@@ -96,9 +96,9 @@ status_t
 arch_vm_translation_map_init(kernel_args *args,
 	VMPhysicalPageMapper** _physicalPageMapper)
 {
-	TRACE("vm_translation_map_init: entry\n");
+	// Do not use TRACE/dprintf during the Pioneer single-hart bootstrap.
 
-#ifdef TRACE_VM_TMAP
+#if 0
 	TRACE("physical memory ranges:\n");
 	for (uint32 i = 0; i < args->num_physical_memory_ranges; i++) {
 		phys_addr_t start = args->physical_memory_range[i].start;
@@ -130,8 +130,10 @@ arch_vm_translation_map_init(kernel_args *args,
 
 	sPageTable = SatpReg{.val = Satp()}.ppn * B_PAGE_SIZE;
 
-	dprintf("physMapBase: %#" B_PRIxADDR "\n", args->arch_args.physMap.start);
-	dprintf("physMemBase: %#" B_PRIxADDR "\n", args->physical_memory_range[0].start);
+	if (args->num_cpus > 1) {
+		dprintf("physMapBase: %#" B_PRIxADDR "\n", args->arch_args.physMap.start);
+		dprintf("physMemBase: %#" B_PRIxADDR "\n", args->physical_memory_range[0].start);
+	}
 	gVirtFromPhysOffset = args->arch_args.physMap.start - args->physical_memory_range[0].start;
 
 	arch_cpu_disable_user_access();

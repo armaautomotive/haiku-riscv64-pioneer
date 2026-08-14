@@ -30,6 +30,7 @@ extern void arch_mmu_post_efi_setup(size_t memoryMapSize,
 extern uint64_t arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize,
 	efi_memory_descriptor *memoryMap, size_t descriptorSize,
 	uint32_t descriptorVersion);
+extern void arch_mmu_set_handoff_kernel_args(addr_t address);
 
 
 #include <arch/riscv64/arch_uart_sifive.h>
@@ -54,6 +55,7 @@ arch_start_kernel(addr_t kernelEntry)
 	addr_t virtKernelArgs;
 	platform_bootloader_address_to_kernel_address((void*)kernelArgs,
 		&virtKernelArgs);
+	arch_mmu_set_handoff_kernel_args((addr_t)kernelArgs);
 
 	// EFI assumed to be SBI booted
 	gKernelArgs.arch_args.machine_platform = kPlatformSbi;
@@ -80,28 +82,16 @@ arch_start_kernel(addr_t kernelEntry)
 	if (memoryMap == NULL)
 		panic("Unable to allocate memory map.");
 
-	// Read (and print) the memory map.
+	// Read the memory map. Avoid printing every descriptor here: the Pioneer
+	// firmware supplies hundreds of entries and serial output can reset it
+	// before ExitBootServices.
 	memoryMapSize = actualMemoryMapSize;
 	if (kBootServices->GetMemoryMap(&memoryMapSize, memoryMap, &mapKey,
 			&descriptorSize, &descriptorVersion) != EFI_SUCCESS) {
 		panic("Unable to fetch system memory map.");
 	}
 
-	addr_t addr = (addr_t)memoryMap;
-	dprintf("System provided memory map:\n");
-	for (size_t i = 0; i < memoryMapSize / descriptorSize; ++i) {
-		efi_memory_descriptor *entry
-			= (efi_memory_descriptor *)(addr + i * descriptorSize);
-		dprintf("  phys: 0x%08" PRIx64 "-0x%08" PRIx64
-			", virt: 0x%08" PRIx64 "-0x%08" PRIx64
-			", type: %s (%#x), attr: %#" PRIx64 "\n",
-			entry->PhysicalStart,
-			entry->PhysicalStart + entry->NumberOfPages * B_PAGE_SIZE,
-			entry->VirtualStart,
-			entry->VirtualStart + entry->NumberOfPages * B_PAGE_SIZE,
-			memory_region_type_str(entry->Type), entry->Type,
-			entry->Attribute);
-	}
+	dprintf("EFI memory map: %lu descriptors\n", memoryMapSize / descriptorSize);
 
 	// Generate page tables for use after ExitBootServices.
 	uint64_t satp = arch_mmu_generate_post_efi_page_tables(
@@ -155,9 +145,9 @@ arch_start_kernel(addr_t kernelEntry)
 	smp_boot_other_cpus(satp, kernelEntry, virtKernelArgs);
 
 	// Enter the kernel!
-	dprintf("arch_enter_kernel(satp: %#" B_PRIxADDR ", kernelArgs: %#" B_PRIxADDR
-		", kernelEntry: %#" B_PRIxADDR ", sp: %#" B_PRIxADDR ")\n",	satp,
-		(addr_t)&kernelArgs, (addr_t)kernelEntry, kernelArgs->cpu_kstack[0].start
+	dprintf("arch_enter_kernel(satp: %#" B_PRIxADDR ", kernelArgs: phys %#" B_PRIxADDR
+		", virt %#" B_PRIxADDR ", kernelEntry: %#" B_PRIxADDR ", sp: %#" B_PRIxADDR ")\n",
+		satp, (addr_t)kernelArgs, virtKernelArgs, (addr_t)kernelEntry, kernelArgs->cpu_kstack[0].start
 			+ kernelArgs->cpu_kstack[0].size);
 
 	arch_enter_kernel(satp, virtKernelArgs, kernelEntry,

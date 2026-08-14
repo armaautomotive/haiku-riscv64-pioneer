@@ -27,15 +27,39 @@
 #include <new>
 
 
-DebugUART8250::DebugUART8250(addr_t base, int64 clock)
+DebugUART8250::DebugUART8250(addr_t base, int64 clock, uint8 regShift,
+	uint8 regIoWidth)
 	:
-	DebugUART(base, clock)
+	DebugUART(base, clock),
+	fRegShift(regShift),
+	fRegIoWidth(regIoWidth)
 {
 }
 
 
 DebugUART8250::~DebugUART8250()
 {
+}
+
+
+void
+DebugUART8250::Out8(int reg, uint8 value)
+{
+	addr_t address = Base() + ((addr_t)reg << fRegShift);
+	if (fRegIoWidth == 4)
+		*(volatile uint32*)address = value;
+	else
+		*(volatile uint8*)address = value;
+}
+
+
+uint8
+DebugUART8250::In8(int reg)
+{
+	addr_t address = Base() + ((addr_t)reg << fRegShift);
+	if (fRegIoWidth == 4)
+		return *(volatile uint32*)address;
+	return *(volatile uint8*)address;
 }
 
 
@@ -183,10 +207,9 @@ DebugUART8250::FlushRx()
 
 
 DebugUART8250*
-arch_get_uart_8250(addr_t base, int64 clock)
+arch_get_uart_8250(addr_t base, int64 clock, uint8 regShift, uint8 regIoWidth)
 {
 	static char buffer[sizeof(DebugUART8250)];
-	DebugUART8250* uart = new(buffer) DebugUART8250(base, clock);
+	DebugUART8250* uart = new(buffer) DebugUART8250(base, clock, regShift, regIoWidth);
 	return uart;
 }
-

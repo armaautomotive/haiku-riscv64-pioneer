@@ -4,7 +4,8 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 SECTIONS
 {
-	. = 0x80000000;
+	/* Allow board firmware to select the physical load address. */
+	. = DEFINED(BOOT_LOADER_BASE) ? BOOT_LOADER_BASE : 0x80000000;
 
 	/* text/read-only data */
   .text : {

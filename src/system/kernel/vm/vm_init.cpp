@@ -25,6 +25,14 @@
 #endif
 
 
+static inline void
+early_boot_marker(char marker)
+{
+	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
+	*uart = marker;
+}
+
+
 /*!	Frees physical pages that were used during the boot process.
 	\a end is inclusive.
 */
@@ -404,11 +412,13 @@ addr_t
 vm_allocate_early(kernel_args* args, size_t virtualSize, size_t physicalSize,
 	uint32 attributes, addr_t alignment)
 {
+	early_boot_marker('a');
 	if (physicalSize > virtualSize)
 		physicalSize = virtualSize;
 
 	// find the vaddr to allocate at
 	addr_t virtualBase = allocate_early_virtual(args, virtualSize, alignment);
+	early_boot_marker('v');
 	//dprintf("vm_allocate_early: vaddr 0x%lx\n", virtualBase);
 	if (virtualBase == 0) {
 		panic("vm_allocate_early: could not allocate virtual address\n");
@@ -417,18 +427,23 @@ vm_allocate_early(kernel_args* args, size_t virtualSize, size_t physicalSize,
 
 	// map the pages
 	for (uint32 i = 0; i < HOWMANY(physicalSize, B_PAGE_SIZE); i++) {
+		if (i == 0)
+			early_boot_marker('p');
 		page_num_t physicalAddress = vm_allocate_early_physical_page(args);
 		if (physicalAddress == 0)
 			panic("error allocating early page!\n");
 
 		//dprintf("vm_allocate_early: paddr 0x%lx\n", physicalAddress);
 
+		if (i == 0)
+			early_boot_marker('m');
 		status_t status = arch_vm_translation_map_early_map(args,
 			virtualBase + i * B_PAGE_SIZE,
 			physicalAddress * B_PAGE_SIZE, attributes);
 		if (status != B_OK)
 			panic("error mapping early page!");
 	}
+	early_boot_marker('d');
 
 	return virtualBase;
 }

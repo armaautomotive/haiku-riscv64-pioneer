@@ -17,6 +17,7 @@
 #include <OS.h>
 
 #include <arch/platform.h>
+#include <arch/debug_console.h>
 #include <boot_device.h>
 #include <boot_item.h>
 #include <boot_splash.h>
@@ -97,6 +98,26 @@ non_boot_cpu_init(void* args, int currentCPU)
 extern "C" int
 _start(kernel_args *bootKernelArgs, int currentCPU)
 {
+	// EFI transfers control directly to the kernel and does not establish the
+	// RISC-V ABI global pointer.  PIC PLT/GOT calls made during early boot rely
+	// on it, so initialize it before calling any external kernel routine.
+	asm volatile("la gp, __global_pointer$");
+
+	// This is deliberately before the normal debug console setup: it proves
+	// that the kernel prologue and its new virtual stack are usable.
+	asm volatile(
+		"li t0, 0xffffffc0068ac000\n"
+		"li t1, 'K'\n"
+		"sw t1, 0(t0)\n"
+		:
+		:
+		: "t0", "t1", "memory");
+
+	// Bring up the platform-selected UART before the first boot diagnostic.
+	// On Pioneer the early fallback is HTIF, which is not wired to the board's
+	// physical serial console.
+	arch_debug_console_init(bootKernelArgs);
+	debug_early_boot_message("riscv: kernel _start\n");
 	if (bootKernelArgs->version == CURRENT_KERNEL_ARGS_VERSION
 		&& bootKernelArgs->kernel_args_size == kernel_args_size_v1) {
 		sKernelArgs.ucode_data = NULL;
@@ -112,44 +133,80 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 	}
 
 	smp_set_num_cpus(bootKernelArgs->num_cpus);
+	debug_early_boot_message("riscv: cpu count set\n");
 
-	// wait for all the cpus to get here
-	smp_cpu_rendezvous(&sCpuRendezvous);
+	// The Pioneer bootstrap currently starts only the boot CPU. Avoid the
+	// atomic rendezvous operation until secondary-hart bring-up is complete.
+	if (bootKernelArgs->num_cpus > 1)
+		smp_cpu_rendezvous(&sCpuRendezvous);
+	debug_early_boot_message("riscv: rendezvous 1\n");
 
 	// the passed in kernel args are in a non-allocated range of memory
 	if (currentCPU == 0)
 		memcpy((void*)&sKernelArgs, bootKernelArgs, bootKernelArgs->kernel_args_size);
 
-	smp_cpu_rendezvous(&sCpuRendezvous2);
+	if (bootKernelArgs->num_cpus > 1)
+		smp_cpu_rendezvous(&sCpuRendezvous2);
+	debug_early_boot_message("riscv: rendezvous 2\n");
 
 	// do any pre-booting cpu config
+	debug_early_boot_message("riscv: cpu preboot\n");
 	cpu_preboot_init_percpu(&sKernelArgs, currentCPU);
+	debug_early_boot_message("riscv: thread preboot\n");
 	thread_preboot_init_percpu(&sKernelArgs, currentCPU);
+	debug_early_boot_message("riscv: cpu ready\n");
 
 	// if we're not a boot cpu, spin here until someone wakes us up
-	if (smp_trap_non_boot_cpus(currentCPU, &sCpuRendezvous3)) {
+	// The Pioneer port currently runs only the boot hart. Do not enter the
+	// multi-hart trap/rendezvous path, which uses unsupported early atomics.
+	if (bootKernelArgs->num_cpus <= 1
+		|| smp_trap_non_boot_cpus(currentCPU, &sCpuRendezvous3)) {
 		// init platform
+		debug_early_boot_message("riscv: platform init\n");
 		arch_platform_init(&sKernelArgs);
+		debug_early_boot_message("riscv: debug init\n");
 
 		// setup debug output
 		debug_init(&sKernelArgs);
+		debug_early_boot_message("riscv: debug ready\n");
+		debug_early_boot_message("riscv: dprintf enable\n");
 		set_dprintf_enabled(true);
-		dprintf("Welcome to kernel debugger output!\n");
-		dprintf("Haiku revision: %s, debug level: %d\n", get_haiku_revision(),
-			KDEBUG_LEVEL);
+		debug_early_boot_message("riscv: dprintf enabled\n");
+		// Formatted kernel debug output still uses early atomic state that is not
+		// available on the Pioneer single-hart bootstrap. Keep the safe early
+		// console path until normal SMP/atomic support is brought up.
+		if (bootKernelArgs->num_cpus > 1) {
+			dprintf("Welcome to kernel debugger output!\n");
+			dprintf("Haiku revision: %s, debug level: %d\n", get_haiku_revision(),
+				KDEBUG_LEVEL);
+		}
+		debug_early_boot_message("riscv: cpu init\n");
 
 		// init modules
 		TRACE("init CPU\n");
 		cpu_init(&sKernelArgs);
+		debug_early_boot_message("riscv: cpu initialized\n");
+		debug_early_boot_message("riscv: cpu percpu\n");
 		cpu_init_percpu(&sKernelArgs, currentCPU);
+		debug_early_boot_message("riscv: cpu percpu ready\n");
 		TRACE("init interrupts\n");
+		debug_early_boot_message("riscv: interrupts init\n");
 		interrupts_init(&sKernelArgs);
+		debug_early_boot_message("riscv: interrupts ready\n");
 
 		TRACE("init VM\n");
-		vm_init(&sKernelArgs);
+		debug_early_boot_message("riscv: vm init\n");
+		// Avoid the unresolved PLT entry for the first VM call during the
+		// Pioneer bootstrap. Earlier setup has established that the direct
+		// kernel address space is valid; this distinguishes a linker-stub hang
+		// from a VM initialization fault.
+		register kernel_args* vmArgs asm("a0") = &sKernelArgs;
+		asm volatile("call vm_init" : "+r"(vmArgs) : : "ra", "memory");
+		debug_early_boot_message("riscv: vm ready\n");
 			// Before vm_init_post_sem() is called, we have to make sure that
 			// the boot loader allocated region is not used anymore
 		boot_item_init();
+		debug_early_boot_message("riscv: boot items ready\n");
 		debug_init_post_vm(&sKernelArgs);
 		low_resource_manager_init();
 
@@ -407,4 +464,3 @@ main2(void* /*unused*/)
 
 	return 0;
 }
-

@@ -11,6 +11,8 @@
 #include <ctype.h>
 
 #include <heap.h>
+#include <arch/debug_console.h>
+#include <boot/kernel_args.h>
 #include <vm/vm.h>
 #include <vm/vm_page.h>
 #include <slab/Slab.h>
@@ -52,14 +54,31 @@ init_heap(struct kernel_args* args, kernel_heap_implementation* heap)
 	size_t heapSize = heap->initial_size;
 	if (heapSize != 0) {
 		// try to accomodate low memory systems
-		while (heapSize > (vm_page_num_pages() * B_PAGE_SIZE) / 8)
-			heapSize /= 2;
+		// The Pioneer has ample memory, and vm_page_num_pages() is an early
+		// cross-image call before the bootstrap's PLT state is dependable.
+		// Retain the normal low-memory adjustment once SMP is enabled.
+		if (args->num_cpus > 1) {
+			while (heapSize > (vm_page_num_pages() * B_PAGE_SIZE) / 8)
+				heapSize /= 2;
+		}
 		if (heapSize < 1024 * 1024)
 			panic("heap_init: go buy some RAM please.");
 
 		// map in the new heap and initialize it
-		heapBase = vm_allocate_early(args, heapSize, heapSize,
-			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, 0);
+		// Avoid the early PIC/PLT call sequence on the Pioneer.  The direct
+		// entry form preserves the RISC-V calling convention explicitly.
+		register addr_t earlyResult asm("a0") = (addr_t)args;
+		register size_t earlyVirtualSize asm("a1") = heapSize;
+		register size_t earlyPhysicalSize asm("a2") = heapSize;
+		register uint32 earlyAttributes asm("a3") =
+			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA;
+		register addr_t earlyAlignment asm("a4") = 0;
+		asm volatile("lla t0, vm_allocate_early\n\tjalr ra, t0, 0"
+			: "+r"(earlyResult)
+			: "r"(earlyVirtualSize), "r"(earlyPhysicalSize),
+				"r"(earlyAttributes), "r"(earlyAlignment)
+			: "ra", "t0", "memory");
+		heapBase = earlyResult;
 		TRACE(("heap at 0x%lx\n", heapBase));
 	}
 
@@ -185,9 +204,15 @@ init_object_cache_replacements(struct kernel_args* args)
 status_t
 heap_init(struct kernel_args* args)
 {
+	arch_debug_serial_early_boot_message("riscv: heap entry\n");
+	// The Pioneer bootstrap has not finished establishing the early VM heap
+	// mappings yet. Use the already initialized slab heap until SMP is enabled.
+	if (args->num_cpus == 1)
+		sActiveHeaps[0] = &kernel_slab_heap;
 	char buffer[32];
 	size_t bufferSize = sizeof(buffer);
-	if (get_safemode_option_early(args, "kernel_malloc", buffer, &bufferSize) == B_OK) {
+	if (args->num_cpus > 1
+		&& get_safemode_option_early(args, "kernel_malloc", buffer, &bufferSize) == B_OK) {
 		if (strcmp(buffer, "guarded") == 0)
 			sActiveHeaps[0] = &kernel_guarded_heap;
 		else if (strcmp(buffer, "debug") == 0)
@@ -199,9 +224,14 @@ heap_init(struct kernel_args* args)
 		else
 			panic("unknown or unavailable kernel heap '%s'!", buffer);
 	}
-	dprintf("kernel malloc: using %s\n", sActiveHeaps[0]->name);
+	// The normal debug-output path takes locks that are not available until
+	// later in the Pioneer single-hart bootstrap.
+	if (args->num_cpus > 1)
+		dprintf("kernel malloc: using %s\n", sActiveHeaps[0]->name);
 
+	arch_debug_serial_early_boot_message("riscv: heap allocate\n");
 	status_t status = init_heap(args, sActiveHeaps[0]);
+	arch_debug_serial_early_boot_message("riscv: heap initialized\n");
 	if (status != B_OK)
 		return status;
 

@@ -32,7 +32,14 @@ SmallObjectCache::Create(const char* name, size_t object_size,
 	object_cache_constructor constructor, object_cache_destructor destructor,
 	object_cache_reclaimer reclaimer)
 {
-	void* buffer = slab_internal_alloc(sizeof(SmallObjectCache), flags);
+	void* buffer;
+	if ((flags & CACHE_DURING_BOOT) != 0) {
+		register size_t earlySize asm("a0") = sizeof(SmallObjectCache);
+		asm volatile("lla t0, _Z17block_alloc_earlym\n\tjalr ra, t0, 0"
+			: "+r"(earlySize) : : "ra", "t0", "memory");
+		buffer = (void*)earlySize;
+	} else
+		buffer = slab_internal_alloc(sizeof(SmallObjectCache), flags);
 	if (buffer == NULL)
 		return NULL;
 

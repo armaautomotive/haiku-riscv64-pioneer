@@ -22,7 +22,8 @@
 
 class DebugUART8250 : public DebugUART {
 public:
-							DebugUART8250(addr_t base, int64 clock);
+						DebugUART8250(addr_t base, int64 clock,
+							uint8 regShift = 0, uint8 regIoWidth = 1);
 							~DebugUART8250();
 
 			void			InitEarly();
@@ -34,10 +35,19 @@ public:
 
 			void			FlushTx();
 			void			FlushRx();
+
+protected:
+	virtual	void			Out8(int reg, uint8 value);
+	virtual	uint8			In8(int reg);
+
+private:
+			uint8			fRegShift;
+			uint8			fRegIoWidth;
 };
 
 
-DebugUART8250* arch_get_uart_8250(addr_t base, int64 clock);
+DebugUART8250* arch_get_uart_8250(addr_t base, int64 clock,
+	uint8 regShift = 0, uint8 regIoWidth = 1);
 
 
 #endif /* _KERNEL_ARCH_DEBUG_UART_8250_H */

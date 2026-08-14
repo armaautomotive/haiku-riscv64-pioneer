@@ -150,7 +150,10 @@ cpu_preboot_init_percpu(kernel_args *args, int curr_cpu)
 	// we can use it for get_current_cpu
 	memset((void*)&gCPU[curr_cpu], 0, sizeof(gCPU[curr_cpu]));
 	gCPU[curr_cpu].cpu_num = curr_cpu;
-	gCPUEnabled.SetBitAtomic(curr_cpu);
+	// The Pioneer bootstrap starts only one hart. Its C920 firmware path traps
+	// the RISC-V A-extension instruction emitted by SetBitAtomic(), so there is
+	// no concurrent writer to protect during this early single-core phase.
+	gCPUEnabled.SetBit(curr_cpu);
 
 	B_INITIALIZE_SPINLOCK(&gCPU[curr_cpu].irqs_lock);
 
@@ -437,4 +440,3 @@ _user_set_cpu_enabled(int32 cpu, bool enabled)
 
 	return B_OK;
 }
-

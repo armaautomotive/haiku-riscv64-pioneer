@@ -472,6 +472,8 @@ MemoryManager::Init(kernel_args* args)
 	// Allocate one area immediately. Otherwise, we might try to allocate before
 	// post-area initialization but after page initialization, during which time
 	// we can't actually reserve pages.
+	// _AllocateArea() temporarily releases and then reacquires sLock, so its
+	// caller must hold the lock even during the single-hart bootstrap.
 	MutexLocker locker(sLock);
 	Area* area = NULL;
 	_AllocateArea(0, area);

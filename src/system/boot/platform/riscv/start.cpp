@@ -163,8 +163,8 @@ platform_start_kernel(void)
 	// Avoid interrupts from virtio devices before kernel driver takes control.
 	virtio_fini();
 
-	// The native, non-SBI bootloader manually installs mmode hooks
-	gKernelArgs.arch_args.machine_platform = kPlatformMNative;
+	// The Pioneer firmware enters the payload in S-mode through OpenSBI.
+	gKernelArgs.arch_args.machine_platform = kPlatformSbi;
 
 	fdt_set_kernel_args();
 

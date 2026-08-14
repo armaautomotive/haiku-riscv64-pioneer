@@ -186,7 +186,11 @@ status_t
 heap_init(struct kernel_args*)
 #endif
 {
+	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
+	*uart = 's';
 	for (size_t index = 0; index < kNumBlockSizes; index++) {
+		if (index == 0)
+			*uart = 'b';
 		char name[32];
 		snprintf(name, sizeof(name), "block allocator: %lu",
 			kBlockSizes[index]);
@@ -202,11 +206,20 @@ heap_init(struct kernel_args*)
 		if (size > 2048)
 			flags |= CACHE_NO_DEPOT;
 
-		sBlockCaches[index] = create_object_cache_etc(name, size, alignment, 0,
-			0, 0, flags, NULL, NULL, NULL, NULL);
+		*uart = 'c';
+		// Bind this early-bootstrap call directly: the loader has not yet
+		// established the dynamic PLT state used by normal kernel calls.
+		typedef object_cache* (*create_cache_func)(const char*, size_t, size_t,
+			size_t, size_t, size_t, uint32, void*, object_cache_constructor,
+			object_cache_destructor, object_cache_reclaimer);
+		create_cache_func createCache;
+		asm volatile("lla %0, create_object_cache_etc" : "=r"(createCache));
+		sBlockCaches[index] = createCache(name, size, alignment, 0, 0, 0, flags,
+			NULL, NULL, NULL, NULL);
 		if (sBlockCaches[index] == NULL)
 			panic("allocator: failed to init block cache");
 	}
+	*uart = 'S';
 
 	return B_OK;
 }

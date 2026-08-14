@@ -39,4 +39,3 @@ bool arch_vm_translation_map_is_kernel_page_accessible(addr_t virtualAddress,
 #include <arch_vm_translation_map.h>
 
 #endif	/* KERNEL_ARCH_VM_TRANSLATION_MAP_H */
-

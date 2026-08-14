@@ -566,9 +566,18 @@ dtb_handle_fdt(const void* fdt, int node)
 				dtb_get_reg(fdt, node, 0, uart.regs);
 				uart.irq = dtb_get_interrupt(fdt, node);
 				uart.clock = dtb_get_clock_frequency(fdt, node);
+				const void* prop = fdt_getprop(fdt, node, "reg-shift", NULL);
+				uart.reg_shift = (prop == NULL) ? 0 : fdt32_to_cpu(*(uint32*)prop);
+				prop = fdt_getprop(fdt, node, "reg-io-width", NULL);
+				uart.reg_io_width = (prop == NULL) ? 1 : fdt32_to_cpu(*(uint32*)prop);
 
-				gUART = kSupportedUarts[i].uart_driver_init(uart.regs.start,
-					uart.clock);
+				if (strcmp(uart.kind, UART_KIND_8250) == 0) {
+					gUART = arch_get_uart_8250(uart.regs.start, uart.clock,
+						uart.reg_shift, uart.reg_io_width);
+				} else {
+					gUART = kSupportedUarts[i].uart_driver_init(uart.regs.start,
+						uart.clock);
+				}
 				gUARTSkipInit = fdt_getprop(fdt, node, "skip-init", NULL) != NULL;
 			}
 		}

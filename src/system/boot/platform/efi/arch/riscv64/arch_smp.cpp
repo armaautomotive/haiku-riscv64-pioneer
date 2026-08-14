@@ -175,6 +175,11 @@ arch_smp_init_other_cpus(void)
 		gKernelArgs.arch_args.plicContexts[i] = sCpus[i].plicContext;
 	}
 
+	// The Pioneer-supplied OpenSBI image reaches S-mode correctly but hangs
+	// while starting additional harts. Bring the initial port up on the boot
+	// hart; SG2042 SMP support can be enabled once its HSM path is reliable.
+	gKernelArgs.num_cpus = 1;
+
 	if (get_safemode_boolean(B_SAFEMODE_DISABLE_SMP, false)) {
 		// SMP has been disabled!
 		TRACE(("smp disabled per safemode setting\n"));

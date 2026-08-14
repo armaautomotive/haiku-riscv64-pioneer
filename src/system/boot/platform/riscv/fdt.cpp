@@ -124,7 +124,8 @@ HandleFdt(const void* fdt, int node, uint32 addressCells, uint32 sizeCells,
 		sClint.start = fdt64_to_cpu(*(reg + 0));
 		sClint.size  = fdt64_to_cpu(*(reg + 1));
 		gClintRegs = (ClintRegs*)sClint.start;
-	} else if (HasFdtString(compatible, compatibleLen, "riscv,plic0")) {
+	} else if (HasFdtString(compatible, compatibleLen, "riscv,plic0")
+		|| HasFdtString(compatible, compatibleLen, "thead,c900-plic")) {
 		GetReg(fdt, node, addressCells, sizeCells, 0, sPlic);
 		int propSize;
 		if (uint32* prop = (uint32*)fdt_getprop(fdt, node, "interrupts-extended", &propSize)) {
@@ -152,9 +153,11 @@ HandleFdt(const void* fdt, int node, uint32 addressCells, uint32 sizeCells,
 	} else if (
 		strcmp(sUart.kind, "") == 0 && (
 			HasFdtString(compatible, compatibleLen, "ns16550a") ||
+			HasFdtString(compatible, compatibleLen, "snps,dw-apb-uart") ||
 			HasFdtString(compatible, compatibleLen, "sifive,uart0"))
 	) {
-		if (HasFdtString(compatible, compatibleLen, "ns16550a"))
+		if (HasFdtString(compatible, compatibleLen, "ns16550a")
+			|| HasFdtString(compatible, compatibleLen, "snps,dw-apb-uart"))
 			strcpy(sUart.kind, UART_KIND_8250);
 		else if (HasFdtString(compatible, compatibleLen, "sifive,uart0"))
 			strcpy(sUart.kind, UART_KIND_SIFIVE);
@@ -165,6 +168,10 @@ HandleFdt(const void* fdt, int node, uint32 addressCells, uint32 sizeCells,
 		sUart.irq = GetInterrupt(fdt, node);
 		const void* prop = fdt_getprop(fdt, node, "clock-frequency", NULL);
 		sUart.clock = (prop == NULL) ? 0 : fdt32_to_cpu(*(uint32*)prop);
+		prop = fdt_getprop(fdt, node, "reg-shift", NULL);
+		sUart.reg_shift = (prop == NULL) ? 0 : fdt32_to_cpu(*(uint32*)prop);
+		prop = fdt_getprop(fdt, node, "reg-io-width", NULL);
+		sUart.reg_io_width = (prop == NULL) ? 1 : fdt32_to_cpu(*(uint32*)prop);
 	} else if (HasFdtString(compatible, compatibleLen, "qemu,fw-cfg-mmio")) {
 		gFwCfgRegs = (FwCfgRegs *volatile)
 			fdt64_to_cpu(*(uint64*)fdt_getprop(fdt, node, "reg", NULL));

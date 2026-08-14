@@ -27,7 +27,10 @@
 #endif
 
 
-//#define TRACE_MEMORY_MAP
+// Keep the UEFI handoff quiet on hardware: the Pioneer firmware watchdog can
+// reset the board while a full 128 GiB memory-map/page-table trace is emitted.
+// Define this temporarily only when diagnosing early loader mappings.
+// #define TRACE_MEMORY_MAP
 
 // Ignore memory above 512GB
 #define PHYSICAL_MEMORY_LOW		0x00000000
@@ -36,6 +39,18 @@
 #define RESERVED_MEMORY_BASE	0x80000000
 
 phys_addr_t sPageTable = 0;
+static addr_t sHandoffKernelArgs = 0;
+
+extern "C" void arch_enter_kernel(uint64 satp, addr_t kernelArgs,
+	addr_t kernelEntry, addr_t kernelStackTop);
+extern "C" void SVec();
+
+
+void
+arch_mmu_set_handoff_kernel_args(addr_t address)
+{
+	sHandoffKernelArgs = address;
+}
 
 
 static inline
@@ -389,16 +404,40 @@ arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descript
 	// Boot loader
 	TRACE("Boot loader:\n");
 	for (size_t i = 0; i < memoryMapSize / descriptorSize; ++i) {
-		efi_memory_descriptor* entry = &memoryMap[i];
+		efi_memory_descriptor* entry = (efi_memory_descriptor*)((uint8*)memoryMap
+			+ i * descriptorSize);
 		switch (entry->Type) {
 		case EfiLoaderCode:
 		case EfiLoaderData:
-			MapRange(entry->VirtualStart, entry->PhysicalStart, entry->NumberOfPages * B_PAGE_SIZE,
+			// UEFI leaves VirtualStart as zero until SetVirtualAddressMap(). Keep
+			// the loader identity-mapped across the SATP switch so entry.S can
+			// reach the kernel entry point.
+			MapRange(entry->PhysicalStart, entry->PhysicalStart, entry->NumberOfPages * B_PAGE_SIZE,
 				Pte {.isRead = true, .isWrite = true, .isExec = true}.val);
 			break;
 		default:
 			;
 		}
+	}
+
+	// The handoff code continues executing at its current physical address
+	// immediately after writing SATP. Map that exact page explicitly; EFI's
+	// VirtualStart fields are zero on Pioneer and cannot describe this mapping.
+	addr_t handoffPage = (addr_t)&arch_enter_kernel & ~(B_PAGE_SIZE - 1);
+	MapRange(handoffPage, handoffPage, B_PAGE_SIZE,
+		Pte {.isRead = true, .isWrite = true, .isExec = true}.val);
+	// A page fault immediately after the SATP switch must still be able to
+	// enter the loader's supervisor trap handler and report its cause.
+	addr_t trapPage = (addr_t)&SVec & ~(B_PAGE_SIZE - 1);
+	MapRange(trapPage, trapPage, B_PAGE_SIZE,
+		Pte {.isRead = true, .isWrite = true, .isExec = true}.val);
+	// The first kernel instructions consume this structure immediately. Keep a
+	// physical alias as a bootstrap safety net in addition to its normal
+	// virtual allocation.
+	if (sHandoffKernelArgs != 0) {
+		addr_t argsPage = sHandoffKernelArgs & ~(B_PAGE_SIZE - 1);
+		MapRange(argsPage, argsPage, B_PAGE_SIZE,
+			Pte {.isRead = true, .isWrite = true}.val);
 	}
 	TRACE("Boot loader stack\n");
 	addr_t sp = Sp();

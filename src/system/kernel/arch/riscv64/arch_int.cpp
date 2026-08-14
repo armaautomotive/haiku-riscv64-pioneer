@@ -311,19 +311,25 @@ STrap(iframe* frame)
 status_t
 arch_int_init(kernel_args* args)
 {
-	dprintf("arch_int_init()\n");
-
-	for (uint32 i = 0; i < args->num_cpus; i++) {
-		dprintf("  CPU %" B_PRIu32 ":\n", i);
-		dprintf("    hartId: %" B_PRIu32 "\n", args->arch_args.hartIds[i]);
-		dprintf("    plicContext: %" B_PRIu32 "\n", args->arch_args.plicContexts[i]);
+	// Formatted dprintf() is not available during the Pioneer single-hart
+	// bootstrap. It is diagnostic-only here, so avoid it until normal SMP
+	// atomic support is established.
+	if (args->num_cpus > 1) {
+		dprintf("arch_int_init()\n");
+		for (uint32 i = 0; i < args->num_cpus; i++) {
+			dprintf("  CPU %" B_PRIu32 ":\n", i);
+			dprintf("    hartId: %" B_PRIu32 "\n", args->arch_args.hartIds[i]);
+			dprintf("    plicContext: %" B_PRIu32 "\n", args->arch_args.plicContexts[i]);
+		}
 	}
 
 	for (uint32 i = 0; i < args->num_cpus; i++)
 		sPlicContexts[i] = args->arch_args.plicContexts[i];
 
-	// TODO: read from FDT
-	reserve_io_interrupt_vectors(128, 0, INTERRUPT_TYPE_IRQ);
+	// TODO: read from FDT. The generic reservation path takes an early mutex;
+	// defer it while the Pioneer bootstrap is intentionally single-hart.
+	if (args->num_cpus > 1)
+		reserve_io_interrupt_vectors(128, 0, INTERRUPT_TYPE_IRQ);
 
 	for (uint32 i = 0; i < args->num_cpus; i++)
 		gPlicRegs->contexts[sPlicContexts[i]].priorityThreshold = 0;

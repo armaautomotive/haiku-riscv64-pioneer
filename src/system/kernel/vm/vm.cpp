@@ -3573,17 +3573,27 @@ vm_init(kernel_args* args)
 	status_t err = 0;
 
 	TRACE(("vm_init: entry\n"));
+	debug_early_boot_message("riscv: vm tmap\n");
 	err = arch_vm_translation_map_init(args, &sPhysicalPageMapper);
+	debug_early_boot_message("riscv: vm arch\n");
 	err = arch_vm_init(args);
 
 	// initialize some globals
 	vm_page_init_num_pages(args);
+	debug_early_boot_message("riscv: vm pages counted\n");
 
 	slab_init(args);
-	heap_init(args);
+	debug_early_boot_message("riscv: vm slab\n");
+	// The Pioneer bootstrap uses the direct entry form here as well.  The
+	// position-independent call sequence emitted for early external calls can
+	// fault before the kernel's dynamic relocation state is fully usable.
+	register kernel_args* heapArgs asm("a0") = args;
+	asm volatile("call heap_init" : "+r"(heapArgs) : : "ra", "memory");
+	debug_early_boot_message("riscv: vm heap\n");
 
 	// initialize the free page list and physical page mapper
 	vm_page_init(args);
+	debug_early_boot_message("riscv: vm pages\n");
 
 	// initialize the cache allocators
 	vm_cache_init(args);
