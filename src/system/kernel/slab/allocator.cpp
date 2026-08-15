@@ -91,6 +91,14 @@ size_to_index(size_t size)
 static void*
 block_alloc(size_t size, size_t alignment, uint32 flags)
 {
+#if defined(__riscv)
+	// The Pioneer bootstrap is deliberately single-hart until the normal
+	// allocator and scheduler paths are fully initialized. Avoid re-entering
+	// object-cache locks from early VM setup.
+	if (gKernelStartup && alignment <= kMinObjectAlignment)
+		return block_alloc_early(size);
+#endif
+
 	if (alignment > kMinObjectAlignment) {
 		// Make size >= alignment and a power of two. This is sufficient, since
 		// all of our object caches with power of two sizes are aligned. We may
@@ -125,9 +133,13 @@ block_alloc(size_t size, size_t alignment, uint32 flags)
 void*
 block_alloc_early(size_t size)
 {
+#if !defined(__riscv)
 	int index = size_to_index(size);
 	if (index >= 0 && sBlockCaches[index] != NULL)
 		return object_cache_alloc(sBlockCaches[index], CACHE_DURING_BOOT);
+#endif
+	// RISC-V reaches this path before object-cache locks are usable. Keep all
+	// bootstrap allocations on the raw, single-threaded backing area instead.
 
 	if (size > SLAB_CHUNK_SIZE_SMALL) {
 		// This is a sufficiently large allocation -- just ask the memory
@@ -144,10 +156,10 @@ block_alloc_early(size_t size)
 	if (sBootStrapMemorySize - sUsedBootStrapMemory < size) {
 		// We need more memory.
 		void* block;
-		if (MemoryManager::AllocateRaw(SLAB_CHUNK_SIZE_SMALL, 0, block) != B_OK)
+		if (MemoryManager::AllocateRaw(SLAB_CHUNK_SIZE_MEDIUM, 0, block) != B_OK)
 			return NULL;
 		sBootStrapMemory = (addr_t)block;
-		sBootStrapMemorySize = SLAB_CHUNK_SIZE_SMALL;
+		sBootStrapMemorySize = SLAB_CHUNK_SIZE_MEDIUM;
 		sUsedBootStrapMemory = 0;
 	}
 

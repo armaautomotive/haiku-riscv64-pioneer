@@ -22,6 +22,7 @@
 #include <arch/cpu.h>
 #include <arch/vm_translation_map.h>
 #include <block_cache.h>
+#include <smp.h>
 #include <boot/kernel_args.h>
 #include <condition_variable.h>
 #include <elf.h>
@@ -1618,8 +1619,10 @@ mark_page_range_in_use(page_num_t startPage, page_num_t length, bool wired)
 		B_PRIxPHYSADDR "\n", startPage, length));
 
 	if (sPhysicalPageOffset > startPage) {
+#if !defined(__riscv)
 		dprintf("mark_page_range_in_use(%#" B_PRIxPHYSADDR ", %#" B_PRIxPHYSADDR
 			"): start page is before free list\n", startPage, length);
+#endif
 		if (sPhysicalPageOffset - startPage >= length)
 			return B_OK;
 		length -= sPhysicalPageOffset - startPage;
@@ -1629,17 +1632,23 @@ mark_page_range_in_use(page_num_t startPage, page_num_t length, bool wired)
 	startPage -= sPhysicalPageOffset;
 
 	if (startPage + length > sNumPages) {
+#if !defined(__riscv)
 		dprintf("mark_page_range_in_use(%#" B_PRIxPHYSADDR ", %#" B_PRIxPHYSADDR
 			"): range would extend past free list\n", startPage, length);
+#endif
 		if (startPage >= sNumPages)
 			return B_OK;
 		length = sNumPages - startPage;
 	}
 
-	WriteLocker locker(sFreePageQueuesLock);
+	const bool bootstrap = smp_get_num_cpus() == 1;
+	if (!bootstrap)
+		rw_lock_write_lock(&sFreePageQueuesLock);
 
 	for (page_num_t i = 0; i < length; i++) {
 		vm_page *page = &sPages[startPage + i];
+		if (i == 0)
+			*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 'd';
 		switch (page->State()) {
 			case PAGE_STATE_FREE:
 			case PAGE_STATE_CLEAR:
@@ -1649,14 +1658,25 @@ mark_page_range_in_use(page_num_t startPage, page_num_t length, bool wired)
 				// This should happen in the early boot process only, though.
 				ASSERT(gKernelStartup);
 
-				DEBUG_PAGE_ACCESS_START(page);
+				if (!bootstrap)
+					DEBUG_PAGE_ACCESS_START(page);
 				VMPageQueue& queue = page->State() == PAGE_STATE_FREE
 					? sFreePageQueue : sClearPageQueue;
 				queue.Remove(page);
+				if (i == 0)
+					*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 'q';
 				page->SetState(wired ? PAGE_STATE_WIRED : PAGE_STATE_UNUSED);
+				if (i == 0)
+					*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 's';
 				page->busy = false;
-				atomic_add(&sUnreservedFreePages, -1);
-				DEBUG_PAGE_ACCESS_END(page);
+				if (bootstrap)
+					sUnreservedFreePages--;
+				else
+					atomic_add(&sUnreservedFreePages, -1);
+				if (i == 0)
+					*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 'c';
+				if (!bootstrap)
+					DEBUG_PAGE_ACCESS_END(page);
 				break;
 			}
 			case PAGE_STATE_WIRED:
@@ -1674,6 +1694,8 @@ mark_page_range_in_use(page_num_t startPage, page_num_t length, bool wired)
 		}
 	}
 
+	if (!bootstrap)
+		rw_lock_write_unlock(&sFreePageQueuesLock);
 	return B_OK;
 }
 
@@ -2448,6 +2470,15 @@ vm_page_init_num_pages(kernel_args *args)
 #endif
 	}
 
+#if defined(__riscv)
+	// Bring up RISC-V systems with a bounded physical-page table first.  Large
+	// machines such as the SG2042 expose 128 GiB, which requires over two GiB
+	// of vm_page metadata before the scheduler is available.
+	const page_num_t maxBootstrapPages = 4ULL * 1024 * 1024 * 1024 / B_PAGE_SIZE;
+	if (physicalPagesEnd - sPhysicalPageOffset > maxBootstrapPages)
+		physicalPagesEnd = sPhysicalPageOffset + maxBootstrapPages;
+#endif
+
 	TRACE(("first phys page = %#" B_PRIxPHYSADDR ", end %#" B_PRIxPHYSADDR "\n",
 		sPhysicalPageOffset, physicalPagesEnd));
 
@@ -2458,6 +2489,8 @@ vm_page_init_num_pages(kernel_args *args)
 status_t
 vm_page_init(kernel_args *args)
 {
+	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
+	*uart = 'p';
 	TRACE(("vm_page_init: entry\n"));
 
 	// init page queues
@@ -2469,10 +2502,12 @@ vm_page_init(kernel_args *args)
 	sClearPageQueue.Init();
 
 	new (&sPageReservationWaiters) PageReservationWaiterList;
+	*uart = 'a';
 
 	// map in the new free page table
 	sPages = (vm_page *)vm_allocate_early(args, sNumPages * sizeof(vm_page),
 		~0L, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, 0);
+	*uart = 'i';
 
 	TRACE(("vm_init: putting free_page_table @ %p, # ents %" B_PRIuPHYSADDR
 		" (size %#" B_PRIxPHYSADDR ")\n", sPages, sNumPages,
@@ -2487,6 +2522,7 @@ vm_page_init(kernel_args *args)
 		sPages[i].allocation_tracking_info.Clear();
 #endif
 	}
+	*uart = 'r';
 
 	sUnreservedFreePages = sNumPages;
 
@@ -2510,6 +2546,7 @@ vm_page_init(kernel_args *args)
 			args->physical_allocated_range[i].start / B_PAGE_SIZE,
 			args->physical_allocated_range[i].size / B_PAGE_SIZE, true);
 	}
+	*uart = 'u';
 
 	// prevent future allocations from the kernel args ranges
 	args->num_physical_allocated_ranges = 0;
@@ -2536,6 +2573,7 @@ vm_page_init(kernel_args *args)
 	}
 
 	TRACE(("vm_page_init: exit\n"));
+	*uart = 'x';
 
 	return B_OK;
 }

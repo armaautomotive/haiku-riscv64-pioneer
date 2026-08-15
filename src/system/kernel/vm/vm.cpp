@@ -3597,15 +3597,19 @@ vm_init(kernel_args* args)
 
 	// initialize the cache allocators
 	vm_cache_init(args);
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '1';
 
 	{
 		status_t error = VMAreas::Init();
 		if (error != B_OK)
 			panic("vm_init: error initializing areas map\n");
 	}
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '2';
 
 	VMAddressSpace::Init();
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '3';
 	reserve_boot_loader_ranges(args);
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '4';
 
 #if DEBUG_HEAPS
 	heap_init_post_area();
@@ -3614,9 +3618,13 @@ vm_init(kernel_args* args)
 	// Do any further initialization that the architecture dependant layers may
 	// need now
 	arch_vm_translation_map_init_post_area(args);
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '5';
 	arch_vm_init_post_area(args);
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '6';
 	vm_page_init_post_area(args);
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '7';
 	slab_init_post_area();
+	*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = '8';
 
 	vm_kernel_args_init_post_area(args);
 
@@ -4413,6 +4421,14 @@ vm_unreserve_memory(uint64 amount)
 
 	if (amount == 0)
 		return;
+
+	if (smp_get_num_cpus() == 1) {
+#if ENABLE_SWAP_SUPPORT
+		sAvailableMemoryAndSwap += amount;
+#endif
+		sAvailableMemory += amount;
+		return;
+	}
 
 	InterruptsReadSpinLocker readLocker(sAvailableMemoryLock);
 #if ENABLE_SWAP_SUPPORT

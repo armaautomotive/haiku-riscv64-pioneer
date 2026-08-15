@@ -472,11 +472,15 @@ MemoryManager::Init(kernel_args* args)
 	// Allocate one area immediately. Otherwise, we might try to allocate before
 	// post-area initialization but after page initialization, during which time
 	// we can't actually reserve pages.
-	// _AllocateArea() temporarily releases and then reacquires sLock, so its
-	// caller must hold the lock even during the single-hart bootstrap.
-	MutexLocker locker(sLock);
 	Area* area = NULL;
-	_AllocateArea(0, area);
+	if (args->num_cpus == 1) {
+		// No other execution context exists yet. _AllocateArea() recognizes
+		// this bootstrap case and does not use sLock.
+		_AllocateArea(0, area);
+	} else {
+		MutexLocker locker(sLock);
+		_AllocateArea(0, area);
+	}
 	_AddArea(area);
 #endif
 }
@@ -565,25 +569,34 @@ MemoryManager::Allocate(ObjectCache* cache, uint32 flags, void*& _pages)
 	TRACE("MemoryManager::Allocate(%p, %#" B_PRIx32 "): chunkSize: %"
 		B_PRIuSIZE "\n", cache, flags, chunkSize);
 
-	MutexLocker locker(sLock);
+	const bool bootstrap = sKernelArgs != NULL && sKernelArgs->num_cpus == 1;
+	if (!bootstrap)
+		mutex_lock(&sLock);
 
 	// allocate a chunk
 	MetaChunk* metaChunk;
 	Chunk* chunk;
 	status_t error = _AllocateChunks(chunkSize, 1, flags, metaChunk, chunk);
-	if (error != B_OK)
+	if (error != B_OK) {
+		if (!bootstrap)
+			mutex_unlock(&sLock);
 		return error;
+	}
 
 	// map the chunk
 	Area* area = metaChunk->GetArea();
 	addr_t chunkAddress = _ChunkAddress(metaChunk, chunk);
 
-	locker.Unlock();
+	if (!bootstrap)
+		mutex_unlock(&sLock);
 	error = _MapChunk(area->vmArea, chunkAddress, chunkSize, 0, flags);
-	locker.Lock();
+	if (!bootstrap)
+		mutex_lock(&sLock);
 	if (error != B_OK) {
 		// something failed -- free the chunk
 		_FreeChunk(area, metaChunk, chunk, chunkAddress, true, flags);
+		if (!bootstrap)
+			mutex_unlock(&sLock);
 		return error;
 	}
 
@@ -593,6 +606,8 @@ MemoryManager::Allocate(ObjectCache* cache, uint32 flags, void*& _pages)
 	TRACE("MemoryManager::Allocate() done: %p (meta chunk: %d, chunk %d)\n",
 		_pages, int(metaChunk - area->metaChunks),
 		int(chunk - metaChunk->chunks));
+	if (!bootstrap)
+		mutex_unlock(&sLock);
 	return B_OK;
 }
 
@@ -684,27 +699,36 @@ MemoryManager::AllocateRaw(size_t size, uint32 flags, void*& _pages)
 		chunkCount = size / SLAB_CHUNK_SIZE_MEDIUM;
 	}
 
-	MutexLocker locker(sLock);
+	const bool bootstrap = sKernelArgs != NULL && sKernelArgs->num_cpus == 1;
+	if (!bootstrap)
+		mutex_lock(&sLock);
 
 	// allocate the chunks
 	MetaChunk* metaChunk;
 	Chunk* chunk;
 	status_t error = _AllocateChunks(chunkSize, chunkCount, flags, metaChunk,
 		chunk);
-	if (error != B_OK)
+	if (error != B_OK) {
+		if (!bootstrap)
+			mutex_unlock(&sLock);
 		return error;
+	}
 
 	// map the chunks
 	Area* area = metaChunk->GetArea();
 	addr_t chunkAddress = _ChunkAddress(metaChunk, chunk);
 
-	locker.Unlock();
+	if (!bootstrap)
+		mutex_unlock(&sLock);
 	error = _MapChunk(area->vmArea, chunkAddress, size, 0, flags);
-	locker.Lock();
+	if (!bootstrap)
+		mutex_lock(&sLock);
 	if (error != B_OK) {
 		// something failed -- free the chunks
 		for (uint32 i = 0; i < chunkCount; i++)
 			_FreeChunk(area, metaChunk, chunk + i, chunkAddress, true, flags);
+		if (!bootstrap)
+			mutex_unlock(&sLock);
 		return error;
 	}
 
@@ -719,6 +743,8 @@ MemoryManager::AllocateRaw(size_t size, uint32 flags, void*& _pages)
 	TRACE("MemoryManager::AllocateRaw() done: %p (meta chunk: %d, chunk %d)\n",
 		_pages, int(metaChunk - area->metaChunks),
 		int(chunk - metaChunk->chunks));
+	if (!bootstrap)
+		mutex_unlock(&sLock);
 	return B_OK;
 }
 
@@ -1311,10 +1337,15 @@ MemoryManager::_AddArea(Area* area)
 {
 	T(AddArea(area));
 
-	// add the area to the hash table
-	WriteLocker writeLocker(sAreaTableLock);
-	sAreaTable.InsertUnchecked(area);
-	writeLocker.Unlock();
+	// There is no concurrent lookup while the one-hart bootstrap creates its
+	// first area. The early RISC-V lock implementation is not usable yet.
+	if (sKernelArgs != NULL && sKernelArgs->num_cpus == 1) {
+		sAreaTable.InsertUnchecked(area);
+	} else {
+		WriteLocker writeLocker(sAreaTableLock);
+		sAreaTable.InsertUnchecked(area);
+		writeLocker.Unlock();
+	}
 
 	// add the area's meta chunks to the free lists
 	sFreeShortMetaChunks.Add(&area->metaChunks[0]);
@@ -1330,7 +1361,9 @@ MemoryManager::_AllocateArea(uint32 flags, Area*& _area)
 
 	ASSERT((flags & CACHE_DONT_LOCK_KERNEL_SPACE) == 0);
 
-	mutex_unlock(&sLock);
+	const bool bootstrap = sKernelArgs != NULL && sKernelArgs->num_cpus == 1;
+	if (!bootstrap)
+		mutex_unlock(&sLock);
 
 	size_t pagesNeededToMap = 0;
 	void* areaBase;
@@ -1345,7 +1378,8 @@ MemoryManager::_AllocateArea(uint32 flags, Area*& _area)
 			&areaBase, B_ANY_KERNEL_BLOCK_ADDRESS, SLAB_AREA_SIZE,
 			areaCreationFlags);
 		if (areaID < 0) {
-			mutex_lock(&sLock);
+			if (!bootstrap)
+				mutex_lock(&sLock);
 			return areaID;
 		}
 
@@ -1364,7 +1398,8 @@ MemoryManager::_AllocateArea(uint32 flags, Area*& _area)
 			pagesNeededToMap, flags);
 		if (error != B_OK) {
 			delete_area(areaID);
-			mutex_lock(&sLock);
+			if (!bootstrap)
+				mutex_lock(&sLock);
 			return error;
 		}
 
@@ -1376,7 +1411,8 @@ MemoryManager::_AllocateArea(uint32 flags, Area*& _area)
 			SLAB_AREA_SIZE, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
 			SLAB_AREA_SIZE);
 		if (areaBase == NULL) {
-			mutex_lock(&sLock);
+			if (!bootstrap)
+				mutex_lock(&sLock);
 			return B_NO_MEMORY;
 		}
 		area = _AreaForAddress((addr_t)areaBase);
@@ -1404,7 +1440,8 @@ MemoryManager::_AllocateArea(uint32 flags, Area*& _area)
 		metaChunk->freeChunks = NULL;
 	}
 
-	mutex_lock(&sLock);
+	if (!bootstrap)
+		mutex_lock(&sLock);
 	_area = area;
 
 	T(AllocateArea(area, flags));

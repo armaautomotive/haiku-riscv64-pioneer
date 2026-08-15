@@ -505,21 +505,35 @@ command_cache_stack(int argc, char** argv)
 status_t
 vm_cache_init(kernel_args* args)
 {
+	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
 	// Create object caches for the structures we allocate here.
+	const uint32 bootstrapFlags = args->num_cpus == 1 ? CACHE_DURING_BOOT : 0;
+	*uart = 'A';
 	gCacheRefObjectCache = create_object_cache("cache refs", sizeof(VMCacheRef),
-		0);
+		bootstrapFlags);
+	*uart = 'a';
 #if ENABLE_SWAP_SUPPORT
+	*uart = 'B';
 	gAnonymousCacheObjectCache = create_object_cache("anon caches",
-		sizeof(VMAnonymousCache), 0);
+		sizeof(VMAnonymousCache), bootstrapFlags);
+	*uart = 'b';
 #endif
+	*uart = 'C';
 	gAnonymousNoSwapCacheObjectCache = create_object_cache(
-		"anon no-swap caches", sizeof(VMAnonymousNoSwapCache), 0);
+		"anon no-swap caches", sizeof(VMAnonymousNoSwapCache), bootstrapFlags);
+	*uart = 'c';
+	*uart = 'D';
 	gVnodeCacheObjectCache = create_object_cache("vnode caches",
-		sizeof(VMVnodeCache), 0);
+		sizeof(VMVnodeCache), bootstrapFlags);
+	*uart = 'd';
+	*uart = 'E';
 	gDeviceCacheObjectCache = create_object_cache("device caches",
-		sizeof(VMDeviceCache), 0);
+		sizeof(VMDeviceCache), bootstrapFlags);
+	*uart = 'e';
+	*uart = 'F';
 	gNullCacheObjectCache = create_object_cache("null caches",
-		sizeof(VMNullCache), 0);
+		sizeof(VMNullCache), bootstrapFlags);
+	*uart = 'f';
 
 	if (gCacheRefObjectCache == NULL
 #if ENABLE_SWAP_SUPPORT

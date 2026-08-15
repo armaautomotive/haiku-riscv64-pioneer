@@ -1216,15 +1216,27 @@ create_object_cache_etc(const char* name, size_t objectSize, size_t alignment,
 			destructor, reclaimer);
 	} else {
 		*uart = 'h';
-		cache = HashedObjectCache::Create(name, objectSize, alignment, maximum,
+		typedef HashedObjectCache* (*create_hashed_cache_func)(const char*, size_t,
+			size_t, size_t, size_t, size_t, uint32, void*,
+			object_cache_constructor, object_cache_destructor,
+			object_cache_reclaimer);
+		create_hashed_cache_func createHashedCache;
+		asm volatile("lla %0, _ZN17HashedObjectCache6CreateEPKcmmmmmjPvPFiS2_S2_EPFvS2_S2_EPFvS2_iE"
+			: "=r"(createHashedCache));
+		cache = createHashedCache(name, objectSize, alignment, maximum,
 			magazineCapacity, maxMagazineCount, flags, cookie, constructor,
 			destructor, reclaimer);
 	}
 
 	if (cache != NULL) {
 		*uart = 'L';
-		MutexLocker _(sObjectCacheListLock);
-		sObjectCaches.Add(cache);
+		if (smp_get_num_cpus() == 1) {
+			// Heap bootstrap is still single-threaded on the Pioneer.
+			sObjectCaches.Add(cache);
+		} else {
+			MutexLocker _(sObjectCacheListLock);
+			sObjectCaches.Add(cache);
+		}
 	}
 
 	T(Create(name, objectSize, alignment, maximum, flags, cookie, cache));
