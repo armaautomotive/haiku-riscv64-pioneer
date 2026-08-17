@@ -13,13 +13,13 @@
 SVec:
 	// Make page faults visible even if the C trap handler cannot yet use the
 	// post-EFI console.
-	li t0, 0xffffffc0068ac000
+	li t0, 0xffffffc07fffe000
 	li t1, '!'
-	sw t1, 0(t0)
+	sb t1, 0(t0)
 	PushTrapFrame
-	li t0, 0xffffffc0068ac000
+	li t0, 0xffffffc07fffe000
 	li t1, 'E'
-	sw t1, 0(t0)
+	sb t1, 0(t0)
 
 	// Do not call the C trap reporter yet: it faults recursively while the
 	// kernel is still bringing up its first console. Emit the low nibbles of
@@ -42,9 +42,9 @@ SVec:
 3:
 	addi t3, t3, '0'
 4:
-	li t0, 0xffffffc0068ac000
-	sw t2, 0(t0)
-	sw t3, 0(t0)
+	li t0, 0xffffffc07fffe000
+	sb t2, 0(t0)
+	sb t3, 0(t0)
 1:
 	wfi
 	j 1b

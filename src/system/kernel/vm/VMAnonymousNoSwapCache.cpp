@@ -45,7 +45,28 @@ VMAnonymousNoSwapCache::Init(bool canOvercommit, int32 numPrecommittedPages,
 	TRACE(("VMAnonymousNoSwapCache::Init(canOvercommit = %s, numGuardPages = %ld) "
 		"at %p\n", canOvercommit ? "yes" : "no", numGuardPages, store));
 
-	status_t error = VMCache::Init("VMAnonymousNoSwapCache", CACHE_TYPE_RAM, allocationFlags);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: no-swap init entry\n");
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	status_t error;
+	if (*kernelStartup) {
+		typedef status_t (*cache_init_func)(VMCache*, const char*, uint32,
+			uint32);
+		cache_init_func directCacheInit;
+		asm volatile("lla %0, _ZN7VMCache4InitEPKcjj"
+			: "=r"(directCacheInit));
+		error = directCacheInit(this, "VMAnonymousNoSwapCache", CACHE_TYPE_RAM,
+			allocationFlags);
+	} else {
+		error = VMCache::Init("VMAnonymousNoSwapCache", CACHE_TYPE_RAM,
+			allocationFlags);
+	}
+	debug_early_boot_message("riscv: no-swap base init done\n");
+#else
+	status_t error = VMCache::Init("VMAnonymousNoSwapCache", CACHE_TYPE_RAM,
+		allocationFlags);
+#endif
 	if (error != B_OK)
 		return error;
 

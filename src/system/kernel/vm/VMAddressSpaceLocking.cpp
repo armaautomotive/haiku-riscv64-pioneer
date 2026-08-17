@@ -9,6 +9,7 @@
 
 #include <AutoDeleter.h>
 
+#include <debug.h>
 #include <vm/vm.h>
 #include <vm/VMAddressSpace.h>
 #include <vm/VMArea.h>
@@ -174,7 +175,8 @@ AddressSpaceWriteLocker::AddressSpaceWriteLocker(team_id team)
 	:
 	fSpace(NULL),
 	fLocked(false),
-	fDegraded(false)
+	fDegraded(false),
+	fBorrowedReference(false)
 {
 	SetTo(team);
 }
@@ -185,7 +187,8 @@ AddressSpaceWriteLocker::AddressSpaceWriteLocker(VMAddressSpace* space,
 	:
 	fSpace(NULL),
 	fLocked(false),
-	fDegraded(false)
+	fDegraded(false),
+	fBorrowedReference(false)
 {
 	SetTo(space, getNewReference);
 }
@@ -195,7 +198,8 @@ AddressSpaceWriteLocker::AddressSpaceWriteLocker()
 	:
 	fSpace(NULL),
 	fLocked(false),
-	fDegraded(false)
+	fDegraded(false),
+	fBorrowedReference(false)
 {
 }
 
@@ -210,23 +214,60 @@ void
 AddressSpaceWriteLocker::Unset()
 {
 	Unlock();
-	if (fSpace != NULL)
+	if (fSpace != NULL && !fBorrowedReference)
 		fSpace->Put();
 	fSpace = NULL;
+	fBorrowedReference = false;
 }
 
 
 status_t
 AddressSpaceWriteLocker::SetTo(team_id team)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: locker set entry\n");
+#endif
 	Unset();
-
+#if defined(__riscv)
+	debug_early_boot_message("riscv: locker unset done\n");
+	bool bootstrap = false;
+	if (team == B_SYSTEM_TEAM) {
+		// Avoid an unrelocated GOT load while deciding whether blocking locks
+		// are usable. The boot CPU is alone throughout gKernelStartup.
+		bool* kernelStartup;
+		asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+		bootstrap = *kernelStartup;
+	}
+	if (bootstrap) {
+		debug_early_boot_message("riscv: locker bootstrap pointer\n");
+		VMAddressSpace** kernelAddressSpace;
+		asm volatile("lla %0, _ZN14VMAddressSpace19sKernelAddressSpaceE"
+			: "=r"(kernelAddressSpace));
+		fSpace = *kernelAddressSpace;
+		fBorrowedReference = true;
+	} else {
+		typedef VMAddressSpace* (*get_address_space_func)(team_id);
+		get_address_space_func directGet;
+		asm volatile("lla %0, _ZN14VMAddressSpace3GetEi" : "=r"(directGet));
+		fSpace = directGet(team);
+	}
+#else
+	bool bootstrap = false;
 	fSpace = VMAddressSpace::Get(team);
+#endif
+
 	if (fSpace == NULL)
 		return B_BAD_TEAM_ID;
-
-	fSpace->WriteLock();
-	fLocked = true;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: locker aspace got\n");
+#endif
+	if (!bootstrap) {
+		fSpace->WriteLock();
+		fLocked = true;
+	}
+#if defined(__riscv)
+	debug_early_boot_message("riscv: locker set done\n");
+#endif
 	return B_OK;
 }
 
@@ -332,6 +373,11 @@ AddressSpaceWriteLocker::Unlock()
 void
 AddressSpaceWriteLocker::DegradeToReadLock()
 {
+	// SetTo() deliberately leaves the locker logically unlocked during the
+	// single-CPU bootstrap phase.
+	if (!fLocked)
+		return;
+
 	fSpace->ReadLock();
 	fSpace->WriteUnlock();
 	fDegraded = true;

@@ -59,36 +59,26 @@ HashedObjectCache::Create(const char* name, size_t object_size,
 	object_cache_constructor constructor, object_cache_destructor destructor,
 	object_cache_reclaimer reclaimer)
 {
-	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
-	*uart = '1';
 	void* buffer = slab_internal_alloc(sizeof(HashedObjectCache), flags);
-	*uart = '2';
 	if (buffer == NULL)
 		return NULL;
 
 	HashedObjectCache* cache = new(buffer) HashedObjectCache();
-	*uart = '3';
-
 	// init the hash table
 	size_t hashSize = cache->hash_table.ResizeNeeded();
 	buffer = slab_internal_alloc(hashSize, flags);
-	*uart = '4';
 	if (buffer == NULL) {
 		cache->Delete();
 		return NULL;
 	}
 
 	cache->hash_table.Resize(buffer, hashSize, true);
-	*uart = '5';
-
 	if (cache->Init(name, object_size, alignment, maximum, magazineCapacity,
 			maxMagazineCount, flags, cookie, constructor, destructor,
 			reclaimer) != B_OK) {
 		cache->Delete();
 		return NULL;
 	}
-	*uart = '6';
-
 	if ((flags & CACHE_LARGE_SLAB) != 0)
 		cache->slab_size = 128 * object_size;
 	else

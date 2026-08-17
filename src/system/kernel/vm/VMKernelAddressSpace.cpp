@@ -13,12 +13,21 @@
 #include <stdlib.h>
 
 #include <KernelExport.h>
+#include <debug.h>
 
 #include <heap.h>
 #include <slab/Slab.h>
 #include <thread.h>
 #include <vm/vm.h>
 #include <vm/VMArea.h>
+
+
+#if defined(__riscv)
+// The kernel address space owns this first range for its entire lifetime.
+// Storing it statically avoids an allocator dependency during VM bootstrap.
+alignas(VMKernelAddressRange) static uint8 sInitialKernelRange[
+	sizeof(VMKernelAddressRange)];
+#endif
 
 
 //#define TRACE_VM
@@ -86,13 +95,16 @@ VMKernelAddressSpace::~VMKernelAddressSpace()
 status_t
 VMKernelAddressSpace::InitObject()
 {
+	const uint32 bootstrapFlags = CACHE_DURING_BOOT;
 	fAreaObjectCache = create_object_cache("kernel areas",
-		sizeof(VMKernelArea), 0);
+		sizeof(VMKernelArea), bootstrapFlags);
+	debug_early_boot_message("riscv: kernel areas cache\n");
 	if (fAreaObjectCache == NULL)
 		return B_NO_MEMORY;
 
 	fRangesObjectCache = create_object_cache("kernel address ranges",
-		sizeof(Range), CACHE_NO_DEPOT);
+		sizeof(Range), CACHE_NO_DEPOT | bootstrapFlags);
+	debug_early_boot_message("riscv: kernel ranges cache\n");
 	if (fRangesObjectCache == NULL)
 		return B_NO_MEMORY;
 
@@ -100,11 +112,20 @@ VMKernelAddressSpace::InitObject()
 	size_t size = fEndAddress - fBase + 1;
 	fFreeListCount = ld(size) - PAGE_SHIFT + 1;
 	fFreeLists = new(std::nothrow) RangeFreeList[fFreeListCount];
+	debug_early_boot_message("riscv: kernel free lists\n");
 	if (fFreeLists == NULL)
 		return B_NO_MEMORY;
 
-	Range* range = new(fRangesObjectCache, 0) Range(fBase, size,
+	// The initial range lives for the lifetime of the kernel address space.
+	// On RISC-V it is created before object-cache locking is available.
+#if defined(__riscv)
+	Range* range = new(sInitialKernelRange) Range(fBase, size,
 		Range::RANGE_FREE);
+#else
+	Range* range = new(fRangesObjectCache, bootstrapFlags) Range(fBase, size,
+		Range::RANGE_FREE);
+#endif
+	debug_early_boot_message("riscv: kernel first range\n");
 	if (range == NULL)
 		return B_NO_MEMORY;
 
@@ -143,6 +164,20 @@ VMArea*
 VMKernelAddressSpace::CreateArea(const char* name, uint32 wiring,
 	uint32 protection, uint32 allocationFlags)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: kernel create area entry\n");
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		typedef VMKernelArea* (*create_kernel_area_func)(VMAddressSpace*,
+			const char*, uint32, uint32, ObjectCache*, uint32);
+		create_kernel_area_func directCreateKernelArea;
+		asm volatile("lla %0, _ZN12VMKernelArea6CreateEP14VMAddressSpacePKcjjP11ObjectCachej"
+			: "=r"(directCreateKernelArea));
+		return directCreateKernelArea(this, name, wiring, protection,
+			fAreaObjectCache, allocationFlags);
+	}
+#endif
 	return VMKernelArea::Create(this, name, wiring, protection,
 		fAreaObjectCache, allocationFlags);
 }

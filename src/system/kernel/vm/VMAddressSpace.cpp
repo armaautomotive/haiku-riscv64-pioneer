@@ -15,6 +15,7 @@
 #include <new>
 
 #include <KernelExport.h>
+#include <debug.h>
 
 #include <util/OpenHashTable.h>
 
@@ -118,6 +119,7 @@ VMAddressSpace::~VMAddressSpace()
 VMAddressSpace::Init()
 {
 	rw_lock_init(&sAddressSpaceTableLock, "address spaces table");
+	debug_early_boot_message("riscv: aspace lock\n");
 
 	// create the area and address space hash tables
 	{
@@ -126,17 +128,21 @@ VMAddressSpace::Init()
 		if (error != B_OK)
 			panic("vm_init: error creating aspace hash table\n");
 	}
+	debug_early_boot_message("riscv: aspace table\n");
 
 	// create the initial kernel address space
 	if (Create(B_SYSTEM_TEAM, KERNEL_BASE, KERNEL_SIZE, true,
 			&sKernelAddressSpace) != B_OK) {
 		panic("vm_init: error creating kernel address space!\n");
 	}
+	debug_early_boot_message("riscv: aspace kernel\n");
 
-	add_debugger_command("aspaces", &_DumpListCommand,
-		"Dump a list of all address spaces");
-	add_debugger_command("aspace", &_DumpCommand,
-		"Dump info about a particular address space");
+	if (smp_get_num_cpus() != 1) {
+		add_debugger_command("aspaces", &_DumpListCommand,
+			"Dump a list of all address spaces");
+		add_debugger_command("aspace", &_DumpCommand,
+			"Dump info about a particular address space");
+	}
 
 	return B_OK;
 }
@@ -193,12 +199,14 @@ VMAddressSpace::Create(team_id teamID, addr_t base, size_t size, bool kernel,
 			size);
 	if (addressSpace == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: aspace object\n");
 
 	status_t status = addressSpace->InitObject();
 	if (status != B_OK) {
 		delete addressSpace;
 		return status;
 	}
+	debug_early_boot_message("riscv: aspace object init\n");
 
 	TRACE(("VMAddressSpace::Create(): team %" B_PRId32 " (%skernel): %#lx "
 		"bytes starting at %#lx => %p\n", teamID, kernel ? "" : "!", size,
@@ -211,11 +219,19 @@ VMAddressSpace::Create(team_id teamID, addr_t base, size_t size, bool kernel,
 		delete addressSpace;
 		return status;
 	}
+	debug_early_boot_message("riscv: aspace map\n");
 
 	// add the aspace to the global hash table
-	rw_lock_write_lock(&sAddressSpaceTableLock);
+	// The kernel address space is created before threads and blocking locks.
+	// Firmware CPU enumeration is not a valid bootstrap test: some platforms
+	// (notably the 64-core SG2042) report all CPUs before any AP is running.
+	const bool bootstrap = kernel && teamID == B_SYSTEM_TEAM;
+	if (!bootstrap)
+		rw_lock_write_lock(&sAddressSpaceTableLock);
 	sAddressSpaceTable.InsertUnchecked(addressSpace);
-	rw_lock_write_unlock(&sAddressSpaceTableLock);
+	if (!bootstrap)
+		rw_lock_write_unlock(&sAddressSpaceTableLock);
+	debug_early_boot_message("riscv: aspace insert\n");
 
 	*_addressSpace = addressSpace;
 	return B_OK;
@@ -263,11 +279,23 @@ VMAddressSpace::GetCurrent()
 /*static*/ VMAddressSpace*
 VMAddressSpace::Get(team_id teamID)
 {
-	rw_lock_read_lock(&sAddressSpaceTableLock);
+	bool bootstrap = false;
+#if defined(__riscv)
+	if (teamID == B_SYSTEM_TEAM) {
+		// Access the flag without an early GOT load. Dynamic relocations are
+		// not dependable yet at this point in the RISC-V kernel bootstrap.
+		bool* kernelStartup;
+		asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+		bootstrap = *kernelStartup;
+	}
+#endif
+	if (!bootstrap)
+		rw_lock_read_lock(&sAddressSpaceTableLock);
 	VMAddressSpace* addressSpace = sAddressSpaceTable.Lookup(teamID);
 	if (addressSpace)
 		addressSpace->Get();
-	rw_lock_read_unlock(&sAddressSpaceTableLock);
+	if (!bootstrap)
+		rw_lock_read_unlock(&sAddressSpaceTableLock);
 
 	return addressSpace;
 }

@@ -53,6 +53,9 @@ mmu_allocate_page()
 {
 	TRACE("%s: called\n", __func__);
 
+	// Mapping the Pioneer's 128 GiB at 4 KiB granularity needs many walk pages.
+	// They may live anywhere in physical RAM; constraining all of them below
+	// 4 GiB exhausts the firmware's low-memory pool.
 	efi_physical_addr addr;
 	efi_status s = kBootServices->AllocatePages(AllocateAnyPages,
 		EfiLoaderData, 1, &addr);

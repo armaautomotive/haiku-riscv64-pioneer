@@ -280,6 +280,10 @@ arch_vm_init(kernel_args *args)
 status_t
 arch_vm_init_post_area(kernel_args *args)
 {
+	// The EFI loader already installed the physical mapping. Registering it as
+	// a VM area requires range splitting before the normal allocator is ready.
+	return B_OK;
+
 	void* address = (void*)args->arch_args.physMap.start;
 	area_id area = vm_create_null_area(VMAddressSpace::KernelID(),
 		"physical map area", &address, B_EXACT_ADDRESS,

@@ -22,29 +22,20 @@ FUNCTION(arch_enter_kernel):
 	csrw sie, zero
 	csrw satp, a0
 	sfence.vma
-	// The Pioneer UART is identity inaccessible after SATP is enabled. Use its
-	// kernel virtual mapping to leave handoff progress markers on the serial
-	// console without disturbing the argument registers.
-	li t0, 0xffffffc0068ac000
+	// Byte-wide store through the canonical post-SATP UART alias.
+	li t0, 0xffffffc07fffe000
 	li t2, 'A'
-	sw t2, 0(t0)
+	sb t2, 0(t0)
 
 	// set the kernel stack
 	mv	sp, a3
 	li	fp, 0
 	li  ra, 0
 
-	li t2, 'B'
-	sw t2, 0(t0)
-
 	// Setup kernel args
 	mv	a0, a1	// kernelArgs
 	mv	t0, a2
 	li	a1, 0	// currentCPU=0
-
-	li t3, 0xffffffc0068ac000
-	li t2, 'C'
-	sw t2, 0(t3)
 
 	// call the kernel
 	jr	t0

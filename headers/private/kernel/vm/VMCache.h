@@ -88,6 +88,7 @@ public:
 	virtual	void				Delete();
 
 	inline	bool				Lock();
+			bool				LockBootstrap();
 	inline	bool				TryLock();
 	inline	bool				SwitchLock(mutex* from);
 	inline	bool				SwitchFromReadLock(rw_lock* from);

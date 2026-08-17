@@ -155,7 +155,9 @@ arch_vm_translation_map_init_post_sem(kernel_args *args)
 status_t
 arch_vm_translation_map_init_post_area(kernel_args *args)
 {
-	TRACE("vm_translation_map_init_post_area: entry\n");
+	// Do not call dprintf() here. This runs before the kernel's dynamic
+	// relocation state is fully usable on RISC-V, so the early PLT call can
+	// fault even though this hook itself was reached successfully.
 	return B_OK;
 }
 

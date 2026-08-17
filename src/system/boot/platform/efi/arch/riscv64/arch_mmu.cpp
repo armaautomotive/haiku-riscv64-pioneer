@@ -38,18 +38,24 @@
 
 #define RESERVED_MEMORY_BASE	0x80000000
 
+// The physical UART is outside Sv39's canonical low virtual range. Keep this
+// canonical kernel alias solely for the immediate post-SATP diagnostic.
+static constexpr addr_t kHandoffDebugUART = 0xffffffc07fffe000ULL;
+
 phys_addr_t sPageTable = 0;
 static addr_t sHandoffKernelArgs = 0;
+static addr_t sHandoffEntry = 0;
 
 extern "C" void arch_enter_kernel(uint64 satp, addr_t kernelArgs,
 	addr_t kernelEntry, addr_t kernelStackTop);
 extern "C" void SVec();
 
 
-void
-arch_mmu_set_handoff_kernel_args(addr_t address)
+extern "C" void
+arch_mmu_set_handoff_kernel_args(addr_t address, addr_t entry)
 {
 	sHandoffKernelArgs = address;
+	sHandoffEntry = entry;
 }
 
 
@@ -409,9 +415,12 @@ arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descript
 		switch (entry->Type) {
 		case EfiLoaderCode:
 		case EfiLoaderData:
+		case EfiBootServicesCode:
+		case EfiBootServicesData:
 			// UEFI leaves VirtualStart as zero until SetVirtualAddressMap(). Keep
-			// the loader identity-mapped across the SATP switch so entry.S can
-			// reach the kernel entry point.
+			// all boot-service allocations identity-mapped across the SATP switch.
+			// Pioneer firmware may classify the loaded EFI image itself as a
+			// boot-service allocation rather than EfiLoaderCode.
 			MapRange(entry->PhysicalStart, entry->PhysicalStart, entry->NumberOfPages * B_PAGE_SIZE,
 				Pte {.isRead = true, .isWrite = true, .isExec = true}.val);
 			break;
@@ -423,7 +432,9 @@ arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descript
 	// The handoff code continues executing at its current physical address
 	// immediately after writing SATP. Map that exact page explicitly; EFI's
 	// VirtualStart fields are zero on Pioneer and cannot describe this mapping.
-	addr_t handoffPage = (addr_t)&arch_enter_kernel & ~(B_PAGE_SIZE - 1);
+	addr_t handoffPage = sHandoffEntry != 0
+		? sHandoffEntry : (addr_t)&arch_enter_kernel;
+	handoffPage &= ~(B_PAGE_SIZE - 1);
 	MapRange(handoffPage, handoffPage, B_PAGE_SIZE,
 		Pte {.isRead = true, .isWrite = true, .isExec = true}.val);
 	// A page fault immediately after the SATP switch must still be able to
@@ -469,11 +480,13 @@ arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descript
 	MapAddrRange(gKernelArgs.arch_args.plic, Pte {.isRead = true, .isWrite = true}.val);
 
 	if (strcmp(gKernelArgs.arch_args.uart.kind, "") != 0) {
-		MapRange(gKernelArgs.arch_args.uart.regs.start,
-			gKernelArgs.arch_args.uart.regs.start,
-			gKernelArgs.arch_args.uart.regs.size,
+		phys_addr_t uartPhysical = gKernelArgs.arch_args.uart.regs.start;
+		size_t uartSize = gKernelArgs.arch_args.uart.regs.size;
+		MapRange(uartPhysical, uartPhysical, uartSize,
 			Pte {.isRead = true, .isWrite = true}.val);
 		MapAddrRange(gKernelArgs.arch_args.uart.regs,
+			Pte {.isRead = true, .isWrite = true}.val);
+		MapRange(kHandoffDebugUART, uartPhysical, uartSize,
 			Pte {.isRead = true, .isWrite = true}.val);
 	}
 

@@ -30,7 +30,7 @@ extern void arch_mmu_post_efi_setup(size_t memoryMapSize,
 extern uint64_t arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize,
 	efi_memory_descriptor *memoryMap, size_t descriptorSize,
 	uint32_t descriptorVersion);
-extern void arch_mmu_set_handoff_kernel_args(addr_t address);
+extern "C" void arch_mmu_set_handoff_kernel_args(addr_t address, addr_t entry);
 
 
 #include <arch/riscv64/arch_uart_sifive.h>
@@ -46,6 +46,16 @@ arch_convert_kernel_args(void)
 void
 arch_start_kernel(addr_t kernelEntry)
 {
+	// Keep the few instructions that follow SATP in a low physical page. Do not
+	// require one fixed address: Pioneer firmware legitimately has 0x40000000
+	// occupied, but can choose another available page below 4 GiB.
+	efi_physical_addr handoffEntry = 0xffffffffULL;
+	if (kBootServices->AllocatePages(AllocateMaxAddress, EfiLoaderCode, 1,
+			&handoffEntry) != EFI_SUCCESS) {
+		panic("Failed to allocate handoff trampoline.");
+	}
+	memcpy((void*)handoffEntry, (void*)arch_enter_kernel, B_PAGE_SIZE);
+	asm volatile("fence.i" ::: "memory");
 	// Allocate virtual memory for kernel args
 	struct kernel_args *kernelArgs = NULL;
 	if (platform_allocate_region((void **)&kernelArgs,
@@ -55,7 +65,7 @@ arch_start_kernel(addr_t kernelEntry)
 	addr_t virtKernelArgs;
 	platform_bootloader_address_to_kernel_address((void*)kernelArgs,
 		&virtKernelArgs);
-	arch_mmu_set_handoff_kernel_args((addr_t)kernelArgs);
+	arch_mmu_set_handoff_kernel_args((addr_t)kernelArgs, (addr_t)handoffEntry);
 
 	// EFI assumed to be SBI booted
 	gKernelArgs.arch_args.machine_platform = kPlatformSbi;
@@ -144,12 +154,8 @@ arch_start_kernel(addr_t kernelEntry)
 
 	smp_boot_other_cpus(satp, kernelEntry, virtKernelArgs);
 
-	// Enter the kernel!
-	dprintf("arch_enter_kernel(satp: %#" B_PRIxADDR ", kernelArgs: phys %#" B_PRIxADDR
-		", virt %#" B_PRIxADDR ", kernelEntry: %#" B_PRIxADDR ", sp: %#" B_PRIxADDR ")\n",
-		satp, (addr_t)kernelArgs, virtKernelArgs, (addr_t)kernelEntry, kernelArgs->cpu_kstack[0].start
-			+ kernelArgs->cpu_kstack[0].size);
-
-	arch_enter_kernel(satp, virtKernelArgs, kernelEntry,
+	// Enter the kernel. The assembly handoff emits the next serial marker.
+	((void (*)(uint64, addr_t, addr_t, addr_t))handoffEntry)(satp,
+		virtKernelArgs, kernelEntry,
 		kernelArgs->cpu_kstack[0].start + kernelArgs->cpu_kstack[0].size);
 }

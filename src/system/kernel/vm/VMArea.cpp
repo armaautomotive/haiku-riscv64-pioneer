@@ -59,6 +59,46 @@ VMArea::Init(const char* name, uint32 allocationFlags)
 }
 
 
+status_t
+VMArea::InitBootstrap(VMAddressSpace* addressSpace, const char* name,
+	uint32 wiring, uint32 protection, uint32 allocationFlags)
+{
+	debug_early_boot_message("riscv: area bootstrap entry\n");
+	// Equivalent to the VMArea constructor for storage obtained from the
+	// early bump allocator.  Keeping this in VMArea.cpp avoids an unrelocated
+	// cross-object base-constructor call during RISC-V bootstrap.
+	this->protection = protection;
+	protection_max = 0;
+	this->wiring = wiring;
+	memory_type = 0;
+	cache = NULL;
+	cache_offset = 0;
+	cache_type = 0;
+	new (&mappings) VMAreaMappings;
+	page_protections = NULL;
+	this->address_space = addressSpace;
+	new (&fCacheLink) DoublyLinkedListLink<VMArea>;
+	fBase = 0;
+	fSize = 0;
+	new (&fWiredRanges) VMAreaWiredRangeList;
+	debug_early_boot_message("riscv: area bootstrap lists\n");
+	addressSpace->Get();
+	debug_early_boot_message("riscv: area bootstrap aspace ref\n");
+
+	// Avoid strlcpy() before the RISC-V kernel's dynamic relocations have
+	// been applied.  B_OS_NAME_LENGTH includes space for the terminator.
+	size_t index = 0;
+	while (index + 1 < B_OS_NAME_LENGTH && name[index] != '\0') {
+		this->name[index] = name[index];
+		index++;
+	}
+	this->name[index] = '\0';
+	id = atomic_add(&sNextAreaID, 1);
+	debug_early_boot_message("riscv: area bootstrap named\n");
+	return B_OK;
+}
+
+
 /*!	Returns whether any part of the given address range intersects with a wired
 	range of this area.
 	The area's top cache must be locked.

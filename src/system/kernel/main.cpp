@@ -103,21 +103,17 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 	// on it, so initialize it before calling any external kernel routine.
 	asm volatile("la gp, __global_pointer$");
 
-	// This is deliberately before the normal debug console setup: it proves
-	// that the kernel prologue and its new virtual stack are usable.
-	asm volatile(
-		"li t0, 0xffffffc0068ac000\n"
-		"li t1, 'K'\n"
-		"sw t1, 0(t0)\n"
-		:
-		:
-		: "t0", "t1", "memory");
-
 	// Bring up the platform-selected UART before the first boot diagnostic.
-	// On Pioneer the early fallback is HTIF, which is not wired to the board's
-	// physical serial console.
-	arch_debug_console_init(bootKernelArgs);
-	debug_early_boot_message("riscv: kernel _start\n");
+	// Do not use the ELF PLT here: its relocation state is not guaranteed at
+	// the instant EFI transfers control to the kernel.
+	typedef status_t (*debug_console_init_func)(kernel_args*);
+	typedef void (*early_message_func)(const char*);
+	debug_console_init_func initConsole;
+	early_message_func earlyMessage;
+	asm volatile("lla %0, arch_debug_console_init" : "=r"(initConsole));
+	asm volatile("lla %0, debug_early_boot_message" : "=r"(earlyMessage));
+	initConsole(bootKernelArgs);
+	earlyMessage("riscv: kernel _start\n");
 	if (bootKernelArgs->version == CURRENT_KERNEL_ARGS_VERSION
 		&& bootKernelArgs->kernel_args_size == kernel_args_size_v1) {
 		sKernelArgs.ucode_data = NULL;

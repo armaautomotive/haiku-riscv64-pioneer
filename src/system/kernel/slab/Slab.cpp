@@ -1179,8 +1179,6 @@ create_object_cache_etc(const char* name, size_t objectSize, size_t alignment,
 	uint32 flags, void* cookie, object_cache_constructor constructor,
 	object_cache_destructor destructor, object_cache_reclaimer reclaimer)
 {
-	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
-	*uart = 'C';
 #if DEBUG_HEAPS && GUARDED_HEAP_CAN_REPLACE_OBJECT_CACHES
 	if (guarded_heap_replaces_object_cache(name)) {
 		ObjectCache* cache = (ObjectCache*)
@@ -1203,7 +1201,6 @@ create_object_cache_etc(const char* name, size_t objectSize, size_t alignment,
 	if (objectSize == 0) {
 		cache = NULL;
 	} else if (objectSize <= 256) {
-		*uart = 'l';
 		typedef SmallObjectCache* (*create_small_cache_func)(const char*, size_t,
 			size_t, size_t, size_t, size_t, uint32, void*,
 			object_cache_constructor, object_cache_destructor,
@@ -1215,7 +1212,6 @@ create_object_cache_etc(const char* name, size_t objectSize, size_t alignment,
 			magazineCapacity, maxMagazineCount, flags, cookie, constructor,
 			destructor, reclaimer);
 	} else {
-		*uart = 'h';
 		typedef HashedObjectCache* (*create_hashed_cache_func)(const char*, size_t,
 			size_t, size_t, size_t, size_t, uint32, void*,
 			object_cache_constructor, object_cache_destructor,
@@ -1229,7 +1225,6 @@ create_object_cache_etc(const char* name, size_t objectSize, size_t alignment,
 	}
 
 	if (cache != NULL) {
-		*uart = 'L';
 		if (smp_get_num_cpus() == 1) {
 			// Heap bootstrap is still single-threaded on the Pioneer.
 			sObjectCaches.Add(cache);

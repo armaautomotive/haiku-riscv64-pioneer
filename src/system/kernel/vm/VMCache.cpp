@@ -17,6 +17,7 @@
 
 #include <arch/cpu.h>
 #include <condition_variable.h>
+#include <debug.h>
 #include <heap.h>
 #include <interrupts.h>
 #include <kernel.h>
@@ -505,35 +506,28 @@ command_cache_stack(int argc, char** argv)
 status_t
 vm_cache_init(kernel_args* args)
 {
-	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
 	// Create object caches for the structures we allocate here.
 	const uint32 bootstrapFlags = args->num_cpus == 1 ? CACHE_DURING_BOOT : 0;
-	*uart = 'A';
 	gCacheRefObjectCache = create_object_cache("cache refs", sizeof(VMCacheRef),
 		bootstrapFlags);
-	*uart = 'a';
+	debug_early_boot_message("riscv: vm cache refs\n");
 #if ENABLE_SWAP_SUPPORT
-	*uart = 'B';
 	gAnonymousCacheObjectCache = create_object_cache("anon caches",
 		sizeof(VMAnonymousCache), bootstrapFlags);
-	*uart = 'b';
+	debug_early_boot_message("riscv: vm cache anon\n");
 #endif
-	*uart = 'C';
 	gAnonymousNoSwapCacheObjectCache = create_object_cache(
 		"anon no-swap caches", sizeof(VMAnonymousNoSwapCache), bootstrapFlags);
-	*uart = 'c';
-	*uart = 'D';
+	debug_early_boot_message("riscv: vm cache anon no-swap\n");
 	gVnodeCacheObjectCache = create_object_cache("vnode caches",
 		sizeof(VMVnodeCache), bootstrapFlags);
-	*uart = 'd';
-	*uart = 'E';
+	debug_early_boot_message("riscv: vm cache vnode\n");
 	gDeviceCacheObjectCache = create_object_cache("device caches",
 		sizeof(VMDeviceCache), bootstrapFlags);
-	*uart = 'e';
-	*uart = 'F';
+	debug_early_boot_message("riscv: vm cache device\n");
 	gNullCacheObjectCache = create_object_cache("null caches",
 		sizeof(VMNullCache), bootstrapFlags);
-	*uart = 'f';
+	debug_early_boot_message("riscv: vm cache null\n");
 
 	if (gCacheRefObjectCache == NULL
 #if ENABLE_SWAP_SUPPORT
@@ -646,7 +640,22 @@ VMCache::~VMCache()
 status_t
 VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: base cache init entry\n");
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	const bool bootstrap = *kernelStartup;
+	if (bootstrap) {
+		typedef void (*mutex_init_func)(mutex*, const char*);
+		mutex_init_func directMutexInit;
+		asm volatile("lla %0, mutex_init" : "=r"(directMutexInit));
+		directMutexInit(&fLock, name);
+	} else
+		mutex_init(&fLock, name);
+	debug_early_boot_message("riscv: base cache mutex done\n");
+#else
 	mutex_init(&fLock, name);
+#endif
 
 	fRefCount = 1;
 	source = NULL;
@@ -666,22 +675,76 @@ VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 		// initialize in case the following fails
 #endif
 
+#if defined(__riscv)
+	if (bootstrap) {
+		typedef void* (*block_alloc_early_func)(size_t);
+		block_alloc_early_func directBlockAllocEarly;
+		asm volatile("lla %0, _Z17block_alloc_earlym"
+			: "=r"(directBlockAllocEarly));
+		fCacheRef = static_cast<VMCacheRef*>(
+			directBlockAllocEarly(sizeof(VMCacheRef)));
+		if (fCacheRef != NULL)
+			fCacheRef->cache = this;
+	} else
+		fCacheRef = new(gCacheRefObjectCache, allocationFlags) VMCacheRef(this);
+	debug_early_boot_message("riscv: base cache ref allocated\n");
+#else
 	fCacheRef = new(gCacheRefObjectCache, allocationFlags) VMCacheRef(this);
+#endif
 	if (fCacheRef == NULL)
 		return B_NO_MEMORY;
 
 #if DEBUG_CACHE_LIST
+#if defined(__riscv)
+	if (!bootstrap)
+		rw_lock_write_lock(&sCacheListLock);
+#else
 	rw_lock_write_lock(&sCacheListLock);
+#endif
 
 	if (gDebugCacheList != NULL)
 		gDebugCacheList->debug_previous = this;
 	debug_next = gDebugCacheList;
 	gDebugCacheList = this;
 
+#if defined(__riscv)
+	if (!bootstrap)
+		rw_lock_write_unlock(&sCacheListLock);
+	debug_early_boot_message("riscv: base cache debug list done\n");
+#else
 	rw_lock_write_unlock(&sCacheListLock);
+#endif
 #endif
 
 	return B_OK;
+}
+
+
+bool
+VMCache::LockBootstrap()
+{
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup)
+		return Lock();
+
+	// Before relocation and scheduler startup, the boot CPU is the only CPU
+	// executing kernel code.  Taking the normal mutex path here enters the
+	// spin-lock/scheduler machinery and hangs.  Record ownership directly;
+	// VMCache::Unlock() will restore the normal unlocked representation.
+#if KDEBUG
+	if (fLock.holder >= 0)
+		return false;
+	fLock.holder = thread_get_current_thread_id();
+#else
+	if (atomic_test_and_set(&fLock.count, -1, 0) != 0)
+		return false;
+#endif
+	return true;
+#else
+	return Lock();
+#endif
 }
 
 
@@ -1668,6 +1731,9 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 	int32 numPrecommittedPages, int32 numGuardPages, bool swappable,
 	int priority)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: cache factory entry\n");
+#endif
 	uint32 allocationFlags = HEAP_DONT_WAIT_FOR_MEMORY
 		| HEAP_DONT_LOCK_KERNEL_SPACE;
 	if (priority >= VM_PRIORITY_VIP)
@@ -1694,14 +1760,71 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 	}
 #endif
 
+#if defined(__riscv)
+	debug_early_boot_message("riscv: cache factory no-swap alloc\n");
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	const bool bootstrap = *kernelStartup;
+	VMAnonymousNoSwapCache* cache;
+	if (bootstrap) {
+		// The Pioneer advertises all 64 CPUs, so the cache itself was created
+		// without CACHE_DURING_BOOT.  Its normal allocation path consequently
+		// enters depot and mutex code before the early kernel has relocated
+		// those calls.  This first cache is permanent; allocate it from the
+		// existing single-threaded bootstrap arena instead.
+		typedef void* (*block_alloc_early_func)(size_t);
+		block_alloc_early_func directBlockAllocEarly;
+		asm volatile("lla %0, _Z17block_alloc_earlym"
+			: "=r"(directBlockAllocEarly));
+		cache = static_cast<VMAnonymousNoSwapCache*>(
+			directBlockAllocEarly(sizeof(VMAnonymousNoSwapCache)));
+		if (cache != NULL) {
+			// Reproduce the implicit zero/default construction without loading
+			// the derived vtable through the not-yet-relocated GOT.
+			uint8* cacheBytes = reinterpret_cast<uint8*>(cache);
+			for (size_t i = 0; i < sizeof(VMAnonymousNoSwapCache); i++)
+				cacheBytes[i] = 0;
+			void** vtable;
+			asm volatile("lla %0, _ZTV22VMAnonymousNoSwapCache"
+				: "=r"(vtable));
+			*reinterpret_cast<void***>(cache) = vtable + 2;
+		}
+	} else {
+		cache = new(gAnonymousNoSwapCacheObjectCache, allocationFlags)
+			VMAnonymousNoSwapCache;
+	}
+#else
 	VMAnonymousNoSwapCache* cache
 		= new(gAnonymousNoSwapCacheObjectCache, allocationFlags)
 			VMAnonymousNoSwapCache;
+#endif
 	if (cache == NULL)
 		return B_NO_MEMORY;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: cache factory no-swap allocated\n");
+#endif
 
+#if defined(__riscv)
+	status_t error;
+	if (bootstrap) {
+		typedef status_t (*init_no_swap_cache_func)(VMAnonymousNoSwapCache*,
+			bool, int32, int32, uint32);
+		init_no_swap_cache_func directInit;
+		asm volatile("lla %0, _ZN22VMAnonymousNoSwapCache4InitEbiij"
+			: "=r"(directInit));
+		error = directInit(cache, canOvercommit, numPrecommittedPages,
+			numGuardPages, allocationFlags);
+	} else {
+		error = cache->Init(canOvercommit, numPrecommittedPages,
+			numGuardPages, allocationFlags);
+	}
+#else
 	status_t error = cache->Init(canOvercommit, numPrecommittedPages,
 		numGuardPages, allocationFlags);
+#endif
+#if defined(__riscv)
+	debug_early_boot_message("riscv: cache factory no-swap initialized\n");
+#endif
 	if (error != B_OK) {
 		cache->Delete();
 		return error;

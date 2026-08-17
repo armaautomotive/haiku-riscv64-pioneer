@@ -79,6 +79,7 @@ private:
 			VMAddressSpace*		fSpace;
 			bool				fLocked;
 			bool				fDegraded;
+			bool				fBorrowedReference;
 };
 
 

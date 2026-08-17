@@ -155,6 +155,9 @@ protected:
 								~VMArea();
 
 			status_t			Init(const char* name, uint32 allocationFlags);
+			status_t			InitBootstrap(VMAddressSpace* addressSpace,
+									const char* name, uint32 wiring,
+									uint32 protection, uint32 allocationFlags);
 
 protected:
 			friend struct VMAreasTreeDefinition;

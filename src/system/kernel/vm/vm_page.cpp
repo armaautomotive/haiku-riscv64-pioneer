@@ -1647,8 +1647,6 @@ mark_page_range_in_use(page_num_t startPage, page_num_t length, bool wired)
 
 	for (page_num_t i = 0; i < length; i++) {
 		vm_page *page = &sPages[startPage + i];
-		if (i == 0)
-			*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 'd';
 		switch (page->State()) {
 			case PAGE_STATE_FREE:
 			case PAGE_STATE_CLEAR:
@@ -1663,18 +1661,12 @@ mark_page_range_in_use(page_num_t startPage, page_num_t length, bool wired)
 				VMPageQueue& queue = page->State() == PAGE_STATE_FREE
 					? sFreePageQueue : sClearPageQueue;
 				queue.Remove(page);
-				if (i == 0)
-					*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 'q';
 				page->SetState(wired ? PAGE_STATE_WIRED : PAGE_STATE_UNUSED);
-				if (i == 0)
-					*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 's';
 				page->busy = false;
 				if (bootstrap)
 					sUnreservedFreePages--;
 				else
 					atomic_add(&sUnreservedFreePages, -1);
-				if (i == 0)
-					*reinterpret_cast<volatile uint32*>(0xffffffc0068ac000ULL) = 'c';
 				if (!bootstrap)
 					DEBUG_PAGE_ACCESS_END(page);
 				break;
@@ -2489,8 +2481,6 @@ vm_page_init_num_pages(kernel_args *args)
 status_t
 vm_page_init(kernel_args *args)
 {
-	volatile uint32* uart = (volatile uint32*)0xffffffc0068ac000ULL;
-	*uart = 'p';
 	TRACE(("vm_page_init: entry\n"));
 
 	// init page queues
@@ -2502,12 +2492,9 @@ vm_page_init(kernel_args *args)
 	sClearPageQueue.Init();
 
 	new (&sPageReservationWaiters) PageReservationWaiterList;
-	*uart = 'a';
-
 	// map in the new free page table
 	sPages = (vm_page *)vm_allocate_early(args, sNumPages * sizeof(vm_page),
 		~0L, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, 0);
-	*uart = 'i';
 
 	TRACE(("vm_init: putting free_page_table @ %p, # ents %" B_PRIuPHYSADDR
 		" (size %#" B_PRIxPHYSADDR ")\n", sPages, sNumPages,
@@ -2522,8 +2509,6 @@ vm_page_init(kernel_args *args)
 		sPages[i].allocation_tracking_info.Clear();
 #endif
 	}
-	*uart = 'r';
-
 	sUnreservedFreePages = sNumPages;
 
 	TRACE(("initialized table\n"));
@@ -2546,8 +2531,6 @@ vm_page_init(kernel_args *args)
 			args->physical_allocated_range[i].start / B_PAGE_SIZE,
 			args->physical_allocated_range[i].size / B_PAGE_SIZE, true);
 	}
-	*uart = 'u';
-
 	// prevent future allocations from the kernel args ranges
 	args->num_physical_allocated_ranges = 0;
 
@@ -2573,8 +2556,6 @@ vm_page_init(kernel_args *args)
 	}
 
 	TRACE(("vm_page_init: exit\n"));
-	*uart = 'x';
-
 	return B_OK;
 }
 
@@ -2585,10 +2566,31 @@ vm_page_init_post_area(kernel_args *args)
 	void *dummy;
 
 	dummy = sPages;
+
+#if defined(__riscv)
+	// The RISC-V kernel reaches this hook before all early PLT entries are
+	// dependable. Call create_area() through its linked address and postpone
+	// the optional debugger command registrations below until that is fixed.
+	debug_early_boot_message("riscv: page post entry\n");
+	typedef area_id (*create_area_func)(const char*, void**, uint32, size_t,
+		uint32, uint32);
+	create_area_func directCreateArea;
+	asm volatile("lla %0, create_area" : "=r"(directCreateArea));
+	debug_early_boot_message("riscv: page area create\n");
+	directCreateArea("page structures", &dummy, B_EXACT_ADDRESS,
+		PAGE_ALIGN(sNumPages * sizeof(vm_page)), B_ALREADY_WIRED,
+		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA);
+	debug_early_boot_message("riscv: page area created\n");
+#else
 	create_area("page structures", &dummy, B_EXACT_ADDRESS,
 		PAGE_ALIGN(sNumPages * sizeof(vm_page)), B_ALREADY_WIRED,
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA);
+#endif
 
+#if defined(__riscv)
+	volatile bool registerDebuggerCommands = false;
+	if (registerDebuggerCommands) {
+#endif
 	add_debugger_command("list_pages", &dump_page_list,
 		"List physical pages");
 	add_debugger_command("page_stats", &dump_page_stats,
@@ -2641,6 +2643,9 @@ vm_page_init_post_area(kernel_args *args)
 		"tracing entry is still available).\n"
 		"If \"--stacktrace\" is given, then stack traces of the allocation\n"
 		"callers are printed, where available\n", 0);
+#endif
+#if defined(__riscv)
+	}
 #endif
 
 	return B_OK;
