@@ -749,6 +749,25 @@ VMCache::LockBootstrap()
 
 
 void
+VMCache::UnlockBootstrap()
+{
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+#if KDEBUG
+		fLock.holder = -1;
+#else
+		fLock.count = 0;
+#endif
+		return;
+	}
+#endif
+	Unlock();
+}
+
+
+void
 VMCache::Delete()
 {
 	if (!areas.IsEmpty())
@@ -874,10 +893,26 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 {
 	TRACE(("VMCache::InsertPage(): cache %p, page %p, offset %" B_PRIdOFF "\n",
 		this, page, offset));
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bool bootstrapFirstPage = *kernelStartup && page_count == 0;
+	if (bootstrapFirstPage)
+		debug_early_boot_message("riscv: cache insert page entry\n");
+	if (!*kernelStartup) {
+		T2(InsertPage(this, page, offset));
+	}
+	if (!*kernelStartup)
+		AssertLocked();
+#else
 	T2(InsertPage(this, page, offset));
-
 	AssertLocked();
+#endif
 	ASSERT(offset >= virtual_base && offset < virtual_end);
+#if defined(__riscv)
+	if (bootstrapFirstPage)
+		debug_early_boot_message("riscv: cache insert page checked\n");
+#endif
 
 	if (page->CacheRef() != NULL) {
 		panic("insert page %p into cache %p: page cache is set to %p\n",
@@ -887,6 +922,10 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 	page->cache_offset = (page_num_t)(offset >> PAGE_SHIFT);
 	page_count++;
 	page->SetCacheRef(fCacheRef);
+#if defined(__riscv)
+	if (bootstrapFirstPage)
+		debug_early_boot_message("riscv: cache insert page referenced\n");
+#endif
 
 #if KDEBUG
 	vm_page* otherPage = pages.Lookup(page->cache_offset);
@@ -898,6 +937,10 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 #endif	// KDEBUG
 
 	pages.Insert(page);
+#if defined(__riscv)
+	if (bootstrapFirstPage)
+		debug_early_boot_message("riscv: cache insert page tree done\n");
+#endif
 
 	if (page->WiredCount() > 0)
 		IncrementWiredPagesCount();
@@ -1081,11 +1124,27 @@ VMCache::InsertAreaLocked(VMArea* area)
 {
 	TRACE(("VMCache::InsertAreaLocked(cache %p, area %p)\n", this, area));
 	T(InsertArea(this, area));
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup)
+		AssertLocked();
+	debug_early_boot_message("riscv: cache area lock asserted\n");
+#else
 	AssertLocked();
+#endif
 
 	areas.Insert(area, false);
 
+#if defined(__riscv)
+	// The base implementation is empty. Avoid its virtual dispatch until the
+	// kernel has applied dynamic relocations.
+	if (!*kernelStartup)
+		AcquireStoreRef();
+	debug_early_boot_message("riscv: cache area inserted\n");
+#else
 	AcquireStoreRef();
+#endif
 }
 
 

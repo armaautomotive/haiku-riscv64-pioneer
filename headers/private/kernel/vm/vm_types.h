@@ -231,6 +231,19 @@ static inline void
 vm_page_debug_access_start(vm_page* page)
 {
 	thread_id threadID = thread_get_current_thread_id();
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		thread_id previousThread = page->accessing_thread;
+		if (previousThread != -1) {
+			panic("Invalid bootstrap access to page 0x%" B_PRIXPHYSADDR,
+				page->physical_page_number * B_PAGE_SIZE);
+		}
+		page->accessing_thread = threadID;
+		return;
+	}
+#endif
 	thread_id previousThread = atomic_test_and_set(&page->accessing_thread,
 		threadID, -1);
 	if (previousThread != -1) {
@@ -245,6 +258,19 @@ static inline void
 vm_page_debug_access_end(vm_page* page)
 {
 	thread_id threadID = thread_get_current_thread_id();
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		thread_id previousThread = page->accessing_thread;
+		if (previousThread != threadID) {
+			panic("Invalid bootstrap release of page 0x%" B_PRIXPHYSADDR,
+				page->physical_page_number * B_PAGE_SIZE);
+		}
+		page->accessing_thread = -1;
+		return;
+	}
+#endif
 	thread_id previousThread = atomic_test_and_set(&page->accessing_thread, -1,
 		threadID);
 	if (previousThread != threadID) {

@@ -421,44 +421,52 @@ status_t
 RISCV64VMTranslationMap::Query(addr_t virtualAddress,
 	phys_addr_t* _physicalAddress, uint32* _flags)
 {
-	*_flags = 0;
-	*_physicalAddress = 0;
+	auto query = [&]() -> status_t {
+		*_flags = 0;
+		*_physicalAddress = 0;
+
+		if (fPageTable == 0)
+			return B_OK;
+
+		std::atomic<Pte>* pte = LookupPte(virtualAddress, false, NULL);
+		if (pte == NULL)
+			return B_OK;
+
+		Pte pteVal = pte->load();
+		*_physicalAddress = pteVal.ppn * B_PAGE_SIZE;
+
+		if (pteVal.isValid)
+			*_flags |= PAGE_PRESENT;
+		if (pteVal.isDirty)
+			*_flags |= PAGE_MODIFIED;
+		if (pteVal.isAccessed)
+			*_flags |= PAGE_ACCESSED;
+		if (pteVal.isUser) {
+			if (pteVal.isRead)
+				*_flags |= B_READ_AREA;
+			if (pteVal.isWrite)
+				*_flags |= B_WRITE_AREA;
+			if (pteVal.isExec)
+				*_flags |= B_EXECUTE_AREA;
+		} else {
+			if (pteVal.isRead)
+				*_flags |= B_KERNEL_READ_AREA;
+			if (pteVal.isWrite)
+				*_flags |= B_KERNEL_WRITE_AREA;
+			if (pteVal.isExec)
+				*_flags |= B_KERNEL_EXECUTE_AREA;
+		}
+
+		return B_OK;
+	};
+
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup)
+		return query();
 
 	ThreadCPUPinner pinner(thread_get_current_thread());
-
-	if (fPageTable == 0)
-		return B_OK;
-
-	std::atomic<Pte>* pte = LookupPte(virtualAddress, false, NULL);
-	if (pte == NULL)
-		return B_OK;
-
-	Pte pteVal = pte->load();
-	*_physicalAddress = pteVal.ppn * B_PAGE_SIZE;
-
-	if (pteVal.isValid)
-		*_flags |= PAGE_PRESENT;
-	if (pteVal.isDirty)
-		*_flags |= PAGE_MODIFIED;
-	if (pteVal.isAccessed)
-		*_flags |= PAGE_ACCESSED;
-	if (pteVal.isUser) {
-		if (pteVal.isRead)
-			*_flags |= B_READ_AREA;
-		if (pteVal.isWrite)
-			*_flags |= B_WRITE_AREA;
-		if (pteVal.isExec)
-			*_flags |= B_EXECUTE_AREA;
-	} else {
-		if (pteVal.isRead)
-			*_flags |= B_KERNEL_READ_AREA;
-		if (pteVal.isWrite)
-			*_flags |= B_KERNEL_WRITE_AREA;
-		if (pteVal.isExec)
-			*_flags |= B_KERNEL_EXECUTE_AREA;
-	}
-
-	return B_OK;
+	return query();
 }
 
 

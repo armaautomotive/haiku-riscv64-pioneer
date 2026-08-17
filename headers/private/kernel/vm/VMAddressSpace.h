@@ -54,6 +54,7 @@ public:
 									{ return fRefCount; }
 
 	inline	void				Get()	{ atomic_add(&fRefCount, 1); }
+			void				GetBootstrap();
 	inline	void				Put();
 			void				RemoveAndPut();
 

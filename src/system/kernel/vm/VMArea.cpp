@@ -82,7 +82,11 @@ VMArea::InitBootstrap(VMAddressSpace* addressSpace, const char* name,
 	fSize = 0;
 	new (&fWiredRanges) VMAreaWiredRangeList;
 	debug_early_boot_message("riscv: area bootstrap lists\n");
-	addressSpace->Get();
+	typedef void (*aspace_get_bootstrap_func)(VMAddressSpace*);
+	aspace_get_bootstrap_func directAddressSpaceGetBootstrap;
+	asm volatile("lla %0, _ZN14VMAddressSpace12GetBootstrapEv"
+		: "=r"(directAddressSpaceGetBootstrap));
+	directAddressSpaceGetBootstrap(addressSpace);
 	debug_early_boot_message("riscv: area bootstrap aspace ref\n");
 
 	// Avoid strlcpy() before the RISC-V kernel's dynamic relocations have
@@ -93,7 +97,7 @@ VMArea::InitBootstrap(VMAddressSpace* addressSpace, const char* name,
 		index++;
 	}
 	this->name[index] = '\0';
-	id = atomic_add(&sNextAreaID, 1);
+	id = sNextAreaID++;
 	debug_early_boot_message("riscv: area bootstrap named\n");
 	return B_OK;
 }
@@ -286,6 +290,16 @@ VMAreas::Find(const char* name)
 /*static*/ status_t
 VMAreas::Insert(VMArea* area)
 {
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		debug_early_boot_message("riscv: global area insert entry\n");
+		status_t status = sTree.Insert(area);
+		debug_early_boot_message("riscv: global area insert done\n");
+		return status;
+	}
+#endif
 	WriteLock();
 	status_t status = sTree.Insert(area);
 	WriteUnlock();

@@ -228,17 +228,34 @@ VMKernelAddressSpace::InsertArea(VMArea* _area, size_t size,
 	const virtual_address_restrictions* addressRestrictions,
 	uint32 allocationFlags, void** _address)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: kernel insert area entry\n");
+#endif
 	TRACE("VMKernelAddressSpace::InsertArea(%p, %" B_PRIu32 ", %#" B_PRIxSIZE
 		", %p \"%s\")\n", addressRestrictions->address,
 		addressRestrictions->address_specification, size, _area, _area->name);
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup)
+		ASSERT_WRITE_LOCKED_RW_LOCK(&fLock);
+	debug_early_boot_message("riscv: kernel insert area asserted\n");
+#else
 	ASSERT_WRITE_LOCKED_RW_LOCK(&fLock);
+#endif
 
 	VMKernelArea* area = static_cast<VMKernelArea*>(_area);
 
 	Range* range;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: kernel allocate range\n");
+#endif
 	status_t error = _AllocateRange(addressRestrictions, size,
 		addressRestrictions->address_specification == B_EXACT_ADDRESS,
 		allocationFlags, range);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: kernel range allocated\n");
+#endif
 	if (error != B_OK)
 		return error;
 
@@ -625,6 +642,9 @@ VMKernelAddressSpace::_AllocateRange(
 	size_t size, bool allowReservedRange, uint32 allocationFlags,
 	Range*& _range)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: allocate range entry\n");
+#endif
 	TRACE("  VMKernelAddressSpace::_AllocateRange(address: %p, size: %#"
 		B_PRIxSIZE ", addressSpec: %#" B_PRIx32 ", reserved allowed: %d)\n",
 		addressRestrictions->address, size,
@@ -665,6 +685,9 @@ VMKernelAddressSpace::_AllocateRange(
 	}
 
 	// find a range
+#if defined(__riscv)
+	debug_early_boot_message("riscv: allocate range find\n");
+#endif
 	Range* range = _FindFreeRange(address, size, alignment,
 		addressRestrictions->address_specification, allowReservedRange,
 		address);
@@ -672,6 +695,9 @@ VMKernelAddressSpace::_AllocateRange(
 		return addressRestrictions->address_specification == B_EXACT_ADDRESS
 			? B_BAD_VALUE : B_NO_MEMORY;
 	}
+#if defined(__riscv)
+	debug_early_boot_message("riscv: allocate range found\n");
+#endif
 
 	TRACE("  VMKernelAddressSpace::_AllocateRange() found range:(%p (%#"
 		B_PRIxADDR ", %#" B_PRIxSIZE ", %d)\n", range, range->base, range->size,
@@ -681,22 +707,62 @@ VMKernelAddressSpace::_AllocateRange(
 	// we have to split the range.
 	size_t rangeSize = range->size;
 
+	bool bootstrapRangeAllocation = false;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bootstrapRangeAllocation = *kernelStartup;
+#endif
+	auto allocateRange = [&](addr_t base, size_t rangeSize,
+		Range* originalRange) -> Range* {
+#if defined(__riscv)
+		if (bootstrapRangeAllocation) {
+			// These first kernel ranges describe permanent bootstrap areas. The
+			// range object cache still enters SMP locking on the Pioneer here.
+			typedef void* (*block_alloc_early_func)(size_t);
+			block_alloc_early_func directBlockAllocEarly;
+			asm volatile("lla %0, _Z17block_alloc_earlym"
+				: "=r"(directBlockAllocEarly));
+			void* storage = directBlockAllocEarly(sizeof(Range));
+			return storage != NULL
+				? new(storage) Range(base, rangeSize, originalRange) : NULL;
+		}
+#endif
+		return new(fRangesObjectCache, allocationFlags)
+			Range(base, rangeSize, originalRange);
+	};
+#if defined(__riscv)
+	debug_early_boot_message("riscv: allocate range splitter ready\n");
+#endif
+
 	if (address == range->base) {
 		// allocation at the beginning of the range
 		if (range->size > size) {
 			// only partial -- split the range
-			Range* leftOverRange = new(fRangesObjectCache, allocationFlags)
-				Range(address + size, range->size - size, range);
+#if defined(__riscv)
+			debug_early_boot_message("riscv: allocate range split start\n");
+#endif
+			Range* leftOverRange = allocateRange(address + size,
+				range->size - size, range);
+#if defined(__riscv)
+			debug_early_boot_message("riscv: allocate range split allocated\n");
+#endif
 			if (leftOverRange == NULL)
 				return B_NO_MEMORY;
 
 			range->size = size;
 			_InsertRange(leftOverRange);
+#if defined(__riscv)
+			debug_early_boot_message("riscv: allocate range split inserted\n");
+#endif
 		}
 	} else if (address + size == range->base + range->size) {
 		// allocation at the end of the range -- split the range
-		Range* leftOverRange = new(fRangesObjectCache, allocationFlags) Range(
-			range->base, range->size - size, range);
+#if defined(__riscv)
+		debug_early_boot_message("riscv: allocate range split end\n");
+#endif
+		Range* leftOverRange = allocateRange(range->base,
+			range->size - size, range);
 		if (leftOverRange == NULL)
 			return B_NO_MEMORY;
 
@@ -705,15 +771,20 @@ VMKernelAddressSpace::_AllocateRange(
 		_InsertRange(leftOverRange);
 	} else {
 		// allocation in the middle of the range -- split the range in three
-		Range* leftOverRange1 = new(fRangesObjectCache, allocationFlags) Range(
-			range->base, address - range->base, range);
+#if defined(__riscv)
+		debug_early_boot_message("riscv: allocate range split middle\n");
+#endif
+		Range* leftOverRange1 = allocateRange(range->base,
+			address - range->base, range);
 		if (leftOverRange1 == NULL)
 			return B_NO_MEMORY;
-		Range* leftOverRange2 = new(fRangesObjectCache, allocationFlags) Range(
-			address + size, range->size - size - leftOverRange1->size, range);
+		Range* leftOverRange2 = allocateRange(address + size,
+			range->size - size - leftOverRange1->size, range);
 		if (leftOverRange2 == NULL) {
-			object_cache_delete(fRangesObjectCache, leftOverRange1,
-				allocationFlags);
+			if (!bootstrapRangeAllocation) {
+				object_cache_delete(fRangesObjectCache, leftOverRange1,
+					allocationFlags);
+			}
 			return B_NO_MEMORY;
 		}
 
@@ -726,6 +797,9 @@ VMKernelAddressSpace::_AllocateRange(
 	// If the range is a free range, remove it from the respective free list.
 	if (range->type == Range::RANGE_FREE)
 		_FreeListRemoveRange(range, rangeSize);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: allocate range free removed\n");
+#endif
 
 	IncrementChangeCount();
 

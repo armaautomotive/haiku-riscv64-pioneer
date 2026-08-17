@@ -115,6 +115,15 @@ VMAddressSpace::~VMAddressSpace()
 }
 
 
+void
+VMAddressSpace::GetBootstrap()
+{
+	// Called only while the boot CPU is the sole executing CPU, before the
+	// RISC-V atomic helper's relocations are usable.
+	fRefCount++;
+}
+
+
 /*static*/ status_t
 VMAddressSpace::Init()
 {

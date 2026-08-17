@@ -261,6 +261,42 @@ static uint32 sPageFaults;
 static VMPhysicalPageMapper* sPhysicalPageMapper;
 
 
+#if defined(__riscv)
+/*! During the RISC-V bootstrap only the boot CPU is running, but the SG2042
+	firmware has already described all 64 CPUs.  The normal reservation path
+	therefore selects SMP spin locks and atomics before those primitives are
+	usable.  Reserve the first anonymous kernel cache directly; normal cache
+	commitment takes over as soon as gKernelStartup is cleared. */
+static status_t
+commit_bootstrap_anonymous_cache(VMCache* cache, off_t size, int priority)
+{
+	VMAnonymousNoSwapCache* anonymousCache
+		= static_cast<VMAnonymousNoSwapCache*>(cache);
+	off_t committedSize = anonymousCache->committed_size;
+	if (size <= committedSize)
+		return B_OK;
+
+	int64 amount = size - committedSize;
+	const int64 amountAndReserve
+		= amount + kMemoryReserveForPriority[priority];
+
+#if ENABLE_SWAP_SUPPORT
+	if (sAvailableMemoryAndSwap < amountAndReserve)
+		return B_NO_MEMORY;
+#endif
+	if (sAvailableMemory < amountAndReserve)
+		return B_NO_MEMORY;
+
+#if ENABLE_SWAP_SUPPORT
+	sAvailableMemoryAndSwap -= amount;
+#endif
+	sAvailableMemory -= amount;
+	anonymousCache->committed_size = size;
+	return B_OK;
+}
+#endif
+
+
 // function declarations
 static void delete_area(VMAddressSpace* addressSpace, VMArea* area,
 	bool deletingAddressSpace, bool alreadyRemoved = false);
@@ -458,8 +494,18 @@ vm_free_page_mapping(page_num_t page, vm_page_mapping* mapping, uint32 flags)
 static inline void
 increment_page_wired_count(vm_page* page)
 {
-	if (!page->IsMapped())
+	if (!page->IsMapped()) {
+#if defined(__riscv)
+		bool* kernelStartup;
+		asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+		if (*kernelStartup)
+			gMappedPagesCount++;
+		else
+			atomic_add(&gMappedPagesCount, 1);
+#else
 		atomic_add(&gMappedPagesCount, 1);
+#endif
+	}
 	page->IncrementWiredCount();
 }
 
@@ -1322,7 +1368,16 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 			commitProtection |= B_READ_AREA | B_KERNEL_READ_AREA;
 
 		if ((protection & commitProtection) != 0) {
+#if defined(__riscv)
+			debug_early_boot_message("riscv: map cache commitment\n");
+			if (*kernelStartup)
+				status = commit_bootstrap_anonymous_cache(cache, size, priority);
+			else
+				status = cache->SetMinimalCommitment(size, priority);
+			debug_early_boot_message("riscv: map cache committed\n");
+#else
 			status = cache->SetMinimalCommitment(size, priority);
+#endif
 			if (status != B_OK)
 				goto err2;
 		}
@@ -1349,8 +1404,30 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 			goto err2;
 	}
 
+#if defined(__riscv)
+	debug_early_boot_message("riscv: map cache insert area\n");
+#endif
+#if defined(__riscv)
+	if (*kernelStartup) {
+		typedef status_t (*insert_kernel_area_func)(VMKernelAddressSpace*,
+			VMArea*, size_t, const virtual_address_restrictions*, uint32,
+			void**);
+		insert_kernel_area_func directInsertKernelArea;
+		asm volatile("lla %0, _ZN20VMKernelAddressSpace10InsertAreaEP6VMAreamPK28virtual_address_restrictionsjPPv"
+			: "=r"(directInsertKernelArea));
+		status = directInsertKernelArea(
+			static_cast<VMKernelAddressSpace*>(addressSpace), area, size,
+			addressRestrictions, allocationFlags, _virtualAddress);
+	} else
+		status = addressSpace->InsertArea(area, size, addressRestrictions,
+			allocationFlags, _virtualAddress);
+#else
 	status = addressSpace->InsertArea(area, size, addressRestrictions,
 		allocationFlags, _virtualAddress);
+#endif
+#if defined(__riscv)
+	debug_early_boot_message("riscv: map cache area inserted\n");
+#endif
 	if (status == B_NO_MEMORY
 			&& addressRestrictions->address_specification == B_ANY_KERNEL_ADDRESS) {
 		// Due to how many locks are held, we cannot wait here for space to be
@@ -1365,12 +1442,24 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	area->cache_offset = offset;
 
 	// point the cache back to the area
+#if defined(__riscv)
+	debug_early_boot_message("riscv: map cache link area\n");
+#endif
 	cache->InsertAreaLocked(area);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: map cache area linked\n");
+#endif
 	if (mapping == REGION_PRIVATE_MAP)
 		cache->Unlock();
 
 	// insert the area in the global areas map
+#if defined(__riscv)
+	debug_early_boot_message("riscv: map cache global insert\n");
+#endif
 	status = VMAreas::Insert(area);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: map cache globally inserted\n");
+#endif
 	if (status != B_OK)
 		goto err3;
 
@@ -1930,7 +2019,11 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			debug_early_boot_message("riscv: anon area wired scan\n");
 			size_t wiredPageIndex = 0;
 #endif
+#if defined(__riscv)
+			debug_early_boot_message("riscv: anon area map lock bypassed\n");
+#else
 			map->Lock();
+#endif
 
 			for (addr_t virtualAddress = area->Base();
 					virtualAddress < area->Base() + (area->Size() - 1);
@@ -1941,12 +2034,33 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #endif
 				phys_addr_t physicalAddress;
 				uint32 flags;
+#if defined(__riscv)
+				typedef status_t (*query_translation_func)(VMTranslationMap*,
+					addr_t, phys_addr_t*, uint32*);
+				query_translation_func directQuery;
+				asm volatile("lla %0, _ZN23RISCV64VMTranslationMap5QueryEmPmPj"
+					: "=r"(directQuery));
+				status = directQuery(map, virtualAddress, &physicalAddress,
+					&flags);
+				if (wiredPageIndex == 1)
+					debug_early_boot_message("riscv: anon area first query done\n");
+#else
 				status = map->Query(virtualAddress, &physicalAddress, &flags);
+#endif
 				if (status < B_OK) {
 					panic("looking up mapping failed for va 0x%lx\n",
 						virtualAddress);
 				}
+#if defined(__riscv)
+				typedef vm_page* (*lookup_page_func)(page_num_t);
+				lookup_page_func directLookupPage;
+				asm volatile("lla %0, vm_lookup_page" : "=r"(directLookupPage));
+				page = directLookupPage(physicalAddress / B_PAGE_SIZE);
+				if (wiredPageIndex == 1)
+					debug_early_boot_message("riscv: anon area first lookup done\n");
+#else
 				page = vm_lookup_page(physicalAddress / B_PAGE_SIZE);
+#endif
 				if (page == NULL) {
 					panic("looking up page failed for pa %#" B_PRIxPHYSADDR
 						"\n", physicalAddress);
@@ -1954,15 +2068,37 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 
 				DEBUG_PAGE_ACCESS_START(page);
 
+#if defined(__riscv)
+				typedef void (*insert_cache_page_func)(VMCache*, vm_page*, off_t);
+				insert_cache_page_func directInsertPage;
+				asm volatile("lla %0, _ZN7VMCache10InsertPageEP7vm_pagel"
+					: "=r"(directInsertPage));
+				directInsertPage(cache, page, offset);
+				if (wiredPageIndex == 1)
+					debug_early_boot_message("riscv: anon area first page inserted\n");
+#else
 				cache->InsertPage(page, offset);
+#endif
 				increment_page_wired_count(page);
+#if defined(__riscv)
+				typedef void (*set_page_state_func)(vm_page*, int);
+				set_page_state_func directSetPageState;
+				asm volatile("lla %0, vm_page_set_state"
+					: "=r"(directSetPageState));
+				directSetPageState(page, PAGE_STATE_WIRED);
+				if (wiredPageIndex == 1)
+					debug_early_boot_message("riscv: anon area first page wired\n");
+#else
 				vm_page_set_state(page, PAGE_STATE_WIRED);
+#endif
 				page->busy = false;
 
 				DEBUG_PAGE_ACCESS_END(page);
 			}
 
+#if !defined(__riscv)
 			map->Unlock();
+#endif
 #if defined(__riscv)
 			debug_early_boot_message("riscv: anon area wired done\n");
 #endif
@@ -2007,7 +2143,16 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			break;
 	}
 
+#if defined(__riscv)
+	typedef void (*unlock_cache_bootstrap_func)(VMCache*);
+	unlock_cache_bootstrap_func directUnlockCacheBootstrap;
+	asm volatile("lla %0, _ZN7VMCache15UnlockBootstrapEv"
+		: "=r"(directUnlockCacheBootstrap));
+	directUnlockCacheBootstrap(cache);
+	debug_early_boot_message("riscv: anon area cache unlocked\n");
+#else
 	cache->Unlock();
+#endif
 
 	if (reservedPages > 0)
 		vm_page_unreserve_pages(&reservation);

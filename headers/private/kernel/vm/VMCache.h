@@ -89,6 +89,7 @@ public:
 
 	inline	bool				Lock();
 			bool				LockBootstrap();
+			void				UnlockBootstrap();
 	inline	bool				TryLock();
 	inline	bool				SwitchLock(mutex* from);
 	inline	bool				SwitchFromReadLock(rw_lock* from);
