@@ -271,7 +271,8 @@ vm_allocate_early_physical_page(kernel_args* args, phys_addr_t maxAddress)
 	const addr_range& lastMemoryRange =
 		args->physical_memory_range[args->num_physical_memory_ranges - 1];
 	const uint64 post32bitAddr = 0x100000000LL;
-	if ((lastMemoryRange.start + lastMemoryRange.size) > post32bitAddr
+	if (maxAddress >= post32bitAddr
+			&& (lastMemoryRange.start + lastMemoryRange.size) > post32bitAddr
 			&& args->num_physical_allocated_ranges < MAX_PHYSICAL_ALLOCATED_RANGE) {
 		// To avoid consuming physical memory in the 32-bit range (which drivers may need),
 		// ensure the last allocated range at least ends past the 32-bit boundary.
@@ -363,6 +364,80 @@ vm_allocate_early_physical_page(kernel_args* args, phys_addr_t maxAddress)
 		}
 	}
 
+#if defined(__riscv)
+	// A constrained allocation can be requested after the EFI loader has
+	// already established allocations above the limit. The generic new-range
+	// path below only searches after the final allocated range, so it cannot
+	// discover an otherwise free low-memory gap in that case.
+	if (maxAddress != __HAIKU_PHYS_ADDR_MAX
+			&& args->num_physical_allocated_ranges < MAX_PHYSICAL_ALLOCATED_RANGE) {
+		phys_addr_t bestCandidate = 0;
+		phys_size_t bestSize = 0;
+
+		for (uint32 i = 0; i < args->num_physical_memory_ranges; i++) {
+			const addr_range& memoryRange = args->physical_memory_range[i];
+			if (memoryRange.start > maxAddress)
+				break;
+
+			phys_addr_t rangeEnd = memoryRange.start + memoryRange.size;
+			if (rangeEnd - 1 > maxAddress)
+				rangeEnd = maxAddress + 1;
+
+			phys_addr_t candidate = memoryRange.start;
+			if (candidate == 0)
+				candidate = B_PAGE_SIZE;
+
+			for (uint32 j = 0; j < args->num_physical_allocated_ranges; j++) {
+				const addr_range& allocatedRange
+					= args->physical_allocated_range[j];
+				const phys_addr_t allocatedEnd
+					= allocatedRange.start + allocatedRange.size;
+
+				if (allocatedEnd <= candidate)
+					continue;
+				if (allocatedRange.start >= rangeEnd)
+					break;
+				if (allocatedRange.start > candidate) {
+					phys_size_t size = allocatedRange.start - candidate;
+					if (size > bestSize) {
+						bestCandidate = candidate;
+						bestSize = size;
+					}
+				}
+				if (allocatedEnd > candidate)
+					candidate = allocatedEnd;
+			}
+
+			if (candidate < rangeEnd && rangeEnd - candidate > bestSize) {
+				bestCandidate = candidate;
+				bestSize = rangeEnd - candidate;
+			}
+		}
+
+		if (bestSize >= B_PAGE_SIZE) {
+			uint32 insertIndex = 0;
+			while (insertIndex < args->num_physical_allocated_ranges
+					&& args->physical_allocated_range[insertIndex].start
+						< bestCandidate) {
+				insertIndex++;
+			}
+			for (uint32 j = args->num_physical_allocated_ranges;
+					j > insertIndex; j--) {
+				args->physical_allocated_range[j]
+					= args->physical_allocated_range[j - 1];
+			}
+
+			addr_range& allocatedRange
+				= args->physical_allocated_range[insertIndex];
+			allocatedRange.start = bestCandidate;
+			allocatedRange.size = B_PAGE_SIZE;
+			args->num_physical_allocated_ranges++;
+			debug_early_boot_message("riscv: early physical largest gap\n");
+			return bestCandidate / B_PAGE_SIZE;
+		}
+	}
+#endif
+
 	// Try starting a new range.
 	if (args->num_physical_allocated_ranges < MAX_PHYSICAL_ALLOCATED_RANGE) {
 		const addr_range& lastAllocatedRange =
@@ -417,7 +492,25 @@ vm_allocate_early(kernel_args* args, size_t virtualSize, size_t physicalSize,
 
 	// map the pages
 	for (uint32 i = 0; i < HOWMANY(physicalSize, B_PAGE_SIZE); i++) {
+#if defined(__riscv)
+		// The RISC-V bootstrap tracks a bounded physical range. Keep backing
+		// pages for early virtual allocations inside that range so they can be
+		// reconstructed as wired areas once the VM is running.
+		typedef phys_addr_t (*max_address_func)();
+		max_address_func maxAddress;
+		if (i == 0)
+			debug_early_boot_message("riscv: early bound resolve\n");
+		asm volatile("lla %0, vm_page_max_address" : "=r"(maxAddress));
+		phys_addr_t physicalLimit = maxAddress();
+		if (i == 0)
+			debug_early_boot_message("riscv: early bound resolved\n");
+		page_num_t physicalAddress = vm_allocate_early_physical_page(args,
+			physicalLimit);
+		if (i == 0)
+			debug_early_boot_message("riscv: early bounded page\n");
+#else
 		page_num_t physicalAddress = vm_allocate_early_physical_page(args);
+#endif
 		if (physicalAddress == 0)
 			panic("error allocating early page!\n");
 
@@ -428,6 +521,16 @@ vm_allocate_early(kernel_args* args, size_t virtualSize, size_t physicalSize,
 			physicalAddress * B_PAGE_SIZE, attributes);
 		if (status != B_OK)
 			panic("error mapping early page!");
+#if defined(__riscv)
+		if (i == 0)
+			debug_early_boot_message("riscv: early first mapped\n");
+		else if (i == 4095)
+			debug_early_boot_message("riscv: early mapped 4096\n");
+		else if (i == 8191)
+			debug_early_boot_message("riscv: early mapped 8192\n");
+		else if (i == 12287)
+			debug_early_boot_message("riscv: early mapped 12288\n");
+#endif
 	}
 	return virtualBase;
 }

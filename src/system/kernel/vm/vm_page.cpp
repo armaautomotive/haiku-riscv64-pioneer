@@ -2493,8 +2493,14 @@ vm_page_init(kernel_args *args)
 
 	new (&sPageReservationWaiters) PageReservationWaiterList;
 	// map in the new free page table
+#if defined(__riscv)
+	debug_early_boot_message("riscv: page metadata allocate\n");
+#endif
 	sPages = (vm_page *)vm_allocate_early(args, sNumPages * sizeof(vm_page),
 		~0L, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, 0);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: page metadata mapped\n");
+#endif
 
 	TRACE(("vm_init: putting free_page_table @ %p, # ents %" B_PRIuPHYSADDR
 		" (size %#" B_PRIxPHYSADDR ")\n", sPages, sNumPages,
@@ -2504,6 +2510,12 @@ vm_page_init(kernel_args *args)
 	for (uint32 i = 0; i < sNumPages; i++) {
 		new(&sPages[i]) vm_page(sPhysicalPageOffset + i);
 		sFreePageQueue.Append(&sPages[i]);
+#if defined(__riscv)
+		if (i == 0)
+			debug_early_boot_message("riscv: page metadata init first\n");
+		else if (i == sNumPages / 2)
+			debug_early_boot_message("riscv: page metadata init half\n");
+#endif
 
 #if VM_PAGE_ALLOCATION_TRACKING_AVAILABLE
 		sPages[i].allocation_tracking_info.Clear();

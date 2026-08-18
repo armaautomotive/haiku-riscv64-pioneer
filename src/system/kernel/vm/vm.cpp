@@ -2056,17 +2056,29 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 				lookup_page_func directLookupPage;
 				asm volatile("lla %0, vm_lookup_page" : "=r"(directLookupPage));
 				page = directLookupPage(physicalAddress / B_PAGE_SIZE);
-				if (wiredPageIndex == 1)
-					debug_early_boot_message("riscv: anon area first lookup done\n");
 #else
 				page = vm_lookup_page(physicalAddress / B_PAGE_SIZE);
 #endif
 				if (page == NULL) {
+#if defined(__riscv)
+					debug_early_boot_message("riscv: anon area lookup failed\n");
+#endif
 					panic("looking up page failed for pa %#" B_PRIxPHYSADDR
 						"\n", physicalAddress);
 				}
+#if defined(__riscv)
+				if (wiredPageIndex == 1)
+					debug_early_boot_message("riscv: anon area first lookup done\n");
+#endif
 
+#if defined(__riscv) && DEBUG_PAGE_ACCESS
+				// tp does not safely reference a Thread during early VM bootstrap.
+				page->accessing_thread = 0;
+				if (wiredPageIndex == 1)
+					debug_early_boot_message("riscv: anon area first access set\n");
+#else
 				DEBUG_PAGE_ACCESS_START(page);
+#endif
 
 #if defined(__riscv)
 				typedef void (*insert_cache_page_func)(VMCache*, vm_page*, off_t);
@@ -2093,7 +2105,11 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #endif
 				page->busy = false;
 
+#if defined(__riscv) && DEBUG_PAGE_ACCESS
+				page->accessing_thread = -1;
+#else
 				DEBUG_PAGE_ACCESS_END(page);
+#endif
 			}
 
 #if !defined(__riscv)

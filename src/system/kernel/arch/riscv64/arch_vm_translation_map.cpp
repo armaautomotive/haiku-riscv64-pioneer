@@ -53,7 +53,11 @@ LookupPte(addr_t virtAdr, bool alloc, kernel_args* args)
 			page_num_t ppn = vm_allocate_early_physical_page(args);
 			if (ppn == 0)
 				return NULL;
-			memset((Pte*)VirtFromPhys(B_PAGE_SIZE * ppn), 0, B_PAGE_SIZE);
+			// Do not call memset through the early kernel linkage here. A new
+			// top-level branch can be needed before dynamic relocation is usable.
+			volatile Pte* table = (Pte*)VirtFromPhys(B_PAGE_SIZE * ppn);
+			for (uint32 i = 0; i < B_PAGE_SIZE / sizeof(Pte); i++)
+				table[i].val = 0;
 			Pte newPte {
 				.isValid = true,
 				.isGlobal = true,
