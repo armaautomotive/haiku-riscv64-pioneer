@@ -2465,8 +2465,10 @@ vm_page_init_num_pages(kernel_args *args)
 #if defined(__riscv)
 	// Bring up RISC-V systems with a bounded physical-page table first.  Large
 	// machines such as the SG2042 expose 128 GiB, which requires over two GiB
-	// of vm_page metadata before the scheduler is available.
-	const page_num_t maxBootstrapPages = 4ULL * 1024 * 1024 * 1024 / B_PAGE_SIZE;
+	// of vm_page metadata before the scheduler is available.  Keep enough of
+	// the low physical address space described that the metadata itself does
+	// not have to fit in the comparatively small set of EFI gaps below 4 GiB.
+	const page_num_t maxBootstrapPages = 8ULL * 1024 * 1024 * 1024 / B_PAGE_SIZE;
 	if (physicalPagesEnd - sPhysicalPageOffset > maxBootstrapPages)
 		physicalPagesEnd = sPhysicalPageOffset + maxBootstrapPages;
 #endif

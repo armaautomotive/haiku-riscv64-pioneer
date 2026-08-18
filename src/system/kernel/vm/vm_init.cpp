@@ -415,6 +415,65 @@ vm_allocate_early_physical_page(kernel_args* args, phys_addr_t maxAddress)
 		}
 
 		if (bestSize >= B_PAGE_SIZE) {
+			// Keep one entry available for an early page-table allocation. EFI
+			// can leave this fixed-size array almost full; coalescing the closest
+			// pair merely reserves the small gap between two already used ranges.
+			while (args->num_physical_allocated_ranges
+					>= MAX_PHYSICAL_ALLOCATED_RANGE - 1) {
+				uint32 mergeIndex = args->num_physical_allocated_ranges;
+				phys_size_t smallestGap = __HAIKU_PHYS_ADDR_MAX;
+				for (uint32 j = 0;
+						j + 1 < args->num_physical_allocated_ranges; j++) {
+					const addr_range& first
+						= args->physical_allocated_range[j];
+					const addr_range& second
+						= args->physical_allocated_range[j + 1];
+					const phys_addr_t firstEnd = first.start + first.size;
+					const phys_addr_t secondEnd = second.start + second.size;
+					bool sameMemoryRange = false;
+					for (uint32 k = 0; k < args->num_physical_memory_ranges; k++) {
+						const addr_range& memoryRange
+							= args->physical_memory_range[k];
+						if (first.start >= memoryRange.start
+								&& secondEnd <= memoryRange.start + memoryRange.size) {
+							sameMemoryRange = true;
+							break;
+						}
+					}
+					if (!sameMemoryRange)
+						continue;
+					phys_size_t gap = second.start > firstEnd
+						? second.start - firstEnd : 0;
+					if (gap < smallestGap) {
+						smallestGap = gap;
+						mergeIndex = j;
+					}
+				}
+				if (mergeIndex == args->num_physical_allocated_ranges)
+					break;
+
+				addr_range& first = args->physical_allocated_range[mergeIndex];
+				const addr_range& second
+					= args->physical_allocated_range[mergeIndex + 1];
+				const phys_addr_t firstEnd = first.start + first.size;
+				const phys_addr_t secondEnd = second.start + second.size;
+				const phys_addr_t mergedEnd
+					= firstEnd > secondEnd ? firstEnd : secondEnd;
+				first.size = mergedEnd - first.start;
+				for (uint32 j = mergeIndex + 1;
+						j + 1 < args->num_physical_allocated_ranges; j++) {
+					args->physical_allocated_range[j]
+						= args->physical_allocated_range[j + 1];
+				}
+				args->num_physical_allocated_ranges--;
+				debug_early_boot_message("riscv: early ranges compacted\n");
+			}
+			if (args->num_physical_allocated_ranges
+					>= MAX_PHYSICAL_ALLOCATED_RANGE - 1) {
+				debug_early_boot_message("riscv: early range compaction failed\n");
+				return 0;
+			}
+
 			uint32 insertIndex = 0;
 			while (insertIndex < args->num_physical_allocated_ranges
 					&& args->physical_allocated_range[insertIndex].start
@@ -511,8 +570,12 @@ vm_allocate_early(kernel_args* args, size_t virtualSize, size_t physicalSize,
 #else
 		page_num_t physicalAddress = vm_allocate_early_physical_page(args);
 #endif
-		if (physicalAddress == 0)
+		if (physicalAddress == 0) {
+#if defined(__riscv)
+			debug_early_boot_message("riscv: early backing allocation failed\n");
+#endif
 			panic("error allocating early page!\n");
+		}
 
 		//dprintf("vm_allocate_early: paddr 0x%lx\n", physicalAddress);
 
@@ -526,6 +589,20 @@ vm_allocate_early(kernel_args* args, size_t virtualSize, size_t physicalSize,
 			debug_early_boot_message("riscv: early first mapped\n");
 		else if (i == 4095)
 			debug_early_boot_message("riscv: early mapped 4096\n");
+		else if (i == 4607)
+			debug_early_boot_message("riscv: early mapped 4608\n");
+		else if (i == 5119)
+			debug_early_boot_message("riscv: early mapped 5120\n");
+		else if (i == 5631)
+			debug_early_boot_message("riscv: early mapped 5632\n");
+		else if (i == 6143)
+			debug_early_boot_message("riscv: early mapped 6144\n");
+		else if (i == 6655)
+			debug_early_boot_message("riscv: early mapped 6656\n");
+		else if (i == 7167)
+			debug_early_boot_message("riscv: early mapped 7168\n");
+		else if (i == 7679)
+			debug_early_boot_message("riscv: early mapped 7680\n");
 		else if (i == 8191)
 			debug_early_boot_message("riscv: early mapped 8192\n");
 		else if (i == 12287)

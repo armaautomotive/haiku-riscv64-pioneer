@@ -13,6 +13,7 @@
 
 #include <arch_cpu_defs.h>
 #include <boot/kernel_args.h>
+#include <debug.h>
 #include <KernelExport.h>
 #include <kernel.h>
 #include <vm/vm.h>
@@ -50,14 +51,24 @@ LookupPte(addr_t virtAdr, bool alloc, kernel_args* args)
 		if (!pte->isValid) {
 			if (!alloc)
 				return NULL;
-			page_num_t ppn = vm_allocate_early_physical_page(args);
-			if (ppn == 0)
+			// Page-table pages must remain reachable through the bounded
+			// bootstrap physical map just like other early VM backing pages.
+			typedef phys_addr_t (*max_address_func)();
+			max_address_func maxAddress;
+			asm volatile("lla %0, vm_page_max_address" : "=r"(maxAddress));
+			page_num_t ppn = vm_allocate_early_physical_page(args,
+				maxAddress());
+			if (ppn == 0) {
+				debug_early_boot_message("riscv: early pte allocation failed\n");
 				return NULL;
+			}
+			debug_early_boot_message("riscv: early pte page\n");
 			// Do not call memset through the early kernel linkage here. A new
 			// top-level branch can be needed before dynamic relocation is usable.
 			volatile Pte* table = (Pte*)VirtFromPhys(B_PAGE_SIZE * ppn);
 			for (uint32 i = 0; i < B_PAGE_SIZE / sizeof(Pte); i++)
 				table[i].val = 0;
+			debug_early_boot_message("riscv: early pte cleared\n");
 			Pte newPte {
 				.isValid = true,
 				.isGlobal = true,

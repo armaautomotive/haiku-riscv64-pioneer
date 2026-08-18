@@ -1699,7 +1699,16 @@ MemoryManager::_ConvertEarlyArea(Area* area)
 	if (areaID < 0)
 		panic("out of memory");
 
+	#if defined(__riscv)
+	debug_early_boot_message("riscv: slab area lookup\n");
+	// InitPostArea() still runs in the single-hart kernel bootstrap.  The
+	// regular lookup's rw_lock path needs a valid current thread, which is not
+	// available yet, while no other execution context can modify the tree.
+	area->vmArea = VMAreas::LookupLocked(areaID);
+	debug_early_boot_message("riscv: slab area lookup done\n");
+	#else
 	area->vmArea = VMAreas::Lookup(areaID);
+	#endif
 }
 
 
