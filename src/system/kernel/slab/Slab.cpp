@@ -1467,6 +1467,15 @@ slab_init_post_area()
 {
 	MemoryManager::InitPostArea();
 
+#if defined(__riscv)
+	// The debugger command registry is optional during bootstrap.  Its public
+	// entry points currently require kernel relocations that are not usable yet
+	// on RISC-V, while the slab allocator itself is already fully initialized.
+	// Defer registering these diagnostic commands until the architecture has a
+	// proper post-relocation initialization hook.
+	return;
+#endif
+
 	add_debugger_command("slabs", dump_slabs, "list all object caches");
 	add_debugger_command("slab_cache", dump_cache_info,
 		"dump information about a specific object cache");

@@ -490,6 +490,9 @@ MemoryManager::Init(kernel_args* args)
 MemoryManager::InitPostArea()
 {
 	sKernelArgs = NULL;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: slab post convert start\n");
+#endif
 
 	// Convert all areas to actual areas. This loop might look a bit weird, but
 	// is necessary since creating the actual area involves memory allocations,
@@ -502,14 +505,23 @@ MemoryManager::InitPostArea()
 				Area* area = it.Next();) {
 			if (area->vmArea == NULL) {
 				_ConvertEarlyArea(area);
+#if defined(__riscv)
+				debug_early_boot_message("riscv: slab post area converted\n");
+#endif
 				done = false;
 				break;
 			}
 		}
 	} while (!done);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: slab post convert done\n");
+#endif
 
 	// unmap and free unused pages
 	if (sFreeAreas != NULL) {
+#if defined(__riscv)
+		debug_early_boot_message("riscv: slab post free area start\n");
+#endif
 		// Just "leak" all but the first of the free areas -- the VM will
 		// automatically free all unclaimed memory.
 		sFreeAreas->next = NULL;
@@ -517,13 +529,31 @@ MemoryManager::InitPostArea()
 
 		Area* area = sFreeAreas;
 		_ConvertEarlyArea(area);
+#if defined(__riscv)
+		debug_early_boot_message("riscv: slab post free area converted\n");
+#endif
 		_UnmapFreeChunksEarly(area);
+#if defined(__riscv)
+		debug_early_boot_message("riscv: slab post free area unmapped\n");
+#endif
 	}
 
+#if defined(__riscv)
+	debug_early_boot_message("riscv: slab post table cleanup start\n");
+#endif
 	for (AreaTable::Iterator it = sAreaTable.GetIterator();
 			Area* area = it.Next();) {
+#if defined(__riscv)
+		debug_early_boot_message("riscv: slab post table area start\n");
+#endif
 		_UnmapFreeChunksEarly(area);
+#if defined(__riscv)
+		debug_early_boot_message("riscv: slab post table area done\n");
+#endif
 	}
+#if defined(__riscv)
+	debug_early_boot_message("riscv: slab post table cleanup done\n");
+#endif
 
 	sMaintenanceNeeded = true;
 		// might not be necessary, but doesn't harm
@@ -1643,6 +1673,20 @@ MemoryManager::_UnmapChunk(VMArea* vmArea, addr_t address, size_t size,
 /*static*/ void
 MemoryManager::_UnmapFreeChunksEarly(Area* area)
 {
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		// Reclaiming unused bootstrap slab pages is only an optimization.  The
+		// normal unmap path takes translation-map and cache locks that are not
+		// usable until the first kernel thread and relocations are established.
+		// Keep this bounded early area fully mapped; later slab allocations can
+		// safely continue to use it.
+		debug_early_boot_message("riscv: slab early cleanup deferred\n");
+		return;
+	}
+#endif
+
 	if (!area->fullyMapped)
 		return;
 
