@@ -1601,12 +1601,21 @@ vm_block_address_range(const char* name, void* address, addr_t size)
 	VMAddressSpace* addressSpace = locker.AddressSpace();
 
 	VMCache* cache;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: block create null cache\n");
+#endif
 	status = VMCacheFactory::CreateNullCache(VM_PRIORITY_SYSTEM, cache);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: block null cache created\n");
+#endif
 	if (status != B_OK)
 		return status;
 
 	cache->temporary = 1;
 	cache->virtual_end = size;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: block lock cache\n");
+#endif
 #if defined(__riscv)
 	typedef bool (*lock_cache_bootstrap_func)(VMCache*);
 	lock_cache_bootstrap_func directLockCacheBootstrap;
@@ -1624,12 +1633,24 @@ vm_block_address_range(const char* name, void* address, addr_t size)
 	status = vm_map_cache(addressSpace, cache, 0, name, size,
 		B_NO_LOCK, 0, REGION_NO_PRIVATE_MAP, 0, CREATE_AREA_DONT_COMMIT_MEMORY,
 		&addressRestrictions, true, &area, NULL);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: block cache mapped\n");
+#endif
 	if (status != B_OK) {
 		cache->ReleaseRefAndUnlock();
 		return status;
 	}
 
+#if defined(__riscv)
+	typedef void (*unlock_cache_bootstrap_func)(VMCache*);
+	unlock_cache_bootstrap_func directUnlockCacheBootstrap;
+	asm volatile("lla %0, _ZN7VMCache15UnlockBootstrapEv"
+		: "=r"(directUnlockCacheBootstrap));
+	directUnlockCacheBootstrap(cache);
+	debug_early_boot_message("riscv: block cache unlocked\n");
+#else
 	cache->Unlock();
+#endif
 	area->cache_type = CACHE_TYPE_NULL;
 	return area->id;
 }

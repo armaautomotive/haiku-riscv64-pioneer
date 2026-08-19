@@ -1950,17 +1950,65 @@ VMCacheFactory::CreateDeviceCache(VMCache*& _cache, addr_t baseAddress)
 /*static*/ status_t
 VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: null cache entry\n");
+#endif
 	uint32 allocationFlags = HEAP_DONT_WAIT_FOR_MEMORY
 		| HEAP_DONT_LOCK_KERNEL_SPACE;
 	if (priority >= VM_PRIORITY_VIP)
 		allocationFlags |= HEAP_PRIORITY_VIP;
 
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	const bool bootstrap = *kernelStartup;
+	VMNullCache* cache;
+	if (bootstrap) {
+		// The overflow guard is installed before normal slab allocation is safe.
+		// As for the early anonymous caches above, allocate this permanent cache
+		// from the single-threaded bootstrap arena and install its vtable without
+		// an unrelocated GOT access.
+		typedef void* (*block_alloc_early_func)(size_t);
+		block_alloc_early_func directBlockAllocEarly;
+		asm volatile("lla %0, _Z17block_alloc_earlym"
+			: "=r"(directBlockAllocEarly));
+		cache = static_cast<VMNullCache*>(
+			directBlockAllocEarly(sizeof(VMNullCache)));
+		if (cache != NULL) {
+			uint8* cacheBytes = reinterpret_cast<uint8*>(cache);
+			for (size_t i = 0; i < sizeof(VMNullCache); i++)
+				cacheBytes[i] = 0;
+			void** vtable;
+			asm volatile("lla %0, _ZTV11VMNullCache" : "=r"(vtable));
+			*reinterpret_cast<void***>(cache) = vtable + 2;
+		}
+	} else
+		cache = new(gNullCacheObjectCache, allocationFlags) VMNullCache;
+#else
 	VMNullCache* cache
 		= new(gNullCacheObjectCache, allocationFlags) VMNullCache;
+#endif
+#if defined(__riscv)
+	debug_early_boot_message("riscv: null cache allocated\n");
+#endif
 	if (cache == NULL)
 		return B_NO_MEMORY;
 
+#if defined(__riscv)
+	status_t error;
+	if (bootstrap) {
+		typedef status_t (*init_null_cache_func)(VMNullCache*, uint32);
+		init_null_cache_func directInit;
+		asm volatile("lla %0, _ZN11VMNullCache4InitEj" : "=r"(directInit));
+		error = directInit(cache, allocationFlags);
+	} else
+		error = cache->Init(allocationFlags);
+#else
 	status_t error = cache->Init(allocationFlags);
+#endif
+#if defined(__riscv)
+	debug_early_boot_message("riscv: null cache initialized\n");
+#endif
 	if (error != B_OK) {
 		cache->Delete();
 		return error;
@@ -1969,5 +2017,8 @@ VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 	T(Create(cache));
 
 	_cache = cache;
+#if defined(__riscv)
+	debug_early_boot_message("riscv: null cache done\n");
+#endif
 	return B_OK;
 }
