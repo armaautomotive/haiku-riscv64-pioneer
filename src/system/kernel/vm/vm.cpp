@@ -2018,6 +2018,7 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #if defined(__riscv)
 			debug_early_boot_message("riscv: anon area wired scan\n");
 			size_t wiredPageIndex = 0;
+			bool reportedUnmanagedPage = false;
 #endif
 #if defined(__riscv)
 			debug_early_boot_message("riscv: anon area map lock bypassed\n");
@@ -2061,10 +2062,20 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #endif
 				if (page == NULL) {
 #if defined(__riscv)
-					debug_early_boot_message("riscv: anon area lookup failed\n");
-#endif
+					// Large RISC-V systems use a bounded vm_page database during
+					// bootstrap. Loader-owned mappings above that bound are already
+					// reserved and must remain mapped, but have no vm_page object to
+					// attach to this area's anonymous cache.
+					if (!reportedUnmanagedPage) {
+						debug_early_boot_message(
+							"riscv: retaining unmanaged wired pages\n");
+						reportedUnmanagedPage = true;
+					}
+					continue;
+#else
 					panic("looking up page failed for pa %#" B_PRIxPHYSADDR
 						"\n", physicalAddress);
+#endif
 				}
 #if defined(__riscv)
 				if (wiredPageIndex == 1)

@@ -1465,7 +1465,18 @@ slab_init(kernel_args* args)
 void
 slab_init_post_area()
 {
+#if defined(__riscv)
+	// Avoid an early PLT tail call.  Besides requiring relocations that are not
+	// ready yet, a tail call would discard this function's return path.
+	typedef void (*init_post_area_func)();
+	init_post_area_func initPostArea;
+	asm volatile("lla %0, _ZN13MemoryManager12InitPostAreaEv"
+		: "=r"(initPostArea));
+	initPostArea();
+	asm volatile("" ::: "memory");
+#else
 	MemoryManager::InitPostArea();
+#endif
 
 #if defined(__riscv)
 	// The debugger command registry is optional during bootstrap.  Its public

@@ -558,6 +558,13 @@ MemoryManager::InitPostArea()
 	sMaintenanceNeeded = true;
 		// might not be necessary, but doesn't harm
 
+#if defined(__riscv)
+	// These commands are diagnostic only, and their registration entry point
+	// still depends on relocations that are unavailable during RISC-V kernel
+	// bootstrap.  The slab allocator and its maintenance state are ready.
+	return;
+#endif
+
 	add_debugger_command_etc("slab_area", &_DumpArea,
 		"Dump information on a given slab area",
 		"[ -c ] <area>\n"
