@@ -2868,13 +2868,17 @@ status_t
 team_init(kernel_args* args)
 {
 	// create the team hash table
+	debug_early_boot_message("riscv: team hash init\n");
 	new(&sTeamHash) TeamTable;
 	if (sTeamHash.Init(64) != B_OK)
 		panic("Failed to init team hash table!");
+	debug_early_boot_message("riscv: team hash ready\n");
 
+	debug_early_boot_message("riscv: group hash init\n");
 	new(&sGroupHash) ProcessGroupHashTable;
 	if (sGroupHash.Init() != B_OK)
 		panic("Failed to init process group hash table!");
+	debug_early_boot_message("riscv: group hash ready\n");
 
 	// create initial session and process groups
 
@@ -2882,18 +2886,22 @@ team_init(kernel_args* args)
 	if (session == NULL)
 		panic("Could not create initial session.\n");
 	BReference<ProcessSession> sessionReference(session, true);
+	debug_early_boot_message("riscv: initial session ready\n");
 
 	ProcessGroup* group = new(std::nothrow) ProcessGroup(1);
 	if (group == NULL)
 		panic("Could not create initial process group.\n");
 	BReference<ProcessGroup> groupReference(group, true);
+	debug_early_boot_message("riscv: initial group ready\n");
 
 	group->Publish(session);
+	debug_early_boot_message("riscv: initial group published\n");
 
 	// create the kernel team
 	sKernelTeam = Team::Create(1, "kernel_team", true);
 	if (sKernelTeam == NULL)
 		panic("could not create kernel team!\n");
+	debug_early_boot_message("riscv: kernel team created\n");
 
 	sKernelTeam->address_space = VMAddressSpace::Kernel();
 	sKernelTeam->SetArgs(sKernelTeam->Name());
@@ -2908,18 +2916,26 @@ team_init(kernel_args* args)
 	sKernelTeam->supplementary_groups = NULL;
 
 	insert_team_into_group(group, sKernelTeam);
+	debug_early_boot_message("riscv: kernel team grouped\n");
 
 	sKernelTeam->io_context = vfs_new_io_context(NULL, false);
 	if (sKernelTeam->io_context == NULL)
 		panic("could not create io_context for kernel team!\n");
+	debug_early_boot_message("riscv: kernel io context ready\n");
 
 	if (vfs_resize_fd_table(sKernelTeam->io_context, 4096) != B_OK)
 		dprintf("Failed to resize FD table for kernel team!\n");
 
 	// stick it in the team hash
 	sTeamHash.Insert(sKernelTeam);
+	debug_early_boot_message("riscv: kernel team inserted\n");
 
 	// check safe mode settings
+#if defined(__riscv)
+	(void)&dump_team_info;
+	(void)&dump_teams;
+	debug_early_boot_message("riscv: team safe mode deferred\n");
+#else
 	sDisableUserAddOns = get_safemode_boolean(B_SAFEMODE_DISABLE_USER_ADD_ONS,
 		false);
 
@@ -2934,10 +2950,13 @@ team_init(kernel_args* args)
 	add_debugger_command_etc("teams", &dump_teams, "List all teams",
 		"\n"
 		"Prints a list of all existing teams.\n", 0);
+#endif
+	debug_early_boot_message("riscv: team optional debug ready\n");
 
 	new(&sNotificationService) TeamNotificationService();
 
 	sNotificationService.Register();
+	debug_early_boot_message("riscv: team notifications ready\n");
 
 	return B_OK;
 }

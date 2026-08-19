@@ -239,21 +239,37 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		notifications_init();
 		debug_early_boot_message("riscv: notifications ready\n");
 		TRACE("init teams\n");
+		debug_early_boot_message("riscv: teams init\n");
 		team_init(&sKernelArgs);
+		debug_early_boot_message("riscv: teams ready\n");
 		TRACE("init ELF loader\n");
+		debug_early_boot_message("riscv: elf init\n");
 		elf_init(&sKernelArgs);
+		debug_early_boot_message("riscv: elf ready\n");
 		TRACE("init modules\n");
+		debug_early_boot_message("riscv: modules init\n");
 		module_init(&sKernelArgs);
+		debug_early_boot_message("riscv: modules ready\n");
 		TRACE("init semaphores\n");
+		debug_early_boot_message("riscv: semaphores init\n");
 		haiku_sem_init(&sKernelArgs);
+		debug_early_boot_message("riscv: semaphores ready\n");
 		TRACE("init interrupts post vm\n");
+		debug_early_boot_message("riscv: interrupts post vm init\n");
 		interrupts_init_post_vm(&sKernelArgs);
+		debug_early_boot_message("riscv: interrupts post vm ready\n");
+		debug_early_boot_message("riscv: cpu post vm init\n");
 		cpu_init_post_vm(&sKernelArgs);
+		debug_early_boot_message("riscv: cpu post vm ready\n");
+		debug_early_boot_message("riscv: commpage init\n");
 		commpage_init();
+		debug_early_boot_message("riscv: commpage ready\n");
 #ifdef _COMPAT_MODE
 		commpage_compat_init();
 #endif
+		debug_early_boot_message("riscv: secondary cpu init\n");
 		call_all_cpus_sync(non_boot_cpu_init, &sKernelArgs);
+		debug_early_boot_message("riscv: secondary cpu ready\n");
 
 		TRACE("init system info\n");
 		system_info_init(&sKernelArgs);

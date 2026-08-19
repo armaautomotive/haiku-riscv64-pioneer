@@ -1105,6 +1105,7 @@ cmd_execute_panic_commands(int argc, char** argv)
 }
 
 
+#if !defined(__riscv)
 static int
 cmd_dump_syslog(int argc, char** argv)
 {
@@ -1187,6 +1188,7 @@ cmd_dump_syslog(int argc, char** argv)
 
 	return 0;
 }
+#endif
 
 
 static int
@@ -1363,6 +1365,7 @@ syslog_init_post_threads(void)
 }
 
 
+#if !defined(__riscv)
 static status_t
 syslog_init_post_vm(struct kernel_args* args)
 {
@@ -1461,6 +1464,7 @@ err1:
 	sSyslogBuffer = NULL;
 	return status;
 }
+#endif
 
 static void
 syslog_init_post_modules()
@@ -1751,25 +1755,49 @@ void
 debug_init_post_settings(struct kernel_args* args)
 {
 	// get debug settings
+	debug_early_boot_message("riscv: debug settings read start\n");
 
+#if defined(__riscv)
+	// Driver-settings lookup is not yet safe during the Pioneer single-hart
+	// bootstrap.  Keep the compiled debug defaults until that path can be
+	// enabled after the remaining kernel services are initialized.
+	debug_early_boot_message("riscv: debug settings reads deferred\n");
+#else
 	sSerialDebugEnabled = get_safemode_boolean("serial_debug_output",
 		sSerialDebugEnabled);
+	debug_early_boot_message("riscv: debug serial setting read\n");
 	sSyslogOutputEnabled = get_safemode_boolean("syslog_debug_output",
 		sSyslogOutputEnabled);
+	debug_early_boot_message("riscv: debug syslog setting read\n");
 	sBlueScreenOutput = get_safemode_boolean("bluescreen", true);
+	debug_early_boot_message("riscv: debug bluescreen setting read\n");
 	sEmergencyKeysEnabled = get_safemode_boolean("emergency_keys",
 		sEmergencyKeysEnabled);
+	debug_early_boot_message("riscv: debug emergency setting read\n");
 	sDebugScreenEnabled = get_safemode_boolean("debug_screen", false);
+#endif
+	debug_early_boot_message("riscv: debug settings read done\n");
 
+	debug_early_boot_message("riscv: bluescreen post settings start\n");
 	if ((sBlueScreenOutput || sDebugScreenEnabled)
 			&& blue_screen_init() != B_OK)
 		sBlueScreenOutput = sDebugScreenEnabled = false;
+	debug_early_boot_message("riscv: bluescreen post settings done\n");
 
 	if (sDebugScreenEnabled)
 		blue_screen_enter(true);
 
 	arch_debug_console_init_settings(args);
+	debug_early_boot_message("riscv: arch debug settings done\n");
+#if defined(__riscv)
+	// This path formats the syslog banner and registers a debugger command,
+	// neither of which is safe yet during the Pioneer bootstrap.  Early serial
+	// output remains available while the syslog transition is deferred.
+	debug_early_boot_message("riscv: syslog post vm deferred\n");
+#else
 	syslog_init_post_vm(args);
+#endif
+	debug_early_boot_message("riscv: syslog post vm done\n");
 }
 
 
