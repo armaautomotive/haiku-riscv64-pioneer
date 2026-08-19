@@ -836,7 +836,16 @@ vm_debug_copy_page_memory(team_id teamID, void* unsafeMemory, void* buffer,
 void
 vm_debug_init()
 {
-#if DEBUG_CACHE_LIST
+#if defined(__riscv)
+	// The general heap has not completed its post-VM transition when this is
+	// called during early RISC-V initialization.  Registering the commands
+	// below allocates debugger_command objects and currently deadlocks in
+	// malloc().  None of these commands is required to finish booting, so
+	// defer their registration until the early heap transition is fixed.
+	return;
+#endif
+
+#if DEBUG_CACHE_LIST && !defined(__riscv)
 	if (vm_page_num_free_pages() >= 200 * 1024 * 1024 / B_PAGE_SIZE) {
 		virtual_address_restrictions virtualRestrictions = {};
 		virtualRestrictions.address_specification = B_ANY_KERNEL_ADDRESS;
@@ -847,7 +856,7 @@ vm_debug_init()
 			CREATE_AREA_DONT_WAIT, 0, &virtualRestrictions,
 			&physicalRestrictions, (void**)&sCacheInfoTable);
 	}
-#endif	// DEBUG_CACHE_LIST
+#endif	// DEBUG_CACHE_LIST && !__riscv
 
 	// add some debugger commands
 	add_debugger_command("areas", &dump_area_list, "Dump a list of all areas");

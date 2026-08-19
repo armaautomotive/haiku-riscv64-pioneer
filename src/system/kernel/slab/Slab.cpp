@@ -1287,6 +1287,18 @@ object_cache_set_minimum_reserve(object_cache* cache, size_t objectCount)
 		return B_OK;
 #endif
 
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		// The boot CPU is still alone and the slab maintenance thread is not
+		// running. Record the target without entering mutex/condition-variable
+		// code; normal allocations will schedule reserve growth after startup.
+		cache->min_object_reserve = objectCount;
+		return B_OK;
+	}
+#endif
+
 	MutexLocker _(cache->lock);
 
 	if (cache->min_object_reserve == objectCount)

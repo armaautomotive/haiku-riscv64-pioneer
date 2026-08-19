@@ -54,17 +54,15 @@ status_t
 arch_platform_init_post_vm(struct kernel_args *kernelArgs)
 {
 	if (gPlatform == kPlatformSbi) {
-		sbiret res;
-		res = sbi_get_spec_version();
-		dprintf("SBI spec version: %#lx\n", res.value);
-		res = sbi_get_impl_id();
-		dprintf("SBI implementation ID: %#lx\n", res.value);
-		res = sbi_get_impl_version();
-		dprintf("SBI implementation version: %#lx\n", res.value);
-		res = sbi_get_mvendorid();
-		dprintf("SBI vendor ID: %#lx\n", res.value);
-		res = sbi_get_marchid();
-		dprintf("SBI arch ID: %#lx\n", res.value);
+		// Formatted debug output still depends on atomic/SMP state that is not
+		// ready during the Pioneer single-hart bootstrap.  Probe the SBI calls,
+		// but report completion through the safe early serial path.
+		(void)sbi_get_spec_version();
+		(void)sbi_get_impl_id();
+		(void)sbi_get_impl_version();
+		(void)sbi_get_mvendorid();
+		(void)sbi_get_marchid();
+		debug_early_boot_message("riscv: SBI platform probed\n");
 	}
 	return B_OK;
 }

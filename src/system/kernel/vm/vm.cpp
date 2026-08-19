@@ -437,30 +437,58 @@ private:
 static void
 create_page_mappings_object_caches()
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: page mappings caches entry\n");
+#endif
 	// We want an even power of 2 smaller than the number of CPUs.
 	const int32 numCPUs = smp_get_num_cpus();
+#if defined(__riscv)
+	debug_early_boot_message("riscv: page mappings cpu count\n");
+#endif
 	int32 count = next_power_of_2(numCPUs);
 	if (count > numCPUs)
 		count >>= 1;
 	sPageMappingsMask = count - 1;
 
 	sPageMappingsObjectCaches = new object_cache*[count];
+#if defined(__riscv)
+	debug_early_boot_message("riscv: page mappings array allocated\n");
+#endif
 	if (sPageMappingsObjectCaches == NULL)
 		panic("failed to allocate page mappings object_cache array");
 
 	for (int32 i = 0; i < count; i++) {
+#if defined(__riscv)
+		if (i == 0)
+			debug_early_boot_message("riscv: page mappings first cache\n");
+#endif
 		char name[32];
 		snprintf(name, sizeof(name), "page mappings %" B_PRId32, i);
+#if defined(__riscv)
+		if (i == 0)
+			debug_early_boot_message("riscv: page mappings first name\n");
+#endif
 
 		object_cache* cache = create_object_cache_etc(name,
 			sizeof(vm_page_mapping), 0, 0, 64, 128, CACHE_LARGE_SLAB, NULL, NULL,
 			NULL, NULL);
 		if (cache == NULL)
 			panic("failed to create page mappings object_cache");
+#if defined(__riscv)
+		if (i == 0)
+			debug_early_boot_message("riscv: page mappings first created\n");
+#endif
 
 		object_cache_set_minimum_reserve(cache, 1024);
+#if defined(__riscv)
+		if (i == 0)
+			debug_early_boot_message("riscv: page mappings first reserved\n");
+#endif
 		sPageMappingsObjectCaches[i] = cache;
 	}
+#if defined(__riscv)
+	debug_early_boot_message("riscv: page mappings caches done\n");
+#endif
 }
 
 
@@ -1912,13 +1940,20 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		asm volatile("lla %0, _ZN23AddressSpaceWriteLocker5SetToEi"
 			: "=r"(directSetTo));
 		status = directSetTo(&locker, team);
+		debug_early_boot_message("riscv: anon area set returned\n");
 	#else
 		status = locker.SetTo(team);
 	#endif
 		if (status != B_OK)
 			goto err1;
+#if defined(__riscv)
+		debug_early_boot_message("riscv: anon area set checked\n");
+#endif
 
 		addressSpace = locker.AddressSpace();
+#if defined(__riscv)
+		debug_early_boot_message("riscv: anon area aspace fetched\n");
+#endif
 	} while (virtualAddressRestrictions->address_specification
 			== B_EXACT_ADDRESS
 		&& (flags & CREATE_AREA_UNMAP_ADDRESS_RANGE) != 0
@@ -1926,6 +1961,7 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			(addr_t)virtualAddressRestrictions->address, size, &locker));
 
 #if defined(__riscv)
+	debug_early_boot_message("riscv: anon area lock loop done\n");
 	debug_early_boot_message("riscv: anon area space locked\n");
 #endif
 
@@ -4002,9 +4038,13 @@ vm_init(kernel_args* args)
 #endif
 #endif
 
+	debug_early_boot_message("riscv: page mappings caches start\n");
 	create_page_mappings_object_caches();
+	debug_early_boot_message("riscv: page mappings caches finished\n");
 
+	debug_early_boot_message("riscv: vm debug start\n");
 	vm_debug_init();
+	debug_early_boot_message("riscv: vm debug done\n");
 
 	TRACE(("vm_init: exit\n"));
 

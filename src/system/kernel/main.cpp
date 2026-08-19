@@ -203,17 +203,41 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 			// the boot loader allocated region is not used anymore
 		boot_item_init();
 		debug_early_boot_message("riscv: boot items ready\n");
+#if defined(__riscv)
+		// debug_init_post_vm() starts by allocating debugger command records.
+		// The Pioneer bootstrap heap cannot service those allocations yet, so
+		// defer this optional debugger setup while continuing kernel bring-up.
+		debug_early_boot_message("riscv: debug post vm deferred\n");
+#else
 		debug_init_post_vm(&sKernelArgs);
+#endif
+		debug_early_boot_message("riscv: low resource init\n");
 		low_resource_manager_init();
+		debug_early_boot_message("riscv: low resource ready\n");
 
 		// now we can use the heap and create areas
+		debug_early_boot_message("riscv: platform post vm init\n");
 		arch_platform_init_post_vm(&sKernelArgs);
+		debug_early_boot_message("riscv: platform post vm ready\n");
+		debug_early_boot_message("riscv: lock debug init\n");
+#if defined(__riscv)
+		// This routine only registers debugger commands, which allocate from the
+		// general heap before the Pioneer bootstrap can safely service them.
+		debug_early_boot_message("riscv: lock debug deferred\n");
+#else
 		lock_debug_init();
+#endif
+		debug_early_boot_message("riscv: lock debug ready\n");
 		TRACE("init driver_settings\n");
+		debug_early_boot_message("riscv: driver settings init\n");
 		driver_settings_init(&sKernelArgs);
+		debug_early_boot_message("riscv: driver settings ready\n");
 		debug_init_post_settings(&sKernelArgs);
+		debug_early_boot_message("riscv: debug post settings ready\n");
 		TRACE("init notification services\n");
+		debug_early_boot_message("riscv: notifications init\n");
 		notifications_init();
+		debug_early_boot_message("riscv: notifications ready\n");
 		TRACE("init teams\n");
 		team_init(&sKernelArgs);
 		TRACE("init ELF loader\n");
