@@ -664,6 +664,11 @@ public:
 			void				Unlock()
 									{ mutex_unlock(&fLock); }
 
+#if defined(__riscv)
+			void				AcquireReferenceBootstrap()
+									{ fReferenceCount++; }
+#endif
+
 private:
 			mutex				fLock;
 };
@@ -691,6 +696,11 @@ public:
 									{ return mutex_trylock(&fLock) == B_OK; }
 			void				Unlock()
 									{ mutex_unlock(&fLock); }
+
+#if defined(__riscv)
+			void				AcquireReferenceBootstrap()
+									{ fReferenceCount++; }
+#endif
 
 			ProcessSession*		Session() const
 									{ return fSession; }

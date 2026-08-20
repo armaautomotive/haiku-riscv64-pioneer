@@ -5024,17 +5024,24 @@ vfs_exec_io_context(io_context* context)
 io_context*
 vfs_new_io_context(const io_context* parentContext, bool purgeCloseOnExec)
 {
+	debug_early_boot_message("riscv: io context entry\n");
 	io_context* context = (io_context*)malloc(sizeof(io_context));
+	debug_early_boot_message("riscv: io context allocated\n");
 	if (context == NULL)
 		return NULL;
 
 	TIOC(NewIOContext(context, parentContext));
 
+	debug_early_boot_message("riscv: io context clear\n");
 	memset(context, 0, sizeof(io_context));
 	context->ref_count = 1;
+	debug_early_boot_message("riscv: io context lock init\n");
 	rw_lock_init(&context->lock, "I/O context");
+	debug_early_boot_message("riscv: io context lock initialized\n");
 
+	debug_early_boot_message("riscv: io context write lock\n");
 	WriteLocker contextLocker(context->lock);
+	debug_early_boot_message("riscv: io context write locked\n");
 	ReadLocker parentLocker;
 
 	size_t tableSize;
@@ -5044,10 +5051,12 @@ vfs_new_io_context(const io_context* parentContext, bool purgeCloseOnExec)
 	} else
 		tableSize = DEFAULT_FD_TABLE_SIZE;
 
+	debug_early_boot_message("riscv: io context resize\n");
 	if (vfs_resize_fd_table(context, tableSize) != B_OK) {
 		free(context);
 		return NULL;
 	}
+	debug_early_boot_message("riscv: io context resized\n");
 
 	// Copy all parent file descriptors
 
@@ -5101,6 +5110,7 @@ vfs_new_io_context(const io_context* parentContext, bool purgeCloseOnExec)
 
 	list_init(&context->node_monitors);
 	context->max_monitors = DEFAULT_NODE_MONITORS;
+	debug_early_boot_message("riscv: io context done\n");
 
 	return context;
 }
@@ -5124,12 +5134,15 @@ vfs_put_io_context(io_context* context)
 status_t
 vfs_resize_fd_table(struct io_context* context, uint32 newSize)
 {
+	debug_early_boot_message("riscv: fd resize entry\n");
 	if (newSize == 0 || newSize > MAX_FD_TABLE_SIZE)
 		return B_BAD_VALUE;
 
 	TIOC(ResizeIOContext(context, newSize));
 
+	debug_early_boot_message("riscv: fd resize lock\n");
 	WriteLocker locker(context->lock);
+	debug_early_boot_message("riscv: fd resize locked\n");
 
 	uint32 oldSize = context->table_size;
 	int oldCloseOnExitBitmapSize = (oldSize + 7) / 8;
@@ -5152,10 +5165,14 @@ vfs_resize_fd_table(struct io_context* context, uint32 newSize)
 	// allocate new tables (separately to reduce the chances of needing a raw allocation)
 	file_descriptor** newFDs = (file_descriptor**)malloc(
 		sizeof(struct file_descriptor*) * newSize);
+	debug_early_boot_message("riscv: fd resize fds allocated\n");
 	select_info** newSelectInfos = (select_info**)malloc(
 		+ sizeof(select_info**) * newSize);
+	debug_early_boot_message("riscv: fd resize selects allocated\n");
 	uint8* newCloseOnExecTable = (uint8*)malloc(newCloseOnExitBitmapSize);
+	debug_early_boot_message("riscv: fd resize exec allocated\n");
 	uint8* newCloseOnForkTable = (uint8*)malloc(newCloseOnExitBitmapSize);
+	debug_early_boot_message("riscv: fd resize fork allocated\n");
 	if (newFDs == NULL || newSelectInfos == NULL || newCloseOnExecTable == NULL
 		|| newCloseOnForkTable == NULL) {
 		free(newFDs);
@@ -5198,6 +5215,7 @@ vfs_resize_fd_table(struct io_context* context, uint32 newSize)
 	free(oldSelectInfos);
 	free(oldCloseOnExecTable);
 	free(oldCloseOnForkTable);
+	debug_early_boot_message("riscv: fd resize done\n");
 
 	return B_OK;
 }

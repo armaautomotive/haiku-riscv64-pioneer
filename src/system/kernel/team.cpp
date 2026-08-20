@@ -1051,12 +1051,29 @@ ProcessGroup::Publish(ProcessSession* session)
 void
 ProcessGroup::PublishLocked(ProcessSession* session)
 {
+	debug_early_boot_message("riscv: group publish lookup\n");
 	ASSERT(sGroupHash.Lookup(this->id) == NULL);
+	debug_early_boot_message("riscv: group publish lookup done\n");
 
 	fSession = session;
+	debug_early_boot_message("riscv: group publish acquire ref\n");
+#if defined(__riscv)
+	// The SG2042 stalls on the AMO used by AcquireReference() during the
+	// single-threaded bootstrap phase. Use a plain increment only until kernel
+	// startup completes; all runtime publications retain the atomic operation.
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup)
+		fSession->AcquireReferenceBootstrap();
+	else
+		fSession->AcquireReference();
+#else
 	fSession->AcquireReference();
+#endif
+	debug_early_boot_message("riscv: group publish ref acquired\n");
 
 	sGroupHash.InsertUnchecked(this);
+	debug_early_boot_message("riscv: group publish inserted\n");
 }
 
 
@@ -1327,12 +1344,26 @@ is_process_group_leader(Team* team)
 static void
 insert_team_into_group(ProcessGroup* group, Team* team)
 {
+	debug_early_boot_message("riscv: group team assign\n");
 	team->group = group;
 	team->group_id = group->id;
+	debug_early_boot_message("riscv: group team session id\n");
 	team->session_id = group->Session()->id;
 
+	debug_early_boot_message("riscv: group team list add\n");
 	group->teams.Add(team, false);
+	debug_early_boot_message("riscv: group team acquire ref\n");
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup)
+		group->AcquireReferenceBootstrap();
+	else
+		group->AcquireReference();
+#else
 	group->AcquireReference();
+#endif
+	debug_early_boot_message("riscv: group team ref acquired\n");
 }
 
 
@@ -2894,7 +2925,15 @@ team_init(kernel_args* args)
 	BReference<ProcessGroup> groupReference(group, true);
 	debug_early_boot_message("riscv: initial group ready\n");
 
+#if defined(__riscv)
+	// The Pioneer is still single-threaded here and the new group has not been
+	// published.  Acquiring sGroupHashLock through InterruptsSpinLocker hangs
+	// before the RISC-V atomic/SMP transition, so perform the locked operation
+	// directly during bootstrap.
+	group->PublishLocked(session);
+#else
 	group->Publish(session);
+#endif
 	debug_early_boot_message("riscv: initial group published\n");
 
 	// create the kernel team
@@ -2903,10 +2942,14 @@ team_init(kernel_args* args)
 		panic("could not create kernel team!\n");
 	debug_early_boot_message("riscv: kernel team created\n");
 
+	debug_early_boot_message("riscv: kernel team address space\n");
 	sKernelTeam->address_space = VMAddressSpace::Kernel();
+	debug_early_boot_message("riscv: kernel team args\n");
 	sKernelTeam->SetArgs(sKernelTeam->Name());
+	debug_early_boot_message("riscv: kernel team state\n");
 	sKernelTeam->state = TEAM_STATE_NORMAL;
 
+	debug_early_boot_message("riscv: kernel team credentials\n");
 	sKernelTeam->saved_set_uid = 0;
 	sKernelTeam->real_uid = 0;
 	sKernelTeam->effective_uid = 0;
@@ -2914,7 +2957,9 @@ team_init(kernel_args* args)
 	sKernelTeam->real_gid = 0;
 	sKernelTeam->effective_gid = 0;
 	sKernelTeam->supplementary_groups = NULL;
+	debug_early_boot_message("riscv: kernel team credentials ready\n");
 
+	debug_early_boot_message("riscv: kernel team grouping\n");
 	insert_team_into_group(group, sKernelTeam);
 	debug_early_boot_message("riscv: kernel team grouped\n");
 
