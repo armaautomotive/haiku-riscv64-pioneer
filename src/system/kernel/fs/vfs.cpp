@@ -5040,7 +5040,15 @@ vfs_new_io_context(const io_context* parentContext, bool purgeCloseOnExec)
 	debug_early_boot_message("riscv: io context lock initialized\n");
 
 	debug_early_boot_message("riscv: io context write lock\n");
-	WriteLocker contextLocker(context->lock);
+	WriteLocker contextLocker;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup)
+		contextLocker.SetTo(context->lock, false);
+#else
+	contextLocker.SetTo(context->lock, false);
+#endif
 	debug_early_boot_message("riscv: io context write locked\n");
 	ReadLocker parentLocker;
 
@@ -5141,7 +5149,15 @@ vfs_resize_fd_table(struct io_context* context, uint32 newSize)
 	TIOC(ResizeIOContext(context, newSize));
 
 	debug_early_boot_message("riscv: fd resize lock\n");
-	WriteLocker locker(context->lock);
+	WriteLocker locker;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup)
+		locker.SetTo(context->lock, false);
+#else
+	locker.SetTo(context->lock, false);
+#endif
 	debug_early_boot_message("riscv: fd resize locked\n");
 
 	uint32 oldSize = context->table_size;
@@ -5187,34 +5203,58 @@ vfs_resize_fd_table(struct io_context* context, uint32 newSize)
 	context->fds_close_on_exec = newCloseOnExecTable;
 	context->fds_close_on_fork = newCloseOnForkTable;
 	context->table_size = newSize;
+	debug_early_boot_message("riscv: fd resize tables replaced\n");
 
 	if (oldSize != 0) {
 		// copy entries from old tables
 		uint32 toCopy = min_c(oldSize, newSize);
 
 		memcpy(context->fds, oldFDs, sizeof(void*) * toCopy);
+		debug_early_boot_message("riscv: fd resize fds copied\n");
 		memcpy(context->select_infos, oldSelectInfos, sizeof(void*) * toCopy);
+		debug_early_boot_message("riscv: fd resize selects copied\n");
 		memcpy(context->fds_close_on_exec, oldCloseOnExecTable,
 			min_c(oldCloseOnExitBitmapSize, newCloseOnExitBitmapSize));
+		debug_early_boot_message("riscv: fd resize exec copied\n");
 		memcpy(context->fds_close_on_fork, oldCloseOnForkTable,
 			min_c(oldCloseOnExitBitmapSize, newCloseOnExitBitmapSize));
+		debug_early_boot_message("riscv: fd resize fork copied\n");
 	}
 
 	// clear additional entries, if the tables grow
 	if (newSize > oldSize) {
 		memset(context->fds + oldSize, 0, sizeof(void*) * (newSize - oldSize));
+		debug_early_boot_message("riscv: fd resize fds cleared\n");
 		memset(context->select_infos + oldSize, 0,
 			sizeof(void*) * (newSize - oldSize));
+		debug_early_boot_message("riscv: fd resize selects cleared\n");
 		memset(context->fds_close_on_exec + oldCloseOnExitBitmapSize, 0,
 			newCloseOnExitBitmapSize - oldCloseOnExitBitmapSize);
+		debug_early_boot_message("riscv: fd resize exec cleared\n");
 		memset(context->fds_close_on_fork + oldCloseOnExitBitmapSize, 0,
 			newCloseOnExitBitmapSize - oldCloseOnExitBitmapSize);
+		debug_early_boot_message("riscv: fd resize fork cleared\n");
 	}
 
-	free(oldFDs);
-	free(oldSelectInfos);
-	free(oldCloseOnExecTable);
-	free(oldCloseOnForkTable);
+#if defined(__riscv)
+	if (*kernelStartup) {
+		// The SG2042 bootstrap allocator stalls while freeing these initial
+		// tables. They are small, superseded, and allocated only once for the
+		// kernel team's first resize, so retain them until normal allocator
+		// locking is available.
+		debug_early_boot_message("riscv: fd resize old tables retained\n");
+	} else
+#endif
+	{
+		free(oldFDs);
+		debug_early_boot_message("riscv: fd resize old fds freed\n");
+		free(oldSelectInfos);
+		debug_early_boot_message("riscv: fd resize old selects freed\n");
+		free(oldCloseOnExecTable);
+		debug_early_boot_message("riscv: fd resize old exec freed\n");
+		free(oldCloseOnForkTable);
+		debug_early_boot_message("riscv: fd resize old fork freed\n");
+	}
 	debug_early_boot_message("riscv: fd resize done\n");
 
 	return B_OK;

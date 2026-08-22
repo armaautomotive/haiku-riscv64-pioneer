@@ -2998,8 +2998,11 @@ team_init(kernel_args* args)
 #endif
 	debug_early_boot_message("riscv: team optional debug ready\n");
 
+	debug_early_boot_message("riscv: team notification construct\n");
 	new(&sNotificationService) TeamNotificationService();
+	debug_early_boot_message("riscv: team notification constructed\n");
 
+	debug_early_boot_message("riscv: team notification register\n");
 	sNotificationService.Register();
 	debug_early_boot_message("riscv: team notifications ready\n");
 
