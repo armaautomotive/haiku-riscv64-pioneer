@@ -117,6 +117,7 @@ register_elf_image(struct elf_image_info *image)
 {
 	extended_image_info imageInfo;
 
+	debug_early_boot_message("riscv: register image metadata\n");
 	memset(&imageInfo, 0, sizeof(imageInfo));
 	imageInfo.basic_info.id = image->id;
 	imageInfo.basic_info.type = B_SYSTEM_IMAGE;
@@ -127,14 +128,17 @@ register_elf_image(struct elf_image_info *image)
 	imageInfo.basic_info.text_size = image->text_region.size;
 	imageInfo.basic_info.data = (void *)image->data_region.start;
 	imageInfo.basic_info.data_size = image->data_region.size;
+	debug_early_boot_message("riscv: register image metadata ready\n");
 
 	if (image->text_region.id >= 0) {
 		// evaluate the API/ABI version symbols
 
 		// Haiku API version
 		imageInfo.basic_info.api_version = 0;
+		debug_early_boot_message("riscv: register image api lookup\n");
 		elf_sym* symbol = elf_find_symbol(image,
 			B_SHARED_OBJECT_HAIKU_VERSION_VARIABLE_NAME, NULL, true);
+		debug_early_boot_message("riscv: register image api lookup done\n");
 		if (symbol != NULL && symbol->st_shndx != SHN_UNDEF
 			&& symbol->st_value > 0
 			&& symbol->Type() == STT_OBJECT
@@ -149,8 +153,10 @@ register_elf_image(struct elf_image_info *image)
 
 		// Haiku ABI
 		imageInfo.basic_info.abi = 0;
+		debug_early_boot_message("riscv: register image abi lookup\n");
 		symbol = elf_find_symbol(image,
 			B_SHARED_OBJECT_HAIKU_ABI_VARIABLE_NAME, NULL, true);
+		debug_early_boot_message("riscv: register image abi lookup done\n");
 		if (symbol != NULL && symbol->st_shndx != SHN_UNDEF
 			&& symbol->st_value > 0
 			&& symbol->Type() == STT_OBJECT
@@ -168,9 +174,13 @@ register_elf_image(struct elf_image_info *image)
 		imageInfo.basic_info.abi = B_HAIKU_ABI;
 	}
 
+	debug_early_boot_message("riscv: register image team insert\n");
 	image->id = register_image(team_get_kernel_team(), &imageInfo,
 		sizeof(imageInfo));
+	debug_early_boot_message("riscv: register image team inserted\n");
+	debug_early_boot_message("riscv: register image hash insert\n");
 	sImagesHash->Insert(image);
+	debug_early_boot_message("riscv: register image hash inserted\n");
 }
 
 
@@ -1264,17 +1274,24 @@ insert_preloaded_image(preloaded_elf_image *preloadedImage, bool kernel)
 {
 	status_t status;
 
+	debug_early_boot_message("riscv: preloaded image verify header\n");
 	status = verify_eheader(&preloadedImage->elf_header);
 	if (status != B_OK)
 		return status;
+	debug_early_boot_message("riscv: preloaded image header verified\n");
 
+	debug_early_boot_message("riscv: preloaded image struct create\n");
 	elf_image_info *image = create_image_struct();
 	if (image == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: preloaded image struct created\n");
 
+	debug_early_boot_message("riscv: preloaded image name copy\n");
 	image->name = strdup(preloadedImage->name);
 	image->dynamic_section = preloadedImage->dynamic_section.start;
+	debug_early_boot_message("riscv: preloaded image name copied\n");
 
+	debug_early_boot_message("riscv: preloaded image regions copy\n");
 	image->text_region.id = preloadedImage->text_region.id;
 	image->text_region.start = preloadedImage->text_region.start;
 	image->text_region.size = preloadedImage->text_region.size;
@@ -1283,14 +1300,19 @@ insert_preloaded_image(preloaded_elf_image *preloadedImage, bool kernel)
 	image->data_region.start = preloadedImage->data_region.start;
 	image->data_region.size = preloadedImage->data_region.size;
 	image->data_region.delta = preloadedImage->data_region.delta;
+	debug_early_boot_message("riscv: preloaded image regions copied\n");
 
+	debug_early_boot_message("riscv: preloaded image dynamic parse\n");
 	status = elf_parse_dynamic_section(image);
 	if (status != B_OK)
 		goto error1;
+	debug_early_boot_message("riscv: preloaded image dynamic parsed\n");
 
+	debug_early_boot_message("riscv: preloaded image versions init\n");
 	status = init_image_version_infos(image);
 	if (status != B_OK)
 		goto error1;
+	debug_early_boot_message("riscv: preloaded image versions ready\n");
 
 	if (!kernel) {
 		status = check_needed_image_versions(image);
@@ -1300,10 +1322,20 @@ insert_preloaded_image(preloaded_elf_image *preloadedImage, bool kernel)
 		status = elf_relocate(image, sKernelImage);
 		if (status != B_OK)
 			goto error1;
-	} else
+	} else {
 		sKernelImage = image;
+		debug_early_boot_message("riscv: preloaded kernel image selected\n");
+	}
 
+	// The boot loader's preloaded debug tables are optional. Copying its debug
+	// string table is not safe during early SG2042 bring-up, and symbol loading
+	// is disabled here anyway.
+#if defined(__riscv)
+	image->num_debug_symbols = 0;
+	debug_early_boot_message("riscv: preloaded image debug tables deferred\n");
+#else
 	// copy debug symbols to the kernel heap
+	debug_early_boot_message("riscv: preloaded image debug symbols copy\n");
 	if (preloadedImage->debug_symbols != NULL) {
 		int32 debugSymbolsSize = sizeof(elf_sym)
 			* preloadedImage->num_debug_symbols;
@@ -1314,8 +1346,10 @@ insert_preloaded_image(preloaded_elf_image *preloadedImage, bool kernel)
 		}
 	}
 	image->num_debug_symbols = preloadedImage->num_debug_symbols;
+	debug_early_boot_message("riscv: preloaded image debug symbols copied\n");
 
 	// copy debug string table to the kernel heap
+	debug_early_boot_message("riscv: preloaded image debug strings copy\n");
 	if (preloadedImage->debug_string_table != NULL) {
 		image->debug_string_table = (char*)malloc(
 			preloadedImage->debug_string_table_size);
@@ -1325,14 +1359,20 @@ insert_preloaded_image(preloaded_elf_image *preloadedImage, bool kernel)
 				preloadedImage->debug_string_table_size);
 		}
 	}
+	debug_early_boot_message("riscv: preloaded image debug strings copied\n");
+#endif
 
+	debug_early_boot_message("riscv: preloaded image register\n");
 	register_elf_image(image);
+	debug_early_boot_message("riscv: preloaded image registered\n");
 	preloadedImage->id = image->id;
 		// modules_init() uses this information to get the preloaded images
 
 	// we now no longer need to write to the text area anymore
+	debug_early_boot_message("riscv: preloaded image protect text\n");
 	set_area_protection(image->text_region.id,
 		B_KERNEL_READ_AREA | B_KERNEL_EXECUTE_AREA);
+	debug_early_boot_message("riscv: preloaded image text protected\n");
 
 	return B_OK;
 
@@ -2697,34 +2737,59 @@ elf_init(kernel_args* args)
 {
 	struct preloaded_image* image;
 
+	debug_early_boot_message("riscv: elf image init entry\n");
 	image_init();
+	debug_early_boot_message("riscv: elf image init ready\n");
 
+	debug_early_boot_message("riscv: elf settings load\n");
+#if defined(__riscv)
+	debug_early_boot_message("riscv: elf settings deferred\n");
+#else
 	if (void* handle = load_driver_settings("kernel")) {
+		debug_early_boot_message("riscv: elf settings loaded\n");
 		sLoadElfSymbols = get_driver_boolean_parameter(handle, "load_symbols",
 			false, false);
+		debug_early_boot_message("riscv: elf settings read\n");
 
 		unload_driver_settings(handle);
+		debug_early_boot_message("riscv: elf settings unloaded\n");
 	}
+#endif
+	debug_early_boot_message("riscv: elf settings ready\n");
 
+	debug_early_boot_message("riscv: elf image hash allocate\n");
 	sImagesHash = new(std::nothrow) ImageHash();
 	if (sImagesHash == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: elf image hash allocated\n");
 	status_t init = sImagesHash->Init(IMAGE_HASH_SIZE);
 	if (init != B_OK)
 		return init;
+	debug_early_boot_message("riscv: elf image hash ready\n");
 
 	// Build a image structure for the kernel, which has already been loaded.
 	// The preloaded_images were already prepared by the VM.
 	image = args->kernel_image;
+	debug_early_boot_message("riscv: elf kernel image insert\n");
 	if (insert_preloaded_image(static_cast<preloaded_elf_image *>(image),
 			true) < B_OK)
 		panic("could not create kernel image.\n");
+	debug_early_boot_message("riscv: elf kernel image ready\n");
 
 	// Build image structures for all preloaded images.
 	for (image = args->preloaded_images; image != NULL; image = image->next)
 		insert_preloaded_image(static_cast<preloaded_elf_image *>(image),
 			false);
+	debug_early_boot_message("riscv: elf preloaded images ready\n");
 
+	debug_early_boot_message("riscv: elf debugger commands init\n");
+#if defined(__riscv)
+	(void)&dump_address_info;
+	(void)&dump_symbols;
+	(void)&dump_symbol;
+	(void)&dump_image;
+	debug_early_boot_message("riscv: elf debugger commands deferred\n");
+#else
 	add_debugger_command("ls", &dump_address_info,
 		"lookup symbol for a particular address");
 	add_debugger_command("symbols", &dump_symbols, "dump symbols for image");
@@ -2732,9 +2797,12 @@ elf_init(kernel_args* args)
 	add_debugger_command_etc("image", &dump_image, "dump image info",
 		"Prints info about the specified image.\n"
 		"  <image>  - pointer to the semaphore structure, or ID\n"
-		"           of the image to print info for.\n", 0);
+			"           of the image to print info for.\n", 0);
+#endif
+	debug_early_boot_message("riscv: elf debugger commands ready\n");
 
 	sInitialized = true;
+	debug_early_boot_message("riscv: elf initialized\n");
 	return B_OK;
 }
 
@@ -2762,4 +2830,3 @@ _user_read_kernel_image_symbols(image_id id, elf_sym* symbolTable,
 }
 
 #endif // ELF32_COMPAT
-

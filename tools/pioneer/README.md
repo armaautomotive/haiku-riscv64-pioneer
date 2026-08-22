@@ -16,9 +16,9 @@ tools/pioneer/pioneer_power.sh off
 tools/pioneer/pioneer_power.sh restart
 ```
 
-`on` and `off` each hold the same physical power button for one second and
-release it; the Pioneer's current power state determines the result. `restart`
-holds it for 10 seconds and releases it, providing the long press used for forced recovery.
+`on` holds the physical power button for 0.75 seconds. `off` and `restart` hold
+it for seven seconds and release it, providing the long press used for forced
+shutdown or recovery.
 Override the hold time with `--duration`, or select another serial port with
 `--device`:
 

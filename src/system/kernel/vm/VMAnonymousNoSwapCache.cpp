@@ -46,7 +46,6 @@ VMAnonymousNoSwapCache::Init(bool canOvercommit, int32 numPrecommittedPages,
 		"at %p\n", canOvercommit ? "yes" : "no", numGuardPages, store));
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: no-swap init entry\n");
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	status_t error;
@@ -62,7 +61,6 @@ VMAnonymousNoSwapCache::Init(bool canOvercommit, int32 numPrecommittedPages,
 		error = VMCache::Init("VMAnonymousNoSwapCache", CACHE_TYPE_RAM,
 			allocationFlags);
 	}
-	debug_early_boot_message("riscv: no-swap base init done\n");
 #else
 	status_t error = VMCache::Init("VMAnonymousNoSwapCache", CACHE_TYPE_RAM,
 		allocationFlags);

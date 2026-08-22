@@ -667,6 +667,8 @@ public:
 #if defined(__riscv)
 			void				AcquireReferenceBootstrap()
 									{ fReferenceCount++; }
+			void				ReleaseReferenceBootstrap()
+									{ fReferenceCount--; }
 #endif
 
 private:
@@ -700,6 +702,8 @@ public:
 #if defined(__riscv)
 			void				AcquireReferenceBootstrap()
 									{ fReferenceCount++; }
+			void				ReleaseReferenceBootstrap()
+									{ fReferenceCount--; }
 #endif
 
 			ProcessSession*		Session() const

@@ -63,7 +63,6 @@ status_t
 VMArea::InitBootstrap(VMAddressSpace* addressSpace, const char* name,
 	uint32 wiring, uint32 protection, uint32 allocationFlags)
 {
-	debug_early_boot_message("riscv: area bootstrap entry\n");
 	// Equivalent to the VMArea constructor for storage obtained from the
 	// early bump allocator.  Keeping this in VMArea.cpp avoids an unrelocated
 	// cross-object base-constructor call during RISC-V bootstrap.
@@ -81,13 +80,11 @@ VMArea::InitBootstrap(VMAddressSpace* addressSpace, const char* name,
 	fBase = 0;
 	fSize = 0;
 	new (&fWiredRanges) VMAreaWiredRangeList;
-	debug_early_boot_message("riscv: area bootstrap lists\n");
 	typedef void (*aspace_get_bootstrap_func)(VMAddressSpace*);
 	aspace_get_bootstrap_func directAddressSpaceGetBootstrap;
 	asm volatile("lla %0, _ZN14VMAddressSpace12GetBootstrapEv"
 		: "=r"(directAddressSpaceGetBootstrap));
 	directAddressSpaceGetBootstrap(addressSpace);
-	debug_early_boot_message("riscv: area bootstrap aspace ref\n");
 
 	// Avoid strlcpy() before the RISC-V kernel's dynamic relocations have
 	// been applied.  B_OS_NAME_LENGTH includes space for the terminator.
@@ -98,7 +95,6 @@ VMArea::InitBootstrap(VMAddressSpace* addressSpace, const char* name,
 	}
 	this->name[index] = '\0';
 	id = sNextAreaID++;
-	debug_early_boot_message("riscv: area bootstrap named\n");
 	return B_OK;
 }
 
@@ -294,9 +290,7 @@ VMAreas::Insert(VMArea* area)
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	if (*kernelStartup) {
-		debug_early_boot_message("riscv: global area insert entry\n");
 		status_t status = sTree.Insert(area);
-		debug_early_boot_message("riscv: global area insert done\n");
 		return status;
 	}
 #endif

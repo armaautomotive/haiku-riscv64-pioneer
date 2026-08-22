@@ -101,6 +101,11 @@ class NotificationService : public BReferenceable {
 public:
 	virtual						~NotificationService();
 
+#if defined(__riscv)
+			void				AcquireReferenceBootstrap()
+									{ fReferenceCount++; }
+#endif
+
 	virtual status_t			AddListener(const KMessage* eventSpecifier,
 									NotificationListener& listener) = 0;
 	virtual status_t			RemoveListener(const KMessage* eventSpecifier,

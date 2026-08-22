@@ -90,7 +90,7 @@ def main():
     )
     parser.add_argument(
         "--duration", type=float,
-        help="override button hold: on/off default to 1s, restart to 10s",
+        help="override button hold: on defaults to 0.75s, off/restart to 7s",
     )
     parser.add_argument(
         "--timeout", type=float, default=2.0,
@@ -110,7 +110,11 @@ def main():
         else:
             duration = args.duration
             if duration is None:
-                duration = 10.0 if args.action == "restart" else 1.0
+                duration = {
+                    "on": 0.75,
+                    "off": 7.0,
+                    "restart": 7.0,
+                }[args.action]
             print(f"Holding Pioneer power button for {duration:g} seconds via {device}")
             send_command(device, "close", args.timeout)
             try:

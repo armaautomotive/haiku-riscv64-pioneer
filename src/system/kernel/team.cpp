@@ -3006,6 +3006,19 @@ team_init(kernel_args* args)
 	sNotificationService.Register();
 	debug_early_boot_message("riscv: team notifications ready\n");
 
+#if defined(__riscv)
+	// Dropping the bootstrap guards through BReference would execute an AMO
+	// before the Pioneer atomic/SMP transition.  Both objects are now retained
+	// by their published owners, so release the guards non-atomically and detach
+	// them while startup is still single-threaded.
+	session->ReleaseReferenceBootstrap();
+	sessionReference.Detach();
+	debug_early_boot_message("riscv: initial session guard released\n");
+	group->ReleaseReferenceBootstrap();
+	groupReference.Detach();
+	debug_early_boot_message("riscv: initial group guard released\n");
+#endif
+
 	return B_OK;
 }
 

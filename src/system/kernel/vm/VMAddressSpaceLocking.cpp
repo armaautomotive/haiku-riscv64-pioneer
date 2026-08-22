@@ -224,12 +224,8 @@ AddressSpaceWriteLocker::Unset()
 status_t
 AddressSpaceWriteLocker::SetTo(team_id team)
 {
-#if defined(__riscv)
-	debug_early_boot_message("riscv: locker set entry\n");
-#endif
 	Unset();
 #if defined(__riscv)
-	debug_early_boot_message("riscv: locker unset done\n");
 	bool bootstrap = false;
 	if (team == B_SYSTEM_TEAM) {
 		// Avoid an unrelocated GOT load while deciding whether blocking locks
@@ -239,7 +235,6 @@ AddressSpaceWriteLocker::SetTo(team_id team)
 		bootstrap = *kernelStartup;
 	}
 	if (bootstrap) {
-		debug_early_boot_message("riscv: locker bootstrap pointer\n");
 		VMAddressSpace** kernelAddressSpace;
 		asm volatile("lla %0, _ZN14VMAddressSpace19sKernelAddressSpaceE"
 			: "=r"(kernelAddressSpace));
@@ -258,16 +253,10 @@ AddressSpaceWriteLocker::SetTo(team_id team)
 
 	if (fSpace == NULL)
 		return B_BAD_TEAM_ID;
-#if defined(__riscv)
-	debug_early_boot_message("riscv: locker aspace got\n");
-#endif
 	if (!bootstrap) {
 		fSpace->WriteLock();
 		fLocked = true;
 	}
-#if defined(__riscv)
-	debug_early_boot_message("riscv: locker set done\n");
-#endif
 	return B_OK;
 }
 

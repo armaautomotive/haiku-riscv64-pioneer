@@ -1293,9 +1293,6 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	uint32 flags, const virtual_address_restrictions* addressRestrictions,
 	bool kernel, VMArea** _area, void** _virtualAddress)
 {
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache entry\n");
-#endif
 	TRACE(("vm_map_cache: aspace %p, cache %p, virtual %p, offset 0x%"
 		B_PRIx64 ", size %" B_PRIuADDR ", addressSpec %" B_PRIu32 ", wiring %d"
 		", protection %d, protectionMax %d, area %p, areaName '%s'\n",
@@ -1307,7 +1304,6 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	if (!*kernelStartup)
 		cache->AssertLocked();
-	debug_early_boot_message("riscv: map cache asserted\n");
 #else
 	cache->AssertLocked();
 #endif
@@ -1333,9 +1329,6 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	} else
 		priority = VM_PRIORITY_SYSTEM;
 
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache create area\n");
-#endif
 	VMArea* area;
 #if defined(__riscv)
 	if (*kernelStartup) {
@@ -1353,9 +1346,6 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 #else
 	area = addressSpace->CreateArea(areaName, wiring, protection,
 		allocationFlags);
-#endif
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache area created\n");
 #endif
 	if (area == NULL)
 		return B_NO_MEMORY;
@@ -1397,12 +1387,10 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 
 		if ((protection & commitProtection) != 0) {
 #if defined(__riscv)
-			debug_early_boot_message("riscv: map cache commitment\n");
 			if (*kernelStartup)
 				status = commit_bootstrap_anonymous_cache(cache, size, priority);
 			else
 				status = cache->SetMinimalCommitment(size, priority);
-			debug_early_boot_message("riscv: map cache committed\n");
 #else
 			status = cache->SetMinimalCommitment(size, priority);
 #endif
@@ -1433,9 +1421,6 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	}
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: map cache insert area\n");
-#endif
-#if defined(__riscv)
 	if (*kernelStartup) {
 		typedef status_t (*insert_kernel_area_func)(VMKernelAddressSpace*,
 			VMArea*, size_t, const virtual_address_restrictions*, uint32,
@@ -1453,9 +1438,6 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	status = addressSpace->InsertArea(area, size, addressRestrictions,
 		allocationFlags, _virtualAddress);
 #endif
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache area inserted\n");
-#endif
 	if (status == B_NO_MEMORY
 			&& addressRestrictions->address_specification == B_ANY_KERNEL_ADDRESS) {
 		// Due to how many locks are held, we cannot wait here for space to be
@@ -1470,24 +1452,12 @@ vm_map_cache(VMAddressSpace* addressSpace, VMCache* cache, off_t offset,
 	area->cache_offset = offset;
 
 	// point the cache back to the area
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache link area\n");
-#endif
 	cache->InsertAreaLocked(area);
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache area linked\n");
-#endif
 	if (mapping == REGION_PRIVATE_MAP)
 		cache->Unlock();
 
 	// insert the area in the global areas map
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache global insert\n");
-#endif
 	status = VMAreas::Insert(area);
-#if defined(__riscv)
-	debug_early_boot_message("riscv: map cache globally inserted\n");
-#endif
 	if (status != B_OK)
 		goto err3;
 
@@ -1630,11 +1600,9 @@ vm_block_address_range(const char* name, void* address, addr_t size)
 
 	VMCache* cache;
 #if defined(__riscv)
-	debug_early_boot_message("riscv: block create null cache\n");
 #endif
 	status = VMCacheFactory::CreateNullCache(VM_PRIORITY_SYSTEM, cache);
 #if defined(__riscv)
-	debug_early_boot_message("riscv: block null cache created\n");
 #endif
 	if (status != B_OK)
 		return status;
@@ -1642,7 +1610,6 @@ vm_block_address_range(const char* name, void* address, addr_t size)
 	cache->temporary = 1;
 	cache->virtual_end = size;
 #if defined(__riscv)
-	debug_early_boot_message("riscv: block lock cache\n");
 #endif
 #if defined(__riscv)
 	typedef bool (*lock_cache_bootstrap_func)(VMCache*);
@@ -1662,7 +1629,6 @@ vm_block_address_range(const char* name, void* address, addr_t size)
 		B_NO_LOCK, 0, REGION_NO_PRIVATE_MAP, 0, CREATE_AREA_DONT_COMMIT_MEMORY,
 		&addressRestrictions, true, &area, NULL);
 #if defined(__riscv)
-	debug_early_boot_message("riscv: block cache mapped\n");
 #endif
 	if (status != B_OK) {
 		cache->ReleaseRefAndUnlock();
@@ -1675,7 +1641,6 @@ vm_block_address_range(const char* name, void* address, addr_t size)
 	asm volatile("lla %0, _ZN7VMCache15UnlockBootstrapEv"
 		: "=r"(directUnlockCacheBootstrap));
 	directUnlockCacheBootstrap(cache);
-	debug_early_boot_message("riscv: block cache unlocked\n");
 #else
 	cache->Unlock();
 #endif
@@ -1744,7 +1709,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		? VM_PAGE_ALLOC_CLEAR : 0;
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area entry\n");
 #endif
 
 	TRACE(("create_anonymous_area [%" B_PRId32 "] %s: size 0x%" B_PRIxADDR "\n",
@@ -1758,7 +1722,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		return B_BAD_VALUE;
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area params\n");
 #endif
 
 	status_t status = check_protection(team, &protection);
@@ -1766,7 +1729,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		return status;
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area protection\n");
 #endif
 
 	if (isStack || (protection & B_OVERCOMMITTING_AREA) != 0)
@@ -1931,7 +1893,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	// CREATE_AREA_UNMAP_ADDRESS_RANGE were specified, ensure the address range
 	// is not wired.
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area space lock\n");
 #endif
 	do {
 	#if defined(__riscv)
@@ -1940,19 +1901,16 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		asm volatile("lla %0, _ZN23AddressSpaceWriteLocker5SetToEi"
 			: "=r"(directSetTo));
 		status = directSetTo(&locker, team);
-		debug_early_boot_message("riscv: anon area set returned\n");
 	#else
 		status = locker.SetTo(team);
 	#endif
 		if (status != B_OK)
 			goto err1;
 #if defined(__riscv)
-		debug_early_boot_message("riscv: anon area set checked\n");
 #endif
 
 		addressSpace = locker.AddressSpace();
 #if defined(__riscv)
-		debug_early_boot_message("riscv: anon area aspace fetched\n");
 #endif
 	} while (virtualAddressRestrictions->address_specification
 			== B_EXACT_ADDRESS
@@ -1961,14 +1919,11 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			(addr_t)virtualAddressRestrictions->address, size, &locker));
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area lock loop done\n");
-	debug_early_boot_message("riscv: anon area space locked\n");
 #endif
 
 	// create an anonymous cache
 	// if it's a stack, make sure that two pages are available at least
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area cache create\n");
 #endif
 #if defined(__riscv)
 	typedef status_t (*create_anonymous_cache_func)(VMCache*&, bool, int32,
@@ -1988,7 +1943,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		goto err1;
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area cache created\n");
 #endif
 
 	cache->temporary = 1;
@@ -2007,7 +1961,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	asm volatile("lla %0, _ZN7VMCache13LockBootstrapEv"
 		: "=r"(directLockAnonymousCacheBootstrap));
 	directLockAnonymousCacheBootstrap(cache);
-	debug_early_boot_message("riscv: anon area map cache\n");
 #else
 	cache->Lock();
 #endif
@@ -2021,7 +1974,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	}
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area cache mapped\n");
 #endif
 
 	locker.DegradeToReadLock();
@@ -2073,12 +2025,9 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 				panic("ALREADY_WIRED flag used outside kernel startup\n");
 
 #if defined(__riscv)
-			debug_early_boot_message("riscv: anon area wired scan\n");
-			size_t wiredPageIndex = 0;
 			bool reportedUnmanagedPage = false;
 #endif
 #if defined(__riscv)
-			debug_early_boot_message("riscv: anon area map lock bypassed\n");
 #else
 			map->Lock();
 #endif
@@ -2086,10 +2035,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			for (addr_t virtualAddress = area->Base();
 					virtualAddress < area->Base() + (area->Size() - 1);
 					virtualAddress += B_PAGE_SIZE, offset += B_PAGE_SIZE) {
-#if defined(__riscv)
-				if ((wiredPageIndex++ & 0xffff) == 0)
-					debug_early_boot_message("riscv: anon area wired progress\n");
-#endif
 				phys_addr_t physicalAddress;
 				uint32 flags;
 #if defined(__riscv)
@@ -2100,8 +2045,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 					: "=r"(directQuery));
 				status = directQuery(map, virtualAddress, &physicalAddress,
 					&flags);
-				if (wiredPageIndex == 1)
-					debug_early_boot_message("riscv: anon area first query done\n");
 #else
 				status = map->Query(virtualAddress, &physicalAddress, &flags);
 #endif
@@ -2134,16 +2077,9 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 						"\n", physicalAddress);
 #endif
 				}
-#if defined(__riscv)
-				if (wiredPageIndex == 1)
-					debug_early_boot_message("riscv: anon area first lookup done\n");
-#endif
-
 #if defined(__riscv) && DEBUG_PAGE_ACCESS
 				// tp does not safely reference a Thread during early VM bootstrap.
 				page->accessing_thread = 0;
-				if (wiredPageIndex == 1)
-					debug_early_boot_message("riscv: anon area first access set\n");
 #else
 				DEBUG_PAGE_ACCESS_START(page);
 #endif
@@ -2154,8 +2090,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 				asm volatile("lla %0, _ZN7VMCache10InsertPageEP7vm_pagel"
 					: "=r"(directInsertPage));
 				directInsertPage(cache, page, offset);
-				if (wiredPageIndex == 1)
-					debug_early_boot_message("riscv: anon area first page inserted\n");
 #else
 				cache->InsertPage(page, offset);
 #endif
@@ -2166,8 +2100,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 				asm volatile("lla %0, vm_page_set_state"
 					: "=r"(directSetPageState));
 				directSetPageState(page, PAGE_STATE_WIRED);
-				if (wiredPageIndex == 1)
-					debug_early_boot_message("riscv: anon area first page wired\n");
 #else
 				vm_page_set_state(page, PAGE_STATE_WIRED);
 #endif
@@ -2184,7 +2116,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			map->Unlock();
 #endif
 #if defined(__riscv)
-			debug_early_boot_message("riscv: anon area wired done\n");
 #endif
 			break;
 		}
@@ -2233,7 +2164,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	asm volatile("lla %0, _ZN7VMCache15UnlockBootstrapEv"
 		: "=r"(directUnlockCacheBootstrap));
 	directUnlockCacheBootstrap(cache);
-	debug_early_boot_message("riscv: anon area cache unlocked\n");
 #else
 	cache->Unlock();
 #endif
@@ -2244,7 +2174,6 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	TRACE(("vm_create_anonymous_area: done\n"));
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: anon area done\n");
 #endif
 
 	area->cache_type = CACHE_TYPE_RAM;
@@ -6062,7 +5991,6 @@ __create_area_haiku(const char* name, void** _address, uint32 addressSpec,
 	// VMAddressSpace::KernelID() reads sKernelAddressSpace through the GOT.
 	// This wrapper is needed before all RISC-V kernel GOT relocations are
 	// dependable, while the initial kernel address space always has this ID.
-	debug_early_boot_message("riscv: create area wrapper\n");
 	return vm_create_anonymous_area(B_SYSTEM_TEAM, name, size,
 		lock, protection, 0, 0, &virtualRestrictions, &physicalRestrictions,
 		true, _address);

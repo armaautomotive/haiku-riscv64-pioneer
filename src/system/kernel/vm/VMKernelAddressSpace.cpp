@@ -98,13 +98,11 @@ VMKernelAddressSpace::InitObject()
 	const uint32 bootstrapFlags = CACHE_DURING_BOOT;
 	fAreaObjectCache = create_object_cache("kernel areas",
 		sizeof(VMKernelArea), bootstrapFlags);
-	debug_early_boot_message("riscv: kernel areas cache\n");
 	if (fAreaObjectCache == NULL)
 		return B_NO_MEMORY;
 
 	fRangesObjectCache = create_object_cache("kernel address ranges",
 		sizeof(Range), CACHE_NO_DEPOT | bootstrapFlags);
-	debug_early_boot_message("riscv: kernel ranges cache\n");
 	if (fRangesObjectCache == NULL)
 		return B_NO_MEMORY;
 
@@ -112,7 +110,6 @@ VMKernelAddressSpace::InitObject()
 	size_t size = fEndAddress - fBase + 1;
 	fFreeListCount = ld(size) - PAGE_SHIFT + 1;
 	fFreeLists = new(std::nothrow) RangeFreeList[fFreeListCount];
-	debug_early_boot_message("riscv: kernel free lists\n");
 	if (fFreeLists == NULL)
 		return B_NO_MEMORY;
 
@@ -125,7 +122,6 @@ VMKernelAddressSpace::InitObject()
 	Range* range = new(fRangesObjectCache, bootstrapFlags) Range(fBase, size,
 		Range::RANGE_FREE);
 #endif
-	debug_early_boot_message("riscv: kernel first range\n");
 	if (range == NULL)
 		return B_NO_MEMORY;
 
@@ -165,7 +161,6 @@ VMKernelAddressSpace::CreateArea(const char* name, uint32 wiring,
 	uint32 protection, uint32 allocationFlags)
 {
 #if defined(__riscv)
-	debug_early_boot_message("riscv: kernel create area entry\n");
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	if (*kernelStartup) {
@@ -229,7 +224,6 @@ VMKernelAddressSpace::InsertArea(VMArea* _area, size_t size,
 	uint32 allocationFlags, void** _address)
 {
 #if defined(__riscv)
-	debug_early_boot_message("riscv: kernel insert area entry\n");
 #endif
 	TRACE("VMKernelAddressSpace::InsertArea(%p, %" B_PRIu32 ", %#" B_PRIxSIZE
 		", %p \"%s\")\n", addressRestrictions->address,
@@ -239,7 +233,6 @@ VMKernelAddressSpace::InsertArea(VMArea* _area, size_t size,
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	if (!*kernelStartup)
 		ASSERT_WRITE_LOCKED_RW_LOCK(&fLock);
-	debug_early_boot_message("riscv: kernel insert area asserted\n");
 #else
 	ASSERT_WRITE_LOCKED_RW_LOCK(&fLock);
 #endif
@@ -248,13 +241,11 @@ VMKernelAddressSpace::InsertArea(VMArea* _area, size_t size,
 
 	Range* range;
 #if defined(__riscv)
-	debug_early_boot_message("riscv: kernel allocate range\n");
 #endif
 	status_t error = _AllocateRange(addressRestrictions, size,
 		addressRestrictions->address_specification == B_EXACT_ADDRESS,
 		allocationFlags, range);
 #if defined(__riscv)
-	debug_early_boot_message("riscv: kernel range allocated\n");
 #endif
 	if (error != B_OK)
 		return error;
@@ -643,7 +634,6 @@ VMKernelAddressSpace::_AllocateRange(
 	Range*& _range)
 {
 #if defined(__riscv)
-	debug_early_boot_message("riscv: allocate range entry\n");
 #endif
 	TRACE("  VMKernelAddressSpace::_AllocateRange(address: %p, size: %#"
 		B_PRIxSIZE ", addressSpec: %#" B_PRIx32 ", reserved allowed: %d)\n",
@@ -686,7 +676,6 @@ VMKernelAddressSpace::_AllocateRange(
 
 	// find a range
 #if defined(__riscv)
-	debug_early_boot_message("riscv: allocate range find\n");
 #endif
 	Range* range = _FindFreeRange(address, size, alignment,
 		addressRestrictions->address_specification, allowReservedRange,
@@ -696,7 +685,6 @@ VMKernelAddressSpace::_AllocateRange(
 			? B_BAD_VALUE : B_NO_MEMORY;
 	}
 #if defined(__riscv)
-	debug_early_boot_message("riscv: allocate range found\n");
 #endif
 
 	TRACE("  VMKernelAddressSpace::_AllocateRange() found range:(%p (%#"
@@ -732,7 +720,6 @@ VMKernelAddressSpace::_AllocateRange(
 			Range(base, rangeSize, originalRange);
 	};
 #if defined(__riscv)
-	debug_early_boot_message("riscv: allocate range splitter ready\n");
 #endif
 
 	if (address == range->base) {
@@ -740,12 +727,10 @@ VMKernelAddressSpace::_AllocateRange(
 		if (range->size > size) {
 			// only partial -- split the range
 #if defined(__riscv)
-			debug_early_boot_message("riscv: allocate range split start\n");
 #endif
 			Range* leftOverRange = allocateRange(address + size,
 				range->size - size, range);
 #if defined(__riscv)
-			debug_early_boot_message("riscv: allocate range split allocated\n");
 #endif
 			if (leftOverRange == NULL)
 				return B_NO_MEMORY;
@@ -753,13 +738,11 @@ VMKernelAddressSpace::_AllocateRange(
 			range->size = size;
 			_InsertRange(leftOverRange);
 #if defined(__riscv)
-			debug_early_boot_message("riscv: allocate range split inserted\n");
 #endif
 		}
 	} else if (address + size == range->base + range->size) {
 		// allocation at the end of the range -- split the range
 #if defined(__riscv)
-		debug_early_boot_message("riscv: allocate range split end\n");
 #endif
 		Range* leftOverRange = allocateRange(range->base,
 			range->size - size, range);
@@ -772,7 +755,6 @@ VMKernelAddressSpace::_AllocateRange(
 	} else {
 		// allocation in the middle of the range -- split the range in three
 #if defined(__riscv)
-		debug_early_boot_message("riscv: allocate range split middle\n");
 #endif
 		Range* leftOverRange1 = allocateRange(range->base,
 			address - range->base, range);
@@ -798,7 +780,6 @@ VMKernelAddressSpace::_AllocateRange(
 	if (range->type == Range::RANGE_FREE)
 		_FreeListRemoveRange(range, rangeSize);
 #if defined(__riscv)
-	debug_early_boot_message("riscv: allocate range free removed\n");
 #endif
 
 	IncrementChangeCount();

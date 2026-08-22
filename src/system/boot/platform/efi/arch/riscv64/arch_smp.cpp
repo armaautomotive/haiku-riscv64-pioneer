@@ -210,7 +210,10 @@ arch_smp_boot_other_cpus(addr_t satp, uint64 kernel_entry, addr_t virtKernelArgs
 	dprintf("arch_smp_boot_other_cpus(%p, %p)\n", (void*)satp, (void*)kernel_entry);
 
 	arch_cpu_dump_hart();
-	for (uint32 i = 0; i < sCpuCount; i++) {
+	// Only start CPUs that arch_smp_init_other_cpus() enabled. In particular,
+	// the Pioneer bootstrap currently deliberately limits gKernelArgs.num_cpus
+	// to one even though all 64 harts are present in the device tree.
+	for (uint32 i = 0; i < gKernelArgs.num_cpus; i++) {
 		if (sCpus[i].id != gBootHart) {
 			sbiret res;
 			dprintf("  starting CPU %" B_PRIu32 "\n", sCpus[i].id);

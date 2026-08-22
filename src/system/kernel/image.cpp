@@ -85,18 +85,29 @@ static ImageNotificationService sNotificationService;
 static image_id
 register_image(Team *team, extended_image_info *info, size_t size, bool locked)
 {
-	image_id id = atomic_add(&sNextImageID, 1);
+	debug_early_boot_message("riscv: core image id allocate\n");
+	// The boot CPU runs alone until gKernelStartup is cleared, and the RISC-V
+	// atomic and mutex primitives are not usable yet on the Pioneer.
+	image_id id = gKernelStartup ? sNextImageID++
+		: atomic_add(&sNextImageID, 1);
 	struct image *image;
 
+	debug_early_boot_message("riscv: core image struct allocate\n");
 	image = (struct image*)malloc(sizeof(struct image));
+	debug_early_boot_message("riscv: core image struct allocated\n");
 	if (image == NULL)
 		return B_NO_MEMORY;
 
 	memcpy(&image->info, info, sizeof(extended_image_info));
 	image->team = team->id;
+	debug_early_boot_message("riscv: core image metadata copied\n");
 
-	if (!locked)
+	bool lockImageTable = !locked && !gKernelStartup;
+	if (lockImageTable) {
+		debug_early_boot_message("riscv: core image mutex lock\n");
 		mutex_lock(&sImageMutex);
+		debug_early_boot_message("riscv: core image mutex locked\n");
+	}
 
 	image->info.basic_info.id = id;
 
@@ -106,13 +117,22 @@ register_image(Team *team, extended_image_info *info, size_t size, bool locked)
 		team->image_list.Add(image, false);
 	else
 		team->image_list.Add(image);
+	debug_early_boot_message("riscv: core image team linked\n");
 	sImageTable->Insert(image);
+	debug_early_boot_message("riscv: core image table inserted\n");
 
 	// notify listeners
-	sNotificationService.Notify(IMAGE_ADDED, image);
+	debug_early_boot_message("riscv: core image notify\n");
+	// Notification delivery can acquire synchronization primitives and there
+	// cannot be runnable listeners before the scheduler leaves kernel startup.
+	if (!gKernelStartup)
+		sNotificationService.Notify(IMAGE_ADDED, image);
+	debug_early_boot_message("riscv: core image notified\n");
 
-	if (!locked)
+	if (lockImageTable) {
 		mutex_unlock(&sImageMutex);
+		debug_early_boot_message("riscv: core image mutex unlocked\n");
+	}
 
 	TRACE(("register_image(team = %p, image id = %ld, image = %p\n", team, id, image));
 	return id;
@@ -359,26 +379,41 @@ image_iterate_through_team_images(team_id teamID,
 status_t
 image_init(void)
 {
+	debug_early_boot_message("riscv: elf image table allocate\n");
 	sImageTable = new(std::nothrow) ImageTable;
+	debug_early_boot_message("riscv: elf image table allocated\n");
 	if (sImageTable == NULL) {
 		panic("image_init(): Failed to allocate image table!");
 		return B_NO_MEMORY;
 	}
 
+	debug_early_boot_message("riscv: elf image table initialize\n");
 	status_t error = sImageTable->Init();
+	debug_early_boot_message("riscv: elf image table initialized\n");
 	if (error != B_OK) {
 		panic("image_init(): Failed to init image table: %s", strerror(error));
 		return error;
 	}
 
+	debug_early_boot_message("riscv: elf image notification construct\n");
 	new(&sNotificationService) ImageNotificationService();
+	debug_early_boot_message("riscv: elf image notification constructed\n");
 
 	sNotificationService.Register();
+	debug_early_boot_message("riscv: elf image notification registered\n");
 
 #ifdef ADD_DEBUGGER_COMMANDS
+#if defined(__riscv)
+	(void)&dump_images_list;
+	debug_early_boot_message("riscv: elf image debugger command deferred\n");
+#else
+	debug_early_boot_message("riscv: elf image debugger command add\n");
 	add_debugger_command("team_images", &dump_images_list, "Dump all registered images from the current team");
+	debug_early_boot_message("riscv: elf image debugger command added\n");
+#endif
 #endif
 
+	debug_early_boot_message("riscv: elf image init ready\n");
 	return B_OK;
 }
 
@@ -519,4 +554,3 @@ _user_get_next_image_info(team_id team, int32 *_cookie, image_info *userInfo,
 
 	return status;
 }
-

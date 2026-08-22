@@ -511,7 +511,32 @@ NotificationManager::RegisterService(NotificationService& service)
 {
 	debug_early_boot_message("riscv: notification register entry\n");
 	debug_early_boot_message("riscv: notification register lock\n");
-	MutexLocker _(fLock);
+#if defined(__riscv)
+	// The first service is registered while kernel startup is still
+	// single-threaded. Avoid constructing a MutexLocker at all in this path:
+	// even an unattached locker's cleanup is not safe this early on SG2042.
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		debug_early_boot_message("riscv: notification register bootstrap unlocked\n");
+		debug_early_boot_message("riscv: notification register lookup\n");
+		if (_ServiceFor(service.Name()))
+			return B_NAME_IN_USE;
+		debug_early_boot_message("riscv: notification register lookup done\n");
+
+		debug_early_boot_message("riscv: notification register insert\n");
+		status_t status = fServiceHash.Insert(&service);
+		debug_early_boot_message("riscv: notification register inserted\n");
+		if (status == B_OK) {
+			debug_early_boot_message("riscv: notification register acquire ref\n");
+			service.AcquireReferenceBootstrap();
+			debug_early_boot_message("riscv: notification register ref acquired\n");
+		}
+		debug_early_boot_message("riscv: notification register bootstrap return\n");
+		return status;
+	}
+#endif
+	MutexLocker locker(fLock);
 	debug_early_boot_message("riscv: notification register locked\n");
 
 	debug_early_boot_message("riscv: notification register lookup\n");

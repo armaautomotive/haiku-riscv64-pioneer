@@ -510,24 +510,18 @@ vm_cache_init(kernel_args* args)
 	const uint32 bootstrapFlags = args->num_cpus == 1 ? CACHE_DURING_BOOT : 0;
 	gCacheRefObjectCache = create_object_cache("cache refs", sizeof(VMCacheRef),
 		bootstrapFlags);
-	debug_early_boot_message("riscv: vm cache refs\n");
 #if ENABLE_SWAP_SUPPORT
 	gAnonymousCacheObjectCache = create_object_cache("anon caches",
 		sizeof(VMAnonymousCache), bootstrapFlags);
-	debug_early_boot_message("riscv: vm cache anon\n");
 #endif
 	gAnonymousNoSwapCacheObjectCache = create_object_cache(
 		"anon no-swap caches", sizeof(VMAnonymousNoSwapCache), bootstrapFlags);
-	debug_early_boot_message("riscv: vm cache anon no-swap\n");
 	gVnodeCacheObjectCache = create_object_cache("vnode caches",
 		sizeof(VMVnodeCache), bootstrapFlags);
-	debug_early_boot_message("riscv: vm cache vnode\n");
 	gDeviceCacheObjectCache = create_object_cache("device caches",
 		sizeof(VMDeviceCache), bootstrapFlags);
-	debug_early_boot_message("riscv: vm cache device\n");
 	gNullCacheObjectCache = create_object_cache("null caches",
 		sizeof(VMNullCache), bootstrapFlags);
-	debug_early_boot_message("riscv: vm cache null\n");
 
 	if (gCacheRefObjectCache == NULL
 #if ENABLE_SWAP_SUPPORT
@@ -641,7 +635,6 @@ status_t
 VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 {
 #if defined(__riscv)
-	debug_early_boot_message("riscv: base cache init entry\n");
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	const bool bootstrap = *kernelStartup;
@@ -652,7 +645,6 @@ VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 		directMutexInit(&fLock, name);
 	} else
 		mutex_init(&fLock, name);
-	debug_early_boot_message("riscv: base cache mutex done\n");
 #else
 	mutex_init(&fLock, name);
 #endif
@@ -687,7 +679,6 @@ VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 			fCacheRef->cache = this;
 	} else
 		fCacheRef = new(gCacheRefObjectCache, allocationFlags) VMCacheRef(this);
-	debug_early_boot_message("riscv: base cache ref allocated\n");
 #else
 	fCacheRef = new(gCacheRefObjectCache, allocationFlags) VMCacheRef(this);
 #endif
@@ -710,7 +701,6 @@ VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 #if defined(__riscv)
 	if (!bootstrap)
 		rw_lock_write_unlock(&sCacheListLock);
-	debug_early_boot_message("riscv: base cache debug list done\n");
 #else
 	rw_lock_write_unlock(&sCacheListLock);
 #endif
@@ -896,9 +886,6 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 #if defined(__riscv)
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
-	bool bootstrapFirstPage = *kernelStartup && page_count == 0;
-	if (bootstrapFirstPage)
-		debug_early_boot_message("riscv: cache insert page entry\n");
 	if (!*kernelStartup) {
 		T2(InsertPage(this, page, offset));
 	}
@@ -909,11 +896,6 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 	AssertLocked();
 #endif
 	ASSERT(offset >= virtual_base && offset < virtual_end);
-#if defined(__riscv)
-	if (bootstrapFirstPage)
-		debug_early_boot_message("riscv: cache insert page checked\n");
-#endif
-
 	if (page->CacheRef() != NULL) {
 		panic("insert page %p into cache %p: page cache is set to %p\n",
 			page, this, page->Cache());
@@ -922,11 +904,6 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 	page->cache_offset = (page_num_t)(offset >> PAGE_SHIFT);
 	page_count++;
 	page->SetCacheRef(fCacheRef);
-#if defined(__riscv)
-	if (bootstrapFirstPage)
-		debug_early_boot_message("riscv: cache insert page referenced\n");
-#endif
-
 #if KDEBUG
 	vm_page* otherPage = pages.Lookup(page->cache_offset);
 	if (otherPage != NULL) {
@@ -937,11 +914,6 @@ VMCache::InsertPage(vm_page* page, off_t offset)
 #endif	// KDEBUG
 
 	pages.Insert(page);
-#if defined(__riscv)
-	if (bootstrapFirstPage)
-		debug_early_boot_message("riscv: cache insert page tree done\n");
-#endif
-
 	if (page->WiredCount() > 0)
 		IncrementWiredPagesCount();
 }
@@ -1129,7 +1101,6 @@ VMCache::InsertAreaLocked(VMArea* area)
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	if (!*kernelStartup)
 		AssertLocked();
-	debug_early_boot_message("riscv: cache area lock asserted\n");
 #else
 	AssertLocked();
 #endif
@@ -1141,7 +1112,6 @@ VMCache::InsertAreaLocked(VMArea* area)
 	// kernel has applied dynamic relocations.
 	if (!*kernelStartup)
 		AcquireStoreRef();
-	debug_early_boot_message("riscv: cache area inserted\n");
 #else
 	AcquireStoreRef();
 #endif
@@ -1791,7 +1761,6 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 	int priority)
 {
 #if defined(__riscv)
-	debug_early_boot_message("riscv: cache factory entry\n");
 #endif
 	uint32 allocationFlags = HEAP_DONT_WAIT_FOR_MEMORY
 		| HEAP_DONT_LOCK_KERNEL_SPACE;
@@ -1820,7 +1789,6 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 #endif
 
 #if defined(__riscv)
-	debug_early_boot_message("riscv: cache factory no-swap alloc\n");
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
 	const bool bootstrap = *kernelStartup;
@@ -1860,7 +1828,6 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 	if (cache == NULL)
 		return B_NO_MEMORY;
 #if defined(__riscv)
-	debug_early_boot_message("riscv: cache factory no-swap allocated\n");
 #endif
 
 #if defined(__riscv)
@@ -1882,7 +1849,6 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 		numGuardPages, allocationFlags);
 #endif
 #if defined(__riscv)
-	debug_early_boot_message("riscv: cache factory no-swap initialized\n");
 #endif
 	if (error != B_OK) {
 		cache->Delete();
@@ -1951,7 +1917,6 @@ VMCacheFactory::CreateDeviceCache(VMCache*& _cache, addr_t baseAddress)
 VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 {
 #if defined(__riscv)
-	debug_early_boot_message("riscv: null cache entry\n");
 #endif
 	uint32 allocationFlags = HEAP_DONT_WAIT_FOR_MEMORY
 		| HEAP_DONT_LOCK_KERNEL_SPACE;
@@ -1989,7 +1954,6 @@ VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 		= new(gNullCacheObjectCache, allocationFlags) VMNullCache;
 #endif
 #if defined(__riscv)
-	debug_early_boot_message("riscv: null cache allocated\n");
 #endif
 	if (cache == NULL)
 		return B_NO_MEMORY;
@@ -2007,7 +1971,6 @@ VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 	status_t error = cache->Init(allocationFlags);
 #endif
 #if defined(__riscv)
-	debug_early_boot_message("riscv: null cache initialized\n");
 #endif
 	if (error != B_OK) {
 		cache->Delete();
@@ -2018,7 +1981,6 @@ VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 
 	_cache = cache;
 #if defined(__riscv)
-	debug_early_boot_message("riscv: null cache done\n");
 #endif
 	return B_OK;
 }
