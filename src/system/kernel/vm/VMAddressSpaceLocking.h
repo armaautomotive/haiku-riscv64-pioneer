@@ -67,7 +67,8 @@ public:
 			status_t			SetFromArea(team_id team, area_id areaID,
 									VMArea*& area);
 
-			bool				IsLocked() const { return fLocked; }
+			bool				IsLocked() const
+									{ return fLocked || fBorrowedReference; }
 			void				Unlock();
 
 			void				DegradeToReadLock();

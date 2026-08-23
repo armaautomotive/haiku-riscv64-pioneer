@@ -14,6 +14,7 @@
 #include <kscheduler.h>
 #include <ksignal.h>
 #include <interrupts.h>
+#include <kernel.h>
 #include <listeners.h>
 #include <scheduling_analysis.h>
 #include <thread.h>
@@ -529,22 +530,30 @@ dump_condition_variable(int argc, char** argv)
 void
 condition_variable_init()
 {
+	debug_early_boot_message("riscv: condition variable hash construct\n");
 	new(&sConditionVariableHash) ConditionVariableHash;
+	debug_early_boot_message("riscv: condition variable hash init\n");
 
 	status_t error = sConditionVariableHash.Init(kConditionVariableHashSize);
 	if (error != B_OK) {
 		panic("condition_variable_init(): Failed to init hash table: %s",
 			strerror(error));
 	}
+	debug_early_boot_message("riscv: condition variable hash ready\n");
 
-	add_debugger_command_etc("cvar", &dump_condition_variable,
-		"Dump condition variable info",
-		"<address>\n"
-		"Prints info for the specified condition variable.\n"
-		"  <address>  - Address of the condition variable or the object it is\n"
-		"               associated with.\n", 0);
-	add_debugger_command_etc("cvars", &list_condition_variables,
-		"List condition variables",
-		"\n"
-		"Lists all published condition variables\n", 0);
+	if (!gKernelStartup) {
+		add_debugger_command_etc("cvar", &dump_condition_variable,
+			"Dump condition variable info",
+			"<address>\n"
+			"Prints info for the specified condition variable.\n"
+			"  <address>  - Address of the condition variable or the object it is\n"
+			"               associated with.\n", 0);
+		add_debugger_command_etc("cvars", &list_condition_variables,
+			"List condition variables",
+			"\n"
+			"Lists all published condition variables\n", 0);
+	} else {
+		debug_early_boot_message(
+			"riscv: condition variable debugger commands deferred\n");
+	}
 }

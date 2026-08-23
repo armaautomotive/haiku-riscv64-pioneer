@@ -491,49 +491,66 @@ RISCV64VMTranslationMap::QueryInterrupt(addr_t virtualAddress,
 status_t RISCV64VMTranslationMap::Protect(addr_t base, addr_t top,
 	uint32 attributes, uint32 memoryType)
 {
-	TRACE("RISCV64VMTranslationMap::Protect(0x%" B_PRIxADDR ", 0x%"
-		B_PRIxADDR ")\n", base, top);
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	const bool bootstrap = *kernelStartup;
 
-	ThreadCPUPinner pinner(thread_get_current_thread());
+	auto protect = [&]() -> status_t {
+		for (addr_t page = base; page < top; page += B_PAGE_SIZE) {
 
-	for (addr_t page = base; page < top; page += B_PAGE_SIZE) {
-
-		std::atomic<Pte>* pte = LookupPte(page, false, NULL);
-		if (pte == NULL || !pte->load().isValid) {
-			TRACE("attempt to protect not mapped page: 0x%"
-				B_PRIxADDR "\n", page);
-			continue;
-		}
-
-		Pte oldPte {};
-		Pte newPte {};
-		while (true) {
-			oldPte = pte->load();
-
-			newPte = oldPte;
-			if ((attributes & B_USER_PROTECTION) != 0) {
-				newPte.isUser = true;
-				newPte.isRead  = (attributes & B_READ_AREA)    != 0;
-				newPte.isWrite = (attributes & B_WRITE_AREA)   != 0;
-				newPte.isExec  = (attributes & B_EXECUTE_AREA) != 0;
-			} else {
-				newPte.isUser = false;
-				newPte.isRead  = (attributes & B_KERNEL_READ_AREA)    != 0;
-				newPte.isWrite = (attributes & B_KERNEL_WRITE_AREA)   != 0;
-				newPte.isExec  = (attributes & B_KERNEL_EXECUTE_AREA) != 0;
+			std::atomic<Pte>* pte = LookupPte(page, false, NULL);
+			if (pte == NULL || !pte->load().isValid) {
+				TRACE("attempt to protect not mapped page: 0x%"
+					B_PRIxADDR "\n", page);
+				continue;
 			}
 
-			if (pte->compare_exchange_strong(oldPte, newPte))
-				break;
+			const bool user = (attributes & B_USER_PROTECTION) != 0;
+			const bool read = (attributes
+				& (user ? B_READ_AREA : B_KERNEL_READ_AREA)) != 0;
+			const bool write = (attributes
+				& (user ? B_WRITE_AREA : B_KERNEL_WRITE_AREA)) != 0;
+			const bool execute = (attributes
+				& (user ? B_EXECUTE_AREA : B_KERNEL_EXECUTE_AREA)) != 0;
+			auto setProtection = [&](Pte& value) {
+				value.isUser = user;
+				value.isRead = read;
+				value.isWrite = write;
+				value.isExec = execute;
+			};
+
+			Pte oldPte = pte->load();
+			Pte newPte = oldPte;
+			setProtection(newPte);
+
+			if (bootstrap)
+				pte->store(newPte);
+			else {
+				while (!pte->compare_exchange_strong(oldPte, newPte)) {
+					newPte = oldPte;
+					setProtection(newPte);
+				}
+			}
+
+			fInvalidCode = newPte.isExec;
+
+			if (oldPte.isAccessed) {
+				if (bootstrap)
+					FlushTlbPage(page);
+				else
+					InvalidatePage(page);
+			}
 		}
+		return B_OK;
+	};
 
-		fInvalidCode = newPte.isExec;
+	if (bootstrap)
+		return protect();
 
-		if (oldPte.isAccessed)
-			InvalidatePage(page);
-	}
-
-	return B_OK;
+	TRACE("RISCV64VMTranslationMap::Protect(0x%" B_PRIxADDR ", 0x%"
+		B_PRIxADDR ")\n", base, top);
+	ThreadCPUPinner pinner(thread_get_current_thread());
+	return protect();
 }
 
 

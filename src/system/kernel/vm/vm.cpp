@@ -2277,19 +2277,35 @@ vm_map_physical_memory(team_id team, const char* name, void** _address,
 	VMArea* area;
 	VMCache* cache;
 	addr_t mapOffset;
+	bool bootstrap = false;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bootstrap = *kernelStartup;
+#endif
 
-	TRACE(("vm_map_physical_memory(aspace = %" B_PRId32 ", \"%s\", virtual = %p"
-		", spec = %" B_PRIu32 ", size = %" B_PRIxADDR ", protection = %"
-		B_PRIu32 ", phys = %#" B_PRIxPHYSADDR ")\n", team, name, *_address,
-		addressSpec, size, protection, physicalAddress));
+	if (!bootstrap) {
+		TRACE(("vm_map_physical_memory(aspace = %" B_PRId32 ", \"%s\", virtual = %p"
+			", spec = %" B_PRIu32 ", size = %" B_PRIxADDR ", protection = %"
+			B_PRIu32 ", phys = %#" B_PRIxPHYSADDR ")\n", team, name, *_address,
+			addressSpec, size, protection, physicalAddress));
+	}
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical protection start\n");
 
 	status_t status = check_protection(team, &protection);
 	if (status != B_OK)
 		return status;
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical protection done\n");
 
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical aspace start\n");
 	AddressSpaceWriteLocker locker(team);
 	if (!locker.IsLocked())
 		return B_BAD_TEAM_ID;
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical aspace done\n");
 
 	// if the physical address is somewhat inside a page,
 	// move the actual area down to align on a page boundary
@@ -2300,25 +2316,55 @@ vm_map_physical_memory(team_id team, const char* name, void** _address,
 	size = PAGE_ALIGN(size);
 
 	// create a device cache
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical cache create start\n");
 	status = VMCacheFactory::CreateDeviceCache(cache, physicalAddress);
 	if (status != B_OK)
 		return status;
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical cache create done\n");
 
 	cache->virtual_end = size;
 
-	cache->Lock();
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical cache lock start\n");
+#if defined(__riscv)
+	if (bootstrap) {
+		typedef bool (*lock_cache_bootstrap_func)(VMCache*);
+		lock_cache_bootstrap_func directLockCacheBootstrap;
+		asm volatile("lla %0, _ZN7VMCache13LockBootstrapEv"
+			: "=r"(directLockCacheBootstrap));
+		directLockCacheBootstrap(cache);
+	} else
+#endif
+		cache->Lock();
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical cache lock done\n");
 
 	virtual_address_restrictions addressRestrictions = {};
 	addressRestrictions.address = *_address;
 	addressRestrictions.address_specification = addressSpec & ~B_MEMORY_TYPE_MASK;
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical area start\n");
 	status = vm_map_cache(locker.AddressSpace(), cache, 0, name, size,
 		B_FULL_LOCK, protection, 0, REGION_NO_PRIVATE_MAP, CREATE_AREA_DONT_COMMIT_MEMORY,
 		&addressRestrictions, true, &area, _address);
+	if (bootstrap)
+		debug_early_boot_message("riscv: map physical area done\n");
 
 	if (status < B_OK)
 		cache->ReleaseRefLocked();
 
-	cache->Unlock();
+#if defined(__riscv)
+	if (bootstrap) {
+		typedef void (*unlock_cache_bootstrap_func)(VMCache*);
+		unlock_cache_bootstrap_func directUnlockCacheBootstrap;
+		asm volatile("lla %0, _ZN7VMCache15UnlockBootstrapEv"
+			: "=r"(directUnlockCacheBootstrap));
+		directUnlockCacheBootstrap(cache);
+	} else
+#endif
+		cache->Unlock();
 
 	if (status == B_OK) {
 		// Set requested memory type -- default to uncached, but allow
@@ -2328,8 +2374,12 @@ vm_map_physical_memory(team_id team, const char* name, void** _address,
 		if (weak)
 			memoryType = B_UNCACHED_MEMORY;
 
+		if (bootstrap)
+			debug_early_boot_message("riscv: map physical memory type start\n");
 		status = arch_vm_set_memory_type(area, physicalAddress, memoryType,
 			weak ? &memoryType : NULL);
+		if (bootstrap)
+			debug_early_boot_message("riscv: map physical memory type done\n");
 
 		area->SetMemoryType(memoryType);
 
@@ -2345,9 +2395,27 @@ vm_map_physical_memory(team_id team, const char* name, void** _address,
 	if (alreadyWired) {
 		// The area is already mapped, but possibly not with the right
 		// memory type.
-		map->Lock();
-		map->ProtectArea(area, area->protection);
-		map->Unlock();
+		if (bootstrap)
+			debug_early_boot_message("riscv: map physical protect start\n");
+#if defined(__riscv)
+		if (bootstrap) {
+			typedef status_t (*protect_translation_func)(VMTranslationMap*,
+				addr_t, addr_t, uint32, uint32);
+			protect_translation_func directProtect;
+			asm volatile("lla %0, _ZN23RISCV64VMTranslationMap7ProtectEmmjj"
+				: "=r"(directProtect));
+			directProtect(map, area->Base(), area->Base() + area->Size() - 1,
+				area->protection, area->MemoryType());
+		} else {
+#endif
+			map->Lock();
+			map->ProtectArea(area, area->protection);
+			map->Unlock();
+#if defined(__riscv)
+		}
+#endif
+		if (bootstrap)
+			debug_early_boot_message("riscv: map physical protect done\n");
 	} else {
 		// Map the area completely.
 
@@ -3647,18 +3715,48 @@ vm_set_area_protection(area_id areaID, uint32 newProtection,
 status_t
 vm_get_page_mapping(team_id team, addr_t vaddr, phys_addr_t* paddr)
 {
+	bool bootstrap = false;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bootstrap = *kernelStartup && team == VMAddressSpace::KernelID();
+	if (bootstrap)
+		debug_early_boot_message("riscv: get page mapping aspace start\n");
+#endif
 	VMAddressSpace* addressSpace = VMAddressSpace::Get(team);
 	if (addressSpace == NULL)
 		return B_BAD_TEAM_ID;
+#if defined(__riscv)
+	if (bootstrap)
+		debug_early_boot_message("riscv: get page mapping aspace done\n");
+#endif
 
 	VMTranslationMap* map = addressSpace->TranslationMap();
 
-	map->Lock();
+	if (!bootstrap)
+		map->Lock();
 	uint32 dummyFlags;
-	status_t status = map->Query(vaddr, paddr, &dummyFlags);
-	map->Unlock();
+	status_t status;
+#if defined(__riscv)
+	if (bootstrap) {
+		debug_early_boot_message("riscv: get page mapping query start\n");
+		typedef status_t (*query_translation_func)(VMTranslationMap*, addr_t,
+			phys_addr_t*, uint32*);
+		query_translation_func directQuery;
+		asm volatile("lla %0, _ZN23RISCV64VMTranslationMap5QueryEmPmPj"
+			: "=r"(directQuery));
+		status = directQuery(map, vaddr, paddr, &dummyFlags);
+		debug_early_boot_message("riscv: get page mapping query done\n");
+	} else
+#endif
+		status = map->Query(vaddr, paddr, &dummyFlags);
+	if (!bootstrap)
+		map->Unlock();
 
-	addressSpace->Put();
+	if (bootstrap)
+		addressSpace->PutBootstrap();
+	else
+		addressSpace->Put();
 	return status;
 }
 
@@ -4052,17 +4150,27 @@ vm_init_post_sem(kernel_args* args)
 {
 	// This frees all unused boot loader resources and makes its space available
 	// again
+	debug_early_boot_message("riscv: vm post sem arch end start\n");
 	arch_vm_init_end(args);
+	debug_early_boot_message("riscv: vm post sem arch end done\n");
+	debug_early_boot_message("riscv: vm post sem unreserve start\n");
 	unreserve_boot_loader_ranges(args);
+	debug_early_boot_message("riscv: vm post sem unreserve done\n");
 
 	// fill in all of the semaphores that were not allocated before
 	// since we're still single threaded and only the kernel address space
 	// exists, it isn't that hard to find all of the ones we need to create
 
+	debug_early_boot_message("riscv: vm post sem translation map start\n");
 	arch_vm_translation_map_init_post_sem(args);
+	debug_early_boot_message("riscv: vm post sem translation map done\n");
 
+	debug_early_boot_message("riscv: vm post sem slab start\n");
 	slab_init_post_sem();
+	debug_early_boot_message("riscv: vm post sem slab done\n");
+	debug_early_boot_message("riscv: vm post sem heap start\n");
 	heap_init_post_sem();
+	debug_early_boot_message("riscv: vm post sem heap done\n");
 
 	return B_OK;
 }

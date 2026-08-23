@@ -124,6 +124,15 @@ VMAddressSpace::GetBootstrap()
 }
 
 
+void
+VMAddressSpace::PutBootstrap()
+{
+	// Kernel address spaces cannot disappear during the single-CPU bootstrap.
+	// Balance GetBootstrap() without entering the normal atomic helper.
+	fRefCount--;
+}
+
+
 /*static*/ status_t
 VMAddressSpace::Init()
 {
@@ -301,8 +310,12 @@ VMAddressSpace::Get(team_id teamID)
 	if (!bootstrap)
 		rw_lock_read_lock(&sAddressSpaceTableLock);
 	VMAddressSpace* addressSpace = sAddressSpaceTable.Lookup(teamID);
-	if (addressSpace)
-		addressSpace->Get();
+	if (addressSpace) {
+		if (bootstrap)
+			addressSpace->GetBootstrap();
+		else
+			addressSpace->Get();
+	}
 	if (!bootstrap)
 		rw_lock_read_unlock(&sAddressSpaceTableLock);
 

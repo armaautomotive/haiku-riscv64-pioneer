@@ -1895,14 +1895,35 @@ VMCacheFactory::CreateDeviceCache(VMCache*& _cache, addr_t baseAddress)
 		| HEAP_DONT_LOCK_KERNEL_SPACE;
 		// Note: Device cache creation is never VIP.
 
-	VMDeviceCache* cache
-		= new(gDeviceCacheObjectCache, allocationFlags) VMDeviceCache;
+	VMDeviceCache* cache;
+	bool bootstrap = false;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bootstrap = *kernelStartup;
+	if (bootstrap) {
+		debug_early_boot_message("riscv: device cache early allocate start\n");
+		typedef void* (*block_alloc_early_func)(size_t);
+		block_alloc_early_func directBlockAllocEarly;
+		asm volatile("lla %0, _Z17block_alloc_earlym"
+			: "=r"(directBlockAllocEarly));
+		void* storage = directBlockAllocEarly(sizeof(VMDeviceCache));
+		cache = storage != NULL ? new(storage) VMDeviceCache : NULL;
+		debug_early_boot_message("riscv: device cache early allocate done\n");
+	} else
+#endif
+		cache = new(gDeviceCacheObjectCache, allocationFlags) VMDeviceCache;
 	if (cache == NULL)
 		return B_NO_MEMORY;
 
+	if (bootstrap)
+		debug_early_boot_message("riscv: device cache init start\n");
 	status_t error = cache->Init(baseAddress, allocationFlags);
+	if (bootstrap)
+		debug_early_boot_message("riscv: device cache init done\n");
 	if (error != B_OK) {
-		cache->Delete();
+		if (!bootstrap)
+			cache->Delete();
 		return error;
 	}
 

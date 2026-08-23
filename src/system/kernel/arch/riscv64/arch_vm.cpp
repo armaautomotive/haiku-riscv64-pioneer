@@ -9,6 +9,7 @@
 #include <vm/VMAddressSpace.h>
 #include <arch/vm.h>
 #include <boot/kernel_args.h>
+#include <kernel.h>
 
 #include "RISCV64VMTranslationMap.h"
 
@@ -308,26 +309,40 @@ arch_vm_init_post_modules(kernel_args *args)
 status_t
 arch_vm_init_end(kernel_args *args)
 {
-	TRACE(("arch_vm_init_end(): %" B_PRIu32 " virtual ranges to keep:\n",
-		args->arch_args.num_virtual_ranges_to_keep));
+	// Formatted dprintf() calls are not safe while the RISC-V kernel is still
+	// using its early dynamic-call state.
+	if (!gKernelStartup) {
+		TRACE(("arch_vm_init_end(): %" B_PRIu32 " virtual ranges to keep:\n",
+			args->arch_args.num_virtual_ranges_to_keep));
+	}
+	debug_early_boot_message("riscv: arch vm end ranges start\n");
 
 	for (int i = 0; i < (int)args->arch_args.num_virtual_ranges_to_keep; i++) {
 		addr_range &range = args->arch_args.virtual_ranges_to_keep[i];
 
-		TRACE(("  start: %p, size: %#" B_PRIxSIZE "\n", (void*)range.start, range.size));
+		if (!gKernelStartup) {
+			TRACE(("  start: %p, size: %#" B_PRIxSIZE "\n", (void*)range.start,
+				range.size));
+		}
+		debug_early_boot_message("riscv: arch vm end range\n");
 
 #if 1
 		// skip ranges outside the kernel address space
 		if (!IS_KERNEL_ADDRESS(range.start)) {
-			TRACE(("    no kernel address, skipping...\n"));
+			if (!gKernelStartup)
+				TRACE(("    no kernel address, skipping...\n"));
+			debug_early_boot_message("riscv: arch vm end range skipped\n");
 			continue;
 		}
 
 		phys_addr_t physicalAddress;
 		void *address = (void*)range.start;
+		debug_early_boot_message("riscv: arch vm end lookup start\n");
 		if (vm_get_page_mapping(VMAddressSpace::KernelID(), range.start,
 				&physicalAddress) != B_OK)
 			panic("arch_vm_init_end(): No page mapping for %p\n", address);
+		debug_early_boot_message("riscv: arch vm end lookup done\n");
+		debug_early_boot_message("riscv: arch vm end map start\n");
 		area_id area = vm_map_physical_memory(VMAddressSpace::KernelID(),
 			"boot loader reserved area", &address,
 			B_EXACT_ADDRESS, range.size,
@@ -338,8 +353,10 @@ arch_vm_init_end(kernel_args *args)
 				"reserved area: %p - %p\n", (void*)range.start,
 				(void*)(range.start + range.size));
 		}
+		debug_early_boot_message("riscv: arch vm end map done\n");
 #endif
 	}
+	debug_early_boot_message("riscv: arch vm end ranges done\n");
 
 #if 0
 	// Throw away any address space mappings we've inherited from the boot
