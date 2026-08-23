@@ -94,9 +94,19 @@ block_alloc(size_t size, size_t alignment, uint32 flags)
 #if defined(__riscv)
 	// The Pioneer bootstrap is deliberately single-hart until the normal
 	// allocator and scheduler paths are fully initialized. Avoid re-entering
-	// object-cache locks from early VM setup.
-	if (gKernelStartup && alignment <= kMinObjectAlignment)
-		return block_alloc_early(size);
+	// object-cache locks from early VM setup. Cache-line-aligned scheduler
+	// objects also reach this path before threads exist, so satisfy their
+	// alignment directly from the never-freed bootstrap arena.
+	if (gKernelStartup) {
+		if (alignment <= kMinObjectAlignment)
+			return block_alloc_early(size);
+
+		ASSERT((alignment & (alignment - 1)) == 0);
+		void* allocation = block_alloc_early(size + alignment - 1);
+		if (allocation == NULL)
+			return NULL;
+		return (void*)ROUNDUP((addr_t)allocation, alignment);
+	}
 #endif
 
 	if (alignment > kMinObjectAlignment) {

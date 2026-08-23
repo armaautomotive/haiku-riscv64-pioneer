@@ -485,7 +485,28 @@ register_low_resource_handler(low_resource_func function, void* data,
 	TRACE(("register_low_resource_handler(function = %p, data = %p)\n",
 		function, data));
 
-	low_resource_handler *newHandler = new(std::nothrow) low_resource_handler;
+	bool bootstrap = false;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bootstrap = *kernelStartup;
+#endif
+
+	low_resource_handler* newHandler;
+#if defined(__riscv)
+	if (bootstrap) {
+		debug_early_boot_message("riscv: low resource handler early allocate start\n");
+		typedef void* (*block_alloc_early_func)(size_t);
+		block_alloc_early_func directBlockAllocEarly;
+		asm volatile("lla %0, _Z17block_alloc_earlym"
+			: "=r"(directBlockAllocEarly));
+		void* storage = directBlockAllocEarly(sizeof(low_resource_handler));
+		newHandler = storage != NULL
+			? new(storage) low_resource_handler : NULL;
+		debug_early_boot_message("riscv: low resource handler early allocate done\n");
+	} else
+#endif
+		newHandler = new(std::nothrow) low_resource_handler;
 	if (newHandler == NULL)
 		return B_NO_MEMORY;
 
@@ -494,23 +515,32 @@ register_low_resource_handler(low_resource_func function, void* data,
 	newHandler->resources = resources;
 	newHandler->priority = priority;
 
-	RecursiveLocker locker(&sLowResourceLock);
+	auto insertHandler = [&]() {
+		// Sort it in after priority (higher priority comes first).
+		HandlerList::ReverseIterator iterator
+			= sLowResourceHandlers.GetReverseIterator();
+		low_resource_handler* last = NULL;
+		while (iterator.HasNext()) {
+			low_resource_handler* handler = iterator.Next();
 
-	// sort it in after priority (higher priority comes first)
-
-	HandlerList::ReverseIterator iterator
-		= sLowResourceHandlers.GetReverseIterator();
-	low_resource_handler* last = NULL;
-	while (iterator.HasNext()) {
-		low_resource_handler *handler = iterator.Next();
-
-		if (handler->priority >= priority) {
-			sLowResourceHandlers.InsertBefore(last, newHandler);
-			return B_OK;
+			if (handler->priority >= priority) {
+				sLowResourceHandlers.InsertBefore(last, newHandler);
+				return;
+			}
+			last = handler;
 		}
-		last = handler;
+
+		sLowResourceHandlers.Add(newHandler, false);
+	};
+
+	if (bootstrap) {
+		debug_early_boot_message("riscv: low resource handler insert start\n");
+		insertHandler();
+		debug_early_boot_message("riscv: low resource handler insert done\n");
+		return B_OK;
 	}
 
-	sLowResourceHandlers.Add(newHandler, false);
+	RecursiveLocker locker(&sLowResourceLock);
+	insertHandler();
 	return B_OK;
 }

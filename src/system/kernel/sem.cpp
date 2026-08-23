@@ -494,7 +494,14 @@ create_sem_etc(int32 count, const char* name, team_id owner)
 		name = "unnamed semaphore";
 
 	// get the owning team
-	Team* team = Team::Get(owner);
+	Team* team;
+#if defined(__riscv)
+	if (gKernelStartup && owner == team_get_kernel_team_id()) {
+		team = team_get_kernel_team();
+		team->AcquireReference();
+	} else
+#endif
+		team = Team::Get(owner);
 	if (team == NULL)
 		return B_BAD_TEAM_ID;
 	BReference<Team> teamReference(team, true);
@@ -508,46 +515,56 @@ create_sem_etc(int32 count, const char* name, team_id owner)
 
 	strlcpy(tempName, name, nameLength);
 
-	InterruptsSpinLocker _(&sSemsSpinlock);
+	auto allocateSemaphore = [&]() -> sem_id {
+		// get the first slot from the free list
+		struct sem_entry* sem = sFreeSemsHead;
+		sem_id id = B_NO_MORE_SEMS;
+		if (sem != NULL) {
+			// remove it from the free list
+			sFreeSemsHead = sem->u.unused.next;
+			if (!sFreeSemsHead)
+				sFreeSemsTail = NULL;
 
-	// get the first slot from the free list
-	struct sem_entry* sem = sFreeSemsHead;
-	sem_id id = B_NO_MORE_SEMS;
-	if (sem != NULL) {
-		// remove it from the free list
-		sFreeSemsHead = sem->u.unused.next;
-		if (!sFreeSemsHead)
-			sFreeSemsTail = NULL;
+			// init the slot
+			SpinLocker semLocker(sem->lock);
+			sem->id = sem->u.unused.next_id;
+			sem->u.used.count = count;
+			sem->u.used.net_count = count;
+			new(&sem->queue) ThreadQueue;
+			sem->u.used.name = tempName;
+			sem->u.used.owner = team->id;
+			sem->u.used.select_infos = NULL;
+			id = sem->id;
 
-		// init the slot
-		SpinLocker semLocker(sem->lock);
-		sem->id = sem->u.unused.next_id;
-		sem->u.used.count = count;
-		sem->u.used.net_count = count;
-		new(&sem->queue) ThreadQueue;
-		sem->u.used.name = tempName;
-		sem->u.used.owner = team->id;
-		sem->u.used.select_infos = NULL;
-		id = sem->id;
+			list_add_item(&team->sem_list, &sem->u.used.team_link);
 
-		list_add_item(&team->sem_list, &sem->u.used.team_link);
+			semLocker.Unlock();
 
-		semLocker.Unlock();
+			atomic_add(&sUsedSems, 1);
 
-		atomic_add(&sUsedSems, 1);
+			KTRACE("create_sem_etc(count: %ld, name: %s, owner: %ld) -> %ld",
+				count, name, owner, id);
 
-		KTRACE("create_sem_etc(count: %ld, name: %s, owner: %ld) -> %ld",
-			count, name, owner, id);
+			T_SCHEDULING_ANALYSIS(CreateSemaphore(id, name));
+			NotifyWaitObjectListeners(&WaitObjectListener::SemaphoreCreated, id,
+				name);
+		} else
+			free(tempName);
 
-		T_SCHEDULING_ANALYSIS(CreateSemaphore(id, name));
-		NotifyWaitObjectListeners(&WaitObjectListener::SemaphoreCreated, id,
-			name);
+		return id;
+	};
+
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// The boot CPU is the only active hart. Keep the free-list spinlock,
+		// but do not restore interrupts before the architecture path is ready.
+		SpinLocker locker(sSemsSpinlock);
+		return allocateSemaphore();
 	}
+#endif
 
-	if (sem == NULL)
-		free(tempName);
-
-	return id;
+	InterruptsSpinLocker locker(&sSemsSpinlock);
+	return allocateSemaphore();
 }
 
 

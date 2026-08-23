@@ -33,6 +33,7 @@
 #include <condition_variable.h>
 #include <cpu.h>
 #include <interrupts.h>
+#include <kernel.h>
 #include <kimage.h>
 #include <kscheduler.h>
 #include <ksignal.h>
@@ -298,23 +299,47 @@ Thread::Thread(const char* name, thread_id threadID, struct cpu_ent* cpu)
 	post_interrupt_callback(NULL),
 	post_interrupt_data(NULL)
 {
+	bool traceBootstrap = false;
+#if defined(__riscv)
+	traceBootstrap = gKernelStartup && threadID >= 0;
+#endif
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor body start\n");
 	id = threadID >= 0 ? threadID : allocate_thread_id();
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor id done\n");
 	visible = false;
 
 	// init locks
 	char lockName[32];
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor lock name start\n");
 	snprintf(lockName, sizeof(lockName), "Thread:%" B_PRId32, id);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor lock name done\n");
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor mutex start\n");
 	mutex_init_etc(&fLock, lockName, MUTEX_FLAG_CLONE_NAME);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor mutex done\n");
 
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor spinlocks start\n");
 	B_INITIALIZE_SPINLOCK(&time_lock);
 	B_INITIALIZE_SPINLOCK(&scheduler_lock);
 	B_INITIALIZE_RW_SPINLOCK(&team_lock);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor spinlocks done\n");
 
 	// init name
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor name start\n");
 	if (name != NULL)
 		strlcpy(this->name, name, B_OS_NAME_LENGTH);
 	else
 		strcpy(this->name, "unnamed thread");
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor name done\n");
 
 	exit.status = 0;
 
@@ -323,8 +348,22 @@ Thread::Thread(const char* name, thread_id threadID, struct cpu_ent* cpu)
 	msg.read_sem = -1;
 
 	// add to thread table -- yet invisible
-	InterruptsWriteSpinLocker threadHashLocker(sThreadHashLock);
-	sThreadHash.Insert(this);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor hash insert start\n");
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// The boot CPU is still the only active hart here.  Avoid restoring the
+		// interrupt state from InterruptsWriteSpinLocker while the architecture
+		// interrupt path is not ready yet.
+		sThreadHash.Insert(this);
+	} else
+#endif
+	{
+		InterruptsWriteSpinLocker threadHashLocker(sThreadHashLock);
+		sThreadHash.Insert(this);
+	}
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread constructor hash insert done\n");
 }
 
 
@@ -471,27 +510,57 @@ Thread::operator delete(void* pointer, size_t size)
 status_t
 Thread::Init(bool idleThread)
 {
+	bool traceBootstrap = false;
+#if defined(__riscv)
+	traceBootstrap = gKernelStartup && id >= 0;
+#endif
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init scheduler create start\n");
 	status_t error = scheduler_on_thread_create(this, idleThread);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init scheduler create done\n");
 	if (error != B_OK)
 		return error;
 
 	char temp[64];
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init exit semaphore name start\n");
 	snprintf(temp, sizeof(temp), "thread_%" B_PRId32 "_retcode_sem", id);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init exit semaphore create start\n");
 	exit.sem = create_sem(0, temp);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init exit semaphore create done\n");
 	if (exit.sem < 0)
 		return exit.sem;
 
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init send semaphore name start\n");
 	snprintf(temp, sizeof(temp), "%s send", name);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init send semaphore create start\n");
 	msg.write_sem = create_sem(1, temp);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init send semaphore create done\n");
 	if (msg.write_sem < 0)
 		return msg.write_sem;
 
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init receive semaphore name start\n");
 	snprintf(temp, sizeof(temp), "%s receive", name);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init receive semaphore create start\n");
 	msg.read_sem = create_sem(0, temp);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init receive semaphore create done\n");
 	if (msg.read_sem < 0)
 		return msg.read_sem;
 
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init arch start\n");
 	error = arch_thread_init_thread_struct(this);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init arch done\n");
 	if (error != B_OK)
 		return error;
 
@@ -2821,32 +2890,47 @@ thread_init(kernel_args *args)
 	TRACE(("thread_init: entry\n"));
 
 	// create the thread hash table
+	debug_early_boot_message("riscv: thread hash construct start\n");
 	new(&sThreadHash) ThreadHashTable();
+	debug_early_boot_message("riscv: thread hash construct done\n");
+	debug_early_boot_message("riscv: thread hash init start\n");
 	if (sThreadHash.Init(128) != B_OK)
 		panic("thread_init(): failed to init thread hash table!");
+	debug_early_boot_message("riscv: thread hash init done\n");
 
 	// create the thread structure object cache
+	debug_early_boot_message("riscv: thread cache create start\n");
 	sThreadCache = create_object_cache_etc("threads", sizeof(Thread), 64,
 		0, 0, 0, 0, NULL, create_kernel_stack, destroy_kernel_stack, NULL);
 		// Note: The x86 port requires 64 byte alignment of thread structures.
 	if (sThreadCache == NULL)
 		panic("thread_init(): failed to allocate thread object cache!");
+	debug_early_boot_message("riscv: thread cache create done\n");
 
+	debug_early_boot_message("riscv: arch thread init start\n");
 	if (arch_thread_init(args) < B_OK)
 		panic("arch_thread_init() failed!\n");
+	debug_early_boot_message("riscv: arch thread init done\n");
 
 	// skip all thread IDs including B_SYSTEM_TEAM, which is reserved
 	sNextThreadID = B_SYSTEM_TEAM + 1;
 
 	// create an idle thread for each cpu
+	debug_early_boot_message("riscv: idle threads init start\n");
 	for (uint32 i = 0; i < args->num_cpus; i++) {
 		Thread *thread;
 		area_info info;
 		char name[64];
 
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread name start\n");
 		sprintf(name, "idle thread %" B_PRIu32, i + 1);
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread construct start\n");
 		thread = new(&sIdleThreads[i]) Thread(name,
 			i == 0 ? team_get_kernel_team_id() : -1, &gCPU[i]);
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread construct done\n");
 		if (thread == NULL || thread->Init(true) != B_OK) {
 			panic("error creating idle thread struct\n");
 			return B_NO_MEMORY;
@@ -2868,18 +2952,30 @@ thread_init(kernel_args *args)
 		thread->kernel_stack_top = thread->kernel_stack_base + info.size;
 
 		thread->visible = true;
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread team insert start\n");
 		insert_thread_into_team(thread->team, thread);
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread team insert done\n");
 
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread scheduler start\n");
 		scheduler_on_thread_init(thread);
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread scheduler done\n");
 	}
+	debug_early_boot_message("riscv: idle threads init done\n");
 	sUsedThreads = args->num_cpus;
 
 	// init the notification service
+	debug_early_boot_message("riscv: thread notification init start\n");
 	new(&sNotificationService) ThreadNotificationService();
 
 	sNotificationService.Register();
+	debug_early_boot_message("riscv: thread notification init done\n");
 
 	// start the undertaker thread
+	debug_early_boot_message("riscv: thread undertaker init start\n");
 	new(&sUndertakerEntries) DoublyLinkedList<UndertakerEntry>();
 	sUndertakerCondition.Init(&sUndertakerEntries, "undertaker entries");
 
@@ -2888,8 +2984,10 @@ thread_init(kernel_args *args)
 	if (undertakerThread < 0)
 		panic("Failed to create undertaker thread!");
 	resume_thread(undertakerThread);
+	debug_early_boot_message("riscv: thread undertaker init done\n");
 
 	// set up some debugger commands
+	debug_early_boot_message("riscv: thread debugger commands start\n");
 	add_debugger_command_etc("threads", &dump_thread_list, "List all threads",
 		"[ <team> ]\n"
 		"Prints a list of all existing threads, or, if a team ID is given,\n"
@@ -2954,6 +3052,7 @@ thread_init(kernel_args *args)
 		"priority. If no thread ID is given, the current thread is selected.\n"
 		"  <priority>  - The thread's new priority (0 - 120)\n"
 		"  <id>        - The ID of the thread.\n", 0);
+	debug_early_boot_message("riscv: thread debugger commands done\n");
 
 	return B_OK;
 }

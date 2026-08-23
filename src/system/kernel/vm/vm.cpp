@@ -1924,7 +1924,7 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	do {
 		if (traceSemaphoreArea)
 			debug_early_boot_message("riscv: sem area address space lock\n");
-	#if defined(__riscv)
+#if defined(__riscv)
 		typedef status_t (*set_to_func)(AddressSpaceWriteLocker*, team_id);
 		set_to_func directSetTo;
 		asm volatile("lla %0, _ZN23AddressSpaceWriteLocker5SetToEi"
@@ -1932,7 +1932,7 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		status = directSetTo(&locker, team);
 	#else
 		status = locker.SetTo(team);
-	#endif
+#endif
 		if (status != B_OK)
 			goto err1;
 		if (traceSemaphoreArea)
@@ -3966,6 +3966,14 @@ vm_area_for(addr_t address, bool kernel)
 static void
 unreserve_boot_loader_ranges(kernel_args* args)
 {
+	#if defined(__riscv)
+	// reserve_boot_loader_ranges() is deferred during the Pioneer bootstrap,
+	// since range splitting still depends on the normal object-cache path.
+	// There are therefore no matching reservations to remove here yet.
+	debug_early_boot_message("riscv: unreserve loader ranges deferred\n");
+	return;
+	#endif
+
 	TRACE(("unreserve_boot_loader_ranges()\n"));
 
 	for (uint32 i = 0; i < args->num_virtual_allocated_ranges; i++) {

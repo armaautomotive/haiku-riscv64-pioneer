@@ -504,7 +504,11 @@ scheduler_reschedule(int32 nextState)
 status_t
 scheduler_on_thread_create(Thread* thread, bool idleThread)
 {
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler thread data allocation start\n");
 	thread->scheduler_data = new(std::nothrow) ThreadData(thread);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler thread data allocation done\n");
 	if (thread->scheduler_data == NULL)
 		return B_NO_MEMORY;
 	return B_OK;
@@ -552,20 +556,43 @@ scheduler_start()
 status_t
 scheduler_set_operation_mode(scheduler_mode mode)
 {
+	debug_early_boot_message("riscv: scheduler set mode validate start\n");
 	if (mode != SCHEDULER_MODE_LOW_LATENCY
 		&& mode != SCHEDULER_MODE_POWER_SAVING) {
 		return B_BAD_VALUE;
 	}
+	debug_early_boot_message("riscv: scheduler set mode validate done\n");
 
-	dprintf("scheduler: switching to %s mode\n", sSchedulerModes[mode]->name);
+	if (!gKernelStartup)
+		dprintf("scheduler: switching to %s mode\n", sSchedulerModes[mode]->name);
 
+	auto applyMode = [&]() {
+		gCurrentModeID = mode;
+		gCurrentMode = sSchedulerModes[mode];
+		debug_early_boot_message("riscv: scheduler set mode switch start\n");
+		gCurrentMode->switch_to_mode();
+		debug_early_boot_message("riscv: scheduler set mode switch done\n");
+
+		debug_early_boot_message("riscv: scheduler set mode quantum start\n");
+		ThreadData::ComputeQuantumLengths();
+		debug_early_boot_message("riscv: scheduler set mode quantum done\n");
+	};
+
+#if defined(__riscv)
+	// Scheduling is still disabled and only the boot hart is running. Taking
+	// every CPU's scheduler lock here makes the unlock path depend on thread
+	// state that has not been initialized yet.
+	if (gKernelStartup) {
+		debug_early_boot_message("riscv: scheduler set mode bootstrap direct\n");
+		applyMode();
+		return B_OK;
+	}
+#endif
+
+	debug_early_boot_message("riscv: scheduler set mode lock start\n");
 	InterruptsBigSchedulerLocker _;
-
-	gCurrentModeID = mode;
-	gCurrentMode = sSchedulerModes[mode];
-	gCurrentMode->switch_to_mode();
-
-	ThreadData::ComputeQuantumLengths();
+	debug_early_boot_message("riscv: scheduler set mode lock done\n");
+	applyMode();
 
 	return B_OK;
 }
@@ -646,16 +673,22 @@ traverse_topology_tree(const cpu_topology_node* node, int packageID, int coreID)
 static status_t
 build_topology_mappings(int32& cpuCount, int32& coreCount, int32& packageCount)
 {
+	debug_early_boot_message("riscv: scheduler topology cpu count start\n");
 	cpuCount = smp_get_num_cpus();
+	debug_early_boot_message("riscv: scheduler topology cpu count done\n");
 
+	debug_early_boot_message("riscv: scheduler topology core map allocate start\n");
 	sCPUToCore = new(std::nothrow) int32[cpuCount];
 	if (sCPUToCore == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: scheduler topology core map allocate done\n");
 	ArrayDeleter<int32> cpuToCoreDeleter(sCPUToCore);
 
+	debug_early_boot_message("riscv: scheduler topology package map allocate start\n");
 	sCPUToPackage = new(std::nothrow) int32[cpuCount];
 	if (sCPUToPackage == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: scheduler topology package map allocate done\n");
 	ArrayDeleter<int32> cpuToPackageDeleter(sCPUToPackage);
 
 	coreCount = 0;
@@ -673,7 +706,9 @@ build_topology_mappings(int32& cpuCount, int32& coreCount, int32& packageCount)
 	}
 
 	const cpu_topology_node* root = get_cpu_topology();
+	debug_early_boot_message("riscv: scheduler topology traverse start\n");
 	traverse_topology_tree(root, 0, 0);
+	debug_early_boot_message("riscv: scheduler topology traverse done\n");
 
 	cpuToCoreDeleter.Detach();
 	cpuToPackageDeleter.Detach();
@@ -686,38 +721,51 @@ init()
 {
 	// create logical processor to core and package mappings
 	int32 cpuCount, coreCount, packageCount;
+	debug_early_boot_message("riscv: scheduler mappings start\n");
 	status_t result = build_topology_mappings(cpuCount, coreCount,
 		packageCount);
 	if (result != B_OK)
 		return result;
+	debug_early_boot_message("riscv: scheduler mappings done\n");
 
 	// disable parts of the scheduler logic that are not needed
 	gSingleCore = coreCount == 1;
+	debug_early_boot_message("riscv: scheduler policy start\n");
 	scheduler_update_policy();
+	debug_early_boot_message("riscv: scheduler policy done\n");
 
 	gCoreCount = coreCount;
 	gPackageCount = packageCount;
 
+	debug_early_boot_message("riscv: scheduler cpu entries allocate start\n");
 	gCPUEntries = new(std::nothrow) CPUEntry[cpuCount];
 	if (gCPUEntries == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: scheduler cpu entries allocate done\n");
 	ArrayDeleter<CPUEntry> cpuEntriesDeleter(gCPUEntries);
 
+	debug_early_boot_message("riscv: scheduler core entries allocate start\n");
 	gCoreEntries = new(std::nothrow) CoreEntry[coreCount];
 	if (gCoreEntries == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: scheduler core entries allocate done\n");
 	ArrayDeleter<CoreEntry> coreEntriesDeleter(gCoreEntries);
 
+	debug_early_boot_message("riscv: scheduler package entries allocate start\n");
 	gPackageEntries = new(std::nothrow) PackageEntry[packageCount];
 	if (gPackageEntries == NULL)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: scheduler package entries allocate done\n");
 	ArrayDeleter<PackageEntry> packageEntriesDeleter(gPackageEntries);
 
+	debug_early_boot_message("riscv: scheduler heap init start\n");
 	new(&gCoreLoadHeap) CoreLoadHeap(coreCount);
 	new(&gCoreHighLoadHeap) CoreLoadHeap(coreCount);
 
 	new(&gIdlePackageList) IdlePackageList;
+	debug_early_boot_message("riscv: scheduler heap init done\n");
 
+	debug_early_boot_message("riscv: scheduler entries init start\n");
 	for (int32 i = 0; i < cpuCount; i++) {
 		CoreEntry* core = &gCoreEntries[sCPUToCore[i]];
 		PackageEntry* package = &gPackageEntries[sCPUToPackage[i]];
@@ -728,6 +776,7 @@ init()
 
 		core->AddCPU(&gCPUEntries[i]);
 	}
+	debug_early_boot_message("riscv: scheduler entries init done\n");
 
 	packageEntriesDeleter.Detach();
 	coreEntriesDeleter.Detach();
@@ -740,22 +789,40 @@ init()
 void
 scheduler_init()
 {
+	debug_early_boot_message("riscv: scheduler cpu query start\n");
 	int32 cpuCount = smp_get_num_cpus();
-	dprintf("scheduler_init: found %" B_PRId32 " logical cpu%s and %" B_PRId32
-		" cache level%s\n", cpuCount, cpuCount != 1 ? "s" : "",
-		gCPUCacheLevelCount, gCPUCacheLevelCount != 1 ? "s" : "");
+	debug_early_boot_message("riscv: scheduler cpu query done\n");
+	debug_early_boot_message("riscv: scheduler report start\n");
+	if (!gKernelStartup) {
+		dprintf("scheduler_init: found %" B_PRId32 " logical cpu%s and %"
+			B_PRId32 " cache level%s\n", cpuCount, cpuCount != 1 ? "s" : "",
+			gCPUCacheLevelCount, gCPUCacheLevelCount != 1 ? "s" : "");
+	}
+	debug_early_boot_message("riscv: scheduler report done\n");
 
 #ifdef SCHEDULER_PROFILING
 	Profiling::Profiler::Initialize();
 #endif
 
+	debug_early_boot_message("riscv: scheduler internal init start\n");
 	status_t result = init();
 	if (result != B_OK)
 		panic("scheduler_init: failed to initialize scheduler\n");
+	debug_early_boot_message("riscv: scheduler internal init done\n");
 
+	debug_early_boot_message("riscv: scheduler mode start\n");
 	scheduler_set_operation_mode(SCHEDULER_MODE_LOW_LATENCY);
+	debug_early_boot_message("riscv: scheduler mode done\n");
 
-	init_debug_commands();
+	debug_early_boot_message("riscv: scheduler debug commands start\n");
+#if defined(__riscv)
+	if (gKernelStartup) {
+		debug_early_boot_message(
+			"riscv: scheduler debug commands deferred\n");
+	} else
+#endif
+		init_debug_commands();
+	debug_early_boot_message("riscv: scheduler debug commands done\n");
 
 #if SCHEDULER_TRACING
 	add_debugger_command_etc("scheduler", &cmd_scheduler,
@@ -779,10 +846,12 @@ scheduler_update_policy()
 {
 	gTrackCPULoad = increase_cpu_performance(0) == B_OK;
 	gTrackCoreLoad = !gSingleCore || gTrackCPULoad;
-	dprintf("scheduler switches: single core: %s, cpu load tracking: %s,"
-		" core load tracking: %s\n", gSingleCore ? "true" : "false",
-		gTrackCPULoad ? "true" : "false",
-		gTrackCoreLoad ? "true" : "false");
+	if (!gKernelStartup) {
+		dprintf("scheduler switches: single core: %s, cpu load tracking: %s,"
+			" core load tracking: %s\n", gSingleCore ? "true" : "false",
+			gTrackCPULoad ? "true" : "false",
+			gTrackCoreLoad ? "true" : "false");
+	}
 }
 
 
@@ -877,4 +946,3 @@ _user_get_scheduler_mode()
 {
 	return gCurrentModeID;
 }
-
