@@ -407,6 +407,7 @@ haiku_sem_init(kernel_args *args)
 	int32 i;
 
 	TRACE(("sem_init: entry\n"));
+	debug_early_boot_message("riscv: semaphore page count\n");
 
 	// compute maximal number of semaphores depending on the available memory
 	// 128 MB -> 16384 semaphores, 448 kB fixed array size
@@ -415,25 +416,33 @@ haiku_sem_init(kernel_args *args)
 	i = vm_page_num_pages() / 2;
 	while (sMaxSems < i && sMaxSems < kMaxSemaphores)
 		sMaxSems <<= 1;
+	debug_early_boot_message("riscv: semaphore table size ready\n");
 
 	// create and initialize semaphore table
 	virtual_address_restrictions virtualRestrictions = {};
 	virtualRestrictions.address_specification = B_ANY_KERNEL_ADDRESS;
 	physical_address_restrictions physicalRestrictions = {};
+	debug_early_boot_message("riscv: semaphore area create\n");
 	area = create_area_etc(B_SYSTEM_TEAM, "sem_table",
 		sizeof(struct sem_entry) * sMaxSems, B_FULL_LOCK,
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, CREATE_AREA_DONT_WAIT, 0,
 		&virtualRestrictions, &physicalRestrictions, (void**)&sSems);
 	if (area < 0)
 		panic("unable to allocate semaphore table!\n");
+	debug_early_boot_message("riscv: semaphore area ready\n");
 
+	debug_early_boot_message("riscv: semaphore table clear\n");
 	memset((void*)sSems, 0, sizeof(struct sem_entry) * sMaxSems);
+	debug_early_boot_message("riscv: semaphore table cleared\n");
+	debug_early_boot_message("riscv: semaphore slots init\n");
 	for (i = 0; i < sMaxSems; i++) {
 		sSems[i].id = -1;
 		free_sem_slot(i, i);
 	}
+	debug_early_boot_message("riscv: semaphore slots ready\n");
 
 	// add debugger commands
+	debug_early_boot_message("riscv: semaphore debugger commands init\n");
 	add_debugger_command_etc("sems", &dump_sem_list,
 		"Dump a list of all active semaphores (for team, with name, etc.)",
 		"[ ([ \"team\" | \"owner\" ] <team>) | (\"name\" <name>) ]"
@@ -448,8 +457,9 @@ haiku_sem_init(kernel_args *args)
 		"Dump info about a particular semaphore",
 		"<sem>\n"
 		"Prints info about the specified semaphore.\n"
-		"  <sem>  - pointer to the semaphore structure, semaphore ID, or name\n"
-		"           of the semaphore to print info for.\n", 0);
+			"  <sem>  - pointer to the semaphore structure, semaphore ID, or name\n"
+			"           of the semaphore to print info for.\n", 0);
+	debug_early_boot_message("riscv: semaphore debugger commands ready\n");
 
 	TRACE(("sem_init: exit\n"));
 

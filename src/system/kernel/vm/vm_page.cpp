@@ -2789,20 +2789,42 @@ vm_page_allocate_page(vm_page_reservation* reservation, uint32 flags)
 		otherQueue = &sClearPageQueue;
 	}
 
-	ReadLocker locker(sFreePageQueuesLock);
+	ReadLocker locker;
+#if defined(__riscv)
+	if (!gKernelStartup)
+		locker.SetTo(sFreePageQueuesLock, false);
+#else
+	locker.SetTo(sFreePageQueuesLock, false);
+#endif
 
+#if defined(__riscv)
+	vm_page* page = gKernelStartup ? queue->RemoveHead()
+		: queue->RemoveHeadUnlocked();
+#else
 	vm_page* page = queue->RemoveHeadUnlocked();
+#endif
 	if (page == NULL) {
 		// if the primary queue was empty, grab the page from the
 		// secondary queue
+#if defined(__riscv)
+		page = gKernelStartup ? otherQueue->RemoveHead()
+			: otherQueue->RemoveHeadUnlocked();
+#else
 		page = otherQueue->RemoveHeadUnlocked();
+#endif
 
 		if (page == NULL) {
 			// Unlikely, but possible: the page we have reserved has moved
 			// between the queues after we checked the first queue. Grab the
 			// write locker to make sure this doesn't happen again.
 			locker.Unlock();
+#if defined(__riscv)
+			WriteLocker writeLocker;
+			if (!gKernelStartup)
+				writeLocker.SetTo(sFreePageQueuesLock, false);
+#else
 			WriteLocker writeLocker(sFreePageQueuesLock);
+#endif
 
 			page = queue->RemoveHead();
 			if (page == NULL)
@@ -2814,7 +2836,8 @@ vm_page_allocate_page(vm_page_reservation* reservation, uint32 flags)
 			}
 
 			// downgrade to read lock
-			locker.Lock();
+			if (!gKernelStartup)
+				locker.Lock();
 		}
 	}
 

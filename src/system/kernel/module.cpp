@@ -45,7 +45,7 @@
 #define FATAL(x) dprintf x
 
 
-#define MODULE_HASH_SIZE 16
+#define MODULE_HASH_SIZE 256
 
 /*! The modules referenced by this structure are built-in
 	modules that can't be loaded from disk.
@@ -546,9 +546,13 @@ create_module(module_info* info, int offset, module** _module)
 	module->ref_count = 0;
 	module->flags = info->flags;
 
-	recursive_lock_lock(&sModulesLock);
+	debug_early_boot_message("riscv: create module table insert\n");
+	if (!gKernelStartup)
+		recursive_lock_lock(&sModulesLock);
 	sModulesHash->Insert(module);
-	recursive_lock_unlock(&sModulesLock);
+	if (!gKernelStartup)
+		recursive_lock_unlock(&sModulesLock);
+	debug_early_boot_message("riscv: create module table inserted\n");
 
 	if (_module)
 		*_module = module;
@@ -1095,18 +1099,23 @@ register_preloaded_module_image(struct preloaded_image* image)
 
 	image->is_module = false;
 
+	debug_early_boot_message("riscv: module preload validate image\n");
 	if (image->id < 0)
 		return B_BAD_VALUE;
 
+	debug_early_boot_message("riscv: module preload struct allocate\n");
 	moduleImage = (module_image*)malloc(sizeof(module_image));
+	debug_early_boot_message("riscv: module preload struct allocated\n");
 	if (moduleImage == NULL)
 		return B_NO_MEMORY;
 
+	debug_early_boot_message("riscv: module preload symbols lookup\n");
 	if (get_image_symbol(image->id, "modules", B_SYMBOL_TYPE_DATA,
 			(void**)&moduleImage->info) != B_OK) {
 		status = B_BAD_TYPE;
 		goto error;
 	}
+	debug_early_boot_message("riscv: module preload symbols found\n");
 
 	image->is_module = true;
 
@@ -1115,12 +1124,16 @@ register_preloaded_module_image(struct preloaded_image* image)
 		goto error;
 	}
 
+	debug_early_boot_message("riscv: module preload dependencies lookup\n");
 	moduleImage->dependencies = NULL;
 	get_image_symbol(image->id, "module_dependencies", B_SYMBOL_TYPE_DATA,
 		(void**)&moduleImage->dependencies);
 		// this is allowed to be NULL
+	debug_early_boot_message("riscv: module preload dependencies ready\n");
 
+	debug_early_boot_message("riscv: module preload path copy\n");
 	moduleImage->path = strdup(image->name);
+	debug_early_boot_message("riscv: module preload path copied\n");
 	if (moduleImage->path == NULL) {
 		status = B_NO_MEMORY;
 		goto error;
@@ -1129,13 +1142,17 @@ register_preloaded_module_image(struct preloaded_image* image)
 	moduleImage->image = image->id;
 	moduleImage->ref_count = 0;
 
+	debug_early_boot_message("riscv: module preload image table insert\n");
 	sModuleImagesHash->Insert(moduleImage);
+	debug_early_boot_message("riscv: module preload image table inserted\n");
 
+	debug_early_boot_message("riscv: module preload entries register\n");
 	for (info = moduleImage->info; *info; info++) {
 		struct module* module = NULL;
 		if (create_module(*info, index++, &module) == B_OK)
 			module->module_image = moduleImage;
 	}
+	debug_early_boot_message("riscv: module preload entries registered\n");
 
 	return B_OK;
 
@@ -1151,6 +1168,7 @@ error:
 }
 
 
+#if !defined(__riscv)
 static int
 dump_modules(int argc, char** argv)
 {
@@ -1179,6 +1197,7 @@ dump_modules(int argc, char** argv)
 	}
 	return 0;
 }
+#endif
 
 
 //	#pragma mark - DirectoryWatcher
@@ -1796,24 +1815,33 @@ module_init(kernel_args* args)
 {
 	struct preloaded_image* image;
 
+	debug_early_boot_message("riscv: module lock init\n");
 	recursive_lock_init(&sModulesLock, "modules rlock");
+	debug_early_boot_message("riscv: module lock ready\n");
 
+	debug_early_boot_message("riscv: module table allocate\n");
 	sModulesHash = new(std::nothrow) ModuleTable();
 	if (sModulesHash == NULL
 			|| sModulesHash->Init(MODULE_HASH_SIZE) != B_OK)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: module table ready\n");
 
+	debug_early_boot_message("riscv: module image table allocate\n");
 	sModuleImagesHash = new(std::nothrow) ImageTable();
 	if (sModuleImagesHash == NULL
 			|| sModuleImagesHash->Init(MODULE_HASH_SIZE) != B_OK)
 		return B_NO_MEMORY;
+	debug_early_boot_message("riscv: module image table ready\n");
 
 	// register built-in modules
 
+	debug_early_boot_message("riscv: module builtins register\n");
 	register_builtin_modules(sBuiltInModules);
+	debug_early_boot_message("riscv: module builtins registered\n");
 
 	// register preloaded images
 
+	debug_early_boot_message("riscv: module preload register\n");
 	for (image = args->preloaded_images; image != NULL; image = image->next) {
 		status_t status = register_preloaded_module_image(image);
 		if (status != B_OK && image->is_module) {
@@ -1821,14 +1849,29 @@ module_init(kernel_args* args)
 				strerror(status));
 		}
 	}
+	debug_early_boot_message("riscv: module preload registered\n");
 
+	debug_early_boot_message("riscv: module notification construct\n");
 	new(&sModuleNotificationService) ModuleNotificationService();
+	debug_early_boot_message("riscv: module notification constructed\n");
 
+	debug_early_boot_message("riscv: module settings read\n");
+#if defined(__riscv)
+	// Driver settings access is deferred during the Pioneer bootstrap. Use the
+	// normal default until settings are available after kernel startup.
+	sDisableUserAddOns = false;
+#else
 	sDisableUserAddOns = get_safemode_boolean(B_SAFEMODE_DISABLE_USER_ADD_ONS,
 		false);
+#endif
+	debug_early_boot_message("riscv: module settings ready\n");
 
+#if defined(__riscv)
+	debug_early_boot_message("riscv: module debugger command deferred\n");
+#else
 	add_debugger_command("modules", &dump_modules,
 		"list all known & loaded modules");
+#endif
 
 	return B_OK;
 }

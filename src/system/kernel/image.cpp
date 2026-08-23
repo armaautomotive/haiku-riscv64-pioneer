@@ -388,7 +388,9 @@ image_init(void)
 	}
 
 	debug_early_boot_message("riscv: elf image table initialize\n");
-	status_t error = sImageTable->Init();
+	// Preloaded images are inserted before bootstrap-safe table resizing is
+	// available on RISC-V. This also avoids several early growth allocations.
+	status_t error = sImageTable->Init(256);
 	debug_early_boot_message("riscv: elf image table initialized\n");
 	if (error != B_OK) {
 		panic("image_init(): Failed to init image table: %s", strerror(error));

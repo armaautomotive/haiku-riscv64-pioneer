@@ -756,10 +756,22 @@ map_page(VMArea* area, vm_page* page, addr_t address, uint32 protection,
 	} else {
 		DEBUG_PAGE_ACCESS_CHECK(page);
 
-		map->Lock();
+		bool skipMapLock = false;
+#if defined(__riscv)
+		skipMapLock = gKernelStartup && strcmp(area->name, "sem_table") == 0;
+#endif
+		if (!skipMapLock)
+			map->Lock();
+		else
+			debug_early_boot_message("riscv: sem translation map lock deferred\n");
+		if (skipMapLock)
+			debug_early_boot_message("riscv: sem translation map call\n");
 		map->Map(address, page->physical_page_number * B_PAGE_SIZE, protection,
 			area->MemoryType(), reservation);
-		map->Unlock();
+		if (skipMapLock)
+			debug_early_boot_message("riscv: sem translation map returned\n");
+		if (!skipMapLock)
+			map->Unlock();
 
 		increment_page_wired_count(page);
 	}
@@ -1707,6 +1719,9 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	bool canOvercommit = false;
 	uint32 pageAllocFlags = (flags & CREATE_AREA_DONT_CLEAR) == 0
 		? VM_PAGE_ALLOC_CLEAR : 0;
+	bool traceSemaphoreArea = name != NULL && strcmp(name, "sem_table") == 0;
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area parameters\n");
 
 #if defined(__riscv)
 #endif
@@ -1822,6 +1837,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	// thus need to reserve pages for the mapping backend upfront.
 	addr_t reservedMapPages = 0;
 	if (wiring == B_FULL_LOCK || wiring == B_CONTIGUOUS) {
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area map sizing\n");
 		AddressSpaceWriteLocker locker;
 		status_t status = locker.SetTo(team);
 		if (status != B_OK)
@@ -1829,6 +1846,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 
 		VMTranslationMap* map = locker.AddressSpace()->TranslationMap();
 		reservedMapPages = map->MaxPagesNeededToMap(0, size - 1);
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area map size ready\n");
 	}
 
 	int priority;
@@ -1844,10 +1863,14 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	// space (if it is the kernel address space that is), the low memory handler
 	// won't be able to free anything for us.
 	if (doReserveMemory) {
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area memory reserve\n");
 		bigtime_t timeout = (flags & CREATE_AREA_DONT_WAIT) != 0 ? 0 : 1000000;
 		if (vm_try_reserve_memory(size, priority, timeout) != B_OK)
 			return B_NO_MEMORY;
 		reservedMemory = size;
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area memory reserved\n");
 		// TODO: We don't reserve the memory for the pages for the page
 		// directories/tables. We actually need to do since we currently don't
 		// reclaim them (and probably can't reclaim all of them anyway). Thus
@@ -1867,6 +1890,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 
 	vm_page_reservation reservation;
 	if (reservedPages > 0) {
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area pages reserve\n");
 		if ((flags & CREATE_AREA_DONT_WAIT) != 0) {
 			if (!vm_page_try_reserve_pages(&reservation, reservedPages,
 					priority)) {
@@ -1876,6 +1901,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 			}
 		} else
 			vm_page_reserve_pages(&reservation, reservedPages, priority);
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area pages reserved\n");
 	}
 
 	if (wiring == B_CONTIGUOUS) {
@@ -1895,6 +1922,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #if defined(__riscv)
 #endif
 	do {
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area address space lock\n");
 	#if defined(__riscv)
 		typedef status_t (*set_to_func)(AddressSpaceWriteLocker*, team_id);
 		set_to_func directSetTo;
@@ -1906,6 +1935,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	#endif
 		if (status != B_OK)
 			goto err1;
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area address space locked\n");
 #if defined(__riscv)
 #endif
 
@@ -1939,6 +1970,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		isStack ? (min_c(2, size / B_PAGE_SIZE - guardPages)) : 0, guardPages,
 		wiring == B_NO_LOCK, priority);
 #endif
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area cache created\n");
 	if (status != B_OK)
 		goto err1;
 
@@ -1964,6 +1997,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #else
 	cache->Lock();
 #endif
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area cache locked\n");
 	status = vm_map_cache(addressSpace, cache, 0, name, size, wiring,
 		protection, 0, REGION_NO_PRIVATE_MAP, flags,
 		virtualAddressRestrictions, kernel, &area, _address);
@@ -1972,6 +2007,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		cache->ReleaseRefAndUnlock();
 		goto err1;
 	}
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area cache mapped\n");
 
 #if defined(__riscv)
 #endif
@@ -1986,6 +2023,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 
 		case B_FULL_LOCK:
 		{
+			if (traceSemaphoreArea)
+				debug_early_boot_message("riscv: sem area pages map\n");
 			// Allocate and map all pages for this area
 
 			off_t offset = 0;
@@ -2002,13 +2041,27 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #	endif
 					continue;
 #endif
+				if (traceSemaphoreArea && offset == 0)
+					debug_early_boot_message("riscv: sem first page allocate\n");
 				vm_page* page = vm_page_allocate_page(&reservation,
 					PAGE_STATE_WIRED | pageAllocFlags);
+				if (traceSemaphoreArea && offset == 0)
+					debug_early_boot_message("riscv: sem first page allocated\n");
+				if (traceSemaphoreArea && offset == 0)
+					debug_early_boot_message("riscv: sem first page cache insert\n");
 				cache->InsertPage(page, offset);
+				if (traceSemaphoreArea && offset == 0)
+					debug_early_boot_message("riscv: sem first page cache inserted\n");
+				if (traceSemaphoreArea && offset == 0)
+					debug_early_boot_message("riscv: sem first page map\n");
 				map_page(area, page, address, protection, &reservation);
+				if (traceSemaphoreArea && offset == 0)
+					debug_early_boot_message("riscv: sem first page mapped\n");
 
 				DEBUG_PAGE_ACCESS_END(page);
 			}
+			if (traceSemaphoreArea)
+				debug_early_boot_message("riscv: sem area pages mapped\n");
 
 			break;
 		}
@@ -4771,6 +4824,20 @@ vm_try_reserve_internal(int64& pool, uint32 resource,
 
 	const size_t reserve = kMemoryReserveForPriority[priority];
 	const int64 amountPlusReserve = amount + reserve;
+
+#if defined(__riscv)
+	// The Pioneer bootstrap deliberately runs on a single hart. Avoid the
+	// spinlock and 64-bit atomic path until kernel startup has completed; those
+	// primitives are not yet dependable at this stage of the RISC-V port.
+	if (gKernelStartup) {
+		debug_early_boot_message("riscv: startup memory reserve\n");
+		if (pool < amountPlusReserve)
+			return B_NO_MEMORY;
+		pool -= amount;
+		debug_early_boot_message("riscv: startup memory reserved\n");
+		return B_OK;
+	}
+#endif
 
 	// Try with a read-lock and atomics first, but only if there's more than double
 	// the amount of memory we're trying to reserve available, to avoid races.

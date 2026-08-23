@@ -59,7 +59,7 @@
 
 namespace {
 
-#define IMAGE_HASH_SIZE 16
+#define IMAGE_HASH_SIZE 256
 
 struct ImageHashDefinition {
 	typedef struct elf_image_info ValueType;
@@ -1370,8 +1370,15 @@ insert_preloaded_image(preloaded_elf_image *preloadedImage, bool kernel)
 
 	// we now no longer need to write to the text area anymore
 	debug_early_boot_message("riscv: preloaded image protect text\n");
+#if defined(__riscv)
+	// set_area_protection() enters VM locking that is not available during the
+	// single-hart kernel startup phase on the Pioneer yet. The loader mapping
+	// remains valid; tighten it once the RISC-V post-startup path can do so.
+	debug_early_boot_message("riscv: preloaded image text protection deferred\n");
+#else
 	set_area_protection(image->text_region.id,
 		B_KERNEL_READ_AREA | B_KERNEL_EXECUTE_AREA);
+#endif
 	debug_early_boot_message("riscv: preloaded image text protected\n");
 
 	return B_OK;
@@ -1608,7 +1615,10 @@ get_image_symbol(image_id id, const char *name, int32 symbolClass,
 
 	TRACE(("get_image_symbol(%s)\n", name));
 
-	mutex_lock(&sImageMutex);
+	debug_early_boot_message("riscv: get image symbol lock\n");
+	if (!gKernelStartup)
+		mutex_lock(&sImageMutex);
+	debug_early_boot_message("riscv: get image symbol lookup\n");
 
 	image = find_image(id);
 	if (image == NULL) {
@@ -1616,7 +1626,9 @@ get_image_symbol(image_id id, const char *name, int32 symbolClass,
 		goto done;
 	}
 
+	debug_early_boot_message("riscv: get image symbol hash lookup\n");
 	symbol = elf_find_symbol(image, name, NULL, true);
+	debug_early_boot_message("riscv: get image symbol hash looked up\n");
 	if (symbol == NULL || symbol->st_shndx == SHN_UNDEF) {
 		status = B_ENTRY_NOT_FOUND;
 		goto done;
@@ -1631,7 +1643,9 @@ get_image_symbol(image_id id, const char *name, int32 symbolClass,
 	*_symbol = (void *)(symbol->st_value + image->text_region.delta);
 
 done:
-	mutex_unlock(&sImageMutex);
+	if (!gKernelStartup)
+		mutex_unlock(&sImageMutex);
+	debug_early_boot_message("riscv: get image symbol done\n");
 	return status;
 }
 
