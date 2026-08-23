@@ -23,14 +23,16 @@ Integrate distributed OS development and testing tools to develop code clarity, 
 
 ---
 
-# Proposed Mission and Goals
+# Verse OS Mission and Goals
 
 ## Mission
 
-Build a fast, coherent, reliable, and approachable personal operating system
-for the age of intelligent software.
+Verse OS rapidly delivers human-centered value through a fast, coherent, and
+trustworthy operating system in which AI is an integrated participant—
+connecting users, developers, and shared compute in a secure network of
+continuous discovery, development, verification, and improvement.
 
-This project extends Haiku's distinctive strengths: rapid startup, immediate
+Verse OS extends Haiku's distinctive strengths: rapid startup, immediate
 responsiveness, architectural clarity, efficient use of hardware, and a
 consistent user experience. It should remain understandable as a complete
 system rather than becoming an accumulation of disconnected components.
@@ -187,3 +189,70 @@ merely serve as infrastructure for agents.
 
 Continuously measure the system and use agents to propose, test, and explain
 improvements under human-governed engineering controls.
+
+The system should learn from changing human needs and continuously produce and
+verify improvements, while integration and deployment remain transparent,
+consent-based, reviewable, and reversible. AI is the development mechanism and
+an integrated system capability; human value is the purpose.
+
+## Cooperative Development Network
+
+With explicit user consent, participating systems may contribute anonymized
+needs, compatibility reports, benchmark results, failure reproductions, test
+execution, and bounded compute capacity to improve the project.
+
+Participation must always be transparent, voluntary, inspectable, limited by
+user-defined resource budgets, and easy to disable. Private user data and
+unreviewed source material must not leave a system without specific
+authorization.
+
+The network may help agents discover unmet needs, reproduce defects, develop
+candidate patches, and verify changes across diverse hardware. It must never
+silently deploy generated code into trusted releases.
+
+## Secure Automated Development and Integration
+
+Automated development infrastructure must treat models, generated code,
+builds, tests, packages, and contributed workloads as potentially hostile.
+
+The project will provide:
+
+- Isolated and disposable build and test environments.
+- Strong separation among agents, jobs, users, secrets, and host resources.
+- Capability-based permissions and least-authority defaults.
+- Signed source inputs, build outputs, test results, and release artifacts.
+- Reproducible builds and independently repeatable verification.
+- Complete provenance from reported need to generated patch and test evidence.
+- Resource quotas for CPU, memory, storage, accelerators, energy, and network.
+- Protection against malicious prompts, dependencies, models, and test cases.
+- Staged integration with mandatory review and automatic rollback.
+- Continuous auditing, adversarial testing, and incident response.
+
+Containers may provide packaging and process isolation, but they must not be
+treated as the sole security boundary. Untrusted work should run behind
+multiple layers of isolation, with narrowly scoped interfaces and no ambient
+access to credentials, user files, devices, or the trusted build system.
+
+## Integration Pipeline
+
+Every automated contribution should follow a traceable progression:
+
+1. Capture an authorized need, failure, or optimization opportunity.
+2. Remove or protect personal and sensitive information.
+3. Produce a reproducible specification or failing test.
+4. Develop candidate changes in an isolated environment.
+5. Run correctness, compatibility, security, and performance tests.
+6. Reproduce verification on independent workers.
+7. Require the appropriate human or policy approval.
+8. Promote through experimental, testing, and stable channels.
+9. Monitor results and provide a safe rollback path.
+
+The trust chain is:
+
+> Consented signal → reproducible need → isolated development → independent
+> verification → governed integration → monitored release
+
+Verse OS follows the principle of **shared compute, individual
+sovereignty**: users remain in control of their machines and data while the
+project gains a distributed laboratory for discovering needs and verifying
+improvements.
