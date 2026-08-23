@@ -564,6 +564,8 @@ Thread::Init(bool idleThread)
 	if (error != B_OK)
 		return error;
 
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: thread init returning success\n");
 	return B_OK;
 }
 
@@ -2931,27 +2933,48 @@ thread_init(kernel_args *args)
 			i == 0 ? team_get_kernel_team_id() : -1, &gCPU[i]);
 		if (i == 0)
 			debug_early_boot_message("riscv: first idle thread construct done\n");
-		if (thread == NULL || thread->Init(true) != B_OK) {
+		status_t initError = thread != NULL ? thread->Init(true) : B_NO_MEMORY;
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread init returned\n");
+		if (initError != B_OK) {
 			panic("error creating idle thread struct\n");
 			return B_NO_MEMORY;
 		}
 
 		gCPU[i].running_thread = thread;
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread cpu assignment done\n");
 
 		thread->team = team_get_kernel_team();
 		thread->priority = B_IDLE_PRIORITY;
 		thread->state = B_THREAD_RUNNING;
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread fields done\n");
 
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread stack name start\n");
 		sprintf(name, "idle thread %" B_PRIu32 " kstack", i + 1);
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread stack name done\n");
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread find area start\n");
 		thread->kernel_stack_area = find_area(name);
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread find area done\n");
 
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread area info start\n");
 		if (get_area_info(thread->kernel_stack_area, &info) != B_OK)
 			panic("error finding idle kstack area\n");
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread area info done\n");
 
 		thread->kernel_stack_base = (addr_t)info.address;
 		thread->kernel_stack_top = thread->kernel_stack_base + info.size;
 
 		thread->visible = true;
+		if (i == 0)
+			debug_early_boot_message("riscv: first idle thread stack fields done\n");
 		if (i == 0)
 			debug_early_boot_message("riscv: first idle thread team insert start\n");
 		insert_thread_into_team(thread->team, thread);

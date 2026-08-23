@@ -262,7 +262,18 @@ VMAreas::Lookup(area_id id)
 /*static*/ area_id
 VMAreas::Find(const char* name)
 {
-	ReadLock();
+	bool bootstrap = false;
+#if defined(__riscv)
+	// The boot CPU is the only CPU accessing the area table while the kernel
+	// is starting. Avoid the rw_lock atomic path until the RISC-V scheduler
+	// and interrupt state are fully initialized, just as Insert() does below.
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	bootstrap = *kernelStartup;
+#endif
+
+	if (!bootstrap)
+		ReadLock();
 
 	area_id id = B_NAME_NOT_FOUND;
 
@@ -277,7 +288,8 @@ VMAreas::Find(const char* name)
 		}
 	}
 
-	ReadUnlock();
+	if (!bootstrap)
+		ReadUnlock();
 
 	return id;
 }

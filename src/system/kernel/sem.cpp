@@ -485,6 +485,12 @@ haiku_sem_init(kernel_args *args)
 sem_id
 create_sem_etc(int32 count, const char* name, team_id owner)
 {
+	bool traceBootstrap = false;
+#if defined(__riscv)
+	traceBootstrap = gKernelStartup;
+#endif
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem entry\n");
 	if (count < 0)
 		return B_BAD_VALUE;
 	if (!sSemsActive || sUsedSems == sMaxSems)
@@ -495,27 +501,46 @@ create_sem_etc(int32 count, const char* name, team_id owner)
 
 	// get the owning team
 	Team* team;
+	bool bootstrapKernelTeam = false;
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem team get start\n");
 #if defined(__riscv)
 	if (gKernelStartup && owner == team_get_kernel_team_id()) {
 		team = team_get_kernel_team();
-		team->AcquireReference();
+		// The kernel team is permanent. Avoid the reference-count AMO, which
+		// the SG2042 cannot execute safely during this bootstrap phase.
+		bootstrapKernelTeam = true;
 	} else
 #endif
 		team = Team::Get(owner);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem team get done\n");
 	if (team == NULL)
 		return B_BAD_TEAM_ID;
-	BReference<Team> teamReference(team, true);
+	BReference<Team> teamReference;
+	if (!bootstrapKernelTeam)
+		teamReference.SetTo(team, true);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem team reference done\n");
 
 	// clone the name
 	size_t nameLength = strlen(name) + 1;
 	nameLength = min_c(nameLength, B_OS_NAME_LENGTH);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem name allocation start\n");
 	char* tempName = (char*)malloc(nameLength);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem name allocation done\n");
 	if (tempName == NULL)
 		return B_NO_MEMORY;
 
 	strlcpy(tempName, name, nameLength);
+	if (traceBootstrap)
+		debug_early_boot_message("riscv: create sem name copy done\n");
 
 	auto allocateSemaphore = [&]() -> sem_id {
+		if (traceBootstrap)
+			debug_early_boot_message("riscv: create sem slot allocation start\n");
 		// get the first slot from the free list
 		struct sem_entry* sem = sFreeSemsHead;
 		sem_id id = B_NO_MORE_SEMS;
@@ -525,40 +550,68 @@ create_sem_etc(int32 count, const char* name, team_id owner)
 			if (!sFreeSemsHead)
 				sFreeSemsTail = NULL;
 
-			// init the slot
-			SpinLocker semLocker(sem->lock);
-			sem->id = sem->u.unused.next_id;
-			sem->u.used.count = count;
-			sem->u.used.net_count = count;
-			new(&sem->queue) ThreadQueue;
-			sem->u.used.name = tempName;
-			sem->u.used.owner = team->id;
-			sem->u.used.select_infos = NULL;
-			id = sem->id;
+			auto initializeSlot = [&]() {
+				sem->id = sem->u.unused.next_id;
+				sem->u.used.count = count;
+				sem->u.used.net_count = count;
+				new(&sem->queue) ThreadQueue;
+				sem->u.used.name = tempName;
+				sem->u.used.owner = team->id;
+				sem->u.used.select_infos = NULL;
+				id = sem->id;
 
-			list_add_item(&team->sem_list, &sem->u.used.team_link);
+				if (traceBootstrap)
+					debug_early_boot_message("riscv: create sem team list add start\n");
+				list_add_item(&team->sem_list, &sem->u.used.team_link);
+				if (traceBootstrap)
+					debug_early_boot_message("riscv: create sem team list add done\n");
+			};
 
-			semLocker.Unlock();
+#if defined(__riscv)
+			if (gKernelStartup) {
+				if (traceBootstrap)
+					debug_early_boot_message("riscv: create sem entry lock bypassed\n");
+				initializeSlot();
+			} else
+#endif
+			{
+				SpinLocker semLocker(sem->lock);
+				initializeSlot();
+			}
 
-			atomic_add(&sUsedSems, 1);
+#if defined(__riscv)
+			if (gKernelStartup)
+				sUsedSems++;
+			else
+#endif
+				atomic_add(&sUsedSems, 1);
+			if (traceBootstrap)
+				debug_early_boot_message("riscv: create sem used count done\n");
 
 			KTRACE("create_sem_etc(count: %ld, name: %s, owner: %ld) -> %ld",
 				count, name, owner, id);
 
 			T_SCHEDULING_ANALYSIS(CreateSemaphore(id, name));
+			if (traceBootstrap)
+				debug_early_boot_message("riscv: create sem listeners start\n");
 			NotifyWaitObjectListeners(&WaitObjectListener::SemaphoreCreated, id,
 				name);
+			if (traceBootstrap)
+				debug_early_boot_message("riscv: create sem listeners done\n");
 		} else
 			free(tempName);
 
+		if (traceBootstrap)
+			debug_early_boot_message("riscv: create sem slot allocation done\n");
 		return id;
 	};
 
 #if defined(__riscv)
 	if (gKernelStartup) {
-		// The boot CPU is the only active hart. Keep the free-list spinlock,
-		// but do not restore interrupts before the architecture path is ready.
-		SpinLocker locker(sSemsSpinlock);
+		// The boot CPU is the only active hart. Avoid AMO-based spinlocks until
+		// the architecture atomic path is ready.
+		if (traceBootstrap)
+			debug_early_boot_message("riscv: create sem free list lock bypassed\n");
 		return allocateSemaphore();
 	}
 #endif

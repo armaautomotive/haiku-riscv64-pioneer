@@ -5142,7 +5142,19 @@ fill_area_info(struct VMArea* area, area_info* info, size_t size)
 	info->lock = area->wiring;
 	info->team = area->address_space->ID();
 
-	VMCache* cache = vm_area_get_locked_cache(area);
+	VMCache* cache;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	const bool bootstrap = *kernelStartup;
+	if (bootstrap)
+		cache = area->cache;
+	else
+		cache = vm_area_get_locked_cache(area);
+#else
+	const bool bootstrap = false;
+	cache = vm_area_get_locked_cache(area);
+#endif
 
 	// Note, this is a simplification; the cache could be larger than this area
 	info->ram_size = cache->page_count * B_PAGE_SIZE;
@@ -5153,7 +5165,8 @@ fill_area_info(struct VMArea* area, area_info* info, size_t size)
 	info->out_count = 0;
 		// TODO: retrieve real values here!
 
-	vm_area_put_locked_cache(cache);
+	if (!bootstrap)
+		vm_area_put_locked_cache(cache);
 }
 
 
@@ -6035,6 +6048,20 @@ _get_area_info(area_id id, area_info* info, size_t size)
 {
 	if (size != sizeof(area_info) || info == NULL)
 		return B_BAD_VALUE;
+
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (*kernelStartup) {
+		// The boot CPU is the sole area-table and cache user at this point.
+		// Avoid the address-space and area rw_locks until scheduler startup.
+		VMArea* area = VMAreas::LookupLocked(id);
+		if (area == NULL)
+			return B_BAD_VALUE;
+		fill_area_info(area, info, size);
+		return B_OK;
+	}
+#endif
 
 	AddressSpaceReadLocker locker;
 	VMArea* area;
