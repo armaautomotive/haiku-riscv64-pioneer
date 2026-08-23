@@ -272,30 +272,50 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		debug_early_boot_message("riscv: secondary cpu ready\n");
 
 		TRACE("init system info\n");
+		debug_early_boot_message("riscv: system info init\n");
 		system_info_init(&sKernelArgs);
+		debug_early_boot_message("riscv: system info ready\n");
 
 		TRACE("init SMP\n");
+		debug_early_boot_message("riscv: smp init\n");
 		smp_init(&sKernelArgs);
+		debug_early_boot_message("riscv: smp ready\n");
+		debug_early_boot_message("riscv: cpu topology init\n");
 		cpu_build_topology_tree();
+		debug_early_boot_message("riscv: cpu topology ready\n");
 		TRACE("init timer\n");
+		debug_early_boot_message("riscv: timer init\n");
 		timer_init(&sKernelArgs);
+		debug_early_boot_message("riscv: timer ready\n");
 		TRACE("init real time clock\n");
+		debug_early_boot_message("riscv: rtc init\n");
 		rtc_init(&sKernelArgs);
 		timer_init_post_rtc();
+		debug_early_boot_message("riscv: rtc ready\n");
 
 		TRACE("init condition variables\n");
+		debug_early_boot_message("riscv: condition variables init\n");
 		condition_variable_init();
+		debug_early_boot_message("riscv: condition variables ready\n");
 
 		// now we can create and use semaphores
 		TRACE("init VM semaphores\n");
+		debug_early_boot_message("riscv: vm post sem init\n");
 		vm_init_post_sem(&sKernelArgs);
+		debug_early_boot_message("riscv: vm post sem ready\n");
 		TRACE("init generic syscall\n");
+		debug_early_boot_message("riscv: generic syscall init\n");
 		generic_syscall_init();
 		smp_init_post_generic_syscalls();
+		debug_early_boot_message("riscv: generic syscall ready\n");
 		TRACE("init scheduler\n");
+		debug_early_boot_message("riscv: scheduler init\n");
 		scheduler_init();
+		debug_early_boot_message("riscv: scheduler ready\n");
 		TRACE("init threads\n");
+		debug_early_boot_message("riscv: threads init\n");
 		thread_init(&sKernelArgs);
+		debug_early_boot_message("riscv: threads ready\n");
 		TRACE("init kernel daemons\n");
 		kernel_daemon_init();
 		TRACE("init stack protector\n");

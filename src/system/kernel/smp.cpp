@@ -27,6 +27,7 @@
 #include <cpu.h>
 #include <generic_syscall.h>
 #include <interrupts.h>
+#include <kernel.h>
 #include <spinlock_contention.h>
 #include <thread.h>
 #include <util/atomic.h>
@@ -1325,20 +1326,22 @@ smp_init(kernel_args* args)
 {
 	TRACE("smp_init: entry\n");
 
+	if (!gKernelStartup) {
 #if DEBUG_SPINLOCKS
-	add_debugger_command_etc("spinlock", &dump_spinlock,
-		"Dump info on a spinlock",
-		"\n"
-		"Dumps info on a spinlock.\n", 0);
+		add_debugger_command_etc("spinlock", &dump_spinlock,
+			"Dump info on a spinlock",
+			"\n"
+			"Dumps info on a spinlock.\n", 0);
 #endif
-	add_debugger_command_etc("ici", &dump_ici_messages,
-		"Dump info on pending ICI messages",
-		"\n"
-		"Dumps info on pending ICI messages.\n", 0);
-	add_debugger_command_etc("ici_message", &dump_ici_message,
-		"Dump info on an ICI message",
-		"\n"
-		"Dumps info on an ICI message.\n", 0);
+		add_debugger_command_etc("ici", &dump_ici_messages,
+			"Dump info on pending ICI messages",
+			"\n"
+			"Dumps info on pending ICI messages.\n", 0);
+		add_debugger_command_etc("ici_message", &dump_ici_message,
+			"Dump info on an ICI message",
+			"\n"
+			"Dumps info on an ICI message.\n", 0);
+	}
 
 	if (args->num_cpus > 1) {
 		sNumCPUs = args->num_cpus;
@@ -1504,4 +1507,3 @@ memory_write_barrier()
 {
 	memory_write_barrier_inline();
 }
-

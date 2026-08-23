@@ -2513,7 +2513,9 @@ elf_create_memory_image(const char* imageName, addr_t text, size_t textSize,
 	addr_t data, size_t dataSize)
 {
 	// allocate the image
+	debug_early_boot_message("riscv: memory image struct create\n");
 	elf_image_info* image = create_image_struct();
+	debug_early_boot_message("riscv: memory image struct ready\n");
 	if (image == NULL)
 		return B_NO_MEMORY;
 	MemoryDeleter imageDeleter(image);
@@ -2523,6 +2525,7 @@ elf_create_memory_image(const char* imageName, addr_t text, size_t textSize,
 	// table, which we don't have.
 	elf_sym* symbolTable = (elf_sym*)malloc(0);
 	char* stringTable = (char*)malloc(1);
+	debug_early_boot_message("riscv: memory image tables allocated\n");
 	MemoryDeleter symbolTableDeleter(symbolTable);
 	MemoryDeleter stringTableDeleter(stringTable);
 	if (symbolTable == NULL || stringTable == NULL)
@@ -2551,10 +2554,14 @@ elf_create_memory_image(const char* imageName, addr_t text, size_t textSize,
 	image->data_region.size = dataSize;
 	image->data_region.delta = 0;
 
-	mutex_lock(&sImageMutex);
+	debug_early_boot_message("riscv: memory image register\n");
+	if (!gKernelStartup)
+		mutex_lock(&sImageMutex);
 	register_elf_image(image);
 	image_id imageID = image->id;
-	mutex_unlock(&sImageMutex);
+	if (!gKernelStartup)
+		mutex_unlock(&sImageMutex);
+	debug_early_boot_message("riscv: memory image registered\n");
 
 	// keep the allocated memory
 	imageDeleter.Detach();
@@ -2569,12 +2576,22 @@ status_t
 elf_add_memory_image_symbol(image_id id, const char* name, addr_t address,
 	size_t size, int32 type)
 {
-	MutexLocker _(sImageMutex);
+#if defined(__riscv)
+	if (gKernelStartup) {
+		debug_early_boot_message(
+			"riscv: startup memory image symbol deferred\n");
+		return B_OK;
+	}
+#endif
+
+	MutexLocker locker(sImageMutex);
+	debug_early_boot_message("riscv: memory image symbol lookup\n");
 
 	// get the image
 	struct elf_image_info* image = find_image(id);
 	if (image == NULL)
 		return B_ENTRY_NOT_FOUND;
+	debug_early_boot_message("riscv: memory image symbol found\n");
 
 	// get the current string table size
 	size_t stringTableSize = 1;
@@ -2603,6 +2620,7 @@ elf_add_memory_image_symbol(image_id id, const char* name, addr_t address,
 		image->debug_string_table = stringTable;
 		memcpy(stringTable + stringIndex, name, nameSize);
 	}
+	debug_early_boot_message("riscv: memory image symbol name ready\n");
 
 	// resize the symbol table
 	int32 symbolCount = image->num_debug_symbols + 1;
@@ -2611,6 +2629,7 @@ elf_add_memory_image_symbol(image_id id, const char* name, addr_t address,
 	if (symbolTable == NULL)
 		return B_NO_MEMORY;
 	image->debug_symbols = symbolTable;
+	debug_early_boot_message("riscv: memory image symbol table ready\n");
 
 	// enter the symbol
 	elf_sym& symbol = symbolTable[symbolCount - 1];
@@ -2622,6 +2641,7 @@ elf_add_memory_image_symbol(image_id id, const char* name, addr_t address,
 	symbol.st_other = 0;
 	symbol.st_shndx = 0;
 	image->num_debug_symbols++;
+	debug_early_boot_message("riscv: memory image symbol added\n");
 
 	return B_OK;
 }

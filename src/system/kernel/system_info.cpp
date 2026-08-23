@@ -550,7 +550,8 @@ _get_cpu_info_etc(uint32 firstCPU, uint32 cpuCount, cpu_info* info, size_t size)
 status_t
 system_info_init(struct kernel_args *args)
 {
-	add_debugger_command("info", &dump_info, "System info");
+	if (!gKernelStartup)
+		add_debugger_command("info", &dump_info, "System info");
 
 	return arch_system_info_init(args);
 }

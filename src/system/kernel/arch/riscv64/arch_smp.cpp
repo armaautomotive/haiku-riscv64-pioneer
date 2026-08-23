@@ -27,7 +27,7 @@ extern uint32 gPlatform;
 status_t
 arch_smp_init(kernel_args *args)
 {
-	dprintf("arch_smp_init()\n");
+	debug_early_boot_message("riscv: arch smp init\n");
 	return B_OK;
 }
 
