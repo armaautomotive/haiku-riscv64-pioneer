@@ -522,12 +522,27 @@ scheduler_on_thread_init(Thread* thread)
 
 	if (thread_is_idle_thread(thread)) {
 		static int32 sIdleThreadsID;
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler idle counter start\n");
+#if defined(__riscv)
+		int32 cpuID = gKernelStartup
+			? sIdleThreadsID++ : atomic_add(&sIdleThreadsID, 1);
+#else
 		int32 cpuID = atomic_add(&sIdleThreadsID, 1);
+#endif
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler idle counter done\n");
 
 		thread->previous_cpu = &gCPU[cpuID];
 		thread->pinned_to_cpu = 1;
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler idle fields done\n");
 
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler idle data init start\n");
 		thread->scheduler_data->Init(CoreEntry::GetCore(cpuID));
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler idle data init done\n");
 	} else
 		thread->scheduler_data->Init();
 }

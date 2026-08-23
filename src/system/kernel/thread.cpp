@@ -173,6 +173,28 @@ static DoublyLinkedList<CachedKernelStack> sCachedKernelStacks;
 static area_id
 allocate_kernel_stack(const char* name, addr_t* base, addr_t* top)
 {
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// Startup Thread objects come from the raw bootstrap heap, so no thread
+		// slab has run create_kernel_stack() to populate the stack cache yet.
+		virtual_address_restrictions virtualRestrictions = {};
+		virtualRestrictions.address_specification = B_ANY_KERNEL_ADDRESS;
+		physical_address_restrictions physicalRestrictions = {};
+
+		area_id area = create_area_etc(B_SYSTEM_TEAM, name,
+			KERNEL_STACK_SIZE + KERNEL_STACK_GUARD_PAGES * B_PAGE_SIZE,
+			B_FULL_LOCK, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA
+				| B_KERNEL_STACK_AREA, 0,
+			KERNEL_STACK_GUARD_PAGES * B_PAGE_SIZE, &virtualRestrictions,
+			&physicalRestrictions, (void**)base);
+		if (area >= 0) {
+			*top = *base + KERNEL_STACK_SIZE
+				+ KERNEL_STACK_GUARD_PAGES * B_PAGE_SIZE;
+		}
+		return area;
+	}
+#endif
+
 	InterruptsSpinLocker locker(sCachedKernelStacksLock);
 	CachedKernelStack* cachedStack = sCachedKernelStacks.RemoveHead();
 	locker.Unlock();
@@ -266,6 +288,7 @@ Thread::Thread(const char* name, thread_id threadID, struct cpu_ent* cpu)
 	flags(0),
 	serial_number(-1),
 	hash_next(NULL),
+	bootstrap_allocation(gKernelStartup),
 	priority(-1),
 	io_priority(-1),
 	cpu(cpu),
@@ -301,7 +324,7 @@ Thread::Thread(const char* name, thread_id threadID, struct cpu_ent* cpu)
 {
 	bool traceBootstrap = false;
 #if defined(__riscv)
-	traceBootstrap = gKernelStartup && threadID >= 0;
+	traceBootstrap = gKernelStartup;
 #endif
 	if (traceBootstrap)
 		debug_early_boot_message("riscv: thread constructor body start\n");
@@ -404,11 +427,19 @@ Thread::~Thread()
 /*static*/ status_t
 Thread::Create(const char* name, Thread*& _thread)
 {
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: Thread::Create allocation start\n");
 	Thread* thread = new Thread(name, -1, NULL);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: Thread::Create allocation done\n");
 	if (thread == NULL)
 		return B_NO_MEMORY;
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: Thread::Create init start\n");
 	status_t error = thread->Init(false);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: Thread::Create init done\n");
 	if (error != B_OK) {
 		delete thread;
 		return error;
@@ -489,7 +520,20 @@ Thread::IsAlive(thread_id id)
 void*
 Thread::operator new(size_t size)
 {
-	return object_cache_alloc(sThreadCache, 0);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread object cache alloc start\n");
+	void* object;
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// The slab-cache mutex is not usable yet. The RISC-V heap provides a
+		// single-hart, never-freed bootstrap arena for exactly this phase.
+		object = memalign(64, size);
+	} else
+#endif
+		object = object_cache_alloc(sThreadCache, 0);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread object cache alloc done\n");
+	return object;
 }
 
 
@@ -503,6 +547,8 @@ Thread::operator new(size_t, void* pointer)
 void
 Thread::operator delete(void* pointer, size_t size)
 {
+	if (((Thread*)pointer)->bootstrap_allocation)
+		return;
 	object_cache_free(sThreadCache, pointer, 0);
 }
 
@@ -1057,15 +1103,35 @@ thread_id
 thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 {
 	status_t status = B_OK;
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create entry\n");
 
 	TRACE(("thread_create_thread(%s, thread = %p, %s)\n", attributes.name,
 		attributes.thread, kernel ? "kernel" : "user"));
 
 	// get the team
-	Team* team = Team::Get(attributes.team);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team get start\n");
+	Team* team;
+	bool bootstrapKernelTeam = false;
+#if defined(__riscv)
+	if (gKernelStartup && attributes.team == team_get_kernel_team_id()) {
+		team = team_get_kernel_team();
+		// The kernel team is permanent. Avoid the hash lock and reference-count
+		// AMO until the first scheduler-managed kernel thread exists.
+		bootstrapKernelTeam = true;
+	} else
+#endif
+		team = Team::Get(attributes.team);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team get done\n");
 	if (team == NULL)
 		return B_BAD_TEAM_ID;
-	BReference<Team> teamReference(team, true);
+	BReference<Team> teamReference;
+	if (!bootstrapKernelTeam)
+		teamReference.SetTo(team, true);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team reference done\n");
 
 	// If a thread object is given, acquire a reference to it, otherwise create
 	// a new thread object with the given attributes.
@@ -1077,8 +1143,14 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 		if (status != B_OK)
 			return status;
 	}
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create object ready\n");
 	BReference<Thread> threadReference(thread, true);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create object reference done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create fields start\n");
 	thread->team = team;
 		// set already, so, if something goes wrong, the team pointer is
 		// available for deinitialization
@@ -1091,17 +1163,31 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 	thread->state = B_THREAD_SUSPENDED;
 
 	thread->sig_block_mask = attributes.signal_mask;
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create fields done\n");
 
 	// init debug structure
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create debug info start\n");
 	init_thread_debug_info(&thread->debug_info);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create debug info done\n");
 
 	// create the kernel stack
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create stack name start\n");
 	char stackName[B_OS_NAME_LENGTH];
 	snprintf(stackName, B_OS_NAME_LENGTH, "%s_%" B_PRId32 "_kstack",
 		thread->name, thread->id);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create stack name done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create kernel stack allocation start\n");
 	thread->kernel_stack_area = allocate_kernel_stack(stackName,
 		&thread->kernel_stack_base, &thread->kernel_stack_top);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create kernel stack allocation done\n");
 	if (thread->kernel_stack_area < 0) {
 		// we're not yet part of a team, so we can just bail out
 		status = thread->kernel_stack_area;
@@ -1120,7 +1206,11 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 		entryArgs.argument = attributes.kernelArgument;
 		entryArgs.enterUserland = false;
 
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: thread create kernel stack init start\n");
 		init_thread_kernel_stack(thread, &entryArgs, sizeof(entryArgs));
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: thread create kernel stack init done\n");
 	} else {
 		// create the userland stack, if the thread doesn't have one yet
 		if (thread->user_stack_base == 0) {
@@ -1154,7 +1244,11 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 	}
 
 	// lock the team and see, if it is still alive
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team lock start\n");
 	TeamLocker teamLocker(team);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team lock done\n");
 	if (team->state >= TEAM_STATE_SHUTDOWN)
 		return B_BAD_TEAM_ID;
 
@@ -2607,6 +2701,20 @@ thread_reset_for_exec(void)
 thread_id
 allocate_thread_id()
 {
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// Startup is single-hart and thread-table insertion already bypasses
+		// this lock until the architecture interrupt path is ready.
+		thread_id id;
+		do {
+			id = sNextThreadID++;
+			if (sNextThreadID < 0)
+				sNextThreadID = 2;
+		} while (sThreadHash.Lookup(id, false) != NULL);
+		return id;
+	}
+#endif
+
 	InterruptsWriteSpinLocker threadHashLocker(sThreadHashLock);
 
 	// find the next unused ID
@@ -2999,14 +3107,22 @@ thread_init(kernel_args *args)
 
 	// start the undertaker thread
 	debug_early_boot_message("riscv: thread undertaker init start\n");
+	debug_early_boot_message("riscv: thread undertaker list start\n");
 	new(&sUndertakerEntries) DoublyLinkedList<UndertakerEntry>();
+	debug_early_boot_message("riscv: thread undertaker list done\n");
+	debug_early_boot_message("riscv: thread undertaker condition start\n");
 	sUndertakerCondition.Init(&sUndertakerEntries, "undertaker entries");
+	debug_early_boot_message("riscv: thread undertaker condition done\n");
 
+	debug_early_boot_message("riscv: thread undertaker spawn start\n");
 	thread_id undertakerThread = spawn_kernel_thread(&undertaker, "thread undertaker",
 		B_DISPLAY_PRIORITY, NULL);
+	debug_early_boot_message("riscv: thread undertaker spawn done\n");
 	if (undertakerThread < 0)
 		panic("Failed to create undertaker thread!");
+	debug_early_boot_message("riscv: thread undertaker resume start\n");
 	resume_thread(undertakerThread);
+	debug_early_boot_message("riscv: thread undertaker resume done\n");
 	debug_early_boot_message("riscv: thread undertaker init done\n");
 
 	// set up some debugger commands
