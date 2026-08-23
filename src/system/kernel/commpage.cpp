@@ -16,6 +16,7 @@
 #include <KernelExport.h>
 
 #include <elf.h>
+#include <kernel.h>
 #include <vm/vm.h>
 #include <vm/vm_types.h>
 
@@ -38,8 +39,12 @@ allocate_commpage_entry(int entry, size_t size)
 	void* space = sFreeCommPageSpace;
 	sFreeCommPageSpace = ALIGN_ENTRY((addr_t)sFreeCommPageSpace + size);
 	sCommPageAddress[entry] = (addr_t)space - (addr_t)sCommPageAddress;
-	dprintf("allocate_commpage_entry(%d, %lu) -> %p\n", entry, size,
-		(void*)sCommPageAddress[entry]);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: commpage entry allocated\n");
+	else {
+		dprintf("allocate_commpage_entry(%d, %lu) -> %p\n", entry, size,
+			(void*)sCommPageAddress[entry]);
+	}
 	return space;
 }
 

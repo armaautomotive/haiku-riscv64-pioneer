@@ -10,11 +10,13 @@
 
 #include <arch/real_time_clock.h>
 #include <commpage.h>
+#include <debug.h>
 #ifdef _COMPAT_MODE
 #	include <commpage_compat.h>
 #endif
 #include <real_time_clock.h>
 #include <real_time_data.h>
+#include <kernel.h>
 #include <syscalls.h>
 #include <thread.h>
 
@@ -69,6 +71,15 @@ rtc_hw_to_system(void)
 	uint64 current_time;
 
 	current_time = arch_rtc_get_hw_time();
+#if defined(__riscv)
+	if (gKernelStartup) {
+		arch_rtc_set_system_time_offset(sRealTimeData,
+			(bigtime_t)(current_time + (sIsGMT ? 0 : sTimezoneOffset))
+				* 1000000 - system_time());
+		debug_early_boot_message("riscv: startup RTC offset set\n");
+		return;
+	}
+#endif
 	set_real_time_clock(current_time + (sIsGMT ? 0 : sTimezoneOffset));
 }
 
@@ -105,9 +116,13 @@ rtc_debug(int argc, char **argv)
 status_t
 rtc_init(kernel_args *args)
 {
+	debug_early_boot_message("riscv: rtc commpage allocate\n");
 	sRealTimeData = (struct real_time_data*)allocate_commpage_entry(
 		COMMPAGE_ENTRY_REAL_TIME_DATA, sizeof(struct real_time_data));
+	debug_early_boot_message("riscv: rtc commpage ready\n");
+	debug_early_boot_message("riscv: arch rtc init\n");
 	arch_rtc_init(args, sRealTimeData);
+	debug_early_boot_message("riscv: arch rtc ready\n");
 
 #ifdef _COMPAT_MODE
 	sRealTimeDataCompat = (struct real_time_data*)
@@ -116,9 +131,14 @@ rtc_init(kernel_args *args)
 	arch_rtc_init(args, sRealTimeDataCompat);
 #endif
 
+	debug_early_boot_message("riscv: rtc hardware sync\n");
 	rtc_hw_to_system();
+	debug_early_boot_message("riscv: rtc hardware synced\n");
 
-	add_debugger_command("rtc", &rtc_debug, "Set and test the real-time clock");
+	if (!gKernelStartup)
+		add_debugger_command("rtc", &rtc_debug, "Set and test the real-time clock");
+	else
+		debug_early_boot_message("riscv: rtc debugger command deferred\n");
 	return B_OK;
 }
 
@@ -350,4 +370,3 @@ _user_get_real_time_clock_is_gmt(bool *_userIsGMT)
 
 	return B_OK;
 }
-

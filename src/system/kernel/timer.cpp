@@ -19,6 +19,7 @@
 #include <cpu.h>
 #include <debug.h>
 #include <elf.h>
+#include <kernel.h>
 #include <real_time_clock.h>
 #include <smp.h>
 #include <thread.h>
@@ -210,12 +211,17 @@ timer_init(kernel_args* args)
 {
 	TRACE(("timer_init: entry\n"));
 
+	debug_early_boot_message("riscv: arch timer init\n");
 	if (arch_init_timer(args) != B_OK)
 		panic("arch_init_timer() failed");
+	debug_early_boot_message("riscv: arch timer ready\n");
 
-	add_debugger_command_etc("timers", &dump_timers, "List all timers",
-		"\n"
-		"Prints a list of all scheduled timers.\n", 0);
+	if (!gKernelStartup) {
+		add_debugger_command_etc("timers", &dump_timers, "List all timers",
+			"\n"
+			"Prints a list of all scheduled timers.\n", 0);
+	} else
+		debug_early_boot_message("riscv: timer debugger command deferred\n");
 
 	return B_OK;
 }
