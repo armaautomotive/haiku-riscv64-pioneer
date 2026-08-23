@@ -443,6 +443,9 @@ haiku_sem_init(kernel_args *args)
 
 	// add debugger commands
 	debug_early_boot_message("riscv: semaphore debugger commands init\n");
+#if defined(__riscv)
+	if (!gKernelStartup) {
+#endif
 	add_debugger_command_etc("sems", &dump_sem_list,
 		"Dump a list of all active semaphores (for team, with name, etc.)",
 		"[ ([ \"team\" | \"owner\" ] <team>) | (\"name\" <name>) ]"
@@ -459,6 +462,10 @@ haiku_sem_init(kernel_args *args)
 		"Prints info about the specified semaphore.\n"
 			"  <sem>  - pointer to the semaphore structure, semaphore ID, or name\n"
 			"           of the semaphore to print info for.\n", 0);
+#if defined(__riscv)
+	} else
+		debug_early_boot_message("riscv: semaphore debugger commands deferred\n");
+#endif
 	debug_early_boot_message("riscv: semaphore debugger commands ready\n");
 
 	TRACE(("sem_init: exit\n"));

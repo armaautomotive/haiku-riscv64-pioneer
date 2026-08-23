@@ -1455,6 +1455,14 @@ wake_up_page_reservation_waiters()
 static inline void
 unreserve_pages(uint32 count)
 {
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// Pioneer bootstrap is single-hart and cannot have runnable page
+		// reservation waiters yet. Avoid startup atomics and the deficit mutex.
+		sUnreservedFreePages += count;
+		return;
+	}
+#endif
 	atomic_add(&sUnreservedFreePages, count);
 	if (atomic_get(&sUnsatisfiedPageReservations) != 0) {
 		MutexLocker pageDeficitLocker(sPageDeficitLock);

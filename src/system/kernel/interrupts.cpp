@@ -189,6 +189,7 @@ interrupts_init_post_vm(kernel_args* args)
 	int i;
 
 	/* initialize the vector list */
+	debug_early_boot_message("riscv: interrupt vectors init\n");
 	for (i = 0; i < NUM_IO_VECTORS; i++) {
 		B_INITIALIZE_SPINLOCK(&sVectors[i].vector_lock);
 		sVectors[i].enable_count = 0;
@@ -214,7 +215,11 @@ interrupts_init_post_vm(kernel_args* args)
 		sVectorCPUAssignments[i].load = 0;
 		sVectorCPUAssignments[i].cpu = -1;
 	}
+	debug_early_boot_message("riscv: interrupt vectors ready\n");
 
+#if defined(__riscv)
+	if (!gKernelStartup) {
+#endif
 #if DEBUG_INTERRUPTS
 	add_debugger_command("ints", &dump_int_statistics,
 		"list interrupt statistics");
@@ -222,8 +227,15 @@ interrupts_init_post_vm(kernel_args* args)
 
 	add_debugger_command("int_load", &dump_int_load,
 		"list interrupt usage statistics");
+#if defined(__riscv)
+	} else
+		debug_early_boot_message("riscv: interrupt debugger commands deferred\n");
+#endif
 
-	return arch_int_init_post_vm(args);
+	debug_early_boot_message("riscv: arch interrupts post vm init\n");
+	status_t status = arch_int_init_post_vm(args);
+	debug_early_boot_message("riscv: arch interrupts post vm ready\n");
+	return status;
 }
 
 

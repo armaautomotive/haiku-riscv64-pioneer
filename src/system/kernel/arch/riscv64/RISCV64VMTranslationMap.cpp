@@ -257,6 +257,12 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 		.isGlobal = fIsKernel,
 		.ppn = physicalAddress / B_PAGE_SIZE
 	};
+	if (gKernelStartup) {
+		// Match the early boot mapper. The SG2042 does not make these new
+		// mappings usable before trap handling is online unless A/D are preset.
+		newPte.isAccessed = true;
+		newPte.isDirty = true;
+	}
 
 	if ((attributes & B_USER_PROTECTION) != 0) {
 		newPte.isUser = true;
@@ -281,8 +287,12 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 
 	pte->store(newPte);
 
-	// Note: We don't need to invalidate the TLB for this address, as previously
-	// the entry was not present and the TLB doesn't cache those entries.
+	// The SG2042 requires the newly installed page-table entry to be made
+	// visible before the bootstrap kernel first accesses the mapping. In
+	// particular, a newly allocated lower-level page table is not reliably
+	// observed without sfence.vma on the boot hart.
+	if (gKernelStartup)
+		FlushTlbPage(virtualAddress);
 
 	fMapCount++;
 

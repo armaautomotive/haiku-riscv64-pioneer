@@ -758,17 +758,17 @@ map_page(VMArea* area, vm_page* page, addr_t address, uint32 protection,
 
 		bool skipMapLock = false;
 #if defined(__riscv)
-		skipMapLock = gKernelStartup && strcmp(area->name, "sem_table") == 0;
+		skipMapLock = gKernelStartup;
 #endif
 		if (!skipMapLock)
 			map->Lock();
-		else
+		else if (address == area->Base())
 			debug_early_boot_message("riscv: sem translation map lock deferred\n");
-		if (skipMapLock)
+		if (skipMapLock && address == area->Base())
 			debug_early_boot_message("riscv: sem translation map call\n");
 		map->Map(address, page->physical_page_number * B_PAGE_SIZE, protection,
 			area->MemoryType(), reservation);
-		if (skipMapLock)
+		if (skipMapLock && address == area->Base())
 			debug_early_boot_message("riscv: sem translation map returned\n");
 		if (!skipMapLock)
 			map->Unlock();
@@ -2212,17 +2212,26 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 	}
 
 #if defined(__riscv)
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area cache unlock\n");
 	typedef void (*unlock_cache_bootstrap_func)(VMCache*);
 	unlock_cache_bootstrap_func directUnlockCacheBootstrap;
 	asm volatile("lla %0, _ZN7VMCache15UnlockBootstrapEv"
 		: "=r"(directUnlockCacheBootstrap));
 	directUnlockCacheBootstrap(cache);
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area cache unlocked\n");
 #else
 	cache->Unlock();
 #endif
 
-	if (reservedPages > 0)
+	if (reservedPages > 0) {
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area pages unreserve\n");
 		vm_page_unreserve_pages(&reservation);
+		if (traceSemaphoreArea)
+			debug_early_boot_message("riscv: sem area pages unreserved\n");
+	}
 
 	TRACE(("vm_create_anonymous_area: done\n"));
 
@@ -2230,6 +2239,8 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 #endif
 
 	area->cache_type = CACHE_TYPE_RAM;
+	if (traceSemaphoreArea)
+		debug_early_boot_message("riscv: sem area complete\n");
 	return area->id;
 
 err1:

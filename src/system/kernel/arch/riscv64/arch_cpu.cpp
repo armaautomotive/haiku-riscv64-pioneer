@@ -74,9 +74,14 @@ status_t
 arch_cpu_init_post_vm(kernel_args *args)
 {
 	// Set address space ownership to currently running threads
+	debug_early_boot_message("riscv: cpu address space refs init\n");
 	for (uint32 i = 0; i < args->num_cpus; i++) {
-		VMAddressSpace::Kernel()->Get();
+		if (gKernelStartup)
+			VMAddressSpace::Kernel()->GetBootstrap();
+		else
+			VMAddressSpace::Kernel()->Get();
 	}
+	debug_early_boot_message("riscv: cpu address space refs ready\n");
 
 	return B_OK;
 }

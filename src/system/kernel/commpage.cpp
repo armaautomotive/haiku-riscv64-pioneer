@@ -75,12 +75,16 @@ status_t
 commpage_init(void)
 {
 	// create a read/write kernel area
+	debug_early_boot_message("riscv: commpage area create\n");
 	sCommPageArea = create_area("kernel_commpage", (void **)&sCommPageAddress,
 		B_ANY_ADDRESS, COMMPAGE_SIZE, B_FULL_LOCK,
 		B_KERNEL_WRITE_AREA | B_KERNEL_READ_AREA);
+	debug_early_boot_message("riscv: commpage area ready\n");
 
 	// zero it out
+	debug_early_boot_message("riscv: commpage clear\n");
 	memset(sCommPageAddress, 0, COMMPAGE_SIZE);
+	debug_early_boot_message("riscv: commpage cleared\n");
 
 	// fill in some of the table
 	sCommPageAddress[0] = COMMPAGE_SIGNATURE;
@@ -90,13 +94,19 @@ commpage_init(void)
 	sFreeCommPageSpace = ALIGN_ENTRY(&sCommPageAddress[COMMPAGE_TABLE_ENTRIES]);
 
 	// create the image for the commpage
+	debug_early_boot_message("riscv: commpage image create\n");
 	sCommPageImage = elf_create_memory_image("commpage", 0, COMMPAGE_SIZE, 0,
 		0);
+	debug_early_boot_message("riscv: commpage image ready\n");
+	debug_early_boot_message("riscv: commpage symbol add\n");
 	elf_add_memory_image_symbol(sCommPageImage, "commpage_table",
 		0, COMMPAGE_TABLE_ENTRIES * sizeof(addr_t),
 		B_SYMBOL_TYPE_DATA);
+	debug_early_boot_message("riscv: commpage symbol ready\n");
 
+	debug_early_boot_message("riscv: arch commpage init\n");
 	arch_commpage_init();
+	debug_early_boot_message("riscv: arch commpage ready\n");
 
 	return B_OK;
 }
