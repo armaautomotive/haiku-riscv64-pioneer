@@ -62,19 +62,39 @@ static KernelDaemon sResourceResizer;
 status_t
 KernelDaemon::Init(const char* name)
 {
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon lock init start\n");
 	recursive_lock_init(&fLock, name);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon lock init done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon sem create start\n");
 	fDaemonAddedSem = create_sem(0, "kernel daemon added");
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon sem create done\n");
 	if (fDaemonAddedSem < 0)
 		return fDaemonAddedSem;
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon spawn start\n");
 	fThread = spawn_kernel_thread(&_DaemonThreadEntry, name, B_LOW_PRIORITY,
 		this);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon spawn done\n");
 	if (fThread < 0)
 		return fThread;
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon resume start\n");
 	resume_thread(fThread);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon resume done\n");
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon condition start\n");
 	fUnregisterCondition.Init(this, name);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon condition done\n");
 
 	return B_OK;
 }
@@ -306,7 +326,12 @@ kernel_daemon_init(void)
 	if (sResourceResizer.Init("resource resizer") != B_OK)
 		panic("kernel_daemon_init(): failed to init resource resizer");
 
-	add_debugger_command("daemons", dump_daemons,
-		"Shows registered kernel daemons.");
+#if defined(__riscv)
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: kernel daemon debugger command deferred\n");
+	else
+#endif
+		add_debugger_command("daemons", dump_daemons,
+			"Shows registered kernel daemons.");
 	return B_OK;
 }

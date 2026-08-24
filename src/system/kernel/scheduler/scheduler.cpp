@@ -96,14 +96,24 @@ static void
 enqueue(Thread* thread, bool newOne)
 {
 	SCHEDULER_ENTER_FUNCTION();
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue entry\n");
 
 	ThreadData* threadData = thread->scheduler_data;
 
 	int32 threadPriority = threadData->GetEffectivePriority();
 	T(EnqueueThread(thread, threadPriority));
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue priority done\n");
 
 	CPUEntry* targetCPU = NULL;
 	CoreEntry* targetCore = NULL;
+#if defined(__riscv)
+	if (gKernelStartup) {
+		targetCPU = &gCPUEntries[smp_get_current_cpu()];
+		targetCore = targetCPU->Core();
+	} else
+#endif
 	if (thread->pinned_to_cpu > 0) {
 		ASSERT(thread->previous_cpu != NULL);
 		ASSERT(threadData->Core() != NULL);
@@ -115,18 +125,32 @@ enqueue(Thread* thread, bool newOne)
 		targetCore = threadData->Rebalance();
 	}
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue choose cpu start\n");
 	const bool rescheduleNeeded = threadData->ChooseCoreAndCPU(targetCore, targetCPU);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue choose cpu done\n");
 
 	TRACE("enqueueing thread %" B_PRId32 " with priority %" B_PRId32 " on CPU %" B_PRId32 " (core %" B_PRId32 ")\n",
 		thread->id, threadPriority, targetCPU->ID(), targetCore->ID());
 
 	bool wasRunQueueEmpty = false;
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue queue insert start\n");
 	threadData->Enqueue(wasRunQueueEmpty);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue queue insert done\n");
 
 	// notify listeners
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue listeners start\n");
 	NotifySchedulerListeners(&SchedulerListener::ThreadEnqueuedInRunQueue,
 		thread);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue listeners done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue reschedule start\n");
 	int32 heapPriority = CPUPriorityHeap::GetKey(targetCPU);
 	if (threadPriority > heapPriority
 		|| (threadPriority == heapPriority && rescheduleNeeded)
@@ -139,6 +163,8 @@ enqueue(Thread* thread, bool newOne)
 				NULL, SMP_MSG_FLAG_ASYNC);
 		}
 	}
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue reschedule done\n");
 }
 
 
@@ -151,7 +177,13 @@ scheduler_enqueue_in_run_queue(Thread *thread)
 	ASSERT(!are_interrupts_enabled());
 	SCHEDULER_ENTER_FUNCTION();
 
-	SchedulerModeLocker _;
+#if defined(__riscv)
+	SchedulerModeLocker modeLocker(false, !gKernelStartup);
+#else
+	SchedulerModeLocker modeLocker;
+#endif
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue mode ready\n");
 
 	TRACE("enqueueing new thread %" B_PRId32 " with static priority %" B_PRId32 "\n", thread->id,
 		thread->priority);
@@ -160,8 +192,12 @@ scheduler_enqueue_in_run_queue(Thread *thread)
 
 	if (threadData->ShouldCancelPenalty())
 		threadData->CancelPenalty();
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue penalty done\n");
 
 	enqueue(thread, true);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: scheduler enqueue complete\n");
 }
 
 
@@ -543,8 +579,13 @@ scheduler_on_thread_init(Thread* thread)
 		thread->scheduler_data->Init(CoreEntry::GetCore(cpuID));
 		if (gKernelStartup)
 			debug_early_boot_message("riscv: scheduler idle data init done\n");
-	} else
+	} else {
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler regular data init start\n");
 		thread->scheduler_data->Init();
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: scheduler regular data init done\n");
+	}
 }
 
 

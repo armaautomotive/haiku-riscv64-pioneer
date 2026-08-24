@@ -1246,7 +1246,9 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 	// lock the team and see, if it is still alive
 	if (gKernelStartup)
 		debug_early_boot_message("riscv: thread create team lock start\n");
-	TeamLocker teamLocker(team);
+	TeamLocker teamLocker;
+	if (!bootstrapKernelTeam)
+		teamLocker.SetTo(team, false);
 	if (gKernelStartup)
 		debug_early_boot_message("riscv: thread create team lock done\n");
 	if (team->state >= TEAM_STATE_SHUTDOWN)
@@ -1293,10 +1295,24 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 	// over a reference to its Thread object. We'll acquire another reference
 	// for our own use (and threadReference remains armed).
 
-	ThreadLocker threadLocker(thread);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create thread lock start\n");
+	ThreadLocker threadLocker;
+	if (!bootstrapKernelTeam)
+		threadLocker.SetTo(thread, false);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create thread lock done\n");
 
-	InterruptsSpinLocker threadCreationLocker(gThreadCreationLock);
-	WriteSpinLocker threadHashLocker(sThreadHashLock);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create creation locks start\n");
+	InterruptsSpinLocker threadCreationLocker;
+	WriteSpinLocker threadHashLocker;
+	if (!bootstrapKernelTeam) {
+		threadCreationLocker.SetTo(&gThreadCreationLock, false);
+		threadHashLocker.SetTo(&sThreadHashLock, false);
+	}
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create creation locks done\n");
 
 	// check the thread limit
 	if (sUsedThreads >= sMaxThreads) {
@@ -1318,12 +1334,27 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 	}
 
 	// make thread visible in global hash/list
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create visibility start\n");
 	thread->visible = true;
 	sUsedThreads++;
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create visibility done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create scheduler init start\n");
 	scheduler_on_thread_init(thread);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create scheduler init done\n");
 
-	thread->AcquireReference();
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create reference transfer start\n");
+	if (bootstrapKernelTeam)
+		threadReference.Detach();
+	else
+		thread->AcquireReference();
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create reference transfer done\n");
 
 	// Debug the new thread, if the parent thread required that (see above),
 	// or the respective global team debug flag is set. But only, if a
@@ -1337,22 +1368,41 @@ thread_create_thread(const ThreadCreationAttributes& attributes, bool kernel)
 		}
 	}
 
-	{
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team insertion start\n");
+	if (bootstrapKernelTeam) {
+		insert_thread_into_team(team, thread);
+	} else {
 		SpinLocker signalLocker(team->signal_lock);
 		SpinLocker timeLocker(team->time_lock);
 
 		// insert thread into team
 		insert_thread_into_team(team, thread);
 	}
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create team insertion done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create locks release start\n");
 	threadHashLocker.Unlock();
 	threadCreationLocker.Unlock();
 	threadLocker.Unlock();
 	teamLocker.Unlock();
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create locks release done\n");
 
 	// notify listeners
-	sNotificationService.Notify(THREAD_ADDED, thread);
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create notification start\n");
+	if (!bootstrapKernelTeam || sNotificationService.HasListeners())
+		sNotificationService.Notify(THREAD_ADDED, thread);
+	else
+		debug_early_boot_message("riscv: thread create notification skipped\n");
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create notification done\n");
 
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread create returning\n");
 	return thread->id;
 }
 
@@ -3127,6 +3177,9 @@ thread_init(kernel_args *args)
 
 	// set up some debugger commands
 	debug_early_boot_message("riscv: thread debugger commands start\n");
+#if defined(__riscv)
+	if (!gKernelStartup) {
+#endif
 	add_debugger_command_etc("threads", &dump_thread_list, "List all threads",
 		"[ <team> ]\n"
 		"Prints a list of all existing threads, or, if a team ID is given,\n"
@@ -3191,6 +3244,10 @@ thread_init(kernel_args *args)
 		"priority. If no thread ID is given, the current thread is selected.\n"
 		"  <priority>  - The thread's new priority (0 - 120)\n"
 		"  <id>        - The ID of the thread.\n", 0);
+#if defined(__riscv)
+	} else
+		debug_early_boot_message("riscv: thread debugger commands deferred\n");
+#endif
 	debug_early_boot_message("riscv: thread debugger commands done\n");
 
 	return B_OK;
@@ -3751,6 +3808,26 @@ suspend_thread(thread_id id)
 static status_t
 thread_resume_thread(thread_id id, bool kernel)
 {
+#if defined(__riscv)
+	if (gKernelStartup && kernel) {
+		debug_early_boot_message("riscv: thread resume bootstrap lookup start\n");
+		Thread* thread = Thread::GetDebug(id);
+		debug_early_boot_message("riscv: thread resume bootstrap lookup done\n");
+		if (thread == NULL)
+			return B_BAD_THREAD_ID;
+
+		thread->going_to_suspend = false;
+		debug_early_boot_message("riscv: thread resume bootstrap enqueue start\n");
+		if (thread->state == B_THREAD_SUSPENDED)
+			scheduler_enqueue_in_run_queue(thread);
+		debug_early_boot_message("riscv: thread resume bootstrap enqueue done\n");
+
+		thread->flags |= THREAD_FLAGS_DONT_RESTART_SYSCALL;
+		debug_early_boot_message("riscv: thread resume bootstrap done\n");
+		return B_OK;
+	}
+#endif
+
 	// Using the kernel internal SIGNAL_CONTINUE_THREAD signal retains
 	// compatibility to BeOS which documents the combination of suspend_thread()
 	// and resume_thread() to interrupt threads waiting on semaphores.

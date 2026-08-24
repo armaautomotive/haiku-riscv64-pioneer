@@ -410,9 +410,15 @@ inline void
 ThreadData::Enqueue(bool& wasRunQueueEmpty)
 {
 	SCHEDULER_ENTER_FUNCTION();
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread data enqueue entry\n");
 
 	if (!fReady) {
-		if (gTrackCoreLoad) {
+		if (gTrackCoreLoad
+#if defined(__riscv)
+			&& !gKernelStartup
+#endif
+			) {
 			bigtime_t timeSlept = system_time() - fWentSleep;
 			bool updateLoad = timeSlept > 0;
 
@@ -425,6 +431,8 @@ ThreadData::Enqueue(bool& wasRunQueueEmpty)
 
 		fReady = true;
 	}
+	if (gKernelStartup)
+		debug_early_boot_message("riscv: thread data enqueue ready\n");
 
 	fThread->state = B_THREAD_READY;
 
@@ -433,7 +441,13 @@ ThreadData::Enqueue(bool& wasRunQueueEmpty)
 		ASSERT(fThread->previous_cpu != NULL);
 		CPUEntry* cpu = CPUEntry::GetCPU(fThread->previous_cpu->cpu_num);
 
-		CPURunQueueLocker _(cpu);
+#if defined(__riscv)
+		CPURunQueueLocker locker(cpu, false, !gKernelStartup);
+#else
+		CPURunQueueLocker locker(cpu);
+#endif
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: thread data cpu queue ready\n");
 		ASSERT(!fEnqueued);
 		fEnqueued = true;
 
@@ -441,8 +455,16 @@ ThreadData::Enqueue(bool& wasRunQueueEmpty)
 		wasRunQueueEmpty = (top == NULL || top->IsIdle());
 
 		cpu->PushBack(this, priority);
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: thread data cpu push done\n");
 	} else {
-		CoreRunQueueLocker _(fCore);
+#if defined(__riscv)
+		CoreRunQueueLocker locker(fCore, false, !gKernelStartup);
+#else
+		CoreRunQueueLocker locker(fCore);
+#endif
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: thread data core queue ready\n");
 		ASSERT(!fEnqueued);
 		fEnqueued = true;
 
@@ -450,6 +472,8 @@ ThreadData::Enqueue(bool& wasRunQueueEmpty)
 		wasRunQueueEmpty = (top == NULL || top->IsIdle());
 
 		fCore->PushBack(this, priority);
+		if (gKernelStartup)
+			debug_early_boot_message("riscv: thread data core push done\n");
 	}
 }
 
@@ -498,4 +522,3 @@ ThreadData::UpdateActivity(bigtime_t active)
 
 
 #endif	// KERNEL_SCHEDULER_THREAD_H
-

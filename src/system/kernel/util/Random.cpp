@@ -10,6 +10,7 @@
 #include <util/Random.h>
 
 #include <OS.h>
+#include <kernel.h>
 
 
 static uint32	sFastLast	= 0;
@@ -112,7 +113,15 @@ secure_random_value()
 	static int32 count = 0;
 
 	uint32 data[8];
-	data[0] = atomic_add(&count, 1);
+#if defined(__riscv)
+	// The Pioneer reaches this during single-CPU bootstrap, before the
+	// scheduler is running.  AMOs are not yet reliable on the SG2042 at that
+	// point, so avoid the otherwise unnecessary atomic operation.
+	if (gKernelStartup)
+		data[0] = count++;
+	else
+#endif
+		data[0] = atomic_add(&count, 1);
 	data[1] = system_time();
 	data[2] = find_thread(NULL);
 	data[3] = smp_get_current_cpu();
@@ -125,4 +134,3 @@ secure_random_value()
 	sSecureLast = random;
 	return random;
 }
-

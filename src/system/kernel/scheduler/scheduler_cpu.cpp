@@ -432,7 +432,12 @@ CoreEntry::PushFront(ThreadData* thread, int32 priority)
 	SCHEDULER_ENTER_FUNCTION();
 
 	fRunQueue.PushFront(thread, priority);
-	atomic_add(&fThreadCount, 1);
+#if defined(__riscv)
+	if (gKernelStartup)
+		fThreadCount++;
+	else
+#endif
+		atomic_add(&fThreadCount, 1);
 }
 
 
@@ -442,7 +447,12 @@ CoreEntry::PushBack(ThreadData* thread, int32 priority)
 	SCHEDULER_ENTER_FUNCTION();
 
 	fRunQueue.PushBack(thread, priority);
-	atomic_add(&fThreadCount, 1);
+#if defined(__riscv)
+	if (gKernelStartup)
+		fThreadCount++;
+	else
+#endif
+		atomic_add(&fThreadCount, 1);
 }
 
 
@@ -819,4 +829,3 @@ void Scheduler::init_debug_commands()
 			"List idle cores", "\nList idle cores", 0);
 	}
 }
-
