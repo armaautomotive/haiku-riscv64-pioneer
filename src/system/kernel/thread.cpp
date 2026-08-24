@@ -3810,20 +3810,15 @@ thread_resume_thread(thread_id id, bool kernel)
 {
 #if defined(__riscv)
 	if (gKernelStartup && kernel) {
-		debug_early_boot_message("riscv: thread resume bootstrap lookup start\n");
 		Thread* thread = Thread::GetDebug(id);
-		debug_early_boot_message("riscv: thread resume bootstrap lookup done\n");
 		if (thread == NULL)
 			return B_BAD_THREAD_ID;
 
 		thread->going_to_suspend = false;
-		debug_early_boot_message("riscv: thread resume bootstrap enqueue start\n");
 		if (thread->state == B_THREAD_SUSPENDED)
 			scheduler_enqueue_in_run_queue(thread);
-		debug_early_boot_message("riscv: thread resume bootstrap enqueue done\n");
 
 		thread->flags |= THREAD_FLAGS_DONT_RESTART_SYSCALL;
-		debug_early_boot_message("riscv: thread resume bootstrap done\n");
 		return B_OK;
 	}
 #endif
