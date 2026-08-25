@@ -16,6 +16,7 @@
 #include <arch_cpu_defs.h>
 #include <arch_thread_types.h>
 #include <arch/debug.h>
+#include <platform/sbi/sbi_syscalls.h>
 #include <util/AutoLock.h>
 #include <Htif.h>
 #include <Plic.h>
@@ -28,6 +29,56 @@
 
 
 static uint32 sPlicContexts[SMP_MAX_CPUS];
+
+
+static void
+TraceKernelPageFaultMessage(const char* message)
+{
+	while (*message != '\0') {
+		if (*message == '\n')
+			sbi_console_putchar_legacy('\r');
+		sbi_console_putchar_legacy(*message++);
+	}
+}
+
+
+static void
+TraceKernelPageFaultValue(const char* label, uint64 value)
+{
+	char message[64];
+	char* cursor = message;
+
+	while (*label != '\0')
+		*cursor++ = *label++;
+
+	*cursor++ = '0';
+	*cursor++ = 'x';
+	for (int32 shift = 60; shift >= 0; shift -= 4) {
+		uint8 digit = (value >> shift) & 0xf;
+		*cursor++ = digit < 10 ? '0' + digit : 'a' + digit - 10;
+	}
+	*cursor++ = '\n';
+	*cursor = '\0';
+
+	TraceKernelPageFaultMessage(message);
+}
+
+
+static void
+TraceKernelPageFault(iframe* frame)
+{
+	TraceKernelPageFaultMessage("riscv: kernel page fault trap\n");
+	TraceKernelPageFaultValue("riscv: trap cause ", frame->cause);
+	TraceKernelPageFaultValue("riscv: trap stval ", frame->tval);
+	TraceKernelPageFaultValue("riscv: trap epc ", frame->epc);
+	TraceKernelPageFaultValue("riscv: trap status ", frame->status);
+	TraceKernelPageFaultValue("riscv: trap ra ", frame->ra);
+	TraceKernelPageFaultValue("riscv: trap sp ", frame->sp);
+	TraceKernelPageFaultValue("riscv: trap fp ", frame->fp);
+	TraceKernelPageFaultValue("riscv: trap a0 ", frame->a0);
+	TraceKernelPageFaultValue("riscv: trap a1 ", frame->a1);
+	TraceKernelPageFaultValue("riscv: trap a2 ", frame->a2);
+}
 
 
 //#pragma mark -
@@ -133,6 +184,13 @@ SetAccessedFlags(addr_t addr, bool isWrite)
 extern "C" void
 STrap(iframe* frame)
 {
+	if (SstatusReg{.val = frame->status}.spp != modeU
+		&& (frame->cause == causeExecPageFault
+			|| frame->cause == causeLoadPageFault
+			|| frame->cause == causeStorePageFault)) {
+		TraceKernelPageFault(frame);
+	}
+
 	switch (frame->cause) {
 		case causeExecPageFault:
 		case causeLoadPageFault:

@@ -575,7 +575,16 @@ RISCV64VMTranslationMap::SetFlags(addr_t address, uint32 flags)
 	if (pte == NULL || !pte->load().isValid)
 		return;
 
-	*(std::atomic<uint64>*)pte |= ConvertAccessedFlags(flags);
+	std::atomic<uint64>* value = (std::atomic<uint64>*)pte;
+	uint64 flagsToSet = ConvertAccessedFlags(flags);
+	if (smp_get_num_cpus() < 2) {
+		// The Pioneer currently boots a single CPU, and this function is entered
+		// with interrupts disabled.  Avoid emitting an AMO while repairing an
+		// accessed/dirty fault; no other execution context can modify the PTE.
+		value->store(value->load(std::memory_order_relaxed) | flagsToSet,
+			std::memory_order_relaxed);
+	} else
+		*value |= flagsToSet;
 
 	if (IS_KERNEL_ADDRESS(address))
 		FlushTlbPage(address);

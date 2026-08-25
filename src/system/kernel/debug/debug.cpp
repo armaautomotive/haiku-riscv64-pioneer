@@ -1812,8 +1812,12 @@ debug_init_post_settings(struct kernel_args* args)
 #if defined(__riscv)
 	// This path formats the syslog banner and registers a debugger command,
 	// neither of which is safe yet during the Pioneer bootstrap.  Early serial
-	// output remains available while the syslog transition is deferred.
+	// output remains available while the syslog transition is deferred.  Do
+	// not leave the boot loader's ring buffer active: its backing memory is no
+	// longer guaranteed to remain mapped after VM initialization.
 	debug_early_boot_message("riscv: syslog post vm deferred\n");
+	sSyslogOutputEnabled = false;
+	sSyslogBuffer = NULL;
 #else
 	syslog_init_post_vm(args);
 #endif

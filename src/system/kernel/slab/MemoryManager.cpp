@@ -626,7 +626,10 @@ MemoryManager::Allocate(ObjectCache* cache, uint32 flags, void*& _pages)
 
 	if (!bootstrap)
 		mutex_unlock(&sLock);
-	error = _MapChunk(area->vmArea, chunkAddress, chunkSize, 0, flags);
+	if (area->fullyMapped)
+		error = B_OK;
+	else
+		error = _MapChunk(area->vmArea, chunkAddress, chunkSize, 0, flags);
 	if (!bootstrap)
 		mutex_lock(&sLock);
 	if (error != B_OK) {
@@ -757,7 +760,10 @@ MemoryManager::AllocateRaw(size_t size, uint32 flags, void*& _pages)
 
 	if (!bootstrap)
 		mutex_unlock(&sLock);
-	error = _MapChunk(area->vmArea, chunkAddress, size, 0, flags);
+	if (area->fullyMapped)
+		error = B_OK;
+	else
+		error = _MapChunk(area->vmArea, chunkAddress, size, 0, flags);
 	if (!bootstrap)
 		mutex_lock(&sLock);
 	if (error != B_OK) {
@@ -1264,7 +1270,7 @@ MemoryManager::_FreeChunk(Area* area, MetaChunk* metaChunk, Chunk* chunk,
 	addr_t chunkAddress, bool alreadyUnmapped, uint32 flags)
 {
 	// unmap the chunk
-	if (!alreadyUnmapped) {
+	if (!alreadyUnmapped && !area->fullyMapped) {
 		mutex_unlock(&sLock);
 		_UnmapChunk(area->vmArea, chunkAddress, metaChunk->chunkSize, flags);
 		mutex_lock(&sLock);

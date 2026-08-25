@@ -56,6 +56,31 @@ static addr_t sBootStrapMemory = 0;
 static size_t sBootStrapMemorySize = 0;
 static size_t sUsedBootStrapMemory = 0;
 
+#if defined(__riscv)
+struct BootstrapAllocationHeader {
+	uint64 magic;
+	size_t size;
+};
+
+static const uint64 kBootstrapAllocationMagic = 0x5256534c41424253ULL;
+
+
+static bool
+bootstrap_allocation_size(void* address, size_t& size)
+{
+	if (address == NULL)
+		return false;
+
+	BootstrapAllocationHeader* header
+		= (BootstrapAllocationHeader*)address - 1;
+	if (header->magic != kBootstrapAllocationMagic)
+		return false;
+
+	size = header->size;
+	return true;
+}
+#endif
+
 
 RANGE_MARKER_FUNCTION_BEGIN(slab_allocator)
 
@@ -105,7 +130,12 @@ block_alloc(size_t size, size_t alignment, uint32 flags)
 		void* allocation = block_alloc_early(size + alignment - 1);
 		if (allocation == NULL)
 			return NULL;
-		return (void*)ROUNDUP((addr_t)allocation, alignment);
+		void* alignedAllocation = (void*)ROUNDUP((addr_t)allocation, alignment);
+		BootstrapAllocationHeader* header
+			= (BootstrapAllocationHeader*)alignedAllocation - 1;
+		header->magic = kBootstrapAllocationMagic;
+		header->size = size;
+		return alignedAllocation;
 	}
 #endif
 
@@ -163,7 +193,16 @@ block_alloc_early(size_t size)
 
 	// A small allocation, but no object cache yet. Use the bootstrap memory.
 	// This allocation must never be freed!
-	if (sBootStrapMemorySize - sUsedBootStrapMemory < size) {
+#if defined(__riscv)
+	size_t neededSize = ROUNDUP(sizeof(BootstrapAllocationHeader) + size,
+		sizeof(double));
+#else
+	size_t neededSize = ROUNDUP(size, sizeof(double));
+#endif
+	if (neededSize > SLAB_CHUNK_SIZE_LARGE)
+		return NULL;
+
+	if (sBootStrapMemorySize - sUsedBootStrapMemory < neededSize) {
 		// We need more memory.
 		void* block;
 		if (MemoryManager::AllocateRaw(SLAB_CHUNK_SIZE_LARGE, 0, block) != B_OK)
@@ -173,10 +212,17 @@ block_alloc_early(size_t size)
 		sUsedBootStrapMemory = 0;
 	}
 
-	size_t neededSize = ROUNDUP(size, sizeof(double));
 	if (sUsedBootStrapMemory + neededSize > sBootStrapMemorySize)
 		return NULL;
+#if defined(__riscv)
+	BootstrapAllocationHeader* header = (BootstrapAllocationHeader*)
+		(sBootStrapMemory + sUsedBootStrapMemory);
+	header->magic = kBootstrapAllocationMagic;
+	header->size = size;
+	void* block = header + 1;
+#else
 	void* block = (void*)(sBootStrapMemory + sUsedBootStrapMemory);
+#endif
 	sUsedBootStrapMemory += neededSize;
 
 	return block;
@@ -188,6 +234,12 @@ block_free(void* block, uint32 flags)
 {
 	if (block == NULL)
 		return;
+
+#if defined(__riscv)
+	size_t bootstrapSize;
+	if (bootstrap_allocation_size(block, bootstrapSize))
+		return;
+#endif
 
 	ObjectCache* cache = MemoryManager::FreeRawOrReturnCache(block, flags);
 	if (cache != NULL) {
@@ -288,8 +340,14 @@ SLAB_PUBLIC_NAME(realloc_etc)(void* address, size_t newSize, uint32 flags)
 		return block_alloc(newSize, 0, flags);
 
 	size_t oldSize;
-	ObjectCache* cache = MemoryManager::GetAllocationInfo(address, oldSize);
-	if (cache == NULL && oldSize == 0) {
+	bool bootstrapAllocation = false;
+#if defined(__riscv)
+	bootstrapAllocation = bootstrap_allocation_size(address, oldSize);
+#endif
+	ObjectCache* cache = NULL;
+	if (!bootstrapAllocation)
+		cache = MemoryManager::GetAllocationInfo(address, oldSize);
+	if (!bootstrapAllocation && cache == NULL && oldSize == 0) {
 		panic("block_realloc(): allocation %p not known", address);
 		return NULL;
 	}
@@ -303,7 +361,8 @@ SLAB_PUBLIC_NAME(realloc_etc)(void* address, size_t newSize, uint32 flags)
 
 	memcpy(newBlock, address, std::min(oldSize, newSize));
 
-	block_free(address, flags);
+	if (!bootstrapAllocation)
+		block_free(address, flags);
 
 	return newBlock;
 }
