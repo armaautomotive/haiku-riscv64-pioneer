@@ -257,6 +257,50 @@ extern void*	get_stack_frame(void);
 
 #if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 7) || defined(__clang__)
 
+#if defined(__riscv) && defined(_KERNEL_MODE)
+#if !defined(_BOOT_MODE)
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern int32 smp_get_num_cpus(void);
+#ifdef __cplusplus
+}
+#endif
+#endif
+
+static __inline__ bool
+_riscv_kernel_single_cpu(void)
+{
+#if defined(_BOOT_MODE)
+	return false;
+#else
+	return smp_get_num_cpus() < 2;
+#endif
+}
+
+
+static __inline__ uint64
+_riscv_kernel_atomic_disable_interrupts(void)
+{
+	uint64 status;
+	uint64 interruptEnable = 1u << 1;
+	__asm__ volatile("csrrc %0, sstatus, %1"
+		: "=r"(status) : "r"(interruptEnable) : "memory");
+	return status;
+}
+
+
+static __inline__ void
+_riscv_kernel_atomic_restore_interrupts(uint64 status)
+{
+	uint64 interruptEnable = 1u << 1;
+	if ((status & interruptEnable) != 0) {
+		__asm__ volatile("csrs sstatus, %0"
+			: : "r"(interruptEnable) : "memory");
+	}
+}
+#endif
+
 
 static __inline__ void
 atomic_set(int32* value, int32 newValue)
@@ -268,6 +312,15 @@ atomic_set(int32* value, int32 newValue)
 static __inline__ int32
 atomic_get_and_set(int32* value, int32 newValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int32 oldValue = *(volatile int32*)value;
+		*(volatile int32*)value = newValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_exchange_n(value, newValue, __ATOMIC_SEQ_CST);
 }
 
@@ -275,6 +328,16 @@ atomic_get_and_set(int32* value, int32 newValue)
 static __inline__ int32
 atomic_test_and_set(int32* value, int32 newValue, int32 testAgainst)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int32 oldValue = *(volatile int32*)value;
+		if (oldValue == testAgainst)
+			*(volatile int32*)value = newValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	__atomic_compare_exchange_n(value, &testAgainst, newValue, 1,
 		__ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 	return testAgainst;
@@ -284,6 +347,15 @@ atomic_test_and_set(int32* value, int32 newValue, int32 testAgainst)
 static __inline__ int32
 atomic_add(int32* value, int32 addValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int32 oldValue = *(volatile int32*)value;
+		*(volatile int32*)value = oldValue + addValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_fetch_add(value, addValue, __ATOMIC_SEQ_CST);
 }
 
@@ -291,6 +363,15 @@ atomic_add(int32* value, int32 addValue)
 static __inline__ int32
 atomic_and(int32* value, int32 andValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int32 oldValue = *(volatile int32*)value;
+		*(volatile int32*)value = oldValue & andValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_fetch_and(value, andValue, __ATOMIC_SEQ_CST);
 }
 
@@ -298,6 +379,15 @@ atomic_and(int32* value, int32 andValue)
 static __inline__ int32
 atomic_or(int32* value, int32 orValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int32 oldValue = *(volatile int32*)value;
+		*(volatile int32*)value = oldValue | orValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_fetch_or(value, orValue, __ATOMIC_SEQ_CST);
 }
 
@@ -319,6 +409,15 @@ atomic_set64(int64* value, int64 newValue)
 static __inline__ int64
 atomic_get_and_set64(int64* value, int64 newValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int64 oldValue = *(volatile int64*)value;
+		*(volatile int64*)value = newValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_exchange_n(value, newValue, __ATOMIC_SEQ_CST);
 }
 
@@ -326,6 +425,16 @@ atomic_get_and_set64(int64* value, int64 newValue)
 static __inline__ int64
 atomic_test_and_set64(int64* value, int64 newValue, int64 testAgainst)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int64 oldValue = *(volatile int64*)value;
+		if (oldValue == testAgainst)
+			*(volatile int64*)value = newValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	__atomic_compare_exchange_n(value, &testAgainst, newValue, 1,
 		__ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST);
 	return testAgainst;
@@ -335,6 +444,15 @@ atomic_test_and_set64(int64* value, int64 newValue, int64 testAgainst)
 static __inline__ int64
 atomic_add64(int64* value, int64 addValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int64 oldValue = *(volatile int64*)value;
+		*(volatile int64*)value = oldValue + addValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_fetch_add(value, addValue, __ATOMIC_SEQ_CST);
 }
 
@@ -342,6 +460,15 @@ atomic_add64(int64* value, int64 addValue)
 static __inline__ int64
 atomic_and64(int64* value, int64 andValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int64 oldValue = *(volatile int64*)value;
+		*(volatile int64*)value = oldValue & andValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_fetch_and(value, andValue, __ATOMIC_SEQ_CST);
 }
 
@@ -349,6 +476,15 @@ atomic_and64(int64* value, int64 andValue)
 static __inline__ int64
 atomic_or64(int64* value, int64 orValue)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	if (_riscv_kernel_single_cpu()) {
+		uint64 status = _riscv_kernel_atomic_disable_interrupts();
+		int64 oldValue = *(volatile int64*)value;
+		*(volatile int64*)value = oldValue | orValue;
+		_riscv_kernel_atomic_restore_interrupts(status);
+		return oldValue;
+	}
+#endif
 	return __atomic_fetch_or(value, orValue, __ATOMIC_SEQ_CST);
 }
 

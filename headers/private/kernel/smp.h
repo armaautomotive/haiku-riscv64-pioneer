@@ -219,6 +219,14 @@ CPUSet::IsEmpty() const
 static inline bool
 try_acquire_spinlock_inline(spinlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2) {
+		if (lock->lock != 0)
+			return false;
+		lock->lock = 1;
+		return true;
+	}
+#endif
 	return atomic_get_and_set(&lock->lock, 1) == 0;
 }
 
@@ -235,6 +243,12 @@ acquire_spinlock_inline(spinlock* lock)
 static inline void
 release_spinlock_inline(spinlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2) {
+		lock->lock = 0;
+		return;
+	}
+#endif
 	atomic_set(&lock->lock, 0);
 }
 
@@ -247,6 +261,14 @@ release_spinlock_inline(spinlock* lock)
 static inline bool
 try_acquire_write_spinlock_inline(rw_spinlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2) {
+		if (lock->lock != 0)
+			return false;
+		lock->lock = 1u << 31;
+		return true;
+	}
+#endif
 	return atomic_test_and_set(&lock->lock, 1u << 31, 0) == 0;
 }
 
@@ -263,6 +285,12 @@ acquire_write_spinlock_inline(rw_spinlock* lock)
 static inline void
 release_write_spinlock_inline(rw_spinlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2) {
+		lock->lock = 0;
+		return;
+	}
+#endif
 	atomic_set(&lock->lock, 0);
 }
 
@@ -270,6 +298,14 @@ release_write_spinlock_inline(rw_spinlock* lock)
 static inline bool
 try_acquire_read_spinlock_inline(rw_spinlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2) {
+		if (lock->lock != 0)
+			return false;
+		lock->lock = 1;
+		return true;
+	}
+#endif
 	uint32 previous = atomic_add(&lock->lock, 1);
 	return (previous & (1u << 31)) == 0;
 }
@@ -287,6 +323,12 @@ acquire_read_spinlock_inline(rw_spinlock* lock)
 static inline void
 release_read_spinlock_inline(rw_spinlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2) {
+		lock->lock = 0;
+		return;
+	}
+#endif
 	atomic_add(&lock->lock, -1);
 }
 
@@ -304,8 +346,14 @@ static inline bool
 try_acquire_write_seqlock_inline(seqlock* lock)
 {
 	bool succeed = try_acquire_spinlock(&lock->lock);
-	if (succeed)
+	if (succeed) {
+#if defined(__riscv)
+		if (smp_get_num_cpus() < 2)
+			lock->count++;
+		else
+#endif
 		atomic_add((int32*)&lock->count, 1);
+	}
 	return succeed;
 }
 
@@ -314,6 +362,11 @@ static inline void
 acquire_write_seqlock_inline(seqlock* lock)
 {
 	acquire_spinlock(&lock->lock);
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2)
+		lock->count++;
+	else
+#endif
 	atomic_add((int32*)&lock->count, 1);
 }
 
@@ -321,6 +374,11 @@ acquire_write_seqlock_inline(seqlock* lock)
 static inline void
 release_write_seqlock_inline(seqlock* lock)
 {
+#if defined(__riscv)
+	if (smp_get_num_cpus() < 2)
+		lock->count++;
+	else
+#endif
 	atomic_add((int32*)&lock->count, 1);
 	release_spinlock(&lock->lock);
 }

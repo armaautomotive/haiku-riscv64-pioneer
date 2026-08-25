@@ -11,6 +11,7 @@
 #include <boot/stage2.h>
 #include <commpage.h>
 #include <kernel.h>
+#include <smp.h>
 #include <thread.h>
 #include <team.h>
 #include <vm/vm_types.h>
@@ -85,8 +86,15 @@ arch_thread_context_switch(Thread *from, Thread *to)
 	auto toMap = (RISCV64VMTranslationMap*)to->team->address_space->TranslationMap();
 
 	int cpu = to->cpu->cpu_num;
-	toMap->ActiveOnCpus().SetBitAtomic(cpu);
-	fromMap->ActiveOnCpus().ClearBitAtomic(cpu);
+	if (smp_get_num_cpus() < 2) {
+		toMap->ActiveOnCpus().SetBit(cpu);
+		debug_early_boot_checkpoint("riscv: arch context to map ready\n");
+		fromMap->ActiveOnCpus().ClearBit(cpu);
+	} else {
+		toMap->ActiveOnCpus().SetBitAtomic(cpu);
+		debug_early_boot_checkpoint("riscv: arch context to map ready\n");
+		fromMap->ActiveOnCpus().ClearBitAtomic(cpu);
+	}
 	debug_early_boot_checkpoint("riscv: arch context cpu maps ready\n");
 
 	// TODO: save/restore FPU only if needed

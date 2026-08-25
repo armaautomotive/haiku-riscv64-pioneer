@@ -933,20 +933,45 @@ thread_enter_userspace_new_team(Thread* thread, addr_t entryFunction,
 static void
 common_thread_entry(void* _args)
 {
+#if defined(__riscv)
+	debug_early_boot_message("riscv: common thread entry\n");
+#endif
 	Thread* thread = thread_get_current_thread();
+#if defined(__riscv)
+	debug_early_boot_message("riscv: common thread current ready\n");
+	debug_early_boot_message("riscv: common thread name ");
+	debug_early_boot_message(thread->name);
+	debug_early_boot_message("\n");
+#endif
 
 	// The thread is new and has been scheduled the first time.
 
+#if defined(__riscv)
+	debug_early_boot_message("riscv: common thread scheduler entry\n");
+#endif
 	scheduler_new_thread_entry(thread);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: common thread scheduler ready\n");
+#endif
 
 	// unlock the scheduler lock and enable interrupts
 	release_spinlock(&thread->scheduler_lock);
+#if defined(__riscv)
+	debug_early_boot_message("riscv: common thread lock released\n");
+#endif
 	enable_interrupts();
+#if defined(__riscv)
+	debug_early_boot_message("riscv: common thread interrupts enabled\n");
+#endif
 
 	// call the kernel function, if any
 	ThreadEntryArguments* args = (ThreadEntryArguments*)_args;
-	if (args->kernelFunction != NULL)
+	if (args->kernelFunction != NULL) {
+#if defined(__riscv)
+		debug_early_boot_message("riscv: common thread kernel function\n");
+#endif
 		args->kernelFunction(args->argument);
+	}
 
 	// If requested, enter userland, now.
 	if (args->enterUserland) {

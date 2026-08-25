@@ -386,9 +386,11 @@ reschedule(int32 nextState)
 		oldThread->id);
 
 	oldThread->state = nextState;
+	scheduler_boot_checkpoint("riscv: reschedule state ready\n");
 
 	// return time spent in interrupts
 	oldThreadData->SetStolenInterruptTime(gCPU[thisCPU].interrupt_time);
+	scheduler_boot_checkpoint("riscv: reschedule stolen time ready\n");
 
 	bool enqueueOldThread = false;
 	bool putOldThreadAtBack = false;
@@ -397,7 +399,9 @@ reschedule(int32 nextState)
 		case B_THREAD_READY:
 			enqueueOldThread = true;
 
+			scheduler_boot_checkpoint("riscv: reschedule old mask start\n");
 			oldThreadMask = oldThreadData->GetCPUMask();
+			scheduler_boot_checkpoint("riscv: reschedule old mask ready\n");
 			useOldThreadMask = !oldThreadMask.IsEmpty();
 			fetchedOldThreadMask = true;
 
@@ -427,8 +431,10 @@ reschedule(int32 nextState)
 				oldThread->id, nextState);
 			break;
 	}
+	scheduler_boot_checkpoint("riscv: reschedule state case ready\n");
 
 	oldThread->has_yielded = false;
+	scheduler_boot_checkpoint("riscv: reschedule select start\n");
 
 	// select thread with the biggest priority and enqueue back the old thread
 	ThreadData* nextThreadData;
@@ -453,9 +459,11 @@ reschedule(int32 nextState)
 			fetchedOldThreadMask = true;
 		}
 		bool oldThreadShouldMigrate = useOldThreadMask && !oldThreadMask.GetBit(thisCPU);
+		scheduler_boot_checkpoint("riscv: reschedule migration ready\n");
 		if (oldThreadShouldMigrate)
 			enqueueOldThread = false;
 
+		scheduler_boot_checkpoint("riscv: reschedule choose call\n");
 		nextThreadData
 			= cpu->ChooseNextThread(enqueueOldThread ? oldThreadData : NULL,
 				putOldThreadAtBack);
