@@ -3008,32 +3008,61 @@ wait_for_notifications(block_cache* cache)
 }
 
 
+static inline void
+block_cache_boot_checkpoint(const char* string)
+{
+#ifdef _KERNEL_MODE
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint(string);
+#else
+	(void)string;
+#endif
+}
+
+
 status_t
 block_cache_init(void)
 {
+	block_cache_boot_checkpoint("riscv: block cache entered\n");
+	block_cache_boot_checkpoint("riscv: block cache objects init\n");
 	sBlockCache = create_object_cache("cached blocks", sizeof(cached_block),
 		CACHE_LARGE_SLAB);
 	if (sBlockCache == NULL)
 		return B_NO_MEMORY;
+	block_cache_boot_checkpoint("riscv: block cache objects ready\n");
 
+	block_cache_boot_checkpoint("riscv: block cache notifications init\n");
 	sCacheNotificationCache = create_object_cache("cache notifications",
 		sizeof(cache_listener), 0);
 	if (sCacheNotificationCache == NULL)
 		return B_NO_MEMORY;
+	block_cache_boot_checkpoint("riscv: block cache notifications ready\n");
 
 	new (&sCaches) DoublyLinkedList<block_cache>;
 		// manually call constructor
+	block_cache_boot_checkpoint("riscv: block cache list ready\n");
 
+	block_cache_boot_checkpoint("riscv: block cache sem init\n");
 	sEventSemaphore = create_sem(0, "block cache event");
 	if (sEventSemaphore < B_OK)
 		return sEventSemaphore;
+	block_cache_boot_checkpoint("riscv: block cache sem ready\n");
 
+	block_cache_boot_checkpoint("riscv: block cache thread spawn\n");
 	sNotifierWriterThread = spawn_kernel_thread(&block_notifier_and_writer,
 		"block notifier/writer", B_LOW_PRIORITY, NULL);
-	if (sNotifierWriterThread >= B_OK)
+	if (sNotifierWriterThread >= B_OK) {
+		block_cache_boot_checkpoint("riscv: block cache thread resume\n");
 		resume_thread(sNotifierWriterThread);
+	}
+	block_cache_boot_checkpoint("riscv: block cache thread ready\n");
 
 #if DEBUG_BLOCK_CACHE
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup) {
+#endif
 	add_debugger_command_etc("block_caches", &dump_caches,
 		"dumps all block caches", "\n", 0);
 	add_debugger_command_etc("block_cache", &dump_cache,
@@ -3060,6 +3089,12 @@ block_cache_init(void)
 		" <offset> the offset of the block data.\n"
 		" <from>   the size of the block data that is dumped\n", 0);
 #	endif
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	} else {
+		block_cache_boot_checkpoint(
+			"riscv: block cache debugger commands deferred\n");
+	}
+#endif
 #endif	// DEBUG_BLOCK_CACHE
 
 	return B_OK;

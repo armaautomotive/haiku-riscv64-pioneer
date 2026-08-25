@@ -5434,6 +5434,7 @@ status_t
 vfs_init(kernel_args* args)
 {
 	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint("riscv: vfs entered\n");
 #if defined(__riscv)
 	bool* kernelStartup;
 	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));

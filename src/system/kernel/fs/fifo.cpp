@@ -1486,9 +1486,19 @@ create_fifo_vnode(fs_volume* superVolume, fs_vnode* vnode)
 void
 fifo_init()
 {
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint("riscv: fifo cache init\n");
 	sRingBufferCache = create_object_cache("fifo ring buffers",
 		VFS_FIFO_BUFFER_CAPACITY, CACHE_NO_DEPOT);
+	debug_early_boot_checkpoint("riscv: fifo cache ready\n");
 
+	bool registerDebuggerCommand = true;
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	registerDebuggerCommand = !*kernelStartup;
+#endif
+	if (registerDebuggerCommand) {
 	add_debugger_command_etc("fifo", &Inode::Dump,
 		"Print info about the specified FIFO node",
 		"[ \"-d\" ] <address>\n"
@@ -1496,4 +1506,7 @@ fifo_init()
 		"<address>. If \"-d\" is given, the data in the FIFO's ring buffer\n"
 		"hexdumped as well.\n",
 		0);
+	} else {
+		debug_early_boot_checkpoint("riscv: fifo debugger command deferred\n");
+	}
 }

@@ -1224,6 +1224,13 @@ cache_node_launched(size_t argCount, char*  const* args)
 extern "C" status_t
 file_cache_init_post_boot_device(void)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	status_t status = register_generic_syscall(CACHE_SYSCALLS,
+		file_cache_control, 1, 0);
+	if (status != B_OK)
+		return status;
+#endif
+
 	// ToDo: get cache module out of driver settings
 
 	if (get_module("file_cache/launch_speedup/v1",
@@ -1234,15 +1241,33 @@ file_cache_init_post_boot_device(void)
 }
 
 
+static inline void
+file_cache_boot_checkpoint(const char* string)
+{
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint(string);
+#else
+	(void)string;
+#endif
+}
+
+
 extern "C" status_t
 file_cache_init(void)
 {
+	file_cache_boot_checkpoint("riscv: file cache entered\n");
+	file_cache_boot_checkpoint("riscv: file cache page reserve\n");
 	// allocate a clean page we can use for writing zeroes
 	vm_page_reservation reservation;
 	vm_page_reserve_pages(&reservation, 1, VM_PRIORITY_SYSTEM);
+	file_cache_boot_checkpoint("riscv: file cache page reserved\n");
+	file_cache_boot_checkpoint("riscv: file cache page allocate\n");
 	vm_page* page = vm_page_allocate_page(&reservation,
 		PAGE_STATE_WIRED | VM_PAGE_ALLOC_CLEAR);
+	file_cache_boot_checkpoint("riscv: file cache page allocated\n");
 	vm_page_unreserve_pages(&reservation);
+	file_cache_boot_checkpoint("riscv: file cache page unreserved\n");
 
 	sZeroPage = (phys_addr_t)page->physical_page_number * B_PAGE_SIZE;
 
@@ -1250,8 +1275,15 @@ file_cache_init(void)
 		sZeroVecs[i].base = sZeroPage;
 		sZeroVecs[i].length = B_PAGE_SIZE;
 	}
+	file_cache_boot_checkpoint("riscv: file cache zero vectors ready\n");
 
+	file_cache_boot_checkpoint("riscv: file cache syscall register\n");
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	file_cache_boot_checkpoint("riscv: file cache syscall deferred\n");
+#else
 	register_generic_syscall(CACHE_SYSCALLS, file_cache_control, 1, 0);
+	file_cache_boot_checkpoint("riscv: file cache syscall ready\n");
+#endif
 	return B_OK;
 }
 

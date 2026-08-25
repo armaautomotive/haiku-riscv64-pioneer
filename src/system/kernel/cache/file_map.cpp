@@ -33,6 +33,11 @@ using namespace FSShell;
 #endif
 
 
+#if defined(__riscv) && defined(_KERNEL_MODE)
+void debug_early_boot_checkpoint(const char* string);
+#endif
+
+
 //#define TRACE_FILE_MAP
 #ifdef TRACE_FILE_MAP
 #	define TRACE(x...) dprintf_no_syslog(x)
@@ -582,6 +587,12 @@ extern "C" status_t
 file_map_init(void)
 {
 #if DEBUG_FILE_MAP
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: file map entered\n");
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup) {
+#endif
 	add_debugger_command_etc("file_map", &dump_file_map,
 		"Dumps the specified file map.",
 		"[-p] <file-map>\n"
@@ -589,8 +600,18 @@ file_map_init(void)
 		"  <file-map>  - pointer to the file map.\n", 0);
 	add_debugger_command("file_map_stats", &dump_file_map_stats,
 		"Dumps some file map statistics.");
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	} else {
+		debug_early_boot_checkpoint(
+			"riscv: file map debugger commands deferred\n");
+	}
+	debug_early_boot_checkpoint("riscv: file map mutex init\n");
+#endif
 
 	mutex_init(&sLock, "file map list");
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: file map mutex ready\n");
+#endif
 #endif
 	return B_OK;
 }
@@ -673,4 +694,3 @@ file_map_translate(void* _map, off_t offset, size_t size, file_io_vec* vecs,
 
 	return map->Translate(offset, size, vecs, _count, align);
 }
-

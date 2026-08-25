@@ -166,8 +166,13 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		debug_early_boot_message("riscv: debug init\n");
 
 		// setup debug output
+		// The Pioneer firmware resets the machine when the very verbose bootstrap
+		// diagnostics keep it in early kernel startup for too long.  Suppress the
+		// low-level probes before debug_init() starts allocating and initializing
+		// its subsystems; explicit checkpoints below remain visible.
+		debug_suppress_early_boot_messages(true);
 		debug_init(&sKernelArgs);
-		debug_early_boot_message("riscv: debug ready\n");
+		debug_early_boot_checkpoint("riscv: debug ready\n");
 		debug_early_boot_message("riscv: dprintf enable\n");
 		set_dprintf_enabled(true);
 		debug_early_boot_message("riscv: dprintf enabled\n");
@@ -201,7 +206,7 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		// from a VM initialization fault.
 		register kernel_args* vmArgs asm("a0") = &sKernelArgs;
 		asm volatile("call vm_init" : "+r"(vmArgs) : : "ra", "memory");
-		debug_early_boot_message("riscv: vm ready\n");
+		debug_early_boot_checkpoint("riscv: vm ready\n");
 			// Before vm_init_post_sem() is called, we have to make sure that
 			// the boot loader allocated region is not used anymore
 		boot_item_init();
@@ -216,7 +221,7 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 #endif
 		debug_early_boot_message("riscv: low resource init\n");
 		low_resource_manager_init();
-		debug_early_boot_message("riscv: low resource ready\n");
+		debug_early_boot_checkpoint("riscv: low resource ready\n");
 
 		// now we can use the heap and create areas
 		debug_early_boot_message("riscv: platform post vm init\n");
@@ -252,11 +257,11 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		TRACE("init modules\n");
 		debug_early_boot_message("riscv: modules init\n");
 		module_init(&sKernelArgs);
-		debug_early_boot_message("riscv: modules ready\n");
+		debug_early_boot_checkpoint("riscv: modules ready\n");
 		TRACE("init semaphores\n");
 		debug_early_boot_message("riscv: semaphores init\n");
 		haiku_sem_init(&sKernelArgs);
-		debug_early_boot_message("riscv: semaphores ready\n");
+		debug_early_boot_checkpoint("riscv: semaphores ready\n");
 		TRACE("init interrupts post vm\n");
 		debug_early_boot_message("riscv: interrupts post vm init\n");
 		interrupts_init_post_vm(&sKernelArgs);
@@ -314,11 +319,11 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		TRACE("init scheduler\n");
 		debug_early_boot_message("riscv: scheduler init\n");
 		scheduler_init();
-		debug_early_boot_message("riscv: scheduler ready\n");
+		debug_early_boot_checkpoint("riscv: scheduler ready\n");
 		TRACE("init threads\n");
 		debug_early_boot_message("riscv: threads init\n");
 		thread_init(&sKernelArgs);
-		debug_early_boot_message("riscv: threads ready\n");
+		debug_early_boot_checkpoint("riscv: threads ready\n");
 		TRACE("init kernel daemons\n");
 		debug_early_boot_message("riscv: kernel daemons init\n");
 		debug_suppress_early_boot_messages(true);
