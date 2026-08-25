@@ -2677,24 +2677,35 @@ vm_page_init_post_area(kernel_args *args)
 status_t
 vm_page_init_post_thread(kernel_args *args)
 {
+	extern void debug_early_boot_checkpoint(const char* string);
 	new (&sFreePageCondition) ConditionVariable;
+	debug_early_boot_checkpoint("riscv: page condition ready\n");
 
 	// create a kernel thread to clear out pages
 
+	debug_early_boot_checkpoint("riscv: page scrubber spawn\n");
 	thread_id thread = spawn_kernel_thread(&page_scrubber, "page scrubber",
 		B_LOWEST_ACTIVE_PRIORITY, NULL);
+	debug_early_boot_checkpoint("riscv: page scrubber resume\n");
 	resume_thread(thread);
+	debug_early_boot_checkpoint("riscv: page scrubber ready\n");
 
 	// start page writer
+	debug_early_boot_checkpoint("riscv: page writer init\n");
 	sDefaultModifiedPageQueue.StartWriter("default");
+	debug_early_boot_checkpoint("riscv: page writer ready\n");
 
 	// start page daemon
 
 	sPageDaemonCondition.Init("page daemon");
+	debug_early_boot_checkpoint("riscv: page daemon condition ready\n");
 
+	debug_early_boot_checkpoint("riscv: page daemon spawn\n");
 	thread = spawn_kernel_thread(&page_daemon, "page daemon",
 		B_NORMAL_PRIORITY, NULL);
+	debug_early_boot_checkpoint("riscv: page daemon resume\n");
 	resume_thread(thread);
+	debug_early_boot_checkpoint("riscv: page daemon ready\n");
 
 	return B_OK;
 }

@@ -438,16 +438,28 @@ low_resource_manager_init(void)
 status_t
 low_resource_manager_init_post_thread(void)
 {
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint("riscv: low resource sem init\n");
 	sLowResourceWaitSem = create_sem(0, "low resource wait");
 	if (sLowResourceWaitSem < B_OK)
 		return sLowResourceWaitSem;
+	debug_early_boot_checkpoint("riscv: low resource sem ready\n");
 
+	debug_early_boot_checkpoint("riscv: low resource spawn\n");
 	thread_id thread = spawn_kernel_thread(&low_resource_manager,
 		"low resource manager", B_LOW_PRIORITY, NULL);
+	debug_early_boot_checkpoint("riscv: low resource resume\n");
 	resume_thread(thread);
+	debug_early_boot_checkpoint("riscv: low resource thread ready\n");
 
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup)
+#endif
 	add_debugger_command("low_resource", &dump_handlers,
 		"Dump list of low resource handlers");
+	debug_early_boot_checkpoint("riscv: low resource init ready\n");
 	return B_OK;
 }
 

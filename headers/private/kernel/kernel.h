@@ -67,11 +67,7 @@ is_user_address_range(const void* addr, size_t size)
 	// At least, you then know that the stack overflows in this case :)
 
 /** Size of the kernel stack */
-#if defined(__riscv)
-	// RISC-V bootstrap and trap paths are currently deeper than the mature
-	// ports, particularly while early-boot diagnostics are enabled.
-	#define KERNEL_STACK_SIZE		(B_PAGE_SIZE * 8)	// 32 kB
-#elif defined(B_HAIKU_64_BIT)
+#ifdef B_HAIKU_64_BIT
 	#define KERNEL_STACK_SIZE		(B_PAGE_SIZE * 4)	// 16 kB
 #else
 	#define KERNEL_STACK_SIZE		(B_PAGE_SIZE * 3)	// 12 kB

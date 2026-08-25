@@ -4187,10 +4187,20 @@ vm_init_post_sem(kernel_args* args)
 status_t
 vm_init_post_thread(kernel_args* args)
 {
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint("riscv: vm page threads init\n");
 	vm_page_init_post_thread(args);
+	debug_early_boot_checkpoint("riscv: vm page threads ready\n");
+	debug_early_boot_checkpoint("riscv: slab post thread init\n");
 	slab_init_post_thread();
+	debug_early_boot_checkpoint("riscv: slab post thread ready\n");
+	debug_early_boot_checkpoint("riscv: deferred free init\n");
 	deferred_free_init();
-	return heap_init_post_thread();
+	debug_early_boot_checkpoint("riscv: deferred free ready\n");
+	debug_early_boot_checkpoint("riscv: heap post thread init\n");
+	status_t status = heap_init_post_thread();
+	debug_early_boot_checkpoint("riscv: heap post thread ready\n");
+	return status;
 }
 
 

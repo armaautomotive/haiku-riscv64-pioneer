@@ -1701,8 +1701,28 @@ debug_puts(const char* string, int32 length)
 }
 
 
+static bool sSuppressEarlyBootMessages = false;
+
+
 void
 debug_early_boot_message(const char* string)
+{
+	if (sSuppressEarlyBootMessages)
+		return;
+
+	arch_debug_serial_early_boot_message(string);
+}
+
+
+void
+debug_suppress_early_boot_messages(bool suppress)
+{
+	sSuppressEarlyBootMessages = suppress;
+}
+
+
+void
+debug_early_boot_checkpoint(const char* string)
 {
 	arch_debug_serial_early_boot_message(string);
 }

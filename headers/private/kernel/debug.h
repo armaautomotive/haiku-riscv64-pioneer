@@ -170,6 +170,7 @@ extern void		debug_init_post_vm(struct kernel_args *args);
 extern void		debug_init_post_settings(struct kernel_args *args);
 extern void		debug_init_post_modules(struct kernel_args *args);
 extern void		debug_early_boot_message(const char *string);
+extern void		debug_suppress_early_boot_messages(bool suppress);
 extern void		debug_puts(const char *s, int32 length);
 extern bool		debug_debugger_running(void);
 extern bool		debug_screen_output_enabled(void);

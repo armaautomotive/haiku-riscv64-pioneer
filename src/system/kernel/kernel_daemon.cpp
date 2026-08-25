@@ -116,6 +116,17 @@ KernelDaemon::Register(daemon_hook function, void* arg, int frequency)
 	daemon->last = 0;
 	daemon->executing = false;
 
+#if defined(__riscv)
+	if (gKernelStartup) {
+		// The boot CPU is the only running hart and daemon threads cannot run
+		// before scheduler_start(). Publish the entry directly; taking the
+		// recursive lock and signaling its suspended thread is both unnecessary
+		// and unsafe during this bootstrap phase.
+		fDaemons.Add(daemon);
+		return B_OK;
+	}
+#endif
+
 	RecursiveLocker locker(fLock);
 	fDaemons.Add(daemon);
 	locker.Unlock();

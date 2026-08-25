@@ -5433,52 +5433,75 @@ vfs_setrlimit(int resource, const struct rlimit* rlp)
 status_t
 vfs_init(kernel_args* args)
 {
+	extern void debug_early_boot_checkpoint(const char* string);
+#if defined(__riscv)
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	const bool bootstrap = *kernelStartup;
+#endif
+	debug_early_boot_checkpoint("riscv: vfs vnode static init\n");
 	vnode::StaticInit();
+	debug_early_boot_checkpoint("riscv: vfs vnode static ready\n");
 
+	debug_early_boot_checkpoint("riscv: vfs vnode table init\n");
 	sVnodeTable = new(std::nothrow) VnodeTable();
 	if (sVnodeTable == NULL || sVnodeTable->Init(VNODE_HASH_TABLE_SIZE) != B_OK)
 		panic("vfs_init: error creating vnode hash table\n");
+	debug_early_boot_checkpoint("riscv: vfs vnode table ready\n");
 
 	sVnodeUndertakerCondition.Init(NULL, "vnode undertaker");
+	debug_early_boot_checkpoint("riscv: vfs undertaker spawn\n");
 	thread_id vnodeUndertaker = spawn_kernel_thread(vnode_undertaker, "vnode undertaker",
 		B_NORMAL_PRIORITY, NULL);
 	if (vnodeUndertaker < 0)
 		panic("vfs_init: error creating vnode undertaker");
+	debug_early_boot_checkpoint("riscv: vfs undertaker resume\n");
 	vnodeUndertaker = resume_thread(vnodeUndertaker);
 	if (vnodeUndertaker < 0)
 		panic("vfs_init: error creating vnode undertaker");
+	debug_early_boot_checkpoint("riscv: vfs undertaker ready\n");
 
 	sMountsTable = new(std::nothrow) MountTable();
 	if (sMountsTable == NULL
 			|| sMountsTable->Init(MOUNTS_HASH_TABLE_SIZE) != B_OK)
 		panic("vfs_init: error creating mounts hash table\n");
+	debug_early_boot_checkpoint("riscv: vfs mounts ready\n");
 
 	sPathNameCache = create_object_cache("vfs path names",
 		B_PATH_NAME_LENGTH, 0);
 	if (sPathNameCache == NULL)
 		panic("vfs_init: error creating path name object_cache\n");
 	object_cache_set_minimum_reserve(sPathNameCache, 1);
+	debug_early_boot_checkpoint("riscv: vfs path cache ready\n");
 
 	sVnodeCache = create_object_cache("vfs vnodes",
 		sizeof(struct vnode), 0);
 	if (sVnodeCache == NULL)
 		panic("vfs_init: error creating vnode object_cache\n");
+	debug_early_boot_checkpoint("riscv: vfs vnode cache ready\n");
 
 	sFileDescriptorCache = create_object_cache("vfs fds",
 		sizeof(file_descriptor), 0);
 	if (sFileDescriptorCache == NULL)
 		panic("vfs_init: error creating file descriptor object_cache\n");
+	debug_early_boot_checkpoint("riscv: vfs fd cache ready\n");
 
 	node_monitor_init();
+	debug_early_boot_checkpoint("riscv: vfs node monitor ready\n");
 
 	sRoot = NULL;
 
 	recursive_lock_init(&sMountOpLock, "vfs_mount_op_lock");
 
+	debug_early_boot_checkpoint("riscv: block cache init\n");
 	if (block_cache_init() != B_OK)
 		return B_ERROR;
+	debug_early_boot_checkpoint("riscv: block cache ready\n");
 
 #ifdef ADD_DEBUGGER_COMMANDS
+#if defined(__riscv)
+	if (!bootstrap) {
+#endif
 	// add some debugger commands
 	add_debugger_command_etc("vnode", &dump_vnode,
 		"Print info about the specified vnode",
@@ -5499,17 +5522,26 @@ vfs_init(kernel_args* args)
 		"info about the I/O context");
 	add_debugger_command("vnode_usage", &dump_vnode_usage,
 		"info about vnode usage");
+#if defined(__riscv)
+	}
+#endif
 #endif
 
+	debug_early_boot_checkpoint("riscv: vfs low resource handler init\n");
 	register_low_resource_handler(&vnode_low_resource_handler, NULL,
 		B_KERNEL_RESOURCE_PAGES | B_KERNEL_RESOURCE_MEMORY
 			| B_KERNEL_RESOURCE_ADDRESS_SPACE,
 		0);
+	debug_early_boot_checkpoint("riscv: vfs low resource handler ready\n");
 
 	fifo_init();
+	debug_early_boot_checkpoint("riscv: vfs fifo ready\n");
 	file_map_init();
+	debug_early_boot_checkpoint("riscv: vfs file map ready\n");
 
-	return file_cache_init();
+	status_t status = file_cache_init();
+	debug_early_boot_checkpoint("riscv: vfs file cache ready\n");
+	return status;
 }
 
 

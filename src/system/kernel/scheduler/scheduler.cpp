@@ -96,15 +96,11 @@ static void
 enqueue(Thread* thread, bool newOne)
 {
 	SCHEDULER_ENTER_FUNCTION();
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue entry\n");
 
 	ThreadData* threadData = thread->scheduler_data;
 
 	int32 threadPriority = threadData->GetEffectivePriority();
 	T(EnqueueThread(thread, threadPriority));
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue priority done\n");
 
 	CPUEntry* targetCPU = NULL;
 	CoreEntry* targetCore = NULL;
@@ -125,32 +121,25 @@ enqueue(Thread* thread, bool newOne)
 		targetCore = threadData->Rebalance();
 	}
 
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue choose cpu start\n");
 	const bool rescheduleNeeded = threadData->ChooseCoreAndCPU(targetCore, targetCPU);
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue choose cpu done\n");
 
 	TRACE("enqueueing thread %" B_PRId32 " with priority %" B_PRId32 " on CPU %" B_PRId32 " (core %" B_PRId32 ")\n",
 		thread->id, threadPriority, targetCPU->ID(), targetCore->ID());
 
 	bool wasRunQueueEmpty = false;
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue queue insert start\n");
 	threadData->Enqueue(wasRunQueueEmpty);
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue queue insert done\n");
 
 	// notify listeners
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue listeners start\n");
 	NotifySchedulerListeners(&SchedulerListener::ThreadEnqueuedInRunQueue,
 		thread);
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue listeners done\n");
 
+#if defined(__riscv)
+	// The scheduler is not running yet, so no CPU can act on a reschedule
+	// request. The threads are already safely present in the run queue.
 	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue reschedule start\n");
+		return;
+#endif
+
 	int32 heapPriority = CPUPriorityHeap::GetKey(targetCPU);
 	if (threadPriority > heapPriority
 		|| (threadPriority == heapPriority && rescheduleNeeded)
@@ -163,8 +152,6 @@ enqueue(Thread* thread, bool newOne)
 				NULL, SMP_MSG_FLAG_ASYNC);
 		}
 	}
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue reschedule done\n");
 }
 
 
@@ -178,12 +165,19 @@ scheduler_enqueue_in_run_queue(Thread *thread)
 	SCHEDULER_ENTER_FUNCTION();
 
 #if defined(__riscv)
-	SchedulerModeLocker modeLocker(false, !gKernelStartup);
-#else
-	SchedulerModeLocker modeLocker;
+	// The scheduler mode lock is unavailable during bootstrap. Keep that path
+	// separate so no unowned lock state crosses the deep enqueue() call.
+	if (gKernelStartup) {
+		ThreadData* threadData = thread->scheduler_data;
+		if (threadData->ShouldCancelPenalty())
+			threadData->CancelPenalty();
+
+		enqueue(thread, true);
+		return;
+	}
 #endif
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue mode ready\n");
+
+	SchedulerModeLocker modeLocker;
 
 	TRACE("enqueueing new thread %" B_PRId32 " with static priority %" B_PRId32 "\n", thread->id,
 		thread->priority);
@@ -192,12 +186,8 @@ scheduler_enqueue_in_run_queue(Thread *thread)
 
 	if (threadData->ShouldCancelPenalty())
 		threadData->CancelPenalty();
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue penalty done\n");
 
 	enqueue(thread, true);
-	if (gKernelStartup)
-		debug_early_boot_message("riscv: scheduler enqueue complete\n");
 }
 
 

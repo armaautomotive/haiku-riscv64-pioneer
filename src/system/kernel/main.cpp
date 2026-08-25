@@ -65,6 +65,9 @@
 #include "vm/VMAnonymousCache.h"
 
 
+extern void debug_early_boot_checkpoint(const char* string);
+
+
 //#define TRACE_BOOT
 #ifdef TRACE_BOOT
 #	define TRACE(x...) dprintf("INIT: " x)
@@ -318,56 +321,57 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		debug_early_boot_message("riscv: threads ready\n");
 		TRACE("init kernel daemons\n");
 		debug_early_boot_message("riscv: kernel daemons init\n");
+		debug_suppress_early_boot_messages(true);
 		kernel_daemon_init();
-		debug_early_boot_message("riscv: kernel daemons ready\n");
+		debug_early_boot_checkpoint("riscv: kernel daemons ready\n");
 		TRACE("init stack protector\n");
-		debug_early_boot_message("riscv: stack protector init\n");
+		debug_early_boot_checkpoint("riscv: stack protector init\n");
 		stack_protector_init();
-		debug_early_boot_message("riscv: stack protector ready\n");
-		debug_early_boot_message("riscv: platform post thread init\n");
+		debug_early_boot_checkpoint("riscv: stack protector ready\n");
+		debug_early_boot_checkpoint("riscv: platform post thread init\n");
 		arch_platform_init_post_thread(&sKernelArgs);
-		debug_early_boot_message("riscv: platform post thread ready\n");
+		debug_early_boot_checkpoint("riscv: platform post thread ready\n");
 
 		TRACE("init I/O interrupts\n");
-		debug_early_boot_message("riscv: io interrupts init\n");
+		debug_early_boot_checkpoint("riscv: io interrupts init\n");
 		interrupts_init_io(&sKernelArgs);
-		debug_early_boot_message("riscv: io interrupts ready\n");
+		debug_early_boot_checkpoint("riscv: io interrupts ready\n");
 		TRACE("init VM threads\n");
-		debug_early_boot_message("riscv: vm post thread init\n");
+		debug_early_boot_checkpoint("riscv: vm post thread init\n");
 		vm_init_post_thread(&sKernelArgs);
 		low_resource_manager_init_post_thread();
-		debug_early_boot_message("riscv: vm post thread ready\n");
+		debug_early_boot_checkpoint("riscv: vm post thread ready\n");
 		TRACE("init DPC\n");
-		debug_early_boot_message("riscv: dpc init\n");
+		debug_early_boot_checkpoint("riscv: dpc init\n");
 		dpc_init();
-		debug_early_boot_message("riscv: dpc ready\n");
+		debug_early_boot_checkpoint("riscv: dpc ready\n");
 		TRACE("init VFS\n");
-		debug_early_boot_message("riscv: vfs init\n");
+		debug_early_boot_checkpoint("riscv: vfs init\n");
 		vfs_init(&sKernelArgs);
-		debug_early_boot_message("riscv: vfs ready\n");
+		debug_early_boot_checkpoint("riscv: vfs ready\n");
 #if ENABLE_SWAP_SUPPORT
 		TRACE("init swap support\n");
 		swap_init();
 #endif
 		TRACE("init POSIX semaphores\n");
-		debug_early_boot_message("riscv: posix ipc init\n");
+		debug_early_boot_checkpoint("riscv: posix ipc init\n");
 		realtime_sem_init();
 		xsi_sem_init();
 		xsi_msg_init();
-		debug_early_boot_message("riscv: posix ipc ready\n");
+		debug_early_boot_checkpoint("riscv: posix ipc ready\n");
 
 		// Start a thread to finish initializing the rest of the system. Note,
 		// it won't be scheduled before calling scheduler_start() (on any CPU).
 		TRACE("spawning main2 thread\n");
-		debug_early_boot_message("riscv: main2 spawn\n");
+		debug_early_boot_checkpoint("riscv: main2 spawn\n");
 		thread_id thread = spawn_kernel_thread(&main2, "main2",
 			B_NORMAL_PRIORITY, NULL);
 		resume_thread(thread);
-		debug_early_boot_message("riscv: main2 ready\n");
+		debug_early_boot_checkpoint("riscv: main2 ready\n");
 
 		// We're ready to start the scheduler and enable interrupts on all CPUs.
 		scheduler_enable_scheduling();
-		debug_early_boot_message("riscv: scheduling enabled\n");
+		debug_early_boot_checkpoint("riscv: scheduling enabled\n");
 
 		// bring up the AP cpus in a lock step fashion
 		TRACE("waking up AP cpus\n");
@@ -378,7 +382,8 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		// exit the kernel startup phase (mutexes, etc work from now on out)
 		TRACE("exiting kernel startup\n");
 		gKernelStartup = false;
-		debug_early_boot_message("riscv: kernel startup complete\n");
+		debug_suppress_early_boot_messages(false);
+		debug_early_boot_checkpoint("riscv: kernel startup complete\n");
 
 		smp_cpu_rendezvous(&sCpuRendezvous2);
 			// release the AP cpus to go enter the scheduler
