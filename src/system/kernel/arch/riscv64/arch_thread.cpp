@@ -74,6 +74,8 @@ arch_thread_init_tls(Thread *thread)
 void
 arch_thread_context_switch(Thread *from, Thread *to)
 {
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint("riscv: arch context switch entered\n");
 	/*
 	dprintf("arch_thread_context_switch(%p(%s), %p(%s))\n", from, from->name,
 		to, to->name);
@@ -85,14 +87,20 @@ arch_thread_context_switch(Thread *from, Thread *to)
 	int cpu = to->cpu->cpu_num;
 	toMap->ActiveOnCpus().SetBitAtomic(cpu);
 	fromMap->ActiveOnCpus().ClearBitAtomic(cpu);
+	debug_early_boot_checkpoint("riscv: arch context cpu maps ready\n");
 
 	// TODO: save/restore FPU only if needed
+	debug_early_boot_checkpoint("riscv: arch context fpu save\n");
 	save_fpu(&from->arch_info.fpuContext);
+	debug_early_boot_checkpoint("riscv: arch context fpu restore\n");
 	restore_fpu(&to->arch_info.fpuContext);
+	debug_early_boot_checkpoint("riscv: arch context fpu ready\n");
 
 	SetSatp(toMap->Satp());
 	FlushTlbAllAsid(0);
+	debug_early_boot_checkpoint("riscv: arch context map ready\n");
 
+	debug_early_boot_checkpoint("riscv: arch context assembly\n");
 	arch_context_switch(&from->arch_info.context, &to->arch_info.context);
 }
 

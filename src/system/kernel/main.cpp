@@ -380,9 +380,17 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 
 		// bring up the AP cpus in a lock step fashion
 		TRACE("waking up AP cpus\n");
-		sCpuRendezvous = sCpuRendezvous2 = 0;
-		smp_wake_up_non_boot_cpus();
-		smp_cpu_rendezvous(&sCpuRendezvous); // wait until they're booted
+		int32 cpuCount = smp_get_num_cpus();
+		if (cpuCount > 1) {
+			debug_early_boot_checkpoint("riscv: smp release init\n");
+			sCpuRendezvous = sCpuRendezvous2 = 0;
+			smp_wake_up_non_boot_cpus();
+			debug_early_boot_checkpoint("riscv: smp aps released\n");
+			smp_cpu_rendezvous(&sCpuRendezvous); // wait until they're booted
+			debug_early_boot_checkpoint("riscv: smp aps ready\n");
+		} else {
+			debug_early_boot_checkpoint("riscv: smp single cpu\n");
+		}
 
 		// exit the kernel startup phase (mutexes, etc work from now on out)
 		TRACE("exiting kernel startup\n");
@@ -390,12 +398,17 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		debug_suppress_early_boot_messages(false);
 		debug_early_boot_checkpoint("riscv: kernel startup complete\n");
 
-		smp_cpu_rendezvous(&sCpuRendezvous2);
-			// release the AP cpus to go enter the scheduler
+		if (cpuCount > 1) {
+			smp_cpu_rendezvous(&sCpuRendezvous2);
+				// release the AP cpus to go enter the scheduler
+		}
 
 		TRACE("starting scheduler on cpu 0 and enabling interrupts\n");
+		debug_early_boot_checkpoint("riscv: scheduler start\n");
 		scheduler_start();
+		debug_early_boot_checkpoint("riscv: scheduler started\n");
 		enable_interrupts();
+		debug_early_boot_checkpoint("riscv: interrupts enabled\n");
 	} else {
 		// lets make sure we're in sync with the main cpu
 		// the boot processor has probably been sending us
@@ -434,6 +447,7 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 static int32
 main2(void* /*unused*/)
 {
+	debug_early_boot_checkpoint("riscv: main2 entered\n");
 	TRACE("start of main2: initializing devices\n");
 
 #if SYSTEM_PROFILER
@@ -441,43 +455,54 @@ main2(void* /*unused*/)
 		SYSTEM_PROFILE_INTERVAL);
 #endif
 	boot_splash_init(sKernelArgs.boot_splash);
+	debug_early_boot_checkpoint("riscv: main2 boot splash ready\n");
 
 	commpage_init_post_cpus();
 #ifdef _COMPAT_MODE
 	commpage_compat_init_post_cpus();
 #endif
+	debug_early_boot_checkpoint("riscv: main2 commpage ready\n");
 
 	TRACE("init ports\n");
 	port_init(&sKernelArgs);
+	debug_early_boot_checkpoint("riscv: main2 ports ready\n");
 
 	TRACE("init user mutex\n");
 	user_mutex_init();
+	debug_early_boot_checkpoint("riscv: main2 user mutex ready\n");
 
 	TRACE("init system notifications\n");
 	system_notifications_init();
+	debug_early_boot_checkpoint("riscv: main2 notifications ready\n");
 
 	scheduler_loadavg_init();
+	debug_early_boot_checkpoint("riscv: main2 loadavg ready\n");
 
 	TRACE("Init modules\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_1_INIT_MODULES);
 	module_init_post_threads();
+	debug_early_boot_checkpoint("riscv: main2 modules ready\n");
 
 	// init userland debugging
 	TRACE("Init Userland debugging\n");
 	init_user_debug();
+	debug_early_boot_checkpoint("riscv: main2 user debug ready\n");
 
 	// init the messaging service
 	TRACE("Init Messaging Service\n");
 	init_messaging_service();
+	debug_early_boot_checkpoint("riscv: main2 messaging ready\n");
 
 	/* bootstrap all the filesystems */
 	TRACE("Bootstrap file systems\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_2_BOOTSTRAP_FS);
 	vfs_bootstrap_file_systems();
+	debug_early_boot_checkpoint("riscv: main2 filesystems ready\n");
 
 	TRACE("Init Device Manager\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_3_INIT_DEVICES);
 	device_manager_init(&sKernelArgs);
+	debug_early_boot_checkpoint("riscv: main2 device manager ready\n");
 
 	TRACE("Add preloaded old-style drivers\n");
 	legacy_driver_add_preloaded(&sKernelArgs);

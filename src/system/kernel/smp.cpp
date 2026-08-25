@@ -265,6 +265,19 @@ try_acquire_spinlock(spinlock* lock)
 	}
 #endif
 
+#if defined(__riscv)
+	// The RISC-V bring-up currently starts only the boot hart.  Avoid AMOs in
+	// the uniprocessor path: some firmware/platform combinations trap the first
+	// AMO after the kernel switches to its final virtual-memory setup.  There is
+	// no competing CPU in this path, so an ordinary load/store is sufficient.
+	if (sNumCPUs < 2) {
+		if (lock->lock != 0)
+			return false;
+		lock->lock = 1;
+		return true;
+	}
+#endif
+
 	if (atomic_get_and_set(&lock->lock, 1) != 0) {
 #if B_DEBUG_SPINLOCK_CONTENTION
 		atomic_add(&lock->failed_try_acquire, 1);
@@ -320,12 +333,13 @@ acquire_spinlock(spinlock* lock)
 		lock->last_acquired = system_time();
 #endif
 #if DEBUG_SPINLOCKS
-		int32 oldValue = atomic_get_and_set(&lock->lock, 1);
+		int32 oldValue = lock->lock;
 		if (oldValue != 0) {
 			panic("acquire_spinlock: attempt to acquire lock %p twice on "
 				"non-SMP system (value %" B_PRIx32 ")", lock, oldValue);
 		}
 #endif
+		lock->lock = 1;
 	}
 }
 
@@ -355,9 +369,10 @@ release_spinlock(spinlock *lock)
 			panic("release_spinlock: attempt to release lock %p with "
 				"interrupts enabled\n", lock);
 		}
-		if (atomic_get_and_set(&lock->lock, 0) != 1)
+		if (lock->lock != 1)
 			panic("release_spinlock: lock %p was already released\n", lock);
 #endif
+		lock->lock = 0;
 	}
 }
 
@@ -374,6 +389,15 @@ try_acquire_write_spinlock(rw_spinlock* lock)
 	if (sNumCPUs < 2 && lock->lock != 0) {
 		panic("try_acquire_write_spinlock(): attempt to acquire lock %p twice "
 			"on non-SMP system", lock);
+	}
+#endif
+
+#if defined(__riscv)
+	if (sNumCPUs < 2) {
+		if (lock->lock != 0)
+			return false;
+		lock->lock = 1u << 31;
+		return true;
 	}
 #endif
 
@@ -452,6 +476,19 @@ acquire_write_spinlock_cpu(int32 currentCPU, rw_spinlock* lock)
 void
 release_write_spinlock(rw_spinlock* lock)
 {
+#if defined(__riscv)
+	if (sNumCPUs < 2) {
+#if DEBUG_SPINLOCKS
+		if ((lock->lock & 1u << 31) == 0) {
+			panic("release_write_spinlock: lock %p was already released (value: "
+				"%#" B_PRIx32 ")\n", lock, lock->lock);
+		}
+#endif
+		lock->lock = 0;
+		return;
+	}
+#endif
+
 #if DEBUG_SPINLOCKS
 	uint32 previous = atomic_get_and_set(&lock->lock, 0);
 	if ((previous & 1u << 31) == 0) {
@@ -476,6 +513,15 @@ try_acquire_read_spinlock(rw_spinlock* lock)
 	if (sNumCPUs < 2 && lock->lock != 0) {
 		panic("try_acquire_read_spinlock(): attempt to acquire lock %p twice "
 			"on non-SMP system", lock);
+	}
+#endif
+
+#if defined(__riscv)
+	if (sNumCPUs < 2) {
+		if (lock->lock != 0)
+			return false;
+		lock->lock = 1;
+		return true;
 	}
 #endif
 
@@ -531,6 +577,19 @@ acquire_read_spinlock_nocheck(rw_spinlock* lock)
 void
 release_read_spinlock(rw_spinlock* lock)
 {
+#if defined(__riscv)
+	if (sNumCPUs < 2) {
+#if DEBUG_SPINLOCKS
+		if (lock->lock != 1) {
+			panic("release_read_spinlock: lock %p was already released (value:"
+				" %#" B_PRIx32 ")\n", lock, lock->lock);
+		}
+#endif
+		lock->lock = 0;
+		return;
+	}
+#endif
+
 #if DEBUG_SPINLOCKS
 	uint32 previous = atomic_add(&lock->lock, -1);
 	if ((previous & 1u << 31) != 0) {

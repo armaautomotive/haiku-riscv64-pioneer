@@ -1563,10 +1563,19 @@ swap_file_delete(const char* path)
 void
 swap_init(void)
 {
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint("riscv: swap entered\n");
+	debug_early_boot_checkpoint("riscv: swap block cache init\n");
+#endif
 	// create swap block cache
 	sSwapBlockCache = create_object_cache("swapblock", sizeof(swap_block), 0);
 	if (sSwapBlockCache == NULL)
 		panic("swap_init(): can't create object cache for swap blocks\n");
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: swap block cache ready\n");
+	debug_early_boot_checkpoint("riscv: swap reserve init\n");
+#endif
 
 	status_t error = object_cache_set_minimum_reserve(sSwapBlockCache,
 		MIN_SWAP_BLOCK_RESERVE);
@@ -1574,10 +1583,18 @@ swap_init(void)
 		panic("swap_init(): object_cache_set_minimum_reserve() failed: %s",
 			strerror(error));
 	}
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: swap reserve ready\n");
+	debug_early_boot_checkpoint("riscv: swap hash init\n");
+#endif
 
 	// init swap hash table
 	sSwapHashTable.Init(INITIAL_SWAP_HASH_SIZE);
 	rw_lock_init(&sSwapHashLock, "swaphash");
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: swap hash ready\n");
+	debug_early_boot_checkpoint("riscv: swap resizer init\n");
+#endif
 
 	error = register_resource_resizer(swap_hash_resizer, NULL,
 		SWAP_HASH_RESIZE_INTERVAL);
@@ -1585,20 +1602,38 @@ swap_init(void)
 		panic("swap_init(): Failed to register swap hash resizer: %s",
 			strerror(error));
 	}
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: swap resizer ready\n");
+#endif
 
 	// init swap file list
 	mutex_init(&sSwapFileListLock, "swaplist");
 	sSwapFileAlloc = NULL;
 	sSwapFileCount = 0;
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: swap file list ready\n");
+#endif
 
 	// init available swap space
 	mutex_init(&sAvailableSwapSpaceLock, "avail swap space");
 	sAvailableSwapSpace = 0;
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	debug_early_boot_checkpoint("riscv: swap space ready\n");
+	bool* kernelStartup;
+	asm volatile("lla %0, gKernelStartup" : "=r"(kernelStartup));
+	if (!*kernelStartup) {
+#endif
 
 	add_debugger_command_etc("swap", &dump_swap_info,
 		"Print infos about the swap usage",
 		"\n"
 		"Print infos about the swap usage.\n", 0);
+#if defined(__riscv) && defined(_KERNEL_MODE)
+	} else {
+		debug_early_boot_checkpoint("riscv: swap debugger command deferred\n");
+	}
+	debug_early_boot_checkpoint("riscv: swap ready\n");
+#endif
 }
 
 
@@ -1836,4 +1871,3 @@ swap_get_info(system_info* info)
 	info->free_swap_pages = 0;
 #endif
 }
-

@@ -68,6 +68,18 @@ static scheduler_mode_operations* sSchedulerModes[] = {
 	&gSchedulerPowerSavingMode,
 };
 
+
+static inline void
+scheduler_boot_checkpoint(const char* string)
+{
+#if defined(__riscv)
+	extern void debug_early_boot_checkpoint(const char* string);
+	debug_early_boot_checkpoint(string);
+#else
+	(void)string;
+#endif
+}
+
 // Since CPU IDs used internally by the kernel bear no relation to the actual
 // CPU topology the following arrays are used to efficiently get the core
 // and the package that CPU in question belongs to.
@@ -316,12 +328,14 @@ scheduler_new_thread_entry(Thread* thread)
 static inline void
 switch_thread(Thread* fromThread, Thread* toThread)
 {
+	scheduler_boot_checkpoint("riscv: switch thread entered\n");
 	// notify the user debugger code
 	if ((fromThread->flags & THREAD_FLAGS_DEBUGGER_INSTALLED) != 0)
 		user_debug_thread_unscheduled(fromThread);
 
 	// stop CPU time based user timers
 	stop_cpu_timers(fromThread, toThread);
+	scheduler_boot_checkpoint("riscv: switch thread timers stopped\n");
 
 	// update CPU and Thread structures and perform the context switch
 	cpu_ent* cpu = fromThread->cpu;
@@ -331,7 +345,9 @@ switch_thread(Thread* fromThread, Thread* toThread)
 	cpu->previous_thread = fromThread;
 
 	arch_thread_set_current_thread(toThread);
+	scheduler_boot_checkpoint("riscv: switch thread current set\n");
 	arch_thread_context_switch(fromThread, toThread);
+	scheduler_boot_checkpoint("riscv: switch thread context returned\n");
 
 	// The use of fromThread below looks weird, but is correct. fromThread had
 	// been unscheduled earlier, but is back now. For a thread scheduled the
@@ -343,11 +359,13 @@ switch_thread(Thread* fromThread, Thread* toThread)
 static void
 reschedule(int32 nextState)
 {
+	scheduler_boot_checkpoint("riscv: reschedule entered\n");
 	ASSERT(!are_interrupts_enabled());
 	SCHEDULER_ENTER_FUNCTION();
 
 	int32 thisCPU = smp_get_current_cpu();
 	atomic_set(&gCPU[thisCPU].invoke_scheduler, false);
+	scheduler_boot_checkpoint("riscv: reschedule invoke flag ready\n");
 
 	CPUEntry* cpu = CPUEntry::GetCPU(thisCPU);
 	CoreEntry* core = CoreEntry::GetCore(thisCPU);
@@ -359,8 +377,10 @@ reschedule(int32 nextState)
 	bool useOldThreadMask, fetchedOldThreadMask = false;
 
 	oldThreadData->StopCPUTime();
+	scheduler_boot_checkpoint("riscv: reschedule old cpu time stopped\n");
 
 	SchedulerModeLocker modeLocker;
+	scheduler_boot_checkpoint("riscv: reschedule mode lock ready\n");
 
 	TRACE("reschedule(): cpu %" B_PRId32 ", current thread = %" B_PRId32 "\n", thisCPU,
 		oldThread->id);
@@ -439,6 +459,7 @@ reschedule(int32 nextState)
 		nextThreadData
 			= cpu->ChooseNextThread(enqueueOldThread ? oldThreadData : NULL,
 				putOldThreadAtBack);
+		scheduler_boot_checkpoint("riscv: reschedule next thread chosen\n");
 
 		if (oldThreadShouldMigrate) {
 			enqueue(oldThread, true);
@@ -464,6 +485,7 @@ reschedule(int32 nextState)
 		}
 
 		acquire_spinlock(&nextThread->scheduler_lock);
+		scheduler_boot_checkpoint("riscv: reschedule next lock ready\n");
 	}
 
 	TRACE("reschedule(): cpu %" B_PRId32 ", next thread = %" B_PRId32 "\n", thisCPU,
@@ -496,6 +518,8 @@ reschedule(int32 nextState)
 
 		SCHEDULER_EXIT_FUNCTION();
 
+		if (nextThread != oldThread)
+			scheduler_boot_checkpoint("riscv: reschedule switch call\n");
 		if (nextThread != oldThread)
 			switch_thread(oldThread, nextThread);
 	}
@@ -592,10 +616,14 @@ scheduler_on_thread_destroy(Thread* thread)
 void
 scheduler_start()
 {
+	scheduler_boot_checkpoint("riscv: scheduler start entered\n");
 	InterruptsSpinLocker _(thread_get_current_thread()->scheduler_lock);
+	scheduler_boot_checkpoint("riscv: scheduler start lock ready\n");
 	SCHEDULER_ENTER_FUNCTION();
+	scheduler_boot_checkpoint("riscv: scheduler start reschedule\n");
 
 	reschedule(B_THREAD_READY);
+	scheduler_boot_checkpoint("riscv: scheduler start reschedule returned\n");
 }
 
 
