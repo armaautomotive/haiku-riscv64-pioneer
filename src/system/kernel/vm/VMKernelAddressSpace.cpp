@@ -118,6 +118,7 @@ VMKernelAddressSpace::InitObject()
 #if defined(__riscv)
 	Range* range = new(sInitialKernelRange) Range(fBase, size,
 		Range::RANGE_FREE);
+	range->SetBootstrapAllocated();
 #else
 	Range* range = new(fRangesObjectCache, bootstrapFlags) Range(fBase, size,
 		Range::RANGE_FREE);
@@ -184,7 +185,10 @@ VMKernelAddressSpace::DeleteArea(VMArea* _area, uint32 allocationFlags)
 	TRACE("VMKernelAddressSpace::DeleteArea(%p)\n", _area);
 
 	VMKernelArea* area = static_cast<VMKernelArea*>(_area);
-	object_cache_delete(fAreaObjectCache, area);
+	if (area->IsBootstrapAllocated())
+		area->~VMKernelArea();
+	else
+		object_cache_delete(fAreaObjectCache, area);
 }
 
 
@@ -354,7 +358,7 @@ VMKernelAddressSpace::ResizeArea(VMArea* _area, size_t newSize,
 		if (sizeDiff == nextRange->size) {
 			// The next range is completely covered -- remove and delete it.
 			_RemoveRange(nextRange);
-			object_cache_delete(fRangesObjectCache, nextRange, allocationFlags);
+			_DeleteRange(nextRange, allocationFlags);
 		} else {
 			// The next range is only partially covered -- shrink it.
 			if (nextRange->type == Range::RANGE_FREE)
@@ -712,8 +716,11 @@ VMKernelAddressSpace::_AllocateRange(
 			asm volatile("lla %0, _Z17block_alloc_earlym"
 				: "=r"(directBlockAllocEarly));
 			void* storage = directBlockAllocEarly(sizeof(Range));
-			return storage != NULL
+			Range* newRange = storage != NULL
 				? new(storage) Range(base, rangeSize, originalRange) : NULL;
+			if (newRange != NULL)
+				newRange->SetBootstrapAllocated();
+			return newRange;
 		}
 #endif
 		return new(fRangesObjectCache, allocationFlags)
@@ -763,10 +770,7 @@ VMKernelAddressSpace::_AllocateRange(
 		Range* leftOverRange2 = allocateRange(address + size,
 			range->size - size - leftOverRange1->size, range);
 		if (leftOverRange2 == NULL) {
-			if (!bootstrapRangeAllocation) {
-				object_cache_delete(fRangesObjectCache, leftOverRange1,
-					allocationFlags);
-			}
+			_DeleteRange(leftOverRange1, allocationFlags);
 			return B_NO_MEMORY;
 		}
 
@@ -911,6 +915,16 @@ TRACE("    -> reserved range not allowed\n");
 
 
 void
+VMKernelAddressSpace::_DeleteRange(Range* range, uint32 allocationFlags)
+{
+	if (range->IsBootstrapAllocated())
+		range->~Range();
+	else
+		object_cache_delete(fRangesObjectCache, range, allocationFlags);
+}
+
+
+void
 VMKernelAddressSpace::_FreeRange(Range* range, uint32 allocationFlags)
 {
 	TRACE("  VMKernelAddressSpace::_FreeRange(%p (%#" B_PRIxADDR ", %#"
@@ -928,15 +942,15 @@ VMKernelAddressSpace::_FreeRange(Range* range, uint32 allocationFlags)
 			_RemoveRange(range);
 			_RemoveRange(nextRange);
 			previousRange->size += range->size + nextRange->size;
-			object_cache_delete(fRangesObjectCache, range, allocationFlags);
-			object_cache_delete(fRangesObjectCache, nextRange, allocationFlags);
+			_DeleteRange(range, allocationFlags);
+			_DeleteRange(nextRange, allocationFlags);
 			_FreeListInsertRange(previousRange, previousRange->size);
 		} else {
 			// join with the previous range only, delete the supplied one
 			_FreeListRemoveRange(previousRange, previousRange->size);
 			_RemoveRange(range);
 			previousRange->size += range->size;
-			object_cache_delete(fRangesObjectCache, range, allocationFlags);
+			_DeleteRange(range, allocationFlags);
 			_FreeListInsertRange(previousRange, previousRange->size);
 		}
 	} else {
@@ -944,7 +958,7 @@ VMKernelAddressSpace::_FreeRange(Range* range, uint32 allocationFlags)
 			// join with the next range and delete it
 			_RemoveRange(nextRange);
 			range->size += nextRange->size;
-			object_cache_delete(fRangesObjectCache, nextRange, allocationFlags);
+			_DeleteRange(nextRange, allocationFlags);
 		}
 
 		// mark the range free and add it to the respective free list

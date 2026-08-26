@@ -19,6 +19,10 @@ VMNullCache::Init(uint32 allocationFlags)
 void
 VMNullCache::DeleteObject()
 {
+	if (IsBootstrapAllocated()) {
+		this->~VMNullCache();
+		return;
+	}
+
 	object_cache_delete(gNullCacheObjectCache, this);
 }
-

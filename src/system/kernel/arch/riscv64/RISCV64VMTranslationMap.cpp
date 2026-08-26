@@ -403,6 +403,14 @@ RISCV64VMTranslationMap::UnmapPage(VMArea* area, addr_t address,
 	}
 
 	if (_flags == NULL) {
+		// The bounded bootstrap vm_page database deliberately omits some
+		// loader-owned wired pages. Their PTEs still have to be removed, but
+		// there is no vm_page or mapping bookkeeping to tear down.
+		if (area->cache_type != CACHE_TYPE_DEVICE
+			&& vm_lookup_page(oldPte.ppn) == NULL) {
+			return B_OK;
+		}
+
 		locker.Detach();
 			// PageUnmapped() will unlock for us
 
@@ -451,7 +459,8 @@ RISCV64VMTranslationMap::UnmapPages(VMArea* area, addr_t base, size_t size,
 		if (oldPte.isAccessed && !deletingAddressSpace)
 			InvalidatePage(start);
 
-		if (area->cache_type != CACHE_TYPE_DEVICE) {
+		if (area->cache_type != CACHE_TYPE_DEVICE
+			&& vm_lookup_page(oldPte.ppn) != NULL) {
 			PageUnmapped(area, oldPte.ppn, oldPte.isAccessed, oldPte.isDirty,
 				updatePageQueue, &queue);
 		}

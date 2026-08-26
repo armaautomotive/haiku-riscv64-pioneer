@@ -111,6 +111,10 @@ public:
 									// long as the lock is owned.
 
 	inline	VMCacheRef*			CacheRef() const	{ return fCacheRef; }
+	inline	bool				IsBootstrapAllocated() const
+									{ return fBootstrapAllocated; }
+	inline	void				SetBootstrapAllocated()
+									{ fBootstrapAllocated = true; }
 
 			void				WaitForPageEvents(vm_page* page, uint32 events,
 									bool relock);
@@ -246,6 +250,7 @@ private:
 			PageEventWaiter*	fPageEventWaiters;
 			void*				fUserData;
 			VMCacheRef*			fCacheRef;
+			bool				fBootstrapAllocated;
 			RemovedPagesQueue	fRemovedBusyPages;
 
 			page_num_t			fWiredPagesCount;

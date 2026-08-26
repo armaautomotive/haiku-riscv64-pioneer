@@ -14,9 +14,9 @@
 #include "pci_msi.h"
 
 
-#define TRACE_PCI
+//#define TRACE_PCI
 #ifndef TRACE_PCI
-#	define TRACE(x)
+#	define TRACE(x) do { if (false) dprintf x; } while (false)
 #else
 #	define TRACE(x) dprintf x
 #endif

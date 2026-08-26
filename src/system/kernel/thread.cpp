@@ -174,9 +174,10 @@ static area_id
 allocate_kernel_stack(const char* name, addr_t* base, addr_t* top)
 {
 #if defined(__riscv)
-	if (gKernelStartup) {
-		// Startup Thread objects come from the raw bootstrap heap, so no thread
-		// slab has run create_kernel_stack() to populate the stack cache yet.
+	{
+		// Keep RISC-V kernel stacks independent of the reusable stack cache for
+		// now. The direct area path is also used during bootstrap and avoids
+		// corrupting the cache list while the port runs without AMOs.
 		virtual_address_restrictions virtualRestrictions = {};
 		virtualRestrictions.address_specification = B_ANY_KERNEL_ADDRESS;
 		physical_address_restrictions physicalRestrictions = {};
@@ -216,6 +217,11 @@ allocate_kernel_stack(const char* name, addr_t* base, addr_t* top)
 static void
 free_kernel_stack(area_id areaID, addr_t base, addr_t top)
 {
+#if defined(__riscv)
+	delete_area(areaID);
+	return;
+#endif
+
 #if defined(STACK_GROWS_DOWNWARDS)
 	const addr_t stackStart = base + KERNEL_STACK_GUARD_PAGES * B_PAGE_SIZE;
 #else
@@ -234,6 +240,7 @@ free_kernel_stack(area_id areaID, addr_t base, addr_t top)
 }
 
 
+#if !defined(__riscv)
 static status_t
 create_kernel_stack(void* cookie, void* object)
 {
@@ -271,6 +278,7 @@ destroy_kernel_stack(void* cookie, void* object)
 
 	delete_area(cachedStack->area->id);
 }
+#endif
 
 
 // #pragma mark - Thread
@@ -3086,7 +3094,13 @@ thread_init(kernel_args *args)
 	// create the thread structure object cache
 	debug_early_boot_message("riscv: thread cache create start\n");
 	sThreadCache = create_object_cache_etc("threads", sizeof(Thread), 64,
-		0, 0, 0, 0, NULL, create_kernel_stack, destroy_kernel_stack, NULL);
+		0, 0, 0, 0, NULL,
+#if defined(__riscv)
+		NULL, NULL,
+#else
+		create_kernel_stack, destroy_kernel_stack,
+#endif
+		NULL);
 		// Note: The x86 port requires 64 byte alignment of thread structures.
 	if (sThreadCache == NULL)
 		panic("thread_init(): failed to allocate thread object cache!");

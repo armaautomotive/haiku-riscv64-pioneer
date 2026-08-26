@@ -277,5 +277,10 @@ VMAnonymousNoSwapCache::Merge(VMCache* _source)
 void
 VMAnonymousNoSwapCache::DeleteObject()
 {
+	if (IsBootstrapAllocated()) {
+		this->~VMAnonymousNoSwapCache();
+		return;
+	}
+
 	object_cache_delete(gAnonymousNoSwapCacheObjectCache, this);
 }

@@ -600,7 +600,8 @@ vm_cache_acquire_locked_page_cache(vm_page* page, bool dontWait)
 
 VMCacheRef::VMCacheRef(VMCache* cache)
 	:
-	cache(cache)
+	cache(cache),
+	bootstrap_allocated(false)
 {
 }
 
@@ -618,7 +619,8 @@ VMCache::_IsMergeable() const
 
 VMCache::VMCache()
 	:
-	fCacheRef(NULL)
+	fCacheRef(NULL),
+	fBootstrapAllocated(false)
 {
 }
 
@@ -627,7 +629,10 @@ VMCache::~VMCache()
 {
 	ASSERT(fRefCount == 0 && page_count == 0);
 
-	object_cache_delete(gCacheRefObjectCache, fCacheRef);
+	// RISC-V cache references created during the single-threaded bootstrap
+	// live in the never-freed bootstrap arena rather than this object cache.
+	if (!fCacheRef->bootstrap_allocated)
+		object_cache_delete(gCacheRefObjectCache, fCacheRef);
 }
 
 
@@ -675,8 +680,10 @@ VMCache::Init(const char* name, uint32 cacheType, uint32 allocationFlags)
 			: "=r"(directBlockAllocEarly));
 		fCacheRef = static_cast<VMCacheRef*>(
 			directBlockAllocEarly(sizeof(VMCacheRef)));
-		if (fCacheRef != NULL)
+		if (fCacheRef != NULL) {
 			fCacheRef->cache = this;
+			fCacheRef->bootstrap_allocated = true;
+		}
 	} else
 		fCacheRef = new(gCacheRefObjectCache, allocationFlags) VMCacheRef(this);
 #else
@@ -1815,6 +1822,7 @@ VMCacheFactory::CreateAnonymousCache(VMCache*& _cache, bool canOvercommit,
 			asm volatile("lla %0, _ZTV22VMAnonymousNoSwapCache"
 				: "=r"(vtable));
 			*reinterpret_cast<void***>(cache) = vtable + 2;
+			cache->SetBootstrapAllocated();
 		}
 	} else {
 		cache = new(gAnonymousNoSwapCacheObjectCache, allocationFlags)
@@ -1909,6 +1917,8 @@ VMCacheFactory::CreateDeviceCache(VMCache*& _cache, addr_t baseAddress)
 			: "=r"(directBlockAllocEarly));
 		void* storage = directBlockAllocEarly(sizeof(VMDeviceCache));
 		cache = storage != NULL ? new(storage) VMDeviceCache : NULL;
+		if (cache != NULL)
+			cache->SetBootstrapAllocated();
 		debug_early_boot_message("riscv: device cache early allocate done\n");
 	} else
 #endif
@@ -1967,6 +1977,7 @@ VMCacheFactory::CreateNullCache(int priority, VMCache*& _cache)
 			void** vtable;
 			asm volatile("lla %0, _ZTV11VMNullCache" : "=r"(vtable));
 			*reinterpret_cast<void***>(cache) = vtable + 2;
+			cache->SetBootstrapAllocated();
 		}
 	} else
 		cache = new(gNullCacheObjectCache, allocationFlags) VMNullCache;

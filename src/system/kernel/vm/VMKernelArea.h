@@ -44,7 +44,8 @@ public:
 		:
 		base(base),
 		size(size),
-		type(type)
+		type(type),
+		fBootstrapAllocated(false)
 	{
 	}
 
@@ -53,13 +54,27 @@ public:
 		:
 		base(base),
 		size(size),
-		type(other->type)
+		type(other->type),
+		fBootstrapAllocated(false)
 	{
 		if (type == RANGE_RESERVED) {
 			reserved.base = other->reserved.base;
 			reserved.flags = other->reserved.flags;
 		}
 	}
+
+	bool IsBootstrapAllocated() const
+	{
+		return fBootstrapAllocated;
+	}
+
+	void SetBootstrapAllocated()
+	{
+		fBootstrapAllocated = true;
+	}
+
+private:
+	bool fBootstrapAllocated;
 };
 
 
@@ -123,9 +138,14 @@ struct VMKernelArea final : VMArea, AVLTreeNode {
 									{ return fRange; }
 			void				SetRange(VMKernelAddressRange* range)
 									{ fRange = range; }
+			bool				IsBootstrapAllocated() const
+									{ return fBootstrapAllocated; }
+			void				SetBootstrapAllocated()
+									{ fBootstrapAllocated = true; }
 
 private:
 			VMKernelAddressRange* fRange;
+			bool				fBootstrapAllocated;
 };
 
 

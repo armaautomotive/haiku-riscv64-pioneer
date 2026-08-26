@@ -74,6 +74,8 @@ private:
 
 			void				_InsertRange(Range* range);
 			void				_RemoveRange(Range* range);
+			void				_DeleteRange(Range* range,
+									uint32 allocationFlags);
 
 			status_t			_AllocateRange(
 									const virtual_address_restrictions*

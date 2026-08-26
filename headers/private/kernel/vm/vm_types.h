@@ -107,6 +107,7 @@ typedef phys_addr_t page_num_t;
 
 struct VMCacheRef {
 			VMCache*			cache;
+			bool				bootstrap_allocated;
 
 								VMCacheRef(VMCache* cache);
 };

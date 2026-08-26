@@ -41,5 +41,10 @@ VMDeviceCache::Write(off_t offset, const generic_io_vec* vecs, size_t count,
 void
 VMDeviceCache::DeleteObject()
 {
+	if (IsBootstrapAllocated()) {
+		this->~VMDeviceCache();
+		return;
+	}
+
 	object_cache_delete(gDeviceCacheObjectCache, this);
 }

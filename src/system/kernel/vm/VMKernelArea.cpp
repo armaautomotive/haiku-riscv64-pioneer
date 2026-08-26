@@ -16,7 +16,8 @@
 VMKernelArea::VMKernelArea(VMAddressSpace* addressSpace, uint32 wiring,
 	uint32 protection)
 	:
-	VMArea(addressSpace, wiring, protection)
+	VMArea(addressSpace, wiring, protection),
+	fBootstrapAllocated(false)
 {
 }
 
@@ -50,6 +51,7 @@ VMKernelArea::Create(VMAddressSpace* addressSpace, const char* name,
 			uint8* bytes = reinterpret_cast<uint8*>(area);
 			for (size_t i = 0; i < sizeof(VMKernelArea); i++)
 				bytes[i] = 0;
+			area->SetBootstrapAllocated();
 		}
 	} else {
 		area = new(objectCache, allocationFlags) VMKernelArea(
@@ -78,7 +80,10 @@ VMKernelArea::Create(VMAddressSpace* addressSpace, const char* name,
 #else
 	if (area->Init(name, allocationFlags) != B_OK) {
 #endif
-		object_cache_delete(objectCache, area);
+		if (area->IsBootstrapAllocated())
+			area->~VMKernelArea();
+		else
+			object_cache_delete(objectCache, area);
 		return NULL;
 	}
 
