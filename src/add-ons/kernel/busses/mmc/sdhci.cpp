@@ -54,7 +54,13 @@ sdhci_generic_interrupt(void* data)
 SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll)
 	:
 	fRegisters(registers),
+	fCommandResult(0),
 	fIrq(irq),
+	fUsePolling(poll),
+	fInterruptInstalled(false),
+	fScanSemaphore(-1),
+	fStatus(B_OK),
+	fWorkerThread(-1),
 	fCardType(CARD_TYPE_UNKNOWN)
 {
 	if (irq == 0 || irq == 0xff) {
@@ -67,12 +73,15 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll)
 
 	DisableInterrupts();
 
-	fStatus = install_io_interrupt_handler(fIrq,
-		sdhci_generic_interrupt, this, 0);
+	if (!fUsePolling) {
+		fStatus = install_io_interrupt_handler(fIrq,
+			sdhci_generic_interrupt, this, 0);
 
-	if (fStatus != B_OK) {
-		ERROR("can't install interrupt handler\n");
-		return;
+		if (fStatus != B_OK) {
+			ERROR("can't install interrupt handler\n");
+			return;
+		}
+		fInterruptInstalled = true;
 	}
 
 	// First of all, we have to make sure we are in a sane state. The easiest
@@ -154,7 +163,7 @@ SdhciBus::~SdhciBus()
 {
 	TerminateBus();
 
-	if (fIrq != 0)
+	if (fInterruptInstalled)
 		remove_io_interrupt_handler(fIrq, sdhci_generic_interrupt, this);
 
 	area_id regs_area = area_for(fRegisters);
@@ -163,7 +172,7 @@ SdhciBus::~SdhciBus()
 	fStatus = B_SHUTTING_DOWN;
 
 	status_t result;
-	if (fWorkerThread != 0)
+	if (fWorkerThread >= 0)
 		wait_for_thread(fWorkerThread, &result);
 }
 
@@ -172,7 +181,8 @@ void
 SdhciBus::EnableInterrupts(uint32_t mask)
 {
 	fRegisters->interrupt_status_enable |= mask;
-	fRegisters->interrupt_signal_enable |= mask;
+	if (!fUsePolling)
+		fRegisters->interrupt_signal_enable |= mask;
 }
 
 
@@ -831,6 +841,8 @@ register_child_devices(void* cookie)
 		status = register_child_devices_pci(cookie);
 	else if (strcmp(bus, "acpi") == 0)
 		status = register_child_devices_acpi(cookie);
+	else if (strcmp(bus, "fdt") == 0)
+		status = register_child_devices_fdt(cookie);
 	else
 		status = B_BAD_VALUE;
 
@@ -914,6 +926,8 @@ supports_device(device_node* parent)
 		return supports_device_pci(parent);
 	else if (strcmp(bus, "acpi") == 0)
 		return supports_device_acpi(parent);
+	else if (strcmp(bus, "fdt") == 0)
+		return supports_device_fdt(parent);
 
 	return 0.0f;
 }
@@ -1007,5 +1021,6 @@ module_info* modules[] = {
 	(module_info* )&sSDHCIDevice,
 	(module_info* )&gSDHCIPCIDeviceModule,
 	(module_info* )&gSDHCIACPIDeviceModule,
+	(module_info* )&gSDHCIFDTDeviceModule,
 	NULL
 };

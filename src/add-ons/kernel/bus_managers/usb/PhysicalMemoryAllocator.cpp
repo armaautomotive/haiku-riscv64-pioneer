@@ -32,6 +32,7 @@ PhysicalMemoryAllocator::PhysicalMemoryAllocator(const char *name,
 		fStatus(B_NO_INIT),
 		fMemoryWaitersCount(0)
 {
+	fArea = -1;
 	fName = strdup(name);
 	mutex_init_etc(&fLock, fName, MUTEX_FLAG_CLONE_NAME);
 
@@ -109,7 +110,8 @@ PhysicalMemoryAllocator::~PhysicalMemoryAllocator()
 	free(fArrayOffset);
 	free(fName);
 
-	delete_area(fArea);
+	if (fArea >= 0)
+		delete_area(fArea);
 	mutex_destroy(&fLock);
 }
 

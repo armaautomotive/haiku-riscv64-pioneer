@@ -48,8 +48,15 @@ Stack::Stack()
 
 	memset(fObjectArray, 0, objectArraySize);
 
+	uint32 minCountPerBlock = 64;
+#if defined(__riscv)
+	// Low 32-bit physical memory is fragmented by the time the USB stack is
+	// loaded on the Pioneer. Keep the largest 128 KiB block size, but avoid
+	// requiring an 8 MiB contiguous low-memory run for the initial pool.
+	minCountPerBlock = 8;
+#endif
 	fAllocator = new(std::nothrow) PhysicalMemoryAllocator("USB Stack Allocator",
-		8, B_PAGE_SIZE * 32, 64);
+		8, B_PAGE_SIZE * 32, minCountPerBlock);
 	if (!fAllocator || fAllocator->InitCheck() < B_OK) {
 		TRACE_ERROR("failed to allocate the allocator\n");
 		delete fAllocator;
@@ -539,4 +546,3 @@ Stack::UninstallNotify(const char *driverName)
 
 	return B_NAME_NOT_FOUND;
 }
-
