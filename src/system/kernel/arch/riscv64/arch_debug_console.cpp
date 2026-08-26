@@ -13,6 +13,7 @@
 #include <arch/riscv64/arch_uart_sifive.h>
 #include <boot/kernel_args.h>
 #include <kernel.h>
+#include <platform/sbi/sbi_syscalls.h>
 #include <vm/vm.h>
 #include <Htif.h>
 
@@ -20,6 +21,7 @@
 
 
 static DebugUART* sArchDebugUART = NULL;
+static bool sUseSbiConsole = false;
 
 
 void
@@ -63,6 +65,15 @@ arch_debug_serial_getchar(void)
 void
 arch_debug_serial_putchar(const char c)
 {
+	// OpenSBI already owns and serializes the Pioneer console. The native
+	// 8250 path loses characters once early kernel output is preemptible, while
+	// direct SBI diagnostics remain intact. Keep the UART object for input, but
+	// use the firmware console for reliable bootstrap and debugger output.
+	if (sUseSbiConsole) {
+		sbi_console_putchar_legacy(c);
+		return;
+	}
+
 	if (sArchDebugUART != NULL) {
 		sArchDebugUART->PutChar(c);
 		return;
@@ -97,6 +108,8 @@ arch_debug_serial_early_boot_message(const char *string)
 status_t
 arch_debug_console_init(kernel_args *args)
 {
+	sUseSbiConsole = args->arch_args.machine_platform == kPlatformSbi;
+
 	if (strncmp(args->arch_args.uart.kind, UART_KIND_8250,
 			sizeof(args->arch_args.uart.kind)) == 0) {
 		sArchDebugUART = arch_get_uart_8250(args->arch_args.uart.regs.start,

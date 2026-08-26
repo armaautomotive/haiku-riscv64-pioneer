@@ -40,6 +40,7 @@ supports_device_fdt(device_node* parent)
 status_t
 register_child_devices_fdt(void* cookie)
 {
+	dprintf("P202:SD0 register FDT child\n");
 	SdhciDevice* context = (SdhciDevice*)cookie;
 	device_attr attrs[] = {
 		{ B_DEVICE_PRETTY_NAME, B_STRING_TYPE,
@@ -57,14 +58,17 @@ register_child_devices_fdt(void* cookie)
 		{}
 	};
 
-	return gDeviceManager->register_node(context->fNode,
+	status_t status = gDeviceManager->register_node(context->fNode,
 		SDHCI_FDT_MMC_BUS_MODULE_NAME, attrs, NULL, NULL);
+	dprintf("P202:SD1 FDT child registered: %s\n", strerror(status));
+	return status;
 }
 
 
 status_t
 init_bus_fdt(device_node* node, void** busCookie)
 {
+	dprintf("P202:SD2 init FDT bus\n");
 	DeviceNodePutter<&gDeviceManager> controller(
 		gDeviceManager->get_parent_node(node));
 	if (!controller.IsSet())
@@ -81,6 +85,7 @@ init_bus_fdt(device_node* node, void** busCookie)
 		(driver_module_info**)&fdt, (void**)&device);
 	if (status != B_OK)
 		return status;
+	dprintf("P202:SD3 FDT parent ready\n");
 
 	uint64 physicalAddress;
 	uint64 registerSize;
@@ -92,6 +97,8 @@ init_bus_fdt(device_node* node, void** busCookie)
 	uint64 irq;
 	if (!fdt->get_interrupt(device, 0, NULL, &irq) || irq > UINT8_MAX)
 		return B_BAD_DATA;
+	dprintf("P202:SD4 regs %#" B_PRIx64 " size %#" B_PRIx64 " irq %" B_PRIu64 "\n",
+		physicalAddress, registerSize, irq);
 
 	struct registers* mappedRegisters;
 	area_id registersArea = map_physical_memory("FDT SDHC registers",
@@ -100,6 +107,7 @@ init_bus_fdt(device_node* node, void** busCookie)
 		(void**)&mappedRegisters);
 	if (registersArea < B_OK)
 		return registersArea;
+	dprintf("P202:SD5 registers mapped\n");
 
 	const char* compatible;
 	uint32 quirks = 0;
@@ -111,6 +119,7 @@ init_bus_fdt(device_node* node, void** busCookie)
 	}
 
 	// Poll until the RISC-V interrupt path for this controller is validated.
+	dprintf("P202:SD6 construct controller\n");
 	SdhciBus* bus = new(std::nothrow) SdhciBus(mappedRegisters, (uint8)irq,
 		true, quirks);
 	if (bus == NULL) {
@@ -123,6 +132,7 @@ init_bus_fdt(device_node* node, void** busCookie)
 		delete bus;
 		return status;
 	}
+	dprintf("P202:SD7 controller ready\n");
 
 	*busCookie = bus;
 	return B_OK;

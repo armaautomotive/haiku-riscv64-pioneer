@@ -25,11 +25,11 @@
 #include "sdhci.h"
 
 
-#define TRACE_SDHCI
+//#define TRACE_SDHCI
 #ifdef TRACE_SDHCI
 #	define TRACE(x...) dprintf("\33[33msdhci:\33[0m " x)
 #else
-#	define TRACE(x...) ;
+#	define TRACE(x...) do { if (false) dprintf(x); } while (false)
 #endif
 #define TRACE_ALWAYS(x...)	dprintf("\33[33msdhci:\33[0m " x)
 #define ERROR(x...)			dprintf("\33[33msdhci:\33[0m " x)
@@ -65,6 +65,7 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	fWorkerThread(-1),
 	fCardType(CARD_TYPE_UNKNOWN)
 {
+	dprintf("P202:SC0 constructor irq %u poll %u\n", irq, poll);
 	if (irq == 0 || irq == 0xff) {
 		ERROR("IRQ not assigned\n");
 		fStatus = B_BAD_DATA;
@@ -74,6 +75,7 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	fInterruptNotifier.Init(this, "SDHCI interrupts");
 
 	DisableInterrupts();
+	dprintf("P202:SC1 interrupts disabled\n");
 
 	if (!fUsePolling) {
 		fStatus = install_io_interrupt_handler(fIrq,
@@ -89,6 +91,7 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	// First of all, we have to make sure we are in a sane state. The easiest
 	// way is to reset everything.
 	Reset();
+	dprintf("P202:SC2 reset complete\n");
 
 	TRACE("Controller spec version: %d, vendor version: %#02x\n",
 		fRegisters->host_controller_version.specVersion,
@@ -135,10 +138,14 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	}
 
 	// Turn on the power supply to the card, if there is a card inserted
-	if (PowerOn()) {
+	bool powered = PowerOn();
+	dprintf("P202:SC3 power %u\n", powered);
+	if (powered) {
 		// Then we configure the clock to the frequency needed for
 		// initialization
+		dprintf("P202:SC4 set initial clock\n");
 		SetClock(400, false);
+		dprintf("P202:SC5 initial clock ready\n");
 	}
 
 	fRegisters->timeout_control.SetDivider(fRegisters->capabilities.TimeoutClockFrequency(), 500);
@@ -151,6 +158,7 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	// interrupt trigger on them (we get a "command complete" interrupt on
 	// errors already)
 	fRegisters->interrupt_status_enable |= SDHCI_INT_ERROR_MASK | SDHCI_INT_NORMAL_MASK;
+	dprintf("P202:SC6 constructor complete\n");
 
 	// Polling controllers consume command and transfer status synchronously.
 	// A separate poller would race with the issuing thread while acknowledging
@@ -431,7 +439,7 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 		TRACE("Dataline is released.\n");
 	}
 
-	ERROR("Command execution %d complete\n", command);
+	TRACE("Command execution %d complete\n", command);
 	return B_OK;
 }
 
@@ -446,11 +454,21 @@ SdhciBus::InitCheck()
 void
 SdhciBus::Reset()
 {
+	dprintf("P204:SR0 reset all begin\n");
 	if (!fRegisters->software_reset.ResetAll())
 		ERROR("SdhciBus::Reset: SoftwareReset timeout\n");
+	else
+		dprintf("P204:SR1 reset all complete\n");
+	// The SG2042 vendor PHY registers must not be accessed immediately after
+	// the host reset completes. Use a busy-wait because this runs during early
+	// device-manager initialization, where a scheduler sleep may not wake.
+	spin(10000);
 
-	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0)
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
+		dprintf("P204:SR2 SG2042 PHY begin\n");
 		_InitSg2042Phy();
+		dprintf("P204:SR3 SG2042 PHY complete\n");
+	}
 }
 
 
@@ -467,10 +485,12 @@ SdhciBus::_InitSg2042Phy()
 	volatile uint16* strobePad = (volatile uint16*)(base + 0x30a);
 	volatile uint16* resetPad = (volatile uint16*)(base + 0x30c);
 
+	dprintf("P205:SP0 read PHY config\n");
 	uint32 config = *phyConfig;
 	config &= ~1u;
 	config |= (1u << 1) | (9u << 16) | (8u << 20);
 	*phyConfig = config;
+	dprintf("P205:SP1 PHY config asserted\n");
 
 	const uint16 pullUpPad = 2u | (1u << 3) | (3u << 5) | (2u << 9);
 	*commandPad = pullUpPad;
@@ -478,6 +498,7 @@ SdhciBus::_InitSg2042Phy()
 	*resetPad = pullUpPad;
 	*clockPad = 2u | (3u << 5) | (2u << 9);
 	*strobePad = 2u | (2u << 3) | (3u << 5) | (2u << 9);
+	dprintf("P205:SP2 PHY pads configured\n");
 
 	volatile uint8* sdClockDelayConfig = base + 0x31d;
 	volatile uint8* sdClockDelayCode = base + 0x31e;
@@ -485,10 +506,13 @@ SdhciBus::_InitSg2042Phy()
 	*sdClockDelayConfig |= (1u << 4);
 	*sdClockDelayCode = 10;
 	*sdClockDelayConfig &= ~(1u << 4);
+	dprintf("P205:SP3 clock delay configured\n");
 	*(base + 0x320) = (1u << 1);
 	*(base + 0x321) = (2u << 2);
+	dprintf("P205:SP4 sample delays configured\n");
 
 	*phyConfig |= 1u;
+	dprintf("P205:SP5 PHY reset deasserted\n");
 	TRACE("SG2042 SD PHY initialized: config %#" B_PRIx32 "\n",
 		*phyConfig);
 }
@@ -628,6 +652,7 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		// In theory we could go on and send other commands as long as they
 		// don't need the DAT lines, but it's overcomplicating things.
 		TRACE("Wait for transfer complete...");
+		uint32 pollingIterations = 0;
 		while ((fCommandResult & SDHCI_INT_TRANSFER_MASK) == 0) {
 			if (fUsePolling) {
 				uint32 intmask = fRegisters->interrupt_status;
@@ -636,6 +661,13 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 					fCommandResult |= completed;
 					fRegisters->interrupt_status = completed;
 					continue;
+				}
+				if (++pollingIterations >= 50000) {
+					ERROR("Transfer completion timed out: status %#" B_PRIx32
+						", command result %#" B_PRIx32 "\n", intmask,
+						fCommandResult);
+					fRegisters->software_reset.ResetDataLine();
+					return B_TIMED_OUT;
 				}
 				snooze(100);
 			} else {
@@ -651,10 +683,12 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 			}
 		}
 
-		if (fCommandResult & SDHCI_INT_DATA_TIMEOUT) {
-			TRACE_ALWAYS("Request timed out!\n");
+		uint32 dataErrors = fCommandResult & SDHCI_INT_DATA_ERROR_MASK;
+		if (dataErrors != 0) {
+			ERROR("Data transfer failed: %#" B_PRIx32 "\n", dataErrors);
 			fRegisters->software_reset.ResetDataLine();
-			return B_TIMED_OUT;
+			return (dataErrors & SDHCI_INT_DATA_TIMEOUT) != 0
+				? B_TIMED_OUT : B_IO_ERROR;
 		}
 
 		TRACE("transfer complete OK.\n");

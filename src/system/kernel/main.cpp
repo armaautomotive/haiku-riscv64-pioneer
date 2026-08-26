@@ -503,34 +503,43 @@ main2(void* /*unused*/)
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_3_INIT_DEVICES);
 	device_manager_init(&sKernelArgs);
 	debug_early_boot_checkpoint("riscv: main2 device manager ready\n");
+	dprintf("P202:M0 device manager ready\n");
 
 	TRACE("Add preloaded old-style drivers\n");
 	legacy_driver_add_preloaded(&sKernelArgs);
+	dprintf("P202:M1 legacy drivers ready\n");
 
 	interrupts_init_post_device_manager(&sKernelArgs);
+	dprintf("P202:M2 interrupts ready\n");
 
 	TRACE("Mount boot file system\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_4_MOUNT_BOOT_FS);
 	vfs_mount_boot_file_system(&sKernelArgs);
+	dprintf("P202:M3 boot filesystem mounted\n");
 
 #if ENABLE_SWAP_SUPPORT
 	TRACE("swap_init_post_modules\n");
 	swap_init_post_modules();
+	dprintf("P202:M4 swap ready\n");
 #endif
 
 	// CPU specific modules may now be available
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_5_INIT_CPU_MODULES);
 	cpu_init_post_modules(&sKernelArgs);
+	dprintf("P202:M5 CPU modules ready\n");
 
 	TRACE("vm_init_post_modules\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_6_INIT_VM_MODULES);
 	vm_init_post_modules(&sKernelArgs);
+	dprintf("P202:M6 VM modules ready\n");
 
 	TRACE("debug_init_post_modules\n");
 	debug_init_post_modules(&sKernelArgs);
+	dprintf("P202:M7 debug modules ready\n");
 
 	TRACE("device_manager_init_post_modules\n");
 	device_manager_init_post_modules(&sKernelArgs);
+	dprintf("P202:M8 device modules ready\n");
 
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_7_RUN_BOOT_SCRIPT);
 	boot_splash_uninit();
@@ -543,6 +552,7 @@ main2(void* /*unused*/)
 	// Note: don't confuse the kernel_args structure (which is never freed)
 	// with the kernel args ranges it contains (and which are freed here).
 	vm_free_kernel_args(&sKernelArgs);
+	dprintf("P202:M9 kernel args freed\n");
 
 	// start the init process
 	{
@@ -564,8 +574,10 @@ main2(void* /*unused*/)
 		thread_id thread;
 
 		thread = load_image(argc, args, NULL);
+		dprintf("P202:MA launch_daemon load result %" B_PRId32 "\n", thread);
 		if (thread >= B_OK) {
 			resume_thread(thread);
+			dprintf("P202:MB launch_daemon resumed\n");
 			TRACE("launch_daemon started\n");
 		} else {
 			dprintf("error starting \"%s\" error = %" B_PRId32 " \n",

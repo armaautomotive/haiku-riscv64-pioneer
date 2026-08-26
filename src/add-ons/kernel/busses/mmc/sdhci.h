@@ -238,29 +238,38 @@ class SoftwareReset {
 
 		bool ResetAll() {
 			fBits = 1;
-			int i = 0;
-			// wait up to 100ms
-			while ((fBits & 1) != 0 && i++ < 10)
-				snooze(10000);
-			return i < 10;
+			return _WaitForReset(1);
 		}
 
-		void ResetCommandAndDataLines() {
+		bool ResetCommandAndDataLines() {
 			fBits |= 6;
-			while(fBits & 6);
+			return _WaitForReset(6);
 		}
 
-		void ResetCommandLine() {
+		bool ResetCommandLine() {
 			fBits |= 2;
-			while(fBits & 2);
+			return _WaitForReset(2);
 		}
 
-		void ResetDataLine() {
+		bool ResetDataLine() {
 			fBits |= 4;
-			while(fBits & 4);
+			return _WaitForReset(4);
 		}
 
 	private:
+		bool _WaitForReset(uint8_t mask) {
+			// Reset is also used while the device manager is still initializing.
+			// Busy-wait here so progress does not depend on an early scheduler
+			// wakeup, and bound every reset path so broken hardware cannot hang
+			// the kernel indefinitely.
+			for (uint32_t i = 0; i < 1000; i++) {
+				if ((fBits & mask) == 0)
+					return true;
+				spin(100);
+			}
+			return false;
+		}
+
 		volatile uint8_t fBits;
 } __attribute__((packed));
 
@@ -297,7 +306,9 @@ class SoftwareReset {
 		| SDHCI_INT_COMMAND_CRC | SDHCI_INT_COMMAND_END_BIT | SDHCI_INT_COMMAND_INDEX)
 
 #define SDHCI_INT_CMD_MASK 			(SDHCI_INT_CMD_CMP | SDHCI_INT_CMD_ERROR_MASK)
-#define SDHCI_INT_TRANSFER_MASK 	(SDHCI_INT_TRANS_CMP | SDHCI_INT_DATA_TIMEOUT)
+#define SDHCI_INT_DATA_ERROR_MASK	(SDHCI_INT_DATA_TIMEOUT | SDHCI_INT_DATA_CRC \
+	| SDHCI_INT_DATA_END | SDHCI_INT_AUTO_CMD_ERROR | SDHCI_INT_ADMA_ERROR)
+#define SDHCI_INT_TRANSFER_MASK 	(SDHCI_INT_TRANS_CMP | SDHCI_INT_DATA_ERROR_MASK)
 
 #define SDHCI_INT_ERROR_MASK		(SDHCI_INT_VENDOR_ERRORS | SDHCI_INT_TUNING_ERROR \
 	| SDHCI_INT_ADMA_ERROR | SDHCI_INT_AUTO_CMD_ERROR | SDHCI_INT_BUS_POWER | SDHCI_INT_DATA_END \

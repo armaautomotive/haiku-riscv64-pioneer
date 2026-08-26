@@ -18,11 +18,11 @@
 #include "mmc.h"
 
 
-#define MMCBUS_TRACE
+//#define MMCBUS_TRACE
 #ifdef MMCBUS_TRACE
 #	define TRACE(x...)		dprintf("\33[33mmmc_bus:\33[0m " x)
 #else
-#	define TRACE(x...)
+#	define TRACE(x...)		do { if (false) dprintf(x); } while (false)
 #endif
 #define TRACE_ALWAYS(x...)	dprintf("\33[33mmmc_bus:\33[0m " x)
 #define ERROR(x...)			dprintf("\33[33mmmc_bus:\33[0m " x)
