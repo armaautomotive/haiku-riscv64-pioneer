@@ -72,12 +72,7 @@ static scheduler_mode_operations* sSchedulerModes[] = {
 static inline void
 scheduler_boot_checkpoint(const char* string)
 {
-#if defined(__riscv)
-	extern void debug_early_boot_checkpoint(const char* string);
-	debug_early_boot_checkpoint(string);
-#else
 	(void)string;
-#endif
 }
 
 // Since CPU IDs used internally by the kernel bear no relation to the actual

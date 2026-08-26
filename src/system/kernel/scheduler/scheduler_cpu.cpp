@@ -12,11 +12,6 @@
 
 #include "scheduler_thread.h"
 
-#if defined(__riscv)
-extern void debug_early_boot_checkpoint(const char* string);
-#endif
-
-
 namespace Scheduler {
 
 
@@ -220,62 +215,33 @@ CPUEntry::ComputeLoad()
 ThreadData*
 CPUEntry::ChooseNextThread(ThreadData* oldThread, bool putAtBack)
 {
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose next entered\n");
-#endif
 	SCHEDULER_ENTER_FUNCTION();
 
 	int32 oldPriority = -1;
 	if (oldThread != NULL)
 		oldPriority = oldThread->GetEffectivePriority();
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose old priority ready\n");
-#endif
-
 	CPURunQueueLocker cpuLocker(this);
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose cpu queue lock ready\n");
-#endif
 
 	ThreadData* pinnedThread = fRunQueue.PeekMaximum();
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose pinned peek ready\n");
-#endif
 	int32 pinnedPriority = -1;
 	if (pinnedThread != NULL)
 		pinnedPriority = pinnedThread->GetEffectivePriority();
 
 	CoreRunQueueLocker coreLocker(fCore);
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose core queue lock ready\n");
-#endif
 
 	ThreadData* sharedThread = fCore->PeekThread();
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose shared peek ready\n");
-#endif
 	if (sharedThread == NULL && pinnedThread == NULL && oldThread == NULL)
 		return NULL;
 
 	int32 sharedPriority = -1;
 	if (sharedThread != NULL)
 		sharedPriority = sharedThread->GetEffectivePriority();
-#if defined(__riscv)
-	::debug_early_boot_checkpoint("riscv: choose shared priority ready\n");
-#endif
-
 	int32 rest = std::max(pinnedPriority, sharedPriority);
 	if (oldPriority > rest || (!putAtBack && oldPriority == rest))
 		return oldThread;
 
 	if (sharedPriority > pinnedPriority) {
-#if defined(__riscv)
-		::debug_early_boot_checkpoint("riscv: choose shared remove\n");
-#endif
 		fCore->Remove(sharedThread);
-#if defined(__riscv)
-		::debug_early_boot_checkpoint("riscv: choose shared removed\n");
-#endif
 		return sharedThread;
 	}
 

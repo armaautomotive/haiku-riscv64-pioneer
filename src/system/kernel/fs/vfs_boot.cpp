@@ -358,24 +358,6 @@ get_boot_partitions(KMessage& bootVolume, PartitionStack& partitions)
 	KDiskDeviceManager::CreateDefault();
 	KDiskDeviceManager *manager = KDiskDeviceManager::Default();
 
-	status = manager->InitialDeviceScan();
-	if (status != B_OK) {
-		dprintf("KDiskDeviceManager::InitialDeviceScan() returned error: %s\n",
-			strerror(status));
-		// InitialDeviceScan returns error if one (or more) partitions are
-		// determined to be invalid. The partition we are trying to boot from
-		// may be usuable anyway, so don't fail here.
-	}
-
-#if KDEBUG
-	// dump devices and partitions
-	KDiskDevice *device;
-	int32 cookie = 0;
-	while ((device = manager->NextDevice(&cookie)) != NULL) {
-		device->Dump(true, 0);
-	}
-#endif
-
 	struct BootPartitionVisitor : KPartitionVisitor {
 		BootPartitionVisitor(BootMethod* bootMethod, PartitionStack &stack)
 			: fPartitions(stack),
@@ -401,25 +383,59 @@ get_boot_partitions(KMessage& bootVolume, PartitionStack& partitions)
 			BootMethod*		fBootMethod;
 	} visitor(bootMethod, partitions);
 
-	bool strict = true;
+	// Some storage buses publish their disks asynchronously. Give them a
+	// bounded opportunity to finish probing before declaring the boot device
+	// missing. Synchronous disks still complete on the first iteration.
+	const bigtime_t scanDeadline = system_time() + 10000000;
+	bool waitingReported = false;
+	do {
+		status = manager->InitialDeviceScan();
 
-	while (true) {
-		KDiskDevice *device;
-		int32 cookie = 0;
-		while ((device = manager->NextDevice(&cookie)) != NULL) {
-			if (!bootMethod->IsBootDevice(device, strict))
-				continue;
+		bool strict = true;
+		while (true) {
+			KDiskDevice* device;
+			int32 cookie = 0;
+			while ((device = manager->NextDevice(&cookie)) != NULL) {
+				if (!bootMethod->IsBootDevice(device, strict))
+					continue;
 
-			if (device->VisitEachDescendant(&visitor) != NULL)
+				if (device->VisitEachDescendant(&visitor) != NULL)
+					break;
+			}
+
+			if (!partitions.IsEmpty() || !strict)
 				break;
+
+			// We couldn't find the selected boot device, try less strictly.
+			strict = false;
 		}
 
-		if (!partitions.IsEmpty() || !strict)
+		if (!partitions.IsEmpty() || system_time() >= scanDeadline)
 			break;
 
-		// we couldn't find any potential boot devices, try again less strict
-		strict = false;
+		if (!waitingReported) {
+			dprintf("Waiting for asynchronous boot device discovery...\n");
+			waitingReported = true;
+		}
+		snooze(100000);
+	} while (true);
+
+	if (status != B_OK) {
+		dprintf("KDiskDeviceManager::InitialDeviceScan() returned error: %s\n",
+			strerror(status));
+		// InitialDeviceScan returns error if one (or more) partitions are
+		// determined to be invalid. The partition we are trying to boot from
+		// may be usable anyway, so don't fail here.
 	}
+
+#if KDEBUG
+	// dump devices and partitions
+	KDiskDevice *device;
+	int32 cookie = 0;
+	while ((device = manager->NextDevice(&cookie)) != NULL) {
+		device->Dump(true, 0);
+	}
+#endif
 
 	// sort partition list (e.g.. when booting from CD, CDs should come first in
 	// the list)
@@ -574,4 +590,3 @@ vfs_mount_boot_file_system(kernel_args* args)
 	manager->RescanDiskSystems();
 	manager->StartMonitoring();
 }
-

@@ -34,6 +34,54 @@
 extern uint32 gPlatform;
 
 
+static Pte
+ExchangePte(std::atomic<Pte>* pte, Pte value = {})
+{
+	if (smp_get_num_cpus() < 2) {
+		cpu_status state = disable_interrupts();
+		Pte oldValue = pte->load(std::memory_order_relaxed);
+		pte->store(value, std::memory_order_relaxed);
+		restore_interrupts(state);
+		return oldValue;
+	}
+
+	return pte->exchange(value);
+}
+
+
+static Pte
+FetchAndPte(std::atomic<Pte>* pte, uint64 value)
+{
+	if (smp_get_num_cpus() < 2) {
+		cpu_status state = disable_interrupts();
+		Pte oldValue = pte->load(std::memory_order_relaxed);
+		Pte newValue = oldValue;
+		newValue.val &= value;
+		pte->store(newValue, std::memory_order_relaxed);
+		restore_interrupts(state);
+		return oldValue;
+	}
+
+	Pte oldValue;
+	oldValue.val = ((std::atomic<uint64>*)pte)->fetch_and(value);
+	return oldValue;
+}
+
+
+static void
+SetPteBits(std::atomic<Pte>* pte, uint64 value)
+{
+	if (smp_get_num_cpus() < 2) {
+		cpu_status state = disable_interrupts();
+		Pte newValue = pte->load(std::memory_order_relaxed);
+		newValue.val |= value;
+		pte->store(newValue, std::memory_order_relaxed);
+		restore_interrupts(state);
+	} else
+		*(std::atomic<uint64>*)pte |= value;
+}
+
+
 static void
 FreePageTable(vm_page_reservation* reservation, page_num_t ppn, bool isKernel, uint32 level = 2)
 {
@@ -312,7 +360,7 @@ RISCV64VMTranslationMap::Unmap(addr_t start, addr_t end)
 		std::atomic<Pte>* pte = LookupPte(page, false, NULL);
 		if (pte != NULL) {
 			fMapCount--;
-			Pte oldPte = pte->exchange({});
+			Pte oldPte = ExchangePte(pte);
 			if (oldPte.isAccessed)
 				InvalidatePage(page);
 		}
@@ -340,7 +388,7 @@ RISCV64VMTranslationMap::UnmapPage(VMArea* area, addr_t address,
 
 	RecursiveLocker locker(fLock);
 
-	Pte oldPte = pte->exchange({});
+	Pte oldPte = ExchangePte(pte);
 	fMapCount--;
 	pinner.Unlock();
 
@@ -392,7 +440,7 @@ RISCV64VMTranslationMap::UnmapPages(VMArea* area, addr_t base, size_t size,
 		if (pte == NULL)
 			continue;
 
-		Pte oldPte = pte->exchange({});
+		Pte oldPte = ExchangePte(pte);
 		if (!oldPte.isValid)
 			continue;
 
@@ -523,7 +571,7 @@ status_t RISCV64VMTranslationMap::Protect(addr_t base, addr_t top,
 			Pte newPte = oldPte;
 			setProtection(newPte);
 
-			if (bootstrap)
+			if (bootstrap || smp_get_num_cpus() < 2)
 				pte->store(newPte);
 			else {
 				while (!pte->compare_exchange_strong(oldPte, newPte)) {
@@ -575,16 +623,9 @@ RISCV64VMTranslationMap::SetFlags(addr_t address, uint32 flags)
 	if (pte == NULL || !pte->load().isValid)
 		return;
 
-	std::atomic<uint64>* value = (std::atomic<uint64>*)pte;
-	uint64 flagsToSet = ConvertAccessedFlags(flags);
-	if (smp_get_num_cpus() < 2) {
-		// The Pioneer currently boots a single CPU, and this function is entered
-		// with interrupts disabled.  Avoid emitting an AMO while repairing an
-		// accessed/dirty fault; no other execution context can modify the PTE.
-		value->store(value->load(std::memory_order_relaxed) | flagsToSet,
-			std::memory_order_relaxed);
-	} else
-		*value |= flagsToSet;
+	// The Pioneer currently boots a single CPU. Avoid emitting an AMO while
+	// repairing an accessed/dirty fault on that path.
+	SetPteBits(pte, ConvertAccessedFlags(flags));
 
 	if (IS_KERNEL_ADDRESS(address))
 		FlushTlbPage(address);
@@ -604,7 +645,7 @@ RISCV64VMTranslationMap::ClearFlags(addr_t address, uint32 flags)
 	if (pte == NULL || !pte->load().isValid)
 		return B_OK;
 
-	*(std::atomic<uint64>*)pte &= ~ConvertAccessedFlags(flags);
+	FetchAndPte(pte, ~ConvertAccessedFlags(flags));
 	InvalidatePage(address);
 	return B_OK;
 }
@@ -633,15 +674,19 @@ RISCV64VMTranslationMap::ClearAccessedAndModified(VMArea* area, addr_t address,
 				return false;
 
 			if (oldPte.isAccessed) {
-				oldPte.val = ((std::atomic<uint64>*)pte)->fetch_and(
+				oldPte = FetchAndPte(pte,
 					~Pte {.isAccessed = true, .isDirty = true}.val);
+				break;
+			}
+			if (smp_get_num_cpus() < 2) {
+				oldPte = ExchangePte(pte);
 				break;
 			}
 			if (pte->compare_exchange_strong(oldPte, {}))
 				break;
 		}
 	} else {
-		oldPte.val = ((std::atomic<uint64>*)pte)->fetch_and(
+		oldPte = FetchAndPte(pte,
 			~Pte {.isAccessed = true, .isDirty = true}.val);
 	}
 

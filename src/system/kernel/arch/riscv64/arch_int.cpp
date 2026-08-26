@@ -29,6 +29,7 @@
 
 
 static uint32 sPlicContexts[SMP_MAX_CPUS];
+static bool sFirstTimerInterrupt = true;
 
 
 static void
@@ -85,9 +86,9 @@ TraceKernelPageFault(iframe* frame)
 
 static void
 SendSignal(debug_exception_type type, uint32 signalNumber, int32 signalCode,
-	addr_t signalAddress = 0, int32 signalError = B_ERROR)
+	bool fromUser, addr_t signalAddress = 0, int32 signalError = B_ERROR)
 {
-	if (SstatusReg{.val = Sstatus()}.spp == modeU) {
+	if (fromUser) {
 		struct sigaction action;
 		Thread* thread = thread_get_current_thread();
 
@@ -184,29 +185,30 @@ SetAccessedFlags(addr_t addr, bool isWrite)
 extern "C" void
 STrap(iframe* frame)
 {
-	if (SstatusReg{.val = frame->status}.spp != modeU
-		&& (frame->cause == causeExecPageFault
-			|| frame->cause == causeLoadPageFault
-			|| frame->cause == causeStorePageFault)) {
-		TraceKernelPageFault(frame);
-	}
-
 	switch (frame->cause) {
 		case causeExecPageFault:
 		case causeLoadPageFault:
 		case causeStorePageFault: {
 			if (SetAccessedFlags(Stval(), frame->cause == causeStorePageFault))
 				return;
+			break;
 		}
 	}
 
-	if (SstatusReg{.val = frame->status}.spp == modeU) {
+	// SPP alone is not sufficient here.  In particular, a kernel thread can be
+	// scheduled while a user trap is still unwinding, and the live trap-vector
+	// state is shared by the hart.  Never route a trap at a kernel PC through
+	// the user signal/debugger path merely because the saved SPP bit says U.
+	const bool fromUser = SstatusReg{.val = frame->status}.spp == modeU
+		&& IS_USER_ADDRESS(frame->epc);
+
+	if (fromUser) {
 		thread_get_current_thread()->arch_info.userFrame = frame;
 		thread_get_current_thread()->arch_info.oldA0 = frame->a0;
 		thread_at_kernel_entry(system_time());
 	}
 	const auto& kernelExit = ScopeExit([&]() {
-		if (SstatusReg{.val = frame->status}.spp == modeU) {
+		if (fromUser) {
 			disable_interrupts();
 			atomic_and(&thread_get_current_thread()->flags, ~THREAD_FLAGS_SYSCALL_RESTARTED);
 			if ((thread_get_current_thread()->flags
@@ -232,16 +234,16 @@ STrap(iframe* frame)
 	switch (frame->cause) {
 		case causeIllegalInst: {
 			return SendSignal(B_INVALID_OPCODE_EXCEPTION, SIGILL, ILL_ILLOPC,
-				frame->epc);
+				fromUser, frame->epc);
 		}
 		case causeExecMisalign:
 		case causeLoadMisalign:
 		case causeStoreMisalign: {
 			return SendSignal(B_ALIGNMENT_EXCEPTION, SIGBUS, BUS_ADRALN,
-				Stval());
+				fromUser, Stval());
 		}
 		case causeBreakpoint: {
-			if (SstatusReg{.val = frame->status}.spp == modeU) {
+			if (fromUser) {
 				user_debug_breakpoint_hit(false);
 			} else {
 				panic("hit kernel breakpoint");
@@ -252,7 +254,7 @@ STrap(iframe* frame)
 		case causeLoadAccessFault:
 		case causeStoreAccessFault: {
 			return SendSignal(B_SEGMENT_VIOLATION, SIGBUS, BUS_ADRERR,
-				Stval());
+				fromUser, Stval());
 		}
 		case causeExecPageFault:
 		case causeLoadPageFault:
@@ -283,6 +285,7 @@ STrap(iframe* frame)
 					}
 				}
 
+				TraceKernelPageFault(frame);
 				panic("page fault in debugger without fault handler! Touching "
 					"address %p from ip %p\n", (void*)stval, (void*)frame->epc);
 				return;
@@ -298,6 +301,7 @@ STrap(iframe* frame)
 						return;
 					}
 				}
+				TraceKernelPageFault(frame);
 				panic("page fault with interrupts disabled@!dump_virt_page %#" B_PRIx64, stval);
 			}
 
@@ -306,7 +310,7 @@ STrap(iframe* frame)
 
 			vm_page_fault(stval, frame->epc, frame->cause == causeStorePageFault,
 				frame->cause == causeExecPageFault,
-				SstatusReg{.val = frame->status}.spp == modeU, &newIP);
+				fromUser, &newIP);
 
 			if (newIP != 0)
 				frame->epc = newIP;
@@ -321,9 +325,16 @@ STrap(iframe* frame)
 			return;
 		}
 		case causeInterrupt + sTimerInt: {
+			const bool firstInterrupt = sFirstTimerInterrupt;
+			if (firstInterrupt) {
+				sFirstTimerInterrupt = false;
+				TraceKernelPageFaultMessage("riscv: first timer interrupt entered\n");
+			}
 			ClearBitsSie(1 << sTimerInt);
 			// dprintf("sTimerInt(%" B_PRId32 ")\n", smp_get_current_cpu());
 			timer_interrupt();
+			if (firstInterrupt)
+				TraceKernelPageFaultMessage("riscv: first timer interrupt returned\n");
 			AfterInterrupt();
 			return;
 		}

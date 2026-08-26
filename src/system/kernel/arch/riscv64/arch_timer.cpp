@@ -23,6 +23,40 @@
 extern uint32 gPlatform;
 
 static uint64 sTimerConversionFactor;
+static bool sFirstTimerProgramming = true;
+
+
+static void
+TraceTimerMessage(const char* message)
+{
+	while (*message != '\0') {
+		if (*message == '\n')
+			sbi_console_putchar_legacy('\r');
+		sbi_console_putchar_legacy(*message++);
+	}
+}
+
+
+static void
+TraceTimerValue(const char* label, uint64 value)
+{
+	char message[64];
+	char* cursor = message;
+
+	while (*label != '\0')
+		*cursor++ = *label++;
+
+	*cursor++ = '0';
+	*cursor++ = 'x';
+	for (int32 shift = 60; shift >= 0; shift -= 4) {
+		uint8 digit = (value >> shift) & 0xf;
+		*cursor++ = digit < 10 ? '0' + digit : 'a' + digit - 10;
+	}
+	*cursor++ = '\n';
+	*cursor = '\0';
+
+	TraceTimerMessage(message);
+}
 
 
 void
@@ -32,7 +66,22 @@ arch_timer_set_hardware_timer(bigtime_t timeout)
 	dprintf("arch_timer_set_hardware_timer(%" B_PRIu64 "), cpu: %" B_PRId32 "\n", timeout,
 		smp_get_current_cpu());
 */
-	uint64 scaledTimeout = (static_cast<__uint128_t>(timeout) * sTimerConversionFactor) >> 32;
+	uint64 scaledTimeout
+		= (static_cast<__uint128_t>(timeout) * sTimerConversionFactor) >> 32;
+	const uint64 now = CpuTime();
+	const uint64 deadline = now + scaledTimeout;
+	const bool firstProgramming = sFirstTimerProgramming;
+	if (firstProgramming) {
+		sFirstTimerProgramming = false;
+		TraceTimerMessage("riscv: first timer programming entered\n");
+		TraceTimerValue("riscv: timer timeout ", timeout);
+		TraceTimerValue("riscv: timer factor ", sTimerConversionFactor);
+		TraceTimerValue("riscv: timer now ", now);
+		TraceTimerValue("riscv: timer deadline ", deadline);
+		TraceTimerValue("riscv: timer sstatus ", Sstatus());
+		TraceTimerValue("riscv: timer sie before ", Sie());
+		TraceTimerValue("riscv: timer sip before ", Sip());
+	}
 
 	SetBitsSie(1 << sTimerInt);
 
@@ -41,11 +90,25 @@ arch_timer_set_hardware_timer(bigtime_t timeout)
 			MSyscall(kMSyscallSetTimer, true, gClintRegs->mtime + scaledTimeout);
 			break;
 		case kPlatformSbi: {
-			sbi_set_timer(CpuTime() + scaledTimeout);
+			const sbiret result = sbi_set_timer(deadline);
+			if (firstProgramming) {
+				TraceTimerValue("riscv: timer result error ", result.error);
+				TraceTimerValue("riscv: timer result value ", result.value);
+			}
+			if (result.error != SBI_SUCCESS) {
+				TraceTimerMessage("riscv: modern SBI timer failed; using legacy call\n");
+				sbi_set_timer_legacy(deadline);
+			}
 			break;
 		}
 		default:
 			;
+	}
+
+	if (firstProgramming) {
+		TraceTimerValue("riscv: timer sie after ", Sie());
+		TraceTimerValue("riscv: timer sip after ", Sip());
+		TraceTimerMessage("riscv: first timer programming returned\n");
 	}
 }
 
