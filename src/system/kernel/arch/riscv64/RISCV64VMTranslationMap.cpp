@@ -381,14 +381,16 @@ RISCV64VMTranslationMap::UnmapPage(VMArea* area, addr_t address,
 		updatePageQueue);
 
 	ThreadCPUPinner pinner(thread_get_current_thread());
-
-	std::atomic<Pte>* pte = LookupPte(address, false, NULL);
-	if (pte == NULL || !pte->load().isValid)
-		return B_ENTRY_NOT_FOUND;
-
 	RecursiveLocker locker(fLock);
 
+	std::atomic<Pte>* pte = LookupPte(address, false, NULL);
+	if (pte == NULL)
+		return B_ENTRY_NOT_FOUND;
+
 	Pte oldPte = ExchangePte(pte);
+	if (!oldPte.isValid)
+		return B_ENTRY_NOT_FOUND;
+
 	fMapCount--;
 	pinner.Unlock();
 

@@ -286,6 +286,7 @@ _riscv_kernel_atomic_disable_interrupts(void)
 	uint64 interruptEnable = 1u << 1;
 	__asm__ volatile("csrrc %0, sstatus, %1"
 		: "=r"(status) : "r"(interruptEnable) : "memory");
+	__asm__ volatile("fence rw, rw" : : : "memory");
 	return status;
 }
 
@@ -294,6 +295,7 @@ static __inline__ void
 _riscv_kernel_atomic_restore_interrupts(uint64 status)
 {
 	uint64 interruptEnable = 1u << 1;
+	__asm__ volatile("fence rw, rw" : : : "memory");
 	if ((status & interruptEnable) != 0) {
 		__asm__ volatile("csrs sstatus, %0"
 			: : "r"(interruptEnable) : "memory");

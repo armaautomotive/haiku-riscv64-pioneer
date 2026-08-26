@@ -224,6 +224,7 @@ try_acquire_spinlock_inline(spinlock* lock)
 		if (lock->lock != 0)
 			return false;
 		lock->lock = 1;
+		memory_full_barrier();
 		return true;
 	}
 #endif
@@ -245,6 +246,7 @@ release_spinlock_inline(spinlock* lock)
 {
 #if defined(__riscv)
 	if (smp_get_num_cpus() < 2) {
+		memory_full_barrier();
 		lock->lock = 0;
 		return;
 	}
@@ -266,6 +268,7 @@ try_acquire_write_spinlock_inline(rw_spinlock* lock)
 		if (lock->lock != 0)
 			return false;
 		lock->lock = 1u << 31;
+		memory_full_barrier();
 		return true;
 	}
 #endif
@@ -287,6 +290,7 @@ release_write_spinlock_inline(rw_spinlock* lock)
 {
 #if defined(__riscv)
 	if (smp_get_num_cpus() < 2) {
+		memory_full_barrier();
 		lock->lock = 0;
 		return;
 	}
@@ -303,6 +307,7 @@ try_acquire_read_spinlock_inline(rw_spinlock* lock)
 		if (lock->lock != 0)
 			return false;
 		lock->lock = 1;
+		memory_full_barrier();
 		return true;
 	}
 #endif
@@ -325,6 +330,7 @@ release_read_spinlock_inline(rw_spinlock* lock)
 {
 #if defined(__riscv)
 	if (smp_get_num_cpus() < 2) {
+		memory_full_barrier();
 		lock->lock = 0;
 		return;
 	}
