@@ -33,3 +33,10 @@ uses only the Python standard library; no `pyserial` installation is needed.
 Do not switch a load beyond the SH-UR01A relay rating. Avoid interrupting power
 while the Pioneer is writing to its SD card; use `restart` as a hard recovery
 mechanism when a clean shutdown is unavailable.
+
+## SG2042 timer DTB patch
+
+`pioneer_timer_dtb_patch.sh` adds the OpenSBI-compatible SG2042 timer fallback
+to the boot DTB. It validates the exact SD card and original DTB hash, backs up
+the DTB to the Linux SSD, preserves the vendor compatible, and verifies the
+installed file. Run it first without `--apply` for a dry run.
