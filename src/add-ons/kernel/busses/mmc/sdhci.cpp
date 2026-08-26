@@ -213,8 +213,10 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 
 	// First of all clear the result
 	fCommandResult = 0;
-	if (fUsePolling)
+	if (fUsePolling) {
 		fRegisters->interrupt_status = SDHCI_INT_CMD_MASK;
+		memory_full_barrier();
+	}
 
 	// Check if it's possible to send a command right now.
 	// It is not possible to send a command as long as the command line is busy.
@@ -327,7 +329,12 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 		|| (replyType == (Command::kR1Type | Command::kDataPresent)))
 		fRegisters->transfer_mode = transferMode;
 
+	// RISC-V permits device writes to be observed out of order. The command
+	// register is the doorbell for the argument and transfer registers, so all
+	// preceding MMIO writes must reach the controller first.
+	memory_full_barrier();
 	fRegisters->command.SendCommand(command, replyType);
+	memory_full_barrier();
 
 	// Wait for command response to be available ("command complete" interrupt).
 	TRACE("Wait for command complete...");
@@ -538,7 +545,10 @@ SdhciBus::_InitSg2042Phy()
 void
 SdhciBus::SetClock(int kilohertz, bool allowAuto)
 {
-	if (allowAuto && (fRegisters->host_controller_version.specVersion > 2)) {
+	// SG2042 advertises preset support, but its preset values are broken.
+	// Keep programming the divider explicitly on this controller.
+	if (allowAuto && (fRegisters->host_controller_version.specVersion > 2)
+		&& (fQuirks & SDHCI_QUIRK_SG2042_PHY) == 0) {
 		TRACE("Ignoring set_clock, controller support presets\n");
 		fRegisters->host_control_2 |= (1<<15);
 		TRACE("Host control 2 after enabling preset mode: %x\n", fRegisters->host_control_2);
@@ -605,9 +615,6 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 	generic_size_t vecOffset = 0;
 
 	status_t result = B_OK;
-	dprintf("P207:IO0 command %u offset %" B_PRIdOFF " length %" B_PRIuGENADDR
-		"\n", command, offset, length);
-
 	while (length > 0) {
 		size_t toCopy = std::min((generic_size_t)length,
 			vecs->length - vecOffset);
@@ -664,8 +671,6 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		uint32_t response;
 		result = ExecuteCommand(command,
 			offset / (offsetAsSectors ? kBlockSize : 1), &response);
-		dprintf("P207:IO1 command %u result %" B_PRId32 " status %#" B_PRIx32
-			"\n", command, result, fRegisters->interrupt_status);
 		if (result != B_OK)
 			break;
 
@@ -713,8 +718,6 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		}
 
 		TRACE("transfer complete OK.\n");
-		dprintf("P207:IO2 command %u transferred %zu\n", command, toCopy);
-
 		length -= toCopy;
 		vecOffset += toCopy;
 		offset += toCopy;

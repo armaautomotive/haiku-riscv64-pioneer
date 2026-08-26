@@ -85,28 +85,22 @@ static ImageNotificationService sNotificationService;
 static image_id
 register_image(Team *team, extended_image_info *info, size_t size, bool locked)
 {
-	debug_early_boot_message("riscv: core image id allocate\n");
 	// The boot CPU runs alone until gKernelStartup is cleared, and the RISC-V
 	// atomic and mutex primitives are not usable yet on the Pioneer.
 	image_id id = gKernelStartup ? sNextImageID++
 		: atomic_add(&sNextImageID, 1);
 	struct image *image;
 
-	debug_early_boot_message("riscv: core image struct allocate\n");
 	image = (struct image*)malloc(sizeof(struct image));
-	debug_early_boot_message("riscv: core image struct allocated\n");
 	if (image == NULL)
 		return B_NO_MEMORY;
 
 	memcpy(&image->info, info, sizeof(extended_image_info));
 	image->team = team->id;
-	debug_early_boot_message("riscv: core image metadata copied\n");
 
 	bool lockImageTable = !locked && !gKernelStartup;
 	if (lockImageTable) {
-		debug_early_boot_message("riscv: core image mutex lock\n");
 		mutex_lock(&sImageMutex);
-		debug_early_boot_message("riscv: core image mutex locked\n");
 	}
 
 	image->info.basic_info.id = id;
@@ -117,21 +111,16 @@ register_image(Team *team, extended_image_info *info, size_t size, bool locked)
 		team->image_list.Add(image, false);
 	else
 		team->image_list.Add(image);
-	debug_early_boot_message("riscv: core image team linked\n");
 	sImageTable->Insert(image);
-	debug_early_boot_message("riscv: core image table inserted\n");
 
 	// notify listeners
-	debug_early_boot_message("riscv: core image notify\n");
 	// Notification delivery can acquire synchronization primitives and there
 	// cannot be runnable listeners before the scheduler leaves kernel startup.
 	if (!gKernelStartup)
 		sNotificationService.Notify(IMAGE_ADDED, image);
-	debug_early_boot_message("riscv: core image notified\n");
 
 	if (lockImageTable) {
 		mutex_unlock(&sImageMutex);
-		debug_early_boot_message("riscv: core image mutex unlocked\n");
 	}
 
 	TRACE(("register_image(team = %p, image id = %ld, image = %p\n", team, id, image));

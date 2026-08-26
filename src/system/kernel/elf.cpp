@@ -117,7 +117,6 @@ register_elf_image(struct elf_image_info *image)
 {
 	extended_image_info imageInfo;
 
-	debug_early_boot_message("riscv: register image metadata\n");
 	memset(&imageInfo, 0, sizeof(imageInfo));
 	imageInfo.basic_info.id = image->id;
 	imageInfo.basic_info.type = B_SYSTEM_IMAGE;
@@ -128,17 +127,14 @@ register_elf_image(struct elf_image_info *image)
 	imageInfo.basic_info.text_size = image->text_region.size;
 	imageInfo.basic_info.data = (void *)image->data_region.start;
 	imageInfo.basic_info.data_size = image->data_region.size;
-	debug_early_boot_message("riscv: register image metadata ready\n");
 
 	if (image->text_region.id >= 0) {
 		// evaluate the API/ABI version symbols
 
 		// Haiku API version
 		imageInfo.basic_info.api_version = 0;
-		debug_early_boot_message("riscv: register image api lookup\n");
 		elf_sym* symbol = elf_find_symbol(image,
 			B_SHARED_OBJECT_HAIKU_VERSION_VARIABLE_NAME, NULL, true);
-		debug_early_boot_message("riscv: register image api lookup done\n");
 		if (symbol != NULL && symbol->st_shndx != SHN_UNDEF
 			&& symbol->st_value > 0
 			&& symbol->Type() == STT_OBJECT
@@ -153,10 +149,8 @@ register_elf_image(struct elf_image_info *image)
 
 		// Haiku ABI
 		imageInfo.basic_info.abi = 0;
-		debug_early_boot_message("riscv: register image abi lookup\n");
 		symbol = elf_find_symbol(image,
 			B_SHARED_OBJECT_HAIKU_ABI_VARIABLE_NAME, NULL, true);
-		debug_early_boot_message("riscv: register image abi lookup done\n");
 		if (symbol != NULL && symbol->st_shndx != SHN_UNDEF
 			&& symbol->st_value > 0
 			&& symbol->Type() == STT_OBJECT
@@ -174,13 +168,9 @@ register_elf_image(struct elf_image_info *image)
 		imageInfo.basic_info.abi = B_HAIKU_ABI;
 	}
 
-	debug_early_boot_message("riscv: register image team insert\n");
 	image->id = register_image(team_get_kernel_team(), &imageInfo,
 		sizeof(imageInfo));
-	debug_early_boot_message("riscv: register image team inserted\n");
-	debug_early_boot_message("riscv: register image hash insert\n");
 	sImagesHash->Insert(image);
-	debug_early_boot_message("riscv: register image hash inserted\n");
 }
 
 
@@ -1615,10 +1605,8 @@ get_image_symbol(image_id id, const char *name, int32 symbolClass,
 
 	TRACE(("get_image_symbol(%s)\n", name));
 
-	debug_early_boot_message("riscv: get image symbol lock\n");
 	if (!gKernelStartup)
 		mutex_lock(&sImageMutex);
-	debug_early_boot_message("riscv: get image symbol lookup\n");
 
 	image = find_image(id);
 	if (image == NULL) {
@@ -1626,9 +1614,7 @@ get_image_symbol(image_id id, const char *name, int32 symbolClass,
 		goto done;
 	}
 
-	debug_early_boot_message("riscv: get image symbol hash lookup\n");
 	symbol = elf_find_symbol(image, name, NULL, true);
-	debug_early_boot_message("riscv: get image symbol hash looked up\n");
 	if (symbol == NULL || symbol->st_shndx == SHN_UNDEF) {
 		status = B_ENTRY_NOT_FOUND;
 		goto done;
@@ -1645,7 +1631,6 @@ get_image_symbol(image_id id, const char *name, int32 symbolClass,
 done:
 	if (!gKernelStartup)
 		mutex_unlock(&sImageMutex);
-	debug_early_boot_message("riscv: get image symbol done\n");
 	return status;
 }
 

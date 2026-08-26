@@ -2062,7 +2062,10 @@ device_node::Probe(const char* devicePath, uint32 updateCycle)
 status_t
 device_node::Reprobe()
 {
+	const char* moduleName = fModuleName != NULL ? fModuleName : "<root>";
+	dprintf("P210:RP0 %s\n", moduleName);
 	status_t status = InitDriver();
+	dprintf("P210:RP1 %s status %" B_PRId32 "\n", moduleName, status);
 	if (status < B_OK)
 		return status;
 
@@ -2070,6 +2073,7 @@ device_node::Reprobe()
 
 	// If this child has been probed already, probe it again
 	status = _Probe();
+	dprintf("P210:RP2 %s status %" B_PRId32 "\n", moduleName, status);
 	if (status != B_OK)
 		return status;
 
@@ -2082,6 +2086,7 @@ device_node::Reprobe()
 			return status;
 	}
 
+	dprintf("P210:RP3 %s\n", moduleName);
 	return B_OK;
 }
 
