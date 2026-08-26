@@ -94,6 +94,17 @@ SendSignal(debug_exception_type type, uint32 signalNumber, int32 signalCode,
 
 		enable_interrupts();
 
+		iframe* frame = thread->arch_info.userFrame;
+		dprintf("P211:USIG thread %" B_PRId32 " type %" B_PRId32
+			" signal %" B_PRIu32 " code %" B_PRId32
+			" address %#" B_PRIxADDR " cause %#" B_PRIx64
+			" tval %#" B_PRIx64 " epc %#" B_PRIx64
+			" sp %#" B_PRIx64 " ra %#" B_PRIx64 "\n",
+			thread->id, (int32)type, signalNumber, signalCode, signalAddress,
+			frame != NULL ? frame->cause : 0, frame != NULL ? frame->tval : 0,
+			frame != NULL ? frame->epc : 0, frame != NULL ? frame->sp : 0,
+			frame != NULL ? frame->ra : 0);
+
 		// If the thread has a signal handler for the signal, we simply send it
 		// the signal. Otherwise we notify the user debugger first.
 		if ((sigaction(signalNumber, NULL, &action) == 0

@@ -1706,6 +1706,8 @@ team_create_thread_start_internal(void* args)
 	TRACE(("team_create_thread_start: loaded elf. entry = %#lx\n", entry));
 
 	// enter userspace -- returns only in case of error
+	dprintf("P211:TU runtime_loader entry %#" B_PRIxADDR
+		" args %p commpage %p\n", entry, programArgs, team->commpage_address);
 	return thread_enter_userspace_new_team(thread, (addr_t)entry,
 		programArgs, team->commpage_address);
 }
@@ -1714,7 +1716,9 @@ team_create_thread_start_internal(void* args)
 static status_t
 team_create_thread_start(void* args)
 {
-	team_create_thread_start_internal(args);
+	status_t status = team_create_thread_start_internal(args);
+	dprintf("P211:TF team start returned %" B_PRId32 " (%s)\n", status,
+		strerror(status));
 	team_init_exit_info_on_error(thread_get_current_thread()->team);
 	thread_exit();
 		// does not return

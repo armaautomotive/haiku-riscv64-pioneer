@@ -2356,6 +2356,11 @@ load_kernel_add_on(const char *path)
 		}
 		region->delta = -ROUNDDOWN(programHeaders[i].p_vaddr, B_PAGE_SIZE);
 
+		// The bytes beyond p_filesz contain the add-on's BSS and must be zero.
+		// Do not rely on newly committed kernel pages being cleared here: on
+		// RISC-V they can retain allocator poison when an add-on area is reused.
+		memset((void *)region->start, 0, region->size);
+
 		TRACE(("elf_load_kspace: created area \"%s\" at %p\n",
 			regionName, (void *)region->start));
 

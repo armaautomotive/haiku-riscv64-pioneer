@@ -18,6 +18,45 @@
 #define SDHCI_FDT_MMC_BUS_MODULE_NAME "busses/mmc/sdhci/fdt/device/v1"
 
 
+static status_t
+enable_sg2042_clocks()
+{
+	// The SG2042 SDHCI block has three gates in TOP_MISC CLK_EN_REG1.
+	// Firmware does not guarantee that they remain enabled when Haiku starts,
+	// and the controller cannot complete a software reset without all three.
+	static const phys_addr_t kClockGatePage = 0x7030012000;
+	static const size_t kClockGatePageSize = B_PAGE_SIZE;
+	static const size_t kClockGateOffset = 0x4;
+	static const uint32 kClockGateMask = (1u << 5) | (1u << 6) | (1u << 7);
+
+	uint8* mappedBase;
+	area_id area = map_physical_memory("SG2042 SD clock gates",
+		kClockGatePage, kClockGatePageSize, B_ANY_KERNEL_BLOCK_ADDRESS,
+		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&mappedBase);
+	if (area < B_OK)
+		return area;
+
+	volatile uint32* clockGate
+		= (volatile uint32*)(mappedBase + kClockGateOffset);
+	memory_full_barrier();
+	uint32 oldValue = *clockGate;
+	*clockGate = oldValue | kClockGateMask;
+	memory_full_barrier();
+	uint32 newValue = *clockGate;
+	memory_full_barrier();
+	dprintf("P215:SC0 SD clocks gate %#" B_PRIx32 " -> %#" B_PRIx32 "\n",
+		oldValue, newValue);
+
+	delete_area(area);
+	if ((newValue & kClockGateMask) != kClockGateMask)
+		return B_ERROR;
+
+	// Give the clocks time to propagate before issuing the host reset.
+	spin(100);
+	return B_OK;
+}
+
+
 float
 supports_device_fdt(device_node* parent)
 {
@@ -100,6 +139,21 @@ init_bus_fdt(device_node* node, void** busCookie)
 	dprintf("P202:SD4 regs %#" B_PRIx64 " size %#" B_PRIx64 " irq %" B_PRIu64 "\n",
 		physicalAddress, registerSize, irq);
 
+	const char* compatible;
+	uint32 quirks = 0;
+	if (gDeviceManager->get_attr_string(fdtNode.Get(), "fdt/compatible",
+			&compatible, false) == B_OK
+		&& (strcmp(compatible, "bitmain,bm-sd") == 0
+			|| strcmp(compatible, "sophgo,sg2042-dwcmshc") == 0)) {
+		quirks |= SDHCI_QUIRK_SG2042_PHY;
+		status = enable_sg2042_clocks();
+		if (status != B_OK) {
+			dprintf("P215:SC1 failed to enable SG2042 SD clocks: %s\n",
+				strerror(status));
+			return status;
+		}
+	}
+
 	struct registers* mappedRegisters;
 	area_id registersArea = map_physical_memory("FDT SDHC registers",
 		physicalAddress, registerSize, B_ANY_KERNEL_BLOCK_ADDRESS,
@@ -108,15 +162,6 @@ init_bus_fdt(device_node* node, void** busCookie)
 	if (registersArea < B_OK)
 		return registersArea;
 	dprintf("P202:SD5 registers mapped\n");
-
-	const char* compatible;
-	uint32 quirks = 0;
-	if (gDeviceManager->get_attr_string(fdtNode.Get(), "fdt/compatible",
-			&compatible, false) == B_OK
-		&& (strcmp(compatible, "bitmain,bm-sd") == 0
-			|| strcmp(compatible, "sophgo,sg2042-dwcmshc") == 0)) {
-		quirks |= SDHCI_QUIRK_SG2042_PHY;
-	}
 
 	// Poll until the RISC-V interrupt path for this controller is validated.
 	dprintf("P202:SD6 construct controller\n");

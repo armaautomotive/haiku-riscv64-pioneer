@@ -234,36 +234,51 @@ class TimeoutControl {
 
 class SoftwareReset {
 	public:
-		uint8_t Bits() { return fBits; }
+		uint8_t Bits() { return _Read(); }
 
 		bool ResetAll() {
-			fBits = 1;
+			_Write(1);
 			return _WaitForReset(1);
 		}
 
 		bool ResetCommandAndDataLines() {
-			fBits |= 6;
+			_Write(_Read() | 6);
 			return _WaitForReset(6);
 		}
 
 		bool ResetCommandLine() {
-			fBits |= 2;
+			_Write(_Read() | 2);
 			return _WaitForReset(2);
 		}
 
 		bool ResetDataLine() {
-			fBits |= 4;
+			_Write(_Read() | 4);
 			return _WaitForReset(4);
 		}
 
 	private:
+		uint8_t _Read() {
+			memory_full_barrier();
+			uint8_t bits = fBits;
+			memory_full_barrier();
+			return bits;
+		}
+
+		void _Write(uint8_t bits) {
+			fBits = bits;
+			memory_full_barrier();
+			// Flush a potentially posted MMIO write before reset polling.
+			(void)fBits;
+			memory_full_barrier();
+		}
+
 		bool _WaitForReset(uint8_t mask) {
 			// Reset is also used while the device manager is still initializing.
 			// Busy-wait here so progress does not depend on an early scheduler
 			// wakeup, and bound every reset path so broken hardware cannot hang
 			// the kernel indefinitely.
 			for (uint32_t i = 0; i < 1000; i++) {
-				if ((fBits & mask) == 0)
+				if ((_Read() & mask) == 0)
 					return true;
 				spin(100);
 			}

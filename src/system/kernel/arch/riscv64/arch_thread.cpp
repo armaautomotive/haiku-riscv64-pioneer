@@ -122,6 +122,12 @@ arch_thread_enter_userspace(Thread *thread, addr_t entry, void *arg1,
 		sizeof(threadExitAddr)) >= B_OK);
 	threadExitAddr += commpageAdr;
 
+	dprintf("P211:UE thread %" B_PRId32 " entry %#" B_PRIxADDR
+		" stack %#" B_PRIxADDR " tls %#" B_PRIxADDR
+		" return %#" B_PRIxADDR "\n", thread->id, entry,
+		thread->user_stack_base + thread->user_stack_size,
+		thread->user_local_storage, threadExitAddr);
+
 	disable_interrupts();
 
 	arch_stack* stackHeader = (arch_stack*)thread->kernel_stack_top - 1;

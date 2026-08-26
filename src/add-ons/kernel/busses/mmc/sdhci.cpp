@@ -478,11 +478,14 @@ SdhciBus::InitCheck()
 void
 SdhciBus::Reset()
 {
-	dprintf("P204:SR0 reset all begin\n");
+	dprintf("P214:SR0 reset all begin bits %#x\n",
+		fRegisters->software_reset.Bits());
 	if (!fRegisters->software_reset.ResetAll())
-		ERROR("SdhciBus::Reset: SoftwareReset timeout\n");
+		ERROR("SdhciBus::Reset: SoftwareReset timeout (bits %#x)\n",
+			fRegisters->software_reset.Bits());
 	else
-		dprintf("P204:SR1 reset all complete\n");
+		dprintf("P214:SR1 reset all complete bits %#x\n",
+			fRegisters->software_reset.Bits());
 	// The SG2042 vendor PHY registers must not be accessed immediately after
 	// the host reset completes. Use a busy-wait because this runs during early
 	// device-manager initialization, where a scheduler sleep may not wake.
@@ -514,6 +517,9 @@ SdhciBus::_InitSg2042Phy()
 	config &= ~1u;
 	config |= (1u << 1) | (9u << 16) | (8u << 20);
 	*phyConfig = config;
+	memory_full_barrier();
+	(void)*phyConfig;
+	memory_full_barrier();
 	dprintf("P205:SP1 PHY config asserted\n");
 
 	const uint16 pullUpPad = 2u | (1u << 3) | (3u << 5) | (2u << 9);
@@ -522,6 +528,9 @@ SdhciBus::_InitSg2042Phy()
 	*resetPad = pullUpPad;
 	*clockPad = 2u | (3u << 5) | (2u << 9);
 	*strobePad = 2u | (2u << 3) | (3u << 5) | (2u << 9);
+	memory_full_barrier();
+	(void)*resetPad;
+	memory_full_barrier();
 	dprintf("P205:SP2 PHY pads configured\n");
 
 	volatile uint8* sdClockDelayConfig = base + 0x31d;
@@ -530,12 +539,21 @@ SdhciBus::_InitSg2042Phy()
 	*sdClockDelayConfig |= (1u << 4);
 	*sdClockDelayCode = 10;
 	*sdClockDelayConfig &= ~(1u << 4);
+	memory_full_barrier();
+	(void)*sdClockDelayConfig;
+	memory_full_barrier();
 	dprintf("P205:SP3 clock delay configured\n");
 	*(base + 0x320) = (1u << 1);
 	*(base + 0x321) = (2u << 2);
+	memory_full_barrier();
+	(void)*(base + 0x321);
+	memory_full_barrier();
 	dprintf("P205:SP4 sample delays configured\n");
 
 	*phyConfig |= 1u;
+	memory_full_barrier();
+	(void)*phyConfig;
+	memory_full_barrier();
 	dprintf("P205:SP5 PHY reset deasserted\n");
 	TRACE("SG2042 SD PHY initialized: config %#" B_PRIx32 "\n",
 		*phyConfig);
