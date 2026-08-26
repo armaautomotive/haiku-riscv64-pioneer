@@ -21,7 +21,8 @@
 
 class SdhciBus {
 	public:
-								SdhciBus(struct registers* registers, uint8_t irq, bool poll);
+								SdhciBus(struct registers* registers, uint8_t irq, bool poll,
+									uint32 quirks = 0);
 								~SdhciBus();
 
 			void				EnableInterrupts(uint32_t mask);
@@ -43,6 +44,7 @@ class SdhciBus {
 			bool				PowerOn();
 			void				PowerOff();
 			void				RecoverError();
+			void				_InitSg2042Phy();
 	static	status_t			_WorkerThread(void*);
 
 	private:
@@ -50,6 +52,7 @@ class SdhciBus {
 			uint32				fCommandResult;
 			uint8				fIrq;
 			bool				fUsePolling;
+			uint32				fQuirks;
 			bool				fInterruptInstalled;
 			ConditionVariable	fInterruptNotifier;
 			sem_id				fScanSemaphore;
@@ -57,6 +60,9 @@ class SdhciBus {
 			thread_id			fWorkerThread;
 			card_type			fCardType;
 };
+
+
+#define SDHCI_QUIRK_SG2042_PHY		(1 << 0)
 
 
 class SdhciDevice {

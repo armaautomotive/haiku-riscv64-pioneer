@@ -51,12 +51,14 @@ sdhci_generic_interrupt(void* data)
 }
 
 
-SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll)
+SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
+	uint32 quirks)
 	:
 	fRegisters(registers),
 	fCommandResult(0),
 	fIrq(irq),
 	fUsePolling(poll),
+	fQuirks(quirks),
 	fInterruptInstalled(false),
 	fScanSemaphore(-1),
 	fStatus(B_OK),
@@ -417,6 +419,49 @@ SdhciBus::Reset()
 {
 	if (!fRegisters->software_reset.ResetAll())
 		ERROR("SdhciBus::Reset: SoftwareReset timeout\n");
+
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0)
+		_InitSg2042Phy();
+}
+
+
+void
+SdhciBus::_InitSg2042Phy()
+{
+	// The SG2042 DWC MSHC PHY loses its configuration on a full host reset.
+	// Configure it for the 3.3 V SD slot before issuing the first command.
+	volatile uint8* base = (volatile uint8*)fRegisters;
+	volatile uint32* phyConfig = (volatile uint32*)(base + 0x300);
+	volatile uint16* commandPad = (volatile uint16*)(base + 0x304);
+	volatile uint16* dataPad = (volatile uint16*)(base + 0x306);
+	volatile uint16* clockPad = (volatile uint16*)(base + 0x308);
+	volatile uint16* strobePad = (volatile uint16*)(base + 0x30a);
+	volatile uint16* resetPad = (volatile uint16*)(base + 0x30c);
+
+	uint32 config = *phyConfig;
+	config &= ~1u;
+	config |= (1u << 1) | (9u << 16) | (8u << 20);
+	*phyConfig = config;
+
+	const uint16 pullUpPad = 2u | (1u << 3) | (3u << 5) | (2u << 9);
+	*commandPad = pullUpPad;
+	*dataPad = pullUpPad;
+	*resetPad = pullUpPad;
+	*clockPad = 2u | (3u << 5) | (2u << 9);
+	*strobePad = 2u | (2u << 3) | (3u << 5) | (2u << 9);
+
+	volatile uint8* sdClockDelayConfig = base + 0x31d;
+	volatile uint8* sdClockDelayCode = base + 0x31e;
+	*sdClockDelayConfig = 1u;
+	*sdClockDelayConfig |= (1u << 4);
+	*sdClockDelayCode = 10;
+	*sdClockDelayConfig &= ~(1u << 4);
+	*(base + 0x320) = (1u << 1);
+	*(base + 0x321) = (2u << 2);
+
+	*phyConfig |= 1u;
+	TRACE("SG2042 SD PHY initialized: config %#" B_PRIx32 "\n",
+		*phyConfig);
 }
 
 

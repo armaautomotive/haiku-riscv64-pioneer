@@ -101,9 +101,18 @@ init_bus_fdt(device_node* node, void** busCookie)
 	if (registersArea < B_OK)
 		return registersArea;
 
+	const char* compatible;
+	uint32 quirks = 0;
+	if (gDeviceManager->get_attr_string(fdtNode.Get(), "fdt/compatible",
+			&compatible, false) == B_OK
+		&& (strcmp(compatible, "bitmain,bm-sd") == 0
+			|| strcmp(compatible, "sophgo,sg2042-dwcmshc") == 0)) {
+		quirks |= SDHCI_QUIRK_SG2042_PHY;
+	}
+
 	// Poll until the RISC-V interrupt path for this controller is validated.
 	SdhciBus* bus = new(std::nothrow) SdhciBus(mappedRegisters, (uint8)irq,
-		true);
+		true, quirks);
 	if (bus == NULL) {
 		delete_area(registersArea);
 		return B_NO_MEMORY;
