@@ -63,12 +63,40 @@ struct BootstrapAllocationHeader {
 };
 
 static const uint64 kBootstrapAllocationMagic = 0x5256534c41424253ULL;
+static const size_t kMaxBootstrapArenas = 64;
+
+struct BootstrapArena {
+	addr_t base;
+	size_t size;
+};
+
+static BootstrapArena sBootstrapArenas[kMaxBootstrapArenas];
+static size_t sBootstrapArenaCount = 0;
+
+
+static bool
+is_bootstrap_address(void* address)
+{
+	addr_t value = (addr_t)address;
+	for (size_t i = 0; i < sBootstrapArenaCount; i++) {
+		const BootstrapArena& arena = sBootstrapArenas[i];
+		if (value >= arena.base + sizeof(BootstrapAllocationHeader)
+			&& value < arena.base + arena.size) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 
 static bool
 bootstrap_allocation_size(void* address, size_t& size)
 {
-	if (address == NULL)
+	// Normal slab objects can start at a page boundary. Do not inspect the
+	// preceding header until we know it belongs to a fully mapped bootstrap
+	// arena, otherwise the probe itself can fault on the previous page.
+	if (address == NULL || !is_bootstrap_address(address))
 		return false;
 
 	BootstrapAllocationHeader* header
@@ -207,6 +235,10 @@ block_alloc_early(size_t size)
 		void* block;
 		if (MemoryManager::AllocateRaw(SLAB_CHUNK_SIZE_LARGE, 0, block) != B_OK)
 			return NULL;
+		if (sBootstrapArenaCount >= kMaxBootstrapArenas)
+			return NULL;
+		sBootstrapArenas[sBootstrapArenaCount++] = {
+			(addr_t)block, SLAB_CHUNK_SIZE_LARGE};
 		sBootStrapMemory = (addr_t)block;
 		sBootStrapMemorySize = SLAB_CHUNK_SIZE_LARGE;
 		sUsedBootStrapMemory = 0;
