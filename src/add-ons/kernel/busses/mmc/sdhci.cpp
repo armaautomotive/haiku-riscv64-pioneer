@@ -152,12 +152,9 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	// errors already)
 	fRegisters->interrupt_status_enable |= SDHCI_INT_ERROR_MASK | SDHCI_INT_NORMAL_MASK;
 
-	if (poll) {
-		// Spawn a polling thread, as the interrupts won't currently work on ACPI.
-		fWorkerThread = spawn_kernel_thread(_WorkerThread, "SD bus poller",
-			B_NORMAL_PRIORITY, this);
-		resume_thread(fWorkerThread);
-	}
+	// Polling controllers consume command and transfer status synchronously.
+	// A separate poller would race with the issuing thread while acknowledging
+	// the write-one-to-clear interrupt status register.
 }
 
 
@@ -208,6 +205,8 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 
 	// First of all clear the result
 	fCommandResult = 0;
+	if (fUsePolling)
+		fRegisters->interrupt_status = SDHCI_INT_CMD_MASK;
 
 	// Check if it's possible to send a command right now.
 	// It is not possible to send a command as long as the command line is busy.
@@ -322,28 +321,52 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 
 	fRegisters->command.SendCommand(command, replyType);
 
-	// Wait for command response to be available ("command complete" interrupt)
+	// Wait for command response to be available ("command complete" interrupt).
 	TRACE("Wait for command complete...");
-	do {
-		status_t result = waiter.Wait(B_RELATIVE_TIMEOUT, 1000000);
-		if (result == B_TIMED_OUT) {
-			TRACE("Command complete interrupt did not trigger for a while, status %x\n",
-				fRegisters->interrupt_status);
-		} else if (result != B_OK)
-			panic("sdhci: Failed to wait for command complete: %s", strerror(result));
+	if (fUsePolling) {
+		uint32 iterations = 0;
+		while ((fCommandResult & SDHCI_INT_CMD_MASK) == 0) {
+			uint32 intmask = fRegisters->interrupt_status;
+			uint32 completed = intmask
+				& (SDHCI_INT_CMD_MASK | SDHCI_INT_TRANSFER_MASK
+					| SDHCI_INT_ERROR);
+			if (completed != 0) {
+				fCommandResult |= completed;
+				fRegisters->interrupt_status = completed;
+				continue;
+			}
+			if (++iterations % 10000 == 0) {
+				TRACE("Command complete status did not appear, status %x, "
+					"command line busy: %d, data line busy: %d\n", intmask,
+					fRegisters->present_state.CommandInhibit(),
+					fRegisters->present_state.DataInhibit());
+			}
+			snooze(100);
+		}
+	} else {
+		do {
+			status_t result = waiter.Wait(B_RELATIVE_TIMEOUT, 1000000);
+			if (result == B_TIMED_OUT) {
+				TRACE("Command complete interrupt did not trigger for a while, status %x\n",
+					fRegisters->interrupt_status);
+			} else if (result != B_OK) {
+				panic("sdhci: Failed to wait for command complete: %s",
+					strerror(result));
+			}
 
-		fInterruptNotifier.Add(&waiter);
-		TRACE("Command status: %x\n", fCommandResult);
-		TRACE("real status = %x command line busy: %d\n",
-			fRegisters->interrupt_status,
-			fRegisters->present_state.CommandInhibit());
-	} while (fCommandResult == 0);
+			fInterruptNotifier.Add(&waiter);
+			TRACE("Command status: %x\n", fCommandResult);
+			TRACE("real status = %x command line busy: %d\n",
+				fRegisters->interrupt_status,
+				fRegisters->present_state.CommandInhibit());
+		} while (fCommandResult == 0);
+	}
 
 	TRACE("Command response available\n");
 
 	if (fCommandResult & SDHCI_INT_ERROR) {
 		// TODO is it a good idea to clear interrupts here from outside the interrupt handler?
-		fRegisters->interrupt_status |= fCommandResult;
+		fRegisters->interrupt_status = fCommandResult;
 		if (fCommandResult & SDHCI_INT_COMMAND_TIMEOUT) {
 			ERROR("Command execution timed out\n");
 			// At this point, the "command inhibit" bit is not set yet, it will be set only after
@@ -394,10 +417,16 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 		TRACE("Waiting for data line...\n");
 		fInterruptNotifier.Add(&waiter);
 		while (fRegisters->present_state.DataInhibit()) {
-			status_t result = waiter.Wait();
-			if (result != B_OK)
-				panic("sdhci: Failed to wait for data line release: %s", strerror(result));
-			fInterruptNotifier.Add(&waiter);
+			if (fUsePolling)
+				snooze(100);
+			else {
+				status_t result = waiter.Wait();
+				if (result != B_OK) {
+					panic("sdhci: Failed to wait for data line release: %s",
+						strerror(result));
+				}
+				fInterruptNotifier.Add(&waiter);
+			}
 		}
 		TRACE("Dataline is released.\n");
 	}
@@ -600,13 +629,26 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		// don't need the DAT lines, but it's overcomplicating things.
 		TRACE("Wait for transfer complete...");
 		while ((fCommandResult & SDHCI_INT_TRANSFER_MASK) == 0) {
-			status_t result = waiter.Wait(B_RELATIVE_TIMEOUT, 1000000);
-			if (result == B_TIMED_OUT) {
-				TRACE("Transfer complete interrupt did not trigger for a while, status %x\n",
-					fRegisters->interrupt_status);
-			} else if (result != B_OK)
-				panic("sdhci: Failed to wait for end of DMA transfer: %s", strerror(result));
-			fInterruptNotifier.Add(&waiter);
+			if (fUsePolling) {
+				uint32 intmask = fRegisters->interrupt_status;
+				uint32 completed = intmask & SDHCI_INT_TRANSFER_MASK;
+				if (completed != 0) {
+					fCommandResult |= completed;
+					fRegisters->interrupt_status = completed;
+					continue;
+				}
+				snooze(100);
+			} else {
+				status_t result = waiter.Wait(B_RELATIVE_TIMEOUT, 1000000);
+				if (result == B_TIMED_OUT) {
+					TRACE("Transfer complete interrupt did not trigger for a while, status %x\n",
+						fRegisters->interrupt_status);
+				} else if (result != B_OK) {
+					panic("sdhci: Failed to wait for end of DMA transfer: %s",
+						strerror(result));
+				}
+				fInterruptNotifier.Add(&waiter);
+			}
 		}
 
 		if (fCommandResult & SDHCI_INT_DATA_TIMEOUT) {
@@ -734,8 +776,8 @@ SdhciBus::RecoverError()
 	if (fRegisters->interrupt_status & 7)
 		fRegisters->software_reset.ResetCommandLine();
 
-	int16_t error_status = fRegisters->interrupt_status;
-	fRegisters->interrupt_status &= ~(error_status);
+	uint32 errorStatus = fRegisters->interrupt_status;
+	fRegisters->interrupt_status = errorStatus;
 }
 
 
@@ -772,7 +814,7 @@ SdhciBus::HandleInterrupt()
 		else
 			TRACE("Card removed interrupt, but card is inserted\n");
 
-		fRegisters->interrupt_status |= SDHCI_INT_CARD_REM;
+		fRegisters->interrupt_status = SDHCI_INT_CARD_REM;
 		TRACE("Card removal interrupt handled\n");
 	}
 
@@ -786,7 +828,7 @@ SdhciBus::HandleInterrupt()
 		} else
 			TRACE("Card insertion interrupt, but card is removed\n");
 
-		fRegisters->interrupt_status |= SDHCI_INT_CARD_INS;
+		fRegisters->interrupt_status = SDHCI_INT_CARD_INS;
 		TRACE("Card presence interrupt handled\n");
 	}
 
@@ -795,7 +837,7 @@ SdhciBus::HandleInterrupt()
 		fCommandResult |= intmask;
 			// Save the status before clearing so the thread can handle it
 
-		fRegisters->interrupt_status |= (intmask & SDHCI_INT_CMD_MASK);
+		fRegisters->interrupt_status = intmask & SDHCI_INT_CMD_MASK;
 
 		// Notify the thread
 		fInterruptNotifier.NotifyAll();
@@ -804,14 +846,14 @@ SdhciBus::HandleInterrupt()
 
 	if (intmask & SDHCI_INT_TRANSFER_MASK) {
 		fCommandResult |= intmask;
-		fRegisters->interrupt_status |= (intmask & SDHCI_INT_TRANSFER_MASK);
+		fRegisters->interrupt_status = intmask & SDHCI_INT_TRANSFER_MASK;
 		fInterruptNotifier.NotifyAll();
 		TRACE("Transfer complete interrupt handled\n");
 	}
 
 	// handling bus power interrupt
 	if (intmask & SDHCI_INT_BUS_POWER) {
-		fRegisters->interrupt_status |= SDHCI_INT_BUS_POWER;
+		fRegisters->interrupt_status = SDHCI_INT_BUS_POWER;
 		TRACE("card is consuming too much power\n");
 	}
 
@@ -833,12 +875,12 @@ SdhciBus::_WorkerThread(void* cookie) {
 		uint32_t intmask = bus->fRegisters->interrupt_status;
 		if (intmask & SDHCI_INT_CMD_CMP) {
 			bus->fCommandResult = intmask;
-			bus->fRegisters->interrupt_status |= (intmask & SDHCI_INT_CMD_MASK);
+			bus->fRegisters->interrupt_status = intmask & SDHCI_INT_CMD_MASK;
 			bus->fInterruptNotifier.NotifyAll();
 		}
 		if (intmask & SDHCI_INT_TRANS_CMP) {
 			bus->fCommandResult = intmask;
-			bus->fRegisters->interrupt_status |= SDHCI_INT_TRANS_CMP;
+			bus->fRegisters->interrupt_status = SDHCI_INT_TRANS_CMP;
 			bus->fInterruptNotifier.NotifyAll();
 		}
 		snooze(100);
