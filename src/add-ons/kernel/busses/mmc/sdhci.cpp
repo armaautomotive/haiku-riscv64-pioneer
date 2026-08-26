@@ -343,7 +343,15 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 				fRegisters->interrupt_status = completed;
 				continue;
 			}
-			if (++iterations % 10000 == 0) {
+			if (++iterations >= 50000) {
+				ERROR("Command completion timed out: command %u, argument %#"
+					B_PRIx32 ", status %#" B_PRIx32 ", present %#" B_PRIx32
+					"\n", command, argument, intmask,
+					fRegisters->present_state.Bits());
+				fRegisters->software_reset.ResetCommandAndDataLines();
+				return B_TIMED_OUT;
+			}
+			if (iterations % 10000 == 0) {
 				TRACE("Command complete status did not appear, status %x, "
 					"command line busy: %d, data line busy: %d\n", intmask,
 					fRegisters->present_state.CommandInhibit(),
@@ -424,10 +432,19 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 		// "transfer complete" interrupt here.
 		TRACE("Waiting for data line...\n");
 		fInterruptNotifier.Add(&waiter);
+		uint32 pollingIterations = 0;
 		while (fRegisters->present_state.DataInhibit()) {
-			if (fUsePolling)
+			if (fUsePolling) {
+				if (++pollingIterations >= 50000) {
+					ERROR("Data line release timed out after command %u: "
+						"status %#" B_PRIx32 ", present %#" B_PRIx32 "\n",
+						command, fRegisters->interrupt_status,
+						fRegisters->present_state.Bits());
+					fRegisters->software_reset.ResetDataLine();
+					return B_TIMED_OUT;
+				}
 				snooze(100);
-			else {
+			} else {
 				status_t result = waiter.Wait();
 				if (result != B_OK) {
 					panic("sdhci: Failed to wait for data line release: %s",
@@ -588,6 +605,8 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 	generic_size_t vecOffset = 0;
 
 	status_t result = B_OK;
+	dprintf("P207:IO0 command %u offset %" B_PRIdOFF " length %" B_PRIuGENADDR
+		"\n", command, offset, length);
 
 	while (length > 0) {
 		size_t toCopy = std::min((generic_size_t)length,
@@ -645,6 +664,8 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		uint32_t response;
 		result = ExecuteCommand(command,
 			offset / (offsetAsSectors ? kBlockSize : 1), &response);
+		dprintf("P207:IO1 command %u result %" B_PRId32 " status %#" B_PRIx32
+			"\n", command, result, fRegisters->interrupt_status);
 		if (result != B_OK)
 			break;
 
@@ -692,6 +713,7 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		}
 
 		TRACE("transfer complete OK.\n");
+		dprintf("P207:IO2 command %u transferred %zu\n", command, toCopy);
 
 		length -= toCopy;
 		vecOffset += toCopy;

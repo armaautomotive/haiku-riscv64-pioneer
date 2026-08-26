@@ -130,15 +130,25 @@ static status_t
 mmc_disk_execute_iorequest(void* data, IOOperation* operation)
 {
 	mmc_disk_driver_info* info = (mmc_disk_driver_info*)data;
-	status_t error;
+	status_t error = B_ERROR;
 
 	uint8_t command;
-	if (operation->IsWrite())
-		command = SD_WRITE_MULTIPLE_BLOCKS;
-	else
-		command = SD_READ_MULTIPLE_BLOCKS;
-	error = info->mmc->do_io(info->parent, info->parentCookie, info->rca,
-		command, operation, (info->flags & kIoCommandOffsetAsSectors) != 0);
+	if (operation->IsWrite()) {
+		command = operation->Length() == kBlockSize
+			? SD_WRITE_SINGLE_BLOCK : SD_WRITE_MULTIPLE_BLOCKS;
+	} else {
+		command = operation->Length() == kBlockSize
+			? SD_READ_SINGLE_BLOCK : SD_READ_MULTIPLE_BLOCKS;
+	}
+
+	for (uint32 attempt = 0; attempt < 3; attempt++) {
+		error = info->mmc->do_io(info->parent, info->parentCookie, info->rca,
+			command, operation, (info->flags & kIoCommandOffsetAsSectors) != 0);
+		if (error != B_TIMED_OUT || operation->IsWrite() || attempt == 2)
+			break;
+		ERROR("Read command %u timed out, retrying (%" B_PRIu32 "/2)\n",
+			command, attempt + 1);
+	}
 
 	if (error != B_OK) {
 		info->scheduler->OperationCompleted(operation, error, 0);
