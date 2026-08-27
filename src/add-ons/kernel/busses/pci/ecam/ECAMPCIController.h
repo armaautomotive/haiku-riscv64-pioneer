@@ -137,11 +137,10 @@ protected:
 	AreaDeleter fControllerRegsArea;
 	uint8 volatile* fControllerRegs{};
 	uint64 fControllerRegsLen{};
-	AreaDeleter fLmRegsArea;
-	uint8 volatile* fLmRegs{};
 	AreaDeleter fAtRegsArea;
 	uint8 volatile* fAtRegs{};
 	bool fIsSg2042{};
+	bool fRootConfigReadLogged{};
 	uint8 fStartBus{};
 
 	Vector<pci_resource_range> fResourceRanges;

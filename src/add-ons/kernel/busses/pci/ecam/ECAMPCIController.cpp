@@ -17,7 +17,6 @@
 
 static const uint32 kSg2042AtPciAddress0 = 0x0000;
 static const uint32 kSg2042AtDescriptor0 = 0x0008;
-static const uint32 kSg2042AtLinkDown = 0x0824;
 
 
 static bool
@@ -219,19 +218,21 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 			return B_ENTRY_NOT_FOUND;
 		}
 		address = (addr_t)fControllerRegs + ROUNDDOWN(offset, 4);
+		if (!fRootConfigReadLogged) {
+			dprintf("P236:SG2042 root config read offset %#" B_PRIx16
+				" address %#" B_PRIxADDR "\n", offset, address);
+		}
 		uint32 word = *(vuint32*)address;
+		if (!fRootConfigReadLogged) {
+			dprintf("P236:SG2042 root config value %#" B_PRIx32 "\n", word);
+			fRootConfigReadLogged = true;
+		}
 		value = word >> ((offset & 3) * 8);
 		if (size == 1)
 			value &= 0xff;
 		else if (size == 2)
 			value &= 0xffff;
 	} else {
-		if ((*(vuint32*)fLmRegs & 1) == 0) {
-			mutex_unlock(&fLock);
-			return B_ENTRY_NOT_FOUND;
-		}
-
-		*(vuint32*)(fAtRegs + kSg2042AtLinkDown) = 0;
 		uint32 devfn = (device << 3) | function;
 		uint32 hardwareBus = fStartBus + bus;
 		*(vuint32*)(fAtRegs + kSg2042AtPciAddress0)
@@ -277,12 +278,6 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 			*(vuint32*)address = (word & ~mask) | ((value << shift) & mask);
 		}
 	} else {
-		if ((*(vuint32*)fLmRegs & 1) == 0) {
-			mutex_unlock(&fLock);
-			return B_ENTRY_NOT_FOUND;
-		}
-
-		*(vuint32*)(fAtRegs + kSg2042AtLinkDown) = 0;
 		uint32 devfn = (device << 3) | function;
 		uint32 hardwareBus = fStartBus + bus;
 		*(vuint32*)(fAtRegs + kSg2042AtPciAddress0)
@@ -306,6 +301,8 @@ status_t
 ECAMPCIController::GetMaxBusDevices(int32& count)
 {
 	count = 32;
+	if (fIsSg2042)
+		dprintf("P236:SG2042 max bus devices ready\n");
 	return B_OK;
 }
 
@@ -329,9 +326,17 @@ ECAMPCIController::WriteIrq(uint8 bus, uint8 device, uint8 function,
 status_t
 ECAMPCIController::GetRange(uint32 index, pci_resource_range* range)
 {
-	if (index >= (uint32)fResourceRanges.Count())
+	if (index >= (uint32)fResourceRanges.Count()) {
+		if (fIsSg2042)
+			dprintf("P236:SG2042 resource ranges complete\n");
 		return B_BAD_INDEX;
+	}
 
 	*range = fResourceRanges[index];
+	if (fIsSg2042) {
+		dprintf("P236:SG2042 resource range %" B_PRIu32 " type %#" B_PRIx32
+			" host %#" B_PRIxPHYSADDR " size %#" B_PRIx64 "\n", index,
+			range->type, range->host_address, range->size);
+	}
 	return B_OK;
 }

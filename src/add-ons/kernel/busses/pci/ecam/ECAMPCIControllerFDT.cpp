@@ -106,12 +106,6 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		CHECK_RET(fControllerRegsArea.Get());
 		dprintf("P233:SG2042 root page mapped\n");
 
-		fLmRegsArea.SetTo(map_physical_memory("SG2042 PCIe link registers",
-			controllerRegs + 0x00100000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
-			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fLmRegs));
-		CHECK_RET(fLmRegsArea.Get());
-		dprintf("P233:SG2042 link page mapped\n");
-
 		fAtRegsArea.SetTo(map_physical_memory("SG2042 PCIe translation registers",
 			controllerRegs + 0x00400000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
 			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fAtRegs));
@@ -125,21 +119,28 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		fRegsPhysical = regs;
 	}
 
+	if (fIsSg2042)
+		dprintf("P234:SG2042 map config page\n");
 	fRegsArea.SetTo(map_physical_memory("PCI Config MMIO", regs, fRegsLen, B_ANY_KERNEL_ADDRESS,
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fRegs));
 	CHECK_RET(fRegsArea.Get());
+	if (fIsSg2042)
+		dprintf("P234:SG2042 config page mapped\n");
 
 	if (fIsSg2042) {
 		// Cadence outbound region 0 is reserved for PCI configuration transactions.
 		*(vuint32*)(fAtRegs + 0x0004) = 0;
+		dprintf("P234:SG2042 PCI address high set\n");
 		*(vuint32*)(fAtRegs + 0x000c) = fStartBus;
+		dprintf("P234:SG2042 descriptor high set\n");
 		*(vuint32*)(fAtRegs + 0x0018)
 			= ((uint32)fRegsPhysical & 0xffffff00) | 11;
+		dprintf("P234:SG2042 CPU address low set\n");
 		*(vuint32*)(fAtRegs + 0x001c) = fRegsPhysical >> 32;
-		dprintf("P233:SG2042 PCIe buses %#" B_PRIx8 "+: regs %#" B_PRIx64
-			", config %#" B_PRIxPHYSADDR ", link %#" B_PRIx32 "\n", fStartBus,
-			controllerRegs, fRegsPhysical,
-			*(vuint32*)fLmRegs);
+		dprintf("P234:SG2042 CPU address high set\n");
+		dprintf("P235:SG2042 PCIe buses %#" B_PRIx8 "+: regs %#" B_PRIx64
+			", config %#" B_PRIxPHYSADDR "\n", fStartBus, controllerRegs,
+			fRegsPhysical);
 	}
 
 	return B_OK;
