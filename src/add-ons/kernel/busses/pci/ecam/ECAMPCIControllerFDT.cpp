@@ -12,6 +12,10 @@
 
 
 static const uint64 kSg2042RootPortConfigOffset = 0x00200000;
+static const uint64 kSg2042LocalManagementOffset = 0x00100000;
+static const uint32 kSg2042RootBarConfig = 0x001e0000;
+static const uint32 kSg2042VendorId = 0x1e30;
+static const uint32 kSg2042DeviceId = 0x2042;
 
 
 status_t
@@ -110,6 +114,24 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		CHECK_RET(fControllerRegsArea.Get());
 		dprintf("P237:SG2042 root config page mapped at %#" B_PRIx64 "\n",
 			controllerRegs + kSg2042RootPortConfigOffset);
+
+		fLmRegsArea.SetTo(map_physical_memory("SG2042 PCIe local management",
+			controllerRegs + kSg2042LocalManagementOffset, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
+			(void**)&fLmRegs));
+		CHECK_RET(fLmRegsArea.Get());
+		dprintf("P238:SG2042 local management page mapped\n");
+
+		// Match the root-complex initialization performed by Sophgo's Linux
+		// driver before it attempts any root-port configuration-space reads.
+		*(vuint32*)(fLmRegs + 0x0300) = kSg2042RootBarConfig;
+		dprintf("P238:SG2042 root BAR policy initialized\n");
+		*(vuint32*)(fLmRegs + 0x0044) = kSg2042VendorId | (kSg2042VendorId << 16);
+		dprintf("P238:SG2042 vendor and subsystem initialized\n");
+		*(vuint32*)(fControllerRegs + 0x0000) = kSg2042VendorId | (kSg2042DeviceId << 16);
+		dprintf("P238:SG2042 root vendor and device initialized\n");
+		*(vuint32*)(fControllerRegs + 0x0008) = 0x06040000;
+		dprintf("P238:SG2042 root class initialized\n");
 
 		fAtRegsArea.SetTo(map_physical_memory("SG2042 PCIe translation registers",
 			controllerRegs + 0x00400000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
