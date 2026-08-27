@@ -11,6 +11,9 @@
 #include <string.h>
 
 
+static const uint64 kSg2042RootPortConfigOffset = 0x00200000;
+
+
 status_t
 ECAMPCIControllerFDT::ReadResourceInfo()
 {
@@ -100,11 +103,13 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		fRegsPhysical = regs;
 
 		fControllerRegsLen = B_PAGE_SIZE;
-		fControllerRegsArea.SetTo(map_physical_memory("SG2042 PCIe root config", controllerRegs,
-			B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
+		fControllerRegsArea.SetTo(map_physical_memory("SG2042 PCIe root config",
+			controllerRegs + kSg2042RootPortConfigOffset, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
 			(void**)&fControllerRegs));
 		CHECK_RET(fControllerRegsArea.Get());
-		dprintf("P233:SG2042 root page mapped\n");
+		dprintf("P237:SG2042 root config page mapped at %#" B_PRIx64 "\n",
+			controllerRegs + kSg2042RootPortConfigOffset);
 
 		fAtRegsArea.SetTo(map_physical_memory("SG2042 PCIe translation registers",
 			controllerRegs + 0x00400000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
