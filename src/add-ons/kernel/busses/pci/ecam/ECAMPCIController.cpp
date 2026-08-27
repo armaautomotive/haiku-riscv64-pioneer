@@ -214,15 +214,16 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 	if (bus == 0) {
 		// The SG2042 root port only accepts naturally aligned 32-bit accesses.
 		if (device != 0 || function != 0) {
+			value = size == 1 ? 0xff : size == 2 ? 0xffff : 0xffffffff;
 			mutex_unlock(&fLock);
-			return B_ENTRY_NOT_FOUND;
+			return B_OK;
 		}
 		address = (addr_t)fControllerRegs + ROUNDDOWN(offset, 4);
 		if (!fRootConfigReadLogged) {
 			dprintf("P236:SG2042 root config read offset %#" B_PRIx16
 				" address %#" B_PRIxADDR "\n", offset, address);
 		}
-		uint32 word = *(vuint32*)address;
+		uint32 word = Sg2042MmioRead((vuint32*)address);
 		if (!fRootConfigReadLogged) {
 			dprintf("P236:SG2042 root config value %#" B_PRIx32 "\n", word);
 			fRootConfigReadLogged = true;
@@ -235,16 +236,23 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 	} else {
 		uint32 devfn = (device << 3) | function;
 		uint32 hardwareBus = fStartBus + bus;
-		*(vuint32*)(fAtRegs + kSg2042AtPciAddress0)
-			= 11 | (devfn << 12) | (hardwareBus << 20);
-		*(vuint32*)(fAtRegs + kSg2042AtDescriptor0)
-			= (1 << 23) | (bus == 1 ? 0xa : 0xb);
+		uint32 pciAddress = 11 | (devfn << 12) | (hardwareBus << 20);
+		uint32 descriptor = (1 << 23) | (bus == 1 ? 0xa : 0xb);
+		Sg2042MmioWrite((vuint32*)(fAtRegs + kSg2042AtPciAddress0), pciAddress);
+		Sg2042MmioWrite((vuint32*)(fAtRegs + kSg2042AtDescriptor0), descriptor);
 
 		address = (addr_t)fRegs + offset;
 		switch (size) {
-			case 1: value = *(vuint8*)address; break;
-			case 2: value = *(vuint16*)address; break;
-			case 4: value = *(vuint32*)address; break;
+			case 1: value = Sg2042MmioRead((vuint8*)address); break;
+			case 2: value = Sg2042MmioRead((vuint16*)address); break;
+			case 4: value = Sg2042MmioRead((vuint32*)address); break;
+		}
+		if (!fDownstreamConfigReadLogged) {
+			dprintf("P242:SG2042 config bus %#" B_PRIx8 " device %#" B_PRIx8
+				" function %#" B_PRIx8 " pci address %#" B_PRIx32
+				" descriptor %#" B_PRIx32 " value %#" B_PRIx32 "\n", bus,
+				device, function, pciAddress, descriptor, value);
+			fDownstreamConfigReadLogged = true;
 		}
 	}
 	mutex_unlock(&fLock);
@@ -270,26 +278,27 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 		}
 		address = (addr_t)fControllerRegs + ROUNDDOWN(offset, 4);
 		if (size == 4) {
-			*(vuint32*)address = value;
+			Sg2042MmioWrite((vuint32*)address, value);
 		} else {
 			uint32 shift = (offset & 3) * 8;
 			uint32 mask = (size == 1 ? 0xff : 0xffff) << shift;
-			uint32 word = *(vuint32*)address;
-			*(vuint32*)address = (word & ~mask) | ((value << shift) & mask);
+			uint32 word = Sg2042MmioRead((vuint32*)address);
+			Sg2042MmioWrite((vuint32*)address,
+				(word & ~mask) | ((value << shift) & mask));
 		}
 	} else {
 		uint32 devfn = (device << 3) | function;
 		uint32 hardwareBus = fStartBus + bus;
-		*(vuint32*)(fAtRegs + kSg2042AtPciAddress0)
-			= 11 | (devfn << 12) | (hardwareBus << 20);
-		*(vuint32*)(fAtRegs + kSg2042AtDescriptor0)
-			= (1 << 23) | (bus == 1 ? 0xa : 0xb);
+		Sg2042MmioWrite((vuint32*)(fAtRegs + kSg2042AtPciAddress0),
+			11 | (devfn << 12) | (hardwareBus << 20));
+		Sg2042MmioWrite((vuint32*)(fAtRegs + kSg2042AtDescriptor0),
+			(uint32)((1 << 23) | (bus == 1 ? 0xa : 0xb)));
 
 		address = (addr_t)fRegs + offset;
 		switch (size) {
-			case 1: *(vuint8*)address = value; break;
-			case 2: *(vuint16*)address = value; break;
-			case 4: *(vuint32*)address = value; break;
+			case 1: Sg2042MmioWrite((vuint8*)address, (uint8)value); break;
+			case 2: Sg2042MmioWrite((vuint16*)address, (uint16)value); break;
+			case 4: Sg2042MmioWrite((vuint32*)address, value); break;
 		}
 	}
 	mutex_unlock(&fLock);

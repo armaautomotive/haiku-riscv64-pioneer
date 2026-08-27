@@ -38,11 +38,16 @@ MMCBus::MMCBus(device_node* node)
 
 	fScanSemaphore = create_sem(0, "MMC bus scan");
 	fLockSemaphore = create_sem(1, "MMC bus lock");
+	dprintf("P243:MB0 semaphores scan %" B_PRId32 " lock %" B_PRId32 "\n",
+		fScanSemaphore, fLockSemaphore);
 	fWorkerThread = spawn_kernel_thread(_WorkerThread, "SD bus controller",
 		B_NORMAL_PRIORITY, this);
+	dprintf("P243:MB1 worker %" B_PRId32 " spawned\n", fWorkerThread);
 	resume_thread(fWorkerThread);
 
+	dprintf("P243:MB2 install scan semaphore\n");
 	fController->set_scan_semaphore(fCookie, fScanSemaphore);
+	dprintf("P243:MB3 scan semaphore installed\n");
 }
 
 
@@ -164,7 +169,9 @@ MMCBus::_WorkerThread(void* cookie)
 	MMCBus* bus = (MMCBus*)cookie;
 	uint32_t response;
 
+	dprintf("P243:MW0 worker entered\n");
 	bus->AcquireBus();
+	dprintf("P243:MW1 bus acquired\n");
 
 	// We assume the bus defaults to 400kHz clock and has already powered on
 	// cards.
@@ -175,7 +182,9 @@ MMCBus::_WorkerThread(void* cookie)
 	// card has been inserted and powered on.
 	status_t result;
 	do {
+		dprintf("P243:MW2 waiting for scan\n");
 		bus->_AcquireScanSemaphore();
+		dprintf("P243:MW3 scan released\n");
 
 		// Check if we need to exit early (possible if the parent device did
 		// not manage initialize itself correctly)
@@ -184,9 +193,9 @@ MMCBus::_WorkerThread(void* cookie)
 			return B_OK;
 		}
 
-		TRACE("Reset the bus...\n");
+		dprintf("P243:MW4 issuing CMD0\n");
 		result = bus->ExecuteCommand(0, GO_IDLE_STATE, 0, NULL);
-		TRACE("CMD0 result: %s\n", strerror(result));
+		dprintf("P243:MW5 CMD0 result %s\n", strerror(result));
 	} while (result != B_OK);
 
 	// Need to wait at least 8 clock cycles after CMD0 before sending the next

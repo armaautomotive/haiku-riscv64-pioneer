@@ -229,8 +229,16 @@ init_bus_fdt(device_node* node, void** busCookie)
 	}
 
 	struct registers* mappedRegisters;
+	uint32 addressSpec = B_ANY_KERNEL_BLOCK_ADDRESS;
+	if ((quirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
+		// SG2042's SDHCI command register stalls when mapped with the T-Head
+		// strongly ordered I/O PTE type.  Request the T-Head non-cacheable
+		// type for this controller without weakening other MMIO mappings such
+		// as PCIe.
+		addressSpec |= B_WRITE_COMBINING_MEMORY;
+	}
 	area_id registersArea = map_physical_memory("FDT SDHC registers",
-		physicalAddress, registerSize, B_ANY_KERNEL_BLOCK_ADDRESS,
+		physicalAddress, registerSize, addressSpec,
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
 		(void**)&mappedRegisters);
 	if (registersArea < B_OK)

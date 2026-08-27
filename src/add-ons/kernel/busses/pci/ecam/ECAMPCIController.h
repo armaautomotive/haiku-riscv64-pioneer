@@ -83,6 +83,38 @@ struct InterruptMap {
 };
 
 
+static inline void
+Sg2042IoFence()
+{
+#if defined(__riscv)
+	asm volatile("fence iorw, iorw" : : : "memory");
+#else
+	memory_full_barrier();
+#endif
+}
+
+
+template<typename Type>
+static inline Type
+Sg2042MmioRead(Type volatile* address)
+{
+	Sg2042IoFence();
+	Type value = *address;
+	Sg2042IoFence();
+	return value;
+}
+
+
+template<typename Type>
+static inline void
+Sg2042MmioWrite(Type volatile* address, Type value)
+{
+	Sg2042IoFence();
+	*address = value;
+	Sg2042IoFence();
+}
+
+
 class ECAMPCIController {
 public:
 	virtual ~ECAMPCIController() = default;
@@ -143,7 +175,9 @@ protected:
 	uint8 volatile* fAtRegs{};
 	bool fIsSg2042{};
 	bool fRootConfigReadLogged{};
+	bool fDownstreamConfigReadLogged{};
 	uint8 fStartBus{};
+	uint8 fEndBus{0xff};
 
 	Vector<pci_resource_range> fResourceRanges;
 };

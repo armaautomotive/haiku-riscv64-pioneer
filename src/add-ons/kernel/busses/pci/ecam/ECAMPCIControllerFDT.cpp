@@ -36,7 +36,17 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		uint32 busBeg = B_BENDIAN_TO_HOST_INT32(*((uint32*)prop + 0));
 		uint32 busEnd = B_BENDIAN_TO_HOST_INT32(*((uint32*)prop + 1));
 		fStartBus = busBeg;
+		fEndBus = busEnd;
 		dprintf("  bus-range: %" B_PRIu32 " - %" B_PRIu32 "\n", busBeg, busEnd);
+	}
+	if (fIsSg2042 && fStartBus != 0) {
+		// Haiku currently presents bus numbers relative to each PCI domain,
+		// while these additional SG2042 roots use global hardware bus numbers.
+		// Defer them until that translation is implemented; domain zero contains
+		// the Pioneer display adapter and is sufficient for graphics bring-up.
+		dprintf("P241:SG2042 deferring nonzero root bus %#" B_PRIx8 "\n",
+			fStartBus);
+		return B_UNSUPPORTED;
 	}
 
 	prop = fdtModule->get_prop(fdtDev, "ranges", &propLen);
@@ -121,17 +131,26 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			(void**)&fLmRegs));
 		CHECK_RET(fLmRegsArea.Get());
 		dprintf("P238:SG2042 local management page mapped\n");
+		uint32 linkState = Sg2042MmioRead((vuint32*)fLmRegs);
+		dprintf("P242:SG2042 link state %#" B_PRIx32 "\n", linkState);
 
 		// Match the root-complex initialization performed by Sophgo's Linux
 		// driver before it attempts any root-port configuration-space reads.
-		*(vuint32*)(fLmRegs + 0x0300) = kSg2042RootBarConfig;
+		Sg2042MmioWrite((vuint32*)(fLmRegs + 0x0300), kSg2042RootBarConfig);
 		dprintf("P238:SG2042 root BAR policy initialized\n");
-		*(vuint32*)(fLmRegs + 0x0044) = kSg2042VendorId | (kSg2042VendorId << 16);
+		Sg2042MmioWrite((vuint32*)(fLmRegs + 0x0044),
+			kSg2042VendorId | (kSg2042VendorId << 16));
 		dprintf("P238:SG2042 vendor and subsystem initialized\n");
-		*(vuint32*)(fControllerRegs + 0x0000) = kSg2042VendorId | (kSg2042DeviceId << 16);
+		Sg2042MmioWrite((vuint32*)(fControllerRegs + 0x0000),
+			kSg2042VendorId | (kSg2042DeviceId << 16));
 		dprintf("P238:SG2042 root vendor and device initialized\n");
-		*(vuint32*)(fControllerRegs + 0x0008) = 0x06040000;
+		Sg2042MmioWrite((vuint32*)(fControllerRegs + 0x0008), (uint32)0x06040000);
 		dprintf("P238:SG2042 root class initialized\n");
+		uint32 localLastBus = fEndBus - fStartBus;
+		Sg2042MmioWrite((vuint32*)(fControllerRegs + 0x0018),
+			(localLastBus << 16) | (1 << 8));
+		dprintf("P241:SG2042 root buses 0 - 1 - %#" B_PRIx32 " initialized\n",
+			localLastBus);
 
 		fAtRegsArea.SetTo(map_physical_memory("SG2042 PCIe translation registers",
 			controllerRegs + 0x00400000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
@@ -156,14 +175,15 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 
 	if (fIsSg2042) {
 		// Cadence outbound region 0 is reserved for PCI configuration transactions.
-		*(vuint32*)(fAtRegs + 0x0004) = 0;
+		Sg2042MmioWrite((vuint32*)(fAtRegs + 0x0004), (uint32)0);
 		dprintf("P234:SG2042 PCI address high set\n");
-		*(vuint32*)(fAtRegs + 0x000c) = fStartBus;
+		Sg2042MmioWrite((vuint32*)(fAtRegs + 0x000c), (uint32)fStartBus);
 		dprintf("P234:SG2042 descriptor high set\n");
-		*(vuint32*)(fAtRegs + 0x0018)
-			= ((uint32)fRegsPhysical & 0xffffff00) | 11;
+		Sg2042MmioWrite((vuint32*)(fAtRegs + 0x0018),
+			((uint32)fRegsPhysical & 0xffffff00) | 11);
 		dprintf("P234:SG2042 CPU address low set\n");
-		*(vuint32*)(fAtRegs + 0x001c) = fRegsPhysical >> 32;
+		Sg2042MmioWrite((vuint32*)(fAtRegs + 0x001c),
+			(uint32)(fRegsPhysical >> 32));
 		dprintf("P234:SG2042 CPU address high set\n");
 		dprintf("P235:SG2042 PCIe buses %#" B_PRIx8 "+: regs %#" B_PRIx64
 			", config %#" B_PRIxPHYSADDR "\n", fStartBus, controllerRegs,

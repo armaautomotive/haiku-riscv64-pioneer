@@ -749,14 +749,21 @@ void
 SdhciBus::SetScanSemaphore(sem_id sem)
 {
 	fScanSemaphore = sem;
+	uint32 presentState = fRegisters->present_state.Bits();
+	dprintf("P243:SS0 scan semaphore %" B_PRId32 " present %#" B_PRIx32
+		"\n", fScanSemaphore, presentState);
 
 	// If there is already a card in, start a scan immediately
-	if (fRegisters->present_state.IsCardInserted())
-		release_sem(fScanSemaphore);
+	if ((presentState & (1 << 16)) != 0) {
+		status_t status = release_sem(fScanSemaphore);
+		dprintf("P243:SS1 initial scan release %s\n", strerror(status));
+	} else
+		dprintf("P243:SS1 no card present\n");
 
 	// We can now enable the card insertion interrupt for next time a card
 	// is inserted
 	EnableInterrupts(SDHCI_INT_CARD_INS);
+	dprintf("P243:SS2 card insertion interrupt enabled\n");
 }
 
 

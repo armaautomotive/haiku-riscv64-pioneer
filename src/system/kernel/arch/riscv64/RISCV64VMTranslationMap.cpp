@@ -35,10 +35,13 @@ extern uint32 gPlatform;
 extern bool gRiscvTHeadMae;
 
 
-// T-Head MAEE encodes normal cacheable, bufferable, shareable memory in
-// PTE[62:60]. Standard RISC-V reserves these bits, so only apply them after
-// the T-Head vendor and MAEE-enable CSR have both been detected.
-static const uint64 kTHeadPma = 7ULL << 60;
+// T-Head MAEE encodes the memory type in PTE[63:59]. Standard RISC-V reserves
+// these bits, so only apply them after the T-Head vendor and MAEE-enable CSR
+// have both been detected.
+static const uint64 kTHeadMemoryTypeMask = 0x1fULL << 59;
+static const uint64 kTHeadPma = 0x0eULL << 59;
+static const uint64 kTHeadNonCacheable = 0x06ULL << 59;
+static const uint64 kTHeadIo = 0x12ULL << 59;
 
 
 static inline void
@@ -46,6 +49,30 @@ ApplyTHeadPma(Pte& pte)
 {
 	if (gRiscvTHeadMae)
 		pte.val |= kTHeadPma;
+}
+
+
+static inline void
+ApplyTHeadMemoryType(Pte& pte, uint32 memoryType)
+{
+	if (!gRiscvTHeadMae)
+		return;
+
+	pte.val &= ~kTHeadMemoryTypeMask;
+	switch (memoryType & B_MEMORY_TYPE_MASK) {
+		case 0:
+			pte.val |= kTHeadPma;
+			break;
+		case B_WRITE_COMBINING_MEMORY:
+		case B_WRITE_THROUGH_MEMORY:
+			pte.val |= kTHeadNonCacheable;
+			break;
+		default:
+			// MMIO must be strongly ordered and non-idempotent. In particular,
+			// leaving this field zero is not a valid T-Head device mapping.
+			pte.val |= kTHeadIo;
+			break;
+	}
 }
 
 
@@ -322,8 +349,7 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 		.isGlobal = fIsKernel,
 		.ppn = physicalAddress / B_PAGE_SIZE
 	};
-	if (memoryType == 0)
-		ApplyTHeadPma(newPte);
+	ApplyTHeadMemoryType(newPte, memoryType);
 	const bool bootstrap = gKernelStartup;
 	const bool singleHart = smp_get_num_cpus() < 2;
 	if (bootstrap) {
@@ -599,6 +625,7 @@ status_t RISCV64VMTranslationMap::Protect(addr_t base, addr_t top,
 				value.isRead = read;
 				value.isWrite = write;
 				value.isExec = execute;
+				ApplyTHeadMemoryType(value, memoryType);
 			};
 
 			Pte oldPte = pte->load();
