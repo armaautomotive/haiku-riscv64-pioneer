@@ -28,6 +28,7 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 	if (prop != NULL && propLen == 8) {
 		uint32 busBeg = B_BENDIAN_TO_HOST_INT32(*((uint32*)prop + 0));
 		uint32 busEnd = B_BENDIAN_TO_HOST_INT32(*((uint32*)prop + 1));
+		fStartBus = busBeg;
 		dprintf("  bus-range: %" B_PRIu32 " - %" B_PRIu32 "\n", busBeg, busEnd);
 	}
 
@@ -37,12 +38,16 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		return B_ERROR;
 	}
 	dprintf("  ranges:\n");
-	for (uint32_t *it = (uint32_t*)prop; (uint8_t*)it - (uint8_t*)prop < propLen; it += 7) {
+	for (uint32_t *it = (uint32_t*)prop;
+			(uint8_t*)(it + 7) - (uint8_t*)prop <= propLen; it += 7) {
 		dprintf("    ");
 		uint32_t type      = B_BENDIAN_TO_HOST_INT32(*(it + 0));
-		uint64_t childAdr  = B_BENDIAN_TO_HOST_INT64(*(uint64_t*)(it + 1));
-		uint64_t parentAdr = B_BENDIAN_TO_HOST_INT64(*(uint64_t*)(it + 3));
-		uint64_t len       = B_BENDIAN_TO_HOST_INT64(*(uint64_t*)(it + 5));
+		uint64_t childAdr  = ((uint64)B_BENDIAN_TO_HOST_INT32(*(it + 1)) << 32)
+			| B_BENDIAN_TO_HOST_INT32(*(it + 2));
+		uint64_t parentAdr = ((uint64)B_BENDIAN_TO_HOST_INT32(*(it + 3)) << 32)
+			| B_BENDIAN_TO_HOST_INT32(*(it + 4));
+		uint64_t len       = ((uint64)B_BENDIAN_TO_HOST_INT32(*(it + 5)) << 32)
+			| B_BENDIAN_TO_HOST_INT32(*(it + 6));
 
 		pci_resource_range range = {};
 		range.host_address = parentAdr;
@@ -83,12 +88,59 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 	}
 
 	uint64 regs = 0;
-	if (!fdtModule->get_reg(fdtDev, 0, &regs, &fRegsLen))
-		return B_ERROR;
+	uint64 controllerRegs = 0;
+	if (fIsSg2042) {
+		if (!fdtModule->get_reg(fdtDev, 0, &regs, &fControllerRegsLen))
+			return B_ERROR;
+		controllerRegs = regs;
+		if (!fdtModule->get_reg(fdtDev, 1, &regs, &fRegsLen)) {
+			dprintf("P233:SG2042 controller has no separate register aperture\n");
+			return B_UNSUPPORTED;
+		}
+		fRegsPhysical = regs;
+
+		fControllerRegsLen = B_PAGE_SIZE;
+		fControllerRegsArea.SetTo(map_physical_memory("SG2042 PCIe root config", controllerRegs,
+			B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
+			(void**)&fControllerRegs));
+		CHECK_RET(fControllerRegsArea.Get());
+		dprintf("P233:SG2042 root page mapped\n");
+
+		fLmRegsArea.SetTo(map_physical_memory("SG2042 PCIe link registers",
+			controllerRegs + 0x00100000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fLmRegs));
+		CHECK_RET(fLmRegsArea.Get());
+		dprintf("P233:SG2042 link page mapped\n");
+
+		fAtRegsArea.SetTo(map_physical_memory("SG2042 PCIe translation registers",
+			controllerRegs + 0x00400000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fAtRegs));
+		CHECK_RET(fAtRegsArea.Get());
+		dprintf("P233:SG2042 translation page mapped\n");
+
+		regs = fRegsPhysical;
+	} else {
+		if (!fdtModule->get_reg(fdtDev, 0, &regs, &fRegsLen))
+			return B_ERROR;
+		fRegsPhysical = regs;
+	}
 
 	fRegsArea.SetTo(map_physical_memory("PCI Config MMIO", regs, fRegsLen, B_ANY_KERNEL_ADDRESS,
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fRegs));
 	CHECK_RET(fRegsArea.Get());
+
+	if (fIsSg2042) {
+		// Cadence outbound region 0 is reserved for PCI configuration transactions.
+		*(vuint32*)(fAtRegs + 0x0004) = 0;
+		*(vuint32*)(fAtRegs + 0x000c) = fStartBus;
+		*(vuint32*)(fAtRegs + 0x0018)
+			= ((uint32)fRegsPhysical & 0xffffff00) | 11;
+		*(vuint32*)(fAtRegs + 0x001c) = fRegsPhysical >> 32;
+		dprintf("P233:SG2042 PCIe buses %#" B_PRIx8 "+: regs %#" B_PRIx64
+			", config %#" B_PRIxPHYSADDR ", link %#" B_PRIx32 "\n", fStartBus,
+			controllerRegs, fRegsPhysical,
+			*(vuint32*)fLmRegs);
+	}
 
 	return B_OK;
 }
@@ -98,6 +150,11 @@ status_t
 ECAMPCIControllerFDT::Finalize()
 {
 	dprintf("finalize PCI controller from FDT\n");
+	if (fIsSg2042) {
+		// SG2042 routes PCIe through its MSI controller rather than interrupt-map.
+		// Enumeration and BAR access do not depend on MSI setup.
+		return B_OK;
+	}
 
 	DeviceNodePutter<&gDeviceManager> parent(gDeviceManager->get_parent_node(fNode));
 

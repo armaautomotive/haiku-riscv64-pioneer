@@ -15,6 +15,19 @@
 #include <new>
 
 
+static const uint32 kSg2042AtPciAddress0 = 0x0000;
+static const uint32 kSg2042AtDescriptor0 = 0x0008;
+static const uint32 kSg2042AtLinkDown = 0x0824;
+
+
+static bool
+IsSg2042Compatible(const char* compatible)
+{
+	return strcmp(compatible, "sophgo,sg2042-pcie-host") == 0
+		|| strcmp(compatible, "sophgo,cdns-pcie-host") == 0;
+}
+
+
 //#pragma mark - driver
 
 
@@ -32,8 +45,10 @@ ECAMPCIController::SupportsDevice(device_node* parent)
 		if (status < B_OK)
 			return -1.0f;
 
-		if (strcmp(compatible, "pci-host-ecam-generic") != 0)
+		if (strcmp(compatible, "pci-host-ecam-generic") != 0
+			&& !IsSg2042Compatible(compatible)) {
 			return 0.0f;
+		}
 
 		return 1.0f;
 	}
@@ -56,8 +71,13 @@ ECAMPCIController::SupportsDevice(device_node* parent)
 status_t
 ECAMPCIController::RegisterDevice(device_node* parent)
 {
+	const char* compatible = NULL;
+	gDeviceManager->get_attr_string(parent, "fdt/compatible", &compatible, false);
+	const char* prettyName = compatible != NULL && IsSg2042Compatible(compatible)
+		? "SG2042 Cadence PCIe Host Controller" : "ECAM PCI Host Controller";
+
 	device_attr attrs[] = {
-		{ B_DEVICE_PRETTY_NAME, B_STRING_TYPE, {.string = "ECAM PCI Host Controller"} },
+		{ B_DEVICE_PRETTY_NAME, B_STRING_TYPE, {.string = prettyName} },
 		{ B_DEVICE_FIXED_CHILD, B_STRING_TYPE, {.string = "bus_managers/pci/root/driver_v1"} },
 		{}
 	};
@@ -70,16 +90,23 @@ ECAMPCIController::RegisterDevice(device_node* parent)
 status_t
 ECAMPCIController::InitDriver(device_node* node, ECAMPCIController*& outDriver)
 {
-	dprintf("+ECAMPCIController::InitDriver()\n");
+	dprintf("P232:ECAM init host\n");
 	DeviceNodePutter<&gDeviceManager> parentNode(gDeviceManager->get_parent_node(node));
 
 	ObjectDeleter<ECAMPCIController> driver;
 
 	const char* bus;
 	CHECK_RET(gDeviceManager->get_attr_string(parentNode.Get(), B_DEVICE_BUS, &bus, false));
-	if (strcmp(bus, "fdt") == 0)
+	if (strcmp(bus, "fdt") == 0) {
 		driver.SetTo(new(std::nothrow) ECAMPCIControllerFDT());
-	else if (strcmp(bus, "acpi") == 0)
+		if (!driver.IsSet())
+			return B_NO_MEMORY;
+		const char* compatible;
+		if (gDeviceManager->get_attr_string(parentNode.Get(), "fdt/compatible", &compatible,
+				false) == B_OK) {
+			driver->fIsSg2042 = IsSg2042Compatible(compatible);
+		}
+	} else if (strcmp(bus, "acpi") == 0)
 		driver.SetTo(new(std::nothrow) ECAMPCIControllerACPI());
 	else
 		return B_ERROR;
@@ -132,6 +159,9 @@ status_t
 ECAMPCIController::ReadConfig(uint8 bus, uint8 device, uint8 function,
 	uint16 offset, uint8 size, uint32& value)
 {
+	if (fIsSg2042)
+		return ReadSg2042Config(bus, device, function, offset, size, value);
+
 	addr_t address = ConfigAddress(bus, device, function, offset);
 	if (address == 0)
 		return ERANGE;
@@ -152,6 +182,9 @@ status_t
 ECAMPCIController::WriteConfig(uint8 bus, uint8 device, uint8 function,
 	uint16 offset, uint8 size, uint32 value)
 {
+	if (fIsSg2042)
+		return WriteSg2042Config(bus, device, function, offset, size, value);
+
 	addr_t address = ConfigAddress(bus, device, function, offset);
 	if (address == 0)
 		return ERANGE;
@@ -164,6 +197,107 @@ ECAMPCIController::WriteConfig(uint8 bus, uint8 device, uint8 function,
 			return B_BAD_VALUE;
 	}
 
+	return B_OK;
+}
+
+
+status_t
+ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
+	uint16 offset, uint8 size, uint32& value)
+{
+	if (size != 1 && size != 2 && size != 4)
+		return B_BAD_VALUE;
+	if (offset + size > 4096)
+		return ERANGE;
+
+	mutex_lock(&fLock);
+	addr_t address;
+	if (bus == 0) {
+		// The SG2042 root port only accepts naturally aligned 32-bit accesses.
+		if (device != 0 || function != 0) {
+			mutex_unlock(&fLock);
+			return B_ENTRY_NOT_FOUND;
+		}
+		address = (addr_t)fControllerRegs + ROUNDDOWN(offset, 4);
+		uint32 word = *(vuint32*)address;
+		value = word >> ((offset & 3) * 8);
+		if (size == 1)
+			value &= 0xff;
+		else if (size == 2)
+			value &= 0xffff;
+	} else {
+		if ((*(vuint32*)fLmRegs & 1) == 0) {
+			mutex_unlock(&fLock);
+			return B_ENTRY_NOT_FOUND;
+		}
+
+		*(vuint32*)(fAtRegs + kSg2042AtLinkDown) = 0;
+		uint32 devfn = (device << 3) | function;
+		uint32 hardwareBus = fStartBus + bus;
+		*(vuint32*)(fAtRegs + kSg2042AtPciAddress0)
+			= 11 | (devfn << 12) | (hardwareBus << 20);
+		*(vuint32*)(fAtRegs + kSg2042AtDescriptor0)
+			= (1 << 23) | (bus == 1 ? 0xa : 0xb);
+
+		address = (addr_t)fRegs + offset;
+		switch (size) {
+			case 1: value = *(vuint8*)address; break;
+			case 2: value = *(vuint16*)address; break;
+			case 4: value = *(vuint32*)address; break;
+		}
+	}
+	mutex_unlock(&fLock);
+	return B_OK;
+}
+
+
+status_t
+ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
+	uint16 offset, uint8 size, uint32 value)
+{
+	if (size != 1 && size != 2 && size != 4)
+		return B_BAD_VALUE;
+	if (offset + size > 4096)
+		return ERANGE;
+
+	mutex_lock(&fLock);
+	addr_t address;
+	if (bus == 0) {
+		if (device != 0 || function != 0) {
+			mutex_unlock(&fLock);
+			return B_ENTRY_NOT_FOUND;
+		}
+		address = (addr_t)fControllerRegs + ROUNDDOWN(offset, 4);
+		if (size == 4) {
+			*(vuint32*)address = value;
+		} else {
+			uint32 shift = (offset & 3) * 8;
+			uint32 mask = (size == 1 ? 0xff : 0xffff) << shift;
+			uint32 word = *(vuint32*)address;
+			*(vuint32*)address = (word & ~mask) | ((value << shift) & mask);
+		}
+	} else {
+		if ((*(vuint32*)fLmRegs & 1) == 0) {
+			mutex_unlock(&fLock);
+			return B_ENTRY_NOT_FOUND;
+		}
+
+		*(vuint32*)(fAtRegs + kSg2042AtLinkDown) = 0;
+		uint32 devfn = (device << 3) | function;
+		uint32 hardwareBus = fStartBus + bus;
+		*(vuint32*)(fAtRegs + kSg2042AtPciAddress0)
+			= 11 | (devfn << 12) | (hardwareBus << 20);
+		*(vuint32*)(fAtRegs + kSg2042AtDescriptor0)
+			= (1 << 23) | (bus == 1 ? 0xa : 0xb);
+
+		address = (addr_t)fRegs + offset;
+		switch (size) {
+			case 1: *(vuint8*)address = value; break;
+			case 2: *(vuint16*)address = value; break;
+			case 4: *(vuint32*)address = value; break;
+		}
+	}
+	mutex_unlock(&fLock);
 	return B_OK;
 }
 

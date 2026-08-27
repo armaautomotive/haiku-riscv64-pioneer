@@ -116,6 +116,10 @@ public:
 
 private:
 	inline addr_t ConfigAddress(uint8 bus, uint8 device, uint8 function, uint16 offset);
+	status_t ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
+		uint16 offset, uint8 size, uint32& value);
+	status_t WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
+		uint16 offset, uint8 size, uint32 value);
 
 protected:
 	virtual status_t ReadResourceInfo() = 0;
@@ -128,6 +132,17 @@ protected:
 	AreaDeleter fRegsArea;
 	uint8 volatile* fRegs{};
 	uint64 fRegsLen{};
+	phys_addr_t fRegsPhysical{};
+
+	AreaDeleter fControllerRegsArea;
+	uint8 volatile* fControllerRegs{};
+	uint64 fControllerRegsLen{};
+	AreaDeleter fLmRegsArea;
+	uint8 volatile* fLmRegs{};
+	AreaDeleter fAtRegsArea;
+	uint8 volatile* fAtRegs{};
+	bool fIsSg2042{};
+	uint8 fStartBus{};
 
 	Vector<pci_resource_range> fResourceRanges;
 };
