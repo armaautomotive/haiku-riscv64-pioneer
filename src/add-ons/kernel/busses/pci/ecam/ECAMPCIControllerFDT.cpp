@@ -7,6 +7,9 @@
 #include "ECAMPCIController.h"
 
 #include <AutoDeleterDrivers.h>
+#include <arch/generic/msi.h>
+#include <interrupts.h>
+#include <util/AutoLock.h>
 
 #include <string.h>
 
@@ -16,6 +19,130 @@ static const uint64 kSg2042LocalManagementOffset = 0x00100000;
 static const uint32 kSg2042RootBarConfig = 0x001e0000;
 static const uint32 kSg2042VendorId = 0x1e30;
 static const uint32 kSg2042DeviceId = 0x2042;
+
+static const uint32 kCadenceOutboundRegionStride = 0x20;
+static const uint32 kCadenceOutboundPciAddress0 = 0x00;
+static const uint32 kCadenceOutboundPciAddress1 = 0x04;
+static const uint32 kCadenceOutboundDescriptor0 = 0x08;
+static const uint32 kCadenceOutboundDescriptor1 = 0x0c;
+static const uint32 kCadenceOutboundCpuAddress0 = 0x18;
+static const uint32 kCadenceOutboundCpuAddress1 = 0x1c;
+static const uint32 kCadenceDescriptorMemory = 0x2;
+static const uint32 kCadenceDescriptorIo = 0x6;
+static const uint32 kCadenceDescriptorHardcodedRequester = 1 << 23;
+
+static const phys_addr_t kSg2042TopIntcPage = 0x7030010000;
+static const uint32 kSg2042TopIntcClearOffset = 0x304;
+static const uint64 kSg2042TopIntcSetAddress = 0x7030010300;
+static const int32 kSg2042TopIntcPlicBase = 64;
+static const uint32 kSg2042TopIntcVectorCount = 32;
+
+
+class Sg2042MsiInterruptController final : public MSIInterface {
+public:
+	status_t Init()
+	{
+		if (fInitialized)
+			return B_OK;
+
+		fRegsArea.SetTo(map_physical_memory("SG2042 PCIe top interrupt controller",
+			kSg2042TopIntcPage, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fRegs));
+		if (fRegsArea.Get() < B_OK)
+			return fRegsArea.Get();
+
+		status_t status = allocate_io_interrupt_vectors(kSg2042TopIntcVectorCount,
+			&fMsiStartIrq, INTERRUPT_TYPE_IRQ);
+		if (status != B_OK)
+			return status;
+
+		for (uint32 i = 0; i < kSg2042TopIntcVectorCount; i++) {
+			fInterrupts[i].controller = this;
+			fInterrupts[i].index = i;
+			status = install_io_interrupt_handler(kSg2042TopIntcPlicBase + i,
+				InterruptReceived, &fInterrupts[i], 0);
+			if (status != B_OK)
+				return status;
+		}
+
+		fInitialized = true;
+		msi_set_interface(this);
+		dprintf("P249:SG2042 MSI vectors %" B_PRId32 "-%" B_PRId32
+			" route through PLIC 64-95\n", fMsiStartIrq,
+			fMsiStartIrq + kSg2042TopIntcVectorCount - 1);
+		return B_OK;
+	}
+
+	status_t AllocateVectors(uint32 count, uint32& startVector, uint64& address,
+		uint32& data) final
+	{
+		if (count != 1)
+			return B_UNSUPPORTED;
+
+		MutexLocker locker(&fLock);
+		for (uint32 i = 0; i < kSg2042TopIntcVectorCount; i++) {
+			if ((fAllocated & (1U << i)) != 0)
+				continue;
+			fAllocated |= 1U << i;
+			startVector = fMsiStartIrq + i;
+			address = kSg2042TopIntcSetAddress;
+			data = 1U << i;
+			dprintf("P249:SG2042 MSI allocate index %" B_PRIu32 " irq %" B_PRIu32
+				" data %#" B_PRIx32 "\n", i, startVector, data);
+			return B_OK;
+		}
+		return B_NO_MEMORY;
+	}
+
+	void FreeVectors(uint32 count, uint32 startVector) final
+	{
+		MutexLocker locker(&fLock);
+		while (count-- > 0 && startVector >= (uint32)fMsiStartIrq) {
+			uint32 index = startVector++ - fMsiStartIrq;
+			if (index < kSg2042TopIntcVectorCount)
+				fAllocated &= ~(1U << index);
+		}
+	}
+
+private:
+	struct InterruptContext {
+		Sg2042MsiInterruptController* controller;
+		uint32 index;
+	};
+
+	static int32 InterruptReceived(void* argument)
+	{
+		InterruptContext* context = (InterruptContext*)argument;
+		Sg2042MmioWrite((vuint32*)(context->controller->fRegs
+			+ kSg2042TopIntcClearOffset), 1U << context->index);
+		return io_interrupt_handler(context->controller->fMsiStartIrq
+			+ context->index, false);
+	}
+
+	struct mutex fLock = MUTEX_INITIALIZER("SG2042 MSI allocation");
+	AreaDeleter fRegsArea;
+	uint8 volatile* fRegs{};
+	int32 fMsiStartIrq{-1};
+	uint32 fAllocated{};
+	InterruptContext fInterrupts[kSg2042TopIntcVectorCount]{};
+	bool fInitialized{};
+};
+
+
+static Sg2042MsiInterruptController sSg2042MsiController;
+
+
+static uint32
+Sg2042OutboundAddressBits(uint64 size)
+{
+	uint32 bits = 8;
+	uint64 aperture = 1ULL << bits;
+	while (aperture < size && bits < 63) {
+		bits++;
+		aperture <<= 1;
+	}
+	return bits;
+}
 
 
 status_t
@@ -39,12 +166,11 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		fEndBus = busEnd;
 		dprintf("  bus-range: %" B_PRIu32 " - %" B_PRIu32 "\n", busBeg, busEnd);
 	}
-	if (fIsSg2042 && fStartBus != 0) {
-		// Haiku currently presents bus numbers relative to each PCI domain,
-		// while these additional SG2042 roots use global hardware bus numbers.
-		// Defer them until that translation is implemented; domain zero contains
-		// the Pioneer display adapter and is sufficient for graphics bring-up.
-		dprintf("P241:SG2042 deferring nonzero root bus %#" B_PRIx8 "\n",
+	if (fIsSg2042 && fStartBus != 0 && fStartBus != 0xc0) {
+		// The Pioneer USB tree is domain 3 (hardware buses c0-ff).  Other
+		// nonzero roots may have their links down and return zero-filled config
+		// completions, which the generic PCI manager mistakes for endpoints.
+		dprintf("P250:SG2042 skipping inactive root bus %#" B_PRIx8 "\n",
 			fStartBus);
 		return B_UNSUPPORTED;
 	}
@@ -107,14 +233,27 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 	uint64 regs = 0;
 	uint64 controllerRegs = 0;
 	if (fIsSg2042) {
-		if (!fdtModule->get_reg(fdtDev, 0, &regs, &fControllerRegsLen))
-			return B_ERROR;
-		controllerRegs = regs;
-		if (!fdtModule->get_reg(fdtDev, 1, &regs, &fRegsLen)) {
-			dprintf("P233:SG2042 controller has no separate register aperture\n");
-			return B_UNSUPPORTED;
+		if (fStartBus == 0xc0) {
+			// Cadence link 1 shares its controller register block with link 0.
+			// Its sole FDT reg entry is the config aperture; Linux derives the
+			// controller address as the paired link-0 base plus 8 MiB.
+			if (!fdtModule->get_reg(fdtDev, 0, &regs, &fRegsLen))
+				return B_ERROR;
+			fRegsPhysical = regs;
+			controllerRegs = 0x7062800000ULL;
+			dprintf("P251:SG2042 link 1 config %#" B_PRIx64
+				" shared controller %#" B_PRIx64 "\n", fRegsPhysical,
+				controllerRegs);
+		} else {
+			if (!fdtModule->get_reg(fdtDev, 0, &regs, &fControllerRegsLen))
+				return B_ERROR;
+			controllerRegs = regs;
+			if (!fdtModule->get_reg(fdtDev, 1, &regs, &fRegsLen)) {
+				dprintf("P233:SG2042 controller has no separate register aperture\n");
+				return B_UNSUPPORTED;
+			}
+			fRegsPhysical = regs;
 		}
-		fRegsPhysical = regs;
 
 		fControllerRegsLen = B_PAGE_SIZE;
 		fControllerRegsArea.SetTo(map_physical_memory("SG2042 PCIe root config",
@@ -146,17 +285,52 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		dprintf("P238:SG2042 root vendor and device initialized\n");
 		Sg2042MmioWrite((vuint32*)(fControllerRegs + 0x0008), (uint32)0x06040000);
 		dprintf("P238:SG2042 root class initialized\n");
-		uint32 localLastBus = fEndBus - fStartBus;
 		Sg2042MmioWrite((vuint32*)(fControllerRegs + 0x0018),
-			(localLastBus << 16) | (1 << 8));
-		dprintf("P241:SG2042 root buses 0 - 1 - %#" B_PRIx32 " initialized\n",
-			localLastBus);
+			((uint32)fEndBus << 16) | ((uint32)(fStartBus + 1) << 8) | fStartBus);
+		dprintf("P249:SG2042 root hardware buses %#" B_PRIx8 " - %#" B_PRIx8
+			" - %#" B_PRIx8 " initialized\n", fStartBus, fStartBus + 1, fEndBus);
 
 		fAtRegsArea.SetTo(map_physical_memory("SG2042 PCIe translation registers",
 			controllerRegs + 0x00400000, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
 			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&fAtRegs));
 		CHECK_RET(fAtRegsArea.Get());
 		dprintf("P233:SG2042 translation page mapped\n");
+
+		// Region zero is the dynamically selected configuration aperture.  Map
+		// every PCI host range in the following Cadence outbound regions so BAR
+		// accesses are translated just as they are by the Linux host driver.
+		for (int32 index = 0; index < fResourceRanges.Count(); index++) {
+			const pci_resource_range& range = fResourceRanges[index];
+			uint32 region = index + 1;
+			uint32 offset = region * kCadenceOutboundRegionStride;
+			uint32 bits = Sg2042OutboundAddressBits(range.size);
+			uint32 pciLow = ((uint32)range.pci_address & 0xffffff00)
+				| ((bits - 1) & 0x3f);
+			uint32 cpuLow = ((uint32)range.host_address & 0xffffff00)
+				| ((bits - 1) & 0x3f);
+			uint32 descriptor = kCadenceDescriptorHardcodedRequester
+				| (range.type == B_IO_PORT
+					? kCadenceDescriptorIo : kCadenceDescriptorMemory);
+
+			Sg2042MmioWrite((vuint32*)(fAtRegs + offset
+				+ kCadenceOutboundPciAddress0), pciLow);
+			Sg2042MmioWrite((vuint32*)(fAtRegs + offset
+				+ kCadenceOutboundPciAddress1),
+				(uint32)(range.pci_address >> 32));
+			Sg2042MmioWrite((vuint32*)(fAtRegs + offset
+				+ kCadenceOutboundDescriptor0), descriptor);
+			Sg2042MmioWrite((vuint32*)(fAtRegs + offset
+				+ kCadenceOutboundDescriptor1), (uint32)fStartBus);
+			Sg2042MmioWrite((vuint32*)(fAtRegs + offset
+				+ kCadenceOutboundCpuAddress0), cpuLow);
+			Sg2042MmioWrite((vuint32*)(fAtRegs + offset
+				+ kCadenceOutboundCpuAddress1),
+				(uint32)(range.host_address >> 32));
+			dprintf("P247:SG2042 outbound %" B_PRIu32 " PCI %#" B_PRIx64
+				" host %#" B_PRIx64 " size %#" B_PRIx64 " type %s\n",
+				region, range.pci_address, range.host_address, range.size,
+				range.type == B_IO_PORT ? "io" : "memory");
+		}
 
 		regs = fRegsPhysical;
 	} else {
@@ -188,6 +362,39 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		dprintf("P235:SG2042 PCIe buses %#" B_PRIx8 "+: regs %#" B_PRIx64
 			", config %#" B_PRIxPHYSADDR "\n", fStartBus, controllerRegs,
 			fRegsPhysical);
+
+		if (fStartBus == 0xc0) {
+			// Pioneer domain 3 contains an ASMedia switch and the xHCI controller
+			// used by the external keyboard and mouse.  Firmware leaves this tree
+			// unassigned for Haiku, so establish the known bridge routing before
+			// the PCI bus manager discovers it.  Bus values passed here are local;
+			// the config accessor translates them to c0/c1/c2/c4 on the wire.
+			WriteConfig(0, 0, 0, PCI_primary_bus, 4, 0x000a0100);
+			WriteConfig(0, 0, 0, PCI_io_base, 4, 0x00002101);
+			WriteConfig(0, 0, 0, PCI_memory_base, 4, 0xf040f000);
+			WriteConfig(0, 0, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(0, 0, 0, PCI_io_base_upper16, 4, 0x00c000c0);
+			WriteConfig(0, 0, 0, PCI_command, 2, 0x0007);
+
+			WriteConfig(1, 0, 0, PCI_primary_bus, 4, 0x000a0201);
+			WriteConfig(1, 0, 0, PCI_io_base, 4, 0x00002101);
+			WriteConfig(1, 0, 0, PCI_memory_base, 4, 0xf040f000);
+			WriteConfig(1, 0, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(1, 0, 0, PCI_io_base_upper16, 4, 0x00c000c0);
+			WriteConfig(1, 0, 0, PCI_command, 2, 0x0007);
+
+			WriteConfig(2, 4, 0, PCI_primary_bus, 4, 0x00c40402);
+			WriteConfig(2, 4, 0, PCI_io_base, 4, 0x000001f1);
+			WriteConfig(2, 4, 0, PCI_memory_base, 4, 0xf010f010);
+			WriteConfig(2, 4, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(2, 4, 0, PCI_command, 2, 0x0006);
+
+			WriteConfig(4, 0, 0, PCI_base_registers, 4, 0xf0100004);
+			WriteConfig(4, 0, 0, PCI_base_registers + 4, 4, 0);
+			WriteConfig(4, 0, 0, PCI_command, 2, 0x0406);
+			dprintf("P249:SG2042 Pioneer xHCI topology configured on local bus 4\n");
+			CHECK_RET(sSg2042MsiController.Init());
+		}
 	}
 
 	return B_OK;
@@ -198,11 +405,68 @@ status_t
 ECAMPCIControllerFDT::Finalize()
 {
 	dprintf("finalize PCI controller from FDT\n");
-	if (fIsSg2042) {
+	if (fIsSg2042 && fStartBus == 0) {
+		// The Pioneer firmware does not assign endpoint resources before handing
+		// control to Haiku.  Configure the board's Caicos display adapter using
+		// addresses from the FDT windows.  This is deliberately hardware-specific
+		// until the PCI bus manager grows a general firmware-less BAR allocator.
+		uint32 vendor = gPCI->read_pci_config(1, 0, 0, PCI_vendor_id, 2);
+		uint32 device = gPCI->read_pci_config(1, 0, 0, PCI_device_id, 2);
+		if (vendor != 0x1002 || device != 0x6779) {
+			dprintf("P247:SG2042 expected Caicos endpoint not found (%#" B_PRIx32
+				":%#" B_PRIx32 ")\n", vendor, device);
+			return B_OK;
+		}
+
+		// Root-port windows: I/O 0x1000-0x1fff, memory
+		// 0x50000000-0x500fffff, prefetchable memory
+		// 0x4100000000-0x410fffffff.  These values match the FDT resources and
+		// the working Linux configuration on this Pioneer.
+		gPCI->write_pci_config(0, 0, 0, PCI_io_base, 4, 0x00001111);
+		gPCI->write_pci_config(0, 0, 0, PCI_memory_base, 4, 0x50005000);
+		gPCI->write_pci_config(0, 0, 0, PCI_prefetchable_memory_base, 4,
+			0x0ff10001);
+		gPCI->write_pci_config(0, 0, 0,
+			PCI_prefetchable_memory_base_upper32, 4, 0x00000041);
+		gPCI->write_pci_config(0, 0, 0,
+			PCI_prefetchable_memory_limit_upper32, 4, 0x00000041);
+		gPCI->write_pci_config(0, 0, 0, PCI_io_base_upper16, 4, 0);
+
+		// Function 0: 256 MiB framebuffer, 128 KiB MMIO registers, 256-byte
+		// I/O aperture, and a disabled 128 KiB option ROM.
+		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 0, 4, 0x0000000c);
+		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 4, 4, 0x00000041);
+		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 8, 4, 0x50000004);
+		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 12, 4, 0);
+		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 16, 4, 0x00001001);
+		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 20, 4, 0);
+		gPCI->write_pci_config(1, 0, 0, PCI_rom_base, 4, 0x50020000);
+
+		uint32 command = gPCI->read_pci_config(1, 0, 0, PCI_command, 2);
+		gPCI->write_pci_config(1, 0, 0, PCI_command, 2, command
+			| PCI_command_io | PCI_command_memory | PCI_command_master);
+
+		// Function 1 is the HDMI audio function sharing the same card.
+		if (gPCI->read_pci_config(1, 0, 1, PCI_vendor_id, 2) == 0x1002) {
+			gPCI->write_pci_config(1, 0, 1, PCI_base_registers, 4, 0x50040004);
+			gPCI->write_pci_config(1, 0, 1, PCI_base_registers + 4, 4, 0);
+			command = gPCI->read_pci_config(1, 0, 1, PCI_command, 2);
+			gPCI->write_pci_config(1, 0, 1, PCI_command, 2, command
+				| PCI_command_memory | PCI_command_master);
+		}
+
+		command = gPCI->read_pci_config(0, 0, 0, PCI_command, 2);
+		gPCI->write_pci_config(0, 0, 0, PCI_command, 2, command
+			| PCI_command_io | PCI_command_memory | PCI_command_master);
+		dprintf("P247:SG2042 Caicos BARs assigned: FB 0x4100000000, MMIO "
+			"0x50000000, IO 0x1000\n");
+
 		// SG2042 routes PCIe through its MSI controller rather than interrupt-map.
 		// Enumeration and BAR access do not depend on MSI setup.
 		return B_OK;
 	}
+	if (fIsSg2042)
+		return B_OK;
 
 	DeviceNodePutter<&gDeviceManager> parent(gDeviceManager->get_parent_node(fNode));
 

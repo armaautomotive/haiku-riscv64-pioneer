@@ -287,7 +287,7 @@ radeon_hd_getbios(radeon_info &info)
 				if ((flags & PCI_rom_enable) != 0)
 					TRACE("%s: PCI ROM decode enabled\n", __func__);
 
-				romBase = info.pci->u.h0.rom_base;
+				romBase = get_pci_rom_address(info.pci);
 				romSize = info.pci->u.h0.rom_size;
 
 				if (romBase == 0 || romSize == 0) {
@@ -358,7 +358,7 @@ radeon_hd_getbios_ni(radeon_info &info)
 	if (flags & PCI_rom_enable)
 		TRACE("%s: PCI ROM decode enabled\n", __func__);
 
-	uint32 romBase = info.pci->u.h0.rom_base;
+	phys_addr_t romBase = get_pci_rom_address(info.pci);
 	uint32 romSize = info.pci->u.h0.rom_size;
 
 	status_t result = B_OK;
@@ -370,7 +370,7 @@ radeon_hd_getbios_ni(radeon_info &info)
 	}
 
 	if (result == B_OK) {
-		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIX32
+		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIXPHYSADDR
 			" [size: 0x%" B_PRIX32 "]\n", __func__, romBase, romSize);
 		info.shared_info->rom_phys = romBase;
 		info.shared_info->rom_size = romSize;
@@ -430,7 +430,7 @@ radeon_hd_getbios_r700(radeon_info &info)
 	if (flags & PCI_rom_enable)
 		TRACE("%s: PCI ROM decode enabled\n", __func__);
 
-	uint32 romBase = info.pci->u.h0.rom_base;
+	phys_addr_t romBase = get_pci_rom_address(info.pci);
 	uint32 romSize = info.pci->u.h0.rom_size;
 
 	status_t result = B_OK;
@@ -442,7 +442,7 @@ radeon_hd_getbios_r700(radeon_info &info)
 	}
 
 	if (result == B_OK) {
-		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIX32
+		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIXPHYSADDR
 			" [size: 0x%" B_PRIX32 "]\n", __func__, romBase, romSize);
 		info.shared_info->rom_phys = romBase;
 		info.shared_info->rom_size = romSize;
@@ -529,7 +529,7 @@ radeon_hd_getbios_r600(radeon_info &info)
 	if (flags & PCI_rom_enable)
 		TRACE("%s: PCI ROM decode enabled\n", __func__);
 
-	uint32 romBase = info.pci->u.h0.rom_base;
+	phys_addr_t romBase = get_pci_rom_address(info.pci);
 	uint32 romSize = info.pci->u.h0.rom_size;
 
 	status_t result = B_OK;
@@ -541,7 +541,7 @@ radeon_hd_getbios_r600(radeon_info &info)
 	}
 
 	if (result == B_OK) {
-		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIX32
+		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIXPHYSADDR
 			" [size: 0x%" B_PRIX32 "]\n", __func__, romBase, romSize);
 		info.shared_info->rom_phys = romBase;
 		info.shared_info->rom_size = romSize;
@@ -613,7 +613,7 @@ radeon_hd_getbios_avivo(radeon_info &info)
 	write32(info.registers + AVIVO_VGA_RENDER_CONTROL,
 		(vgaRenderControl & ~AVIVO_VGA_VSTATUS_CNTL_MASK));
 
-	uint32 romBase = info.pci->u.h0.rom_base;
+	phys_addr_t romBase = get_pci_rom_address(info.pci);
 	uint32 romSize = info.pci->u.h0.rom_size;
 
 	status_t result = B_OK;
@@ -625,7 +625,7 @@ radeon_hd_getbios_avivo(radeon_info &info)
 	}
 
 	if (result == B_OK) {
-		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIX32
+		ERROR("%s: AtomBIOS found using disabled method at 0x%" B_PRIXPHYSADDR
 			" [size: 0x%" B_PRIX32 "]\n", __func__, romBase, romSize);
 		info.shared_info->rom_phys = romBase;
 		info.shared_info->rom_size = romSize;
@@ -847,6 +847,7 @@ radeon_hd_init(radeon_info &info)
 	}
 
 	if (biosStatus != B_OK) {
+	#if defined(__i386__) || defined(__x86_64__)
 		// *** very last resort, shadow bios VGA rom
 		ERROR("%s: Can't find an AtomBIOS rom! Trying shadow rom...\n",
 			__func__);
@@ -867,6 +868,12 @@ radeon_hd_init(radeon_info &info)
 			info.shared_info->rom_size = romSize;
 			biosStatus = B_OK;
 		}
+	#else
+		// 0xc0000 is the conventional x86 VGA shadow-ROM address.  Probing it
+		// on other architectures can touch unmapped physical memory and fault.
+		ERROR("%s: VGA shadow ROM fallback is unavailable on this architecture\n",
+			__func__);
+	#endif
 	}
 
 	// Check if a valid AtomBIOS image was found.
@@ -918,4 +925,3 @@ radeon_hd_uninit(radeon_info &info)
 	delete_area(info.framebuffer_area);
 	delete_area(info.rom_area);
 }
-

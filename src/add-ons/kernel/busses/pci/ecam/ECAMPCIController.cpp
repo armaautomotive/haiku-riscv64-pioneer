@@ -19,6 +19,35 @@ static const uint32 kSg2042AtPciAddress0 = 0x0000;
 static const uint32 kSg2042AtDescriptor0 = 0x0008;
 
 
+static uint32
+TranslateSg2042BridgeBusNumbers(uint32 value, uint16 offset, uint8 size,
+	uint8 startBus, uint8 accessedBus, bool toHardware)
+{
+	if (startBus == 0)
+		return value;
+
+	for (uint8 i = 0; i < size; i++) {
+		uint16 registerOffset = offset + i;
+		if (registerOffset < PCI_primary_bus || registerOffset > PCI_subordinate_bus)
+			continue;
+
+		uint32 shift = i * 8;
+		uint8 bus = (value >> shift) & 0xff;
+		if (toHardware) {
+			// Zero normally means an unconfigured bridge.  The root bridge is
+			// the exception: its local primary bus zero is the domain's global
+			// starting bus number.
+			if (bus != 0 || (accessedBus == 0 && registerOffset == PCI_primary_bus))
+				bus += startBus;
+		} else if (bus != 0 && bus >= startBus) {
+			bus -= startBus;
+		}
+		value = (value & ~(0xffU << shift)) | ((uint32)bus << shift);
+	}
+	return value;
+}
+
+
 static bool
 IsSg2042Compatible(const char* compatible)
 {
@@ -233,6 +262,8 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 			value &= 0xff;
 		else if (size == 2)
 			value &= 0xffff;
+		value = TranslateSg2042BridgeBusNumbers(value, offset, size,
+			fStartBus, bus, false);
 	} else {
 		// A PCIe Root Port is a point-to-point link.  Its immediate secondary
 		// bus can only contain device 0; scanning other device numbers on the
@@ -255,6 +286,11 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 			case 1: value = Sg2042MmioRead((vuint8*)address); break;
 			case 2: value = Sg2042MmioRead((vuint16*)address); break;
 			case 4: value = Sg2042MmioRead((vuint32*)address); break;
+		}
+		uint8 headerType = Sg2042MmioRead((vuint8*)(fRegs + PCI_header_type));
+		if ((headerType & PCI_header_type_mask) == PCI_header_type_PCI_to_PCI_bridge) {
+			value = TranslateSg2042BridgeBusNumbers(value, offset, size,
+				fStartBus, bus, false);
 		}
 		if (!fDownstreamConfigReadLogged) {
 			dprintf("P242:SG2042 config bus %#" B_PRIx8 " device %#" B_PRIx8
@@ -291,6 +327,8 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 			mutex_unlock(&fLock);
 			return B_ENTRY_NOT_FOUND;
 		}
+		value = TranslateSg2042BridgeBusNumbers(value, offset, size,
+			fStartBus, bus, true);
 		address = (addr_t)fControllerRegs + ROUNDDOWN(offset, 4);
 		if (size == 4) {
 			Sg2042MmioWrite((vuint32*)address, value);
@@ -313,6 +351,11 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 		Sg2042MmioWrite((vuint32*)(fAtRegs + kSg2042AtDescriptor0),
 			(uint32)((1 << 23) | (bus == 1 ? 0xa : 0xb)));
 
+		uint8 headerType = Sg2042MmioRead((vuint8*)(fRegs + PCI_header_type));
+		if ((headerType & PCI_header_type_mask) == PCI_header_type_PCI_to_PCI_bridge) {
+			value = TranslateSg2042BridgeBusNumbers(value, offset, size,
+				fStartBus, bus, true);
+		}
 		address = (addr_t)fRegs + offset;
 		switch (size) {
 			case 1: Sg2042MmioWrite((vuint8*)address, (uint8)value); break;

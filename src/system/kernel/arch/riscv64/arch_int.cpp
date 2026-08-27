@@ -461,11 +461,6 @@ arch_int_init(kernel_args* args)
 	for (uint32 i = 0; i < args->num_cpus; i++)
 		sPlicContexts[i] = args->arch_args.plicContexts[i];
 
-	// TODO: read from FDT. The generic reservation path takes an early mutex;
-	// defer it while the Pioneer bootstrap is intentionally single-hart.
-	if (args->num_cpus > 1)
-		reserve_io_interrupt_vectors(128, 0, INTERRUPT_TYPE_IRQ);
-
 	for (uint32 i = 0; i < args->num_cpus; i++)
 		gPlicRegs->contexts[sPlicContexts[i]].priorityThreshold = 0;
 
@@ -476,7 +471,10 @@ arch_int_init(kernel_args* args)
 status_t
 arch_int_init_post_vm(kernel_args* args)
 {
-	return B_OK;
+	// PLIC interrupt IDs are used directly as Haiku I/O vectors.  Reserve them
+	// after the generic vector table and its allocation mutex exist; doing this
+	// in arch_int_init() was too early during the Pioneer single-hart bootstrap.
+	return reserve_io_interrupt_vectors(128, 0, INTERRUPT_TYPE_IRQ);
 }
 
 

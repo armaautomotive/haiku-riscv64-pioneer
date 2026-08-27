@@ -52,5 +52,16 @@ set_pci_config(pci_info* info, uint8 offset, uint8 size, uint32 value)
 }
 
 
-#endif  /* DRIVER_H */
+static inline phys_addr_t
+get_pci_rom_address(pci_info* info)
+{
+	// pci_info::rom_base predates 64-bit host physical addresses and can
+	// truncate a translated PCI ROM BAR.  Translate the live PCI bus address
+	// here instead (for example, SG2042 maps 0x50020000 to 0x4050020000).
+	uint32 address = get_pci_config(info, PCI_rom_base, 4)
+		& PCI_rom_address_mask;
+	return gPCI->ram_address(address);
+}
 
+
+#endif  /* DRIVER_H */
