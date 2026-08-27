@@ -234,6 +234,15 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 		else if (size == 2)
 			value &= 0xffff;
 	} else {
+		// A PCIe Root Port is a point-to-point link.  Its immediate secondary
+		// bus can only contain device 0; scanning other device numbers on the
+		// SG2042 Cadence window returns stale completion data and creates
+		// phantom copies of the endpoint.
+		if (bus == 1 && device != 0) {
+			value = size == 1 ? 0xff : size == 2 ? 0xffff : 0xffffffff;
+			mutex_unlock(&fLock);
+			return B_OK;
+		}
 		uint32 devfn = (device << 3) | function;
 		uint32 hardwareBus = fStartBus + bus;
 		uint32 pciAddress = 11 | (devfn << 12) | (hardwareBus << 20);
@@ -253,6 +262,12 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 				" descriptor %#" B_PRIx32 " value %#" B_PRIx32 "\n", bus,
 				device, function, pciAddress, descriptor, value);
 			fDownstreamConfigReadLogged = true;
+		}
+		if (bus == 1 && device == 0 && offset == 0 && size == 2
+			&& (fSg2042FunctionsLogged & (1 << function)) == 0) {
+			dprintf("P246:SG2042 endpoint function %u vendor %#" B_PRIx32
+				"\n", function, value);
+			fSg2042FunctionsLogged |= 1 << function;
 		}
 	}
 	mutex_unlock(&fLock);
@@ -287,6 +302,10 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 				(word & ~mask) | ((value << shift) & mask));
 		}
 	} else {
+		if (bus == 1 && device != 0) {
+			mutex_unlock(&fLock);
+			return B_ENTRY_NOT_FOUND;
+		}
 		uint32 devfn = (device << 3) | function;
 		uint32 hardwareBus = fStartBus + bus;
 		Sg2042MmioWrite((vuint32*)(fAtRegs + kSg2042AtPciAddress0),

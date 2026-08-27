@@ -176,6 +176,7 @@ protected:
 	bool fIsSg2042{};
 	bool fRootConfigReadLogged{};
 	bool fDownstreamConfigReadLogged{};
+	uint8 fSg2042FunctionsLogged{};
 	uint8 fStartBus{};
 	uint8 fEndBus{0xff};
 
