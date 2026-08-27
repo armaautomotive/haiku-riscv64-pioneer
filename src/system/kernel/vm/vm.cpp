@@ -653,6 +653,8 @@ get_area_page_protection(VMArea* area, addr_t pageAddress)
 		kernelProtection |= B_KERNEL_READ_AREA;
 	if ((protection & B_WRITE_AREA) != 0)
 		kernelProtection |= B_KERNEL_WRITE_AREA;
+	if ((protection & B_EXECUTE_AREA) != 0)
+		kernelProtection |= B_KERNEL_EXECUTE_AREA;
 
 	// If this is a kernel area we return only the kernel flags.
 	if (area->address_space == VMAddressSpace::Kernel())

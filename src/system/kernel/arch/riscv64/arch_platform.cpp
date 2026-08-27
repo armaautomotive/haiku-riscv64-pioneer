@@ -14,6 +14,7 @@
 
 
 uint32 gPlatform;
+bool gRiscvTHeadMae;
 
 void* gFDT = NULL;
 
@@ -60,8 +61,13 @@ arch_platform_init_post_vm(struct kernel_args *kernelArgs)
 		(void)sbi_get_spec_version();
 		(void)sbi_get_impl_id();
 		(void)sbi_get_impl_version();
-		(void)sbi_get_mvendorid();
+		sbiret vendor = sbi_get_mvendorid();
 		(void)sbi_get_marchid();
+		if (vendor.error == SBI_SUCCESS && vendor.value == 0x5b7) {
+			uint64 sxstatus;
+			asm volatile("csrr %0, 0x5c0" : "=r"(sxstatus));
+			gRiscvTHeadMae = (sxstatus & (1UL << 21)) != 0;
+		}
 		debug_early_boot_message("riscv: SBI platform probed\n");
 	}
 	return B_OK;

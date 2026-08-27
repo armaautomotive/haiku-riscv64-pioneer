@@ -262,10 +262,12 @@ KDiskDeviceManager::KDiskDeviceManager()
 
 	RescanDiskSystems();
 
+#if !defined(__riscv)
 	fMediaChecker = spawn_kernel_thread(_CheckMediaStatusDaemon,
 		"media checker", B_NORMAL_PRIORITY, this);
 	if (fMediaChecker >= 0)
 		resume_thread(fMediaChecker);
+#endif
 
 	TRACE("number of disk systems: %" B_PRId32 "\n", CountDiskSystems());
 	// TODO: Watch the disk systems and the relevant directories.
@@ -1027,6 +1029,20 @@ KDiskDeviceManager::StartMonitoring()
 	// do another scan, this will populate the devfs directories
 	InitialDeviceScan();
 
+#if defined(__riscv)
+	// During early RISC-V boot the initial scan runs before the scheduler is
+	// fully settled. Starting this worker in the constructor can make it wait
+	// on fLock while the scan owns it, corrupting the stack-based mutex waiter.
+	// Media monitoring is not needed until the boot volume is mounted, which is
+	// also when StartMonitoring() is called.
+	if (fMediaChecker < 0) {
+		fMediaChecker = spawn_kernel_thread(_CheckMediaStatusDaemon,
+			"media checker", B_NORMAL_PRIORITY, this);
+		if (fMediaChecker >= 0)
+			resume_thread(fMediaChecker);
+	}
+#endif
+
 	// start monitoring the disk systems
 	fDiskSystemWatcher = new(std::nothrow) DiskSystemWatcher(this);
 	if (fDiskSystemWatcher != NULL) {
@@ -1575,4 +1591,3 @@ KDiskDeviceManager::_NotifyDeviceEvent(KDiskDevice* device, int32 event,
 
 	fNotifications->Notify(message, mask);
 }
-

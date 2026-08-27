@@ -82,6 +82,34 @@ TraceKernelPageFault(iframe* frame)
 }
 
 
+static void
+TraceUserPageTable(addr_t address)
+{
+	SatpReg satp {.val = Satp()};
+	Pte* table = (Pte*)VirtFromPhys(satp.ppn * B_PAGE_SIZE);
+	dprintf("P226:UPTE address %#" B_PRIxADDR " satp %#" B_PRIx64,
+		address, satp.val);
+
+	for (int32 level = 2; level >= 0; level--) {
+		Pte pte = table[VirtAdrPte(address, level)];
+		dprintf(" l%" B_PRId32 " %#" B_PRIx64, level, pte.val);
+		if (!pte.isValid || (pte.isRead || pte.isWrite || pte.isExec)) {
+			if (pte.isValid) {
+				phys_addr_t physicalAddress = pte.ppn * B_PAGE_SIZE
+					+ (address & (((addr_t)1
+						<< (pageBits + pteIdxBits * level)) - 1));
+				dprintf(" pa %#" B_PRIxPHYSADDR, physicalAddress);
+			}
+			dprintf("\n");
+			return;
+		}
+		table = (Pte*)VirtFromPhys(pte.ppn * B_PAGE_SIZE);
+	}
+
+	dprintf("\n");
+}
+
+
 //#pragma mark -
 
 static void
@@ -104,6 +132,33 @@ SendSignal(debug_exception_type type, uint32 signalNumber, int32 signalCode,
 			frame != NULL ? frame->cause : 0, frame != NULL ? frame->tval : 0,
 			frame != NULL ? frame->epc : 0, frame != NULL ? frame->sp : 0,
 			frame != NULL ? frame->ra : 0);
+		if (frame != NULL) {
+			dprintf("P223:UREG a0 %#" B_PRIx64 " a1 %#" B_PRIx64
+				" a2 %#" B_PRIx64 " a3 %#" B_PRIx64
+				" a4 %#" B_PRIx64 " a5 %#" B_PRIx64
+				" fp %#" B_PRIx64 " gp %#" B_PRIx64
+				" tp %#" B_PRIx64 "\n",
+				frame->a0, frame->a1, frame->a2, frame->a3, frame->a4,
+				frame->a5, frame->fp, frame->gp, frame->tp);
+
+			uint16 instructions[8];
+			addr_t codeAddress = frame->epc >= 8 ? frame->epc - 8
+				: frame->epc;
+			status_t readStatus = user_memcpy(instructions,
+				(const void*)codeAddress, sizeof(instructions));
+			if (readStatus == B_OK) {
+				dprintf("P223:UCODE %#" B_PRIxADDR
+					" %04x %04x %04x %04x %04x %04x %04x %04x\n",
+					codeAddress, instructions[0], instructions[1],
+					instructions[2], instructions[3], instructions[4],
+					instructions[5], instructions[6], instructions[7]);
+			} else {
+				dprintf("P223:UCODE read failed: %s\n",
+					strerror(readStatus));
+			}
+
+			TraceUserPageTable(frame->a0);
+		}
 
 		// If the thread has a signal handler for the signal, we simply send it
 		// the signal. Otherwise we notify the user debugger first.

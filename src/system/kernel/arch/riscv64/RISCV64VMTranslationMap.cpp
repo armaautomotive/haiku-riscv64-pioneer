@@ -32,6 +32,21 @@
 	panic("not implemented: %s\n", __PRETTY_FUNCTION__)
 
 extern uint32 gPlatform;
+extern bool gRiscvTHeadMae;
+
+
+// T-Head MAEE encodes normal cacheable, bufferable, shareable memory in
+// PTE[62:60]. Standard RISC-V reserves these bits, so only apply them after
+// the T-Head vendor and MAEE-enable CSR have both been detected.
+static const uint64 kTHeadPma = 7ULL << 60;
+
+
+static inline void
+ApplyTHeadPma(Pte& pte)
+{
+	if (gRiscvTHeadMae)
+		pte.val |= kTHeadPma;
+}
 
 
 static Pte
@@ -159,6 +174,7 @@ RISCV64VMTranslationMap::LookupPte(addr_t virtAdr, bool alloc,
 				Pte *pte = &userPageTable[i];
 				pte->ppn = kernelPageTable[i].ppn;
 				pte->isValid = true;
+				ApplyTHeadPma(*pte);
 			}
 		}
 	}
@@ -180,6 +196,7 @@ RISCV64VMTranslationMap::LookupPte(addr_t virtAdr, bool alloc,
 				.isGlobal = fIsKernel,
 				.ppn = ppn
 			};
+			ApplyTHeadPma(newPte);
 			pte->store(newPte);
 		}
 		pte = (std::atomic<Pte>*)VirtFromPhys(B_PAGE_SIZE * pte->load().ppn);
@@ -305,12 +322,18 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 		.isGlobal = fIsKernel,
 		.ppn = physicalAddress / B_PAGE_SIZE
 	};
-	if (gKernelStartup) {
-		// Match the early boot mapper. The SG2042 does not make these new
-		// mappings usable before trap handling is online unless A/D are preset.
+	if (memoryType == 0)
+		ApplyTHeadPma(newPte);
+	const bool bootstrap = gKernelStartup;
+	const bool singleHart = smp_get_num_cpus() < 2;
+	if (bootstrap) {
+		// Match the early boot mapper while VM page accounting is unavailable.
 		newPte.isAccessed = true;
 		newPte.isDirty = true;
-	}
+	} else if (gRiscvTHeadMae)
+		// Linux likewise installs normal T-Head user mappings as accessed, but
+		// leaves Dirty clear until the hardware observes a real write.
+		newPte.isAccessed = true;
 
 	if ((attributes & B_USER_PROTECTION) != 0) {
 		newPte.isUser = true;
@@ -339,7 +362,7 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 	// visible before the bootstrap kernel first accesses the mapping. In
 	// particular, a newly allocated lower-level page table is not reliably
 	// observed without sfence.vma on the boot hart.
-	if (gKernelStartup)
+	if (bootstrap || singleHart)
 		FlushTlbPage(virtualAddress);
 
 	fMapCount++;

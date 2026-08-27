@@ -792,12 +792,18 @@ SdhciBus::SetCardType(card_type type)
 bool
 SdhciBus::PowerOn()
 {
-	if (!fRegisters->present_state.IsCardInserted()) {
+	dprintf("P227:PO0 read present state\n");
+	uint32 presentState = fRegisters->present_state.Bits();
+	dprintf("P227:PO1 present state %#" PRIx32 "\n", presentState);
+	if ((presentState & (1 << 16)) == 0) {
 		TRACE("Card not inserted, not powering on for now\n");
 		return false;
 	}
 
+	dprintf("P227:PO2 read capabilities\n");
 	uint8_t supportedVoltages = fRegisters->capabilities.SupportedVoltages();
+	dprintf("P227:PO3 supported voltages %#x\n", supportedVoltages);
+	dprintf("P227:PO4 set power control\n");
 	if ((supportedVoltages & Capabilities::k3v3) != 0)
 		fRegisters->power_control.SetVoltage(PowerControl::k3v3);
 	else if ((supportedVoltages & Capabilities::k3v0) != 0)
@@ -809,6 +815,8 @@ SdhciBus::PowerOn()
 		ERROR("No voltage is supported\n");
 		return false;
 	}
+	dprintf("P227:PO5 power control %#x\n",
+		fRegisters->power_control.Bits());
 
 	return true;
 }
