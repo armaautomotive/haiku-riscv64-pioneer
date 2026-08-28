@@ -20,6 +20,7 @@
 
 #include <ByteOrder.h>
 #include <util/AutoLock.h>
+#include <vm/vm.h>
 
 #include "xhci.h"
 
@@ -31,6 +32,27 @@
 
 device_manager_info* gDeviceManager;
 static usb_for_controller_interface* gUSB;
+
+
+static status_t
+PrepareDmaArea(area_id area, phys_addr_t physicalAddress, const char* name)
+{
+#if defined(__riscv)
+	// SG2042 advertises coherent PCIe, but until the port configures the
+	// platform coherency path, keep xHCI's controller-owned data structures
+	// non-cacheable. Use the write-through API type because RISC-V reserves
+	// B_UNCACHED_MEMORY for strongly ordered MMIO. This is also a useful
+	// diagnostic: a controller which starts consuming the command ring here
+	// was previously seeing stale cache lines.
+	status_t status = vm_set_area_memory_type(area, physicalAddress,
+		B_WRITE_THROUGH_MEMORY);
+	dprintf("P262:XHCI DMA area %s physical %#" B_PRIxPHYSADDR
+		" non-cacheable status %s\n", name, physicalAddress, strerror(status));
+	return status;
+#else
+	return B_OK;
+#endif
+}
 
 
 #define XHCI_PCI_DEVICE_MODULE_NAME "busses/usb/xhci/pci/driver_v1"
@@ -708,6 +730,8 @@ XHCI::Start()
 		TRACE_ERROR("unable to create the DCBA area\n");
 		return B_ERROR;
 	}
+	if (PrepareDmaArea(fDcbaArea, dmaAddress, "DCBA") != B_OK)
+		return B_ERROR;
 	memset(fDcba, 0, sizeof(*fDcba));
 	memset(fScratchpadArea, 0, sizeof(fScratchpadArea));
 	memset(fScratchpad, 0, sizeof(fScratchpad));
@@ -723,6 +747,10 @@ XHCI::Start()
 			&scratchDmaAddress, B_PAGE_SIZE, "Scratchpad Area");
 		if (fScratchpadArea[i] < B_OK) {
 			TRACE_ERROR("unable to create the scratchpad area\n");
+			return B_ERROR;
+		}
+		if (PrepareDmaArea(fScratchpadArea[i], scratchDmaAddress,
+				"scratchpad") != B_OK) {
 			return B_ERROR;
 		}
 		fDcba->scratchpad[i] = scratchDmaAddress;
@@ -744,6 +772,8 @@ XHCI::Start()
 		delete_area(fDcbaArea);
 		return B_ERROR;
 	}
+	if (PrepareDmaArea(fErstArea, dmaAddress, "ERST and rings") != B_OK)
+		return B_ERROR;
 	fErst = (xhci_erst_element *)addr;
 	memset(fErst, 0, (XHCI_MAX_COMMANDS + XHCI_MAX_EVENTS) * sizeof(xhci_trb)
 		+ sizeof(xhci_erst_element));
@@ -1585,6 +1615,11 @@ XHCI::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 		CleanupDevice(device);
 		return NULL;
 	}
+	if (PrepareDmaArea(device->input_ctx_area, device->input_ctx_addr,
+			"input context") != B_OK) {
+		CleanupDevice(device);
+		return NULL;
+	}
 	if (fContextSizeShift == 1) {
 		// 64-byte contexts have to be page-aligned in order for
 		// _OffsetContextAddr to function properly.
@@ -1674,6 +1709,11 @@ XHCI::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 		CleanupDevice(device);
 		return NULL;
 	}
+	if (PrepareDmaArea(device->device_ctx_area, device->device_ctx_addr,
+			"device context") != B_OK) {
+		CleanupDevice(device);
+		return NULL;
+	}
 	memset(device->device_ctx, 0, sizeof(*device->device_ctx) << fContextSizeShift);
 
 	device->trb_area = fStack->AllocateArea((void **)&device->trbs,
@@ -1681,6 +1721,11 @@ XHCI::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 			* XHCI_ENDPOINT_RING_SIZE, "XHCI endpoint trbs");
 	if (device->trb_area < B_OK) {
 		TRACE_ERROR("unable to create a device trbs area\n");
+		CleanupDevice(device);
+		return NULL;
+	}
+	if (PrepareDmaArea(device->trb_area, device->trb_addr,
+			"endpoint rings") != B_OK) {
 		CleanupDevice(device);
 		return NULL;
 	}

@@ -12,6 +12,7 @@
 #include <SupportDefs.h>
 #include <util/AutoLock.h>
 #include <util/kernel_cpp.h>
+#include <vm/vm.h>
 
 #include "PhysicalMemoryAllocator.h"
 
@@ -91,6 +92,22 @@ PhysicalMemoryAllocator::PhysicalMemoryAllocator(const char *name,
 	}
 
 	fPhysicalBase = physicalEntry.address;
+
+#if defined(__riscv)
+	// Until the platform PCIe coherency path is configured, USB host
+	// controllers must see the same transfer descriptors and buffers as the
+	// CPU. B_WRITE_THROUGH_MEMORY selects ordinary non-cacheable RAM on the
+	// T-Head MMU; B_UNCACHED_MEMORY is reserved for strongly ordered MMIO.
+	status_t memoryTypeStatus = vm_set_area_memory_type(fArea, fPhysicalBase,
+		B_WRITE_THROUGH_MEMORY);
+	dprintf("P263:USB DMA allocator physical %#" B_PRIxPHYSADDR
+		" size %#" B_PRIxSIZE " non-cacheable status %s\n", fPhysicalBase,
+		roundedSize, strerror(memoryTypeStatus));
+	if (memoryTypeStatus != B_OK) {
+		TRACE_ERROR(("PMA: failed to make DMA memory non-cacheable\n"));
+		return;
+	}
+#endif
 
 	fNoMemoryCondition.Init(this, "USB PMA");
 	fStatus = B_OK;
