@@ -269,6 +269,20 @@ DMAResource::CreateBounceBuffer(DMABounceBuffer** _buffer)
 
 	ASSERT(fRestrictions.high_address >= physicalBase + size);
 
+#if defined(__riscv)
+	if ((fRestrictions.flags & DMA_RESTRICTION_FORCE_BOUNCE) != 0) {
+		status_t status = vm_set_area_memory_type(area, physicalBase,
+			B_WRITE_THROUGH_MEMORY);
+		dprintf("P272:DMA forced bounce physical %#" B_PRIxPHYSADDR
+			" size %#" B_PRIxPHYSADDR " non-cacheable status %s\n",
+			physicalBase, size, strerror(status));
+		if (status != B_OK) {
+			delete_area(area);
+			return status;
+		}
+	}
+#endif
+
 	DMABounceBuffer* buffer = new(std::nothrow) DMABounceBuffer;
 	if (buffer == NULL) {
 		delete_area(area);
@@ -581,7 +595,11 @@ DMAResource::TranslateNext(IORequest* request, IOOperation* operation,
 
 		// Check low address: use bounce buffer for range to low address.
 		// Check alignment: if not aligned, use bounce buffer for complete vec.
-		if (base < fRestrictions.low_address) {
+		if ((fRestrictions.flags & DMA_RESTRICTION_FORCE_BOUNCE) != 0) {
+			useBounceBufferSize = length;
+			TRACE("  vec %" B_PRIu32 ": forced bounce buffer: %lu\n", i,
+				useBounceBufferSize);
+		} else if (base < fRestrictions.low_address) {
 			useBounceBufferSize = fRestrictions.low_address - base;
 			TRACE("  vec %" B_PRIu32 ": below low address, using bounce buffer: %lu\n", i,
 				useBounceBufferSize);
@@ -774,7 +792,8 @@ DMAResource::_NeedsBoundsBuffers() const
 	return fRestrictions.alignment > 1
 		|| fRestrictions.low_address != 0
 		|| fRestrictions.high_address != ~(generic_addr_t)0
-		|| fBlockSize > 1;
+		|| fBlockSize > 1
+		|| (fRestrictions.flags & DMA_RESTRICTION_FORCE_BOUNCE) != 0;
 }
 
 

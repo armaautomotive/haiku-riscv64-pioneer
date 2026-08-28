@@ -1036,6 +1036,21 @@ PCI::_FixupDevices(uint8 domain, uint8 bus)
 			int busBehindBridge = ReadConfig(domain, bus, dev, function,
 				PCI_secondary_bus, 1);
 
+#if defined(__riscv)
+			if (domain == 1) {
+				dprintf("P269:PCI bridge %u:%u:%u.%u secondary %u\n", domain,
+					bus, dev, function, busBehindBridge);
+			}
+#endif
+			// A secondary bus must be below its bridge in the hierarchy.  Besides
+			// avoiding an unbounded walk on broken firmware, this prevents a stale
+			// host-controller completion from creating a cyclic device tree.
+			if (busBehindBridge <= bus) {
+				dprintf("PCI: ignoring invalid bridge %u:%u:%u.%u secondary bus %u\n",
+					domain, bus, dev, function, busBehindBridge);
+				continue;
+			}
+
 			TRACE(("PCI: FixupDevices: checking bus %d behind %04x:%04x\n",
 				busBehindBridge, vendorId, deviceId));
 			_FixupDevices(domain, busBehindBridge);
@@ -1208,6 +1223,11 @@ PCI::_DiscoverDevice(PCIBus *bus, uint8 dev, uint8 function)
 		&& headerType == PCI_header_type_PCI_to_PCI_bridge) {
 		uint8 secondaryBus = ReadConfig(bus->domain, bus->bus, dev, function,
 			PCI_secondary_bus, 1);
+		if (secondaryBus <= bus->bus) {
+			dprintf("PCI: ignoring invalid bridge %u:%u:%u.%u secondary bus %u\n",
+				bus->domain, bus->bus, dev, function, secondaryBus);
+			return;
+		}
 		PCIBus *newBus = _CreateBus(newDev, bus->domain, secondaryBus);
 		_DiscoverBus(newBus);
 	}

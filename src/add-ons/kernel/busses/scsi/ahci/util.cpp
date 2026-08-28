@@ -45,6 +45,18 @@ alloc_mem(void **virt, phys_addr_t *phy, size_t size, uint32 protection,
 		ERROR("couldn't get mapping for %s\n", name);
 		return B_ERROR;
 	}
+#if defined(__riscv)
+	// SG2042 PCIe is not coherent with ordinary cached RAM in the current
+	// port. AHCI command lists, received FISes, command tables, and PRDs are
+	// all controller-owned structures and must remain visible to both sides.
+	rv = vm_set_area_memory_type(areaid, pe.address, B_WRITE_THROUGH_MEMORY);
+	TRACE("P277 DMA area %s physical %#" B_PRIxPHYSADDR
+		" non-cacheable status %s\n", name, pe.address, strerror(rv));
+	if (rv != B_OK) {
+		delete_area(areaid);
+		return rv;
+	}
+#endif
 	if (virt)
 		*virt = virtadr;
 	if (phy)
@@ -113,6 +125,31 @@ sg_memcpy(const physical_entry *sgTable, int sgCount, const void *data,
 	if (dataSize != 0)
 		return B_ERROR;
 	return B_OK;
+}
+
+
+status_t
+sg_memcpy_from(void* data, size_t dataSize, const physical_entry* sgTable,
+	int sgCount)
+{
+	if (sgTable == NULL || data == NULL) {
+		if (dataSize == 0)
+			return B_OK;
+		return B_ERROR;
+	}
+
+	for (int i = 0; i < sgCount && dataSize > 0; i++) {
+		size_t size = min_c(dataSize, sgTable[i].size);
+		status_t status = vm_memcpy_from_physical(data, sgTable[i].address,
+			size, false);
+		if (status != B_OK)
+			return status;
+
+		data = (char*)data + size;
+		dataSize -= size;
+	}
+
+	return dataSize == 0 ? B_OK : B_ERROR;
 }
 
 

@@ -1130,6 +1130,13 @@ unsigned int nvme_qpair_poll(struct nvme_qpair *qpair,
 		if (cpl->status.p != qpair->phase)
 			break;
 
+		/*
+		 * The phase tag is the controller's final write for this
+		 * completion. Order that observation before consuming the rest of
+		 * the completion and any DMA payload belonging to the command.
+		 */
+		nvme_dma_rmb();
+
 		tr = &qpair->tr[cpl->cid];
 		if (tr->active) {
 			nvme_qpair_complete_tracker(qpair, tr, cpl, true);
@@ -1238,4 +1245,3 @@ void nvme_qpair_fail(struct nvme_qpair *qpair)
 
 	pthread_mutex_unlock(&qpair->lock);
 }
-

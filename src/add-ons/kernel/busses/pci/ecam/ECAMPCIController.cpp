@@ -268,10 +268,15 @@ ECAMPCIController::ReadSg2042Config(uint8 bus, uint8 device, uint8 function,
 		// A PCIe Root Port is a point-to-point link.  Its immediate secondary
 		// bus can only contain device 0; scanning other device numbers on the
 		// SG2042 Cadence window returns stale completion data and creates
-		// phantom copies of the endpoint.
+		// phantom copies of the endpoint.  Pioneer link 1 is different at bus
+		// 2: that bus contains the downstream ports of its PCIe switch.  Probe
+		// populated branches incrementally during bring-up. Enable the known
+		// NVMe, xHCI, and AHCI branches. Buses below those switch ports are
+		// point-to-point again.
 		if ((bus == 1 && device != 0)
-			|| (fStartBus == 0xc0 && bus == 2 && device != 4)
-			|| (fStartBus == 0xc0 && bus == 4 && device != 0)) {
+			|| (fStartBus == 0xc0 && bus == 2
+				&& device != 0 && device != 4 && device != 12)
+			|| (fStartBus == 0xc0 && bus > 2 && device != 0)) {
 			value = size == 1 ? 0xff : size == 2 ? 0xffff : 0xffffffff;
 			mutex_unlock(&fLock);
 			return B_OK;
@@ -343,8 +348,9 @@ ECAMPCIController::WriteSg2042Config(uint8 bus, uint8 device, uint8 function,
 		}
 	} else {
 		if ((bus == 1 && device != 0)
-			|| (fStartBus == 0xc0 && bus == 2 && device != 4)
-			|| (fStartBus == 0xc0 && bus == 4 && device != 0)) {
+			|| (fStartBus == 0xc0 && bus == 2
+				&& device != 0 && device != 4 && device != 12)
+			|| (fStartBus == 0xc0 && bus > 2 && device != 0)) {
 			mutex_unlock(&fLock);
 			return B_ENTRY_NOT_FOUND;
 		}

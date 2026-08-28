@@ -44,6 +44,16 @@ pci_root_traverse(device_node* node, PCIBus* bus)
 	for (PCIDev* dev = bus->child; dev != NULL; dev = dev->next) {
 		const pci_info& info = dev->info;
 
+#if defined(__riscv)
+		if (info.class_base == PCI_mass_storage) {
+			dprintf("P264:PCI storage %" B_PRIu8 ":%02" B_PRIx8 ":%02" B_PRIx8
+				".%" B_PRIu8 " vendor %#06" B_PRIx16 " device %#06" B_PRIx16
+				" class %02" B_PRIx8 "%02" B_PRIx8 "%02" B_PRIx8 "\n",
+				dev->domain, dev->bus, info.device, info.function, info.vendor_id,
+				info.device_id, info.class_base, info.class_sub, info.class_api);
+		}
+#endif
+
 		device_attr attrs[] = {
 			// info about device
 			{B_DEVICE_BUS, B_STRING_TYPE, {.string = "pci"}},

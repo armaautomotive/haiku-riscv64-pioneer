@@ -57,8 +57,24 @@ nvme_mem_alloc_node(size_t size, size_t align, unsigned int node_id,
 	if (area < 0)
 		return NULL;
 
+	phys_addr_t physicalAddress = nvme_mem_vtophys(address);
 	if (paddr != NULL)
-		*paddr = nvme_mem_vtophys(address);
+		*paddr = physicalAddress;
+
+#if defined(__riscv)
+	// Keep controller-owned queues and PRP lists coherent with the CPU until
+	// the SG2042 PCIe coherency path is configured. As with xHCI,
+	// B_WRITE_THROUGH_MEMORY selects ordinary non-cacheable RAM on RISC-V.
+	status_t memoryTypeStatus = vm_set_area_memory_type(area, physicalAddress,
+		B_WRITE_THROUGH_MEMORY);
+	dprintf("P271:NVMe DMA area physical %#" B_PRIxPHYSADDR
+		" size %#" B_PRIxSIZE " non-cacheable status %s\n", physicalAddress,
+		size, strerror(memoryTypeStatus));
+	if (memoryTypeStatus != B_OK) {
+		delete_area(area);
+		return NULL;
+	}
+#endif
 	return address;
 }
 
@@ -147,6 +163,11 @@ nvme_pcicfg_map_bar(void* devhandle, unsigned int bar, bool read_only,
 {
 	uint64 addr, size;
 	nvme_pcicfg_get_bar_addr_len(devhandle, bar, &addr, &size);
+
+#if defined(__riscv)
+	dprintf("P271:NVMe map BAR %u host %#" B_PRIx64 " size %#" B_PRIx64
+		" read-only %d\n", bar, addr, size, read_only);
+#endif
 
 	area_id area = map_physical_memory("nvme mapped bar", (phys_addr_t)addr, (size_t)size,
 		B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | (read_only ? 0 : B_KERNEL_WRITE_AREA),

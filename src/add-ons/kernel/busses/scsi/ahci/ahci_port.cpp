@@ -47,6 +47,10 @@
 
 #define INQUIRY_BASE_LENGTH 36
 
+#if defined(__riscv)
+#define AHCI_BOUNCE_BUFFER_SIZE (128 * 1024)
+#endif
+
 
 // DATA SET MANAGEMENT command limits
 
@@ -66,6 +70,12 @@ AHCIPort::AHCIPort(AHCIController* controller, int index)
 	fIndex(index),
 	fRegs(&controller->fRegs->port[index]),
 	fArea(-1),
+#if defined(__riscv)
+	fBounceArea(-1),
+	fBounceBuffer(NULL),
+	fBouncePhysical(0),
+	fPrdbcMismatchReported(false),
+#endif
 	fCommandsActive(0),
 	fRequestSem(-1),
 	fResponseSem(-1),
@@ -125,6 +135,20 @@ AHCIPort::Init1()
 	virtAddr += sizeof(command_table);
 	fPRDTable = (prd*)virtAddr;
 	TRACE("PRD table is at %p\n", fPRDTable);
+
+#if defined(__riscv)
+	snprintf(name, sizeof(name), "AHCI port %d data bounce", fIndex);
+	fBounceArea = alloc_mem(&fBounceBuffer, &fBouncePhysical,
+		AHCI_BOUNCE_BUFFER_SIZE, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA,
+		name);
+	if (fBounceArea < B_OK) {
+		delete_area(fArea);
+		fArea = -1;
+		return fBounceArea;
+	}
+	dprintf("ahci: P280 port %d data bounce physical %#" B_PRIxPHYSADDR
+		" size %#x\n", fIndex, fBouncePhysical, AHCI_BOUNCE_BUFFER_SIZE);
+#endif
 
 	fRegs->clb  = LO32(physAddr);
 	fRegs->clbu = HI32(physAddr);
@@ -221,6 +245,10 @@ AHCIPort::Uninit()
 	fRegs->fbu  = 0;
 
 	delete_area(fArea);
+#if defined(__riscv)
+	delete_area(fBounceArea);
+	fBounceArea = -1;
+#endif
 }
 
 
@@ -562,12 +590,19 @@ AHCIPort::WaitForTransfer(int* tfd, bigtime_t timeout)
 		restore_interrupts(cpu);
 
 		result = B_TIMED_OUT;
-	} else if (fError) {
-		*tfd = fRegs->tfd;
-		result = B_ERROR;
-		fError = false;
 	} else {
-		*tfd = fRegs->tfd;
+#if defined(__riscv)
+		// Order the observed controller completion before consuming its FIS,
+		// command status, or DMA payload.
+		memory_read_barrier();
+#endif
+		if (fError) {
+			*tfd = fRegs->tfd;
+			result = B_ERROR;
+			fError = false;
+		} else {
+			*tfd = fRegs->tfd;
+		}
 	}
 	return result;
 }
@@ -1186,7 +1221,42 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 	StartTransfer();
 
 	int prdEntrys;
+	size_t dataSize = 0;
+	if (request->CCB() != NULL)
+		dataSize = request->CCB()->data_length;
+	else
+		dataSize = request->Size();
 
+#if defined(__riscv)
+	if (dataSize > AHCI_BOUNCE_BUFFER_SIZE) {
+		ERROR("P280 port %d request size %lu exceeds data bounce buffer\n",
+			fIndex, dataSize);
+		FinishTransfer();
+		request->Abort();
+		return;
+	}
+	if (dataSize > 0) {
+		if (isWrite) {
+			status_t copyStatus;
+			if (request->CCB() != NULL) {
+				copyStatus = sg_memcpy_from(fBounceBuffer, dataSize,
+					request->CCB()->sg_list, request->CCB()->sg_count);
+			} else {
+				memcpy(fBounceBuffer, request->Data(), dataSize);
+				copyStatus = B_OK;
+			}
+			if (copyStatus != B_OK) {
+				FinishTransfer();
+				request->Abort();
+				return;
+			}
+			memory_write_barrier();
+		}
+		FillPrdTable(fPRDTable, &prdEntrys, PRD_TABLE_ENTRY_COUNT,
+			fBounceBuffer, dataSize);
+	} else
+		prdEntrys = 0;
+#else
 	if (request->CCB() && request->CCB()->data_length) {
 		FillPrdTable(fPRDTable, &prdEntrys, PRD_TABLE_ENTRY_COUNT,
 			request->CCB()->sg_list, request->CCB()->sg_count,
@@ -1196,6 +1266,7 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 			request->Data(), request->Size());
 	} else
 		prdEntrys = 0;
+#endif
 
 	FLOW("prdEntrys %d\n", prdEntrys);
 
@@ -1265,6 +1336,32 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 	}
 
 	size_t bytesTransfered = fCommandList->prdbc;
+
+#if defined(__riscv)
+	if (!isWrite && status == B_OK && dataSize > 0) {
+		// PRDBC is controller-owned and can remain stale in the cached command
+		// list mapping on the non-coherent SG2042. A successfully completed ATA
+		// DMA command transfers its requested length; ATAPI may legitimately be
+		// short, so retain its reported count.
+		if (!request->IsATAPI()) {
+			if (bytesTransfered != dataSize && !fPrdbcMismatchReported) {
+				dprintf("ahci: P281 port %d stale PRDBC %lu, expected %lu; "
+					"using completed ATA DMA length\n", fIndex,
+					bytesTransfered, dataSize);
+				fPrdbcMismatchReported = true;
+			}
+			bytesTransfered = dataSize;
+		} else
+			bytesTransfered = min_c(bytesTransfered, dataSize);
+		if (request->CCB() != NULL) {
+			sg_memcpy(request->CCB()->sg_list, request->CCB()->sg_count,
+				fBounceBuffer, bytesTransfered);
+		} else
+			memcpy(request->Data(), fBounceBuffer, bytesTransfered);
+	}
+	if (isWrite && status == B_OK && !request->IsATAPI())
+		bytesTransfered = dataSize;
+#endif
 
 	FinishTransfer();
 

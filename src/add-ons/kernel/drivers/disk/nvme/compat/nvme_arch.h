@@ -25,6 +25,15 @@
 
 
 #define nvme_wmb() memory_write_barrier()
+#if defined(__riscv)
+// NVMe completions and payloads both live in ordinary non-cacheable RAM on
+// SG2042. The RISC-V memory_read_barrier() orders device-input reads, not a
+// completion-queue RAM load followed by a payload RAM load, so use a full
+// I/O-and-memory fence when consuming DMA completed by the controller.
+#define nvme_dma_rmb() memory_full_barrier()
+#else
+#define nvme_dma_rmb() memory_read_barrier()
+#endif
 
 
 typedef uint8 __u8;

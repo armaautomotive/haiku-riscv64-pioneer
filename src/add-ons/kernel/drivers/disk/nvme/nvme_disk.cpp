@@ -193,6 +193,15 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	pci->get_pci_info(pcidev, &info->info);
 	sDeviceManager->put_node(parent);
 
+#if defined(__riscv)
+	TRACE_ALWAYS("P271 init PCI %u:%u:%u BAR0 host %#" B_PRIx32
+		" PCI %#" B_PRIx32 " size %#" B_PRIx32 "\n", info->info.bus,
+		info->info.device, info->info.function,
+		info->info.u.h0.base_registers[0],
+		info->info.u.h0.base_registers_pci[0],
+		info->info.u.h0.base_register_sizes[0]);
+#endif
+
 	// construct the libnvme pci_device struct
 	pci_device* device = new pci_device;
 	device->vendor_id = info->info.vendor_id;
@@ -213,11 +222,13 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	pci->write_pci_config(pcidev, PCI_command, 2, command);
 
 	// open the controller
+	TRACE_ALWAYS("P271 opening controller\n");
 	info->ctrlr = nvme_ctrlr_open(device, NULL);
 	if (info->ctrlr == NULL) {
 		TRACE_ERROR("failed to open the controller!\n");
 		return B_ERROR;
 	}
+	TRACE_ALWAYS("P271 controller open complete\n");
 
 	struct nvme_ctrlr_stat* cstat = (struct nvme_ctrlr_stat*)malloc(sizeof(struct nvme_ctrlr_stat));
 	if (cstat == NULL)
@@ -404,6 +415,13 @@ nvme_disk_init_device(void* _info, void** _cookie)
 		// of the block size.
 	restrictions.max_segment_count = (NVME_MAX_SGL_DESCRIPTORS / 2);
 	restrictions.max_transfer_size = cstat->max_xfer_size;
+#if defined(__riscv)
+	// SG2042 PCIe DMA is not coherent with ordinary cached request pages in
+	// the current port. Route payload I/O through the non-cacheable bounce
+	// buffers provided by DMAResource until platform cache maintenance exists.
+	restrictions.flags |= DMA_RESTRICTION_FORCE_BOUNCE;
+	TRACE_ALWAYS("P272 forcing non-cacheable data bounce buffers\n");
+#endif
 	info->max_io_blocks = cstat->max_xfer_size / nsstat.sector_size;
 
 	err = info->dma_resource.Init(restrictions, B_PAGE_SIZE, buffers, buffers);
@@ -515,6 +533,14 @@ static void
 io_finished_callback(status_t* status, const struct nvme_cpl* cpl)
 {
 	*status = nvme_cpl_is_error(cpl) ? B_IO_ERROR : B_OK;
+
+	static int32 sCompletionDiagnosticCount = 0;
+	int32 diagnosticId = atomic_add(&sCompletionDiagnosticCount, 1);
+	if (diagnosticId < 16) {
+		TRACE_ALWAYS("P274 completion #%" B_PRId32 " sct %u sc %u sqid %u cid %u"
+			" status %s\n", diagnosticId, cpl->status.sct, cpl->status.sc,
+			cpl->sqid, cpl->cid, strerror(*status));
+	}
 }
 
 
@@ -563,6 +589,7 @@ await_status(nvme_disk_driver_info* info, struct nvme_qpair* qpair, status_t& st
 
 struct nvme_io_request {
 	status_t status;
+	int32 diagnostic_id;
 
 	bool write;
 
@@ -614,9 +641,23 @@ ior_next_sge(nvme_io_request* request, uint64_t* address, uint32_t* length)
 static status_t
 do_nvme_io_request(nvme_disk_driver_info* info, nvme_io_request* request)
 {
+	static int32 sSubmissionDiagnosticCount = 0;
+	int32 diagnosticId = atomic_add(&sSubmissionDiagnosticCount, 1);
+	request->diagnostic_id = diagnosticId < 16 ? diagnosticId : -1;
 	request->status = EINPROGRESS;
 
 	qpair_info* qpinfo = get_qpair(info);
+	if (request->diagnostic_id >= 0) {
+		TRACE_ALWAYS("P274 I/O #%" B_PRId32 " submit %s LBA %" B_PRIdOFF
+			" blocks %" B_PRIuSIZE " vecs %" B_PRId32 " first %#" B_PRIx64
+			"/%#" B_PRIx64 " polling %" B_PRId32 "\n",
+			request->diagnostic_id, request->write ? "write" : "read",
+			request->lba_start, request->lba_count, request->iovec_count,
+			request->iovec_count > 0 ? (uint64)request->iovecs[0].address : 0,
+			request->iovec_count > 0 ? (uint64)request->iovecs[0].size : 0,
+			info->polling);
+	}
+
 	int ret = -1;
 	if (request->write) {
 		ret = nvme_ns_writev(info->ns, qpinfo->qpair, request->lba_start,
@@ -639,6 +680,11 @@ do_nvme_io_request(nvme_disk_driver_info* info, nvme_io_request* request)
 	}
 
 	await_status(info, qpinfo->qpair, request->status);
+	if (request->diagnostic_id >= 0) {
+		TRACE_ALWAYS("P274 I/O #%" B_PRId32 " wait done status %s polling %"
+			B_PRId32 "\n", request->diagnostic_id, strerror(request->status),
+			info->polling);
+	}
 
 	if (request->status != B_OK) {
 		TRACE_ERROR("%s at LBA %" B_PRIdOFF " of %" B_PRIuSIZE
@@ -691,6 +737,21 @@ nvme_disk_bounced_io(nvme_disk_handle* handle, io_request* request)
 			nvme_request.iovec_count = operation.VecCount();
 
 			status = do_nvme_io_request(handle->info, &nvme_request);
+			if (status == B_OK && !nvme_request.write
+				&& nvme_request.diagnostic_id >= 0 && operation.VecCount() > 0
+				&& operation.Length() >= 16) {
+				DMABuffer* dmaBuffer = operation.Buffer();
+				uint64 physicalOffset = operation.Vecs()[0].base
+					- dmaBuffer->PhysicalBounceBufferAddress();
+				const uint8* data = (const uint8*)dmaBuffer->BounceBufferAddress()
+					+ physicalOffset;
+				TRACE_ALWAYS("P274 I/O #%" B_PRId32
+					" data %02x %02x %02x %02x %02x %02x %02x %02x"
+					" %02x %02x %02x %02x %02x %02x %02x %02x\n",
+					nvme_request.diagnostic_id, data[0], data[1], data[2], data[3],
+					data[4], data[5], data[6], data[7], data[8], data[9],
+					data[10], data[11], data[12], data[13], data[14], data[15]);
+			}
 
 			operation.SetStatus(status,
 				status == B_OK ? operation.Length() : 0);
@@ -796,6 +857,15 @@ do_io(nvme_disk_handle* handle, io_request* request)
 	// See if we need to bounce anything other than the first or last vec.
 	const size_t block_size = handle->info->block_size;
 	bool bounceAll = (nvme_request.iovecs == NULL);
+#if defined(__riscv)
+	// DMAResource is configured with DMA_RESTRICTION_FORCE_BOUNCE above, but
+	// requests that satisfy the NVMe driver's own alignment checks otherwise
+	// bypass it. In particular, the disk scanner's small GPT reads took this
+	// direct path into cached pages on the non-coherent SG2042 PCIe fabric.
+	// Send every payload through DMAResource so its non-cacheable bounce
+	// buffers are used for small and large requests alike.
+	bounceAll = true;
+#endif
 	for (int32 i = 1; !bounceAll && i < (nvme_request.iovec_count - 1); i++) {
 		if ((nvme_request.iovecs[i].address % B_PAGE_SIZE) != 0)
 			bounceAll = true;
@@ -1153,6 +1223,11 @@ nvme_disk_supports_device(device_node *parent)
 
 	if (subClass != PCI_nvm)
 		return 0.0f;
+
+#if defined(__riscv)
+	TRACE_ALWAYS("P264 matched PCI mass-storage class %#x subclass %#x\n",
+		baseClass, subClass);
+#endif
 
 	TRACE("NVMe device found!\n");
 	return 1.0f;

@@ -1995,7 +1995,6 @@ device_node::Probe(const char* devicePath, uint32 updateCycle)
 	status_t status = InitDriver();
 	if (status < B_OK)
 		return status;
-
 	MethodDeleter<device_node, bool, &device_node::UninitDriver> uninit(this);
 
 	if ((fFlags & B_FIND_CHILD_ON_DEMAND) != 0) {

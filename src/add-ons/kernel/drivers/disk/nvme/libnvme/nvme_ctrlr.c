@@ -1082,6 +1082,7 @@ nvme_ctrlr_attach(struct pci_device *pci_dev,
 	TAILQ_INIT(&ctrlr->active_io_qpairs);
 	pthread_mutex_init(&ctrlr->lock, NULL);
 	ctrlr->quirks = nvme_ctrlr_get_quirks(pci_dev);
+	nvme_info("P271 controller handle initialized\n");
 
 	nvme_ctrlr_set_state(ctrlr,
 			     NVME_CTRLR_STATE_INIT,
@@ -1094,6 +1095,7 @@ nvme_ctrlr_attach(struct pci_device *pci_dev,
 		free(ctrlr);
 		return NULL;
 	}
+	nvme_info("P271 controller BAR mapped\n");
 
 	/* Enable PCI busmaster and disable INTx */
 	nvme_pcicfg_read32(pci_dev, &cmd_reg, 4);
@@ -1105,6 +1107,7 @@ nvme_ctrlr_attach(struct pci_device *pci_dev,
 	 * but we want multiples of 4, so drop the + 2.
 	 */
 	cap.raw = nvme_reg_mmio_read_8(ctrlr, cap.raw);
+	nvme_info("P271 CAP read %#llx\n", (unsigned long long)cap.raw);
 	ctrlr->doorbell_stride_u32 = 1 << cap.bits.dstrd;
 	ctrlr->min_page_size = 1 << (12 + cap.bits.mpsmin);
 
@@ -1118,10 +1121,12 @@ nvme_ctrlr_attach(struct pci_device *pci_dev,
 		nvme_err("Initialize admin queue pair failed\n");
 		goto err;
 	}
+	nvme_info("P271 admin queue memory constructed\n");
 
 	/* Set options and then initialize */
 	nvme_ctrlr_set_opts(ctrlr, opts);
 	do {
+		nvme_info("P271 controller init state %d\n", ctrlr->state);
 		ret = nvme_ctrlr_init(ctrlr);
 		if (ret)
 			goto err;

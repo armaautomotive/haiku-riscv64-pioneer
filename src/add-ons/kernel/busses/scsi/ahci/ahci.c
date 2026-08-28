@@ -231,6 +231,13 @@ ahci_supports_device(device_node *parent)
 				false) < B_OK)
 		return 0.0f;
 
+#if defined(__riscv)
+	if (baseClass == PCI_mass_storage) {
+		dprintf("ahci: P264 probe vendor %#06x device %#06x class %#x/%#x/%#x\n",
+			vendorID, deviceID, baseClass, subClass, classAPI);
+	}
+#endif
+
 	if (get_device_info(vendorID, deviceID, &name, NULL) < B_OK) {
 		if (baseClass != PCI_mass_storage || subClass != PCI_sata
 			|| classAPI != PCI_sata_ahci)
@@ -262,6 +269,22 @@ ahci_supports_device(device_node *parent)
 static status_t
 ahci_register_device(device_node *parent)
 {
+	uint16 vendorID = 0xffff;
+	uint16 deviceID = 0xffff;
+	uint64 dmaHighAddress = 0x100000000LL;
+	gDeviceManager->get_attr_uint16(parent, B_DEVICE_VENDOR_ID, &vendorID,
+		false);
+	gDeviceManager->get_attr_uint16(parent, B_DEVICE_ID, &deviceID, false);
+
+	// The JMB585 advertises CAP.S64A and accepts 64-bit PRD addresses. Avoid
+	// exhausting scarce low physical memory on systems with large RAM.
+	if (vendorID == PCI_VENDOR_JMICRON && deviceID == 0x0585) {
+		dmaHighAddress = UINT64_MAX;
+#if defined(__riscv)
+		dprintf("ahci: P279 JMB585 enabling 64-bit data DMA\n");
+#endif
+	}
+
 	device_attr attrs[] = {
 		{ SCSI_DEVICE_MAX_TARGET_COUNT, B_UINT32_TYPE,
 			{ .ui32 = 33 }},
@@ -277,10 +300,8 @@ ahci_register_device(device_node *parent)
 		{ B_DMA_MAX_SEGMENT_BLOCKS, B_UINT32_TYPE, { .ui32 = 0x10000 }},
 		{ B_DMA_MAX_SEGMENT_COUNT, B_UINT32_TYPE,
 			{ .ui32 = 32 /* whatever... */ }},
-		{ B_DMA_HIGH_ADDRESS, B_UINT64_TYPE, { .ui64 = 0x100000000LL }},
-			// TODO: We don't know at this point whether 64 bit addressing is
-			// supported. That's indicated by a capability flag. Play it safe
-			// for now.
+		{ B_DMA_HIGH_ADDRESS, B_UINT64_TYPE, { .ui64 = dmaHighAddress }},
+			// Default to 32-bit DMA when the controller capability is unknown.
 		{ NULL }
 	};
 

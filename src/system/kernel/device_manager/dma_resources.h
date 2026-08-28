@@ -21,6 +21,14 @@ struct IOOperation;
 struct IORequest;
 
 
+enum {
+	// Route every transfer through DMAResource's bounce buffer. This is useful
+	// for devices on a non-coherent interconnect when the architecture does not
+	// yet provide cache maintenance for arbitrary request pages.
+	DMA_RESTRICTION_FORCE_BOUNCE = 0x00000001
+};
+
+
 struct dma_restrictions {
 	generic_addr_t	low_address;
 	generic_addr_t	high_address;

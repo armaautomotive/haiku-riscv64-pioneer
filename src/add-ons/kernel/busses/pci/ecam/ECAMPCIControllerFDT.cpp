@@ -433,11 +433,11 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			fRegsPhysical);
 
 		if (fStartBus == 0xc0) {
-			// Pioneer domain 3 contains an ASMedia switch and the xHCI controller
-			// used by the external keyboard and mouse.  Firmware leaves this tree
-			// unassigned for Haiku, so establish the known bridge routing before
-			// the PCI bus manager discovers it.  Bus values passed here are local;
-			// the config accessor translates them to c0/c1/c2/c4 on the wire.
+			// Pioneer domain 3 contains an ASMedia switch, NVMe, and the xHCI
+			// controller used by the external keyboard and mouse.  Firmware leaves
+			// parts of this tree unassigned for Haiku, so establish the known bridge
+			// routing before the PCI bus manager discovers it.  Bus values passed
+			// here are local; the config accessor adds the c0 hardware bus base.
 			WriteConfig(0, 0, 0, PCI_primary_bus, 4, 0x000a0100);
 			WriteConfig(0, 0, 0, PCI_io_base, 4, 0x00002101);
 			WriteConfig(0, 0, 0, PCI_memory_base, 4, 0xf040f000);
@@ -452,6 +452,20 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(1, 0, 0, PCI_io_base_upper16, 4, 0x00c000c0);
 			WriteConfig(1, 0, 0, PCI_command, 2, 0x0007);
 
+			// Switch port 0 leads to the NVMe controller on bus 3.  Its 16 KiB
+			// BAR resides at PCI 0xf0020000 (host 0x4cf0020000), inside a 1 MiB
+			// bridge memory window matching the working Linux configuration.
+			WriteConfig(2, 0, 0, PCI_primary_bus, 4, 0x00030302);
+			WriteConfig(2, 0, 0, PCI_io_base, 4, 0x000001f1);
+			WriteConfig(2, 0, 0, PCI_memory_base, 4, 0xf000f000);
+			WriteConfig(2, 0, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(2, 0, 0, PCI_command, 2, 0x0006);
+
+			WriteConfig(3, 0, 0, PCI_base_registers, 4, 0xf0020004);
+			WriteConfig(3, 0, 0, PCI_base_registers + 4, 4, 0);
+			WriteConfig(3, 0, 0, PCI_rom_base, 4, 0xf0000000);
+			WriteConfig(3, 0, 0, PCI_command, 2, 0x0406);
+
 			// Keep all three bus numbers local here.  The config accessor
 			// translates 2/4/4 to the hardware's c2/c4/c4 numbering.
 			WriteConfig(2, 4, 0, PCI_primary_bus, 4, 0x00040402);
@@ -463,7 +477,22 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(4, 0, 0, PCI_base_registers, 4, 0xf0100004);
 			WriteConfig(4, 0, 0, PCI_base_registers + 4, 4, 0);
 			WriteConfig(4, 0, 0, PCI_command, 2, 0x0406);
-			dprintf("P252:SG2042 Pioneer xHCI-only topology configured on local bus 4\n");
+
+			// Switch port 12 leads to the JMicron JMB585 AHCI controller on
+			// bus 8. Linux assigns a 1 MiB bridge window at PCI 0xf0300000
+			// and the controller's 8 KiB ABAR at PCI 0xf0310000 (host
+			// 0x4cf0310000).
+			WriteConfig(2, 12, 0, PCI_primary_bus, 4, 0x00080802);
+			WriteConfig(2, 12, 0, PCI_io_base, 4, 0x000001f1);
+			WriteConfig(2, 12, 0, PCI_memory_base, 4, 0xf030f030);
+			WriteConfig(2, 12, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(2, 12, 0, PCI_command, 2, 0x0006);
+
+			WriteConfig(8, 0, 0, PCI_base_registers + 5 * 4, 4, 0xf0310000);
+			WriteConfig(8, 0, 0, PCI_rom_base, 4, 0xf0300000);
+			WriteConfig(8, 0, 0, PCI_command, 2, 0x0406);
+
+			dprintf("P277:SG2042 Pioneer NVMe, xHCI, and AHCI topology configured\n");
 			// Kernel add-ons do not initialize C++ objects in static storage.
 			// Construct this polymorphic object explicitly so its virtual table is
 			// valid when generic_msi calls AllocateVectors().

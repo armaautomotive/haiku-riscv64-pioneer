@@ -65,8 +65,14 @@ private:
 inline void
 AHCIController::FlushPostedWrites()
 {
+#if defined(__riscv)
+	memory_write_barrier();
+#endif
 	volatile uint32 dummy = fRegs->ghc;
 	dummy = dummy;
+#if defined(__riscv)
+	memory_read_barrier();
+#endif
 }
 
 #endif	// _AHCI_CONTROLLER_H
