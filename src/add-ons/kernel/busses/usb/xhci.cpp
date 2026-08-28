@@ -3259,17 +3259,34 @@ XHCI::FinishTransfers()
 }
 
 
+static inline void
+XhciIoFence()
+{
+#if defined(__riscv)
+	// volatile orders the compiler, but not transactions observed by a PCIe
+	// device.  In particular, xHCI latches a 64-bit pointer when the high
+	// dword is written, so the preceding low-dword write must reach it first.
+	memory_full_barrier();
+#endif
+}
+
+
 inline void
 XHCI::WriteOpReg(uint32 reg, uint32 value)
 {
+	XhciIoFence();
 	*(volatile uint32 *)(fRegisters + fOperationalRegisterOffset + reg) = value;
+	XhciIoFence();
 }
 
 
 inline uint32
 XHCI::ReadOpReg(uint32 reg)
 {
-	return *(volatile uint32 *)(fRegisters + fOperationalRegisterOffset + reg);
+	XhciIoFence();
+	uint32 value = *(volatile uint32 *)(fRegisters + fOperationalRegisterOffset + reg);
+	XhciIoFence();
+	return value;
 }
 
 
@@ -3299,42 +3316,57 @@ XHCI::WaitOpBits(uint32 reg, uint32 mask, uint32 expected)
 inline uint32
 XHCI::ReadCapReg32(uint32 reg)
 {
-	return *(volatile uint32 *)(fRegisters + fCapabilityRegisterOffset + reg);
+	XhciIoFence();
+	uint32 value = *(volatile uint32 *)(fRegisters + fCapabilityRegisterOffset + reg);
+	XhciIoFence();
+	return value;
 }
 
 
 inline void
 XHCI::WriteCapReg32(uint32 reg, uint32 value)
 {
+	XhciIoFence();
 	*(volatile uint32 *)(fRegisters + fCapabilityRegisterOffset + reg) = value;
+	XhciIoFence();
 }
 
 
 inline uint32
 XHCI::ReadRunReg32(uint32 reg)
 {
-	return *(volatile uint32 *)(fRegisters + fRuntimeRegisterOffset + reg);
+	XhciIoFence();
+	uint32 value = *(volatile uint32 *)(fRegisters + fRuntimeRegisterOffset + reg);
+	XhciIoFence();
+	return value;
 }
 
 
 inline void
 XHCI::WriteRunReg32(uint32 reg, uint32 value)
 {
+	XhciIoFence();
 	*(volatile uint32 *)(fRegisters + fRuntimeRegisterOffset + reg) = value;
+	XhciIoFence();
 }
 
 
 inline uint32
 XHCI::ReadDoorReg32(uint32 reg)
 {
-	return *(volatile uint32 *)(fRegisters + fDoorbellRegisterOffset + reg);
+	XhciIoFence();
+	uint32 value = *(volatile uint32 *)(fRegisters + fDoorbellRegisterOffset + reg);
+	XhciIoFence();
+	return value;
 }
 
 
 inline void
 XHCI::WriteDoorReg32(uint32 reg, uint32 value)
 {
+	XhciIoFence();
 	*(volatile uint32 *)(fRegisters + fDoorbellRegisterOffset + reg) = value;
+	XhciIoFence();
 }
 
 
