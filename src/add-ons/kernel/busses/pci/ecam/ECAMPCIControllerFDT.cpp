@@ -12,6 +12,7 @@
 #include <util/AutoLock.h>
 
 #include <string.h>
+#include <new>
 
 
 static const uint64 kSg2042RootPortConfigOffset = 0x00200000;
@@ -30,8 +31,12 @@ static const uint32 kCadenceOutboundCpuAddress1 = 0x1c;
 static const uint32 kCadenceDescriptorMemory = 0x2;
 static const uint32 kCadenceDescriptorIo = 0x6;
 static const uint32 kCadenceDescriptorHardcodedRequester = 1 << 23;
+static const uint32 kCadenceInboundNoBarAddress0 = 0x0810;
+static const uint32 kCadenceInboundNoBarAddress1 = 0x0814;
+static const uint32 kSg2042InboundAddressBits = 48;
 
 static const phys_addr_t kSg2042TopIntcPage = 0x7030010000;
+static const uint32 kSg2042TopIntcStatusOffset = 0x2e0;
 static const uint32 kSg2042TopIntcClearOffset = 0x304;
 static const uint64 kSg2042TopIntcSetAddress = 0x7030010300;
 static const int32 kSg2042TopIntcPlicBase = 64;
@@ -67,8 +72,14 @@ public:
 
 		fInitialized = true;
 		msi_set_interface(this);
-		dprintf("P249:SG2042 MSI vectors %" B_PRId32 "-%" B_PRId32
-			" route through PLIC 64-95\n", fMsiStartIrq,
+		fPollThread = spawn_kernel_thread(PollThread, "SG2042 MSI status poll",
+			B_REAL_TIME_DISPLAY_PRIORITY, this);
+		if (fPollThread < B_OK)
+			return fPollThread;
+		resume_thread(fPollThread);
+		dprintf("P253:SG2042 MSI interface %p vtable %p, vectors %" B_PRId32
+			"-%" B_PRId32 " route through PLIC 64-95\n", this,
+			*(void**)this, fMsiStartIrq,
 			fMsiStartIrq + kSg2042TopIntcVectorCount - 1);
 		return B_OK;
 	}
@@ -113,10 +124,48 @@ private:
 	static int32 InterruptReceived(void* argument)
 	{
 		InterruptContext* context = (InterruptContext*)argument;
+		uint32 mask = 1U << context->index;
+		uint32 status = Sg2042MmioRead((vuint32*)(context->controller->fRegs
+			+ kSg2042TopIntcStatusOffset));
+		if ((status & mask) == 0)
+			return B_UNHANDLED_INTERRUPT;
 		Sg2042MmioWrite((vuint32*)(context->controller->fRegs
-			+ kSg2042TopIntcClearOffset), 1U << context->index);
+			+ kSg2042TopIntcClearOffset), mask);
+		if (context->controller->fPhysicalInterrupts++ < 8) {
+			dprintf("P254:SG2042 MSI physical PLIC index %" B_PRIu32
+				" status %#" B_PRIx32 "\n", context->index, status);
+		}
 		return io_interrupt_handler(context->controller->fMsiStartIrq
 			+ context->index, false);
+	}
+
+	static int32 PollThread(void* argument)
+	{
+		Sg2042MsiInterruptController* controller
+			= (Sg2042MsiInterruptController*)argument;
+		while (true) {
+			uint32 status = Sg2042MmioRead((vuint32*)(controller->fRegs
+				+ kSg2042TopIntcStatusOffset));
+			while (status != 0) {
+				uint32 index = __builtin_ctz(status);
+				uint32 mask = 1U << index;
+				Sg2042MmioWrite((vuint32*)(controller->fRegs
+					+ kSg2042TopIntcClearOffset), mask);
+				uint32 statusAfterClear = Sg2042MmioRead(
+					(vuint32*)(controller->fRegs + kSg2042TopIntcStatusOffset));
+				if (controller->fPolledInterrupts++ < 8) {
+					dprintf("P258:SG2042 MSI poll index %" B_PRIu32
+						" status %#" B_PRIx32 " after-clear %#" B_PRIx32 "\n",
+						index, status, statusAfterClear);
+				}
+				cpu_status interruptState = disable_interrupts();
+				io_interrupt_handler(controller->fMsiStartIrq + index, false);
+				restore_interrupts(interruptState);
+				status &= ~mask;
+			}
+			snooze(1000);
+		}
+		return B_OK;
 	}
 
 	struct mutex fLock = MUTEX_INITIALIZER("SG2042 MSI allocation");
@@ -125,11 +174,14 @@ private:
 	int32 fMsiStartIrq{-1};
 	uint32 fAllocated{};
 	InterruptContext fInterrupts[kSg2042TopIntcVectorCount]{};
+	thread_id fPollThread{-1};
+	uint32 fPhysicalInterrupts{};
+	uint32 fPolledInterrupts{};
 	bool fInitialized{};
 };
 
 
-static Sg2042MsiInterruptController sSg2042MsiController;
+static Sg2042MsiInterruptController* sSg2042MsiController;
 
 
 static uint32
@@ -296,6 +348,23 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		CHECK_RET(fAtRegsArea.Get());
 		dprintf("P233:SG2042 translation page mapped\n");
 
+		// Match Sophgo's Cadence host initialization: Root Port BAR0 and BAR1
+		// are disabled, so all endpoint DMA and MSI writes depend on the
+		// no-BAR-match inbound translation entry.  Firmware state is not a
+		// stable interface and may leave this entry disabled after a cold boot.
+		uint32 oldInboundLow = Sg2042MmioRead(
+			(vuint32*)(fAtRegs + kCadenceInboundNoBarAddress0));
+		uint32 oldInboundHigh = Sg2042MmioRead(
+			(vuint32*)(fAtRegs + kCadenceInboundNoBarAddress1));
+		Sg2042MmioWrite((vuint32*)(fAtRegs + kCadenceInboundNoBarAddress0),
+			(kSg2042InboundAddressBits - 1) & 0x3f);
+		Sg2042MmioWrite((vuint32*)(fAtRegs + kCadenceInboundNoBarAddress1),
+			(uint32)0);
+		dprintf("P255:SG2042 inbound no-BAR %#" B_PRIx32 ":%#" B_PRIx32
+			" -> 0:%#" B_PRIx32 " (%" B_PRIu32 " bits)\n", oldInboundHigh,
+			oldInboundLow, (kSg2042InboundAddressBits - 1) & 0x3f,
+			kSg2042InboundAddressBits);
+
 		// Region zero is the dynamically selected configuration aperture.  Map
 		// every PCI host range in the following Cadence outbound regions so BAR
 		// accesses are translated just as they are by the Linux host driver.
@@ -383,7 +452,9 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(1, 0, 0, PCI_io_base_upper16, 4, 0x00c000c0);
 			WriteConfig(1, 0, 0, PCI_command, 2, 0x0007);
 
-			WriteConfig(2, 4, 0, PCI_primary_bus, 4, 0x00c40402);
+			// Keep all three bus numbers local here.  The config accessor
+			// translates 2/4/4 to the hardware's c2/c4/c4 numbering.
+			WriteConfig(2, 4, 0, PCI_primary_bus, 4, 0x00040402);
 			WriteConfig(2, 4, 0, PCI_io_base, 4, 0x000001f1);
 			WriteConfig(2, 4, 0, PCI_memory_base, 4, 0xf010f010);
 			WriteConfig(2, 4, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
@@ -392,8 +463,17 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(4, 0, 0, PCI_base_registers, 4, 0xf0100004);
 			WriteConfig(4, 0, 0, PCI_base_registers + 4, 4, 0);
 			WriteConfig(4, 0, 0, PCI_command, 2, 0x0406);
-			dprintf("P249:SG2042 Pioneer xHCI topology configured on local bus 4\n");
-			CHECK_RET(sSg2042MsiController.Init());
+			dprintf("P252:SG2042 Pioneer xHCI-only topology configured on local bus 4\n");
+			// Kernel add-ons do not initialize C++ objects in static storage.
+			// Construct this polymorphic object explicitly so its virtual table is
+			// valid when generic_msi calls AllocateVectors().
+			if (sSg2042MsiController == NULL) {
+				sSg2042MsiController
+					= new(std::nothrow) Sg2042MsiInterruptController();
+				if (sSg2042MsiController == NULL)
+					return B_NO_MEMORY;
+			}
+			CHECK_RET(sSg2042MsiController->Init());
 		}
 	}
 

@@ -2597,6 +2597,10 @@ XHCI::Ring(uint8 slot, uint8 endpoint)
 	if (slot > fSlotCount || endpoint >= XHCI_MAX_ENDPOINTS)
 		panic("Ring() invalid slot or endpoint\n");
 
+	// A device must not observe the MMIO doorbell before the command or
+	// transfer TRBs written to coherent memory.  Strongly ordered platforms
+	// hid the missing barrier, but RISC-V may otherwise fetch a stale TRB.
+	memory_write_barrier();
 	WriteDoorReg32(XHCI_DOORBELL(slot), XHCI_DOORBELL_TARGET(endpoint)
 		| XHCI_DOORBELL_STREAMID(0));
 	ReadDoorReg32(XHCI_DOORBELL(slot));
@@ -2629,6 +2633,12 @@ XHCI::QueueCommand(xhci_trb* trb)
 	fCmdRing[i].flags = B_HOST_TO_LENDIAN_INT32(temp);
 
 	fCmdAddr = fErst->rs_addr + (XHCI_MAX_EVENTS + i) * sizeof(xhci_trb);
+	dprintf("P258:XHCI queue type %" B_PRIu32 " index %" B_PRIu8
+		" dma %#" B_PRIx64 " trb %#" B_PRIx64 "/%#" B_PRIx32
+		"/%#" B_PRIx32 " crcr %#" B_PRIx32 ":%#" B_PRIx32 "\n",
+		TRB_3_TYPE_GET(trb->flags), i, fCmdAddr, fCmdRing[i].address,
+		fCmdRing[i].status, fCmdRing[i].flags, ReadOpReg(XHCI_CRCR_HI),
+		ReadOpReg(XHCI_CRCR_LO));
 
 	i++;
 
@@ -2857,6 +2867,17 @@ XHCI::DoCommand(xhci_trb* trb)
 		// Now try again, this time with a 750ms timeout.
 		if (acquire_sem_etc(fCmdCompSem, 1, B_RELATIVE_TIMEOUT,
 				750 * 1000) != B_OK) {
+			uint16 eventIndex = fEventIdx;
+			dprintf("P258:XHCI timeout type %" B_PRIu32 " cmd-index %" B_PRIu16
+				" event-index %" B_PRIu16 " crcr %#" B_PRIx32 ":%#" B_PRIx32
+				" sts %#" B_PRIx32 " iman %#" B_PRIx32 " erdp %#" B_PRIx32
+				":%#" B_PRIx32 " event %#" B_PRIx64 "/%#" B_PRIx32
+				"/%#" B_PRIx32 "\n", TRB_3_TYPE_GET(trb->flags), fCmdIdx,
+				eventIndex, ReadOpReg(XHCI_CRCR_HI), ReadOpReg(XHCI_CRCR_LO),
+				ReadOpReg(XHCI_STS), ReadRunReg32(XHCI_IMAN(0)),
+				ReadRunReg32(XHCI_ERDP_HI(0)), ReadRunReg32(XHCI_ERDP_LO(0)),
+				fEventRing[eventIndex].address, fEventRing[eventIndex].status,
+				fEventRing[eventIndex].flags);
 			TRACE("Unable to obtain fCmdCompSem!\n");
 			fCmdAddr = 0;
 			Unlock();
@@ -3099,6 +3120,9 @@ XHCI::ProcessEvents()
 		return;
 	}
 
+	// Order event-ring loads after the controller's MMIO interrupt status
+	// acknowledgement.  This is required on weakly ordered architectures.
+	memory_read_barrier();
 	uint16 i = fEventIdx;
 	uint8 j = fEventCcs;
 	uint8 t = 2;
