@@ -19,6 +19,9 @@
 #include "mmc.h"
 
 
+void dump_sg2042_clock_state();
+
+
 class SdhciBus {
 	public:
 								SdhciBus(struct registers* registers, uint8_t irq, bool poll,
@@ -45,6 +48,9 @@ class SdhciBus {
 			void				PowerOff();
 			void				RecoverError();
 			void				_InitSg2042Phy();
+			void				_DumpSg2042State(const char* reason,
+									uint8 command, uint32 argument);
+			status_t			_InitSg2042Adma2();
 	static	status_t			_WorkerThread(void*);
 
 	private:
@@ -59,6 +65,11 @@ class SdhciBus {
 			status_t			fStatus;
 			thread_id			fWorkerThread;
 			card_type			fCardType;
+			bool				fSg2042StateDumped;
+			area_id				fAdmaArea;
+			void*				fAdmaDescriptors;
+			phys_addr_t		fAdmaPhysical;
+			bool				fUseAdma2;
 };
 
 

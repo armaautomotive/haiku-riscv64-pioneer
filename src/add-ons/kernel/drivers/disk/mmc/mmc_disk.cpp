@@ -93,8 +93,10 @@ mmc_disk_supports_device(device_node* parent)
 	if (sDeviceManager->get_attr_uint8(parent, kMmcTypeAttribute,
 			&deviceType, true) != B_OK)
 	{
-		ERROR("Could not get device type\n");
-		return -1;
+		// The MMC bus root itself has no card type. It is merely not a disk;
+		// returning an error here makes normal asynchronous card discovery look
+		// like a failed driver probe.
+		return 0.0;
 	}
 
 	if (deviceType == CARD_TYPE_SD)

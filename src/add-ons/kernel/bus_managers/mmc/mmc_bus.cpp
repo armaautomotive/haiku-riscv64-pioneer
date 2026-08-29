@@ -167,7 +167,7 @@ status_t
 MMCBus::_WorkerThread(void* cookie)
 {
 	MMCBus* bus = (MMCBus*)cookie;
-	uint32_t response;
+	uint32_t response = 0;
 
 	dprintf("P243:MW0 worker entered\n");
 	bus->AcquireBus();
@@ -227,8 +227,10 @@ MMCBus::_WorkerThread(void* cookie)
 		// If ACMD41 also does not work, it may be an SDIO card, too
 		uint32_t probe = (HOST_27_36V << 8) | kVoltageCheckPattern;
 		uint32_t hcs = 1 << 30;
-		uint32_t ocr;
+		uint32_t ocr = 0;
 		status_t status = bus->ExecuteCommand(0, SD_SEND_IF_COND, probe, &response);
+		dprintf("P295:CMD8 status %s response %#" B_PRIx32 "\n",
+			strerror(status), response);
 		if (status != B_OK) {
 			TRACE("Card does not implement CMD8, may be a V1 SD or MMC card\n");
 			// Do not check for SDHC support in this case
@@ -269,22 +271,36 @@ MMCBus::_WorkerThread(void* cookie)
 		if ((cardType != CARD_TYPE_MMC) && (cardType != CARD_TYPE_MMC_EXTENDED_CAPACITY)) {
 			do {
 				uint32_t cardStatus;
-				while (bus->ExecuteCommand(0, SD_APP_CMD, 0, &cardStatus) == B_BUSY) {
+				status_t appStatus;
+				while ((appStatus = bus->ExecuteCommand(0, SD_APP_CMD, 0,
+						&cardStatus)) == B_BUSY) {
 					ERROR("Card locked after CMD8...\n");
 					snooze(1000000);
+				}
+				if (appStatus != B_OK) {
+					dprintf("P295:CMD55 failed: %s\n", strerror(appStatus));
+					snooze(100000);
+					continue;
 				}
 				if ((cardStatus & 0xFFFF8000) != 0)
 					ERROR("SD card reports error %x\n", cardStatus);
 				if ((cardStatus & (1 << 5)) == 0)
 					ERROR("Card did not enter ACMD mode\n");
 
-				bus->ExecuteCommand(0, SD_SEND_OP_COND, hcs | 0xFF8000, &ocr);
+				status = bus->ExecuteCommand(0, SD_SEND_OP_COND,
+					hcs | 0xFF8000, &ocr);
+				if (status != B_OK) {
+					dprintf("P295:ACMD41 failed: %s\n", strerror(status));
+					snooze(100000);
+					continue;
+				}
 
 				if ((ocr & (1 << 31)) == 0) {
 					TRACE("Card is busy\n");
 					snooze(100000);
 				}
 			} while ((ocr & (1 << 31)) == 0);
+			dprintf("P295:ACMD41 ready OCR %#" B_PRIx32 "\n", ocr);
 		}
 
 		// FIXME this should be asked to each card, when there are multiple
@@ -346,30 +362,41 @@ MMCBus::_WorkerThread(void* cookie)
 					cardFound = true;
 				}
 			}
-		} else if (bus->ExecuteCommand(0, ALL_SEND_CID, 0, cid) == B_OK) {
-			bus->ExecuteCommand(0, SD_SEND_RELATIVE_ADDR, 0, &response);
-
-			TRACE("RCA: %x Status: %x\n", response >> 16, response & 0xFFFF);
-
-			if ((response & 0xFF00) != 0x500) {
-				TRACE("Card did not enter data state\n");
-				// This probably means there are no more cards to scan on the
-				// bus, so exit the loop.
-				break;
+		} else {
+			status = bus->ExecuteCommand(0, ALL_SEND_CID, 0, cid);
+			dprintf("P295:CMD2 status %s\n", strerror(status));
+			if (status == B_OK) {
+				status = bus->ExecuteCommand(0, SD_SEND_RELATIVE_ADDR, 0,
+					&response);
+				dprintf("P295:CMD3 status %s response %#" B_PRIx32 "\n",
+					strerror(status), response);
 			}
+			if (status == B_OK) {
 
-			// The card now has an RCA and it entered the data phase, which
-			// means our initializing job is over, we can pass it on to the
-			// mmc_disk driver.
-			rca = response >> 16;
-			SDCid sdCid(cid);
-			vendor = sdCid.VendorID();
-			sdCid.ProductName(name);
-			serial = sdCid.ProductSerial();
-			revision = sdCid.ProductRevision();
-			month = sdCid.ManufactureMonth();
-			year = sdCid.ManufactureYear();
-			cardFound = true;
+				TRACE("RCA: %x Status: %x\n", response >> 16,
+					response & 0xFFFF);
+
+				if ((response & 0xFF00) != 0x500) {
+					dprintf("P295:card did not enter data state: %#" B_PRIx32
+						"\n", response);
+					// This probably means there are no more cards to scan on the
+					// bus, so exit the loop.
+					break;
+				}
+
+				// The card now has an RCA and it entered the data phase, which
+				// means our initializing job is over, we can pass it on to the
+				// mmc_disk driver.
+				rca = response >> 16;
+				SDCid sdCid(cid);
+				vendor = sdCid.VendorID();
+				sdCid.ProductName(name);
+				serial = sdCid.ProductSerial();
+				revision = sdCid.ProductRevision();
+				month = sdCid.ManufactureMonth();
+				year = sdCid.ManufactureYear();
+				cardFound = true;
+			}
 		}
 
 		if (cardFound) {
@@ -388,8 +415,10 @@ MMCBus::_WorkerThread(void* cookie)
 			};
 
 			// publish child device for the card
-			gDeviceManager->register_node(bus->fNode, MMC_BUS_MODULE_NAME,
-				attrs, NULL, NULL);
+			status_t registerStatus = gDeviceManager->register_node(bus->fNode,
+				MMC_BUS_MODULE_NAME, attrs, NULL, NULL);
+			dprintf("P295:card node RCA %#x registration %s\n", rca,
+				strerror(registerStatus));
 		}
 
 		// TODO if there is a single card active, check if it supports CMD6

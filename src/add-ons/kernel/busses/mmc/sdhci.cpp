@@ -20,6 +20,10 @@
 
 #include <KernelExport.h>
 
+#if defined(__riscv)
+#include <vm/vm.h>
+#endif
+
 #include "IOSchedulerSimple.h"
 #include "mmc.h"
 #include "sdhci.h"
@@ -43,6 +47,19 @@ device_manager_info* gDeviceManager;
 device_module_info* gMMCBusController;
 
 
+struct adma2_64_descriptor {
+	volatile uint16 attributes;
+	volatile uint16 length;
+	volatile uint32 addressLow;
+	volatile uint32 addressHigh;
+} __attribute__((packed));
+
+
+static const uint16 kAdma2Valid = 1 << 0;
+static const uint16 kAdma2End = 1 << 1;
+static const uint16 kAdma2Transfer = 2 << 4;
+
+
 static int32
 sdhci_generic_interrupt(void* data)
 {
@@ -63,7 +80,12 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	fScanSemaphore(-1),
 	fStatus(B_OK),
 	fWorkerThread(-1),
-	fCardType(CARD_TYPE_UNKNOWN)
+	fCardType(CARD_TYPE_UNKNOWN),
+	fSg2042StateDumped(false),
+	fAdmaArea(-1),
+	fAdmaDescriptors(NULL),
+	fAdmaPhysical(0),
+	fUseAdma2(false)
 {
 	dprintf("P202:SC0 constructor irq %u poll %u\n", irq, poll);
 	if (irq == 0 || irq == 0xff) {
@@ -131,6 +153,16 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	TRACE("Initial host control: %x\n", fRegisters->host_control.Bits());
 	TRACE("Initial host control 2: %x\n", fRegisters->host_control_2);
 
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
+			&& fRegisters->capabilities.AdvancedDMA()
+			&& fRegisters->capabilities.SystemBus64Bits()) {
+		status_t admaStatus = _InitSg2042Adma2();
+		if (admaStatus != B_OK) {
+			ERROR("P297:SG2042 ADMA2 initialization failed: %s; using SDMA\n",
+				strerror(admaStatus));
+		}
+	}
+
 	if (fRegisters->host_controller_version.specVersion > 3) {
 		// TODO proper class for manipulating host_control_2
 		fRegisters->host_control_2 &= ~(1<<12);
@@ -169,6 +201,8 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 SdhciBus::~SdhciBus()
 {
 	TerminateBus();
+	if (fAdmaArea >= 0)
+		delete_area(fAdmaArea);
 
 	if (fInterruptInstalled)
 		remove_io_interrupt_handler(fIrq, sdhci_generic_interrupt, this);
@@ -181,6 +215,47 @@ SdhciBus::~SdhciBus()
 	status_t result;
 	if (fWorkerThread >= 0)
 		wait_for_thread(fWorkerThread, &result);
+}
+
+
+status_t
+SdhciBus::_InitSg2042Adma2()
+{
+	void* descriptors = NULL;
+	area_id area = create_area("SG2042 SDHCI ADMA2 descriptors", &descriptors,
+		B_ANY_KERNEL_ADDRESS, B_PAGE_SIZE, B_CONTIGUOUS,
+		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA);
+	if (area < B_OK)
+		return area;
+
+	physical_entry entry;
+	status_t status = get_memory_map(descriptors, B_PAGE_SIZE, &entry, 1);
+	if (status != B_OK) {
+		delete_area(area);
+		return status;
+	}
+
+#if defined(__riscv)
+	status = vm_set_area_memory_type(area, entry.address,
+		B_WRITE_THROUGH_MEMORY);
+	if (status != B_OK) {
+		delete_area(area);
+		return status;
+	}
+#endif
+
+	memset(descriptors, 0, B_PAGE_SIZE);
+	fAdmaArea = area;
+	fAdmaDescriptors = descriptors;
+	fAdmaPhysical = entry.address;
+	fRegisters->host_control.SetDMAMode(HostControl::kAdma64);
+	memory_full_barrier();
+	(void)fRegisters->host_control.Bits();
+	fUseAdma2 = true;
+	dprintf("P297:SG2042 ADMA2 enabled descriptors physical %#"
+		B_PRIxPHYSADDR " host control %#x\n", fAdmaPhysical,
+		fRegisters->host_control.Bits());
+	return B_OK;
 }
 
 
@@ -355,6 +430,8 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 					B_PRIx32 ", status %#" B_PRIx32 ", present %#" B_PRIx32
 					"\n", command, argument, intmask,
 					fRegisters->present_state.Bits());
+				_DumpSg2042State("command completion timeout", command,
+					argument);
 				fRegisters->software_reset.ResetCommandAndDataLines();
 				return B_TIMED_OUT;
 			}
@@ -388,6 +465,7 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 	TRACE("Command response available\n");
 
 	if (fCommandResult & SDHCI_INT_ERROR) {
+		_DumpSg2042State("command interrupt error", command, argument);
 		// TODO is it a good idea to clear interrupts here from outside the interrupt handler?
 		fRegisters->interrupt_status = fCommandResult;
 		if (fCommandResult & SDHCI_INT_COMMAND_TIMEOUT) {
@@ -411,6 +489,8 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 	}
 
 	if (fRegisters->present_state.CommandInhibit()) {
+		_DumpSg2042State("command inhibit after completion", command,
+			argument);
 		TRACE("Command execution failed, card stalled\n");
 		// Clear the stall
 		fRegisters->software_reset.ResetCommandLine();
@@ -447,6 +527,8 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 						"status %#" B_PRIx32 ", present %#" B_PRIx32 "\n",
 						command, fRegisters->interrupt_status,
 						fRegisters->present_state.Bits());
+					_DumpSg2042State("data line release timeout", command,
+						argument);
 					fRegisters->software_reset.ResetDataLine();
 					return B_TIMED_OUT;
 				}
@@ -515,7 +597,11 @@ SdhciBus::_InitSg2042Phy()
 	dprintf("P205:SP0 read PHY config\n");
 	uint32 config = *phyConfig;
 	config &= ~1u;
-	config |= (1u << 1) | (9u << 16) | (8u << 20);
+	// The Pioneer vendor driver initially uses 9/8, but changes both drive
+	// controls to 0xe when the SD card selects driver type C. Haiku does not
+	// currently perform that UHS drive-strength negotiation, so program the
+	// resulting known-good Pioneer setting directly.
+	config |= (1u << 1) | (0xeu << 16) | (0xeu << 20);
 	*phyConfig = config;
 	memory_full_barrier();
 	(void)*phyConfig;
@@ -537,7 +623,10 @@ SdhciBus::_InitSg2042Phy()
 	volatile uint8* sdClockDelayCode = base + 0x31e;
 	*sdClockDelayConfig = 1u;
 	*sdClockDelayConfig |= (1u << 4);
-	*sdClockDelayCode = 10;
+	// The vendor driver changes this from its reset-time value of 10 to 0x10
+	// whenever it enables a non-zero card clock. Use that active-clock value;
+	// leaving the reset-time delay selected eventually causes command timeouts.
+	*sdClockDelayCode = 0x10;
 	*sdClockDelayConfig &= ~(1u << 4);
 	memory_full_barrier();
 	(void)*sdClockDelayConfig;
@@ -545,10 +634,14 @@ SdhciBus::_InitSg2042Phy()
 	dprintf("P205:SP3 clock delay configured\n");
 	*(base + 0x320) = (1u << 1);
 	*(base + 0x321) = (2u << 2);
+	// Preserve the SG2042 firmware's Vendor Host Control 3 and automatic-tuning
+	// state. Other DWC MSHC integrations disable command-conflict checking here,
+	// but the upstream Linux SG2042 path deliberately leaves it untouched. A
+	// zero value caused the first Haiku filesystem read to stop completing.
 	memory_full_barrier();
 	(void)*(base + 0x321);
 	memory_full_barrier();
-	dprintf("P205:SP4 sample delays configured\n");
+	dprintf("P294:SG2042 firmware vendor and tuning state preserved\n");
 
 	*phyConfig |= 1u;
 	memory_full_barrier();
@@ -561,6 +654,58 @@ SdhciBus::_InitSg2042Phy()
 
 
 void
+SdhciBus::_DumpSg2042State(const char* reason, uint8 command, uint32 argument)
+{
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) == 0 || fSg2042StateDumped)
+		return;
+	fSg2042StateDumped = true;
+
+	volatile uint8* base = (volatile uint8*)fRegisters;
+	memory_full_barrier();
+	dprintf("P291:FAIL %s cmd %u arg %#" B_PRIx32 " present %#" B_PRIx32
+		" int %#" B_PRIx32 " result %#" B_PRIx32 " clock %#x host1 %#x"
+		" host2 %#x reset %#x\n", reason, command, argument,
+		fRegisters->present_state.Bits(), fRegisters->interrupt_status,
+		fCommandResult, fRegisters->clock_control.Bits(),
+		fRegisters->host_control.Bits(), fRegisters->host_control_2,
+		fRegisters->software_reset.Bits());
+	dprintf("P291:PHY cfg %#" B_PRIx32 " pads %#" B_PRIx32 " %#"
+		B_PRIx32 " %#" B_PRIx32 " delay %#" B_PRIx32 " dll %#"
+		B_PRIx32 " status %#" B_PRIx32 "\n",
+		*(volatile uint32*)(base + 0x300),
+		*(volatile uint32*)(base + 0x304),
+		*(volatile uint32*)(base + 0x308),
+		*(volatile uint32*)(base + 0x30c),
+		*(volatile uint32*)(base + 0x31c),
+		*(volatile uint32*)(base + 0x324),
+		*(volatile uint32*)(base + 0x32c));
+	dprintf("P291:VENDOR mshc %#" B_PRIx32 " atctrl %#" B_PRIx32
+		" atstat %#" B_PRIx32 "\n",
+		*(volatile uint32*)(base + 0x508),
+		*(volatile uint32*)(base + 0x540),
+		*(volatile uint32*)(base + 0x544));
+	dprintf("P296:CMD sysaddr %#" B_PRIx32 " block %#" B_PRIx32
+		" arg %#" B_PRIx32 " xfer %#x cmd %#x\n",
+		fRegisters->system_address,
+		*(volatile uint32*)(base + 0x04), fRegisters->argument,
+		fRegisters->transfer_mode, fRegisters->command.Bits());
+	if (fUseAdma2) {
+		adma2_64_descriptor* descriptor
+			= (adma2_64_descriptor*)fAdmaDescriptors;
+		dprintf("P297:ADMA table %#" B_PRIx64 " error %#x descriptor"
+			" attr %#x len %u address %#" B_PRIx64 "\n",
+			fRegisters->adma_system_address,
+			fRegisters->adma_error_status, descriptor->attributes,
+			descriptor->length,
+			((uint64)descriptor->addressHigh << 32)
+				| descriptor->addressLow);
+	}
+	memory_full_barrier();
+	dump_sg2042_clock_state();
+}
+
+
+void
 SdhciBus::SetClock(int kilohertz, bool allowAuto)
 {
 	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0 && kilohertz > 6250) {
@@ -568,7 +713,6 @@ SdhciBus::SetClock(int kilohertz, bool allowAuto)
 			kilohertz);
 		kilohertz = 6250;
 	}
-
 	// SG2042 advertises preset support, but its preset values are broken.
 	// Keep programming the divider explicitly on this controller.
 	if (allowAuto && (fRegisters->host_controller_version.specVersion > 2)
@@ -614,6 +758,14 @@ SdhciBus::SetClock(int kilohertz, bool allowAuto)
 
 	// Finally, route the clock to the SD card
 	fRegisters->clock_control.EnableSD();
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
+		volatile uint8* base = (volatile uint8*)fRegisters;
+		*(base + 0x31e) = 0x10;
+		memory_full_barrier();
+		(void)*(base + 0x31e);
+		memory_full_barrier();
+		dprintf("P290:SG2042 active clock PHY drive e/e delay 0x10\n");
+	}
 }
 
 
@@ -653,14 +805,29 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 
 		uint8 effectiveCommand = command;
 		if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
-			// SG2042 eventually times out a multi-block transfer together with
-			// an Auto-CMD12 error, leaving DAT inhibit asserted permanently.
-			// Use single-block commands until its stop/recovery path is reliable.
-			toCopy = std::min(toCopy, (size_t)kBlockSize);
-			if (command == SD_READ_MULTIPLE_BLOCKS)
-				effectiveCommand = SD_READ_SINGLE_BLOCK;
-			else if (command == SD_WRITE_MULTIPLE_BLOCKS)
-				effectiveCommand = SD_WRITE_SINGLE_BLOCK;
+			if (fUseAdma2) {
+				// Keep the descriptor length explicit instead of relying on the
+				// special zero-means-64-KiB encoding. Smaller batches completed
+				// reliably on SG2042, while the first boot allowed to issue that
+				// encoding stopped during device-module initialization. Batching up
+				// to 127 sectors still avoids the CMD17 command storm.
+				toCopy = std::min(toCopy, (size_t)65024);
+				if (toCopy == kBlockSize) {
+					if (command == SD_READ_MULTIPLE_BLOCKS)
+						effectiveCommand = SD_READ_SINGLE_BLOCK;
+					else if (command == SD_WRITE_MULTIPLE_BLOCKS)
+						effectiveCommand = SD_WRITE_SINGLE_BLOCK;
+				}
+			} else {
+				// SG2042 SDMA eventually times out a multi-block transfer together
+				// with an Auto-CMD12 error, leaving DAT inhibit asserted. Keep the
+				// established single-block fallback when ADMA2 is unavailable.
+				toCopy = std::min(toCopy, (size_t)kBlockSize);
+				if (command == SD_READ_MULTIPLE_BLOCKS)
+					effectiveCommand = SD_READ_SINGLE_BLOCK;
+				else if (command == SD_WRITE_MULTIPLE_BLOCKS)
+					effectiveCommand = SD_WRITE_SINGLE_BLOCK;
+			}
 		}
 
 		// Follow steps from SD Host Controller Simplified Specification Version 4.20
@@ -669,11 +836,22 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		// With SDMA we can only transfer multiples of 1 sector
 		ASSERT(toCopy % kBlockSize == 0);
 
-		// Step 1: set system address
-		fRegisters->system_address = vecs->base + vecOffset;
-		// TODO detect if the host controller supports "advanced DMA", in that case, use the ADMA
-		// registers:
-		// fRegisters->adma_system_address = fDmaMemory;
+		// Step 1: set the data address. SG2042 advertises ADMA2 with 64-bit
+		// addressing, and its Linux driver uses that path. Its SDMA engine can
+		// intermittently stop accepting otherwise valid CMD17 transfers, so use
+		// one ADMA2 descriptor for the already single-block SG2042 requests.
+		if (fUseAdma2) {
+			adma2_64_descriptor* descriptor
+				= (adma2_64_descriptor*)fAdmaDescriptors;
+			uint64 dataAddress = vecs->base + vecOffset;
+			descriptor->attributes = kAdma2Valid | kAdma2End | kAdma2Transfer;
+			descriptor->length = toCopy;
+			descriptor->addressLow = (uint32)dataAddress;
+			descriptor->addressHigh = (uint32)(dataAddress >> 32);
+			memory_full_barrier();
+			fRegisters->adma_system_address = fAdmaPhysical;
+		} else
+			fRegisters->system_address = vecs->base + vecOffset;
 
 		// Step 2: Set block size
 		// For simplicity we use a transfer size equal to the sector size. We could
@@ -753,6 +931,9 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 					ERROR("Transfer completion timed out: status %#" B_PRIx32
 						", command result %#" B_PRIx32 "\n", intmask,
 						fCommandResult);
+					_DumpSg2042State("transfer completion timeout",
+						effectiveCommand, (uint32)(offset
+							/ (offsetAsSectors ? kBlockSize : 1)));
 					fRegisters->software_reset.ResetCommandAndDataLines();
 					result = B_TIMED_OUT;
 					break;
@@ -786,6 +967,8 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		uint32 dataErrors = fCommandResult & SDHCI_INT_DATA_ERROR_MASK;
 		if (dataErrors != 0) {
 			ERROR("Data transfer failed: %#" B_PRIx32 "\n", dataErrors);
+			_DumpSg2042State("data transfer error", effectiveCommand,
+				(uint32)(offset / (offsetAsSectors ? kBlockSize : 1)));
 			bool reset = fRegisters->software_reset.ResetCommandAndDataLines();
 			dprintf("P283:SD transfer recovery reset %u present %#" B_PRIx32
 				"\n", reset, fRegisters->present_state.Bits());

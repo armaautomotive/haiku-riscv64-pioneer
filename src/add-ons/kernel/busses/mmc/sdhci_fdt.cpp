@@ -18,6 +18,31 @@
 #define SDHCI_FDT_MMC_BUS_MODULE_NAME "busses/mmc/sdhci/fdt/device/v1"
 
 
+static volatile uint8* sSg2042ClockBase;
+
+
+void
+dump_sg2042_clock_state()
+{
+	if (sSg2042ClockBase == NULL) {
+		dprintf("P291:CLK external clock mapping unavailable\n");
+		return;
+	}
+
+	memory_full_barrier();
+	dprintf("P291:CLK gate0 %#" B_PRIx32 " gate1 %#" B_PRIx32
+		" divSD %#" B_PRIx32 " div100k %#" B_PRIx32 " divAXI %#"
+		B_PRIx32 " divHSP %#" B_PRIx32 "\n",
+		*(volatile uint32*)(sSg2042ClockBase + 0x00),
+		*(volatile uint32*)(sSg2042ClockBase + 0x04),
+		*(volatile uint32*)(sSg2042ClockBase + 0x94),
+		*(volatile uint32*)(sSg2042ClockBase + 0x98),
+		*(volatile uint32*)(sSg2042ClockBase + 0x9c),
+		*(volatile uint32*)(sSg2042ClockBase + 0xa0));
+	memory_full_barrier();
+}
+
+
 static bool
 program_sg2042_divider(volatile uint32* divider, uint32 expectedValue)
 {
@@ -60,6 +85,7 @@ enable_sg2042_clocks()
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&mappedBase);
 	if (area < B_OK)
 		return area;
+	sSg2042ClockBase = mappedBase;
 	dprintf("P220:VM0 clock physical %#" B_PRIxPHYSADDR " virtual %p area %"
 		B_PRId32 "\n", kClockGatePage, mappedBase, area);
 
