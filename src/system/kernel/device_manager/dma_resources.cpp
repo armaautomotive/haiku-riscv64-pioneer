@@ -112,10 +112,11 @@ DMAResource::~DMAResource()
 
 status_t
 DMAResource::Init(device_node* node, generic_size_t blockSize,
-	uint32 bufferCount, uint32 bounceBufferCount)
+	uint32 bufferCount, uint32 bounceBufferCount, uint32 flags)
 {
 	dma_restrictions restrictions;
 	memset(&restrictions, 0, sizeof(dma_restrictions));
+	restrictions.flags = flags;
 
 	// TODO: add DMA attributes instead of reusing block_io's
 

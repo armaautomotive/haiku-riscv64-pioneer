@@ -563,6 +563,12 @@ SdhciBus::_InitSg2042Phy()
 void
 SdhciBus::SetClock(int kilohertz, bool allowAuto)
 {
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0 && kilohertz > 6250) {
+		dprintf("P285:SG2042 limiting SD clock from %d to 6250 kHz\n",
+			kilohertz);
+		kilohertz = 6250;
+	}
+
 	// SG2042 advertises preset support, but its preset values are broken.
 	// Keep programming the divider explicitly on this controller.
 	if (allowAuto && (fRegisters->host_controller_version.specVersion > 2)
@@ -631,6 +637,7 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 
 	const generic_io_vec* vecs = operation->Vecs();
 	generic_size_t vecOffset = 0;
+	uint32 transferRetryCount = 0;
 
 	status_t result = B_OK;
 	while (length > 0) {
@@ -642,6 +649,18 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 			vecs++;
 			vecOffset = 0;
 			continue;
+		}
+
+		uint8 effectiveCommand = command;
+		if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
+			// SG2042 eventually times out a multi-block transfer together with
+			// an Auto-CMD12 error, leaving DAT inhibit asserted permanently.
+			// Use single-block commands until its stop/recovery path is reliable.
+			toCopy = std::min(toCopy, (size_t)kBlockSize);
+			if (command == SD_READ_MULTIPLE_BLOCKS)
+				effectiveCommand = SD_READ_SINGLE_BLOCK;
+			else if (command == SD_WRITE_MULTIPLE_BLOCKS)
+				effectiveCommand = SD_WRITE_SINGLE_BLOCK;
 		}
 
 		// Follow steps from SD Host Controller Simplified Specification Version 4.20
@@ -687,10 +706,34 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		fInterruptNotifier.Add(&waiter);
 
 		uint32_t response;
-		result = ExecuteCommand(command,
-			offset / (offsetAsSectors ? kBlockSize : 1), &response);
-		if (result != B_OK)
+		uint32 commandAttempt = 0;
+		do {
+		result = ExecuteCommand(effectiveCommand,
+				offset / (offsetAsSectors ? kBlockSize : 1), &response);
+			if (result != B_TIMED_OUT
+					|| (fQuirks & SDHCI_QUIRK_SG2042_PHY) == 0)
+				break;
+			commandAttempt++;
+			if (commandAttempt < 3) {
+				dprintf("P284:SG2042 retry command %u sector %#" B_PRIx64
+					" attempt %u\n", effectiveCommand,
+					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
+					commandAttempt + 1);
+				snooze(1000);
+			}
+		} while (commandAttempt < 3);
+		if (result != B_OK) {
+			if (result == B_TIMED_OUT
+					&& (fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
+					&& ++transferRetryCount < 3) {
+				dprintf("P285:SG2042 retry full command %u sector %#"
+					B_PRIx64 " attempt %u\n", effectiveCommand,
+					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
+					transferRetryCount + 1);
+				continue;
+			}
 			break;
+		}
 
 		// Step 10: Wait for DMA transfer to complete
 		// In theory we could go on and send other commands as long as they
@@ -710,8 +753,9 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 					ERROR("Transfer completion timed out: status %#" B_PRIx32
 						", command result %#" B_PRIx32 "\n", intmask,
 						fCommandResult);
-					fRegisters->software_reset.ResetDataLine();
-					return B_TIMED_OUT;
+					fRegisters->software_reset.ResetCommandAndDataLines();
+					result = B_TIMED_OUT;
+					break;
 				}
 				snooze(100);
 			} else {
@@ -727,15 +771,39 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 			}
 		}
 
+		if (result == B_TIMED_OUT) {
+			if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
+					&& ++transferRetryCount < 3) {
+				dprintf("P285:SG2042 retry full transfer command %u sector %#"
+					B_PRIx64 " attempt %u\n", effectiveCommand,
+					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
+					transferRetryCount + 1);
+				continue;
+			}
+			return result;
+		}
+
 		uint32 dataErrors = fCommandResult & SDHCI_INT_DATA_ERROR_MASK;
 		if (dataErrors != 0) {
 			ERROR("Data transfer failed: %#" B_PRIx32 "\n", dataErrors);
-			fRegisters->software_reset.ResetDataLine();
-			return (dataErrors & SDHCI_INT_DATA_TIMEOUT) != 0
+			bool reset = fRegisters->software_reset.ResetCommandAndDataLines();
+			dprintf("P283:SD transfer recovery reset %u present %#" B_PRIx32
+				"\n", reset, fRegisters->present_state.Bits());
+			status_t dataResult = (dataErrors & SDHCI_INT_DATA_TIMEOUT) != 0
 				? B_TIMED_OUT : B_IO_ERROR;
+			if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
+					&& ++transferRetryCount < 3) {
+				dprintf("P285:SG2042 retry errored transfer command %u sector %#"
+					B_PRIx64 " attempt %u\n", effectiveCommand,
+					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
+					transferRetryCount + 1);
+				continue;
+			}
+			return dataResult;
 		}
 
 		TRACE("transfer complete OK.\n");
+		transferRetryCount = 0;
 		length -= toCopy;
 		vecOffset += toCopy;
 		offset += toCopy;

@@ -298,8 +298,16 @@ mmc_disk_init_driver(device_node* node, void** cookie)
 		return B_NO_MEMORY;
 	}
 
+	uint32 dmaFlags = 0;
+#if defined(__riscv)
+	// SG2042 peripheral DMA is not coherent with ordinary cached request
+	// pages. Route MMC payload I/O through DMAResource's non-cacheable bounce
+	// buffers until the architecture has cache maintenance for arbitrary pages.
+	dmaFlags |= DMA_RESTRICTION_FORCE_BOUNCE;
+	dprintf("P287:MMC forcing non-cacheable DMA bounce buffers\n");
+#endif
 	error = info->dmaResource->Init(info->node, kBlockSize,
-		kDMAResourceBufferCount, kDMAResourceBounceBufferCount);
+		kDMAResourceBufferCount, kDMAResourceBounceBufferCount, dmaFlags);
 	if (error != B_OK) {
 		TRACE("Failed to init DMA resource");
 		delete info->dmaResource;

@@ -103,7 +103,8 @@ public:
 			status_t			Init(device_node* node,
 									generic_size_t blockSize,
 									uint32 bufferCount,
-									uint32 bounceBufferCount);
+									uint32 bounceBufferCount,
+									uint32 flags = 0);
 
 			status_t			CreateBuffer(DMABuffer** _buffer);
 			status_t			CreateBounceBuffer(DMABounceBuffer** _buffer);

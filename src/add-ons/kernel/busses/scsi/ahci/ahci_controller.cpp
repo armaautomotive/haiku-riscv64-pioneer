@@ -173,6 +173,19 @@ AHCIController::Init()
 		fPortCount = highestPort;
 	}
 
+#if defined(__riscv)
+	// The SG2042 currently stalls while the SCSI layer creates resources for
+	// both attached JMB585 disks concurrently. Keep the first attached SATA
+	// disk (port 3) available while isolating the second-disk initialization
+	// path. This is deliberately limited to the Pioneer JMB585.
+	if (fPCIVendorID == 0x197b && fPCIDeviceID == 0x0585
+			&& (fPortImplementedMask & (1 << 4)) != 0) {
+		fPortImplementedMask &= ~(1 << 4);
+		dprintf("ahci: P282 temporarily masking JMB585 port 4 to isolate "
+			"multi-disk initialization\n");
+	}
+#endif
+
 	TRACE("cap: Interface Speed Support: generation %" B_PRIu32 "\n",
 		(fRegs->cap >> CAP_ISS_SHIFT) & CAP_ISS_MASK);
 	TRACE("cap: Number of Command Slots: %d (raw %#" B_PRIx32 ")\n",
