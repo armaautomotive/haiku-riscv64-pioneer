@@ -305,14 +305,16 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 		TRACE_ALWAYS("Command execution impossible, command inhibit\n");
 		return B_BUSY;
 	}
-	if (fRegisters->present_state.DataInhibit()) {
+	if (fRegisters->present_state.DataInhibit()
+			&& command != SD_STOP_TRANSMISSION && command != SD_IO_ABORT) {
 		TRACE_ALWAYS("Command execution unwise, data inhibit\n");
 		return B_BUSY;
 	}
 
 	// Get ready to accet interrupts that will occur during the command
 	ConditionVariableEntry waiter;
-	fInterruptNotifier.Add(&waiter);
+	if (!fUsePolling)
+		fInterruptNotifier.Add(&waiter);
 
 	uint32_t replyType;
 	uint16 transferMode = 0;
@@ -329,6 +331,7 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 			break;
 		case SELECT_DESELECT_CARD:
 		case SD_ERASE:
+		case SD_STOP_TRANSMISSION:
 			replyType = Command::kR1bType;
 			break;
 		case ALL_SEND_CID:
@@ -367,8 +370,9 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 			break;
 		case SD_READ_MULTIPLE_BLOCKS:
 			transferMode = TransferMode::kRead | TransferMode::kMulti
-				| TransferMode::kAutoCmd12Enable | TransferMode::kBlockCountEnable
-				| TransferMode::kDmaEnable;
+				| TransferMode::kBlockCountEnable | TransferMode::kDmaEnable;
+			if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) == 0)
+				transferMode |= TransferMode::kAutoCmd12Enable;
 			replyType = Command::kR1Type | Command::kDataPresent;
 			break;
 		case SD_WRITE_SINGLE_BLOCK:
@@ -377,8 +381,9 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 			break;
 		case SD_WRITE_MULTIPLE_BLOCKS:
 			transferMode = TransferMode::kWrite | TransferMode::kMulti
-				| TransferMode::kAutoCmd12Enable | TransferMode::kBlockCountEnable
-				| TransferMode::kDmaEnable;
+				| TransferMode::kBlockCountEnable | TransferMode::kDmaEnable;
+			if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) == 0)
+				transferMode |= TransferMode::kAutoCmd12Enable;
 			replyType = Command::kR1Type | Command::kDataPresent;
 			break;
 		default:
@@ -454,11 +459,12 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 					strerror(result));
 			}
 
-			fInterruptNotifier.Add(&waiter);
 			TRACE("Command status: %x\n", fCommandResult);
 			TRACE("real status = %x command line busy: %d\n",
 				fRegisters->interrupt_status,
 				fRegisters->present_state.CommandInhibit());
+			if (fCommandResult == 0)
+				fInterruptNotifier.Add(&waiter);
 		} while (fCommandResult == 0);
 	}
 
@@ -518,7 +524,8 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 		// R1b commands may use the data line so we must wait for the
 		// "transfer complete" interrupt here.
 		TRACE("Waiting for data line...\n");
-		fInterruptNotifier.Add(&waiter);
+		if (!fUsePolling)
+			fInterruptNotifier.Add(&waiter);
 		uint32 pollingIterations = 0;
 		while (fRegisters->present_state.DataInhibit()) {
 			if (fUsePolling) {
@@ -806,17 +813,24 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		uint8 effectiveCommand = command;
 		if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
 			if (fUseAdma2) {
-				// Keep the descriptor length explicit instead of relying on the
-				// special zero-means-64-KiB encoding. Smaller batches completed
-				// reliably on SG2042, while the first boot allowed to issue that
-				// encoding stopped during device-module initialization. Batching up
-				// to 127 sectors still avoids the CMD17 command storm.
-				toCopy = std::min(toCopy, (size_t)65024);
-				if (toCopy == kBlockSize) {
-					if (command == SD_READ_MULTIPLE_BLOCKS)
-						effectiveCommand = SD_READ_SINGLE_BLOCK;
-					else if (command == SD_WRITE_MULTIPLE_BLOCKS)
+				if (command == SD_WRITE_MULTIPLE_BLOCKS
+						|| command == SD_WRITE_SINGLE_BLOCK) {
+					// SG2042's first failure with explicit stop handling was a
+					// four-sector CMD25, which left the controller unusable for later
+					// reads. Keep writes on the proven single-block ADMA path while
+					// retaining efficient multi-block reads.
+					toCopy = kBlockSize;
+					if (command == SD_WRITE_MULTIPLE_BLOCKS)
 						effectiveCommand = SD_WRITE_SINGLE_BLOCK;
+				} else {
+					// Keep the descriptor length explicit instead of relying on the
+					// special zero-means-64-KiB encoding. Batching up to 127 sectors
+					// still avoids the CMD17 command storm.
+					toCopy = std::min(toCopy, (size_t)65024);
+					if (toCopy == kBlockSize
+							&& command == SD_READ_MULTIPLE_BLOCKS) {
+						effectiveCommand = SD_READ_SINGLE_BLOCK;
+					}
 				}
 			} else {
 				// SG2042 SDMA eventually times out a multi-block transfer together
@@ -881,7 +895,8 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 		// Steps 4, 5 and 6: set argument register, transfer_mode and command register
 		// Step 7, 8, 9: wait for command complete interrupt, clear interrupt, read response
 		ConditionVariableEntry waiter;
-		fInterruptNotifier.Add(&waiter);
+		if (!fUsePolling)
+			fInterruptNotifier.Add(&waiter);
 
 		uint32_t response;
 		uint32 commandAttempt = 0;
@@ -983,6 +998,21 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 				continue;
 			}
 			return dataResult;
+		}
+
+		if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
+				&& (effectiveCommand == SD_READ_MULTIPLE_BLOCKS
+					|| effectiveCommand == SD_WRITE_MULTIPLE_BLOCKS)) {
+			uint32 stopResponse = 0;
+			status_t stopStatus = ExecuteCommand(SD_STOP_TRANSMISSION, 0,
+				&stopResponse);
+			if (stopStatus != B_OK) {
+				dprintf("P301:SG2042 explicit CMD12 failed after command %u"
+					" sector %#" B_PRIx64 ": %s\n", effectiveCommand,
+					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
+					strerror(stopStatus));
+				return stopStatus;
+			}
 		}
 
 		TRACE("transfer complete OK.\n");
