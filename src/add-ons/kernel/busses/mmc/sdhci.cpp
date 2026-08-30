@@ -81,6 +81,7 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 	fStatus(B_OK),
 	fWorkerThread(-1),
 	fCardType(CARD_TYPE_UNKNOWN),
+	fRelativeCardAddress(0),
 	fSg2042StateDumped(false),
 	fAdmaArea(-1),
 	fAdmaDescriptors(NULL),
@@ -188,8 +189,17 @@ SdhciBus::SdhciBus(struct registers* registers, uint8_t irq, bool poll,
 
 	// We want to see the other bits in the status register, but not have an
 	// interrupt trigger on them (we get a "command complete" interrupt on
-	// errors already)
-	fRegisters->interrupt_status_enable |= SDHCI_INT_ERROR_MASK | SDHCI_INT_NORMAL_MASK;
+	// errors already). The SG2042 slot contains an ordinary memory card, not
+	// an SDIO function. Enabling CARD_STATUS there repeatedly latches a
+	// spurious DAT1 interrupt (the lone 0x100 present at every dropped command),
+	// so do not ask the controller to detect it.
+	uint32 statusMask = SDHCI_INT_ERROR_MASK | SDHCI_INT_NORMAL_MASK;
+	if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0) {
+		statusMask &= ~SDHCI_INT_CARD_STATUS;
+		fRegisters->interrupt_status = SDHCI_INT_CARD_STATUS;
+		dprintf("P304:SG2042 SDIO card-status detection disabled\n");
+	}
+	fRegisters->interrupt_status_enable |= statusMask;
 	dprintf("P202:SC6 constructor complete\n");
 
 	// Polling controllers consume command and transfer status synchronously.
@@ -289,7 +299,13 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 	// First of all clear the result
 	fCommandResult = 0;
 	if (fUsePolling) {
-		fRegisters->interrupt_status = SDHCI_INT_CMD_MASK;
+		// SG2042 can latch a spurious SDIO card-status interrupt while DAT1 is
+		// used by an ordinary memory-card transfer. Do not carry that stale bit
+		// into the next command.
+		fRegisters->interrupt_status = SDHCI_INT_CMD_MASK
+			| SDHCI_INT_CARD_STATUS;
+		memory_full_barrier();
+		(void)fRegisters->interrupt_status;
 		memory_full_barrier();
 	}
 
@@ -325,6 +341,7 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 			replyType = Command::kNoReplyType;
 			break;
 		case SD_APP_CMD:
+		case SD_SEND_STATUS:
 		case SD_ERASE_WR_BLK_START:
 		case SD_ERASE_WR_BLK_END:
 			replyType = Command::kR1Type;
@@ -428,6 +445,9 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 			if (completed != 0) {
 				fCommandResult |= completed;
 				fRegisters->interrupt_status = completed;
+				memory_full_barrier();
+				(void)fRegisters->interrupt_status;
+				memory_full_barrier();
 				continue;
 			}
 			if (++iterations >= 50000) {
@@ -553,7 +573,60 @@ SdhciBus::ExecuteCommand(uint8_t command, uint32_t argument, uint32_t* response)
 	}
 
 	TRACE("Command execution %d complete\n", command);
+	if (command == SELECT_DESELECT_CARD)
+		fRelativeCardAddress = argument >> 16;
 	return B_OK;
+}
+
+
+status_t
+SdhciBus::_WaitForSg2042CardReady()
+{
+	if (fRelativeCardAddress == 0)
+		return B_OK;
+
+	// The SG2042 host exposes idle CMD/DAT levels immediately after write
+	// transfer completion, but it can ignore a command issued in that instant.
+	// Give its internal command engine time to turn around before CMD13.
+	snooze(1000);
+
+	uint32 commandRetryCount = 0;
+	for (uint32 iteration = 0; iteration < 5000; iteration++) {
+		uint32 status = 0;
+		status_t result = ExecuteCommand(SD_SEND_STATUS,
+			(uint32)fRelativeCardAddress << 16, &status);
+		if (result != B_OK) {
+			if (result == B_TIMED_OUT && commandRetryCount < 2) {
+				commandRetryCount++;
+				dprintf("P306:SG2042 retry CMD13 readiness probe attempt"
+					" %u\n", commandRetryCount + 1);
+				snooze(1000);
+				continue;
+			}
+			return result;
+		}
+		commandRetryCount = 0;
+
+		const bool readyForData = (status & (1 << 8)) != 0;
+		const uint32 currentState = (status >> 9) & 0xf;
+		if (readyForData && currentState == 4) {
+			if (iteration != 0) {
+				dprintf("P302:SG2042 card ready after %u ms status %#"
+					B_PRIx32 "\n", iteration, status);
+			}
+			return B_OK;
+		}
+
+		if (iteration == 0) {
+			dprintf("P302:SG2042 waiting for card programming status %#"
+				B_PRIx32 "\n", status);
+		}
+		snooze(1000);
+	}
+
+	dprintf("P302:SG2042 card programming timeout RCA %#x\n",
+		fRelativeCardAddress);
+	return B_TIMED_OUT;
 }
 
 
@@ -899,30 +972,23 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 			fInterruptNotifier.Add(&waiter);
 
 		uint32_t response;
-		uint32 commandAttempt = 0;
-		do {
 		result = ExecuteCommand(effectiveCommand,
 				offset / (offsetAsSectors ? kBlockSize : 1), &response);
-			if (result != B_TIMED_OUT
-					|| (fQuirks & SDHCI_QUIRK_SG2042_PHY) == 0)
-				break;
-			commandAttempt++;
-			if (commandAttempt < 3) {
-				dprintf("P284:SG2042 retry command %u sector %#" B_PRIx64
-					" attempt %u\n", effectiveCommand,
-					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
-					commandAttempt + 1);
-				snooze(1000);
-			}
-		} while (commandAttempt < 3);
 		if (result != B_OK) {
 			if (result == B_TIMED_OUT
 					&& (fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
 					&& ++transferRetryCount < 3) {
-				dprintf("P285:SG2042 retry full command %u sector %#"
+				// A CMD/DAT software reset also resets the controller's data
+				// state machine. Retrying only the command register can therefore
+				// produce command-complete with no transfer-complete. Restart the
+				// whole request so ADMA, block count, transfer mode, and command are
+				// programmed as one coherent transaction.
+				dprintf("P305:SG2042 retry full request after command %u"
+					" timeout sector %#"
 					B_PRIx64 " attempt %u\n", effectiveCommand,
 					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
 					transferRetryCount + 1);
+				snooze(1000);
 				continue;
 			}
 			break;
@@ -940,6 +1006,9 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 				if (completed != 0) {
 					fCommandResult |= completed;
 					fRegisters->interrupt_status = completed;
+					memory_full_barrier();
+					(void)fRegisters->interrupt_status;
+					memory_full_barrier();
 					continue;
 				}
 				if (++pollingIterations >= 50000) {
@@ -974,6 +1043,7 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 					B_PRIx64 " attempt %u\n", effectiveCommand,
 					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
 					transferRetryCount + 1);
+				snooze(1000);
 				continue;
 			}
 			return result;
@@ -995,6 +1065,7 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 					B_PRIx64 " attempt %u\n", effectiveCommand,
 					(uint64)(offset / (offsetAsSectors ? kBlockSize : 1)),
 					transferRetryCount + 1);
+				snooze(1000);
 				continue;
 			}
 			return dataResult;
@@ -1013,6 +1084,13 @@ SdhciBus::DoIO(uint8_t command, IOOperation* operation, bool offsetAsSectors)
 					strerror(stopStatus));
 				return stopStatus;
 			}
+		}
+
+		if ((fQuirks & SDHCI_QUIRK_SG2042_PHY) != 0
+				&& effectiveCommand == SD_WRITE_SINGLE_BLOCK) {
+			result = _WaitForSg2042CardReady();
+			if (result != B_OK)
+				return result;
 		}
 
 		TRACE("transfer complete OK.\n");

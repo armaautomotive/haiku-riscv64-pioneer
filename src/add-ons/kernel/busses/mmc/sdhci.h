@@ -51,6 +51,7 @@ class SdhciBus {
 			void				_DumpSg2042State(const char* reason,
 									uint8 command, uint32 argument);
 			status_t			_InitSg2042Adma2();
+			status_t			_WaitForSg2042CardReady();
 	static	status_t			_WorkerThread(void*);
 
 	private:
@@ -65,6 +66,7 @@ class SdhciBus {
 			status_t			fStatus;
 			thread_id			fWorkerThread;
 			card_type			fCardType;
+			uint16				fRelativeCardAddress;
 			bool				fSg2042StateDumped;
 			area_id				fAdmaArea;
 			void*				fAdmaDescriptors;

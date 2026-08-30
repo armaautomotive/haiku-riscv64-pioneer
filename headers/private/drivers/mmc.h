@@ -55,6 +55,7 @@ enum SD_COMMANDS {
 	MMC_SEND_EXT_CSD = 8,
 	SEND_CSD = 9,
 	SD_STOP_TRANSMISSION = 12,
+	SD_SEND_STATUS = 13,
 
 	// Block oriented read and write commands, class 2
 	SD_READ_SINGLE_BLOCK = 17,
