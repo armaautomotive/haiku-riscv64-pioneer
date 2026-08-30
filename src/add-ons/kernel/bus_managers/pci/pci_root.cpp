@@ -45,10 +45,11 @@ pci_root_traverse(device_node* node, PCIBus* bus)
 		const pci_info& info = dev->info;
 
 #if defined(__riscv)
-		if (info.class_base == PCI_mass_storage) {
-			dprintf("P264:PCI storage %" B_PRIu8 ":%02" B_PRIx8 ":%02" B_PRIx8
+		if (info.class_base == PCI_mass_storage || info.class_base == PCI_network) {
+			const char* type = info.class_base == PCI_mass_storage ? "storage" : "network";
+			dprintf("P264:PCI %s %" B_PRIu8 ":%02" B_PRIx8 ":%02" B_PRIx8
 				".%" B_PRIu8 " vendor %#06" B_PRIx16 " device %#06" B_PRIx16
-				" class %02" B_PRIx8 "%02" B_PRIx8 "%02" B_PRIx8 "\n",
+				" class %02" B_PRIx8 "%02" B_PRIx8 "%02" B_PRIx8 "\n", type,
 				dev->domain, dev->bus, info.device, info.function, info.vendor_id,
 				info.device_id, info.class_base, info.class_sub, info.class_api);
 		}

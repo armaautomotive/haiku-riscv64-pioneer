@@ -478,6 +478,24 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(4, 0, 0, PCI_base_registers + 4, 4, 0);
 			WriteConfig(4, 0, 0, PCI_command, 2, 0x0406);
 
+			// Switch ports 6 and 14 lead to the Pioneer's two RTL8125B
+			// controllers.  Linux assigns each a 1 MiB memory window and a
+			// 4 KiB I/O window.  Establish the same topology and BAR layout so
+			// the generic PCI manager can discover the endpoints.
+			WriteConfig(2, 6, 0, PCI_primary_bus, 4, 0x00050502);
+			WriteConfig(2, 6, 0, PCI_io_base, 4, 0x00000101);
+			WriteConfig(2, 6, 0, PCI_memory_base, 4, 0xf020f020);
+			WriteConfig(2, 6, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(2, 6, 0, PCI_io_base_upper16, 4, 0x00c000c0);
+			WriteConfig(2, 6, 0, PCI_command, 2, 0x0007);
+
+			WriteConfig(5, 0, 0, PCI_base_registers, 4, 0x00c00001);
+			WriteConfig(5, 0, 0, PCI_base_registers + 2 * 4, 4, 0xf0200004);
+			WriteConfig(5, 0, 0, PCI_base_registers + 3 * 4, 4, 0);
+			WriteConfig(5, 0, 0, PCI_base_registers + 4 * 4, 4, 0xf0210004);
+			WriteConfig(5, 0, 0, PCI_base_registers + 5 * 4, 4, 0);
+			WriteConfig(5, 0, 0, PCI_command, 2, 0x0407);
+
 			// Switch port 12 leads to the JMicron JMB585 AHCI controller on
 			// bus 8. Linux assigns a 1 MiB bridge window at PCI 0xf0300000
 			// and the controller's 8 KiB ABAR at PCI 0xf0310000 (host
@@ -492,7 +510,21 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(8, 0, 0, PCI_rom_base, 4, 0xf0300000);
 			WriteConfig(8, 0, 0, PCI_command, 2, 0x0406);
 
-			dprintf("P277:SG2042 Pioneer NVMe, xHCI, and AHCI topology configured\n");
+			WriteConfig(2, 14, 0, PCI_primary_bus, 4, 0x00090902);
+			WriteConfig(2, 14, 0, PCI_io_base, 4, 0x00002121);
+			WriteConfig(2, 14, 0, PCI_memory_base, 4, 0xf040f040);
+			WriteConfig(2, 14, 0, PCI_prefetchable_memory_base, 4, 0x0001fff1);
+			WriteConfig(2, 14, 0, PCI_io_base_upper16, 4, 0x00c000c0);
+			WriteConfig(2, 14, 0, PCI_command, 2, 0x0007);
+
+			WriteConfig(9, 0, 0, PCI_base_registers, 4, 0x00c02001);
+			WriteConfig(9, 0, 0, PCI_base_registers + 2 * 4, 4, 0xf0400004);
+			WriteConfig(9, 0, 0, PCI_base_registers + 3 * 4, 4, 0);
+			WriteConfig(9, 0, 0, PCI_base_registers + 4 * 4, 4, 0xf0410004);
+			WriteConfig(9, 0, 0, PCI_base_registers + 5 * 4, 4, 0);
+			WriteConfig(9, 0, 0, PCI_command, 2, 0x0407);
+
+			dprintf("P277:SG2042 Pioneer NVMe, xHCI, AHCI, and RTL8125 topology configured\n");
 			// Kernel add-ons do not initialize C++ objects in static storage.
 			// Construct this polymorphic object explicitly so its virtual table is
 			// valid when generic_msi calls AllocateVectors().

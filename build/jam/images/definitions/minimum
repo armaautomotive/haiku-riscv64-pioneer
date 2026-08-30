@@ -309,7 +309,7 @@ SYSTEM_ADD_ONS_DRIVERS_GRAPHICS = [ FFilterByBuildFeatures
 SYSTEM_ADD_ONS_DRIVERS_MIDI = ;
 
 SYSTEM_ADD_ONS_DRIVERS_NET = [ FFilterByBuildFeatures
-	x86,x86_64,riscv64 @{
+	x86,x86_64 @{
 		3com
 		asix88xxx
 		atheros813x
@@ -336,7 +336,15 @@ SYSTEM_ADD_ONS_DRIVERS_NET = [ FFilterByBuildFeatures
 		via_rhine
 		vmxnet
 		vt612x
-	}@ # x86,x86_64,riscv64
+	}@ # x86,x86_64
+
+	riscv64 @{
+		# The Pioneer has RTL8125B controllers. Avoid probing the complete
+		# legacy x86 PCI Ethernet driver set while the RISC-V PCI port is
+		# still being brought up. virtio_net and generic USB drivers are
+		# packaged separately below/in Haiku.package.
+		rtl8125
+	}@ # riscv64
 
 	etherpci
 	usb_davicom

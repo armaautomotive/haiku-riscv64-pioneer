@@ -86,7 +86,59 @@ static uint32 sCpuRendezvous;
 static uint32 sCpuRendezvous2;
 static uint32 sCpuRendezvous3;
 
+
+struct boot_stage_record {
+	const char*	code;
+	const char*	description;
+	bigtime_t	time;
+	bigtime_t	delta;
+};
+
+
+static const uint32 kMaxBootStageRecords = 16;
+static boot_stage_record sBootStageRecords[kMaxBootStageRecords];
+static uint32 sBootStageRecordCount;
+static bigtime_t sBootStageStartTime;
+
+
 static int32 main2(void *);
+
+
+static void
+record_boot_stage(const char* code, const char* description)
+{
+	const bigtime_t now = system_time();
+	const bigtime_t previous = sBootStageRecordCount == 0
+		? sBootStageStartTime : sBootStageRecords[sBootStageRecordCount - 1].time;
+
+	if (sBootStageRecordCount < kMaxBootStageRecords) {
+		boot_stage_record& record = sBootStageRecords[sBootStageRecordCount++];
+		record.code = code;
+		record.description = description;
+		record.time = now;
+		record.delta = now - previous;
+	}
+
+	dprintf("P202:%s %s at=%" B_PRId64 "us delta=%" B_PRId64 "us\n",
+		code, description, now, now - previous);
+}
+
+
+static void
+print_boot_stage_summary()
+{
+	const bigtime_t end = system_time();
+	dprintf("P202:BOOT stages=%" B_PRIu32 " start=%" B_PRId64 "us end=%"
+		B_PRId64 "us elapsed=%" B_PRId64 "us\n", sBootStageRecordCount,
+		sBootStageStartTime, end, end - sBootStageStartTime);
+
+	for (uint32 i = 0; i < sBootStageRecordCount; i++) {
+		const boot_stage_record& record = sBootStageRecords[i];
+		dprintf("P202:BOOT[%" B_PRIu32 "] %s %s at=%" B_PRId64
+			"us delta=%" B_PRId64 "us\n", i, record.code,
+			record.description, record.time, record.delta);
+	}
+}
 
 
 static void
@@ -447,6 +499,7 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 static int32
 main2(void* /*unused*/)
 {
+	sBootStageStartTime = system_time();
 	debug_early_boot_checkpoint("riscv: main2 entered\n");
 	TRACE("start of main2: initializing devices\n");
 
@@ -503,43 +556,52 @@ main2(void* /*unused*/)
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_3_INIT_DEVICES);
 	device_manager_init(&sKernelArgs);
 	debug_early_boot_checkpoint("riscv: main2 device manager ready\n");
-	dprintf("P202:M0 device manager ready\n");
+	record_boot_stage("M0", "device manager ready");
 
 	TRACE("Add preloaded old-style drivers\n");
 	legacy_driver_add_preloaded(&sKernelArgs);
-	dprintf("P202:M1 legacy drivers ready\n");
+	record_boot_stage("M1", "legacy drivers ready");
 
 	interrupts_init_post_device_manager(&sKernelArgs);
-	dprintf("P202:M2 interrupts ready\n");
+	record_boot_stage("M2", "interrupts ready");
 
 	TRACE("Mount boot file system\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_4_MOUNT_BOOT_FS);
 	vfs_mount_boot_file_system(&sKernelArgs);
-	dprintf("P202:M3 boot filesystem mounted\n");
+	record_boot_stage("M3", "boot filesystem mounted");
 
 #if ENABLE_SWAP_SUPPORT
 	TRACE("swap_init_post_modules\n");
 	swap_init_post_modules();
-	dprintf("P202:M4 swap ready\n");
+	record_boot_stage("M4", "swap ready");
 #endif
 
 	// CPU specific modules may now be available
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_5_INIT_CPU_MODULES);
 	cpu_init_post_modules(&sKernelArgs);
-	dprintf("P202:M5 CPU modules ready\n");
+	record_boot_stage("M5", "CPU modules ready");
 
 	TRACE("vm_init_post_modules\n");
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_6_INIT_VM_MODULES);
 	vm_init_post_modules(&sKernelArgs);
-	dprintf("P202:M6 VM modules ready\n");
+	record_boot_stage("M6", "VM modules ready");
 
 	TRACE("debug_init_post_modules\n");
+#if defined(__riscv)
+	// The early call to debug_init_post_vm() is deferred on RISC-V because
+	// registering debugger commands allocates memory before the Pioneer
+	// bootstrap heap is ready.  main2 runs after the heap and scheduler are
+	// operational, so finish that initialization here before loading debugger
+	// modules.  Without this, KDL has a prompt but no help, inspection, or
+	// continue commands.
+	debug_init_post_vm(&sKernelArgs);
+#endif
 	debug_init_post_modules(&sKernelArgs);
-	dprintf("P202:M7 debug modules ready\n");
+	record_boot_stage("M7", "debug modules ready");
 
 	TRACE("device_manager_init_post_modules\n");
 	device_manager_init_post_modules(&sKernelArgs);
-	dprintf("P202:M8 device modules ready\n");
+	record_boot_stage("M8", "device modules ready");
 
 	boot_splash_set_stage(BOOT_SPLASH_STAGE_7_RUN_BOOT_SCRIPT);
 	boot_splash_uninit();
@@ -552,7 +614,7 @@ main2(void* /*unused*/)
 	// Note: don't confuse the kernel_args structure (which is never freed)
 	// with the kernel args ranges it contains (and which are freed here).
 	vm_free_kernel_args(&sKernelArgs);
-	dprintf("P202:M9 kernel args freed\n");
+	record_boot_stage("M9", "kernel args freed");
 
 	// start the init process
 	{
@@ -574,10 +636,12 @@ main2(void* /*unused*/)
 		thread_id thread;
 
 		thread = load_image(argc, args, NULL);
+		record_boot_stage("MA", "launch_daemon image loaded");
 		dprintf("P202:MA launch_daemon load result %" B_PRId32 "\n", thread);
 		if (thread >= B_OK) {
 			resume_thread(thread);
-			dprintf("P202:MB launch_daemon resumed\n");
+			record_boot_stage("MB", "launch_daemon resumed");
+			print_boot_stage_summary();
 			TRACE("launch_daemon started\n");
 		} else {
 			dprintf("error starting \"%s\" error = %" B_PRId32 " \n",

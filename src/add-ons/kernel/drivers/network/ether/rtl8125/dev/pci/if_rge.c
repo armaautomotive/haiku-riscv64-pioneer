@@ -242,7 +242,14 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_dev = dev;
 	sc->sc_dmat = bus_get_dma_tag(sc->sc_dev);
 	bus_dma_tag_create(sc->sc_dmat, 1, 0,
+	#if defined(__riscv)
+		/* RTL8125B supports 64-bit descriptor addresses.  Keeping its rings
+		 * below 4 GiB exhausts the SG2042's scarce low-memory page runs by
+		 * the time net_server loads the driver. */
+		BUS_SPACE_MAXADDR, BUS_SPACE_MAXADDR, NULL, NULL,
+	#else
 		BUS_SPACE_MAXADDR_32BIT, BUS_SPACE_MAXADDR, NULL, NULL,
+	#endif
 		BUS_SPACE_MAXSIZE_32BIT, BUS_SPACE_UNRESTRICTED, BUS_SPACE_MAXSIZE_32BIT, 0, NULL, NULL,
 		&sc->sc_dmat);
 	pci_enable_busmaster(sc->sc_dev);

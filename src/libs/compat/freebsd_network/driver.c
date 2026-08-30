@@ -171,17 +171,32 @@ _fbsd_init_hardware_pci(driver_t* drivers[])
 		return status;
 
 	bool found = false;
+	bool traceRTL8125 = strcmp(gDriverName, "rtl8125") == 0;
+	if (traceRTL8125)
+		dprintf("P310:rtl8125 PCI probe scan begin\n");
 	for (info = get_device_pci_info(root); gPci->get_nth_pci_info(i, info) == B_OK; i++) {
 		int best = 0;
 		driver_t* driver = NULL;
+		if (traceRTL8125 && (info->class_base == PCI_network
+				|| info->vendor_id == 0x10ec)) {
+			dprintf("P310:rtl8125 candidate virtual PCI %u:%u.%u vendor %#06x"
+				" device %#06x class %02x%02x%02x\n", info->bus, info->device,
+				info->function, info->vendor_id, info->device_id, info->class_base,
+				info->class_sub, info->class_api);
+		}
 
 		struct device device = {};
 		device.parent = root;
 		device.root = root;
 
 		driver = __haiku_probe_drivers(&device, drivers);
-		if (driver == NULL)
+		if (driver == NULL) {
+			if (traceRTL8125 && info->vendor_id == 0x10ec)
+				dprintf("P310:rtl8125 candidate rejected by probe\n");
 			continue;
+		}
+		if (traceRTL8125)
+			dprintf("P310:rtl8125 candidate accepted by probe\n");
 
 		// We've found a driver; now try to reserve the device and store it
 		if (gPci->reserve_device(info->bus, info->device, info->function,
@@ -199,6 +214,9 @@ _fbsd_init_hardware_pci(driver_t* drivers[])
 	sProbedDevices[p].bus = BUS_INVALID;
 
 	device_delete_child(NULL, root);
+	if (traceRTL8125)
+		dprintf("P310:rtl8125 PCI probe scan complete found=%s\n",
+			found ? "yes" : "no");
 
 	if (found)
 		return B_OK;
