@@ -6,7 +6,11 @@
  *		Augustin Cavalier <waddlesplash>
  */
 
+#include <kernel/vm/vm.h>
+
 extern "C" {
+#include <string.h>
+
 #include <sys/malloc.h>
 #include <sys/bus.h>
 #include <sys/lock.h>
@@ -257,6 +261,22 @@ _allocate_dmamem(bus_dma_tag_t dmat, phys_size_t size, void** vaddr, int flags)
 		return ENOMEM;
 	}
 
+#if defined(__riscv)
+	// RISC-V does not currently provide the FreeBSD compatibility layer with
+	// cache maintenance operations for non-coherent devices. Keep memory owned
+	// by DMA tags non-cacheable so descriptor rings and bounce buffers remain
+	// coherent with the device.
+	status_t status = vm_set_area_memory_type(area_for(*vaddr), vtophys(*vaddr),
+		B_WRITE_THROUGH_MEMORY);
+	if (status != B_OK) {
+		dprintf("bus_dmamem_alloc: failed to make DMA memory non-cacheable: %s\n",
+			strerror(status));
+		bus_dmamem_free_tagless(*vaddr, size);
+		*vaddr = NULL;
+		return ENOMEM;
+	}
+#endif
+
 	return 0;
 }
 
@@ -449,10 +469,17 @@ bus_dmamap_load_mbuf_sg(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf* mb,
 		return EINVAL;
 
 	int seg = 0, error = 0;
-	bool first = true;
 	bus_addr_t lastaddr = 0;
 	flags |= BUS_DMA_NOWAIT;
 
+#if defined(__riscv)
+	// Packet mbufs are allocated from cached kernel memory. Until RISC-V has
+	// cache maintenance hooks for bus_dma, force packets through the
+	// non-cacheable bounce memory allocated by _allocate_dmamem(). Existing
+	// PREWRITE/POSTREAD synchronization copies data in the correct direction.
+	error = EOPNOTSUPP;
+#else
+	bool first = true;
 	for (struct mbuf* m = mb; m != NULL && error == 0; m = m->m_next) {
 		if (m->m_len <= 0)
 			continue;
@@ -461,6 +488,7 @@ bus_dmamap_load_mbuf_sg(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf* mb,
 			flags, lastaddr, segs, seg, first);
 		first = false;
 	}
+#endif
 
 	if (error != 0) {
 		// Try again using a bounce buffer.
