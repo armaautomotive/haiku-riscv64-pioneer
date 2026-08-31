@@ -1,19 +1,25 @@
-# Pioneer power control
+# Pioneer relay control
 
-The DSD TECH SH-UR01A relay appears on this Mac as
-`/dev/cu.usbserial-110`. The Pioneer serial console is the separate
+The DSD TECH SH-UR04A relay appears on this Mac as
+`/dev/cu.usbserial-1`. The Pioneer serial console is the separate
 `/dev/cu.usbserial-0001` device; the scripts deliberately exclude that port
 from automatic relay detection.
 
-Wire the Pioneer's power-button contacts through the relay's `COM` and `NO`
-terminals. Closing the relay then acts like pressing the physical button;
-opening it releases the button.
+Channel assignments:
+
+- Relay 1: Pioneer power-button contacts, wired through `COM` and `NO`.
+- Relay 2: SD attachment control. Closed means attached; open means detached.
+- Relays 3 and 4: currently unused.
 
 ```sh
 tools/pioneer/pioneer_power.sh test
 tools/pioneer/pioneer_power.sh on
 tools/pioneer/pioneer_power.sh off
 tools/pioneer/pioneer_power.sh restart
+tools/pioneer/pioneer_power.sh sd-attach
+tools/pioneer/pioneer_power.sh sd-detach
+tools/pioneer/pioneer_power.sh sd-status
+tools/pioneer/pioneer_power.sh status
 ```
 
 `on` holds the physical power button for 0.75 seconds. `off` and `restart` hold
@@ -24,12 +30,15 @@ Override the hold time with `--duration`, or select another serial port with
 
 ```sh
 tools/pioneer/pioneer_power.sh restart --duration 12
-tools/pioneer/pioneer_power.sh test --device /dev/cu.usbserial-110
+tools/pioneer/pioneer_power.sh test --device /dev/cu.usbserial-1
 ```
 
 The relay uses 9600 baud, 8 data bits, no parity, and one stop bit. The script
 uses only the Python standard library; no `pyserial` installation is needed.
 
-Do not switch a load beyond the SH-UR01A relay rating. Avoid interrupting power
-while the Pioneer is writing to its SD card; use `restart` as a hard recovery
-mechanism when a clean shutdown is unavailable.
+Never detach the SD card while either OS has it mounted or while it may be
+reading or writing. Detach it only while the Pioneer is fully powered off.
+Likewise, attach it before powering on. A single relay contact is suitable only
+if it drives a purpose-built SD isolation/multiplexer control input; it must not
+be used to interrupt only the card's power line while its signal lines remain
+connected.
