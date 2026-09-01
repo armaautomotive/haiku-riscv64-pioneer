@@ -12,6 +12,7 @@
 #include <boot/stage2.h>
 #include <efi/types.h>
 #include <efi/boot-services.h>
+#include <platform/sbi/sbi_syscalls.h>
 #include <string.h>
 
 #include "efi_platform.h"
@@ -42,9 +43,16 @@
 // canonical kernel alias solely for the immediate post-SATP diagnostic.
 static constexpr addr_t kHandoffDebugUART = 0xffffffc07fffe000ULL;
 
+// When MAEE is enabled, T-Head C9xx PTE[63:59] describes the memory type.
+// Normal memory must be cacheable, bufferable and shareable for inter-hart
+// atomics; MMIO must be strongly ordered and shareable.
+static constexpr uint64 kTHeadPma = 0x0eULL << 59;
+static constexpr uint64 kTHeadIo = 0x12ULL << 59;
+
 phys_addr_t sPageTable = 0;
 static addr_t sHandoffKernelArgs = 0;
 static addr_t sHandoffEntry = 0;
+static bool sTHeadMae = false;
 
 extern "C" void arch_enter_kernel(uint64 satp, addr_t kernelArgs,
 	addr_t kernelEntry, addr_t kernelStackTop);
@@ -63,6 +71,23 @@ static inline
 void *VirtFromPhys(uint64_t physAdr)
 {
 	return (void*)physAdr;
+}
+
+
+static void
+DetectTHeadMae()
+{
+	if (gKernelArgs.arch_args.machine_platform != kPlatformSbi)
+		return;
+
+	sbiret vendor = sbi_get_mvendorid();
+	if (vendor.error != SBI_SUCCESS || vendor.value != 0x5b7)
+		return;
+
+	uint64 sxstatus;
+	asm volatile("csrr %0, 0x5c0" : "=r"(sxstatus));
+	sTHeadMae = (sxstatus & (1UL << 21)) != 0;
+	dprintf("T-Head MAEE: %s\n", sTHeadMae ? "enabled" : "disabled");
 }
 
 
@@ -186,6 +211,8 @@ LookupPte(addr_t virtAdr, bool alloc)
 				.isGlobal = IS_KERNEL_ADDRESS(virtAdr),
 				.ppn = ppn
 			};
+			if (sTHeadMae)
+				newPte.val |= kTHeadPma;
 			pte->val = newPte.val;
 		}
 		pte = (Pte*)VirtFromPhys(B_PAGE_SIZE * pte->ppn);
@@ -196,7 +223,7 @@ LookupPte(addr_t virtAdr, bool alloc)
 
 
 static void
-Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags)
+Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags, bool device)
 {
 	// TRACE("Map(%#" B_PRIxADDR ", %#" B_PRIxADDR ")\n", virtAdr, physAdr);
 	Pte* pte = LookupPte(virtAdr, true);
@@ -210,18 +237,21 @@ Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags)
 		.ppn = physAdr / B_PAGE_SIZE,
 	};
 	newPte.val |= flags;
+	if (sTHeadMae)
+		newPte.val |= device ? kTHeadIo : kTHeadPma;
 
 	pte->val = newPte.val;
 }
 
 
 static void
-MapRange(addr_t virtAdr, phys_addr_t physAdr, size_t size, uint64 flags)
+MapRange(addr_t virtAdr, phys_addr_t physAdr, size_t size, uint64 flags,
+	bool device = false)
 {
 	TRACE("MapRange(%#" B_PRIxADDR " - %#" B_PRIxADDR ", %#" B_PRIxADDR " - %#" B_PRIxADDR ", %#"
 		B_PRIxADDR ")\n", virtAdr, virtAdr + (size - 1), physAdr, physAdr + (size - 1), size);
 	for (size_t i = 0; i < size; i += B_PAGE_SIZE)
-		Map(virtAdr + i, physAdr + i, flags);
+		Map(virtAdr + i, physAdr + i, flags, device);
 
 	ASSERT_ALWAYS(insert_virtual_allocated_range(virtAdr, size) >= B_OK);
 }
@@ -253,7 +283,7 @@ MapAddrRange(addr_range& range, uint64 flags)
 	phys_addr_t physAdr = range.start;
 	range.start = get_next_virtual_address(range.size);
 
-	MapRange(range.start, physAdr, range.size, flags);
+	MapRange(range.start, physAdr, range.size, flags, true);
 	insert_virtual_range_to_keep(range.start, range.size);
 }
 
@@ -273,6 +303,8 @@ PreallocKernelRange()
 			.isGlobal = true,
 			.ppn = ppn
 		};
+		if (sTHeadMae)
+			newPte.val |= kTHeadPma;
 		pte->val = newPte.val;
 	}
 }
@@ -382,6 +414,8 @@ uint64
 arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descriptor* memoryMap,
 	size_t descriptorSize, uint32_t descriptorVersion)
 {
+	DetectTHeadMae();
+
 	sPageTable = mmu_allocate_page();
 	memset(VirtFromPhys(sPageTable), 0, B_PAGE_SIZE);
 	TRACE("sPageTable: %#" B_PRIxADDR "\n", sPageTable);
@@ -483,11 +517,11 @@ arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descript
 		phys_addr_t uartPhysical = gKernelArgs.arch_args.uart.regs.start;
 		size_t uartSize = gKernelArgs.arch_args.uart.regs.size;
 		MapRange(uartPhysical, uartPhysical, uartSize,
-			Pte {.isRead = true, .isWrite = true}.val);
+			Pte {.isRead = true, .isWrite = true}.val, true);
 		MapAddrRange(gKernelArgs.arch_args.uart.regs,
 			Pte {.isRead = true, .isWrite = true}.val);
 		MapRange(kHandoffDebugUART, uartPhysical, uartSize,
-			Pte {.isRead = true, .isWrite = true}.val);
+			Pte {.isRead = true, .isWrite = true}.val, true);
 	}
 
 	sort_address_ranges(gKernelArgs.virtual_allocated_range,

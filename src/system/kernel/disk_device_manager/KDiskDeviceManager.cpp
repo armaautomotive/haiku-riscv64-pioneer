@@ -993,9 +993,12 @@ KDiskDeviceManager::LoadNextDiskSystem(int32* cookie)
 status_t
 KDiskDeviceManager::InitialDeviceScan()
 {
+	dprintf("DDMSCAN I0 initial scan enter at=%" B_PRIdBIGTIME "us\n", system_time());
 	// scan for devices
 	if (ManagerLocker locker = this) {
 		status_t error = _Scan("/dev/disk");
+		dprintf("DDMSCAN I1 devfs scan returned status=%s at=%" B_PRIdBIGTIME
+			"us\n", strerror(error), system_time());
 		if (error != B_OK)
 			return error;
 	}
@@ -1004,10 +1007,16 @@ KDiskDeviceManager::InitialDeviceScan()
 	int32 cookie = 0;
 	status_t status = B_OK;
 	while (KDiskDevice* device = RegisterNextDevice(&cookie)) {
+		dprintf("DDMSCAN I2 device begin id=%" B_PRId32 " path=%s at=%" B_PRIdBIGTIME
+			"us\n", device->ID(), device->Path() != NULL ? device->Path() : "<null>",
+			system_time());
 		PartitionRegistrar _(device, true);
 		if (DeviceWriteLocker deviceLocker = device) {
 			if (ManagerLocker locker = this) {
 				status_t error = _ScanPartition(device, false);
+				dprintf("DDMSCAN I3 device scan returned id=%" B_PRId32
+					" status=%s at=%" B_PRIdBIGTIME "us\n", device->ID(),
+					strerror(error), system_time());
 				device->UnmarkBusy(true);
 				if (error != B_OK)
 					status = error;
@@ -1019,6 +1028,8 @@ KDiskDeviceManager::InitialDeviceScan()
 		} else
 			return B_ERROR;
 	}
+	dprintf("DDMSCAN I4 initial scan complete status=%s at=%" B_PRIdBIGTIME "us\n",
+		strerror(status), system_time());
 	return status;
 }
 
@@ -1060,6 +1071,8 @@ status_t
 KDiskDeviceManager::_RescanDiskSystems(DiskSystemMap& addedSystems,
 	bool fileSystems)
 {
+	dprintf("DDMSCAN D1 module list begin type=%s at=%" B_PRIdBIGTIME "us\n",
+		fileSystems ? "filesystem" : "partitioning", system_time());
 	void* cookie = open_module_list(fileSystems
 		? kFileSystemPrefix : kPartitioningSystemPrefix);
 	if (cookie == NULL)
@@ -1092,6 +1105,8 @@ KDiskDeviceManager::_RescanDiskSystems(DiskSystemMap& addedSystems,
 	}
 
 	close_module_list(cookie);
+	dprintf("DDMSCAN D2 module list complete type=%s at=%" B_PRIdBIGTIME "us\n",
+		fileSystems ? "filesystem" : "partitioning", system_time());
 	return B_OK;
 }
 
@@ -1104,22 +1119,31 @@ KDiskDeviceManager::RescanDiskSystems()
 {
 	DiskSystemMap addedSystems;
 
+	dprintf("DDMSCAN D0 rescan enter at=%" B_PRIdBIGTIME "us\n", system_time());
 	Lock();
+	dprintf("DDMSCAN D3 manager locked at=%" B_PRIdBIGTIME "us\n", system_time());
 
 	// rescan for partitioning and file systems
 	_RescanDiskSystems(addedSystems, false);
 	_RescanDiskSystems(addedSystems, true);
 
 	Unlock();
+	dprintf("DDMSCAN D4 module rescan unlocked at=%" B_PRIdBIGTIME "us\n", system_time());
 
 	// rescan existing devices with the new disk systems
 	int32 cookie = 0;
 	status_t status = B_OK;
 	while (KDiskDevice* device = RegisterNextDevice(&cookie)) {
+		dprintf("DDMSCAN D5 device begin id=%" B_PRId32 " path=%s at=%" B_PRIdBIGTIME
+			"us\n", device->ID(), device->Path() != NULL ? device->Path() : "<null>",
+			system_time());
 		PartitionRegistrar _(device, true);
 		if (DeviceWriteLocker deviceLocker = device) {
 			if (ManagerLocker locker = this) {
 				status_t error = _ScanPartition(device, false, &addedSystems);
+				dprintf("DDMSCAN D6 device scan returned id=%" B_PRId32
+					" status=%s at=%" B_PRIdBIGTIME "us\n", device->ID(),
+					strerror(error), system_time());
 				device->UnmarkBusy(true);
 				if (error != B_OK)
 					status = error;
@@ -1130,6 +1154,8 @@ KDiskDeviceManager::RescanDiskSystems()
 			return B_ERROR;
 	}
 
+	dprintf("DDMSCAN D7 rescan complete status=%s at=%" B_PRIdBIGTIME "us\n",
+		strerror(status), system_time());
 	return status;
 }
 

@@ -314,16 +314,15 @@ Stack::FreeChunk(void *logicalAddress, phys_addr_t physicalAddress,
 
 area_id
 Stack::AllocateArea(void **logicalAddress, phys_addr_t *physicalAddress, size_t size,
-	const char *name)
+	const char *name, bool restrictTo32Bits)
 {
 	TRACE("allocating %ld bytes for %s\n", size, name);
 
 	void *logAddress;
 	size = (size + B_PAGE_SIZE - 1) & ~(B_PAGE_SIZE - 1);
 	area_id area = create_area(name, &logAddress, B_ANY_KERNEL_ADDRESS, size,
-		B_32_BIT_CONTIGUOUS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA);
-		// TODO: Use B_CONTIGUOUS when the TODOs regarding 64 bit physical
-		// addresses are fixed (if possible).
+		restrictTo32Bits ? B_32_BIT_CONTIGUOUS : B_CONTIGUOUS,
+		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA);
 
 	if (area < B_OK) {
 		TRACE_ERROR("couldn't allocate area %s\n", name);

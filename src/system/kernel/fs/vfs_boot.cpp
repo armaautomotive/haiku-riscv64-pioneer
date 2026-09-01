@@ -485,11 +485,14 @@ vfs_bootstrap_file_systems(void)
 void
 vfs_mount_boot_file_system(kernel_args* args)
 {
+	dprintf("VFSBOOT B0 enter at=%" B_PRIdBIGTIME "us\n", system_time());
 	KMessage bootVolume;
 	bootVolume.SetTo(args->boot_volume, args->boot_volume_size);
 
 	PartitionStack partitions;
 	status_t status = get_boot_partitions(bootVolume, partitions);
+	dprintf("VFSBOOT B1 partitions ready at=%" B_PRIdBIGTIME "us status=%s count=%" B_PRId32 "\n",
+		system_time(), strerror(status), partitions.CountItems());
 	if (status < B_OK) {
 		panic("get_boot_partitions failed!");
 	}
@@ -528,6 +531,8 @@ vfs_mount_boot_file_system(kernel_args* args)
 
 	if (bootDevice < B_OK)
 		panic("could not mount boot device!\n");
+	dprintf("VFSBOOT B2 boot volume mounted at=%" B_PRIdBIGTIME "us device=%" B_PRIdDEV "\n",
+		system_time(), bootDevice);
 
 	// create link for the name of the boot device
 
@@ -538,6 +543,7 @@ vfs_mount_boot_file_system(kernel_args* args)
 
 		_kern_create_symlink(-1, path, "/boot", 0777);
 	}
+	dprintf("VFSBOOT B3 boot-volume metadata ready at=%" B_PRIdBIGTIME "us\n", system_time());
 
 	// If we're booting off a packaged system, mount packagefs.
 	struct stat st;
@@ -557,6 +563,8 @@ vfs_mount_boot_file_system(kernel_args* args)
 
 		dev_t packageMount = _kern_mount("/boot/system", NULL, kPackageFSName,
 			0, arguments, 0 /* unused argument length */);
+		dprintf("VFSBOOT B4 system packagefs returned at=%" B_PRIdBIGTIME
+			"us status=%" B_PRIdDEV "\n", system_time(), packageMount);
 		if (packageMount < 0) {
 			panic("Failed to mount system packagefs: %s",
 				strerror(packageMount));
@@ -565,6 +573,8 @@ vfs_mount_boot_file_system(kernel_args* args)
 		packageMount = _kern_mount("/boot/home/config", NULL, kPackageFSName, 0,
 			"packages /boot/home/config/packages; type home",
 			0 /* unused argument length */);
+		dprintf("VFSBOOT B5 home packagefs returned at=%" B_PRIdBIGTIME
+			"us status=%" B_PRIdDEV "\n", system_time(), packageMount);
 		if (packageMount < 0) {
 			dprintf("Failed to mount home packagefs: %s\n",
 				strerror(packageMount));
@@ -573,6 +583,7 @@ vfs_mount_boot_file_system(kernel_args* args)
 
 	// Now that packagefs is mounted, the boot volume is really ready.
 	gBootDevice = bootDevice;
+	dprintf("VFSBOOT B6 boot device published at=%" B_PRIdBIGTIME "us\n", system_time());
 
 	// Do post-boot-volume module initialization. The module code wants to know
 	// whether the module images the boot loader has pre-loaded are the same as
@@ -582,11 +593,16 @@ vfs_mount_boot_file_system(kernel_args* args)
 	bool bootingFromBootLoaderVolume = bootMethodType == BOOT_METHOD_HARD_DISK
 		|| bootMethodType == BOOT_METHOD_CD;
 	module_init_post_boot_device(bootingFromBootLoaderVolume);
+	dprintf("VFSBOOT B7 module post-boot init returned at=%" B_PRIdBIGTIME "us\n", system_time());
 
 	file_cache_init_post_boot_device();
+	dprintf("VFSBOOT B8 file cache post-boot init returned at=%" B_PRIdBIGTIME "us\n",
+		system_time());
 
 	// search for other disk systems
 	KDiskDeviceManager *manager = KDiskDeviceManager::Default();
 	manager->RescanDiskSystems();
+	dprintf("VFSBOOT B9 disk-system rescan returned at=%" B_PRIdBIGTIME "us\n", system_time());
 	manager->StartMonitoring();
+	dprintf("VFSBOOT BA monitoring started at=%" B_PRIdBIGTIME "us\n", system_time());
 }

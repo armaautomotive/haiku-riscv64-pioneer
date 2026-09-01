@@ -172,6 +172,20 @@ nvme_disk_set_capacity(nvme_disk_driver_info* info, uint64 capacity,
 }
 
 
+static void
+nvme_disk_close_controller(nvme_disk_driver_info* info)
+{
+	if (info->ns != NULL) {
+		nvme_ns_close(info->ns);
+		info->ns = NULL;
+	}
+	if (info->ctrlr != NULL) {
+		nvme_ctrlr_close(info->ctrlr);
+		info->ctrlr = NULL;
+	}
+}
+
+
 //	#pragma mark - device module API
 
 
@@ -231,14 +245,16 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	TRACE_ALWAYS("P271 controller open complete\n");
 
 	struct nvme_ctrlr_stat* cstat = (struct nvme_ctrlr_stat*)malloc(sizeof(struct nvme_ctrlr_stat));
-	if (cstat == NULL)
+	if (cstat == NULL) {
+		nvme_disk_close_controller(info);
 		return B_NO_MEMORY;
+	}
 	MemoryDeleter cstatDeleter(cstat);
 
 	int err = nvme_ctrlr_stat(info->ctrlr, cstat);
 	if (err != 0) {
 		TRACE_ERROR("failed to get controller information!\n");
-		nvme_ctrlr_close(info->ctrlr);
+		nvme_disk_close_controller(info);
 		return err;
 	}
 
@@ -250,7 +266,7 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	info->ns = nvme_ns_open(info->ctrlr, cstat->ns_ids[0]);
 	if (info->ns == NULL) {
 		TRACE_ERROR("failed to open namespace!\n");
-		nvme_ctrlr_close(info->ctrlr);
+		nvme_disk_close_controller(info);
 		return B_ERROR;
 	}
 	TRACE_ALWAYS("namespace 0\n");
@@ -259,7 +275,7 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	err = nvme_ns_stat(info->ns, &nsstat);
 	if (err != 0) {
 		TRACE_ERROR("failed to get namespace information!\n");
-		nvme_ctrlr_close(info->ctrlr);
+		nvme_disk_close_controller(info);
 		return err;
 	}
 
@@ -398,7 +414,7 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	}
 	if (info->qpair_count == 0) {
 		TRACE_ERROR("failed to allocate qpairs!\n");
-		nvme_ctrlr_close(info->ctrlr);
+		nvme_disk_close_controller(info);
 		return B_NO_MEMORY;
 	}
 	if (info->qpair_count != try_qpairs) {
@@ -427,19 +443,23 @@ nvme_disk_init_device(void* _info, void** _cookie)
 	err = info->dma_resource.Init(restrictions, B_PAGE_SIZE, buffers, buffers);
 	if (err != 0) {
 		TRACE_ERROR("failed to initialize DMA resource!\n");
-		nvme_ctrlr_close(info->ctrlr);
+		nvme_disk_close_controller(info);
 		return err;
 	}
 
 	info->dma_buffers_sem = create_sem(buffers, "nvme buffers sem");
 	if (info->dma_buffers_sem < 0) {
 		TRACE_ERROR("failed to create DMA buffers semaphore!\n");
-		nvme_ctrlr_close(info->ctrlr);
+		nvme_disk_close_controller(info);
 		return info->dma_buffers_sem;
 	}
 
-	if (info->request_owners.Init(buffers) != B_OK)
+	if (info->request_owners.Init(buffers) != B_OK) {
+		delete_sem(info->dma_buffers_sem);
+		info->dma_buffers_sem = -1;
+		nvme_disk_close_controller(info);
 		return B_ERROR;
+	}
 
 	mutex_init(&info->request_owners_lock, "nvme request owners");
 
@@ -462,8 +482,7 @@ nvme_disk_uninit_device(void* _cookie)
 
 	rw_lock_destroy(&info->rounded_write_lock);
 
-	nvme_ns_close(info->ns);
-	nvme_ctrlr_close(info->ctrlr);
+	nvme_disk_close_controller(info);
 
 	// TODO: Deallocate MSI(-X).
 	// TODO: Deallocate PCI.
@@ -1268,6 +1287,7 @@ nvme_disk_init_driver(device_node* node, void** cookie)
 	info->node = node;
 
 	info->ctrlr = NULL;
+	info->ns = NULL;
 
 	*cookie = info;
 	return B_OK;

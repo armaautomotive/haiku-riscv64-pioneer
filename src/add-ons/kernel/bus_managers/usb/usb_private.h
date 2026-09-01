@@ -157,7 +157,8 @@ public:
 
 		area_id							AllocateArea(void **logicalAddress,
 											phys_addr_t *physicalAddress,
-											size_t size, const char *name);
+											size_t size, const char *name,
+											bool restrictTo32Bits = true);
 
 		void							NotifyDeviceChange(Device *device,
 											rescan_item **rescanList,

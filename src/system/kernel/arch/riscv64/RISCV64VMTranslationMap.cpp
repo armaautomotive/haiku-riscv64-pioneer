@@ -61,6 +61,7 @@ ApplyTHeadMemoryType(Pte& pte, uint32 memoryType)
 	pte.val &= ~kTHeadMemoryTypeMask;
 	switch (memoryType & B_MEMORY_TYPE_MASK) {
 		case 0:
+		case B_WRITE_BACK_MEMORY:
 			pte.val |= kTHeadPma;
 			break;
 		case B_WRITE_COMBINING_MEMORY:

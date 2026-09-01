@@ -87,6 +87,46 @@ static uint32 sCpuRendezvous2;
 static uint32 sCpuRendezvous3;
 
 
+static void
+early_smp_rendezvous(uint32* rendezvous, int currentCPU, int phase)
+{
+	if (phase == 1) {
+		debug_early_boot_message(currentCPU == 0
+			? "riscv: rv1 cpu0 before atomic\n"
+			: "riscv: rv1 cpu1 before atomic\n");
+	} else {
+		debug_early_boot_message(currentCPU == 0
+			? "riscv: rv2 cpu0 before atomic\n"
+			: "riscv: rv2 cpu1 before atomic\n");
+	}
+
+	atomic_add((int32*)rendezvous, 1);
+
+	if (phase == 1) {
+		debug_early_boot_message(currentCPU == 0
+			? "riscv: rv1 cpu0 after atomic\n"
+			: "riscv: rv1 cpu1 after atomic\n");
+	} else {
+		debug_early_boot_message(currentCPU == 0
+			? "riscv: rv2 cpu0 after atomic\n"
+			: "riscv: rv2 cpu1 after atomic\n");
+	}
+
+	while (*(volatile uint32*)rendezvous < 2)
+		asm volatile("" ::: "memory");
+
+	if (phase == 1) {
+		debug_early_boot_message(currentCPU == 0
+			? "riscv: rv1 cpu0 complete\n"
+			: "riscv: rv1 cpu1 complete\n");
+	} else {
+		debug_early_boot_message(currentCPU == 0
+			? "riscv: rv2 cpu0 complete\n"
+			: "riscv: rv2 cpu1 complete\n");
+	}
+}
+
+
 struct boot_stage_record {
 	const char*	code;
 	const char*	description;
@@ -186,10 +226,10 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 	smp_set_num_cpus(bootKernelArgs->num_cpus);
 	debug_early_boot_message("riscv: cpu count set\n");
 
-	// The Pioneer bootstrap currently starts only the boot CPU. Avoid the
-	// atomic rendezvous operation until secondary-hart bring-up is complete.
+	// Use a diagnostic barrier before per-CPU state exists so Pioneer SMP
+	// failures identify the atomic operation separately from cache visibility.
 	if (bootKernelArgs->num_cpus > 1)
-		smp_cpu_rendezvous(&sCpuRendezvous);
+		early_smp_rendezvous(&sCpuRendezvous, currentCPU, 1);
 	debug_early_boot_message("riscv: rendezvous 1\n");
 
 	// the passed in kernel args are in a non-allocated range of memory
@@ -197,7 +237,7 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		memcpy((void*)&sKernelArgs, bootKernelArgs, bootKernelArgs->kernel_args_size);
 
 	if (bootKernelArgs->num_cpus > 1)
-		smp_cpu_rendezvous(&sCpuRendezvous2);
+		early_smp_rendezvous(&sCpuRendezvous2, currentCPU, 2);
 	debug_early_boot_message("riscv: rendezvous 2\n");
 
 	// do any pre-booting cpu config
@@ -447,10 +487,24 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 		// exit the kernel startup phase (mutexes, etc work from now on out)
 		TRACE("exiting kernel startup\n");
 		gKernelStartup = false;
-		debug_suppress_early_boot_messages(false);
+		// The raw early console has no SMP serialization. Keep the temporary
+		// byte-at-a-time diagnostics suppressed once multiple CPUs enter the
+		// scheduler; explicit checkpoints and normal locked dprintf output remain.
+		if (cpuCount <= 1)
+			debug_suppress_early_boot_messages(false);
 		debug_early_boot_checkpoint("riscv: kernel startup complete\n");
 
 		if (cpuCount > 1) {
+#if defined(__riscv)
+			// Let secondary CPUs enter their schedulers so they can service IPIs and
+			// TLB shootdowns, but keep normal boot work on CPU 0 until main2 has
+			// mounted filesystems and launched userland.  This avoids the RISC-V SMP
+			// ordering bugs seen as nondeterministic AHCI, packagefs, and disk-rescan
+			// stalls without treating an online CPU as unresponsive.
+			for (int32 cpu = 1; cpu < cpuCount; cpu++)
+				scheduler_set_cpu_enabled(cpu, false);
+			debug_early_boot_checkpoint("riscv: secondary schedulers disabled through main2\n");
+#endif
 			smp_cpu_rendezvous(&sCpuRendezvous2);
 				// release the AP cpus to go enter the scheduler
 		}
@@ -619,13 +673,16 @@ main2(void* /*unused*/)
 	// start the init process
 	{
 		KPath serverPath;
+		record_boot_stage("M91", "launch_daemon directory lookup begin");
 		status_t status = __find_directory(B_SYSTEM_SERVERS_DIRECTORY,
 			gBootDevice, false, serverPath.LockBuffer(),
 			serverPath.BufferSize());
+		record_boot_stage("M92", "launch_daemon directory lookup returned");
 		if (status != B_OK)
 			dprintf("main2: find_directory() failed: %s\n", strerror(status));
 		serverPath.UnlockBuffer();
 		status = serverPath.Append("/launch_daemon");
+		record_boot_stage("M93", "launch_daemon path ready");
 		if (status != B_OK) {
 			dprintf("main2: constructing path to launch_daemon failed: %s\n",
 			strerror(status));
@@ -635,6 +692,7 @@ main2(void* /*unused*/)
 		int32 argc = 1;
 		thread_id thread;
 
+		record_boot_stage("M94", "launch_daemon load begin");
 		thread = load_image(argc, args, NULL);
 		record_boot_stage("MA", "launch_daemon image loaded");
 		dprintf("P202:MA launch_daemon load result %" B_PRId32 "\n", thread);
@@ -648,6 +706,16 @@ main2(void* /*unused*/)
 				args[0], thread);
 		}
 	}
+
+#if defined(__riscv)
+	if (smp_get_num_cpus() > 1) {
+		// Keep secondary CPUs scheduler-disabled while the remaining RISC-V SMP
+		// races are isolated.  They are online and can service IPIs/TLB shootdowns,
+		// but normal userland and driver work stays on CPU 0.  Enabling CPU 1 here
+		// currently makes the Pioneer xHCI hub control transfers time out.
+		record_boot_stage("MC", "secondary CPUs remain scheduler-disabled");
+	}
+#endif
 
 	return 0;
 }

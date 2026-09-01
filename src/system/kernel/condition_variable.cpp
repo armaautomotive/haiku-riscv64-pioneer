@@ -17,6 +17,7 @@
 #include <kernel.h>
 #include <listeners.h>
 #include <scheduling_analysis.h>
+#include <smp.h>
 #include <thread.h>
 #include <util/AutoLock.h>
 #include <util/atomic.h>
@@ -400,8 +401,14 @@ ConditionVariable::_NotifyLocked(bool all, status_t result)
 			int32 tries = 0;
 			while (atomic_get(&fEntriesCount) != removedCount) {
 				tries++;
-				if ((tries % 10000) == 0)
-					dprintf("entries count was not decremented for a long time!\n");
+				if ((tries % 10000) == 0) {
+					dprintf("entries count was not decremented for a long time: "
+						"cpu=%" B_PRId32 " thread=%" B_PRId32 " entry=%p "
+						"count=%" B_PRId32 " expected=%" B_PRId32 " status=%" B_PRId32
+						"\n", smp_get_current_cpu(), thread_get_current_thread()->id,
+						entry, atomic_get(&fEntriesCount), removedCount,
+						entry->fWaitStatus);
+				}
 				cpu_wait(&fEntriesCount, removedCount);
 			}
 		} else {

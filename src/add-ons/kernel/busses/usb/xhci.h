@@ -238,6 +238,7 @@ private:
 			Stack *				fStack;
 			uint32				fIRQ;
 			bool				fUseMSI;
+			bool				fUse64BitAddresses;
 
 			area_id				fErstArea;
 			xhci_erst_element *	fErst;

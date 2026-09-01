@@ -37,6 +37,8 @@ struct CpuEntryInfo {
 	uint64 stackBase;	//  8
 	uint64 stackSize;	// 16
 	KernelEntry kernelEntry;// 24
+	kernel_args* kernelArgs;// 32
+	uint64 cpu;		// 40
 };
 
 
@@ -95,35 +97,30 @@ arch_cpu_dump_hart()
 static void __attribute__((naked))
 arch_cpu_entry(int hartId, CpuEntryInfo* info)
 {
-	// enable MMU
+	// Load everything from the boot loader's address space before switching to
+	// the kernel page tables. The CpuEntryInfo allocation is not guaranteed to
+	// remain mapped after satp changes.
 	asm("ld t0, 0(a1)");   // CpuEntryInfo::satp
+	asm("ld t1, 8(a1)");   // CpuEntryInfo::stackBase
+	asm("ld t2, 16(a1)");  // CpuEntryInfo::stackSize
+	asm("ld t3, 24(a1)");  // CpuEntryInfo::kernelEntry
+	asm("ld t4, 32(a1)");  // CpuEntryInfo::kernelArgs
+	asm("ld t5, 40(a1)");  // CpuEntryInfo::cpu
+
+	// enable MMU
 	asm("csrw satp, t0");
 	asm("sfence.vma");
 
 	// setup stack
-	asm("ld sp, 8(a1)");   // CpuEntryInfo::stackBase
-	asm("ld t0, 16(a1)");  // CpuEntryInfo::stackSize
-	asm("add sp, sp, t0");
+	asm("mv sp, t1");
+	asm("add sp, sp, t2");
 	asm("li fp, 0");
 
-	asm("tail arch_cpu_entry2");
-}
-
-
-extern "C" void
-arch_cpu_entry2(int hartId, CpuEntryInfo* info)
-{
-	dprintf("%s(%d)\n", __func__, hartId);
-
-	uint32 cpu = 0;
-	while (cpu < sCpuCount && !(sCpus[cpu].id == (uint32)hartId))
-		cpu++;
-
-	if (!(cpu < sCpuCount))
-		panic("CPU for hart id %d not found\n", hartId);
-
-	info->kernelEntry(&gKernelArgs, cpu);
-	for (;;) {}
+	// No boot-loader address is valid after loading the kernel page table.
+	// Enter the kernel directly with its normal _start(kernelArgs, cpu) ABI.
+	asm("mv a0, t4");
+	asm("mv a1, t5");
+	asm("jr t3");
 }
 
 
@@ -175,10 +172,11 @@ arch_smp_init_other_cpus(void)
 		gKernelArgs.arch_args.plicContexts[i] = sCpus[i].plicContext;
 	}
 
-	// The Pioneer-supplied OpenSBI image reaches S-mode correctly but hangs
-	// while starting additional harts. Bring the initial port up on the boot
-	// hart; SG2042 SMP support can be enabled once its HSM path is reliable.
-	gKernelArgs.num_cpus = 1;
+	// Keep a true single-hart baseline while the remaining SG2042 condition-
+	// variable and xHCI SMP races are isolated. Merely scheduler-disabling the
+	// second hart is insufficient: packagefs can still deadlock during boot.
+	gKernelArgs.num_cpus = std::min<uint32>(sCpuCount, 1);
+	dprintf("Pioneer: enabling %" B_PRIu32 " CPU(s)\n", gKernelArgs.num_cpus);
 
 	if (get_safemode_boolean(B_SAFEMODE_DISABLE_SMP, false)) {
 		// SMP has been disabled!
@@ -210,9 +208,7 @@ arch_smp_boot_other_cpus(addr_t satp, uint64 kernel_entry, addr_t virtKernelArgs
 	dprintf("arch_smp_boot_other_cpus(%p, %p)\n", (void*)satp, (void*)kernel_entry);
 
 	arch_cpu_dump_hart();
-	// Only start CPUs that arch_smp_init_other_cpus() enabled. In particular,
-	// the Pioneer bootstrap currently deliberately limits gKernelArgs.num_cpus
-	// to one even though all 64 harts are present in the device tree.
+	// Only start CPUs that arch_smp_init_other_cpus() enabled.
 	for (uint32 i = 0; i < gKernelArgs.num_cpus; i++) {
 		if (sCpus[i].id != gBootHart) {
 			sbiret res;
@@ -226,14 +222,30 @@ arch_smp_boot_other_cpus(addr_t satp, uint64 kernel_entry, addr_t virtKernelArgs
 				.satp = satp,
 				.stackBase = gKernelArgs.cpu_kstack[i].start,
 				.stackSize = gKernelArgs.cpu_kstack[i].size,
-				.kernelEntry = (KernelEntry)kernel_entry
+				.kernelEntry = (KernelEntry)kernel_entry,
+				.kernelArgs = (kernel_args*)virtKernelArgs,
+				.cpu = i
 			};
-			res = sbi_hart_start(sCpus[i].id, (addr_t)&arch_cpu_entry, (addr_t)info);
+			if (info == NULL)
+				panic("Unable to allocate CPU entry information");
 
+			res = sbi_hart_start(sCpus[i].id, (addr_t)&arch_cpu_entry, (addr_t)info);
+			if (res.error != SBI_SUCCESS) {
+				panic("Unable to start CPU %" B_PRIu32 ": SBI error %" B_PRId64,
+					sCpus[i].id, res.error);
+			}
+
+			bigtime_t deadline = system_time() + 5000000;
 			for (;;) {
 				res = sbi_hart_get_status(sCpus[i].id);
 				if (res.error < 0 || res.value == SBI_HART_STATE_STARTED)
 					break;
+				if (system_time() >= deadline)
+					panic("Timed out starting CPU %" B_PRIu32, sCpus[i].id);
+			}
+			if (res.error < 0) {
+				panic("Unable to query CPU %" B_PRIu32 ": SBI error %" B_PRId64,
+					sCpus[i].id, res.error);
 			}
 		}
 	}

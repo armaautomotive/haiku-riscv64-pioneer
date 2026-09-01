@@ -31,6 +31,8 @@
 static uint32 sPlicContexts[SMP_MAX_CPUS];
 static bool sFirstTimerInterrupt = true;
 
+extern bool gRiscvTHeadMae;
+
 
 static void
 TraceKernelPageFaultMessage(const char* message)
@@ -79,6 +81,27 @@ TraceKernelPageFault(iframe* frame)
 	TraceKernelPageFaultValue("riscv: trap a0 ", frame->a0);
 	TraceKernelPageFaultValue("riscv: trap a1 ", frame->a1);
 	TraceKernelPageFaultValue("riscv: trap a2 ", frame->a2);
+}
+
+
+static void
+TraceKernelPageTable(addr_t address)
+{
+	SatpReg satp {.val = Satp()};
+	TraceKernelPageFaultValue("riscv: pte address ", address);
+	TraceKernelPageFaultValue("riscv: pte satp ", satp.val);
+	TraceKernelPageFaultValue("riscv: pte thead mae ", gRiscvTHeadMae ? 1 : 0);
+
+	Pte* table = (Pte*)VirtFromPhys(satp.ppn * B_PAGE_SIZE);
+	for (int32 level = 2; level >= 0; level--) {
+		Pte pte = table[VirtAdrPte(address, level)];
+		const char* label = level == 2 ? "riscv: pte level 2 "
+			: level == 1 ? "riscv: pte level 1 " : "riscv: pte level 0 ";
+		TraceKernelPageFaultValue(label, pte.val);
+		if (!pte.isValid || pte.isRead || pte.isWrite || pte.isExec)
+			break;
+		table = (Pte*)VirtFromPhys(pte.ppn * B_PAGE_SIZE);
+	}
 }
 
 
@@ -319,6 +342,8 @@ STrap(iframe* frame)
 		case causeExecAccessFault:
 		case causeLoadAccessFault:
 		case causeStoreAccessFault: {
+			if (!fromUser && frame->cause == causeStoreAccessFault)
+				TraceKernelPageTable(frame->a4);
 			return SendSignal(B_SEGMENT_VIOLATION, SIGBUS, BUS_ADRERR,
 				fromUser, Stval());
 		}

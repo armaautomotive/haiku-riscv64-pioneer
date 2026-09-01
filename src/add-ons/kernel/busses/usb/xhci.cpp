@@ -370,6 +370,7 @@ XHCI::XHCI(pci_info *info, 	pci_device_module_info* pci, pci_device* device, Sta
 		fStack(stack),
 		fIRQ(0),
 		fUseMSI(false),
+		fUse64BitAddresses(false),
 		fErstArea(-1),
 		fDcbaArea(-1),
 		fCmdCompSem(-1),
@@ -456,6 +457,9 @@ XHCI::XHCI(pci_info *info, 	pci_device_module_info* pci, pci_device* device, Sta
 	if (cparams == 0xffffffff)
 		return;
 	TRACE_ALWAYS("capability parameters: 0x%08" B_PRIx32 "\n", cparams);
+	fUse64BitAddresses = HCC_AC64(cparams) != 0;
+	TRACE_ALWAYS("DMA addressing: %s\n",
+		fUse64BitAddresses ? "64-bit" : "32-bit");
 
 	// if 64 bytes context structures, then 1
 	fContextSizeShift = HCC_CSZ(cparams);
@@ -725,7 +729,7 @@ XHCI::Start()
 	// allocate Device Context Base Address array
 	phys_addr_t dmaAddress;
 	fDcbaArea = fStack->AllocateArea((void **)&fDcba, &dmaAddress,
-		sizeof(*fDcba), "DCBA Area");
+		sizeof(*fDcba), "DCBA Area", !fUse64BitAddresses);
 	if (fDcbaArea < B_OK) {
 		TRACE_ERROR("unable to create the DCBA area\n");
 		return B_ERROR;
@@ -744,7 +748,8 @@ XHCI::Start()
 	for (uint32 i = 0; i < fScratchpadCount; i++) {
 		phys_addr_t scratchDmaAddress;
 		fScratchpadArea[i] = fStack->AllocateArea((void **)&fScratchpad[i],
-			&scratchDmaAddress, B_PAGE_SIZE, "Scratchpad Area");
+			&scratchDmaAddress, B_PAGE_SIZE, "Scratchpad Area",
+			!fUse64BitAddresses);
 		if (fScratchpadArea[i] < B_OK) {
 			TRACE_ERROR("unable to create the scratchpad area\n");
 			return B_ERROR;
@@ -765,7 +770,7 @@ XHCI::Start()
 	fErstArea = fStack->AllocateArea((void **)&addr, &dmaAddress,
 		(XHCI_MAX_COMMANDS + XHCI_MAX_EVENTS) * sizeof(xhci_trb)
 		+ sizeof(xhci_erst_element),
-		"USB XHCI ERST CMD_RING and EVENT_RING Area");
+		"USB XHCI ERST CMD_RING and EVENT_RING Area", !fUse64BitAddresses);
 
 	if (fErstArea < B_OK) {
 		TRACE_ERROR("unable to create the ERST AND RING area\n");
@@ -1609,7 +1614,7 @@ XHCI::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 
 	device->input_ctx_area = fStack->AllocateArea((void **)&device->input_ctx,
 		&device->input_ctx_addr, sizeof(*device->input_ctx) << fContextSizeShift,
-		"XHCI input context");
+		"XHCI input context", !fUse64BitAddresses);
 	if (device->input_ctx_area < B_OK) {
 		TRACE_ERROR("unable to create a input context area\n");
 		CleanupDevice(device);
@@ -1703,7 +1708,7 @@ XHCI::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 
 	device->device_ctx_area = fStack->AllocateArea((void **)&device->device_ctx,
 		&device->device_ctx_addr, sizeof(*device->device_ctx) << fContextSizeShift,
-		"XHCI device context");
+		"XHCI device context", !fUse64BitAddresses);
 	if (device->device_ctx_area < B_OK) {
 		TRACE_ERROR("unable to create a device context area\n");
 		CleanupDevice(device);
@@ -1718,7 +1723,8 @@ XHCI::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 
 	device->trb_area = fStack->AllocateArea((void **)&device->trbs,
 		&device->trb_addr, sizeof(xhci_trb) * (XHCI_MAX_ENDPOINTS - 1)
-			* XHCI_ENDPOINT_RING_SIZE, "XHCI endpoint trbs");
+			* XHCI_ENDPOINT_RING_SIZE, "XHCI endpoint trbs",
+			!fUse64BitAddresses);
 	if (device->trb_area < B_OK) {
 		TRACE_ERROR("unable to create a device trbs area\n");
 		CleanupDevice(device);
@@ -2903,31 +2909,61 @@ XHCI::DoCommand(xhci_trb* trb)
 	QueueCommand(trb);
 	Ring(0, 0);
 
+#if defined(__riscv)
+	// The SG2042 currently obtains PCIe MSI events through a polling kernel
+	// thread. On a single-hart boot, sleeping here can leave both that thread
+	// and this timeout dependent on a scheduler/timer handoff while early USB
+	// discovery holds the bus-manager call chain. Poll the event ring directly
+	// for this bounded command window. ProcessEvents() uses fEventLock and is
+	// safe if the normal event thread happens to run concurrently.
+	status_t commandWaitStatus = B_TIMED_OUT;
+	const bigtime_t commandDeadline = system_time() + 800 * 1000;
+	uint32 pollCount = 0;
+	while (system_time() < commandDeadline && pollCount++ < 1000000) {
+		ProcessEvents();
+		commandWaitStatus = acquire_sem_etc(fCmdCompSem, 1,
+			B_RELATIVE_TIMEOUT, 0);
+		if (commandWaitStatus == B_OK)
+			break;
+		spin(75);
+	}
+	if (pollCount > 1) {
+		dprintf("P290:XHCI polled command type %" B_PRIu32
+			" iterations %" B_PRIu32 " status %s\n",
+			TRB_3_TYPE_GET(trb->flags), pollCount,
+			strerror(commandWaitStatus));
+	}
+#else
 	// Begin with a 50ms timeout.
-	if (acquire_sem_etc(fCmdCompSem, 1, B_RELATIVE_TIMEOUT, 50 * 1000) != B_OK) {
+	status_t commandWaitStatus = acquire_sem_etc(fCmdCompSem, 1,
+		B_RELATIVE_TIMEOUT, 50 * 1000);
+	if (commandWaitStatus != B_OK) {
 		// We've hit the timeout. In some error cases, interrupts are not
 		// generated; so here we force the event ring to be polled once.
 		release_sem(fEventSem);
 
 		// Now try again, this time with a 750ms timeout.
-		if (acquire_sem_etc(fCmdCompSem, 1, B_RELATIVE_TIMEOUT,
-				750 * 1000) != B_OK) {
-			uint16 eventIndex = fEventIdx;
-			dprintf("P258:XHCI timeout type %" B_PRIu32 " cmd-index %" B_PRIu16
-				" event-index %" B_PRIu16 " crcr %#" B_PRIx32 ":%#" B_PRIx32
-				" sts %#" B_PRIx32 " iman %#" B_PRIx32 " erdp %#" B_PRIx32
-				":%#" B_PRIx32 " event %#" B_PRIx64 "/%#" B_PRIx32
-				"/%#" B_PRIx32 "\n", TRB_3_TYPE_GET(trb->flags), fCmdIdx,
-				eventIndex, ReadOpReg(XHCI_CRCR_HI), ReadOpReg(XHCI_CRCR_LO),
-				ReadOpReg(XHCI_STS), ReadRunReg32(XHCI_IMAN(0)),
-				ReadRunReg32(XHCI_ERDP_HI(0)), ReadRunReg32(XHCI_ERDP_LO(0)),
-				fEventRing[eventIndex].address, fEventRing[eventIndex].status,
-				fEventRing[eventIndex].flags);
-			TRACE("Unable to obtain fCmdCompSem!\n");
-			fCmdAddr = 0;
-			Unlock();
-			return B_TIMED_OUT;
-		}
+		commandWaitStatus = acquire_sem_etc(fCmdCompSem, 1,
+			B_RELATIVE_TIMEOUT, 750 * 1000);
+	}
+#endif
+
+	if (commandWaitStatus != B_OK) {
+		uint16 eventIndex = fEventIdx;
+		dprintf("P258:XHCI timeout type %" B_PRIu32 " cmd-index %" B_PRIu16
+			" event-index %" B_PRIu16 " crcr %#" B_PRIx32 ":%#" B_PRIx32
+			" sts %#" B_PRIx32 " iman %#" B_PRIx32 " erdp %#" B_PRIx32
+			":%#" B_PRIx32 " event %#" B_PRIx64 "/%#" B_PRIx32
+			"/%#" B_PRIx32 "\n", TRB_3_TYPE_GET(trb->flags), fCmdIdx,
+			eventIndex, ReadOpReg(XHCI_CRCR_HI), ReadOpReg(XHCI_CRCR_LO),
+			ReadOpReg(XHCI_STS), ReadRunReg32(XHCI_IMAN(0)),
+			ReadRunReg32(XHCI_ERDP_HI(0)), ReadRunReg32(XHCI_ERDP_LO(0)),
+			fEventRing[eventIndex].address, fEventRing[eventIndex].status,
+			fEventRing[eventIndex].flags);
+		TRACE("Unable to obtain fCmdCompSem!\n");
+		fCmdAddr = 0;
+		Unlock();
+		return B_TIMED_OUT;
 	}
 
 	// eat up sems that have been released by multiple interrupts

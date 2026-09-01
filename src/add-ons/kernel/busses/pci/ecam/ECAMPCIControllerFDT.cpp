@@ -7,6 +7,7 @@
 #include "ECAMPCIController.h"
 
 #include <AutoDeleterDrivers.h>
+#include <KernelExport.h>
 #include <arch/generic/msi.h>
 #include <interrupts.h>
 #include <util/AutoLock.h>
@@ -70,15 +71,21 @@ public:
 				return status;
 		}
 
+		// The SG2042 top interrupt controller status bits are not reaching the
+		// PLIC reliably yet. Poll them from the boot CPU's periodic hardware
+		// timer rather than a sleeping kernel thread. The timer hook runs with
+		// interrupts disabled, matching the contract of io_interrupt_handler(),
+		// and cannot be stranded behind the very PCIe completion it must deliver
+		// on a single-hart boot.
+		fPollTimer.user_data = this;
+		status = add_timer(&fPollTimer, PollTimer, 1000, B_PERIODIC_TIMER);
+		if (status != B_OK)
+			return status;
+
 		fInitialized = true;
 		msi_set_interface(this);
-		fPollThread = spawn_kernel_thread(PollThread, "SG2042 MSI status poll",
-			B_REAL_TIME_DISPLAY_PRIORITY, this);
-		if (fPollThread < B_OK)
-			return fPollThread;
-		resume_thread(fPollThread);
 		dprintf("P253:SG2042 MSI interface %p vtable %p, vectors %" B_PRId32
-			"-%" B_PRId32 " route through PLIC 64-95\n", this,
+			"-%" B_PRId32 " route through PLIC 64-95, timer poll 1000us\n", this,
 			*(void**)this, fMsiStartIrq,
 			fMsiStartIrq + kSg2042TopIntcVectorCount - 1);
 		return B_OK;
@@ -139,33 +146,32 @@ private:
 			+ context->index, false);
 	}
 
-	static int32 PollThread(void* argument)
+	static int32 PollTimer(timer* event)
 	{
 		Sg2042MsiInterruptController* controller
-			= (Sg2042MsiInterruptController*)argument;
-		while (true) {
-			uint32 status = Sg2042MmioRead((vuint32*)(controller->fRegs
-				+ kSg2042TopIntcStatusOffset));
-			while (status != 0) {
-				uint32 index = __builtin_ctz(status);
-				uint32 mask = 1U << index;
-				Sg2042MmioWrite((vuint32*)(controller->fRegs
-					+ kSg2042TopIntcClearOffset), mask);
-				uint32 statusAfterClear = Sg2042MmioRead(
-					(vuint32*)(controller->fRegs + kSg2042TopIntcStatusOffset));
-				if (controller->fPolledInterrupts++ < 8) {
-					dprintf("P258:SG2042 MSI poll index %" B_PRIu32
-						" status %#" B_PRIx32 " after-clear %#" B_PRIx32 "\n",
-						index, status, statusAfterClear);
-				}
-				cpu_status interruptState = disable_interrupts();
-				io_interrupt_handler(controller->fMsiStartIrq + index, false);
-				restore_interrupts(interruptState);
-				status &= ~mask;
+			= (Sg2042MsiInterruptController*)event->user_data;
+		uint32 status = Sg2042MmioRead((vuint32*)(controller->fRegs
+			+ kSg2042TopIntcStatusOffset));
+		int32 result = B_HANDLED_INTERRUPT;
+		while (status != 0) {
+			uint32 index = __builtin_ctz(status);
+			uint32 mask = 1U << index;
+			Sg2042MmioWrite((vuint32*)(controller->fRegs
+				+ kSg2042TopIntcClearOffset), mask);
+			uint32 statusAfterClear = Sg2042MmioRead(
+				(vuint32*)(controller->fRegs + kSg2042TopIntcStatusOffset));
+			if (controller->fPolledInterrupts++ < 8) {
+				dprintf("P291:SG2042 MSI timer poll index %" B_PRIu32
+					" status %#" B_PRIx32 " after-clear %#" B_PRIx32 "\n",
+					index, status, statusAfterClear);
 			}
-			snooze(1000);
+			int32 interruptResult = io_interrupt_handler(
+				controller->fMsiStartIrq + index, false);
+			if (interruptResult == B_INVOKE_SCHEDULER)
+				result = B_INVOKE_SCHEDULER;
+			status &= ~mask;
 		}
-		return B_OK;
+		return result;
 	}
 
 	struct mutex fLock = MUTEX_INITIALIZER("SG2042 MSI allocation");
@@ -174,7 +180,7 @@ private:
 	int32 fMsiStartIrq{-1};
 	uint32 fAllocated{};
 	InterruptContext fInterrupts[kSg2042TopIntcVectorCount]{};
-	thread_id fPollThread{-1};
+	timer fPollTimer{};
 	uint32 fPhysicalInterrupts{};
 	uint32 fPolledInterrupts{};
 	bool fInitialized{};
@@ -324,6 +330,16 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 		dprintf("P238:SG2042 local management page mapped\n");
 		uint32 linkState = Sg2042MmioRead((vuint32*)fLmRegs);
 		dprintf("P242:SG2042 link state %#" B_PRIx32 "\n", linkState);
+		if (linkState == 0 || linkState == UINT32_MAX
+			|| linkState == 0x5a5a5a5a) {
+			// An unavailable SG2042 PCIe root returns a fixed fill pattern rather
+			// than raising a recoverable bus error.  Do not touch its controller
+			// or ECAM windows: doing so causes a supervisor load-access fault.
+			dprintf("P259:SG2042 root bus %#" B_PRIx8
+				" unavailable (link state %#" B_PRIx32 "), skipping\n",
+				fStartBus, linkState);
+			return B_UNSUPPORTED;
+		}
 
 		// Match the root-complex initialization performed by Sophgo's Linux
 		// driver before it attempts any root-port configuration-space reads.

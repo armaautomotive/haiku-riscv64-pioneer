@@ -39,6 +39,18 @@ ssize_t gVirtFromPhysOffset = 0;
 phys_addr_t sPageTable = 0;
 char sPhysicalPageMapperData[sizeof(RISCV64VMPhysicalPageMapper)];
 
+extern bool gRiscvTHeadMae;
+
+static const uint64 kTHeadPma = 0x0eULL << 59;
+
+
+static inline void
+ApplyTHeadPma(Pte& pte)
+{
+	if (gRiscvTHeadMae)
+		pte.val |= kTHeadPma;
+}
+
 
 // TODO: Consolidate function with RISCV64VMTranslationMap
 
@@ -74,6 +86,7 @@ LookupPte(addr_t virtAdr, bool alloc, kernel_args* args)
 				.isGlobal = true,
 				.ppn = ppn
 			};
+			ApplyTHeadPma(newPte);
 			pte->val = newPte.val;
 		}
 		pte = (Pte*)VirtFromPhys(B_PAGE_SIZE * pte->ppn);
@@ -98,6 +111,7 @@ Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags, kernel_args* args)
 		.ppn = physAdr / B_PAGE_SIZE
 	};
 	newPte.val |= flags;
+	ApplyTHeadPma(newPte);
 
 	pte->val = newPte.val;
 

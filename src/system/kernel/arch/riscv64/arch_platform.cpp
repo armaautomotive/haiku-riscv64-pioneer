@@ -23,6 +23,22 @@ PlicRegs  *volatile gPlicRegs;
 ClintRegs *volatile gClintRegs;
 
 
+static void
+detect_thead_mae()
+{
+	if (gPlatform != kPlatformSbi)
+		return;
+
+	sbiret vendor = sbi_get_mvendorid();
+	if (vendor.error != SBI_SUCCESS || vendor.value != 0x5b7)
+		return;
+
+	uint64 sxstatus;
+	asm volatile("csrr %0, 0x5c0" : "=r"(sxstatus));
+	gRiscvTHeadMae = (sxstatus & (1UL << 21)) != 0;
+}
+
+
 status_t
 arch_platform_init(struct kernel_args *args)
 {
@@ -47,6 +63,10 @@ arch_platform_init(struct kernel_args *args)
 	gPlicRegs  = (PlicRegs *volatile)args->arch_args.plic.start;
 	gClintRegs = (ClintRegs *volatile)args->arch_args.clint.start;
 
+	// Translation-map initialization follows this call. Detect MAEE here so
+	// every page table created by the kernel uses the C920 memory attributes.
+	detect_thead_mae();
+
 	return B_OK;
 }
 
@@ -61,13 +81,8 @@ arch_platform_init_post_vm(struct kernel_args *kernelArgs)
 		(void)sbi_get_spec_version();
 		(void)sbi_get_impl_id();
 		(void)sbi_get_impl_version();
-		sbiret vendor = sbi_get_mvendorid();
+		(void)sbi_get_mvendorid();
 		(void)sbi_get_marchid();
-		if (vendor.error == SBI_SUCCESS && vendor.value == 0x5b7) {
-			uint64 sxstatus;
-			asm volatile("csrr %0, 0x5c0" : "=r"(sxstatus));
-			gRiscvTHeadMae = (sxstatus & (1UL << 21)) != 0;
-		}
 		debug_early_boot_message("riscv: SBI platform probed\n");
 	}
 	return B_OK;

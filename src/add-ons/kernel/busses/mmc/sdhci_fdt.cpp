@@ -81,7 +81,8 @@ enable_sg2042_clocks()
 
 	uint8* mappedBase;
 	area_id area = map_physical_memory("SG2042 SD clock gates",
-		kClockGatePage, kClockGatePageSize, B_ANY_KERNEL_BLOCK_ADDRESS,
+		kClockGatePage, kClockGatePageSize,
+		B_ANY_KERNEL_BLOCK_ADDRESS | B_WRITE_COMBINING_MEMORY,
 		B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA, (void**)&mappedBase);
 	if (area < B_OK)
 		return area;
