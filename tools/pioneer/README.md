@@ -42,3 +42,43 @@ Likewise, attach it before powering on. A single relay contact is suitable only
 if it drives a purpose-built SD isolation/multiplexer control input; it must not
 be used to interrupt only the card's power line while its signal lines remain
 connected.
+
+## Haiku build and SD deployment
+
+The Pioneer firmware image used by this port contains an embedded Haiku EFI
+loader. That embedded loader is the copy the board actually executes; updating
+only `EFI/BOOT/BOOTRISCV64.EFI` is insufficient.
+
+Build the image and BFS payload with `pioneer_build.sh`, then repack the newly
+built loader into a known-working firmware image:
+
+```sh
+tools/pioneer/pioneer_firmware_embed.sh \
+  --base /path/to/known-working/MilkV-Pioneer.fd \
+  --loader /path/to/generated.riscv64/objects/haiku/riscv64/release/system/boot/efi/haiku_loader.efi \
+  --output /path/to/MilkV-Pioneer.updated.fd
+```
+
+The repacker validates the Pioneer firmware GUIDs and layout, preserves the
+vendor firmware outside the compressed DXE allocation, decompresses its own
+output, and compares the embedded loader byte-for-byte with the input loader.
+
+Deploying a loader now requires both the standalone loader and the verified
+repacked firmware:
+
+```sh
+tools/pioneer/pioneer_sd_deploy.sh \
+  --device /dev/mmcblk1 \
+  --payload /path/to/haiku-pioneer-bfs.img \
+  --sha256 BFS_SHA256 \
+  --loader /path/to/haiku_loader.efi \
+  --loader-sha256 LOADER_SHA256 \
+  --firmware /path/to/MilkV-Pioneer.updated.fd \
+  --firmware-sha256 FIRMWARE_SHA256 \
+  --apply
+```
+
+Before writing, the deployment script independently decompresses the supplied
+firmware and rejects it unless its embedded loader hash matches
+`--loader-sha256`. It backs up and readback-verifies the BFS payload, standalone
+loader, and booted firmware.

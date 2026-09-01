@@ -137,3 +137,12 @@ echo "BFS payload: $PAYLOAD"
 echo "BFS payload size: $(wc -c < "$PAYLOAD" | tr -d ' ') bytes"
 echo "BFS payload SHA-256: $PAYLOAD_HASH"
 echo "Manifest: $MANIFEST"
+
+LOADER=$BUILD_OUTPUT/objects/haiku/riscv64/release/system/boot/efi/haiku_loader.efi
+[ -f "$LOADER" ] || {
+	echo "EFI loader target was not produced: $LOADER" >&2
+	exit 1
+}
+echo "EFI loader: $LOADER"
+echo "EFI loader size: $(wc -c < "$LOADER" | tr -d ' ') bytes"
+echo "EFI loader SHA-256: $(shasum -a 256 "$LOADER" | awk '{print $1}')"
