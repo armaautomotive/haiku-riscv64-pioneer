@@ -223,6 +223,10 @@ Stack::ExploreThread(void *data)
 void
 Stack::Explore()
 {
+	static int32 sExploreTraceCount = 0;
+	int32 exploreTraceIndex = atomic_add(&sExploreTraceCount, 1);
+	if (exploreTraceIndex < 32)
+		dprintf("P300:USB explore %" B_PRId32 " begin\n", exploreTraceIndex);
 	recursive_lock* dmLock = device_manager_get_lock();
 	if (find_thread(NULL) != fExploreThread
 			&& RECURSIVE_LOCK_HOLDER(dmLock) == find_thread(NULL)) {
@@ -272,6 +276,8 @@ Stack::Explore()
 
 	mutex_unlock(&fExploreLock);
 	RescanDrivers(rescanList);
+	if (exploreTraceIndex < 32)
+		dprintf("P300:USB explore %" B_PRId32 " complete\n", exploreTraceIndex);
 }
 
 void

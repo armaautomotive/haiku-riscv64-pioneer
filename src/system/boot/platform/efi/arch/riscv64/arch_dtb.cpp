@@ -11,12 +11,14 @@
 #include <arch_smp.h>
 #include <boot/platform.h>
 #include <boot/stage2.h>
+#include <efi/protocol/riscv-boot.h>
 
 extern "C" {
 #include <libfdt.h>
 }
 
 #include "dtb.h"
+#include "efi_platform.h"
 
 
 uint32 gBootHart = 0;
@@ -53,15 +55,10 @@ arch_handle_fdt(const void* fdt, int node)
 				return;
 			info->id = fdt32_to_cpu(*(uint32*)fdt_getprop(fdt, node,
 				"reg", NULL));
-			dprintf("cpu\n");
-			dprintf("  id: %" B_PRIu32 "\n", info->id);
 
 			int subNode = fdt_subnode_offset(fdt, node, "interrupt-controller");
-			if (subNode < 0) {
-				dprintf("  [!] no interrupt controller\n");
-			} else {
+			if (subNode >= 0) {
 				info->phandle = fdt_get_phandle(fdt, subNode);
-				dprintf("  phandle: %" B_PRIu32 "\n", info->phandle);
 			}
 		}
 	}
@@ -83,18 +80,14 @@ arch_handle_fdt(const void* fdt, int node)
 		dtb_get_reg(fdt, node, 0, sPlic);
 		int propSize;
 		if (uint32* prop = (uint32*)fdt_getprop(fdt, node, "interrupts-extended", &propSize)) {
-			dprintf("PLIC contexts\n");
 			uint32 contextId = 0;
 			for (uint32 *it = prop; (uint8_t*)it - (uint8_t*)prop < propSize; it += 2) {
 				uint32 phandle = fdt32_to_cpu(*it);
 				uint32 interrupt = fdt32_to_cpu(*(it + 1));
 				if (interrupt == sExternInt) {
 					platform_cpu_info* cpuInfo = arch_smp_find_cpu(phandle);
-					dprintf("  context %" B_PRIu32 ": %" B_PRIu32 "\n", contextId, phandle);
-					if (cpuInfo != NULL) {
+					if (cpuInfo != NULL)
 						cpuInfo->plicContext = contextId;
-						dprintf("    cpu id: %" B_PRIu32 "\n", cpuInfo->id);
-					}
 				}
 				contextId++;
 			}
@@ -107,8 +100,19 @@ arch_handle_fdt(const void* fdt, int node)
 void
 arch_dtb_set_kernel_args(void)
 {
-	dprintf("bootHart: %" B_PRIu32 "\n", gBootHart);
-	dprintf("timerFrequency: %" B_PRIu64 "\n", sTimerFrequency);
+	// UEFI may start on a different hart than the device tree's static
+	// boot-hartid property names.  The RISC-V EFI boot protocol reports the
+	// hart actually executing the loader and is authoritative for selecting
+	// per-hart interrupt-controller contexts.
+	efi_guid bootProtocolGuid = EFI_RISCV_BOOT_PROTOCOL_GUID;
+	efi_riscv_boot_protocol* bootProtocol = NULL;
+	if (kBootServices->LocateProtocol(&bootProtocolGuid, NULL,
+			(void**)&bootProtocol) == EFI_SUCCESS && bootProtocol != NULL) {
+		size_t bootHartId;
+		if (bootProtocol->GetBootHartId(bootProtocol, &bootHartId) == EFI_SUCCESS)
+			gBootHart = bootHartId;
+	}
+
 	gKernelArgs.arch_args.timerFrequency = sTimerFrequency;
 
 //	gKernelArgs.arch_args.htif  = {.start = 0x40008000, .size = 0x10};

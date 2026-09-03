@@ -127,7 +127,6 @@ arch_cpu_entry(int hartId, CpuEntryInfo* info)
 void
 arch_smp_register_cpu(platform_cpu_info** cpu)
 {
-	dprintf("arch_smp_register_cpu()\n");
 	uint32 newCount = sCpuCount + 1;
 	if (newCount > SMP_MAX_CPUS) {
 		*cpu = NULL;
@@ -160,6 +159,22 @@ void
 arch_smp_init_other_cpus(void)
 {
 	gKernelArgs.num_cpus = sCpuCount;
+
+	// Some RISC-V firmware supplies a stale boot-hartid in both the device tree
+	// and EFI boot protocol.  HSM still knows which single hart is executing the
+	// loader, so use it when it yields an unambiguous answer.
+	uint32 startedHart = 0;
+	uint32 startedHartCount = 0;
+	for (uint32 i = 0; i < sCpuCount; i++) {
+		sbiret result = sbi_hart_get_status(sCpus[i].id);
+		if (result.error == SBI_SUCCESS
+			&& result.value == SBI_HART_STATE_STARTED) {
+			startedHart = sCpus[i].id;
+			startedHartCount++;
+		}
+	}
+	if (startedHartCount == 1)
+		gBootHart = startedHart;
 
 	// make boot CPU first as expected by kernel
 	for (uint32 i = 1; i < sCpuCount; i++) {

@@ -2605,10 +2605,17 @@ XHCI::InterruptHandler(void* data)
 int32
 XHCI::Interrupt()
 {
+	static int32 sInterruptTraceCount = 0;
 	SpinLocker _(&fSpinlock);
 
 	uint32 status = ReadOpReg(XHCI_STS);
 	uint32 temp = ReadRunReg32(XHCI_IMAN(0));
+	int32 traceIndex = atomic_add(&sInterruptTraceCount, 1);
+	if (traceIndex < 64) {
+		dprintf("P294:XHCI interrupt %" B_PRId32 " sts %#" B_PRIx32
+			" iman %#" B_PRIx32 " event-index %" B_PRIu16 "\n",
+			traceIndex, status, temp, fEventIdx);
+	}
 	WriteOpReg(XHCI_STS, status);
 	WriteRunReg32(XHCI_IMAN(0), temp);
 
@@ -2909,31 +2916,6 @@ XHCI::DoCommand(xhci_trb* trb)
 	QueueCommand(trb);
 	Ring(0, 0);
 
-#if defined(__riscv)
-	// The SG2042 currently obtains PCIe MSI events through a polling kernel
-	// thread. On a single-hart boot, sleeping here can leave both that thread
-	// and this timeout dependent on a scheduler/timer handoff while early USB
-	// discovery holds the bus-manager call chain. Poll the event ring directly
-	// for this bounded command window. ProcessEvents() uses fEventLock and is
-	// safe if the normal event thread happens to run concurrently.
-	status_t commandWaitStatus = B_TIMED_OUT;
-	const bigtime_t commandDeadline = system_time() + 800 * 1000;
-	uint32 pollCount = 0;
-	while (system_time() < commandDeadline && pollCount++ < 1000000) {
-		ProcessEvents();
-		commandWaitStatus = acquire_sem_etc(fCmdCompSem, 1,
-			B_RELATIVE_TIMEOUT, 0);
-		if (commandWaitStatus == B_OK)
-			break;
-		spin(75);
-	}
-	if (pollCount > 1) {
-		dprintf("P290:XHCI polled command type %" B_PRIu32
-			" iterations %" B_PRIu32 " status %s\n",
-			TRB_3_TYPE_GET(trb->flags), pollCount,
-			strerror(commandWaitStatus));
-	}
-#else
 	// Begin with a 50ms timeout.
 	status_t commandWaitStatus = acquire_sem_etc(fCmdCompSem, 1,
 		B_RELATIVE_TIMEOUT, 50 * 1000);
@@ -2946,7 +2928,6 @@ XHCI::DoCommand(xhci_trb* trb)
 		commandWaitStatus = acquire_sem_etc(fCmdCompSem, 1,
 			B_RELATIVE_TIMEOUT, 750 * 1000);
 	}
-#endif
 
 	if (commandWaitStatus != B_OK) {
 		uint16 eventIndex = fEventIdx;
@@ -3193,6 +3174,7 @@ XHCI::CompleteEvents()
 void
 XHCI::ProcessEvents()
 {
+	static int32 sEventTraceCount = 0;
 	// Use mutex_trylock first, in case we are in KDL.
 	MutexLocker locker(fEventLock, mutex_trylock(&fEventLock) == B_OK);
 	if (!locker.IsLocked()) {
@@ -3211,6 +3193,13 @@ XHCI::ProcessEvents()
 	while (1) {
 		uint32 temp = B_LENDIAN_TO_HOST_INT32(fEventRing[i].flags);
 		uint8 event = TRB_3_TYPE_GET(temp);
+		int32 traceIndex = atomic_add(&sEventTraceCount, 1);
+		if (traceIndex < 128) {
+			dprintf("P295:XHCI event %" B_PRId32 " index %" B_PRIu16
+				" type %" B_PRIu8 " cycle %" B_PRIu8 "/%" B_PRIu8
+				" status %#" B_PRIx32 "\n", traceIndex, i, event,
+				(temp & TRB_3_CYCLE_BIT) != 0, j, fEventRing[i].status);
+		}
 		TRACE("event[%u] = %u (0x%016" B_PRIx64 " 0x%08" B_PRIx32 " 0x%08"
 			B_PRIx32 ")\n", i, event, fEventRing[i].address,
 			fEventRing[i].status, B_LENDIAN_TO_HOST_INT32(fEventRing[i].flags));
@@ -3262,9 +3251,15 @@ XHCI::FinishThread(void* data)
 void
 XHCI::FinishTransfers()
 {
+	static int32 sFinishTraceCount = 0;
 	while (!fStopThreads) {
 		if (acquire_sem(fFinishTransfersSem) < B_OK)
 			continue;
+		int32 wakeTraceIndex = atomic_add(&sFinishTraceCount, 1);
+		if (wakeTraceIndex < 64) {
+			dprintf("P296:XHCI finish wake %" B_PRId32 " head %p\n",
+				wakeTraceIndex, fFinishedHead);
+		}
 
 		// eat up sems that have been released by multiple interrupts
 		int32 semCount = 0;
@@ -3329,7 +3324,16 @@ XHCI::FinishTransfers()
 			}
 			if (finished) {
 				// The actualLength was already handled in AdvanceByFragment.
+				if (wakeTraceIndex < 64) {
+					dprintf("P296:XHCI finish callback %" B_PRId32
+						" status %s length %" B_PRIuSIZE "\n", wakeTraceIndex,
+						strerror(callbackStatus), actualLength);
+				}
 				transfer->Finished(callbackStatus, 0);
+				if (wakeTraceIndex < 64) {
+					dprintf("P296:XHCI finish callback returned %" B_PRId32
+						"\n", wakeTraceIndex);
+				}
 				delete transfer;
 			}
 

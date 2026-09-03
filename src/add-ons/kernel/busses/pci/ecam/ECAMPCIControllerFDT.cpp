@@ -42,6 +42,7 @@ static const uint32 kSg2042TopIntcClearOffset = 0x304;
 static const uint64 kSg2042TopIntcSetAddress = 0x7030010300;
 static const int32 kSg2042TopIntcPlicBase = 64;
 static const uint32 kSg2042TopIntcVectorCount = 32;
+static const phys_addr_t kSg2042PlicPendingPage = 0x7090001000;
 
 
 class Sg2042MsiInterruptController final : public MSIInterface {
@@ -57,6 +58,12 @@ public:
 		if (fRegsArea.Get() < B_OK)
 			return fRegsArea.Get();
 
+		fPlicPendingArea.SetTo(map_physical_memory("SG2042 PLIC pending registers",
+			kSg2042PlicPendingPage, B_PAGE_SIZE, B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA, (void**)&fPlicPending));
+		if (fPlicPendingArea.Get() < B_OK)
+			return fPlicPendingArea.Get();
+
 		status_t status = allocate_io_interrupt_vectors(kSg2042TopIntcVectorCount,
 			&fMsiStartIrq, INTERRUPT_TYPE_IRQ);
 		if (status != B_OK)
@@ -71,12 +78,10 @@ public:
 				return status;
 		}
 
-		// The SG2042 top interrupt controller status bits are not reaching the
-		// PLIC reliably yet. Poll them from the boot CPU's periodic hardware
-		// timer rather than a sleeping kernel thread. The timer hook runs with
-		// interrupts disabled, matching the contract of io_interrupt_handler(),
-		// and cannot be stranded behind the very PCIe completion it must deliver
-		// on a single-hart boot.
+		// Observe the SG2042 MSI and PLIC pending state without acknowledging it.
+		// Only InterruptReceived() may clear an MSI.  A previous diagnostic poller
+		// cleared and dispatched the status itself, racing the real PLIC path and
+		// making it impossible to tell whether hardware delivery was functional.
 		fPollTimer.user_data = this;
 		status = add_timer(&fPollTimer, PollTimer, 1000, B_PERIODIC_TIMER);
 		if (status != B_OK)
@@ -85,7 +90,7 @@ public:
 		fInitialized = true;
 		msi_set_interface(this);
 		dprintf("P253:SG2042 MSI interface %p vtable %p, vectors %" B_PRId32
-			"-%" B_PRId32 " route through PLIC 64-95, timer poll 1000us\n", this,
+			"-%" B_PRId32 " route through PLIC 64-95, observer 1000us\n", this,
 			*(void**)this, fMsiStartIrq,
 			fMsiStartIrq + kSg2042TopIntcVectorCount - 1);
 		return B_OK;
@@ -138,7 +143,7 @@ private:
 			return B_UNHANDLED_INTERRUPT;
 		Sg2042MmioWrite((vuint32*)(context->controller->fRegs
 			+ kSg2042TopIntcClearOffset), mask);
-		if (context->controller->fPhysicalInterrupts++ < 8) {
+		if (context->controller->fPhysicalInterrupts++ < 64) {
 			dprintf("P254:SG2042 MSI physical PLIC index %" B_PRIu32
 				" status %#" B_PRIx32 "\n", context->index, status);
 		}
@@ -152,31 +157,27 @@ private:
 			= (Sg2042MsiInterruptController*)event->user_data;
 		uint32 status = Sg2042MmioRead((vuint32*)(controller->fRegs
 			+ kSg2042TopIntcStatusOffset));
-		int32 result = B_HANDLED_INTERRUPT;
-		while (status != 0) {
-			uint32 index = __builtin_ctz(status);
-			uint32 mask = 1U << index;
-			Sg2042MmioWrite((vuint32*)(controller->fRegs
-				+ kSg2042TopIntcClearOffset), mask);
-			uint32 statusAfterClear = Sg2042MmioRead(
-				(vuint32*)(controller->fRegs + kSg2042TopIntcStatusOffset));
-			if (controller->fPolledInterrupts++ < 8) {
-				dprintf("P291:SG2042 MSI timer poll index %" B_PRIu32
-					" status %#" B_PRIx32 " after-clear %#" B_PRIx32 "\n",
-					index, status, statusAfterClear);
-			}
-			int32 interruptResult = io_interrupt_handler(
-				controller->fMsiStartIrq + index, false);
-			if (interruptResult == B_INVOKE_SCHEDULER)
-				result = B_INVOKE_SCHEDULER;
-			status &= ~mask;
+		if (status != 0 && controller->fPolledInterrupts++ < 16) {
+			uint32 plicPending = Sg2042MmioRead(controller->fPlicPending
+				+ kSg2042TopIntcPlicBase / 32);
+			uint64 sie = 0;
+			uint64 sip = 0;
+#if defined(__riscv)
+			asm volatile("csrr %0, sie" : "=r"(sie));
+			asm volatile("csrr %0, sip" : "=r"(sip));
+#endif
+			dprintf("P292:SG2042 MSI observed status %#" B_PRIx32
+				" PLIC pending[64:95] %#" B_PRIx32 " sie %#" B_PRIx64
+				" sip %#" B_PRIx64 "\n", status, plicPending, sie, sip);
 		}
-		return result;
+		return B_HANDLED_INTERRUPT;
 	}
 
 	struct mutex fLock = MUTEX_INITIALIZER("SG2042 MSI allocation");
 	AreaDeleter fRegsArea;
 	uint8 volatile* fRegs{};
+	AreaDeleter fPlicPendingArea;
+	vuint32* fPlicPending{};
 	int32 fMsiStartIrq{-1};
 	uint32 fAllocated{};
 	InterruptContext fInterrupts[kSg2042TopIntcVectorCount]{};
