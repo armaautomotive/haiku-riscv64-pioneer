@@ -295,8 +295,6 @@ Hub::Explore(change_item **changeList)
 
 					Device *newDevice = GetBusManager()->AllocateDevice(this,
 						hubAddress, hubPort, speed);
-					dprintf("P299:USB hub port %" B_PRId32 " allocation returned %p\n",
-						i, newDevice);
 
 					if (newDevice) {
 						newDevice->Changed(changeList, true);

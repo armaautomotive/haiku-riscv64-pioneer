@@ -32,8 +32,6 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 	fNode(NULL)
 {
 	TRACE("creating device\n");
-	dprintf("P297:USB device %" B_PRId8 " constructor begin\n",
-		fDeviceAddress);
 
 	fDefaultPipe = new(std::nothrow) ControlPipe(this);
 	if (fDefaultPipe == NULL) {
@@ -54,8 +52,6 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 		TRACE_ERROR("error while getting the device descriptor\n");
 		return;
 	}
-	dprintf("P297:USB device %" B_PRId8 " full descriptor configurations %"
-		B_PRIu8 "\n", fDeviceAddress, fDeviceDescriptor.num_configurations);
 
 	TRACE("full device descriptor for device %d:\n", fDeviceAddress);
 	TRACE("\tlength:..............%d\n", fDeviceDescriptor.length);
@@ -84,8 +80,6 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 	memset(fConfigurations, 0, fDeviceDescriptor.num_configurations
 		* sizeof(usb_configuration_info));
 	for (int32 i = 0; i < fDeviceDescriptor.num_configurations; i++) {
-		dprintf("P297:USB device %" B_PRId8 " configuration %" B_PRId32
-			" header begin\n", fDeviceAddress, i);
 		usb_configuration_descriptor configDescriptor;
 		status = GetDescriptor(USB_DESCRIPTOR_CONFIGURATION, i, 0,
 			(void*)&configDescriptor, sizeof(usb_configuration_descriptor),
@@ -96,9 +90,6 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 			TRACE_ERROR("error fetching configuration %" B_PRId32 "\n", i);
 			return;
 		}
-		dprintf("P297:USB device %" B_PRId8 " configuration %" B_PRId32
-			" header length %" B_PRIu16 "\n", fDeviceAddress, i,
-			configDescriptor.total_length);
 
 		TRACE("configuration %" B_PRId32 "\n", i);
 		TRACE("\tlength:..............%d\n", configDescriptor.length);
@@ -130,8 +121,6 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 			free(configData);
 			return;
 		}
-		dprintf("P297:USB device %" B_PRId8 " configuration %" B_PRId32
-			" body complete\n", fDeviceAddress, i);
 
 		usb_configuration_descriptor* configuration
 			= (usb_configuration_descriptor*)configData;
@@ -154,24 +143,14 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 			if (remaining < 2) {
 				TRACE_ERROR("truncated descriptor header at offset %" B_PRIu32
 					" in configuration %" B_PRId32 "\n", descriptorStart, i);
-				dprintf("P297:USB device %" B_PRId8 " invalid descriptor offset %"
-					B_PRIu32 " remaining %" B_PRIuSIZE "\n", fDeviceAddress,
-					descriptorStart, remaining);
 				return;
 			}
 
 			const uint8 descriptorLength = configData[descriptorStart];
-			const uint8 descriptorType = configData[descriptorStart + 1];
-			dprintf("P297:USB device %" B_PRId8 " descriptor offset %" B_PRIu32
-				" length %" B_PRIu8 " type %#" B_PRIx8 "\n", fDeviceAddress,
-				descriptorStart, descriptorLength, descriptorType);
 			if (descriptorLength < 2 || descriptorLength > remaining) {
 				TRACE_ERROR("invalid descriptor length %" B_PRIu8 " at offset %"
 					B_PRIu32 " in configuration %" B_PRId32 "\n",
 					descriptorLength, descriptorStart, i);
-				dprintf("P297:USB device %" B_PRId8 " invalid descriptor length %"
-					B_PRIu8 " offset %" B_PRIu32 " remaining %" B_PRIuSIZE "\n",
-					fDeviceAddress, descriptorLength, descriptorStart, remaining);
 				return;
 			}
 
@@ -354,18 +333,12 @@ Device::Device(Object* parent, int8 hubAddress, uint8 hubPort,
 
 	// Set default configuration
 	TRACE("setting default configuration\n");
-	dprintf("P297:USB device %" B_PRId8 " set configuration begin\n",
-		fDeviceAddress);
 	if (SetConfigurationAt(0) != B_OK) {
 		TRACE_ERROR("failed to set default configuration\n");
 		return;
 	}
-	dprintf("P297:USB device %" B_PRId8 " set configuration complete\n",
-		fDeviceAddress);
 
 	fInitOK = true;
-	dprintf("P297:USB device %" B_PRId8 " constructor complete\n",
-		fDeviceAddress);
 }
 
 

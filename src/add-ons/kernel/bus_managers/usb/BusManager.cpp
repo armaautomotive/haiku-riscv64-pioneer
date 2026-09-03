@@ -118,8 +118,6 @@ Device *
 BusManager::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 	usb_speed speed)
 {
-	dprintf("P298:USB allocate begin hub %" B_PRId8 " port %" B_PRIu8
-		" speed %d\n", hubAddress, hubPort, speed);
 	// Check if there is a free entry in the device map (for the device number)
 	int8 deviceAddress = AllocateAddress();
 	if (deviceAddress < 0) {
@@ -162,7 +160,6 @@ BusManager::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 		FreeAddress(deviceAddress);
 		return NULL;
 	}
-	dprintf("P298:USB address %" B_PRId8 " set\n", deviceAddress);
 
 	// Wait a bit for the device to complete addressing
 	snooze(USB_DELAY_SET_ADDRESS);
@@ -195,8 +192,6 @@ BusManager::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 		FreeAddress(deviceAddress);
 		return NULL;
 	}
-	dprintf("P298:USB address %" B_PRId8 " short descriptor class %#" B_PRIx8
-		"\n", deviceAddress, deviceDescriptor.device_class);
 
 	TRACE("short device descriptor for device %d:\n", deviceAddress);
 	TRACE("\tlength:..............%d\n", deviceDescriptor.length);
@@ -245,10 +240,8 @@ BusManager::AllocateDevice(Hub *parent, int8 hubAddress, uint8 hubPort,
 		delete device;
 		return NULL;
 	}
-	dprintf("P298:USB address %" B_PRId8 " initialized\n", deviceAddress);
 
 	device->RegisterNode();
-	dprintf("P298:USB address %" B_PRId8 " registered\n", deviceAddress);
 
 	return device;
 }

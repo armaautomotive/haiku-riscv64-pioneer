@@ -523,13 +523,6 @@ arch_int_enable_io_interrupt(int32 irq)
 	dprintf("arch_int_enable_io_interrupt(%" B_PRId32 ")\n", irq);
 	gPlicRegs->priority[irq] = 1;
 	gPlicRegs->enable[sPlicContexts[0]][irq / 32] |= 1 << (irq % 32);
-	if (irq == 64 || irq == 95) {
-		dprintf("P293:PLIC enable irq %" B_PRId32 " context %" B_PRIu32
-			" priority %#" B_PRIx32 " enable[64:95] %#" B_PRIx32
-			" pending[64:95] %#" B_PRIx32 "\n", irq, sPlicContexts[0],
-			gPlicRegs->priority[irq],
-			gPlicRegs->enable[sPlicContexts[0]][2], gPlicRegs->pending[2]);
-	}
 }
 
 
