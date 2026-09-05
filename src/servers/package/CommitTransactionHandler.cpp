@@ -144,7 +144,11 @@ CommitTransactionHandler::~CommitTransactionHandler()
 	int32 count = fPackagesToActivate.CountItems();
 	for (int32 i = 0; i < count; i++) {
 		Package* package = fPackagesToActivate.ItemAt(i);
-		if (fPackagesAlreadyAdded.find(package)
+		// First-boot processing operates on Package objects that already belong
+		// to the cloned VolumeState.  If processing fails, deleting them here and
+		// then deleting fVolumeState below frees the same objects twice.
+		if (!fFirstBootProcessing
+			&& fPackagesAlreadyAdded.find(package)
 				== fPackagesAlreadyAdded.end()) {
 			delete package;
 		}
