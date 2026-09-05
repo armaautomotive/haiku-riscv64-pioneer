@@ -58,6 +58,7 @@ struct RISCV64VMTranslationMap: public VMTranslationMap {
 
 			void				SetFlags(addr_t virtualAddress,
 									uint32 flags);
+			void				ClearUntrackedPage(addr_t virtualAddress);
 
 	virtual	status_t			ClearFlags(addr_t virtualAddress,
 									uint32 flags);

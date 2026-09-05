@@ -27,6 +27,9 @@
 
 #include <arch/cpu.h>
 #include <arch/vm.h>
+#if defined(__riscv)
+#	include <arch/vm_translation_map.h>
+#endif
 #include <arch/user_memory.h>
 #include <boot/elf.h>
 #include <boot/stage2.h>
@@ -2212,6 +2215,26 @@ vm_create_anonymous_area(team_id team, const char *name, addr_t size,
 		default:
 			break;
 	}
+
+#if defined(__riscv) && defined(DEBUG_KERNEL_STACKS)
+	// The EFI loader's page tables remain active when the kernel VM takes
+	// ownership. A newly allocated stack range can therefore overlap an
+	// untracked loader mapping. Since guard pages are intentionally skipped by
+	// the mapper above, explicitly remove any inherited PTE before the stack is
+	// made available to a thread.
+	if ((protection & B_KERNEL_STACK_AREA) != 0 && guardPages > 0) {
+		VMTranslationMap* map = addressSpace->TranslationMap();
+#	ifdef STACK_GROWS_DOWNWARDS
+		addr_t guardBase = area->Base();
+#	else
+		addr_t guardBase = area->Base() + area->Size() - guardSize;
+#	endif
+		for (page_num_t i = 0; i < guardPages; i++) {
+			arch_vm_translation_map_clear_untracked_page(map,
+				guardBase + i * B_PAGE_SIZE);
+		}
+	}
+#endif
 
 #if defined(__riscv)
 	if (traceSemaphoreArea)

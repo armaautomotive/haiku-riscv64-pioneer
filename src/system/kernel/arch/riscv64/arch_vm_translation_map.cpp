@@ -219,6 +219,15 @@ arch_vm_translation_map_create_map(bool kernel, VMTranslationMap** _map)
 }
 
 
+void
+arch_vm_translation_map_clear_untracked_page(VMTranslationMap* map,
+	addr_t virtualAddress)
+{
+	static_cast<RISCV64VMTranslationMap*>(map)->ClearUntrackedPage(
+		virtualAddress);
+}
+
+
 bool
 arch_vm_translation_map_is_kernel_page_accessible(addr_t virtualAddress,
 	uint32 protection)

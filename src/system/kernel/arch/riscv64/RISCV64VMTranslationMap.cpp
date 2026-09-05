@@ -428,6 +428,34 @@ RISCV64VMTranslationMap::Unmap(addr_t start, addr_t end)
 }
 
 
+void
+RISCV64VMTranslationMap::ClearUntrackedPage(addr_t virtualAddress)
+{
+	ASSERT(IS_KERNEL_ADDRESS(virtualAddress));
+	ASSERT(virtualAddress % B_PAGE_SIZE == 0);
+
+	ThreadCPUPinner pinner(thread_get_current_thread());
+	RecursiveLocker locker(fLock);
+
+	std::atomic<Pte>* pte = LookupPte(virtualAddress, false, NULL);
+	if (pte == NULL || !pte->load().isValid)
+		return;
+
+	// This PTE predates the VMArea and was never included in fMapCount or in
+	// vm_page mapping/wiring state. Clear it without applying either kind of
+	// accounting. The map lock serializes page-table writers, so a store is
+	// sufficient here and also avoids an unnecessary AMO during bootstrap.
+	pte->store(Pte {});
+	FlushTlbPage(virtualAddress);
+
+	// Before the APs enter the scheduler no other hart can have used this
+	// newly allocated stack address. Afterwards, make removal synchronous on
+	// every CPU before the guard area can be used by a thread.
+	if (!gKernelStartup)
+		InvalidatePage(virtualAddress);
+}
+
+
 status_t
 RISCV64VMTranslationMap::UnmapPage(VMArea* area, addr_t address,
 	bool updatePageQueue, bool deletingAddressSpace, uint32* _flags)
@@ -513,12 +541,15 @@ RISCV64VMTranslationMap::UnmapPages(VMArea* area, addr_t base, size_t size,
 		if (!oldPte.isValid)
 			continue;
 
-		fMapCount--;
+		const bool isStackGuard = (area->protection & B_KERNEL_STACK_AREA) != 0
+			&& start < base + KERNEL_STACK_GUARD_PAGES * B_PAGE_SIZE;
+		if (!isStackGuard)
+			fMapCount--;
 
 		if (oldPte.isAccessed && !deletingAddressSpace)
 			InvalidatePage(start);
 
-		if (area->cache_type != CACHE_TYPE_DEVICE
+		if (!isStackGuard && area->cache_type != CACHE_TYPE_DEVICE
 			&& vm_lookup_page(oldPte.ppn) != NULL) {
 			PageUnmapped(area, oldPte.ppn, oldPte.isAccessed, oldPte.isDirty,
 				updatePageQueue, &queue);
