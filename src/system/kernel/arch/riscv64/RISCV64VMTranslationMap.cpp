@@ -386,9 +386,20 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 
 	// The SG2042 requires a newly installed page-table entry, including a
 	// newly allocated lower-level page table, to be made visible before the
-	// calling hart first accesses the mapping.  This is required after SMP is
+	// calling hart first accesses the mapping. This is required after SMP is
 	// online too; skipping it there leaves stale invalid walk-cache entries.
 	FlushTlbPage(virtualAddress);
+
+	// A kernel stack can be used immediately by a thread scheduled on another
+	// CPU. That CPU may still cache an invalid translation from an earlier use
+	// of the same stack address, so the local fence above is not sufficient.
+	// Queue these mappings for the translation map's synchronous cross-CPU
+	// flush; the surrounding map lock completes it before being released.
+	// Keep this targeted: broadcasting new device mappings perturbs early SG2042
+	// MMIO initialization while the secondary schedulers are intentionally
+	// disabled through main2.
+	if (!bootstrap && (attributes & B_KERNEL_STACK_AREA) != 0)
+		InvalidatePage(virtualAddress);
 
 	fMapCount++;
 
