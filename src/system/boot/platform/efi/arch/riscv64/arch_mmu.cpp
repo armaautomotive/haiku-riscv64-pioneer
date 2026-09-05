@@ -430,6 +430,18 @@ arch_mmu_generate_post_efi_page_tables(size_t memoryMapSize, efi_memory_descript
 	build_physical_memory_list(memoryMapSize, memoryMap, descriptorSize, descriptorVersion,
 		PHYSICAL_MEMORY_LOW, PHYSICAL_MEMORY_HIGH);
 
+	uint64 usableMemory = 0;
+	for (uint32 i = 0; i < gKernelArgs.num_physical_memory_ranges; i++) {
+		const addr_range& range = gKernelArgs.physical_memory_range[i];
+		dprintf("Pioneer: EFI usable memory range %" B_PRIu32 ": %#" B_PRIx64
+			"-%#" B_PRIx64 " (%" B_PRIu64 " bytes)\n", i,
+			(uint64)range.start, (uint64)(range.start + range.size),
+			(uint64)range.size);
+		usableMemory += range.size;
+	}
+	dprintf("Pioneer: EFI usable memory total: %" B_PRIu64 " bytes\n",
+		usableMemory);
+
 	addr_range physMemRange;
 	GetPhysMemRange(physMemRange);
 	TRACE("physMemRange: %#" B_PRIxADDR ", %#" B_PRIxSIZE "\n",

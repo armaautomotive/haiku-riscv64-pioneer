@@ -44,6 +44,16 @@ arch_handle_fdt(const void* fdt, int node)
 	}
 
 	if (deviceType != NULL) {
+		if (strcmp(deviceType, "memory") == 0) {
+			addr_range range;
+			for (size_t i = 0; dtb_get_reg(fdt, node, i, range); i++) {
+				dprintf("Pioneer: FDT memory range %" B_PRIuSIZE ": %#" B_PRIx64
+					"-%#" B_PRIx64 " (%" B_PRIu64 " bytes)\n", i,
+					(uint64)range.start, (uint64)(range.start + range.size),
+					(uint64)range.size);
+			}
+		}
+
 		if (strcmp(deviceType, "cpu") == 0) {
 			// TODO: improve incompatible CPU detection
 			if (!(fdt_getprop(fdt, node, "mmu-type", NULL) != NULL))
