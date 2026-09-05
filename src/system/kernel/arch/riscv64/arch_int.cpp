@@ -292,8 +292,18 @@ STrap(iframe* frame)
 		&& IS_USER_ADDRESS(frame->epc);
 
 	if (fromUser) {
-		thread_get_current_thread()->arch_info.userFrame = frame;
-		thread_get_current_thread()->arch_info.oldA0 = frame->a0;
+		Thread* thread = thread_get_current_thread();
+
+		// stvec and sscratch describe the live trap nesting state of this hart,
+		// not merely the saved register state of the thread.  Migrating a thread
+		// while it is handling a user trap can therefore leave the destination
+		// hart using SVec when the thread returns to user mode.  Keep the complete
+		// user trap lifetime on one CPU; SVecURet restores the normal user trap
+		// vector before the thread is unpinned below.
+		thread_pin_to_current_cpu(thread);
+
+		thread->arch_info.userFrame = frame;
+		thread->arch_info.oldA0 = frame->a0;
 		thread_at_kernel_entry(system_time());
 	}
 	const auto& kernelExit = ScopeExit([&]() {
@@ -317,6 +327,7 @@ STrap(iframe* frame)
 				frame->epc -= 4;
 			}
 			thread_get_current_thread()->arch_info.userFrame = NULL;
+			thread_unpin_from_current_cpu(thread_get_current_thread());
 		}
 	});
 

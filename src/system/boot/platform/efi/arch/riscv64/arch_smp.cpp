@@ -46,54 +46,6 @@ static platform_cpu_info sCpus[SMP_MAX_CPUS];
 uint32 sCpuCount = 0;
 
 
-static void
-arch_cpu_dump_hart_status(uint64 status)
-{
-	switch (status) {
-		case SBI_HART_STATE_STARTED:
-			dprintf("started");
-			break;
-		case SBI_HART_STATE_STOPPED:
-			dprintf("stopped");
-			break;
-		case SBI_HART_STATE_START_PENDING:
-			dprintf("startPending");
-			break;
-		case SBI_HART_STATE_STOP_PENDING:
-			dprintf("stopPending");
-			break;
-		case SBI_HART_STATE_SUSPENDED:
-			dprintf("suspended");
-			break;
-		case SBI_HART_STATE_SUSPEND_PENDING:
-			dprintf("suspendPending");
-			break;
-		case SBI_HART_STATE_RESUME_PENDING:
-			dprintf("resumePending");
-			break;
-		default:
-			dprintf("?(%" B_PRIu64 ")", status);
-	}
-}
-
-
-static void
-arch_cpu_dump_hart()
-{
-	dprintf("  hart status:\n");
-	for (uint32 i = 0; i < sCpuCount; i++) {
-		dprintf("    hart %" B_PRIu32 ": ", i);
-		sbiret res = sbi_hart_get_status(sCpus[i].id);
-		if (res.error < 0)
-			dprintf("error: %" B_PRIu64 , res.error);
-		else {
-			arch_cpu_dump_hart_status(res.value);
-		}
-		dprintf("\n");
-	}
-}
-
-
 static void __attribute__((naked))
 arch_cpu_entry(int hartId, CpuEntryInfo* info)
 {
@@ -158,8 +110,6 @@ arch_smp_get_current_cpu(void)
 void
 arch_smp_init_other_cpus(void)
 {
-	gKernelArgs.num_cpus = sCpuCount;
-
 	// Some RISC-V firmware supplies a stale boot-hartid in both the device tree
 	// and EFI boot protocol.  HSM still knows which single hart is executing the
 	// loader, so use it when it yields an unambiguous answer.
@@ -187,10 +137,10 @@ arch_smp_init_other_cpus(void)
 		gKernelArgs.arch_args.plicContexts[i] = sCpus[i].plicContext;
 	}
 
-	// Keep a true single-hart baseline while the remaining SG2042 condition-
-	// variable and xHCI SMP races are isolated. Merely scheduler-disabling the
-	// second hart is insufficient: packagefs can still deadlock during boot.
-	gKernelArgs.num_cpus = std::min<uint32>(sCpuCount, 1);
+	// Bring up one secondary hart first.  This bounds the initial SG2042 SMP
+	// validation while exercising the AP trampoline, per-CPU PLIC contexts,
+	// inter-CPU interrupts, and TLB shootdowns.
+	gKernelArgs.num_cpus = std::min<uint32>(sCpuCount, 2);
 	dprintf("Pioneer: enabling %" B_PRIu32 " CPU(s)\n", gKernelArgs.num_cpus);
 
 	if (get_safemode_boolean(B_SAFEMODE_DISABLE_SMP, false)) {
@@ -222,7 +172,6 @@ arch_smp_boot_other_cpus(addr_t satp, uint64 kernel_entry, addr_t virtKernelArgs
 {
 	dprintf("arch_smp_boot_other_cpus(%p, %p)\n", (void*)satp, (void*)kernel_entry);
 
-	arch_cpu_dump_hart();
 	// Only start CPUs that arch_smp_init_other_cpus() enabled.
 	for (uint32 i = 0; i < gKernelArgs.num_cpus; i++) {
 		if (sCpus[i].id != gBootHart) {
@@ -264,7 +213,6 @@ arch_smp_boot_other_cpus(addr_t satp, uint64 kernel_entry, addr_t virtKernelArgs
 			}
 		}
 	}
-	arch_cpu_dump_hart();
 }
 
 

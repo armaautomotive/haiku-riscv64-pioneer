@@ -496,14 +496,13 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 
 		if (cpuCount > 1) {
 #if defined(__riscv)
-			// Let secondary CPUs enter their schedulers so they can service IPIs and
-			// TLB shootdowns, but keep normal boot work on CPU 0 until main2 has
-			// mounted filesystems and launched userland.  This avoids the RISC-V SMP
-			// ordering bugs seen as nondeterministic AHCI, packagefs, and disk-rescan
-			// stalls without treating an online CPU as unresponsive.
+			// Keep ordinary boot and driver initialization on the boot CPU. The
+			// secondary CPU remains online for IPIs and TLB shootdowns, but does
+			// not receive scheduler work until main2 has completed device startup.
 			for (int32 cpu = 1; cpu < cpuCount; cpu++)
 				scheduler_set_cpu_enabled(cpu, false);
-			debug_early_boot_checkpoint("riscv: secondary schedulers disabled through main2\n");
+			debug_early_boot_checkpoint(
+				"riscv: secondary schedulers disabled through main2\n");
 #endif
 			smp_cpu_rendezvous(&sCpuRendezvous2);
 				// release the AP cpus to go enter the scheduler
@@ -709,11 +708,11 @@ main2(void* /*unused*/)
 
 #if defined(__riscv)
 	if (smp_get_num_cpus() > 1) {
-		// Keep secondary CPUs scheduler-disabled while the remaining RISC-V SMP
-		// races are isolated.  They are online and can service IPIs/TLB shootdowns,
-		// but normal userland and driver work stays on CPU 0.  Enabling CPU 1 here
-		// currently makes the Pioneer xHCI hub control transfers time out.
-		record_boot_stage("MC", "secondary CPUs remain scheduler-disabled");
+		cpu_status state = disable_interrupts();
+		for (int32 cpu = 1; cpu < smp_get_num_cpus(); cpu++)
+			scheduler_set_cpu_enabled(cpu, true);
+		restore_interrupts(state);
+		record_boot_stage("MC", "secondary CPUs enabled after main2");
 	}
 #endif
 

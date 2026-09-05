@@ -33,6 +33,12 @@ arch_cpu_preboot_init_percpu(kernel_args *args, int curr_cpu)
 status_t
 arch_cpu_init_percpu(kernel_args *args, int curr_cpu)
 {
+	uint64 sxstatus;
+	asm volatile("csrr %0, 0x5c0" : "=r"(sxstatus));
+	dprintf("P288:CPU %" B_PRId32 " hart %" B_PRIu32
+		" sxstatus %#" B_PRIx64 "\n", curr_cpu,
+		args->arch_args.hartIds[curr_cpu], sxstatus);
+
 	SetStvec((uint64)SVec);
 	SstatusReg sstatus{.val = Sstatus()};
 	sstatus.ie = 0;
@@ -116,18 +122,20 @@ arch_cpu_invalidate_tlb_range(intptr_t, addr_t start, addr_t end)
 	addr_t userEnd   = std::min<addr_t>(end,   USER_TOP);
 
 	if (kernelStart <= kernelEnd) {
-		int64 numPages = kernelStart / B_PAGE_SIZE - kernelEnd / B_PAGE_SIZE;
+		addr_t page = kernelStart;
+		int64 numPages = kernelEnd / B_PAGE_SIZE - kernelStart / B_PAGE_SIZE;
 		while (numPages-- >= 0) {
-			FlushTlbPage(start);
-			start += B_PAGE_SIZE;
+			FlushTlbPage(page);
+			page += B_PAGE_SIZE;
 		}
 	}
 
 	if (userStart <= userEnd) {
-		int64 numPages = userStart / B_PAGE_SIZE - userEnd / B_PAGE_SIZE;
+		addr_t page = userStart;
+		int64 numPages = userEnd / B_PAGE_SIZE - userStart / B_PAGE_SIZE;
 		while (numPages-- >= 0) {
-			FlushTlbPageAsid(start, 0);
-			start += B_PAGE_SIZE;
+			FlushTlbPageAsid(page, 0);
+			page += B_PAGE_SIZE;
 		}
 	}
 }

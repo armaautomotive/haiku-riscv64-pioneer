@@ -352,7 +352,6 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 	};
 	ApplyTHeadMemoryType(newPte, memoryType);
 	const bool bootstrap = gKernelStartup;
-	const bool singleHart = smp_get_num_cpus() < 2;
 	if (bootstrap) {
 		// Match the early boot mapper while VM page accounting is unavailable.
 		newPte.isAccessed = true;
@@ -385,12 +384,11 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 
 	pte->store(newPte);
 
-	// The SG2042 requires the newly installed page-table entry to be made
-	// visible before the bootstrap kernel first accesses the mapping. In
-	// particular, a newly allocated lower-level page table is not reliably
-	// observed without sfence.vma on the boot hart.
-	if (bootstrap || singleHart)
-		FlushTlbPage(virtualAddress);
+	// The SG2042 requires a newly installed page-table entry, including a
+	// newly allocated lower-level page table, to be made visible before the
+	// calling hart first accesses the mapping.  This is required after SMP is
+	// online too; skipping it there leaves stale invalid walk-cache entries.
+	FlushTlbPage(virtualAddress);
 
 	fMapCount++;
 
