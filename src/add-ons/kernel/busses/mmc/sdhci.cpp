@@ -674,60 +674,67 @@ SdhciBus::_InitSg2042Phy()
 	volatile uint16* strobePad = (volatile uint16*)(base + 0x30a);
 	volatile uint16* resetPad = (volatile uint16*)(base + 0x30c);
 
-	dprintf("P205:SP0 read PHY config\n");
-	uint32 config = *phyConfig;
-	config &= ~1u;
 	// The Pioneer vendor driver initially uses 9/8, but changes both drive
 	// controls to 0xe when the SD card selects driver type C. Haiku does not
 	// currently perform that UHS drive-strength negotiation, so program the
 	// resulting known-good Pioneer setting directly.
-	config |= (1u << 1) | (0xeu << 16) | (0xeu << 20);
+	// Write the complete register value instead of reading it first. The
+	// SG2042 can stop responding on a PHY-register read after host reset, and
+	// the defined fields are reset-deassert, power-good, and the two drive
+	// controls; reserved fields remain zero.
+	const uint32 config = 1u | (1u << 1) | (0xeu << 16) | (0xeu << 20);
+	dprintf("P205:SP0 direct PHY config write %#" B_PRIx32 "\n", config);
 	*phyConfig = config;
 	memory_full_barrier();
-	(void)*phyConfig;
-	memory_full_barrier();
-	dprintf("P205:SP1 PHY config asserted\n");
+	spin(1000);
+	dprintf("P205:SP1 PHY config write complete\n");
 
 	const uint16 pullUpPad = 2u | (1u << 3) | (3u << 5) | (2u << 9);
+	dprintf("P205:SP1A command pad begin\n");
 	*commandPad = pullUpPad;
+	dprintf("P205:SP1B command pad complete\n");
 	*dataPad = pullUpPad;
+	dprintf("P205:SP1C data pad complete\n");
 	*resetPad = pullUpPad;
+	dprintf("P205:SP1D reset pad complete\n");
 	*clockPad = 2u | (3u << 5) | (2u << 9);
+	dprintf("P205:SP1E clock pad complete\n");
 	*strobePad = 2u | (2u << 3) | (3u << 5) | (2u << 9);
-	memory_full_barrier();
-	(void)*resetPad;
+	dprintf("P205:SP1F strobe pad complete\n");
 	memory_full_barrier();
 	dprintf("P205:SP2 PHY pads configured\n");
 
 	volatile uint8* sdClockDelayConfig = base + 0x31d;
 	volatile uint8* sdClockDelayCode = base + 0x31e;
-	*sdClockDelayConfig = 1u;
-	*sdClockDelayConfig |= (1u << 4);
+	// Write the complete values directly. Compound assignments to volatile
+	// MMIO generate read-modify-write cycles; on SG2042 a PHY register read at
+	// this point can wedge the interconnect instead of returning.
+	dprintf("P205:SP2A clock delay update begin\n");
+	*sdClockDelayConfig = 1u | (1u << 4);
+	dprintf("P205:SP2B clock delay update asserted\n");
 	// The vendor driver changes this from its reset-time value of 10 to 0x10
 	// whenever it enables a non-zero card clock. Use that active-clock value;
 	// leaving the reset-time delay selected eventually causes command timeouts.
 	*sdClockDelayCode = 0x10;
-	*sdClockDelayConfig &= ~(1u << 4);
-	memory_full_barrier();
-	(void)*sdClockDelayConfig;
+	dprintf("P205:SP2C clock delay code written\n");
+	*sdClockDelayConfig = 1u;
+	dprintf("P205:SP2D clock delay update complete\n");
 	memory_full_barrier();
 	dprintf("P205:SP3 clock delay configured\n");
+	dprintf("P205:SP3A sample delay begin\n");
 	*(base + 0x320) = (1u << 1);
+	dprintf("P205:SP3B sample delay complete\n");
 	*(base + 0x321) = (2u << 2);
+	dprintf("P205:SP3C automatic tuning delay complete\n");
 	// Preserve the SG2042 firmware's Vendor Host Control 3 and automatic-tuning
 	// state. Other DWC MSHC integrations disable command-conflict checking here,
 	// but the upstream Linux SG2042 path deliberately leaves it untouched. A
 	// zero value caused the first Haiku filesystem read to stop completing.
 	memory_full_barrier();
-	(void)*(base + 0x321);
-	memory_full_barrier();
 	dprintf("P294:SG2042 firmware vendor and tuning state preserved\n");
 
-	*phyConfig |= 1u;
 	memory_full_barrier();
-	(void)*phyConfig;
-	memory_full_barrier();
-	dprintf("P205:SP5 PHY reset deasserted\n");
+	dprintf("P205:SP5 PHY configuration complete\n");
 	TRACE("SG2042 SD PHY initialized: config %#" B_PRIx32 "\n",
 		*phyConfig);
 }
