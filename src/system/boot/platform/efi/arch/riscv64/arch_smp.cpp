@@ -137,10 +137,9 @@ arch_smp_init_other_cpus(void)
 		gKernelArgs.arch_args.plicContexts[i] = sCpus[i].plicContext;
 	}
 
-	// Bring up three secondary harts for the next bounded SG2042 SMP scaling
-	// step. This exercises the AP trampoline, per-CPU PLIC contexts, inter-CPU
-	// interrupts, and TLB shootdowns without jumping directly to all 64 harts.
-	gKernelArgs.num_cpus = std::min<uint32>(sCpuCount, 4);
+	// Enable every hart discovered within the architecture's SMP limit. The
+	// Pioneer exposes all 64 SG2042 harts through the FDT and SBI HSM.
+	gKernelArgs.num_cpus = sCpuCount;
 	dprintf("Pioneer: enabling %" B_PRIu32 " CPU(s)\n", gKernelArgs.num_cpus);
 
 	if (get_safemode_boolean(B_SAFEMODE_DISABLE_SMP, false)) {
