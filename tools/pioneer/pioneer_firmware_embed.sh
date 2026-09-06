@@ -8,10 +8,12 @@ usage()
 Usage: pioneer_firmware_embed.sh --base MilkV-Pioneer.fd \
        --loader haiku_loader.efi --output MilkV-Pioneer.updated.fd [options]
 
-Replace the Haiku EFI loader embedded in the Milk-V Pioneer EDK2 firmware.
-The vendor DXE volume and every byte outside its outer compressed FFS allocation
-are preserved. The completed firmware is decompressed again and its loader is
-compared byte-for-byte with the requested input before the output is published.
+Replace the embedded UEFI application in Milk-V Pioneer EDK2 firmware with the
+Haiku EFI loader. Both older Haiku-loader firmware and upstream SOPHGO firmware
+containing the standard UEFI shell are supported. The vendor DXE volume and
+every byte outside its outer compressed FFS allocation are preserved. The
+completed firmware is decompressed again and its loader is compared
+byte-for-byte with the requested input before the output is published.
 
 Required:
   --base FILE          Known-working MilkV-Pioneer.fd used as the base.
@@ -35,14 +37,10 @@ OUTPUT=
 EDK2_TOOLS=/private/tmp/haiku-pioneer-edk2-tools/BaseTools/Source/C/bin
 
 FIRMWARE_BYTES=8585216
-OUTER_FFS_OFFSET=53752
-GUIDED_SECTION_OFFSET=53776
-LZMA_OFFSET=53800
-RAW_INNER_FFS_OFFSET=2906800
-RAW_LOADER_OFFSET=2906828
 OUTER_FFS_GUID=93fd219e729c154c8c4be77f1db2d792
 LZMA_GUID=98584eee143959429d6edc7bd79403cf
-INNER_LOADER_FFS_GUID=a144b84d771bb442a90de72331d0a142
+HAIKU_LOADER_FFS_GUID=a144b84d771bb442a90de72331d0a142
+UEFI_SHELL_FFS_GUID=83a5047c3e9e1c4fad65e05268d0b4d1
 
 while [ "$#" -gt 0 ]; do
 	case "$1" in
@@ -100,15 +98,65 @@ read_le24()
 	echo $(($1 + $2 * 256 + $3 * 65536))
 }
 
+find_guid_offset()
+{
+	python3 - "$1" "$2" <<'PY'
+import pathlib
+import sys
+
+data = pathlib.Path(sys.argv[1]).read_bytes()
+needle = bytes.fromhex(sys.argv[2])
+offsets = []
+start = 0
+while True:
+    offset = data.find(needle, start)
+    if offset < 0:
+        break
+    offsets.append(offset)
+    start = offset + 1
+if len(offsets) != 1:
+    raise SystemExit(
+        f"expected one occurrence of GUID {sys.argv[2]}, found {len(offsets)}")
+print(offsets[0])
+PY
+}
+
+find_embedded_application_offset()
+{
+	python3 - "$1" "$HAIKU_LOADER_FFS_GUID" "$UEFI_SHELL_FFS_GUID" <<'PY'
+import pathlib
+import sys
+
+data = pathlib.Path(sys.argv[1]).read_bytes()
+matches = []
+for name, value in (("haiku-loader", sys.argv[2]), ("uefi-shell", sys.argv[3])):
+    needle = bytes.fromhex(value)
+    start = 0
+    while True:
+        offset = data.find(needle, start)
+        if offset < 0:
+            break
+        # EFI_FV_FILETYPE_APPLICATION followed by a PE32 section.
+        if (offset + 28 <= len(data) and data[offset + 18] == 0x09
+                and data[offset + 27] == 0x10):
+            matches.append((offset, name))
+        start = offset + 1
+if len(matches) != 1:
+    detail = ", ".join(f"{name}@{offset}" for offset, name in matches)
+    raise SystemExit(
+        f"expected one embedded Haiku loader or UEFI shell application; found: {detail or 'none'}")
+print(f"{matches[0][0]} {matches[0][1]}")
+PY
+}
+
 BASE_BYTES=$(wc -c < "$BASE" | tr -d ' ')
 [ "$BASE_BYTES" -eq "$FIRMWARE_BYTES" ] || {
 	echo "Base firmware must be exactly $FIRMWARE_BYTES bytes; got $BASE_BYTES" >&2
 	exit 1
 }
-[ "$(bytes_hex "$BASE" "$OUTER_FFS_OFFSET" 16)" = "$OUTER_FFS_GUID" ] || {
-	echo "Base firmware outer DXE FFS GUID does not match the validated layout" >&2
-	exit 1
-}
+OUTER_FFS_OFFSET=$(find_guid_offset "$BASE" "$OUTER_FFS_GUID") || exit 1
+GUIDED_SECTION_OFFSET=$((OUTER_FFS_OFFSET + 24))
+LZMA_OFFSET=$((GUIDED_SECTION_OFFSET + 24))
 [ "$(bytes_hex "$BASE" $((GUIDED_SECTION_OFFSET + 4)) 16)" = "$LZMA_GUID" ] || {
 	echo "Base firmware LZMA guided-section GUID does not match" >&2
 	exit 1
@@ -127,11 +175,11 @@ LZMA_BYTES=$((GUIDED_BYTES - 24))
 dd if="$BASE" of="$WORK/base.lzma" bs=1 skip=$LZMA_OFFSET count=$LZMA_BYTES status=none
 "$LZMA_COMPRESS" -d -o "$WORK/base.raw" "$WORK/base.lzma"
 
-[ "$(bytes_hex "$WORK/base.raw" "$RAW_INNER_FFS_OFFSET" 16)" \
-	= "$INNER_LOADER_FFS_GUID" ] || {
-	echo "Embedded Haiku loader FFS GUID does not match" >&2
-	exit 1
-}
+APPLICATION_INFO=$(find_embedded_application_offset "$WORK/base.raw") || exit 1
+set -- $APPLICATION_INFO
+RAW_INNER_FFS_OFFSET=$1
+EMBEDDED_APPLICATION=$2
+RAW_LOADER_OFFSET=$((RAW_INNER_FFS_OFFSET + 28))
 SECTION_TYPE=$(bytes_hex "$WORK/base.raw" $((RAW_INNER_FFS_OFFSET + 27)) 1)
 [ "$SECTION_TYPE" = 10 ] || {
 	echo "Embedded Haiku loader is not in a PE32 section" >&2
@@ -209,6 +257,7 @@ LOADER_HASH=$(hash_file "$LOADER")
 printf '%s  %s\n' "$OUTPUT_HASH" "$(basename -- "$OUTPUT")" > "$OUTPUT.sha256"
 
 echo "Embedded loader verified: $LOADER_HASH"
+echo "Replaced embedded application: $EMBEDDED_APPLICATION"
 echo "Repacked firmware: $OUTPUT"
 echo "Repacked firmware size: $CANDIDATE_BYTES bytes"
 echo "Repacked firmware SHA-256: $OUTPUT_HASH"

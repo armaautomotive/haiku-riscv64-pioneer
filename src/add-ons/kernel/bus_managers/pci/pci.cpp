@@ -1306,6 +1306,29 @@ PCI::_BarSize(uint64 bits)
 }
 
 
+phys_addr_t
+PCI::_RamAddress(uint8 domain, phys_addr_t pciAddress)
+{
+#if defined(__i386__) || defined(__x86_64__)
+	return pciAddress;
+#else
+	// PCI addresses are local to a host bridge. Different domains may
+	// expose overlapping ranges with different CPU physical addresses.
+	if (domain >= fDomainCount)
+		return 0;
+	const auto& ranges = fDomainData[domain].ranges;
+	for (int32 i = 0; i < ranges.Count(); i++) {
+		const pci_resource_range& range = ranges[i];
+		if (range.type == B_IO_MEMORY && pciAddress >= range.pci_address
+			&& pciAddress - range.pci_address < range.size) {
+			return pciAddress - range.pci_address + range.host_address;
+		}
+	}
+	return 0;
+#endif
+}
+
+
 size_t
 PCI::_GetBarInfo(PCIDev *dev, uint8 offset, uint32 &_ramAddress,
 	uint32 &_pciAddress, uint32 &_size, uint8 &flags, uint32 *_highRAMAddress,
@@ -1347,7 +1370,14 @@ PCI::_GetBarInfo(PCIDev *dev, uint8 offset, uint32 &_ramAddress,
 	size &= ((uint64)0xffffffff << 32) | mask;
 
 	size = _BarSize(size);
-	uint64 ramAddress = pci_ram_address(pciAddress);
+	uint64 ramAddress = (flags & PCI_address_space) != 0
+		? pci_ram_address(pciAddress) : _RamAddress(dev->domain, pciAddress);
+	if (dev->info.class_base == 0x0c && dev->info.class_sub == 0x03
+		&& offset == PCI_base_registers) {
+		dprintf("P328:USB BAR domain %u bus %u PCI %#" B_PRIx64
+			" host %#" B_PRIx64 " size %#" B_PRIx64 "\n",
+			dev->domain, dev->bus, pciAddress, ramAddress, size);
+	}
 
 	_ramAddress = ramAddress;
 	_pciAddress = pciAddress;
@@ -1459,7 +1489,7 @@ PCI::_ReadHeaderInfo(PCIDev *dev)
 			WriteConfig(dev->domain, dev->bus, dev->device, dev->function,
 				PCI_command, 2, pcicmd);
 
-			dev->info.u.h0.rom_base = (uint32)pci_ram_address(
+			dev->info.u.h0.rom_base = (uint32)_RamAddress(dev->domain,
 				dev->info.u.h0.rom_base_pci);
 
 			dev->info.u.h0.cardbus_cis = ReadConfig(dev->domain, dev->bus,
@@ -1507,7 +1537,7 @@ PCI::_ReadHeaderInfo(PCIDev *dev)
 			WriteConfig(dev->domain, dev->bus, dev->device, dev->function,
 				PCI_command, 2, pcicmd);
 
-			dev->info.u.h1.rom_base = (uint32)pci_ram_address(
+			dev->info.u.h1.rom_base = (uint32)_RamAddress(dev->domain,
 				dev->info.u.h1.rom_base_pci);
 
 			dev->info.u.h1.primary_bus = ReadConfig(dev->domain, dev->bus,

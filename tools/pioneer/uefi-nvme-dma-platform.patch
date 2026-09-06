@@ -1,0 +1,16 @@
+diff --git a/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc b/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc
+index 13d388e6b5..9d934f2eac 100644
+--- a/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc
++++ b/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc
+@@ -621,7 +621,10 @@
+   #
+   # NVMe Support
+   #
+-  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
++  MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf {
++    <BuildOptions>
++      GCC:*_*_RISCV64_CC_FLAGS = -DPIONEER_NVME_NON_COHERENT_DMA -DPIONEER_NVME_READ_ONLY_TEST
++  }
+ 
+   #
+   # SATA Support

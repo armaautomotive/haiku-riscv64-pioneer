@@ -1,0 +1,206 @@
+diff --git a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c
+index c0c8ffbd9e..4e7c25b07f 100644
+--- a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c
++++ b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c
+@@ -9,6 +9,46 @@
+ 
+ #include "AtaAtapiPassThru.h"
+ 
++#ifdef PIONEER_AHCI_IDENTIFY_PROBE
++#ifndef MDE_CPU_RISCV64
++#error Pioneer AHCI probe requires RISC-V 64
++#endif
++
++STATIC
++VOID
++PioneerAhciCache (VOID *Buffer, UINTN Length, BOOLEAN Publish)
++{
++  UINTN Satp;
++  UINTN Address;
++  UINTN Last;
++
++  __asm__ __volatile__ ("csrr %0, satp" : "=r" (Satp));
++  if (Satp != 0 || Buffer == NULL || Length == 0 ||
++      Length - 1 > MAX_UINTN - (UINTN)Buffer) {
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: invalid cache address/mode; stopped\n"));
++    CpuDeadLoop ();
++  }
++  Address = (UINTN)Buffer & ~(UINTN)63;
++  Last = ((UINTN)Buffer + Length - 1) & ~(UINTN)63;
++  MemoryFence ();
++  for (;;) {
++    if (Publish) {
++      // T-Head physical clean + invalidate: th.dcache.cipa a0.
++      __asm__ __volatile__ ("mv a0, %0\n.word 0x02b5000b" :: "r" (Address) : "a0", "memory");
++    } else {
++      // T-Head physical invalidate: th.dcache.ipa a0.
++      __asm__ __volatile__ ("mv a0, %0\n.word 0x02a5000b" :: "r" (Address) : "a0", "memory");
++    }
++    if (Address == Last) {
++      break;
++    }
++    Address += 64;
++  }
++  __asm__ __volatile__ (".word 0x0190000b\nfence iorw, iorw" ::: "memory");
++}
++
++#endif
++
+ /**
+   Read AHCI Operation register.
+ 
+@@ -953,6 +993,102 @@ AhciPrintStatusBlock (
+   DEBUG ((DebugLevel, "AtaError: %d\n", AtaStatusBlock->AtaError));
+ }
+ 
++#ifdef PIONEER_AHCI_IDENTIFY_PROBE
++// Deliberately never returns: this experiment cannot expose a partially
++// coherent SATA disk or proceed to configuration, sector reads, or writes.
++STATIC
++VOID
++PioneerAhciIdentifyProbe (
++  EFI_PCI_IO_PROTOCOL *PciIo,
++  EFI_AHCI_REGISTERS *Registers,
++  UINT8 Port,
++  UINT8 PortMultiplier,
++  EFI_ATA_COMMAND_BLOCK *Command,
++  UINT64 Timeout
++  )
++{
++  VOID *Buffer;
++  VOID *Mapping;
++  EFI_PHYSICAL_ADDRESS Physical;
++  UINTN Length;
++  EFI_STATUS Status;
++  EFI_STATUS StopStatus;
++  EFI_STATUS FisStatus;
++  EFI_AHCI_COMMAND_FIS Fis;
++  EFI_AHCI_COMMAND_LIST List;
++  UINT32 Count;
++  UINTN Index;
++  CHAR8 Model[41];
++
++  DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: Identify port=%u command=%x\n",
++          Port, Command->AtaCommand));
++  Status = AhciStopCommand (PciIo, Port, Timeout);
++  if (!EFI_ERROR (Status)) {
++    Status = AhciDisableFisReceive (PciIo, Port, Timeout);
++  }
++  if (EFI_ERROR (Status)) {
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: cannot acquire buffers: %r; stopped\n", Status));
++    CpuDeadLoop ();
++  }
++
++  // Keep cache-line ownership separate from the caller's stack/pool buffer.
++  Buffer = NULL;
++  Status = PciIo->AllocateBuffer (PciIo, AllocateAnyPages,
++                                  EfiBootServicesData, 1, &Buffer, 0);
++  if (EFI_ERROR (Status)) {
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: allocation %r; stopped\n", Status));
++    CpuDeadLoop ();
++  }
++  ZeroMem (Buffer, EFI_PAGE_SIZE);
++  Length = 512;
++  Status = PciIo->Map (PciIo, EfiPciIoOperationBusMasterCommonBuffer,
++                       Buffer, &Length, &Physical, &Mapping);
++  if (EFI_ERROR (Status) || Length != 512) {
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: mapping %r size=%u; stopped\n", Status, Length));
++    CpuDeadLoop ();
++  }
++  PioneerAhciCache (Buffer, EFI_PAGE_SIZE, TRUE);
++  AhciBuildCommandFis (&Fis, Command);
++  ZeroMem (&List, sizeof (List));
++  List.AhciCmdCfl = EFI_AHCI_FIS_REGISTER_H2D_LENGTH / 4;
++  AhciBuildCommand (PciIo, Registers, Port, PortMultiplier, &Fis, &List,
++                     NULL, 0, 0, (VOID *)(UINTN)Physical, 512);
++  PioneerAhciCache ((VOID *)((UINTN)Registers->AhciRFis +
++                      Port * sizeof (EFI_AHCI_RECEIVED_FIS)),
++                      sizeof (EFI_AHCI_RECEIVED_FIS), TRUE);
++  PioneerAhciCache (Registers->AhciCommandTable, Registers->MaxCommandTableSize, TRUE);
++  PioneerAhciCache (Registers->AhciCmdList, Registers->MaxCommandListSize, TRUE);
++  DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: data=%lx list=%p table=%p\n",
++          Physical, Registers->AhciCmdList, Registers->AhciCommandTable));
++  Status = AhciStartCommand (PciIo, Port, 0, Timeout);
++  if (!EFI_ERROR (Status)) {
++    Status = AhciWaitUntilFisReceived (PciIo, Port, Timeout, SataFisPioSetup);
++  }
++  StopStatus = AhciStopCommand (PciIo, Port, Timeout);
++  FisStatus = AhciDisableFisReceive (PciIo, Port, Timeout);
++  if (EFI_ERROR (StopStatus) || EFI_ERROR (FisStatus)) {
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: result=%r stop=%r fis=%r; stopped\n",
++            Status, StopStatus, FisStatus));
++    CpuDeadLoop ();
++  }
++  PioneerAhciCache (Registers->AhciCmdList, Registers->MaxCommandListSize, FALSE);
++  PioneerAhciCache (Buffer, EFI_PAGE_SIZE, FALSE);
++  Count = Registers->AhciCmdList[0].AhciCmdPrdbc;
++  for (Index = 0; Index < 40; Index++) {
++    // ATA Identify model string is words 27..46 with byte-swapped characters.
++    Model[Index] = ((CHAR8 *)Buffer)[54 + (Index ^ 1)];
++    if (Model[Index] < 32 || Model[Index] > 126) {
++      Model[Index] = '?';
++    }
++  }
++  Model[40] = 0;
++  DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: result=%r bytes=%u config=%04x model=[%a]; stopped\n",
++          Status, Count, *(UINT16 *)Buffer, Model));
++  // Retain mappings until power-off; never reclaim storage after uncertain DMA.
++  CpuDeadLoop ();
++}
++#endif
++
+ /**
+   Start a PIO data transfer on specific port.
+ 
+@@ -1008,6 +1144,15 @@ AhciPioTransfer (
+   EFI_STATUS                     RecoveryStatus;
+   BOOLEAN                        DoRetry;
+ 
++#ifdef PIONEER_AHCI_IDENTIFY_PROBE
++  if (!Read || AtapiCommand != NULL || Task != NULL || DataCount != 512 ||
++      AtaCommandBlock == NULL || AtaCommandBlock->AtaCommand != ATA_CMD_IDENTIFY_DRIVE) {
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA PROBE: refusing non-Identify PIO command; stopped\n"));
++    CpuDeadLoop ();
++  }
++  PioneerAhciIdentifyProbe (PciIo, AhciRegisters, Port, PortMultiplier, AtaCommandBlock, Timeout);
++#endif
++
+   if (Read) {
+     Flag = EfiPciIoOperationBusMasterWrite;
+   } else {
+@@ -1184,6 +1329,10 @@ AhciDmaTransfer (
+   EFI_STATUS                     RecoveryStatus;
+   BOOLEAN                        DoRetry;
+ 
++#ifdef PIONEER_AHCI_IDENTIFY_PROBE
++  return EFI_UNSUPPORTED;
++#endif
++
+   Map   = NULL;
+   PciIo = Instance->PciIo;
+ 
+@@ -1441,6 +1590,10 @@ AhciNonDataTransfer (
+   EFI_STATUS             RecoveryStatus;
+   BOOLEAN                DoRetry;
+ 
++#ifdef PIONEER_AHCI_IDENTIFY_PROBE
++  return EFI_UNSUPPORTED;
++#endif
++
+   //
+   // Package read needed
+   //
+@@ -2410,6 +2563,13 @@ AhciCreateTransferDescriptor (
+ 
+   AhciRegisters->AhciCommandTablePciAddr = (EFI_AHCI_COMMAND_TABLE *)(UINTN)AhciCommandTablePciAddr;
+ 
++#ifdef PIONEER_AHCI_IDENTIFY_PROBE
++  // Publish initialization while reset has left all DMA engines stopped.
++  PioneerAhciCache (AhciRegisters->AhciRFis, MaxReceiveFisSize, TRUE);
++  PioneerAhciCache (AhciRegisters->AhciCmdList, MaxCommandListSize, TRUE);
++  PioneerAhciCache (AhciRegisters->AhciCommandTable, MaxCommandTableSize, TRUE);
++#endif
++
+   return EFI_SUCCESS;
+   //
+   // Map error or unable to map the whole CmdList buffer into a contiguous region.

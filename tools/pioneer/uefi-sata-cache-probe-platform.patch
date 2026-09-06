@@ -1,0 +1,16 @@
+diff --git a/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc b/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc
+index 9d934f2eac..9090edafe0 100644
+--- a/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc
++++ b/Platform/Sophgo/SG2042Pkg/MilkV-Pioneer/MilkV-Pioneer.dsc
+@@ -629,7 +629,10 @@
+   #
+   # SATA Support
+   #
+-  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
++  MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf {
++    <BuildOptions>
++      GCC:*_*_RISCV64_CC_FLAGS = -DPIONEER_AHCI_IDENTIFY_PROBE
++  }
+   MdeModulePkg/Bus/Ata/AtaBusDxe/AtaBusDxe.inf
+   MdeModulePkg/Bus/Pci/SataControllerDxe/SataControllerDxe.inf
+   MdeModulePkg/Bus/Scsi/ScsiBusDxe/ScsiBusDxe.inf

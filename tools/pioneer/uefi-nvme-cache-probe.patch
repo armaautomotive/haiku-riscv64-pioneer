@@ -1,0 +1,84 @@
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c
+index f818e48fc1..0357f67dfb 100644
+--- a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c
+@@ -10,6 +10,37 @@
+ 
+ #include "NvmExpress.h"
+ 
++// Pioneer-only diagnostic, not a general DMA implementation. Physical cache
++// operations require the pinned platform's bare-address firmware mode.
++STATIC VOID
++PioneerProbeCache (VOID *Buffer, UINTN Size, BOOLEAN Flush)
++{
++  UINTN Address;
++  UINTN End;
++  UINTN Satp;
++  __asm__ __volatile__ ("csrr %0, satp" : "=r" (Satp));
++  if (Satp != 0 || Size == 0 || (Size - 1) > MAX_ADDRESS - (UINTN)Buffer) {
++    DEBUG ((DEBUG_ERROR, "PIONEER DMA PROBE: invalid cache range or non-bare SATP\n"));
++    CpuDeadLoop ();
++  }
++  End = (UINTN)Buffer + Size - 1;
++  Address = (UINTN)Buffer & ~(UINTN)63;
++  for (;;) {
++    // Encodings from Linux arch/riscv/errata/thead/errata.c: physical-address
++    // th.dcache.cipa / th.dcache.ipa, followed by th.sync.s.
++    if (Flush) {
++      __asm__ __volatile__ ("mv a0, %0\n.long 0x02b5000b" : : "r" (Address) : "a0", "memory");
++    } else {
++      __asm__ __volatile__ ("mv a0, %0\n.long 0x02a5000b" : : "r" (Address) : "a0", "memory");
++    }
++    if (End - Address < 64) {
++      break;
++    }
++    Address += 64;
++  }
++  __asm__ __volatile__ (".long 0x0190000b\nfence iorw, iorw" : : : "memory");
++}
++
+ /**
+   Dump the execution status from a given completion queue entry.
+ 
+@@ -733,6 +764,20 @@ NvmExpressPassThru (
+     Private->SqTdbl[QueueId].Sqt ^= 1;
+   }
+ 
++  if (QueueId != 0 || Sq->Opc != 0x06 || Packet->TransferLength != 4096
++      || Event != NULL || Packet->TransferBuffer == NULL) {
++    DEBUG ((DEBUG_ERROR, "PIONEER DMA PROBE: unexpected command %x queue %u; stopped\n", Sq->Opc, QueueId));
++    CpuDeadLoop ();
++  }
++  DEBUG ((DEBUG_ERROR, "PIONEER DMA PROBE: Identify SQ=%p CQ=%p PRP=%lx buffer=%p\n",
++    Sq, Cq, Sq->Prp[0], Packet->TransferBuffer));
++  PioneerProbeCache ((VOID *)Sq, sizeof (*Sq), TRUE);
++  PioneerProbeCache ((VOID *)Cq, sizeof (*Cq), TRUE);
++  PioneerProbeCache ((VOID *)(UINTN)Sq->Prp[0], 4096, TRUE);
++  if (MapPrpList != NULL) {
++    PioneerProbeCache (PrpListHost, EFI_PAGES_TO_SIZE (PrpListNo), TRUE);
++  }
++
+   Data   = ReadUnaligned32 ((UINT32 *)&Private->SqTdbl[QueueId]);
+   Status = PciIo->Mem.Write (
+                         PciIo,
+@@ -797,6 +842,7 @@ NvmExpressPassThru (
+   //
+   Status = EFI_TIMEOUT;
+   while (EFI_ERROR (gBS->CheckEvent (TimerEvent))) {
++    PioneerProbeCache ((VOID *)Cq, sizeof (*Cq), FALSE);
+     if (Cq->Pt != Private->Pt[QueueId]) {
+       Status = EFI_SUCCESS;
+       break;
+@@ -804,6 +850,12 @@ NvmExpressPassThru (
+   }
+ 
+   //
++  // Stop before normal driver initialization or any disk I/O. This probe
++  // intentionally does not expose a partially coherent NVMe device.
++  DEBUG ((DEBUG_ERROR, "PIONEER DMA PROBE: Identify result=%r phase=%u expected=%u status=%u/%u; stopped\n",
++    Status, Cq->Pt, Private->Pt[QueueId], Cq->Sct, Cq->Sc));
++  CpuDeadLoop ();
++
+   // Check the NVMe cmd execution result
+   //
+   if (Status != EFI_TIMEOUT) {

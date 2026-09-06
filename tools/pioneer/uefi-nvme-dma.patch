@@ -1,0 +1,481 @@
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.c b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.c
+index c8d8be32b0..1ae6ee0927 100644
+--- a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.c
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.c
+@@ -135,6 +135,9 @@ EnumerateNvmeDevNamespace (
+     Device->Media.MediaPresent     = TRUE;
+     Device->Media.LogicalPartition = FALSE;
+     Device->Media.ReadOnly         = FALSE;
++#ifdef PIONEER_NVME_READ_ONLY_TEST
++    Device->Media.ReadOnly         = TRUE;
++#endif
+     Device->Media.WriteCaching     = FALSE;
+     Device->Media.IoAlign          = Private->PassThruMode.IoAlign;
+ 
+@@ -663,7 +666,11 @@ ProcessAsyncTaskList (
+     }
+   }
+ 
+-  while (Cq->Pt != Private->Pt[QueueId]) {
++  for (;;) {
++    NvmeDmaObserve ((VOID *)Cq, sizeof (*Cq));
++    if (Cq->Pt == Private->Pt[QueueId]) {
++      break;
++    }
+     ASSERT (Cq->Sqid == QueueId);
+ 
+     HasNewItem = TRUE;
+@@ -692,15 +699,15 @@ ProcessAsyncTaskList (
+         // Free the resources allocated before cmd submission
+         //
+         if (AsyncRequest->MapData != NULL) {
+-          PciIo->Unmap (PciIo, AsyncRequest->MapData);
++          NvmeDmaUnmap (PciIo, AsyncRequest->MapData);
+         }
+ 
+         if (AsyncRequest->MapMeta != NULL) {
+-          PciIo->Unmap (PciIo, AsyncRequest->MapMeta);
++          NvmeDmaUnmap (PciIo, AsyncRequest->MapMeta);
+         }
+ 
+         if (AsyncRequest->MapPrpList != NULL) {
+-          PciIo->Unmap (PciIo, AsyncRequest->MapPrpList);
++          NvmeDmaUnmap (PciIo, AsyncRequest->MapPrpList);
+         }
+ 
+         if (AsyncRequest->PrpListHost != NULL) {
+@@ -1052,7 +1059,7 @@ NvmExpressDriverBindingStart (
+     }
+ 
+     Bytes  = EFI_PAGES_TO_SIZE (6);
+-    Status = PciIo->Map (
++    Status = NvmeDmaMap (
+                       PciIo,
+                       EfiPciIoOperationBusMasterCommonBuffer,
+                       Private->Buffer,
+@@ -1167,7 +1174,7 @@ NvmExpressDriverBindingStart (
+ 
+ Exit:
+   if ((Private != NULL) && (Private->Mapping != NULL)) {
+-    PciIo->Unmap (PciIo, Private->Mapping);
++    NvmeDmaUnmap (PciIo, Private->Mapping);
+   }
+ 
+   if ((Private != NULL) && (Private->Buffer != NULL)) {
+@@ -1289,7 +1296,7 @@ NvmExpressDriverBindingStop (
+       }
+ 
+       if (Private->Mapping != NULL) {
+-        Private->PciIo->Unmap (Private->PciIo, Private->Mapping);
++        NvmeDmaUnmap (Private->PciIo, Private->Mapping);
+       }
+ 
+       if (Private->Buffer != NULL) {
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.h b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.h
+index 11207afa63..3a57b71464 100644
+--- a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.h
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpress.h
+@@ -52,6 +52,7 @@ typedef struct _NVME_DEVICE_PRIVATE_DATA      NVME_DEVICE_PRIVATE_DATA;
+ #include "NvmExpressDiskInfo.h"
+ #include "NvmExpressHci.h"
+ #include "NvmExpressMediaSanitize.h"
++#include "NvmExpressDma.h"
+ 
+ extern EFI_DRIVER_BINDING_PROTOCOL                gNvmExpressDriverBinding;
+ extern EFI_COMPONENT_NAME_PROTOCOL                gNvmExpressComponentName;
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDma.c b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDma.c
+new file mode 100644
+index 0000000000..901c6a58d2
+--- /dev/null
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDma.c
+@@ -0,0 +1,198 @@
++/** @file
++  Pioneer SG2042 DMA ownership support. This is not a generic RISC-V backend.
++
++  Streaming buffers use private page-aligned storage: invalidating a partial
++  cache line belonging to the caller could otherwise destroy unrelated data.
++  Common buffers remain shared and require explicit queue/PRP synchronization.
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#include "NvmExpress.h"
++
++#ifdef PIONEER_NVME_NON_COHERENT_DMA
++#ifndef MDE_CPU_RISCV64
++#error Pioneer DMA requires RISC-V 64
++#endif
++
++#define PIONEER_CACHE_LINE  64U
++
++typedef struct {
++  VOID                           *InnerMapping;
++  VOID                           *Host;
++  VOID                           *Bounce;
++  UINTN                          Bytes;
++  UINTN                          Pages;
++  EFI_PCI_IO_PROTOCOL_OPERATION   Operation;
++} NVME_DMA_MAPPING;
++
++STATIC
++BOOLEAN
++NvmeDmaBareAddressing (VOID)
++{
++  UINTN Satp;
++
++  __asm__ __volatile__ ("csrr %0, satp" : "=r" (Satp));
++  return Satp == 0;
++}
++
++STATIC
++VOID
++NvmeDmaCache (VOID *Buffer, UINTN Length, BOOLEAN Publish)
++{
++  UINTN Address;
++  UINTN Last;
++
++  if (Length == 0) {
++    return;
++  }
++
++  // Physical CMO encodings require bare addressing. Do not silently apply
++  // them to virtual addresses if a future firmware enables its MMU.
++  if (!NvmeDmaBareAddressing () || Buffer == NULL ||
++      Length - 1 > MAX_UINTN - (UINTN)Buffer) {
++    DEBUG ((DEBUG_ERROR, "PIONEER DMA: invalid cache range/address mode\n"));
++    CpuDeadLoop ();
++  }
++
++  Address = (UINTN)Buffer & ~(UINTN)(PIONEER_CACHE_LINE - 1);
++  Last = ((UINTN)Buffer + Length - 1) & ~(UINTN)(PIONEER_CACHE_LINE - 1);
++  MemoryFence ();
++  for (;;) {
++    if (Publish) {
++      // th.dcache.cipa a0 (physical clean + invalidate).
++      __asm__ __volatile__ ("mv a0, %0\n.word 0x02b5000b" :: "r" (Address) : "a0", "memory");
++    } else {
++      // th.dcache.ipa a0; never write stale completion data back to RAM.
++      __asm__ __volatile__ ("mv a0, %0\n.word 0x02a5000b" :: "r" (Address) : "a0", "memory");
++    }
++    if (Address == Last) {
++      break;
++    }
++    Address += PIONEER_CACHE_LINE;
++  }
++  // Complete cache operations before a doorbell or any CPU data access.
++  __asm__ __volatile__ (".word 0x0190000b\nfence iorw, iorw" ::: "memory");
++}
++#endif
++
++VOID
++NvmeDmaPublish (VOID *Buffer, UINTN Length)
++{
++#ifdef PIONEER_NVME_NON_COHERENT_DMA
++  NvmeDmaCache (Buffer, Length, TRUE);
++#endif
++}
++
++VOID
++NvmeDmaObserve (VOID *Buffer, UINTN Length)
++{
++#ifdef PIONEER_NVME_NON_COHERENT_DMA
++  NvmeDmaCache (Buffer, Length, FALSE);
++#endif
++}
++
++EFI_STATUS
++NvmeDmaMap (
++  EFI_PCI_IO_PROTOCOL *PciIo,
++  EFI_PCI_IO_PROTOCOL_OPERATION Operation,
++  VOID *HostAddress,
++  UINTN *NumberOfBytes,
++  EFI_PHYSICAL_ADDRESS *DeviceAddress,
++  VOID **Mapping
++  )
++{
++#ifndef PIONEER_NVME_NON_COHERENT_DMA
++  return PciIo->Map (PciIo, Operation, HostAddress, NumberOfBytes, DeviceAddress, Mapping);
++#else
++  NVME_DMA_MAPPING *Map;
++  EFI_STATUS Status;
++  UINTN Length;
++
++  if (PciIo == NULL || HostAddress == NULL || NumberOfBytes == NULL ||
++      DeviceAddress == NULL || Mapping == NULL || *NumberOfBytes == 0 ||
++      *NumberOfBytes > MAX_UINTN - EFI_PAGE_MASK) {
++    return EFI_INVALID_PARAMETER;
++  }
++  *Mapping = NULL;
++  if (!NvmeDmaBareAddressing ()) {
++    return EFI_UNSUPPORTED;
++  }
++  // These are the only operations the NVMe driver uses. Refuse additions
++  // until their ownership semantics have been implemented and tested.
++  if (Operation != EfiPciIoOperationBusMasterRead &&
++      Operation != EfiPciIoOperationBusMasterWrite &&
++      Operation != EfiPciIoOperationBusMasterCommonBuffer) {
++    return EFI_UNSUPPORTED;
++  }
++  Map = AllocateZeroPool (sizeof (*Map));
++  if (Map == NULL) {
++    return EFI_OUT_OF_RESOURCES;
++  }
++  Map->Host = HostAddress;
++  Map->Bytes = *NumberOfBytes;
++  Map->Operation = Operation;
++  Length = Map->Bytes;
++  if (Operation == EfiPciIoOperationBusMasterCommonBuffer) {
++    Status = PciIo->Map (PciIo, Operation, HostAddress, &Length,
++                        DeviceAddress, &Map->InnerMapping);
++  } else {
++    Map->Pages = EFI_SIZE_TO_PAGES (Map->Bytes);
++    Status = PciIo->AllocateBuffer (PciIo, AllocateAnyPages,
++                 EfiBootServicesData, Map->Pages, &Map->Bounce, 0);
++    if (EFI_ERROR (Status)) {
++      FreePool (Map);
++      return Status;
++    }
++    ZeroMem (Map->Bounce, EFI_PAGES_TO_SIZE (Map->Pages));
++    if (Operation == EfiPciIoOperationBusMasterRead) {
++      CopyMem (Map->Bounce, HostAddress, Map->Bytes);
++    }
++    NvmeDmaPublish (Map->Bounce, EFI_PAGES_TO_SIZE (Map->Pages));
++    // Map private storage as common so the PCI layer cannot introduce a
++    // second, unmaintained streaming bounce buffer underneath this one.
++    Status = PciIo->Map (PciIo, EfiPciIoOperationBusMasterCommonBuffer,
++                        Map->Bounce, &Length, DeviceAddress, &Map->InnerMapping);
++  }
++  if (EFI_ERROR (Status) || Length != Map->Bytes) {
++    if (!EFI_ERROR (Status)) {
++      PciIo->Unmap (PciIo, Map->InnerMapping);
++      Status = EFI_BAD_BUFFER_SIZE;
++    }
++    if (Map->Bounce != NULL) {
++      PciIo->FreeBuffer (PciIo, Map->Pages, Map->Bounce);
++    }
++    FreePool (Map);
++    return Status;
++  }
++  *Mapping = Map;
++  return EFI_SUCCESS;
++#endif
++}
++
++EFI_STATUS
++NvmeDmaUnmap (EFI_PCI_IO_PROTOCOL *PciIo, VOID *Mapping)
++{
++#ifndef PIONEER_NVME_NON_COHERENT_DMA
++  return PciIo->Unmap (PciIo, Mapping);
++#else
++  NVME_DMA_MAPPING *Map;
++  EFI_STATUS Status;
++
++  if (Mapping == NULL) {
++    return EFI_SUCCESS;
++  }
++  Map = Mapping;
++  // The caller must have observed completion or stopped the controller.
++  if (Map->Operation == EfiPciIoOperationBusMasterWrite) {
++    NvmeDmaObserve (Map->Bounce, EFI_PAGES_TO_SIZE (Map->Pages));
++    CopyMem (Map->Host, Map->Bounce, Map->Bytes);
++  }
++  Status = PciIo->Unmap (PciIo, Map->InnerMapping);
++  if (Map->Bounce != NULL) {
++    PciIo->FreeBuffer (PciIo, Map->Pages, Map->Bounce);
++  }
++  FreePool (Map);
++  return Status;
++#endif
++}
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDma.h b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDma.h
+new file mode 100644
+index 0000000000..24930ed3c2
+--- /dev/null
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDma.h
+@@ -0,0 +1,30 @@
++/** @file
++  Opt-in SG2042 non-coherent DMA support for the Pioneer firmware experiment.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#ifndef NVME_DMA_H_
++#define NVME_DMA_H_
++
++EFI_STATUS
++NvmeDmaMap (
++  IN EFI_PCI_IO_PROTOCOL *PciIo,
++  IN EFI_PCI_IO_PROTOCOL_OPERATION Operation,
++  IN VOID *HostAddress,
++  IN OUT UINTN *NumberOfBytes,
++  OUT EFI_PHYSICAL_ADDRESS *DeviceAddress,
++  OUT VOID **Mapping
++  );
++
++EFI_STATUS
++NvmeDmaUnmap (IN EFI_PCI_IO_PROTOCOL *PciIo, IN VOID *Mapping);
++
++// Clean/invalidate CPU-owned storage before handing it to the controller.
++VOID
++NvmeDmaPublish (IN VOID *Buffer, IN UINTN Length);
++
++// Invalidate device-owned, CPU-read-only storage before observing completion.
++VOID
++NvmeDmaObserve (IN VOID *Buffer, IN UINTN Length);
++
++#endif
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
+index 5fd0e468a9..229bf1e13d 100644
+--- a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressDxe.inf
+@@ -35,6 +35,8 @@
+   ComponentName.c
+   NvmExpress.c
+   NvmExpress.h
++  NvmExpressDma.c
++  NvmExpressDma.h
+   NvmExpressDiskInfo.c
+   NvmExpressDiskInfo.h
+   NvmExpressHci.c
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressHci.c b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressHci.c
+index e1b0ee6051..c62abd8f96 100644
+--- a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressHci.c
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressHci.c
+@@ -819,6 +819,9 @@ NvmeControllerInit (
+   // Address of I/O submission & completion queue.
+   //
+   ZeroMem (Private->Buffer, EFI_PAGES_TO_SIZE (6));
++  // Controller is disabled here. Publish every zeroed SQ/CQ cache line
++  // once, before enabling DMA; completion queues are CPU-read-only after it.
++  NvmeDmaPublish (Private->Buffer, EFI_PAGES_TO_SIZE (6));
+   Private->SqBuffer[0]        = (NVME_SQ *)(UINTN)(Private->Buffer);
+   Private->SqBufferPciAddr[0] = (NVME_SQ *)(UINTN)(Private->BufferPciAddr);
+   Private->CqBuffer[0]        = (NVME_CQ *)(UINTN)(Private->Buffer + 1 * EFI_PAGE_SIZE);
+diff --git a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c
+index f818e48fc1..4b9b3a93a3 100644
+--- a/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c
++++ b/MdeModulePkg/Bus/Pci/NvmExpressDxe/NvmExpressPassthru.c
+@@ -261,7 +261,7 @@ NvmeCreatePrpList (
+   }
+ 
+   Bytes  = EFI_PAGES_TO_SIZE (*PrpListNo);
+-  Status = PciIo->Map (
++  Status = NvmeDmaMap (
+                     PciIo,
+                     EfiPciIoOperationBusMasterCommonBuffer,
+                     *PrpListHost,
+@@ -307,6 +307,7 @@ NvmeCreatePrpList (
+     PhysicalAddr                                   += EFI_PAGE_SIZE;
+   }
+ 
++  NvmeDmaPublish (*PrpListHost, Bytes);
+   return (VOID *)(UINTN)PrpListPhyAddr;
+ 
+ EXIT:
+@@ -377,15 +378,15 @@ AbortAsyncPassThruTasks (
+     AsyncRequest = NVME_PASS_THRU_ASYNC_REQ_FROM_THIS (Link);
+ 
+     if (AsyncRequest->MapData != NULL) {
+-      PciIo->Unmap (PciIo, AsyncRequest->MapData);
++      NvmeDmaUnmap (PciIo, AsyncRequest->MapData);
+     }
+ 
+     if (AsyncRequest->MapMeta != NULL) {
+-      PciIo->Unmap (PciIo, AsyncRequest->MapMeta);
++      NvmeDmaUnmap (PciIo, AsyncRequest->MapMeta);
+     }
+ 
+     if (AsyncRequest->MapPrpList != NULL) {
+-      PciIo->Unmap (PciIo, AsyncRequest->MapPrpList);
++      NvmeDmaUnmap (PciIo, AsyncRequest->MapPrpList);
+     }
+ 
+     if (AsyncRequest->PrpListHost != NULL) {
+@@ -497,6 +498,20 @@ NvmExpressPassThru (
+     return EFI_INVALID_PARAMETER;
+   }
+ 
++#ifdef PIONEER_NVME_READ_ONLY_TEST
++  // This first integration test must not modify the Linux NVMe installation.
++  // Also guard PassThru, not just BlockIo.Media.ReadOnly.
++  if (Packet->QueueType == NVME_ADMIN_QUEUE) {
++    if (Packet->NvmeCmd->Cdw0.Opcode != NVME_ADMIN_IDENTIFY_CMD &&
++        Packet->NvmeCmd->Cdw0.Opcode != NVME_ADMIN_CRIOCQ_CMD &&
++        Packet->NvmeCmd->Cdw0.Opcode != NVME_ADMIN_CRIOSQ_CMD) {
++      return EFI_WRITE_PROTECTED;
++    }
++  } else if (Packet->NvmeCmd->Cdw0.Opcode != NVME_IO_READ_OPC) {
++    return EFI_WRITE_PROTECTED;
++  }
++#endif
++
+   //
+   // 'Attributes' with neither EFI_NVM_EXPRESS_PASS_THRU_ATTRIBUTES_LOGICAL nor
+   // EFI_NVM_EXPRESS_PASS_THRU_ATTRIBUTES_PHYSICAL set is an illegal
+@@ -629,7 +644,7 @@ NvmExpressPassThru (
+ 
+     if ((Packet->TransferLength != 0) && (Packet->TransferBuffer != NULL)) {
+       MapLength = Packet->TransferLength;
+-      Status    = PciIo->Map (
++      Status    = NvmeDmaMap (
+                            PciIo,
+                            Flag,
+                            Packet->TransferBuffer,
+@@ -647,7 +662,7 @@ NvmExpressPassThru (
+ 
+     if ((Packet->MetadataLength != 0) && (Packet->MetadataBuffer != NULL)) {
+       MapLength = Packet->MetadataLength;
+-      Status    = PciIo->Map (
++      Status    = NvmeDmaMap (
+                            PciIo,
+                            Flag,
+                            Packet->MetadataBuffer,
+@@ -656,7 +671,7 @@ NvmExpressPassThru (
+                            &MapMeta
+                            );
+       if (EFI_ERROR (Status) || (Packet->MetadataLength != MapLength)) {
+-        PciIo->Unmap (
++        NvmeDmaUnmap (
+                  PciIo,
+                  MapData
+                  );
+@@ -726,6 +741,7 @@ NvmExpressPassThru (
+   //
+   // Ring the submission queue doorbell.
+   //
++  NvmeDmaPublish ((VOID *)Sq, sizeof (*Sq));
+   if ((Event != NULL) && (QueueId != 0)) {
+     Private->SqTdbl[QueueId].Sqt =
+       (Private->SqTdbl[QueueId].Sqt + 1) % QueueSize;
+@@ -797,6 +813,7 @@ NvmExpressPassThru (
+   //
+   Status = EFI_TIMEOUT;
+   while (EFI_ERROR (gBS->CheckEvent (TimerEvent))) {
++    NvmeDmaObserve ((VOID *)Cq, sizeof (*Cq));
+     if (Cq->Pt != Private->Pt[QueueId]) {
+       Status = EFI_SUCCESS;
+       break;
+@@ -894,21 +911,21 @@ NvmExpressPassThru (
+ 
+ EXIT:
+   if (MapData != NULL) {
+-    PciIo->Unmap (
++    NvmeDmaUnmap (
+              PciIo,
+              MapData
+              );
+   }
+ 
+   if (MapMeta != NULL) {
+-    PciIo->Unmap (
++    NvmeDmaUnmap (
+              PciIo,
+              MapMeta
+              );
+   }
+ 
+   if (MapPrpList != NULL) {
+-    PciIo->Unmap (
++    NvmeDmaUnmap (
+              PciIo,
+              MapPrpList
+              );

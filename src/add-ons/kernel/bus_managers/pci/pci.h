@@ -173,6 +173,7 @@ private:
 			void			_RefreshDeviceInfo(PCIBus *bus);
 
 			uint64			_BarSize(uint64 bits);
+			phys_addr_t		_RamAddress(uint8 domain, phys_addr_t pciAddress);
 			size_t			_GetBarInfo(PCIDev *dev, uint8 offset,
 								uint32 &ramAddress, uint32 &pciAddress,
 								uint32 &size, uint8 &flags,

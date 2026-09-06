@@ -24,6 +24,9 @@ Options:
   --firmware FILE       Repacked MilkV-Pioneer.fd containing --loader.
   --firmware-sha256 HASH
                         Expected repacked firmware SHA-256.
+  --dtb FILE            Matching mango-milkv-pioneer.dtb (requires firmware).
+  --dtb-sha256 HASH      Expected device-tree SHA-256.
+  --firmware-only        Validate payload, but do not back up or write p2.
   --apply               Perform the write. Without this, run validation only.
   --backup-dir DIR      Rollback directory (default: payload directory).
   --no-backup           Skip rollback creation (must be explicit).
@@ -47,17 +50,18 @@ LOADER=
 LOADER_EXPECTED_HASH=
 FIRMWARE=
 FIRMWARE_EXPECTED_HASH=
+DTB=
+DTB_EXPECTED_HASH=
+FIRMWARE_ONLY=0
 BACKUP_DIR=
 APPLY=0
 BACKUP=1
 PAYLOAD_BYTES=314572800
 FIRMWARE_BYTES=8585216
-FIRMWARE_OUTER_FFS_OFFSET=53752
-FIRMWARE_GUIDED_SECTION_OFFSET=53776
-FIRMWARE_LZMA_OFFSET=53800
-FIRMWARE_LOADER_OFFSET=2906828
 FIRMWARE_OUTER_FFS_GUID=93fd219e729c154c8c4be77f1db2d792
 FIRMWARE_LZMA_GUID=98584eee143959429d6edc7bd79403cf
+HAIKU_LOADER_FFS_GUID=a144b84d771bb442a90de72331d0a142
+UEFI_SHELL_FFS_GUID=83a5047c3e9e1c4fad65e05268d0b4d1
 P1_TEMP_MOUNT=
 FIRMWARE_VERIFY_TEMP=
 SUDO=
@@ -74,6 +78,55 @@ cleanup()
 }
 trap cleanup EXIT HUP INT TERM
 
+find_guid_offset()
+{
+	python3 - "$1" "$2" <<'PY'
+import pathlib
+import sys
+
+data = pathlib.Path(sys.argv[1]).read_bytes()
+needle = bytes.fromhex(sys.argv[2])
+offsets = []
+start = 0
+while True:
+    offset = data.find(needle, start)
+    if offset < 0:
+        break
+    offsets.append(offset)
+    start = offset + 1
+if len(offsets) != 1:
+    raise SystemExit(
+        f"expected one occurrence of GUID {sys.argv[2]}, found {len(offsets)}")
+print(offsets[0])
+PY
+}
+
+find_embedded_application_offset()
+{
+	python3 - "$1" "$HAIKU_LOADER_FFS_GUID" "$UEFI_SHELL_FFS_GUID" <<'PY'
+import pathlib
+import sys
+
+data = pathlib.Path(sys.argv[1]).read_bytes()
+matches = []
+for value in sys.argv[2:]:
+    needle = bytes.fromhex(value)
+    start = 0
+    while True:
+        offset = data.find(needle, start)
+        if offset < 0:
+            break
+        if (offset + 28 <= len(data) and data[offset + 18] == 0x09
+                and data[offset + 27] == 0x10):
+            matches.append(offset)
+        start = offset + 1
+if len(matches) != 1:
+    raise SystemExit(
+        f"expected one embedded Haiku loader or UEFI shell application, found {len(matches)}")
+print(matches[0])
+PY
+}
+
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 		--device) shift; DEVICE=${1:?missing argument for --device} ;;
@@ -84,6 +137,9 @@ while [ "$#" -gt 0 ]; do
 		--loader-sha256) shift; LOADER_EXPECTED_HASH=${1:?missing argument for --loader-sha256} ;;
 		--firmware) shift; FIRMWARE=${1:?missing argument for --firmware} ;;
 		--firmware-sha256) shift; FIRMWARE_EXPECTED_HASH=${1:?missing argument for --firmware-sha256} ;;
+		--dtb) shift; DTB=${1:?missing argument for --dtb} ;;
+		--dtb-sha256) shift; DTB_EXPECTED_HASH=${1:?missing argument for --dtb-sha256} ;;
+		--firmware-only) FIRMWARE_ONLY=1 ;;
 		--apply) APPLY=1 ;;
 		--no-backup) BACKUP=0 ;;
 		-h|--help) usage; exit 0 ;;
@@ -106,6 +162,27 @@ done
 		exit 2
 	}
 }
+
+[ "$FIRMWARE_ONLY" -eq 0 ] || [ -n "$FIRMWARE" ] || {
+	echo '--firmware-only requires loader and firmware options' >&2
+	exit 2
+}
+if [ -n "$DTB" ] || [ -n "$DTB_EXPECTED_HASH" ]; then
+	[ -n "$FIRMWARE" ] && [ -f "$DTB" ] || {
+		echo '--dtb requires an existing DTB file and firmware options' >&2
+		exit 2
+	}
+	case "$DTB_EXPECTED_HASH" in
+		*[!0-9a-fA-F]*|'') echo 'Invalid DTB SHA-256' >&2; exit 2 ;;
+	esac
+	[ "${#DTB_EXPECTED_HASH}" -eq 64 ] || exit 2
+	DTB_EXPECTED_HASH=$(printf '%s' "$DTB_EXPECTED_HASH" | tr 'A-F' 'a-f')
+	[ "$(sha256sum "$DTB" | awk '{print $1}')" = "$DTB_EXPECTED_HASH" ] || {
+		echo 'DTB hash mismatch' >&2; exit 1
+	}
+	command -v dtc >/dev/null 2>&1 || { echo 'dtc required to validate DTB' >&2; exit 1; }
+	dtc -q -I dtb -O dts "$DTB" >/dev/null
+fi
 
 DEVICE_NUMBER=${DEVICE#/dev/mmcblk}
 [ "$DEVICE_NUMBER" != "$DEVICE" ] || {
@@ -192,6 +269,14 @@ if [ -n "$LOADER" ]; then
 		echo "xz is required to verify the firmware's embedded loader" >&2
 		exit 1
 	}
+	command -v python3 >/dev/null 2>&1 || {
+		echo "python3 is required to verify the firmware structure" >&2
+		exit 1
+	}
+	FIRMWARE_OUTER_FFS_OFFSET=$(find_guid_offset \
+		"$FIRMWARE" "$FIRMWARE_OUTER_FFS_GUID") || exit 1
+	FIRMWARE_GUIDED_SECTION_OFFSET=$((FIRMWARE_OUTER_FFS_OFFSET + 24))
+	FIRMWARE_LZMA_OFFSET=$((FIRMWARE_GUIDED_SECTION_OFFSET + 24))
 	OUTER_GUID=$(dd if="$FIRMWARE" bs=1 skip=$FIRMWARE_OUTER_FFS_OFFSET count=16 status=none \
 		| od -An -tx1 | tr -d ' \n')
 	GUIDED_GUID=$(dd if="$FIRMWARE" bs=1 skip=$((FIRMWARE_GUIDED_SECTION_OFFSET + 4)) \
@@ -217,6 +302,9 @@ if [ -n "$LOADER" ]; then
 		skip=$FIRMWARE_LZMA_OFFSET count=$FIRMWARE_LZMA_BYTES status=none
 	xz --format=lzma --decompress --stdout "$FIRMWARE_VERIFY_TEMP/dxe.lzma" \
 		> "$FIRMWARE_VERIFY_TEMP/dxe.raw"
+	FIRMWARE_APPLICATION_OFFSET=$(find_embedded_application_offset \
+		"$FIRMWARE_VERIFY_TEMP/dxe.raw") || exit 1
+	FIRMWARE_LOADER_OFFSET=$((FIRMWARE_APPLICATION_OFFSET + 28))
 	LOADER_BYTES=$(wc -c < "$LOADER" | tr -d ' ')
 	dd if="$FIRMWARE_VERIFY_TEMP/dxe.raw" of="$FIRMWARE_VERIFY_TEMP/embedded-loader.efi" \
 		bs=1 skip=$FIRMWARE_LOADER_OFFSET count=$LOADER_BYTES status=none
@@ -264,7 +352,12 @@ P2_BYTES=$(lsblk -bdnro SIZE "${DEVICE}p2")
 echo "Validated Pioneer SD layout:"
 lsblk -o NAME,PATH,SIZE,FSTYPE,LABEL,MOUNTPOINTS "$DEVICE"
 echo "Payload SHA-256: $ACTUAL_HASH"
-echo "Write target: ${DEVICE}p2"
+if [ "$FIRMWARE_ONLY" -eq 1 ]; then
+	echo "Firmware-only deployment: ${DEVICE}p2 will not be changed."
+else
+	echo "Write target: ${DEVICE}p2"
+fi
+[ -z "$DTB" ] || echo "Device-tree SHA-256: $DTB_EXPECTED_HASH"
 if [ -n "$LOADER" ]; then
 	echo "EFI loader SHA-256: $LOADER_ACTUAL_HASH"
 	echo "Embedded EFI loader SHA-256: $EMBEDDED_LOADER_HASH"
@@ -305,6 +398,12 @@ if [ -n "$LOADER" ]; then
 	fi
 	LOADER_TARGET=$P1_MOUNTPOINT/EFI/BOOT/BOOTRISCV64.EFI
 	FIRMWARE_TARGET=$P1_MOUNTPOINT/riscv64/MilkV-Pioneer.fd
+	DTB_TARGET=$P1_MOUNTPOINT/riscv64/mango-milkv-pioneer.dtb
+	if [ -n "$DTB" ]; then
+		$SUDO test -f "$DTB_TARGET" || {
+			echo "Existing device tree not found: $DTB_TARGET" >&2; exit 1
+		}
+	fi
 	$SUDO test -f "$LOADER_TARGET" || {
 		echo "Existing EFI loader not found: $LOADER_TARGET" >&2
 		exit 1
@@ -315,19 +414,23 @@ if [ -n "$LOADER" ]; then
 	}
 fi
 
-MOUNTPOINT=$(findmnt -n -o TARGET -S "${DEVICE}p2" 2>/dev/null || true)
-[ -z "$MOUNTPOINT" ] || $SUDO umount "${DEVICE}p2"
+if [ "$FIRMWARE_ONLY" -eq 0 ]; then
+	MOUNTPOINT=$(findmnt -n -o TARGET -S "${DEVICE}p2" 2>/dev/null || true)
+	[ -z "$MOUNTPOINT" ] || $SUDO umount "${DEVICE}p2"
+fi
 
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 if [ "$BACKUP" -eq 1 ]; then
 	AVAILABLE=$(df -PB1 "$BACKUP_DIR" | awk 'NR == 2 {print $4}')
 	REQUIRED=$((PAYLOAD_BYTES + 67108864))
+	[ "$FIRMWARE_ONLY" -eq 0 ] || REQUIRED=67108864
 	[ "$AVAILABLE" -ge "$REQUIRED" ] || {
 		echo "Insufficient conservative backup space in $BACKUP_DIR" >&2
 		echo "Need at least $REQUIRED bytes; available $AVAILABLE" >&2
 		echo "Choose another --backup-dir or explicitly use --no-backup." >&2
 		exit 1
 	}
+	if [ "$FIRMWARE_ONLY" -eq 0 ]; then
 	BACKUP_FILE=$BACKUP_DIR/haiku-pioneer-bfs-before-$STAMP.img.gz
 	echo "Creating rollback image: $BACKUP_FILE"
 	if ! $SUDO dd if="${DEVICE}p2" bs=1M count=300 status=none \
@@ -344,6 +447,7 @@ if [ "$BACKUP" -eq 1 ]; then
 		exit 1
 	}
 	sha256sum "$BACKUP_FILE" > "$BACKUP_FILE.sha256"
+	fi
 
 	if [ -n "$LOADER" ]; then
 		LOADER_BACKUP=$BACKUP_DIR/BOOTRISCV64-before-$STAMP.EFI
@@ -354,9 +458,16 @@ if [ "$BACKUP" -eq 1 ]; then
 		echo "Backing up embedded-loader firmware: $FIRMWARE_BACKUP"
 		$SUDO cp "$FIRMWARE_TARGET" "$FIRMWARE_BACKUP"
 		$SUDO sha256sum "$FIRMWARE_BACKUP" > "$FIRMWARE_BACKUP.sha256"
+		if [ -n "$DTB" ]; then
+			DTB_BACKUP=$BACKUP_DIR/mango-milkv-pioneer-before-$STAMP.dtb
+			$SUDO cp "$DTB_TARGET" "$DTB_BACKUP"
+			$SUDO cmp "$DTB_TARGET" "$DTB_BACKUP"
+			$SUDO sha256sum "$DTB_BACKUP" > "$DTB_BACKUP.sha256"
+		fi
 	fi
 fi
 
+if [ "$FIRMWARE_ONLY" -eq 0 ]; then
 echo "Writing verified BFS payload to ${DEVICE}p2"
 $SUDO dd if="$PAYLOAD" of="${DEVICE}p2" bs=1M count=300 conv=fsync status=progress
 $SUDO sync
@@ -371,11 +482,18 @@ READBACK_HASH=$($SUDO dd if="${DEVICE}p2" bs=1M count=300 status=none | sha256su
 }
 
 echo "Deployment verified: $READBACK_HASH"
+fi
 
 if [ -n "$LOADER" ]; then
 	echo "Staging verified standalone and embedded EFI loaders"
 	$SUDO install -m 0644 "$LOADER" "$LOADER_TARGET.new"
 	$SUDO install -m 0644 "$FIRMWARE" "$FIRMWARE_TARGET.new"
+	if [ -n "$DTB" ]; then
+		$SUDO install -m 0644 "$DTB" "$DTB_TARGET.new"
+		[ "$($SUDO sha256sum "$DTB_TARGET.new" | awk '{print $1}')" = "$DTB_EXPECTED_HASH" ] || {
+			echo 'DTB staging verification failed; live firmware unchanged' >&2; exit 1
+		}
+	fi
 	LOADER_TEMP_HASH=$($SUDO sha256sum "$LOADER_TARGET.new" | awk '{print $1}')
 	FIRMWARE_TEMP_HASH=$($SUDO sha256sum "$FIRMWARE_TARGET.new" | awk '{print $1}')
 	if [ "$LOADER_TEMP_HASH" != "$LOADER_EXPECTED_HASH" ] \
@@ -386,8 +504,17 @@ if [ -n "$LOADER" ]; then
 		exit 1
 	fi
 	$SUDO mv "$LOADER_TARGET.new" "$LOADER_TARGET"
+	# Both files are staged and verified before publishing. FAT cannot make
+	# the pair atomic: never reboot until the entire deployment succeeds.
+	[ -z "$DTB" ] || $SUDO mv "$DTB_TARGET.new" "$DTB_TARGET"
 	$SUDO mv "$FIRMWARE_TARGET.new" "$FIRMWARE_TARGET"
 	$SUDO sync
+	if [ -n "$DTB" ]; then
+		[ "$($SUDO sha256sum "$DTB_TARGET" | awk '{print $1}')" = "$DTB_EXPECTED_HASH" ] || {
+			echo 'DTB readback verification failed; do not reboot' >&2; exit 1
+		}
+		echo "Device-tree deployment verified: $DTB_EXPECTED_HASH"
+	fi
 	LOADER_READBACK_HASH=$($SUDO sha256sum "$LOADER_TARGET" | awk '{print $1}')
 	FIRMWARE_READBACK_HASH=$($SUDO sha256sum "$FIRMWARE_TARGET" | awk '{print $1}')
 	[ "$LOADER_READBACK_HASH" = "$LOADER_EXPECTED_HASH" ] || {
@@ -406,4 +533,4 @@ if [ -n "$LOADER" ]; then
 	echo "Embedded-loader firmware deployment verified: $FIRMWARE_READBACK_HASH"
 fi
 
-echo "It is safe to power off before the next cold boot."
+echo "Deployment complete. Shut Linux down cleanly before the next cold boot."

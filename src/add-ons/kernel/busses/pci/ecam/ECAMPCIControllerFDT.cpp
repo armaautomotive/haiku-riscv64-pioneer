@@ -243,8 +243,17 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 
 	uint64 regs = 0;
 	uint64 controllerRegs = 0;
+	bool isPioneerPeripheralRoot = false;
 	if (fIsSg2042) {
-		if (fStartBus == 0xc0) {
+		uint64 firstReg;
+		uint64 firstRegSize;
+		if (!fdtModule->get_reg(fdtDev, 0, &firstReg, &firstRegSize))
+			return B_ERROR;
+		// The old tree starts this root at c0; UEFI starts each domain at
+		// zero. Identify the physical link, not its firmware bus numbering.
+		isPioneerPeripheralRoot = firstReg == 0x4c00000000ULL
+			&& firstRegSize == 0x1000;
+		if (isPioneerPeripheralRoot) {
 			// Cadence link 1 shares its controller register block with link 0.
 			// Its sole FDT reg entry is the config aperture; Linux derives the
 			// controller address as the paired link-0 base plus 8 MiB.
@@ -494,6 +503,11 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			WriteConfig(9, 0, 0, PCI_command, 2, 0x0407);
 
 			dprintf("P277:SG2042 Pioneer NVMe, xHCI, AHCI, and RTL8125 topology configured\n");
+		}
+		if (isPioneerPeripheralRoot) {
+			if (fStartBus == 0) {
+				dprintf("P327:SG2042 peripheral root uses firmware bridge/BAR layout\n");
+			}
 			// Kernel add-ons do not initialize C++ objects in static storage.
 			// Construct this polymorphic object explicitly so its virtual table is
 			// valid when generic_msi calls AllocateVectors().
@@ -516,58 +530,145 @@ ECAMPCIControllerFDT::Finalize()
 {
 	dprintf("finalize PCI controller from FDT\n");
 	if (fIsSg2042 && fStartBus == 0) {
-		// The Pioneer firmware does not assign endpoint resources before handing
-		// control to Haiku.  Configure the board's Caicos display adapter using
-		// addresses from the FDT windows.  This is deliberately hardware-specific
-		// until the PCI bus manager grows a general firmware-less BAR allocator.
-		uint32 vendor = gPCI->read_pci_config(1, 0, 0, PCI_vendor_id, 2);
-		uint32 device = gPCI->read_pci_config(1, 0, 0, PCI_device_id, 2);
+		// Bus numbers here are local to this controller. Multiple firmware PCI
+		// domains can all start at zero; the global PCI bus 1 is not necessarily
+		// this root's endpoint.
+		uint32 vendor;
+		uint32 device;
+		CHECK_RET(ReadConfig(1, 0, 0, PCI_vendor_id, 2, vendor));
+		CHECK_RET(ReadConfig(1, 0, 0, PCI_device_id, 2, device));
 		if (vendor != 0x1002 || device != 0x6779) {
 			dprintf("P247:SG2042 expected Caicos endpoint not found (%#" B_PRIx32
 				":%#" B_PRIx32 ")\n", vendor, device);
 			return B_OK;
 		}
 
+		auto containsRange = [this](uint32 type, uint64 address, uint64 size) {
+			for (int32 i = 0; i < fResourceRanges.Count(); i++) {
+				const pci_resource_range& range = fResourceRanges[i];
+				if (range.type == type && address >= range.pci_address
+					&& size <= range.size
+					&& address - range.pci_address <= range.size - size) {
+					return true;
+				}
+			}
+			return false;
+		};
+		auto readMemoryBar = [this](uint16 offset, uint64& address) -> status_t {
+			uint32 low;
+			CHECK_RET(ReadConfig(1, 0, 0, offset, 4, low));
+			if (low == 0 || low == UINT32_MAX || (low & PCI_address_space) != 0)
+				return B_BAD_VALUE;
+			address = low & ~0xfU;
+			if ((low & PCI_address_type) == PCI_address_type_64) {
+				uint32 high;
+				CHECK_RET(ReadConfig(1, 0, 0, offset + 4, 4, high));
+				address |= (uint64)high << 32;
+			} else if ((low & PCI_address_type) != PCI_address_type_32)
+				return B_BAD_VALUE;
+			return address != 0 ? B_OK : B_BAD_VALUE;
+		};
+
+		uint64 frameBuffer = 0;
+		uint64 mmio = 0;
+		uint32 endpointCommand;
+		uint32 rootCommand;
+		uint32 memoryWindow;
+		uint32 prefetchWindow;
+		uint32 prefetchBaseHigh;
+		uint32 prefetchLimitHigh;
+		CHECK_RET(ReadConfig(1, 0, 0, PCI_command, 2, endpointCommand));
+		CHECK_RET(ReadConfig(0, 0, 0, PCI_command, 2, rootCommand));
+		CHECK_RET(ReadConfig(0, 0, 0, PCI_memory_base, 4, memoryWindow));
+		CHECK_RET(ReadConfig(0, 0, 0, PCI_prefetchable_memory_base, 4, prefetchWindow));
+		CHECK_RET(ReadConfig(0, 0, 0, PCI_prefetchable_memory_base_upper32, 4, prefetchBaseHigh));
+		CHECK_RET(ReadConfig(0, 0, 0, PCI_prefetchable_memory_limit_upper32, 4, prefetchLimitHigh));
+		uint64 memoryBase = (uint64)(memoryWindow & 0xfff0) << 16;
+		uint64 memoryLimit = (memoryWindow & 0xfff00000) | 0xfffff;
+		uint64 prefetchBase = (uint64)(prefetchWindow & 0xfff0) << 16;
+		uint64 prefetchLimit = (prefetchWindow & 0xfff00000) | 0xfffff;
+		if ((prefetchWindow & 0xf) == 1)
+			prefetchBase |= (uint64)prefetchBaseHigh << 32;
+		if (((prefetchWindow >> 16) & 0xf) == 1)
+			prefetchLimit |= (uint64)prefetchLimitHigh << 32;
+		auto windowContains = [](uint64 base, uint64 limit, uint64 address, uint64 size) {
+			return base <= limit && address >= base && address <= limit
+				&& size != 0 && size - 1 <= limit - address;
+		};
+		// These aperture sizes belong to the exact Caicos device checked above.
+		// Do not resize a live BAR just to inspect it.
+		if (readMemoryBar(PCI_base_registers, frameBuffer) == B_OK
+			&& readMemoryBar(PCI_base_registers + 8, mmio) == B_OK
+			&& (frameBuffer & 0xfffffff) == 0 && (mmio & 0x1ffff) == 0
+			&& containsRange(B_IO_MEMORY, frameBuffer, 0x10000000)
+			&& containsRange(B_IO_MEMORY, mmio, 0x20000)
+			&& windowContains(prefetchBase, prefetchLimit, frameBuffer, 0x10000000)
+			&& windowContains(memoryBase, memoryLimit, mmio, 0x20000)) {
+			// Firmware may leave an unbound display function's decode disabled.
+			// Enable memory access without moving BARs or enabling DMA here.
+			CHECK_RET(WriteConfig(0, 0, 0, PCI_command, 2,
+				rootCommand | PCI_command_memory));
+			CHECK_RET(WriteConfig(1, 0, 0, PCI_command, 2,
+				endpointCommand | PCI_command_memory));
+			dprintf("P326:SG2042 preserving firmware Caicos BARs: FB %#" B_PRIx64
+				", MMIO %#" B_PRIx64 "\n", frameBuffer, mmio);
+			return B_OK;
+		}
+
+		// Only the old firmware-less layout permits these fixed allocations.
+		// Never put a BAR outside the current root's outbound windows.
+		if (!containsRange(B_IO_PORT, 0x1000, 0x1000)
+			|| !containsRange(B_IO_MEMORY, 0x50000000, 0x100000)
+			|| !containsRange(B_IO_MEMORY, 0x4100000000ULL, 0x10000000)) {
+			dprintf("P326:SG2042 invalid firmware Caicos resources (FB %#" B_PRIx64
+				", MMIO %#" B_PRIx64 "); legacy layout unavailable\n",
+				frameBuffer, mmio);
+			return B_BAD_DATA;
+		}
+
 		// Root-port windows: I/O 0x1000-0x1fff, memory
 		// 0x50000000-0x500fffff, prefetchable memory
 		// 0x4100000000-0x410fffffff.  These values match the FDT resources and
 		// the working Linux configuration on this Pioneer.
-		gPCI->write_pci_config(0, 0, 0, PCI_io_base, 4, 0x00001111);
-		gPCI->write_pci_config(0, 0, 0, PCI_memory_base, 4, 0x50005000);
-		gPCI->write_pci_config(0, 0, 0, PCI_prefetchable_memory_base, 4,
-			0x0ff10001);
-		gPCI->write_pci_config(0, 0, 0,
-			PCI_prefetchable_memory_base_upper32, 4, 0x00000041);
-		gPCI->write_pci_config(0, 0, 0,
-			PCI_prefetchable_memory_limit_upper32, 4, 0x00000041);
-		gPCI->write_pci_config(0, 0, 0, PCI_io_base_upper16, 4, 0);
+		CHECK_RET(WriteConfig(0, 0, 0, PCI_io_base, 4, 0x00001111));
+		CHECK_RET(WriteConfig(0, 0, 0, PCI_memory_base, 4, 0x50005000));
+		CHECK_RET(WriteConfig(0, 0, 0, PCI_prefetchable_memory_base, 4,
+			0x0ff10001));
+		CHECK_RET(WriteConfig(0, 0, 0,
+			PCI_prefetchable_memory_base_upper32, 4, 0x00000041));
+		CHECK_RET(WriteConfig(0, 0, 0,
+			PCI_prefetchable_memory_limit_upper32, 4, 0x00000041));
+		CHECK_RET(WriteConfig(0, 0, 0, PCI_io_base_upper16, 4, 0));
 
 		// Function 0: 256 MiB framebuffer, 128 KiB MMIO registers, 256-byte
 		// I/O aperture, and a disabled 128 KiB option ROM.
-		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 0, 4, 0x0000000c);
-		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 4, 4, 0x00000041);
-		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 8, 4, 0x50000004);
-		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 12, 4, 0);
-		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 16, 4, 0x00001001);
-		gPCI->write_pci_config(1, 0, 0, PCI_base_registers + 20, 4, 0);
-		gPCI->write_pci_config(1, 0, 0, PCI_rom_base, 4, 0x50020000);
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_base_registers + 0, 4, 0x0000000c));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_base_registers + 4, 4, 0x00000041));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_base_registers + 8, 4, 0x50000004));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_base_registers + 12, 4, 0));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_base_registers + 16, 4, 0x00001001));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_base_registers + 20, 4, 0));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_rom_base, 4, 0x50020000));
 
-		uint32 command = gPCI->read_pci_config(1, 0, 0, PCI_command, 2);
-		gPCI->write_pci_config(1, 0, 0, PCI_command, 2, command
-			| PCI_command_io | PCI_command_memory | PCI_command_master);
+		uint32 command;
+		CHECK_RET(ReadConfig(1, 0, 0, PCI_command, 2, command));
+		CHECK_RET(WriteConfig(1, 0, 0, PCI_command, 2, command
+			| PCI_command_io | PCI_command_memory | PCI_command_master));
 
 		// Function 1 is the HDMI audio function sharing the same card.
-		if (gPCI->read_pci_config(1, 0, 1, PCI_vendor_id, 2) == 0x1002) {
-			gPCI->write_pci_config(1, 0, 1, PCI_base_registers, 4, 0x50040004);
-			gPCI->write_pci_config(1, 0, 1, PCI_base_registers + 4, 4, 0);
-			command = gPCI->read_pci_config(1, 0, 1, PCI_command, 2);
-			gPCI->write_pci_config(1, 0, 1, PCI_command, 2, command
-				| PCI_command_memory | PCI_command_master);
+		uint32 audioVendor;
+		CHECK_RET(ReadConfig(1, 0, 1, PCI_vendor_id, 2, audioVendor));
+		if (audioVendor == 0x1002) {
+			CHECK_RET(WriteConfig(1, 0, 1, PCI_base_registers, 4, 0x50040004));
+			CHECK_RET(WriteConfig(1, 0, 1, PCI_base_registers + 4, 4, 0));
+			CHECK_RET(ReadConfig(1, 0, 1, PCI_command, 2, command));
+			CHECK_RET(WriteConfig(1, 0, 1, PCI_command, 2, command
+				| PCI_command_memory | PCI_command_master));
 		}
 
-		command = gPCI->read_pci_config(0, 0, 0, PCI_command, 2);
-		gPCI->write_pci_config(0, 0, 0, PCI_command, 2, command
-			| PCI_command_io | PCI_command_memory | PCI_command_master);
+		CHECK_RET(ReadConfig(0, 0, 0, PCI_command, 2, command));
+		CHECK_RET(WriteConfig(0, 0, 0, PCI_command, 2, command
+			| PCI_command_io | PCI_command_memory | PCI_command_master));
 		dprintf("P247:SG2042 Caicos BARs assigned: FB 0x4100000000, MMIO "
 			"0x50000000, IO 0x1000\n");
 

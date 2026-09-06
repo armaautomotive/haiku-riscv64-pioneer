@@ -205,6 +205,8 @@ platform_add_boot_device(struct stage2_args *args, NodeList *devicesList)
 		panic("Cannot read size of block device handles!");
 
 	uint32 noOfHandles = memSize / sizeof(efi_handle);
+	dprintf("efi/devices: enumerating %" PRIu32 " Block I/O handles\n",
+		noOfHandles);
 
 	efi_handle handles[noOfHandles];
 	if (kBootServices->LocateHandle(ByProtocol, &BlockIoGUID, 0, &memSize,
@@ -220,9 +222,9 @@ platform_add_boot_device(struct stage2_args *args, NodeList *devicesList)
 				(void**)&blockIo) != EFI_SUCCESS)
 			panic("Cannot get block device handle!");
 
-		TRACE("%s: %p: present: %s, logical: %s, removeable: %s, "
+		dprintf("efi/devices: handle %" PRIu32 ": present: %s, logical: %s, removable: %s, "
 			"blocksize: %" PRIu32 ", lastblock: %" PRIu64 "\n",
-			__func__, blockIo,
+			n,
 			blockIo->Media->MediaPresent ? "true" : "false",
 			blockIo->Media->LogicalPartition ? "true" : "false",
 			blockIo->Media->RemovableMedia ? "true" : "false",
@@ -245,6 +247,8 @@ platform_add_boot_device(struct stage2_args *args, NodeList *devicesList)
 			panic("Can't allocate memory for block devices!");
 		devicesList->Insert(device);
 	}
+	dprintf("efi/devices: %" B_PRIuSIZE " boot device candidates\n",
+		(size_t)devicesList->Count());
 
 	return devicesList->Count() > 0 ? B_OK : B_ENTRY_NOT_FOUND;
 }

@@ -1,0 +1,491 @@
+diff --git a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c
+index c0c8ffbd9e..393bed0e8c 100644
+--- a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c
++++ b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AhciMode.c
+@@ -9,6 +9,31 @@
+ 
+ #include "AtaAtapiPassThru.h"
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++// This first integration test deliberately supports blocking reads only.
++STATIC
++BOOLEAN
++PioneerSataReadCommand (EFI_ATA_COMMAND_BLOCK *Command)
++{
++  if (Command == NULL) {
++    return FALSE;
++  }
++  switch (Command->AtaCommand) {
++    case 0xec: // IDENTIFY DEVICE
++    case 0x20: // READ SECTORS
++    case 0x24: // READ SECTORS EXT
++    case 0xc4: // READ MULTIPLE
++    case 0x29: // READ MULTIPLE EXT
++    case 0xc8: // READ DMA
++    case 0x25: // READ DMA EXT
++    case 0x2f: // READ LOG EXT
++      return TRUE;
++    default:
++      return FALSE;
++  }
++}
++#endif
++
+ /**
+   Read AHCI Operation register.
+ 
+@@ -341,6 +366,8 @@ AhciDumpPortStatus (
+     FisBaseAddr = (UINTN)AhciRegisters->AhciRFis + Port * sizeof (EFI_AHCI_RECEIVED_FIS);
+     Offset      = FisBaseAddr + EFI_AHCI_D2H_FIS_OFFSET;
+ 
++    PioneerSataDmaObserve ((VOID *)FisBaseAddr, sizeof (EFI_AHCI_RECEIVED_FIS));
++
+     Status = AhciCheckMemSet (Offset, EFI_AHCI_FIS_TYPE_MASK, EFI_AHCI_FIS_REGISTER_D2H);
+     if (!EFI_ERROR (Status)) {
+       //
+@@ -443,6 +470,25 @@ AhciDisableFisReceive (
+            );
+ }
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++STATIC
++VOID
++PioneerSataQuiesce (EFI_PCI_IO_PROTOCOL *PciIo, UINT8 Port, UINT64 Timeout)
++{
++  EFI_STATUS Status;
++
++  Status = AhciStopCommand (PciIo, Port, Timeout);
++  if (!EFI_ERROR (Status)) {
++    Status = AhciDisableFisReceive (PciIo, Port, Timeout);
++  }
++  if (EFI_ERROR (Status)) {
++    // Do not rewrite descriptors or free mappings while DMA may own them.
++    DEBUG ((DEBUG_ERROR, "PIONEER SATA DMA: port %u quiesce %r; stopped\n", Port, Status));
++    CpuDeadLoop ();
++  }
++}
++#endif
++
+ /**
+   Build the command list, command table and prepare the fis receiver.
+ 
+@@ -483,6 +529,11 @@ AhciBuildCommand (
+   DATA_64  Data64;
+   UINT32   Offset;
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  // The shared command list/table is used by one blocking request at a time.
++  PioneerSataQuiesce (PciIo, Port, ATA_ATAPI_TIMEOUT);
++#endif
++
+   //
+   // Filling the PRDT
+   //
+@@ -558,6 +609,10 @@ AhciBuildCommand (
+   AhciRegisters->AhciCmdList[CommandSlotNumber].AhciCmdCtba  = Data64.Uint32.Lower32;
+   AhciRegisters->AhciCmdList[CommandSlotNumber].AhciCmdCtbau = Data64.Uint32.Upper32;
+   AhciRegisters->AhciCmdList[CommandSlotNumber].AhciCmdPmp   = PortMultiplier;
++
++  PioneerSataDmaPublish ((VOID *)(UINTN)BaseAddr, sizeof (EFI_AHCI_RECEIVED_FIS));
++  PioneerSataDmaPublish (AhciRegisters->AhciCommandTable, AhciRegisters->MaxCommandTableSize);
++  PioneerSataDmaPublish (AhciRegisters->AhciCmdList, AhciRegisters->MaxCommandListSize);
+ }
+ 
+ /**
+@@ -1008,6 +1063,15 @@ AhciPioTransfer (
+   EFI_STATUS                     RecoveryStatus;
+   BOOLEAN                        DoRetry;
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  if (Task != NULL) {
++    return EFI_UNSUPPORTED;
++  }
++  if (!Read || AtapiCommand != NULL || !PioneerSataReadCommand (AtaCommandBlock)) {
++    return EFI_WRITE_PROTECTED;
++  }
++#endif
++
+   if (Read) {
+     Flag = EfiPciIoOperationBusMasterWrite;
+   } else {
+@@ -1018,7 +1082,7 @@ AhciPioTransfer (
+   // construct command list and command table with pci bus address
+   //
+   MapLength = DataCount;
+-  Status    = PciIo->Map (
++  Status    = PioneerSataDmaMap (
+                        PciIo,
+                        Flag,
+                        MemoryAddr,
+@@ -1071,6 +1135,7 @@ AhciPioTransfer (
+     if (Read && (AtapiCommand == 0)) {
+       Status = AhciWaitUntilFisReceived (PciIo, Port, Timeout, SataFisPioSetup);
+       if (Status == EFI_SUCCESS) {
++        PioneerSataDmaObserve (AhciRegisters->AhciCmdList, AhciRegisters->MaxCommandListSize);
+         PrdCount = *(volatile UINT32 *)(&(AhciRegisters->AhciCmdList[0].AhciCmdPrdbc));
+         if (PrdCount == DataCount) {
+           Status = EFI_SUCCESS;
+@@ -1106,7 +1171,10 @@ AhciPioTransfer (
+     Timeout
+     );
+ 
+-  PciIo->Unmap (
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  PioneerSataQuiesce (PciIo, Port, Timeout);
++#endif
++  PioneerSataDmaUnmap (
+            PciIo,
+            Map
+            );
+@@ -1184,6 +1252,15 @@ AhciDmaTransfer (
+   EFI_STATUS                     RecoveryStatus;
+   BOOLEAN                        DoRetry;
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  if (Task != NULL) {
++    return EFI_UNSUPPORTED;
++  }
++  if (!Read || AtapiCommand != NULL || !PioneerSataReadCommand (AtaCommandBlock)) {
++    return EFI_WRITE_PROTECTED;
++  }
++#endif
++
+   Map   = NULL;
+   PciIo = Instance->PciIo;
+ 
+@@ -1208,7 +1285,7 @@ AhciDmaTransfer (
+     }
+ 
+     MapLength = DataCount;
+-    Status    = PciIo->Map (
++    Status    = PioneerSataDmaMap (
+                          PciIo,
+                          Flag,
+                          MemoryAddr,
+@@ -1370,7 +1447,10 @@ AhciDmaTransfer (
+       Timeout
+       );
+ 
+-    PciIo->Unmap (
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++    PioneerSataQuiesce (PciIo, Port, Timeout);
++#endif
++    PioneerSataDmaUnmap (
+              PciIo,
+              (Task != NULL) ? Task->Map : Map
+              );
+@@ -1441,6 +1521,19 @@ AhciNonDataTransfer (
+   EFI_STATUS             RecoveryStatus;
+   BOOLEAN                DoRetry;
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  if (Task != NULL) {
++    return EFI_UNSUPPORTED;
++  }
++  // Permit only the volatile transfer-mode selection required by driver
++  // initialization, not SMART enable, PUIS, security, or erase commands.
++  if (AtapiCommand != NULL || AtaCommandBlock == NULL ||
++      AtaCommandBlock->AtaCommand != ATA_CMD_SET_FEATURES ||
++      AtaCommandBlock->AtaFeatures != 0x03) {
++    return EFI_WRITE_PROTECTED;
++  }
++#endif
++
+   //
+   // Package read needed
+   //
+@@ -1502,6 +1595,9 @@ AhciNonDataTransfer (
+     Timeout
+     );
+ 
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  PioneerSataQuiesce (PciIo, Port, Timeout);
++#endif
+   AhciDumpPortStatus (PciIo, AhciRegisters, Port, AtaStatusBlock);
+ 
+   if (Status == EFI_DEVICE_ERROR) {
+@@ -1779,6 +1875,7 @@ AhciAtaSmartReturnStatusCheck (
+ 
+   FisBaseAddr = (UINTN)AhciRegisters->AhciRFis + Port * sizeof (EFI_AHCI_RECEIVED_FIS);
+ 
++  PioneerSataDmaObserve ((VOID *)FisBaseAddr, sizeof (EFI_AHCI_RECEIVED_FIS));
+   Value = *(UINT32 *)(FisBaseAddr + EFI_AHCI_D2H_FIS_OFFSET);
+ 
+   if ((Value & EFI_AHCI_FIS_TYPE_MASK) == EFI_AHCI_FIS_REGISTER_D2H) {
+@@ -2410,6 +2507,11 @@ AhciCreateTransferDescriptor (
+ 
+   AhciRegisters->AhciCommandTablePciAddr = (EFI_AHCI_COMMAND_TABLE *)(UINTN)AhciCommandTablePciAddr;
+ 
++  // The controller has been reset; publish zeros before enabling FIS DMA.
++  PioneerSataDmaPublish (AhciRegisters->AhciRFis, MaxReceiveFisSize);
++  PioneerSataDmaPublish (AhciRegisters->AhciCmdList, MaxCommandListSize);
++  PioneerSataDmaPublish (AhciRegisters->AhciCommandTable, MaxCommandTableSize);
++
+   return EFI_SUCCESS;
+   //
+   // Map error or unable to map the whole CmdList buffer into a contiguous region.
+diff --git a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.h b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.h
+index 016fc6890a..01d1083e78 100644
+--- a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.h
++++ b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.h
+@@ -36,6 +36,7 @@
+ 
+ #include "IdeMode.h"
+ #include "AhciMode.h"
++#include "PioneerSataDma.h"
+ 
+ extern EFI_DRIVER_BINDING_PROTOCOL   gAtaAtapiPassThruDriverBinding;
+ extern EFI_COMPONENT_NAME_PROTOCOL   gAtaAtapiPassThruComponentName;
+diff --git a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
+index 78caa3c458..f48986d3b4 100644
+--- a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
++++ b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/AtaAtapiPassThru.inf
+@@ -35,6 +35,8 @@
+   AtaAtapiPassThru.h
+   AhciMode.c
+   AhciMode.h
++  PioneerSataDma.c
++  PioneerSataDma.h
+   IdeMode.c
+   IdeMode.h
+   ComponentName.c
+diff --git a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/PioneerSataDma.c b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/PioneerSataDma.c
+new file mode 100644
+index 0000000000..a50c7ba9c8
+--- /dev/null
++++ b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/PioneerSataDma.c
+@@ -0,0 +1,198 @@
++/** @file
++  Pioneer SG2042 DMA ownership support. This is not a generic RISC-V backend.
++
++  Streaming buffers use private page-aligned storage: invalidating a partial
++  cache line belonging to the caller could otherwise destroy unrelated data.
++  Common buffers remain shared and require explicit descriptor/FIS synchronization.
++
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#include "AtaAtapiPassThru.h"
++
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++#ifndef MDE_CPU_RISCV64
++#error Pioneer DMA requires RISC-V 64
++#endif
++
++#define PIONEER_CACHE_LINE  64U
++
++typedef struct {
++  VOID                           *InnerMapping;
++  VOID                           *Host;
++  VOID                           *Bounce;
++  UINTN                          Bytes;
++  UINTN                          Pages;
++  EFI_PCI_IO_PROTOCOL_OPERATION   Operation;
++} PIONEER_SATA_DMA_MAPPING;
++
++STATIC
++BOOLEAN
++PioneerSataDmaBareAddressing (VOID)
++{
++  UINTN Satp;
++
++  __asm__ __volatile__ ("csrr %0, satp" : "=r" (Satp));
++  return Satp == 0;
++}
++
++STATIC
++VOID
++PioneerSataDmaCache (VOID *Buffer, UINTN Length, BOOLEAN Publish)
++{
++  UINTN Address;
++  UINTN Last;
++
++  if (Length == 0) {
++    return;
++  }
++
++  // Physical CMO encodings require bare addressing. Do not silently apply
++  // them to virtual addresses if a future firmware enables its MMU.
++  if (!PioneerSataDmaBareAddressing () || Buffer == NULL ||
++      Length - 1 > MAX_UINTN - (UINTN)Buffer) {
++    DEBUG ((DEBUG_ERROR, "PIONEER DMA: invalid cache range/address mode\n"));
++    CpuDeadLoop ();
++  }
++
++  Address = (UINTN)Buffer & ~(UINTN)(PIONEER_CACHE_LINE - 1);
++  Last = ((UINTN)Buffer + Length - 1) & ~(UINTN)(PIONEER_CACHE_LINE - 1);
++  MemoryFence ();
++  for (;;) {
++    if (Publish) {
++      // th.dcache.cipa a0 (physical clean + invalidate).
++      __asm__ __volatile__ ("mv a0, %0\n.word 0x02b5000b" :: "r" (Address) : "a0", "memory");
++    } else {
++      // th.dcache.ipa a0; never write stale completion data back to RAM.
++      __asm__ __volatile__ ("mv a0, %0\n.word 0x02a5000b" :: "r" (Address) : "a0", "memory");
++    }
++    if (Address == Last) {
++      break;
++    }
++    Address += PIONEER_CACHE_LINE;
++  }
++  // Complete cache operations before a doorbell or any CPU data access.
++  __asm__ __volatile__ (".word 0x0190000b\nfence iorw, iorw" ::: "memory");
++}
++#endif
++
++VOID
++PioneerSataDmaPublish (VOID *Buffer, UINTN Length)
++{
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  PioneerSataDmaCache (Buffer, Length, TRUE);
++#endif
++}
++
++VOID
++PioneerSataDmaObserve (VOID *Buffer, UINTN Length)
++{
++#ifdef PIONEER_SATA_NON_COHERENT_DMA
++  PioneerSataDmaCache (Buffer, Length, FALSE);
++#endif
++}
++
++EFI_STATUS
++PioneerSataDmaMap (
++  EFI_PCI_IO_PROTOCOL *PciIo,
++  EFI_PCI_IO_PROTOCOL_OPERATION Operation,
++  VOID *HostAddress,
++  UINTN *NumberOfBytes,
++  EFI_PHYSICAL_ADDRESS *DeviceAddress,
++  VOID **Mapping
++  )
++{
++#ifndef PIONEER_SATA_NON_COHERENT_DMA
++  return PciIo->Map (PciIo, Operation, HostAddress, NumberOfBytes, DeviceAddress, Mapping);
++#else
++  PIONEER_SATA_DMA_MAPPING *Map;
++  EFI_STATUS Status;
++  UINTN Length;
++
++  if (PciIo == NULL || HostAddress == NULL || NumberOfBytes == NULL ||
++      DeviceAddress == NULL || Mapping == NULL || *NumberOfBytes == 0 ||
++      *NumberOfBytes > MAX_UINTN - EFI_PAGE_MASK) {
++    return EFI_INVALID_PARAMETER;
++  }
++  *Mapping = NULL;
++  if (!PioneerSataDmaBareAddressing ()) {
++    return EFI_UNSUPPORTED;
++  }
++  // These are the only operations the SATA driver uses. Refuse additions
++  // until their ownership semantics have been implemented and tested.
++  if (Operation != EfiPciIoOperationBusMasterRead &&
++      Operation != EfiPciIoOperationBusMasterWrite &&
++      Operation != EfiPciIoOperationBusMasterCommonBuffer) {
++    return EFI_UNSUPPORTED;
++  }
++  Map = AllocateZeroPool (sizeof (*Map));
++  if (Map == NULL) {
++    return EFI_OUT_OF_RESOURCES;
++  }
++  Map->Host = HostAddress;
++  Map->Bytes = *NumberOfBytes;
++  Map->Operation = Operation;
++  Length = Map->Bytes;
++  if (Operation == EfiPciIoOperationBusMasterCommonBuffer) {
++    Status = PciIo->Map (PciIo, Operation, HostAddress, &Length,
++                        DeviceAddress, &Map->InnerMapping);
++  } else {
++    Map->Pages = EFI_SIZE_TO_PAGES (Map->Bytes);
++    Status = PciIo->AllocateBuffer (PciIo, AllocateAnyPages,
++                 EfiBootServicesData, Map->Pages, &Map->Bounce, 0);
++    if (EFI_ERROR (Status)) {
++      FreePool (Map);
++      return Status;
++    }
++    ZeroMem (Map->Bounce, EFI_PAGES_TO_SIZE (Map->Pages));
++    if (Operation == EfiPciIoOperationBusMasterRead) {
++      CopyMem (Map->Bounce, HostAddress, Map->Bytes);
++    }
++    PioneerSataDmaPublish (Map->Bounce, EFI_PAGES_TO_SIZE (Map->Pages));
++    // Map private storage as common so the PCI layer cannot introduce a
++    // second, unmaintained streaming bounce buffer underneath this one.
++    Status = PciIo->Map (PciIo, EfiPciIoOperationBusMasterCommonBuffer,
++                        Map->Bounce, &Length, DeviceAddress, &Map->InnerMapping);
++  }
++  if (EFI_ERROR (Status) || Length != Map->Bytes) {
++    if (!EFI_ERROR (Status)) {
++      PciIo->Unmap (PciIo, Map->InnerMapping);
++      Status = EFI_BAD_BUFFER_SIZE;
++    }
++    if (Map->Bounce != NULL) {
++      PciIo->FreeBuffer (PciIo, Map->Pages, Map->Bounce);
++    }
++    FreePool (Map);
++    return Status;
++  }
++  *Mapping = Map;
++  return EFI_SUCCESS;
++#endif
++}
++
++EFI_STATUS
++PioneerSataDmaUnmap (EFI_PCI_IO_PROTOCOL *PciIo, VOID *Mapping)
++{
++#ifndef PIONEER_SATA_NON_COHERENT_DMA
++  return PciIo->Unmap (PciIo, Mapping);
++#else
++  PIONEER_SATA_DMA_MAPPING *Map;
++  EFI_STATUS Status;
++
++  if (Mapping == NULL) {
++    return EFI_SUCCESS;
++  }
++  Map = Mapping;
++  // The caller must have observed completion or stopped the controller.
++  if (Map->Operation == EfiPciIoOperationBusMasterWrite) {
++    PioneerSataDmaObserve (Map->Bounce, EFI_PAGES_TO_SIZE (Map->Pages));
++    CopyMem (Map->Host, Map->Bounce, Map->Bytes);
++  }
++  Status = PciIo->Unmap (PciIo, Map->InnerMapping);
++  if (Map->Bounce != NULL) {
++    PciIo->FreeBuffer (PciIo, Map->Pages, Map->Bounce);
++  }
++  FreePool (Map);
++  return Status;
++#endif
++}
+diff --git a/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/PioneerSataDma.h b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/PioneerSataDma.h
+new file mode 100644
+index 0000000000..d8e4fa25d3
+--- /dev/null
++++ b/MdeModulePkg/Bus/Ata/AtaAtapiPassThru/PioneerSataDma.h
+@@ -0,0 +1,30 @@
++/** @file
++  Opt-in SG2042 non-coherent DMA support for the Pioneer firmware experiment.
++  SPDX-License-Identifier: BSD-2-Clause-Patent
++**/
++
++#ifndef PIONEER_SATA_DMA_H_
++#define PIONEER_SATA_DMA_H_
++
++EFI_STATUS
++PioneerSataDmaMap (
++  IN EFI_PCI_IO_PROTOCOL *PciIo,
++  IN EFI_PCI_IO_PROTOCOL_OPERATION Operation,
++  IN VOID *HostAddress,
++  IN OUT UINTN *NumberOfBytes,
++  OUT EFI_PHYSICAL_ADDRESS *DeviceAddress,
++  OUT VOID **Mapping
++  );
++
++EFI_STATUS
++PioneerSataDmaUnmap (IN EFI_PCI_IO_PROTOCOL *PciIo, IN VOID *Mapping);
++
++// Clean/invalidate CPU-owned storage before handing it to the controller.
++VOID
++PioneerSataDmaPublish (IN VOID *Buffer, IN UINTN Length);
++
++// Invalidate device-owned, CPU-read-only storage before observing completion.
++VOID
++PioneerSataDmaObserve (IN VOID *Buffer, IN UINTN Length);
++
++#endif

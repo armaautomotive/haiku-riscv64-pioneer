@@ -417,6 +417,12 @@ XHCI::XHCI(pci_info *info, 	pci_device_module_info* pci, pci_device* device, Sta
 	}
 
 	size_t mapSize = fPCIInfo->u.h0.base_register_sizes[0];
+	if (physicalAddress == 0 || mapSize < 0x20
+		|| (fPCIInfo->u.h0.base_register_flags[0] & PCI_address_space) != 0) {
+		TRACE_ERROR("invalid register BAR: address %#" B_PRIxPHYSADDR
+			", size %" B_PRIuSIZE "\n", physicalAddress, mapSize);
+		return;
+	}
 
 	TRACE("map registers %08" B_PRIxPHYSADDR ", size: %" B_PRIuSIZE "\n",
 		physicalAddress, mapSize);

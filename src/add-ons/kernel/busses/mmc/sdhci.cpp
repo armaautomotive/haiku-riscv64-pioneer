@@ -685,8 +685,15 @@ SdhciBus::_InitSg2042Phy()
 	const uint32 config = 1u | (1u << 1) | (0xeu << 16) | (0xeu << 20);
 	dprintf("P205:SP0 direct PHY config write %#" B_PRIx32 "\n", config);
 	*phyConfig = config;
+	// Temporary handoff diagnostics: distinguish progress past the store,
+	// explicit ordering barrier, and timed wait without reading PHY MMIO.
+	// Logging itself affects timing; a printed marker is not proof that an
+	// earlier posted write has completed at the device.
+	dprintf("P329:SD PHY store issued, before barrier\n");
 	memory_full_barrier();
+	dprintf("P329:SD PHY barrier returned, before spin\n");
 	spin(1000);
+	dprintf("P329:SD PHY spin returned\n");
 	dprintf("P205:SP1 PHY config write complete\n");
 
 	const uint16 pullUpPad = 2u | (1u << 3) | (3u << 5) | (2u << 9);
