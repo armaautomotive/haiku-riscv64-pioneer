@@ -852,6 +852,66 @@ check. The earlier Ethernet-consumer page fault and affinity-probe scheduler
 assertion remain unresolved; avoid treating this checkpoint as stress-tested
 or upstream-ready. Keep diagnostics and rollback packages for further work.
 
+Persistence retest: user saved a desktop file and custom screen resolution,
+then confirmed clean shutdown safe. Relay off/on with SD inserted; serial
+offset18657323, selected Samsung111.79GiB again. All five disk identity
+checksums match; kernel mounted /dev/disk/scsi/0/3/0/0 at171053577us
+(includes menu wait). No package/config changes in this reboot. Await user
+confirmation that desktop file and resolution survived.
+
+Persistence reboot halted before desktop: P332 interrupt-disabled store page
+fault, CPU46 thread121 launch_daemon, VAffffffc0020048a8,
+PCffffffc002134f96. Correct ELF load bias is ffffffc002080000 (verified using
+arch_thread_entry); ELF offset b4f96 resolves to _mutex_unlock, instruction
+sd a3,16(a4), updating a mutex waiter link. Caller MemoryManager::_MapChunk
+during slab allocation / VMCache creation / elf_load_user_image. Not the
+nearest-symbol event_queue name printed by KDL. PTE snapshot MAEE1,
+SATP8000000000005606, L2=700000002f635801, L1=700000002b5f0821,
+L0=70000000015b7ce7 (valid/read/write/accessed/dirty present in snapshot).
+Underlying mapping/coherency or waiter-lifetime cause not established.
+Samsung identity and boot mount succeeded first; persistence of desktop file
+and resolution remains unverified. Board left halted in KDL, no recovery
+power operation or new kernel changes made during diagnosis.
+
+Unchanged P336 SSD retry, user authorized, serial offset19077309: Samsung
+identity checks pass and boot mount succeeds165579707us; secondary CPUs
+enabled186182303us. Panics again, CPU8 thread88 scsi scheduler2, PC
+ffffffc002135042 (ELF b5042: _mutex_lock), store atffffffc002388330,
+instruction sd a4,8(a3) appending a mutex waiter. Stack is dprintf_args ->
+dprintf -> AHCI sg_memcpy -> ExecuteSataRequest -> SCSI scheduler. P332
+L0=700000000391cce7, L1=700000002b5f0c21, L2=700000002f635821,
+SATP80000000000bd8d7. Like prior fault, snapshot shows valid writable A/D
+mapping. Both failures concern mutex waiter-list writes, but different locks,
+threads and addresses; shared underlying cause not yet proven. No build or
+disk changes on retry; board left halted in KDL. Next investigate waiter
+lifetime and cross-CPU stack mapping/TLB visibility, not disk identity bypass.
+
+P337 candidate after recovery to Linux (SD serial0x0000e752 verified):
+Map() already marks T-Head pages accessed, but leaves new stack PTEs dirty=0
+after bootstrap. Set dirty=1 specifically for kernel B_KERNEL_STACK_AREA
+mappings on detected T-Head MAEE. Wired stacks contain mutex waiter records
+that other CPUs write with interrupts disabled; avoid needing first-write
+dirty-bit faults there. Preserve user/pageable dirty tracking and existing
+synchronous stack TLB flush. This is a narrow hypothesis test: panic-time
+PTE snapshots were already dirty, so it does NOT prove the original cause;
+stale translation state and waiter lifetime still need consideration if it
+recurs. No CPU-count/device mapping/AHCI/firmware changes. Build pending.
+
+P337 build/deploy passed1124 targets. Built kernel SHA
+c0c72b3dc61629a86ce38a88530cacb55c04378536fefd409ce9932c2ae57c9f;
+packaged kernel61045b6d7313d4d57192f3274864ff4842a6a6a1211e664e72543685e1c3c7af
+(stripped; .text extracted and byte-compared equal to build).
+Package7dd3646661bceaec5992858b9cf8871e2a6b29b2f6899395c8d605535bc378e8.
+SD payload haiku-pioneer-bfs-stack-dirty.img full readback SHA
+1bb85fa481389e436bc83eb8dc5126ee8d98290ac941016b81fd58b9bd231014,
+rollback stamp20260907T050429Z. Linux clean shutdown,20s wait,relayON;
+normal SD boot offset19598832. Samsung remains on P336 until safely updated.
+
+P337 startup not confirmed: power-on returned success, but serial log stayed
+at19598832 bytes through two20s waits. Serial device and existing screen
+session39215 remain present. No firmware/kernel output from this attempt;
+do not classify this as a candidate-kernel failure. Await physical board state.
+
 For firmware-only experiments, add `--firmware-only --dtb FILE
 --dtb-sha256 HASH` to the deployment command below. The payload is still
 validated, but partition 2 is not written or backed up. The previous DTB is

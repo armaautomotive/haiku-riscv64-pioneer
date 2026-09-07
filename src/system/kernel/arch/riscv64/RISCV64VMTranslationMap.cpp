@@ -356,10 +356,16 @@ RISCV64VMTranslationMap::Map(addr_t virtualAddress, phys_addr_t physicalAddress,
 		// Match the early boot mapper while VM page accounting is unavailable.
 		newPte.isAccessed = true;
 		newPte.isDirty = true;
-	} else if (gRiscvTHeadMae)
+	} else if (gRiscvTHeadMae) {
 		// Linux likewise installs normal T-Head user mappings as accessed, but
 		// leaves Dirty clear until the hardware observes a real write.
 		newPte.isAccessed = true;
+		// Wired kernel stacks also hold mutex waiters written by other CPUs
+		// with interrupts disabled. Do not require a first-write dirty-bit
+		// fault for those accesses. User/pageable mappings retain dirty tracking.
+		if (fIsKernel && (attributes & B_KERNEL_STACK_AREA) != 0)
+			newPte.isDirty = true;
+	}
 
 	if ((attributes & B_USER_PROTECTION) != 0) {
 		newPte.isUser = true;
