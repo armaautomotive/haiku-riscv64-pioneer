@@ -13,6 +13,33 @@
 #define TRACE(a...) dprintf("ahci: " a)
 #define ERROR(a...) dprintf("ahci: " a)
 
+#if defined(__riscv)
+extern bool gRiscvTHeadMae;
+
+void
+ahci_dma_sync(phys_addr_t physical, size_t size, bool publish)
+{
+	if (!gRiscvTHeadMae || size == 0)
+		return;
+	ASSERT(size - 1 <= ~(phys_addr_t)0 - physical);
+	const phys_addr_t last = (physical + size - 1) & ~(phys_addr_t)63;
+	asm volatile("fence iorw, iorw" ::: "memory");
+	for (phys_addr_t address = physical & ~(phys_addr_t)63;; address += 64) {
+		register phys_addr_t operand asm("a0") = address;
+		if (publish) {
+			// th.dcache.cipa: publish CPU writes and discard cached aliases.
+			asm volatile(".long 0x02b5000b" : : "r"(operand) : "memory");
+		} else {
+			// th.dcache.ipa: never write stale data over device output.
+			asm volatile(".long 0x02a5000b" : : "r"(operand) : "memory");
+		}
+		if (address == last)
+			break;
+	}
+	asm volatile(".long 0x0190000b\n\tfence iorw, iorw" ::: "memory");
+}
+#endif
+
 
 static inline uint32
 round_to_pagesize(uint32 size)
@@ -49,6 +76,9 @@ alloc_mem(void **virt, phys_addr_t *phy, size_t size, uint32 protection,
 	// SG2042 PCIe is not coherent with ordinary cached RAM in the current
 	// port. AHCI command lists, received FISes, command tables, and PRDs are
 	// all controller-owned structures and must remain visible to both sides.
+	// create_area() initialized these pages through a cached mapping. Retire
+	// that cache state before changing memory type or exposing pages to DMA.
+	ahci_dma_sync(pe.address, size, true);
 	rv = vm_set_area_memory_type(areaid, pe.address, B_WRITE_THROUGH_MEMORY);
 	TRACE("P277 DMA area %s physical %#" B_PRIxPHYSADDR
 		" non-cacheable status %s\n", name, pe.address, strerror(rv));

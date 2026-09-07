@@ -22,6 +22,11 @@ status_t sg_memcpy_from(void *data, size_t dataSize,
 
 void swap_words(void *data, size_t size);
 
+#if defined(__riscv)
+// Only use for dedicated DMA allocations, with CPU/device ownership serialized.
+void ahci_dma_sync(phys_addr_t physical, size_t size, bool publish);
+#endif
+
 #ifdef __cplusplus
 }
 #endif

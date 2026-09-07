@@ -4,6 +4,7 @@ UsePrivateKernelHeaders ;
 UsePrivateHeaders shared ;
 
 SimpleTest advisory_locking_test : advisory_locking_test.cpp ;
+SimpleTest pioneer_sector_probe : pioneer_sector_probe.cpp ;
 
 SimpleTest fibo_load_image : fibo_load_image.cpp ;
 SimpleTest fibo_fork : fibo_fork.cpp ;

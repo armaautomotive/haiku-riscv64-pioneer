@@ -455,6 +455,403 @@ untested. The intermittent SD PHY startup stall and firmware USB enumeration
 errors are still unresolved; retain the diagnostic patches as experimental
 history, not production-ready firmware support.
 
+Samsung update preparation (no Samsung writes yet): Linux identifies the
+Samsung SSD 840 as `/dev/sda`, with its existing 111.8 GiB BFS installation on
+`/dev/sda1`. It is mounted read-only at
+`/mnt/ssd/haiku-deploy/samsung-inspect.wxNpcj`. The old system package is backed
+up under `/mnt/ssd/haiku-deploy/samsung-system-backup.908Twq/`, SHA-256
+`6e0b8977344bf316f85d220c20ee190a83d644eb3f82e81b0dac75ce34cab848`.
+The working checkpoint system package is staged on SD FAT at
+`pioneer-update-8ecc61384c/haiku-r1~beta6_hrev99999-1-riscv64.hpkg`, with
+readback SHA-256 `16a5fd3df8af53c2c8128eb469246b0d42f579bb36237df3b40b1ca985e62c9a`.
+This is staging only, not an installed update or successful Samsung boot.
+Next use the working SD Haiku system to inspect/mount the Samsung and apply
+a backed-up system-package update without formatting or replacing home/settings.
+
+The ensuing SD boot (serial offset 14093225) reached graphics/input, but AHCI
+mapped its BAR through the wrong root (`0x40e0100000`, AHCI version zero).
+The device-specific PCI `ram_address` callback still ignored the device and
+called the legacy all-domain lookup. It now calls `PCI::RamAddress` using the
+owning domain, reusing the already-corrected BAR translation helper. The
+compiled callback relocation was verified to call this method. No SATA
+transfer code changed. New, not-yet-deployed payload:
+`haiku-pioneer-bfs-pci-device-domain.img`, SHA-256
+`780f197609a52b64759baabefcab7ee6271431a1366f93210e53ff22024315e9`.
+Do not apply the older staged Samsung package until SATA is validated; stage
+the subsequently validated system package instead. Samsung remains unchanged.
+
+Device-domain fix deployed and fully readback verified with rollback stamp
+`20260906T220241Z`. Clean Linux shutdown, 20-second wait, relay on; serial
+offset 14400511. AHCI now maps PCI `0xe0100000` to CPU `0x4ce0100000`, size
+`0x2000`, reports version 1.3.1 and starts port 3 at 6 Gb/s. Disk discovery
+reports `Samsung SS`. The SD boot partition mounts normally. This verifies
+controller access and disk discovery, not Samsung filesystem mounting, writes,
+or SSD boot. Existing JMB585 port-4 masking remains. The FAT-staged
+`pioneer-update-8ecc61384c` package predates this fix and must not be used for
+the Samsung update; stage the new validated package first.
+
+Later on that same boot the user reported frozen input after the desktop
+appeared. Serial confirms a kernel storePageFault on CPU 17, thread 249
+`screensaver controller`, in `read_port_etc + 0x142`, runtime PC
+`0xffffffc0021109da`, fault address `0xffffffc00a9fa7f8`. ELF offset `0x909da`
+is `sd zero,8(s2)`, clearing a link while removing the head port message;
+preceding instructions read the message links. This does not identify the
+cause as screensaver or USB. Read-only KDL `port 167` reports the expected
+port object `0xffffffc00a1675f8`, owner 211, capacity 200, read_count 1,
+write_count 199, total_count 13. Further memory mapping/lifetime evidence is
+needed before choosing a fix. Samsung package replacement has not occurred.
+KDL `aspace 1` places the faulting address within slab area 10576, base
+`0xffffffc00a800000`, size `0x800000`, protection `0x30` (kernel read/write).
+Area-level permissions are not proof of the faulting page's PTE state or
+message-object lifetime; inspect those before attributing a root cause.
+
+Next diagnostic image: `haiku-pioneer-bfs-fatal-map.img`, SHA-256
+`3e832234dcc852f5c50c61523c0a0d16f7a7dda0ccc2f4b4db20b3d779fc1acb`.
+Kernel SHA-256:
+`9be4abd7eb5e630d527c0022a0793120a4af0d2fa51517e9bebee19efb45a45a`.
+P330 prints the translation-map query result (physical address and page
+flags), area and per-page permissions, and cache type immediately before an
+unhandled kernel page-fault panic. It does not dereference the faulting
+message or change fault recovery. Both the built and package-staged kernel
+contain the diagnostic strings. This is instrumentation, not a crash fix;
+firmware, DT, CPU configuration and device drivers remain unchanged from the
+SATA device-domain test. Samsung has not been updated.
+SD deployment completed with a full 300 MiB readback matching the payload;
+rollback backup stamp `20260906T223936Z`. Linux was shut down cleanly and
+the next boot capture starts at serial byte offset 14783717.
+That boot reached the kernel, mounted `/dev/disk/mmc/0/1` at about 94.2 s,
+and mounted packagefs at about 98.5 s. Samsung disk discovery and its MBR
+partition are visible, but the partition scan reports status 2, content size
+0 and no recognized filesystem; it is not yet a validated Samsung BFS mount.
+Desktop stability remains to be tested.
+
+Follow-up: user confirmed responsive desktop/input. SSH required creating the
+missing `sshd` service account; the bundled host-key fingerprint was verified
+against the build before connection. From running Haiku, Samsung was already
+mounted as BFS at `/Haiku1` (`/dev/disk/scsi/0/3/0/0`). The initial partition
+scan above was therefore not its final recognition state. Three 4 KiB header
+reads agreed, and the installed 36 MB system package matched the Linux backup
+SHA-256 `6e0b8977344bf316f85d220c20ee190a83d644eb3f82e81b0dac75ce34cab848`.
+
+With user approval, replaced only Samsung's
+`system/packages/haiku-r1~beta6_hrev99999-1-riscv64.hpkg` with the package from
+the running fatal-map SD image. Source, staged copy and installed file matched
+SHA-256 `64f17196a418a9cc4efbcf6c9159e0d3528bf8427aa38e127c01208aa01f059f`;
+`sync` completed before and after the replacement. Verified previous package
+is retained at `/Haiku1/pioneer-update-fatal-map-20260906/previous-haiku.hpkg`,
+outside the active package directory. Apps, settings, other packages, SD
+firmware and Linux were not changed by this update. Samsung boot remains
+untested; the machine is still running from SD. Do not confuse a successful
+package update with successful SSD boot, or with a fix for the earlier panic.
+
+Samsung boot-selection test (serial offset 15182077): after clean Haiku
+shutdown and user confirmation of safe power-off, relay off/on with SD in.
+A single serial Space after `[Bds]Stop Hotkey Service!` opened the loader
+menu. Enter opened volume selection; two Down keys highlighted
+`Haiku (111.79 GiB)`, Enter selected it, Escape returned to the main menu,
+which confirmed that volume. Enter continued. No firmware or boot-order
+configuration was written by these menu actions.
+
+The Samsung kernel started but panicked in `vfs_mount_boot_file_system()`:
+`did not find any boot partitions!`. At about 185.8 s, the final disk dump
+DOES recognize Samsung's BFS partition: offset 32768, size 120033640448,
+status 0, content name Haiku. The boot message has `user selected=true`,
+partition offset 32768, hard-disk boot method 0 and a 79-byte disk identifier.
+Nevertheless the boot candidate count is zero. This narrows the next check
+to loader/kernel disk identity matching (size and sector checksums), not a
+missing SATA driver or unrecognized BFS filesystem. Actual identifier values
+and mismatched checksum/read status still need diagnostics; do not bypass
+identity checks or assume a root cause. The board is halted in KDL.
+
+Next build: `haiku-pioneer-bfs-boot-identity.img`, SHA-256
+`e1e4958500e7dd7bdcb634ab9643a80d2e4d0652fd02a7b7b18573a0133d3824`.
+Kernel SHA-256 `b383cd88e99dfdb932ddf346cf736e5196ebb687edf3abb48fa2774e1ea486ab`;
+system package SHA-256
+`2896076e4c97a1d58bdfbd79f30822e7b00308c03333e77de53107dcf520fc50`.
+P331 traces at most 64 disk-identity comparisons, reporting actual/expected
+size, checksum offsets, read return values and actual/expected sums. Rejects
+malformed identifier lengths before accessing the structure. Existing valid
+disk-matching rules are not relaxed. Both built and package-staged kernels
+contain P331. Firmware/loader unchanged. After SD removal the board booted
+Linux (capture offset 15404530); this diagnostic package still needs SD
+deployment and then a verified Samsung package update from running Haiku
+before another Samsung-selected boot can exercise it.
+SD deployment was subsequently verified by complete 300 MiB readback;
+rollback backup stamp `20260906T231730Z`, SD serial `0x0000e752`.
+Clean Linux shutdown followed by relay on; normal SD boot capture starts at
+15470203. Samsung still contains the fatal-map package, not P331. The fresh
+SD image also still needs the `sshd` service account created before its
+bundled SSH launcher can run; this account setup is not yet automated.
+
+The P331 SD test passed all five disk-identity checks and mounted the SD boot
+volume at about 96.1 s. After all 64 CPUs were enabled (about 110.7 s), it
+panicked with interrupts disabled in `SVec + 0x08`, CPU 1, thread 124
+`_power_daemon_event_loop_`. Fault address `0xffffffc0007a6000`, PC
+`0xffffffc0021d4818`, SP `0xffffffc0007a5fc0`; disassembly of this kernel
+identifies `sd tp,64(sp)` while saving a trap frame. KDL reports the thread's
+kernel stack as `0xffffffc0007a2000` to `0xffffffc0007a7000`. This is not the
+Samsung identity mismatch; mapping state and original nested-trap cause are
+not yet known. No Samsung update occurred on that boot. Following user SD
+removal, relay off/on began a Linux boot at serial offset 15665688.
+
+Next SD image `haiku-pioneer-bfs-stack-pte.img`:
+SHA-256 `9523e9602061de861d32f0d3983d42348388ad991c5f78eb0a140f1fa7a58c09`;
+kernel `0f2475bb0a3cf5c2e1d8ce488c3ba8ccd01a4fa94c0c87598f100a9fc64c7daf`;
+system package `deb5b0a46fdd837c4b9aa12506cb71f993186f0fcd0cef262ca96af2712afe61`.
+P332 invokes the existing raw active-page-table dump immediately before an
+interrupt-disabled page-fault panic; normal fault/mapping behavior is unchanged.
+P331 disk-identity diagnostics remain. Compiled and package-staged kernels
+contain P332. This is not a proven fix for either failure.
+
+`pioneer_start_sshd.sh` is the tracked source for the image's
+`generated.pioneer/ssh/start-sshd.sh` asset (copy it there before building).
+It creates the missing non-login sshd account when absent, refuses UID 0 for
+that account, and retains the existing key-based SSH configuration. Shell
+syntax checked; automatic startup still requires runtime verification.
+SD serial `0x0000e752` deployment completed with full readback verification;
+rollback backup stamp `20260906T235019Z`. Clean Linux shutdown, 20-second
+wait, relay on; next normal SD boot capture starts at 15731039.
+That SD boot reached the desktop (user confirmed), passed all five P331 SD
+identity checks, and allowed automatic key-authenticated SSH. `sshd` account
+was created as UID 1000/GID 101. No panic was present in the inspected log.
+Samsung was not auto-mounted; its device size and BFS header were verified,
+then `/dev/disk/scsi/0/3/0/0` was mounted explicitly at `/Haiku1`.
+
+Samsung's installed fatal-map system package matched expected SHA-256
+`64f17196a418a9cc4efbcf6c9159e0d3528bf8427aa38e127c01208aa01f059f`.
+Backed it up to
+`/Haiku1/pioneer-update-stack-pte-20260906/previous-haiku.hpkg`, verified the
+backup, and replaced only the system package with the running SD package
+`deb5b0a46fdd837c4b9aa12506cb71f993186f0fcd0cef262ca96af2712afe61`.
+Staging and final hashes matched, with sync before/after replacement. Samsung
+now has both P331 and P332; its next selected boot is still untested. No
+other installed packages or settings were replaced. The SSH image launcher
+change is outside the system package and was not copied to Samsung.
+
+Samsung P331/P332 boot test, serial offset 16133110: clean shutdown confirmed
+safe by user, relay off/on, single Space at firmware handoff, then selected
+`Haiku (111.79 GiB)` and confirmed selection on main menu before continuing.
+Kernel again panicked `did not find any boot partitions!` (about 176.8 s).
+P331 identifies the reason: Samsung device 2 size 120034123776 matches the
+loader's expected size, but checksum 0 at offset 0 (512 bytes read) is
+`0xb2ec35bc`, versus loader identifier `0x83a217d7`. This repeats in strict
+and non-strict passes. The SD's distinct checksum is `0x50334973`. Next
+compare the actual 512-byte Samsung sector under Linux against both read
+paths; do not weaken identity matching. No Samsung filesystem was mounted
+as boot, and the board is halted in KDL. This test does not establish which
+read path is incorrect or resolve the separate intermittent stack fault.
+
+Linux comparison after user SD removal (boot serial offset 16368183):
+identified `/dev/sda` as Samsung SSD 840 Series, serial `S14CNSAD300075H`,
+120034123776 bytes. Read sector zero without mounting or writing Samsung.
+Summing its 128 little-endian uint32 words modulo 2^32 gives `0x83a217d7`,
+matching the loader, not Haiku kernel `0xb2ec35bc`. A second read using
+`dd iflag=direct` produced identical bytes and checksum. Thus the evidence
+points to the Haiku kernel read path; the particular AHCI/DMA/copy layer is
+not established yet. Next instrument sector-zero data at the AHCI bounce
+buffer and destination to distinguish transfer data from copy/mapping errors.
+Do not bypass disk identity checking. No disk writes occurred in this check.
+
+Next SD test `haiku-pioneer-bfs-ahci-sector.img`, SHA-256
+`206c9a80d1458cce570eb8d3bab3f8fa57f4efe79d697ac402542f563c4fb02e`;
+system package `a3e97847d7245ca747c6dbb595480499d876a64fbf568c3043582936a7cc1464`.
+Kernel and EFI loader unchanged from P332. AHCI P333 logs at most 16
+completed read-DMA requests starting at LBA 0, comparing the first 512 bytes
+of the bounce buffer with the destination via the physical scatter/gather
+copy helper. It reports both checksums, destination-read status and first
+mismatch offset (512 means identical). No transfer or identity-matching rule
+is changed. The packaged AHCI binary contains P333. An ordinary SD boot can
+exercise this probe during Samsung discovery; Samsung is not yet updated
+with this package.
+Deployment to SD serial `0x0000e752` passed complete readback; rollback backup
+stamp `20260907T001055Z`. Linux clean shutdown and 20-second wait preceded
+relay on. Normal SD boot capture starts at 16436303.
+User confirmed desktop on that boot; SSH works and no panic appeared in the
+inspected log. During early discovery P333 repeatedly reports LBA0 bounce
+and destination checksum `0xd541b20c`, with all 512 bytes identical between
+them. After desktop startup a read-only SSH `dd` of Samsung raw sector zero
+returned exactly the 128 uint32 words previously read under Linux, checksum
+`0x83a217d7`; the corresponding P333 entry likewise reports that correct
+checksum for both bounce and destination. Thus early wrong data is already
+in the bounce buffer, and later reads can succeed without a disk change.
+The probe does not yet distinguish DMA coherency, command completion, or
+another early initialization issue. Samsung has not received P333 and has
+not been modified during this diagnostic session.
+
+Live follow-up: built `pioneer_sector_probe` (SimpleTest target) and copied
+only that test executable to Haiku `/tmp`. It opens the specified disk
+O_RDONLY and requests affinity for its own thread on CPUs 0,1,2,16,32,63,0,
+reading one sector per CPU. No sector result returned: while the test was
+running, kernel panicked at scheduler.cpp:503,
+`nextThreadData->Core() == core`, CPU 31, thread 277 `w>Desktop` in reschedule
+while waiting for a port message. This does not establish CPU-dependent disk
+data, nor prove affinity caused the assertion. Do not repeat the probe until
+the scheduler issue is understood. No CPUs were explicitly disabled, and no
+Samsung writes occurred. The running image/kernel was not replaced. Board
+is halted in KDL; preserve both the scheduler and earlier P333 evidence.
+
+P334 follow-up (2026-09-06): after returning to Linux and confirming SD
+serial `0x0000e752`, add a bounded AHCI LBA0 cache-visibility diagnostic.
+For the first 16 sector-zero reads, on detected T-Head MAEE hardware only,
+compare the bounce-buffer checksum before and after physical cache-line
+invalidation of its first 512 bytes. The dedicated allocation is page aligned;
+the completed request still owns it. Interrupts are disabled during comparison
+to avoid migration. No dirty cache data is cleaned back over device output.
+The physical IPA and SYNC.S encodings match Linux's T-Head cache operations
+(`arch/riscv/errata/thead/errata.c`). The kernel already exports the detection
+flag; verified the built driver loads physical addresses into a0 for IPA.
+This runs **after** the normal destination copy, so it does not repair the
+current read: a changed bounce checksum and P333 destination mismatch would
+be diagnostic evidence, not a new copy failure. No command, identity policy,
+CPU count, firmware, or Samsung package changes. Do not repeat the affinity
+probe. Test via the normal SD boot before attempting another Samsung boot.
+
+P334 built and SD full-readback verified: payload
+`haiku-pioneer-bfs-ahci-cache-probe.img`, SHA-256
+`d29b6642a0419932763dee88716ac529145ccff4c40e737b64553d118c5f6eb3`;
+package `b0e3fbdeebc3433b35624603ae8c2c3f9535f4a8e6bb378a9f5e57bc3c426308`.
+Kernel remains `0f2475bb0a3cf5c2e1d8ce488c3ba8ccd01a4fa94c0c87598f100a9fc64c7daf`.
+Rollback stamp `20260907T003612Z`. Linux shut down via `shutdown -h now`,
+waited 20 seconds, then relay ON only. Serial boot offset 16780414.
+
+P334 result: SD mounted at 96.58s; Haiku SSH works. Samsung raw device
+published, but initial device scan returned `Bad data` without issuing a
+traced LBA0 read. No early P334 measurement was obtained. A later SSH read
+returned the correct sector; P334 reports physical `0x27b8000`, checksum
+`0x83a217d7 -> 0x83a217d7`, P333 destination identical. That read used command
+0x25 (48-bit), whereas P333's earlier normal Samsung reads used 0xc8 (28-bit).
+Inspect the IDENTIFY/capacity initialization path next; this test does not
+establish that cache invalidation fixes the early failure. No disk writes or
+affinity changes were performed in the running Haiku. Board left in Haiku.
+
+After user confirmed the desktop is up, read-only `driveinfo` on Samsung raw
+reports **size 0 bytes**, bytes_per_sector 512, sectors_per_track 0,
+cylinder_count/head_count 1, media status `No error`. Only SD is mounted.
+This directly confirms incorrect exposed capacity, despite successful later
+sector-zero reads. Instrument IDENTIFY and synthesized READ CAPACITY results
+next; do not treat this as a missing partition or reformat the disk.
+
+P335 preparation: add AHCI IDENTIFY diagnostics at DMA completion (status,
+task-file status, PRDBC, requested length, checksum and parsed sector data),
+and at the inquiry destination after completion. Log synthesized READ CAPACITY
+10/16 sector count, block size and last LBA before the scatter/gather copy.
+IDENTIFY data traces are capped at 24 and capacity traces at 16 per variant.
+This is logging only; sector parsing, command selection, DMA handling and
+the prior P334 diagnostic are unchanged. No Samsung package update planned
+for this test: the normal SD boot exercises Samsung discovery.
+
+P335 build passed (972 targets); verified P335 strings in both compiled and
+packaged AHCI. Payload `haiku-pioneer-bfs-ahci-identify-probe.img`, SHA-256
+`bb0552346d7db79109b174e42b9ef0f5c8adc779daea11fa5767a12bc9bd1cd3`.
+Kernel and EFI loader hashes unchanged from P334. Not deployed yet; the
+P334 Haiku instance remains running pending the next clean shutdown cycle.
+
+Attempted P335 deployment through running Haiku at user's request. /boot had
+36.1 MiB free; new hpkg is 34,788,779 bytes. Saved and hash-verified old P334
+package on Mac at `/private/tmp/pioneer-haiku-p335-rollback/previous-haiku.hpkg`
+(SHA b0e3fbdeebc3433b35624603ae8c2c3f9535f4a8e6bb378a9f5e57bc3c426308).
+Created `/boot/pioneer-update-p335`; hard-link rollback attempt was rejected
+with Operation not allowed. Transfer to `new-haiku.hpkg` subsequently timed
+out. **No publication/active-package replacement command was issued.**
+An incomplete staging file may remain and must be checked/removed on recovery.
+Serial shows old P334 kernel panic in thread 196 `/dev/net/rtl8125/1 consumer`,
+CPU19, list_remove_item+0x0e, PC ffffffc0021b040e, store fault
+ffffffc01c0740a0. P330 query: VA ffffffc01c074000 PA 7ca1f000 flags7030,
+area13310 slab baseffffffc01c000000 size800000 protection30, cachetype4.
+Do not attribute this to unactivated P335. Board halted in KDL; Samsung
+contents and active SD system package unchanged by this deployment attempt.
+
+P335 subsequently deployed through Linux after user removed/reinserted SD.
+Verified serial 0x0000e752, staged on /mnt/ssd (sdb2), rollback image stamp
+`20260907T013952Z`. Complete 300 MiB readback matches
+`bb0552346d7db79109b174e42b9ef0f5c8adc779daea11fa5767a12bc9bd1cd3`.
+This replaces the SD BFS filesystem, including any incomplete SSH staging
+file; the backup preserves its previous contents. Firmware/Samsung unchanged.
+Linux clean shutdown, 20-second wait, relay ON. Serial boot offset 17102187.
+
+P335 result: IDENTIFY completion status0 TFD50 PRDBC512, both bounce and
+destination sum2162b018, 234441648 sectors, logical/physical512, use48=true.
+CAPACITY16 correctly emits lastLBA0xdf94baf, block512, copy32. First LBA0
+read provides direct cache-visibility evidence: P334 physical0x27b8000
+checksum **0x84bc582c -> 0x83a217d7** after IPA/SYNC.S. Already-copied
+destination retains bad84bc582c (first mismatch0); subsequent reads match
+83a217d7, the Linux/loader checksum. This diagnostic is still after-copy,
+not a complete DMA ownership fix. SD boot mounted97.66s. Haiku SSH works;
+read-only driveinfo now reports correct120034123776-byte Samsung capacity.
+The zero-capacity failure did not recur on this boot; don't claim its exact
+cause independently established. Next implement proper cache ownership
+handling, including allocation memory-type transition and command metadata,
+then retest rather than bypassing disk identity or changing partitions.
+
+P336 candidate: AHCI-local T-Head-gated physical cache synchronization helper
+uses clean+invalidate before DMA ownership transfer, invalidate-only after
+completion, and SYNC.S/fence ordering. Retire cached create_area initialization
+before switching DMA allocations to non-cacheable memory. Publish initialized
+metadata before port enable; before each doorbell publish bounce data, slot0
+command header and command table/active PRDs. Do not clean controller-owned
+received FIS memory while the port is running. After successful completion,
+invalidate command header before PRDBC and read payload before any copy or
+IDENTIFY interpretation. Check RISC-V PRD construction success before using
+its count. Existing P281 length workaround and P333/P334/P335 diagnostics
+remain for comparison; P334 should no longer change the first-sector checksum.
+No kernel/firmware/CPU-count/Samsung modifications. Runtime validation pending.
+
+P336 final build passed including PRD guard. Payload
+`haiku-pioneer-bfs-ahci-dma-sync.img`, SHA-256
+`c6818774a87dc636a1859b289df0f2b7c9af6e785e3103421c53a13728030678`.
+Verified packaged P336 marker and physical cache-op/a0 encodings in compiled
+driver; checked cache-line coverage arithmetic for 704 offset/length cases.
+Kernel/loader hashes remain unchanged. Not deployed; board left running P335.
+
+P336 deployed through Linux following user-confirmed clean Haiku shutdown
+and SD removal/insertion. Verified SD serial0x0000e752; rollback stamp
+`20260907T023027Z`. Full 300MiB readback matches
+`c6818774a87dc636a1859b289df0f2b7c9af6e785e3103421c53a13728030678`.
+Linux shutdown -h now, waited20s, relay ON. Serial boot offset17433730.
+Firmware and Samsung unchanged.
+
+P336 boot result at offset17433730: sync enabled=1 on ports0-3. First LBA0
+already has correct83a217d7 before P334's extra invalidation; afterward
+unchanged, and P333 destination identical. All five early traced reads match.
+IDENTIFY now reports word0=0x40, checksum47290ea7, 234441648 sectors,
+512-byte logical/physical sectors; bounce/destination agree. SD mounted94.80s;
+64 CPUs enabled109.51s. SSH driveinfo confirms Samsung120034123776 bytes
+and partition discovery. No P281 warning, PANIC or ASSERT in inspected boot.
+This validates the first-read regression on this SD boot, not Samsung boot
+or sustained disk writes. Samsung installed package remains unchanged.
+
+User authorized Samsung update for SSD boot test. Under running P336 Haiku,
+mounted /dev/disk/scsi/0/3/0/0 at /Haiku1 (111.8GiB BFS), verified old package
+deb5b0a46fdd837c4b9aa12506cb71f993186f0fcd0cef262ca96af2712afe61.
+Copied that to /Haiku1/pioneer-update-dma-sync-20260907/previous-haiku.hpkg
+and verified it. Staged P336 directly from /boot/system/packages (no large
+network transfer), verified SHA1160580d83f0c535a803b3b7965327725a5c711ff7158caa2dc233dda151dc46,
+then same-filesystem mv to Samsung's existing
+system/packages/haiku-r1~beta6_hrev99999-1-riscv64.hpkg. Sync and final hash
+checks of installed and rollback copies both passed. Apps/settings/partitions
+and SD package unchanged. Board remains running SD Haiku; Samsung mounted.
+Next: clean shutdown, user confirms safe, off/on with SD LEFT INSERTED,
+select Samsung111.79GiB through the existing serial boot menu procedure.
+
+P336 Samsung boot test: user confirmed clean shutdown safe; relay off/on,
+SD left inserted. Serial offset17874825. One Space at firmware handoff,
+selected Haiku111.79GiB, confirmed main menu, continued. Kernel P336 active;
+all five P331 disk-identity checksums MATCH (83a217d7, b9226b3b, 211d8c3e,
+2551e54e, 5e896c45). **Mounted boot partition /dev/disk/scsi/0/3/0/0** at
+193394455us (includes time spent selecting the menu). This confirms Samsung
+kernel boot-volume discovery/mount, not yet full desktop startup. System
+package loading proceeds from Samsung; no SPI or Linux boot changes made.
+
+SSD-boot checkpoint: user subsequently confirmed a running Haiku desktop.
+The kernel mounted the Samsung boot partition and enabled 64 CPUs. Boot still
+requires the SD firmware/loader and manual serial selection of Samsung;
+default SD boot and Linux-with-SD-removed workflow are unchanged. Persistent
+apps/settings reside on Samsung, but a desktop-file persistence reboot test
+has not yet been performed. Samsung SSH was not responding during the initial
+check. The earlier Ethernet-consumer page fault and affinity-probe scheduler
+assertion remain unresolved; avoid treating this checkpoint as stress-tested
+or upstream-ready. Keep diagnostics and rollback packages for further work.
+
 For firmware-only experiments, add `--firmware-only --dtb FILE
 --dtb-sha256 HASH` to the deployment command below. The payload is still
 validated, but partition 2 is not written or backed up. The previous DTB is

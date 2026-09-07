@@ -49,6 +49,106 @@
 
 #if defined(__riscv)
 #define AHCI_BOUNCE_BUFFER_SIZE (128 * 1024)
+
+extern bool gRiscvTHeadMae;
+
+static uint32
+SectorChecksum(const uint8* data)
+{
+	uint32 sum = 0;
+	for (size_t i = 0; i < 512; i += 4) {
+		sum += (uint32)data[i] | ((uint32)data[i + 1] << 8)
+			| ((uint32)data[i + 2] << 16) | ((uint32)data[i + 3] << 24);
+	}
+	return sum;
+}
+
+
+static void
+TraceIdentifyData(const void* buffer, int port, const char* stage)
+{
+	static int32 sCount = 0;
+	if (atomic_add(&sCount, 1) >= 24)
+		return;
+	ata_device_infoblock info;
+	memcpy(&info, buffer, sizeof(info));
+	bool use48 = false;
+	uint64 sectors = info.SectorCount(use48, true);
+	dprintf("P335: AHCI port %d IDENTIFY %s sum %#" B_PRIx32
+		" word0 %#x lba %d lba48 %d sectors28 %" B_PRIu32
+		" sectors48 %" B_PRIu64 "\n", port, stage,
+		SectorChecksum((const uint8*)buffer), info.word_0.raw,
+		info.lba_supported != 0, info.lba48_supported != 0,
+		info.lba_sector_count, info.lba48_sector_count);
+	dprintf("P335: AHCI port %d IDENTIFY %s parsed sectors %" B_PRIu64
+		" logical %" B_PRIu32 " physical %" B_PRIu32 " use48 %d\n",
+		port, stage, sectors, info.SectorSize(), info.PhysicalSectorSize(),
+		use48);
+}
+
+
+static void
+TraceSectorZeroRead(sata_request* request, const void* bounce, size_t size,
+	phys_addr_t physical, int port)
+{
+	const uint8* fis = (const uint8*)request->FIS();
+	if (size < 512 || request->IsATAPI()
+		|| (fis[2] != ATA_COMMAND_READ_DMA_EXT
+			&& fis[2] != ATA_COMMAND_READ_DMA)
+		|| fis[4] != 0 || fis[5] != 0 || fis[6] != 0)
+		return;
+	if (fis[2] == ATA_COMMAND_READ_DMA_EXT) {
+		if (fis[8] != 0 || fis[9] != 0 || fis[10] != 0)
+			return;
+	} else if ((fis[7] & 0x0f) != 0)
+		return;
+
+	static int32 sTraceCount = 0;
+	if (atomic_add(&sTraceCount, 1) >= 16)
+		return;
+
+	// Diagnostic only: this dedicated, page-aligned DMA allocation is owned
+	// by this completed read while the port request semaphore is held. Never
+	// clean old cache contents back over data just written by the controller.
+	// T-Head IPA takes a physical address even with address translation on.
+	if (gRiscvTHeadMae) {
+		cpu_status state = disable_interrupts();
+		uint32 before = SectorChecksum((const uint8*)bounce);
+		for (phys_addr_t address = physical; address < physical + 512;
+			address += 64) {
+			register phys_addr_t operand asm("a0") = address;
+			asm volatile(".long 0x02a5000b" : : "r"(operand) : "memory");
+		}
+		asm volatile(".long 0x0190000b\n\tfence iorw, iorw" ::: "memory");
+		uint32 after = SectorChecksum((const uint8*)bounce);
+		restore_interrupts(state);
+		dprintf("P334: AHCI port %d LBA0 physical %#" B_PRIxPHYSADDR
+			" cache invalidate sum %#" B_PRIx32 " -> %#" B_PRIx32 "\n",
+			port, physical, before, after);
+	}
+
+	uint8 destination[512];
+	status_t copyStatus = B_OK;
+	if (request->CCB() != NULL) {
+		copyStatus = sg_memcpy_from(destination, sizeof(destination),
+			request->CCB()->sg_list, request->CCB()->sg_count);
+	} else
+		memcpy(destination, request->Data(), sizeof(destination));
+
+	const uint8* source = (const uint8*)bounce;
+	dprintf("P333: AHCI port %d LBA0 command %#x length %" B_PRIuSIZE
+		" bounce sum %#" B_PRIx32 " destination read %" B_PRId32 "\n",
+		port, fis[2], size, SectorChecksum(source), copyStatus);
+	if (copyStatus == B_OK) {
+		size_t mismatch = 0;
+		while (mismatch < sizeof(destination)
+			&& source[mismatch] == destination[mismatch])
+			mismatch++;
+		dprintf("P333: destination sum %#" B_PRIx32
+			" first mismatch %" B_PRIuSIZE " (512 means identical)\n",
+			SectorChecksum(destination), mismatch);
+	}
+}
 #endif
 
 
@@ -71,6 +171,7 @@ AHCIPort::AHCIPort(AHCIController* controller, int index)
 	fRegs(&controller->fRegs->port[index]),
 	fArea(-1),
 #if defined(__riscv)
+	fDMAPhysical(0),
 	fBounceArea(-1),
 	fBounceBuffer(NULL),
 	fBouncePhysical(0),
@@ -126,6 +227,9 @@ AHCIPort::Init1()
 		return fArea;
 	}
 	memset(virtAddr, 0, size);
+#if defined(__riscv)
+	fDMAPhysical = physAddr;
+#endif
 
 	fCommandList = (command_list_entry*)virtAddr;
 	virtAddr += sizeof(command_list_entry) * COMMAND_LIST_ENTRY_COUNT;
@@ -159,6 +263,12 @@ AHCIPort::Init1()
 	fCommandList[0].ctba  = LO32(physAddr);
 	fCommandList[0].ctbau = HI32(physAddr);
 	// prdt follows after command table
+#if defined(__riscv)
+	// The port has not been enabled yet; all metadata is CPU-owned here.
+	ahci_dma_sync(fDMAPhysical, size, true);
+	dprintf("P336: AHCI port %d DMA ownership sync enabled=%d\n",
+		fIndex, gRiscvTHeadMae);
+#endif
 
 	// disable transitions to partial or slumber state
 	fRegs->sctl |= (SCTL_PORT_IPM_NOPART | SCTL_PORT_IPM_NOSLUM);
@@ -772,6 +882,10 @@ AHCIPort::ScsiInquiry(scsi_ccb* request)
 	ExecuteSataRequest(&sreq);
 	sreq.WaitForCompletion();
 
+#if defined(__riscv)
+	TraceIdentifyData(&ataData, fIndex, "inquiry destination");
+#endif
+
 	if ((sreq.CompletionStatus() & ATA_STATUS_ERROR) != 0) {
 		ERROR("identify device failed\n");
 		request->subsys_status = SCSI_REQ_CMP_ERR;
@@ -953,6 +1067,15 @@ AHCIPort::ScsiReadCapacity(scsi_ccb* request)
 	else
 		scsiData.lba = 0xffffffff;
 
+#if defined(__riscv)
+	static int32 sTraceCount = 0;
+	if (atomic_add(&sTraceCount, 1) < 16) {
+		dprintf("P335: AHCI port %d CAPACITY10 sectors %" B_PRIu64
+			" block %" B_PRIu32 " last LBA %#" B_PRIx32 "\n", fIndex,
+			fSectorCount, fSectorSize, B_BENDIAN_TO_HOST_INT32(scsiData.lba));
+	}
+#endif
+
 	if (sg_memcpy(request->sg_list, request->sg_count, &scsiData,
 			sizeof(scsiData)) < B_OK) {
 		request->subsys_status = SCSI_DATA_RUN_ERR;
@@ -997,6 +1120,16 @@ AHCIPort::ScsiReadCapacity16(scsi_ccb* request)
 	scsiData.rc_basis = 0x01;
 	scsiData.lbpme = fTrimSupported;
 	scsiData.lbprz = fTrimReturnsZeros;
+
+#if defined(__riscv)
+	static int32 sTraceCount = 0;
+	if (atomic_add(&sTraceCount, 1) < 16) {
+		dprintf("P335: AHCI port %d CAPACITY16 sectors %" B_PRIu64
+			" block %" B_PRIu32 " last LBA %#" B_PRIx64 " copy %"
+			B_PRIuSIZE "\n", fIndex, fSectorCount, fSectorSize,
+			B_BENDIAN_TO_HOST_INT64(scsiData.lba), copySize);
+	}
+#endif
 
 	if (sg_memcpy(request->sg_list, request->sg_count, &scsiData,
 			copySize) < B_OK) {
@@ -1252,8 +1385,12 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 			}
 			memory_write_barrier();
 		}
-		FillPrdTable(fPRDTable, &prdEntrys, PRD_TABLE_ENTRY_COUNT,
-			fBounceBuffer, dataSize);
+		if (FillPrdTable(fPRDTable, &prdEntrys, PRD_TABLE_ENTRY_COUNT,
+				fBounceBuffer, dataSize) != B_OK) {
+			FinishTransfer();
+			request->Abort();
+			return;
+		}
 	} else
 		prdEntrys = 0;
 #else
@@ -1303,6 +1440,15 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 	cpu_status cpu = disable_interrupts();
 	acquire_spinlock(&fSpinlock);
 	fCommandsActive |= 1;
+#if defined(__riscv)
+	// One outstanding request per port. Do not clean the received-FIS region:
+	// it belongs to the controller once the port is enabled.
+	ahci_dma_sync(fBouncePhysical, dataSize, true);
+	ahci_dma_sync(fDMAPhysical, sizeof(command_list_entry), true);
+	ahci_dma_sync(fDMAPhysical
+		+ sizeof(command_list_entry) * COMMAND_LIST_ENTRY_COUNT + sizeof(fis),
+		sizeof(command_table) + sizeof(prd) * prdEntrys, true);
+#endif
 	fRegs->ci = 1;
 	FlushPostedWrites();
 	release_spinlock(&fSpinlock);
@@ -1310,6 +1456,13 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 
 	int tfd;
 	status_t status = WaitForTransfer(&tfd, 20000000);
+#if defined(__riscv)
+	if (status == B_OK) {
+		ahci_dma_sync(fDMAPhysical, sizeof(command_list_entry), false);
+		if (!isWrite)
+			ahci_dma_sync(fBouncePhysical, dataSize, false);
+	}
+#endif
 
 	FLOW("Port %d sata request flow:\n", fIndex);
 	FLOW("  tfd %#x\n", tfd);
@@ -1339,6 +1492,13 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 
 #if defined(__riscv)
 	if (!isWrite && status == B_OK && dataSize > 0) {
+		if (((const uint8*)request->FIS())[2] == ATA_COMMAND_IDENTIFY_DEVICE
+			&& dataSize >= 512) {
+			dprintf("P335: AHCI port %d IDENTIFY completion status %"
+				B_PRId32 " tfd %#x PRDBC %" B_PRIuSIZE " requested %"
+				B_PRIuSIZE "\n", fIndex, status, tfd, bytesTransfered, dataSize);
+			TraceIdentifyData(fBounceBuffer, fIndex, "DMA bounce");
+		}
 		// PRDBC is controller-owned and can remain stale in the cached command
 		// list mapping on the non-coherent SG2042. A successfully completed ATA
 		// DMA command transfers its requested length; ATAPI may legitimately be
@@ -1358,6 +1518,8 @@ AHCIPort::ExecuteSataRequest(sata_request* request, bool isWrite)
 				fBounceBuffer, bytesTransfered);
 		} else
 			memcpy(request->Data(), fBounceBuffer, bytesTransfered);
+		TraceSectorZeroRead(request, fBounceBuffer, bytesTransfered,
+			fBouncePhysical, fIndex);
 	}
 	if (isWrite && status == B_OK && !request->IsATAPI())
 		bytesTransfered = dataSize;

@@ -106,7 +106,9 @@ pci_device_module_info gPCIDeviceModule = {
 		pci_write_io_32(mappedIOAddress, value);
 	},
 	.ram_address = [](pci_device *device, phys_addr_t physicalAddress) {
-		return pci_ram_address(physicalAddress);
+		// The address belongs to this device's root, not the first root
+		// with a matching (possibly overlapping) PCI memory window.
+		return gPCI->RamAddress(device->device, physicalAddress);
 	},
 	.read_pci_config = [](pci_device *device, uint16 offset, uint8 size) {
 		return gPCI->ReadConfig(device->device, offset, size);

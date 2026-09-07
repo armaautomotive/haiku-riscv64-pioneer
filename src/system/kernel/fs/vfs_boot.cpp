@@ -124,10 +124,12 @@ compare_cd_boot(const void* _a, const void* _b)
 	boot/platform/bios_ia32/devices.cpp (or similar solutions).
 */
 static uint32
-compute_check_sum(KDiskDevice* device, off_t offset)
+compute_check_sum(KDiskDevice* device, off_t offset, ssize_t* _bytesRead = NULL)
 {
 	char buffer[512];
 	ssize_t bytesRead = read_pos(device->FD(), offset, buffer, sizeof(buffer));
+	if (_bytesRead != NULL)
+		*_bytesRead = bytesRead;
 	if (bytesRead < B_OK)
 		return 0;
 
@@ -196,6 +198,22 @@ DiskBootMethod::IsBootDevice(KDiskDevice* device, bool strict)
 		return false;
 	}
 
+	if (diskIdentifierSize != sizeof(disk_identifier)) {
+		dprintf("boot device: invalid disk identifier size %" B_PRId32 "\n",
+			diskIdentifierSize);
+		return false;
+	}
+
+	// Bound diagnostic traffic even when asynchronous discovery retries.
+	static int32 sIdentityTraceCount = 0;
+	bool traceIdentity = atomic_add(&sIdentityTraceCount, 1) < 64;
+	if (traceIdentity) {
+		dprintf("P331: boot identity device %" B_PRId32 " strict %d bus %"
+			B_PRId32 " type %" B_PRId32 " size %" B_PRIdOFF "\n",
+			device->ID(), strict, disk->bus_type, disk->device_type,
+			device->Size());
+	}
+
 	TRACE(("boot device: bus %" B_PRId32 ", device %" B_PRId32 "\n",
 		disk->bus_type, disk->device_type));
 
@@ -220,6 +238,10 @@ DiskBootMethod::IsBootDevice(KDiskDevice* device, bool strict)
 		case UNKNOWN_DEVICE:
 			// test if the size of the device matches
 			// (the BIOS might have given us the wrong value here, though)
+			if (traceIdentity) {
+				dprintf("P331: expected disk size %" B_PRIdOFF "\n",
+					disk->device.unknown.size);
+			}
 			if (strict && device->Size() != disk->device.unknown.size)
 				return false;
 
@@ -233,9 +255,17 @@ DiskBootMethod::IsBootDevice(KDiskDevice* device, bool strict)
 				if (disk->device.unknown.check_sums[i].offset == -1)
 					continue;
 
-				if (compute_check_sum(device,
-						disk->device.unknown.check_sums[i].offset)
-							!= disk->device.unknown.check_sums[i].sum) {
+				ssize_t bytesRead = 0;
+				uint32 sum = compute_check_sum(device,
+					disk->device.unknown.check_sums[i].offset, &bytesRead);
+				if (traceIdentity) {
+					dprintf("P331: checksum %" B_PRId32 " offset %" B_PRIdOFF
+						" bytes %" B_PRIdSSIZE " expected %#" B_PRIx32
+						" actual %#" B_PRIx32 "\n", i,
+						disk->device.unknown.check_sums[i].offset, bytesRead,
+						disk->device.unknown.check_sums[i].sum, sum);
+				}
+				if (sum != disk->device.unknown.check_sums[i].sum) {
 					return false;
 				}
 			}

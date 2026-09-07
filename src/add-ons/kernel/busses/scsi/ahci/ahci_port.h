@@ -74,6 +74,7 @@ private:
 	volatile ahci_port *	fRegs;
 	area_id					fArea;
 #if defined(__riscv)
+	phys_addr_t				fDMAPhysical;
 	area_id					fBounceArea;
 	void*					fBounceBuffer;
 	phys_addr_t				fBouncePhysical;

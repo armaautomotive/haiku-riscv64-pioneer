@@ -404,6 +404,8 @@ STrap(iframe* frame)
 					}
 				}
 				TraceKernelPageFault(frame);
+				TraceKernelPageFaultMessage("P332: fatal interrupt-disabled mapping\n");
+				TraceKernelPageTable(stval);
 				panic("page fault with interrupts disabled@!dump_virt_page %#" B_PRIx64, stval);
 			}
 

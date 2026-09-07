@@ -88,6 +88,7 @@ public:
 								uint8 &domain, pci_resource_range &range, uint8 **mappedAdr = NULL);
 
 			status_t		GetNthInfo(long index, pci_info *outInfo);
+			phys_addr_t		RamAddress(PCIDev* device, phys_addr_t pciAddress);
 
 			status_t		ReadConfig(uint8 domain, uint8 bus, uint8 device,
 								uint8 function, uint16 offset, uint8 size,

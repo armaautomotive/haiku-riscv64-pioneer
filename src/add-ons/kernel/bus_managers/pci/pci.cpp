@@ -1307,6 +1307,13 @@ PCI::_BarSize(uint64 bits)
 
 
 phys_addr_t
+PCI::RamAddress(PCIDev* device, phys_addr_t pciAddress)
+{
+	return _RamAddress(device->domain, pciAddress);
+}
+
+
+phys_addr_t
 PCI::_RamAddress(uint8 domain, phys_addr_t pciAddress)
 {
 #if defined(__i386__) || defined(__x86_64__)

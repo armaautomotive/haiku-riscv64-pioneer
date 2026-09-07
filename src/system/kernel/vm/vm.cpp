@@ -4314,6 +4314,34 @@ vm_page_fault(addr_t address, addr_t faultAddress, bool isWrite, bool isExecute,
 				*newIP = reinterpret_cast<uintptr_t>(thread->fault_handler);
 			} else {
 				// unhandled page fault in the kernel
+				// Inspect the mapping without touching the faulting memory. Keep
+				// this off the recoverable-fault path: normal paging must not
+				// acquire extra locks or generate serial traffic.
+				if (addressSpace != NULL) {
+					phys_addr_t physicalAddress = 0;
+					uint32 flags = 0;
+					status_t queryStatus = addressSpace->TranslationMap()
+						->QueryInterrupt(pageAddress, &physicalAddress, &flags);
+					dprintf("P330: fatal mapping va %#" B_PRIxADDR
+						" pa %#" B_PRIxPHYSADDR " flags %#" B_PRIx32
+						" query %" B_PRId32 " fault %" B_PRId32 "\n",
+						pageAddress, physicalAddress, flags, queryStatus, status);
+
+					addressSpace->ReadLock();
+					VMArea* area = addressSpace->LookupArea(pageAddress);
+					if (area != NULL) {
+						dprintf("P330: fatal area %" B_PRId32 " %s base %#"
+							B_PRIxADDR " size %#" B_PRIxSIZE " protection %#"
+							B_PRIx32 " page protection %#" B_PRIx32
+							" cache type %d\n",
+							area->id, area->name, area->Base(), area->Size(),
+							area->protection,
+							get_area_page_protection(area, pageAddress),
+							(int)area->cache_type);
+					} else
+						dprintf("P330: fatal area missing\n");
+					addressSpace->ReadUnlock();
+				}
 				panic("vm_page_fault: unhandled page fault in kernel space at "
 					"0x%lx, ip 0x%lx\n", address, faultAddress);
 			}
