@@ -1,0 +1,16 @@
+--- a/Source/kwsys/SystemInformation.cxx
++++ b/Source/kwsys/SystemInformation.cxx
+@@ -4934,3 +4934,4 @@
+   system_info info;
+   get_system_info(&info);
+   this->NumberOfPhysicalCPU = info.cpu_count;
++  this->NumberOfLogicalCPU = info.cpu_count;
+@@ -4963,2 +4964,4 @@
+   this->TotalVirtualMemory = 0;
+   this->AvailableVirtualMemory = 0;
++  // Haiku exposes x86 CPUID fields only on x86 architectures.
++#if defined(__i386__) || defined(__x86_64__)
+@@ -5002,2 +5005,3 @@
+   // Get ChipID.ProcessorName from other information already gathered
+   this->RetrieveClassicalCPUIdentity();
++#endif

@@ -21,7 +21,9 @@ mkdir -p "$ssh_directory"
 chmod 700 "$ssh_directory"
 chmod 600 "$ssh_directory/authorized_keys" "$host_key"
 
-exec /bin/sshd -D -e \
+# Offline package deployment may not initialize OpenSSH's .settings link.
+# Use only the explicit configuration below, not the package default file.
+exec /bin/sshd -f /dev/null -D -e \
 	-h "$host_key" \
 	-o PidFile="$ssh_directory/sshd.pid" \
 	-o AuthorizedKeysFile="$ssh_directory/authorized_keys" \
