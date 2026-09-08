@@ -1,0 +1,37 @@
+diff --git a/common/arg.cpp b/common/arg.cpp
+index 86f8610a5..e25f4ff3b 100644
+--- a/common/arg.cpp
++++ b/common/arg.cpp
+@@ -49,0 +50,2 @@
++#elif defined(__HAIKU__)
++#include <limits.h>
+diff --git a/common/common.cpp b/common/common.cpp
+index 3d54bd600..d44515af1 100644
+--- a/common/common.cpp
++++ b/common/common.cpp
+@@ -60,0 +61,4 @@
++
++#if defined(__HAIKU__)
++#include <FindDirectory.h>
++#endif
+@@ -1050,0 +1055,6 @@
++#elif defined(__HAIKU__)
++        char path[PATH_MAX];
++        if (find_directory(B_USER_CACHE_DIRECTORY, -1, false, path, sizeof(path)) != B_OK) {
++            throw std::runtime_error("Failed to find user cache directory");
++        }
++        cache_directory = path;
+@@ -1101,0 +1112,6 @@
++#elif defined(__HAIKU__)
++    char path[PATH_MAX];
++    if (find_directory(B_USER_SETTINGS_DIRECTORY, -1, false, path, sizeof(path)) != B_OK) {
++        throw std::runtime_error("Failed to find user settings directory");
++    }
++    config_directory = path;
+diff --git a/common/download.cpp b/common/download.cpp
+index 4b28a708c..0056c8d54 100644
+--- a/common/download.cpp
++++ b/common/download.cpp
+@@ -32,0 +33,2 @@
++#elif defined(__HAIKU__)
++#include <limits.h>

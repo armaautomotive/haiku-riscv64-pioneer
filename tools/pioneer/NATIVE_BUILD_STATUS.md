@@ -226,3 +226,47 @@ Reverse dry-run against patched CMake 3.31.8 source passed. Native cmsys
 compiled/linked successfully after deployment; cmlibuv also built. Resumed
 full `make -j4` session 99166 reached 24%, still running, no complete CMake
 or llama.cpp build yet. No new kernel/boot change in this iteration.
+
+Full CMake link later failed on missing libuv platform symbols. Added a Haiku
+source-selection block using existing no-fsevents, no-proctitle, posix-hrtime,
+and posix-poll sources, linking network. This is a POSIX polling fallback,
+not native filesystem notification support. Saved in the same CMake patch;
+corrected earlier patch context and verified reverse dry-run for both files.
+Native make completed all cmake/cpack/ctest targets with exit 0; make install
+also passed. Installed cmake and ctest report version 3.31.8 under
+`/boot/home/config/non-packaged/bin`.
+
+Full installed CMake successfully configured llama.cpp build-pioneer.
+Haiku reports CMAKE_SYSTEM_PROCESSOR=other, so GGML chose CPU_GENERIC.
+Optional vector/half/prefetch/pause extensions, OpenMP, OpenSSL, server, app,
+UI, examples and tests disabled for this initial build. Tools remain enabled.
+Commit explicitly set to c060ca974c77 because Git is not installed on target.
+Initial llama-cli target request failed: this revision gates CLI on server.
+Started four-job build of llama-completion and llama-bench instead. Runtime/inference not
+yet verified. Processor detection needs follow-up before performance tuning.
+
+First llama build compiled/linked ggml-base, ggml-cpu, ggml and libllama.so,
+then failed in common/arg.cpp on missing sys/syslimits.h. Added a Haiku-only
+limits.h include branch in the local llama submodule and deployed that file.
+Haiku headers define PATH_MAX and NAME_MAX there. Diff whitespace check passed.
+Resumed native session 8335 passes the prior include error, but arg.cpp object
+completion is still pending. Another file, common/common.cpp, fails its cache
+and configuration-directory platform branches with '#error Unknown architecture'
+(lines 1065 and 1111). This is OS-directory selection, not CPU instruction
+support. Full completion/benchmark binaries and inference remain unverified.
+
+Added Haiku native directory lookup in common.cpp using find_directory for
+B_USER_CACHE_DIRECTORY and B_USER_SETTINGS_DIRECTORY, retaining LLAMA_CACHE
+override. Applied the matching limits.h fix in download.cpp. All three source
+edits live in the Mac's llama submodule and were copied to the Samsung source
+tree; they are not committed. Native compilation passed for the fixed files.
+llama-completion linked successfully and --version exited 0:
+0.2.0-dev, build 0, commit c060ca974c77, GNU 13.2.0, Haiku other.
+Session 29322 is still building llama-bench.cpp at this checkpoint.
+No model inference or benchmark execution verified yet.
+
+The exact current llama.cpp delta is preserved as
+`tools/pioneer/llama-c060ca-haiku.patch`. Both Pioneer source patches use
+zero-context insertion hunks; apply them with `git apply --unidiff-zero`.
+The llama patch was applied to a clean c060ca974 tree and reproduced all
+three locally modified files byte-for-byte.
