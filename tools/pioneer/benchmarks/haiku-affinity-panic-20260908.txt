@@ -1,0 +1,78 @@
+4085000 tls 0x3004085000 return 0x3f8d963248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003f8d963000
+P211:UE thread 831 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3f8d963248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003f8d963000
+P211:UE thread 832 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3f8d963248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003f8d963000
+P211:UE thread 833 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3f8d963248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003f8d963000
+P211:UE thread 834 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3f8d963248
+P211:TU runtime_loader entry 0x213a8a95f2 args 0x00000034c4bad200 commpage 0x0000003fd8cd1000
+P211:UE thread 829 entry 0x213a8a95f2 stack 0x34c4bad000 tls 0x34c4bad000 return 0x3fd8cd1248
+P211:TU runtime_loader entry 0x2a889c95f2 args 0x00000035fc223200 commpage 0x0000003fee9ab000
+P211:UE thread 835 entry 0x2a889c95f2 stack 0x35fc223000 tls 0x35fc223000 return 0x3fee9ab248
+P211:TU runtime_loader entry 0x2e63fd35f2 args 0x0000003ef8d8f200 commpage 0x0000003ff3e75000
+P211:UE thread 838 entry 0x2e63fd35f2 stack 0x3ef8d8f000 tls 0x3ef8d8f000 return 0x3ff3e75248
+P211:TU runtime_loader entry 0x20d178b5f2 args 0x0000003ec84a4200 commpage 0x0000003ffb7d6000
+P211:UE thread 838 entry 0x20d178b5f2 stack 0x3ec84a4000 tls 0x3ec84a4000 return 0x3ffb7d6248
+P211:TU runtime_loader entry 0x362d74e5f2 args 0x000000373a53d200 commpage 0x0000003cc8f1b000
+P211:UE thread 839 entry 0x362d74e5f2 stack 0x373a53d000 tls 0x373a53d000 return 0x3cc8f1b248
+P211:TU runtime_loader entry 0x240dd15f2 args 0x00000037de9fe200 commpage 0x0000003ecd112000
+P211:UE thread 842 entry 0x240dd15f2 stack 0x37de9fe000 tls 0x37de9fe000 return 0x3ecd112248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003ecd112000
+P211:UE thread 843 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3ecd112248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003ecd112000
+P211:UE thread 844 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3ecd112248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003ecd112000
+P211:UE thread 845 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3ecd112248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003ecd112000
+P211:UE thread 846 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3ecd112248
+P211:TU runtime_loader entry 0xf5f2 args 0x0000003004085200 commpage 0x0000003ecd112000
+P211:UE thread 847 entry 0xf5f2 stack 0x3004085000 tls 0x3004085000 return 0x3ecd112248
+P211:TU runtime_loader entry 0x2aff8eb5f2 args 0x0000003ee65c4200 commpage 0x0000003fb8729000
+P211:UE thread 848 entry 0x2aff8eb5f2 stack 0x3ee65c4000 tls 0x3ee65c4000 return 0x3fb8729248
+vm_page_fault: vm_soft_fault returned error 'Bad address' on fault at 0x0, ip 0xffffffc002129ab0, write 0, kernel, exec 0, thread 848
+PANIC: vm_page_fault: unhandled page fault in kernel space at 0x0, ip 0xffffffc002129ab0
+
+Welcome to Kernel Debugging Land...
+revision: hrev99999
+Thread 848 "cpu_activity" running on CPU 55
+stack trace for thread 848 "cpu_activity"
+    kernel stack: 0xffffffc008e02000 to 0xffffffc008e07000
+      user stack: 0x0000003ee25c4000 to 0x0000003ee65c4000
+frame                       caller             <image>:function + offset
+ 0 ffffffc008e06820 (+  32) ffffffc0021d60f0   <kernel_riscv64> arch_debug_call_with_fault_handler + 0x20
+ 1 ffffffc008e06870 (+  80) ffffffc00214a9ae   <kernel_riscv64> debug_call_with_fault_handler + 0x78
+ 2 ffffffc008e06900 (+ 144) ffffffc00214ba3e   <kernel_riscv64> kgets (nearest) + 0x140
+ 3 ffffffc008e06990 (+ 144) ffffffc00214be54   <kernel_riscv64> kgets (nearest) + 0x556
+ 4 ffffffc008e069d0 (+  64) ffffffc00214c1a0   <kernel_riscv64> panic + 0x4e
+ 5 ffffffc008e06b00 (+ 304) ffffffc0021bd4fc   <kernel_riscv64> vm_page_fault(unsigned long, unsigned long, bool, bool, bool, unsigned long*) + 0x324
+ 6 ffffffc008e06c10 (+ 272) ffffffc0021d7c6a   <kernel_riscv64> STrap + 0x4e6
+kernel iframe at 0xffffffc008e06c10 (end = 0xffffffc008e06d30)
+   ra: 0xffffffc002129a6a   t6: 0x0000000000014000   sp: 0xffffffc008e06d30   gp: 0x0000000000000000
+   tp: 0xffffffc01c833880   t0: 0xffffffc0021d4810   t1: 0x0000000000000004   t2: 0x0000000000000003
+   t5: 0x0000003ee65c3f48   s1: 0xffffffc00ab90b80   a0: 0x0000000000000000   a1: 0x0000000000000000
+   a2: 0x0000000000000000   a3: 0x0000000000000000   a4: 0x0000000000000000   a5: 0x0000000000000002
+   a6: 0x0000000000000000   a7: 0x0000000000000000   s2: 0x0000000000000001   s3: 0xffffffc008e06d38
+   s4: 0xffffffc008e06d30   s5: 0x00000000000002ff   s6: 0x0000003ee65c3cf8   s7: 0x0000000000000001
+   s8: 0x0000000000000003   s9: 0x000000241a058c88  s10: 0x000000000000003f  s11: 0x0000000000000003
+   t3: 0xffffffc002119754   t4: 0x0000003ee65c2f10   fp: 0xffffffc008e06d80  epc: 0xffffffc002129ab0
+ status: (ie: {}, pie: {s}, spp: s, fs: dirty, xs: off, sum: 0, mxr: 0, uxl: 2, sd: 1), cause: exception loadPageFault, tval: 0x0
+ 7 ffffffc008e06d80 (+ 368) ffffffc002129ab0   <kernel_riscv64> _user_set_thread_affinity + 0xe0
+ 8 ffffffc008e06dc0 (+  64) ffffffc00211c316   <kernel_riscv64> syscall_dispatcher + 0x1044
+ 9 ffffffc008e06ed0 (+ 272) ffffffc0021d7aae   <kernel_riscv64> STrap + 0x32a
+user iframe at 0xffffffc008e06ed0 (end = 0xffffffc008e06ff0)
+   ra: 0x000000241a058a26   t6: 0x0000000000014000   sp: 0x0000003ee65c3cf0   gp: 0x0000000000000000
+   tp: 0x0000003ee65c4000   t0: 0x000000000000004b   t1: 0x000000241a0588bc   t2: 0x0000000000000003
+   t5: 0x0000003ee65c3f48   s1: 0x0000003ee65c3d50   a0: 0x00000000000002ff   a1: 0x0000003ee65c3d50
+   a2: 0x0000000000000080   a3: 0x0000000000000000   a4: 0x0000003ee65c3dd0   a5: 0x0000000000000004
+   a6: 0x0000003ee65c37c0   a7: 0x000000000ccccccc   s2: 0x0000000000000002   s3: 0x0000000000000003
+   s4: 0x0000003ee65c4648   s5: 0x0000003ee65c3cf4   s6: 0x0000003ee65c3cf8   s7: 0x0000000000000001
+   s8: 0x0000000000000003   s9: 0x000000241a058c88  s10: 0x000000000000003f  s11: 0x0000000000000003
+   t3: 0x00000017da17a300   t4: 0x0000003ee65c2f10   fp: 0x0000003ee65c3fa0  epc: 0x00000017da17a308
+ status: (ie: {}, pie: {s}, spp: u, fs: dirty, xs: off, sum: 0, mxr: 0, uxl: 2, sd: 1), cause: exception uEcall, tval: 0x0
+10 0000003ee65c3fa0 (+   0) 00000017da17a308   </boot/system/lib/libroot.so> _kern_set_thread_affinity + 0x08
+11 0000003ee65c3fd0 (+  48) 000000241a058c72   </boot/home/develop/cpu_activity> _start + 0x3a
+12 0000003ee65c4000 (+  48) 0000002aff8eb6c6   </boot/system/runtime_loader> runtime_loader + 0xd4
+13 0000000000000000 (+   0) 0000003fb8729248   <commpage> commpage_thread_exit + 0x00
+kdebug>

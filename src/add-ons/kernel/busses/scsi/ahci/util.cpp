@@ -144,9 +144,6 @@ sg_memcpy(const physical_entry *sgTable, int sgCount, const void *data,
 	for (i = 0; i < sgCount && dataSize > 0; i++) {
 		size_t size = min_c(dataSize, sgTable[i].size);
 
-		TRACE("sg_memcpy phyAddr %#" B_PRIxPHYSADDR ", size %lu\n",
-			sgTable[i].address, size);
-
 		vm_memcpy_to_physical(sgTable[i].address, data, size, false);
 
 		data = (char *)data + size;

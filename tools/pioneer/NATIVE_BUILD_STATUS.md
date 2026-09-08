@@ -265,8 +265,107 @@ llama-completion linked successfully and --version exited 0:
 Session 29322 is still building llama-bench.cpp at this checkpoint.
 No model inference or benchmark execution verified yet.
 
+## First verified inference: Qwen3-0.6B Q8_0
+
+Both llama-completion and llama-bench builds completed with exit 0.
+Downloaded the official Qwen/Qwen3-0.6B-GGUF model on the Mac and copied it
+via rate-limited SCP to Samsung. Mac and Samsung SHA-256 matched the publisher:
+`9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031`.
+Model: `/boot/home/models/Qwen3-0.6B-Q8_0.gguf`.
+Source: https://huggingface.co/Qwen/Qwen3-0.6B-GGUF/blob/main/Qwen3-0.6B-Q8_0.gguf
+
+Native llama-completion exited 0 using four generation/batch threads,
+512 context, batch/ubatch 64, zero GPU layers, 32 predicted tokens,
+temperature 0, seed 1, no-conversation, simple-io and perf enabled.
+Prompt: "The capital of France is". Output began:
+"Paris, and the capital of Italy is Rome. The capital of Spain is Madrid."
+Reported prompt evaluation: 1193.43 ms / 5 tokens, 4.19 tokens/s.
+Reported generation: 10119.35 ms / 31 runs, 3.06 tokens/s.
+Reported load time: 10525.34 ms. These are single-run smoke-test timings,
+not repeated benchmark results. CPU_GENERIC backend; system reports 64 CPUs.
+No P341 retry or kernel panic logged in this SSD boot through this test.
+Model loader warned about token 128247 '</s>' type and overrode it; run
+continued successfully. Tools remain in the development build directory,
+not installed system-wide; models are separate under /boot/home/models.
+
+Interactive launcher installed as `/boot/home/config/non-packaged/bin/llama-chat`;
+Mac source `tools/pioneer/llama-chat.sh`. Uses completion runtime in development
+tree, Qwen model above, four threads, 2048 context, conversation/Jinja/simple-io.
+Interactive test reached the prompt, answered "Hello!", returned to the prompt,
+and exited 0 on Ctrl+D. User can run `llama-chat` in Haiku Terminal.
+User requested overnight shutdown. Normal sync/shutdown requested; await their
+safe-to-power-off confirmation before the relay off action. Leave SD inserted.
+Next session: boot Samsung via serial volume/latest-state selection, verify
+SSH and persistent model/launcher, then continue packaging/performance work.
+
 The exact current llama.cpp delta is preserved as
 `tools/pioneer/llama-c060ca-haiku.patch`. Both Pioneer source patches use
 zero-context insertion hunks; apply them with `git apply --unidiff-zero`.
 The llama patch was applied to a clean c060ca974 tree and reproduced all
 three locally modified files byte-for-byte.
+
+## 2026-09-08: quiet AHCI transfer path
+
+Samsung boot verified via SSH at `/boot`, device `/dev/disk/scsi/0/3/0/0`.
+The initial llama-bench 4/8/16/32/64-thread sweep was stopped during its
+first prompt warm-up without producing a timing sample. Live serial output
+was continuously printing `ahci: sg_memcpy phyAddr` and brief top samples
+showed the SCSI scheduler consuming nearly one core while llama workers
+received little CPU time. See `benchmarks/README.md` for test parameters.
+
+Removed only the per-segment TRACE call in AHCI util.cpp's sg_memcpy loop.
+Errors and startup diagnostics remain; no DMA, PCI, SMP or VM logic changed.
+Build script --image completed with exit 0. Generated image still reports
+the existing missing boot.scr warning; no generated firmware partition was
+deployed. AHCI binary no longer contains the removed trace string.
+Kernel checksum remains
+`db082a789069bc14e405b862a8bf38163335be27718ddfe5eb52867e12a23077`;
+EFI loader checksum remains
+`477ccfeff4d309e8549d68fdd232f836d29e100e4858513005f077a64586bf05`.
+
+Updated system package SHA-256:
+`6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a`.
+Deployed directly through Haiku to Samsung's
+`/boot/system/packages/haiku-r1~beta6_hrev99999-1-riscv64.hpkg`;
+sync and installed-file SHA-256 verification passed.
+First SCP disconnected after 64 KiB; retry at 8192 kbit/s completed and
+verified before replacement. Previous package backup:
+`/boot/pioneer-update-quiet-ahci-20260908/previous-haiku.hpkg`, verified
+`e37b0f44f2957631d246d1ccf9a85865819a498f917ef669a8bd1c5183b61ac9`.
+SD, firmware, apps, models and settings were not replaced.
+
+Reboot and quiet-driver runtime verification remain pending. Ask user to
+save work before normal Haiku shutdown, then wait for safe confirmation
+before relay off/on. Keep SD inserted and select Samsung/latest state.
+Repeat the same benchmark into a new output file after verifying boot;
+do not treat the interrupted noisy run as a completed baseline.
+
+Quiet-AHCI Samsung boot subsequently verified after user safe confirmation.
+Serial start offset 37112326. Selected 111.79 GiB/latest state; SSH verified
+Samsung `/boot` and package SHA-256 6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a.
+No `sg_memcpy phyAddr` messages found in this boot's serial output.
+Restarted the identical benchmark into
+`benchmarks/haiku-qwen3-0.6b-q8-quiet-ahci-20260908.{jsonl,stderr}`.
+Session 25741 is running; first prompt warm-up reached, no timing samples
+yet at this checkpoint. Do not reboot or start another benchmark on top of it.
+
+Quiet-AHCI benchmark subsequently completed all ten tests with exit 0.
+64-thread generation: 0.143406 +/- 0.000036 tokens/s; mean 223.143459
+seconds for 32 tokens across three repetitions. Approximately 83 times
+slower than 32-thread generation (11.938151 tokens/s). Full results are
+saved in `benchmarks/LLAMA_CPU_RESULTS.md`. Session 25741 is complete;
+no benchmark remains running from this sweep. Cause of scaling regression
+is not established; next work is runtime profiling/polling experiments,
+not unrelated kernel or driver changes.
+
+Scaling investigation: --poll 0 short probe stalled in its first 32-thread
+warm-up. CPU sampler reports all 64 enabled but about three busy; most
+llama threads READY with unrestricted masks. External per-worker pinning
+through _kern_set_thread_affinity caused a null-address kernel panic in
+_user_set_thread_affinity+0xe0, thread 848 cpu_activity, CPU 55. Board is
+currently stopped at kdebug; do not interpret pending SSH sessions as live
+progress. Saved serial tail and diagnostic samples under benchmarks/.
+No kernel or llama source edits in this investigation. Do not rerun the
+--pin diagnostic before reviewing/fixing the affinity syscall. Review
+thread.cpp's unconditional thread->cpu dereference and scheduling/locking
+semantics; a null guard alone does not establish correct remote migration.
