@@ -133,6 +133,94 @@ TraceUserPageTable(addr_t address)
 }
 
 
+struct KernelStoreRetry {
+	Thread* thread;
+	addr_t pc;
+	addr_t address;
+	uint64 satp;
+	uint64 pte;
+	uint32 count;
+};
+
+static KernelStoreRetry sKernelStoreRetry[SMP_MAX_CPUS] = {};
+
+
+static bool __attribute__((noinline))
+RetryMappedKernelStore(iframe* frame, addr_t address)
+{
+	if (!gRiscvTHeadMae || !IS_KERNEL_ADDRESS(frame->epc)
+		|| SstatusReg{.val = frame->status}.spp != modeS)
+		return false;
+
+	SatpReg satp {.val = Satp()};
+	if (satp.mode != 8)
+		return false;
+
+	std::atomic<Pte>* table = (std::atomic<Pte>*)VirtFromPhys(
+		satp.ppn * B_PAGE_SIZE);
+	Pte leaf {};
+	for (int32 level = 2; level >= 0; level--) {
+		Pte pte = table[VirtAdrPte(address, level)].load();
+		if (!pte.isValid)
+			return false;
+		if (pte.isRead || pte.isWrite || pte.isExec) {
+			if (level != 0)
+				return false;
+			leaf = pte;
+			break;
+		}
+		if (level == 0)
+			return false;
+		table = (std::atomic<Pte>*)VirtFromPhys(pte.ppn * B_PAGE_SIZE);
+	}
+
+	// Only retry fully permitted, ordinary cacheable kernel RAM stores.
+	// Do not alter PTEs, dirty tracking, user access, or device mappings.
+	if (!leaf.isRead || !leaf.isWrite || leaf.isUser || !leaf.isGlobal
+		|| !leaf.isAccessed || !leaf.isDirty
+		|| (leaf.val & (0x1fULL << 59)) != (0x0eULL << 59))
+		return false;
+
+	uint32 cpu = smp_get_current_cpu();
+	KernelStoreRetry& retry = sKernelStoreRetry[cpu];
+	Thread* thread = thread_get_current_thread();
+	// Diagnostic limits: an identical repeated fault still reaches the VM
+	// failure path, and each CPU gets at most 16 retries during this boot.
+	if (retry.count >= 16 || (retry.count != 0 && retry.thread == thread
+			&& retry.pc == frame->epc && retry.address == address
+			&& retry.satp == satp.val && retry.pte == leaf.val))
+		return false;
+
+	retry.thread = thread;
+	retry.pc = frame->epc;
+	retry.address = address;
+	retry.satp = satp.val;
+	retry.pte = leaf.val;
+	retry.count++;
+	FlushTlbPage(address);
+	if (retry.count <= 2) {
+		TraceKernelPageFaultMessage("P341: bounded kernel store translation retry\n");
+		TraceKernelPageFaultValue("P341: cpu ", cpu);
+		TraceKernelPageFaultValue("P341: address ", address);
+		TraceKernelPageFaultValue("P341: pc ", frame->epc);
+		TraceKernelPageFaultValue("P341: leaf ", leaf.val);
+	}
+	return true;
+}
+
+
+static void __attribute__((noinline))
+TraceKernelStoreBeforeVM(iframe* frame, addr_t address)
+{
+	// Use only the live hart's page tables here, before VM handling can
+	// schedule. Do not acquire VM references or query the translation map.
+	TraceKernelPageFaultMessage("P340: kernel store fault before VM\n");
+	TraceKernelPageFaultValue("P340: cpu ", smp_get_current_cpu());
+	TraceKernelPageFault(frame);
+	TraceKernelPageTable(address);
+}
+
+
 //#pragma mark -
 
 static void
@@ -407,6 +495,13 @@ STrap(iframe* frame)
 				TraceKernelPageFaultMessage("P332: fatal interrupt-disabled mapping\n");
 				TraceKernelPageTable(stval);
 				panic("page fault with interrupts disabled@!dump_virt_page %#" B_PRIx64, stval);
+			}
+
+			if (!fromUser && IS_KERNEL_ADDRESS(stval)
+				&& frame->cause == causeStorePageFault) {
+				if (RetryMappedKernelStore(frame, stval))
+					return;
+				TraceKernelStoreBeforeVM(frame, stval);
 			}
 
 			addr_t newIP = 0;
