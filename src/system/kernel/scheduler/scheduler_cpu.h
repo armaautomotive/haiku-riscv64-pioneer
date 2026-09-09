@@ -157,6 +157,7 @@ public:
 											bigtime_t activeTime);
 
 	inline				int32			GetLoad() const;
+	inline				int32			GetUncappedLoad() const;
 	inline				uint32			LoadMeasurementEpoch() const
 											{ return fLoadMeasurementEpoch; }
 
@@ -398,10 +399,17 @@ CoreEntry::GetActiveTime() const
 inline int32
 CoreEntry::GetLoad() const
 {
+	return std::min(GetUncappedLoad(), kMaxLoad);
+}
+
+
+inline int32
+CoreEntry::GetUncappedLoad() const
+{
 	SCHEDULER_ENTER_FUNCTION();
 
 	ASSERT(fCPUCount > 0);
-	return std::min(fLoad / fCPUCount, kMaxLoad);
+	return fLoad / fCPUCount;
 }
 
 
@@ -596,4 +604,3 @@ PackageEntry::GetLeastIdlePackage()
 
 
 #endif	// KERNEL_SCHEDULER_CPU_H
-

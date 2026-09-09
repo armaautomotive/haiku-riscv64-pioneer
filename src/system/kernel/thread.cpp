@@ -4393,7 +4393,10 @@ _user_get_thread_affinity(thread_id id, void* userMask, size_t size)
 		return B_BAD_THREAD_ID;
 	BReference<Thread> threadReference(thread, true);
 	ThreadLocker threadLocker(thread, true);
-	memcpy(&mask, &thread->cpumask, sizeof(mask));
+	{
+		InterruptsSpinLocker schedulerLocker(thread->scheduler_lock);
+		mask = thread->cpumask;
+	}
 
 	if (user_memcpy(userMask, &mask, min_c(sizeof(mask), size)) < B_OK)
 		return B_BAD_ADDRESS;
@@ -4430,11 +4433,14 @@ _user_set_thread_affinity(thread_id id, const void* userMask, size_t size)
 		return B_BAD_THREAD_ID;
 	BReference<Thread> threadReference(thread, true);
 	ThreadLocker threadLocker(thread, true);
-	memcpy(&thread->cpumask, &mask, sizeof(mask));
+	if (thread_is_idle_thread(thread) || !thread_check_permissions(
+			thread_get_current_thread(), thread, false)) {
+		return B_NOT_ALLOWED;
+	}
 
-	// check if running on masked cpu
-	if (!thread->cpumask.GetBit(thread->cpu->cpu_num))
-		thread_yield();
+	status_t status = scheduler_set_thread_affinity(thread, mask);
+	threadLocker.Unlock();
+	scheduler_reschedule_if_necessary();
 
-	return B_OK;
+	return status;
 }

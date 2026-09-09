@@ -34,6 +34,12 @@ FUNCTION(arch_context_switch):
 	sd s11, 12*8(a0)
 	sd sp,  13*8(a0)
 
+# Every saved context resumes in the kernel, possibly on a different hart.
+# SVecURet rebuilds the user trap vector and scratch stack before sret.
+	la t0, SVec
+	csrw stvec, t0
+	csrw sscratch, zero
+
 # load `to` context
 	ld ra,   0*8(a1)
 	ld s0,   1*8(a1)

@@ -117,8 +117,9 @@ rebalance(const ThreadData* threadData)
 
 	// Check if the least loaded core is significantly less loaded than
 	// the current one.
-	int32 coreLoad = core->GetLoad();
-	int32 otherLoad = other->GetLoad();
+	// Preserve excess demand so an overloaded core can shed a busy thread.
+	int32 coreLoad = core->GetUncappedLoad();
+	int32 otherLoad = other->GetUncappedLoad();
 	if (other == core || otherLoad + kLoadDifference >= coreLoad)
 		return core;
 
@@ -195,4 +196,3 @@ scheduler_mode_operations gSchedulerLowLatencyMode = {
 	rebalance,
 	rebalance_irqs,
 };
-

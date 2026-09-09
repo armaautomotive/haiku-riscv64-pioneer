@@ -252,6 +252,49 @@ scheduler_set_thread_priority(Thread *thread, int32 priority)
 }
 
 
+status_t
+scheduler_set_thread_affinity(Thread* thread, const CPUSet& mask)
+{
+	ASSERT(are_interrupts_enabled());
+	InterruptsSpinLocker threadLocker(thread->scheduler_lock);
+	SchedulerModeLocker modeLocker;
+
+	// Do not move a thread out of a temporarily pinned kernel operation.
+	if (thread->pinned_to_cpu > 0 && !mask.IsEmpty()
+		&& !mask.GetBit(thread->previous_cpu->cpu_num)) {
+		return B_BUSY;
+	}
+
+	thread->cpumask = mask;
+	ThreadData* threadData = thread->scheduler_data;
+	if (thread->state == B_THREAD_READY) {
+		T(RemoveThread(thread));
+		NotifySchedulerListeners(&SchedulerListener::ThreadRemovedFromRunQueue,
+			thread);
+		if (threadData->Dequeue())
+			enqueue(thread, true);
+		return B_OK;
+	}
+
+	// Sleeping threads use the new mask when they are next enqueued.
+	if (thread->state != B_THREAD_RUNNING)
+		return B_OK;
+
+	ASSERT(thread->cpu != NULL);
+	int32 cpu = thread->cpu->cpu_num;
+	CPUSet effectiveMask = threadData->GetCPUMask();
+	if (effectiveMask.IsEmpty() || effectiveMask.GetBit(cpu))
+		return B_OK;
+
+	if (atomic_get_and_set(&gCPU[cpu].invoke_scheduler, true) != true
+		&& cpu != smp_get_current_cpu()) {
+		smp_send_ici(cpu, SMP_MSG_RESCHEDULE, 0, 0, 0, NULL,
+			SMP_MSG_FLAG_ASYNC);
+	}
+	return B_OK;
+}
+
+
 void
 scheduler_reschedule_ici()
 {
