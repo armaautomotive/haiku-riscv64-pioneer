@@ -19,8 +19,12 @@ main(int argc, char** argv)
 				if (cpu >= 64)
 					return 1;
 				mask[0] = (uint64)1 << cpu++;
-				if (_kern_set_thread_affinity(thread.thread, mask, sizeof(mask)) != B_OK)
+				status_t setStatus = _kern_set_thread_affinity(thread.thread, mask, sizeof(mask));
+				if (setStatus != B_OK) {
+					fprintf(stderr, "thread=%ld set affinity failed: %ld (%s)\n",
+						(long)thread.thread, (long)setStatus, strerror(setStatus));
 					return 1;
+				}
 			}
 			status_t status = _kern_get_thread_affinity(thread.thread, mask, sizeof(mask));
 			printf("thread=%ld state=%d affinity_status=%ld mask=%016llx\n",

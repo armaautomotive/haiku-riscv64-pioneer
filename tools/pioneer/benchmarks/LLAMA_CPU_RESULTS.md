@@ -94,6 +94,220 @@ be claimed from this comparison.
 
 ## Next experiments
 
+### Scheduler reproduction and profiler failure
+
+Ran the original unpinned 4/8/16/32/64 sequence using the matched baseline
+backend. Nine rows completed; 64-worker generation did not finish.
+`haiku-scheduler-repro-20260908.{jsonl,stderr}` is incomplete and must not
+be treated as a completed sweep. A two-second scheduler-profiler smoke
+capture ran during the early part of this sweep, so it is diagnostic data,
+not an entirely uninstrumented throughput baseline.
+
+Added a bounded 16 MiB in-memory capture utility using the existing system
+profiler. Its initial two-second smoke test exited 0 with 4915 switch
+events. A second capture during 64-worker warm-up panicked in
+`SystemProfiler::_AllocateBuffer` on CPU 12, thread 2027. Store page fault
+at `0xffffffc0208018b8`, PC `0xffffffc0021588ce`, interrupts disabled;
+printed leaf PTE `0x7000000127ab68e7`. The entry appears valid/writable,
+but that alone does not establish the mapping/translation failure's cause.
+Full serial evidence: `haiku-scheduler-profiler-panic-20260908.txt`.
+The second capture produced no usable switch data. Worker mask snapshot
+exists, but does not reveal actual CPU placement. Do not rerun the profiler
+on this candidate merely to obtain performance data.
+
+Static inspection identified a separate hypothesis: low-latency rebalance
+compares capped core load with a worker's demand. A 100%-demand worker
+cannot pass the migration threshold using a capped 100% source load and
+20% margin, even when that core hosts two such workers. Runtime evidence
+is still needed. No scheduler policy change has been made for this theory.
+
+Prepared `scheduler_balance_probe.c`: seed two workers on CPU 0, leave
+CPU 63 without a probe worker, warm up for one second, then release all
+affinity masks and sample each worker's CPU for four seconds. This avoids
+the kernel profiler and is a diagnostic workload, not a llama benchmark.
+
+After recovery to the same SD image, this probe completed three times
+(exit 0 each). In every run workers 0 and 63 sampled only CPU 0 throughout
+the four-second unrestricted phase; the other 62 workers stayed on CPUs
+1..62. No worker sampled CPU 63. All affinity calls returned B_OK.
+The two sharing workers recorded roughly half as many samples each as a
+worker on its own CPU; counts are observations, not calibrated CPU time.
+Probe binary SHA-256 was verified on Haiku:
+`b3ab11c4f35556663603bccff22c2f456deb694492c8df004a35382ed949d86c`.
+Evidence: `haiku-scheduler-balance-probe-20260908.txt` and
+`haiku-scheduler-balance-repeat-20260908.txt`.
+
+This directly reproduces persistent imbalance after restrictions are
+removed, independently of llama's barriers. It supports, but does not yet
+prove, the capped-demand explanation. Prepared a kernel candidate adding
+`CoreEntry::GetUncappedLoad()` and using it only for low-latency rebalance
+comparisons. Existing capped utilization, heap keys, affinity checks,
+power-saving policy, and 20% migration margin remain unchanged. Example:
+two fully busy workers represent demand 2000, not capped 1000; against an
+idle core, the existing threshold can then permit moving a 1000-demand
+worker. Candidate runtime validation is pending; no performance fix claimed.
+
+### llama startup affinity experiment
+
+Added a Haiku branch to `ggml_thread_apply_affinity`, using libroot's
+private `_kern_set_thread_affinity` syscall. It validates CPU indices,
+uses Haiku's uint32 bitmap layout, and reports failures. Priority handling
+is unchanged. This is an opt-in llama change, not another kernel change.
+The existing threadpool assigns distinct CPUs with `--cpu-strict 1`.
+
+Kernel remains the SD trap-migration candidate (`5902003a...`). Samsung
+remains read-only; the original runtime, model, and installed OS are
+unchanged. Test libraries are in `/tmp/baseline` and `/tmp/affinity`.
+
+To isolate compiler effects, both test libraries replace only
+`ggml-cpu.c.o`, compiled using cross GCC 13.3.0 with the original Release,
+CPU_GENERIC, scalar options. All other CPU backend objects and the base
+library are copied from the native GCC 13.2.0 build. The original llama
+executable and other libraries are reused. These are hybrid test builds,
+not a freshly rebuilt distribution package.
+
+Rebuild script: `build_llama_affinity_backend.sh OBJECT_DIRECTORY`.
+The directory must contain `native-objects/` copied from
+`build-pioneer/ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/`, and
+`libggml-base.so.0.21.0` copied from `build-pioneer/bin/`.
+The script generates separate baseline and affinity libraries. A standalone
+source patch is saved as `../llama-c060ca-haiku-affinity.patch`.
+
+Final backend SHA-256 values:
+
+- Baseline: `f4be753ee1f9a4def96e2b48700c94d5b0dd13aaeee3c3d204bf2aeace794263`
+- Affinity: `e91b5cb2c94d683f4413021a4d7dc4c0cfeefc471503ab26d4441392928ba762`
+
+Initial pinned probes completed successfully: 32-token generation averaged
+13.021658 +/- 0.401167 tokens/s; 128-token generation averaged
+11.238023 +/- 1.488758 tokens/s, each with three repetitions. The longer
+run's mask snapshot confirms all 64 workers have distinct single-bit
+masks covering CPUs 0 through 63. These two probes used an earlier uint64
+bitmap representation (identical bytes on this little-endian machine),
+backend SHA-256 `fecc2957cb5938d0ddb3e0aa5baac01ef503639909ba38357b4b1d6aa2bbab87`.
+
+Raw evidence: `haiku-llama-affinity64-20260908.{jsonl,stderr}`,
+`haiku-llama-affinity64-long-20260908.{jsonl,stderr}`, and
+`haiku-llama-affinity64-long-masks-20260908.txt`. The short run's snapshot
+caught only the main thread after workers exited; use the longer snapshot
+as the placement evidence.
+
+Alternating baseline/affinity fresh-process trials are in
+`haiku-llama-affinity-ab-20260908.{jsonl,stderr}`. Rows alternate baseline,
+affinity for three rounds; stderr labels each trial. Both receive identical
+CPU-mask options, but the baseline ignores them (the prior Haiku stub).
+JSON records requested options, not verified placement.
+
+All six alternating trials exited successfully. Generation throughput:
+
+| Fresh-process round | Matched baseline (unpinned) | Startup affinity |
+| ---: | ---: | ---: |
+| 1 | 10.922765 | 12.629153 |
+| 2 | 12.153996 | 12.330276 |
+| 3 | 12.217611 | 12.202060 |
+
+No affinity errors were reported. Neither variant reproduced the severe
+collapse in this batch. This verifies the opt-in mechanism but does not
+establish that it reliably prevents the intermittent scheduler problem.
+No general scheduler fix or improved 32-to-64 scaling is claimed.
+
+The final-library sequence `-t 32,64 -p 128 -n 32 -r 3` also completed
+all four tests, exit 0, without affinity warnings:
+
+| Workers | Prompt tokens/s | Generation tokens/s |
+| ---: | ---: | ---: |
+| 32 | 23.215656 +/- 0.270143 | 16.266823 +/- 0.094419 |
+| 64 | 34.774933 +/- 0.026403 | 13.412439 +/- 0.252681 |
+
+Evidence: `haiku-llama-affinity32-64-20260908.{jsonl,stderr}`. Its late
+mask snapshot caught only the main thread; the earlier long-run snapshot
+remains the complete 64-worker placement evidence. This sequence does not
+include the earlier 4/8/16-worker phases. Generation still favors 32
+workers, while prompt processing benefits from 64. Startup affinity is a
+working diagnostic/opt-in control, not proof of a general scheduler fix.
+No benchmark remains running after these trials. Further repetitions and
+correctness checks are needed before distribution integration.
+
+```sh
+runtime=/Haiku1/home/develop/llama-c060ca974c77/build-pioneer/bin
+LIBRARY_PATH=/tmp/affinity:$runtime:/boot/system/lib \
+  "$runtime/llama-bench" -m /Haiku1/home/models/Qwen3-0.6B-Q8_0.gguf \
+  -t 64 -p 0 -n 32 -b 64 -ub 64 -ngl 0 -r 1 -o jsonl --progress \
+  --cpu-mask ffffffffffffffff --cpu-strict 1
+```
+
+### Isolated 64-thread runs: placement variability
+
+On the same migration-candidate SD boot, isolated generation with
+`-t 64 -p 0 -n 32 --poll 50` completed at 0.296190 tokens/s (one
+repetition, 108.038867 seconds). During the slow phase, CPU 8 was nearly
+idle; two workers each consumed about one CPU-second per two-second
+sample while the remaining workers consumed nearly two. Total CPU use
+was approximately 98%. This is consistent with two workers sharing one
+CPU while another CPU is idle, causing barrier delays; direct per-thread
+CPU placement was not captured in that sample.
+
+A second isolated run, now with three repetitions, completed at
+12.785758 +/- 0.412390 tokens/s. An external pinning attempt during its
+warm-up returned B_BUSY on the first thread, so no affinity was changed.
+The retry produced no thread records because the benchmark had finished.
+This is NOT a pinned result. The large run-to-run difference means token
+count alone does not explain the slowdown. Controlled startup affinity is
+the next diagnostic, before any claim of a general scheduling fix.
+
+Evidence:
+
+- `haiku-migration-isolated64-20260908.jsonl`
+- `haiku-migration-isolated64-activity-20260908.txt`
+- `haiku-migration-isolated64-repeat-20260908.jsonl`
+
+Both benchmark processes exited 0 and have finished.
+
+### Trap-migration candidate: preliminary improvement
+
+The SD candidate restores kernel trap state on context switch and removes
+blanket pinning for the user trap lifetime, retaining other kernel pinning.
+The affinity smoke test passed 100 migrations between CPUs 0 and 63, with
+placement checks after sleeping/waking and an initial suspended-thread
+affinity change.
+
+A short `-t 32,64 -p 0 -n 8 -r 1 --poll 50` generation probe exited 0:
+
+| Threads | Generation tokens/s (one repetition, 8 tokens) |
+| ---: | ---: |
+| 32 | 14.613447 |
+| 64 | 13.773844 |
+
+The severe 64-thread collapse is absent in this probe. This is not yet
+a like-for-like speedup measurement: the original used 32 generated tokens
+and three repetitions. Also, the candidate boots from SD, with Samsung
+mounted read-only at /Haiku1; the runtime and model are unchanged on Samsung.
+LIBRARY_PATH includes the relocated build bin directory and /boot/system/lib.
+The initial launch without this corrected search path exited 3; it was
+not a computation failure. A CPU sample ran too late to establish active
+worker distribution during this short probe.
+
+Raw results: [migration probe](haiku-trap-migration-probe-pathfixed-20260908.jsonl).
+The full original 4/8/16/32/64-thread settings completed all ten tests
+with exit 0. Raw output: `haiku-trap-migration-full-20260908.{jsonl,stderr}`.
+
+| Threads | Prompt tokens/s (mean +/- SD) | Generation tokens/s (mean +/- SD) |
+| ---: | ---: | ---: |
+| 4 | 4.553071 +/- 0.043294 | 3.178920 +/- 0.001457 |
+| 8 | 8.758219 +/- 0.000701 | 6.099343 +/- 0.002957 |
+| 16 | 15.593373 +/- 0.005259 | 11.144254 +/- 0.016266 |
+| 32 | 28.181762 +/- 0.030087 | 15.824186 +/- 0.040242 |
+| 64 | 38.931319 +/- 0.040316 | 0.260900 +/- 0.000052 |
+
+The longer run does NOT confirm that 64-thread generation is fixed.
+Prompt processing at 64 threads improved from 7.09 to 38.93 tokens/s,
+and 32-thread generation improved from 11.94 to 15.82 tokens/s. However,
+64-thread generation remains severely slow (0.261 tokens/s), despite the
+successful 8-token probe. Investigate token-count and run-history effects,
+and profile the slow phase before drawing a root-cause conclusion.
+The different boot volume remains a comparison caveat. The best generation
+throughput measured in this full sweep is at 32 threads.
+
 ### Initial scaling investigation
 
 A short generation probe (`-t 32,64 -p 0 -n 8 -r 1 --poll 0`, otherwise

@@ -1,0 +1,43 @@
+diff --git a/ggml/src/ggml-cpu/ggml-cpu.c b/ggml/src/ggml-cpu/ggml-cpu.c
+index 87ac0a702..b974e9b98 100644
+--- a/ggml/src/ggml-cpu/ggml-cpu.c
++++ b/ggml/src/ggml-cpu/ggml-cpu.c
+@@ -2667,0 +2668,38 @@
++#elif defined(__HAIKU__)
++#include <OS.h>
++
++// Haiku exposes CPU affinity through a private libroot syscall.
++extern status_t _kern_set_thread_affinity(thread_id id, const void * mask, size_t size);
++
++static bool ggml_thread_apply_affinity(const bool * mask) {
++    uint32_t cpuset[(GGML_MAX_N_THREADS + 31) / 32] = { 0 };
++    system_info info;
++    status_t err = get_system_info(&info);
++    if (err != B_OK) {
++        fprintf(stderr, "warn: failed to query CPUs: %s (%" PRId32 ")\n", strerror(err), err);
++        return false;
++    }
++
++    for (uint32_t i = 0; i < GGML_MAX_N_THREADS; i++) {
++        if (mask[i]) {
++            if (i >= info.cpu_count) {
++                fprintf(stderr, "warn: affinity CPU %u is unavailable\n", i);
++                return false;
++            }
++            cpuset[i / 32] |= UINT32_C(1) << (i % 32);
++        }
++    }
++
++    err = _kern_set_thread_affinity(0, cpuset, sizeof(cpuset));
++    if (err != B_OK) {
++        fprintf(stderr, "warn: failed to set thread affinity: %s (%" PRId32 ")\n", strerror(err), err);
++        return false;
++    }
++    return true;
++}
++
++static bool ggml_thread_apply_priority(int32_t prio) {
++    UNUSED(prio);
++    return true;
++}
++

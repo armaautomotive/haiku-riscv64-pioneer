@@ -1,0 +1,114 @@
+TRIAL round=1 variant=baseline
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/1
+TRIAL round=1 variant=affinity
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/1
+TRIAL round=2 variant=baseline
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/1
+TRIAL round=2 variant=affinity
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/1
+TRIAL round=3 variant=baseline
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/1
+TRIAL round=3 variant=affinity
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+ggml_backend_load_best: search path  does not exist
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/1

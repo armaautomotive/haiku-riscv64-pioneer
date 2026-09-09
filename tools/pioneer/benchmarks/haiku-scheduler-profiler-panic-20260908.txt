@@ -1,0 +1,171 @@
+ 0x3ffe1fa248
+P211:UE thread 1988 entry 0x21a3542cfc stack 0x3c63460000 tls 0x3c63460000 return 0x3ffe1fa248
+P211:UE thread 1989 entry 0x21a3542cfc stack 0x3ea7d59000 tls 0x3ea7d59000 return 0x3ffe1fa248
+P211:UE thread 1990 entry 0x21a3542cfc stack 0x3befd04000 tls 0x3befd04000 return 0x3ffe1fa248
+P211:UE thread 1991 entry 0x21a3542cfc stack 0x33c4dc7000 tls 0x33c4dc7000 return 0x3ffe1fa248
+P211:UE thread 1992 entry 0x21a3542cfc stack 0x3b3d597000 tls 0x3b3d597000 return 0x3ffe1fa248
+P211:UE thread 1993 entry 0x21a3542cfc stack 0x35439d8000 tls 0x35439d8000 return 0x3ffe1fa248
+P211:UE thread 1994 entry 0x21a3542cfc stack 0x3712481000 tls 0x3712481000 return 0x3ffe1fa248
+P211:UE thread 1995 entry 0x21a3542cfc stack 0x3776a99000 tls 0x3776a99000 return 0x3ffe1fa248
+P211:UE thread 1996 entry 0x21a3542cfc stack 0x347a3d9000 tls 0x347a3d9000 return 0x3ffe1fa248
+P211:UE thread 1997 entry 0x21a3542cfc stack 0x37fe8a9000 tls 0x37fe8a9000 return 0x3ffe1fa248
+P211:UE thread 1998 entry 0x21a3542cfc stack 0x386c0ff000 tls 0x386c0ff000 return 0x3ffe1fa248
+P211:UE thread 1999 entry 0x21a3542cfc stack 0x3b96e9e000 tls 0x3b96e9e000 return 0x3ffe1fa248
+P211:UE thread 2000 entry 0x21a3542cfc stack 0x3beb7f3000 tls 0x3beb7f3000 return 0x3ffe1fa248
+P211:UE thread 2001 entry 0x21a3542cfc stack 0x3c16240000 tls 0x3c16240000 return 0x3ffe1fa248
+P211:UE thread 2002 entry 0x21a3542cfc stack 0x3925f78000 tls 0x3925f78000 return 0x3ffe1fa248
+P211:UE thread 2003 entry 0x21a3542cfc stack 0x3be95ad000 tls 0x3be95ad000 return 0x3ffe1fa248
+P211:UE thread 2004 entry 0x21a3542cfc stack 0x3f81f1f000 tls 0x3f81f1f000 return 0x3ffe1fa248
+P211:UE thread 2005 entry 0x21a3542cfc stack 0x32836d0000 tls 0x32836d0000 return 0x3ffe1fa248
+P211:UE thread 2006 entry 0x21a3542cfc stack 0x324c71d000 tls 0x324c71d000 return 0x3ffe1fa248
+P211:UE thread 2007 entry 0x21a3542cfc stack 0x3940e05000 tls 0x3940e05000 return 0x3ffe1fa248
+P211:UE thread 2008 entry 0x21a3542cfc stack 0x3cf2721000 tls 0x3cf2721000 return 0x3ffe1fa248
+P211:UE thread 2009 entry 0x21a3542cfc stack 0x373620e000 tls 0x373620e000 return 0x3ffe1fa248
+P211:UE thread 2010 entry 0x21a3542cfc stack 0x35339cf000 tls 0x35339cf000 return 0x3ffe1fa248
+P211:UE thread 2011 entry 0x21a3542cfc stack 0x387eefb000 tls 0x387eefb000 return 0x3ffe1fa248
+P211:UE thread 2012 entry 0x21a3542cfc stack 0x32484b7000 tls 0x32484b7000 return 0x3ffe1fa248
+P211:UE thread 2013 entry 0x21a3542cfc stack 0x35eb169000 tls 0x35eb169000 return 0x3ffe1fa248
+P211:UE thread 2014 entry 0x21a3542cfc stack 0x313e610000 tls 0x313e610000 return 0x3ffe1fa248
+P211:UE thread 2015 entry 0x21a3542cfc stack 0x3e1fb43000 tls 0x3e1fb43000 return 0x3ffe1fa248
+P211:UE thread 2016 entry 0x21a3542cfc stack 0x3fb7fd7000 tls 0x3fb7fd7000 return 0x3ffe1fa248
+P211:UE thread 2017 entry 0x21a3542cfc stack 0x3c6f1d1000 tls 0x3c6f1d1000 return 0x3ffe1fa248
+P211:UE thread 2018 entry 0x21a3542cfc stack 0x3ba28ff000 tls 0x3ba28ff000 return 0x3ffe1fa248
+P211:UE thread 2019 entry 0x21a3542cfc stack 0x348d1cb000 tls 0x348d1cb000 return 0x3ffe1fa248
+P211:UE thread 2020 entry 0x21a3542cfc stack 0x36fec09000 tls 0x36fec09000 return 0x3ffe1fa248
+P211:UE thread 2021 entry 0x21a3542cfc stack 0x3231391000 tls 0x3231391000 return 0x3ffe1fa248
+P211:UE thread 2022 entry 0x21a3542cfc stack 0x3e1c1f8000 tls 0x3e1c1f8000 return 0x3ffe1fa248
+P211:UE thread 2023 entry 0x21a3542cfc stack 0x34797a5000 tls 0x34797a5000 return 0x3ffe1fa248
+P211:UE thread 2024 entry 0x21a3542cfc stack 0x3d7636e000 tls 0x3d7636e000 return 0x3ffe1fa248
+P211:UE thread 2025 entry 0x21a3542cfc stack 0x38515b8000 tls 0x38515b8000 return 0x3ffe1fa248
+P211:UE thread 2026 entry 0x21a3542cfc stack 0x3c3d344000 tls 0x3c3d344000 return 0x3ffe1fa248
+P211:UE thread 2027 entry 0x21a3542cfc stack 0x36cd27e000 tls 0x36cd27e000 return 0x3ffe1fa248
+P211:UE thread 2028 entry 0x21a3542cfc stack 0x3d431f6000 tls 0x3d431f6000 return 0x3ffe1fa248
+P211:UE thread 2029 entry 0x21a3542cfc stack 0x3be2dc2000 tls 0x3be2dc2000 return 0x3ffe1fa248
+P211:UE thread 2030 entry 0x21a3542cfc stack 0x3c2da84000 tls 0x3c2da84000 return 0x3ffe1fa248
+P211:UE thread 2031 entry 0x21a3542cfc stack 0x3842afb000 tls 0x3842afb000 return 0x3ffe1fa248
+P211:UE thread 2032 entry 0x21a3542cfc stack 0x306fafc000 tls 0x306fafc000 return 0x3ffe1fa248
+P211:UE thread 2033 entry 0x21a3542cfc stack 0x3589c60000 tls 0x3589c60000 return 0x3ffe1fa248
+P211:UE thread 2034 entry 0x21a3542cfc stack 0x35dec59000 tls 0x35dec59000 return 0x3ffe1fa248
+P211:UE thread 2035 entry 0x21a3542cfc stack 0x38ae9b7000 tls 0x38ae9b7000 return 0x3ffe1fa248
+P211:UE thread 2036 entry 0x21a3542cfc stack 0x3d3fe97000 tls 0x3d3fe97000 return 0x3ffe1fa248
+P211:UE thread 2037 entry 0x21a3542cfc stack 0x3484d98000 tls 0x3484d98000 return 0x3ffe1fa248
+P211:UE thread 2038 entry 0x21a3542cfc stack 0x3d2e7fb000 tls 0x3d2e7fb000 return 0x3ffe1fa248
+P211:UE thread 2039 entry 0x21a3542cfc stack 0x3b03eca000 tls 0x3b03eca000 return 0x3ffe1fa248
+P211:UE thread 2040 entry 0x21a3542cfc stack 0x3841b8d000 tls 0x3841b8d000 return 0x3ffe1fa248
+P211:UE thread 2041 entry 0x21a3542cfc stack 0x36bdc35000 tls 0x36bdc35000 return 0x3ffe1fa248
+P211:UE thread 2042 entry 0x21a3542cfc stack 0x35d299f000 tls 0x35d299f000 return 0x3ffe1fa248
+P211:UE thread 2043 entry 0x21a3542cfc stack 0x3ee5057000 tls 0x3ee5057000 return 0x3ffe1fa248
+P211:UE thread 2044 entry 0x21a3542cfc stack 0x37c45e8000 tls 0x37c45e8000 return 0x3ffe1fa248
+P211:UE thread 2045 entry 0x21a3542cfc stack 0x3a511b3000 tls 0x3a511b3000 return 0x3ffe1fa248
+P211:UE thread 2046 entry 0x21a3542cfc stack 0x37b33ff000 tls 0x37b33ff000 return 0x3ffe1fa248
+P211:UE thread 2047 entry 0x21a3542cfc stack 0x398a920000 tls 0x398a920000 return 0x3ffe1fa248
+P211:UE thread 2048 entry 0x21a3542cfc stack 0x3df3a58000 tls 0x3df3a58000 return 0x3ffe1fa248
+P211:UE thread 2049 entry 0x21a3542cfc stack 0x38614c6000 tls 0x38614c6000 return 0x3ffe1fa248
+P211:UE thread 2050 entry 0x21a3542cfc stack 0x30f1ab0000 tls 0x30f1ab0000 return 0x3ffe1fa248
+P211:UE thread 2051 entry 0x21a3542cfc stack 0x3ed5673000 tls 0x3ed5673000 return 0x3ffe1fa248
+P211:UE thread 2052 entry 0x21a3542cfc stack 0x3ffd530000 tls 0x3ffd530000 return 0x3ffe1fa248
+P211:UE thread 2053 entry 0x21a3542cfc stack 0x3d58150000 tls 0x3d58150000 return 0x3ffe1fa248
+P211:UE thread 2054 entry 0x21a3542cfc stack 0x3de519d000 tls 0x3de519d000 return 0x3ffe1fa248
+P211:UE thread 2055 entry 0x21a3542cfc stack 0x306db19000 tls 0x306db19000 return 0x3ffe1fa248
+P211:UE thread 2056 entry 0x21a3542cfc stack 0x36bb8e5000 tls 0x36bb8e5000 return 0x3ffe1fa248
+P211:UE thread 2057 entry 0x21a3542cfc stack 0x33c82a0000 tls 0x33c82a0000 return 0x3ffe1fa248
+P211:UE thread 2058 entry 0x21a3542cfc stack 0x3985105000 tls 0x3985105000 return 0x3ffe1fa248
+P211:UE thread 2059 entry 0x21a3542cfc stack 0x3510612000 tls 0x3510612000 return 0x3ffe1fa248
+P211:UE thread 2060 entry 0x21a3542cfc stack 0x3d390dc000 tls 0x3d390dc000 return 0x3ffe1fa248
+P211:UE thread 2061 entry 0x21a3542cfc stack 0x3b8885c000 tls 0x3b8885c000 return 0x3ffe1fa248
+P211:UE thread 2062 entry 0x21a3542cfc stack 0x3ae8190000 tls 0x3ae8190000 return 0x3ffe1fa248
+P211:UE thread 2063 entry 0x21a3542cfc stack 0x3f73af7000 tls 0x3f73af7000 return 0x3ffe1fa248
+P211:UE thread 2064 entry 0x21a3542cfc stack 0x3df2d7c000 tls 0x3df2d7c000 return 0x3ffe1fa248
+P211:UE thread 2065 entry 0x21a3542cfc stack 0x3557755000 tls 0x3557755000 return 0x3ffe1fa248
+P211:UE thread 2066 entry 0x21a3542cfc stack 0x3f3bd07000 tls 0x3f3bd07000 return 0x3ffe1fa248
+P211:UE thread 2067 entry 0x21a3542cfc stack 0x3925049000 tls 0x3925049000 return 0x3ffe1fa248
+P211:UE thread 2068 entry 0x21a3542cfc stack 0x3eb7107000 tls 0x3eb7107000 return 0x3ffe1fa248
+P211:UE thread 2069 entry 0x21a3542cfc stack 0x3e1f95d000 tls 0x3e1f95d000 return 0x3ffe1fa248
+P211:UE thread 2070 entry 0x21a3542cfc stack 0x34edc54000 tls 0x34edc54000 return 0x3ffe1fa248
+P211:UE thread 2071 entry 0x21a3542cfc stack 0x38950af000 tls 0x38950af000 return 0x3ffe1fa248
+P211:UE thread 2072 entry 0x21a3542cfc stack 0x3fb1eb0000 tls 0x3fb1eb0000 return 0x3ffe1fa248
+P211:UE thread 2073 entry 0x21a3542cfc stack 0x3b039ec000 tls 0x3b039ec000 return 0x3ffe1fa248
+P211:TU runtime_loader entry 0xaf2c5c5f2 args 0x0000003eafa81200 commpage 0x0000003fec044000
+P211:UE thread 2074 entry 0xaf2c5c5f2 stack 0x3eafa81000 tls 0x3eafa81000 return 0x3fec044248
+P211:TU runtime_loader entry 0x351a6b25f2 args 0x0000003d1c5ee200 commpage 0x0000003ff5937000
+P211:UE thread 2077 entry 0x351a6b25f2 stack 0x3d1c5ee000 tls 0x3d1c5ee000 return 0x3ff5937248
+P211:TU runtime_loader entry 0x1ab4ff85f2 args 0x0000003e74bbb200 commpage 0x0000003ffcf72000
+P211:UE thread 2077 entry 0x1ab4ff85f2 stack 0x3e74bbb000 tls 0x3e74bbb000 return 0x3ffcf72248
+P211:TU runtime_loader entry 0x22deb8e5f2 args 0x000000353621f200 commpage 0x0000003fcdf11000
+P211:UE thread 2078 entry 0x22deb8e5f2 stack 0x353621f000 tls 0x353621f000 return 0x3fcdf11248
+P211:TU runtime_loader entry 0x2fdd7675f2 args 0x00000035902a9200 commpage 0x0000003fe2154000
+P211:UE thread 2081 entry 0x2fdd7675f2 stack 0x35902a9000 tls 0x35902a9000 return 0x3fe2154248
+P211:TU runtime_loader entry 0x3a1a0955f2 args 0x0000003b0c78c200 commpage 0x0000003fff9a9000
+P211:UE thread 2081 entry 0x3a1a0955f2 stack 0x3b0c78c000 tls 0x3b0c78c000 return 0x3fff9a9248
+P211:TU runtime_loader entry 0x3d314195f2 args 0x0000003fc9eaf200 commpage 0x0000003f41d38000
+P211:UE thread 2082 entry 0x3d314195f2 stack 0x3fc9eaf000 tls 0x3fc9eaf000 return 0x3f41d38248
+P211:TU runtime_loader entry 0x2600a515f2 args 0x00000035fd3c2200 commpage 0x0000003fceadc000
+P211:UE thread 2085 entry 0x2600a515f2 stack 0x35fd3c2000 tls 0x35fd3c2000 return 0x3fceadc248
+P211:TU runtime_loader entry 0x36d3f8a5f2 args 0x0000003b1380a200 commpage 0x0000003ffa2fc000
+P211:UE thread 2085 entry 0x36d3f8a5f2 stack 0x3b1380a000 tls 0x3b1380a000 return 0x3ffa2fc248
+riscv: kernel page fault trap
+riscv: trap cause 0x000000000000000f
+riscv: trap stval 0xffffffc0208018b8
+riscv: trap epc 0xffffffc0021588ce
+riscv: trap status 0x8000000200006100
+riscv: trap ra 0xffffffc00215a246
+riscv: trap sp 0xffffffc01be0bc90
+riscv: trap fp 0xffffffc01be0bca0
+riscv: trap a0 0xffffffc0208018b8
+riscv: trap a1 0x0000000000000024
+riscv: trap a2 0x000000000000000a
+P332: fatal interrupt-disabled mapping
+riscv: pte address 0xffffffc0208018b8
+riscv: pte satp 0x800000000049aa56
+riscv: pte thead mae 0x0000000000000001
+riscv: pte level 2 0x700000002f635401
+riscv: pte level 1 0x7000000128916c21
+riscv: pte level 0 0x7000000127ab68e7
+PANIC: page fault with interrupts disabled
+Welcome to Kernel Debugging Land...
+revision: hrev99999
+Thread 2027 "libggml-cpu.so.0 pthread" running on CPU 12
+stack trace for thread 2027 "libggml-cpu.so.0 pthread"
+    kernel stack: 0xffffffc01be07000 to 0xffffffc01be0c000
+      user stack: 0x00000036cd23e000 to 0x00000036cd27e000
+frame                       caller             <image>:function + offset
+ 0 ffffffc01be0b870 (+  32) ffffffc0021d64c0   <kernel_riscv64> arch_debug_call_with_fault_handler + 0x20
+ 1 ffffffc01be0b8c0 (+  80) ffffffc00214ad6c   <kernel_riscv64> debug_call_with_fault_handler + 0x78
+ 2 ffffffc01be0b950 (+ 144) ffffffc00214bdfc   <kernel_riscv64> kgets (nearest) + 0x140
+ 3 ffffffc01be0b9e0 (+ 144) ffffffc00214c212   <kernel_riscv64> kgets (nearest) + 0x556
+ 4 ffffffc01be0ba20 (+  64) ffffffc00214c55e   <kernel_riscv64> panic + 0x4e
+ 5 ffffffc01be0bb70 (+ 336) ffffffc0021d7fa2   <kernel_riscv64> STrap + 0x492
+kernel iframe at 0xffffffc01be0bb70 (end = 0xffffffc01be0bc90)
+   ra: 0xffffffc00215a246   t6: 0x0000000000000001   sp: 0xffffffc01be0bc90   gp: 0x0000000000000000
+   tp: 0xffffffc01e357ac0   t0: 0xffffffc0021d4be0   t1: 0xffffffc0020f119c   t2: 0x0000000000000008
+   t5: 0x0000000000000200   s1: 0xffffffc01f5e6000   a0: 0xffffffc0208018b8   a1: 0x0000000000000024
+   a2: 0x000000000000000a   a3: 0x000000000000000c   a4: 0x00000000000018a8   a5: 0xffffffc01f5e6000
+   a6: 0x0000000000000020   a7: 0x00000000000018cc   s2: 0x000000000000000c   s3: 0xffffffc01e357ac0
+   s4: 0xffffffc01e357ac0   s5: 0x0000000000000000   s6: 0x0000000000000001   s7: 0xffffffc01f5e6048
+   s8: 0xffffffc002237700   s9: 0xffffffc01be0bd1c  s10: 0xffffffc0022d6560  s11: 0xffffffc007147700
+   t3: 0xffffffc002119b1c   t4: 0x0000000000000002   fp: 0xffffffc01be0bca0  epc: 0xffffffc0021588ce
+ status: (ie: {}, pie: {}, spp: s, fs: dirty, xs: off, sum: 0, mxr: 0, uxl: 2, sd: 1), cause: exception storePageFault, tval: 0xffffffc0208018b8
+ 6 ffffffc01be0bca0 (+ 304) ffffffc0021588ce   <kernel_riscv64> SystemProfiler::_AllocateBuffer(unsigned long, int, int, int) + 0x4c
+ 7 ffffffc01be0bcf0 (+  80) ffffffc01be0bcf0
+ 8 ffffffc01be0bd90 (+ 160) ffffffc002139f28   <kernel_riscv64> _ZN9Scheduler14ThreadEnqueuerclEPNS_10ThreadDataE (nearest) + 0x21e
+ 9 ffffffc01be0bdc0 (+  48) ffffffc0021d6f72   <kernel_riscv64> arch_elf_relocate_rela (nearest) + 0x18c
+10 ffffffc01be0bed0 (+ 272) ffffffc0021d7e86   <kernel_riscv64> STrap + 0x376
+user iframe at 0xffffffc01be0bed0 (end = 0xffffffc01be0bff0)
+   ra: 0x0000003884ec8840   t6: 0x0000000000000001   sp: 0x00000036cd27dcc0   gp: 0x0000000000000000
+   tp: 0x00000036cd27e000   t0: 0x00000036cd27de78   t1: 0x0000003884ec5c3c   t2: 0x0000000000000008
+   t5: 0x0000000000000200   s1: 0x0000001ec5e4c020   a0: 0x0000001ec5b60200   a1: 0x0000001ec5b60280
+   a2: 0x000000000000001f   a3: 0x0000001ec5b602c0   a4: 0x00000000000000fe   a5: 0x00000000000000fe
+   a6: 0x0000000000000001   a7: 0x0000000079000000   s2: 0x00000036cd27de78   s3: 0x000000000000014a
+   s4: 0x0000001ec5b60308   s5: 0x0000001ec5b50420   s6: 0x0000001ec5b60218   s7: 0x0000000000000000
+   s8: 0x0000000000000a48   s9: 0x0000000000000149  s10: 0x0000000000000000  s11: 0x0000000000000000
+   t3: 0x0000003884ec60fe   t4: 0x0000000000000002   fp: 0x00000036cd27dcd0  epc: 0x0000003884ec6134
+ status: (ie: {}, pie: {s}, spp: u, fs: dirty, xs: off, sum: 0, mxr: 0, uxl: 2, sd: 1), cause: interrupt sTimer, tval: 0x0
+11 00000036cd27dcd0 (+   0) 0000003884ec6134   </boot/system/cache/tmp/baseline> ggml_barrier + 0x36
+12 00000036cd27df90 (+ 704) 00000036cd27df90   30491:libggml-cpu.so.0 pthread_2027_s@0x00000036cd23a000 + 0x43f90
+13 00000036cd27dfe0 (+  80) 0000003884ec99fc   </boot/system/cache/tmp/baseline> ggml_compute_forward_mul_mat (nearest) + 0x20f8
+14 00000036cd27e000 (+  32) 00000021a3542d12   </boot/system/lib/libroot.so> pthread_exit (nearest) + 0x2e
+15 0000000000000000 (+   0) 0000003ffe1fa248   <commpage> commpage_thread_exit + 0x00
+initial commands: dump_virt_page 0xffffffc0208018b8
+Unknown command "dump_virt_page". Enter "help" to get a list of all supported commands.
+
+kdebug>

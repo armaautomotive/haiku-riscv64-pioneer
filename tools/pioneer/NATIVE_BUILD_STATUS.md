@@ -369,3 +369,179 @@ No kernel or llama source edits in this investigation. Do not rerun the
 --pin diagnostic before reviewing/fixing the affinity syscall. Review
 thread.cpp's unconditional thread->cpu dereference and scheduling/locking
 semantics; a null guard alone does not establish correct remote migration.
+
+## Affinity scheduler candidate, 2026-09-08
+
+Implemented scheduler_set_thread_affinity under the scheduler/thread locks:
+READY threads are dequeued/re-enqueued, RUNNING threads request rescheduling
+on their actual CPU, and sleeping threads retain the mask for their next
+wakeup. Reject conflicting masks during temporary CPU pinning with B_BUSY.
+The syscall checks permissions/idle threads and releases the thread lock
+before checking for local rescheduling. Affinity reads use scheduler_lock.
+No changes to llama, PCI, DMA, GPU, or general scheduler balancing policy.
+
+Image build exit 0; whitespace check passed. Runtime validation pending.
+Kernel SHA-256: 436c35f47e1c301ee7792b3100fc8368e725ecf143b7cf83c29da241ae23d52b.
+Package SHA-256: 584e55fc831215ab80ac8f6e5f6ef8d6ad00db9ac2292664fe8ff4eabe0b54c0.
+SD payload SHA-256: d4231e076337f5ee9d71e86885f20b1088b7579f11cd26b05f187095616fefea.
+SD /dev/mmcblk1 (serial 0x0000e752) p2 deployed and full readback verified.
+Rollback: /mnt/ssd/haiku-deploy/haiku-pioneer-bfs-before-20260908T222102Z.img.gz.
+Samsung remains on quiet-AHCI package 6a40c785...; firmware unchanged.
+Linux clean shutdown requested and completed, then relay on issued for SD
+boot. Serial start offset 37516388. No menu watcher: allow default SD boot.
+Do not assume this candidate fixes performance until runtime tests pass.
+
+SD candidate boot verified over SSH: /boot=/dev/disk/mmc/0/1 (300 MiB),
+installed package hash 584e55fc... matches. Samsung mounted read-only at
+/Haiku1. Saved Samsung cpu_activity binary has invalid ELF header (begins
+4a1dce17), while llama-bench begins valid ELF magic. Cause of the damaged
+diagnostic file not established; do not use it. Rebuilt cpu_activity on
+Mac with cross compiler and staged it under /tmp on SD Haiku instead.
+
+Disposable sleeping-thread affinity test succeeded with mask 1 and no panic.
+Running shell-loop test returned B_BUSY on five spaced retries; test process
+was stopped afterward. This candidate is not yet a validated migration fix.
+STrap pins the entire user trap lifetime, including blocking syscalls and
+timer-driven rescheduling, to preserve hart-local stvec/sscratch assumptions.
+That pinning is a plausible cause of poor runnable-work distribution.
+Do not remove the pin without reviewing arch context-switch/trap-return
+state restoration. No new llama benchmark started in this SD boot.
+SD Haiku remains running; Samsung still read-only and unchanged.
+
+## Trap-migration candidate prepared, not deployed
+
+arch_context_switch now explicitly sets stvec=SVec and clears sscratch
+before loading the incoming kernel context. SVecURet already reconstructs
+the user trap entry and kernel stack on the executing hart before sret.
+Removed the blanket pin/unpin around the user STrap lifetime; other kernel
+pinning remains. This targets the trap-state rationale for the earlier
+pinning workaround without changing general scheduler balancing policy.
+
+Image build exited 0; objdump confirmed the new CSR writes; diff check
+passed. Added affinity_smoke.c (outside llama) to test suspended-thread
+affinity followed by 100 self-migrations between CPU 0 and the last CPU,
+checking placement before/after sleep. Cross-compiled with -Wall -Wextra
+-Werror; /private/tmp/pioneer-affinity-smoke is ready, not run yet.
+
+Candidate kernel SHA-256:
+5902003af9a378625b17e9345f04dc7eca7b09c8458e7512764a497b6199ec46.
+Candidate SD payload: /Volumes/HaikuBuildLocal/generated.riscv64/haiku-pioneer-bfs-trap-migration.img
+SHA-256: bb81f152e2c3859aa8e47aa0a71c12ff70a1cf799468ba6df7c9878a9dad26a4.
+EFI loader unchanged. Current SD still has affinity-only candidate
+584e55fc... package. Need user save/shutdown/safe sequence, SD removal for
+Linux boot, then deploy with rollback. No performance or runtime success
+claimed for this migration candidate. Samsung remains unchanged.
+
+Trap-migration payload subsequently deployed to verified SD serial
+0x0000e752 via Linux, with complete 300 MiB readback matching bb81f152... .
+Rollback: /mnt/ssd/haiku-deploy/haiku-pioneer-bfs-before-20260908T232120Z.img.gz.
+Firmware and Samsung unchanged. Linux clean shutdown completed; relay on
+issued with SD inserted. Serial boot offset 37883662. Default SD boot;
+runtime migration and performance tests remain pending.
+
+Migration SD boot confirmed. Fresh affinity_smoke binary transfer SHA-256
+ca0bfec9bcfc88d85638ce0d2a4431d938240fc0b223b7b5b1f3dc58298b8cbf
+verified; test exited 0, PASS for suspended affinity plus 100 migrations
+between CPUs 0/63 and sleep/wakeup placement checks. Samsung mounted
+read-only at /Haiku1. Existing llama runtime needs command-local
+LIBRARY_PATH=/Haiku1/home/develop/llama-c060ca974c77/build-pioneer/bin:/boot/system/lib.
+Without it, runtime_loader cannot locate libraries (exit 3).
+
+Short generation probe -t 32,64 -p 0 -n 8 -r 1 --poll 50 exited 0:
+32 threads 14.613447 tokens/s; 64 threads 13.773844 tokens/s. This is
+preliminary, not directly comparable to the longer original benchmark.
+Full original 4..64 settings restarted as session 80132, results in
+benchmarks/haiku-trap-migration-full-20260908.{jsonl,stderr}. Do not start
+another benchmark or reboot while that run is active. Samsung unchanged.
+
+Session 80132 subsequently completed all ten tests, exit 0. Full results
+updated in benchmarks/LLAMA_CPU_RESULTS.md. 64-thread prompt processing
+38.931319 tokens/s; 32-thread generation 15.824186; 64-thread generation
+only 0.260900. The longer test contradicts treating the successful short
+probe as a complete fix. Investigate token count/run history and collect
+CPU/thread samples during the slow phase. No benchmark remains running
+from this sweep. SD Haiku still running, Samsung read-only and unchanged.
+
+Isolated 64-thread generation: one 32-token repetition ran at 0.296190
+tokens/s. CPU 8 was almost idle; two workers each received about half a
+core, remaining workers near full cores. A second isolated run with three
+repetitions ran at 12.785758 +/- 0.412390 tokens/s. Pinning team 926 was
+attempted during warm-up but rejected B_BUSY on the first thread; retry
+enumerated zero threads after completion. No pinning was applied. Renamed
+second run raw files to haiku-migration-isolated64-repeat-20260908 to avoid
+mislabeling. Both runs exited 0; no benchmark currently running. Next:
+controlled affinity at worker startup to test placement/synchronization.
+See benchmarks/LLAMA_CPU_RESULTS.md; root cause not yet proven.
+
+## 2026-09-08: llama startup-affinity experiment
+
+Added 38-line Haiku affinity branch in llama ggml-cpu.c, using private
+libroot _kern_set_thread_affinity with CPU-index validation and uint32
+bitmap layout. Existing strict-mask worker assignment is reused. Priority
+handling, math kernels, kernel code, and installed Samsung runtime were
+not changed in this experiment. Separate patch:
+llama-c060ca-haiku-affinity.patch. Reproduction helper:
+benchmarks/build_llama_affinity_backend.sh. No commit or push performed.
+
+Built matched hybrid baseline/affinity CPU backends: only ggml-cpu.c.o
+cross-compiled with GCC 13.3; remaining native GCC 13.2 backend objects and
+runtime reused. Libraries staged in Haiku /tmp/baseline and /tmp/affinity,
+transfer hashes verified. Samsung remains read-only at /Haiku1; SD Haiku
+still runs the existing trap-migration kernel. No reboot or SD change.
+
+Initial pinned probes: 13.021658 tok/s for 32 tokens, 11.238023 for 128,
+three repetitions each. Complete mask snapshot confirms 64 distinct
+single-CPU masks. Three fresh-process alternating pairs all completed:
+baseline 10.922765 / 12.153996 / 12.217611 tok/s;
+affinity 12.629153 / 12.330276 / 12.202060 tok/s.
+Neither side reproduced the severe collapse in these paired trials.
+
+Final-library 32->64 sequence, prompt128/generation32, r3: prompt
+23.215656 / 34.774933 tok/s; generation 16.266823 / 13.412439.
+All four results complete, exit 0. No affinity warnings. Affinity works,
+but reliable elimination of the intermittent collapse remains unproven;
+64-worker generation still trails 32. All sessions completed; nothing
+benchmarking now. Full provenance, hashes, raw results, and caveats saved
+in benchmarks/LLAMA_CPU_RESULTS.md. Next: repeated controlled trials and
+targeted scheduler placement diagnostics, not unrelated hardware changes.
+
+## 2026-09-08: deterministic scheduler imbalance and candidate
+
+Original unpinned full sweep completed nine rows before the scheduler
+profiler panicked during 64-thread warm-up. The bounded profiler smoke
+test had worked earlier. Panic is storePageFault at 0xffffffc0208018b8,
+SystemProfiler::_AllocateBuffer+0x4c, CPU12/thread2027, interrupts disabled,
+printed leaf 0x7000000127ab68e7. Root cause of this mapping/translation
+failure is not proven. Do not rerun profiler on this image. Saved serial
+trace benchmarks/haiku-scheduler-profiler-panic-20260908.txt; incomplete
+sweep haiku-scheduler-repro-20260908.jsonl, empty switch capture not valid
+placement data. Added bounded scheduler_capture.cpp and trace analyzer;
+analyzer rejects empty/inconsistent captures.
+
+Recovered via relay off/on, same SD image, serial offset38348055. SSH
+returned. Samsung was read-only before panic and has not been written.
+No deployment or firmware change during recovery.
+
+Safer scheduler_balance_probe.c seeds two of 64 busy workers on CPU0,
+none on CPU63, warms for1sec, removes affinity, then samples for4sec.
+All three runs exited0 with B_OK affinity calls. Workers0/63 stayed only
+on CPU0, all others only on CPUs1..62; CPU63 received no probe worker.
+This is direct placement evidence independent of llama and profiler.
+Raw results in benchmarks/haiku-scheduler-balance-{probe,repeat}-20260908.txt.
+
+Prepared narrow kernel candidate: scheduler_cpu.h adds GetUncappedLoad;
+low_latency.cpp rebalance uses uncapped demand in its two comparisons.
+Other utilization consumers, heap keys, power-saving mode, margin, and
+affinity handling unchanged. Existing affinity/trap-migration fixes remain.
+Candidate build session18343, log /private/tmp/pioneer-scheduler-demand-build.log,
+payload /Volumes/HaikuBuildLocal/generated.riscv64/haiku-pioneer-bfs-scheduler-demand.img.
+Not deployed or runtime validated yet. Next: SD-only deployment through
+Linux after user save/safe/manual SD swap, then identical imbalance probe
+and unpinned llama tests. Preserve Samsung installation.
+
+Scheduler-demand image build subsequently completed, exit0. Payload
+SHA-256 01dc43b1e36671a53bf23be46587f503ed61af4c55b73ca50bbe51769bd9ed41;
+kernel SHA-256 ab47572fdb79946e2f0087cc33ccf517f0c7b87824fd15600317bcdaf512f186.
+EFI unchanged (477ccfeff4d309e8549d68fdd232f836d29e100e4858513005f077a64586bf05).
+Diff check passed. Awaiting safe shutdown/manual SD swap for SD-only test.
+Recovered Haiku is currently running; no benchmark is active on the board.

@@ -1,0 +1,257 @@
+cpu enabled active_percent
+0 1 99.80
+1 1 99.98
+2 1 100.00
+3 1 99.79
+4 1 100.00
+5 1 100.00
+6 1 99.87
+7 1 99.83
+8 1 1.72
+9 1 99.89
+10 1 99.99
+11 1 99.99
+12 1 99.89
+13 1 99.79
+14 1 99.98
+15 1 99.78
+16 1 99.91
+17 1 100.00
+18 1 100.02
+19 1 99.90
+20 1 100.00
+21 1 99.94
+22 1 99.97
+23 1 99.70
+24 1 99.79
+25 1 99.98
+26 1 99.97
+27 1 99.77
+28 1 99.85
+29 1 99.89
+30 1 99.84
+31 1 99.88
+32 1 99.86
+33 1 99.98
+34 1 99.89
+35 1 99.99
+36 1 99.83
+37 1 99.91
+38 1 99.98
+39 1 99.93
+40 1 99.81
+41 1 99.84
+42 1 99.85
+43 1 99.93
+44 1 99.78
+45 1 99.86
+46 1 99.84
+47 1 99.84
+48 1 99.86
+49 1 99.74
+50 1 99.64
+51 1 99.65
+52 1 99.80
+53 1 99.65
+54 1 99.75
+55 1 99.67
+56 1 99.75
+57 1 99.86
+58 1 99.98
+59 1 99.89
+60 1 99.98
+61 1 99.83
+62 1 99.72
+63 1 99.74
+Starting: 2 intervals of 2 seconds each
+  THID   TOTAL    USER  KERNEL %CPU        TEAM NAME THREAD NAME
+   891 1999.39 1990.00    8.00  1.6            llama libggml-cpu.so.0
+   885 1999.37 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   912 1999.37 1993.00    5.00  1.6            llama libggml-cpu.so.0
+   865 1999.35 1992.00    7.00  1.6            llama libggml-cpu.so.0
+   855 1999.26 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   853 1999.24 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   893 1999.23 1992.00    7.00  1.6            llama libggml-cpu.so.0
+   909 1999.23 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   883 1999.21 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   887 1999.18 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   874 1999.15 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   907 1999.09 1990.00    8.00  1.6            llama libggml-cpu.so.0
+   899 1998.96 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   873 1998.95 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   886 1998.92 1992.00    5.00  1.6            llama libggml-cpu.so.0
+   894 1998.87 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   892 1998.83 1992.00    5.00  1.6            llama libggml-cpu.so.0
+   861 1998.79 1992.00    6.00  1.6            llama libggml-cpu.so.0
+   913 1998.73 1992.00    6.00  1.6            llama libggml-cpu.so.0
+   862 1998.68 1995.00    3.00  1.6            llama libggml-cpu.so.0
+   857 1998.64 1988.00   10.00  1.6            llama libggml-cpu.so.0
+   882 1998.56 1988.00   10.00  1.6            llama libggml-cpu.so.0
+   870 1998.55 1992.00    5.00  1.6            llama libggml-cpu.so.0
+   859 1998.52 1990.00    8.00  1.6            llama libggml-cpu.so.0
+   864 1998.52 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   908 1998.48 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   901 1998.46 1990.00    8.00  1.6            llama libggml-cpu.so.0
+   897 1998.43 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   902 1998.40 1992.00    5.00  1.6            llama libggml-cpu.so.0
+   869 1998.39 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   856 1998.37 1995.00    3.00  1.6            llama libggml-cpu.so.0
+   866 1998.36 1992.00    5.00  1.6            llama libggml-cpu.so.0
+   906 1998.33 1990.00    8.00  1.6            llama libggml-cpu.so.0
+   877 1998.29 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   875 1998.28 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   858 1998.22 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   900 1998.20 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   878 1998.13 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   895 1998.10 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   911 1998.01 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   880 1998.01 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   905 1997.96 1991.00    6.00  1.6            llama libggml-cpu.so.0
+   898 1997.94 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   860 1997.92 1994.00    3.00  1.6            llama libggml-cpu.so.0
+   903 1997.80 1989.00    7.00  1.6            llama libggml-cpu.so.0
+   868 1997.76 1987.00    9.00  1.6            llama libggml-cpu.so.0
+   863 1997.72 1988.00    9.00  1.6            llama libggml-cpu.so.0
+   876 1997.66 1989.00    7.00  1.6            llama libggml-cpu.so.0
+   871 1997.61 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   851 1997.59 1991.00    6.00  1.6            llama libggml-cpu.so.0
+   881 1997.59 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   884 1997.56 1989.00    7.00  1.6            llama libggml-cpu.so.0
+   852 1997.52 1991.00    6.00  1.6            llama libggml-cpu.so.0
+   854 1997.32 1991.00    6.00  1.6            llama libggml-cpu.so.0
+   890 1997.24 1989.00    7.00  1.6            llama libggml-cpu.so.0
+   896 1997.12 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   850 1997.08 1989.00    7.00  1.6            llama llama-bench
+   867 1996.96 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   872 1996.42 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   889 1996.41 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   879 1995.95 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   904 1995.90 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   888 1000.18  997.00    2.00  0.8            llama libggml-cpu.so.0
+   910  998.32  995.00    2.00  0.8            llama libggml-cpu.so.0
+    70   14.06    0.00   14.00  0.0      kernel_team page daemon
+   296    8.69    5.00    2.00  0.0       app_server w:277:Deskbar
+   309    5.62    3.00    1.00  0.0          Deskbar w>Deskbar
+   917    1.33    0.00    1.00  0.0 top -d -i 2 -n 2 top
+   118    1.27    0.00    0.00  0.0        registrar timer_thread
+    68    0.99    0.00    0.00  0.0      kernel_team page scrubber
+    79    0.57    0.00    0.00  0.0      kernel_team usb explore
+    82    0.50    0.00    0.00  0.0      kernel_team xhci finish thre
+   302    0.47    0.00    0.00  0.0          Deskbar Expando Window W
+    81    0.38    0.00    0.00  0.0      kernel_team xhci event threa
+   286    0.36    0.00    0.00  0.0          Tracker w>Desktop
+   117    0.36    0.00    0.00  0.0        registrar message delivere
+   189    0.28    0.00    0.00  0.0      kernel_team rge intr handler
+   279    0.21    0.00    0.00  0.0          Tracker Tracker
+   233    0.19    0.00    0.00  0.0     input_server AddOnMonitor
+   225    0.18    0.00    0.00  0.0 media_addon_serv media_addon_serv
+   313    0.17    0.00    0.00  0.0          Tracker w>Tracker status
+    66    0.12    0.00    0.00  0.0      kernel_team kernel daemon
+   325    0.11    0.00    0.00  0.0          Tracker TrackerTaskLoop
+   186    0.07    0.00    0.00  0.0      kernel_team fbsd callout
+   196    0.07    0.00    0.00  0.0      kernel_team ethernet link st
+   100    0.07    0.00    0.00  0.0      kernel_team media checker
+    67    0.06    0.00    0.00  0.0      kernel_team resource resizer
+   200    0.04    0.00    0.00  0.0      kernel_team /dev/net/rtl8125
+   199    0.02    0.00    0.00  0.0      kernel_team /dev/net/rtl8125
+    77    0.02    0.00    0.00  0.0      kernel_team block notifier/w
+    72    0.02    0.00    0.00  0.0      kernel_team low resource man
+    69    0.01    0.00    0.00  0.0      kernel_team page writer: def
+   149    0.01    0.00    0.00  0.0      kernel_team net timer
+------ 125924.00 125400.00  524.00 98.3% TOTAL ( 1.6% idle time,  0.1% unknown)  THID   TOTAL    USER  KERNEL %CPU        TEAM NAME THREAD NAME
+   878 1999.41 1995.00    3.00  1.6            llama libggml-cpu.so.0
+   869 1999.38 1995.00    4.00  1.6            llama libggml-cpu.so.0
+   898 1999.32 1992.00    6.00  1.6            llama libggml-cpu.so.0
+   868 1999.32 1995.00    3.00  1.6            llama libggml-cpu.so.0
+   867 1999.28 1992.00    6.00  1.6            llama libggml-cpu.so.0
+   862 1999.27 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   875 1999.27 1992.00    6.00  1.6            llama libggml-cpu.so.0
+   911 1999.27 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   894 1999.25 1993.00    5.00  1.6            llama libggml-cpu.so.0
+   873 1999.24 1992.00    7.00  1.6            llama libggml-cpu.so.0
+   850 1999.15 1991.00    7.00  1.6            llama llama-bench
+   876 1999.15 1995.00    3.00  1.6            llama libggml-cpu.so.0
+   860 1999.10 1988.00   10.00  1.6            llama libggml-cpu.so.0
+   907 1999.10 1992.00    6.00  1.6            llama libggml-cpu.so.0
+   864 1999.09 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   882 1999.08 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   885 1999.05 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   866 1998.97 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   854 1998.96 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   900 1998.94 1995.00    3.00  1.6            llama libggml-cpu.so.0
+   913 1998.92 1990.00    8.00  1.6            llama libggml-cpu.so.0
+   899 1998.82 1991.00    6.00  1.6            llama libggml-cpu.so.0
+   897 1998.75 1993.00    5.00  1.6            llama libggml-cpu.so.0
+   912 1998.70 1993.00    5.00  1.6            llama libggml-cpu.so.0
+   853 1998.69 1991.00    7.00  1.6            llama libggml-cpu.so.0
+   893 1998.55 1988.00   10.00  1.6            llama libggml-cpu.so.0
+   883 1998.54 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   855 1998.39 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   890 1998.36 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   874 1998.26 1988.00    9.00  1.6            llama libggml-cpu.so.0
+   863 1998.14 1988.00    9.00  1.6            llama libggml-cpu.so.0
+   892 1998.13 1989.00    9.00  1.6            llama libggml-cpu.so.0
+   857 1998.10 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   872 1998.07 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   880 1997.93 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   889 1997.86 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   884 1997.80 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   902 1997.68 1989.00    7.00  1.6            llama libggml-cpu.so.0
+   879 1997.64 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   865 1997.64 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   908 1997.61 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   861 1997.60 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   856 1997.58 1987.00    9.00  1.6            llama libggml-cpu.so.0
+   871 1997.56 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   891 1997.53 1989.00    8.00  1.6            llama libggml-cpu.so.0
+   895 1997.52 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   859 1997.49 1990.00    6.00  1.6            llama libggml-cpu.so.0
+   896 1997.48 1990.00    7.00  1.6            llama libggml-cpu.so.0
+   909 1997.48 1986.00   11.00  1.6            llama libggml-cpu.so.0
+   901 1997.43 1988.00    9.00  1.6            llama libggml-cpu.so.0
+   870 1997.30 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   886 1997.22 1987.00   10.00  1.6            llama libggml-cpu.so.0
+   906 1997.14 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   877 1997.13 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   858 1996.70 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   905 1996.60 1984.00   11.00  1.6            llama libggml-cpu.so.0
+   903 1996.59 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   881 1996.42 1986.00   10.00  1.6            llama libggml-cpu.so.0
+   852 1996.12 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   887 1995.98 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   851 1995.76 1985.00   10.00  1.6            llama libggml-cpu.so.0
+   904 1994.55 1981.00   12.00  1.6            llama libggml-cpu.so.0
+   910 1000.71  997.00    3.00  0.8            llama libggml-cpu.so.0
+   888  997.33  994.00    3.00  0.8            llama libggml-cpu.so.0
+    70   13.60    0.00   13.00  0.0      kernel_team page daemon
+   296    8.63    5.00    2.00  0.0       app_server w:277:Deskbar
+   309    5.85    3.00    2.00  0.0          Deskbar w>Deskbar
+   917    3.42    1.00    1.00  0.0 top -d -i 2 -n 2 top
+    68    3.30    0.00    3.00  0.0      kernel_team page scrubber
+   916    2.52    0.00    2.00  0.0 sshd-session -D  sshd-session
+   189    1.48    0.00    1.00  0.0      kernel_team rge intr handler
+   118    1.25    0.00    0.00  0.0        registrar timer_thread
+    79    0.61    0.00    0.00  0.0      kernel_team usb explore
+    82    0.53    0.00    0.00  0.0      kernel_team xhci finish thre
+    81    0.49    0.00    0.00  0.0      kernel_team xhci event threa
+   302    0.46    0.00    0.00  0.0          Deskbar Expando Window W
+   286    0.38    0.00    0.00  0.0          Tracker w>Desktop
+   117    0.37    0.00    0.00  0.0        registrar message delivere
+   279    0.21    0.00    0.00  0.0          Tracker Tracker
+   233    0.19    0.00    0.00  0.0     input_server AddOnMonitor
+   225    0.18    0.00    0.00  0.0 media_addon_serv media_addon_serv
+   313    0.17    0.00    0.00  0.0          Tracker w>Tracker status
+    66    0.14    0.00    0.00  0.0      kernel_team kernel daemon
+   199    0.13    0.00    0.00  0.0      kernel_team /dev/net/rtl8125
+   200    0.12    0.00    0.00  0.0      kernel_team /dev/net/rtl8125
+   187    0.11    0.00    0.00  0.0      kernel_team fast taskq
+   325    0.10    0.00    0.00  0.0          Tracker TrackerTaskLoop
+   186    0.07    0.00    0.00  0.0      kernel_team fbsd callout
+   196    0.07    0.00    0.00  0.0      kernel_team ethernet link st
+    67    0.07    0.00    0.00  0.0      kernel_team resource resizer
+   100    0.07    0.00    0.00  0.0      kernel_team media checker
+   149    0.05    0.00    0.00  0.0      kernel_team net timer
+    77    0.02    0.00    0.00  0.0      kernel_team block notifier/w
+    87    0.01    0.00    0.00  0.0      kernel_team page writer: /de
+    90    0.01    0.00    0.00  0.0      kernel_team page writer: /de
+------ 125923.00 125362.00  561.00 98.3% TOTAL ( 1.6% idle time,  0.1% unknown)
