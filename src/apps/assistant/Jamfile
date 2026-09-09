@@ -1,0 +1,6 @@
+SubDir HAIKU_TOP src apps assistant ;
+
+Application HaikuAssistant : Assistant.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]
+	: Assistant.rdef
+	;
