@@ -1,0 +1,5 @@
+llama-bench: benchmark 1/1: starting
+llama-bench: benchmark 1/1: warmup generation run
+llama-bench: benchmark 1/1: generation run 1/3
+llama-bench: benchmark 1/1: generation run 2/3
+llama-bench: benchmark 1/1: generation run 3/3

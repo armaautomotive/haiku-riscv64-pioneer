@@ -545,3 +545,125 @@ kernel SHA-256 ab47572fdb79946e2f0087cc33ccf517f0c7b87824fd15600317bcdaf512f186.
 EFI unchanged (477ccfeff4d309e8549d68fdd232f836d29e100e4858513005f077a64586bf05).
 Diff check passed. Awaiting safe shutdown/manual SD swap for SD-only test.
 Recovered Haiku is currently running; no benchmark is active on the board.
+
+Scheduler-demand payload deployed via Linux to verified SD /dev/mmcblk1
+serial0x0000e752 (31299993600 bytes), p2 only. Backup:
+/mnt/ssd/haiku-deploy/haiku-pioneer-bfs-before-20260909T040948Z.img.gz.
+Complete 300MiB readback matched01dc43b1... . Firmware and Samsung untouched.
+Linux shutdown -h now completed; waited10sec, then relay on (no relay off).
+Candidate SD boot serial offset38714189. Runtime test pending.
+
+Candidate boot reached SSH. Active packaged kernel SHA-256 is
+3fe93a8af0fddadfa226ced3abf504e7b1e1ad4d6baa523849e005819101e110,
+matching packages_build/regular/hpkg_-haiku.hpkg/contents/kernel_riscv64.
+The earlier ab47572f... value is the unstripped build artifact, not the
+deployed file. Affinity smoke PASS (100 migrations plus wakeups).
+All three deterministic probes now move one of the CPU0 pair to CPU63;
+the three pre-fix probes did not. Raw output:
+benchmarks/haiku-scheduler-demand-probes-20260908.txt. Kernel fix validated
+for this seeded imbalance; broad stability/llama results still pending.
+
+Samsung mounted read-only at /Haiku1. Original native scalar llama full
+4/8/16/32/64 sweep running as session12692, no affinity or profiler.
+benchmarks/haiku-scheduler-demand-full-20260908.{jsonl,stderr}.
+Do not reboot or start a competing workload until that run finishes.
+
+Session12692 subsequently completed all ten rows, exit0. No benchmark
+remains running. Full results added to benchmarks/LLAMA_CPU_RESULTS.md.
+Prompt/generation tok/s by workers:
+4:4.603126/3.148009; 8:8.827817/6.155621;16:15.538612/11.366162;
+32:23.997733/12.939131;64:35.590468/10.610063 (r3 each).
+No severe collapse in this unpinned, unprofiled sweep. Deterministic
+imbalance fix confirmed; broad stability and Linux comparison remain.
+Current state: candidate SD Haiku running, Samsung read-only at /Haiku1,
+SD inserted. No firmware/Samsung writes or git commit/push. Next Linux
+comparison requires user safe shutdown/manual SD removal. Do not rerun
+the system profiler until its separate mapping fault is understood.
+
+## 2026-09-09: Linux scalar comparison in progress
+
+User removed SD while Haiku was still running. SSH confirmed Haiku;
+sync/shutdown blocked on removed-card write timeouts. Saved results are on
+Mac and Samsung was read-only. Relay off/on used to recover and boot Linux.
+Do not assume the SD filesystem was cleanly unmounted; redeploy/check it
+before relying on that test image again. SD remains removed.
+
+Linux SSH verified: Fedora riscv64 kernel6.1.31, GCC13.2.1, CMake3.27.4,
+64 CPUs, four NUMA nodes. Environment saved in
+benchmarks/linux-environment-20260909.txt. New isolated staging directory:
+/mnt/ssd/haiku-deploy/llama-linux-c060ca-N3stW2.
+Transferred exact c060ca974c773c7c3d17fd1b66dc9d312bc292c0 git archive and
+same Qwen3-0.6B-Q8_0 model from Mac, both hashes verified by build script.
+Model retains .gguf.part filename but is the complete verified639446688-byte
+file, SHA9465e63a... . No Samsung/SD writes or system-package installation.
+
+benchmarks/build_linux_scalar.sh and linux-scalar-generic.cmake reproduce
+build: native /usr/bin/gcc/g++, Release, rv64gc/lp64d, CPU_GENERIC, shared
+libs, OpenMP/RVV/XTheadVector off. CMAKE_PROJECT_INCLUDE overrides only
+processor dispatch to match Haiku's generic backend; actual compilers are
+native RISC-V Linux. Source archive is unmodified upstream revision;
+Haiku-only compatibility edits are not needed on Linux. GCC version/libc/
+OS/NUMA differences must be recorded in comparisons.
+Build session73569, log benchmarks/linux-scalar-build-20260909.log,
+targets llama-bench and llama-completion, parallel32. Benchmark not started
+yet. Linux remains running. Next: verify build flags, finish build, run
+same unpinned4/8/16/32/64 sweep and save comparison in LLAMA_CPU_RESULTS.md.
+
+Linux build session73569 finished all261 Ninja steps, exit0. Exact CPU
+compiler command saved in benchmarks/linux-cpu-compile-command-20260909.txt,
+confirming CPU_GENERIC, rv64gc/lp64d, O3, no OpenMP/vector flags. Full scalar
+sweep started as session82346, outputs
+benchmarks/linux-scalar-full-20260909.{jsonl,stderr}. No concurrent workload
+or profiler. Old blocked Haiku shutdown SSH client53412 was identified and
+closed locally; its session74908 ended255, not a clean Haiku shutdown.
+Linux remains running; SD out; Samsung untouched. Await benchmark completion.
+
+Linux sweep session82346 completed all10 rows, exit0. Through32 workers,
+performance closely tracks Haiku. At64 Linux unpinned prompt8.912730 tok/s,
+generation3.275249 +/-3.191252 (samples0.587546/6.80228/2.43592).
+Fresh unpinned64 r3 session22821 completed2.053593 +/-2.173011.
+Pinned64 r3 session43530 completed9.443906 +/-0.248929. Short mask snapshot
+missed finished process (session18864 exit1); no placement proof in that file.
+Long pinned64 n128/r3 session1460 completed8.889666 +/-0.711164; snapshot
+session98094 verified64 distinct single-CPU masks0..63. All benchmark
+processes exited0. No benchmark or build remains running.
+
+Full comparison and caveats in benchmarks/LLAMA_CPU_RESULTS.md; raw Linux
+results linux-scalar-full/64-repeat/64-pinned/64-pinned-long-20260909.
+Do not claim general Haiku superiority from Linux's slow unpinned outliers.
+Current scalar performance is broadly competitive; neither tested setup
+scales generation better at64 than32. Next optimization candidates are
+NUMA/worker placement and vector backend, with separate correctness checks.
+Current machine state: Linux running, SD out, Samsung unchanged/unmounted.
+No system-wide Linux install, kernel change, or git commit/push performed.
+
+## Native assistant prototype (after Linux scalar comparison)
+
+User approved temporarily switching from performance work to a native local
+chat application, later global Ctrl+Space and permission-checked MCP tools.
+Added src/apps/assistant (HaikuAssistant Jam target, app resources, README),
+tools/pioneer/build_assistant.sh and tools/pioneer/haiku-assistant.sh.
+No llama.cpp, kernel, boot, image, or Samsung changes for this task.
+
+Prototype: native conversation/input window, background posix_spawn of existing
+llama-completion, separate output/diagnostic pipes, streamed snapshots, Stop,
+bounded recent conversation context, explicit Qwen3 non-thinking prompt.
+Model reloads each turn; no global shortcut, resident backend, MCP, or automatic
+system package inclusion yet. Full limitations and hardware checklist in README.
+
+Cross-build passes -Wall -Wextra -Werror using SDK system headers. Resource-bearing
+RISC-V binary /private/tmp/HaikuAssistant SHA256:
+dcf03b26ff79e2cba922d0621b2e16633a6167ed0a112fe64b5869bb416beaa3.
+Dependencies libbe.so, libstdc++.so.6, libroot.so. Shell syntax and diff checks
+pass; missing-app launcher error checked. Linux matching-model command smoke
+test session69583 exited0 with a short greeting. Native UI/cancellation/relaunch
+still need Haiku testing; Linux test is not proof of native GUI correctness.
+
+Linux SSH was verified running. SD remains out per last user report. No reboot
+or deploy performed. SD was previously removed before a clean Haiku shutdown;
+check/redeploy it before relying on it for the next boot. Samsung unchanged.
+
+Night shutdown requested by user: verified Linux over SSH and issued
+sudo -n shutdown -h now successfully (session30716 exit0). No relay off/on
+or reset used. Resume with assistant hardware testing; source and cross-built
+binary are saved on the Mac. SD last reported out; confirm before next boot.

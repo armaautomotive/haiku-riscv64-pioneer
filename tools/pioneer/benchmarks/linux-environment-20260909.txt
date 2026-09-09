@@ -1,0 +1,20 @@
+Linux fedora-riscv 6.1.31 #1 SMP Thu Jun 15 01:30:00 CST 2023 riscv64 GNU/Linux
+Architecture:        riscv64
+Byte Order:          Little Endian
+CPU(s):              64
+On-line CPU(s) list: 0-63
+NUMA node(s):        4
+NUMA node0 CPU(s):   0-7,16-23
+NUMA node1 CPU(s):   8-15,24-31
+NUMA node2 CPU(s):   32-39,48-55
+NUMA node3 CPU(s):   40-47,56-63
+gcc (GCC) 13.2.1 20230728 (Red Hat 13.2.1-1)
+cmake version 3.27.4
+MemTotal:       131976904 kB
+MemFree:        124433252 kB
+MemAvailable:   125060516 kB
+Buffers:           55656 kB
+Cached:          1440116 kB
+SwapCached:            0 kB
+Active:           252364 kB
+Inactive:        6389304 kB

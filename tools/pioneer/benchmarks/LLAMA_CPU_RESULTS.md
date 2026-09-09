@@ -4,10 +4,21 @@ Recorded: 2026-09-08.
 
 ## Status
 
-All ten test results have been recorded. The benchmark exited successfully
-with status 0. Each test includes three measured repetitions.
+Latest: the uncapped-demand scheduler candidate passed three seeded
+imbalance probes and the 100-migration regression test. Its complete
+unpinned llama sweep exited 0: 32-worker generation 12.939 tokens/s,
+64-worker generation 10.610 tokens/s, with no severe collapse in this run.
+Linux comparison is also complete. Through 32 workers, matched scalar
+performance is similar. Linux's unpinned 64-worker runs were variable;
+explicit placement gave 9.444 tokens/s over 32-token generation, while
+the latest unpinned Haiku sweep gave 10.610. These are limited trials, not
+a general OS ranking. See the sections below for settings and caveats.
 
-## Results
+## Original baseline results
+
+The first table below is the historical Haiku baseline, before the scheduler
+changes. Current scheduler-candidate results and the Linux comparison are
+recorded later in this document.
 
 Throughput is tokens per second, reported as mean +/- sample standard
 deviation across three repetitions. Higher is better.
@@ -94,6 +105,106 @@ be claimed from this comparison.
 
 ## Next experiments
 
+### Linux matched scalar comparison
+
+Built the exact unmodified `c060ca974c773c7c3d17fd1b66dc9d312bc292c0`
+source archive on the same Pioneer under Fedora Linux, kernel 6.1.31.
+Native GCC 13.2.1 and CMake 3.27.4; Haiku used GCC 13.2.0 and CMake 3.31.8.
+Both builds use shared libraries, Release/O3, CPU_GENERIC, and no OpenMP,
+RVV, or XTheadVector. Linux explicitly uses `-march=rv64gc -mabi=lp64d`.
+The comparison-only `linux-scalar-generic.cmake` sets CMake's processor
+dispatch to `other` to select the same generic backend as Haiku. The actual
+compiler remains native RISC-V Linux. No Linux source modifications.
+
+Linux reports 64 online CPUs across four NUMA nodes, 131976904 KiB RAM.
+No NUMA binding, worker affinity, governor change, or profiler is applied.
+No cpufreq policy0 data was exposed by the inspected sysfs paths. This is
+an application/OS comparison, not an isolation of kernel scheduling alone:
+libc, compiler patch release, memory policy, and other OS behavior differ.
+
+Source and model are in a separate staging directory on the R3SL SSD:
+`/mnt/ssd/haiku-deploy/llama-linux-c060ca-N3stW2`. The Samsung disk and SD
+are not written. Model filename is `Qwen3-0.6B-Q8_0.gguf.part`, but it is
+the complete verified 639446688-byte model with SHA-256 `9465e63a...`.
+Source archive SHA-256:
+`ef1286b5bc643e2394957f655f05be468bbf505306cb5a9e2508ac2746957528`.
+
+Reproduction: `build_linux_scalar.sh STAGING_DIRECTORY` verifies both
+inputs and builds the benchmark and completion tool. Build exited 0.
+Exact compile command, build log, and environment are saved in
+`linux-cpu-compile-command-20260909.txt`, `linux-scalar-build-20260909.log`,
+and `linux-environment-20260909.txt`.
+
+```sh
+comparison=/mnt/ssd/haiku-deploy/llama-linux-c060ca-N3stW2
+"$comparison/build/bin/llama-bench" \
+  -m "$comparison/Qwen3-0.6B-Q8_0.gguf.part" \
+  -t 4,8,16,32,64 -p 128 -n 32 -b 64 -ub 64 -ngl 0 \
+  -r 3 -o jsonl --progress
+```
+
+Raw results: `linux-scalar-full-20260909.{jsonl,stderr}`.
+
+The Linux sweep completed all ten tests, exit 0. Comparison against the
+uncapped-demand Haiku candidate (mean tokens/second, three repetitions):
+
+| Workers | Haiku prompt | Linux prompt | Haiku generation | Linux generation |
+| ---: | ---: | ---: | ---: | ---: |
+| 4 | 4.603126 | 4.537783 | 3.148009 | 3.185387 |
+| 8 | 8.827817 | 8.558674 | 6.155621 | 6.203492 |
+| 16 | 15.538612 | 15.589630 | 11.366162 | 11.619844 |
+| 32 | 23.997733 | 24.739234 | 12.939131 | 12.454231 |
+| 64 | 35.590468 | 8.912730 | 10.610063 | 3.275249 |
+
+Linux's 64-worker generation was highly variable: 0.587546, 6.80228,
+and 2.43592 tokens/s (standard deviation 3.191252). Its average is not a
+reliable estimate of best achievable Linux performance. Through 32 workers,
+both systems are in broadly the same range. A lightweight `ps -L` snapshot
+during the final test showed two workers last assigned to CPU 60; PSR is
+last-CPU metadata, not simultaneous execution proof. Snapshot saved in
+`linux-scalar64-thread-snapshot-20260909.txt`. This diagnostic may slightly
+perturb that test and is not a root-cause diagnosis. Fresh-process and
+explicit-affinity controls are required before a high-thread-count verdict.
+
+Model storage differs (Linux staging R3SL SSD versus Samsung on Haiku);
+these are measured inference repetitions after warm-up, not model-loading
+or storage-speed benchmarks.
+
+#### Linux 64-worker controls
+
+All controls completed, exit 0; same native scalar binary and model:
+
+| Test | Generation length | Mean tokens/s | Sample standard deviation |
+| --- | ---: | ---: | ---: |
+| Full-sweep unpinned | 32 | 3.275249 | 3.191252 |
+| Fresh-process unpinned | 32 | 2.053593 | 2.173011 |
+| Strict per-worker affinity | 32 | 9.443906 | 0.248929 |
+| Strict per-worker affinity, longer run | 128 | 8.889666 | 0.711164 |
+
+Fresh unpinned samples: 1.13239, 4.53546, 0.49293 tokens/s. Short pinned
+samples: 9.20872, 9.41839, 9.70461. Longer pinned samples: 8.10674,
+9.49566, 9.06660. Pinned tests add only `--cpu-mask ffffffffffffffff
+--cpu-strict 1`; the longer control also uses `-n 128`. All use r3.
+The longer test's /proc status snapshot verifies 64 distinct single-CPU
+masks covering CPUs 0..63. The short test ended before its snapshot; its
+empty mask file is not verification evidence. No affinity errors reported.
+
+Raw controls: `linux-scalar64-repeat-20260909.{jsonl,stderr}`,
+`linux-scalar64-pinned-20260909.{jsonl,stderr}`,
+`linux-scalar64-pinned-long-20260909.{jsonl,stderr}`, and
+`linux-scalar64-pinned-long-masks-20260909.txt`.
+
+Interpretation: placement sensitivity also affects this Linux scalar
+workload. Do not compare only its slow unpinned outliers with Haiku and
+claim a universal Haiku speedup. The current Haiku scheduler is competitive
+in these limited matched-backend tests. Neither OS demonstrates better
+generation throughput at 64 workers than at 32 under the tested settings.
+Further work should distinguish NUMA placement, synchronization overhead,
+and vector-kernel performance; this data alone does not isolate them.
+The optimized/native RISC-V backend and vector extensions were deliberately
+not benchmarked. Both benchmark binaries are available in Linux's staging
+directory, but were not installed system-wide. No benchmark remains active.
+
 ### Scheduler reproduction and profiler failure
 
 Ran the original unpinned 4/8/16/32/64 sequence using the matched baseline
@@ -145,7 +256,53 @@ comparisons. Existing capped utilization, heap keys, affinity checks,
 power-saving policy, and 20% migration margin remain unchanged. Example:
 two fully busy workers represent demand 2000, not capped 1000; against an
 idle core, the existing threshold can then permit moving a 1000-demand
-worker. Candidate runtime validation is pending; no performance fix claimed.
+worker. Runtime validation at that point was pending.
+
+#### Uncapped-demand candidate: deterministic test passed
+
+Deployed only to the SD. Full payload readback matched
+`01dc43b1e36671a53bf23be46587f503ed61af4c55b73ca50bbe51769bd9ed41`.
+Rollback on Linux:
+`/mnt/ssd/haiku-deploy/haiku-pioneer-bfs-before-20260909T040948Z.img.gz`.
+The active `/boot/system/kernel_riscv64` hash matches the packaged candidate:
+`3fe93a8af0fddadfa226ced3abf504e7b1e1ad4d6baa523849e005819101e110`.
+The unstripped build artifact has a different hash (`ab47572f...`);
+compare deployed kernels against the packaged artifact, not that file.
+
+The affinity smoke test passed all 100 migrations and sleep/wakeup checks.
+All three seeded-imbalance probes completed successfully. In runs 1 and 2,
+worker 63 moved from CPU 0 to CPU 63; in run 3, worker 0 moved instead.
+Only about 1460-1610 early samples remained on the shared CPU before the
+moving worker accumulated about 1.43 million samples on CPU 63. Before
+this change, both workers stayed on CPU 0 for the entire four-second
+unrestricted phase in all three runs. This is a confirmed improvement in
+the deterministic scheduler test, not yet a llama throughput claim.
+Evidence: `haiku-scheduler-demand-probes-20260908.txt`.
+
+Started the original native scalar llama runtime, with no affinity options
+and no profiler, using `-t 4,8,16,32,64 -p 128 -n 32 -b 64 -ub 64 -ngl 0
+-r 3 -o jsonl --progress`. Samsung is mounted read-only at `/Haiku1`.
+Results: `haiku-scheduler-demand-full-20260908.{jsonl,stderr}`.
+
+The sweep subsequently completed all ten tests, exit 0. Three measured
+repetitions per row; mean +/- sample standard deviation, tokens/second:
+
+| Workers | Prompt processing (128 tokens) | Generation (32 tokens) |
+| ---: | ---: | ---: |
+| 4 | 4.603126 +/- 0.007067 | 3.148009 +/- 0.007362 |
+| 8 | 8.827817 +/- 0.004662 | 6.155621 +/- 0.011144 |
+| 16 | 15.538612 +/- 0.015370 | 11.366162 +/- 0.034655 |
+| 32 | 23.997733 +/- 0.003516 | 12.939131 +/- 0.058303 |
+| 64 | 35.590468 +/- 0.557512 | 10.610063 +/- 0.448594 |
+
+The deterministic imbalance is corrected and the severe collapse did not
+occur in this sweep. This does not prove all intermittent scheduling
+problems are eliminated. Earlier healthy unpinned runs were also fast;
+do not present comparison against a prior slow outlier as a universal
+speedup. Generation still favors 32 workers over 64. Prompt processing
+benefits from 64. The profiler mapping fault remains unresolved and was
+not exercised in this run. No benchmark remains running. Next: equivalent
+Linux baseline before further optimization or distribution packaging.
 
 ### llama startup affinity experiment
 
