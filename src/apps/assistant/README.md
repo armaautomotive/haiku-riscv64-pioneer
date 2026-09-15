@@ -40,6 +40,11 @@ CPU threads default to the lesser of 32 or the available CPU count. Change the
 saved value in the GUI or with `assistantctl threads N`; it applies to the next
 request without reloading the model. Context is 4,096 tokens, batches are 64,
 and the maximum response is 256 tokens.
+The Apply button saves `~/config/settings/HaikuAssistant_settings`. Both prompt
+processing and generation use this count; an in-flight request keeps its old
+count. This controls worker threads, not CPU affinity or every service helper
+thread. Valid range is 1 through the available CPU count. SD and Samsung
+installations keep separate settings on their respective boot volumes.
 The GUI trims older completed turns above 3,000 bytes and limits input to 2,000
 bytes. The service validates actual token count and rejects oversized context.
 Cancelled/failed replies are not added to subsequent GUI context.

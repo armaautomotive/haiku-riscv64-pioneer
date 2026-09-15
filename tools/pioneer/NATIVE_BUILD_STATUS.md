@@ -811,3 +811,14 @@ service d7329b2a8418d3e4d44e1e918997b357ddb7129b13ee6ad5c8a987b6e1304aa0;
 shortcut c0d57845e49da39c642d677ecfde2df98901ad2fb9d489ac5576304cdef548c3;
 tools 877f8e5dff03256d10eeef6628ee1e32614af14e9fafec9f3406980c747296f8;
 tools control 0bbc801f01151352f201151935e9cc9b1b23af54d288b98f1566bce27c938af2.
+
+CPU-settings deployment verified on SD: installed GUI/service hashes match the
+above; assistantctl SHA8a6da17119160b687c81dcf10d07eebcda8ba0ab5c1065d8d177c423ae5f3d58.
+New service defaulted32/max64. Counts0 and65 rejected. Short inference at4,
+then32 succeeded on the same team1583/model_loads1; status confirmed each
+last_request_threads count. Saved32 survived service restart: team1731 ready1,
+busy0, cpu_threads32. Settings file /boot/home/config/settings/HaikuAssistant_settings.
+Backups /boot/home/HaikuAssistant.before-cpu-settings,
+HaikuAssistantService.before-cpu-settings, assistantctl.before-cpu-settings.
+Old open GUI was not killed; close/reopen to see CPU threads / Apply controls.
+GUI interaction still needs user confirmation. Samsung untouched, no reboot.
