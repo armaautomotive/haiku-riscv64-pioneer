@@ -667,3 +667,147 @@ Night shutdown requested by user: verified Linux over SSH and issued
 sudo -n shutdown -h now successfully (session30716 exit0). No relay off/on
 or reset used. Resume with assistant hardware testing; source and cross-built
 binary are saved on the Mac. SD last reported out; confirm before next boot.
+
+## Assistant resident-service update, 2026-09-15
+
+Linux boot verified with /Users/arma/.ssh/known_hosts.old (existing saved key).
+SD 0x0000e752 inserted; firmware bbff6ac04... and EFI 477ccfef... unchanged.
+Clean Linux shutdown then ten-second wait and relay on. Space watcher fired,
+but this boot ultimately selected SD, not Samsung; /boot is /dev/disk/mmc/0/1.
+Haiku host fingerprint verified against generated.pioneer/ssh public key:
+SHA256:8eyC1ZQLmJwM6moJpEMuj5CFOcR9B672b8TNsosuFSs.
+Known-host file restored at /private/tmp/pioneer-haiku-verified-known-hosts.
+Samsung mounted read-only at /Haiku1 (/dev/disk/scsi/0/3/0/0).
+
+Original chat GUI installed on SD and user confirmed it works. User requested
+resident inference plus OS-wide shortcut. Implemented native BApplication
+service using installed llama shared libraries, message IPC, bounded requests,
+fresh per-request KV/sampler state, cancellation and persistent model/context.
+GUI starts service on first launch; service survives GUI exit. No automatic
+boot preload yet. Ctrl+Space input filter asynchronously launches/toggles GUI.
+No kernel, firmware, llama source, Samsung, or existing Shortcuts changes.
+
+Cross-build outputs and installed hashes:
+HaikuAssistant: 7cd49d963b25124ea37c3e1909b0cf5c5531d19735ab3987118b0db3acbbf3c7
+HaikuAssistantService: 902b64264444db81bb76c4c85fc02e7ef0a8bcdb0e3cde775b1aea0dd715c82b
+HaikuAssistantShortcut: c0d57845e49da39c642d677ecfde2df98901ad2fb9d489ac5576304cdef548c3
+Control executable installed as /boot/home/config/non-packaged/bin/assistantctl.
+Native libraries copied for cross-linking to /private/tmp/pioneer-assistant-libs.
+Service running from /tmp/HaikuAssistantService, team598; log /tmp/assistant-service.log.
+Permanent copy installed under non-packaged/servers/HaikuAssistantService.
+
+Two short asks, cancellation, and another successful ask all left team598,
+ready=1 busy=0 model_loads=1. Sessions27570/19991 completed0. listimage confirms
+shortcut image6817 loaded into input_server team211. No input restart.
+Old GUI team546 still running as of last check. User asked to close it before
+using Ctrl+Space to launch new version; physical shortcut/new GUI confirmation
+pending. Backup non-packaged/apps/HaikuAssistant.before-resident-20260915.
+See src/apps/assistant/README.md for current limitations and packaging work.
+
+User confirmed updated GUI/shortcut work and approved Samsung deployment.
+Verified Samsung /Haiku1 is /dev/disk/scsi/0/3/0/0, 111.8GiB. Stopped idle
+service598, unmounted normally and remounted writable. No target assistant
+files existed; deployment refused overwrites and added only five files under
+/Haiku1/home/config/non-packaged: apps/HaikuAssistant,
+servers/HaikuAssistantService, add-ons/input_server/filters/HaikuAssistantShortcut,
+bin/assistantctl, bin/haiku-assistant. First three hashes match above.
+Control SHA e98fe0a428c821700dc75d24271fa1dcc009d15a2b23074ed0f16519563a3997.
+Launcher SHA bf92f61a5cde61ecc3c55b44092c73b802f05893109519db4def10bf62fb162c
+(tools/pioneer/haiku-assistant.sh, Samsung /boot paths, not SD launcher).
+All destination hashes verified. Synced, unmounted and remounted Samsung
+read-only (device9). Restarted SD-installed service as team877. No kernel,
+bootloader, runtime/model or existing user settings changed. No reboot.
+Samsung-boot validation remains pending. Proposed system-tools/MCP service
+has not been implemented; this deployment contains only the working chat suite.
+
+## Native system-tools service, 2026-09-15
+
+User requested MCP server, then clarified "or service". Implemented native
+HaikuAssistantTools background BApplication and haiku-tools CLI. This is not
+MCP/JSON-RPC and not yet connected to Qwen's automatic tool selection. Source:
+src/apps/assistant/ToolsService.cpp, ToolsControl.cpp, ToolsProtocol.h,
+ToolsService.rdef, TOOLS.md; Jam/build_assistant.sh targets added.
+
+Tools: system_info, list_apps, list_windows, launch_app (Terminal/StyledEdit/
+DeskCalc/WebPositive only, no args), move_window, resize_window, focus_window.
+Mutations require native one-shot approval, default Deny, 60-second expiry.
+Random nonce binds response, one pending action, exact target revalidation,
+on-screen bounds, immovable/unresizable checks; no shell or filesystem tools.
+Request/list limits and bounded IPC replies. Local consent gate, not sandbox.
+
+Read-only native tests passed, reporting64 CPUs and136289968128 bytes total.
+Unknown shell tool, /bin/sh launch and nonexistent-window requests rejected.
+Initial approval test exposed BMessage copying strips synchronous reply flags;
+fixed using DetachCurrentMessage with exactly-once reply/delete after consent.
+Approved DeskCalc launch succeeded, observed team985/token24. User confirmed
+seeing permission prompt. Move request to100,100 was denied or expired and
+list_windows confirmed unchanged frame1020,691,1242,832. Thus approved launch
+and denied/expired mutation tested; successful move/resize/focus still untested.
+
+Final service SHA6f80a9404cb3b1aca52812af8db2571f95ad3e9659cd76050e77035602538192.
+CLI SHA0bbc801f01151352f201151935e9cc9b1b23af54d288b98f1566bce27c938af2.
+Installed SD paths non-packaged/servers/HaikuAssistantTools, bin/haiku-tools.
+Previous test build backup /boot/home/HaikuAssistantTools-before-bounded-replies.
+Service log /tmp/assistant-tools.log. Final build read-only/allowlist smoke tests
+rerun after activation. Build and diff/shell checks passed. Samsung not changed
+by this tools-service work; earlier chat/service/shortcut deployment remains.
+Current OS still SD Haiku; Samsung /Haiku1 read-only. No reboot/kernel/firmware
+change, git commit or push. Next: connect structured chat tool requests/results
+to native IPC while preserving approval; actual MCP adapter remains optional.
+
+Final tools service is team1031. Process inspection confirmed deployment shell
+and sync had exited; session57535 remains open because CLI auto-launch via
+BRoster inherited the SSH descriptors. Service is functional, not a hung sync.
+For clean remote management, start the service explicitly with stdin=/dev/null
+and stdout/stderr redirected to /tmp/assistant-tools.log before using CLI.
+
+## Chat tool bridge integration, 2026-09-15
+
+Added ToolBridge strict JSON parser and ToolSession native orchestration shared
+by GUI and ToolFlowTest. Limits: one tool per generation, three per turn,
+bounded result/prompt sizes, watchdog and cancellation. Model does not supply
+approval; native consent remains mandatory for desktop mutations. Read-only
+results are visible before the model summary. No MCP transport, shell tools,
+kernel, boot or llama-source changes.
+
+Cross-build and all 17 parser cases passed on SD Haiku. Initial end-to-end
+CPU/RAM test produced invented plain text instead of a tool call; this was
+NOT a successful integration test. Added explicit examples and tightened test
+success criteria. Second run issued a native request and received a result;
+final model answer is still being checked. Current GUI remains old version.
+
+Updated SD model service SHA38bf01b8f75b9ae4a99b46d5615023eb8930fd6c85317d1f215ec1a1bf844e1d
+preserves special tool delimiters. Tools service
+SHAe95d21f7aa6519d1f10a460017a92b2829a105dd9aacb39b176971bc1b5ca65f
+echoes request IDs and supports same-caller cancellation. Backups in /boot/home:
+HaikuAssistantService.before-tool-flow, HaikuAssistantTools.before-tool-flow.
+Model service team1218, ready=1, model_loads=1 throughout the two test requests.
+Samsung stays read-only and unchanged. New GUI staged as
+/tmp/HaikuAssistant.tool-flow, not yet activated.
+
+Completion: second end-to-end run returned [Tool: system_info], actual64 CPUs,
+136289968128 bytes, then a model answer. Qwen incorrectly converted bytes to
+13.63 GB; native output now formats126.93 GiB itself (direct query verified).
+Tool selection/summary reliability remains limited; do not claim arbitrary
+queries are reliable based on this single success. No mutation model test yet.
+
+Final GUI SHAda09ddb62a0ac979dfe4e17e70625cd8a4340a44656965ec8f4ef9892d74192e
+installed SD atomically; old open GUI not killed. User must close/reopen via
+Ctrl+Space. Backup /boot/home/HaikuAssistant.before-tool-flow. Final tools
+SHA877f8e5dff03256d10eeef6628ee1e32614af14e9fafec9f3406980c747296f8
+installed and queried. Checksums matched, final parser tests all passed.
+Latest test harness uses session tool_calls metadata instead of trusting a text
+marker; end-to-end run preceded that instrumentation-only update. Watchdog
+initialization failure now fails closed. Model remains team1218 ready1 busy0
+model_loads1. Samsung unchanged, no reboot or kernel changes.
+
+Follow-up source adds a persisted CPU-thread setting. It defaults to the lesser
+of 32 or the available CPU count, can be changed in the GUI or with
+`assistantctl threads N`, and is captured per request so the next request uses
+the new value without reloading the model. Pioneer deployment/testing of this
+settings follow-up remains pending. Final warning-as-error cross-build hashes:
+GUI dfbcd69a805fb722cfab18b1b1092d05a28f97009b53e821761c1b5217d82388;
+service d7329b2a8418d3e4d44e1e918997b357ddb7129b13ee6ad5c8a987b6e1304aa0;
+shortcut c0d57845e49da39c642d677ecfde2df98901ad2fb9d489ac5576304cdef548c3;
+tools 877f8e5dff03256d10eeef6628ee1e32614af14e9fafec9f3406980c747296f8;
+tools control 0bbc801f01151352f201151935e9cc9b1b23af54d288b98f1566bce27c938af2.
