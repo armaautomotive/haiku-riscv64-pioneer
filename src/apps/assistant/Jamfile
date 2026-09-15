@@ -1,6 +1,28 @@
 SubDir HAIKU_TOP src apps assistant ;
 
-Application HaikuAssistant : Assistant.cpp
-	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]
+UsePrivateHeaders shared ;
+Application HaikuAssistant : Assistant.cpp ToolBridge.cpp ToolSession.cpp
+	: be shared [ TargetLibstdc++ ] [ TargetLibsupc++ ]
 	: Assistant.rdef
+	;
+
+Application HaikuAssistantControl : ServiceControl.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]
+	;
+
+SubDirHdrs [ FDirName $(HAIKU_TOP) headers os add-ons input_server ] ;
+Addon HaikuAssistantShortcut : ShortcutFilter.cpp
+	: be input_server [ TargetLibstdc++ ] [ TargetLibsupc++ ]
+	;
+
+# Service.cpp links the separately built Pioneer llama runtime. Until that
+# runtime is packaged, build it with tools/pioneer/build_assistant.sh.
+
+UsePrivateHeaders app interface ;
+Application HaikuAssistantTools : ToolsService.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]
+	: ToolsService.rdef
+	;
+Application HaikuAssistantToolsControl : ToolsControl.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]
 	;
