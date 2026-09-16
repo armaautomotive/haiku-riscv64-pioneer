@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Verse OS — Open. Speed. Human.</title>
+  <meta name="description" content="Verse OS is an independent Haiku-based operating system project for RISC-V. A familiar desktop, local AI, and room to make it your own.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='white'/%3E%3Cpath d='M7 9l9 16L25 9' stroke='black' stroke-width='2.5' fill='none'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="header">
+    <a class="wordmark" href="#" aria-label="Verse OS home">verse <span>OS</span></a>
+    <nav aria-label="Main navigation"><a href="#about">About</a><a href="#features">Features</a><a href="#community">Community</a><a href="#download">Download</a><a href="https://github.com/armaautomotive/haiku-riscv64-pioneer/tree/master/tools/pioneer">Docs</a></nav>
+    <a class="button small" href="#download">Get Verse OS</a>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-title">
+      <img class="hero-art" src="/web_hero.PNG" alt="A person reading beneath a tree, overlooking a quiet landscape. Verse OS: open, speed, human." width="1536" height="1024" fetchpriority="high">
+      <div class="hero-copy">
+        <h1 id="hero-title">verse <span>OS</span></h1>
+        <div class="rule" aria-hidden="true"><i></i><b></b><i></i></div>
+        <p class="motto">Open · Speed · Human</p>
+        <p class="intro">An open, human-centered operating system.<br class="desktop-break"> Built for speed, simplicity, and freedom.</p>
+        <div class="actions"><a class="button primary" href="#download">Get Verse OS <span aria-hidden="true">↓</span></a><a class="button" href="#about">Learn more</a></div>
+      </div>
+    </section>
+    <section class="principles" id="features" aria-label="Our principles">
+      <article><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M12 21h26v23H12zM17 21v-9a9 9 0 0118 0M25 30v6"/><circle cx="25" cy="29" r="2"/></svg><div><h2>Open</h2><p>Open source.<br>Room to make it yours.</p></div></article>
+      <article><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M9 39a21 21 0 1130 0M24 4v5M5 24h5M38 24h5M10 10l4 4M38 10l-4 4M25 24l9-12"/><circle cx="24" cy="27" r="3"/></svg><div><h2>Speed</h2><p>Built toward a lighter,<br>more responsive desktop.</p></div></article>
+      <article><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="13" r="9"/><path d="M7 44v-7c0-15 34-15 34 0v7z"/></svg><div><h2>Human</h2><p>Designed around people,<br>not complexity.</p></div></article>
+      <article><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24" cy="14" r="7"/><path d="M13 42v-8c0-12 22-12 22 0v8zM9 8a7 7 0 000 14M39 8a7 7 0 010 14M8 27c-5 1-6 5-6 11h6M40 27c5 1 6 5 6 11h-6"/></svg><div><h2>Community</h2><p>A shared project.<br>A future built together.</p></div></article>
+    </section>
+    <section class="story section" id="about">
+      <p class="eyebrow">A familiar feeling. A new direction.</p>
+      <div class="split"><h2>More room for<br>what matters.</h2><div><p>Remember when a computer felt simple? Verse OS carries that spirit forward: a clear desktop, direct interactions, and software that leaves room for your ideas.</p><p>Built on Haiku and developed on the Milk-V Pioneer, Verse explores what a personal operating system can be on RISC-V—with local AI as part of the experience, not a distant service.</p><a class="text-link" href="https://github.com/armaautomotive/haiku-riscv64-pioneer">Explore the source <span aria-hidden="true">↗</span></a></div></div>
+    </section>
+    <section class="development section" aria-labelledby="development-title">
+      <div class="section-heading"><p class="eyebrow">Built in the open</p><h2 id="development-title">A real desktop.<br>An ongoing experiment.</h2></div>
+      <div class="details"><article><span class="number">01</span><h3>RISC-V, on real hardware</h3><p>The Pioneer port has reached a working desktop with 64 CPUs, keyboard, mouse, networking, and SSD boot support.</p></article><article><span class="number">02</span><h3>AI that stays with you</h3><p>A native chat app connects to a resident llama.cpp service and a local Qwen model. Desktop actions ask for your permission.</p></article><article><span class="number">03</span><h3>Space to keep improving</h3><p>Performance, reliability, and packaging are active work. Tenstorrent accelerator support is being investigated—not yet supported.</p></article></div>
+    </section>
+    <section class="download section" id="download"><div><p class="eyebrow">For the curious</p><h2>Start with the source.</h2><p>Verse OS is an experimental distribution in development, not a finished general-purpose release. A ready-to-install public image is not offered here yet.</p><p>Want to build or follow along? The Pioneer repository contains the source, build tools, and development notes. Use separate test storage and keep a recovery system available.</p><div class="actions"><a class="button primary" href="https://github.com/armaautomotive/haiku-riscv64-pioneer">View repository <span aria-hidden="true">↗</span></a><a class="button" href="https://github.com/armaautomotive/haiku-riscv64-pioneer/tree/master/tools/pioneer">Build notes</a></div></div><aside><span class="release-label">Development preview</span><dl><div><dt>Foundation</dt><dd>Haiku</dd></div><div><dt>Architecture</dt><dd>RISC-V 64-bit</dd></div><div><dt>Development hardware</dt><dd>Milk-V Pioneer</dd></div><div><dt>Availability</dt><dd>Source code</dd></div></dl></aside></section>
+    <section class="community section" id="community"><p class="eyebrow">Made better, together</p><h2>A little curiosity goes a long way.</h2><p>Read the code. Share what you find. Help shape a more personal kind of computing.</p><a class="text-link" href="https://github.com/armaautomotive/haiku-riscv64-pioneer/issues">Join the conversation <span aria-hidden="true">↗</span></a></section>
+  </main>
+  <footer><a class="wordmark" href="#">verse <span>OS</span></a><p>An independent Haiku-based project.<br>Not an official Haiku release.</p><a href="https://www.haiku-os.org/">With thanks to Haiku ↗</a><span>verseos.org</span></footer>
+</body>
+</html>

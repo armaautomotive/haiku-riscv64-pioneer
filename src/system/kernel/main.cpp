@@ -58,6 +58,7 @@
 #include <timer.h>
 #include <user_debugger.h>
 #include <user_mutex.h>
+#include <util/BootStageLog.h>
 #include <vfs.h>
 #include <vm/vm.h>
 #include <boot/kernel_args.h>
@@ -127,18 +128,7 @@ early_smp_rendezvous(uint32* rendezvous, int currentCPU, int phase)
 }
 
 
-struct boot_stage_record {
-	const char*	code;
-	const char*	description;
-	bigtime_t	time;
-	bigtime_t	delta;
-};
-
-
-static const uint32 kMaxBootStageRecords = 16;
-static boot_stage_record sBootStageRecords[kMaxBootStageRecords];
-static uint32 sBootStageRecordCount;
-static bigtime_t sBootStageStartTime;
+static BootStageLog<64> sBootStages;
 
 
 static int32 main2(void *);
@@ -147,37 +137,33 @@ static int32 main2(void *);
 static void
 record_boot_stage(const char* code, const char* description)
 {
-	const bigtime_t now = system_time();
-	const bigtime_t previous = sBootStageRecordCount == 0
-		? sBootStageStartTime : sBootStageRecords[sBootStageRecordCount - 1].time;
-
-	if (sBootStageRecordCount < kMaxBootStageRecords) {
-		boot_stage_record& record = sBootStageRecords[sBootStageRecordCount++];
-		record.code = code;
-		record.description = description;
-		record.time = now;
-		record.delta = now - previous;
-	}
-
-	dprintf("P202:%s %s at=%" B_PRId64 "us delta=%" B_PRId64 "us\n",
-		code, description, now, now - previous);
+	sBootStages.Append(code, description, system_time());
 }
 
 
 static void
-print_boot_stage_summary()
+print_boot_stage_summary(void (*print)(const char*, ...) = dprintf)
 {
-	const bigtime_t end = system_time();
-	dprintf("P202:BOOT stages=%" B_PRIu32 " start=%" B_PRId64 "us end=%"
-		B_PRId64 "us elapsed=%" B_PRId64 "us\n", sBootStageRecordCount,
-		sBootStageStartTime, end, end - sBootStageStartTime);
+	const bigtime_t end = sBootStages.Last();
+	print("P202:BOOT stages=%" B_PRIu32 " start=%" B_PRId64 "us end=%"
+		B_PRId64 "us elapsed=%" B_PRId64 "us dropped=%" B_PRIu64 "\n",
+		(uint32)sBootStages.Count(), (bigtime_t)sBootStages.Start(), end,
+		end - sBootStages.Start(), sBootStages.Dropped());
 
-	for (uint32 i = 0; i < sBootStageRecordCount; i++) {
-		const boot_stage_record& record = sBootStageRecords[i];
-		dprintf("P202:BOOT[%" B_PRIu32 "] %s %s at=%" B_PRId64
+	for (uint32 i = 0; i < sBootStages.Count(); i++) {
+		const BootStageLog<64>::Record& record = sBootStages.At(i);
+		print("P202:BOOT[%" B_PRIu32 "] %s %s at=%" B_PRId64
 			"us delta=%" B_PRId64 "us\n", i, record.code,
 			record.description, record.time, record.delta);
 	}
+}
+
+
+static int
+dump_boot_stages(int, char**)
+{
+	print_boot_stage_summary(kprintf);
+	return 0;
 }
 
 
@@ -552,7 +538,7 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 static int32
 main2(void* /*unused*/)
 {
-	sBootStageStartTime = system_time();
+	sBootStages.Reset(system_time());
 	debug_early_boot_checkpoint("riscv: main2 entered\n");
 	TRACE("start of main2: initializing devices\n");
 
@@ -650,6 +636,8 @@ main2(void* /*unused*/)
 	debug_init_post_vm(&sKernelArgs);
 #endif
 	debug_init_post_modules(&sKernelArgs);
+	add_debugger_command("bootstages", dump_boot_stages,
+		"Print the retained main2 boot-stage timestamps and dropped count");
 	record_boot_stage("M7", "debug modules ready");
 
 	TRACE("device_manager_init_post_modules\n");
@@ -698,7 +686,6 @@ main2(void* /*unused*/)
 		if (thread >= B_OK) {
 			resume_thread(thread);
 			record_boot_stage("MB", "launch_daemon resumed");
-			print_boot_stage_summary();
 			TRACE("launch_daemon started\n");
 		} else {
 			dprintf("error starting \"%s\" error = %" B_PRId32 " \n",
@@ -715,6 +702,7 @@ main2(void* /*unused*/)
 		record_boot_stage("MC", "secondary CPUs enabled after main2");
 	}
 #endif
+	print_boot_stage_summary();
 
 	return 0;
 }

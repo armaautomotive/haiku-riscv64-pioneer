@@ -56,6 +56,7 @@ All rights reserved.
 #include <PathMonitor.h>
 #include <Roster.h>
 #include <StopWatch.h>
+#include <StartupTiming.h>
 #include <Volume.h>
 #include <VolumeRoster.h>
 
@@ -1549,11 +1550,14 @@ TTracker::_OpenPreviouslyOpenedWindows(const char* pathFilter)
 void
 TTracker::ReadyToRun()
 {
+	BPrivate::StartupTiming timing("Tracker.ReadyToRun");
 	gStatusWindow = new BStatusWindow();
 	InitMimeTypes();
+	timing.Mark("mime_initialized");
 	InstallDefaultTemplates();
 	InstallIndices();
 	InstallTemporaryBackgroundImages();
+	timing.Mark("defaults_initialized");
 
 	fTrashWatcher->Run();
 
@@ -1564,6 +1568,7 @@ TTracker::ReadyToRun()
 
 	// kick off building the mime type list for find panels, etc.
 	fMimeTypeList = new MimeTypeList();
+	timing.Mark("watchers_started");
 
 	if (!BootedInSafeMode()) {
 		// kick of transient query killer
@@ -1571,6 +1576,8 @@ TTracker::ReadyToRun()
 		// the mount_server will have mounted the previous volumes already.
 		_OpenPreviouslyOpenedWindows();
 	}
+	timing.Mark("ready_callback_completed");
+	timing.Flush();
 }
 
 

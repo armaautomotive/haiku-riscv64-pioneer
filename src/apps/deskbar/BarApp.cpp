@@ -56,6 +56,7 @@ All rights reserved.
 #include <Mime.h>
 #include <Path.h>
 #include <Roster.h>
+#include <StartupTiming.h>
 
 #include <DeskbarPrivate.h>
 #include <RosterPrivate.h>
@@ -101,11 +102,14 @@ TBarApp::TBarApp()
 	fClockSettingsFile(NULL),
 	fPreferencesWindow(NULL)
 {
+	BPrivate::StartupTiming timing("Deskbar.constructor");
 	InitSettings();
 	InitIconPreloader();
+	timing.Mark("settings_initialized");
 
 	fBarWindow = new TBarWindow();
 	fBarView = fBarWindow->BarView();
+	timing.Mark("window_constructed");
 
 	be_roster->StartWatching(this);
 
@@ -128,6 +132,7 @@ TBarApp::TBarApp()
 	}
 
 	sWindowIconCache.MakeEmpty();
+	timing.Mark("running_apps_enumerated");
 	for (int32 id = R_WindowShownIcon; id <= R_WindowHiddenSwitchIcon; id++) {
 		if (id == R_ResizeIcon)
 			continue;
@@ -140,6 +145,7 @@ TBarApp::TBarApp()
 	sSubscribers.MakeEmpty();
 	fSwitcherMessenger = BMessenger(new TSwitchManager());
 	fBarWindow->Show();
+	timing.Mark("window_show_returned");
 
 	fBarWindow->Lock();
 	fBarView->UpdatePlacement();
@@ -149,6 +155,18 @@ TBarApp::TBarApp()
 	// statusview so that all additions to the tray
 	// follow the same path
 	fStatusViewMessenger = BMessenger(fBarWindow->FindView("BarView"));
+	timing.Mark("constructor_completed");
+	timing.Flush();
+}
+
+
+void
+TBarApp::ReadyToRun()
+{
+	BPrivate::StartupTiming timing("Deskbar.ReadyToRun");
+	BServer::ReadyToRun();
+	timing.Mark("ready_callback_completed");
+	timing.Flush();
 }
 
 

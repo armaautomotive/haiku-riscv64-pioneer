@@ -33,6 +33,7 @@
 #include <RosterPrivate.h>
 #include <syscalls.h>
 #include <system_info.h>
+#include <StartupTiming.h>
 
 #include "multiuser_utils.h"
 
@@ -493,6 +494,8 @@ LaunchDaemon::TeamLaunched(Job* job, status_t status)
 void
 LaunchDaemon::ReadyToRun()
 {
+	::BPrivate::StartupTiming timing(fUserMode
+		? "launch_daemon.user" : "launch_daemon.system");
 	_RetrieveKernelOptions();
 	_SetupEnvironment();
 
@@ -507,6 +510,7 @@ LaunchDaemon::ReadyToRun()
 #endif	// TEST_MODE
 	} else
 		_InitSystem();
+	timing.Mark("environment_initialized");
 
 	BStringList paths;
 #ifdef TEST_MODE
@@ -535,13 +539,16 @@ LaunchDaemon::ReadyToRun()
 	_ReadPaths(paths);
 
 	BMessenger target(this);
+	timing.Mark("settings_loaded");
 	BMessenger::Private messengerPrivate(target);
 	port_id port = messengerPrivate.Port();
 	int32 token = messengerPrivate.Token();
 	__start_watching_system(-1, B_WATCH_SYSTEM_TEAM_DELETION, port, token);
 
 	_InitJobs(NULL);
+	timing.Mark("jobs_initialized");
 	_LaunchJobs(NULL);
+	timing.Mark("initial_jobs_submitted");
 
 	// Launch run targets (ignores events)
 	for (int32 index = 0; index < fRunTargets.CountStrings(); index++) {
@@ -552,6 +559,8 @@ LaunchDaemon::ReadyToRun()
 
 	if (fUserMode)
 		be_roster->StartWatching(this, B_REQUEST_LAUNCHED);
+	timing.Mark("ready_callback_completed");
+	timing.Flush();
 }
 
 

@@ -137,6 +137,7 @@ class TBarApp : public BServer {
 public:
 									TBarApp();
 	virtual							~TBarApp();
+	virtual void				ReadyToRun();
 
 	virtual	bool					QuitRequested();
 	virtual	void					MessageReceived(BMessage* message);
