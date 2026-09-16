@@ -70,6 +70,7 @@ BuildPlatformMain <build>bfs_shell
 	:
 	additional_commands.cpp
 	command_checkfs.cpp
+	command_clonefs.cpp
 	command_resizefs.cpp
 	:
 	<build>bfs.o

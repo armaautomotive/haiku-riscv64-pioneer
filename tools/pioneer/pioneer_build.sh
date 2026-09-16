@@ -21,8 +21,10 @@ Options:
   --no-sync            Do not synchronize the source checkout to the mirror.
   -h, --help           Show this help.
 
-The image mode extracts only the 300 MiB BFS filesystem payload used for
-/dev/mmcblk1p2. It does not create or modify an SD card.
+The image mode extracts a 300 MiB fresh-install BFS filesystem payload.
+It does not preserve an installed card's settings or enlarged filesystem.
+Do not use it as a whole-filesystem update to an expanded persistent card;
+pioneer_sd_deploy.sh rejects filesystem shrinkage. It does not modify an SD card.
 EOF
 }
 

@@ -15,7 +15,7 @@ firmware locations on the FAT partition.
 
 Required:
   --device DEVICE       Whole SD device, for example /dev/mmcblk1.
-  --payload FILE        Exact 300 MiB BFS payload from pioneer_build.sh.
+  --payload FILE        BFS image, whole MiB size matching its superblock.
   --sha256 HASH         Expected payload SHA-256.
 
 Options:
@@ -56,7 +56,7 @@ FIRMWARE_ONLY=0
 BACKUP_DIR=
 APPLY=0
 BACKUP=1
-PAYLOAD_BYTES=314572800
+PAYLOAD_BYTES=
 FIRMWARE_BYTES=8585216
 FIRMWARE_OUTER_FFS_GUID=93fd219e729c154c8c4be77f1db2d792
 FIRMWARE_LZMA_GUID=98584eee143959429d6edc7bd79403cf
@@ -65,6 +65,34 @@ UEFI_SHELL_FFS_GUID=83a5047c3e9e1c4fad65e05268d0b4d1
 P1_TEMP_MOUNT=
 FIRMWARE_VERIFY_TEMP=
 SUDO=
+
+# Read BFS geometry instead of assuming every installed filesystem is 300 MiB.
+# Supports the little-endian images used by this RISC-V port; rejects ambiguity.
+bfs_size()
+{
+	$SUDO python3 - "$1" <<'PY'
+import struct
+import sys
+
+with open(sys.argv[1], "rb") as stream:
+    stream.seek(512)
+    header = stream.read(116)
+if len(header) != 116:
+    raise SystemExit("Truncated BFS superblock")
+u32 = lambda offset: struct.unpack_from("<I", header, offset)[0]
+if (u32(32), u32(36), u32(68), u32(112)) != (
+        0x42465331, 0x42494745, 0xdd121031, 0x15b6830e):
+    raise SystemExit("Not a supported little-endian BFS superblock")
+block_size = u32(40)
+blocks = struct.unpack_from("<q", header, 48)[0]
+used = struct.unpack_from("<q", header, 56)[0]
+if (block_size not in (1024, 2048, 4096, 8192) or u32(44) not in (10, 11, 12, 13)
+        or (1 << u32(44)) != block_size or not 0 <= used <= blocks
+        or blocks <= 0):
+    raise SystemExit("Invalid BFS geometry")
+print(blocks * block_size)
+PY
+}
 
 cleanup()
 {
@@ -199,11 +227,16 @@ esac
 }
 [ -f "$PAYLOAD" ] || { echo "Payload not found: $PAYLOAD" >&2; exit 1; }
 
+command -v python3 >/dev/null 2>&1 || { echo 'python3 is required' >&2; exit 1; }
 ACTUAL_BYTES=$(wc -c < "$PAYLOAD" | tr -d ' ')
-[ "$ACTUAL_BYTES" -eq "$PAYLOAD_BYTES" ] || {
-	echo "Payload must be exactly $PAYLOAD_BYTES bytes; got $ACTUAL_BYTES" >&2
+PAYLOAD_BYTES=$(bfs_size "$PAYLOAD")
+[ "$ACTUAL_BYTES" -eq "$PAYLOAD_BYTES" ] \
+	&& [ "$PAYLOAD_BYTES" -ge 314572800 ] \
+	&& [ $((PAYLOAD_BYTES % 1048576)) -eq 0 ] || {
+	echo "Payload length must match BFS geometry and be whole MiB (at least 300 MiB)" >&2
 	exit 1
 }
+PAYLOAD_MIB=$((PAYLOAD_BYTES / 1048576))
 
 case "$EXPECTED_HASH" in
 	*[!0-9a-fA-F]*|'') echo "Invalid SHA-256: $EXPECTED_HASH" >&2; exit 2 ;;
@@ -349,6 +382,23 @@ P2_BYTES=$(lsblk -bdnro SIZE "${DEVICE}p2")
 	exit 1
 }
 
+if [ "$(id -u)" -ne 0 ]; then
+	command -v sudo >/dev/null 2>&1 || { echo 'sudo required' >&2; exit 1; }
+	SUDO=sudo
+fi
+CURRENT_FS_BYTES=$(bfs_size "${DEVICE}p2")
+[ "$CURRENT_FS_BYTES" -le "$P2_BYTES" ] || {
+	echo 'Existing BFS geometry exceeds partition size' >&2; exit 1
+}
+if [ "$FIRMWARE_ONLY" -eq 0 ] && [ "$PAYLOAD_BYTES" -lt "$CURRENT_FS_BYTES" ]; then
+	echo "Refusing to shrink installed BFS from $CURRENT_FS_BYTES to $PAYLOAD_BYTES bytes" >&2
+	exit 1
+fi
+[ $((P2_BYTES % 1048576)) -eq 0 ] || {
+	echo 'Backup requires a whole-MiB partition size' >&2; exit 1
+}
+BACKUP_MIB=$((P2_BYTES / 1048576))
+
 echo "Validated Pioneer SD layout:"
 lsblk -o NAME,PATH,SIZE,FSTYPE,LABEL,MOUNTPOINTS "$DEVICE"
 echo "Payload SHA-256: $ACTUAL_HASH"
@@ -422,7 +472,7 @@ fi
 STAMP=$(date -u +%Y%m%dT%H%M%SZ)
 if [ "$BACKUP" -eq 1 ]; then
 	AVAILABLE=$(df -PB1 "$BACKUP_DIR" | awk 'NR == 2 {print $4}')
-	REQUIRED=$((PAYLOAD_BYTES + 67108864))
+	REQUIRED=$((P2_BYTES + 67108864))
 	[ "$FIRMWARE_ONLY" -eq 0 ] || REQUIRED=67108864
 	[ "$AVAILABLE" -ge "$REQUIRED" ] || {
 		echo "Insufficient conservative backup space in $BACKUP_DIR" >&2
@@ -433,7 +483,7 @@ if [ "$BACKUP" -eq 1 ]; then
 	if [ "$FIRMWARE_ONLY" -eq 0 ]; then
 	BACKUP_FILE=$BACKUP_DIR/haiku-pioneer-bfs-before-$STAMP.img.gz
 	echo "Creating rollback image: $BACKUP_FILE"
-	if ! $SUDO dd if="${DEVICE}p2" bs=1M count=300 status=none \
+	if ! $SUDO dd if="${DEVICE}p2" bs=1M count="$BACKUP_MIB" status=none \
 			| gzip -1 > "$BACKUP_FILE"; then
 		rm -f "$BACKUP_FILE"
 		echo "Rollback image creation failed; SD was not written" >&2
@@ -441,7 +491,7 @@ if [ "$BACKUP" -eq 1 ]; then
 	fi
 	gzip -t "$BACKUP_FILE"
 	BACKUP_BYTES=$(gzip -dc "$BACKUP_FILE" | wc -c | tr -d ' ')
-	[ "$BACKUP_BYTES" -eq "$PAYLOAD_BYTES" ] || {
+	[ "$BACKUP_BYTES" -eq "$P2_BYTES" ] || {
 		rm -f "$BACKUP_FILE"
 		echo "Rollback image is incomplete; SD was not written" >&2
 		exit 1
@@ -469,11 +519,11 @@ fi
 
 if [ "$FIRMWARE_ONLY" -eq 0 ]; then
 echo "Writing verified BFS payload to ${DEVICE}p2"
-$SUDO dd if="$PAYLOAD" of="${DEVICE}p2" bs=1M count=300 conv=fsync status=progress
+$SUDO dd if="$PAYLOAD" of="${DEVICE}p2" bs=1M count="$PAYLOAD_MIB" conv=fsync status=progress
 $SUDO sync
 
-echo "Verifying complete 300 MiB readback"
-READBACK_HASH=$($SUDO dd if="${DEVICE}p2" bs=1M count=300 status=none | sha256sum | awk '{print $1}')
+echo "Verifying complete $PAYLOAD_MIB MiB readback"
+READBACK_HASH=$($SUDO dd if="${DEVICE}p2" bs=1M count="$PAYLOAD_MIB" iflag=direct status=none | sha256sum | awk '{print $1}')
 [ "$READBACK_HASH" = "$EXPECTED_HASH" ] || {
 	echo "READBACK VERIFICATION FAILED" >&2
 	echo "Expected: $EXPECTED_HASH" >&2
