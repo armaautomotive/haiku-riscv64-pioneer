@@ -1,0 +1,10 @@
+verseos.org {
+	root * /srv/verseos/current
+	encode zstd gzip
+	header {
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		X-Frame-Options DENY
+	}
+	file_server
+}
