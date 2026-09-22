@@ -205,7 +205,8 @@ The official script changed only `P100A-1` PCI bus 0 to BAR4 size `4096`
 MiB, and its post-write verification passed. `tt_fwbundle.py diff` reported
 only the P100A-1 `cmfwcfg` entry changed, from CRC `8cc1b6a1` to
 `34a5fa6f`. The resulting **unflashed, experimental** bundle is at
-`/private/tmp/fw_pack-19.15.0-p100a-bar4-4096-test.fwbundle` with SHA-256
+`generated.pioneer/tenstorrent/fw_pack-19.15.0-p100a-bar4-4096-test.fwbundle`
+(ignored local artifact, not pushed to GitHub) with SHA-256
 `6dda5a74404672a194bf472a2c816e75b043dda015307d6b6774c6e4df61d602`.
 Do not copy this firmware bundle to the public project repository or flash
 it without determining the card's installed firmware version, taking a
