@@ -93,6 +93,37 @@ probes against a live device. PCI enumeration is not accelerator readiness.
 Hardware-dependent steps cannot be marked complete from compilation alone.
 Preserve the working SD/Samsung CPU-only configuration as a recovery path.
 
+## Fedora hardware inventory, 2026-09-21
+
+With the P100A in the bottom PCIe slot and a native 12+4-pin PSU cable, the
+first boot did not enumerate the card. After a clean shutdown and physical
+reseat, Fedora 38 (Linux 6.1.31, riscv64) enumerated `0002:81:00.0` as
+`1e52:b140`, class `1200` (processing accelerator). The root port is
+`0002:80:00.0`. The link trained at PCIe 2.5 GT/s x8; this is below the
+endpoint's advertised 32 GT/s x16 capability and is not a performance result.
+
+No Tenstorrent module, device node, or `tt-smi` installation was present.
+Linux failed to assign all three memory BARs: BAR0 512 MiB, BAR2 1 MiB,
+and BAR4 32 GiB. It also failed to allocate the root-port's requested
+48 GiB prefetchable bridge window. The root bus advertises a high
+prefetchable window at `0x4900000000..0x4affffffff` (8 GiB), plus a
+768 MiB lower prefetchable window. Its non-prefetchable windows cannot
+accommodate the 32 GiB prefetchable BAR. `lspci` shows the bridge memory
+windows disabled and the endpoint resources unassigned. The other Pioneer
+root buses likewise advertise only 8 GiB high prefetchable windows in this
+Fedora boot; moving slots alone is not an established fix.
+
+The card's usable memory capacity is distinct from the size of
+its BAR4 PCI address aperture. Do not treat the user's 28 GB memory figure
+as a contradiction of the measured 32 GiB BAR. The captured allocation
+failure is sufficient to stop driver/LLM installation attempts for now.
+Next investigate SG2042 outbound address-map and device-tree/firmware limits
+offline, and determine whether a supported smaller BAR4 configuration exists.
+Do not write live PCI configuration, flash firmware, or replace the working
+boot setup as a diagnostic shortcut. A future aperture change needs a
+recovery plan and separate validation. No Linux/Haiku PCI configuration,
+driver, firmware, or storage was changed during this inventory.
+
 ## Official references
 
 - P100A hardware: https://docs.tenstorrent.com/aibs/blackhole/installation.html
