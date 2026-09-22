@@ -174,14 +174,9 @@ TT-Metal or LLM inference works without it.
 The patch is not safe to copy uncritically: [Linux PCI review](https://lkml.iu.edu/2608.3/06163.html)
 points out that zeroing Linux's BAR4 resource metadata does not disable
 the BAR in the device. Enabling memory decoding could leave a live,
-unassigned BAR that decodes an unintended PCI address. No accepted fix or
-device-side BAR-disable mechanism has been verified here. The next safe
-engineering task is an **offline** review of the PCI configuration and
-Tenstorrent driver/firmware to find a sound way to keep BAR4 inactive while
-assigning BAR0/BAR2. Test only with a separately bootable kernel and a
-known-good SD/boot fallback; first milestone is BAR0/BAR2 allocation and
-driver enumeration, not an LLM. The live Fedora installation has not been
-modified for this investigation.
+unassigned BAR that decodes an unintended PCI address. Do not use this
+unmodified PCI quirk on the Pioneer. The firmware-side sizing mechanism
+below is preferable once the card can safely be reached for flashing.
 
 On the live Fedora boot, read-only `setpci` shows PCI COMMAND `0x0000`
 (memory decoding and bus mastering both off), while BAR4's low/high config
@@ -190,6 +185,47 @@ safe in the current state, but it reinforces the reviewer's concern:
 turning on memory decoding after merely hiding BAR4 from Linux would leave
 the hardware BAR pointed at bus address zero. No PCI config register was
 written during this check.
+
+### Firmware-side BAR4 resize: offline dry run
+
+Tenstorrent's public [system-firmware source](https://github.com/tenstorrent/tt-system-firmware)
+at `04f0df6ebfbd016d98189e8131b16af17b48638b` exposes
+`pci0_property_table.pcie_bar4_size` in MiB. The P100A table defaults to
+`32768`; `lib/tenstorrent/bh_arc/pcie.c` accepts power-of-two values and
+explicitly handles `0` as “BAR4 Disabled.” The project's own
+`scripts/update_bar4_size.py` edits that field in a firmware bundle and
+states that a **cold reboot** is required for the change to take effect.
+The `P100A-1` board in the bundle matches this card's `0x0043` subsystem
+device family, but its exact installed firmware version remains unknown.
+
+An offline dry run used the official `v19.15.0` firmware bundle, whose
+downloaded SHA-256 matched the published
+`c1a317f9658435a7f2e8ab1e18a9fe942cd36334d8b88f01b777c8de975b2aef`.
+The official script changed only `P100A-1` PCI bus 0 to BAR4 size `4096`
+MiB, and its post-write verification passed. `tt_fwbundle.py diff` reported
+only the P100A-1 `cmfwcfg` entry changed, from CRC `8cc1b6a1` to
+`34a5fa6f`. The resulting **unflashed, experimental** bundle is at
+`/private/tmp/fw_pack-19.15.0-p100a-bar4-4096-test.fwbundle` with SHA-256
+`6dda5a74404672a194bf472a2c816e75b043dda015307d6b6774c6e4df61d602`.
+Do not copy this firmware bundle to the public project repository or flash
+it without determining the card's installed firmware version, taking a
+recoverable backup, verifying board compatibility, and establishing a way
+to access the card with BAR0/BAR2 despite today's failed allocation.
+
+Why 4 GiB: one BAR4 4-GiB TLB window plus BAR0 (512 MiB) and BAR2 (1 MiB)
+should, in principle, fit the root's 8 GiB prefetchable window. Linux bridge
+allocation and Tenstorrent userspace behavior with only one large window
+have **not** been tested. Setting BAR4 to zero is another documented firmware
+option for basic access, but its effect on TT-Metal/LLM use is even less
+certain. No card firmware, kernel, boot configuration, or PCI register was
+changed during this work.
+
+Next gate: find a safe one-time access path (for example a compatible host)
+and a firmware backup/recovery procedure, then select a matching firmware
+release and test a 4 GiB BAR4 configuration under supervision. Do not
+reboot or flash this Pioneer unattended: a failed card flash or boot test
+could need physical recovery. First verify PCI resource assignment and
+`tt-smi`; model inference is a later milestone.
 
 ## Official references
 
