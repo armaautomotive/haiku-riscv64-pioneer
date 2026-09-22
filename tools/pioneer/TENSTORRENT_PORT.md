@@ -117,8 +117,8 @@ The card's usable memory capacity is distinct from the size of
 its BAR4 PCI address aperture. Do not treat the user's 28 GB memory figure
 as a contradiction of the measured 32 GiB BAR. The captured allocation
 failure is sufficient to stop driver/LLM installation attempts for now.
-Next investigate SG2042 outbound address-map and device-tree/firmware limits
-offline, and determine whether a supported smaller BAR4 configuration exists.
+The SG2042 manual and Tenstorrent BAR4 discussion below narrow the possible
+workaround; a larger device-tree window is not the solution.
 Do not write live PCI configuration, flash firmware, or replace the working
 boot setup as a diagnostic shortcut. A future aperture change needs a
 recovery plan and separate validation. No Linux/Haiku PCI configuration,
@@ -146,12 +146,50 @@ to the Fedora boot or PCI configuration.
 
 The local Tenstorrent KMD source derives its number of BAR4 TLB windows from
 the exposed BAR length, but the UMD and compute stack still need validation
-against any reduced aperture. This is not evidence that the fixed 32 GiB PCI
-BAR can be resized or omitted on this card. Before a boot test, obtain a
-supported SG2042 PCIe address-map/firmware answer and a documented P100A
-BAR4 requirement, then prepare a reversible boot entry and verify the
-existing entry still boots. Even after BAR allocation works, host-side
-TT-Metal support on riscv64 remains a separate porting question.
+without BAR4. Even after BAR0/BAR2 allocation works, host-side TT-Metal
+support on riscv64 remains a separate porting question.
+
+### SG2042 physical limit and BAR4-free path
+
+The [SG2042 Technical Reference Manual, Chapter 2, Table 1](https://github.com/milkv-pioneer/pioneer-files/blob/main/hardware/SG2042-TRM.pdf)
+assigns only **16 GiB** of CPU physical address space to each PCIe link:
+`0x4000000000..0x43ffffffff`, `0x4400000000..0x47ffffffff`,
+`0x4800000000..0x4bffffffff`, and `0x4c00000000..0x4fffffffff`.
+The P100A is on PCIe1 link 0 (`0x4800000000..0x4bffffffff`). Its 32 GiB
+BAR4 cannot fit inside that link's documented physical aperture, regardless
+of how the current 8 GiB device-tree subwindow is enlarged. Do **not** make
+a 32 GiB device-tree `ranges` change or borrow space from the neighboring
+link. The live `lspci -vv` capability list also shows no PCI Resizable BAR
+capability; a standard BAR resize is not available in this observation.
+
+There is, however, a credible BAR4-free path. A [Tenstorrent engineer's
+August 2026 Linux PCI patch](https://lists.openwall.net/linux-kernel/2026/08/24/1853)
+targets Blackhole device `1e52:b140`, exactly this P100A's PCI ID. It
+proposes omitting BAR4 from Linux resource assignment when the host aperture
+is too small, allowing BAR0 and BAR2 to fit. The author reports that this
+made `tt-smi` and `tt-bh-linux` work on a 4 GiB-aperture RISC-V host.
+That is evidence of basic card access without BAR4, **not** evidence that
+TT-Metal or LLM inference works without it.
+
+The patch is not safe to copy uncritically: [Linux PCI review](https://lkml.iu.edu/2608.3/06163.html)
+points out that zeroing Linux's BAR4 resource metadata does not disable
+the BAR in the device. Enabling memory decoding could leave a live,
+unassigned BAR that decodes an unintended PCI address. No accepted fix or
+device-side BAR-disable mechanism has been verified here. The next safe
+engineering task is an **offline** review of the PCI configuration and
+Tenstorrent driver/firmware to find a sound way to keep BAR4 inactive while
+assigning BAR0/BAR2. Test only with a separately bootable kernel and a
+known-good SD/boot fallback; first milestone is BAR0/BAR2 allocation and
+driver enumeration, not an LLM. The live Fedora installation has not been
+modified for this investigation.
+
+On the live Fedora boot, read-only `setpci` shows PCI COMMAND `0x0000`
+(memory decoding and bus mastering both off), while BAR4's low/high config
+dwords are `0x0000000c`/`0x00000000` (an unassigned 64-bit BAR). This is
+safe in the current state, but it reinforces the reviewer's concern:
+turning on memory decoding after merely hiding BAR4 from Linux would leave
+the hardware BAR pointed at bus address zero. No PCI config register was
+written during this check.
 
 ## Official references
 
