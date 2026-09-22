@@ -4,9 +4,22 @@
 
 Source/feasibility investigation started 2026-09-15. No functioning Haiku
 accelerator driver yet. No kernel, firmware, PCI configuration or disk changes
-were deployed for this investigation. The running Haiku `listdev` inventory
-does not show vendor 0x1e52 / device 0xb140. Physical installation is not yet
-confirmed; absence from this inventory alone does not explain why.
+were deployed for this investigation. An earlier Haiku `listdev` inventory
+did not show vendor 0x1e52 / device 0xb140; Linux later enumerated the card
+after a physical reseat. Haiku detection must be checked again.
+
+A first optional Haiku diagnostic add-on is now in
+`src/add-ons/kernel/drivers/misc/tenstorrent_pci_diag.c`. It binds only PCI
+`1e52:b140` and exposes one read-only, versioned snapshot through
+`/dev/misc/tenstorrent_pci_diag`. The matching
+`tools/pioneer/tenstorrent_haiku_diag.c` prints the snapshot. This code has
+not yet been cross-built or run on the Pioneer; the previously used build
+mirror is currently unavailable. It is not included in the boot image.
+The snapshot reports identity, command/status and raw BAR configuration,
+but deliberately does not size BARs, infer usable mappings, touch MMIO,
+enable bus mastering, use DMA, or flash/reset the card. The legacy `pci_info`
+structure cannot faithfully describe a >4-GiB BAR; raw BAR registers are
+not a substitute for validated 64-bit resource allocation.
 
 Download pinned official sources with:
 
