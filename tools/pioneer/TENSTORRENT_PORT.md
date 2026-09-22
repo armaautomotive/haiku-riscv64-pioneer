@@ -124,6 +124,35 @@ boot setup as a diagnostic shortcut. A future aperture change needs a
 recovery plan and separate validation. No Linux/Haiku PCI configuration,
 driver, firmware, or storage was changed during this inventory.
 
+### Read-only aperture feasibility check
+
+The active device tree's `pcie@7062000000` ranges match the kernel source in
+`arch/riscv/boot/dts/sophgo/mango-pcie-4rc.dtsi`: 768 MiB low prefetchable,
+256 MiB non-prefetchable, 8 GiB high prefetchable at `0x4900000000`, and
+4 GiB high non-prefetchable at `0x4b00000000`. `/proc/iomem` confirms the
+adjacent `0x4c00000000..0x4fffffffff` address space belongs to the next
+PCIe controller, while `0x4800000000..0x48ffffffff` contains this root's
+configuration and smaller windows. Thus the 32-GiB-aligned interval
+`0x4800000000..0x4fffffffff` cannot simply be assigned to BAR4.
+
+The Sophgo Cadence host driver programs an outbound translation region for
+each device-tree range. Its CPU-address fixup masks addresses with
+`0xCFFFFFFFFF`; for example, the next 32-GiB-aligned candidate at
+`0x5000000000` would become `0x4000000000` in the programmed translation
+register. The controller's wider address decode and a non-overlapping host
+aperture have **not** been established, so changing only the device-tree
+window would be an unsafe experiment. This read-only check made no changes
+to the Fedora boot or PCI configuration.
+
+The local Tenstorrent KMD source derives its number of BAR4 TLB windows from
+the exposed BAR length, but the UMD and compute stack still need validation
+against any reduced aperture. This is not evidence that the fixed 32 GiB PCI
+BAR can be resized or omitted on this card. Before a boot test, obtain a
+supported SG2042 PCIe address-map/firmware answer and a documented P100A
+BAR4 requirement, then prepare a reversible boot entry and verify the
+existing entry still boots. Even after BAR allocation works, host-side
+TT-Metal support on riscv64 remains a separate porting question.
+
 ## Official references
 
 - P100A hardware: https://docs.tenstorrent.com/aibs/blackhole/installation.html
