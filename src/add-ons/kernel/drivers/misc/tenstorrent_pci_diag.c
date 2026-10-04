@@ -10,7 +10,6 @@
 #include <KernelExport.h>
 #include <PCI.h>
 #include <string.h>
-#include <vm/vm.h>
 
 
 #define TT_VENDOR_ID 0x1e52
@@ -94,6 +93,7 @@ publish_devices(void)
 static status_t
 diag_open(const char* name, uint32 flags, void** cookie)
 {
+	(void)flags;
 	if (!sFound || strcmp(name, TT_PCI_DIAG_DEVICE) != 0)
 		return B_ENTRY_NOT_FOUND;
 	*cookie = &sDevice;
@@ -104,6 +104,7 @@ diag_open(const char* name, uint32 flags, void** cookie)
 static status_t
 diag_close(void* cookie)
 {
+	(void)cookie;
 	return B_OK;
 }
 
@@ -111,6 +112,7 @@ diag_close(void* cookie)
 static status_t
 diag_free(void* cookie)
 {
+	(void)cookie;
 	return B_OK;
 }
 
@@ -151,6 +153,9 @@ diag_control(void* cookie, uint32 op, void* arg, size_t length)
 static status_t
 diag_read(void* cookie, off_t position, void* buffer, size_t* length)
 {
+	(void)cookie;
+	(void)position;
+	(void)buffer;
 	*length = 0;
 	return B_NOT_ALLOWED;
 }
@@ -159,6 +164,9 @@ diag_read(void* cookie, off_t position, void* buffer, size_t* length)
 static status_t
 diag_write(void* cookie, off_t position, const void* buffer, size_t* length)
 {
+	(void)cookie;
+	(void)position;
+	(void)buffer;
 	*length = 0;
 	return B_NOT_ALLOWED;
 }
@@ -173,7 +181,11 @@ find_device(const char* name)
 		diag_free,
 		diag_control,
 		diag_read,
-		diag_write
+		diag_write,
+		NULL,
+		NULL,
+		NULL,
+		NULL
 	};
 	return strcmp(name, TT_PCI_DIAG_DEVICE) == 0 ? &hooks : NULL;
 }

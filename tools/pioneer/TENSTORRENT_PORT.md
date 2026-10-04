@@ -12,9 +12,12 @@ A first optional Haiku diagnostic add-on is now in
 `src/add-ons/kernel/drivers/misc/tenstorrent_pci_diag.c`. It binds only PCI
 `1e52:b140` and exposes one read-only, versioned snapshot through
 `/dev/misc/tenstorrent_pci_diag`. The matching
-`tools/pioneer/tenstorrent_haiku_diag.c` prints the snapshot. This code has
-not yet been cross-built or run on the Pioneer; the previously used build
-mirror is currently unavailable. It is not included in the boot image.
+`tools/pioneer/tenstorrent_haiku_diag.c` prints the snapshot. The kernel
+add-on compiled cleanly with `-Wall -Wextra -Werror` and linked against the
+existing kernel build using `/Volumes/HaikuBuildLocal`'s RISC-V compiler.
+The CLI passed a compiler syntax check. Jam is missing, so this was a direct
+compile/link rather than an integrated Haiku build. Neither artifact has been
+installed or run on the Pioneer, and neither is included in the boot image.
 The snapshot reports identity, command/status and raw BAR configuration,
 but deliberately does not size BARs, infer usable mappings, touch MMIO,
 enable bus mastering, use DMA, or flash/reset the card. The legacy `pci_info`
