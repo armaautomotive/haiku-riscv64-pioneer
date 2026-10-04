@@ -14,10 +14,12 @@ A first optional Haiku diagnostic add-on is now in
 `/dev/misc/tenstorrent_pci_diag`. The matching
 `tools/pioneer/tenstorrent_haiku_diag.c` prints the snapshot. The kernel
 add-on compiled cleanly with `-Wall -Wextra -Werror` and linked against the
-existing kernel build using `/Volumes/HaikuBuildLocal`'s RISC-V compiler.
-The CLI passed a compiler syntax check. Jam is missing, so this was a direct
-compile/link rather than an integrated Haiku build. Neither artifact has been
-installed or run on the Pioneer, and neither is included in the boot image.
+existing kernel build. The CLI also compiled and linked against the existing
+Haiku runtime. Both used `/Volumes/HaikuBuildLocal`'s RISC-V compiler and are
+saved under ignored `generated.pioneer/tenstorrent/haiku-build/`. Jam is
+missing, so this was a direct compile/link rather than an integrated Haiku
+build. Neither artifact has been installed or run on the Pioneer, and neither
+is included in the boot image.
 The snapshot reports identity, command/status and raw BAR configuration,
 but deliberately does not size BARs, infer usable mappings, touch MMIO,
 enable bus mastering, use DMA, or flash/reset the card. The legacy `pci_info`
