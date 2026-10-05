@@ -142,6 +142,18 @@ boot setup as a diagnostic shortcut. A future aperture change needs a
 recovery plan and separate validation. No Linux/Haiku PCI configuration,
 driver, firmware, or storage was changed during this inventory.
 
+## Linux boot check, 2026-10-04
+
+With the Haiku SD removed, the Pioneer booted its SPI loader, then kexec'd
+Fedora Linux 6.1.31 from NVMe. The serial log again shows the P100A at
+`0002:81:00.0` (`1e52:b140`) requesting BAR0 512 MiB, BAR2 1 MiB and BAR4
+32 GiB. The root port's high prefetchable aperture remains 8 GiB; Linux reports
+no space for the 48 GiB bridge window and fails to assign all three endpoint
+BARs. This confirms the same aperture problem on a fresh boot with the card
+installed. Serial capture is saved in ignored
+`generated.pioneer/tenstorrent/pioneer-linux-boot-2026-10-04.log`. The boot
+used no SD, and no PCI settings, card firmware, or disks were modified.
+
 ### Read-only aperture feasibility check
 
 The active device tree's `pcie@7062000000` ranges match the kernel source in
