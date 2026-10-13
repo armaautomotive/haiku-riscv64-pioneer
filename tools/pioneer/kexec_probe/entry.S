@@ -48,13 +48,23 @@ _probe_trap_entry:
 	call probe_trap
 	j probe_halt
 
-.globl probe_putchar
-.type probe_putchar,@function
-probe_putchar:
-	li a7, 1
-	ecall
+.globl probe_mmio_read32
+.type probe_mmio_read32,@function
+probe_mmio_read32:
+	fence iorw, iorw
+	lwu a0, 0(a0)
+	fence iorw, iorw
 	ret
-.size probe_putchar, .-probe_putchar
+.size probe_mmio_read32, .-probe_mmio_read32
+
+.globl probe_mmio_write32
+.type probe_mmio_write32,@function
+probe_mmio_write32:
+	fence iorw, iorw
+	sw a1, 0(a0)
+	fence iorw, iorw
+	ret
+.size probe_mmio_write32, .-probe_mmio_write32
 
 .globl probe_sbi_read
 .type probe_sbi_read,@function

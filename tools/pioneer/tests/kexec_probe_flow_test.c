@@ -39,7 +39,7 @@ probe_sbi_read(unsigned long extension, unsigned long function, unsigned long ar
 		return result;
 	}
 	assert(function == 4 || (function == 3
-		&& (argument == 0x48534d || argument == 0x52464e43)));
+		&& (argument == 1 || argument == 0x48534d || argument == 0x52464e43)));
 	struct ProbeSbiResult result = {0,
 		function == 4 ? 0x5b7 : (failHsm && argument == 0x48534d ? 0 : 1)};
 	return result;
@@ -97,7 +97,7 @@ run(unsigned long hart, unsigned long pointer, unsigned long satp,
 		probe_main(hart, pointer, satp, status, 0x222, 0, 0x1234);
 		assert(!"probe returned without halting");
 	}
-	assert(strstr(output, "PIONEER_KEXEC_PROBE v1 BEGIN") != 0);
+	assert(strstr(output, "PIONEER_KEXEC_PROBE v2 BEGIN") != 0);
 	assert(strstr(output, expected) != 0);
 }
 
@@ -106,7 +106,7 @@ main(void)
 {
 	reset();
 	run(3, (unsigned long)fdt, 0, 0, "END status=PASS (entry/header/SBI state only)");
-	assert(queries == 68);
+	assert(queries == 69);
 	assert(strstr(output, "fdt_header=OK (full tree not parsed)") != 0);
 	reset();
 	run(3, (unsigned long)fdt, 1, 0, "FAIL reason=MMU was not disabled");
@@ -140,7 +140,7 @@ main(void)
 		probe_trap(15, 0x2200000, 0xcccccccc);
 		assert(!"trap reporter returned without halting");
 	}
-	assert(strstr(output, "PIONEER_KEXEC_PROBE v1 TRAP") != 0);
+	assert(strstr(output, "PIONEER_KEXEC_PROBE v2 TRAP") != 0);
 	assert(strstr(output, "stval=0x00000000cccccccc") != 0);
 	assert(strstr(output, "FAIL reason=unexpected supervisor trap") != 0);
 	puts("PASS: production entry flow, fail-closed paths and trap reporting (mock SBI)");

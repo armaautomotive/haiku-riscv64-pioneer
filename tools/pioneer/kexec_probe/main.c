@@ -27,7 +27,7 @@ hex(const char* name, ProbeU64 value)
 static void __attribute__((noreturn))
 fail(const char* reason)
 {
-	text("PIONEER_KEXEC_PROBE v1 END status=FAIL reason=");
+	text("PIONEER_KEXEC_PROBE v2 END status=FAIL reason=");
 	text(reason);
 	text("\n");
 	probe_halt();
@@ -38,7 +38,8 @@ probe_main(unsigned long hart, unsigned long fdt, unsigned long satp,
 	unsigned long status, unsigned long interruptEnable,
 	unsigned long interruptPending, unsigned long trapVector)
 {
-	text("PIONEER_KEXEC_PROBE v1 BEGIN\n");
+	text("PIONEER_KEXEC_PROBE v2 BEGIN\n");
+	text("console=uart32 (existing baud/settings; bounded polling)\n");
 	hex("hart", hart);
 	hex("fdt", fdt);
 	hex("satp", satp);
@@ -73,6 +74,9 @@ probe_main(unsigned long hart, unsigned long fdt, unsigned long satp,
 	hex("sbi_spec_version", result.value);
 	if (result.error != 0)
 		fail("SBI Base query failed");
+	result = probe_sbi_read(0x10, 3, 1);
+	hex("sbi_legacy_console_error", result.error);
+	hex("sbi_legacy_console_available", result.value);
 	result = probe_sbi_read(0x10, 4, 0);
 	hex("sbi_vendor_error", result.error);
 	hex("sbi_vendor", result.value);
@@ -102,7 +106,7 @@ probe_main(unsigned long hart, unsigned long fdt, unsigned long satp,
 	result = probe_sbi_read(0x10, 3, 0x52464e43);
 	hex("sbi_rfence_error", result.error);
 	hex("sbi_rfence_available", result.value);
-	text("PIONEER_KEXEC_PROBE v1 END status=PASS (entry/header/SBI state only)\n");
+	text("PIONEER_KEXEC_PROBE v2 END status=PASS (entry/header/SBI state only)\n");
 	text("HALTED: recover with the approved relay off/wait/on sequence\n");
 	probe_halt();
 }
@@ -110,7 +114,7 @@ probe_main(unsigned long hart, unsigned long fdt, unsigned long satp,
 void
 probe_trap(unsigned long cause, unsigned long pc, unsigned long address)
 {
-	text("PIONEER_KEXEC_PROBE v1 TRAP\n");
+	text("PIONEER_KEXEC_PROBE v2 TRAP\n");
 	hex("scause", cause);
 	hex("sepc", pc);
 	hex("stval", address);

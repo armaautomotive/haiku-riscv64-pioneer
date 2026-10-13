@@ -3,9 +3,9 @@
 This is the first SD-free bootstrap experiment, not a Haiku kernel or a
 working Haiku-from-disk loader. It implements the RISC-V Linux Image header
 and receives `a0` (hart ID) and `a1` (physical device-tree address) in S-mode.
-It uses OpenSBI's legacy console and read-only Base/HSM-status queries. It does not
-touch PCI, disk controllers, firmware flash, boot variables, secondary harts
-or persistent boot configuration. Every success/failure path deliberately
+Version 2 uses bounded, 32-bit polled UART output and read-only OpenSBI
+Base/HSM-status queries. It does not touch PCI, disk controllers, firmware
+flash, boot variables, secondary harts or persistent boot configuration. Every success/failure path deliberately
 halts; it never returns to the Linux kernel that performed kexec.
 
 ## Build and local checks
@@ -46,6 +46,11 @@ only after the board is powered off. Leave P100A removed. With SD absent,
 the unchanged SPI/LinuxBoot path must boot the existing NVMe Fedora system,
 and pinned SSH plus the serial console must both work. Confirm the relay is
 available for recovery before loading any probe. No SPI update is needed.
+The live FDT must confirm UART `0x7040000000`, range `0x1000`, register shift
+2 and I/O width 4. Output reads LCR/LSR and writes only a TX byte; it preserves
+baud, clock, FIFO and interrupt configuration. A divisor-bank selection or
+262,144 unsuccessful polls halts rather than writing an unsafe register or
+continuing to a PASS with failed output. Host UART tests mock MMIO, not hardware.
 
 Run the read-only inventory/gates on native Linux:
 
@@ -54,11 +59,16 @@ sh pioneer_kexec_probe_preflight.sh
 ```
 
 It verifies the known board family, non-EFI boot, NVMe root, no MMC device,
-live FDT, enabled/unoccupied kexec interface and secondary-CPU shutdown
-configuration. It does not load an image. Review the actual installed kexec
+live FDT/UART layout, enabled/unoccupied kexec interface and secondary-CPU
+shutdown configuration. It does not load an image. Review the actual installed kexec
 version/help and its RISC-V Image support; do not assume current upstream
 features are present in the older Fedora installation. An unknown or already
 loaded request is a blocker, not permission to unload someone else's image.
+The observed Fedora kexec-tools 2.0.26 supports only `elf-riscv`. A separate,
+uninstalled upstream build at commit `0fd0d8e9ea975696fdc05ad267a65f3efd415612`
+provides `image-riscv`. With that build, omit `-d`: it sends `KEXEC_DEBUG`
+(0x10), which the older Linux 6.1 syscall rejects. This is not permission to
+change a kernel security policy; retain hash, configuration and memory gates.
 
 Stage files only in a private directory on the separate R3SL staging SSD.
 Verify the image SHA-256 and a saved live FDT before a reviewed **load-only**
@@ -77,11 +87,13 @@ No automatic load/execution or persistent boot-selection service is included.
 
 ## Expected diagnostics and limitations
 
-`PIONEER_KEXEC_PROBE v1 BEGIN` precedes the CSR/FDT checks. The probe prints
+`PIONEER_KEXEC_PROBE v2 BEGIN` precedes the CSR/FDT checks. The probe prints
 the actual hart, FDT address, initial SATP/SSTATUS/SIE/SIP/STVEC, runtime image
-range, bounded FDT header fields and SBI Base/HSM/RFENCE query results.
+range, bounded FDT header fields and SBI Base/legacy-console/HSM/RFENCE
+query results.
 HSM must report the incoming hart started and the other 63 stopped; errors,
-pending states or another started hart fail the check without starting/stopping any hart.
+pending states or another started hart fail the check without starting/stopping
+any hart.
 SATP must be zero, supervisor interrupts disabled and hart ID below 64.
 FDT must be eight-byte aligned, fit a known Pioneer RAM window, have a
 compatible v17 header and remain within the 2 MiB probe cap. Resident low
@@ -95,8 +107,10 @@ SBI-reported hart states passed. It does not independently verify actual
 secondary-CPU execution, DMA shutdown, cache coherency,
 Haiku startup or a boot-volume choice. `TRAP` reports SCAUSE/SEPC/STVAL on a
 private stack, then emits `END status=FAIL`. Missing output is ambiguous: it
-could be a failed handoff or unavailable legacy SBI console. Always retain
+could be a failed handoff, unavailable UART or a shutdown failure. Always retain
 Linux's preceding kexec diagnostics and perform the planned recovery.
+Version 1's legacy-SBI-console attempt was silent and inconclusive; the direct
+UART path is diagnostic instrumentation, not an established fix for that attempt.
 
 Sources: [RISC-V boot contract](https://docs.kernel.org/arch/riscv/boot.html),
 [Image header](https://docs.kernel.org/arch/riscv/boot-image-header.html),

@@ -12,6 +12,18 @@ fail()
 [ -r /proc/device-tree/compatible ] || fail 'Missing live device-tree identity'
 tr '\000' '\n' < /proc/device-tree/compatible \
 	| grep -qxE 'sophgo,(sg2042|mango)' || fail 'Unexpected board compatible'
+uart_node=/proc/device-tree/soc/serial@7040000000
+property_hex()
+{
+	[ -r "$uart_node/$1" ] || fail 'Live UART layout is unavailable'
+	od -An -tx1 "$uart_node/$1" | tr -d ' \n'
+}
+[ "$(property_hex reg)" = 00000070400000000000000000001000 ] \
+	|| fail 'Unexpected UART physical register range'
+[ "$(property_hex reg-shift)" = 00000002 ] \
+	|| fail 'UART register shift is not the reviewed layout'
+[ "$(property_hex reg-io-width)" = 00000004 ] \
+	|| fail 'UART register I/O width is not the reviewed layout'
 command -v findmnt >/dev/null || fail 'findmnt is required for root-disk verification'
 [ "$(findmnt -n -o SOURCE /)" = /dev/nvme0n1p3 ] \
 	|| fail 'Linux root is not the recorded NVMe partition'

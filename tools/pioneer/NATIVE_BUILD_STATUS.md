@@ -972,3 +972,52 @@ power off, the seven-second relay off hold completed. SD removal remains gated
 on physical confirmation that fans/LEDs are off. Native Linux preflight, actual
 installed kexec Image support, handoff diagnostics and recovery are pending.
 The SD, Samsung system package, SPI and Linux boot configuration are unchanged.
+
+### First native attempt and diagnostic follow-up
+
+The user confirmed fans/LEDs off and SD removed. Relay on booted the unchanged
+SPI/LinuxBoot path into Fedora 6.1.31, with pinned Linux SSH, NVMe root, all 64
+CPUs online and no MMC storage. Read-only preflight passed CONFIG_KEXEC and
+CONFIG_HOTPLUG_CPU, live FDT and unoccupied/enabled load interface. Samsung
+remained unmounted; only verified R3SL `/dev/sdb2` at `/mnt/ssd` was used for
+private staging in `/mnt/ssd/pioneer-kexec-probe-20261013`.
+
+Installed kexec-tools 2.0.26 handles only `elf-riscv`. Built unmodified upstream
+commit `0fd0d8e9ea975696fdc05ad267a65f3efd415612` natively with existing GCC
+13.2.1/autoconf, no system install or additional packages. Source archive
+SHA-256 `28011794cdc4320b2440bcdbb723242d6c413bbfd0ede3f6bae0dac60d47c75a`;
+private 2.0.32.git executable
+`06aa5c6fa6e78bdf92abefb4e7f4b0accadfe6212a02c700905392f8d8056748`.
+Saved original live FDT SHA-256
+`e9264e1696ae23bdde4a2a20c0831215b4ea8967d2dd90ccba5a910aaa9befdd`.
+
+Version 1 load with `-c -l -d -t image-riscv`, saved DTB and memory bounds
+0x2200000..0xbfffffff failed EINVAL with kexec_loaded still zero. Debug showed
+entry 0x2200000, FDT segment 0xbfff5000 and syscall flags 0xf30010. Current
+userspace adds KEXEC_DEBUG (0x10) for `-d`; Linux 6.1 rejects unknown flags.
+Retry without `-d` exited zero and kexec_loaded became one. Used normal
+`systemctl kexec`, not direct `kexec -e`. SSH went away, but no new serial bytes
+or probe marker appeared after offset 1729522 within the bounded observation.
+No entry/hart/console success is claimed. Relay off/wait/on returned to pinned
+NVMe Linux and kexec_loaded zero. The retained journal does not contain this
+attempt's final shutdown record; recovery shows journal/EFI-FAT warnings that
+were also present before the test, not a diagnosed new corruption from it.
+
+Prepared version 2 diagnostic candidate: direct UART32 polled output instead
+of legacy SBI putchar, with all original read-only SBI state queries retained.
+Live FDT confirms the exact UART range, shift 2 and width 4. No clock, baud,
+FIFO or interrupt-register changes are made. Divisor-bank selection and bounded
+poll timeout halt without PASS. UART host mock tests, existing sanitizer tests
+and byte-identical relink checks pass. Candidate is 28,672 bytes, SHA-256
+`b57754d066aaaaa96ad285faff00a9efd30d5e4b24351b7d37f52f5d865f70e7`, in
+`generated.pioneer/kexec-probe-20261013/build-uart/PioneerKexecProbe.Image`.
+This console change is not yet a proven explanation or fix for the silent test.
+
+Version 2's reviewed load-only operation also exited zero/kexec_loaded one.
+Normal `systemctl kexec` at 17:41:14 UTC was observed in a live host-side journal
+stream, including logind's accepted kexec request. The stream ended when SSH
+closed; it does not prove final filesystem unmount, SMP shutdown or payload
+entry. No serial bytes followed offset 1793524 through 17:44:39 UTC, so this
+attempt is also inconclusive, not PASS. Began the planned relay recovery.
+Next control is the existing Linux kernel/initrd with temporary serial-enabled
+arguments, not a saved boot-entry or firmware change.
