@@ -85,17 +85,19 @@ Packaged original SHA-256:
 
 ## Reversible SD test
 
-Use a **user** non-packaged override, with a boot symlink so the driver
-can be preloaded before the root filesystem mounts:
+An experimental **user** non-packaged override was staged with a boot
+symlink so the driver could be preloaded before the root filesystem mounts.
+**This boot method failed validation; do not repeat it as a deployment recipe.**
 
 - `/boot/home/config/non-packaged/add-ons/kernel/busses/usb/xhci`
 - `/boot/home/config/non-packaged/add-ons/kernel/boot/xhci`
   pointing to `../busses/usb/xhci`.
 
 The bootloader reads these user paths from the BFS root and prepends their
-images after reading packaged modules. They therefore register first.
-The original packaged driver and system package remain intact. Do not
-attempt to reload the USB controller live.
+images after reading packaged modules. The test log reports duplicate xHCI
+module names. It does not establish that this arrangement is safe for the
+Pioneer bootstrap. The original packaged driver and system package remain
+intact. Do not attempt to reload the USB controller live.
 
 The hash-checked backup/staging directory is
 `/boot/home/pioneer-xhci-cleanup-20261012`, outside active add-on paths.
@@ -106,9 +108,22 @@ the established Linux recovery path and the saved SD snapshot.
 Staging passed: the backup and packaged original matched the original hash,
 and both user override paths matched the fixed driver hash. The package hash
 was checked before staging and no package was replaced. A normal
-`shutdown -r` closed the desktop and SSH, but no new firmware output had
-appeared during the initial checks; physical board-state confirmation is
-pending before relay recovery. Reboot verification remains pending.
-Keep the P100A removed for
-the normal-controller regression test; reconnecting it is a separate,
-supervised hardware test and is not necessary to validate the healthy path.
+`shutdown -r` closed the desktop and SSH but did not restart the board. The
+user requested a hardware restart; relay off (7 seconds), ten-second wait,
+then relay on (0.75 seconds) produced a fresh firmware/Haiku boot.
+
+That boot passed firmware PCI allocation but panicked at about 94.4 seconds
+with `did not find any boot partitions!`. Device discovery published the
+FDT blob but did not register the SD controller, PCI devices or native USB
+controller. The xHCI constructor/cleanup failure path was not exercised.
+This is a new early device-discovery failure, not proof of a bad cleanup
+guard or of SD corruption. Its relation to duplicate preloading remains
+unproven until an unchanged-package baseline is retested without the override.
+Evidence: ignored `generated.pioneer/xhci-cleanup/haiku-override-boot-20261012.log`,
+combined serial start offset 431481.
+
+Rollback is pending: power off, remove the SD to boot Linux from NVMe,
+reinsert it only after Linux is ready, verify card identity, then disable
+only the two override entries. Preserve the driver backup and all existing
+packages/settings; do not reflash the card or deploy the 300 MiB test image.
+Keep the P100A removed. Hardware validation of the fixed driver is incomplete.
