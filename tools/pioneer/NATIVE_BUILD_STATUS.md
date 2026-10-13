@@ -1242,3 +1242,25 @@ protocol, capacity, physical/removable flags and original volume UUID. Requested
 macOS administrator authorization to execute the explicitly approved write;
 actual write/readback/ejection results are still pending. The Pioneer remains
 off, its NVMe rollback is still pending, and no SPI or Haiku-SD write is planned.
+
+Administrator authorization was accepted, but macOS privacy policy prevented
+the privileged Python process from opening the script under Documents. This
+first attempt never reached the card. Staged identical script/image copies in
+private directory `/private/tmp/pioneer-linux-sd.KhhSuW` (directory 700, custom
+image 600), avoiding a request for broader Documents access. Script SHA-256 is
+`21f22e6307e7e55fd0496cf40fb4da1db07a6761dd2c1428f2b3dd5df2acad8d`.
+
+The staged retry verified the card identity and prepared-image SHA, rechecked
+the original spare UUID, successfully unmounted disk6, and rechecked its
+identity. It then stopped at opening `/dev/rdisk6` with `Operation not permitted`.
+No raw descriptor was opened, no original-header backup exists, and no SD
+sector was written. The card is unmounted, not erased or imaged. Log copied to
+`generated.pioneer/linux-recovery-20261013/image-spare-temporary-stage.log`.
+Do not retry alternate device aliases or weaken macOS privacy settings silently.
+The user can explicitly run the unchanged guarded script in their own Terminal:
+`sudo /usr/bin/python3 /private/tmp/pioneer-linux-sd.KhhSuW/image-spare.py --apply`.
+It independently checks the original spare identity and image again before
+writing and verifies the complete image readback before ejection. If Terminal
+also reports a privacy block, stop and arrange explicit OS permission or an
+authorized GUI media writer. Linux recovery has not booted; NVMe rollback is
+still pending, and the Pioneer must remain off until media is ready.
