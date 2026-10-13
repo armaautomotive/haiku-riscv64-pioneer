@@ -1264,3 +1264,35 @@ writing and verifies the complete image readback before ejection. If Terminal
 also reports a privacy block, stop and arrange explicit OS permission or an
 authorized GUI media writer. Linux recovery has not booted; NVMe rollback is
 still pending, and the Pioneer must remain off until media is ready.
+
+The user ran the unchanged guarded imager in their own Terminal. It verified
+the image/card, wrote all 13,555,990,528 bytes, and completed a full readback
+(158 seconds), but the final SHA comparison failed: `SD readback SHA-256
+mismatch; DO NOT BOOT`. The spare's original filesystem has therefore been
+replaced; it was not ejected and is not yet approved as recovery media. The
+original first-1-MiB header backup now exists in the private staging directory;
+this is not a full backup of the erased filesystem. No Pioneer/NVMe/Haiku-SD
+write occurred.
+
+Read-only investigation identified the same spare serial 0xeb42 with the
+expected new three-partition layout. macOS had automatically mounted its new
+127.9 MB FAT boot volume and created `.Spotlight-V100` and `.fseventsd`, both
+timestamped during imaging. Those directories do not exist in the source FAT
+image. The imager closed its raw write descriptor before rechecking identity
+and reading back, leaving a remount race. This is a likely explanation for
+the whole-image mismatch, not yet proof that all payload data is intact or
+that the media is healthy. Do not ignore the failed checksum or simply boot.
+
+Unmounted disk6 successfully to stop indexing changes. Direct raw reads from
+the tool process are permission-denied, so the user must capture a read-only
+image from their authorized Terminal:
+`sudo dd if=/dev/rdisk6 bs=4m count=3232 > /private/tmp/pioneer-linux-sd.KhhSuW/spare-readback.raw`.
+This reads exactly 13,555,990,528 bytes and does not write the SD. Sufficient
+temporary storage is available. Next compare all bytes outside the FAT
+partition against the prepared image and verify every original FAT boot file
+plus filesystem structure; only then decide whether the mismatch is benign
+Mac metadata or corruption. Extracted the 12 original FAT files read-only
+into ignored `generated.pioneer/linux-recovery-20261013/fat-original/` for
+independent payload comparisons. The Pioneer remains off; NVMe rollback is
+still pending. Never rerun the one-shot imager blindly or delete its guard
+backup to force a second write.
