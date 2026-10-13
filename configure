@@ -926,10 +926,12 @@ if wget --retry-on-host-error --version > /dev/null 2>&1; then
 	HOST_WGET_RETRY_ON_HOST_ERROR=1
 fi
 
+# Host-only builds do not use a target assembler.
 # check if nasm can actually output ELF files
 # (the stock version in OSX can't)
 # XXX: should probably only test for x86* arch
-if [ "$("$HAIKU_NASM" -hf | grep -c elf'[36][24] ')" -ne "2" ]; then
+if [ "$HAIKU_HOST_BUILD_ONLY" != 1 ] \
+	&& [ "$("$HAIKU_NASM" -hf | grep -c elf'[36][24] ')" -ne "2" ]; then
 	echo "$HAIKU_NASM cannot generate ELF files. Please install a working version."
 	if [ $HOST_PLATFORM = "darwin" ]; then
 		echo "You can install it from Mac Ports."

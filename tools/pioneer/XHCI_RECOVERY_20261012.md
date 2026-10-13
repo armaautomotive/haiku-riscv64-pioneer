@@ -122,8 +122,72 @@ unproven until an unchanged-package baseline is retested without the override.
 Evidence: ignored `generated.pioneer/xhci-cleanup/haiku-override-boot-20261012.log`,
 combined serial start offset 431481.
 
-Rollback is pending: power off, remove the SD to boot Linux from NVMe,
-reinsert it only after Linux is ready, verify card identity, then disable
-only the two override entries. Preserve the driver backup and all existing
-packages/settings; do not reflash the card or deploy the 300 MiB test image.
-Keep the P100A removed. Hardware validation of the fixed driver is incomplete.
+## File-level rollback under Linux
+
+After the user removed the SD, Linux booted from `/dev/nvme0n1p3`. The
+user reinserted the SD; its CID and both partition sizes matched the records
+above. Both partitions were unmounted before backup and maintenance.
+
+A fresh complete 4 GiB partition backup is on the separate R3SL staging SSD:
+`/mnt/ssd/pioneer-xhci-rollback-20261012/sd-before-rollback.img`, SHA-256
+`fce7aa1c3203b1326c43c787eecdc69aa468519f4fcd230824940e47ac3a5e1e`.
+The directory is private; raw filesystem backups must not be pushed to GitHub.
+
+Linux's in-kernel BFS driver is read-only. Built this checkout's native
+`<build>bfs_shell` on Linux/riscv64 (91 targets), using the restored Jam source.
+The host-only configure path unnecessarily required NASM, then replaced it
+with a dummy target-assembler command. Changed `configure` to skip only the
+unused NASM check for `--host-only`; target-build validation is unchanged.
+Configuration passed without NASM, with `--no-xattr --no-downloads`. No
+Linux packages were installed. Build workspace and tool:
+
+```text
+/mnt/ssd/pioneer-xhci-rollback-20261012/host
+/mnt/ssd/pioneer-xhci-rollback-20261012/host/objects/linux/riscv64/release/tools/bfs_shell/bfs_shell
+```
+
+Rehearsed the following two renames on a copy of the fresh backup, then
+performed the same operations on the verified, unmounted `/dev/mmcblk1p2`:
+
+- Move the user `boot/xhci` symlink to
+  `/home/pioneer-xhci-cleanup-20261012/disabled-boot-link`.
+- Move the user `busses/usb/xhci` file to
+  `/home/pioneer-xhci-cleanup-20261012/disabled-driver`.
+
+No driver was deleted. Only these test entries were moved out of active
+add-on paths; no full-filesystem payload, partition table, firmware or package
+replacement was performed. The copy and actual card passed `checkfs -c`
+before and after: 614 nodes, zero missing/duplicate/freeable blocks. All 11
+command replies in each run were zero. Extracted system package, original
+driver backup and disabled candidate matched their recorded hashes.
+
+An independent read-only Linux mount confirmed both active override entries
+were absent and rechecked the system package, firmware, DTB and EFI loader
+hashes. Both partitions were unmounted again. Logs and audit files are saved
+in the rollback workspace (`rehearsal.log`, `live.log`, `*.reply`, and audit
+directories). The original full-card and pre-override backups remain intact.
+
+Linux was shut down cleanly, followed by a twenty-second wait and relay on
+with the SD still inserted. The baseline re-boot succeeded. SSH verified
+Haiku on `/dev/disk/mmc/0/1`, 4 GiB total with 2.8 GiB free (1,473,257
+blocks of 2048 bytes). Tracker, Deskbar, app_server, input_server, net_server
+and sshd are running. The active override entries remain absent; the
+packaged xHCI driver still has its original hash. `listimage 1` shows the
+original single xHCI image, ID 47. No panic or duplicate-module warning
+appeared in the inspected rollback boot log.
+
+Evidence: ignored `generated.pioneer/xhci-cleanup/haiku-after-rollback-20261012.log`,
+combined serial start offset 650820. Restored device discovery after removing
+the extra preloaded driver implicates the override arrangement; the precise
+bootstrap failure mechanism remains undiagnosed. Do not claim the cleanup
+guard caused the disk failure or that the new driver passed a hardware test.
+
+Haiku is left running with the original driver, the SD inserted, and the
+P100A removed. Post-rollback physical desktop/input confirmation is pending.
+The cleanup fix is saved/built but disabled on this SD. Before another runtime
+test, prepare a backed-up package-level driver update that does not preload
+both copies; do not overwrite the persistent filesystem or firmware.
+
+Host-only configure checks also passed shell syntax validation. An isolated
+NASM-check test succeeds for `HAIKU_HOST_BUILD_ONLY=1` with a nonexistent
+assembler and still rejects it for `HAIKU_HOST_BUILD_ONLY=0`.
