@@ -1202,3 +1202,43 @@ candidate by removing only the three experimental arguments. It is exactly
 This provides a verified local rollback copy in addition to the intact R3SL
 backup. It has not been installed. Restore and hash-verify the original on
 the identified NVMe boot partition before any further kexec experiment.
+
+The spare is now physically identified on this Mac as `/dev/disk6`, Built In
+SDXC Reader, Secure Digital protocol, removable physical media, exactly
+31,299,993,600 bytes. It is LSMSSD0, manufacturer 0xad, serial **0xeb42**,
+not the working Haiku card's serial 0xe752. Its original single FAT32 volume
+is `NO NAME`, UUID `80235346-F6F1-3CCB-AA9C-55108A5F0AE5`. The user explicitly
+approved erasing this spare. The Mac classifies this built-in reader as
+internal; an external-only disk inventory does not list it.
+
+Uncompressed the untouched vendor image (13,555,990,528 bytes), SHA-256
+`681edfbb89349e32111c2cac8b48b551f5e5205d8387a81ce3e7c16bb01879ed`.
+Inspected its MBR/FAT and ext4 boot/root read-only. The default is Fedora
+6.1.55 and its root UUID matches the included filesystem. Built upstream
+e2fsprogs 1.47.3 tools privately under the ignored recovery directory; source
+SHA-256 `857e6ef800feaa2bb4578fbc810214be5d3c88b072ea53c5384733a965737329`
+matches kernel.org's published digest. No system-wide package install.
+
+Prepared a separate copy-on-write artifact, `PioneerLinuxRecovery-20261013.raw`.
+Gave it MBR disk ID `201785d7` and set both extlinux and fstab to root
+`PARTUUID=201785d7-03`, avoiding reliance on device enumeration or a factory
+filesystem UUID potentially duplicated on another disk. Kept the stock kernel,
+initramfs, DTBs and FAT boot firmware. Added the existing owner's public key
+for root, a first-included SSH configuration requiring public-key authentication
+and disabling password/interactive authentication and forwarding, and a fresh
+private recovery host key (root:root, 600). Stock sshd service was already
+enabled. Recovery host fingerprint is
+`SHA256:5k2RifcAMqINUw7EbEJEHt4ND1fAfdhcWz0Lzh9qJMk`; its separate pin file
+is `generated.pioneer/linux-recovery-20261013/known_hosts.recovery`.
+The exact rollback file is included at `/root/pioneer-extlinux.conf.original`.
+Private keys, disk images and preparation helpers remain ignored, not pushed.
+
+All injected files were readback-compared against their inputs without exposing
+private key material. Both modified ext4 partitions passed full read-only
+`e2fsck -fn` (exit 0). Prepared image SHA-256 is
+`7251f9ae2848761db1768d6f9bf82fbcd523a7bc823ee7879b8a93516acde121`.
+The one-shot imager's dry run verified this digest and the spare's serial,
+protocol, capacity, physical/removable flags and original volume UUID. Requested
+macOS administrator authorization to execute the explicitly approved write;
+actual write/readback/ejection results are still pending. The Pioneer remains
+off, its NVMe rollback is still pending, and no SPI or Haiku-SD write is planned.
