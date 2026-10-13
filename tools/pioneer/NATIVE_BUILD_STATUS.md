@@ -1117,3 +1117,54 @@ unchanged by SPI/LinuxBoot. `/boot/grub.cfg` is an older 6.1.22/mmc entry;
 `/boot/grub2/grub.cfg` and `/boot/efi/EFI/fedora/grub.cfg` are absent. None of
 these files was changed. A temporary, backed-up keep_bootcon experiment is a
 possible next logging diagnostic, not an implemented selector or proven fix.
+
+### Approved temporary boot-logging experiment
+
+The user approved a temporary Linux boot-logging change with backup/rollback.
+Rechecked pinned Linux SSH, NVMe root, CPU mask 0-63, kexec_loaded zero and the
+unchanged extlinux hash. Created an exact metadata-preserving backup at
+`/mnt/ssd/pioneer-kexec-probe-20261013/logging-change-1/extlinux.conf.before`.
+Patched a local copy using apply_patch and audited the full diff: only the
+f38MVP append line gains `keep_bootcon ignore_loglevel loglevel=8`. Other
+entries, default choice, kernel, initrd, FDT, root and existing arguments are
+unchanged. Linux 6.1 documents keep_bootcon as retaining its boot console.
+
+Candidate SHA-256
+`97f7f3085719f6a9e9dbf79a47c6778fd320fafaf82a57d81d99ba38de835d70`,
+918 bytes, root:root mode 664. Installed via a same-directory temporary copy
+with preserved attributes, hash/mode checks, sync and atomic rename. At
+20:37:32 UTC requested clean shutdown; fresh serial baseline is 2052292.
+No kexec image was loaded for this cold boot. The original must be atomically
+restored and hash-verified as soon as pinned SSH returns, before any new probe.
+Whether SPI/LinuxBoot passes through these logging arguments remains a test,
+not an assumed property of the candidate file.
+
+The cold test did pass the three new arguments into Fedora: serial captured
+the full command line including keep_bootcon/ignore_loglevel/loglevel=8 and
+continued past the old bootconsole cutoff. Last visible line is at 3.358654
+seconds, after UART0-3 driver registration. Pinned SSH did not return during
+the bounded cold-boot checks. This logging boot is not healthy; whether it
+exposed or caused the stop is not yet isolated. The logging candidate remains
+installed until recovery can restore the exact original backup. No SPI or
+Samsung change occurred. Began a bounded LinuxBoot recovery interruption;
+never send rollback shell commands until an actual recovery prompt is observed.
+
+Recovery interruption: watcher used a fresh offset 2142064, observed LinuxBoot
+userspace initialization, waited two seconds and sent exactly one Ctrl-C via
+the existing serial reader. No recovery prompt appeared; firmware continued
+its normal handoff to Fedora with the temporary logging arguments. Again the
+last visible Fedora line is after UART0-3 registration (3.360801 seconds).
+Pinned SSH and two ICMP probes failed; ARP for the known address was incomplete.
+No shell commands were injected and no additional boot-entry edit was made.
+
+Issued the seven-second relay off hold at 20:57:11 UTC. Recovery is unfinished:
+the candidate `97f7f308...` is still on NVMe `/boot/extlinux/extlinux.conf`.
+The original `53c0da6d...` remains intact on the separate R3SL staging SSD at
+`/mnt/ssd/pioneer-kexec-probe-20261013/logging-change-1/extlinux.conf.before`.
+An independent recovery boot is required to mount the known NVMe boot
+partition `/dev/nvme0n1p2`, restore that exact original via same-directory
+temporary copy/atomic rename, preserve root:root mode 664 and sync/hash-check
+it before a normal boot. Do not flash SPI, reformat storage or overwrite the
+working Haiku SD as a recovery shortcut. Do not report Linux restored or
+resume kexec probes while this rollback remains pending. User physical-display
+confirmation and available recovery-media information are pending.
