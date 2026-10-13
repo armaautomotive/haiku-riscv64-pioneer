@@ -943,3 +943,32 @@ alone does not solve this bootstrap work. Linux's published entry contract:
 https://docs.kernel.org/arch/riscv/boot.html
 SPI replacement is a separate option requiring recovery planning and explicit
 approval, not part of this investigation. Current board remains on SD Haiku.
+
+## 2026-10-13: SD-free kexec entry probe candidate
+
+Implemented `tools/pioneer/kexec_probe/` and separate build/read-only preflight
+scripts as the first bootstrap milestone. This is a freestanding serial-only
+RISC-V Linux Image, not a Haiku kernel, disk loader or working boot selector.
+It receives the incoming hart/FDT, captures entry CSRs, validates bounded FDT
+header/physical-RAM limits and reads SBI Base/HSM status. It neither starts nor
+stops harts and makes no disk, PCI, flash or persistent boot-setting changes.
+A private supervisor trap stack reports unexpected exceptions. Every result
+deliberately halts and requires the planned relay recovery to default Linux.
+
+Host ASan/UBSan tests passed production FDT checks and diagnostic control flow
+with mocked physical-address/SBI/console calls. Six Python test groups passed
+Image header rejection checks. The existing GCC 13.3.0 cross toolchain built
+the RV64 IMAC soft-float candidate with warnings as errors, no runtime imports
+or retained ELF relocations. Raw bytes are identical when linked at 0x2200000
+and 0x80200000. The fixed-linked debug ELF is not a kexec target. Raw artifact:
+`generated.pioneer/kexec-probe-20261013/build/PioneerKexecProbe.Image`, 24,576
+bytes, SHA-256
+`78de12a2de7f8bdf9ccdd1864bb822b505c0e8cb64c94d9646b6aada7da930c9`.
+No emulator or hardware execution is established by these local checks.
+
+The user confirmed Haiku work saved, then used Deskbar shutdown because pinned
+SSH was still unreachable. After the user confirmed shutdown finished/safe to
+power off, the seven-second relay off hold completed. SD removal remains gated
+on physical confirmation that fans/LEDs are off. Native Linux preflight, actual
+installed kexec Image support, handoff diagnostics and recovery are pending.
+The SD, Samsung system package, SPI and Linux boot configuration are unchanged.

@@ -48,6 +48,11 @@ The [October 12 SD/xHCI recovery record](XHCI_RECOVERY_20261012.md) documents
 the healthy 4 GiB SD baseline, the P100A-triggered PCI allocation failure,
 the USB cleanup fix, and its reversible driver test/rollback path.
 
+The [kexec entry probe](kexec_probe/README.md) starts the SD-free bootstrap
+work. Its build and host tests are local-only; the read-only Linux preflight
+does not load or execute a payload. Hardware handoff and recovery remain
+separate validation gates before an unattended boot selector is implemented.
+
 ## Haiku build and SD deployment
 
 ### Source-built UEFI for SSD boot experiments
