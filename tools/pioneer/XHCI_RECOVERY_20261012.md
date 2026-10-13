@@ -96,7 +96,7 @@ symlink so the driver could be preloaded before the root filesystem mounts.
 The bootloader reads these user paths from the BFS root and prepends their
 images after reading packaged modules. The test log reports duplicate xHCI
 module names. It does not establish that this arrangement is safe for the
-Pioneer bootstrap. The original packaged driver and system package remain
+Pioneer bootstrap. The original packaged driver and system package remained
 intact. Do not attempt to reload the USB controller live.
 
 The hash-checked backup/staging directory is
@@ -171,7 +171,7 @@ Linux was shut down cleanly, followed by a twenty-second wait and relay on
 with the SD still inserted. The baseline re-boot succeeded. SSH verified
 Haiku on `/dev/disk/mmc/0/1`, 4 GiB total with 2.8 GiB free (1,473,257
 blocks of 2048 bytes). Tracker, Deskbar, app_server, input_server, net_server
-and sshd are running. The active override entries remain absent; the
+and sshd were running. The active override entries remained absent; the
 packaged xHCI driver still has its original hash. `listimage 1` shows the
 original single xHCI image, ID 47. No panic or duplicate-module warning
 appeared in the inspected rollback boot log.
@@ -180,15 +180,91 @@ Evidence: ignored `generated.pioneer/xhci-cleanup/haiku-after-rollback-20261012.
 combined serial start offset 650820. Restored device discovery after removing
 the extra preloaded driver implicates the override arrangement; the precise
 bootstrap failure mechanism remains undiagnosed. Do not claim the cleanup
-guard caused the disk failure or that the new driver passed a hardware test.
+guard caused the disk failure or that this rollback tested the new driver.
 
-Haiku is left running with the original driver, the SD inserted, and the
+Haiku was left running with the original driver, the SD inserted, and the
 P100A removed. The user confirmed the desktop is visible and mouse/keyboard
 respond after rollback.
-The cleanup fix is saved/built but disabled on this SD. Before another runtime
-test, prepare a backed-up package-level driver update that does not preload
-both copies; do not overwrite the persistent filesystem or firmware.
+The cleanup fix was saved/built but disabled on this SD at that point. The
+next runtime test used the backed-up package-level update below to avoid
+preloading both copies; it did not overwrite the persistent filesystem or
+firmware.
 
 Host-only configure checks also passed shell syntax validation. An isolated
 NASM-check test succeeds for `HAIKU_HOST_BUILD_ONLY=1` with a nonexistent
 assembler and still rejects it for `HAIKU_HOST_BUILD_ONLY=0`.
+
+## Package-level cleanup test
+
+Prepared a copy of the currently installed system package, not a new
+filesystem image. The host package tool's `add -f` replaced only
+`add-ons/kernel/busses/usb/xhci`; implicit parent-directory metadata is
+preserved by its update mode. The replacement retained the original file's
+Haiku attributes, permissions and modification time. The USB directory's
+archive entry order changed, but its entry set and metadata did not.
+
+`tests/audit_xhci_package.py` compared the extracted original and candidate
+trees plus canonicalized `package list -a` output: 5,857 paths, 5,449 files,
+158 symlinks. Only xHCI's payload changed. All other payloads, link targets,
+modes, ownership, regular-file modification times, typed Haiku attributes,
+listed archive metadata and package attributes matched. Darwin attributes
+are read through the native no-follow xattr API because Python's os module
+does not expose it on this host. An unrelated `.PackageInfo` edit in the
+extracted candidate was rejected by the audit; restoration passed again.
+The actual candidate archive was not modified by this negative control.
+
+Original system package SHA-256:
+`c7e0d87fcd3c15c284c320586b92455359e4341ab5514474a7ad0aee034f3d62`.
+Candidate system package SHA-256:
+`edffc524908beab2084b7abc3b33b8a7c7ca0f7b4ad700c96470dade6bc72a53`.
+Candidate driver SHA-256 remains
+`dfaa3f1f61e2c14c1ee26902d90ea5fcc5bb425fad65961bdf9127db8ec8e806`.
+Original and candidate kernels both match
+`693794818248a33e3df9d7a0486639a645925a89966b480811559c13426c71d0`.
+
+Saved and hash-verified the running package at
+`/boot/home/pioneer-xhci-package-test-20261012/previous-haiku.hpkg`, outside
+active package paths. Uploaded the audited candidate there, verified its
+hash, and used Haiku's own package reader to extract and hash-check its
+driver and unchanged kernel before installation. Synchronized, renamed
+the candidate over the canonical system-package path on the same SD
+filesystem, synchronized again, and verified installed/backup hashes.
+The old package was never overwritten in place. Both user override entries
+remain disabled. No firmware, DTB, loader, partition table, or other package
+was replaced. The current USB controller was not deliberately reloaded live.
+
+The package backup/copy and upload completed before installation. Serial
+included handled P340 store-fault diagnostics, but SSH and desktop services
+remained responsive and no fatal panic was observed. The user's HaikuAssistant
+service also reported missing `libllama.so.0`; that separate pre-existing
+application dependency was not changed as part of this USB test.
+
+A normal `sync; shutdown` closed Haiku and SSH. After a twenty-second wait,
+SSH was no longer reachable. Relay off (seven seconds), a ten-second wait,
+and relay on (0.75 seconds) produced a fresh boot with the SD still inserted
+and P100A removed. The SD FDT child and native USB controller were discovered,
+and `/dev/disk/mmc/0/1` mounted as the boot partition. USB HID loaded and
+graphical userland started. No panic or duplicate-module warning appeared in
+the inspected test boot log.
+
+After this boot, pinned SSH verified the installed package, exposed xHCI
+driver, unchanged kernel and preserved original package against the four
+hashes above. `listimage 1` showed one xHCI image, ID 47. Both active user
+override entries were absent. Tracker, Deskbar, app_server, input_server,
+net_server, package_daemon and sshd were running. `/boot` remained the 4 GiB
+BFS volume with 1,446,881 free blocks of 2048 bytes (about 2.8 GiB).
+Physical desktop/mouse/keyboard confirmation for this new boot is pending.
+
+Evidence: ignored
+`generated.pioneer/xhci-cleanup/package-test-20261012/haiku-package-test-boot.log`,
+combined serial start offset 973483. The package audit and sanitized cleanup
+regression also passed again after deployment. This is a successful
+healthy-controller hardware boot with the new driver; the rejected-BAR
+destructor path has only been tested in the host fixture. PCI resource
+allocation with P100A is not fixed, and the precise duplicate-preloading
+failure mechanism remains undiagnosed.
+
+Haiku is left running with the fixed packaged driver, SD inserted and P100A
+removed. Rollback is to copy the preserved original to a staging file, then
+rename that file over the same canonical package and synchronize; do not
+consume the only backup or reinstate the failed user override.
