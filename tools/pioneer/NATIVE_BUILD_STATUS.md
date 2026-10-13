@@ -1021,3 +1021,29 @@ entry. No serial bytes followed offset 1793524 through 17:44:39 UTC, so this
 attempt is also inconclusive, not PASS. Began the planned relay recovery.
 Next control is the existing Linux kernel/initrd with temporary serial-enabled
 arguments, not a saved boot-entry or firmware change.
+
+Version 2 recovery returned pinned NVMe Linux with kexec_loaded zero. For a
+Linux-to-Linux control, decompressed the existing `/boot/vmlinuz-6.1.31` into
+private staging and copied its existing initramfs without modifying originals.
+The decompressed file is a RISC-V Linux Image with a PE/EFI header, not ELF;
+its Image header has version 0.2 and text offset 2 MiB. It can use the same
+private `image-riscv` loader without invoking EFI services. Artifact identities:
+compressed kernel `eae39971f09c29b94d7fc00de22241cb92dabf8ce960be226686cb1911b271e3`;
+decompressed 31,954,432-byte kernel
+`b77ee6f003e0ffc74444880b93d9a9d903bad550ef9ca5b0b232b07a7a78fbef`;
+initramfs `2abfdf6268cdaa9beab1297525d6812c821e27bc72677e80fb5cf6db8c7c5747`.
+Saved current FDT matches the earlier live-FDT hash. Reused running command
+line and appended `console=ttyS0,115200 keep_bootcon ignore_loglevel loglevel=8`
+only to the staged in-memory DTB. No saved boot arguments were changed.
+Control load-only returned zero/kexec_loaded one, then normal systemctl kexec
+was requested at 17:50:55 UTC after fresh serial offset 1857526. This tests the
+same Fedora handoff path using its known Linux payload; it is not a Haiku boot.
+
+The Linux control produced zero serial bytes through 17:54:00 UTC and did not
+return pinned SSH within the observation window. Therefore the current failure
+is not isolated to probe code: the shared load/shutdown/relocation path remains
+unvalidated even with the known Linux payload. This does not identify the cause
+or prove which final shutdown/entry stage ran. Began relay off/wait/on recovery;
+do not implement automatic Haiku selection atop this unproven handoff. The next
+diagnostic needs outgoing Linux kernel serial visibility, not more silent probe
+retries, and must preserve the current cold-boot recovery path.
