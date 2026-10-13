@@ -1102,3 +1102,18 @@ Began the approved relay recovery to normal Linux. Do not repeat silent probes
 or build automatic Haiku selection on an assumed entry success. Next diagnostic
 is outgoing-kernel serial visibility so the final driver/SMP/relocation stages
 can be distinguished. Original Linux boot entries and SPI remain unchanged.
+
+Final recovery verified pinned SSH on Fedora 6.1.31, root `/dev/nvme0n1p3`,
+CPUs 0-63 and kexec_loaded zero. The SD stays removed. Samsung remains
+unmounted and the known Linux cold-boot path is retained. All host sanitizer,
+format/UART and Image-header tests still pass; hardware entry remains unproven.
+Read-only boot-entry inspection: `/boot/extlinux/extlinux.conf` default f38MVP
+matches kernel/initrd/root identities and already specifies console=ttyS0,115200;
+its SHA-256 is `53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c`.
+Actual Fedora command line instead ends console=tty1, with the early UART
+bootconsole disabled on registration. Thus do not assume editing a serial
+console token in that file is sufficient or that its arguments are used
+unchanged by SPI/LinuxBoot. `/boot/grub.cfg` is an older 6.1.22/mmc entry;
+`/boot/grub2/grub.cfg` and `/boot/efi/EFI/fedora/grub.cfg` are absent. None of
+these files was changed. A temporary, backed-up keep_bootcon experiment is a
+possible next logging diagnostic, not an implemented selector or proven fix.
