@@ -253,7 +253,8 @@ hashes above. `listimage 1` showed one xHCI image, ID 47. Both active user
 override entries were absent. Tracker, Deskbar, app_server, input_server,
 net_server, package_daemon and sshd were running. `/boot` remained the 4 GiB
 BFS volume with 1,446,881 free blocks of 2048 bytes (about 2.8 GiB).
-Physical desktop/mouse/keyboard confirmation for this new boot is pending.
+The user confirmed a visible desktop and responsive mouse/keyboard on this
+new boot with the fixed packaged driver.
 
 Evidence: ignored
 `generated.pioneer/xhci-cleanup/package-test-20261012/haiku-package-test-boot.log`,
