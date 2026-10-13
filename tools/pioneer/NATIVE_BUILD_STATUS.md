@@ -893,3 +893,53 @@ Next hardware milestone is a controlled Samsung boot after the user saves
 work; keep the SD inserted for its firmware/loader and preserve existing
 rollback packages. Do not replace Samsung's whole package with the SD package merely
 to copy the xHCI fix; audit any future Samsung driver update independently.
+
+### SSD-selection attempt and SD-free boot direction
+
+The user saved work and approved shutdown/restart. Issued `sync; shutdown`,
+waited twenty seconds and confirmed SSH connection refusal, then relay off
+(seven seconds), ten-second wait and relay on (0.75 seconds). The SD remained
+inserted and P100A removed. No package or firmware was changed.
+
+A bounded watcher saw `[Bds]Stop Hotkey Service!` after fresh serial byte
+offset 1383772 and sent one Space through the existing screen session. The
+loader did not enter the boot menu; it selected and mounted
+`/dev/disk/mmc/0/1` again. This is not a Samsung boot test. The user reported
+Haiku was up, and serial reached graphical userland. Several pinned SSH
+connections to 10.0.0.247 timed out; two ICMP requests also timed out. The
+cached ARP entry still matches the recorded Pioneer MAC, but does not prove
+current reachability. Early P340 store-fault diagnostics appeared in this boot;
+no fatal panic line was found in the inspected capture. Do not classify this
+boot as network-validated. No second restart or forced power-off was performed.
+Evidence: ignored `stability-20261012/ssd-selection-attempt-1-boot.log`.
+
+`console_check_boot_keys()` polls EFI input only three times, with 100 ms
+stalls, before the loader welcome message. The serial reader's log flush
+interval can delay a marker watcher relative to that window. Timing is a
+hypothesis, not an established explanation for the missed Space. Do not
+send volume-selection keys unless the menu is actually observed.
+
+The user proposed SD-free, remotely selectable booting for unattended port
+development. The saved October 12 no-SD Linux log establishes the relevant
+constraint: SPI loads OpenSBI, Linux 6.1.47 and an initrd; that LinuxBoot
+environment kexecs Fedora 6.1.31 from NVMe. Both Linux entries report
+`efi: UEFI not found`. Thus copying an EFI executable to NVMe or relying on
+EFI BootNext is not sufficient for the currently installed SPI boot path.
+Haiku's deployed EFI loader requires live EFI services for disk reads.
+
+Proposed non-flashing direction, not implemented or hardware-validated:
+retain the known SPI/Linux boot as recovery, add a kexec-compatible Pioneer
+Haiku loader/adapter, preload verified boot resources from disk, and select
+the root volume by stable identity. Consume a one-shot Haiku request before
+handoff; a host-side timeout and relay restart should then return to default
+Linux rather than repeatedly boot the failed candidate. A second proven
+Haiku build can be retained independently. The existing non-EFI RISC-V
+loader has a hart-ID/device-tree entry point, but its disk path is VirtIO
+and its console/startup assumptions are not a validated Pioneer kexec port.
+Start with a serial-only handoff probe, then RAM boot resources, then real
+Samsung identity/mount and secondary-CPU validation. CPU state, reserved
+memory and device/DMA quiescence must be checked; a menu-selection function
+alone does not solve this bootstrap work. Linux's published entry contract:
+https://docs.kernel.org/arch/riscv/boot.html
+SPI replacement is a separate option requiring recovery planning and explicit
+approval, not part of this investigation. Current board remains on SD Haiku.
