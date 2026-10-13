@@ -51,6 +51,13 @@ The live FDT must confirm UART `0x7040000000`, range `0x1000`, register shift
 baud, clock, FIFO and interrupt configuration. A divisor-bank selection or
 262,144 unsuccessful polls halts rather than writing an unsafe register or
 continuing to a PASS with failed output. Host UART tests mock MMIO, not hardware.
+Firmware boot-banner capture alone does not establish the UART's later line
+state. Native Fedora's `/dev/ttyS0` reports a 9600-baud default, while capture
+is 115200. Before a reviewed test, explicitly prepare the verified UART in
+Linux for 115200/raw/no-flow-control and observe a fresh serial marker. This is
+a temporary runtime console change, separate from the read-only preflight.
+The Image itself does not initialize baud; visibility can still be lost during
+Linux's shutdown. Do not infer payload execution from a successful Linux marker.
 
 Run the read-only inventory/gates on native Linux:
 

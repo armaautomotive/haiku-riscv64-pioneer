@@ -1077,3 +1077,28 @@ the final entry/console state remains unobserved. Began the planned relay
 recovery, which should restore the default full CPU mask. Next check is the
 native Linux UART's actual line state/output, since version 2 preserves baud
 settings rather than initializing a known line configuration itself.
+
+Cold recovery returned pinned NVMe Linux with CPUs 0-63 and kexec_loaded zero.
+Verified `/sys/class/tty/ttyS0/device` is the exact `7040000000.serial` node.
+Native `stty` reports 9600 baud, despite the host's 115200 capture. This is a
+runtime termios observation, not proof of the pre-open physical line state or
+the cause of previous silence. Explicit runtime stty 115200/raw/no-flow-control,
+with HUPCL disabled, followed by a Linux TX marker reached the host capture:
+`PIONEER_LINUX_UART_READY v1`. No saved serial/boot configuration changed.
+
+The CPU helper's complete restore path was also tested: quiesce to CPU 0,
+restore to 0-63, then quiesce again, all successful. After the final quiesce,
+`PIONEER_LINUX_UART_READY v1 cpu=0` also reached the host. Loaded the unchanged
+version 2 probe/FDT in the same bounds, then normal systemctl kexec at
+18:16:23 UTC after fresh offset 1986942. This calibration does not itself prove
+UART survival through shutdown or payload entry; actual probe markers remain
+the success criterion.
+
+The calibrated single-CPU attempt still produced zero new serial bytes through
+18:21:05 UTC. Neither a probe BEGIN/PASS/FAIL nor a supervisor-trap marker was
+observed. This is not a successful handoff; calibrated Linux TX and runtime
+CPU-hotplug success do not establish the state after final kernel shutdown.
+Began the approved relay recovery to normal Linux. Do not repeat silent probes
+or build automatic Haiku selection on an assumed entry success. Next diagnostic
+is outgoing-kernel serial visibility so the final driver/SMP/relocation stages
+can be distinguished. Original Linux boot entries and SPI remain unchanged.
