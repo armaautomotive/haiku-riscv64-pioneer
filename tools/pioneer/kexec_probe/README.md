@@ -85,6 +85,16 @@ Recover using relay off (seven-second hold), ten-second wait and relay on
 its pinned SSH return. Recovery itself must pass before unattended testing.
 No automatic load/execution or persistent boot-selection service is included.
 
+`pioneer_linux_cpu_quiesce.sh status|quiesce|restore` is a separate native
+runtime diagnostic, not a boot selector. Quiesce requires the original 0-63
+mask and no loaded image; it retains CPU 0, bounds each hotplug operation and
+attempts rollback on errors. Restore accepts only its single-CPU state or the
+already-restored full mask. Neither mode changes saved boot settings. A hung
+kernel operation may defeat rollback and still requires approved relay recovery.
+Do not leave ordinary Linux work on one CPU. The observed SPI/LinuxBoot uses
+`maxcpus=1`; testing this hypothesis is not evidence that Fedora's final kexec
+handoff works or that secondary-CPU shutdown caused the silent attempts.
+
 ## Expected diagnostics and limitations
 
 `PIONEER_KEXEC_PROBE v2 BEGIN` precedes the CSR/FDT checks. The probe prints

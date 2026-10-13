@@ -1047,3 +1047,33 @@ or prove which final shutdown/entry stage ran. Began relay off/wait/on recovery;
 do not implement automatic Haiku selection atop this unproven handoff. The next
 diagnostic needs outgoing Linux kernel serial visibility, not more silent probe
 retries, and must preserve the current cold-boot recovery path.
+
+Fresh-log comparison identifies an additional control variable: SPI/LinuxBoot
+6.1.47 boots with `maxcpus=1` and reports one online CPU before its successful
+handoff to Fedora; Fedora 6.1.31 subsequently brings up 64. Thus secondary-CPU
+shutdown is a testable hypothesis, not yet an established cause. A temporary
+native Linux CPU-hotplug check is possible without saved boot-setting changes;
+any failed check must recover/restore the CPU mask before further handoff work.
+
+Native hotplug check offlined logical CPU 1 and restored the full 0-63 mask.
+The reported IRQ60/61 affinity warnings are Radeon/HDMI on the first PCIe
+controller; their interrupt counts were already on CPU 0. Disk/network use
+the separate controller. The guarded `pioneer_linux_cpu_quiesce.sh` then
+offlined CPUs 1-63, retaining CPU 0, and exited zero. Pinned SSH and a fresh
+read-only preflight worked in that state. This proves the tested runtime
+hotplug operations, not final kernel shutdown or independent HSM status.
+The helper changes only runtime CPU-online controls, requires native known
+board/NVMe/no-SD and an unoccupied kexec interface, checks the original full
+mask, bounds individual operations and attempts mask restoration on errors.
+A stuck kernel operation can still require relay recovery.
+
+Loaded identical version 2 probe/FDT in the same memory bounds, then requested
+normal systemctl kexec at 18:04:32 UTC with only CPU 0 online. Fresh serial
+offset is 1921528. This is the single-CPU hypothesis check, not a new payload.
+
+The single-CPU attempt also produced zero serial bytes through 18:08:19 UTC.
+Therefore pre-quiescing the secondary CPUs alone is not a proven workaround;
+the final entry/console state remains unobserved. Began the planned relay
+recovery, which should restore the default full CPU mask. Next check is the
+native Linux UART's actual line state/output, since version 2 preserves baud
+settings rather than initializing a known line configuration itself.
