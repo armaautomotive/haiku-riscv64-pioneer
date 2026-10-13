@@ -269,3 +269,10 @@ Haiku is left running with the fixed packaged driver, SD inserted and P100A
 removed. Rollback is to copy the preserved original to a staging file, then
 rename that file over the same canonical package and synchronize; do not
 consume the only backup or reinstate the failed user override.
+
+The subsequent [read-only runtime/stability checks](NATIVE_BUILD_STATUS.md)
+mounted Samsung at `/Haiku1`, verified the saved model, passed bounded CPU
+tests at 4/32/64 workers and an SSD/SSH checksum comparison, and restored the
+installed resident assistant's access to its libraries/model. No reboot or
+Samsung write occurred. The assistant's answer-quality caveat is recorded
+separately from successful runtime execution; Samsung remains read-only.

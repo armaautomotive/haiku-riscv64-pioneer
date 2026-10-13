@@ -822,3 +822,74 @@ Backups /boot/home/HaikuAssistant.before-cpu-settings,
 HaikuAssistantService.before-cpu-settings, assistantctl.before-cpu-settings.
 Old open GUI was not killed; close/reopen to see CPU threads / Apply controls.
 GUI interaction still needs user confirmation. Samsung untouched, no reboot.
+
+## 2026-10-12: read-only runtime recovery and bounded smoke tests
+
+Following the verified SD/xHCI recovery, identified the Samsung by its
+120,034,123,776-byte capacity and existing AHCI device path. Mounted only
+`/dev/disk/scsi/0/3/0/0` at `/Haiku1` with `mount -ro -t bfs`. `df` verified
+BFS, 111.8 GiB total, 82.1 GiB free, and flags `QAM-P--` (no writable flag).
+The Samsung system package still matches the September 8 quiet-AHCI record:
+`6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a`.
+No Samsung files, system packages, firmware, boot settings or partitions were
+changed. The working SD remains the boot volume, with P100A removed.
+
+The missing assistant library/model paths were unavailable because Samsung
+was not mounted. The saved runtime and model are present under
+`/Haiku1/home/develop/llama-c060ca974c77/build-pioneer/bin` and
+`/Haiku1/home/models/Qwen3-0.6B-Q8_0.gguf`. The complete 639,446,688-byte
+model hashes to the recorded reference:
+`9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031`.
+Runtime reports commit `c060ca974c77`, GNU 13.2.0, Haiku other. The Samsung
+CMake executable runs and reports 3.31.8; GCC 13.2.0 and Make 4.3 package
+archives are present. GCC, G++, Make and CMake were not found in the current
+SD shell's PATH. A read-only BFS mount does not activate Samsung's development
+packages in the SD packagefs; no compiler was installed in this session.
+
+Haiku `sysinfo` reports 64 CPUs and 136,289,968,128 bytes total RAM
+(126.93 GiB). Ran six CPU-only llama-bench cases: prompt 16 tokens and
+generation 8 tokens, each with 4, 32 and 64 workers. Parameters were batch
+and microbatch 32, GPU layers zero, one repetition, no warmup, offline mode,
+JSONL output and no explicit CPU affinity. The 4-worker command and combined
+32/64-worker command both exited zero under 90-second deadlines. All six
+JSONL rows identify CPU backend and positive completion times. These tiny,
+single-repetition checks are not sustained-load, all-RAM, write-I/O or
+performance-comparison validation.
+
+Checksummed the first 64 MiB of the model on Haiku, then streamed the same
+bounded read through SSH and checksummed it on the Mac without saving its
+contents. Both commands exited zero and transferred/read exactly 67,108,864
+bytes. Both SHA-256 results were
+`3616867eba00d6d0aaeb3beaf32c0aadc88a92e5a2bcb3a007ff57e5c7375c4f`.
+This validates that read/transfer sample, not full storage or network stress.
+
+Installed assistant GUI, service and control hashes still match the September
+15 CPU-settings deployment above. Started the existing service with the saved
+runtime in command-local `LIBRARY_PATH`, logging only to
+`/tmp/pioneer-assistant-smoke-20261012.log`. It loaded the fallback Samsung
+model as team 713, `ready=1 busy=0 model_loads=1`, CPU threads 32/max 64.
+Cancellation returned `Stopped. Model remains loaded.`; a subsequent request
+returned `Hello! How can I assist you today?`. Same team, readiness and one
+model load were retained after all requests. No settings or executable changed.
+The service is left resident and Samsung must remain mounted while it is used.
+New-boot GUI/shortcut interaction has not been physically reconfirmed.
+
+Answer-quality caveat: the service returned `2` for "Reply with only the
+number: what is 2 plus 2?", despite reporting successful execution. Direct
+completion with the same ChatML/non-thinking prompt also returned `2`, using
+temperature zero and seed 1234. A service follow-up correctly answered
+3 plus 5 as 8. Thus the first arithmetic test failed semantically; successful
+IPC/inference execution does not imply correct answers. The direct comparison
+points away from an IPC-only explanation, but does not isolate prompt, model,
+runtime/numerical or hardware causes. No answer-quality fix was attempted.
+
+Ignored raw evidence is under `generated.pioneer/stability-20261012/`:
+`cpu-smoke-{4,32-64}.{jsonl,stderr}`, `model-prefix-*`,
+`assistant-{smoke,followup,cancel-recovery}.*`, `completion-arithmetic.*`,
+`final-state.*` and `smoke-serial.log`. Serial slice 1260522..1380324 contained
+no panic, assertion or P340/store/load-fault diagnostic during these checks.
+Desktop/input/network services and SSH remained running. No reboot occurred.
+Next hardware milestone is a controlled Samsung boot after the user saves
+work; keep the SD inserted for its firmware/loader and preserve existing
+rollback packages. Do not replace Samsung's whole package with the SD package merely
+to copy the xHCI fix; audit any future Samsung driver update independently.
