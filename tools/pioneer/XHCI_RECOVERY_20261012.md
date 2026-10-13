@@ -183,7 +183,8 @@ bootstrap failure mechanism remains undiagnosed. Do not claim the cleanup
 guard caused the disk failure or that the new driver passed a hardware test.
 
 Haiku is left running with the original driver, the SD inserted, and the
-P100A removed. Post-rollback physical desktop/input confirmation is pending.
+P100A removed. The user confirmed the desktop is visible and mouse/keyboard
+respond after rollback.
 The cleanup fix is saved/built but disabled on this SD. Before another runtime
 test, prepare a backed-up package-level driver update that does not preload
 both copies; do not overwrite the persistent filesystem or firmware.
