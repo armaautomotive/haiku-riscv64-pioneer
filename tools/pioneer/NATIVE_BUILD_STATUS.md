@@ -1168,3 +1168,37 @@ it before a normal boot. Do not flash SPI, reformat storage or overwrite the
 working Haiku SD as a recovery shortcut. Do not report Linux restored or
 resume kexec probes while this rollback remains pending. User physical-display
 confirmation and available recovery-media information are pending.
+
+### Spare-SD recovery preparation
+
+The user physically confirmed power is off and has only the working Haiku
+SD, but offered a spare SD for Linux recovery. Leave the board off and the
+Haiku SD unchanged. Asked the user to connect only the spare to this Mac,
+state its capacity, and authorize erasing that exact spare; those details
+and target identification are still pending. No removable-media write or
+new Pioneer boot has occurred, and the NVMe logging rollback is still pending.
+
+Downloaded the Fedora image currently linked by Milk-V's Pioneer download
+page, `fedora-disk-gnome-workstation_livecd-f38-20231010-033114.n.0-fix.raw.xz`,
+from public Google Drive file `1-tYHNXjX6oekNorOGlWb_Az2nVOoey6y`. This is
+temporary recovery media, not an OS reinstall on NVMe or a firmware-flash
+update. Compressed size is 2,617,107,208 bytes; XZ declares 13,555,990,528
+uncompressed bytes, so verify the spare's actual capacity before imaging.
+Local compressed SHA-256 is
+`4c38d4a2c53e301fb3ae0221a0d9e82ab25f73a04d1d44a956b2daecc384e680`;
+this is a locally computed digest, not a vendor-published authentication hash.
+The full `xz --test` CRC64 integrity check completed successfully (exit 0).
+The download's `.part` suffix was removed only after this validation.
+Artifacts are under ignored `generated.pioneer/linux-recovery-20261013/`.
+Before writing/booting recovery media, inspect its partition/boot configuration,
+verify it selects the SD root rather than the modified NVMe entry, and identify
+the authorized spare by fresh disk inventory. Verify imaging readback; do not
+write the original Haiku card, internal Mac disks, NVMe, or SPI firmware.
+
+Also reconstructed `extlinux.conf.original` locally from the audited
+candidate by removing only the three experimental arguments. It is exactly
+878 bytes and matches the original backup SHA-256
+`53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c`.
+This provides a verified local rollback copy in addition to the intact R3SL
+backup. It has not been installed. Restore and hash-verify the original on
+the identified NVMe boot partition before any further kexec experiment.
