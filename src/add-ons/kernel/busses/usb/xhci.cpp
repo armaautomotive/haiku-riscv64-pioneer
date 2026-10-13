@@ -364,6 +364,10 @@ XHCI::XHCI(pci_info *info, 	pci_device_module_info* pci, pci_device* device, Sta
 	:	BusManager(stack, node),
 		fRegisterArea(-1),
 		fRegisters(NULL),
+		fCapabilityRegisterOffset(0),
+		fOperationalRegisterOffset(0),
+		fRuntimeRegisterOffset(0),
+		fDoorbellRegisterOffset(0),
 		fPCIInfo(info),
 		fPci(pci),
 		fDevice(device),
@@ -608,7 +612,9 @@ XHCI::~XHCI()
 {
 	TRACE("tear down XHCI host controller driver\n");
 
-	WriteOpReg(XHCI_CMD, 0);
+	// Construction can fail before the controller registers have been mapped.
+	if (fRegisterArea >= B_OK)
+		WriteOpReg(XHCI_CMD, 0);
 
 	int32 result = 0;
 	fStopThreads = true;

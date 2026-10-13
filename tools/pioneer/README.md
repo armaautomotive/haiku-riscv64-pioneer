@@ -8,7 +8,7 @@ from automatic relay detection.
 Channel assignments:
 
 - Relay 1: Pioneer power-button contacts, wired through `COM` and `NO`.
-- Relay 2: SD attachment control. Closed means attached; open means detached.
+- Relay 2: former SD attachment control, no longer used. Do not toggle it.
 - Relays 3 and 4: currently unused.
 
 ```sh
@@ -16,9 +16,6 @@ tools/pioneer/pioneer_power.sh test
 tools/pioneer/pioneer_power.sh on
 tools/pioneer/pioneer_power.sh off
 tools/pioneer/pioneer_power.sh restart
-tools/pioneer/pioneer_power.sh sd-attach
-tools/pioneer/pioneer_power.sh sd-detach
-tools/pioneer/pioneer_power.sh sd-status
 tools/pioneer/pioneer_power.sh status
 ```
 
@@ -42,6 +39,14 @@ Likewise, attach it before powering on. A single relay contact is suitable only
 if it drives a purpose-built SD isolation/multiplexer control input; it must not
 be used to interrupt only the card's power line while its signal lines remain
 connected.
+
+Current hardware uses manual SD insertion/removal with board power off, not
+the SD relay. The relay status reports button contacts, not whether the
+Pioneer itself is powered on.
+
+The [October 12 SD/xHCI recovery record](XHCI_RECOVERY_20261012.md) documents
+the healthy 4 GiB SD baseline, the P100A-triggered PCI allocation failure,
+the USB cleanup fix, and its reversible driver test/rollback path.
 
 ## Haiku build and SD deployment
 

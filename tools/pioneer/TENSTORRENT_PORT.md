@@ -16,15 +16,33 @@ A first optional Haiku diagnostic add-on is now in
 add-on compiled cleanly with `-Wall -Wextra -Werror` and linked against the
 existing kernel build. The CLI also compiled and linked against the existing
 Haiku runtime. Both used `/Volumes/HaikuBuildLocal`'s RISC-V compiler and are
-saved under ignored `generated.pioneer/tenstorrent/haiku-build/`. Jam is
-missing, so this was a direct compile/link rather than an integrated Haiku
-build. Neither artifact has been installed or run on the Pioneer, and neither
-is included in the boot image.
+saved under ignored `generated.pioneer/tenstorrent/haiku-build/`. Jam was
+missing for that check, so this was a direct compile/link rather than an
+integrated Haiku build. The two artifacts are staged in a separate test BFS filesystem and a
+separate full-disk image based on the existing 2026-09-08 `haiku-mmc.image`.
+The full image retains its original boot partition; its test BFS partition
+contains the add-on at
+`system/non-packaged/add-ons/kernel/drivers/dev/tenstorrent_pci_diag` and the
+CLI at `system/non-packaged/bin/tenstorrent_haiku_diag`. A read-only BFS
+consistency check found no allocation errors across 249 nodes. The source
+image and boot partition hashes were verified unchanged. This is a manually
+assembled test image, not a fresh integrated build of current source. Its
+300 MiB fresh-install filesystem must not overwrite the persistent 4 GiB SD.
+It has not been deployed or booted, and neither artifact has been run on
+the Pioneer.
 The snapshot reports identity, command/status and raw BAR configuration,
 but deliberately does not size BARs, infer usable mappings, touch MMIO,
 enable bus mastering, use DMA, or flash/reset the card. The legacy `pci_info`
 structure cannot faithfully describe a >4-GiB BAR; raw BAR registers are
 not a substitute for validated 64-bit resource allocation.
+
+On October 12, the unchanged SD booted normally after the P100A was physically
+removed. With the card installed, UEFI PCI resource allocation failed and
+Haiku rejected the USB controller's zero BAR; an xHCI error-cleanup bug then
+panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
+Jam has now been restored for the USB driver build. The cleanup fix is not
+a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
+out while establishing the Haiku port baseline.
 
 Download pinned official sources with:
 
