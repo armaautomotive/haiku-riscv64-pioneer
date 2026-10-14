@@ -7,16 +7,23 @@
 #include "PioneerPciProfile.h"
 #include "BlackholePioneerMmioProbe.h"
 #include "BlackholeArcScratchProbe.h"
+#include "BlackholeArcTelemetryProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
 #define TT_PCI_PROBE_PIONEER_PROFILE (B_DEVICE_OP_CODES_END + 0x5452)
 #define TT_PCI_PROBE_PIONEER_NOC_ID (B_DEVICE_OP_CODES_END + 0x5453)
 #define TT_PCI_PROBE_PIONEER_ARC_SCRATCH (B_DEVICE_OP_CODES_END + 0x5454)
+#define TT_PCI_PROBE_PIONEER_TELEMETRY (B_DEVICE_OP_CODES_END + 0x5455)
 
 struct tt_pioneer_arc_result {
 	tt_pioneer_mmio_result pci;
 	tt_arc_scratch_result arc;
+};
+
+struct tt_pioneer_telemetry_result {
+	tt_pioneer_arc_result control;
+	tt_arc_telemetry_result telemetry;
 };
 
 #endif

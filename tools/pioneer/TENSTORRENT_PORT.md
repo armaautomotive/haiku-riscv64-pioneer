@@ -8,6 +8,11 @@ its optional read-only diagnostic works, and a controlled temporary BAR
 mapping reads the card's NoC identification register successfully. A fixed
 read-only NoC window also reads ARC boot/error status and telemetry pointers.
 ARC boot status is stable at `0x5`, and the sampled error-status word is zero.
+Bounded, whitelisted telemetry reads now work too: firmware bundle
+`18.5.0` (raw suffix `01`), ASIC about 46.6 C, fan 1,882 RPM, seven enabled
+GDDR channels with training complete and no reported uncorrected errors.
+Repeated samples show an advancing firmware heartbeat. This is a firmware
+health snapshot, not a memory stress test or working accelerator runtime.
 The test restores the card and bridge configuration exactly; DMA has never
 been enabled. There is no functioning compute driver/runtime yet. See the
 live-test records below. Samsung's installed OS package, card firmware,
@@ -304,7 +309,7 @@ words and exact restoration. The independent live profile then passed stage
 6, including original disabled root windows and both domain translations;
 the separate PCI snapshot again showed the original disabled endpoint.
 
-Current optional module:
+Optional module at this ARC-only checkpoint (superseded below):
 `d17d56a3035927d47eed55f0f7161aa0af0dbde117c9f7259afd124d62e149a7`.
 ARC CLI:
 `4ebae8542bd87a54afc58a897235f3f498d0e7b1beefddcbd73a9fcc69a166bd`.
@@ -315,6 +320,86 @@ Next: validate the advertised telemetry-table layout and ARC CSM bounds
 against the vendor sources before reading whitelisted firmware-version and
 health values. Do not assume that a nonzero pointer authorizes an arbitrary
 NoC read or a flash operation.
+
+### October 14: native Haiku firmware telemetry and live heartbeat
+
+The next explicit operation, `TT_PCI_PROBE_PIONEER_TELEMETRY`, first performs
+the tested ARC status transaction, then reuses TLB 201 for a read-only CSM
+window. The CSM NoC base is **`0x10000000` directly**, not that address plus
+the ARC/APB XBAR offset. Its words are `00000080 / 04004000 / 00000a40`.
+Only the first 128 KiB is mapped, despite the hardware CSM having a larger
+aperture. Both the ARC and telemetry TLB configurations and the entire PCI
+transaction are independently restored and verified.
+
+The parser requires aligned, bounded tag/data pointers, at most 128 entries,
+a supported table major version, non-overlapping table/data spans, valid
+offsets and no duplicate requested tags. It repeats the header after sampling
+and clears the output mask if the header changed. Values are not an atomic
+snapshot: live telemetry can change between individual reads. It reads only
+12 whitelisted public health/version values, never board/ASIC serial values
+or arbitrary requested addresses. There are no data writes, firmware
+messages, SPI operations, reset commands, DMA or bus-master enables.
+
+At 20:10 UTC the real card returned telemetry state 1, ARC state 1, PCI state
+1 and all three restored flags 1. Table version was `00000100`, with 63
+entries and all 12 requested tags present. A repeat returned the same
+structural values and restored flags:
+
+| Public telemetry | First sample | Repeat / interpretation |
+|---|---|---|
+| Firmware bundle | `12050001` | 18.5.0, raw suffix `01` |
+| CM firmware | `000e0000` | unchanged raw value |
+| ASIC temperature | `002e8f7a` | `002eb04a`, about 46.56 to 46.69 C |
+| Maximum GDDR temperature | `0000002e` | 46, unchanged |
+| Fan | `0000075a` | 1,882 RPM |
+| Enabled GDDR | `000000f7` | seven enabled channels, consistent with nominal 28 GiB; capacity not tested |
+| GDDR status | `00005515` | training complete/no error on all seven enabled channels |
+| GDDR uncorrected errors | `00000000` | none reported in these samples |
+| Enabled Tensix columns | `00000fff` | raw mask; no compute test |
+| Firmware heartbeat | `0000a44a` | `0000b6a6`, advancing |
+| Board temperature / shutdown limit | both zero | sensor/limit availability unverified; do not interpret as a healthy 0 C reading or limit |
+
+The GDDR interpretation follows the pinned UMD's per-channel two-bit training
+fields (completion bit then error bit), with disabled channel 3 ignored.
+This firmware predates 19.7's upper-half BIST reporting: the zero upper half
+does **not** mean a failed or completed BIST. This did not run a DRAM test.
+
+The pinned UMD explicitly sets Blackhole's minimum compatible bundle to
+18.5.0 and has an 18.5-family feature map. Its `FirmwareBundleVersion`
+comparison normalizes away the suffix, so `12050001` meets that numerical
+minimum. This does not validate every current Metal/LLM release or prove the
+entire software stack compatible. The official versioned
+[Metal v0.62.2 installation matrix](https://docs.tenstorrent.com/tt-metal/v0.62.2/tt-metalium/installing.html)
+also names Blackhole firmware 18.5.0. No firmware update is needed merely to
+continue this bounded native transport investigation. Flashing still requires
+a verified backup/recovery plan and separate approval; the old experimental
+19.15 bundle remains unflashed.
+
+The independent profile passed stage 6 after the repeat, with original
+disabled root windows. The separate diagnostic confirmed card command
+`0000`, status `0010` and all six original BAR words. All original TLB words
+were zero before and after both samples. Haiku and SSH stayed available.
+
+Host ASan/UBSan tests cover pointer/span/count/version validation, maximum
+128-entry tables (144 bounded CSM reads), duplicate/out-of-range entries,
+changing headers, missing required fields and dropped setup/restore writes.
+All earlier policy/BAR/MMIO/ARC suites still pass. The integrated kernel
+module and all six userspace tools cross-built successfully; the previous
+five CLI hashes were unchanged.
+
+Current optional module:
+`5ee9781e130f6e8ca701c4bb95adecef4ede61f2a2b6cbbecaaabec43a3e0456`.
+Telemetry CLI:
+`75701df2eb37c67c20516fa3dc6fce668a1848385d732980ac247f63944013c6`.
+Both are installed/staged in the existing private `mmio-cross-1/` tree.
+The prior module is retained as `tenstorrent_pci_probe.before-telemetry-1`.
+
+Next: audit a bounded device-memory/compute-core smoke-test path, including
+physical/harvested tile coordinates, reset state, read/write NoC ordering,
+scratch ownership and rollback, before any data or core-control writes.
+Persistent mappings, interrupts, non-coherent host DMA, native UMD/runtime
+and LLM execution remain unimplemented and unvalidated. Both SD cards stay
+out; Samsung's installed OS package/default Linux boot remain unchanged.
 
 Download pinned official sources with:
 

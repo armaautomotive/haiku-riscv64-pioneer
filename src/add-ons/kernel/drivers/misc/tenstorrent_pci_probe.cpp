@@ -305,11 +305,96 @@ struct PioneerArcIO : PioneerMmioIO {
 	}
 };
 
+struct PioneerTelemetryIO : PioneerArcIO {
+	tt_arc_telemetry_result& telemetry;
+	area_id csmArea = -1;
+	const volatile uint32* csm = NULL;
+	bool telemetryAttempted = false;
+
+	PioneerTelemetryIO(const tt_pioneer_profile& p, tt_arc_scratch_result& arcResult,
+		tt_arc_telemetry_result& result)
+		: PioneerArcIO(p, arcResult), telemetry(result) {}
+	~PioneerTelemetryIO() { if (csmArea >= B_OK) delete_area(csmArea); }
+	bool Map()
+	{
+		if (!PioneerArcIO::Map()) return false;
+		void* address = NULL;
+		csmArea = map_physical_memory("P100A bounded telemetry read-only",
+			profile.bar0_host_start + 0x19200000, 0x20000,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_UNCACHED_MEMORY, &address);
+		if (csmArea < B_OK) return false;
+		csm = (const volatile uint32*)address;
+		return true;
+	}
+	uint32 CsmRead(uint32 address)
+	{
+		if (!BlackholeTelemetryRange(address, 4)) return UINT32_MAX;
+		return PioneerRead32(csm + (address - 0x10000000) / 4);
+	}
+	bool AfterNodeId(uint32 id)
+	{
+		if (!PioneerArcIO::AfterNodeId(id)) return false;
+		telemetryAttempted = true;
+		dprintf("PIONEER-P100A: bounded CSM telemetry attempt, whitelisted tags only\n");
+		return BlackholeArcTelemetryProbe(*this, arc, telemetry);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		if (csmArea >= B_OK) {
+			if (delete_area(csmArea) == B_OK) csmArea = -1;
+			else okay = false;
+		}
+		if (telemetryAttempted && !telemetry.tlb_restored) {
+			for (unsigned i = 0; i < 3; i++) TlbWrite(i, telemetry.tlb_before[i]);
+			telemetry.tlb_restored = 1;
+			for (unsigned i = 0; i < 3; i++) {
+				telemetry.tlb_after[i] = TlbRead(i);
+				telemetry.tlb_restored &= telemetry.tlb_after[i] == telemetry.tlb_before[i];
+			}
+		}
+		if (telemetryAttempted && !telemetry.tlb_restored) okay = false;
+		return PioneerArcIO::Unmap() && okay;
+	}
+};
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_TELEMETRY) {
+		if (data == NULL || length != sizeof(tt_pioneer_telemetry_result)) return B_BAD_VALUE;
+		tt_pioneer_telemetry_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = acquire_sem(sLock);
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
+			TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL)
+			status = get_module(B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		result.control.pci.version = result.control.arc.version = result.telemetry.version = 1;
+		result.control.pci.profile_status = status;
+		result.control.pci.profile_stage = profile.stage;
+		result.control.arc.tlb_restored = result.telemetry.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerTelemetryIO io(profile, result.control.arc, result.telemetry);
+			BlackholePioneerMmioProbe(io, result.control.pci);
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: telemetry state %" B_PRIu32 " version %#" B_PRIx32
+			" count %" B_PRIu32 " mask %#" B_PRIx32 " TLB restored %" B_PRIu32
+			" PCI restored %" B_PRIu32 " (no firmware/DMA writes)\n",
+			result.telemetry.state, result.telemetry.table_version, result.telemetry.entry_count,
+			result.telemetry.present_mask, result.telemetry.tlb_restored, result.control.pci.restored);
+		return user_memcpy(data, &result, sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_ARC_SCRATCH) {
 		if (data == NULL || length != sizeof(tt_pioneer_arc_result))
 			return B_BAD_VALUE;
