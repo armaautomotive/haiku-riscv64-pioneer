@@ -14,6 +14,12 @@ int main(int argc, char** argv)
 {
 	unsigned char super[512] = {0};
 	struct PioneerBfsHeader info;
+	assert(PioneerProbeModeValid(1) && PioneerProbeModeValid(2));
+	assert(!PioneerProbeModeValid(0) && !PioneerProbeModeValid(3));
+	assert(!PioneerProbeModeValid(UINT64_MAX));
+	assert(PioneerPreloadPoolEnd(0x1effff5000, 0x1f00000000) == 0xc0000000);
+	assert(PioneerPreloadPoolEnd(0xbfff5000, 0xbccc8000) == 0xbccc8000);
+	assert(PioneerPreloadPoolEnd(0xbccc7000, 0xbccc8000) == 0xbccc7000);
 	assert(PioneerRamRange(0x2200000, 40));
 	assert(PioneerRamRange(0x100000000, 0x100000000));
 	assert(!PioneerRamRange(0x1000, 40));

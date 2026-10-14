@@ -22,6 +22,24 @@
 #include "Htif.h"
 #include "virtio.h"
 #include "graphics.h"
+#include "pioneer_kexec.h"
+
+#ifdef PIONEER_KEXEC_PROBE
+static bool sPioneerPreloadActive;
+static uint64_t sPioneerRamStart;
+static size_t sPioneerRamSize;
+
+bool PioneerKexecPreloadActive()
+{
+	return sPioneerPreloadActive;
+}
+
+const void* PioneerKexecRamDisk(size_t& size)
+{
+	size = sPioneerRamSize;
+	return (const void*)(addr_t)sPioneerRamStart;
+}
+#endif
 
 
 // GCC defined globals
@@ -77,6 +95,10 @@ check_for_boot_keys()
 extern "C" uint32
 platform_boot_options(void)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive())
+		return BOOT_OPTION_DEBUG_OUTPUT;
+#endif
 	if (!sBootOptionsValid) {
 		sBootOptions = check_for_boot_keys();
 		sBootOptionsValid = true;
@@ -151,6 +173,28 @@ convert_kernel_args()
 extern "C" void
 platform_start_kernel(void)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		if (gKernelArgs.kernel_image == NULL
+			|| gKernelArgs.kernel_image->elf_class != ELFCLASS64)
+			PioneerKexecStop(false, "missing_ELF64_kernel");
+		preloaded_elf64_image* kernel = static_cast<preloaded_elf64_image*>(
+			gKernelArgs.kernel_image.Pointer());
+		if (kernel->elf_header.e_machine != EM_RISCV)
+			PioneerKexecStop(false, "wrong_kernel_architecture");
+		dprintf("Pioneer preload: kernel entry %#lx\n", kernel->elf_header.e_entry);
+		uint32 count = 0;
+		for (preloaded_image* module = gKernelArgs.preloaded_images; module != NULL;
+			module = module->next) {
+			if (++count > 4096)
+				PioneerKexecStop(false, "module_list_bounds");
+		}
+		dprintf("Pioneer preload: %" B_PRIu32 " preloaded boot images\n", count);
+		if (count == 0)
+			PioneerKexecStop(false, "no_boot_images");
+		PioneerKexecStop(true, "kernel_and_boot_images_preloaded");
+	}
+#endif
 	static struct kernel_args* args = &gKernelArgs;
 	// platform_bootloader_address_to_kernel_address(&gKernelArgs, (addr_t*)&args);
 
@@ -216,3 +260,33 @@ _start(int hartId, void* fdt)
 
 	main(&args);
 }
+
+#ifdef PIONEER_KEXEC_PROBE
+extern "C" void
+pioneer_kexec_preload(uint64_t hart, const void* fdt, uint64_t start, uint64_t size)
+{
+	// Keep the live stack separate from cleared BSS, and initialize platform
+	// state only after the early no-allocation metadata checks have passed.
+	clear_bss();
+	sPioneerPreloadActive = true;
+	sPioneerRamStart = start;
+	sPioneerRamSize = size;
+	gFdt = (void*)fdt; // Already fully validated; do not enumerate hardware here.
+	uint64_t poolEnd = PioneerPreloadPoolEnd((addr_t)fdt, start);
+	extern uint8 gStackEnd;
+	if (poolEnd <= (addr_t)&gStackEnd + 64 * 1024 * 1024)
+		PioneerKexecStop(false, "insufficient_nonoverlapping_boot_pool");
+	gMemBase = (uint8*)0x2200000;
+	gTotalMem = poolEnd - (addr_t)gMemBase;
+	call_ctors();
+	cpu_init();
+	mmu_init();
+	dprintf("Pioneer preload: hart %" B_PRIu64 ", RAM disk %p (%" B_PRIu64
+		" bytes), allocation ceiling %#" B_PRIx64 "\n", hart,
+		(const void*)(addr_t)start, size, poolEnd);
+	stage2_args args = {};
+	args.heap_size = 16 * 1024 * 1024;
+	main(&args);
+	PioneerKexecStop(false, "stage2_returned_without_preload");
+}
+#endif

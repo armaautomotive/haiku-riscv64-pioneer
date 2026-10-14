@@ -10,6 +10,19 @@ struct PioneerBfsHeader {
 	uint64_t root_offset;
 };
 
+static inline int PioneerProbeModeValid(uint64_t mode)
+{
+	return mode == 1 || mode == 2; /* Neither mode may execute a kernel. */
+}
+
+static inline uint64_t PioneerPreloadPoolEnd(uint64_t fdt, uint64_t initrd)
+{
+	uint64_t end = 0xc0000000;
+	if (fdt >= 0x2200000 && fdt < end) end = fdt;
+	if (initrd >= 0x2200000 && initrd < end) end = initrd;
+	return end;
+}
+
 static inline uint32_t PioneerReadLe32(const unsigned char* p)
 {
 	return (uint32_t)p[0] | (uint32_t)p[1] << 8 | (uint32_t)p[2] << 16
@@ -88,4 +101,13 @@ static inline int PioneerBfsHeaderCheck(const unsigned char* super,
 	info->root_offset = root_block * block;
 	return 1;
 }
+
+#if defined(PIONEER_KEXEC_PROBE) && defined(__cplusplus)
+bool PioneerKexecPreloadActive();
+const void* PioneerKexecRamDisk(size_t& size);
+void PioneerKexecWrite(const char* data, size_t size);
+void PioneerKexecStop(bool success, const char* reason) __attribute__((noreturn));
+extern "C" void pioneer_kexec_preload(uint64_t hart, const void* fdt,
+	uint64_t start, uint64_t size) __attribute__((noreturn));
+#endif
 #endif

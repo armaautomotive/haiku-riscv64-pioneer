@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include <Errors.h>
+#include "pioneer_kexec.h"
 
 extern FILE *dbgerr;
 
@@ -23,6 +24,14 @@ dprintf_args(const char* format, va_list args)
 	int length = vsnprintf(buffer, sizeof(buffer), format, args);
 	if (length == 0)
 		return;
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		if (length > 0)
+			PioneerKexecWrite(buffer, (size_t)length < sizeof(buffer)
+				? (size_t)length : sizeof(buffer) - 1);
+		return;
+	}
+#endif
 
 	//syslog_write(buffer, length);
 	HtifOutString(buffer);

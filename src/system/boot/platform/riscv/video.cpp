@@ -11,6 +11,7 @@
 #include "graphics.h"
 #include "virtio.h"
 #include "FwCfg.h"
+#include "pioneer_kexec.h"
 
 #include <arch/cpu.h>
 #include <boot/stage2.h>
@@ -111,6 +112,13 @@ platform_switch_to_text_mode(void)
 extern "C" status_t
 platform_init_video(void)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		gFramebuf.colors = NULL;
+		gFramebuf.stride = gFramebuf.width = gFramebuf.height = 0;
+		return console_init(); // Serial only; no emulator or PCI/DMA setup.
+	}
+#endif
 	FwCfg::Init();
 	virtio_init(); // we want heap initalized
 	Clear(gFramebuf, 0xff000000);

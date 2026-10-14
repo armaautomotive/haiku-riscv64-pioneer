@@ -81,6 +81,18 @@ Run `sh tools/pioneer/tests/run_pioneer_kexec_loader_tests.sh [VERIFIED_BFS_IMAG
 for sanitizer bounds tests and an optional read-only real-image check. This
 is not yet a RAM filesystem mount, kernel/module preload, or Haiku boot.
 
+The next opt-in profile supports chosen value 2 for **preload only**. It mounts
+the RAM BFS through the existing read-only MemoryDisk/package readers, uses a
+bounded low-RAM allocation pool, skips emulator/device/video setup, and stops
+at platform_start_kernel before MMU/SMP/kernel execution. The hardware test
+loaded the RISC-V kernel and 54 boot images, then halted at that guard.
+`run_pioneer_kexec_preload_guard_test.sh` tests the extracted production guard
+for success/failure/cyclic lists and confirms no active path falls through.
+The build helper now delays its profile-dependent timestamp updates past
+Jam's one-second resolution and verifies the restored generic entry/base.
+Neither probe mode can execute a kernel; a real root-device/handoff adapter
+is still required.
+
 ## Haiku build and SD deployment
 
 ### Source-built UEFI for SSD boot experiments

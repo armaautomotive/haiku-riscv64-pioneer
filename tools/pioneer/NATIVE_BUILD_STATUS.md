@@ -1724,3 +1724,99 @@ test inputs are `/mnt/ssd/pioneer-haiku-kexec-20261013/smoke-1/`. None of the
 raw filesystem or private image data is committed. Next is a separate
 RAM-only filesystem/kernel-resource preload test, still stopping before
 kernel execution and without touching the original SD/Samsung/boot settings.
+
+### RAM filesystem, kernel and 54 boot images preloaded successfully
+
+Extended the explicit probe profile with chosen mode 2. Modes 1 and 2 alone
+are accepted, and both halt before kernel execution. After the early bounded
+FDT/RAM/BFS checks, mode 2 clears BSS while preserving the separate active
+stack, records the validated RAM disk, initializes constructors/FPU/heap and
+uses the existing stage2 filesystem/package/kernel readers. A low allocation
+pool ends before either a low FDT/initrd or 0xc0000000, with a 64 MiB minimum
+margin beyond the loader stack. This is a boot allocator, not a reported
+restriction on the machine's usable RAM. No kernel memory map is built yet.
+
+Only this explicit profile routes loader debug/console to bounded UART
+output, disables emulator fw-cfg/virtio/video hardware initialization, and
+adds a read-only MemoryDisk instead of VirtIO disk probing. It retains the
+already-validated FDT without platform hardware enumeration. Unexpected menus
+halt with failure instead of awaiting unavailable keyboard input. The
+platform_start_kernel guard validates a RISC-V ELF64 kernel and a bounded,
+nonempty boot-image list, prints their summary, then halts before the normal
+MMU/SMP/kernel path. It cannot execute the loaded kernel.
+
+New host sanitizer fixture extracts that exact production guard, stubs the
+stop operation and tests inactive behavior plus missing/wrong-class/wrong-
+architecture kernels, empty image lists, successful preload and cyclic lists.
+Every active case stops and none reaches the mocked normal kernel path.
+Mode rejection/pool bounds and the real BFS snapshot tests also pass. All
+existing UART/trace/probe tests and seven Image-header groups pass again.
+
+The first generic-profile restore during this extension reported a no-op:
+Jam compares whole-second timestamps and the source touch could occur in the
+same second as freshly compiled objects. Fixed this before hardware by
+waiting one second before each profile-dependent touch, forcing all seven
+affected sources and verifying the generic ELF base/no-probe-symbol result.
+The corrected private build and generic restore both rebuilt 12 targets and
+passed. Shared output is normal base 0x1000000, no probe entry. Existing
+package/architecture notices and RWX segment warning remain; no kernel or
+package target was built. New source/mirror copies were equality-checked
+against the previous committed versions before scoped synchronization.
+
+Tested preload Image is 1,417,216 bytes, SHA-256
+`b9146f111413e3dbd1967c638659309e807d97308cd0ec5ded32dde8caadfe37`.
+Its fresh cold-boot FDT again matches `e9264e1696ae23bdde4a2a20c0831215b4ea8967d2dd90ccba5a910aaa9befdd`.
+Complete private-copy diff adds only `haiku,pioneer-kexec-probe = <2>`;
+input FDT SHA is `2db3daed29f04d3aa87bdde73275b3a215010d081eddc6588907e77dfeca297f`.
+Rehashed the unchanged private 4 GiB snapshot completely before arming.
+Normal native gates, fresh visible UART marker/token
+`6bb62b1cb5fb4ac15a4b3b12177db321`, runtime on/active policy and accepted
+load-only all passed. CPUs stayed 0-63, with no tracing module.
+
+Normal systemctl kexec at 04:42:21 UTC October 14 (October 13 local), fresh
+serial offset 2668506, printed the matching late marker, mode-2 entry and
+successful high-RAM BFS header/root checks. Then the real Haiku boot loader
+mounted the 4 GiB RAM device and reported:
+
+```
+load kernel kernel_riscv64...
+Pioneer preload: kernel entry 0xffffffc00010a180
+Pioneer preload: 54 preloaded boot images
+HAIKU_KEXEC_LOADER v2 END status=PASS reason=kernel_and_boot_images_preloaded (kernel not started)
+```
+
+The activated-packages-file warning is a handled current-state fallback:
+production PackageVolumeInfo::_InitState scans for the system HPKG when that
+administrative file is absent. It did not stop preload. The private loader's
+revision string is blank because this helper uses the unrevisioned ELF, not
+a claim about the loaded kernel's revision. No physical disk was mounted by Haiku,
+no hardware storage/graphics probing ran, and no kernel entry is established.
+
+Approved relay off/wait/on (on at 04:49:25 UTC, recovery serial offset 2669977)
+returned default Linux. Complete baseline and owned-hook cleanup passed at
+04:51:22 UTC: kernel/root/boot, CPUs 0-63, empty kexec slot, original extlinux
+hash/878-byte/root:root/664 metadata, no MMC and Samsung unmounted. UART auto,
+no owned keepalive/arm state, no trace module, taint=0 and unchanged installed
+executor SHA all passed. An approval-service stream disconnection prevented
+one validation call from executing; the same-scope retry used the normal
+approval path and completed, without bypassing authorization.
+
+Ignored private evidence/scripts: `generated.pioneer/haiku-kexec-loader-20261013/preload-1/`;
+native staged test inputs: `/mnt/ssd/pioneer-haiku-kexec-20261013/preload-1/`.
+The shared snapshot is reused read-only from the previous private smoke
+directory. Next is root-identity and non-EFI hart/MMU handoff review before
+any real kernel execution. No firmware, saved boot setting, Haiku media or
+Samsung content was replaced. Linux remains powered on and reachable.
+
+Read-only root inventory identifies Samsung serial S14CNSAD300075H, whole
+capacity 120,034,123,776 bytes, partition 1 start sector 64, size
+120,033,640,448, BFS UUID 020147de08752551 and PARTUUID d89b0970-01. Mounted
+only with Linux befs ro,nosuid,nodev,noexec to inspect the system-package hash,
+then unmounted successfully. Samsung's package is
+`haiku-r1~beta6_hrev99999-1-riscv64.hpkg`, SHA
+`6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a`.
+It differs from the saved SD package `c7e0d87f...` and current SD xHCI candidate
+`edffc524...`; do not assume matching kernels/userspace merely because their
+package version names match. Further read-only compatibility/input selection
+is required before choosing a real root; no root package update is authorized
+or needed by the completed preload experiment.

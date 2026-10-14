@@ -45,6 +45,23 @@ static void Put(const char* text)
 	}
 }
 
+void PioneerKexecWrite(const char* data, size_t size)
+{
+	for (size_t i = 0; i < size; i++) {
+		if (data[i] == '\n') PutChar('\r');
+		PutChar(data[i]);
+	}
+}
+
+void PioneerKexecStop(bool success, const char* reason)
+{
+	Put("HAIKU_KEXEC_LOADER v2 END status=");
+	Put(success ? "PASS reason=" : "FAIL reason=");
+	Put(reason);
+	Put(" (kernel not started)\nHALTED: relay recovery required\n");
+	Halt();
+}
+
 static void Hex(const char* label, uint64_t value)
 {
 	Put(label);
@@ -57,7 +74,7 @@ static void Hex(const char* label, uint64_t value)
 static void Fail(const char* reason) __attribute__((noreturn));
 static void Fail(const char* reason)
 {
-	Put("HAIKU_KEXEC_LOADER v1 END status=FAIL reason=");
+	Put("HAIKU_KEXEC_LOADER v2 END status=FAIL reason=");
 	Put(reason);
 	Put("\nHALTED: relay recovery required\n");
 	Halt();
@@ -65,7 +82,7 @@ static void Fail(const char* reason)
 
 extern "C" void pioneer_kexec_trap(uint64_t cause, uint64_t pc, uint64_t value)
 {
-	Put("HAIKU_KEXEC_LOADER v1 TRAP\n");
+	Put("HAIKU_KEXEC_LOADER v2 TRAP\n");
 	Hex("scause=", cause);
 	Hex("sepc=", pc);
 	Hex("stval=", value);
@@ -76,7 +93,7 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 	uint64_t satp, uint64_t status, uint64_t sie)
 {
 	/* No C++ constructors, heap, BSS state or emulator HTIF are used here. */
-	if (satp || !PioneerRamRange((uintptr_t)fdt, 40))
+	if (satp || ((uintptr_t)fdt & 7) || !PioneerRamRange((uintptr_t)fdt, 40))
 		Halt();
 	uint32_t fdtSize = fdt_totalsize(fdt);
 	if (fdtSize < 40 || fdtSize > 2 * 1024 * 1024
@@ -100,7 +117,7 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 		"reg-io-width", &length);
 	if (!width || length != 4 || PioneerReadBeCell(width, 4) != 4)
 		Halt();
-	Put("HAIKU_KEXEC_LOADER v1 BEGIN (RAM-resource smoke only)\n");
+	Put("HAIKU_KEXEC_LOADER v2 BEGIN (RAM-resource probe only)\n");
 	Hex("hart=", hart);
 	Hex("incoming_satp=", satp);
 	Hex("incoming_sstatus=", status);
@@ -111,8 +128,9 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 	int chosen = fdt_path_offset(fdt, "/chosen");
 	const unsigned char* mode = (const unsigned char*)fdt_getprop(fdt, chosen,
 		"haiku,pioneer-kexec-probe", &length);
-	if (!mode || length != 4 || PioneerReadBeCell(mode, 4) != 1)
+	if (!mode || length != 4 || !PioneerProbeModeValid(PioneerReadBeCell(mode, 4)))
 		Fail("missing_explicit_probe_mode");
+	uint64_t probeMode = PioneerReadBeCell(mode, 4);
 	const unsigned char* cell = (const unsigned char*)fdt_getprop(fdt, chosen,
 		"linux,initrd-start", &length);
 	uint64_t start = PioneerReadBeCell(cell, length > 0 ? (size_t)length : 0);
@@ -136,8 +154,8 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 		|| (PioneerReadLe32(root + 20) & 0xf000) != 0x4000)
 		Fail("bfs_root_inode");
 	Put("bfs_root_inode=OK\n");
-	Put("HAIKU_KEXEC_LOADER v1 END status=PASS (RAM header/root only; kernel not started)\n");
-	Put("HALTED: relay recovery required\n");
-	Halt();
+	if (probeMode == 2)
+		pioneer_kexec_preload(hart, fdt, start, end - start);
+	PioneerKexecStop(true, "RAM_header_root_only");
 }
 #endif

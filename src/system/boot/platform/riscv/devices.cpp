@@ -6,6 +6,8 @@
 
 #include "bios.h"
 #include "virtio.h"
+#include "pioneer_kexec.h"
+#include <boot/vfs.h>
 
 #include <KernelExport.h>
 #include <boot/platform.h>
@@ -164,6 +166,19 @@ compute_check_sum(Node* device, off_t offset)
 status_t
 platform_add_boot_device(struct stage2_args* args, NodeList* devicesList)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		size_t size;
+		const void* data = PioneerKexecRamDisk(size);
+		MemoryDisk* disk = new(std::nothrow) MemoryDisk((const uint8*)data,
+			size, "pioneer-ram-bfs");
+		if (disk == NULL)
+			return B_NO_MEMORY;
+		devicesList->Insert(disk);
+		dprintf("Pioneer preload: read-only RAM BFS device (%" B_PRIuSIZE " bytes)\n", size);
+		return B_OK;
+	}
+#endif
 	for (int i = 0;; i++) {
 		ObjectDeleter<VirtioBlockDevice> device(CreateVirtioBlockDev(i));
 		if (!device.IsSet()) break;

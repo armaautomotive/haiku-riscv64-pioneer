@@ -10,6 +10,7 @@
 #include "graphics.h"
 #include <Htif.h>
 #include "virtio.h"
+#include "pioneer_kexec.h"
 
 #include <SupportDefs.h>
 #include <util/kernel_cpp.h>
@@ -120,6 +121,12 @@ ssize_t
 Console::WriteAt(void *cookie, off_t /*pos*/, const void *buffer,
 		size_t bufferSize)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		PioneerKexecWrite((const char*)buffer, bufferSize);
+		return bufferSize;
+	}
+#endif
 	const char *string = (const char *)buffer;
 
 	if (gKernelArgs.frame_buffer.enabled)
@@ -209,6 +216,10 @@ Console::SetColors(int32 foreground, int32 background)
 int
 console_wait_for_key(void)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive())
+		PioneerKexecStop(false, "unexpected_interactive_boot_menu");
+#endif
 	int key = virtio_input_wait_for_key();
 
 	switch (key) {
