@@ -16,6 +16,10 @@
     a3  - kernelStackTop
 */
 FUNCTION(arch_enter_kernel):
+#ifdef PIONEER_KEXEC_PROBE
+	// Kernel text was copied from the RAM filesystem after Linux's flush.
+	fence.i
+#endif
 	csrw satp, a0
 	sfence.vma
 

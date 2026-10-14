@@ -216,7 +216,33 @@ platform_register_boot_device(Node* device)
 {
 	TRACE("%s: called\n", __func__);
 
-	disk_identifier identifier;
+	disk_identifier identifier = {};
+
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive() && PioneerKexecMode() >= 3) {
+		PioneerRootManifest root;
+		if (!PioneerKexecRoot(root))
+			PioneerKexecStop(false, "invalid_root_manifest_at_registration");
+		static_assert(NUM_DISK_CHECK_SUMS == 5, "root manifest checksum count");
+		identifier.bus_type = UNKNOWN_BUS;
+		identifier.device_type = UNKNOWN_DEVICE;
+		identifier.device.unknown.size = root.disk_size;
+		for (uint32 i = 0; i < NUM_DISK_CHECK_SUMS; i++) {
+			identifier.device.unknown.check_sums[i].offset = root.offsets[i];
+			identifier.device.unknown.check_sums[i].sum = root.sums[i];
+		}
+		if (gBootParams.SetInt32(BOOT_METHOD, BOOT_METHOD_HARD_DISK) != B_OK
+			|| gBootParams.SetBool(BOOT_VOLUME_BOOTED_FROM_IMAGE, false) != B_OK
+			|| gBootParams.SetInt64(BOOT_VOLUME_PARTITION_OFFSET, root.partition_offset) != B_OK
+			|| gBootParams.SetData(BOOT_VOLUME_DISK_IDENTIFIER, B_RAW_TYPE,
+				&identifier, sizeof(identifier)) != B_OK)
+			PioneerKexecStop(false, "root_manifest_registration_failed");
+		dprintf("Pioneer root: disk bytes %" B_PRIu64 ", partition offset %"
+			B_PRIu64 ", five sampled-sector checksums\n", root.disk_size,
+			root.partition_offset);
+		return B_OK;
+	}
+#endif
 
 	identifier.bus_type = UNKNOWN_BUS;
 	identifier.device_type = UNKNOWN_DEVICE;

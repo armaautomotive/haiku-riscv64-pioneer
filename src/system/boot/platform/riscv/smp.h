@@ -49,6 +49,9 @@ void smp_init_other_cpus(void);
 void smp_boot_other_cpus(uint64 pageTable, uint64 kernel_entry);
 
 void smp_init();
+#ifdef PIONEER_KEXEC_PROBE
+void smp_init_pioneer(uint32 hart, uint32 phandle, uint32 context);
+#endif
 
 
 #endif	// _SMP_H_

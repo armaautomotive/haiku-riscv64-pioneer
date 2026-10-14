@@ -26,12 +26,18 @@ static struct {
 	preloaded_image* preloaded_images = nullptr;
 } gKernelArgs;
 static bool active;
+static uint64_t mode = 2;
 static bool normalReached;
 static bool PioneerKexecPreloadActive() { return active; }
+static uint64_t PioneerKexecMode() { return mode; }
 struct Stop { bool success; const char* reason; };
 [[noreturn]] static void PioneerKexecStop(bool success, const char* reason)
 {
 	throw Stop{success, reason};
+}
+[[noreturn]] static void pioneer_prepare_kernel(preloaded_elf64_image*)
+{
+	throw Stop{true, "preparation_only"};
 }
 static void mock_dprintf(const char*, ...) {}
 #define dprintf mock_dprintf
@@ -71,7 +77,12 @@ int main()
 	preloaded_image module;
 	gKernelArgs.preloaded_images = &module;
 	expect_stop(true, "kernel_and_boot_images_preloaded");
+	mode = 3;
+	expect_stop(true, "preparation_only");
+	mode = 4;
+	expect_stop(true, "preparation_only");
+	mode = 2;
 	module.next = &module;
 	expect_stop(false, "module_list_bounds");
-	std::puts("production preload guard: PASS (active mode never reaches kernel path)");
+	std::puts("production preload guard: PASS (mode 2 halts; mode 3 uses separate preparation path)");
 }

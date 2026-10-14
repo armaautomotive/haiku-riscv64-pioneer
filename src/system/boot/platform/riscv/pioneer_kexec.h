@@ -12,7 +12,7 @@ struct PioneerBfsHeader {
 
 static inline int PioneerProbeModeValid(uint64_t mode)
 {
-	return mode == 1 || mode == 2; /* Neither mode may execute a kernel. */
+	return mode >= 1 && mode <= 4; /* Only explicit mode 4 may execute a kernel. */
 }
 
 static inline uint64_t PioneerPreloadPoolEnd(uint64_t fdt, uint64_t initrd)
@@ -43,6 +43,40 @@ static inline uint64_t PioneerReadBeCell(const unsigned char* p, size_t length)
 	for (i = 0; i < length; i++)
 		value = value << 8 | p[i];
 	return value;
+}
+
+struct PioneerRootManifest {
+	uint64_t disk_size;
+	uint64_t partition_offset;
+	uint64_t offsets[5];
+	uint32_t sums[5];
+};
+
+/* Private /chosen property: version, disk bytes, partition byte offset,
+ * then five (64-bit byte offset, 32-bit sector sum) pairs, all big endian.
+ * This describes the real root disk, NOT the temporary RAM filesystem.
+ */
+static inline int PioneerRootManifestRead(const unsigned char* data, size_t size,
+	struct PioneerRootManifest* root)
+{
+	if (!data || !root || size != 80 || PioneerReadBeCell(data, 4) != 1)
+		return 0;
+	root->disk_size = PioneerReadBeCell(data + 4, 8);
+	root->partition_offset = PioneerReadBeCell(data + 12, 8);
+	if (root->disk_size < 4096 || root->disk_size > INT64_MAX
+		|| (root->disk_size & 511) || !root->partition_offset
+		|| (root->partition_offset & 511)
+		|| root->partition_offset > root->disk_size - 1024)
+		return 0;
+	const uint64_t expected[5] = {0, 512, root->partition_offset,
+		root->partition_offset + 512, root->disk_size - 512};
+	for (size_t i = 0; i < 5; i++) {
+		root->offsets[i] = PioneerReadBeCell(data + 20 + i * 12, 8);
+		root->sums[i] = (uint32_t)PioneerReadBeCell(data + 28 + i * 12, 4);
+		if (root->offsets[i] != expected[i])
+			return 0;
+	}
+	return 1;
 }
 
 static inline int PioneerRamRange(uint64_t start, uint64_t size)
@@ -104,10 +138,12 @@ static inline int PioneerBfsHeaderCheck(const unsigned char* super,
 
 #if defined(PIONEER_KEXEC_PROBE) && defined(__cplusplus)
 bool PioneerKexecPreloadActive();
+uint64_t PioneerKexecMode();
+bool PioneerKexecRoot(PioneerRootManifest& root);
 const void* PioneerKexecRamDisk(size_t& size);
 void PioneerKexecWrite(const char* data, size_t size);
 void PioneerKexecStop(bool success, const char* reason) __attribute__((noreturn));
 extern "C" void pioneer_kexec_preload(uint64_t hart, const void* fdt,
-	uint64_t start, uint64_t size) __attribute__((noreturn));
+	uint64_t start, uint64_t size, uint64_t mode) __attribute__((noreturn));
 #endif
 #endif

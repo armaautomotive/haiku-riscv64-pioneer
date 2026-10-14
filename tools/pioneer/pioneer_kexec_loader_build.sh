@@ -1,5 +1,5 @@
 #!/bin/sh
-# Opt-in private smoke image only. Does not deploy, load, reboot or flash.
+# Opt-in private RAM boot/probe image. Does not deploy, load, reboot or flash.
 set -eu
 [ "$#" -eq 2 ] || { printf 'Usage: %s CONFIGURED_BUILD_DIRECTORY OUTPUT_DIRECTORY\n' "$0" >&2; exit 2; }
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -19,6 +19,14 @@ for source in src/system/boot/platform/riscv/crt0.S \
  src/system/boot/platform/riscv/console.cpp \
  src/system/boot/platform/riscv/devices.cpp \
  src/system/boot/platform/riscv/video.cpp \
+ src/system/boot/platform/riscv/mmu.cpp \
+ src/system/boot/platform/riscv/mmu.h \
+ src/system/boot/platform/riscv/entry.S \
+ src/system/boot/platform/riscv/smp.cpp \
+ src/system/boot/platform/riscv/smp.h \
+ src/system/boot/platform/riscv/fdt.cpp \
+ src/system/boot/platform/riscv/fdt.h \
+ src/system/kernel/messaging/KMessage.cpp \
  src/system/ldscripts/riscv64/boot_loader_riscv.ld; do
 	cmp "$script_dir/../../$source" "$mirror/$source"
 done
@@ -28,7 +36,7 @@ run_build()
 	# objects built with a different command-line macro. Contents are unchanged.
 	# Jam compares whole-second timestamps; avoid a same-second false no-op.
 	sleep 1
-	for source in crt0.S pioneer_kexec.cpp start.cpp debug.cpp console.cpp devices.cpp video.cpp; do
+	for source in crt0.S pioneer_kexec.cpp start.cpp debug.cpp console.cpp devices.cpp video.cpp mmu.cpp smp.cpp fdt.cpp entry.S; do
 		touch "$mirror/src/system/boot/platform/riscv/$source"
 	done
 	(cd "$build_dir" && env HAIKU_REVISION=hrev99999 \
@@ -72,4 +80,4 @@ cp "$elf" "$output_dir/HaikuPioneerKexecProbe.elf"
 "${cross}readelf" -h -l -r "$elf" > "$output_dir/loader.elf-info"
 python3 "$script_dir/kexec_probe/verify_image.py" --max-size=0x400000 \
 	"$output_dir/HaikuPioneerKexecProbe.Image"
-printf 'SMOKE ONLY: fixed physical base 0x2200000; halts before any Haiku kernel\n'
+printf 'PRIVATE OPT-IN IMAGE: fixed physical base 0x2200000; modes 1-3 halt, mode 4 permits kernel entry\n'

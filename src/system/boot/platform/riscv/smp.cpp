@@ -42,3 +42,16 @@ smp_init()
 {
 	sCpus[0].hartId = 0;
 }
+
+#ifdef PIONEER_KEXEC_PROBE
+void
+smp_init_pioneer(uint32 hart, uint32 phandle, uint32 context)
+{
+	// First native handoff is deliberately single-hart. Do not report hart 0
+	// when Linux kexec entered on another physical hart, or restart stopped APs.
+	sCpus[0].hartId = hart;
+	sCpus[0].phandle = phandle;
+	sCpus[0].plicContext = context;
+	sCpuCount = 1;
+}
+#endif

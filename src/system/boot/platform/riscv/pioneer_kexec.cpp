@@ -1,15 +1,27 @@
 /* SPDX-License-Identifier: MIT */
-/* Opt-in RAM-resource smoke entry. Does not start Haiku or touch a disk. */
+/* Opt-in RAM-resource entry. Mode 4 alone permits the native kernel handoff. */
 #ifdef PIONEER_KEXEC_PROBE
 #include "pioneer_kexec.h"
+#include "fdt.h"
 extern "C" {
 #include <libfdt.h>
+}
+
+bool PioneerKexecRoot(PioneerRootManifest& root)
+{
+	int length;
+	int chosen = fdt_path_offset(gFdt, "/chosen");
+	const unsigned char* data = (const unsigned char*)fdt_getprop(gFdt, chosen,
+		"haiku,pioneer-root-v1", &length);
+	return data && length == 80 && PioneerRootManifestRead(data, length, &root);
 }
 
 static unsigned int ReadUart(unsigned int offset)
 {
 	unsigned int value;
-	uintptr_t address = 0x7040000000ULL + offset;
+	uintptr_t satp;
+	asm volatile("csrr %0, satp" : "=r"(satp));
+	uintptr_t address = (satp ? 0xffffffc07fffe000ULL : 0x7040000000ULL) + offset;
 	asm volatile("fence iorw, iorw; lwu %0, 0(%1); fence iorw, iorw"
 		: "=r"(value) : "r"(address) : "memory");
 	return value;
@@ -27,7 +39,9 @@ static void PutChar(char ch)
 		Halt();
 	for (unsigned int i = 0; i < 262144; i++) {
 		if (ReadUart(20) & 0x20) {
-			uintptr_t address = 0x7040000000ULL;
+			uintptr_t satp;
+			asm volatile("csrr %0, satp" : "=r"(satp));
+			uintptr_t address = satp ? 0xffffffc07fffe000ULL : 0x7040000000ULL;
 			unsigned int value = (unsigned char)ch;
 			asm volatile("fence iorw, iorw; sw %0, 0(%1); fence iorw, iorw"
 				: : "r"(value), "r"(address) : "memory");
@@ -55,10 +69,13 @@ void PioneerKexecWrite(const char* data, size_t size)
 
 void PioneerKexecStop(bool success, const char* reason)
 {
-	Put("HAIKU_KEXEC_LOADER v2 END status=");
+	Put("HAIKU_KEXEC_LOADER v3 END status=");
 	Put(success ? "PASS reason=" : "FAIL reason=");
 	Put(reason);
-	Put(" (kernel not started)\nHALTED: relay recovery required\n");
+	uintptr_t satp;
+	asm volatile("csrr %0, satp" : "=r"(satp));
+	Put(satp ? " (kernel handoff active)\n" : " (kernel not started)\n");
+	Put("HALTED: relay recovery required\n");
 	Halt();
 }
 
@@ -74,7 +91,7 @@ static void Hex(const char* label, uint64_t value)
 static void Fail(const char* reason) __attribute__((noreturn));
 static void Fail(const char* reason)
 {
-	Put("HAIKU_KEXEC_LOADER v2 END status=FAIL reason=");
+	Put("HAIKU_KEXEC_LOADER v3 END status=FAIL reason=");
 	Put(reason);
 	Put("\nHALTED: relay recovery required\n");
 	Halt();
@@ -82,7 +99,7 @@ static void Fail(const char* reason)
 
 extern "C" void pioneer_kexec_trap(uint64_t cause, uint64_t pc, uint64_t value)
 {
-	Put("HAIKU_KEXEC_LOADER v2 TRAP\n");
+	Put("HAIKU_KEXEC_LOADER v3 TRAP\n");
 	Hex("scause=", cause);
 	Hex("sepc=", pc);
 	Hex("stval=", value);
@@ -117,7 +134,7 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 		"reg-io-width", &length);
 	if (!width || length != 4 || PioneerReadBeCell(width, 4) != 4)
 		Halt();
-	Put("HAIKU_KEXEC_LOADER v2 BEGIN (RAM-resource probe only)\n");
+	Put("HAIKU_KEXEC_LOADER v3 BEGIN (explicit RAM boot profile)\n");
 	Hex("hart=", hart);
 	Hex("incoming_satp=", satp);
 	Hex("incoming_sstatus=", status);
@@ -131,6 +148,13 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 	if (!mode || length != 4 || !PioneerProbeModeValid(PioneerReadBeCell(mode, 4)))
 		Fail("missing_explicit_probe_mode");
 	uint64_t probeMode = PioneerReadBeCell(mode, 4);
+	if (probeMode >= 3) {
+		PioneerRootManifest rootInfo;
+		const unsigned char* data = (const unsigned char*)fdt_getprop(fdt, chosen,
+			"haiku,pioneer-root-v1", &length);
+		if (!data || length != 80 || !PioneerRootManifestRead(data, length, &rootInfo))
+			Fail("missing_or_invalid_root_manifest");
+	}
 	const unsigned char* cell = (const unsigned char*)fdt_getprop(fdt, chosen,
 		"linux,initrd-start", &length);
 	uint64_t start = PioneerReadBeCell(cell, length > 0 ? (size_t)length : 0);
@@ -154,8 +178,8 @@ extern "C" void pioneer_kexec_start(uint64_t hart, const void* fdt,
 		|| (PioneerReadLe32(root + 20) & 0xf000) != 0x4000)
 		Fail("bfs_root_inode");
 	Put("bfs_root_inode=OK\n");
-	if (probeMode == 2)
-		pioneer_kexec_preload(hart, fdt, start, end - start);
+	if (probeMode >= 2)
+		pioneer_kexec_preload(hart, fdt, start, end - start, probeMode);
 	PioneerKexecStop(true, "RAM_header_root_only");
 }
 #endif

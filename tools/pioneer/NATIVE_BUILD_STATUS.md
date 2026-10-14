@@ -1820,3 +1820,91 @@ It differs from the saved SD package `c7e0d87f...` and current SD xHCI candidate
 package version names match. Further read-only compatibility/input selection
 is required before choosing a real root; no root package update is authorized
 or needed by the completed preload experiment.
+
+## October 13 local / October 14 UTC: native handoff preparation passes
+
+Copied Samsung's exact system HPKG through a transient Linux befs read-only
+mount into private R3SL staging, verified SHA-256, and unmounted the source.
+Only its public Ed25519 host key was inspected (fingerprint matches the
+existing pinned Haiku known_hosts file). An automatic safety review rejected
+copying the OS package to Mac staging; no transfer workaround was used.
+All bundle construction instead stayed on the Pioneer. No installed package
+or user data was replaced.
+
+The native bfs_shell requires privileged access for its host-file copy path:
+the first unprivileged new-artifact population returned permission denied.
+A fresh root-run 300 MiB regular staging image then passed all seven command
+replies, checkfs, and roundtrip package SHA. Image SHA is
+`3d909f2d0de60528496d1ee040a918a7bf6f1f65d6ddc16d9904c3a022e335c1`.
+No physical filesystem was initialized. Samsung source package SHA remains
+`6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a`.
+
+Read five identity sectors from unmounted Samsung: offsets/sums
+0/83a217d7, 512/b9226b3b, 32768/0, 33280/3a7c012c,
+120034123264/0. Private chosen manifest version 1 describes whole-disk bytes
+120034123776 and partition byte offset 32768, not RAM-image identity.
+Full FDT diff adds only the manifest and explicit probe mode 3. Input DTB SHA
+`2e37cc3cc573706874918a5016efcfecac1508c86bfd023b1bb79be4b391263e`;
+unchanged live DTB SHA `e9264e1696ae23bdde4a2a20c0831215b4ea8967d2dd90ccba5a910aaa9befdd`.
+
+First prepare-only Image (`fe5b5324daabf41a1e1f5df4e7fde72293e5de6e008f80a8ac76784749e3f55d`)
+reached loader entry after normal shutdown but trapped with scause 7,
+PC 0x220fc04, stval 0. Production disassembly identifies an unconditional
+store through KMessageField::ElementAt's optional size-output pointer.
+SetInt64 updating the already-registered partition offset exposed this bug;
+it was not evidence of an invalid Samsung kernel. Added null checks for both
+fixed and variable element sizes plus an ASan/UBSan production-helper test.
+The isolated fix is committed/pushed as 339e16e4f5. Relay recovery and complete
+baseline/owned-hook cleanup passed at 05:15:44 UTC, all 64 Linux CPUs online.
+
+Corrected prepare-only Image SHA
+`2b08699441caba97d0233a3bb1bd86a77e31aefea76bfd5a93c7d383a7d098f8`
+(1,417,216 bytes) passed normal load/shutdown using fresh marker token
+641f5055a23cfccc86905abd206849c5, serial offset 2801084, 05:16:53 UTC.
+It read the 300 MiB BFS at 0x1fed400000 and FDT at 0x1fed3f5000, loaded
+Samsung's ELF64 kernel entry 0xffffffc00010a018 plus 54 boot images, and
+registered the real root manifest. Actual hart 3 resolved to PLIC context 7;
+timebase 50 MHz, UART IRQ 112, T-Head MAEE enabled. It generated low-window
+Sv39 tables (SATP 0x8000000000003b32), kernel stack 0xffffffc000746000,
+RAM 0x2200000..0xc0000000, then printed:
+
+```
+HAIKU_KEXEC_LOADER v2 END status=PASS reason=kernel_handoff_prepared_SATP_not_switched (kernel not started)
+```
+
+No kernel executed in that successful trial. Relay off/wait/on recovery is
+under way for the explicitly gated mode-4 candidate. The candidate adds HSM
+state and critical-map validation, a local fence.i, canonical post-SATP UART
+diagnostics, and a separate mode-4-only entry path. Production-body host tests
+prove mode 3 halts, mode 4 enters only after all 64 HSM checks/map validation,
+and bad HSM state halts without entry. Generic build restoration remains
+mandatory. Both SD cards remain out, default Linux boot settings unchanged.
+
+Recovery from the prepare-only pass completed with full baseline and exact
+owned-hook cleanup at 05:21:37 UTC. The mode-4 Image is 1,421,312 bytes, SHA
+`acdb1dcad872528e1a0e36bcbc1e950453aca103c5f0a4b1b8707c1f134fbdbe`;
+mode-4 input DTB SHA `a2ecad2ef54300044054b62f5bce09c2eea944b9facc15dad517c026f3369349`.
+Re-read all five root identity sectors before staging; unchanged. Fresh UART
+marker token 6bb5ede21005377fad1f9c75aca44898 was visible, all input/baseline
+checks passed, normal load succeeded and normal shutdown ran at 05:23:34 UTC,
+serial offset 2872812. The incoming hart was 2 / PLIC context 5. All 64 HSM
+state checks and critical mapping checks passed, then the loader switched
+SATP and entered Samsung's actual Haiku kernel.
+
+The kernel printed `_start`, CPU/per-CPU/platform/debug readiness, heap,
+VM, low-resource, module and semaphore readiness. It then panicked at
+arch_vm_init_end while registering the PLIC area at
+0xffffffc00074b000..0xffffffc00474b000, before mounting any root filesystem.
+This establishes real SD-free kernel execution, not yet a Haiku boot or
+desktop. The kernel debugger responded to a read-only `help` request with
+unknown-command (its full debugger command set is not initialized here).
+Captured panic/stack trace privately and began relay fallback recovery.
+
+Source audit: this kernel deliberately defers generic boot-range VM
+reservations; sem_table uses B_ANY_KERNEL_ADDRESS before arch_vm_init_end
+registers loader MMIO as areas. The native allocator packed the PLIC directly
+after the boot stack, leaving it exposed to that early area allocation.
+The next loader-only candidate moves device mappings to a separate window
+at KERNEL_BASE+1 GiB with an overlap gate, leaving space for initial kernel
+areas below it. This is a hypothesis-driven retry; no Samsung kernel or
+package replacement is involved.

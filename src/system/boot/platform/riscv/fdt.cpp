@@ -24,6 +24,7 @@ extern "C" {
 #include "Htif.h"
 #include "Clint.h"
 #include "FwCfg.h"
+#include "pioneer_kexec.h"
 
 
 void* gFdt = NULL;
@@ -224,10 +225,82 @@ fdt_set_kernel_args()
 
 	gKernelArgs.arch_args.timerFrequency = sTimerFrequrency;
 
-	gKernelArgs.arch_args.htif.start = (addr_t)gHtifRegs;
-	gKernelArgs.arch_args.htif.size = sizeof(HtifRegs);
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		// The Pioneer has SBI, not the emulator's HTIF MMIO device.
+		gKernelArgs.arch_args.htif = {};
+	} else
+#endif
+	{
+		gKernelArgs.arch_args.htif.start = (addr_t)gHtifRegs;
+		gKernelArgs.arch_args.htif.size = sizeof(HtifRegs);
+	}
 
 	gKernelArgs.arch_args.plic  = sPlic;
 	gKernelArgs.arch_args.clint = sClint;
 	gKernelArgs.arch_args.uart  = sUart;
 }
+
+#ifdef PIONEER_KEXEC_PROBE
+void
+fdt_init_pioneer(unsigned int hart)
+{
+	// Read only the resources used by the initial single-hart handoff. Avoid
+	// generic emulator enumeration and its last-memory-node allocator override.
+	int cpus = fdt_path_offset(gFdt, "/cpus");
+	int length;
+	const unsigned char* timebase = (const unsigned char*)fdt_getprop(gFdt,
+		cpus, "timebase-frequency", &length);
+	if (!timebase || length != 4 || PioneerReadBeCell(timebase, 4) == 0)
+		PioneerKexecStop(false, "invalid_timebase");
+	sTimerFrequrency = PioneerReadBeCell(timebase, 4);
+	uint32 phandle = 0;
+	int cpu;
+	fdt_for_each_subnode(cpu, gFdt, cpus) {
+		const unsigned char* reg = (const unsigned char*)fdt_getprop(gFdt, cpu,
+			"reg", &length);
+		if (!reg || length != 4 || PioneerReadBeCell(reg, 4) != hart)
+			continue;
+		int intc = fdt_subnode_offset(gFdt, cpu, "interrupt-controller");
+		if (fdt_node_check_compatible(gFdt, intc, "riscv,cpu-intc") == 0)
+			phandle = fdt_get_phandle(gFdt, intc);
+	}
+	if (phandle == 0 || phandle == UINT32_MAX)
+		PioneerKexecStop(false, "boot_hart_not_in_fdt");
+	int plic = fdt_node_offset_by_compatible(gFdt, -1, "thead,c900-plic");
+	if (plic < 0 || !GetReg(gFdt, plic, 2, 2, 0, sPlic)
+		|| sPlic.start != 0x7090000000ULL || sPlic.size != 0x4000000)
+		PioneerKexecStop(false, "invalid_pioneer_plic");
+	const unsigned char* contexts = (const unsigned char*)fdt_getprop(gFdt,
+		plic, "interrupts-extended", &length);
+	if (!contexts || length <= 0 || length > 64 * 16 || length % 8)
+		PioneerKexecStop(false, "invalid_plic_contexts");
+	uint32 context = UINT32_MAX;
+	for (int offset = 0; offset < length; offset += 8) {
+		if (PioneerReadBeCell(contexts + offset, 4) == phandle
+			&& PioneerReadBeCell(contexts + offset + 4, 4) == sExternInt) {
+			if (context != UINT32_MAX)
+				PioneerKexecStop(false, "duplicate_boot_hart_context");
+			context = offset / 8;
+		}
+	}
+	if (context == UINT32_MAX)
+		PioneerKexecStop(false, "missing_boot_hart_context");
+	smp_init_pioneer(hart, phandle, context);
+	int uart = fdt_path_offset(gFdt, "/soc/serial@7040000000");
+	// Base/size/shift/width were already checked before any C++ initialization.
+	strcpy(sUart.kind, UART_KIND_8250);
+	sUart.regs = {0x7040000000ULL, 0x1000};
+	sUart.reg_shift = 2;
+	sUart.reg_io_width = 4;
+	sUart.irq = GetInterrupt(gFdt, uart);
+	const unsigned char* clock = (const unsigned char*)fdt_getprop(gFdt, uart,
+		"clock-frequency", &length);
+	if (!clock || length != 4 || !PioneerReadBeCell(clock, 4) || sUart.irq != 112)
+		PioneerKexecStop(false, "invalid_pioneer_uart_clock_irq");
+	sUart.clock = PioneerReadBeCell(clock, 4);
+	dprintf("Pioneer hardware: hart %u, PLIC context %" B_PRIu32
+		", timebase %" B_PRIu64 ", UART IRQ %" B_PRIu32 "\n",
+		hart, context, sTimerFrequrency, sUart.irq);
+}
+#endif

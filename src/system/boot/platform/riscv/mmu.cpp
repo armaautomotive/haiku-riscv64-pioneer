@@ -20,6 +20,27 @@
 #include <OS.h>
 
 #include <string.h>
+#include "pioneer_kexec.h"
+#ifdef PIONEER_KEXEC_PROBE
+#include <platform/sbi/sbi_syscalls.h>
+static bool sTHeadMae;
+static constexpr uint64 kTHeadPma = 0x0eULL << 59;
+static constexpr uint64 kTHeadIo = 0x12ULL << 59;
+
+static void
+DetectPioneerTHeadMae()
+{
+	if (!PioneerKexecPreloadActive())
+		return;
+	sbiret vendor = sbi_get_mvendorid();
+	if (vendor.error != SBI_SUCCESS || vendor.value != 0x5b7)
+		PioneerKexecStop(false, "unexpected_SBI_vendor");
+	uint64 sxstatus;
+	asm volatile("csrr %0, 0x5c0" : "=r"(sxstatus));
+	sTHeadMae = (sxstatus & (1UL << 21)) != 0;
+	dprintf("Pioneer T-Head MAEE: %s\n", sTHeadMae ? "enabled" : "disabled");
+}
+#endif
 
 
 struct MemoryRegion
@@ -151,6 +172,9 @@ LookupPte(addr_t virtAdr, bool alloc)
 				.isGlobal = IS_KERNEL_ADDRESS(virtAdr),
 				.ppn = ppn
 			};
+#ifdef PIONEER_KEXEC_PROBE
+			if (sTHeadMae) newPte.val |= kTHeadPma;
+#endif
 			pte->val = newPte.val;
 		}
 		pte = (Pte*)VirtFromPhys(B_PAGE_SIZE * pte->ppn);
@@ -161,7 +185,7 @@ LookupPte(addr_t virtAdr, bool alloc)
 
 
 static void
-Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags)
+Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags, bool device)
 {
 	// dprintf("Map(0x%" B_PRIxADDR ", 0x%" B_PRIxADDR ")\n", virtAdr, physAdr);
 	Pte* pte = LookupPte(virtAdr, true);
@@ -176,20 +200,26 @@ Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags)
 		.ppn = physAdr / B_PAGE_SIZE
 	};
 	newPte.val |= flags;
+#ifdef PIONEER_KEXEC_PROBE
+	if (sTHeadMae) newPte.val |= device ? kTHeadIo : kTHeadPma;
+#else
+	(void)device;
+#endif
 
 	pte->val = newPte.val;
 }
 
 
 static void
-MapRange(addr_t virtAdr, phys_addr_t physAdr, size_t size, uint64 flags)
+MapRange(addr_t virtAdr, phys_addr_t physAdr, size_t size, uint64 flags,
+	bool device = false)
 {
 	dprintf("MapRange(0x%" B_PRIxADDR ", 0x%" B_PRIxADDR ", 0x%"
 		B_PRIxADDR ", ", virtAdr, physAdr, size);
 	WritePteFlags(flags);
 	dprintf(")\n");
 	for (size_t i = 0; i < size; i += B_PAGE_SIZE)
-		Map(virtAdr + i, physAdr + i, flags);
+		Map(virtAdr + i, physAdr + i, flags, device);
 
 	ASSERT_ALWAYS(insert_virtual_allocated_range(virtAdr, size) >= B_OK);
 }
@@ -205,10 +235,12 @@ MapRangeIdentity(addr_t adr, size_t size, uint64 flags)
 static void
 MapAddrRange(addr_range& range, uint64 flags)
 {
+	if (range.size == 0)
+		return;
 	phys_addr_t physAdr = range.start;
 	range.start = AllocVirtPages(range.size);
 
-	MapRange(range.start, physAdr, range.size, flags);
+	MapRange(range.start, physAdr, range.size, flags, true);
 
 	if (gKernelArgs.arch_args.num_virtual_ranges_to_keep
 		>= MAX_VIRTUAL_RANGES_TO_KEEP)
@@ -234,6 +266,9 @@ PreallocKernelRange()
 			.isGlobal = true,
 			.ppn = ppn
 		};
+#ifdef PIONEER_KEXEC_PROBE
+		if (sTHeadMae) newPte.val |= kTHeadPma;
+#endif
 		pte->val = newPte.val;
 	}
 }
@@ -273,10 +308,27 @@ SetupPageTable()
 	}
 
 	// Devices
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecPreloadActive()) {
+		// The current Pioneer kernel defers generic boot-range reservations.
+		// Keep MMIO away from the first free kernel slots used by sem_table
+		// before arch_vm_init_end() registers these device mappings as areas.
+		const addr_t deviceBase = KERNEL_BASE + 0x40000000;
+		if (gFreeVirtMem >= deviceBase)
+			PioneerKexecStop(false, "boot_regions_overlap_device_window");
+		gFreeVirtMem = deviceBase;
+	}
+#endif
 	MapAddrRange(gKernelArgs.arch_args.clint, Pte {.isRead = true, .isWrite = true}.val);
 	MapAddrRange(gKernelArgs.arch_args.htif, Pte {.isRead = true, .isWrite = true}.val);
 	MapAddrRange(gKernelArgs.arch_args.plic, Pte {.isRead = true, .isWrite = true}.val);
 	if (strcmp(gKernelArgs.arch_args.uart.kind, "") != 0) {
+#ifdef PIONEER_KEXEC_PROBE
+		if (PioneerKexecPreloadActive()) {
+			MapRange(0xffffffc07fffe000ULL, gKernelArgs.arch_args.uart.regs.start,
+				B_PAGE_SIZE, Pte {.isRead = true, .isWrite = true}.val, true);
+		}
+#endif
 		MapAddrRange(gKernelArgs.arch_args.uart.regs,
 			Pte {.isRead = true, .isWrite = true}.val);
 	}
@@ -409,6 +461,9 @@ mmu_init(void)
 void
 mmu_init_for_kernel(addr_t& satp)
 {
+#ifdef PIONEER_KEXEC_PROBE
+	DetectPioneerTHeadMae();
+#endif
 	// map in a kernel stack
 	void* stack_address = NULL;
 	if (platform_allocate_region(&stack_address,
@@ -436,3 +491,42 @@ mmu_init_for_kernel(addr_t& satp)
 
 	sort_address_ranges(gKernelArgs.virtual_allocated_range, gKernelArgs.num_virtual_allocated_ranges);
 }
+
+#ifdef PIONEER_KEXEC_PROBE
+static bool
+PioneerMappingMatches(addr_t address, uint64 required, bool device = false,
+	phys_addr_t expected = 0)
+{
+	Pte* pte = LookupPte(address, false);
+	if (pte == NULL || (pte->val & required) != required)
+		return false;
+	phys_addr_t physical = pte->ppn * B_PAGE_SIZE + address % B_PAGE_SIZE;
+	if (expected && physical != expected)
+		return false;
+	if (!device && !PioneerRamRange(physical, 1))
+		return false;
+	return !sTHeadMae || (pte->val & (0x1fULL << 59))
+		== (device ? kTHeadIo : kTHeadPma);
+}
+
+void
+mmu_validate_pioneer_handoff(addr_t entry)
+{
+	uint64 readable = Pte {.isValid = true, .isRead = true}.val;
+	uint64 executable = readable | Pte {.isExec = true}.val;
+	uint64 writable = readable | Pte {.isWrite = true}.val;
+	addr_t stackTop = gKernelArgs.cpu_kstack[0].start + gKernelArgs.cpu_kstack[0].size;
+	if (entry < KERNEL_BASE || !PioneerMappingMatches(entry, executable)
+		|| !PioneerMappingMatches((addr_t)&gKernelArgs, writable, false, (addr_t)&gKernelArgs)
+		|| !PioneerMappingMatches((addr_t)&gStackEnd - 8, writable, false, (addr_t)&gStackEnd - 8)
+		|| !PioneerMappingMatches(stackTop - 8, writable)
+		|| !PioneerMappingMatches(gKernelArgs.kernel_image.Get(), readable)
+		|| !PioneerMappingMatches(gKernelArgs.boot_volume.Get(), readable)
+		|| !PioneerMappingMatches(gKernelArgs.arch_args.fdt.Get(), readable)
+		|| !PioneerMappingMatches(0xffffffc07fffe000ULL, writable, true, 0x7040000000ULL)
+		|| !PioneerMappingMatches(gKernelArgs.arch_args.plic.start, writable, true, 0x7090000000ULL)
+		|| gKernelArgs.arch_args.htif.size != 0 || gKernelArgs.arch_args.clint.size != 0)
+		PioneerKexecStop(false, "handoff_mapping_validation");
+	dprintf("Pioneer handoff mappings: kernel/args/FDT/stacks/PLIC/UART verified\n");
+}
+#endif

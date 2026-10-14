@@ -10,12 +10,57 @@ static void put32(unsigned char* p, uint32_t value)
 	for (i = 0; i < 4; i++) p[i] = (unsigned char)(value >> (i * 8));
 }
 
+static void put_be(unsigned char* p, uint64_t value, unsigned bytes)
+{
+	for (unsigned i = 0; i < bytes; i++) p[bytes - i - 1] = (unsigned char)(value >> (i * 8));
+}
+
+static void test_root_manifest(void)
+{
+	unsigned char data[80] = {0};
+	struct PioneerRootManifest root;
+	const uint64_t disk = 120034123776ULL, partition = 32768;
+	const uint64_t offsets[5] = {0, 512, partition, partition + 512, disk - 512};
+	put_be(data, 1, 4);
+	put_be(data + 4, disk, 8);
+	put_be(data + 12, partition, 8);
+	for (unsigned i = 0; i < 5; i++) {
+		put_be(data + 20 + i * 12, offsets[i], 8);
+		put_be(data + 28 + i * 12, 0x80000000U + i, 4);
+	}
+	assert(PioneerRootManifestRead(data, 80, &root));
+	assert(root.disk_size == disk && root.partition_offset == partition);
+	assert(root.sums[4] == 0x80000004U && root.offsets[4] == disk - 512);
+	assert(!PioneerRootManifestRead(NULL, 80, &root));
+	assert(!PioneerRootManifestRead(data, 80, NULL));
+	assert(!PioneerRootManifestRead(data, 79, &root));
+	assert(!PioneerRootManifestRead(data, 81, &root));
+	put_be(data, 2, 4);
+	assert(!PioneerRootManifestRead(data, 80, &root));
+	put_be(data, 1, 4);
+	put_be(data + 4, UINT64_MAX, 8);
+	assert(!PioneerRootManifestRead(data, 80, &root));
+	put_be(data + 4, disk, 8);
+	put_be(data + 12, 0, 8);
+	assert(!PioneerRootManifestRead(data, 80, &root));
+	put_be(data + 12, partition + 1, 8);
+	assert(!PioneerRootManifestRead(data, 80, &root));
+	put_be(data + 12, disk - 512, 8);
+	assert(!PioneerRootManifestRead(data, 80, &root));
+	put_be(data + 12, partition, 8);
+	put_be(data + 20 + 4 * 12, disk, 8);
+	assert(!PioneerRootManifestRead(data, 80, &root));
+}
+
 int main(int argc, char** argv)
 {
+	test_root_manifest();
 	unsigned char super[512] = {0};
 	struct PioneerBfsHeader info;
 	assert(PioneerProbeModeValid(1) && PioneerProbeModeValid(2));
-	assert(!PioneerProbeModeValid(0) && !PioneerProbeModeValid(3));
+	assert(PioneerProbeModeValid(3));
+	assert(PioneerProbeModeValid(4));
+	assert(!PioneerProbeModeValid(0) && !PioneerProbeModeValid(5));
 	assert(!PioneerProbeModeValid(UINT64_MAX));
 	assert(PioneerPreloadPoolEnd(0x1effff5000, 0x1f00000000) == 0xc0000000);
 	assert(PioneerPreloadPoolEnd(0xbfff5000, 0xbccc8000) == 0xbccc8000);

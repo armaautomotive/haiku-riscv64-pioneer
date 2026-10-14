@@ -23,16 +23,29 @@
 #include "virtio.h"
 #include "graphics.h"
 #include "pioneer_kexec.h"
+#ifdef PIONEER_KEXEC_PROBE
+#include <platform/sbi/sbi_syscalls.h>
+#endif
 
 #ifdef PIONEER_KEXEC_PROBE
 static bool sPioneerPreloadActive;
 static uint64_t sPioneerRamStart;
 static size_t sPioneerRamSize;
+static uint64_t sPioneerMode;
+static uint64_t sPioneerHart;
 
 bool PioneerKexecPreloadActive()
 {
 	return sPioneerPreloadActive;
 }
+
+uint64_t PioneerKexecMode()
+{
+	return sPioneerMode;
+}
+
+static void pioneer_prepare_kernel(preloaded_elf64_image* image)
+	__attribute__((noreturn));
 
 const void* PioneerKexecRamDisk(size_t& size)
 {
@@ -192,6 +205,8 @@ platform_start_kernel(void)
 		dprintf("Pioneer preload: %" B_PRIu32 " preloaded boot images\n", count);
 		if (count == 0)
 			PioneerKexecStop(false, "no_boot_images");
+		if (PioneerKexecMode() >= 3)
+			pioneer_prepare_kernel(kernel);
 		PioneerKexecStop(true, "kernel_and_boot_images_preloaded");
 	}
 #endif
@@ -263,12 +278,15 @@ _start(int hartId, void* fdt)
 
 #ifdef PIONEER_KEXEC_PROBE
 extern "C" void
-pioneer_kexec_preload(uint64_t hart, const void* fdt, uint64_t start, uint64_t size)
+pioneer_kexec_preload(uint64_t hart, const void* fdt, uint64_t start, uint64_t size,
+	uint64_t mode)
 {
 	// Keep the live stack separate from cleared BSS, and initialize platform
 	// state only after the early no-allocation metadata checks have passed.
 	clear_bss();
 	sPioneerPreloadActive = true;
+	sPioneerMode = mode;
+	sPioneerHart = hart;
 	sPioneerRamStart = start;
 	sPioneerRamSize = size;
 	gFdt = (void*)fdt; // Already fully validated; do not enumerate hardware here.
@@ -288,5 +306,39 @@ pioneer_kexec_preload(uint64_t hart, const void* fdt, uint64_t start, uint64_t s
 	args.heap_size = 16 * 1024 * 1024;
 	main(&args);
 	PioneerKexecStop(false, "stage2_returned_without_preload");
+}
+
+static void
+pioneer_prepare_kernel(preloaded_elf64_image* image)
+{
+	addr_t entry = image->elf_header.e_entry;
+	for (uint32 hart = 0; hart < 64; hart++) {
+		sbiret status = sbi_hart_get_status(hart);
+		long expected = hart == sPioneerHart
+			? SBI_HART_STATE_STARTED : SBI_HART_STATE_STOPPED;
+		if (status.error != SBI_SUCCESS || status.value != expected)
+			PioneerKexecStop(false, "unexpected_HSM_state_before_handoff");
+	}
+	fdt_init_pioneer(sPioneerHart);
+	smp_init_other_cpus();
+	gKernelArgs.arch_args.machine_platform = kPlatformSbi;
+	fdt_set_kernel_args();
+	convert_kernel_args();
+	uint64 satp;
+	mmu_init_for_kernel(satp);
+	mmu_validate_pioneer_handoff(entry);
+	dprintf("Pioneer prepared: %" B_PRIu32 " CPU, hart %" B_PRIu32
+		", PLIC context %" B_PRIu32 ", RAM %#" B_PRIx64 " bytes\n",
+		gKernelArgs.num_cpus, gKernelArgs.arch_args.hartIds[0],
+		gKernelArgs.arch_args.plicContexts[0], (uint64)gTotalMem);
+	if (PioneerKexecMode() == 3)
+		PioneerKexecStop(true, "kernel_handoff_prepared_SATP_not_switched");
+	if (PioneerKexecMode() != 4)
+		PioneerKexecStop(false, "kernel_execution_not_explicitly_requested");
+	addr_t stackTop = gKernelArgs.cpu_kstack[0].start + gKernelArgs.cpu_kstack[0].size;
+	dprintf("HAIKU_KEXEC_LOADER v3 HANDOFF entry %#lx args %p stack %#lx\n",
+		entry, &gKernelArgs, stackTop);
+	arch_enter_kernel(satp, &gKernelArgs, entry, stackTop);
+	PioneerKexecStop(false, "kernel_returned");
 }
 #endif

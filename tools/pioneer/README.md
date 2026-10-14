@@ -90,8 +90,29 @@ loaded the RISC-V kernel and 54 boot images, then halted at that guard.
 for success/failure/cyclic lists and confirms no active path falls through.
 The build helper now delays its profile-dependent timestamp updates past
 Jam's one-second resolution and verifies the restored generic entry/base.
-Neither probe mode can execute a kernel; a real root-device/handoff adapter
-is still required.
+Modes 1 and 2 cannot execute a kernel. Mode 3 additionally prepares the native
+single-hart SBI handoff and page tables, then halts without switching SATP.
+That hardware preparation test passed using Samsung's own OS package in a
+new 300 MiB RAM BFS, with Samsung root selected by a private manifest.
+
+Only explicit value 4 permits kernel entry. Values 3 and 4 require an exact
+80-byte `haiku,pioneer-root-v1` chosen property: BE32 version 1, BE64 whole-disk
+size, BE64 partition byte offset, then five (BE64 offset, BE32 sector sum)
+pairs. Sample offsets are 0, 512, partition, partition+512, and disk_size-512;
+sums are the modulo-2^32 sum of 128 little-endian 32-bit words in each sector.
+Native preparation must verify the physical disk serial, size, BFS UUID,
+partition start and matching system package before generating this manifest.
+Never substitute the RAM image's size, checksums or zero partition offset.
+
+The initial native adapter deliberately exposes only the low RAM window and
+one CPU. It preserves the incoming physical hart ID, resolves that hart's
+PLIC context, checks that all other harts are stopped, copies the FDT, uses
+the existing EFI path's T-Head MAEE memory types, omits emulator HTIF, and
+validates critical page-table mappings before entry. Post-SATP loader traps
+use a canonical UART alias. Run `run_pioneer_kexec_handoff_tests.sh` for the
+production mode-3 halt/mode-4 entry gates, and `run_kmessage_element_tests.sh`
+for the optional-output API regression exposed by root-manifest registration.
+Mode 4 is an experimental hardware path, not yet a verified desktop selector.
 
 ## Haiku build and SD deployment
 

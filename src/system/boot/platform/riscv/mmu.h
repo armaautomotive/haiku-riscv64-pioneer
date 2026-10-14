@@ -20,6 +20,9 @@ extern size_t gTotalMem;
 
 void mmu_init();
 void mmu_init_for_kernel(addr_t& satp);
+#ifdef PIONEER_KEXEC_PROBE
+void mmu_validate_pioneer_handoff(addr_t entry);
+#endif
 
 
 inline addr_t
