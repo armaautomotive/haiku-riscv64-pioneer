@@ -118,14 +118,16 @@ struct KMessage::FieldHeader {
 			return NULL;
 		uint8* data = (uint8*)this + headerSize;
 		if (HasFixedElementSize()) {
-			*size = elementSize;
+			if (size != NULL)
+				*size = elementSize;
 			return data + elementSize * index;
 		}
 		// non-fixed element size: we need to iterate
 		FieldValueHeader* valueHeader = (FieldValueHeader*)data;
 		for (int i = 0; i < index; i++)
 			valueHeader = valueHeader->NextFieldValueHeader();
-		*size = valueHeader->size;
+		if (size != NULL)
+			*size = valueHeader->size;
 		return valueHeader->Data();
 	}
 
