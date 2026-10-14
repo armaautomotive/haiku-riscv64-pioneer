@@ -3,13 +3,13 @@
 ## Status
 
 Source/feasibility investigation started 2026-09-15. As of October 14,
-Haiku enumerates the installed P100A through the SD-free RAM boot path and
-its optional read-only diagnostic works. There is no functioning compute
-driver/runtime yet. A separate, reversible BAR4 configuration-register test
-also passed with memory decoding and bus mastering off throughout; it is
-not MMIO, DMA, firmware access, or an accelerator test. See the live-test
-record below. Samsung's installed OS package and default Linux boot remain
-unchanged.
+Haiku enumerates the installed P100A through the SD-free RAM boot path,
+its optional read-only diagnostic works, and a controlled temporary BAR
+mapping reads the card's NoC identification register successfully. The
+test restores the card and bridge configuration exactly; DMA has never
+been enabled. There is no functioning compute driver/runtime yet. See the
+live-test records below. Samsung's installed OS package, card firmware,
+and default Linux boot remain unchanged.
 
 A first optional Haiku diagnostic add-on is now in
 `src/add-ons/kernel/drivers/misc/tenstorrent_pci_diag.c`. It binds only PCI
@@ -154,6 +154,97 @@ BAR intervals, bridge windows, host translations, interrupt state, exclusive
 ownership, and rollback. Do not merely hide BAR4 in software. There has been
 no card MMIO/DMA or firmware write. Firmware flashing still requires a
 verified backup/recovery plan and separate approval.
+
+### October 14: first working Haiku card-register access
+
+The next optional probe operation audits the actual device-manager ancestry,
+exact FDT tag/register layout, two-device root topology, all five outbound
+windows (one I/O plus four memory), and domain-aware translation of both ends
+of the proposed BAR0/BAR2 intervals. `GetPioneerPciProfile()` and its userspace
+tool are read-only. The initial recursive traversal hit the existing kernel
+`get_next_child_node()` missing-break behavior; the audit uses the working
+`find_child_node()` API instead, without changing the installed kernel.
+The exact PCI interface name is `bus_managers/pci/driver_v1`. A first layout
+check omitted the I/O range, refused safely, and was corrected to include all
+five actual ranges. The final audit passed at stage 6:
+
+- Hardware controller/config: `0x7062000000`, `0x4800000000/0x1000`.
+- Haiku virtual card/root buses: 3/2, root buses `003f0100`.
+- Initial root command `0000`, memory window `0000fff0`, prefetch window
+  `0001fff1`, both upper prefetch words zero (disabled windows).
+- BAR0 PCI and CPU interval: `0x4900000000..0x491fffffff` (512 MiB).
+- BAR2 PCI and CPU interval: `0x4920000000..0x49200fffff` (1 MiB).
+
+The explicit `TT_PCI_PROBE_PIONEER_NOC_ID` operation requires root and a
+read/write-open descriptor. It reserves the card, repeats the live audit,
+rejects enabled commands, assigned BARs, unexpected sizes, root-port BARs,
+enabled option ROMs, active MSI/MSI-X, malformed capability lists, and a
+non-D0 PM state. It assigns only BAR0/BAR2 inside the recorded window and
+places the complete unused 32 GiB BAR4 at PCI
+`0xfffffff800000000..0xffffffffffffffff`, outside every forwarded memory
+range. This is a hardware BAR placement, **not** hiding a live BAR in kernel
+metadata and **not** disabling the BAR in hardware. It is not a general
+resource allocator or a permanent driver configuration.
+
+The temporary bridge prefetch window is `20010001`, upper base/limit `49/49`.
+Only command `0402` (memory + INTx disable) may be enabled on card and bridge;
+bus mastering, I/O, firmware writes and resets are never enabled. A single
+BAR0 page at CPU `0x491fd04000` is mapped kernel-read-only and explicitly
+uncached. Exactly three reads use register offset `0x44`, followed by unmap,
+decoder shutdown, complete BAR/window restoration, and configuration readback.
+Disassembly caught `__sync_synchronize()` producing only `fence rw,rw`;
+the final kernel implementation explicitly uses RISC-V `fence iorw,iorw`.
+The offset/coordinates are also documented by the pinned Apache-2.0 UMD
+`blackhole_implementation.hpp` / `blackhole_arc_apb.cpp`; no GPL driver
+implementation was copied.
+
+Host ASan/UBSan tests cover every dropped configuration write, map/unmap
+failure, failed decoder shutdown, unsafe geometry, stale/active BARs,
+interrupt/ROM/PM guards, malformed/cyclic capabilities, unstable register
+reads, and restoration checks. They assert no DMA-enable operation and no
+BAR/bridge-window rewrite while its decoder is active. These are simulated
+failure tests, not injected hardware failures.
+
+Before the first MMIO test, SSH stopped responding during banner exchange
+and serial showed a userspace "Crashed program" dialog. No new MMIO module
+had been installed or run at that point; the cause is not established.
+Graceful SSH shutdown was unavailable. The last optional-driver installation
+had been synced; a relay power-off hold and cold boot recovered normal Linux
+with card command `0000`. The same private RAM package booted Haiku again
+without either SD. Native compilation was removed from the hardware-test
+dependency: `tools/pioneer/tenstorrent_cross_build_tools.sh` builds all four
+diagnostic CLIs against the configured build's SDK/startup objects/libroot,
+using a fresh output directory and no device access. Its three C++ binaries
+reproduced the earlier cross-build hashes and ran on Haiku.
+
+At about 19:31 UTC, the first hardware transaction returned
+`18611002 / 18611002 / 18611002`, with complete PCI rollback. The original
+validator wrongly required the entire word to equal 2 or 11; upper register
+fields are nonzero. The corrected validator checks the six-bit X/Y coordinate
+pair while preserving the full raw value, matching PCIe tile `(2,0)` here.
+A regression case covers this real value and rejects a wrong Y coordinate.
+At about 19:36 UTC the repeat returned **state 1, stage 5, restored 1** and
+the same three words. All six BAR words and all three bridge-prefetch words
+matched their originals, card/root commands were `0000/0000`, and an
+independent read-only driver snapshot confirmed the card's original disabled
+state and status `0010`. SSH remained usable. This establishes bounded
+memory-mapped card-register access, not ARC/DRAM health, DMA, or compute.
+
+Current optional module in the user `drivers/bin/tenstorrent_pci_probe`, with
+the existing `dev/misc` symlink:
+`1ec5a894442283e47b31338628a563cff5b4699b21941f298e10424b9c1e60b5`.
+The previous binaries are retained under
+`/boot/home/pioneer-p100a-20261014/` for recovery. Mac-built tools and module
+are privately staged in its `mmio-cross-1/` directory. The baseline tracked
+boot helper and installed OS package were not modified. The last boot used
+native session `p100a-mmio-20261014-1` with the previously verified RAM bundle.
+
+Next: bounded ARC status/telemetry over a 2 MiB NoC window, with restoration
+of the exact TLB configuration. The observed PCIe tile is X=2; the pinned
+UMD explicitly routes ARC access over NoC on that tile. Do **not** assume
+the direct BAR0 ARC/APB route (available at X=11) works here. No ARC access,
+firmware update, DMA test, general memory mapping API, or accelerator runtime
+has been implemented/tested yet.
 
 Download pinned official sources with:
 

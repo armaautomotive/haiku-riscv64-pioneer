@@ -25,4 +25,5 @@ KernelAddon <driver>tenstorrent_pci_diag :
 
 KernelAddon <driver>tenstorrent_pci_probe :
 	tenstorrent_pci_probe.cpp
+	PioneerPciProfile.cpp
 	;
