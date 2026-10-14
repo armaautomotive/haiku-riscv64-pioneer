@@ -84,13 +84,10 @@ arch_thread_context_switch(Thread *from, Thread *to)
 	auto toMap = (RISCV64VMTranslationMap*)to->team->address_space->TranslationMap();
 
 	int cpu = to->cpu->cpu_num;
-	if (smp_get_num_cpus() < 2) {
+	if (smp_get_num_cpus() < 2)
 		toMap->ActiveOnCpus().SetBit(cpu);
-		fromMap->ActiveOnCpus().ClearBit(cpu);
-	} else {
+	else
 		toMap->ActiveOnCpus().SetBitAtomic(cpu);
-		fromMap->ActiveOnCpus().ClearBitAtomic(cpu);
-	}
 
 	// TODO: save/restore FPU only if needed
 	save_fpu(&from->arch_info.fpuContext);
@@ -98,6 +95,16 @@ arch_thread_context_switch(Thread *from, Thread *to)
 
 	SetSatp(toMap->Satp());
 	FlushTlbAllAsid(0);
+
+	// Keep the old map active until this hart has stopped using it. In
+	// particular, a same-team switch must not clear the bit we just set:
+	// VM unmaps/protection changes use it to target remote TLB invalidations.
+	if (fromMap != toMap) {
+		if (smp_get_num_cpus() < 2)
+			fromMap->ActiveOnCpus().ClearBit(cpu);
+		else
+			fromMap->ActiveOnCpus().ClearBitAtomic(cpu);
+	}
 
 	arch_context_switch(&from->arch_info.context, &to->arch_info.context);
 }

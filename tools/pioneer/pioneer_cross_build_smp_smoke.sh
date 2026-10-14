@@ -1,7 +1,12 @@
 #!/bin/sh
 # Build a bounded userspace CPU smoke test only. Never reboot or touch a card.
 set -eu
-[ "$#" = 2 ] || { echo 'Usage: pioneer_cross_build_smp_smoke.sh CONFIGURED_BUILD FRESH_ABSOLUTE_OUTPUT' >&2; exit 2; }
+[ "$#" = 2 ] || [ "$#" = 3 ] || { echo 'Usage: pioneer_cross_build_smp_smoke.sh CONFIGURED_BUILD FRESH_ABSOLUTE_OUTPUT [--vm-shootdown]' >&2; exit 2; }
+case "${3:-}" in
+ '') smp_name=pioneer_smp_smoke;;
+ --vm-shootdown) smp_name=pioneer_vm_shootdown_smoke;;
+ *) exit 2;;
+esac
 smp_source=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 smp_build=$(CDPATH= cd -- "$1" && pwd)
 smp_output=$2
@@ -20,9 +25,9 @@ mkdir -m 700 "$smp_output"
  -isystem "$smp_sdk/os" -isystem "$smp_sdk/os/kernel" -isystem "$smp_sdk/os/drivers" \
  -isystem "$smp_sdk/os/support" -isystem "$smp_sdk/os/storage" \
  -isystem "$smp_sdk/config" -isystem "$smp_sdk/posix" -isystem "$smp_sdk" \
- -c "$smp_source/pioneer_smp_smoke.c" -o "$smp_output/pioneer_smp_smoke.o"
+ -c "$smp_source/$smp_name.c" -o "$smp_output/$smp_name.o"
 "$smp_cc" -nostartfiles -Wl,-e,_start \
  "$smp_glue/arch/riscv64/crti.o" "$smp_begin" "$smp_glue/start_dyn.o" "$smp_glue/init_term_dyn.o" \
- "$smp_output/pioneer_smp_smoke.o" -L "$smp_libroot" -lroot "$smp_end" "$smp_glue/arch/riscv64/crtn.o" \
- -o "$smp_output/pioneer_smp_smoke"
-shasum -a 256 "$smp_output/pioneer_smp_smoke"
+ "$smp_output/$smp_name.o" -L "$smp_libroot" -lroot "$smp_end" "$smp_glue/arch/riscv64/crtn.o" \
+ -o "$smp_output/$smp_name"
+shasum -a 256 "$smp_output/$smp_name"

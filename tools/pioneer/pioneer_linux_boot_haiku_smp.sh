@@ -16,7 +16,9 @@ base=/mnt/ssd/pioneer-haiku-kexec-20261013
 run=$base/boot-$session
 image=$base/smp-4/HaikuPioneerKexecProbe.Image
 bundle=$base/smp-kernel-bundle-1/samsung-ram.bfs
-profile=${4:-current}
+# Default to the profile with recorded all-core workload passes. "current"
+# retains the earlier uncapped experiment for explicit comparisons only.
+profile=${4:-capped-control}
 case "$profile" in
  current) bundle_hash=a3e1015fb56a440d5ea75a538b590c59cebd1ce99183b176eaef2ac703010c28;;
  validated-control)

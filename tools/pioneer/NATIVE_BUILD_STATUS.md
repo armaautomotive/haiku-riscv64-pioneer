@@ -2299,3 +2299,49 @@ The fixed expected binary hash is embedded in the script. The test-only
 files are under `/boot/home/pioneer-smp-20261014`; no package was installed.
 Armed token `smp64-serial-v1` was synced. `shutdown -s` dispatched and closed
 SSH normally; final shutdown completion must still be confirmed on serial.
+
+### 64-core workload passes; subsequent runtime stall still under investigation
+
+`smp64-capped1-20261014`, serial boundary 9127700, used loader `smp-4`
+and capped-comparison kernel `beff31ad...` (boot hart 2). The armed serial
+test ran and completed with status zero: all 64 enabled CPUs reported
+correct pinning, sleep/wakeup placement, private-memory checks and checksum
+`7f2dc078`; final mask `ffffffffffffffff`. Pinned SSH then reported 64 CPUs.
+One direct repeat and five further saved repeats all passed: **seven passes**.
+This validates basic all-core work, not full OS stability or all RAM.
+
+Retired the temporary launch job by moving it to
+`/boot/home/pioneer-smp-20261014/pioneer-smp-smoke.completed.launch` after its
+hash check, and synced. Its consumed arm and binaries remain in that scoped
+directory; existing SSH startup/configuration is unchanged. The tracked SMP
+helper defaults to this workload-passing capped profile; the older uncapped
+profile remains an explicit comparison. This is a conservative baseline,
+not evidence that the capped comparison fixed earlier network problems.
+
+A later SSH request intended to recheck the P100A timed out before any result
+or new authentication appeared in the inspected serial tail. No card test
+result can be claimed. ICMP then failed even with a valid, non-REJECT Mac
+route, so the renewed runtime stall is not explained by the earlier route
+cache alone. No new core start/DMA/firmware/flash operation was attempted.
+Bounded SSH shutdown failed; relay recovery was unclean again.
+
+Source review found an independent, concrete RISC-V context-switch bug:
+setting the destination address-space CPU bit and immediately clearing the
+source bit clears the **same map's** bit during same-team switches. The old
+map was also cleared before SATP/local-TLB switch completion. VM Flush uses
+this mask for user-page shootdown targets, so that bookkeeping can omit an
+actively executing CPU. Corrected membership and ordering; production-body
+ASan/UBSan host tests cover all CPU indices/counts, same/different maps,
+atomic selection, destination-before-SATP and source-after-flush ordering.
+This source proof is not yet proof of the network stall's cause.
+
+Cross-built corrected kernel:
+`d7aa573407757c25402793bb24c576f465982778966ce38eea26541936ae8c0c`.
+Added a bounded userspace remapping test: controller on CPU 0, two workers
+per CPU 1..63, 32 alternating fixed mappings of two independently resident
+scratch-file pages. Workers park before each remap and verify after release;
+no arbitrary/existing mappings or data are replaced. Worker joins and runtime
+are bounded; the 8 KiB new scratch file is unlinked while held open.
+Test binary: `32ae2ee7a1d3dc79ca4e711e65dbe57840ba9d71900d66fbe7d62c2e8cf3caf9`.
+Neither corrected kernel nor VM test is hardware-validated yet. Linux recovery
+is booting; P100A inference remains unimplemented, not a CPU-only substitute.

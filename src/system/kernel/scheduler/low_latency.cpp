@@ -117,9 +117,10 @@ rebalance(const ThreadData* threadData)
 
 	// Check if the least loaded core is significantly less loaded than
 	// the current one.
-	// Preserve excess demand so an overloaded core can shed a busy thread.
-	int32 coreLoad = core->GetUncappedLoad();
-	int32 otherLoad = other->GetUncappedLoad();
+	// Keep the baseline normalized comparison. Excess-demand rebalancing is
+	// a separate performance experiment from bringing CPUs online.
+	int32 coreLoad = core->GetLoad();
+	int32 otherLoad = other->GetLoad();
 	if (other == core || otherLoad + kLoadDifference >= coreLoad)
 		return core;
 

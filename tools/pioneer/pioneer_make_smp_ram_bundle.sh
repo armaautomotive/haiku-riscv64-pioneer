@@ -23,7 +23,12 @@ case "${1:-current}" in
   candidate=$base/smp-kernel-capped-1/kernel_riscv64
   kernel_hash=beff31ad047033dc0b76685aaaffe0f6fe53c94d07442efb1d09f9caea1cceac
   ;;
- *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control]' >&2; exit 2;;
+ active-map-control)
+  run=$base/smp-kernel-bundle-active-map-1
+  candidate=$base/smp-kernel-active-map-1/kernel_riscv64
+  kernel_hash=d7aa573407757c25402793bb24c576f465982778966ce38eea26541936ae8c0c
+  ;;
+ *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control|active-map-control]' >&2; exit 2;;
 esac
 [ "$#" -le 1 ]
 source=$base/p100a-root-probe-2/samsung-private.hpkg
