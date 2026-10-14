@@ -2,11 +2,14 @@
 
 ## Status
 
-Source/feasibility investigation started 2026-09-15. No functioning Haiku
-accelerator driver yet. No kernel, firmware, PCI configuration or disk changes
-were deployed for this investigation. An earlier Haiku `listdev` inventory
-did not show vendor 0x1e52 / device 0xb140; Linux later enumerated the card
-after a physical reseat. Haiku detection must be checked again.
+Source/feasibility investigation started 2026-09-15. As of October 14,
+Haiku enumerates the installed P100A through the SD-free RAM boot path and
+its optional read-only diagnostic works. There is no functioning compute
+driver/runtime yet. A separate, reversible BAR4 configuration-register test
+also passed with memory decoding and bus mastering off throughout; it is
+not MMIO, DMA, firmware access, or an accelerator test. See the live-test
+record below. Samsung's installed OS package and default Linux boot remain
+unchanged.
 
 A first optional Haiku diagnostic add-on is now in
 `src/add-ons/kernel/drivers/misc/tenstorrent_pci_diag.c`. It binds only PCI
@@ -33,8 +36,10 @@ the Pioneer.
 The snapshot reports identity, command/status and raw BAR configuration,
 but deliberately does not size BARs, infer usable mappings, touch MMIO,
 enable bus mastering, use DMA, or flash/reset the card. The legacy `pci_info`
-structure cannot faithfully describe a >4-GiB BAR; raw BAR registers are
-not a substitute for validated 64-bit resource allocation.
+arrays hold 32-bit words: valid 64-bit BARs use adjacent entries for the high
+address and high size. Do not truncate to one element. Neither these cached
+values nor raw BAR registers substitute for validated resource allocation
+and host-address translation.
 
 On October 12, the unchanged SD booted normally after the P100A was physically
 removed. With the card installed, UEFI PCI resource allocation failed and
@@ -71,6 +76,84 @@ that particular boot dependency, not the documented BAR4 aperture limit.
 The firmware access/backup/compatibility gate below still applies; do not
 flash the old experimental bundle or hide an enabled/unassigned BAR merely
 to make a driver bind.
+
+### October 14: installed P100A, native enumeration and reversible BAR4 test
+
+The user reinstalled the card. A relay-controlled cold boot reached unchanged
+NVMe Linux 6.1.31 with both SD cards out. Linux again found `0002:81:00.0`,
+`1e52:b140`, subsystem `1e52:0043`, at 2.5 GT/s x8. All three BAR allocations
+still failed (512 MiB, 1 MiB, 32 GiB); command was `0000`, no driver bound.
+The old known-good RAM handoff still booted Haiku and SSH with the card in,
+but `listdev` omitted it. Serial proved why: the ECAM driver unconditionally
+skipped hardware root `0x80`, rather than checking this installed endpoint.
+
+Added an opt-in ECAM gate, leaving the default skip unchanged. It requires
+the exact full-width FDT bus range `80..bf`, a four-byte big-endian
+`haiku,pioneer-root-probe = <0x1e52b140>` property on `/pcie@7062000000`,
+controller address `0x7062000000`, and config aperture `0x4800000000/0x1000`.
+Existing unavailable-link fill-pattern guards remain. The tag is a private
+enumeration request, not authentication of a card and not permission to
+enable endpoint decoding, bus mastering, or firmware writes. Host ASan/UBSan
+tests and integrated `<pci>ecam` cross-build passed.
+
+Only the existing `add-ons/kernel/busses/pci/ecam` entry was replaced in a
+new native-only copy of Samsung's HPKG. Sorted package path sets matched,
+the new module extracted to the expected hash, and the Samsung kernel stayed
+`38d4a4245db6a8ec4e2baa44c7705cdcdd5d4e66a8d43da97f3157699449a65b`.
+The original package remained unchanged. The fresh 300 MiB RAM BFS passed
+check-only consistency and package round-trip verification. Initial default
+maximum compression was slow and reordered the TOC; the successful final
+build uses fast compression and compares path sets independently of order.
+
+Private native experiment under `/mnt/ssd/pioneer-haiku-kexec-20261013/`:
+
+- `p100a-root-probe-2/samsung-ram.bfs`:
+  `f6292d07bc16f41bedca3d1b63edb2da2fa9961065da3b86e66e74b95196b611`
+- Its private HPKG:
+  `7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea`
+- Candidate ECAM:
+  `23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d`
+- `boot-p100a-root-probe-2.sh`, session
+  `p100a-root-probe-2-20261014`, uses those exact pins, the existing loader,
+  fresh Samsung sector manifest, UART keepalive, and normal `systemctl kexec`.
+  The tracked baseline boot helper's original artifact pins were not changed.
+
+At about 18:39 UTC, serial showed the opt-in marker, root link state
+`0x5000ff07`, and endpoint vendor `0x1e52`. Haiku mounted Samsung and SSH
+returned. `listdev` identifies Blackhole. The optional read-only diagnostic
+was installed in the user non-packaged driver tree and ran successfully:
+Haiku virtual PCI `03:00.0`, subsystem `1e52:0043`, command `0000`, status
+`0010`, raw BAR words `0000000c 0 0000000c 0 0000000c 0`.
+Haiku's virtual bus number is not Linux hardware bus `81`.
+
+Added the separate optional `<driver>tenstorrent_pci_probe` and
+`tools/pioneer/tenstorrent_haiku_bar4_probe.cpp`. It accepts only an explicit
+root, read/write-open ioctl. It reserves the sole matching P100A during the
+transaction, rejects any enabled command, assigned BAR, or unexpected cached
+BAR size, temporarily writes BAR4's high address, then restores and verifies
+all six BAR words. No arbitrary register/address request, MMIO, bridge
+change, command-enable operation, DMA, reset, or firmware access exists.
+Simulated refusal, repeated use, narrower address masks, concurrent-command
+interruption, and restoration-failure tests passed under ASan/UBSan.
+The module cross-built and the CLI compiled natively with warnings as errors.
+
+Live discovery needed the canonical user `drivers/bin/tenstorrent_pci_probe`
+plus `drivers/dev/misc/tenstorrent_pci_probe -> ../../bin/tenstorrent_pci_probe`;
+adding a file only to the already-scanned category was not noticed. The first
+attempt therefore made no PCI writes. The canonical-bin installation was
+discovered, and the controlled test then passed: all BARs restored exactly,
+command `0000 -> 0000`, sizes `0x20000000 / 0x100000 / 0x800000000`, temporary
+BAR4 readback `fffffff8:0000000c`. A subsequent independent read-only ioctl
+confirmed the original BAR values and command `0000`.
+
+This establishes hardware address-bit retention, **not** a resource allocation
+or safe CPU mapping. A possible next experiment is to keep unused BAR4 in a
+verified unforwarded high PCI interval while assigning only BAR0/BAR2 inside
+the recorded host window. Before any memory enable, validate the complete
+BAR intervals, bridge windows, host translations, interrupt state, exclusive
+ownership, and rollback. Do not merely hide BAR4 in software. There has been
+no card MMIO/DMA or firmware write. Firmware flashing still requires a
+verified backup/recovery plan and separate approval.
 
 Download pinned official sources with:
 

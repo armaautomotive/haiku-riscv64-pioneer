@@ -22,3 +22,7 @@ KernelAddon <driver>test :
 KernelAddon <driver>tenstorrent_pci_diag :
 	tenstorrent_pci_diag.c
 	;
+
+KernelAddon <driver>tenstorrent_pci_probe :
+	tenstorrent_pci_probe.cpp
+	;

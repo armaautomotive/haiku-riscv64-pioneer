@@ -5,6 +5,7 @@
 
 
 #include "ECAMPCIController.h"
+#include "Sg2042RootPolicy.h"
 
 #include <AutoDeleterDrivers.h>
 #include <KernelExport.h>
@@ -168,22 +169,35 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 
 	const void* prop;
 	int propLen;
+	bool blackholeBusRange = false;
 
 	prop = fdtModule->get_prop(fdtDev, "bus-range", &propLen);
 	if (prop != NULL && propLen == 8) {
 		uint32 busBeg = B_BENDIAN_TO_HOST_INT32(*((uint32*)prop + 0));
 		uint32 busEnd = B_BENDIAN_TO_HOST_INT32(*((uint32*)prop + 1));
+		// Validate full FDT words before narrowing them to the controller's
+		// eight-bit bus fields (for example, 0x180 must not opt in as 0x80).
+		blackholeBusRange = busBeg == 0x80 && busEnd == 0xbf;
 		fStartBus = busBeg;
 		fEndBus = busEnd;
 		dprintf("  bus-range: %" B_PRIu32 " - %" B_PRIu32 "\n", busBeg, busEnd);
 	}
+	bool blackholeRootProbe = false;
 	if (fIsSg2042 && fStartBus != 0 && fStartBus != 0xc0) {
 		// The Pioneer USB tree is domain 3 (hardware buses c0-ff).  Other
 		// nonzero roots may have their links down and return zero-filled config
 		// completions, which the generic PCI manager mistakes for endpoints.
-		dprintf("P250:SG2042 skipping inactive root bus %#" B_PRIx8 "\n",
-			fStartBus);
-		return B_UNSUPPORTED;
+		propLen = 0;
+		prop = fdtModule->get_prop(fdtDev, "haiku,pioneer-root-probe", &propLen);
+		blackholeRootProbe = blackholeBusRange && propLen >= 0
+			&& Sg2042BlackholeRootRequested(
+			fStartBus, fEndBus, prop, (size_t)propLen);
+		if (!blackholeRootProbe) {
+			dprintf("P250:SG2042 skipping inactive root bus %#" B_PRIx8 "\n",
+				fStartBus);
+			return B_UNSUPPORTED;
+		}
+		dprintf("PIONEER-P100A: private root 0x80 enumeration requested\n");
 	}
 
 	prop = fdtModule->get_prop(fdtDev, "ranges", &propLen);
@@ -275,6 +289,11 @@ ECAMPCIControllerFDT::ReadResourceInfo()
 			fRegsPhysical = regs;
 		}
 
+		if (blackholeRootProbe && !Sg2042BlackholeRootRegistersMatch(
+				controllerRegs, fRegsPhysical, fRegsLen)) {
+			dprintf("PIONEER-P100A: unexpected root register layout; refusing\n");
+			return B_UNSUPPORTED;
+		}
 		fControllerRegsLen = B_PAGE_SIZE;
 		fControllerRegsArea.SetTo(map_physical_memory("SG2042 PCIe root config",
 			controllerRegs + kSg2042RootPortConfigOffset, B_PAGE_SIZE,
