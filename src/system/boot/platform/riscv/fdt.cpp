@@ -25,6 +25,7 @@ extern "C" {
 #include "Clint.h"
 #include "FwCfg.h"
 #include "pioneer_kexec.h"
+#include "pioneer_memory.h"
 
 
 void* gFdt = NULL;
@@ -242,6 +243,102 @@ fdt_set_kernel_args()
 }
 
 #ifdef PIONEER_KEXEC_PROBE
+// PIONEER_MEMORY_PARSER_BEGIN
+static void
+PioneerExcludeMemory(PioneerMemoryPlan& plan, uint64_t start, uint64_t size)
+{
+	if (!PioneerMemoryExclude(plan, start, size))
+		PioneerKexecStop(false, "invalid_or_excessive_memory_reservations");
+}
+
+bool
+fdt_pioneer_memory_plan(const void* fdt, uint64_t initrd,
+	uint64_t initrdSize, PioneerMemoryPlan& plan)
+{
+	int length;
+	int chosen = fdt_path_offset(fdt, "/chosen");
+	const unsigned char* limit = (const unsigned char*)fdt_getprop(fdt, chosen,
+		"haiku,pioneer-memory-gib", &length);
+	if (limit == NULL)
+		return false; // Preserve the existing 3038 MiB profile exactly.
+	if (length != 4 || !PioneerMemoryPlanInit(plan, PioneerReadBeCell(limit, 4)))
+		PioneerKexecStop(false, "invalid_requested_memory_limit");
+	if (fdt_address_cells(fdt, 0) != 2 || fdt_size_cells(fdt, 0) != 2)
+		PioneerKexecStop(false, "invalid_memory_root_cells");
+
+	// This private profile is for the recorded 128 GiB Pioneer only. Do not
+	// infer usable memory merely from an address ceiling or accept a gap.
+	unsigned banks = 0;
+	int node;
+	fdt_for_each_subnode(node, fdt, 0) {
+		const char* type = (const char*)fdt_getprop(fdt, node, "device_type", &length);
+		if (type == NULL || length != 7 || memcmp(type, "memory", 7) != 0)
+			continue;
+		const char* status = (const char*)fdt_getprop(fdt, node, "status", &length);
+		if (status != NULL && !((length == 5 && memcmp(status, "okay", 5) == 0)
+			|| (length == 3 && memcmp(status, "ok", 3) == 0)))
+			PioneerKexecStop(false, "disabled_memory_bank");
+		const unsigned char* reg = (const unsigned char*)fdt_getprop(fdt, node,
+			"reg", &length);
+		if (reg == NULL || length != 16)
+			PioneerKexecStop(false, "invalid_memory_bank_reg");
+		uint64_t start = PioneerReadBeCell(reg, 8);
+		uint64_t size = PioneerReadBeCell(reg + 8, 8);
+		unsigned bank = start / UINT64_C(0x800000000);
+		if (start >= UINT64_C(0x2000000000)
+			|| start % UINT64_C(0x800000000) != 0
+			|| size != UINT64_C(0x800000000) || (banks & (1U << bank)))
+			PioneerKexecStop(false, "unexpected_memory_bank_layout");
+		banks |= 1U << bank;
+	}
+	if (banks != 15)
+		PioneerKexecStop(false, "incomplete_128GiB_memory_layout");
+
+	int reservations = fdt_num_mem_rsv(fdt);
+	if (reservations < 0 || reservations > 32)
+		PioneerKexecStop(false, "invalid_FDT_memory_reservation_table");
+	for (int i = 0; i < reservations; i++) {
+		uint64_t start, size;
+		if (fdt_get_mem_rsv(fdt, i, &start, &size) != 0)
+			PioneerKexecStop(false, "invalid_FDT_memory_reservation");
+		PioneerExcludeMemory(plan, start, size);
+	}
+	int reserved = fdt_path_offset(fdt, "/reserved-memory");
+	if (reserved < 0 || fdt_address_cells(fdt, reserved) != 2
+		|| fdt_size_cells(fdt, reserved) != 2)
+		PioneerKexecStop(false, "invalid_reserved_memory_node");
+	const void* ranges = fdt_getprop(fdt, reserved, "ranges", &length);
+	if (ranges == NULL || length != 0)
+		PioneerKexecStop(false, "reserved_memory_translation_not_supported");
+	unsigned nodes = 0;
+	fdt_for_each_subnode(node, fdt, reserved) {
+		if (++nodes > 32)
+			PioneerKexecStop(false, "excessive_reserved_memory_nodes");
+		const unsigned char* reg = (const unsigned char*)fdt_getprop(fdt, node,
+			"reg", &length);
+		if (reg != NULL) {
+			if (length <= 0 || length > 32 * 16 || length % 16 != 0)
+				PioneerKexecStop(false, "invalid_reserved_memory_reg");
+			for (int offset = 0; offset < length; offset += 16)
+				PioneerExcludeMemory(plan, PioneerReadBeCell(reg + offset, 8),
+					PioneerReadBeCell(reg + offset + 8, 8));
+		} else {
+			// The known, reusable Linux CMA pool has no fixed address here;
+			// Linux/device shutdown has completed before this loader runs.
+			// Reject unknown dynamic reservations instead of silently ignoring.
+			if (strcmp(fdt_get_name(fdt, node, NULL), "linux,cma") != 0
+				|| fdt_node_check_compatible(fdt, node, "shared-dma-pool") != 0
+				|| fdt_getprop(fdt, node, "reusable", NULL) == NULL
+				|| fdt_getprop(fdt, node, "linux,cma-default", NULL) == NULL)
+				PioneerKexecStop(false, "unknown_dynamic_memory_reservation");
+		}
+	}
+	PioneerExcludeMemory(plan, (uintptr_t)fdt, fdt_totalsize(fdt));
+	PioneerExcludeMemory(plan, initrd, initrdSize);
+	return true;
+}
+// PIONEER_MEMORY_PARSER_END
+
 void
 fdt_init_pioneer(unsigned int hart)
 {

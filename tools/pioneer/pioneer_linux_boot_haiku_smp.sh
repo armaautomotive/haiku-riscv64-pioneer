@@ -2,12 +2,12 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control]'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 case "$action" in prepare|boot|cancel) ;; *) fail 'Unknown action';; esac
 case "$session" in ''|*[!A-Za-z0-9_-]*) fail 'Use a simple unique session name';; esac
@@ -17,6 +17,8 @@ case "$session" in ''|*[!A-Za-z0-9_-]*) fail 'Use a simple unique session name';
 base=/mnt/ssd/pioneer-haiku-kexec-20261013
 run=$base/boot-$session
 image=$base/smp-4/HaikuPioneerKexecProbe.Image
+image_hash=7f9788287e1851789ff41b098c910d613df51c4044256278f104b9b806082fcb
+memory_gib=3
 bundle=$base/smp-kernel-bundle-1/samsung-ram.bfs
 # Default has recorded all-core and VM workload passes, not full P100A/runtime
 # certification. "current" is the frozen historical uncapped experiment.
@@ -33,6 +35,15 @@ case "$profile" in
  active-map-control)
   bundle=$base/smp-kernel-bundle-active-map-1/samsung-ram.bfs
   bundle_hash=8a0110715013a322ace77f896a4ce00857c3b18ca4d7106edeac46a6fdfe5ced
+  ;;
+ memory8-control|memory128-control)
+  # Explicit experimental memory profile; requires its matching kernel's
+  # permanent virtual-map reservation. Never pair it with an older bundle.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-1/samsung-ram.bfs
+  bundle_hash=98eebc001c7c869566a81ec445ee71798ec98be05d7585e18d416f8029c759cd
+  case "$profile" in memory8-control) memory_gib=8;; memory128-control) memory_gib=128;; esac
   ;;
  *) fail 'Unknown pinned kernel profile';;
 esac
@@ -91,6 +102,11 @@ validate_run()
  cmp /sys/firmware/fdt "$run/live-fdt.dtb"
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe)" = 4 ] || fail 'Wrong loader mode'
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-cpu-count)" = "$(printf '%x' "$cpu_count")" ] || fail 'Wrong SMP opt-in'
+ if [ "$memory_gib" = 3 ]; then
+  if fdtget "$run/probe-fdt.dtb" /chosen haiku,pioneer-memory-gib > /dev/null 2>&1; then fail 'Unexpected memory opt-in'; fi
+ else
+  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-memory-gib)" = "$(printf '%x' "$memory_gib")" ] || fail 'Wrong memory opt-in'
+ fi
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /pcie@7062000000 haiku,pioneer-root-probe)" = 1e52b140 ] || fail 'Missing private root opt-in'
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-root-v1)" = "$(root_manifest)" ] || fail 'Root identity changed since prepare'
 }
@@ -100,7 +116,7 @@ case "$action" in
   [ ! -e "$run" ] && [ ! -L "$run" ] || fail 'Use a fresh session name'
   [ "$(cat "$uart/power/control")" = auto ] || fail 'UART policy already owned elsewhere'
   [ ! -e /run/pioneer-uart-keepalive ] && [ ! -L /run/pioneer-uart-keepalive ] || fail 'UART state already exists'
-  hash_is "$image" 7f9788287e1851789ff41b098c910d613df51c4044256278f104b9b806082fcb
+  hash_is "$image" "$image_hash"
   hash_is "$bundle" "$bundle_hash"
   hash_is "$uart_helper" a9056dbc4317cc52bea715d9687ba223dee6957ca5e625d91cba8f6fb7071a22
   [ "$(grep 'System RAM' /proc/iomem | head -n1 | cut -d- -f1)" = 02200000 ] || fail 'Unexpected low RAM start'
@@ -126,6 +142,11 @@ case "$action" in
   cp "$run/live-fdt.dtb" "$run/probe-fdt.dtb"
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe 4
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-cpu-count "$(printf '%x' "$cpu_count")"
+  if [ "$memory_gib" = 3 ]; then
+   if fdtget "$run/probe-fdt.dtb" /chosen haiku,pioneer-memory-gib > /dev/null 2>&1; then fail 'Unexpected inherited memory opt-in'; fi
+  else
+   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-memory-gib "$(printf '%x' "$memory_gib")"
+  fi
   printf '%s\n' "$cpu_count" > "$run/cpus"
   printf '%s\n' "$profile" > "$run/profile"
   [ "$(fdtget -t x "$run/live-fdt.dtb" /pcie@7062000000 bus-range)" = '80 bf' ] || fail 'Wrong slot bus range'

@@ -137,7 +137,9 @@ static inline int PioneerBfsHeaderCheck(const unsigned char* super,
 }
 
 #if defined(PIONEER_KEXEC_PROBE) && defined(__cplusplus)
+struct PioneerMemoryPlan;
 bool PioneerKexecPreloadActive();
+const PioneerMemoryPlan* PioneerKexecMemoryPlan();
 uint64_t PioneerKexecMode();
 bool PioneerKexecRoot(PioneerRootManifest& root);
 const void* PioneerKexecRamDisk(size_t& size);

@@ -23,6 +23,7 @@
 #include "virtio.h"
 #include "graphics.h"
 #include "pioneer_kexec.h"
+#include "pioneer_memory.h"
 #ifdef PIONEER_KEXEC_PROBE
 #include <platform/sbi/sbi_syscalls.h>
 #endif
@@ -33,6 +34,13 @@ static uint64_t sPioneerRamStart;
 static size_t sPioneerRamSize;
 static uint64_t sPioneerMode;
 static uint64_t sPioneerHart;
+static PioneerMemoryPlan sPioneerMemoryPlan;
+static bool sPioneerHighMemory;
+
+const PioneerMemoryPlan* PioneerKexecMemoryPlan()
+{
+	return sPioneerHighMemory ? &sPioneerMemoryPlan : NULL;
+}
 
 bool PioneerKexecPreloadActive()
 {
@@ -291,6 +299,17 @@ pioneer_kexec_preload(uint64_t hart, const void* fdt, uint64_t start, uint64_t s
 	sPioneerRamSize = size;
 	gFdt = (void*)fdt; // Already fully validated; do not enumerate hardware here.
 	uint64_t poolEnd = PioneerPreloadPoolEnd((addr_t)fdt, start);
+	sPioneerHighMemory = fdt_pioneer_memory_plan(fdt, start, size,
+		sPioneerMemoryPlan);
+	if (sPioneerHighMemory) {
+		if (sPioneerMemoryPlan.count == 0
+			|| sPioneerMemoryPlan.ranges[0].start != 0x2200000)
+			PioneerKexecStop(false, "memory_reservation_overlaps_loader");
+		uint64_t firstEnd = sPioneerMemoryPlan.ranges[0].start
+			+ sPioneerMemoryPlan.ranges[0].size;
+		if (firstEnd < poolEnd)
+			poolEnd = firstEnd;
+	}
 	extern uint8 gStackEnd;
 	if (poolEnd <= (addr_t)&gStackEnd + 64 * 1024 * 1024)
 		PioneerKexecStop(false, "insufficient_nonoverlapping_boot_pool");

@@ -2385,3 +2385,83 @@ Trace profile CLI SHA:
 Neither is deployed yet; original driver `f0ab0eba...` is the rollback target.
 The next trial must determine whether discovery/loading or profile inspection
 causes the freeze before any later card operation is retried.
+
+### RAM cap diagnosis and guarded high-memory implementation, October 14
+
+Session `smp64-p100a-trace1-20261014`, serial boundary 9734650, returned
+64-core Haiku with active-map kernel `d7aa5734...`. The trace-only optional
+probe was installed after an exact-hash rollback copy and sync; its original
+`f0ab0eba...` binary remains at
+`/boot/home/pioneer-p100a-20261014/smp-trace-driver-1/tenstorrent_pci_probe.before-trace`.
+Read-only profile CLI `967da2b7...` completed all six stages, status zero,
+ready=1, with root command 0000 and the unchanged five host windows. No MMIO
+write/core start/DMA occurred. A subsequent health request failed during SSH
+preauthentication with "Bad packet length 2139826825"; it never entered the
+card script. ICMP still responded. Later pinned SSH worked again, so this
+specific event is not evidence of a whole-system freeze or a card-test fault.
+
+The user's RAM observation was confirmed directly: `sysinfo -cpu` returned
+64 and `sysinfo -mem` returned maximum 3,185,573,888 bytes, exactly **3038 MiB**.
+The kexec adapter uses `gMemBase=0x2200000` and its temporary boot allocation
+ceiling 0xc0000000 as the kernel's only physical memory range. Thus 3 GiB
+minus 34 MiB explains the display exactly. This is not a hardware limit.
+Saved Linux FDT and its boot log show four contiguous 32 GiB banks, totaling
+128 GiB, with the first 34 MiB excluded. The adapter's 3..4 GiB exclusion is
+a conservative loader policy, **not** a missing-RAM hardware hole: the Linux
+DMA32 range includes that interval.
+
+Added a separately requested `haiku,pioneer-memory-gib` trial (8/16/32/64/128),
+leaving the absent-property default unchanged. It requires the exact four
+FDT banks, excludes rounded FDT reservation-table/static reserved-memory
+intervals plus the live FDT and initrd, refuses unknown dynamic reservations,
+and keeps the loader's contiguous allocator below its first reservation.
+The kernel-visible ranges are independent of that low allocator. The linear
+physical map spans their physical offsets while leaving excluded holes
+unmapped; its entire virtual span is protected. A post-semaphore VM block
+reserves a large map permanently, without replacing mappings or overlapping
+the existing final-page overflow-protection area. Handoff checks cover each
+usable range's first and last mapped bytes and retain the existing MAEE policy.
+
+ASan/UBSan tests execute the production FDT parser, sparse-map construction
+and large-map reservation against two saved real FDTs. They cover absence
+of opt-in, all accepted ceilings, missing/disabled/malformed banks, unknown
+dynamic reservations, page rounding, overlap, overflow, full fixed arrays,
+reservation failure and unchanged small-map behavior. Existing loader,
+handoff, preload, topology/HSM, context-switch and helper tests pass.
+Private loader build and generic-profile restoration succeeded. Loader:
+`609691a0500bb6d58b6dd08a47581b3d7c536916e5229606d28627a10f8c2dc0`.
+Kernel:
+`1dca50d6976fb4629f0eca35be7c81305408ec4a053882d37135c3ef2ca99c91`.
+Neither higher-memory profile is hardware-validated yet. The old loader,
+bundles and installed Samsung kernel/package are unchanged.
+
+Review caught a top-of-address-space edge case before hardware: the generic
+range insertion helper does not merge an exclusive end that wraps to zero.
+The sparse mapper now registers its entire span **once**, not individual
+subranges followed by an overlapping top-ended span. Its production-body
+test asserts component mappings do not create reservations. Final loader
+`memory-2` SHA:
+`b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98`.
+The earlier `memory-1` loader was staged but never executed.
+Final kernel hash is unchanged. Private native HPKG:
+`8fe3b460a99c95a4d988790e525484b1bc8b6aa834dc98ffff3d7e9021174a93`;
+RAM BFS:
+`98eebc001c7c869566a81ec445ee71798ec98be05d7585e18d416f8029c759cd`.
+Kernel/ECAM extraction hashes, sorted package path sets, fresh private BFS
+check and full HPKG roundtrip passed. The new helper's `memory8-control` and
+`memory128-control` explicitly pair this loader with its matching kernel;
+the default remains the old active-map 3038 MiB profile. Helper SHA:
+`f1c63c21c1f5b5c02c44b1f3f7a1a2183557835b0abce15a5728f965d57f64ee`.
+
+Added a bounded, private RAM-sample test with 64 pinned workers, two full
+address-dependent patterns, sleep/wake validation, 62-second join deadline,
+and test-team-only failure termination. It requires >3 GiB reported RAM and
+the requested sample plus 1 GiB free headroom; permits only 64..4096 MiB.
+It does not claim to audit every physical page. Cross-built test SHA:
+`410d48f2cb49a1bf6b189b2dbdf20c4f710dba7f5ab3520c447db339f28ade6a`.
+
+Requested `sync; shutdown -s` over authenticated Haiku SSH; serial showed
+service termination but no final shutdown-complete marker. Finished with
+the relay off hold, waited ten seconds after completion, then powered on
+for default NVMe Linux. Do not describe this as a fully confirmed clean
+shutdown. Next is a private 8 GiB trial before attempting the full span.

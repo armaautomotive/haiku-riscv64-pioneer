@@ -309,6 +309,20 @@ arch_vm_init_post_modules(kernel_args *args)
 status_t
 arch_vm_init_end(kernel_args *args)
 {
+	// PIONEER_LARGE_MAP_RESERVATION_BEGIN
+	// The opt-in large-memory loader uses a sparse linear physical map. Its
+	// early virtual reservation must become a permanent VM reservation before
+	// normal allocations can grow into it. The final page already belongs to
+	// vm_init()'s overflow-protection area. Do not replace/unmap either mapping.
+	if (args->arch_args.physMap.size > UINT64_C(0xc0000000)) {
+		status_t status = vm_block_address_range("physical memory map",
+			(void*)args->arch_args.physMap.start,
+			args->arch_args.physMap.size - B_PAGE_SIZE);
+		if (status < B_OK)
+			panic("cannot reserve large physical memory map: %" B_PRId32, status);
+		debug_early_boot_message("riscv: large physical map reserved\n");
+	}
+	// PIONEER_LARGE_MAP_RESERVATION_END
 	// Formatted dprintf() calls are not safe while the RISC-V kernel is still
 	// using its early dynamic-call state.
 	if (!gKernelStartup) {

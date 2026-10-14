@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include "pioneer_kexec.h"
+#include "pioneer_memory.h"
 #include "smp.h"
 #ifdef PIONEER_KEXEC_PROBE
 #include <platform/sbi/sbi_syscalls.h>
@@ -213,7 +214,7 @@ Map(addr_t virtAdr, phys_addr_t physAdr, uint64 flags, bool device)
 
 static void
 MapRange(addr_t virtAdr, phys_addr_t physAdr, size_t size, uint64 flags,
-	bool device = false)
+	bool device = false, bool reserve = true)
 {
 	dprintf("MapRange(0x%" B_PRIxADDR ", 0x%" B_PRIxADDR ", 0x%"
 		B_PRIxADDR ", ", virtAdr, physAdr, size);
@@ -222,7 +223,8 @@ MapRange(addr_t virtAdr, phys_addr_t physAdr, size_t size, uint64 flags,
 	for (size_t i = 0; i < size; i += B_PAGE_SIZE)
 		Map(virtAdr + i, physAdr + i, flags, device);
 
-	ASSERT_ALWAYS(insert_virtual_allocated_range(virtAdr, size) >= B_OK);
+	if (reserve)
+		ASSERT_ALWAYS(insert_virtual_allocated_range(virtAdr, size) >= B_OK);
 }
 
 
@@ -276,22 +278,44 @@ PreallocKernelRange()
 
 
 static void
+SetupPhysicalMemoryMap()
+{
+	// Physical memory mapping
+	uint64 physicalBase = gKernelArgs.physical_memory_range[0].start;
+	gKernelArgs.arch_args.physMap.size
+		= gKernelArgs.physical_memory_range[0].size;
+#ifdef PIONEER_KEXEC_PROBE
+	if (PioneerKexecMemoryPlan() != NULL) {
+		const addr_range& last = gKernelArgs.physical_memory_range[
+			gKernelArgs.num_physical_memory_ranges - 1];
+		gKernelArgs.arch_args.physMap.size = last.start + last.size - physicalBase;
+	}
+#endif
+	gKernelArgs.arch_args.physMap.start = KERNEL_TOP + 1
+		- gKernelArgs.arch_args.physMap.size;
+	for (uint32 i = 0; i < gKernelArgs.num_physical_memory_ranges; i++) {
+		const addr_range& range = gKernelArgs.physical_memory_range[i];
+		MapRange(gKernelArgs.arch_args.physMap.start + range.start - physicalBase,
+			range.start, range.size, Pte {.isRead = true, .isWrite = true}.val,
+			false, false);
+	}
+	// Reserve the entire linear-map span, including unmapped reserved holes.
+	// Register it only once: insert_address_range() cannot merge a range
+	// whose exclusive end wraps to zero with its smaller component ranges.
+	ASSERT_ALWAYS(insert_virtual_allocated_range(
+		gKernelArgs.arch_args.physMap.start,
+		gKernelArgs.arch_args.physMap.size) >= B_OK);
+}
+
+
+static void
 SetupPageTable()
 {
 	sPageTable = AllocPhysPage();
 	memset(VirtFromPhys(sPageTable), 0, B_PAGE_SIZE);
 
 	PreallocKernelRange();
-
-	// Physical memory mapping
-	gKernelArgs.arch_args.physMap.size
-		= gKernelArgs.physical_memory_range[0].size;
-	gKernelArgs.arch_args.physMap.start = KERNEL_TOP + 1
-		- gKernelArgs.arch_args.physMap.size;
-	MapRange(gKernelArgs.arch_args.physMap.start,
-		gKernelArgs.physical_memory_range[0].start,
-		gKernelArgs.arch_args.physMap.size,
-		Pte {.isRead = true, .isWrite = true}.val);
+	SetupPhysicalMemoryMap();
 
 	// Boot loader
 	MapRangeIdentity((addr_t)gMemBase, &gStackEnd - gMemBase,
@@ -478,7 +502,16 @@ mmu_init_for_kernel(addr_t& satp)
 	dprintf("Kernel stack at %#lx\n", gKernelArgs.cpu_kstack[0].start);
 
 	gKernelArgs.num_physical_memory_ranges = 0;
-	insert_physical_memory_range((addr_t)gMemBase, gTotalMem);
+#ifdef PIONEER_KEXEC_PROBE
+	const PioneerMemoryPlan* memory = PioneerKexecMemoryPlan();
+	if (memory != NULL) {
+		for (unsigned i = 0; i < memory->count; i++) {
+			ASSERT_ALWAYS(insert_physical_memory_range(memory->ranges[i].start,
+				memory->ranges[i].size) >= B_OK);
+		}
+	} else
+#endif
+		insert_physical_memory_range((addr_t)gMemBase, gTotalMem);
 
 	gKernelArgs.num_virtual_allocated_ranges = 0;
 	gKernelArgs.arch_args.num_virtual_ranges_to_keep = 0;
@@ -504,8 +537,12 @@ PioneerMappingMatches(addr_t address, uint64 required, bool device = false,
 	phys_addr_t physical = pte->ppn * B_PAGE_SIZE + address % B_PAGE_SIZE;
 	if (expected && physical != expected)
 		return false;
-	if (!device && !PioneerRamRange(physical, 1))
-		return false;
+	if (!device) {
+		const PioneerMemoryPlan* memory = PioneerKexecMemoryPlan();
+		if (!(memory != NULL ? PioneerMemoryContains(*memory, physical, 1)
+			: PioneerRamRange(physical, 1)))
+			return false;
+	}
 	return !sTHeadMae || (pte->val & (0x1fULL << 59))
 		== (device ? kTHeadIo : kTHeadPma);
 }
@@ -528,6 +565,22 @@ mmu_validate_pioneer_handoff(addr_t entry)
 		|| !PioneerMappingMatches(gKernelArgs.arch_args.plic.start, writable, true, 0x7090000000ULL)
 		|| gKernelArgs.arch_args.htif.size != 0 || gKernelArgs.arch_args.clint.size != 0)
 		PioneerKexecStop(false, "handoff_mapping_validation");
+	if (PioneerKexecMemoryPlan() != NULL) {
+		uint64 physicalBase = gKernelArgs.physical_memory_range[0].start;
+		for (uint32 i = 0; i < gKernelArgs.num_physical_memory_ranges; i++) {
+			const addr_range& range = gKernelArgs.physical_memory_range[i];
+			addr_t address = gKernelArgs.arch_args.physMap.start
+				+ range.start - physicalBase;
+			if (!PioneerMappingMatches(address, writable, false, range.start)
+				|| !PioneerMappingMatches(address + range.size - 8, writable,
+					false, range.start + range.size - 8))
+				PioneerKexecStop(false, "large_physical_map_validation");
+		}
+		dprintf("Pioneer high-memory map: %u ranges, span %#" B_PRIx64
+			" bytes; reserved holes excluded\n",
+			gKernelArgs.num_physical_memory_ranges,
+			(uint64)gKernelArgs.arch_args.physMap.size);
+	}
 	for (uint32 cpu = 1; cpu < gKernelArgs.num_cpus; cpu++) {
 		const PioneerApEntry* info = smp_pioneer_entry(cpu);
 		addr_range stack = gKernelArgs.cpu_kstack[cpu];

@@ -1,10 +1,11 @@
 #!/bin/sh
 # Build a bounded userspace CPU smoke test only. Never reboot or touch a card.
 set -eu
-[ "$#" = 2 ] || [ "$#" = 3 ] || { echo 'Usage: pioneer_cross_build_smp_smoke.sh CONFIGURED_BUILD FRESH_ABSOLUTE_OUTPUT [--vm-shootdown]' >&2; exit 2; }
+[ "$#" = 2 ] || [ "$#" = 3 ] || { echo 'Usage: pioneer_cross_build_smp_smoke.sh CONFIGURED_BUILD FRESH_ABSOLUTE_OUTPUT [--vm-shootdown|--memory]' >&2; exit 2; }
 case "${3:-}" in
  '') smp_name=pioneer_smp_smoke;;
  --vm-shootdown) smp_name=pioneer_vm_shootdown_smoke;;
+ --memory) smp_name=pioneer_memory_smoke;;
  *) exit 2;;
 esac
 smp_source=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
