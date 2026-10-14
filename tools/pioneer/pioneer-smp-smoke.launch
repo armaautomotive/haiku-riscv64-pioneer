@@ -1,0 +1,6 @@
+# Temporary opt-in diagnostic. No job runs without the separately armed file.
+job pioneer-smp-smoke {
+	requires x-vnd.Haiku-registrar
+	if file_exists /boot/home/pioneer-smp-20261014/armed
+	launch /bin/sh /boot/home/pioneer-smp-20261014/boot-smoke.sh
+}

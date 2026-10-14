@@ -46,6 +46,8 @@ worker(void* cookie)
 
 int main(int argc, char** argv)
 {
+	/* Keep results visible on /dev/dprintf even if a later worker panics. */
+	setvbuf(stdout, NULL, _IONBF, 0);
 	if (argc != 2 || strncmp(argv[1], "--expect-cpus=", 14) != 0) {
 		fprintf(stderr, "Usage: %s --expect-cpus=2|4|8|16|32|64\n", argv[0]); return 2;
 	}

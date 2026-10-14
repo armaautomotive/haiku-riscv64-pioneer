@@ -5,9 +5,28 @@ test "$(id -u)" = 0
 test "$(uname -s):$(uname -m)" = Linux:riscv64
 test "$(findmnt -n -o SOURCE /mnt/ssd)" = /dev/sdb2
 base=/mnt/ssd/pioneer-haiku-kexec-20261013
-run=$base/smp-kernel-bundle-1
+case "${1:-current}" in
+ current)
+  run=$base/smp-kernel-bundle-1
+  candidate=$base/smp-kernel-1/kernel_riscv64
+  kernel_hash=cd02cdb537a41641a1eb6442abd6cfd083614243b85a7841ebf824291e8013e3
+  ;;
+ validated-control)
+  # Extracted from the SHA-pinned, previously SD-tested September 8 image.
+  # The packaged kernel is revision-stamped, unlike the old build-object hash.
+  run=$base/smp-kernel-bundle-validated-1
+  candidate=$base/smp-kernel-validated-1/kernel_riscv64
+  kernel_hash=660147f6ad79cdbe1d1f60b4abffeb55b9ed655d5617959820bf7ddfa62cd2d8
+  ;;
+ capped-control)
+  run=$base/smp-kernel-bundle-capped-1
+  candidate=$base/smp-kernel-capped-1/kernel_riscv64
+  kernel_hash=beff31ad047033dc0b76685aaaffe0f6fe53c94d07442efb1d09f9caea1cceac
+  ;;
+ *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control]' >&2; exit 2;;
+esac
+[ "$#" -le 1 ]
 source=$base/p100a-root-probe-2/samsung-private.hpkg
-candidate=$base/smp-kernel-1/kernel_riscv64
 host=/mnt/ssd/pioneer-xhci-rollback-20261012/host/objects/linux/riscv64/release/tools
 package=$host/package/package
 bfs=$host/bfs_shell/bfs_shell
@@ -19,7 +38,7 @@ hash_is()
  test "$(sha256sum "$1" | cut -d ' ' -f1)" = "$2"
 }
 hash_is "$source" 7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
-hash_is "$candidate" cd02cdb537a41641a1eb6442abd6cfd083614243b85a7841ebf824291e8013e3
+hash_is "$candidate" "$kernel_hash"
 test ! -e "$run" && test ! -L "$run"
 umask 077
 mkdir -m 700 "$run"
@@ -37,7 +56,7 @@ cmp "$run/original.sorted" "$run/candidate.sorted"
 # Linux can reject Haiku attributes after extracting complete file data.
 "$package" extract -C "$run/verify" "$run/samsung-private.hpkg" "$entry" > "$run/extract-kernel.log" 2>&1 || extract_status=$?
 "$package" extract -C "$run/verify" "$run/samsung-private.hpkg" "$ecam" > "$run/extract-ecam.log" 2>&1 || extract_status=$?
-hash_is "$run/verify/$entry" cd02cdb537a41641a1eb6442abd6cfd083614243b85a7841ebf824291e8013e3
+hash_is "$run/verify/$entry" "$kernel_hash"
 hash_is "$run/verify/$ecam" 23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d
 hash_is "$source" 7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
 image=$run/samsung-ram.bfs

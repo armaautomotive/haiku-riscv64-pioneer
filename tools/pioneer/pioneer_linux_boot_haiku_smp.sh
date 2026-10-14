@@ -2,7 +2,7 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control]'
 action=$1
 session=$2
 cpu_count=$3
@@ -16,6 +16,19 @@ base=/mnt/ssd/pioneer-haiku-kexec-20261013
 run=$base/boot-$session
 image=$base/smp-4/HaikuPioneerKexecProbe.Image
 bundle=$base/smp-kernel-bundle-1/samsung-ram.bfs
+profile=${4:-current}
+case "$profile" in
+ current) bundle_hash=a3e1015fb56a440d5ea75a538b590c59cebd1ce99183b176eaef2ac703010c28;;
+ validated-control)
+  bundle=$base/smp-kernel-bundle-validated-1/samsung-ram.bfs
+  bundle_hash=5f2f13fd45946aaae8038f20facad6638574468801c49497085443558a13151a
+  ;;
+ capped-control)
+  bundle=$base/smp-kernel-bundle-capped-1/samsung-ram.bfs
+  bundle_hash=1b247841bdf4a5d5ecd7239103dee0c359f24c7fa3224f8bae7eb8f72115a626
+  ;;
+ *) fail 'Unknown pinned kernel profile';;
+esac
 loader=/mnt/ssd/pioneer-kexec-probe-20261013/kexec-tools-0fd0d8e9ea975696fdc05ad267a65f3efd415612/build/sbin/kexec
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 uart_helper=$script_dir/pioneer_linux_uart_keepalive.sh
@@ -66,6 +79,7 @@ validate_run()
  [ "$(stat -c '%u:%g:%a:%h:%s' "$run/prepared")" = 0:0:600:1:33 ] || fail 'Unexpected prepared marker'
  cmp "$run/token" "$run/prepared"
  [ "$(cat "$run/cpus")" = "$cpu_count" ] || fail 'CPU count differs from prepared session'
+ [ "$(cat "$run/profile")" = "$profile" ] || fail 'Kernel profile differs from prepared session'
  sha256sum -c "$run/inputs.sha256"
  cmp /sys/firmware/fdt "$run/live-fdt.dtb"
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe)" = 4 ] || fail 'Wrong loader mode'
@@ -80,7 +94,7 @@ case "$action" in
   [ "$(cat "$uart/power/control")" = auto ] || fail 'UART policy already owned elsewhere'
   [ ! -e /run/pioneer-uart-keepalive ] && [ ! -L /run/pioneer-uart-keepalive ] || fail 'UART state already exists'
   hash_is "$image" 7f9788287e1851789ff41b098c910d613df51c4044256278f104b9b806082fcb
-  hash_is "$bundle" a3e1015fb56a440d5ea75a538b590c59cebd1ce99183b176eaef2ac703010c28
+  hash_is "$bundle" "$bundle_hash"
   hash_is "$uart_helper" a9056dbc4317cc52bea715d9687ba223dee6957ca5e625d91cba8f6fb7071a22
   [ "$(grep 'System RAM' /proc/iomem | head -n1 | cut -d- -f1)" = 02200000 ] || fail 'Unexpected low RAM start'
   [ "$(awk '/MemAvailable:/ {print $2}' /proc/meminfo)" -gt 20971520 ] || fail 'Insufficient staging RAM'
@@ -106,6 +120,7 @@ case "$action" in
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe 4
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-cpu-count "$(printf '%x' "$cpu_count")"
   printf '%s\n' "$cpu_count" > "$run/cpus"
+  printf '%s\n' "$profile" > "$run/profile"
   [ "$(fdtget -t x "$run/live-fdt.dtb" /pcie@7062000000 bus-range)" = '80 bf' ] || fail 'Wrong slot bus range'
   [ "$(fdtget -t x "$run/live-fdt.dtb" /pcie@7062000000 reg)" = '70 62000000 0 2000000 48 0 0 1000' ] || fail 'Wrong slot register layout'
   fdtput -t x "$run/probe-fdt.dtb" /pcie@7062000000 haiku,pioneer-root-probe 1e52b140
@@ -117,7 +132,7 @@ case "$action" in
   token=$(tr -d '-' < /proc/sys/kernel/random/uuid)
   printf '%s\n' "$token" > "$run/token"
   grep -Eq '^[0-9a-f]{32}$' "$run/token" || fail 'Invalid token'
-  sha256sum "$image" "$bundle" "$loader" "$uart_helper" "$run/live-fdt.dtb" "$run/probe-fdt.dtb" "$run/cpus" > "$run/inputs.sha256"
+  sha256sum "$image" "$bundle" "$loader" "$uart_helper" "$run/live-fdt.dtb" "$run/probe-fdt.dtb" "$run/cpus" "$run/profile" > "$run/inputs.sha256"
   uart_owned=1
   sh "$uart_helper" enable
   attempted_load=1
@@ -125,7 +140,7 @@ case "$action" in
    --dtb="$run/probe-fdt.dtb" --initrd="$bundle" "$image"
   [ "$(cat /sys/kernel/kexec_loaded)" = 1 ] || fail 'Image not loaded'
   cp "$run/token" "$run/prepared"
-  printf 'PREPARED %s with %s CPUs; Linux is still running. Run: %s boot %s %s\n' "$session" "$cpu_count" "$0" "$session" "$cpu_count"
+  printf 'PREPARED %s with %s CPUs (%s); Linux is still running. Run: %s boot %s %s %s\n' "$session" "$cpu_count" "$profile" "$0" "$session" "$cpu_count" "$profile"
   ;;
  boot)
   validate_run

@@ -9,6 +9,8 @@ smp_script=$directory/../pioneer_linux_boot_haiku_smp.sh
 sh -n "$smp_script"
 if sh "$smp_script" prepare ../unsafe 2 > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" unsupported session 64 > /dev/null 2>&1; then exit 1; fi
+if sh "$smp_script" prepare session 64 unpinned > /dev/null 2>&1; then exit 1; fi
+if sh "$smp_script" prepare session 64 current extra > /dev/null 2>&1; then exit 1; fi
 for count in '' 0 1 3 63 65 0x40 08 -1; do
  if sh "$smp_script" prepare session "$count" > /dev/null 2>&1; then exit 1; fi
 done

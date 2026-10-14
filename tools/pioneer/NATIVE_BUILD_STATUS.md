@@ -2221,3 +2221,81 @@ Current experimental artifacts:
 The old single-core loader/bundle and all intermediate private candidates
 remain available. All host tests/builds are evidence of source/artifact
 checks, not proof of 64-core runtime correctness or P100A inference.
+
+### All-core handoff and archived-kernel control, October 14
+
+`smp64-kernel1-20261014`, serial boundary 8258118, booted loader `smp-4`
+and RAM kernel `cd02cdb5...` with all 64 harts. CPU 0 was physical hart 3;
+all secondary schedulers reached their enabled marker. The MSI-only RTL8125
+override loaded (hash `fe6273c9...`), but networking became unreachable before
+the bounded worker executable could be staged. The inspected serial tail
+showed continuing xHCI timeouts, not a fatal panic. No CPU workload passed;
+neither the 64-core nor earlier two-core candidate is validated. A bounded
+SSH shutdown attempt failed with "No route to host"; relay recovery was
+therefore unclean, not a claimed normal shutdown. NVMe Linux returned with
+64 online CPUs and an empty kexec slot.
+
+For an isolated control, copied the old SD checkpoint to a disposable local
+image and extracted only its public OS package/kernel. Original image
+`haiku-pioneer-bfs-trap-migration.img` still matches deployed SHA-256
+`bb81f152e2c3859aa8e47aa0a71c12ff70a1cf799468ba6df7c9878a9dad26a4`.
+Its packaged kernel is `660147f6ad79cdbe1d1f60b4abffeb55b9ed655d5617959820bf7ddfa62cd2d8`,
+not the earlier recorded build-object hash `5902003a...`; package generation
+revision-stamps a copy. Its `_haiku_revision` contains `hrev99999`, and
+disassembly independently confirms the context-switch stvec/sscratch fix.
+Use the exact deployed image and extracted-kernel hashes as the control's
+identity; do not silently substitute the build-object hash.
+
+The fresh native-only `smp-kernel-bundle-validated-1` replaces just that
+kernel in the existing root-opt-in HPKG. Sorted path sets match; retained
+ECAM hash is `23e65e2a...`; BFS checkfs and full HPKG roundtrip pass.
+Control HPKG: `7e4ace3490f560bd1b3df70b2b56d72229cf24c6527492a84a59b336ca00c43b`.
+Control RAM BFS: `5f2f13fd45946aaae8038f20facad6638574468801c49497085443558a13151a`.
+The boot helper's optional, fixed `validated-control` profile pins that
+bundle and binds the profile into each fresh session's input manifest.
+Samsung's installed kernel/package, default Linux boot and firmware remain
+unchanged. Session `smp64-validated1-20261014`, boundary 8492494, was prepared
+and dispatched via normal `systemctl kexec`; its runtime result is pending.
+
+The archived kernel's identity was also verified in memory: zeroing only its
+128-byte `_haiku_revision` section reproduces **exactly** the original
+`5902003a...` hash. The control reached all 64 per-CPU initialization records
+but stopped after SG2042 MSI setup, before SSH. No passing workload follows
+from this control. It lacks current KMessage/driver-priority fixes; the
+stopping point alone does not establish which difference matters. SSH was
+unreachable; relay recovery was unclean again. Default NVMe Linux recovered.
+
+Prepared a current-source control with only low-latency rebalancing's load
+comparison restored to its old capped values. This is a diagnostic experiment,
+not a proven fix. Kernel `beff31ad047033dc0b76685aaaffe0f6fe53c94d07442efb1d09f9caea1cceac`;
+fresh native-only HPKG `38ac0e19bd52dda8e65a383c3e9eb18a4160fd940a58002bdeacb26858cd2ced`;
+RAM BFS `1b247841bdf4a5d5ecd7239103dee0c359f24c7fa3224f8bae7eb8f72115a626`.
+The same package-path, retained-ECAM and BFS roundtrip checks passed.
+
+Added an explicitly armed, one-shot serial userspace CPU test. The launcher
+requires a fixed token and executable hash, consumes/flushed its arm before
+work and never reboots or touches the accelerator. It does not modify SSH's
+configuration or startup script. Host tests cover missing/invalid/symlink
+arms, bad executable hash, previously consumed arm, success and failure.
+The test executable now uses unbuffered output for serial visibility:
+`cbabe84a18808d4610e56c829f48e01b798a9da9f51e9b86d932fc414df3e139`.
+Staging session `smp-serial-stage1-20261014`, boundary 8615713, uses the
+previously working single-core profile; deployment and 64-core test pending.
+
+Single-core staging succeeded after diagnosing a Mac-side cached REJECT
+route to the board's known IP. A scoped ping returned 3/3 packets, and pinned
+SSH immediately returned CPU count 1. Therefore earlier SSH timeout/no-route
+observations are **not by themselves proof** of a kernel/network deadlock;
+future readiness checks must include this route/ARP condition. The earlier
+serial observations and absence of workload results remain valid.
+
+Staged and hash-verified the serial diagnostic on live Haiku, flushed it and
+installed only the new `/boot/system/settings/launch/pioneer-smp-smoke` job.
+Existing SSH settings/startup were untouched. Script hash:
+`c7e3825a7a24e952f5e6699b9d6e2b5464956474d6d0e54f6af2f1cf56dc6f73`.
+The job refuses a non-64-core staging boot without consuming its arm; on a
+64-core boot it renames `armed` to `consumed-v1` and syncs before executing.
+The fixed expected binary hash is embedded in the script. The test-only
+files are under `/boot/home/pioneer-smp-20261014`; no package was installed.
+Armed token `smp64-serial-v1` was synced. `shutdown -s` dispatched and closed
+SSH normally; final shutdown completion must still be confirmed on serial.
