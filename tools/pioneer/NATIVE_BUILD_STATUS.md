@@ -2491,3 +2491,34 @@ original extlinux SHA `53c0da6d...`, and P100A command 0000. The machine is
 left running Linux, not the failed experimental Haiku boot. Full host RAM
 and P100A LLM execution remain pending; basic all-64 CPU and remapping passes
 on the old low-RAM profile remain the strongest successful Haiku controls.
+
+### High-memory isolation control, October 14
+
+User requested restoration of the old full-RAM/CPU/desktop baseline before
+P100A LLM work. The original full-memory fix `7be8406fed` remains present;
+October 12's SD/UEFI record reports 64 CPUs and 136,289,968,128 bytes RAM
+(126.93 GiB). This is stronger prior evidence than hardware enumeration in
+Linux alone. The SD-free adapter bypasses that EFI map-building path.
+
+Without changing any kernel or loader input, session
+`smp2-memory8-isolate1-20261014`, boundary 10170193, selected two CPUs and
+the same `memory8-control` profile. It booted userspace and pinned SSH.
+`sysinfo` reported two CPUs and 8,500,535,296 bytes RAM (7.92 GiB).
+The existing two-CPU affinity/work/sleep test passed mask 3. This control
+does not establish why the previous 64-core boot stalled, but it separates
+an ability to expose/use high memory from all-core runtime stability.
+
+The private memory test now accepts an optional explicit expected count
+(2/4/8/16/32/64), retaining its default 64-CPU requirement. Count must match
+the running system; the allocation/headroom/deadline and test-team-only
+failure boundaries are unchanged. New binary SHA:
+`b1773fd1cdc23d1074c864ab8bd9b8b365cd08b1b699e44e02792cc33786b963`.
+Staged as `/boot/home/pioneer-memory-20261014/pioneer_memory_smoke-v2`.
+Both the 64 MiB and **4096 MiB** samples passed two complete address-dependent
+patterns on two pinned workers, mask 3. Post-test SSH/sysinfo still worked;
+free RAM returned to 8,124,702,720 bytes. This is a bounded private memory
+sample, not an audit of every physical page or proof of 64-core stability.
+Some recoverable kernel page-fault traces also occur in this successful run;
+therefore the earlier fault trace alone must not be presented as a proven
+root cause of its stall. Next: a full-span two-CPU control before another
+all-core comparison. P100A compute/DMA/firmware operations remain untouched.
