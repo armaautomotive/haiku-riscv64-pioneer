@@ -13,6 +13,8 @@ Bounded, whitelisted telemetry reads now work too: firmware bundle
 GDDR channels with training complete and no reported uncorrected errors.
 Repeated samples show an advancing firmware heartbeat. This is a firmware
 health snapshot, not a memory stress test or working accelerator runtime.
+One stopped Tensix tile also passes a reversible 64-byte L1 pattern test,
+including verification of the original bytes after restoration.
 The test restores the card and bridge configuration exactly; DMA has never
 been enabled. There is no functioning compute driver/runtime yet. See the
 live-test records below. Samsung's installed OS package, card firmware,
@@ -387,7 +389,7 @@ All earlier policy/BAR/MMIO/ARC suites still pass. The integrated kernel
 module and all six userspace tools cross-built successfully; the previous
 five CLI hashes were unchanged.
 
-Current optional module:
+Optional module at this telemetry checkpoint (superseded below):
 `5ee9781e130f6e8ca701c4bb95adecef4ede61f2a2b6cbbecaaabec43a3e0456`.
 Telemetry CLI:
 `75701df2eb37c67c20516fa3dc6fce668a1848385d732980ac247f63944013c6`.
@@ -400,6 +402,88 @@ scratch ownership and rollback, before any data or core-control writes.
 Persistent mappings, interrupts, non-coherent host DMA, native UMD/runtime
 and LLM execution remain unimplemented and unvalidated. Both SD cards stay
 out; Samsung's installed OS package/default Linux boot remain unchanged.
+
+### October 14: stopped Tensix core and reversible L1 memory test
+
+Added two explicit private operations, `TT_PCI_PROBE_PIONEER_TENSIX_RESET`
+and `TT_PCI_PROBE_PIONEER_L1_SCRATCH`, plus matching userspace tools. They
+retain all earlier profile, PCI, ARC and telemetry checks, require the measured
+firmware tag `12050001`, and require enabled-column telemetry bit 0. The
+vendor's physical harvesting-column order starts at x=1, and its Tensix grid
+starts at y=2. The sole permitted tile is therefore `(1,2)`. No arbitrary
+coordinate or address is accepted from userspace.
+
+The initial conservative build refused NIU configuration `00006005` because
+translation bit 14 was set; that run made no core-register reads. Source
+review of UMD's `fill_tensix_noc0_translated_mapping()` established that the
+first enabled physical column maps to translated x=1. Since bit 0 requires
+physical x=1 itself enabled, this one tile remains `(1,2)` in either mode.
+The revised guard permits that specific case, not arbitrary translated
+coordinates. One immediate run still used the previous loaded module before
+Haiku's asynchronous driver watcher reloaded it; a later run reached the
+new code. The canonical-file hash alone does not prove an already-loaded
+driver revision has changed.
+
+The reset-state operation maps only the read-only CSR page, temporarily using
+TLB 201 words `000007fd / 40840800 / 00000a40`: NoC0 `(1,2)`, local base
+`ffa00000`. It reads `ffb121b0` three times, never writes reset controls, and
+requires all BRISC/TRISC0/TRISC1/TRISC2/NCRISC reset bits (`00047800`) held.
+All three hardware reads returned exactly `00047800`; the TLB and full PCI
+state were restored, independently confirmed by the diagnostic.
+
+The L1 operation first passes that same gate. It separately saves/configures
+TLBs 200 and 201, using TLB 200 for the last 64 bytes (`17ffc0..17ffff`) of
+that stopped tile's 1.5 MiB L1. Its data window is strict **bidirectional,
+dynamic VC**, words `00000000 / 40840800 / 00000040`. Do not reuse the static
+read VC for mixed reads/writes: the pinned UMD explicitly warns that this can
+crash the host. TLB 201 remains the strict read-only reset window.
+
+The only data-write API is sixteen fixed, aligned words. Original values stay
+kernel-local, never in the ioctl or logs. The operation checks reset state
+before patterns and after testing, writes/reads two independently
+address-varied patterns, restores all sixteen original words, and reads them
+back. A failed data restoration gets at most one retry before either TLB is
+changed. Persistent restoration failure requires cold recovery; no destructor
+ever touches device MMIO after PCI decoding is off. Normal traffic is 48 L1
+writes / 64 L1 reads, with at most 64 writes / 80 reads on a restore retry.
+There is no core start, instruction loading, firmware message, flash, reset
+write, interrupt enable, DMA or bus mastering.
+
+At about 20:27 UTC the real card passed both patterns with zero mismatches,
+data/TLB/PCI restored `1/1/1`, and reset before/after `00047800/00047800`.
+All six TLB words were zero both before and after. Card/root command ended
+`0000/0000`; the independent snapshot confirmed all original BARs and status
+`0010`. A second full L1 run passed identically. Subsequent telemetry still
+reported about 46.69 C, 1,882 RPM, GDDR errors zero and an advancing heartbeat
+`0000de7c`. The live root profile again passed stage 6. No panic was captured,
+and SSH remained working.
+
+Both new host suites pass ASan/UBSan, including independent 96-bit TLB decode,
+wrong firmware/harvest state, translated/non-translated modes, changed or
+running core state, setup/restore failures, every dropped pattern/restore
+data write, and persistent restore failure. Fault-injection initial TLB words
+must differ from trial words: dropping a write of the already-present zero
+is not a configuration failure. All seven host suites and the integrated
+kernel build pass. All eight CLIs cross-build; the earlier six hashes remain
+unchanged.
+
+Current optional kernel module:
+`f0ab0ebac81ffd0f2b8ac81ad3dacfb90ecbd1f2e8728b3765543178776b101b`.
+Core-state CLI:
+`5b3cdeb3b3f5db9c93d3b8f29ba61fbeded11c8159549e53e075c92323ae1813`.
+L1 CLI:
+`0b4e526fa699c52deb800efe4902b9e5fcabc7c3dffb96a30723cc2ea0a02372`.
+Staging remains `mmio-cross-1/`; the previous module is retained as
+`tenstorrent_pci_probe.before-l1-1`. The intermediate core-only modules are
+also retained. Only reviewed selected sources were synced to the build mirror.
+
+This proves native host PIO access to a stopped compute tile's local memory,
+not execution on its RISC/Tensix processors, a GDDR capacity test, performant
+transfers or an LLM backend. Next inspect the vendor's minimal core startup,
+instruction/cache requirements and compatible runtime before launching code.
+The latest vendor Metal installation matrix names newer firmware than this
+card has; the older versioned 18.5-compatible matrix and UMD's minimum do
+not certify current Metal/LLM releases. No automatic firmware upgrade.
 
 Download pinned official sources with:
 

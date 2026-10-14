@@ -358,11 +358,198 @@ struct PioneerTelemetryIO : PioneerArcIO {
 	}
 };
 
+struct PioneerTensixIO : PioneerTelemetryIO {
+	tt_tensix_reset_result& tensix;
+	area_id resetArea = -1;
+	const volatile uint32* reset = NULL;
+	bool resetAttempted = false;
+
+	PioneerTensixIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& r)
+		: PioneerTelemetryIO(p, a, t), tensix(r) {}
+	~PioneerTensixIO() { if (resetArea >= B_OK) delete_area(resetArea); }
+	bool Map()
+	{
+		if (!PioneerTelemetryIO::Map()) return false;
+		void* address = NULL;
+		// TLB 201 -> local base ffa00000; SOFT_RESET is ffb121b0.
+		resetArea = map_physical_memory("P100A Tensix reset read-only",
+			profile.bar0_host_start + 0x19312000, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_UNCACHED_MEMORY, &address);
+		if (resetArea < B_OK) return false;
+		reset = (const volatile uint32*)((const uint8*)address + 0x1b0);
+		return true;
+	}
+	uint32 NiuRead()
+	{
+		// Same already-mapped PCIe NIU page as NODE_ID; NIU_CFG_0 is +100.
+		return PioneerRead32((const volatile uint32*)((const uint8*)nodeID + 0xbc));
+	}
+	uint32 ResetRead() { return PioneerRead32(reset); }
+	bool AfterNodeId(uint32 id)
+	{
+		if (!PioneerTelemetryIO::AfterNodeId(id)) return false;
+		resetAttempted = true;
+		dprintf("PIONEER-P100A: enabled physical Tensix (1,2), read-only reset-state attempt\n");
+		return BlackholeTensixResetProbe(*this, telemetry, tensix);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		if (resetArea >= B_OK) {
+			if (delete_area(resetArea) == B_OK) resetArea = -1;
+			else okay = false;
+		}
+		if (resetAttempted && !tensix.tlb_restored) {
+			for (unsigned i = 0; i < 3; i++) TlbWrite(i, tensix.tlb_before[i]);
+			tensix.tlb_restored = 1;
+			for (unsigned i = 0; i < 3; i++) {
+				tensix.tlb_after[i] = TlbRead(i);
+				tensix.tlb_restored &= tensix.tlb_after[i] == tensix.tlb_before[i];
+			}
+		}
+		if (resetAttempted && !tensix.tlb_restored) okay = false;
+		return PioneerTelemetryIO::Unmap() && okay;
+	}
+};
+
+struct PioneerL1IO : PioneerTensixIO {
+	tt_l1_scratch_result& l1;
+	area_id l1Area = -1;
+	volatile uint32* memory = NULL;
+	bool l1Attempted = false;
+
+	PioneerL1IO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_l1_scratch_result& r)
+		: PioneerTensixIO(p, a, t, c), l1(r) {}
+	~PioneerL1IO() { if (l1Area >= B_OK) delete_area(l1Area); }
+	bool Map()
+	{
+		if (!PioneerTensixIO::Map()) return false;
+		void* address = NULL;
+		// TLB 200 BAR0 base 19000000; final 64 bytes of 180000-byte L1.
+		l1Area = map_physical_memory("P100A stopped-core L1 scratch",
+			profile.bar0_host_start + 0x1917f000, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA
+				| B_UNCACHED_MEMORY, &address);
+		if (l1Area < B_OK) return false;
+		memory = (volatile uint32*)((uint8*)address + 0xfc0);
+		return true;
+	}
+	uint32 L1TlbRead(unsigned slot, unsigned word)
+	{
+		if (slot > 1 || word > 2) return UINT32_MAX;
+		return PioneerRead32(tlb - 3 + slot * 3 + word);
+	}
+	void L1TlbWrite(unsigned slot, unsigned word, uint32 value)
+	{
+		if (slot > 1 || word > 2) return;
+		PioneerWrite32(tlb - 3 + slot * 3 + word, value);
+	}
+	uint32 L1Read(unsigned word) { return word < TT_L1_WORDS ? PioneerRead32(memory + word) : UINT32_MAX; }
+	void L1Write(unsigned word, uint32 value) { if (word < TT_L1_WORDS) PioneerWrite32(memory + word, value); }
+	bool AfterNodeId(uint32 id)
+	{
+		if (!PioneerTensixIO::AfterNodeId(id)) return false;
+		l1Attempted = true;
+		dprintf("PIONEER-P100A: stopped Tensix (1,2), 64-byte reversible L1 data test\n");
+		return BlackholeL1ScratchProbe(*this, tensix, l1);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		if (l1Area >= B_OK) {
+			if (delete_area(l1Area) == B_OK) l1Area = -1;
+			else okay = false;
+		}
+		if (l1Attempted && !l1.tlb_restored) {
+			for (unsigned s = 0; s < 2; s++)
+				for (unsigned w = 0; w < 3; w++) L1TlbWrite(s, w, l1.tlb_before[s][w]);
+			l1.tlb_restored = 1;
+			for (unsigned s = 0; s < 2; s++) {
+				for (unsigned w = 0; w < 3; w++) {
+					l1.tlb_after[s][w] = L1TlbRead(s, w);
+					l1.tlb_restored &= l1.tlb_after[s][w] == l1.tlb_before[s][w];
+				}
+			}
+		}
+		if (l1Attempted && (!l1.tlb_restored || !l1.data_restored)) okay = false;
+		return PioneerTensixIO::Unmap() && okay;
+	}
+};
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_L1_SCRATCH) {
+		if (data == NULL || length != sizeof(tt_pioneer_l1_result)) return B_BAD_VALUE;
+		tt_pioneer_l1_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = acquire_sem(sLock);
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
+			TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL)
+			status = get_module(B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		tt_pioneer_arc_result& control = result.control.control.control;
+		tt_arc_telemetry_result& telemetry = result.control.control.telemetry;
+		tt_tensix_reset_result& tensix = result.control.tensix;
+		control.pci.version = control.arc.version = telemetry.version = tensix.version = result.l1.version = 1;
+		control.pci.profile_status = status;
+		control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = 1;
+		result.l1.tlb_restored = result.l1.data_restored = 1;
+		if (status == B_OK) {
+			PioneerL1IO io(profile, control.arc, telemetry, tensix, result.l1);
+			BlackholePioneerMmioProbe(io, control.pci);
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: L1 state %" B_PRIu32 " passes %" B_PRIu32 " mismatches %#" B_PRIx32
+			" data/TLB/PCI restored %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32 " (no core start/DMA/flash)\n",
+			result.l1.state, result.l1.passes, result.l1.mismatch_mask,
+			result.l1.data_restored, result.l1.tlb_restored, control.pci.restored);
+		return user_memcpy(data, &result, sizeof(result));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_RESET) {
+		if (data == NULL || length != sizeof(tt_pioneer_tensix_result)) return B_BAD_VALUE;
+		tt_pioneer_tensix_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = acquire_sem(sLock);
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
+			TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL)
+			status = get_module(B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		tt_pioneer_arc_result& control = result.control.control;
+		control.pci.version = control.arc.version = result.control.telemetry.version = result.tensix.version = 1;
+		control.pci.profile_status = status;
+		control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = result.control.telemetry.tlb_restored = result.tensix.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerTensixIO io(profile, control.arc, result.control.telemetry, result.tensix);
+			BlackholePioneerMmioProbe(io, control.pci);
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: Tensix reset state %" B_PRIu32 " raw %08" B_PRIx32
+			" NIU %#" B_PRIx32 " TLB restored %" B_PRIu32 " PCI restored %" B_PRIu32 " (read-only core)\n",
+			result.tensix.state, result.tensix.reset[0], result.tensix.niu_config,
+			result.tensix.tlb_restored, control.pci.restored);
+		return user_memcpy(data, &result, sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_TELEMETRY) {
 		if (data == NULL || length != sizeof(tt_pioneer_telemetry_result)) return B_BAD_VALUE;
 		tt_pioneer_telemetry_result result = {};
