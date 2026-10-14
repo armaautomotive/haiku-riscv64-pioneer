@@ -2629,3 +2629,24 @@ job and `/boot/home/pioneer-memory-20261014/boot-full-memory-smoke.sh`, with
 staged originals in that directory's `full-serial-1` subdirectory. Existing
 SSH configuration/startup is untouched. Armed `armed-full-v1`, then manually
 verified the two-CPU control refuses without consuming it. All files synced.
+
+The recovered control also repeated the **4096 MiB** private sample with both
+patterns and mask 3 successfully. The subsequent synced `shutdown -rs` closed
+SSH and began Radeon/USB endpoint teardown, but unlike the earlier control
+did not reach firmware restart within the bounded observation. Serial stopped
+at byte 10953061. This is a passed RAM sample, not a confirmed clean reboot;
+relay fallback was required again. The source of this teardown stall is not
+proven by the last XHCI messages. Do not blame a specific driver from that
+output alone or conflate it with the full-memory startup stall.
+
+After the off hold completed, waited more than ten seconds before the on
+pulse (about 23:35:40 UTC). Unlike earlier recoveries, no ZSBL/firmware text
+has appeared by 23:37 UTC. The same screen reader still owns the UART and
+its log remains at byte 10953061; scoped ICMP/Linux SSH cannot reach the
+known address. Relay status confirms the power-button contact is released,
+but does not measure board power. Asked for the current fans/LEDs/display
+state before any further pulse; do not guess it is on or off. Both SDs stay
+out and the old SD relay is unused. Full-RAM/64-core comparison is pending,
+not executed. The one-shot arm remains staged for that future trial, with
+its 64-core/>120 GiB guards; it does nothing in Linux or the recovery control.
+No P100A compute, DMA, instruction loading or firmware operation ran.
