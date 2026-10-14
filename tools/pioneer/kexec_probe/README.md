@@ -106,6 +106,21 @@ late userspace phase is now observed, not final kernel handoff or payload
 entry. Relay recovery and complete baseline verification passed, and the
 temporary installed hook was removed. The SD-free selector remains unimplemented.
 
+The next controlled test established actual v2 payload entry and END PASS
+after preventing runtime suspension of only the native UART. It used the
+unchanged v2 image, all 64 outgoing CPUs and **no armed kernel checkpoints**.
+The incoming hart was 2, SATP/SIE were zero, and SBI HSM reported one hart
+started and 63 stopped. Relay recovery restored normal Linux, original UART
+auto policy and the unchanged boot entry. A transmitted marker followed by
+tty close was not sufficient: native tests found suspended UART LSR=0 versus
+active LSR=0x60. Use the separate guarded
+`pioneer_linux_uart_keepalive.sh status|enable|restore` runtime helper before
+the fresh-marker gate; it does not load/reboot or persist boot configuration.
+The existing Linux kernel/initramfs control also returned pinned SSH with a
+new boot ID, the original command line and all 64 CPUs online without relay
+recovery. These are entry/header/SBI and Linux-handoff milestones, not yet a
+Haiku RAM-resource loader, disk selection or unattended service.
+
 `pioneer_linux_cpu_quiesce.sh status|quiesce|restore` is a separate native
 runtime diagnostic, not a boot selector. Quiesce requires the original 0-63
 mask and no loaded image; it retains CPU 0, bounds each hotplug operation and

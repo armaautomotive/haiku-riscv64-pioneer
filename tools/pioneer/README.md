@@ -55,6 +55,14 @@ separate validation gates before an unattended boot selector is implemented.
 The optional [late-shutdown UART trace](kexec_trace/README.md) is a separately
 armed userspace diagnostic for the silent handoff. Its preparation/build do
 not install it, load a payload, reboot, or change the restored boot entry.
+The unchanged v2 entry probe subsequently reached PASS with native UART
+runtime suspension temporarily prevented, and the existing Linux control
+returned pinned SSH with all 64 CPUs. `pioneer_linux_uart_keepalive.sh` gives
+guarded status/enable/restore using volatile state; baud setup followed by
+tty close alone does not keep the UART active. The optional
+[kernel checkpoints](kexec_kernel_trace/README.md) are removable diagnostics,
+not an automatically installed fix. Haiku disk boot and the unattended
+selector still require implementation/validation.
 
 ## Haiku build and SD deployment
 

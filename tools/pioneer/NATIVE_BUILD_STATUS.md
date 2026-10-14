@@ -1512,3 +1512,114 @@ The board is left powered on in normal NVMe Linux; both SD cards remain out.
 No saved boot configuration, kernel, firmware or Haiku/Samsung content changed.
 Further controlled hardware tests require a new reviewed plan/approval; first
 investigate the remaining hook/final-handoff boundary without another reboot.
+
+### UART runtime-power diagnosis and first observed payload entry PASS
+
+The user requested continuation until the solution works or a physical SD
+change is required, authorizing continued controlled tests/recovery. Read-only
+checks found matching native Linux 6.1.31 headers, KPROBES/MODULE_UNLOAD and
+fixed handoff symbols. Installed executor `/usr/sbin/kexec` remains SHA
+`64b403d2c1c0f0d63581b902477a9945ba187c8b1ab18ae733c69a48dc3b0950`,
+95,624 bytes, root:root 755. Dracut restore requires the volatile
+`/run/initramfs/.need_shutdown` gate, absent now alongside its shutdown binary;
+its saved initramfs contains a kexec-capable shutdown script. Runtime absence
+does not prove which path an earlier shutdown took. Inspection ran no hooks,
+restore/activation commands or executor.
+
+Prepared a removable GPL kernel module with nine fixed function-entry kprobes,
+default self-test-only mode, no image/reboot operations and no saved-register
+edits. It never installs/autoloads itself. Matching headers supply symbol
+versions/vermagic and RV64 IMAC flags, no FP/vector code. Native GCC is 13.2.1
+versus the kernel's 13.1.1; build warned about this difference. Fixed an initial
+module-local name collision with a kernel header. Host sanitizer tests pass
+token policy, UART TX/drain iteration bounds, divisor-bank refusal and invalid
+inputs. Actual armed handoff checkpoint testing remains undone.
+
+The first native self-test returned EIO, leaving no module/probe loaded.
+Added hit/register reporting and rebuilt; private module SHA is
+`213953ff8e1600bcebbd0f65791d40dd8556e27124f4b3030e1b932b76b3deec`.
+The actual breakpoint ran (`hits=1`) but transmission failed with UART
+runtime_status=suspended, LCR=0x13 and LSR=0. A matching userspace marker had
+passed immediately beforehand and then closed ttyS0. Holding that same tty
+open made the kernel self-test pass with runtime_status=active, LSR=0x60.
+Setting only `/sys/devices/platform/soc/7040000000.serial/power/control` to on
+then passed without an open tty. Each successful self-test-only module was
+unloaded; **no real handoff probes were armed**. Unsigned out-of-tree testing
+tainted the running kernel as expected, with no signature/security-policy
+change. The following cold boot cleared the taint.
+
+This demonstrates a serial-output failure from UART runtime suspension;
+baud configuration plus a marker followed by close does not keep it visible.
+With only UART runtime policy on, loaded the exact unchanged v2 Image and
+fresh pinned FDT using the existing private classic loader and memory bounds.
+Outgoing CPUs remained 0-63 and the module was absent. Normal systemctl kexec
+ran at 03:42:45 UTC October 14 (October 13 local), fresh serial offset 2532916.
+The matching late marker (`9564c3fa8d41e9ae8340fd18542b7e2b`) is followed by:
+
+```
+PIONEER_KEXEC_PROBE v2 BEGIN
+hart=0x0000000000000002
+fdt=0x00000000bfff5000
+satp=0x0000000000000000
+sie=0x0000000000000000
+image_start=0x0000000002200000
+image_end=0x0000000002207000
+fdt_header=OK (full tree not parsed)
+sbi_harts_started=0x0000000000000001
+sbi_harts_stopped=0x000000000000003f
+PIONEER_KEXEC_PROBE v2 END status=PASS (entry/header/SBI state only)
+```
+
+This is the **first actual payload entry PASS**, validating this probe's
+entry/header/SBI checks and SBI-reported hart states, not independent DMA,
+cache, full-FDT validation or what happened in all earlier silent attempts.
+It deliberately halted. Approved relay off seven seconds, wait ten, on 0.75
+(03:44:12 UTC) returned normal pinned NVMe Linux. Baseline validation and
+owned-hook removal passed at 03:46:33 UTC: kernel 6.1.31, expected root/boot,
+CPUs 0-63, kexec_loaded=0, original extlinux SHA/metadata, no MMC, Samsung
+unmounted, volatile arm absent. UART reset to auto, no module loaded, taint=0
+and installed executor unchanged. No boot, firmware or Haiku media edits.
+
+Added `pioneer_linux_uart_keepalive.sh status|enable|restore`. It claims only
+the recorded UART's original auto policy with an empty kexec slot, records
+root-owned 0600 state in /run, verifies on/active and restores/removes only
+owned state. Native enable/restore passed auto/suspended -> on/active ->
+auto/suspended. No persistent boot/service change is added. Optional module
+source/build/README and host tests are saved; armed checkpoints were not
+needed for the successful unchanged probe. Existing trace/probe sanitizer
+tests and all six Image-header groups also pass.
+
+Ignored evidence is in `generated.pioneer/kexec-probe-20261013/kernel-trace-1/`,
+notably `self-test-1.serial.log`, `held-tty-self-test.serial.log`,
+`self-tests.serial.log`, `untraced-handoff.serial.log` and `recovery-1.serial.log`.
+
+### Full existing Linux-to-Linux handoff passed, without relay recovery
+
+Used the guarded UART helper and a fresh visible self-test marker with token
+`0257c485981a5ed2655f7cbf79cec15f`. Reverified the existing decompressed Linux
+Image SHA `b77ee6f003e0ffc74444880b93d9a9d903bad550ef9ca5b0b232b07a7a78fbef`,
+existing initramfs SHA `2abfdf6268cdaa9beab1297525d6812c821e27bc72677e80fb5cf6db8c7c5747`,
+source compressed kernel/initramfs, fresh live FDT, loader, hook and restored
+boot-entry identities. Accepted load used the same classic Image loader and
+memory bounds plus the **exact original running command line**. No previous
+keep_bootcon/ignore_loglevel/loglevel options were appended. No module loaded.
+
+Requested normal systemctl kexec at 03:49:35 UTC, fresh serial offset 2598200.
+Capture contains its late marker and directly the new Linux 6.1.31 boot, with
+no intervening ZSBL/OpenSBI/LinuxBoot cold-boot banner. Early UART cut-off at
+tty1 registration is normal for these unchanged arguments. Pinned SSH returned
+with boot ID `2343aa26-2b05-4216-9a61-62b7d4b5b160`, different from outgoing
+`78a9d5aa-73f7-4e7d-a020-912c9d03efdb`. Kernel/root/boot and all CPUs are correct.
+No relay pulse was used for this control. Thus a **full Linux handoff** is now
+observed, not just the tiny entry probe.
+
+Complete baseline validation and hash-checked temporary-hook removal passed
+at 03:52:40 UTC: kexec_loaded=0, CPUs 0-63, no MMC, Samsung unmounted, original
+command line and original 878-byte/root:root/664 extlinux SHA unchanged. UART
+policy is auto, owned keepalive/arm state absent, no module loaded, taint=0
+and installed executor unchanged. Ignored control evidence/scripts are in
+`generated.pioneer/kexec-probe-20261013/linux-control-uart-on-1/`, including
+`self-test.serial.log`, `load.log`, `handoff.serial.log` and
+`validation-cleanup.log`. Linux remains powered on and reachable with both SD
+cards out. Haiku RAM-resource loading, root identity and unattended selector
+are still unimplemented; do not call this a Haiku boot.

@@ -55,3 +55,12 @@ kexec_loaded=0 and the unchanged original extlinux hash. The hash-verified
 temporary hook was removed; the volatile arm directory was absent after
 reboot. No persistent boot arguments, firmware or Haiku media were changed.
 See [native build status](../NATIVE_BUILD_STATUS.md) for hashes and artifacts.
+
+The subsequent UART runtime-power test found that closing ttyS0 permits the
+device to suspend even after a successful marker. Keeping only the verified
+UART's runtime policy on made the unchanged v2 probe print BEGIN and END PASS
+after normal kexec. Use `pioneer_linux_uart_keepalive.sh` with volatile state
+and complete restore/recovery checks; setting baud alone is insufficient.
+The existing Linux kernel/initramfs then returned to pinned SSH with a new
+boot ID, the original command line and all CPUs online. Haiku boot and the
+unattended selector are still unimplemented.
