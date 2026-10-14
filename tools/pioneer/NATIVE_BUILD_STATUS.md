@@ -2484,3 +2484,10 @@ Bounded pinned-SSH shutdown timed out. The relay off hold was therefore
 recovery from an unresponsive experimental boot, not a clean OS shutdown.
 No SD change, firmware update or P100A operation was involved. The default
 NVMe Linux boot and the old 3038 MiB Haiku control remain the recovery paths.
+
+Recovery was verified over pinned SSH at 22:59 UTC: Linux 6.1.31, CPUs 0-63,
+root /dev/nvme0n1p3, kexec_loaded=0, Samsung unmounted, no MMC device, exact
+original extlinux SHA `53c0da6d...`, and P100A command 0000. The machine is
+left running Linux, not the failed experimental Haiku boot. Full host RAM
+and P100A LLM execution remain pending; basic all-64 CPU and remapping passes
+on the old low-RAM profile remain the strongest successful Haiku controls.
