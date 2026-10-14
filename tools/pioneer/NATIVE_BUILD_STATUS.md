@@ -2610,3 +2610,22 @@ Argument/syntax and existing boot-helper tests pass. Prepared and started
 `smp2-memory8-journal-recovery1-20261014`, boundary 10746492, at 23:29 UTC.
 Only the subsequent normal Haiku root mount may replay the original journal;
 no offline original-disk repair or firmware/P100A operation was performed.
+
+The journal-recovery control booted live Haiku with pinned SSH, two CPUs and
+8,500,535,296 bytes RAM; a 64 MiB private sample passed again. Added a separate
+one-shot full-memory serial diagnostic so the next full-span trial does not
+depend on SSH. It requires Haiku/riscv64/UID 0, exactly 64 enabled CPUs and
+more than 120 GiB reported RAM, a fixed arm token, unconsumed state and the
+previously built memory-test binary hash. It consumes and syncs its arm before
+running only the bounded 64 MiB/two-pattern private sample on 64 pinned workers.
+There is no card access, model download, reboot or whole-RAM-audit claim.
+Host tests cover arm/symlink/hash/refusal gates, the exact RAM threshold,
+malformed sysinfo and both worker success/failure reporting.
+
+Script SHA `098ab90ea60ad6dc348b3e95299209ac0b18365ec82b03e641b97327925a8c27`;
+launch-job SHA `bd89b3af0084fee5fb849ef36af544a3f75325f11a167d6def968b95d29218f5`.
+Installed only the new `/boot/system/settings/launch/pioneer-full-memory-smoke`
+job and `/boot/home/pioneer-memory-20261014/boot-full-memory-smoke.sh`, with
+staged originals in that directory's `full-serial-1` subdirectory. Existing
+SSH configuration/startup is untouched. Armed `armed-full-v1`, then manually
+verified the two-CPU control refuses without consuming it. All files synced.

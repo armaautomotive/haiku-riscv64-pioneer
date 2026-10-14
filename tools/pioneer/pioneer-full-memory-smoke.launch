@@ -1,0 +1,6 @@
+# Temporary diagnostic; refuses low-memory/non-64-core boots without consuming.
+job pioneer-full-memory-smoke {
+	requires x-vnd.Haiku-registrar
+	if file_exists /boot/home/pioneer-memory-20261014/armed-full-v1
+	launch /bin/sh /boot/home/pioneer-memory-20261014/boot-full-memory-smoke.sh
+}
