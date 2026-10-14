@@ -44,6 +44,34 @@ Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
 
+### October 14: resume after SD-free baseline
+
+The card-free baseline is now established: Linux → Haiku → Linux → Haiku
+without either SD, using the RAM handoff and the tested RTL8125 MSI-only
+override. Haiku SSH and Samsung root work; the initial loader still exposes
+one CPU and about 3 GiB RAM. The user requested renewed P100A bring-up and
+confirmed the card remains physically removed. Normal Haiku shutdown closed
+services/SSH, followed by the known seven-second relay power-off hold at
+about 18:13 UTC. Physical fans/LEDs-off and AC disconnection must be confirmed
+before installing the card. Leave both SD cards out.
+
+Synced the previously absent read-only diagnostic C/header and their sole
+Jam target into the reviewed build mirror. An integrated Jam build of
+`<driver>tenstorrent_pci_diag` passed; the private artifact/log are under
+`generated.pioneer/tenstorrent/haiku-integrated-20261014/`. Nothing was
+installed on Samsung, no accelerator driver was loaded, and no card firmware,
+PCI configuration or DMA settings were changed by this preparation.
+
+Next: reinstall in the previously used lower slot with the correct fully
+seated native power cable while AC is disconnected; restore PSU power but
+leave the host off for controlled startup. First cold-boot the unchanged
+NVMe Linux, record identity/link/BAR assignments read-only, then assess a
+Haiku enumeration test through the new boot path. Bypassing UEFI removes
+that particular boot dependency, not the documented BAR4 aperture limit.
+The firmware access/backup/compatibility gate below still applies; do not
+flash the old experimental bundle or hide an enabled/unassigned BAR merely
+to make a driver bind.
+
 Download pinned official sources with:
 
 ```sh
