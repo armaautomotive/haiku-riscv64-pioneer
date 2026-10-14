@@ -5,7 +5,7 @@ import hashlib
 import struct
 
 
-def verify(data):
+def verify(data, *, maximum_size=131072):
     if len(data) < 64:
         raise ValueError("truncated Image header")
     (code, nop, offset, size, flags, version, reserved1, reserved2,
@@ -14,7 +14,7 @@ def verify(data):
         raise ValueError("expected uncompressed jump to entry at byte 64")
     if offset != 0x200000 or size != len(data) or size % 4096 != 0:
         raise ValueError("incorrect load offset, image size or page alignment")
-    if size < 24576 or size > 131072:
+    if size < 24576 or size > maximum_size:
         raise ValueError("size outside probe bounds")
     if flags != 0 or version != 2 or reserved1 != 0 or reserved2 != 0:
         raise ValueError("unexpected flags, version or reserved fields")
@@ -27,11 +27,15 @@ def verify(data):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--max-size", type=lambda value: int(value, 0), default=131072,
+                        help="explicit header-only size cap for larger loader smoke images")
     parser.add_argument("image")
     args = parser.parse_args()
     with open(args.image, "rb") as stream:
-        data = stream.read(131073)
-    digest = verify(data)
+        if args.max_size < 24576 or args.max_size > 16777216:
+            parser.error("--max-size must be between 24576 and 16777216")
+        data = stream.read(args.max_size + 1)
+    digest = verify(data, maximum_size=args.max_size)
     print(f"PASS: raw RISC-V Image, {len(data)} bytes, SHA-256 {digest}")
 
 

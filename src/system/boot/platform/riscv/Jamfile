@@ -13,6 +13,10 @@ UseLibraryHeaders [ FDirName libfdt ] ;
 {
 	SubDirC++Flags -fno-rtti ;
 	SubDirAsFlags -I $(SUBDIR) ;
+	if $(HAIKU_PIONEER_KEXEC_PROBE) = 1 {
+		SubDirC++Flags -DPIONEER_KEXEC_PROBE ;
+		SubDirAsFlags -DPIONEER_KEXEC_PROBE ;
+	}
 }
 
 local platform ;
@@ -21,6 +25,7 @@ for platform in [ MultiBootSubDirSetup riscv ] {
 
 		BootMergeObject boot_platform_riscv_other.o :
 			crt0.S
+			pioneer_kexec.cpp
 			start.cpp
 			debug.cpp
 			console.cpp

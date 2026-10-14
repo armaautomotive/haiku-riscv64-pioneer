@@ -1623,3 +1623,104 @@ and installed executor unchanged. Ignored control evidence/scripts are in
 `validation-cleanup.log`. Linux remains powered on and reachable with both SD
 cards out. Haiku RAM-resource loading, root identity and unattended selector
 are still unimplemented; do not call this a Haiku boot.
+
+### Haiku non-EFI kexec RAM-header/root smoke passed
+
+Found the existing complete 4 GiB SD filesystem snapshot locally; SHA-256
+again matches `987165a790a12170c75554a9a2833e4c8c14b9d8a698559c9e3932fd94940d0f`.
+Restricted the local raw snapshot to mode 600. No SD change was required.
+Transferred a compressed stream into a new private R3SL staging directory,
+expanded it to exactly 4,294,967,296 bytes and verified the complete native
+disk hash. The native copy is milkv:milkv 600 beneath a 700 directory. Raw
+filesystem copies may contain private account data and must never be pushed.
+An initial staging mkdir without sudo was permission-denied, leaving no
+destination; created only the exact new project directory with sudo/chown
+before retrying. No existing media/image was overwritten.
+
+Added an explicit `HAIKU_PIONEER_KEXEC_PROBE` build profile for the existing
+non-EFI loader. Its 64-byte Linux Image header enters assembly startup,
+captures incoming CSRs, creates a private stack/trap handler and enables the
+FPU before C++ code. The smoke path validates bounded physical FDT memory,
+full FDT structure, board and exact UART layout before output. It requires
+the explicit chosen property value 1, validates 32/64-bit initrd bounds, then
+checks BFS superblock geometry and root inode bounds/magic/type. It never
+uses emulator HTIF, heap/constructors, PCI/storage drivers or starts Haiku.
+Output is polled/bounded and preserves the prepared UART settings.
+
+The shared non-EFI linker entry now names assembly `_riscv_start` rather than
+the C `_start`, and small BSS/common data are included in the clear range.
+Renamed the input stack section to `.stack` so wildcard BSS clearing cannot
+erase the active stack; it remains outside `_end`. Generic builds have no
+Linux header or smoke entry unless explicitly selected. EFI source paths and
+deployed loaders are unchanged. Generic compilation, not runtime emulator
+behavior, was checked after these startup changes.
+
+Host ASan/UBSan bounds tests passed. Testing against the real snapshot caught
+an incorrect assumption before hardware: BFS blocks_per_ag counts **bitmap**
+blocks, not data blocks. Corrected it against production Volume.cpp and added
+the group-capacity/count checks. Real-image verification now passes with
+block size 2048 and root byte offset 1,073,741,824. Existing probe tests and
+all seven Image-header groups pass; the header verifier retains its default
+128 KiB cap and accepts a larger smoke image only with an explicit size cap.
+
+Existing source hashes matched the mirror before syncing only the affected
+files. Build first stopped for missing mirror Git revision, then succeeded
+using the existing hrev99999 local-development convention/cross-tool PATH.
+`pioneer_kexec_loader_build.sh` verifies mirror equality, forces the two
+profile-dependent sources, saves/pads the private Image, checks fixed base,
+unresolved symbols and retained relocations, then restores generic build
+objects with the macro off and normal base 0x1000000, including on failure.
+Both private-build and generic-profile rebuild passed; the latter has
+`_riscv_start=0x1000000` and no `pioneer_kexec_start` symbol. Existing package
+notices and RWX loader-segment warning remain. No package or kernel was built.
+
+Tested private Image: 1,413,120 bytes, SHA-256
+`69d2f889c9a1d28913c5b0d0c73f148aa63f94687eed2d0e6399ce0d72aaca90`.
+After the Linux control boot, fresh live FDT has SHA
+`a447ce7127fa4c626a5a0f63a423e6ba303657b8751dcfa795e2bc65f472a94c`;
+it legitimately differs from the earlier cold-boot FDT because its initrd and
+kexec chosen properties changed. Verified a complete textual diff of a
+private test copy: only `haiku,pioneer-kexec-probe = <1>` is added. That input
+copy SHA is `d34acb35d9a3073ae0e0aa9eaab0cee3a9b740db34bc9d62d419d4782b73922b`.
+No memory, CPU, PCI or UART node changed. The loader subsequently supplies the
+actual new initrd/FDT placement. Native gates and complete snapshot rehash
+passed before arming; fresh visible marker token is
+`fc7be564428ff7626804afb577686ccf`. Used the guarded UART on policy, no module,
+all 64 CPUs and exact private loader. Root-visible first System RAM begins
+0x2200000, matching this fixed-linked Image. Accepted load allowed RAM through
+0x1fffffffff to hold the complete 4 GiB initrd without using the 3..4 GiB hole.
+
+Normal systemctl kexec at 04:22:27 UTC October 14 (October 13 local), fresh
+serial offset 2603770, produced the matching late marker and:
+
+```
+HAIKU_KEXEC_LOADER v1 BEGIN (RAM-resource smoke only)
+hart=0x0000000000000003
+incoming_satp=0x0000000000000000
+incoming_sstatus=0x0000000200000120
+incoming_sie=0x0000000000000000
+fdt=0x0000001effff5000
+initrd_start=0x0000001f00000000
+initrd_size=0x0000000100000000
+bfs_block_size=0x0000000000000800
+bfs_num_blocks=0x0000000000200000
+bfs_root_offset=0x0000000040000000
+bfs_root_inode=OK
+HAIKU_KEXEC_LOADER v1 END status=PASS (RAM header/root only; kernel not started)
+```
+
+The initrd starts at 124 GiB and the root-inode read is at 125 GiB. This
+establishes these 64-bit RAM reads and metadata checks, not a full-memory
+audit, RAM filesystem mount, kernel/module preload or Haiku boot. It halted
+as designed. Approved relay off/wait/on (on at 04:23:42 UTC) restored default
+NVMe Linux. Complete baseline/owned-hook cleanup passed at 04:27:11 UTC:
+kernel/root/boot, CPUs 0-63, kexec_loaded=0, no MMC, Samsung unmounted and the
+exact original extlinux hash/metadata. UART auto policy, absent volatile
+keepalive/arm state, no module/taint and executor hash are separately checked.
+
+Private build/test evidence is under
+`generated.pioneer/haiku-kexec-loader-20261013/smoke-1/`; native snapshot and
+test inputs are `/mnt/ssd/pioneer-haiku-kexec-20261013/smoke-1/`. None of the
+raw filesystem or private image data is committed. Next is a separate
+RAM-only filesystem/kernel-resource preload test, still stopping before
+kernel execution and without touching the original SD/Samsung/boot settings.

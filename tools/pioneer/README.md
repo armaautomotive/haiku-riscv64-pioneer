@@ -64,6 +64,23 @@ tty close alone does not keep the UART active. The optional
 not an automatically installed fix. Haiku disk boot and the unattended
 selector still require implementation/validation.
 
+`pioneer_kexec_loader_build.sh CONFIGURED_BUILD_DIRECTORY OUTPUT_DIRECTORY`
+builds an explicit `HAIKU_PIONEER_KEXEC_PROBE=1` non-EFI loader smoke Image
+fixed at physical 0x2200000. It validates the private Image header and padded
+BSS/stack, then rebuilds the shared generic profile with the probe disabled
+(recorded normal base 0x1000000, override with `PIONEER_RESTORE_LOADER_BASE`).
+Only verified mirror sources are used; profile-dependent sources are touched
+to prevent stale command-line-macro objects. Nothing is deployed or executed.
+
+The first hardware smoke passed with a verified 4 GiB BFS snapshot loaded
+above 124 GiB: full FDT structure, BFS superblock geometry and root inode were
+read successfully. It requires only the explicit private chosen property
+`haiku,pioneer-kexec-probe = <1>` and deliberately halts before Haiku startup.
+It uses no emulator HTIF, PCI/storage drivers, heap or C++ constructors.
+Run `sh tools/pioneer/tests/run_pioneer_kexec_loader_tests.sh [VERIFIED_BFS_IMAGE]`
+for sanitizer bounds tests and an optional read-only real-image check. This
+is not yet a RAM filesystem mount, kernel/module preload, or Haiku boot.
+
 ## Haiku build and SD deployment
 
 ### Source-built UEFI for SSD boot experiments

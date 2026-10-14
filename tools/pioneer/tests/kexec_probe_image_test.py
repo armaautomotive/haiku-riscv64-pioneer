@@ -56,6 +56,13 @@ class ImageTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             module.verify(data)
 
+    def test_explicit_larger_smoke_cap(self):
+        data = self.image() + bytes(131072)
+        struct.pack_into("<Q", data, 16, len(data))
+        self.assertEqual(len(module.verify(data, maximum_size=0x400000)), 64)
+        with self.assertRaises(ValueError):
+            module.verify(data, maximum_size=len(data) - 1)
+
 
 if __name__ == "__main__":
     unittest.main()

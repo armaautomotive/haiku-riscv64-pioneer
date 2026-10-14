@@ -1,7 +1,7 @@
 OUTPUT_FORMAT("elf64-littleriscv", "elf64-littleriscv", "elf64-littleriscv")
 OUTPUT_ARCH(riscv)
 
-ENTRY(_start)
+ENTRY(_riscv_start)
 SECTIONS
 {
 	/* Allow board firmware to select the physical load address. */
@@ -38,12 +38,14 @@ SECTIONS
 
 	/* uninitialized data (in same segment as writable data) */
 	__bss_start = .;
-	.bss : { *(.bss) }
+	.bss : { *(.bss .bss.* .sbss .sbss.*) *(COMMON) }
 
 	. = ALIGN(0x1000);
 	_end = . ;
 
-	.bss.stack : { *(.bss.stack) }
+	.bss.stack : { *(.stack) }
+	. = ALIGN(0x1000);
+	_riscv_image_end = .;
 
 	/* Strip unnecessary stuff */
 	/DISCARD/ : { *(.comment .note .eh_frame .dtors .stab .stabstr .debug*) }
