@@ -7,6 +7,11 @@ script=$directory/../pioneer_linux_boot_haiku.sh
 sh -n "$script"
 smp_script=$directory/../pioneer_linux_boot_haiku_smp.sh
 sh -n "$smp_script"
+journal_script=$directory/../pioneer_verify_samsung_journal_view.sh
+sh -n "$journal_script"
+if sh "$journal_script" ../unsafe > /dev/null 2>&1; then exit 1; fi
+if sh "$journal_script" session extra > /dev/null 2>&1; then exit 1; fi
+if sh "$smp_script" prepare session 64 memory8-journal-recovery-control > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" prepare ../unsafe 2 > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" unsupported session 64 > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" prepare session 64 unpinned > /dev/null 2>&1; then exit 1; fi

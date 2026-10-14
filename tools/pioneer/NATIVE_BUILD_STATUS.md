@@ -2579,3 +2579,34 @@ Requested a non-blocking desktop/input observation and attempted a bounded
 normal SSH reboot; it timed out. Relay recovery is therefore recovery from
 an unresponsive experimental boot, not a confirmed clean shutdown. The
 source-order fix must not be advertised as fixing this separate stall.
+
+Recovered default Linux again at 23:23 UTC: NVMe root, empty kexec slot,
+P100A command 0000. Linux /proc/iomem confirms continuous System RAM from
+0x02200000 through four 32 GiB banks to 0x1fffffffff; MemTotal is
+131,976,904 kB. This does not diagnose the Haiku stall. The next 64-core
+prepare stopped at its Linux befs read-only check: pending BFS journal
+entries after the unresponsive boot require normal Haiku replay. No
+64-core/full-RAM handoff occurred in that session.
+
+Added an explicit `memory8-journal-recovery-control` profile, restricted to
+the previously passing two-CPU/8 GiB loader/kernel pair. All other profiles
+retain the direct read-only verification and the low-memory default is
+unchanged. Its pinned verifier places both Samsung whole disk and partition
+under kernel block-read-only protection, replays only into a fresh private
+qcow2/NBD view, extracts only the OS package and RTL override and requires
+their original hashes. It never repairs or mounts the physical BFS in Linux.
+NBD is detached, the module removed if newly loaded and the original write
+policy restored before returning. A failed/disconnected attachment keeps the
+source protected if cleanup cannot establish safety. A first attempt stopped
+before BFS access because NBD capacity was asynchronous; cleanup passed.
+Added a bounded capacity-readiness wait; two subsequent extractions passed.
+The original superblock stayed unchanged and Linux taint remained zero.
+
+Verifier SHA:
+`8ff6ad3643e4baab6734cbb7799c1ba02bb8beb197cf43f3540a66c2b02c7ff9`.
+New native helper `pioneer_linux_boot_haiku_journal-recovery-1.sh` SHA:
+`c33e566a92987592c0934b88441f2ac15d71274721e1475d1d0031595d3b0cde`.
+Argument/syntax and existing boot-helper tests pass. Prepared and started
+`smp2-memory8-journal-recovery1-20261014`, boundary 10746492, at 23:29 UTC.
+Only the subsequent normal Haiku root mount may replay the original journal;
+no offline original-disk repair or firmware/P100A operation was performed.
