@@ -2465,3 +2465,22 @@ service termination but no final shutdown-complete marker. Finished with
 the relay off hold, waited ten seconds after completion, then powered on
 for default NVMe Linux. Do not describe this as a fully confirmed clean
 shutdown. Next is a private 8 GiB trial before attempting the full span.
+
+The first 8 GiB/64-core trial `smp64-memory8-1-20261014`, serial boundary
+10015540, passed loader checks with two usable ranges and physical-map span
+0x1fde00000. The low allocator correctly stopped at the first FDT reservation
+(0x40000000), independently of kernel-visible RAM. Kernel startup completed
+and Samsung root identity checks passed, but boot then stalled before SSH.
+Serial showed a kernel store-page fault at VA 0xffffffc0016e7030, leaf PTE zero,
+PC 0xffffffc0001ac0e0 (kernel-relative 0x12c0e0, ObjectCache::InitSlab), called
+by HashedObjectCache::CreateSlab. The "before VM" trace label means before
+the fault handler calls VM, not before VM initialization. Some root-scan
+output followed the fault, so the trace alone is not a proven fatal panic.
+ICMP did not respond and no RAM/CPU userspace workload ran. Do not claim
+8 GiB validation, restored 128 GiB, or identify the root cause from this alone.
+The 128 GiB trial has not been attempted.
+
+Bounded pinned-SSH shutdown timed out. The relay off hold was therefore
+recovery from an unresponsive experimental boot, not a clean OS shutdown.
+No SD change, firmware update or P100A operation was involved. The default
+NVMe Linux boot and the old 3038 MiB Haiku control remain the recovery paths.
