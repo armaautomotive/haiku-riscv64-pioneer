@@ -1296,3 +1296,38 @@ into ignored `generated.pioneer/linux-recovery-20261013/fat-original/` for
 independent payload comparisons. The Pioneer remains off; NVMe rollback is
 still pending. Never rerun the one-shot imager blindly or delete its guard
 backup to force a second write.
+
+### Recovery SD payload verification completed
+
+The user captured exactly 13,555,990,528 bytes in 154.72 seconds with the
+read-only dd command. Protected this captured image with mode 600. Its SHA-256
+is `21a56241499397d010679e5c35159cce6b2c681172974eb539810a6ebc441513`.
+An independent local audit compared all captured bytes with the pinned prepared
+source and inspected the FAT filesystem through mtools, without opening a
+device for writing. Results:
+
+- Prefix/MBR, Linux boot partition, entire Linux root partition and trailing
+  image bytes match **exactly**. No differences exist outside the FAT partition.
+- All **12 original FAT boot files** match byte-for-byte by SHA-256, including
+  ZSBL, FIP, OpenSBI, LinuxBoot kernel/initrd, DTBs and GRUB EFI loader.
+- Every extra FAT directory/file is under `.Spotlight-V100` or `.fseventsd`;
+  there are no missing original entries or unexplained extra boot files.
+- Read-only `fsck_msdos -n` on the captured FAT partition and `e2fsck -fn` on
+  both captured ext4 partitions all completed with exit 0, without repairs.
+
+Thus the whole-image digest mismatch is explained by Mac filesystem/indexing
+changes confined to FAT, not altered Linux or original boot payloads. This is
+a passed **payload/filesystem** audit, not an assertion that the whole card
+still has the prepared raw SHA or that it has undergone long-term media testing.
+Detailed ignored report: `generated.pioneer/linux-recovery-20261013/spare-readback-audit.json`;
+audit helper: `audit-spare-readback.py` in the same directory.
+
+Rechecked the exact spare identity (serial 0xeb42, disk6, 31,299,993,600 bytes)
+and successfully ejected it with diskutil. The recovery SD is now ready for
+its first boot test; no second media write was needed. Asked the user to move
+only this spare into the powered-off Pioneer and confirm insertion, leaving
+the working Haiku SD separate. Do not power on before that physical confirmation.
+Once recovery Linux is running, verify the expected host key, SD PARTUUID
+`201785d7-03`, kernel/root/device identities, then restore the known NVMe boot
+entry using the exact original backup with hash/metadata/sync checks. The
+Pioneer remains off and that NVMe rollback is still pending.
