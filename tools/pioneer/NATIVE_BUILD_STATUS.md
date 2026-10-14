@@ -2054,3 +2054,80 @@ the actual function with packaged, nested non-packaged, user and lookalike
 paths; the normal kernel cross build passed. This fix is not yet deployed
 to Samsung's unchanged OS package, so the current diagnostic trial must use
 the existing higher-priority user path instead, without any boot-preload link.
+
+Moved the exact diagnostic override to
+`home/config/non-packaged/add-ons/kernel/drivers/dev/net/rtl8125`; the former
+system override path is absent. Trial `enter-5` at 17:14:30 UTC (serial byte
+4208522, marker `98b2d369625e461bb7a0376da82634cf`) emitted the real diagnostic
+ticks. NIC status changed from 0x4010 to 0x40b5, RX descriptors completed and
+transmit producer advanced while the consumer stayed zero. All 16 ticks
+reported zero driver interrupt calls. This narrows the failure to interrupt
+delivery/service rather than simply assuming corrupt DHCP or missing SSH.
+The first diagnostic's `listseg.ds_addr` fields were compatibility-layer
+virtual addresses, not the hardware ring addresses; corrected subsequent
+diagnostics to report `list_map->dm_segs[0].ds_addr` with null-map guards.
+
+Prepared an explicit, default-off `HAIKU_PIONEER_RTL_MSI_ONLY=1` comparison
+profile. It skips MSI-X and fails closed if conventional MSI cannot be
+allocated; normal builds retain existing MSI-X-to-MSI fallback. Production
+selection code and tick diagnostics pass ASan/UBSan host tests. Cross build
+passed; shared output was rebuilt normally and contains no test marker.
+Private MSI-only driver SHA
+`fe6273c985de229e0c6d8fba9dcc27d7978cb9ab2b419670058ceb0198a13c00`,
+250,547 bytes. Replaced only the exact prior diagnostic override, retained
+its backup, verified readback and unchanged OS package. This is a controlled
+comparison, not yet a proven MSI-X workaround.
+
+Trial `enter-6` at 17:19:57 UTC (serial byte 4636021, marker
+`0f6a175a186e49deaeb240ebc84e492c`) passed: MSI-only profile markers appeared,
+driver interrupt counts advanced, DHCP assigned 10.0.0.247 and pinned-key SSH
+as baron succeeded. The real root is Samsung BFS `/dev/disk/scsi/0/3/0/0`.
+The loaded driver is the expected user non-packaged override; SHA matches
+`fe6273c9...13c00`, OS package remains `6a40c785...b348a`. SSH inspection
+confirmed net_server, Tracker and Deskbar, with bidirectional packet counters
+and zero reported network errors. Both SD cards remain out. This establishes
+an MSI workaround for the observed MSI-X interrupt failure; it does not prove
+the underlying MSI-X hardware/bridge cause. No polling completion workaround
+or cache-management experiment was needed.
+
+The RAM handoff still intentionally exposes one CPU and 3,185,573,888 usable
+bytes, not all 64 CPUs/128 GiB. Added `pioneer_linux_boot_haiku.sh` for the
+recorded native artifacts: separate prepare/boot/cancel actions, fresh strict
+root-identity manifest, exact image/bundle/driver/package hashes, SD absence,
+root/boot/CPU/default-config gates, temporary owned UART policy and normal
+systemd kexec shutdown. It never edits extlinux/SPI, writes Samsung, or moves
+an SD card. Preparing stages an image while Linux remains running; cancel
+unloads it and restores the UART policy. Private run directories retain
+evidence; session names must be fresh and simple. Source checksum tests reject
+short sectors and validate all 128 little-endian words (including repeated
+rows via `od -v`). Native round-trip verification follows.
+
+The full SD-free round trip passed. Requested normal Haiku shutdown via
+pinned SSH (`sync; shutdown -s`), observed service termination/SSH closure,
+allowed it to settle, then used the existing off/wait/on relay recovery.
+No claim is made that this board physically powered itself off or rebooted.
+BFS emitted existing index-lookup warnings during shutdown; no filesystem
+repair was attempted. Default Linux returned all 64 CPUs, original NVMe
+root/boot, unchanged extlinux hash/metadata and an empty kexec slot. Removed
+only the exact old temporary diagnostic hook.
+
+The tracked helper's native `prepare cancel-check-20261014` loaded the image
+while Linux stayed running. Its `cancel` verified input hashes/root manifest,
+unloaded the image and restored UART auto policy; independent checks confirmed
+empty kexec, absent owned UART state and unmounted Samsung. Then prepared and
+booted `roundtrip-20261014` through the same helper at approximately 17:30 UTC,
+fresh serial byte 5122103, without installing another shutdown hook. Pinned
+Haiku SSH returned again at 17:31 UTC. Samsung BFS root, MSI-only driver hash,
+unchanged system package and bidirectional error-free wired packet counters
+were verified again. Both SD cards remained out throughout.
+
+Final board state: reachable Haiku, using the tested user MSI-only override;
+no request for physical intervention. Normal Linux remains the cold-boot
+fallback. Known limits: this RAM loader is single-CPU/low-memory, physical
+desktop/input have not been independently confirmed for these new boots,
+MSI-X delivery root cause is unresolved, and the driver-priority source fix
+is cross-built but not installed into Samsung's package. Host probe, preload,
+handoff, KMessage, xHCI cleanup, SSH, driver-priority, RTL selection/diagnostics
+and boot-helper tests all pass. Shared cross-build outputs are normal profiles,
+not the opt-in diagnostic driver. Unrelated llama.cpp submodule edits remain
+untouched.

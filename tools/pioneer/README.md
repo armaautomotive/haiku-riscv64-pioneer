@@ -1050,3 +1050,58 @@ Before writing, the deployment script independently decompresses the supplied
 firmware and rejects it unless its embedded loader hash matches
 `--loader-sha256`. It backs up and readback-verifies the BFS payload, standalone
 loader, and booted firmware.
+
+## SD-free Linux / Haiku switching (October 14 experimental path)
+
+The recorded Pioneer can now kexec from its normal NVMe Linux into Samsung
+Haiku, with working key-authenticated SSH, without either SD card. The
+RTL8125 driver needs the tested MSI-only override: MSI-X produced hardware
+events but no driver interrupts on this warm-boot path. This is an explicit
+development profile, not a claim that MSI-X is fixed. The initial RAM loader
+still uses one CPU and about 3 GiB RAM; full-memory/SMP validation is separate.
+
+`pioneer_linux_boot_haiku.sh` is deliberately pinned to this board's recorded
+Linux 6.1.31, disk identities, default boot hash and native artifacts under
+`/mnt/ssd/pioneer-haiku-kexec-20261013`. It refuses different artifacts rather
+than guessing. It requires its tracked UART helper in the same directory,
+native `dtc`/`fdtput`/`fdtget`, and the already prepared exact MSI-only override
+on Samsung. The source/build record and hashes are in `NATIVE_BUILD_STATUS.md`.
+Do not use this script as a general installation tool for another machine.
+
+Run on the native Linux as root, using a new session name each time:
+
+```sh
+sh pioneer_linux_boot_haiku.sh prepare example-20261014
+# Linux remains running, but the Haiku image is staged in the kexec slot.
+# Save all Linux work before the next command.
+sh pioneer_linux_boot_haiku.sh boot example-20261014
+```
+
+Before `boot`, `cancel` unloads the staged image and restores the temporary
+UART policy:
+
+```sh
+sh pioneer_linux_boot_haiku.sh cancel example-20261014
+```
+
+Preparation reads Samsung only through a temporary read-only mount and five
+identity sectors. It never edits extlinux, SPI or the installed OS. Existing
+test shutdown hooks must first be removed by their known hash/ownership
+checks. The normal NVMe Linux boot stays the cold-power-on fallback.
+
+For Haiku-to-Linux, request normal Haiku shutdown through pinned SSH, allow
+services/filesystems to settle, then use the existing power relay off/wait/on
+sequence. Do not assume Haiku's reboot request physically restarted this
+board. Do not use the obsolete SD relay, and never move cards while powered.
+Only the known host-key files and key authentication should be used; this
+workflow does not disable SSH host verification or enable passwords.
+
+The MSI-only and bounded RTL diagnostics are separate, default-off build
+flags: `HAIKU_PIONEER_RTL_MSI_ONLY=1` and
+`HAIKU_PIONEER_RTL_DIAGNOSTICS=1` on riscv64. Retain a private output before
+rebuilding shared outputs with both flags off. Touch the driver sources
+between profile builds because Jam may reuse objects across changed flags.
+The override belongs in the user non-packaged `drivers/dev/net/rtl8125` path,
+with no boot-preload link. Samsung's unchanged kernel has a priority bug
+that lets a system non-packaged override be replaced by the packaged driver;
+the source fix is tested but is not yet installed on Samsung.

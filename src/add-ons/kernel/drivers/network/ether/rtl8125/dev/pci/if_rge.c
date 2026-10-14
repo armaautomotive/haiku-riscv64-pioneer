@@ -293,7 +293,13 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Allocate interrupt.
 	 */
+	/* Explicit private warm-boot experiment; normal builds retain MSI-X. */
+#if defined(HAIKU_PIONEER_RTL_MSI_ONLY) && defined(__riscv)
+	printf("PIONEER-RTL: MSI-only diagnostic profile\n");
+	if (
+#else
 	if (pci_intr_map_msix(pa, 0, &ih) == 0 ||
+#endif
 	    pci_intr_map_msi(pa, &ih) == 0)
 		sc->rge_flags |= RGE_FLAG_MSI;
 #ifdef __HAIKU__
@@ -3849,7 +3855,9 @@ rge_tick(void *arg)
 		    RGE_READ_1(sc, RGE_CMD), RGE_READ_4(sc, RGE_ISR),
 		    RGE_READ_4(sc, RGE_IMR));
 		if (q != NULL && q->q_tx.rge_tx_list != NULL &&
-		    q->q_rx.rge_rx_list != NULL) {
+		    q->q_rx.rge_rx_list != NULL &&
+		    q->q_tx.rge_tx_list_map != NULL &&
+		    q->q_rx.rge_rx_list_map != NULL) {
 			int tx = q->q_tx.rge_txq_considx;
 			int rx = q->q_rx.rge_rxq_considx;
 			if (tx >= 0 && tx < RGE_TX_LIST_CNT &&
@@ -3858,9 +3866,9 @@ rge_tick(void *arg)
 				    "rx=%d status=%#x ring=%#llx buffer=%#llx\n",
 				    DEVNAME(sc), tx, q->q_tx.rge_txq_prodidx,
 				    letoh32(q->q_tx.rge_tx_list[tx].rge_cmdsts),
-				    (unsigned long long)q->q_tx.rge_tx_listseg.ds_addr,
+				    (unsigned long long)q->q_tx.rge_tx_list_map->dm_segs[0].ds_addr,
 				    rx, letoh32(q->q_rx.rge_rx_list[rx].hi_qword1.rx_qword4.rge_cmdsts),
-				    (unsigned long long)q->q_rx.rge_rx_listseg.ds_addr,
+				    (unsigned long long)q->q_rx.rge_rx_list_map->dm_segs[0].ds_addr,
 				    (unsigned long long)letoh64(q->q_rx.rge_rx_list[rx].hi_qword0.rge_addr));
 			}
 		}

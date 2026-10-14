@@ -18,16 +18,19 @@ struct rx_desc {
 	struct { struct { uint32_t rge_cmdsts; } rx_qword4; } hi_qword1;
 };
 struct segment { uint64_t ds_addr; };
+struct dma_map { struct segment dm_segs[1]; };
 struct rge_queues {
 	struct {
 		int rge_txq_considx, rge_txq_prodidx;
 		struct tx_desc *rge_tx_list;
 		struct segment rge_tx_listseg;
+		struct dma_map *rge_tx_list_map;
 	} q_tx;
 	struct {
 		int rge_rxq_considx;
 		struct rx_desc *rge_rx_list;
 		struct segment rge_rx_listseg;
+		struct dma_map *rge_rx_list_map;
 	} q_rx;
 };
 struct rge_softc {
@@ -56,8 +59,11 @@ int main(void)
 	struct tx_desc tx[4] = {0};
 	struct rx_desc rx[4] = {0};
 	struct rge_queues q = {0};
+	struct dma_map tx_map = {0}, rx_map = {0};
 	q.q_tx.rge_tx_list = tx;
 	q.q_rx.rge_rx_list = rx;
+	q.q_tx.rge_tx_list_map = &tx_map;
+	q.q_rx.rge_rx_list_map = &rx_map;
 	struct rge_softc sc = {&q, 0, 123, 0};
 	for (int i = 0; i < 20; i++) rge_tick(&sc);
 	assert(schedules == 20 && links == 20);
@@ -68,9 +74,13 @@ int main(void)
 	q.q_tx.rge_txq_considx = -1;
 	rge_tick(&sc);
 	assert(lines == 33); /* Invalid index: never dereference descriptors. */
+	q.q_tx.rge_txq_considx = 0;
+	q.q_tx.rge_tx_list_map = NULL;
+	rge_tick(&sc);
+	assert(lines == 34); /* Incomplete DMA map must also be safe. */
 	sc.sc_queues = NULL;
 	rge_tick(&sc);
-	assert(lines == 34);
+	assert(lines == 35);
 #else
 	assert(sc.rge_diagnostic_ticks == 0 && reads == 0 && lines == 0);
 #endif

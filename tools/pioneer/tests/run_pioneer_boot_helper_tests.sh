@@ -1,0 +1,42 @@
+#!/bin/sh
+set -eu
+directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-boot-helper.XXXXXXXX")
+trap 'rm -rf "$temporary"' EXIT HUP INT TERM
+script=$directory/../pioneer_linux_boot_haiku.sh
+sh -n "$script"
+if sh "$script" prepare ../unsafe > /dev/null 2>&1; then exit 1; fi
+if sh "$script" unsupported session > /dev/null 2>&1; then exit 1; fi
+awk '
+$0 == "root_manifest()" { copy = 1 }
+copy { print }
+copy && $0 == "}" { exit }
+' "$script" > "$temporary/root_manifest.inc"
+test -s "$temporary/root_manifest.inc"
+. "$temporary/root_manifest.inc"
+# Mock only the device/od boundary; execute the real manifest/checksum logic.
+dd() { printf 'mock sector'; }
+words=128
+od()
+{
+ case " $* " in *' -v '*) :;; *) return 1;; esac
+ while IFS= read -r line; do :; done
+ index=0
+ while [ "$index" -lt "$words" ]; do
+  printf '4294967295\n'
+  index=$((index + 1))
+ done
+}
+manifest=$(root_manifest)
+set -- $manifest
+[ "$#" = 20 ]
+index=1
+for word do
+ case "$index" in 8|11|14|17|20) [ "$word" = ffffff80 ];; esac
+ index=$((index + 1))
+done
+words=127
+if root_manifest > /dev/null; then exit 1; fi
+words=0
+if root_manifest > /dev/null; then exit 1; fi
+printf 'PASS: boot helper argument guards, production root manifest/modular checksum, short-read rejection\n'
