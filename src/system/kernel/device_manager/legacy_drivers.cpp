@@ -528,18 +528,25 @@ get_priority(const char* path)
 		B_USER_DIRECTORY
 	};
 	KPath pathBuffer;
+	int32 priority = -1;
 
 	for (uint32 index = 0; index < B_COUNT_OF(whichPath); index++) {
 		if (__find_directory(whichPath[index], gBootDevice, false,
 			pathBuffer.LockBuffer(), pathBuffer.BufferSize()) == B_OK) {
 			pathBuffer.UnlockBuffer();
-			if (strncmp(pathBuffer.Path(), path, pathBuffer.Length()) == 0)
-				return index;
+			size_t length = pathBuffer.Length();
+			if (strncmp(pathBuffer.Path(), path, length) == 0
+				&& (path[length] == '/' || path[length] == '\0')) {
+				// The non-packaged system directory is inside the system
+				// directory. Keep looking for the more specific, higher
+				// priority match instead of treating both as packaged paths.
+				priority = index;
+			}
 		} else
 			pathBuffer.UnlockBuffer();
 	}
 
-	return -1;
+	return priority;
 }
 
 

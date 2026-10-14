@@ -491,6 +491,10 @@ rge_intr(void *arg)
 	uint32_t status;
 	int claimed = 0, rv;
 
+#if defined(HAIKU_PIONEER_RTL_DIAGNOSTICS) && defined(__riscv)
+	__atomic_fetch_add(&sc->rge_diagnostic_interrupts, 1, __ATOMIC_RELAXED);
+#endif
+
 	if (!(ifp->if_flags & IFF_RUNNING))
 		return (0);
 
@@ -3833,6 +3837,35 @@ rge_tick(void *arg)
 
 	s = splnet();
 	rge_link_state(sc);
+#if defined(HAIKU_PIONEER_RTL_DIAGNOSTICS) && defined(__riscv)
+	/* Read-only, bounded warm-boot diagnosis. No packet contents or polling
+	 * completion workaround: preserve the failing interrupt/DMA behavior. */
+	if (sc->rge_diagnostic_ticks < 16) {
+		struct rge_queues *q = sc->sc_queues;
+		uint32_t tick = sc->rge_diagnostic_ticks++;
+		printf("PIONEER-RTL %s tick=%u irq=%u cmd=%#x isr=%#x imr=%#x\n",
+		    DEVNAME(sc), tick,
+		    __atomic_load_n(&sc->rge_diagnostic_interrupts, __ATOMIC_RELAXED),
+		    RGE_READ_1(sc, RGE_CMD), RGE_READ_4(sc, RGE_ISR),
+		    RGE_READ_4(sc, RGE_IMR));
+		if (q != NULL && q->q_tx.rge_tx_list != NULL &&
+		    q->q_rx.rge_rx_list != NULL) {
+			int tx = q->q_tx.rge_txq_considx;
+			int rx = q->q_rx.rge_rxq_considx;
+			if (tx >= 0 && tx < RGE_TX_LIST_CNT &&
+			    rx >= 0 && rx < RGE_RX_LIST_CNT) {
+				printf("PIONEER-RTL %s tx=%d/%d status=%#x ring=%#llx "
+				    "rx=%d status=%#x ring=%#llx buffer=%#llx\n",
+				    DEVNAME(sc), tx, q->q_tx.rge_txq_prodidx,
+				    letoh32(q->q_tx.rge_tx_list[tx].rge_cmdsts),
+				    (unsigned long long)q->q_tx.rge_tx_listseg.ds_addr,
+				    rx, letoh32(q->q_rx.rge_rx_list[rx].hi_qword1.rx_qword4.rge_cmdsts),
+				    (unsigned long long)q->q_rx.rge_rx_listseg.ds_addr,
+				    (unsigned long long)letoh64(q->q_rx.rge_rx_list[rx].hi_qword0.rge_addr));
+			}
+		}
+	}
+#endif
 	splx(s);
 
 	timeout_add_sec(&sc->sc_timeout, 1);

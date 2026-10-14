@@ -444,6 +444,10 @@ struct rge_softc {
 
 	uint32_t		rge_intrs;
 	int			rge_timerintr;
+#if defined(HAIKU_PIONEER_RTL_DIAGNOSTICS) && defined(__riscv)
+	uint32_t		rge_diagnostic_ticks;
+	uint32_t		rge_diagnostic_interrupts;
+#endif
 #define RGE_IMTYPE_NONE		0
 #define RGE_IMTYPE_SIM		1
 

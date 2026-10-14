@@ -685,6 +685,15 @@ contain P332. This is not a proven fix for either failure.
 It creates the missing non-login sshd account when absent, refuses UID 0 for
 that account, and retains the existing key-based SSH configuration. Shell
 syntax checked; automatic startup still requires runtime verification.
+For SD-free boot diagnostics, `pioneer-ssh.launch` explicitly waits for the
+registrar and opts the script into `--serial-diagnostics`. Install it as
+`/boot/system/settings/launch/pioneer-ssh`, not as an additional duplicate job.
+This mode directs startup/sshd errors to `/dev/dprintf`, reports the failing
+startup stage, validates the explicit SSH configuration before exec, and
+reports four local RTL8125 interface snapshots over 60 seconds. It does not
+trace commands, read keys into logs, capture packets, or enable passwords.
+Without the option, serial diagnostics remain off. Host regression coverage:
+`sh tools/pioneer/tests/run_pioneer_sshd_tests.sh`.
 SD serial `0x0000e752` deployment completed with full readback verification;
 rollback backup stamp `20260906T235019Z`. Clean Linux shutdown, 20-second
 wait, relay on; next normal SD boot capture starts at 15731039.

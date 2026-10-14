@@ -1970,3 +1970,87 @@ Linux is the reachable fallback while that permission is requested. The
 successful SD-free kernel/root/desktop-service startup is retained in source,
 private test artifacts and this record; remote-unattended operation is not
 claimed complete.
+
+## October 14: authorized service audit and reversible SSH diagnostics
+
+The user explicitly approved displaying wired-network settings, non-secret
+SSH startup commands, selected service-account presence and filtered DHCP/SSH
+errors. The scoped read-only audit found the existing launcher intact and
+the nonzero-UID sshd account present in `system/settings/etc/passwd` (not the
+previously guessed `system/settings/passwd`). No private keys or password
+fields were displayed. Historical syslog entries include successful DHCP
+leases for the expected address, but lack timestamps and cannot establish
+network success during the new kexec boot.
+
+Replayed the journal and ran check-only checkfs on a private qcow2/NBD view
+while the Samsung backing partition was block-read-only. No newer log data
+appeared. Checkfs reported zero missing/duplicate allocations but 16,987
+blocks that could be freed; this is not a claim of a pristine filesystem.
+No repairs ran. The source was unmounted, original kernel write policy
+restored, and temporary NBD attachment/module removed.
+
+Release launch_daemon redirects job stdout/stderr to `/dev/null`. Added
+opt-in serial checkpoints/configuration testing to the tracked SSH launcher,
+plus a launch job with the registrar dependency. The explicit key-only SSH
+options remain unchanged. Regression tests exercise existing/missing accounts,
+UID-zero refusal, configuration and permission failures, default silent mode,
+and bounded interface reporting. Existing handoff/KMessage/probe tests pass.
+
+Rehearsed replacement of only the startup script and launch job on a fresh
+copy-on-write view, verified readback, then installed those exact two files
+on the identity-checked Samsung partition. Backups of both original regular
+files are retained on the build disk under
+`/mnt/ssd/pioneer-haiku-kexec-20261013/ssh-diag-1/installed/`.
+The OS package hash remained `6a40c785...b348a`; keys and account databases
+were not changed. Check-only allocation counts remained unchanged.
+
+At 16:58 UTC prepared and started mode-4 trial `enter-3` with the same tested
+loader and Samsung RAM bundle, a freshly read root identity manifest, FDT SHA
+`4037ce8ed6f6c268d3a0e29094ddd1106040b4f7a800ed148071f037acfa24b1`,
+and fresh marker `de0c2237582946ccacd21ff5131b5622`.
+Visible self-test and normal late-shutdown markers passed. Serial capture
+starts at byte 3350762. This trial is for live service diagnosis, not a new
+cache/DMA fix or a claim of unattended remote operation.
+
+Trial `enter-3` passed root identity/mount again. The new SSH diagnostics
+passed account, permission and `sshd -t` checks; sshd explicitly reported
+listening on IPv4/IPv6 port 22. The active wired port (MAC ending ce) reached
+1 Gb/s link, but successive snapshots showed no IPv4 address, zero received
+packets and five submitted transmit packets. Thus SSH startup is no longer
+the unobserved variable; receive/DMA/interrupt behavior needs investigation.
+Recovered Linux and removed the exact temporary shutdown hook; all baseline
+checks passed. No SD insertion was needed.
+
+Built an opt-in `HAIKU_PIONEER_RTL_DIAGNOSTICS=1` driver profile. It reports
+16 initial ticks of ISR/IMR, interrupt count and ring descriptor metadata,
+without packet contents, register writes or polling completions. Host tests
+execute the production tick function under ASan/UBSan, checking bounded
+output, null/index guards and diagnostics-off behavior. Cross build passed;
+shared outputs were rebuilt with diagnostics off and verified to contain no
+diagnostic marker. Private diagnostic driver SHA
+`1bb1fc8f063651c8373b063133bd48f368f17129107d4c6e9c13e7d1995a5816`,
+246,763 bytes. Native inspection confirmed zero unresolved strong imports
+against Samsung's actual kernel (SHA `38d4a424...49a65b`). Native package
+extraction reported unsupported Linux extended attributes after file data
+extraction; these are private inspection files, not installation artifacts.
+
+Rehearsed then installed one previously absent regular-file override at
+`system/non-packaged/add-ons/kernel/drivers/dev/net/rtl8125`. The package and
+its original driver remain unchanged. Check-only BFS allocation warnings
+remain 16,987 freeable blocks, zero missing/duplicate blocks. The override
+can be removed by its exact hash/path after recovery; no other override was
+created. A fresh manifest and marker are required for its boot trial.
+
+Trial `enter-4` (17:08:53 UTC, serial offset 3776564, marker
+`9a2a2c1fa4844e528b08df8d7c82b8d4`) loaded the system non-packaged driver
+but then initialized the packaged driver, yielding no diagnostic tick lines.
+This is not valid evidence about its DMA/interrupt counters. Source inspection
+found `legacy_drivers.cpp::get_priority()` returning on the general system
+directory prefix before considering the nested non-packaged directory; both
+therefore receive priority zero and the later packaged entry replaces the
+diagnostic path. Fixed the production function to retain the more-specific
+match and check directory-component boundaries. ASan/UBSan tests exercise
+the actual function with packaged, nested non-packaged, user and lookalike
+paths; the normal kernel cross build passed. This fix is not yet deployed
+to Samsung's unchanged OS package, so the current diagnostic trial must use
+the existing higher-priority user path instead, without any boot-preload link.

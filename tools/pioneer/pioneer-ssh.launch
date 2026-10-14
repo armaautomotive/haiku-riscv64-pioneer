@@ -1,0 +1,4 @@
+job pioneer-ssh {
+	requires x-vnd.Haiku-registrar
+	launch /bin/sh /boot/home/config/settings/ssh/start-sshd.sh --serial-diagnostics
+}

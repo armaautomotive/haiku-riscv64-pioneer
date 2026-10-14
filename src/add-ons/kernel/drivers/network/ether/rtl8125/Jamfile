@@ -1,5 +1,9 @@
 SubDir HAIKU_TOP src add-ons kernel drivers network ether rtl8125 ;
 
+if $(TARGET_ARCH) = riscv64 && $(HAIKU_PIONEER_RTL_DIAGNOSTICS) = 1 {
+	SubDirCcFlags [ FDefines HAIKU_PIONEER_RTL_DIAGNOSTICS=1 ] ;
+}
+
 UseHeaders [ FDirName $(HAIKU_TOP) src libs compat openbsd_network compat ] : true ;
 UseHeaders [ FDirName $(HAIKU_TOP) src libs compat freebsd_network compat ] : true ;
 UsePrivateHeaders net system ;
