@@ -92,6 +92,14 @@ Recover using relay off (seven-second hold), ten-second wait and relay on
 its pinned SSH return. Recovery itself must pass before unattended testing.
 No automatic load/execution or persistent boot-selection service is included.
 
+After the temporary boot-logging experiment was rolled back and normal NVMe
+Linux cold boot verified, a separate [late-shutdown trace](../kexec_trace/README.md)
+was prepared to observe the systemd userspace boundary without changing boot
+arguments. It requires its own saved-work/test approval, temporary installation
+and volatile arm token. A trace marker would not establish kernel handoff or
+probe execution; lack of a marker remains ambiguous until its self-test and
+late-hook invocation are checked on hardware.
+
 `pioneer_linux_cpu_quiesce.sh status|quiesce|restore` is a separate native
 runtime diagnostic, not a boot selector. Quiesce requires the original 0-63
 mask and no loaded image; it retains CPU 0, bounds each hotplug operation and

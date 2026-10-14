@@ -1390,3 +1390,56 @@ this recovery. Hardware entry remains unproven, and the unattended SD-free
 Haiku/Linux selector remains unimplemented. Do not reuse the one-shot Mac
 imager or start another logging experiment without addressing its remount race
 and preserving this now-working recovery path.
+
+### Late-userspace kexec trace prepared (not yet installed/armed)
+
+User approved resuming SD-free boot work. Rechecked the restored baseline:
+kernel 6.1.31, NVMe root, CPUs 0-63, kexec_loaded zero and the original extlinux
+SHA `53c0da6d...`. Root-visible journal history has no retained October 13
+failed-handoff shutdown record; pstore directories are empty. Installed
+systemd is 253.2. Its normal kexec target ends through systemd-shutdown and
+the installed `/usr/sbin/kexec -e`. Inspected matching upstream v253 shutdown
+source: system-shutdown hooks run after userspace/filesystem teardown and
+before the final kexec path. Existing hooks are mdadm and fwupd. Read-only
+SQLite inspection found `/var/lib/fwupd/pending.db` exists but its history
+table has zero rows; its name alone must not be treated as a pending update.
+`/proc/mdstat` lists no arrays. No activation command or firmware write ran.
+
+Copied the installed public System.map and existing staged decompressed
+kernel for local disassembly, not live kernel-memory access. Its handoff
+code matches the older relocation/CPU shutdown structure; this does not
+isolate the silent failure or justify a kernel patch. No boot-entry or
+kernel replacement was made.
+
+Implemented `tools/pioneer/kexec_trace/` plus native build and host test
+scripts. The native userspace helper ignores normal poweroff/reboot/halt,
+requires an explicitly created root-owned 0600 single-link arm file in /run,
+checks riscv64/exact UART binding and the expected kexec_loaded state, and
+emits distinct self-test/late-shutdown markers carrying a fresh token. It
+only sets the verified native UART to 115200 raw/no-flow-control; it never
+loads an image or reboots. Nonblocking output is limited to one second/512
+calls, drain polling to one second, and a process alarm covers three seconds.
+These are userspace bounds, not protection against a wedged kernel operation.
+The volatile arm token disappears on cold reboot, leaving an installed
+helper inactive even if cleanup has not yet been possible.
+
+ASan/UBSan host tests passed for token policy, both marker forms, partial
+writes, EINTR/EAGAIN, timeout/iteration/clock bounds and invalid write results.
+All existing kexec probe tests and six Image-header test groups still pass.
+Native build succeeded using existing GCC with explicit RV64GC/LP64D (no
+RVV 1.0). Private binary:
+`/mnt/ssd/pioneer-kexec-probe-20261013/shutdown-trace-1/build/PioneerKexecTrace`,
+SHA-256 `5010270d91c420346a0a3cedf0ad6a6feb7dddce2ffbac9fdcb6e56a16b7b063`.
+Native normal-action no-op and unarmed kexec/self-test guard checks passed;
+none opened the UART. The first aggregate shell command stopped at an
+over-conservative database-absence check **after** reporting guard tests pass;
+subsequent read-only schema inspection established the history is empty.
+
+The helper remains **uninstalled and unarmed**. No image has been loaded and
+no reboot/CPU-hotplug operation has occurred in this resumed work. Requested
+explicit saved-Linux-work approval for one controlled test with a temporary
+late-shutdown hook, fresh visible self-test token, normal systemctl kexec,
+bounded serial observation, relay recovery, complete baseline revalidation
+and hash-checked hook cleanup. Approval is pending; do not treat the question's
+preselected answer or these host/native guard tests as hardware authorization
+or actual late-shutdown/probe success. The restored extlinux hash is unchanged.

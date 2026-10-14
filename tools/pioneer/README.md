@@ -52,6 +52,9 @@ The [kexec entry probe](kexec_probe/README.md) starts the SD-free bootstrap
 work. Its build and host tests are local-only; the read-only Linux preflight
 does not load or execute a payload. Hardware handoff and recovery remain
 separate validation gates before an unattended boot selector is implemented.
+The optional [late-shutdown UART trace](kexec_trace/README.md) is a separately
+armed userspace diagnostic for the silent handoff. Its preparation/build do
+not install it, load a payload, reboot, or change the restored boot entry.
 
 ## Haiku build and SD deployment
 
