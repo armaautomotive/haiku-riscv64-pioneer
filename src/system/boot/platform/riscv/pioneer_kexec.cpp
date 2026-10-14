@@ -74,7 +74,9 @@ void PioneerKexecStop(bool success, const char* reason)
 	Put(reason);
 	uintptr_t satp;
 	asm volatile("csrr %0, satp" : "=r"(satp));
-	Put(satp ? " (kernel handoff active)\n" : " (kernel not started)\n");
+	// Secondary harts can already be at the kernel rendezvous even when the
+	// boot hart has not switched SATP. Do not describe partial SMP as no entry.
+	Put(satp ? " (kernel handoff active)\n" : " (boot-hart MMU still off)\n");
 	Put("HALTED: relay recovery required\n");
 	Halt();
 }

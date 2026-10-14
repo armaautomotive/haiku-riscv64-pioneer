@@ -326,6 +326,7 @@ pioneer_prepare_kernel(preloaded_elf64_image* image)
 	convert_kernel_args();
 	uint64 satp;
 	mmu_init_for_kernel(satp);
+	smp_prepare_pioneer(satp, entry);
 	mmu_validate_pioneer_handoff(entry);
 	dprintf("Pioneer prepared: %" B_PRIu32 " CPU, hart %" B_PRIu32
 		", PLIC context %" B_PRIu32 ", RAM %#" B_PRIx64 " bytes\n",
@@ -335,6 +336,7 @@ pioneer_prepare_kernel(preloaded_elf64_image* image)
 		PioneerKexecStop(true, "kernel_handoff_prepared_SATP_not_switched");
 	if (PioneerKexecMode() != 4)
 		PioneerKexecStop(false, "kernel_execution_not_explicitly_requested");
+	smp_boot_other_cpus(satp, entry);
 	addr_t stackTop = gKernelArgs.cpu_kstack[0].start + gKernelArgs.cpu_kstack[0].size;
 	dprintf("HAIKU_KEXEC_LOADER v3 HANDOFF entry %#lx args %p stack %#lx\n",
 		entry, &gKernelArgs, stackTop);

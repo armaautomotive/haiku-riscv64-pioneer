@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include "pioneer_kexec.h"
+#include "smp.h"
 #ifdef PIONEER_KEXEC_PROBE
 #include <platform/sbi/sbi_syscalls.h>
 static bool sTHeadMae;
@@ -527,6 +528,21 @@ mmu_validate_pioneer_handoff(addr_t entry)
 		|| !PioneerMappingMatches(gKernelArgs.arch_args.plic.start, writable, true, 0x7090000000ULL)
 		|| gKernelArgs.arch_args.htif.size != 0 || gKernelArgs.arch_args.clint.size != 0)
 		PioneerKexecStop(false, "handoff_mapping_validation");
+	for (uint32 cpu = 1; cpu < gKernelArgs.num_cpus; cpu++) {
+		const PioneerApEntry* info = smp_pioneer_entry(cpu);
+		addr_range stack = gKernelArgs.cpu_kstack[cpu];
+		if (info == NULL || stack.size != KERNEL_STACK_SIZE + KERNEL_STACK_GUARD_PAGES * B_PAGE_SIZE
+			|| (stack.start & (B_PAGE_SIZE - 1)) != 0
+			|| !PioneerMappingMatches((addr_t)&pioneer_ap_entry, executable)
+			|| !PioneerMappingMatches((addr_t)info, writable, false, (addr_t)info)
+			|| !PioneerMappingMatches((addr_t)info + sizeof(*info) - 1, writable,
+				false, (addr_t)info + sizeof(*info) - 1))
+			PioneerKexecStop(false, "AP_descriptor_mapping_validation");
+		for (addr_t offset = 0; offset < stack.size; offset += B_PAGE_SIZE) {
+			if (!PioneerMappingMatches(stack.start + offset, writable))
+				PioneerKexecStop(false, "AP_stack_mapping_validation");
+		}
+	}
 	dprintf("Pioneer handoff mappings: kernel/args/FDT/stacks/PLIC/UART verified\n");
 }
 #endif

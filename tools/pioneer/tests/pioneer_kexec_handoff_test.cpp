@@ -16,6 +16,7 @@ static unsigned queries;
 static int badHart = -1;
 static bool mapped;
 static bool entered;
+static bool apsStarted;
 static struct KernelArgs {
 	uint32 num_cpus = 1;
 	struct { uint32 machine_platform; uint32 hartIds[1] = {3}; uint32 plicContexts[1] = {7}; } arch_args;
@@ -38,11 +39,20 @@ static void smp_init_other_cpus() {}
 static void fdt_set_kernel_args() {}
 static void convert_kernel_args() {}
 static void mmu_init_for_kernel(uint64& satp) { satp = 0x8000000000003b32ULL; }
+static void smp_prepare_pioneer(uint64 satp, uint64 entry)
+{
+	assert(satp == 0x8000000000003b32ULL && entry == 0xffffffc00010a018ULL);
+}
+static void smp_boot_other_cpus(uint64 satp, uint64 entry)
+{
+	assert(mode == 4 && mapped && satp == 0x8000000000003b32ULL && entry == 0xffffffc00010a018ULL);
+	apsStarted = true;
+}
 static void mmu_validate_pioneer_handoff(addr_t entry) { assert(entry == 0xffffffc00010a018ULL); mapped = true; }
 static void mock_dprintf(const char*, ...) {}
 static void arch_enter_kernel(uint64 satp, KernelArgs* args, addr_t entry, addr_t stack)
 {
-	assert(mode == 4 && queries == 64 && mapped);
+	assert(mode == 4 && queries == 64 && mapped && apsStarted);
 	assert(satp == 0x8000000000003b32ULL && args == &gKernelArgs);
 	assert(entry == 0xffffffc00010a018ULL && stack == 0xffffffc000805000ULL);
 	entered = true;
@@ -55,11 +65,11 @@ static void invoke_handoff(preloaded_elf64_image* image)
 
 static void expect_stop(uint64 requested, bool success, const char* reason)
 {
-	mode = requested; queries = 0; mapped = entered = false;
+	mode = requested; queries = 0; mapped = entered = apsStarted = false;
 	preloaded_elf64_image image;
 	try { invoke_handoff(&image); assert(false); }
 	catch (const Stop& stop) { assert(stop.success == success && !std::strcmp(stop.reason, reason)); }
-	assert(!entered);
+	assert(!entered && !apsStarted);
 }
 int main()
 {

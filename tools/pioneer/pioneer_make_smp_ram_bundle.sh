@@ -1,0 +1,57 @@
+#!/bin/sh
+# Recorded native Linux only. Fresh private RAM bundle; no Samsung/SD writes.
+set -eu
+test "$(id -u)" = 0
+test "$(uname -s):$(uname -m)" = Linux:riscv64
+test "$(findmnt -n -o SOURCE /mnt/ssd)" = /dev/sdb2
+base=/mnt/ssd/pioneer-haiku-kexec-20261013
+run=$base/smp-kernel-bundle-1
+source=$base/p100a-root-probe-2/samsung-private.hpkg
+candidate=$base/smp-kernel-1/kernel_riscv64
+host=/mnt/ssd/pioneer-xhci-rollback-20261012/host/objects/linux/riscv64/release/tools
+package=$host/package/package
+bfs=$host/bfs_shell/bfs_shell
+entry=kernel_riscv64
+ecam=add-ons/kernel/busses/pci/ecam
+hash_is()
+{
+ test -f "$1" && test ! -L "$1"
+ test "$(sha256sum "$1" | cut -d ' ' -f1)" = "$2"
+}
+hash_is "$source" 7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
+hash_is "$candidate" cd02cdb537a41641a1eb6442abd6cfd083614243b85a7841ebf824291e8013e3
+test ! -e "$run" && test ! -L "$run"
+umask 077
+mkdir -m 700 "$run"
+mkdir -p "$run/replacement" "$run/verify/add-ons/kernel/busses/pci"
+cp "$candidate" "$run/replacement/$entry"
+chmod 755 "$run/replacement/$entry"
+cp "$source" "$run/samsung-private.hpkg"
+"$package" list -p "$source" > "$run/original.paths"
+test "$(grep -cx "$entry" "$run/original.paths")" = 1
+"$package" add -1 -f -C "$run/replacement" "$run/samsung-private.hpkg" "$entry" > "$run/package-add.log" 2>&1
+"$package" list -p "$run/samsung-private.hpkg" > "$run/candidate.paths"
+LC_ALL=C sort "$run/original.paths" > "$run/original.sorted"
+LC_ALL=C sort "$run/candidate.paths" > "$run/candidate.sorted"
+cmp "$run/original.sorted" "$run/candidate.sorted"
+# Linux can reject Haiku attributes after extracting complete file data.
+"$package" extract -C "$run/verify" "$run/samsung-private.hpkg" "$entry" > "$run/extract-kernel.log" 2>&1 || extract_status=$?
+"$package" extract -C "$run/verify" "$run/samsung-private.hpkg" "$ecam" > "$run/extract-ecam.log" 2>&1 || extract_status=$?
+hash_is "$run/verify/$entry" cd02cdb537a41641a1eb6442abd6cfd083614243b85a7841ebf824291e8013e3
+hash_is "$run/verify/$ecam" 23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d
+hash_is "$source" 7a830442362ba511bdfc08f6d99e26df5813475861d3583a90cb62cbef1f3cea
+image=$run/samsung-ram.bfs
+truncate -s 314572800 "$image"
+test -f "$image" && test ! -L "$image"
+"$bfs" --initialize "$image" PioneerSMPKernel 'block_size 2048' > "$run/initialize.log" 2>&1
+printf '%s\n' 'mkdir /myfs/system' 'mkdir /myfs/system/packages' \
+ "cp :$run/samsung-private.hpkg /myfs/system/packages/haiku-r1~beta6_hrev99999-1-riscv64.hpkg" \
+ 'sync' 'checkfs -c' \
+ "cp /myfs/system/packages/haiku-r1~beta6_hrev99999-1-riscv64.hpkg :$run/roundtrip.hpkg" \
+ 'sync' > "$run/commands"
+"$bfs" -n "$image" 3< "$run/commands" 4> "$run/replies" > "$run/populate.log" 2>&1
+test "$(wc -l < "$run/replies")" -eq 7
+test "$(sort -u "$run/replies")" = 0
+cmp "$run/samsung-private.hpkg" "$run/roundtrip.hpkg"
+sha256sum "$image" "$run/samsung-private.hpkg" "$run/verify/$entry" "$run/verify/$ecam"
+printf 'PRIVATE SMP RAM BUNDLE PASS: kernel replaced; package paths/root-opt-in ECAM preserved\n'

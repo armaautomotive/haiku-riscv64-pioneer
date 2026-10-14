@@ -2140,3 +2140,84 @@ handoff, KMessage, xHCI cleanup, SSH, driver-priority, RTL selection/diagnostics
 and boot-helper tests all pass. Shared cross-build outputs are normal profiles,
 not the opt-in diagnostic driver. Unrelated llama.cpp submodule edits remain
 untouched.
+
+## October 14: SD-free SMP loader, two-core tests and remaining runtime gate
+
+The user requested restoring all CPUs before P100A inference. Added a
+default-off `/chosen/haiku,pioneer-cpu-count` property (power-of-two counts
+through 64) to the private non-EFI loader. Without it, the tested single-hart
+path remains unchanged. The selected set puts the actual Linux entry hart
+first, not an assumed hart 0. It requires complete/unique FDT records for all
+64 physical harts and their supervisor PLIC contexts, then allocates distinct
+final stacks and static reserved entry descriptors before final mappings.
+
+The new assembly trampoline checks SBI's MMU-off entry, expected hart and
+T-Head MAEE state, installs a private early trap recorder, enables FP state,
+loads all descriptor inputs before switching SATP, fences TLB/instructions,
+touches its private stack and acknowledges final mappings. It calls the
+normal kernel ABI with the logical CPU index. The boot hart starts only
+selected stopped APs, with bounded entry waits and checked HSM return codes.
+Probe modes 1-3 cannot start APs. Mapping validation covers every AP stack,
+descriptor and trampoline. Late failure can mean partial AP entry; stop
+diagnostics now describe the boot hart's MMU state, not falsely "no kernel".
+
+ASan/UBSan tests execute the production startup body and topology policy,
+cover all 64 choices of boot hart, every supported count, missing/duplicate
+identities/contexts, bad descriptor/HSM state, start errors, entry traps and
+timeouts. Existing preload/handoff/boot-helper/card-policy tests still pass.
+The integrated loader cross-build passes and restores shared generic output.
+
+Live sequence (all times UTC, no SD/firmware/default-boot change):
+
+- Before the first SMP trial, the previously running single-core September 4
+  Samsung kernel panicked at a user-mode execute fault at zero in sshd-session
+  thread 616. The normal shutdown request did not complete; relay recovery
+  was an unclean stop, not a confirmed shutdown. Do not attribute that earlier
+  fault to the not-yet-run SMP candidate.
+- `smp2-20261014-1`, serial boundary 7685191: loader refused the PLIC table
+  before any AP or kernel entry. Actual inactive machine-mode slots use
+  `ffffffff`; the supervisor slots use 9. The corrected parser preserves
+  the inactive slots' numbering and never assigns them to a CPU. This was
+  checked against both the saved and live Linux FDT; a regression test covers it.
+- `smp2-20261014-2`, boundary 7753311: loader `smp-3` booted the unchanged
+  Samsung kernel `38d4a424...49a65b` with logical CPUs 0/1 on harts 3/0.
+  Both schedulers enabled, SSH worked and `sysinfo -cpu` reported 2. The
+  pinned worker test then hit the old scheduler assertion
+  `nextThreadData->Core() == core` in thread 381 on CPU 1 during snooze.
+  This is **not** a passing SMP workload test. The test executable had not
+  been flushed before that panic and was absent after recovery; future
+  staging explicitly syncs before workload execution.
+- The repository's later affinity/trap migration fix `a1b44844a6` was already
+  SD-tested but is absent from the installed September 4 kernel. Built the
+  current kernel, checked matching mirror sources and disassembled the
+  context-switch CSR restoration. A native-only HPKG copy replaced only its
+  kernel; path sets, retained root-opt-in ECAM, fresh BFS consistency and
+  package round trip were verified. No kernel/package was installed on Samsung.
+- `smp2-kernel1-20261014`, boundary 8011208: that RAM-only kernel booted both
+  CPUs (boot hart 1, AP hart 0), reached userspace, and returned `sysinfo`=2
+  over SSH. The pinned executable was missing, so **no worker test ran**.
+  Subsequent network access stopped without a fatal panic in the inspected
+  serial capture. Do not call this kernel or two-core mode stable. Normal
+  SSH shutdown could not be confirmed; relay recovery was required again.
+
+The next controlled comparison is all 64 CPUs with the same private kernel;
+it is not validated yet. The 3 GiB RAM restriction remains separate. The
+bounded userspace smoke test checks CPU enabled state, real placement,
+arithmetic, private memory across sleeps, and the final CPU mask. Its newer
+revision bounds joins and terminates only its own test threads on timeout.
+
+Current experimental artifacts:
+
+- Loader `smp-4/HaikuPioneerKexecProbe.Image`:
+  `7f9788287e1851789ff41b098c910d613df51c4044256278f104b9b806082fcb`.
+  Startup code is unchanged from the two-core-booted `smp-3` image; only the
+  partial-entry stop wording changed. It has not yet been booted.
+- Fixed kernel: `cd02cdb537a41641a1eb6442abd6cfd083614243b85a7841ebf824291e8013e3`.
+- Private `smp-kernel-bundle-1/samsung-private.hpkg`:
+  `71bb415fb2968c1119d6e177ed69213546104a5765990b6e3f15849570e21948`.
+- Its RAM BFS: `a3e1015fb56a440d5ea75a538b590c59cebd1ce99183b176eaef2ac703010c28`.
+- Bounded CPU test: `6bd45e4c49a3f49d31de0bc95aaaf9de4ed216045f4c290f84e822ab214701a6`.
+
+The old single-core loader/bundle and all intermediate private candidates
+remain available. All host tests/builds are evidence of source/artifact
+checks, not proof of 64-core runtime correctness or P100A inference.

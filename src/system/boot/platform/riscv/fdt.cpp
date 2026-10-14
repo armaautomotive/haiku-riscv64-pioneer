@@ -287,6 +287,49 @@ fdt_init_pioneer(unsigned int hart)
 	if (context == UINT32_MAX)
 		PioneerKexecStop(false, "missing_boot_hart_context");
 	smp_init_pioneer(hart, phandle, context);
+	// An absent property retains the already-tested single-hart adapter.
+	int chosen = fdt_path_offset(gFdt, "/chosen");
+	const unsigned char* requested = (const unsigned char*)fdt_getprop(gFdt,
+		chosen, "haiku,pioneer-cpu-count", &length);
+	if (requested != NULL) {
+		if (length != 4 || !PioneerCpuCountValid(PioneerReadBeCell(requested, 4)))
+			PioneerKexecStop(false, "invalid_requested_CPU_count");
+		uint32 count = PioneerReadBeCell(requested, 4);
+		PioneerCpuTopology topology = {};
+		PioneerCpuRecord selected[64];
+		fdt_for_each_subnode(cpu, gFdt, cpus) {
+			int typeLength;
+			const char* type = (const char*)fdt_getprop(gFdt, cpu, "device_type", &typeLength);
+			if (type == NULL || typeLength != 4 || memcmp(type, "cpu", 4) != 0) continue;
+			const char* status = (const char*)fdt_getprop(gFdt, cpu, "status", &length);
+			if (status != NULL && !((length == 5 && memcmp(status, "okay", 5) == 0)
+				|| (length == 3 && memcmp(status, "ok", 3) == 0)))
+				PioneerKexecStop(false, "disabled_Pioneer_CPU");
+			const unsigned char* reg = (const unsigned char*)fdt_getprop(gFdt, cpu, "reg", &length);
+			if (reg == NULL || length != 4 || PioneerReadBeCell(reg, 4) >= 64)
+				PioneerKexecStop(false, "invalid_Pioneer_CPU_reg");
+			uint32 id = PioneerReadBeCell(reg, 4);
+			int intc = fdt_subnode_offset(gFdt, cpu, "interrupt-controller");
+			if (intc < 0 || fdt_node_check_compatible(gFdt, intc, "riscv,cpu-intc") != 0)
+				PioneerKexecStop(false, "invalid_CPU_interrupt_controller");
+			const unsigned char* cells = (const unsigned char*)fdt_getprop(gFdt, intc,
+				"#interrupt-cells", &length);
+			if (cells == NULL || length != 4 || PioneerReadBeCell(cells, 4) != 1
+				|| !PioneerAddCpu(topology, id, fdt_get_phandle(gFdt, intc)))
+				PioneerKexecStop(false, "invalid_CPU_topology");
+		}
+		contexts = (const unsigned char*)fdt_getprop(gFdt, plic, "interrupts-extended", &length);
+		if (contexts == NULL || length != 1024) PioneerKexecStop(false, "invalid_SMP_PLIC_table");
+		for (int offset = 0; offset < length; offset += 8) {
+			if (!PioneerAddCpuContext(topology, PioneerReadBeCell(contexts + offset, 4),
+				PioneerReadBeCell(contexts + offset + 4, 4), offset / 8))
+				PioneerKexecStop(false, "invalid_SMP_PLIC_context");
+		}
+		if (!PioneerSelectCpus(topology, hart, count, selected))
+			PioneerKexecStop(false, "incomplete_Pioneer_CPU_topology");
+		smp_set_pioneer_cpus(selected, count);
+		dprintf("Pioneer SMP opt-in: %u CPUs, boot hart %u first; all 64 FDT/PLIC records verified\n", count, hart);
+	}
 	int uart = fdt_path_offset(gFdt, "/soc/serial@7040000000");
 	// Base/size/shift/width were already checked before any C++ initialization.
 	strcpy(sUart.kind, UART_KIND_8250);

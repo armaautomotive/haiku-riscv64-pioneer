@@ -14,6 +14,7 @@ for source in src/system/boot/platform/riscv/crt0.S \
  src/system/boot/platform/riscv/Jamfile \
  src/system/boot/platform/riscv/pioneer_kexec.cpp \
  src/system/boot/platform/riscv/pioneer_kexec.h \
+ src/system/boot/platform/riscv/pioneer_smp.h \
  src/system/boot/platform/riscv/start.cpp \
  src/system/boot/platform/riscv/debug.cpp \
  src/system/boot/platform/riscv/console.cpp \
