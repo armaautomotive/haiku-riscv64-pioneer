@@ -112,7 +112,13 @@ validates critical page-table mappings before entry. Post-SATP loader traps
 use a canonical UART alias. Run `run_pioneer_kexec_handoff_tests.sh` for the
 production mode-3 halt/mode-4 entry gates, and `run_kmessage_element_tests.sh`
 for the optional-output API regression exposed by root-manifest registration.
-Mode 4 is an experimental hardware path, not yet a verified desktop selector.
+Mode 4 successfully mounted Samsung root and started app_server, Tracker and
+Deskbar with both SD cards out. The private tested Image SHA is
+`6188d850ba4fda0851031dd9213d2cd1e760276eddfa801a577d73ddc6850961`.
+Device mappings use a separate KERNEL_BASE+1 GiB window to avoid collision
+with early kernel allocations while generic boot-range reservations are
+deferred. Physical display/input confirmation and remote SSH/networking are
+not yet verified, so this is not yet an unattended desktop selector.
 
 ## Haiku build and SD deployment
 

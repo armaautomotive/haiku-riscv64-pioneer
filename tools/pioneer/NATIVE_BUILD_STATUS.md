@@ -1908,3 +1908,65 @@ The next loader-only candidate moves device mappings to a separate window
 at KERNEL_BASE+1 GiB with an overlap gate, leaving space for initial kernel
 areas below it. This is a hypothesis-driven retry; no Samsung kernel or
 package replacement is involved.
+
+## October 13 local / October 14 UTC: SD-free Samsung boot reaches desktop services
+
+The dedicated-MMIO-window candidate (same kernel/package, loader-only change)
+is 1,421,312 bytes, SHA
+`6188d850ba4fda0851031dd9213d2cd1e760276eddfa801a577d73ddc6850961`.
+The previous kernel-entry failure recovered into the complete Linux baseline
+and owned-hook cleanup at 05:29:56 UTC. Re-read Samsung identity sectors;
+unchanged. Fresh marker add3a96ff84e0aa74dcd3702e4f6976f, verified image/FDT/
+bundle, visible self-test, UART on/active and normal load/shutdown passed.
+Execution began 05:31:06 UTC, fresh serial offset 2945223.
+
+This time the kernel passed VM/area setup, identified Samsung with the exact
+whole-disk size and all five checksum matches, selected partition byte offset
+32768, and mounted BFS root `/dev/disk/scsi/0/3/0/0`. It loaded/resumed
+launch_daemon and started net_server, debug_server, app_server, input_server,
+Tracker, Deskbar and notification_server. Radeon initialized a 1600-pixel
+framebuffer. There was no panic through the observed userspace run. Both SD
+cards remained physically out throughout. This establishes SD-free Samsung
+root/userspace startup; physical desktop/input confirmation remains separate.
+
+The working initial adapter is still intentionally one CPU and the low RAM
+window, not a full-memory/SMP validation. Remote access is unresolved: NICs
+enumerated, active RTL8125 MAC ending ce reported 1 Gb/s link, and a DHCP
+negotiator started, but 10.0.0.247 ICMP/pinned SSH timed out. The source-derived
+IPv4 fallback 169.254.0.10 did not resolve via ARP. IPv6 link-local also did
+not answer; source inspection then confirmed default IPv6 autoconfiguration
+is disabled in this net_server. No LAN-wide scan or SSH trust bypass ran.
+Mac packet-header capture was unavailable because sudo requires a password
+and unprivileged BPF access is denied; no permission was weakened.
+
+Captured the full private serial log, left the package unmodified, and began
+relay fallback recovery at 05:39 UTC to inspect only the saved network/SSH
+configuration through Linux befs read-only. Default boot settings, SPI,
+recovery media and SD contents are unchanged. A normal Haiku boot can write
+its own logs/settings; the relay recovery was not a claimed graceful shutdown
+and future source inspection must account for possible pending BFS journal
+state. No disk repair or offline write is authorized by that read-only audit.
+
+Linux recovery returned all 64 CPUs, NVMe root/boot, empty kexec slot and
+unchanged extlinux hash/metadata; the exact temporary hook was removed.
+The first post-Haiku Linux clock reading briefly showed May 2023, so local
+Mac UTC timestamps remain the reliable trial ordering evidence.
+
+Automatic safety review rejected the planned readout of Samsung network/SSH
+configuration, selected account metadata and filtered service logs. That
+script was not executed and no alternate content-export path was used.
+A separate lower-risk existence-only script was approved and completed:
+system/settings/launch/pioneer-ssh, home/config/settings/ssh/start-sshd.sh,
+home/config/settings/ssh/authorized_keys and system/var/log/syslog are regular
+files; system/home wired interfaces files were absent or symlinks, as was
+the probed system/settings/passwd path. No conclusions about account validity
+or exact configuration contents follow from those existence checks.
+The transient mount was explicitly read-only and successfully unmounted.
+
+Next required authorization is the narrowly scoped configuration/filtered-log
+inspection (no private keys, password hashes or general personal logs), not
+an SD-card swap. No offline repair or source-disk write has been performed.
+Linux is the reachable fallback while that permission is requested. The
+successful SD-free kernel/root/desktop-service startup is retained in source,
+private test artifacts and this record; remote-unattended operation is not
+claimed complete.
