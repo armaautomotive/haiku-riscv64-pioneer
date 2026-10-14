@@ -8,8 +8,11 @@
 
 int main()
 {
+	setvbuf(stdout, NULL, _IONBF, 0);
+	printf("P100A-PROFILE: userspace entered; opening probe device\n");
 	int fd = open("/dev/" TT_PCI_PROBE_DEVICE, O_RDWR);
 	if (fd < 0) { perror(TT_PCI_PROBE_DEVICE); return 1; }
+	printf("P100A-PROFILE: device opened; read-only profile ioctl begin\n");
 	tt_pioneer_profile p = {};
 	int status = ioctl(fd, TT_PCI_PROBE_PIONEER_PROFILE, &p, sizeof(p));
 	close(fd);

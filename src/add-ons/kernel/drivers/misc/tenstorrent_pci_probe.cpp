@@ -67,12 +67,15 @@ FindCard(pci_module_info* pci, pci_info& card)
 status_t
 init_hardware()
 {
+	dprintf("PIONEER-P100A: probe hardware PCI module begin\n");
 	pci_module_info* pci;
 	status_t status = get_module(B_PCI_MODULE_NAME, (module_info**)&pci);
+	dprintf("PIONEER-P100A: probe hardware PCI module status %" B_PRId32 "\n", status);
 	if (status != B_OK)
 		return status;
 	pci_info card;
 	bool found = FindCard(pci, card);
+	dprintf("PIONEER-P100A: probe hardware scan found %d\n", found);
 	put_module(B_PCI_MODULE_NAME);
 	return found ? B_OK : B_ENTRY_NOT_FOUND;
 }
@@ -80,7 +83,9 @@ init_hardware()
 status_t
 init_driver()
 {
+	dprintf("PIONEER-P100A: probe driver init begin\n");
 	status_t status = get_module(B_PCI_MODULE_NAME, (module_info**)&sPCI);
+	dprintf("PIONEER-P100A: probe driver PCI module status %" B_PRId32 "\n", status);
 	if (status != B_OK)
 		return status;
 	if (!FindCard(sPCI, sCard)) {
@@ -88,12 +93,14 @@ init_driver()
 		sPCI = NULL;
 		return B_ENTRY_NOT_FOUND;
 	}
+	dprintf("PIONEER-P100A: probe driver scan complete\n");
 	sLock = create_sem(1, "P100A config address probe");
 	if (sLock < B_OK) {
 		put_module(B_PCI_MODULE_NAME);
 		sPCI = NULL;
 		return sLock;
 	}
+	dprintf("PIONEER-P100A: probe driver init complete\n");
 	return B_OK;
 }
 
@@ -124,6 +131,7 @@ ProbeOpen(const char* name, uint32 flags, void** cookie)
 	if (strcmp(name, TT_PCI_PROBE_DEVICE) != 0)
 		return B_ENTRY_NOT_FOUND;
 	*cookie = &sCookie;
+	dprintf("PIONEER-P100A: probe open ready\n");
 	return B_OK;
 }
 
@@ -663,15 +671,21 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation == TT_PCI_PROBE_PIONEER_PROFILE) {
 		if (data == NULL || length != sizeof(tt_pioneer_profile))
 			return B_BAD_VALUE;
+		dprintf("PIONEER-P100A: profile semaphore begin\n");
 		status_t status = acquire_sem(sLock);
+		dprintf("PIONEER-P100A: profile semaphore status %" B_PRId32 "\n", status);
 		if (status != B_OK)
 			return status;
 		tt_pioneer_profile profile = {};
-		if (sDeviceManager == NULL)
+		if (sDeviceManager == NULL) {
+			dprintf("PIONEER-P100A: profile device manager module begin\n");
 			status = get_module(B_DEVICE_MANAGER_MODULE_NAME,
 				(module_info**)&sDeviceManager);
+			dprintf("PIONEER-P100A: profile device manager module status %" B_PRId32 "\n", status);
+		}
 		if (status == B_OK)
 			status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		dprintf("PIONEER-P100A: profile returned status %" B_PRId32 " stage %u\n", status, profile.stage);
 		profile.status = status;
 		release_sem(sLock);
 		return user_memcpy(data, &profile, sizeof(profile));

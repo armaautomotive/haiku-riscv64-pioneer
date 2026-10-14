@@ -6,6 +6,7 @@
 #include "../../busses/pci/ecam/Sg2042RootPolicy.h"
 
 #include <ByteOrder.h>
+#include <KernelExport.h>
 #include <drivers/bus/PCI.h>
 #include <drivers/bus/FDT.h>
 #include <string.h>
@@ -30,6 +31,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	profile = {};
 	profile.version = 1;
 	profile.card_bus = expected.bus;
+	dprintf("PIONEER-P100A: profile root node begin\n");
 	NodeRef tree(dm, dm->get_root_node());
 	if (tree.node == NULL)
 		return B_ENTRY_NOT_FOUND;
@@ -40,10 +42,12 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 		{}
 	};
 	device_node* cardNode = NULL;
+	dprintf("PIONEER-P100A: profile card node search begin\n");
 	if (dm->find_child_node(tree.node, cardAttrs, &cardNode) != B_OK)
 		return B_ENTRY_NOT_FOUND;
 	NodeRef card(dm, cardNode);
 	profile.stage = 1;
+	dprintf("PIONEER-P100A: profile stage 1 card node found\n");
 	pci_device_module_info* pci;
 	pci_device* device;
 	if (dm->get_driver(card.node, (driver_module_info**)&pci,
@@ -61,6 +65,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 		|| localBus != 1 || slot != 0 || function != 0)
 		return B_UNSUPPORTED;
 	profile.stage = 2;
+	dprintf("PIONEER-P100A: profile stage 2 cached card identity checked\n");
 	NodeRef root(dm, dm->get_parent_node(card.node));
 	if (root.node == NULL)
 		return B_ENTRY_NOT_FOUND;
@@ -78,6 +83,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	}
 	if (peerCount != 2)
 		return B_UNSUPPORTED;
+	dprintf("PIONEER-P100A: profile root peers checked\n");
 	device_attr rootAttrs[] = {
 		{B_DEVICE_BUS, B_STRING_TYPE, {.string = "pci"}},
 		{B_PCI_DEVICE_BUS, B_UINT8_TYPE, {.ui8 = 0}},
@@ -91,6 +97,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	NodeRef rootPort(dm, rootPortNode);
 	pci_device_module_info* rootPCI;
 	pci_device* rootDevice;
+	dprintf("PIONEER-P100A: profile root PCI reads begin\n");
 	if (dm->get_driver(rootPort.node, (driver_module_info**)&rootPCI,
 			(void**)&rootDevice) != B_OK
 		|| strcmp(rootPCI->info.info.name, "bus_managers/pci/driver_v1") != 0
@@ -107,6 +114,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	profile.root_prefetch_limit_high = rootPCI->read_pci_config(rootDevice, 0x2c, 4);
 	profile.root_memory = rootPCI->read_pci_config(rootDevice, 0x20, 4);
 	profile.stage = 3;
+	dprintf("PIONEER-P100A: profile stage 3 root PCI reads complete\n");
 	NodeRef controller(dm, dm->get_parent_node(root.node));
 	if (controller.node == NULL)
 		return B_ENTRY_NOT_FOUND;
@@ -147,6 +155,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	if (length < 0 || !Sg2042BlackholeRootRequested(firstBus, lastBus, tag, length))
 		return B_UNSUPPORTED;
 	profile.stage = 4;
+	dprintf("PIONEER-P100A: profile stage 4 FDT identity checked\n");
 	const uint64 hosts[] = {0x4810800000, 0x4890000000, 0x48c0000000, 0x4900000000, 0x4b00000000};
 	const uint64 addresses[] = {0x800000, 0x90000000, 0xc0000000, 0x4900000000, 0x4b00000000};
 	const uint64 sizes[] = {0x400000, 0x30000000, 0x10000000, 0x200000000, 0x100000000};
@@ -167,6 +176,7 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 	if (host->get_range(hostDevice, TT_PIONEER_RANGE_COUNT, &extra) == B_OK)
 		return B_UNSUPPORTED;
 	profile.stage = 5;
+	dprintf("PIONEER-P100A: profile stage 5 host windows checked\n");
 	profile.bar0_host_start = pci->ram_address(device, 0x4900000000);
 	profile.bar0_host_end = pci->ram_address(device, 0x491fffffff);
 	profile.bar2_host_start = pci->ram_address(device, 0x4920000000);
@@ -176,5 +186,6 @@ GetPioneerPciProfile(device_manager_info* dm, const pci_info& expected,
 		return B_UNSUPPORTED;
 	profile.stage = 6;
 	profile.ready = 1;
+	dprintf("PIONEER-P100A: profile stage 6 validated; no PCI/MMIO writes\n");
 	return B_OK;
 }

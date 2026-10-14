@@ -2345,3 +2345,43 @@ are bounded; the 8 KiB new scratch file is unlinked while held open.
 Test binary: `32ae2ee7a1d3dc79ca4e711e65dbe57840ba9d71900d66fbe7d62c2e8cf3caf9`.
 Neither corrected kernel nor VM test is hardware-validated yet. Linux recovery
 is booting; P100A inference remains unimplemented, not a CPU-only substitute.
+
+Corrected-kernel native bundle checks passed with unchanged package paths and
+ECAM hash, clean private BFS check and exact HPKG roundtrip. RAM BFS:
+`8a0110715013a322ace77f896a4ce00857c3b18ca4d7106edeac46a6fdfe5ced`;
+HPKG: `ced1b4904d5ce9e79475f38953973f3add47d15cc84f6e5a98d53ea88e6817b0`.
+Helper `pioneer_linux_boot_haiku_smp-active-map-1.sh` hash:
+`99737a29a8eb85a136421ed55ec0febe3992bb822fd7ed400e357210176501c9`.
+Fresh session `smp64-active-map1-20261014`, boundary 9443031, was dispatched
+through normal Linux shutdown. Runtime result is pending. The VM executable
+was rebuilt with phase/worker failure diagnostics (same workload), new hash
+`26ccd9ca7c015675f6e59aaf1599e440a4a98a7068c8120d4cc98112d5dcf104`.
+
+The corrected-kernel trial returned pinned SSH and CPU count 64. Its all-core
+smoke passed, then the VM test passed all 32 rounds on all 126 workers, then
+the all-core smoke passed again. Full CPU mask remained `ffffffffffffffff`.
+This is hardware validation of these bounded workloads, not proof that every
+runtime path is stable. The tracked helper now defaults to this stronger
+active-map profile, while retaining all earlier pinned controls explicitly.
+
+The subsequent P100A revalidation session authenticated but returned no
+profile/health result before the machine stopped responding. The user also
+confirmed the desktop and input were frozen, so this stall is not merely
+an SSH failure. The source fix is retained as an independently demonstrated
+bookkeeping correction, **not** claimed to resolve the whole-system freeze.
+No P100A compute, core-start, DMA or firmware update result exists. A normal
+shutdown attempt failed; relay recovery was again required.
+
+Added diagnostic-only stage markers in probe discovery/init/open, profile
+semaphore/module lookup, and the six existing read-only topology stages.
+The profile CLI now prints unbuffered entry/open markers. Hardware policy,
+ioctl layouts and all PCI/TLB/data restore operations are unchanged. All six
+root/MMIO/ARC/telemetry/reset/L1 policy suites still pass. The plain Jam target
+was not found; the correctly qualified `<driver>tenstorrent_pci_probe` build
+then succeeded. Trace driver SHA:
+`0d0946532efb494b264c0048c84dcd602030915f837b14020294f7ecbf1967c7`.
+Trace profile CLI SHA:
+`967da2b70f736923f36ac379696dbd0a1ef73ee2d3df4741531cd6e36566b657`.
+Neither is deployed yet; original driver `f0ab0eba...` is the rollback target.
+The next trial must determine whether discovery/loading or profile inspection
+causes the freeze before any later card operation is retried.

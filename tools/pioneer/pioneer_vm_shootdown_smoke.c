@@ -57,7 +57,14 @@ wait_all(struct shared* s)
 {
 	while (__atomic_load_n(&s->ack[0], __ATOMIC_ACQUIRE) != UINT64_MAX
 		|| __atomic_load_n(&s->ack[1], __ATOMIC_ACQUIRE) != ((UINT64_C(1) << 62) - 1)) {
-		if (__atomic_load_n(&s->failed, __ATOMIC_ACQUIRE) || system_time() >= s->deadline) return 1;
+		if (__atomic_load_n(&s->failed, __ATOMIC_ACQUIRE) || system_time() >= s->deadline) {
+			fprintf(stderr, "VM phase %u incomplete: ack %016" PRIx64 "/%016" PRIx64 " failed %u\n",
+				__atomic_load_n(&s->phase, __ATOMIC_ACQUIRE),
+				__atomic_load_n(&s->ack[0], __ATOMIC_ACQUIRE),
+				__atomic_load_n(&s->ack[1], __ATOMIC_ACQUIRE),
+				__atomic_load_n(&s->failed, __ATOMIC_ACQUIRE));
+			return 1;
+		}
 	}
 	return __atomic_load_n(&s->failed, __ATOMIC_ACQUIRE) != 0;
 }
@@ -131,7 +138,10 @@ stop:
 		if (wait_for_thread_etc(workers[i].id, B_ABSOLUTE_TIMEOUT, s.deadline + 2000000, &result) != B_OK) {
 			fprintf(stderr, "FAIL: VM worker join deadline; terminating this test team\n"); _exit(1);
 		}
-		if (result != 0) failed = 1;
+		if (result != 0) {
+			fprintf(stderr, "VM worker %u CPU %u exited %ld\n", i, workers[i].cpu, (long)result);
+			failed = 1;
+		}
 	}
 done:
 	if (target != MAP_FAILED) munmap(target, kPage);

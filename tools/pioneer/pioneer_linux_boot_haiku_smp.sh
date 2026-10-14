@@ -2,10 +2,12 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control]'
 action=$1
 session=$2
 cpu_count=$3
+profile=${4:-active-map-control}
+case "$profile" in current|validated-control|capped-control|active-map-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 case "$action" in prepare|boot|cancel) ;; *) fail 'Unknown action';; esac
 case "$session" in ''|*[!A-Za-z0-9_-]*) fail 'Use a simple unique session name';; esac
@@ -16,9 +18,8 @@ base=/mnt/ssd/pioneer-haiku-kexec-20261013
 run=$base/boot-$session
 image=$base/smp-4/HaikuPioneerKexecProbe.Image
 bundle=$base/smp-kernel-bundle-1/samsung-ram.bfs
-# Default to the profile with recorded all-core workload passes. "current"
-# retains the earlier uncapped experiment for explicit comparisons only.
-profile=${4:-capped-control}
+# Default has recorded all-core and VM workload passes, not full P100A/runtime
+# certification. "current" is the frozen historical uncapped experiment.
 case "$profile" in
  current) bundle_hash=a3e1015fb56a440d5ea75a538b590c59cebd1ce99183b176eaef2ac703010c28;;
  validated-control)
@@ -28,6 +29,10 @@ case "$profile" in
  capped-control)
   bundle=$base/smp-kernel-bundle-capped-1/samsung-ram.bfs
   bundle_hash=1b247841bdf4a5d5ecd7239103dee0c359f24c7fa3224f8bae7eb8f72115a626
+  ;;
+ active-map-control)
+  bundle=$base/smp-kernel-bundle-active-map-1/samsung-ram.bfs
+  bundle_hash=8a0110715013a322ace77f896a4ce00857c3b18ca4d7106edeac46a6fdfe5ced
   ;;
  *) fail 'Unknown pinned kernel profile';;
 esac
