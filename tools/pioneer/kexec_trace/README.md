@@ -39,3 +39,19 @@ operation could still defeat userspace timeouts; this is not a recovery system.
 Host tests cover token policy, markers, partial writes, EINTR/EAGAIN, bounded
 timeouts and invalid backend results. They do not validate actual hardware,
 systemd invocation, final kernel shutdown, or post-kexec UART survival.
+
+## Observed hardware result (2026-10-13 local)
+
+One explicitly approved test passed both the fresh-token UART self-test and
+the matching `stage=late_shutdown action=kexec kexec_loaded=1` marker during
+normal `systemctl kexec`. The reviewed v2 probe produced no BEGIN, END or TRAP
+output in the subsequent observation window. This establishes that systemd
+reached the late userspace hook phase; it does **not** establish completion
+of all hooks, final kernel handoff, or payload entry. Lost post-shutdown UART
+visibility remains possible.
+
+Relay recovery returned to normal NVMe Linux 6.1.31 with CPUs 0-63 online,
+kexec_loaded=0 and the unchanged original extlinux hash. The hash-verified
+temporary hook was removed; the volatile arm directory was absent after
+reboot. No persistent boot arguments, firmware or Haiku media were changed.
+See [native build status](../NATIVE_BUILD_STATUS.md) for hashes and artifacts.

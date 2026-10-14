@@ -1443,3 +1443,72 @@ bounded serial observation, relay recovery, complete baseline revalidation
 and hash-checked hook cleanup. Approval is pending; do not treat the question's
 preselected answer or these host/native guard tests as hardware authorization
 or actual late-shutdown/probe success. The restored extlinux hash is unchanged.
+
+### Late-shutdown trace observed; payload entry still unproven
+
+The user explicitly approved installing the temporary trace and one controlled
+kexec test, confirming Linux work was saved. This supersedes the pending
+approval recorded above. Read-only native preflight passed on Linux 6.1.31:
+NVMe root, no MMC device, CPUs 0-63, enabled/unoccupied classic kexec, exact
+live UART layout and the unchanged original extlinux SHA. Relay status was
+available without a power pulse. Neither the hook nor arm directory existed.
+
+Installed the reviewed native binary as root:root 0755 at
+`/usr/lib/systemd/system-shutdown/pioneer-kexec-trace`, with SHA-256
+`5010270d91c420346a0a3cedf0ad6a6feb7dddce2ffbac9fdcb6e56a16b7b063`.
+Created a root:root 0700 volatile directory and single-link 0600 33-byte arm
+file. The self-test exited successfully with kexec_loaded still zero. From
+fresh serial offset 2468404, the capture contains exactly its 108-byte marker
+with token `8c4e8bfa910d189309d0aca26d51e1c4` and `stage=self_test action=none`.
+
+Saved a fresh live FDT and compared it to `/sys/firmware/fdt` as root; SHA-256
+is `e9264e1696ae23bdde4a2a20c0831215b4ea8967d2dd90ccba5a910aaa9befdd`.
+An initial non-root cmp was permission-denied, not a data mismatch; the root
+comparison passed. Local fdtget and native live properties confirm UART
+0x7040000000, range 0x1000, shift 2, width 4 and the existing four 32 GiB RAM
+nodes. No FDT edits were made. Reverified unchanged v2 Image SHA
+`b57754d066aaaaa96ad285faff00a9efd30d5e4b24351b7d37f52f5d865f70e7`
+and private loader SHA
+`06aa5c6fa6e78bdf92abefb4e7f4b0accadfe6212a02c700905392f8d8056748`.
+The guarded classic `image-riscv` load used memory limits 0x2200000 through
+0xbfffffff, the fresh DTB and no debug flag. It succeeded with kexec_loaded=1;
+the no-command-line warning is expected for this non-Linux entry probe.
+
+At 02:16:57 UTC October 14 (October 13 local), requested normal
+`sudo systemctl kexec`, retaining all 64 online CPUs. Fresh handoff offset
+2468512 produced exactly one 113-byte serial record:
+
+```
+PIONEER_KEXEC_TRACE v1 stage=late_shutdown action=kexec token=8c4e8bfa910d189309d0aca26d51e1c4 kexec_loaded=1
+```
+
+No probe BEGIN, END or TRAP appeared by 02:18:08 UTC, over 70 seconds after
+the shutdown request, and one bounded pinned-SSH attempt timed out. Thus
+systemd's late userspace hook phase is observed. Completion of every hook,
+the final kexec syscall/device/SMP/relocation path and payload execution are
+**not** established. The remaining silence can still be a shutdown/handoff
+failure or lost post-shutdown UART visibility; do not label it a proven
+payload or CPU-shutdown bug. This is not a successful Haiku boot or selector.
+
+Performed the approved seven-second relay off hold, ten-second wait, then
+0.75-second on pulse (02:18:47 UTC). Fresh recovery serial offset 2468625
+shows the unchanged SPI/LinuxBoot path and normal Fedora 6.1.31 early boot.
+Pinned SSH baseline validation completed at 02:20:25 UTC: root
+`/dev/nvme0n1p3` ext4, `/boot` `/dev/nvme0n1p2` ext4, CPUs 0-63,
+kexec_loaded=0, no MMC device and preserved Samsung partition unmounted.
+The command line is the original one without experimental logging flags.
+Extlinux remains exactly SHA-256
+`53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c`,
+878 bytes, root:root mode 664. Verified the installed hook's complete hash,
+owner/mode and single-link status, then removed only that hook. The volatile
+arm directory was already absent after cold boot. Cleanup checks passed.
+
+Ignored evidence and guarded one-test scripts are under
+`generated.pioneer/kexec-probe-20261013/shutdown-trace-1/`: `self-test.serial.log`,
+`handoff.serial.log`, `load.log`, `kexec-request.log`, `live-fdt.dtb`,
+`recovery.serial.log` and `recovery-validation.log`. Host ASan/UBSan trace,
+probe format/flow/UART tests and all six Image-header test groups passed again.
+The board is left powered on in normal NVMe Linux; both SD cards remain out.
+No saved boot configuration, kernel, firmware or Haiku/Samsung content changed.
+Further controlled hardware tests require a new reviewed plan/approval; first
+investigate the remaining hook/final-handoff boundary without another reboot.

@@ -100,6 +100,12 @@ and volatile arm token. A trace marker would not establish kernel handoff or
 probe execution; lack of a marker remains ambiguous until its self-test and
 late-hook invocation are checked on hardware.
 
+The October 13 controlled trace test subsequently observed both the native
+self-test and matching late-shutdown marker, but no v2 probe output. The
+late userspace phase is now observed, not final kernel handoff or payload
+entry. Relay recovery and complete baseline verification passed, and the
+temporary installed hook was removed. The SD-free selector remains unimplemented.
+
 `pioneer_linux_cpu_quiesce.sh status|quiesce|restore` is a separate native
 runtime diagnostic, not a boot selector. Quiesce requires the original 0-63
 mask and no loaded image; it retains CPU 0, bounds each hotplug operation and
