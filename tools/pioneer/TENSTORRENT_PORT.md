@@ -5,8 +5,10 @@
 Source/feasibility investigation started 2026-09-15. As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
-mapping reads the card's NoC identification register successfully. The
-test restores the card and bridge configuration exactly; DMA has never
+mapping reads the card's NoC identification register successfully. A fixed
+read-only NoC window also reads ARC boot/error status and telemetry pointers.
+ARC boot status is stable at `0x5`, and the sampled error-status word is zero.
+The test restores the card and bridge configuration exactly; DMA has never
 been enabled. There is no functioning compute driver/runtime yet. See the
 live-test records below. Samsung's installed OS package, card firmware,
 and default Linux boot remain unchanged.
@@ -31,8 +33,9 @@ consistency check found no allocation errors across 249 nodes. The source
 image and boot partition hashes were verified unchanged. This is a manually
 assembled test image, not a fresh integrated build of current source. Its
 300 MiB fresh-install filesystem must not overwrite the persistent 4 GiB SD.
-It has not been deployed or booted, and neither artifact has been run on
-the Pioneer.
+Those manually assembled SD images were not deployed. The October 14 live
+tests below instead deploy the optional add-on/CLI on Samsung while booting
+through the private RAM handoff.
 The snapshot reports identity, command/status and raw BAR configuration,
 but deliberately does not size BARs, infer usable mappings, touch MMIO,
 enable bus mastering, use DMA, or flash/reset the card. The legacy `pci_info`
@@ -230,7 +233,7 @@ independent read-only driver snapshot confirmed the card's original disabled
 state and status `0010`. SSH remained usable. This establishes bounded
 memory-mapped card-register access, not ARC/DRAM health, DMA, or compute.
 
-Current optional module in the user `drivers/bin/tenstorrent_pci_probe`, with
+NoC-ID-tested module at this checkpoint in user `drivers/bin/tenstorrent_pci_probe`, with
 the existing `dev/misc` symlink:
 `1ec5a894442283e47b31338628a563cff5b4699b21941f298e10424b9c1e60b5`.
 The previous binaries are retained under
@@ -245,6 +248,73 @@ UMD explicitly routes ARC access over NoC on that tile. Do **not** assume
 the direct BAR0 ARC/APB route (available at X=11) works here. No ARC access,
 firmware update, DMA test, general memory mapping API, or accelerator runtime
 has been implemented/tested yet.
+
+### October 14: ARC firmware responds over a restored NoC window
+
+Added an explicit `TT_PCI_PROBE_PIONEER_ARC_SCRATCH` operation and matching
+`tenstorrent_haiku_arc_probe --read-arc-status-and-restore` CLI. It reuses the
+tested temporary PCI transaction and NoC-ID validation. Only PCIe tile `(2,0)`
+may enter this new path. The ARC target is NoC0 `(8,0)`, reached through the
+last 2 MiB BAR0 window, index 201. Its 12-byte configuration at BAR0
+`0x1fc0096c` is saved, temporarily configured, verified, and restored exactly.
+The independently encoded words are `00000400 / 04004000 / 00000a40`:
+ARC local base `0x80000000`, strict unicast-read ordering, static read VC/buddy.
+The ARC data page at BAR0 `0x19230000` is kernel-read-only and uncached;
+only the TLB control page is writable. There is no ARC data-write method.
+
+The sample reads scratch registers 2, 4, 11, 12 and 13, then repeats register
+2, for exactly six ARC reads. These cover boot status, error status, message
+queue pointer and telemetry data/tag pointers. Pointers are reported but not
+dereferenced. There are no ARC messages, ASIC/core resets, firmware writes,
+SPI operations or DMA. The outer operation unmaps the target before shutting
+down PCI decoding and verifies complete PCI rollback. A TLB restore failure
+gets one bounded retry while decoding is still on; any remaining restore
+failure requires cold recovery. Destructors only remove virtual mappings and
+never attempt MMIO after decoding has been shut down. Partial map failures
+are also cleaned up by the outer transaction.
+
+The fixed layout and ARC status/scratch facts were checked against pinned
+Apache-2.0 UMD sources. Host ASan/UBSan tests independently decode the 96-bit
+TLB layout and cover dropped setup/restoration writes, unknown saved bits,
+nonzero saved configurations, boot/error/telemetry conditions, and bounded
+reads. The existing NoC-ID/PCI policy suite also covers failed callback and
+partial-map cleanup. Integrated kernel cross-build passed, and disassembly
+shows explicit `fence iorw,iorw` around device accesses. The cross-build script
+now builds five userspace tools; the original four binary hashes stayed the
+same. Their installed operations retain their earlier ABI/behavior.
+
+The new optional module was staged with its previous version retained. A
+NoC-ID hardware regression test passed before the new operation was called.
+At about 19:51 UTC, the ARC operation returned **ARC state 1, TLB restored 1,
+PCI state 1, PCI restored 1**. TLB words were initially all zero, became the
+three expected words, then read back as all zero after restoration:
+
+- ARC boot: `00000005 -> 00000005`.
+- ARC error status 0: `00000000`.
+- Message queue pointer: `100161c4`.
+- Telemetry data/tags pointers: `1001902c / 10018f28`.
+- Card/root command after: `0000 / 0000`; NoC ID: `18611002`.
+
+The independent read-only PCI snapshot confirmed original BAR words, command
+`0000`, and status `0010`. No card firmware was changed. This proves bounded
+ARC register access and boot-ready status, **not** a complete card/DRAM health
+test, firmware compatibility assessment, interrupt/DMA path or compute stack.
+A second ARC run returned the same values, again with initially zero TLB
+words and exact restoration. The independent live profile then passed stage
+6, including original disabled root windows and both domain translations;
+the separate PCI snapshot again showed the original disabled endpoint.
+
+Current optional module:
+`d17d56a3035927d47eed55f0f7161aa0af0dbde117c9f7259afd124d62e149a7`.
+ARC CLI:
+`4ebae8542bd87a54afc58a897235f3f498d0e7b1beefddcbd73a9fcc69a166bd`.
+They are in the existing private `mmio-cross-1/` staging directory. The prior
+module is retained as `tenstorrent_pci_probe.before-arc-1` there.
+
+Next: validate the advertised telemetry-table layout and ARC CSM bounds
+against the vendor sources before reading whitelisted firmware-version and
+health values. Do not assume that a nonzero pointer authorizes an arbitrary
+NoC read or a flash operation.
 
 Download pinned official sources with:
 

@@ -20,6 +20,33 @@ static sem_id sLock = -1;
 static device_manager_info* sDeviceManager;
 static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 
+static inline void
+PioneerIoFence()
+{
+#if defined(__riscv)
+	asm volatile("fence iorw, iorw" ::: "memory");
+#else
+	__sync_synchronize();
+#endif
+}
+
+static inline uint32
+PioneerRead32(const volatile uint32* address)
+{
+	PioneerIoFence();
+	uint32 value = *address;
+	PioneerIoFence();
+	return B_LENDIAN_TO_HOST_INT32(value);
+}
+
+static inline void
+PioneerWrite32(volatile uint32* address, uint32 value)
+{
+	PioneerIoFence();
+	*address = B_HOST_TO_LENDIAN_INT32(value);
+	PioneerIoFence();
+}
+
 static bool
 FindCard(pci_module_info* pci, pci_info& card)
 {
@@ -127,6 +154,8 @@ struct PioneerMmioIO : ConfigIO {
 	const volatile uint32* nodeID = NULL;
 
 	PioneerMmioIO(const tt_pioneer_profile& p) : profile(p) {}
+	PioneerMmioIO(const PioneerMmioIO&) = delete;
+	PioneerMmioIO& operator=(const PioneerMmioIO&) = delete;
 	~PioneerMmioIO() { if (area >= B_OK) delete_area(area); }
 	const tt_pioneer_profile& Profile() { return profile; }
 	uint32 CardRead(uint16 offset, uint8 size) { return Read(offset, size); }
@@ -162,8 +191,8 @@ struct PioneerMmioIO : ConfigIO {
 	}
 	bool Map()
 	{
-		// Hardware register fact from pinned tt-kmd blackhole.c: BAR0's
-		// NoC2AXI node ID is at 0x1fd04044 (PCIe NoC x = 2 or 11, y = 0).
+		// Hardware fact from pinned Apache-2.0 tt-umd Blackhole constants:
+		// BAR0 NoC2AXI node ID is at 0x1fd04044 (x = 2 or 11, y = 0).
 		// Independent implementation: map only this page, no register writes.
 		void* address = NULL;
 		area = map_physical_memory("P100A NoC ID one-shot",
@@ -178,6 +207,8 @@ struct PioneerMmioIO : ConfigIO {
 	}
 	bool Unmap()
 	{
+		if (area < B_OK)
+			return true;
 		status_t status = delete_area(area);
 		if (status != B_OK)
 			return false;
@@ -187,18 +218,90 @@ struct PioneerMmioIO : ConfigIO {
 	}
 	uint32 ReadNodeId()
 	{
-#if defined(__riscv)
-		asm volatile("fence iorw, iorw" ::: "memory");
-#else
-		__sync_synchronize();
-#endif
-		uint32 value = *nodeID;
-#if defined(__riscv)
-		asm volatile("fence iorw, iorw" ::: "memory");
-#else
-		__sync_synchronize();
-#endif
-		return B_LENDIAN_TO_HOST_INT32(value);
+		return PioneerRead32(nodeID);
+	}
+	bool AfterNodeId(uint32) { return true; }
+};
+
+struct PioneerArcIO : PioneerMmioIO {
+	tt_arc_scratch_result& arc;
+	area_id tlbArea = -1, scratchArea = -1;
+	volatile uint32* tlb = NULL;
+	const volatile uint32* scratch = NULL;
+	bool dirty = false;
+
+	PioneerArcIO(const tt_pioneer_profile& p, tt_arc_scratch_result& result)
+		: PioneerMmioIO(p), arc(result) {}
+	~PioneerArcIO()
+	{
+		// Only virtual mappings here: the outer transaction has already
+		// disabled PCI decoding. Never attempt MMIO from this destructor.
+		if (scratchArea >= B_OK) delete_area(scratchArea);
+		if (tlbArea >= B_OK) delete_area(tlbArea);
+	}
+	bool Map()
+	{
+		if (!PioneerMmioIO::Map())
+			return false;
+		void* address = NULL;
+		tlbArea = map_physical_memory("P100A fixed TLB control",
+			profile.bar0_host_start + 0x1fc00000, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA
+				| B_UNCACHED_MEMORY, &address);
+		if (tlbArea < B_OK)
+			return false;
+		tlb = (volatile uint32*)((uint8*)address + 0x96c);
+		scratchArea = map_physical_memory("P100A ARC scratch read-only",
+			profile.bar0_host_start + 0x19230000, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_UNCACHED_MEMORY, &address);
+		if (scratchArea < B_OK)
+			return false;
+		scratch = (const volatile uint32*)address;
+		return true;
+	}
+	uint32 TlbRead(unsigned i) { return i < 3 ? PioneerRead32(tlb + i) : UINT32_MAX; }
+	void TlbWrite(unsigned i, uint32 value)
+	{
+		if (i >= 3) return;
+		dirty = true;
+		PioneerWrite32(tlb + i, value);
+	}
+	uint32 ScratchRead(unsigned n)
+	{
+		if (n != 2 && n != 4 && n != 11 && n != 12 && n != 13)
+			return UINT32_MAX;
+		return PioneerRead32(scratch + (0x400 + n * 4) / 4);
+	}
+	bool AfterNodeId(uint32 id)
+	{
+		if ((id & 0xfff) != 2)
+			return false;
+		dprintf("PIONEER-P100A: ARC scratch attempt NoC0 (8,0), TLB 201, read-only target\n");
+		return BlackholeArcScratchProbe(*this, arc);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		if (scratchArea >= B_OK) {
+			if (delete_area(scratchArea) == B_OK) scratchArea = -1;
+			else okay = false;
+		}
+		if (dirty && !arc.tlb_restored) {
+			// One bounded restore retry, while the outer transaction still
+			// has memory decoding enabled. Never write ARC scratch itself.
+			for (unsigned i = 0; i < 3; i++) TlbWrite(i, arc.tlb_before[i]);
+			arc.tlb_restored = 1;
+			for (unsigned i = 0; i < 3; i++) {
+				arc.tlb_after[i] = TlbRead(i);
+				arc.tlb_restored &= arc.tlb_after[i] == arc.tlb_before[i];
+			}
+		}
+		if (dirty && !arc.tlb_restored) okay = false;
+		if (tlbArea >= B_OK) {
+			if (delete_area(tlbArea) == B_OK) tlbArea = -1;
+			else okay = false;
+		}
+		return PioneerMmioIO::Unmap() && okay;
 	}
 };
 
@@ -207,6 +310,44 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_ARC_SCRATCH) {
+		if (data == NULL || length != sizeof(tt_pioneer_arc_result))
+			return B_BAD_VALUE;
+		tt_pioneer_arc_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = acquire_sem(sLock);
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
+			TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL)
+			status = get_module(B_DEVICE_MANAGER_MODULE_NAME,
+				(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK)
+			status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		result.pci.version = result.arc.version = 1;
+		result.pci.profile_status = status;
+		result.pci.profile_stage = profile.stage;
+		result.arc.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerArcIO io(profile, result.arc);
+			BlackholePioneerMmioProbe(io, result.pci);
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function,
+			TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: ARC scratch state %" B_PRIu32
+			" TLB restored %" B_PRIu32 " PCI state %" B_PRIu32
+			" restored %" B_PRIu32 " boot %08" B_PRIx32 "/%08" B_PRIx32
+			" error %08" B_PRIx32 " (no firmware/DMA writes)\n",
+			result.arc.state, result.arc.tlb_restored, result.pci.state,
+			result.pci.restored, result.arc.boot_before, result.arc.boot_after,
+			result.arc.error_status0);
+		return user_memcpy(data, &result, sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_NOC_ID) {
 		if (data == NULL || length != sizeof(tt_pioneer_mmio_result))
 			return B_BAD_VALUE;

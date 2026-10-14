@@ -27,13 +27,16 @@ struct MockIO {
 	uint32_t command[2] = {};
 	uint32_t rom = 0, msiControl = 0, msixControl = 0, pmControl = 0, capPointer = 0x40;
 	bool capCycle = false;
+	bool hookFails = false;
 	uint64_t sizes[3] = {0x20000000, 0x100000, UINT64_C(0x800000000)};
 	uint32_t samples[3] = {2, 2, 2};
 	unsigned writes = 0, droppedWrite = 0, mmioReads = 0, mapCalls = 0;
 	bool quiet = true, mapFails = false, unmapFails = false, mapped = false;
+	bool partialMapFails = false;
 	bool disableCardFails = false, disableRootFails = false;
 	const tt_pioneer_profile& Profile() { return profile; }
 	bool Quiet() { return quiet; }
+	bool AfterNodeId(uint32_t) { return !hookFails; }
 	uint64_t Size(unsigned bar) { return sizes[bar / 2]; }
 	uint32_t CardRead(unsigned offset, unsigned width)
 	{
@@ -95,6 +98,7 @@ struct MockIO {
 		assert(bridge[0] == 0x20010001 && bridge[1] == 0x49 && bridge[2] == 0x49);
 		assert(command[0] == 0 && command[1] == 0);
 		mapped = !mapFails;
+		if (partialMapFails) { mapped = true; return false; }
 		return mapped;
 	}
 	bool Unmap() { if (unmapFails) return false; mapped = false; return true; }
@@ -132,6 +136,10 @@ int main()
 	}
 	io = {}; io.mapFails = true; BlackholePioneerMmioProbe(io, r);
 	assert(r.state == TT_PIONEER_MMIO_MAP_FAILED && r.restored && io.mmioReads == 0);
+	io = {}; io.partialMapFails = true; BlackholePioneerMmioProbe(io, r);
+	assert(r.state == TT_PIONEER_MMIO_MAP_FAILED && r.restored && !io.mapped && io.mmioReads == 0);
+	io = {}; io.hookFails = true; BlackholePioneerMmioProbe(io, r);
+	assert(r.state == TT_PIONEER_MMIO_READ_BAD && r.restored);
 	io = {}; io.unmapFails = true; BlackholePioneerMmioProbe(io, r);
 	assert(r.state == TT_PIONEER_MMIO_RESTORE_FAILED && !r.restored);
 	io = {}; io.disableCardFails = true; BlackholePioneerMmioProbe(io, r);

@@ -102,7 +102,7 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 	io.RootWrite(0x28, 4, 0x49);
 	io.RootWrite(0x2c, 4, 0x49);
 	io.RootWrite(0x24, 4, 0x20010001);
-	bool mapped = false;
+	bool mapAttempted = false;
 	do {
 		bool configured = true;
 		for (unsigned i = 0; i < 6; i++) {
@@ -113,11 +113,11 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 			&& io.RootRead(0x28, 4) == 0x49 && io.RootRead(0x2c, 4) == 0x49;
 		if (!configured)
 			break;
+		mapAttempted = true;
 		if (!io.Map()) {
 			r.state = TT_PIONEER_MMIO_MAP_FAILED;
 			break;
 		}
-		mapped = true;
 		r.stage = 2;
 		io.RootWrite(4, 2, 0x0402);
 		if (io.RootRead(4, 2) != 0x0402)
@@ -134,10 +134,12 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 		r.state = (xy == 2 || xy == 11) && r.node_id[0] == r.node_id[1]
 			&& r.node_id[0] == r.node_id[2]
 			? TT_PIONEER_MMIO_READ_OK : TT_PIONEER_MMIO_READ_BAD;
+		if (r.state == TT_PIONEER_MMIO_READ_OK && !io.AfterNodeId(r.node_id[0]))
+			r.state = TT_PIONEER_MMIO_READ_BAD;
 		r.stage = 4;
 	} while (false);
 
-	bool unmapped = !mapped || io.Unmap();
+	bool unmapped = !mapAttempted || io.Unmap();
 	io.CardWrite(4, 2, 0);
 	io.RootWrite(4, 2, 0);
 	bool decodersOff = io.CardRead(4, 2) == 0 && io.RootRead(4, 2) == 0;
