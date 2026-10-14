@@ -2,12 +2,12 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control]'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 case "$action" in prepare|boot|cancel) ;; *) fail 'Unknown action';; esac
 case "$session" in ''|*[!A-Za-z0-9_-]*) fail 'Use a simple unique session name';; esac
@@ -44,6 +44,13 @@ case "$profile" in
   bundle=$base/smp-kernel-bundle-memory-1/samsung-ram.bfs
   bundle_hash=98eebc001c7c869566a81ec445ee71798ec98be05d7585e18d416f8029c759cd
   case "$profile" in memory8-control) memory_gib=8;; memory128-control) memory_gib=128;; esac
+  ;;
+ memory8-map-order-control|memory128-map-order-control)
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-map-order-1/samsung-ram.bfs
+  bundle_hash=98783b7aa58b283c9ce33623deecd828eaf5a8f20394cfa92a2fe1065c098ebf
+  case "$profile" in memory8-map-order-control) memory_gib=8;; memory128-map-order-control) memory_gib=128;; esac
   ;;
  *) fail 'Unknown pinned kernel profile';;
 esac

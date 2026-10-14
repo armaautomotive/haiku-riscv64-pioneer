@@ -2522,3 +2522,60 @@ Some recoverable kernel page-fault traces also occur in this successful run;
 therefore the earlier fault trace alone must not be presented as a proven
 root cause of its stall. Next: a full-span two-CPU control before another
 all-core comparison. P100A compute/DMA/firmware operations remain untouched.
+
+The successful two-CPU/8 GiB control also completed a normal `shutdown -rs`
+into default NVMe Linux, without a relay pulse. This validates an ordinary
+Haiku reboot in that control; it does not establish that shutdown/reboot
+works when the kernel has stalled.
+
+The first full-span two-CPU trial, `smp2-memory128-isolate1-20261014`, boundary
+10434050, passed loader handoff checks but panicked in arch_vm_init_end:
+"cannot reserve large physical memory map: -2147483643" (B_BAD_VALUE).
+Its map began at 0xffffffe014e0b000. Source and disassembly show a concrete
+conflict: vm_init's compiled 64-bit freed-heap poison guard reserves
+0xffffffefdeadb000 (size 0x40000) before the later physical-map
+reservation. That address lies inside a 128 GiB linear map but outside the
+8 GiB map. This explains this particular deterministic reservation failure,
+not the earlier intermittent all-core stall.
+
+Moved the large-map reservation into vm_init, after bootstrap-area conversion
+and kernel-argument areas but before overflow/poison guards. The final page
+still belongs to the existing overflow protection. Optional poison guards
+whose ranges intersect the RISC-V physical map are now skipped; low guards
+and non-RISC-V behavior remain unchanged. Production-body sanitizer tests
+cover the actual poison address, map-boundary overlap, retained low/non-RISC-V
+guards, failure handling and the source ordering relative to conversion and
+all four poison placements. Two real-FDT test runs and the cross-build pass.
+Kernel SHA:
+`dab2171f6d7d80e2a2879eb7ffd2d6c501eb5066a3da9e83b3398cf659174e7f`.
+An initial relative-path mirror copy failed from the build working directory;
+no corrected binary was assumed from that invocation. Retried with absolute
+paths, set -eu and cmp before the successful build. The loader is unchanged.
+
+The failed full-span trial stopped before mounting Samsung root. Recovered
+with the relay and verified default Linux 6.1.31/NVMe root with an empty
+kexec slot before staging a fresh corrected RAM-only bundle. No original
+package, boot entry, SD, P100A command/DMA state or firmware was changed.
+
+Corrected private bundle verification passed: RAM BFS SHA
+`98783b7aa58b283c9ce33623deecd828eaf5a8f20394cfa92a2fe1065c098ebf`,
+HPKG SHA `b52f7da807a96fe2c139a74a98a8ea6a7c3e3950f51927fda47d9dd705bb1e2a`.
+The extracted ECAM module remains
+`23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d`.
+The helper adds explicit `memory8-map-order-control` and
+`memory128-map-order-control` profiles without changing the low-memory default;
+SHA `a069094bbafb59b77b36a6d5690982c4697285131dad46ef6f1447323e2a0b83`.
+At 23:17 UTC started `smp2-memory128-maporder1-20261014`, boundary 10508568,
+with the corrected kernel and two CPUs. It passed the former reservation
+panic and reached device/root/package initialization. Runtime memory and
+CPU validation are pending; this is not yet a full restoration claim.
+
+That corrected two-CPU/full-span trial reached userspace, sshd listeners and
+DHCP at 10.0.0.247. One ICMP reply succeeded; subsequent pinned SSH attempts
+timed out, then ICMP stopped replying as well. Serial stopped after thread
+239 at byte 10681164, with no final panic. No CPU/RAM userspace test ran.
+The reservation conflict is bypassed, but full-RAM runtime is not validated.
+Requested a non-blocking desktop/input observation and attempted a bounded
+normal SSH reboot; it timed out. Relay recovery is therefore recovery from
+an unresponsive experimental boot, not a confirmed clean shutdown. The
+source-order fix must not be advertised as fixing this separate stall.

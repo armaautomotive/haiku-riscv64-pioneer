@@ -4046,6 +4046,32 @@ reserve_boot_loader_ranges(kernel_args* args)
 }
 
 
+#if PARANOID_KERNEL_MALLOC || PARANOID_KERNEL_FREE
+static void
+block_debug_address_range(kernel_args* args, const char* name, void* address,
+	addr_t size)
+{
+	// PIONEER_POISON_MAP_GUARD_BEGIN
+#if defined(__riscv)
+	// Poison values are optional debugging sentinels, not fixed platform
+	// resources. On a large-memory machine their kernel-address variants can
+	// fall inside the loader's linear physical map (e.g. 0xffffffefdeadbeef).
+	addr_t start = (addr_t)address;
+	addr_t mapStart = args->arch_args.physMap.start;
+	if (size != 0 && mapStart != 0
+		&& (start >= mapStart || size > mapStart - start)) {
+		debug_early_boot_message("riscv: poison guard overlaps physical map; skipped\n");
+		return;
+	}
+#else
+	(void)args;
+#endif
+	vm_block_address_range(name, address, size);
+	// PIONEER_POISON_MAP_GUARD_END
+}
+#endif
+
+
 /*!	The main entrance point to initialize the VM. */
 status_t
 vm_init(kernel_args* args)
@@ -4127,6 +4153,23 @@ vm_init(kernel_args* args)
 	vm_kernel_args_init_post_area(args);
 	debug_early_boot_message("riscv: kernel args post done\n");
 
+#if defined(__riscv)
+	// PIONEER_LARGE_MAP_RESERVATION_BEGIN
+	// Protect the whole physical-map span before the optional poison guards
+	// or ordinary allocations claim any of it. This is after bootstrap area
+	// conversion, where vm_block_address_range() is already usable. Leave the
+	// final page to the existing overflow-protection area immediately below.
+	if (args->arch_args.physMap.size > UINT64_C(0xc0000000)) {
+		status_t status = vm_block_address_range("physical memory map",
+			(void*)args->arch_args.physMap.start,
+			args->arch_args.physMap.size - B_PAGE_SIZE);
+		if (status < B_OK)
+			panic("cannot reserve large physical memory map: %" B_PRId32, status);
+		debug_early_boot_message("riscv: large physical map reserved\n");
+	}
+	// PIONEER_LARGE_MAP_RESERVATION_END
+#endif
+
 	void* lastPage = (void*)ROUNDDOWN(~(addr_t)0, B_PAGE_SIZE);
 	vm_block_address_range("overflow protection", lastPage, B_PAGE_SIZE);
 
@@ -4134,14 +4177,14 @@ vm_init(kernel_args* args)
 	addr_t blockAddress = 0xcccccccc;
 	if (blockAddress < KERNEL_BASE)
 		blockAddress |= KERNEL_BASE;
-	vm_block_address_range("uninitialized heap memory",
+	block_debug_address_range(args, "uninitialized heap memory",
 		(void *)ROUNDDOWN(blockAddress, B_PAGE_SIZE), B_PAGE_SIZE * 64);
 
 #if B_HAIKU_64_BIT
 	blockAddress = 0xcccccccccccccccc;
 	if (blockAddress < KERNEL_BASE)
 		blockAddress |= KERNEL_BASE;
-	vm_block_address_range("uninitialized heap memory",
+	block_debug_address_range(args, "uninitialized heap memory",
 		(void *)ROUNDDOWN(blockAddress, B_PAGE_SIZE), B_PAGE_SIZE * 64);
 #endif
 #endif
@@ -4150,14 +4193,14 @@ vm_init(kernel_args* args)
 	blockAddress = 0xdeadbeef;
 	if (blockAddress < KERNEL_BASE)
 		blockAddress |= KERNEL_BASE;
-	vm_block_address_range("freed heap memory",
+	block_debug_address_range(args, "freed heap memory",
 		(void *)ROUNDDOWN(blockAddress, B_PAGE_SIZE), B_PAGE_SIZE * 64);
 
 #if B_HAIKU_64_BIT
 	blockAddress = 0xdeadbeefdeadbeef;
 	if (blockAddress < KERNEL_BASE)
 		blockAddress |= KERNEL_BASE;
-	vm_block_address_range("freed heap memory",
+	block_debug_address_range(args, "freed heap memory",
 		(void *)ROUNDDOWN(blockAddress, B_PAGE_SIZE), B_PAGE_SIZE * 64);
 #endif
 #endif

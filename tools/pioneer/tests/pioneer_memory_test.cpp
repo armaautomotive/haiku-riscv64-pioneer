@@ -57,9 +57,15 @@ using status_t = int;
 static constexpr uint64_t B_PAGE_SIZE = 4096;
 #define B_PRId32 "d"
 static unsigned reservations;
+static unsigned debugReservations;
 static int reservationStatus;
 static status_t vm_block_address_range(const char* name, void* start, uint64_t size)
 {
+	if (strcmp(name, "physical memory map") != 0) {
+		assert(!strcmp(name, "test poison"));
+		debugReservations++;
+		return reservationStatus;
+	}
 	assert(!strcmp(name, "physical memory map"));
 	assert((uintptr_t)start == gKernelArgs.arch_args.physMap.start);
 	assert(size == gKernelArgs.arch_args.physMap.size - 4096);
@@ -73,6 +79,20 @@ static void ReserveMap()
 {
 	auto* args = &gKernelArgs;
 #include "pioneer_memory_reservation.inc"
+}
+#define __riscv 1
+static void BlockPoison(void* address, addr_t size)
+{
+	auto* args = &gKernelArgs;
+	const char* name = "test poison";
+#include "pioneer_poison_guard.inc"
+}
+#undef __riscv
+static void BlockPoisonOtherArch(void* address, addr_t size)
+{
+	auto* args = &gKernelArgs;
+	const char* name = "test poison";
+#include "pioneer_poison_guard.inc"
 }
 
 static void CheckPlan(const PioneerMemoryPlan& plan)
@@ -123,6 +143,16 @@ int main(int argc, char** argv)
 	sPlan = &plan;
 	SetupPhysicalMemoryMap();
 	ReserveMap(); assert(reservations == 1);
+	// Exact 64-bit freed-memory sentinel compiled into the failing kernel.
+	BlockPoison((void*)UINT64_C(0xffffffefdeadb000), 64 * 4096);
+	assert(debugReservations == 0);
+	BlockPoison((void*)gKernelArgs.arch_args.physMap.start, 4096);
+	BlockPoison((void*)(gKernelArgs.arch_args.physMap.start - 4096), 8192);
+	assert(debugReservations == 0);
+	BlockPoison((void*)UINT64_C(0xffffffc0deadb000), 64 * 4096);
+	assert(debugReservations == 1); // Low poison guard remains active.
+	BlockPoisonOtherArch((void*)UINT64_C(0xffffffefdeadb000), 64 * 4096);
+	assert(debugReservations == 2); // Other architectures retain old behavior.
 	reservationStatus = -1;
 	try { ReserveMap(); assert(false); }
 	catch (const Stop& stop) { assert(!strcmp(stop.reason, "reservation_failed")); }
