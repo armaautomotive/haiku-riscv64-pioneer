@@ -485,6 +485,34 @@ The latest vendor Metal installation matrix names newer firmware than this
 card has; the older versioned 18.5-compatible matrix and UMD's minimum do
 not certify current Metal/LLM releases. No automatic firmware upgrade.
 
+### Minimal execution audit: not yet a hardware execution test
+
+Read only the relevant official Metal v0.62.2 sources in an ignored,
+no-checkout, filtered clone. Annotated tag object
+`278c18eddaee71ff6127f083a4a5f2934b688866` resolves to commit
+`d279aa36bebe71367a521449310f6f53100e92be` (Apache-2.0). No upstream script,
+build or initialization command ran. The clone is private generated source,
+not an added dependency or a validated native Haiku runtime.
+
+Blackhole's `bh_hal_tensix.cpp` sets BRISC's reset PC to zero and places a
+generated JAL at L1 address zero. `hal.cpp`'s startup helper explicitly bounds
+the firmware base below `0x7ffff`. `dev_mem_map.h` reserves low L1 locations,
+including ARC power-throttling scratch at bytes 16..31. BRISC's normal
+`device_setup()` also performs architecture-specific instruction-cache
+invalidation and other setup. These are not covered by the tail-of-L1 data
+test. A valid CPU-side configuration-register address alone does not establish
+that a host NoC write to it is supported or safe.
+
+Do not simply clear BRISC's reset bit after a successful data round-trip.
+A separate execution transaction needs audited boot-word/code/mailbox
+ownership, executable-image validation, instruction/cache behavior, correct
+read/write NoC attributes, bounded completion polling, and verified core stop
+**before** restoring any instructions or data. Failure to stop must prohibit
+rewriting live code and require cold recovery. No such transaction is
+implemented or deployed yet. No reset controls or instruction bytes were
+written during this audit. The last hardware operation remains the successful
+repeat L1/telemetry/profile/independent PCI verification above.
+
 Download pinned official sources with:
 
 ```sh

@@ -1,5 +1,14 @@
 # Native build status (2026-09-07)
 
+Latest checkpoint (October 14): P100A installed; both SD cards out; Haiku
+reachable through the private SD-free RAM handoff. Native card enumeration,
+ARC telemetry, a stopped-core reset-state check and two reversible 64-byte
+Tensix L1 pattern tests passed. Card firmware/default Linux boot are unchanged;
+compute execution, DMA and an accelerator LLM runtime are **not** working yet.
+See [the current P100A bring-up record](TENSTORRENT_PORT.md) for exact artifacts,
+rollback evidence and the remaining startup/cache gate. Older entries below
+are chronological checkpoints, not the current hardware state.
+
 Samsung boot and automatic key-authenticated SSH were verified. The launcher
 needs `sshd -f /dev/null` because the offline-installed OpenSSH package's
 default `.settings/ssh/sshd_config` path was missing.
