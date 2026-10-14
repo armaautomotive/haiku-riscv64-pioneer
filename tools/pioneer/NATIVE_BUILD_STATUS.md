@@ -1331,3 +1331,62 @@ Once recovery Linux is running, verify the expected host key, SD PARTUUID
 `201785d7-03`, kernel/root/device identities, then restore the known NVMe boot
 entry using the exact original backup with hash/metadata/sync checks. The
 Pioneer remains off and that NVMe rollback is still pending.
+
+### Original NVMe boot entry restored from recovery Linux
+
+After the user confirmed insertion while powered off, the short power-on
+pulse successfully booted the spare SD. Fresh serial baseline: 2233184.
+Both LinuxBoot and Fedora use 6.1.55; final command line selects
+`root=PARTUUID=201785d7-03`, and the running root is `/dev/mmcblk1p3` ext4.
+The pre-pinned recovery SSH host key and existing owner's public key both
+worked at 10.0.0.247. No serial password login or SSH trust bypass was needed.
+
+Read-only disk inventory identified NVMe `FORESEE XP1000F001T`, exactly
+1,024,209,543,168 bytes. Its 511,705,088-byte ext4 boot partition is
+`/dev/nvme0n1p2`, UUID `d9518f6d-f175-4331-83de-cb10ef6d8885`, PARTUUID
+`4d3e74a9-02`. Neither SATA disk was mounted in this inventory. The guarded
+rollback helper verified all these identities and the recovery SD root, then
+mounted the NVMe boot partition read-only with journal replay suppressed.
+Candidate `97f7f308...`, 918 bytes, root:root mode 664, matched exactly.
+The SD rollback copy was the expected original `53c0da6d...`, 878 bytes.
+The full diff confirms only `keep_bootcon ignore_loglevel loglevel=8` are removed.
+
+Read-only preflight passed, followed by the authorized `--apply` rollback.
+Preserved the logging candidate on the recovery SD at
+`/root/pioneer-nvme-rollback-20261013/extlinux.conf.logging-candidate`.
+Restored via same-directory temporary file, SHA/ownership/mode checks, sync
+and atomic rename; then unmounted and remounted read-only and verified again.
+The NVMe entry is now exactly SHA-256
+`53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c`,
+878 bytes, root:root mode 664. This **file rollback is complete**. No kernel,
+initramfs, DTB, SPI firmware or Samsung content was replaced. The cause of the
+logging boot stall is still not isolated. Detailed ignored artifacts include
+`restore-nvme-boot-entry.sh`, `nvme-boot-restore-apply.log` and
+`recovery-sd-boot1.log` under the recovery directory.
+
+Requested clean shutdown only after checking the NVMe partition was unmounted.
+Serial confirms root remounted read-only, all filesystems/devices detached and
+`reboot: Power down`. The user physically confirmed fans/LEDs off and removed
+the recovery SD. No extra forced-off pulse was necessary. Issued the short
+power-on pulse for a normal SD-free NVMe cold-boot test at 00:27:44 UTC on
+October 14 (October 13 local). Fresh serial baseline is 2403054.
+
+The SD-free cold boot **passed** the original pinned Linux SSH check as milkv
+at 10.0.0.247. Running kernel is 6.1.31, root is `/dev/nvme0n1p3` ext4,
+`/boot` is `/dev/nvme0n1p2` ext4, all CPUs 0-63 are online and kexec_loaded
+is zero. The live command line has none of the three experimental logging
+options. `/boot/extlinux/extlinux.conf` again matches the complete original
+SHA-256 `53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c`,
+878 bytes, uid/gid 0:0 and mode 664. The validation command completed with
+`NVME COLD-BOOT VALIDATION PASS`. SPI LinuxBoot remains 6.1.47 and the normal
+Fedora early UART cutoff at approximately 0.03 seconds is unchanged; SSH
+runtime verification, not serial silence, establishes this successful boot.
+
+**NVMe Linux recovery is complete and verified for this cold boot.** The board
+is left powered on in its normal Linux installation, with SD removed. Keep
+the spare Linux recovery SD and working Haiku SD separate; insert/remove them
+only with board power off. No new kexec payload was loaded or executed during
+this recovery. Hardware entry remains unproven, and the unattended SD-free
+Haiku/Linux selector remains unimplemented. Do not reuse the one-shot Mac
+imager or start another logging experiment without addressing its remount race
+and preserving this now-working recovery path.
