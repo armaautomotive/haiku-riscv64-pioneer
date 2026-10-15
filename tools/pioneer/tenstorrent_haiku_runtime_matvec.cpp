@@ -11,14 +11,15 @@ int main(int argc,char** argv)
 	bool support=argc==2 && !strcmp(argv[1],"--check-support");
 	bool compareDma=argc>=3 && !strcmp(argv[1],"--compare-qwen-resident-output-dma");
 	bool fp16=argc>=3 && !strcmp(argv[1],"--run-qwen-resident-fp16");
+	bool integerProbe=argc>=3 && !strcmp(argv[1],"--probe-qwen-q8-integer-block");
 	unsigned outputs=32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
 		if (!end || end==argv[4] || *end || n<16 || n>TT_RUNTIME_MATVEC_OUTPUTS_MAX || (n&15)) return 2;
 		outputs=unsigned(n);
 	}
-	if (!support && ((argc!=3 && argc!=5) || (!compareDma && !fp16 && strcmp(argv[1],"--run-qwen-resident-projection")))) {
-		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma | --run-qwen-resident-fp16} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained weights, two separate vectors; DMA comparison also requires bit-identical PIO results. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
+	if (!support && ((argc!=3 && argc!=5) || (!compareDma && !fp16 && !integerProbe && strcmp(argv[1],"--run-qwen-resident-projection")))) {
+		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma | --run-qwen-resident-fp16 | --probe-qwen-q8-integer-block} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained weights, two separate vectors; DMA comparison requires bit-identical PIO results; integer-block probe requires exact dot products, not a scaled Q8 implementation. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
@@ -44,6 +45,10 @@ int main(int argc,char** argv)
 	for (unsigned row=0;row<outputs && passed;row++) for (unsigned block=0;block<inputs/32;block++) {
 		uint8_t data[34];
 		if (fread(data,1,34,model)!=34 || !PioneerDecodeQ8_0(data,weights+row*inputs+block*32)) { passed=false; break; }
+		if (integerProbe) for (unsigned k=0;k<32;k++) {
+			int q=data[2+k]; if (q>=128) q-=256;
+			weights[row*inputs+block*32+k]=block==0?float(q):0;
+		}
 	}
 	fclose(model);
 	for (unsigned row=0;row<outputs && passed;row++) for (unsigned k=0;k<inputs;k++) {
@@ -54,6 +59,7 @@ int main(int argc,char** argv)
 	}
 	printf("Source tensor Q8_0 [%llu,%llu] file offset %llu; retained sample %ux%u packed %u bytes\n",
 		(unsigned long long)tensor.inputs,(unsigned long long)tensor.outputs,(unsigned long long)tensor.offset,outputs,inputs,bytes);
+	if (integerProbe) puts("INTEGER BLOCK PROBE: first 32 raw Q8 integers per real row, zero padding, BF16-exact integer operands, exact dot gate. Scales are NOT applied; not a quantized inference backend.");
 	session={}; session.version=1; session.bytes=bytes;
 	if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session))==0 && session.active && session.state==TT_RESIDENT_SESSION_READY;
 	for (unsigned offset=0;offset<bytes && passed;offset+=4096) {
@@ -70,6 +76,7 @@ int main(int argc,char** argv)
 		float vector[TT_RUNTIME_MATVEC_INPUTS_MAX];
 		for (unsigned k=0;k<inputs;k++) {
 			vector[k]=float(int((k*17+vectorTrial*29)%257)-128)/256.0f;
+			if (integerProbe) vector[k]=k<32?float(int((k*17+vectorTrial*29)%255)-127):0;
 			request->input[k/2]|=uint32_t(fp16?PioneerFloat16(vector[k]):PioneerTileBf16(vector[k]))<<(16*(k&1));
 		}
 		double start=Seconds();
@@ -89,7 +96,7 @@ int main(int argc,char** argv)
 			}
 			printf("  result path %s, independent vector %u\n",dma?"owned output DMA":"legacy PIO",vectorTrial);
 		}
-		double dot=0,a2=0,ref2=0,delta2=0; unsigned mismatches=0,strictMismatches=0;
+		double dot=0,a2=0,ref2=0,delta2=0; unsigned mismatches=0,strictMismatches=0,integerMismatches=0;
 		float maxError=0,maxNormalized=0;
 		for (unsigned row=0;row<outputs;row++) {
 			float reference=0,bf16=0,absolute=0;
@@ -102,6 +109,7 @@ int main(int argc,char** argv)
 				bf16+=product; absolute+=fabsf(product);
 			}
 			float actual=PioneerTileFloat(request->output[row]);
+			integerMismatches+=integerProbe && actual!=reference;
 			float error=fabsf(actual-bf16),normalized=absolute>0?error/absolute:error;
 			bool strict=!isfinite(actual) || error>1e-5f+absolute*1e-5f;
 			strictMismatches+=strict;
@@ -114,12 +122,13 @@ int main(int argc,char** argv)
 			if (normalized>maxNormalized) maxNormalized=normalized;
 			dot+=double(actual)*reference; a2+=double(actual)*actual; ref2+=double(reference)*reference;
 			double difference=actual-reference; delta2+=difference*difference;
-			if (row<4 || (strict && strictMismatches<=8)) printf("  row%u card %.9g CPU-%s %.9g CPU-Q8 %.9g error/sum-abs %.9g\n",row,actual,fp16?"FP16-phases":"BF16",bf16,reference,normalized);
+			if (row<4 || (strict && strictMismatches<=8)) printf("  row%u card %.9g CPU-%s %.9g CPU-Q8%s %.9g error/sum-abs %.9g\n",row,actual,fp16?"FP16-phases":"BF16",bf16,integerProbe?"-integer-block":"",reference,normalized);
 		}
 		double cosine=dot/sqrt(a2*ref2),relative=sqrt(delta2/ref2);
 		printf("  %s-level target failures %u; stricter 1e-5 diagnostic failures %u; max absolute/normalized error %.9g/%.9g\n",fp16?"FP16":"BF16",mismatches,strictMismatches,maxError,maxNormalized);
-		printf("  independent Q8 FP32 reference cosine %.9f relative-L2 %.9f; NOT bit-exact\n",cosine,relative);
-		passed=!mismatches && isfinite(cosine) && cosine>.9999 && relative<.01;
+		printf("  independent Q8%s FP32 reference cosine %.9f relative-L2 %.9f; %s\n",integerProbe?"-integer-block":"",cosine,relative,integerProbe?"exact dot gate required":"NOT bit-exact");
+		if (integerProbe) printf("  Exact integer-block mismatches %u of %u\n",integerMismatches,outputs);
+		passed=!integerMismatches && !mismatches && isfinite(cosine) && cosine>.9999 && relative<.01;
 		if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&session,sizeof(session))==0 && session.uploaded_pages==bytes/4096;
 	}
 	if (cold) fprintf(stderr,"STOP: cold recovery required, no retry/reset/reload\n");
@@ -129,6 +138,6 @@ int main(int argc,char** argv)
 		passed &= session.state==TT_RESIDENT_SESSION_CLOSED && session.pci_restored && session.host_released && !session.cold;
 	}
 	free(weights); free(packed); free(request); close(fd);
-	printf("%s: real Qwen projection, retained weights and two vectors; NOT full inference or a CPU speedup\n",passed?"PASS":"FAIL");
+	printf("%s: %s, retained weights and two vectors; NOT full inference or a CPU speedup\n",passed?"PASS":"FAIL",integerProbe?"real Qwen integer-block probe, no scales applied":"real Qwen projection");
 	return passed?0:1;
 }

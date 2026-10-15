@@ -163,6 +163,18 @@ full-model diagnostic:
 The previous driver (`d02da2...`) is preserved as
 `/boot/home/pioneer-runtime-fp16-20261015/tenstorrent_pci_probe.before`.
 
+For the next quantized-kernel experiment, the projection CLI has an explicit
+`--probe-qwen-q8-integer-block` mode. It reads the first 32 raw signed Q8
+integers from each real model row, uses exact BF16 integer operands with
+zero padding, and requires every resulting 32-term dot product to equal the
+independent integer reference exactly. The remaining original numerical,
+completion and cleanup gates still apply. No scales are applied: this is
+**not a Q8 backend or full inference**. Offline image execution passes four
+mixed-sign integer-vector trials, and all tools cross-build. Native use is
+pending the exclusive FP16 full-model test's completion; never run it as a
+competing card operation. A failure must be retained, not rounded/substituted
+or called an integer proof.
+
 #### Checked output DMA (native projection proof, no speedup)
 
 A separate data-only matvec ioctl `54be`, capability bit 64 (candidate

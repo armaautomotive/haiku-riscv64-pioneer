@@ -8,20 +8,23 @@ struct RuntimeMachine:Machine {
 	uint32_t base,target;
 	bool pending=false,doorbellRead=false,corrupt=false;
 	bool fp16;
+	bool integer;
 	uint32_t buffers[8192]={};
 	std::vector<uint32_t> weights;
 	std::vector<uint16_t> vector;
-	RuntimeMachine(unsigned k,unsigned n,unsigned trial=0,uint32_t address=0x04000000,bool half=false)
-		:Machine(false,24),inputs(k),outputs(n),base(address),target(address),fp16(half),weights(PioneerMatvecWeightBytes(k,n)/4),vector(k) {
+	RuntimeMachine(unsigned k,unsigned n,unsigned trial=0,uint32_t address=0x04000000,bool half=false,bool integerBlock=false)
+		:Machine(false,24),inputs(k),outputs(n),base(address),target(address),fp16(half),integer(integerBlock),weights(PioneerMatvecWeightBytes(k,n)/4),vector(k) {
 		assert(PioneerMatvecShape(k,n)); l1[0]=0x0006a06f;
 		for (unsigned i=0;i<1024;i++) l1[1+i]=half?BlackholeRuntimeFp16MatvecCodeWord(i):BlackholeRuntimeMatvecCodeWord(i);
 		l1[Index(0x70500)]=base; l1[Index(0x70504)]=k/16; l1[Index(0x70508)]=n/16;
 		for (unsigned i=0;i<k;i++) {
 			vector[i]=uint16_t((0x3e00+(i*5+trial*13)%512)|((i&2)?0x8000:0));
+			if (integer) vector[i]=uint16_t(Bits(i<32?float(int((i*17+trial*29)%255)-127):0)>>16);
 			buffers[i/2]|=uint32_t(vector[i])<<(16*(i&1));
 		}
 		for (unsigned row=0;row<n;row++) for (unsigned i=0;i<k;i++) {
 			uint16_t value=uint16_t((0x3c00+(i*3+row*7)%512)|((i&1)?0x8000:0));
+			if (integer) value=uint16_t(Bits(i<32?float(int((i*13+row*7)%256)-128):0)>>16);
 			uint64_t byte=PioneerMatvecWeightElement(k,i,row);
 			weights[byte/4]|=uint32_t(value)<<(8*(byte&3));
 		}
@@ -83,10 +86,11 @@ struct RuntimeMachine:Machine {
 			// Independent output-major host matrix, not the device tile layout.
 			for (unsigned i=0;i<inputs;i++) {
 				uint16_t weight=uint16_t((0x3c00+(i*3+row*7)%512)|((i&1)?0x8000:0));
+				if (integer) weight=uint16_t(Bits(i<32?float(int((i*13+row*7)%256)-128):0)>>16);
 				float product=Operand16(fp16?weight&~1U:weight)*Operand16(vector[i]);
 				sum+=product; absolute+=fabsf(product);
 			}
-			if (!isfinite(Float(buffers[4096+row])) || fabsf(Float(buffers[4096+row])-sum)>1e-5f+absolute*1e-5f) return false;
+			if (!isfinite(Float(buffers[4096+row])) || (integer?Float(buffers[4096+row])!=sum:fabsf(Float(buffers[4096+row])-sum)>1e-5f+absolute*1e-5f)) return false;
 		}
 		for (unsigned row=outputs;row<4096;row++) if (buffers[4096+row]!=0x7fc00000) return false;
 		return true;
@@ -106,6 +110,10 @@ int main(int argc,char** argv)
 	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) {
 		RuntimeMachine m(k,k==1024?32:16); m.delay=3; m.Run();
 		assert(m.CorrectRuntime() && m.requests==m.ExpectedFixtures() && m.matrixInstructions==4*m.ExpectedFixtures() && m.outputReads==m.outputs);
+	}
+	for (unsigned trial=0;trial<4;trial++) {
+		RuntimeMachine block(1024,32,trial,0x04000000,false,true); block.Run();
+		assert(block.CorrectRuntime() && block.requests==128 && block.matrixInstructions==512);
 	}
 	RuntimeMachine alternate(1024,64,1,0x04800000); alternate.Run(); assert(alternate.CorrectRuntime());
 	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) {
