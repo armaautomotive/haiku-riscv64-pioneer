@@ -14,12 +14,20 @@
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+#include <new>
 #include <vm/vm.h>
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
 static pci_info sCard;
 static char sCookie;
+struct PioneerStoreContext;
+struct PioneerProbeCookie {
+	uint32 magic=0x50313030;
+	team_id team=-1;
+	PioneerStoreContext* context=NULL;
+};
+static PioneerProbeCookie* sRuntimeOwner=NULL;
 static sem_id sLock = -1;
 // Protected by sLock. A module reload is NOT cold recovery; after this latch
 // is set, the board must be cold-recovered before changing/reloading drivers.
@@ -29,12 +37,16 @@ static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 
 // PIONEER_PROBE_LOCK_BEGIN
 static status_t
-AcquireProbeLock()
+AcquireProbeLock(const void* runtimeOwner=NULL)
 {
 	status_t status = acquire_sem(sLock);
 	if (status == B_OK && sColdRecoveryRequired) {
 		release_sem(sLock);
 		return B_DEV_NOT_READY;
+	}
+	if (status==B_OK && sRuntimeOwner!=NULL && sRuntimeOwner!=runtimeOwner) {
+		release_sem(sLock);
+		return B_BUSY;
 	}
 	return status;
 }
@@ -202,6 +214,8 @@ publish_devices()
 	return sNames;
 }
 
+static status_t ReleaseResidentCookie(PioneerProbeCookie* cookie);
+
 static status_t
 ProbeOpen(const char* name, uint32 flags, void** cookie)
 {
@@ -209,13 +223,19 @@ ProbeOpen(const char* name, uint32 flags, void** cookie)
 		return B_NOT_ALLOWED;
 	if (strcmp(name, TT_PCI_PROBE_DEVICE) != 0)
 		return B_ENTRY_NOT_FOUND;
-	*cookie = &sCookie;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	PioneerProbeCookie* instance=new(std::nothrow) PioneerProbeCookie;
+	if (instance==NULL) return B_NO_MEMORY;
+	instance->team=thread.team;
+	*cookie=instance;
 	dprintf("PIONEER-P100A: probe open ready\n");
 	return B_OK;
 }
 
 static status_t ProbeClose(void*) { return B_OK; }
-static status_t ProbeFree(void*) { return B_OK; }
+static status_t ProbeFree(void* cookie) { return ReleaseResidentCookie((PioneerProbeCookie*)cookie); }
 
 struct ConfigIO {
 	uint32 Read(uint16 offset, uint8 size)
@@ -1360,11 +1380,218 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	}
 };
 
+// The session owns the PCI reservation, mappings and high host page until
+// explicit END or the final close of this FD. No firmware/core start is
+// performed here. Storage/compute commands will use this same owner.
+struct PioneerStoreContext {
+	tt_pioneer_profile profile={};
+	tt_pioneer_host_dma_audit_result baseline={};
+	tt_host_write_result unused={};
+	tt_host_page_result host={};
+	tt_resident_session_idle_result idle={};
+	tt_pioneer_mmio_transaction transaction={};
+	PioneerResidentLease lease;
+	uint64 bytes;
+	uint8* initialized=NULL;
+	uint32* hashes=NULL;
+	uint32 uploadedPages=0;
+	PioneerHostWriteIO io;
+	explicit PioneerStoreContext(uint64 capacity) : bytes(capacity),
+		io(profile,baseline.baseline.baseline.baseline.control.control.control.arc,
+			baseline.baseline.baseline.baseline.control.control.telemetry,
+			baseline.baseline.baseline.baseline.control.tensix,
+			baseline.baseline.baseline.baseline.dram,baseline.baseline.baseline.noc,
+			baseline.baseline.path,baseline.audit,unused,4096) {
+		initialized=(uint8*)calloc(capacity/4096,1);
+		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
+	}
+	~PioneerStoreContext() { free(initialized); free(hashes); }
+	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
+	bool Unsafe() {
+		return lease.pending || lease.recovery_required || idle.recovery_required || baseline.audit.recovery_required || baseline.baseline.path.recovery_required
+			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
+			|| Pci().state==TT_PIONEER_MMIO_RESTORE_FAILED;
+	}
+	void Snapshot(tt_resident_session_result& r) {
+		r={}; r.version=1; r.state=TT_RESIDENT_SESSION_READY; r.active=1; r.bytes=bytes;
+		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
+		r.host_released=host.released; r.pci_restored=Pci().restored;
+		r.route_state=baseline.baseline.path.state; r.audit_state=baseline.audit.state;
+		r.capabilities=15; r.uploaded_pages=uploadedPages; // mappings, host page, storage, inter-step source guards; no compute
+		r.cold=sColdRecoveryRequired;
+	}
+};
+
+// sLock held. On uncertainty only the established PCI/TLB rollback is used;
+// a wired system-team page is retained, never freed through a destructor.
+static void
+EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool recheck)
+{
+	PioneerStoreContext* context=cookie->context;
+	context->Snapshot(result);
+	bool clean=!sColdRecoveryRequired && !context->Unsafe();
+	if (context->lease.saved!=NULL) {
+		if (!clean) context->lease.recovery_required=true;
+		clean=PioneerResidentLeaseEnd(context->io,context->baseline.baseline.baseline.noc,context->lease) && clean;
+	}
+	if (recheck && clean) {
+		clean=context->io.PioneerHostDmaAuditIO::AfterNodeId(context->Pci().node_id[0])
+			&& BlackholeHostReadPciQuiet(context->io,0x402)
+			&& PioneerResidentSessionIdle(context->io,context->baseline.baseline.baseline.noc,context->idle);
+	}
+	BlackholePioneerMmioEnd(context->io,context->Pci(),context->transaction);
+	clean &= !context->Unsafe() && context->Pci().restored;
+	result.active=0; result.pci_restored=context->Pci().restored;
+	if (context->host.allocated) {
+		if (!clean) context->io.QuarantineHostPage();
+		else {
+			context->host.release_status=context->io.ReleaseHostPage();
+			context->host.released=context->host.release_status==B_OK;
+		}
+	}
+	result.host_released=!context->host.allocated || context->host.released;
+	if (!clean || !result.host_released) sColdRecoveryRequired=true;
+	result.cold=sColdRecoveryRequired;
+	result.state=clean && result.host_released?TT_RESIDENT_SESSION_CLOSED:TT_RESIDENT_SESSION_CLEANUP_FAILED;
+	sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+	cookie->context=NULL; sRuntimeOwner=NULL;
+	delete context;
+}
+
+static status_t
+ReleaseResidentCookie(PioneerProbeCookie* cookie)
+{
+	if (cookie==NULL || cookie->magic!=0x50313030) return B_BAD_VALUE;
+	if (cookie->context!=NULL) {
+		// Closing must also work after the cold latch: do not use the
+		// ordinary gate, which deliberately refuses all further card work.
+		status_t status=acquire_sem(sLock);
+		if (status!=B_OK) return status; // retain ownership, never silently free a possibly live page
+		tt_resident_session_result result={};
+		EndResidentSession(cookie,result,!sColdRecoveryRequired);
+		release_sem(sLock);
+	}
+	cookie->magic=0; delete cookie; return B_OK;
+}
+
+static status_t
+ResidentSessionControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (data==NULL || length!=sizeof(tt_resident_session_result)) return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_resident_session_result result={};
+	if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) {
+		status=user_memcpy(&result,data,sizeof(result)); if (status!=B_OK) return status;
+		if (result.version!=1 || !PioneerResidentCapacity(result.bytes)) return B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
+	if (operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT) {
+		result={}; result.version=1; result.capabilities=15;
+	} else if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) {
+		if (cookie->context!=NULL) { release_sem(sLock); return B_BUSY; }
+		uint64 capacity=result.bytes;
+		PioneerStoreContext* context=new(std::nothrow) PioneerStoreContext(capacity);
+		if (context==NULL) { release_sem(sLock); return B_NO_MEMORY; }
+		if (context->initialized==NULL || context->hashes==NULL) { delete context; release_sem(sLock); return B_NO_MEMORY; }
+		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status!=B_OK) { delete context; release_sem(sLock); return status; }
+		if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,context->profile);
+		context->profile.status=status;
+		bool ready=status==B_OK && BlackholePioneerMmioBegin(context->io,context->Pci(),context->transaction)
+			&& context->io.PioneerHostDmaAuditIO::AfterNodeId(context->Pci().node_id[0])
+			&& PioneerResidentSessionIdle(context->io,context->baseline.baseline.baseline.noc,context->idle);
+		unsigned failure=TT_RESIDENT_SESSION_PREFLIGHT_FAILED;
+		if (ready) { failure=TT_RESIDENT_SESSION_HOST_FAILED; ready=PioneerPrepareHostPage(context->io,context->host); }
+		cookie->context=context; sRuntimeOwner=cookie;
+		context->Snapshot(result);
+		if (!ready) {
+			// Every partially started mapping transaction is rolled back.
+			// A pristine preflight refusal may never have changed PCI state.
+			if (!context->transaction.config_attempted && context->Pci().state!=TT_PIONEER_MMIO_READ_OK)
+				context->Pci().restored=1;
+			EndResidentSession(cookie,result,false);
+			if (!result.cold && result.host_released) result.state=failure;
+		}
+	} else if (cookie->context==NULL || sRuntimeOwner!=cookie) {
+		release_sem(sLock); return B_DEV_NOT_READY;
+	} else if (operation==TT_PCI_PROBE_PIONEER_SESSION_END) {
+		EndResidentSession(cookie,result,true);
+	} else {
+		// CPU metadata only. It does not revalidate hardware health or
+		// authorize freeing a page; END performs its own live audit.
+		cookie->context->Snapshot(result);
+	}
+	status=user_memcpy(data,&result,sizeof(result));
+	if (status!=B_OK && operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN && cookie->context!=NULL) {
+		tt_resident_session_result cleanup={}; EndResidentSession(cookie,cleanup,true);
+	}
+	release_sem(sLock); return status;
+}
+
+static status_t
+ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (data==NULL || length!=sizeof(tt_pioneer_resident_page)) return B_BAD_VALUE;
+	thread_info thread={};
+	status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_resident_page* request=(tt_pioneer_resident_page*)malloc(sizeof(tt_pioneer_resident_page));
+	if (request==NULL) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=1 || request->reserved!=0) {
+		free(request); return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie);
+	if (status!=B_OK) { free(request); return status; }
+	PioneerStoreContext* context=cookie->context;
+	if (context==NULL || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (!PioneerResidentOffset(context->bytes,request->offset)) status=B_BAD_VALUE;
+	else {
+		bool upload=operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD;
+		unsigned page=unsigned(request->offset/4096);
+		if (!upload && !context->initialized[page]) status=B_ENTRY_NOT_FOUND;
+		else {
+			request->result={}; request->result.version=1; request->result.state=TT_STORE_CONFIG_FAILED;
+			bool ready=context->lease.ready;
+			if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
+			bool passed=ready && PioneerResidentStorePage(context->io,context->baseline.baseline.baseline.baseline.dram,
+				context->baseline.baseline.baseline.noc,context->host,context->lease,context->bytes,request->offset,
+				upload,request->data,request->result);
+			if (upload && request->result.wrote_device && context->initialized[page]) {
+				context->initialized[page]=0; context->uploadedPages--;
+			}
+			if (passed && upload) {
+				context->hashes[page]=PioneerResidentPageHash(request->data);
+				context->initialized[page]=1; context->uploadedPages++;
+			} else if (passed && PioneerResidentPageHash(request->data)!=context->hashes[page]) {
+				request->result.state=TT_STORE_MISMATCH; request->result.mismatches++;
+			}
+			if (context->lease.recovery_required || context->lease.pending || request->result.recovery_required) {
+				context->lease.recovery_required=true; context->io.QuarantineHostPage();
+				request->result.recovery_required=1; sColdRecoveryRequired=true;
+			}
+			status=user_memcpy(data,request,sizeof(*request));
+		}
+	}
+	release_sem(sLock); free(request); return status;
+}
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
-	if (geteuid() != 0 || cookie != &sCookie)
+	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
+	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 		return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN || operation==TT_PCI_PROBE_PIONEER_SESSION_END
+		|| operation==TT_PCI_PROBE_PIONEER_SESSION_STATUS || operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT)
+		return ResidentSessionControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD || operation==TT_PCI_PROBE_PIONEER_STORE_READ)
+		return ResidentStoreControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;

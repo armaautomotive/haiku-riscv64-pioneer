@@ -34,7 +34,9 @@ allowed. This remains a fixed one-tile proof, not Qwen inference or a speedup.
 The same card now also passes full on-card accumulation for fixed 16-output
 GEMV fixtures with 1,024, 5,120 and 6,144 inputs. It no longer needs a host
 request/reset or a CPU partial sum for each 16-element input block. Model
-weights are not yet persistent across requests and Qwen chat remains CPU-only.
+weights in those GEMV fixtures are still re-uploaded. A separate exclusive
+storage session now retains raw model chunks across requests; it is not yet
+connected to Qwen compute, and Qwen chat remains CPU-only.
 Dedicated, owned high-address host buffers now pass 4 KiB transfers in both
 directions. Card-to-host writes additionally require CPU-visible payload and
 distinct poisoned-L1 readback proof before releasing their buffer. These
@@ -98,6 +100,111 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 15: exclusive sessions and persistent Qwen-file chunks
+
+The driver now has **per-open-FD, creator-team-owned sessions**. A session
+retains its PCI reservation, validated mappings and a dedicated wired,
+non-cached high-address host page until explicit END or final FD close.
+Legacy experimental operations, other FDs and other teams cannot use the
+session while it owns the card; inherited handles are denied to a different
+team, while `dup()` in the owner preserves the session until final close.
+The ordinary cold gate still takes precedence, including for the owner.
+Final-close cleanup uses a separate locked path so it can quarantine a
+possibly live host page even after that gate has latched.
+
+The formerly one-shot PCI mapping policy is split into audited Begin/End
+transactions. Existing callers still use the same one-shot wrapper and
+retain the original 22-write rollback tests. END is idempotent and a failed
+or partially mapped BEGIN must still be ended. Only memory/INTx-disable is
+enabled by this policy; bus mastering remains confined to the bounded
+owned-page transfer. Additional session preflight checks require a pristine
+initiator, disabled IRQ configuration, all four command buffers idle and
+both read and outgoing-write transaction-ID arrays empty. Source changes or
+failed control rollback retain the cold-recovery requirements.
+
+The first storage API exposes **fixed 4 KiB payloads and validated arena
+offsets**, never host pointers or arbitrary NoC addresses. Initial bank-0
+capacity is 4 KiB–2 GiB, page aligned, starting above the 64 MiB low
+reservation and below the `0xff000000` NIU region. This is not a claim that
+the card has only 2 GiB, nor enough residency for the 27B target: multi-bank
+quantized storage remains required. Initialized-page bookkeeping refuses
+reads from a page that has not been successfully uploaded; per-page FNV-1a
+is integrity bookkeeping, not cryptographic model authentication.
+
+On the first data operation the session saves the original 8 KiB L1 scratch,
+NIU configuration and two TLBs once, then owns those resources across
+requests. An upload stages the supplied bytes in the owned host page,
+reads them into L1, proves host DMA completion and BME-off, writes L1 to
+owned GDDR with a normal acknowledged NoC write, and reads GDDR back into
+distinct L1 for complete byte comparison. All read responses return to the
+initiating NIU. Every step requires ordered command readback, exact
+response-or-ACK/flit/accepted/sent deltas **1/64/1/1**, idle IDs and stable
+routes/mapping before the next step. A read operation fetches an initialized
+GDDR page independently, validates its recorded hash, and returns the bytes.
+No core is released and no firmware command, counter clear or retry exists.
+
+This is real cross-request residency, not a synthetic fixture: the native
+diagnostic used two distinct 4 KiB chunks at file offsets 32 MiB and
+32 MiB + 4 KiB from the installed Qwen3-0.6B-Q8_0 GGUF. Its full SHA-256 was
+reverified as
+`9465e63a22add5354d9bb4b99e90117043c7124007664907259bd16d043bb031`.
+Chunk hashes were `a1fdfe1d` / `7a1d46bb`. Within a 12 KiB arena it uploaded
+offsets 0 and 8,192 in separate ioctls, independently read both back,
+overwrote offset 0 with the second chunk, and checked both pages again.
+Reading the uninitialized gap and writing at the arena end were refused
+before a device command. The uploaded-page count remained two.
+
+The final guarded driver passed this complete sequence twice: once with
+explicit END and once leaving initialized storage to final-FD-close cleanup.
+All three uploads per run completed 3/3 requests; all four independent reads
+completed 1/1, with zero mismatches and no cold recovery. Host reads took
+two polls, GDDR writes/readbacks one each. Explicit END restored original
+L1/NIU/TLB/PCI state and released the host page; the automatic close allowed
+legacy operations again afterward. The lifetime is the **open session**,
+not reboot or a newly opened session. GDDR payload is intentionally retained
+during ownership, not restored to pre-upload bytes after each request.
+Closing releases logical ownership; another session must initialize its own
+pages before reading them.
+
+Native lifecycle testing also passed foreign-FD/legacy rejection, a child
+process's inherited-team denial, duplicate-FD retention, explicit END and
+automatic close without data. Existing native 4 KiB transfers and
+1,024-input resident GEMV regressions pass after session cleanup. The
+post-test PCIe audit remains clean, with firmware DMA channels disabled and
+stopped. Assistant team 2705 remains ready/idle with its original model and
+conversation unchanged.
+
+ASan/UBSan tests cover arena overflow/alignment/NIU bounds, every lost
+setup/data/close write, each missing pipeline completion, corruption,
+inter-step source/mapping changes, failed BME-off, pending PCIe status and
+unexplained flits. Uncertain completion quarantines the wired system-team
+page and permits only BME-off and TLB/PCI control rollback, never L1/NIU
+payload rewrite or a reset/retry. The existing MMIO/ARC/reset/L1/BRISC/DRAM
+and resident-compute suites still pass. The driver and all 29 utilities build.
+
+Final artifacts/logs: `/boot/home/pioneer-resident-store-guarded-20261015/`,
+including separate explicit/final-close logs and the prior working driver
+as `tenstorrent_pci_probe.before`. Session support v1 advertises capability
+bits 1/2/4/8 (exclusive mappings / host buffer / storage / inter-step guards);
+the guarded upload diagnostic requires bits 4 and 8 before proceeding.
+SHA-256:
+
+- Driver: `bde82a9caec341ae7a437622d8c4086a737387adc12a7d029ee8b1885ae0589e`
+- Session/store CLI: `a97f1a2e4f5b1a535a0807bdb2dec40e1570986cee06ceeecb42d42a5c4471f0`
+
+Earlier lifecycle-only and initial storage artifacts remain preserved under
+`/boot/home/pioneer-resident-session-20261015/` and
+`/boot/home/pioneer-resident-store-20261015/` respectively.
+
+**Remaining:** raw retained chunks are not yet a model-aware tensor layout,
+resident Qwen matrix execution, the full Qwen graph, or an Assistant backend.
+The next step is compute over persistent weight tensors with input vectors
+kept separate, followed by the actual model backend and same-model CPU/GPU
+correctness and throughput tests. Current storage readback still uses PIO
+for complete verification; do not treat these correctness-test times as
+transfer bandwidth or Qwen tokens/second. The full 27B hybrid graph and
+quantized multi-bank residency remain in scope and unimplemented.
 
 ### October 15: owned card-to-host write and distinct-L1 readback
 

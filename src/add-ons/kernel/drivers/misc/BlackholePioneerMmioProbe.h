@@ -58,13 +58,18 @@ BlackholeCardControlsQuiet(IO& io)
 	return cap == 0;
 }
 
-// Strict, one-shot Pioneer experiment. Only memory + INTx-disable (0x402)
+struct tt_pioneer_mmio_transaction {
+	bool config_attempted,map_attempted;
+};
+
+// Strict Pioneer mapping transaction. Only memory + INTx-disable (0x402)
 // may be enabled, NEVER bus mastering. All addressing is fixed and audited.
 // IO maps exactly the BAR0 NoC identification page read-only and uncached.
 template<class IO>
-void
-BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
+bool
+BlackholePioneerMmioBegin(IO& io, tt_pioneer_mmio_result& r,tt_pioneer_mmio_transaction& transaction)
 {
+	transaction={};
 	r = {};
 	r.version = 1;
 	r.profile_status = io.Profile().status;
@@ -74,17 +79,17 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 		|| io.CardRead(0, 4) != 0xb1401e52 || io.CardRead(0x2c, 4) != 0x00431e52
 		|| io.RootRead(0, 4) != 0x20421e30
 		|| (io.RootRead(8, 4) >> 8) != 0x060400)
-		return;
+		return false;
 	r.commands_before[0] = io.CardRead(4, 2);
 	r.commands_before[1] = io.RootRead(4, 2);
 	if (r.commands_before[0] != 0 || r.commands_before[1] != 0
 		|| io.RootRead(0x18, 4) != 0x003f0100
 		|| io.RootRead(0x20, 4) != 0x0000fff0)
-		return;
+		return false;
 	for (unsigned i = 0; i < 6; i++) {
 		r.bars_before[i] = io.CardRead(0x10 + 4 * i, 4);
 		if (r.bars_before[i] != (i % 2 == 0 ? 0x0cU : 0U))
-			return;
+			return false;
 	}
 	for (unsigned i = 0; i < 3; i++)
 		r.bridge_before[i] = io.RootRead(0x24 + 4 * i, 4);
@@ -92,17 +97,17 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 		|| r.bridge_before[2] != 0 || io.Size(0) != UINT64_C(0x20000000)
 		|| io.Size(2) != UINT64_C(0x100000) || io.Size(4) != UINT64_C(0x800000000)
 		|| io.CardRead(4, 2) != 0 || io.RootRead(4, 2) != 0)
-		return;
+		return false;
 	r.stage = 1;
 	r.state = TT_PIONEER_MMIO_CONFIG_FAILED;
 	const uint32_t trial[] = {0x0c, 0x49, 0x2000000c, 0x49, 0x0c, 0xfffffff8};
 	const unsigned order[] = {5, 4, 1, 0, 3, 2};
+	transaction.config_attempted=true;
 	for (unsigned i : order)
 		io.CardWrite(0x10 + 4 * i, 4, trial[i]);
 	io.RootWrite(0x28, 4, 0x49);
 	io.RootWrite(0x2c, 4, 0x49);
 	io.RootWrite(0x24, 4, 0x20010001);
-	bool mapAttempted = false;
 	do {
 		bool configured = true;
 		for (unsigned i = 0; i < 6; i++) {
@@ -113,7 +118,7 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 			&& io.RootRead(0x28, 4) == 0x49 && io.RootRead(0x2c, 4) == 0x49;
 		if (!configured)
 			break;
-		mapAttempted = true;
+		transaction.map_attempted = true;
 		if (!io.Map()) {
 			r.state = TT_PIONEER_MMIO_MAP_FAILED;
 			break;
@@ -134,12 +139,23 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 		r.state = (xy == 2 || xy == 11) && r.node_id[0] == r.node_id[1]
 			&& r.node_id[0] == r.node_id[2]
 			? TT_PIONEER_MMIO_READ_OK : TT_PIONEER_MMIO_READ_BAD;
-		if (r.state == TT_PIONEER_MMIO_READ_OK && !io.AfterNodeId(r.node_id[0]))
-			r.state = TT_PIONEER_MMIO_READ_BAD;
 		r.stage = 4;
 	} while (false);
+	return r.state==TT_PIONEER_MMIO_READ_OK;
+}
 
-	bool unmapped = !mapAttempted || io.Unmap();
+// Must be called even when Begin refuses after the first config write.
+// It is idempotent: an already-finished or never-started transaction does
+// not unmap or alter PCI state again. It never enables bus mastering.
+template<class IO>
+void
+BlackholePioneerMmioEnd(IO& io,tt_pioneer_mmio_result& r,tt_pioneer_mmio_transaction& transaction)
+{
+	if (!transaction.config_attempted) return;
+	transaction.config_attempted=false;
+	const unsigned order[] = {5, 4, 1, 0, 3, 2};
+	bool unmapped = !transaction.map_attempted || io.Unmap();
+	transaction.map_attempted=false;
 	io.CardWrite(4, 2, 0);
 	io.RootWrite(4, 2, 0);
 	bool decodersOff = io.CardRead(4, 2) == 0 && io.RootRead(4, 2) == 0;
@@ -167,6 +183,16 @@ BlackholePioneerMmioProbe(IO& io, tt_pioneer_mmio_result& r)
 		r.state = TT_PIONEER_MMIO_RESTORE_FAILED;
 	else
 		r.stage = 5;
+}
+
+template<class IO>
+void
+BlackholePioneerMmioProbe(IO& io,tt_pioneer_mmio_result& r)
+{
+	tt_pioneer_mmio_transaction transaction={};
+	if (BlackholePioneerMmioBegin(io,r,transaction) && !io.AfterNodeId(r.node_id[0]))
+		r.state=TT_PIONEER_MMIO_READ_BAD;
+	BlackholePioneerMmioEnd(io,r,transaction);
 }
 
 #endif

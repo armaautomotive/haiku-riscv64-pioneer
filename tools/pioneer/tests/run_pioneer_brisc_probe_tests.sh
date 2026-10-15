@@ -18,6 +18,8 @@ ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
 awk '
  /acquire_sem\(sLock\)/ {acquires++}
  /status = AcquireProbeLock\(\)/ {gated++}
- END {if(acquires!=1 || gated!=23) exit 1}
+ # One ordinary gated acquisition plus the deliberate final-FD-close
+ # cleanup path, which must retain/quarantine even after a cold latch.
+ END {if(acquires!=2 || gated!=23) exit 1}
 ' "$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
 printf 'PASS: fixed BRISC/TRISC0 scalar policies; dropped writes, timeout, unsafe-entry/stop and rollback gates\n'

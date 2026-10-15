@@ -120,6 +120,15 @@ int main()
 {
 	MockIO io;
 	tt_pioneer_mmio_result r;
+	tt_pioneer_mmio_transaction transaction={};
+	assert(BlackholePioneerMmioBegin(io,r,transaction));
+	assert(io.mapped && io.command[0]==0x402 && io.command[1]==0x402 && !r.restored && io.writes==11);
+	assert(transaction.config_attempted && transaction.map_attempted && io.mmioReads==3);
+	BlackholePioneerMmioEnd(io,r,transaction);
+	assert(r.restored && !io.mapped && io.writes==22);
+	BlackholePioneerMmioEnd(io,r,transaction);
+	assert(io.writes==22);
+	io={};
 	BlackholePioneerMmioProbe(io, r);
 	assert(r.state == TT_PIONEER_MMIO_READ_OK && r.restored && r.stage == 5);
 	assert(io.mmioReads == 3 && !io.mapped && io.writes == 22);
