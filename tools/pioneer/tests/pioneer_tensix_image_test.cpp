@@ -46,6 +46,8 @@ struct Machine {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) l1[i] = BlackholeTensixImageWord(i,configSmoke,sfpuSmoke);
 	}
 	virtual ~Machine() = default;
+	virtual bool Fp16Operands() const { return false; }
+	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
 		assert(false); return 0;
@@ -84,14 +86,14 @@ struct Machine {
 			bool srcA = op == 0x420000c1;
 			assert(UnpackBoundsValid()); // an X1 reset would load just one datum
 			assert(srcA ? !ownerA : !ownerB);
-			assert(config[srcA ? 64 : 112] == 0x100015 && config[srcA ? 65 : 113] == (srcA ? 16U : 8U));
-			assert(config[srcA ? 72 : 120] == 5 && config[srcA ? 73 : 121] == 3);
+			assert(config[srcA ? 64 : 112] == (Fp16Operands()?0x100011U:0x100015U) && config[srcA ? 65 : 113] == (srcA ? 16U : 8U));
+			assert(config[srcA ? 72 : 120] == (Fp16Operands()?1U:5U) && config[srcA ? 73 : 121] == 3);
 			assert(config[srcA ? 76 : 124] == (srcA ? 0x7070U : 0x7091U));
 			unsigned base = srcA ? 0x70710 : 0x70920, rows = srcA ? 16 : 8;
 			for (unsigned row = 0; row < rows; row++) for (unsigned col = 0; col < 16; col++) {
 				unsigned element = row*16+col;
 				uint32_t word = l1[Index(base+(element/2)*4)];
-				float value = Float(((word >> (16*(element&1))) & 65535) << 16);
+				float value = Operand16(uint16_t(word >> (16*(element&1))));
 				if (!dropUnpack) (srcA ? a[row][col] : b[row][col]) = value;
 				unpackReads++;
 			}
@@ -155,12 +157,15 @@ struct Machine {
 		}
 		else if (op == 0x26000020 || op == 0x26c00020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
-			assert(config[0] == 0x42b5 && config[1] == 0x20aa0000 && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[7] == 0 && config[220] == 0);
+			assert(config[0] == (Fp16Operands()?0x4231U:0x42b5U) && config[1] == (Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
 				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) {
 					float av = transposeA ? a[col][k] : a[k][col], bv = b[row][k];
+					// The documented FP16 SrcA fidelity phases do not consume
+					// its least significant mantissa bit. SrcB keeps all ten.
+					if (Fp16Operands()) av=Float(Bits(av)&~0x2000U);
 					if (sfpuSmoke == 24) {
 						unsigned phase = thread[11]; assert(phase < 4);
 						float highA = Float(Bits(av)&0xfff80000), highB = Float(Bits(bv)&0xfffe0000);

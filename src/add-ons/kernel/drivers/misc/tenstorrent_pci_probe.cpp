@@ -1480,7 +1480,7 @@ struct PioneerStoreContext {
 		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
 		r.host_released=host.released; r.pci_restored=Pci().restored;
 		r.route_state=baseline.baseline.path.state; r.audit_state=baseline.audit.state;
-		r.capabilities=127; r.uploaded_pages=uploadedPages; // mappings, host, storage, guards, matvec, stream upload, output DMA
+		r.capabilities=255; r.uploaded_pages=uploadedPages; // previous bits plus fixed FP16 operand matvec (128)
 		r.cold=sColdRecoveryRequired;
 	}
 };
@@ -1557,7 +1557,7 @@ ResidentSessionControl(PioneerProbeCookie* cookie,uint32 operation,void* data,si
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	if (operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT) {
-		result={}; result.version=1; result.capabilities=127;
+		result={}; result.version=1; result.capabilities=255;
 	} else if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) {
 		if (cookie->context!=NULL) { release_sem(sLock); return B_BUSY; }
 		uint64 capacity=result.bytes;
@@ -1682,7 +1682,7 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput)
+RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16)
 {
 	if (data==NULL || length!=sizeof(tt_pioneer_runtime_matvec)) return B_BAD_VALUE;
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
@@ -1711,7 +1711,7 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 			if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
 			if (ready) ready=context->io.MapRuntime();
 			if (ready) ready=PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
-				context->baseline.baseline.baseline.noc,context->lease,context->compute);
+				context->baseline.baseline.baseline.noc,context->lease,context->compute,fp16);
 			if (ready) PioneerRuntimeMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
 				context->baseline.baseline.baseline.noc,context->host,context->lease,context->compute,context->bytes,
 				request->weight_offset,request->inputs,request->outputs,request->input,request->output,request->result,dmaOutput);
@@ -1736,8 +1736,9 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return ResidentSessionControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD || operation==TT_PCI_PROBE_PIONEER_STORE_READ)
 		return ResidentStoreControl(instance,operation,data,length);
-	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA)
-		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA);
+	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA
+		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16)
+		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)
 		return ResidentStreamControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {

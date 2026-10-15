@@ -105,6 +105,64 @@ out while establishing the Haiku port baseline.
 
 ### October 15: checked streamed uploads and numerical localization
 
+#### Fixed FP16 precision candidate (projections passed, full model pending)
+
+The remaining BF16/CPU-Q8 graph drift motivated a separate trusted FP16
+operand matvec, ioctl `54bf`, capability bit 128 (support capabilities 255).
+It changes exactly six fixed source-format immediates in the independently
+assembled runtime image. No code/data address, NoC command, shape, counter,
+phase/park PC, loop or FP32 destination format changes. Prepared format is
+immutable for a session; a mismatched-format invocation is refused rather
+than replacing live code. The original BF16 and optional result-DMA calls
+remain available and unchanged by default.
+
+The format fields were checked against pinned Blackhole
+[configuration definitions](https://github.com/tenstorrent/tt-metal/blob/d279aa36bebe71367a521449310f6f53100e92be/tt_metal/hw/inc/blackhole/cfg_defines.h).
+FP16 carries more input mantissa bits than BF16 but is not an IEEE-exact
+matrix path: the documented four fidelity phases consume all ten SrcB
+mantissa bits and only nine SrcA bits. The independent reference explicitly
+models that omitted bit; see the shared architecture-specific discussion in
+[SrcA/SrcB fidelity phases](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md).
+The application packs normal FP16 round-to-nearest-even and explicitly
+flushes subnormals, refusing overflow/nonfinite operands. No kernel floating
+point is used. The full-model candidate still preprocesses activations with
+the independent CPU runtime's Q8 quantizer before operand packing.
+
+ASan/UBSan covers exhaustive finite normal FP16 round trips, nearest-even
+ties, signed zero, subnormal flush and overflow; independently assembled
+image equality (only six changed words); all five K widths; unchanged legacy
+images/GEMV variants; packing/cache reuse; nonfinite/overflow refusal; format
+immutability; all lost post-upload control writes; and existing no-fallback
+ggml failure/cleanup policy. The driver and all 30 utilities build.
+
+Native FP16 tests passed for 32x1,024, full 2,048x1,024 query, 1,024x3,072
+down and 4,096x1,024 classifier projections, each with two independent
+vectors and clean END. Exact compute completion/park/counters and original
+CPU numerical gates remain unchanged. On the 32-row query sample, relative
+L2 against the original Q8 FP32 product improved from BF16's
+**0.001926905 / 0.001968701** to **0.000590074 / 0.000520048**.
+This is evidence for a precision improvement, not full-model correctness
+or a speedup. Stricter 1e-5 primitive discrepancies are still printed, not
+discarded. Legacy ownership/final-close/GEMV tests and the hardware audit
+passed afterward, cold 0, with the Assistant unchanged.
+
+The standalone backend now supports explicit `--diagnose-fp16-cpu-q8` /
+`--verify-fp16-cpu-q8`, keeping the CPU reference context created before
+device registration. The native full-model diagnostic is running with the
+same primitive/graph/full-logit/greedy gates; **generation is not qualified**.
+Its log/failure vector are `full-qwen-first.log` /
+`full-qwen-failure-first.raw` under `/boot/home/pioneer-runtime-fp16-20261015/`.
+Do not deploy this as a faster Assistant mode based on projection evidence.
+
+Installed driver SHA-256:
+`228885f27d567a83ffa034bb97d9e21c728dbdc83e53ad40dd89b50029e11fea`;
+projection CLI:
+`fb31741d50db7fbbdbf8bd8e34e3e1dd8b2a9c7f9d5675093bc96695e6206726`;
+full-model diagnostic:
+`18cc5958274b1a8876c892d8020ec5ea45904fa58847a3498aeafcc9d6d7f425`.
+The previous driver (`d02da2...`) is preserved as
+`/boot/home/pioneer-runtime-fp16-20261015/tenstorrent_pci_probe.before`.
+
 #### Checked output DMA (native projection proof, no speedup)
 
 A separate data-only matvec ioctl `54be`, capability bit 64 (candidate

@@ -5,6 +5,7 @@
 #include <math.h>
 #include <string.h>
 #include <vector>
+#include "PioneerFloat16.h"
 
 static inline uint16_t PioneerResidentBf16(float value)
 {
@@ -29,10 +30,11 @@ template<class IO> class PioneerResidentTensorCache {
 	IO& io;
 	uint64_t capacity,next=0;
 	bool failed=false;
+	const bool fp16;
 	std::vector<Entry> entries;
 public:
 	uint64_t uploadedPages=0,matvecCalls=0;
-	PioneerResidentTensorCache(IO& transport,uint64_t bytes):io(transport),capacity(bytes) {}
+	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false):io(transport),capacity(bytes),fp16(half) {}
 	bool Failed() const { return failed; }
 	size_t Tensors() const { return entries.size(); }
 	uint64_t Bytes() const { return next; }
@@ -55,8 +57,9 @@ public:
 			for (unsigned r=0;r<16;r++) if (!decode(row+r,rows.data()+size_t(r)*inputs)) { failed=true; return false; }
 			memset(packed.data(),0,tileBytes);
 			for (unsigned r=0;r<16;r++) for (unsigned k=0;k<inputs;k++) {
-				float value=rows[size_t(r)*inputs+k]; uint16_t bf16=PioneerResidentBf16(value);
-				if (!isfinite(value) || (bf16&0x7f80)==0x7f80) { failed=true; return false; }
+				float value=rows[size_t(r)*inputs+k]; uint16_t bf16=fp16?PioneerFloat16(value):PioneerResidentBf16(value);
+				uint16_t mask=fp16?0x7c00:0x7f80;
+				if (!isfinite(value) || (bf16&mask)==mask) { failed=true; return false; }
 				uint64_t byte=PioneerMatvecWeightElement(inputs,k,r);
 				packed[size_t(byte/4)]|=uint32_t(bf16)<<(8*(byte&3));
 			}
@@ -75,8 +78,9 @@ public:
 		if (!found || !input || !output) { failed=true; return false; }
 		uint32_t vector[TT_RUNTIME_MATVEC_INPUTS_MAX/2]={};
 		for (unsigned k=0;k<inputs;k++) {
-			uint16_t bf16=PioneerResidentBf16(input[k]);
-			if (!isfinite(input[k]) || (bf16&0x7f80)==0x7f80) { failed=true; return false; }
+			uint16_t bf16=fp16?PioneerFloat16(input[k]):PioneerResidentBf16(input[k]);
+			uint16_t mask=fp16?0x7c00:0x7f80;
+			if (!isfinite(input[k]) || (bf16&mask)==mask) { failed=true; return false; }
 			vector[k/2]|=uint32_t(bf16)<<(16*(k&1));
 		}
 		uint32_t result[TT_RUNTIME_MATVEC_OUTPUTS_MAX];

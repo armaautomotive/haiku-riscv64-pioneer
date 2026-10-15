@@ -74,6 +74,17 @@ int main() {
 		assert(((float*)result->data)[row]==reference);
 	}
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
+	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); PioneerGgmlFp16Operands(true);
+	backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+	PioneerGgmlFp16Operands(false); // format cannot change during a live context
+	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS && io.fp16);
+	for (unsigned row=0;row<32;row++) {
+		float reference=0;
+		for (unsigned k=0;k<1024;k++) reference+=PioneerFloat16Value(PioneerFloat16(decoded[row*1024+k])&~1U)*PioneerFloat16Value(PioneerFloat16(dx[k]));
+		assert(((float*)result->data)[row]==reference);
+	}
+	assert(PioneerGgmlSnapshot(stats) && stats.tensors==1 && stats.uploads==18 && stats.matvecs==1);
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlFp16Operands(false);
 	weights->buffer=NULL; input->buffer=NULL; result->buffer=NULL;
 	ggml_backend_buffer_free(buffer); ggml_backend_buffer_free(inputBuffer); ggml_backend_buffer_free(resultBuffer); ggml_free(ctx);
 	printf("PASS: pinned ggml registration, strict support policy, two vectors/one upload, graph failure/no fallback, exclusive cleanup; OFFLINE ONLY\n");

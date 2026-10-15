@@ -2,6 +2,7 @@
 #include "TenstorrentHaikuTile.h"
 #include "TenstorrentGgufQuant.h"
 #include "TenstorrentGgufTensor.h"
+#include "PioneerFloat16.h"
 #include <stdlib.h>
 #include <time.h>
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
@@ -9,14 +10,15 @@ int main(int argc,char** argv)
 {
 	bool support=argc==2 && !strcmp(argv[1],"--check-support");
 	bool compareDma=argc>=3 && !strcmp(argv[1],"--compare-qwen-resident-output-dma");
+	bool fp16=argc>=3 && !strcmp(argv[1],"--run-qwen-resident-fp16");
 	unsigned outputs=32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
 		if (!end || end==argv[4] || *end || n<16 || n>TT_RUNTIME_MATVEC_OUTPUTS_MAX || (n&15)) return 2;
 		outputs=unsigned(n);
 	}
-	if (!support && ((argc!=3 && argc!=5) || (!compareDma && strcmp(argv[1],"--run-qwen-resident-projection")))) {
-		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained BF16 weights, two separate vectors; DMA comparison also requires bit-identical PIO results. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
+	if (!support && ((argc!=3 && argc!=5) || (!compareDma && !fp16 && strcmp(argv[1],"--run-qwen-resident-projection")))) {
+		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma | --run-qwen-resident-fp16} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained weights, two separate vectors; DMA comparison also requires bit-identical PIO results. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
@@ -25,6 +27,7 @@ int main(int argc,char** argv)
 	printf("Session support v%u capabilities %u; resident matvec bit16 required\n",session.version,session.capabilities);
 	if (session.version!=1 || (session.capabilities&31)!=31) { close(fd); return 1; }
 	if (compareDma && !(session.capabilities&64)) { fprintf(stderr,"Output DMA capability unavailable\n"); close(fd); return 1; }
+	if (fp16 && !(session.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec capability unavailable\n"); close(fd); return 1; }
 	if (support) { close(fd); return 0; }
 	FILE* model=fopen(argv[2],"rb"); if (!model) { close(fd); return 1; }
 	PioneerGgufTensor tensor={};
@@ -45,7 +48,9 @@ int main(int argc,char** argv)
 	fclose(model);
 	for (unsigned row=0;row<outputs && passed;row++) for (unsigned k=0;k<inputs;k++) {
 		uint64_t byte=PioneerMatvecWeightElement(inputs,k,row);
-		packed[byte/4]|=uint32_t(PioneerTileBf16(weights[row*inputs+k]))<<(8*(byte&3));
+		uint16_t value=fp16?PioneerFloat16(weights[row*inputs+k]):PioneerTileBf16(weights[row*inputs+k]);
+		if (fp16 && (value&0x7c00)==0x7c00) { passed=false; break; }
+		packed[byte/4]|=uint32_t(value)<<(8*(byte&3));
 	}
 	printf("Source tensor Q8_0 [%llu,%llu] file offset %llu; retained sample %ux%u packed %u bytes\n",
 		(unsigned long long)tensor.inputs,(unsigned long long)tensor.outputs,(unsigned long long)tensor.offset,outputs,inputs,bytes);
@@ -65,10 +70,10 @@ int main(int argc,char** argv)
 		float vector[TT_RUNTIME_MATVEC_INPUTS_MAX];
 		for (unsigned k=0;k<inputs;k++) {
 			vector[k]=float(int((k*17+vectorTrial*29)%257)-128)/256.0f;
-			request->input[k/2]|=uint32_t(PioneerTileBf16(vector[k]))<<(16*(k&1));
+			request->input[k/2]|=uint32_t(fp16?PioneerFloat16(vector[k]):PioneerTileBf16(vector[k]))<<(16*(k&1));
 		}
 		double start=Seconds();
-		int status=ioctl(fd,dma?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
+		int status=ioctl(fd,fp16?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16:dma?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
 		double elapsed=Seconds()-start;
 		const auto& r=request->result; cold=r.recovery_required!=0;
 		printf("Trial %u state %u start/complete/stop %u/%u/%u staged %u polls %u phase/tiles/marker %x/%u/%x PC %x/%x cold %u %.6fs\n",
@@ -90,7 +95,10 @@ int main(int argc,char** argv)
 			float reference=0,bf16=0,absolute=0;
 			for (unsigned k=0;k<inputs;k++) {
 				float w=weights[row*inputs+k],x=vector[k]; reference+=w*x;
-				float product=PioneerTileFloat(uint32_t(PioneerTileBf16(w))<<16)*PioneerTileFloat(uint32_t(PioneerTileBf16(x))<<16);
+				// All four documented FP16 fidelity phases consume nine
+				// explicit SrcA bits and all ten SrcB mantissa bits.
+				float product=fp16?PioneerFloat16Value(PioneerFloat16(w)&~1U)*PioneerFloat16Value(PioneerFloat16(x))
+					:PioneerTileFloat(uint32_t(PioneerTileBf16(w))<<16)*PioneerTileFloat(uint32_t(PioneerTileBf16(x))<<16);
 				bf16+=product; absolute+=fabsf(product);
 			}
 			float actual=PioneerTileFloat(request->output[row]);
@@ -106,10 +114,10 @@ int main(int argc,char** argv)
 			if (normalized>maxNormalized) maxNormalized=normalized;
 			dot+=double(actual)*reference; a2+=double(actual)*actual; ref2+=double(reference)*reference;
 			double difference=actual-reference; delta2+=difference*difference;
-			if (row<4 || (strict && strictMismatches<=8)) printf("  row%u card %.9g CPU-BF16 %.9g CPU-Q8 %.9g error/sum-abs %.9g\n",row,actual,bf16,reference,normalized);
+			if (row<4 || (strict && strictMismatches<=8)) printf("  row%u card %.9g CPU-%s %.9g CPU-Q8 %.9g error/sum-abs %.9g\n",row,actual,fp16?"FP16-phases":"BF16",bf16,reference,normalized);
 		}
 		double cosine=dot/sqrt(a2*ref2),relative=sqrt(delta2/ref2);
-		printf("  BF16-level target failures %u; stricter 1e-5 diagnostic failures %u; max absolute/normalized error %.9g/%.9g\n",mismatches,strictMismatches,maxError,maxNormalized);
+		printf("  %s-level target failures %u; stricter 1e-5 diagnostic failures %u; max absolute/normalized error %.9g/%.9g\n",fp16?"FP16":"BF16",mismatches,strictMismatches,maxError,maxNormalized);
 		printf("  independent Q8 FP32 reference cosine %.9f relative-L2 %.9f; NOT bit-exact\n",cosine,relative);
 		passed=!mismatches && isfinite(cosine) && cosine>.9999 && relative<.01;
 		if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&session,sizeof(session))==0 && session.uploaded_pages==bytes/4096;

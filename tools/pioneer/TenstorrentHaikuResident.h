@@ -9,12 +9,12 @@
 // never substitutes a CPU product, and owns one exclusive session lifetime.
 class PioneerResidentDevice {
 	int fd=-1;
-	bool active=false,failed=false,cold=false,finished=false,stream=false;
+	bool active=false,failed=false,cold=false,finished=false,stream=false,fp16=false;
 	tt_pioneer_runtime_matvec* request=NULL;
 public:
 	uint64_t uploads=0,calls=0;
 	~PioneerResidentDevice() { Finish(); free(request); }
-	bool Open(uint64_t bytes) {
+	bool Open(uint64_t bytes,bool half=false) {
 		if (fd>=0 || failed || finished || !PioneerResidentCapacity(bytes)) return false;
 		fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 		if (fd<0) { perror("resident open"); failed=true; return false; }
@@ -23,7 +23,10 @@ public:
 			fprintf(stderr,"Resident matvec capability unavailable; no compute submitted\n"); failed=true; return false;
 		}
 		stream=(s.capabilities&32)!=0;
+		fp16=half;
+		if (fp16 && !(s.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
+		fprintf(stderr,"Resident operand format: %s\n",fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		request=(tt_pioneer_runtime_matvec*)calloc(1,sizeof(*request));
 		if (!request) { failed=true; return false; }
 		s={}; s.version=1; s.bytes=bytes;
@@ -58,7 +61,7 @@ public:
 		if (!active || failed || finished || cold || !vector || !result || !PioneerMatvecShape(inputs,outputs)) return false;
 		memset(request,0,sizeof(*request)); request->version=1; request->inputs=inputs; request->outputs=outputs; request->weight_offset=offset;
 		memcpy(request->input,vector,inputs*2);
-		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
+		int status=ioctl(fd,fp16?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
 		const auto& r=request->result; cold=r.recovery_required!=0;
 		if (status || r.version!=1 || r.state!=TT_RUNTIME_PASSED || !r.started || !r.completed || !r.stopped || cold) {
 			fprintf(stderr,"Resident matvec STOP: status %d state %u start/complete/stop %u/%u/%u phase/tiles/PC %x/%u/%x cold %u; no fallback/retry\n",

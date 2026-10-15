@@ -141,6 +141,7 @@
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC (B_DEVICE_OP_CODES_END + 0x54bc)
 #define TT_PCI_PROBE_PIONEER_STREAM_UPLOAD (B_DEVICE_OP_CODES_END + 0x54bd)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA (B_DEVICE_OP_CODES_END + 0x54be)
+#define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 (B_DEVICE_OP_CODES_END + 0x54bf)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };

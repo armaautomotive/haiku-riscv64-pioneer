@@ -85,12 +85,12 @@ struct RuntimeMock:StoreMock {
 	}
 };
 static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
-	tt_runtime_matvec_result& r,bool dma=false)
+	tt_runtime_matvec_result& r,bool dma=false,bool fp16=false)
 {
 	auto b=io.Baseline(); auto n=io.Compute(); uint32_t input[512],output[32]={};
 	r={};
 	for (auto& value:input) value=0x3f803f80;
-	if (!PioneerRuntimeMatvecPrepare(io,b,n,store,compute)) return false;
+	if (!PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16)) return false;
 	bool passed=PioneerRuntimeMatvec(io,b,n,host,store,compute,73728,0,1024,32,input,output,r,dma);
 	if (passed) for (uint32_t v:output) assert(v==0x40000000);
 	return passed;
@@ -189,4 +189,25 @@ int main()
 		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
 	}
 	printf("Dropped every DMA post-upload control write: %u cases\n",dmaCases);
+	{
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s) && Run(trial,h,s,c,r,false,true));
+		unsigned writes=trial.Mock::writes;
+		assert(c.fp16 && !PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false) && trial.Mock::writes==writes);
+		assert(Run(trial,h,s,c,r,false,true));
+		uint32_t input[512]={},output[32]={}; input[0]=0x7c00;
+		unsigned starts=trial.starts;
+		assert(!PioneerRuntimeMatvec(trial,b,n,h,s,c,73728,0,1024,32,input,output,r) && trial.starts==starts && !r.started);
+		input[0]=0x7c000000;
+		assert(!PioneerRuntimeMatvec(trial,b,n,h,s,c,73728,0,1024,32,input,output,r) && trial.starts==starts);
+		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
+	}
+	for (unsigned drop=0;drop<=runtimeWrites;drop++) {
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s)); if (drop<trial.Mock::writes+1026) continue;
+		trial.Mock::drop=drop; Run(trial,h,s,c,r,false,true);
+		if (!r.recovery_required && !c.unsafe) {
+			assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
+		} else assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));
+	}
 }

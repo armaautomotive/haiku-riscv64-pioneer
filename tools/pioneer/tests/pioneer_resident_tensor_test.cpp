@@ -7,6 +7,7 @@ struct TensorIO {
 	std::vector<uint32_t> storage;
 	unsigned uploads=0,calls=0,uploadFail=0,callFail=0;
 	bool nonfinite=false;
+	bool fp16=false;
 	TensorIO():storage(16*1024*1024/4,0xfeedface) {}
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		assert(!(offset%4096) && offset/4+1024<=storage.size());
@@ -23,7 +24,8 @@ struct TensorIO {
 				// layout, not the packer's indexing helper.
 				uint64_t pos=offset+((uint64_t(row/16)*(inputs/16)+k/16)*576)+16+(k%16)*32+(row%16)*2;
 				unsigned bf16=(storage[size_t(pos/4)]>>(8*(pos&3)))&65535;
-				sum+=Float(bf16<<16)*Float(((x[k/2]>>(16*(k&1)))&65535)<<16);
+				unsigned v=(x[k/2]>>(16*(k&1)))&65535;
+				sum+=fp16?PioneerFloat16Value(uint16_t(bf16)&~1U)*PioneerFloat16Value(uint16_t(v)):Float(bf16<<16)*Float(v<<16);
 			}
 			if (nonfinite) sum=INFINITY;
 			memcpy(y+row,&sum,4);
@@ -74,5 +76,26 @@ int main() {
 		assert(!c.Weights(&second,8,1024,32,decode,offset) && trial.uploads==uploads);
 	}
 	assert(!PioneerResidentTensorShape(512,16) && !PioneerResidentTensorShape(1024,17));
+	{
+		TensorIO half; half.fp16=true; PioneerResidentTensorCache<TensorIO> c(half,16*1024*1024,true);
+		auto fractional=[](unsigned row,float* data) { for (unsigned k=0;k<1024;k++) data[k]=Weight(row,k)/3.14159f; return true; };
+		assert(c.Weights(&first,8,1024,32,fractional,offset));
+		for (unsigned trial=0;trial<2;trial++) {
+			for (unsigned k=0;k<1024;k++) input[k]=float(int((k*3+trial*7)%17)-8)/17;
+			assert(c.Multiply(offset,1024,32,input,output));
+			for (unsigned row=0;row<32;row++) {
+				float reference=0;
+				for (unsigned k=0;k<1024;k++) reference+=PioneerFloat16Value(PioneerFloat16(Weight(row,k)/3.14159f)&~1U)*PioneerFloat16Value(PioneerFloat16(input[k]));
+				assert(output[row]==reference);
+			}
+		}
+		assert(half.uploads==18 && half.calls==2 && c.Tensors()==1);
+		input[0]=100000; assert(!c.Multiply(offset,1024,32,input,output) && half.calls==2 && c.Failed());
+	}
+	{
+		TensorIO half; PioneerResidentTensorCache<TensorIO> c(half,16*1024*1024,true);
+		assert(!c.Weights(&first,8,1024,32,[](unsigned,float* data) { for (unsigned k=0;k<1024;k++) data[k]=100000; return true; },offset));
+		assert(c.Failed() && !half.calls && !half.uploads);
+	}
 	printf("PASS: immutable tensor packing/cache, changed vectors, multi-call classifier chunks, capacity/nonfinite/transport failures; NO hardware\n");
 }

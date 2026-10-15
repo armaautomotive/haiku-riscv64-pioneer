@@ -67,8 +67,16 @@ thread_config:
 	emit 0xb2030001
 	emit 0xb2050004 /* SrcA address override, as in normal unpack setup */
 	jal ra, drain
+.ifdef TT_RUNTIME_FP16
+.ifndef TT_RUNTIME_MATVEC
+	.error "FP16 candidate is restricted to the fixed runtime matvec"
+.endif
+	config 0, 0x4231 /* explicit FP16 SrcA/SrcB, FP32 Dst override */
+	config 1, 0x20220000 /* FP16 source fields, FP32 accumulation */
+.else
 	config 0, 0x42b5
 	config 1, 0x20aa0000
+.endif
 	config 2, 0
 	config 3, 0 /* TRISC0 RISC Dst access = converted IEEE FP32 */
 	config 6, 0
@@ -84,16 +92,32 @@ thread_config:
 	config 50, 0x100
 	config 56, 0x00100000
 	config 59, 0x100
+.ifdef TT_RUNTIME_FP16
+	config 64, 0x00100011
+.else
 	config 64, 0x00100015
+.endif
 	config 65, 16
+.ifdef TT_RUNTIME_FP16
+	config 72, 1
+.else
 	config 72, 5
+.endif
 	config 73, 3
 	config 76, 0x7070 /* payload/16 - 1 */
 	config 84, 0x00400040
 	config 86, 0x00100010
+.ifdef TT_RUNTIME_FP16
+	config 112, 0x00100011
+.else
 	config 112, 0x00100015
+.endif
 	config 113, 8
+.ifdef TT_RUNTIME_FP16
+	config 120, 1
+.else
 	config 120, 5
+.endif
 	config 121, 3
 	config 124, 0x7091
 	fence
