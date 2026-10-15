@@ -3057,3 +3057,18 @@ maximum remained 137,034,936,320 bytes. No relay/reboot/SD action was needed.
 No DMA, ARC firmware message, firmware flash or GDDR compute/memory test has
 been run. Next gates are real accelerator math, model-memory transport and a
 native runtime/backend; this does not yet make llama.cpp use the P100A.
+
+Started the next read-only source audit, not a GDDR transaction. The active
+versioned Blackhole HAL reserves a 64-byte DRAM barrier at zero and optional
+profiler space before its allocator's unreserved range. Its older standalone
+dram_address_map.h is not sufficient to select the live allocator boundary.
+Pinned UMD derives the DRAM harvest mask directly as (~ENABLED_GDDR)&0xff,
+so this card's f7 means bank 3 harvested. With NoC translation enabled, its
+coordinate manager maps logical bank 0/port 0 to translated (18,12), not the
+Tensix coordinate used above. The physical bank-0 port is (0,0). A future
+GDDR test must validate that routing and reserved-memory ownership before
+touching data. The UMD's host DRAM barrier uses 32-bit PCIe reads/writes;
+device-issued NoC DRAM alignment is separately 64-byte read/16-byte write.
+No GDDR data reads/writes, capacity test or memory-probe operation were added
+or run in this checkpoint. The comment-only module rebuild remains exactly
+58ffcadc... and loaded support query/host memory checks still pass.
