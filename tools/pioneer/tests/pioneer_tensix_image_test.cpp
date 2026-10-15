@@ -53,8 +53,8 @@ struct Machine {
 				assert(row+i < 24 && valid[row+i]);
 				(opcode == 8 ? a[target+i][col] : b[target+i][col]) = dst[row+i][col];
 			}
-		} else if (op == 0x43000700) ownerA = true;
-		else if (op == 0x43800700) ownerB = true;
+		} else if (op == 0x43000007) ownerA = true;
+		else if (op == 0x43800007) ownerB = true;
 		else if (op == 0x26000020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
 			assert(config[0] == 0x42b5 && config[1] == 0x20aa0000 && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[220] == 0);
@@ -83,7 +83,8 @@ struct Machine {
 			dst[index/16][index%16] = Float(value); inputWrites++; return;
 		}
 		assert((address >= 0x17f800 && address < 0x17fc00) || (address >= 0x17ffc0 && address <= 0x17ffc8));
-		assert(drained); l1[Index(address)] = value;
+		assert(drained || address == 0x17ffc0); // progress label precedes a completion wait
+		l1[Index(address)] = value;
 	}
 	uint32_t Load(uint32_t address) {
 		assert((address & 3) == 0);
@@ -97,11 +98,11 @@ struct Machine {
 			assert(drained && matrixInstructions != 0); unsigned index = (address-0xffbd8000)/4;
 			assert(valid[index/16]); outputReads++; return Bits(dst[index/16][index%16]);
 		}
-		assert(address == 0x17ffc4 || address == 0x17ffc8); return l1[Index(address)];
+		assert(address == 0x17ffc0 || address == 0x17ffc4 || address == 0x17ffc8); return l1[Index(address)];
 	}
 	void Run() {
 		while (pc != TT_TENSIX_PARK_PC || steps == 0) {
-			assert(++steps < 20000 && (pc == 0x6000 || (pc >= 0x70000 && pc < 0x7023c)));
+			assert(++steps < 20000 && (pc == 0x6000 || (pc >= 0x70000 && pc < 0x70000 + TT_TENSIX_CODE_WORDS*4)));
 			uint32_t instruction = l1[Index(pc)], next = pc + 4;
 			unsigned op = instruction & 127, rd = (instruction>>7)&31, f3 = (instruction>>12)&7;
 			unsigned rs1 = (instruction>>15)&31, rs2 = (instruction>>20)&31;
@@ -132,7 +133,7 @@ struct Machine {
 			regs[0] = 0; pc = next;
 		}
 		assert(l1[Index(pc)] == 0x0000006f && drained);
-		assert(l1[Index(0x17ffc0)] == 1 && l1[Index(0x17ffc4)] == 2 && l1[Index(0x17ffc8)] == 0x4d415431);
+		assert(l1[Index(0x17ffc0)] == TT_TENSIX_FINAL_PHASE && l1[Index(0x17ffc4)] == 2 && l1[Index(0x17ffc8)] == 0x4d415431);
 	}
 	bool Correct() {
 		for (unsigned i = 0; i < 256; i++) if (l1[Index(0x17f800+i*4)] != Bits(i < 128 ? 16 : 96)) return false;

@@ -38,9 +38,10 @@ struct MockMatmul {
 		assert(valid);
 		if (++resetReads == changeResetAt) reset = 0;
 		if (reset == 0x46800 && ++polls == 2 && !timeout) {
-			memory[400] = 1; memory[401] = 2; memory[402] = 0x4d415431;
-			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[144+i] = BlackholeMatmulExpected(i);
-			if (badMath) memory[144] ^= 1;
+			memory[TT_TENSIX_STATUS_INDEX] = TT_TENSIX_FINAL_PHASE;
+			memory[TT_TENSIX_STATUS_INDEX+1] = 2; memory[TT_TENSIX_STATUS_INDEX+2] = 0x4d415431;
+			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+TT_TENSIX_CODE_WORDS+i] = BlackholeMatmulExpected(i);
+			if (badMath) memory[1+TT_TENSIX_CODE_WORDS] ^= 1;
 			executed = true;
 		}
 		return reset;
@@ -77,7 +78,7 @@ int main()
 	assert(BlackholeTensixMatmulProbe(io,baseline,r));
 	assert(r.state == TT_MATMUL_PASSED && r.context_reset && r.started && r.completed && r.stopped);
 	assert(r.l1_restored && r.tlb_restored && !r.recovery_required && r.mismatches == 0 && io.Restored());
-	assert(baseline.cores_checked == 120 && io.imageWrites == 806 && io.resetWrites == 4);
+	assert(baseline.cores_checked == 120 && io.imageWrites == 2*TT_TENSIX_IMAGE_WORDS && io.resetWrites == 4);
 	unsigned configWrites = io.configWrites;
 	for (unsigned drop = 1; drop <= configWrites; drop++) {
 		io = {}; baseline = io.Baseline(); io.dropConfig = drop;
@@ -85,28 +86,28 @@ int main()
 		assert(r.l1_restored && r.tlb_restored && !r.recovery_required && io.Restored());
 		if (okay) assert(r.completed && r.stopped);
 	}
-	for (unsigned drop = 1; drop <= 806; drop++) {
+	for (unsigned drop = 1; drop <= 2*TT_TENSIX_IMAGE_WORDS; drop++) {
 		io = {}; baseline = io.Baseline(); io.dropImage = drop;
 		bool okay = BlackholeTensixMatmulProbe(io,baseline,r);
 		assert(r.l1_restored && r.tlb_restored && !r.recovery_required && io.Restored());
-		if (drop <= 403) assert(!okay && io.resetWrites == 0);
-		else assert(okay && io.imageWrites == 1209);
+		if (drop <= TT_TENSIX_IMAGE_WORDS) assert(!okay && io.resetWrites == 0);
+		else assert(okay && io.imageWrites == 3*TT_TENSIX_IMAGE_WORDS);
 	}
 	for (unsigned drop = 1; drop <= 4; drop++) {
 		io = {}; baseline = io.Baseline(); io.dropReset = drop;
-		assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && !r.l1_restored && io.imageWrites == 403);
+		assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && !r.l1_restored && io.imageWrites == TT_TENSIX_IMAGE_WORDS);
 	}
 	io = {}; baseline = io.Baseline(); io.timeout = true;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.polls == 2000 && r.stopped && !r.completed && r.recovery_required);
-	assert(io.imageWrites == 403);
+	assert(io.imageWrites == TT_TENSIX_IMAGE_WORDS);
 	io = {}; baseline = io.Baseline(); io.badPC = true;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.stopped && !r.completed && r.recovery_required);
 	io = {}; baseline = io.Baseline(); io.badMath = true;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.completed && r.stopped && r.mismatches == 1 && io.Restored() && !r.recovery_required);
 	io = {}; baseline = io.Baseline(); io.sourceChanges = true;
-	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && !r.stopped && io.resetWrites == 2 && io.imageWrites == 403);
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && !r.stopped && io.resetWrites == 2 && io.imageWrites == TT_TENSIX_IMAGE_WORDS);
 	io = {}; baseline = io.Baseline(); io.failRestore = true;
-	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && !r.l1_restored && io.imageWrites == 1209);
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && !r.l1_restored && io.imageWrites == 3*TT_TENSIX_IMAGE_WORDS);
 	io = {}; baseline = io.Baseline(); io.failTlbRestore = true;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && r.recovery_required && r.l1_restored && !r.tlb_restored);
 	for (unsigned control = 0; control < 3; control++) {

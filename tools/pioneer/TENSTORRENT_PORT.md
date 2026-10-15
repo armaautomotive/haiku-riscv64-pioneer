@@ -731,6 +731,40 @@ explicit `--run-fixed-tensix-matmul-and-reset`. The ordinary boot and firmware
 are unchanged. Next: record timeout PC snapshots/checkpoints, locate the
 Tensix startup/completion stall, and cold-recover before another attempt.
 
+The first trial was followed by an ordinary shutdown request, a relay-off
+hold, more than 90 seconds off, and a fresh ZSBL/Linux boot. Linux verified
+64 online CPUs, an untainted kernel and disabled P100A PCI decoding. The
+next preparation found a clean BFS journal; the dirty-journal profile
+correctly refused it. The equivalent pinned clean-filesystem profile
+`memory128-spin-idle6-nosd-control` then passed its input checks and prepared
+the same private full-RAM kernel without changing the default Linux boot.
+
+The revised candidate records each manual completion wait's return PC in
+L1 and samples the TRISC0 PC periodically, including on timeout. The
+official ISA's `Bits32_UNPACR_NOP_SETDVALID.svg` places mode 7 in bits 0..2,
+not bits 8..10: corrected handoffs are `43000007` / `43800007`. The initial
+candidate's `43000700` / `43800700` encodings were incorrect. This source
+correction alone does not establish where that initial execution stalled.
+The candidate image is now 588 bytes / 147 code words, with a 407-word
+preserved footprint and metadata policy v3. The offline test passes 5,336
+scalar steps and 11 manual drains; this remains a functional model, not
+hardware timing proof. The rebuilt driver SHA is
+`e90f98933706b2ec8297391bcc0bf0cd80e8b337577efaf0c91d46ccda284ab2`;
+CLI SHA `400f34aecb42d56445c9e4ed90be95b5bcaf31851b31204639d93e482ccf5bc7`.
+Neither successful matrix execution nor model inference is established by
+these build/source checks.
+
+At 22:12 local October 14 (05:12 UTC October 15), the revised live trial
+reached a frontend PC snapshot `70110` (the input-fill loop), then subsequent
+PC, L1 status and reset reads returned zero. It refused a stop write from
+that unrecognized reset state: state 7, started/completed/stopped 1/0/0,
+polls 2, no completed fixture. L1/TLB/PCI restored 0/1/0, commands 0000/0000,
+cold recovery 1. The initial PC snapshot is speculative, not proof of
+retirement or completion. Haiku remained responsive with all 64 CPUs/full
+RAM. No further card operation or module reload followed; an ordinary
+shutdown request and a relay-off hold began another cold recovery. The
+unexpected readbacks are unresolved; no matrix result is claimed.
+
 Download pinned official sources with:
 
 ```sh

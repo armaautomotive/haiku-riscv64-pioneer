@@ -87,8 +87,15 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		for (unsigned attempt = 0; attempt < 2000; attempt++) {
 			r.polls++; r.reset_running = io.ResetRead();
 			if (r.reset_running != 0x46800) { r.state = TT_MATMUL_CORE_CHANGED; break; }
-			r.phase = io.MathImageRead(400); r.fixtures = io.MathImageRead(401); r.marker = io.MathImageRead(402);
-			if (r.phase == 1 && r.fixtures == 2 && r.marker == 0x4d415431) {
+			// Read-only progress snapshots also on timeout, not only after
+			// a completion marker. A snapshot is never itself completion.
+			if ((attempt & 127) == 0) {
+				r.pc[0] = io.MathPcRead(); io.Pause(); r.pc[1] = io.MathPcRead();
+			}
+			r.phase = io.MathImageRead(TT_TENSIX_STATUS_INDEX);
+			r.fixtures = io.MathImageRead(TT_TENSIX_STATUS_INDEX+1);
+			r.marker = io.MathImageRead(TT_TENSIX_STATUS_INDEX+2);
+			if (r.phase == TT_TENSIX_FINAL_PHASE && r.fixtures == 2 && r.marker == 0x4d415431) {
 				io.Pause(); r.pc[0] = io.MathPcRead();
 				io.Pause(); r.pc[1] = io.MathPcRead();
 				if (r.pc[0] == TT_TENSIX_PARK_PC && r.pc[1] == TT_TENSIX_PARK_PC) {

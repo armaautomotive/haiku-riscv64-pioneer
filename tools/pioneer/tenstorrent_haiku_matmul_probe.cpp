@@ -30,7 +30,7 @@ int main(int argc, char** argv)
 			" entry/code/park/results %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32
 			" reset/running %08" PRIx32 "/%08" PRIx32 "; metadata only\n",
 			s.version,s.code_words,s.footprint_words,s.entry,s.code_base,s.park_pc,s.results_base,s.reset_mask,s.running_mask);
-		return s.version == 1 && s.code_words == 143 && s.footprint_words == 403 && s.entry == 0x6000
+		return s.version == 3 && s.code_words == 147 && s.footprint_words == 407 && s.entry == 0x6000
 			&& s.code_base == 0x70000 && s.park_pc == TT_TENSIX_PARK_PC && s.results_base == 0x17f800
 			&& s.reset_mask == 0x87ffff && s.running_mask == 0x46800 ? 0 : 1;
 	}
@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 	printf("Matmul state %" PRIu32 " (1 passed), started/completed/stopped %" PRIu32 "/%" PRIu32 "/%" PRIu32
 		" context reset %" PRIu32 " polls %" PRIu32 "; routes/cores checked %" PRIu32 "/%" PRIu32 "\n",
 		m.state,m.started,m.completed,m.stopped,m.context_reset,m.polls,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked);
-	printf("Phase/fixtures/marker %" PRIu32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",m.phase,m.fixtures,m.marker,m.mismatches);
+	printf("Wait-return-PC/fixtures/marker %08" PRIx32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",m.phase,m.fixtures,m.marker,m.mismatches);
 	printf("Representative output bits %08" PRIx32 "/%08" PRIx32 " (expected 41800000/42c00000 = 16.0/96.0); PC %08" PRIx32 "/%08" PRIx32 "\n",
 		m.representative[0],m.representative[1],m.pc[0],m.pc[1]);
 	printf("Reset before/initialized/running/after %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",

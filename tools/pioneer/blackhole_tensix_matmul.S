@@ -121,9 +121,9 @@ clear_output:
 	 * implied format is disabled; both physical bank-0 operands become
 	 * matrix-owned and remain so for the second fixture.
 	 */
-	li t0, 0x43000700
+	li t0, 0x43000007
 	sw t0, 0(s0)
-	li t0, 0x43800700
+	li t0, 0x43800007
 	sw t0, 0(s0)
 	jal ra, drain
 matrix:
@@ -160,6 +160,12 @@ copy_output:
 parked:
 	j parked
 drain:
+	/* Publish the caller's return PC before waiting, so a timeout identifies
+	 * which completion wait stalled without a debug-register write. */
+	sw ra, 0(s3)
+	lw t1, 0(s3)
+	addi zero, t1, 0
+	fence
 	/* Ordered manual TTSync: do not omit the same-address store or the
 	 * dependent ALU use. Fence flushes L0 and waits for this sequence.
 	 */
