@@ -72,6 +72,7 @@ struct Mock {
 		assert(source[0]==0x6005 && config==0x6005);
 	}
 };
+#ifndef PIONEER_RESIDENT_READ_MOCK_ONLY
 int main()
 {
 	Mock io; auto b=io.Baseline(); auto n=io.Compute(); tt_resident_read_result r;
@@ -111,3 +112,4 @@ int main()
 	assert(!BlackholeResidentWriteRegister(0x60) && !BlackholeResidentWriteRegister(0x178)
 		&& !BlackholeResidentWriteRegister(0x208) && !BlackholeResidentWriteRegister(0x840));
 }
+#endif

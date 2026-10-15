@@ -15,6 +15,7 @@ struct PageMock {
 	uint32_t HostPageRead(unsigned w) { assert(allocated && !cached && w<TT_HOST_PAGE_WORDS); return page[w]; }
 	int32_t ReleaseHostPage() { assert(allocated && releases==0); releases++; if (!releaseFail) allocated=false; return releaseFail?-4:0; }
 };
+#ifndef PIONEER_HOST_PAGE_MOCK_ONLY
 int main()
 {
 	PageMock io; tt_host_page_result r;
@@ -40,3 +41,4 @@ int main()
 	io={}; assert(PioneerPrepareHostPage(io,r) && io.allocated && io.releases==0 && !r.released);
 	assert(io.ReleaseHostPage()==0);
 }
+#endif

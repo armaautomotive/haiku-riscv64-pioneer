@@ -38,6 +38,7 @@ struct HostMock {
 	}
 	void Restored() { for (unsigned s=0;s<2;s++) for (unsigned w=0;w<3;w++) assert(tlb[s][w]==1+3*s+w); }
 };
+#ifndef PIONEER_HOST_PATH_MOCK_ONLY
 int main()
 {
 	uint64_t decoded=(uint64_t(BlackholeHostSiiTlbWord(1)&0x7ff)<<53)
@@ -63,3 +64,4 @@ int main()
 	io={}; b=io.Baseline(); n=io.Compute(); n.source[0][14]|=1U<<24;
 	assert(!BlackholeHostPathProbe(io,b,n,0x18611002,r) && io.writes==0);
 }
+#endif

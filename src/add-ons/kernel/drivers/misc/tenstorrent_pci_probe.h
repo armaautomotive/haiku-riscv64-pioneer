@@ -22,6 +22,8 @@
 #include "BlackholeResidentMathProbe.h"
 #include "BlackholeHostPathProbe.h"
 #include "PioneerHostPage.h"
+#include "BlackholeHostDmaAudit.h"
+#include "BlackholeHostReadProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -115,6 +117,10 @@
 #define TT_PCI_PROBE_PIONEER_HOST_PATH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a9)
 #define TT_PCI_PROBE_PIONEER_HOST_PAGE (B_DEVICE_OP_CODES_END + 0x54aa)
 #define TT_PCI_PROBE_PIONEER_HOST_PAGE_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ab)
+#define TT_PCI_PROBE_PIONEER_HOST_DMA_AUDIT (B_DEVICE_OP_CODES_END + 0x54ac)
+#define TT_PCI_PROBE_PIONEER_HOST_DMA_AUDIT_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ad)
+#define TT_PCI_PROBE_PIONEER_HOST_READ (B_DEVICE_OP_CODES_END + 0x54ae)
+#define TT_PCI_PROBE_PIONEER_HOST_READ_SUPPORT (B_DEVICE_OP_CODES_END + 0x54af)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -226,6 +232,16 @@ struct tt_pioneer_resident_gemv_result {
 struct tt_pioneer_host_path_result {
 	tt_pioneer_compute_noc_result baseline;
 	tt_host_path_result path;
+};
+
+struct tt_pioneer_host_dma_audit_result {
+	tt_pioneer_host_path_result baseline;
+	tt_host_dma_audit_result audit;
+};
+
+struct tt_pioneer_host_read_result {
+	tt_pioneer_host_dma_audit_result baseline;
+	tt_host_read_result read;
 };
 
 #endif

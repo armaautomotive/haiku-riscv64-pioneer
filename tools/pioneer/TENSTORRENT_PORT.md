@@ -48,8 +48,10 @@ Repeated samples show an advancing firmware heartbeat. This is a firmware
 health snapshot, not a memory stress test or working accelerator runtime.
 One stopped Tensix tile also passes a reversible 64-byte L1 pattern test,
 including verification of the original bytes after restoration.
-The test restores the card and bridge configuration exactly; DMA has never
-been enabled. There is no general-purpose model compute runtime yet. See the
+The tests restore the card and bridge configuration exactly. The initial
+experiments never enabled DMA; a later fixed owned-page read now does so
+only for the duration of the verified operation described below. There is
+no general-purpose model compute runtime yet. See the
 live-test records below. Samsung's installed OS package, card firmware,
 and default Linux boot remain unchanged.
 
@@ -91,6 +93,72 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 15: first owned host-to-card read passes twice
+
+A new, separate read-only preflight first verified PCIe Device Status on
+both endpoint and root (`0000/0000`, including no Transactions Pending), and
+the read/write HDMA channel 0 registers used by pinned 18.5.0 firmware. Three
+samples showed both enables zero and both statuses `3` (stopped). These
+registers are accessed through documented device-local NoC DBI window 62 at
+`0xf800000000380000`, using the full 43-bit BAR0 TLB address field; BAR2's
+1 MiB aperture is insufficient for these offsets. No PCIe-tile/HDMA register
+is written. Source: pinned official `tt-system-firmware` 18.5.0
+`lib/tenstorrent/bh_arc/pcie_dma.c` and `tt-isa-documentation`
+`8a34e25e04d1ad7dd129ac9231e126b85923fac3`, PCI Express Tile address spaces.
+This checks the firmware-used channel pair, not undocumented DMA channels.
+
+The first real **host-to-card read** then passed twice on Haiku. Each run
+allocated a fresh owned, wired non-cached 4 KiB page above 4 GiB, checked its
+mapping/patterns and read exactly 64 bytes from page offset 128 into the
+poisoned final 64 L1 bytes of stopped physical tile `(1,2)`. No user pointer,
+arbitrary length, host-write operation or firmware DMA command is accepted.
+NoC0 initiator 0 uses translated PCIe coordinates `(19,24)` (physical `(2,0)`),
+the already-audited SII window 0 and 48-bit root inbound identity mapping.
+All 120 enabled compute tiles remain held reset.
+
+The dedicated policy briefly enables endpoint/root bus mastering (`0406`),
+after rechecking the firmware engines, SII/inbound mapping, exact idle
+initiator, routes and full host-page pattern. Both runs completed in one
+poll with exact response/flit/accepted/sent deltas **1/1/1/1**, zero
+destination mismatches and zero full-page host-guard mismatches. Completion
+requires ordered command readback, all four command buffers idle, all read
+and outgoing-write IDs idle, stable physical mapping and unchanged routes.
+Bus mastering was disabled/read back before freeing the host page; BME-off,
+L1, NIU, TLB and PCI rollback all passed. PCI commands ended `0000/0000`;
+pages were released, none quarantined, and no cold recovery was required.
+A read-only preflight between the runs again found no pending/error status
+and both firmware channels disabled/stopped. Assistant team 2705 stayed
+ready and idle with its existing model/conversation untouched. A subsequent
+native 1,024-input resident GEMV regression also passed: zero mismatches,
+64/1,088/64/64 counters, complete rollback and no cold-recovery requirement.
+
+Timeout, a dropped doorbell, unexplained counter delta, changed route/map or
+unverified BME-off/rollback latches cold recovery and quarantines the wired
+system-team page. A delayed read must never see reused private memory. No
+reset, counter clear, payload rewrite, retry or module reload is a recovery
+mechanism. ASan/UBSan tests exercise every lost setup/rollback write, the
+maximum 48-bit source address, counter wrap, accepted-but-incomplete reads,
+bad data/flits, host-guard corruption, PCIe pending status, changed mappings,
+permanent cleanup failures and quarantine ownership. The unchanged MMIO,
+ARC, reset, L1, BRISC, DRAM and compute-route suites also pass. The RISC-V
+driver and all 27 utilities build successfully.
+
+Native artifacts/logs are in `/boot/home/pioneer-host-read-20261015/` with
+the prior read-only driver saved as `tenstorrent_pci_probe.before`. SHA-256:
+
+- Driver: `828dc285510a06860dfb4a32ddbb40da32281d8b27a20f092bad96875d6247c0`
+- Host-read CLI: `93bbf2ec60df71661925bd09fc51dae5c884245eb8d42c23d40035438c2625df`
+
+The preceding read-only audit's artifacts are separately preserved at
+`/boot/home/pioneer-host-dma-audit-20261015/` (driver
+`c41f1b5c4e79709cef13a3580fcf72c214477903d23d1519b442d40c040a7fbf`, CLI
+`df8a0a8f62db8d68037751cbcb68eb63a469a1888b29efd955b8aec661ef0db7`).
+These results establish a safe, coherent high-address read path for the
+owned test page. They are **not** a bulk bandwidth measurement, a persistent
+model allocator, full Qwen inference or a faster-than-CPU result. Next:
+larger bounded transfers, persistent weight storage and the actual Qwen
+graph/backend, followed by correctness and same-model CPU/GPU benchmarks.
 
 ### October 15: owned high-address host buffer prerequisite
 
