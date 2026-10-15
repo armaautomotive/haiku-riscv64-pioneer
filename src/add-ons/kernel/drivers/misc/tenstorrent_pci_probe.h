@@ -27,6 +27,7 @@
 #include "BlackholeHostWriteProbe.h"
 #include "PioneerResidentSession.h"
 #include "PioneerResidentStore.h"
+#include "PioneerRuntimeMatvec.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -136,6 +137,7 @@
 #define TT_PCI_PROBE_PIONEER_SESSION_SUPPORT (B_DEVICE_OP_CODES_END + 0x54b9)
 #define TT_PCI_PROBE_PIONEER_STORE_UPLOAD (B_DEVICE_OP_CODES_END + 0x54ba)
 #define TT_PCI_PROBE_PIONEER_STORE_READ (B_DEVICE_OP_CODES_END + 0x54bb)
+#define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC (B_DEVICE_OP_CODES_END + 0x54bc)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -269,6 +271,14 @@ struct tt_pioneer_resident_page {
 	uint64_t offset;
 	uint32_t data[1024];
 	tt_resident_store_result result;
+};
+
+struct tt_pioneer_runtime_matvec {
+	uint32_t version,inputs,outputs,reserved;
+	uint64_t weight_offset;
+	uint32_t input[TT_RUNTIME_MATVEC_INPUTS_MAX/2]; // packed BF16, never kernel floating-point
+	uint32_t output[TT_RUNTIME_MATVEC_OUTPUTS_MAX]; // FP32 bits, no reference substitution
+	tt_runtime_matvec_result result;
 };
 
 #endif

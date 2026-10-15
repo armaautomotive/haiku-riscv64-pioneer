@@ -70,6 +70,7 @@ static bool Prepared(StoreMock& io,tt_host_page_result& host,PioneerResidentLeas
 {
 	return PioneerPrepareHostPage(io,host) && PioneerResidentLeaseBegin(io,io.Compute(),lease);
 }
+#ifndef PIONEER_RESIDENT_STORE_MOCK_ONLY
 int main()
 {
 	uint32_t first[1024],second[1024],readback[1024]={};
@@ -136,3 +137,4 @@ int main()
 		assert(PioneerResidentLeaseEnd(trial,noc,l)); assert(trial.ReleaseHostPage()==0); trial.Safe();
 	}
 }
+#endif

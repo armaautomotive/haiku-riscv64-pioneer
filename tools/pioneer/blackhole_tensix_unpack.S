@@ -32,6 +32,15 @@ main:
 	li s3, 0x17ffc0
 	li s4, 0
 .ifdef TT_UNPACK_GEMV
+.ifdef TT_RUNTIME_MATVEC
+	li t0, 0x70500 /* trusted data-only descriptor: weight base, K/16, N/16 */
+	lw a0, 0(t0)
+	lw s8, 4(t0)
+	lw s11, 8(t0)
+	li a1, 0
+	li s9, 0
+	li s10, 0x84000
+.else
 	.global gemv_count_instruction
 gemv_count_instruction:
 .ifndef TT_GEMV_INPUTS
@@ -41,6 +50,7 @@ gemv_count_instruction:
 	.error "unsupported fixed GEMV shape"
 .endif
 	li s8, (TT_GEMV_INPUTS/16)
+.endif
 .endif
 	emit 0xb2000000 /* first select configuration state zero */
 	jal ra, drain
@@ -90,6 +100,17 @@ thread_config:
 	emit 0x5e23fc00 /* unpack0 X bounds 0..255 BF16 elements */
 	emit 0x5e41fc00 /* unpack1 X bounds 0..127 BF16 elements */
 	jal ra, drain
+.ifdef TT_RUNTIME_MATVEC
+	/* Only row zero is a vector. Weight fetch padding overwrites that
+	 * row, not the other seven rows, which remain zero for all K/N tiles. */
+	li t2, 0x70920
+	li t1, 64
+runtime_zero_b:
+	sw zero, 0(t2)
+	addi t2, t2, 4
+	addi t1, t1, -1
+	bne t1, zero, runtime_zero_b
+.endif
 fixture:
 .ifdef TT_UNPACK_CONFIG
 	j finish_fixture /* control only: no input writes, unpack or matrix */
@@ -179,18 +200,31 @@ gemv_keep_accumulator:
 full_bf16_return:
 .ifdef TT_UNPACK_GEMV
 	addi s4, s4, 1
+.ifdef TT_RUNTIME_MATVEC
+	addi a1, a1, 1
+	sw a1, 4(s3)
+.else
 	sw s4, 4(s3)
+.endif
 	lw t0, 4(s3)
 	andi t0, t0, 0
 	bne s4, s8, fixture /* all K tiles accumulate on-card, no host partial sums */
 .endif
 	li t2, 0xffbd8800
+.ifdef TT_RUNTIME_MATVEC
+	addi t3, s10, 0
+.else
 	li t3, 0x17f800
+.endif
 .ifndef TT_UNPACK_GEMV
 	slli t4, s4, 9
 	add t3, t3, t4
 .endif
+.ifdef TT_RUNTIME_MATVEC
+	li t5, 16
+.else
 	li t5, 128
+.endif
 copy_output:
 	lw t0, 0(t2)
 	sw t0, 0(t3)
@@ -214,6 +248,12 @@ copy_output:
 .endif
 .endif
 finish_fixture:
+.ifdef TT_RUNTIME_MATVEC
+	addi s9, s9, 1
+	addi s10, s10, 64
+	li s4, 0
+	bne s9, s11, fixture
+.endif
 .ifndef TT_UNPACK_GEMV
 	addi s4, s4, 1
 	sw s4, 4(s3)
@@ -251,16 +291,34 @@ wait_done:
 	fence
 	jalr zero, 0(ra)
 .ifdef TT_UNPACK_NONUNIFORM
+.ifdef TT_RUNTIME_MATVEC
+	.org 0x500, 0
+	.global runtime_descriptor
+runtime_descriptor:
+	.word 0,0,0
+	.org 0x540, 0
+.else
 	.org 0x440, 0
+.endif
 nonuniform_inputs:
+.ifdef TT_RUNTIME_MATVEC
+	li t3, 0x80000
+	slli t0, s4, 5
+	add t3, t3, t0
+.else
 	li t3, 0x70500
+.endif
 .ifndef TT_UNPACK_GEMV
 	beq s4, zero, copy_nonuniform
 	addi t3, t3, 256
 .endif
 copy_nonuniform:
 	li t2, 0x70920
+.ifdef TT_RUNTIME_MATVEC
+	li t1, 8
+.else
 	li t1, 64
+.endif
 copy_nonuniform_word:
 	lw t0, 0(t3)
 	sw t0, 0(t2)
@@ -270,7 +328,11 @@ copy_nonuniform_word:
 	bne t1, zero, copy_nonuniform_word
 	j inputs_ready
 .ifdef TT_UNPACK_FULL_BF16
+.ifdef TT_RUNTIME_MATVEC
+	.org 0x600, 0
+.else
 	.org 0x480, 0
+.endif
 full_bf16_math:
 	li t2, 0
 full_bf16_phase:
@@ -331,6 +393,7 @@ full_bf16_emit:
 .endif
 .endif
 .endm
+.ifndef TT_RUNTIME_MATVEC
 	.org 0x500, 0
 .set nu_f, 0
 .rept 2
@@ -368,6 +431,8 @@ full_bf16_emit:
 .set nu_r, nu_r+1
 .endr
 .endif
+	/* Runtime weights and vector are supplied independently, not embedded. */
+.endif
 	/* This exact fixed region also contains the two local input buffers.
 	 * No instructions may be placed in either buffer by the linker.
 	 */
@@ -383,6 +448,11 @@ resident_fetch:
 	lw t0, 0x40(s5)
 	bne t0, zero, resident_fault
 .ifdef TT_UNPACK_GEMV
+.ifdef TT_RUNTIME_MATVEC
+	sw a0, 0(s5)
+	lw t0, 0(s5)
+	andi t0, t0, 0
+.else
 	/* Fixed GDDR base + chunk*1088, no code-supplied external address.
 	 * Current s4 is bounded by the trusted shape before this code runs.
 	 */
@@ -394,6 +464,7 @@ resident_fetch:
 	sw t0, 0(s5)
 	lw t0, 0(s5)
 	andi t0, t0, 0
+.endif
 .endif
 	lw s6, 0x208(s5)
 	addi s6, s6, 1
@@ -423,6 +494,9 @@ resident_fault_park:
 	j resident_fault_park /* no reset, retry, counter clear or payload write */
 resident_ready:
 	fence /* invalidate RISC L0 before consuming externally written L1 */
+.ifdef TT_RUNTIME_MATVEC
+	addi a0, a0, 576 /* header16 + BF16 weight tile512 + padding48 */
+.endif
 	j nonuniform_inputs
 	.org 0x1000, 0
 .else

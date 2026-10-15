@@ -35,8 +35,10 @@ The same card now also passes full on-card accumulation for fixed 16-output
 GEMV fixtures with 1,024, 5,120 and 6,144 inputs. It no longer needs a host
 request/reset or a CPU partial sum for each 16-element input block. Model
 weights in those GEMV fixtures are still re-uploaded. A separate exclusive
-storage session now retains raw model chunks across requests; it is not yet
-connected to Qwen compute, and Qwen chat remains CPU-only.
+storage session now retains model data across requests. It is connected to a
+new bounded matrix-vector runtime: real Qwen query and FFN-down matrices
+run with retained weights and separate vectors. Full Qwen chat remains
+CPU-only; a model-graph backend and an actual CPU speedup are still missing.
 Dedicated, owned high-address host buffers now pass 4 KiB transfers in both
 directions. Card-to-host writes additionally require CPU-visible payload and
 distinct poisoned-L1 readback proof before releasing their buffer. These
@@ -100,6 +102,110 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 15: real Qwen projections over retained device weights
+
+The exclusive session now executes a **data-only resident matrix-vector
+operation**, ioctl `54bc`, with capability bit 16 (support v1, capabilities
+31). Shapes are K = 1,024 / 2,048 / 3,072 / 5,120 / 6,144 and N = 16–4,096
+in multiples of 16. The driver checks all referenced weight pages are
+initialized, validates arena offsets and finite input, and accepts neither
+caller code nor host/NoC addresses. This is a primitive for a model backend,
+not full Qwen inference or a faster-than-CPU hardware mode.
+
+Weights use canonical 576-byte blocks: a 16-byte header, 16x16 BF16 weights
+and 48 bytes of padding. Inputs are separate BF16 vectors in fixed L1
+`0x80000`; FP32 output bits use `0x84000`. TRISC0 itself loops over both K
+blocks and output tiles, retaining the accumulator across K, clearing it
+between output tiles and reading each weight block from owned bank-0 GDDR.
+All four fidelity phases remain enabled. There are no CPU partial sums,
+per-input-block host doorbells or weight re-uploads between vector requests.
+Only physical tile (1,2), TRISC0, runs; this is not multicore acceleration.
+
+On first compute the session saves its fixed boot/code and 32 KiB vector/
+output scratch once, rechecks source/idle state, and verifies the uploaded
+fixed image. Before each run it stages/poisons input and output pages using
+the owned-host path, verifies BME-off and bounded command setup, then
+initializes the idle coprocessor and starts only TRISC0. Completion requires
+the exact phase/tile count/MAT1 marker, two parked PC samples at `0x70400`,
+empty command/ID state, stable routes and exact device-read counter deltas
+`tiles / (9*tiles) / tiles / tiles`. Only proven completion authorizes
+output reads and the verified stop/reset sequence. Missing completion,
+unexpected PC/counters/source or a failed stop quarantines the host page
+and latches cold recovery, without a reset, retry or L1/NIU cleanup.
+Explicit END restores the saved code/buffers before storage scratch and
+normal PCI cleanup. Firmware and boot configuration are unchanged.
+
+The new read-only bounded GGUFv3 loader selects a Q8_0 tensor, skips typed
+metadata without interpreting templates, and checks header/count/string/
+alignment/type/dimension/file bounds. It is not a general GGUF authenticator
+or all-tensor overlap validator. The installed Qwen3-0.6B-Q8_0 model's
+previously recorded full SHA-256 was reverified before this trial. Userspace
+decodes and packs weights once, uploads every page with full readback
+verification, runs two different vectors and independently computes CPU
+BF16 and original Q8/FP32 references. The uploaded-page count must remain
+unchanged after each vector. Neither reference supplies device output.
+
+The first 32-row trial **failed the strict numerical check** on 5 outputs,
+despite clean execution/restore. Its log is preserved as
+`qwen-projection-first.log`. This is not bit-exact IEEE FP32 reduction. The
+prior mixed-exponent tile tests already established the explicit empirical
+BF16 target `abs(error) <= 1e-6 + sum(abs(products))/1024`; the runtime CLI
+now applies that same target while continuing to report strict failures.
+This is not a newly fitted or universal error bound, nor a diagnosis of the
+exact rounding mechanism. The official
+[MVMUL functional model](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md)
+also cautions that floating-point reduction order and precision need not
+match the illustrative model.
+
+Native tests passed both different vectors, with zero failures against the
+existing BF16-level target and cosine > 0.9999 / relative L2 < 0.01 against
+the independent original-Q8 FP32 result:
+
+| Real Qwen tensor | Shape N x K | Uploaded once | Second-vector ioctl time | Worst Q8 FP32 relative L2 |
+|---|---:|---:|---:|---:|
+| `blk.0.attn_q.weight` sample, repeated fresh session | 32 x 1,024 | 18 pages | 4.071–5.978 ms | 0.001968701 |
+| Complete `blk.0.attn_q.weight` | 2,048 x 1,024 | 1,152 pages | 24.715 ms | 0.001787636 |
+| Complete `blk.0.ffn_down.weight` | 1,024 x 3,072 | 1,728 pages | 28.325 ms | 0.001818912 |
+| Complete `blk.0.attn_output.weight` | 1,024 x 2,048 | 1,152 pages | 20.928 ms | 0.001762324 |
+
+The complete query matrix made exactly **8,192 / 73,728 / 8,192 / 8,192**
+device reads/flits/accepted/sent per vector; FFN-down made
+**12,288 / 110,592 / 12,288 / 12,288**. Maximum observed normalized
+BF16-reference error for these trials was `4.44479228e-5`. The stricter
+1e-5 diagnostic still fails (query: 541/550 rows; FFN-down: 83/83;
+attention-output: 168/153); this is
+reported rather than hidden. First-vector times include roughly 31 ms of
+one-time code/buffer snapshot and upload. All times also include vector/
+poison staging, completion/stop checks and PIO output reads. They are
+**not tokens/second, isolated kernel throughput or a CPU comparison**.
+
+The native exclusive lifetime test and the old K1,024 fixed GEMV regression
+still pass after the new compute session. The latter retains zero
+mismatches and complete GDDR/NIU/L1/TLB/PCI restoration. Offline ASan/UBSan
+tests check all assembled image bytes, five input widths, multiple output
+tiles, independent fractional dot products, stale accumulators, corrupt
+weights and missing first/interior/final NoC responses. Policy tests drop
+all 50 post-upload control writes, sample lost code writes and cover
+timeouts, wrong PC/flits, nonfinite results and permanent restore failure.
+The old image/rollback suites and all 30 utility builds pass. The final
+read-only PCIe/HDMA audit is clean, with both channels disabled/stopped,
+commands restored to zero and no cold latch. Assistant team 2705 remains
+ready/idle on its original TinyStories model with the conversation unchanged.
+
+Native artifacts/logs and the untouched previous driver backup are in
+`/boot/home/pioneer-runtime-matvec-20261015/`; a local ignored log copy is
+under `generated.pioneer/tenstorrent/runtime-matvec-20261015/`. SHA-256:
+
+- Driver: `392b900d7948685975ce89f53d38cb798e8551adf9ebca7ee7f7318fbf94ebb9`
+- Final bounded-shape CLI: `a76879fbe74589d956a2231d0902a573dafac9e37dea79e096d43d2980962b11`
+- Earlier two-vector accuracy CLI: `f5ea579187d40a332ae2456be51ae61dd0e0f7b3576f4059e56b049ec8475f80`
+
+Next: connect this retained-tensor operation to the actual Qwen graph,
+verify generated logits/tokens, then address single-core/PIO overhead and
+benchmark the same model against CPU. Full 27B graph support and quantized
+multi-bank residency remain unimplemented. Do not label the Assistant's
+experimental TinyStories selection as Qwen acceleration.
 
 ### October 15: exclusive sessions and persistent Qwen-file chunks
 
