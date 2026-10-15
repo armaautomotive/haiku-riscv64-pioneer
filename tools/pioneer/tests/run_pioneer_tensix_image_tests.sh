@@ -5,7 +5,7 @@ directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-tensix-image.XXXXXXXX")
 cleanup() {
- for name in image config load store operand matrix; do
+ for name in image config load store operand matrix zeroacc movd kernel kerneloperand kernelmatrix; do
   rm -f "$temporary/$name.o" "$temporary/$name.elf" "$temporary/$name.bin"
  done
  rm -f "$temporary/boot.bin" "$temporary/code.bin" "$temporary/test"
@@ -25,12 +25,19 @@ trap cleanup EXIT HUP INT TERM
 "$cross-as" -march=rv32i -mabi=ilp32 -mno-relax --defsym TT_SFPU_STORE_SMOKE=1 "$directory/../blackhole_tensix_matmul.S" -o "$temporary/store.o"
 "$cross-ld" -m elf32lriscv --no-relax -T "$directory/../blackhole_tensix_matmul.ld" "$temporary/store.o" -o "$temporary/store.elf"
 "$cross-objcopy" -O binary -j .text "$temporary/store.elf" "$temporary/store.bin"
-for stage in operand matrix; do
- case "$stage" in operand) symbol=TT_OPERAND_SMOKE;; matrix) symbol=TT_MATRIX_EXEC_SMOKE;; esac
+for stage in operand matrix zeroacc movd; do
+ case "$stage" in operand) symbol=TT_OPERAND_SMOKE;; matrix) symbol=TT_MATRIX_EXEC_SMOKE;; zeroacc) symbol=TT_ZEROACC_SMOKE;; movd) symbol=TT_MOVD_SMOKE;; esac
  "$cross-as" -march=rv32i -mabi=ilp32 -mno-relax --defsym "$symbol=1" "$directory/../blackhole_tensix_matmul.S" -o "$temporary/$stage.o"
  "$cross-ld" -m elf32lriscv --no-relax -T "$directory/../blackhole_tensix_matmul.ld" "$temporary/$stage.o" -o "$temporary/$stage.elf"
  "$cross-objcopy" -O binary -j .text "$temporary/$stage.elf" "$temporary/$stage.bin"
 done
+for stage in kernel kerneloperand kernelmatrix; do
+ set -- --defsym TT_KERNEL_HANDOFF=1
+ case "$stage" in kerneloperand) set -- "$@" --defsym TT_OPERAND_SMOKE=1;; kernelmatrix) set -- "$@" --defsym TT_MATRIX_EXEC_SMOKE=1;; esac
+ "$cross-as" -march=rv32i -mabi=ilp32 -mno-relax "$@" "$directory/../blackhole_tensix_matmul.S" -o "$temporary/$stage.o"
+ "$cross-ld" -m elf32lriscv --no-relax -T "$directory/../blackhole_tensix_matmul.ld" "$temporary/$stage.o" -o "$temporary/$stage.elf"
+ "$cross-objcopy" -O binary -j .text "$temporary/$stage.elf" "$temporary/$stage.bin"
+done
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined "$directory/pioneer_tensix_image_test.cpp" -o "$temporary/test"
-"$temporary/test" "$temporary/boot.bin" "$temporary/code.bin" "$temporary/config.bin" "$temporary/load.bin" "$temporary/store.bin" "$temporary/operand.bin" "$temporary/matrix.bin"
+"$temporary/test" "$temporary/boot.bin" "$temporary/code.bin" "$temporary/config.bin" "$temporary/load.bin" "$temporary/store.bin" "$temporary/operand.bin" "$temporary/matrix.bin" "$temporary/zeroacc.bin" "$temporary/movd.bin" "$temporary/kernel.bin" "$temporary/kerneloperand.bin" "$temporary/kernelmatrix.bin"
 printf 'PASS: fixed RV32I image, whitelisted MMIO and reference matrix fixture; no hardware operation\n'

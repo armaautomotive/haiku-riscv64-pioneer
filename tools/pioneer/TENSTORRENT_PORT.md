@@ -1027,6 +1027,45 @@ CLI SHA `9073be2f688cd2663fd5a0a2f1ff9031a4afbf9854b0e52a8a83d810127e1747`.
 The failure is now narrowed to ZEROACC, MOVD2A/B or operand handoff, not
 necessarily MVMUL or RISC Dst reads. No numerical matrix or model success.
 
+### October 14: ZEROACC/MOVD pass; handoff remains non-repeatable
+
+After another default Linux cold recovery and clean full-memory/64-CPU
+Haiku boot, repeated SFPU-store control passed. New fixed ZEROACC-only
+(`5476`/`5477`, metadata v12) and MOVD-only (`5478`/`5479`, v13) controls
+both PASSED at 06:38 UTC October 15: completion/stop 1/1, three/two polls,
+expected phase/marker/park, L1/TLB/PCI restored, recovery 0. Both bypass
+UNPACR_NOP handoff, MVMUL and RISC Dst reads. This narrows the failing
+prefix to the handoff rather than SFPU, ZEROACC or MOVD2A/B individually.
+Artifacts `/boot/home/pioneer-p100a-20261014/zeroacc-1/`; driver SHA
+`ac0d9b7bcde0133cc985f7d93a6fe272578c505574bc6caa13a4746e4ab6967c`,
+CLI SHA `e1f13d2dc3c74313416f20836897c729e0fd4d285448659d2d997dbc99ebba89`.
+
+The ISA's pure-handoff `43000007`/`43800007` differs from the pinned
+LLK's actually used dummy-valid helper: `SET_DVALID=1`, `UNP_ZEROSRC=1`
+through its macro yields `43000101`/`43800101`. Added a separately selected
+kernel-style variant using that clear-and-valid sequence BEFORE MOVD2
+(otherwise the clear would erase inputs). It executes once, retaining
+Matrix ownership through the second fixture. It is not silently substituted
+into the existing diagnostic variants. All images retain their fixed
+footprint and are independently assembled/decoded, including a numerical
+model that fails if matrix execution is removed. New metadata v14 operand
+(`547a/b`), v15 matrix-execution-only (`547c/d`), v16 full numeric (`547e/f`).
+
+At 06:43 UTC, kernel-operand-only PASSED once: one poll, complete/stop and
+all restoration checks passed, recovery 0. The immediately following
+kernel-matrix-exec-only test TIMED OUT, 2000 polls, phase `70190`, two PCs
+`70274`, still-running reset `46800`. That phase is the handoff drain,
+BEFORE reaching MVMUL. Stop/reset succeeded but L1 was deliberately not
+restored after uncertain completion; cold recovery 1. No numeric full
+matrix test was run. Thus this is **not a proven repeatable handoff fix**.
+Requested normal shutdown and relay cold recovery. Next test the numerical
+variant first from a fresh cold state, without a preceding dummy-valid test.
+
+Artifacts `/boot/home/pioneer-p100a-20261014/kernel-handoff-1/`; driver SHA
+`716ca2cc741892ab2a0584d69d67508b57859868b0278aa6549e2e684aea752c`,
+CLI SHA `6d1ecbff645d8a0c8293acd2263fae80e53dc285dce86859496d6e81d9b8c23b`.
+No firmware, clock-gating, voltage-force or default-boot changes were made.
+
 Download pinned official sources with:
 
 ```sh

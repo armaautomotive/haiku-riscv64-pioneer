@@ -23,6 +23,18 @@ static inline uint32_t BlackholeTensixImageAddress(unsigned index)
 }
 static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
+	uint32_t address = BlackholeTensixImageAddress(index);
+	if (sfpuSmoke >= 7 && sfpuSmoke <= 9 && address >= 0x70170 && address <= 0x701d4) {
+		// Same-sized independent kernel-style handoff-before-MOVD2 prefix.
+		const uint32_t kernelOperands[] = {
+			0x020a1063,0x430002b7,0x10128293,0x00542023,
+			0x438002b7,0x10128293,0x00542023,0x0d0000ef,
+			0x080022b7,0x00542023,0x080822b7,0x00428293,0x00542023,
+			0x081022b7,0x00828293,0x00542023,0x081822b7,0x00c28293,0x00542023,
+			0x0a0022b7,0x01028293,0x00542023,0x0a0822b7,0x01428293,0x00542023,0x088000ef
+		};
+		return kernelOperands[(address-0x70170)/4];
+	}
 	// Independent fixed configuration-only control. The decoder test proves
 	// these two same-width substitutions bypass every Dst and matrix access.
 	if (configSmoke && BlackholeTensixImageAddress(index) == 0x700e0) return 0x1540006f;
@@ -30,11 +42,13 @@ static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke
 	if (sfpuSmoke == 1 && BlackholeTensixImageAddress(index) == 0x7011c) return 0x1180006f;
 	if (sfpuSmoke == 2 && BlackholeTensixImageAddress(index) == 0x70150) return 0x0e40006f;
 	if (sfpuSmoke == 2 && BlackholeTensixImageAddress(index) == 0x70154) return 0x00000013;
-	if (sfpuSmoke == 3 && BlackholeTensixImageAddress(index) == 0x701d8) return 0x05c0006f;
-	if (sfpuSmoke == 3 && BlackholeTensixImageAddress(index) == 0x701dc) return 0x00000013;
-	if (sfpuSmoke == 4 && BlackholeTensixImageAddress(index) == 0x701e8) return 0x04c0006f;
-	if (sfpuSmoke == 4 && BlackholeTensixImageAddress(index) == 0x701ec) return 0x00000013;
-	if ((configSmoke || sfpuSmoke != 0) && BlackholeTensixImageAddress(index) == 0x70238) return 0x0059a223;
+	if ((sfpuSmoke == 3 || sfpuSmoke == 8) && address == 0x701d8) return 0x05c0006f;
+	if ((sfpuSmoke == 3 || sfpuSmoke == 8) && address == 0x701dc) return 0x00000013;
+	if ((sfpuSmoke == 4 || sfpuSmoke == 9) && address == 0x701e8) return 0x04c0006f;
+	if ((sfpuSmoke == 4 || sfpuSmoke == 9) && address == 0x701ec) return 0x00000013;
+	if (sfpuSmoke == 5 && BlackholeTensixImageAddress(index) == 0x70170) return 0x0c40006f;
+	if (sfpuSmoke == 6 && BlackholeTensixImageAddress(index) == 0x701b8) return 0x07c0006f;
+	if ((configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7)) && address == 0x70238) return 0x0059a223;
 	if (index == 0) return 0x0006a06f;
 	const uint32_t code[] = {
 		0xffe40437,0xffe804b7,0x00448493,0xffef0937,

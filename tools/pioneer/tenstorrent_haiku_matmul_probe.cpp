@@ -27,7 +27,17 @@ int main(int argc, char** argv)
 		{"--check-fixed-operand-support","--run-fixed-operand-and-reset","Operand-only","ZEROACC/MOVD2/ownership/drain; no matrix/RISC Dst reads",
 		 TT_PCI_PROBE_PIONEER_OPERAND_SUPPORT,TT_PCI_PROBE_PIONEER_OPERAND_SMOKE,10,5,true},
 		{"--check-fixed-matrix-exec-support","--run-fixed-matrix-exec-and-reset","Matrix-exec-only","One MVMUL/drain; no RISC Dst reads, no numerical validation",
-		 TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT,TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE,11,6,true}
+		 TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT,TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE,11,6,true},
+		{"--check-fixed-zeroacc-support","--run-fixed-zeroacc-and-reset","ZEROACC-only","SFPU prefix and ZEROACC/drain; no operand moves/handoff/matrix",
+		 TT_PCI_PROBE_PIONEER_ZEROACC_SUPPORT,TT_PCI_PROBE_PIONEER_ZEROACC_SMOKE,12,7,true},
+		{"--check-fixed-movd-support","--run-fixed-movd-and-reset","MOVD-only","SFPU/ZEROACC/MOVD2/drain; no handoff/matrix/RISC Dst reads",
+		 TT_PCI_PROBE_PIONEER_MOVD_SUPPORT,TT_PCI_PROBE_PIONEER_MOVD_SMOKE,13,8,true},
+		{"--check-kernel-operand-support","--run-kernel-operand-and-reset","Kernel-operand-only","Kernel-style clear/valid BEFORE MOVD2; no matrix/RISC Dst reads",
+		 TT_PCI_PROBE_PIONEER_KERNEL_OPERAND_SUPPORT,TT_PCI_PROBE_PIONEER_KERNEL_OPERAND,14,10,true},
+		{"--check-kernel-matrix-exec-support","--run-kernel-matrix-exec-and-reset","Kernel-matrix-exec-only","Kernel-style handoff and one MVMUL/drain; no numerical readback",
+		 TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC_SUPPORT,TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC,15,11,true},
+		{"--check-kernel-matmul-support","--run-kernel-matmul-and-reset","Kernel-matmul","Kernel-style handoff and two numerical fixtures with actual Dst readback",
+		 TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_KERNEL_MATMUL,16,9,false}
 	};
 	const Mode* selected = NULL; bool inspect = false;
 	if (argc == 2) for (const Mode& mode : modes) {

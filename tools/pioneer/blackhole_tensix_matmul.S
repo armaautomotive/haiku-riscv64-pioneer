@@ -23,6 +23,12 @@
 .ifdef TT_MATRIX_EXEC_SMOKE
 .set TT_SMOKE_COMPLETION, 1
 .endif
+.ifdef TT_ZEROACC_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
+.ifdef TT_MOVD_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -148,6 +154,18 @@ clear_output:
 	bne t2, zero, clear_output
 	jal ra, drain
 	/* Four rows per MOVD2A/B. No address increments or bank flips. */
+.ifdef TT_KERNEL_HANDOFF
+	/* Match the pinned LLK's clear-and-dummy-valid operation. Do this
+	 * BEFORE filling Src: the operation zeros its target bank. Both
+	 * Matrix-owned banks remain owned for the second fixture.
+	 */
+	bne s4, zero, kernel_operands
+	li t0, 0x43000101
+	sw t0, 0(s0)
+	li t0, 0x43800101
+	sw t0, 0(s0)
+	jal ra, drain
+kernel_operands:
 	li t0, 0x08002000
 	sw t0, 0(s0)
 	li t0, 0x08082004
@@ -161,7 +179,29 @@ clear_output:
 	li t0, 0x0a082014
 	sw t0, 0(s0)
 	jal ra, drain
+.else
+.ifdef TT_ZEROACC_SMOKE
+	j config_completion /* ZEROACC drained; no MOVD2/ownership/matrix */
+.else
+	li t0, 0x08002000
+.endif
+	sw t0, 0(s0)
+	li t0, 0x08082004
+	sw t0, 0(s0)
+	li t0, 0x08102008
+	sw t0, 0(s0)
+	li t0, 0x0818200c
+	sw t0, 0(s0)
+	li t0, 0x0a002010
+	sw t0, 0(s0)
+	li t0, 0x0a082014
+	sw t0, 0(s0)
+	jal ra, drain
+.ifdef TT_MOVD_SMOKE
+	j config_completion /* MOVD2 drained; no ownership/matrix */
+.else
 	bne s4, zero, matrix
+.endif
 	/* Supported UNPACR_NOP handoffs, NOT unsupported SETDVALID. The
 	 * implied format is disabled; both physical bank-0 operands become
 	 * matrix-owned and remain so for the second fixture.
@@ -171,6 +211,7 @@ clear_output:
 	li t0, 0x43800007
 	sw t0, 0(s0)
 	jal ra, drain
+.endif /* TT_KERNEL_HANDOFF */
 matrix:
 .ifdef TT_OPERAND_SMOKE
 	j config_completion /* ZEROACC/MOVD2/ownership drained; no matrix */
