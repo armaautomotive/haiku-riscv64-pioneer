@@ -1,8 +1,8 @@
 /*
  * Copyright 2026, Haiku, Inc. All rights reserved.
  * Distributed under the terms of the MIT License.
- * Optional, root-only Pioneer experiments. Only fixed owned host-read DMA;
- * no arbitrary DMA, host writes or firmware flash.
+ * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
+ * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
 
@@ -1098,14 +1098,17 @@ struct PioneerHostReadIO : PioneerHostDmaAuditIO, PioneerHostPageIO {
 		if (writeArea>=B_OK) delete_area(writeArea);
 	}
 	bool Map() {
-		if (payloadBytes!=64 && payloadBytes!=4096) return false;
+		// 128/8192 are only the separate fixed write/readback policies:
+		// two distinct L1 regions, never a user-selected size.
+		if (payloadBytes!=64 && payloadBytes!=128 && payloadBytes!=4096 && payloadBytes!=8192) return false;
 		if (!PioneerHostDmaAuditIO::Map()) return false;
 		void* address=NULL;
-		scratchArea=map_physical_memory("P100A owned host read final 64-byte L1 destination",
-			profile.bar0_host_start+0x1917f000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+		unsigned mappedBytes=payloadBytes==8192?8192:4096;
+		scratchArea=map_physical_memory("P100A owned host transfer fixed L1 scratch",
+			profile.bar0_host_start+0x19180000-mappedBytes,mappedBytes,B_ANY_KERNEL_ADDRESS,
 			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&address);
 		if (scratchArea<B_OK) return false;
-		scratchData=(volatile uint32*)((uint8*)address+(TT_HOST_PAGE_BYTES-payloadBytes));
+		scratchData=(volatile uint32*)((uint8*)address+(mappedBytes-payloadBytes));
 		writeArea=map_physical_memory("P100A owned host read fixed NIU0 initiator",
 			profile.bar0_host_start+0x19320000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
 			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&address);
@@ -1123,7 +1126,7 @@ struct PioneerHostReadIO : PioneerHostDmaAuditIO, PioneerHostPageIO {
 		if (BlackholeResidentWriteRegister(offset)) PioneerWrite32(niuWrite+offset/4,value);
 	}
 	uint32* HostReadBackup(unsigned words) {
-		if (backup!=NULL || words!=payloadBytes/4 || (words!=16 && words!=1024)) return NULL;
+		if (backup!=NULL || words!=payloadBytes/4 || (words!=16 && words!=32 && words!=1024 && words!=2048)) return NULL;
 		backup=(uint32*)malloc(words*sizeof(uint32)); return backup;
 	}
 	uint32 ResidentL1Read(unsigned w) { return w<payloadBytes/4?PioneerRead32(scratchData+w):UINT32_MAX; }
@@ -1145,6 +1148,25 @@ struct PioneerHostReadIO : PioneerHostDmaAuditIO, PioneerHostPageIO {
 		if (readAttempted && (!read.bme_restored || !read.l1_restored || !read.niu_restored
 			|| !read.tlb_restored || read.recovery_required)) okay=false;
 		return PioneerHostDmaAuditIO::Unmap() && okay;
+	}
+};
+
+struct PioneerHostWriteIO : PioneerHostReadIO {
+	tt_host_write_result& write;
+	const unsigned writeBytes;
+	PioneerHostWriteIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
+		tt_compute_noc_result& n,tt_host_path_result& h,tt_host_dma_audit_result& auditResult,tt_host_write_result& r,unsigned bytes)
+		: PioneerHostReadIO(p,a,t,c,d,n,h,auditResult,r.transfer,2*bytes),write(r),writeBytes(bytes) {}
+	uint32 ResidentNocRead(uint32 offset) {
+		return BlackholeHostWriteReadRegister(offset)?PioneerRead32(nocRegisters+offset/4):UINT32_MAX;
+	}
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerHostDmaAuditIO::AfterNodeId(id)) return false;
+		readAttempted=true;
+		dprintf("PIONEER-P100A: single owned host %u-byte write + distinct L1 readback; all cores held\n",writeBytes);
+		if (writeBytes==4096) return BlackholeHostWriteProbe<PioneerHostWriteIO,4096>(*this,dram,noc,path,audit,write);
+		return writeBytes==64 && BlackholeHostWriteProbe(*this,dram,noc,path,audit,write);
 	}
 };
 
@@ -1343,6 +1365,46 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE) {
+		if (data==NULL || length!=sizeof(tt_pioneer_host_write_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status!=B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile={};
+		if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status=status;
+		tt_pioneer_host_write_result result={};
+		tt_pioneer_dram_samples_result& baseline=result.baseline.baseline.baseline.baseline;
+		tt_pioneer_arc_result& control=baseline.control.control.control;
+		tt_arc_telemetry_result& telemetry=baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix=baseline.control.tensix;
+		control.pci.version=control.arc.version=telemetry.version=tensix.version=baseline.dram.version=1;
+		control.arc.tlb_restored=telemetry.tlb_restored=tensix.tlb_restored=1;
+		baseline.dram.data_restored=baseline.dram.tlb_restored=result.baseline.baseline.baseline.noc.tlb_restored=1;
+		result.baseline.baseline.path.tlb_restored=result.baseline.audit.tlb_restored=1;
+		tt_host_read_result& transfer=result.write.transfer;
+		transfer.bme_restored=transfer.l1_restored=transfer.niu_restored=transfer.tlb_restored=1;
+		if (status==B_OK) {
+			PioneerHostWriteIO io(profile,control.arc,telemetry,tensix,baseline.dram,
+				result.baseline.baseline.baseline.noc,result.baseline.baseline.path,result.baseline.audit,result.write,
+				operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE?4096:64);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (transfer.recovery_required || result.baseline.audit.recovery_required
+			|| result.baseline.baseline.path.recovery_required || result.baseline.baseline.baseline.noc.recovery_required
+			|| baseline.dram.recovery_required || control.pci.state==TT_PIONEER_MMIO_RESTORE_FAILED) {
+			transfer.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock); return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_READ_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_READ_PAGE_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;

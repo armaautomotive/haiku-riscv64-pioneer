@@ -35,6 +35,11 @@ The same card now also passes full on-card accumulation for fixed 16-output
 GEMV fixtures with 1,024, 5,120 and 6,144 inputs. It no longer needs a host
 request/reset or a CPU partial sum for each 16-element input block. Model
 weights are not yet persistent across requests and Qwen chat remains CPU-only.
+Dedicated, owned high-address host buffers now pass 4 KiB transfers in both
+directions. Card-to-host writes additionally require CPU-visible payload and
+distinct poisoned-L1 readback proof before releasing their buffer. These
+are reversible transfer primitives, not a persistent Qwen backend or a
+tokens-per-second improvement.
 As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
@@ -49,7 +54,7 @@ health snapshot, not a memory stress test or working accelerator runtime.
 One stopped Tensix tile also passes a reversible 64-byte L1 pattern test,
 including verification of the original bytes after restoration.
 The tests restore the card and bridge configuration exactly. The initial
-experiments never enabled DMA; a later fixed owned-page read now does so
+experiments never enabled DMA; later fixed owned-page transfers now do so
 only for the duration of the verified operation described below. There is
 no general-purpose model compute runtime yet. See the
 live-test records below. Samsung's installed OS package, card firmware,
@@ -93,6 +98,84 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 15: owned card-to-host write and distinct-L1 readback
+
+Both fixed variants, 64 bytes and 4 KiB, now pass twice on the real P100A.
+The stopped sole tile's L1 contains a third, distinct known pattern; the
+owned non-cached host page initially contains a different pattern, and a
+separate L1 readback region is poisoned. Each operation issues exactly one
+non-inline, unicast, acknowledged NoC write into the owned host page, checks
+CPU-visible target bytes and the full page, then issues exactly one NoC read
+back into the distinct poisoned L1 region. No user pointer, arbitrary
+physical address/length, DMA-engine message, core start or retry is accepted.
+
+The write's `NOC_CTRL=0x212` sets `WR`, `RESP_MARKED` and
+`MEM_RD_DROP_ACK`: the last suppresses only the unused NoC-overlay
+notification, **not** the NoC write acknowledgement. The source coordinate
+is the initiating tile itself; the destination uses the audited translated
+PCIe `(19,24)` route and SII window 0. The pinned official NoC
+`MemoryMap.md`/`Counters.md` define the write ACK, non-posted data-flit,
+accepted and non-posted request counters at `0x204/0x220/0x210/0x228`.
+All are read only after the ordered command readback. Complete proof also
+requires every command buffer and read/outgoing-write transaction ID idle,
+stable source routes, unchanged host physical mapping and clean PCIe status.
+A NoC ACK alone is not sufficient evidence of host-visible PCIe posted data.
+
+Each 64-byte run had write/read deltas **1/1/1/1**, with one ACK poll,
+one host-visibility poll and one readback poll. Each 4 KiB run had write
+and read deltas **1/64/1/1**, with one ACK poll, one host-visibility poll and
+two readback polls. Every payload/source word matched, full-page host checks
+passed, bus mastering was disabled/read back, original L1/NIU/TLB/PCI state
+was restored and PCI commands ended `0000/0000`. All owned host pages were
+released; none were quarantined and no cold recovery was required. For the
+64-byte variant the rest of the host page is an independent guard; the 4 KiB
+variant verifies the entire page as payload (no claim of guards outside that
+allocation). The source/readback footprint is 128 bytes or 8 KiB of L1,
+respectively; private heap backups keep the larger image off the kernel stack.
+
+If **any** host write was attempted, freeing its page requires the entire
+host-visible plus distinct-L1 readback proof. Missing/delayed/unexpected data,
+missing ACK, a dropped write or readback doorbell, changed route/mapping,
+unexplained counters or unverified cleanup retains the wired system-team
+page and latches cold recovery. No counter clear, payload rewrite, reset,
+request retry or module reload may bypass that gate. BME-off and TLB/PCI
+control rollback remain permitted after uncertainty.
+
+Both variants pass ASan/UBSan tests covering every lost setup/rollback write,
+delayed host visibility, ACK-before-host-data, permanently missing/wrong host
+data, bad guards, absent/wrong readback, source/mapping changes, cache/heap
+allocation refusal, maximum 48-bit host address, counter wrap and permanent
+cleanup failure. The existing read, MMIO, ARC, reset, L1, BRISC, DRAM and
+resident-compute policies pass unchanged. All 28 RISC-V utilities and the
+driver build. Native legacy 64-byte write, 4 KiB read and 1,024-input resident
+GEMV regressions also pass; GEMV has zero mismatches and complete rollback.
+The post-test read-only PCIe audit shows Device Status `0000/0000`, firmware
+HDMA channels disabled/stopped, commands `0000/0000` and no cold latch.
+Assistant team 2705 remains ready/idle on its existing TinyStories model,
+without reopening or clearing its conversation.
+
+Final artifacts/logs: `/boot/home/pioneer-host-write-page-20261015/`, with
+the prior verified driver saved as `tenstorrent_pci_probe.before`. SHA-256:
+
+- Driver: `c258042fcd7acb5b4b634a41dbb1c4fb2b0ebd49806d02a048dbdc7c1c6cadad`
+- Host-write CLI: `e46f8758e357b25109354b0f6bc1d2ee1327bdeac8aea47c25177cbc6238867b`
+
+Initial 64-byte artifacts/logs remain separately preserved in
+`/boot/home/pioneer-host-write-20261015/` (driver
+`8fc4f93c219e6f1eb750b751f0c048176bde775d81f262e7df7bfe44abadf594`, CLI
+`06b60464c74c3a040a32f396add31028759f7f9558315b82ada0c9f2ce128288`).
+
+These tests establish coherent bounded two-way host transfers, **not** bulk
+bandwidth, persistent weights, full Qwen generation or a measured speedup.
+The next implementation seam is an exclusively owned runtime session:
+retain verified device weight storage across multiple input vectors, move
+data through driver-owned host buffers, reject foreign experimental requests
+while a session owns the card, and prove idle completion before closing it.
+Use L1 staging plus normal acknowledged GDDR writes rather than sending read
+responses to a different NIU (which corrupts outstanding-counter accounting).
+The actual Qwen graph/backend and same-model CPU/GPU correctness and speed
+comparisons remain required, including quantized residency for the 27B target.
 
 ### October 15: full owned 4 KiB host-to-card read passes twice
 

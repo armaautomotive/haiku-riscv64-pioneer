@@ -6,12 +6,12 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeHostReadProbe.h"
 struct HostReadMock : Mock,PageMock {
 	uint32_t pciCommand[2]={0x402,0x402};
-	uint32_t backup[1024]={},destination[1024]={};
+	uint32_t backup[2048]={},destination[2048]={};
 	unsigned transferBytes=64;
 	unsigned bmeWrites=0;
 	bool quarantined=false,clearFails=false,hostCorrupt=false,lateMapChange=false,pciePending=false;
 	bool badHdma=false,badSii=false,backupFail=false;
-	HostReadMock() { for (unsigned w=0;w<1024;w++) destination[w]=100+w; }
+	HostReadMock() { for (unsigned w=0;w<2048;w++) destination[w]=100+w; }
 	uint32_t* HostReadBackup(unsigned words) { assert(words==transferBytes/4); return backupFail?nullptr:backup; }
 	uint32_t ResidentL1Read(unsigned w) {
 		assert(w<transferBytes/4); Window(0,0,1,2,false); return destination[w];
@@ -80,7 +80,7 @@ struct HostReadMock : Mock,PageMock {
 	}
 	void Safe() {
 		Mock::Restored(); assert(pciCommand[0]==0x402 && pciCommand[1]==0x402);
-		for (unsigned w=0;w<1024;w++) assert(destination[w]==100+w);
+		for (unsigned w=0;w<2048;w++) assert(destination[w]==100+w);
 		assert(!quarantined && !PageMock::allocated && releases==1);
 	}
 };
