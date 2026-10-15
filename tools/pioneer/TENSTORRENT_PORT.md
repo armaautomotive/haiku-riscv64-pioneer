@@ -1119,6 +1119,18 @@ All 17 assembled code variants and the reset-jump section match the
 independently decoded constants and policy tests. This is a prepared
 experiment, NOT yet a hardware result.
 
+At 07:12 UTC October 15, the fresh-cold-boot pure-SrcA test TIMED OUT:
+phase `701e8` (after MOVA2D), PCs `70274`, 2000 polls, running reset
+`46800`, stop succeeded. Thus the NOP/format-3 form got past its handoff
+drain but did not provide a readable Matrix-owned SrcA bank on this setup.
+No SrcB or MVMUL variant was run. Cold recovery was latched, L1 deliberately
+left untouched, normal shutdown and relay power-off completed. Artifacts
+`/boot/home/pioneer-p100a-20261014/pure-handoff-1/`; driver SHA
+`32de6fbb87ca6e751d1d360b7587d668ccb10b2ef6320ed665d32c56a232affe`,
+CLI SHA `29f8a6b8dd3010c6826878e5eba28cac5df7f30a2b40eff4fb8eb332642c52ec`.
+Next investigate the standard bounded L1-to-SrcA/B UNPACR path rather than
+treating another guessed standalone handoff encoding as a fix.
+
 Download pinned official sources with:
 
 ```sh
