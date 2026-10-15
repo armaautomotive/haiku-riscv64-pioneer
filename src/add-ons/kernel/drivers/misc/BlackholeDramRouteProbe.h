@@ -62,11 +62,11 @@ static inline bool BlackholeDramBankZeroId(const uint32_t* id)
 		&& ((id[0] >> 19) & 127) == 12 && (id[0] & 0xf0000000) == 0x10000000
 		&& id[1] == 0x00080000 // NoC 0, DRAM type, bank/group 0
 		&& (id[2] & 0x1000) == 0 // containing tile is not clock-disabled
-		// Firmware 18.5 on the measured board leaves NOC_ID_LOGICAL at
-		// zero. This writable software label is NOT the routing table.
+		// Firmware 18.5 retains the power-on physical NOC_ID_LOGICAL
+		// label, zero on this sole (0,0) port. It is NOT the routing table.
 		// Physical NODE_ID + typed ENDPOINT_ID and the source translation
 		// proof above independently identify the destination. Accept only
-		// the observed unset label or the prescribed translated label.
+		// the observed physical label or the prescribed translated label.
 		&& ((id[3] & 0xfff) == 0 || (id[3] & 0xfff) == (18U | (12U << 6)));
 }
 

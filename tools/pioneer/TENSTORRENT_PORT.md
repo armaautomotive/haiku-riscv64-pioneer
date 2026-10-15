@@ -590,9 +590,10 @@ core control result. Only the fixed source-configuration/target-ID registers
 are readable through this new ioctl; no arbitrary addresses or input fields.
 
 The initial live check restored all PCI/TLB state but refused its ID because
-firmware 18.5 leaves `NOC_ID_LOGICAL` at zero. This register is a writable
-software label, not the routing lookup table. Policy v2 accepts either that
-observed unset label or the prescribed label; the independent physical
+firmware 18.5 retains the physical/power-on `NOC_ID_LOGICAL` label at this
+port, zero for `(0,0)`. This register is a writable software label, not the
+routing lookup table. Policy v2 accepts either that observed physical label
+or the prescribed translated label; the independent physical
 `NOC_NODE_ID`, typed `NOC_ENDPOINT_ID`, source-table translation and repeated
 sample checks remain required. No identity field or actual routing-table
 check was removed. Host ASan/UBSan tests cover dropped configuration/restore
@@ -621,6 +622,64 @@ Register facts were audited against official ISA documentation commit
 UMD coordinate manager. Preserve those sources' own license notices; this
 policy is an independent implementation of register facts, not copied
 documentation code. No DMA, firmware messages/flash or model inference ran.
+
+### October 14: seven-bank GDDR payload samples passed twice
+
+Added two separate operations: read-only identification of the seven enabled
+bank/port-0 routes, and an explicit fixed reversible payload-sample test.
+Firmware 18.5's live source tables map physical banks 0/1/2 to translated
+`(18,12)/(18,15)/(18,18)` and banks 4/5/6/7 to
+`(17,12)/(17,15)/(17,18)/(17,21)`. This differs from the newer pinned UMD's
+mirror-bank ordering. The policy derives routes only within the eight
+documented DRAM port-0 slots, proves each against the source tables, and
+then independently verifies physical NODE_ID and typed bank ENDPOINT_ID.
+Firmware retains physical labels on the west ports and translated labels
+on the east ports; only the matching physical or matching translated label
+is accepted, not arbitrary zero on every bank. The initial seven-bank v1
+attempt safely refused bank 1's physical label, before any payload access.
+
+The fixed payload footprint is five 64-byte samples per enabled bank at
+local addresses `04000000`, `40000000`, `80000000`, `c0000000`, `fe000000`:
+2,240 bytes total. All are above the pinned HAL's low reservations (including
+its optional profiler reservation, 6,400,064 bytes total) and below
+`MEM_DRAM_SIZE=ff000000`; the top 16 MiB is never used as payload. The
+driver reserves the otherwise undecoded card, requires exact telemetry,
+proves all 120 enabled Tensix tiles' five RISCs are held, and preserves the
+original sample bytes kernel-locally. Each pattern is written to the whole
+set before reading back, so aliased banks/high addresses cannot silently
+pass independent write/read pairs. Before restoring bytes, it re-proves all
+120 cores held and unchanged source tables. Unknown ownership or failed
+restoration latches cold-recovery-required; cleanup does not blindly rewrite
+payload. No arbitrary-address, firmware-message or DMA interface is exposed.
+
+Host ASan/UBSan tests passed for all individual TLB-write drops, payload-write
+drops, bank/address aliases, wrong identities, source changes, unknown core
+ownership and failed payload/TLB restoration. Existing policy and fixed-image
+tests passed; all ten pre-existing diagnostic executable hashes are unchanged.
+
+At about 21:39 local October 14 (04:39 UTC October 15), the explicit sample
+test PASSED twice: seven routes, 240 core checks (120 before and 120 before
+restore), 35 saved/modified regions, two patterns, zero mismatches. Data/TLB/
+PCI restored flags were 1/1/1, commands ended 0000/0000 and recovery flag was
+zero. Subsequent telemetry reported firmware 18.5, GDDR f7/status5515,
+uncorrected errors zero, ASIC 48.48 C, fan 1,882 RPM and advancing heartbeat.
+Haiku still reported 64 CPUs and max memory 137,034,936,320 bytes.
+
+Installed optional driver SHA:
+`b3d9b69dca6a300d9a367e1fdbe8e47ed56d9fad5cbebc8c4326fc8905a19ee9`.
+New CLI SHA:
+`0035dffe29337164e54b27a75c90527addb02c889377c68ceb51fd5ea1c5e042`.
+Artifacts and prior-driver backup are in
+`/boot/home/pioneer-p100a-20261014/dram-samples-2/`.
+`--check-fixed-dram-samples-support` must identify loaded policy v2;
+`--read-enabled-dram-routes-and-restore` is payload-read/write-free;
+`--test-fixed-dram-samples-and-restore` performs the explicit sample test.
+
+This establishes BAR4-free reversible host access to distinct high-address
+samples on all seven GDDR banks. It does NOT test every byte of nominal
+28 GiB, provide a runtime allocator/DMA transport, execute Tensix matrix
+operations or run an LLM on the accelerator. Kernel and boot defaults and
+card firmware are unchanged; no SD change or reboot was needed.
 
 Download pinned official sources with:
 

@@ -3078,12 +3078,34 @@ or run in this checkpoint. The comment-only module rebuild remains exactly
 The new fixed bank-0 probe proves the PCIe source translation table maps
 translated (18,12) to physical (0,0), then checks the target's physical NoC
 coordinates, DRAM/bank-0 endpoint type and repeated NIU/label samples.
-The first live attempt safely restored PCI/TLB state but refused the unset
-software label NOC_ID_LOGICAL. The host-tested v2 policy recognizes firmware
-18.5's observed zero label without relaxing the physical identity or source
+The first live attempt safely restored PCI/TLB state but refused the retained
+physical/power-on label NOC_ID_LOGICAL. The host-tested v2 policy recognizes
+firmware 18.5's observed zero bank-0 label without relaxing physical identity or source
 routing proof. At about 21:28 local October 14 it passed three identical
 samples, TLB/PCI restored 1/1, commands 0000/0000, cold recovery zero.
 Installed module d999e495... and CLI 4f7b46c2... are retained in
 /boot/home/pioneer-p100a-20261014/dram-route-2 with the prior module backup.
 All earlier CLI hashes are unchanged. This is not GDDR payload testing,
 matrix computation or P100A model inference. Kernel/default boot unchanged.
+
+## October 14: high-address GDDR samples on all seven banks passed twice
+
+The seven-bank route check now verifies all enabled bank endpoints against
+the measured source translation tables, rather than assuming the newer
+UMD's mirror-bank ordering. Firmware's NIU labels are partially configured:
+west ports retain physical labels, east ports use translated labels. The
+first all-bank read-only attempt refused this difference before payload
+access; v2 requires either the correct physical or correct translated label.
+
+At about 21:39 local October 14, the explicit reversible payload test passed
+twice: seven routes, all 120 compute tiles held before and before restore,
+five distinct 64-byte regions per bank (64 MiB/1 GiB/2 GiB/3 GiB/0xfe000000),
+35 saved/modified regions, two patterns, zero mismatches. Original memory
+remained kernel-local; data/TLB/PCI restored 1/1/1, commands 0000/0000,
+recovery zero. ASIC 48.48 C, fan 1,882 RPM, reported uncorrected GDDR errors
+zero, firmware 18.5 unchanged. Haiku remained reachable with 64 CPUs and
+137,034,936,320 bytes maximum memory. Installed module b3d9b69d... and CLI
+0035dffe... are retained with a backup in pioneer-p100a-20261014/dram-samples-2.
+This is 2,240 bytes of high-address sample coverage, not full-capacity RAM
+testing, Tensix matrix compute, DMA or accelerator LLM inference. No boot
+changes, firmware changes, card swaps or recovery were needed.

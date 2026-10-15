@@ -665,11 +665,133 @@ struct PioneerDramRouteIO : PioneerTensixIO {
 	}
 };
 
+struct PioneerDramSamplesIO : PioneerTensixIO {
+	tt_dram_samples_result& dram;
+	const bool writeSamples;
+	area_id dramArea = -1, dataArea = -1;
+	const volatile uint32* dramNiu = NULL;
+	volatile uint32* data = NULL;
+	bool dramAttempted = false;
+	PioneerDramSamplesIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& r, bool writes)
+		: PioneerTensixIO(p, a, t, c), dram(r), writeSamples(writes) {}
+	~PioneerDramSamplesIO() {
+		if (dataArea >= B_OK) delete_area(dataArea);
+		if (dramArea >= B_OK) delete_area(dramArea);
+	}
+	bool Map()
+	{
+		if (!PioneerTensixIO::Map()) return false;
+		void* address = NULL;
+		dramArea = map_physical_memory("P100A enabled GDDR NIU read-only",
+			profile.bar0_host_start + 0x19320000, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_UNCACHED_MEMORY, &address);
+		if (dramArea < B_OK) return false;
+		dramNiu = (const volatile uint32*)address;
+		if (writeSamples) {
+			dataArea = map_physical_memory("P100A fixed reversible GDDR samples",
+				profile.bar0_host_start + 0x19000000, B_PAGE_SIZE,
+				B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA | B_UNCACHED_MEMORY, &address);
+			if (dataArea < B_OK) return false;
+			data = (volatile uint32*)address;
+		}
+		return true;
+	}
+	uint32 SourceRead(unsigned word) {
+		uint32 offset = BlackholeDramSourceOffset(word);
+		return offset == UINT32_MAX ? UINT32_MAX
+			: PioneerRead32((const volatile uint32*)((const uint8*)nodeID - 0x44 + offset));
+	}
+	uint32 DramIdRead(unsigned word) {
+		uint32 offset = BlackholeDramIdOffset(word);
+		return offset == UINT32_MAX ? UINT32_MAX : PioneerRead32(dramNiu + offset / 4);
+	}
+	uint32 DramTlbRead(unsigned slot, unsigned word) {
+		return slot < 2 && word < 3 ? PioneerRead32(tlb - 3 + slot * 3 + word) : UINT32_MAX;
+	}
+	void DramTlbWrite(unsigned slot, unsigned word, uint32 value) {
+		if (slot < 2 && word < 3) PioneerWrite32(tlb - 3 + slot * 3 + word, value);
+	}
+	uint32 DramRead(unsigned word) { return data != NULL && word < TT_DRAM_WORDS ? PioneerRead32(data + word) : UINT32_MAX; }
+	void DramWrite(unsigned word, uint32 value) { if (data != NULL && word < TT_DRAM_WORDS) PioneerWrite32(data + word, value); }
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerTensixIO::AfterNodeId(id)) return false;
+		dramAttempted = true;
+		dprintf("PIONEER-P100A: seven-bank DRAM %s transaction, no core start/DMA/flash\n", writeSamples ? "reversible sample" : "read-only route");
+		return BlackholeDramSamplesProbe(*this, telemetry, tensix, writeSamples, dram);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		if (dataArea >= B_OK) {
+			if (delete_area(dataArea) == B_OK) dataArea = -1;
+			else okay = false;
+		}
+		if (dramArea >= B_OK) {
+			if (delete_area(dramArea) == B_OK) dramArea = -1;
+			else okay = false;
+		}
+		if (dramAttempted && !dram.tlb_restored) {
+			for (unsigned slot = 0; slot < 2; slot++) for (unsigned word = 0; word < 3; word++) DramTlbWrite(slot,word,dram.tlb_before[slot][word]);
+			dram.tlb_restored = 1;
+			for (unsigned slot = 0; slot < 2; slot++) for (unsigned word = 0; word < 3; word++) {
+				dram.tlb_after[slot][word] = DramTlbRead(slot,word);
+				dram.tlb_restored &= dram.tlb_after[slot][word] == dram.tlb_before[slot][word];
+			}
+		}
+		// Never restore payload in cleanup after ownership/route uncertainty.
+		if (dramAttempted && (!dram.data_restored || !dram.tlb_restored || dram.recovery_required)) okay = false;
+		return PioneerTensixIO::Unmap() && okay;
+	}
+};
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_DRAM_SAMPLES_SUPPORT) {
+		if (data == NULL || length != sizeof(tt_dram_samples_support)) return B_BAD_VALUE;
+		status_t status = AcquireProbeLock();
+		if (status != B_OK) return status;
+		const tt_dram_samples_support support = {2, TT_DRAM_BANKS, TT_DRAM_REGIONS, TT_DRAM_WORDS, 0xfff, 0xf7};
+		release_sem(sLock);
+		return user_memcpy(data, &support, sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_DRAM_ALL_ROUTES || operation == TT_PCI_PROBE_PIONEER_DRAM_SAMPLES) {
+		if (data == NULL || length != sizeof(tt_pioneer_dram_samples_result)) return B_BAD_VALUE;
+		tt_pioneer_dram_samples_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = AcquireProbeLock();
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		tt_pioneer_arc_result& control = result.control.control.control;
+		tt_arc_telemetry_result& telemetry = result.control.control.telemetry;
+		tt_tensix_reset_result& tensix = result.control.tensix;
+		control.pci.version = control.arc.version = telemetry.version = tensix.version = result.dram.version = 1;
+		control.pci.profile_status = status; control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = result.dram.tlb_restored = result.dram.data_restored = 1;
+		if (status == B_OK) {
+			PioneerDramSamplesIO io(profile, control.arc, telemetry, tensix, result.dram, operation == TT_PCI_PROBE_PIONEER_DRAM_SAMPLES);
+			BlackholePioneerMmioProbe(io, control.pci);
+		}
+		if (result.dram.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.dram.recovery_required = 1; sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: DRAM samples state %" B_PRIu32 " routes/cores %" B_PRIu32 "/%" B_PRIu32
+			" data/TLB/PCI restored %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32 " recovery %" B_PRIu32 "\n",
+			result.dram.state, result.dram.routes_verified, result.dram.cores_checked,
+			result.dram.data_restored, result.dram.tlb_restored, control.pci.restored, result.dram.recovery_required);
+		return user_memcpy(data, &result, sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_DRAM_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_dram_route_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock();

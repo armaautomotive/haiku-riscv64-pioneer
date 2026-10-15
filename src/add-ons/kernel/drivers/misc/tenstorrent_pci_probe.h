@@ -12,6 +12,7 @@
 #include "BlackholeL1ScratchProbe.h"
 #include "BlackholeBriscSmokeProbe.h"
 #include "BlackholeDramRouteProbe.h"
+#include "BlackholeDramSamplesProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -25,6 +26,13 @@
 #define TT_PCI_PROBE_PIONEER_BRISC_SUPPORT (B_DEVICE_OP_CODES_END + 0x5459)
 #define TT_PCI_PROBE_PIONEER_DRAM_ROUTE (B_DEVICE_OP_CODES_END + 0x545a)
 #define TT_PCI_PROBE_PIONEER_DRAM_SUPPORT (B_DEVICE_OP_CODES_END + 0x545b)
+#define TT_PCI_PROBE_PIONEER_DRAM_ALL_ROUTES (B_DEVICE_OP_CODES_END + 0x545c)
+#define TT_PCI_PROBE_PIONEER_DRAM_SAMPLES (B_DEVICE_OP_CODES_END + 0x545d)
+#define TT_PCI_PROBE_PIONEER_DRAM_SAMPLES_SUPPORT (B_DEVICE_OP_CODES_END + 0x545e)
+
+struct tt_dram_samples_support {
+	uint32_t version, banks, regions, words, enabled_columns, enabled_gddr;
+};
 
 struct tt_dram_route_support {
 	uint32_t version, bank, source_words, id_words, translated_x, translated_y;
@@ -62,6 +70,11 @@ struct tt_pioneer_brisc_result {
 struct tt_pioneer_dram_route_result {
 	tt_pioneer_tensix_result control;
 	tt_dram_route_result dram;
+};
+
+struct tt_pioneer_dram_samples_result {
+	tt_pioneer_tensix_result control;
+	tt_dram_samples_result dram;
 };
 
 #endif
