@@ -385,14 +385,15 @@ struct PioneerTelemetryIO : PioneerArcIO {
 
 struct PioneerArcQueryIO : PioneerTelemetryIO {
 	tt_arc_queue_result& query;
+	tt_arc_clock_guard_result* const clock;
 	area_id queueWriteArea = -1, msiArea = -1;
 	volatile uint32* queueWrite = NULL;
 	volatile uint32* msi = NULL;
 	uint32 queueBase = 0, requestAddress = 0;
 	bool queryAttempted = false;
 	PioneerArcQueryIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
-		tt_arc_telemetry_result& t, tt_arc_queue_result& q)
-		: PioneerTelemetryIO(p,a,t), query(q) {}
+		tt_arc_telemetry_result& t, tt_arc_queue_result& q, tt_arc_clock_guard_result* clockGuard = NULL)
+		: PioneerTelemetryIO(p,a,t), query(q), clock(clockGuard) {}
 	~PioneerArcQueryIO() {
 		if (queueWriteArea >= B_OK) delete_area(queueWriteArea);
 		if (msiArea >= B_OK) delete_area(msiArea);
@@ -432,6 +433,12 @@ struct PioneerArcQueryIO : PioneerTelemetryIO {
 	bool AfterNodeId(uint32 id) {
 		if (!PioneerTelemetryIO::AfterNodeId(id)) return false;
 		queryAttempted = true;
+		if (clock != NULL) {
+			dprintf("PIONEER-P100A: normal firmware busy/idle clock cycle, no forced frequency/voltage/reset/flash/DMA\n");
+			bool entered = BlackholeArcClockEnter(*this,arc,telemetry,*clock);
+			bool left = BlackholeArcClockLeave(*this,arc,telemetry,*clock);
+			return entered && left && clock->state == TT_ARC_CLOCK_RESTORED && !clock->recovery_required;
+		}
 		dprintf("PIONEER-P100A: fixed ARC GET_AICLK query, application queue only, no clock/voltage/reset/flash/DMA command\n");
 		return BlackholeArcQueueProbe(*this,arc,telemetry,query);
 	}
@@ -445,6 +452,7 @@ struct PioneerArcQueryIO : PioneerTelemetryIO {
 			}
 		}
 		if (queryAttempted && (!query.request_restored || !query.tlb_restored || query.recovery_required)) okay = false;
+		if (clock != NULL && (clock->recovery_required || !clock->restored)) okay = false;
 		if (queueWriteArea >= B_OK) { if (delete_area(queueWriteArea) == B_OK) queueWriteArea = -1; else okay = false; }
 		if (msiArea >= B_OK) { if (delete_area(msiArea) == B_OK) msiArea = -1; else okay = false; }
 		return PioneerTelemetryIO::Unmap() && okay;
@@ -820,6 +828,9 @@ struct PioneerDramSamplesIO : PioneerTensixIO {
 struct PioneerMatmulIO : PioneerDramSamplesIO {
 	tt_tensix_matmul_result& math;
 	const bool configSmoke;
+	tt_arc_queue_result unusedQuery = {};
+	PioneerArcQueryIO clockIO;
+	tt_arc_clock_guard_result* const clock;
 	area_id mathAreas[5] = {-1,-1,-1,-1,-1};
 	volatile uint32* entry = NULL;
 	volatile uint32* code = NULL;
@@ -828,8 +839,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	const volatile uint32* pc = NULL;
 	bool mathAttempted = false;
 	PioneerMatmulIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
-		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& d, tt_tensix_matmul_result& m, bool configOnly = false)
-		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m), configSmoke(configOnly) {}
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& d, tt_tensix_matmul_result& m,
+		bool configOnly = false, tt_arc_clock_guard_result* clockGuard = NULL)
+		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m), configSmoke(configOnly),
+		clockIO(p,a,t,clockGuard != NULL ? clockGuard->last : unusedQuery,clockGuard), clock(clockGuard) {}
 	~PioneerMatmulIO() { for (unsigned i = 0; i < 5; i++) if (mathAreas[i] >= B_OK) delete_area(mathAreas[i]); }
 	bool Map()
 	{
@@ -846,6 +859,8 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 		entry = (volatile uint32*)pages[0]; code = (volatile uint32*)pages[1];
 		tail = (volatile uint32*)pages[2]; controls = (volatile uint32*)pages[3];
 		pc = (const volatile uint32*)((const uint8*)pages[4]+0x140); // TRISC0 snapshot
+		// Additional virtual views only; no nested PCI configuration transaction.
+		if (clock != NULL && !clockIO.Map()) return false;
 		return true;
 	}
 	volatile uint32* MathPointer(unsigned index) {
@@ -866,10 +881,16 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	}
 	uint32 MathPcRead() { return PioneerRead32(pc); }
 	void Pause() { spin(100); }
+	bool EnterNormalClock(tt_arc_clock_guard_result& r) {
+		clockIO.queryAttempted = true;
+		return BlackholeArcClockEnter(clockIO,arc,telemetry,r);
+	}
+	bool LeaveNormalClock(tt_arc_clock_guard_result& r) { return BlackholeArcClockLeave(clockIO,arc,telemetry,r); }
 	bool AfterNodeId(uint32 id) {
 		if (!PioneerDramSamplesIO::AfterNodeId(id)) return false;
 		mathAttempted = true;
 		dprintf("PIONEER-P100A: fixed TRISC0 matrix fixtures, one idle tile context reset, no NoC/DMA commands\n");
+		if (clock != NULL) return BlackholeClockedMatmulProbe(*this,dram,math,*clock);
 		return BlackholeTensixMatmulProbe(*this,dram,math,configSmoke);
 	}
 	bool Unmap()
@@ -889,6 +910,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 			}
 		}
 		if (mathAttempted && (!math.l1_restored || !math.tlb_restored || math.recovery_required)) okay = false;
+		if (clock != NULL && !clockIO.Unmap()) okay = false;
 		return PioneerDramSamplesIO::Unmap() && okay;
 	}
 };
@@ -898,6 +920,85 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_CLOCKED_MATMUL_SUPPORT) {
+		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
+		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
+		const tt_matmul_support support = {7,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
+		release_sem(sLock); return user_memcpy(data,&support,sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_CLOCKED_MATMUL) {
+		if (data == NULL || length != sizeof(tt_pioneer_clocked_matmul_result)) return B_BAD_VALUE;
+		tt_pioneer_clocked_matmul_result result = {};
+		status_t status = user_memcpy(data,&result,sizeof(result)); if (status != B_OK) return status;
+		status = AcquireProbeLock(); if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status = status;
+		tt_pioneer_arc_result& control = result.matmul.baseline.control.control.control;
+		tt_arc_telemetry_result& health = result.matmul.baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix = result.matmul.baseline.control.tensix;
+		tt_tensix_matmul_result& math = result.matmul.math;
+		control.pci.version = control.arc.version = health.version = tensix.version = result.matmul.baseline.dram.version = math.version = result.clock.version = 1;
+		control.pci.profile_status = status; control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = health.tlb_restored = tensix.tlb_restored = result.matmul.baseline.dram.tlb_restored = result.matmul.baseline.dram.data_restored = 1;
+		math.l1_restored = math.tlb_restored = result.clock.restored = result.clock.last.request_restored = result.clock.last.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerMatmulIO io(profile,control.arc,health,tensix,result.matmul.baseline.dram,math,false,&result.clock);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (math.recovery_required || result.clock.recovery_required || result.clock.last.recovery_required
+			|| result.matmul.baseline.dram.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			math.recovery_required = result.clock.recovery_required = 1; sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: clocked matrix state %" B_PRIu32 " complete/stop %" B_PRIu32 "/%" B_PRIu32
+			" clock restored %" B_PRIu32 " PCI restored %" B_PRIu32 " recovery %" B_PRIu32 "\n",
+			math.state,math.completed,math.stopped,result.clock.restored,control.pci.restored,math.recovery_required);
+		return user_memcpy(data,&result,sizeof(result));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_ARC_CLOCK_CYCLE_SUPPORT) {
+		if (data == NULL || length != sizeof(tt_arc_clock_support)) return B_BAD_VALUE;
+		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
+		const tt_arc_clock_support support = {1,0x34,0x52,0x54,800,1400};
+		release_sem(sLock); return user_memcpy(data,&support,sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_ARC_CLOCK_CYCLE) {
+		if (data == NULL || length != sizeof(tt_pioneer_arc_clock_result)) return B_BAD_VALUE;
+		tt_pioneer_arc_clock_result result = {};
+		status_t status = user_memcpy(data,&result,sizeof(result)); if (status != B_OK) return status;
+		status = AcquireProbeLock(); if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status = status;
+		tt_pioneer_mmio_result& pci = result.control.control.pci;
+		tt_arc_scratch_result& arc = result.control.control.arc;
+		tt_arc_telemetry_result& health = result.control.telemetry;
+		pci.version = arc.version = health.version = result.clock.version = 1;
+		pci.profile_status = status; pci.profile_stage = profile.stage;
+		arc.tlb_restored = health.tlb_restored = result.clock.restored = 1;
+		result.clock.last.tlb_restored = result.clock.last.request_restored = 1;
+		if (status == B_OK) {
+			PioneerArcQueryIO io(profile,arc,health,result.clock.last,&result.clock);
+			BlackholePioneerMmioProbe(io,pci);
+		}
+		if (result.clock.recovery_required || result.clock.last.recovery_required || pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.clock.recovery_required = 1; sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: clock cycle state %" B_PRIu32 " MHz %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32
+			" restored %" B_PRIu32 " PCI restored %" B_PRIu32 " recovery %" B_PRIu32 "\n",
+			result.clock.state,result.clock.before_mhz,result.clock.busy_mhz,result.clock.after_mhz,
+			result.clock.restored,pci.restored,result.clock.recovery_required);
+		return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_ARC_QUERY_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_arc_query_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;

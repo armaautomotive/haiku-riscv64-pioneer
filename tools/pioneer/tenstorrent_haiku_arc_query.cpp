@@ -11,16 +11,48 @@
 int main(int argc, char** argv)
 {
 	bool inspect = argc == 2 && strcmp(argv[1],"--check-fixed-arc-query-support") == 0;
-	if (!inspect && (argc != 2 || strcmp(argv[1],"--query-fixed-arc-clock-and-restore") != 0)) {
+	bool cycle = argc == 2 && (strcmp(argv[1],"--check-fixed-clock-cycle-support") == 0 || strcmp(argv[1],"--test-normal-clock-cycle-and-restore") == 0);
+	inspect |= cycle && strcmp(argv[1],"--check-fixed-clock-cycle-support") == 0;
+	if (!inspect && !cycle && (argc != 2 || strcmp(argv[1],"--query-fixed-arc-clock-and-restore") != 0)) {
 		fprintf(stderr,"Usage: %s --check-fixed-arc-query-support | --query-fixed-arc-clock-and-restore\n"
 			"Private Pioneer: one GET_AICLK query on ARC application queue 3.\n"
 			"Queue pointers/counter advance normally; consumed response remains firmware-owned.\n"
 			"No clock/voltage change, RISC/reset, DMA or flash command.\n",argv[0]);
+		fprintf(stderr,"Separate state-changing control: --check-fixed-clock-cycle-support | --test-normal-clock-cycle-and-restore\n"
+			"Normal firmware BUSY/IDLE DVFS requests, bounded verification and idle restoration. No forced clock/voltage.\n");
 		return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd = open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 	if (fd < 0) { perror(TT_PCI_PROBE_DEVICE); return 1; }
+	if (cycle) {
+		if (inspect) {
+			tt_arc_clock_support s = {};
+			int status = ioctl(fd,TT_PCI_PROBE_PIONEER_ARC_CLOCK_CYCLE_SUPPORT,&s,sizeof(s));
+			int error = errno; close(fd);
+			if (status != 0) { errno = error; perror("PIONEER_ARC_CLOCK_CYCLE_SUPPORT"); return 1; }
+			printf("Clock cycle v%" PRIu32 " query/busy/idle %02" PRIx32 "/%02" PRIx32 "/%02" PRIx32 " idle/max %" PRIu32 "/%" PRIu32 " MHz; metadata only\n",
+				s.version,s.query,s.busy,s.idle,s.before_mhz,s.max_mhz);
+			return s.version == 1 && s.query == 0x34 && s.busy == 0x52 && s.idle == 0x54 && s.before_mhz == 800 && s.max_mhz == 1400 ? 0 : 1;
+		}
+		printf("P100A-CLOCK-CYCLE: normal BUSY/IDLE DVFS arbitration, bounded idle restore; no forced frequency/voltage/reset/DMA/flash\n");
+		tt_pioneer_arc_clock_result r = {};
+		int status = ioctl(fd,TT_PCI_PROBE_PIONEER_ARC_CLOCK_CYCLE,&r,sizeof(r));
+		int error = errno; close(fd);
+		if (status != 0) { errno = error; perror("PIONEER_ARC_CLOCK_CYCLE"); return 1; }
+		const tt_arc_clock_guard_result& c = r.clock;
+		const tt_pioneer_mmio_result& p = r.control.control.pci;
+		printf("Clock state %" PRIu32 " (2 verified/restored), before/busy/after %" PRIu32 "/%" PRIu32 "/%" PRIu32 " MHz; modes %" PRIu32 "/%" PRIu32 "/%" PRIu32 "\n",
+			c.state,c.before_mhz,c.busy_mhz,c.after_mhz,c.before_mode,c.busy_mode,c.after_mode);
+		printf("Busy requested/acked, idle acked %" PRIu32 "/%" PRIu32 "/%" PRIu32 "; messages %" PRIu32 " last %02" PRIx32 " status %08" PRIx32 "\n",
+			c.busy_requested,c.busy_acknowledged,c.idle_acknowledged,c.messages,c.last_message,c.last.status);
+		printf("Clock/request/TLB/PCI restored %" PRIu32 "/%" PRIu32 "/%" PRIu32 "/%" PRIu32 "; PCI state %" PRIu32 "; cold recovery %" PRIu32 "\n",
+			c.restored,c.last.request_restored,c.last.tlb_restored,p.restored,p.state,c.recovery_required);
+		if (c.recovery_required || p.state == TT_PIONEER_MMIO_RESTORE_FAILED)
+			fprintf(stderr,"STOP: cold recovery required; do not retry, reload or run another card operation.\n");
+		return c.version == 1 && c.state == TT_ARC_CLOCK_RESTORED && c.restored && !c.recovery_required
+			&& p.version == 1 && p.state == TT_PIONEER_MMIO_READ_OK && p.restored ? 0 : 1;
+	}
 	if (inspect) {
 		tt_arc_query_support s = {};
 		int status = ioctl(fd,TT_PCI_PROBE_PIONEER_ARC_QUERY_SUPPORT,&s,sizeof(s));

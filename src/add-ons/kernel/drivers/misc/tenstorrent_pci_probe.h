@@ -9,12 +9,14 @@
 #include "BlackholeArcScratchProbe.h"
 #include "BlackholeArcTelemetryProbe.h"
 #include "BlackholeArcQueueProbe.h"
+#include "BlackholeArcClockGuard.h"
 #include "BlackholeTensixResetProbe.h"
 #include "BlackholeL1ScratchProbe.h"
 #include "BlackholeBriscSmokeProbe.h"
 #include "BlackholeDramRouteProbe.h"
 #include "BlackholeDramSamplesProbe.h"
 #include "BlackholeTensixMatmulProbe.h"
+#include "BlackholeClockedMatmulProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -42,8 +44,13 @@
 #define TT_PCI_PROBE_PIONEER_OPERATING_TELEMETRY (B_DEVICE_OP_CODES_END + 0x5467)
 #define TT_PCI_PROBE_PIONEER_ARC_CLOCK_QUERY (B_DEVICE_OP_CODES_END + 0x5468)
 #define TT_PCI_PROBE_PIONEER_ARC_QUERY_SUPPORT (B_DEVICE_OP_CODES_END + 0x5469)
+#define TT_PCI_PROBE_PIONEER_ARC_CLOCK_CYCLE (B_DEVICE_OP_CODES_END + 0x546a)
+#define TT_PCI_PROBE_PIONEER_ARC_CLOCK_CYCLE_SUPPORT (B_DEVICE_OP_CODES_END + 0x546b)
+#define TT_PCI_PROBE_PIONEER_CLOCKED_MATMUL (B_DEVICE_OP_CODES_END + 0x546c)
+#define TT_PCI_PROBE_PIONEER_CLOCKED_MATMUL_SUPPORT (B_DEVICE_OP_CODES_END + 0x546d)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
+struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
 
 struct tt_matmul_support {
 	uint32_t version, code_words, footprint_words, entry, code_base, park_pc, results_base, reset_mask, running_mask;
@@ -76,6 +83,11 @@ struct tt_pioneer_arc_query_result {
 	tt_arc_queue_result query;
 };
 
+struct tt_pioneer_arc_clock_result {
+	tt_pioneer_telemetry_result control;
+	tt_arc_clock_guard_result clock;
+};
+
 struct tt_pioneer_tensix_result {
 	tt_pioneer_telemetry_result control;
 	tt_tensix_reset_result tensix;
@@ -104,6 +116,11 @@ struct tt_pioneer_dram_samples_result {
 struct tt_pioneer_matmul_result {
 	tt_pioneer_dram_samples_result baseline;
 	tt_tensix_matmul_result math;
+};
+
+struct tt_pioneer_clocked_matmul_result {
+	tt_pioneer_matmul_result matmul;
+	tt_arc_clock_guard_result clock;
 };
 
 #endif

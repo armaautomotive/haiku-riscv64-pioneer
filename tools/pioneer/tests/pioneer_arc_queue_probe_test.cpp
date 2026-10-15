@@ -2,21 +2,25 @@
 #include <array>
 #include <cassert>
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcQueueProbe.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 
 struct MockQueue {
 	std::array<uint32_t,TT_ARC_QUEUE_CSM_BYTES/4> csm = {};
-	uint32_t tlb[3] = {1,2,3}, original[8] = {}, base = 0x1002a208;
+	uint32_t tlb[3] = {1,2,3}, original[4][8] = {}, base = 0x1002a208;
 	uint32_t request = 0, response = 0, msiStatus = 1;
+	uint32_t clock = 800, mode = 3;
 	unsigned tlbWrites = 0, writes = 0, polls = 0, pauses = 0, notifications = 0;
 	unsigned dropTlb = 0, dropWrite = 0;
 	bool notified = false, timeout = false, badReply = false, changed = false, failRestore = false;
+	bool ignoreBusy = false, ignoreIdle = false;
 	uint32_t& At(uint32_t address) { assert(BlackholeArcQueueRange(address,4)); return csm[(address-0x10000000)/4]; }
 	MockQueue(unsigned req = 0, unsigned resp = 0) {
 		At(0x10001000) = 0x10029ea8; At(0x10001004) = 0x404;
 		At(base) = At(base+16) = req; At(base+4) = At(base+20) = resp;
 		At(base+24) = 0xffffffff; // counter wraps normally
 		request = base+32+(req%4)*32; response = base+160+(resp%4)*32;
-		for (unsigned w = 0; w < 8; w++) At(request+4*w) = original[w] = 0xaabb0000+w;
+		for (unsigned slot = 0; slot < 4; slot++) for (unsigned w = 0; w < 8; w++)
+			At(base+32+slot*32+4*w) = original[slot][w] = 0xaabb0000+slot*256+w;
 	}
 	void Check(bool apb) { for (unsigned w = 0; w < 3; w++) assert(tlb[w] == BlackholeArcQueueTlbWord(apb,w)); }
 	uint32_t TlbRead(unsigned w) { assert(w < 3); return tlb[w]; }
@@ -26,29 +30,38 @@ struct MockQueue {
 		if (notified && a == base && ++polls == 3 && !timeout) {
 			At(base+16) = At(base);
 			At(base+20) = (At(base+4)+1)%8; At(base+24)++;
-			At(response) = badReply ? 0xff : 0; At(response+4) = 800; At(response+8) = 3;
+			uint32_t message = At(request);
+			assert(message == 0x34 || message == 0x52 || message == 0x54);
+			if (message == 0x52 && !ignoreBusy) clock = 1350;
+			if (message == 0x54 && !ignoreIdle) clock = 800;
+			At(response) = badReply ? 0xff : 0;
+			At(response+4) = message == 0x34 ? clock : 0; At(response+8) = message == 0x34 ? mode : 0;
 			if (changed) At(base+4) = (At(base+4)+2)%8;
 		}
 		return At(a);
 	}
-	void SetQueueBounds(uint32_t q, uint32_t req, uint32_t resp) { assert(q == base && req == request && resp == response); }
+	void SetQueueBounds(uint32_t q, uint32_t req, uint32_t resp) {
+		assert(q == base && req == base+32+(At(base)%4)*32 && resp == base+160+(At(base+4)%4)*32);
+		request = req; response = resp;
+	}
 	void QueueWrite(uint32_t a, uint32_t v) {
 		Check(false);
 		assert(a == base || a == base+4 || (a >= request && a < request+32));
 		if (a >= request && a < request+32) assert(At(base) == At(base+16) && At(base+4) == At(base+20));
-		if (++writes == dropWrite || (failRestore && a >= request && v == original[(a-request)/4])) return;
+		if (++writes == dropWrite || (failRestore && a >= request && v == original[(request-base-32)/32][(a-request)/4])) return;
 		At(a) = v;
 	}
 	uint32_t MsiStatusRead() { Check(true); return msiStatus; }
-	void NotifyArc() { Check(true); assert(At(base) != At(base+16)); notified = true; notifications++; }
+	void NotifyArc() { Check(true); assert(At(base) != At(base+16)); notified = true; polls = 0; notifications++; }
 	void Pause() { assert(++pauses < 5000); }
-	bool Restored() { for (unsigned w = 0; w < 8; w++) if (At(request+4*w) != original[w]) return false; return true; }
+	bool Restored() { for (unsigned slot = 0; slot < 4; slot++) for (unsigned w = 0; w < 8; w++) if (At(base+32+slot*32+4*w) != original[slot][w]) return false; return true; }
 	static tt_arc_scratch_result Arc() {
 		tt_arc_scratch_result a = {}; a.version = 1; a.state = TT_ARC_SCRATCH_READY; a.tlb_restored = 1; a.message_queue = 0x10001000; return a;
 	}
 	static tt_arc_telemetry_result Health() {
 		tt_arc_telemetry_result h = {}; h.version = 1; h.state = TT_ARC_TELEMETRY_OK; h.tlb_restored = 1; h.present_mask = 0xfff;
 		h.values[0] = 0x12050001; h.values[6] = 0xf7; h.values[7] = 0x5515; h.values[9] = 0xfff;
+		h.values[2] = 48*65536;
 		h.tags_address = 0x10002000; h.data_address = 0x10003000; h.entry_count = 63; return h;
 	}
 };
@@ -100,4 +113,34 @@ int main()
 	assert(!BlackholeArcQueueProbe(io,arc,health,r) && r.state == TT_ARC_QUERY_BAD_DESCRIPTOR && io.writes == 0);
 	io = {}; health.values[0] = 0;
 	assert(!BlackholeArcQueueProbe(io,arc,health,r) && io.tlbWrites == 0);
+	io = {}; health = MockQueue::Health();
+	assert(!BlackholeArcQueueProbe(io,arc,health,r,0x33) && io.tlbWrites == 0); // no forced-frequency command
+	tt_arc_clock_guard_result clock;
+	io = {};
+	assert(BlackholeArcClockEnter(io,arc,health,clock) && clock.busy_mhz == 1350 && !clock.restored);
+	assert(BlackholeArcClockLeave(io,arc,health,clock) && clock.state == TT_ARC_CLOCK_RESTORED && clock.restored && !clock.recovery_required && io.clock == 800);
+	assert(clock.messages == 5 && io.Restored());
+	for (unsigned drop = 1; drop <= 90; drop++) {
+		io = {}; io.dropWrite = drop;
+		BlackholeArcClockEnter(io,arc,health,clock);
+		unsigned beforeLeave = io.writes;
+		bool uncertain = clock.recovery_required;
+		BlackholeArcClockLeave(io,arc,health,clock);
+		if (uncertain) assert(io.writes == beforeLeave && clock.recovery_required);
+		if (!clock.recovery_required) assert(clock.restored && io.clock == 800 && io.Restored());
+	}
+	io = {}; io.mode = 2;
+	assert(!BlackholeArcClockEnter(io,arc,health,clock) && !clock.busy_requested && clock.restored && !clock.recovery_required);
+	io = {}; io.ignoreBusy = true;
+	assert(!BlackholeArcClockEnter(io,arc,health,clock) && clock.busy_acknowledged && clock.state == TT_ARC_CLOCK_NOT_SETTLED);
+	assert(BlackholeArcClockLeave(io,arc,health,clock) && clock.restored && !clock.recovery_required);
+	io = {}; io.ignoreIdle = true;
+	assert(BlackholeArcClockEnter(io,arc,health,clock));
+	assert(!BlackholeArcClockLeave(io,arc,health,clock) && clock.recovery_required && !clock.restored);
+	io = {};
+	assert(BlackholeArcClockEnter(io,arc,health,clock));
+	unsigned writesBefore = io.writes; clock.recovery_required = 1;
+	assert(!BlackholeArcClockLeave(io,arc,health,clock) && io.writes == writesBefore); // no further ARC op after compute uncertainty
+	io = {}; health.values[2] = 71*65536;
+	assert(!BlackholeArcClockEnter(io,arc,health,clock) && clock.restored && io.writes == 0);
 }

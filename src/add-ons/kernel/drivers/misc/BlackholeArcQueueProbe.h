@@ -54,18 +54,20 @@ static inline bool BlackholeArcQueueHeaderValid(const uint32_t* h)
 	return h[0] < 8 && h[1] < 8 && h[4] < 8 && h[5] < 8 && h[2] == 0 && h[3] == 0 && h[7] == 0;
 }
 
-// Installed v18.5.0 protocol only: application queue 3, four entries, and
-// GET_AICLK (0x34) with NO arguments. It cannot change clocks, voltage,
-// firmware, RISCs or DMA. Inbound ARC MSI-catcher notification only.
+// Installed v18.5.0 protocol only: application queue 3, four entries.
+// Default is GET_AICLK (0x34). Internal clock guards may use only the
+// normal BUSY/IDLE arbiter requests 0x52/0x54, all with NO arguments.
+// No arbitrary-message ioctl, forced frequency/voltage, reset, flash or DMA.
 // Queue pointers/serial advance by the normal protocol, never get rewound.
 // Saved request bytes stay kernel-local. Firmware-owned response bytes are
 // never written by the host. Uncertain publication or
 // response ownership leaves those bytes in place and latches cold recovery.
 template<class IO>
 bool BlackholeArcQueueProbe(IO& io, const tt_arc_scratch_result& arc,
-	const tt_arc_telemetry_result& health, tt_arc_queue_result& r)
+	const tt_arc_telemetry_result& health, tt_arc_queue_result& r, uint32_t message = 0x34)
 {
 	r = {}; r.version = 1; r.request_restored = r.tlb_restored = 1;
+	if (message != 0x34 && message != 0x52 && message != 0x54) return false;
 	if (arc.version != 1 || arc.state != TT_ARC_SCRATCH_READY || !arc.tlb_restored
 		|| health.version != 1 || health.state != TT_ARC_TELEMETRY_OK || !health.tlb_restored
 		|| (health.present_mask & 0x3c1) != 0x3c1 || health.values[0] != 0x12050001
@@ -115,9 +117,9 @@ bool BlackholeArcQueueProbe(IO& io, const tt_arc_scratch_result& arc,
 		if (!BlackholeArcQueueSame(current,r.before)) break;
 		idleOwned = true; modified = true; r.request_restored = 0;
 		r.state = TT_ARC_QUERY_STAGE_FAILED;
-		for (unsigned w = 0; w < 8; w++) io.QueueWrite(r.request_address+4*w,w == 0 ? 0x34 : 0);
+		for (unsigned w = 0; w < 8; w++) io.QueueWrite(r.request_address+4*w,w == 0 ? message : 0);
 		bool staged = true;
-		for (unsigned w = 0; w < 8; w++) staged &= io.CsmRead(r.request_address+4*w) == (w == 0 ? 0x34U : 0U);
+		for (unsigned w = 0; w < 8; w++) staged &= io.CsmRead(r.request_address+4*w) == (w == 0 ? message : 0U);
 		if (!staged) break;
 		BlackholeArcQueueHeader(io,r.base,current);
 		if (!BlackholeArcQueueSame(current,r.before)) { idleOwned = false; r.state = TT_ARC_QUERY_CHANGED; break; }
@@ -149,7 +151,9 @@ bool BlackholeArcQueueProbe(IO& io, const tt_arc_scratch_result& arc,
 		if (!r.responded) break;
 		uint32_t response[8]; for (unsigned w = 0; w < 8; w++) response[w] = io.CsmRead(r.response_address+4*w);
 		r.status = response[0]; r.clock_mhz = response[1]; r.clock_mode = response[2];
-		bool validResponse = r.status == 0 && r.clock_mhz >= 200 && r.clock_mhz <= 1400 && r.clock_mode >= 1 && r.clock_mode <= 3;
+		bool validResponse = r.status == 0 && (message == 0x34
+			? r.clock_mhz >= 200 && r.clock_mhz <= 1400 && r.clock_mode >= 1 && r.clock_mode <= 3
+			: r.clock_mhz == 0 && r.clock_mode == 0);
 		for (unsigned w = 3; w < 8; w++) validResponse &= response[w] == 0;
 		BlackholeArcQueueHeader(io,r.base,r.after);
 		if (!BlackholeArcQueueSame(current,r.after)) { r.state = TT_ARC_QUERY_CHANGED; break; }

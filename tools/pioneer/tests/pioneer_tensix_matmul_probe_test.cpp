@@ -2,6 +2,7 @@
 #include <cassert>
 #include <cstring>
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTensixMatmulProbe.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeClockedMatmulProbe.h"
 
 struct MockMatmul {
 	uint32_t source[TT_DRAM_SOURCE_WORDS] = {
@@ -15,6 +16,19 @@ struct MockMatmul {
 	bool timeout = false, badPC = false, badMath = false, failRestore = false, sourceChanges = false, failTlbRestore = false;
 	bool everStarted = false, executed = false;
 	bool configOnly = false;
+	unsigned clockEnter = 0, clockLeave = 0;
+	bool enterFails = false, enterUncertain = false, leaveFails = false;
+	bool EnterNormalClock(tt_arc_clock_guard_result& r) {
+		clockEnter++; r = {}; r.version = 1; r.busy_requested = 1;
+		r.state = TT_ARC_CLOCK_BUSY_VERIFIED; r.recovery_required = enterUncertain;
+		return !enterFails && !enterUncertain;
+	}
+	bool LeaveNormalClock(tt_arc_clock_guard_result& r) {
+		assert(!r.recovery_required); clockLeave++;
+		r.restored = !leaveFails; r.recovery_required = leaveFails;
+		r.state = leaveFails ? TT_ARC_CLOCK_RESTORE_FAILED : TT_ARC_CLOCK_RESTORED;
+		return !leaveFails;
+	}
 	MockMatmul() { for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) memory[i] = original[i] = 0xabcd0000 ^ i; }
 	uint32_t SourceRead(unsigned word) {
 		assert(word < TT_DRAM_SOURCE_WORDS); sourceReads++;
@@ -123,4 +137,23 @@ int main()
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r,true) && r.recovery_required && !r.completed && r.stopped);
 	io = {}; baseline = io.Baseline(); io.configOnly = io.badMath = true;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r,true) && r.completed && r.stopped && r.mismatches == 1 && io.Restored());
+	tt_arc_clock_guard_result clock = {};
+	io = {}; baseline = io.Baseline(); r = {};
+	assert(BlackholeClockedMatmulProbe(io,baseline,r,clock));
+	assert(io.clockEnter == 1 && io.clockLeave == 1 && clock.restored && io.Restored());
+	io = {}; baseline = io.Baseline(); r = {}; io.timeout = true;
+	assert(!BlackholeClockedMatmulProbe(io,baseline,r,clock));
+	assert(io.clockLeave == 0 && clock.recovery_required && r.recovery_required);
+	io = {}; baseline = io.Baseline(); r = {}; io.badMath = true;
+	assert(!BlackholeClockedMatmulProbe(io,baseline,r,clock));
+	assert(io.clockLeave == 1 && clock.restored && !clock.recovery_required && r.completed && io.Restored());
+	io = {}; baseline = io.Baseline(); r = {}; io.enterFails = true;
+	assert(!BlackholeClockedMatmulProbe(io,baseline,r,clock));
+	assert(io.clockLeave == 1 && clock.restored && io.imageWrites == 0 && io.resetWrites == 0);
+	io = {}; baseline = io.Baseline(); r = {}; io.enterUncertain = true;
+	assert(!BlackholeClockedMatmulProbe(io,baseline,r,clock));
+	assert(io.clockLeave == 0 && clock.recovery_required && io.imageWrites == 0 && io.resetWrites == 0);
+	io = {}; baseline = io.Baseline(); r = {}; io.leaveFails = true;
+	assert(!BlackholeClockedMatmulProbe(io,baseline,r,clock));
+	assert(io.clockLeave == 1 && clock.recovery_required && r.completed && io.Restored());
 }

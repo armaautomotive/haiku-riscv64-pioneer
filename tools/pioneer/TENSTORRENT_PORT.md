@@ -946,6 +946,46 @@ Artifacts/backups: `/boot/home/pioneer-p100a-20261014/arc-query-2/`.
 Driver SHA `dc84a37a2d7c0e3512b48ec38af22f843e7a4053d07590440f46929e87e7cc13`;
 CLI SHA `2580224de840261ac7027c788d56303f83b4af8fcaabb2615b50a95798dd9313`.
 
+### October 14: normal DVFS activation passed; clocked matrix still failed
+
+The matching system firmware v18.5.0, commit
+`80b056af360a58730756467d5cc8df8db789640d`, implements normal busy (`52`)
+and idle (`54`) requests through its voltage-before-frequency DVFS arbiter.
+Added a fixed clock guard, not arbitrary messages or forced clock/voltage.
+It requires measured idle 800 MHz, normal mode 3 and ASIC temperature at
+most 70 C, verifies busy above 800 and at most 1400 MHz, and verifies return
+to the original idle clock. Unknown queue state prevents further commands.
+Host tests cover all individual dropped writes, failed clock settling,
+idle-restoration failure and no commands after uncertain transport/compute.
+
+At 06:08 UTC October 15 (23:08 local October 14), the real P100A passed:
+800 -> 1350 -> 800 MHz, mode 3 throughout, five messages, busy/idle replies
+acknowledged, clock/request/TLB/PCI restored, cold recovery 0. Operations
+`546a`/`546b` expose this one fixed cycle and its metadata. Artifacts:
+`/boot/home/pioneer-p100a-20261014/arc-clock-1/`; driver SHA
+`ff116ac09be48073f4e7df6d3aeca8257fecd3a5525dbd88cd6d2198fe7388cd`,
+CLI SHA `c3aab27eacfec8f173812fdc8b4bc363cf8c26010aff0c4168afbb3595dd81b2`.
+
+Added guarded matrix operation `546c`, metadata `546d` v7, wrapping the
+unchanged 160-word SFPU-input fixture. A first invocation safely refused
+before routes, clock messages or core start; every restoration passed.
+The diagnostic invocation then passed the full baseline (seven routes,
+120 held cores, expected firmware/harvesting/training/error masks), entered
+1350 MHz normal mode, started TRISC0, but again lost trustworthy target
+reset/PC/status readings on poll 2. Matrix state 7, complete/stop 0/0,
+no output or completion marker. This **does not establish a clock fix**.
+No idle request was issued after compute uncertainty; cold recovery was
+latched. Three ARC messages preceded compute, queue bytes/TLB restored,
+math L1/context not restored, aggregate PCI state 5, command words 0000/0000.
+Requested normal Haiku shutdown, then relay power-off and cold recovery.
+
+Artifacts: `/boot/home/pioneer-p100a-20261014/clocked-matmul-1/`;
+driver SHA `006f5fa75f81a38ca815dcf1a8605681dae487ac978324a890e8748b736cc577`,
+diagnostic CLI v2 SHA
+`db1cc8c5cb53ac6b03b5031c279db62031d0725cba563bb2b1c6bd2f578a14e9`.
+Neither matrix execution nor any model inference has passed. Next isolate
+the first SFPU/data-path operations, retaining all cold-recovery gates.
+
 Download pinned official sources with:
 
 ```sh
