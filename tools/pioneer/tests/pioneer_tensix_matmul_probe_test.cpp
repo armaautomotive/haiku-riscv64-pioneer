@@ -14,6 +14,7 @@ struct MockMatmul {
 	unsigned dropConfig = 0, dropImage = 0, dropReset = 0, changeResetAt = 0;
 	bool timeout = false, badPC = false, badMath = false, failRestore = false, sourceChanges = false, failTlbRestore = false;
 	bool everStarted = false, executed = false;
+	bool configOnly = false;
 	MockMatmul() { for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) memory[i] = original[i] = 0xabcd0000 ^ i; }
 	uint32_t SourceRead(unsigned word) {
 		assert(word < TT_DRAM_SOURCE_WORDS); sourceReads++;
@@ -40,7 +41,7 @@ struct MockMatmul {
 		if (reset == 0x46800 && ++polls == 2 && !timeout) {
 			memory[TT_TENSIX_STATUS_INDEX] = TT_TENSIX_FINAL_PHASE;
 			memory[TT_TENSIX_STATUS_INDEX+1] = 2; memory[TT_TENSIX_STATUS_INDEX+2] = 0x4d415431;
-			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+TT_TENSIX_CODE_WORDS+i] = BlackholeMatmulExpected(i);
+			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+TT_TENSIX_CODE_WORDS+i] = configOnly ? 0U : BlackholeMatmulExpected(i);
 			if (badMath) memory[1+TT_TENSIX_CODE_WORDS] ^= 1;
 			executed = true;
 		}
@@ -58,7 +59,7 @@ struct MockMatmul {
 		if (value == 0x87ffff) assert(reset == (everStarted ? 0x46800U : 0x47800U));
 		else if (value == 0x46800) {
 			assert(reset == 0x87ffff && !everStarted);
-			for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) assert(memory[i] == BlackholeTensixImageWord(i));
+			for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) assert(memory[i] == BlackholeTensixImageWord(i,configOnly));
 			everStarted = true;
 		} else { assert(value == 0x47800 && reset == 0x87ffff && everStarted); }
 		if (++resetWrites != dropReset) reset = value;
@@ -116,4 +117,10 @@ int main()
 	}
 	io = {}; baseline = io.Baseline(); baseline.routes_verified = 6;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r) && io.configWrites == 0);
+	io = {}; baseline = io.Baseline(); io.configOnly = true;
+	assert(BlackholeTensixMatmulProbe(io,baseline,r,true) && r.version == 2 && r.representative[0] == 0 && r.representative[1] == 0 && io.Restored());
+	io = {}; baseline = io.Baseline(); io.configOnly = io.timeout = true;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,true) && r.recovery_required && !r.completed && r.stopped);
+	io = {}; baseline = io.Baseline(); io.configOnly = io.badMath = true;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,true) && r.completed && r.stopped && r.mismatches == 1 && io.Restored());
 }

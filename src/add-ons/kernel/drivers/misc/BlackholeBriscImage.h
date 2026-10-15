@@ -25,4 +25,10 @@ static inline uint32_t BlackholeBriscImageWord(unsigned index)
 	};
 	return index < TT_BRISC_IMAGE_WORDS ? image[index] : 0;
 }
+// Same independently checked scalar checksum, but TRISC0 starts at 0x6000.
+// No coprocessor or MMIO instruction is added by this diagnostic variant.
+static inline uint32_t BlackholeRiscSmokeImageWord(unsigned index, bool trisc)
+{
+	return trisc && index == 0 ? 0x0006a06f : BlackholeBriscImageWord(index);
+}
 #endif

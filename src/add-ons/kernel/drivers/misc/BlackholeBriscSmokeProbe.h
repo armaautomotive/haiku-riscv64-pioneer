@@ -29,9 +29,11 @@ static inline uint32_t BlackholeBriscTlbWord(unsigned slot, unsigned word)
 // place and requires cold recovery, even if a reset write appears to succeed.
 template<class IO>
 bool BlackholeBriscSmokeProbe(IO& io, const tt_tensix_reset_result& core,
-	tt_brisc_smoke_result& r)
+	tt_brisc_smoke_result& r, bool trisc = false, bool backendReset = false)
 {
-	r = {}; r.version = 1; r.l1_restored = r.tlb_restored = 1;
+	r = {}; r.version = backendReset ? 3 : trisc ? 2 : 1; r.l1_restored = r.tlb_restored = 1;
+	if (backendReset && !trisc) return false;
+	const uint32_t running = trisc ? 0x46800 : 0x47000;
 	if (core.version != 1 || core.state != TT_TENSIX_RESET_HELD || !core.tlb_restored
 		|| core.reset[0] != 0x47800 || core.reset[1] != 0x47800 || core.reset[2] != 0x47800)
 		return false;
@@ -56,27 +58,35 @@ bool BlackholeBriscSmokeProbe(IO& io, const tt_tensix_reset_result& core,
 		r.state = TT_BRISC_CORE_CHANGED;
 		r.reset_before = io.ResetRead();
 		if (r.reset_before != 0x47800 || io.ResetRead() != 0x47800) break;
+		if (trisc && (io.ResetEntryOverride() & 1) != 0) break;
 		for (unsigned i = 0; i < TT_BRISC_IMAGE_WORDS; i++) saved[i] = io.ImageRead(i);
 		if (io.ResetRead() != 0x47800) break;
 		modified = true; r.l1_restored = 0;
 		// Clear stale completion and install code first, reset jump last.
-		for (unsigned i = 1; i < TT_BRISC_IMAGE_WORDS; i++) io.ImageWrite(i, BlackholeBriscImageWord(i));
+		for (unsigned i = 1; i < TT_BRISC_IMAGE_WORDS; i++) io.ImageWrite(i, BlackholeRiscSmokeImageWord(i,trisc));
 		if (io.ResetRead() != 0x47800) break;
-		io.ImageWrite(0, BlackholeBriscImageWord(0));
+		io.ImageWrite(0, BlackholeRiscSmokeImageWord(0,trisc));
 		r.state = TT_BRISC_IMAGE_FAILED;
 		bool imageOkay = true;
-		for (unsigned i = 0; i < TT_BRISC_IMAGE_WORDS; i++) imageOkay &= io.ImageRead(i) == BlackholeBriscImageWord(i);
+		for (unsigned i = 0; i < TT_BRISC_IMAGE_WORDS; i++) imageOkay &= io.ImageRead(i) == BlackholeRiscSmokeImageWord(i,trisc);
 		if (!imageOkay) break;
 		r.state = TT_BRISC_CORE_CHANGED;
 		if (io.ResetRead() != 0x47800) break;
-		// Only BRISC bit 11 changes; the other four RISCs remain held.
+		if (trisc && (io.ResetEntryOverride() & 1) != 0) break;
+		if (backendReset) {
+			// Independent control: identical scalar image after the matrix
+			// transaction's broad backend/Auto-TTSync reset. No TT instructions.
+			io.ResetWrite(0x87ffff); io.Pause();
+			if (io.ResetRead() != 0x87ffff || io.ResetRead() != 0x87ffff) break;
+		}
+		// Only the selected RISC's bit changes; the other four stay held.
 		r.started = 1; // set before write: dropped writes still need safe cleanup
-		io.ResetWrite(0x47000);
+		io.ResetWrite(running);
 		r.state = TT_BRISC_COMPLETION_FAILED;
 		for (unsigned attempt = 0; attempt < 128; attempt++) {
 			r.polls++;
 			r.reset_running = io.ResetRead();
-			if (r.reset_running != 0x47000) { r.state = TT_BRISC_CORE_CHANGED; break; }
+			if (r.reset_running != running) { r.state = TT_BRISC_CORE_CHANGED; break; }
 			r.checksum = io.ImageRead(20); r.completion = io.ImageRead(21);
 			if (r.checksum == 528 && r.completion == 0x50494f4e) {
 				io.Pause(); r.pc[0] = io.PcRead();
@@ -88,7 +98,13 @@ bool BlackholeBriscSmokeProbe(IO& io, const tt_tensix_reset_result& core,
 		}
 		// Never write an unknown reset value or assert reset on another RISC.
 		uint32_t current = io.ResetRead();
-		if (current == 0x47000) io.ResetWrite(0x47800);
+		if (current == running) {
+			if (backendReset) {
+				io.ResetWrite(0x87ffff); io.Pause();
+				if (io.ResetRead() != 0x87ffff || io.ResetRead() != 0x87ffff) { r.state = TT_BRISC_STOP_FAILED; break; }
+			}
+			io.ResetWrite(0x47800);
+		}
 		else if (current != 0x47800) { r.state = TT_BRISC_STOP_FAILED; break; }
 		io.Pause();
 		r.reset_after = io.ResetRead();

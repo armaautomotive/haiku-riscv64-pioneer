@@ -12,6 +12,9 @@ struct MockBrisc {
 	unsigned dropConfig = 0, dropImage = 0, dropReset = 0, changeResetAt = 0, transientResetAt = 0;
 	bool timeout = false, badResult = false, badPC = false, failRestore = false;
 	bool everStarted = false, executed = false;
+	bool trisc = false;
+	bool backendReset = false;
+	uint32_t entryOverride = 0;
 	MockBrisc() { for (unsigned i = 0; i < TT_BRISC_IMAGE_WORDS; i++) memory[i] = original[i] = 0xabab1234 ^ i; }
 	uint32_t BriscTlbRead(unsigned s, unsigned w) { assert(s < 2 && w < 3); return tlb[s][w]; }
 	void BriscTlbWrite(unsigned s, unsigned w, uint32_t value)
@@ -29,7 +32,7 @@ struct MockBrisc {
 		checkWindows();
 		if (++resetReads == transientResetAt) return 0;
 		if (resetReads == changeResetAt) reset = 0; // unknown running cores
-		if (reset == 0x47000 && ++startPolls == 2 && !timeout) {
+		if (reset == (trisc ? 0x46800U : 0x47000U) && ++startPolls == 2 && !timeout) {
 			memory[20] = badResult ? 529 : 528; memory[21] = 0x50494f4e; executed = true;
 		}
 		return reset;
@@ -37,12 +40,18 @@ struct MockBrisc {
 	void ResetWrite(uint32_t value)
 	{
 		checkWindows();
-		assert(value == 0x47000 || value == 0x47800);
-		if (value == 0x47000) {
-			assert(!everStarted && reset == 0x47800);
-			for (unsigned i = 0; i < TT_BRISC_IMAGE_WORDS; i++) assert(memory[i] == BlackholeBriscImageWord(i));
+		const uint32_t running = trisc ? 0x46800 : 0x47000;
+		if (value == 0x87ffff) {
+			assert(trisc && backendReset && reset == (everStarted ? running : 0x47800));
+			if (++resetWrites != dropReset) reset = value;
+			return;
+		}
+		assert(value == running || value == 0x47800);
+		if (value == running) {
+			assert(!everStarted && reset == (backendReset ? 0x87ffff : 0x47800));
+			for (unsigned i = 0; i < TT_BRISC_IMAGE_WORDS; i++) assert(memory[i] == BlackholeRiscSmokeImageWord(i,trisc));
 			everStarted = true;
-		} else assert(reset == 0x47000);
+		} else assert(reset == (backendReset ? 0x87ffff : running));
 		if (++resetWrites != dropReset) reset = value;
 	}
 	uint32_t ImageRead(unsigned i) { checkWindows(); assert(i < TT_BRISC_IMAGE_WORDS); return memory[i]; }
@@ -56,6 +65,7 @@ struct MockBrisc {
 	}
 	void Pause() { checkWindows(); assert(++pauses < 512); }
 	uint32_t PcRead() { checkWindows(); pcReads++; return badPC ? 0x70000 : 0x70048; }
+	uint32_t ResetEntryOverride() { checkWindows(); assert(trisc); return entryOverride; }
 };
 static tt_tensix_reset_result held()
 {
@@ -114,4 +124,38 @@ int main()
 	assert(r.recovery_required && io.imageWrites == 21 && io.resetWrites == 0);
 	io = {}; core = held(); io.tlb[0][2] = 0x4000;
 	assert(!BlackholeBriscSmokeProbe(io, core, r) && io.configWrites == 0);
+	io = {}; core = held(); io.trisc = true;
+	assert(BlackholeBriscSmokeProbe(io, core, r, true) && r.version == 2);
+	assert(r.reset_running == 0x46800 && r.completed && r.stopped && r.l1_restored && !r.recovery_required);
+	assert(memcmp(io.memory,io.original,sizeof(io.memory)) == 0);
+	io = {}; io.trisc = true; io.entryOverride = 1;
+	assert(!BlackholeBriscSmokeProbe(io,core,r,true) && io.imageWrites == 0 && io.resetWrites == 0 && r.tlb_restored);
+	for (unsigned drop = 1; drop <= 44; drop++) {
+		io = {}; io.trisc = true; io.dropImage = drop;
+		bool okay = BlackholeBriscSmokeProbe(io,core,r,true);
+		assert(r.l1_restored && r.tlb_restored && !r.recovery_required);
+		if (drop <= 22) assert(!okay && io.resetWrites == 0);
+		else assert(okay && io.imageWrites == 66);
+	}
+	for (unsigned drop = 1; drop <= 2; drop++) {
+		io = {}; io.trisc = true; io.dropReset = drop;
+		assert(!BlackholeBriscSmokeProbe(io,core,r,true) && r.recovery_required && !r.l1_restored);
+	}
+	io = {}; io.trisc = true; io.timeout = true;
+	assert(!BlackholeBriscSmokeProbe(io,core,r,true) && r.stopped && !r.completed && r.recovery_required);
+	io = {}; io.trisc = true; io.badPC = true;
+	assert(!BlackholeBriscSmokeProbe(io,core,r,true) && r.stopped && !r.completed && r.recovery_required);
+	io = {}; io.trisc = true; io.failRestore = true;
+	assert(!BlackholeBriscSmokeProbe(io,core,r,true) && r.recovery_required && !r.l1_restored);
+	io = {}; io.trisc = io.backendReset = true;
+	assert(BlackholeBriscSmokeProbe(io,core,r,true,true) && r.version == 3 && r.completed && r.stopped);
+	assert(io.resetWrites == 4 && r.l1_restored && r.tlb_restored && !r.recovery_required);
+	for (unsigned drop = 1; drop <= 4; drop++) {
+		io = {}; io.trisc = io.backendReset = true; io.dropReset = drop;
+		assert(!BlackholeBriscSmokeProbe(io,core,r,true,true));
+		assert(r.recovery_required && !r.l1_restored);
+		if (drop == 1) assert(!r.started);
+	}
+	io = {}; io.trisc = io.backendReset = true; io.timeout = true;
+	assert(!BlackholeBriscSmokeProbe(io,core,r,true,true) && r.stopped && !r.completed && r.recovery_required);
 }

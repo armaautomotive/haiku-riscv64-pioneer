@@ -69,7 +69,11 @@ thread_config:
 	li t0, 0x3700000f /* SETRWC: SrcA/SrcB/Dst/fidelity = 0 */
 	sw t0, 0(s0)
 	jal ra, drain
+.ifdef TT_CONFIG_SMOKE
+	j config_completion /* same-width scalar control: no Dst or math access */
+.else
 	li s4, 0
+.endif
 fixture:
 	li t0, 0x3f800000 /* fixture 0: A=1, B=1 */
 	li t1, 0x3f800000
@@ -149,8 +153,13 @@ copy_output:
 	lw t0, 4(s3)
 	addi zero, t0, 0
 	fence
+config_completion:
 	li t0, 2
+.ifdef TT_CONFIG_SMOKE
+	sw t0, 4(s3) /* protocol count, NOT two executed matrix fixtures */
+.else
 	bne s4, t0, fixture
+.endif
 	jal ra, drain
 	li t0, 0x4d415431 /* MAT1 */
 	sw t0, 8(s3)

@@ -31,8 +31,10 @@ static int32_t signedBits(uint32_t value, unsigned bits)
 
 int main(int argc, char** argv)
 {
-	assert(argc == 3);
+	assert(argc == 4);
 	const auto boot = read(argv[1]), code = read(argv[2]);
+	const auto triscBoot = read(argv[3]);
+	assert(triscBoot.size() == 4 && word(triscBoot,0) == BlackholeRiscSmokeImageWord(0,true));
 	assert(boot.size() == 4 && code.size() >= 4 && code.size() <= 128 && code.size() % 4 == 0);
 	assert(word(boot, 0) == BlackholeBriscImageWord(0));
 	assert(code.size() == 4 * TT_BRISC_CODE_WORDS);
@@ -44,13 +46,15 @@ int main(int argc, char** argv)
 	assert(BlackholeBriscImageAddress(20) == 0x17ffc0 && BlackholeBriscImageAddress(21) == 0x17ffc4);
 	assert(BlackholeBriscImageWord(20) == 0 && BlackholeBriscImageWord(21) == 0);
 	assert(BlackholeBriscImageAddress(22) == UINT32_MAX);
+	for (unsigned variant = 0; variant < 2; variant++) {
+	const uint32_t entry = variant ? 0x6000 : 0;
 	std::array<uint32_t, 32> regs = {};
 	std::array<uint32_t, 2> mailbox = {};
 	unsigned writes = 0, loads = 0, fences = 0, readConsumers = 0, parks = 0;
-	uint32_t pc = 0;
+	uint32_t pc = entry;
 	for (unsigned step = 0; step < 1000; step++) {
-		assert(pc == 0 || (pc >= 0x70000 && uint64_t(pc) + 4 <= 0x70000 + code.size()));
-		uint32_t insn = pc == 0 ? word(boot, 0) : word(code, pc - 0x70000);
+		assert(pc == entry || (pc >= 0x70000 && uint64_t(pc) + 4 <= 0x70000 + code.size()));
+		uint32_t insn = pc == entry ? word(variant ? triscBoot : boot, 0) : word(code, pc - 0x70000);
 		uint32_t opcode = insn & 0x7f, rd = (insn >> 7) & 31;
 		uint32_t funct3 = (insn >> 12) & 7, rs1 = (insn >> 15) & 31, rs2 = (insn >> 20) & 31;
 		uint32_t next = pc + 4, result = 0;
@@ -94,7 +98,7 @@ int main(int argc, char** argv)
 				uint32_t imm = ((insn >> 31) << 20) | (((insn >> 12) & 255) << 12)
 					| (((insn >> 20) & 1) << 11) | (((insn >> 21) & 1023) << 1);
 				next = pc + signedBits(imm, 21);
-				if (pc == 0) assert(next == 0x70000);
+				if (pc == entry) assert(next == 0x70000);
 				else { assert(pc == 0x70000 + code.size() - 4 && next == pc); parks++; }
 				break;
 			}
@@ -106,4 +110,5 @@ int main(int argc, char** argv)
 	}
 	assert(parks == 8 && writes == 2 && loads == 2 && fences == 2 && readConsumers == 2);
 	assert(mailbox[0] == 528 && mailbox[1] == 0x50494f4e);
+	}
 }

@@ -504,6 +504,8 @@ struct PioneerL1IO : PioneerTensixIO {
 
 struct PioneerBriscIO : PioneerTensixIO {
 	tt_brisc_smoke_result& brisc;
+	const bool trisc;
+	const bool backendReset;
 	area_id briscAreas[5] = {-1, -1, -1, -1, -1};
 	volatile uint32* boot = NULL;
 	volatile uint32* code = NULL;
@@ -513,8 +515,8 @@ struct PioneerBriscIO : PioneerTensixIO {
 	bool briscAttempted = false;
 
 	PioneerBriscIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
-		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_brisc_smoke_result& r)
-		: PioneerTensixIO(p, a, t, c), brisc(r) {}
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_brisc_smoke_result& r, bool trisc0 = false, bool resetBackends = false)
+		: PioneerTensixIO(p, a, t, c), brisc(r), trisc(trisc0), backendReset(resetBackends) {}
 	~PioneerBriscIO()
 	{
 		// Never perform MMIO in a destructor or retry code/reset restoration.
@@ -524,7 +526,7 @@ struct PioneerBriscIO : PioneerTensixIO {
 	bool Map()
 	{
 		if (!PioneerTensixIO::Map()) return false;
-		const uint32 offsets[] = {0x19000000, 0x19070000, 0x1917f000, 0x19312000, 0x19313000};
+		const uint32 offsets[] = {trisc ? 0x19006000U : 0x19000000U, 0x19070000, 0x1917f000, 0x19312000, 0x19313000};
 		void* pages[5] = {};
 		for (unsigned i = 0; i < 5; i++) {
 			uint32 protection = B_KERNEL_READ_AREA | B_UNCACHED_MEMORY;
@@ -537,7 +539,7 @@ struct PioneerBriscIO : PioneerTensixIO {
 		boot = (volatile uint32*)pages[0]; code = (volatile uint32*)pages[1];
 		results = (volatile uint32*)((uint8*)pages[2] + 0xfc0);
 		resetWrite = (volatile uint32*)((uint8*)pages[3] + 0x1b0);
-		pc = (const volatile uint32*)((const uint8*)pages[4] + 0x138);
+		pc = (const volatile uint32*)((const uint8*)pages[4] + (trisc ? 0x140 : 0x138));
 		return true;
 	}
 	uint32 BriscTlbRead(unsigned slot, unsigned word)
@@ -567,16 +569,17 @@ struct PioneerBriscIO : PioneerTensixIO {
 	}
 	void ResetWrite(uint32 value)
 	{
-		if (value == 0x47000 || value == 0x47800) PioneerWrite32(resetWrite, value);
+		if (value == (trisc ? 0x46800 : 0x47000) || value == 0x47800 || (trisc && backendReset && value == 0x87ffff)) PioneerWrite32(resetWrite, value);
 	}
+	uint32 ResetEntryOverride() { return PioneerRead32(resetWrite + (0x234-0x1b0)/4); }
 	uint32 PcRead() { return PioneerRead32(pc); }
 	void Pause() { spin(100); } // fixed 100 us; policy bounds the iteration count
 	bool AfterNodeId(uint32 id)
 	{
 		if (!PioneerTensixIO::AfterNodeId(id)) return false;
 		briscAttempted = true;
-		dprintf("PIONEER-P100A: fixed BRISC checksum attempt, sole tile (1,2), no DMA/flash\n");
-		return BlackholeBriscSmokeProbe(*this, tensix, brisc);
+		dprintf("PIONEER-P100A: fixed %s scalar checksum, sole tile (1,2), no coprocessor/DMA/flash\n", trisc ? "TRISC0" : "BRISC");
+		return BlackholeBriscSmokeProbe(*this, tensix, brisc, trisc, backendReset);
 	}
 	bool Unmap()
 	{
@@ -747,6 +750,7 @@ struct PioneerDramSamplesIO : PioneerTensixIO {
 
 struct PioneerMatmulIO : PioneerDramSamplesIO {
 	tt_tensix_matmul_result& math;
+	const bool configSmoke;
 	area_id mathAreas[5] = {-1,-1,-1,-1,-1};
 	volatile uint32* entry = NULL;
 	volatile uint32* code = NULL;
@@ -755,8 +759,8 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	const volatile uint32* pc = NULL;
 	bool mathAttempted = false;
 	PioneerMatmulIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
-		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& d, tt_tensix_matmul_result& m)
-		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m) {}
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& d, tt_tensix_matmul_result& m, bool configOnly = false)
+		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m), configSmoke(configOnly) {}
 	~PioneerMatmulIO() { for (unsigned i = 0; i < 5; i++) if (mathAreas[i] >= B_OK) delete_area(mathAreas[i]); }
 	bool Map()
 	{
@@ -797,7 +801,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 		if (!PioneerDramSamplesIO::AfterNodeId(id)) return false;
 		mathAttempted = true;
 		dprintf("PIONEER-P100A: fixed TRISC0 matrix fixtures, one idle tile context reset, no NoC/DMA commands\n");
-		return BlackholeTensixMatmulProbe(*this,dram,math);
+		return BlackholeTensixMatmulProbe(*this,dram,math,configSmoke);
 	}
 	bool Unmap()
 	{
@@ -825,14 +829,14 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
-	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT) {
+	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
-		const tt_matmul_support support = {3,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
+		const tt_matmul_support support = {operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT ? 4U : 3U,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
 		release_sem(sLock);
 		return user_memcpy(data,&support,sizeof(support));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_MATMUL) {
+	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_MATMUL || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG) {
 		if (data == NULL || length != sizeof(tt_pioneer_matmul_result)) return B_BAD_VALUE;
 		tt_pioneer_matmul_result result = {};
 		status_t status = user_memcpy(data,&result,sizeof(result)); if (status != B_OK) return status;
@@ -851,7 +855,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = result.baseline.dram.tlb_restored = result.baseline.dram.data_restored = 1;
 		result.math.l1_restored = result.math.tlb_restored = 1;
 		if (status == B_OK) {
-			PioneerMatmulIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.math);
+			PioneerMatmulIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.math,operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG);
 			BlackholePioneerMmioProbe(io,control.pci);
 		}
 		if (result.math.recovery_required || result.baseline.dram.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
@@ -949,16 +953,16 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 			result.dram.tlb_restored, control.pci.restored, result.dram.recovery_required);
 		return user_memcpy(data, &result, sizeof(result));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SUPPORT) {
+	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TRISC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TRISC_RESET_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_brisc_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock();
 		if (status != B_OK) return status;
-		const tt_brisc_support support = {1, TT_BRISC_CODE_WORDS, TT_BRISC_IMAGE_WORDS, 0x70000, 0x17ffc0, 0x70048};
+		const tt_brisc_support support = {operation == TT_PCI_PROBE_PIONEER_TRISC_RESET_SUPPORT ? 3U : operation == TT_PCI_PROBE_PIONEER_TRISC_SUPPORT ? 2U : 1U, TT_BRISC_CODE_WORDS, TT_BRISC_IMAGE_WORDS, 0x70000, 0x17ffc0, 0x70048};
 		release_sem(sLock);
 		// Loaded-module ABI/image metadata only: no PCI or MMIO access.
 		return user_memcpy(data, &support, sizeof(support));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SMOKE) {
+	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SMOKE || operation == TT_PCI_PROBE_PIONEER_TRISC_SMOKE || operation == TT_PCI_PROBE_PIONEER_TRISC_RESET_SMOKE) {
 		if (data == NULL || length != sizeof(tt_pioneer_brisc_result)) return B_BAD_VALUE;
 		tt_pioneer_brisc_result result = {};
 		status_t status = user_memcpy(data, &result, sizeof(result));
@@ -979,7 +983,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = 1;
 		result.brisc.l1_restored = result.brisc.tlb_restored = 1;
 		if (status == B_OK) {
-			PioneerBriscIO io(profile, control.arc, telemetry, tensix, result.brisc);
+			PioneerBriscIO io(profile, control.arc, telemetry, tensix, result.brisc, operation != TT_PCI_PROBE_PIONEER_BRISC_SMOKE, operation == TT_PCI_PROBE_PIONEER_TRISC_RESET_SMOKE);
 			BlackholePioneerMmioProbe(io, control.pci);
 		}
 		if (result.brisc.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {

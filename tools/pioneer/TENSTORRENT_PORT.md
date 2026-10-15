@@ -765,6 +765,83 @@ RAM. No further card operation or module reload followed; an ordinary
 shutdown request and a relay-off hold began another cold recovery. The
 unexpected readbacks are unresolved; no matrix result is claimed.
 
+### October 14: scalar controls isolate the compute startup failure
+
+Following another shutdown request and relay cold recovery, unchanged NVMe
+Linux verified 64 CPUs, taint 0, kexec slot empty and P100A command `0000`.
+The pinned clean-filesystem full-RAM Haiku profile then booted again.
+The historical BRISC checksum control passed (528 / `50494f4e`, matching
+park PCs `70048`, started/completed/stopped 1/1/1, L1/TLB/PCI restored 1/1/1,
+cold recovery 0). This establishes a working scalar execution/transport
+control after recovery; it does not vindicate the failed matrix image.
+
+Added a separate scalar-only TRISC0 control. Its fixed image has the same
+19 checksum instructions, but the jump at TRISC0's reset address `6000`
+targets `70000`. Only the TRISC0 reset bit changes (`47800 -> 46800 ->
+47800`); no coprocessor instruction, direct-Dst access, NoC command, DMA or
+ARC message is issued. A redirected TRISC0 reset entry is rejected. The
+loaded metadata is v2; new explicit operations are `5461` / `5462`.
+The original BRISC operations and results layout are unchanged. Both reset
+jumps are independently assembled/decoded and the shared scalar instruction
+body is functionally checked offline. Fault tests exercise both core modes.
+
+At 22:24 local October 14 (05:24 UTC October 15), the TRISC0 scalar control
+PASSED on the real card under Haiku: checksum 528, completion `50494f4e`,
+both PC snapshots `70048`, started/completed/stopped 1/1/1, one poll,
+L1/TLB/PCI restored 1/1/1, commands 0000/0000, cold recovery 0.
+Driver SHA `2f201f915a5cdbedcb5c8d7f153a352663ced6281ec9a2291fd3967ab046d2c8`;
+CLI SHA `2d8a8d1b373baa1c7aedefb13f9d35dc5a0c8f9ba8d0178efa99d4eff500d0d3`.
+Native backups/artifacts are under `/boot/home/pioneer-p100a-20261014/trisc-1/`.
+
+The next independent control uses that identical scalar image, but explicitly
+reinitializes the sole unused tile's backends/Auto-TTSync with `87ffff`
+before releasing TRISC0, and repeats the broad reset before stopping.
+This is a different explicit operation (`5463` / metadata `5464`, v3), not
+a silent widening of the scalar-only operation. It does not preserve prior
+Src/Dst/register context and still executes no coprocessor instruction.
+The versioned CLI flags are `--check-reset-trisc-support` and
+`--run-reset-trisc-checksum-and-restore`. The original scalar-only flags
+remain available. Uncertain reset/execution still latches cold recovery.
+Driver SHA `6469b2c4df1dbe09decfac7400fe76edd2e21f822eed7b1cdbebda135a6b7f65`;
+CLI SHA `32bcc4c9348a230ebb4dc07d6858d50863c09457c929fcf28fe4773764bbd16a`.
+
+At 22:28 local October 14 (05:28 UTC October 15), that broad-reset scalar
+control also PASSED: started/completed/stopped 1/1/1, three polls, checksum
+528, marker `50494f4e`, both PC snapshots `70048`, restoration 1/1/1,
+commands 0000/0000 and cold recovery 0. Thus both scalar core launch and
+the broad reset sequence have successful live controls. This narrows the
+unresolved matrix failure to the additional configuration/coprocessor/Dst
+path; it is not evidence that any matrix instruction has completed.
+
+The configuration-only control uses two independently assembled, decoded
+same-width substitutions in the fixed matrix image: jump from `700d4` to
+`70200`, then publish protocol count 2 instead of looping over fixtures.
+This executes SETC16 configuration, backend configuration writes/readbacks,
+SETRWC and four manual completion drains, but no direct-Dst access,
+MOVD2A/B, handoff or MVMUL. Its output footprint must remain zero; those
+zeros are explicitly NOT matrix results. New explicit operations are
+`5465` / metadata `5466` (v4), with result version 2. The matrix operation
+is not changed into a configuration-only operation. CLI flags are
+`--check-fixed-tensix-config-support` and `--run-fixed-tensix-config-and-reset`.
+
+At 22:31 local October 14 (05:31 UTC October 15), configuration-only
+PASSED on silicon: started/completed/stopped 1/1/1, two polls, final wait
+return PC `7020c`, both park PCs `70224`, marker `4d415431`, protocol count
+2, untouched-zero output, L1/TLB/PCI restored 1/1/1, commands 0000/0000,
+cold recovery 0. The native artifacts/backups are in
+`/boot/home/pioneer-p100a-20261014/config-1/`.
+Driver SHA `bf3f740571e8de515992cd3ba36b461d7a8c0993bfe9ba021e3d14ae59e5e447`;
+CLI SHA `eb7c1b6839878f7a5c31fea1bc936d61814699d82a51516a967831acfe210e21`.
+This narrows the failing matrix path further; the RISC-to-Dst input access,
+operand moves/handoffs and matrix execution remain unverified.
+
+Also source-audited the official minimal `tenstorrent/tt-lab` runtime at
+`e6baf562a72491ed9d594cddbdf42e0925b1f79e`. Its documented one-chip model
+path is useful reference, not a native Haiku runtime: it assumes Linux/x86,
+exclusive KMD ownership, mandatory pinned host DMA, and BAR4 DRAM windows.
+Its source is retained in an ignored no-checkout audit clone; no upstream
+build, firmware-loader or installation script was executed.
+
 Download pinned official sources with:
 
 ```sh

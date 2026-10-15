@@ -20,4 +20,4 @@ awk '
  /status = AcquireProbeLock\(\)/ {gated++}
  END {if(acquires!=1 || gated!=15) exit 1}
 ' "$directory/../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
-printf 'PASS: fixed BRISC start/complete/stop policy; dropped writes, timeout, unsafe-stop and rollback gates\n'
+printf 'PASS: fixed BRISC/TRISC0 scalar policies; dropped writes, timeout, unsafe-entry/stop and rollback gates\n'

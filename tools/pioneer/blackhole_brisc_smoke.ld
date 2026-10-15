@@ -3,7 +3,7 @@ OUTPUT_ARCH(riscv)
 ENTRY(pioneer_brisc_boot)
 SECTIONS
 {
-	.boot 0 : { KEEP(*(.boot)) }
+	.boot (DEFINED(TT_TRISC_SMOKE) ? 0x6000 : 0) : { KEEP(*(.boot)) }
 	.text 0x70000 : { *(.text) }
 	/DISCARD/ : { *(.data) *(.bss) *(.comment) }
 }

@@ -21,8 +21,12 @@ static inline uint32_t BlackholeTensixImageAddress(unsigned index)
 	index -= TT_TENSIX_OUTPUT_WORDS;
 	return index < 3 ? 0x17ffc0 + index * 4 : UINT32_MAX;
 }
-static inline uint32_t BlackholeTensixImageWord(unsigned index)
+static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke = false)
 {
+	// Independent fixed configuration-only control. The decoder test proves
+	// these two same-width substitutions bypass every Dst and matrix access.
+	if (configSmoke && BlackholeTensixImageAddress(index) == 0x700d4) return 0x12c0006f;
+	if (configSmoke && BlackholeTensixImageAddress(index) == 0x70204) return 0x0059a223;
 	if (index == 0) return 0x0006a06f;
 	const uint32_t code[] = {
 		0xffe40437,0xffe804b7,0x00448493,0xffef0937,
