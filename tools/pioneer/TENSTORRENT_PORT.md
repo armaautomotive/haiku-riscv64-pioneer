@@ -103,6 +103,75 @@ Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
 
+### October 15: standalone Qwen backend candidate, validation in progress
+
+A standalone experimental ggml ACCEL backend now connects retained weights
+to the pinned llama runtime, outside the user-modified llama.cpp checkout.
+It accepts immutable learned Q8_0 matrices and single F32 input vectors,
+decodes/packs a bounded 16-row strip at a time, retains each uploaded tensor
+and splits classifier output into at most 4,096 rows per device call. Input
+vectors change without re-uploading the weights. CPU handles normalization,
+attention/KV, activations and embedding lookup; selected matrix operations
+never fall back to CPU after a device error. Unsupported graph operations
+are explicitly scheduled to CPU. This is a prototype, not a verified
+faster-than-CPU Assistant mode or support for the 27B hybrid graph.
+
+`tenstorrent_haiku_qwen_resident --verify-qwen MODEL` creates its independent
+CPU context **before** registering the P100A device, then creates the card
+context over the same immutable model. It compares every forward's full
+logit vector (cosine >= 0.999, relative L2 <= 0.02) and requires exact greedy
+token agreement at generation, never replacing a card result with the
+reference. The final verifier also requires all seven learned matrices per
+layer plus the classifier to be cached, with exact uploaded-page accounting.
+The separate native test leaves the open Assistant and its conversation
+unchanged. Four checked greedy output tokens are the first target, not a
+benchmark. The steady decode diagnostic excludes CPU-reference time, but
+three samples are insufficient for a speedup claim.
+
+The first complete-model native run is **still in progress**, using the
+already verified capability-31 driver. Its initial load has passed 650 MiB
+of retained tensors, but no full-forward/logit/token result is confirmed yet.
+The old upload's two complete per-word PCIe scans make this first load slow;
+weights are checked once, not streamed again for each generated token.
+Do not restart/reload the driver or submit other card operations while its
+exclusive session owns the device. A separately developed streamed-upload
+candidate is only built/offline-tested and is not installed or enabled.
+
+Native run directory: `/boot/home/pioneer-qwen-resident-20261015/`.
+The first loader attempt lacked `/boot/system/lib` in `LIBRARY_PATH` and
+failed before any device access; the next attempt uses the existing
+Assistant's library path and is logged as `qwen-first-loaded.log`.
+Running prototype SHA-256:
+`22318635b6e27136e96bcda27766c60375344184f93489032efbf8c4f0d1d7da`.
+The final stricter coverage-check binary (not substituted into the running
+process) is `d2da38de247766a9d83257b6fe1c26846c0e4a885dc0cd5fc64f17fab90cbe48`.
+
+Offline tests pass tensor layout/reuse, different vectors, a 4,112-row
+classifier split, capacity refusal, changed identities, nonfinite data and
+transport failures. A test with pristine pinned ggml checks actual backend
+registration/support/graph execution, two vectors with only one weight
+upload, exclusive instance lifetime and failed graph/no CPU fallback.
+That test uses a clearly separate software-only transport: it is not a
+card performance result. New code is tested with ASan/UBSan and halt-on-error;
+only pointer-overflow instrumentation in upstream `ggml.c` is excluded for
+its intentional null-based `ggml_graph_nbytes` size calculation. The pristine
+upstream source is archived to a temporary test build, never edited in the
+user's checkout. Native production builds never enable the test transport.
+
+Reproduce build/offline tests:
+
+```sh
+sh tools/pioneer/tests/run_pioneer_resident_tensor_tests.sh
+sh tools/pioneer/tests/run_pioneer_ggml_backend_tests.sh
+sh tools/pioneer/build_qwen_resident.sh CONFIGURED_BUILD MATCHING_NATIVE_LIBS FRESH_OUTPUT
+```
+
+The native build verifies the pinned revision/API headers and exact hashes
+of all four matching Haiku libraries. All 64 CPUs, RAM, boot/recovery,
+firmware and the open Assistant remain outside this standalone deployment.
+Wait for native completion and a clean END/audit before declaring this
+candidate functional or attempting the next driver installation.
+
 ### October 15: real Qwen projections over retained device weights
 
 The exclusive session now executes a **data-only resident matrix-vector
