@@ -29,6 +29,7 @@ struct Machine {
 	const bool configSmoke;
 	const unsigned sfpuSmoke;
 	unsigned matrixInstructions = 0, drains = 0, configWrites = 0, inputWrites = 0, vectorWrites = 0, outputReads = 0, steps = 0;
+	unsigned moveInstructions = 0;
 	Machine(bool configOnly = false, unsigned sfpuOnly = 0) : configSmoke(configOnly), sfpuSmoke(sfpuOnly) {
 		// Explicit pre-launch coprocessor reset reverts ZEROACC validity.
 		for (unsigned i = 0; i < 64; i++) valid[i] = true;
@@ -78,6 +79,10 @@ struct Machine {
 				assert(row+i < 24 && valid[row+i]);
 				(opcode == 8 ? a[target+i][col] : b[target+i][col]) = dst[row+i][col];
 			}
+		} else if (op == 0x430000c2 || op == 0x438000c2) {
+			assert(sfpuSmoke >= 13);
+			if (op == 0x430000c2) { assert(!ownerA); ownerA = true; }
+			else { assert(!ownerB); ownerB = true; }
 		} else if (op == 0x43000101) {
 			assert(sfpuSmoke >= 7 && !ownerA);
 			memset(a,0,sizeof(a)); ownerA = true;
@@ -86,6 +91,14 @@ struct Machine {
 			memset(b,0,sizeof(b)); ownerB = true;
 		} else if (op == 0x43000007) ownerA = true;
 		else if (op == 0x43800007) ownerB = true;
+		else if (op == 0x12002020 || op == 0x13001020) {
+			assert((op == 0x12002020 && (sfpuSmoke == 11 || sfpuSmoke == 13) && ownerA) || (op == 0x13001020 && (sfpuSmoke == 12 || sfpuSmoke == 14) && ownerB));
+			for (unsigned row = 0; row < 8; row++) {
+				for (unsigned col = 0; col < 16; col++) dst[32+row][col] = op == 0x12002020 ? a[row][col] : b[0][col];
+				valid[32+row] = true;
+			}
+			moveInstructions++;
+		}
 		else if (op == 0x26000020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
 			assert(config[0] == 0x42b5 && config[1] == 0x20aa0000 && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[7] == 0 && config[220] == 0);
@@ -128,7 +141,7 @@ struct Machine {
 		}
 		if (address >= 0xffbd8800 && address < 0xffbd8a00) {
 			assert(!configSmoke);
-			assert(drained && matrixInstructions != 0); unsigned index = (address-0xffbd8000)/4;
+			assert(drained && (matrixInstructions != 0 || moveInstructions != 0)); unsigned index = (address-0xffbd8000)/4;
 			assert(valid[index/16]); outputReads++; return Bits(dst[index/16][index%16]);
 		}
 		if (address >= 0xffbd8000 && address < 0xffbd8200) {
@@ -175,7 +188,7 @@ struct Machine {
 	}
 	bool Correct() {
 		for (unsigned i = 0; i < 256; i++) {
-			uint32_t expected = sfpuSmoke == 10 ? Bits(i < 128 ? 1 : 2) : (configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7)) ? 0U : Bits(i < 128 ? 16 : 96);
+			uint32_t expected = (sfpuSmoke >= 10 && sfpuSmoke <= 14) ? Bits(i < 128 ? 1 : (sfpuSmoke == 12 || sfpuSmoke == 14) ? 3 : 2) : (configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10)) ? 0U : Bits(i < 128 ? 16 : 96);
 			if (l1[Index(0x17f800+i*4)] != expected) return false;
 		}
 		return true;
@@ -183,7 +196,7 @@ struct Machine {
 };
 int main(int argc, char** argv)
 {
-	assert(argc == 14);
+	assert(argc == 19);
 	auto boot = Read(argv[1]), code = Read(argv[2]);
 	auto configCode = Read(argv[3]);
 	assert(boot.size() == 4 && Word(boot,0) == BlackholeTensixImageWord(0) && code.size() == TT_TENSIX_CODE_WORDS*4);
@@ -194,7 +207,7 @@ int main(int argc, char** argv)
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(loadCode,i*4) == BlackholeTensixImageWord(i+1,false,true));
 	auto storeCode = Read(argv[5]); assert(storeCode.size() == code.size());
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(storeCode,i*4) == BlackholeTensixImageWord(i+1,false,2));
-	for (unsigned stage = 3; stage <= 10; stage++) {
+	for (unsigned stage = 3; stage <= 15; stage++) {
 		auto bytes = Read(argv[stage+3]); assert(bytes.size() == code.size());
 		for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(bytes,i*4) == BlackholeTensixImageWord(i+1,false,stage));
 	}
@@ -228,5 +241,13 @@ int main(int argc, char** argv)
 	Machine dstRead(false,10); dstRead.Run();
 	assert(dstRead.Correct() && dstRead.matrixInstructions == 0 && dstRead.vectorWrites == 768 && dstRead.outputReads == 256);
 	Machine brokenVector(false,10); brokenVector.dropVector = true; brokenVector.Run(); assert(!brokenVector.Correct());
+	for (unsigned stage = 11; stage <= 12; stage++) {
+		Machine roundtrip(false,stage); roundtrip.Run();
+		assert(roundtrip.Correct() && roundtrip.matrixInstructions == 0 && roundtrip.moveInstructions == 2 && roundtrip.outputReads == 256);
+	}
+	for (unsigned stage = 13; stage <= 15; stage++) {
+		Machine pure(false,stage); pure.Run();
+		assert(pure.Correct() && pure.outputReads == 256 && pure.matrixInstructions == (stage == 15 ? 2U : 0U));
+	}
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }

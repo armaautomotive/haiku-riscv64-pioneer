@@ -24,7 +24,7 @@ static inline uint32_t BlackholeTensixImageAddress(unsigned index)
 static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
 	uint32_t address = BlackholeTensixImageAddress(index);
-	if (sfpuSmoke >= 7 && sfpuSmoke <= 9 && address >= 0x70170 && address <= 0x701d4) {
+	if (((sfpuSmoke >= 7 && sfpuSmoke <= 9) || (sfpuSmoke >= 11 && sfpuSmoke <= 15)) && address >= 0x70170 && address <= 0x701d4) {
 		// Same-sized independent kernel-style handoff-before-MOVD2 prefix.
 		const uint32_t kernelOperands[] = {
 			0x020a1063,0x430002b7,0x10128293,0x00542023,
@@ -33,7 +33,9 @@ static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke
 			0x081022b7,0x00828293,0x00542023,0x081822b7,0x00c28293,0x00542023,
 			0x0a0022b7,0x01028293,0x00542023,0x0a0822b7,0x01428293,0x00542023,0x088000ef
 		};
-		return kernelOperands[(address-0x70170)/4];
+		unsigned word = (address-0x70170)/4;
+		if (sfpuSmoke >= 13 && (word == 2 || word == 5)) return 0x0c228293;
+		return kernelOperands[word];
 	}
 	// Independent fixed configuration-only control. The decoder test proves
 	// these two same-width substitutions bypass every Dst and matrix access.
@@ -52,7 +54,9 @@ static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke
 	if (sfpuSmoke == 10 && address == 0x70154) return 0x00000013;
 	if (sfpuSmoke == 10 && address == 0x701e8) return 0xffbd83b7;
 	if (sfpuSmoke == 10 && address == 0x701ec) return 0x00000013;
-	if ((configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke != 10)) && address == 0x70238) return 0x0059a223;
+	if ((sfpuSmoke == 11 || sfpuSmoke == 13) && address == 0x701d8) return 0x120022b7;
+	if ((sfpuSmoke == 12 || sfpuSmoke == 14) && address == 0x701d8) return 0x130012b7;
+	if ((configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10)) && address == 0x70238) return 0x0059a223;
 	if (index == 0) return 0x0006a06f;
 	const uint32_t code[] = {
 		0xffe40437,0xffe804b7,0x00448493,0xffef0937,

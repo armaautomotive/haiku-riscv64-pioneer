@@ -56,7 +56,7 @@ struct MockMatmul {
 		if (reset == 0x46800 && ++polls == 2 && !timeout) {
 			memory[TT_TENSIX_STATUS_INDEX] = TT_TENSIX_FINAL_PHASE;
 			memory[TT_TENSIX_STATUS_INDEX+1] = 2; memory[TT_TENSIX_STATUS_INDEX+2] = 0x4d415431;
-			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+TT_TENSIX_CODE_WORDS+i] = sfpuOnly == 10 ? (i < 128 ? 0x3f800000U : 0x40000000U) : (configOnly || (sfpuOnly != 0 && sfpuOnly != 7)) ? 0U : BlackholeMatmulExpected(i);
+			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+TT_TENSIX_CODE_WORDS+i] = (configOnly || (sfpuOnly != 0 && sfpuOnly != 7 && sfpuOnly < 10)) ? 0U : BlackholeMatmulStageExpected(sfpuOnly,i);
 			if (badMath) memory[1+TT_TENSIX_CODE_WORDS] ^= 1;
 			executed = true;
 		}
@@ -146,8 +146,8 @@ int main()
 	io = {}; baseline = io.Baseline(); io.sfpuOnly = 2;
 	assert(BlackholeTensixMatmulProbe(io,baseline,r,false,2) && r.version == 4 && r.completed && io.Restored());
 	io = {}; baseline = io.Baseline();
-	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,11) && io.configWrites == 0);
-	for (unsigned stage = 3; stage <= 10; stage++) {
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,16) && io.configWrites == 0);
+	for (unsigned stage = 3; stage <= 15; stage++) {
 		io = {}; baseline = io.Baseline(); io.sfpuOnly = stage;
 		assert(BlackholeTensixMatmulProbe(io,baseline,r,false,stage) && r.version == 2+stage && r.completed && io.Restored());
 	}

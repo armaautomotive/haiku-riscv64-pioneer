@@ -165,9 +165,17 @@ clear_output:
 	 * Matrix-owned banks remain owned for the second fixture.
 	 */
 	bne s4, zero, kernel_operands
+.ifdef TT_PURE_KERNEL_HANDOFF
+	li t0, 0x430000c2 /* LLK format 3 + NOP 2: mark valid, no clearing */
+.else
 	li t0, 0x43000101
+.endif
 	sw t0, 0(s0)
+.ifdef TT_PURE_KERNEL_HANDOFF
+	li t0, 0x438000c2
+.else
 	li t0, 0x43800101
+.endif
 	sw t0, 0(s0)
 	jal ra, drain
 kernel_operands:
@@ -222,7 +230,15 @@ matrix:
 	j config_completion /* ZEROACC/MOVD2/ownership drained; no matrix */
 	nop
 .else
+.ifdef TT_SRCA_ROUNDTRIP
+	li t0, 0x12002020 /* MOVA2D: eight rows SrcA0 -> FP32 Dst32 */
+.else
+.ifdef TT_SRCB_ROUNDTRIP
+	li t0, 0x13001020 /* MOVB2D: broadcast SrcB row0 -> eight Dst rows */
+.else
 	li t0, 0x26000020 /* MVMUL Dst rows 32..39 += B[8,16] @ A[16,16] */
+.endif
+.endif
 .endif
 	sw t0, 0(s0)
 	jal ra, drain

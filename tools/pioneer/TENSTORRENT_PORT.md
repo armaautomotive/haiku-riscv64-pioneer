@@ -1094,6 +1094,31 @@ from MVMUL. The pinned LLK has a Blackhole MOVD2B/B2D FP32 workaround
 (issue 449); the generic ISA functional descriptions are not timing/silicon
 proof. No speculative forced clock/voltage or firmware change is justified.
 
+### October 15: source-register numerical controls and pure-valid alternative
+
+Added SrcA/SrcB round-trip controls (`5482/3`, metadata v18; `5484/5`, v19),
+using MOVA2D of eight rows / MOVB2D broadcast of one row, never MVMUL.
+Both use the kernel-style clear-and-valid handoff first. At 07:03 UTC the
+SrcA test timed out at phase `70190`, PCs `70274`, before the source check.
+Stop succeeded, but completion was uncertain, so L1 was not restored and
+cold recovery was latched. SrcB was NOT run. No numerical inference about
+SrcA can be drawn from a timeout before reaching it. Normal shutdown and
+relay power-off requested/completed; all card commands remained 0000.
+Artifacts `/boot/home/pioneer-p100a-20261014/src-roundtrip-1/`; driver SHA
+`b3c54d468a475046d4c4a46952b6ef193295f651dea5be9fe0f7eb5d04f18e73`,
+CLI SHA `d5b8e3c197a1abfbf91057a0695510eb295e384b7f648626268d0082bc846362`.
+
+The pinned LLK Blackhole `instructions/assembly.yaml` documents a separate
+pure-valid form: Clr_to1_fmt_Ctrl bits 7:6 = 3, with UNP_NOP bits 1:0 = 2.
+This yields `430000c2/438000c2`, distinct from both the ISA's low-mode-7
+form and the clearing `43000101/43800101` helper. Added explicitly separate
+fixed variants: SrcA `5486/7` metadata v20, SrcB `5488/9` v21, full matrix
+`548a/b` v22. They change only these two handoff payloads in the kernel-style
+prefix, with no register/overlay-write modes, clearing, DMA or ARC command.
+All 17 assembled code variants and the reset-jump section match the
+independently decoded constants and policy tests. This is a prepared
+experiment, NOT yet a hardware result.
+
 Download pinned official sources with:
 
 ```sh

@@ -1039,7 +1039,9 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 			result.query.request_restored,result.query.tlb_restored,pci.restored,result.query.recovery_required);
 		return user_memcpy(data,&result,sizeof(result));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SFPU_STORE_SUPPORT || operation == TT_PCI_PROBE_PIONEER_OPERAND_SUPPORT || operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_ZEROACC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_MOVD_SUPPORT || operation == TT_PCI_PROBE_PIONEER_KERNEL_OPERAND_SUPPORT || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DST_READ_SUPPORT) {
+	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SFPU_STORE_SUPPORT || operation == TT_PCI_PROBE_PIONEER_OPERAND_SUPPORT || operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_ZEROACC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_MOVD_SUPPORT || operation == TT_PCI_PROBE_PIONEER_KERNEL_OPERAND_SUPPORT || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC_SUPPORT || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DST_READ_SUPPORT
+		|| operation == TT_PCI_PROBE_PIONEER_SRCA_ROUNDTRIP_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SRCB_ROUNDTRIP_SUPPORT
+		|| operation == TT_PCI_PROBE_PIONEER_PURE_SRCA_SUPPORT || operation == TT_PCI_PROBE_PIONEER_PURE_SRCB_SUPPORT || operation == TT_PCI_PROBE_PIONEER_PURE_MATMUL_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
 		uint32 version = 5;
@@ -1054,11 +1056,18 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		if (operation == TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC_SUPPORT) version = 15;
 		if (operation == TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT) version = 16;
 		if (operation == TT_PCI_PROBE_PIONEER_DST_READ_SUPPORT) version = 17;
+		if (operation == TT_PCI_PROBE_PIONEER_SRCA_ROUNDTRIP_SUPPORT) version = 18;
+		if (operation == TT_PCI_PROBE_PIONEER_SRCB_ROUNDTRIP_SUPPORT) version = 19;
+		if (operation == TT_PCI_PROBE_PIONEER_PURE_SRCA_SUPPORT) version = 20;
+		if (operation == TT_PCI_PROBE_PIONEER_PURE_SRCB_SUPPORT) version = 21;
+		if (operation == TT_PCI_PROBE_PIONEER_PURE_MATMUL_SUPPORT) version = 22;
 		const tt_matmul_support support = {version,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
 		release_sem(sLock);
 		return user_memcpy(data,&support,sizeof(support));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_MATMUL || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG || operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD || operation == TT_PCI_PROBE_PIONEER_SFPU_STORE || operation == TT_PCI_PROBE_PIONEER_OPERAND_SMOKE || operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE || operation == TT_PCI_PROBE_PIONEER_ZEROACC_SMOKE || operation == TT_PCI_PROBE_PIONEER_MOVD_SMOKE || operation == TT_PCI_PROBE_PIONEER_KERNEL_OPERAND || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATMUL || operation == TT_PCI_PROBE_PIONEER_DST_READ) {
+	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_MATMUL || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG || operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD || operation == TT_PCI_PROBE_PIONEER_SFPU_STORE || operation == TT_PCI_PROBE_PIONEER_OPERAND_SMOKE || operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE || operation == TT_PCI_PROBE_PIONEER_ZEROACC_SMOKE || operation == TT_PCI_PROBE_PIONEER_MOVD_SMOKE || operation == TT_PCI_PROBE_PIONEER_KERNEL_OPERAND || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC || operation == TT_PCI_PROBE_PIONEER_KERNEL_MATMUL || operation == TT_PCI_PROBE_PIONEER_DST_READ
+		|| operation == TT_PCI_PROBE_PIONEER_SRCA_ROUNDTRIP || operation == TT_PCI_PROBE_PIONEER_SRCB_ROUNDTRIP
+		|| operation == TT_PCI_PROBE_PIONEER_PURE_SRCA || operation == TT_PCI_PROBE_PIONEER_PURE_SRCB || operation == TT_PCI_PROBE_PIONEER_PURE_MATMUL) {
 		if (data == NULL || length != sizeof(tt_pioneer_matmul_result)) return B_BAD_VALUE;
 		tt_pioneer_matmul_result result = {};
 		status_t status = user_memcpy(data,&result,sizeof(result)); if (status != B_OK) return status;
@@ -1086,6 +1095,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 			if (operation == TT_PCI_PROBE_PIONEER_KERNEL_OPERAND) sfpuOnly = 8;
 			if (operation == TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC) sfpuOnly = 9;
 			if (operation == TT_PCI_PROBE_PIONEER_DST_READ) sfpuOnly = 10;
+			if (operation == TT_PCI_PROBE_PIONEER_SRCA_ROUNDTRIP) sfpuOnly = 11;
+			if (operation == TT_PCI_PROBE_PIONEER_SRCB_ROUNDTRIP) sfpuOnly = 12;
+			if (operation == TT_PCI_PROBE_PIONEER_PURE_SRCA) sfpuOnly = 13;
+			if (operation == TT_PCI_PROBE_PIONEER_PURE_SRCB) sfpuOnly = 14;
+			if (operation == TT_PCI_PROBE_PIONEER_PURE_MATMUL) sfpuOnly = 15;
 			PioneerMatmulIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.math,operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG,NULL,sfpuOnly);
 			BlackholePioneerMmioProbe(io,control.pci);
 		}
