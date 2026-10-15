@@ -2650,3 +2650,49 @@ out and the old SD relay is unused. Full-RAM/64-core comparison is pending,
 not executed. The one-shot arm remains staged for that future trial, with
 its 64-core/>120 GiB guards; it does nothing in Linux or the recovery control.
 No P100A compute, DMA, instruction loading or firmware operation ran.
+
+### October 14 evening: full-memory/all-core comparison
+
+The user confirmed fans/LEDs off after the stalled recovery. A further single
+on pulse at 23:57 UTC produced no observed startup; the user said it needed
+to sit, so stopped power actions. Following their later manual power-on,
+fresh ZSBL and Linux startup appeared. At 00:57 UTC October 15 (still October
+14 locally), pinned SSH confirmed default Linux 6.1.31, NVMe root, CPUs 0-63,
+131,976,904 kB RAM, empty kexec slot and P100A command 0000. This observation
+does not establish why the earlier power-on failed or prove a thermal cause.
+No relay pulse was sent during this user-managed startup.
+
+Prepared the corrected full-memory/all-core profile in fresh session
+`smp64-memory128-maporder2-20261014`; Linux's direct read-only Samsung mount
+and original OS/RTL hash checks passed, so no further journal overlay or
+offline repair was needed. Started at 00:58 UTC, serial boundary 11018389,
+using the unchanged `memory-2` loader, corrected `dab2171f...` kernel and
+`98783b7a...` RAM bundle. Loader verified all 64 CPU/PLIC records (boot hart 2),
+two RAM ranges and physical-map span 0x1feb1f5000. Kernel reached its scheduler
+without the former reservation panic. Serial one-shot and userspace/runtime
+validation are pending; full restoration is not yet claimed.
+
+That full-RAM/64-CPU trial stopped progressing before launch_daemon. Serial
+ends at byte 11117550 after debugger-module initialization and the inactive
+ECAM root 0x40 refusal. No new panic, CPU/RAM userspace workload, serial
+one-shot or SSH listener was observed. The last logged driver is not proven
+to cause the stall. The user still saw Linux's shutdown screen; loader and
+kernel serial show Haiku took control, so the framebuffer had not yet been
+replaced by a Haiku desktop. Full host functionality remains unresolved.
+
+Prepared a separately compiled diagnostic, not a runtime fix: explicit Jam
+`-sHAIKU_PIONEER_KDL_TIMER=1` enables a one-shot timer only on logical AP1 with
+64 CPUs and a >120 GiB physical-map span. At 120 seconds it deliberately
+requests KDL, even on an otherwise successful boot, to inspect stalled boot
+CPU state without userspace/SSH. It neither resets hardware nor automatically
+reboots or re-arms after continue. It can still fail to provide a capture if
+that AP cannot service its timer. Host production-body sanitizer tests cover
+CPU/memory gates, exact delay/mode, explicit debug entry and add-timer errors.
+
+Default build and a second default rebuild after the opt-in both remain
+byte-identical to kernel `dab2171f...`, with no diagnostic marker. The private
+kernel contains the marker and has SHA
+`f15e31781218b404db862d4763b916310f1b2e33ba09dc57ee13b961e9a39c4f`.
+It is saved separately under `memory-kdl-timer-kernel-1`; the build mirror is
+back to the normal kernel. Native packaging/deployment and timed KDL are
+pending. No installed Samsung package, default boot, SD or P100A state changed.

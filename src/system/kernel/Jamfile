@@ -1,5 +1,13 @@
 SubDir HAIKU_TOP src system kernel ;
 
+# Explicit private diagnostic build only. Normal kernels never arm this timer.
+if $(HAIKU_PIONEER_KDL_TIMER) = 1 {
+	if $(TARGET_ARCH) != riscv64 {
+		Exit "HAIKU_PIONEER_KDL_TIMER requires riscv64" ;
+	}
+	ObjectDefines main.cpp : PIONEER_KDL_TIMER ;
+}
+
 {
 	local defines =
 		HAIKU_ARCH=\\\"$(TARGET_ARCH)\\\"

@@ -88,6 +88,38 @@ static uint32 sCpuRendezvous2;
 static uint32 sCpuRendezvous3;
 
 
+#if defined(__riscv) && defined(PIONEER_KDL_TIMER)
+// PIONEER_DIAGNOSTIC_KDL_TIMER_BEGIN
+static timer sPioneerDiagnosticKDLTimer;
+
+
+static int32
+pioneer_diagnostic_kdl_timer(timer*)
+{
+	// This is a deliberate diagnostic halt, not a detected panic or watchdog
+	// recovery. Keep the timer one-shot so continuing from KDL cannot re-arm it.
+	kernel_debugger("Pioneer opt-in diagnostic: 120-second AP timer");
+	return B_HANDLED_INTERRUPT;
+}
+
+
+static void
+arm_pioneer_diagnostic_kdl_timer(int currentCPU)
+{
+	// Use one secondary CPU, whose timer can still fire if boot CPU 0 is stuck
+	// with interrupts disabled. Do not affect single/low-memory control boots.
+	if (currentCPU != 1 || sKernelArgs.num_cpus != 64
+		|| sKernelArgs.arch_args.physMap.size <= UINT64_C(128849018880))
+		return;
+	status_t status = add_timer(&sPioneerDiagnosticKDLTimer,
+		pioneer_diagnostic_kdl_timer, 120000000, B_ONE_SHOT_RELATIVE_TIMER);
+	if (status != B_OK)
+		panic("Pioneer diagnostic timer could not be armed");
+}
+// PIONEER_DIAGNOSTIC_KDL_TIMER_END
+#endif
+
+
 static void
 early_smp_rendezvous(uint32* rendezvous, int currentCPU, int phase)
 {
@@ -516,6 +548,9 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 
 		// welcome to the machine
 		scheduler_start();
+#if defined(__riscv) && defined(PIONEER_KDL_TIMER)
+		arm_pioneer_diagnostic_kdl_timer(currentCPU);
+#endif
 		enable_interrupts();
 	}
 
