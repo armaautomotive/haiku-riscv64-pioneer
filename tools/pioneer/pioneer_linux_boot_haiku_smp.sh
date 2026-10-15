@@ -7,23 +7,23 @@ action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 # PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN
 private_nosd=0
 journal_view=0
 case "$profile" in
- memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control) private_nosd=1;;
+ memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control) private_nosd=1;;
 esac
 case "$profile" in
- memory8-journal-recovery-control|memory128-kdl-journal-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-journal-control) journal_view=1;;
+ memory8-journal-recovery-control|memory128-kdl-journal-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-journal-control) journal_view=1;;
 esac
 # PIONEER_PRIVATE_PROFILE_FLAGS_END
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 if [ "$profile" = memory8-journal-recovery-control ]; then
  [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
 fi
-case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control)
- [ "$cpu_count" = 64 ] || fail 'Private KDL diagnostic requires 64 CPUs'
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control)
+ [ "$cpu_count" = 64 ] || fail 'Private diagnostic requires 64 CPUs'
  ;;
 esac
 case "$action" in prepare|boot|cancel) ;; *) fail 'Unknown action';; esac
@@ -103,6 +103,15 @@ case "$profile" in
   image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
   bundle=$base/smp-kernel-bundle-memory-kdl-spin-idle-5/samsung-ram.bfs
   bundle_hash=657e8dea921ce3a0c8a2526c606065051bdcf39088078f3c2fb642009bf401f4
+  memory_gib=128
+  ;;
+ memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control)
+  # Explicit runtime comparison: same spin-idle behavior without a timed KDL
+  # stop, separating userspace stability from debugger exit/resume behavior.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-spin-idle-runtime-6/samsung-ram.bfs
+  bundle_hash=f0dac3262f73e6e35ccb8eb2bdcda25875f5ab7841afcb0ec0522026a155cefa
   memory_gib=128
   ;;
  *) fail 'Unknown pinned kernel profile';;

@@ -2894,3 +2894,45 @@ The ordinary build was rebuilt with both private options absent. Its SHA is
 it retains WFI/no CPU-count bypass in disassembly and has no timer markers.
 It differs from the preceding ordinary checksum, so byte identity is not
 claimed. The private idle comparison has not yet run on the board.
+
+Revision-5 spin-idle session `smp64-memory128-spinidle5-20261014` started at
+02:30:21 UTC October 15, serial boundary 12304944. All 17 main2 stages finished
+in 22,501,221 us. Pinned SSH reported 64 CPUs and 137,034,936,320 bytes usable.
+The private memory test PASSED its 4096 MiB sample, two complete patterns,
+with all 64 pinned workers (mask ffffffffffffffff). This is not a whole-RAM
+audit. At the deliberate AP1 timer stop, KDL reported no nontrapped CPUs,
+unlike the two WFI comparisons. This supports investigating idle wakeup;
+it does not yet establish a precise cause or permanent remedy.
+
+After serial `continue`, the desktop was frozen and SSH timed out. Seven
+planned CPU-test repetitions did not start; no pass is claimed. No further
+serial output or response to `help` appeared. The debugger exit/resume path
+may be a separate confounder; its cause is not proven. Forced relay off hold
+completed at about 02:39 UTC, not a clean shutdown. Preparing a separately
+opted-in spin-idle runtime test without the timed debugger interruption;
+all prior frozen profiles and ordinary-build behavior remain unchanged.
+
+Default Linux recovered through one on pulse after the longer off interval;
+pinned SSH at 02:42 UTC confirmed 64 CPUs, 131,976,904 kB RAM, empty kexec,
+P100A command 0000 and Samsung BFS CLEAN. This was forced recovery, not a
+clean Haiku shutdown. No SD change or card operation was needed.
+
+The private runtime comparison requires both HAIKU_PIONEER_SPIN_IDLE=1 and
+HAIKU_PIONEER_SPIN_IDLE_RUNTIME_TEST=1 when the timer is absent. A spin-idle
+build without either explicit diagnostic authorization is still rejected.
+Built revision-6 kernel SHA:
+`91c3de0034de429e212db0bd804668843541438a81148a46929ec9db4851c1ad`.
+Disassembly confirms the 64-CPU WFI bypass; timer marker strings are absent.
+Rebuilt ordinary objects with both options absent: kernel remains
+`3bdfd5ddc0690ebdbb46ddbe05dbf52d7de75ae81b1e1d80c7b6f32873c6ff04`
+and retains WFI/no 64-CPU bypass. Production-body idle, serial, timer, CPU,
+context-switch, memory-parser, full-memory one-shot and helper tests pass.
+
+Fresh native runtime bundle passed package path-set comparison, extracted
+kernel/ECAM hashes, private BFS checkfs and full HPKG roundtrip. BFS SHA:
+`f0dac3262f73e6e35ccb8eb2bdcda25875f5ab7841afcb0ec0522026a155cefa`.
+HPKG SHA: `3a653b946e9b076c2f35e01afd5c22b0b473aa1c32c239b79afc7ef51a2f1209`.
+New helper SHA:
+`964d2b3ae8a6a756d5b252d91f03aa0ed9c7c4e719802bf823243126a8a8ef81`.
+Explicit `memory128-spin-idle6-nosd-control` and journal counterpart retain
+the old defaults and frozen artifact pins. Runtime validation is pending.

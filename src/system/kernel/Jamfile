@@ -8,13 +8,17 @@ if $(HAIKU_PIONEER_KDL_TIMER) = 1 {
 	ObjectDefines main.cpp : PIONEER_KDL_TIMER ;
 }
 
-# Bounded private comparison for a missing idle-hart wakeup; never the default.
+# Private comparison for a missing idle-hart wakeup; never the default.
+# The separate runtime-test opt-in omits KDL so its exit path cannot confound
+# repeated userspace tests. Neither option changes an ordinary build.
 if $(HAIKU_PIONEER_SPIN_IDLE) = 1 {
 	if $(TARGET_ARCH) != riscv64 {
 		Exit "HAIKU_PIONEER_SPIN_IDLE requires riscv64" ;
 	}
 	if $(HAIKU_PIONEER_KDL_TIMER) != 1 {
-		Exit "HAIKU_PIONEER_SPIN_IDLE requires the timed diagnostic" ;
+		if $(HAIKU_PIONEER_SPIN_IDLE_RUNTIME_TEST) != 1 {
+			Exit "HAIKU_PIONEER_SPIN_IDLE requires the timed diagnostic or explicit runtime test" ;
+		}
 	}
 	ObjectDefines cpu.cpp : PIONEER_DIAGNOSTIC_SPIN_IDLE ;
 }
