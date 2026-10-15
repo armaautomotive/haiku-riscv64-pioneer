@@ -2974,3 +2974,21 @@ TLB state were restored, card/root commands 0000/0000, and the independent
 profile passed again. No core start, reset write, DMA, firmware message or
 flash occurred. Accelerator inference remains unimplemented. The normal
 kernel was rebuilt after a comment-only synchronization and remains 3bdfd5dd...
+
+Offline CPU-only Qwen3-0.6B-Q8_0 benchmark completed with 4, 32 and 64 threads,
+prompt 32/generation 8, one repetition, no warmup, poll=0, GPU layers=0.
+Model SHA remains 9465e63a...; backend explicitly CPU, GPU field empty. Tiny
+prompt/generation rates were respectively 3.17/2.98, 17.30/8.12 and
+17.24/1.18 tokens/s. This is a short host functional baseline, not robust
+performance measurement or P100A inference; 64-thread generation was slower.
+The benchmark's internal timestamps were in 1970, so they are not valid wall
+times; external Mac UTC is used for this record. Afterwards, all 32 VM remap
+rounds passed again on all 126 workers, and pinned SSH/system totals remained
+available more than ten minutes after boot. Longer stability and physical
+desktop/input confirmation are still outstanding.
+
+Continued P100A startup audit against the pinned official ISA documentation;
+see TENSTORRENT_PORT.md. Added a host-tested, offline-only fixed BRISC checksum
+image and independent instruction/data-bounds decoder. It is not connected
+to any driver operation and has not run on the card. No kernel module, reset
+controls, instructions, firmware or DMA state changed during this audit.

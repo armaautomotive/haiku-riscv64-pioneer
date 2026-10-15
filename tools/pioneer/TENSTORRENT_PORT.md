@@ -513,6 +513,39 @@ implemented or deployed yet. No reset controls or instruction bytes were
 written during this audit. The last hardware operation remains the successful
 repeat L1/telemetry/profile/independent PCI verification above.
 
+### Continued execution audit and offline image, October 14 local time
+
+Pinned official ISA documentation at
+`8a34e25e04d1ad7dd129ac9231e126b85923fac3` in a private no-checkout clone.
+Its [Blackhole soft-reset contract](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/SoftReset.md)
+specifies cache invalidation when leaving reset, BRISC entry at zero, and no
+new instruction starts while reset is held. It does not promise immediate
+abortion of every in-flight operation. Its
+[NoC memory map](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/BabyRISCV/README.md)
+marks backend configuration inaccessible over NoC: do not attempt a host
+write to the CPU-local cache-control register. Local RISC RAM is also
+reinitialized on release unless configured otherwise. This is a documented
+startup contract, not yet validation on this installed board/firmware.
+
+Added an original, offline-only RV32I checksum/park image and linker bounds.
+The sole reset word jumps to code at 0x70000 (under the prior startup bound).
+It computes 1+...+32, writes 528 at 0x17ffc0, consumes a readback, fences,
+publishes PION at 0x17ffc4, consumes that readback, fences and parks. It uses
+no stack, local RAM, CSR, interrupt, NoC command, DMA or Tensix instruction.
+The host test assembles/links the real RV32I image, independently decodes it,
+allows only its fixed instruction subset, bounds every instruction fetch and
+data access, checks both results and observes the terminal self-loop. The
+boot section is exactly four bytes; code is at most 128 bytes. Host test
+passes with ASan/UBSan; this models instruction/data bounds, not hardware
+cache timing or reset quiescence.
+
+No driver/ioctl references this image, no instructions have been installed,
+and no reset bit has been written. Integration still requires initial-zero
+completion checks, exact code/data preservation, fixed firmware/tile gates,
+completion/stop verification, and a cold-recovery-only path on uncertain
+stop. Never rewrite live instructions or treat a timeout as restored state.
+The original kernel driver's operation set and installed binary are unchanged.
+
 Download pinned official sources with:
 
 ```sh
