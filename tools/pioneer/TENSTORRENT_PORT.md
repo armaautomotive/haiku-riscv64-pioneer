@@ -1688,6 +1688,43 @@ ignored local evidence is under
 program definitions were synced to the build mirror. Assistant, models,
 boot, firmware and host DMA state were not changed.
 
+### October 15: read-only host-transfer address-path audit
+
+Before enabling any host DMA, a new root-only read-only preflight checks the
+compute source route `(19,24)` to the actually connected PCIe tile `(2,0)`,
+all previous idle/firmware/route gates, the Cadence inbound no-BAR-match
+mapping, and the card's NoC-to-host SII window configuration. A temporary
+read-only BAR0 TLB uses the full 43-bit local-address field to reach fixed
+device-local `fffffffff0000000 + 134..150`, not a host pointer. The native
+driver maps both SII and root-AT pages read-only/uncached. There are no
+SII/inbound/initiator/payload writes, bus mastering, core starts or DMA.
+
+The live audit PASSED: connected PCIe `18611002`; all three samples had
+root inbound `0000002f/00000000` (the existing 48-bit identity mapping), and
+SII windows `00400000 00400200 00400100 00400300 00000000 00000200
+00000100 00000300`, matching pinned firmware 18.5 defaults. In particular,
+window 0 uses memory requests with iATU bypass, no address prefix, relaxed
+ordering, no-snoop or DBI flag. TLB/PCI restoration flags were `1/1`,
+commands `0000/0000`, cold flag zero. This proves the sampled configuration,
+**not an actual DMA transfer or cache-coherent host-buffer lifetime**.
+
+ASan/UBSan tests verify independent full-width address decoding, route
+refusal, every individual TLB-write loss/rollback, wrong/changing inbound
+or SII values, active cores, source changes and failed restoration. Jam and
+all twenty-four cross-built utilities pass. Installed driver SHA-256:
+`0d0ebffb6accc34621d5054f83b6cb40b51ca3cb5d835215ecda7a4dc4385148`;
+host-path utility SHA-256:
+`806def48eea75766a3eece25bcb88b869be5628c143cd3c402b2a6c28971d6dc`.
+Native backup/log: `/boot/home/pioneer-host-path-20261015/`; ignored local
+evidence: `generated.pioneer/tenstorrent/host-path-20261015/`. No firmware,
+model, Assistant, boot or DMA state was changed. Next: dedicated owned,
+pinned non-cached host buffers and a bounded device-read-only transfer.
+
+Register provenance: pinned official system-firmware 18.5 `pcie.c` (SII
+base, window data fields and default values), and
+[PCI Express tile documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/PCIExpressTile/README.md).
+This policy is original code; no GPL KMD implementation was copied.
+
 ## Findings from source
 
 - P100A belongs to Blackhole. KMD `enumerate.h` identifies Blackhole as

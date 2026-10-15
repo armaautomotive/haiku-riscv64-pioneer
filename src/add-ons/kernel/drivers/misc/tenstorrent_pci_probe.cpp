@@ -934,6 +934,54 @@ struct PioneerResidentReadIO : PioneerComputeNocIO {
 	}
 };
 
+struct PioneerHostPathIO : PioneerComputeNocIO {
+	tt_host_path_result& path;
+	area_id inboundArea=-1,siiArea=-1;
+	const volatile uint32* inbound=NULL;
+	const volatile uint32* sii=NULL;
+	bool pathAttempted=false;
+	PioneerHostPathIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
+		tt_compute_noc_result& n,tt_host_path_result& r)
+		: PioneerComputeNocIO(p,a,t,c,d,n),path(r) {}
+	~PioneerHostPathIO() {
+		if (inboundArea>=B_OK) delete_area(inboundArea);
+		if (siiArea>=B_OK) delete_area(siiArea);
+	}
+	bool Map() {
+		if (!PioneerComputeNocIO::Map()) return false;
+		void* address=NULL;
+		// Same Cadence AT page already configured by ECAM, strictly read-only.
+		inboundArea=map_physical_memory("P100A root inbound read-only audit",
+			profile.controller+0x00400000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&address);
+		if (inboundArea<B_OK) return false;
+		inbound=(const volatile uint32*)((uint8*)address+0x810);
+		siiArea=map_physical_memory("P100A fixed PCIe SII read-only audit",
+			profile.bar0_host_start+0x19000000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&address);
+		if (siiArea<B_OK) return false;
+		sii=(const volatile uint32*)((uint8*)address+0x134); return true;
+	}
+	uint32 HostInboundRead(unsigned w) { return w<2?PioneerRead32(inbound+w):UINT32_MAX; }
+	uint32 HostSiiRead(unsigned w) { return w<8?PioneerRead32(sii+w):UINT32_MAX; }
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerComputeNocIO::AfterNodeId(id)) return false;
+		pathAttempted=true;
+		dprintf("PIONEER-P100A: read-only host-transfer route/inbound/SII audit; no DMA or bus mastering\n");
+		return BlackholeHostPathProbe(*this,dram,noc,id,path);
+	}
+	bool Unmap() {
+		bool okay=true;
+		area_id* areas[]={&inboundArea,&siiArea};
+		for (area_id* area:areas) if (*area>=B_OK) {
+			if (delete_area(*area)==B_OK) *area=-1; else okay=false;
+		}
+		if (pathAttempted && (!path.tlb_restored || path.recovery_required)) okay=false;
+		return PioneerComputeNocIO::Unmap() && okay;
+	}
+};
+
 struct PioneerResidentMathIO : PioneerComputeNocIO {
 	tt_resident_math_result& compute;
 	const unsigned gemvInputs;
@@ -1129,6 +1177,40 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_PIONEER_HOST_PATH_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_HOST_PATH) {
+		if (data==NULL || length!=sizeof(tt_pioneer_host_path_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status!=B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile={};
+		if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status=status;
+		tt_pioneer_host_path_result result={};
+		tt_pioneer_dram_samples_result& baseline=result.baseline.baseline;
+		tt_pioneer_arc_result& control=baseline.control.control.control;
+		tt_arc_telemetry_result& telemetry=baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix=baseline.control.tensix;
+		control.pci.version=control.arc.version=telemetry.version=tensix.version=baseline.dram.version=1;
+		control.arc.tlb_restored=telemetry.tlb_restored=tensix.tlb_restored=1;
+		baseline.dram.data_restored=baseline.dram.tlb_restored=result.baseline.noc.tlb_restored=result.path.tlb_restored=1;
+		if (status==B_OK) {
+			PioneerHostPathIO io(profile,control.arc,telemetry,tensix,baseline.dram,result.baseline.noc,result.path);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (result.path.recovery_required || result.baseline.noc.recovery_required || baseline.dram.recovery_required
+			|| control.pci.state==TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.path.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock); return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_GEMV_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
