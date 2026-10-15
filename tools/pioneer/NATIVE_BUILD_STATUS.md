@@ -2720,3 +2720,24 @@ boundary 11184226, using the unchanged loader and separately pinned diagnostic
 kernel/bundle. The intended KDL timeout is diagnostic, not a detected kernel
 panic. The normal kernel artifact has already been restored on the build
 mirror; no installed/default boot or P100A operation was changed.
+
+The first timed diagnostic reached main2/device initialization, with a
+successful timer-programming trace, but serial stopped at SDHCI
+`P214:SR0 reset all begin bits 0x0`, byte 11232317. Neither the intended KDL
+banner nor a response to a read-only `help` sent through the existing screen
+session appeared after the timeout plus grace period. No usable stack capture
+or RAM/CPU workload result exists. This does not distinguish a timer/IRQ
+problem, debugger-entry/output blockage or another cause, and is not proof
+that the SD controller caused the earlier different stall.
+
+Prepared one further private isolation profile, `memory128-kdl-nosd-control`,
+using the same timed kernel/bundle. Both SDs must remain absent under the
+existing global guard. It removes only `/soc/bm-sd@704002B000` from the fresh
+private probe FDT after checking exact compatible, register range and IRQ;
+eMMC, CPU and memory information remain. It does not alter the live Linux FDT,
+installed OS, default boot, persistent SD support or any card. Source review
+shows the current Haiku FDT enumerator ignores status="disabled", hence actual
+private-node removal instead of an ineffective status property. Host tests
+exercise the production edit, source/same-inode preservation, exact identity
+refusals, CPU/timebase preservation and the full memory-parser tests on the
+modified DTB. Hardware deployment/result are pending; this is not a claimed fix.

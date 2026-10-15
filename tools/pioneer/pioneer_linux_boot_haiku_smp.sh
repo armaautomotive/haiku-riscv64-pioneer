@@ -2,17 +2,17 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control]'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 if [ "$profile" = memory8-journal-recovery-control ]; then
  [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
 fi
-case "$profile" in memory128-kdl-control|memory128-kdl-journal-control)
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control)
  [ "$cpu_count" = 64 ] || fail 'Private KDL diagnostic requires 64 CPUs'
  ;;
 esac
@@ -59,7 +59,7 @@ case "$profile" in
   bundle_hash=98783b7aa58b283c9ce33623deecd828eaf5a8f20394cfa92a2fe1065c098ebf
   case "$profile" in memory8-map-order-control) memory_gib=8;; memory128-map-order-control) memory_gib=128;; esac
   ;;
- memory128-kdl-control|memory128-kdl-journal-control)
+ memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control)
   # Deliberately enters the debugger from AP1 after 120 seconds, even if
   # boot succeeds. This is a separate diagnostic, never the default kernel.
   image=$base/memory-2/HaikuPioneerKexecProbe.Image
@@ -113,6 +113,24 @@ root_manifest()
  done
  printf '%s\n' "$*"
 }
+remove_private_sd_node()
+{
+ # PIONEER_PRIVATE_NOSD_BEGIN
+ # Only the explicit diagnostic calls this, after the global no-MMC guard.
+ # Haiku's current FDT enumerator does not honor status="disabled", so remove
+ # this one identity-checked node from the private copy, not the live FDT.
+ target=$run/probe-fdt.dtb
+ [ -f "$target" ] && [ ! -L "$target" ] || fail 'Wrong private FDT'
+ [ ! "$target" -ef "$run/live-fdt.dtb" ] || fail 'Private FDT aliases source'
+ sd=/soc/bm-sd@704002B000
+ [ "$(fdtget -t s "$target" "$sd" compatible)" = bitmain,bm-sd ] || fail 'Wrong SD compatible'
+ [ "$(fdtget -t x "$target" "$sd" reg)" = '70 4002b000 0 1000' ] || fail 'Wrong SD registers'
+ [ "$(fdtget -t x "$target" "$sd" interrupts)" = '88 4' ] || fail 'Wrong SD interrupt'
+ fdtput -r "$target" "$sd"
+ if fdtget "$target" "$sd" compatible >/dev/null 2>&1; then fail 'Private SD node remains'; fi
+ [ "$(fdtget -t x "$target" /soc/bm-emmc@704002A000 reg)" = '70 4002a000 0 1000' ] || fail 'eMMC node changed'
+ # PIONEER_PRIVATE_NOSD_END
+}
 validate_run()
 {
  [ -d "$run" ] && [ ! -L "$run" ] || fail 'Unknown session'
@@ -133,6 +151,10 @@ validate_run()
  fi
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /pcie@7062000000 haiku,pioneer-root-probe)" = 1e52b140 ] || fail 'Missing private root opt-in'
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-root-v1)" = "$(root_manifest)" ] || fail 'Root identity changed since prepare'
+ if [ "$profile" = memory128-kdl-nosd-control ]; then
+  if fdtget "$run/probe-fdt.dtb" /soc/bm-sd@704002B000 compatible >/dev/null 2>&1; then fail 'Unexpected SD node in no-SD diagnostic'; fi
+  [ "$(fdtget -t x "$run/probe-fdt.dtb" /soc/bm-emmc@704002A000 reg)" = '70 4002a000 0 1000' ] || fail 'eMMC node changed'
+ fi
 }
 case "$action" in
  prepare)
@@ -173,6 +195,7 @@ case "$action" in
   fi
   cp /sys/firmware/fdt "$run/live-fdt.dtb"
   cp "$run/live-fdt.dtb" "$run/probe-fdt.dtb"
+  if [ "$profile" = memory128-kdl-nosd-control ]; then remove_private_sd_node; fi
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe 4
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-cpu-count "$(printf '%x' "$cpu_count")"
   if [ "$memory_gib" = 3 ]; then
