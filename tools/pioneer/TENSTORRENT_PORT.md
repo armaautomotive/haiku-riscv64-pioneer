@@ -103,7 +103,85 @@ Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
 
-### October 15: standalone Qwen backend candidate, validation in progress
+### October 15: checked streamed uploads and numerical localization
+
+The operational upload now has a separate root/FD/team-owned data-only
+ioctl `54bd`, capability bit 32 (support v1, capabilities 63). The original
+PIO-checked storage API is unchanged. It still accepts exactly 4 KiB and a
+validated arena offset, never supplied host/NoC addresses or code.
+
+The six-step chain is: owned host to L1 staging; acknowledged write to
+owned GDDR; read into distinct L1; poison the host page with the complete
+bitwise complement and read that poison into the return region; write the
+GDDR readback to host; require every CPU-visible word to match the original
+before a fresh ordered PCIe read into L1 distinct from the write source.
+A second complete CPU comparison follows that read's proven completion.
+Unlike the initial transfer diagnostic, this operational chain does not
+PIO-scan each payload word in L1; its data-integrity evidence is the complete
+GDDR-to-host return loop. It still requires source/route/mapping/PCI/idle
+guards between steps, exact counters **1/64/1/1** for every request, BME-off
+proof, and quarantine/cold recovery on missing visibility or completion.
+No core starts, counter clears, firmware writes or uncertain-payload cleanup
+were introduced.
+
+Native testing passed twice with the two pinned Qwen-file chunks, three
+uploads (including overwrite), four independent legacy PIO GDDR reads,
+zero mismatches, page count two and clean explicit END. The new operation's
+out-of-arena/reserved-field refusal, foreign-FD conflict and inherited-team
+denial also pass. Existing lifetime/final-close tests and the old K1,024
+GEMV regression still pass, with clean post-test PCIe/HDMA audit and the
+Assistant unchanged. Warm checked 4 KiB stream ioctls took **5.218–5.224 ms**,
+versus **8.115–8.129 ms** for the matched legacy uploads; first-operation
+setup costs were 11.597 / 14.527 ms respectively. These are validation-inclusive
+samples, not a bandwidth benchmark or Qwen token-rate improvement. Larger
+owned bulk transfers remain necessary for practical model loading.
+
+Artifacts/logs and the verified previous driver backup:
+`/boot/home/pioneer-stream-upload-20261015/`. SHA-256:
+
+- Driver: `c729f0d526229a3518cef37501e85a1560324b8050a71ef40d2e936afa5256b2`
+- Timed stream/lifecycle CLI: `cbb89e4a1dfd90b4d2586277eda24c892affa467203377ec71ea29c2c558fae8`
+
+ASan/UBSan tests cover all lost control writes and both full sets of host
+writes, all six missing completions, stale/corrupt payload, changed source/
+mapping, pending PCIe state and BME-off failure. They assert no per-word
+L1 payload reads during the operational upload and no cleanup/retry after
+uncertainty. The driver and all 30 diagnostics build.
+
+The subsequent real-activation primitive trace checked 64 rows per learned
+matrix through layer 10: device output remained close to an independently
+decoded BF16 reference, and the two independent Q8 decoders agreed. This
+has not explained the failed full-model logits below. That diagnostic was
+stopped with SIGINT to replace it with a CPU-graph comparison; automatic
+final-FD cleanup left a clean audit, cold 0, and the Assistant unchanged.
+A more targeted tracer captures every learned CPU reference input/output
+before card execution, checks full reference coverage, compares activation
+and output drift, and separately emulates CPU Q8 activation quantization.
+It exclusively creates a failure-vector file for short reproductions,
+never overwrites one, relaxes no numerical gate and substitutes no output.
+The first CPU-graph trace localized divergence in layer zero without a
+primitive transport/decoder failure. GPU versus independent BF16 L2 was
+0.000090148 / 0.000323759 / 0.000211562 for Q/V/K. But GPU versus the CPU
+graph was 0.003497376 / 0.010499444 / 0.003004001, with identical original
+inputs. Independently quantizing activations to Q8 reproduced the CPU graph
+within L2 **2.41e-7 / 7.71e-7 / 7.61e-7**. Thus the CPU's activation
+quantization is a concrete arithmetic difference, not an initialization or
+DMA failure. By attention-output, input/output drift reached
+0.015584076 / 0.020216687 and the unchanged 0.02 graph diagnostic stopped.
+The 8 KiB FP32 vector was saved as `graph-failure-input-first.raw`, and END
+again restored/released everything with cold 0.
+
+An explicit `--diagnose-cpu-q8` candidate now preprocesses each input with
+the same Q8 quantizer before BF16 device input. It is unit-tested but its
+full-model effect is still under native test; do not call it a verified fix.
+CPU reference capture is single-threaded for diagnostics to avoid repeatedly
+creating 32-worker pools at every tapped node; throughput verification remains
+a separate task. The reference context is still created before device
+registration, and no reference value supplies card output. Strict primitive,
+graph, full-logit and greedy-token gates remain in place. Full Qwen generation
+and speedup remain unverified.
+
+### October 15: standalone Qwen backend candidate, first full forward fails
 
 A standalone experimental ggml ACCEL backend now connects retained weights
 to the pinned llama runtime, outside the user-modified llama.cpp checkout.
@@ -128,20 +206,31 @@ unchanged. Four checked greedy output tokens are the first target, not a
 benchmark. The steady decode diagnostic excludes CPU-reference time, but
 three samples are insufficient for a speedup claim.
 
-The first complete-model native run is **still in progress**, using the
-already verified capability-31 driver. Its initial load has passed 650 MiB
-of retained tensors, but no full-forward/logit/token result is confirmed yet.
-The old upload's two complete per-word PCIe scans make this first load slow;
-weights are checked once, not streamed again for each generated token.
-Do not restart/reload the driver or submit other card operations while its
-exclusive session owns the device. A separately developed streamed-upload
-candidate is only built/offline-tested and is not installed or enabled.
+The first complete-model native run **failed numerical verification** on
+position zero. It retained all **197** learned matrices (28 x 7 plus tied
+embedding/classifier), **1,340,964,864 bytes / 327,384 pages**, and completed
+**234 real matvec calls** (196 layer projections plus 38 classifier chunks).
+But full logits had cosine **0.972931802**, relative L2 **0.264345575**,
+despite matching argmax **1479/1479**. No generated token was accepted or
+substituted from CPU. END restored PCI and released the host page, state 2,
+cold 0; the subsequent read-only PCIe/HDMA audit is clean, and Assistant
+team 2705 remains ready/idle and unchanged. **Do not weaken the logit gate.**
+The next numerical test must localize the first divergent primitive/layer
+with real activation vectors and independent BF16/Q8 references.
+
+Initial decode took **2,717.271042 seconds**, including the full verified
+load; total test time was **2,724.992 seconds**. The old upload's two complete
+per-word PCIe scans dominate this first load. There is no generation-rate
+result. The separately qualified streamed-upload path above preserves full
+CPU payload checks, ordered readback and the existing cold/quarantine gates
+while shortening subsequent loads. No other card
+operation or driver change was made during the now-finished exclusive run.
 
 Native run directory: `/boot/home/pioneer-qwen-resident-20261015/`.
 The first loader attempt lacked `/boot/system/lib` in `LIBRARY_PATH` and
 failed before any device access; the next attempt uses the existing
 Assistant's library path and is logged as `qwen-first-loaded.log`.
-Running prototype SHA-256:
+Failed native prototype SHA-256:
 `22318635b6e27136e96bcda27766c60375344184f93489032efbf8c4f0d1d7da`.
 The final stricter coverage-check binary (not substituted into the running
 process) is `d2da38de247766a9d83257b6fe1c26846c0e4a885dc0cd5fc64f17fab90cbe48`.
@@ -169,8 +258,9 @@ sh tools/pioneer/build_qwen_resident.sh CONFIGURED_BUILD MATCHING_NATIVE_LIBS FR
 The native build verifies the pinned revision/API headers and exact hashes
 of all four matching Haiku libraries. All 64 CPUs, RAM, boot/recovery,
 firmware and the open Assistant remain outside this standalone deployment.
-Wait for native completion and a clean END/audit before declaring this
-candidate functional or attempting the next driver installation.
+The clean END/audit has now been established, but this candidate is not
+numerically functional yet. Continue with scoped primitive diagnostics;
+full Qwen generation and speedup remain unfinished.
 
 ### October 15: real Qwen projections over retained device weights
 

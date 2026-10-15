@@ -9,7 +9,7 @@
 // never substitutes a CPU product, and owns one exclusive session lifetime.
 class PioneerResidentDevice {
 	int fd=-1;
-	bool active=false,failed=false,cold=false,finished=false;
+	bool active=false,failed=false,cold=false,finished=false,stream=false;
 	tt_pioneer_runtime_matvec* request=NULL;
 public:
 	uint64_t uploads=0,calls=0;
@@ -22,6 +22,8 @@ public:
 		if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&s,sizeof(s)) || s.version!=1 || (s.capabilities&31)!=31) {
 			fprintf(stderr,"Resident matvec capability unavailable; no compute submitted\n"); failed=true; return false;
 		}
+		stream=(s.capabilities&32)!=0;
+		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
 		request=(tt_pioneer_runtime_matvec*)calloc(1,sizeof(*request));
 		if (!request) { failed=true; return false; }
 		s={}; s.version=1; s.bytes=bytes;
@@ -33,10 +35,19 @@ public:
 	}
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		if (!active || failed || finished || cold || !data) return false;
-		tt_pioneer_resident_page p={}; p.version=1; p.offset=offset; memcpy(p.data,data,4096);
-		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_STORE_UPLOAD,&p,sizeof(p)); cold=p.result.recovery_required!=0;
-		if (status || p.result.state!=TT_STORE_PASSED || cold) {
-			fprintf(stderr,"Resident upload STOP: status %d state %u offset %llu cold %u\n",status,p.result.state,(unsigned long long)offset,cold);
+		int status=0; uint32_t state=0; bool complete=false;
+		if (stream) {
+			tt_pioneer_resident_stream p={}; p.version=1; p.offset=offset; memcpy(p.data,data,4096);
+			status=ioctl(fd,TT_PCI_PROBE_PIONEER_STREAM_UPLOAD,&p,sizeof(p));
+			const auto& r=p.result; cold=r.recovery_required!=0; state=r.state;
+			complete=r.version==1 && r.requests==6 && r.completed==6 && r.host_write_issued && r.host_visible && r.readback_complete && !r.mismatches;
+		} else {
+			tt_pioneer_resident_page p={}; p.version=1; p.offset=offset; memcpy(p.data,data,4096);
+			status=ioctl(fd,TT_PCI_PROBE_PIONEER_STORE_UPLOAD,&p,sizeof(p)); cold=p.result.recovery_required!=0; state=p.result.state;
+			complete=p.result.version==1 && p.result.completed==3 && !p.result.mismatches;
+		}
+		if (status || state!=TT_STORE_PASSED || !complete || cold) {
+			fprintf(stderr,"Resident upload STOP: status %d state %u offset %llu cold %u\n",status,state,(unsigned long long)offset,cold);
 			failed=true; return false;
 		}
 		uploads++;

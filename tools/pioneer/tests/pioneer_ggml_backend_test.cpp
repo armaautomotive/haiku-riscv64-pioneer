@@ -17,6 +17,10 @@ int main() {
 	auto* buffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(weights)); assert(buffer);
 	weights->data=ggml_backend_buffer_get_base(buffer);
 	weights->buffer=buffer; ggml_backend_buffer_set_usage(buffer,GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+	auto* inputBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(input)); assert(inputBuffer);
+	input->buffer=inputBuffer; input->data=ggml_backend_buffer_get_base(inputBuffer);
+	auto* resultBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(result)); assert(resultBuffer);
+	result->buffer=resultBuffer; result->data=ggml_backend_buffer_get_base(resultBuffer);
 	assert(ggml_backend_dev_supports_op(dev,result));
 	ggml_backend_buffer_set_usage(buffer,GGML_BACKEND_BUFFER_USAGE_COMPUTE);
 	assert(!ggml_backend_dev_supports_op(dev,result));
@@ -48,6 +52,29 @@ int main() {
 	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED && io.calls==3);
 	assert(PioneerGgmlFinish() && io.finishes==1);
 	ggml_backend_free(backend); assert(io.finishes==1 && !PioneerGgmlSnapshot(stats));
-	weights->buffer=NULL; ggml_backend_buffer_free(buffer); ggml_free(ctx);
+	// Independent primitive diagnostics catch a numerically wrong device
+	// result even when transport completion says success; never substitute.
+	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS);
+	assert(PioneerGgmlReferenceTap(result,true,NULL) && PioneerGgmlReferenceTap(result,false,NULL) && PioneerGgmlReferenceCount()==1);
+	ggml_tensor metadataOnly=*result; metadataOnly.op=GGML_OP_RESHAPE;
+	assert(!PioneerGgmlReferenceTap(&metadataOnly,true,NULL));
+	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS);
+	float correct=((float*)result->data)[0]; io.badMath=true;
+	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED && ((float*)result->data)[0]==correct+1);
+	assert(PioneerGgmlSnapshot(stats) && stats.failed && stats.matvecs==3);
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend); assert(io.finishes==1);
+	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(false); PioneerGgmlCpuActivationQuantization(true);
+	backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS);
+	std::vector<uint8_t> qx(1024/32*34); std::vector<float> dx(1024);
+	traits->from_float_ref((const float*)input->data,qx.data(),1024); traits->to_float(qx.data(),dx.data(),1024);
+	for (unsigned row=0;row<32;row++) {
+		float reference=0; for (unsigned k=0;k<1024;k++) reference+=Bf16(decoded[row*1024+k])*Bf16(dx[k]);
+		assert(((float*)result->data)[row]==reference);
+	}
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
+	weights->buffer=NULL; input->buffer=NULL; result->buffer=NULL;
+	ggml_backend_buffer_free(buffer); ggml_backend_buffer_free(inputBuffer); ggml_backend_buffer_free(resultBuffer); ggml_free(ctx);
 	printf("PASS: pinned ggml registration, strict support policy, two vectors/one upload, graph failure/no fallback, exclusive cleanup; OFFLINE ONLY\n");
 }

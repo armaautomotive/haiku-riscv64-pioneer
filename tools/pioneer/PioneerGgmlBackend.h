@@ -10,4 +10,13 @@ ggml_backend_reg_t PioneerGgmlReg();
 struct PioneerGgmlStats { uint64_t tensors,bytes,uploads,matvecs; bool failed; };
 bool PioneerGgmlSnapshot(PioneerGgmlStats& stats);
 bool PioneerGgmlFinish();
+// Expensive independent primitive diagnostics, not a production benchmark.
+// Configure before creating a context; results never replace device output.
+// Optional output path must stay alive; exclusive-create writes only the
+// first failing primitive's FP32 input vector, never overwriting a file.
+void PioneerGgmlDiagnose(bool enabled,const char* vectorPath=NULL);
+// CPU-context-only eval tap; never attach this to the P100A context.
+bool PioneerGgmlReferenceTap(ggml_tensor* tensor,bool ask,void*);
+size_t PioneerGgmlReferenceCount();
+void PioneerGgmlCpuActivationQuantization(bool enabled);
 #endif

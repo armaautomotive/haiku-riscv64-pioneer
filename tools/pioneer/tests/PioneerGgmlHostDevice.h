@@ -6,7 +6,7 @@
 #include <cassert>
 struct PioneerGgmlHostState {
 	unsigned opens=0,finishes=0,uploads=0,calls=0;
-	bool fail=false;
+	bool fail=false,badMath=false;
 	std::vector<uint32_t> bytes;
 	PioneerGgmlHostState():bytes(1024*1024/4) {}
 };
@@ -30,6 +30,7 @@ public:
 				uint32_t w=((s.bytes[size_t(p/4)]>>(8*(p&3)))&65535)<<16,v=((x[k/2]>>(16*(k&1)))&65535)<<16;
 				float a,b; memcpy(&a,&w,4); memcpy(&b,&v,4); sum+=a*b;
 			}
+			if (s.badMath) sum+=1;
 			memcpy(output+row,&sum,4);
 		}
 		return true;

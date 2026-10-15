@@ -17,8 +17,10 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 	for (int i=0;i<n;i++) { unsigned char c=text[i]; if (c<32 || c==127) printf("\\x%02x",c); else putchar(c); }
 }
 int main(int argc,char** argv) {
-	if (argc!=3 || strcmp(argv[1],"--verify-qwen")) {
-		fprintf(stderr,"Usage: %s --verify-qwen QWEN3_0.6B_Q8_0_GGUF\nExperimental single-token resident BF16 hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
+	bool cpuActivations=(argc==3 || argc==4) && !strcmp(argv[1],"--diagnose-cpu-q8");
+	bool diagnose=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-qwen") || cpuActivations);
+	if (!diagnose && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
+		fprintf(stderr,"Usage: %s --verify-qwen MODEL | --diagnose-qwen|--diagnose-cpu-q8 MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident BF16 hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_load_all();
@@ -27,13 +29,16 @@ int main(int argc,char** argv) {
 	char arch[64]={}; llama_model_meta_val_str(model,"general.architecture",arch,sizeof(arch));
 	if (strcmp(arch,"qwen3") || llama_model_n_embd(model)!=1024) { fprintf(stderr,"This bootstrap requires Qwen3-0.6B Q8_0\n"); llama_model_free(model); return 1; }
 	llama_context_params params=llama_context_default_params();
-	params.n_ctx=256; params.n_batch=1; params.n_ubatch=1; params.n_threads=32; params.n_threads_batch=32;
+	int referenceThreads=diagnose?1:32;
+	params.n_ctx=256; params.n_batch=1; params.n_ubatch=1; params.n_threads=referenceThreads; params.n_threads_batch=referenceThreads;
 	params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; params.offload_kqv=false;
+	params.cb_eval=diagnose?PioneerGgmlReferenceTap:NULL;
 	// Create the independent CPU context before registering any P100A
 	// device. Its backend list therefore cannot accidentally use the card.
 	llama_context* reference=llama_init_from_model(model,params);
 	if (!reference) { llama_model_free(model); return 1; }
-	ggml_backend_register(PioneerGgmlReg());
+	params.cb_eval=NULL; params.cb_eval_user_data=NULL; // never overwrite CPU reference with card data
+	PioneerGgmlDiagnose(diagnose,argc==4?argv[3]:NULL); PioneerGgmlCpuActivationQuantization(cpuActivations); ggml_backend_register(PioneerGgmlReg());
 	llama_context* actual=llama_init_from_model(model,params);
 	if (!actual) { llama_free(reference); llama_model_free(model); return 1; }
 	const llama_vocab* vocab=llama_model_get_vocab(model); int count=llama_vocab_n_tokens(vocab);
@@ -42,12 +47,16 @@ int main(int argc,char** argv) {
 	std::vector<llama_token> tokens(256);
 	int tokenCount=llama_tokenize(vocab,prompt,int(strlen(prompt)),tokens.data(),int(tokens.size()),false,true);
 	bool passed=tokenCount>0 && tokenCount<128;
-	printf("Qwen resident prototype: %d prompt tokens, 4 greedy output tokens; %llu learned matrices required; CPU32 reference created before P100A registration\n",tokenCount,(unsigned long long)expectedTensors);
+	printf("Qwen resident prototype: %d prompt tokens, 4 greedy output tokens; %llu learned matrices required; CPU%d reference created before P100A registration; CPU-Q8 activation preprocessing %u\n",tokenCount,(unsigned long long)expectedTensors,referenceThreads,cpuActivations);
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
 	for (int position=0;passed && generated<4;position++) {
 		if (position<tokenCount) token=tokens[size_t(position)];
 		llama_batch batch=llama_batch_get_one(&token,1);
 		if (llama_decode(reference,batch)) { passed=false; break; }
+		if (diagnose && PioneerGgmlReferenceCount()!=expectedTensors) {
+			fprintf(stderr,"CPU graph tap captured %zu/%llu learned matrices; no card decode submitted\n",PioneerGgmlReferenceCount(),(unsigned long long)expectedTensors);
+			passed=false; break;
+		}
 		double start=Seconds(); int status=llama_decode(actual,batch); double elapsed=Seconds()-start;
 		if (status) { fprintf(stderr,"P100A decode STOP status %d; no CPU fallback\n",status); passed=false; break; }
 		const float* a=llama_get_logits(actual); const float* r=llama_get_logits(reference);
@@ -76,6 +85,6 @@ int main(int argc,char** argv) {
 	bool clean=PioneerGgmlFinish(); passed &= clean && generated==4;
 	printf("%s: generated %u checked Qwen tokens, retained %llu tensors / %llu bytes, %llu pages uploaded, %llu real matvec calls; cleanup %u, total %.3fs\n",
 		passed?"PASS":"FAIL",generated,(unsigned long long)stats.tensors,(unsigned long long)stats.bytes,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs,clean,Seconds()-begin);
-	if (passed && decodeSeconds>0) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
+	if (passed && decodeSeconds>0 && !diagnose) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
 	llama_free(actual); llama_free(reference); llama_model_free(model); llama_backend_free(); return passed?0:1;
 }

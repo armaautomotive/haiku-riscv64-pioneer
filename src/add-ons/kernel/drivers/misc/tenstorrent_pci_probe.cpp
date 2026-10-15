@@ -1480,7 +1480,7 @@ struct PioneerStoreContext {
 		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
 		r.host_released=host.released; r.pci_restored=Pci().restored;
 		r.route_state=baseline.baseline.path.state; r.audit_state=baseline.audit.state;
-		r.capabilities=31; r.uploaded_pages=uploadedPages; // mappings, host, storage, guards, resident BF16 matvec
+		r.capabilities=63; r.uploaded_pages=uploadedPages; // mappings, host, storage, guards, matvec, streamed upload
 		r.cold=sColdRecoveryRequired;
 	}
 };
@@ -1557,7 +1557,7 @@ ResidentSessionControl(PioneerProbeCookie* cookie,uint32 operation,void* data,si
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	if (operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT) {
-		result={}; result.version=1; result.capabilities=31;
+		result={}; result.version=1; result.capabilities=63;
 	} else if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) {
 		if (cookie->context!=NULL) { release_sem(sLock); return B_BUSY; }
 		uint64 capacity=result.bytes;
@@ -1650,6 +1650,38 @@ ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size
 }
 
 static status_t
+ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (data==NULL || length!=sizeof(tt_pioneer_resident_stream)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_resident_stream* request=(tt_pioneer_resident_stream*)malloc(sizeof(tt_pioneer_resident_stream));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=1 || request->reserved) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	PioneerStoreContext* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (!PioneerResidentOffset(context->bytes,request->offset)) status=B_BAD_VALUE;
+	else {
+		request->result={}; request->result.version=1; request->result.state=TT_STORE_CONFIG_FAILED;
+		bool ready=context->lease.ready;
+		if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
+		bool passed=ready && PioneerResidentStreamPage(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->host,context->lease,context->bytes,request->offset,request->data,request->result);
+		unsigned page=unsigned(request->offset/4096);
+		if (request->result.wrote_device && context->initialized[page]) { context->initialized[page]=0; context->uploadedPages--; }
+		if (passed) { context->hashes[page]=PioneerResidentPageHash(request->data); context->initialized[page]=1; context->uploadedPages++; }
+		if (context->lease.recovery_required || context->lease.pending || request->result.recovery_required) {
+			context->lease.recovery_required=true; context->io.QuarantineHostPage(); request->result.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock); free(request); return status;
+}
+
+static status_t
 RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length)
 {
 	if (data==NULL || length!=sizeof(tt_pioneer_runtime_matvec)) return B_BAD_VALUE;
@@ -1706,6 +1738,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return ResidentStoreControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC)
 		return RuntimeMatvecControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)
+		return ResidentStreamControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
