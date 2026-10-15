@@ -828,6 +828,7 @@ struct PioneerDramSamplesIO : PioneerTensixIO {
 struct PioneerMatmulIO : PioneerDramSamplesIO {
 	tt_tensix_matmul_result& math;
 	const bool configSmoke;
+	const unsigned sfpuSmoke;
 	tt_arc_queue_result unusedQuery = {};
 	PioneerArcQueryIO clockIO;
 	tt_arc_clock_guard_result* const clock;
@@ -840,8 +841,8 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	bool mathAttempted = false;
 	PioneerMatmulIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
 		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& d, tt_tensix_matmul_result& m,
-		bool configOnly = false, tt_arc_clock_guard_result* clockGuard = NULL)
-		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m), configSmoke(configOnly),
+		bool configOnly = false, tt_arc_clock_guard_result* clockGuard = NULL, unsigned sfpuOnly = 0)
+		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m), configSmoke(configOnly), sfpuSmoke(sfpuOnly),
 		clockIO(p,a,t,clockGuard != NULL ? clockGuard->last : unusedQuery,clockGuard), clock(clockGuard) {}
 	~PioneerMatmulIO() { for (unsigned i = 0; i < 5; i++) if (mathAreas[i] >= B_OK) delete_area(mathAreas[i]); }
 	bool Map()
@@ -891,7 +892,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 		mathAttempted = true;
 		dprintf("PIONEER-P100A: fixed TRISC0 matrix fixtures, one idle tile context reset, no NoC/DMA commands\n");
 		if (clock != NULL) return BlackholeClockedMatmulProbe(*this,dram,math,*clock);
-		return BlackholeTensixMatmulProbe(*this,dram,math,configSmoke);
+		return BlackholeTensixMatmulProbe(*this,dram,math,configSmoke,sfpuSmoke);
 	}
 	bool Unmap()
 	{
@@ -1038,14 +1039,20 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 			result.query.request_restored,result.query.tlb_restored,pci.restored,result.query.recovery_required);
 		return user_memcpy(data,&result,sizeof(result));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT) {
+	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SFPU_STORE_SUPPORT || operation == TT_PCI_PROBE_PIONEER_OPERAND_SUPPORT || operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
-		const tt_matmul_support support = {operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT ? 6U : 5U,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
+		uint32 version = 5;
+		if (operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT) version = 6;
+		if (operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD_SUPPORT) version = 8;
+		if (operation == TT_PCI_PROBE_PIONEER_SFPU_STORE_SUPPORT) version = 9;
+		if (operation == TT_PCI_PROBE_PIONEER_OPERAND_SUPPORT) version = 10;
+		if (operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT) version = 11;
+		const tt_matmul_support support = {version,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
 		release_sem(sLock);
 		return user_memcpy(data,&support,sizeof(support));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_MATMUL || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG) {
+	if (operation == TT_PCI_PROBE_PIONEER_TENSIX_MATMUL || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG || operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD || operation == TT_PCI_PROBE_PIONEER_SFPU_STORE || operation == TT_PCI_PROBE_PIONEER_OPERAND_SMOKE || operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE) {
 		if (data == NULL || length != sizeof(tt_pioneer_matmul_result)) return B_BAD_VALUE;
 		tt_pioneer_matmul_result result = {};
 		status_t status = user_memcpy(data,&result,sizeof(result)); if (status != B_OK) return status;
@@ -1064,7 +1071,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = result.baseline.dram.tlb_restored = result.baseline.dram.data_restored = 1;
 		result.math.l1_restored = result.math.tlb_restored = 1;
 		if (status == B_OK) {
-			PioneerMatmulIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.math,operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG);
+			unsigned sfpuOnly = operation == TT_PCI_PROBE_PIONEER_SFPU_STORE ? 2U : operation == TT_PCI_PROBE_PIONEER_SFPU_LOAD ? 1U : 0U;
+			if (operation == TT_PCI_PROBE_PIONEER_OPERAND_SMOKE) sfpuOnly = 3;
+			if (operation == TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE) sfpuOnly = 4;
+			PioneerMatmulIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.math,operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG,NULL,sfpuOnly);
 			BlackholePioneerMmioProbe(io,control.pci);
 		}
 		if (result.math.recovery_required || result.baseline.dram.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {

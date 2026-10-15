@@ -10,48 +10,68 @@
 
 int main(int argc, char** argv)
 {
-	bool inspect = argc == 2 && strcmp(argv[1],"--check-fixed-matmul-support") == 0;
-	bool configSmoke = argc == 2 && (strcmp(argv[1],"--check-fixed-tensix-config-support") == 0 || strcmp(argv[1],"--run-fixed-tensix-config-and-reset") == 0);
-	inspect |= configSmoke && strcmp(argv[1],"--check-fixed-tensix-config-support") == 0;
-	if (!inspect && !configSmoke && (argc != 2 || strcmp(argv[1],"--run-fixed-tensix-matmul-and-reset") != 0)) {
-		fprintf(stderr,"Usage: %s --check-fixed-matmul-support | --run-fixed-tensix-matmul-and-reset\n"
-			"Private Pioneer: two fixed matrix fixtures on TRISC0, sole idle tile (1,2).\n"
-			"REINITIALIZES this tile's compute context; preserves fixed L1 bytes, not prior Src/Dst/register context.\n"
-			"Requires 120 idle compute tiles. No device-issued NoC, DMA, ARC or firmware-flash commands.\n",argv[0]);
-		fprintf(stderr,"Configuration-only control: --check-fixed-tensix-config-support | --run-fixed-tensix-config-and-reset\n"
-			"Same context reset and configuration; bypasses all Dst, data-movement and matrix operations.\n");
+	struct Mode {
+		const char *check, *run, *name, *description;
+		uint32_t support, operation, metadataVersion, resultVersion;
+		bool protocolOnly;
+	};
+	const Mode modes[] = {
+		{"--check-fixed-matmul-support","--run-fixed-tensix-matmul-and-reset","Matmul","Two numerical matrix fixtures",
+		 TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_TENSIX_MATMUL,5,1,false},
+		{"--check-fixed-tensix-config-support","--run-fixed-tensix-config-and-reset","Config-only","Configuration only; no data-path operations",
+		 TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT,TT_PCI_PROBE_PIONEER_TENSIX_CONFIG,6,2,true},
+		{"--check-fixed-sfpu-load-support","--run-fixed-sfpu-load-and-reset","SFPU-load-only","SFPLOADI/drain only; no Dst/Src/matrix",
+		 TT_PCI_PROBE_PIONEER_SFPU_LOAD_SUPPORT,TT_PCI_PROBE_PIONEER_SFPU_LOAD,8,3,true},
+		{"--check-fixed-sfpu-store-support","--run-fixed-sfpu-store-and-reset","SFPU-store-only","SFPSTORE/drain; no ZEROACC/MOVD2/matrix/RISC Dst reads",
+		 TT_PCI_PROBE_PIONEER_SFPU_STORE_SUPPORT,TT_PCI_PROBE_PIONEER_SFPU_STORE,9,4,true},
+		{"--check-fixed-operand-support","--run-fixed-operand-and-reset","Operand-only","ZEROACC/MOVD2/ownership/drain; no matrix/RISC Dst reads",
+		 TT_PCI_PROBE_PIONEER_OPERAND_SUPPORT,TT_PCI_PROBE_PIONEER_OPERAND_SMOKE,10,5,true},
+		{"--check-fixed-matrix-exec-support","--run-fixed-matrix-exec-and-reset","Matrix-exec-only","One MVMUL/drain; no RISC Dst reads, no numerical validation",
+		 TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SUPPORT,TT_PCI_PROBE_PIONEER_MATRIX_EXEC_SMOKE,11,6,true}
+	};
+	const Mode* selected = NULL; bool inspect = false;
+	if (argc == 2) for (const Mode& mode : modes) {
+		if (strcmp(argv[1],mode.check) == 0) { selected = &mode; inspect = true; }
+		if (strcmp(argv[1],mode.run) == 0) selected = &mode;
+	}
+	if (selected == NULL) {
+		fprintf(stderr,"Usage: %s MODE\nPrivate Pioneer idle tile (1,2); reinitializes compute context, preserves fixed L1 only.\n"
+			"Requires 120 held tiles; no device NoC, DMA, ARC or firmware-flash commands.\n",argv[0]);
+		for (const Mode& mode : modes) fprintf(stderr,"  %s | %s\n    %s\n",mode.check,mode.run,mode.description);
 		return 2;
 	}
+	const Mode& mode = *selected;
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd = open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 	if (fd < 0) { perror(TT_PCI_PROBE_DEVICE); return 1; }
 	if (inspect) {
 		tt_matmul_support s = {};
-		int status = ioctl(fd,configSmoke ? TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT : TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT,&s,sizeof(s));
+		int status = ioctl(fd,mode.support,&s,sizeof(s));
 		int error = errno; close(fd);
 		if (status != 0) { errno = error; perror("PIONEER_MATMUL_SUPPORT"); return 1; }
 		printf("Loaded %s v%" PRIu32 " code/footprint %" PRIu32 "/%" PRIu32
 			" entry/code/park/results %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32
 			" reset/running %08" PRIx32 "/%08" PRIx32 "; metadata only\n",
-			configSmoke ? "config-only" : "matmul",s.version,s.code_words,s.footprint_words,s.entry,s.code_base,s.park_pc,s.results_base,s.reset_mask,s.running_mask);
-		return s.version == (configSmoke ? 6U : 5U) && s.code_words == 160 && s.footprint_words == 420 && s.entry == 0x6000
+			mode.name,s.version,s.code_words,s.footprint_words,s.entry,s.code_base,s.park_pc,s.results_base,s.reset_mask,s.running_mask);
+		return s.version == mode.metadataVersion && s.code_words == 160 && s.footprint_words == 420 && s.entry == 0x6000
 			&& s.code_base == 0x70000 && s.park_pc == TT_TENSIX_PARK_PC && s.results_base == 0x17f800
 			&& s.reset_mask == 0x87ffff && s.running_mask == 0x46800 ? 0 : 1;
 	}
 	printf("P100A-MATMUL: one idle tile context will be reinitialized; fixed L1 preserved, no DMA or firmware update\n");
-	if (configSmoke) printf("CONFIGURATION-ONLY control: no matrix fixtures or Dst accesses execute; count 2 is only a protocol marker\n");
+	printf("%s: %s\n",mode.name,mode.description);
+	if (mode.protocolOnly) printf("Count 2 is only a protocol marker, NOT two numerical matrix results\n");
 	tt_pioneer_matmul_result r = {};
-	int status = ioctl(fd,configSmoke ? TT_PCI_PROBE_PIONEER_TENSIX_CONFIG : TT_PCI_PROBE_PIONEER_TENSIX_MATMUL,&r,sizeof(r));
+	int status = ioctl(fd,mode.operation,&r,sizeof(r));
 	int error = errno; close(fd);
 	if (status != 0) { errno = error; perror("PIONEER_TENSIX_MATMUL"); return 1; }
 	const tt_tensix_matmul_result& m = r.math;
 	const tt_pioneer_mmio_result& p = r.baseline.control.control.control.pci;
 	printf("%s state %" PRIu32 " (1 passed), started/completed/stopped %" PRIu32 "/%" PRIu32 "/%" PRIu32
 		" context reset %" PRIu32 " polls %" PRIu32 "; routes/cores checked %" PRIu32 "/%" PRIu32 "\n",
-		configSmoke ? "Config-only" : "Matmul",m.state,m.started,m.completed,m.stopped,m.context_reset,m.polls,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked);
-	printf("Wait-return-PC/%s/marker %08" PRIx32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",configSmoke ? "protocol-count" : "fixtures",m.phase,m.fixtures,m.marker,m.mismatches);
+		mode.name,m.state,m.started,m.completed,m.stopped,m.context_reset,m.polls,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked);
+	printf("Wait-return-PC/%s/marker %08" PRIx32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",mode.protocolOnly ? "protocol-count" : "fixtures",m.phase,m.fixtures,m.marker,m.mismatches);
 	printf("Representative output bits %08" PRIx32 "/%08" PRIx32 " (%s); PC %08" PRIx32 "/%08" PRIx32 "\n",
-		m.representative[0],m.representative[1],configSmoke ? "expected zero footprint, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
+		m.representative[0],m.representative[1],mode.protocolOnly ? "expected zero footprint, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
 	printf("Reset before/initialized/running/after %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",
 		m.reset_before,m.reset_initialized,m.reset_running,m.reset_after);
 	printf("Entry/FIFO/sync controls %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",m.controls[0],m.controls[1],m.controls[2]);
@@ -60,7 +80,7 @@ int main(int argc, char** argv)
 	printf("Card/root commands after %04" PRIx32 "/%04" PRIx32 "; compute context not preserved\n",p.commands_after[0],p.commands_after[1]);
 	if (m.recovery_required || p.state == TT_PIONEER_MMIO_RESTORE_FAILED)
 		fprintf(stderr,"STOP: cold recovery required; do not retry, reload or run another card operation.\n");
-	return m.version == (configSmoke ? 2U : 1U) && m.state == TT_MATMUL_PASSED && m.started && m.completed && m.stopped
+	return m.version == mode.resultVersion && m.state == TT_MATMUL_PASSED && m.started && m.completed && m.stopped
 		&& m.mismatches == 0 && m.l1_restored && m.tlb_restored && !m.recovery_required
 		&& p.version == 1 && p.state == TT_PIONEER_MMIO_READ_OK && p.restored ? 0 : 1;
 }

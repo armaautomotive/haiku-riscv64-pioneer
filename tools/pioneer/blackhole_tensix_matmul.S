@@ -7,6 +7,22 @@
  */
 .option norvc
 .option norelax
+.set TT_SMOKE_COMPLETION, 0
+.ifdef TT_CONFIG_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
+.ifdef TT_SFPU_LOAD_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
+.ifdef TT_SFPU_STORE_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
+.ifdef TT_OPERAND_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
+.ifdef TT_MATRIX_EXEC_SMOKE
+.set TT_SMOKE_COMPLETION, 1
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -95,8 +111,13 @@ fill_inputs:
 	li t2, 0x71100000 /* SFPLOADI LReg1 */
 	or t1, t1, t2
 	sw t1, 0(s0)
+.ifdef TT_SFPU_LOAD_SMOKE
+	jal ra, drain /* complete vector operations before scalar marker */
+	j config_completion /* only SFPLOADI; no Dst/Src/matrix access */
+.else
 	li t0, 0x72030000 /* SFPSTORE LReg0, FP32, AddrMod0, Dst row 0 */
 	li t2, 8 /* A: sixteen rows, sixteen columns */
+.endif
 fill_a:
 	sw t0, 0(s0)
 	addi t0, t0, 2
@@ -113,7 +134,12 @@ fill_b:
 	/* Only output rows are made undefined. Do not ZEROACC input rows:
 	 * their validity was established by the prior explicit reset.
 	 */
+.ifdef TT_SFPU_STORE_SMOKE
+	j config_completion /* SFPU writes drained; no ZEROACC/MOVD2/matrix */
+	nop /* preserve original two-word li width and every common PC */
+.else
 	li t0, 0x10000020
+.endif
 	li t2, 8
 clear_output:
 	sw t0, 0(s0)
@@ -146,11 +172,21 @@ clear_output:
 	sw t0, 0(s0)
 	jal ra, drain
 matrix:
+.ifdef TT_OPERAND_SMOKE
+	j config_completion /* ZEROACC/MOVD2/ownership drained; no matrix */
+	nop
+.else
 	li t0, 0x26000020 /* MVMUL Dst rows 32..39 += B[8,16] @ A[16,16] */
+.endif
 	sw t0, 0(s0)
 	jal ra, drain
 	/* Copy actual FPU results; the scalar core does no matrix arithmetic. */
+.ifdef TT_MATRIX_EXEC_SMOKE
+	j config_completion /* one matrix instruction drained, no RISC Dst reads */
+	nop
+.else
 	li t2, 0xffbd8800
+.endif
 	li t3, 0x17f800
 	slli t4, s4, 9
 	add t3, t3, t4
@@ -170,7 +206,7 @@ copy_output:
 	fence
 config_completion:
 	li t0, 2
-.ifdef TT_CONFIG_SMOKE
+.if TT_SMOKE_COMPLETION
 	sw t0, 4(s3) /* protocol count, NOT two executed matrix fixtures */
 .else
 	bne s4, t0, fixture

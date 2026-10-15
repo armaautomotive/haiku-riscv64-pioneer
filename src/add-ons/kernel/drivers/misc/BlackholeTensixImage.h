@@ -21,12 +21,20 @@ static inline uint32_t BlackholeTensixImageAddress(unsigned index)
 	index -= TT_TENSIX_OUTPUT_WORDS;
 	return index < 3 ? 0x17ffc0 + index * 4 : UINT32_MAX;
 }
-static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke = false)
+static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
 	// Independent fixed configuration-only control. The decoder test proves
 	// these two same-width substitutions bypass every Dst and matrix access.
 	if (configSmoke && BlackholeTensixImageAddress(index) == 0x700e0) return 0x1540006f;
-	if (configSmoke && BlackholeTensixImageAddress(index) == 0x70238) return 0x0059a223;
+	if (sfpuSmoke == 1 && BlackholeTensixImageAddress(index) == 0x70118) return 0x144000ef;
+	if (sfpuSmoke == 1 && BlackholeTensixImageAddress(index) == 0x7011c) return 0x1180006f;
+	if (sfpuSmoke == 2 && BlackholeTensixImageAddress(index) == 0x70150) return 0x0e40006f;
+	if (sfpuSmoke == 2 && BlackholeTensixImageAddress(index) == 0x70154) return 0x00000013;
+	if (sfpuSmoke == 3 && BlackholeTensixImageAddress(index) == 0x701d8) return 0x05c0006f;
+	if (sfpuSmoke == 3 && BlackholeTensixImageAddress(index) == 0x701dc) return 0x00000013;
+	if (sfpuSmoke == 4 && BlackholeTensixImageAddress(index) == 0x701e8) return 0x04c0006f;
+	if (sfpuSmoke == 4 && BlackholeTensixImageAddress(index) == 0x701ec) return 0x00000013;
+	if ((configSmoke || sfpuSmoke != 0) && BlackholeTensixImageAddress(index) == 0x70238) return 0x0059a223;
 	if (index == 0) return 0x0006a06f;
 	const uint32_t code[] = {
 		0xffe40437,0xffe804b7,0x00448493,0xffef0937,

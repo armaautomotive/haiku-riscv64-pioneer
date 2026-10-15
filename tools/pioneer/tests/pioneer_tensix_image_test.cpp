@@ -26,11 +26,12 @@ struct Machine {
 	bool valid[64], ownerA = false, ownerB = false, drained = true, pendingDrainStore = false;
 	bool dropMatrix = false;
 	const bool configSmoke;
+	const unsigned sfpuSmoke;
 	unsigned matrixInstructions = 0, drains = 0, configWrites = 0, inputWrites = 0, vectorWrites = 0, outputReads = 0, steps = 0;
-	Machine(bool configOnly = false) : configSmoke(configOnly) {
+	Machine(bool configOnly = false, unsigned sfpuOnly = 0) : configSmoke(configOnly), sfpuSmoke(sfpuOnly) {
 		// Explicit pre-launch coprocessor reset reverts ZEROACC validity.
 		for (unsigned i = 0; i < 64; i++) valid[i] = true;
-		for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) l1[i] = BlackholeTensixImageWord(i,configSmoke);
+		for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) l1[i] = BlackholeTensixImageWord(i,configSmoke,sfpuSmoke);
 	}
 	unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) if (BlackholeTensixImageAddress(i) == address) return i;
@@ -39,6 +40,8 @@ struct Machine {
 	void Instruction(uint32_t op) {
 		unsigned opcode = op >> 24;
 		if (configSmoke) assert(opcode == 0xb2 || op == 0x3700000f);
+		if (sfpuSmoke == 1 || sfpuSmoke == 2) assert(opcode == 0xb2 || opcode == 0x71 || (sfpuSmoke == 2 && opcode == 0x72) || op == 0x3700000f);
+		if (sfpuSmoke == 3) assert(opcode != 0x26);
 		if (opcode == 0xb2) {
 			unsigned index = (op >> 16) & 255; assert(index < 68);
 			thread[index] = op & 65535;
@@ -155,24 +158,42 @@ struct Machine {
 		assert(l1[Index(0x17ffc0)] == TT_TENSIX_FINAL_PHASE && l1[Index(0x17ffc4)] == 2 && l1[Index(0x17ffc8)] == 0x4d415431);
 	}
 	bool Correct() {
-		for (unsigned i = 0; i < 256; i++) if (l1[Index(0x17f800+i*4)] != (configSmoke ? 0U : Bits(i < 128 ? 16 : 96))) return false;
+		for (unsigned i = 0; i < 256; i++) if (l1[Index(0x17f800+i*4)] != ((configSmoke || sfpuSmoke != 0) ? 0U : Bits(i < 128 ? 16 : 96))) return false;
 		return true;
 	}
 };
 int main(int argc, char** argv)
 {
-	assert(argc == 4);
+	assert(argc == 8);
 	auto boot = Read(argv[1]), code = Read(argv[2]);
 	auto configCode = Read(argv[3]);
 	assert(boot.size() == 4 && Word(boot,0) == BlackholeTensixImageWord(0) && code.size() == TT_TENSIX_CODE_WORDS*4);
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(code,i*4) == BlackholeTensixImageWord(i+1));
 	assert(configCode.size() == code.size());
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(configCode,i*4) == BlackholeTensixImageWord(i+1,true));
+	auto loadCode = Read(argv[4]); assert(loadCode.size() == code.size());
+	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(loadCode,i*4) == BlackholeTensixImageWord(i+1,false,true));
+	auto storeCode = Read(argv[5]); assert(storeCode.size() == code.size());
+	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(storeCode,i*4) == BlackholeTensixImageWord(i+1,false,2));
+	for (unsigned stage = 3; stage <= 4; stage++) {
+		auto bytes = Read(argv[stage+3]); assert(bytes.size() == code.size());
+		for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(bytes,i*4) == BlackholeTensixImageWord(i+1,false,stage));
+	}
 	assert(BlackholeTensixImageAddress(TT_TENSIX_IMAGE_WORDS) == UINT32_MAX);
 	Machine m; m.Run(); assert(m.Correct() && m.matrixInstructions == 2 && m.inputWrites == 0 && m.vectorWrites == 768 && m.outputReads == 256 && m.drains == 13);
 	Machine disabled; disabled.dropMatrix = true; disabled.Run(); assert(!disabled.Correct());
 	Machine configOnly(true); configOnly.Run();
 	assert(configOnly.Correct() && configOnly.matrixInstructions == 0 && configOnly.inputWrites == 0 && configOnly.vectorWrites == 0 && configOnly.outputReads == 0 && configOnly.configWrites == 7 && configOnly.drains == 4);
 	assert(configOnly.config[0] == 0x42b5 && configOnly.config[1] == 0x20aa0000 && configOnly.thread[2] == 1 && configOnly.thread[3] == 1);
+	Machine loadOnly(false,true); loadOnly.Run();
+	assert(loadOnly.Correct() && loadOnly.lreg[0] == 1 && loadOnly.lreg[1] == 1 && loadOnly.matrixInstructions == 0
+		&& loadOnly.vectorWrites == 0 && loadOnly.outputReads == 0 && loadOnly.drains == 5);
+	Machine storeOnly(false,2); storeOnly.Run();
+	assert(storeOnly.Correct() && storeOnly.matrixInstructions == 0 && storeOnly.vectorWrites == 384 && storeOnly.outputReads == 0 && storeOnly.drains == 5);
+	for (unsigned row = 0; row < 24; row++) for (unsigned col = 0; col < 16; col++) assert(storeOnly.dst[row][col] == 1);
+	Machine operandOnly(false,3); operandOnly.Run();
+	assert(operandOnly.Correct() && operandOnly.matrixInstructions == 0 && operandOnly.vectorWrites == 384 && operandOnly.outputReads == 0 && operandOnly.drains == 8);
+	Machine matrixOnly(false,4); matrixOnly.Run();
+	assert(matrixOnly.Correct() && matrixOnly.matrixInstructions == 1 && matrixOnly.vectorWrites == 384 && matrixOnly.outputReads == 0 && matrixOnly.drains == 9);
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }

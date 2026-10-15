@@ -986,6 +986,47 @@ diagnostic CLI v2 SHA
 Neither matrix execution nor any model inference has passed. Next isolate
 the first SFPU/data-path operations, retaining all cold-recovery gates.
 
+### October 14: vector execution passes; operand preparation isolates failure
+
+Added separately assembled fixed-prefix controls with unchanged 160-word
+code/420-word L1 footprint and common drain/park/restore protocol. New
+operations `546e`/`546f` (metadata v8) run two SFPLOADI instructions only;
+`5470`/`5471` (v9) additionally execute the twelve SFPSTORE instructions
+covering 24 rows of Dst, but no ZEROACC/MOVD2/matrix/RISC Dst reads.
+The assembler-byte comparison, constrained functional decoder and kernel
+policy/fault tests pass. These controls require their zero output footprint
+to remain unchanged; count 2 is a protocol marker, not two matrix results.
+An offline completion-marker-before-drain mistake was caught and fixed
+before deployment. Neither test numerically reads back Dst on hardware.
+
+At 06:24 UTC October 15, SFPU-load-only PASSED on P100A: started/completed/
+stopped 1/1/1, two polls, expected final phase/marker and two parked PCs,
+L1/TLB/PCI restored 1/1/1, recovery 0. Artifacts
+`/boot/home/pioneer-p100a-20261014/sfpu-load-1/`; driver SHA
+`658be222d062267a8106725d40cd2f3049de5403f160e76a631af31dd4d878aa`,
+CLI SHA `26f0434df9355d73adfe293aa2297e57e7a70b4fc13641e1e507a6d5005a5461`.
+
+At 06:27 UTC, SFPU-store-only PASSED with the same complete/stop/restore
+checks, one poll, recovery 0. Artifacts
+`/boot/home/pioneer-p100a-20261014/sfpu-store-1/`; driver SHA
+`32a2fbda464205a83c3b690e0d8c77df2de925bb0b80dab9b8209a8ce5323f37`,
+CLI SHA `109002f28743e7d2c045637f879d7e97759d5de54924eba6a38092f7a1d3829f`.
+
+Added operand-only `5472`/`5473` (v10): same SFPU prefix, ZEROACC,
+MOVD2A/B and UNPACR_NOP handoff, then drain/park without matrix or RISC
+Dst reads. Also added matrix-exec-only `5474`/`5475` (v11), which issues
+one MVMUL/drain but skips numerical readback. At 06:31 UTC, operand-only
+FAILED: start/complete/stop 1/0/0, poll 2 target reset/PC/status all zero,
+state 7, L1 not restored, TLB restored, aggregate PCI state 5, recovery 1.
+Matrix-exec-only was therefore NOT run. Card/root commands remained 0000.
+Requested normal shutdown and relay power-off; no further card commands.
+
+Artifacts `/boot/home/pioneer-p100a-20261014/operand-1/`; driver SHA
+`bd630ce8d779938af3b185d8e98e7fc9a5153b5bdfb4f57409cd1b71d026d237`,
+CLI SHA `9073be2f688cd2663fd5a0a2f1ff9031a4afbf9854b0e52a8a83d810127e1747`.
+The failure is now narrowed to ZEROACC, MOVD2A/B or operand handoff, not
+necessarily MVMUL or RISC Dst reads. No numerical matrix or model success.
+
 Download pinned official sources with:
 
 ```sh
