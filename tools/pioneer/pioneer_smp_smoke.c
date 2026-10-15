@@ -8,7 +8,27 @@
 extern status_t _kern_set_thread_affinity(thread_id, const void*, size_t);
 extern int32 _kern_get_cpu(void);
 
-struct worker_result { uint32 cpu, checksum, actual; status_t error; };
+struct worker_result {
+	uint32 cpu, checksum, actual;
+	status_t error, sleep_error;
+	uint32 sleep_interrupts;
+};
+
+// PIONEER_SMOKE_SLEEP_BEGIN
+static status_t
+wait_for_wakeup(uint32* interruptions)
+{
+	const bigtime_t deadline = system_time() + 1000;
+	for (unsigned retry = 0; retry < 32; retry++) {
+		status_t status = snooze_until(deadline, B_SYSTEM_TIMEBASE);
+		if (status != B_INTERRUPTED) return status;
+		(*interruptions)++;
+		if (system_time() >= deadline) return B_OK;
+	}
+	// Fail closed even if a broken clock or a signal storm prevents progress.
+	return B_INTERRUPTED;
+}
+// PIONEER_SMOKE_SLEEP_END
 
 static uint32
 expected_checksum(void)
@@ -34,7 +54,8 @@ worker(void* cookie)
 		if (result->actual != result->cpu) return 2;
 		for (unsigned i = 0; i < 256; i++) memory[i] = (result->cpu << 24) ^ (round << 16) ^ i;
 		for (unsigned i = 0; i < 10000; i++) value = value * 1664525U + 1013904223U;
-		if (snooze(1000) != B_OK) return 3;
+		result->sleep_error = wait_for_wakeup(&result->sleep_interrupts);
+		if (result->sleep_error != B_OK) return 3;
 		if (_kern_get_cpu() != (int32)result->cpu) return 4;
 		for (unsigned i = 0; i < 256; i++) {
 			if (memory[i] != ((result->cpu << 24) ^ (round << 16) ^ i)) return 5;
@@ -81,8 +102,10 @@ int main(int argc, char** argv)
 		status_t waitStatus = wait_for_thread_etc(threads[i], B_ABSOLUTE_TIMEOUT, deadline, &status);
 		if (waitStatus != B_OK || status != 0) failed = 1;
 		else seen |= UINT64_C(1) << i;
-		printf("CPU %u actual %" PRIu32 " status %ld wait %ld affinity %ld checksum %08" PRIx32 "\n",
-			i, results[i].actual, (long)status, (long)waitStatus, (long)results[i].error, results[i].checksum);
+		printf("CPU %u actual %" PRIu32 " status %ld wait %ld affinity %ld sleep %ld interruptions %" PRIu32 " checksum %08" PRIx32 "\n",
+			i, results[i].actual, (long)status, (long)waitStatus,
+			(long)results[i].error, (long)results[i].sleep_error,
+			results[i].sleep_interrupts, results[i].checksum);
 		if (waitStatus != B_OK) {
 			// Only our own test threads. Do not wait forever if the test fails.
 			for (unsigned j = i; j < spawned; j++) kill_thread(threads[j]);

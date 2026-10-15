@@ -350,8 +350,8 @@ cpu_idle(void)
 
 #if defined(__riscv) && defined(PIONEER_DIAGNOSTIC_SPIN_IDLE)
 	// Private 64-CPU comparison only: keep idle harts awake to isolate an
-	// inter-CPU-interrupt wakeup failure. The build also requires the timed
-	// KDL diagnostic; ordinary kernels continue to use the normal idle path.
+	// inter-CPU-interrupt wakeup failure. Requires explicit diagnostic build
+	// authorization; ordinary kernels continue to use the normal idle path.
 	if (smp_get_num_cpus() == 64) {
 		cpu_pause();
 		return;

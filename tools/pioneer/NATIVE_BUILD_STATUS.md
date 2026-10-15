@@ -2936,3 +2936,41 @@ New helper SHA:
 `964d2b3ae8a6a756d5b252d91f03aa0ed9c7c4e719802bf823243126a8a8ef81`.
 Explicit `memory128-spin-idle6-nosd-control` and journal counterpart retain
 the old defaults and frozen artifact pins. Runtime validation is pending.
+
+Untimed revision-6 session `smp64-memory128-spinidle6-20261014` started at
+02:44 UTC October 15, serial boundary 12592078, through normal systemctl
+kexec. All 17 main2 stages completed in 25,141,754 us. Pinned SSH reported
+64 CPUs and 137,034,936,320 bytes usable. The 4096 MiB/two-pattern memory
+sample PASSED with mask ffffffffffffffff; the 126-worker VM shootdown test
+PASSED all 32 remap rounds. These requests overlapped briefly; both returned
+zero. This is a bounded sample, not a whole-RAM audit or general stability
+certification. app_server, Tracker, Deskbar and input_server were present;
+physical desktop/input confirmation remains pending.
+
+The old CPU smoke passed its first two repetitions, then CPU 63 returned
+worker status 3 (sleep failure); SSH remained responsive. Added exact sleep
+status reporting only in a fresh binary, preserving the original. Seven
+repetitions passed, then an extended 24-repetition run captured one failure:
+CPU 63's snooze returned -2147483638, exactly B_INTERRUPTED. This is a legal
+signal interruption, not evidence that CPU 63 was disabled or corrupt.
+
+The updated CPU test retries only B_INTERRUPTED against one fixed absolute
+1 ms deadline, reports interruption counts, preserves other errors and caps
+retries at 32. Production-body ASan/UBSan tests cover normal sleep, identical
+retry deadlines, real errors, elapsed deadlines and a nonprogressing clock.
+Fresh binary `pioneer_smp_smoke-interrupt-retry-v3` SHA:
+`967c96a229744a715613157a4ded66dac4fbbd125fac06d2dd3f63fbee27d089`.
+All 24 hardware repetitions PASSED, mask ffffffffffffffff each time; CPU 61
+and CPU 58 each reported one handled interruption. No kernel change was
+needed for this userspace test correction. The old failing result is retained.
+
+At about 02:51 UTC, the existing pinned P100A profile passed all six read-only
+topology stages on full-memory/all-core Haiku. The previously audited health
+transaction then returned telemetry/ARC/PCI state 1 and all restored flags 1.
+Firmware remains 12050001 (18.5.0, suffix 01), enabled GDDR f7, status 5515,
+reported uncorrected errors zero, ASIC 47.20 C and fan 1,882 RPM. Board/limit
+zero values remain unvalidated, not claims of healthy zero readings. PCI and
+TLB state were restored, card/root commands 0000/0000, and the independent
+profile passed again. No core start, reset write, DMA, firmware message or
+flash occurred. Accelerator inference remains unimplemented. The normal
+kernel was rebuilt after a comment-only synchronization and remains 3bdfd5dd...
