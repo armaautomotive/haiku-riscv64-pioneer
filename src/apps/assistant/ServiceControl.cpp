@@ -1,5 +1,6 @@
 /* Copyright 2026. Distributed under the terms of the MIT License. */
 #include "Protocol.h"
+#include "ModelStore.h"
 #include <Application.h>
 #include <Looper.h>
 #include <Messenger.h>
@@ -33,8 +34,38 @@ int main(int argc, char** argv)
 	BApplication app("application/x-vnd.Haiku-AssistantControl");
 	BMessenger service(kServiceSignature);
 	if (argc < 2) {
-		fprintf(stderr, "Usage: assistantctl status | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
+		fprintf(stderr, "Usage: assistantctl status | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
 		return 2;
+	}
+	if (strcmp(argv[1], "models") == 0) {
+		for (size_t i = 0; i < kAssistantModelCount; i++)
+			printf("%zu: %s | %llu bytes | %s | %s\n", i, kAssistantModels[i].name,
+				(unsigned long long)kAssistantModels[i].bytes,
+				AssistantModelPresent(i) ? "installed" : "not installed",
+				kAssistantModels[i].compatible ? "CPU backend" : "unsupported");
+		return 0;
+	}
+	if ((strcmp(argv[1], "install") == 0 || strcmp(argv[1], "verify") == 0
+		|| strcmp(argv[1], "model") == 0) && argc == 3) {
+		char* end;
+		long index = strtol(argv[2], &end, 10);
+		if (end == argv[2] || *end != '\0' || index < 0 || (size_t)index >= kAssistantModelCount) return 2;
+		if (strcmp(argv[1], "model") == 0) {
+			BMessage request(kSelectModel), reply;
+			request.AddInt32("model_index", index);
+			status_t status;
+			if (service.SendMessage(&request, &reply, 1000000, 1000000) != B_OK
+				|| reply.FindInt32("status", &status) != B_OK) return 1;
+			printf("select status=%ld (accepted is asynchronous; check status for load result)\n", (long)status);
+			return status == B_OK ? 0 : 1;
+		}
+		std::atomic<bool> cancelled(false);
+		BString error;
+		status_t status = strcmp(argv[1], "install") == 0
+			? InstallAssistantModel(index, cancelled, BMessenger(), error)
+			: VerifyAssistantModel(index, AssistantModelPath(index).String(), cancelled, error);
+		printf("status=%ld %s\n", (long)status, status == B_OK ? "Verified successfully." : error.String());
+		return status == B_OK ? 0 : 1;
 	}
 	if (strcmp(argv[1], "toggle") == 0)
 		return BMessenger(kAssistantSignature).SendMessage(kToggle) == B_OK ? 0 : 1;
@@ -69,6 +100,11 @@ int main(int argc, char** argv)
 		reply.FindInt32("max_threads", &maximum);
 		printf("cpu_threads=%ld last_request_threads=%ld max_threads=%ld\n",
 			(long)threads, (long)active, (long)maximum);
+		bool loading = false;
+		const char* path = ""; const char* error = ""; const char* backend = "";
+		reply.FindBool("loading", &loading); reply.FindString("model_path", &path);
+		reply.FindString("model_error", &error); reply.FindString("backend", &backend);
+		printf("loading=%d model=%s\nbackend=%s\nmodel_error=%s\n", loading, path, backend, error);
 		return 0;
 	}
 	bool cancel = strcmp(argv[1], "cancel-test") == 0;

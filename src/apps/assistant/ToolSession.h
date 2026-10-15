@@ -21,7 +21,7 @@ private:
 	int64 fOuterID, fInnerID;
 	bool fBusy, fWaitingTool;
 	int fToolCount;
-	std::string fPrompt, fVisible, fCall;
+	std::string fPrompt, fVisible, fCall, fModelPath;
 	BMessageRunner* fWatch;
 	bigtime_t fDeadline;
 };

@@ -1,6 +1,7 @@
 /* Copyright 2026. Distributed under the terms of the MIT License. */
 #include "Protocol.h"
 #include "Settings.h"
+#include "ModelStore.h"
 
 #include <Application.h>
 #include <Autolock.h>
@@ -45,8 +46,16 @@ public:
 	AssistantService()
 		: BApplication(kServiceSignature), fWake(create_sem(0, "assistant requests")),
 			fWorker(-1), fRequest(NULL), fQuit(false), fReady(false), fLoads(0),
-			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL)
+			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL),
+			fLoading(true), fPersistModel(false)
 	{
+		const char* overridePath = getenv("LLAMA_MODEL");
+		fPendingPath = overridePath != NULL ? BString(overridePath) : LoadAssistantModel();
+		if (fPendingPath.IsEmpty()) {
+			fPendingPath = AssistantModelPath(0);
+			if (access(fPendingPath.String(), R_OK) != 0)
+				fPendingPath = "/Haiku1/home/models/Qwen3-0.6B-Q8_0.gguf";
+		}
 	}
 
 	virtual void ReadyToRun()
@@ -61,6 +70,7 @@ public:
 			fWorker = -1;
 			PostMessage(B_QUIT_REQUESTED);
 		}
+		release_sem(fWake);
 	}
 
 	virtual bool QuitRequested()
@@ -80,6 +90,7 @@ public:
 	virtual void MessageReceived(BMessage* message)
 	{
 		if (message->what == kConfigureThreads) {
+			BAutolock lock(&fLock);
 			int32 threads;
 			status_t status = B_BAD_VALUE;
 			if (message->FindInt32("cpu_threads", &threads) == B_OK
@@ -93,11 +104,34 @@ public:
 			message->SendReply(&reply, (BHandler*)NULL, 1000000);
 			return;
 		}
+		if (message->what == kSelectModel) {
+			BAutolock lock(&fLock);
+			int32 index = -1;
+			status_t status = B_BAD_VALUE;
+			if (message->FindInt32("model_index", &index) == B_OK && index >= 0
+				&& (size_t)index < kAssistantModelCount && kAssistantModels[index].compatible) {
+				if (fLoading || fRequest != NULL) status = B_BUSY;
+				else if (!AssistantModelPresent(index)) status = B_ENTRY_NOT_FOUND;
+				else {
+					fPendingPath = AssistantModelPath(index);
+					fLoading = true; fPersistModel = true; fModelError = "";
+					status = B_OK; release_sem(fWake);
+				}
+			}
+			BMessage reply(kSelectModel);
+			reply.AddInt32("status", status);
+			message->SendReply(&reply);
+			return;
+		}
 		if (message->what == kServiceStatus) {
 			BAutolock lock(&fLock);
 			BMessage reply(kServiceStatus);
 			reply.AddBool("ready", fReady.load());
 			reply.AddBool("busy", fRequest != NULL);
+			reply.AddBool("loading", fLoading);
+			reply.AddString("model_path", fModelPath);
+			reply.AddString("model_error", fModelError);
+			reply.AddString("backend", "CPU (llama.cpp); P100A chat backend not available yet");
 			reply.AddInt32("model_loads", fLoads.load());
 			reply.AddInt32("cpu_threads", fThreads.load());
 			reply.AddInt32("active_threads", fActiveThreads.load());
@@ -130,9 +164,14 @@ public:
 		}
 		request->prompt = prompt;
 		BAutolock lock(&fLock);
-		if (fRequest != NULL || request->prompt.size() > 12000) {
-			Reply(request, kDone, "", fRequest != NULL
-				? "Service is busy. Try again shortly." : "Prompt is too long.");
+		const char* expected;
+		if (message->FindString("model_path", &expected) == B_OK && fModelPath != expected) {
+			Reply(request, kDone, "", "Model changed. Start a new chat and try again.");
+			delete request; return;
+		}
+		if (fLoading || fRequest != NULL || request->prompt.size() > 12000) {
+			Reply(request, kDone, "", (fLoading || fRequest != NULL)
+				? "Service is loading or busy. Try again shortly." : "Prompt is too long.");
 			delete request;
 			return;
 		}
@@ -167,50 +206,23 @@ private:
 	{
 		llama_backend_init();
 		ggml_backend_load_all();
-		const char* path = getenv("LLAMA_MODEL");
-		if (path == NULL) {
-			path = "/boot/home/models/Qwen3-0.6B-Q8_0.gguf";
-			if (access(path, R_OK) != 0)
-				path = "/Haiku1/home/models/Qwen3-0.6B-Q8_0.gguf";
-		}
-		llama_model_params modelParams = llama_model_default_params();
-		modelParams.n_gpu_layers = 0;
-		modelParams.progress_callback = LoadProgress;
-		modelParams.progress_callback_user_data = this;
-		fModel = llama_model_load_from_file(path, modelParams);
-		if (fModel != NULL) {
-			fLoads.fetch_add(1);
-			llama_context_params params = llama_context_default_params();
-			params.n_ctx = 4096;
-			params.n_batch = 64;
-			params.n_ubatch = 64;
-			params.n_threads = fThreads.load();
-			params.n_threads_batch = params.n_threads;
-			fContext = llama_init_from_model(fModel, params);
-			if (fContext != NULL)
-				llama_set_abort_callback(fContext, Abort, this);
-		}
-		fReady.store(fContext != NULL);
-		fprintf(stderr, "Assistant service: model_loads=%d ready=%d\n",
-			fLoads.load(), fReady.load());
 		while (!fQuit.load()) {
-			if (acquire_sem(fWake) != B_OK || fQuit.load())
-				break;
+			if (acquire_sem(fWake) != B_OK || fQuit.load()) break;
+			BString path;
 			Request* request;
 			{
 				BAutolock lock(&fLock);
+				path = fPendingPath;
+				fPendingPath = "";
 				request = fRequest;
 			}
-			if (request == NULL)
-				continue;
-			std::string answer;
-			std::string error;
+			if (!path.IsEmpty()) { LoadModel(path); continue; }
+			if (request == NULL) continue;
+			std::string answer, error;
 			bool success = fReady.load() && Complete(request, answer, error);
-			if (!fReady.load())
-				error = "Model/context load failed. Check service log and restart service.";
+			if (!fReady.load()) error = "No model is ready. Open Models to select or retry a model.";
 			if (request->cancelled.load()) {
-				success = false;
-				error = "Stopped. Model remains loaded.";
+				success = false; error = "Stopped. Model remains loaded.";
 			}
 			{
 				BAutolock lock(&fLock);
@@ -220,11 +232,53 @@ private:
 				? "Ready. Model stays loaded in the background." : error.c_str(), success);
 			delete request;
 		}
-		if (fContext != NULL)
-			llama_free(fContext);
-		if (fModel != NULL)
-			llama_model_free(fModel);
+		if (fContext != NULL) llama_free(fContext);
+		if (fModel != NULL) llama_model_free(fModel);
 		llama_backend_free();
+	}
+
+	void LoadModel(const BString& path)
+	{
+		BString error;
+		int index = AssistantModelIndex(path.String());
+		status_t status = B_NOT_SUPPORTED;
+		if (index >= 0 && kAssistantModels[index].compatible)
+			status = VerifyAssistantModel(index, path.String(), fQuit, error);
+		else error = "Model is outside the supported catalog. Open Models to choose a supported Qwen3 model.";
+		llama_model* model = NULL;
+		llama_context* context = NULL;
+		llama_model_params modelParams = llama_model_default_params();
+		modelParams.n_gpu_layers = 0;
+		modelParams.progress_callback = LoadProgress;
+		modelParams.progress_callback_user_data = this;
+		if (status == B_OK && !fQuit.load()) model = llama_model_load_from_file(path.String(), modelParams);
+		if (model != NULL) {
+			fLoads.fetch_add(1);
+			llama_context_params params = llama_context_default_params();
+			params.n_ctx = 4096;
+			params.n_batch = 64;
+			params.n_ubatch = 64;
+			params.n_threads = fThreads.load();
+			params.n_threads_batch = params.n_threads;
+			context = llama_init_from_model(model, params);
+			if (context != NULL) llama_set_abort_callback(context, Abort, this);
+		}
+		BAutolock lock(&fLock);
+		if (context != NULL && fPersistModel && SaveAssistantModel(path.String()) != B_OK)
+			error = "Could not save model selection; previous model kept.";
+		if (context != NULL && error.IsEmpty()) {
+			if (fContext != NULL) llama_free(fContext);
+			if (fModel != NULL) llama_model_free(fModel);
+			fContext = context; fModel = model; fModelPath = path;
+		} else {
+			if (context != NULL) llama_free(context);
+			if (model != NULL) llama_model_free(model);
+			if (error.IsEmpty()) error = "Model/context load failed. Previous model kept; choose another or retry.";
+		}
+		fModelError = error; fLoading = false; fPersistModel = false;
+		fReady.store(fContext != NULL);
+		fprintf(stderr, "Assistant service: model_loads=%d ready=%d model=%s error=%s\n",
+			fLoads.load(), fReady.load(), fModelPath.String(), error.String());
 	}
 
 	bool Complete(Request* request, std::string& answer, std::string& error)
@@ -305,6 +359,8 @@ private:
 	std::atomic<int32> fThreads, fActiveThreads;
 	llama_model* fModel;
 	llama_context* fContext;
+	bool fLoading, fPersistModel;
+	BString fPendingPath, fModelPath, fModelError;
 };
 
 int main()

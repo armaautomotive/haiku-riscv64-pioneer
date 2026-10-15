@@ -2,6 +2,7 @@
 #include "Protocol.h"
 #include "ToolBridge.h"
 #include "ToolSession.h"
+#include "ModelManager.h"
 #include <Application.h>
 #include <Button.h>
 #include <Entry.h>
@@ -9,6 +10,7 @@
 #include <MessageRunner.h>
 #include <Messenger.h>
 #include <Roster.h>
+#include <Path.h>
 #include <ScrollView.h>
 #include <StringView.h>
 #include <TextView.h>
@@ -17,6 +19,7 @@
 #include <stdio.h>
 #include <Window.h>
 #include <stdlib.h>
+#include <string.h>
 #include <string>
 #include <vector>
 #include <unistd.h>
@@ -24,6 +27,7 @@
 static const uint32 kSend = 'send', kStop = 'stop', kClear = 'cler';
 static const uint32 kShow = 'show', kCheck = 'chek';
 static const uint32 kApplyThreads = 'apth';
+static const uint32 kOpenModels = 'omod';
 
 static status_t
 StartService()
@@ -67,8 +71,11 @@ public:
 		fThreads->SetEnabled(false);
 		fApplyThreads = new BButton("Apply", new BMessage(kApplyThreads));
 		fApplyThreads->SetEnabled(false);
+		fModels = new BButton("Models…", new BMessage(kOpenModels));
+		fModelLabel = new BStringView("active model", "Chat backend: CPU — starting service");
 		BLayoutBuilder::Group<>(this, B_VERTICAL)
 			.SetInsets(B_USE_WINDOW_INSETS)
+			.AddGroup(B_HORIZONTAL).Add(fModelLabel).AddGlue().Add(fModels).End()
 			.AddGroup(B_HORIZONTAL)
 				.Add(fThreads).Add(fApplyThreads)
 				.Add(new BStringView("thread_hint", "Saved; applies to next model request"))
@@ -99,6 +106,13 @@ public:
 	virtual void MessageReceived(BMessage* message)
 	{
 		switch (message->what) {
+			case kOpenModels:
+				if (fModelWindow.IsValid()) fModelWindow.SendMessage(kShowModelManager);
+				else {
+					ModelManager* manager = new ModelManager;
+					fModelWindow = BMessenger(manager); manager->Show();
+				}
+				break;
 			case kApplyThreads: ApplyThreads(); break;
 			case kToggle:
 				if (!IsHidden() && IsActive()) {
@@ -132,8 +146,19 @@ public:
 							fThreads->SetEnabled(true); fApplyThreads->SetEnabled(true);
 						}
 						reply.FindBool("ready", &ready);
-						fStatus->SetText(ready ? "Model loaded. Ctrl+Space shows/hides this window."
-							: "Service loading model (check log if this persists).");
+						bool loading = false;
+						const char* path = ""; const char* error = "";
+						reply.FindBool("loading", &loading);
+						reply.FindString("model_path", &path); reply.FindString("model_error", &error);
+						if (fModelPath != path) {
+							fModelPath = path; fTurns.clear(); fTranscript->SetText("");
+						}
+						BString label("CPU: "); label << (*path ? BPath(path).Leaf() : "no model loaded");
+						fModelLabel->SetText(label.String());
+						fSend->SetEnabled(ready && !loading);
+						fStatus->SetText(loading ? "Verifying/loading model..."
+							: (*error ? error : (ready ? "Model loaded. Ctrl+Space shows/hides this window."
+							: "No model loaded. Open Models to install/select one.")));
 					}
 				}
 				break;
@@ -209,6 +234,15 @@ private:
 			fStatus->SetText("Could not start service. Check installation and try again.");
 			return;
 		}
+		BMessage query(kServiceStatus), state;
+		bool ready = false, loading = true;
+		const char* path = "";
+		if (BMessenger(kServiceSignature).SendMessage(&query, &state, 100000, 100000) == B_OK) {
+			state.FindBool("ready", &ready); state.FindBool("loading", &loading);
+			state.FindString("model_path", &path);
+		}
+		if (!ready || loading) { fStatus->SetText("Model is not ready. Open Models to check its status."); return; }
+		if (fModelPath != path) { fModelPath = path; fTurns.clear(); fTranscript->SetText(""); }
 		fPending = fInput->Text();
 		size_t bytes = fPending.size();
 		for (size_t i = 0; i < fTurns.size(); i++)
@@ -234,6 +268,7 @@ private:
 		request.AddInt64("id", fRequest);
 		request.AddMessenger("target", BMessenger(this));
 		request.AddString("prompt", prompt.c_str());
+		request.AddString("model_path", fModelPath.c_str());
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;
@@ -251,6 +286,10 @@ private:
 	BStringView* fStatus;
 	BTextControl* fThreads;
 	BButton* fApplyThreads;
+	BButton* fModels;
+	BStringView* fModelLabel;
+	BMessenger fModelWindow;
+	std::string fModelPath;
 	bool fThreadsLoaded;
 	BMessageRunner* fCheck;
 	ToolSession* fSession;
@@ -272,11 +311,15 @@ public:
 		fWindow = BMessenger(window);
 		window->Show();
 	}
-	virtual void ArgvReceived(int32, char**) { fWindow.SendMessage(kShow); }
+	virtual void ArgvReceived(int32 argc, char** argv)
+	{
+		fWindow.SendMessage(kShow);
+		if (argc == 2 && strcmp(argv[1], "--models") == 0) PostMessage(kOpenModels);
+	}
 	virtual void RefsReceived(BMessage*) { fWindow.SendMessage(kShow); }
 	virtual void MessageReceived(BMessage* message)
 	{
-		if (message->what == kToggle) fWindow.SendMessage(kToggle);
+		if (message->what == kToggle || message->what == kOpenModels) fWindow.SendMessage(message);
 		else BApplication::MessageReceived(message);
 	}
 private:

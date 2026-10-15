@@ -1,14 +1,17 @@
 SubDir HAIKU_TOP src apps assistant ;
 
-UsePrivateHeaders shared ;
-Application HaikuAssistant : Assistant.cpp ToolBridge.cpp ToolSession.cpp
+UsePrivateHeaders shared libroot ;
+Application HaikuAssistant : Assistant.cpp ModelManager.cpp ModelStore.cpp ToolBridge.cpp ToolSession.cpp
 	: be shared [ TargetLibstdc++ ] [ TargetLibsupc++ ]
 	: Assistant.rdef
 	;
 
-Application HaikuAssistantControl : ServiceControl.cpp
+Application HaikuAssistantControl : ServiceControl.cpp ModelStore.cpp
 	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]
 	;
+
+SimpleTest HaikuAssistantModelStoreTest : ModelStoreTest.cpp ModelStore.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ] ;
 
 SubDirHdrs [ FDirName $(HAIKU_TOP) headers os add-ons input_server ] ;
 Addon HaikuAssistantShortcut : ShortcutFilter.cpp

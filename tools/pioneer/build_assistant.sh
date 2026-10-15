@@ -23,7 +23,10 @@ done
 	"$@" -B"$assistant_release/system/glue/" \
 	-L"$assistant_release/kits" -L"$assistant_release/system/libroot" \
 	-I"$assistant_root/headers/private/shared" \
+	-I"$assistant_root/headers/private/libroot" \
 	"$assistant_root/src/apps/assistant/Assistant.cpp" \
+	"$assistant_root/src/apps/assistant/ModelManager.cpp" \
+	"$assistant_root/src/apps/assistant/ModelStore.cpp" \
 	"$assistant_root/src/apps/assistant/ToolBridge.cpp" \
 	"$assistant_root/src/apps/assistant/ToolSession.cpp" \
 	"$assistant_release/kits/shared/libshared.a" -lbe -o "$assistant_output"
@@ -40,10 +43,12 @@ if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
 	"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
 		"$@" -I"$assistant_root/src/libs/llama.cpp/include" \
 		-I"$assistant_root/src/libs/llama.cpp/ggml/include" \
+		-I"$assistant_root/headers/private/libroot" \
 		-B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
 		-L"$assistant_release/system/libroot" -L"$ASSISTANT_LLAMA_LIB_DIR" \
 		-Wl,-rpath-link,"$ASSISTANT_LLAMA_LIB_DIR" \
 		"$assistant_root/src/apps/assistant/Service.cpp" \
+		"$assistant_root/src/apps/assistant/ModelStore.cpp" \
 		-lbe -l:libllama.so.0.2.0 -l:libggml.so.0 \
 		-o "${assistant_output}Service"
 	"$assistant_host_tools/rc/rc" -o "$assistant_resources/Service.rsrc" \
@@ -64,8 +69,17 @@ shasum -a 256 "${assistant_output}Shortcut"
 "$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
 	"$@" -B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
 	-L"$assistant_release/system/libroot" \
-	"$assistant_root/src/apps/assistant/ServiceControl.cpp" -lbe \
+	-I"$assistant_root/headers/private/libroot" \
+	"$assistant_root/src/apps/assistant/ServiceControl.cpp" \
+	"$assistant_root/src/apps/assistant/ModelStore.cpp" -lbe \
 	-o "${assistant_output}Control"
+
+"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
+	"$@" -B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
+	-L"$assistant_release/system/libroot" -I"$assistant_root/headers/private/libroot" \
+	"$assistant_root/src/apps/assistant/ModelStoreTest.cpp" \
+	"$assistant_root/src/apps/assistant/ModelStore.cpp" -lbe \
+	-o "${assistant_output}ModelStoreTest"
 
 "$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
 	"$@" -I"$assistant_root/headers/private/app" -I"$assistant_root/headers/private/interface" \
