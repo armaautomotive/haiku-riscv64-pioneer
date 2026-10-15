@@ -2696,3 +2696,27 @@ kernel contains the marker and has SHA
 It is saved separately under `memory-kdl-timer-kernel-1`; the build mirror is
 back to the normal kernel. Native packaging/deployment and timed KDL are
 pending. No installed Samsung package, default boot, SD or P100A state changed.
+
+Bounded normal SSH reboot failed for the stalled comparison. Recovered with
+the relay off hold, a longer off interval, then one on pulse at about 01:10
+UTC. Fresh ZSBL and default Linux returned; pinned SSH verified NVMe root,
+empty kexec slot and P100A command 0000. This is relay recovery, not a clean
+Haiku shutdown, and does not prove why the prior power-on attempt failed.
+
+The private diagnostic bundle passed native package path-set comparison,
+kernel/ECAM extraction hashes, fresh private BFS check and full HPKG roundtrip.
+RAM BFS SHA `abbd25643a1787f3a857535f4becee8f8b7fe7578404fb1dae52b425afae1e68`;
+HPKG SHA `566f44dd4ebd0fbb811fe829faf3173f10294d4b8ed40ffbf96c1d5f40e35261`.
+ECAM remains `23e65e2a...`. New native helper
+`pioneer_linux_boot_haiku_kdl-timer-1.sh` SHA
+`1782286b9683097fca48d9535b18d022337688e46fb9dae93c13809145d17f3f`
+adds explicit 64-CPU/full-RAM KDL profiles; defaults and old pins stay unchanged.
+A separate explicit journal-view variant retains the pinned read-only backing
+verifier if needed; it has not been used for this diagnostic. Direct Samsung
+read-only mounting and original boot-input hashes passed again.
+
+Prepared and started `smp64-memory128-kdl1-20261014` at 01:14 UTC October 15,
+boundary 11184226, using the unchanged loader and separately pinned diagnostic
+kernel/bundle. The intended KDL timeout is diagnostic, not a detected kernel
+panic. The normal kernel artifact has already been restored on the build
+mirror; no installed/default boot or P100A operation was changed.

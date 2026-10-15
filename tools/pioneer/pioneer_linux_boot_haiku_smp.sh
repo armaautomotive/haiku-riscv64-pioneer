@@ -2,16 +2,20 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control]'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 if [ "$profile" = memory8-journal-recovery-control ]; then
  [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
 fi
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control)
+ [ "$cpu_count" = 64 ] || fail 'Private KDL diagnostic requires 64 CPUs'
+ ;;
+esac
 case "$action" in prepare|boot|cancel) ;; *) fail 'Unknown action';; esac
 case "$session" in ''|*[!A-Za-z0-9_-]*) fail 'Use a simple unique session name';; esac
 [ "${#session}" -le 64 ] || fail 'Session name too long'
@@ -54,6 +58,15 @@ case "$profile" in
   bundle=$base/smp-kernel-bundle-memory-map-order-1/samsung-ram.bfs
   bundle_hash=98783b7aa58b283c9ce33623deecd828eaf5a8f20394cfa92a2fe1065c098ebf
   case "$profile" in memory8-map-order-control) memory_gib=8;; memory128-map-order-control) memory_gib=128;; esac
+  ;;
+ memory128-kdl-control|memory128-kdl-journal-control)
+  # Deliberately enters the debugger from AP1 after 120 seconds, even if
+  # boot succeeds. This is a separate diagnostic, never the default kernel.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-timer-1/samsung-ram.bfs
+  bundle_hash=abbd25643a1787f3a857535f4becee8f8b7fe7578404fb1dae52b425afae1e68
+  memory_gib=128
   ;;
  *) fail 'Unknown pinned kernel profile';;
 esac
@@ -145,8 +158,8 @@ case "$action" in
    exit "$result"
   }
   trap cleanup EXIT
-  if [ "$profile" = memory8-journal-recovery-control ]; then
-   # Linux befs refuses a pending journal. The explicit recovery profile
+  if [ "$profile" = memory8-journal-recovery-control ] || [ "$profile" = memory128-kdl-journal-control ]; then
+   # Linux befs refuses a pending journal. Explicit journal-view profiles
    # verifies the same two hashes through a fresh private replay overlay,
    # keeping the physical Samsung disk block-read-only throughout that check.
    # Only a subsequent ordinary Haiku root mount replays the real journal.
@@ -181,7 +194,7 @@ case "$action" in
   printf '%s\n' "$token" > "$run/token"
   grep -Eq '^[0-9a-f]{32}$' "$run/token" || fail 'Invalid token'
   sha256sum "$image" "$bundle" "$loader" "$uart_helper" "$run/live-fdt.dtb" "$run/probe-fdt.dtb" "$run/cpus" "$run/profile" > "$run/inputs.sha256"
-  if [ "$profile" = memory8-journal-recovery-control ]; then
+  if [ "$profile" = memory8-journal-recovery-control ] || [ "$profile" = memory128-kdl-journal-control ]; then
    sha256sum "$journal_verifier" >> "$run/inputs.sha256"
   fi
   uart_owned=1
