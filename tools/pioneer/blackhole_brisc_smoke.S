@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-/* Offline test image only. No driver operation installs or starts this image.
+/* Fixed diagnostic image for the optional guarded BRISC operation only.
  * RV32I: no stack, local RAM, CSR, NoC command, DMA or coprocessor access.
  * The sole stores are to two words in the previously tested L1 tail.
  */

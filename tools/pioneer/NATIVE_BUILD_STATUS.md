@@ -3031,3 +3031,29 @@ BRISC CLI SHA:
 `d8c88121d0b9c194ba4b0c8f7ebdd1629e41e093e4584c85cfbdc7a6a8889c70`.
 Neither is deployed yet; installed trace module remains 0d094653... and no
 BRISC instruction/start/reset-write result exists yet. No DMA or flash.
+
+Deployed only the optional module after saving/verifying trace module
+0d094653... as `brisc-exec-1/tenstorrent_pci_probe.before-brisc-1`. The first
+read-only support query returned Invalid Argument from the still-loaded old
+module. After the asynchronous devfs reload, it positively returned v1,
+19 code/22 footprint words and the expected code/result/park addresses; no
+core operation had run during that check. All prior profile, telemetry,
+held-core and reversible L1 checks then passed with the newly loaded module.
+
+At about 04:01 UTC October 15 (October 14 locally), serial boundary 13260172,
+the first actual fixed BRISC execution PASSED: checksum 528, completion PION,
+both PC samples 0x70048, reset 0x47800 -> 0x47000 -> 0x47800. It completed on
+the first poll, started/completed/stopped flags all 1, L1/TLB/PCI restored all
+1, card/root commands 0000/0000, cold-recovery flag zero. This is real scalar
+RISC execution on the P100A, not a CPU-host simulation or Tensix matrix/LLM
+inference result. Only one core on the sole whitelisted tile was released.
+
+Independent health and held-core checks then passed: ARC heartbeat advanced,
+GDDR reported errors remained zero, ASIC about 48.10 C, fan 1,882 RPM and all
+five RISCs held. A second explicit execution passed identically, taking five
+polls. The subsequent independent topology profile passed stage 6 with the
+original disabled windows/commands; the host all-core smoke passed and memory
+maximum remained 137,034,936,320 bytes. No relay/reboot/SD action was needed.
+No DMA, ARC firmware message, firmware flash or GDDR compute/memory test has
+been run. Next gates are real accelerator math, model-memory transport and a
+native runtime/backend; this does not yet make llama.cpp use the P100A.

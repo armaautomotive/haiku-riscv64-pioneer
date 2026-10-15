@@ -1,7 +1,7 @@
 /*
  * Copyright 2026, Haiku, Inc. All rights reserved.
  * Distributed under the terms of the MIT License.
- * Optional, root-only Pioneer experiments. No DMA or firmware writes.
+ * Optional, root-only Pioneer experiments. No DMA or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
 

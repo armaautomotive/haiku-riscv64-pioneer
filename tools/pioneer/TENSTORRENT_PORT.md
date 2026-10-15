@@ -546,6 +546,39 @@ completion/stop verification, and a cold-recovery-only path on uncertain
 stop. Never rewrite live instructions or treat a timeout as restored state.
 The original kernel driver's operation set and installed binary are unchanged.
 
+### October 14: first native P100A scalar-core execution
+
+Implemented the separate explicit BRISC operation and a read-only loaded-
+module metadata query. All earlier operation ABIs and eight CLI hashes stay
+unchanged. The new policy uses dynamic bidirectional VC for both L1 and reset
+access, starts only bit-11 BRISC on the already validated tile `(1,2)`, and
+requires drained results plus two park-PC samples before stop verification
+and code restoration. Original L1 bytes remain kernel-local. Unknown core
+state or execution/stop uncertainty leaves the image in place and latches
+cold-recovery-required; later operations are refused under the same lock.
+Reloading a module is not cold recovery. Local BRISC RAM/register state may
+reset; the L1/PCI/TLB restore flags do not promise arbitrary RISC context
+restoration. No other RISC, DMA, firmware message or flash operation is used.
+
+New optional module SHA:
+`58ffcadcdc3e9ae0804b75ddda17ad55b06da97613a9d8b5b51a1b5b64107174`.
+New explicit CLI SHA:
+`d8c88121d0b9c194ba4b0c8f7ebdd1629e41e093e4584c85cfbdc7a6a8889c70`.
+They are in `brisc-exec-1/`, with the exact previous trace driver retained as
+`tenstorrent_pci_probe.before-brisc-1`. A first metadata check correctly saw
+the old loaded module; a later check confirmed devfs had reloaded the new
+one. All prior topology/telemetry/held-core/L1 checks passed before execution.
+
+At about 21:01 local October 14 (04:01 UTC October 15), the first execution
+PASSED: checksum 528, completion 50494f4e, both PC samples 00070048, reset
+00047800 -> 00047000 -> 00047800. Started/completed/stopped and all three
+L1/TLB/PCI restored flags were 1; card/root commands ended 0000/0000. The
+repeat passed identically, using five polls versus one in the first run.
+Independent health/core-state/profile checks and the host 64-CPU test passed
+afterwards; no recovery or SD change was necessary. This proves bounded
+scalar RISC code runs on the real P100A under Haiku. It is not Tensix matrix
+compute, a GDDR memory audit, a native runtime port or accelerator LLM inference.
+
 Download pinned official sources with:
 
 ```sh
