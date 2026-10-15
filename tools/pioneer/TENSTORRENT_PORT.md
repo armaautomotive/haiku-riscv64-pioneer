@@ -21,6 +21,12 @@ An initial DRAM-route preflight refusal and an exception-path failure were
 observed; explicit error returns replaced exception unwinding, without
 relaxing device guards. This remains experimental, not full Qwen support.
 See [Assistant details and validation](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).
+The next performance prerequisite now passes on the real card: the sole
+compute tile's NoC0 can read a fixed 64-byte GDDR sample into its own L1,
+with a poisoned destination, independent host comparison and complete
+L1/NIU/TLB/PCI rollback. This is **not** a resident Qwen backend, a bandwidth
+measurement, or a faster-than-CPU result. The Assistant's supported modes
+have not changed. See the October 15 device-residency record below.
 As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
@@ -1442,6 +1448,110 @@ Keep original notices and provenance. Do not relabel copied GPL driver code
 as MIT. Packaging/upstream acceptance needs an explicit licensing review.
 These pins are investigation snapshots, not a validated mutually compatible
 release pair or a firmware recommendation.
+
+### October 15: device-residency prerequisite, not Qwen acceleration
+
+The existing tile interface cannot become a practical Qwen accelerator just
+by removing reference comparisons or enabling its UI entry. It streams tiny
+BF16 weight tiles over host PIO, executes on one tile, and repeatedly starts,
+drains, stops and restores it. Qwen needs persistent device weights and much
+larger, parallel device-dispatched operations. Qwen remains CPU-only in the
+Assistant; TinyStories remains explicitly experimental, not a Qwen fallback.
+
+A fresh CPU comparison baseline used the existing native llama.cpp
+`c060ca974c77`, installed Qwen3-0.6B-Q8_0 (SHA-256 `9465e63a...`), 32 CPU
+threads, batch/microbatch 128, GPU layers 0, normal warmup and three repeats:
+prompt processing 128 tokens `32.219 +/- 0.303` tokens/s; generation 64 tokens
+`11.695 +/- 0.091` tokens/s. See the unmodified native
+[JSONL results](benchmarks/haiku-qwen3-0.6b-q8-cpu-residency-baseline-20261015.jsonl).
+Prompt and generation are separate llama-bench cases, not an Assistant
+end-to-end latency result. A preceding one-repeat prompt32/generation16
+check gave `33.888/12.015` tokens/s. Benchmarks ran in a separate process,
+without switching the open Assistant away from TinyStories. Do not compare
+these numbers to the much smaller TinyStories model as an acceleration ratio.
+
+Two new root-only, fixed-address operations were implemented and deployed:
+
+- `tenstorrent_haiku_compute_noc --read-compute-noc-and-restore` first
+  verifies all seven GDDR routes and all 120 enabled tiles held reset. It
+  samples physical `(1,2)` NoC0's identity, translation configuration, four
+  command controls and sixteen outstanding-response counters three times.
+  Only temporary BAR/TLB controls are written. The live samples agreed:
+  node `10611081`, endpoint `00010001`, NIU configuration `00006005`, all
+  commands/counters zero, request FIFO disabled. TLB/PCI rollback passed.
+- `tenstorrent_haiku_resident_read --read-fixed-gddr-to-l1-and-restore`
+  repeats the ownership/route gates, requires unused initiator 0 and no NIU
+  interrupt enables, then reads bank 0 at 64 MiB through the host window for
+  comparison. Those bytes stay kernel-local and GDDR is never written.
+  It saves the final 64 bytes of `(1,2)`'s L1 and poisons them with the
+  inverse of the expected bytes. It temporarily enables the NIU request
+  FIFO and issues exactly one 64-byte read from GDDR to that L1 address.
+  Both endpoints are on-card; bus mastering/host DMA stays disabled.
+
+Completion requires command-control readback before the first counter read,
+exactly one additional read response, data flit, command acceptance and read
+request sent, all initiators idle, all outstanding/outgoing ID counters zero,
+stable source routes and unchanged stopped-core state. A command accepted
+without its completed response is not success. The destination must then
+match the independently read GDDR bytes. Only proven completion/ownership
+permits restoring L1, initiator fields and the original FIFO setting. A
+timeout or uncertain route/completion leaves payload/control state untouched
+and latches cold recovery; never retry, clear counters or reload the driver
+to bypass it. Event counters naturally advance; this does not roll them back.
+
+The first live transfer and the final stricter-flit-check build both PASSED:
+issued/completed `1/1`, one poll, zero mismatches, counter deltas `1/1/1/1`,
+L1/NIU/TLB/PCI restored `1/1/1/1`, card/root commands `0000/0000`, cold flag
+zero. No core was released or reset-written. Metadata queries also confirm
+the old data-tile/batch ABI remains available. Neither test transfers model
+weights, proves all-bank bandwidth, nor executes Qwen on the device.
+
+The source policy tests use ASan/UBSan and inject every individual TLB,
+initiator, FIFO, doorbell and L1 write loss, timeouts, accepted-but-incomplete
+commands, incorrect flit counts, data corruption, source changes, active
+cores, enabled interrupts, counter wrapping and permanent L1 rollback
+failure. They verify no request retry, counter clear or NIU/L1 rewrite after
+uncertainty. All thirteen PCI/ARC/core/L1/DRAM/compute policy suites pass;
+the existing independent TinyStories/reference and Assistant-adapter tests
+pass too. The optional driver builds through Jam and all twenty-one tools
+cross-build with warnings as errors.
+
+Final installed driver SHA-256:
+`4e128ef4857f6e311ce0c784a6020632e711a860bb08c27892ba48bb43d68790`.
+The source files were synced to `/Volumes/HaikuBuildLocal/haiku` before the
+build. Verified native backups/evidence are in
+`/boot/home/pioneer-compute-noc-20261015/` and
+`/boot/home/pioneer-resident-read-20261015/`; copied logs are ignored under
+`generated.pioneer/tenstorrent/resident-read-20261015/`. No Assistant binary,
+conversation, settings, model, boot medium, kernel, firmware or CPU/RAM
+configuration changed during these tests. The original dirty llama.cpp
+submodule was left untouched.
+
+Register semantics were audited against official
+[NoC memory-map documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/NoC/MemoryMap.md)
+and [completion-counter documentation](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/NoC/Counters.md).
+The implementation is original fixed-policy code, not an upstream Linux
+runtime transplanted onto Haiku.
+
+Remaining acceptance gates for a real Qwen P100A mode:
+
+1. Own bounded GDDR allocations, upload resident weights once, verify their
+   contents and lifetimes, and safely release them on cancel/exit. Preserve
+   quantized storage for the requested 27B model; full BF16 expansion does
+   not fit its 28 GB card.
+2. Build persistent, larger matrix-vector kernels using device-side
+   GDDR-to-L1 transfers; validate first on one tile, then distribute work
+   across the enabled tiles. Do not use a host ioctl/reset per tiny tile.
+3. Integrate a real Qwen inference backend: begin with installed ordinary
+   Qwen3-0.6B and independent layer/logit references; the requested 27B
+   `qwen35` hybrid graph and mixed quantization require additional support.
+4. Validate generation, KV/context growth, deterministic comparisons,
+   cancellation, repeated requests, model switching and recovery, with no
+   silent CPU fallback.
+5. Measure the same model/quantization, prompt and output lengths against
+   the CPU using repeated warm runs, time to first token, prompt throughput,
+   sustained generation and total latency. Include cold load separately.
+   Only expose a practical faster-Qwen mode after this gate passes.
 
 ## Findings from source
 

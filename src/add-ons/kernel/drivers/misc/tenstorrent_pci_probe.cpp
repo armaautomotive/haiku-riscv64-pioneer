@@ -827,6 +827,113 @@ struct PioneerDramSamplesIO : PioneerTensixIO {
 	}
 };
 
+struct PioneerComputeNocIO : PioneerDramSamplesIO {
+	tt_compute_noc_result& noc;
+	area_id nocArea=-1;
+	const volatile uint32* nocRegisters=NULL;
+	bool nocAttempted=false;
+	PioneerComputeNocIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
+		tt_compute_noc_result& n) : PioneerDramSamplesIO(p,a,t,c,d,false),noc(n) {}
+	~PioneerComputeNocIO() { if (nocArea>=B_OK) delete_area(nocArea); }
+	bool Map() {
+		if (!PioneerDramSamplesIO::Map()) return false;
+		void* address=NULL;
+		// Both NIU command-register pages; target reads only. TLB 201 is
+		// saved/restored by the policy, and forced to sole physical (1,2).
+		nocArea=map_physical_memory("P100A compute NoC0 read-only state",
+			profile.bar0_host_start+0x19320000,2*B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&address);
+		if (nocArea<B_OK) return false;
+		nocRegisters=(const volatile uint32*)address; return true;
+	}
+	uint32 ComputeNocRead(uint32 offset) {
+		return BlackholeComputeNocReadOffset(offset) ? PioneerRead32(nocRegisters+offset/4) : UINT32_MAX;
+	}
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerDramSamplesIO::AfterNodeId(id)) return false;
+		nocAttempted=true;
+		return BlackholeComputeNocProbe(*this,dram,noc);
+	}
+	bool Unmap() {
+		bool okay=true;
+		if (nocArea>=B_OK) {
+			if (delete_area(nocArea)==B_OK) nocArea=-1; else okay=false;
+		}
+		if (nocAttempted && !noc.tlb_restored) {
+			for (unsigned w=0;w<3;w++) DramTlbWrite(1,w,noc.tlb_before[w]);
+			noc.tlb_restored=1;
+			for (unsigned w=0;w<3;w++) noc.tlb_restored &= DramTlbRead(1,w)==noc.tlb_before[w];
+		}
+		if (nocAttempted && (!noc.tlb_restored || noc.recovery_required)) okay=false;
+		return PioneerDramSamplesIO::Unmap() && okay;
+	}
+};
+
+struct PioneerResidentReadIO : PioneerComputeNocIO {
+	tt_resident_read_result& read;
+	area_id sourceArea=-1,scratchArea=-1,writeArea=-1;
+	const volatile uint32* sourceData=NULL;
+	volatile uint32* scratchData=NULL;
+	volatile uint32* niuWrite=NULL;
+	bool readAttempted=false;
+	PioneerResidentReadIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
+		tt_compute_noc_result& n,tt_resident_read_result& r)
+		: PioneerComputeNocIO(p,a,t,c,d,n),read(r) {}
+	~PioneerResidentReadIO() {
+		if (sourceArea>=B_OK) delete_area(sourceArea);
+		if (scratchArea>=B_OK) delete_area(scratchArea);
+		if (writeArea>=B_OK) delete_area(writeArea);
+	}
+	bool Map() {
+		if (!PioneerComputeNocIO::Map()) return false;
+		void* address=NULL;
+		sourceArea=map_physical_memory("P100A fixed GDDR read-only source",
+			profile.bar0_host_start+0x19000000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&address);
+		if (sourceArea<B_OK) return false;
+		sourceData=(const volatile uint32*)address;
+		scratchArea=map_physical_memory("P100A sole tile final 64-byte L1 destination",
+			profile.bar0_host_start+0x1917f000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&address);
+		if (scratchArea<B_OK) return false;
+		scratchData=(volatile uint32*)((uint8*)address+0xfc0);
+		writeArea=map_physical_memory("P100A fixed NIU0 initiator 0 control",
+			profile.bar0_host_start+0x19320000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&address);
+		if (writeArea<B_OK) return false;
+		niuWrite=(volatile uint32*)address; return true;
+	}
+	uint32 ResidentNocRead(uint32 offset) {
+		return BlackholeResidentReadRegister(offset)?PioneerRead32(nocRegisters+offset/4):UINT32_MAX;
+	}
+	void ResidentNocWrite(uint32 offset,uint32 value) {
+		if (BlackholeResidentWriteRegister(offset)) PioneerWrite32(niuWrite+offset/4,value);
+	}
+	uint32 ResidentGddrRead(unsigned word) { return word<16?PioneerRead32(sourceData+word):UINT32_MAX; }
+	uint32 ResidentL1Read(unsigned word) { return word<16?PioneerRead32(scratchData+word):UINT32_MAX; }
+	void ResidentL1Write(unsigned word,uint32 value) { if (word<16) PioneerWrite32(scratchData+word,value); }
+	void Pause() { spin(100); }
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerComputeNocIO::AfterNodeId(id)) return false;
+		readAttempted=true;
+		dprintf("PIONEER-P100A: single fixed 64-byte GDDR-to-L1 read, cores held, no host DMA\n");
+		return BlackholeResidentReadProbe(*this,dram,noc,read);
+	}
+	bool Unmap() {
+		bool okay=true;
+		area_id* areas[]={&sourceArea,&scratchArea,&writeArea};
+		for (area_id* area:areas) if (*area>=B_OK) {
+			if (delete_area(*area)==B_OK) *area=-1; else okay=false;
+		}
+		// The policy alone owns NIU/L1 cleanup. Uncertain completion permits
+		// only TLB control rollback, never a request/reset/payload retry.
+		if (readAttempted && (!read.l1_restored || !read.niu_restored || !read.tlb_restored || read.recovery_required)) okay=false;
+		return PioneerComputeNocIO::Unmap() && okay;
+	}
+};
+
 struct PioneerMatmulIO : PioneerDramSamplesIO {
 	tt_tensix_matmul_result& math;
 	const bool configSmoke;
@@ -934,6 +1041,76 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_READ_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_READ) {
+		if (data==NULL || length!=sizeof(tt_pioneer_resident_read_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status!=B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile={};
+		if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status=status;
+		tt_pioneer_resident_read_result result={};
+		tt_pioneer_dram_samples_result& baseline=result.baseline.baseline;
+		tt_pioneer_arc_result& control=baseline.control.control.control;
+		tt_arc_telemetry_result& telemetry=baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix=baseline.control.tensix;
+		control.pci.version=control.arc.version=telemetry.version=tensix.version=baseline.dram.version=1;
+		control.arc.tlb_restored=telemetry.tlb_restored=tensix.tlb_restored=1;
+		baseline.dram.data_restored=baseline.dram.tlb_restored=result.baseline.noc.tlb_restored=1;
+		result.read.l1_restored=result.read.niu_restored=result.read.tlb_restored=1;
+		if (status==B_OK) {
+			PioneerResidentReadIO io(profile,control.arc,telemetry,tensix,baseline.dram,result.baseline.noc,result.read);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (result.read.recovery_required || result.baseline.noc.recovery_required
+			|| baseline.dram.recovery_required || control.pci.state==TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.read.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock);
+		return user_memcpy(data,&result,sizeof(result));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_COMPUTE_NOC_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_COMPUTE_NOC) {
+		if (data==NULL || length!=sizeof(tt_pioneer_compute_noc_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status!=B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile={};
+		if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status=status;
+		tt_pioneer_compute_noc_result result={};
+		tt_pioneer_arc_result& control=result.baseline.control.control.control;
+		tt_arc_telemetry_result& telemetry=result.baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix=result.baseline.control.tensix;
+		control.pci.version=control.arc.version=telemetry.version=tensix.version=result.baseline.dram.version=1;
+		control.arc.tlb_restored=telemetry.tlb_restored=tensix.tlb_restored=1;
+		result.baseline.dram.data_restored=result.baseline.dram.tlb_restored=result.noc.tlb_restored=1;
+		if (status==B_OK) {
+			PioneerComputeNocIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.noc);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (result.noc.recovery_required || result.baseline.dram.recovery_required
+			|| control.pci.state==TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.noc.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock);
+		return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_CLOCKED_MATMUL_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;

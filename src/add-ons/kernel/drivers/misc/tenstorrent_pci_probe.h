@@ -17,6 +17,8 @@
 #include "BlackholeDramSamplesProbe.h"
 #include "BlackholeTensixMatmulProbe.h"
 #include "BlackholeClockedMatmulProbe.h"
+#include "BlackholeComputeNocProbe.h"
+#include "BlackholeResidentReadProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -98,6 +100,10 @@
 #define TT_PCI_PROBE_PIONEER_DATA_TILE_SUPPORT (B_DEVICE_OP_CODES_END + 0x549d)
 #define TT_PCI_PROBE_PIONEER_DATA_BATCH (B_DEVICE_OP_CODES_END + 0x549e)
 #define TT_PCI_PROBE_PIONEER_DATA_BATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x549f)
+#define TT_PCI_PROBE_PIONEER_COMPUTE_NOC (B_DEVICE_OP_CODES_END + 0x54a0)
+#define TT_PCI_PROBE_PIONEER_COMPUTE_NOC_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a1)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_READ (B_DEVICE_OP_CODES_END + 0x54a2)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_READ_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a3)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -184,6 +190,16 @@ struct tt_pioneer_data_batch {
 	tt_tensix_tile_data input[TT_DATA_TILE_BATCH_MAX];
 	uint32_t output[TT_DATA_TILE_BATCH_MAX][256];
 	tt_pioneer_matmul_result result;
+};
+
+struct tt_pioneer_compute_noc_result {
+	tt_pioneer_dram_samples_result baseline;
+	tt_compute_noc_result noc;
+};
+
+struct tt_pioneer_resident_read_result {
+	tt_pioneer_compute_noc_result baseline;
+	tt_resident_read_result read;
 };
 
 #endif

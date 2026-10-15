@@ -130,6 +130,12 @@ and activation. All Qwen entries use CPU. Only TinyStories uses the P100A;
 neither a full-Qwen P100A backend nor Qwen3.8 architecture support exists in
 this pinned llama runtime yet.
 
+The subsequent device-residency work has verified a fixed on-card GDDR-to-L1
+read with complete restoration, but has not added a resident Qwen backend
+or demonstrated a Qwen speedup. The hardware menu deliberately remains
+unchanged. The required performance gates and repeated CPU comparison are
+recorded in [the port log](../../../tools/pioneer/TENSTORRENT_PORT.md#october-15-device-residency-prerequisite-not-qwen-acceleration).
+
 ### P100A experimental story mode
 
 Install catalog entry 4 in Models, then click **Use on P100A (story mode)**,
