@@ -36,8 +36,8 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 	tt_tensix_matmul_result& r, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
 	r = {}; r.version = sfpuSmoke != 0 ? 2 + sfpuSmoke : configSmoke ? 2 : 1; r.l1_restored = r.tlb_restored = 1;
-	if (sfpuSmoke > 9 || (configSmoke && sfpuSmoke != 0)) return false;
-	bool protocolOnly = configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7);
+	if (sfpuSmoke > 10 || (configSmoke && sfpuSmoke != 0)) return false;
+	bool protocolOnly = configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke != 10);
 	if (baseline.version != 1 || baseline.state != TT_DRAM_SAMPLE_ROUTES_OK
 		|| baseline.routes_verified != TT_DRAM_BANKS || !baseline.data_restored
 		|| !baseline.tlb_restored || baseline.recovery_required || !BlackholeDramBuildRoutes(baseline)) return false;
@@ -105,7 +105,8 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 					for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) {
 						uint32_t value = io.MathImageRead(1 + TT_TENSIX_CODE_WORDS + i);
 						if (i == 0 || i == 128) r.representative[i / 128] = value;
-						if (value != (protocolOnly ? 0U : BlackholeMatmulExpected(i))) r.mismatches++;
+						uint32_t expected = protocolOnly ? 0U : sfpuSmoke == 10 ? (i < 128 ? 0x3f800000U : 0x40000000U) : BlackholeMatmulExpected(i);
+						if (value != expected) r.mismatches++;
 					}
 					r.state = r.mismatches == 0 ? TT_MATMUL_PASSED : TT_MATMUL_RESULT_MISMATCH;
 					break;

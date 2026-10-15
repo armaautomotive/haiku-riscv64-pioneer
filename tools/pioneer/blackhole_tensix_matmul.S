@@ -140,11 +140,16 @@ fill_b:
 	/* Only output rows are made undefined. Do not ZEROACC input rows:
 	 * their validity was established by the prior explicit reset.
 	 */
+.ifdef TT_DST_READ_SMOKE
+	j read_dst /* known SFPU-filled input rows; no ownership or matrix */
+	nop
+.else
 .ifdef TT_SFPU_STORE_SMOKE
 	j config_completion /* SFPU writes drained; no ZEROACC/MOVD2/matrix */
 	nop /* preserve original two-word li width and every common PC */
 .else
 	li t0, 0x10000020
+.endif
 .endif
 	li t2, 8
 clear_output:
@@ -222,11 +227,17 @@ matrix:
 	sw t0, 0(s0)
 	jal ra, drain
 	/* Copy actual FPU results; the scalar core does no matrix arithmetic. */
+read_dst:
 .ifdef TT_MATRIX_EXEC_SMOKE
 	j config_completion /* one matrix instruction drained, no RISC Dst reads */
 	nop
 .else
+.ifdef TT_DST_READ_SMOKE
+	li t2, 0xffbd8000 /* known A input rows, not uninitialized output rows */
+	nop /* same width as original two-word li */
+.else
 	li t2, 0xffbd8800
+.endif
 .endif
 	li t3, 0x17f800
 	slli t4, s4, 9

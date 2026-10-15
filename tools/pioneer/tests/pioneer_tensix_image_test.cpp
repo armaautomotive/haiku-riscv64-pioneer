@@ -25,6 +25,7 @@ struct Machine {
 	float lreg[2] = {};
 	bool valid[64], ownerA = false, ownerB = false, drained = true, pendingDrainStore = false;
 	bool dropMatrix = false;
+	bool dropVector = false;
 	const bool configSmoke;
 	const unsigned sfpuSmoke;
 	unsigned matrixInstructions = 0, drains = 0, configWrites = 0, inputWrites = 0, vectorWrites = 0, outputReads = 0, steps = 0;
@@ -44,6 +45,7 @@ struct Machine {
 		if (sfpuSmoke == 3) assert(opcode != 0x26);
 		if (sfpuSmoke == 5) assert(opcode == 0xb2 || opcode == 0x71 || opcode == 0x72 || opcode == 0x10 || op == 0x3700000f);
 		if (sfpuSmoke == 6) assert(opcode != 0x26 && opcode != 0x43);
+		if (sfpuSmoke == 10) assert(opcode == 0xb2 || opcode == 0x71 || opcode == 0x72 || op == 0x3700000f);
 		if (opcode == 0xb2) {
 			unsigned index = (op >> 16) & 255; assert(index < 68);
 			thread[index] = op & 65535;
@@ -62,7 +64,7 @@ struct Machine {
 			for (unsigned lane = 0; lane < 32; lane++) {
 				unsigned row = (address & ~3U) + lane/8, col = 2*(lane&7) + ((address&2) != 0);
 				assert(row < 24 && valid[row]);
-				dst[row][col] = lreg[reg]; vectorWrites++;
+				if (!dropVector) dst[row][col] = lreg[reg]; vectorWrites++;
 			}
 		} else if (opcode == 0x10) {
 			assert((op & 0xffffff00) == 0x10000000 && (op & 255) >= 32 && (op & 255) < 40);
@@ -129,6 +131,11 @@ struct Machine {
 			assert(drained && matrixInstructions != 0); unsigned index = (address-0xffbd8000)/4;
 			assert(valid[index/16]); outputReads++; return Bits(dst[index/16][index%16]);
 		}
+		if (address >= 0xffbd8000 && address < 0xffbd8200) {
+			assert(sfpuSmoke == 10 && drained && matrixInstructions == 0);
+			unsigned index = (address-0xffbd8000)/4;
+			assert(valid[index/16]); outputReads++; return Bits(dst[index/16][index%16]);
+		}
 		assert(address == 0x17ffc0 || address == 0x17ffc4 || address == 0x17ffc8); return l1[Index(address)];
 	}
 	void Run() {
@@ -167,13 +174,16 @@ struct Machine {
 		assert(l1[Index(0x17ffc0)] == TT_TENSIX_FINAL_PHASE && l1[Index(0x17ffc4)] == 2 && l1[Index(0x17ffc8)] == 0x4d415431);
 	}
 	bool Correct() {
-		for (unsigned i = 0; i < 256; i++) if (l1[Index(0x17f800+i*4)] != ((configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7)) ? 0U : Bits(i < 128 ? 16 : 96))) return false;
+		for (unsigned i = 0; i < 256; i++) {
+			uint32_t expected = sfpuSmoke == 10 ? Bits(i < 128 ? 1 : 2) : (configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7)) ? 0U : Bits(i < 128 ? 16 : 96);
+			if (l1[Index(0x17f800+i*4)] != expected) return false;
+		}
 		return true;
 	}
 };
 int main(int argc, char** argv)
 {
-	assert(argc == 13);
+	assert(argc == 14);
 	auto boot = Read(argv[1]), code = Read(argv[2]);
 	auto configCode = Read(argv[3]);
 	assert(boot.size() == 4 && Word(boot,0) == BlackholeTensixImageWord(0) && code.size() == TT_TENSIX_CODE_WORDS*4);
@@ -184,7 +194,7 @@ int main(int argc, char** argv)
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(loadCode,i*4) == BlackholeTensixImageWord(i+1,false,true));
 	auto storeCode = Read(argv[5]); assert(storeCode.size() == code.size());
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(storeCode,i*4) == BlackholeTensixImageWord(i+1,false,2));
-	for (unsigned stage = 3; stage <= 9; stage++) {
+	for (unsigned stage = 3; stage <= 10; stage++) {
 		auto bytes = Read(argv[stage+3]); assert(bytes.size() == code.size());
 		for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(bytes,i*4) == BlackholeTensixImageWord(i+1,false,stage));
 	}
@@ -215,5 +225,8 @@ int main(int argc, char** argv)
 	assert(kernelOperands.Correct() && kernelOperands.matrixInstructions == 0 && kernelOperands.vectorWrites == 384 && kernelOperands.outputReads == 0);
 	Machine kernelMatrix(false,9); kernelMatrix.Run();
 	assert(kernelMatrix.Correct() && kernelMatrix.matrixInstructions == 1 && kernelMatrix.vectorWrites == 384 && kernelMatrix.outputReads == 0);
+	Machine dstRead(false,10); dstRead.Run();
+	assert(dstRead.Correct() && dstRead.matrixInstructions == 0 && dstRead.vectorWrites == 768 && dstRead.outputReads == 256);
+	Machine brokenVector(false,10); brokenVector.dropVector = true; brokenVector.Run(); assert(!brokenVector.Correct());
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }

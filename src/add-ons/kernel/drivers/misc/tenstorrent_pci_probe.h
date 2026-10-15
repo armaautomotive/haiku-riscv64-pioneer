@@ -66,6 +66,8 @@
 #define TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC_SUPPORT (B_DEVICE_OP_CODES_END + 0x547d)
 #define TT_PCI_PROBE_PIONEER_KERNEL_MATMUL (B_DEVICE_OP_CODES_END + 0x547e)
 #define TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT (B_DEVICE_OP_CODES_END + 0x547f)
+#define TT_PCI_PROBE_PIONEER_DST_READ (B_DEVICE_OP_CODES_END + 0x5480)
+#define TT_PCI_PROBE_PIONEER_DST_READ_SUPPORT (B_DEVICE_OP_CODES_END + 0x5481)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };

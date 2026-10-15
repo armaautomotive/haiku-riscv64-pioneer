@@ -48,7 +48,11 @@ static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke
 	if ((sfpuSmoke == 4 || sfpuSmoke == 9) && address == 0x701ec) return 0x00000013;
 	if (sfpuSmoke == 5 && BlackholeTensixImageAddress(index) == 0x70170) return 0x0c40006f;
 	if (sfpuSmoke == 6 && BlackholeTensixImageAddress(index) == 0x701b8) return 0x07c0006f;
-	if ((configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7)) && address == 0x70238) return 0x0059a223;
+	if (sfpuSmoke == 10 && address == 0x70150) return 0x0980006f;
+	if (sfpuSmoke == 10 && address == 0x70154) return 0x00000013;
+	if (sfpuSmoke == 10 && address == 0x701e8) return 0xffbd83b7;
+	if (sfpuSmoke == 10 && address == 0x701ec) return 0x00000013;
+	if ((configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke != 10)) && address == 0x70238) return 0x0059a223;
 	if (index == 0) return 0x0006a06f;
 	const uint32_t code[] = {
 		0xffe40437,0xffe804b7,0x00448493,0xffef0937,

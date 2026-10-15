@@ -1066,6 +1066,34 @@ Artifacts `/boot/home/pioneer-p100a-20261014/kernel-handoff-1/`; driver SHA
 CLI SHA `6d1ecbff645d8a0c8293acd2263fae80e53dc285dce86859496d6e81d9b8c23b`.
 No firmware, clock-gating, voltage-force or default-boot changes were made.
 
+### October 14: matrix completes with wrong values; Dst numerical control passes
+
+Following a timed (>60 s) relay off interval, default Linux cold boot and
+clean 64-CPU/full-memory Haiku handoff, the v16 kernel-style numerical
+matrix fixture ran FIRST at 06:50:45 UTC October 15. Both fixture markers,
+drains, parked PCs and stop completed. L1/TLB/PCI restoration passed,
+recovery 0, but all 256 numerical outputs mismatched: representative bits
+`72741ef6/72741ef6`, not `41800000/42c00000`. Matrix state 6, aggregate
+PCI state 2 (bad result, not failed restoration). This is execution progress,
+NOT numerical matrix success. Same kernel-handoff-1 artifacts as above.
+
+Added fixed SFPU-fill/RISC-Dst-read control `5480`/`5481`, metadata v17,
+result v12. It bypasses ZEROACC, MOVD2, handoff and MVMUL, reading known
+input rows 0..7 after SFPU fills (1.0 then 2.0). Independent assembly and
+decoder agree; removing SFPU writes breaks the model's numerical check.
+At 06:56 UTC this control PASSED on P100A: 256/256 output values correct,
+representative bits `3f800000/40000000`, start/complete/stop 1/1/1, four
+polls, L1/TLB/PCI restored, recovery 0. This numerically establishes the
+SFPU-fill and RISC-Dst-read path, not matrix operands or arithmetic.
+
+Artifacts `/boot/home/pioneer-p100a-20261014/dst-read-1/`; driver SHA
+`9d1022bbe7f559537eb9fbd3150857034eb080953b68fc4d35ae3ebd37ccbb94`,
+CLI SHA `b024b9ecb57c5344ff6b08420f903236a8716f81146e9063e4ce065ccf0467ae`.
+Next numerically round-trip SrcA/SrcB separately to isolate MOVD2 formatting
+from MVMUL. The pinned LLK has a Blackhole MOVD2B/B2D FP32 workaround
+(issue 449); the generic ISA functional descriptions are not timing/silicon
+proof. No speculative forced clock/voltage or firmware change is justified.
+
 Download pinned official sources with:
 
 ```sh

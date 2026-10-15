@@ -37,7 +37,9 @@ int main(int argc, char** argv)
 		{"--check-kernel-matrix-exec-support","--run-kernel-matrix-exec-and-reset","Kernel-matrix-exec-only","Kernel-style handoff and one MVMUL/drain; no numerical readback",
 		 TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC_SUPPORT,TT_PCI_PROBE_PIONEER_KERNEL_MATRIX_EXEC,15,11,true},
 		{"--check-kernel-matmul-support","--run-kernel-matmul-and-reset","Kernel-matmul","Kernel-style handoff and two numerical fixtures with actual Dst readback",
-		 TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_KERNEL_MATMUL,16,9,false}
+		 TT_PCI_PROBE_PIONEER_KERNEL_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_KERNEL_MATMUL,16,9,false},
+		{"--check-fixed-dst-read-support","--run-fixed-dst-read-and-reset","Dst-read-only","SFPU fill and numerical RISC Dst readback; no ownership/matrix",
+		 TT_PCI_PROBE_PIONEER_DST_READ_SUPPORT,TT_PCI_PROBE_PIONEER_DST_READ,17,12,false}
 	};
 	const Mode* selected = NULL; bool inspect = false;
 	if (argc == 2) for (const Mode& mode : modes) {
@@ -81,7 +83,7 @@ int main(int argc, char** argv)
 		mode.name,m.state,m.started,m.completed,m.stopped,m.context_reset,m.polls,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked);
 	printf("Wait-return-PC/%s/marker %08" PRIx32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",mode.protocolOnly ? "protocol-count" : "fixtures",m.phase,m.fixtures,m.marker,m.mismatches);
 	printf("Representative output bits %08" PRIx32 "/%08" PRIx32 " (%s); PC %08" PRIx32 "/%08" PRIx32 "\n",
-		m.representative[0],m.representative[1],mode.protocolOnly ? "expected zero footprint, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
+		m.representative[0],m.representative[1],mode.protocolOnly ? "expected zero footprint, NOT matrix results" : mode.resultVersion == 12 ? "expected 3f800000/40000000 = 1.0/2.0, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
 	printf("Reset before/initialized/running/after %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",
 		m.reset_before,m.reset_initialized,m.reset_running,m.reset_after);
 	printf("Entry/FIFO/sync controls %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",m.controls[0],m.controls[1],m.controls[2]);
