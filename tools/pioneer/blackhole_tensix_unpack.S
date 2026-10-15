@@ -31,6 +31,17 @@ main:
 	li s2, 0xffef0000
 	li s3, 0x17ffc0
 	li s4, 0
+.ifdef TT_UNPACK_GEMV
+	.global gemv_count_instruction
+gemv_count_instruction:
+.ifndef TT_GEMV_INPUTS
+	.set TT_GEMV_INPUTS, 1024
+.endif
+.if TT_GEMV_INPUTS != 1024 && TT_GEMV_INPUTS != 5120 && TT_GEMV_INPUTS != 6144
+	.error "unsupported fixed GEMV shape"
+.endif
+	li s8, (TT_GEMV_INPUTS/16)
+.endif
 	emit 0xb2000000 /* first select configuration state zero */
 	jal ra, drain
 	li t2, 1
@@ -129,6 +140,9 @@ inputs_ready:
 	andi t1, t1, 0
 	fence
 	emit 0x3700000f /* reset all RWCs, no ownership side effects */
+.ifdef TT_UNPACK_GEMV
+	bne s4, zero, gemv_keep_accumulator
+.endif
 	li t0, 0x10180000 /* clear all Dst valid bits; no Dst input is in use */
 	nop /* same width as the former two-word one-row clear immediate */
 	li t2, 1
@@ -137,6 +151,9 @@ clear_output:
 	addi t0, t0, 1
 	addi t2, t2, -1
 	bne t2, zero, clear_output
+.ifdef TT_UNPACK_GEMV
+gemv_keep_accumulator:
+.endif
 	jal ra, drain
 	emit 0x5160000a /* reset Y only; preserve X0 start and X1 end bounds */
 	emit 0x5460000f /* zero Z/W ADCs for both unpackers/channels */
@@ -160,10 +177,19 @@ clear_output:
 .endif
 	jal ra, drain
 full_bf16_return:
+.ifdef TT_UNPACK_GEMV
+	addi s4, s4, 1
+	sw s4, 4(s3)
+	lw t0, 4(s3)
+	andi t0, t0, 0
+	bne s4, s8, fixture /* all K tiles accumulate on-card, no host partial sums */
+.endif
 	li t2, 0xffbd8800
 	li t3, 0x17f800
+.ifndef TT_UNPACK_GEMV
 	slli t4, s4, 9
 	add t3, t3, t4
+.endif
 	li t5, 128
 copy_output:
 	lw t0, 0(t2)
@@ -188,12 +214,14 @@ copy_output:
 .endif
 .endif
 finish_fixture:
+.ifndef TT_UNPACK_GEMV
 	addi s4, s4, 1
 	sw s4, 4(s3)
 	lw t0, 4(s3)
 	andi t0, t0, 0
 	li t0, 2
 	bne s4, t0, fixture
+.endif
 	jal ra, drain
 final_wait_return:
 	li t0, 0x4d415431
@@ -226,8 +254,10 @@ wait_done:
 	.org 0x440, 0
 nonuniform_inputs:
 	li t3, 0x70500
+.ifndef TT_UNPACK_GEMV
 	beq s4, zero, copy_nonuniform
 	addi t3, t3, 256
+.endif
 copy_nonuniform:
 	li t2, 0x70920
 	li t1, 64
@@ -352,6 +382,19 @@ resident_fetch:
 	li s5, 0xffb20000
 	lw t0, 0x40(s5)
 	bne t0, zero, resident_fault
+.ifdef TT_UNPACK_GEMV
+	/* Fixed GDDR base + chunk*1088, no code-supplied external address.
+	 * Current s4 is bounded by the trusted shape before this code runs.
+	 */
+	slli t0, s4, 10
+	slli t1, s4, 6
+	add t0, t0, t1
+	li t1, 0x04000000
+	add t0, t0, t1
+	sw t0, 0(s5)
+	lw t0, 0(s5)
+	andi t0, t0, 0
+.endif
 	lw s6, 0x208(s5)
 	addi s6, s6, 1
 	li t0, 1

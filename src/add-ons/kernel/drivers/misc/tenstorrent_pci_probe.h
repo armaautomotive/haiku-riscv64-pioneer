@@ -107,6 +107,8 @@
 #define TT_PCI_PROBE_PIONEER_RESIDENT_READ_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a3)
 #define TT_PCI_PROBE_PIONEER_RESIDENT_MATH (B_DEVICE_OP_CODES_END + 0x54a4)
 #define TT_PCI_PROBE_PIONEER_RESIDENT_MATH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a5)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_GEMV (B_DEVICE_OP_CODES_END + 0x54a6)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_GEMV_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a7)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -208,6 +210,11 @@ struct tt_pioneer_resident_read_result {
 struct tt_pioneer_resident_math_result {
 	tt_pioneer_compute_noc_result baseline;
 	tt_resident_math_result compute;
+};
+
+struct tt_pioneer_resident_gemv_result {
+	uint32_t version,inputs; // version 1; inputs exactly 1024, 5120 or 6144
+	tt_pioneer_resident_math_result result;
 };
 
 #endif

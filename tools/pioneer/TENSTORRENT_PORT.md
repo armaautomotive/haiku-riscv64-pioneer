@@ -31,6 +31,10 @@ The next live gate also passed twice: TRISC0 fetched resident GDDR inputs
 itself and computed two dense BF16 matrix fixtures with zero numerical
 mismatches. No host NoC doorbell write or input write between fixtures was
 allowed. This remains a fixed one-tile proof, not Qwen inference or a speedup.
+The same card now also passes full on-card accumulation for fixed 16-output
+GEMV fixtures with 1,024, 5,120 and 6,144 inputs. It no longer needs a host
+request/reset or a CPU partial sum for each 16-element input block. Model
+weights are not yet persistent across requests and Qwen chat remains CPU-only.
 As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
@@ -1622,6 +1626,67 @@ artifacts are ignored under
 `generated.pioneer/tenstorrent/resident-matrix-20261015/`. Larger resident
 matrix-vector kernels, model residency, Qwen graph integration and the
 same-model faster-than-CPU acceptance gate remain unfinished.
+
+### October 15: larger resident GEMV with on-card partial sums
+
+The fixed resident program now has a separate `TT_UNPACK_GEMV` variant:
+exactly 16 outputs and K chosen from `{1024,5120,6144}`. It uses one launch,
+initializes Dst once, then iterates over K/16 blocks. Each iteration's source
+is the fixed GDDR base plus `block*1088`; the device issues its read, waits
+for completion, unpacks BF16 and adds four fidelity phases into the retained
+FP32 accumulator. Only after the full dot product completes are results
+copied to L1. No host block dispatch, intervening input writes or CPU partial
+sums are used. No arbitrary code, pointers, coordinates or shapes are accepted.
+
+The original matrix proof and GEMV share a templated policy selected solely
+by trusted kernel program types. The original operation keeps math ABI 27;
+the new root-only GEMV operation has math ABI 28 and an explicit version/shape
+request. It maps/saves at most 417,792 fixed GDDR bytes, one code/data page,
+the fixed output/status words and NIU controls. The same cold-recovery,
+stopped-core ownership, NoC completion, numerical comparison and exact
+GDDR/NIU/L1/TLB/PCI rollback gates apply. A failed/uncertain completion never
+triggers a reset, retry or memory rewrite.
+
+The simulator independently decodes the assembled RV32I instructions,
+checks executable/data address bounds and models NoC payload delivery and
+the BF16 FPU. Every output matches an independent full-length integer dot
+product for all three shapes, including unused zero output rows. Fault
+tests detect stale Dst, clearing between blocks, corrupted weights, delayed
+or missing responses at the first, middle and final block. The byte test
+independently assembles every supported shape and compares every code word.
+Shared policy tests retain exhaustive small-operation write-loss coverage;
+larger GEMV tests sample upload/restore interiors and boundaries and cover
+NoC/PC/source/rollback failures and invalid shapes.
+
+All three live Pioneer tests PASSED:
+
+| Inputs -> outputs | Device reads / response flits | Host polls | Entire reversible test |
+|---|---|---|---|
+| 1024 -> 16 | 64 / 1088 | 11 | 0.341552 s |
+| 5120 -> 16 | 320 / 5440 | 9 | 0.983847 s |
+| 6144 -> 16 | 384 / 6528 | 9 | 1.146131 s |
+
+Each had state 1, ABI 28, started/completed/stopped `1/1/1`, zero mismatches,
+phase `703a0`, matching tile count, marker `4d415431`, both park PCs `703b8`,
+all five restoration flags 1, commands `0000/0000` and cold flag zero. The
+wall times include all initial ownership checks, CPU PIO uploads/readbacks,
+numerical checks, original-memory restoration and mapping cleanup. They are
+**not kernel throughput, real Qwen projections, whole-model inference,
+nor a CPU speed comparison**. Inputs are known synthetic integer/BF16
+fixtures. Persistent model allocations and efficient host transfers remain
+necessary before practical inference timing can be measured.
+
+The optional driver builds through Jam, all twenty-three utilities
+cross-build with warnings as errors, and original image/memory/compute
+tests remain passing. Final installed driver SHA-256:
+`0efb637754cb925facd830678d125908c2e4b2815cbb4a08df17e7695e5ae176`;
+GEMV utility SHA-256:
+`189fb50a269e7113b55d7e2613b9ad19fea7bc7275031fcd00845e2ccfc3b407`.
+Native backup/logs are under `/boot/home/pioneer-resident-gemv-20261015/`;
+ignored local evidence is under
+`generated.pioneer/tenstorrent/resident-gemv-20261015/`. Driver source and
+program definitions were synced to the build mirror. Assistant, models,
+boot, firmware and host DMA state were not changed.
 
 ## Findings from source
 

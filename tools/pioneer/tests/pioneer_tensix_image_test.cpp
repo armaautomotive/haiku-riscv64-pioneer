@@ -236,13 +236,16 @@ struct Machine {
 		return false;
 	}
 	virtual unsigned StepLimit() const { return 20000; }
+	virtual uint32_t ParkPc() const { return BlackholeTensixParkPc(sfpuSmoke); }
+	virtual uint32_t FinalPhase() const { return BlackholeTensixFinalPhase(sfpuSmoke); }
+	virtual unsigned ExpectedFixtures() const { return 2; }
 	virtual bool CodeAddress(uint32_t address) const {
 		return address==0x6000 || (address>=0x70000
 			&& address<0x70000+BlackholeTensixCodeWords(sfpuSmoke)*4
 			&& (sfpuSmoke<16 || address<0x70700) && (sfpuSmoke<20 || address<0x70500));
 	}
 	void Run() {
-		while (pc != BlackholeTensixParkPc(sfpuSmoke) || steps == 0) {
+		while (pc != ParkPc() || steps == 0) {
 			assert(++steps < StepLimit() && CodeAddress(pc));
 			uint32_t instruction = l1[Index(pc)], next = pc + 4;
 			unsigned op = instruction & 127, rd = (instruction>>7)&31, f3 = (instruction>>12)&7;
@@ -275,7 +278,7 @@ struct Machine {
 			regs[0] = 0; pc = next;
 		}
 		assert(l1[Index(pc)] == 0x0000006f && drained);
-		assert(l1[Index(0x17ffc0)] == BlackholeTensixFinalPhase(sfpuSmoke) && l1[Index(0x17ffc4)] == 2 && l1[Index(0x17ffc8)] == 0x4d415431);
+		assert(l1[Index(0x17ffc0)] == FinalPhase() && l1[Index(0x17ffc4)] == ExpectedFixtures() && l1[Index(0x17ffc8)] == 0x4d415431);
 	}
 	bool Correct() {
 		for (unsigned i = 0; i < 256; i++) {

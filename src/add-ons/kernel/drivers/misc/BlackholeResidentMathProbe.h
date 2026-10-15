@@ -2,7 +2,7 @@
 #ifndef BLACKHOLE_RESIDENT_MATH_PROBE_H
 #define BLACKHOLE_RESIDENT_MATH_PROBE_H
 #include "BlackholeResidentReadProbe.h"
-#include "BlackholeResidentMathImage.h"
+#include "BlackholeResidentPrograms.h"
 #include "BlackholeTensixMatmulProbe.h"
 struct tt_resident_math_result {
 	uint32_t version,gddr_restored,niu_restored,recovery_required,stage;
@@ -16,23 +16,23 @@ bool BlackholeResidentMathNocStable(IO& io,const tt_compute_noc_result& n,uint32
 	for (unsigned w=0;w<16;w++) okay &= io.ResidentNocRead(BlackholeDramSourceOffset(w))==(w==0?config:n.source[0][w]);
 	return okay;
 }
-// Fixed dense BF16 numerical proof, not an arbitrary executable/descriptor API.
-// GDDR is resident for BOTH fixtures; TRISC0 issues the reads, not the host.
+// Fixed, shape-bounded numerical proofs; no arbitrary executable/descriptor API.
+// GDDR stays resident for the complete operation; TRISC0 issues its reads.
 // Saved original GDDR and L1 contents remain kernel-local. Compute context
 // is explicitly reset as in the earlier tile proof, not saved/restored.
-template<class IO>
+template<class IO,class Program=BlackholeResidentMatrixProgram>
 bool BlackholeResidentMathProbe(IO& io,tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& n,tt_resident_math_result& result)
+	const tt_compute_noc_result& n,tt_resident_math_result& result,Program program=Program())
 {
 	result={}; result.version=1; result.gddr_restored=result.niu_restored=1;
 	tt_tensix_matmul_result& r=result.math;
-	r.version=27; r.l1_restored=r.tlb_restored=1;
+	r.version=program.Version(); r.l1_restored=r.tlb_restored=1;
 	uint32_t* saved=io.ResidentMathSavedWords();
-	if (saved==0 || baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK
+	if (!program.Valid() || saved==0 || baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK
 		|| baseline.routes_verified!=7 || !baseline.data_restored || !baseline.tlb_restored || baseline.recovery_required
 		|| n.version!=1 || n.state!=TT_COMPUTE_NOC_PASSED || !n.tlb_restored || n.recovery_required
 		|| !BlackholeComputeNocRouteValid(n.source[0]) || !BlackholeDramBuildRoutes(baseline)) return false;
-	uint32_t* gddrSaved=saved+TT_RESIDENT_MATH_IMAGE_WORDS;
+	uint32_t* gddrSaved=saved+program.ImageWords();
 	for (unsigned s=0;s<2;s++) for (unsigned w=0;w<3;w++) {
 		r.tlb_before[s][w]=io.DramTlbRead(s,w);
 		if (w==2 && (r.tlb_before[s][w]&0xffffc000)!=0) return false;
@@ -54,39 +54,39 @@ bool BlackholeResidentMathProbe(IO& io,tt_dram_samples_result& baseline,
 		if (!pristine || (r.controls[0]&1)!=0 || r.controls[1]!=0 || r.controls[2]!=0) break;
 		result.stage=2;
 		if (!BlackholeDramConfigure(io,0,0x04000000,baseline.translated[0][0],baseline.translated[0][1],false)) break;
-		for (unsigned w=0;w<TT_RESIDENT_MATH_GDDR_WORDS;w++) gddrSaved[w]=io.ResidentGddrRead(w);
+		for (unsigned w=0;w<program.GddrWords();w++) gddrSaved[w]=io.ResidentGddrRead(w);
 		if (io.ResetRead()!=0x47800 || !BlackholeDramSourceStable(io,baseline)) break;
 		gddrModified=true; result.gddr_restored=0;
-		for (unsigned w=0;w<TT_RESIDENT_MATH_GDDR_WORDS;w++) io.ResidentGddrWrite(w,BlackholeResidentMathGddrWord(w));
+		for (unsigned w=0;w<program.GddrWords();w++) io.ResidentGddrWrite(w,program.GddrWord(w));
 		bool uploaded=true;
-		for (unsigned w=0;w<TT_RESIDENT_MATH_GDDR_WORDS;w++) uploaded &= io.ResidentGddrRead(w)==BlackholeResidentMathGddrWord(w);
+		for (unsigned w=0;w<program.GddrWords();w++) uploaded &= io.ResidentGddrRead(w)==program.GddrWord(w);
 		if (!uploaded) break;
 		result.stage=3;
 		if (!BlackholeDramConfigure(io,0,0,1,2,false)) break;
-		for (unsigned w=0;w<TT_RESIDENT_MATH_IMAGE_WORDS;w++) saved[w]=io.MathImageRead(w);
+		for (unsigned w=0;w<program.ImageWords();w++) saved[w]=io.MathImageRead(w);
 		r.reset_before=io.ResetRead();
 		if (r.reset_before!=0x47800 || !BlackholeResidentMathNocStable(io,n,config)) break;
 		l1Modified=true; r.l1_restored=0;
-		for (unsigned w=1;w<TT_RESIDENT_MATH_IMAGE_WORDS;w++) io.MathImageWrite(w,BlackholeResidentMathImageWord(w));
-		io.MathImageWrite(0,BlackholeResidentMathImageWord(0));
+		for (unsigned w=1;w<program.ImageWords();w++) io.MathImageWrite(w,program.ImageWord(w));
+		io.MathImageWrite(0,program.ImageWord(0));
 		r.state=TT_MATMUL_IMAGE_FAILED;
 		bool image=true;
-		for (unsigned w=0;w<TT_RESIDENT_MATH_IMAGE_WORDS;w++) image &= io.MathImageRead(w)==BlackholeResidentMathImageWord(w);
+		for (unsigned w=0;w<program.ImageWords();w++) image &= io.MathImageRead(w)==program.ImageWord(w);
 		if (!image) break;
 		result.stage=4; r.state=TT_MATMUL_CONFIG_FAILED;
 		if (io.ResetRead()!=0x47800 || !BlackholeResidentIdle(io)) break;
 		niuModified=true; result.niu_restored=0;
 		io.ResidentNocWrite(0x100,config|0x10000);
-		for (unsigned w=0;w<10;w++) io.ResidentNocWrite(w*4,BlackholeResidentMathCommandWord(w));
+		for (unsigned w=0;w<10;w++) io.ResidentNocWrite(w*4,program.CommandWord(w));
 		bool ready=BlackholeResidentMathNocStable(io,n,config|0x10000);
-		for (unsigned w=0;w<10;w++) ready &= io.ResidentNocRead(w*4)==BlackholeResidentMathCommandWord(w);
+		for (unsigned w=0;w<10;w++) ready &= io.ResidentNocRead(w*4)==program.CommandWord(w);
 		if (!ready || !BlackholeDramSourceStable(io,baseline) || io.ResetRead()!=0x47800) break;
 		result.stage=5; r.context_reset=1; r.state=TT_MATMUL_CORE_CHANGED;
 		io.MathResetWrite(0x87ffff); io.Pause();
 		r.reset_initialized=io.ResetRead();
 		if (r.reset_initialized!=0x87ffff || io.ResetRead()!=0x87ffff) break;
 		ready=BlackholeResidentMathNocStable(io,n,config|0x10000) && BlackholeResidentIdle(io);
-		for (unsigned w=0;w<10;w++) ready &= io.ResidentNocRead(w*4)==BlackholeResidentMathCommandWord(w);
+		for (unsigned w=0;w<10;w++) ready &= io.ResidentNocRead(w*4)==program.CommandWord(w);
 		if (!ready || !BlackholeDramSourceStable(io,baseline)) break;
 		for (unsigned w=0;w<4;w++) result.before[w]=io.ResidentNocRead(0x208+w*4);
 		result.stage=6; r.started=1; r.state=TT_MATMUL_COMPLETION_FAILED;
@@ -94,20 +94,20 @@ bool BlackholeResidentMathProbe(IO& io,tt_dram_samples_result& baseline,
 		for (unsigned attempt=0;attempt<2000;attempt++) {
 			r.polls++; r.reset_running=io.ResetRead();
 			if (r.reset_running!=0x46800) { r.state=TT_MATMUL_CORE_CHANGED; break; }
-			r.phase=io.MathImageRead(TT_RESIDENT_MATH_STATUS_INDEX);
-			r.fixtures=io.MathImageRead(TT_RESIDENT_MATH_STATUS_INDEX+1);
-			r.marker=io.MathImageRead(TT_RESIDENT_MATH_STATUS_INDEX+2);
+			r.phase=io.MathImageRead(program.StatusIndex());
+			r.fixtures=io.MathImageRead(program.StatusIndex()+1);
+			r.marker=io.MathImageRead(program.StatusIndex()+2);
 			if (r.marker==0x4e4f4346) break; // device's bounded read timeout
-			if (r.phase==TT_UNPACK_FINAL_PHASE && r.fixtures==2 && r.marker==0x4d415431) {
+			if (r.phase==program.FinalPhase() && r.fixtures==program.Fixtures() && r.marker==0x4d415431) {
 				io.Pause(); r.pc[0]=io.MathPcRead(); io.Pause(); r.pc[1]=io.MathPcRead();
 				// Doorbell readback before counters even though the RISC issued it.
 				bool quiet=BlackholeResidentIdle(io);
 				for (unsigned w=0;w<4;w++) result.after[w]=io.ResidentNocRead(0x208+w*4);
-				if (quiet && r.pc[0]==TT_UNPACK_PARK_PC && r.pc[1]==TT_UNPACK_PARK_PC
-					&& uint32_t(result.after[0]-result.before[0])==2
-					&& uint32_t(result.after[1]-result.before[1])==34
-					&& uint32_t(result.after[2]-result.before[2])==2
-					&& uint32_t(result.after[3]-result.before[3])==2) { r.completed=1; break; }
+				if (quiet && r.pc[0]==program.ParkPc() && r.pc[1]==program.ParkPc()
+					&& uint32_t(result.after[0]-result.before[0])==program.Requests()
+					&& uint32_t(result.after[1]-result.before[1])==program.Flits()
+					&& uint32_t(result.after[2]-result.before[2])==program.Requests()
+					&& uint32_t(result.after[3]-result.before[3])==program.Requests()) { r.completed=1; break; }
 			}
 			io.Pause();
 		}
@@ -117,10 +117,10 @@ bool BlackholeResidentMathProbe(IO& io,tt_dram_samples_result& baseline,
 		result.stage=7;
 		if (!BlackholeDramSourceStable(io,baseline) || !BlackholeResidentMathNocStable(io,n,config|0x10000)
 			|| io.ResetRead()!=0x46800 || !BlackholeResidentIdle(io)) { r.state=TT_MATMUL_SOURCE_CHANGED; break; }
-		for (unsigned w=0;w<256;w++) {
-			uint32_t value=io.MathImageRead(1+TT_RESIDENT_MATH_CODE_WORDS+w);
+		for (unsigned w=0;w<program.OutputWords();w++) {
+			uint32_t value=io.MathImageRead(1+program.CodeWords()+w);
 			if (w==0 || w==128) r.representative[w/128]=value;
-			r.mismatches += value!=BlackholeNonuniformExpected(21,w);
+			r.mismatches += value!=program.ExpectedWord(w);
 		}
 		io.MathResetWrite(0x87ffff); io.Pause();
 		if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) { r.state=TT_MATMUL_STOP_FAILED; break; }
@@ -150,10 +150,10 @@ bool BlackholeResidentMathProbe(IO& io,tt_dram_samples_result& baseline,
 	if (canRestore && l1Modified) {
 		canRestore=BlackholeDramConfigure(io,0,0,1,2,false);
 		if (canRestore) for (unsigned attempt=0;attempt<2 && !r.l1_restored;attempt++) {
-			for (unsigned w=1;w<TT_RESIDENT_MATH_IMAGE_WORDS;w++) io.MathImageWrite(w,saved[w]);
+			for (unsigned w=1;w<program.ImageWords();w++) io.MathImageWrite(w,saved[w]);
 			io.MathImageWrite(0,saved[0]);
 			r.l1_restored=io.ResetRead()==0x47800;
-			for (unsigned w=0;w<TT_RESIDENT_MATH_IMAGE_WORDS;w++) r.l1_restored &= io.MathImageRead(w)==saved[w];
+			for (unsigned w=0;w<program.ImageWords();w++) r.l1_restored &= io.MathImageRead(w)==saved[w];
 		}
 		canRestore=canRestore && r.l1_restored;
 	}
@@ -162,9 +162,9 @@ bool BlackholeResidentMathProbe(IO& io,tt_dram_samples_result& baseline,
 			&& BlackholeResidentMathNocStable(io,n,config)
 			&& BlackholeDramConfigure(io,0,0x04000000,baseline.translated[0][0],baseline.translated[0][1],false);
 		if (canRestore) for (unsigned attempt=0;attempt<2 && !result.gddr_restored;attempt++) {
-			for (unsigned w=0;w<TT_RESIDENT_MATH_GDDR_WORDS;w++) io.ResidentGddrWrite(w,gddrSaved[w]);
+			for (unsigned w=0;w<program.GddrWords();w++) io.ResidentGddrWrite(w,gddrSaved[w]);
 			result.gddr_restored=io.ResetRead()==0x47800;
-			for (unsigned w=0;w<TT_RESIDENT_MATH_GDDR_WORDS;w++) result.gddr_restored &= io.ResidentGddrRead(w)==gddrSaved[w];
+			for (unsigned w=0;w<program.GddrWords();w++) result.gddr_restored &= io.ResidentGddrRead(w)==gddrSaved[w];
 		}
 	}
 	}

@@ -95,6 +95,7 @@ struct Mock {
 		assert(config==0x6005 && reset==0x47800);
 	}
 };
+#ifndef PIONEER_RESIDENT_MOCK_ONLY
 int main()
 {
 	Mock io; auto b=io.Baseline(); auto n=io.Compute(); tt_resident_math_result r;
@@ -127,3 +128,4 @@ int main()
 	io={}; b=io.Baseline(); n=io.Compute(); b.recovery_required=1;
 	assert(!BlackholeResidentMathProbe(io,b,n,r) && io.writes==0);
 }
+#endif
