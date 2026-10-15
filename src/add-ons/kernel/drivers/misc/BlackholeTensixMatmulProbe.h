@@ -3,13 +3,14 @@
 #define BLACKHOLE_TENSIX_MATMUL_PROBE_H
 #include "BlackholeDramSamplesProbe.h"
 #include "BlackholeTensixImage.h"
+#include "BlackholeTensixTileData.h"
 
 enum {
 	TT_MATMUL_REFUSED = 0, TT_MATMUL_PASSED = 1, TT_MATMUL_CONFIG_FAILED = 2,
 	TT_MATMUL_CORE_CHANGED = 3, TT_MATMUL_IMAGE_FAILED = 4,
 	TT_MATMUL_COMPLETION_FAILED = 5, TT_MATMUL_RESULT_MISMATCH = 6,
 	TT_MATMUL_STOP_FAILED = 7, TT_MATMUL_RESTORE_FAILED = 8,
-	TT_MATMUL_SOURCE_CHANGED = 9
+	TT_MATMUL_SOURCE_CHANGED = 9, TT_MATMUL_DATA_EXECUTED = 10
 };
 struct tt_tensix_matmul_result {
 	uint32_t version, state, started, completed, stopped, l1_restored, tlb_restored;
@@ -40,10 +41,14 @@ static inline uint32_t BlackholeMatmulTlbWord(unsigned slot, unsigned word)
 // There are no device-issued NoC requests, host DMA, IRQs or ARC messages.
 template<class IO>
 bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
-	tt_tensix_matmul_result& r, bool configSmoke = false, unsigned sfpuSmoke = 0)
+	tt_tensix_matmul_result& r, bool configSmoke = false, unsigned sfpuSmoke = 0,
+	const tt_tensix_tile_data* input = 0, uint32_t* output = 0)
 {
 	r = {}; r.version = sfpuSmoke != 0 ? 2 + sfpuSmoke : configSmoke ? 2 : 1; r.l1_restored = r.tlb_restored = 1;
-	if (sfpuSmoke > 23 || (configSmoke && sfpuSmoke != 0)) return false;
+	if (sfpuSmoke > 24 || (configSmoke && sfpuSmoke != 0)) return false;
+	if (sfpuSmoke == 24) {
+		if (input == 0 || output == 0 || !BlackholeTileDataValid(*input)) return false;
+	} else if (input != 0 || output != 0) return false;
 	bool protocolOnly = configSmoke || sfpuSmoke == 19 || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10);
 	const unsigned codeWords = BlackholeTensixCodeWords(sfpuSmoke), imageWords = BlackholeTensixImageWords(sfpuSmoke);
 	const unsigned statusIndex = BlackholeTensixStatusIndex(sfpuSmoke);
@@ -78,12 +83,14 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		for (unsigned i = 0; i < imageWords; i++) saved[i] = io.MathImageRead(i);
 		if (io.ResetRead() != 0x47800) break;
 		modified = true; r.l1_restored = 0;
-		for (unsigned i = 1; i < imageWords; i++) io.MathImageWrite(i,BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
+		for (unsigned i = 1; i < imageWords; i++) io.MathImageWrite(i,input != 0
+			? BlackholeTileDataImageWord(i,*input) : BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
 		if (io.ResetRead() != 0x47800) break;
 		io.MathImageWrite(0,BlackholeTensixImageWord(0,configSmoke,sfpuSmoke));
 		r.state = TT_MATMUL_IMAGE_FAILED;
 		bool imageOkay = true;
-		for (unsigned i = 0; i < imageWords; i++) imageOkay &= io.MathImageRead(i) == BlackholeTensixImageWord(i,configSmoke,sfpuSmoke);
+		for (unsigned i = 0; i < imageWords; i++) imageOkay &= io.MathImageRead(i) == (input != 0
+			? BlackholeTileDataImageWord(i,*input) : BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
 		if (!imageOkay) break;
 		r.state = TT_MATMUL_CORE_CHANGED;
 		if (io.ResetRead() != 0x47800) break;
@@ -115,10 +122,12 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 					for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) {
 						uint32_t value = io.MathImageRead(1 + codeWords + i);
 						if (i == 0 || i == 128) r.representative[i / 128] = value;
+						if (output != 0) { output[i] = value; continue; }
 						uint32_t expected = protocolOnly ? 0U : BlackholeMatmulStageExpected(sfpuSmoke,i);
 						if (value != expected) r.mismatches++;
 					}
-					r.state = r.mismatches == 0 ? TT_MATMUL_PASSED : TT_MATMUL_RESULT_MISMATCH;
+					r.state = output != 0 ? TT_MATMUL_DATA_EXECUTED
+						: r.mismatches == 0 ? TT_MATMUL_PASSED : TT_MATMUL_RESULT_MISMATCH;
 					break;
 				}
 			}
@@ -160,8 +169,8 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		}
 	}
 	if (!sourceOkay || !r.l1_restored || !r.tlb_restored || (r.started && (!r.completed || !r.stopped))) r.recovery_required = 1;
-	if ((!r.l1_restored || !r.tlb_restored) && r.state == TT_MATMUL_PASSED) r.state = TT_MATMUL_RESTORE_FAILED;
-	return r.state == TT_MATMUL_PASSED && r.started && r.completed && r.stopped
+	if ((!r.l1_restored || !r.tlb_restored) && (r.state == TT_MATMUL_PASSED || r.state == TT_MATMUL_DATA_EXECUTED)) r.state = TT_MATMUL_RESTORE_FAILED;
+	return (r.state == TT_MATMUL_PASSED || r.state == TT_MATMUL_DATA_EXECUTED) && r.started && r.completed && r.stopped
 		&& r.l1_restored && r.tlb_restored && !r.recovery_required;
 }
 #endif

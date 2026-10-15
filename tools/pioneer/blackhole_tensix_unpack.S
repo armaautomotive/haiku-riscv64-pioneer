@@ -143,10 +143,17 @@ clear_output:
 .ifdef TT_UNPACK_SRCB
 	emit 0x13001020 /* SrcB row0 broadcast -> Dst32; no multiplication */
 .else
+.ifdef TT_UNPACK_FULL_BF16
+	j full_bf16_math
+	nop
+	nop /* preserve the common three-word emit and completion addresses */
+.else
 	emit 0x26c00020 /* MVMUL, release/flip both operand banks on completion */
 .endif
 .endif
+.endif
 	jal ra, drain
+full_bf16_return:
 	li t2, 0xffbd8800
 	li t3, 0x17f800
 	slli t4, s4, 9
@@ -226,6 +233,27 @@ copy_nonuniform_word:
 	addi t1, t1, -1
 	bne t1, zero, copy_nonuniform_word
 	j inputs_ready
+.ifdef TT_UNPACK_FULL_BF16
+	.org 0x480, 0
+full_bf16_math:
+	li t2, 0
+full_bf16_phase:
+	li t0, 0xb20b0000 /* ThreadConfig FIDELITY_BASE.Phase, documented index 11 */
+	or t0, t0, t2
+	sw t0, 0(s0)
+	jal ra, drain /* serialize CFGEXU before the corresponding FPU operation */
+	li t0, 0x26000020 /* retain both operands until the final fidelity phase */
+	li t3, 3
+	bne t2, t3, full_bf16_emit
+	li t0, 0x26c00020
+full_bf16_emit:
+	sw t0, 0(s0)
+	jal ra, drain
+	addi t2, t2, 1
+	li t3, 4
+	bne t2, t3, full_bf16_phase
+	j full_bf16_return
+.endif
 .macro bf16_small value
 .if (\value) == -8
 	.short 0xc100

@@ -3,10 +3,12 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <cmath>
 #include <fstream>
 #include <iterator>
 #include <vector>
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTensixImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeTensixTileData.h"
 
 static uint32_t Bits(float f) { uint32_t u; memcpy(&u,&f,4); return u; }
 static float Float(uint32_t u) { float f; memcpy(&f,&u,4); return f; }
@@ -28,6 +30,7 @@ struct Machine {
 	bool dropVector = false;
 	bool dropClear = false;
 	bool transposeA = false;
+	bool dropLowFidelity = false;
 	bool dropUnpack = false, backendWait = false;
 	uint32_t gpr63 = 0;
 	unsigned unpackReads = 0, inputStores = 0;
@@ -155,11 +158,21 @@ struct Machine {
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
-				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) value += b[row][k] * (transposeA ? a[col][k] : a[k][col]);
+				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) {
+					float av = transposeA ? a[col][k] : a[k][col], bv = b[row][k];
+					if (sfpuSmoke == 24) {
+						unsigned phase = thread[11]; assert(phase < 4);
+						float highA = Float(Bits(av)&0xfff80000), highB = Float(Bits(bv)&0xfffe0000);
+						av = (phase&1) ? av-highA : highA;
+						bv = (phase&2) ? bv-highB : highB;
+						if (dropLowFidelity && phase != 0) av = 0;
+					}
+					value += bv*av;
+				}
 				dst[32+row][col] = value;
 			}
 			for (unsigned row = 32; row < 40; row++) valid[row] = true;
-			if (op == 0x26c00020) { assert(sfpuSmoke == 16 || sfpuSmoke == 20 || sfpuSmoke == 21); ownerA = ownerB = false; }
+			if (op == 0x26c00020) { assert(sfpuSmoke == 16 || sfpuSmoke == 20 || sfpuSmoke == 21 || sfpuSmoke == 24); ownerA = ownerB = false; }
 		} else assert(false);
 		drained = false;
 	}
@@ -281,7 +294,7 @@ struct Machine {
 };
 int main(int argc, char** argv)
 {
-	assert(argc == 27);
+	assert(argc == 28);
 	auto boot = Read(argv[1]), code = Read(argv[2]);
 	auto configCode = Read(argv[3]);
 	assert(boot.size() == 4 && Word(boot,0) == BlackholeTensixImageWord(0) && code.size() == TT_TENSIX_CODE_WORDS*4);
@@ -301,6 +314,13 @@ int main(int argc, char** argv)
 		}
 	}
 	assert(BlackholeTensixImageAddress(TT_TENSIX_IMAGE_WORDS) == UINT32_MAX);
+	tt_tensix_tile_data assembledInput = {}; assembledInput.version = 1;
+	for (unsigned i = 0; i < 256; i++) {
+		assembledInput.weights[i] = Bits(i/16 == i%16 ? 1.0f : 0.0f)>>16;
+		assembledInput.activations[i] = BlackholeFixedIntegerFp32(BlackholeFixedVector(i/128,(i%128)/16,i%16))>>16;
+	}
+	auto dataCode = Read(argv[27]); assert(dataCode.size() == TT_UNPACK_CODE_WORDS*4);
+	for (unsigned i = 0; i < TT_UNPACK_CODE_WORDS; i++) assert(Word(dataCode,i*4) == BlackholeTileDataImageWord(i+1,assembledInput));
 	Machine m; m.Run(); assert(m.Correct() && m.matrixInstructions == 2 && m.inputWrites == 0 && m.vectorWrites == 768 && m.outputReads == 256 && m.drains == 13);
 	Machine disabled; disabled.dropMatrix = true; disabled.Run(); assert(!disabled.Correct());
 	Machine configOnly(true); configOnly.Run();
@@ -365,5 +385,29 @@ int main(int argc, char** argv)
 	}
 	Machine transposed(false,21); transposed.transposeA = true; transposed.Run(); assert(!transposed.Correct());
 	Machine noNonuniformMath(false,21); noNonuniformMath.dropMatrix = true; noNonuniformMath.Run(); assert(!noNonuniformMath.Correct());
+	// Same independently assembled identity program, data-only substitutions.
+	// Fractional values ensure this is not the old fixed integer oracle.
+	for (unsigned trial = 0; trial < 8; trial++) {
+		tt_tensix_tile_data input = {}; input.version = 1;
+		for (unsigned i = 0; i < 256; i++) {
+			input.weights[i] = (0x3e80+(i*13+trial*7)%384) | ((i&1) ? 0x8000 : 0);
+			input.activations[i] = (0x3f00+(i*11+trial*3)%256) | ((i&2) ? 0x8000 : 0);
+		}
+		assert(BlackholeTileDataValid(input));
+		Machine data(false,24);
+		for (unsigned i = 0; i < TT_UNPACK_IMAGE_WORDS; i++) data.l1[i] = BlackholeTileDataImageWord(i,input);
+		data.Run();
+		assert(data.matrixInstructions == 8 && data.outputReads == 256);
+		Machine low(false,24); low.dropLowFidelity = true;
+		for (unsigned i = 0; i < TT_UNPACK_IMAGE_WORDS; i++) low.l1[i] = BlackholeTileDataImageWord(i,input);
+		low.Run(); unsigned lowMismatches = 0;
+		for (unsigned row = 0; row < 16; row++) for (unsigned col = 0; col < 16; col++) {
+			float reference = 0;
+			for (unsigned k = 0; k < 16; k++) reference += Float(uint32_t(input.activations[row*16+k])<<16)*Float(uint32_t(input.weights[k*16+col])<<16);
+			assert(fabsf(Float(data.l1[data.Index(0x17f800+4*(row*16+col))])-reference) < 0.00001f);
+			lowMismatches += low.l1[low.Index(0x17f800+4*(row*16+col))] != Bits(reference);
+		}
+		assert(lowMismatches > 200);
+	}
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }

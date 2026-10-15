@@ -94,6 +94,8 @@
 #define TT_PCI_PROBE_PIONEER_DENSE_SRCA_SUPPORT (B_DEVICE_OP_CODES_END + 0x5499)
 #define TT_PCI_PROBE_PIONEER_PATTERN_SRCB (B_DEVICE_OP_CODES_END + 0x549a)
 #define TT_PCI_PROBE_PIONEER_PATTERN_SRCB_SUPPORT (B_DEVICE_OP_CODES_END + 0x549b)
+#define TT_PCI_PROBE_PIONEER_DATA_TILE (B_DEVICE_OP_CODES_END + 0x549c)
+#define TT_PCI_PROBE_PIONEER_DATA_TILE_SUPPORT (B_DEVICE_OP_CODES_END + 0x549d)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -167,6 +169,12 @@ struct tt_pioneer_matmul_result {
 struct tt_pioneer_clocked_matmul_result {
 	tt_pioneer_matmul_result matmul;
 	tt_arc_clock_guard_result clock;
+};
+
+struct tt_pioneer_data_tile {
+	tt_tensix_tile_data input;
+	uint32_t output[256]; // FP32 bits, valid only after fully restored execution
+	tt_pioneer_matmul_result result;
 };
 
 #endif

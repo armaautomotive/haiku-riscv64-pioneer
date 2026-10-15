@@ -1196,8 +1196,6 @@ prove nonuniform layouts, a scalable runtime or model inference. Next test
 nonuniform data before model-backend integration. Default Linux boot,
 firmware and both SDs remain unchanged; no BAR4 enlargement/bus mastering.
 
-Download pinned official sources with:
-
 ### October 15: nonuniform, mixed-sign layouts verified
 
 At **07:59 UTC**, the new SrcA dense readback, SrcB patterned broadcast,
@@ -1224,6 +1222,85 @@ CLI SHA `641cf396986aa3d573e32ff4f58acf278d16c540b9397fabbc5799d076bcaa1b`.
 This proves these bounded numerical layouts, NOT model inference or a
 scalable backend. Next add a bounded data-only input/output interface;
 no user-controlled device addresses, code or DMA descriptors.
+
+### October 15: bounded data-only BF16 interface and model bootstrap
+
+Added root-only ioctl `549c` with metadata `549d` v39. Request is exactly
+two 16x16 BF16 arrays (`A[k][column]`, `B[row][k]`); output is 16x16 FP32
+`B @ A`. No caller-controlled addresses, code, dimensions or descriptors.
+NaN/Inf and nonzero subnormals are rejected before hardware access.
+The driver snapshots inputs on a bounded heap allocation, zeros results,
+and never reads userspace during execution. Result state **10 EXECUTED**
+is deliberately distinct from a numerical fixture PASS. Output is erased
+if completion, stop or L1/TLB/PCI restoration fails. Cold-recovery gates
+remain in force. Context on the single idle tile is reinitialized.
+
+The separately assembled program adds four fidelity phases at `70480..704c3`,
+retaining both source banks until the last MVMUL. Thread register 11 selects
+the phase; each change and multiplication is explicitly drained. Code/data
+and snapshot footprint remain 908 words. The decoder compares the complete
+assembled image, emulates all four phase contributions, and verifies that
+omitting low phases fails. Parameterized policy tests cover data-write loss,
+invalid inputs and timeout/no-restore rules; the source lock audit now has
+22 guarded handlers.
+
+Live driver SHA `295c8c82f6a39a07cd7d74c8cb237d7602226c7de445951a06140c407d2ae0bb`,
+artifact folder `/boot/home/pioneer-p100a-20261014/data-tile-1/`.
+Nine diagonal/equal-exponent reduction controls passed **exactly**. The
+full-mantissa mixed-exponent sweep is NOT bit-exact: an initial absolute
+1e-5 target failed, and a normalized 1/4096 target missed one output in
+trial 6. At **08:19 UTC**, all eight trials / 2048 outputs passed the explicit
+BF16-level acceptance target `abs(error) <= 1e-6 + sum(abs(products))/1024`.
+Measured maximum absolute error 0.00425720215, maximum normalized error
+0.000244877592, elapsed 1.342 seconds. This is an empirical acceptance
+test, not a universal hardware error bound or a diagnosis of the precise
+mixed-exponent reduction rounding. Official MVMUL documentation explicitly
+does not promise IEEE-exact reduction. The earlier strict failures remain
+important evidence; do not describe this path as bit-exact FP32 GEMM.
+Sweep CLI SHA `d47c088ca83b11ed84f7c5f60d43e21c8c11844acd28510bd84004fb8cd5e170`.
+
+`tenstorrent_haiku_tinyllama.cpp` is a strict fixed-shape 260K TinyStories
+bootstrap, not a Qwen loader. Every learned linear projection and classifier
+uses actual P100A BF16 tile operations, without CPU fallback. Host software
+does normalization, attention/KV, activations, embedding lookup and partial
+tile sums. A separate full-FP32 model context compares every generated
+token's 512 logits (cosine >=0.999, relative L2 <=0.02, exact argmax agreement).
+The offline implementation matches the independently compiled pinned
+karpathy/llama2.c reference; all eight BF16-emulated greedy tokens agree:
+`Once upon a time, there was a`. Those are **offline** results, not yet a
+claim about live P100A inference. A two-token live test is underway.
+
+At **08:23 UTC**, the first LIVE token completed: id 403, ` Once`, identical
+to the independent CPU argmax. Logit cosine 0.999997107, relative L2
+0.002905042, maximum error 0.0623066. All 1028 real device tiles completed
+and restored; elapsed 173.071 seconds. This is hybrid inference with every
+learned linear projection on the P100A, not all-device execution. The next
+token is still being tested. Native harness SHA
+`a1de72855ce62f2bdf94985da281c7d44ea1a58de6f7f3fa593c10fc6585843d`,
+artifacts `/boot/home/pioneer-p100a-20261014/tinyllama-1/`.
+
+Pinned model author/revision: karpathy/tinyllamas
+`0bd21da7698eaf29a0d7de3992de8a46ef624add`; raw model SHA
+`b0a507e7ad0f626624f17112325e66691f9076d622e1d3274d103d00299f2696`,
+tokenizer SHA `037cb335abb25d1fa9e8ecae30ed2a3a8ace9302862ebcdc05d51a6bbb10c312`.
+`tenstorrent_fetch_tiny_bootstrap.sh` fetches only pinned plain C/license,
+raw float checkpoint and tokenizer, verifies hashes, and executes nothing.
+Do not download/execute the `.pt` pickle. The reference source remains
+unmodified in ignored artifacts, with its original MIT license.
+
+Reproduce offline checks:
+
+```sh
+sh tools/pioneer/tenstorrent_fetch_tiny_bootstrap.sh /absolute/fresh/artifacts
+sh tools/pioneer/tests/run_pioneer_tinyllama_tests.sh /absolute/fresh/artifacts
+sh tools/pioneer/tenstorrent_cross_build_tools.sh CONFIGURED_BUILD /absolute/fresh/tools
+```
+
+The diagnostic per-tile save/check/restore path is far too slow for 27B.
+Qwen3.8-27B 4-bit, resident GDDR weights and a scalable batched backend remain
+separate, unfinished milestones. No firmware/boot/SD changes or DMA enable.
+
+Download the other pinned official sources with:
 
 ```sh
 sh tools/pioneer/tenstorrent_fetch.sh
