@@ -37,9 +37,11 @@ static inline bool PioneerTileSucceeded(const tt_pioneer_matmul_result& r)
 class PioneerTileBackend {
 	int fd;
 	bool failed;
+	bool batchChecked;
 public:
 	uint64_t calls;
-	PioneerTileBackend() : fd(-1), failed(false), calls(0) {}
+	uint64_t transactions;
+	PioneerTileBackend() : fd(-1), failed(false), batchChecked(false), calls(0), transactions(0) {}
 	~PioneerTileBackend() { if (fd >= 0) close(fd); }
 	bool Open() {
 		if (fd >= 0 || failed) return false;
@@ -62,6 +64,7 @@ public:
 			perror("P100A data tile ioctl"); failed = true; return false;
 		}
 		calls++;
+		transactions++;
 		if (!PioneerTileSucceeded(tile.result)) {
 			fprintf(stderr,"P100A STOP: execution state %u completed/stopped %u/%u restored %u/%u/%u cold %u; no retries\n",
 				tile.result.math.state,tile.result.math.completed,tile.result.math.stopped,
@@ -69,6 +72,35 @@ public:
 				tile.result.baseline.control.control.control.pci.restored,tile.result.math.recovery_required);
 			failed = true; return false;
 		}
+		return true;
+	}
+	bool RunBatch(const tt_tensix_tile_data* input,uint32_t output[][256],unsigned count) {
+		if (fd < 0 || failed || count == 0 || count > TT_DATA_TILE_BATCH_MAX) return false;
+		for (unsigned i=0;i<count;i++) if (!BlackholeTileDataValid(input[i])) return false;
+		if (!batchChecked) {
+			tt_matmul_support s = {};
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_DATA_BATCH_SUPPORT,&s,sizeof(s)) != 0
+				|| s.version != 40 || s.code_words != TT_UNPACK_CODE_WORDS
+				|| s.footprint_words != TT_UNPACK_IMAGE_WORDS || s.park_pc != TT_UNPACK_PARK_PC
+				|| s.entry != 0x6000 || s.code_base != 0x70000 || s.results_base != 0x17f800
+				|| s.reset_mask != 0x87ffff || s.running_mask != 0x46800) {
+				fprintf(stderr,"P100A batch ABI unavailable; no batch submitted\n"); failed=true; return false;
+			}
+			batchChecked=true;
+		}
+		tt_pioneer_data_batch batch = {}; batch.version=1; batch.count=count;
+		memcpy(batch.input,input,count*sizeof(*input));
+		if (ioctl(fd,TT_PCI_PROBE_PIONEER_DATA_BATCH,&batch,sizeof(batch)) != 0) {
+			perror("P100A data batch ioctl"); failed=true; return false;
+		}
+		transactions++;
+		if (batch.completed != count || !PioneerTileSucceeded(batch.result)) {
+			fprintf(stderr,"P100A batch STOP: completed %u/%u state %u cold %u; no retries\n",
+				batch.completed,count,batch.result.math.state,batch.result.math.recovery_required);
+			failed=true; return false;
+		}
+		calls+=count;
+		memcpy(output,batch.output,count*sizeof(batch.output[0]));
 		return true;
 	}
 	bool Multiply16(const float* weights, const float* activations, float* output) {

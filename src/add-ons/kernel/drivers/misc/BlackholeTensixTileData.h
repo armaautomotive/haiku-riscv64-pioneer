@@ -10,6 +10,17 @@ struct tt_tensix_tile_data {
 	uint32_t version, flags;
 	uint16_t weights[256], activations[256];
 };
+enum { TT_DATA_TILE_BATCH_MAX = 16 };
+// Between completed/stopped jobs under one exclusive transaction, only
+// these data tables and progress words are host-mutable. Code/entry remain
+// untouched. Private B payload/output are overwritten by the next program.
+static inline bool BlackholeTileDataMutableIndex(unsigned index)
+{
+	uint32_t address = BlackholeTensixImageAddress(index,24);
+	return (address >= 0x70500 && address < 0x70700)
+		|| (address >= 0x70710 && address < 0x70910)
+		|| (address >= 0x17ffc0 && address <= 0x17ffc8);
+}
 static inline bool BlackholeTileDataValid(const tt_tensix_tile_data& input)
 {
 	if (input.version != 1 || input.flags != 0) return false;

@@ -24,4 +24,12 @@ struct PioneerTileBackend {
 		}
 		return true;
 	}
+	bool RunBatch(const tt_tensix_tile_data* input,uint32_t output[][256],unsigned count) {
+		if(count==0 || count>TT_DATA_TILE_BATCH_MAX) return false;
+		for(unsigned i=0;i<count;i++) {
+			tt_pioneer_data_tile tile={}; tile.input=input[i]; if(!Run(tile)) return false;
+			memcpy(output[i],tile.output,sizeof(tile.output));
+		}
+		return true;
+	}
 };

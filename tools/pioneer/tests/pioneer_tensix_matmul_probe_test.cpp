@@ -18,6 +18,9 @@ struct MockMatmul {
 	bool configOnly = false;
 	unsigned sfpuOnly = 0;
 	const tt_tensix_tile_data* tileInput = nullptr;
+	bool batching = false;
+	unsigned jobsStarted = 0;
+	unsigned timeoutJob = 0;
 	bool allocationFails = false;
 	uint32_t* MathSavedWords() { return allocationFails ? nullptr : saved; }
 	unsigned clockEnter = 0, clockLeave = 0;
@@ -56,10 +59,11 @@ struct MockMatmul {
 		for (unsigned x : xs) for (unsigned y = 2; y <= 11; y++) valid |= Matches(1,0xffa00000,x,y,true);
 		assert(valid);
 		if (++resetReads == changeResetAt) reset = 0;
-		if (reset == 0x46800 && ++polls == 2 && !timeout) {
+		if (reset == 0x46800 && ++polls == 2 && !timeout && jobsStarted != timeoutJob) {
 			memory[BlackholeTensixStatusIndex(sfpuOnly)] = BlackholeTensixFinalPhase(sfpuOnly);
 			memory[BlackholeTensixStatusIndex(sfpuOnly)+1] = 2; memory[BlackholeTensixStatusIndex(sfpuOnly)+2] = 0x4d415431;
 			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+BlackholeTensixCodeWords(sfpuOnly)+i] = (configOnly || sfpuOnly == 19 || (sfpuOnly != 0 && sfpuOnly != 7 && sfpuOnly < 10)) ? 0U : BlackholeMatmulStageExpected(sfpuOnly,i);
+			if (batching) for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+BlackholeTensixCodeWords(sfpuOnly)+i] = (jobsStarted<<16)|i;
 			if (badMath) memory[1+BlackholeTensixCodeWords(sfpuOnly)] ^= 1;
 			executed = true;
 		}
@@ -70,14 +74,22 @@ struct MockMatmul {
 	void MathImageWrite(unsigned word, uint32_t value) {
 		Windows(); assert(word < BlackholeTensixImageWords(sfpuOnly) && reset == 0x47800);
 		if (everStarted) assert(executed && !timeout && !badPC && !sourceChanges);
+		if (batching && everStarted && value != original[word]) assert(BlackholeTileDataMutableIndex(word));
 		if (++imageWrites != dropImage && !(failRestore && value == original[word])) memory[word] = value;
 	}
 	void MathResetWrite(uint32_t value) {
 		Windows();
-		if (value == 0x87ffff) assert(reset == (everStarted ? 0x46800U : 0x47800U));
+		if (value == 0x87ffff) {
+			if (batching && reset == 0x47800) assert(!everStarted || executed);
+			else assert(reset == (everStarted ? 0x46800U : 0x47800U));
+		}
 		else if (value == 0x46800) {
-			assert(reset == 0x87ffff && !everStarted);
-			for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuOnly); i++) assert(memory[i] == (tileInput != nullptr ? BlackholeTileDataImageWord(i,*tileInput) : BlackholeTensixImageWord(i,configOnly,sfpuOnly)));
+			assert(reset == 0x87ffff && (!everStarted || batching));
+			for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuOnly); i++) {
+				if (batching && jobsStarted != 0 && !BlackholeTileDataMutableIndex(i)) continue;
+				assert(memory[i] == (tileInput != nullptr ? BlackholeTileDataImageWord(i,tileInput[batching ? jobsStarted : 0]) : BlackholeTensixImageWord(i,configOnly,sfpuOnly)));
+			}
+			jobsStarted++; polls = 0; executed = false;
 			everStarted = true;
 		} else { assert(value == 0x47800 && reset == 0x87ffff && everStarted); }
 		if (++resetWrites != dropReset) reset = value;
@@ -172,6 +184,30 @@ int main()
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,23,&input,output) && io.configWrites == 0);
 	input.flags = 1;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,&input,output) && io.configWrites == 0);
+	tt_tensix_tile_data batch[TT_DATA_TILE_BATCH_MAX] = {};
+	uint32_t batchOutput[TT_DATA_TILE_BATCH_MAX*256] = {}, completedJobs = 99;
+	for (unsigned j = 0; j < TT_DATA_TILE_BATCH_MAX; j++) {
+		batch[j].version = 1; batch[j].weights[j] = 0x3f80+j; batch[j].activations[j+1] = 0xbf80+j;
+	}
+	io = {}; baseline = io.Baseline(); io.sfpuOnly = 24; io.tileInput = batch; io.batching = true;
+	assert(BlackholeTensixMatmulProbe(io,baseline,r,false,24,batch,batchOutput,TT_DATA_TILE_BATCH_MAX,&completedJobs));
+	assert(completedJobs == TT_DATA_TILE_BATCH_MAX && io.jobsStarted == TT_DATA_TILE_BATCH_MAX && io.Restored() && !r.recovery_required);
+	assert(io.resetWrites == TT_DATA_TILE_BATCH_MAX*4 && baseline.cores_checked == 120);
+	assert(io.imageWrites == 2*TT_UNPACK_IMAGE_WORDS+(TT_DATA_TILE_BATCH_MAX-1)*259);
+	for (unsigned j = 0; j < TT_DATA_TILE_BATCH_MAX; j++) for (unsigned i = 0; i < 256; i++) assert(batchOutput[j*256+i] == ((j+1)<<16|i));
+	io = {}; baseline = io.Baseline();
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,batch,batchOutput,0,&completedJobs) && completedJobs == 0 && io.configWrites == 0);
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,batch,batchOutput,TT_DATA_TILE_BATCH_MAX+1,&completedJobs) && io.configWrites == 0);
+	batch[15].flags = 1;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,batch,batchOutput,TT_DATA_TILE_BATCH_MAX,&completedJobs) && io.configWrites == 0);
+	batch[15].flags = 0;
+	io = {}; baseline = io.Baseline(); io.sfpuOnly = 24; io.tileInput = batch; io.batching = true; io.timeoutJob = 2;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,batch,batchOutput,16,&completedJobs));
+	assert(completedJobs == 1 && r.recovery_required && !r.l1_restored && !r.completed && r.stopped);
+	io = {}; baseline = io.Baseline(); io.sfpuOnly = 24; io.tileInput = batch; io.batching = true; io.dropImage = TT_UNPACK_IMAGE_WORDS+1;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,batch,batchOutput,16,&completedJobs));
+	assert(completedJobs == 1 && !r.started && !r.recovery_required && r.l1_restored && io.Restored());
+	io = {}; baseline = io.Baseline();
 	input.flags = 0; input.weights[255] = 0x7f80;
 	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24,&input,output) && io.configWrites == 0);
 	input.weights[255] = 0; input.activations[0] = 0xffc0;

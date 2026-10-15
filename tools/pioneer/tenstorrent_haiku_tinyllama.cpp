@@ -65,20 +65,28 @@ static void Gemv(PioneerTileBackend* device,float* out,const float* w,const floa
 		for(int row=0;row<d;row++) for(int k=0;k<n;k++) out[row]+=w[row*n+k]*x[k];
 		return;
 	}
-	for(int row=0;row<d;row+=16) for(int k=0;k<n;k+=16) {
-		tt_pioneer_data_tile tile={}; tile.input.version=1;
-		for(int inner=0;inner<16;inner++) {
-			if(k+inner<n) tile.input.activations[inner]=PioneerTileBf16(x[k+inner]);
-			for(int col=0;col<16;col++) if(row+col<d && k+inner<n)
-				tile.input.weights[inner*16+col]=PioneerTileBf16(w[(row+col)*n+k+inner]);
-		}
-		if(!device->Run(tile)) Fail("accelerator projection failed; no CPU fallback");
-		for(int col=0;col<16 && row+col<d;col++) {
-			float value=PioneerTileFloat(tile.output[col]);
+	tt_tensix_tile_data input[TT_DATA_TILE_BATCH_MAX] = {};
+	uint32_t output[TT_DATA_TILE_BATCH_MAX][256];
+	int rowBase[TT_DATA_TILE_BATCH_MAX]; unsigned count=0;
+	auto flush = [&]() {
+		if(!device->RunBatch(input,output,count)) Fail("accelerator batch failed; no CPU fallback");
+		for(unsigned job=0;job<count;job++) for(int col=0;col<16 && rowBase[job]+col<d;col++) {
+			float value=PioneerTileFloat(output[job][col]);
 			if(!isfinite(value)) Fail("nonfinite accelerator projection");
-			out[row+col]+=value;
+			out[rowBase[job]+col]+=value;
 		}
+		count=0;
+	};
+	for(int row=0;row<d;row+=16) for(int k=0;k<n;k+=16) {
+		tt_tensix_tile_data& tile=input[count]; tile={}; tile.version=1; rowBase[count]=row;
+		for(int inner=0;inner<16;inner++) {
+			if(k+inner<n) tile.activations[inner]=PioneerTileBf16(x[k+inner]);
+			for(int col=0;col<16;col++) if(row+col<d && k+inner<n)
+				tile.weights[inner*16+col]=PioneerTileBf16(w[(row+col)*n+k+inner]);
+		}
+		if(++count==TT_DATA_TILE_BATCH_MAX) flush();
 	}
+	if(count!=0) flush();
 }
 static void Rotate(float* vector,int count,int position)
 {

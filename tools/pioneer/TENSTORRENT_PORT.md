@@ -1311,6 +1311,46 @@ separate, unfinished milestones. No firmware/boot/SD changes or DMA enable.
 
 Download the other pinned official sources with:
 
+### October 15: bounded batching and eight-token live inference
+
+Added data-only batch ioctl `549e`, metadata `549f` v40. It accepts 1..16
+fixed-shape inputs, privately snapshots/validates all before hardware access,
+and holds the same lock/PCI reservation throughout. Original L1 is saved
+once/restored once. Every job is independently started, drained, parked and
+stopped; only the 256 input-table words and three progress words change
+between jobs. Executable code and entry are untouched. A failed batch
+erases all public outputs. A timeout after job one still forbids L1 restore
+and cold-latches the driver; dropped second-job data before start safely
+restores the original snapshot. Offline tests cover all 16 ordered results,
+invalid final input, count bounds, mid-batch timeout and dropped data.
+The lock audit now has 23 guarded handlers. Single-job/legacy tests pass.
+
+At **08:30 UTC**, eight real matrices passed in one transaction, 2048 checked
+outputs, same numerical error as the single-job test, elapsed 0.189 s. An
+immediate warm repeat passed in 0.191 s, recovery 0, full restoration.
+
+At **08:33 UTC**, the live batched pretrained-model run PASSED all eight
+tokens: ` Once upon a time, there was a` (ids 403,407,261,378,432,383,286,261).
+All CPU argmaxes matched. Across tokens cosine >=0.999989242, relative L2
+<=0.005256786, max logit absolute error <=0.110325. All **8224 real device
+tiles** completed/stopped/restored, total **123.050 seconds**, about 15.38
+seconds/token vs 173.09 before batching (11.25x faster). The first two tokens'
+logits were identical to the unbatched live results. Host attention/norm/KV
+and partial sums remain; no CPU fallback for learned projections.
+Post-run health: 64 CPUs, 137,034,936,320 maximum RAM bytes, card idle 800 MHz,
+742 mV, 90 W input, zero thermal trips, advancing heartbeat, PCI commands
+0000/0000. No cold recovery, boot changes, firmware flash, SD changes or DMA.
+
+Artifacts `/boot/home/pioneer-p100a-20261014/batch-1/`: driver SHA
+`c0cdb75a7f2d4a90638be45660e99121b02deb0152656fc96643071ff3c32a77`,
+matrix CLI `9dee6fe46afbc29b851030dd617cb27fa2dfb7cf95fd0dcd9ec9cd4e9c32b925`,
+model harness `3f7571fdfd2098b4d5ac5d001a3453f8d45fecc38a40e03099ba9545713fb968`.
+This is a working tiny hybrid language model, NOT Qwen3.8-27B. Resident
+quantized weights, device-side transfers and a scalable model backend remain
+necessary for that target. Default boot remains Linux and both SDs stay out.
+
+Download the other pinned official sources with:
+
 ```sh
 sh tools/pioneer/tenstorrent_fetch.sh
 ```

@@ -42,13 +42,17 @@ static inline uint32_t BlackholeMatmulTlbWord(unsigned slot, unsigned word)
 template<class IO>
 bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 	tt_tensix_matmul_result& r, bool configSmoke = false, unsigned sfpuSmoke = 0,
-	const tt_tensix_tile_data* input = 0, uint32_t* output = 0)
+	const tt_tensix_tile_data* input = 0, uint32_t* output = 0,
+	unsigned batchCount = 1, uint32_t* completedJobs = 0)
 {
 	r = {}; r.version = sfpuSmoke != 0 ? 2 + sfpuSmoke : configSmoke ? 2 : 1; r.l1_restored = r.tlb_restored = 1;
+	if (completedJobs != 0) *completedJobs = 0;
+	if (batchCount == 0 || batchCount > TT_DATA_TILE_BATCH_MAX || (batchCount > 1 && completedJobs == 0)) return false;
 	if (sfpuSmoke > 24 || (configSmoke && sfpuSmoke != 0)) return false;
 	if (sfpuSmoke == 24) {
-		if (input == 0 || output == 0 || !BlackholeTileDataValid(*input)) return false;
-	} else if (input != 0 || output != 0) return false;
+		if (input == 0 || output == 0) return false;
+		for (unsigned job = 0; job < batchCount; job++) if (!BlackholeTileDataValid(input[job])) return false;
+	} else if (input != 0 || output != 0 || batchCount != 1) return false;
 	bool protocolOnly = configSmoke || sfpuSmoke == 19 || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10);
 	const unsigned codeWords = BlackholeTensixCodeWords(sfpuSmoke), imageWords = BlackholeTensixImageWords(sfpuSmoke);
 	const unsigned statusIndex = BlackholeTensixStatusIndex(sfpuSmoke);
@@ -83,14 +87,26 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		for (unsigned i = 0; i < imageWords; i++) saved[i] = io.MathImageRead(i);
 		if (io.ResetRead() != 0x47800) break;
 		modified = true; r.l1_restored = 0;
-		for (unsigned i = 1; i < imageWords; i++) io.MathImageWrite(i,input != 0
-			? BlackholeTileDataImageWord(i,*input) : BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
+		for (unsigned job = 0; job < batchCount; job++) {
+		r.started = r.completed = r.stopped = 0;
+		r.phase = r.fixtures = r.marker = r.pc[0] = r.pc[1] = 0;
+		r.state = TT_MATMUL_CORE_CHANGED;
+		if (job != 0 && (io.ResetRead() != 0x47800 || !BlackholeDramSourceStable(io,baseline))) break;
+		const tt_tensix_tile_data* currentInput = input != 0 ? input+job : 0;
+		for (unsigned i = 1; i < imageWords; i++) {
+			if (job != 0 && !BlackholeTileDataMutableIndex(i)) continue;
+			io.MathImageWrite(i,currentInput != 0 ? BlackholeTileDataImageWord(i,*currentInput)
+				: BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
+		}
 		if (io.ResetRead() != 0x47800) break;
-		io.MathImageWrite(0,BlackholeTensixImageWord(0,configSmoke,sfpuSmoke));
+		if (job == 0) io.MathImageWrite(0,BlackholeTensixImageWord(0,configSmoke,sfpuSmoke));
 		r.state = TT_MATMUL_IMAGE_FAILED;
 		bool imageOkay = true;
-		for (unsigned i = 0; i < imageWords; i++) imageOkay &= io.MathImageRead(i) == (input != 0
-			? BlackholeTileDataImageWord(i,*input) : BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
+		for (unsigned i = 0; i < imageWords; i++) {
+			if (job != 0 && !BlackholeTileDataMutableIndex(i)) continue;
+			imageOkay &= io.MathImageRead(i) == (currentInput != 0
+				? BlackholeTileDataImageWord(i,*currentInput) : BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
+		}
 		if (!imageOkay) break;
 		r.state = TT_MATMUL_CORE_CHANGED;
 		if (io.ResetRead() != 0x47800) break;
@@ -122,7 +138,7 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 					for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) {
 						uint32_t value = io.MathImageRead(1 + codeWords + i);
 						if (i == 0 || i == 128) r.representative[i / 128] = value;
-						if (output != 0) { output[i] = value; continue; }
+						if (output != 0) { output[job*TT_TENSIX_OUTPUT_WORDS+i] = value; continue; }
 						uint32_t expected = protocolOnly ? 0U : BlackholeMatmulStageExpected(sfpuSmoke,i);
 						if (value != expected) r.mismatches++;
 					}
@@ -143,6 +159,9 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		r.reset_after = io.ResetRead();
 		r.stopped = r.reset_after == 0x47800 && io.ResetRead() == 0x47800;
 		if (!r.stopped) r.state = TT_MATMUL_STOP_FAILED;
+		if (!r.stopped || (r.state != TT_MATMUL_PASSED && r.state != TT_MATMUL_DATA_EXECUTED)) break;
+		if (completedJobs != 0) (*completedJobs)++;
+		}
 	} while (false);
 
 	bool sourceOkay = BlackholeDramSourceStable(io,baseline);
@@ -171,6 +190,7 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 	if (!sourceOkay || !r.l1_restored || !r.tlb_restored || (r.started && (!r.completed || !r.stopped))) r.recovery_required = 1;
 	if ((!r.l1_restored || !r.tlb_restored) && (r.state == TT_MATMUL_PASSED || r.state == TT_MATMUL_DATA_EXECUTED)) r.state = TT_MATMUL_RESTORE_FAILED;
 	return (r.state == TT_MATMUL_PASSED || r.state == TT_MATMUL_DATA_EXECUTED) && r.started && r.completed && r.stopped
+		&& (completedJobs == 0 || *completedJobs == batchCount)
 		&& r.l1_restored && r.tlb_restored && !r.recovery_required;
 }
 #endif

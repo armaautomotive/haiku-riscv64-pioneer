@@ -10,6 +10,7 @@
 #include <PCI.h>
 #include <fcntl.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -843,13 +844,16 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 	uint32* savedWords = NULL;
 	const tt_tensix_tile_data* const tileInput;
 	uint32* const tileOutput;
+	const unsigned tileCount;
+	uint32* const completedJobs;
 	PioneerMatmulIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
 		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_samples_result& d, tt_tensix_matmul_result& m,
 		bool configOnly = false, tt_arc_clock_guard_result* clockGuard = NULL, unsigned sfpuOnly = 0,
-		const tt_tensix_tile_data* input = NULL, uint32* output = NULL)
+		const tt_tensix_tile_data* input = NULL, uint32* output = NULL,
+		unsigned count = 1, uint32* completed = NULL)
 		: PioneerDramSamplesIO(p,a,t,c,d,false), math(m), configSmoke(configOnly), sfpuSmoke(sfpuOnly),
 		clockIO(p,a,t,clockGuard != NULL ? clockGuard->last : unusedQuery,clockGuard), clock(clockGuard),
-		tileInput(input), tileOutput(output) {}
+		tileInput(input), tileOutput(output), tileCount(count), completedJobs(completed) {}
 	~PioneerMatmulIO() { free(savedWords); for (unsigned i = 0; i < 5; i++) if (mathAreas[i] >= B_OK) delete_area(mathAreas[i]); }
 	bool Map()
 	{
@@ -901,7 +905,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 		mathAttempted = true;
 		dprintf("PIONEER-P100A: fixed TRISC0 matrix fixtures, one idle tile context reset, no NoC/DMA commands\n");
 		if (clock != NULL) return BlackholeClockedMatmulProbe(*this,dram,math,*clock);
-		return BlackholeTensixMatmulProbe(*this,dram,math,configSmoke,sfpuSmoke,tileInput,tileOutput);
+		return BlackholeTensixMatmulProbe(*this,dram,math,configSmoke,sfpuSmoke,tileInput,tileOutput,tileCount,completedJobs);
 	}
 	bool Unmap()
 	{
@@ -1052,7 +1056,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		|| operation == TT_PCI_PROBE_PIONEER_SRCA_ROUNDTRIP_SUPPORT || operation == TT_PCI_PROBE_PIONEER_SRCB_ROUNDTRIP_SUPPORT
 		|| operation == TT_PCI_PROBE_PIONEER_PURE_SRCA_SUPPORT || operation == TT_PCI_PROBE_PIONEER_PURE_SRCB_SUPPORT || operation == TT_PCI_PROBE_PIONEER_PURE_MATMUL_SUPPORT
 		|| operation == TT_PCI_PROBE_PIONEER_UNPACK_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_UNPACK_SRCA_SUPPORT || operation == TT_PCI_PROBE_PIONEER_UNPACK_SRCB_SUPPORT || operation == TT_PCI_PROBE_PIONEER_UNPACK_CONFIG_SUPPORT
-		|| operation == TT_PCI_PROBE_PIONEER_IDENTITY_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DENSE_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DENSE_SRCA_SUPPORT || operation == TT_PCI_PROBE_PIONEER_PATTERN_SRCB_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DATA_TILE_SUPPORT) {
+		|| operation == TT_PCI_PROBE_PIONEER_IDENTITY_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DENSE_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DENSE_SRCA_SUPPORT || operation == TT_PCI_PROBE_PIONEER_PATTERN_SRCB_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DATA_TILE_SUPPORT || operation == TT_PCI_PROBE_PIONEER_DATA_BATCH_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
 		uint32 version = 5;
@@ -1081,10 +1085,58 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		if (operation == TT_PCI_PROBE_PIONEER_DENSE_SRCA_SUPPORT) version = 37;
 		if (operation == TT_PCI_PROBE_PIONEER_PATTERN_SRCB_SUPPORT) version = 38;
 		if (operation == TT_PCI_PROBE_PIONEER_DATA_TILE_SUPPORT) version = 39;
+		if (operation == TT_PCI_PROBE_PIONEER_DATA_BATCH_SUPPORT) version = 40;
 		unsigned stage = version >= 31 ? version-15 : 0;
 		const tt_matmul_support support = {version,BlackholeTensixCodeWords(stage),BlackholeTensixImageWords(stage),0x6000,0x70000,BlackholeTensixParkPc(stage),0x17f800,0x87ffff,0x46800};
 		release_sem(sLock);
 		return user_memcpy(data,&support,sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_DATA_BATCH) {
+		if (data == NULL || length != sizeof(tt_pioneer_data_batch)) return B_BAD_VALUE;
+		struct Transaction {
+			tt_pioneer_data_batch* p;
+			Transaction() : p((tt_pioneer_data_batch*)calloc(1,sizeof(tt_pioneer_data_batch))) {}
+			~Transaction() { free(p); }
+		} transaction;
+		if (transaction.p == NULL) return B_NO_MEMORY;
+		status_t status = user_memcpy(transaction.p,data,offsetof(tt_pioneer_data_batch,output));
+		if (status != B_OK) return status;
+		if (transaction.p->version != 1 || transaction.p->count == 0
+			|| transaction.p->count > TT_DATA_TILE_BATCH_MAX || transaction.p->completed != 0
+			|| transaction.p->reserved != 0) return B_BAD_VALUE;
+		for (unsigned i = 0; i < transaction.p->count; i++)
+			if (!BlackholeTileDataValid(transaction.p->input[i])) return B_BAD_VALUE;
+		status = AcquireProbeLock(); if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status = status;
+		tt_pioneer_matmul_result& result = transaction.p->result;
+		tt_pioneer_arc_result& control = result.baseline.control.control.control;
+		tt_arc_telemetry_result& telemetry = result.baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix = result.baseline.control.tensix;
+		control.pci.version = control.arc.version = telemetry.version = tensix.version = result.baseline.dram.version = 1;
+		control.pci.profile_status = status; control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = result.baseline.dram.tlb_restored = result.baseline.dram.data_restored = 1;
+		result.math.l1_restored = result.math.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerMatmulIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.math,
+				false,NULL,24,transaction.p->input,&transaction.p->output[0][0],
+				transaction.p->count,&transaction.p->completed);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (result.math.recovery_required || result.baseline.dram.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.math.recovery_required = 1; sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock);
+		if (transaction.p->completed != transaction.p->count || result.math.state != TT_MATMUL_DATA_EXECUTED
+			|| !result.math.completed || !result.math.stopped || !result.math.l1_restored
+			|| !result.math.tlb_restored || !control.pci.restored || result.math.recovery_required)
+			memset(transaction.p->output,0,sizeof(transaction.p->output));
+		return user_memcpy(data,transaction.p,sizeof(tt_pioneer_data_batch));
 	}
 	if (operation == TT_PCI_PROBE_PIONEER_DATA_TILE) {
 		if (data == NULL || length != sizeof(tt_pioneer_data_tile)) return B_BAD_VALUE;
