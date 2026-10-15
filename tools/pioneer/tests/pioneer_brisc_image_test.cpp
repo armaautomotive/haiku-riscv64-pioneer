@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iterator>
 #include <vector>
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeBriscImage.h"
 
 static std::vector<uint8_t> read(const char* path)
 {
@@ -33,6 +34,16 @@ int main(int argc, char** argv)
 	assert(argc == 3);
 	const auto boot = read(argv[1]), code = read(argv[2]);
 	assert(boot.size() == 4 && code.size() >= 4 && code.size() <= 128 && code.size() % 4 == 0);
+	assert(word(boot, 0) == BlackholeBriscImageWord(0));
+	assert(code.size() == 4 * TT_BRISC_CODE_WORDS);
+	for (unsigned i = 1; i <= TT_BRISC_CODE_WORDS; i++) {
+		assert(BlackholeBriscImageAddress(i) == 0x70000 + (i - 1) * 4);
+		assert(word(code, (i - 1) * 4) == BlackholeBriscImageWord(i));
+	}
+	assert(BlackholeBriscImageAddress(0) == 0);
+	assert(BlackholeBriscImageAddress(20) == 0x17ffc0 && BlackholeBriscImageAddress(21) == 0x17ffc4);
+	assert(BlackholeBriscImageWord(20) == 0 && BlackholeBriscImageWord(21) == 0);
+	assert(BlackholeBriscImageAddress(22) == UINT32_MAX);
 	std::array<uint32_t, 32> regs = {};
 	std::array<uint32_t, 2> mailbox = {};
 	unsigned writes = 0, loads = 0, fences = 0, readConsumers = 0, parks = 0;

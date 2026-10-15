@@ -17,8 +17,24 @@ static pci_module_info* sPCI;
 static pci_info sCard;
 static char sCookie;
 static sem_id sLock = -1;
+// Protected by sLock. A module reload is NOT cold recovery; after this latch
+// is set, the board must be cold-recovered before changing/reloading drivers.
+static bool sColdRecoveryRequired = false;
 static device_manager_info* sDeviceManager;
 static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
+
+// PIONEER_PROBE_LOCK_BEGIN
+static status_t
+AcquireProbeLock()
+{
+	status_t status = acquire_sem(sLock);
+	if (status == B_OK && sColdRecoveryRequired) {
+		release_sem(sLock);
+		return B_DEV_NOT_READY;
+	}
+	return status;
+}
+// PIONEER_PROBE_LOCK_END
 
 static inline void
 PioneerIoFence()
@@ -486,17 +502,165 @@ struct PioneerL1IO : PioneerTensixIO {
 	}
 };
 
+struct PioneerBriscIO : PioneerTensixIO {
+	tt_brisc_smoke_result& brisc;
+	area_id briscAreas[5] = {-1, -1, -1, -1, -1};
+	volatile uint32* boot = NULL;
+	volatile uint32* code = NULL;
+	volatile uint32* results = NULL;
+	volatile uint32* resetWrite = NULL;
+	const volatile uint32* pc = NULL;
+	bool briscAttempted = false;
+
+	PioneerBriscIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_brisc_smoke_result& r)
+		: PioneerTensixIO(p, a, t, c), brisc(r) {}
+	~PioneerBriscIO()
+	{
+		// Never perform MMIO in a destructor or retry code/reset restoration.
+		for (unsigned i = 0; i < 5; i++)
+			if (briscAreas[i] >= B_OK) delete_area(briscAreas[i]);
+	}
+	bool Map()
+	{
+		if (!PioneerTensixIO::Map()) return false;
+		const uint32 offsets[] = {0x19000000, 0x19070000, 0x1917f000, 0x19312000, 0x19313000};
+		void* pages[5] = {};
+		for (unsigned i = 0; i < 5; i++) {
+			uint32 protection = B_KERNEL_READ_AREA | B_UNCACHED_MEMORY;
+			if (i != 4) protection |= B_KERNEL_WRITE_AREA;
+			briscAreas[i] = map_physical_memory("P100A fixed BRISC smoke page",
+				profile.bar0_host_start + offsets[i], B_PAGE_SIZE,
+				B_ANY_KERNEL_ADDRESS, protection, &pages[i]);
+			if (briscAreas[i] < B_OK) return false;
+		}
+		boot = (volatile uint32*)pages[0]; code = (volatile uint32*)pages[1];
+		results = (volatile uint32*)((uint8*)pages[2] + 0xfc0);
+		resetWrite = (volatile uint32*)((uint8*)pages[3] + 0x1b0);
+		pc = (const volatile uint32*)((const uint8*)pages[4] + 0x138);
+		return true;
+	}
+	uint32 BriscTlbRead(unsigned slot, unsigned word)
+	{
+		return slot < 2 && word < 3 ? PioneerRead32(tlb - 3 + slot * 3 + word) : UINT32_MAX;
+	}
+	void BriscTlbWrite(unsigned slot, unsigned word, uint32 value)
+	{
+		if (slot < 2 && word < 3) PioneerWrite32(tlb - 3 + slot * 3 + word, value);
+	}
+	volatile uint32* ImagePointer(unsigned index)
+	{
+		if (index == 0) return boot;
+		if (index <= TT_BRISC_CODE_WORDS) return code + index - 1;
+		if (index < TT_BRISC_IMAGE_WORDS) return results + index - 20;
+		return NULL;
+	}
+	uint32 ImageRead(unsigned index)
+	{
+		volatile uint32* address = ImagePointer(index);
+		return address != NULL ? PioneerRead32(address) : UINT32_MAX;
+	}
+	void ImageWrite(unsigned index, uint32 value)
+	{
+		volatile uint32* address = ImagePointer(index);
+		if (address != NULL) PioneerWrite32(address, value);
+	}
+	void ResetWrite(uint32 value)
+	{
+		if (value == 0x47000 || value == 0x47800) PioneerWrite32(resetWrite, value);
+	}
+	uint32 PcRead() { return PioneerRead32(pc); }
+	void Pause() { spin(100); } // fixed 100 us; policy bounds the iteration count
+	bool AfterNodeId(uint32 id)
+	{
+		if (!PioneerTensixIO::AfterNodeId(id)) return false;
+		briscAttempted = true;
+		dprintf("PIONEER-P100A: fixed BRISC checksum attempt, sole tile (1,2), no DMA/flash\n");
+		return BlackholeBriscSmokeProbe(*this, tensix, brisc);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		for (unsigned i = 0; i < 5; i++) {
+			if (briscAreas[i] < B_OK) continue;
+			if (delete_area(briscAreas[i]) == B_OK) briscAreas[i] = -1;
+			else okay = false;
+		}
+		boot = code = results = resetWrite = NULL; pc = NULL;
+		if (briscAttempted && !brisc.tlb_restored) {
+			// Only TLB control cleanup here. Never retry a core start/stop or
+			// rewrite code after the policy has declared execution uncertain.
+			for (unsigned s = 0; s < 2; s++)
+				for (unsigned w = 0; w < 3; w++) BriscTlbWrite(s, w, brisc.tlb_before[s][w]);
+			brisc.tlb_restored = 1;
+			for (unsigned s = 0; s < 2; s++) {
+				for (unsigned w = 0; w < 3; w++) {
+					brisc.tlb_after[s][w] = BriscTlbRead(s, w);
+					brisc.tlb_restored &= brisc.tlb_after[s][w] == brisc.tlb_before[s][w];
+				}
+			}
+		}
+		if (briscAttempted && (!brisc.l1_restored || !brisc.tlb_restored || brisc.recovery_required)) okay = false;
+		return PioneerTensixIO::Unmap() && okay;
+	}
+};
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SUPPORT) {
+		if (data == NULL || length != sizeof(tt_brisc_support)) return B_BAD_VALUE;
+		status_t status = AcquireProbeLock();
+		if (status != B_OK) return status;
+		const tt_brisc_support support = {1, TT_BRISC_CODE_WORDS, TT_BRISC_IMAGE_WORDS, 0x70000, 0x17ffc0, 0x70048};
+		release_sem(sLock);
+		// Loaded-module ABI/image metadata only: no PCI or MMIO access.
+		return user_memcpy(data, &support, sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SMOKE) {
+		if (data == NULL || length != sizeof(tt_pioneer_brisc_result)) return B_BAD_VALUE;
+		tt_pioneer_brisc_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = AcquireProbeLock();
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		tt_pioneer_arc_result& control = result.control.control.control;
+		tt_arc_telemetry_result& telemetry = result.control.control.telemetry;
+		tt_tensix_reset_result& tensix = result.control.tensix;
+		control.pci.version = control.arc.version = telemetry.version = tensix.version = result.brisc.version = 1;
+		control.pci.profile_status = status; control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = 1;
+		result.brisc.l1_restored = result.brisc.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerBriscIO io(profile, control.arc, telemetry, tensix, result.brisc);
+			BlackholePioneerMmioProbe(io, control.pci);
+		}
+		if (result.brisc.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.brisc.recovery_required = 1;
+			sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: BRISC state %" B_PRIu32 " started/completed/stopped %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32
+			" L1/TLB/PCI restored %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32 " cold recovery %" B_PRIu32 "\n",
+			result.brisc.state, result.brisc.started, result.brisc.completed, result.brisc.stopped,
+			result.brisc.l1_restored, result.brisc.tlb_restored, control.pci.restored, result.brisc.recovery_required);
+		return user_memcpy(data, &result, sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_L1_SCRATCH) {
 		if (data == NULL || length != sizeof(tt_pioneer_l1_result)) return B_BAD_VALUE;
 		tt_pioneer_l1_result result = {};
 		status_t status = user_memcpy(data, &result, sizeof(result));
 		if (status != B_OK) return status;
-		status = acquire_sem(sLock);
+		status = AcquireProbeLock();
 		if (status != B_OK) return status;
 		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
 			TT_PCI_PROBE_DEVICE, &sCookie);
@@ -531,7 +695,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		tt_pioneer_tensix_result result = {};
 		status_t status = user_memcpy(data, &result, sizeof(result));
 		if (status != B_OK) return status;
-		status = acquire_sem(sLock);
+		status = AcquireProbeLock();
 		if (status != B_OK) return status;
 		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
 			TT_PCI_PROBE_DEVICE, &sCookie);
@@ -563,7 +727,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		tt_pioneer_telemetry_result result = {};
 		status_t status = user_memcpy(data, &result, sizeof(result));
 		if (status != B_OK) return status;
-		status = acquire_sem(sLock);
+		status = AcquireProbeLock();
 		if (status != B_OK) return status;
 		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
 			TT_PCI_PROBE_DEVICE, &sCookie);
@@ -596,7 +760,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		tt_pioneer_arc_result result = {};
 		status_t status = user_memcpy(data, &result, sizeof(result));
 		if (status != B_OK) return status;
-		status = acquire_sem(sLock);
+		status = AcquireProbeLock();
 		if (status != B_OK) return status;
 		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
 			TT_PCI_PROBE_DEVICE, &sCookie);
@@ -635,7 +799,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		status_t status = user_memcpy(data, &result, sizeof(result));
 		if (status != B_OK)
 			return status;
-		status = acquire_sem(sLock);
+		status = AcquireProbeLock();
 		if (status != B_OK)
 			return status;
 		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,
@@ -672,7 +836,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		if (data == NULL || length != sizeof(tt_pioneer_profile))
 			return B_BAD_VALUE;
 		dprintf("PIONEER-P100A: profile semaphore begin\n");
-		status_t status = acquire_sem(sLock);
+		status_t status = AcquireProbeLock();
 		dprintf("PIONEER-P100A: profile semaphore status %" B_PRId32 "\n", status);
 		if (status != B_OK)
 			return status;
@@ -697,7 +861,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	status_t status = user_memcpy(data, &result, sizeof(result));
 	if (status != B_OK)
 		return status;
-	status = acquire_sem(sLock);
+	status = AcquireProbeLock();
 	if (status != B_OK)
 		return status;
 	status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function,

@@ -2992,3 +2992,42 @@ see TENSTORRENT_PORT.md. Added a host-tested, offline-only fixed BRISC checksum
 image and independent instruction/data-bounds decoder. It is not connected
 to any driver operation and has not run on the card. No kernel module, reset
 controls, instructions, firmware or DMA state changed during this audit.
+
+The user confirmed the revision-6 Haiku desktop and mouse/keyboard work.
+Pinned SSH at about 03:47 UTC October 15 (October 14 locally) still reported
+64 CPUs, 137,034,936,320 bytes usable and a passing all-core CPU smoke,
+more than an hour after boot. The experimental idle workaround is still in
+use; the ordinary installed/default boot has not been replaced.
+
+Implemented a separate root-only, fixed-image BRISC checksum operation in
+the optional probe, plus read-only loaded-module metadata query. No general
+code upload, coordinates or addresses are accepted. The existing firmware,
+harvested-tile and stopped-core gates run first. Two strict bidirectional,
+dynamic-VC TLBs cover only the fixed L1 footprint and core CSRs. Only BRISC's
+reset bit can change; the other four RISCs stay held. Completion requires
+528/PION results and repeated park-PC observations, then repeated stopped
+reset-state checks before restoring the saved 22 L1 words. Local BRISC
+RAM/registers may reset; this does not claim arbitrary RISC context restore.
+
+Any unknown core activity, completion timeout, uncertain stop or failed
+rollback refuses success. After uncertain execution the image stays intact:
+never rewrite potentially live instructions. A semaphore-protected cold-
+recovery latch denies all later probe operations, including queued callers;
+driver reload is explicitly not a substitute for cold recovery. Cleanup
+never retries a start/stop or code restoration after this refusal. All
+original L1 values stay kernel-local and are not returned/logged.
+
+Host ASan/UBSan tests pass for every setup/restore TLB write loss, all 44
+image-install/restore write losses, both reset write losses, timeout, wrong
+checksum/PC, permanent restore failure and persistent/transient core-state
+changes. The actual assembled RV32I bytes match the driver's fixed image and
+pass independent instruction/data-bounds decoding. All seven existing
+PCI/ARC/telemetry/reset/L1 policy suites pass. Integrated optional module and
+all nine CLIs cross-build. One initial build invocation used unsupported Jam
+-C and the first CLI compile exposed a nested-result reference typo; both
+were corrected before deployment. Optional module SHA:
+`58ffcadcdc3e9ae0804b75ddda17ad55b06da97613a9d8b5b51a1b5b64107174`.
+BRISC CLI SHA:
+`d8c88121d0b9c194ba4b0c8f7ebdd1629e41e093e4584c85cfbdc7a6a8889c70`.
+Neither is deployed yet; installed trace module remains 0d094653... and no
+BRISC instruction/start/reset-write result exists yet. No DMA or flash.
