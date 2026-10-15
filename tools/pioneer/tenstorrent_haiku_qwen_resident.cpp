@@ -17,10 +17,12 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 	for (int i=0;i<n;i++) { unsigned char c=text[i]; if (c<32 || c==127) printf("\\x%02x",c); else putchar(c); }
 }
 int main(int argc,char** argv) {
-	bool cpuActivations=(argc==3 || argc==4) && !strcmp(argv[1],"--diagnose-cpu-q8");
-	bool diagnose=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-qwen") || cpuActivations);
-	if (!diagnose && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
-		fprintf(stderr,"Usage: %s --verify-qwen MODEL | --diagnose-qwen|--diagnose-cpu-q8 MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident BF16 hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
+	bool diagnoseCpuActivations=(argc==3 || argc==4) && !strcmp(argv[1],"--diagnose-cpu-q8");
+	bool verifyCpuActivations=argc==3 && !strcmp(argv[1],"--verify-cpu-q8");
+	bool cpuActivations=diagnoseCpuActivations || verifyCpuActivations;
+	bool diagnose=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-qwen") || diagnoseCpuActivations);
+	if (!diagnose && !verifyCpuActivations && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
+		fprintf(stderr,"Usage: %s --verify-qwen|--verify-cpu-q8 MODEL | --diagnose-qwen|--diagnose-cpu-q8 MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident BF16 hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_load_all();
@@ -85,6 +87,8 @@ int main(int argc,char** argv) {
 	bool clean=PioneerGgmlFinish(); passed &= clean && generated==4;
 	printf("%s: generated %u checked Qwen tokens, retained %llu tensors / %llu bytes, %llu pages uploaded, %llu real matvec calls; cleanup %u, total %.3fs\n",
 		passed?"PASS":"FAIL",generated,(unsigned long long)stats.tensors,(unsigned long long)stats.bytes,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs,clean,Seconds()-begin);
+	printf("Backend phase totals: weight preparation/upload/cache %.6fs, activation preprocessing %.6fs, matvec/staging/result %.6fs, primitive diagnostics %.6fs; not device-only timing\n",
+		stats.weightSeconds,stats.inputSeconds,stats.matvecSeconds,stats.diagnosticSeconds);
 	if (passed && decodeSeconds>0 && !diagnose) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
 	llama_free(actual); llama_free(reference); llama_model_free(model); llama_backend_free(); return passed?0:1;
 }

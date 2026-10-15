@@ -6,8 +6,9 @@
 struct RuntimeMock:StoreMock {
 	uint32_t code[1025]={},buffers[8192]={},saved[9217]={},stage[1024]={},status[3]={};
 	uint32_t reset=0x47800;
-	unsigned starts=0,stops=0;
+	unsigned starts=0,stops=0,outputPioReads=0,outputDmaWrites=0;
 	bool executeTimeout=false,badPc=false,badMathFlits=false,stopFails=false,restoreCodeFails=false,restoreBufferFails=false,nonfinite=false;
+	bool omitDmaPayload=false;
 	RuntimeMock() {
 		for (unsigned w=0;w<1025;w++) code[w]=0x12340000+w;
 		for (unsigned w=0;w<8192;w++) buffers[w]=0xabc00000+w;
@@ -20,7 +21,7 @@ struct RuntimeMock:StoreMock {
 		assert(w<1025 && !uncertain && reset==0x47800);
 		if (++Mock::writes!=Mock::drop && !(restoreCodeFails && value==0x12340000+w)) code[w]=value;
 	}
-	uint32_t RuntimeBufferRead(unsigned w) { assert(w<8192); return buffers[w]; }
+	uint32_t RuntimeBufferRead(unsigned w) { assert(w<8192); if (w>=4096) outputPioReads++; return buffers[w]; }
 	void RuntimeBufferWrite(unsigned w,uint32_t value) {
 		assert(w<8192 && !uncertain && reset==0x47800);
 		if (++Mock::writes!=Mock::drop && !(restoreBufferFails && value==0xabc00000+w)) buffers[w]=value;
@@ -46,6 +47,25 @@ struct RuntimeMock:StoreMock {
 		}
 	}
 	void ResidentNocWrite(uint32_t offset,uint32_t value) {
+		if (offset==0x40 && ((command[7]==0x212 && command[5]==(19|(24<<6)))
+			|| (command[2]==(19|(24<<6)) && command[3]==0x17f000))) {
+			assert(reset==0x47800 && stops && !uncertain && !pending && value==1 && command[8]==4096);
+			assert(pciCommand[0]==0x406 && pciCommand[1]==0x406);
+			doorbells++; doorbellRead=false;
+			if (++Mock::writes==Mock::drop) { uncertain=true; return; }
+			requests++; pending=true;
+			if (failRequest==doorbells) { uncertain=true; return; }
+			if (command[7]==0x212) {
+				assert(command[0]>=0x84000 && command[0]<=0x87000 && command[0]%4096==0);
+				outputDmaWrites++;
+				if (!omitDmaPayload) for (unsigned w=0;w<1024;w++) page[w]=buffers[(command[0]-0x80000)/4+w];
+				writeCounters[0]++; writeCounters[1]+=64; accepted++; writeCounters[3]++;
+			} else {
+				for (unsigned w=0;w<1024;w++) destination[1024+w]=page[w];
+				counters[0]++; counters[1]+=64; accepted++; counters[3]++;
+			}
+			pending=false; done=true; return;
+		}
 		if (offset==0x40 && command[3]>=0x80000 && command[3]<0x88000) {
 			assert(!uncertain && !pending && value==1 && command[7]==0 && command[8]==4096);
 			assert(command[0]==uint32_t(physical) && command[1]==uint32_t(physical>>32) && command[2]==(19|(24<<6)));
@@ -65,13 +85,15 @@ struct RuntimeMock:StoreMock {
 	}
 };
 static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
-	tt_runtime_matvec_result& r)
+	tt_runtime_matvec_result& r,bool dma=false)
 {
 	auto b=io.Baseline(); auto n=io.Compute(); uint32_t input[512],output[32]={};
 	r={};
 	for (auto& value:input) value=0x3f803f80;
 	if (!PioneerRuntimeMatvecPrepare(io,b,n,store,compute)) return false;
-	return PioneerRuntimeMatvec(io,b,n,host,store,compute,73728,0,1024,32,input,output,r);
+	bool passed=PioneerRuntimeMatvec(io,b,n,host,store,compute,73728,0,1024,32,input,output,r,dma);
+	if (passed) for (uint32_t v:output) assert(v==0x40000000);
+	return passed;
 }
 int main()
 {
@@ -132,4 +154,39 @@ int main()
 	}
 	assert(controlCases>20);
 	printf("Dropped every post-upload control write: %u cases\n",controlCases);
+	unsigned dmaWrites=0;
+	{
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s) && Run(trial,h,s,c,r,true)); dmaWrites=trial.Mock::writes;
+		assert(r.stopped && !r.recovery_required && trial.outputDmaWrites==1 && trial.outputPioReads==4096);
+		assert(Run(trial,h,s,c,r,true) && trial.outputDmaWrites==2 && trial.outputPioReads==4096);
+		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c)); trial.Restored();
+		assert(PioneerResidentLeaseEnd(trial,n,s) && trial.ReleaseHostPage()==0); trial.Safe();
+	}
+	unsigned dmaCases=0;
+	for (unsigned drop=0;drop<=dmaWrites;drop++) {
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s)); if (drop<trial.Mock::writes+1026) continue;
+		trial.Mock::drop=drop; dmaCases++;
+		Run(trial,h,s,c,r,true);
+		if (!r.recovery_required && !c.unsafe) {
+			assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
+		} else assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));
+	}
+	for (unsigned fault=0;fault<5;fault++) {
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s));
+		trial.omitDmaPayload=fault==0; trial.failRequest=fault>=1 && fault<=3?fault+2:0; trial.stopFails=fault==4;
+		assert(!Run(trial,h,s,c,r,true) && r.recovery_required && trial.quarantined && !trial.releases);
+		unsigned stops=trial.stops;
+		assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c) && trial.stops==stops);
+		if (fault==4) assert(!trial.outputDmaWrites);
+	}
+	{
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s)); trial.nonfinite=true;
+		assert(!Run(trial,h,s,c,r,true) && r.state==TT_RUNTIME_NONFINITE && r.nonfinite==32 && !r.recovery_required);
+		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
+	}
+	printf("Dropped every DMA post-upload control write: %u cases\n",dmaCases);
 }

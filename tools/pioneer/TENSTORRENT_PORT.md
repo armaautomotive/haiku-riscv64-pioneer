@@ -105,6 +105,62 @@ out while establishing the Haiku port baseline.
 
 ### October 15: checked streamed uploads and numerical localization
 
+#### Checked output DMA (native projection proof, no speedup)
+
+A separate data-only matvec ioctl `54be`, capability bit 64 (candidate
+support capabilities 127), collects results through the session's owned
+4 KiB host page. The original `54bc` PIO matvec is unchanged and remains
+available for independent comparisons. No arbitrary addresses or device
+code are accepted, and the request/result ABI is unchanged.
+
+Only after the original phase/tiles/PC/NoC completion proof and both verified
+reset holds does the candidate transfer each fixed output page from
+`0x84000..0x87fff`. All host words are first poisoned with `0xffffffff`;
+an ordered host read establishes that poison in scratch L1. The output
+write must replace every host word (unused words must match the pre-staged
+`0x7fc00000` padding), followed by a fresh ordered read to a distinct L1
+destination and a second full CPU comparison. Each of the three commands
+requires exact 1/64/1/1 completion deltas and all existing source/mapping/
+route/idle/PCI guards. Posted-write ACK alone is never accepted. Ambiguous
+visibility, ordering or completion quarantines the page and latches cold
+recovery; no reset, retry or payload cleanup follows uncertainty. Finite
+validation still occurs in the caller's existing integer-bit checks.
+
+ASan/UBSan covers all four pages, partial-page padding, counter wrap,
+delayed/missing/partial host visibility, late mutation, unsafe core state,
+all lost poison/control writes and incomplete commands. Integrated runtime
+tests additionally drop every post-upload control write (87 DMA cases),
+require a verified stop before output DMA and reject any PIO fallback.
+The candidate builds through Jam and all 30 tools cross-build. The new CLI
+`--compare-qwen-resident-output-dma` executes two independent input vectors
+through both paths, requiring bit-identical outputs as well as the original
+independent CPU numerical gates.
+
+Native tests passed for 32x1,024, 2,048x1,024, 4,096x1,024 (the tied
+`token_embd.weight` classifier), and 1,024x3,072. Both independent vectors
+were bit-identical to separately executed PIO results at every output.
+All original CPU numerical gates passed, with exact compute counters and
+clean explicit END. Ownership/inherited-team/duplicate-FD/final-close tests,
+the fixed K1,024 GEMV regression and the PCIe/HDMA audit also passed; the
+Assistant stayed idle/unchanged. The first 4,096-row attempt requested an
+absent `output.weight` name and exited before starting a session; the
+correct tied tensor was then selected from the existing full-model log.
+
+Warm validation-inclusive PIO / DMA samples were **24.563 / 24.864 ms**
+for 2,048 outputs, **46.335 / 46.895 ms** for 4,096 outputs, and
+**29.123 / 29.313 ms** for K3,072. The new path is therefore **not a
+demonstrated performance gain** and is not automatically selected by the
+Qwen adapter. Removing per-word payload reads alone does not remove the
+transfer/guard overhead or single-core compute bottleneck. No token-rate
+claim follows from these samples. Full-model numerical acceptance remains
+unmet independently of this exact result-transfer proof.
+
+Artifacts/logs and the verified previous-driver backup are in
+`/boot/home/pioneer-output-dma-20261015/`. Installed driver SHA-256:
+`d02da23388c2a55b946d5672535adea06504af01ef13d93a1c0b782f31cf5c57`;
+comparison CLI: `5ed87587ac3a077f4eafa0a788e853646aa843baee2011082778eed11118a108`.
+The previous driver (`c729f0...`) is preserved as `tenstorrent_pci_probe.before`.
+
 The operational upload now has a separate root/FD/team-owned data-only
 ioctl `54bd`, capability bit 32 (support v1, capabilities 63). The original
 PIO-checked storage API is unchanged. It still accepts exactly 4 KiB and a
@@ -172,14 +228,31 @@ The 8 KiB FP32 vector was saved as `graph-failure-input-first.raw`, and END
 again restored/released everything with cold 0.
 
 An explicit `--diagnose-cpu-q8` candidate now preprocesses each input with
-the same Q8 quantizer before BF16 device input. It is unit-tested but its
-full-model effect is still under native test; do not call it a verified fix.
+the same Q8 quantizer before BF16 device input. Its native trace passed
+through layer 24, but stopped at `blk.25.ffn_down.weight`: graph input/output
+relative L2 reached **0.022495117 / 0.030109908**, above the unchanged 0.02
+limits, while the independent BF16 primitive error remained **0.000291272**.
+This is not a verified full-model fix. Zero Qwen tokens were accepted after
+182 tensors / 920,125,440 bytes / 224,640 pages and 1,199.277 seconds.
+Explicit END restored/released everything, cold stayed 0, the post-run audit
+passed and the Assistant remained idle/unchanged. The failure log and 12 KiB
+input are `graph-cpu-q8-first.log` / `graph-cpu-q8-failure-first.raw` in the
+native Qwen test directory. Further precision work remains necessary;
+none of the reference values replace device output.
 CPU reference capture is single-threaded for diagnostics to avoid repeatedly
 creating 32-worker pools at every tapped node; throughput verification remains
 a separate task. The reference context is still created before device
 registration, and no reference value supplies card output. Strict primitive,
 graph, full-logit and greedy-token gates remain in place. Full Qwen generation
 and speedup remain unverified.
+
+The standalone CLI also has an explicit `--verify-cpu-q8` path (same full
+logit/token gates, without the expensive primitive taps) and reports separate
+backend weight preparation/upload/cache, activation preprocessing,
+matvec/staging/result and diagnostic wall-time totals. These do not claim
+device-only timing or a benchmark. The new options build and the pristine
+pinned ggml ASan/UBSan tests pass; they have not bypassed the failed native
+diagnostic or qualified generation.
 
 ### October 15: standalone Qwen backend candidate, first full forward fails
 

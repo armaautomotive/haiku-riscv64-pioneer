@@ -7,7 +7,11 @@
 // Q8_0 weights; supported learned matrix operations execute on the card.
 // Norms/attention/activations remain CPU operations, not hidden fallbacks.
 ggml_backend_reg_t PioneerGgmlReg();
-struct PioneerGgmlStats { uint64_t tensors,bytes,uploads,matvecs; bool failed; };
+struct PioneerGgmlStats {
+	uint64_t tensors,bytes,uploads,matvecs;
+	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds;
+	bool failed;
+};
 bool PioneerGgmlSnapshot(PioneerGgmlStats& stats);
 bool PioneerGgmlFinish();
 // Expensive independent primitive diagnostics, not a production benchmark.

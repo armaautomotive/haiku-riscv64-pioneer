@@ -13,12 +13,16 @@
 #include <unistd.h>
 #include <map>
 #include <string>
+#include <time.h>
+
+static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
 
 static const uint64_t Arena=UINT64_C(2)*1024*1024*1024;
 struct PioneerGgmlContext {
 	PioneerResidentDevice device;
 	PioneerResidentTensorCache<PioneerResidentDevice> cache;
 	bool opened=false,failed=false;
+	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
 	PioneerGgmlContext():cache(device,Arena) {}
 };
 // One exclusive backend instance per process, matching the current device
@@ -137,25 +141,36 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
 		uint64_t offset=0; size_t before=ctx->cache.Tensors();
-		if (!ctx->cache.Weights(w->data,unsigned(w->type),inputs,outputs,[&](unsigned row,float* out) {
+		double start=Seconds();
+		bool weightsOkay=ctx->cache.Weights(w->data,unsigned(w->type),inputs,outputs,[&](unsigned row,float* out) {
 			ggml_get_type_traits(w->type)->to_float((const char*)w->data+row*w->nb[1],out,inputs); return true;
-		},offset)) { fprintf(stderr,"P100A tensor upload failed: %s; no CPU fallback\n",w->name); ctx->failed=true; return GGML_STATUS_FAILED; }
+		},offset);
+		ctx->weightSeconds+=Seconds()-start;
+		if (!weightsOkay) { fprintf(stderr,"P100A tensor upload failed: %s; no CPU fallback\n",w->name); ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (ctx->cache.Tensors()!=before) fprintf(stderr,"P100A retained %s [%u,%u], total %llu MiB / %zu tensors\n",
 			w->name,inputs,outputs,(unsigned long long)(ctx->cache.Bytes()/1048576),ctx->cache.Tensors());
 		const float* original=(const float*)op->src[1]->data;
 		const float* execution=original;
 		std::vector<uint8_t> quantized;
 		std::vector<float> converted;
+		start=Seconds();
 		if (sCpuActivationQuantization) {
 			quantized.resize(inputs/32*34); converted.resize(inputs);
 			const auto* traits=ggml_get_type_traits(GGML_TYPE_Q8_0);
 			traits->from_float_ref(original,quantized.data(),inputs);
 			traits->to_float(quantized.data(),converted.data(),inputs); execution=converted.data();
 		}
-		if (!ctx->cache.Multiply(offset,inputs,outputs,execution,(float*)op->data)) {
+		ctx->inputSeconds+=Seconds()-start;
+		start=Seconds();
+		bool mathOkay=ctx->cache.Multiply(offset,inputs,outputs,execution,(float*)op->data);
+		ctx->matvecSeconds+=Seconds()-start;
+		if (!mathOkay) {
 			ctx->failed=true; return GGML_STATUS_FAILED;
 		}
-		if (sDiagnose && !CheckProjection(w,execution,(const float*)op->data,original)) {
+		start=Seconds();
+		bool diagnosticOkay=!sDiagnose || CheckProjection(w,execution,(const float*)op->data,original);
+		ctx->diagnosticSeconds+=Seconds()-start;
+		if (!diagnosticOkay) {
 			fprintf(stderr,"Primitive numerical diagnostic STOP; no CPU fallback or substituted output\n"); ctx->failed=true; return GGML_STATUS_FAILED;
 		}
 	}
@@ -196,7 +211,9 @@ ggml_backend_reg_t PioneerGgmlReg() {
 bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats={}; if (!sActive) return false;
 	stats.tensors=sActive->cache.Tensors(); stats.bytes=sActive->cache.Bytes(); stats.uploads=sActive->cache.uploadedPages;
-	stats.matvecs=sActive->cache.matvecCalls; stats.failed=sActive->failed || sActive->cache.Failed(); return true;
+	stats.matvecs=sActive->cache.matvecCalls; stats.failed=sActive->failed || sActive->cache.Failed();
+	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;
+	stats.matvecSeconds=sActive->matvecSeconds; stats.diagnosticSeconds=sActive->diagnosticSeconds; return true;
 }
 bool PioneerGgmlFinish() { return !sActive || sActive->device.Finish(); }
 void PioneerGgmlDiagnose(bool enabled,const char* vectorPath) { if (!sActive) { sDiagnose=enabled; sDiagnosticVector=vectorPath; sReference.clear(); } }

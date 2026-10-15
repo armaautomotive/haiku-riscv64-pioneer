@@ -8,14 +8,15 @@ static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); 
 int main(int argc,char** argv)
 {
 	bool support=argc==2 && !strcmp(argv[1],"--check-support");
+	bool compareDma=argc>=3 && !strcmp(argv[1],"--compare-qwen-resident-output-dma");
 	unsigned outputs=32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
 		if (!end || end==argv[4] || *end || n<16 || n>TT_RUNTIME_MATVEC_OUTPUTS_MAX || (n&15)) return 2;
 		outputs=unsigned(n);
 	}
-	if (!support && ((argc!=3 && argc!=5) || strcmp(argv[1],"--run-qwen-resident-projection"))) {
-		fprintf(stderr,"Usage: %s --check-support | --run-qwen-resident-projection MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained BF16 weights, two separate vectors; NOT full-model inference or tokens/second.\n",argv[0]); return 2;
+	if (!support && ((argc!=3 && argc!=5) || (!compareDma && strcmp(argv[1],"--run-qwen-resident-projection")))) {
+		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained BF16 weights, two separate vectors; DMA comparison also requires bit-identical PIO results. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
@@ -23,6 +24,7 @@ int main(int argc,char** argv)
 	if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&session,sizeof(session))) { perror("runtime support"); close(fd); return 1; }
 	printf("Session support v%u capabilities %u; resident matvec bit16 required\n",session.version,session.capabilities);
 	if (session.version!=1 || (session.capabilities&31)!=31) { close(fd); return 1; }
+	if (compareDma && !(session.capabilities&64)) { fprintf(stderr,"Output DMA capability unavailable\n"); close(fd); return 1; }
 	if (support) { close(fd); return 0; }
 	FILE* model=fopen(argv[2],"rb"); if (!model) { close(fd); return 1; }
 	PioneerGgufTensor tensor={};
@@ -55,21 +57,33 @@ int main(int argc,char** argv)
 		cold=page.result.recovery_required!=0;
 	}
 	if (passed) printf("Weights uploaded once: %u pages; running two independent vectors\n",bytes/4096);
-	for (unsigned trial=0;trial<2 && passed;trial++) {
+	uint32_t pioReference[TT_RUNTIME_MATVEC_OUTPUTS_MAX]={};
+	for (unsigned trial=0;trial<(compareDma?4U:2U) && passed;trial++) {
+		bool dma=compareDma && (trial&1);
+		unsigned vectorTrial=compareDma?trial/2:trial;
 		memset(request,0,sizeof(*request)); request->version=1; request->inputs=inputs; request->outputs=outputs;
 		float vector[TT_RUNTIME_MATVEC_INPUTS_MAX];
 		for (unsigned k=0;k<inputs;k++) {
-			vector[k]=float(int((k*17+trial*29)%257)-128)/256.0f;
+			vector[k]=float(int((k*17+vectorTrial*29)%257)-128)/256.0f;
 			request->input[k/2]|=uint32_t(PioneerTileBf16(vector[k]))<<(16*(k&1));
 		}
 		double start=Seconds();
-		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
+		int status=ioctl(fd,dma?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
 		double elapsed=Seconds()-start;
 		const auto& r=request->result; cold=r.recovery_required!=0;
 		printf("Trial %u state %u start/complete/stop %u/%u/%u staged %u polls %u phase/tiles/marker %x/%u/%x PC %x/%x cold %u %.6fs\n",
 			trial,r.state,r.started,r.completed,r.stopped,r.staged_pages,r.polls,r.phase,r.tiles,r.marker,r.pc[0],r.pc[1],r.recovery_required,elapsed);
 		printf("  device weight reads response/flits/accepted/sent %u/%u/%u/%u\n",uint32_t(r.after[0]-r.before[0]),uint32_t(r.after[1]-r.before[1]),uint32_t(r.after[2]-r.before[2]),uint32_t(r.after[3]-r.before[3]));
 		if (status || r.state!=TT_RUNTIME_PASSED || !r.started || !r.completed || !r.stopped || cold) { if (status) perror("runtime matvec"); passed=false; break; }
+		if (compareDma) {
+			if (!dma) memcpy(pioReference,request->output,outputs*4);
+			else {
+				unsigned different=0; for (unsigned row=0;row<outputs;row++) different+=pioReference[row]!=request->output[row];
+				printf("  DMA vs independent PIO execution: %u bit mismatches of %u outputs\n",different,outputs);
+				if (different) { passed=false; break; }
+			}
+			printf("  result path %s, independent vector %u\n",dma?"owned output DMA":"legacy PIO",vectorTrial);
+		}
 		double dot=0,a2=0,ref2=0,delta2=0; unsigned mismatches=0,strictMismatches=0;
 		float maxError=0,maxNormalized=0;
 		for (unsigned row=0;row<outputs;row++) {

@@ -3,8 +3,9 @@
 #define PIONEER_RUNTIME_MATVEC_H
 #include "BlackholeRuntimeMatvecImage.h"
 #include "PioneerResidentStore.h"
+#include "PioneerRuntimeOutput.h"
 enum { TT_RUNTIME_REFUSED=0,TT_RUNTIME_PASSED=1,TT_RUNTIME_CONFIG_FAILED=2,TT_RUNTIME_STAGE_FAILED=3,
-	TT_RUNTIME_START_FAILED=4,TT_RUNTIME_COMPLETION_FAILED=5,TT_RUNTIME_NONFINITE=6,TT_RUNTIME_COLD=7 };
+	TT_RUNTIME_START_FAILED=4,TT_RUNTIME_COMPLETION_FAILED=5,TT_RUNTIME_NONFINITE=6,TT_RUNTIME_COLD=7,TT_RUNTIME_READ_FAILED=8 };
 struct tt_runtime_matvec_result {
 	uint32_t version,state,prepared,started,completed,stopped,recovery_required,context_reset;
 	uint32_t staged_pages,polls,phase,tiles,marker,pc[2],before[4],after[4],nonfinite;
@@ -108,7 +109,7 @@ template<class IO>
 bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
 	uint64_t capacity,uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* input,uint32_t* output,
-	tt_runtime_matvec_result& r)
+	tt_runtime_matvec_result& r,bool dmaOutput=false)
 {
 	r={}; r.version=1;
 	if (!PioneerMatvecWeightRange(capacity,offset,inputs,outputs) || !input || !output || !compute.ready
@@ -162,7 +163,7 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 		io.Pause();
 	}
 	if (!r.completed || !PioneerRuntimeSources(io,baseline,noc,store) || io.ResetRead()!=0x46800 || !BlackholeResidentIdle(io)) goto finished;
-	for (unsigned w=0;w<outputs;w++) {
+	if (!dmaOutput) for (unsigned w=0;w<outputs;w++) {
 		output[w]=io.RuntimeBufferRead(4096+w);
 		r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
 	}
@@ -171,6 +172,17 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 	io.RuntimeResetWrite(0x47800); io.Pause();
 	r.stopped=io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
 	if (r.stopped) compute.running=false;
+	if (r.stopped && dmaOutput) {
+		// No host DMA while compute is running. Preserve the existing PIO
+		// operation as an independent native comparison path.
+		r.state=TT_RUNTIME_READ_FAILED;
+		for (unsigned page=0;page<(outputs+1023)/1024;page++) {
+			unsigned words=outputs-page*1024<1024?outputs-page*1024:1024;
+			tt_resident_stream_result transfer={};
+			if (!PioneerRuntimeOutputPage(io,baseline,noc,host,store,page,words,stage,output+page*1024,transfer)) goto finished;
+		}
+		for (unsigned w=0;w<outputs;w++) r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
+	}
 	r.state=!r.stopped?TT_RUNTIME_COLD:r.nonfinite?TT_RUNTIME_NONFINITE:TT_RUNTIME_PASSED;
 finished:
 	if (!r.started && r.context_reset && io.ResetRead()==0x87ffff && io.ResetRead()==0x87ffff) {
