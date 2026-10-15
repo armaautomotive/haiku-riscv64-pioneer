@@ -148,8 +148,8 @@ int main()
 	io = {}; baseline = io.Baseline(); io.sfpuOnly = 2;
 	assert(BlackholeTensixMatmulProbe(io,baseline,r,false,2) && r.version == 4 && r.completed && io.Restored());
 	io = {}; baseline = io.Baseline();
-	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,20) && io.configWrites == 0);
-	for (unsigned stage = 3; stage <= 19; stage++) {
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,24) && io.configWrites == 0);
+	for (unsigned stage = 3; stage <= 23; stage++) {
 		io = {}; baseline = io.Baseline(); io.sfpuOnly = stage;
 		assert(BlackholeTensixMatmulProbe(io,baseline,r,false,stage) && r.version == 2+stage && r.completed && io.Restored());
 	}

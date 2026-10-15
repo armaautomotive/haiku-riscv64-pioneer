@@ -10,17 +10,68 @@ enum {
  TT_UNPACK_IMAGE_WORDS = 1 + TT_UNPACK_CODE_WORDS + 256 + 3,
  TT_UNPACK_PARK_PC = 0x703bc, TT_UNPACK_FINAL_PHASE = 0x703a4
 };
+// Exact integer fixtures only, bounded by +/-256; no kernel floating point.
+static inline uint32_t BlackholeFixedIntegerFp32(int value)
+{
+ if (value == 0) return 0;
+ uint32_t sign = value < 0 ? 0x80000000U : 0;
+ uint32_t magnitude = value < 0 ? uint32_t(-value) : uint32_t(value);
+ unsigned exponent = 0;
+ for (uint32_t rest = magnitude; rest > 1; rest >>= 1) exponent++;
+ return sign | ((127+exponent)<<23) | ((magnitude<<(23-exponent)) & 0x7fffff);
+}
+static inline int BlackholeFixedWeight(unsigned row, unsigned column, bool dense)
+{
+ return dense ? int((row+2*column)%5)-2 : (row == column ? 1 : 0);
+}
+static inline int BlackholeFixedVector(unsigned fixture, unsigned row, unsigned column)
+{
+ int value = int((3*row+column)%16)-8;
+ return fixture == 0 ? value : -value-1;
+}
+static inline uint32_t BlackholeNonuniformExpected(unsigned stage, unsigned output)
+{
+ unsigned fixture = output/128, row = (output%128)/16, column = output%16;
+ if (stage == 22) return BlackholeFixedIntegerFp32(BlackholeFixedWeight(row,column,true));
+ if (stage == 23) return BlackholeFixedIntegerFp32(BlackholeFixedVector(fixture,0,column));
+ int sum = 0;
+ for (unsigned k = 0; k < 16; k++)
+  sum += BlackholeFixedVector(fixture,row,k)*BlackholeFixedWeight(k,column,stage == 21);
+ return BlackholeFixedIntegerFp32(sum);
+}
 static inline uint32_t BlackholeTensixUnpackImageWord(unsigned index, unsigned stage)
 {
  if (index == 0) return 0x0006a06f;
  uint32_t address = 0x70000 + (index-1)*4;
- if (stage == 17 && address == 0x70334) return 0x120022b7;
- if (stage == 18 && address == 0x70334) return 0x130012b7;
- if ((stage == 17 || stage == 18) && address == 0x7037c) return 0x36c002b7;
- if ((stage == 17 || stage == 18) && address == 0x70380) return 0x00542023;
- if ((stage == 17 || stage == 18) && address == 0x70384) return 0x03c000ef;
+ if ((stage == 17 || stage == 22) && address == 0x70334) return 0x120022b7;
+ if ((stage == 18 || stage == 23) && address == 0x70334) return 0x130012b7;
+ if ((stage == 17 || stage == 18 || stage == 22 || stage == 23) && address == 0x7037c) return 0x36c002b7;
+ if ((stage == 17 || stage == 18 || stage == 22 || stage == 23) && address == 0x70380) return 0x00542023;
+ if ((stage == 17 || stage == 18 || stage == 22 || stage == 23) && address == 0x70384) return 0x03c000ef;
  if (stage == 19 && address == 0x70240) return 0x1480006f;
  if (stage == 19 && address == 0x70244) return 0x00000013;
+ if (stage >= 20 && stage <= 23) {
+  if (address == 0x70270) return 0x1d00006f;
+  if (address == 0x70274) return 0x00000013;
+  if (address >= 0x70440 && address < 0x70478) {
+   const uint32_t copy[] = {0x00070e37,0x500e0e13,0x000a0463,0x100e0e13,
+    0x000713b7,0x92038393,0x04000313,0x000e2283,0x0053a023,
+    0x004e0e13,0x00438393,0xfff30313,0xfe0316e3,0xe55ff06f};
+   return copy[(address-0x70440)/4];
+  }
+  if (address >= 0x70500 && address < 0x70700) {
+   unsigned fixture = (address-0x70500)/256, element = ((address-0x70500)%256)/2;
+   uint32_t lo = BlackholeFixedIntegerFp32(BlackholeFixedVector(fixture,element/16,element%16))>>16;
+   uint32_t hi = BlackholeFixedIntegerFp32(BlackholeFixedVector(fixture,element/16,element%16+1))>>16;
+   return lo | (hi<<16);
+  }
+  if (address >= 0x70710 && address < 0x70910) {
+   unsigned element = (address-0x70710)/2; bool dense = stage == 21 || stage == 22;
+   uint32_t lo = BlackholeFixedIntegerFp32(BlackholeFixedWeight(element/16,element%16,dense))>>16;
+   uint32_t hi = BlackholeFixedIntegerFp32(BlackholeFixedWeight(element/16,element%16+1,dense))>>16;
+   return lo | (hi<<16);
+  }
+ }
  const uint32_t code[] = {
 		0xffe40437,0xffe004b7,0x0fc48493,0xffef0937,
 		0x001809b7,0xfc098993,0x00000a13,0xb20002b7,

@@ -27,6 +27,7 @@ struct Machine {
 	bool dropMatrix = false;
 	bool dropVector = false;
 	bool dropClear = false;
+	bool transposeA = false;
 	bool dropUnpack = false, backendWait = false;
 	uint32_t gpr63 = 0;
 	unsigned unpackReads = 0, inputStores = 0;
@@ -75,7 +76,7 @@ struct Machine {
 		} else if (op == 0x5460000f) {
 			assert(sfpuSmoke >= 16);
 		} else if (op == 0x420000c1 || op == 0x428000c1) {
-			assert(sfpuSmoke >= 16 && sfpuSmoke <= 18 && config[50] == 0x100 && config[56] == 0x100000 && config[59] == 0x100);
+			assert(sfpuSmoke >= 16 && sfpuSmoke != 19 && config[50] == 0x100 && config[56] == 0x100000 && config[59] == 0x100);
 			bool srcA = op == 0x420000c1;
 			assert(UnpackBoundsValid()); // an X1 reset would load just one datum
 			assert(srcA ? !ownerA : !ownerB);
@@ -92,7 +93,7 @@ struct Machine {
 			}
 			if (srcA) ownerA = true; else ownerB = true;
 		} else if (op == 0x36c00000) {
-			assert((sfpuSmoke == 17 || sfpuSmoke == 18) && ownerA && ownerB);
+			assert((sfpuSmoke == 17 || sfpuSmoke == 18 || sfpuSmoke == 22 || sfpuSmoke == 23) && ownerA && ownerB);
 			ownerA = ownerB = false;
 		} else if (op == 0x3700000f) {
 			// All increments are zero and all RWCs are reset by this exact opcode.
@@ -141,7 +142,7 @@ struct Machine {
 		} else if (op == 0x43000007) ownerA = true;
 		else if (op == 0x43800007) ownerB = true;
 		else if (op == 0x12002020 || op == 0x13001020) {
-			assert((op == 0x12002020 && (sfpuSmoke == 11 || sfpuSmoke == 13 || sfpuSmoke == 17) && ownerA) || (op == 0x13001020 && (sfpuSmoke == 12 || sfpuSmoke == 14 || sfpuSmoke == 18) && ownerB));
+			assert((op == 0x12002020 && (sfpuSmoke == 11 || sfpuSmoke == 13 || sfpuSmoke == 17 || sfpuSmoke == 22) && ownerA) || (op == 0x13001020 && (sfpuSmoke == 12 || sfpuSmoke == 14 || sfpuSmoke == 18 || sfpuSmoke == 23) && ownerB));
 			for (unsigned row = 0; row < 8; row++) {
 				for (unsigned col = 0; col < 16; col++) dst[32+row][col] = op == 0x12002020 ? a[row][col] : b[0][col];
 				valid[32+row] = true;
@@ -154,11 +155,11 @@ struct Machine {
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
-				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) value += b[row][k] * a[k][col];
+				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) value += b[row][k] * (transposeA ? a[col][k] : a[k][col]);
 				dst[32+row][col] = value;
 			}
 			for (unsigned row = 32; row < 40; row++) valid[row] = true;
-			if (op == 0x26c00020) { assert(sfpuSmoke == 16); ownerA = ownerB = false; }
+			if (op == 0x26c00020) { assert(sfpuSmoke == 16 || sfpuSmoke == 20 || sfpuSmoke == 21); ownerA = ownerB = false; }
 		} else assert(false);
 		drained = false;
 	}
@@ -168,9 +169,11 @@ struct Machine {
 		if (address == 0xffe80004) { assert(value == 0); pendingDrainStore = true; return; }
 		if (address == 0xffe000fc) { assert(sfpuSmoke >= 16 && value == 0); gpr63 = 0; return; }
 		if (address >= 0x70700 && address < 0x70a20) {
-			assert(sfpuSmoke >= 16 && sfpuSmoke <= 18);
+			assert(sfpuSmoke >= 16 && sfpuSmoke != 19);
 			bool header = address < 0x70710 || (address >= 0x70910 && address < 0x70920);
-			assert(header ? value == 0 : (value == 0x3f803f80 || value == 0x40004000 || value == 0x40404040));
+			if (sfpuSmoke >= 20 && !header) {
+				assert(address >= 0x70920); // preset A and lookup tables are read-only
+			} else assert(header ? value == 0 : (value == 0x3f803f80 || value == 0x40004000 || value == 0x40404040));
 			l1[Index(address)] = value; inputStores++; return;
 		}
 		if (address >= 0xffef0000 && address <= 0xffef0370) {
@@ -192,7 +195,8 @@ struct Machine {
 		assert((address & 3) == 0);
 		if (address == 0xffe80004) { assert(pendingDrainStore); pendingDrainStore = false; drained = true; drains++; return 0xdeadbeef; }
 		if (address == 0xffe000fc) { assert(sfpuSmoke >= 16); return gpr63; }
-		if (address == 0x70a1c) { assert(sfpuSmoke >= 16 && sfpuSmoke <= 18); return l1[Index(address)]; }
+		if (address == 0x70a1c) { assert(sfpuSmoke >= 16 && sfpuSmoke != 19); return l1[Index(address)]; }
+		if (address >= 0x70500 && address < 0x70700) { assert(sfpuSmoke >= 20); return l1[Index(address)]; }
 		if (address >= 0xffef0000 && address <= 0xffef0370) {
 			assert(drained); unsigned offset = address-0xffef0000;
 			assert(ConfigOffset(offset));
@@ -221,6 +225,7 @@ struct Machine {
 		while (pc != BlackholeTensixParkPc(sfpuSmoke) || steps == 0) {
 			assert(++steps < 20000 && (pc == 0x6000 || (pc >= 0x70000 && pc < 0x70000 + BlackholeTensixCodeWords(sfpuSmoke)*4)));
 			if (sfpuSmoke >= 16) assert(pc < 0x70700);
+			if (sfpuSmoke >= 20) assert(pc < 0x70500);
 			uint32_t instruction = l1[Index(pc)], next = pc + 4;
 			unsigned op = instruction & 127, rd = (instruction>>7)&31, f3 = (instruction>>12)&7;
 			unsigned rs1 = (instruction>>15)&31, rs2 = (instruction>>20)&31;
@@ -257,6 +262,18 @@ struct Machine {
 	bool Correct() {
 		for (unsigned i = 0; i < 256; i++) {
 			uint32_t expected = ((sfpuSmoke >= 10 && sfpuSmoke <= 14) || sfpuSmoke == 17 || sfpuSmoke == 18) ? Bits(i < 128 ? 1 : (sfpuSmoke == 12 || sfpuSmoke == 14 || sfpuSmoke == 18) ? 3 : 2) : (configSmoke || sfpuSmoke == 19 || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10)) ? 0U : Bits(i < 128 ? 16 : 96);
+			if (sfpuSmoke >= 20) {
+				unsigned fixture = i/128, row = (i%128)/16, column = i%16;
+				int sum = 0;
+				for (unsigned k = 0; k < 16; k++) {
+					int vector = int((3*row+k)%16)-8; if (fixture) vector = -vector-1;
+					int weight = sfpuSmoke == 21 ? int((k+2*column)%5)-2 : (k == column ? 1 : 0);
+					sum += vector*weight;
+				}
+				if (sfpuSmoke == 22) sum = int((row+2*column)%5)-2;
+				if (sfpuSmoke == 23) { sum = int(column)-8; if (fixture) sum = -sum-1; }
+				expected = Bits(float(sum));
+			}
 			if (l1[Index(0x17f800+i*4)] != expected) return false;
 		}
 		return true;
@@ -264,7 +281,7 @@ struct Machine {
 };
 int main(int argc, char** argv)
 {
-	assert(argc == 23);
+	assert(argc == 27);
 	auto boot = Read(argv[1]), code = Read(argv[2]);
 	auto configCode = Read(argv[3]);
 	assert(boot.size() == 4 && Word(boot,0) == BlackholeTensixImageWord(0) && code.size() == TT_TENSIX_CODE_WORDS*4);
@@ -275,7 +292,7 @@ int main(int argc, char** argv)
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(loadCode,i*4) == BlackholeTensixImageWord(i+1,false,true));
 	auto storeCode = Read(argv[5]); assert(storeCode.size() == code.size());
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(storeCode,i*4) == BlackholeTensixImageWord(i+1,false,2));
-	for (unsigned stage = 3; stage <= 19; stage++) {
+	for (unsigned stage = 3; stage <= 23; stage++) {
 		auto bytes = Read(argv[stage+3]); assert(bytes.size() == BlackholeTensixCodeWords(stage)*4);
 		for (unsigned i = 0; i < BlackholeTensixCodeWords(stage); i++) {
 			if (Word(bytes,i*4) != BlackholeTensixImageWord(i+1,false,stage))
@@ -340,5 +357,13 @@ int main(int argc, char** argv)
 	bounds.Instruction(0x5e23fc00); bounds.Instruction(0x5e41fc00); assert(bounds.UnpackBoundsValid());
 	bounds.Instruction(0x5160000a); assert(bounds.UnpackBoundsValid());
 	bounds.Instruction(0x5160000f); assert(!bounds.UnpackBoundsValid());
+	for (int integer = -256; integer <= 256; integer++) assert(BlackholeFixedIntegerFp32(integer) == Bits(float(integer)));
+	for (unsigned stage = 20; stage <= 23; stage++) {
+		Machine nonuniform(false,stage); nonuniform.Run();
+		assert(nonuniform.Correct() && nonuniform.unpackReads == 768 && nonuniform.inputStores == 144 && nonuniform.outputReads == 256);
+		assert(nonuniform.matrixInstructions == (stage <= 21 ? 2U : 0U));
+	}
+	Machine transposed(false,21); transposed.transposeA = true; transposed.Run(); assert(!transposed.Correct());
+	Machine noNonuniformMath(false,21); noNonuniformMath.dropMatrix = true; noNonuniformMath.Run(); assert(!noNonuniformMath.Correct());
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }

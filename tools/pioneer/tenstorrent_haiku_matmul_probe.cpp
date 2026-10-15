@@ -57,7 +57,15 @@ int main(int argc, char** argv)
 		{"--check-l1-unpack-srcb-support","--run-l1-unpack-srcb-and-reset","L1-unpack-SrcB","Normal L1-to-SrcB and numerical 1.0/3.0 roundtrip; no multiply",
 		 TT_PCI_PROBE_PIONEER_UNPACK_SRCB_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_SRCB,33,20,false},
 		{"--check-l1-unpack-config-support","--run-l1-unpack-config-and-reset","L1-unpack-config","Configuration and explicit backend/GPR completion only; no unpack/input/matrix",
-		 TT_PCI_PROBE_PIONEER_UNPACK_CONFIG_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_CONFIG,34,21,true}
+		 TT_PCI_PROBE_PIONEER_UNPACK_CONFIG_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_CONFIG,34,21,true},
+		{"--check-identity-matmul-support","--run-identity-matmul-and-reset","Identity-matmul","Identity weights and distinct mixed-sign inputs, all-element CPU reference",
+		 TT_PCI_PROBE_PIONEER_IDENTITY_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_IDENTITY_MATMUL,35,22,false},
+		{"--check-dense-matmul-support","--run-dense-matmul-and-reset","Dense-matmul","Nonsymmetric dense mixed-sign weights and inputs, all-element CPU reference",
+		 TT_PCI_PROBE_PIONEER_DENSE_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_DENSE_MATMUL,36,23,false},
+		{"--check-dense-srca-support","--run-dense-srca-and-reset","Dense-SrcA","Nonuniform SrcA roundtrip; no multiplication",
+		 TT_PCI_PROBE_PIONEER_DENSE_SRCA_SUPPORT,TT_PCI_PROBE_PIONEER_DENSE_SRCA,37,24,false},
+		{"--check-pattern-srcb-support","--run-pattern-srcb-and-reset","Pattern-SrcB","Distinct mixed-sign SrcB row broadcast; no multiplication",
+		 TT_PCI_PROBE_PIONEER_PATTERN_SRCB_SUPPORT,TT_PCI_PROBE_PIONEER_PATTERN_SRCB,38,25,false}
 	};
 	const Mode* selected = NULL; bool inspect = false;
 	if (argc == 2) for (const Mode& mode : modes) {
@@ -102,8 +110,11 @@ int main(int argc, char** argv)
 		" context reset %" PRIu32 " polls %" PRIu32 "; routes/cores checked %" PRIu32 "/%" PRIu32 "\n",
 		mode.name,m.state,m.started,m.completed,m.stopped,m.context_reset,m.polls,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked);
 	printf("Wait-return-PC/%s/marker %08" PRIx32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",mode.protocolOnly ? "protocol-count" : "fixtures",m.phase,m.fixtures,m.marker,m.mismatches);
-	printf("Representative output bits %08" PRIx32 "/%08" PRIx32 " (%s); PC %08" PRIx32 "/%08" PRIx32 "\n",
-		m.representative[0],m.representative[1],mode.protocolOnly ? "expected zero footprint, NOT matrix results" : (mode.resultVersion == 14 || mode.resultVersion == 16 || mode.resultVersion == 20) ? "expected 3f800000/40400000 = 1.0/3.0, NOT matrix results" : ((mode.resultVersion >= 12 && mode.resultVersion <= 15) || mode.resultVersion == 19) ? "expected 3f800000/40000000 = 1.0/2.0, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
+	unsigned stage = mode.resultVersion >= 3 ? mode.resultVersion-2 : 0;
+	uint32_t expected0 = mode.protocolOnly ? 0 : BlackholeMatmulStageExpected(stage,0);
+	uint32_t expected1 = mode.protocolOnly ? 0 : BlackholeMatmulStageExpected(stage,128);
+	printf("Representative output bits %08" PRIx32 "/%08" PRIx32 ", expected %08" PRIx32 "/%08" PRIx32
+		"; PC %08" PRIx32 "/%08" PRIx32 "\n",m.representative[0],m.representative[1],expected0,expected1,m.pc[0],m.pc[1]);
 	printf("Reset before/initialized/running/after %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",
 		m.reset_before,m.reset_initialized,m.reset_running,m.reset_after);
 	printf("Entry/FIFO/sync controls %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",m.controls[0],m.controls[1],m.controls[2]);

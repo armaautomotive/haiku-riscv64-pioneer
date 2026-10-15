@@ -24,6 +24,7 @@ static inline uint32_t BlackholeMatmulExpected(unsigned output)
 }
 static inline uint32_t BlackholeMatmulStageExpected(unsigned stage, unsigned output)
 {
+	if (stage >= 20 && stage <= 23) return BlackholeNonuniformExpected(stage,output);
 	if (stage == 10 || stage == 11 || stage == 13 || stage == 17) return output < 128 ? 0x3f800000U : 0x40000000U;
 	if (stage == 12 || stage == 14 || stage == 18) return output < 128 ? 0x3f800000U : 0x40400000U;
 	return BlackholeMatmulExpected(output);
@@ -42,7 +43,7 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 	tt_tensix_matmul_result& r, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
 	r = {}; r.version = sfpuSmoke != 0 ? 2 + sfpuSmoke : configSmoke ? 2 : 1; r.l1_restored = r.tlb_restored = 1;
-	if (sfpuSmoke > 19 || (configSmoke && sfpuSmoke != 0)) return false;
+	if (sfpuSmoke > 23 || (configSmoke && sfpuSmoke != 0)) return false;
 	bool protocolOnly = configSmoke || sfpuSmoke == 19 || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10);
 	const unsigned codeWords = BlackholeTensixCodeWords(sfpuSmoke), imageWords = BlackholeTensixImageWords(sfpuSmoke);
 	const unsigned statusIndex = BlackholeTensixStatusIndex(sfpuSmoke);

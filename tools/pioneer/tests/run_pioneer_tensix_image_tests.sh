@@ -5,7 +5,7 @@ directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-tensix-image.XXXXXXXX")
 cleanup() {
- for name in image config load store operand matrix zeroacc movd kernel kerneloperand kernelmatrix dstread srca srcb purea pureb purematrix unpack unpacka unpackb unpackconfig; do
+ for name in image config load store operand matrix zeroacc movd kernel kerneloperand kernelmatrix dstread srca srcb purea pureb purematrix unpack unpacka unpackb unpackconfig identity dense densea patternb; do
   rm -f "$temporary/$name.o" "$temporary/$name.elf" "$temporary/$name.bin"
  done
  rm -f "$temporary/boot.bin" "$temporary/code.bin" "$temporary/test"
@@ -31,9 +31,10 @@ for stage in operand matrix zeroacc movd; do
  "$cross-ld" -m elf32lriscv --no-relax -T "$directory/../blackhole_tensix_matmul.ld" "$temporary/$stage.o" -o "$temporary/$stage.elf"
  "$cross-objcopy" -O binary -j .text "$temporary/$stage.elf" "$temporary/$stage.bin"
 done
-for stage in unpack unpacka unpackb unpackconfig; do
+for stage in unpack unpacka unpackb unpackconfig identity dense densea patternb; do
  set --
  case "$stage" in unpacka) set -- --defsym TT_UNPACK_SRCA=1;; unpackb) set -- --defsym TT_UNPACK_SRCB=1;; unpackconfig) set -- --defsym TT_UNPACK_CONFIG=1;; esac
+ case "$stage" in identity) set -- --defsym TT_UNPACK_NONUNIFORM=1;; dense) set -- --defsym TT_UNPACK_NONUNIFORM=1 --defsym TT_UNPACK_DENSE=1;; densea) set -- --defsym TT_UNPACK_NONUNIFORM=1 --defsym TT_UNPACK_DENSE=1 --defsym TT_UNPACK_SRCA=1;; patternb) set -- --defsym TT_UNPACK_NONUNIFORM=1 --defsym TT_UNPACK_SRCB=1;; esac
  "$cross-as" -march=rv32i -mabi=ilp32 -mno-relax "$@" "$directory/../blackhole_tensix_unpack.S" -o "$temporary/$stage.o"
  "$cross-ld" -m elf32lriscv --no-relax -T "$directory/../blackhole_tensix_unpack.ld" "$temporary/$stage.o" -o "$temporary/$stage.elf"
  "$cross-objcopy" -O binary -j .text "$temporary/$stage.elf" "$temporary/$stage.bin"
@@ -47,5 +48,5 @@ for stage in kernel kerneloperand kernelmatrix dstread srca srcb purea pureb pur
  "$cross-objcopy" -O binary -j .text "$temporary/$stage.elf" "$temporary/$stage.bin"
 done
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined "$directory/pioneer_tensix_image_test.cpp" -o "$temporary/test"
-"$temporary/test" "$temporary/boot.bin" "$temporary/code.bin" "$temporary/config.bin" "$temporary/load.bin" "$temporary/store.bin" "$temporary/operand.bin" "$temporary/matrix.bin" "$temporary/zeroacc.bin" "$temporary/movd.bin" "$temporary/kernel.bin" "$temporary/kerneloperand.bin" "$temporary/kernelmatrix.bin" "$temporary/dstread.bin" "$temporary/srca.bin" "$temporary/srcb.bin" "$temporary/purea.bin" "$temporary/pureb.bin" "$temporary/purematrix.bin" "$temporary/unpack.bin" "$temporary/unpacka.bin" "$temporary/unpackb.bin" "$temporary/unpackconfig.bin"
+"$temporary/test" "$temporary/boot.bin" "$temporary/code.bin" "$temporary/config.bin" "$temporary/load.bin" "$temporary/store.bin" "$temporary/operand.bin" "$temporary/matrix.bin" "$temporary/zeroacc.bin" "$temporary/movd.bin" "$temporary/kernel.bin" "$temporary/kerneloperand.bin" "$temporary/kernelmatrix.bin" "$temporary/dstread.bin" "$temporary/srca.bin" "$temporary/srcb.bin" "$temporary/purea.bin" "$temporary/pureb.bin" "$temporary/purematrix.bin" "$temporary/unpack.bin" "$temporary/unpacka.bin" "$temporary/unpackb.bin" "$temporary/unpackconfig.bin" "$temporary/identity.bin" "$temporary/dense.bin" "$temporary/densea.bin" "$temporary/patternb.bin"
 printf 'PASS: fixed RV32I image, whitelisted MMIO and reference matrix fixture; no hardware operation\n'

@@ -1198,6 +1198,33 @@ firmware and both SDs remain unchanged; no BAR4 enlargement/bus mastering.
 
 Download pinned official sources with:
 
+### October 15: nonuniform, mixed-sign layouts verified
+
+At **07:59 UTC**, the new SrcA dense readback, SrcB patterned broadcast,
+identity multiplication and nonsymmetric dense multiplication all PASSED
+on the live P100A. Each operation checked all 256 FP32 outputs against an
+integer CPU oracle. The dense multiplication also passed an immediate
+warm repeat. All runs completed/stopped, restored L1/TLB/PCI, and reported
+recovery 0 and commands 0000/0000. Haiku retained all 64 CPUs and
+137,034,936,320 maximum RAM bytes.
+
+Input B rows contain distinct values in [-8,7], with a second independent
+fixture `-B-1`; dense A is `(row+2*column)%5-2`. A separate identity A
+establishes orientation. The independently assembled RV32 program only
+copies bounded BF16 input tables; actual MVMUL generates the outputs.
+The decoder independently calculates the reference and rejects a transposed
+A layout or removed MVMUL. It also verifies all 25 program variants,
+read/write whitelists and existing rollback/recovery gates.
+
+New fixed operations 5494/5 identity v35, 5496/7 dense v36, 5498/9 SrcA v37,
+549a/b SrcB v38 preserve the same 908-word footprint and completion PCs.
+Native artifacts: `/boot/home/pioneer-p100a-20261014/nonuniform-1/`.
+Driver SHA `8bfc79537c1f07be7ceaf388183589ec20547e838e8a4d570e391e77a25bf32e`;
+CLI SHA `641cf396986aa3d573e32ff4f58acf278d16c540b9397fabbc5799d076bcaa1b`.
+This proves these bounded numerical layouts, NOT model inference or a
+scalable backend. Next add a bounded data-only input/output interface;
+no user-controlled device addresses, code or DMA descriptors.
+
 ```sh
 sh tools/pioneer/tenstorrent_fetch.sh
 ```

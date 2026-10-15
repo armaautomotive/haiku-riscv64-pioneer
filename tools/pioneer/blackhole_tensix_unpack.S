@@ -93,7 +93,12 @@ fixture:
 	sw zero, 4(t2)
 	sw zero, 8(t2)
 	sw zero, 12(t2)
+.ifdef TT_UNPACK_NONUNIFORM
+	j nonuniform_inputs
+	nop /* same width as li, preserve every common code address */
+.else
 	li t0, 0x3f803f80
+.endif
 	li t3, 0x3f803f80
 	beq s4, zero, inputs
 	li t0, 0x40004000
@@ -113,6 +118,7 @@ fill_b:
 	addi t2, t2, 4
 	addi t1, t1, -1
 	bne t1, zero, fill_b
+inputs_ready:
 	lw t1, -4(t2) /* dependent readback before issuing an L1 consumer */
 	andi t1, t1, 0
 	fence
@@ -203,6 +209,97 @@ wait_done:
 	beq t1, zero, wait_done
 	fence
 	jalr zero, 0(ra)
+.ifdef TT_UNPACK_NONUNIFORM
+	.org 0x440, 0
+nonuniform_inputs:
+	li t3, 0x70500
+	beq s4, zero, copy_nonuniform
+	addi t3, t3, 256
+copy_nonuniform:
+	li t2, 0x70920
+	li t1, 64
+copy_nonuniform_word:
+	lw t0, 0(t3)
+	sw t0, 0(t2)
+	addi t3, t3, 4
+	addi t2, t2, 4
+	addi t1, t1, -1
+	bne t1, zero, copy_nonuniform_word
+	j inputs_ready
+.macro bf16_small value
+.if (\value) == -8
+	.short 0xc100
+.elseif (\value) == -7
+	.short 0xc0e0
+.elseif (\value) == -6
+	.short 0xc0c0
+.elseif (\value) == -5
+	.short 0xc0a0
+.elseif (\value) == -4
+	.short 0xc080
+.elseif (\value) == -3
+	.short 0xc040
+.elseif (\value) == -2
+	.short 0xc000
+.elseif (\value) == -1
+	.short 0xbf80
+.elseif (\value) == 0
+	.short 0
+.elseif (\value) == 1
+	.short 0x3f80
+.elseif (\value) == 2
+	.short 0x4000
+.elseif (\value) == 3
+	.short 0x4040
+.elseif (\value) == 4
+	.short 0x4080
+.elseif (\value) == 5
+	.short 0x40a0
+.elseif (\value) == 6
+	.short 0x40c0
+.elseif (\value) == 7
+	.short 0x40e0
+.else
+	.error "fixed BF16 input outside small-integer whitelist"
+.endif
+.endm
+	.org 0x500, 0
+.set nu_f, 0
+.rept 2
+.set nu_r, 0
+.rept 8
+.set nu_c, 0
+.rept 16
+.set nu_b, ((nu_r*3+nu_c)%16)-8
+.if nu_f
+.set nu_b, -nu_b-1
+.endif
+	bf16_small nu_b
+.set nu_c, nu_c+1
+.endr
+.set nu_r, nu_r+1
+.endr
+.set nu_f, nu_f+1
+.endr
+	.org 0x710, 0
+.set nu_r, 0
+.rept 16
+.set nu_c, 0
+.rept 16
+.ifdef TT_UNPACK_DENSE
+.set nu_a, ((nu_r+2*nu_c)%5)-2
+.else
+.set nu_a, 0
+.if nu_r == nu_c
+.set nu_a, 1
+.endif
+.endif
+	bf16_small nu_a
+.set nu_c, nu_c+1
+.endr
+.set nu_r, nu_r+1
+.endr
+.endif
 	/* This exact fixed region also contains the two local input buffers.
 	 * No instructions may be placed in either buffer by the linker.
 	 */
