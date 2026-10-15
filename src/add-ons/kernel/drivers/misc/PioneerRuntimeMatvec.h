@@ -3,6 +3,8 @@
 #define PIONEER_RUNTIME_MATVEC_H
 #include "BlackholeRuntimeMatvecImage.h"
 #include "BlackholeRuntimeFp16MatvecImage.h"
+#include "BlackholeRuntimeInt8MatvecImage.h"
+#include "PioneerInt8Operand.h"
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeOutput.h"
 #include "PioneerRuntimeProfile.h"
@@ -15,6 +17,7 @@ struct tt_runtime_matvec_result {
 struct PioneerRuntimeMatvecLease {
 	bool saved=false,code_dirty=false,buffers_dirty=false,ready=false,running=false,unsafe=false;
 	bool fp16=false; // immutable for one prepared-code lease
+	bool int8=false;
 };
 template<class IO>
 bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,const PioneerResidentLease& store)
@@ -26,9 +29,10 @@ bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const t
 }
 template<class IO>
 bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
-	const PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,bool fp16=false)
+	const PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,bool fp16=false,bool int8=false)
 {
-	if (compute.ready) return compute.fp16==fp16;
+	if (fp16 && int8) return false;
+	if (compute.ready) return compute.fp16==fp16 && compute.int8==int8;
 	uint32_t* saved=io.RuntimeSavedWords();
 	if (!saved || compute.saved || !store.ready || store.pending || store.recovery_required || io.ResetRead()!=0x47800
 		|| !PioneerRuntimeSources(io,baseline,noc,store) || !BlackholeResidentIdle(io)) return false;
@@ -43,11 +47,11 @@ bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,c
 		compute.unsafe=true; return false;
 	}
 	compute.code_dirty=true;
-	compute.fp16=fp16;
-	for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
+	compute.fp16=fp16; compute.int8=int8;
+	for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
 	io.RuntimeCodeWrite(0,0x0006a06f);
 	bool valid=io.RuntimeCodeRead(0)==0x0006a06f;
-	for (unsigned w=0;w<1024;w++) valid &= io.RuntimeCodeRead(1+w)==(fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
+	for (unsigned w=0;w<1024;w++) valid &= io.RuntimeCodeRead(1+w)==(int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
 	compute.ready=valid; return valid;
 }
 template<class IO>
@@ -117,8 +121,12 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 {
 	r={}; r.version=1;
 	if (!PioneerMatvecWeightRange(capacity,offset,inputs,outputs) || !input || !output || !compute.ready
-		|| !store.ready || store.pending || store.recovery_required || compute.unsafe) return false;
+		|| !store.ready || store.pending || store.recovery_required || compute.unsafe || (compute.int8 && dmaOutput)) return false;
 	for (unsigned w=0;w<inputs/2;w++) {
+		if (compute.int8) {
+			if (!PioneerInt8OperandValid(uint16_t(input[w])) || !PioneerInt8OperandValid(uint16_t(input[w]>>16))) return false;
+			continue;
+		}
 		uint32_t mask=compute.fp16?0x7c00:0x7f80;
 		if ((input[w]&mask)==mask || (input[w]&(mask<<16))==(mask<<16)) return false;
 	}
@@ -175,7 +183,7 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 	io.RuntimeProfileMark(TT_PROFILE_COMPLETED);
 	if (!dmaOutput) for (unsigned w=0;w<outputs;w++) {
 		output[w]=io.RuntimeBufferRead(4096+w);
-		r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
+		if (!compute.int8) r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
 	}
 	if (!dmaOutput) io.RuntimeProfileMark(TT_PROFILE_PIO);
 	io.RuntimeResetWrite(0x87ffff); io.Pause();

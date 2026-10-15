@@ -6,14 +6,14 @@
 #include <stdlib.h>
 #include <time.h>
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
-static bool Profile(int fd,bool fp16,bool dma,uint64_t& previous,bool& closeOnly)
+static bool Profile(int fd,bool fp16,bool dma,bool int8,uint64_t& previous,bool& closeOnly)
 {
 	tt_runtime_profile_result p={};
 	if (ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&p,sizeof(p))) {
 		perror("runtime phase metadata"); closeOnly=true; return false;
 	}
 	bool valid=p.version==1 && p.available && p.clock_stable && p.sequence>previous
-		&& p.format==(fp16?2U:dma?1U:0U) && p.mask==(dma?0x1dfU:0x17fU)
+		&& p.format==(int8?3U:fp16?2U:dma?1U:0U) && p.mask==(dma?0x1dfU:0x17fU)
 		&& p.state==TT_RUNTIME_PASSED && p.started && p.completed && p.stopped && !p.recovery_required;
 	uint64_t last=0;
 	for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) if (p.mask&(1U<<slot)) {
@@ -32,7 +32,8 @@ int main(int argc,char** argv)
 	bool support=argc==2 && !strcmp(argv[1],"--check-support");
 	bool compareDma=argc>=3 && !strcmp(argv[1],"--compare-qwen-resident-output-dma");
 	bool fp16=argc>=3 && !strcmp(argv[1],"--run-qwen-resident-fp16");
-	bool integerProbe=argc>=3 && !strcmp(argv[1],"--probe-qwen-q8-integer-block");
+	bool int8=argc>=3 && !strcmp(argv[1],"--probe-qwen-q8-int8-engine");
+	bool integerProbe=(argc>=3 && !strcmp(argv[1],"--probe-qwen-q8-integer-block")) || int8;
 	unsigned outputs=32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
@@ -40,7 +41,7 @@ int main(int argc,char** argv)
 		outputs=unsigned(n);
 	}
 	if (!support && ((argc!=3 && argc!=5) || (!compareDma && !fp16 && !integerProbe && strcmp(argv[1],"--run-qwen-resident-projection")))) {
-		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma | --run-qwen-resident-fp16 | --probe-qwen-q8-integer-block} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained weights, two separate vectors; DMA comparison requires bit-identical PIO results; integer-block probe requires exact dot products, not a scaled Q8 implementation. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
+		fprintf(stderr,"Usage: %s --check-support | {--run-qwen-resident-projection | --compare-qwen-resident-output-dma | --run-qwen-resident-fp16 | --probe-qwen-q8-integer-block | --probe-qwen-q8-int8-engine} MODEL_GGUF [TENSOR_NAME OUTPUT_ROWS]\nReal Q8_0 rows (default: 32 blk.0.attn_q), retained weights, two separate vectors; DMA comparison requires bit-identical PIO results; integer-block probes require exact dots, not a scaled Q8 implementation. NOT full-model inference or tokens/second.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
@@ -50,6 +51,7 @@ int main(int argc,char** argv)
 	if (session.version!=1 || (session.capabilities&31)!=31) { close(fd); return 1; }
 	if (compareDma && !(session.capabilities&64)) { fprintf(stderr,"Output DMA capability unavailable\n"); close(fd); return 1; }
 	if (fp16 && !(session.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec capability unavailable\n"); close(fd); return 1; }
+	if (int8 && !(session.capabilities&512)) { fprintf(stderr,"Fixed integer-8 matvec capability unavailable\n"); close(fd); return 1; }
 	if (support) { close(fd); return 0; }
 	bool profiling=(session.capabilities&256)!=0;
 	FILE* model=fopen(argv[2],"rb"); if (!model) { close(fd); return 1; }
@@ -75,13 +77,15 @@ int main(int argc,char** argv)
 	fclose(model);
 	for (unsigned row=0;row<outputs && passed;row++) for (unsigned k=0;k<inputs;k++) {
 		uint64_t byte=PioneerMatvecWeightElement(inputs,k,row);
-		uint16_t value=fp16?PioneerFloat16(weights[row*inputs+k]):PioneerTileBf16(weights[row*inputs+k]);
+		uint16_t value=int8?PioneerInt8Operand(int(weights[row*inputs+k])):fp16?PioneerFloat16(weights[row*inputs+k]):PioneerTileBf16(weights[row*inputs+k]);
+		if (int8 && !PioneerInt8OperandValid(value)) { passed=false; break; }
 		if (fp16 && (value&0x7c00)==0x7c00) { passed=false; break; }
 		packed[byte/4]|=uint32_t(value)<<(8*(byte&3));
 	}
 	printf("Source tensor Q8_0 [%llu,%llu] file offset %llu; retained sample %ux%u packed %u bytes\n",
 		(unsigned long long)tensor.inputs,(unsigned long long)tensor.outputs,(unsigned long long)tensor.offset,outputs,inputs,bytes);
-	if (integerProbe) puts("INTEGER BLOCK PROBE: first 32 raw Q8 integers per real row, zero padding, BF16-exact integer operands, exact dot gate. Scales are NOT applied; not a quantized inference backend.");
+	if (integerProbe) printf("INTEGER BLOCK PROBE: first 32 raw Q8 integers per real row, zero padding, %s, exact dot gate. Scales are NOT applied; not a quantized inference backend.\n",int8?"integer-8 encoded operands":"exactly represented BF16 operands");
+	if (int8) puts("INTEGER ENGINE: forced integer-8 matrix arithmetic with int32 destination/readback; FP16 unpack is ONLY an operand bit overlay, not FP16 arithmetic.");
 	session={}; session.version=1; session.bytes=bytes;
 	if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session))==0 && session.active && session.state==TT_RESIDENT_SESSION_READY;
 	for (unsigned offset=0;offset<bytes && passed;offset+=4096) {
@@ -100,17 +104,17 @@ int main(int argc,char** argv)
 		for (unsigned k=0;k<inputs;k++) {
 			vector[k]=float(int((k*17+vectorTrial*29)%257)-128)/256.0f;
 			if (integerProbe) vector[k]=k<32?float(int((k*17+vectorTrial*29)%255)-127):0;
-			request->input[k/2]|=uint32_t(fp16?PioneerFloat16(vector[k]):PioneerTileBf16(vector[k]))<<(16*(k&1));
+			request->input[k/2]|=uint32_t(int8?PioneerInt8Operand(int(vector[k])):fp16?PioneerFloat16(vector[k]):PioneerTileBf16(vector[k]))<<(16*(k&1));
 		}
 		double start=Seconds();
-		int status=ioctl(fd,fp16?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16:dma?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
+		int status=ioctl(fd,int8?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8:fp16?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16:dma?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
 		double elapsed=Seconds()-start;
 		const auto& r=request->result; cold=r.recovery_required!=0;
 		printf("Trial %u state %u start/complete/stop %u/%u/%u staged %u polls %u phase/tiles/marker %x/%u/%x PC %x/%x cold %u %.6fs\n",
 			trial,r.state,r.started,r.completed,r.stopped,r.staged_pages,r.polls,r.phase,r.tiles,r.marker,r.pc[0],r.pc[1],r.recovery_required,elapsed);
 		printf("  device weight reads response/flits/accepted/sent %u/%u/%u/%u\n",uint32_t(r.after[0]-r.before[0]),uint32_t(r.after[1]-r.before[1]),uint32_t(r.after[2]-r.before[2]),uint32_t(r.after[3]-r.before[3]));
 		if (status || r.state!=TT_RUNTIME_PASSED || !r.started || !r.completed || !r.stopped || cold) { if (status) perror("runtime matvec"); passed=false; break; }
-		if (profiling && !Profile(fd,fp16,dma,previousProfile,closeOnly)) { passed=false; break; }
+		if (profiling && !Profile(fd,fp16,dma,int8,previousProfile,closeOnly)) { passed=false; break; }
 		if (compareDma) {
 			if (!dma) memcpy(pioReference,request->output,outputs*4);
 			else {
@@ -132,7 +136,8 @@ int main(int argc,char** argv)
 					:PioneerTileFloat(uint32_t(PioneerTileBf16(w))<<16)*PioneerTileFloat(uint32_t(PioneerTileBf16(x))<<16);
 				bf16+=product; absolute+=fabsf(product);
 			}
-			float actual=PioneerTileFloat(request->output[row]);
+			int32_t integerActual=0; memcpy(&integerActual,request->output+row,4);
+			float actual=int8?float(integerActual):PioneerTileFloat(request->output[row]);
 			integerMismatches+=integerProbe && actual!=reference;
 			float error=fabsf(actual-bf16),normalized=absolute>0?error/absolute:error;
 			bool strict=!isfinite(actual) || error>1e-5f+absolute*1e-5f;
@@ -146,14 +151,40 @@ int main(int argc,char** argv)
 			if (normalized>maxNormalized) maxNormalized=normalized;
 			dot+=double(actual)*reference; a2+=double(actual)*actual; ref2+=double(reference)*reference;
 			double difference=actual-reference; delta2+=difference*difference;
-			if (row<4 || (strict && strictMismatches<=8)) printf("  row%u card %.9g CPU-%s %.9g CPU-Q8%s %.9g error/sum-abs %.9g\n",row,actual,fp16?"FP16-phases":"BF16",bf16,integerProbe?"-integer-block":"",reference,normalized);
+			if (row<4 || (strict && strictMismatches<=8)) printf("  row%u card %.9g CPU-%s %.9g CPU-Q8%s %.9g error/sum-abs %.9g\n",row,actual,int8?"INT32":fp16?"FP16-phases":"BF16",bf16,integerProbe?"-integer-block":"",reference,normalized);
 		}
 		double cosine=dot/sqrt(a2*ref2),relative=sqrt(delta2/ref2);
 		printf("  %s-level target failures %u; stricter 1e-5 diagnostic failures %u; max absolute/normalized error %.9g/%.9g\n",fp16?"FP16":"BF16",mismatches,strictMismatches,maxError,maxNormalized);
 		printf("  independent Q8%s FP32 reference cosine %.9f relative-L2 %.9f; %s\n",integerProbe?"-integer-block":"",cosine,relative,integerProbe?"exact dot gate required":"NOT bit-exact");
 		if (integerProbe) printf("  Exact integer-block mismatches %u of %u\n",integerMismatches,outputs);
 		passed=!integerMismatches && !mismatches && isfinite(cosine) && cosine>.9999 && relative<.01;
+		if (passed && int8) memcpy(pioReference,request->output,outputs*4);
 		if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&session,sizeof(session))==0 && session.uploaded_pages==bytes/4096;
+	}
+	if (passed && int8) {
+		uint32_t saved=request->input[0]; request->input[0]=0x40004080; // +128 is outside signed-byte input range
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,request,sizeof(*request));
+		cold=request->result.recovery_required!=0;
+		if (status) { perror("integer invalid-input refusal"); closeOnly=true; }
+		passed=!status && request->result.state==TT_RUNTIME_REFUSED && !request->result.started && !cold;
+		printf("  Native integer encoding refusal: state %u started %u cold %u\n",request->result.state,request->result.started,cold);
+		request->input[0]=saved;
+		if (passed) {
+			status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
+			cold=request->result.recovery_required!=0;
+			if (status) { perror("integer prepared-format refusal"); closeOnly=true; }
+			passed=!status && request->result.state==TT_RUNTIME_CONFIG_FAILED && !request->result.started && !cold;
+			printf("  Native prepared-format refusal: state %u started %u cold %u\n",request->result.state,request->result.started,cold);
+		}
+		if (passed) {
+			status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,request,sizeof(*request));
+			const auto& r=request->result; cold=r.recovery_required!=0;
+			if (status) { perror("integer reuse after refusal"); closeOnly=true; }
+			passed=!status && r.state==TT_RUNTIME_PASSED && r.started && r.completed && r.stopped && !cold
+				&& !memcmp(pioReference,request->output,outputs*4);
+			if (passed && profiling) passed=Profile(fd,false,false,true,previousProfile,closeOnly);
+			printf("  Exact integer reuse after both refusals: %s\n",passed?"PASS":"FAIL");
+		}
 	}
 	if (cold) fprintf(stderr,"STOP: cold recovery required, no retry/reset/reload\n");
 	else if (closeOnly) fprintf(stderr,"STOP: metadata request failed; close-only, no further card commands or timing claim\n");

@@ -24,6 +24,7 @@ static uint32_t Word(const std::vector<uint8_t>& b, unsigned i) {
 struct Machine {
 	uint32_t regs[32] = {}, pc = 0x6000, l1[2048] = {}, config[224] = {}, thread[68] = {};
 	float dst[64][16] = {}, a[16][16] = {}, b[8][16] = {};
+	int32_t dstInt[64][16] = {};
 	float lreg[2] = {};
 	bool valid[64], ownerA = false, ownerB = false, drained = true, pendingDrainStore = false;
 	bool dropMatrix = false;
@@ -47,6 +48,7 @@ struct Machine {
 	}
 	virtual ~Machine() = default;
 	virtual bool Fp16Operands() const { return false; }
+	virtual bool Int8Arithmetic() const { return false; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
@@ -157,12 +159,18 @@ struct Machine {
 		}
 		else if (op == 0x26000020 || op == 0x26c00020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
-			assert(config[0] == (Fp16Operands()?0x4231U:0x42b5U) && config[1] == (Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[7] == 0 && config[220] == 0);
+			assert(config[0] == (Fp16Operands()?0x4231U:0x42b5U) && config[1] == (Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8Arithmetic()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
+				int64_t integerValue=valid[32+row]?dstInt[32+row][col]:0;
 				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) {
 					float av = transposeA ? a[col][k] : a[k][col], bv = b[row][k];
+					if (Int8Arithmetic()) {
+						unsigned phase=thread[11]; assert(phase<4);
+						int32_t ai=int32_t(fabsf(av))&(phase&1?31:224),bi=int32_t(fabsf(bv))&(phase&2?15:1008);
+						integerValue+=(av<0?-ai:ai)*(bv<0?-bi:bi); continue;
+					}
 					// The documented FP16 SrcA fidelity phases do not consume
 					// its least significant mantissa bit. SrcB keeps all ten.
 					if (Fp16Operands()) av=Float(Bits(av)&~0x2000U);
@@ -176,6 +184,8 @@ struct Machine {
 					value += bv*av;
 				}
 				dst[32+row][col] = value;
+				assert(integerValue>=INT32_MIN && integerValue<=INT32_MAX);
+				dstInt[32+row][col]=int32_t(integerValue);
 			}
 			for (unsigned row = 32; row < 40; row++) valid[row] = true;
 			if (op == 0x26c00020) { assert(sfpuSmoke == 16 || sfpuSmoke == 20 || sfpuSmoke == 21 || sfpuSmoke == 24); ownerA = ownerB = false; }
@@ -224,7 +234,8 @@ struct Machine {
 		if (address >= 0xffbd8800 && address < 0xffbd8a00) {
 			assert(!configSmoke);
 			assert(drained && (matrixInstructions != 0 || moveInstructions != 0)); unsigned index = (address-0xffbd8000)/4;
-			assert(valid[index/16]); outputReads++; return Bits(dst[index/16][index%16]);
+			assert(valid[index/16]); outputReads++;
+			return Int8Arithmetic()?uint32_t(dstInt[index/16][index%16]):Bits(dst[index/16][index%16]);
 		}
 		if (address >= 0xffbd8000 && address < 0xffbd8200) {
 			assert(sfpuSmoke == 10 && drained && matrixInstructions == 0);

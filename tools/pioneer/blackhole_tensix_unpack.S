@@ -25,6 +25,9 @@ _start:
 
 .section .text,"ax"
 .global main, parked, final_wait_return, drain
+.ifdef TT_RUNTIME_INT8
+	.set TT_RUNTIME_FP16,1 /* integer-8 uses the FP16 source bit overlay */
+.endif
 main:
 	li s0, 0xffe40000
 	li s1, 0xffe000fc /* ThCon GPR63, shared with this TRISC0 */
@@ -72,13 +75,21 @@ thread_config:
 	.error "FP16 candidate is restricted to the fixed runtime matvec"
 .endif
 	config 0, 0x4231 /* explicit FP16 SrcA/SrcB, FP32 Dst override */
+.ifdef TT_RUNTIME_INT8
+	config 1, 0xa0220000 /* force integer matrix arithmetic, not FP16 math */
+.else
 	config 1, 0x20220000 /* FP16 source fields, FP32 accumulation */
+.endif
 .else
 	config 0, 0x42b5
 	config 1, 0x20aa0000
 .endif
 	config 2, 0
+.ifdef TT_RUNTIME_INT8
+	config 3, 0x10000 /* converted signed int32 RISC destination read */
+.else
 	config 3, 0 /* TRISC0 RISC Dst access = converted IEEE FP32 */
+.endif
 	config 6, 0
 	config 7, 0
 	config 220, 0

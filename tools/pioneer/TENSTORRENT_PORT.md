@@ -105,9 +105,61 @@ out while establishing the Haiku port baseline.
 
 ### October 15: checked streamed uploads and numerical localization
 
-#### Fixed FP16 precision candidate (projections passed, full model pending)
+#### Native integer-8 arithmetic candidate (not scaled Qwen inference)
 
-An offline timing candidate now adds a separate, read-only per-session CPU
+The failed floating-point integer probe below motivated a separate fixed
+integer matrix mode, ioctl `54c1`, capability bit 512 (support capabilities
+1023). It uses the documented integer-8 source overlay through the FP16
+unpacker, sets `ALU_ACC_CTRL_INT8_math_enabled`, and reads the destination
+through converted signed-int32 RISC access. The independently assembled
+image differs from the FP16 image by exactly two more fixed immediates.
+Addresses, NoC commands, K/N loops, all four fidelity phases, completion
+markers and park PCs remain unchanged. There is no caller-provided code.
+See the integer path in the primary [MVMUL specification](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md)
+and Blackhole's [RISC destination access](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/Dst.md#riscv-access-to-dst).
+
+Operands are explicitly bounded signed-byte encodings; invalid inputs and
+mixed prepared formats are refused. This operation returns integer bits,
+never interprets negative integers as FP32 NaNs, and refuses the unqualified
+integer/result-DMA combination. `--probe-qwen-q8-int8-engine` reads real raw
+Q8 integers, but still zero-pads all but the first 32 terms and **does not
+apply block scales**. It is neither a quantized model backend nor inference.
+
+ASan/UBSan covers exhaustive 16-bit encoding validity, signed-byte round
+trips/refusal, signed-int32 output handling, all lost control writes, format
+lifetime, and exact integer-phase execution with stale-Dst refusal.
+Independent assembly equals the fixed image; legacy BF16/FP16 images and
+GEMV variants still pass. Jam and all 30 utilities build.
+
+The first native 32x1,024 test passed both independent input vectors with
+**zero of 32 mismatches each**, cosine 1 and relative L2 0. Exact NoC
+128/1,152/128/128, completion/park/stop and clean explicit END passed, cold 0.
+The 32x3,072 test of `blk.25.ffn_down.weight` also passed both vectors with
+zero mismatches and exact 384/3,456/384/384 counters. The preceding
+floating-mode version failed 30 of 32 rows on the same first vector, so its
+result has not been relabeled an integer proof. The full 2,048-row query
+shape then passed both vectors with zero mismatches and exact
+8,192/73,728/8,192/8,192 completion counters. Applying block scales, compact
+quantized storage and full-model testing remain required before integration.
+
+Native invalid signed-byte encoding and attempted in-session BF16 format
+change were then refused with **started 0**, cold 0. A subsequent integer
+operation reproduced all prior outputs exactly. Explicit END, ownership/
+inherited/dup-FD/final-close checks, both old floating formats, fixed GEMV
+and final PCIe/HDMA audit all passed; the Assistant was idle/unchanged.
+
+Current installed candidate SHA-256:
+`dcc775acf96c7c1533f14ae3ca6018a84fc0f6664727862cdf5723e11f264b31`;
+CLI: `450b23263e3a8125cdb1662568a921745e34b78e953bb50ca783d578eff6362f`.
+The separate refusal/reuse diagnostic is
+`2715c4117b1c12a061b8423afb6fd550f6ff2701cf8fa86469326643ea4f6821`
+(`tenstorrent_haiku_int8_refusal_check`).
+Native logs and the verified previous-driver backup (`b3d271...`) are in
+`/boot/home/pioneer-int8-engine-20261015/`.
+
+#### Fixed FP16 precision candidate (projections passed; full model failed)
+
+A native-verified timing interface adds a separate, read-only per-session CPU
 phase record, ioctl `54c0`, capability bit 256 (candidate capabilities 511).
 It preserves the existing matvec request/result ABI and all compute/DMA
 gates. Integer `system_time()` stamps separate one-time preparation, staging,
@@ -125,8 +177,19 @@ its lifecycle test adds foreign/inherited-FD refusal and final-close coverage.
 ASan/UBSan phase/clock/partial/frozen-record tests and all existing dropped
 runtime writes pass, as do the independent compute images, ownership and
 output-DMA regressions. Jam and all 30 diagnostics build. **Native timing and
-new metadata ownership checks remain pending** the exclusive full-Qwen test;
-this candidate has not replaced the installed FP16 driver below.
+new metadata ownership checks passed** after the exclusive full-Qwen test
+ended. Both result paths and FP16 metadata passed their unchanged projection
+gates, including exact PIO/DMA comparisons. Ownership/inherited-team/dup-FD/
+final-close tests, legacy GEMV and post-test audit passed, cold 0, Assistant
+unchanged. The timing-only driver was installed as `b3d271...`, then preserved
+before the integer-mode experiment above.
+
+Warm full query-projection timings (CPU microseconds, all guards included):
+preparation 1, staging 3,318, configuration 750, compute/completion proof
+14,552, PIO 6,052, stop 211, final checks 1; total **24,885 us**. Matched
+owned result DMA took 6,326 us and 25,166 us total. Compute and host/control
+overhead both matter; result DMA is not a speedup. Evidence is in
+`/boot/home/pioneer-runtime-profile-20261015/`.
 
 Candidate driver SHA-256:
 `b3d271236719b3fc663e3cc0cf6ee98fa14506a3f10a440517590c06064feace`.
@@ -171,15 +234,22 @@ or a speedup. Stricter 1e-5 primitive discrepancies are still printed, not
 discarded. Legacy ownership/final-close/GEMV tests and the hardware audit
 passed afterward, cold 0, with the Assistant unchanged.
 
-The standalone backend now supports explicit `--diagnose-fp16-cpu-q8` /
+The standalone backend supports explicit `--diagnose-fp16-cpu-q8` /
 `--verify-fp16-cpu-q8`, keeping the CPU reference context created before
-device registration. The native full-model diagnostic is running with the
-same primitive/graph/full-logit/greedy gates; **generation is not qualified**.
+device registration. The native full-model diagnostic failed at
+`blk.25.ffn_down.weight` with the same primitive/graph/full-logit/greedy gates:
+graph input/output L2 **0.022267011 / 0.030230597**, versus primitive
+FP16-phase L2 0.000368990. It accepted **zero Qwen tokens** after 182 tensors /
+920,125,440 bytes / 224,640 pages and 1,196.102 seconds. Weight preparation/
+upload consumed 1,187.743920 seconds, versus 4.777610 seconds for all matvec/
+staging/result calls. Individual FP16 improvement did not qualify full
+generation. Explicit END and the post-test PCIe/HDMA audit passed, cold 0,
+with the Assistant unchanged.
 Its log/failure vector are `full-qwen-first.log` /
 `full-qwen-failure-first.raw` under `/boot/home/pioneer-runtime-fp16-20261015/`.
 Do not deploy this as a faster Assistant mode based on projection evidence.
 
-Installed driver SHA-256:
+Driver used for that FP16 test, SHA-256:
 `228885f27d567a83ffa034bb97d9e21c728dbdc83e53ad40dd89b50029e11fea`;
 projection CLI:
 `fb31741d50db7fbbdbf8bd8e34e3e1dd8b2a9c7f9d5675093bc96695e6206726`;
@@ -195,10 +265,12 @@ zero padding, and requires every resulting 32-term dot product to equal the
 independent integer reference exactly. The remaining original numerical,
 completion and cleanup gates still apply. No scales are applied: this is
 **not a Q8 backend or full inference**. Offline image execution passes four
-mixed-sign integer-vector trials, and all tools cross-build. Native use is
-pending the exclusive FP16 full-model test's completion; never run it as a
-competing card operation. A failure must be retained, not rounded/substituted
-or called an integer proof.
+mixed-sign integer-vector trials, and all tools cross-build. The native test
+completed after the FP16 test: **30 of 32 rows failed exact equality** on the
+first vector, maximum absolute error 8, relative L2 0.000205409. Completion
+and cleanup still passed, with a clean audit/cold 0. This floating-mode probe
+is not an exact integer proof, and is retained as a failure. The integer
+arithmetic candidate above is separate, not a relaxed gate.
 
 #### Checked output DMA (native projection proof, no speedup)
 

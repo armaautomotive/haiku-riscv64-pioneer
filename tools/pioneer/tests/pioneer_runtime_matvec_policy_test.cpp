@@ -46,7 +46,7 @@ struct RuntimeMock:StoreMock {
 			unsigned tiles=code[1+0x504/4]*code[1+0x508/4];
 			status[0]=TT_RUNTIME_MATVEC_FINAL_PHASE; status[1]=tiles; status[2]=0x4d415431;
 			counters[0]+=tiles; counters[1]+=tiles*9+(badMathFlits?1:0); accepted+=tiles; counters[3]+=tiles;
-			for (unsigned w=0;w<code[1+0x508/4]*16;w++) buffers[4096+w]=nonfinite?0x7fc00000:0x40000000;
+			for (unsigned w=0;w<code[1+0x508/4]*16;w++) buffers[4096+w]=code[42]==0xa02202b7?uint32_t(-11282):nonfinite?0x7fc00000:0x40000000;
 		}
 	}
 	void ResidentNocWrite(uint32_t offset,uint32_t value) {
@@ -88,13 +88,13 @@ struct RuntimeMock:StoreMock {
 	}
 };
 static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
-	tt_runtime_matvec_result& r,bool dma=false,bool fp16=false)
+	tt_runtime_matvec_result& r,bool dma=false,bool fp16=false,bool int8=false)
 {
 	auto b=io.Baseline(); auto n=io.Compute(); uint32_t input[512],output[32]={};
 	r={};
-	for (auto& value:input) value=0x3f803f80;
-	io.runtimeProfile.Begin(io.microseconds,fp16?2:dma?1:0);
-	bool ready=PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16),passed=false;
+	for (auto& value:input) value=int8?0x40014001:0x3f803f80;
+	io.runtimeProfile.Begin(io.microseconds,int8?3:fp16?2:dma?1:0);
+	bool ready=PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16,int8),passed=false;
 	if (ready) {
 		io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 		passed=PioneerRuntimeMatvec(io,b,n,host,store,compute,73728,0,1024,32,input,output,r,dma);
@@ -103,8 +103,8 @@ static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& 
 	const auto& p=io.runtimeProfile.Snapshot();
 	assert(p.available && p.clock_stable && p.state==r.state && p.recovery_required==r.recovery_required);
 	assert(p.started==r.started && p.completed==r.completed && p.stopped==r.stopped);
-	if (passed) assert(p.mask==(dma?0x1dfU:0x17fU) && p.format==(fp16?2U:dma?1U:0U));
-	if (passed) for (uint32_t v:output) assert(v==0x40000000);
+	if (passed) assert(p.mask==(dma?0x1dfU:0x17fU) && p.format==(int8?3U:fp16?2U:dma?1U:0U));
+	if (passed) for (uint32_t v:output) assert(v==(int8?uint32_t(-11282):0x40000000));
 	return passed;
 }
 int main()
@@ -218,6 +218,31 @@ int main()
 		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
 		assert(Prepared(trial,h,s)); if (drop<trial.Mock::writes+1026) continue;
 		trial.Mock::drop=drop; Run(trial,h,s,c,r,false,true);
+		if (!r.recovery_required && !c.unsafe) {
+			assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
+		} else assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));
+	}
+	{
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s) && Run(trial,h,s,c,r,false,false,true));
+		assert(c.int8 && !r.nonfinite && !r.recovery_required);
+		unsigned writes=trial.Mock::writes;
+		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c) && !PioneerRuntimeMatvecPrepare(trial,b,n,s,c,true,true));
+		assert(trial.Mock::writes==writes && Run(trial,h,s,c,r,false,false,true));
+		uint32_t input[512],output[32]={}; for (auto& value:input) value=0x40004000;
+		unsigned starts=trial.starts;
+		input[0]=0x40004080;
+		assert(!PioneerRuntimeMatvec(trial,b,n,h,s,c,73728,0,1024,32,input,output,r) && !r.started && trial.starts==starts);
+		input[0]=0x4000c081;
+		assert(!PioneerRuntimeMatvec(trial,b,n,h,s,c,73728,0,1024,32,input,output,r) && trial.starts==starts);
+		input[0]=0x40004000;
+		assert(!PioneerRuntimeMatvec(trial,b,n,h,s,c,73728,0,1024,32,input,output,r,true) && trial.starts==starts);
+		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
+	}
+	for (unsigned drop=0;drop<=runtimeWrites;drop++) {
+		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
+		assert(Prepared(trial,h,s)); if (drop<trial.Mock::writes+1026) continue;
+		trial.Mock::drop=drop; Run(trial,h,s,c,r,false,false,true);
 		if (!r.recovery_required && !c.unsafe) {
 			assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
 		} else assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));

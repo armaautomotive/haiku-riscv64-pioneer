@@ -143,6 +143,7 @@
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA (B_DEVICE_OP_CODES_END + 0x54be)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 (B_DEVICE_OP_CODES_END + 0x54bf)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE (B_DEVICE_OP_CODES_END + 0x54c0)
+#define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8 (B_DEVICE_OP_CODES_END + 0x54c1)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -281,8 +282,8 @@ struct tt_pioneer_resident_page {
 struct tt_pioneer_runtime_matvec {
 	uint32_t version,inputs,outputs,reserved;
 	uint64_t weight_offset;
-	uint32_t input[TT_RUNTIME_MATVEC_INPUTS_MAX/2]; // packed BF16/explicit FP16, never kernel floating-point
-	uint32_t output[TT_RUNTIME_MATVEC_OUTPUTS_MAX]; // FP32 bits, no reference substitution
+	uint32_t input[TT_RUNTIME_MATVEC_INPUTS_MAX/2]; // explicit BF16/FP16/integer-8 overlay, never kernel FP
+	uint32_t output[TT_RUNTIME_MATVEC_OUTPUTS_MAX]; // FP32 or explicit int32 bits, no reference substitution
 	tt_runtime_matvec_result result;
 };
 
