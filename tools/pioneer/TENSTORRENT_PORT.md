@@ -94,6 +94,51 @@ Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
 
+### October 15: full owned 4 KiB host-to-card read passes twice
+
+The same ownership/completion policy now has a second, separately selected
+fixed variant: read the complete owned 4 KiB non-cached host page into the
+sole stopped tile's final L1 page (`0x17f000`). Arbitrary addresses, lengths
+and core starts remain unavailable. The original L1 bytes are held in a
+private heap-owned CPU backup, not a 4 KiB kernel-stack array, and are never
+exposed to userspace. The 64-byte ioctl/result layout remains unchanged.
+
+The native 4 KiB variant passed twice: every one of 1,024 payload words
+matched, the full host page was unchanged, each run completed in two polls
+with response/flit/accepted/sent deltas **1/64/1/1**, all BME-off/L1/NIU/TLB/PCI
+rollback checks passed, both PCI commands ended `0000/0000`, and each owned
+host page was released without quarantine or cold recovery. The old
+64-byte utility/operation also passed against this driver before the larger
+test, preserving its exact **1/1/1/1** counter proof. Assistant team 2705
+remained ready/idle with the same model. Both variants pass ASan/UBSan fault
+injection, including every lost setup/rollback write, heap-backup refusal,
+bad payload/flits, maximum 48-bit source addresses, counter wrap and the
+unchanged no-retry/quarantine gates. The driver and all 27 tools build.
+
+Native artifacts/logs: `/boot/home/pioneer-host-read-page-20261015/`, with
+the previous verified driver saved as `tenstorrent_pci_probe.before`.
+SHA-256:
+
+- Driver: `a90e885122d195842e64058b635544b4a2b4127b9de8aa97e69160db565e1a27`
+- Host-read CLI: `f475ccd3927995b0217124ee960e40f0c66c177c97644896facef35c6a0f558c`
+
+This is still a reversible correctness test with substantial CPU setup,
+PIO verification and rollback, **not a bandwidth or Qwen speed benchmark**.
+It proves larger coherent owned-page reads, not persistent model storage.
+The next milestones are a similarly bounded card-to-owned-host transfer,
+bulk upload into owned device storage, persistent model weights, the Qwen
+graph/backend and same-model correctness/performance comparisons.
+
+Design constraint from the pinned official NoC `MemoryMap.md` and
+`Counters.md`: sending a read response directly to a different NIU would
+increment the requesting tile's outstanding counter but decrement the
+destination tile's counter. Do not use that as a shortcut from host memory
+to GDDR, or clear counters to conceal it. An intermediate L1 read followed
+by a normal acknowledged write retains correct ownership/completion
+accounting. Card-to-host writes will additionally need explicit host-visible
+payload/guard proof; a NoC write acknowledgement alone must not justify
+freeing a host page while a PCIe posted write could still be pending.
+
 ### October 15: first owned host-to-card read passes twice
 
 A new, separate read-only preflight first verified PCIe Device Status on

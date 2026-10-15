@@ -121,6 +121,8 @@
 #define TT_PCI_PROBE_PIONEER_HOST_DMA_AUDIT_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ad)
 #define TT_PCI_PROBE_PIONEER_HOST_READ (B_DEVICE_OP_CODES_END + 0x54ae)
 #define TT_PCI_PROBE_PIONEER_HOST_READ_SUPPORT (B_DEVICE_OP_CODES_END + 0x54af)
+#define TT_PCI_PROBE_PIONEER_HOST_READ_PAGE (B_DEVICE_OP_CODES_END + 0x54b0)
+#define TT_PCI_PROBE_PIONEER_HOST_READ_PAGE_SUPPORT (B_DEVICE_OP_CODES_END + 0x54b1)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };

@@ -6,9 +6,21 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeHostReadProbe.h"
 struct HostReadMock : Mock,PageMock {
 	uint32_t pciCommand[2]={0x402,0x402};
+	uint32_t backup[1024]={},destination[1024]={};
+	unsigned transferBytes=64;
 	unsigned bmeWrites=0;
 	bool quarantined=false,clearFails=false,hostCorrupt=false,lateMapChange=false,pciePending=false;
-	bool badHdma=false,badSii=false;
+	bool badHdma=false,badSii=false,backupFail=false;
+	HostReadMock() { for (unsigned w=0;w<1024;w++) destination[w]=100+w; }
+	uint32_t* HostReadBackup(unsigned words) { assert(words==transferBytes/4); return backupFail?nullptr:backup; }
+	uint32_t ResidentL1Read(unsigned w) {
+		assert(w<transferBytes/4); Window(0,0,1,2,false); return destination[w];
+	}
+	void ResidentL1Write(unsigned w,uint32_t value) {
+		assert(w<transferBytes/4); Window(0,0,1,2,false);
+		if (requests) { assert(done); postIssueWrites++; }
+		if (++Mock::writes!=Mock::drop && !(restoreFails && value==100+w)) destination[w]=value;
+	}
 	uint32_t HostPciRead(unsigned peer,uint16_t offset,uint8_t size) {
 		assert(peer<2);
 		if (offset==4) { assert(size==2); return pciCommand[peer]; }
@@ -45,15 +57,16 @@ struct HostReadMock : Mock,PageMock {
 		if (offset!=0x40) { Mock::ResidentNocWrite(offset,value); return; }
 		Window(1,0xffa00000,1,2,false);
 		assert(value==1 && !requests && config==0x16005 && pciCommand[0]==0x406 && pciCommand[1]==0x406);
-		assert(command[0]==uint32_t(physical+128) && command[1]==uint32_t((physical+128)>>32));
-		const uint32_t expected[]={19|(24<<6),0x17ffc0,0,1|(2<<6),0,0,64,0};
+		unsigned sourceOffset=transferBytes==64?128:0;
+		assert(command[0]==uint32_t(physical+sourceOffset) && command[1]==uint32_t((physical+sourceOffset)>>32));
+		const uint32_t expected[]={19|(24<<6),0x180000-transferBytes,0,1|(2<<6),0,0,transferBytes,0};
 		assert(!memcmp(command+2,expected,sizeof(expected)) && !cached && PageMock::allocated);
 		if (++Mock::writes==Mock::drop) return;
 		requests++;
 		if (acceptedOnly) { counters[2]++; counters[3]++; }
 		if (!timeout && !acceptedOnly) {
-			done=true; counters[0]++; counters[1]+=badFlits?2:1; counters[2]++; counters[3]++;
-			for (unsigned w=0;w<16;w++) l1[w]=page[32+w]^(badData?1:0);
+			done=true; counters[0]++; counters[1]+=transferBytes/64+(badFlits?1:0); counters[2]++; counters[3]++;
+			for (unsigned w=0;w<transferBytes/4;w++) destination[w]=page[sourceOffset/4+w]^(badData?1:0);
 			if (hostCorrupt) page[0]^=1;
 		}
 	}
@@ -67,9 +80,11 @@ struct HostReadMock : Mock,PageMock {
 	}
 	void Safe() {
 		Mock::Restored(); assert(pciCommand[0]==0x402 && pciCommand[1]==0x402);
+		for (unsigned w=0;w<1024;w++) assert(destination[w]==100+w);
 		assert(!quarantined && !PageMock::allocated && releases==1);
 	}
 };
+#ifndef PIONEER_HOST_READ_MOCK_ONLY
 int main()
 {
 	HostReadMock io; auto b=io.Baseline(); auto n=io.Compute(); auto p=io.Path(); auto a=io.Audit(); tt_host_read_result r;
@@ -108,3 +123,4 @@ int main()
 	io={}; b=io.Baseline(); a.recovery_required=1;
 	assert(!BlackholeHostReadProbe(io,b,n,p,a,r) && !io.Mock::writes && !io.PageMock::allocated);
 }
+#endif

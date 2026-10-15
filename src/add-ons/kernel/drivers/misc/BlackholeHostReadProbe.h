@@ -7,7 +7,7 @@
 enum {
 	TT_HOST_READ_REFUSED=0,TT_HOST_READ_PASSED=1,TT_HOST_READ_PAGE_FAILED=2,
 	TT_HOST_READ_CONFIG_FAILED=3,TT_HOST_READ_CHANGED=4,TT_HOST_READ_TIMEOUT=5,
-	TT_HOST_READ_MISMATCH=6,TT_HOST_READ_RESTORE_FAILED=7
+	TT_HOST_READ_MISMATCH=6,TT_HOST_READ_RESTORE_FAILED=7,TT_HOST_READ_BACKUP_FAILED=8
 };
 struct tt_host_read_result {
 	uint32_t version,state,phase,issued,completed,polls,mismatches,host_mismatches;
@@ -32,14 +32,17 @@ bool BlackholeHostReadMapStable(IO& io,const tt_host_page_result& page)
 	return io.HostPageMap(physical,bytes)==0 && physical==page.physical && bytes==page.bytes
 		&& PioneerHostPageAddress(physical,bytes);
 }
-// One fixed NoC *read*: private host-page offset 128 -> sole stopped tile's
-// last 64 L1 bytes. No host writes, firmware commands, DMA-engine doorbells,
+// One fixed NoC *read*: either private host-page offset 128 -> final 64 L1
+// bytes, or the complete owned 4KiB page -> final 4KiB L1 page. No host writes,
+// firmware commands, DMA-engine doorbells,
 // user addresses, arbitrary lengths, core starts or persistent allocation.
-template<class IO>
+template<class IO,unsigned Bytes=64>
 bool BlackholeHostReadProbe(IO& io,tt_dram_samples_result& baseline,
 	const tt_compute_noc_result& n,const tt_host_path_result& path,
 	const tt_host_dma_audit_result& audit,tt_host_read_result& r)
 {
+	static_assert(Bytes==64 || Bytes==4096,"Only two fixed private host-read policies exist");
+	const unsigned words=Bytes/4,sourceWord=Bytes==64?32:0;
 	r={}; r.version=1; r.bme_restored=r.l1_restored=r.niu_restored=r.tlb_restored=1;
 	if (audit.version!=1 || audit.state!=TT_HOST_DMA_AUDIT_PASSED || !audit.tlb_restored || audit.recovery_required
 		|| path.version!=1 || path.state!=TT_HOST_PATH_PASSED || !path.tlb_restored || path.recovery_required
@@ -47,10 +50,15 @@ bool BlackholeHostReadProbe(IO& io,tt_dram_samples_result& baseline,
 		|| !baseline.data_restored || !baseline.tlb_restored || baseline.recovery_required
 		|| n.version!=1 || n.state!=TT_COMPUTE_NOC_PASSED || !n.tlb_restored || n.recovery_required
 		|| !BlackholeHostSourceRoute(n.source[0]) || !BlackholeDramBuildRoutes(baseline)) return false;
+	// Keep the larger original L1 snapshot off the kernel stack. IO owns
+	// this private CPU-only backup, including refusal/uncertainty cleanup.
+	r.state=TT_HOST_READ_BACKUP_FAILED;
+	uint32_t* saved=io.HostReadBackup(words);
+	if (saved==0) return false;
 	r.state=TT_HOST_READ_PAGE_FAILED;
 	bool prepared=PioneerPrepareHostPage(io,r.page);
 	bool savedTlb=false,modified=false,configured=false,bmeTouched=false,canRestore=true;
-	uint32_t saved[16]={},config=n.source[0][0];
+	uint32_t config=n.source[0][0];
 	do {
 		if (!prepared) break;
 		r.state=TT_HOST_READ_CONFIG_FAILED; r.phase=1;
@@ -80,17 +88,17 @@ bool BlackholeHostReadProbe(IO& io,tt_dram_samples_result& baseline,
 		for (unsigned w=0;w<2;w++) stable &= io.HostInboundRead(w)==path.inbound[0][w];
 		if (!stable || !BlackholeHostReadMapStable(io,r.page)) { r.state=TT_HOST_READ_CHANGED; break; }
 		if (!BlackholeDramConfigure(io,0,0,1,2,false)) break;
-		for (unsigned w=0;w<16;w++) saved[w]=io.ResidentL1Read(w);
+		for (unsigned w=0;w<words;w++) saved[w]=io.ResidentL1Read(w);
 		modified=true; r.l1_restored=0; r.phase=3;
-		for (unsigned w=0;w<16;w++) io.ResidentL1Write(w,~PioneerHostPagePattern(1,32+w));
+		for (unsigned w=0;w<words;w++) io.ResidentL1Write(w,~PioneerHostPagePattern(1,sourceWord+w));
 		bool poisoned=true;
-		for (unsigned w=0;w<16;w++) poisoned &= io.ResidentL1Read(w)==~PioneerHostPagePattern(1,32+w);
+		for (unsigned w=0;w<words;w++) poisoned &= io.ResidentL1Read(w)==~PioneerHostPagePattern(1,sourceWord+w);
 		if (!poisoned) break;
 		configured=true; r.niu_restored=0;
 		io.ResidentNocWrite(0x100,config|0x10000);
 		if (!BlackholeResidentSourceStable(io,n,config|0x10000)) break;
-		uint64_t source=r.page.physical+128;
-		const uint32_t command[]={uint32_t(source),uint32_t(source>>32),19|(24<<6),0x17ffc0,0,1|(2<<6),0,0,64,0};
+		uint64_t source=r.page.physical+sourceWord*4;
+		const uint32_t command[]={uint32_t(source),uint32_t(source>>32),19|(24<<6),0x180000-Bytes,0,1|(2<<6),0,0,Bytes,0};
 		for (unsigned w=0;w<10;w++) io.ResidentNocWrite(w*4,command[w]);
 		bool ready=BlackholeResidentIdle(io);
 		for (unsigned w=0;w<10;w++) ready &= io.ResidentNocRead(w*4)==command[w];
@@ -116,7 +124,7 @@ bool BlackholeHostReadProbe(IO& io,tt_dram_samples_result& baseline,
 			r.polls++;
 			uint32_t pending=io.ResidentNocRead(0x40); // ordered BEFORE counters
 			for (unsigned w=0;w<4;w++) r.after[w]=io.ResidentNocRead(0x208+w*4);
-			if (!pending && uint32_t(r.after[0]-r.before[0])==1 && uint32_t(r.after[1]-r.before[1])==1
+			if (!pending && uint32_t(r.after[0]-r.before[0])==1 && uint32_t(r.after[1]-r.before[1])==Bytes/64
 				&& uint32_t(r.after[2]-r.before[2])==1 && uint32_t(r.after[3]-r.before[3])==1
 				&& BlackholeResidentIdle(io)) { r.completed=1; break; }
 			io.Pause();
@@ -127,7 +135,7 @@ bool BlackholeHostReadProbe(IO& io,tt_dram_samples_result& baseline,
 			|| !BlackholeHostReadPciQuiet(io,0x406) || !BlackholeHostReadMapStable(io,r.page)) {
 			r.state=TT_HOST_READ_CHANGED; canRestore=false; break;
 		}
-		for (unsigned w=0;w<16;w++) r.mismatches+=io.ResidentL1Read(w)!=PioneerHostPagePattern(1,32+w);
+		for (unsigned w=0;w<words;w++) r.mismatches+=io.ResidentL1Read(w)!=PioneerHostPagePattern(1,sourceWord+w);
 		for (unsigned w=0;w<TT_HOST_PAGE_WORDS;w++) r.host_mismatches+=io.HostPageRead(w)!=PioneerHostPagePattern(1,w);
 		r.state=r.mismatches || r.host_mismatches?TT_HOST_READ_MISMATCH:TT_HOST_READ_PASSED;
 	} while (false);
@@ -153,9 +161,9 @@ bool BlackholeHostReadProbe(IO& io,tt_dram_samples_result& baseline,
 			canRestore=r.niu_restored!=0;
 		}
 		if (canRestore) for (unsigned attempt=0;attempt<2 && !r.l1_restored;attempt++) {
-			for (unsigned w=0;w<16;w++) io.ResidentL1Write(w,saved[w]);
+			for (unsigned w=0;w<words;w++) io.ResidentL1Write(w,saved[w]);
 			r.l1_restored=io.ResetRead()==0x47800;
-			for (unsigned w=0;w<16;w++) r.l1_restored &= io.ResidentL1Read(w)==saved[w];
+			for (unsigned w=0;w<words;w++) r.l1_restored &= io.ResidentL1Read(w)==saved[w];
 		}
 	}
 	if (savedTlb) for (unsigned attempt=0;attempt<2 && !r.tlb_restored;attempt++) {
