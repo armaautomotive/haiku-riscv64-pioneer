@@ -3109,3 +3109,17 @@ zero, firmware 18.5 unchanged. Haiku remained reachable with 64 CPUs and
 This is 2,240 bytes of high-address sample coverage, not full-capacity RAM
 testing, Tensix matrix compute, DMA or accelerator LLM inference. No boot
 changes, firmware changes, card swaps or recovery were needed.
+
+## October 14: fixed TRISC0 matrix trial stopped safely but did not complete
+
+The original fixed RV32I image and guarded single-tile driver passed offline
+functional/MMIO-bound checks and policy fault tests. At about 21:58 local,
+the first hardware attempt started TRISC0 but timed out before fixture 0
+completed: phase1/fixtures0/marker0 after 2,000 polls. The guard stopped and
+reset the tile, but correctly did not restore L1 after uncertain execution;
+recovery was latched. TLB restore1, outer PCI state5/restored0, commands0/0.
+This is NOT a passing matrix test or accelerator inference. Haiku remained
+reachable with 64 CPUs/full RAM. Requested sync/shutdown over pinned SSH;
+no further card operation or module reload is permitted until cold recovery.
+Module 693b2a61... and CLI 1898e050... are retained with the GDDR module backup
+in pioneer-p100a-20261014/matmul-1. Boot/kernel/firmware defaults unchanged.

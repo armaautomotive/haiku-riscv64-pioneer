@@ -13,6 +13,7 @@
 #include "BlackholeBriscSmokeProbe.h"
 #include "BlackholeDramRouteProbe.h"
 #include "BlackholeDramSamplesProbe.h"
+#include "BlackholeTensixMatmulProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -29,6 +30,12 @@
 #define TT_PCI_PROBE_PIONEER_DRAM_ALL_ROUTES (B_DEVICE_OP_CODES_END + 0x545c)
 #define TT_PCI_PROBE_PIONEER_DRAM_SAMPLES (B_DEVICE_OP_CODES_END + 0x545d)
 #define TT_PCI_PROBE_PIONEER_DRAM_SAMPLES_SUPPORT (B_DEVICE_OP_CODES_END + 0x545e)
+#define TT_PCI_PROBE_PIONEER_TENSIX_MATMUL (B_DEVICE_OP_CODES_END + 0x545f)
+#define TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT (B_DEVICE_OP_CODES_END + 0x5460)
+
+struct tt_matmul_support {
+	uint32_t version, code_words, footprint_words, entry, code_base, park_pc, results_base, reset_mask, running_mask;
+};
 
 struct tt_dram_samples_support {
 	uint32_t version, banks, regions, words, enabled_columns, enabled_gddr;
@@ -75,6 +82,11 @@ struct tt_pioneer_dram_route_result {
 struct tt_pioneer_dram_samples_result {
 	tt_pioneer_tensix_result control;
 	tt_dram_samples_result dram;
+};
+
+struct tt_pioneer_matmul_result {
+	tt_pioneer_dram_samples_result baseline;
+	tt_tensix_matmul_result math;
 };
 
 #endif

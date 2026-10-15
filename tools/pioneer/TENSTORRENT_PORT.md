@@ -681,6 +681,56 @@ samples on all seven GDDR banks. It does NOT test every byte of nominal
 operations or run an LLM on the accelerator. Kernel and boot defaults and
 card firmware are unchanged; no SD change or reboot was needed.
 
+### October 14: first fixed Tensix matrix trial timed out; cold recovery
+
+Added an original 572-byte RV32I TRISC0 fixture and fixed optional execution
+transaction. It uses the sole idle tile `(1,2)`, a reset jump at `6000`, code
+at `70000`, two 512-byte result arrays at `17f800`, and three status words at
+`17ffc0`. The 403-word L1 footprint is saved kernel-locally. The scalar RISC
+initializes fixed inputs but does no matrix arithmetic: actual `MOVD2A/B`,
+supported `UNPACR_NOP` handoffs and `MVMUL` instructions are queued. Two
+8x16-by-16x16 constant fixtures should yield 128 FP32 values of 16.0 and
+128 of 96.0. Manual TTSync waits for instruction completion before reading
+the destination. No unsupported SETDVALID, NoC command, DMA or ARC message.
+
+This explicitly reinitializes one unused tile's coprocessor context using
+documented soft reset; it does not preserve prior Src/Dst or RISC local RAM.
+It first proves all 120 enabled compute tiles held, checks source translation
+and entry/FIFO/sync controls, bounds completion polling, and requires the
+drained completion marker, two park-PC samples, known stop/reset state and
+L1 restoration. Uncertain execution leaves image bytes intact and latches
+cold recovery; cleanup never rewrites potentially live code.
+
+Offline assembly/link/bounds and independent RV32I/MMIO decoding tests passed
+under ASan/UBSan: 5,292 scalar steps, 11 manual drains, two reference matrix
+results; disabling modeled matrix execution fails the expected-output check.
+This is a software functional model, not a model of hardware timing. Policy
+tests cover individual image/TLB/reset-write drops, timeout, incorrect result,
+PC, source changes and failed restoration. The RISC-V driver/tools build
+passed; all 11 prior CLI hashes remain unchanged. The kernel driver stack
+frames inspected were bounded (ioctl 1,808 bytes; compute policy 1,760 bytes).
+
+At 21:58 local October 14 (04:58 UTC October 15), the first live matrix trial
+TIMED OUT after 2,000 polls: started/completed/stopped 1/0/1, phase 1,
+fixtures 0, marker 0. Reset readbacks were `47800 -> 87ffff -> 46800 ->
+47800`, but completion was not confirmed; no matrix result is claimed.
+The L1 image was deliberately not restored. TLB restored 1, outer PCI state
+5/restored 0, commands 0000/0000 and cold-recovery flag 1. No further card
+operation or driver reload was attempted after the latch. Haiku remained
+responsive with 64 CPUs and max memory 137,034,936,320 bytes. Requested
+ordinary `sync; shutdown -s` over pinned SSH, then a relay cold cycle for
+recovery. A shutdown request is not proof of a clean filesystem shutdown.
+
+First-trial installed driver SHA:
+`693b2a61d7772682ed12bc7983d33c78a0924572a83272fd8cd209768fc29b66`.
+CLI SHA: `1898e05062a97bf91ede1d2968b272732091bb9071c865e66e7c2434f5b34fcf`.
+Artifacts and the passing GDDR module backup are retained in
+`/boot/home/pioneer-p100a-20261014/matmul-1/`. Metadata-only
+`--check-fixed-matmul-support` identifies policy v1. Execution is only through
+explicit `--run-fixed-tensix-matmul-and-reset`. The ordinary boot and firmware
+are unchanged. Next: record timeout PC snapshots/checkpoints, locate the
+Tensix startup/completion stall, and cold-recover before another attempt.
+
 Download pinned official sources with:
 
 ```sh
