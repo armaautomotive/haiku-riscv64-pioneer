@@ -10,6 +10,7 @@ static const uint32 kCancel = 'acan';
 static const uint32 kServiceStatus = 'asta';
 static const uint32 kConfigureThreads = 'athr';
 static const uint32 kSelectModel = 'amdl';
+static const uint32 kConfigureHardware = 'ahdw';
 static const uint32 kUpdate = 'updt';
 static const uint32 kDone = 'done';
 static const uint32 kToggle = 'atog';

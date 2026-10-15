@@ -55,6 +55,7 @@ void ToolSession::SendModel()
 	request.AddMessenger("target", BMessenger(this));
 	request.AddString("prompt", fPrompt.c_str());
 	if (!fModelPath.empty()) request.AddString("model_path", fModelPath.c_str());
+	if (!fBackend.empty()) request.AddString("backend_id", fBackend.c_str());
 	if (fModel.SendMessage(&request, this, 100000) != B_OK) Fail("Model service is unavailable.");
 }
 
@@ -75,6 +76,7 @@ void ToolSession::MessageReceived(BMessage* message)
 		fPrompt = prompt; fVisible.clear(); fToolCount = 0;
 		const char* modelPath = ""; message->FindString("model_path", &modelPath);
 		fModelPath = modelPath;
+		const char* backend = ""; message->FindString("backend_id", &backend); fBackend = backend;
 		if (fWatch->InitCheck() != B_OK) {
 			Fail("Cannot start tool-session watchdog. No request executed."); return;
 		}

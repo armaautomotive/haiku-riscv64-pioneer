@@ -49,6 +49,7 @@ public:
 			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL),
 			fLoading(true), fPersistModel(false)
 	{
+		fHardware = LoadAssistantHardware();
 		const char* overridePath = getenv("LLAMA_MODEL");
 		fPendingPath = overridePath != NULL ? BString(overridePath) : LoadAssistantModel();
 		if (fPendingPath.IsEmpty()) {
@@ -56,6 +57,7 @@ public:
 			if (access(fPendingPath.String(), R_OK) != 0)
 				fPendingPath = "/Haiku1/home/models/Qwen3-0.6B-Q8_0.gguf";
 		}
+		fStartupPath = fPendingPath;
 	}
 
 	virtual void ReadyToRun()
@@ -89,6 +91,40 @@ public:
 
 	virtual void MessageReceived(BMessage* message)
 	{
+		if (message->what == kConfigureHardware) {
+			BAutolock lock(&fLock);
+			const char* id = NULL;
+			int32 threads = fThreads.load();
+			int32 requestedThreads;
+			status_t threadStatus = message->FindInt32("cpu_threads", &requestedThreads);
+			if (threadStatus == B_OK) threads = requestedThreads;
+			status_t status = B_BAD_VALUE;
+			BString explanation("Invalid hardware selection or CPU-thread count.");
+			if (message->FindString("backend_id", &id) == B_OK && AssistantHardwareIndex(id) >= 0) {
+				if (!AssistantHardwareCanChat(id)) {
+					status = B_NOT_SUPPORTED;
+					explanation = "P100A chat backend is not implemented. No CPU fallback was used.";
+				} else if (fLoading || fRequest != NULL) {
+					status = B_BUSY; explanation = "Finish/stop the current reply or wait for model loading, then try again.";
+				} else if (threadStatus == B_OK || threadStatus == B_NAME_NOT_FOUND) {
+					status = SaveAssistantHardware(id, threads);
+					if (status == B_OK) {
+						bool recover = !AssistantHardwareCanChat(fHardware.String());
+						fHardware = id; fThreads.store(threads);
+						if (recover) {
+							fPendingPath = fStartupPath; fLoading = true; fModelError = "";
+							release_sem(fWake);
+						}
+						explanation = "CPU selected and saved. CPU threads apply to the next request.";
+					} else explanation = "Could not save hardware settings. Previous selection kept.";
+				}
+			}
+			BMessage reply(kConfigureHardware);
+			reply.AddInt32("status", status); reply.AddString("explanation", explanation);
+			reply.AddString("backend_id", fHardware); reply.AddInt32("cpu_threads", fThreads.load());
+			message->SendReply(&reply);
+			return;
+		}
 		if (message->what == kConfigureThreads) {
 			BAutolock lock(&fLock);
 			int32 threads;
@@ -110,7 +146,8 @@ public:
 			status_t status = B_BAD_VALUE;
 			if (message->FindInt32("model_index", &index) == B_OK && index >= 0
 				&& (size_t)index < kAssistantModelCount && kAssistantModels[index].compatible) {
-				if (fLoading || fRequest != NULL) status = B_BUSY;
+				if (!AssistantHardwareCanChat(fHardware.String())) status = B_NOT_SUPPORTED;
+				else if (fLoading || fRequest != NULL) status = B_BUSY;
 				else if (!AssistantModelPresent(index)) status = B_ENTRY_NOT_FOUND;
 				else {
 					fPendingPath = AssistantModelPath(index);
@@ -131,7 +168,18 @@ public:
 			reply.AddBool("loading", fLoading);
 			reply.AddString("model_path", fModelPath);
 			reply.AddString("model_error", fModelError);
-			reply.AddString("backend", "CPU (llama.cpp); P100A chat backend not available yet");
+			reply.AddString("backend", AssistantHardwareCanChat(fHardware.String())
+				? "CPU (llama.cpp)" : "Unavailable hardware; no fallback");
+			reply.AddString("backend_id", fHardware);
+			reply.AddString("active_backend_id", fReady.load() ? fHardware.String() : "");
+			for (size_t i = 0; i < kAssistantHardwareCount; i++) {
+				BMessage hardware;
+				hardware.AddString("id", kAssistantHardware[i].id);
+				hardware.AddString("name", kAssistantHardware[i].name);
+				hardware.AddBool("available", AssistantHardwareCanChat(kAssistantHardware[i].id));
+				hardware.AddString("description", kAssistantHardware[i].description);
+				reply.AddMessage("hardware", &hardware);
+			}
 			reply.AddInt32("model_loads", fLoads.load());
 			reply.AddInt32("cpu_threads", fThreads.load());
 			reply.AddInt32("active_threads", fActiveThreads.load());
@@ -165,6 +213,12 @@ public:
 		request->prompt = prompt;
 		BAutolock lock(&fLock);
 		const char* expected;
+		status_t backendStatus = message->FindString("backend_id", &expected);
+		if (!AssistantHardwareCanChat(fHardware.String())
+			|| (backendStatus != B_NAME_NOT_FOUND && (backendStatus != B_OK || fHardware != expected))) {
+			Reply(request, kDone, "", "Requested hardware is unavailable or changed. No CPU fallback was used.");
+			delete request; return;
+		}
 		if (message->FindString("model_path", &expected) == B_OK && fModelPath != expected) {
 			Reply(request, kDone, "", "Model changed. Start a new chat and try again.");
 			delete request; return;
@@ -239,6 +293,14 @@ private:
 
 	void LoadModel(const BString& path)
 	{
+		{
+			BAutolock lock(&fLock);
+			if (!AssistantHardwareCanChat(fHardware.String())) {
+				fLoading = false;
+				fModelError = "Saved hardware backend is unavailable. Open Hardware and explicitly choose CPU.";
+				return;
+			}
+		}
 		BString error;
 		int index = AssistantModelIndex(path.String());
 		status_t status = B_NOT_SUPPORTED;
@@ -361,6 +423,7 @@ private:
 	llama_context* fContext;
 	bool fLoading, fPersistModel;
 	BString fPendingPath, fModelPath, fModelError;
+	BString fHardware, fStartupPath;
 };
 
 int main()

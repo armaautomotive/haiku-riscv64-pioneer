@@ -1,6 +1,7 @@
 /* Copyright 2026. Distributed under the terms of the MIT License. */
 #ifndef HAIKU_ASSISTANT_SETTINGS_H
 #define HAIKU_ASSISTANT_SETTINGS_H
+#include "Hardware.h"
 #include <File.h>
 #include <FindDirectory.h>
 #include <Message.h>
@@ -79,5 +80,37 @@ static inline status_t SaveAssistantModel(const char* path)
 	settings.RemoveName("model_path");
 	settings.AddString("model_path", path);
 	return SaveAssistantSettings(settings);
+}
+static inline BString AssistantHardwareSetting(const BMessage& settings)
+{
+	type_code type; int32 count;
+	if (settings.GetInfo("backend_id", &type, &count) == B_NAME_NOT_FOUND) return BString("cpu");
+	const char* id;
+	// Preserve an unsupported saved ID so the service fails closed instead of
+	// silently falling back to CPU. The Hardware dialog can recover to CPU.
+	return settings.FindString("backend_id", &id) == B_OK ? BString(id) : BString("invalid");
+}
+static inline BString LoadAssistantHardware()
+{
+	BMessage settings;
+	LoadAssistantSettings(settings);
+	return AssistantHardwareSetting(settings);
+}
+static inline status_t UpdateAssistantHardwareSettings(BMessage& settings,
+	const char* id, int32 threads)
+{
+	if (AssistantHardwareIndex(id) < 0) return B_BAD_VALUE;
+	if (!AssistantHardwareCanChat(id)) return B_NOT_SUPPORTED;
+	if (threads < 1 || threads > AssistantMaxThreads()) return B_BAD_VALUE;
+	settings.RemoveName("backend_id"); settings.AddString("backend_id", id);
+	settings.RemoveName("cpu_threads"); settings.AddInt32("cpu_threads", threads);
+	return B_OK;
+}
+static inline status_t SaveAssistantHardware(const char* id, int32 threads)
+{
+	BMessage settings;
+	LoadAssistantSettings(settings);
+	status_t status = UpdateAssistantHardwareSettings(settings, id, threads);
+	return status == B_OK ? SaveAssistantSettings(settings) : status;
 }
 #endif

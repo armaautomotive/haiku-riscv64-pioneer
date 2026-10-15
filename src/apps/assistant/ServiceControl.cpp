@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	BApplication app("application/x-vnd.Haiku-AssistantControl");
 	BMessenger service(kServiceSignature);
 	if (argc < 2) {
-		fprintf(stderr, "Usage: assistantctl status | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
+		fprintf(stderr, "Usage: assistantctl status | hardware | hardware cpu|p100a [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
 		return 2;
 	}
 	if (strcmp(argv[1], "models") == 0) {
@@ -70,6 +70,38 @@ int main(int argc, char** argv)
 	if (strcmp(argv[1], "toggle") == 0)
 		return BMessenger(kAssistantSignature).SendMessage(kToggle) == B_OK ? 0 : 1;
 	if (!service.IsValid()) { fprintf(stderr, "Service is not running.\n"); return 1; }
+	if (strcmp(argv[1], "hardware") == 0) {
+		BMessage query(kServiceStatus), state;
+		if (service.SendMessage(&query, &state, 1000000, 1000000) != B_OK) return 1;
+		if (argc == 2) {
+			const char* selected = "unknown";
+			state.FindString("backend_id", &selected); printf("selected=%s\n", selected);
+			BMessage entry;
+			for (int32 i = 0; state.FindMessage("hardware", i, &entry) == B_OK; i++) {
+				const char* id = ""; const char* name = ""; const char* description = ""; bool available = false;
+				entry.FindString("id", &id); entry.FindString("name", &name);
+				entry.FindString("description", &description); entry.FindBool("available", &available);
+				printf("%s: %s [%s]\n%s\n", id, name, available ? "available" : "unavailable", description);
+			}
+			return state.HasMessage("hardware") ? 0 : 1;
+		}
+		if (argc != 3 && argc != 4) return 2;
+		int32 threads;
+		if (state.FindInt32("cpu_threads", &threads) != B_OK) return 1;
+		if (argc == 4) {
+			char* end; long value = strtol(argv[3], &end, 10);
+			if (end == argv[3] || *end != '\0' || value < 1 || value > 4096) return 2;
+			threads = value;
+		}
+		BMessage request(kConfigureHardware), reply;
+		request.AddString("backend_id", argv[2]); request.AddInt32("cpu_threads", threads);
+		status_t result;
+		if (service.SendMessage(&request, &reply, 1000000, 2000000) != B_OK
+			|| reply.FindInt32("status", &result) != B_OK) return 1;
+		const char* explanation = ""; reply.FindString("explanation", &explanation);
+		printf("status=%ld %s\n", (long)result, explanation);
+		return result == B_OK ? 0 : 1;
+	}
 	if (strcmp(argv[1], "stop") == 0)
 		return service.SendMessage(B_QUIT_REQUESTED) == B_OK ? 0 : 1;
 	if (strcmp(argv[1], "threads") == 0 && argc == 3) {
@@ -105,6 +137,9 @@ int main(int argc, char** argv)
 		reply.FindBool("loading", &loading); reply.FindString("model_path", &path);
 		reply.FindString("model_error", &error); reply.FindString("backend", &backend);
 		printf("loading=%d model=%s\nbackend=%s\nmodel_error=%s\n", loading, path, backend, error);
+		const char* selected = ""; const char* activeBackend = "";
+		reply.FindString("backend_id", &selected); reply.FindString("active_backend_id", &activeBackend);
+		printf("selected_backend=%s active_backend=%s\n", selected, activeBackend);
 		return 0;
 	}
 	bool cancel = strcmp(argv[1], "cancel-test") == 0;

@@ -11,6 +11,9 @@ desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 - **Models…** opens the native model manager: choose an installed model or
   install another from the curated Hugging Face catalog, with progress and
   cancellation. Model files stay in `~/models` and are shared across chats.
+- **Hardware…** opens the native hardware chooser, including availability,
+  explanations and CPU-thread controls. `HaikuAssistantHardware` opens the
+  same dialog independently without closing an existing conversation window.
 - `HaikuAssistantService`: background BApplication. Loads Qwen once and reuses
   its model and context across requests. All llama calls run on a dedicated
   worker. Haiku messages carry bounded requests and streaming responses.
@@ -29,6 +32,47 @@ The GUI starts the service on first launch, so loading occurs before the first
 request where possible. This is **not yet an automatic OS-boot service**. A
 reboot or `assistantctl stop` releases the model. The next GUI launch/Send can
 restart it. A failed load can be retried from Models without restarting.
+
+## Hardware selection
+
+Open **Hardware…** in Assistant, launch `HaikuAssistant --hardware`, or run
+`/boot/home/config/non-packaged/apps/HaikuAssistantHardware` separately.
+The dialog shows the selected and actually running backend, logical CPU
+count, and an availability list supplied by the resident service.
+
+- **CPU (llama.cpp)** is available for the currently supported Qwen3 models.
+  Choose it, set a CPU-thread count, and click **Use selected hardware**.
+  The choice and thread count are saved atomically alongside the selected
+  model. CPU-to-CPU settings changes do not unload/reload the resident model.
+- **Tenstorrent P100A** is listed but unavailable for general chat. Selecting
+  the row explains the missing backend and disables Apply. The TinyStories
+  hybrid diagnostic remains separate from Assistant and is not offered as a
+  Qwen execution backend. This is execution capability, not PCI card detection.
+
+Changing hardware is rejected during model loading or an active request.
+Unknown IDs, unsupported backends, malformed settings and invalid thread
+counts are rejected by the service too, not just the UI. Requests from the
+updated GUI/tool-session bridge pin both model path and backend ID. Asking
+for P100A will never silently run the request on CPU. An unavailable or corrupt
+saved backend stops startup model loading; explicitly choosing CPU in the
+dialog can recover it. Missing backend settings from older installs default
+to CPU. There is no Auto mode or automatic CPU fallback.
+
+Hardware selection does not load firmware, touch PCI mappings, probe the card,
+change power, download models or enable a new accelerator backend. Future
+backends need their own executor and per-model compatibility checks before
+they can be enabled. The dialog does not imply that full P100A chat works yet.
+
+Diagnostics: `assistantctl hardware` lists capabilities; `assistantctl hardware
+cpu [THREADS]` saves a valid CPU choice, while `assistantctl hardware p100a`
+returns an explicit unsupported-backend error. `assistantctl status` reports
+both selected and active backend IDs. The native `HaikuAssistantHardwareTest`
+checks in-memory settings/policy without writes; `--loading-test` checks the
+busy gate during an actual model load, and `--service-tests` validates the
+resident service, writes only the current CPU/thread selection, and tests
+that a P100A-tagged request is rejected without inference.
+Service-dependent test modes return skip code 77 if their ready/loading
+preconditions are no longer true; they do not stop the service to satisfy them.
 
 ## Model installation and selection
 
@@ -129,8 +173,9 @@ ASSISTANT_LLAMA_LIB_DIR=/private/tmp/pioneer-assistant-libs \
 The library directory must contain the matching **Haiku RISC-V** libraries:
 `libllama.so.0.2.0`, `libggml.so.0`, `libggml-base.so.0`, `libggml-cpu.so.0`.
 The script emits the GUI, `HaikuAssistantService`, `HaikuAssistantShortcut`,
-`HaikuAssistantControl`, and `HaikuAssistantModelStoreTest`, plus tools-bridge
-binaries/tests. Without the library variable it skips the service.
+`HaikuAssistantControl`, `HaikuAssistantHardware`, `HaikuAssistantHardwareTest`,
+and `HaikuAssistantModelStoreTest`, plus tools-bridge binaries/tests. Without
+the library variable it skips the service.
 It attaches application resources and does not deploy or write a disk image.
 
 Install, preserving an old version before replacing it:
@@ -141,6 +186,7 @@ Install, preserving an old version before replacing it:
 | HaikuAssistantService | `servers/HaikuAssistantService` |
 | HaikuAssistantShortcut | `add-ons/input_server/filters/HaikuAssistantShortcut` |
 | HaikuAssistantControl | `bin/assistantctl` |
+| HaikuAssistantHardware | `apps/HaikuAssistantHardware` |
 
 All executables must have executable permissions. Input-server add-on
 directories are monitored; no input-server restart is needed. To disable the
@@ -160,6 +206,33 @@ when present. It does not download files or alter installed models/settings.
 The optional `--cancel-download` test starts an HTTPS install of catalog entry
 2 on a regular Haiku worker and cancels it after one second; it requires that
 entry not already be installed. Assertions stay enabled in release test builds.
+
+## Hardware-dialog verification on Pioneer, 2026-10-15
+
+- Standalone cross-builds passed with warnings as errors; standard Jam builds
+  passed for Assistant, control utility, hardware app and hardware tests.
+- Native policy tests passed for backend IDs, fail-closed unsupported/corrupt
+  saved IDs, CPU-thread bounds, and preservation of unrelated/model settings.
+- The service rejected hardware changes during loading. Ready/idle tests
+  passed for unsupported/unknown backend selection, invalid or malformed
+  thread counts, and P100A-tagged or wrongly typed backend requests. No
+  fallback inference was performed. CPU selection preserved the resident
+  model (`model_loads=1`), its path and 32 threads; saving threads preserved
+  the explicit saved CPU backend field.
+- Native UI tests confirmed P100A disables Apply and CPU-thread controls,
+  while CPU enables them. Applying CPU from the actual dialog kept the model
+  resident. A window-only screenshot confirmed the full scrollable P100A
+  explanation. The service generated `READY` on Qwen3-1.7B after the changes.
+- The hardware dialog was installed and opened independently; the existing
+  conversation window was left open. The main app was replaced atomically,
+  so its Hardware button appears on its next launch. No chat contents were
+  inspected. The updated GUI ignores transient empty model paths during
+  service loading/restart rather than treating them as model changes.
+- Previous GUI/service/control binaries have `.before-hardware-20261015`
+  backups; settings were backed up under
+  `/boot/home/pioneer-assistant-hardware-20261015/`. The same Qwen3-1.7B model
+  and 32 CPU threads remain selected. No PCI, firmware, power, bootloader,
+  kernel, model files or runtime libraries were modified.
 
 ## Model-manager verification on Pioneer, 2026-10-15
 

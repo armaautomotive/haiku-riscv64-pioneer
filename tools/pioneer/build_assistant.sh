@@ -26,6 +26,7 @@ done
 	-I"$assistant_root/headers/private/libroot" \
 	"$assistant_root/src/apps/assistant/Assistant.cpp" \
 	"$assistant_root/src/apps/assistant/ModelManager.cpp" \
+	"$assistant_root/src/apps/assistant/HardwareWindow.cpp" \
 	"$assistant_root/src/apps/assistant/ModelStore.cpp" \
 	"$assistant_root/src/apps/assistant/ToolBridge.cpp" \
 	"$assistant_root/src/apps/assistant/ToolSession.cpp" \
@@ -38,6 +39,20 @@ assistant_resources=$(mktemp -d /private/tmp/haiku-assistant-resources.XXXXXX)
 	"$assistant_resources/Assistant.rsrc"
 file "$assistant_output"
 shasum -a 256 "$assistant_output"
+
+"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
+	"$@" -B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
+	-L"$assistant_release/system/libroot" \
+	"$assistant_root/src/apps/assistant/HardwareApp.cpp" \
+	"$assistant_root/src/apps/assistant/HardwareWindow.cpp" -lbe -o "${assistant_output}Hardware"
+"$assistant_host_tools/rc/rc" -o "$assistant_resources/Hardware.rsrc" \
+	"$assistant_root/src/apps/assistant/Hardware.rdef"
+"$assistant_host_tools/xres" -o "${assistant_output}Hardware" "$assistant_resources/Hardware.rsrc"
+
+"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
+	"$@" -B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
+	-L"$assistant_release/system/libroot" \
+	"$assistant_root/src/apps/assistant/HardwareTest.cpp" -lbe -o "${assistant_output}HardwareTest"
 
 if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
 	"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \

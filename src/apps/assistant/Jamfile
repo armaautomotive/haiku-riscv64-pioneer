@@ -1,10 +1,16 @@
 SubDir HAIKU_TOP src apps assistant ;
 
 UsePrivateHeaders shared libroot ;
-Application HaikuAssistant : Assistant.cpp ModelManager.cpp ModelStore.cpp ToolBridge.cpp ToolSession.cpp
+Application HaikuAssistant : Assistant.cpp ModelManager.cpp ModelStore.cpp HardwareWindow.cpp ToolBridge.cpp ToolSession.cpp
 	: be shared [ TargetLibstdc++ ] [ TargetLibsupc++ ]
 	: Assistant.rdef
 	;
+
+Application HaikuAssistantHardware : HardwareApp.cpp HardwareWindow.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ] : Hardware.rdef ;
+
+SimpleTest HaikuAssistantHardwareTest : HardwareTest.cpp
+	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ] ;
 
 Application HaikuAssistantControl : ServiceControl.cpp ModelStore.cpp
 	: be [ TargetLibstdc++ ] [ TargetLibsupc++ ]

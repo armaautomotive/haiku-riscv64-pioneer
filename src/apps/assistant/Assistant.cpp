@@ -3,6 +3,7 @@
 #include "ToolBridge.h"
 #include "ToolSession.h"
 #include "ModelManager.h"
+#include "HardwareWindow.h"
 #include <Application.h>
 #include <Button.h>
 #include <Entry.h>
@@ -28,6 +29,7 @@ static const uint32 kSend = 'send', kStop = 'stop', kClear = 'cler';
 static const uint32 kShow = 'show', kCheck = 'chek';
 static const uint32 kApplyThreads = 'apth';
 static const uint32 kOpenModels = 'omod';
+static const uint32 kOpenHardware = 'ohdw';
 
 static status_t
 StartService()
@@ -72,10 +74,11 @@ public:
 		fApplyThreads = new BButton("Apply", new BMessage(kApplyThreads));
 		fApplyThreads->SetEnabled(false);
 		fModels = new BButton("Models…", new BMessage(kOpenModels));
+		BButton* hardware = new BButton("hardware_settings", "Hardware…", new BMessage(kOpenHardware));
 		fModelLabel = new BStringView("active model", "Chat backend: CPU — starting service");
 		BLayoutBuilder::Group<>(this, B_VERTICAL)
 			.SetInsets(B_USE_WINDOW_INSETS)
-			.AddGroup(B_HORIZONTAL).Add(fModelLabel).AddGlue().Add(fModels).End()
+			.AddGroup(B_HORIZONTAL).Add(fModelLabel).AddGlue().Add(hardware).Add(fModels).End()
 			.AddGroup(B_HORIZONTAL)
 				.Add(fThreads).Add(fApplyThreads)
 				.Add(new BStringView("thread_hint", "Saved; applies to next model request"))
@@ -106,6 +109,13 @@ public:
 	virtual void MessageReceived(BMessage* message)
 	{
 		switch (message->what) {
+			case kOpenHardware:
+				if (fHardwareWindow.IsValid()) fHardwareWindow.SendMessage(kShowHardwareWindow);
+				else {
+					HardwareWindow* hardware = new HardwareWindow;
+					fHardwareWindow = BMessenger(hardware); hardware->Show();
+				}
+				break;
 			case kOpenModels:
 				if (fModelWindow.IsValid()) fModelWindow.SendMessage(kShowModelManager);
 				else {
@@ -150,10 +160,15 @@ public:
 						const char* path = ""; const char* error = "";
 						reply.FindBool("loading", &loading);
 						reply.FindString("model_path", &path); reply.FindString("model_error", &error);
-						if (fModelPath != path) {
+						// A temporary empty path during service restart/loading is
+						// not a successful model change; keep the conversation.
+						if (ready && !loading && *path && fModelPath != path) {
 							fModelPath = path; fTurns.clear(); fTranscript->SetText("");
 						}
-						BString label("CPU: "); label << (*path ? BPath(path).Leaf() : "no model loaded");
+						const char* backend = "cpu";
+						reply.FindString("backend_id", &backend);
+						BString label(AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: ");
+						label << (*path ? BPath(path).Leaf() : "no model loaded");
 						fModelLabel->SetText(label.String());
 						fSend->SetEnabled(ready && !loading);
 						fStatus->SetText(loading ? "Verifying/loading model..."
@@ -237,11 +252,16 @@ private:
 		BMessage query(kServiceStatus), state;
 		bool ready = false, loading = true;
 		const char* path = "";
+		const char* backend = "";
 		if (BMessenger(kServiceSignature).SendMessage(&query, &state, 100000, 100000) == B_OK) {
 			state.FindBool("ready", &ready); state.FindBool("loading", &loading);
 			state.FindString("model_path", &path);
+			state.FindString("backend_id", &backend);
 		}
 		if (!ready || loading) { fStatus->SetText("Model is not ready. Open Models to check its status."); return; }
+		if (!AssistantHardwareCanChat(backend)) {
+			fStatus->SetText("Hardware backend unavailable. Open Hardware; an updated service is required."); return;
+		}
 		if (fModelPath != path) { fModelPath = path; fTurns.clear(); fTranscript->SetText(""); }
 		fPending = fInput->Text();
 		size_t bytes = fPending.size();
@@ -269,6 +289,7 @@ private:
 		request.AddMessenger("target", BMessenger(this));
 		request.AddString("prompt", prompt.c_str());
 		request.AddString("model_path", fModelPath.c_str());
+		request.AddString("backend_id", backend);
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;
@@ -289,6 +310,7 @@ private:
 	BButton* fModels;
 	BStringView* fModelLabel;
 	BMessenger fModelWindow;
+	BMessenger fHardwareWindow;
 	std::string fModelPath;
 	bool fThreadsLoaded;
 	BMessageRunner* fCheck;
@@ -315,11 +337,13 @@ public:
 	{
 		fWindow.SendMessage(kShow);
 		if (argc == 2 && strcmp(argv[1], "--models") == 0) PostMessage(kOpenModels);
+		if (argc == 2 && strcmp(argv[1], "--hardware") == 0) PostMessage(kOpenHardware);
 	}
 	virtual void RefsReceived(BMessage*) { fWindow.SendMessage(kShow); }
 	virtual void MessageReceived(BMessage* message)
 	{
-		if (message->what == kToggle || message->what == kOpenModels) fWindow.SendMessage(message);
+		if (message->what == kToggle || message->what == kOpenModels || message->what == kOpenHardware)
+			fWindow.SendMessage(message);
 		else BApplication::MessageReceived(message);
 	}
 private:
