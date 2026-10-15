@@ -2802,3 +2802,58 @@ the dirty-journal profile remains explicit and unchanged. Fresh helper
 Its prepare passed, then normal systemctl kexec started
 `smp64-memory128-kdl3-nosd2-20261014` at 01:56 UTC October 15, serial boundary
 11465656. Awaiting diagnostic/runtime results; defaults are unchanged.
+
+### Full-memory userspace pass followed by workload stall; debugger input repair
+
+Revision 3 reached all 17 main2 stages and positively confirmed AP1's timer
+armed before scheduler release. The full-memory one-shot reported
+137,034,936,320 bytes (127.62 GiB usable) and passed its 64 MiB, two-pattern
+sample with all 64 pinned workers, mask ffffffffffffffff, END status=0.
+Pinned SSH also returned 64 CPUs and the same memory maximum. This is a
+bounded sample, not a complete RAM audit or a stable-system claim.
+
+A subsequent explicit pioneer_smp_smoke run stalled while spawning workers;
+no completion result arrived. The separate 4096 MiB request timed out before
+starting, so no large-sample pass is claimed. The AP1 callback did fire and
+entered KDL, warning four CPUs were not trapped. Stack 510 showed the parent
+blocked on AddressSpaceWriteLocker during thread_create_thread; worker 526
+was blocked on RISCV64VMTranslationMap::Lock during a user-stack store fault.
+Workers 523/524/525 were asleep in snooze; earlier workers had exited. The
+symbol-derived sCPUTrapped bitmap identified CPUs 8-11 as not trapped. Read-only
+gCPU records (448-byte stride, running_thread offset 352, thread ID offset 48
+verified against source/disassembly) identified CPU 9's thread as 65, "thread
+undertaker"; the other three ran idle threads. Their missing captured register
+state prevented normal stack crawls. CPU 0 was already trapped and a handover
+to it confirmed its interrupted idle stack. This locates a stalled dependency,
+not yet the underlying lockup cause. No debugger handover to CPUs 8-11 occurred.
+
+Attempting the bounded remote-memory reader exposed a separate concrete
+diagnostic defect: RISC-V arch_debug_serial_getchar() called GetChar(false),
+so the supposedly blocking GDB reader received a no-input -1 converted through
+unsigned char to 255. gdb_cmdread_handler also had no command-buffer bound.
+After packet input, the UART object's vtable became invalid and debugger input
+recursively faulted in arch_debug_serial_try_getchar. This later diagnostic
+failure does not explain the earlier workload stall.
+
+Corrected the blocking API to GetChar(true), the nonblocking API to preserve
+the UART's int -1 sentinel, and bounded GDB command payloads to leave a NUL
+terminator. Overlong packets NAK/reset rather than overwriting adjacent state.
+Production-body ASan/UBSan tests use -funsigned-char and cover missing/input
+sentinels, blocking selection, the exact buffer boundary and packet restart.
+CPU/topology/context-switch, timer, helper and private-FDT tests also pass.
+Diagnostic revision-4 kernel SHA:
+`9d31e4649f0ac4b9fcfed91dfefb4d911998b10ed7d0f94e2569e375f4ac5ba0`.
+Ordinary kernel, verified without the timer markers:
+`3b8c940b4793c097742f97a23e113ee0dd64f356005df762446c27b0a09dce36`.
+Fresh private bundle checks passed (package paths, extracted kernel/ECAM,
+private BFS checkfs and full HPKG roundtrip). BFS:
+`faa302273e1aa04048c9ab1da8749f41b09b4c144c7b3031769f63b5c70db023`.
+HPKG: `a42cd079b6280160abbfe7b219aa30d8d2c2a2c70cab7254011adb23190f4e39`.
+Explicit revision-4 clean/journal no-SD profiles retain all old artifact pins
+and defaults; production feature-flag tests cover every combination.
+
+Normal SSH reboot had timed out before KDL. After the later debugger failure,
+relay off/rest/on recovery returned fresh default Linux serial and pinned SSH
+by 02:13 UTC October 15: all 64 CPUs, empty kexec, Samsung journal CLEAN. No
+additional power pulse was sent while waiting for its delayed startup output.
+Revision 4 is not yet hardware-tested; P100A compute and firmware untouched.

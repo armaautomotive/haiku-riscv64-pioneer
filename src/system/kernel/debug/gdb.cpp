@@ -323,6 +323,7 @@ gdb_parse_command(void)
 //	#pragma mark - protocol state machine
 
 
+// KERNEL_GDB_COMMAND_BUFFER_BEGIN
 static int
 gdb_init_handler(int input)
 {
@@ -354,11 +355,18 @@ gdb_cmdread_handler(int input)
 			return CKSUM1;
 
 		default:
+			// Keep one zero byte for the parser's string operations. A broken
+			// or overlong packet must not overwrite adjacent debugger state.
+			if (sCommandIndex >= (int)sizeof(sCommand) - 1) {
+				gdb_nak();
+				return INIT;
+			}
 			sCommand[sCommandIndex] = input;
 			sCommandIndex += 1;
 			return CMDREAD;
 	}
 }
+// KERNEL_GDB_COMMAND_BUFFER_END
 
 
 static int

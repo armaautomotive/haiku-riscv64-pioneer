@@ -44,11 +44,13 @@ arch_debug_blue_screen_getchar(void)
 }
 
 
+// PIONEER_DEBUG_SERIAL_INPUT_BEGIN
 int
 arch_debug_serial_try_getchar(void)
 {
-	// TODO: Implement correctly!
-	return arch_debug_serial_getchar();
+	// Preserve the UART's -1 sentinel. RISC-V char is unsigned, so routing
+	// this through the char-returning blocking API would turn no input into 255.
+	return sArchDebugUART != NULL ? sArchDebugUART->GetChar(false) : -1;
 }
 
 
@@ -56,10 +58,11 @@ char
 arch_debug_serial_getchar(void)
 {
 	if (sArchDebugUART != NULL)
-		return sArchDebugUART->GetChar(false);
+		return sArchDebugUART->GetChar(true);
 
 	return 0;
 }
+// PIONEER_DEBUG_SERIAL_INPUT_END
 
 
 void

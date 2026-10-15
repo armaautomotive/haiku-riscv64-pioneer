@@ -2,17 +2,27 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control]'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+# PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN
+private_nosd=0
+journal_view=0
+case "$profile" in
+ memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control) private_nosd=1;;
+esac
+case "$profile" in
+ memory8-journal-recovery-control|memory128-kdl-journal-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-journal-control) journal_view=1;;
+esac
+# PIONEER_PRIVATE_PROFILE_FLAGS_END
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 if [ "$profile" = memory8-journal-recovery-control ]; then
  [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
 fi
-case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control)
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control)
  [ "$cpu_count" = 64 ] || fail 'Private KDL diagnostic requires 64 CPUs'
  ;;
 esac
@@ -75,6 +85,15 @@ case "$profile" in
   image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
   bundle=$base/smp-kernel-bundle-memory-kdl-timer-3/samsung-ram.bfs
   bundle_hash=04b00965d0b52bb75b08863c805cc96b604e241ae2bb10906ce68dfd01b078e3
+  memory_gib=128
+  ;;
+ memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control)
+  # Same diagnostic timing with corrected blocking/nonblocking UART input
+  # and a bounded debugger remote-command buffer.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-timer-4/samsung-ram.bfs
+  bundle_hash=faa302273e1aa04048c9ab1da8749f41b09b4c144c7b3031769f63b5c70db023
   memory_gib=128
   ;;
  *) fail 'Unknown pinned kernel profile';;
@@ -160,7 +179,7 @@ validate_run()
  fi
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /pcie@7062000000 haiku,pioneer-root-probe)" = 1e52b140 ] || fail 'Missing private root opt-in'
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-root-v1)" = "$(root_manifest)" ] || fail 'Root identity changed since prepare'
- if [ "$profile" = memory128-kdl-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then
+ if [ "$private_nosd" = 1 ]; then
   if fdtget "$run/probe-fdt.dtb" /soc/bm-sd@704002B000 compatible >/dev/null 2>&1; then fail 'Unexpected SD node in no-SD diagnostic'; fi
   [ "$(fdtget -t x "$run/probe-fdt.dtb" /soc/bm-emmc@704002A000 reg)" = '70 4002a000 0 1000' ] || fail 'eMMC node changed'
  fi
@@ -189,7 +208,7 @@ case "$action" in
    exit "$result"
   }
   trap cleanup EXIT
-  if [ "$profile" = memory8-journal-recovery-control ] || [ "$profile" = memory128-kdl-journal-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then
+  if [ "$journal_view" = 1 ]; then
    # Linux befs refuses a pending journal. Explicit journal-view profiles
    # verifies the same two hashes through a fresh private replay overlay,
    # keeping the physical Samsung disk block-read-only throughout that check.
@@ -204,7 +223,7 @@ case "$action" in
   fi
   cp /sys/firmware/fdt "$run/live-fdt.dtb"
   cp "$run/live-fdt.dtb" "$run/probe-fdt.dtb"
-  if [ "$profile" = memory128-kdl-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then remove_private_sd_node; fi
+  if [ "$private_nosd" = 1 ]; then remove_private_sd_node; fi
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe 4
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-cpu-count "$(printf '%x' "$cpu_count")"
   if [ "$memory_gib" = 3 ]; then
@@ -226,7 +245,7 @@ case "$action" in
   printf '%s\n' "$token" > "$run/token"
   grep -Eq '^[0-9a-f]{32}$' "$run/token" || fail 'Invalid token'
   sha256sum "$image" "$bundle" "$loader" "$uart_helper" "$run/live-fdt.dtb" "$run/probe-fdt.dtb" "$run/cpus" "$run/profile" > "$run/inputs.sha256"
-  if [ "$profile" = memory8-journal-recovery-control ] || [ "$profile" = memory128-kdl-journal-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then
+  if [ "$journal_view" = 1 ]; then
    sha256sum "$journal_verifier" >> "$run/inputs.sha256"
   fi
   uart_owned=1

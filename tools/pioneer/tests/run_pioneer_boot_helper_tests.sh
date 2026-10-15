@@ -12,8 +12,30 @@ sh -n "$journal_script"
 if sh "$journal_script" ../unsafe > /dev/null 2>&1; then exit 1; fi
 if sh "$journal_script" session extra > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" prepare session 64 memory8-journal-recovery-control > /dev/null 2>&1; then exit 1; fi
-for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl3-nosd-journal-control; do
+for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-control memory128-kdl4-nosd-journal-control; do
  if sh "$smp_script" prepare session 2 "$profile" > /dev/null 2>&1; then exit 1; fi
+done
+awk '
+ /PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN/ {copying=1; next}
+ /PIONEER_PRIVATE_PROFILE_FLAGS_END/ {found=1; exit}
+ copying {print}
+ END {if(!found) exit 1}
+' "$smp_script" > "$temporary/private_flags.inc"
+for profile in active-map-control memory128-map-order-control memory128-kdl-control; do
+ . "$temporary/private_flags.inc"
+ [ "$private_nosd:$journal_view" = 0:0 ]
+done
+for profile in memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl4-nosd-control; do
+ . "$temporary/private_flags.inc"
+ [ "$private_nosd:$journal_view" = 1:0 ]
+done
+for profile in memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-journal-control; do
+ . "$temporary/private_flags.inc"
+ [ "$private_nosd:$journal_view" = 1:1 ]
+done
+for profile in memory8-journal-recovery-control memory128-kdl-journal-control; do
+ . "$temporary/private_flags.inc"
+ [ "$private_nosd:$journal_view" = 0:1 ]
 done
 if sh "$smp_script" prepare ../unsafe 2 > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" unsupported session 64 > /dev/null 2>&1; then exit 1; fi
