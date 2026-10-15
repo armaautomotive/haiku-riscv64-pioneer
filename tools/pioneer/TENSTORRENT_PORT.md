@@ -1279,6 +1279,15 @@ token is still being tested. Native harness SHA
 `a1de72855ce62f2bdf94985da281c7d44ea1a58de6f7f3fa593c10fc6585843d`,
 artifacts `/boot/home/pioneer-p100a-20261014/tinyllama-1/`.
 
+At **08:26 UTC**, the two-token LIVE run PASSED: ` Once upon` (ids 403,407),
+both matching the independent full-FP32 CPU argmax. Second token cosine
+0.999997918, relative L2 0.002064653, maximum logit error 0.0702281. All
+2056 actual P100A tile transactions completed/stopped/restored; total
+346.172 seconds. The P100A, not a CPU fallback, computed all learned linear
+projections/classification; CPU still handles the other listed operations.
+This establishes a very small working hybrid model, not the requested 27B
+model, useful throughput, resident weights or all-device inference.
+
 Pinned model author/revision: karpathy/tinyllamas
 `0bd21da7698eaf29a0d7de3992de8a46ef624add`; raw model SHA
 `b0a507e7ad0f626624f17112325e66691f9076d622e1d3274d103d00299f2696`,
