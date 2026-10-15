@@ -1191,6 +1191,7 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO {
+	PioneerRuntimeProfile runtimeProfile;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1};
 	volatile uint32* runtimeEntry=NULL;
 	volatile uint32* runtimeCode=NULL;
@@ -1230,6 +1231,7 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 	}
 	uint32* RuntimeSavedWords() { return runtimeSaved; }
 	uint32* RuntimeStageWords() { return runtimeStage; }
+	void RuntimeProfileMark(unsigned slot) { runtimeProfile.Mark(uint64(system_time()),slot); }
 	uint32 RuntimeCodeRead(unsigned w) { return w<=1024?PioneerRead32(w?runtimeCode+w-1:runtimeEntry):UINT32_MAX; }
 	void RuntimeCodeWrite(unsigned w,uint32 value) { if (w<=1024) PioneerWrite32(w?runtimeCode+w-1:runtimeEntry,value); }
 	uint32 RuntimeBufferRead(unsigned w) { return w<8192?PioneerRead32(runtimeBuffers+w):UINT32_MAX; }
@@ -1480,7 +1482,7 @@ struct PioneerStoreContext {
 		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
 		r.host_released=host.released; r.pci_restored=Pci().restored;
 		r.route_state=baseline.baseline.path.state; r.audit_state=baseline.audit.state;
-		r.capabilities=255; r.uploaded_pages=uploadedPages; // previous bits plus fixed FP16 operand matvec (128)
+		r.capabilities=511; r.uploaded_pages=uploadedPages; // previous bits plus CPU wall-time metadata (256)
 		r.cold=sColdRecoveryRequired;
 	}
 };
@@ -1557,7 +1559,7 @@ ResidentSessionControl(PioneerProbeCookie* cookie,uint32 operation,void* data,si
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	if (operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT) {
-		result={}; result.version=1; result.capabilities=255;
+		result={}; result.version=1; result.capabilities=511;
 	} else if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) {
 		if (cookie->context!=NULL) { release_sem(sLock); return B_BUSY; }
 		uint64 capacity=result.bytes;
@@ -1707,11 +1709,13 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 		else {
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
 			memset(request->output,0,sizeof(request->output));
+			context->io.runtimeProfile.Begin(uint64(system_time()),fp16?2:dmaOutput?1:0);
 			bool ready=context->lease.ready;
 			if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
 			if (ready) ready=context->io.MapRuntime();
 			if (ready) ready=PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
 				context->baseline.baseline.baseline.noc,context->lease,context->compute,fp16);
+			if (ready) context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 			if (ready) PioneerRuntimeMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
 				context->baseline.baseline.baseline.noc,context->host,context->lease,context->compute,context->bytes,
 				request->weight_offset,request->inputs,request->outputs,request->input,request->output,request->result,dmaOutput);
@@ -1719,10 +1723,25 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 				context->lease.recovery_required=true; context->io.QuarantineHostPage();
 				request->result.recovery_required=1; sColdRecoveryRequired=true;
 			}
+			const auto& r=request->result;
+			context->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
 			status=user_memcpy(data,request,sizeof(*request));
 		}
 	}
 	release_sem(sLock); free(request); return status;
+}
+
+static status_t
+RuntimeProfileControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (data==NULL || length!=sizeof(tt_runtime_profile_result)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
+	if (!cookie->context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else status=user_memcpy(data,&cookie->context->io.runtimeProfile.Snapshot(),sizeof(tt_runtime_profile_result));
+	release_sem(sLock); return status;
 }
 
 static status_t
@@ -1739,6 +1758,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16)
 		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16);
+	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
+		return RuntimeProfileControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)
 		return ResidentStreamControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {

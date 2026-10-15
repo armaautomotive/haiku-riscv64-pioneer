@@ -107,6 +107,31 @@ out while establishing the Haiku port baseline.
 
 #### Fixed FP16 precision candidate (projections passed, full model pending)
 
+An offline timing candidate now adds a separate, read-only per-session CPU
+phase record, ioctl `54c0`, capability bit 256 (candidate capabilities 511).
+It preserves the existing matvec request/result ABI and all compute/DMA
+gates. Integer `system_time()` stamps separate one-time preparation, staging,
+configuration, compute plus completion proof, PIO collection, verified stop,
+optional result DMA and final checks. These include guards/polling and are
+**not device-cycle or device-only throughput measurements**. Records include
+format, sequence, completed-stage mask and final status; clock regressions
+invalidate timing evidence without changing device execution.
+
+The query is root/FD/creator-team-owned, requires the same live exclusive
+session and cold-precedence lock, and copies only CPU metadata. It has no
+MMIO/DMA/reset/firmware operation and does not bypass a cold latch. The
+projection CLI checks complete masks, status, sequence and monotonic stamps;
+its lifecycle test adds foreign/inherited-FD refusal and final-close coverage.
+ASan/UBSan phase/clock/partial/frozen-record tests and all existing dropped
+runtime writes pass, as do the independent compute images, ownership and
+output-DMA regressions. Jam and all 30 diagnostics build. **Native timing and
+new metadata ownership checks remain pending** the exclusive full-Qwen test;
+this candidate has not replaced the installed FP16 driver below.
+
+Candidate driver SHA-256:
+`b3d271236719b3fc663e3cc0cf6ee98fa14506a3f10a440517590c06064feace`.
+Diagnostics are in `/private/tmp/pioneer-runtime-profile-tools-20261015/`.
+
 The remaining BF16/CPU-Q8 graph drift motivated a separate trusted FP16
 operand matvec, ioctl `54bf`, capability bit 128 (support capabilities 255).
 It changes exactly six fixed source-format immediates in the independently

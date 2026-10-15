@@ -126,6 +126,12 @@ int main(int argc,char** argv)
 		r.state,r.active,r.host_ready,r.host_address_bits,!r.pci_restored,r.cold);
 	if (passed) {
 		passed=Legacy(foreign,true) && Legacy(fd,true);
+		if (r.capabilities&256) {
+			tt_runtime_profile_result profile={};
+			passed &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))==0
+				&& profile.version==1 && !profile.available && !profile.sequence && !profile.mask;
+			errno=0; passed &= ioctl(foreign,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))<0 && errno==EBUSY;
+		}
 		if (r.capabilities&32) {
 			tt_pioneer_resident_stream otherStream={}; otherStream.version=1; errno=0;
 			passed &= ioctl(foreign,TT_PCI_PROBE_PIONEER_STREAM_UPLOAD,&otherStream,sizeof(otherStream))<0 && errno==EBUSY;
@@ -138,6 +144,10 @@ int main(int argc,char** argv)
 		if (child==0) {
 			tt_resident_session_result info={}; errno=0;
 			bool denied=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&info,sizeof(info))<0 && errno==EPERM;
+			if (r.capabilities&256) {
+				tt_runtime_profile_result profile={}; errno=0;
+				denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))<0 && errno==EPERM;
+			}
 			if (r.capabilities&32) {
 				tt_pioneer_resident_stream inherited={}; inherited.version=1; errno=0;
 				denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_STREAM_UPLOAD,&inherited,sizeof(inherited))<0 && errno==EPERM;
@@ -151,11 +161,19 @@ int main(int argc,char** argv)
 			close(fd); fd=duplicate;
 			tt_resident_session_result info={};
 			passed &= ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&info,sizeof(info))==0 && info.active && info.host_ready;
+			if (r.capabilities&256) {
+				tt_runtime_profile_result profile={};
+				passed &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))==0 && profile.version==1 && !profile.available;
+			}
 		} else passed=false;
 		printf("Foreign FD/legacy conflict gates, inherited-team denial and duplicate-FD retention %s\n",passed?"PASS":"FAIL");
 		if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_END,&r,sizeof(r))) { perror("session end"); passed=false; }
 		printf("End state %u active %u PCI-restored/host-released %u/%u cold %u\n",r.state,r.active,r.pci_restored,r.host_released,r.cold);
 		passed &= r.state==TT_RESIDENT_SESSION_CLOSED && !r.active && r.pci_restored && r.host_released && !r.cold;
+		if (r.capabilities&256) {
+			tt_runtime_profile_result profile={};
+			passed &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))<0;
+		}
 	}
 	close(fd);
 	if (passed) passed=Legacy(foreign,false);

@@ -5,6 +5,7 @@
 #include "BlackholeRuntimeFp16MatvecImage.h"
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeOutput.h"
+#include "PioneerRuntimeProfile.h"
 enum { TT_RUNTIME_REFUSED=0,TT_RUNTIME_PASSED=1,TT_RUNTIME_CONFIG_FAILED=2,TT_RUNTIME_STAGE_FAILED=3,
 	TT_RUNTIME_START_FAILED=4,TT_RUNTIME_COMPLETION_FAILED=5,TT_RUNTIME_NONFINITE=6,TT_RUNTIME_COLD=7,TT_RUNTIME_READ_FAILED=8 };
 struct tt_runtime_matvec_result {
@@ -134,6 +135,7 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 		okay=PioneerRuntimeStage(io,baseline,noc,host,store,true,page,stage,r);
 	}
 	if (!okay) goto finished;
+	io.RuntimeProfileMark(TT_PROFILE_STAGED);
 	r.state=TT_RUNTIME_CONFIG_FAILED;
 	io.RuntimeCodeWrite(1+0x500/4,PioneerResidentAddress(capacity,offset));
 	io.RuntimeCodeWrite(1+0x504/4,inputs/16); io.RuntimeCodeWrite(1+0x508/4,outputs/16);
@@ -150,6 +152,7 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 		|| !BlackholeResidentIdle(io)) goto finished;
 	for (unsigned w=0;w<4;w++) r.before[w]=io.ResidentNocRead(0x208+w*4);
 	r.started=1; compute.running=true; r.state=TT_RUNTIME_COMPLETION_FAILED;
+	io.RuntimeProfileMark(TT_PROFILE_LAUNCHED);
 	io.RuntimeResetWrite(0x46800);
 	for (unsigned attempt=0;attempt<50000;attempt++) {
 		r.polls++;
@@ -169,15 +172,17 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 		io.Pause();
 	}
 	if (!r.completed || !PioneerRuntimeSources(io,baseline,noc,store) || io.ResetRead()!=0x46800 || !BlackholeResidentIdle(io)) goto finished;
+	io.RuntimeProfileMark(TT_PROFILE_COMPLETED);
 	if (!dmaOutput) for (unsigned w=0;w<outputs;w++) {
 		output[w]=io.RuntimeBufferRead(4096+w);
 		r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
 	}
+	if (!dmaOutput) io.RuntimeProfileMark(TT_PROFILE_PIO);
 	io.RuntimeResetWrite(0x87ffff); io.Pause();
 	if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) goto finished;
 	io.RuntimeResetWrite(0x47800); io.Pause();
 	r.stopped=io.ResetRead()==0x47800 && io.ResetRead()==0x47800;
-	if (r.stopped) compute.running=false;
+	if (r.stopped) { compute.running=false; io.RuntimeProfileMark(TT_PROFILE_STOPPED); }
 	if (r.stopped && dmaOutput) {
 		// No host DMA while compute is running. Preserve the existing PIO
 		// operation as an independent native comparison path.
@@ -188,6 +193,7 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 			if (!PioneerRuntimeOutputPage(io,baseline,noc,host,store,page,words,stage,output+page*1024,transfer)) goto finished;
 		}
 		for (unsigned w=0;w<outputs;w++) r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
+		io.RuntimeProfileMark(TT_PROFILE_DMA);
 	}
 	r.state=!r.stopped?TT_RUNTIME_COLD:r.nonfinite?TT_RUNTIME_NONFINITE:TT_RUNTIME_PASSED;
 finished:

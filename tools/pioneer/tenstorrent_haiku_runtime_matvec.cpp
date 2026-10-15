@@ -6,6 +6,27 @@
 #include <stdlib.h>
 #include <time.h>
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
+static bool Profile(int fd,bool fp16,bool dma,uint64_t& previous,bool& closeOnly)
+{
+	tt_runtime_profile_result p={};
+	if (ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&p,sizeof(p))) {
+		perror("runtime phase metadata"); closeOnly=true; return false;
+	}
+	bool valid=p.version==1 && p.available && p.clock_stable && p.sequence>previous
+		&& p.format==(fp16?2U:dma?1U:0U) && p.mask==(dma?0x1dfU:0x17fU)
+		&& p.state==TT_RUNTIME_PASSED && p.started && p.completed && p.stopped && !p.recovery_required;
+	uint64_t last=0;
+	for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) if (p.mask&(1U<<slot)) {
+		valid &= p.microseconds[slot]>=last; last=p.microseconds[slot];
+	}
+	if (!valid) { fprintf(stderr,"Invalid/stale phase metadata; no timing claim\n"); return false; }
+	previous=p.sequence; const uint64_t* t=p.microseconds;
+	printf("  CPU wall-time profile #%llu us (guards/polling INCLUDED): prepare %llu stage %llu configure %llu compute-proof %llu PIO %llu stop %llu DMA %llu finish %llu total %llu; NOT device-only throughput\n",
+		(unsigned long long)p.sequence,(unsigned long long)t[1],(unsigned long long)(t[2]-t[1]),(unsigned long long)(t[3]-t[2]),
+		(unsigned long long)(t[4]-t[3]),(unsigned long long)(dma?0:t[5]-t[4]),(unsigned long long)(t[6]-t[dma?4:5]),
+		(unsigned long long)(dma?t[7]-t[6]:0),(unsigned long long)(t[8]-t[dma?7:6]),(unsigned long long)t[8]);
+	return true;
+}
 int main(int argc,char** argv)
 {
 	bool support=argc==2 && !strcmp(argv[1],"--check-support");
@@ -30,6 +51,7 @@ int main(int argc,char** argv)
 	if (compareDma && !(session.capabilities&64)) { fprintf(stderr,"Output DMA capability unavailable\n"); close(fd); return 1; }
 	if (fp16 && !(session.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec capability unavailable\n"); close(fd); return 1; }
 	if (support) { close(fd); return 0; }
+	bool profiling=(session.capabilities&256)!=0;
 	FILE* model=fopen(argv[2],"rb"); if (!model) { close(fd); return 1; }
 	PioneerGgufTensor tensor={};
 	if (!PioneerFindGgufTensor(model,argc==5?argv[3]:"blk.0.attn_q.weight",tensor)
@@ -41,7 +63,7 @@ int main(int argc,char** argv)
 	uint32_t* packed=(uint32_t*)calloc(bytes/4,sizeof(uint32_t));
 	tt_pioneer_runtime_matvec* request=(tt_pioneer_runtime_matvec*)calloc(1,sizeof(tt_pioneer_runtime_matvec));
 	if (!weights || !packed || !request) { free(weights); free(packed); free(request); fclose(model); close(fd); return 1; }
-	bool passed=true,cold=false;
+	bool passed=true,cold=false,closeOnly=false;
 	for (unsigned row=0;row<outputs && passed;row++) for (unsigned block=0;block<inputs/32;block++) {
 		uint8_t data[34];
 		if (fread(data,1,34,model)!=34 || !PioneerDecodeQ8_0(data,weights+row*inputs+block*32)) { passed=false; break; }
@@ -69,6 +91,7 @@ int main(int argc,char** argv)
 	}
 	if (passed) printf("Weights uploaded once: %u pages; running two independent vectors\n",bytes/4096);
 	uint32_t pioReference[TT_RUNTIME_MATVEC_OUTPUTS_MAX]={};
+	uint64_t previousProfile=0;
 	for (unsigned trial=0;trial<(compareDma?4U:2U) && passed;trial++) {
 		bool dma=compareDma && (trial&1);
 		unsigned vectorTrial=compareDma?trial/2:trial;
@@ -87,6 +110,7 @@ int main(int argc,char** argv)
 			trial,r.state,r.started,r.completed,r.stopped,r.staged_pages,r.polls,r.phase,r.tiles,r.marker,r.pc[0],r.pc[1],r.recovery_required,elapsed);
 		printf("  device weight reads response/flits/accepted/sent %u/%u/%u/%u\n",uint32_t(r.after[0]-r.before[0]),uint32_t(r.after[1]-r.before[1]),uint32_t(r.after[2]-r.before[2]),uint32_t(r.after[3]-r.before[3]));
 		if (status || r.state!=TT_RUNTIME_PASSED || !r.started || !r.completed || !r.stopped || cold) { if (status) perror("runtime matvec"); passed=false; break; }
+		if (profiling && !Profile(fd,fp16,dma,previousProfile,closeOnly)) { passed=false; break; }
 		if (compareDma) {
 			if (!dma) memcpy(pioReference,request->output,outputs*4);
 			else {
@@ -132,6 +156,7 @@ int main(int argc,char** argv)
 		if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&session,sizeof(session))==0 && session.uploaded_pages==bytes/4096;
 	}
 	if (cold) fprintf(stderr,"STOP: cold recovery required, no retry/reset/reload\n");
+	else if (closeOnly) fprintf(stderr,"STOP: metadata request failed; close-only, no further card commands or timing claim\n");
 	else if (session.active) {
 		if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_END,&session,sizeof(session))) passed=false;
 		printf("Close state %u PCI/host %u/%u cold %u\n",session.state,session.pci_restored,session.host_released,session.cold);

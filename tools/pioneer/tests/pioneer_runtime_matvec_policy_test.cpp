@@ -4,6 +4,9 @@
 #include "pioneer_resident_store_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerRuntimeMatvec.h"
 struct RuntimeMock:StoreMock {
+	PioneerRuntimeProfile runtimeProfile;
+	uint64_t microseconds=100;
+	void RuntimeProfileMark(unsigned slot) { runtimeProfile.Mark(microseconds+=50,slot); }
 	uint32_t code[1025]={},buffers[8192]={},saved[9217]={},stage[1024]={},status[3]={};
 	uint32_t reset=0x47800;
 	unsigned starts=0,stops=0,outputPioReads=0,outputDmaWrites=0;
@@ -90,8 +93,17 @@ static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& 
 	auto b=io.Baseline(); auto n=io.Compute(); uint32_t input[512],output[32]={};
 	r={};
 	for (auto& value:input) value=0x3f803f80;
-	if (!PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16)) return false;
-	bool passed=PioneerRuntimeMatvec(io,b,n,host,store,compute,73728,0,1024,32,input,output,r,dma);
+	io.runtimeProfile.Begin(io.microseconds,fp16?2:dma?1:0);
+	bool ready=PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16),passed=false;
+	if (ready) {
+		io.RuntimeProfileMark(TT_PROFILE_PREPARED);
+		passed=PioneerRuntimeMatvec(io,b,n,host,store,compute,73728,0,1024,32,input,output,r,dma);
+	}
+	io.runtimeProfile.End(io.microseconds+=50,r.state,r.recovery_required,r.started,r.completed,r.stopped);
+	const auto& p=io.runtimeProfile.Snapshot();
+	assert(p.available && p.clock_stable && p.state==r.state && p.recovery_required==r.recovery_required);
+	assert(p.started==r.started && p.completed==r.completed && p.stopped==r.stopped);
+	if (passed) assert(p.mask==(dma?0x1dfU:0x17fU) && p.format==(fp16?2U:dma?1U:0U));
 	if (passed) for (uint32_t v:output) assert(v==0x40000000);
 	return passed;
 }
