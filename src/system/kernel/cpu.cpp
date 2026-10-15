@@ -339,6 +339,7 @@ decrease_cpu_performance(int delta)
 }
 
 
+// PIONEER_IDLE_PROFILE_BEGIN
 void
 cpu_idle(void)
 {
@@ -347,11 +348,22 @@ cpu_idle(void)
 		panic("cpu_idle() called with interrupts disabled.");
 #endif
 
+#if defined(__riscv) && defined(PIONEER_DIAGNOSTIC_SPIN_IDLE)
+	// Private 64-CPU comparison only: keep idle harts awake to isolate an
+	// inter-CPU-interrupt wakeup failure. The build also requires the timed
+	// KDL diagnostic; ordinary kernels continue to use the normal idle path.
+	if (smp_get_num_cpus() == 64) {
+		cpu_pause();
+		return;
+	}
+#endif
+
 	if (sCPUIdleModule != NULL)
 		sCPUIdleModule->cpuidle_idle();
 	else
 		arch_cpu_idle();
 }
+// PIONEER_IDLE_PROFILE_END
 
 
 void

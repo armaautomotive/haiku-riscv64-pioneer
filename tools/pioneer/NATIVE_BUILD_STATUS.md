@@ -2857,3 +2857,40 @@ relay off/rest/on recovery returned fresh default Linux serial and pinned SSH
 by 02:13 UTC October 15: all 64 CPUs, empty kexec, Samsung journal CLEAN. No
 additional power pulse was sent while waiting for its delayed startup output.
 Revision 4 is not yet hardware-tested; P100A compute and firmware untouched.
+
+Revision-4 session `smp64-memory128-kdl4-nosd1-20261014` began at 02:15 UTC
+October 15, boundary 12032565. All main2 stages completed in 22,553,769 us.
+Pinned SSH returned 64 CPUs and 137,034,936,320 bytes. The 4096 MiB/64-worker
+memory sample began and spawned through thread 494, but stalled with no PASS.
+The timer entered KDL; this time the four nontrapped CPUs were 60-63. The
+fixed GDB reader successfully returned checksum-verified bounded memory reads,
+including the trap bitmap, running-thread records, IPI fields and 4096 bytes
+of the nontrapped worker's kernel stack; no UART corruption recurred.
+CPU 62 ran thread 493 (state RUNNING); CPUs 60/61/63 ran idle threads 61/62/64.
+Those CPUs' IPI counters all read 0x14a67, and CPU 62 had a queued local
+message. The shared broadcast-list lock read zero, not an owned spinlock.
+The saved stack contains VM-fault/scheduler/ICI frames, but no live registers
+were captured for CPU 62, so stale frames must not be called its proven live
+PC. Different affected quad groups make a fixed bad-CPU diagnosis unsupported.
+
+Detached the memory reader back to KDL and requested `reboot`. Default Linux
+returned with pinned SSH, 64 CPUs, empty kexec and source BFS CLEAN; no relay
+cycle was needed. This is debugger/firmware recovery, not a synced userspace
+shutdown. No card execution or firmware change occurred.
+
+Prepared a separate idle-wakeup isolation comparison. Only an explicit
+HAIKU_PIONEER_SPIN_IDLE=1 RISC-V build, also requiring the timed KDL build,
+bypasses WFI/idle-module entry on exactly 64 CPUs. Other CPU counts and all
+ordinary builds retain the existing idle path. Production-body tests run both
+opted-in and ordinary variants with/without an idle module; cross-disassembly
+confirms the private 64-CPU branch skips WFI. This tests a hypothesis; it is
+not a confirmed cause or permanent fix. Private comparison kernel SHA:
+`80a0c240387719e32411079e5bea528c50fcbb671169bbe46acc07bd3ade23b4`.
+Fresh verified RAM bundle:
+`657e8dea921ce3a0c8a2526c606065051bdcf39088078f3c2fb642009bf401f4`.
+HPKG: `0daa5b21c1331d689d95645ccabcd0082dc4cba448a2df24fbed680c83875dd5`.
+The ordinary build was rebuilt with both private options absent. Its SHA is
+`3bdfd5ddc0690ebdbb46ddbe05dbf52d7de75ae81b1e1d80c7b6f32873c6ff04`;
+it retains WFI/no CPU-count bypass in disassembly and has no timer markers.
+It differs from the preceding ordinary checksum, so byte identity is not
+claimed. The private idle comparison has not yet run on the board.

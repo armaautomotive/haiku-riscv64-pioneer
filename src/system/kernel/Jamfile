@@ -8,6 +8,17 @@ if $(HAIKU_PIONEER_KDL_TIMER) = 1 {
 	ObjectDefines main.cpp : PIONEER_KDL_TIMER ;
 }
 
+# Bounded private comparison for a missing idle-hart wakeup; never the default.
+if $(HAIKU_PIONEER_SPIN_IDLE) = 1 {
+	if $(TARGET_ARCH) != riscv64 {
+		Exit "HAIKU_PIONEER_SPIN_IDLE requires riscv64" ;
+	}
+	if $(HAIKU_PIONEER_KDL_TIMER) != 1 {
+		Exit "HAIKU_PIONEER_SPIN_IDLE requires the timed diagnostic" ;
+	}
+	ObjectDefines cpu.cpp : PIONEER_DIAGNOSTIC_SPIN_IDLE ;
+}
+
 {
 	local defines =
 		HAIKU_ARCH=\\\"$(TARGET_ARCH)\\\"

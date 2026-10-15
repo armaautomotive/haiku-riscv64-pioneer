@@ -2,27 +2,27 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [PINNED_PROFILE] (default: active-map-control; explicit profiles are listed in this script)'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 # PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN
 private_nosd=0
 journal_view=0
 case "$profile" in
- memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control) private_nosd=1;;
+ memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control) private_nosd=1;;
 esac
 case "$profile" in
- memory8-journal-recovery-control|memory128-kdl-journal-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-journal-control) journal_view=1;;
+ memory8-journal-recovery-control|memory128-kdl-journal-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-journal-control) journal_view=1;;
 esac
 # PIONEER_PRIVATE_PROFILE_FLAGS_END
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 if [ "$profile" = memory8-journal-recovery-control ]; then
  [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
 fi
-case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control)
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control)
  [ "$cpu_count" = 64 ] || fail 'Private KDL diagnostic requires 64 CPUs'
  ;;
 esac
@@ -94,6 +94,15 @@ case "$profile" in
   image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
   bundle=$base/smp-kernel-bundle-memory-kdl-timer-4/samsung-ram.bfs
   bundle_hash=faa302273e1aa04048c9ab1da8749f41b09b4c144c7b3031769f63b5c70db023
+  memory_gib=128
+  ;;
+ memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control)
+  # Bounded wakeup comparison only. All 64 CPUs/RAM remain exposed; idle
+  # harts spin instead of WFI until the same 120-second diagnostic halt.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-spin-idle-5/samsung-ram.bfs
+  bundle_hash=657e8dea921ce3a0c8a2526c606065051bdcf39088078f3c2fb642009bf401f4
   memory_gib=128
   ;;
  *) fail 'Unknown pinned kernel profile';;

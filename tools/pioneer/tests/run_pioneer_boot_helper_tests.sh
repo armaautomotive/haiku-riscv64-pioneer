@@ -12,7 +12,7 @@ sh -n "$journal_script"
 if sh "$journal_script" ../unsafe > /dev/null 2>&1; then exit 1; fi
 if sh "$journal_script" session extra > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" prepare session 64 memory8-journal-recovery-control > /dev/null 2>&1; then exit 1; fi
-for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-control memory128-kdl4-nosd-journal-control; do
+for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-control memory128-kdl4-nosd-journal-control memory128-kdl5-spin-idle-nosd-control memory128-kdl5-spin-idle-nosd-journal-control; do
  if sh "$smp_script" prepare session 2 "$profile" > /dev/null 2>&1; then exit 1; fi
 done
 awk '
@@ -25,11 +25,11 @@ for profile in active-map-control memory128-map-order-control memory128-kdl-cont
  . "$temporary/private_flags.inc"
  [ "$private_nosd:$journal_view" = 0:0 ]
 done
-for profile in memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl4-nosd-control; do
+for profile in memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl4-nosd-control memory128-kdl5-spin-idle-nosd-control; do
  . "$temporary/private_flags.inc"
  [ "$private_nosd:$journal_view" = 1:0 ]
 done
-for profile in memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-journal-control; do
+for profile in memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-journal-control memory128-kdl5-spin-idle-nosd-journal-control; do
  . "$temporary/private_flags.inc"
  [ "$private_nosd:$journal_view" = 1:1 ]
 done

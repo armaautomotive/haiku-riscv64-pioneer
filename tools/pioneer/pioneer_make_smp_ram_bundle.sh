@@ -53,7 +53,12 @@ case "${1:-current}" in
   candidate=$base/smp-kernel-memory-kdl-timer-4/kernel_riscv64
   kernel_hash=9d31e4649f0ac4b9fcfed91dfefb4d911998b10ed7d0f94e2569e375f4ac5ba0
   ;;
- *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control|active-map-control|memory-control|memory-map-order-control|memory-kdl-control|memory-kdl3-control|memory-kdl4-control]' >&2; exit 2;;
+ memory-kdl5-spin-idle-control)
+  run=$base/smp-kernel-bundle-memory-kdl-spin-idle-5
+  candidate=$base/smp-kernel-memory-kdl-spin-idle-5/kernel_riscv64
+  kernel_hash=80a0c240387719e32411079e5bea528c50fcbb671169bbe46acc07bd3ade23b4
+  ;;
+ *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control|active-map-control|memory-control|memory-map-order-control|memory-kdl-control|memory-kdl3-control|memory-kdl4-control|memory-kdl5-spin-idle-control]' >&2; exit 2;;
 esac
 [ "$#" -le 1 ]
 source=$base/p100a-root-probe-2/samsung-private.hpkg
