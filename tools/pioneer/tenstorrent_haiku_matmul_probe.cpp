@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 			" entry/code/park/results %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32
 			" reset/running %08" PRIx32 "/%08" PRIx32 "; metadata only\n",
 			configSmoke ? "config-only" : "matmul",s.version,s.code_words,s.footprint_words,s.entry,s.code_base,s.park_pc,s.results_base,s.reset_mask,s.running_mask);
-		return s.version == (configSmoke ? 4U : 3U) && s.code_words == 147 && s.footprint_words == 407 && s.entry == 0x6000
+		return s.version == (configSmoke ? 6U : 5U) && s.code_words == 160 && s.footprint_words == 420 && s.entry == 0x6000
 			&& s.code_base == 0x70000 && s.park_pc == TT_TENSIX_PARK_PC && s.results_base == 0x17f800
 			&& s.reset_mask == 0x87ffff && s.running_mask == 0x46800 ? 0 : 1;
 	}

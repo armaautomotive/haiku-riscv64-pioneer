@@ -62,6 +62,9 @@ thread_config:
 	sw zero, 24(s2)
 	lw t1, 24(s2)
 	addi zero, t1, 0
+	sw zero, 28(s2) /* SFPU stack-address base */
+	lw t1, 28(s2)
+	addi zero, t1, 0
 	sw zero, 880(s2) /* global Dst row remap/swizzle disabled */
 	lw t1, 880(s2)
 	addi zero, t1, 0
@@ -81,20 +84,32 @@ fixture:
 	li t0, 0x40000000 /* fixture 1: A=2, B=3 */
 	li t1, 0x40400000
 fill_inputs:
-	li t2, 0xffbd8000
-	li t3, 256 /* A: sixteen rows, sixteen columns */
+	/* Fill FP32 Dst via the SFPU, not direct RISC-to-Dst stores. Two
+	 * SFPSTOREs (even/odd columns) cover each group of four rows.
+	 */
+	srli t0, t0, 16
+	li t2, 0x71000000 /* SFPLOADI LReg0, BF16 immediate -> FP32 */
+	or t0, t0, t2
+	sw t0, 0(s0)
+	srli t1, t1, 16
+	li t2, 0x71100000 /* SFPLOADI LReg1 */
+	or t1, t1, t2
+	sw t1, 0(s0)
+	li t0, 0x72030000 /* SFPSTORE LReg0, FP32, AddrMod0, Dst row 0 */
+	li t2, 8 /* A: sixteen rows, sixteen columns */
 fill_a:
-	sw t0, 0(t2)
-	addi t2, t2, 4
-	addi t3, t3, -1
-	bne t3, zero, fill_a
-	li t3, 128 /* B: eight rows, sixteen columns */
+	sw t0, 0(s0)
+	addi t0, t0, 2
+	addi t2, t2, -1
+	bne t2, zero, fill_a
+	li t0, 0x72130010 /* SFPSTORE LReg1, FP32, AddrMod0, Dst row 16 */
+	li t2, 4 /* B: eight rows, sixteen columns */
 fill_b:
-	sw t1, 0(t2)
-	addi t2, t2, 4
-	addi t3, t3, -1
-	bne t3, zero, fill_b
-	fence
+	sw t0, 0(s0)
+	addi t0, t0, 2
+	addi t2, t2, -1
+	bne t2, zero, fill_b
+	jal ra, drain /* drain SFPU writes before ZEROACC or MOVD2A/B */
 	/* Only output rows are made undefined. Do not ZEROACC input rows:
 	 * their validity was established by the prior explicit reset.
 	 */

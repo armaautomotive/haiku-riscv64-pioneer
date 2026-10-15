@@ -832,7 +832,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
-		const tt_matmul_support support = {operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT ? 4U : 3U,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
+		const tt_matmul_support support = {operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT ? 6U : 5U,TT_TENSIX_CODE_WORDS,TT_TENSIX_IMAGE_WORDS,0x6000,0x70000,TT_TENSIX_PARK_PC,0x17f800,0x87ffff,0x46800};
 		release_sem(sLock);
 		return user_memcpy(data,&support,sizeof(support));
 	}

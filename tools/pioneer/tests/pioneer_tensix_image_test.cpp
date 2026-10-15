@@ -22,10 +22,11 @@ static uint32_t Word(const std::vector<uint8_t>& b, unsigned i) {
 struct Machine {
 	uint32_t regs[32] = {}, pc = 0x6000, l1[TT_TENSIX_IMAGE_WORDS] = {}, config[224] = {}, thread[68] = {};
 	float dst[64][16] = {}, a[16][16] = {}, b[8][16] = {};
+	float lreg[2] = {};
 	bool valid[64], ownerA = false, ownerB = false, drained = true, pendingDrainStore = false;
 	bool dropMatrix = false;
 	const bool configSmoke;
-	unsigned matrixInstructions = 0, drains = 0, configWrites = 0, inputWrites = 0, outputReads = 0, steps = 0;
+	unsigned matrixInstructions = 0, drains = 0, configWrites = 0, inputWrites = 0, vectorWrites = 0, outputReads = 0, steps = 0;
 	Machine(bool configOnly = false) : configSmoke(configOnly) {
 		// Explicit pre-launch coprocessor reset reverts ZEROACC validity.
 		for (unsigned i = 0; i < 64; i++) valid[i] = true;
@@ -44,6 +45,20 @@ struct Machine {
 		} else if (op == 0x3700000f) {
 			// All increments are zero and all RWCs are reset by this exact opcode.
 			assert(thread[0] == 0);
+		} else if (opcode == 0x71) {
+			unsigned reg = (op >> 20) & 15;
+			assert(reg < 2 && ((op >> 16) & 15) == 0);
+			lreg[reg] = Float((op & 65535) << 16);
+			assert(lreg[reg] == 1 || lreg[reg] == 2 || lreg[reg] == 3);
+		} else if (opcode == 0x72) {
+			unsigned reg = (op >> 20) & 15, address = op & 1023;
+			assert(reg < 2 && (op & 0x000ffc00) == 0x00030000 && (address & 1) == 0);
+			assert(address < 24 && config[6] == 0 && config[7] == 0 && thread[1] == 0 && thread[36] == 0);
+			for (unsigned lane = 0; lane < 32; lane++) {
+				unsigned row = (address & ~3U) + lane/8, col = 2*(lane&7) + ((address&2) != 0);
+				assert(row < 24 && valid[row]);
+				dst[row][col] = lreg[reg]; vectorWrites++;
+			}
 		} else if (opcode == 0x10) {
 			assert((op & 0xffffff00) == 0x10000000 && (op & 255) >= 32 && (op & 255) < 40);
 			valid[op & 255] = false;
@@ -59,7 +74,7 @@ struct Machine {
 		else if (op == 0x43800007) ownerB = true;
 		else if (op == 0x26000020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
-			assert(config[0] == 0x42b5 && config[1] == 0x20aa0000 && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[220] == 0);
+			assert(config[0] == 0x42b5 && config[1] == 0x20aa0000 && config[2] == 0 && config[3] == 0 && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
@@ -76,11 +91,11 @@ struct Machine {
 		if (address == 0xffe80004) { assert(value == 0); pendingDrainStore = true; return; }
 		if (address >= 0xffef0000 && address <= 0xffef0370) {
 			assert(drained); unsigned offset = address-0xffef0000;
-			assert(offset == 0 || offset == 4 || offset == 8 || offset == 12 || offset == 24 || offset == 880);
+			assert(offset == 0 || offset == 4 || offset == 8 || offset == 12 || offset == 24 || offset == 28 || offset == 880);
 			config[offset/4] = value; configWrites++; return;
 		}
 		if (address >= 0xffbd8000 && address < 0xffbd8600) {
-			assert(!configSmoke);
+			assert(false && "No direct RISC-to-Dst input stores in this image");
 			assert(drained && config[3] == 0); unsigned index = (address-0xffbd8000)/4;
 			assert(value == Bits(1) || value == Bits(2) || value == Bits(3));
 			dst[index/16][index%16] = Float(value); inputWrites++; return;
@@ -94,7 +109,7 @@ struct Machine {
 		if (address == 0xffe80004) { assert(pendingDrainStore); pendingDrainStore = false; drained = true; drains++; return 0xdeadbeef; }
 		if (address >= 0xffef0000 && address <= 0xffef0370) {
 			assert(drained); unsigned offset = address-0xffef0000;
-			assert(offset == 0 || offset == 4 || offset == 8 || offset == 12 || offset == 24 || offset == 880);
+			assert(offset == 0 || offset == 4 || offset == 8 || offset == 12 || offset == 24 || offset == 28 || offset == 880);
 			return config[offset/4];
 		}
 		if (address >= 0xffbd8800 && address < 0xffbd8a00) {
@@ -115,7 +130,7 @@ struct Machine {
 			if (op == 0x37) { result = instruction & 0xfffff000; write = true; }
 			else if (op == 0x13) {
 				if (f3 == 0) result = regs[rs1] + imm;
-				else { assert(f3 == 1 && (instruction>>25) == 0); result = regs[rs1] << (instruction>>20 & 31); }
+				else { assert((f3 == 1 || f3 == 5) && (instruction>>25) == 0); result = f3 == 1 ? regs[rs1] << (instruction>>20 & 31) : regs[rs1] >> (instruction>>20 & 31); }
 				write = true;
 			} else if (op == 0x33) {
 				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 6));
@@ -154,10 +169,10 @@ int main(int argc, char** argv)
 	assert(configCode.size() == code.size());
 	for (unsigned i = 0; i < TT_TENSIX_CODE_WORDS; i++) assert(Word(configCode,i*4) == BlackholeTensixImageWord(i+1,true));
 	assert(BlackholeTensixImageAddress(TT_TENSIX_IMAGE_WORDS) == UINT32_MAX);
-	Machine m; m.Run(); assert(m.Correct() && m.matrixInstructions == 2 && m.inputWrites == 768 && m.outputReads == 256 && m.drains >= 10);
+	Machine m; m.Run(); assert(m.Correct() && m.matrixInstructions == 2 && m.inputWrites == 0 && m.vectorWrites == 768 && m.outputReads == 256 && m.drains == 13);
 	Machine disabled; disabled.dropMatrix = true; disabled.Run(); assert(!disabled.Correct());
 	Machine configOnly(true); configOnly.Run();
-	assert(configOnly.Correct() && configOnly.matrixInstructions == 0 && configOnly.inputWrites == 0 && configOnly.outputReads == 0 && configOnly.configWrites == 6 && configOnly.drains == 4);
+	assert(configOnly.Correct() && configOnly.matrixInstructions == 0 && configOnly.inputWrites == 0 && configOnly.vectorWrites == 0 && configOnly.outputReads == 0 && configOnly.configWrites == 7 && configOnly.drains == 4);
 	assert(configOnly.config[0] == 0x42b5 && configOnly.config[1] == 0x20aa0000 && configOnly.thread[2] == 1 && configOnly.thread[3] == 1);
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }

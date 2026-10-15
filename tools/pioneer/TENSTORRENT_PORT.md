@@ -842,6 +842,36 @@ exclusive KMD ownership, mandatory pinned host DMA, and BAR4 DRAM windows.
 Its source is retained in an ignored no-checkout audit clone; no upstream
 build, firmware-loader or installation script was executed.
 
+### October 14: SFPU-input alternative still loses target readbacks
+
+Replaced direct RISC-to-Dst input stores with SFPLOADI/SFPSTORE fills: all
+24 input rows are written on the vector unit, with an explicit completion
+drain before output ZEROACC or MOVD2A/B. Explicitly clears the SFPU stack
+address base as well. The 640-byte image has 160 code words, 420 preserved
+words, park PC `70258` and final-wait return PC `70240`. Matrix/config-only
+metadata versions are now 5/6, so old metadata checks refuse the changed
+image. The independent decoder verifies all assembled bytes, both nonzero
+matrix reference fixtures, 768 SFPU input writes, 256 actual output reads,
+13 drains and NO direct RISC input store. This functional test takes 2,401
+scalar steps; it still does not model hardware timing. Fault/rollback and
+seven-bank GDDR policy regressions pass.
+
+At 22:39 local October 14 (05:39 UTC October 15), the new config-only control
+PASSED on silicon, all restorations 1/1/1 and recovery 0. After matching
+matrix metadata, one SFPU-input matrix trial failed with the same early
+unexpected zero reset/PC/L1 readbacks: state 7, polls 2,
+started/completed/stopped 1/0/0, no fixture/marker, L1/TLB/PCI restored
+0/1/0, commands 0000/0000 and cold recovery 1. No subsequent card operation
+or module reload was attempted. Haiku was still responsive with all 64 CPUs
+and full RAM; ordinary shutdown was requested and a relay cold recovery
+started. Bypassing direct input stores did NOT resolve the failure.
+
+Native artifacts/backups: `/boot/home/pioneer-p100a-20261014/sfpu-matmul-1/`.
+Driver SHA `d9b1586a8609b7388ac84b41e2bf3c3bb987695df17f3cdc75c9c9f726d869d9`;
+CLI SHA `248bb9c1d04b723411e30e2aa30f4de9b742f8181d90b1a45345a6f8acd7664c`.
+Next audit: the normal ARC power/clock initialization used before compute,
+against the installed 18.5.0 firmware, not speculative firmware flashing.
+
 Download pinned official sources with:
 
 ```sh
