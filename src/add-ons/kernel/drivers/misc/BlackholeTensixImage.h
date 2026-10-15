@@ -2,6 +2,7 @@
 #ifndef BLACKHOLE_TENSIX_IMAGE_H
 #define BLACKHOLE_TENSIX_IMAGE_H
 #include <stdint.h>
+#include "BlackholeTensixUnpackImage.h"
 
 // Original fixed TRISC0 program, separately assembled and decoded by tests.
 // No firmware upload API. Compute context on the sole idle tile is reset;
@@ -12,17 +13,23 @@ enum {
 	TT_TENSIX_STATUS_INDEX = 1 + TT_TENSIX_CODE_WORDS + TT_TENSIX_OUTPUT_WORDS,
 	TT_TENSIX_PARK_PC = 0x70258, TT_TENSIX_FINAL_PHASE = 0x70240
 };
-static inline uint32_t BlackholeTensixImageAddress(unsigned index)
+static inline unsigned BlackholeTensixCodeWords(unsigned stage) { if (stage >= 16) return TT_UNPACK_CODE_WORDS; return TT_TENSIX_CODE_WORDS; }
+static inline unsigned BlackholeTensixImageWords(unsigned stage) { if (stage >= 16) return TT_UNPACK_IMAGE_WORDS; return TT_TENSIX_IMAGE_WORDS; }
+static inline unsigned BlackholeTensixStatusIndex(unsigned stage) { return 1 + BlackholeTensixCodeWords(stage) + TT_TENSIX_OUTPUT_WORDS; }
+static inline uint32_t BlackholeTensixParkPc(unsigned stage) { if (stage >= 16) return TT_UNPACK_PARK_PC; return TT_TENSIX_PARK_PC; }
+static inline uint32_t BlackholeTensixFinalPhase(unsigned stage) { if (stage >= 16) return TT_UNPACK_FINAL_PHASE; return TT_TENSIX_FINAL_PHASE; }
+static inline uint32_t BlackholeTensixImageAddress(unsigned index, unsigned stage = 0)
 {
 	if (index == 0) return 0x6000;
-	if (index <= TT_TENSIX_CODE_WORDS) return 0x70000 + (index - 1) * 4;
-	index -= 1 + TT_TENSIX_CODE_WORDS;
+	if (index <= BlackholeTensixCodeWords(stage)) return 0x70000 + (index - 1) * 4;
+	index -= 1 + BlackholeTensixCodeWords(stage);
 	if (index < TT_TENSIX_OUTPUT_WORDS) return 0x17f800 + index * 4;
 	index -= TT_TENSIX_OUTPUT_WORDS;
 	return index < 3 ? 0x17ffc0 + index * 4 : UINT32_MAX;
 }
 static inline uint32_t BlackholeTensixImageWord(unsigned index, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
+	if (sfpuSmoke >= 16) return BlackholeTensixUnpackImageWord(index,sfpuSmoke);
 	uint32_t address = BlackholeTensixImageAddress(index);
 	if (((sfpuSmoke >= 7 && sfpuSmoke <= 9) || (sfpuSmoke >= 11 && sfpuSmoke <= 15)) && address >= 0x70170 && address <= 0x701d4) {
 		// Same-sized independent kernel-style handoff-before-MOVD2 prefix.

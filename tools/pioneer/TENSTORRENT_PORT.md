@@ -2,7 +2,11 @@
 
 ## Status
 
-Source/feasibility investigation started 2026-09-15. As of October 14,
+Source/feasibility investigation started 2026-09-15. On October 15, a fixed
+one-tile BF16-input/FP32-output matrix fixture passed all 256 numerical
+results twice consecutively under Haiku, with verified L1/TLB/PCI restoration.
+This is a hardware matrix primitive, not LLM inference or a general model
+runtime. See the standard L1-unpack record below. As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
 mapping reads the card's NoC identification register successfully. A fixed
@@ -16,7 +20,7 @@ health snapshot, not a memory stress test or working accelerator runtime.
 One stopped Tensix tile also passes a reversible 64-byte L1 pattern test,
 including verification of the original bytes after restoration.
 The test restores the card and bridge configuration exactly; DMA has never
-been enabled. There is no functioning compute driver/runtime yet. See the
+been enabled. There is no general-purpose model compute runtime yet. See the
 live-test records below. Samsung's installed OS package, card firmware,
 and default Linux boot remain unchanged.
 
@@ -1130,6 +1134,67 @@ left untouched, normal shutdown and relay power-off completed. Artifacts
 CLI SHA `29f8a6b8dd3010c6826878e5eba28cac5df7f30a2b40eff4fb8eb332642c52ec`.
 Next investigate the standard bounded L1-to-SrcA/B UNPACR path rather than
 treating another guessed standalone handoff encoding as a fix.
+
+### October 15: first repeated numerical matrix success via normal L1 unpack
+
+Added a separate fixed TRISC0 program using normal uncompressed BF16
+L1-to-SrcA/B UNPACR loads, FP32 arithmetic and RISC Dst readback. It issues
+no device NoC requests, host DMA, ARC commands, packer or firmware updates.
+The sole idle tile's compute context is deliberately reinitialized, not
+preserved. Original L1 words remain kernel-private and are restored only
+after proven completion/stop. Legacy images retain their original layout.
+
+New image: 648 words covering code/private inputs, 908 total preserved
+words (3,632 bytes), park `703bc`, final wait return `703a4`. Code ends at
+`70404`; A header/payload occupies `70700..7090f`, B `70910..70a1f`, all
+inside the existing 4 KiB mapped code page. No instructions execute from
+input buffers. The snapshot now uses a bounded kernel heap allocation;
+null allocation refuses before writes, avoiding kernel-stack growth.
+Completion blocks ThCon until CFGEXU, both unpackers, FPU and SFPU are
+idle, then polls a GPR63 SETDMAREG marker. No PCBuf completion read is used.
+
+Configuration-only v26 passed first. Initial source tests completed and
+restored but matched only one SrcA element / one broadcast SrcB column.
+Our SETADCXY mask `f` cleared X1, the input end counter, after establishing
+255/127 bounds. Y-only mask `a` preserves those bounds, as the runtime does.
+The decoder now tracks both X channels and rejects clobbered bounds.
+At 07:38 UTC all 256 SrcA and all 256 SrcB values then PASSED.
+
+Matrix returned 19 and 115, consistent with accumulating onto the prior
+SrcB test's 3, then onto 19. The one-row ZEROACC sequence did not invalidate
+this FP32 block on the live card. Switching this L1-only path to the
+runtime's all-Dst clear fixes it. A regression preloads Dst with 3 and
+reproduces 19/115 if the clear is removed. The precise silicon cause of
+the former one-row clear behavior is not established.
+
+At **07:42:36 UTC October 15**, actual MVMUL PASSED all 256 outputs:
+`41800000/42c00000` = 16.0/96.0, complete/stop 1/1, one poll, zero
+mismatches, L1/TLB/PCI restored, recovery 0. An immediate WARM repeat also
+PASSED, three polls, no driver reload or cold recovery. MVMUL releases/flips
+both operand banks; source round-trip controls release them after readback.
+Haiku still reports 64 CPUs and 137,034,936,320 bytes maximum RAM (127.62
+GiB usable). Subsequent operating telemetry passed: idle 800 MHz, 742 mV,
+input 89 W, thermal trips 0, advancing heartbeat, command words 0000/0000.
+
+Passing operations: `548c/d` matrix/metadata v31, `548e/f` SrcA v32,
+`5490/1` SrcB v33, `5492/3` configuration-only v34. CLI flags start
+`--check-l1-unpack-...-support` / `--run-l1-unpack-...-and-reset`.
+Artifacts `/boot/home/pioneer-p100a-20261014/l1-unpack-3/`; driver SHA
+`e4a4f2d212f2de7b06043b9ed5da85c7c708933e85d080f93f0407076fb38a59`,
+CLI SHA `875b4c43db93d4cc5ff2c53e3859d3ec2f4f3cc68b3f49fef8d9cd6ec223abd1`.
+Earlier underfilled v23..26 artifacts: `l1-unpack-1/`, driver
+`70974fb9f229fd181c2cc1a200f674dc9076b7c66212af65cd43de4b080846e2`, CLI
+`e9627ecc3f1dfcdd47ec0180cf9229935724ec5d10c43b1644b96cd39cf3b547`.
+Corrected-bounds/stale-accumulator v27..30: `l1-unpack-2/`, driver
+`e1a4bf366587ddfe0e68229cb9b1340771e06917f99ddcaa4690da2e8e97b4ec`, CLI
+`e5dd619aa86cba47cc8e1880b90561b397936bd4cf7c75ed5dfea5ad7a4ec4ef`.
+
+All 21 code variants are independently assembled/decoded. Tests cover
+rollback, recovery gates, null allocation, ADC bounds and stale Dst; removing
+actual unpacking or MVMUL breaks the numerical reference. This does NOT yet
+prove nonuniform layouts, a scalable runtime or model inference. Next test
+nonuniform data before model-backend integration. Default Linux boot,
+firmware and both SDs remain unchanged; no BAR4 enlargement/bus mastering.
 
 Download pinned official sources with:
 

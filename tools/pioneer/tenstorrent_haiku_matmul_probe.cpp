@@ -49,7 +49,15 @@ int main(int argc, char** argv)
 		{"--check-pure-srcb-support","--run-pure-srcb-and-reset","Pure-SrcB-roundtrip","LLK NOP/format-3 mark-valid; numerical SrcB roundtrip; no multiply",
 		 TT_PCI_PROBE_PIONEER_PURE_SRCB_SUPPORT,TT_PCI_PROBE_PIONEER_PURE_SRCB,21,16,false},
 		{"--check-pure-matmul-support","--run-pure-matmul-and-reset","Pure-matmul","LLK NOP/format-3 mark-valid and two numerical matrix fixtures",
-		 TT_PCI_PROBE_PIONEER_PURE_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_PURE_MATMUL,22,17,false}
+		 TT_PCI_PROBE_PIONEER_PURE_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_PURE_MATMUL,22,17,false},
+		{"--check-l1-unpack-matmul-support","--run-l1-unpack-matmul-and-reset","L1-unpack-matmul","Normal bounded BF16 L1 unpacking and two numerical matrix fixtures",
+		 TT_PCI_PROBE_PIONEER_UNPACK_MATMUL_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_MATMUL,31,18,false},
+		{"--check-l1-unpack-srca-support","--run-l1-unpack-srca-and-reset","L1-unpack-SrcA","Normal L1-to-SrcA and numerical 1.0/2.0 roundtrip; no multiply",
+		 TT_PCI_PROBE_PIONEER_UNPACK_SRCA_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_SRCA,32,19,false},
+		{"--check-l1-unpack-srcb-support","--run-l1-unpack-srcb-and-reset","L1-unpack-SrcB","Normal L1-to-SrcB and numerical 1.0/3.0 roundtrip; no multiply",
+		 TT_PCI_PROBE_PIONEER_UNPACK_SRCB_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_SRCB,33,20,false},
+		{"--check-l1-unpack-config-support","--run-l1-unpack-config-and-reset","L1-unpack-config","Configuration and explicit backend/GPR completion only; no unpack/input/matrix",
+		 TT_PCI_PROBE_PIONEER_UNPACK_CONFIG_SUPPORT,TT_PCI_PROBE_PIONEER_UNPACK_CONFIG,34,21,true}
 	};
 	const Mode* selected = NULL; bool inspect = false;
 	if (argc == 2) for (const Mode& mode : modes) {
@@ -75,8 +83,10 @@ int main(int argc, char** argv)
 			" entry/code/park/results %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32
 			" reset/running %08" PRIx32 "/%08" PRIx32 "; metadata only\n",
 			mode.name,s.version,s.code_words,s.footprint_words,s.entry,s.code_base,s.park_pc,s.results_base,s.reset_mask,s.running_mask);
-		return s.version == mode.metadataVersion && s.code_words == 160 && s.footprint_words == 420 && s.entry == 0x6000
-			&& s.code_base == 0x70000 && s.park_pc == TT_TENSIX_PARK_PC && s.results_base == 0x17f800
+		unsigned stage = mode.metadataVersion >= 31 ? mode.metadataVersion-15 : 0;
+		return s.version == mode.metadataVersion && s.code_words == BlackholeTensixCodeWords(stage)
+			&& s.footprint_words == BlackholeTensixImageWords(stage) && s.entry == 0x6000
+			&& s.code_base == 0x70000 && s.park_pc == BlackholeTensixParkPc(stage) && s.results_base == 0x17f800
 			&& s.reset_mask == 0x87ffff && s.running_mask == 0x46800 ? 0 : 1;
 	}
 	printf("P100A-MATMUL: one idle tile context will be reinitialized; fixed L1 preserved, no DMA or firmware update\n");
@@ -93,7 +103,7 @@ int main(int argc, char** argv)
 		mode.name,m.state,m.started,m.completed,m.stopped,m.context_reset,m.polls,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked);
 	printf("Wait-return-PC/%s/marker %08" PRIx32 "/%" PRIu32 "/%08" PRIx32 " mismatches %" PRIu32 "\n",mode.protocolOnly ? "protocol-count" : "fixtures",m.phase,m.fixtures,m.marker,m.mismatches);
 	printf("Representative output bits %08" PRIx32 "/%08" PRIx32 " (%s); PC %08" PRIx32 "/%08" PRIx32 "\n",
-		m.representative[0],m.representative[1],mode.protocolOnly ? "expected zero footprint, NOT matrix results" : (mode.resultVersion == 14 || mode.resultVersion == 16) ? "expected 3f800000/40400000 = 1.0/3.0, NOT matrix results" : (mode.resultVersion >= 12 && mode.resultVersion <= 15) ? "expected 3f800000/40000000 = 1.0/2.0, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
+		m.representative[0],m.representative[1],mode.protocolOnly ? "expected zero footprint, NOT matrix results" : (mode.resultVersion == 14 || mode.resultVersion == 16 || mode.resultVersion == 20) ? "expected 3f800000/40400000 = 1.0/3.0, NOT matrix results" : ((mode.resultVersion >= 12 && mode.resultVersion <= 15) || mode.resultVersion == 19) ? "expected 3f800000/40000000 = 1.0/2.0, NOT matrix results" : "expected 41800000/42c00000 = 16.0/96.0",m.pc[0],m.pc[1]);
 	printf("Reset before/initialized/running/after %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",
 		m.reset_before,m.reset_initialized,m.reset_running,m.reset_after);
 	printf("Entry/FIFO/sync controls %08" PRIx32 "/%08" PRIx32 "/%08" PRIx32 "\n",m.controls[0],m.controls[1],m.controls[2]);

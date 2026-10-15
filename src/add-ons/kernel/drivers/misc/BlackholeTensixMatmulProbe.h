@@ -24,8 +24,8 @@ static inline uint32_t BlackholeMatmulExpected(unsigned output)
 }
 static inline uint32_t BlackholeMatmulStageExpected(unsigned stage, unsigned output)
 {
-	if (stage == 10 || stage == 11 || stage == 13) return output < 128 ? 0x3f800000U : 0x40000000U;
-	if (stage == 12 || stage == 14) return output < 128 ? 0x3f800000U : 0x40400000U;
+	if (stage == 10 || stage == 11 || stage == 13 || stage == 17) return output < 128 ? 0x3f800000U : 0x40000000U;
+	if (stage == 12 || stage == 14 || stage == 18) return output < 128 ? 0x3f800000U : 0x40400000U;
 	return BlackholeMatmulExpected(output);
 }
 static inline uint32_t BlackholeMatmulTlbWord(unsigned slot, unsigned word)
@@ -42,8 +42,12 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 	tt_tensix_matmul_result& r, bool configSmoke = false, unsigned sfpuSmoke = 0)
 {
 	r = {}; r.version = sfpuSmoke != 0 ? 2 + sfpuSmoke : configSmoke ? 2 : 1; r.l1_restored = r.tlb_restored = 1;
-	if (sfpuSmoke > 15 || (configSmoke && sfpuSmoke != 0)) return false;
-	bool protocolOnly = configSmoke || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10);
+	if (sfpuSmoke > 19 || (configSmoke && sfpuSmoke != 0)) return false;
+	bool protocolOnly = configSmoke || sfpuSmoke == 19 || (sfpuSmoke != 0 && sfpuSmoke != 7 && sfpuSmoke < 10);
+	const unsigned codeWords = BlackholeTensixCodeWords(sfpuSmoke), imageWords = BlackholeTensixImageWords(sfpuSmoke);
+	const unsigned statusIndex = BlackholeTensixStatusIndex(sfpuSmoke);
+	uint32_t* saved = io.MathSavedWords();
+	if (saved == 0) return false; // allocation failure before any device write
 	if (baseline.version != 1 || baseline.state != TT_DRAM_SAMPLE_ROUTES_OK
 		|| baseline.routes_verified != TT_DRAM_BANKS || !baseline.data_restored
 		|| !baseline.tlb_restored || baseline.recovery_required || !BlackholeDramBuildRoutes(baseline)) return false;
@@ -52,7 +56,6 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		if ((r.tlb_before[slot][2] & 0xffffc000) != 0) return false;
 	}
 	r.tlb_restored = 0;
-	uint32_t saved[TT_TENSIX_IMAGE_WORDS] = {};
 	bool modified = false;
 	do {
 		r.state = TT_MATMUL_CORE_CHANGED;
@@ -71,15 +74,15 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 		// No redirected entry, debug FIFO owner or manual-sync bypass.
 		if ((r.controls[0] & 1) != 0 || r.controls[1] != 0 || r.controls[2] != 0) break;
 		if (!BlackholeDramSourceStable(io,baseline)) { r.state = TT_MATMUL_SOURCE_CHANGED; break; }
-		for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) saved[i] = io.MathImageRead(i);
+		for (unsigned i = 0; i < imageWords; i++) saved[i] = io.MathImageRead(i);
 		if (io.ResetRead() != 0x47800) break;
 		modified = true; r.l1_restored = 0;
-		for (unsigned i = 1; i < TT_TENSIX_IMAGE_WORDS; i++) io.MathImageWrite(i,BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
+		for (unsigned i = 1; i < imageWords; i++) io.MathImageWrite(i,BlackholeTensixImageWord(i,configSmoke,sfpuSmoke));
 		if (io.ResetRead() != 0x47800) break;
 		io.MathImageWrite(0,BlackholeTensixImageWord(0,configSmoke,sfpuSmoke));
 		r.state = TT_MATMUL_IMAGE_FAILED;
 		bool imageOkay = true;
-		for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) imageOkay &= io.MathImageRead(i) == BlackholeTensixImageWord(i,configSmoke,sfpuSmoke);
+		for (unsigned i = 0; i < imageWords; i++) imageOkay &= io.MathImageRead(i) == BlackholeTensixImageWord(i,configSmoke,sfpuSmoke);
 		if (!imageOkay) break;
 		r.state = TT_MATMUL_CORE_CHANGED;
 		if (io.ResetRead() != 0x47800) break;
@@ -100,16 +103,16 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 			if ((attempt & 127) == 0) {
 				r.pc[0] = io.MathPcRead(); io.Pause(); r.pc[1] = io.MathPcRead();
 			}
-			r.phase = io.MathImageRead(TT_TENSIX_STATUS_INDEX);
-			r.fixtures = io.MathImageRead(TT_TENSIX_STATUS_INDEX+1);
-			r.marker = io.MathImageRead(TT_TENSIX_STATUS_INDEX+2);
-			if (r.phase == TT_TENSIX_FINAL_PHASE && r.fixtures == 2 && r.marker == 0x4d415431) {
+			r.phase = io.MathImageRead(statusIndex);
+			r.fixtures = io.MathImageRead(statusIndex+1);
+			r.marker = io.MathImageRead(statusIndex+2);
+			if (r.phase == BlackholeTensixFinalPhase(sfpuSmoke) && r.fixtures == 2 && r.marker == 0x4d415431) {
 				io.Pause(); r.pc[0] = io.MathPcRead();
 				io.Pause(); r.pc[1] = io.MathPcRead();
-				if (r.pc[0] == TT_TENSIX_PARK_PC && r.pc[1] == TT_TENSIX_PARK_PC) {
+				if (r.pc[0] == BlackholeTensixParkPc(sfpuSmoke) && r.pc[1] == BlackholeTensixParkPc(sfpuSmoke)) {
 					r.completed = 1;
 					for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) {
-						uint32_t value = io.MathImageRead(1 + TT_TENSIX_CODE_WORDS + i);
+						uint32_t value = io.MathImageRead(1 + codeWords + i);
 						if (i == 0 || i == 128) r.representative[i / 128] = value;
 						uint32_t expected = protocolOnly ? 0U : BlackholeMatmulStageExpected(sfpuSmoke,i);
 						if (value != expected) r.mismatches++;
@@ -140,10 +143,10 @@ bool BlackholeTensixMatmulProbe(IO& io, tt_dram_samples_result& baseline,
 	if (canRestore) {
 		for (unsigned attempt = 0; attempt < 2 && !r.l1_restored; attempt++) {
 			if (io.ResetRead() != 0x47800) break;
-			for (unsigned i = 1; i < TT_TENSIX_IMAGE_WORDS; i++) io.MathImageWrite(i,saved[i]);
+			for (unsigned i = 1; i < imageWords; i++) io.MathImageWrite(i,saved[i]);
 			io.MathImageWrite(0,saved[0]);
 			r.l1_restored = io.ResetRead() == 0x47800;
-			for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) r.l1_restored &= io.MathImageRead(i) == saved[i];
+			for (unsigned i = 0; i < imageWords; i++) r.l1_restored &= io.MathImageRead(i) == saved[i];
 			r.l1_restored &= io.ResetRead() == 0x47800;
 		}
 	}

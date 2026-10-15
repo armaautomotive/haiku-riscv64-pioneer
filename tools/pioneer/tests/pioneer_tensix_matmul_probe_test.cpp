@@ -10,13 +10,15 @@ struct MockMatmul {
 		0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0
 	};
 	uint32_t tlb[2][3] = {{1,2,3},{4,5,6}}, controls[3] = {};
-	uint32_t memory[TT_TENSIX_IMAGE_WORDS], original[TT_TENSIX_IMAGE_WORDS], reset = 0x47800;
+	uint32_t memory[TT_UNPACK_IMAGE_WORDS], original[TT_UNPACK_IMAGE_WORDS], saved[TT_UNPACK_IMAGE_WORDS], reset = 0x47800;
 	unsigned configWrites = 0, imageWrites = 0, resetWrites = 0, resetReads = 0, sourceReads = 0, polls = 0, pauses = 0;
 	unsigned dropConfig = 0, dropImage = 0, dropReset = 0, changeResetAt = 0;
 	bool timeout = false, badPC = false, badMath = false, failRestore = false, sourceChanges = false, failTlbRestore = false;
 	bool everStarted = false, executed = false;
 	bool configOnly = false;
 	unsigned sfpuOnly = 0;
+	bool allocationFails = false;
+	uint32_t* MathSavedWords() { return allocationFails ? nullptr : saved; }
 	unsigned clockEnter = 0, clockLeave = 0;
 	bool enterFails = false, enterUncertain = false, leaveFails = false;
 	bool EnterNormalClock(tt_arc_clock_guard_result& r) {
@@ -30,7 +32,7 @@ struct MockMatmul {
 		r.state = leaveFails ? TT_ARC_CLOCK_RESTORE_FAILED : TT_ARC_CLOCK_RESTORED;
 		return !leaveFails;
 	}
-	MockMatmul() { for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) memory[i] = original[i] = 0xabcd0000 ^ i; }
+	MockMatmul() { for (unsigned i = 0; i < TT_UNPACK_IMAGE_WORDS; i++) memory[i] = original[i] = 0xabcd0000 ^ i; }
 	uint32_t SourceRead(unsigned word) {
 		assert(word < TT_DRAM_SOURCE_WORDS); sourceReads++;
 		return source[word] ^ ((sourceChanges && sourceReads > 16) ? 1U : 0U);
@@ -54,18 +56,18 @@ struct MockMatmul {
 		assert(valid);
 		if (++resetReads == changeResetAt) reset = 0;
 		if (reset == 0x46800 && ++polls == 2 && !timeout) {
-			memory[TT_TENSIX_STATUS_INDEX] = TT_TENSIX_FINAL_PHASE;
-			memory[TT_TENSIX_STATUS_INDEX+1] = 2; memory[TT_TENSIX_STATUS_INDEX+2] = 0x4d415431;
-			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+TT_TENSIX_CODE_WORDS+i] = (configOnly || (sfpuOnly != 0 && sfpuOnly != 7 && sfpuOnly < 10)) ? 0U : BlackholeMatmulStageExpected(sfpuOnly,i);
-			if (badMath) memory[1+TT_TENSIX_CODE_WORDS] ^= 1;
+			memory[BlackholeTensixStatusIndex(sfpuOnly)] = BlackholeTensixFinalPhase(sfpuOnly);
+			memory[BlackholeTensixStatusIndex(sfpuOnly)+1] = 2; memory[BlackholeTensixStatusIndex(sfpuOnly)+2] = 0x4d415431;
+			for (unsigned i = 0; i < TT_TENSIX_OUTPUT_WORDS; i++) memory[1+BlackholeTensixCodeWords(sfpuOnly)+i] = (configOnly || sfpuOnly == 19 || (sfpuOnly != 0 && sfpuOnly != 7 && sfpuOnly < 10)) ? 0U : BlackholeMatmulStageExpected(sfpuOnly,i);
+			if (badMath) memory[1+BlackholeTensixCodeWords(sfpuOnly)] ^= 1;
 			executed = true;
 		}
 		return reset;
 	}
 	uint32_t MathControlRead(unsigned word) { Windows(); assert(word < 3); return controls[word]; }
-	uint32_t MathImageRead(unsigned word) { Windows(); assert(word < TT_TENSIX_IMAGE_WORDS); return memory[word]; }
+	uint32_t MathImageRead(unsigned word) { Windows(); assert(word < BlackholeTensixImageWords(sfpuOnly)); return memory[word]; }
 	void MathImageWrite(unsigned word, uint32_t value) {
-		Windows(); assert(word < TT_TENSIX_IMAGE_WORDS && reset == 0x47800);
+		Windows(); assert(word < BlackholeTensixImageWords(sfpuOnly) && reset == 0x47800);
 		if (everStarted) assert(executed && !timeout && !badPC && !sourceChanges);
 		if (++imageWrites != dropImage && !(failRestore && value == original[word])) memory[word] = value;
 	}
@@ -74,12 +76,12 @@ struct MockMatmul {
 		if (value == 0x87ffff) assert(reset == (everStarted ? 0x46800U : 0x47800U));
 		else if (value == 0x46800) {
 			assert(reset == 0x87ffff && !everStarted);
-			for (unsigned i = 0; i < TT_TENSIX_IMAGE_WORDS; i++) assert(memory[i] == BlackholeTensixImageWord(i,configOnly,sfpuOnly));
+			for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuOnly); i++) assert(memory[i] == BlackholeTensixImageWord(i,configOnly,sfpuOnly));
 			everStarted = true;
 		} else { assert(value == 0x47800 && reset == 0x87ffff && everStarted); }
 		if (++resetWrites != dropReset) reset = value;
 	}
-	uint32_t MathPcRead() { Windows(); return badPC ? 0x70000 : TT_TENSIX_PARK_PC; }
+	uint32_t MathPcRead() { Windows(); return badPC ? 0x70000 : BlackholeTensixParkPc(sfpuOnly); }
 	void Pause() { assert(++pauses < 10000); }
 	bool Restored() { return memcmp(memory,original,sizeof(memory)) == 0; }
 	tt_dram_samples_result Baseline() {
@@ -146,11 +148,15 @@ int main()
 	io = {}; baseline = io.Baseline(); io.sfpuOnly = 2;
 	assert(BlackholeTensixMatmulProbe(io,baseline,r,false,2) && r.version == 4 && r.completed && io.Restored());
 	io = {}; baseline = io.Baseline();
-	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,16) && io.configWrites == 0);
-	for (unsigned stage = 3; stage <= 15; stage++) {
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,20) && io.configWrites == 0);
+	for (unsigned stage = 3; stage <= 19; stage++) {
 		io = {}; baseline = io.Baseline(); io.sfpuOnly = stage;
 		assert(BlackholeTensixMatmulProbe(io,baseline,r,false,stage) && r.version == 2+stage && r.completed && io.Restored());
 	}
+	io = {}; baseline = io.Baseline(); io.sfpuOnly = 16; io.allocationFails = true;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,16) && io.configWrites == 0 && io.imageWrites == 0 && io.resetWrites == 0);
+	io = {}; baseline = io.Baseline(); io.sfpuOnly = 16; io.timeout = true;
+	assert(!BlackholeTensixMatmulProbe(io,baseline,r,false,16) && r.recovery_required && !r.completed && r.stopped && io.imageWrites == TT_UNPACK_IMAGE_WORDS);
 	io = {}; baseline = io.Baseline(); r = {};
 	assert(BlackholeClockedMatmulProbe(io,baseline,r,clock));
 	assert(io.clockEnter == 1 && io.clockLeave == 1 && clock.restored && io.Restored());
