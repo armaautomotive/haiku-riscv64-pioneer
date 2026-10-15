@@ -13,8 +13,10 @@ ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I "$temporary" "$directory/pioneer_kdl_timer_test.cpp" -o "$temporary/test"
 "$temporary/test"
 awk '
- /\/\/ welcome to the machine/ {ap=1}
- /arm_pioneer_diagnostic_kdl_timer\(currentCPU\);/ {calls++; if(!ap) exit 1}
- END {if(calls != 1) exit 1}
+ /this is run for each non boot processor/ {ap=1}
+ ap && /smp_cpu_rendezvous\(&sCpuRendezvous\);/ {ready=1}
+ /arm_pioneer_diagnostic_kdl_timer\(currentCPU\);/ {calls++; if(!ap || !ready) exit 1}
+ ap && /smp_cpu_rendezvous\(&sCpuRendezvous2\);/ {release=1; if(calls != 1) exit 1}
+ END {if(calls != 1 || !release) exit 1}
 ' "$directory/../../../src/system/kernel/main.cpp"
 printf 'PASS: production diagnostic timer uses only AP1/full-memory/64-CPU opt-in, fixed one-shot and explicit debugger halt\n'

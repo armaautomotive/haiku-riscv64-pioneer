@@ -91,6 +91,7 @@ static uint32 sCpuRendezvous3;
 #if defined(__riscv) && defined(PIONEER_KDL_TIMER)
 // PIONEER_DIAGNOSTIC_KDL_TIMER_BEGIN
 static timer sPioneerDiagnosticKDLTimer;
+static int32 sPioneerDiagnosticKDLTimerArmed;
 
 
 static int32
@@ -98,6 +99,7 @@ pioneer_diagnostic_kdl_timer(timer*)
 {
 	// This is a deliberate diagnostic halt, not a detected panic or watchdog
 	// recovery. Keep the timer one-shot so continuing from KDL cannot re-arm it.
+	debug_early_boot_checkpoint("PIONEER-KDL-TIMER: callback entered\n");
 	kernel_debugger("Pioneer opt-in diagnostic: 120-second AP timer");
 	return B_HANDLED_INTERRUPT;
 }
@@ -115,6 +117,22 @@ arm_pioneer_diagnostic_kdl_timer(int currentCPU)
 		pioneer_diagnostic_kdl_timer, 120000000, B_ONE_SHOT_RELATIVE_TIMER);
 	if (status != B_OK)
 		panic("Pioneer diagnostic timer could not be armed");
+	__atomic_store_n(&sPioneerDiagnosticKDLTimerArmed, 1, __ATOMIC_RELEASE);
+}
+
+
+static void
+verify_pioneer_diagnostic_kdl_timer()
+{
+	if (sKernelArgs.num_cpus != 64
+		|| sKernelArgs.arch_args.physMap.size <= UINT64_C(128849018880))
+		return;
+	// Do not rely on the generic rendezvous' plain polling load to publish
+	// this diagnostic state on a weakly ordered CPU.
+	__atomic_thread_fence(__ATOMIC_SEQ_CST);
+	if (__atomic_load_n(&sPioneerDiagnosticKDLTimerArmed, __ATOMIC_ACQUIRE) != 1)
+		panic("Pioneer diagnostic AP1 timer was not armed before release");
+	debug_early_boot_checkpoint("PIONEER-KDL-TIMER: AP1 armed before scheduler release\n");
 }
 // PIONEER_DIAGNOSTIC_KDL_TIMER_END
 #endif
@@ -524,6 +542,9 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 #endif
 			smp_cpu_rendezvous(&sCpuRendezvous2);
 				// release the AP cpus to go enter the scheduler
+#if defined(__riscv) && defined(PIONEER_KDL_TIMER)
+			verify_pioneer_diagnostic_kdl_timer();
+#endif
 		}
 
 		TRACE("starting scheduler on cpu 0 and enabling interrupts\n");
@@ -544,13 +565,15 @@ _start(kernel_args *bootKernelArgs, int currentCPU)
 
 		// wait for all other AP cpus to get to this point
 		smp_cpu_rendezvous(&sCpuRendezvous);
+#if defined(__riscv) && defined(PIONEER_KDL_TIMER)
+		// Arm before the release barrier and scheduler_start(), which can
+		// switch away before returning. CPU 0 verifies the arm after this barrier.
+		arm_pioneer_diagnostic_kdl_timer(currentCPU);
+#endif
 		smp_cpu_rendezvous(&sCpuRendezvous2);
 
 		// welcome to the machine
 		scheduler_start();
-#if defined(__riscv) && defined(PIONEER_KDL_TIMER)
-		arm_pioneer_diagnostic_kdl_timer(currentCPU);
-#endif
 		enable_interrupts();
 	}
 

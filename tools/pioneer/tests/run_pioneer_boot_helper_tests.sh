@@ -12,7 +12,7 @@ sh -n "$journal_script"
 if sh "$journal_script" ../unsafe > /dev/null 2>&1; then exit 1; fi
 if sh "$journal_script" session extra > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" prepare session 64 memory8-journal-recovery-control > /dev/null 2>&1; then exit 1; fi
-for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control; do
+for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-journal-control; do
  if sh "$smp_script" prepare session 2 "$profile" > /dev/null 2>&1; then exit 1; fi
 done
 if sh "$smp_script" prepare ../unsafe 2 > /dev/null 2>&1; then exit 1; fi

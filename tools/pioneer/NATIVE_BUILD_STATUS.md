@@ -2741,3 +2741,53 @@ private-node removal instead of an ineffective status property. Host tests
 exercise the production edit, source/same-inode preservation, exact identity
 refusals, CPU/timebase preservation and the full memory-parser tests on the
 modified DTB. Hardware deployment/result are pending; this is not a claimed fix.
+
+Recovered the unresponsive timed diagnostic by relay after another bounded
+normal reboot timed out. Allowed the longer powered-off interval before one
+on pulse; default Linux returned and pinned SSH verified NVMe root, empty
+kexec slot and P100A command 0000. The timed diagnostic had stopped before
+Samsung root/userspace; the next direct read-only source verification passed.
+
+Staged helper `pioneer_linux_boot_haiku_kdl-nosd-1.sh`, SHA
+`c99e456013abc2747f473febd7b2c5bf9f9139e019daab90910f1f40cebc5ad2`.
+Prepared and started fresh session `smp64-memory128-kdl-nosd1-20261014` at
+01:29 UTC October 15, serial boundary 11297645. Same timed kernel, loader,
+RAM bundle and 64-CPU/128 GiB settings; only the private SD node is omitted.
+Live FDT/default boot/installed package/SD contents/P100A remain unchanged.
+Observe before attributing a result to any particular cause.
+
+That no-SD diagnostic completed all 17 main2 stages: root mounted,
+launch_daemon loaded/resumed, and secondary schedulers enabled. The bootstage
+summary covered 22,037,804 us, ending at 221,087,446 us. Serial then stopped
+after user threads 95/96/97 entered; no SSH, full-memory one-shot result or
+timed debugger banner appeared. This is progress past the SD reset, not a
+working full-memory system or proof that SD caused the other stalls. Normal
+SSH reboot timed out. Relay recovery with a longer off interval restored
+Linux; pinned SSH confirmed all 64 CPUs and 131,976,904 kB RAM, empty kexec.
+
+Review found the first diagnostic armed its timer after scheduler_start(),
+which may switch away before returning. The private revision 3 arms AP1
+between its two rendezvous, before scheduler_start(). CPU 0 requires an
+atomic release/acquire arm flag before its scheduler entry and emits a
+positive arm checkpoint. The callback emits its own checkpoint before KDL.
+This distinguishes failure to arm from failure to reach/print the callback;
+it does not itself fix the underlying runtime stall. Production-body
+sanitizer and source-order tests pass. The regular build, with the opt-in
+absent, is again byte-identical to dab2171f... and contains no timer markers.
+An initial fast touch/rebuild left the diagnostic object unchanged because
+source and object had the same timestamp second; a later forced source
+timestamp update rebuilt the ordinary object successfully.
+
+Private revision-3 kernel SHA:
+`6b40ab26227afaeb77c6a7e7219872cc1a1517e6b925d2bf61ae1853a4da758b`.
+Fresh native bundle `smp-kernel-bundle-memory-kdl-timer-3` passed package-path,
+kernel/ECAM extraction, private BFS checkfs and full HPKG roundtrip checks.
+RAM BFS SHA:
+`04b00965d0b52bb75b08863c805cc96b604e241ae2bb10906ce68dfd01b078e3`.
+HPKG SHA:
+`836023ebdd6fc6abd128c0ffee127de6deb2bb87e5f036aa76cf7a341398e85f`.
+The explicit `memory128-kdl3-nosd-journal-control` pairs those fresh artifacts
+with the unchanged memory-2 loader, removes only the private SD node, and
+verifies any pending source journal through the existing read-only/COW
+procedure. It requires 64 CPUs; existing profiles/defaults remain unchanged.
+Revision 3 has not yet been boot-tested. No P100A compute or firmware action.
