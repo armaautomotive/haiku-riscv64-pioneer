@@ -30,7 +30,8 @@ ModelManager::ModelManager()
 	fDetails = new BTextView("model details");
 	fDetails->MakeEditable(false);
 	fDetails->SetViewUIColor(B_PANEL_BACKGROUND_COLOR);
-	fDetails->SetExplicitMinSize(BSize(600, 170));
+	BScrollView* details = new BScrollView("model explanation", fDetails, 0, false, true);
+	details->SetExplicitMinSize(BSize(600, 170));
 	fStatus = new BStringView("model status", "Select a model. Downloads never start automatically.");
 	fProgress = new BStatusBar("model progress"); fProgress->SetMaxValue(100);
 	fInstall = new BButton("install_model", "Install from Hugging Face", new BMessage(kInstall));
@@ -39,9 +40,9 @@ ModelManager::ModelManager()
 	fCancel->SetEnabled(false);
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
-		.Add(new BStringView("backend", "Chat backend: CPU. P100A full-model chat support is still in development."))
+		.Add(new BStringView("backend", "Qwen3 chat: CPU. TinyStories: experimental P100A + CPU story completion (not Qwen)."))
 		.Add(new BScrollView("model list", fList, 0, false, true))
-		.Add(fDetails, 1)
+		.Add(details, 1)
 		.Add(fProgress)
 		.AddGroup(B_HORIZONTAL).Add(fInstall).Add(fSelect).AddGlue().Add(fCancel).End()
 		.Add(fStatus);
@@ -84,11 +85,18 @@ ModelManager::Details()
 	if (index < 0) return;
 	const AssistantModel& model = kAssistantModels[index];
 	BString text;
-	text.SetToFormat("%s\nDownload: %.2f GiB   |   License: Apache-2.0\nSource: https://huggingface.co/%s\n",
-		model.name, (double)model.bytes / (1024.0 * 1024 * 1024), model.repository);
+	text.SetToFormat("%s\nDownload: %.2f MiB   |   License: %s\nSource: https://huggingface.co/%s\n",
+		model.name, (double)model.bytes / (1024.0 * 1024),
+		(size_t)index == kAssistantTinyModel ? "MIT" : "Apache-2.0", model.repository);
 	text << "File: " << AssistantModelPath(index) << "\n";
 	text << "Installation needs twice the download size plus 64 MiB free.\n";
-	if (model.compatible)
+	if ((size_t)index == kAssistantTinyModel)
+		text << "Includes the pinned 6 KiB tokenizer; both files require SHA-256 verification.\n"
+			"Use selects P100A AND TinyStories together. This tiny base model continues\n"
+			"short ASCII stories; it is NOT a chat assistant or a Qwen accelerator.\n"
+			"All projections run on-card; attention/KV/norms and verification use CPU.\n"
+			"8 output tokens; roughly 15 seconds per prompt/output token. Stop is batch-safe.";
+	else if (model.compatible)
 		text << "Qwen3 / CPU backend. Larger models use more RAM and are slower;\n"
 			"0.6B has been tested for chat. Other sizes need on-device inference testing.\n"
 			"SHA-256 verification is required before installation and activation.";
@@ -97,6 +105,7 @@ ModelManager::Details()
 			"does not support this architecture, and the P100A chat backend is unfinished.\n"
 			"P100A TinyStories experiments are not a general chat backend.";
 	fDetails->SetText(text.String());
+	fSelect->SetLabel((size_t)index == kAssistantTinyModel ? "Use on P100A (story mode)" : "Use on CPU (chat)");
 	bool present = AssistantModelPresent(index);
 	fInstall->SetEnabled(!fDownloading && model.compatible && !present);
 	fSelect->SetEnabled(!fDownloading && model.compatible && present);
@@ -199,7 +208,8 @@ ModelManager::MessageReceived(BMessage* message)
 			else if (*path != '\0') {
 				title << " — active: " << BPath(path).Leaf();
 				if (fSelecting) {
-					BString status("Active on CPU: "); status << BPath(path).Leaf();
+					const char* backend = "unknown"; reply.FindString("backend_id", &backend);
+					BString status("Active on "); status << backend << ": " << BPath(path).Leaf();
 					fStatus->SetText(*error ? error : status.String());
 				}
 			}

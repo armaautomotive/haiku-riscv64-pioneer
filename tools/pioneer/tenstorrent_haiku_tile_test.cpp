@@ -10,8 +10,14 @@ static double Seconds()
 }
 int main(int argc, char** argv)
 {
+	if (argc == 2 && strcmp(argv[1],"--check-support") == 0) {
+		PioneerTileBackend backend;
+		if (!backend.Open() || !backend.CheckBatchSupport()) return 1;
+		puts("PASS: ABI 39/40 metadata and driver cold-recovery gate; no card transaction submitted");
+		return 0;
+	}
 	if (argc != 2 || (strcmp(argv[1],"--run-data-tiles-and-reset") != 0 && strcmp(argv[1],"--run-batched-data-tiles-and-reset") != 0)) {
-		fprintf(stderr,"Usage: %s --run-data-tiles-and-reset | --run-batched-data-tiles-and-reset\nRuns eight data-only BF16 matrices, four fidelity phases, all-element FP32 reference.\nOne idle tile context reinitialized; no NoC, host DMA or firmware changes.\n",argv[0]); return 2;
+		fprintf(stderr,"Usage: %s --check-support | --run-data-tiles-and-reset | --run-batched-data-tiles-and-reset\nRuns eight data-only BF16 matrices, four fidelity phases, all-element FP32 reference.\nOne idle tile context reinitialized; no NoC, host DMA or firmware changes.\n",argv[0]); return 2;
 	}
 	bool batched = strcmp(argv[1],"--run-batched-data-tiles-and-reset") == 0;
 	setvbuf(stdout,NULL,_IONBF,0);

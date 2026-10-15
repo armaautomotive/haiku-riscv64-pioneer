@@ -19,7 +19,14 @@ for assistant_lib in "$assistant_build"/build_packages/gcc_syslibs-*/lib; do
 	set -- "$@" -L"$assistant_lib"
 done
 
-"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
+for assistant_variant in normal p100a-preview; do
+assistant_variant_flags=
+assistant_variant_output=$assistant_output
+if [ "$assistant_variant" = p100a-preview ]; then
+	assistant_variant_flags=-DASSISTANT_P100A_PREVIEW
+	assistant_variant_output=${assistant_output}P100A
+fi
+"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar $assistant_variant_flags \
 	"$@" -B"$assistant_release/system/glue/" \
 	-L"$assistant_release/kits" -L"$assistant_release/system/libroot" \
 	-I"$assistant_root/headers/private/shared" \
@@ -30,7 +37,8 @@ done
 	"$assistant_root/src/apps/assistant/ModelStore.cpp" \
 	"$assistant_root/src/apps/assistant/ToolBridge.cpp" \
 	"$assistant_root/src/apps/assistant/ToolSession.cpp" \
-	"$assistant_release/kits/shared/libshared.a" -lbe -o "$assistant_output"
+	"$assistant_release/kits/shared/libshared.a" -lbe -o "$assistant_variant_output"
+done
 assistant_host_tools=$assistant_build/objects/darwin/arm64/release/tools
 assistant_resources=$(mktemp -d /private/tmp/haiku-assistant-resources.XXXXXX)
 "$assistant_host_tools/rc/rc" -o "$assistant_resources/Assistant.rsrc" \
@@ -63,6 +71,7 @@ if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
 		-L"$assistant_release/system/libroot" -L"$ASSISTANT_LLAMA_LIB_DIR" \
 		-Wl,-rpath-link,"$ASSISTANT_LLAMA_LIB_DIR" \
 		"$assistant_root/src/apps/assistant/Service.cpp" \
+		"$assistant_root/src/apps/assistant/P100ABackend.cpp" \
 		"$assistant_root/src/apps/assistant/ModelStore.cpp" \
 		-lbe -l:libllama.so.0.2.0 -l:libggml.so.0 \
 		-o "${assistant_output}Service"
@@ -112,6 +121,21 @@ shasum -a 256 "${assistant_output}Shortcut"
 	"$assistant_root/src/apps/assistant/ToolsControl.cpp" -lbe \
 	-o "${assistant_output}ToolsControl"
 shasum -a 256 "${assistant_output}Tools" "${assistant_output}ToolsControl"
+
+# Optional OFFLINE adapter test for native Haiku: software BF16 only, no
+# device header/open/ioctl. The independently pinned C reference is data
+# supplied explicitly by the developer, not downloaded or executed here.
+if [ -n "${ASSISTANT_TINY_BOOTSTRAP_DIR:-}" ]; then
+	assistant_cc=$assistant_build/cross-tools-riscv64/bin/riscv64-unknown-haiku-gcc
+	"$assistant_cc" -std=c11 -O1 -ffp-contract=off -Wno-unknown-pragmas "$@" \
+		-DPIONEER_TINY_REFERENCE_SOURCE="\"$ASSISTANT_TINY_BOOTSTRAP_DIR/run.c\"" \
+		-c "$assistant_root/tools/pioneer/tests/pioneer_tiny_reference_bridge.c" \
+		-o "${assistant_output}TinyReference.o"
+	"$assistant_cxx" -std=gnu++17 -O1 -ffp-contract=off -Wall -Wextra -Werror \
+		"$@" -B"$assistant_release/system/glue/" -L"$assistant_release/system/libroot" \
+		"$assistant_root/tools/pioneer/tests/pioneer_assistant_p100a_test.cpp" \
+		"${assistant_output}TinyReference.o" -o "${assistant_output}P100AOfflineTest"
+fi
 
 "$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
 	"$@" -I"$assistant_root/headers/private/shared" \

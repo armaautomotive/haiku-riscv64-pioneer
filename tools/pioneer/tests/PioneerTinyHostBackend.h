@@ -1,10 +1,16 @@
 /* SPDX-License-Identifier: MIT */
-// Offline numerical adapter only. Open() refuses, so the native CLI cannot
-// accidentally report a hardware pass when compiled against this test shim.
+// Offline numerical adapter only. The standalone CLI's Open() refuses; only
+// the explicitly compiled service-adapter unit test enables its software path.
+// Neither variant includes a device open or ioctl implementation.
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTensixTileData.h"
 #include <stdio.h>
 #include <string.h>
 struct tt_pioneer_data_tile { tt_tensix_tile_data input; uint32_t output[256]; };
+#ifdef PIONEER_TINY_LIBRARY
+// Explicitly offline service-adapter tests only; not used by native builds.
+static bool sPioneerTinyFailBatch = false;
+static uint64_t sPioneerTinyHostCalls = 0;
+#endif
 static float PioneerTileFloat(uint32_t u) { float f; memcpy(&f,&u,4); return f; }
 static uint16_t PioneerTileBf16(float f) {
 	uint32_t u; memcpy(&u,&f,4);
@@ -13,10 +19,20 @@ static uint16_t PioneerTileBf16(float f) {
 }
 struct PioneerTileBackend {
 	uint64_t calls=0;
-	bool Open() { return false; }
+	bool Open() {
+#ifdef PIONEER_TINY_LIBRARY
+		return true;
+#else
+		return false;
+#endif
+	}
+	bool CheckBatchSupport() { return true; }
 	bool Run(tt_pioneer_data_tile& tile) {
 		if(!BlackholeTileDataValid(tile.input)) return false;
 		calls++;
+#ifdef PIONEER_TINY_LIBRARY
+		sPioneerTinyHostCalls++;
+#endif
 		for(unsigned row=0;row<16;row++) for(unsigned column=0;column<16;column++) {
 			float value=0;
 			for(unsigned k=0;k<16;k++) value+=PioneerTileFloat(uint32_t(tile.input.activations[row*16+k])<<16)*PioneerTileFloat(uint32_t(tile.input.weights[k*16+column])<<16);
@@ -25,6 +41,9 @@ struct PioneerTileBackend {
 		return true;
 	}
 	bool RunBatch(const tt_tensix_tile_data* input,uint32_t output[][256],unsigned count) {
+#ifdef PIONEER_TINY_LIBRARY
+		if (sPioneerTinyFailBatch) return false;
+#endif
 		if(count==0 || count>TT_DATA_TILE_BATCH_MAX) return false;
 		for(unsigned i=0;i<count;i++) {
 			tt_pioneer_data_tile tile={}; tile.input=input[i]; if(!Run(tile)) return false;

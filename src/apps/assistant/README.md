@@ -1,6 +1,8 @@
 # Haiku Assistant
 
 Native local Qwen chat, backed by a separate resident llama.cpp service.
+Experimental P100A story completion is also available with TinyStories-260K;
+it is **not** a Qwen accelerator or a general chat model.
 No kernel changes or network listener. A native tools bridge is under testing;
 desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 
@@ -44,10 +46,11 @@ count, and an availability list supplied by the resident service.
   Choose it, set a CPU-thread count, and click **Use selected hardware**.
   The choice and thread count are saved atomically alongside the selected
   model. CPU-to-CPU settings changes do not unload/reload the resident model.
-- **Tenstorrent P100A** is listed but unavailable for general chat. Selecting
-  the row explains the missing backend and disables Apply. The TinyStories
-  hybrid diagnostic remains separate from Assistant and is not offered as a
-  Qwen execution backend. This is execution capability, not PCI card detection.
+- **Tenstorrent P100A** is available for experimental TinyStories completion
+  when its two-file model bundle is installed and driver ABI 39/40 is present.
+  Choosing it also selects TinyStories. Choosing CPU restores the previous
+  Qwen model. Both model/backend fields are saved only after successful load.
+  This is execution capability, not PCI card detection or Qwen compatibility.
 
 Changing hardware is rejected during model loading or an active request.
 Unknown IDs, unsupported backends, malformed settings and invalid thread
@@ -58,14 +61,17 @@ saved backend stops startup model loading; explicitly choosing CPU in the
 dialog can recover it. Missing backend settings from older installs default
 to CPU. There is no Auto mode or automatic CPU fallback.
 
-Hardware selection does not load firmware, touch PCI mappings, probe the card,
-change power, download models or enable a new accelerator backend. Future
-backends need their own executor and per-model compatibility checks before
-they can be enabled. The dialog does not imply that full P100A chat works yet.
+Hardware selection does not execute card work, load firmware, change power or
+download models. Capability detection reads driver ABI metadata only. Actual
+P100A generation uses the existing guarded data-tile transactions, which
+temporarily map BAR0/BAR2, execute/check/stop the tile, and restore L1/TLB/PCI
+state. BAR4 stays unforwarded and bus mastering/DMA remain disabled. A failed
+card transaction disables the backend for that service session; a driver cold
+recovery latch is never bypassed, even after restarting the service.
 
 Diagnostics: `assistantctl hardware` lists capabilities; `assistantctl hardware
-cpu [THREADS]` saves a valid CPU choice, while `assistantctl hardware p100a`
-returns an explicit unsupported-backend error. `assistantctl status` reports
+cpu [THREADS]` selects CPU, while `assistantctl hardware p100a` queues the
+TinyStories/P100A pair if available. `assistantctl status` reports
 both selected and active backend IDs. The native `HaikuAssistantHardwareTest`
 checks in-memory settings/policy without writes; `--loading-test` checks the
 busy gate during an actual model load, and `--service-tests` validates the
@@ -76,8 +82,9 @@ preconditions are no longer true; they do not stop the service to satisfy them.
 
 ## Model installation and selection
 
-The initial, deliberately small catalog contains Qwen3 0.6B Q8_0, 1.7B Q8_0,
-and 4B Q4_K_M from the official Qwen repositories. The 0.6B model is the
+The deliberately small catalog contains Qwen3 0.6B Q8_0, 1.7B Q8_0,
+and 4B Q4_K_M from the official Qwen repositories, plus MIT-licensed
+TinyStories-260K and its tokenizer from `karpathy/tinyllamas`. The 0.6B model is the
 established on-device chat baseline; 1.7B installation/selection/chat was also
 tested on Pioneer. The 4B entry is an architecture-compatible CPU candidate,
 not yet inference-tested here. Compatibility is not a speed or output-quality
@@ -119,9 +126,42 @@ start a fresh GUI conversation, and multi-step tool sessions pin their model
 path to prevent silently switching mid-request.
 
 The window explicitly lists **Qwen3.8 27B as unsupported** and disables install
-and activation. This service uses the **CPU**, not the P100A. The experimental
-P100A TinyStories harness is separate; neither a working full-Qwen backend nor
-Qwen3.8 architecture support exists in this pinned llama runtime yet.
+and activation. All Qwen entries use CPU. Only TinyStories uses the P100A;
+neither a full-Qwen P100A backend nor Qwen3.8 architecture support exists in
+this pinned llama runtime yet.
+
+### P100A experimental story mode
+
+Install catalog entry 4 in Models, then click **Use on P100A (story mode)**,
+or choose **P100A + TinyStories** in Hardware. The installer downloads the
+1,056,540-byte model and 6,227-byte tokenizer from one immutable Hub revision;
+both hashes are required before activation. An interrupted bundle install
+can reuse its completed, hash-verified half, but never overwrites a bad file.
+
+Enter a short story beginning such as `Once`. The native conversation window
+sends this raw text directly to the P100A executor, without ChatML, previous
+turns, system instructions, tool execution, or CPU fallback. Initial limits
+are 128 printable ASCII characters, 16 prompt tokens, and 8 output tokens
+(the service supports explicitly requested limits of 1–16 output tokens).
+This tiny base model is for integration testing, not useful assistant chat.
+
+Every learned linear projection and the classifier runs on the P100A via
+BF16 tiles. CPU handles embedding lookup, attention/KV, norms, activations
+and partial sums, plus an independent FP32 numerical check. Generated tokens
+come from the card's logits, never the reference's logits. Weights are host
+streamed, not resident in GDDR. Expect roughly 15 seconds per evaluated
+prompt/output token, including verification. Progress streams while a token
+is being evaluated. Stop waits for the current checked transaction to finish;
+the worker is never killed during an ioctl. Each request gets fresh KV state.
+
+Offline adapter tests, including independent tokenizer comparison, simulated
+faults and batch-boundary cancellation, run with:
+
+```sh
+sh tools/pioneer/tests/run_pioneer_tinyllama_tests.sh PINNED_BOOTSTRAP_DIRECTORY
+```
+
+Those explicitly use a software BF16 adapter and do not count as card tests.
 
 For diagnostics: `assistantctl models`, `assistantctl install INDEX`,
 `assistantctl verify INDEX`, and `assistantctl model INDEX` use the same catalog
@@ -176,6 +216,8 @@ The script emits the GUI, `HaikuAssistantService`, `HaikuAssistantShortcut`,
 `HaikuAssistantControl`, `HaikuAssistantHardware`, `HaikuAssistantHardwareTest`,
 and `HaikuAssistantModelStoreTest`, plus tools-bridge binaries/tests. Without
 the library variable it skips the service.
+It also emits a separately signed `HaikuAssistantP100A` preview build for
+isolated native UI tests; the ordinary Assistant includes the same story mode.
 It attaches application resources and does not deploy or write a disk image.
 
 Install, preserving an old version before replacing it:
@@ -207,7 +249,58 @@ The optional `--cancel-download` test starts an HTTPS install of catalog entry
 2 on a regular Haiku worker and cancels it after one second; it requires that
 entry not already be installed. Assertions stay enabled in release test builds.
 
-## Hardware-dialog verification on Pioneer, 2026-10-15
+## P100A integration verification on Pioneer, 2026-10-15
+
+- Cross-builds passed with warnings as errors, as did the standard GUI,
+  control, hardware and model-store Jam targets. Relevant sources were synced
+  to the build mirror. No llama submodule changes were included.
+- The two-file TinyStories bundle was installed over verified HTTPS on Haiku
+  and both SHA-256 pins passed. A tokenizer URL initially returned 404; its
+  corrected `stories260K/tok512.bin` path then reused the verified model half
+  without overwriting it. The saved P100A/model pair survived service restart.
+- ASan/UBSan offline tests passed against the independent pinned C reference,
+  including BPE prompts, input limits, missing-file rejection, safe
+  cancellation, simulated batch failure and no retries after a fault. The
+  software-only adapter also passed natively on Haiku.
+- Native service tests rejected wrong backend/model, missing story format,
+  invalid token limits/types and unsupported text without inference/fallback.
+  Real-card cancellation returned safely and left the same resident service
+  ready. A hardware switch during generation was rejected as busy.
+- An initial UI run stopped during a DRAM-route preflight before the next
+  compute batch started. Its C++ exception error path entered the debugger.
+  This was **not** a successful generation. Error/cancellation paths were
+  changed to explicit returns, not exception unwinding. The driver cold gate
+  remained clear and the read-only PCI snapshot matched the original disabled
+  state before another controlled test. No guard was relaxed or bypassed.
+- The repaired native GUI completed eight output tokens for `Once`:
+  ` upon a time, there was a little`. Nine evaluated positions used 9,252
+  card tiles, with numerical/reference and completion/stop/restore checks
+  on every batch. CPU handles attention/KV/norms and verification as described
+  above; this is not Qwen inference or a performance-ready accelerator runtime.
+- Independent post-run telemetry passed: ASIC about 49 C, reported GDDR
+  uncorrected errors zero, firmware 18.5 unchanged, PCI/TLB restored, endpoint
+  command `0000`, original BAR words. No reboot or SD change was required.
+- Native UI inspection confirmed clear P100A/hybrid labeling, disabled CPU
+  thread controls in story mode, and a completed story in the actual main
+  Assistant window. No pre-existing chat contents were read; the user saved
+  their chat and explicitly approved reopening the older GUI.
+- Switching back to CPU restored Qwen3-1.7B and 32 threads; a `READY` request
+  and CPU/no-fallback service regressions passed. Selecting TinyStories in
+  the actual Models window switched back to P100A. The native Send/Stop path
+  also cancelled safely. The 27B entry remained disabled; TinyStories showed
+  its MIT license, two-file requirement and explicit story-mode Use button.
+- A second full service request, starting from BOS, returned `Once upon a
+  time, there was a`: eight output tokens, 8,224 real card tiles, 124.17 seconds
+  total, `success=1`. That is about 0.064 output tokens/second **including CPU
+  verification**, not a general P100A performance result. The same service
+  remained ready/idle with P100A selected; no automatic fallback was used.
+- The original four installed binaries have `.before-p100a-20261015`
+  backups; settings and test artifacts are under
+  `/boot/home/pioneer-assistant-p100a-20261015/`. Kernel, firmware, boot media,
+  runtime libraries and existing Qwen files were unchanged. An intermittent
+  preflight refusal was observed; this remains an experimental integration.
+
+## Earlier hardware-dialog verification on Pioneer, 2026-10-15
 
 - Standalone cross-builds passed with warnings as errors; standard Jam builds
   passed for Assistant, control utility, hardware app and hardware tests.

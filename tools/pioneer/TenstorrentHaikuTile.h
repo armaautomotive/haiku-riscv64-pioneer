@@ -77,6 +77,42 @@ public:
 	bool RunBatch(const tt_tensix_tile_data* input,uint32_t output[][256],unsigned count) {
 		if (fd < 0 || failed || count == 0 || count > TT_DATA_TILE_BATCH_MAX) return false;
 		for (unsigned i=0;i<count;i++) if (!BlackholeTileDataValid(input[i])) return false;
+		if (!CheckBatchSupport()) return false;
+		tt_pioneer_data_batch batch = {}; batch.version=1; batch.count=count;
+		memcpy(batch.input,input,count*sizeof(*input));
+		if (ioctl(fd,TT_PCI_PROBE_PIONEER_DATA_BATCH,&batch,sizeof(batch)) != 0) {
+			perror("P100A data batch ioctl"); failed=true; return false;
+		}
+		transactions++;
+		if (batch.completed != count || !PioneerTileSucceeded(batch.result)) {
+			fprintf(stderr,"P100A batch STOP: completed %u/%u state %u cold %u; no retries\n",
+				batch.completed,count,batch.result.math.state,batch.result.math.recovery_required);
+			const tt_pioneer_matmul_result& r=batch.result;
+			fprintf(stderr,"P100A baseline: PCI state/restored %u/%u commands %x/%x; ARC %u telemetry %u; reset %u; DRAM state/routes/cores %u/%u/%u restored %u/%u cold %u; math started/stopped %u/%u restored %u/%u\n",
+				r.baseline.control.control.control.pci.state,r.baseline.control.control.control.pci.restored,
+				r.baseline.control.control.control.pci.commands_after[0],r.baseline.control.control.control.pci.commands_after[1],
+				r.baseline.control.control.control.arc.state,r.baseline.control.control.telemetry.state,
+				r.baseline.control.tensix.state,r.baseline.dram.state,r.baseline.dram.routes_verified,r.baseline.dram.cores_checked,
+				r.baseline.dram.data_restored,r.baseline.dram.tlb_restored,r.baseline.dram.recovery_required,
+				r.math.started,r.math.stopped,r.math.l1_restored,r.math.tlb_restored);
+			const tt_arc_telemetry_result& t=r.baseline.control.control.telemetry;
+			fprintf(stderr,"P100A baseline values: FW %x GDDR enabled/status/errors %x/%x/%x Tensix %x reset %x/%x/%x\n",
+				t.values[0],t.values[6],t.values[7],t.values[8],t.values[9],
+				r.baseline.control.tensix.reset[0],r.baseline.control.tensix.reset[1],r.baseline.control.tensix.reset[2]);
+			if (r.baseline.dram.state == TT_DRAM_SAMPLE_BAD_ROUTE && r.baseline.dram.routes_verified < TT_DRAM_BANKS)
+				for (unsigned sample=0;sample<3;sample++) {
+					const uint32_t* id=r.baseline.dram.id[r.baseline.dram.routes_verified][sample];
+					fprintf(stderr,"P100A refused route %u sample %u: %x/%x/%x/%x\n",r.baseline.dram.routes_verified,sample,id[0],id[1],id[2],id[3]);
+				}
+			failed=true; return false;
+		}
+		calls+=count;
+		memcpy(output,batch.output,count*sizeof(batch.output[0]));
+		return true;
+	}
+	// Metadata-only capability check; no tile or PCI configuration is submitted.
+	bool CheckBatchSupport() {
+		if (fd < 0 || failed) return false;
 		if (!batchChecked) {
 			tt_matmul_support s = {};
 			if (ioctl(fd,TT_PCI_PROBE_PIONEER_DATA_BATCH_SUPPORT,&s,sizeof(s)) != 0
@@ -88,19 +124,6 @@ public:
 			}
 			batchChecked=true;
 		}
-		tt_pioneer_data_batch batch = {}; batch.version=1; batch.count=count;
-		memcpy(batch.input,input,count*sizeof(*input));
-		if (ioctl(fd,TT_PCI_PROBE_PIONEER_DATA_BATCH,&batch,sizeof(batch)) != 0) {
-			perror("P100A data batch ioctl"); failed=true; return false;
-		}
-		transactions++;
-		if (batch.completed != count || !PioneerTileSucceeded(batch.result)) {
-			fprintf(stderr,"P100A batch STOP: completed %u/%u state %u cold %u; no retries\n",
-				batch.completed,count,batch.result.math.state,batch.result.math.recovery_required);
-			failed=true; return false;
-		}
-		calls+=count;
-		memcpy(output,batch.output,count*sizeof(batch.output[0]));
 		return true;
 	}
 	bool Multiply16(const float* weights, const float* activations, float* output) {

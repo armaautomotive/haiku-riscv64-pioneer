@@ -12,7 +12,7 @@
 
 class RejectionReceiver : public BLooper {
 public:
-	RejectionReceiver() : BLooper("hardware rejection test"), done(create_sem(0, "hardware rejected")), rejected(false) {}
+	RejectionReceiver() : BLooper("hardware rejection test"), done(create_sem(0, "hardware rejected")), rejected(false), failed(false) {}
 	virtual ~RejectionReceiver() { delete_sem(done); }
 	virtual void MessageReceived(BMessage* message)
 	{
@@ -20,10 +20,12 @@ public:
 		bool success = true; const char* text = "";
 		message->FindBool("success", &success); message->FindString("status", &text);
 		rejected = !success && strstr(text, "No CPU fallback") != NULL;
+		failed = !success;
 		release_sem(done);
 	}
 	sem_id done;
 	bool rejected;
+	bool failed;
 };
 
 static BMessage Query(BMessenger& service)
@@ -46,7 +48,7 @@ int main(int argc, char** argv)
 {
 	BApplication app("application/x-vnd.Haiku-AssistantHardwareTest");
 	assert(AssistantHardwareCanChat("cpu"));
-	assert(!AssistantHardwareCanChat("p100a") && !AssistantHardwareCanChat("auto"));
+	assert(AssistantHardwareCanChat("p100a") && !AssistantHardwareCanChat("auto"));
 	assert(!AssistantHardwareCanChat(NULL) && AssistantHardwareIndex(NULL) == -1);
 	assert(AssistantHardwareIndex("cpu") == 0 && AssistantHardwareIndex("p100a") == 1);
 	BMessage settings;
@@ -57,7 +59,8 @@ int main(int argc, char** argv)
 	assert(!AssistantHardwareCanChat(AssistantHardwareSetting(settings).String()));
 	settings.AddString("model_path", "/test/model.gguf"); settings.AddString("unrelated", "keep");
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
-	assert(UpdateAssistantHardwareSettings(settings, "p100a", 2) == B_NOT_SUPPORTED);
+	assert(UpdateAssistantHardwareSettings(settings, "p100a", 1) == B_OK);
+	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "unknown", 1) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 0) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", AssistantMaxThreads() + 1) == B_BAD_VALUE);
@@ -68,7 +71,8 @@ int main(int argc, char** argv)
 	assert(settings.FindInt32("cpu_threads", &threads) == B_OK && threads == 1);
 	puts("PASS: hardware policy, fail-closed saved IDs, thread limits and field preservation (no settings written)");
 	if (argc == 1) return 0;
-	if (argc != 2 || (strcmp(argv[1], "--loading-test") != 0 && strcmp(argv[1], "--service-tests") != 0)) return 2;
+	if (argc != 2 || (strcmp(argv[1], "--loading-test") != 0 && strcmp(argv[1], "--service-tests") != 0
+		&& strcmp(argv[1], "--p100a-tests") != 0)) return 2;
 	BMessenger service(kServiceSignature);
 	if (!service.IsValid()) { puts("SKIP: resident service is not running"); return 77; }
 	BMessage state = Query(service);
@@ -82,9 +86,32 @@ int main(int argc, char** argv)
 	}
 	bool initiallyReady = false; state.FindBool("ready", &initiallyReady);
 	if (loading || busy || !initiallyReady) { puts("SKIP: service tests require a ready, idle model"); return 77; }
+	const char* initialBackend = ""; state.FindString("backend_id", &initialBackend);
+	if (strcmp(argv[1], "--p100a-tests") == 0) {
+		if (strcmp(initialBackend, "p100a")) { puts("SKIP: P100A must be selected and idle"); return 77; }
+		RejectionReceiver* receiver = new RejectionReceiver; receiver->Run();
+		for (int test=0; test<6; test++) {
+			BMessage request(kGenerate);
+			request.AddMessenger("target", BMessenger(receiver)); request.AddInt64("id", system_time());
+			request.AddString("backend_id", test==0 ? "cpu" : "p100a");
+			request.AddString("prompt", test==4 ? "bad\ninput" : "Once");
+			if (test!=1) request.AddString("prompt_format", "story");
+			if (test==2) request.AddInt32("max_tokens",17);
+			if (test==3) request.AddString("max_tokens","8");
+			if (test==5) request.AddString("model_path","/not/the/selected/model");
+			assert(service.SendMessage(&request) == B_OK);
+			assert(acquire_sem_etc(receiver->done,1,B_RELATIVE_TIMEOUT,2000000)==B_OK && receiver->failed);
+			if (test<4) assert(receiver->rejected);
+		}
+		if (receiver->Lock()) receiver->Quit();
+		BMessage after=Query(service); bool ready=false; after.FindBool("ready",&ready); assert(ready);
+		assert(after.FindString("backend_id",&value)==B_OK && strcmp(value,"p100a")==0);
+		puts("PASS: P100A service rejects wrong hardware, non-story format, token limits/types, non-ASCII input and wrong model without CPU fallback");
+		return 0;
+	}
+	if (strcmp(initialBackend, "cpu")) { puts("SKIP: rejection tests require CPU selected"); return 77; }
 	int32 loads = 0; state.FindInt32("model_loads", &loads);
 	BString model; assert(state.FindString("model_path", &model) == B_OK);
-	assert(Configure(service, "p100a", threads) == B_NOT_SUPPORTED);
 	assert(Configure(service, "invalid", threads) == B_BAD_VALUE);
 	assert(Configure(service, "cpu", 0) == B_BAD_VALUE);
 	assert(Configure(service, "cpu", threads) == B_OK);
@@ -105,7 +132,7 @@ int main(int argc, char** argv)
 	bool ready = false; after.FindBool("ready", &ready); assert(ready);
 	BMessage entry;
 	assert(after.FindMessage("hardware", 1, &entry) == B_OK);
-	bool available = true; entry.FindBool("available", &available); assert(!available);
+	bool available = false; assert(entry.FindBool("available", &available) == B_OK);
 	RejectionReceiver* receiver = new RejectionReceiver; receiver->Run();
 	BMessage generate(kGenerate);
 	generate.AddMessenger("target", BMessenger(receiver)); generate.AddInt64("id", system_time());

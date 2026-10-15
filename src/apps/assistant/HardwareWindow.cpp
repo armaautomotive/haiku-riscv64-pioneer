@@ -79,6 +79,7 @@ HardwareWindow::Details()
 		if (text != fDetails->Text()) fDetails->SetText(text.String());
 	}
 	fApply->SetEnabled(available && !fBusy);
+	fApply->SetLabel(index == 1 ? "Use P100A + TinyStories (experimental)" : "Use CPU + previous Qwen model");
 	fThreads->SetEnabled(available && index == 0 && fThreadsLoaded);
 }
 

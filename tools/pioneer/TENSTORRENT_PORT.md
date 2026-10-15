@@ -11,6 +11,16 @@ fixed-shape hybrid runtime: the host handles norms, attention/KV, activations,
 embedding lookup and partial sums. **Full Qwen3.8-27B inference is not working
 yet.** Its real Q4_K/Q8_0/Q6_K projection samples now pass independently.
 Haiku retains 64 CPUs and 127.62 GiB usable RAM. See the live records below.
+The native Assistant now integrates this fixed-shape runtime as explicitly
+labeled experimental story completion: a real GUI prompt `Once` produced
+eight output tokens, ` upon a time, there was a little`, using 9,252 card
+tiles across nine evaluated positions. The model manager installs both pinned
+data files from Hugging Face; hardware selection commits the compatible
+model/backend pair. Stop is batch-boundary-safe and never falls back to CPU.
+An initial DRAM-route preflight refusal and an exception-path failure were
+observed; explicit error returns replaced exception unwinding, without
+relaxing device guards. This remains experimental, not full Qwen support.
+See [Assistant details and validation](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).
 As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR

@@ -42,7 +42,7 @@ int main(int argc, char** argv)
 			printf("%zu: %s | %llu bytes | %s | %s\n", i, kAssistantModels[i].name,
 				(unsigned long long)kAssistantModels[i].bytes,
 				AssistantModelPresent(i) ? "installed" : "not installed",
-				kAssistantModels[i].compatible ? "CPU backend" : "unsupported");
+				kAssistantModels[i].compatible ? AssistantModelBackend(i) : "unsupported");
 		return 0;
 	}
 	if ((strcmp(argv[1], "install") == 0 || strcmp(argv[1], "verify") == 0
@@ -151,6 +151,14 @@ int main(int argc, char** argv)
 	std::string prompt = "<|im_start|>user\n" + std::string(argv[2])
 		+ " /no_think<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 	BMessage request(kGenerate);
+	BMessage query(kServiceStatus), state;
+	if (service.SendMessage(&query, &state, 1000000, 1000000) != B_OK) return 1;
+	const char* backend = ""; const char* path = "";
+	state.FindString("backend_id", &backend); state.FindString("model_path", &path);
+	request.AddString("backend_id", backend); request.AddString("model_path", path);
+	if (strcmp(backend, "p100a") == 0) {
+		prompt = argv[2]; request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8);
+	}
 	request.AddInt64("id", id);
 	request.AddMessenger("target", target);
 	request.AddString("prompt", prompt.c_str());
@@ -163,7 +171,8 @@ int main(int argc, char** argv)
 		service.SendMessage(&stop, (BHandler*)NULL, 1000000);
 	}
 	if (result == B_OK)
-		result = acquire_sem_etc(receiver->done, 1, B_RELATIVE_TIMEOUT, 180000000);
+		result = acquire_sem_etc(receiver->done, 1, B_RELATIVE_TIMEOUT,
+			strcmp(backend, "p100a") == 0 ? 900000000 : 180000000);
 	bool success = result == B_OK && (cancel ? !receiver->success : receiver->success);
 	if (receiver->Lock()) receiver->Quit();
 	return success ? 0 : 1;

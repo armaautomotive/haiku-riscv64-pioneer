@@ -16,10 +16,11 @@ static const AssistantHardware kAssistantHardware[] = {
 		"Runs supported Qwen3 chat models on the system CPUs.\n"
 		"CPU threads apply to the next request; they do not change CPU affinity."},
 	{"p100a", "Tenstorrent P100A",
-		"Unavailable for Assistant chat: the general P100A inference backend is unfinished.\n"
-		"The experimental TinyStories CPU/P100A hybrid is a separate diagnostic,\n"
-		"not a backend for the installed Qwen models. Card presence alone is not enough.\n"
-		"Choosing hardware never downloads firmware or changes PCI/power settings."}
+		"Experimental TinyStories-260K story completion only — NOT Qwen chat.\n"
+		"Selecting P100A also selects TinyStories (install it in Models first).\n"
+		"Real card projections; CPU attention/KV/norms and independent verification.\n"
+		"Short ASCII story beginnings; 8 output tokens; roughly 15 seconds/token.\n"
+		"Stop waits for a completed batch. No CPU fallback or firmware changes."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 
@@ -31,11 +32,11 @@ static inline int AssistantHardwareIndex(const char* id)
 	return -1;
 }
 
-// Actual execution capability, not PCI device detection. Enable a future
-// backend only together with its model compatibility checks and executor.
+// Recognized execution implementations. Service capability messages additionally
+// require a matching driver ABI, model bundle and a non-faulted runtime.
 static inline bool AssistantHardwareCanChat(const char* id)
 {
-	return id != NULL && strcmp(id, "cpu") == 0;
+	return AssistantHardwareIndex(id) >= 0;
 }
 
 #endif

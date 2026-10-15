@@ -21,16 +21,21 @@
 #include <unistd.h>
 #include <vector>
 
-BString
-AssistantModelPath(size_t index)
+static BString ResourcePath(const AssistantModel& model)
 {
-	if (index >= kAssistantModelCount) return BString();
 	BPath path;
 	if (find_directory(B_USER_DIRECTORY, &path) != B_OK) return BString();
 	path.Append("models");
-	path.Append(kAssistantModels[index].filename);
+	path.Append(model.filename);
 	return BString(path.Path());
 }
+
+BString AssistantModelPath(size_t index)
+{
+	return index < kAssistantModelCount ? ResourcePath(kAssistantModels[index]) : BString();
+}
+
+BString AssistantTinyTokenizerPath() { return ResourcePath(kAssistantTinyTokenizer); }
 
 int
 AssistantModelIndex(const char* path)
@@ -51,6 +56,8 @@ AssistantModelPresent(size_t index)
 {
 	if (index >= kAssistantModelCount) return false;
 	struct stat st;
+	if (index == kAssistantTinyModel && (lstat(AssistantTinyTokenizerPath().String(), &st) != 0
+		|| !S_ISREG(st.st_mode) || st.st_size != (off_t)kAssistantTinyTokenizer.bytes)) return false;
 	return lstat(AssistantModelPath(index).String(), &st) == 0
 		&& S_ISREG(st.st_mode) && st.st_size == (off_t)kAssistantModels[index].bytes;
 }
@@ -65,12 +72,10 @@ Progress(const BMessenger& target, off_t bytes, off_t total, const char* phase)
 	target.SendMessage(&message, (BHandler*)NULL, 10000);
 }
 
-status_t
-VerifyAssistantModel(size_t index, const char* path, const std::atomic<bool>& cancelled,
+static status_t
+VerifyResource(const AssistantModel& model, const char* path, const std::atomic<bool>& cancelled,
 	BString& error, const BMessenger& target)
 {
-	if (index >= kAssistantModelCount) return B_BAD_VALUE;
-	const AssistantModel& model = kAssistantModels[index];
 	int fd = open(path, O_RDONLY | O_NOFOLLOW);
 	struct stat st;
 	if (fd < 0) { error = "Cannot open model file."; return B_FILE_ERROR; }
@@ -108,6 +113,16 @@ VerifyAssistantModel(size_t index, const char* path, const std::atomic<bool>& ca
 		error = "SHA-256 mismatch. File was not activated or installed."; return B_BAD_DATA;
 	}
 	return B_OK;
+}
+
+status_t VerifyAssistantModel(size_t index, const char* path,
+	const std::atomic<bool>& cancelled, BString& error, const BMessenger& target)
+{
+	if (index >= kAssistantModelCount) return B_BAD_VALUE;
+	status_t status = VerifyResource(kAssistantModels[index], path, cancelled, error, target);
+	if (status == B_OK && index == kAssistantTinyModel)
+		status = VerifyResource(kAssistantTinyTokenizer, AssistantTinyTokenizerPath().String(), cancelled, error, target);
+	return status;
 }
 
 // Bounded streaming sink: errors/cancellation cannot fill the disk with an
@@ -266,20 +281,19 @@ AssistantModelStorePrivate::PublishModel(const char* source, const char* destina
 	return status;
 }
 
-status_t
-InstallAssistantModel(size_t index, const std::atomic<bool>& cancelled,
-	const BMessenger& target, BString& error)
+static status_t
+InstallResource(const AssistantModel& model, const char* remotePath, bool resumeBundle,
+	const std::atomic<bool>& cancelled, const BMessenger& target, BString& error)
 {
-	if (index >= kAssistantModelCount || !kAssistantModels[index].compatible) {
-		error = "This model is not supported by the installed chat backend."; return B_NOT_SUPPORTED;
-	}
-	const AssistantModel& model = kAssistantModels[index];
-	BString destination = AssistantModelPath(index);
+	BString destination = ResourcePath(model);
 	BPath directory(destination.String()); directory.GetParent(&directory);
 	status_t status = create_directory(directory.Path(), 0755);
 	if (status != B_OK) { error = "Cannot create model folder."; return status; }
 	struct stat st;
 	if (lstat(destination.String(), &st) == 0 || errno != ENOENT) {
+		// A previously completed half of the two-file bundle may be reused,
+		// but only after hash verification. Never overwrite an existing file.
+		if (resumeBundle) return VerifyResource(model, destination.String(), cancelled, error, target);
 		error = "A file already exists at this model path. It was not overwritten."; return B_FILE_EXISTS;
 	}
 	if (cancelled.load()) { error = "Cancelled; installed models unchanged."; return B_CANCELED; }
@@ -295,7 +309,7 @@ InstallAssistantModel(size_t index, const std::atomic<bool>& cancelled,
 	int fd = mkstemp(temporary.LockBuffer(temporary.Length())); temporary.UnlockBuffer();
 	if (fd < 0) { error = "Cannot create temporary download."; return B_FILE_ERROR; }
 	BString url("https://huggingface.co/");
-	url << model.repository << "/resolve/" << model.revision << "/" << model.filename;
+	url << model.repository << "/resolve/" << model.revision << "/" << remotePath;
 	status = B_ERROR;
 	for (int redirect = 0; redirect <= 5 && !cancelled.load(); redirect++) {
 		if (url.FindFirst("https://") != 0 || ftruncate(fd, 0) != 0 || lseek(fd, 0, SEEK_SET) < 0) break;
@@ -318,11 +332,25 @@ InstallAssistantModel(size_t index, const std::atomic<bool>& cancelled,
 	if (cancelled.load()) { status = B_CANCELED; error = "Cancelled; installed models unchanged."; }
 	if (status == B_OK && fsync(fd) != 0) { status = B_IO_ERROR; error = "Could not sync download."; }
 	close(fd);
-	if (status == B_OK) status = VerifyAssistantModel(index, temporary.String(), cancelled, error, target);
+	if (status == B_OK) status = VerifyResource(model, temporary.String(), cancelled, error, target);
 	if (status == B_OK && cancelled.load()) { status = B_CANCELED; error = "Cancelled."; }
 	if (status == B_OK) status = AssistantModelStorePrivate::PublishModel(temporary.String(), destination.String(),
 		model.bytes, cancelled, target, error);
 	unlink(temporary.String());
 	if (status != B_OK && error.IsEmpty()) error = "Download failed; no model was installed.";
+	return status;
+}
+
+status_t InstallAssistantModel(size_t index, const std::atomic<bool>& cancelled,
+	const BMessenger& target, BString& error)
+{
+	if (index >= kAssistantModelCount || !kAssistantModels[index].compatible) {
+		error = "This model is not supported by an installed backend."; return B_NOT_SUPPORTED;
+	}
+	bool tiny = index == kAssistantTinyModel;
+	status_t status = InstallResource(kAssistantModels[index], tiny ? "stories260K/stories260K.bin"
+		: kAssistantModels[index].filename, tiny, cancelled, target, error);
+	if (status == B_OK && tiny)
+		status = InstallResource(kAssistantTinyTokenizer, "stories260K/tok512.bin", true, cancelled, target, error);
 	return status;
 }

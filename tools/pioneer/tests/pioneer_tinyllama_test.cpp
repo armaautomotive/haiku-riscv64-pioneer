@@ -11,16 +11,16 @@ extern "C" {
 }
 int main(int argc,char** argv) {
 	assert(argc==3);
-	Model model; model.Load(argv[1]);
-	char pieces[Vocab][128]; LoadVocabulary(argv[2],pieces);
+	Model model; assert(model.Load(argv[1]));
+	char pieces[Vocab][128]; assert(LoadVocabulary(argv[2],pieces));
 	State* state=(State*)calloc(1,sizeof(State)); assert(state);
 	State* bf16=(State*)calloc(1,sizeof(State)); assert(bf16);
 	void* reference=pioneer_tiny_reference_create(argv[1]);
 	PioneerTileBackend software; int token=1;
 	for(int pos=0;pos<8;pos++) {
 		const float* expected=pioneer_tiny_reference_forward(reference,token,pos);
-		Forward(model,*state,token,pos,NULL);
-		Forward(model,*bf16,token,pos,&software);
+		assert(Forward(model,*state,token,pos,NULL));
+		assert(Forward(model,*bf16,token,pos,&software));
 		double dot=0,a2=0,r2=0;
 		for(int i=0;i<Vocab;i++) {
 			assert(fabsf(expected[i]-state->logits[i])<0.0001f);

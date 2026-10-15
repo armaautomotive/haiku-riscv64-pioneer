@@ -29,8 +29,22 @@ static const AssistantModel kAssistantModels[] = {
 		2497280256ULL, "7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5", true},
 	{"Qwen3.8 27B — Q4_K_M (not supported yet)", "ggml-org/Qwen3.8-27B-GGUF",
 		"71bc7b627595dc8a91039addd9c791ae548d6747", "Qwen3.8-27B-Q4_K_M.gguf",
-		18973870528ULL, "c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747", false}
+		18973870528ULL, "c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747", false},
+	{"TinyStories 260K — P100A experimental story completion", "karpathy/tinyllamas",
+		"0bd21da7698eaf29a0d7de3992de8a46ef624add", "stories260K.bin",
+		1056540ULL, "b0a507e7ad0f626624f17112325e66691f9076d622e1d3274d103d00299f2696", true}
 };
 static const size_t kAssistantModelCount = sizeof(kAssistantModels) / sizeof(kAssistantModels[0]);
+static const size_t kAssistantTinyModel = 4;
+static const AssistantModel kAssistantTinyTokenizer = {
+	"TinyStories tokenizer", "karpathy/tinyllamas",
+	"0bd21da7698eaf29a0d7de3992de8a46ef624add", "tok512.bin", 6227,
+	"037cb335abb25d1fa9e8ecae30ed2a3a8ace9302862ebcdc05d51a6bbb10c312", true
+};
+
+static inline const char* AssistantModelBackend(size_t index)
+{
+	return index == kAssistantTinyModel ? "p100a" : "cpu";
+}
 
 #endif

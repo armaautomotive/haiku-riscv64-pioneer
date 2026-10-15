@@ -14,24 +14,39 @@
 #include <math.h>
 #include <stdlib.h>
 #include <time.h>
+#ifdef PIONEER_TINY_LIBRARY
+#include <functional>
+static std::function<bool()> sTileBoundary;
+static bool sTileFailure = false;
+#endif
 
 enum { Dim=64, Hidden=172, Layers=5, Heads=8, KvHeads=4, Kv=32, Head=8, Vocab=512, Seq=512 };
+static const char* sTinyError = "";
+static bool TinyFailure(const char* text) { sTinyError=text; return false; }
+#ifndef PIONEER_TINY_LIBRARY
 [[noreturn]] static void Fail(const char* text) { fprintf(stderr,"STOP: %s\n",text); exit(1); }
+#endif
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
+struct TinyFile {
+	FILE* file;
+	explicit TinyFile(const char* path) : file(fopen(path,"rb")) {}
+	~TinyFile() { if (file) fclose(file); }
+	bool Close() { FILE* saved=file; file=NULL; return fclose(saved)==0; }
+};
 struct Model {
 	float* storage;
 	const float *embedding,*attentionNorm,*q,*k,*v,*o,*ffnNorm,*up,*down,*gate,*finalNorm;
 	Model() : storage(NULL) {}
 	~Model() { free(storage); }
-	void Load(const char* path) {
-		FILE* file = fopen(path,"rb"); if (!file) Fail("cannot open pinned model");
+	bool Load(const char* path) {
+		TinyFile owner(path); FILE* file=owner.file; if (!file) return TinyFailure("cannot open pinned model");
 		int32_t config[7];
 		const int32_t wanted[] = {Dim,Hidden,Layers,Heads,KvHeads,Vocab,Seq};
-		if (fread(config,sizeof(config),1,file) != 1 || memcmp(config,wanted,sizeof(config))) Fail("unsupported model header");
-		if (fseek(file,0,SEEK_END) || ftell(file) != 1056540 || fseek(file,28,SEEK_SET)) Fail("wrong model length");
-		storage = (float*)malloc(1056512); if (!storage) Fail("model allocation");
-		if (fread(storage,1056512,1,file) != 1 || fclose(file)) Fail("model read");
-		for (unsigned i=0;i<264128;i++) if (!isfinite(storage[i])) Fail("nonfinite model weight");
+		if (fread(config,sizeof(config),1,file) != 1 || memcmp(config,wanted,sizeof(config))) return TinyFailure("unsupported model header");
+		if (fseek(file,0,SEEK_END) || ftell(file) != 1056540 || fseek(file,28,SEEK_SET)) return TinyFailure("wrong model length");
+		storage = (float*)malloc(1056512); if (!storage) return TinyFailure("model allocation");
+		if (fread(storage,1056512,1,file) != 1 || !owner.Close()) return TinyFailure("model read");
+		for (unsigned i=0;i<264128;i++) if (!isfinite(storage[i])) return TinyFailure("nonfinite model weight");
 		const float* cursor=storage;
 		embedding=cursor; cursor+=Vocab*Dim;
 		attentionNorm=cursor; cursor+=Layers*Dim;
@@ -44,7 +59,8 @@ struct Model {
 		down=cursor; cursor+=Layers*Hidden*Dim;
 		gate=cursor; cursor+=Layers*Dim*Hidden;
 		finalNorm=cursor; cursor+=Dim+Seq*Head; // legacy rotary tables are unused
-		if (cursor != storage+264128) Fail("weight layout bounds");
+		if (cursor != storage+264128) return TinyFailure("weight layout bounds");
+		return true;
 	}
 };
 struct State {
@@ -57,25 +73,39 @@ static void Norm(float* out,const float* x,const float* weight,int count)
 	float inverse=1.0f/sqrtf(squares/count+0.00001f);
 	for(int i=0;i<count;i++) out[i]=x[i]*inverse*weight[i];
 }
-static void Gemv(PioneerTileBackend* device,float* out,const float* w,const float* x,int n,int d)
+static bool Gemv(PioneerTileBackend* device,float* out,const float* w,const float* x,int n,int d)
 {
-	if (n<1 || n>Hidden || d<1 || d>Vocab) Fail("unsupported projection shape");
+	if (n<1 || n>Hidden || d<1 || d>Vocab) return TinyFailure("unsupported projection shape");
 	memset(out,0,d*sizeof(float));
 	if (device == NULL) {
 		for(int row=0;row<d;row++) for(int k=0;k<n;k++) out[row]+=w[row*n+k]*x[k];
-		return;
+		return true;
 	}
 	tt_tensix_tile_data input[TT_DATA_TILE_BATCH_MAX] = {};
 	uint32_t output[TT_DATA_TILE_BATCH_MAX][256];
 	int rowBase[TT_DATA_TILE_BATCH_MAX]; unsigned count=0;
 	auto flush = [&]() {
-		if(!device->RunBatch(input,output,count)) Fail("accelerator batch failed; no CPU fallback");
+#ifdef PIONEER_TINY_LIBRARY
+		if (sTileBoundary && !sTileBoundary()) return TinyFailure("Stopped safely between completed P100A batches.");
+#endif
+		if(!device->RunBatch(input,output,count)) {
+#ifdef PIONEER_TINY_LIBRARY
+			sTileFailure = true;
+#endif
+			return TinyFailure("accelerator batch failed; no CPU fallback");
+		}
 		for(unsigned job=0;job<count;job++) for(int col=0;col<16 && rowBase[job]+col<d;col++) {
 			float value=PioneerTileFloat(output[job][col]);
-			if(!isfinite(value)) Fail("nonfinite accelerator projection");
+			if(!isfinite(value)) {
+#ifdef PIONEER_TINY_LIBRARY
+				sTileFailure = true;
+#endif
+				return TinyFailure("nonfinite accelerator projection");
+			}
 			out[rowBase[job]+col]+=value;
 		}
 		count=0;
+		return true;
 	};
 	for(int row=0;row<d;row+=16) for(int k=0;k<n;k+=16) {
 		tt_tensix_tile_data& tile=input[count]; tile={}; tile.version=1; rowBase[count]=row;
@@ -84,9 +114,9 @@ static void Gemv(PioneerTileBackend* device,float* out,const float* w,const floa
 			for(int col=0;col<16;col++) if(row+col<d && k+inner<n)
 				tile.weights[inner*16+col]=PioneerTileBf16(w[(row+col)*n+k+inner]);
 		}
-		if(++count==TT_DATA_TILE_BATCH_MAX) flush();
+		if(++count==TT_DATA_TILE_BATCH_MAX && !flush()) return false;
 	}
-	if(count!=0) flush();
+	return count==0 || flush();
 }
 static void Rotate(float* vector,int count,int position)
 {
@@ -96,15 +126,15 @@ static void Rotate(float* vector,int count,int position)
 		vector[i]=first*c-second*s; vector[i+1]=first*s+second*c;
 	}
 }
-static void Forward(const Model& m,State& s,int token,int position,PioneerTileBackend* device)
+static bool Forward(const Model& m,State& s,int token,int position,PioneerTileBackend* device)
 {
-	if(token<0 || token>=Vocab || position<0 || position>=Seq) Fail("forward bounds");
+	if(token<0 || token>=Vocab || position<0 || position>=Seq) return TinyFailure("forward bounds");
 	memcpy(s.x,m.embedding+token*Dim,sizeof(s.x));
 	for(int layer=0;layer<Layers;layer++) {
 		Norm(s.branch,s.x,m.attentionNorm+layer*Dim,Dim);
-		Gemv(device,s.query,m.q+layer*Dim*Dim,s.branch,Dim,Dim);
-		Gemv(device,s.keys[layer][position],m.k+layer*Dim*Kv,s.branch,Dim,Kv);
-		Gemv(device,s.values[layer][position],m.v+layer*Dim*Kv,s.branch,Dim,Kv);
+		if (!Gemv(device,s.query,m.q+layer*Dim*Dim,s.branch,Dim,Dim)
+			|| !Gemv(device,s.keys[layer][position],m.k+layer*Dim*Kv,s.branch,Dim,Kv)
+			|| !Gemv(device,s.values[layer][position],m.v+layer*Dim*Kv,s.branch,Dim,Kv)) return false;
 		Rotate(s.query,Dim,position); Rotate(s.keys[layer][position],Kv,position);
 		for(int head=0;head<Heads;head++) {
 			float scores[Seq],maximum=-INFINITY,total=0;
@@ -121,38 +151,42 @@ static void Forward(const Model& m,State& s,int token,int position,PioneerTileBa
 				s.branch[head*Head+i]=value;
 			}
 		}
-		Gemv(device,s.projected,m.o+layer*Dim*Dim,s.branch,Dim,Dim);
+		if (!Gemv(device,s.projected,m.o+layer*Dim*Dim,s.branch,Dim,Dim)) return false;
 		for(int i=0;i<Dim;i++) s.x[i]+=s.projected[i];
 		Norm(s.branch,s.x,m.ffnNorm+layer*Dim,Dim);
-		Gemv(device,s.up,m.up+layer*Dim*Hidden,s.branch,Dim,Hidden);
-		Gemv(device,s.gate,m.gate+layer*Dim*Hidden,s.branch,Dim,Hidden);
+		if (!Gemv(device,s.up,m.up+layer*Dim*Hidden,s.branch,Dim,Hidden)
+			|| !Gemv(device,s.gate,m.gate+layer*Dim*Hidden,s.branch,Dim,Hidden)) return false;
 		for(int i=0;i<Hidden;i++) s.up[i]=s.up[i]/(1.0f+expf(-s.up[i]))*s.gate[i];
-		Gemv(device,s.projected,m.down+layer*Dim*Hidden,s.up,Hidden,Dim);
+		if (!Gemv(device,s.projected,m.down+layer*Dim*Hidden,s.up,Hidden,Dim)) return false;
 		for(int i=0;i<Dim;i++) s.x[i]+=s.projected[i];
 		if(device) fprintf(stderr,"P100A token-position %d layer %d/%d complete, device tiles %llu\n",position,layer+1,Layers,(unsigned long long)device->calls);
 	}
 	Norm(s.branch,s.x,m.finalNorm,Dim);
-	Gemv(device,s.logits,m.embedding,s.branch,Dim,Vocab);
+	return Gemv(device,s.logits,m.embedding,s.branch,Dim,Vocab);
 }
 static int Argmax(const float* x)
 {
 	int best=0;
-	for(int i=0;i<Vocab;i++) { if(!isfinite(x[i])) Fail("nonfinite logits"); if(x[i]>x[best]) best=i; }
+	for(int i=0;i<Vocab;i++) { if(!isfinite(x[i])) { TinyFailure("nonfinite logits"); return -1; } if(x[i]>x[best]) best=i; }
 	return best;
 }
-static void LoadVocabulary(const char* path,char pieces[Vocab][128])
+static bool LoadVocabulary(const char* path,char pieces[Vocab][128],float* scores = NULL)
 {
-	FILE* file=fopen(path,"rb"); if(!file) Fail("cannot open tokenizer");
+	TinyFile owner(path); FILE* file=owner.file; if(!file) return TinyFailure("cannot open tokenizer");
 	uint32_t maximum;
-	if(fread(&maximum,4,1,file)!=1 || maximum>=128) Fail("tokenizer header");
+	if(fread(&maximum,4,1,file)!=1 || maximum>=128) return TinyFailure("tokenizer header");
 	for(int i=0;i<Vocab;i++) {
 		float score; int32_t length;
 		if(fread(&score,4,1,file)!=1 || fread(&length,4,1,file)!=1 || length<0 || length>=128
-			|| fread(pieces[i],1,length,file)!=size_t(length)) Fail("tokenizer record");
+			|| fread(pieces[i],1,length,file)!=size_t(length)) return TinyFailure("tokenizer record");
 		pieces[i][length]=0;
+		if (!isfinite(score)) return TinyFailure("nonfinite tokenizer score");
+		if (scores) scores[i]=score;
 	}
-	if(fgetc(file)!=EOF || fclose(file)) Fail("tokenizer length");
+	if(fgetc(file)!=EOF || !owner.Close()) return TinyFailure("tokenizer length");
+	return true;
 }
+#ifndef PIONEER_TINY_LIBRARY
 int main(int argc,char** argv)
 {
 	if(argc!=5 || strcmp(argv[1],"--run-p100a-with-cpu-reference")) {
@@ -161,16 +195,18 @@ int main(int argc,char** argv)
 	char* end=NULL; long count=strtol(argv[4],&end,10);
 	if(!end || *end || count<1 || count>32) return 2;
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
-	Model model; model.Load(argv[2]); char pieces[Vocab][128]; LoadVocabulary(argv[3],pieces);
+	Model model; char pieces[Vocab][128];
+	if (!model.Load(argv[2]) || !LoadVocabulary(argv[3],pieces)) Fail(sTinyError);
 	State* actual=(State*)calloc(1,sizeof(State)); State* reference=(State*)calloc(1,sizeof(State));
 	if(!actual || !reference) Fail("state allocation");
 	PioneerTileBackend backend; if(!backend.Open()) return 1;
 	printf("TinyStories-260K: real P100A BF16 learned projections; host norm/attention/KV/activations. Independent CPU FP32 verification; no fallback.\n");
 	int token=1; double started=Seconds();
 	for(int position=0;position<count;position++) {
-		Forward(model,*reference,token,position,NULL);
-		Forward(model,*actual,token,position,&backend);
+		if (!Forward(model,*reference,token,position,NULL)
+			|| !Forward(model,*actual,token,position,&backend)) Fail(sTinyError);
 		int chosen=Argmax(actual->logits),expected=Argmax(reference->logits);
+		if (chosen < 0 || expected < 0) Fail(sTinyError);
 		double dot=0,a2=0,r2=0,diff2=0; float maxError=0;
 		for(int i=0;i<Vocab;i++) {
 			double a=actual->logits[i],r=reference->logits[i],delta=a-r;
@@ -188,3 +224,4 @@ int main(int argc,char** argv)
 	printf("PASS: pretrained model generated tokens with P100A learned projections and independent CPU agreement; %llu device tiles, %.3fs. Not Qwen3.8-27B or resident-GDDR inference.\n",(unsigned long long)backend.calls,Seconds()-started);
 	free(actual); free(reference); return 0;
 }
+#endif

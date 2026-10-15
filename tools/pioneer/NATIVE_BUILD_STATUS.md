@@ -1,10 +1,13 @@
 # Native build status (2026-09-07)
 
-Latest checkpoint (October 14): P100A installed; both SD cards out; Haiku
-reachable through the private SD-free RAM handoff. Native card enumeration,
-ARC telemetry, a stopped-core reset-state check and two reversible 64-byte
-Tensix L1 pattern tests passed. Card firmware/default Linux boot are unchanged;
-compute execution, DMA and an accelerator LLM runtime are **not** working yet.
+Latest checkpoint (October 15): P100A installed; both SD cards out; Haiku
+reachable through the private SD-free RAM handoff with 64 CPUs and full RAM.
+The native Assistant now offers experimental TinyStories-260K story completion
+using real P100A projections plus CPU attention/KV/norms and verification.
+An eight-output-token native GUI run passed; CPU chat remains a separate Qwen
+backend. Full Qwen/P100A inference, resident GDDR weights and DMA are **not**
+working yet. Card firmware/default Linux boot are unchanged. See the
+[Assistant integration record](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).
 See [the current P100A bring-up record](TENSTORRENT_PORT.md) for exact artifacts,
 rollback evidence and the remaining startup/cache gate. Older entries below
 are chronological checkpoints, not the current hardware state.

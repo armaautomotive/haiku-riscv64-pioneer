@@ -54,7 +54,12 @@ struct Turn { std::string user; std::string assistant; };
 class AssistantWindow : public BWindow {
 public:
 	AssistantWindow()
-		: BWindow(BRect(100, 100, 820, 680), "Haiku Assistant",
+		: BWindow(BRect(100, 100, 820, 680),
+#ifdef ASSISTANT_P100A_PREVIEW
+			"Haiku Assistant — P100A story preview",
+#else
+			"Haiku Assistant",
+#endif
 			B_TITLED_WINDOW, B_AUTO_UPDATE_SIZE_LIMITS), fThreadsLoaded(false), fBusy(false), fRequest(0)
 	{
 		fTranscript = new BTextView("conversation");
@@ -74,6 +79,7 @@ public:
 		fApplyThreads = new BButton("Apply", new BMessage(kApplyThreads));
 		fApplyThreads->SetEnabled(false);
 		fModels = new BButton("Models…", new BMessage(kOpenModels));
+		fThreadHint = new BStringView("thread_hint", "Saved; applies to next CPU request");
 		BButton* hardware = new BButton("hardware_settings", "Hardware…", new BMessage(kOpenHardware));
 		fModelLabel = new BStringView("active model", "Chat backend: CPU — starting service");
 		BLayoutBuilder::Group<>(this, B_VERTICAL)
@@ -81,7 +87,7 @@ public:
 			.AddGroup(B_HORIZONTAL).Add(fModelLabel).AddGlue().Add(hardware).Add(fModels).End()
 			.AddGroup(B_HORIZONTAL)
 				.Add(fThreads).Add(fApplyThreads)
-				.Add(new BStringView("thread_hint", "Saved; applies to next model request"))
+				.Add(fThreadHint)
 			.End()
 			.Add(new BScrollView("history", fTranscript, 0, false, true), 1)
 			.Add(new BScrollView("input", fInput, 0, false, true), 0)
@@ -167,7 +173,13 @@ public:
 						}
 						const char* backend = "cpu";
 						reply.FindString("backend_id", &backend);
-						BString label(AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: ");
+						bool story = strcmp(backend, "p100a") == 0;
+						fThreads->SetEnabled(!story && fThreadsLoaded);
+						fApplyThreads->SetEnabled(!story && fThreadsLoaded);
+						fThreadHint->SetText(story ? "P100A host path: 1 thread; CPU setting retained"
+							: "Saved; applies to next CPU request");
+						BString label(story ? "P100A + CPU (experimental story mode): "
+							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model loaded");
 						fModelLabel->SetText(label.String());
 						fSend->SetEnabled(ready && !loading);
@@ -262,6 +274,11 @@ private:
 		if (!AssistantHardwareCanChat(backend)) {
 			fStatus->SetText("Hardware backend unavailable. Open Hardware; an updated service is required."); return;
 		}
+#ifdef ASSISTANT_P100A_PREVIEW
+		if (strcmp(backend, "p100a") != 0) {
+			fStatus->SetText("This preview is for P100A stories only. Select P100A in Hardware first."); return;
+		}
+#endif
 		if (fModelPath != path) { fModelPath = path; fTurns.clear(); fTranscript->SetText(""); }
 		fPending = fInput->Text();
 		size_t bytes = fPending.size();
@@ -283,6 +300,16 @@ private:
 		prompt += "<|im_start|>user\n" + EscapeToolData(fPending)
 			+ " /no_think<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		fDisplay += "You: " + fPending + "\n\nQwen: ";
+		bool story = strcmp(backend, "p100a") == 0;
+		if (story) {
+			// This base model is not instruction-tuned. No chat history,
+			// ChatML, tools, system instructions or hidden CPU fallback.
+			prompt = fPending;
+			fDisplay = "Experimental TinyStories — real P100A projections + CPU attention/verification.\n"
+				"Not Qwen chat. Up to 128 printable ASCII characters / 16 prompt tokens; 8 output tokens.\n\n"
+				"Story beginning: " + fPending + "\n\nContinuation: ";
+			fService = BMessenger(kServiceSignature);
+		}
 		fRequest = system_time();
 		BMessage request(kGenerate);
 		request.AddInt64("id", fRequest);
@@ -290,6 +317,7 @@ private:
 		request.AddString("prompt", prompt.c_str());
 		request.AddString("model_path", fModelPath.c_str());
 		request.AddString("backend_id", backend);
+		if (story) { request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8); }
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;
@@ -309,6 +337,7 @@ private:
 	BButton* fApplyThreads;
 	BButton* fModels;
 	BStringView* fModelLabel;
+	BStringView* fThreadHint;
 	BMessenger fModelWindow;
 	BMessenger fHardwareWindow;
 	std::string fModelPath;
@@ -325,7 +354,13 @@ private:
 
 class AssistantApp : public BApplication {
 public:
-	AssistantApp() : BApplication(kAssistantSignature) {}
+	AssistantApp() : BApplication(
+#ifdef ASSISTANT_P100A_PREVIEW
+		"application/x-vnd.Haiku-AssistantP100A"
+#else
+		kAssistantSignature
+#endif
+	) {}
 	virtual void ReadyToRun()
 	{
 		StartService();
