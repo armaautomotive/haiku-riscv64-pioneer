@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT
  * Original bounded TRISC0 L1-unpack fixture. Register/encoding facts from
  * pinned tt-lab e6baf562a72491ed9d594cddbdf42e0925b1f79e and public LLK.
- * No NoC requests, host DMA, ARC messages, packer or firmware changes.
+ * Default variants issue no NoC requests. The separate TT_UNPACK_RESIDENT
+ * variant performs two fixed GDDR reads. No host DMA, ARC messages, packer
+ * or firmware changes in any variant.
  */
 .option norvc
 .option norelax
@@ -94,7 +96,11 @@ fixture:
 	sw zero, 8(t2)
 	sw zero, 12(t2)
 .ifdef TT_UNPACK_NONUNIFORM
+.ifdef TT_UNPACK_RESIDENT
+	j resident_fetch
+.else
 	j nonuniform_inputs
+.endif
 	nop /* same width as li, preserve every common code address */
 .else
 	li t0, 0x3f803f80
@@ -255,6 +261,9 @@ full_bf16_emit:
 	j full_bf16_return
 .endif
 .macro bf16_small value
+.ifdef TT_UNPACK_RESIDENT
+	.short 0 /* L1 poison: usable inputs must arrive from GDDR, not this image. */
+.else
 .if (\value) == -8
 	.short 0xc100
 .elseif (\value) == -7
@@ -289,6 +298,7 @@ full_bf16_emit:
 	.short 0x40e0
 .else
 	.error "fixed BF16 input outside small-integer whitelist"
+.endif
 .endif
 .endm
 	.org 0x500, 0
@@ -331,4 +341,47 @@ full_bf16_emit:
 	/* This exact fixed region also contains the two local input buffers.
 	 * No instructions may be placed in either buffer by the linker.
 	 */
-.org 0xa20, 0
+.ifdef TT_UNPACK_RESIDENT
+	.org 0xa40, 0
+	.global resident_fetch, resident_fault_park
+resident_fetch:
+	/* Initiator 0 is fixed/configured/verified by the host before start.
+	 * Only this doorbell is device-written. Both fixtures fetch the same
+	 * resident 1088-byte A/B data block; no host data write between them.
+	 */
+	li s5, 0xffb20000
+	lw t0, 0x40(s5)
+	bne t0, zero, resident_fault
+	lw s6, 0x208(s5)
+	addi s6, s6, 1
+	li t0, 1
+	sw t0, 0x40(s5)
+	lw t0, 0x40(s5) /* required doorbell readback before counter reads */
+	andi t0, t0, 0
+	li s7, 65536
+resident_poll:
+	lw t0, 0x40(s5)
+	bne t0, zero, resident_next
+	lw t0, 0x208(s5)
+	bne t0, s6, resident_next
+	lw t0, 0x240(s5)
+	andi t0, t0, 255
+	beq t0, zero, resident_ready
+resident_next:
+	addi s7, s7, -1
+	bne s7, zero, resident_poll
+resident_fault:
+	li t0, 0x4e4f4346 /* NOCF; never a successful completion marker */
+	sw t0, 8(s3)
+	lw t0, 8(s3)
+	andi t0, t0, 0
+	fence
+resident_fault_park:
+	j resident_fault_park /* no reset, retry, counter clear or payload write */
+resident_ready:
+	fence /* invalidate RISC L0 before consuming externally written L1 */
+	j nonuniform_inputs
+	.org 0x1000, 0
+.else
+	.org 0xa20, 0
+.endif

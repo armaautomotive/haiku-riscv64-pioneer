@@ -22,7 +22,7 @@ static uint32_t Word(const std::vector<uint8_t>& b, unsigned i) {
 }
 
 struct Machine {
-	uint32_t regs[32] = {}, pc = 0x6000, l1[TT_UNPACK_IMAGE_WORDS] = {}, config[224] = {}, thread[68] = {};
+	uint32_t regs[32] = {}, pc = 0x6000, l1[2048] = {}, config[224] = {}, thread[68] = {};
 	float dst[64][16] = {}, a[16][16] = {}, b[8][16] = {};
 	float lreg[2] = {};
 	bool valid[64], ownerA = false, ownerB = false, drained = true, pendingDrainStore = false;
@@ -45,7 +45,8 @@ struct Machine {
 		for (unsigned i = 0; i < 64; i++) valid[i] = true;
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) l1[i] = BlackholeTensixImageWord(i,configSmoke,sfpuSmoke);
 	}
-	unsigned Index(uint32_t address) {
+	virtual ~Machine() = default;
+	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
 		assert(false); return 0;
 	}
@@ -176,7 +177,7 @@ struct Machine {
 		} else assert(false);
 		drained = false;
 	}
-	void Store(uint32_t address, uint32_t value) {
+	virtual void Store(uint32_t address, uint32_t value) {
 		assert((address & 3) == 0);
 		if (address == 0xffe40000) { Instruction(value); return; }
 		if (address == 0xffe80004) { assert(value == 0); pendingDrainStore = true; return; }
@@ -204,7 +205,7 @@ struct Machine {
 		assert(drained || address == 0x17ffc0); // progress label precedes a completion wait
 		l1[Index(address)] = value;
 	}
-	uint32_t Load(uint32_t address) {
+	virtual uint32_t Load(uint32_t address) {
 		assert((address & 3) == 0);
 		if (address == 0xffe80004) { assert(pendingDrainStore); pendingDrainStore = false; drained = true; drains++; return 0xdeadbeef; }
 		if (address == 0xffe000fc) { assert(sfpuSmoke >= 16); return gpr63; }
@@ -234,11 +235,15 @@ struct Machine {
 		for (unsigned reg : registers) if (offset == reg*4) return true;
 		return false;
 	}
+	virtual unsigned StepLimit() const { return 20000; }
+	virtual bool CodeAddress(uint32_t address) const {
+		return address==0x6000 || (address>=0x70000
+			&& address<0x70000+BlackholeTensixCodeWords(sfpuSmoke)*4
+			&& (sfpuSmoke<16 || address<0x70700) && (sfpuSmoke<20 || address<0x70500));
+	}
 	void Run() {
 		while (pc != BlackholeTensixParkPc(sfpuSmoke) || steps == 0) {
-			assert(++steps < 20000 && (pc == 0x6000 || (pc >= 0x70000 && pc < 0x70000 + BlackholeTensixCodeWords(sfpuSmoke)*4)));
-			if (sfpuSmoke >= 16) assert(pc < 0x70700);
-			if (sfpuSmoke >= 20) assert(pc < 0x70500);
+			assert(++steps < StepLimit() && CodeAddress(pc));
 			uint32_t instruction = l1[Index(pc)], next = pc + 4;
 			unsigned op = instruction & 127, rd = (instruction>>7)&31, f3 = (instruction>>12)&7;
 			unsigned rs1 = (instruction>>15)&31, rs2 = (instruction>>20)&31;
@@ -292,6 +297,7 @@ struct Machine {
 		return true;
 	}
 };
+#ifndef PIONEER_TENSIX_MACHINE_ONLY
 int main(int argc, char** argv)
 {
 	assert(argc == 28);
@@ -411,3 +417,4 @@ int main(int argc, char** argv)
 	}
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }
+#endif

@@ -19,6 +19,7 @@
 #include "BlackholeClockedMatmulProbe.h"
 #include "BlackholeComputeNocProbe.h"
 #include "BlackholeResidentReadProbe.h"
+#include "BlackholeResidentMathProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -104,6 +105,8 @@
 #define TT_PCI_PROBE_PIONEER_COMPUTE_NOC_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a1)
 #define TT_PCI_PROBE_PIONEER_RESIDENT_READ (B_DEVICE_OP_CODES_END + 0x54a2)
 #define TT_PCI_PROBE_PIONEER_RESIDENT_READ_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a3)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_MATH (B_DEVICE_OP_CODES_END + 0x54a4)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_MATH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a5)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -200,6 +203,11 @@ struct tt_pioneer_compute_noc_result {
 struct tt_pioneer_resident_read_result {
 	tt_pioneer_compute_noc_result baseline;
 	tt_resident_read_result read;
+};
+
+struct tt_pioneer_resident_math_result {
+	tt_pioneer_compute_noc_result baseline;
+	tt_resident_math_result compute;
 };
 
 #endif

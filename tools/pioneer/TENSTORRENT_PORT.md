@@ -27,6 +27,10 @@ with a poisoned destination, independent host comparison and complete
 L1/NIU/TLB/PCI rollback. This is **not** a resident Qwen backend, a bandwidth
 measurement, or a faster-than-CPU result. The Assistant's supported modes
 have not changed. See the October 15 device-residency record below.
+The next live gate also passed twice: TRISC0 fetched resident GDDR inputs
+itself and computed two dense BF16 matrix fixtures with zero numerical
+mismatches. No host NoC doorbell write or input write between fixtures was
+allowed. This remains a fixed one-tile proof, not Qwen inference or a speedup.
 As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
@@ -1552,6 +1556,72 @@ Remaining acceptance gates for a real Qwen P100A mode:
    the CPU using repeated warm runs, time to first token, prompt throughput,
    sustained generation and total latency. Include cold load separately.
    Only expose a practical faster-Qwen mode after this gate passes.
+
+### October 15: compute-core-driven resident-input matrix proof
+
+The fixed `TT_UNPACK_RESIDENT` variant of `blackhole_tensix_unpack.S`
+retains the independently verified full-fidelity BF16 matrix program and
+its original completion/park addresses. L1 activation/weight tables are
+initialized to zero, not usable fixtures. A bounded NoC reader is appended
+outside the input buffers, within one fixed 4 KiB code/data page. Before
+each of the two matrix fixtures, TRISC0 issues a read of the same 1,088-byte
+resident GDDR block into its private L1 input area. The host cannot ring a
+NoC doorbell through this operation, and performs no intervening data writes.
+
+The reader checks an idle initiator, records the expected response count,
+reads back its doorbell before polling counters, waits for that response
+and zero outstanding requests, then fences before consuming externally
+written L1. Its 65,536-iteration deadline parks with `NOCF`, never `MAT1`,
+on uncertainty. It never retries a request or clears counters. The linker
+and independent RV32I/FPU/NoC simulator verify exact assembled bytes,
+executable bounds, both dense numerical outputs, delayed transfers,
+corruption detection and missing/incomplete-response refusal.
+
+The optional root-only `tenstorrent_haiku_resident_math` ioctl first runs
+the existing firmware, seven-bank route, 120-held-tile and compute-source
+checks. It saves/validates the fixed GDDR block and L1 footprint, uploads
+one known dense BF16 fixture block, then installs/verifies the poisoned
+program. The NIU's fixed command fields and request FIFO are configured and
+verified before releasing only TRISC0. The host requires normal math drain,
+two fixtures, `MAT1`, two park-PC samples, exact NoC counter deltas
+`2/34/2/2` (responses/flits/accepted/read requests), all initiators idle and
+all outstanding/outgoing counters zero before declaring completion.
+
+Unlike the earlier no-NoC tile test, a timeout does **not** assert reset:
+an outstanding request could still overwrite L1 after a RISC parks. Unknown
+execution, route, completion or stop therefore forbids further reset,
+NIU/control or payload writes and latches cold recovery. Only verified
+completion and stop permit restoring original NIU fields/FIFO, L1, GDDR,
+TLBs and PCI state. Src/Dst, local RISC state and coprocessor configuration
+are explicitly initialized, not claimed preserved.
+
+Two real Pioneer runs PASSED with math ABI 27, state 1, started/completed/
+stopped `1/1/1`, three host polls, zero numerical mismatches, phase `703a4`,
+two fixtures, marker `4d415431`, both PCs `703bc`, reset
+`47800 -> 87ffff -> 46800 -> 47800`, NoC deltas `2/34/2/2`, all five
+GDDR/NIU/L1/TLB/PCI restoration flags 1, commands `0000/0000`, cold flag zero.
+No firmware, host DMA, model, Assistant setting or boot change was made.
+The input block is resident across the two fixtures only: this is not yet
+a model allocator, persistent command queue, multicore backend or benchmark.
+
+ASan/UBSan policy tests inject every individual setup/restore write loss,
+NoC timeout, wrong flit count, wrong park PC, numerical corruption, source
+change, active cores/interrupts, allocation failure and permanent GDDR/L1
+restore failures. They assert no host doorbell, repeated start, reset or
+payload rewrite after uncertain execution. All previous image and thirteen
+PCI/ARC/core/memory policy suites remain passing. Jam builds the optional
+driver and all twenty-two utilities cross-build with warnings as errors.
+
+Installed driver SHA-256:
+`e3cbe60248d8ec940ed7f00dfa6357e619a7028e9efc849fc4b256537668c8a5`;
+CLI SHA-256:
+`a375d177bd5b0a6c0769f951f243fff0b037466258f249c936a5dd0ae3323613`.
+Verified original driver and native evidence are in
+`/boot/home/pioneer-resident-matrix-20261015/`; copied logs and assembled
+artifacts are ignored under
+`generated.pioneer/tenstorrent/resident-matrix-20261015/`. Larger resident
+matrix-vector kernels, model residency, Qwen graph integration and the
+same-model faster-than-CPU acceptance gate remain unfinished.
 
 ## Findings from source
 

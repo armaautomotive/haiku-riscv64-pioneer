@@ -934,6 +934,86 @@ struct PioneerResidentReadIO : PioneerComputeNocIO {
 	}
 };
 
+struct PioneerResidentMathIO : PioneerComputeNocIO {
+	tt_resident_math_result& compute;
+	area_id mathAreas[7]={-1,-1,-1,-1,-1,-1,-1};
+	volatile uint32* entry=NULL;
+	volatile uint32* code=NULL;
+	volatile uint32* tail=NULL;
+	volatile uint32* controls=NULL;
+	volatile uint32* gddrData=NULL;
+	volatile uint32* niuWrite=NULL;
+	const volatile uint32* pc=NULL;
+	uint32* savedWords=NULL;
+	bool computeAttempted=false;
+	PioneerResidentMathIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
+		tt_compute_noc_result& n,tt_resident_math_result& r)
+		: PioneerComputeNocIO(p,a,t,c,d,n),compute(r) {}
+	~PioneerResidentMathIO() {
+		free(savedWords);
+		for (unsigned i=0;i<7;i++) if (mathAreas[i]>=B_OK) delete_area(mathAreas[i]);
+	}
+	bool Map() {
+		if (!PioneerComputeNocIO::Map()) return false;
+		savedWords=(uint32*)malloc((TT_RESIDENT_MATH_IMAGE_WORDS+TT_RESIDENT_MATH_GDDR_WORDS)*sizeof(uint32));
+		if (savedWords==NULL) return false;
+		const uint32 offsets[]={0x19006000,0x19070000,0x1917f000,0x19312000,0x19313000,0x19000000,0x19320000};
+		void* pages[7]={};
+		for (unsigned i=0;i<7;i++) {
+			uint32 protection=B_KERNEL_READ_AREA|B_UNCACHED_MEMORY;
+			if (i!=4) protection|=B_KERNEL_WRITE_AREA;
+			mathAreas[i]=map_physical_memory("P100A fixed resident-matrix experiment page",
+				profile.bar0_host_start+offsets[i],B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,protection,&pages[i]);
+			if (mathAreas[i]<B_OK) return false;
+		}
+		entry=(volatile uint32*)pages[0]; code=(volatile uint32*)pages[1]; tail=(volatile uint32*)pages[2];
+		controls=(volatile uint32*)pages[3]; pc=(const volatile uint32*)((uint8*)pages[4]+0x140);
+		gddrData=(volatile uint32*)pages[5]; niuWrite=(volatile uint32*)pages[6]; return true;
+	}
+	uint32* ResidentMathSavedWords() { return savedWords; }
+	volatile uint32* MathPointer(unsigned index) {
+		if (index>=TT_RESIDENT_MATH_IMAGE_WORDS) return NULL;
+		if (index==0) return entry;
+		uint32 address=BlackholeResidentMathAddress(index);
+		return index<=TT_RESIDENT_MATH_CODE_WORDS?code+(address-0x70000)/4:tail+(address-0x17f000)/4;
+	}
+	uint32 MathImageRead(unsigned index) { volatile uint32* p=MathPointer(index); return p!=NULL?PioneerRead32(p):UINT32_MAX; }
+	void MathImageWrite(unsigned index,uint32 value) { volatile uint32* p=MathPointer(index); if (p!=NULL) PioneerWrite32(p,value); }
+	uint32 MathControlRead(unsigned index) {
+		const uint32 offsets[]={0x234,0xa0,0x90};
+		return index<3?PioneerRead32(controls+offsets[index]/4):UINT32_MAX;
+	}
+	void MathResetWrite(uint32 value) {
+		if (value==0x87ffff || value==0x46800 || value==0x47800) PioneerWrite32(controls+0x1b0/4,value);
+	}
+	uint32 MathPcRead() { return PioneerRead32(pc); }
+	uint32 ResidentGddrRead(unsigned word) { return word<TT_RESIDENT_MATH_GDDR_WORDS?PioneerRead32(gddrData+word):UINT32_MAX; }
+	void ResidentGddrWrite(unsigned word,uint32 value) { if (word<TT_RESIDENT_MATH_GDDR_WORDS) PioneerWrite32(gddrData+word,value); }
+	uint32 ResidentNocRead(uint32 offset) { return BlackholeResidentReadRegister(offset)?PioneerRead32(nocRegisters+offset/4):UINT32_MAX; }
+	void ResidentNocWrite(uint32 offset,uint32 value) {
+		// This operation's HOST cannot ring any NoC doorbell. Fixed TRISC0
+		// alone issues the two reads after the full launch proof.
+		if (offset!=0x40 && BlackholeResidentWriteRegister(offset)) PioneerWrite32(niuWrite+offset/4,value);
+	}
+	void Pause() { spin(100); }
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerComputeNocIO::AfterNodeId(id)) return false;
+		computeAttempted=true;
+		dprintf("PIONEER-P100A: fixed TRISC0 resident GDDR inputs, two device-issued reads, no host DMA/flash\n");
+		return BlackholeResidentMathProbe(*this,dram,noc,compute);
+	}
+	bool Unmap() {
+		bool okay=true;
+		for (unsigned i=0;i<7;i++) if (mathAreas[i]>=B_OK) {
+			if (delete_area(mathAreas[i])==B_OK) mathAreas[i]=-1; else okay=false;
+		}
+		if (computeAttempted && (compute.recovery_required || !compute.gddr_restored || !compute.niu_restored
+			|| !compute.math.l1_restored || !compute.math.tlb_restored)) okay=false;
+		return PioneerComputeNocIO::Unmap() && okay;
+	}
+};
+
 struct PioneerMatmulIO : PioneerDramSamplesIO {
 	tt_tensix_matmul_result& math;
 	const bool configSmoke;
@@ -1041,6 +1121,42 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_MATH_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_MATH) {
+		if (data==NULL || length!=sizeof(tt_pioneer_resident_math_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status!=B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager==NULL) status=get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile={};
+		if (status==B_OK) status=GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status=status;
+		tt_pioneer_resident_math_result result={};
+		tt_pioneer_dram_samples_result& baseline=result.baseline.baseline;
+		tt_pioneer_arc_result& control=baseline.control.control.control;
+		tt_arc_telemetry_result& telemetry=baseline.control.control.telemetry;
+		tt_tensix_reset_result& tensix=baseline.control.tensix;
+		control.pci.version=control.arc.version=telemetry.version=tensix.version=baseline.dram.version=1;
+		control.arc.tlb_restored=telemetry.tlb_restored=tensix.tlb_restored=1;
+		baseline.dram.data_restored=baseline.dram.tlb_restored=result.baseline.noc.tlb_restored=1;
+		result.compute.gddr_restored=result.compute.niu_restored=1;
+		result.compute.math.l1_restored=result.compute.math.tlb_restored=1;
+		if (status==B_OK) {
+			PioneerResidentMathIO io(profile,control.arc,telemetry,tensix,baseline.dram,result.baseline.noc,result.compute);
+			BlackholePioneerMmioProbe(io,control.pci);
+		}
+		if (result.compute.recovery_required || result.compute.math.recovery_required || result.baseline.noc.recovery_required
+			|| baseline.dram.recovery_required || control.pci.state==TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.compute.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock); return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_READ_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
