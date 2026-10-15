@@ -2,11 +2,16 @@
 
 ## Status
 
-Source/feasibility investigation started 2026-09-15. On October 15, a fixed
-one-tile BF16-input/FP32-output matrix fixture passed all 256 numerical
-results twice consecutively under Haiku, with verified L1/TLB/PCI restoration.
-This is a hardware matrix primitive, not LLM inference or a general model
-runtime. See the standard L1-unpack record below. As of October 14,
+Source/feasibility investigation started 2026-09-15. On October 15,
+TinyStories-260K generated eight verified tokens under Haiku with every
+learned linear projection/classifier computed on the P100A: `Once upon a
+time, there was a`. All CPU reference token choices matched; 8224 device
+tiles completed/stopped/restored in 123.050 seconds. This is an experimental
+fixed-shape hybrid runtime: the host handles norms, attention/KV, activations,
+embedding lookup and partial sums. **Full Qwen3.8-27B inference is not working
+yet.** Its real Q4_K/Q8_0/Q6_K projection samples now pass independently.
+Haiku retains 64 CPUs and 127.62 GiB usable RAM. See the live records below.
+As of October 14,
 Haiku enumerates the installed P100A through the SD-free RAM boot path,
 its optional read-only diagnostic works, and a controlled temporary BAR
 mapping reads the card's NoC identification register successfully. A fixed
@@ -1309,8 +1314,6 @@ The diagnostic per-tile save/check/restore path is far too slow for 27B.
 Qwen3.8-27B 4-bit, resident GDDR weights and a scalable batched backend remain
 separate, unfinished milestones. No firmware/boot/SD changes or DMA enable.
 
-Download the other pinned official sources with:
-
 ### October 15: bounded batching and eight-token live inference
 
 Added data-only batch ioctl `549e`, metadata `549f` v40. It accepts 1..16
@@ -1348,6 +1351,68 @@ model harness `3f7571fdfd2098b4d5ac5d001a3453f8d45fecc38a40e03099ba9545713fb968`
 This is a working tiny hybrid language model, NOT Qwen3.8-27B. Resident
 quantized weights, device-side transfers and a scalable model backend remain
 necessary for that target. Default boot remains Linux and both SDs stay out.
+
+### October 15: requested Qwen GGUF preflight and mixed-format projections
+
+Pinned primary model candidate: [ggml-org/Qwen3.8-27B-GGUF](https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF),
+revision `71bc7b627595dc8a91039addd9c791ae548d6747`, file
+`Qwen3.8-27B-Q4_K_M.gguf`, **18,973,870,528 bytes** (17.67 GiB).
+Published full LFS SHA-256:
+`c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`.
+Only a 16 MiB header range and three small tensor ranges were downloaded,
+NOT the complete model. Range hashes do not verify that full-file checksum.
+HTTP responses were bounded 206 ranges from that immutable revision.
+
+The new read-only `tenstorrent_gguf_preflight.py` parses GGUF v3 with bounded
+lengths/counts, validates tensor formats/alignment/non-overlap/full-file
+bounds and never evaluates chat templates or executes a model. Tests reject
+every header truncation, duplicate keys, bad alignment/types/dimensions and
+out-of-file tensors. Actual header ends at byte 10,994,112 and describes
+851 tensors: **193 Q4_K, 288 Q8_0, 17 Q6_K and 353 F32**. It is not uniform
+4-bit. Architecture is `qwen35`, 64 layers, width 5120, FFN 17408, recurrent
+inner width 6144, full-attention interval 4. The TinyStories harness cannot
+load this graph; convolution/Gated DeltaNet and gated-attention execution,
+tokenization and memory planning remain substantial unfinished work.
+
+Independent original host block decoders now cover Q4_K (144 bytes/256
+weights), Q8_0 (34/32), Q6_K (210/256) and IEEE FP16 scales. Offline fixtures
+test all finite FP16 encodings, 16384 Q4_K, 8192 Q8_0 and 65536 Q6_K values,
+including signed scales/quants and rejection of nonfinite scales.
+No existing llama.cpp files were changed. Native probe uses bounded host
+block decode/BF16 conversion, P100A matrix multiplication and host partial
+sums. It compares both decoded-FP32 and BF16 CPU references for 16 real
+weight rows with a synthetic activation vector; this is NOT complete model
+inference or device-side quantized storage/dequantization.
+
+At **08:41..08:44 UTC**, actual Qwen weights PASSED:
+
+| Tensor sample | Shape tested | CPU FP32 cosine | Relative L2 | Device tiles / transactions | Time |
+|---|---|---|---|---|---|
+| Q4_K `blk.0.ffn_gate.weight` rows 0..15 | 5120 → 16 | 0.999997570 | 0.002212184 | 320 / 20 | 4.337 s |
+| Q8_0 `blk.0.attn_gate.weight` rows 0..15 | 5120 → 16 | 0.999998024 | 0.002027083 | 320 / 20 | 4.330 s |
+| Q6_K `blk.3.attn_output.weight` rows 0..15 | 6144 → 16 | 0.999998654 | 0.001672537 | 384 / 24 | 5.231 s |
+
+All outputs satisfied the separate BF16 numerical budget; every transaction
+completed/stopped/restored without recovery. Driver remains batching SHA
+`c0cdb75a7f2d4a90638be45660e99121b02deb0152656fc96643071ff3c32a77`.
+Latest native projection CLI SHA
+`ed5b2b1e2006a05bccfff851f21e552a34ba25f38b1f5f3ddb86e8d2f9149e3e`,
+folder `/boot/home/pioneer-p100a-20261014/qwen-mixed-1/`.
+The earlier Q4-only CLI was
+`5719b881425a9f9ecb7f38b33587e49f0772197952a9ce60fcf4fee9bab1ad3e`
+in `qwen-q4-1/`.
+
+`tenstorrent_fetch_qwen_preflight.sh` reproduces bounded header and tensor
+ranges, verifies exact lengths, Content-Range and local range hashes. It
+does not execute code, connect to the card, fetch pickle files, or download
+the complete 19 GB model. Run the inspector with declared full size
+18973870528. Do not treat the header range as a runnable GGUF file.
+
+Remaining scale gate: resident quantized weights and device-side transfers
+must replace host PIO weight streaming, then implement/validate the complete
+64-layer hybrid graph. A model-sized BF16 expansion would exceed 28 GB and
+must not be used as the residency plan. No SD, default boot, firmware or DMA
+changes were needed for any of these results.
 
 Download the other pinned official sources with:
 
