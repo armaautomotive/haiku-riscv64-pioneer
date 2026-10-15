@@ -605,11 +605,113 @@ struct PioneerBriscIO : PioneerTensixIO {
 	}
 };
 
+struct PioneerDramRouteIO : PioneerTensixIO {
+	tt_dram_route_result& dram;
+	area_id dramArea = -1;
+	const volatile uint32* dramNiu = NULL;
+	bool dramAttempted = false;
+	PioneerDramRouteIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t, tt_tensix_reset_result& c, tt_dram_route_result& r)
+		: PioneerTensixIO(p, a, t, c), dram(r) {}
+	~PioneerDramRouteIO() { if (dramArea >= B_OK) delete_area(dramArea); }
+	bool Map()
+	{
+		if (!PioneerTensixIO::Map()) return false;
+		void* address = NULL;
+		// TLB 201, local ffa00000 + 120000 => ffb20000. Only one NIU
+		// page, read-only and uncached, not GDDR payload memory.
+		dramArea = map_physical_memory("P100A fixed GDDR bank-0 NIU read-only",
+			profile.bar0_host_start + 0x19320000, B_PAGE_SIZE,
+			B_ANY_KERNEL_ADDRESS, B_KERNEL_READ_AREA | B_UNCACHED_MEMORY, &address);
+		if (dramArea < B_OK) return false;
+		dramNiu = (const volatile uint32*)address;
+		return true;
+	}
+	uint32 SourceRead(unsigned word)
+	{
+		uint32 offset = BlackholeDramSourceOffset(word);
+		return offset == UINT32_MAX ? UINT32_MAX
+			: PioneerRead32((const volatile uint32*)((const uint8*)nodeID - 0x44 + offset));
+	}
+	uint32 DramIdRead(unsigned word)
+	{
+		uint32 offset = BlackholeDramIdOffset(word);
+		return offset == UINT32_MAX ? UINT32_MAX : PioneerRead32(dramNiu + offset / 4);
+	}
+	bool AfterNodeId(uint32 id)
+	{
+		if (!PioneerTensixIO::AfterNodeId(id)) return false;
+		dramAttempted = true;
+		dprintf("PIONEER-P100A: GDDR bank-0 NIU route proof, read-only target\n");
+		return BlackholeDramRouteProbe(*this, telemetry, tensix, dram);
+	}
+	bool Unmap()
+	{
+		bool okay = true;
+		if (dramArea >= B_OK) {
+			if (delete_area(dramArea) == B_OK) dramArea = -1;
+			else okay = false;
+		}
+		if (dramAttempted && !dram.tlb_restored) {
+			for (unsigned i = 0; i < 3; i++) TlbWrite(i, dram.tlb_before[i]);
+			dram.tlb_restored = 1;
+			for (unsigned i = 0; i < 3; i++) {
+				dram.tlb_after[i] = TlbRead(i);
+				dram.tlb_restored &= dram.tlb_after[i] == dram.tlb_before[i];
+			}
+		}
+		if (dramAttempted && (!dram.tlb_restored || dram.recovery_required)) okay = false;
+		return PioneerTensixIO::Unmap() && okay;
+	}
+};
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_DRAM_SUPPORT) {
+		if (data == NULL || length != sizeof(tt_dram_route_support)) return B_BAD_VALUE;
+		status_t status = AcquireProbeLock();
+		if (status != B_OK) return status;
+		const tt_dram_route_support support = {2, 0, TT_DRAM_SOURCE_WORDS, TT_DRAM_ID_WORDS, 18, 12};
+		release_sem(sLock);
+		return user_memcpy(data, &support, sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_DRAM_ROUTE) {
+		if (data == NULL || length != sizeof(tt_pioneer_dram_route_result)) return B_BAD_VALUE;
+		tt_pioneer_dram_route_result result = {};
+		status_t status = user_memcpy(data, &result, sizeof(result));
+		if (status != B_OK) return status;
+		status = AcquireProbeLock();
+		if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME, (module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager, sCard, profile);
+		profile.status = status;
+		tt_pioneer_arc_result& control = result.control.control.control;
+		tt_arc_telemetry_result& telemetry = result.control.control.telemetry;
+		tt_tensix_reset_result& tensix = result.control.tensix;
+		control.pci.version = control.arc.version = telemetry.version = tensix.version = result.dram.version = 1;
+		control.pci.profile_status = status; control.pci.profile_stage = profile.stage;
+		control.arc.tlb_restored = telemetry.tlb_restored = tensix.tlb_restored = result.dram.tlb_restored = 1;
+		if (status == B_OK) {
+			PioneerDramRouteIO io(profile, control.arc, telemetry, tensix, result.dram);
+			BlackholePioneerMmioProbe(io, control.pci);
+		}
+		if (result.dram.recovery_required || control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.dram.recovery_required = 1;
+			sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: DRAM route state %" B_PRIu32 " TLB/PCI restored %" B_PRIu32 "/%" B_PRIu32
+			" cold recovery %" B_PRIu32 "\n", result.dram.state,
+			result.dram.tlb_restored, control.pci.restored, result.dram.recovery_required);
+		return user_memcpy(data, &result, sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_BRISC_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_brisc_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock();

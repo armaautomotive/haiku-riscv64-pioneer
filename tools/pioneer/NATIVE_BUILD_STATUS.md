@@ -3072,3 +3072,18 @@ device-issued NoC DRAM alignment is separately 64-byte read/16-byte write.
 No GDDR data reads/writes, capacity test or memory-probe operation were added
 or run in this checkpoint. The comment-only module rebuild remains exactly
 58ffcadc... and loaded support query/host memory checks still pass.
+
+## October 14: native read-only GDDR route verified
+
+The new fixed bank-0 probe proves the PCIe source translation table maps
+translated (18,12) to physical (0,0), then checks the target's physical NoC
+coordinates, DRAM/bank-0 endpoint type and repeated NIU/label samples.
+The first live attempt safely restored PCI/TLB state but refused the unset
+software label NOC_ID_LOGICAL. The host-tested v2 policy recognizes firmware
+18.5's observed zero label without relaxing the physical identity or source
+routing proof. At about 21:28 local October 14 it passed three identical
+samples, TLB/PCI restored 1/1, commands 0000/0000, cold recovery zero.
+Installed module d999e495... and CLI 4f7b46c2... are retained in
+/boot/home/pioneer-p100a-20261014/dram-route-2 with the prior module backup.
+All earlier CLI hashes are unchanged. This is not GDDR payload testing,
+matrix computation or P100A model inference. Kernel/default boot unchanged.

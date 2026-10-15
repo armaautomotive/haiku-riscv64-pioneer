@@ -24,7 +24,7 @@ umask 077
 mkdir -m 700 "$tt_output"
 for tt_name in tenstorrent_haiku_diag tenstorrent_haiku_bar4_probe \
  tenstorrent_haiku_pioneer_profile tenstorrent_haiku_mmio_probe tenstorrent_haiku_arc_probe \
- tenstorrent_haiku_telemetry_probe tenstorrent_haiku_tensix_probe tenstorrent_haiku_l1_probe tenstorrent_haiku_brisc_probe; do
+ tenstorrent_haiku_telemetry_probe tenstorrent_haiku_tensix_probe tenstorrent_haiku_l1_probe tenstorrent_haiku_brisc_probe tenstorrent_haiku_dram_probe; do
  case "$tt_name" in
   tenstorrent_haiku_diag) tt_language=c; tt_standard=c11; tt_extension=c; set -- ;;
   *) tt_language=c++; tt_standard=c++11; tt_extension=cpp; set -- -fno-exceptions -fno-rtti ;;
@@ -47,6 +47,6 @@ fi
  cd "$tt_output"
  tt_hash tenstorrent_haiku_diag tenstorrent_haiku_bar4_probe \
   tenstorrent_haiku_pioneer_profile tenstorrent_haiku_mmio_probe tenstorrent_haiku_arc_probe \
-  tenstorrent_haiku_telemetry_probe tenstorrent_haiku_tensix_probe tenstorrent_haiku_l1_probe tenstorrent_haiku_brisc_probe > artifacts.sha256
+  tenstorrent_haiku_telemetry_probe tenstorrent_haiku_tensix_probe tenstorrent_haiku_l1_probe tenstorrent_haiku_brisc_probe tenstorrent_haiku_dram_probe > artifacts.sha256
 )
-printf 'Built nine diagnostics in %s; no device was accessed\n' "$tt_output"
+printf 'Built ten diagnostics in %s; no device was accessed\n' "$tt_output"

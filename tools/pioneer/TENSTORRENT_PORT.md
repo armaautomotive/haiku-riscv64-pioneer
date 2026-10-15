@@ -579,6 +579,49 @@ afterwards; no recovery or SD change was necessary. This proves bounded
 scalar RISC code runs on the real P100A under Haiku. It is not Tensix matrix
 compute, a GDDR memory audit, a native runtime port or accelerator LLM inference.
 
+### October 14: first verified read-only GDDR route
+
+Added a separate fixed bank-0/port-0 NIU identification transaction, not a
+payload memory operation. Before issuing a NoC request, it reads the PCIe
+NIU's translation configuration and proves translated `(18,12)` maps to
+physical `(0,0)`. It requires the measured firmware `12050001`, GDDR mask
+`f7`, status `5515`, zero reported uncorrected errors and the existing held-
+core control result. Only the fixed source-configuration/target-ID registers
+are readable through this new ioctl; no arbitrary addresses or input fields.
+
+The initial live check restored all PCI/TLB state but refused its ID because
+firmware 18.5 leaves `NOC_ID_LOGICAL` at zero. This register is a writable
+software label, not the routing lookup table. Policy v2 accepts either that
+observed unset label or the prescribed label; the independent physical
+`NOC_NODE_ID`, typed `NOC_ENDPOINT_ID`, source-table translation and repeated
+sample checks remain required. No identity field or actual routing-table
+check was removed. Host ASan/UBSan tests cover dropped configuration/restore
+writes, wrong/unstable IDs, all-zero/all-one reads and source-table changes.
+
+At 21:28 local October 14 (04:28 UTC October 15), loaded policy v2 and the
+fixed route PASSED. Three samples were identical:
+`NODE=1c611000 ENDPOINT=00080000 NIU=0000e005 LOGICAL=00000000`.
+The source NIU was `6005` with unchanged translation words. TLB/PCI restore
+flags were 1/1, commands ended 0000/0000, and cold-recovery flag was zero.
+Only bank-0 identification was tested, not GDDR capacity or matrix compute.
+
+Installed optional driver SHA:
+`d999e495ca4fb73cb577f1558e3f5b515dd19c5700a283802ec455b1701b4bec`.
+CLI SHA: `4f7b46c23bcbe5cb513ba25e755fe59a850a08cd7975c68f4c7f4ca0a963cbb4`.
+Artifacts and the previous driver are retained under
+`/boot/home/pioneer-p100a-20261014/dram-route-2/`; the earlier BRISC driver
+also remains backed up under `dram-route-1/`. Metadata-only
+`--check-fixed-dram-support` identifies loaded policy v2. Explicit
+`--read-fixed-dram-route-and-restore` performs the bounded transaction.
+
+Register facts were audited against official ISA documentation commit
+`8a34e25e04d1ad7dd129ac9231e126b85923fac3`,
+`BlackholeA0/NoC/{Coordinates,MemoryMap}.md` and
+`BlackholeA0/PCIExpressTile/HostToDeviceTLBs.md`, together with the pinned
+UMD coordinate manager. Preserve those sources' own license notices; this
+policy is an independent implementation of register facts, not copied
+documentation code. No DMA, firmware messages/flash or model inference ran.
+
 Download pinned official sources with:
 
 ```sh

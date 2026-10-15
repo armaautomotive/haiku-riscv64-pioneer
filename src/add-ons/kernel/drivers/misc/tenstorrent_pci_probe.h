@@ -11,6 +11,7 @@
 #include "BlackholeTensixResetProbe.h"
 #include "BlackholeL1ScratchProbe.h"
 #include "BlackholeBriscSmokeProbe.h"
+#include "BlackholeDramRouteProbe.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -22,6 +23,12 @@
 #define TT_PCI_PROBE_PIONEER_L1_SCRATCH (B_DEVICE_OP_CODES_END + 0x5457)
 #define TT_PCI_PROBE_PIONEER_BRISC_SMOKE (B_DEVICE_OP_CODES_END + 0x5458)
 #define TT_PCI_PROBE_PIONEER_BRISC_SUPPORT (B_DEVICE_OP_CODES_END + 0x5459)
+#define TT_PCI_PROBE_PIONEER_DRAM_ROUTE (B_DEVICE_OP_CODES_END + 0x545a)
+#define TT_PCI_PROBE_PIONEER_DRAM_SUPPORT (B_DEVICE_OP_CODES_END + 0x545b)
+
+struct tt_dram_route_support {
+	uint32_t version, bank, source_words, id_words, translated_x, translated_y;
+};
 
 struct tt_brisc_support {
 	uint32_t version, code_words, footprint_words, code_base, result_base, park_pc;
@@ -50,6 +57,11 @@ struct tt_pioneer_l1_result {
 struct tt_pioneer_brisc_result {
 	tt_pioneer_tensix_result control;
 	tt_brisc_smoke_result brisc;
+};
+
+struct tt_pioneer_dram_route_result {
+	tt_pioneer_tensix_result control;
+	tt_dram_route_result dram;
 };
 
 #endif
