@@ -13,6 +13,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <unistd.h>
+#include <vm/vm.h>
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -64,6 +65,65 @@ PioneerWrite32(volatile uint32* address, uint32 value)
 	*address = B_HOST_TO_LENDIAN_INT32(value);
 	PioneerIoFence();
 }
+
+struct PioneerHostPageIO {
+	area_id area=-1;
+	volatile uint32* page=NULL;
+	uint64 physical=0;
+	bool releaseAttempted=false,quarantined=false;
+	~PioneerHostPageIO() {
+		if (area>=B_OK && !releaseAttempted && !quarantined) ReleaseHostPage();
+	}
+	int32 AllocateHostPage() {
+		if (area>=B_OK || B_PAGE_SIZE!=TT_HOST_PAGE_BYTES) return B_BAD_VALUE;
+		virtual_address_restrictions virtualRestrictions={};
+		virtualRestrictions.address_specification=B_ANY_KERNEL_ADDRESS;
+		physical_address_restrictions physicalRestrictions={};
+		physicalRestrictions.low_address=UINT64_C(0x100000000);
+		physicalRestrictions.high_address=UINT64_C(0x1000000000000); // exclusive
+		physicalRestrictions.alignment=TT_HOST_PAGE_BYTES;
+		void* address=NULL;
+		area=create_area_etc(B_SYSTEM_TEAM,"P100A dedicated high host-read page",
+			TT_HOST_PAGE_BYTES,B_CONTIGUOUS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,
+			0,0,&virtualRestrictions,&physicalRestrictions,&address);
+		if (area<B_OK) return area;
+		page=(volatile uint32*)address; return B_OK;
+	}
+	int32 HostPageMap(uint64_t& address,uint64_t& bytes) {
+		if (area<B_OK || page==NULL) return B_BAD_VALUE;
+		physical_entry entry={};
+		status_t status=get_memory_map((const void*)page,TT_HOST_PAGE_BYTES,&entry,1);
+		if (status!=B_OK) return status;
+		address=entry.address; bytes=entry.size;
+		if (PioneerHostPageAddress(address,bytes)) physical=address;
+		return B_OK;
+	}
+	int32 SetHostPageNonCached() {
+#if defined(__riscv)
+		if (area<B_OK || !PioneerHostPageAddress(physical,TT_HOST_PAGE_BYTES)) return B_BAD_VALUE;
+		// Same ordinary non-cacheable RAM type used by this port's working
+		// NVMe queue/bounce allocations, not an MMIO alias or cached buffer.
+		return vm_set_area_memory_type(area,physical,B_WRITE_THROUGH_MEMORY);
+#else
+		return B_UNSUPPORTED;
+#endif
+	}
+	uint32 HostPageRead(unsigned w) { return w<TT_HOST_PAGE_WORDS?PioneerRead32(page+w):UINT32_MAX; }
+	void HostPageWrite(unsigned w,uint32 value) { if (w<TT_HOST_PAGE_WORDS) PioneerWrite32(page+w,value); }
+	int32 ReleaseHostPage() {
+		if (area<B_OK || releaseAttempted || quarantined) return B_BAD_VALUE;
+		releaseAttempted=true;
+		status_t status=delete_area(area);
+		if (status==B_OK) { area=-1; page=NULL; }
+		return status;
+	}
+	void QuarantineHostPage() {
+		// Future DMA callers must retain a page after uncertain completion:
+		// late device reads must never observe newly reused private memory.
+		// A system-team area stays wired even if this module later unloads.
+		quarantined=true;
+	}
+};
 
 static bool
 FindCard(pci_module_info* pci, pci_info& card)
@@ -1177,6 +1237,20 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_PIONEER_HOST_PAGE_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_HOST_PAGE) {
+		if (data==NULL || length!=sizeof(tt_host_page_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		tt_host_page_result result={};
+		PioneerHostPageIO io;
+		PioneerHostPageProbe(io,result); // CPU-only: never calls PCI/MMIO
+		release_sem(sLock); return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_PATH_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;

@@ -92,6 +92,40 @@ Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
 
+### October 15: owned high-address host buffer prerequisite
+
+The native CPU-only host-page diagnostic passed on the running Haiku system.
+It allocated a dedicated contiguous, wired 4 KiB system-team area above 4 GiB
+(33 physical address bits), validated its full mapping, configured the same
+ordinary non-cacheable RAM type used by the port's NVMe queues **before any
+payload write**, checked two full-page patterns, revalidated the mapping and
+released the area exactly once. Allocation/map/cache/release statuses were
+all zero, both patterns matched, and the Assistant remained ready and idle.
+This test did not reserve PCI, map device registers, enable bus mastering,
+issue a device transaction or establish DMA coherence.
+
+`PioneerHostPage.h` separates owned-page preparation from the CPU-only
+prepare/check/release wrapper so a future bounded device-read test can retain
+the allocation until proven completion. The native owner can quarantine a
+wired system-team area after uncertainty; destruction must not free a page
+which a delayed device read could still access. No DMA caller exists at this
+checkpoint. Host ASan/UBSan tests cover every lost pattern write, invalid and
+overflowing addresses, changed mappings, allocation/cache failures and exact
+cleanup ownership. The driver and all 25 cross-built utilities compile.
+
+Native artifacts and the scoped log are in
+`/boot/home/pioneer-host-page-20261015/`; the previous driver is preserved as
+`tenstorrent_pci_probe.before`. SHA-256:
+
+- Driver: `5317631f2792bb5549172f74065dbda714e5b9b2f9fa7efcf59c7afb6133f907`
+- Host-page CLI: `bf92b31bd4e2267bd685f629ad4b34bf95a4c1c3b8f8467bab0282930eb2c2be`
+
+The next transfer gate is a strictly bounded read **from** this owned host
+memory, including PCIe pending-transaction/DMA-engine checks, destination
+poisoning, complete counter proof and quarantine on uncertain completion.
+Neither this prerequisite nor the resident GEMV fixtures are full Qwen
+inference or a speedup over the measured Qwen CPU baseline.
+
 ### October 14: resume after SD-free baseline
 
 The card-free baseline is now established: Linux → Haiku → Linux → Haiku

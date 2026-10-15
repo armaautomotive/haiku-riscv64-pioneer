@@ -21,6 +21,7 @@
 #include "BlackholeResidentReadProbe.h"
 #include "BlackholeResidentMathProbe.h"
 #include "BlackholeHostPathProbe.h"
+#include "PioneerHostPage.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -112,6 +113,8 @@
 #define TT_PCI_PROBE_PIONEER_RESIDENT_GEMV_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a7)
 #define TT_PCI_PROBE_PIONEER_HOST_PATH (B_DEVICE_OP_CODES_END + 0x54a8)
 #define TT_PCI_PROBE_PIONEER_HOST_PATH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54a9)
+#define TT_PCI_PROBE_PIONEER_HOST_PAGE (B_DEVICE_OP_CODES_END + 0x54aa)
+#define TT_PCI_PROBE_PIONEER_HOST_PAGE_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ab)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
