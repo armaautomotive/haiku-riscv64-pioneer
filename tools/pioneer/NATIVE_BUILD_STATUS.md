@@ -2791,3 +2791,14 @@ with the unchanged memory-2 loader, removes only the private SD node, and
 verifies any pending source journal through the existing read-only/COW
 procedure. It requires 64 CPUs; existing profiles/defaults remain unchanged.
 Revision 3 has not yet been boot-tested. No P100A compute or firmware action.
+
+The journal-profile prepare refused before staging because the source BFS
+header was CLEAN (434c454e), not DIRTY. Verified empty kexec slot, automatic
+UART policy and both block-device RW policies unchanged. Added a separate
+`memory128-kdl3-nosd-control` using the existing direct read-only verification;
+the dirty-journal profile remains explicit and unchanged. Fresh helper
+`pioneer_linux_boot_haiku_kdl-nosd-3b.sh` SHA:
+`2fc1f828eb53ea6a5fc6723d7b0782b10cacd6225a12982b729b7e0978d92dd9`.
+Its prepare passed, then normal systemctl kexec started
+`smp64-memory128-kdl3-nosd2-20261014` at 01:56 UTC October 15, serial boundary
+11465656. Awaiting diagnostic/runtime results; defaults are unchanged.

@@ -2,17 +2,17 @@
 # Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
 set -eu
 fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
-[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-journal-control]'
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control]'
 action=$1
 session=$2
 cpu_count=$3
 profile=${4:-active-map-control}
-case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
 case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
 if [ "$profile" = memory8-journal-recovery-control ]; then
  [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
 fi
-case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-journal-control)
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control)
  [ "$cpu_count" = 64 ] || fail 'Private KDL diagnostic requires 64 CPUs'
  ;;
 esac
@@ -68,7 +68,7 @@ case "$profile" in
   bundle_hash=abbd25643a1787f3a857535f4becee8f8b7fe7578404fb1dae52b425afae1e68
   memory_gib=128
   ;;
- memory128-kdl3-nosd-journal-control)
+ memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control)
   # Earlier AP1 arm is positively verified before scheduler release. Replay
   # any pending source journal only through the private COW verifier.
   image=$base/memory-2/HaikuPioneerKexecProbe.Image
@@ -160,7 +160,7 @@ validate_run()
  fi
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /pcie@7062000000 haiku,pioneer-root-probe)" = 1e52b140 ] || fail 'Missing private root opt-in'
  [ "$(fdtget -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-root-v1)" = "$(root_manifest)" ] || fail 'Root identity changed since prepare'
- if [ "$profile" = memory128-kdl-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then
+ if [ "$profile" = memory128-kdl-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then
   if fdtget "$run/probe-fdt.dtb" /soc/bm-sd@704002B000 compatible >/dev/null 2>&1; then fail 'Unexpected SD node in no-SD diagnostic'; fi
   [ "$(fdtget -t x "$run/probe-fdt.dtb" /soc/bm-emmc@704002A000 reg)" = '70 4002a000 0 1000' ] || fail 'eMMC node changed'
  fi
@@ -204,7 +204,7 @@ case "$action" in
   fi
   cp /sys/firmware/fdt "$run/live-fdt.dtb"
   cp "$run/live-fdt.dtb" "$run/probe-fdt.dtb"
-  if [ "$profile" = memory128-kdl-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then remove_private_sd_node; fi
+  if [ "$profile" = memory128-kdl-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-control ] || [ "$profile" = memory128-kdl3-nosd-journal-control ]; then remove_private_sd_node; fi
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-kexec-probe 4
   fdtput -t x "$run/probe-fdt.dtb" /chosen haiku,pioneer-cpu-count "$(printf '%x' "$cpu_count")"
   if [ "$memory_gib" = 3 ]; then
