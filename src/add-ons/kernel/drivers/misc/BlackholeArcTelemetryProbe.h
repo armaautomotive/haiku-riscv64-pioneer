@@ -24,11 +24,12 @@ struct tt_arc_telemetry_result {
 };
 
 static inline uint16_t
-BlackholeTelemetryTag(unsigned i)
+BlackholeTelemetryTag(unsigned i, bool operating = false)
 {
 	// Public UMD TelemetryTag values. Deliberately exclude board/ASIC IDs.
 	const uint16_t tags[] = {28, 29, 11, 13, 51, 41, 36, 22, 50, 34, 32, 10};
-	return i < TT_ARC_TELEMETRY_COUNT ? tags[i] : 0;
+	const uint16_t operatingTags[] = {14, 15, 16, 6, 53, 54, 60, 63, 28, 29, 32, 10};
+	return i < TT_ARC_TELEMETRY_COUNT ? (operating ? operatingTags[i] : tags[i]) : 0;
 }
 
 static inline bool
@@ -50,10 +51,10 @@ BlackholeTelemetryTlbWord(unsigned i)
 template<class IO>
 bool
 BlackholeArcTelemetryProbe(IO& io, const tt_arc_scratch_result& arc,
-	tt_arc_telemetry_result& r)
+	tt_arc_telemetry_result& r, bool operating = false)
 {
 	r = {};
-	r.version = 1;
+	r.version = operating ? 2 : 1;
 	r.tlb_restored = 1;
 	r.tags_address = arc.telemetry_tags;
 	r.data_address = arc.telemetry_data;
@@ -94,7 +95,7 @@ BlackholeArcTelemetryProbe(IO& io, const tt_arc_scratch_result& arc,
 			uint32_t offset = entry >> 16;
 			if (offset >= r.entry_count) { valid = false; break; }
 			for (unsigned j = 0; j < TT_ARC_TELEMETRY_COUNT; j++) {
-				if (tag != BlackholeTelemetryTag(j)) continue;
+				if (tag != BlackholeTelemetryTag(j,operating)) continue;
 				if ((found & (1U << j)) != 0) { valid = false; break; }
 				found |= 1U << j;
 				offsets[j] = offset;
@@ -110,7 +111,8 @@ BlackholeArcTelemetryProbe(IO& io, const tt_arc_scratch_result& arc,
 			}
 		}
 		if (valid) {
-			r.state = (r.present_mask & 7) == 7 ? TT_ARC_TELEMETRY_OK : TT_ARC_TELEMETRY_INCOMPLETE;
+			const uint32_t required = operating ? 0x109 : 7; // AICLK, VCORE, bundle; or legacy health
+			r.state = (r.present_mask & required) == required ? TT_ARC_TELEMETRY_OK : TT_ARC_TELEMETRY_INCOMPLETE;
 			if (io.CsmRead(r.tags_address) != r.table_version
 				|| io.CsmRead(r.tags_address + 4) != r.entry_count) {
 				r.state = TT_ARC_TELEMETRY_CHANGED;

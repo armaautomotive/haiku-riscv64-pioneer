@@ -20,15 +20,16 @@ static void PrintTemperature(uint32_t raw)
 
 int main(int argc, char** argv)
 {
-	if (argc != 2 || strcmp(argv[1], "--read-telemetry-and-restore") != 0) {
-		fprintf(stderr, "Usage: %s --read-telemetry-and-restore\n"
+	bool operating = argc == 2 && strcmp(argv[1],"--read-operating-telemetry-and-restore") == 0;
+	if (!operating && (argc != 2 || strcmp(argv[1], "--read-telemetry-and-restore") != 0)) {
+		fprintf(stderr, "Usage: %s --read-telemetry-and-restore | --read-operating-telemetry-and-restore\n"
 			"Private Pioneer only: bounded whitelisted firmware/health values, exact PCI/TLB rollback.\n", argv[0]);
 		return 2;
 	}
 	int fd = open("/dev/" TT_PCI_PROBE_DEVICE, O_RDWR);
 	if (fd < 0) { perror(TT_PCI_PROBE_DEVICE); return 1; }
 	tt_pioneer_telemetry_result r = {};
-	int status = ioctl(fd, TT_PCI_PROBE_PIONEER_TELEMETRY, &r, sizeof(r));
+	int status = ioctl(fd, operating ? TT_PCI_PROBE_PIONEER_OPERATING_TELEMETRY : TT_PCI_PROBE_PIONEER_TELEMETRY, &r, sizeof(r));
 	int savedError = errno;
 	close(fd);
 	if (status != 0) { errno = savedError; perror("PIONEER_TELEMETRY"); return 1; }
@@ -46,21 +47,25 @@ int main(int argc, char** argv)
 	const char* labels[] = {"Firmware bundle", "CM firmware", "ASIC temperature", "Board temperature",
 		"Max GDDR temperature", "Fan RPM", "Enabled GDDR", "GDDR status", "GDDR uncorrected errors",
 		"Enabled Tensix columns", "Firmware heartbeat", "Thermal shutdown limit"};
+	const char* operatingLabels[] = {"AI clock (MHz)", "AXI clock (MHz)", "ARC clock (MHz)", "Vcore (mV)",
+		"Board power limit (W)", "Input power (W)", "Thermal trip count", "AI clock limit max", "Firmware bundle",
+		"CM firmware", "Firmware heartbeat", "Thermal shutdown limit"};
 	for (unsigned i = 0; i < TT_ARC_TELEMETRY_COUNT; i++) {
-		printf("Tag %u %-25s: ", BlackholeTelemetryTag(i), labels[i]);
+		printf("Tag %u %-25s: ", BlackholeTelemetryTag(i,operating), operating ? operatingLabels[i] : labels[i]);
 		if ((t.present_mask & (1U << i)) == 0) { printf("not published\n"); continue; }
 		uint32_t raw = t.values[i];
 		printf("%08" PRIx32, raw);
-		if (i == 0) printf(" %u.%u.%u (suffix 0x%02x)", raw >> 24, (raw >> 16) & 255, (raw >> 8) & 255, raw & 255);
-		if (i == 2 || i == 3) PrintTemperature(raw);
-		if (i == 5 && raw != UINT32_MAX) printf(" %" PRIu32 " RPM", raw);
+		if ((!operating && i == 0) || (operating && i == 8)) printf(" %u.%u.%u (suffix 0x%02x)", raw >> 24, (raw >> 16) & 255, (raw >> 8) & 255, raw & 255);
+		if (!operating && (i == 2 || i == 3)) PrintTemperature(raw);
+		if (!operating && i == 5 && raw != UINT32_MAX) printf(" %" PRIu32 " RPM", raw);
+		if (operating && i <= 2 && raw != UINT32_MAX) printf(" %" PRIu32 " MHz",raw & 65535);
 		printf("\n");
 	}
 	printf("Card/root commands after %04" PRIx32 "/%04" PRIx32 "; no serial IDs, firmware commands/writes or DMA.\n",
 		r.control.pci.commands_after[0], r.control.pci.commands_after[1]);
 	if (r.control.pci.state == TT_PIONEER_MMIO_RESTORE_FAILED || !t.tlb_restored || !r.control.arc.tlb_restored)
 		fprintf(stderr, "STOP: cold recovery required; do not run another card test.\n");
-	return t.version == 1 && t.state == TT_ARC_TELEMETRY_OK && t.tlb_restored
+	return t.version == (operating ? 2U : 1U) && t.state == TT_ARC_TELEMETRY_OK && t.tlb_restored
 		&& r.control.arc.tlb_restored && r.control.pci.state == TT_PIONEER_MMIO_READ_OK
 		&& r.control.pci.restored ? 0 : 1;
 }

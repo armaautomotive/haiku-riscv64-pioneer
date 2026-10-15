@@ -331,13 +331,14 @@ struct PioneerArcIO : PioneerMmioIO {
 
 struct PioneerTelemetryIO : PioneerArcIO {
 	tt_arc_telemetry_result& telemetry;
+	const bool operating;
 	area_id csmArea = -1;
 	const volatile uint32* csm = NULL;
 	bool telemetryAttempted = false;
 
 	PioneerTelemetryIO(const tt_pioneer_profile& p, tt_arc_scratch_result& arcResult,
-		tt_arc_telemetry_result& result)
-		: PioneerArcIO(p, arcResult), telemetry(result) {}
+		tt_arc_telemetry_result& result, bool operatingSnapshot = false)
+		: PioneerArcIO(p, arcResult), telemetry(result), operating(operatingSnapshot) {}
 	~PioneerTelemetryIO() { if (csmArea >= B_OK) delete_area(csmArea); }
 	bool Map()
 	{
@@ -360,7 +361,7 @@ struct PioneerTelemetryIO : PioneerArcIO {
 		if (!PioneerArcIO::AfterNodeId(id)) return false;
 		telemetryAttempted = true;
 		dprintf("PIONEER-P100A: bounded CSM telemetry attempt, whitelisted tags only\n");
-		return BlackholeArcTelemetryProbe(*this, arc, telemetry);
+		return BlackholeArcTelemetryProbe(*this, arc, telemetry, operating);
 	}
 	bool Unmap()
 	{
@@ -379,6 +380,74 @@ struct PioneerTelemetryIO : PioneerArcIO {
 		}
 		if (telemetryAttempted && !telemetry.tlb_restored) okay = false;
 		return PioneerArcIO::Unmap() && okay;
+	}
+};
+
+struct PioneerArcQueryIO : PioneerTelemetryIO {
+	tt_arc_queue_result& query;
+	area_id queueWriteArea = -1, msiArea = -1;
+	volatile uint32* queueWrite = NULL;
+	volatile uint32* msi = NULL;
+	uint32 queueBase = 0, requestAddress = 0;
+	bool queryAttempted = false;
+	PioneerArcQueryIO(const tt_pioneer_profile& p, tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t, tt_arc_queue_result& q)
+		: PioneerTelemetryIO(p,a,t), query(q) {}
+	~PioneerArcQueryIO() {
+		if (queueWriteArea >= B_OK) delete_area(queueWriteArea);
+		if (msiArea >= B_OK) delete_area(msiArea);
+	}
+	bool Map() {
+		if (!PioneerTelemetryIO::Map()) return false;
+		void* address = NULL;
+		queueWriteArea = map_physical_memory("P100A bounded ARC host-queue writes",
+			profile.bar0_host_start+0x19200000,TT_ARC_QUEUE_CSM_BYTES,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA | B_UNCACHED_MEMORY,&address);
+		if (queueWriteArea < B_OK) return false;
+		queueWrite = (volatile uint32*)address;
+		msiArea = map_physical_memory("P100A inbound ARC message notification",
+			profile.bar0_host_start+0x192b0000,B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA | B_KERNEL_WRITE_AREA | B_UNCACHED_MEMORY,&address);
+		if (msiArea < B_OK) return false;
+		msi = (volatile uint32*)address;
+		return true;
+	}
+	uint32 CsmRead(uint32 address) {
+		return BlackholeArcQueueRange(address,4) ? PioneerRead32(queueWrite+(address-0x10000000)/4) : UINT32_MAX;
+	}
+	void SetQueueBounds(uint32 base, uint32 request, uint32) {
+		if (!BlackholeArcQueueRange(base,288) || request < base+32 || request > base+128 || (request-base-32)%32 != 0) return;
+		queueBase = base; requestAddress = request;
+	}
+	void QueueWrite(uint32 address, uint32 value) {
+		if (queueBase == 0 || !BlackholeArcQueueRange(address,4)) return;
+		// Only CPU-owned request bytes and the two CPU-owned queue pointers.
+		if (address != queueBase && address != queueBase+4
+			&& (address < requestAddress || address >= requestAddress+32)) return;
+		PioneerWrite32(queueWrite+(address-0x10000000)/4,value);
+	}
+	uint32 MsiStatusRead() { return PioneerRead32(msi+2); }
+	void NotifyArc() { PioneerWrite32(msi,0); }
+	void Pause() { spin(100); }
+	bool AfterNodeId(uint32 id) {
+		if (!PioneerTelemetryIO::AfterNodeId(id)) return false;
+		queryAttempted = true;
+		dprintf("PIONEER-P100A: fixed ARC GET_AICLK query, application queue only, no clock/voltage/reset/flash/DMA command\n");
+		return BlackholeArcQueueProbe(*this,arc,telemetry,query);
+	}
+	bool Unmap() {
+		bool okay = true;
+		if (queryAttempted && !query.tlb_restored) {
+			for (unsigned attempt = 0; attempt < 2 && !query.tlb_restored; attempt++) {
+				for (unsigned w = 0; w < 3; w++) TlbWrite(w,query.tlb_before[w]);
+				query.tlb_restored = 1;
+				for (unsigned w = 0; w < 3; w++) { query.tlb_after[w] = TlbRead(w); query.tlb_restored &= query.tlb_after[w] == query.tlb_before[w]; }
+			}
+		}
+		if (queryAttempted && (!query.request_restored || !query.tlb_restored || query.recovery_required)) okay = false;
+		if (queueWriteArea >= B_OK) { if (delete_area(queueWriteArea) == B_OK) queueWriteArea = -1; else okay = false; }
+		if (msiArea >= B_OK) { if (delete_area(msiArea) == B_OK) msiArea = -1; else okay = false; }
+		return PioneerTelemetryIO::Unmap() && okay;
 	}
 };
 
@@ -829,6 +898,45 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	if (geteuid() != 0 || cookie != &sCookie)
 		return B_NOT_ALLOWED;
+	if (operation == TT_PCI_PROBE_PIONEER_ARC_QUERY_SUPPORT) {
+		if (data == NULL || length != sizeof(tt_arc_query_support)) return B_BAD_VALUE;
+		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
+		const tt_arc_query_support support = {2,0x34,3,4,TT_ARC_QUEUE_CSM_BYTES};
+		release_sem(sLock);
+		return user_memcpy(data,&support,sizeof(support));
+	}
+	if (operation == TT_PCI_PROBE_PIONEER_ARC_CLOCK_QUERY) {
+		if (data == NULL || length != sizeof(tt_pioneer_arc_query_result)) return B_BAD_VALUE;
+		tt_pioneer_arc_query_result result = {};
+		status_t status = user_memcpy(data,&result,sizeof(result)); if (status != B_OK) return status;
+		status = AcquireProbeLock(); if (status != B_OK) return status;
+		status = sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		if (status != B_OK) { release_sem(sLock); return status; }
+		if (sDeviceManager == NULL) status = get_module(B_DEVICE_MANAGER_MODULE_NAME,(module_info**)&sDeviceManager);
+		tt_pioneer_profile profile = {};
+		if (status == B_OK) status = GetPioneerPciProfile(sDeviceManager,sCard,profile);
+		profile.status = status;
+		tt_pioneer_mmio_result& pci = result.control.control.pci;
+		tt_arc_scratch_result& arc = result.control.control.arc;
+		tt_arc_telemetry_result& health = result.control.telemetry;
+		pci.version = arc.version = health.version = result.query.version = 1;
+		pci.profile_status = status; pci.profile_stage = profile.stage;
+		arc.tlb_restored = health.tlb_restored = result.query.tlb_restored = result.query.request_restored = 1;
+		if (status == B_OK) {
+			PioneerArcQueryIO io(profile,arc,health,result.query);
+			BlackholePioneerMmioProbe(io,pci);
+		}
+		if (result.query.recovery_required || pci.state == TT_PIONEER_MMIO_RESTORE_FAILED) {
+			result.query.recovery_required = 1; sColdRecoveryRequired = true;
+		}
+		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock);
+		dprintf("PIONEER-P100A: ARC query state %" B_PRIu32 " submit/reply/ack %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32
+			" request/TLB/PCI restored %" B_PRIu32 "/%" B_PRIu32 "/%" B_PRIu32 " recovery %" B_PRIu32 "\n",
+			result.query.state,result.query.submitted,result.query.responded,result.query.acknowledged,
+			result.query.request_restored,result.query.tlb_restored,pci.restored,result.query.recovery_required);
+		return user_memcpy(data,&result,sizeof(result));
+	}
 	if (operation == TT_PCI_PROBE_PIONEER_MATMUL_SUPPORT || operation == TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT) {
 		if (data == NULL || length != sizeof(tt_matmul_support)) return B_BAD_VALUE;
 		status_t status = AcquireProbeLock(); if (status != B_OK) return status;
@@ -1065,7 +1173,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 			result.tensix.tlb_restored, control.pci.restored);
 		return user_memcpy(data, &result, sizeof(result));
 	}
-	if (operation == TT_PCI_PROBE_PIONEER_TELEMETRY) {
+	if (operation == TT_PCI_PROBE_PIONEER_TELEMETRY || operation == TT_PCI_PROBE_PIONEER_OPERATING_TELEMETRY) {
 		if (data == NULL || length != sizeof(tt_pioneer_telemetry_result)) return B_BAD_VALUE;
 		tt_pioneer_telemetry_result result = {};
 		status_t status = user_memcpy(data, &result, sizeof(result));
@@ -1085,7 +1193,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		result.control.pci.profile_stage = profile.stage;
 		result.control.arc.tlb_restored = result.telemetry.tlb_restored = 1;
 		if (status == B_OK) {
-			PioneerTelemetryIO io(profile, result.control.arc, result.telemetry);
+			PioneerTelemetryIO io(profile, result.control.arc, result.telemetry, operation == TT_PCI_PROBE_PIONEER_OPERATING_TELEMETRY);
 			BlackholePioneerMmioProbe(io, result.control.pci);
 		}
 		sPCI->unreserve_device(sCard.bus, sCard.device, sCard.function, TT_PCI_PROBE_DEVICE, &sCookie);

@@ -872,6 +872,80 @@ CLI SHA `248bb9c1d04b723411e30e2aa30f4de9b742f8181d90b1a45345a6f8acd7664c`.
 Next audit: the normal ARC power/clock initialization used before compute,
 against the installed 18.5.0 firmware, not speculative firmware flashing.
 
+### October 14: read-only operating-state snapshot
+
+Audited official firmware tag `v18.5.0`, commit
+`80b056af360a58730756467d5cc8df8db789640d`, matching the reported bundle
+family. Its normal `AICLK_GO_BUSY` handler requests the maximum through
+the firmware DVFS arbiter; it is not a forced-voltage/frequency command.
+The default ASIC state is already A0. No state/clock/flash command was sent
+on the basis of this source audit.
+
+Added a separate bounded read-only operating telemetry selector at `5467`,
+result version 2. The legacy health selector and result layout are unchanged.
+Its fixed whitelist reads clocks, voltage, power limits/input, thermal trip
+count and firmware/heartbeat; no serial or ASIC identifiers. Bounds, table
+validation and TLB rollback use the existing tested telemetry policy.
+CLI flag: `--read-operating-telemetry-and-restore`.
+
+After the latest cold recovery, the clean-filesystem full-RAM Haiku profile
+booted again with 64 CPUs and max memory 137,034,936,320 bytes. At 22:47
+local October 14 (05:47 UTC October 15), the operating snapshot PASSED:
+AI clock 800 MHz, AXI 960 MHz, ARC 800 MHz, Vcore 742 mV, board power limit
+300 W, input power 89 W, thermal trip count 0, bundle `12050001`,
+CM `000e0000`, heartbeat `12b0`. AICLK maximum is not published by this
+firmware. ARC/TLB/PCI restoration all passed and commands returned 0000/0000.
+These readings make a normal busy-clock test worth investigating; they do
+not establish missing clock activation as the cause of the compute failure.
+
+Artifacts/backups: `/boot/home/pioneer-p100a-20261014/operating-1/`.
+Driver SHA `d66b82ed9657cef9a0b1cd8eee50496f057916281d02b46d90921e15cdccf1f7`;
+CLI SHA `0090f6c27a4781e44dcaa76d098ff92c78f891b23caeeb95e9f604e5c4e22dad`.
+Next: a fixed ARC no-op round trip with queue ownership/range/timeout guards,
+then assess normal runtime clock activation. No firmware image is modified.
+
+### October 14: first verified ARC request/reply under Haiku
+
+Implemented a fixed `GET_AICLK` (`34`) request with zero arguments, rather
+than assuming a declared NOP has a handler. The matching 18.5.0 firmware
+defines the clock query, its nonzero clock/mode reply, four queues of four
+32-byte entries, double-wrapped pointers and an eight-word header. This
+implementation uses application queue 3 only. It verifies an idle, stable
+queue twice, non-overlapping descriptor/telemetry/queue regions, the inbound
+MSI catcher's readiness before publication, all staged request words, and
+the exact pointer/counter advancement before acknowledging the response.
+It never rewinds queue counters or writes firmware-owned response bytes.
+Saved host-owned request bytes stay kernel-local and are restored only after
+proven idle ownership. Unknown publication/completion/acknowledgement latches
+cold recovery; notification is an inbound ARC interrupt, not host MSI or DMA.
+
+The initial 128 KiB guard correctly refused the live queue descriptor
+`10029ea8/00000404/0/0` before any request write. PCI/TLB restoration passed,
+recovery 0. The pinned firmware DTS explicitly documents 512 KiB of CSM at
+`10000000`; the queue-only limit was therefore increased to the first
+192 KiB, just enough for this queue, while legacy telemetry retains its
+128 KiB bound. Tests now use the observed live placement and cover exact
+upper bounds, all 64 request/response pointer combinations, counter wrap,
+each dropped request/pointer/TLB write, malformed/overlapping descriptors,
+bad response, timeout, changed ownership and failed restoration.
+
+New explicit operations: `5468` clock query, `5469` metadata v2.
+CLI: `--check-fixed-arc-query-support`, then
+`--query-fixed-arc-clock-and-restore`. There is no arbitrary message API,
+clock/voltage/reset command, host DMA, firmware flash or RISC start here.
+
+At 23:00 local October 14 (06:00 UTC October 15), the clock query PASSED on
+the P100A under Haiku: submitted/replied/acknowledged 1/1/1, three polls,
+status 0, 800 MHz, mode 3 (normal/unforced DVFS), MSI-catcher status 1.
+Application queue is `1002a208`; request/response pointers advanced 0/0 to
+1/1 and the sequence counter 0 to 1. Request/TLB/PCI restored 1/1/1,
+commands 0000/0000, cold recovery 0. This proves the firmware transport,
+not matrix execution or model inference. No clock-changing message was sent.
+
+Artifacts/backups: `/boot/home/pioneer-p100a-20261014/arc-query-2/`.
+Driver SHA `dc84a37a2d7c0e3512b48ec38af22f843e7a4053d07590440f46929e87e7cc13`;
+CLI SHA `2580224de840261ac7027c788d56303f83b4af8fcaabb2615b50a95798dd9313`.
+
 Download pinned official sources with:
 
 ```sh

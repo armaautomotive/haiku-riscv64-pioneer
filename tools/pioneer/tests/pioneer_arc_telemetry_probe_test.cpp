@@ -87,4 +87,11 @@ int main()
 	assert(!BlackholeArcTelemetryProbe(io, arc, r) && r.state == TT_ARC_TELEMETRY_CHANGED && r.tlb_restored && r.present_mask == 0);
 	io = {}; io.entries[0] = 0xffff;
 	assert(!BlackholeArcTelemetryProbe(io, arc, r) && r.state == TT_ARC_TELEMETRY_INCOMPLETE && r.tlb_restored);
+	io = {};
+	for (unsigned i = 0; i < TT_ARC_TELEMETRY_COUNT; i++) io.entries[i] = (i << 16) | BlackholeTelemetryTag(i,true);
+	assert(BlackholeArcTelemetryProbe(io,arc,r,true) && r.version == 2 && r.present_mask == 0xfff && r.tlb_restored);
+	assert(io.reads == 28 && io.dataReads == 12);
+	io.entries[0] = 0xffff;
+	assert(!BlackholeArcTelemetryProbe(io,arc,r,true) && r.state == TT_ARC_TELEMETRY_INCOMPLETE && r.tlb_restored);
+	assert(BlackholeTelemetryTag(12,true) == 0);
 }

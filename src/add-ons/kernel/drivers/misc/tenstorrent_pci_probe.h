@@ -8,6 +8,7 @@
 #include "BlackholePioneerMmioProbe.h"
 #include "BlackholeArcScratchProbe.h"
 #include "BlackholeArcTelemetryProbe.h"
+#include "BlackholeArcQueueProbe.h"
 #include "BlackholeTensixResetProbe.h"
 #include "BlackholeL1ScratchProbe.h"
 #include "BlackholeBriscSmokeProbe.h"
@@ -38,6 +39,11 @@
 #define TT_PCI_PROBE_PIONEER_TRISC_RESET_SUPPORT (B_DEVICE_OP_CODES_END + 0x5464)
 #define TT_PCI_PROBE_PIONEER_TENSIX_CONFIG (B_DEVICE_OP_CODES_END + 0x5465)
 #define TT_PCI_PROBE_PIONEER_TENSIX_CONFIG_SUPPORT (B_DEVICE_OP_CODES_END + 0x5466)
+#define TT_PCI_PROBE_PIONEER_OPERATING_TELEMETRY (B_DEVICE_OP_CODES_END + 0x5467)
+#define TT_PCI_PROBE_PIONEER_ARC_CLOCK_QUERY (B_DEVICE_OP_CODES_END + 0x5468)
+#define TT_PCI_PROBE_PIONEER_ARC_QUERY_SUPPORT (B_DEVICE_OP_CODES_END + 0x5469)
+
+struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 
 struct tt_matmul_support {
 	uint32_t version, code_words, footprint_words, entry, code_base, park_pc, results_base, reset_mask, running_mask;
@@ -63,6 +69,11 @@ struct tt_pioneer_arc_result {
 struct tt_pioneer_telemetry_result {
 	tt_pioneer_arc_result control;
 	tt_arc_telemetry_result telemetry;
+};
+
+struct tt_pioneer_arc_query_result {
+	tt_pioneer_telemetry_result control;
+	tt_arc_queue_result query;
 };
 
 struct tt_pioneer_tensix_result {
