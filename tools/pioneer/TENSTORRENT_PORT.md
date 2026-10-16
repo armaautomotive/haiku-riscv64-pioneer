@@ -163,6 +163,33 @@ The original working7d09 driver is preserved in
 Support12287 was observed before submitting the corrected native trial.
 No forced module unload, cold-gate bypass, firmware or boot change was used.
 
+###### Exact FP32 weight-scale hot-loop candidate (offline qualified only)
+
+A distinct `TT_RUNTIME_Q8_NATIVE_F32` candidate expands each original finite
+FP16 weight scale to exact FP32 bits once at packing time. Its 576-byte tile
+is64 scale bytes plus512 signed native quant bytes, with no padding. The
+on-card reader copies those sixteen scale words instead of repeating sixteen
+integer half-to-float conversions for every 32-K output block. Arithmetic,
+activation quantization/scales, weight values and total footprint do not change.
+This is **not** the earlier FP32 K/V-cache experiment.
+
+The separate immutable mode has ioctl54c5, capability16384, profile7; candidate
+support28671 retains the qualified native8192 bit and all original modes.
+It uses the same aligned64 NoC706c0 destination, with input halves70700/70800
+and a64-byte saved scale area70680..706bf, all inside the saved code page.
+The pack layout is tested for complete, non-overlapping byte coverage. All
+65,536 half patterns are checked independently (nonfinite values still must
+be refused by packers), including signed zero/subnormals. All K/N4096 shapes,
+two vectors, corruption/omission and bounded NoC failure parks pass ASan/UBSan.
+The independent RISC model executes68,457 steps versus91,113 for native-FP16
+scales on the same small case: this is not hardware timing or a speedup claim.
+Both native scale formats pass all65 dropped-control-write policy cases,
+immutable-format refusal and timeout/bad-PC/flits/stop/source quarantine tests.
+Legacy assembled-image regressions, Jam and all31 utilities build.
+This candidate is built offline only while full-model tests own
+the card. It is not installed or native-qualified; do not replace its live
+driver or submit a competing card command just to try this optimization.
+
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 
 A separate fixed `TT_RUNTIME_Q8_COMPACT` image retains the scaled integer
@@ -381,14 +408,61 @@ references are cleared so stale captures cannot masquerade as a complete
 new reference. Observers never replace actual output or weaken graph/logit/
 greedy gates; missing/ambiguous trace references stop the diagnostic. The
 native trace binary `2413f6aa7ba0607711140028a2e865df5e85be793383afec3fdf78880588f3d5`
-is now the sole card owner, log
+completed with a numerical failure, log
 `/boot/home/pioneer-q8-native-20261015/full-qwen-native-trace-first.log`.
-Until its authoritative terminal result, do not submit any competing card
-query/audit, install/reload/reset; scoped public-test log reads and offline
-work are safe. Its initial primitive and observer records pass; no completed
-full-model result is claimed. The earlier legacy BF16/FP16/scaled-Q8/compact/
-fixed-GEMV regressions and independent PCI/HDMA audit all passed, Assistant
-still unchanged and idle before starting the trace.
+Positions0..4 passed all-vocabulary logits at L2~1e-8; warm prompt decodes
+took8.56..8.60s, not accepted reply-token rates or a CPU speedup. At position5,
+Q/K raw projection inputs still quantized identically to the CPU through
+layer13. Tiny Q/K norm/RoPE changes preceded `kq-13` L2 `3.52e-7` and
+softmax `5.06e-7`. `kqv-13` then changed128/2048 values at L2 `2.035e-5`.
+The first learned-projection activation quantization difference was exactly
+**one scale block, zero quant bytes** at `blk.13.attn_output.weight`.
+Later quantization amplified this; the diagnostic stopped at the original
+`blk.19.attn_v.weight` graph L2 `0.020091322`, while the checked primitive
+still passed. No learned-product fallback or substitution was used.
+This localizes the first amplification but does not prove SFPMAD or one
+specific F16 attention conversion is the sole cause. It generated0 checked
+reply tokens after1305 real matvecs, retained197 tensors/670,482,432bytes,
+total934.885s; preparation/upload877.973895s, matvec/staging/result42.785727s.
+END2 restored PCI/host1/1,cold0, and independent post-audit passed; Assistant
+remains unchanged. Legacy BF16/FP16/scaled-Q8/compact/fixed-GEMV regressions
+and updated lifecycle had passed before this trace.
+
+The separate `--probe-native-q8-reference MODEL [TENSOR]` fast diagnostic
+runs only the first six public prompt inputs in an independent CPU context,
+then replays one captured learned projection on the card. The CPU model and
+immutable weight tensor remain alive; separate host buffers hold the actual
+card output. Full independent primitive/graph comparisons and explicit END
+still apply. It is not full-model generation or a timing qualification.
+The K13 replay passed with exactly matching CPU input:148/1024 changed FP32
+values, maximum255ULP near small values, full-output L2 `1.92434544e-9`, and
+zero raw projection FP16-rounding changes. END2/PCI-host1/1/cold0. Original
+binary `6bf70835d855adbf94b27a3dd97f6bd018ccd1eb9ae21b1102c93a77177cb97b`.
+The extended observer additionally rebuilds a private CPU norm/RoPE graph
+using actual card output. A CPU-reference-input control must reproduce the
+original CPU pipeline bit-identically before its half-boundary diagnostics
+are accepted. Neither graph mutates independent reference or Assistant data.
+The first extended Q13 trial's **card projection** passed, but its private
+CPU-clone control failed; no conclusion about post-RoPE rounding was accepted.
+The position input had to be snapshotted during the original callback rather
+than reread after the whole CPU graph reused its scratch buffers. After that
+fix, `--probe-cpu-rope-reference` passes bit-identically on Haiku, using only
+explicit CPU registration (no P100A backend/open/ioctl). The updated native
+post-RoPE replay has not yet run; do not confuse the CPU-only self-check with
+a hardware post-RoPE result. These diagnostics do not accept generated tokens.
+
+The **existing** `--verify-native-q8` contract is now being tested separately
+with the already qualified native-FP16-scale driver and binary2413f6...,
+log `full-qwen-native-verify-first.log` in the native test folder. CPU32
+reference is created before P100A registration. Unlike diagnostic mode,
+verify has always checked all vocabulary logits (cosine>=.999, L2<=.02) at
+every prompt/generated position and requires four CPU-identical greedy reply
+tokens, rather than adding the per-layer diagnostic comparisons. Those
+thresholds and no-fallback rules are unchanged. The prior diagnostic failure
+is not reclassified as passed. This tests whether its intermediate drift
+actually violates final-output quality; it is not a speed benchmark. This
+process alone owns the card until a known terminal result. Only public log
+reads, explicit CPU-only diagnostics and offline work may overlap it.
 No accepted Qwen reply tokens or CPU speedup have yet been established.
 The runtime still uses one core and bank0 / 2GiB. Compact mixed quantization,
 wider models, multicore/bulk dispatch and matched repeated benchmarks remain

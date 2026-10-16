@@ -111,6 +111,16 @@ int main() {
 	io.badMath=true; assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED);
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Native(false);
 	}
+	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true);
+	backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+	assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS);
+	assert(PioneerGgmlReferenceTap(result,false,NULL) && PioneerGgmlReferenceCount()==1);
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
+	io=PioneerGgmlHostState(); assert(!PioneerGgmlReplayReference("missing") && !PioneerGgmlReplayCpuRope("missing") && !io.opens);
+	assert(PioneerGgmlReplayReference(weights->name) && io.opens==1 && io.calls==1 && io.uploads==9 && io.finishes==1);
+	io=PioneerGgmlHostState(); io.badMath=true;
+	assert(!PioneerGgmlReplayReference(weights->name) && io.finishes==1);
+	PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Native(false);
 	// Trace observers are separate from learned-matrix qualification. They
 	// detect missing references and leave every actual output byte intact.
 	PioneerGgmlTrace(true); PioneerGgmlBeginPosition(17);

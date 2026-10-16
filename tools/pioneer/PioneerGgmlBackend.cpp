@@ -40,9 +40,11 @@ static bool sCompact=false;
 static bool sNative=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
-struct ReferenceProjection { std::vector<float> input,output; };
+struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
 static std::map<std::string,ReferenceProjection> sReference;
 static std::map<std::string,std::vector<float>> sIntermediate;
+static std::map<std::string,const ggml_tensor*> sIntermediateNodes;
+static std::map<std::string,std::vector<uint8_t>> sRopePositions;
 static unsigned sPosition=0;
 static std::string TraceKey(const ggml_tensor* t) {
 	std::string key=std::string(t->name)+"|"+std::to_string(int(t->op));
@@ -279,7 +281,7 @@ void PioneerGgmlQ8Operands(bool enabled) { if (!sActive) sQ8=enabled; }
 void PioneerGgmlQ8Compact(bool enabled) { if (!sActive) sCompact=enabled; }
 void PioneerGgmlQ8Native(bool enabled) { if (!sActive) sNative=enabled; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
-void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); }
+void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	bool wanted=t->op==GGML_OP_MUL_MAT && t->src[0] && t->src[0]->type==GGML_TYPE_Q8_0 && Supports(NULL,t);
 	bool trace=TraceTensor(t);
@@ -288,10 +290,16 @@ bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 		auto key=TraceKey(t);
 		if (sIntermediate.find(key)!=sIntermediate.end()) { fprintf(stderr,"TRACE duplicate reference %s; diagnostic stopped\n",key.c_str()); return false; }
 		auto& values=sIntermediate[key]; values.resize(size_t(ggml_nelements(t)));
+		sIntermediateNodes[key]=t;
 		ggml_backend_tensor_get(t,values.data(),0,values.size()*sizeof(float));
+		if (t->op==GGML_OP_ROPE && t->src[1] && t->src[1]->type==GGML_TYPE_I32 && ggml_nbytes(t->src[1])<=1024) {
+			auto& positions=sRopePositions[key]; positions.resize(ggml_nbytes(t->src[1]));
+			ggml_backend_tensor_get(t->src[1],positions.data(),0,positions.size());
+		}
 	}
 	if (!wanted) return true;
 	auto& r=sReference[t->src[0]->name];
+	r.weights=t->src[0]; // CPU model owns this immutable tensor until replay finishes
 	r.input.resize(size_t(t->src[0]->ne[0])); r.output.resize(size_t(t->src[0]->ne[1]));
 	ggml_backend_tensor_get(t->src[1],r.input.data(),0,r.input.size()*sizeof(float));
 	ggml_backend_tensor_get(t,r.output.data(),0,r.output.size()*sizeof(float));
@@ -299,6 +307,117 @@ bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	return true;
 }
 size_t PioneerGgmlReferenceCount() { return sReference.size(); }
+static bool ReplayPostRope(const char* tensorName,const float* actual,size_t elements,bool fromCard=true) {
+	unsigned layer=0; char which=0;
+	if (sscanf(tensorName,"blk.%u.attn_%c.weight",&layer,&which)!=2 || (which!='k' && which!='q')) return true;
+	// This observer copies public test data into a private CPU graph. It
+	// uses actual card output, never overwrites the independent reference.
+	std::string name=std::string(which=='k'?"Kcur-":"Qcur-")+std::to_string(layer);
+	const ggml_tensor* rope=NULL; const std::vector<float>* reference=NULL;
+	for (const auto& entry:sIntermediateNodes) if (entry.second->op==GGML_OP_ROPE && name==entry.second->name) {
+		rope=entry.second; reference=&sIntermediate.find(entry.first)->second; break;
+	}
+	if (!rope) {
+		if (sTrace) fprintf(stderr,"POST-ROPE %s expected CPU reference missing; diagnostic stopped\n",name.c_str());
+		return !sTrace; // standalone primitive tests need not capture attention
+	}
+	const auto* normal=rope->src[0];
+	if (!normal || normal->op!=GGML_OP_MUL || !normal->src[0] || normal->src[0]->op!=GGML_OP_RMS_NORM
+		|| !normal->src[1] || normal->src[1]->type!=GGML_TYPE_F32 || !rope->src[1] || rope->src[2]
+		|| ggml_nelements(normal)!=int64_t(elements) || reference->size()!=elements) return false;
+	const auto* rms=normal->src[0]; float epsilon=0; memcpy(&epsilon,rms->op_params,sizeof(epsilon));
+	if (!isfinite(epsilon) || epsilon<=0 || ggml_nelements(normal->src[1])>6144 || ggml_nelements(rope->src[1])>256) return false;
+	ggml_init_params params={1024*1024,NULL,false}; auto* ctx=ggml_init(params); if (!ctx) return false;
+	auto* input=ggml_new_tensor(ctx,GGML_TYPE_F32,4,rms->src[0]->ne); memcpy(input->data,actual,elements*4);
+	auto* weight=ggml_dup_tensor(ctx,normal->src[1]); ggml_backend_tensor_get(normal->src[1],weight->data,0,ggml_nbytes(weight));
+	auto savedPositions=sRopePositions.find(TraceKey(rope));
+	if (savedPositions==sRopePositions.end() || savedPositions->second.size()!=ggml_nbytes(rope->src[1])) { ggml_free(ctx); return false; }
+	auto* positions=ggml_dup_tensor(ctx,rope->src[1]); memcpy(positions->data,savedPositions->second.data(),ggml_nbytes(positions));
+	auto* norm=ggml_rms_norm(ctx,input,epsilon); auto* scaled=ggml_mul(ctx,norm,weight);
+	auto* result=ggml_dup_tensor(ctx,rope); result->op=GGML_OP_ROPE; result->src[0]=scaled; result->src[1]=positions;
+	memcpy(result->op_params,rope->op_params,sizeof(result->op_params));
+	auto* graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,result);
+	auto device=ggml_backend_dev_by_type(GGML_BACKEND_DEVICE_TYPE_CPU);
+	auto cpu=device?ggml_backend_dev_init(device,NULL):NULL;
+	auto projection=sReference.find(tensorName);
+	bool passed=cpu && projection!=sReference.end() && projection->second.output.size()==elements;
+	if (passed) {
+		memcpy(input->data,projection->second.output.data(),elements*4);
+		passed=ggml_backend_graph_compute(cpu,graph)==GGML_STATUS_SUCCESS
+			&& !memcmp(result->data,reference->data(),elements*4);
+		fprintf(stderr,"POST-ROPE CPU clone control %s: %s; independent reference and device output unchanged\n",name.c_str(),passed?"bit-identical":"STOP mismatch");
+		if (!passed) {
+			unsigned changed=0; double error=0,norm=0;
+			for (size_t i=0;i<elements;i++) { float a=((float*)result->data)[i],r=(*reference)[i]; changed+=memcmp(&a,&r,4)!=0; double d=double(a)-r; error+=d*d; norm+=double(r)*r; }
+			fprintf(stderr,"CPU CLONE diagnostic eps %.9g shape %lld/%lld position0 %d changed %u/%zu L2 %.9g\n",epsilon,(long long)input->ne[0],(long long)input->ne[1],((int32_t*)positions->data)[0],changed,elements,sqrt(error/(norm+1e-30)));
+		}
+	}
+	if (passed) {
+		memcpy(input->data,actual,elements*4);
+		passed=ggml_backend_graph_compute(cpu,graph)==GGML_STATUS_SUCCESS;
+	}
+	if (passed) {
+		unsigned halfChanged=0,changed=0; double error2=0,norm2=0;
+		for (size_t i=0;i<elements;i++) {
+			float a=((float*)result->data)[i],r=(*reference)[i]; uint16_t ah=ggml_fp32_to_fp16(a),rh=ggml_fp32_to_fp16(r);
+			if (ah!=rh && halfChanged<4) fprintf(stderr,"POST-ROPE HALF %s index%zu card-derived %.9g/%04x reference %.9g/%04x\n",name.c_str(),i,a,unsigned(ah),r,unsigned(rh));
+			halfChanged+=ah!=rh; changed+=memcmp(&a,&r,4)!=0;
+			double difference=double(a)-r; error2+=difference*difference; norm2+=double(r)*r;
+			passed &= isfinite(a) && isfinite(r);
+		}
+		double relative=sqrt(error2/(norm2+1e-30)); passed &= isfinite(relative) && relative<.02;
+		fprintf(stderr,"POST-ROPE REPLAY %s %s + private CPU norm/RoPE, changed %u/%zu half changes %u L2 %.9g; observer only, not complete attention/inference\n",name.c_str(),fromCard?"actual card projection":"CPU-only control projection",changed,elements,halfChanged,relative);
+	}
+	if (cpu) ggml_backend_free(cpu);
+	ggml_free(ctx); return passed;
+}
+bool PioneerGgmlReplayCpuRope(const char* tensorName) {
+	unsigned layer=0; char which=0;
+	if (sscanf(tensorName,"blk.%u.attn_%c.weight",&layer,&which)!=2 || (which!='k' && which!='q')) return false;
+	auto projection=sReference.find(tensorName);
+	return !sActive && projection!=sReference.end() && ReplayPostRope(tensorName,projection->second.output.data(),projection->second.output.size(),false);
+}
+bool PioneerGgmlReplayReference(const char* tensorName) {
+	auto found=sReference.find(tensorName);
+	if (sActive || found==sReference.end() || !found->second.weights) return false;
+	const auto& reference=found->second; const ggml_tensor* source=reference.weights;
+	if (reference.input.size()!=size_t(source->ne[0]) || reference.output.size()!=size_t(source->ne[1])) return false;
+	ggml_init_params params={1024*1024,NULL,true}; ggml_context* ctx=ggml_init(params); if (!ctx) return false;
+	auto* weights=ggml_dup_tensor(ctx,source); weights->data=source->data; weights->buffer=source->buffer;
+	ggml_set_name(weights,source->name);
+	auto* input=ggml_new_tensor_2d(ctx,GGML_TYPE_F32,source->ne[0],1);
+	auto* result=ggml_mul_mat(ctx,weights,input); result->flags|=GGML_TENSOR_FLAG_COMPUTE;
+	auto inputBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(input));
+	auto outputBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(result));
+	auto backend=ggml_backend_dev_init(ggml_backend_reg_dev_get(PioneerGgmlReg(),0),NULL);
+	bool passed=inputBuffer && outputBuffer && backend;
+	if (passed) {
+		input->buffer=inputBuffer; input->data=ggml_backend_buffer_get_base(inputBuffer);
+		result->buffer=outputBuffer; result->data=ggml_backend_buffer_get_base(outputBuffer);
+		memcpy(input->data,reference.input.data(),reference.input.size()*sizeof(float));
+		for (size_t i=0;i<reference.output.size();i++) ((float*)result->data)[i]=NAN;
+		auto* graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,result);
+		passed=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
+		unsigned changed=0,halfChanged=0; uint32_t maxUlp=0; double error2=0,norm2=0;
+		for (size_t i=0;i<reference.output.size();i++) {
+			float a=((float*)result->data)[i],r=reference.output[i]; uint32_t ab,rb; memcpy(&ab,&a,4); memcpy(&rb,&r,4);
+			changed+=ab!=rb; halfChanged+=ggml_fp32_to_fp16(a)!=ggml_fp32_to_fp16(r);
+			ab=(ab&0x80000000)?~ab:ab^0x80000000; rb=(rb&0x80000000)?~rb:rb^0x80000000;
+			uint32_t distance=ab>rb?ab-rb:rb-ab; if (distance>maxUlp) maxUlp=distance;
+			double difference=double(a)-r; error2+=difference*difference; norm2+=double(r)*r;
+			passed &= isfinite(a) && isfinite(r);
+		}
+		double relative=sqrt(error2/(norm2+1e-30)); passed &= isfinite(relative) && relative<.02;
+		fprintf(stderr,"FOCUSED REPLAY %s [%lld,%lld] original CPU input, changed FP32 %u/%zu max ULP %u half-rounding changes %u full-output L2 %.9g; numerical gates unchanged; NOT full inference/timing\n",
+			tensorName,(long long)source->ne[0],(long long)source->ne[1],changed,reference.output.size(),maxUlp,halfChanged,relative);
+		if (passed) passed=ReplayPostRope(tensorName,(const float*)result->data,reference.output.size());
+	}
+	bool clean=PioneerGgmlFinish(); passed &= clean;
+	if (backend) ggml_backend_free(backend);
+	if (inputBuffer) ggml_backend_buffer_free(inputBuffer);
+	if (outputBuffer) ggml_backend_buffer_free(outputBuffer);
+	ggml_free(ctx); return passed;
+}
 bool PioneerGgmlCompareTap(ggml_tensor* t,bool ask,void*) {
 	bool wanted=TraceTensor(t);
 	if (ask) return wanted;

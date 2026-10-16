@@ -37,7 +37,7 @@ mkdir -m 700 "$output"
  -I"$source/include" -I"$source/ggml/include" -I"$source/ggml/src" \
  -B"$release/system/glue/" -L"$release/system/libroot" -L"$libraries" -Wl,-rpath-link,"$libraries" \
  "$project/tools/pioneer/PioneerGgmlBackend.cpp" "$project/tools/pioneer/tenstorrent_haiku_qwen_resident.cpp" \
- -l:libllama.so.0.2.0 -l:libggml.so.0 -l:libggml-base.so.0 \
+ -l:libllama.so.0.2.0 -l:libggml.so.0 -l:libggml-base.so.0 -l:libggml-cpu.so.0.21.0 \
  -o "$output/tenstorrent_haiku_qwen_resident"
 shasum -a 256 "$output/tenstorrent_haiku_qwen_resident"
 printf 'Built standalone experimental Qwen resident test; no device or Assistant was accessed\n'

@@ -51,6 +51,7 @@ struct Machine {
 	virtual bool Int8Arithmetic() const { return false; }
 	virtual bool Int8ConvertedRead() const { return Int8Arithmetic(); }
 	virtual bool NativeInt8Unpack() const { return false; }
+	virtual uint32_t NativePayloadBase(unsigned half) const { return 0x706e0+half*256; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
@@ -93,7 +94,7 @@ struct Machine {
 			assert(srcA ? !ownerA : !ownerB);
 			assert(config[srcA ? 64 : 112] == (native?0x10001eU:Fp16Operands()?0x100011U:0x100015U) && config[srcA ? 65 : 113] == (srcA ? 16U : 8U));
 			assert(config[srcA ? 72 : 120] == (native?14U:Fp16Operands()?1U:5U) && config[srcA ? 73 : 121] == 3);
-			assert(native?(config[76]==0x706d || config[76]==0x707d):config[srcA ? 76 : 124] == (srcA ? 0x7070U : 0x7091U));
+			assert(native?((config[76]+1)*16==NativePayloadBase(0) || (config[76]+1)*16==NativePayloadBase(1)):config[srcA ? 76 : 124] == (srcA ? 0x7070U : 0x7091U));
 			if (native) assert(!(config[1]&0x8000) && config[49]==0 && (config[84]&65535)==64); // signed, row0 aligned for x8 bursts
 			unsigned base = native?(config[76]+1)*16:srcA ? 0x70710 : 0x70920, rows = srcA ? 16 : 8;
 			for (unsigned row = 0; row < rows; row++) for (unsigned col = 0; col < 16; col++) {

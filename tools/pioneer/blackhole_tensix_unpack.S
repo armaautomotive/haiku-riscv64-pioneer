@@ -25,6 +25,9 @@ _start:
 
 .section .text,"ax"
 .global main, parked, final_wait_return, drain
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	.set TT_RUNTIME_Q8_NATIVE,1
+.endif
 .ifdef TT_RUNTIME_Q8_NATIVE
 	.set TT_RUNTIME_Q8_COMPACT,1
 .endif
@@ -632,6 +635,20 @@ q8_accumulate:
 	emit 0x701b0000
 	jal ra, drain
 q8_have_accumulator:
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	/* Immutable host-packed scales are already exact FP32. No per-output
+	 * half conversion in the hot loop; original half subnormals survive. */
+	li a2, 0x70680
+	li a3, 0xffbd8000
+	li a4, 16
+q8_copy_f32_scale:
+	lw a5, 0(a2)
+	sw a5, 0(a3)
+	addi a2, a2, 4
+	addi a3, a3, 4
+	addi a4, a4, -1
+	bne a4, zero, q8_copy_f32_scale
+.else
 	/* Convert each FP16 dW to FP32 with integer RISC instructions, including
 	 * signed zero and subnormal half scales (do NOT flush these to zero). */
 	li a2, 0x70680
@@ -677,6 +694,7 @@ q8_scale_store:
 	addi a4, a4, 1
 	li t0, 16
 	bne a4, t0, q8_scale_half
+.endif
 	/* One FP32 dX per 32-value input block, fixed saved gap 83000. */
 	srli t0, s4, 1
 	slli t0, t0, 2
@@ -726,7 +744,11 @@ q8_native_inputs:
 	bne t0, zero, q8_native_odd
 	li t2, 0x706c0
 	li t3, 0x70680
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	li t1, 16
+.else
 	li t1, 8
+.endif
 q8_native_scale_word:
 	lw t0, 0(t2)
 	sw t0, 0(t3)
@@ -734,12 +756,22 @@ q8_native_scale_word:
 	addi t3, t3, 4
 	addi t1, t1, -1
 	bne t1, zero, q8_native_scale_word
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	li t0, 0x706f
+	li t2, 0x706f0
+.else
 	li t0, 0x706d
 	li t2, 0x706d0
+.endif
 	j q8_native_header
 q8_native_odd:
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	li t0, 0x707f
+	li t2, 0x707f0
+.else
 	li t0, 0x707d
 	li t2, 0x707d0 /* first half is fully consumed before this is cleared */
+.endif
 q8_native_header:
 	sw t0, (4*76)(s2)
 	lw t1, (4*76)(s2)

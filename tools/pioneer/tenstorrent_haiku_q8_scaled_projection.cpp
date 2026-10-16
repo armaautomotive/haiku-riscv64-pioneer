@@ -3,6 +3,7 @@
 #include "TenstorrentGgufQuant.h"
 #include "TenstorrentGgufTensor.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Unpack.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ8NativeF32Layout.h"
 #include <stdlib.h>
 #include <time.h>
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
@@ -11,9 +12,10 @@ static int Input(unsigned k,unsigned trial) { return int((k*17+trial*29)%256)-12
 static float Scale(unsigned block,unsigned trial) { return float(int((block*7+trial*3)%31)-15)/1024.0f; }
 int main(int argc,char** argv)
 {
-	bool native=argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-native") || !strcmp(argv[1],"--check-native-support"));
+	bool f32Scales=argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-native-f32-scales") || !strcmp(argv[1],"--check-native-f32-scale-support"));
+	bool native=f32Scales || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-native") || !strcmp(argv[1],"--check-native-support")));
 	bool compact=native || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-compact") || !strcmp(argv[1],"--check-compact-support")));
-	bool support=argc==2 && (!strcmp(argv[1],"--check-support") || !strcmp(argv[1],"--check-compact-support") || !strcmp(argv[1],"--check-native-support"));
+	bool support=argc==2 && (!strcmp(argv[1],"--check-native-f32-scale-support") || !strcmp(argv[1],"--check-support") || !strcmp(argv[1],"--check-compact-support") || !strcmp(argv[1],"--check-native-support"));
 	unsigned outputs=32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
@@ -21,13 +23,13 @@ int main(int argc,char** argv)
 		outputs=unsigned(n);
 	}
 	if (!support && ((argc!=3 && argc!=5) || (!compact && strcmp(argv[1],"--run-qwen-q8-scaled")))) {
-		fprintf(stderr,"Usage: %s --check-support|--check-compact-support|--check-native-support | --run-qwen-q8-scaled|--run-qwen-q8-compact|--run-qwen-q8-native MODEL [TENSOR OUTPUT_ROWS]\nReal retained Q8_0 weights, two independent signed-byte vectors and per-block scales. Native signed unpack refuses weight -128; never clamps. NOT full inference or a CPU speedup.\n",argv[0]); return 2;
+		fprintf(stderr,"Usage: %s --check-support|--check-compact-support|--check-native-support|--check-native-f32-scale-support | --run-qwen-q8-scaled|--run-qwen-q8-compact|--run-qwen-q8-native|--run-qwen-q8-native-f32-scales MODEL [TENSOR OUTPUT_ROWS]\nReal retained Q8_0 weights, two independent signed-byte vectors and per-block scales. Native signed unpack refuses weight -128; never clamps. NOT full inference or a CPU speedup.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
 	tt_resident_session_result session={};
 	if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&session,sizeof(session))) { perror("support"); close(fd); return 1; }
-	unsigned capability=native?TT_PIONEER_CAP_NATIVE_Q8_UNPACK:compact?2048:1024;
+	unsigned capability=f32Scales?TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES:native?TT_PIONEER_CAP_NATIVE_Q8_UNPACK:compact?2048:1024;
 	printf("Session capabilities %u; %s Q8 bit%u required\n",session.capabilities,native?"native INT8 unpack":compact?"compact":"scaled",capability);
 	if (session.version!=1 || !(session.capabilities&capability)) { close(fd); return 1; }
 	if (support) { close(fd); return 0; }
@@ -38,7 +40,7 @@ int main(int argc,char** argv)
 		|| fseeko(model,off_t(tensor.offset),SEEK_SET)) { fprintf(stderr,"Unsupported Q8_0 tensor\n"); fclose(model); close(fd); return 1; }
 	unsigned inputs=unsigned(tensor.inputs),blocks=inputs/32;
 	unsigned bytes=unsigned(compact?PioneerQ8CompactWeightBytes(inputs,outputs):PioneerMatvecWeightBytes(inputs,outputs));
-	uint32_t operation=native?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE:compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
+	uint32_t operation=f32Scales?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES:native?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE:compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
 	uint8_t* raw=(uint8_t*)malloc(size_t(outputs)*blocks*34);
 	uint32_t* packed=(uint32_t*)calloc(bytes/4,4);
 	tt_pioneer_runtime_q8_matvec* request=(tt_pioneer_runtime_q8_matvec*)calloc(1,sizeof(*request));
@@ -53,15 +55,16 @@ int main(int argc,char** argv)
 			int q=data[2+i]; if (q>=128) q-=256;
 			uint8_t encoded=data[2+i];
 			if (native && !PioneerInt8UnpackEncode(q,encoded)) { fprintf(stderr,"Native INT8 weight %d refused at row%u block%u i%u before BEGIN\n",q,row,block,i); passed=false; break; }
-			uint64_t byte=compact?PioneerQ8CompactValueByte(inputs,block*32+i,row):PioneerMatvecWeightElement(inputs,block*32+i,row);
+			uint64_t byte=f32Scales?PioneerQ8NativeF32ValueByte(inputs,block*32+i,row):compact?PioneerQ8CompactValueByte(inputs,block*32+i,row):PioneerMatvecWeightElement(inputs,block*32+i,row);
 			packed[byte/4]|=uint32_t(compact?uint16_t(encoded):PioneerInt8Operand(q))<<(8*(byte&3));
 		}
-		uint64_t byte=compact?PioneerQ8CompactScaleByte(inputs,block,row):(uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2;
-		packed[byte/4]|=uint32_t(d)<<(8*(byte&3));
+		uint64_t byte=f32Scales?PioneerQ8NativeF32ScaleByte(inputs,block,row):compact?PioneerQ8CompactScaleByte(inputs,block,row):(uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2;
+		packed[byte/4]|=f32Scales?PioneerQ8HalfToFloatBits(d):uint32_t(d)<<(8*(byte&3));
 	}
 	printf("Real Qwen Q8_0 tensor [%u,%llu], %u rows, %u bytes retained; all %u blocks/row, integer dots + device scales + SFPU accumulation\n",
 		inputs,(unsigned long long)tensor.outputs,outputs,bytes,blocks);
 	printf("Weight format %s; NoC reads per matvec %u (math tiles %u)\n",native?"native sign-magnitude bytes, 1.125 bytes/parameter":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlay, 2.25 bytes/parameter",(inputs/16)*(outputs/16)/(compact?2:1),(inputs/16)*(outputs/16));
+	if (f32Scales) puts("Distinct exact FP32 weight scales; same original half values and footprint, no hot-loop half conversion; NOT cache precision");
 	session={}; session.version=1; session.bytes=bytes;
 	if (passed) {
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session));
@@ -104,7 +107,7 @@ int main(int argc,char** argv)
 		passed=!errors && isfinite(relative) && relative<1e-5;
 		if (passed) {
 			tt_runtime_profile_result p={}; status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&p,sizeof(p)); closeOnly=status!=0;
-			passed=!status && p.version==1 && p.available && p.clock_stable && p.format==(native?6U:compact?5U:4U) && p.mask==0x17f
+			passed=!status && p.version==1 && p.available && p.clock_stable && p.format==(f32Scales?7U:native?6U:compact?5U:4U) && p.mask==0x17f
 				&& p.sequence>sequence && p.state==TT_RUNTIME_PASSED && !p.recovery_required && p.started && p.completed && p.stopped;
 			uint64_t last=0; for (unsigned i=0;i<TT_PROFILE_SLOTS;i++) if (p.mask&(1U<<i)) { passed &= p.microseconds[i]>=last; last=p.microseconds[i]; }
 			sequence=p.sequence;
@@ -133,6 +136,13 @@ int main(int argc,char** argv)
 				status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT,request,sizeof(*request)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
 				passed=!status && m.result.state==TT_RUNTIME_CONFIG_FAILED && !m.result.started && !cold;
 				printf("Native-to-raw-byte format switch refused: %s\n",passed?"PASS":"FAIL");
+			}
+		}
+		if (passed) {
+			if (f32Scales) {
+				status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE,request,sizeof(*request)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
+				passed=!status && m.result.state==TT_RUNTIME_CONFIG_FAILED && !m.result.started && !cold;
+				printf("FP32-to-FP16 weight scale format switch refused: %s\n",passed?"PASS":"FAIL");
 			}
 		}
 		if (passed) {

@@ -32,4 +32,9 @@ void PioneerGgmlQ8Native(bool enabled);
 void PioneerGgmlTrace(bool enabled);
 void PioneerGgmlBeginPosition(unsigned position);
 bool PioneerGgmlCompareTap(ggml_tensor* tensor,bool ask,void*);
+// CPU model/context and its immutable weights must remain alive. Replays
+// only one captured public-test projection, never a generated conversation.
+bool PioneerGgmlReplayReference(const char* tensorName);
+// CPU-only diagnostic control; never opens or computes on P100A.
+bool PioneerGgmlReplayCpuRope(const char* tensorName);
 #endif

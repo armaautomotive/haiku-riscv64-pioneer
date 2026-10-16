@@ -94,14 +94,14 @@ struct RuntimeMock:StoreMock {
 	}
 };
 static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
-	tt_runtime_matvec_result& r,bool dma=false,bool fp16=false,bool int8=false,bool q8=false,bool compact=false,bool native=false)
+	tt_runtime_matvec_result& r,bool dma=false,bool fp16=false,bool int8=false,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false)
 {
 	auto b=io.Baseline(); auto n=io.Compute(); uint32_t input[512],output[32]={};
 	r={};
 	for (auto& value:input) value=int8?0x40014001:0x3f803f80;
 	uint32_t scales[32]; for (auto& value:scales) value=0x3c800000;
-	io.runtimeProfile.Begin(io.microseconds,native?6:compact?5:q8?4:int8?3:fp16?2:dma?1:0);
-	bool ready=PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16,int8,q8,compact,native),passed=false;
+	io.runtimeProfile.Begin(io.microseconds,f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dma?1:0);
+	bool ready=PioneerRuntimeMatvecPrepare(io,b,n,store,compute,fp16,int8,q8,compact,native,f32Scales),passed=false;
 	if (ready) {
 		io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 		passed=PioneerRuntimeMatvec(io,b,n,host,store,compute,compact?36864:73728,0,1024,32,input,output,r,dma,q8?scales:NULL);
@@ -110,7 +110,7 @@ static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& 
 	const auto& p=io.runtimeProfile.Snapshot();
 	assert(p.available && p.clock_stable && p.state==r.state && p.recovery_required==r.recovery_required);
 	assert(p.started==r.started && p.completed==r.completed && p.stopped==r.stopped);
-	if (passed) assert(p.mask==(dma?0x1dfU:0x17fU) && p.format==(native?6U:compact?5U:q8?4U:int8?3U:fp16?2U:dma?1U:0U));
+	if (passed) assert(p.mask==(dma?0x1dfU:0x17fU) && p.format==(f32Scales?7U:native?6U:compact?5U:q8?4U:int8?3U:fp16?2U:dma?1U:0U));
 	if (passed) for (uint32_t v:output) assert(v==(int8 && !q8?uint32_t(-11282):0x40000000));
 	return passed;
 }
@@ -317,22 +317,26 @@ int main()
 		if (r.recovery_required) assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));
 	}
 	printf("Dropped every compact-Q8 post-upload control write: %u cases\n",compactCases);
+	for (unsigned scaleFormat=0;scaleFormat<2;scaleFormat++) {
+	bool f32Scales=scaleFormat!=0;
 	unsigned nativeWrites=0,nativeCases=0;
 	{
 		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
 		assert(Prepared(trial,h,s)); bool dirty=s.l1_dirty;
 		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,false,true));
-		assert(Run(trial,h,s,c,r,false,false,true,true,true,true)); nativeWrites=trial.Mock::writes;
-		assert(c.native && c.compact && c.q8 && s.l1_dirty==dirty && r.after[0]-r.before[0]==64);
+		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,false,true));
+		assert(Run(trial,h,s,c,r,false,false,true,true,true,true,f32Scales)); nativeWrites=trial.Mock::writes;
+		assert(c.native && c.compact && c.q8 && c.f32_scales==f32Scales && s.l1_dirty==dirty && r.after[0]-r.before[0]==64);
 		unsigned writes=trial.Mock::writes;
 		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,false) && trial.Mock::writes==writes);
-		assert(Run(trial,h,s,c,r,false,false,true,true,true,true));
+		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,true,!f32Scales) && trial.Mock::writes==writes);
+		assert(Run(trial,h,s,c,r,false,false,true,true,true,true,f32Scales));
 		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
 	}
 	for (unsigned drop=0;drop<=nativeWrites;drop++) {
 		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
 		assert(Prepared(trial,h,s)); if (drop<trial.Mock::writes+1026) continue;
-		trial.Mock::drop=drop; nativeCases++; Run(trial,h,s,c,r,false,false,true,true,true,true);
+		trial.Mock::drop=drop; nativeCases++; Run(trial,h,s,c,r,false,false,true,true,true,true,f32Scales);
 		if (!r.recovery_required && !c.unsafe) {
 			assert(PioneerRuntimeMatvecClose(trial,b,n,s,c) && PioneerResidentLeaseEnd(trial,n,s)); trial.Restored();
 		} else assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));
@@ -342,10 +346,11 @@ int main()
 		assert(Prepared(trial,h,s));
 		trial.executeTimeout=fault==0; trial.badPc=fault==1; trial.badMathFlits=fault==2; trial.stopFails=fault==3;
 		trial.failRequest=fault==4?2:0; trial.clearFails=fault==5; trial.changed=fault==6;
-		assert(!Run(trial,h,s,c,r,false,false,true,true,true,true));
+		assert(!Run(trial,h,s,c,r,false,false,true,true,true,true,f32Scales));
 		if (fault!=6) assert(r.recovery_required && trial.quarantined);
 		if (fault<3) assert(trial.stops==0);
 		if (r.recovery_required) assert(!PioneerRuntimeMatvecClose(trial,b,n,s,c));
 	}
-	printf("Dropped every native-unpack-Q8 post-upload control write: %u cases\n",nativeCases);
+	printf("Dropped every native-unpack-Q8 %s-scales post-upload control write: %u cases\n",f32Scales?"FP32":"FP16",nativeCases);
+	}
 }

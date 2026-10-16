@@ -55,6 +55,7 @@ struct NativeQ8Machine:CompactQ8Machine {
 		return true;
 	}
 };
+#ifndef PIONEER_NATIVE_Q8_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8NativeCodeWord(w));
@@ -80,3 +81,4 @@ int main(int argc,char** argv) {
 	}
 	puts("PASS: native signed INT8 unpack image, lossless SM7 encoding with -128 refusal, FP16-overlay full-range activations, all K/N including4096, exact half NoC counts, scaled references and bounded failure parks; NO hardware");
 }
+#endif
