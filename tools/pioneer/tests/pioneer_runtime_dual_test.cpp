@@ -66,6 +66,7 @@ struct Fixture {
 	tt_host_page_result host[2];
 	PioneerResidentLease store[2];
 	PioneerRuntimeMatvecLease compute[2];
+	PioneerRuntimeActivationCache cache[2];
 	tt_runtime_matvec_result result[2]={};
 	Fixture() {
 		io.first.bufferWords=12288;
@@ -76,14 +77,16 @@ struct Fixture {
 		assert(PioneerRuntimeMatvecPrepare(io.second,b,n2,store[1],compute[1],false,true,true,true,true,true,true));
 		io.profile.Begin(io.now,10); io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 	}
-	bool Run(unsigned n=64) {
+	bool Run(unsigned n=64,bool reuse=false,unsigned trial=0) {
 		assert(io.first.reset==0x47800 && io.second.reset==0x47800);
 		io.allStarts=0; io.pcReads[0]=io.pcReads[1]=0;
 		auto b=io.first.Baseline(); auto first=io.first.Compute(),second=first; second.version=2;
 		uint32_t input[512],scales[32],output[64]={};
 		for (auto& v:input) v=0x40014001;
 		for (auto& v:scales) v=0x3c800000;
-		bool passed=PioneerRuntimeDualMatvec(io,b,first,second,host[0],store[0],store[1],compute[0],compute[1],73728,0,1024,n,input,scales,output,result);
+		if (trial==1) input[0]=0x40024002;
+		if (trial==2) scales[0]^=1;
+		bool passed=PioneerRuntimeDualMatvec(io,b,first,second,host[0],store[0],store[1],compute[0],compute[1],73728,0,1024,n,input,scales,output,result,reuse?cache:NULL);
 		if (passed) {
 			for (auto v:output) assert(v==0x40000000);
 			assert(io.first.code[1+0x500/4]==0x04000000 && io.second.code[1+0x500/4]==0x04009000);
@@ -142,5 +145,45 @@ int main()
 		assert(PioneerRuntimeDualShape(inputs,n)==valid);
 		if (valid) assert(PioneerQ8CompactWeightRange(PioneerQ8CompactWeightBytes(inputs,n),PioneerQ8CompactWeightBytes(inputs,n/2),inputs,n/2));
 	}
+	unsigned cachedWrites[2]={},cachedSelects=0;
+	{
+		Fixture f; assert(f.Run(64,true));
+		assert(f.result[0].staged_pages==3 && f.result[1].staged_pages==3 && f.cache[0].Sealed() && f.cache[1].Sealed());
+		unsigned before[2]={f.io.first.Mock::writes,f.io.second.Mock::writes};
+		unsigned selectsBefore=f.io.selects;
+		assert(f.Run(64,true) && f.result[0].staged_pages==1 && f.result[1].staged_pages==1);
+		cachedWrites[0]=f.io.first.Mock::writes-before[0]; cachedWrites[1]=f.io.second.Mock::writes-before[1];
+		cachedSelects=f.io.selects-selectsBefore;
+		for (unsigned trial:{1U,2U,0U}) {
+			assert(f.Run(64,true,trial) && f.result[0].staged_pages==3 && f.result[1].staged_pages==3);
+			assert(f.Run(64,true,trial) && f.result[0].staged_pages==1 && f.result[1].staged_pages==1);
+		}
+		f.Close();
+	}
+	unsigned cachedCases=0;
+	for (unsigned core=0;core<2;core++) for (unsigned drop=1;drop<=cachedWrites[core];drop++) {
+		Fixture f; assert(f.Run(64,true));
+		if (core) f.io.second.Mock::drop=f.io.second.Mock::writes+drop;
+		else f.io.first.Mock::drop=f.io.first.Mock::writes+drop;
+		cachedCases++; bool passed=f.Run(64,true);
+		if (!passed) assert(!f.cache[0].Sealed() && !f.cache[1].Sealed());
+		f.Close();
+	}
+	for (unsigned select=1;select<=cachedSelects;select++) {
+		Fixture f; assert(f.Run(64,true)); f.io.failSelect=f.io.selects+select;
+		assert(!f.Run(64,true) && !f.cache[0].Sealed() && !f.cache[1].Sealed()); f.Close();
+	}
+	for (unsigned core=0;core<2;core++) for (unsigned fault=0;fault<3;fault++) {
+		Fixture f; assert(f.Run(64,true));
+		RuntimeMock& target=core?static_cast<RuntimeMock&>(f.io.second):f.io.first;
+		unsigned requests=f.io.first.requests+f.io.second.requests,bme=f.io.first.bmeWrites+f.io.second.bmeWrites;
+		unsigned stops=f.io.first.stops+f.io.second.stops,starts=f.io.first.starts+f.io.second.starts;
+		target.changed=fault==0; target.lateMapChange=fault==1; target.pciePending=fault==2;
+		assert(!f.Run(64,true) && f.io.unsafe && !f.cache[0].Sealed() && !f.cache[1].Sealed());
+		assert(requests==f.io.first.requests+f.io.second.requests && bme==f.io.first.bmeWrites+f.io.second.bmeWrites);
+		assert(stops==f.io.first.stops+f.io.second.stops && starts==f.io.first.starts+f.io.second.starts);
+		f.Close();
+	}
+	printf("PASS: guarded exact activation reuse, byte/scale changes miss, output poison retained, %u cached lost writes and %u mapping faults; OFFLINE, not installed\n",cachedCases,cachedSelects);
 	printf("PASS: two fixed workers, row partitions, both staged before launch, both proved before results/stop, %u lost writes and %u mapping faults; OFFLINE only\n",cases,selects);
 }

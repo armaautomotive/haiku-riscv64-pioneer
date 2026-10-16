@@ -19,7 +19,8 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool dual=argc==3 && (!strcmp(argv[1],"--verify-dual-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1"));
+	bool reuse=argc==3 && (!strcmp(argv[1],"--verify-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-reuse-q8-host1"));
+	bool dual=reuse || (argc==3 && (!strcmp(argv[1],"--verify-dual-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1")));
 	bool exact=dual || ((argc==3 || argc==4) && (!strcmp(argv[1],"--probe-native-q8-exact-reference") || !strcmp(argv[1],"--verify-native-q8-exact-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1") || !strcmp(argv[1],"--trace-native-q8-exact")));
 	bool host1=dual || (argc==3 && (!strcmp(argv[1],"--verify-native-q8-host1") || !strcmp(argv[1],"--benchmark-native-q8-host1") || !strcmp(argv[1],"--verify-native-q8-exact-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1")));
 	bool roundingProbe=(argc==3 || argc==4) && !strcmp(argv[1],"--probe-cpu-q8-rounding");
@@ -29,7 +30,7 @@ int main(int argc,char** argv) {
 	bool trace=(argc==3 || argc==4) && (!strcmp(argv[1],"--trace-native-q8") || !strcmp(argv[1],"--trace-native-q8-exact"));
 	bool native=exact || host1 || (probe && !cpuProbe) || trace || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-native-q8") || !strcmp(argv[1],"--verify-native-q8") || !strcmp(argv[1],"--benchmark-native-q8")));
 	bool f32Kv=(argc==3 || argc==4) && !strcmp(argv[1],"--diagnose-compact-q8-f32-kv");
-	bool benchmark=argc==3 && (!strcmp(argv[1],"--benchmark-dual-q8-host1") || !strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8") || !strcmp(argv[1],"--benchmark-native-q8") || !strcmp(argv[1],"--benchmark-native-q8-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1"));
+	bool benchmark=argc==3 && (!strcmp(argv[1],"--benchmark-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1") || !strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8") || !strcmp(argv[1],"--benchmark-native-q8") || !strcmp(argv[1],"--benchmark-native-q8-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1"));
 	bool compact=native || f32Kv || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-compact-q8") || !strcmp(argv[1],"--verify-compact-q8") || !strcmp(argv[1],"--benchmark-compact-q8")));
 	bool q8=compact || benchmark || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--verify-int8-q8")));
 	bool fp16=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8"));
@@ -66,6 +67,7 @@ int main(int argc,char** argv) {
 	PioneerGgmlDiagnose(diagnose,argc==4 && !probe?argv[3]:NULL); PioneerGgmlCpuActivationQuantization(cpuActivations); PioneerGgmlFp16Operands(fp16); PioneerGgmlQ8Operands(q8); PioneerGgmlQ8Compact(compact); PioneerGgmlQ8Native(native);
 	PioneerGgmlQ8Exact(exact);
 	PioneerGgmlQ8Dual(dual);
+	PioneerGgmlQ8DualReuse(reuse);
 	if (!cpuProbe) ggml_backend_register(PioneerGgmlReg());
 	llama_context* actual=probe?NULL:llama_init_from_model(model,params);
 	if (!actual && !probe) { llama_free(reference); llama_model_free(model); return 1; }
@@ -95,6 +97,7 @@ int main(int argc,char** argv) {
 	if (native) puts("Native signed INT8 hardware unpack; unsupported -128 weights fail without clamping or fallback");
 	if (exact) puts("Exact FP32 scale bits + compensated SFPU accumulation, all learned sums stay on the card; experimental until full verification");
 	if (dual) puts("Two fixed bulk workers; no reduction-dimension split; every matvec requires BOTH independent completion/stop/NoC proofs; not a CPU speedup claim");
+	if (reuse) puts("Explicit guarded per-core input/scales reuse; every result still computed, poisoned, read and proved; no CPU learned products or result substitution");
 	printf("Both independent contexts K/V cache types: %d/%d (%s); graph/logit/greedy gates unchanged\n",int(params.type_k),int(params.type_v),f32Kv?"explicit FP32 precision experiment":"library defaults");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
 	for (int position=0;passed && generated<4;position++) {

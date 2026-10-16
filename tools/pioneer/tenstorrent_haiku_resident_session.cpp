@@ -43,6 +43,10 @@ static bool QuantizedDenied(int fd,uint32_t capabilities,int expected)
 		tt_pioneer_runtime_dual_matvec dual={}; dual.q8.matvec.version=1; dual.q8.matvec.inputs=1024; dual.q8.matvec.outputs=64;
 		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL,&dual,sizeof(dual))<0 && errno==expected;
 	}
+	if (capabilities&TT_PIONEER_CAP_Q8_DUAL_REUSE) {
+		tt_pioneer_runtime_dual_matvec dual={}; dual.q8.matvec.version=1; dual.q8.matvec.inputs=1024; dual.q8.matvec.outputs=64;
+		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL_REUSE,&dual,sizeof(dual))<0 && errno==expected;
+	}
 	if (sSecondProbe) {
 		tt_pioneer_compute_noc_result probe={}; errno=0;
 		denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC,&probe,sizeof(probe))<0 && errno==expected;

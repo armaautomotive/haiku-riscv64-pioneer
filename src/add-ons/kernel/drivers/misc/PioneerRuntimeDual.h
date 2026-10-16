@@ -2,6 +2,7 @@
 #ifndef PIONEER_RUNTIME_DUAL_H
 #define PIONEER_RUNTIME_DUAL_H
 #include "PioneerRuntimeMatvec.h"
+#include "PioneerRuntimeActivationCache.h"
 
 // Two fixed workers, disjoint contiguous row ranges. Never divide the
 // reduction dimension: each output keeps the qualified FP32 summation order.
@@ -27,7 +28,7 @@ bool PioneerRuntimeDualMatvec(IO& io,const tt_dram_samples_result& baseline,
 	const tt_host_page_result& host,PioneerResidentLease& firstStore,PioneerResidentLease& secondStore,
 	PioneerRuntimeMatvecLease& firstCompute,PioneerRuntimeMatvecLease& secondCompute,
 	uint64_t capacity,uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* input,
-	const uint32_t* scales,uint32_t* output,tt_runtime_matvec_result (&r)[2])
+	const uint32_t* scales,uint32_t* output,tt_runtime_matvec_result (&r)[2],PioneerRuntimeActivationCache* cache=NULL)
 {
 	for (unsigned i=0;i<2;i++) { r[i]={}; r[i].version=1; }
 	if (!PioneerRuntimeDualShape(inputs,outputs) || !input || !scales || !output
@@ -47,8 +48,20 @@ bool PioneerRuntimeDualMatvec(IO& io,const tt_dram_samples_result& baseline,
 		if (!PioneerInt8OperandValid(uint16_t(input[w])) || !PioneerInt8OperandValid(uint16_t(input[w]>>16))) return false;
 	for (unsigned w=0;w<inputs/32;w++) if ((scales[w]&0x7f800000)==0x7f800000) return false;
 	uint32_t* stage=io.RuntimeStageWords(); if (!stage) return false;
-	bool uncertain=false,passed=false,armed[2]={false,false};
+	bool uncertain=false,passed=false,armed[2]={false,false},hits[2]={false,false};
 	do {
+		if (cache) {
+			// A matching CPU shadow is insufficient. Check BOTH workers and
+			// the shared host/PCI route before any transfer or cache hit.
+			for (unsigned i=0;i<2;i++) {
+				if (!io.SelectRuntimeCore(i) || io.ResetRead()!=0x47800 || io.ResetRead()!=0x47800
+					|| !PioneerRuntimeSources(io,baseline,*noc[i],*store[i]) || !BlackholeResidentIdle(io)
+					|| !BlackholeHostReadMapStable(io,host)) { uncertain=true; break; }
+				hits[i]=cache[i].Matches(inputs,input,scales);
+				if (!hits[i] && !cache[i].Remember(inputs,input,scales)) { uncertain=true; break; }
+			}
+			if (uncertain) break;
+		}
 		// Stage/configure BOTH held cores before releasing either. All host
 		// DMA is complete, BME off, before any worker can execute.
 		for (unsigned i=0;i<2;i++) {
@@ -56,11 +69,11 @@ bool PioneerRuntimeDualMatvec(IO& io,const tt_dram_samples_result& baseline,
 			auto& result=r[i]; result.prepared=1; result.state=TT_RUNTIME_STAGE_FAILED;
 			compute[i]->buffers_dirty=true;
 			bool okay=io.ResetRead()==0x47800;
-			for (unsigned page=0;page<(inputs*2+4095)/4096 && okay;page++) {
+			for (unsigned page=0;page<(inputs*2+4095)/4096 && okay && !hits[i];page++) {
 				for (unsigned w=0;w<1024;w++) stage[w]=page*1024+w<inputs/2?input[page*1024+w]:0;
 				okay=PioneerRuntimeStage(io,baseline,*noc[i],host,*store[i],false,page,stage,result,false,2+i);
 			}
-			if (okay) {
+			if (okay && !hits[i]) {
 				for (unsigned w=0;w<1024;w++) stage[w]=w<inputs/32?scales[w]:0;
 				okay=PioneerRuntimeStage(io,baseline,*noc[i],host,*store[i],false,3,stage,result,true,2+i);
 			}
@@ -176,6 +189,10 @@ bool PioneerRuntimeDualMatvec(IO& io,const tt_dram_samples_result& baseline,
 	if (uncertain) {
 		for (unsigned i=0;i<2;i++) { compute[i]->unsafe=true; store[i]->recovery_required=true; r[i].recovery_required=1; }
 		io.QuarantineHostPage();
+	}
+	if (cache) {
+		if (passed && !uncertain) for (unsigned i=0;i<2;i++) if (!hits[i] && !cache[i].Seal(r[i],rows)) { passed=false; r[i].state=TT_RUNTIME_CONFIG_FAILED; }
+		if (!passed || uncertain) for (unsigned i=0;i<2;i++) cache[i].Invalidate();
 	}
 	return passed && !uncertain;
 }

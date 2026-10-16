@@ -12,13 +12,14 @@ static int Input(unsigned k,unsigned trial) { return int((k*17+trial*29)%256)-12
 static float Scale(unsigned block,unsigned trial) { return float(int((block*7+trial*3)%31)-15)/1024.0f; }
 int main(int argc,char** argv)
 {
-	bool dual=argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-dual") || !strcmp(argv[1],"--check-dual-support"));
+	bool reuse=argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-dual-reuse") || !strcmp(argv[1],"--check-dual-reuse-support"));
+	bool dual=reuse || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-dual") || !strcmp(argv[1],"--check-dual-support")));
 	bool second=dual || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-second-core") || !strcmp(argv[1],"--check-second-core-support")));
 	bool bulk=second || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-bulk") || !strcmp(argv[1],"--check-bulk-support")));
 	bool f32Scales=bulk || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-native-f32-scales") || !strcmp(argv[1],"--check-native-f32-scale-support")));
 	bool native=f32Scales || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-native") || !strcmp(argv[1],"--check-native-support")));
 	bool compact=native || (argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-compact") || !strcmp(argv[1],"--check-compact-support")));
-	bool support=argc==2 && (!strcmp(argv[1],"--check-dual-support") || !strcmp(argv[1],"--check-second-core-support") || !strcmp(argv[1],"--check-bulk-support") || !strcmp(argv[1],"--check-native-f32-scale-support") || !strcmp(argv[1],"--check-support") || !strcmp(argv[1],"--check-compact-support") || !strcmp(argv[1],"--check-native-support"));
+	bool support=argc==2 && (!strcmp(argv[1],"--check-dual-reuse-support") || !strcmp(argv[1],"--check-dual-support") || !strcmp(argv[1],"--check-second-core-support") || !strcmp(argv[1],"--check-bulk-support") || !strcmp(argv[1],"--check-native-f32-scale-support") || !strcmp(argv[1],"--check-support") || !strcmp(argv[1],"--check-compact-support") || !strcmp(argv[1],"--check-native-support"));
 	unsigned outputs=dual?64:32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
@@ -32,7 +33,7 @@ int main(int argc,char** argv)
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
 	tt_resident_session_result session={};
 	if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&session,sizeof(session))) { perror("support"); close(fd); return 1; }
-	unsigned capability=dual?TT_PIONEER_CAP_Q8_DUAL:second?TT_PIONEER_CAP_Q8_SECOND:bulk?TT_PIONEER_CAP_Q8_BULK:f32Scales?TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES:native?TT_PIONEER_CAP_NATIVE_Q8_UNPACK:compact?2048:1024;
+	unsigned capability=reuse?TT_PIONEER_CAP_Q8_DUAL_REUSE:dual?TT_PIONEER_CAP_Q8_DUAL:second?TT_PIONEER_CAP_Q8_SECOND:bulk?TT_PIONEER_CAP_Q8_BULK:f32Scales?TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES:native?TT_PIONEER_CAP_NATIVE_Q8_UNPACK:compact?2048:1024;
 	printf("Session capabilities %u; %s Q8 bit%u required\n",session.capabilities,native?"native INT8 unpack":compact?"compact":"scaled",capability);
 	if (session.version!=1 || !(session.capabilities&capability)) { close(fd); return 1; }
 	if (support) { close(fd); return 0; }
@@ -43,7 +44,7 @@ int main(int argc,char** argv)
 		|| fseeko(model,off_t(tensor.offset),SEEK_SET)) { fprintf(stderr,"Unsupported Q8_0 tensor\n"); fclose(model); close(fd); return 1; }
 	unsigned inputs=unsigned(tensor.inputs),blocks=inputs/32;
 	unsigned bytes=unsigned(compact?PioneerQ8CompactWeightBytes(inputs,outputs):PioneerMatvecWeightBytes(inputs,outputs));
-	uint32_t operation=dual?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL:second?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND:bulk?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK:f32Scales?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES:native?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE:compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
+	uint32_t operation=reuse?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL_REUSE:dual?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL:second?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND:bulk?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK:f32Scales?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES:native?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE:compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
 	uint8_t* raw=(uint8_t*)malloc(size_t(outputs)*blocks*34);
 	uint32_t* packed=(uint32_t*)calloc(bytes/4,4);
 	size_t requestBytes=dual?sizeof(tt_pioneer_runtime_dual_matvec):sizeof(tt_pioneer_runtime_q8_matvec);
@@ -72,6 +73,7 @@ int main(int argc,char** argv)
 	if (bulk) puts("Bulk GDDR reader:16 tiles/9216 bytes/144 flits per read; separately saved48KiB buffers; immutable distinct operation, NOT a speedup claim");
 	if (dual) puts("TWO fixed workers (1,2)/(1,3): disjoint rows, unchanged summation order, both staged before launch and proved before results/stop; NOT a CPU speedup claim");
 	else if (second) puts("Fixed second core (1,3) ONLY; first core remains held; separate saved code/buffers/NIU/tail; prerequisite, NOT parallel compute");
+	if (reuse) puts("Explicit exact-byte activation reuse: per-core CPU shadows, both held/idle/source/PCI/host guards; output poison never skipped; native qualification pending");
 	session={}; session.version=1; session.bytes=bytes;
 	if (passed) {
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session));
@@ -93,6 +95,7 @@ int main(int argc,char** argv)
 			trial,r.state,r.started,r.completed,r.stopped,cold,r.phase,r.pc[0],r.pc[1],r.tiles,
 			r.after[0]-r.before[0],r.after[1]-r.before[1],r.after[2]-r.before[2],r.after[3]-r.before[3],Seconds()-start);
 		passed=!status && r.state==TT_RUNTIME_PASSED && r.started && r.completed && r.stopped && !cold;
+		if (reuse) { unsigned full=2*((inputs*2+4095)/4096+1+((outputs/2)*4+4095)/4096); printf("Changed input full staging %u/%u pages\n",r.staged_pages,full); passed &= r.staged_pages==full; }
 		unsigned tiles=(inputs/16)*(outputs/16),reads=bulk?tiles/32:compact?tiles/2:tiles;
 		passed &= r.tiles==tiles && uint32_t(r.after[0]-r.before[0])==reads
 			&& uint32_t(r.after[1]-r.before[1])==reads*(bulk?144:9)
@@ -132,7 +135,7 @@ int main(int argc,char** argv)
 		if (f32Scales) { printf("Exact CPU IEEE FMA bits: %u/%u mismatches (required zero)\n",bitDifferences,outputs); passed &= bitDifferences==0; }
 		if (passed) {
 			tt_runtime_profile_result p={}; status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&p,sizeof(p)); closeOnly=status!=0;
-			passed=!status && p.version==1 && p.available && p.clock_stable && p.format==(dual?10U:second?9U:bulk?8U:f32Scales?7U:native?6U:compact?5U:4U) && p.mask==0x17f
+			passed=!status && p.version==1 && p.available && p.clock_stable && p.format==(reuse?11U:dual?10U:second?9U:bulk?8U:f32Scales?7U:native?6U:compact?5U:4U) && p.mask==0x17f
 				&& p.sequence>sequence && p.state==TT_RUNTIME_PASSED && !p.recovery_required && p.started && p.completed && p.stopped;
 			uint64_t last=0; for (unsigned i=0;i<TT_PROFILE_SLOTS;i++) if (p.mask&(1U<<i)) { passed &= p.microseconds[i]>=last; last=p.microseconds[i]; }
 			sequence=p.sequence;
@@ -177,10 +180,20 @@ int main(int argc,char** argv)
 				printf("Bulk-to-single-tile mode switch refused: %s\n",passed?"PASS":"FAIL");
 			}
 		}
+		if (passed && reuse) {
+			status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL,request,requestBytes); closeOnly=status!=0; cold=m.result.recovery_required!=0;
+			passed=!status && m.result.state==TT_RUNTIME_CONFIG_FAILED && !m.result.started && !cold;
+			printf("Cached-to-uncached mode switch refused: %s\n",passed?"PASS":"FAIL");
+		}
 		if (passed) {
 			status=ioctl(fd,operation,request,requestBytes); closeOnly=status!=0; cold=m.result.recovery_required!=0;
 			passed=!status && m.result.state==TT_RUNTIME_PASSED && m.result.started && m.result.completed && m.result.stopped && !cold && !memcmp(previous,m.output,outputs*4);
 			printf("Bit-identical reuse after refusals: %s\n",passed?"PASS":"FAIL");
+			if (passed && reuse) {
+				unsigned expected=2*(((outputs/2)*4+4095)/4096);
+				passed=m.result.staged_pages==expected && PioneerRuntimeDualProof(((tt_pioneer_runtime_dual_matvec*)request)->core,inputs,outputs);
+				printf("Exact input cache hit: %u/%u output-only staged pages; both full compute proofs %s\n",m.result.staged_pages,expected,passed?"PASS":"FAIL");
+			}
 		}
 	}
 	if (cold || closeOnly) fprintf(stderr,"STOP: %s; no retries, reset, reload or further card commands\n",cold?"cold recovery required":"request failed / state uncertain");

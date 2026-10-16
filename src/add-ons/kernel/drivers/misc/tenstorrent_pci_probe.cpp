@@ -1485,6 +1485,7 @@ struct PioneerStoreContext {
 	PioneerResidentLease lease;
 	PioneerRuntimeMatvecLease compute;
 	PioneerRuntimeMatvecLease secondCompute;
+	PioneerRuntimeActivationCache activation[2];
 	PioneerResidentLease secondLease;
 	tt_compute_noc_result secondNoc={};
 	int runtimeCoreMode=-1; // immutable after the first runtime preparation
@@ -1735,7 +1736,7 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false,bool bulk=false,bool second=false,bool dual=false)
+RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false,bool bulk=false,bool second=false,bool dual=false,bool reuse=false)
 {
 	size_t bytes=dual?sizeof(tt_pioneer_runtime_dual_matvec):q8?sizeof(tt_pioneer_runtime_q8_matvec):sizeof(tt_pioneer_runtime_matvec);
 	if (data==NULL || length!=bytes) return B_BAD_VALUE;
@@ -1763,8 +1764,8 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
 			if (dual) memset(((tt_pioneer_runtime_dual_matvec*)request)->core,0,sizeof(((tt_pioneer_runtime_dual_matvec*)request)->core));
 			memset(request->output,0,sizeof(request->output));
-			context->io.runtimeProfile.Begin(uint64(system_time()),dual?10:second?9:bulk?8:f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
-			int coreMode=dual?2:int(second);
+			context->io.runtimeProfile.Begin(uint64(system_time()),reuse?11:dual?10:second?9:bulk?8:f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
+			int coreMode=reuse?3:dual?2:int(second);
 			bool ready=context->runtimeCoreMode<0 || context->runtimeCoreMode==coreMode;
 			ready=ready && (context->lease.ready || (!context->lease.saved
 				&& PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease)));
@@ -1790,7 +1791,7 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 				PioneerRuntimeDualMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
 					context->baseline.baseline.baseline.noc,context->secondNoc,context->host,context->lease,context->secondLease,
 					context->compute,context->secondCompute,context->bytes,request->weight_offset,request->inputs,request->outputs,
-					request->input,scales,request->output,parts);
+					request->input,scales,request->output,parts,reuse?context->activation:NULL);
 				auto& total=request->result; total=parts[0];
 				total.state=parts[0].state==TT_RUNTIME_PASSED?parts[1].state:parts[0].state;
 				total.prepared=parts[0].prepared && parts[1].prepared;
@@ -1842,8 +1843,9 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK
-		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL) {
-		bool dual=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL;
+		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL_REUSE) {
+		bool reuse=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL_REUSE;
+		bool dual=reuse || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL;
 		bool second=dual || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND;
 		bool bulk=second || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK;
 		bool f32Scales=bulk || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES;
@@ -1851,7 +1853,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		bool compact=native || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT;
 		bool q8=compact || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
 		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,
-			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact,native,f32Scales,bulk,second,dual);
+			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact,native,f32Scales,bulk,second,dual,reuse);
 	}
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
 		return RuntimeProfileControl(instance,data,length);

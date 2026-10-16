@@ -29,6 +29,7 @@ void PioneerGgmlQ8Compact(bool enabled);
 void PioneerGgmlQ8Native(bool enabled);
 void PioneerGgmlQ8Exact(bool enabled);
 void PioneerGgmlQ8Dual(bool enabled);
+void PioneerGgmlQ8DualReuse(bool enabled);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);

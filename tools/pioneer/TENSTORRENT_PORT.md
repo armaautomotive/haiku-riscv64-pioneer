@@ -394,6 +394,43 @@ matrix coverage, original cache/flash settings, all-vocabulary gates and four
 strict reply tokens. No result or speedup is claimed while it is running.
 No forced unload, firmware/clock/boot change or Assistant model/backend change.
 
+###### Exact activation reuse (offline-qualified; staged, NOT installed)
+
+Separate54cb / bit262144 / profile11 adds per-core private CPU operand/scale
+shadows to the same fixed two-core bulk image. Its session mode3 cannot
+switch to uncached mode2. Keys compare EVERY operand and scale byte, including
+signed zero; there is no hash-only match. A remembered CPU copy is not valid
+until its real compute has completed/stopped with exact NoC/PC/marker proof.
+Before either input can be reused, BOTH workers must be held/idle with stable
+source/PCI/host mappings. Output poison is NEVER skipped; every learned
+product, result collection and both independent completion proofs remain.
+Any execution failure invalidates both shadows; uncertainty retains the same
+global quarantine/no-reset/no-payload-restoration rule.
+
+The actual assembled bulk image is additionally checked to leave the ENTIRE
+16KiB input/scale region unchanged for every K and two vectors. Exact-key
+tests change every word independently, signed zero, nonfinite/invalid operands
+and every critical proof field. The two-core model proves cold/changed-input
+full staging and output-only staging on hits,70 individually lost cached-path
+writes, all14 mapping boundaries and source/host-map/PCI changes on either
+worker BEFORE any new DMA/start/stop. Legacy uncached130-write tests still
+pass. Pristine pinned-ggml fake tests run both client modes, exact outputs,
+active flag immutability, invalid flag combinations and device failure/no
+fallback; these fake results are NOT model or hardware throughput evidence.
+
+Driver25454115f888e9bfcff2e1b57315ba35a25d2479c08c896bb789530c181bb97d
+and CLI411c1a73d94e9ee2d6d6ede30c15ed2861fbf87167efa59aabfdd7d8b855773e
+are built and staged in `/boot/home/pioneer-dual-reuse-20261015`, NOT installed.
+The current full-model run must close first with known END/stop/cleanup, then
+an independent audit, before considering installation/natural support520191.
+Native reuse diagnostics will require full staging for BOTH changed vectors,
+bit-identical repeated results, exact output-only page counts, immutable-mode
+refusal and all per-core proofs. Qwen CLI modes are
+`--verify-dual-reuse-q8-host1` / `--benchmark-dual-reuse-q8-host1`, retaining
+the same reference/thread/quality gates. Standalone verifier
+3f3f674b25a8e8f299d4d9c5c9995d6dd4c1721787de0b74ff4258cd309faa71 is built
+locally, not run. No native cache correctness or speedup is claimed yet.
+
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 
 A separate fixed `TT_RUNTIME_Q8_COMPACT` image retains the scaled integer

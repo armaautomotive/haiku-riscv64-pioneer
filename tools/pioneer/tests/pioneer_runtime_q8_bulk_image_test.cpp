@@ -49,8 +49,11 @@ int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8BulkCodeWord(w));
 	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) for (unsigned t=0;t<2;t++) {
-		BulkQ8Machine m(k,32,t); m.delay=3; m.Run();
+		BulkQ8Machine m(k,32,t); m.delay=3;
+		uint32_t activationBefore[4096]; memcpy(activationBefore,m.buffers,sizeof(activationBefore));
+		m.Run();
 		assert(m.CorrectIeee() && m.Guards() && m.requests==m.ExpectedFixtures()/32 && m.responses==m.requests && !m.expansions);
+		assert(!memcmp(activationBefore,m.buffers,sizeof(activationBefore))); // entire input+scales region read-only
 	}
 	BulkQ8Machine full(1024,4096,1); full.Run(); assert(full.CorrectIeee() && full.Guards());
 	BulkQ8Machine alternate(1024,64,1,0x04800000); alternate.Run(); assert(alternate.CorrectIeee() && alternate.Guards());
