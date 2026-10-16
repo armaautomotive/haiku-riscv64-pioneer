@@ -52,7 +52,9 @@ public:
 		: BApplication(kServiceSignature), fWake(create_sem(0, "assistant requests")),
 			fWorker(-1), fRequest(NULL), fQuit(false), fReady(false), fLoads(0),
 			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL),
-			fLoading(true), fPersistModel(false), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false)
+			fLoading(true), fPersistModel(false), fUnloading(false), fPendingUnload(false),
+			fResidentModels(0), fProgressActive(true), fProgressValue(-1),
+			fProgressPhase("Starting model service"), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false)
 	{
 		fHardware = LoadAssistantHardware();
 		const char* overridePath = getenv("LLAMA_MODEL");
@@ -63,6 +65,8 @@ public:
 				fPendingPath = "/Haiku1/home/models/Qwen3-0.6B-Q8_0.gguf";
 		}
 		fPendingHardware = fHardware;
+		fModelPath = fPendingPath;
+		fLoadingPath = fPendingPath; fLoadingHardware = fHardware;
 		fPendingThreads = fThreads.load();
 		BMessage settings; LoadAssistantSettings(settings);
 		const char* lastCPU;
@@ -104,6 +108,31 @@ public:
 
 	virtual void MessageReceived(BMessage* message)
 	{
+		if (message->what == kLoadModel || message->what == kUnloadModel) {
+			BAutolock lock(&fLock);
+			status_t status = B_BUSY;
+			if (!fLoading && !fUnloading && fRequest == NULL) {
+				if (message->what == kLoadModel)
+					status = fReady.load() ? B_OK : QueueSelection(fModelPath, fHardware.String(), fThreads.load());
+				else {
+					status = B_OK;
+					if (fResidentModels != 0) {
+						fUnloading = fPendingUnload = true;
+						fReady.store(false);
+						fProgressActive = true; fProgressValue = -1;
+						fProgressPhase = "Releasing model memory and P100A session";
+						release_sem(fWake);
+					}
+				}
+			}
+			BMessage reply(message->what);
+			reply.AddInt32("status", status);
+			reply.AddString("explanation", status == B_OK ? "Accepted; check status for completion."
+				: status == B_BUSY ? "Finish/stop the current reply or wait for model loading/unloading, then try again."
+				: "Could not load the selected model. Check Models, Hardware and the service status.");
+			message->SendReply(&reply);
+			return;
+		}
 		if (message->what == kConfigureHardware) {
 			BAutolock lock(&fLock);
 			const char* id = NULL;
@@ -114,7 +143,7 @@ public:
 			status_t status = B_BAD_VALUE;
 			BString explanation("Invalid hardware selection or CPU-thread count.");
 			if (message->FindString("backend_id", &id) == B_OK && AssistantHardwareIndex(id) >= 0) {
-				if (fLoading || fRequest != NULL) {
+				if (fLoading || fUnloading || fRequest != NULL) {
 					status = B_BUSY; explanation = "Finish/stop the current reply or wait for model loading, then try again.";
 				} else if (threadStatus == B_OK || threadStatus == B_NAME_NOT_FOUND) {
 					BString path = AssistantHardwareIsP100AQwen(id) ? AssistantModelPath(0)
@@ -138,7 +167,7 @@ public:
 			status_t status = B_BAD_VALUE;
 			if (message->FindInt32("cpu_threads", &threads) == B_OK
 				&& threads >= 1 && threads <= AssistantMaxThreads()) {
-				status = fLoading ? B_BUSY : SaveAssistantThreads(threads);
+				status = fLoading || fUnloading ? B_BUSY : SaveAssistantThreads(threads);
 				if (status == B_OK) fThreads.store(threads);
 			}
 			BMessage reply(kConfigureThreads);
@@ -166,6 +195,13 @@ public:
 			reply.AddBool("ready", fReady.load());
 			reply.AddBool("busy", fRequest != NULL);
 			reply.AddBool("loading", fLoading);
+			reply.AddBool("unloading", fUnloading);
+			reply.AddInt32("resident_models", fResidentModels);
+			reply.AddBool("model_progress_active", fProgressActive);
+			reply.AddFloat("model_progress", fProgressValue);
+			reply.AddString("model_phase", fProgressPhase);
+			reply.AddString("loading_model_path", fLoading ? fLoadingPath.String() : "");
+			reply.AddString("loading_backend_id", fLoading ? fLoadingHardware.String() : "");
 			reply.AddString("model_path", fModelPath);
 			reply.AddString("model_error", fModelError);
 			reply.AddString("backend", AssistantHardwareIsP100AFast(fHardware.String()) ? "P100A Fast Qwen3-0.6B (CPU reference validation OFF; experimental)"
@@ -249,9 +285,10 @@ public:
 				delete request; return;
 			}
 		}
-		if (fLoading || fRequest != NULL || request->prompt.size() > 12000) {
-			Reply(request, kDone, "", (fLoading || fRequest != NULL)
-				? "Service is loading or busy. Try again shortly." : "Prompt is too long.");
+		if (!fReady.load() || fLoading || fUnloading || fRequest != NULL || request->prompt.size() > 12000) {
+			Reply(request, kDone, "", (fLoading || fUnloading || fRequest != NULL)
+				? "Service is loading, unloading or busy. Try again shortly."
+				: !fReady.load() ? "No model is loaded. Press Load model first." : "Prompt is too long.");
 			delete request;
 			return;
 		}
@@ -267,7 +304,7 @@ private:
 	// only after hash verification and successful loading on the worker.
 	status_t QueueSelection(const BString& path, const char* backend, int32 threads)
 	{
-		if (fLoading || fRequest != NULL) return B_BUSY;
+		if (fLoading || fUnloading || fRequest != NULL) return B_BUSY;
 		int index = AssistantModelIndex(path.String());
 		if (index < 0 || !kAssistantModels[index].compatible
 			|| !AssistantModelSupportsBackend(index,backend)
@@ -281,7 +318,9 @@ private:
 			return status;
 		}
 		fPendingPath = path; fPendingHardware = backend; fPendingThreads = threads;
+		fLoadingPath = path; fLoadingHardware = backend;
 		fLoading = true; fPersistModel = true; fModelError = "";
+		fProgressActive = true; fProgressValue = 0; fProgressPhase = "Verifying model SHA-256";
 		release_sem(fWake); return B_OK;
 	}
 
@@ -291,9 +330,38 @@ private:
 		return 0;
 	}
 
-	static bool LoadProgress(float, void* data)
+	void Progress(float value, const char* phase)
 	{
-		return !static_cast<AssistantService*>(data)->fQuit.load();
+		BAutolock lock(&fLock);
+		fProgressActive = true;
+		fProgressValue = value < 0 ? -1 : std::min(1.0f, std::max(0.0f, value));
+		fProgressPhase = phase;
+	}
+
+	static bool LoadProgress(float value, void* data)
+	{
+		AssistantService* self = static_cast<AssistantService*>(data);
+		self->Progress(value, "Loading model weights into host memory");
+		return !self->fQuit.load();
+	}
+
+	// Worker-only: no context or device ownership is released by the UI thread.
+	bool ReleaseModels()
+	{
+		std::string error;
+		bool clean = !fQwen || fQwen->Unload(error);
+		delete fQwen; fQwen = NULL;
+		delete fTiny; fTiny = NULL;
+		if (fContext) llama_free(fContext);
+		if (fModel) llama_model_free(fModel);
+		fContext = NULL; fModel = NULL;
+		BAutolock lock(&fLock);
+		fReady.store(false); fActiveThreads.store(0); fResidentModels = 0;
+		fUnloading = false; fProgressActive = false;
+		fModelError = error.c_str();
+		if (!clean) { fP100ASupported.store(false); fP100AQwenSupported.store(false); }
+		fprintf(stderr, "Assistant service: unloaded all resident models; clean=%d\n", clean);
+		return clean;
 	}
 
 	static bool Abort(void* data)
@@ -314,6 +382,7 @@ private:
 		while (!fQuit.load()) {
 			if (acquire_sem(fWake) != B_OK || fQuit.load()) break;
 			BString path, backend;
+			bool unload;
 			int32 threads;
 			Request* request;
 			{
@@ -321,8 +390,10 @@ private:
 				path = fPendingPath;
 				backend = fPendingHardware; threads = fPendingThreads;
 				fPendingPath = "";
+				unload = fPendingUnload; fPendingUnload = false;
 				request = fRequest;
 			}
+			if (unload) { ReleaseModels(); continue; }
 			if (!path.IsEmpty()) { LoadModel(path, backend, threads); continue; }
 			if (request == NULL) continue;
 			std::string answer, error;
@@ -346,6 +417,10 @@ private:
 					success=fQwen && fQwen->Complete(request->prompt,request->tokens,answer,error,
 						[&]() { return fQuit.load() || request->cancelled.load(); },
 						[&](const std::string& text,const char* status) {
+							PioneerGgmlStats stats = {};
+							if (PioneerGgmlSnapshot(stats) && stats.tensors < 197)
+								Progress(float(double(stats.uploads) / 163692), "Uploading P100A weights (first reply; can take ~15 minutes)");
+							else { BAutolock lock(&fLock); fProgressActive = false; }
 							if (!strncmp(status,"P100A Qwen:",11)) request->summary=status;
 							Reply(request,kUpdate,text,status);
 						});
@@ -367,16 +442,14 @@ private:
 			{
 				BAutolock lock(&fLock);
 				fRequest = NULL;
+				fProgressActive = false;
 			}
 			Reply(request, kDone, answer, success
 				? (fHardware != "cpu" ? request->summary.c_str()
 					: "Ready. Model stays loaded in the background.") : error.c_str(), success);
 			delete request;
 		}
-		if (fContext != NULL) llama_free(fContext);
-		if (fModel != NULL) llama_model_free(fModel);
-		delete fTiny; fTiny = NULL;
-		delete fQwen; fQwen=NULL;
+		ReleaseModels();
 		llama_backend_free();
 	}
 
@@ -386,6 +459,7 @@ private:
 			BAutolock lock(&fLock);
 			if (!AssistantHardwareCanChat(backend.String())) {
 				fLoading = false;
+				fProgressActive = false;
 				fModelError = "Saved hardware backend is unavailable. Open Hardware and explicitly choose CPU.";
 				return;
 			}
@@ -398,7 +472,8 @@ private:
 		status_t status = B_NOT_SUPPORTED;
 		if (index >= 0 && kAssistantModels[index].compatible
 			&& AssistantModelSupportsBackend(index,backend.String()))
-			status = reuseQwen?B_OK:VerifyAssistantModel(index, path.String(), fQuit, error);
+			status = reuseQwen ? B_OK : VerifyAssistantModel(index, path.String(), fQuit, error, BMessenger(),
+				[&](float value) { Progress(value, "Verifying model SHA-256"); });
 		else error = "Model is outside the supported catalog. Open Models to choose a supported Qwen3 model.";
 		llama_model* model = NULL;
 		llama_context* context = NULL;
@@ -410,17 +485,21 @@ private:
 				std::string reason;
 				bool validate=!AssistantHardwareIsP100AFast(backend.String());
 				if (reuseQwen) {
+					Progress(-1, "Preparing Qwen mode; retaining resident P100A weights");
 					if (fQwen->SetValidation(validate,reason)) qwen=fQwen;
 					else error=reason.c_str();
 				} else {
 					qwen=new AssistantP100AQwen;
-					if (!qwen->Load(path.String(),reason,validate)) { error=reason.c_str(); delete qwen; qwen=NULL; }
+					if (!qwen->Load(path.String(),reason,validate,[&](float value,const char* phase) {
+						Progress(value,phase); return !fQuit.load();
+					})) { error=reason.c_str(); delete qwen; qwen=NULL; }
 				}
 			}
 		}
 		if (status == B_OK && backend == "p100a") {
 			if (!fP100ASupported.load()) error = "P100A driver unavailable or disabled after a fault; no fallback.";
 			else {
+				Progress(-1, "Preparing TinyStories model and tokenizer");
 				tiny = new AssistantP100A;
 				std::string reason;
 				if (!tiny->Load(path.String(), AssistantTinyTokenizerPath().String(), reason)) {
@@ -434,6 +513,7 @@ private:
 		modelParams.progress_callback_user_data = this;
 		if (status == B_OK && backend == "cpu" && !fQuit.load()) model = llama_model_load_from_file(path.String(), modelParams);
 		if (model != NULL) {
+			Progress(-1, "Preparing CPU context and KV cache");
 			fLoads.fetch_add(1);
 			llama_context_params params = llama_context_default_params();
 			params.n_ctx = 4096;
@@ -473,6 +553,8 @@ private:
 			if (error.IsEmpty()) error = "Model/context load failed. Previous model kept; choose another or retry.";
 		}
 		fModelError = error; fLoading = false; fPersistModel = false;
+		fResidentModels = (fModel != NULL) + (fTiny != NULL) + (fQwen != NULL);
+		fProgressActive = false;
 		fprintf(stderr, "Assistant service: model_loads=%d ready=%d model=%s error=%s\n",
 			fLoads.load(), fReady.load(), fModelPath.String(), error.String());
 	}
@@ -560,6 +642,12 @@ private:
 	llama_model* fModel;
 	llama_context* fContext;
 	bool fLoading, fPersistModel;
+	bool fUnloading, fPendingUnload;
+	int32 fResidentModels;
+	bool fProgressActive;
+	float fProgressValue;
+	BString fProgressPhase;
+	BString fLoadingPath, fLoadingHardware;
 	BString fPendingPath, fModelPath, fModelError;
 	BString fHardware, fStartupPath;
 	BString fPendingHardware;

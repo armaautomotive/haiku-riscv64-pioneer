@@ -74,17 +74,34 @@ bool AssistantP100AQwen::Available() {
 	tt_resident_session_result s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&s,sizeof(s)); close(fd);
 	return !status && s.version==1 && !s.cold && (s.capabilities&TT_PIONEER_CAP_Q8_DUAL_REUSE)!=0;
 }
-bool AssistantP100AQwen::Load(const char* path,std::string& error,bool validate) {
+bool AssistantP100AQwen::Unload(std::string& error) {
+	bool clean=!fData || fData->CloseActual();
+	delete fData; fData=NULL;
+	if (!clean) {
+		fFaulted=true;
+		error="P100A cleanup could not be proven; backend disabled. No retry, reset or CPU fallback.";
+	}
+	return clean;
+}
+bool AssistantP100AQwen::Load(const char* path,std::string& error,bool validate,
+	const std::function<bool(float,const char*)>& progress) {
 	Data* data=new Data;
 	data->validate=validate;
 	PioneerGgmlContextExecution(false);
 	llama_model_params m=llama_model_default_params(); m.n_gpu_layers=0;
+	if (progress) {
+		m.progress_callback=[](float value,void* opaque) {
+			return (*static_cast<const std::function<bool(float,const char*)>*>(opaque))(value,"Loading model weights into host memory");
+		};
+		m.progress_callback_user_data=const_cast<std::function<bool(float,const char*)>*>(&progress);
+	}
 	data->model=llama_model_load_from_file(path,m);
 	char arch[64]={};
 	if (data->model) llama_model_meta_val_str(data->model,"general.architecture",arch,sizeof(arch));
 	bool okay=data->model && !strcmp(arch,"qwen3") && llama_model_n_embd(data->model)==1024 && llama_model_n_layer(data->model)==28;
 	if (okay) {
-		okay=(!validate || data->CreateReference()) && data->CreateActual();
+		okay=(!progress || progress(-1,"Preparing P100A contexts (device upload starts on first reply)"))
+			&& (!validate || data->CreateReference()) && data->CreateActual();
 	}
 	if (!okay) { delete data; error="Could not initialize the exact Qwen3-0.6B P100A runtime; no CPU fallback."; return false; }
 	delete fData; fData=data;

@@ -6,6 +6,7 @@
 #include <Messenger.h>
 #include <String.h>
 #include <atomic>
+#include <functional>
 
 static const uint32 kModelProgress = 'mprg';
 static const uint32 kModelInstalled = 'mins';
@@ -16,7 +17,8 @@ int AssistantModelIndex(const char* path);
 bool AssistantModelPresent(size_t index);
 status_t VerifyAssistantModel(size_t index, const char* path,
 	const std::atomic<bool>& cancelled, BString& error,
-	const BMessenger& target = BMessenger());
+	const BMessenger& target = BMessenger(),
+	const std::function<void(float)>& progress = std::function<void(float)>());
 status_t InstallAssistantModel(size_t index, const std::atomic<bool>& cancelled,
 	const BMessenger& target, BString& error);
 

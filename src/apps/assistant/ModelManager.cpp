@@ -2,6 +2,8 @@
 #include "ModelManager.h"
 #include "ModelStore.h"
 #include "Protocol.h"
+#include "ServiceLauncher.h"
+#include "Hardware.h"
 
 #include <Alert.h>
 #include <Button.h>
@@ -14,14 +16,15 @@
 #include <StringItem.h>
 #include <StringView.h>
 #include <TextView.h>
+#include <stdio.h>
 
 static const uint32 kChoose = 'mcho', kInstall = 'midl', kUse = 'muse';
 static const uint32 kCancelDownload = 'mccl', kPoll = 'mpol';
 
 ModelManager::ModelManager()
-	: BWindow(BRect(150, 140, 900, 670), "Haiku Assistant — Models",
+	: BWindow(BRect(150, 100, 950, 780), "Haiku Assistant — Models",
 		B_TITLED_WINDOW, B_AUTO_UPDATE_SIZE_LIMITS), fWorker(-1), fDownloadIndex(-1),
-		fDownloading(false), fSelecting(false), fCancelled(false)
+		fDownloading(false), fSelecting(false), fServiceBusy(true), fCancelled(false)
 {
 	fList = new BListView("models");
 	fList->SetSelectionMessage(new BMessage(kChoose));
@@ -38,6 +41,15 @@ ModelManager::ModelManager()
 	fSelect = new BButton("use_model", "Use for new chats", new BMessage(kUse));
 	fCancel = new BButton("cancel_model_download", "Cancel download", new BMessage(kCancelDownload));
 	fCancel->SetEnabled(false);
+	fMemoryModel = new BStringView("memory_model", "Chat model: checking service...");
+	fMemoryStatus = new BStringView("memory_status", "Checking resident model memory...");
+	fLoadProgress = new BStatusBar("model_loading_progress"); fLoadProgress->SetMaxValue(100);
+	fLoadProgress->Hide();
+	fLoad = new BButton("load_model", "Load model", new BMessage(kLoadModel));
+	fUnload = new BButton("unload_model", "Unload model", new BMessage(kUnloadModel));
+	fLoad->SetToolTip("Reload the chat model named above. Use the catalog's Use button to switch models.");
+	fUnload->SetToolTip("Release all model/context caches and P100A weights; keep files, selection and chat.");
+	fLoad->SetEnabled(false); fUnload->SetEnabled(false);
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
 		.Add(new BStringView("backend", "Qwen3: CPU; Qwen3 0.6B also has a slow experimental P100A option in Hardware…"))
@@ -45,9 +57,15 @@ ModelManager::ModelManager()
 		.Add(details, 1)
 		.Add(fProgress)
 		.AddGroup(B_HORIZONTAL).Add(fInstall).Add(fSelect).AddGlue().Add(fCancel).End()
-		.Add(fStatus);
+		.Add(fStatus)
+		.AddStrut(B_USE_DEFAULT_SPACING)
+		.Add(fMemoryModel)
+		.AddGroup(B_HORIZONTAL).Add(fLoad).Add(fUnload).AddGlue().End()
+		.Add(fLoadProgress)
+		.Add(fMemoryStatus);
 	Refresh(); fList->Select(0); Details();
 	BMessage poll(kPoll); fPoll = new BMessageRunner(BMessenger(this), &poll, 1000000);
+	PostMessage(kPoll);
 }
 
 ModelManager::~ModelManager()
@@ -111,7 +129,7 @@ ModelManager::Details()
 	fSelect->SetLabel((size_t)index == kAssistantTinyModel ? "Use on P100A (story mode)" : "Use on CPU (chat)");
 	bool present = AssistantModelPresent(index);
 	fInstall->SetEnabled(!fDownloading && model.compatible && !present);
-	fSelect->SetEnabled(!fDownloading && model.compatible && present);
+	fSelect->SetEnabled(!fDownloading && !fServiceBusy && model.compatible && present);
 }
 
 void
@@ -149,17 +167,96 @@ void
 ModelManager::Select()
 {
 	int32 index = fList->CurrentSelection();
-	if (index < 0 || fDownloading) return;
+	if (index < 0 || fDownloading || fServiceBusy) return;
 	BMessage request(kSelectModel), reply;
 	request.AddInt32("model_index", index);
 	status_t status = BMessenger(kServiceSignature).SendMessage(&request, &reply, 1000000, 1000000);
 	if (status == B_OK && reply.FindInt32("status", &status) != B_OK) status = B_ERROR;
 	if (status == B_OK) {
-		fSelecting = true;
+		fSelecting = true; fServiceBusy = true; Details();
 		fStatus->SetText("Verifying and loading selected model. Selection is saved only on success.");
 	} else if (status == B_BUSY)
 		fStatus->SetText("Service is busy or loading. Finish/stop the reply, then try again.");
 	else fStatus->SetText("Could not select model. Open Assistant to start the updated service; check the model file.");
+}
+
+void
+ModelManager::ModelMemory(uint32 action)
+{
+	if (fDownloading) return;
+	if (action == kLoadModel && !BMessenger(kServiceSignature).IsValid()) {
+		fMemoryStatus->SetText(StartAssistantService() == B_OK
+			? "Starting model service..." : "Could not start the model service.");
+		PostMessage(kPoll); return; // A new service queues the saved model itself.
+	}
+	BMessage request(action), reply;
+	status_t result = B_ERROR;
+	if (BMessenger(kServiceSignature).SendMessage(&request, &reply, 100000, 1000000) != B_OK
+		|| reply.FindInt32("status", &result) != B_OK || result != B_OK) {
+		const char* explanation = "Could not change model memory. Stop the reply or wait for loading; an updated service is required.";
+		reply.FindString("explanation", &explanation);
+		(new BAlert("Model memory", explanation, "OK"))->Go(NULL);
+	} else {
+		fLoad->SetEnabled(false); fUnload->SetEnabled(false);
+		fMemoryStatus->SetText(action == kLoadModel ? "Loading selected chat model..." : "Releasing resident model memory...");
+	}
+	PostMessage(kPoll);
+}
+
+void
+ModelManager::PollService()
+{
+	BMessage query(kServiceStatus), reply;
+	if (BMessenger(kServiceSignature).SendMessage(&query, &reply, 100000, 100000) != B_OK) {
+		fServiceBusy = true;
+		fLoad->SetEnabled(!fDownloading); fUnload->SetEnabled(false);
+		if (!fLoadProgress->IsHidden()) fLoadProgress->Hide();
+		fMemoryStatus->SetText("Service stopped. Load model restarts it with your saved selection.");
+		SetTitle("Haiku Assistant — Models");
+		Details(); return;
+	}
+	bool ready = false, loading = false, unloading = false, busy = false, progress = false;
+	float value = -1; int32 resident = 0;
+	const char* path = ""; const char* error = ""; const char* backend = ""; const char* phase = "";
+	reply.FindBool("ready", &ready); reply.FindBool("loading", &loading);
+	reply.FindBool("unloading", &unloading); reply.FindBool("busy", &busy);
+	bool lifecycle = reply.FindInt32("resident_models", &resident) == B_OK;
+	reply.FindBool("model_progress_active", &progress); reply.FindFloat("model_progress", &value);
+	reply.FindString("model_phase", &phase); reply.FindString("model_path", &path);
+	reply.FindString("model_error", &error); reply.FindString("backend_id", &backend);
+	if (loading) {
+		const char* pendingPath = ""; const char* pendingBackend = "";
+		if (reply.FindString("loading_model_path", &pendingPath) == B_OK && *pendingPath) path = pendingPath;
+		if (reply.FindString("loading_backend_id", &pendingBackend) == B_OK && *pendingBackend) backend = pendingBackend;
+	}
+	fServiceBusy = loading || unloading || busy;
+	fLoad->SetEnabled(lifecycle && !fDownloading && !fServiceBusy && !ready);
+	fUnload->SetEnabled(lifecycle && !fDownloading && !fServiceBusy && resident > 0);
+	if (progress) {
+		char percent[24] = "";
+		if (value >= 0) snprintf(percent, sizeof(percent), "%.0f%%", value * 100);
+		fLoadProgress->SetTo(value < 0 ? 0 : value * 100, phase, percent);
+		if (fLoadProgress->IsHidden()) fLoadProgress->Show();
+	} else if (!fLoadProgress->IsHidden()) fLoadProgress->Hide();
+	BString model("Chat model: "); model << (*path ? BPath(path).Leaf() : "none") << " | " << backend;
+	model << (unloading ? " (unloading)" : loading ? " (loading)" : ready ? " (loaded)" : " (unloaded)");
+	fMemoryModel->SetText(model.String());
+	BString status;
+	if (loading || unloading) status = phase;
+	else if (*error) status = error;
+	else if (busy) status = "Model in use. Stop the reply in Assistant before unloading.";
+	else if (ready) {
+		status << "Resident models: " << resident << ". Files and chat are kept on unload.";
+		if (AssistantHardwareIsP100AQwen(backend)) status << " P100A upload begins on first reply.";
+	} else status = "No resident model. Load restores this chat model; Use above switches models.";
+	fMemoryStatus->SetText(status.String());
+	if (fSelecting && !loading) {
+		if (!fDownloading) fStatus->SetText(*error ? error : ready ? "Selected model loaded successfully." : "No model is ready.");
+		fSelecting = false;
+	}
+	if (!fDownloading) Refresh();
+	Details();
+	SetTitle("Haiku Assistant — Models");
 }
 
 void
@@ -170,6 +267,8 @@ ModelManager::MessageReceived(BMessage* message)
 		case kChoose: Details(); break;
 		case kInstall: Install(); break;
 		case kUse: Select(); break;
+		case kLoadModel:
+		case kUnloadModel: ModelMemory(message->what); break;
 		case kCancelDownload: fCancelled.store(true); fStatus->SetText("Cancelling..."); break;
 		case kModelProgress:
 		{
@@ -194,30 +293,7 @@ ModelManager::MessageReceived(BMessage* message)
 		}
 		case kPoll:
 		{
-			if (fDownloading) break;
-			BMessage query(kServiceStatus), reply;
-			if (BMessenger(kServiceSignature).SendMessage(&query, &reply, 100000, 100000) != B_OK) {
-				SetTitle("Haiku Assistant — Models (service unavailable)");
-				if (fSelecting) fStatus->SetText("Model service stopped. Reopen Assistant to restart it.");
-				fSelecting = false;
-				break;
-			}
-			Refresh(); Details();
-			bool loading = false; const char* path = ""; const char* error = "";
-			reply.FindBool("loading", &loading); reply.FindString("model_path", &path);
-			reply.FindString("model_error", &error);
-			BString title("Haiku Assistant — Models");
-			if (loading) { title << " (verifying/loading)"; fSelecting = true; fStatus->SetText("Verifying SHA-256 and loading model; chat is temporarily unavailable."); }
-			else if (*path != '\0') {
-				title << " — active: " << BPath(path).Leaf();
-				if (fSelecting) {
-					const char* backend = "unknown"; reply.FindString("backend_id", &backend);
-					BString status("Active on "); status << backend << ": " << BPath(path).Leaf();
-					fStatus->SetText(*error ? error : status.String());
-				}
-			}
-			if (!loading) { if (fSelecting && *error) fStatus->SetText(error); fSelecting = false; }
-			SetTitle(title.String());
+			PollService();
 			break;
 		}
 		default: BWindow::MessageReceived(message);

@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	BApplication app("application/x-vnd.Haiku-AssistantControl");
 	BMessenger service(kServiceSignature);
 	if (argc < 2) {
-		fprintf(stderr, "Usage: assistantctl status | hardware | hardware cpu|p100a|p100a-qwen|p100a-qwen-fast [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
+		fprintf(stderr, "Usage: assistantctl status | load | unload | hardware | hardware cpu|p100a|p100a-qwen|p100a-qwen-fast [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
 		return 2;
 	}
 	if (strcmp(argv[1], "models") == 0) {
@@ -71,6 +71,15 @@ int main(int argc, char** argv)
 	if (strcmp(argv[1], "toggle") == 0)
 		return BMessenger(kAssistantSignature).SendMessage(kToggle) == B_OK ? 0 : 1;
 	if (!service.IsValid()) { fprintf(stderr, "Service is not running.\n"); return 1; }
+	if (argc == 2 && (strcmp(argv[1], "load") == 0 || strcmp(argv[1], "unload") == 0)) {
+		BMessage request(strcmp(argv[1], "load") == 0 ? kLoadModel : kUnloadModel), reply;
+		status_t status;
+		if (service.SendMessage(&request, &reply, 1000000, 1000000) != B_OK
+			|| reply.FindInt32("status", &status) != B_OK) return 1;
+		const char* explanation = ""; reply.FindString("explanation", &explanation);
+		printf("%s status=%ld %s\n", argv[1], (long)status, explanation);
+		return status == B_OK ? 0 : 1;
+	}
 	if (strcmp(argv[1], "hardware") == 0) {
 		BMessage query(kServiceStatus), state;
 		if (service.SendMessage(&query, &state, 1000000, 1000000) != B_OK) return 1;
@@ -141,6 +150,12 @@ int main(int argc, char** argv)
 		const char* selected = ""; const char* activeBackend = "";
 		reply.FindString("backend_id", &selected); reply.FindString("active_backend_id", &activeBackend);
 		printf("selected_backend=%s active_backend=%s\n", selected, activeBackend);
+		bool unloading = false, progress = false; int32 resident = -1; float value = -1; const char* phase = "";
+		reply.FindBool("unloading", &unloading); reply.FindInt32("resident_models", &resident);
+		reply.FindBool("model_progress_active", &progress); reply.FindFloat("model_progress", &value);
+		reply.FindString("model_phase", &phase);
+		printf("unloading=%d resident_models=%ld progress_active=%d progress=%.4f phase=%s\n",
+			unloading, (long)resident, progress, value, phase);
 		return 0;
 	}
 	bool cancel = strcmp(argv[1], "cancel-test") == 0;

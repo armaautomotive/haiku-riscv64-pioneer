@@ -16,13 +16,19 @@
 struct VerifyWork {
 	std::atomic<bool> cancelled;
 	BString error;
-	VerifyWork() : cancelled(false) {}
+	float lastProgress;
+	int progressCalls;
+	VerifyWork() : cancelled(false), lastProgress(0), progressCalls(0) {}
 };
 
 static int32 VerifyOnWorker(void* data)
 {
 	VerifyWork* work = static_cast<VerifyWork*>(data);
-	return VerifyAssistantModel(0, AssistantModelPath(0).String(), work->cancelled, work->error);
+	return VerifyAssistantModel(0, AssistantModelPath(0).String(), work->cancelled, work->error, BMessenger(),
+		[&](float value) {
+			assert(value >= work->lastProgress && value >= 0 && value <= 1);
+			work->lastProgress = value; work->progressCalls++;
+		});
 }
 
 static int32 InstallOnWorker(void* data)
@@ -93,6 +99,7 @@ int main(int argc, char** argv)
 		thread_id worker = spawn_thread(VerifyOnWorker, "verify model stack test", B_NORMAL_PRIORITY, &work);
 		assert(worker >= 0 && resume_thread(worker) == B_OK);
 		status_t result; assert(wait_for_thread(worker, &result) == B_OK && result == B_OK);
+		assert(work.progressCalls > 0 && work.lastProgress == 1);
 		assert(InstallAssistantModel(0, cancelled, BMessenger(), error) == B_FILE_EXISTS);
 	}
 	puts("PASS: catalog bounds, path allowlist, unsupported install, size/hash rejection, cancellation, symlink rejection, existing-file protection, installed model verification");

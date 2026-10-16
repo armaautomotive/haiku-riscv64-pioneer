@@ -74,7 +74,8 @@ Progress(const BMessenger& target, off_t bytes, off_t total, const char* phase)
 
 static status_t
 VerifyResource(const AssistantModel& model, const char* path, const std::atomic<bool>& cancelled,
-	BString& error, const BMessenger& target)
+	BString& error, const BMessenger& target,
+	const std::function<void(float)>& progress = std::function<void(float)>())
 {
 	int fd = open(path, O_RDONLY | O_NOFOLLOW);
 	struct stat st;
@@ -99,6 +100,7 @@ VerifyResource(const AssistantModel& model, const char* path, const std::atomic<
 		bytes += n;
 		if (system_time() - last > 250000) {
 			Progress(target, bytes, st.st_size, "Verifying SHA-256"); last = system_time();
+			if (progress) progress(float(double(bytes) / st.st_size));
 		}
 	}
 	close(fd);
@@ -112,16 +114,18 @@ VerifyResource(const AssistantModel& model, const char* path, const std::atomic<
 	if (strcmp(digest, model.sha256) != 0) {
 		error = "SHA-256 mismatch. File was not activated or installed."; return B_BAD_DATA;
 	}
+	if (progress) progress(1);
 	return B_OK;
 }
 
 status_t VerifyAssistantModel(size_t index, const char* path,
-	const std::atomic<bool>& cancelled, BString& error, const BMessenger& target)
+	const std::atomic<bool>& cancelled, BString& error, const BMessenger& target,
+	const std::function<void(float)>& progress)
 {
 	if (index >= kAssistantModelCount) return B_BAD_VALUE;
-	status_t status = VerifyResource(kAssistantModels[index], path, cancelled, error, target);
+	status_t status = VerifyResource(kAssistantModels[index], path, cancelled, error, target, progress);
 	if (status == B_OK && index == kAssistantTinyModel)
-		status = VerifyResource(kAssistantTinyTokenizer, AssistantTinyTokenizerPath().String(), cancelled, error, target);
+		status = VerifyResource(kAssistantTinyTokenizer, AssistantTinyTokenizerPath().String(), cancelled, error, target, progress);
 	return status;
 }
 

@@ -4,6 +4,7 @@
 #include "ToolSession.h"
 #include "ModelManager.h"
 #include "HardwareWindow.h"
+#include "ServiceLauncher.h"
 #include <Application.h>
 #include <Button.h>
 #include <Entry.h>
@@ -15,8 +16,6 @@
 #include <ScrollView.h>
 #include <StringView.h>
 #include <TextView.h>
-#include <TextControl.h>
-#include <Alert.h>
 #include <stdio.h>
 #include <Window.h>
 #include <stdlib.h>
@@ -27,27 +26,8 @@
 
 static const uint32 kSend = 'send', kStop = 'stop', kClear = 'cler';
 static const uint32 kShow = 'show', kCheck = 'chek';
-static const uint32 kApplyThreads = 'apth';
 static const uint32 kOpenModels = 'omod';
 static const uint32 kOpenHardware = 'ohdw';
-
-static status_t
-StartService()
-{
-	if (BMessenger(kServiceSignature).IsValid())
-		return B_OK;
-	const char* runtime = "/boot/home/develop/llama-c060ca974c77/build-pioneer/bin";
-	if (access(runtime, R_OK) != 0)
-		runtime = "/Haiku1/home/develop/llama-c060ca974c77/build-pioneer/bin";
-	std::string libraries = std::string(runtime) + ":/boot/system/lib";
-	setenv("LIBRARY_PATH", libraries.c_str(), 1);
-	entry_ref ref;
-	status_t result = get_ref_for_path(
-		"/boot/home/config/non-packaged/servers/HaikuAssistantService", &ref);
-	if (result == B_OK)
-		result = be_roster->Launch(&ref);
-	return result == B_ALREADY_RUNNING ? B_OK : result;
-}
 
 struct Turn { std::string user; std::string assistant; };
 
@@ -60,7 +40,7 @@ public:
 #else
 			"Haiku Assistant",
 #endif
-			B_TITLED_WINDOW, B_AUTO_UPDATE_SIZE_LIMITS), fThreadsLoaded(false), fBusy(false), fRequest(0)
+			B_TITLED_WINDOW, B_AUTO_UPDATE_SIZE_LIMITS), fBusy(false), fRequest(0)
 	{
 		fTranscript = new BTextView("conversation");
 		fTranscript->MakeEditable(false);
@@ -73,22 +53,12 @@ public:
 		fClear = new BButton("New chat", new BMessage(kClear));
 		fStop->SetEnabled(false);
 		fStatus = new BStringView("status", "Background model service starting...");
-		fThreads = new BTextControl("cpu_threads", "CPU threads:", "32", NULL);
-		fThreads->TextView()->SetMaxBytes(4);
-		fThreads->SetEnabled(false);
-		fApplyThreads = new BButton("Apply", new BMessage(kApplyThreads));
-		fApplyThreads->SetEnabled(false);
 		fModels = new BButton("Models…", new BMessage(kOpenModels));
-		fThreadHint = new BStringView("thread_hint", "Saved; applies to next CPU request");
 		BButton* hardware = new BButton("hardware_settings", "Hardware…", new BMessage(kOpenHardware));
 		fModelLabel = new BStringView("active model", "Chat backend: CPU — starting service");
 		BLayoutBuilder::Group<>(this, B_VERTICAL)
 			.SetInsets(B_USE_WINDOW_INSETS)
 			.AddGroup(B_HORIZONTAL).Add(fModelLabel).AddGlue().Add(hardware).Add(fModels).End()
-			.AddGroup(B_HORIZONTAL)
-				.Add(fThreads).Add(fApplyThreads)
-				.Add(fThreadHint)
-			.End()
 			.Add(new BScrollView("history", fTranscript, 0, false, true), 1)
 			.Add(new BScrollView("input", fInput, 0, false, true), 0)
 			.AddGroup(B_HORIZONTAL)
@@ -129,7 +99,6 @@ public:
 					fModelWindow = BMessenger(manager); manager->Show();
 				}
 				break;
-			case kApplyThreads: ApplyThreads(); break;
 			case kToggle:
 				if (!IsHidden() && IsActive()) {
 					Hide();
@@ -150,44 +119,41 @@ public:
 				BMessenger service(kServiceSignature);
 				if (!service.IsValid()) {
 					SetBusy(false);
-					fStatus->SetText("Service stopped. Send will try to restart it.");
+					fSend->SetEnabled(false);
+					fStatus->SetText("Service stopped. Open Models and click Load model to restart it.");
 				} else if (!fBusy) {
 					BMessage query(kServiceStatus), reply;
 					if (service.SendMessage(&query, &reply, 100000, 100000) == B_OK) {
 						bool ready = false;
-						int32 threads;
-						if (!fThreadsLoaded && reply.FindInt32("cpu_threads", &threads) == B_OK) {
-							char value[24]; snprintf(value, sizeof(value), "%ld", (long)threads);
-							fThreads->SetText(value); fThreadsLoaded = true;
-							fThreads->SetEnabled(true); fApplyThreads->SetEnabled(true);
-						}
 						reply.FindBool("ready", &ready);
 						bool loading = false;
+						bool unloading = false, serviceBusy = false;
 						const char* path = ""; const char* error = "";
 						reply.FindBool("loading", &loading);
+						reply.FindBool("unloading", &unloading); reply.FindBool("busy", &serviceBusy);
+						bool changing = loading || unloading;
+						fSend->SetEnabled(!fBusy && !serviceBusy && ready && !changing);
 						reply.FindString("model_path", &path); reply.FindString("model_error", &error);
 						const char* backend = "cpu";
 						reply.FindString("backend_id", &backend);
 						// A temporary empty path during service restart/loading is
 						// not a successful model change; keep the conversation.
-						if (ready && !loading && *path && (fModelPath != path || fBackend != backend)) {
+						if (ready && !changing && *path && (fModelPath != path || fBackend != backend)) {
 							fModelPath = path; fBackend=backend; fTurns.clear(); fTranscript->SetText("");
 						}
 						bool story = strcmp(backend, "p100a") == 0;
 						bool cardQwen=AssistantHardwareIsP100AQwen(backend);
 						bool fast=AssistantHardwareIsP100AFast(backend);
-						fThreads->SetEnabled(!story && !cardQwen && fThreadsLoaded);
-						fApplyThreads->SetEnabled(!story && !cardQwen && fThreadsLoaded);
-						fThreadHint->SetText(story || cardQwen ? "P100A host path: 1 thread; CPU setting retained"
-							: "Saved; applies to next CPU request");
 						BString label(fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
-						label << (*path ? BPath(path).Leaf() : "no model loaded");
+						label << (*path ? BPath(path).Leaf() : "no model selected");
+						if (!ready && !changing) label << " (unloaded)";
 						fModelLabel->SetText(label.String());
-						fSend->SetEnabled(ready && !loading);
-						fStatus->SetText(loading ? "Verifying/loading model..."
-							: (*error ? error : (ready ? "Model loaded. Ctrl+Space shows/hides this window."
-							: "No model loaded. Open Models to install/select one.")));
+						fStatus->SetText(changing ? (unloading ? "Unloading models safely..." : "Verifying/loading model...")
+							: (*error ? error : serviceBusy ? "Another client is generating a reply."
+							: ready ? (cardQwen ? "Host model loaded; P100A weights upload on first reply and stay resident."
+							: "Model loaded. Ctrl+Space shows/hides this window.")
+							: "Model unloaded. Open Models to load it or choose another."));
 					}
 				}
 				break;
@@ -221,22 +187,6 @@ public:
 		}
 	}
 private:
-	void ApplyThreads()
-	{
-		const char* text = fThreads->Text();
-		char* end;
-		long threads = strtol(text, &end, 10);
-		BMessage request(kConfigureThreads), reply;
-		status_t result = B_BAD_VALUE;
-		if (end != text && *end == '\0' && threads >= 1 && threads <= 4096) {
-			request.AddInt32("cpu_threads", (int32)threads);
-			result = BMessenger(kServiceSignature).SendMessage(&request, &reply, 1000000, 2000000);
-			if (result == B_OK && reply.FindInt32("status", &result) != B_OK) result = B_ERROR;
-		}
-		if (result != B_OK) {
-			(new BAlert("CPU threads", "Could not save CPU threads. Enter a whole number from 1 to the available CPU count, and make sure the service is running and settings are writable.", "OK"))->Go(NULL);
-		} else fStatus->SetText("CPU threads saved. Applies to the next model request; no reload needed.");
-	}
 	void Cancel()
 	{
 		if (!fBusy) return;
@@ -248,19 +198,20 @@ private:
 	}
 	void SetBusy(bool busy)
 	{
+		bool wasBusy = fBusy;
 		fBusy = busy;
 		fSend->SetEnabled(!busy);
 		fStop->SetEnabled(busy);
 		fClear->SetEnabled(!busy);
 		fInput->MakeEditable(!busy);
+		if (!busy) { fSend->SetEnabled(false); if (wasBusy) PostMessage(kCheck); }
 	}
 	void Start()
 	{
 		if (fBusy || fInput->TextLength() == 0) return;
-		status_t result = StartService();
 		fService = BMessenger(fSession);
-		if (result != B_OK || !fService.IsValid()) {
-			fStatus->SetText("Could not start service. Check installation and try again.");
+		if (!BMessenger(kServiceSignature).IsValid() || !fService.IsValid()) {
+			fStatus->SetText("Service stopped. Open Models and click Load model to restart it.");
 			return;
 		}
 		BMessage query(kServiceStatus), state;
@@ -272,7 +223,7 @@ private:
 			state.FindString("model_path", &path);
 			state.FindString("backend_id", &backend);
 		}
-		if (!ready || loading) { fStatus->SetText("Model is not ready. Open Models to check its status."); return; }
+		if (!ready || loading) { fStatus->SetText("Model is not ready. Open Models to load it or check its status."); return; }
 		if (!AssistantHardwareCanChat(backend)) {
 			fStatus->SetText("Hardware backend unavailable. Open Hardware; an updated service is required."); return;
 		}
@@ -347,16 +298,12 @@ private:
 	BButton* fStop;
 	BButton* fClear;
 	BStringView* fStatus;
-	BTextControl* fThreads;
-	BButton* fApplyThreads;
 	BButton* fModels;
 	BStringView* fModelLabel;
-	BStringView* fThreadHint;
 	BMessenger fModelWindow;
 	BMessenger fHardwareWindow;
 	std::string fModelPath;
 	std::string fBackend;
-	bool fThreadsLoaded;
 	BMessageRunner* fCheck;
 	ToolSession* fSession;
 	bool fBusy;
@@ -378,7 +325,7 @@ public:
 	) {}
 	virtual void ReadyToRun()
 	{
-		StartService();
+		StartAssistantService();
 		AssistantWindow* window = new AssistantWindow();
 		fWindow = BMessenger(window);
 		window->Show();

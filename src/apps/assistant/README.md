@@ -15,19 +15,35 @@ desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 
 - `HaikuAssistant`: conversation/input window. Send or Ctrl+Enter submits.
   Stop cancels the current request. New chat clears conversation context.
+- In **Models…**, **Load model / Unload model** explicitly manage resident memory without
+  deleting model files, changing the selected hardware/model, or clearing the
+  chat. Unload frees all cached models/contexts (including inactive CPU and
+  validation caches) and normally ends any owned P100A resident session.
+  Stop a reply first: both controls are disabled/rejected during inference,
+  loading or unloading. Load re-verifies the selected file before activating
+  it; Send never implicitly reloads an unloaded model. Unload is session-only:
+  restarting the service still preloads the saved selection.
+- A separate loading progress bar in **Models…** shows per-stage SHA-256 verification and
+  host weight loading, plus the measured P100A upload on its first reply.
+  Stages without a measurable fraction show their name, not a fabricated
+  percentage. P100A Load prepares the host model/contexts; it does not eagerly
+  upload card weights. The first reply still performs that ~15-minute upload,
+  and another upload is needed after Unload. Closing/hiding the window alone
+  does not unload the service's model.
 - **Models…** opens the native model manager: choose an installed model or
   install another from the curated Hugging Face catalog, with progress and
   cancellation. Model files stay in `~/models` and are shared across chats.
 - **Hardware…** opens the native hardware chooser, including availability,
   explanations and CPU-thread controls. `HaikuAssistantHardware` opens the
   same dialog independently without closing an existing conversation window.
+  CPU-thread controls live only here, not in the main chat window.
 - `HaikuAssistantService`: background BApplication. Loads Qwen once and reuses
   its model and context across requests. All llama calls run on a dedicated
   worker. Haiku messages carry bounded requests and streaming responses.
 - `HaikuAssistantShortcut`: input-server filter for Ctrl+Space. An independent
   looper handles launch/toggle; the input thread only queues a message.
   Repeated key-downs and the matching key-up are consumed for the shortcut.
-- `assistantctl`: service status, CPU-thread settings, stop, toggle, and
+- `assistantctl`: service status, load/unload, CPU-thread settings, stop, toggle, and
   request/cancellation tests.
 
 Ctrl+Space opens the GUI if absent, brings it forward if inactive, or hides it
@@ -37,10 +53,40 @@ memory-only conversation. Ordinary Space is unchanged.
 
 The GUI starts the service on first launch, so loading occurs before the first
 request where possible. This is **not yet an automatic OS-boot service**. A
-reboot or `assistantctl stop` releases the model. The next GUI launch/Send can
-restart it. A failed load can be retried from Models without restarting.
+reboot or `assistantctl stop` releases the model. The next GUI launch or
+**Load model** can restart it. A failed load can be retried using Load model
+or Models without restarting.
 
 ## Hardware selection
+
+### Model-memory controls verified on Pioneer, 2026-10-16
+
+- The standalone RISC-V build passed with warnings as errors. Native tests
+  passed for CPU Qwen3 1.7B, TinyStories and P100A Fast Qwen3 0.6B host-model
+  unload/reload, idempotence, saved model/backend/thread preservation,
+  unloaded inference rejection, loading/inference busy guards, and measured
+  verification progress. The pinned ggml offline ASan/UBSan tests also passed.
+- The actual Models action released both a cached inactive CPU model and the
+  active Qwen model together (`resident_models=2` to `0`). CPU inference still
+  returned the public test answer `READY` with the saved 32-thread setting.
+- A full eight-token public GUI request completed on P100A Fast with zero
+  CPU reference decodes. The Models upload bar showed measured progress.
+  Unload then proved `Resident END: state 2 PCI/host 1/1 cold 0`, freed all
+  model caches, and kept the same chat length through reload. No conversation
+  contents were read for that preservation check. This is feature validation,
+  not a new performance or larger-model qualification.
+- Native UI checks confirmed memory buttons/progress in Models and no
+  CPU-thread controls in the chat window. Loading disabled both memory
+  actions. Models' Load action also restarted a stopped service successfully.
+  The final selected pair remains P100A Fast / Qwen3 0.6B Q8_0; the previous
+  1.7B CPU model and 32-thread preference are retained.
+- GUI/service/control backups and test logs are in
+  `/boot/home/pioneer-assistant-memory-20261016/`. Model files, runtime
+  libraries, input-server filter, kernel, PCI driver, firmware and boot media
+  were not changed. Attention offload is a separate follow-up, not enabled
+  by these controls.
+
+### Choosing hardware
 
 Open **Hardware…** in Assistant, launch `HaikuAssistant --hardware`, or run
 `/boot/home/config/non-packaged/apps/HaikuAssistantHardware` separately.
@@ -349,11 +395,11 @@ Prompt processing is still required each turn; this is not prefix-cache reuse.
 Pinned llama revision: `c060ca974c773c7c3d17fd1b66dc9d312bc292c0`.
 Model: Qwen3-0.6B-Q8_0, with its explicit ChatML/non-thinking template.
 CPU threads default to the lesser of 32 or the available CPU count. Change the
-saved value in the GUI or with `assistantctl threads N`; it applies to the next
+saved value in **Hardware…** or with `assistantctl threads N`; it applies to the next
 request without reloading the model. CPU-mode context is 4,096 tokens,
 batches are 64, and the maximum response is 256 tokens. The experimental
 card mode has the separate, smaller limits documented above.
-The Apply button saves `~/config/settings/HaikuAssistant_settings`. Both prompt
+Hardware's **Use selected hardware** button saves `~/config/settings/HaikuAssistant_settings`. Both prompt
 processing and generation use this count; an in-flight request keeps its old
 count. This controls worker threads, not CPU affinity or every service helper
 thread. Valid range is 1 through the available CPU count. SD and Samsung

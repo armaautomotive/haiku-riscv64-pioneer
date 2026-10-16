@@ -46,6 +46,35 @@ static status_t Configure(BMessenger& service, const char* id, int32 threads)
 	return status;
 }
 
+static status_t Memory(BMessenger& service, uint32 action)
+{
+	BMessage request(action), reply;
+	assert(service.SendMessage(&request, &reply, 1000000, 1000000) == B_OK);
+	status_t status; assert(reply.FindInt32("status", &status) == B_OK);
+	return status;
+}
+
+static BMessage WaitIdle(BMessenger& service)
+{
+	for (int i = 0; i < 6000; i++) {
+		BMessage state = Query(service);
+		bool loading = true, unloading = true;
+		assert(state.FindBool("loading", &loading) == B_OK);
+		assert(state.FindBool("unloading", &unloading) == B_OK);
+		if (!loading && !unloading) return state;
+		bool progress = false; float value = -2; const char* phase = "";
+		assert(state.FindBool("model_progress_active", &progress) == B_OK && progress);
+		assert(state.FindFloat("model_progress", &value) == B_OK && value >= -1 && value <= 1);
+		assert(state.FindString("model_phase", &phase) == B_OK && *phase);
+		if (loading) {
+			assert(state.FindString("loading_model_path", &phase) == B_OK && *phase);
+			assert(state.FindString("loading_backend_id", &phase) == B_OK && AssistantHardwareCanChat(phase));
+		}
+		snooze(100000);
+	}
+	assert(!"model lifecycle timed out"); return BMessage();
+}
+
 int main(int argc, char** argv)
 {
 	BApplication app("application/x-vnd.Haiku-AssistantHardwareTest");
@@ -89,22 +118,75 @@ int main(int argc, char** argv)
 	if (argc == 1) return 0;
 	if (argc != 2 || (strcmp(argv[1], "--loading-test") != 0 && strcmp(argv[1], "--service-tests") != 0
 		&& strcmp(argv[1], "--p100a-tests") != 0 && strcmp(argv[1],"--p100a-qwen-tests")!=0
-		&& strcmp(argv[1],"--qwen-mode-switch-tests")!=0)) return 2;
+		&& strcmp(argv[1],"--qwen-mode-switch-tests")!=0 && strcmp(argv[1],"--memory-tests")!=0
+		&& strcmp(argv[1],"--busy-memory-test")!=0)) return 2;
 	BMessenger service(kServiceSignature);
 	if (!service.IsValid()) { puts("SKIP: resident service is not running"); return 77; }
 	BMessage state = Query(service);
 	bool loading = false, busy = false;
 	state.FindBool("loading", &loading); state.FindBool("busy", &busy);
 	state.FindInt32("cpu_threads", &threads);
+	if (!strcmp(argv[1], "--busy-memory-test")) {
+		if (!busy) { puts("SKIP: requires an active reply"); return 77; }
+		assert(Memory(service, kLoadModel) == B_BUSY && Memory(service, kUnloadModel) == B_BUSY);
+		puts("PASS: load/unload rejected while inference owns the model/device"); return 0;
+	}
 	if (argc == 2 && strcmp(argv[1], "--loading-test") == 0) {
 		if (!loading) { puts("SKIP: model already finished loading; run during a fresh load"); return 77; }
 		assert(Configure(service, "cpu", threads) == B_BUSY);
 		assert(Configure(service, "p100a-qwen-fast", threads) == B_BUSY);
+		assert(Memory(service, kLoadModel) == B_BUSY && Memory(service, kUnloadModel) == B_BUSY);
 		puts("PASS: hardware changes rejected while model is loading"); return 0;
 	}
 	bool initiallyReady = false; state.FindBool("ready", &initiallyReady);
 	if (loading || busy || !initiallyReady) { puts("SKIP: service tests require a ready, idle model"); return 77; }
 	const char* initialBackend = ""; state.FindString("backend_id", &initialBackend);
+	if (!strcmp(argv[1], "--memory-tests")) {
+		BString model, backend(initialBackend);
+		assert(state.FindString("model_path", &model) == B_OK);
+		int32 loads = 0, resident = 0;
+		assert(state.FindInt32("model_loads", &loads) == B_OK);
+		assert(state.FindInt32("resident_models", &resident) == B_OK && resident > 0);
+		BString savedModel = LoadAssistantModel(), savedHardware = LoadAssistantHardware();
+		int32 savedThreads = LoadAssistantThreads();
+		assert(Memory(service, kLoadModel) == B_OK); // Already loaded: no reload.
+		assert(Memory(service, kUnloadModel) == B_OK);
+		BMessage empty = WaitIdle(service);
+		bool ready = true, progress = true;
+		assert(empty.FindBool("ready", &ready) == B_OK && !ready);
+		assert(empty.FindInt32("resident_models", &resident) == B_OK && resident == 0);
+		assert(empty.FindBool("model_progress_active", &progress) == B_OK && !progress);
+		assert(empty.FindString("active_backend_id", &value) == B_OK && !*value);
+		assert(empty.FindString("model_path", &value) == B_OK && model == value);
+		assert(empty.FindString("backend_id", &value) == B_OK && backend == value);
+		assert(empty.FindInt32("model_loads", &resident) == B_OK && resident == loads);
+		assert(Memory(service, kUnloadModel) == B_OK); // Idempotent, no device reopen.
+		RejectionReceiver* receiver = new RejectionReceiver; receiver->Run();
+		BMessage request(kGenerate);
+		request.AddMessenger("target", BMessenger(receiver)); request.AddInt64("id", system_time());
+		request.AddString("backend_id", backend); request.AddString("model_path", model);
+		request.AddString("prompt", "This unloaded-model test must never execute.");
+		request.AddString("prompt_format", AssistantHardwareIsP100AQwen(backend.String())
+			? (AssistantHardwareIsP100AFast(backend.String()) ? "qwen-p100a-fast" : "qwen-p100a") : "story");
+		assert(service.SendMessage(&request) == B_OK);
+		assert(acquire_sem_etc(receiver->done, 1, B_RELATIVE_TIMEOUT, 2000000) == B_OK && receiver->failed);
+		if (receiver->Lock()) receiver->Quit();
+		assert(LoadAssistantModel() == savedModel && LoadAssistantHardware() == savedHardware
+			&& LoadAssistantThreads() == savedThreads);
+		assert(Memory(service, kLoadModel) == B_OK);
+		BMessage after = WaitIdle(service);
+		assert(after.FindBool("ready", &ready) == B_OK && ready);
+		assert(after.FindInt32("resident_models", &resident) == B_OK && resident == 1);
+		assert(after.FindInt32("model_loads", &resident) == B_OK && resident == loads + 1);
+		assert(after.FindString("model_path", &value) == B_OK && model == value);
+		assert(after.FindString("backend_id", &value) == B_OK && backend == value);
+		assert(after.FindInt32("cpu_threads", &resident) == B_OK && resident == threads);
+		assert(after.FindBool("model_progress_active", &progress) == B_OK && !progress);
+		assert(LoadAssistantModel() == savedModel && LoadAssistantHardware() == savedHardware
+			&& LoadAssistantThreads() == savedThreads);
+		puts("PASS: unload frees all caches, no implicit inference reload, idempotent memory commands, reload/progress completion and saved selection/thread preservation");
+		return 0;
+	}
 	if (!strcmp(argv[1],"--qwen-mode-switch-tests")) {
 		if (!AssistantHardwareIsP100AQwen(initialBackend)) { puts("SKIP: a Qwen/P100A mode must be selected"); return 77; }
 		std::string original=initialBackend;

@@ -25,11 +25,18 @@ private:
 	void Details();
 	void Install();
 	void Select();
+	void ModelMemory(uint32 action);
+	void PollService();
 	static int32 Download(void* data);
 	BListView* fList;
 	BTextView* fDetails;
 	BStringView* fStatus;
 	BStatusBar* fProgress;
+	BStatusBar* fLoadProgress;
+	BStringView* fMemoryModel;
+	BStringView* fMemoryStatus;
+	BButton* fLoad;
+	BButton* fUnload;
 	BButton* fInstall;
 	BButton* fSelect;
 	BButton* fCancel;
@@ -38,6 +45,7 @@ private:
 	int32 fDownloadIndex;
 	bool fDownloading;
 	bool fSelecting;
+	bool fServiceBusy;
 	std::atomic<bool> fCancelled;
 };
 
