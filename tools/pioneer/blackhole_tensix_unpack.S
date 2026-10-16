@@ -25,6 +25,9 @@ _start:
 
 .section .text,"ax"
 .global main, parked, final_wait_return, drain
+.ifdef TT_RUNTIME_Q8
+	.set TT_RUNTIME_INT8,1
+.endif
 .ifdef TT_RUNTIME_INT8
 	.set TT_RUNTIME_FP16,1 /* integer-8 uses the FP16 source bit overlay */
 .endif
@@ -86,7 +89,11 @@ thread_config:
 .endif
 	config 2, 0
 .ifdef TT_RUNTIME_INT8
+.ifdef TT_RUNTIME_Q8
+	config 3, 0 /* FP32 scales/results; SFPU consumes sign-magnitude int dots */
+.else
 	config 3, 0x10000 /* converted signed int32 RISC destination read */
+.endif
 .else
 	config 3, 0 /* TRISC0 RISC Dst access = converted IEEE FP32 */
 .endif
@@ -197,8 +204,13 @@ inputs_ready:
 	fence
 	emit 0x3700000f /* reset all RWCs, no ownership side effects */
 .ifdef TT_UNPACK_GEMV
+.ifdef TT_RUNTIME_Q8
+	j q8_clear /* clear the integer dot at every 32-value block boundary */
+.else
 	bne s4, zero, gemv_keep_accumulator
 .endif
+.endif
+clear_first:
 	li t0, 0x10180000 /* clear all Dst valid bits; no Dst input is in use */
 	nop /* same width as the former two-word one-row clear immediate */
 	li t2, 1
@@ -233,6 +245,10 @@ gemv_keep_accumulator:
 .endif
 	jal ra, drain
 full_bf16_return:
+.ifdef TT_RUNTIME_Q8
+	j q8_accumulate
+q8_accumulate_return:
+.endif
 .ifdef TT_UNPACK_GEMV
 	addi s4, s4, 1
 .ifdef TT_RUNTIME_MATVEC
@@ -337,6 +353,10 @@ runtime_descriptor:
 .endif
 nonuniform_inputs:
 .ifdef TT_RUNTIME_MATVEC
+.ifdef TT_RUNTIME_Q8
+	j q8_save_scales
+q8_save_scales_return:
+.endif
 	li t3, 0x80000
 	slli t0, s4, 5
 	add t3, t3, t0
@@ -533,6 +553,118 @@ resident_ready:
 	addi a0, a0, 576 /* header16 + BF16 weight tile512 + padding48 */
 .endif
 	j nonuniform_inputs
+.ifdef TT_RUNTIME_Q8
+	.org 0xb00, 0
+q8_clear:
+	andi t0, s4, 1
+	bne t0, zero, gemv_keep_accumulator
+	j clear_first
+q8_save_scales:
+	/* The odd tile's 32-byte padding contains sixteen FP16 dW scales.
+	 * Preserve it before the normal vector copy overwrites that padding.
+	 * 70680..7069f is fixed private data, inside the saved code page. */
+	andi t0, s4, 1
+	beq t0, zero, q8_save_scales_return
+	li t2, 0x70920
+	li t3, 0x70680
+	li t1, 8
+q8_save_scale_word:
+	lw t0, 0(t2)
+	sw t0, 0(t3)
+	addi t2, t2, 4
+	addi t3, t3, 4
+	addi t1, t1, -1
+	bne t1, zero, q8_save_scale_word
+	j q8_save_scales_return
+q8_accumulate:
+	andi t0, s4, 1
+	beq t0, zero, q8_accumulate_return
+	li t0, 1
+	bne s4, t0, q8_have_accumulator
+	emit 0x700b0000 /* LReg0/1 = zero, independent of stale Dst contents */
+	emit 0x701b0000
+	jal ra, drain
+q8_have_accumulator:
+	/* Convert each FP16 dW to FP32 with integer RISC instructions, including
+	 * signed zero and subnormal half scales (do NOT flush these to zero). */
+	li a2, 0x70680
+	li a3, 0xffbd8000
+	li a4, 0
+q8_scale_half:
+	lw a5, 0(a2)
+	andi t0, a4, 1
+	beq t0, zero, q8_scale_low
+	srli a5, a5, 16
+	addi a2, a2, 4
+q8_scale_low:
+	li t0, 0xffff
+	and a5, a5, t0
+	srli a6, a5, 10
+	andi a6, a6, 31
+	andi a7, a5, 1023
+	li t0, 0x8000
+	and a5, a5, t0
+	slli a5, a5, 16
+	bne a6, zero, q8_scale_normal
+	beq a7, zero, q8_scale_store
+	li a6, 113
+q8_scale_denormal:
+	andi t0, a7, 1024
+	bne t0, zero, q8_scale_denormal_done
+	slli a7, a7, 1
+	addi a6, a6, -1
+	j q8_scale_denormal
+q8_scale_denormal_done:
+	andi a7, a7, 1023
+	j q8_scale_exponent
+q8_scale_normal:
+	addi a6, a6, 112
+q8_scale_exponent:
+	slli a6, a6, 23
+	slli a7, a7, 13
+	or a5, a5, a6
+	or a5, a5, a7
+q8_scale_store:
+	sw a5, 0(a3)
+	addi a3, a3, 4
+	addi a4, a4, 1
+	li t0, 16
+	bne a4, t0, q8_scale_half
+	/* One FP32 dX per 32-value input block, fixed saved gap 83000. */
+	srli t0, s4, 1
+	slli t0, t0, 2
+	li t2, 0x83000
+	add t2, t2, t0
+	lw t0, 0(t2)
+	li t2, 0xffbd8100 /* row4, sixteen identical scales */
+	li t1, 16
+q8_broadcast_scale:
+	sw t0, 0(t2)
+	addi t2, t2, 4
+	addi t1, t1, -1
+	bne t1, zero, q8_broadcast_scale
+	lw t0, -4(t2)
+	andi t0, t0, 0
+	fence
+	emit 0x70240020 /* signed-magnitude int32 dot: even/odd columns */
+	emit 0x70340022
+	emit 0x90000220 /* SFPCAST LReg2 -> LReg2, deterministic RNE */
+	emit 0x90000330
+	emit 0x70430000 /* FP32 dW even/odd, dX */
+	emit 0x70530002
+	emit 0x70630004
+	emit 0x84046940 /* LReg4 = dW_even*dX + constant LReg9(+0) */
+	emit 0x84056950
+	emit 0x84024000 /* accumulator_even = dot_even*scale_even + accumulator_even */
+	emit 0x84035110
+	jal ra, drain
+	addi t0, s4, 1
+	bne t0, s8, q8_accumulate_return
+	emit 0x72030020 /* final FP32 result to Dst row32, even/odd columns */
+	emit 0x72130022
+	jal ra, drain
+	j q8_accumulate_return
+.endif
 	.org 0x1000, 0
 .else
 	.org 0xa20, 0

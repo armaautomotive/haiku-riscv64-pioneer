@@ -23,8 +23,9 @@ struct PioneerGgmlContext {
 	PioneerResidentTensorCache<PioneerResidentDevice> cache;
 	bool opened=false,failed=false;
 	const bool fp16;
+	const bool q8;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
-	PioneerGgmlContext(bool half):cache(device,Arena,half),fp16(half) {}
+	PioneerGgmlContext(bool half,bool quant):cache(device,Arena,half),fp16(half),q8(quant) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -32,12 +33,13 @@ static PioneerGgmlContext* sActive=NULL;
 static bool sDiagnose=false;
 static bool sCpuActivationQuantization=false;
 static bool sFp16=false;
+static bool sQ8=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; };
 static std::map<std::string,ReferenceProjection> sReference;
 static const char* Name(ggml_backend_t) { return "P100A-resident-experimental"; }
 static const char* DeviceName(ggml_backend_dev_t) { return "P100A-resident"; }
-static const char* Description(ggml_backend_dev_t) { return "P100A single-core resident 16-bit prototype (not a verified speedup)"; }
+static const char* Description(ggml_backend_dev_t) { return "P100A single-core resident matrix prototype (not a verified speedup)"; }
 static bool View(enum ggml_op op) {
 	return op==GGML_OP_NONE || op==GGML_OP_RESHAPE || op==GGML_OP_VIEW || op==GGML_OP_PERMUTE || op==GGML_OP_TRANSPOSE;
 }
@@ -86,13 +88,21 @@ static bool CheckProjection(const ggml_tensor* w,const float* x,const float* y,c
 			uint32_t wb=uint32_t(PioneerResidentBf16(independent[k]))<<16,xb=uint32_t(PioneerResidentBf16(x[k]))<<16;
 			float a,b; memcpy(&a,&wb,4); memcpy(&b,&xb,4);
 			if (sFp16) { a=PioneerFloat16Value(PioneerFloat16(independent[k])&~1U); b=PioneerFloat16Value(PioneerFloat16(x[k])); }
-			float product=a*b; bf16+=product; absolute+=fabsf(product); fp32+=independent[k]*x[k];
+			float product=a*b;
+			if (!sQ8) { bf16+=product; absolute+=fabsf(product); }
+			fp32+=independent[k]*x[k];
 			cpuQuantized+=independent[k]*quantizedX[k];
+		}
+		if (sQ8) for (unsigned block=0;block<inputs/32;block++) {
+			const uint8_t* wb=bytes+block*34; const uint8_t* xb=quantized.data()+block*34; int dot=0;
+			for (unsigned k=0;k<32;k++) { int a=wb[2+k],b=xb[2+k]; if (a>=128) a-=256; if (b>=128) b-=256; dot+=a*b; }
+			float dw=PioneerHalfFloat(uint16_t(wb[0])|(uint16_t(wb[1])<<8)),dx=PioneerHalfFloat(uint16_t(xb[0])|(uint16_t(xb[1])<<8));
+			float product=float(dot)*(dw*dx); bf16+=product; absolute+=fabsf(product);
 		}
 		float actual=y[row],error=fabsf(actual-bf16),normalized=absolute>0?error/absolute:error;
 		if (normalized>maximum) maximum=normalized;
-		bool bad=!isfinite(actual) || error>1e-6f+absolute/1024.0f;
-		if (bad && failures<4) fprintf(stderr,"  primitive row%u actual %.9g independent-%s %.9g original-Q8 %.9g error/sumabs %.9g\n",row,actual,sFp16?"FP16-phases":"BF16",bf16,fp32,normalized);
+		bool bad=!isfinite(actual) || error>1e-6f+absolute*(sQ8?1e-6f:1/1024.0f);
+		if (bad && failures<4) fprintf(stderr,"  primitive row%u actual %.9g independent-%s %.9g original-Q8 %.9g error/sumabs %.9g\n",row,actual,sQ8?"integer-Q8-blocks":sFp16?"FP16-phases":"BF16",bf16,fp32,normalized);
 		failures+=bad;
 		bfDot+=double(actual)*bf16; bfA2+=double(actual)*actual; bfB2+=double(bf16)*bf16;
 		double d=double(actual)-bf16; bfDelta2+=d*d;
@@ -106,8 +116,8 @@ static bool CheckProjection(const ggml_tensor* w,const float* x,const float* y,c
 	double bfRelative=bfB2>0?sqrt(bfDelta2/bfB2):sqrt(bfDelta2),fpRelative=fpB2>0?sqrt(fpDelta2/fpB2):sqrt(fpDelta2);
 	double bfCos=bfB2>0 && bfA2>0?bfDot/sqrt(bfA2*bfB2):1,fpCos=fpB2>0 && bfA2>0?fpDot/sqrt(bfA2*fpB2):1;
 	fprintf(stderr,"PRIMITIVE %s [%u,%u] samples %u %s cosine/L2 %.9f/%.9f original-Q8 cosine/L2 %.9f/%.9f normalized %.9g failures %u decoder mismatches %u\n",
-		w->name,inputs,outputs,samples,sFp16?"FP16-phases":"BF16",bfCos,bfRelative,fpCos,fpRelative,maximum,failures,decodeMismatches);
-	bool passed=!decodeMismatches && !failures && isfinite(bfRelative) && bfRelative<.01;
+		w->name,inputs,outputs,samples,sQ8?"integer-Q8-blocks":sFp16?"FP16-phases":"BF16",bfCos,bfRelative,fpCos,fpRelative,maximum,failures,decodeMismatches);
+	bool passed=!decodeMismatches && !failures && isfinite(bfRelative) && bfRelative<(sQ8?1e-5:.01);
 	if (graph) {
 		double inputError=sqrt(graphInputDelta/(graphInputNorm+1e-30)),outputError=sqrt(graphOutputDelta/(graphOutputNorm+1e-30));
 		fprintf(stderr,"  GRAPH CPU reference input-L2 %.9f output-L2 %.9f; CPU-Q8-activation emulation vs graph-output L2 %.9f\n",
@@ -139,13 +149,15 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
 		uint64_t offset=0; size_t before=ctx->cache.Tensors();
 		double start=Seconds();
-		bool weightsOkay=ctx->cache.Weights(w->data,unsigned(w->type),inputs,outputs,[&](unsigned row,float* out) {
+		bool weightsOkay=ctx->q8?ctx->cache.Q8Weights(w->data,unsigned(w->type),inputs,outputs,[&](unsigned row,unsigned block,uint8_t* out) {
+			memcpy(out,(const uint8_t*)w->data+row*w->nb[1]+block*34,34); return true;
+		},offset):ctx->cache.Weights(w->data,unsigned(w->type),inputs,outputs,[&](unsigned row,float* out) {
 			ggml_get_type_traits(w->type)->to_float((const char*)w->data+row*w->nb[1],out,inputs); return true;
 		},offset);
 		ctx->weightSeconds+=Seconds()-start;
@@ -157,15 +169,17 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		std::vector<uint8_t> quantized;
 		std::vector<float> converted;
 		start=Seconds();
-		if (sCpuActivationQuantization) {
-			quantized.resize(inputs/32*34); converted.resize(inputs);
+		if (sCpuActivationQuantization || ctx->q8) {
+			for (unsigned k=0;k<inputs;k++) if (!isfinite(original[k])) { ctx->failed=true; return GGML_STATUS_FAILED; }
+			quantized.resize(inputs/32*34);
 			const auto* traits=ggml_get_type_traits(GGML_TYPE_Q8_0);
 			traits->from_float_ref(original,quantized.data(),inputs);
-			traits->to_float(quantized.data(),converted.data(),inputs); execution=converted.data();
+			if (!ctx->q8) { converted.resize(inputs); traits->to_float(quantized.data(),converted.data(),inputs); execution=converted.data(); }
 		}
 		ctx->inputSeconds+=Seconds()-start;
 		start=Seconds();
-		bool mathOkay=ctx->cache.Multiply(offset,inputs,outputs,execution,(float*)op->data);
+		bool mathOkay=ctx->q8?ctx->cache.Q8Multiply(offset,inputs,outputs,quantized.data(),(float*)op->data)
+			:ctx->cache.Multiply(offset,inputs,outputs,execution,(float*)op->data);
 		ctx->matvecSeconds+=Seconds()-start;
 		if (!mathOkay) {
 			ctx->failed=true; return GGML_STATUS_FAILED;
@@ -180,8 +194,8 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	return GGML_STATUS_SUCCESS;
 }
 static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
-	if (sActive) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8); if (!ctx) return NULL;
 	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
 	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
@@ -222,6 +236,7 @@ bool PioneerGgmlFinish() { return !sActive || sActive->device.Finish(); }
 void PioneerGgmlDiagnose(bool enabled,const char* vectorPath) { if (!sActive) { sDiagnose=enabled; sDiagnosticVector=vectorPath; sReference.clear(); } }
 void PioneerGgmlCpuActivationQuantization(bool enabled) { if (!sActive) sCpuActivationQuantization=enabled; }
 void PioneerGgmlFp16Operands(bool enabled) { if (!sActive) sFp16=enabled; }
+void PioneerGgmlQ8Operands(bool enabled) { if (!sActive) sQ8=enabled; }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	bool wanted=t->op==GGML_OP_MUL_MAT && t->src[0] && t->src[0]->type==GGML_TYPE_Q8_0 && Supports(NULL,t);
 	if (ask) return wanted;

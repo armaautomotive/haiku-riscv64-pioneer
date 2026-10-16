@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include <cassert>
 #include "../PioneerResidentTensor.h"
+#include "../TenstorrentGgufQuant.h"
 static float Float(uint32_t bits) { float f; memcpy(&f,&bits,4); return f; }
 static float Weight(unsigned row,unsigned k) { return float(int((row*7+k*13)%31)-15)/32; }
 struct TensorIO {
@@ -32,7 +33,42 @@ struct TensorIO {
 		}
 		return true;
 	}
+	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* x,const uint32_t* scales,uint32_t* y) {
+		assert(PioneerMatvecShape(inputs,outputs) && !(offset%4096)); if (++calls==callFail) return false;
+		for (unsigned row=0;row<outputs;row++) {
+			float sum=0;
+			for (unsigned block=0;block<inputs/32;block++) {
+				int dot=0;
+				for (unsigned i=0;i<32;i++) {
+					unsigned k=block*32+i; uint64_t p=offset+((uint64_t(row/16)*(inputs/16)+k/16)*576)+16+(k%16)*32+(row%16)*2;
+					uint16_t a=uint16_t(storage[size_t(p/4)]>>(8*(p&3))),b=uint16_t(x[k/2]>>(16*(k&1)));
+					assert(PioneerInt8OperandValid(a) && PioneerInt8OperandValid(b));
+					dot+=int(a&1023)*((a&0x8000)?-1:1)*int(b&1023)*((b&0x8000)?-1:1);
+				}
+				uint64_t p=offset+(uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2;
+				float dw=PioneerHalfFloat(uint16_t(storage[size_t(p/4)]>>(8*(p&3))));
+				sum+=float(dot)*(dw*Float(scales[block]));
+			}
+			if (nonfinite) sum=INFINITY;
+			memcpy(y+row,&sum,4);
+		}
+		return true;
+	}
 };
+static uint16_t QScale(unsigned r,unsigned b) { const uint16_t h[]={0x2801,0xb503,0,0x8000,1,0x83ff}; return h[(r+b)%6]; }
+static void QBlock(unsigned r,unsigned b,uint8_t* out) {
+	uint16_t h=QScale(r,b); out[0]=uint8_t(h); out[1]=uint8_t(h>>8);
+	for (unsigned i=0;i<32;i++) out[2+i]=uint8_t(r*37+b*13+i*17);
+}
+static float QReference(unsigned row,unsigned inputs,const uint8_t* x) {
+	float sum=0;
+	for (unsigned b=0;b<inputs/32;b++) {
+		uint8_t w[34]; QBlock(row,b,w); const uint8_t* v=x+b*34; int dot=0;
+		for (unsigned i=0;i<32;i++) { int a=w[2+i],q=v[2+i]; if (a>=128) a-=256; if (q>=128) q-=256; dot+=a*q; }
+		float dw=PioneerHalfFloat(QScale(row,b)),dx=PioneerHalfFloat(uint16_t(v[0])|(uint16_t(v[1])<<8)); sum+=float(dot)*(dw*dx);
+	}
+	return sum;
+}
 int main() {
 	TensorIO io; PioneerResidentTensorCache<TensorIO> cache(io,16*1024*1024);
 	int first=0,second=0; uint64_t offset=0;
@@ -96,6 +132,37 @@ int main() {
 		TensorIO half; PioneerResidentTensorCache<TensorIO> c(half,16*1024*1024,true);
 		assert(!c.Weights(&first,8,1024,32,[](unsigned,float* data) { for (unsigned k=0;k<1024;k++) data[k]=100000; return true; },offset));
 		assert(c.Failed() && !half.calls && !half.uploads);
+	}
+	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) {
+		TensorIO quant; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024);
+		unsigned rows=k==1024?4112:32;
+		assert(c.Q8Weights(&first,8,k,rows,[](unsigned r,unsigned b,uint8_t* out) { QBlock(r,b,out); return true; },offset));
+		unsigned uploads=quant.uploads;
+		assert(c.Q8Weights(&first,8,k,rows,[](unsigned,unsigned,uint8_t*) { assert(false); return false; },offset) && quant.uploads==uploads);
+		std::vector<uint8_t> x(k/32*34);
+		std::vector<float> y(rows);
+		for (unsigned t=0;t<2;t++) {
+			for (unsigned b=0;b<k/32;b++) QBlock(t+3,b,x.data()+b*34);
+			assert(c.Q8Multiply(offset,k,rows,x.data(),y.data()));
+			for (unsigned row=0;row<rows;row++) assert(y[row]==QReference(row,k,x.data()));
+		}
+		assert(c.uploadedPages==c.Bytes()/4096 && c.matvecCalls==(rows>4096?4:2) && quant.uploads==uploads);
+		unsigned calls=quant.calls; x[0]=0; x[1]=0x7c;
+		assert(!c.Q8Multiply(offset,k,rows,x.data(),y.data()) && c.Failed() && quant.calls==calls);
+	}
+	for (unsigned fault=0;fault<6;fault++) {
+		TensorIO quant; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024);
+		quant.uploadFail=fault==0?2:0;
+		bool okay=c.Q8Weights(&first,8,1024,32,[&](unsigned r,unsigned b,uint8_t* out) {
+			QBlock(r,b,out); if (fault==1) { out[0]=0; out[1]=0xfc; } return fault!=2;
+		},offset);
+		if (fault<3) assert(!okay && c.Failed() && !quant.calls);
+		else {
+			assert(okay); std::vector<uint8_t> x(32*34); for (unsigned b=0;b<32;b++) QBlock(2,b,x.data()+b*34);
+			quant.callFail=fault==3?1:0; quant.nonfinite=fault==4;
+			if (fault==5) assert(!c.Weights(&first,8,1024,32,decode,offset) && c.Failed());
+			else assert(!c.Q8Multiply(offset,1024,32,x.data(),output) && c.Failed());
+		}
 	}
 	printf("PASS: immutable tensor packing/cache, changed vectors, multi-call classifier chunks, capacity/nonfinite/transport failures; NO hardware\n");
 }

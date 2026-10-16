@@ -4,6 +4,7 @@
 #include "BlackholeRuntimeMatvecImage.h"
 #include "BlackholeRuntimeFp16MatvecImage.h"
 #include "BlackholeRuntimeInt8MatvecImage.h"
+#include "BlackholeRuntimeQ8MatvecImage.h"
 #include "PioneerInt8Operand.h"
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeOutput.h"
@@ -18,6 +19,7 @@ struct PioneerRuntimeMatvecLease {
 	bool saved=false,code_dirty=false,buffers_dirty=false,ready=false,running=false,unsafe=false;
 	bool fp16=false; // immutable for one prepared-code lease
 	bool int8=false;
+	bool q8=false;
 };
 template<class IO>
 bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,const PioneerResidentLease& store)
@@ -29,10 +31,10 @@ bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const t
 }
 template<class IO>
 bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
-	const PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,bool fp16=false,bool int8=false)
+	const PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,bool fp16=false,bool int8=false,bool q8=false)
 {
-	if (fp16 && int8) return false;
-	if (compute.ready) return compute.fp16==fp16 && compute.int8==int8;
+	if ((fp16 && int8) || (q8 && (!int8 || fp16))) return false;
+	if (compute.ready) return compute.fp16==fp16 && compute.int8==int8 && compute.q8==q8;
 	uint32_t* saved=io.RuntimeSavedWords();
 	if (!saved || compute.saved || !store.ready || store.pending || store.recovery_required || io.ResetRead()!=0x47800
 		|| !PioneerRuntimeSources(io,baseline,noc,store) || !BlackholeResidentIdle(io)) return false;
@@ -47,11 +49,11 @@ bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,c
 		compute.unsafe=true; return false;
 	}
 	compute.code_dirty=true;
-	compute.fp16=fp16; compute.int8=int8;
-	for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
+	compute.fp16=fp16; compute.int8=int8; compute.q8=q8;
+	for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,q8?BlackholeRuntimeQ8MatvecCodeWord(w):int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
 	io.RuntimeCodeWrite(0,0x0006a06f);
 	bool valid=io.RuntimeCodeRead(0)==0x0006a06f;
-	for (unsigned w=0;w<1024;w++) valid &= io.RuntimeCodeRead(1+w)==(int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
+	for (unsigned w=0;w<1024;w++) valid &= io.RuntimeCodeRead(1+w)==(q8?BlackholeRuntimeQ8MatvecCodeWord(w):int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
 	compute.ready=valid; return valid;
 }
 template<class IO>
@@ -82,9 +84,9 @@ bool PioneerRuntimeMatvecClose(IO& io,const tt_dram_samples_result& baseline,con
 template<class IO>
 bool PioneerRuntimeStage(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& store,bool output,unsigned page,
-	const uint32_t* data,tt_runtime_matvec_result& r)
+	const uint32_t* data,tt_runtime_matvec_result& r,bool scale=false)
 {
-	if ((!output && page>=3) || (output && page>=4)) return false;
+	if (scale?(output || page!=3):((!output && page>=3) || (output && page>=4))) return false;
 	if (!PioneerRuntimeSources(io,baseline,noc,store) || !BlackholeResidentIdle(io) || !BlackholeHostReadMapStable(io,host)) {
 		store.recovery_required=true; return false;
 	}
@@ -117,11 +119,15 @@ template<class IO>
 bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
 	uint64_t capacity,uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* input,uint32_t* output,
-	tt_runtime_matvec_result& r,bool dmaOutput=false)
+	tt_runtime_matvec_result& r,bool dmaOutput=false,const uint32_t* scales=NULL)
 {
 	r={}; r.version=1;
 	if (!PioneerMatvecWeightRange(capacity,offset,inputs,outputs) || !input || !output || !compute.ready
 		|| !store.ready || store.pending || store.recovery_required || compute.unsafe || (compute.int8 && dmaOutput)) return false;
+	if (compute.q8) {
+		if (!scales) return false;
+		for (unsigned block=0;block<inputs/32;block++) if ((scales[block]&0x7f800000)==0x7f800000) return false;
+	} else if (scales) return false;
 	for (unsigned w=0;w<inputs/2;w++) {
 		if (compute.int8) {
 			if (!PioneerInt8OperandValid(uint16_t(input[w])) || !PioneerInt8OperandValid(uint16_t(input[w]>>16))) return false;
@@ -137,6 +143,10 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 	for (unsigned page=0;page<(inputs*2+4095)/4096 && okay;page++) {
 		for (unsigned w=0;w<1024;w++) stage[w]=page*1024+w<inputs/2?input[page*1024+w]:0;
 		okay=PioneerRuntimeStage(io,baseline,noc,host,store,false,page,stage,r);
+	}
+	if (compute.q8 && okay) {
+		for (unsigned w=0;w<1024;w++) stage[w]=w<inputs/32?scales[w]:0;
+		okay=PioneerRuntimeStage(io,baseline,noc,host,store,false,3,stage,r,true);
 	}
 	for (unsigned page=0;page<(outputs*4+4095)/4096 && okay;page++) {
 		for (unsigned w=0;w<1024;w++) stage[w]=0x7fc00000;
@@ -167,11 +177,11 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 		if (io.ResetRead()!=0x46800) break;
 		r.phase=io.RuntimeStatusRead(0); r.tiles=io.RuntimeStatusRead(1); r.marker=io.RuntimeStatusRead(2);
 		if (r.marker==0x4e4f4346) break;
-		if (r.phase==TT_RUNTIME_MATVEC_FINAL_PHASE && r.tiles==(inputs/16)*(outputs/16) && r.marker==0x4d415431) {
+		if (r.phase==(compute.q8?uint32_t(TT_RUNTIME_Q8_FINAL_PHASE):uint32_t(TT_RUNTIME_MATVEC_FINAL_PHASE)) && r.tiles==(inputs/16)*(outputs/16) && r.marker==0x4d415431) {
 			io.Pause(); r.pc[0]=io.RuntimePcRead(); io.Pause(); r.pc[1]=io.RuntimePcRead();
 			bool idle=BlackholeResidentIdle(io);
 			for (unsigned w=0;w<4;w++) r.after[w]=io.ResidentNocRead(0x208+w*4);
-			if (idle && r.pc[0]==TT_RUNTIME_MATVEC_PARK_PC && r.pc[1]==TT_RUNTIME_MATVEC_PARK_PC
+			if (idle && r.pc[0]==(compute.q8?uint32_t(TT_RUNTIME_Q8_PARK_PC):uint32_t(TT_RUNTIME_MATVEC_PARK_PC)) && r.pc[1]==r.pc[0]
 				&& uint32_t(r.after[0]-r.before[0])==r.tiles && uint32_t(r.after[1]-r.before[1])==r.tiles*9
 				&& uint32_t(r.after[2]-r.before[2])==r.tiles && uint32_t(r.after[3]-r.before[3])==r.tiles) {
 				r.completed=1; break;
@@ -183,7 +193,7 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 	io.RuntimeProfileMark(TT_PROFILE_COMPLETED);
 	if (!dmaOutput) for (unsigned w=0;w<outputs;w++) {
 		output[w]=io.RuntimeBufferRead(4096+w);
-		if (!compute.int8) r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
+		if (!compute.int8 || compute.q8) r.nonfinite+=(output[w]&0x7f800000)==0x7f800000;
 	}
 	if (!dmaOutput) io.RuntimeProfileMark(TT_PROFILE_PIO);
 	io.RuntimeResetWrite(0x87ffff); io.Pause();

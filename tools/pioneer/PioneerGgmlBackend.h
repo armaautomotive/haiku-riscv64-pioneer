@@ -24,4 +24,5 @@ bool PioneerGgmlReferenceTap(ggml_tensor* tensor,bool ask,void*);
 size_t PioneerGgmlReferenceCount();
 void PioneerGgmlCpuActivationQuantization(bool enabled);
 void PioneerGgmlFp16Operands(bool enabled);
+void PioneerGgmlQ8Operands(bool enabled);
 #endif

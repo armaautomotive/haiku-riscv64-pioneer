@@ -63,6 +63,7 @@ struct RuntimeMachine:Machine {
 	void Store(uint32_t address,uint32_t value) override {
 		if (address>=0x84000 && address<0x88000) { assert(drained); buffers[(address-0x80000)/4]=value; return; }
 		if (address==0xffb20000) {
+			if (pending || !drained || value!=base+requests*576) fprintf(stderr,"NoC address pc=%x pending=%u drained=%u value=%x expected=%x requests=%u s4=%u\n",pc,pending,drained,value,base+requests*576,requests,regs[20]);
 			assert(!pending && drained && value==base+requests*576); target=value; return;
 		}
 		if (address==0xffb20040) {
@@ -106,6 +107,7 @@ struct RuntimeMachine:Machine {
 		return true;
 	}
 };
+#ifndef PIONEER_RUNTIME_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==5); auto boot=Read(argv[1]),code=Read(argv[2]),fp16=Read(argv[3]),int8=Read(argv[4]);
@@ -153,3 +155,4 @@ int main(int argc,char** argv)
 	assert(PioneerMatvecWeightRange(2*1024*1024,4096,1024,32) && !PioneerMatvecWeightRange(4096,0,1024,16));
 	printf("PASS: independently assembled BF16/FP16 runtime images, retained weights, separate vector, K/N loops, phase-aware dot references, bounded NoC faults; NO hardware\n");
 }
+#endif

@@ -49,12 +49,13 @@ struct Machine {
 	virtual ~Machine() = default;
 	virtual bool Fp16Operands() const { return false; }
 	virtual bool Int8Arithmetic() const { return false; }
+	virtual bool Int8ConvertedRead() const { return Int8Arithmetic(); }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
 		assert(false); return 0;
 	}
-	void Instruction(uint32_t op) {
+	virtual void Instruction(uint32_t op) {
 		unsigned opcode = op >> 24;
 		if (configSmoke) assert(opcode == 0xb2 || op == 0x3700000f);
 		if (sfpuSmoke == 1 || sfpuSmoke == 2) assert(opcode == 0xb2 || opcode == 0x71 || (sfpuSmoke == 2 && opcode == 0x72) || op == 0x3700000f);
@@ -159,7 +160,7 @@ struct Machine {
 		}
 		else if (op == 0x26000020 || op == 0x26c00020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
-			assert(config[0] == (Fp16Operands()?0x4231U:0x42b5U) && config[1] == (Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8Arithmetic()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
+			assert(config[0] == (Fp16Operands()?0x4231U:0x42b5U) && config[1] == (Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
@@ -235,7 +236,7 @@ struct Machine {
 			assert(!configSmoke);
 			assert(drained && (matrixInstructions != 0 || moveInstructions != 0)); unsigned index = (address-0xffbd8000)/4;
 			assert(valid[index/16]); outputReads++;
-			return Int8Arithmetic()?uint32_t(dstInt[index/16][index%16]):Bits(dst[index/16][index%16]);
+			return Int8ConvertedRead()?uint32_t(dstInt[index/16][index%16]):Bits(dst[index/16][index%16]);
 		}
 		if (address >= 0xffbd8000 && address < 0xffbd8200) {
 			assert(sfpuSmoke == 10 && drained && matrixInstructions == 0);
@@ -275,8 +276,8 @@ struct Machine {
 				else { assert((f3 == 1 || f3 == 5) && (instruction>>25) == 0); result = f3 == 1 ? regs[rs1] << (instruction>>20 & 31) : regs[rs1] >> (instruction>>20 & 31); }
 				write = true;
 			} else if (op == 0x33) {
-				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 6));
-				result = f3 == 0 ? regs[rs1] + regs[rs2] : regs[rs1] | regs[rs2]; write = true;
+				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 6 || f3 == 7));
+				result = f3 == 0 ? regs[rs1] + regs[rs2] : f3 == 6 ? regs[rs1] | regs[rs2] : regs[rs1] & regs[rs2]; write = true;
 			} else if (op == 0x23) {
 				assert(f3 == 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
 				Store(regs[rs1]+imm,regs[rs2]);

@@ -6,6 +6,7 @@
 #include <string.h>
 #include <vector>
 #include "PioneerFloat16.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 
 static inline uint16_t PioneerResidentBf16(float value)
 {
@@ -31,6 +32,7 @@ template<class IO> class PioneerResidentTensorCache {
 	uint64_t capacity,next=0;
 	bool failed=false;
 	const bool fp16;
+	unsigned mode=0; // one immutable packing/operation format per cache
 	std::vector<Entry> entries;
 public:
 	uint64_t uploadedPages=0,matvecCalls=0;
@@ -41,7 +43,8 @@ public:
 	template<class Decode> bool Weights(const void* identity,unsigned encoding,unsigned inputs,unsigned outputs,
 		Decode decode,uint64_t& offset)
 	{
-		if (failed) return false;
+		if (failed || mode==2) { failed=true; return false; }
+		mode=1;
 		for (const auto& e:entries) if (e.identity==identity) {
 			if (e.encoding!=encoding || e.inputs!=inputs || e.outputs!=outputs) { failed=true; return false; }
 			offset=e.offset; return true;
@@ -72,7 +75,7 @@ public:
 	}
 	bool Multiply(uint64_t offset,unsigned inputs,unsigned outputs,const float* input,float* output)
 	{
-		if (failed) return false;
+		if (failed || mode!=1) { failed=true; return false; }
 		bool found=false;
 		for (const auto& e:entries) found |= e.offset==offset && e.inputs==inputs && e.outputs==outputs;
 		if (!found || !input || !output) { failed=true; return false; }
@@ -94,6 +97,76 @@ public:
 				if (!isfinite(value)) { failed=true; return false; }
 				output[row+r]=value;
 			}
+		}
+		return true;
+	}
+	// Lossless Q8_0 path: preserve original signed bytes and FP16 block
+	// scales; do not dequantize or re-quantize immutable learned weights.
+	// DecodeBlock supplies exactly the original 34-byte GGML block.
+	template<class DecodeBlock> bool Q8Weights(const void* identity,unsigned encoding,unsigned inputs,unsigned outputs,
+		DecodeBlock decode,uint64_t& offset)
+	{
+		if (failed || fp16 || mode==1) { failed=true; return false; }
+		mode=2;
+		for (const auto& e:entries) if (e.identity==identity) {
+			if (e.encoding!=encoding || e.inputs!=inputs || e.outputs!=outputs) { failed=true; return false; }
+			offset=e.offset; return true;
+		}
+		uint64_t bytes=PioneerResidentTensorBytes(inputs,outputs);
+		if (!identity || !bytes || !PioneerResidentCapacity(capacity) || next>capacity || bytes>capacity-next) { failed=true; return false; }
+		const unsigned tileBytes=unsigned(PioneerMatvecWeightBytes(inputs,16));
+		std::vector<uint32_t> packed(tileBytes/4);
+		for (unsigned row=0;row<outputs;row+=16) {
+			memset(packed.data(),0,tileBytes);
+			for (unsigned r=0;r<16;r++) for (unsigned block=0;block<inputs/32;block++) {
+				uint8_t data[34];
+				if (!decode(row+r,block,data)) { failed=true; return false; }
+				uint16_t d=uint16_t(data[0])|(uint16_t(data[1])<<8);
+				if ((d&0x7c00)==0x7c00) { failed=true; return false; }
+				for (unsigned i=0;i<32;i++) {
+					int q=data[2+i]; if (q>=128) q-=256;
+					uint64_t byte=PioneerMatvecWeightElement(inputs,block*32+i,r);
+					packed[size_t(byte/4)]|=uint32_t(PioneerInt8Operand(q))<<(8*(byte&3));
+				}
+				uint64_t byte=uint64_t(block*2+1)*576+544+r*2;
+				packed[size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
+			}
+			for (unsigned page=0;page<tileBytes;page+=4096) {
+				if (!io.Upload(next+uint64_t(row/16)*tileBytes+page,packed.data()+page/4)) { failed=true; return false; }
+				uploadedPages++;
+			}
+		}
+		offset=next; next+=bytes; entries.push_back({identity,encoding,inputs,outputs,offset}); return true;
+	}
+	// Activation blocks are produced by the pinned GGML reference quantizer,
+	// not by an approximate local rounding implementation.
+	bool Q8Multiply(uint64_t offset,unsigned inputs,unsigned outputs,const uint8_t* blocks,float* output)
+	{
+		if (failed || fp16 || mode!=2) { failed=true; return false; }
+		bool found=false; for (const auto& e:entries) found |= e.offset==offset && e.inputs==inputs && e.outputs==outputs;
+		if (!found || !blocks || !output) { failed=true; return false; }
+		uint32_t vector[TT_RUNTIME_MATVEC_INPUTS_MAX/2]={},scales[TT_RUNTIME_MATVEC_INPUTS_MAX/32]={};
+		for (unsigned block=0;block<inputs/32;block++) {
+			const uint8_t* data=blocks+block*34;
+			uint16_t half=uint16_t(data[0])|(uint16_t(data[1])<<8);
+			if ((half&0x7c00)==0x7c00) { failed=true; return false; }
+			// Exact half -> float conversion, including subnormal dX.
+			uint32_t sign=uint32_t(half&0x8000)<<16,exp=(half>>10)&31,m=half&1023;
+			if (exp) scales[block]=sign|((exp+112)<<23)|(m<<13);
+			else if (!m) scales[block]=sign;
+			else { unsigned shifts=0; while (!(m&1024)) { m<<=1; shifts++; } scales[block]=sign|((113-shifts)<<23)|((m&1023)<<13); }
+			for (unsigned i=0;i<32;i++) {
+				int q=data[2+i]; if (q>=128) q-=256; unsigned k=block*32+i;
+				vector[k/2]|=uint32_t(PioneerInt8Operand(q))<<(16*(k&1));
+			}
+		}
+		uint32_t result[TT_RUNTIME_MATVEC_OUTPUTS_MAX];
+		for (unsigned row=0;row<outputs;row+=TT_RUNTIME_MATVEC_OUTPUTS_MAX) {
+			unsigned n=outputs-row; if (n>TT_RUNTIME_MATVEC_OUTPUTS_MAX) n=TT_RUNTIME_MATVEC_OUTPUTS_MAX;
+			uint64_t position=offset+uint64_t(row/16)*(inputs/16)*576;
+			if (!io.Q8Matvec(position,inputs,n,vector,scales,result)) { failed=true; return false; }
+			matvecCalls++;
+			for (unsigned r=0;r<n;r++) { float value; memcpy(&value,result+r,4); if (!isfinite(value)) { failed=true; return false; } output[row+r]=value; }
 		}
 		return true;
 	}

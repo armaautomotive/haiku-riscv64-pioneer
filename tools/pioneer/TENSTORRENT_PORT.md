@@ -105,6 +105,75 @@ out while establishing the Haiku port baseline.
 
 ### October 15: checked streamed uploads and numerical localization
 
+#### Native scaled Q8 integer blocks (full-model verifier in progress)
+
+The trusted `TT_RUNTIME_Q8` variant now uses exact integer-8 matrix dots
+over each **32-value block**, converts sign-magnitude dots with deterministic
+`SFPCAST`, multiplies original weight/activation block scales, and accumulates
+FP32 results in SFPU registers on the card. No host partial sums or reference
+substitution are used. Sixteen original FP16 weight scales occupy the odd
+16-K tile's final 32 padding bytes; integer RISC half-to-float conversion
+preserves signed zero and subnormal scales. One FP32 activation scale per
+block uses the already saved `83000..83fff` gap. Two separate even/odd-column
+accumulators are reinitialized for every output tile. The fixed image fits
+the original 4 KiB page, with exact phase/park `703ec/70404`, and unchanged
+NoC read counts and four integer fidelity phases per 16-K tile.
+
+Primary semantics/encodings: Blackhole
+[SFPCAST](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPCAST_IntFloat.md),
+[SFPLOAD](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md),
+[SFPMAD](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPMAD.md),
+[SFPSTORE](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md)
+and their linked instruction diagrams. `SFPMAD` is only partially fused;
+native comparisons are required, not assumed from the offline FP32 model.
+
+The new ioctl is `54c2`, capability bit 1024 (capabilities 2047), CPU profile
+format 4. Its appended scale request preserves every old request ABI.
+Prepared formats are immutable, invalid/nonfinite activation scales are
+refused before start, and integer/scaled output-DMA combinations remain
+unqualified/refused. All prior owner/team, source, owned-host-buffer,
+NoC completion/park/idle, unknown-completion quarantine and cold gates stay.
+
+ASan/UBSan passed independent assembly/image equality, all five K widths,
+signed/subnormal/zero scales, omitted cast/scale/accumulation rejection,
+bounded NoC failure parks, and **65** lost post-upload control-write cases.
+The original BF16/FP16, fixed GEMV, profile and integer operand tests passed.
+All **31** userspace utilities and Jam driver build passed.
+
+Native real-model projections passed both independent vectors using **all**
+Q8 blocks, not zero padding:
+
+- 32x1024 query: relative L2 `1.16206551e-7 / 1.35299361e-7`.
+- 32x3072 `blk.25.ffn_down.weight`: `1.01958204e-7 / 1.55807658e-7`.
+- Full 2048x1024 query: `9.13021911e-8 / 9.70029151e-8`, zero of 2048
+  numerical gate failures each, maximum absolute error `4.76837158e-7`.
+
+The primitive requires relative L2 below `1e-5` and per-row error below
+`1e-6 + sum_abs_block_contributions*1e-6`. The full-model graph/logit/greedy
+acceptance gates are unchanged. Native nonfinite-scale/prepared-format
+refusals reported started 0, and subsequent results were bit-identical.
+All END operations restored PCI/host 1/1, cold 0. Original lifecycle,
+BF16/FP16 regressions and final PCIe/HDMA audit passed; Assistant unchanged.
+The full query's second CPU wall-time total was 29,821 us, including 18,360
+compute/proof and 6,044 PIO. **This is not a CPU speedup.**
+
+Driver SHA-256 `f8b8360583853f43a4cacaa4f662e44047ec9fd4b37cb907e80653a2bf0d85fb`;
+projection CLI `1d7c5c05989d3de013889d6ee945883667639edd9fe285f5ff6bc80c0af9a7f1`.
+Native logs and original `dcc775...` driver backup are in
+`/boot/home/pioneer-q8-scaled-20261015/`.
+
+The standalone ggml adapter now retains original Q8 signed bytes/scales
+without weight dequantization, uses pinned GGML activation quantization
+once, and dispatches this scaled operation. Its offline pinned-ABI tests
+passed two vectors/one upload, original-byte packing, immutable format and
+wrong-math/no-fallback rejection. **A native full-model run is in progress**
+with binary `2430136a355a7cb8e193015dc4df7a81199ead5e7dc9c3f1702d8538df278f72`.
+No accepted Qwen tokens or speedup have yet been established. Storage still
+expands integer operands to 2.25 bytes/parameter, is limited to bank 0 / 2 GiB,
+and uses one core. Compact mixed quantization, wider models, multicore/bulk
+dispatch and matched repeated benchmarks remain required. Assistant is not
+changed to expose an unverified faster-Qwen mode.
+
 #### Native integer-8 arithmetic candidate (not scaled Qwen inference)
 
 The failed floating-point integer probe below motivated a separate fixed
@@ -148,7 +217,7 @@ operation reproduced all prior outputs exactly. Explicit END, ownership/
 inherited/dup-FD/final-close checks, both old floating formats, fixed GEMV
 and final PCIe/HDMA audit all passed; the Assistant was idle/unchanged.
 
-Current installed candidate SHA-256:
+Previous integer-only candidate SHA-256:
 `dcc775acf96c7c1533f14ae3ca6018a84fc0f6664727862cdf5723e11f264b31`;
 CLI: `450b23263e3a8125cdb1662568a921745e34b78e953bb50ca783d578eff6362f`.
 The separate refusal/reuse diagnostic is
