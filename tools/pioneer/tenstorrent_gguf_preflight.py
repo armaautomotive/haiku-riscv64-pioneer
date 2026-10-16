@@ -86,7 +86,7 @@ def inspect(data, full_size):
         if len(key) > 512 or key in seen:
             raise ValueError("oversized/duplicate metadata key")
         seen.add(key)
-        keep = key in ("general.architecture", "general.alignment", "general.name", "general.file_type") or key.startswith("qwen35.")
+        keep = key in ("general.architecture", "general.alignment", "general.name", "general.file_type") or key.startswith(("qwen3.", "qwen35."))
         value = r.value(r.number("I"), keep)
         if keep:
             metadata[key] = value
@@ -122,6 +122,12 @@ def inspect(data, full_size):
             "header_bytes": r.offset, "data_start": data_start,
             "declared_full_bytes": full_size, "tensor_bytes": sum(t["bytes"] for t in tensors),
             "formats": dict(collections.Counter(t["format"] for t in tensors)),
+            "matrix_shapes": dict(collections.Counter(
+                f'{t["format"]}:{t["shape"][0]}x{t["shape"][1]}' for t in tensors if len(t["shape"]) == 2)),
+            # Layout inventory only: no claim that the shapes, signed values,
+            # architecture, arena or full model are executable on the card.
+            "q8_packed_matrix_bytes": sum(math.prod(t["shape"]) // 32 * 36
+                                          for t in tensors if t["format"] == "Q8_0" and len(t["shape"]) == 2),
             "selected_tensors": [t for t in tensors if t["name"].startswith(("blk.0.", "blk.3."))],
             "header_only_not_runnable": len(data) < full_size}
 

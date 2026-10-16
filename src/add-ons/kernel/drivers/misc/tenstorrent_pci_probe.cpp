@@ -138,14 +138,14 @@ struct PioneerHostPageIO {
 	}
 };
 
-// CPU-only standalone probe adapter, NOT part of a resident context or DMA
-// path. A future transport controller still needs explicit ownership wiring.
-struct PioneerOutputBufferProbeIO : PioneerHostPageIO {
+// Private contiguous host owner. Only the separately guarded bulk-upload
+// controller hands this address to the device; the allocation probe never does.
+struct PioneerOutputBufferIO {
 	area_id outputArea=-1;
 	volatile uint32* outputPage=NULL;
 	uint64 outputPhysical=0;
 	bool outputReleaseAttempted=false,outputQuarantined=false;
-	~PioneerOutputBufferProbeIO() {
+	~PioneerOutputBufferIO() {
 		if (outputArea>=B_OK && !outputReleaseAttempted && !outputQuarantined) ReleaseOutputBuffer();
 	}
 	int32 AllocateOutputBuffer() {
@@ -157,7 +157,7 @@ struct PioneerOutputBufferProbeIO : PioneerHostPageIO {
 		physicalRestrictions.high_address=UINT64_C(0x1000000000000);
 		physicalRestrictions.alignment=4096;
 		void* address=NULL;
-		outputArea=create_area_etc(B_SYSTEM_TEAM,"P100A CPU-only private output-buffer probe",
+		outputArea=create_area_etc(B_SYSTEM_TEAM,"P100A private high host-transfer buffer",
 			TT_OUTPUT_BUFFER_BYTES,B_CONTIGUOUS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,
 			0,0,&virtualRestrictions,&physicalRestrictions,&address);
 		if (outputArea<B_OK) return outputArea;
@@ -198,6 +198,7 @@ struct PioneerOutputBufferProbeIO : PioneerHostPageIO {
 	}
 	void QuarantineOutputBuffer() { outputQuarantined=true; } // retain wired system-team ownership
 };
+struct PioneerOutputBufferProbeIO : PioneerHostPageIO,PioneerOutputBufferIO {};
 
 static bool
 FindCard(pci_module_info* pci, pci_info& card)
@@ -1253,7 +1254,7 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 	}
 };
 
-struct PioneerSessionIO : PioneerHostWriteIO {
+struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO {
 	PioneerRuntimeProfile runtimeProfile;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1};
 	volatile uint32* runtimeEntry=NULL;
@@ -1269,6 +1270,10 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 	volatile uint32* attentionView=NULL;
 	uint32* attentionSaved=NULL;
 	bool attentionMapAttempted=false;
+	area_id bulkArea=-1;
+	volatile uint32* bulkView=NULL;
+	uint32* bulkSaved=NULL;
+	bool bulkMapAttempted=false;
 	unsigned runtimeCore=0;
 	bool runtimeMapAttempted=false,runtimeMapped=false;
 	unsigned runtimeBufferWords=8192;
@@ -1279,8 +1284,38 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 	~PioneerSessionIO() {
 		for (unsigned i=0;i<5;i++) if (runtimeAreas[i]>=B_OK) delete_area(runtimeAreas[i]);
 		if (attentionArea>=B_OK) delete_area(attentionArea);
+		if (bulkArea>=B_OK) delete_area(bulkArea);
 		free(runtimeSaved); free(secondRuntimeSaved); free(secondLeaseSaved); free(runtimeStage);
 		free(attentionSaved);
+		free(bulkSaved);
+	}
+	void QuarantineHostPage() {
+		PioneerHostPageIO::QuarantineHostPage();
+		if (outputArea>=B_OK) QuarantineOutputBuffer();
+	}
+	bool MapBulk() {
+		if (runtimeCore!=0) return false;
+		if (bulkView) return true;
+		if (bulkMapAttempted) return false;
+		bulkMapAttempted=true;
+		bulkSaved=(uint32*)malloc(TT_BULK_UPLOAD_SAVED_WORDS*4);
+		if (!bulkSaved) return false;
+		void* view=NULL;
+		bulkArea=map_physical_memory("P100A fixed owned bulk-upload L1",profile.bar0_host_start+0x19140000,
+			TT_BULK_UPLOAD_SAVED_WORDS*4,B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (bulkArea<B_OK) return false;
+		bulkView=(volatile uint32*)view; return true;
+	}
+	bool BulkMappingStable() { return runtimeCore==0 && bulkArea>=B_OK && bulkView && bulkSaved; }
+	uint32* BulkSavedWords() { return bulkSaved; }
+	uint32 BulkL1Read(unsigned w) { return w<TT_BULK_UPLOAD_SAVED_WORDS && bulkView?PioneerRead32(bulkView+w):UINT32_MAX; }
+	void BulkL1Write(unsigned w,uint32 value) { if (w<TT_BULK_UPLOAD_SAVED_WORDS && bulkView) PioneerWrite32(bulkView+w,value); }
+	void BulkHostFence() { PioneerIoFence(); }
+	uint32 BulkHostLoad(unsigned w) {
+		return w<TT_BULK_UPLOAD_WORDS && outputArea>=B_OK && outputPage?B_LENDIAN_TO_HOST_INT32(outputPage[w]):UINT32_MAX;
+	}
+	void BulkHostStore(unsigned w,uint32 value) {
+		if (w<TT_BULK_UPLOAD_WORDS && outputArea>=B_OK && outputPage) outputPage[w]=B_HOST_TO_LENDIAN_INT32(value);
 	}
 	bool MapRuntime(bool bulk=false) {
 		unsigned words=bulk?TT_Q8_BULK_SAVED_BUFFER_WORDS:8192;
@@ -1580,6 +1615,8 @@ struct PioneerStoreContext {
 	PioneerRuntimeMatvecLease compute;
 	PioneerRuntimeMatvecLease secondCompute;
 	PioneerAttentionTileLease attention;
+	PioneerBulkUploadLease bulk;
+	PioneerOutputBufferLease bulkHost;
 	PioneerRuntimeActivationCache activation[2];
 	PioneerResidentLease secondLease;
 	tt_compute_noc_result secondNoc={};
@@ -1601,7 +1638,7 @@ struct PioneerStoreContext {
 	~PioneerStoreContext() { free(initialized); free(hashes); }
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
-		return attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
+		return bulk.unsafe || bulkHost.pending || bulkHost.quarantined || attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
 			|| secondLease.pending || secondLease.recovery_required || secondNoc.recovery_required
 			|| lease.pending || lease.recovery_required || idle.recovery_required || baseline.audit.recovery_required || baseline.baseline.path.recovery_required
 			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
@@ -1619,12 +1656,23 @@ struct PioneerStoreContext {
 
 // sLock held. On uncertainty only the established PCI/TLB rollback is used;
 // a wired system-team page is retained, never freed through a destructor.
+static bool
+CloseBulkScratch(PioneerStoreContext& context,bool safe)
+{
+	if (!context.bulk.saved) return safe;
+	if (safe) safe=context.io.SelectRuntimeCore(0);
+	if (!safe) context.bulk.unsafe=true;
+	return PioneerBulkUploadClose(context.io,context.baseline.baseline.baseline.baseline.dram,
+		context.baseline.baseline.baseline.noc,context.host,context.lease,context.bulkHost,context.bulk) && safe;
+}
+
 static void
 EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool recheck)
 {
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
+	if (!context->secondCompute.saved && !context->secondLease.saved) clean=CloseBulkScratch(*context,clean);
 	if (context->attention.saved && !context->secondCompute.saved && !context->secondLease.saved) {
 		if (!clean) context->attention.unsafe=true;
 		clean=PioneerAttentionTileClose(context->io,context->baseline.baseline.baseline.baseline.dram,
@@ -1643,6 +1691,7 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 		// All workers must be known held before restoring either program's
 		// shared boot word. Attention saved the matrix entry; matrix close
 		// later restores the original firmware entry in the opposite order.
+		clean=CloseBulkScratch(*context,clean);
 		if (context->attention.saved) {
 			if (!context->io.SelectRuntimeCore(0)) clean=false;
 			if (!clean) context->attention.unsafe=true;
@@ -1673,6 +1722,10 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	BlackholePioneerMmioEnd(context->io,context->Pci(),context->transaction);
 	clean &= !context->Unsafe() && context->Pci().restored;
 	result.active=0; result.pci_restored=context->Pci().restored;
+	if (context->bulkHost.allocated) {
+		if (!clean) PioneerQuarantineOutputBuffer(context->io,context->bulkHost);
+		else clean=PioneerReleaseOutputBuffer(context->io,context->bulkHost,true) && clean;
+	}
 	if (context->host.allocated) {
 		if (!clean) context->io.QuarantineHostPage();
 		else {
@@ -1680,7 +1733,8 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 			context->host.released=context->host.release_status==B_OK;
 		}
 	}
-	result.host_released=!context->host.allocated || context->host.released;
+	result.host_released=(!context->host.allocated || context->host.released)
+		&& (!context->bulkHost.allocated || context->bulkHost.released);
 	if (!clean || !result.host_released) sColdRecoveryRequired=true;
 	result.cold=sColdRecoveryRequired;
 	result.state=clean && result.host_released?TT_RESIDENT_SESSION_CLOSED:TT_RESIDENT_SESSION_CLEANUP_FAILED;
@@ -1840,6 +1894,58 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		if (passed) { context->hashes[page]=PioneerResidentPageHash(request->data); context->initialized[page]=1; context->uploadedPages++; }
 		if (context->lease.recovery_required || context->lease.pending || request->result.recovery_required) {
 			context->lease.recovery_required=true; context->io.QuarantineHostPage(); request->result.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock); free(request); return status;
+}
+
+static status_t
+BulkUploadControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_bulk_upload)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_bulk_upload*)malloc(sizeof(tt_pioneer_bulk_upload));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=1 || request->reserved[0] || request->reserved[1]
+		|| request->pages<1 || request->pages>4) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	PioneerStoreContext* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=3) status=B_NOT_ALLOWED;
+	else if (!PioneerBulkUploadRange(context->bytes,request->offset,request->pages)) status=B_BAD_VALUE;
+	else {
+		request->result={}; request->result.transfer.version=1; request->result.transfer.state=TT_STORE_CONFIG_FAILED;
+		bool ready=context->lease.ready;
+		if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
+		if (ready && context->runtimeCoreMode==3) ready=PioneerRuntimeAttentionPeersHeld(context->io,
+			context->baseline.baseline.baseline.baseline.dram,context->baseline.baseline.baseline.noc,context->secondNoc,
+			context->lease,context->secondLease,context->compute,context->secondCompute,context->attention);
+		if (ready) ready=context->io.SelectRuntimeCore(0) && context->io.MapBulk();
+		if (ready && !context->bulkHost.allocated) ready=PioneerPrepareOutputBuffer(context->io,context->host,context->bulkHost);
+		ready=ready && context->bulkHost.ready && PioneerBulkUploadPrepare(context->io,
+			context->baseline.baseline.baseline.baseline.dram,context->baseline.baseline.baseline.noc,
+			context->host,context->lease,context->bulkHost,context->bulk);
+		bool passed=ready && PioneerBulkUpload(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->host,context->lease,context->bulkHost,context->bulk,
+			context->bytes,request->offset,request->pages,request->data,request->result);
+		unsigned first=unsigned(request->offset/4096);
+		for (unsigned p=0;p<request->pages;p++) {
+			if (request->result.transfer.wrote_device && context->initialized[first+p]) {
+				context->initialized[first+p]=0; context->uploadedPages--;
+			}
+			if (passed) {
+				context->hashes[first+p]=PioneerResidentPageHash(request->data+p*1024);
+				context->initialized[first+p]=1; context->uploadedPages++;
+			}
+		}
+		if (context->Unsafe() || request->result.transfer.recovery_required) {
+			context->bulk.unsafe=true; context->lease.recovery_required=true;
+			context->io.QuarantineHostPage(); PioneerQuarantineOutputBuffer(context->io,context->bulkHost);
+			request->result.transfer.recovery_required=1; sColdRecoveryRequired=true;
 		}
 		status=user_memcpy(data,request,sizeof(*request));
 	}
@@ -2024,6 +2130,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return AttentionTileTestControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)
 		return ResidentStreamControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_BULK_UPLOAD)
+		return BulkUploadControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;

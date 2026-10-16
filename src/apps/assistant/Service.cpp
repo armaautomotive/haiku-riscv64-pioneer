@@ -151,7 +151,7 @@ public:
 						: (fHardware == "cpu" && !fModelPath.IsEmpty() ? fModelPath : fStartupPath);
 					status = QueueSelection(path, id, threads);
 					explanation = status == B_OK
-						? "Verifying model/hardware pair; saved only after success. P100A Qwen uses 0.6B only, is slower than CPU, and first-use upload can take 15 minutes."
+						? "Verifying model/hardware pair; saved only after success. P100A Qwen uses 0.6B only, is slower than CPU, and first-use upload takes several minutes."
 						: "Could not select hardware. Install its supported model and check driver availability; previous selection kept.";
 				}
 			}
@@ -422,7 +422,7 @@ private:
 						[&](const std::string& text,const char* status) {
 							PioneerGgmlStats stats = {};
 							if (PioneerGgmlSnapshot(stats) && stats.tensors < 197)
-								Progress(float(double(stats.uploads) / 163692), "Uploading P100A weights (first reply; can take ~15 minutes)");
+								Progress(float(double(stats.uploads) / 163692), "Uploading P100A weights (measured first-reply progress)");
 							else { BAutolock lock(&fLock); fProgressActive = false; }
 							if (!strncmp(status,"P100A Qwen:",11)) request->summary=status;
 							Reply(request,kUpdate,text,status);

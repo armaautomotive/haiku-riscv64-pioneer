@@ -33,6 +33,7 @@
 #include "PioneerRuntimeAttention.h"
 #include "PioneerOutputBufferProbe.h"
 #include "PioneerResidentStream.h"
+#include "PioneerBulkUpload.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -162,6 +163,7 @@
 #define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT (B_DEVICE_OP_CODES_END + 0x54cd)
 #define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST (B_DEVICE_OP_CODES_END + 0x54ce)
 #define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED (B_DEVICE_OP_CODES_END + 0x54cf)
+#define TT_PCI_PROBE_PIONEER_BULK_UPLOAD (B_DEVICE_OP_CODES_END + 0x54d0)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -172,7 +174,8 @@
 #define TT_PIONEER_CAP_Q8_DUAL_REUSE 262144U
 #define TT_PIONEER_CAP_ATTENTION_TILE_TEST 524288U
 #define TT_PIONEER_CAP_ATTENTION_TILE_SHARED 1048576U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED)
+#define TT_PIONEER_CAP_BULK_UPLOAD 2097152U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -343,5 +346,13 @@ struct tt_pioneer_resident_stream {
 	uint32_t data[1024];
 	tt_resident_stream_result result;
 };
+
+struct tt_pioneer_bulk_upload {
+	uint32_t version,pages,reserved[2];
+	uint64_t offset;
+	uint32_t data[TT_BULK_UPLOAD_WORDS];
+	tt_bulk_upload_result result;
+};
+static_assert(sizeof(tt_pioneer_bulk_upload)==16688,"fixed bulk upload ABI: bounded inline data, no pointer/address");
 
 #endif

@@ -2,15 +2,26 @@
 
 ## Status
 
-October16 attention checkpoint: QK products and PV accumulation now execute
-on the P100A SFPU, with reductions and softmax on the card's TRISC0. The
-dedicated qualification path passes all448 grouped-head tiles from56 public
-Qwen fixtures, plus synthetic1/3/256-key cases, including verified stop and
-restoration. **Assistant still uses CPU attention.** Full-model scheduling,
-shared matrix/attention ownership and resident KV optimization remain to be
-integrated; this checkpoint is not a faster-inference claim. Details below.
+October16 current attention checkpoint: the installed Assistant can execute
+Qwen3-0.6B Q8_0 learned matrices AND attention on the P100A. QK/PV run on the
+SFPU; reductions and softmax run on card TRISC0. The complete standalone
+22-position test has CPU-identical logits and greedy tokens, and the
+installed zero-reference-decode Assistant answered the public capital-of-
+France question correctly. Shared matrix/attention ownership and clean END
+are integrated. Host KV storage/prefix staging remain. Its approximately
+0.093 tokens/s public-request diagnostic is **not usable acceleration or a
+CPU speedup**; practical generation performance is still unfinished.
 
-Latest October16: standalone Qwen3-0.6B Q8_0 now
+Performance work now has an opt-in 1..4-page owned bulk uploader. A native
+equal-byte, alternating-order transfer comparison measured 3.221x over the
+existing 4KiB stream, with every uploaded word and untouched neighbour
+independently PIO-read, exact six-request counters and clean dual-host-owner
+release. This is a small transfer benchmark, **not** a full-model loading or
+generation speedup claim. Full-model loading/quality qualification passed;
+warm generation remained0.094529tokens/s. Details and the separate inference
+bottleneck measurements follow below.
+
+Earlier October16 matrix-only checkpoint: standalone Qwen3-0.6B Q8_0
 passes its full22-position bootstrap under Haiku on two fixed P100A cores,
 with all197 learned matrices, full-vocabulary checks at every position and four
 CPU-identical greedy reply tokens. Compensated SFPU accumulation fixed the
@@ -31,6 +42,102 @@ reuse, ownership, logit/token and cleanup checks. See the records below.
 
 The following early milestones are chronological; their narrower intermediate
 limitations do not supersede the current Qwen correctness/integration results.
+
+### October16 performance investigation: measured limits, not peak claims
+
+The existing exact two-core path is a bring-up runtime, not a throughput-
+optimized decoder. It performs234 matrix ioctls and224 grouped-head attention
+ioctls per position. Only two fixed compute workers are qualified, weights
+use one GDDR bank, and the full attention prefix is host-staged. Neither
+"on card" nor disabling independent CPU validation implies fast inference.
+No evidence currently establishes1000 tokens/s, support for every Qwen
+architecture/quantization, or even faster-than-CPU generation.
+
+Native projection profiles with the original staging path, exact CPU FMA
+bits and both independent stop/completion proofs passed:
+
+| Qwen0.6B projection | Whole operation | Compute plus proof | Result PIO |
+| --- | ---: | ---: | ---: |
+| query1024→64 |13918us |4079us |222us |
+| query1024→2048 |26046us |10043us |6095us |
+| FFN down3072→1024 |29027us |13864us |3066us |
+
+These are CPU-wall phase profiles, including guards/polling, not bare-device
+arithmetic timings. They motivate fewer host round trips, bulk/result
+transport, resident KV and larger decoder execution units before broadening
+model support. The CPU baseline and independent quality gates must remain
+unchanged; faster loading alone does not satisfy the generation objective.
+
+The initial bulk upload driver SHA is
+`f29ab0314165fd5e4fc9fe089662af5d0bf9df515b24fe53d2f5c7c695f08c8b`,
+capabilities`0x3fefff`. Its diagnostic SHA is
+`9c5aec795967a3819f41aa4b426e7f5032764acf73b0d796bfc50b11c8add65d`.
+Native evidence is retained at`/boot/home/pioneer-bulk-upload-20261016-a/`:
+`bulk-compare.log`, `profile-q64.log`, `profile-q2048.log`,
+`profile-down1024.log`. Ten matched warm transfers total163840bytes per path:
+legacy0.209904s, bulk0.065166s. One-time allocation/L1 snapshot is excluded.
+All1/2/3/4-page shapes, nonzero offsets, foreign FD/inherited-team denial,
+invalid request fields and clean END passed. The original upload remains.
+
+The new controller saves/restores two fixed16KiB L1 regions, privately owns
+a contiguous high-address noncacheable16KiB host allocation, checks all four
+physical pages/no input alias and retains both host owners after uncertainty.
+It uses the existing six-step poison/full CPU visibility/ordered-read proof,
+with exact1/(64×pages)/1/1 counters. Only host RAM fill/scan fences move to
+block boundaries; MMIO fences and transaction/route/PCI checks remain.
+Offline tests cover all8192 dropped host stores,4096 late-word corruptions,
+8192 dropped scratch restoration writes, counter wrap and transfer/map/PCI
+failures under ASan/UBSan. A synchronous tensor-span adapter is explicitly
+opt-in at the native client; legacy transports keep their old page path.
+
+Full-model bulk loading passed with verifier SHA
+`a5a5f185664d07178102586f3c4dca5921a5b46c2ec16324159aa588a1380406`:
+all197 learned tensors/670482432bytes/163692pages, all22 full-vocabulary
+logit vectors CPU-identical (cosine1/L2=0), four identical greedy output
+tokens,616 attention ops/4928 tiles/5148 matrix calls and END2/PCI1/host1/
+cold0. Total587.490s; weight preparation/upload/cache350.930330s versus
+876.625116s previously, approximately2.50x faster. Matrix147.476447s,
+attention60.832223s, activation preprocessing0.366104s. The three generated-
+input warm samples took31.736450s (0.094529tokens/s): **generation speed did
+not improve**. Evidence:`full-qwen-bulk.log` in the native directory above
+and ignored local`generated.pioneer/tenstorrent/bulk-upload-20261016/`.
+
+A separate block-boundary fence experiment for the old4KiB runtime input
+page passed exact outputs but did not consistently accelerate larger shapes:
+query2048 was26276us versus26046us, FFN-down1024 was29562us versus29027us.
+The64-output sample was11578us, but compute/proof varied too. This is not a
+matched speedup qualification. The experiment was removed; the fully
+qualified`f29ab031` driver restored normally after clean session ends.
+The rejected candidate SHA
+`317d247aa31e39958619edf788132837e59313629404fda5fec23b7951e46cb2`
+and its`block-profile-*.log` files remain in the isolated native test folder.
+
+Assistant now prefers bulk loading only when its capability is advertised
+at the initial open, before BEGIN. A legacy driver is selected up front as
+legacy; **no transfer failure can trigger fallback/retry**. The real client
+against synthetic syscalls tests both modes, every38 proof-field corruption,
+request failure, counter wrap and capability absence. Native idle mode-switch
+and malformed/unpinned request tests pass in the updated installed build.
+The installed public-generation smoke is still in progress at this checkpoint.
+
+Read-only1.7B inventory (not an executable-card qualification) confirms
+28 layers,2048 embeddings,6144 FFN,16 query/8 KV heads and width128. Its197
+Q8 matrices would occupy1935507456 packed bytes, within the existing2GiB
+arena; matrix shapes are2048×151936,2048×1024,2048×2048,6144×2048 and
+2048×6144. This does not check signed weight values, full graph compatibility
+or correctness, so the Assistant compatibility list is unchanged. The bounded
+header parser now reports Qwen3 metadata/matrix inventory without printing or
+evaluating remote chat templates. Q4/mixed formats and the27B architecture
+still need independent implementations and qualification.
+
+For interpreting performance targets, Tenstorrent distinguishes per-user
+generation from aggregate batch throughput in its
+[benchmark definitions](https://github.com/tenstorrent/tt-metal/blob/main/README.md).
+The [board specification](https://docs.tenstorrent.com/aibs/blackhole/index.html)
+lists120 Tensix cores and448GB/s memory bandwidth for p100a; our qualified
+two-worker, single-bank prototype does not approach that hardware utilization.
+No vendor peak or multi-user throughput figure is an achieved single-chat
+Qwen0.6B result for this Haiku port.
 
 Source/feasibility investigation started 2026-09-15. On October 15,
 TinyStories-260K generated eight verified tokens under Haiku with every

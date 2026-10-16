@@ -18,7 +18,12 @@ class PioneerResidentDevice {
 	bool active=false;
 public:
 	~PioneerResidentDevice() { Finish(); }
-	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false,bool reuse=false,bool attention=false) { assert(capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact) && (!reuse || dual) && (!attention || reuse)); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; PioneerHostDeviceState().reuse=reuse; PioneerHostDeviceState().attention=attention; return true; }
+	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false,bool reuse=false,bool attention=false,unsigned bulkUpload=0) { assert(capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact) && (!reuse || dual) && (!attention || reuse) && bulkUpload<=2 && (!bulkUpload || reuse)); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; PioneerHostDeviceState().reuse=reuse; PioneerHostDeviceState().attention=attention; return true; }
+	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
+		assert(pages>=1 && pages<=4);
+		for (unsigned p=0;p<pages;p++) if (!Upload(offset+p*4096,data+p*1024)) return false;
+		return true;
+	}
 	bool AttentionTile(unsigned n,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* output) {
 		auto& s=PioneerHostDeviceState(); assert(active && s.attention); s.attentionCalls++; if (s.fail) return false;
 		float query[256],result[256]; memcpy(query,q,1024);

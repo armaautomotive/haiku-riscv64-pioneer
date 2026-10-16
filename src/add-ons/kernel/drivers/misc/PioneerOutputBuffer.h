@@ -3,9 +3,9 @@
 #define PIONEER_OUTPUT_BUFFER_H
 #include "PioneerHostPage.h"
 // Preparation/ownership policy. A separate CPU-only probe can qualify the
-// native allocation, but no resident transport adapter, DMA, core release or
-// compute capability exposes this buffer yet.
-// A future transfer controller must quarantine BOTH this buffer and the
+// native allocation. The opt-in bulk upload controller separately qualifies
+// this owner before any transfer; the allocation probe never issues DMA.
+// A transfer controller must quarantine BOTH this buffer and the
 // existing input page after uncertainty, not just one of them.
 enum { TT_OUTPUT_BUFFER_BYTES=16384,TT_OUTPUT_BUFFER_PAGES=4,TT_OUTPUT_BUFFER_WORDS=4096 };
 enum {

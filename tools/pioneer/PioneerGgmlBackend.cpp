@@ -25,6 +25,9 @@ static PioneerGgmlBoundaryCallback sBoundary=NULL;
 static void* sBoundaryData=NULL;
 static bool Boundary() { return !sBoundary || sBoundary(sBoundaryData); }
 struct PioneerGgmlDevice:PioneerResidentDevice {
+	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
+		return Boundary() && PioneerResidentDevice::UploadPages(offset,data,pages) && Boundary();
+	}
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		return Boundary() && PioneerResidentDevice::Upload(offset,data) && Boundary();
 	}
@@ -68,6 +71,7 @@ static bool sExact=false;
 static bool sDual=false;
 static bool sDualReuse=false;
 static bool sAttention=false;
+static unsigned sBulkUpload=0;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -255,7 +259,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		if (op->op==GGML_OP_FLASH_ATTN_EXT) {
@@ -329,7 +333,7 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 		disabled.iface.supports_op=DisabledSupports; disabled.iface.supports_buft=DisabledBuffer;
 		return new(std::nothrow) ggml_backend {&guid,iface,&disabled,NULL};
 	}
-	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse)) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse) || sBulkUpload>2 || (sBulkUpload && !sDualReuse)) return NULL;
 	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention); if (!ctx) return NULL;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
@@ -380,6 +384,7 @@ void PioneerGgmlQ8Exact(bool enabled) { if (!sActive) sExact=enabled; }
 void PioneerGgmlQ8Dual(bool enabled) { if (!sActive) sDual=enabled; }
 void PioneerGgmlQ8DualReuse(bool enabled) { if (!sActive) sDualReuse=enabled; }
 void PioneerGgmlAttention(bool enabled) { if (!sActive) sAttention=enabled; }
+void PioneerGgmlBulkUpload(unsigned mode) { if (!sActive) sBulkUpload=mode; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {

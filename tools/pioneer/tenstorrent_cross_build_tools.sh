@@ -25,7 +25,7 @@ mkdir -m 700 "$tt_output"
 tt_names='tenstorrent_haiku_diag tenstorrent_haiku_bar4_probe
  tenstorrent_haiku_pioneer_profile tenstorrent_haiku_mmio_probe tenstorrent_haiku_arc_probe
  tenstorrent_haiku_telemetry_probe tenstorrent_haiku_tensix_probe tenstorrent_haiku_l1_probe tenstorrent_haiku_brisc_probe tenstorrent_haiku_dram_probe tenstorrent_haiku_dram_samples tenstorrent_haiku_matmul_probe tenstorrent_haiku_trisc_probe tenstorrent_haiku_arc_query tenstorrent_haiku_clocked_matmul_probe tenstorrent_haiku_tile_test tenstorrent_haiku_tile_accuracy tenstorrent_haiku_tinyllama tenstorrent_haiku_qwen_q4_probe tenstorrent_haiku_compute_noc tenstorrent_haiku_resident_read tenstorrent_haiku_resident_math tenstorrent_haiku_resident_gemv tenstorrent_haiku_host_path tenstorrent_haiku_host_page tenstorrent_haiku_host_dma_audit tenstorrent_haiku_host_read'
-tt_names="$tt_names tenstorrent_haiku_host_write tenstorrent_haiku_resident_session tenstorrent_haiku_runtime_matvec tenstorrent_haiku_q8_scaled_projection tenstorrent_haiku_output_buffer tenstorrent_haiku_attention_probe tenstorrent_haiku_attention_mix"
+tt_names="$tt_names tenstorrent_haiku_host_write tenstorrent_haiku_resident_session tenstorrent_haiku_runtime_matvec tenstorrent_haiku_q8_scaled_projection tenstorrent_haiku_output_buffer tenstorrent_haiku_attention_probe tenstorrent_haiku_attention_mix tenstorrent_haiku_bulk_upload"
 for tt_name in $tt_names; do
  case "$tt_name" in
   tenstorrent_haiku_diag) tt_language=c; tt_standard=c11; tt_extension=c; set -- ;;
@@ -54,4 +54,4 @@ fi
  cd "$tt_output"
  tt_hash $tt_names > artifacts.sha256
 )
-printf 'Built thirty-four P100A utilities in %s; no device was accessed\n' "$tt_output"
+printf 'Built thirty-five P100A utilities in %s; no device was accessed\n' "$tt_output"

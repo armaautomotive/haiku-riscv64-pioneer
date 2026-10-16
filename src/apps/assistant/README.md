@@ -31,9 +31,16 @@ desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
   host weight loading, plus the measured P100A upload on its first reply.
   Stages without a measurable fraction show their name, not a fabricated
   percentage. P100A Load prepares the host model/contexts; it does not eagerly
-  upload card weights. The first reply still performs that ~15-minute upload,
+  upload card weights. The first reply still performs a several-minute upload,
   and another upload is needed after Unload. Closing/hiding the window alone
   does not unload the service's model.
+- Qwen modes use the qualified1..4-page bulk uploader when the driver
+  advertises it at initial open, before BEGIN. A standalone full-model test
+  reduced weight preparation/upload from876.6s to350.9s, with CPU-identical
+  logits at all22 positions and clean release. This is a loading improvement,
+  not generation acceleration (the warm diagnostic remained0.095tokens/s).
+  Older drivers retain their original upload path; any transfer error stops
+  without retry, transport switching or CPU result substitution.
 - **Models…** opens the native model manager: choose an installed model or
   install another from the curated Hugging Face catalog, with progress and
   cancellation. Model files stay in `~/models` and are shared across chats.

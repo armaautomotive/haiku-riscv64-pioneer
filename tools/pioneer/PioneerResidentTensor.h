@@ -26,6 +26,26 @@ static inline uint64_t PioneerResidentTensorBytes(unsigned inputs,unsigned outpu
 	return PioneerResidentTensorShape(inputs,outputs)?uint64_t(inputs/16)*(outputs/16)*576:0;
 }
 
+// Prefer a synchronous bounded span when the transport exposes it. Legacy
+// adapters retain their exact page-at-a-time behaviour, including failure
+// boundaries. Neither path queues data beyond this call.
+template<class IO>
+auto PioneerTensorUpload(IO& io,uint64_t offset,const uint32_t* data,unsigned pages,uint64_t& uploaded,int)
+	-> decltype(io.UploadPages(offset,data,pages),bool())
+{
+	if (!io.UploadPages(offset,data,pages)) return false;
+	uploaded+=pages; return true;
+}
+template<class IO>
+bool PioneerTensorUpload(IO& io,uint64_t offset,const uint32_t* data,unsigned pages,uint64_t& uploaded,long)
+{
+	for (unsigned page=0;page<pages;page++) {
+		if (!io.Upload(offset+page*4096,data+page*1024)) return false;
+		uploaded++;
+	}
+	return true;
+}
+
 // Immutable model weights only. An identity must stay alive and its data
 // unchanged until this cache is destroyed. Never use with trainable tensors.
 // IO performs synchronous, fail-closed owned-page uploads and real matvecs.
@@ -141,9 +161,9 @@ public:
 				if (f32Scales) packed[size_t(byte/4)]=PioneerQ8HalfToFloatBits(d);
 				else packed[size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
 			}
-			for (unsigned page=0;page<tileBytes;page+=4096) {
-				if (!io.Upload(next+uint64_t(row/rowStep)*tileBytes+page,packed.data()+page/4)) { failed=true; return false; }
-				uploadedPages++;
+			for (unsigned page=0;page<tileBytes;page+=16384) {
+				unsigned pages=(tileBytes-page)/4096; if (pages>4) pages=4;
+				if (!PioneerTensorUpload(io,next+uint64_t(row/rowStep)*tileBytes+page,packed.data()+page/4,pages,uploadedPages,0)) { failed=true; return false; }
 			}
 		}
 		offset=next; next+=bytes; entries.push_back({identity,encoding,inputs,outputs,offset}); return true;

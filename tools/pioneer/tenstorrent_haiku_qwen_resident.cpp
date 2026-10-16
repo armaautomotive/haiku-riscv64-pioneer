@@ -19,7 +19,8 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool deviceAttention=argc==3 && !strcmp(argv[1],"--verify-device-attention-q8-host1");
+	bool bulkUpload=argc==3 && !strcmp(argv[1],"--verify-device-attention-bulk-upload-q8-host1");
+	bool deviceAttention=bulkUpload || (argc==3 && !strcmp(argv[1],"--verify-device-attention-q8-host1"));
 	bool reuse=deviceAttention || (argc==3 && (!strcmp(argv[1],"--verify-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-reuse-q8-host1")));
 	bool dual=reuse || (argc==3 && (!strcmp(argv[1],"--verify-dual-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1")));
 	bool exact=dual || ((argc==3 || argc==4) && (!strcmp(argv[1],"--probe-native-q8-exact-reference") || !strcmp(argv[1],"--verify-native-q8-exact-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1") || !strcmp(argv[1],"--trace-native-q8-exact")));
@@ -70,6 +71,7 @@ int main(int argc,char** argv) {
 	PioneerGgmlQ8Dual(dual);
 	PioneerGgmlQ8DualReuse(reuse);
 	PioneerGgmlAttention(deviceAttention);
+	PioneerGgmlBulkUpload(bulkUpload);
 	if (deviceAttention) {
 		params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_ENABLED;
 		params.offload_kqv=true; params.op_offload=true;
@@ -105,6 +107,7 @@ int main(int argc,char** argv) {
 	if (dual) puts("Two fixed bulk workers; no reduction-dimension split; every matvec requires BOTH independent completion/stop/NoC proofs; not a CPU speedup claim");
 	if (reuse) puts("Explicit guarded per-core input/scales reuse; every result still computed, poisoned, read and proved; no CPU learned products or result substitution");
 	if (deviceAttention) puts("DEVICE ATTENTION: all28 fused attention operations/224 grouped-head tiles per position REQUIRED; QK/PV on SFPU, softmax on card TRISC0; host KV prefix staging, NOT a speedup claim");
+	if (bulkUpload) puts("EXPLICIT BULK UPLOAD: synchronous 1..4-page owned transfer; original learned tensor bytes and all numerical/coverage/cleanup gates unchanged");
 	printf("Both independent contexts K/V cache types: %d/%d (%s); graph/logit/greedy gates unchanged\n",int(params.type_k),int(params.type_v),f32Kv?"explicit FP32 precision experiment":"library defaults");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
 	for (int position=0;passed && generated<4;position++) {
@@ -160,8 +163,8 @@ int main(int argc,char** argv) {
 	bool clean=PioneerGgmlFinish(); passed &= clean && generated==4;
 	printf("%s: generated %u checked Qwen tokens, retained %llu tensors / %llu bytes, %llu pages uploaded, %llu real matvec calls; cleanup %u, total %.3fs\n",
 		passed?"PASS":"FAIL",generated,(unsigned long long)stats.tensors,(unsigned long long)stats.bytes,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs,clean,Seconds()-begin);
-	printf("Backend phase totals: weight preparation/upload/cache %.6fs, activation preprocessing %.6fs, matvec/staging/result %.6fs, primitive diagnostics %.6fs; not device-only timing\n",
-		stats.weightSeconds,stats.inputSeconds,stats.matvecSeconds,stats.diagnosticSeconds);
+	printf("Backend phase totals: weight preparation/upload/cache %.6fs, activation preprocessing %.6fs, matvec/staging/result %.6fs, attention/staging/result %.6fs, primitive diagnostics %.6fs; not device-only timing\n",
+		stats.weightSeconds,stats.inputSeconds,stats.matvecSeconds,stats.attentionSeconds,stats.diagnosticSeconds);
 	if (passed && decodeSeconds>0 && !diagnose) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
 	llama_free(actual); llama_free(reference); llama_model_free(model); llama_backend_free(); return passed?0:1;
 }

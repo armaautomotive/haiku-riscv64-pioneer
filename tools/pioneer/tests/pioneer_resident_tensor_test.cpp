@@ -60,6 +60,16 @@ struct TensorIO {
 		return true;
 	}
 };
+struct BatchTensorIO:TensorIO {
+	unsigned spans=0,spanFail=0;
+	std::vector<unsigned> sizes;
+	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
+		assert(pages>=1 && pages<=4); sizes.push_back(pages);
+		if (++spans==spanFail) return false;
+		for (unsigned p=0;p<pages;p++) if (!Upload(offset+p*4096,data+p*1024)) return false;
+		return true;
+	}
+};
 static uint16_t QScale(unsigned r,unsigned b) { const uint16_t h[]={0x2801,0xb503,0,0x8000,1,0x83ff}; return h[(r+b)%6]; }
 static void QBlock(unsigned r,unsigned b,uint8_t* out,bool native=false) {
 	uint16_t h=QScale(r,b); out[0]=uint8_t(h); out[1]=uint8_t(h>>8);
@@ -183,6 +193,21 @@ int main() {
 			quant.callFail=fault==3?1:0; quant.nonfinite=fault==4;
 			if (fault==5) assert(!c.Weights(&first,8,1024,32,decode,offset) && c.Failed());
 			else assert(!c.Q8Multiply(offset,1024,32,x.data(),output) && c.Failed());
+		}
+	}
+	for (unsigned fault=0;fault<7;fault++) {
+		BatchTensorIO batch; batch.compact=batch.native=batch.exact=true; batch.spanFail=fault;
+		PioneerResidentTensorCache<BatchTensorIO> c(batch,16*1024*1024,false,true,true,true);
+		bool okay=c.Q8Weights(&first,8,1024,64,[](unsigned r,unsigned b,uint8_t* out) { QBlock(r,b,out,true); return true; },offset);
+		assert(okay==(fault==0) && c.Failed()==(fault!=0));
+		if (okay) {
+			assert(c.uploadedPages==18 && batch.uploads==18 && batch.spans==6 && batch.sizes==std::vector<unsigned>({4,4,1,4,4,1}));
+			std::vector<uint8_t> x(32*34); for (unsigned b=0;b<32;b++) QBlock(3,b,x.data()+b*34);
+			assert(c.Q8Multiply(0,1024,64,x.data(),output));
+			for (unsigned row=0;row<64;row++) assert(output[row]==QReference(row,1024,x.data(),true,true));
+		} else {
+			assert(batch.spans==fault && !batch.calls && c.Tensors()==0);
+			assert(!c.Q8Weights(&second,8,1024,64,[](unsigned,unsigned,uint8_t*) { assert(false); return false; },offset) && batch.spans==fault);
 		}
 	}
 	printf("PASS: immutable tensor packing/cache, changed vectors, multi-call classifier chunks, capacity/nonfinite/transport failures; NO hardware\n");

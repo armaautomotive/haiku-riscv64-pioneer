@@ -24,7 +24,7 @@ static const AssistantHardware kAssistantHardware[] = {
 	{"p100a-qwen", "P100A — Qwen3 0.6B (experimental, slow)",
 		"Runs the verified Qwen3-0.6B Q8_0 model on two P100A cores.\n"
 		"Currently SLOWER than CPU: about 0.15 output tokens/second.\n"
-		"First request uploads weights (~15 minutes); later requests reuse them.\n"
+		"First request uploads weights (several minutes); later requests reuse them.\n"
 		"Short questions only: 512 UTF-8 bytes / 192 prompt tokens, 8 output tokens.\n"
 		"CPU attention + independent validation; no tools/history or CPU fallback.\n"
 		"Stop waits for the current checked transfer/matvec. Other models unsupported."},
@@ -35,7 +35,7 @@ static const AssistantHardware kAssistantHardware[] = {
 		"Device completion/stop, coverage, finite-output and recovery checks remain.\n"
 		"Same short-question/eight-token limits; no history, tools or CPU fallback.\n"
 		"Fast means validation off, NOT a faster-than-CPU guarantee.\n"
-		"First upload can take ~15 minutes; checked/Fast switching keeps warm weights."},
+		"First upload takes several minutes; checked/Fast switching keeps warm weights."},
 	{"p100a-qwen-attention", "P100A Attention — Qwen3 0.6B (experimental)",
 		"Qwen3-0.6B Q8_0 matrices AND attention execute on the P100A.\n"
 		"QK/PV use Tensix; softmax runs on the card's control core.\n"

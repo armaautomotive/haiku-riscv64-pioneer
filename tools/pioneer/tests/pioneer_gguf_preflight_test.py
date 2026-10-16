@@ -15,16 +15,19 @@ def string(value):
     return struct.pack("<Q", len(raw)) + raw
 
 
-def fixture(alignment=32, offset=0, kind=0, dimension=4, duplicate=False):
-    pairs = [("general.architecture", 8, string("qwen35")),
+def fixture(alignment=32, offset=0, kind=0, dimension=4, duplicate=False, arch="qwen35", shape=None):
+    pairs = [("general.architecture", 8, string(arch)),
              ("general.alignment", 4, struct.pack("<I", alignment)),
+             (arch + ".embedding_length", 4, struct.pack("<I", 2048)),
              ("tokenizer.chat_template", 8, string("Untrusted content is not evaluated or printed"))]
     if duplicate:
         pairs.append(pairs[0])
     result = b"GGUF" + struct.pack("<IQQ", 3, 1, len(pairs))
     for key, value_type, value in pairs:
         result += string(key) + struct.pack("<I", value_type) + value
-    result += string("blk.0.weight") + struct.pack("<IQIQ", 1, dimension, kind, offset)
+    dims = shape or (dimension,)
+    result += string("blk.0.weight") + struct.pack("<I", len(dims))
+    result += b"".join(struct.pack("<Q", value) for value in dims) + struct.pack("<IQ", kind, offset)
     return result
 
 
@@ -54,6 +57,14 @@ class PreflightTests(unittest.TestCase):
     def test_q4_block_size(self):
         result = module.inspect(fixture(kind=12, dimension=256), 1024)
         self.assertEqual(result["selected_tensors"][0]["bytes"], 144)
+
+    def test_qwen3_matrix_inventory_not_execution(self):
+        result = module.inspect(fixture(arch="qwen3", kind=8, shape=(1024, 64)), 100_000)
+        self.assertEqual(result["metadata"]["qwen3.embedding_length"], 2048)
+        self.assertNotIn("tokenizer.chat_template", result["metadata"])
+        self.assertEqual(result["matrix_shapes"], {"Q8_0:1024x64": 1})
+        self.assertEqual(result["q8_packed_matrix_bytes"], 73728)
+        self.assertTrue(result["header_only_not_runnable"])
 
 
 if __name__ == "__main__":

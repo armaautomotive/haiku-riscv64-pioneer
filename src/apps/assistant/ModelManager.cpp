@@ -124,7 +124,7 @@ ModelManager::Details()
 			"P100A TinyStories experiments are not a general chat backend.";
 	if (index==0) text << "\nTo run this exact model on P100A, open Hardware and select P100A — Qwen3 0.6B.\n"
 		"Validated and Fast (no CPU reference) targets are available; neither guarantees a CPU speedup.\n"
-		"First request uploads weights for about 15 minutes; warm Qwen mode changes reuse them.";
+		"First request uploads weights for several minutes; warm Qwen mode changes reuse them.";
 	fDetails->SetText(text.String());
 	fSelect->SetLabel((size_t)index == kAssistantTinyModel ? "Use on P100A (story mode)" : "Use on CPU (chat)");
 	bool present = AssistantModelPresent(index);

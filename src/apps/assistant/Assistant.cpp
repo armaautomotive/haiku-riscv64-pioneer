@@ -264,7 +264,7 @@ private:
 				"Experimental PIO-staged KV; may be slower than Fast. Eight tokens; no tools/history.\n"
 				:fast?"P100A Fast Qwen3-0.6B — CPU validation OFF; experimental, no CPU-speedup guarantee.\n"
 				"CPU attention remains. Device safety checks retained. Eight output tokens; no tools/history.\n"
-				:"Experimental P100A Qwen3-0.6B — slower than CPU; first upload can take 15 minutes.\n"
+				:"Experimental P100A Qwen3-0.6B — slower than CPU; first upload takes several minutes.\n"
 				"Single short question; no history or system tools. Eight checked output tokens.\n";
 			fDisplay+="\nYou: "+fPending+"\n\nQwen (P100A): ";
 			fService=BMessenger(kServiceSignature);

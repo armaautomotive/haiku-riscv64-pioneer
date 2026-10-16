@@ -42,6 +42,9 @@ void PioneerGgmlQ8DualReuse(bool enabled);
 // Explicit bounded Qwen0.6B fused attention; requires exact dual-reuse mode.
 // PIO-staged prefix, not persistent device KV or a speedup qualification.
 void PioneerGgmlAttention(bool enabled);
+// 0: legacy; 1: require bulk capability; 2: prefer it when advertised at
+// initial open, before BEGIN. Never switch/fall back after any transfer error.
+void PioneerGgmlBulkUpload(unsigned mode);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);

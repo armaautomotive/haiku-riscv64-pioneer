@@ -47,6 +47,7 @@ struct AssistantP100AQwen::Data {
 		PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true);
 		PioneerGgmlQ8Exact(true); PioneerGgmlQ8Dual(true); PioneerGgmlQ8DualReuse(true);
 		PioneerGgmlAttention(attention);
+		PioneerGgmlBulkUpload(2); // capability selection before BEGIN; no error fallback
 		static bool registered=false;
 		if (!registered) { ggml_backend_register(PioneerGgmlReg()); registered=true; }
 		llama_context_params p=llama_context_default_params();
@@ -63,7 +64,7 @@ struct AssistantP100AQwen::Data {
 		double now=Now();
 		if (self.progress && now-self.last>=1) {
 			PioneerGgmlStats s={}; PioneerGgmlSnapshot(s); char status[240];
-			if (s.tensors<197) snprintf(status,sizeof(status),"P100A first-use upload: %.1f/639.4 MiB, %llu/197 matrices; can take ~15 minutes. Stop is transfer-boundary safe.",double(s.uploads)/256,(unsigned long long)s.tensors);
+			if (s.tensors<197) snprintf(status,sizeof(status),"P100A first-use upload: %.1f/639.4 MiB, %llu/197 matrices; can take several minutes. Stop is transfer-boundary safe.",double(s.uploads)/256,(unsigned long long)s.tensors);
 			else snprintf(status,sizeof(status),"P100A Qwen%s: %llu matrices, %llu card attention ops, %.1fs; %s attention; CPU validation %s.",self.attention?" Attention":self.validate?"":" Fast",(unsigned long long)s.matvecs,(unsigned long long)s.attentionOps,now-self.started,self.attention?"P100A":"CPU",self.validate?"ON":"OFF");
 			(*self.progress)(*self.answer,status); self.last=now;
 		}

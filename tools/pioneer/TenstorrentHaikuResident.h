@@ -14,12 +14,13 @@ class PioneerResidentDevice {
 	tt_pioneer_attention_tile_test* attentionRequest=NULL;
 	bool dual=false,reuse=false;
 	bool attention=false;
+	bool bulkUpload=false;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false) {
-		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || !PioneerResidentCapacity(bytes)) return false;
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0) {
+		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || groupedUpload>2 || (groupedUpload && !reuseInput) || !PioneerResidentCapacity(bytes)) return false;
 		fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 		if (fd<0) { perror("resident open"); failed=true; return false; }
 		tt_resident_session_result s={};
@@ -35,6 +36,8 @@ public:
 		dual=twoCores;
 		reuse=reuseInput;
 		attention=deviceAttention;
+		bulkUpload=groupedUpload && (s.capabilities&TT_PIONEER_CAP_BULK_UPLOAD);
+		if (groupedUpload==1 && !bulkUpload) { fprintf(stderr,"Explicit owned bulk upload unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		if (fp16 && !(s.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (q8 && !(s.capabilities&1024)) { fprintf(stderr,"Scaled Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (compact && !(s.capabilities&2048)) { fprintf(stderr,"Compact Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
@@ -44,6 +47,7 @@ public:
 		if (reuse && !(s.capabilities&TT_PIONEER_CAP_Q8_DUAL_REUSE)) { fprintf(stderr,"Guarded exact activation reuse unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		if (attention && !(s.capabilities&TT_PIONEER_CAP_ATTENTION_TILE_SHARED)) { fprintf(stderr,"Shared attention capability unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
+		if (bulkUpload) fprintf(stderr,"Explicit owned bulk upload: synchronous 1..4 pages, six exact proofs and full CPU comparisons\n");
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
 		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
@@ -80,6 +84,28 @@ public:
 		}
 		uploads++;
 		if (!(uploads%4096)) fprintf(stderr,"Resident upload verified: %llu MiB\n",(unsigned long long)(uploads/256));
+		return true;
+	}
+	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
+		if (!active || failed || finished || cold || !data || !pages || pages>4) return false;
+		if (!bulkUpload) {
+			for (unsigned page=0;page<pages;page++) if (!Upload(offset+page*4096,data+page*1024)) return false;
+			return true;
+		}
+		tt_pioneer_bulk_upload p={}; p.version=1; p.pages=pages; p.offset=offset; memcpy(p.data,data,pages*4096);
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_BULK_UPLOAD,&p,sizeof(p));
+		const auto& r=p.result.transfer; cold=r.recovery_required!=0;
+		bool proved=!status && r.version==1 && r.state==TT_STORE_PASSED && r.requests==6 && r.completed==6
+			&& r.wrote_device && r.host_write_issued && r.host_visible && r.readback_complete && !r.mismatches && !cold
+			&& p.result.pages==pages && p.result.host_words==pages*1024 && p.result.host_ready && p.result.l1_prepared;
+		for (unsigned step=0;step<6;step++) for (unsigned w=0;w<4;w++)
+			proved &= uint32_t(r.after[step][w]-r.before[step][w])==(w==1?64*pages:1);
+		if (!proved) {
+			closeOnly=true; failed=true;
+			fprintf(stderr,"Resident bulk upload STOP status %d state %u offset %llu pages %u cold %u; close only, no fallback/retry\n",status,r.state,(unsigned long long)offset,pages,cold); return false;
+		}
+		uploads+=pages;
+		if (uploads%4096<pages) fprintf(stderr,"Resident bulk upload verified: %llu MiB\n",(unsigned long long)(uploads/256));
 		return true;
 	}
 	bool Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,uint32_t* result) {
