@@ -107,6 +107,94 @@ out while establishing the Haiku port baseline.
 
 #### Native scaled Q8 integer blocks (full-model verifier in progress)
 
+##### Compact Q8 candidate (offline-qualified, not yet deployed)
+
+A separate fixed `TT_RUNTIME_Q8_COMPACT` image retains the scaled integer
+arithmetic but stores one 576-byte tile per 32-K / 16-output block: 32 bytes
+of original FP16 scales, 512 original signed quant bytes, 32 bytes padding.
+That is **1.125 bytes/parameter**, exactly half the expanded Q8 layout.
+N must be a multiple of 32, making all supported K tensor/chunk sizes 4-KiB
+aligned. No scale/quant is rounded or discarded. The tensor cache packs
+32 output rows at a time and preserves the existing expanded mode.
+
+The fixed reader fetches into the already saved `17e000` L1 tail only for
+even 16-K math tiles; the next tile reuses the other half of that payload.
+A fixed 256-entry signed-byte lookup at `70e00..70fff` expands every value,
+including -128, into the already qualified integer overlay at `70710`.
+Neither payload nor descriptor is executable. Scalar byte/halfword accesses
+remain strictly within these fixed regions. Original scales are preserved
+before vector staging; SFPU math and final phase/park remain `703ec/70404`.
+The NoC fault park is `70ab8`. Each operation requires **exactly half as
+many** read responses/requests/accepted IDs and nine 64-byte flits per read,
+while still requiring all math tiles. This changes expected byte counts,
+not the strength of completion/idle/park proof. L1-tail dirtiness is explicit
+and can be restored only after proven completion/stop, never on uncertainty.
+
+The separate ioctl is `54c3`, capability bit 2048 (candidate capabilities
+4095), CPU profile format 5. All previous request ABIs and expanded modes
+remain unchanged. Compact/expanded prepared formats cannot be switched
+inside a session; compact requests refuse unsupported or out-of-range shapes.
+The added lifecycle checks exercise foreign-FD and inherited-team denial for
+both scaled formats without starting computation.
+
+ASan/UBSan passes independent assembled-image equality, all 256 lookup
+entries, all five K widths and multiple N tiles/weight bases, delayed NoC,
+missing-response parks, omitted decoding/cast/scale/accumulation, quant/scale
+corruption, exact half read counts and full independent numerical references.
+All **65** lost post-upload compact control writes and explicit timeout,
+bad PC/flits/source/stop tests preserve quarantine/no-reset rules. Immutable
+cache tests pass both formats, repeated vectors/one upload, multi-chunk
+classifiers, original subnormal/negative/zero scales, capacity/transport and
+nonfinite refusal. Pristine pinned ggml tests pass each format and reject
+wrong arithmetic without fallback. Jam and all 31 diagnostics build.
+
+Local, **not installed** candidate:
+
+- Driver `7d090204b85f27aa20bf4ba53636314211ca21cb7a837900d236769ecd38a9cc`
+  frozen at `/private/tmp/pioneer-q8-compact-final-tools-20261015/tenstorrent_pci_probe.candidate`.
+- Projection CLI `4274e91182c88b02d977c83d76c24ae5a8b3771da628f0cff8fc985abc78e969`;
+  use `--run-qwen-q8-compact`, never assume the new capability exists.
+- Lifecycle CLI `72b4095d0ccc986859e3a58881926bedfd7486aee9af99b35f008f45c1882986`.
+- Standalone compact-capable full verifier
+  `f8fb01d372e4d15f42d617d9a1c0a9047bab7b0fdff9261fa25d683c04dd2821`
+  at `/private/tmp/pioneer-qwen-compact-q8-20261015/`.
+
+The existing expanded full-model verifier is still the sole live owner.
+Do not install/reload/query the card for this candidate until that process
+ends and a safe terminal result is established. Next gates are independent
+native 32x1024 / 32x3072 / full-2048 projection comparisons, exact counters,
+refusal/reuse, old-mode/lifecycle regressions and post audit, then full-model
+testing. **Neither a compact native result nor a speedup is yet proven.**
+Halving bytes/requests is not evidence that the scalar decoder improves
+end-to-end throughput; native timing and multicore/bulk work are still needed.
+
+The standalone verifier additionally has `--benchmark-int8-q8` and
+`--benchmark-compact-q8`. Only after its original four-token bootstrap
+passes does it run three distinct public requests with up to 16 natural
+greedy tokens each. A CPU32 context with prompt batch/ubatch 128 is created
+**before** any P100A registration; the card context uses CPU32/batch1.
+Every generated card token must match the independent CPU token and pass
+the unchanged all-vocabulary cosine/L2 gates; no reference token is fed
+to the card to repair divergence. An early reply shorter than eight tokens
+does not become a padded rate. Upload/tensor/byte counts must stay fixed
+across all requests. Synchronous decode plus greedy sampling wall-time sums
+include host/control work, but exclude model load, cold upload, tokenization,
+KV reset, logging and reference diagnostics; these exclusions are printed.
+Per-request JSON reports TTFT, generated-token samples (excluding the first
+token produced by prefill), total time and both rates. Qualification requires
+each of three requests to improve both generation and total time by at
+least 5%, not just return correct text. This still does not qualify Assistant
+integration, longer-context use or the requested 27B model.
+
+The benchmark controller's ASan/UBSan **fake-only** tests cover CPU batching
+vs single-vector card dispatch, three-request accounting, greedy/logit failure,
+weight reupload, short output, invalid clock/timing, and a mathematically
+correct but slower card. All rates in those tests are synthetic, not device
+evidence. The compiled real candidate is
+`bdb5706f06f7e71370e28b72b471d4f816fc6e3c07df0267f2f9aeec83ea532c`
+under `/private/tmp/pioneer-qwen-warm-benchmark-checked-20261015/`.
+It has not yet been run on hardware; native timing remains unproven.
+
 The trusted `TT_RUNTIME_Q8` variant now uses exact integer-8 matrix dots
 over each **32-value block**, converts sign-magnitude dots with deterministic
 `SFPCAST`, multiplies original weight/activation block scales, and accumulates

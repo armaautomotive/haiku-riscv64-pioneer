@@ -10,30 +10,33 @@ static int Input(unsigned k,unsigned trial) { return int((k*17+trial*29)%256)-12
 static float Scale(unsigned block,unsigned trial) { return float(int((block*7+trial*3)%31)-15)/1024.0f; }
 int main(int argc,char** argv)
 {
-	bool support=argc==2 && !strcmp(argv[1],"--check-support");
+	bool compact=argc>=2 && (!strcmp(argv[1],"--run-qwen-q8-compact") || !strcmp(argv[1],"--check-compact-support"));
+	bool support=argc==2 && (!strcmp(argv[1],"--check-support") || !strcmp(argv[1],"--check-compact-support"));
 	unsigned outputs=32;
 	if (argc==5) {
 		char* end=NULL; unsigned long n=strtoul(argv[4],&end,10);
 		if (!end || end==argv[4] || *end || n<16 || n>4096 || (n&15)) return 2;
 		outputs=unsigned(n);
 	}
-	if (!support && ((argc!=3 && argc!=5) || strcmp(argv[1],"--run-qwen-q8-scaled"))) {
-		fprintf(stderr,"Usage: %s --check-support | --run-qwen-q8-scaled MODEL [TENSOR OUTPUT_ROWS]\nReal retained Q8_0 weights, two independent signed-byte vectors and per-block scales. NOT full inference or a CPU speedup.\n",argv[0]); return 2;
+	if (!support && ((argc!=3 && argc!=5) || (!compact && strcmp(argv[1],"--run-qwen-q8-scaled")))) {
+		fprintf(stderr,"Usage: %s --check-support|--check-compact-support | --run-qwen-q8-scaled|--run-qwen-q8-compact MODEL [TENSOR OUTPUT_ROWS]\nReal retained Q8_0 weights, two independent signed-byte vectors and per-block scales. NOT full inference or a CPU speedup.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("open"); return 1; }
 	tt_resident_session_result session={};
 	if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&session,sizeof(session))) { perror("support"); close(fd); return 1; }
-	printf("Session capabilities %u; scaled-Q8 bit1024 required\n",session.capabilities);
-	if (session.version!=1 || !(session.capabilities&1024)) { close(fd); return 1; }
+	unsigned capability=compact?2048:1024;
+	printf("Session capabilities %u; %s Q8 bit%u required\n",session.capabilities,compact?"compact":"scaled",capability);
+	if (session.version!=1 || !(session.capabilities&capability)) { close(fd); return 1; }
 	if (support) { close(fd); return 0; }
 	FILE* model=fopen(argv[2],"rb"); if (!model) { perror("model"); close(fd); return 1; }
 	PioneerGgufTensor tensor={};
 	if (!PioneerFindGgufTensor(model,argc==5?argv[3]:"blk.0.attn_q.weight",tensor)
-		|| tensor.inputs>TT_RUNTIME_MATVEC_INPUTS_MAX || tensor.outputs<outputs || !PioneerMatvecShape(unsigned(tensor.inputs),outputs)
+		|| tensor.inputs>TT_RUNTIME_MATVEC_INPUTS_MAX || tensor.outputs<outputs || !(compact?PioneerQ8CompactShape(unsigned(tensor.inputs),outputs):PioneerMatvecShape(unsigned(tensor.inputs),outputs))
 		|| fseeko(model,off_t(tensor.offset),SEEK_SET)) { fprintf(stderr,"Unsupported Q8_0 tensor\n"); fclose(model); close(fd); return 1; }
 	unsigned inputs=unsigned(tensor.inputs),blocks=inputs/32;
-	unsigned bytes=unsigned(PioneerMatvecWeightBytes(inputs,outputs));
+	unsigned bytes=unsigned(compact?PioneerQ8CompactWeightBytes(inputs,outputs):PioneerMatvecWeightBytes(inputs,outputs));
+	uint32_t operation=compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
 	uint8_t* raw=(uint8_t*)malloc(size_t(outputs)*blocks*34);
 	uint32_t* packed=(uint32_t*)calloc(bytes/4,4);
 	tt_pioneer_runtime_q8_matvec* request=(tt_pioneer_runtime_q8_matvec*)calloc(1,sizeof(*request));
@@ -46,14 +49,15 @@ int main(int argc,char** argv)
 		if ((d&0x7c00)==0x7c00) { passed=false; break; }
 		for (unsigned i=0;i<32;i++) {
 			int q=data[2+i]; if (q>=128) q-=256;
-			uint64_t byte=PioneerMatvecWeightElement(inputs,block*32+i,row);
-			packed[byte/4]|=uint32_t(PioneerInt8Operand(q))<<(8*(byte&3));
+			uint64_t byte=compact?PioneerQ8CompactValueByte(inputs,block*32+i,row):PioneerMatvecWeightElement(inputs,block*32+i,row);
+			packed[byte/4]|=uint32_t(compact?uint16_t(data[2+i]):PioneerInt8Operand(q))<<(8*(byte&3));
 		}
-		uint64_t byte=(uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2;
+		uint64_t byte=compact?PioneerQ8CompactScaleByte(inputs,block,row):(uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2;
 		packed[byte/4]|=uint32_t(d)<<(8*(byte&3));
 	}
 	printf("Real Qwen Q8_0 tensor [%u,%llu], %u rows, %u bytes retained; all %u blocks/row, integer dots + device scales + SFPU accumulation\n",
 		inputs,(unsigned long long)tensor.outputs,outputs,bytes,blocks);
+	printf("Weight format %s; NoC reads per matvec %u (math tiles %u)\n",compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlay, 2.25 bytes/parameter",(inputs/16)*(outputs/16)/(compact?2:1),(inputs/16)*(outputs/16));
 	session={}; session.version=1; session.bytes=bytes;
 	if (passed) {
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session));
@@ -69,7 +73,7 @@ int main(int argc,char** argv)
 		memset(request,0,sizeof(*request)); auto& m=request->matvec; m.version=1; m.inputs=inputs; m.outputs=outputs;
 		for (unsigned k=0;k<inputs;k++) m.input[k/2]|=uint32_t(PioneerInt8Operand(Input(k,trial)))<<(16*(k&1));
 		for (unsigned b=0;b<blocks;b++) request->scale[b]=Bits(Scale(b,trial));
-		double start=Seconds(); int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,request,sizeof(*request));
+		double start=Seconds(); int status=ioctl(fd,operation,request,sizeof(*request));
 		const auto& r=m.result; cold=r.recovery_required!=0; closeOnly=status!=0;
 		printf("Trial %u state %u start/complete/stop %u/%u/%u cold %u phase/PC %x/%x/%x tiles %u NoC %u/%u/%u/%u elapsed %.6fs\n",
 			trial,r.state,r.started,r.completed,r.stopped,cold,r.phase,r.pc[0],r.pc[1],r.tiles,
@@ -96,7 +100,7 @@ int main(int argc,char** argv)
 		passed=!errors && isfinite(relative) && relative<1e-5;
 		if (passed) {
 			tt_runtime_profile_result p={}; status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&p,sizeof(p)); closeOnly=status!=0;
-			passed=!status && p.version==1 && p.available && p.clock_stable && p.format==4 && p.mask==0x17f
+			passed=!status && p.version==1 && p.available && p.clock_stable && p.format==(compact?5U:4U) && p.mask==0x17f
 				&& p.sequence>sequence && p.state==TT_RUNTIME_PASSED && !p.recovery_required && p.started && p.completed && p.stopped;
 			uint64_t last=0; for (unsigned i=0;i<TT_PROFILE_SLOTS;i++) if (p.mask&(1U<<i)) { passed &= p.microseconds[i]>=last; last=p.microseconds[i]; }
 			sequence=p.sequence;
@@ -107,16 +111,21 @@ int main(int argc,char** argv)
 	}
 	if (passed) {
 		auto& m=request->matvec; uint32_t saved=request->scale[0]; request->scale[0]=0x7fc00000;
-		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,request,sizeof(*request)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
+		int status=ioctl(fd,operation,request,sizeof(*request)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
 		passed=!status && m.result.state==TT_RUNTIME_REFUSED && !m.result.started && !cold;
 		printf("Nonfinite scale refused before start: %s\n",passed?"PASS":"FAIL"); request->scale[0]=saved;
 		if (passed) {
-			status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,&m,sizeof(m)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
+			// Keep the wrong format's weight range valid, so this tests the
+			// immutable prepared-code gate rather than an earlier range error.
+			if (compact) m.outputs=outputs/2;
+			status=compact?ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,request,sizeof(*request))
+				:ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,&m,sizeof(m)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
+			m.outputs=outputs;
 			passed=!status && m.result.state==TT_RUNTIME_CONFIG_FAILED && !m.result.started && !cold;
 			printf("Prepared-format switch refused: %s\n",passed?"PASS":"FAIL");
 		}
 		if (passed) {
-			status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,request,sizeof(*request)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
+			status=ioctl(fd,operation,request,sizeof(*request)); closeOnly=status!=0; cold=m.result.recovery_required!=0;
 			passed=!status && m.result.state==TT_RUNTIME_PASSED && m.result.started && m.result.completed && m.result.stopped && !cold && !memcmp(previous,m.output,outputs*4);
 			printf("Bit-identical reuse after refusals: %s\n",passed?"PASS":"FAIL");
 		}

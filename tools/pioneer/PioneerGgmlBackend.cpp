@@ -24,8 +24,9 @@ struct PioneerGgmlContext {
 	bool opened=false,failed=false;
 	const bool fp16;
 	const bool q8;
+	const bool compact;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
-	PioneerGgmlContext(bool half,bool quant):cache(device,Arena,half),fp16(half),q8(quant) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes):cache(device,Arena,half,rawBytes),fp16(half),q8(quant),compact(rawBytes) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -34,6 +35,7 @@ static bool sDiagnose=false;
 static bool sCpuActivationQuantization=false;
 static bool sFp16=false;
 static bool sQ8=false;
+static bool sCompact=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; };
 static std::map<std::string,ReferenceProjection> sReference;
@@ -52,6 +54,7 @@ static bool Supports(ggml_backend_dev_t,const ggml_tensor* op) {
 	return w->type==GGML_TYPE_Q8_0 && x->type==GGML_TYPE_F32 && op->type==GGML_TYPE_F32
 		&& w->ne[0]>0 && w->ne[0]<=TT_RUNTIME_MATVEC_INPUTS_MAX && w->ne[1]>0 && w->ne[1]<=262144
 		&& PioneerResidentTensorShape(unsigned(w->ne[0]),unsigned(w->ne[1]))
+		&& (!sCompact || PioneerQ8CompactTensorShape(unsigned(w->ne[0]),unsigned(w->ne[1])))
 		&& w->ne[2]==1 && w->ne[3]==1 && x->ne[0]==w->ne[0] && x->ne[1]==1 && x->ne[2]==1 && x->ne[3]==1
 		&& op->ne[0]==w->ne[1] && op->ne[1]==1 && op->ne[2]==1 && op->ne[3]==1
 		&& ggml_is_contiguous(w) && ggml_is_contiguous(x) && ggml_is_contiguous(op)
@@ -149,7 +152,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
@@ -194,8 +197,8 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	return GGML_STATUS_SUCCESS;
 }
 static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
-	if (sActive || (sFp16 && sQ8)) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact); if (!ctx) return NULL;
 	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
 	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
@@ -237,6 +240,7 @@ void PioneerGgmlDiagnose(bool enabled,const char* vectorPath) { if (!sActive) { 
 void PioneerGgmlCpuActivationQuantization(bool enabled) { if (!sActive) sCpuActivationQuantization=enabled; }
 void PioneerGgmlFp16Operands(bool enabled) { if (!sActive) sFp16=enabled; }
 void PioneerGgmlQ8Operands(bool enabled) { if (!sActive) sQ8=enabled; }
+void PioneerGgmlQ8Compact(bool enabled) { if (!sActive) sCompact=enabled; }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	bool wanted=t->op==GGML_OP_MUL_MAT && t->src[0] && t->src[0]->type==GGML_TYPE_Q8_0 && Supports(NULL,t);
 	if (ask) return wanted;

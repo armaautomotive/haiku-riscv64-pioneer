@@ -16,6 +16,18 @@ static bool Legacy(int fd,bool busy)
 	int result=ioctl(fd,TT_PCI_PROBE_PIONEER_HOST_READ_PAGE_SUPPORT,&version,sizeof(version));
 	return busy?result<0 && errno==EBUSY:result==0 && version==1;
 }
+static bool QuantizedDenied(int fd,uint32_t capabilities,int expected)
+{
+	tt_pioneer_runtime_q8_matvec request={}; request.matvec.version=1; request.matvec.inputs=1024; request.matvec.outputs=32;
+	bool denied=true;
+	if (capabilities&1024) {
+		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,&request,sizeof(request))<0 && errno==expected;
+	}
+	if (capabilities&2048) {
+		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT,&request,sizeof(request))<0 && errno==expected;
+	}
+	return denied;
+}
 static bool Begin(int fd,tt_resident_session_result& r,uint64_t bytes=8192)
 {
 	r={}; r.version=1; r.bytes=bytes;
@@ -126,6 +138,7 @@ int main(int argc,char** argv)
 		r.state,r.active,r.host_ready,r.host_address_bits,!r.pci_restored,r.cold);
 	if (passed) {
 		passed=Legacy(foreign,true) && Legacy(fd,true);
+		passed &= QuantizedDenied(foreign,r.capabilities,EBUSY);
 		if (r.capabilities&256) {
 			tt_runtime_profile_result profile={};
 			passed &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))==0
@@ -144,6 +157,7 @@ int main(int argc,char** argv)
 		if (child==0) {
 			tt_resident_session_result info={}; errno=0;
 			bool denied=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&info,sizeof(info))<0 && errno==EPERM;
+			denied &= QuantizedDenied(fd,r.capabilities,EPERM);
 			if (r.capabilities&256) {
 				tt_runtime_profile_result profile={}; errno=0;
 				denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))<0 && errno==EPERM;

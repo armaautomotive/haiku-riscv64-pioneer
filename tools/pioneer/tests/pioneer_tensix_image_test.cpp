@@ -221,6 +221,7 @@ struct Machine {
 		assert(drained || address == 0x17ffc0); // progress label precedes a completion wait
 		l1[Index(address)] = value;
 	}
+	virtual void Store16(uint32_t,uint16_t) { assert(false && "half store not allowed in this image"); }
 	virtual uint32_t Load(uint32_t address) {
 		assert((address & 3) == 0);
 		if (address == 0xffe80004) { assert(pendingDrainStore); pendingDrainStore = false; drained = true; drains++; return 0xdeadbeef; }
@@ -279,9 +280,14 @@ struct Machine {
 				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 6 || f3 == 7));
 				result = f3 == 0 ? regs[rs1] + regs[rs2] : f3 == 6 ? regs[rs1] | regs[rs2] : regs[rs1] & regs[rs2]; write = true;
 			} else if (op == 0x23) {
-				assert(f3 == 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
-				Store(regs[rs1]+imm,regs[rs2]);
-			} else if (op == 3) { assert(f3 == 2); result = Load(regs[rs1]+imm); write = true; }
+				assert(f3 == 1 || f3 == 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
+				if (f3==1) Store16(regs[rs1]+imm,uint16_t(regs[rs2])); else Store(regs[rs1]+imm,regs[rs2]);
+			} else if (op == 3) {
+				assert(f3==2 || f3==4 || f3==5); uint32_t address=regs[rs1]+imm;
+				if (f3==2) result=Load(address);
+				else { assert(f3!=5 || !(address&1)); result=(Load(address&~3U)>>(8*(address&3)))&(f3==4?255:65535); }
+				write=true;
+			}
 			else if (op == 0x63) {
 				assert(f3 == 0 || f3 == 1);
 				imm = Sign(((instruction>>31)<<12) | ((instruction>>7 & 1)<<11) | ((instruction>>25 & 63)<<5) | ((instruction>>8 & 15)<<1),13);

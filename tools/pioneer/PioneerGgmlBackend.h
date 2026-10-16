@@ -25,4 +25,5 @@ size_t PioneerGgmlReferenceCount();
 void PioneerGgmlCpuActivationQuantization(bool enabled);
 void PioneerGgmlFp16Operands(bool enabled);
 void PioneerGgmlQ8Operands(bool enabled);
+void PioneerGgmlQ8Compact(bool enabled);
 #endif

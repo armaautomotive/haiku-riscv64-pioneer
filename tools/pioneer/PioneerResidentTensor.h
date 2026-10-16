@@ -7,6 +7,7 @@
 #include <vector>
 #include "PioneerFloat16.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ8CompactLayout.h"
 
 static inline uint16_t PioneerResidentBf16(float value)
 {
@@ -32,18 +33,19 @@ template<class IO> class PioneerResidentTensorCache {
 	uint64_t capacity,next=0;
 	bool failed=false;
 	const bool fp16;
+	const bool compact;
 	unsigned mode=0; // one immutable packing/operation format per cache
 	std::vector<Entry> entries;
 public:
 	uint64_t uploadedPages=0,matvecCalls=0;
-	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false):io(transport),capacity(bytes),fp16(half) {}
+	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false,bool rawBytes=false):io(transport),capacity(bytes),fp16(half),compact(rawBytes) {}
 	bool Failed() const { return failed; }
 	size_t Tensors() const { return entries.size(); }
 	uint64_t Bytes() const { return next; }
 	template<class Decode> bool Weights(const void* identity,unsigned encoding,unsigned inputs,unsigned outputs,
 		Decode decode,uint64_t& offset)
 	{
-		if (failed || mode==2) { failed=true; return false; }
+		if (failed || mode==2 || compact) { failed=true; return false; }
 		mode=1;
 		for (const auto& e:entries) if (e.identity==identity) {
 			if (e.encoding!=encoding || e.inputs!=inputs || e.outputs!=outputs) { failed=true; return false; }
@@ -112,27 +114,28 @@ public:
 			if (e.encoding!=encoding || e.inputs!=inputs || e.outputs!=outputs) { failed=true; return false; }
 			offset=e.offset; return true;
 		}
-		uint64_t bytes=PioneerResidentTensorBytes(inputs,outputs);
+		uint64_t bytes=compact?PioneerQ8CompactWeightBytes(inputs,outputs):PioneerResidentTensorBytes(inputs,outputs);
 		if (!identity || !bytes || !PioneerResidentCapacity(capacity) || next>capacity || bytes>capacity-next) { failed=true; return false; }
-		const unsigned tileBytes=unsigned(PioneerMatvecWeightBytes(inputs,16));
+		const unsigned rowStep=compact?32:16;
+		const unsigned tileBytes=unsigned(compact?PioneerQ8CompactWeightBytes(inputs,rowStep):PioneerMatvecWeightBytes(inputs,rowStep));
 		std::vector<uint32_t> packed(tileBytes/4);
-		for (unsigned row=0;row<outputs;row+=16) {
+		for (unsigned row=0;row<outputs;row+=rowStep) {
 			memset(packed.data(),0,tileBytes);
-			for (unsigned r=0;r<16;r++) for (unsigned block=0;block<inputs/32;block++) {
+			for (unsigned r=0;r<rowStep;r++) for (unsigned block=0;block<inputs/32;block++) {
 				uint8_t data[34];
 				if (!decode(row+r,block,data)) { failed=true; return false; }
 				uint16_t d=uint16_t(data[0])|(uint16_t(data[1])<<8);
 				if ((d&0x7c00)==0x7c00) { failed=true; return false; }
 				for (unsigned i=0;i<32;i++) {
 					int q=data[2+i]; if (q>=128) q-=256;
-					uint64_t byte=PioneerMatvecWeightElement(inputs,block*32+i,r);
-					packed[size_t(byte/4)]|=uint32_t(PioneerInt8Operand(q))<<(8*(byte&3));
+					uint64_t byte=compact?PioneerQ8CompactValueByte(inputs,block*32+i,r):PioneerMatvecWeightElement(inputs,block*32+i,r);
+					packed[size_t(byte/4)]|=uint32_t(compact?uint16_t(data[2+i]):PioneerInt8Operand(q))<<(8*(byte&3));
 				}
-				uint64_t byte=uint64_t(block*2+1)*576+544+r*2;
+				uint64_t byte=compact?PioneerQ8CompactScaleByte(inputs,block,r):uint64_t(block*2+1)*576+544+r*2;
 				packed[size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
 			}
 			for (unsigned page=0;page<tileBytes;page+=4096) {
-				if (!io.Upload(next+uint64_t(row/16)*tileBytes+page,packed.data()+page/4)) { failed=true; return false; }
+				if (!io.Upload(next+uint64_t(row/rowStep)*tileBytes+page,packed.data()+page/4)) { failed=true; return false; }
 				uploadedPages++;
 			}
 		}
@@ -163,7 +166,7 @@ public:
 		uint32_t result[TT_RUNTIME_MATVEC_OUTPUTS_MAX];
 		for (unsigned row=0;row<outputs;row+=TT_RUNTIME_MATVEC_OUTPUTS_MAX) {
 			unsigned n=outputs-row; if (n>TT_RUNTIME_MATVEC_OUTPUTS_MAX) n=TT_RUNTIME_MATVEC_OUTPUTS_MAX;
-			uint64_t position=offset+uint64_t(row/16)*(inputs/16)*576;
+			uint64_t position=offset+uint64_t(row/16)*(inputs/(compact?32:16))*576;
 			if (!io.Q8Matvec(position,inputs,n,vector,scales,result)) { failed=true; return false; }
 			matvecCalls++;
 			for (unsigned r=0;r<n;r++) { float value; memcpy(&value,result+r,4); if (!isfinite(value)) { failed=true; return false; } output[row+r]=value; }

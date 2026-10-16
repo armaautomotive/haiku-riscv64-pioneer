@@ -25,6 +25,9 @@ _start:
 
 .section .text,"ax"
 .global main, parked, final_wait_return, drain
+.ifdef TT_RUNTIME_Q8_COMPACT
+	.set TT_RUNTIME_Q8,1
+.endif
 .ifdef TT_RUNTIME_Q8
 	.set TT_RUNTIME_INT8,1
 .endif
@@ -495,6 +498,10 @@ full_bf16_emit:
 	.org 0xa40, 0
 	.global resident_fetch, resident_fault_park
 resident_fetch:
+.ifdef TT_RUNTIME_Q8_COMPACT
+	andi t0, s4, 1
+	bne t0, zero, q8_compact_expand /* two math tiles share one 576B read */
+.endif
 	/* Initiator 0 is fixed/configured/verified by the host before start.
 	 * Only this doorbell is device-written. Both fixtures fetch the same
 	 * resident 1088-byte A/B data block; no host data write between them.
@@ -552,7 +559,11 @@ resident_ready:
 .ifdef TT_RUNTIME_MATVEC
 	addi a0, a0, 576 /* header16 + BF16 weight tile512 + padding48 */
 .endif
+.ifdef TT_RUNTIME_Q8_COMPACT
+	j q8_compact_expand
+.else
 	j nonuniform_inputs
+.endif
 .ifdef TT_RUNTIME_Q8
 	.org 0xb00, 0
 q8_clear:
@@ -565,7 +576,11 @@ q8_save_scales:
 	 * 70680..7069f is fixed private data, inside the saved code page. */
 	andi t0, s4, 1
 	beq t0, zero, q8_save_scales_return
+.ifdef TT_RUNTIME_Q8_COMPACT
+	li t2, 0x17e000 /* scales precede 512 raw bytes in the compact tile */
+.else
 	li t2, 0x70920
+.endif
 	li t3, 0x70680
 	li t1, 8
 q8_save_scale_word:
@@ -664,6 +679,44 @@ q8_broadcast_scale:
 	emit 0x72130022
 	jal ra, drain
 	j q8_accumulate_return
+.endif
+.ifdef TT_RUNTIME_Q8_COMPACT
+	.org 0xd00, 0
+	.global q8_compact_expand, q8_compact_lookup
+q8_compact_expand:
+	/* The whole source tile lives in the separately saved L1 tail. Expand
+	 * exactly one 16x16 half into the existing uncompressed A payload.
+	 * Every byte is an index into an immutable trusted 256-entry table;
+	 * no branch-dependent sign approximation or caller-provided code. */
+	andi t0, s4, 1
+	slli t0, t0, 8
+	li a2, 0x17e020
+	add a2, a2, t0
+	li a3, 0x70710
+	li a4, 256
+	li a5, 0x70e00
+q8_compact_byte:
+	lbu t0, 0(a2)
+	slli t0, t0, 1
+	add t0, t0, a5
+	lhu t0, 0(t0)
+	sh t0, 0(a3)
+	addi a2, a2, 1
+	addi a3, a3, 2
+	addi a4, a4, -1
+	bne a4, zero, q8_compact_byte
+	j nonuniform_inputs
+	.org 0xe00, 0
+q8_compact_lookup:
+.set q8_lookup_byte, 0
+.rept 256
+.if q8_lookup_byte < 128
+	.short 0x4000+q8_lookup_byte
+.else
+	.short 0xc000+(256-q8_lookup_byte)
+.endif
+.set q8_lookup_byte, q8_lookup_byte+1
+.endr
 .endif
 	.org 0x1000, 0
 .else

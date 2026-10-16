@@ -1482,7 +1482,7 @@ struct PioneerStoreContext {
 		r.host_ready=host.state==TT_HOST_PAGE_READY; r.host_address_bits=host.address_bits;
 		r.host_released=host.released; r.pci_restored=Pci().restored;
 		r.route_state=baseline.baseline.path.state; r.audit_state=baseline.audit.state;
-		r.capabilities=2047; r.uploaded_pages=uploadedPages; // previous bits plus scaled Q8 block matvec (1024)
+		r.capabilities=4095; r.uploaded_pages=uploadedPages; // previous bits plus compact scaled Q8 matvec (2048)
 		r.cold=sColdRecoveryRequired;
 	}
 };
@@ -1559,7 +1559,7 @@ ResidentSessionControl(PioneerProbeCookie* cookie,uint32 operation,void* data,si
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	if (operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT) {
-		result={}; result.version=1; result.capabilities=2047;
+		result={}; result.version=1; result.capabilities=4095;
 	} else if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) {
 		if (cookie->context!=NULL) { release_sem(sLock); return B_BUSY; }
 		uint64 capacity=result.bytes;
@@ -1684,7 +1684,7 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false)
+RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false)
 {
 	size_t bytes=q8?sizeof(tt_pioneer_runtime_q8_matvec):sizeof(tt_pioneer_runtime_matvec);
 	if (data==NULL || length!=bytes) return B_BAD_VALUE;
@@ -1695,15 +1695,15 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 	if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,bytes);
 	const uint32_t* scales=q8?((tt_pioneer_runtime_q8_matvec*)request)->scale:NULL;
-	if (status!=B_OK || request->version!=1 || request->reserved || !PioneerMatvecShape(request->inputs,request->outputs)) {
+	if (status!=B_OK || request->version!=1 || request->reserved || !(compact?PioneerQ8CompactShape(request->inputs,request->outputs):PioneerMatvecShape(request->inputs,request->outputs))) {
 		free(request); return status!=B_OK?status:B_BAD_VALUE;
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
-	else if (!PioneerMatvecWeightRange(context->bytes,request->weight_offset,request->inputs,request->outputs)) status=B_BAD_VALUE;
+	else if (!(compact?PioneerQ8CompactWeightRange(context->bytes,request->weight_offset,request->inputs,request->outputs):PioneerMatvecWeightRange(context->bytes,request->weight_offset,request->inputs,request->outputs))) status=B_BAD_VALUE;
 	else {
-		uint64 bytes=PioneerMatvecWeightBytes(request->inputs,request->outputs);
+		uint64 bytes=compact?PioneerQ8CompactWeightBytes(request->inputs,request->outputs):PioneerMatvecWeightBytes(request->inputs,request->outputs);
 		bool initialized=true;
 		for (uint64 page=request->weight_offset/4096;page<(request->weight_offset+bytes+4095)/4096;page++)
 			initialized &= context->initialized[page]!=0;
@@ -1711,12 +1711,12 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 		else {
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
 			memset(request->output,0,sizeof(request->output));
-			context->io.runtimeProfile.Begin(uint64(system_time()),q8?4:int8?3:fp16?2:dmaOutput?1:0);
+			context->io.runtimeProfile.Begin(uint64(system_time()),compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
 			bool ready=context->lease.ready;
 			if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
 			if (ready) ready=context->io.MapRuntime();
 			if (ready) ready=PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
-				context->baseline.baseline.baseline.noc,context->lease,context->compute,fp16,int8,q8);
+				context->baseline.baseline.baseline.noc,context->lease,context->compute,fp16,int8,q8,compact);
 			if (ready) context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 			if (ready) PioneerRuntimeMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
 				context->baseline.baseline.baseline.noc,context->host,context->lease,context->compute,context->bytes,
@@ -1758,8 +1758,13 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD || operation==TT_PCI_PROBE_PIONEER_STORE_READ)
 		return ResidentStoreControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA
-		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8)
-		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8);
+		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8
+		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT) {
+		bool compact=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT;
+		bool q8=compact || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
+		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,
+			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact);
+	}
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
 		return RuntimeProfileControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)

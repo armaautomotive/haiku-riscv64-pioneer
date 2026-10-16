@@ -6,7 +6,7 @@
 #include <string.h>
 #include <time.h>
 #include <vector>
-static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
+static double Seconds() { struct timespec t={}; if (clock_gettime(CLOCK_MONOTONIC,&t)) return NAN; return t.tv_sec+t.tv_nsec*1e-9; }
 static void Log(enum ggml_log_level level,const char* text,void*) { if (level>=GGML_LOG_LEVEL_WARN) fputs(text,stderr); }
 static int Argmax(const float* values,int n) {
 	int best=0; for (int i=0;i<n;i++) { if (!isfinite(values[i])) return -1; if (values[i]>values[best]) best=i; } return best;
@@ -16,15 +16,18 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 	if (n<0) { printf("<piece too long>"); return; }
 	for (int i=0;i<n;i++) { unsigned char c=text[i]; if (c<32 || c==127) printf("\\x%02x",c); else putchar(c); }
 }
+#include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool q8=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--verify-int8-q8"));
+	bool benchmark=argc==3 && (!strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8"));
+	bool compact=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-compact-q8") || !strcmp(argv[1],"--verify-compact-q8") || !strcmp(argv[1],"--benchmark-compact-q8"));
+	bool q8=compact || benchmark || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--verify-int8-q8")));
 	bool fp16=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8"));
-	bool diagnoseCpuActivations=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-cpu-q8") || !strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--diagnose-int8-q8"));
-	bool verifyCpuActivations=argc==3 && (!strcmp(argv[1],"--verify-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8") || !strcmp(argv[1],"--verify-int8-q8"));
-	bool cpuActivations=diagnoseCpuActivations || verifyCpuActivations;
+	bool diagnoseCpuActivations=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-cpu-q8") || !strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--diagnose-compact-q8"));
+	bool verifyCpuActivations=argc==3 && (!strcmp(argv[1],"--verify-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8") || !strcmp(argv[1],"--verify-int8-q8") || !strcmp(argv[1],"--verify-compact-q8"));
+	bool cpuActivations=diagnoseCpuActivations || verifyCpuActivations || benchmark;
 	bool diagnose=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-qwen") || diagnoseCpuActivations);
-	if (!diagnose && !verifyCpuActivations && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
-		fprintf(stderr,"Usage: %s --verify-qwen|--verify-cpu-q8|--verify-fp16-cpu-q8|--verify-int8-q8 MODEL | --diagnose-qwen|--diagnose-cpu-q8|--diagnose-fp16-cpu-q8|--diagnose-int8-q8 MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
+	if (!diagnose && !verifyCpuActivations && !benchmark && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
+		fprintf(stderr,"Usage: %s --verify-qwen|--verify-cpu-q8|--verify-fp16-cpu-q8|--verify-int8-q8|--verify-compact-q8|--benchmark-int8-q8|--benchmark-compact-q8 MODEL | --diagnose-qwen|--diagnose-cpu-q8|--diagnose-fp16-cpu-q8|--diagnose-int8-q8|--diagnose-compact-q8 MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_load_all();
@@ -39,10 +42,12 @@ int main(int argc,char** argv) {
 	params.cb_eval=diagnose?PioneerGgmlReferenceTap:NULL;
 	// Create the independent CPU context before registering any P100A
 	// device. Its backend list therefore cannot accidentally use the card.
-	llama_context* reference=llama_init_from_model(model,params);
+	llama_context_params referenceParams=params;
+	if (benchmark) referenceParams.n_batch=referenceParams.n_ubatch=128;
+	llama_context* reference=llama_init_from_model(model,referenceParams);
 	if (!reference) { llama_model_free(model); return 1; }
 	params.cb_eval=NULL; params.cb_eval_user_data=NULL; // never overwrite CPU reference with card data
-	PioneerGgmlDiagnose(diagnose,argc==4?argv[3]:NULL); PioneerGgmlCpuActivationQuantization(cpuActivations); PioneerGgmlFp16Operands(fp16); PioneerGgmlQ8Operands(q8); ggml_backend_register(PioneerGgmlReg());
+	PioneerGgmlDiagnose(diagnose,argc==4?argv[3]:NULL); PioneerGgmlCpuActivationQuantization(cpuActivations); PioneerGgmlFp16Operands(fp16); PioneerGgmlQ8Operands(q8); PioneerGgmlQ8Compact(compact); ggml_backend_register(PioneerGgmlReg());
 	llama_context* actual=llama_init_from_model(model,params);
 	if (!actual) { llama_free(reference); llama_model_free(model); return 1; }
 	const llama_vocab* vocab=llama_model_get_vocab(model); int count=llama_vocab_n_tokens(vocab);
@@ -52,6 +57,7 @@ int main(int argc,char** argv) {
 	int tokenCount=llama_tokenize(vocab,prompt,int(strlen(prompt)),tokens.data(),int(tokens.size()),false,true);
 	bool passed=tokenCount>0 && tokenCount<128;
 	printf("Qwen resident prototype: %d prompt tokens, 4 greedy output tokens; %llu learned matrices required; CPU%d reference created before P100A registration; CPU-Q8 activation preprocessing %u; operand format %s\n",tokenCount,(unsigned long long)expectedTensors,referenceThreads,cpuActivations,q8?"Q8 integer blocks + device scales":fp16?"FP16":"BF16");
+	if (q8) printf("Q8 retained weight layout: %s\n",compact?"compact 1.125 bytes/parameter":"expanded 2.25 bytes/parameter");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
 	for (int position=0;passed && generated<4;position++) {
 		if (position<tokenCount) token=tokens[size_t(position)];
@@ -86,6 +92,12 @@ int main(int argc,char** argv) {
 		if (position>=tokenCount) decodeSeconds+=elapsed;
 	}
 	PioneerGgmlStats stats={}; passed &= PioneerGgmlSnapshot(stats) && stats.tensors && !stats.failed;
+	bool warmQualified=passed && generated==4;
+	if (benchmark && warmQualified) {
+		puts("Bootstrap Qwen generation verification PASS; starting separate repeated warm speed/quality gate");
+		passed=PioneerQwenWarmBenchmark(model,reference,actual,expectedTensors);
+		passed &= PioneerGgmlSnapshot(stats) && !stats.failed;
+	}
 	bool clean=PioneerGgmlFinish(); passed &= clean && generated==4;
 	printf("%s: generated %u checked Qwen tokens, retained %llu tensors / %llu bytes, %llu pages uploaded, %llu real matvec calls; cleanup %u, total %.3fs\n",
 		passed?"PASS":"FAIL",generated,(unsigned long long)stats.tensors,(unsigned long long)stats.bytes,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs,clean,Seconds()-begin);

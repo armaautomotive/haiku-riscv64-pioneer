@@ -112,6 +112,7 @@ struct Q8Machine:RuntimeMachine {
 		return true;
 	}
 };
+#ifndef PIONEER_Q8_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8MatvecCodeWord(w));
@@ -135,3 +136,4 @@ int main(int argc,char** argv) {
 	}
 	puts("PASS: assembled Q8 integer-block scaling/FP32 accumulation image, all K widths, signed/subnormal/zero scales, omission/fault rejection; NO hardware");
 }
+#endif
