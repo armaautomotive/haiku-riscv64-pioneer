@@ -107,6 +107,7 @@ struct Fixture {
 		io.first.Restored(); io.second.Restored();
 	}
 };
+#ifndef PIONEER_DUAL_MOCK_ONLY
 int main()
 {
 	Fixture baseline; assert(baseline.Run());
@@ -187,3 +188,4 @@ int main()
 	printf("PASS: guarded exact activation reuse, byte/scale changes miss, output poison retained, %u cached lost writes and %u mapping faults; OFFLINE, not installed\n",cachedCases,cachedSelects);
 	printf("PASS: two fixed workers, row partitions, both staged before launch, both proved before results/stop, %u lost writes and %u mapping faults; OFFLINE only\n",cases,selects);
 }
+#endif

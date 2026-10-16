@@ -10,8 +10,11 @@ reproduced rounding drift. This is **correctness, not speed qualification**:
 the three-sample warm diagnostic is0.140525tokens/s (prior one-core exact
 0.115836), not a matched benchmark or CPU speedup. Assistant remains unchanged;
 27B/mixed quantization and practical acceleration still require further work.
-The activation-reuse driver installation requires explicit approval; the proven
-two-core driver remains installed. See the full two-core record below.
+On October16 the user explicitly approved the activation-reuse kernel test,
+including possible freeze/power-cycle recovery. The replacement driver is now
+installed with the proven two-core driver preserved for rollback. Small and
+full-size native projections pass exact-bit, reuse, ownership and cleanup
+checks; full Qwen verification is in progress. See the records below.
 
 The following early milestones are chronological; their narrower intermediate
 limitations do not supersede the current standalone Qwen correctness result.
@@ -409,7 +412,7 @@ about21% in rate across the new bulk+dual path, not an isolated kernel A/B,
 matched repeated real-world benchmark, CPU speedup, Assistant or27B claim.
 No forced unload, firmware/clock/boot change or Assistant model/backend change.
 
-###### Exact activation reuse (offline-qualified; staged, NOT installed)
+###### Exact activation reuse (native projections qualified; full Qwen pending)
 
 Separate54cb / bit262144 / profile11 adds per-core private CPU operand/scale
 shadows to the same fixed two-core bulk image. Its session mode3 cannot
@@ -439,23 +442,41 @@ were built and staged in `/boot/home/pioneer-dual-reuse-20261015`, NOT installed
 That frozen driver is superseded by the stricter output-validation source
 below; do not install it. Replacement4ca653a3ff622b0976d1dde86d08d4a49dd8b07d8cd5e7cd61c75f78660d3c0f
 has built locally in `/private/tmp/pioneer-dual-reuse-checked-tools-20261015`
-with all31 diagnostic tools; CLI/lifecycle hashes above are unchanged. It has
-not been staged on Haiku or installed. Approval still gates installation;
-there has been no attempt to bypass the rejected operation.
+with all31 diagnostic tools; CLI/lifecycle hashes above are unchanged.
 The full-model run closed with known END/stop/cleanup and independent audit.
 Automatic safety review then rejected installing this unqualified activation-
 reuse kernel driver as higher risk needing explicit user approval. Do not
-work around that rejection: leave the proven235079 dual driver in place and
-request approval explaining potential Haiku freeze/power-cycle recovery.
-The rejected installation did not run. Native support520191 and tests remain
-pending that approval; a module reload is never cold recovery.
-Native reuse diagnostics will require full staging for BOTH changed vectors,
-bit-identical repeated results, exact output-only page counts, immutable-mode
-refusal and all per-core proofs. Qwen CLI modes are
+work around that rejection: request approval explaining potential Haiku
+freeze/power-cycle recovery. The rejected installation did not run.
+On October16 the human explicitly approved that installation/test after the
+risk/rollback question. Fresh pre-audit passed, Assistant was idle and the
+installed235079 identity was verified before any change. Replacement4ca653
+and matching tools were staged/hash-verified in
+`/boot/home/pioneer-dual-reuse-checked-20261016`. The old driver is preserved
+there as `tenstorrent_pci_probe.before-reuse-235079`; the replacement was
+installed atomically. Support520191 appeared through natural module turnover,
+with NO forced unload/reload, firmware, clock or boot change. A module reload
+is never cold recovery.
+
+Native64x1024, complete2048x1024 query and complete1024x3072 FFN-down tests
+all pass: BOTH changed vectors require full staging (6/6,6/6,8/8 pages),
+every result matches CPU IEEE FMA bits (zero mismatches), all format/nonfinite
+refusals pass, and identical reuse needs exactly2/2 output-only staged pages.
+Both independent compute/stop/NoC proofs pass on every operation. Each test
+closed END2/PCI-host1/1/cold0 and passed an independent post-audit. The new
+operation also passes foreign/inherited-FD denial, duplicate-FD retention and
+final-FD-close cleanup. These are correctness/transfer-reduction results, NOT
+full-inference or CPU-speedup qualification. Public logs are `reuse-*-first.log`
+and `lifecycle-first.log` in the fresh folder.
+
+Qwen CLI modes are
 `--verify-dual-reuse-q8-host1` / `--benchmark-dual-reuse-q8-host1`, retaining
 the same reference/thread/quality gates. Standalone verifier
 3f3f674b25a8e8f299d4d9c5c9995d6dd4c1721787de0b74ff4258cd309faa71 is built
-locally, not run. No native cache correctness or speedup is claimed yet.
+locally and hash-verified with the pinned model/libraries on Haiku. Full
+`--verify-dual-reuse-q8-host1` is running in
+`full-qwen-dual-reuse-host1-first.log` (job46638); no full-model cache or
+speedup result is claimed until that run closes and passes its post-audit.
 
 ###### Exact result transport prerequisites (offline only)
 
@@ -466,7 +487,9 @@ Omitted readback data could therefore pass despite complete NoC counters.
 The old native projection comparisons remain historical evidence for those
 particular vectors, not proof of this stronger transport property. Qwen's
 passing native modes use PIO and reject Q8/integer output-DMA combinations;
-their correctness result is unaffected. No native driver was changed here.
+their correctness result is unaffected. The stricter helper is included in
+the approved4ca653 replacement; that separate experimental output-DMA
+operation is neither used by Qwen nor qualified by the activation-reuse tests.
 
 The source helper now compares ALL words of original output, fresh L1 return
 and the CPU-visible host snapshot, including padding. Tests reject omitted
@@ -497,6 +520,28 @@ defeat XOR checksums, signed-zero differences, nonzero initial registers,
 wrong count/selector/marker/PC and complete data/register-write bounds. Normal
 bulk math remains IEEE-bit-identical for all K; old BF16/FP16/INT8/native-FP32
 and fixed-image regressions pass. These are NOT native or timing results.
+
+`PioneerRuntimeReadback.h` now separately models the bounded two-worker
+comparison lifecycle. It requires prior successful math proofs, both workers
+held, the private input/output owners mapped stably, fixed TLB/source routes
+and PCI bus mastering OFF. It verifies the alternate entry/executable tail,
+configures the bounded selector/count, freshly clears/reads back ALL FOUR
+metadata words, arms BOTH contexts before either launch, and requires zero
+new read AND write NoC traffic, exact metadata and two parked-PC samples.
+Both comparisons must complete before either stop; metadata/counters are
+rechecked before stopping. An uncertain completion/map/route/stop quarantines
+BOTH host owners, forbidding peer reset or payload restoration. Known
+comparison mismatch can stop safely but returns failure, never output.
+
+Its ASan/UBSan tests pass all20 lost control writes,12 mapping selections,
+48 reset-read boundaries,132 host-map boundaries, each fixed TLB field,
+wrong/stale metadata, early/late counter changes and stop failures on either
+worker. All4096 independently corrupted returned words fail, padding included;
+the comparator performs no payload PIO, DMA, PCI/NIU writes, output acceptance
+or buffer release. This remains an OFFLINE prerequisite, not a transport
+controller: it cannot establish DMA freshness/order or frozen-host-snapshot
+identity by itself. No native adapter, ioctl or capability exposes it, and
+selector0 must be explicitly restored before any future math launch.
 
 `PioneerOutputBuffer.h` separately models a private16KiB output area's owner
 lifecycle. It requires four contiguous high physical pages, exact whole-area
