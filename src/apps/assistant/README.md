@@ -41,6 +41,10 @@ desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
   not generation acceleration (the warm diagnostic remained0.095tokens/s).
   Older drivers retain their original upload path; any transfer error stops
   without retry, transport switching or CPU result substitution.
+  The installed Assistant also passed its public question with8 output
+  tokens/26 positions/728 card attention ops, zero CPU reference decodes and
+  success1. First reply613.3s versus1117.4s previously; warm generation
+  remained0.091tokens/s. The model is left warm/idle after testing.
 - **Models…** opens the native model manager: choose an installed model or
   install another from the curated Hugging Face catalog, with progress and
   cancellation. Model files stay in `~/models` and are shared across chats.

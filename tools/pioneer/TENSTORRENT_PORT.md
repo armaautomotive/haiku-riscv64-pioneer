@@ -118,7 +118,24 @@ legacy; **no transfer failure can trigger fallback/retry**. The real client
 against synthetic syscalls tests both modes, every38 proof-field corruption,
 request failure, counter wrap and capability absence. Native idle mode-switch
 and malformed/unpinned request tests pass in the updated installed build.
-The installed public-generation smoke is still in progress at this checkpoint.
+The installed public-generation smoke passed:`The capital of France is
+**Paris**`,8 output tokens/26 positions/728 card attention ops, CPU validation
+OFF/reference decodes0, success1/exit0. First reply613.3s versus1117.4s in
+the previous attention build. Warm generation7 samples/76.595s=0.091tokens/s
+is unchanged within this short diagnostic; this is NOT a generation speedup.
+The service is left ready/idle with its device weights resident, selected
+`p100a-qwen-attention`, CPU-thread preference32 and empty GUI chat/draft.
+
+Installed Assistant GUI SHA
+`329f65d6bf9dbe334e4f8e902a005492d2565badfc02688d49914942e571dc46`;
+service SHA
+`89af00519938cad54cc9d9250ef73379d7a32c47d3c177ae7fb9e6b53b00415b`;
+Hardware SHA
+`8c30ed6b2a0e56b67e3b3e9f911007edced9584f28b96124d905b6ff3a9ad5cd`.
+Native`assistant-bulk-public.log` and`gui-bulk.log` are retained alongside
+individual original-binary backups. No firmware/clock/boot/SD changes, forced
+driver unload or cold-latch bypass. The RAM/CPU port and user llama edits
+were not changed.
 
 Read-only1.7B inventory (not an executable-card qualification) confirms
 28 layers,2048 embeddings,6144 FFN,16 query/8 KV heads and width128. Its197
