@@ -25,6 +25,9 @@ _start:
 
 .section .text,"ax"
 .global main, parked, final_wait_return, drain
+.ifdef TT_RUNTIME_Q8_NATIVE
+	.set TT_RUNTIME_Q8_COMPACT,1
+.endif
 .ifdef TT_RUNTIME_Q8_COMPACT
 	.set TT_RUNTIME_Q8,1
 .endif
@@ -80,9 +83,17 @@ thread_config:
 .ifndef TT_RUNTIME_MATVEC
 	.error "FP16 candidate is restricted to the fixed runtime matvec"
 .endif
+.ifdef TT_RUNTIME_Q8_NATIVE
+	config 0, 0x423e /* native signed Int8 SrcA; FP16-overlay SrcB */
+.else
 	config 0, 0x4231 /* explicit FP16 SrcA/SrcB, FP32 Dst override */
+.endif
 .ifdef TT_RUNTIME_INT8
+.ifdef TT_RUNTIME_Q8_NATIVE
+	config 1, 0xa03c0000 /* source A format14, signed, integer matrix math */
+.else
 	config 1, 0xa0220000 /* force integer matrix arithmetic, not FP16 math */
+.endif
 .else
 	config 1, 0x20220000 /* FP16 source fields, FP32 accumulation */
 .endif
@@ -114,13 +125,21 @@ thread_config:
 	config 56, 0x00100000
 	config 59, 0x100
 .ifdef TT_RUNTIME_FP16
+.ifdef TT_RUNTIME_Q8_NATIVE
+	config 64, 0x0010001e /* uncompressed native INT8 source */
+.else
 	config 64, 0x00100011
+.endif
 .else
 	config 64, 0x00100015
 .endif
 	config 65, 16
 .ifdef TT_RUNTIME_FP16
+.ifdef TT_RUNTIME_Q8_NATIVE
+	config 72, 14 /* INT8 external input/output formats must match */
+.else
 	config 72, 1
+.endif
 .else
 	config 72, 5
 .endif
@@ -500,7 +519,11 @@ full_bf16_emit:
 resident_fetch:
 .ifdef TT_RUNTIME_Q8_COMPACT
 	andi t0, s4, 1
+.ifdef TT_RUNTIME_Q8_NATIVE
+	bne t0, zero, q8_native_inputs
+.else
 	bne t0, zero, q8_compact_expand /* two math tiles share one 576B read */
+.endif
 .endif
 	/* Initiator 0 is fixed/configured/verified by the host before start.
 	 * Only this doorbell is device-written. Both fixtures fetch the same
@@ -560,7 +583,11 @@ resident_ready:
 	addi a0, a0, 576 /* header16 + BF16 weight tile512 + padding48 */
 .endif
 .ifdef TT_RUNTIME_Q8_COMPACT
+.ifdef TT_RUNTIME_Q8_NATIVE
+	j q8_native_inputs
+.else
 	j q8_compact_expand
+.endif
 .else
 	j nonuniform_inputs
 .endif
@@ -571,6 +598,10 @@ q8_clear:
 	bne t0, zero, gemv_keep_accumulator
 	j clear_first
 q8_save_scales:
+.ifdef TT_RUNTIME_Q8_NATIVE
+	j q8_save_scales_return /* already saved before clearing A/B headers */
+	.org 0xb40, 0
+.else
 	/* The odd tile's 32-byte padding contains sixteen FP16 dW scales.
 	 * Preserve it before the normal vector copy overwrites that padding.
 	 * 70680..7069f is fixed private data, inside the saved code page. */
@@ -591,6 +622,7 @@ q8_save_scale_word:
 	addi t1, t1, -1
 	bne t1, zero, q8_save_scale_word
 	j q8_save_scales_return
+.endif
 q8_accumulate:
 	andi t0, s4, 1
 	beq t0, zero, q8_accumulate_return
@@ -682,6 +714,42 @@ q8_broadcast_scale:
 .endif
 .ifdef TT_RUNTIME_Q8_COMPACT
 	.org 0xd00, 0
+.ifdef TT_RUNTIME_Q8_NATIVE
+	.global q8_native_inputs
+q8_native_inputs:
+	/* NoC payload706c0 = scales32 + two native INT8 halves256 each + pad32.
+	 * This entire data-only region lies within the saved code/data page.
+	 * GDDR and L1 addresses must be congruent mod32; both are aligned64.
+	 * Save scales on even K before clearing the first header; odd K reuses
+	 * the second half. There is no scalar per-byte decode or payload copy. */
+	andi t0, s4, 1
+	bne t0, zero, q8_native_odd
+	li t2, 0x706c0
+	li t3, 0x70680
+	li t1, 8
+q8_native_scale_word:
+	lw t0, 0(t2)
+	sw t0, 0(t3)
+	addi t2, t2, 4
+	addi t3, t3, 4
+	addi t1, t1, -1
+	bne t1, zero, q8_native_scale_word
+	li t0, 0x706d
+	li t2, 0x706d0
+	j q8_native_header
+q8_native_odd:
+	li t0, 0x707d
+	li t2, 0x707d0 /* first half is fully consumed before this is cleared */
+q8_native_header:
+	sw t0, (4*76)(s2)
+	lw t1, (4*76)(s2)
+	andi t1, t1, 0
+	sw zero, 0(t2)
+	sw zero, 4(t2)
+	sw zero, 8(t2)
+	sw zero, 12(t2)
+	j nonuniform_inputs
+.else
 	.global q8_compact_expand, q8_compact_lookup
 q8_compact_expand:
 	/* The whole source tile lives in the separately saved L1 tail. Expand
@@ -717,6 +785,7 @@ q8_compact_lookup:
 .endif
 .set q8_lookup_byte, q8_lookup_byte+1
 .endr
+.endif
 .endif
 	.org 0x1000, 0
 .else

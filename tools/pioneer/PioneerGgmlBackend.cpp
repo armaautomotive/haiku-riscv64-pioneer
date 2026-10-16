@@ -25,8 +25,9 @@ struct PioneerGgmlContext {
 	const bool fp16;
 	const bool q8;
 	const bool compact;
+	const bool native;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes):cache(device,Arena,half,rawBytes),fp16(half),q8(quant),compact(rawBytes) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack):cache(device,Arena,half,rawBytes,hardwareUnpack),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -36,9 +37,25 @@ static bool sCpuActivationQuantization=false;
 static bool sFp16=false;
 static bool sQ8=false;
 static bool sCompact=false;
+static bool sNative=false;
+static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; };
 static std::map<std::string,ReferenceProjection> sReference;
+static std::map<std::string,std::vector<float>> sIntermediate;
+static unsigned sPosition=0;
+static std::string TraceKey(const ggml_tensor* t) {
+	std::string key=std::string(t->name)+"|"+std::to_string(int(t->op));
+	for (unsigned i=0;i<4;i++) key+="|"+std::to_string(t->ne[i]);
+	return key;
+}
+static bool TraceTensor(const ggml_tensor* t) {
+	if (!sTrace || t->type!=GGML_TYPE_F32 || !ggml_is_contiguous(t) || ggml_nelements(t)<=0 || ggml_nelements(t)>262144) return false;
+	if (t->op==GGML_OP_NONE || t->op==GGML_OP_VIEW || t->op==GGML_OP_RESHAPE || t->op==GGML_OP_TRANSPOSE || t->op==GGML_OP_PERMUTE) return false;
+	const char* prefixes[]={"attn_norm-","Qcur-","Kcur-","Qcur_normed-","Kcur_normed-","kq-","kq_soft_max-","kqv-","kqv_out-"};
+	for (const char* p:prefixes) if (!strncmp(t->name,p,strlen(p))) return true;
+	return false;
+}
 static const char* Name(ggml_backend_t) { return "P100A-resident-experimental"; }
 static const char* DeviceName(ggml_backend_dev_t) { return "P100A-resident"; }
 static const char* Description(ggml_backend_dev_t) { return "P100A single-core resident matrix prototype (not a verified speedup)"; }
@@ -126,6 +143,16 @@ static bool CheckProjection(const ggml_tensor* w,const float* x,const float* y,c
 		fprintf(stderr,"  GRAPH CPU reference input-L2 %.9f output-L2 %.9f; CPU-Q8-activation emulation vs graph-output L2 %.9f\n",
 			inputError,outputError,sqrt(cpuQuantDelta/(graphOutputNorm+1e-30)));
 		passed &= isfinite(inputError) && isfinite(outputError) && inputError<.02 && outputError<.02;
+		if (sTrace && sQ8) {
+			std::vector<uint8_t> referenceQ(inputs/32*34);
+			ggml_get_type_traits(GGML_TYPE_Q8_0)->from_float_ref(found->second.input.data(),referenceQ.data(),inputs);
+			unsigned scaleDifferences=0,valueDifferences=0;
+			for (unsigned b=0;b<inputs/32;b++) {
+				scaleDifferences+=memcmp(referenceQ.data()+b*34,quantized.data()+b*34,2)!=0;
+				for (unsigned i=2;i<34;i++) valueDifferences+=referenceQ[b*34+i]!=quantized[b*34+i];
+			}
+			fprintf(stderr,"  TRACE pos%u Q8 input differences: scale blocks %u/%u, values %u/%u; diagnostic only\n",sPosition,scaleDifferences,inputs/32,valueDifferences,inputs);
+		}
 		if (sQ8 && (strstr(w->name,".attn_v.weight") || strstr(w->name,".attn_k.weight"))) {
 			unsigned halfDifferences=0; float maxDifference=0;
 			for (unsigned row=0;row<outputs;row++) {
@@ -161,7 +188,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
@@ -206,8 +233,8 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	return GGML_STATUS_SUCCESS;
 }
 static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
-	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8)) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative); if (!ctx) return NULL;
 	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
 	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
@@ -250,9 +277,19 @@ void PioneerGgmlCpuActivationQuantization(bool enabled) { if (!sActive) sCpuActi
 void PioneerGgmlFp16Operands(bool enabled) { if (!sActive) sFp16=enabled; }
 void PioneerGgmlQ8Operands(bool enabled) { if (!sActive) sQ8=enabled; }
 void PioneerGgmlQ8Compact(bool enabled) { if (!sActive) sCompact=enabled; }
+void PioneerGgmlQ8Native(bool enabled) { if (!sActive) sNative=enabled; }
+void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
+void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	bool wanted=t->op==GGML_OP_MUL_MAT && t->src[0] && t->src[0]->type==GGML_TYPE_Q8_0 && Supports(NULL,t);
-	if (ask) return wanted;
+	bool trace=TraceTensor(t);
+	if (ask) return wanted || trace;
+	if (trace) {
+		auto key=TraceKey(t);
+		if (sIntermediate.find(key)!=sIntermediate.end()) { fprintf(stderr,"TRACE duplicate reference %s; diagnostic stopped\n",key.c_str()); return false; }
+		auto& values=sIntermediate[key]; values.resize(size_t(ggml_nelements(t)));
+		ggml_backend_tensor_get(t,values.data(),0,values.size()*sizeof(float));
+	}
 	if (!wanted) return true;
 	auto& r=sReference[t->src[0]->name];
 	r.input.resize(size_t(t->src[0]->ne[0])); r.output.resize(size_t(t->src[0]->ne[1]));
@@ -262,3 +299,22 @@ bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	return true;
 }
 size_t PioneerGgmlReferenceCount() { return sReference.size(); }
+bool PioneerGgmlCompareTap(ggml_tensor* t,bool ask,void*) {
+	bool wanted=TraceTensor(t);
+	if (ask) return wanted;
+	if (!wanted) return true;
+	auto found=sIntermediate.find(TraceKey(t));
+	if (found==sIntermediate.end() || found->second.size()!=size_t(ggml_nelements(t))) {
+		fprintf(stderr,"TRACE pos%u %s reference missing/shape changed; stopping diagnostic\n",sPosition,t->name); return false;
+	}
+	std::vector<float> actual(found->second.size()); ggml_backend_tensor_get(t,actual.data(),0,actual.size()*sizeof(float));
+	double norm=0,delta=0; float maximum=0; unsigned changed=0,nonfinite=0;
+	for (size_t i=0;i<actual.size();i++) {
+		float a=actual[i],r=found->second[i]; changed+=memcmp(&a,&r,4)!=0;
+		if (!isfinite(a) || !isfinite(r)) { nonfinite++; continue; }
+		double difference=double(a)-r; delta+=difference*difference; norm+=double(r)*r;
+		float absolute=fabsf(a-r); if (absolute>maximum) maximum=absolute;
+	}
+	fprintf(stderr,"TRACE pos%u %s op%d elements %zu changed %u nonfinite %u relative-L2 %.9g max-abs %.9g; observer only, output unchanged\n",sPosition,t->name,int(t->op),actual.size(),changed,nonfinite,sqrt(delta/(norm+1e-30)),maximum);
+	return true;
+}

@@ -26,6 +26,9 @@ static bool QuantizedDenied(int fd,uint32_t capabilities,int expected)
 	if (capabilities&2048) {
 		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT,&request,sizeof(request))<0 && errno==expected;
 	}
+	if (capabilities&TT_PIONEER_CAP_NATIVE_Q8_UNPACK) {
+		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE,&request,sizeof(request))<0 && errno==expected;
+	}
 	return denied;
 }
 static bool Begin(int fd,tt_resident_session_result& r,uint64_t bytes=8192)

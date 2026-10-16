@@ -6,6 +6,7 @@
 #include "BlackholeRuntimeInt8MatvecImage.h"
 #include "BlackholeRuntimeQ8MatvecImage.h"
 #include "BlackholeRuntimeQ8CompactImage.h"
+#include "BlackholeRuntimeQ8NativeImage.h"
 #include "PioneerInt8Operand.h"
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeOutput.h"
@@ -22,6 +23,7 @@ struct PioneerRuntimeMatvecLease {
 	bool int8=false;
 	bool q8=false;
 	bool compact=false;
+	bool native=false; // signed-byte hardware unpack; immutable, distinct encoding
 };
 template<class IO>
 bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,const PioneerResidentLease& store)
@@ -33,10 +35,10 @@ bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const t
 }
 template<class IO>
 bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
-	const PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,bool fp16=false,bool int8=false,bool q8=false,bool compact=false)
+	const PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,bool fp16=false,bool int8=false,bool q8=false,bool compact=false,bool native=false)
 {
-	if ((fp16 && int8) || (q8 && (!int8 || fp16)) || (compact && !q8)) return false;
-	if (compute.ready) return compute.fp16==fp16 && compute.int8==int8 && compute.q8==q8 && compute.compact==compact;
+	if ((fp16 && int8) || (q8 && (!int8 || fp16)) || (compact && !q8) || (native && !compact)) return false;
+	if (compute.ready) return compute.fp16==fp16 && compute.int8==int8 && compute.q8==q8 && compute.compact==compact && compute.native==native;
 	uint32_t* saved=io.RuntimeSavedWords();
 	if (!saved || compute.saved || !store.ready || store.pending || store.recovery_required || io.ResetRead()!=0x47800
 		|| !PioneerRuntimeSources(io,baseline,noc,store) || !BlackholeResidentIdle(io)) return false;
@@ -51,11 +53,11 @@ bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,c
 		compute.unsafe=true; return false;
 	}
 	compute.code_dirty=true;
-	compute.fp16=fp16; compute.int8=int8; compute.q8=q8; compute.compact=compact;
-	for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,compact?BlackholeRuntimeQ8CompactCodeWord(w):q8?BlackholeRuntimeQ8MatvecCodeWord(w):int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
+	compute.fp16=fp16; compute.int8=int8; compute.q8=q8; compute.compact=compact; compute.native=native;
+	for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,native?BlackholeRuntimeQ8NativeCodeWord(w):compact?BlackholeRuntimeQ8CompactCodeWord(w):q8?BlackholeRuntimeQ8MatvecCodeWord(w):int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
 	io.RuntimeCodeWrite(0,0x0006a06f);
 	bool valid=io.RuntimeCodeRead(0)==0x0006a06f;
-	for (unsigned w=0;w<1024;w++) valid &= io.RuntimeCodeRead(1+w)==(compact?BlackholeRuntimeQ8CompactCodeWord(w):q8?BlackholeRuntimeQ8MatvecCodeWord(w):int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
+	for (unsigned w=0;w<1024;w++) valid &= io.RuntimeCodeRead(1+w)==(native?BlackholeRuntimeQ8NativeCodeWord(w):compact?BlackholeRuntimeQ8CompactCodeWord(w):q8?BlackholeRuntimeQ8MatvecCodeWord(w):int8?BlackholeRuntimeInt8MatvecCodeWord(w):fp16?BlackholeRuntimeFp16MatvecCodeWord(w):BlackholeRuntimeMatvecCodeWord(w));
 	compute.ready=valid; return valid;
 }
 template<class IO>
@@ -163,13 +165,14 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 		|| io.RuntimeCodeRead(1+0x504/4)!=inputs/16 || io.RuntimeCodeRead(1+0x508/4)!=outputs/16) goto finished;
 	for (unsigned w=0;w<3;w++) io.RuntimeStatusWrite(w,0);
 	{
-		const uint32_t command[]={PioneerResidentAddress(capacity,offset),0,18|(12<<6),compute.compact?0x17e000U:0x70700U,0,1|(2<<6),0,0,576,0};
+		const uint32_t command[]={PioneerResidentAddress(capacity,offset),0,18|(12<<6),compute.native?0x706c0U:compute.compact?0x17e000U:0x70700U,0,1|(2<<6),0,0,576,0};
+		if ((command[0]&31)!=(command[3]&31)) goto finished; // GDDR -> L1 NoC congruence
 		if (!BlackholeHostWriteCommand(io,command) || io.ResetRead()!=0x47800 || !PioneerRuntimeSources(io,baseline,noc,store)) goto finished;
 	}
 	// The compact reader writes the already backed-up L1 tail, not just
 	// the runtime buffers. Restore it only after the same exact completion
 	// and stop proofs; uncertainty still forbids all payload restoration.
-	if (compute.compact) { store.l1_dirty=true; store.l1_restored=false; }
+	if (compute.compact && !compute.native) { store.l1_dirty=true; store.l1_restored=false; }
 	r.state=TT_RUNTIME_START_FAILED; r.context_reset=1;
 	io.RuntimeResetWrite(0x87ffff); io.Pause();
 	if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff || !PioneerRuntimeSources(io,baseline,noc,store)

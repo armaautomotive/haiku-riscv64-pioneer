@@ -47,6 +47,7 @@ struct CompactQ8Machine:Q8Machine {
 		return Q8Machine::Load(a);
 	}
 };
+#ifndef PIONEER_COMPACT_Q8_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8CompactCodeWord(w));
@@ -81,3 +82,4 @@ int main(int argc,char** argv) {
 	assert(!PioneerQ8CompactWeightRange(40960,UINT64_MAX-4095,1024,32));
 	puts("PASS: compact Q8 image, lossless signed-byte table, all K/N loops, half GDDR bytes/NoC requests, independent scaled references and corruption/fault rejection; NO hardware");
 }
+#endif

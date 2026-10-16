@@ -18,17 +18,19 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
+	bool trace=(argc==3 || argc==4) && !strcmp(argv[1],"--trace-native-q8");
+	bool native=trace || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-native-q8") || !strcmp(argv[1],"--verify-native-q8") || !strcmp(argv[1],"--benchmark-native-q8")));
 	bool f32Kv=(argc==3 || argc==4) && !strcmp(argv[1],"--diagnose-compact-q8-f32-kv");
-	bool benchmark=argc==3 && (!strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8"));
-	bool compact=f32Kv || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-compact-q8") || !strcmp(argv[1],"--verify-compact-q8") || !strcmp(argv[1],"--benchmark-compact-q8")));
+	bool benchmark=argc==3 && (!strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8") || !strcmp(argv[1],"--benchmark-native-q8"));
+	bool compact=native || f32Kv || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-compact-q8") || !strcmp(argv[1],"--verify-compact-q8") || !strcmp(argv[1],"--benchmark-compact-q8")));
 	bool q8=compact || benchmark || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--verify-int8-q8")));
 	bool fp16=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8"));
-	bool diagnoseCpuActivations=f32Kv || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-cpu-q8") || !strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--diagnose-compact-q8")));
-	bool verifyCpuActivations=argc==3 && (!strcmp(argv[1],"--verify-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8") || !strcmp(argv[1],"--verify-int8-q8") || !strcmp(argv[1],"--verify-compact-q8"));
+	bool diagnoseCpuActivations=trace || f32Kv || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-cpu-q8") || !strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--diagnose-compact-q8") || !strcmp(argv[1],"--diagnose-native-q8")));
+	bool verifyCpuActivations=argc==3 && (!strcmp(argv[1],"--verify-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8") || !strcmp(argv[1],"--verify-int8-q8") || !strcmp(argv[1],"--verify-compact-q8") || !strcmp(argv[1],"--verify-native-q8"));
 	bool cpuActivations=diagnoseCpuActivations || verifyCpuActivations || benchmark;
 	bool diagnose=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-qwen") || diagnoseCpuActivations);
 	if (!diagnose && !verifyCpuActivations && !benchmark && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
-		fprintf(stderr,"Usage: %s --verify-qwen|--verify-cpu-q8|--verify-fp16-cpu-q8|--verify-int8-q8|--verify-compact-q8|--benchmark-int8-q8|--benchmark-compact-q8 MODEL | --diagnose-qwen|--diagnose-cpu-q8|--diagnose-fp16-cpu-q8|--diagnose-int8-q8|--diagnose-compact-q8|--diagnose-compact-q8-f32-kv MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
+		fprintf(stderr,"Usage: %s --verify-qwen|--verify-cpu-q8|--verify-fp16-cpu-q8|--verify-int8-q8|--verify-compact-q8|--verify-native-q8|--benchmark-int8-q8|--benchmark-compact-q8|--benchmark-native-q8 MODEL | --diagnose-qwen|--diagnose-cpu-q8|--diagnose-fp16-cpu-q8|--diagnose-int8-q8|--diagnose-compact-q8|--diagnose-compact-q8-f32-kv|--diagnose-native-q8|--trace-native-q8 MODEL [FRESH_FAILED_INPUT_FILE]\nExperimental single-token resident hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_load_all();
@@ -42,14 +44,15 @@ int main(int argc,char** argv) {
 	params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; params.offload_kqv=false;
 	if (f32Kv) params.type_k=params.type_v=GGML_TYPE_F32;
 	params.cb_eval=diagnose?PioneerGgmlReferenceTap:NULL;
+	PioneerGgmlTrace(trace);
 	// Create the independent CPU context before registering any P100A
 	// device. Its backend list therefore cannot accidentally use the card.
 	llama_context_params referenceParams=params;
 	if (benchmark) referenceParams.n_batch=referenceParams.n_ubatch=128;
 	llama_context* reference=llama_init_from_model(model,referenceParams);
 	if (!reference) { llama_model_free(model); return 1; }
-	params.cb_eval=NULL; params.cb_eval_user_data=NULL; // never overwrite CPU reference with card data
-	PioneerGgmlDiagnose(diagnose,argc==4?argv[3]:NULL); PioneerGgmlCpuActivationQuantization(cpuActivations); PioneerGgmlFp16Operands(fp16); PioneerGgmlQ8Operands(q8); PioneerGgmlQ8Compact(compact); ggml_backend_register(PioneerGgmlReg());
+	params.cb_eval=trace?PioneerGgmlCompareTap:NULL; params.cb_eval_user_data=NULL; // never overwrite CPU reference with card data
+	PioneerGgmlDiagnose(diagnose,argc==4?argv[3]:NULL); PioneerGgmlCpuActivationQuantization(cpuActivations); PioneerGgmlFp16Operands(fp16); PioneerGgmlQ8Operands(q8); PioneerGgmlQ8Compact(compact); PioneerGgmlQ8Native(native); ggml_backend_register(PioneerGgmlReg());
 	llama_context* actual=llama_init_from_model(model,params);
 	if (!actual) { llama_free(reference); llama_model_free(model); return 1; }
 	const llama_vocab* vocab=llama_model_get_vocab(model); int count=llama_vocab_n_tokens(vocab);
@@ -60,9 +63,11 @@ int main(int argc,char** argv) {
 	bool passed=tokenCount>0 && tokenCount<128;
 	printf("Qwen resident prototype: %d prompt tokens, 4 greedy output tokens; %llu learned matrices required; CPU%d reference created before P100A registration; CPU-Q8 activation preprocessing %u; operand format %s\n",tokenCount,(unsigned long long)expectedTensors,referenceThreads,cpuActivations,q8?"Q8 integer blocks + device scales":fp16?"FP16":"BF16");
 	if (q8) printf("Q8 retained weight layout: %s\n",compact?"compact 1.125 bytes/parameter":"expanded 2.25 bytes/parameter");
+	if (native) puts("Native signed INT8 hardware unpack; unsupported -128 weights fail without clamping or fallback");
 	printf("Both independent contexts K/V cache types: %d/%d (%s); graph/logit/greedy gates unchanged\n",int(params.type_k),int(params.type_v),f32Kv?"explicit FP32 precision experiment":"library defaults");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
 	for (int position=0;passed && generated<4;position++) {
+		if (diagnose) PioneerGgmlBeginPosition(unsigned(position));
 		if (position<tokenCount) token=tokens[size_t(position)];
 		llama_batch batch=llama_batch_get_one(&token,1);
 		if (llama_decode(reference,batch)) { passed=false; break; }

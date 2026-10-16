@@ -105,7 +105,63 @@ out while establishing the Haiku port baseline.
 
 ### October 15: checked streamed uploads and numerical localization
 
-#### Native scaled Q8 integer blocks (F16-KV full run failed; precision test active)
+#### Native scaled Q8 integer blocks (full generation still unqualified)
+
+##### Native signed-byte hardware unpack (alignment-corrected candidate)
+
+The new `TT_RUNTIME_Q8_NATIVE` image replaces the compact scalar lookup loop
+with the hardware INT8 unpacker. The 576-byte compact shape and original
+FP16 scales are retained, but signed weight bytes have a distinct lossless
+sign-magnitude encoding. The external signed unpacker cannot represent -128;
+the host packer refuses it without clamping. Activations retain the existing
+FP16-overlay path and its full signed-byte range. Cache and prepared-code
+formats remain immutable. New ioctl `54c4` uses the existing Q8 request ABI,
+CPU profile format6 and capability bit8192 (support12287). Bit4096 is reserved
+for a rejected unpublished prototype and is not accepted as current support.
+
+An initial 32x1024 hardware trial completed with exact 64/576/64/64 NoC
+counts, 128 math tiles, correct phase/park, clean END2/PCI-host1/1/cold0 and
+a passing post audit, but failed all numerical rows. It was not retried as
+full inference. Investigation found that the prototype read from aligned
+GDDR into `706f0`: these addresses are not congruent mod32, violating the
+documented [NoC alignment rule](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/NoC/Alignment.md).
+The corrected fixed destination is aligned64 `706c0`, with INT8 halves at
+`706e0/707e0`; saved scales remain `70680`. Header clearing happens only
+after scale preservation / previous-half consumption. The entire payload
+lies inside the already saved 4KiB code/data page. The runtime and independent
+models now explicitly check congruence; exact completion and quarantine
+requirements are unchanged. No temporary kernel tracing remains in source.
+
+Independent assembled-image equality and ASan/UBSan arithmetic tests pass
+all K widths, N4096, two vectors, alternate bases, exhaustive lossless encode
+or refusal, corruption and bounded failure parks. Driver policy tests pass
+all65 native dropped-control-write cases and explicit bad PC/flits/timeout/
+stop/source failures. Cache/backend tests cover the third immutable format,
+no fallback, unsupported -128 refusal, repeated vectors and classifier chunks.
+Legacy BF16/FP16/INT8/scaled-Q8/compact image regressions also pass.
+The corrected native image passed real Qwen 32x1024, 32x3072 and full
+2048x1024 projections, each with two independent vectors and all original
+block data/scales. All rows passed the unchanged numeric gates; full-query
+relative L2 is `9.13021911e-8 / 9.70029151e-8`, max absolute `4.76837158e-7`.
+Exact counters are4096/36864/4096/4096 for8192 math tiles. Nonfinite scales,
+expanded/native and raw-byte/native format switches are refused before
+start; subsequent reuse is bit-identical. All ENDs are2, PCI/host1/1,cold0.
+The updated native foreign/inherited/duplicate/final-close lifecycle passed.
+
+Full-query second CPU wall time is27,545us, including16,122 compute/proof
+and6,088 PIO. This removes the compact scalar decoder's measured slowdown
+(75,016us total /63,423 compute), and is close to the earlier expanded Q8
+projection (29,821/18,360). It is **not** a CPU inference speedup. Full-model
+generation and matched real-world latency/throughput remain unqualified.
+
+Frozen aligned artifacts under `/private/tmp/pioneer-native-aligned-tools-20261015/`:
+driver `cf495ccfbab435ed44aedd998739e18cefd47ffe4b753a92c2bc8ee3eb49bba0`,
+projection CLI `c18c24590af2046472f44a854e155ce57add10b72a61ab3b6d7594ef4053c782`,
+lifecycle CLI `cd59393e91bfa6d3ccbf939a337c21beb87e3fd7d0344d1b9ff39697514ebecf`.
+The original working7d09 driver is preserved in
+`/boot/home/pioneer-q8-native-20261015/tenstorrent_pci_probe.before`.
+Support12287 was observed before submitting the corrected native trial.
+No forced module unload, cold-gate bypass, firmware or boot change was used.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 
@@ -304,12 +360,35 @@ acceptance limits remain unchanged. It additionally reports full pre-cache
 K/V projection FP16-rounding disagreements; K normalization/RoPE occur later,
 so this diagnostic alone cannot prove the actual stored-key difference.
 
-This new native run is active with binary
+The FP32-cache experiment with binary
 `24ae9f4c32222a3856e525d9c44ab9fa5aebeaf291ac8198190e4321ec1ccf1c`,
 named `tenstorrent_haiku_qwen_f32_kv`, log
-`/boot/home/pioneer-q8-compact-20261015/full-qwen-f32-kv-first.log`.
-It is the sole current card owner: no card queries, driver replacement,
-reset/reload or competing test until its authoritative terminal result.
+`/boot/home/pioneer-q8-compact-20261015/full-qwen-f32-kv-first.log`,
+ended with failure after positions0..2 passed all-vocabulary logits at
+relative L2 `1.5e-8 / 1.7e-8 / 1.1e-8`. At position3, the first input jump
+was layer15 attention (`0.000021627`), and the unchanged graph gate stopped
+at `blk.22.attn_output.weight` output L2 `0.020480192`. Primitive L2 remained
+`1.07e-7`, with CPU Q8 emulation on the diverged input `0.020480352`.
+It retained197 tensors / 670,482,432 bytes / 163,692 pages, made860 real
+matvec calls and generated0 checked reply tokens. Total952.283s, weight
+preparation/upload866.928562s, matvec/staging/result75.845823s. END2 restored
+PCI/host1/1/cold0 and the independent audit passed. Thus FP32 cache precision
+alone does not resolve the drift; the F16-cache hypothesis is not established.
+The new optional `--trace-native-q8` diagnostic separately observes named
+attention intermediates in CPU/reference and card contexts, keyed by
+name/op/shape, and reports Q8 input byte/scale differences. Per-position
+references are cleared so stale captures cannot masquerade as a complete
+new reference. Observers never replace actual output or weaken graph/logit/
+greedy gates; missing/ambiguous trace references stop the diagnostic. The
+native trace binary `2413f6aa7ba0607711140028a2e865df5e85be793383afec3fdf78880588f3d5`
+is now the sole card owner, log
+`/boot/home/pioneer-q8-native-20261015/full-qwen-native-trace-first.log`.
+Until its authoritative terminal result, do not submit any competing card
+query/audit, install/reload/reset; scoped public-test log reads and offline
+work are safe. Its initial primitive and observer records pass; no completed
+full-model result is claimed. The earlier legacy BF16/FP16/scaled-Q8/compact/
+fixed-GEMV regressions and independent PCI/HDMA audit all passed, Assistant
+still unchanged and idle before starting the trace.
 No accepted Qwen reply tokens or CPU speedup have yet been established.
 The runtime still uses one core and bank0 / 2GiB. Compact mixed quantization,
 wider models, multicore/bulk dispatch and matched repeated benchmarks remain

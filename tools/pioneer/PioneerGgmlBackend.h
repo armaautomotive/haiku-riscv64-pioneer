@@ -26,4 +26,10 @@ void PioneerGgmlCpuActivationQuantization(bool enabled);
 void PioneerGgmlFp16Operands(bool enabled);
 void PioneerGgmlQ8Operands(bool enabled);
 void PioneerGgmlQ8Compact(bool enabled);
+void PioneerGgmlQ8Native(bool enabled);
+// Public bootstrap graph diagnostics only. Reference capture and comparison
+// are separate observers; neither changes tensor data or numerical gates.
+void PioneerGgmlTrace(bool enabled);
+void PioneerGgmlBeginPosition(unsigned position);
+bool PioneerGgmlCompareTap(ggml_tensor* tensor,bool ask,void*);
 #endif

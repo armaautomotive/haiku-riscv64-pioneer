@@ -50,6 +50,7 @@ struct Machine {
 	virtual bool Fp16Operands() const { return false; }
 	virtual bool Int8Arithmetic() const { return false; }
 	virtual bool Int8ConvertedRead() const { return Int8Arithmetic(); }
+	virtual bool NativeInt8Unpack() const { return false; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
@@ -87,16 +88,19 @@ struct Machine {
 		} else if (op == 0x420000c1 || op == 0x428000c1) {
 			assert(sfpuSmoke >= 16 && sfpuSmoke != 19 && config[50] == 0x100 && config[56] == 0x100000 && config[59] == 0x100);
 			bool srcA = op == 0x420000c1;
+			bool native=srcA && NativeInt8Unpack();
 			assert(UnpackBoundsValid()); // an X1 reset would load just one datum
 			assert(srcA ? !ownerA : !ownerB);
-			assert(config[srcA ? 64 : 112] == (Fp16Operands()?0x100011U:0x100015U) && config[srcA ? 65 : 113] == (srcA ? 16U : 8U));
-			assert(config[srcA ? 72 : 120] == (Fp16Operands()?1U:5U) && config[srcA ? 73 : 121] == 3);
-			assert(config[srcA ? 76 : 124] == (srcA ? 0x7070U : 0x7091U));
-			unsigned base = srcA ? 0x70710 : 0x70920, rows = srcA ? 16 : 8;
+			assert(config[srcA ? 64 : 112] == (native?0x10001eU:Fp16Operands()?0x100011U:0x100015U) && config[srcA ? 65 : 113] == (srcA ? 16U : 8U));
+			assert(config[srcA ? 72 : 120] == (native?14U:Fp16Operands()?1U:5U) && config[srcA ? 73 : 121] == 3);
+			assert(native?(config[76]==0x706d || config[76]==0x707d):config[srcA ? 76 : 124] == (srcA ? 0x7070U : 0x7091U));
+			if (native) assert(!(config[1]&0x8000) && config[49]==0 && (config[84]&65535)==64); // signed, row0 aligned for x8 bursts
+			unsigned base = native?(config[76]+1)*16:srcA ? 0x70710 : 0x70920, rows = srcA ? 16 : 8;
 			for (unsigned row = 0; row < rows; row++) for (unsigned col = 0; col < 16; col++) {
 				unsigned element = row*16+col;
-				uint32_t word = l1[Index(base+(element/2)*4)];
-				float value = Operand16(uint16_t(word >> (16*(element&1))));
+				uint32_t word = l1[Index(base+(native?element/4:element/2)*4)];
+				unsigned byte=native?((word>>(8*(element&3)))&255):0;
+				float value = native?float(byte&127)*((byte&128)?-1:1):Operand16(uint16_t(word >> (16*(element&1))));
 				if (!dropUnpack) (srcA ? a[row][col] : b[row][col]) = value;
 				unpackReads++;
 			}
@@ -160,7 +164,7 @@ struct Machine {
 		}
 		else if (op == 0x26000020 || op == 0x26c00020) {
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
-			assert(config[0] == (Fp16Operands()?0x4231U:0x42b5U) && config[1] == (Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
+			assert(config[0] == (NativeInt8Unpack()?0x423eU:Fp16Operands()?0x4231U:0x42b5U) && config[1] == (NativeInt8Unpack()?0xa03c0000U:Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;
@@ -264,7 +268,10 @@ struct Machine {
 	}
 	void Run() {
 		while (pc != ParkPc() || steps == 0) {
-			assert(++steps < StepLimit() && CodeAddress(pc));
+			++steps;
+			if (steps >= StepLimit() || !CodeAddress(pc))
+				fprintf(stderr,"RISC execution bound: pc=%08x steps=%u limit=%u allowed=%u\n",pc,steps,StepLimit(),CodeAddress(pc));
+			assert(steps < StepLimit() && CodeAddress(pc));
 			uint32_t instruction = l1[Index(pc)], next = pc + 4;
 			unsigned op = instruction & 127, rd = (instruction>>7)&31, f3 = (instruction>>12)&7;
 			unsigned rs1 = (instruction>>15)&31, rs2 = (instruction>>20)&31;

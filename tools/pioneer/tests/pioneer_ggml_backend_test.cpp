@@ -85,14 +85,16 @@ int main() {
 	}
 	assert(PioneerGgmlSnapshot(stats) && stats.tensors==1 && stats.uploads==18 && stats.matvecs==1);
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlFp16Operands(false);
-	for (bool compact:{false,true}) {
-	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(compact);
+	for (unsigned format=0;format<3;format++) {
+	bool compact=format!=0,native=format==2;
+	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(compact); PioneerGgmlQ8Native(native);
 	backend=ggml_backend_dev_init(dev,NULL); assert(backend); PioneerGgmlQ8Operands(false); // immutable while live
 	PioneerGgmlQ8Compact(!compact); // also immutable while live
+	PioneerGgmlQ8Native(!native);
 	for (unsigned trial=0;trial<2;trial++) {
 		for (unsigned k=0;k<1024;k++) ((float*)input->data)[k]=float(int((k*17+trial*29)%257)-128)/257;
 		traits->from_float_ref((const float*)input->data,qx.data(),1024);
-		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS && io.q8 && !io.fp16 && io.compact==compact);
+		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS && io.q8 && !io.fp16 && io.compact==compact && io.native==native);
 		for (unsigned row=0;row<32;row++) {
 			float reference=0;
 			for (unsigned block=0;block<32;block++) {
@@ -107,8 +109,20 @@ int main() {
 	}
 	assert(PioneerGgmlSnapshot(stats) && !stats.failed && stats.tensors==1 && stats.uploads==(compact?9U:18U) && stats.matvecs==2 && io.calls==2);
 	io.badMath=true; assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED);
-	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false);
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Native(false);
 	}
+	// Trace observers are separate from learned-matrix qualification. They
+	// detect missing references and leave every actual output byte intact.
+	PioneerGgmlTrace(true); PioneerGgmlBeginPosition(17);
+	result->op=GGML_OP_RMS_NORM; ggml_set_name(result,"attn_norm-0");
+	assert(PioneerGgmlReferenceTap(result,true,NULL) && PioneerGgmlReferenceTap(result,false,NULL));
+	assert(PioneerGgmlReferenceCount()==0 && PioneerGgmlCompareTap(result,true,NULL));
+	assert(PioneerGgmlCompareTap(result,false,NULL));
+	float changed=((float*)result->data)[0]+.125f; ((float*)result->data)[0]=changed;
+	assert(PioneerGgmlCompareTap(result,false,NULL) && ((float*)result->data)[0]==changed);
+	result->op=GGML_OP_MUL; assert(!PioneerGgmlCompareTap(result,false,NULL)); result->op=GGML_OP_RMS_NORM;
+	PioneerGgmlBeginPosition(18); assert(!PioneerGgmlCompareTap(result,false,NULL));
+	PioneerGgmlTrace(false); assert(!PioneerGgmlCompareTap(result,true,NULL));
 	weights->buffer=NULL; input->buffer=NULL; result->buffer=NULL;
 	ggml_backend_buffer_free(buffer); ggml_backend_buffer_free(inputBuffer); ggml_backend_buffer_free(resultBuffer); ggml_free(ctx);
 	printf("PASS: pinned ggml registration, strict support policy, two vectors/one upload, graph failure/no fallback, exclusive cleanup; OFFLINE ONLY\n");
