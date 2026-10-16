@@ -245,7 +245,7 @@ matched repeated benchmark or CPU speedup**. END2/PCI-host1/1/cold0 and
 independent post-audit pass; Assistant is still team2705 idle, same TinyStories
 model/backend and three model loads. Both SDs remain out; no boot change.
 
-###### Sixteen-tile GDDR reader (offline candidate, not installed)
+###### Sixteen-tile GDDR reader (native projections qualified)
 
 `TT_RUNTIME_Q8_BULK` keeps the same exact-scale packing and compensated
 arithmetic, but reads16 contiguous576-byte tiles in one9216-byte NoC request
@@ -271,7 +271,41 @@ faults, format switches and extra-buffer rollback pass the policy model.
 Jam and31 tools build, with no deployment while the full-Qwen test owns the
 card. The updated projection CLI independently checks all NoC deltas and,
 for both exact modes, requires every output FP32 bit to match CPU IEEE FMA.
-No native bulk test or performance gain has yet been established.
+The candidate `a8ab8fafae714c4ae75ddb4c6bb7a010f0730aee294b0b0963ec2d86a8409bf4`
+is now installed, with precision driver4cdc... preserved in
+`/boot/home/pioneer-q8-bulk-20261015/tenstorrent_pci_probe.before-bulk-4cdc`.
+Support61439 loaded naturally. The old exact32-row path passed every CPU
+IEEE bit first. Native bulk32x1024,2048x1024,32x3072 and1024x3072 then passed
+both vectors, every output FP32 bit, independent exact NoC accounting,
+nonfinite/format refusals and identical reuse. Full query uses256/36864/256/
+256 NoC deltas for8192 math tiles; full FFN384/55296/384/384 for12288 tiles.
+Every END is2, PCI/host1/1,cold0; independent audits and updated foreign/
+inherited/duplicate/final-close lifecycle pass. Assistant remains unchanged.
+
+A same-driver full-query control gives a warm validation-inclusive sample
+30,645us old versus28,465us bulk (compute/proof19,136 versus17,016; PIO6,068
+versus6,054). This is a modest projection-only improvement in a single warm
+sample, **not** a repeatable real-world or CPU speedup. Small32-row bulk was
+slower/noisy (9,709us versus5,289), so bulk is not presumed universally faster.
+Full FFN bulk warm33,661us includes25,137 compute/proof and3,037 PIO.
+Logs are in the separate bulk folder; current standalone projection CLI
+`c62ad340892171f83c1f67a7808ff8f95569e117a84853d47fa972665afbba81` and lifecycle
+`5ac0a1e77bcb372ded31a115dc29cb19fe1301321f749a28cfa8fb671cfc47b6`.
+No full-Qwen bulk benchmark or Assistant change has been made.
+
+###### Second-core discovery (read-only candidate, not installed)
+
+The next scaling prerequisite is an explicit fixed(1,3) NoC source/idle
+probe, separate from the old(1,2) operation. New54c7/54c8 probe/support return
+version2; old54a0/54a1 remain version1. No caller coordinates are accepted.
+It repeats the same120-core-held / seven-GDDR-route baseline, temporarily
+selects only the fixed read-only NIU pages, requires three correct node /
+endpoint / source-table / empty-command / outstanding samples and restores
+TLB/PCI state. It cannot start a second core, upload code, ring a doorbell,
+clear counters or transfer payload. New actual-probe calls require FD creator
+team; all legacy-owner conflicts and cold precedence remain. Offline models
+pass both fixed rows, every dropped TLB write, invalid coordinate refusal and
+identity/source/busy/outstanding/restore faults. Native discovery is pending.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 
@@ -577,8 +611,8 @@ thread overhead in verify32, not the rounding failure. Exact-scale backend/
 cache wiring is a distinct immutable mode; missing capability, invalid
 combinations, -128 weights and nonfinite scales fail without fallback. Its
 focused replay additionally requires **every FP32 output bit** to match the
-independent CPU. The compensated kernel's native projection qualification
-passes above; its full-model verification remains pending.
+independent CPU. The compensated kernel's full bootstrap verification passes
+above; matched faster-than-CPU performance remains unqualified.
 The new compensated run above now establishes four checked Qwen reply tokens;
 the earlier partial-SFPU failure remains a failure. No CPU speedup has yet
 been established.

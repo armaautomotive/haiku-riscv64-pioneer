@@ -913,15 +913,17 @@ struct PioneerComputeNocIO : PioneerDramSamplesIO {
 	area_id nocArea=-1;
 	const volatile uint32* nocRegisters=NULL;
 	bool nocAttempted=false;
+	const unsigned targetY;
 	PioneerComputeNocIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
 		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
-		tt_compute_noc_result& n) : PioneerDramSamplesIO(p,a,t,c,d,false),noc(n) {}
+		tt_compute_noc_result& n,unsigned y=2) : PioneerDramSamplesIO(p,a,t,c,d,false),noc(n),targetY(y) {}
 	~PioneerComputeNocIO() { if (nocArea>=B_OK) delete_area(nocArea); }
 	bool Map() {
+		if (targetY!=2 && targetY!=3) return false;
 		if (!PioneerDramSamplesIO::Map()) return false;
 		void* address=NULL;
 		// Both NIU command-register pages; target reads only. TLB 201 is
-		// saved/restored by the policy, and forced to sole physical (1,2).
+		// saved/restored by policy, forced to the fixed selected (1,2)/(1,3).
 		nocArea=map_physical_memory("P100A compute NoC0 read-only state",
 			profile.bar0_host_start+0x19320000,2*B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,
 			B_KERNEL_READ_AREA|B_UNCACHED_MEMORY,&address);
@@ -934,7 +936,7 @@ struct PioneerComputeNocIO : PioneerDramSamplesIO {
 	bool AfterNodeId(uint32 id) {
 		if (!PioneerDramSamplesIO::AfterNodeId(id)) return false;
 		nocAttempted=true;
-		return BlackholeComputeNocProbe(*this,dram,noc);
+		return BlackholeComputeNocProbe(*this,dram,noc,targetY);
 	}
 	bool Unmap() {
 		bool okay=true;
@@ -2054,14 +2056,20 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		release_sem(sLock);
 		return user_memcpy(data,&result,sizeof(result));
 	}
-	if (operation==TT_PCI_PROBE_PIONEER_COMPUTE_NOC_SUPPORT) {
+	if (operation==TT_PCI_PROBE_PIONEER_COMPUTE_NOC_SUPPORT || operation==TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC_SUPPORT) {
 		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
-		release_sem(sLock); const uint32 version=1;
+		release_sem(sLock); const uint32 version=operation==TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC_SUPPORT?2:1;
 		return user_memcpy(data,&version,sizeof(version));
 	}
-	if (operation==TT_PCI_PROBE_PIONEER_COMPUTE_NOC) {
+	if (operation==TT_PCI_PROBE_PIONEER_COMPUTE_NOC || operation==TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC) {
 		if (data==NULL || length!=sizeof(tt_pioneer_compute_noc_result)) return B_BAD_VALUE;
+		bool second=operation==TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC;
+		if (second) {
+			thread_info thread={}; status_t caller=get_thread_info(find_thread(NULL),&thread);
+			if (caller!=B_OK) return caller;
+			if (thread.team!=instance->team) return B_NOT_ALLOWED;
+		}
 		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
 		status=sPCI->reserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
 		if (status!=B_OK) { release_sem(sLock); return status; }
@@ -2077,7 +2085,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		control.arc.tlb_restored=telemetry.tlb_restored=tensix.tlb_restored=1;
 		result.baseline.dram.data_restored=result.baseline.dram.tlb_restored=result.noc.tlb_restored=1;
 		if (status==B_OK) {
-			PioneerComputeNocIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.noc);
+			PioneerComputeNocIO io(profile,control.arc,telemetry,tensix,result.baseline.dram,result.noc,second?3:2);
 			BlackholePioneerMmioProbe(io,control.pci);
 		}
 		if (result.noc.recovery_required || result.baseline.dram.recovery_required

@@ -10,6 +10,7 @@
 #include <unistd.h>
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
 static int Device() { return open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); }
+static bool sSecondProbe=false;
 static bool Legacy(int fd,bool busy)
 {
 	uint32_t version=0; errno=0;
@@ -34,6 +35,10 @@ static bool QuantizedDenied(int fd,uint32_t capabilities,int expected)
 	}
 	if (capabilities&TT_PIONEER_CAP_Q8_BULK) {
 		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK,&request,sizeof(request))<0 && errno==expected;
+	}
+	if (sSecondProbe) {
+		tt_pioneer_compute_noc_result probe={}; errno=0;
+		denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC,&probe,sizeof(probe))<0 && errno==expected;
 	}
 	return denied;
 }
@@ -132,6 +137,8 @@ int main(int argc,char** argv)
 	if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&r,sizeof(r))) { perror("session support"); close(fd); return 1; }
 	printf("Resident session support v%u capabilities %u (bits: mappings 1, host buffer 2, storage 4, inter-step guards 8)\n",r.version,r.capabilities);
 	if (r.version!=1 || (r.capabilities&3)!=3) { close(fd); return 1; }
+	uint32_t secondVersion=0;
+	sSecondProbe=ioctl(fd,TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC_SUPPORT,&secondVersion,sizeof(secondVersion))==0 && secondVersion==2;
 	if (support) { close(fd); return 0; }
 	if (store) {
 		bool passed=(r.capabilities&12)==12 && (!stream || (r.capabilities&32)) && StoreFile(fd,argv[2],automaticClose,stream); close(fd);

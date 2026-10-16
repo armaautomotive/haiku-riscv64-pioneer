@@ -2,7 +2,7 @@
 #ifndef BLACKHOLE_RUNTIME_Q8_BULK_IMAGE_H
 #define BLACKHOLE_RUNTIME_Q8_BULK_IMAGE_H
 #include "BlackholeRuntimeQ8NativeF32Image.h"
-// OFFLINE candidate only: requires an additional saved/mapped16KiB at88000.
+// Native projections qualified, not full-model speed: requires saved/mapped16KiB at88000.
 // Do not expose through the existing runtime's32KiB buffer lease.
 // Pinned tt-metal d279aa36, Blackhole noc_parameters.h: max burst256x64B.
 enum { TT_Q8_BULK_TILES=16, TT_Q8_BULK_BYTES=9216, TT_Q8_BULK_FLITS=144,
