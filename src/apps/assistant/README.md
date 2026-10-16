@@ -5,6 +5,9 @@ Hardware now also offers **P100A — Qwen3 0.6B (experimental, slow)**, using
 the exact, two-core resident Q8_0 runtime. It is currently slower than CPU,
 not a practical acceleration claim. The older TinyStories experiment remains
 available separately.
+**P100A Fast — Qwen3 0.6B (no CPU validation)** is a separate opt-in
+target using the same device runtime without the duplicate CPU reference run.
+It is not a faster-than-CPU guarantee.
 No kernel changes or network listener. A native tools bridge is under testing;
 desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 
@@ -62,6 +65,20 @@ count, and an availability list supplied by the resident service.
   tokens in the GUI (service limit 1–16), 256-token context. No history or
   system tools are used in this experimental mode. CPU mode restores the
   previous CPU model/thread setting.
+- **P100A Fast — Qwen3 0.6B (no CPU validation)** uses that same pinned
+  model and the same question/context/output limits. It does not create a
+  CPU reference context on a cold load, nor clear/decode/sample/read a CPU
+  reference during requests. The cosine/L2 and CPU-greedy comparisons are
+  disabled. CPU attention/KV/norms and activation preprocessing remain.
+  Device completion/stop proofs, exact execution coverage, finite-logit,
+  model-hash, ownership, cancellation and cold-recovery checks remain enabled.
+  Fast means validation off, not support for a larger model or guaranteed
+  real-world speed. Switching between the two Qwen modes retains the model,
+  card weights and session, without another upload. Switching back to the
+  validated mode lazily prepares its CPU reference if needed. A dormant
+  reference from an earlier validated mode can stay allocated but is not
+  used by Fast. Hardware/model settings are committed together; a failed
+  switch retains the prior selection.
 
 Changing hardware is rejected during model loading or an active request.
 Unknown IDs, unsupported backends, malformed settings and invalid thread
@@ -84,10 +101,12 @@ P100A Qwen instead uses the separately verified owned resident session and
 two fixed workers. Every learned matrix/classifier product must run on the
 card: each evaluated position requires 197 retained tensors, 163,692 verified
 upload pages and 234 real matvec calls. CPU handles attention/KV/norms,
-activation preprocessing and an independent 32-thread full-logit reference.
-Cosine >= .999, relative L2 <= .02 and CPU-identical greedy output tokens are
-required; failed output is never substituted. Card failures disable both
-card choices for the service session, with no automatic CPU fallback.
+activation preprocessing. The validated mode also runs an independent
+32-thread full-logit reference: cosine >= .999, relative L2 <= .02 and
+CPU-identical greedy output tokens are required. Fast deliberately skips that
+independent numerical comparison. Neither mode substitutes CPU output.
+Card failures disable all card choices for the service session, with no
+automatic CPU fallback.
 The existing driver owns mappings/high host memory, checks both completion/
 stop proofs, and retains quarantine/cold-recovery gates. This update does not
 change the kernel, firmware, boot media or runtime libraries.
@@ -95,7 +114,8 @@ change the kernel, firmware, boot media or runtime libraries.
 Uploads and matvecs report progress and honor Stop only between completed
 transactions; no thread is killed during an ioctl. Cancelling clears the
 partial card context safely and can require a fresh upload next time. Closing
-the service or explicitly switching hardware releases its resident session.
+the service or selecting CPU/TinyStories releases its resident session.
+Fast/validated Qwen mode changes alone keep the existing session warm.
 CPU contexts remain CPU-only even after accelerator registration: they use
 an inert backend with no supported operations and no card access. It accepts
 only its default host-storage buffer to satisfy ggml's scheduler contract.
@@ -116,6 +136,19 @@ Use `assistantctl hardware p100a-qwen` for the new Qwen/card pair;
 `HaikuAssistantHardwareTest --p100a-qwen-tests` checks rejection of unpinned
 hardware/model, wrong request format, output bounds and question limits
 without executing inference.
+Use `assistantctl hardware p100a-qwen-fast` for the explicit no-reference
+target. Requests must pin this exact backend and the `qwen-p100a-fast` prompt
+format; a validated-mode request cannot silently disable validation (or vice
+versa). The same rejection test supports both Qwen modes and checks cross-mode
+tag/format mismatches too. `--qwen-mode-switch-tests` switches to the other
+Qwen mode and back, checking preserved model/load count/thread settings
+without inference. Reply summaries/logs report CPU reference decode count,
+device position count and generation samples/time, so zero reference work
+is observable rather than inferred from a label. Generation timing includes
+synchronous decode/logit work for generated-token inputs and any in-decode
+boundary progress delivery. It excludes cold upload, prompt evaluation,
+model loading and the subsequent per-token rendering/streaming call. It is
+a diagnostic, not end-to-end throughput or a repeated benchmark.
 
 ### Qwen/P100A integration checks on Pioneer (2026-10-16)
 
@@ -161,6 +194,58 @@ integration's public test logs are retained privately on the Pioneer under
 `/boot/home/pioneer-assistant-qwen-20261016`. No existing conversation text was
 read. Runtime libraries, model data, kernel, firmware and boot configuration
 are unchanged; the pre-inference card audit passes with cold-recovery zero.
+
+### Fast target verification (2026-10-16)
+
+The full cross-build and pinned ggml ASan/UBSan backend regressions pass.
+Native hardware/settings/model-store tests pass. Both Qwen modes reject
+twelve malformed or cross-mode-tagged requests without inference. The
+fast/validated selection round-trip retains model, load count and saved
+CPU threads. A fresh Fast service explicitly reports CPU validation OFF
+and reference context absent. Its one-second public Stop test enters the
+resident upload path and closes with END state 2, PCI/host restoration 1/1
+and cold-recovery zero; the service stays ready.
+
+The final Fast build's full public question `What is the capital of France?`
+returns `The capital of France is **Paris**`, eight output tokens, success
+true and exit zero. Its summary reports CPU validation OFF, **zero reference
+decodes**, and 26 device positions. Total time including first-use upload is
+1,039.7 seconds; seven generated-token input samples take 47.077 seconds,
+about 0.149 tokens/second. This is a short diagnostic, not a repeated
+performance qualification or a CPU speedup. All 197 matrices remain resident.
+The fast/validated mode-switch test also passes with those actual warm weights
+and the model-load count still one.
+
+A separate warm request after explicitly selecting the retained validated
+target returns the same answer and passes all numerical checks: 26 reference
+decodes and 26 device positions, eight tokens in 202.6 seconds. Its seven
+generation samples take 49.875 seconds (about 0.140 tokens/second). Against
+Fast's 47.077 seconds, this is only a modest difference in a single short
+case, not a repeated A/B or CPU comparison. The validated mode remains fully
+functional; neither mode reloads/reuploads when switching to the other.
+
+The reopened ordinary GUI exposes four hardware choices and selects Fast.
+Its real Send action returns the same public answer with validation OFF,
+zero reference decodes and 26 device positions. The warm request takes
+175.2 seconds; seven generation samples take 47.243 seconds (about 0.148
+tokens/second). These single-case warm latencies, 175.2 versus 202.6 seconds,
+are not a repeated benchmark. Applying the current Fast choice preserves
+the single model load and warm weights; the twelve rejection checks still
+pass. Assistant is left open, idle and ready in Fast mode with this public
+reply visible.
+
+The cancellation path now records whether Stop was actually observed at a
+safe boundary. A simultaneous real computation/non-finite/cleanup failure
+is not treated as a benign cancellation merely because Stop is also set.
+An initial public upload was intentionally stopped cleanly to install this
+correction; its exit 1 is an interrupted test, not a hardware-failure result.
+
+Original userland/settings backups and public test evidence are retained in
+`/boot/home/pioneer-assistant-fast-20261016`. No existing private conversation
+was read; the human approved the saved-chat restart. No kernel, firmware,
+power, boot, model or runtime-library change is involved. The previous warm
+validated session closed cleanly before installation; the pre-test card
+audit passes. The user's separate llama.cpp edits remain untouched.
 
 ## Model installation and selection
 

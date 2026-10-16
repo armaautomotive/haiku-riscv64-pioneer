@@ -27,7 +27,15 @@ static const AssistantHardware kAssistantHardware[] = {
 		"First request uploads weights (~15 minutes); later requests reuse them.\n"
 		"Short questions only: 512 UTF-8 bytes / 192 prompt tokens, 8 output tokens.\n"
 		"CPU attention + independent validation; no tools/history or CPU fallback.\n"
-		"Stop waits for the current checked transfer/matvec. Other models unsupported."}
+		"Stop waits for the current checked transfer/matvec. Other models unsupported."},
+	{"p100a-qwen-fast", "P100A Fast — Qwen3 0.6B (no CPU validation)",
+		"Experimental Qwen3-0.6B Q8_0 on the same two P100A cores.\n"
+		"Skips the independent CPU model run and logit/token comparison.\n"
+		"CPU attention/KV/norms and activation preprocessing still run.\n"
+		"Device completion/stop, coverage, finite-output and recovery checks remain.\n"
+		"Same short-question/eight-token limits; no history, tools or CPU fallback.\n"
+		"Fast means validation off, NOT a faster-than-CPU guarantee.\n"
+		"First upload can take ~15 minutes; switching Qwen modes keeps warm weights."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 
@@ -37,6 +45,16 @@ static inline int AssistantHardwareIndex(const char* id)
 		for (size_t i = 0; i < kAssistantHardwareCount; i++)
 			if (strcmp(id, kAssistantHardware[i].id) == 0) return (int)i;
 	return -1;
+}
+
+static inline bool AssistantHardwareIsP100AQwen(const char* id)
+{
+	return id != NULL && (!strcmp(id,"p100a-qwen") || !strcmp(id,"p100a-qwen-fast"));
+}
+
+static inline bool AssistantHardwareIsP100AFast(const char* id)
+{
+	return id != NULL && !strcmp(id,"p100a-qwen-fast");
 }
 
 // Recognized execution implementations. Service capability messages additionally

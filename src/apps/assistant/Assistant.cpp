@@ -174,12 +174,13 @@ public:
 							fModelPath = path; fBackend=backend; fTurns.clear(); fTranscript->SetText("");
 						}
 						bool story = strcmp(backend, "p100a") == 0;
-						bool cardQwen=strcmp(backend,"p100a-qwen")==0;
+						bool cardQwen=AssistantHardwareIsP100AQwen(backend);
+						bool fast=AssistantHardwareIsP100AFast(backend);
 						fThreads->SetEnabled(!story && !cardQwen && fThreadsLoaded);
 						fApplyThreads->SetEnabled(!story && !cardQwen && fThreadsLoaded);
 						fThreadHint->SetText(story || cardQwen ? "P100A host path: 1 thread; CPU setting retained"
 							: "Saved; applies to next CPU request");
-						BString label(cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
+						BString label(fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model loaded");
 						fModelLabel->SetText(label.String());
@@ -302,11 +303,15 @@ private:
 			+ " /no_think<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		fDisplay += "You: " + fPending + "\n\nQwen: ";
 		bool story = strcmp(backend, "p100a") == 0;
-		bool cardQwen=strcmp(backend,"p100a-qwen")==0;
+		bool cardQwen=AssistantHardwareIsP100AQwen(backend);
+		bool fast=AssistantHardwareIsP100AFast(backend);
 		if (cardQwen) {
 			prompt=fPending;
-			fDisplay="Experimental P100A Qwen3-0.6B — slower than CPU; first upload can take 15 minutes.\n"
-				"Single short question; no history or system tools. Eight checked output tokens.\n\nYou: "+fPending+"\n\nQwen (P100A): ";
+			fDisplay=fast?"P100A Fast Qwen3-0.6B — CPU validation OFF; experimental, no CPU-speedup guarantee.\n"
+				"CPU attention remains. Device safety checks retained. Eight output tokens; no tools/history.\n"
+				:"Experimental P100A Qwen3-0.6B — slower than CPU; first upload can take 15 minutes.\n"
+				"Single short question; no history or system tools. Eight checked output tokens.\n";
+			fDisplay+="\nYou: "+fPending+"\n\nQwen (P100A): ";
 			fService=BMessenger(kServiceSignature);
 		}
 		if (story) {
@@ -326,7 +331,7 @@ private:
 		request.AddString("model_path", fModelPath.c_str());
 		request.AddString("backend_id", backend);
 		if (story) { request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8); }
-		if (cardQwen) { request.AddString("prompt_format","qwen-p100a"); request.AddInt32("max_tokens",8); }
+		if (cardQwen) { request.AddString("prompt_format",fast?"qwen-p100a-fast":"qwen-p100a"); request.AddInt32("max_tokens",8); }
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;

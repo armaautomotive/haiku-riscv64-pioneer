@@ -8,7 +8,9 @@ public:
 	AssistantP100AQwen();
 	~AssistantP100AQwen();
 	static bool Available(); // Read-only resident ABI; no BEGIN or compute.
-	bool Load(const char* path,std::string& error);
+	bool Load(const char* path,std::string& error,bool validate=true);
+	// Worker-only idle mode change; retains card weights and session.
+	bool SetValidation(bool enabled,std::string& error);
 	bool Complete(const std::string& question,int tokens,std::string& answer,
 		std::string& error,const std::function<bool()>& cancelled,
 		const std::function<void(const std::string&,const char*)>& progress);

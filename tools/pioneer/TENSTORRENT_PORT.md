@@ -11,6 +11,9 @@ the three-sample warm diagnostic with exact activation reuse is0.148549tokens/s
 (prior uncached two-core0.140525; one-core exact0.115836), not a matched
 benchmark or CPU speedup. Assistant now offers this runtime as the explicit
 experimental `p100a-qwen` hardware option for the pinned 0.6B model only;
+the separate `p100a-qwen-fast` target skips the independent CPU reference,
+with a native zero-reference-decode reply and about 0.149 tokens/s in a
+short generation diagnostic, not a CPU-beating performance qualification.
 27B/mixed quantization and practical acceleration still require further work.
 On October16 the user explicitly approved the activation-reuse kernel test,
 including possible freeze/power-cycle recovery. The replacement driver is now
@@ -122,6 +125,82 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 16: P100A Fast target without CPU reference validation
+
+The new explicit hardware ID `p100a-qwen-fast` uses the same pinned
+Qwen3-0.6B Q8_0 model and two-core exact dual-reuse device runtime. Its cold
+load does not create a CPU reference context. Requests do not clear, decode,
+sample or read a CPU reference, and skip the full-logit cosine/L2 and
+CPU-greedy comparisons. CPU attention/KV/norms, activation preprocessing and
+finite-output checks remain. Exact 197-tensor/670,482,432-byte/163,692-page
+coverage and 234 actual matvecs per position, completion/stop/ownership,
+quarantine and cold-recovery checks remain unchanged. No automatic CPU
+fallback or retry is introduced. Finite but numerically wrong output is no
+longer independently detected in Fast; this is an explicit tradeoff.
+
+The old validated target remains available, and requests must pin each
+mode's own backend ID and prompt format. Warm fast/validated switches run
+on the worker, retain the model/card session, and atomically save settings;
+failed changes keep the previous selection. Enabling validation lazily
+creates the inert-device CPU context if absent. Fast may keep a previously
+allocated reference dormant, but performs zero reference decodes. Both modes
+retain the existing 512-byte/192-prompt-token/256-context/eight-GUI-token
+limits. Fast is not a larger-model or faster-than-CPU guarantee.
+
+The final native Fast build answers the public France question with
+`The capital of France is **Paris**`, eight tokens, success true and exit 0.
+Its counters report CPU validation OFF, reference decodes 0 and device
+positions 26. Total including cold upload is 1,039.7 seconds; seven generated-
+token input samples take 47.077 seconds, approximately 0.149 tokens/second.
+Timing includes synchronous decode/logit work and in-decode boundary progress,
+not model load, cold upload, prompt processing or subsequent per-token output
+delivery. This single short diagnostic is **not a repeated benchmark, a CPU
+speedup, 27B support or a numerical parity test with validation disabled**.
+All weights remain resident. A native fast/validated selection round-trip
+passes both before inference and with the actual warm weights, retaining
+one model load and the saved CPU thread setting.
+
+A separately selected warm validated request returns the same eight tokens
+with every numerical gate enabled: 26 CPU reference decodes, 26 device
+positions, 202.6 seconds total, and seven generation samples in 49.875 seconds
+(about 0.140 tokens/second). Fast's corresponding generation diagnostic is
+47.077 seconds/about 0.149 tokens/second: a modest single-case difference,
+not a repeated A/B, CPU comparison or practical performance qualification.
+Mode changes retain the single model load and uploaded weights.
+
+The final ordinary GUI exposes four choices, selects Fast, and its actual
+Send action returns the same answer with reference decodes 0 and 26 device
+positions. Warm latency is 175.2 seconds; seven generation samples take
+47.243 seconds (about 0.148 tokens/second). Comparing 175.2 with 202.6 seconds
+is only a single-case latency diagnostic, not a repeated performance claim.
+Applying the current Fast pair keeps one model load and all uploaded weights;
+the twelve rejection checks still pass. The GUI is left open/ready in Fast,
+with this public reply and its exclusive resident session warm.
+
+Cross-build/warnings-as-errors, native model-store and hardware/settings
+checks, twelve malformed/cross-mode request rejections in both modes, and
+the pinned ggml ASan/UBSan backend regressions pass. A native Fast Stop test
+enters the first tensor upload, closes END2/PCI-host1/1/cold0 and stays ready.
+A review caught a Stop/fault race: an actual failure must not become benign
+merely because Stop is also set. The runtime now distinguishes Stop actually
+observed at a safe boundary. An initial public upload was intentionally
+stopped cleanly to install this correction, then the final Stop/full-request
+tests passed. No uncertain-operation retry or recovery gate was bypassed.
+
+The human approved restarting the saved-chat GUI. Original userland/settings
+backups and public logs are retained in
+`/boot/home/pioneer-assistant-fast-20261016`, with public local copies ignored
+under `generated.pioneer/tenstorrent/assistant-fast-20261016/`. No private
+conversation was read. Final service SHA-256 is
+`bda87b2aa7378b3fc53896c42baf6e80231d0306524fcf7e0ff350991f91b883`,
+GUI `78d1860e00f916f069ef2397fb7a34ac9bf8687a1e9bb0a8ef4bc10e971eaf38`,
+Hardware dialog `8a93f54de20a993be2791bcb68c160f9b55ea1f38f2c2334a9fb1b690150527f`,
+and control `5699b1f3c1d16f0c299e85054cc86c5c25b8640e70782d211ecfda048a0cae5e`.
+Kernel/firmware/power/boot/models/runtime libraries are unchanged; the old
+warm session closed cleanly and pre-test card audit passed. The dirty
+llama.cpp submodule remains untouched. See
+[Assistant Fast verification](../../src/apps/assistant/README.md#fast-target-verification-2026-10-16).
 
 ### October 16: explicit Qwen/P100A mode in Assistant
 

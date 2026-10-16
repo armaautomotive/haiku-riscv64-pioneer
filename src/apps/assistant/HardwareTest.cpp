@@ -54,9 +54,16 @@ int main(int argc, char** argv)
 	assert(!AssistantHardwareCanChat(NULL) && AssistantHardwareIndex(NULL) == -1);
 	assert(AssistantHardwareIndex("cpu") == 0 && AssistantHardwareIndex("p100a") == 1);
 	assert(AssistantHardwareIndex("p100a-qwen")==2 && AssistantHardwareCanChat("p100a-qwen"));
+	assert(AssistantHardwareIndex("p100a-qwen-fast")==3 && AssistantHardwareCanChat("p100a-qwen-fast"));
+	assert(AssistantHardwareIsP100AQwen("p100a-qwen") && AssistantHardwareIsP100AQwen("p100a-qwen-fast"));
+	assert(!AssistantHardwareIsP100AQwen(NULL) && !AssistantHardwareIsP100AQwen("cpu"));
+	assert(AssistantHardwareIsP100AFast("p100a-qwen-fast") && !AssistantHardwareIsP100AFast("p100a-qwen"));
+	assert(!AssistantHardwareIsP100AFast(NULL));
 	assert(AssistantModelSupportsBackend(0,"cpu") && AssistantModelSupportsBackend(0,"p100a-qwen"));
 	assert(!AssistantModelSupportsBackend(1,"p100a-qwen") && !AssistantModelSupportsBackend(3,"p100a-qwen"));
 	assert(!AssistantModelSupportsBackend(kAssistantTinyModel,"p100a-qwen"));
+	assert(AssistantModelSupportsBackend(0,"p100a-qwen-fast"));
+	for (size_t index=1;index<kAssistantModelCount;index++) assert(!AssistantModelSupportsBackend(index,"p100a-qwen-fast"));
 	assert(!AssistantModelSupportsBackend(0,NULL) && !AssistantModelSupportsBackend(kAssistantModelCount,"p100a-qwen"));
 	BMessage settings;
 	assert(AssistantHardwareSetting(settings) == "cpu");
@@ -68,6 +75,7 @@ int main(int argc, char** argv)
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen", 1) == B_OK);
+	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-fast", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "unknown", 1) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 0) == B_BAD_VALUE);
@@ -80,7 +88,8 @@ int main(int argc, char** argv)
 	puts("PASS: hardware policy, fail-closed saved IDs, thread limits and field preservation (no settings written)");
 	if (argc == 1) return 0;
 	if (argc != 2 || (strcmp(argv[1], "--loading-test") != 0 && strcmp(argv[1], "--service-tests") != 0
-		&& strcmp(argv[1], "--p100a-tests") != 0 && strcmp(argv[1],"--p100a-qwen-tests")!=0)) return 2;
+		&& strcmp(argv[1], "--p100a-tests") != 0 && strcmp(argv[1],"--p100a-qwen-tests")!=0
+		&& strcmp(argv[1],"--qwen-mode-switch-tests")!=0)) return 2;
 	BMessenger service(kServiceSignature);
 	if (!service.IsValid()) { puts("SKIP: resident service is not running"); return 77; }
 	BMessage state = Query(service);
@@ -90,20 +99,50 @@ int main(int argc, char** argv)
 	if (argc == 2 && strcmp(argv[1], "--loading-test") == 0) {
 		if (!loading) { puts("SKIP: model already finished loading; run during a fresh load"); return 77; }
 		assert(Configure(service, "cpu", threads) == B_BUSY);
+		assert(Configure(service, "p100a-qwen-fast", threads) == B_BUSY);
 		puts("PASS: hardware changes rejected while model is loading"); return 0;
 	}
 	bool initiallyReady = false; state.FindBool("ready", &initiallyReady);
 	if (loading || busy || !initiallyReady) { puts("SKIP: service tests require a ready, idle model"); return 77; }
 	const char* initialBackend = ""; state.FindString("backend_id", &initialBackend);
+	if (!strcmp(argv[1],"--qwen-mode-switch-tests")) {
+		if (!AssistantHardwareIsP100AQwen(initialBackend)) { puts("SKIP: a Qwen/P100A mode must be selected"); return 77; }
+		std::string original=initialBackend;
+		const char* other=AssistantHardwareIsP100AFast(initialBackend)?"p100a-qwen":"p100a-qwen-fast";
+		BString model; assert(state.FindString("model_path",&model)==B_OK);
+		int32 loads=0; assert(state.FindInt32("model_loads",&loads)==B_OK);
+		for (const char* target:{other,original.c_str()}) {
+			assert(Configure(service,target,threads)==B_OK);
+			bool finished=false;
+			for (int poll=0;poll<200;poll++) {
+				BMessage after=Query(service); bool loadingNow=true;
+				after.FindBool("loading",&loadingNow);
+				if (!loadingNow) {
+					bool ready=false; int32 afterLoads=-1,afterThreads=0;
+					assert(after.FindBool("ready",&ready)==B_OK && ready);
+					assert(after.FindString("backend_id",&value)==B_OK && !strcmp(value,target));
+					assert(after.FindString("model_path",&value)==B_OK && model==value);
+					assert(after.FindInt32("model_loads",&afterLoads)==B_OK && afterLoads==loads);
+					assert(after.FindInt32("cpu_threads",&afterThreads)==B_OK && afterThreads==threads);
+					finished=true; break;
+				}
+				snooze(100000);
+			}
+			assert(finished);
+		}
+		puts("PASS: explicit fast/validated round-trip retains model, load count and CPU threads without inference"); return 0;
+	}
 	if (!strcmp(argv[1],"--p100a-qwen-tests")) {
-		if (strcmp(initialBackend,"p100a-qwen")) { puts("SKIP: experimental P100A Qwen must be selected/idle"); return 77; }
+		if (!AssistantHardwareIsP100AQwen(initialBackend)) { puts("SKIP: experimental P100A Qwen must be selected/idle"); return 77; }
+		bool fast=AssistantHardwareIsP100AFast(initialBackend);
+		const char* format=fast?"qwen-p100a-fast":"qwen-p100a";
 		const char* model=""; assert(state.FindString("model_path",&model)==B_OK);
 		RejectionReceiver* receiver=new RejectionReceiver; receiver->Run();
-		for (int test=0;test<10;test++) {
+		for (int test=0;test<12;test++) {
 			BMessage request(kGenerate); request.AddMessenger("target",BMessenger(receiver)); request.AddInt64("id",system_time());
-			if (test!=0) request.AddString("backend_id",test==1?"cpu":"p100a-qwen");
+			if (test!=0) request.AddString("backend_id",test==1?"cpu":test==10?(fast?"p100a-qwen":"p100a-qwen-fast"):initialBackend);
 			if (test!=2) request.AddString("model_path",test==3?"/wrong/model.gguf":model);
-			if (test!=4) request.AddString("prompt_format",test==5?"story":"qwen-p100a");
+			if (test!=4) request.AddString("prompt_format",test==5?"story":test==11?(fast?"qwen-p100a":"qwen-p100a-fast"):format);
 			request.AddString("prompt",test==8?std::string(513,'x').c_str():test==9?"":"Public rejection test");
 			if (test==6) request.AddInt32("max_tokens",17);
 			if (test==7) request.AddString("max_tokens","8");
@@ -113,7 +152,7 @@ int main(int argc, char** argv)
 		}
 		if (receiver->Lock()) receiver->Quit();
 		BMessage after=Query(service); bool ready=false; after.FindBool("ready",&ready); assert(ready);
-		assert(after.FindString("backend_id",&value)==B_OK && !strcmp(value,"p100a-qwen"));
+		assert(after.FindString("backend_id",&value)==B_OK && !strcmp(value,initialBackend));
 		puts("PASS: P100A Qwen rejects missing/wrong hardware/model/format, token limit/type and question bounds; no inference or CPU fallback"); return 0;
 	}
 	if (strcmp(argv[1], "--p100a-tests") == 0) {
