@@ -79,7 +79,8 @@ HardwareWindow::Details()
 		if (text != fDetails->Text()) fDetails->SetText(text.String());
 	}
 	fApply->SetEnabled(available && !fBusy);
-	fApply->SetLabel(index == 3 ? "Use P100A Fast (CPU validation OFF)"
+	fApply->SetLabel(index == 4 ? "Use P100A Attention (experimental)"
+		: index == 3 ? "Use P100A Fast (CPU validation OFF)"
 		: index == 2 ? "Use P100A + Qwen3 0.6B (experimental, slow)"
 		: index == 1 ? "Use P100A + TinyStories (experimental)" : "Use CPU + previous Qwen model");
 	fThreads->SetEnabled(available && index == 0 && fThreadsLoaded);

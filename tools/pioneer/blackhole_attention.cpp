@@ -1,6 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// Bounded qualification image. Explicit dedicated test ioctl only;
-// not yet registered for Assistant/full-model inference.
+// Bounded image; immutable dedicated and shared resident-session ioctls only.
 // Fixed Qwen3-0.6B GQA tile: two query heads sharing one KV head, <=256 keys.
 // QK products and PV accumulation execute on the 32-lane Tensix SFPU.
 // Reductions/softmax execute on the card's TRISC0, not the host CPU.
@@ -58,7 +57,8 @@ static inline unsigned LaneOffset(unsigned lane)
 static void WriteQuery(const float* query)
 {
 	volatile uint32_t* dst = Words(0xffbd8000);
-	for (unsigned i = 0; i < 32; i++) dst[LaneOffset(i)] = PioneerAttentionBits(query[i]);
+	for (unsigned i = 0; i < 32; i++)
+		dst[LaneOffset(i)] = PioneerAttentionBits(PioneerAttentionHalf(PioneerAttentionToHalf(query[i])));
 	(void)dst[LaneOffset(31)]; Fence();
 }
 static void WriteHalf(const uint16_t* input, unsigned row)
@@ -79,7 +79,7 @@ static void AccurateMad()
 
 static float Dot(const float* query, const uint16_t* key)
 {
-	float sum = 0;
+	float high = 0, low = 0;
 	for (unsigned block = 0; block < 4; block++) {
 		WriteQuery(query + block * 32); WriteHalf(key + block * 32, 4);
 		Emit(0x70030000); Emit(0x70130004); // q0, k1
@@ -87,25 +87,34 @@ static float Dot(const float* query, const uint16_t* key)
 		AccurateMad(); // exact RN(q*k) -> 0
 		Emit(0x72030008); Drain(); // result -> rows8..11
 		volatile uint32_t* dst = Words(0xffbd8200);
-		for (unsigned i = 0; i < 32; i++) sum += PioneerAttentionFloat(dst[LaneOffset(i)]);
+		for (unsigned i = 0; i < 32; i++) PioneerAttentionAdd(PioneerAttentionFloat(dst[LaneOffset(i)]), high, low);
 	}
-	return sum * 0.0883883461356163f;
+	return (high + low) * 0.0883883461356163f;
 }
 
 static void WeightedValues(const uint16_t* values, const float* probabilities,
 	unsigned tokens, float* output)
 {
 	for (unsigned block = 0; block < 4; block++) {
-		Emit(0x702b0000); Drain(); // independent accumulator for each 32 dims
+		Emit(0x702b0000); Emit(0x703b0000); Drain(); // independent hi2/lo3 for each 32 dims
 		for (unsigned t = 0; t < tokens; t++) {
 			WriteHalf(values + t * 128 + block * 32, 0);
 			Emit(0x70030000);
 			uint32_t p = PioneerAttentionBits(probabilities[t]);
 			Emit(0x71100000 | (p >> 16)); Emit(0x711a0000 | (p & 0xffff));
-			AccurateMad(); // result0 = RN(value0 * p1 + accumulator2)
-			Emit(0x7c000020); Drain(); // result0 -> accumulator2
+			// Half operands have an exact FP32 product. Compensated FP32
+			// additions retain the low part of the CPU's double reduction.
+			Emit(0x84001940); // product4 = value0 * probability1 + zero9
+			Emit(0x850a2450); // sum5 = high2 + product4
+			Emit(0x850a5262); // virtual6 = sum5 - high2
+			Emit(0x850a5672); // temporary7 = sum5 - virtual6
+			Emit(0x850a2772); // error7 = high2 - temporary7
+			Emit(0x850a4662); // temporary6 = product4 - virtual6
+			Emit(0x850a7670); // error7 += temporary6
+			Emit(0x850a3730); // low3 += error7
+			Emit(0x7c000520); Drain(); // high2 = sum5
 		}
-		Emit(0x72230008); Drain();
+		Emit(0x850a2300); Emit(0x72030008); Drain(); // result0 = high2 + low3
 		volatile uint32_t* dst = Words(0xffbd8200);
 		for (unsigned i = 0; i < 32; i++) output[block * 32 + i] = PioneerAttentionFloat(dst[LaneOffset(i)]);
 	}
@@ -134,12 +143,13 @@ extern "C" unsigned attention_main()
 			scores[t] = Dot(query + head * 128, keys + t * 128);
 			if (scores[t] > maximum) maximum = scores[t];
 		}
-		float denominator = 0;
+		float denominator = 0, denominatorLow = 0;
 		for (unsigned t = 0; t < tokens; t++) {
-			scores[t] = PioneerAttentionExp(scores[t] - maximum); denominator += scores[t];
+			scores[t] = PioneerAttentionExp(scores[t] - maximum);
+			PioneerAttentionAdd(scores[t], denominator, denominatorLow);
 		}
-		float inverse = PioneerAttentionReciprocal(denominator);
-		for (unsigned t = 0; t < tokens; t++) scores[t] *= inverse;
+		float inverse = PioneerAttentionReciprocal(denominator, denominatorLow);
+		for (unsigned t = 0; t < tokens; t++) scores[t] = PioneerAttentionHalf(PioneerAttentionToHalf(scores[t] * inverse));
 		WeightedValues(values, scores, tokens, output + head * 128);
 	}
 	Drain();

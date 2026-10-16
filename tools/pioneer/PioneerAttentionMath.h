@@ -34,14 +34,67 @@ static inline float PioneerAttentionHalf(uint16_t value)
 	return PioneerAttentionFloat(sign | ((exponent == 31 ? 255 : exponent + 112) << 23) | (mantissa << 13));
 }
 
-static inline float PioneerAttentionReciprocal(float value)
+// IEEE binary16 RNE, including subnormals. The older matrix operand helper
+// intentionally flushes subnormals and must not be used for probabilities.
+static inline uint16_t PioneerAttentionToHalf(float value)
+{
+	uint32_t bits = PioneerAttentionBits(value), magnitude = bits & 0x7fffffff;
+	uint16_t sign = uint16_t((bits >> 16) & 0x8000);
+	if (magnitude >= 0x7f800000) return sign | uint16_t(magnitude == 0x7f800000 ? 0x7c00 : 0x7e00);
+	if (magnitude >= 0x477ff000) return sign | 0x7c00;
+	if (magnitude < 0x33000000) return sign;
+	if (magnitude < 0x38800000) {
+		unsigned shift = 126 - (magnitude >> 23);
+		uint32_t mantissa = (magnitude & 0x7fffff) | 0x800000;
+		uint32_t rounded = mantissa >> shift;
+		uint32_t remainder = mantissa & ((1U << shift) - 1), halfway = 1U << (shift - 1);
+		return sign | uint16_t(rounded + (remainder > halfway || (remainder == halfway && (rounded & 1))));
+	}
+	uint32_t rounded = magnitude + 0xfff + ((magnitude >> 13) & 1);
+	return sign | uint16_t((rounded - 0x38000000) >> 13);
+}
+
+// Half*half products are exact binary32. A two-float expansion retains the
+// low part of bounded reductions, matching the pinned CPU's double sum
+// without requiring unsupported double instructions on the card.
+static inline void PioneerAttentionAdd(float value, float& high, float& low)
+{
+	float sum = high + value, virtualValue = sum - high;
+	low += (high - (sum - virtualValue)) + (value - virtualValue);
+	high = sum;
+}
+
+struct PioneerAttentionWide { float high, low; };
+static inline PioneerAttentionWide PioneerAttentionWideAdd(PioneerAttentionWide a, PioneerAttentionWide b)
+{
+	float high = a.high + b.high, v = high - a.high;
+	float low = ((a.high - (high - v)) + (b.high - v)) + (a.low + b.low);
+	float normalized = high + low, w = normalized - high;
+	return {normalized, (high - (normalized - w)) + (low - w)};
+}
+static inline PioneerAttentionWide PioneerAttentionWideMultiply(PioneerAttentionWide a, PioneerAttentionWide b)
+{
+	float as = a.high * 4097.0f, ah = as - (as - a.high), al = a.high - ah;
+	float bs = b.high * 4097.0f, bh = bs - (bs - b.high), bl = b.high - bh;
+	float high = a.high * b.high;
+	float low = (((ah * bh - high) + ah * bl) + al * bh) + al * bl;
+	low += (a.high * b.low + a.low * b.high) + a.low * b.low;
+	return PioneerAttentionWideAdd({high, 0}, {low, 0});
+}
+
+static inline float PioneerAttentionReciprocal(float value, float low = 0)
 {
 	// Positive softmax denominator is in [1,256]. No unsupported fdiv.s.
 	uint32_t bits = PioneerAttentionBits(value);
-	if (!(bits & 0x7fffff)) return PioneerAttentionFloat((254U - (bits >> 23)) << 23);
+	if (!(bits & 0x7fffff) && !low) return PioneerAttentionFloat((254U - (bits >> 23)) << 23);
 	float inverse = PioneerAttentionFloat(0x7ef311c3U - bits);
 	for (unsigned i = 0; i < 4; i++) inverse = inverse * (2.0f - value * inverse);
-	return inverse;
+	// A float-only Newton step can oscillate between adjacent floats.
+	// Retain the denominator's low part and round one wide correction.
+	PioneerAttentionWide product = PioneerAttentionWideMultiply({value, low}, {inverse, 0});
+	PioneerAttentionWide error = PioneerAttentionWideAdd({1, 0}, {-product.high, -product.low});
+	PioneerAttentionWide result = PioneerAttentionWideAdd({inverse, 0}, PioneerAttentionWideMultiply({inverse, 0}, error));
+	return result.high + result.low;
 }
 
 static inline float PioneerAttentionExp(float value)
@@ -58,16 +111,21 @@ static inline float PioneerAttentionExp(float value)
 		rounded = (mantissa + (1U << (shift - 1))) >> shift;
 	}
 	int n = -int(rounded);
-	// Split ln(2) keeps the range-reduction products exact at this bound.
-	float r = (value - float(n) * 0.693145751953125f) - float(n) * 0.000001428606765330187f;
-	float result = 0.001388888888888889f;
-	result = result * r + 0.008333333333333333f;
-	result = result * r + 0.041666666666666667f;
-	result = result * r + 0.166666666666666667f;
-	result = result * r + 0.5f;
-	result = result * r + 1.0f;
-	result = result * r + 1.0f;
-	return result * PioneerAttentionFloat(uint32_t(n + 127) << 23);
+	// Degree-10 exp on [-ln(2)/2,ln(2)/2], evaluated in two floats.
+	// Single-float exp error can cross a subsequent binary16 midpoint.
+	// Constants are split offline, not computed using card double ops.
+	PioneerAttentionWide shift = PioneerAttentionWideMultiply({float(n), 0}, {0.6931471824645996f, -1.904654323148236e-9f});
+	PioneerAttentionWide r = PioneerAttentionWideAdd({value, 0}, {-shift.high, -shift.low});
+	static const uint32_t coefficients[11][2] = {
+		{0x3f800000,0}, {0x3f800000,0}, {0x3f000000,0},
+		{0x3e2aaaab,0xb1aaaaab}, {0x3d2aaaab,0xb0aaaaab}, {0x3c088889,0xafeeeeef},
+		{0x3ab60b61,0xae13e93f}, {0x39500d01,0xac3fcbfd}, {0x37d00d01,0xaabfcbfd},
+		{0x3638ef1d,0x292ad8e6}, {0x3493f27e,0xa808760a}
+	};
+	PioneerAttentionWide result = {PioneerAttentionFloat(coefficients[10][0]), PioneerAttentionFloat(coefficients[10][1])};
+	for (int i = 9; i >= 0; i--) result = PioneerAttentionWideAdd(PioneerAttentionWideMultiply(result, r),
+		{PioneerAttentionFloat(coefficients[i][0]), PioneerAttentionFloat(coefficients[i][1])});
+	return (result.high + result.low) * PioneerAttentionFloat(uint32_t(n + 127) << 23);
 }
 
 static inline bool PioneerAttentionHead(const float* query, const uint16_t* keys,
@@ -81,20 +139,25 @@ static inline bool PioneerAttentionHead(const float* query, const uint16_t* keys
 		if ((keys[t * stride + d] & 0x7c00) == 0x7c00 || (values[t * stride + d] & 0x7c00) == 0x7c00) return false;
 	float scores[PIONEER_ATTN_TOKENS], maximum = -3.4028234663852886e38f;
 	for (unsigned t = 0; t < tokens; t++) {
-		float sum = 0;
-		for (unsigned d = 0; d < PIONEER_ATTN_WIDTH; d++) sum += query[d] * PioneerAttentionHalf(keys[t * stride + d]);
-		scores[t] = sum * 0.0883883461356163f;
+		float high = 0, low = 0;
+		for (unsigned d = 0; d < PIONEER_ATTN_WIDTH; d++) {
+			float q = PioneerAttentionHalf(PioneerAttentionToHalf(query[d]));
+			PioneerAttentionAdd(q * PioneerAttentionHalf(keys[t * stride + d]), high, low);
+		}
+		scores[t] = (high + low) * 0.0883883461356163f;
 		if (scores[t] > maximum) maximum = scores[t];
 	}
-	float denominator = 0;
+	float denominator = 0, denominatorLow = 0;
 	for (unsigned t = 0; t < tokens; t++) {
-		scores[t] = PioneerAttentionExp(scores[t] - maximum); denominator += scores[t];
+		scores[t] = PioneerAttentionExp(scores[t] - maximum);
+		PioneerAttentionAdd(scores[t], denominator, denominatorLow);
 	}
-	float inverse = PioneerAttentionReciprocal(denominator);
+	float inverse = PioneerAttentionReciprocal(denominator, denominatorLow);
+	for (unsigned t = 0; t < tokens; t++) scores[t] = PioneerAttentionHalf(PioneerAttentionToHalf(scores[t] * inverse));
 	for (unsigned d = 0; d < PIONEER_ATTN_WIDTH; d++) {
-		float sum = 0;
-		for (unsigned t = 0; t < tokens; t++) sum += (scores[t] * inverse) * PioneerAttentionHalf(values[t * stride + d]);
-		output[d] = sum;
+		float high = 0, low = 0;
+		for (unsigned t = 0; t < tokens; t++) PioneerAttentionAdd(scores[t] * PioneerAttentionHalf(values[t * stride + d]), high, low);
+		output[d] = high + low;
 	}
 	return true;
 }

@@ -30,6 +30,7 @@
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerRuntimeDual.h"
 #include "PioneerAttentionTile.h"
+#include "PioneerRuntimeAttention.h"
 #include "PioneerOutputBufferProbe.h"
 #include "PioneerResidentStream.h"
 
@@ -160,6 +161,7 @@
 #define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_PROBE (B_DEVICE_OP_CODES_END + 0x54cc)
 #define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT (B_DEVICE_OP_CODES_END + 0x54cd)
 #define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST (B_DEVICE_OP_CODES_END + 0x54ce)
+#define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED (B_DEVICE_OP_CODES_END + 0x54cf)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -169,7 +171,8 @@
 #define TT_PIONEER_CAP_Q8_DUAL 131072U
 #define TT_PIONEER_CAP_Q8_DUAL_REUSE 262144U
 #define TT_PIONEER_CAP_ATTENTION_TILE_TEST 524288U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST)
+#define TT_PIONEER_CAP_ATTENTION_TILE_SHARED 1048576U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };

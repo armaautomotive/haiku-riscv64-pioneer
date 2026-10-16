@@ -7,14 +7,17 @@ class AssistantP100AQwen {
 public:
 	AssistantP100AQwen();
 	~AssistantP100AQwen();
-	static bool Available(); // Read-only resident ABI; no BEGIN or compute.
+	static bool Available(bool attention=false); // Read-only ABI; no BEGIN/compute.
 	bool Load(const char* path,std::string& error,bool validate=true,
-		const std::function<bool(float,const char*)>& progress = std::function<bool(float,const char*)>());
+		const std::function<bool(float,const char*)>& progress = std::function<bool(float,const char*)>(),bool attention=false);
 	// Idle inference worker only. Frees host contexts/model and proves END
 	// before relinquishing an existing resident device session.
 	bool Unload(std::string& error);
 	// Worker-only idle mode change; retains card weights and session.
 	bool SetValidation(bool enabled,std::string& error);
+	// Changing attention retains the host model, but closes the device graph
+	// and requires a new first-use upload. Idle inference worker only.
+	bool SetMode(bool validate,bool attention,std::string& error);
 	bool Complete(const std::string& question,int tokens,std::string& answer,
 		std::string& error,const std::function<bool()>& cancelled,
 		const std::function<void(const std::string&,const char*)>& progress);

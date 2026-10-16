@@ -11,13 +11,15 @@ class PioneerResidentDevice {
 	int fd=-1;
 	bool active=false,failed=false,cold=false,finished=false,stream=false,fp16=false,q8=false,compact=false,native=false,f32Scales=false,closeOnly=false;
 	tt_pioneer_runtime_matvec* request=NULL;
+	tt_pioneer_attention_tile_test* attentionRequest=NULL;
 	bool dual=false,reuse=false;
+	bool attention=false;
 	size_t requestBytes=0;
 public:
-	uint64_t uploads=0,calls=0;
-	~PioneerResidentDevice() { Finish(); free(request); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false) {
-		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || !PioneerResidentCapacity(bytes)) return false;
+	uint64_t uploads=0,calls=0,attentionCalls=0;
+	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); }
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false) {
+		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || !PioneerResidentCapacity(bytes)) return false;
 		fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 		if (fd<0) { perror("resident open"); failed=true; return false; }
 		tt_resident_session_result s={};
@@ -32,6 +34,7 @@ public:
 		f32Scales=exactScales;
 		dual=twoCores;
 		reuse=reuseInput;
+		attention=deviceAttention;
 		if (fp16 && !(s.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (q8 && !(s.capabilities&1024)) { fprintf(stderr,"Scaled Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (compact && !(s.capabilities&2048)) { fprintf(stderr,"Compact Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
@@ -39,6 +42,7 @@ public:
 		if (f32Scales && !(s.capabilities&TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES)) { fprintf(stderr,"Exact-scale/compensated-SFPU Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (dual && !(s.capabilities&TT_PIONEER_CAP_Q8_DUAL)) { fprintf(stderr,"Fixed two-core bulk Q8 unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		if (reuse && !(s.capabilities&TT_PIONEER_CAP_Q8_DUAL_REUSE)) { fprintf(stderr,"Guarded exact activation reuse unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
+		if (attention && !(s.capabilities&TT_PIONEER_CAP_ATTENTION_TILE_SHARED)) { fprintf(stderr,"Shared attention capability unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
@@ -107,6 +111,28 @@ public:
 			fprintf(stderr,"Resident two-core proof mismatch; output not accepted, close-only, no fallback/retry\n"); failed=true; closeOnly=true; return false;
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
+	}
+	bool AttentionTile(unsigned tokens,const uint32_t* query,const uint32_t* keys,const uint32_t* values,uint32_t* result) {
+		if (!active || failed || finished || cold || !attention || !result
+			|| !PioneerAttentionTileInputValid(tokens,query,keys,values)) return false;
+		if (!attentionRequest) attentionRequest=(tt_pioneer_attention_tile_test*)malloc(sizeof(tt_pioneer_attention_tile_test));
+		if (!attentionRequest) { failed=true; return false; }
+		memset(attentionRequest,0,sizeof(*attentionRequest));
+		auto& p=*attentionRequest; p.version=1; p.tokens=tokens;
+		memcpy(p.query,query,1024); memcpy(p.key,keys,tokens*256); memcpy(p.value,values,tokens*256);
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED,&p,sizeof(p));
+		const auto& r=p.result; cold=r.recovery_required!=0;
+		bool proved=!status && r.version==1 && r.state==TT_ATTN_TILE_PASSED && r.prepared && r.started
+			&& r.completed && r.stopped && !cold && r.tokens==tokens && r.count==tokens && !r.nonfinite
+			&& r.staged_words==256+tokens*128 && r.phase==TT_ATTENTION_TILE_DONE && r.marker==TT_ATTENTION_TILE_MARKER
+			&& r.pc[0]==TT_ATTENTION_TILE_PARK && r.pc[1]==r.pc[0];
+		for (unsigned w=0;w<4;w++) proved &= r.before[w]==r.after[w];
+		if (!proved) {
+			closeOnly=status!=0; failed=true;
+			fprintf(stderr,"Resident attention STOP status %d state %u launch/complete/stop %u/%u/%u phase/count/pc %x/%u/%x cold %u; no fallback/retry\n",
+				status,r.state,r.started,r.completed,r.stopped,r.phase,r.count,r.pc[1],cold); return false;
+		}
+		memcpy(result,p.output,1024); attentionCalls++; return true;
 	}
 	bool Finish() {
 		if (finished) return !cold && !closeOnly;

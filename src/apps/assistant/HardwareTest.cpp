@@ -88,10 +88,21 @@ int main(int argc, char** argv)
 	assert(!AssistantHardwareIsP100AQwen(NULL) && !AssistantHardwareIsP100AQwen("cpu"));
 	assert(AssistantHardwareIsP100AFast("p100a-qwen-fast") && !AssistantHardwareIsP100AFast("p100a-qwen"));
 	assert(!AssistantHardwareIsP100AFast(NULL));
+	assert(AssistantHardwareIndex("p100a-qwen-attention")==4 && AssistantHardwareCanChat("p100a-qwen-attention"));
+	assert(AssistantHardwareIsP100AQwen("p100a-qwen-attention") && AssistantHardwareIsP100AAttention("p100a-qwen-attention"));
+	assert(!AssistantHardwareIsP100AAttention(NULL) && !AssistantHardwareIsP100AAttention("p100a-qwen-fast"));
+	assert(AssistantHardwareSkipsValidation("p100a-qwen-attention") && AssistantHardwareSkipsValidation("p100a-qwen-fast"));
+	assert(!AssistantHardwareSkipsValidation("p100a-qwen") && !AssistantHardwareSkipsValidation("cpu"));
+	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen-attention"),"qwen-p100a-attention"));
+	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen-fast"),"qwen-p100a-fast"));
+	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen"),"qwen-p100a"));
+	assert(AssistantHardwareQwenFormat("cpu")==NULL && AssistantHardwareQwenFormat(NULL)==NULL);
 	assert(AssistantModelSupportsBackend(0,"cpu") && AssistantModelSupportsBackend(0,"p100a-qwen"));
 	assert(!AssistantModelSupportsBackend(1,"p100a-qwen") && !AssistantModelSupportsBackend(3,"p100a-qwen"));
 	assert(!AssistantModelSupportsBackend(kAssistantTinyModel,"p100a-qwen"));
 	assert(AssistantModelSupportsBackend(0,"p100a-qwen-fast"));
+	assert(AssistantModelSupportsBackend(0,"p100a-qwen-attention"));
+	for (size_t index=1;index<kAssistantModelCount;index++) assert(!AssistantModelSupportsBackend(index,"p100a-qwen-attention"));
 	for (size_t index=1;index<kAssistantModelCount;index++) assert(!AssistantModelSupportsBackend(index,"p100a-qwen-fast"));
 	assert(!AssistantModelSupportsBackend(0,NULL) && !AssistantModelSupportsBackend(kAssistantModelCount,"p100a-qwen"));
 	BMessage settings;
@@ -105,6 +116,7 @@ int main(int argc, char** argv)
 	assert(UpdateAssistantHardwareSettings(settings, "p100a", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-fast", 1) == B_OK);
+	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-attention", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "unknown", 1) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 0) == B_BAD_VALUE);
@@ -167,7 +179,7 @@ int main(int argc, char** argv)
 		request.AddString("backend_id", backend); request.AddString("model_path", model);
 		request.AddString("prompt", "This unloaded-model test must never execute.");
 		request.AddString("prompt_format", AssistantHardwareIsP100AQwen(backend.String())
-			? (AssistantHardwareIsP100AFast(backend.String()) ? "qwen-p100a-fast" : "qwen-p100a") : "story");
+			? AssistantHardwareQwenFormat(backend.String()) : "story");
 		assert(service.SendMessage(&request) == B_OK);
 		assert(acquire_sem_etc(receiver->done, 1, B_RELATIVE_TIMEOUT, 2000000) == B_OK && receiver->failed);
 		if (receiver->Lock()) receiver->Quit();
@@ -216,8 +228,8 @@ int main(int argc, char** argv)
 	}
 	if (!strcmp(argv[1],"--p100a-qwen-tests")) {
 		if (!AssistantHardwareIsP100AQwen(initialBackend)) { puts("SKIP: experimental P100A Qwen must be selected/idle"); return 77; }
-		bool fast=AssistantHardwareIsP100AFast(initialBackend);
-		const char* format=fast?"qwen-p100a-fast":"qwen-p100a";
+		bool fast=AssistantHardwareSkipsValidation(initialBackend);
+		const char* format=AssistantHardwareQwenFormat(initialBackend);
 		const char* model=""; assert(state.FindString("model_path",&model)==B_OK);
 		RejectionReceiver* receiver=new RejectionReceiver; receiver->Run();
 		for (int test=0;test<12;test++) {

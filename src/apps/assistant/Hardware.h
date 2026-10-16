@@ -35,7 +35,15 @@ static const AssistantHardware kAssistantHardware[] = {
 		"Device completion/stop, coverage, finite-output and recovery checks remain.\n"
 		"Same short-question/eight-token limits; no history, tools or CPU fallback.\n"
 		"Fast means validation off, NOT a faster-than-CPU guarantee.\n"
-		"First upload can take ~15 minutes; switching Qwen modes keeps warm weights."}
+		"First upload can take ~15 minutes; checked/Fast switching keeps warm weights."},
+	{"p100a-qwen-attention", "P100A Attention — Qwen3 0.6B (experimental)",
+		"Qwen3-0.6B Q8_0 matrices AND attention execute on the P100A.\n"
+		"QK/PV use Tensix; softmax runs on the card's control core.\n"
+		"Host still stores KV and handles norms, embeddings and preprocessing.\n"
+		"No independent CPU validation or CPU attention fallback.\n"
+		"PIO-staged KV prototype: NOT a speedup; may be slower than Fast.\n"
+		"Same short-question/eight-token limits, no history/tools.\n"
+		"Switching attention modes reloads device weights; upload can take 15+ minutes."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 
@@ -49,12 +57,29 @@ static inline int AssistantHardwareIndex(const char* id)
 
 static inline bool AssistantHardwareIsP100AQwen(const char* id)
 {
-	return id != NULL && (!strcmp(id,"p100a-qwen") || !strcmp(id,"p100a-qwen-fast"));
+	return id != NULL && (!strcmp(id,"p100a-qwen") || !strcmp(id,"p100a-qwen-fast") || !strcmp(id,"p100a-qwen-attention"));
 }
 
 static inline bool AssistantHardwareIsP100AFast(const char* id)
 {
 	return id != NULL && !strcmp(id,"p100a-qwen-fast");
+}
+
+static inline bool AssistantHardwareIsP100AAttention(const char* id)
+{
+	return id != NULL && !strcmp(id,"p100a-qwen-attention");
+}
+
+static inline bool AssistantHardwareSkipsValidation(const char* id)
+{
+	return AssistantHardwareIsP100AFast(id) || AssistantHardwareIsP100AAttention(id);
+}
+
+static inline const char* AssistantHardwareQwenFormat(const char* id)
+{
+	return AssistantHardwareIsP100AAttention(id)?"qwen-p100a-attention"
+		:AssistantHardwareIsP100AFast(id)?"qwen-p100a-fast"
+		:(id && !strcmp(id,"p100a-qwen")?"qwen-p100a":NULL);
 }
 
 // Recognized execution implementations. Service capability messages additionally

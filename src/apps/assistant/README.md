@@ -8,7 +8,11 @@ available separately.
 **P100A Fast — Qwen3 0.6B (no CPU validation)** is a separate opt-in
 target using the same device runtime without the duplicate CPU reference run.
 It is not a faster-than-CPU guarantee.
-No kernel changes or network listener. A native tools bridge is under testing;
+**P100A Attention — Qwen3 0.6B (experimental)** also moves QK, softmax and
+weighted-value work onto the card. It is a correctness-qualified PIO-staged
+prototype, not a speed improvement; see the limits below. It requires the
+matching optional P100A driver. No firmware/boot change or network listener.
+A native tools bridge is under testing;
 desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 
 ## Components
@@ -125,6 +129,21 @@ count, and an availability list supplied by the resident service.
   reference from an earlier validated mode can stay allocated but is not
   used by Fast. Hardware/model settings are committed together; a failed
   switch retains the prior selection.
+- **P100A Attention — Qwen3 0.6B (experimental)** uses the same pinned
+  Q8_0 model, question/context/output bounds and no CPU reference validation.
+  Both learned matrices and all attention execute on the card: QK products
+  and weighted-value accumulation use Tensix SFPU; softmax and reductions
+  run on its control core. Host KV storage, norms, embeddings and activation
+  preprocessing remain. Each used KV prefix is copied with checked PIO;
+  this is **not** persistent device KV, support for larger models, or a
+  faster-than-Fast/CPU guarantee. A short full-logit diagnostic measured
+  0.094761 output tokens/s across three warm samples, not a benchmark.
+  Changing to/from this mode retains host weights but closes the old device
+  graph/session; the next reply needs another roughly15-minute upload.
+  Checked/Fast switching alone still retains warm device weights. Capability,
+  model hash, finite output, per-position matrix/attention coverage,
+  completion/stop, ownership and recovery gates remain mandatory. Missing
+  card attention fails the request; it never accepts a CPU attention fallback.
 
 Changing hardware is rejected during model loading or an active request.
 Unknown IDs, unsupported backends, malformed settings and invalid thread
@@ -146,11 +165,14 @@ recovery latch is never bypassed, even after restarting the service.
 P100A Qwen instead uses the separately verified owned resident session and
 two fixed workers. Every learned matrix/classifier product must run on the
 card: each evaluated position requires 197 retained tensors, 163,692 verified
-upload pages and 234 real matvec calls. CPU handles attention/KV/norms,
-activation preprocessing. The validated mode also runs an independent
+upload pages and 234 real matvec calls. The checked/Fast modes keep attention,
+KV/norms and activation preprocessing on CPU. Attention mode additionally
+requires28 card attention operations/224 grouped-head tiles per evaluated
+position, while KV/norms and preprocessing remain on CPU.
+The validated mode also runs an independent
 32-thread full-logit reference: cosine >= .999, relative L2 <= .02 and
 CPU-identical greedy output tokens are required. Fast deliberately skips that
-independent numerical comparison. Neither mode substitutes CPU output.
+independent numerical comparison, as does Attention mode. No mode substitutes CPU output.
 Card failures disable all card choices for the service session, with no
 automatic CPU fallback.
 The existing driver owns mappings/high host memory, checks both completion/

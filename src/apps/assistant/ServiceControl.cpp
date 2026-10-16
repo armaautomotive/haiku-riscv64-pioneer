@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	BApplication app("application/x-vnd.Haiku-AssistantControl");
 	BMessenger service(kServiceSignature);
 	if (argc < 2) {
-		fprintf(stderr, "Usage: assistantctl status | load | unload | hardware | hardware cpu|p100a|p100a-qwen|p100a-qwen-fast [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
+		fprintf(stderr, "Usage: assistantctl status | load | unload | hardware | hardware cpu|p100a|p100a-qwen|p100a-qwen-fast|p100a-qwen-attention [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
 		return 2;
 	}
 	if (strcmp(argv[1], "models") == 0) {
@@ -176,7 +176,7 @@ int main(int argc, char** argv)
 		prompt = argv[2]; request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8);
 	}
 	if (AssistantHardwareIsP100AQwen(backend)) {
-		prompt=argv[2]; request.AddString("prompt_format",AssistantHardwareIsP100AFast(backend)?"qwen-p100a-fast":"qwen-p100a"); request.AddInt32("max_tokens",8);
+		prompt=argv[2]; request.AddString("prompt_format",AssistantHardwareQwenFormat(backend)); request.AddInt32("max_tokens",8);
 	}
 	request.AddInt64("id", id);
 	request.AddMessenger("target", target);

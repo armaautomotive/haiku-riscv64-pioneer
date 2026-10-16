@@ -106,7 +106,7 @@ struct Machine {
 						float av=F(lanes[a][lane]),bv=F(lanes[b][lane]),cv=F(lanes[c][lane]);
 						if (mod&1) av=-av; if (mod&2) cv=-cv;
 						if (dropMultiply && code==0x84) av=0;
-						if (omitAccumulation && op==0x84001930) lanes[2][lane]=0;
+						if (omitAccumulation && op==0x850a2450) lanes[2][lane]=0;
 						r=B(PioneerBlackholeFma(av,bv,cv)); mads++; break; }
 					case 0x7e: assert(mod==1 && b<8 && c<8); r=lanes[b][lane]&lanes[c][lane]; break;
 					case 0x7c: assert(!mod && c<8); r=lanes[c][lane]; break;
@@ -237,16 +237,17 @@ static void Reference(const std::vector<float>& q,const std::vector<uint16_t>& k
 	for (unsigned h=0;h<2;h++) {
 		std::vector<double> scores(n); double maximum=-INFINITY,total=0;
 		for (unsigned t=0;t<n;t++) { double sum=0;
-			for (unsigned d=0;d<128;d++) sum+=double(q[h*128+d])*PioneerAttentionHalf(k[t*128+d]);
-			scores[t]=sum*double(0.0883883461356163f); maximum=fmax(maximum,scores[t]); }
-		for (auto& value:scores) { value=exp(value-maximum); total+=value; }
+			for (unsigned d=0;d<128;d++) sum+=double(float(_Float16(q[h*128+d]))*PioneerAttentionHalf(k[t*128+d]));
+			scores[t]=float(float(sum)*0.0883883461356163f); maximum=fmax(maximum,scores[t]); }
+		for (auto& value:scores) { value=expf(float(value-maximum)); total+=value; }
 		for (unsigned d=0;d<128;d++) { double sum=0;
-			for (unsigned t=0;t<n;t++) sum+=scores[t]/total*PioneerAttentionHalf(v[t*128+d]); out[h*128+d]=float(sum); }
+			for (unsigned t=0;t<n;t++) sum+=double(float(_Float16(float(scores[t]*float(1.0/total))))*PioneerAttentionHalf(v[t*128+d])); out[h*128+d]=float(sum); }
 	}
 }
 
 int main(int argc,char** argv)
 {
+	setvbuf(stdout,NULL,_IONBF,0);
 	assert(argc>=2); Image image(argv[1]);
 	unsigned maxStack=0; double maximumError=0;
 	for (unsigned n:{1U,2U,3U,7U,16U,31U,32U,64U,128U,192U,256U}) {
@@ -298,6 +299,9 @@ int main(int argc,char** argv)
 			for (unsigned t=0;t<h.tokens;t++) for (unsigned d=0;d<128;d++) { tk[t*128+d]=k[t*1024+group*128+d]; tv[t*128+d]=v[t*1024+group*128+d]; }
 			Reference(tq,tk,tv,h.tokens,tp);
 			Machine m(image,h.tokens); m.Inputs(tq,tk,tv); m.Run(); double e=m.Error(te),p=m.Error(tp);
+			if (!(e<.02 && p<.00002)) {
+				fprintf(stderr,"PRECISION STOP path=%s layer=%u group=%u n=%u captured-L2=%.9g double-L2=%.9g\n",argv[argument],h.layer,group,h.tokens,e,p);
+			}
 			assert(e<.02 && p<.00002 && m.mem[0x17ffc4/4]==h.tokens && m.outputWrites==256);
 			maximumError=fmax(maximumError,p);
 			printf("PUBLIC assembled fixture layer=%u group=%u n=%u vs-ggml-f16-L2=%.9g vs-double-L2=%.9g PASS\n",h.layer,group,h.tokens,e,p);

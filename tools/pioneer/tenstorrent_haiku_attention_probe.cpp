@@ -35,13 +35,17 @@ struct Fixture {
 	bool Pack(unsigned group,tt_pioneer_attention_tile_test& p,float* precise) const {
 		memset(&p,0,sizeof(p)); p.version=1; p.tokens=tokens;
 		memcpy(p.query,q.data()+group*256,1024);
-		auto* pk=reinterpret_cast<uint16_t*>(p.key); auto* pv=reinterpret_cast<uint16_t*>(p.value);
+		std::vector<uint16_t> pk(tokens*128),pv(tokens*128);
 		for (unsigned t=0;t<tokens;t++) for (unsigned d=0;d<128;d++) {
 			pk[t*128+d]=k[t*groups*128+group*128+d]; pv[t*128+d]=v[t*groups*128+group*128+d];
 		}
+		for (unsigned w=0;w<tokens*64;w++) {
+			p.key[w]=pk[w*2]|(uint32_t(pk[w*2+1])<<16);
+			p.value[w]=pv[w*2]|(uint32_t(pv[w*2+1])<<16);
+		}
 		return PioneerAttentionTileInputValid(tokens,p.query,p.key,p.value)
-			&& PioneerAttentionHead(q.data()+group*256,pk,pv,tokens,128,precise)
-			&& PioneerAttentionHead(q.data()+group*256+128,pk,pv,tokens,128,precise+128);
+			&& PioneerAttentionHead(q.data()+group*256,pk.data(),pv.data(),tokens,128,precise)
+			&& PioneerAttentionHead(q.data()+group*256+128,pk.data(),pv.data(),tokens,128,precise+128);
 	}
 };
 static double Error(const uint32_t* result,const float* expected)

@@ -5,7 +5,8 @@
 #include <stdint.h>
 // Standalone experimental ACCEL backend. Host storage mirrors immutable
 // Q8_0 weights; supported learned matrix operations execute on the card.
-// Norms/attention/activations remain CPU operations, not hidden fallbacks.
+// Norms/activations remain host operations. Attention is host by default,
+// or explicitly dispatched to the separately qualified bounded card mode.
 ggml_backend_reg_t PioneerGgmlReg();
 // A registered ACCEL device is initialized even for CPU-only llama contexts.
 // Disable execution during their creation: they receive an inert backend
@@ -16,8 +17,8 @@ typedef bool (*PioneerGgmlBoundaryCallback)(void*);
 // Called only between completed uploads/matvecs, never during an ioctl.
 void PioneerGgmlBoundary(PioneerGgmlBoundaryCallback callback,void* data);
 struct PioneerGgmlStats {
-	uint64_t tensors,bytes,uploads,matvecs;
-	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds;
+	uint64_t tensors,bytes,uploads,matvecs,attentionOps,attentionTiles;
+	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds,attentionSeconds;
 	bool failed;
 };
 bool PioneerGgmlSnapshot(PioneerGgmlStats& stats);
@@ -38,6 +39,9 @@ void PioneerGgmlQ8Native(bool enabled);
 void PioneerGgmlQ8Exact(bool enabled);
 void PioneerGgmlQ8Dual(bool enabled);
 void PioneerGgmlQ8DualReuse(bool enabled);
+// Explicit bounded Qwen0.6B fused attention; requires exact dual-reuse mode.
+// PIO-staged prefix, not persistent device KV or a speedup qualification.
+void PioneerGgmlAttention(bool enabled);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);

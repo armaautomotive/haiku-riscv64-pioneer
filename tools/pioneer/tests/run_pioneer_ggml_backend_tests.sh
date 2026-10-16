@@ -2,6 +2,12 @@
 # Build pristine pinned ggml base plus an explicitly software-only transport.
 # The native build never defines PIONEER_GGML_OFFLINE_TEST.
 set -eu
+[ "$#" -le 1 ] || { echo 'Usage: run_pioneer_ggml_backend_tests.sh [PUBLIC_FIXTURE_DIRECTORY]' >&2; exit 2; }
+attention_fixture_dir=${1:-}
+if [ -n "$attention_fixture_dir" ]; then
+ case "$attention_fixture_dir" in /*) ;; *) echo 'Absolute fixture directory required' >&2; exit 2;; esac
+ [ -d "$attention_fixture_dir" ] || exit 2
+fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 project=$(CDPATH= cd -- "$directory/../../.." && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-ggml-backend.XXXXXXXX")
@@ -25,5 +31,9 @@ done
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror "$@" -DPIONEER_GGML_OFFLINE_TEST \
  "$directory/../PioneerGgmlBackend.cpp" "$directory/pioneer_ggml_backend_test.cpp" \
  "$temporary"/*.o -o "$temporary/test"
-UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"
+if [ -n "$attention_fixture_dir" ]; then
+ UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$attention_fixture_dir"/*.bin
+else
+ UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"
+fi
 printf 'Pristine pinned ggml test build retained at %s; NO hardware was accessed\n' "$temporary"

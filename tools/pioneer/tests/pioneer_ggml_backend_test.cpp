@@ -1,11 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerGgmlHostDevice.h"
 #include "../PioneerGgmlBackend.h"
+#include "../PioneerAttentionFixture.h"
 #include "ggml.h"
 #include "ggml-backend-impl.h"
 PioneerGgmlHostState& PioneerHostDeviceState() { static PioneerGgmlHostState state; return state; }
 static float Bf16(float f) { uint32_t bits=uint32_t(PioneerResidentBf16(f))<<16; memcpy(&f,&bits,4); return f; }
-int main() {
+int main(int argc,char** argv) {
 	ggml_backend_register(PioneerGgmlReg());
 	auto* dev=ggml_backend_reg_dev_get(PioneerGgmlReg(),0); assert(dev);
 	assert(ggml_backend_dev_type(dev)==GGML_BACKEND_DEVICE_TYPE_ACCEL);
@@ -211,6 +212,81 @@ int main() {
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
 	PioneerGgmlQ8DualReuse(false); PioneerGgmlQ8Dual(false); PioneerGgmlQ8Exact(false); PioneerGgmlQ8Native(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Operands(false);
 	dualWeights->buffer=NULL; dualResult->buffer=NULL; ggml_backend_buffer_free(dualWeightBuffer); ggml_backend_buffer_free(dualResultBuffer);
+	}
+	// Fixed fused-attention contract and 28-layer coverage. The transport is
+	// explicitly software-only here; native shared handoff is tested separately.
+	{
+		PioneerGgmlAttention(true); assert(!ggml_backend_dev_init(dev,NULL));
+		PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true);
+		PioneerGgmlQ8Exact(true); PioneerGgmlQ8Dual(true); PioneerGgmlQ8DualReuse(true);
+		io=PioneerGgmlHostState(); backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+		ggml_init_params ap={8*1024*1024,NULL,false}; auto* ac=ggml_init(ap); assert(ac);
+		auto* qr=ggml_new_tensor_3d(ac,GGML_TYPE_F32,128,16,1);
+		auto* kr=ggml_new_tensor_3d(ac,GGML_TYPE_F16,128,8,256);
+		auto* vr=ggml_new_tensor_3d(ac,GGML_TYPE_F16,128,8,256);
+		auto* mask=ggml_new_tensor_2d(ac,GGML_TYPE_F16,256,1);
+		for (unsigned i=0;i<2048;i++) static_cast<float*>(qr->data)[i]=1;
+		memset(kr->data,0,ggml_nbytes(kr));
+		for (unsigned t=0;t<256;t++) for (unsigned h=0;h<8;h++) for (unsigned d=0;d<128;d++) {
+			uint16_t value=PioneerFloat16(float(t+h+d%3)/8); memcpy(static_cast<uint8_t*>(vr->data)+(t*1024+h*128+d)*2,&value,2);
+		}
+		for (unsigned t=0;t<256;t++) { uint16_t value=t<2?0:0xfc00; memcpy(static_cast<uint8_t*>(mask->data)+t*2,&value,2); }
+		auto* q=ggml_permute(ac,qr,0,2,1,3); auto* k=ggml_permute(ac,kr,0,2,1,3); auto* v=ggml_permute(ac,vr,0,2,1,3);
+		auto* attention=ggml_flash_attn_ext(ac,q,k,v,mask,0.0883883461356163f,0,0); ggml_flash_attn_ext_set_prec(attention,GGML_PREC_F32);
+		auto* ag=ggml_new_graph(ac); ggml_build_forward_expand(ag,attention); attention->flags|=GGML_TENSOR_FLAG_COMPUTE;
+		auto names=[&](unsigned layer) {
+			char name[32]; snprintf(name,sizeof(name),"Qcur-%u",layer); ggml_set_name(qr,name);
+			snprintf(name,sizeof(name),"cache_k_l%u",layer); ggml_set_name(kr,name);
+			snprintf(name,sizeof(name),"cache_v_l%u",layer); ggml_set_name(vr,name);
+		};
+		names(0); assert(ggml_backend_dev_supports_op(dev,attention));
+		attention->src[4]=mask; assert(!ggml_backend_dev_supports_op(dev,attention)); attention->src[4]=NULL;
+		ggml_flash_attn_ext_set_prec(attention,GGML_PREC_DEFAULT); assert(!ggml_backend_dev_supports_op(dev,attention)); ggml_flash_attn_ext_set_prec(attention,GGML_PREC_F32);
+		ggml_set_name(kr,"cache_k_l1"); assert(!ggml_backend_dev_supports_op(dev,attention)); names(0);
+		PioneerGgmlAttention(false); // immutable while backend exists
+		for (unsigned layer=0;layer<28;layer++) {
+			names(layer); assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS);
+			for (unsigned h=0;h<16;h++) for (unsigned d=0;d<128;d++) assert(static_cast<float*>(attention->data)[h*128+d]==float(h/2+d%3+.5)/8);
+		}
+		assert(PioneerGgmlSnapshot(stats) && stats.attentionOps==28 && stats.attentionTiles==224 && !stats.matvecs && io.attentionCalls==224 && io.opens==1);
+		// Optional public captures exercise nonuniform Q/K/V, every head
+		// and layer, and position-major cache packing through the real
+		// GGML integration. Goldens come from an independent native CPU
+		// nonflash graph, not this software-only device model.
+		for (int argument=1;argument<argc;argument++) {
+			FILE* file=fopen(argv[argument],"rb"); assert(file);
+			PioneerAttentionFixture h={};
+			assert(fread(&h,sizeof(h),1,file)==1 && PioneerAttentionFixtureValid(h) && h.layer==unsigned(argument-1)%28);
+			std::vector<float> expected(h.resultCount);
+			memset(kr->data,0,ggml_nbytes(kr)); memset(vr->data,0,ggml_nbytes(vr));
+			assert(fread(qr->data,4,h.queryCount,file)==h.queryCount && fread(kr->data,2,h.kvCount,file)==h.kvCount
+				&& fread(vr->data,2,h.kvCount,file)==h.kvCount && fread(expected.data(),4,h.resultCount,file)==h.resultCount
+				&& fgetc(file)==EOF && fclose(file)==0);
+			for (unsigned t=0;t<256;t++) static_cast<uint16_t*>(mask->data)[t]=t<h.tokens?0:0xfc00;
+			names(h.layer); unsigned calls=io.attentionCalls;
+			assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS && io.attentionCalls-calls==8);
+			assert(!memcmp(attention->data,expected.data(),8192));
+			printf("PUBLIC GGML attention layer=%u n=%u all-head exact CPU-nonflash output PASS (OFFLINE)\n",h.layer,h.tokens);
+		}
+		assert((argc-1)%28==0);
+		for (unsigned i=0;i<2048;i++) static_cast<float*>(qr->data)[i]=1;
+		memset(kr->data,0,ggml_nbytes(kr));
+		for (unsigned t=0;t<256;t++) for (unsigned h=0;h<8;h++) for (unsigned d=0;d<128;d++) {
+			uint16_t value=PioneerFloat16(float(t+h+d%3)/8); memcpy(static_cast<uint8_t*>(vr->data)+(t*1024+h*128+d)*2,&value,2);
+		}
+		// Same fixed shape, now the entire 256-key prefix; uniform keys have
+		// an independent analytic mean, no local numerical-model dependency.
+		memset(mask->data,0,512); names(0);
+		assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS);
+		for (unsigned h=0;h<16;h++) for (unsigned d=0;d<128;d++) assert(fabsf(static_cast<float*>(attention->data)[h*128+d]-float(127.5+h/2+d%3)/8)<.00001f);
+		// Non-causal hole refuses before any partial output is published.
+		names(1); uint16_t hidden=0xfc00; memcpy(static_cast<uint8_t*>(mask->data)+4,&hidden,2);
+		std::vector<float> before(2048); memcpy(before.data(),attention->data,8192); unsigned calls=io.attentionCalls;
+		assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_FAILED && io.attentionCalls==calls && !memcmp(before.data(),attention->data,8192));
+		assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_FAILED && io.attentionCalls==calls);
+		assert(PioneerGgmlFinish()); ggml_backend_free(backend); ggml_free(ac);
+		PioneerGgmlAttention(false); PioneerGgmlQ8DualReuse(false); PioneerGgmlQ8Dual(false); PioneerGgmlQ8Exact(false);
+		PioneerGgmlQ8Native(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Operands(false);
 	}
 	for (unsigned reject:{1U,2U,36U,37U,38U}) {
 		io=PioneerGgmlHostState(); PioneerGgmlDiagnose(false);

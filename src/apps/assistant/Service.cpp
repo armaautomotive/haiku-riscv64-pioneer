@@ -54,7 +54,7 @@ public:
 			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL),
 			fLoading(true), fPersistModel(false), fUnloading(false), fPendingUnload(false),
 			fResidentModels(0), fProgressActive(true), fProgressValue(-1),
-			fProgressPhase("Starting model service"), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false)
+			fProgressPhase("Starting model service"), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false), fP100AAttentionSupported(false)
 	{
 		fHardware = LoadAssistantHardware();
 		const char* overridePath = getenv("LLAMA_MODEL");
@@ -204,7 +204,8 @@ public:
 			reply.AddString("loading_backend_id", fLoading ? fLoadingHardware.String() : "");
 			reply.AddString("model_path", fModelPath);
 			reply.AddString("model_error", fModelError);
-			reply.AddString("backend", AssistantHardwareIsP100AFast(fHardware.String()) ? "P100A Fast Qwen3-0.6B (CPU reference validation OFF; experimental)"
+			reply.AddString("backend", AssistantHardwareIsP100AAttention(fHardware.String()) ? "P100A Attention Qwen3-0.6B (card attention; CPU validation OFF; experimental)"
+				: AssistantHardwareIsP100AFast(fHardware.String()) ? "P100A Fast Qwen3-0.6B (CPU reference validation OFF; experimental)"
 				: fHardware == "p100a-qwen" ? "P100A Qwen3-0.6B exact dual-reuse hybrid (experimental, slower than CPU)"
 				: fHardware == "p100a" ? "P100A TinyStories experimental hybrid (not Qwen)"
 				: (fHardware == "cpu" ? "CPU (llama.cpp)" : "Unavailable hardware; no fallback"));
@@ -215,7 +216,7 @@ public:
 				hardware.AddString("id", kAssistantHardware[i].id);
 				hardware.AddString("name", kAssistantHardware[i].name);
 				hardware.AddBool("available", i == 0 || (i==1 && fP100ASupported.load() && AssistantModelPresent(kAssistantTinyModel))
-					|| ((i==2 || i==3) && fP100AQwenSupported.load() && AssistantModelPresent(0)));
+					|| ((i==2 || i==3 || (i==4 && fP100AAttentionSupported.load())) && fP100AQwenSupported.load() && AssistantModelPresent(0)));
 				hardware.AddString("description", kAssistantHardware[i].description);
 				reply.AddMessage("hardware", &hardware);
 			}
@@ -278,7 +279,7 @@ public:
 			status_t tokensStatus=message->FindInt32("max_tokens",&request->tokens);
 			if (backendStatus!=B_OK || message->FindString("model_path",&pinnedModel)!=B_OK || fModelPath!=pinnedModel
 				|| message->FindString("prompt_format",&format)!=B_OK
-				|| strcmp(format,AssistantHardwareIsP100AFast(fHardware.String())?"qwen-p100a-fast":"qwen-p100a")
+				|| strcmp(format,AssistantHardwareQwenFormat(fHardware.String()))
 				|| (tokensStatus!=B_OK && tokensStatus!=B_NAME_NOT_FOUND) || request->tokens<1 || request->tokens>16
 				|| request->prompt.empty() || request->prompt.size()>512 || !fP100AQwenSupported.load()) {
 				Reply(request,kDone,"","P100A Qwen requires explicit short-question mode, 512 bytes and 1-16 output tokens. No CPU fallback.");
@@ -311,6 +312,7 @@ private:
 			|| threads < 1 || threads > AssistantMaxThreads()) return B_BAD_VALUE;
 		if (strcmp(backend, "p100a") == 0 && !fP100ASupported.load()) return B_NOT_SUPPORTED;
 		if (AssistantHardwareIsP100AQwen(backend) && !fP100AQwenSupported.load()) return B_NOT_SUPPORTED;
+		if (AssistantHardwareIsP100AAttention(backend) && !fP100AAttentionSupported.load()) return B_NOT_SUPPORTED;
 		if (!AssistantModelPresent(index)) return B_ENTRY_NOT_FOUND;
 		if (fReady.load() && fHardware == backend && fModelPath == path) {
 			status_t status = SaveAssistantHardware(backend, threads);
@@ -379,6 +381,7 @@ private:
 		PioneerGgmlContextExecution(false);
 		fP100ASupported.store(AssistantP100A::Available());
 		fP100AQwenSupported.store(AssistantP100AQwen::Available());
+		fP100AAttentionSupported.store(AssistantP100AQwen::Available(true));
 		while (!fQuit.load()) {
 			if (acquire_sem(fWake) != B_OK || fQuit.load()) break;
 			BString path, backend;
@@ -468,7 +471,8 @@ private:
 		int index = AssistantModelIndex(path.String());
 		const bool reuseQwen=fQwen && fReady.load() && path==fModelPath
 			&& AssistantHardwareIsP100AQwen(fHardware.String()) && AssistantHardwareIsP100AQwen(backend.String());
-		const bool previousValidation=!AssistantHardwareIsP100AFast(fHardware.String());
+		const bool previousValidation=!AssistantHardwareSkipsValidation(fHardware.String());
+		const bool previousAttention=AssistantHardwareIsP100AAttention(fHardware.String());
 		status_t status = B_NOT_SUPPORTED;
 		if (index >= 0 && kAssistantModels[index].compatible
 			&& AssistantModelSupportsBackend(index,backend.String()))
@@ -480,19 +484,20 @@ private:
 		AssistantP100A* tiny = NULL;
 		AssistantP100AQwen* qwen=NULL;
 		if (status==B_OK && AssistantHardwareIsP100AQwen(backend.String())) {
-			if (!fP100AQwenSupported.load()) error="P100A exact Qwen driver unavailable or disabled after a fault; no fallback.";
+			if (!fP100AQwenSupported.load() || (AssistantHardwareIsP100AAttention(backend.String()) && !fP100AAttentionSupported.load())) error="P100A exact Qwen/attention driver unavailable or disabled after a fault; no fallback.";
 			else {
 				std::string reason;
-				bool validate=!AssistantHardwareIsP100AFast(backend.String());
+				bool validate=!AssistantHardwareSkipsValidation(backend.String());
+				bool attention=AssistantHardwareIsP100AAttention(backend.String());
 				if (reuseQwen) {
-					Progress(-1, "Preparing Qwen mode; retaining resident P100A weights");
-					if (fQwen->SetValidation(validate,reason)) qwen=fQwen;
+					Progress(-1, attention!=previousAttention?"Rebuilding attention graph; device weights reload on first reply":"Preparing Qwen mode; retaining resident P100A weights");
+					if (fQwen->SetMode(validate,attention,reason)) qwen=fQwen;
 					else error=reason.c_str();
 				} else {
 					qwen=new AssistantP100AQwen;
 					if (!qwen->Load(path.String(),reason,validate,[&](float value,const char* phase) {
 						Progress(value,phase); return !fQuit.load();
-					})) { error=reason.c_str(); delete qwen; qwen=NULL; }
+					},attention)) { error=reason.c_str(); delete qwen; qwen=NULL; }
 				}
 			}
 		}
@@ -545,7 +550,13 @@ private:
 			} else if (!reuseQwen) { delete fTiny; fTiny = tiny; fLoads.fetch_add(1); }
 			fModelPath = path; fHardware = backend; fThreads.store(threads); fReady.store(true);
 		} else {
-			if (reuseQwen) { std::string ignored; fQwen->SetValidation(previousValidation,ignored); }
+			if (reuseQwen) {
+				std::string restoreError;
+				if (!fQwen->SetMode(previousValidation,previousAttention,restoreError) || fQwen->Faulted()) {
+					fReady.store(false); fP100AQwenSupported.store(false); fP100AAttentionSupported.store(false);
+					error="P100A mode restoration failed; model unavailable, no CPU fallback. "; error<<restoreError.c_str();
+				}
+			}
 			else delete qwen;
 			delete tiny;
 			if (context != NULL) llama_free(context);
@@ -656,6 +667,7 @@ private:
 	std::atomic<bool> fP100ASupported;
 	AssistantP100AQwen* fQwen;
 	std::atomic<bool> fP100AQwenSupported;
+	std::atomic<bool> fP100AAttentionSupported;
 };
 
 int main()

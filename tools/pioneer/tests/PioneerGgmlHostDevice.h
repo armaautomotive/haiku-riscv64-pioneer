@@ -4,9 +4,11 @@
 // OFFLINE ONLY: no device header, open, ioctl, mmap or hardware access.
 #include "../PioneerResidentTensor.h"
 #include "../TenstorrentGgufQuant.h"
+#include "../PioneerAttentionMath.h"
 #include <cassert>
 struct PioneerGgmlHostState {
-	unsigned opens=0,finishes=0,uploads=0,calls=0;
+	unsigned opens=0,finishes=0,uploads=0,calls=0,attentionCalls=0;
+	bool attention=false;
 	bool fail=false,badMath=false,fp16=false,q8=false,compact=false,native=false,exact=false,dual=false,reuse=false;
 	std::vector<uint32_t> bytes;
 	PioneerGgmlHostState():bytes(1024*1024/4) {}
@@ -16,7 +18,15 @@ class PioneerResidentDevice {
 	bool active=false;
 public:
 	~PioneerResidentDevice() { Finish(); }
-	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false,bool reuse=false) { assert(capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact) && (!reuse || dual)); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; PioneerHostDeviceState().reuse=reuse; return true; }
+	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false,bool reuse=false,bool attention=false) { assert(capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact) && (!reuse || dual) && (!attention || reuse)); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; PioneerHostDeviceState().reuse=reuse; PioneerHostDeviceState().attention=attention; return true; }
+	bool AttentionTile(unsigned n,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* output) {
+		auto& s=PioneerHostDeviceState(); assert(active && s.attention); s.attentionCalls++; if (s.fail) return false;
+		float query[256],result[256]; memcpy(query,q,1024);
+		std::vector<uint16_t> key(n*128),value(n*128);
+		for (unsigned w=0;w<n*64;w++) { key[w*2]=uint16_t(k[w]); key[w*2+1]=uint16_t(k[w]>>16); value[w*2]=uint16_t(v[w]); value[w*2+1]=uint16_t(v[w]>>16); }
+		if (!PioneerAttentionHead(query,key.data(),value.data(),n,128,result) || !PioneerAttentionHead(query+128,key.data(),value.data(),n,128,result+128)) return false;
+		memcpy(output,result,1024); return true;
+	}
 	bool Finish() { if (active) PioneerHostDeviceState().finishes++; active=false; return true; }
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		auto& s=PioneerHostDeviceState(); assert(active && !(offset%4096) && offset+4096<=s.bytes.size()*4);

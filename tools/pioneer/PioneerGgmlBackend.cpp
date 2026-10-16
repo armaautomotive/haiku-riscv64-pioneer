@@ -8,6 +8,7 @@
 #include "ggml-backend-impl.h"
 #include "TenstorrentGgufQuant.h"
 #include "PioneerBlackholeFma.h"
+#include "PioneerGgmlAttention.h"
 #include <new>
 #include <errno.h>
 #include <fcntl.h>
@@ -33,6 +34,9 @@ struct PioneerGgmlDevice:PioneerResidentDevice {
 	bool Matvec(uint64_t offset,unsigned k,unsigned n,const uint32_t* x,uint32_t* y) {
 		return Boundary() && PioneerResidentDevice::Matvec(offset,k,n,x,y) && Boundary();
 	}
+	bool AttentionTile(unsigned n,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::AttentionTile(n,q,k,v,y) && Boundary();
+	}
 };
 struct PioneerGgmlContext {
 	PioneerGgmlDevice device;
@@ -45,8 +49,11 @@ struct PioneerGgmlContext {
 	const bool exact;
 	const bool dual;
 	const bool reuse;
-	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput) {}
+	const bool attention;
+	uint64_t attentionOps=0,attentionTiles=0;
+	unsigned attentionLayer=0;
+	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0,attentionSeconds=0;
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -60,6 +67,7 @@ static bool sNative=false;
 static bool sExact=false;
 static bool sDual=false;
 static bool sDualReuse=false;
+static bool sAttention=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -88,6 +96,7 @@ static bool View(enum ggml_op op) {
 }
 static bool Supports(ggml_backend_dev_t,const ggml_tensor* op) {
 	if (View(op->op)) return true;
+	if (sAttention && op->op==GGML_OP_FLASH_ATTN_EXT) return PioneerGgmlAttentionContract(op);
 	if (op->op!=GGML_OP_MUL_MAT || !op->src[0] || !op->src[1]) return false;
 	const auto* w=op->src[0]; const auto* x=op->src[1];
 	// Strict immutable learned Q8_0 matrices only, not dynamic attention
@@ -205,6 +214,39 @@ static bool CheckProjection(const ggml_tensor* w,const float* x,const float* y,c
 	}
 	return passed;
 }
+static bool ComputeAttention(PioneerGgmlContext& ctx,ggml_tensor* op)
+{
+	unsigned layer=0;
+	if (!ctx.attention || !PioneerGgmlAttentionContract(op,&layer) || layer!=ctx.attentionLayer
+		|| !op->src[2]->data || !op->src[3]->data) return false;
+	const auto* mask=static_cast<const uint8_t*>(op->src[3]->data);
+	unsigned tokens=0;
+	for (unsigned i=0;i<256;i++) {
+		uint16_t bits; memcpy(&bits,mask+i*2,2);
+		if (!bits && tokens==i) tokens++;
+		else if (bits!=0xfc00) return false;
+	}
+	if (!tokens) return false;
+	std::vector<uint32_t> query(256),keys(tokens*64),values(tokens*64),result(2048);
+	const auto* q=static_cast<const uint8_t*>(op->src[0]->data);
+	const auto* k=static_cast<const uint8_t*>(op->src[1]->data);
+	const auto* v=static_cast<const uint8_t*>(op->src[2]->data);
+	double started=Seconds();
+	for (unsigned group=0;group<8;group++) {
+		memcpy(query.data(),q+group*1024,1024);
+		for (unsigned t=0;t<tokens;t++) {
+			memcpy(keys.data()+t*64,k+t*2048+group*256,256);
+			memcpy(values.data()+t*64,v+t*2048+group*256,256);
+		}
+		if (!ctx.device.AttentionTile(tokens,query.data(),keys.data(),values.data(),result.data()+group*256)) return false;
+		ctx.attentionTiles++;
+	}
+	ctx.attentionSeconds+=Seconds()-started;
+	// Publish only after all eight grouped-head operations are proved.
+	memcpy(op->data,result.data(),8192); ctx.attentionOps++;
+	ctx.attentionLayer=(ctx.attentionLayer+1)%28;
+	return true;
+}
 static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	auto* ctx=(PioneerGgmlContext*)backend->context;
 	if (!ctx || ctx->failed) return GGML_STATUS_FAILED;
@@ -213,8 +255,12 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
+		}
+		if (op->op==GGML_OP_FLASH_ATTN_EXT) {
+			if (!ComputeAttention(*ctx,op)) { ctx->failed=true; return GGML_STATUS_FAILED; }
+			continue;
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
 		uint64_t offset=0; size_t before=ctx->cache.Tensors();
@@ -283,8 +329,8 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 		disabled.iface.supports_op=DisabledSupports; disabled.iface.supports_buft=DisabledBuffer;
 		return new(std::nothrow) ggml_backend {&guid,iface,&disabled,NULL};
 	}
-	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual)) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention); if (!ctx) return NULL;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -318,6 +364,8 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats={}; if (!sActive) return false;
 	stats.tensors=sActive->cache.Tensors(); stats.bytes=sActive->cache.Bytes(); stats.uploads=sActive->cache.uploadedPages;
 	stats.matvecs=sActive->cache.matvecCalls; stats.failed=sActive->failed || sActive->cache.Failed();
+	stats.attentionOps=sActive->attentionOps; stats.attentionTiles=sActive->attentionTiles;
+	stats.attentionSeconds=sActive->attentionSeconds;
 	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;
 	stats.matvecSeconds=sActive->matvecSeconds; stats.diagnosticSeconds=sActive->diagnosticSeconds; return true;
 }
@@ -331,6 +379,7 @@ void PioneerGgmlQ8Native(bool enabled) { if (!sActive) sNative=enabled; }
 void PioneerGgmlQ8Exact(bool enabled) { if (!sActive) sExact=enabled; }
 void PioneerGgmlQ8Dual(bool enabled) { if (!sActive) sDual=enabled; }
 void PioneerGgmlQ8DualReuse(bool enabled) { if (!sActive) sDualReuse=enabled; }
+void PioneerGgmlAttention(bool enabled) { if (!sActive) sAttention=enabled; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {

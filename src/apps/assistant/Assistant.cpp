@@ -144,7 +144,8 @@ public:
 						bool story = strcmp(backend, "p100a") == 0;
 						bool cardQwen=AssistantHardwareIsP100AQwen(backend);
 						bool fast=AssistantHardwareIsP100AFast(backend);
-						BString label(fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
+						bool attention=AssistantHardwareIsP100AAttention(backend);
+						BString label(attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model selected");
 						if (!ready && !changing) label << " (unloaded)";
@@ -256,9 +257,12 @@ private:
 		bool story = strcmp(backend, "p100a") == 0;
 		bool cardQwen=AssistantHardwareIsP100AQwen(backend);
 		bool fast=AssistantHardwareIsP100AFast(backend);
+		bool attention=AssistantHardwareIsP100AAttention(backend);
 		if (cardQwen) {
 			prompt=fPending;
-			fDisplay=fast?"P100A Fast Qwen3-0.6B — CPU validation OFF; experimental, no CPU-speedup guarantee.\n"
+			fDisplay=attention?"P100A Attention Qwen3-0.6B — matrices and attention run on card; CPU validation OFF.\n"
+				"Experimental PIO-staged KV; may be slower than Fast. Eight tokens; no tools/history.\n"
+				:fast?"P100A Fast Qwen3-0.6B — CPU validation OFF; experimental, no CPU-speedup guarantee.\n"
 				"CPU attention remains. Device safety checks retained. Eight output tokens; no tools/history.\n"
 				:"Experimental P100A Qwen3-0.6B — slower than CPU; first upload can take 15 minutes.\n"
 				"Single short question; no history or system tools. Eight checked output tokens.\n";
@@ -282,7 +286,7 @@ private:
 		request.AddString("model_path", fModelPath.c_str());
 		request.AddString("backend_id", backend);
 		if (story) { request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8); }
-		if (cardQwen) { request.AddString("prompt_format",fast?"qwen-p100a-fast":"qwen-p100a"); request.AddInt32("max_tokens",8); }
+		if (cardQwen) { request.AddString("prompt_format",AssistantHardwareQwenFormat(backend)); request.AddInt32("max_tokens",8); }
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;

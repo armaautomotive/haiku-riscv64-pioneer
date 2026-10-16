@@ -211,7 +211,102 @@ Local ignored evidence: `generated.pioneer/tenstorrent/attention-20261016/`.
 Assistant was normally unloaded before device tests; chat/model selection
 were retained. Ordinary atomic driver update was discovered after a delay;
 no reboot, firmware/boot/SD change, forced module unload or cold-latch bypass
-was needed. Do not describe this as full-model attention integration yet.
+was needed. That first qualification alone did not prove full-model attention.
+
+### October 16: shared attention and CPU-compatible precision
+
+The subsequent shared operation `TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED`
+requires the exact two-worker/reused-activation matrix mode and uploaded
+weights. Before changing the primary worker's fixed boot entry, both workers
+must be held and their PCI/NoC state unchanged. The secondary entry remains
+the matrix program. Before the next matrix call the primary entry is restored.
+The attention code/data reservations do not overlap matrix code/bulk buffers.
+END proves both workers held before restoring attention state, then closes the
+matrix leases in order. Mapping, entry-readback, completion or stop uncertainty
+quarantines both workers: no reset/retry, forced reload or cold-latch bypass.
+
+The first full Qwen experiment stopped at position1: logit cosine0.996853787,
+relative-L2 0.103737042, despite the same argmax. Position0 was exact. END was
+clean (state2, PCI/host1/1, cold0); no generated token was accepted. The
+repeated-`Hello` qualification fixtures did not expose the precision issue.
+A CPU-only control on the actual public ChatML prompt also found that the
+pinned CPU flash and nonflash graphs differed by logit-L2 0.0435024467 at
+position1 and0.0292053534 at position2. This was not evidence of a card fault.
+
+`tenstorrent_haiku_attention_precision.cpp` links/registers only CPU backends.
+It decodes three distinct fixed public tokens (151644,872,198), captures all
+28 layers, and replays each captured Q/K/V through a separate tiny nonflash
+GGML graph. It can export84 public fixtures with nonflash replay outputs.
+It never opens the card, reads chat/settings, or generates an answer.
+
+The corrected card kernel follows that original nonflash numerical contract:
+
+- Incoming F32 queries round to IEEE F16 on the card, including subnormals.
+- Half-query/half-key products run on SFPU; a two-float card reduction
+  preserves the pinned CPU's double-accumulated dot before rounding to F32.
+- Stable softmax uses split-float degree10 exp and a corrected reciprocal
+  that retains the denominator's low part. No card double/divide is required.
+- Normalized probabilities round to F16, matching the CPU's second matmul.
+  Half-value products and compensated high/low accumulation run on SFPU.
+
+The actual linked3660-byte RV32IMF image was interpreted with strict fixed
+memory/MMIO bounds, Blackhole partial-FMA arithmetic and fault injection.
+Synthetic n1..256 and all672 grouped-head tiles from the84 varied-token
+fixtures match the independent CPU-nonflash reference exactly. Observed
+stack is1360/8192bytes. IEEE half midpoint/neighbour tests and100001 reciprocal
+tests (including low denominator parts) pass under ASan/UBSan. Elemental
+exp/reciprocal relative errors versus double are below6.1e-8. The GGML
+integration separately replays all84 captures with exact all-head outputs.
+
+Native Haiku on the corrected driver also passed n1/3/256 exactly, then five
+matrix/four attention handoffs (including256 keys), with clean END. All56
+varied-token position1/2 captures, eight groups each, passed **448 exact
+CPU-nonflash output comparisons**: ioctl wall3.172236s, whole test3.427302s.
+These are primitive checks, not generation throughput.
+
+The corrected full Qwen run subsequently **passed** with the original
+cosine/L2/greedy gates unchanged: all22 evaluated positions (19 public prompt
+tokens plus three generated-token inputs) had exact full logits, cosine1 and
+relative-L2 0. All four greedy tokens matched CPU: `The capital of France`.
+Coverage was616 attention ops/4928 grouped tiles and5148 matvecs; all197
+tensors/163692 pages were resident. END was state2, PCI/host1/1, cold0.
+Total1104.967s included876.625116s of verified weight preparation/upload.
+Three warm decode samples took31.658543s (0.094761 tokens/s), excluding the
+CPU reference. This is a short diagnostic, **not** a speed benchmark or a
+CPU/Fast speedup. KV-prefix PIO and per-tile proofs remain expensive.
+Verifier SHA256:
+`cc1723522c17cc410ed9e694c25bf3faa7d81d5da99ddc2f3ed1ec62230efb79`.
+
+Corrected driver SHA256:
+`ee60544cfedb7ee4ef4b41b534fa675205572d5b8c462732e4c2b6dfb6d51236`.
+TRISC image SHA256:
+`0d46bb397ecbfa59b7a9df27263949523d8cd94e86d6bb1b8011ec5509fa46c6`.
+Probe/mixed-tool SHA256 respectively:
+`a642924daf06760a519d5ee5ae35b37c6733cf82af66e133cc6376c6caaf16ec`,
+`1cc124b53b678b5688ce53313514800d5c8bf9cb05654d6afce716a138d81764`.
+Evidence/rollback: `/boot/home/pioneer-attention-20261016/rounding-wide-a/`,
+`precision-b/`, `full-qwen-wide/`; original shared driver preserved as
+`rounding-wide-a/original-driver-053e75c0`. Normal atomic replacement loaded
+the corrected driver without reboot. Firmware, boot/SD configuration,
+kernel CPU/RAM code and the pinned llama runtime were not changed.
+
+The fused backend is opt-in; it requires28 card attention operations/224
+grouped-head tiles and234 learned matvecs at every evaluated position. It
+still stages each used KV prefix with checked PIO and retains the KV cache
+on the host. It is not a speed claim or support for larger Qwen models.
+
+Assistant now exposes the separate ID `p100a-qwen-attention`, with its own
+`qwen-p100a-attention` request tag. It uses the pinned0.6B model, card
+attention and no independent CPU reference during ordinary requests. Old
+checked/Fast modes remain unchanged and keep CPU attention. Switching
+attention graphs retains the host model but proves END and discards device
+weights; the next reply must upload again. Host-only mode-cycle tests prove
+zero uploads/compute. The installed service passed idle mode round-trip,
+malformed/unpinned request rejection and Load/Unload/reload preservation
+tests. The GUI and standalone Hardware chooser were both updated; only
+empty chat/draft lengths were inspected before their normal restart. The
+installed service's separate public-question smoke test is still in progress
+in `assistant-wide-a/`; the standalone full-logit result above is complete.
 
 ### October 16: P100A Fast target without CPU reference validation
 

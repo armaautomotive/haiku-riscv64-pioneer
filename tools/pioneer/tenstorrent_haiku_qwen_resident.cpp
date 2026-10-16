@@ -19,7 +19,8 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool reuse=argc==3 && (!strcmp(argv[1],"--verify-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-reuse-q8-host1"));
+	bool deviceAttention=argc==3 && !strcmp(argv[1],"--verify-device-attention-q8-host1");
+	bool reuse=deviceAttention || (argc==3 && (!strcmp(argv[1],"--verify-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-reuse-q8-host1")));
 	bool dual=reuse || (argc==3 && (!strcmp(argv[1],"--verify-dual-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1")));
 	bool exact=dual || ((argc==3 || argc==4) && (!strcmp(argv[1],"--probe-native-q8-exact-reference") || !strcmp(argv[1],"--verify-native-q8-exact-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1") || !strcmp(argv[1],"--trace-native-q8-exact")));
 	bool host1=dual || (argc==3 && (!strcmp(argv[1],"--verify-native-q8-host1") || !strcmp(argv[1],"--benchmark-native-q8-host1") || !strcmp(argv[1],"--verify-native-q8-exact-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1")));
@@ -68,6 +69,11 @@ int main(int argc,char** argv) {
 	PioneerGgmlQ8Exact(exact);
 	PioneerGgmlQ8Dual(dual);
 	PioneerGgmlQ8DualReuse(reuse);
+	PioneerGgmlAttention(deviceAttention);
+	if (deviceAttention) {
+		params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_ENABLED;
+		params.offload_kqv=true; params.op_offload=true;
+	}
 	if (!cpuProbe) ggml_backend_register(PioneerGgmlReg());
 	llama_context* actual=probe?NULL:llama_init_from_model(model,params);
 	if (!actual && !probe) { llama_free(reference); llama_model_free(model); return 1; }
@@ -98,6 +104,7 @@ int main(int argc,char** argv) {
 	if (exact) puts("Exact FP32 scale bits + compensated SFPU accumulation, all learned sums stay on the card; experimental until full verification");
 	if (dual) puts("Two fixed bulk workers; no reduction-dimension split; every matvec requires BOTH independent completion/stop/NoC proofs; not a CPU speedup claim");
 	if (reuse) puts("Explicit guarded per-core input/scales reuse; every result still computed, poisoned, read and proved; no CPU learned products or result substitution");
+	if (deviceAttention) puts("DEVICE ATTENTION: all28 fused attention operations/224 grouped-head tiles per position REQUIRED; QK/PV on SFPU, softmax on card TRISC0; host KV prefix staging, NOT a speedup claim");
 	printf("Both independent contexts K/V cache types: %d/%d (%s); graph/logit/greedy gates unchanged\n",int(params.type_k),int(params.type_v),f32Kv?"explicit FP32 precision experiment":"library defaults");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
 	for (int position=0;passed && generated<4;position++) {
@@ -109,6 +116,8 @@ int main(int argc,char** argv) {
 			fprintf(stderr,"CPU graph tap captured %zu/%llu learned matrices; no card decode submitted\n",PioneerGgmlReferenceCount(),(unsigned long long)expectedTensors);
 			passed=false; break;
 		}
+		PioneerGgmlStats coverageBefore={};
+		if (deviceAttention && !PioneerGgmlSnapshot(coverageBefore)) { passed=false; break; }
 		double start=Seconds(); int status=llama_decode(actual,batch); double elapsed=Seconds()-start;
 		if (status) { fprintf(stderr,"P100A decode STOP status %d; no CPU fallback\n",status); passed=false; break; }
 		const float* a=llama_get_logits(actual); const float* r=llama_get_logits(reference);
@@ -118,6 +127,14 @@ int main(int argc,char** argv) {
 		double cosine=dot/sqrt(a2*r2),relative=sqrt(delta2/r2);
 		int next=Argmax(a,count),cpu=Argmax(r,count);
 		PioneerGgmlStats stats={}; bool live=PioneerGgmlSnapshot(stats);
+		if (deviceAttention) {
+			printf("  DEVICE ATTENTION coverage: ops=%llu tiles=%llu matrix=%llu delta=%llu/%llu/%llu\n",
+				(unsigned long long)stats.attentionOps,(unsigned long long)stats.attentionTiles,(unsigned long long)stats.matvecs,
+				(unsigned long long)(stats.attentionOps-coverageBefore.attentionOps),(unsigned long long)(stats.attentionTiles-coverageBefore.attentionTiles),
+				(unsigned long long)(stats.matvecs-coverageBefore.matvecs));
+			if (stats.attentionOps-coverageBefore.attentionOps!=28 || stats.attentionTiles-coverageBefore.attentionTiles!=224
+				|| stats.matvecs-coverageBefore.matvecs!=234) { fprintf(stderr,"Strict device attention coverage failed; no CPU fallback or accepted result\n"); passed=false; break; }
+		}
 		printf("Position %d: card decode %.6fs cosine %.9f relative-L2 %.9f argmax card/CPU %d/%d tensors %llu pages %llu matvecs %llu\n",
 			position,elapsed,cosine,relative,next,cpu,(unsigned long long)stats.tensors,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs);
 		if (!live || stats.failed || stats.tensors!=expectedTensors || stats.uploads!=stats.bytes/4096 || !stats.matvecs

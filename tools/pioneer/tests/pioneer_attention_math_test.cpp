@@ -12,14 +12,14 @@ static void Reference(const float* q,const uint16_t* k,const uint16_t* v,unsigne
 	std::vector<double> scores(n); double maximum=-INFINITY,total=0;
 	for (unsigned t=0;t<n;t++) {
 		double dot=0;
-		for (unsigned d=0;d<128;d++) dot+=double(q[d])*PioneerAttentionHalf(k[t*stride+d]);
-		scores[t]=dot*double(0.0883883461356163f);
+		for (unsigned d=0;d<128;d++) dot+=double(float(_Float16(q[d]))*PioneerAttentionHalf(k[t*stride+d]));
+		scores[t]=float(float(dot)*0.0883883461356163f);
 		maximum=fmax(maximum,scores[t]);
 	}
-	for (auto& value:scores) { value=exp(value-maximum); total+=value; }
+	for (auto& value:scores) { value=expf(float(value-maximum)); total+=value; }
 	for (unsigned d=0;d<128;d++) {
 		out[d]=0;
-		for (unsigned t=0;t<n;t++) out[d]+=scores[t]/total*PioneerAttentionHalf(v[t*stride+d]);
+		for (unsigned t=0;t<n;t++) out[d]+=double(float(_Float16(float(scores[t]*float(1.0/total))))*PioneerAttentionHalf(v[t*stride+d]));
 	}
 }
 
@@ -45,8 +45,8 @@ static void CheckFixture(const char* path)
 		}
 	}
 	double relative=norm?sqrt(delta/norm):sqrt(delta),precise=preciseNorm?sqrt(preciseDelta/preciseNorm):sqrt(preciseDelta);
-	// ggml's F16 flash kernel rounds query/value accumulators to half;
-	// the separate double-precision oracle checks the FP32 math itself.
+	// Legacy fixtures use CPU flash; new varied-token captures use an
+	// independent CPU nonflash replay. The numerical oracle is nonflash.
 	assert(relative<.02 && precise<.00002);
 	printf("PUBLIC fixture layer=%u tokens=%u vs-ggml-f16-L2=%.9g max-abs=%.9g vs-double-L2=%.9g PASS (CPU ONLY)\n",h.layer,h.tokens,relative,maximum,precise);
 }
@@ -60,8 +60,11 @@ int main(int argc,char** argv)
 		expError=fmax(expError,fabs(double(PioneerAttentionExp(x))/reference-1));
 		float denominator=1+255.0f*float(i)/100000;
 		inverseError=fmax(inverseError,fabs(double(PioneerAttentionReciprocal(denominator))*denominator-1));
+		assert(PioneerAttentionBits(PioneerAttentionReciprocal(denominator))==PioneerAttentionBits(float(1.0/double(denominator))));
+		double wide=1.0+double(1.0f/float(i+1)); float high=float(wide),low=float(wide-high);
+		assert(PioneerAttentionBits(PioneerAttentionReciprocal(high,low))==PioneerAttentionBits(float(1.0/wide)));
 	}
-	assert(expError<.000002 && inverseError<.000001);
+	assert(expError<.000000061 && inverseError<.000000061);
 	assert(PioneerAttentionExp(0)==1 && PioneerAttentionExp(-80)==0 && PioneerAttentionExp(-1000)==0);
 	for (unsigned half=0;half<65536;half++) {
 		unsigned e=(half>>10)&31,m=half&1023;
@@ -69,7 +72,25 @@ int main(int argc,char** argv)
 		double expected=e?ldexp(double(1024+m),int(e)-25):ldexp(double(m),-24);
 		if (half&0x8000) expected=-expected;
 		assert(double(PioneerAttentionHalf(uint16_t(half)))==expected);
+		assert(PioneerAttentionToHalf(float(expected))==half);
+		for (float input:{float(expected),nextafterf(float(expected),INFINITY),nextafterf(float(expected),-INFINITY)}) {
+			_Float16 oracle=_Float16(input); uint16_t bits; memcpy(&bits,&oracle,2);
+			assert(PioneerAttentionToHalf(input)==bits);
+		}
 	}
+	for (unsigned bits=0;bits<0x7f800000;bits+=7919) {
+		float input=PioneerAttentionFloat(bits); _Float16 oracle=_Float16(input); uint16_t half; memcpy(&half,&oracle,2);
+		assert(PioneerAttentionToHalf(input)==half && PioneerAttentionToHalf(-input)==uint16_t(half|0x8000));
+	}
+	for (unsigned half=0;half<0x7bff;half++) {
+		float midpoint=float((double(PioneerAttentionHalf(uint16_t(half)))+PioneerAttentionHalf(uint16_t(half+1)))*.5);
+		for (float input:{midpoint,nextafterf(midpoint,INFINITY),nextafterf(midpoint,-INFINITY)}) {
+			_Float16 oracle=_Float16(input); uint16_t bits; memcpy(&bits,&oracle,2);
+			assert(PioneerAttentionToHalf(input)==bits && PioneerAttentionToHalf(-input)==uint16_t(bits|0x8000));
+		}
+	}
+	assert(PioneerAttentionToHalf(INFINITY)==0x7c00 && PioneerAttentionToHalf(-INFINITY)==0xfc00
+		&& (PioneerAttentionToHalf(NAN)&0x7fff)==0x7e00);
 	for (unsigned n:{1U,2U,3U,7U,16U,31U,32U,64U,128U,192U,256U}) for (unsigned stride:{128U,1024U}) {
 		float query[128],actual[128]; double expected[128];
 		std::vector<uint16_t> keys(n*stride,0x7e00),values(n*stride,0x7e00);

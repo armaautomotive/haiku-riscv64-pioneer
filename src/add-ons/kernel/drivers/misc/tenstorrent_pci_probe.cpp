@@ -1319,7 +1319,7 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 		return secondRuntimeSaved!=NULL;
 	}
 	bool MapAttention() {
-		if (runtimeCore!=0 || !MapRuntime()) return false;
+		if (runtimeCore!=0 || (!runtimeMapped && !MapRuntime())) return false;
 		if (attentionView) return true;
 		if (attentionMapAttempted) return false;
 		attentionMapAttempted=true;
@@ -1625,7 +1625,7 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
-	if (context->attention.saved) {
+	if (context->attention.saved && !context->secondCompute.saved && !context->secondLease.saved) {
 		if (!clean) context->attention.unsafe=true;
 		clean=PioneerAttentionTileClose(context->io,context->baseline.baseline.baseline.baseline.dram,
 			context->baseline.baseline.baseline.noc,context->lease,context->attention) && clean;
@@ -1639,6 +1639,15 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 			clean=context->io.SelectRuntimeCore(1) && clean && context->io.ResetRead()==0x47800
 				&& BlackholeResidentIdle(context->io) && PioneerRuntimeSources(context->io,
 					context->baseline.baseline.baseline.baseline.dram,context->secondNoc,context->secondLease);
+		}
+		// All workers must be known held before restoring either program's
+		// shared boot word. Attention saved the matrix entry; matrix close
+		// later restores the original firmware entry in the opposite order.
+		if (context->attention.saved) {
+			if (!context->io.SelectRuntimeCore(0)) clean=false;
+			if (!clean) context->attention.unsafe=true;
+			clean=PioneerAttentionTileClose(context->io,context->baseline.baseline.baseline.baseline.dram,
+				context->baseline.baseline.baseline.noc,context->lease,context->attention) && clean;
 		}
 		if (!context->io.SelectRuntimeCore(1)) clean=false;
 		if (!clean) { context->secondCompute.unsafe=true; context->secondLease.recovery_required=true; }
@@ -1887,6 +1896,10 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 			if (ready && dual) ready=context->io.SelectRuntimeCore(0)
 				&& PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
 					context->baseline.baseline.baseline.noc,context->lease,context->compute,false,true,true,true,true,true,true);
+			if (ready && context->attention.saved) ready=reuse
+				&& PioneerRuntimeAttentionSelect(context->io,context->baseline.baseline.baseline.baseline.dram,
+					context->baseline.baseline.baseline.noc,context->secondNoc,context->lease,context->secondLease,
+					context->compute,context->secondCompute,context->attention,false);
 			if (ready) context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 			if (ready && dual) {
 				auto& parts=((tt_pioneer_runtime_dual_matvec*)request)->core;
@@ -1931,7 +1944,7 @@ RuntimeProfileControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length)
+AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length,bool shared)
 {
 	if (data==NULL || length!=sizeof(tt_pioneer_attention_tile_test)) return B_BAD_VALUE;
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
@@ -1947,18 +1960,25 @@ AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
-	else if (context->uploadedPages || (context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=4)
-		|| context->compute.saved || context->secondCompute.saved || context->secondLease.saved) status=B_NOT_ALLOWED;
+	else if (shared?(context->runtimeCoreMode!=3 || !context->uploadedPages || !context->compute.ready || !context->secondCompute.ready)
+		:(context->uploadedPages || (context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=4)
+			|| context->compute.saved || context->secondCompute.saved || context->secondLease.saved)) status=B_NOT_ALLOWED;
 	else {
-		context->runtimeCoreMode=4; // dedicated attention session; never mix code/boot owners
+		if (!shared) context->runtimeCoreMode=4;
 		request->result={}; request->result.version=1; request->result.state=TT_ATTN_TILE_CONFIG_FAILED;
 		memset(request->output,0,sizeof(request->output));
 		bool ready=context->lease.ready;
 		if (!ready && !context->lease.saved)
 			ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
+		if (ready && shared) ready=PioneerRuntimeAttentionPeersHeld(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->secondNoc,context->lease,context->secondLease,
+			context->compute,context->secondCompute,context->attention);
 		ready=ready && context->io.MapAttention()
 			&& PioneerAttentionTilePrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
 				context->baseline.baseline.baseline.noc,context->lease,context->attention);
+		if (ready && shared) ready=PioneerRuntimeAttentionSelect(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->secondNoc,context->lease,context->secondLease,
+			context->compute,context->secondCompute,context->attention,true);
 		if (ready) PioneerAttentionTileRun(context->io,context->baseline.baseline.baseline.baseline.dram,
 			context->baseline.baseline.baseline.noc,context->lease,context->attention,
 			request->tokens,request->query,request->key,request->value,request->output,request->result);
@@ -2000,8 +2020,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	}
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
 		return RuntimeProfileControl(instance,data,length);
-	if (operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST)
-		return AttentionTileTestControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST || operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED)
+		return AttentionTileTestControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)
 		return ResidentStreamControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {
