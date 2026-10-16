@@ -21,15 +21,16 @@ static inline uint32_t PioneerResidentPageHash(const uint32_t* data)
 	return hash; // integrity bookkeeping, not a cryptographic authenticity claim
 }
 template<class IO>
-bool PioneerResidentLeaseBegin(IO& io,const tt_compute_noc_result& noc,PioneerResidentLease& lease)
+bool PioneerResidentLeaseBegin(IO& io,const tt_compute_noc_result& noc,PioneerResidentLease& lease,unsigned y=2)
 {
-	if (lease.controls_saved || lease.saved || noc.version!=1 || noc.state!=TT_COMPUTE_NOC_PASSED
-		|| !noc.tlb_restored || noc.recovery_required) return false;
+	if ((y!=2 && y!=3) || lease.controls_saved || lease.saved || noc.version!=(y==3?2U:1U) || noc.state!=TT_COMPUTE_NOC_PASSED
+		|| !noc.tlb_restored || noc.recovery_required || !BlackholeComputeNocRouteValid(noc.source[0],y)
+		|| (y==3 && !BlackholeHostSourceRoute(noc.source[0]))) return false;
 	lease.saved=io.HostReadBackup(2048); if (!lease.saved) return false;
 	for (unsigned s=0;s<2;s++) for (unsigned w=0;w<3;w++) lease.tlb[s][w]=io.DramTlbRead(s,w);
 	if ((lease.tlb[0][2]&0xffffc000) || (lease.tlb[1][2]&0xffffc000)) return false;
 	lease.controls_saved=true; lease.tlb_restored=false; lease.config=noc.source[0][0];
-	if (!BlackholeDramConfigure(io,0,0,1,2,false) || !BlackholeDramConfigure(io,1,0xffa00000,1,2,false)) return false;
+	if (!BlackholeDramConfigure(io,0,0,1,y,false) || !BlackholeDramConfigure(io,1,0xffa00000,1,y,false)) return false;
 	if (!BlackholeHostReadPciQuiet(io,0x402) || !BlackholeResidentSourceStable(io,noc,lease.config)
 		|| !BlackholeResidentIdle(io) || (io.ResidentNocRead(0x178)&0xffff)) return false;
 	for (unsigned w=0;w<10;w++) if (io.ResidentNocRead(w*4)) return false;

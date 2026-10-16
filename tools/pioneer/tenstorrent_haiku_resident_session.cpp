@@ -36,6 +36,9 @@ static bool QuantizedDenied(int fd,uint32_t capabilities,int expected)
 	if (capabilities&TT_PIONEER_CAP_Q8_BULK) {
 		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK,&request,sizeof(request))<0 && errno==expected;
 	}
+	if (capabilities&TT_PIONEER_CAP_Q8_SECOND) {
+		errno=0; denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND,&request,sizeof(request))<0 && errno==expected;
+	}
 	if (sSecondProbe) {
 		tt_pioneer_compute_noc_result probe={}; errno=0;
 		denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC,&probe,sizeof(probe))<0 && errno==expected;

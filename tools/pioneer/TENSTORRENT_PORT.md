@@ -293,7 +293,7 @@ Logs are in the separate bulk folder; current standalone projection CLI
 `5ac0a1e77bcb372ded31a115dc29cb19fe1301321f749a28cfa8fb671cfc47b6`.
 No full-Qwen bulk benchmark or Assistant change has been made.
 
-###### Second-core discovery (read-only candidate, not installed)
+###### Second-core discovery (native read-only qualification passed)
 
 The next scaling prerequisite is an explicit fixed(1,3) NoC source/idle
 probe, separate from the old(1,2) operation. New54c7/54c8 probe/support return
@@ -305,7 +305,31 @@ TLB/PCI state. It cannot start a second core, upload code, ring a doorbell,
 clear counters or transfer payload. New actual-probe calls require FD creator
 team; all legacy-owner conflicts and cold precedence remain. Offline models
 pass both fixed rows, every dropped TLB write, invalid coordinate refusal and
-identity/source/busy/outstanding/restore faults. Native discovery is pending.
+identity/source/busy/outstanding/restore faults.
+
+Driver `62badf1bfd8f679a68ee3304d7f3e29802c9f4a3184f89a72c5c12915b17e869`
+loaded support version2 naturally. Native `second-core-noc-first.log` in
+`/boot/home/pioneer-second-core-20261015` passes: node106110c1, endpoint10003,
+three identical sources, four empty command slots and sixteen zero outstanding
+counts per sample, all120 cores held / seven routes. PCI/TLB rollback1/1,
+cold0, both independent post-audits and foreign/inherited/duplicate/final-close
+lifecycle pass. Assistant remains team2705 ready/idle with the same model.
+This is identity/route/idle qualification, NOT second-core computation.
+
+A separate fixed54c9 operation, capability65536/profile9, now implements the
+next candidate: exact bulk Q8 on (1,3) only, while (1,2) stays held. Bank0
+uploads still use the established first-core path. Before touching second-core
+code it repeats the read-only probe, validates its own host route, and takes
+independent code/48KiB buffer/NIU/8KiB tail backups. All activation and weight
+read destinations name (1,3); owned PCIe views return to (1,2) after each call.
+Completion status also dirties the tail, which must be restored even though
+the native bulk weight reader does not use that tail. The session cannot
+switch between first/second runtime modes. Global uncertainty blocks payload
+restoration on either core, quarantines the one system-owned host page, and
+permits only PCI/TLB rollback. No new coordinates/physical pointers/code API.
+The model passes all65 post-upload dropped control writes, destination checks,
+tail rollback and timeout/PC/flits/stop/source faults. Native compute is pending;
+this candidate is still NOT parallel compute or a speedup.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 

@@ -120,6 +120,7 @@ static bool Run(RuntimeMock& io,tt_host_page_result& host,PioneerResidentLease& 
 	if (passed) for (uint32_t v:output) assert(v==(int8 && !q8?uint32_t(-11282):0x40000000));
 	return passed;
 }
+#ifndef PIONEER_RUNTIME_POLICY_MOCK_ONLY
 int main()
 {
 	RuntimeMock io; tt_host_page_result host; PioneerResidentLease store; PioneerRuntimeMatvecLease compute; tt_runtime_matvec_result r;
@@ -328,12 +329,12 @@ int main()
 	unsigned nativeWrites=0,nativeCases=0;
 	{
 		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
-		assert(Prepared(trial,h,s)); bool dirty=s.l1_dirty;
+		assert(Prepared(trial,h,s));
 		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,false,true));
 		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,false,true));
 		if (bulk) assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,true,true,true) && !c.saved); // insufficient32KiB lease
 		assert(Run(trial,h,s,c,r,false,false,true,true,true,true,f32Scales,bulk)); nativeWrites=trial.Mock::writes;
-		assert(c.native && c.compact && c.q8 && c.f32_scales==f32Scales && c.bulk==bulk && s.l1_dirty==dirty && r.after[0]-r.before[0]==(bulk?4U:64U));
+		assert(c.native && c.compact && c.q8 && c.f32_scales==f32Scales && c.bulk==bulk && s.l1_dirty && r.after[0]-r.before[0]==(bulk?4U:64U));
 		unsigned writes=trial.Mock::writes;
 		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,false) && trial.Mock::writes==writes);
 		assert(!PioneerRuntimeMatvecPrepare(trial,b,n,s,c,false,true,true,true,true,!f32Scales) && trial.Mock::writes==writes);
@@ -362,3 +363,4 @@ int main()
 	printf("Dropped every native-unpack-Q8 %s-scales post-upload control write: %u cases\n",bulk?"bulk-FP32":f32Scales?"FP32":"FP16",nativeCases);
 	}
 }
+#endif

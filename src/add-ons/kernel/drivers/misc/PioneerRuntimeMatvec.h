@@ -98,8 +98,9 @@ bool PioneerRuntimeMatvecClose(IO& io,const tt_dram_samples_result& baseline,con
 template<class IO>
 bool PioneerRuntimeStage(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& store,bool output,unsigned page,
-	const uint32_t* data,tt_runtime_matvec_result& r,bool scale=false)
+	const uint32_t* data,tt_runtime_matvec_result& r,bool scale=false,unsigned y=2)
 {
+	if (y!=2 && y!=3) return false;
 	if (scale?(output || page!=3):((!output && page>=3) || (output && page>=4))) return false;
 	if (!PioneerRuntimeSources(io,baseline,noc,store) || !BlackholeResidentIdle(io) || !BlackholeHostReadMapStable(io,host)) {
 		store.recovery_required=true; return false;
@@ -111,7 +112,7 @@ bool PioneerRuntimeStage(IO& io,const tt_dram_samples_result& baseline,const tt_
 		io.HostPciWrite(1,4,2,0x406); if (io.HostPciRead(1,4,2)!=0x406) break;
 		io.HostPciWrite(0,4,2,0x406); if (!BlackholeHostReadPciQuiet(io,0x406)) break;
 		uint32_t destination=(output?0x84000:0x80000)+page*4096;
-		const uint32_t command[]={uint32_t(host.physical),uint32_t(host.physical>>32),19|(24<<6),destination,0,1|(2<<6),0,0,4096,0};
+		const uint32_t command[]={uint32_t(host.physical),uint32_t(host.physical>>32),19|(24<<6),destination,0,1|(y<<6),0,0,4096,0};
 		tt_resident_store_result transfer={};
 		passed=PioneerResidentStoreCommand(io,store,command,false,0,transfer);
 	} while (false);
@@ -133,9 +134,12 @@ template<class IO>
 bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& store,PioneerRuntimeMatvecLease& compute,
 	uint64_t capacity,uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* input,uint32_t* output,
-	tt_runtime_matvec_result& r,bool dmaOutput=false,const uint32_t* scales=NULL)
+	tt_runtime_matvec_result& r,bool dmaOutput=false,const uint32_t* scales=NULL,unsigned y=2)
 {
 	r={}; r.version=1;
+	// Second-core proof is deliberately restricted to the already qualified
+	// exact bulk image and PIO results. It is not a general coordinate API.
+	if ((y!=2 && y!=3) || (y==3 && (!compute.bulk || dmaOutput || noc.version!=2))) return false;
 	if (!(compute.compact?PioneerQ8CompactWeightRange(capacity,offset,inputs,outputs):PioneerMatvecWeightRange(capacity,offset,inputs,outputs)) || !input || !output || !compute.ready
 		|| !store.ready || store.pending || store.recovery_required || compute.unsafe || (compute.int8 && dmaOutput)) return false;
 	if (compute.q8) {
@@ -156,15 +160,15 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 	bool okay=true;
 	for (unsigned page=0;page<(inputs*2+4095)/4096 && okay;page++) {
 		for (unsigned w=0;w<1024;w++) stage[w]=page*1024+w<inputs/2?input[page*1024+w]:0;
-		okay=PioneerRuntimeStage(io,baseline,noc,host,store,false,page,stage,r);
+		okay=PioneerRuntimeStage(io,baseline,noc,host,store,false,page,stage,r,false,y);
 	}
 	if (compute.q8 && okay) {
 		for (unsigned w=0;w<1024;w++) stage[w]=w<inputs/32?scales[w]:0;
-		okay=PioneerRuntimeStage(io,baseline,noc,host,store,false,3,stage,r,true);
+		okay=PioneerRuntimeStage(io,baseline,noc,host,store,false,3,stage,r,true,y);
 	}
 	for (unsigned page=0;page<(outputs*4+4095)/4096 && okay;page++) {
 		for (unsigned w=0;w<1024;w++) stage[w]=0x7fc00000;
-		okay=PioneerRuntimeStage(io,baseline,noc,host,store,true,page,stage,r);
+		okay=PioneerRuntimeStage(io,baseline,noc,host,store,true,page,stage,r,false,y);
 	}
 	if (!okay) goto finished;
 	io.RuntimeProfileMark(TT_PROFILE_STAGED);
@@ -173,9 +177,10 @@ bool PioneerRuntimeMatvec(IO& io,const tt_dram_samples_result& baseline,const tt
 	io.RuntimeCodeWrite(1+0x504/4,inputs/16); io.RuntimeCodeWrite(1+0x508/4,outputs/16);
 	if (io.RuntimeCodeRead(1+0x500/4)!=PioneerResidentAddress(capacity,offset)
 		|| io.RuntimeCodeRead(1+0x504/4)!=inputs/16 || io.RuntimeCodeRead(1+0x508/4)!=outputs/16) goto finished;
+	store.l1_dirty=true; store.l1_restored=false; // completion words live in the saved L1 tail
 	for (unsigned w=0;w<3;w++) io.RuntimeStatusWrite(w,0);
 	{
-		const uint32_t command[]={PioneerResidentAddress(capacity,offset),0,18|(12<<6),compute.bulk?uint32_t(TT_Q8_BULK_L1):compute.native?0x706c0U:compute.compact?0x17e000U:0x70700U,0,1|(2<<6),0,0,compute.bulk?uint32_t(TT_Q8_BULK_BYTES):576U,0};
+		const uint32_t command[]={PioneerResidentAddress(capacity,offset),0,18|(12<<6),compute.bulk?uint32_t(TT_Q8_BULK_L1):compute.native?0x706c0U:compute.compact?0x17e000U:0x70700U,0,1|(y<<6),0,0,compute.bulk?uint32_t(TT_Q8_BULK_BYTES):576U,0};
 		if ((command[0]&31)!=(command[3]&31)) goto finished; // GDDR -> L1 NoC congruence
 		if (!BlackholeHostWriteCommand(io,command) || io.ResetRead()!=0x47800 || !PioneerRuntimeSources(io,baseline,noc,store)) goto finished;
 	}
