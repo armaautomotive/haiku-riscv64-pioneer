@@ -106,6 +106,7 @@ struct NativeF32Q8Machine:NativeQ8Machine {
 		return Q8Machine::Load(a);
 	}
 };
+#ifndef PIONEER_NATIVE_F32_Q8_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8NativeF32CodeWord(w));
@@ -165,3 +166,4 @@ int main(int argc,char** argv) {
 	}
 	printf("PASS: OFFLINE native FP32-scale + compensated-SFPU image/layout; exhaustive half bits incl signed zero/subnormal; all K/N4096 BIT-EXACT IEEE FMA and fault parks; RISC model steps %u vs original %u (NOT hardware timing); no driver/card exposure\n",exact.steps,original.steps);
 }
+#endif

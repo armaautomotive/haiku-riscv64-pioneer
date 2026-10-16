@@ -148,11 +148,13 @@
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT (B_DEVICE_OP_CODES_END + 0x54c3)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE (B_DEVICE_OP_CODES_END + 0x54c4)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES (B_DEVICE_OP_CODES_END + 0x54c5)
+#define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK (B_DEVICE_OP_CODES_END + 0x54c6)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
 #define TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES 16384U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES)
+#define TT_PIONEER_CAP_Q8_BULK 32768U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };

@@ -22,7 +22,7 @@ static uint32_t Word(const std::vector<uint8_t>& b, unsigned i) {
 }
 
 struct Machine {
-	uint32_t regs[32] = {}, pc = 0x6000, l1[2048] = {}, config[224] = {}, thread[68] = {};
+	uint32_t regs[32] = {}, pc = 0x6000, l1[8192] = {}, config[224] = {}, thread[68] = {};
 	float dst[64][16] = {}, a[16][16] = {}, b[8][16] = {};
 	int32_t dstInt[64][16] = {};
 	float lreg[2] = {};

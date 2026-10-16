@@ -2,6 +2,15 @@
 
 ## Status
 
+Latest October15 local / October16 UTC: standalone Qwen3-0.6B Q8_0 now
+passes its full22-position bootstrap under Haiku, with all197 learned
+matrices on P100A, full-vocabulary checks at every position and four
+CPU-identical greedy reply tokens. Compensated SFPU accumulation fixed the
+reproduced rounding drift. This is **correctness, not speed qualification**:
+the three-sample warm diagnostic is0.115836tokens/s, not a matched benchmark
+or a CPU speedup. Assistant remains unchanged;27B/mixed quantization and
+practical acceleration still require further work. See the exact-scale record.
+
 Source/feasibility investigation started 2026-09-15. On October 15,
 TinyStories-260K generated eight verified tokens under Haiku with every
 learned linear projection/classifier computed on the P100A: `Once upon a
@@ -163,7 +172,7 @@ The original working7d09 driver is preserved in
 Support12287 was observed before submitting the corrected native trial.
 No forced module unload, cold-gate bypass, firmware or boot change was used.
 
-###### Exact FP32 scale / compensated SFPU candidate (offline qualified only)
+###### Exact FP32 scale / compensated SFPU (native projections qualified)
 
 A distinct `TT_RUNTIME_Q8_NATIVE_F32` candidate expands each original finite
 FP16 weight scale to exact FP32 bits once at packing time. Its 576-byte tile
@@ -203,9 +212,66 @@ not hardware or universal IEEE FMA claims.
 Both native scale formats pass all65 dropped-control-write policy cases,
 immutable-format refusal and timeout/bad-PC/flits/stop/source quarantine tests.
 Legacy assembled-image regressions, Jam and all31 utilities build.
-This candidate is built offline only while full-model tests own
-the card. It is not installed or native-qualified; do not replace its live
-driver or submit a competing card command just to try this optimization.
+The compensated driver `4cdc779a21496b56e12962b55ec35d8c2484981ba31a54b37c335592fc5d106c`
+is now installed. Qualified cf495... was preserved as
+`/boot/home/pioneer-q8-native-20261015/tenstorrent_pci_probe.before-exact-cf495`.
+Natural module turnover reported distinct support28671; no forced unload.
+Native32x1024,32x3072 and full2048x1024 tests pass both vectors, original
+numeric gates, exact NoC counts, all format/nonfinite refusals and identical
+reuse. Full-query warm validation-inclusive total30,998us / compute-proof
+19,552 / PIO6,053: no CPU speedup. END2 and independent post-audits all pass.
+Ownership/foreign/inherited/duplicate/final-close coverage also passes.
+
+Most importantly the real Q13 replay with standalone binary
+`56333500720e5a7606c000487116d364bb186a6c25ac9137d279902a44225fc8`
+now matches **all2048 independent CPU FP32 output bits**, and its private
+CPU norm/RoPE output also matches every bit, with zero half-boundary changes.
+Log: `exact-sfpu-q13-replay-first.log` in the native test folder. END2/PCI-host1/1/
+cold0 and post-audit pass; Assistant remains unchanged. This establishes the
+specific projection fix, not full inference or performance.
+
+Full `--verify-native-q8-exact-host1` completed successfully in
+`full-qwen-exact-host1-first.log`, with the same full-vocabulary and strict
+greedy gates, CPU32 reference and actual host1. All22 positions pass with
+reported logit L2 zero; four real reply tokens match CPU (`The capital of
+France`). All197 matrices /670,482,432bytes stay resident after163,692 page
+uploads and5,148 real matvec calls. No reference substitution or learned
+CPU-product fallback was used. Total1092.333s: preparation880.718824s,
+activation preprocessing0.367404s, matvec/staging/result187.035777s. Warm
+prompt positions take8.61..8.70s rather than the previous verify32's~47s;
+this is not an isolated kernel comparison. Three generated-token input
+samples total25.898678s =0.115836tokens/s, explicitly a diagnostic, **not a
+matched repeated benchmark or CPU speedup**. END2/PCI-host1/1/cold0 and
+independent post-audit pass; Assistant is still team2705 idle, same TinyStories
+model/backend and three model loads. Both SDs remain out; no boot change.
+
+###### Sixteen-tile GDDR reader (offline candidate, not installed)
+
+`TT_RUNTIME_Q8_BULK` keeps the same exact-scale packing and compensated
+arithmetic, but reads16 contiguous576-byte tiles in one9216-byte NoC request
+to fixed L1 `88000..8a3ff`. It uses bounded tile indices0..15 and the same
+scale-preservation/consume-before-header-clear discipline, without copying
+or decoding raw weights. Pinned tt-metal `d279aa36` Blackhole
+`noc_parameters.h` sets the maximum burst to256x64B=16KiB;9216 is below it.
+The fixed bulk buffer must be additionally saved/mapped: the existing32KiB
+runtime-buffer lease is insufficient. A new distinct54c6 operation, bit32768,
+profile8 (candidate support61439) selects it; older operations cannot.
+
+Independent assembled-image tests pass every K / N4096 with exact IEEE bits,
+alternate bases/vectors, untouched surrounding data, skipped/corrupted payload
+rejection and bounded NoC failure parks. On the same small model fixture,
+read requests drop64 to4; RISC steps96,617 to95,757. Neither count is hardware
+timing or a speedup. The candidate driver separately maps/saves48KiB, refuses
+an insufficient32KiB mapping, uses immutable bulk format selection and
+restores the complete extended buffer only after the existing completion /
+stop proofs. Each read requires exact144-flit accounting and one response /
+request / accepted ID; total data bytes remain identical to the old reader.
+All65 dropped post-upload control writes, timeout/bad-PC/flits/stop/source
+faults, format switches and extra-buffer rollback pass the policy model.
+Jam and31 tools build, with no deployment while the full-Qwen test owns the
+card. The updated projection CLI independently checks all NoC deltas and,
+for both exact modes, requires every output FP32 bit to match CPU IEEE FMA.
+No native bulk test or performance gain has yet been established.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 
@@ -511,8 +577,11 @@ thread overhead in verify32, not the rounding failure. Exact-scale backend/
 cache wiring is a distinct immutable mode; missing capability, invalid
 combinations, -128 weights and nonfinite scales fail without fallback. Its
 focused replay additionally requires **every FP32 output bit** to match the
-independent CPU. Native qualification of the compensated kernel is pending.
-No accepted Qwen reply tokens or CPU speedup have yet been established.
+independent CPU. The compensated kernel's native projection qualification
+passes above; its full-model verification remains pending.
+The new compensated run above now establishes four checked Qwen reply tokens;
+the earlier partial-SFPU failure remains a failure. No CPU speedup has yet
+been established.
 The runtime still uses one core and bank0 / 2GiB. Compact mixed quantization,
 wider models, multicore/bulk dispatch and matched repeated benchmarks remain
 required. Assistant is not changed to expose an unverified faster-Qwen mode.

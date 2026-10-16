@@ -25,6 +25,9 @@ _start:
 
 .section .text,"ax"
 .global main, parked, final_wait_return, drain
+.ifdef TT_RUNTIME_Q8_BULK
+	.set TT_RUNTIME_Q8_NATIVE_F32,1
+.endif
 .ifdef TT_RUNTIME_Q8_NATIVE_F32
 	.set TT_RUNTIME_Q8_NATIVE,1
 .endif
@@ -521,7 +524,11 @@ full_bf16_emit:
 	.global resident_fetch, resident_fault_park
 resident_fetch:
 .ifdef TT_RUNTIME_Q8_COMPACT
+.ifdef TT_RUNTIME_Q8_BULK
+	andi t0, s4, 31 /* sixteen 32-K weight tiles per 9216-byte read */
+.else
 	andi t0, s4, 1
+.endif
 .ifdef TT_RUNTIME_Q8_NATIVE
 	bne t0, zero, q8_native_inputs
 .else
@@ -583,7 +590,12 @@ resident_fault_park:
 resident_ready:
 	fence /* invalidate RISC L0 before consuming externally written L1 */
 .ifdef TT_RUNTIME_MATVEC
+.ifdef TT_RUNTIME_Q8_BULK
+	li t0, 9216
+	add a0, a0, t0
+.else
 	addi a0, a0, 576 /* header16 + BF16 weight tile512 + padding48 */
+.endif
 .endif
 .ifdef TT_RUNTIME_Q8_COMPACT
 .ifdef TT_RUNTIME_Q8_NATIVE
@@ -745,9 +757,20 @@ q8_native_inputs:
 	 * GDDR and L1 addresses must be congruent mod32; both are aligned64.
 	 * Save scales on even K before clearing the first header; odd K reuses
 	 * the second half. There is no scalar per-byte decode or payload copy. */
+.ifdef TT_RUNTIME_Q8_BULK
+	srli t2, s4, 1
+	andi t2, t2, 15
+	slli t3, t2, 9
+	slli t2, t2, 6
+	add t2, t2, t3
+	li t3, 0x88000
+	add t2, t2, t3 /* bounded tile0..15 within separately saved bulk L1 */
+.endif
 	andi t0, s4, 1
 	bne t0, zero, q8_native_odd
+.ifndef TT_RUNTIME_Q8_BULK
 	li t2, 0x706c0
+.endif
 	li t3, 0x70680
 .ifdef TT_RUNTIME_Q8_NATIVE_F32
 	li t1, 16
@@ -761,6 +784,10 @@ q8_native_scale_word:
 	addi t3, t3, 4
 	addi t1, t1, -1
 	bne t1, zero, q8_native_scale_word
+.ifdef TT_RUNTIME_Q8_BULK
+	addi t2, t2, -16 /* preserved all64 scale bytes before clearing header */
+	srli t0, t2, 4
+.else
 .ifdef TT_RUNTIME_Q8_NATIVE_F32
 	li t0, 0x706f
 	li t2, 0x706f0
@@ -768,14 +795,20 @@ q8_native_scale_word:
 	li t0, 0x706d
 	li t2, 0x706d0
 .endif
+.endif
 	j q8_native_header
 q8_native_odd:
+.ifdef TT_RUNTIME_Q8_BULK
+	addi t2, t2, 304 /* first half consumed before its last16 bytes cleared */
+	srli t0, t2, 4
+.else
 .ifdef TT_RUNTIME_Q8_NATIVE_F32
 	li t0, 0x707f
 	li t2, 0x707f0
 .else
 	li t0, 0x707d
 	li t2, 0x707d0 /* first half is fully consumed before this is cleared */
+.endif
 .endif
 q8_native_header:
 	sw t0, (4*76)(s2)

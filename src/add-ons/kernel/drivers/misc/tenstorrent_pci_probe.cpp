@@ -1201,6 +1201,7 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 	uint32* runtimeSaved=NULL;
 	uint32* runtimeStage=NULL;
 	bool runtimeMapAttempted=false,runtimeMapped=false;
+	unsigned runtimeBufferWords=8192;
 	PioneerSessionIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
 		tt_arc_telemetry_result& t,tt_tensix_reset_result& c,tt_dram_samples_result& d,
 		tt_compute_noc_result& n,tt_host_path_result& h,tt_host_dma_audit_result& auditResult,tt_host_write_result& r)
@@ -1209,11 +1210,13 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 		for (unsigned i=0;i<5;i++) if (runtimeAreas[i]>=B_OK) delete_area(runtimeAreas[i]);
 		free(runtimeSaved); free(runtimeStage);
 	}
-	bool MapRuntime() {
-		if (runtimeMapped) return true;
+	bool MapRuntime(bool bulk=false) {
+		unsigned words=bulk?TT_Q8_BULK_SAVED_BUFFER_WORDS:8192;
+		if (runtimeMapped) return runtimeBufferWords==words;
 		if (runtimeMapAttempted) return false;
 		runtimeMapAttempted=true;
-		runtimeSaved=(uint32*)malloc((1025+8192)*sizeof(uint32)); runtimeStage=(uint32*)malloc(4096);
+		runtimeBufferWords=words;
+		runtimeSaved=(uint32*)malloc((1025+words)*sizeof(uint32)); runtimeStage=(uint32*)malloc(4096);
 		if (!runtimeSaved || !runtimeStage) return false;
 		const uint32 offsets[]={0x19006000,0x19070000,0x19080000,0x19312000,0x19313000};
 		void* views[5]={};
@@ -1221,7 +1224,7 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 			uint32 protection=B_KERNEL_READ_AREA|B_UNCACHED_MEMORY;
 			if (i!=4) protection|=B_KERNEL_WRITE_AREA;
 			runtimeAreas[i]=map_physical_memory("P100A owned runtime fixed compute view",profile.bar0_host_start+offsets[i],
-				i==2?0x8000:B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,protection,&views[i]);
+				i==2?words*sizeof(uint32):B_PAGE_SIZE,B_ANY_KERNEL_ADDRESS,protection,&views[i]);
 			if (runtimeAreas[i]<B_OK) return false;
 		}
 		runtimeEntry=(volatile uint32*)views[0]; runtimeCode=(volatile uint32*)views[1];
@@ -1230,12 +1233,13 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 		runtimeMapped=true; return true;
 	}
 	uint32* RuntimeSavedWords() { return runtimeSaved; }
+	unsigned RuntimeBufferWords() const { return runtimeBufferWords; }
 	uint32* RuntimeStageWords() { return runtimeStage; }
 	void RuntimeProfileMark(unsigned slot) { runtimeProfile.Mark(uint64(system_time()),slot); }
 	uint32 RuntimeCodeRead(unsigned w) { return w<=1024?PioneerRead32(w?runtimeCode+w-1:runtimeEntry):UINT32_MAX; }
 	void RuntimeCodeWrite(unsigned w,uint32 value) { if (w<=1024) PioneerWrite32(w?runtimeCode+w-1:runtimeEntry,value); }
-	uint32 RuntimeBufferRead(unsigned w) { return w<8192?PioneerRead32(runtimeBuffers+w):UINT32_MAX; }
-	void RuntimeBufferWrite(unsigned w,uint32 value) { if (w<8192) PioneerWrite32(runtimeBuffers+w,value); }
+	uint32 RuntimeBufferRead(unsigned w) { return w<runtimeBufferWords?PioneerRead32(runtimeBuffers+w):UINT32_MAX; }
+	void RuntimeBufferWrite(unsigned w,uint32 value) { if (w<runtimeBufferWords) PioneerWrite32(runtimeBuffers+w,value); }
 	uint32 RuntimeControlRead(unsigned w) {
 		const uint32 offsets[]={0x234,0xa0,0x90}; return w<3?PioneerRead32(runtimeControl+offsets[w]/4):UINT32_MAX;
 	}
@@ -1684,7 +1688,7 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false)
+RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false,bool bulk=false)
 {
 	size_t bytes=q8?sizeof(tt_pioneer_runtime_q8_matvec):sizeof(tt_pioneer_runtime_matvec);
 	if (data==NULL || length!=bytes) return B_BAD_VALUE;
@@ -1711,12 +1715,12 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 		else {
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
 			memset(request->output,0,sizeof(request->output));
-			context->io.runtimeProfile.Begin(uint64(system_time()),f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
+			context->io.runtimeProfile.Begin(uint64(system_time()),bulk?8:f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
 			bool ready=context->lease.ready;
 			if (!ready && !context->lease.saved) ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
-			if (ready) ready=context->io.MapRuntime();
+			if (ready) ready=context->io.MapRuntime(bulk);
 			if (ready) ready=PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
-				context->baseline.baseline.baseline.noc,context->lease,context->compute,fp16,int8,q8,compact,native,f32Scales);
+				context->baseline.baseline.baseline.noc,context->lease,context->compute,fp16,int8,q8,compact,native,f32Scales,bulk);
 			if (ready) context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 			if (ready) PioneerRuntimeMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
 				context->baseline.baseline.baseline.noc,context->host,context->lease,context->compute,context->bytes,
@@ -1760,13 +1764,14 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT
-		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES) {
-		bool f32Scales=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES;
+		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK) {
+		bool bulk=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK;
+		bool f32Scales=bulk || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES;
 		bool native=f32Scales || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE;
 		bool compact=native || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT;
 		bool q8=compact || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
 		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,
-			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact,native,f32Scales);
+			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact,native,f32Scales,bulk);
 	}
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
 		return RuntimeProfileControl(instance,data,length);
