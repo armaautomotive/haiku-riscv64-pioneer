@@ -105,9 +105,9 @@ out while establishing the Haiku port baseline.
 
 ### October 15: checked streamed uploads and numerical localization
 
-#### Native scaled Q8 integer blocks (full-model verifier in progress)
+#### Native scaled Q8 integer blocks (F16-KV full run failed; precision test active)
 
-##### Compact Q8 candidate (offline-qualified, not yet deployed)
+##### Compact Q8 candidate (native projections qualified, not full inference)
 
 A separate fixed `TT_RUNTIME_Q8_COMPACT` image retains the scaled integer
 arithmetic but stores one 576-byte tile per 32-K / 16-output block: 32 bytes
@@ -148,7 +148,7 @@ classifiers, original subnormal/negative/zero scales, capacity/transport and
 nonfinite refusal. Pristine pinned ggml tests pass each format and reject
 wrong arithmetic without fallback. Jam and all 31 diagnostics build.
 
-Local, **not installed** candidate:
+Native-qualified compact candidate, also frozen locally:
 
 - Driver `7d090204b85f27aa20bf4ba53636314211ca21cb7a837900d236769ecd38a9cc`
   frozen at `/private/tmp/pioneer-q8-compact-final-tools-20261015/tenstorrent_pci_probe.candidate`.
@@ -159,14 +159,30 @@ Local, **not installed** candidate:
   `f8fb01d372e4d15f42d617d9a1c0a9047bab7b0fdff9261fa25d683c04dd2821`
   at `/private/tmp/pioneer-qwen-compact-q8-20261015/`.
 
-The existing expanded full-model verifier is still the sole live owner.
-Do not install/reload/query the card for this candidate until that process
-ends and a safe terminal result is established. Next gates are independent
-native 32x1024 / 32x3072 / full-2048 projection comparisons, exact counters,
-refusal/reuse, old-mode/lifecycle regressions and post audit, then full-model
-testing. **Neither a compact native result nor a speedup is yet proven.**
-Halving bytes/requests is not evidence that the scalar decoder improves
-end-to-end throughput; native timing and multicore/bulk work are still needed.
+After the expanded full run ended cleanly (failure described below), audit
+and idle Assistant checks passed. The `f8b836...` driver was backed up in
+`/boot/home/pioneer-q8-compact-20261015/tenstorrent_pci_probe.before`, then the
+compact candidate was atomically installed and capability 4095 observed
+after natural module turnover, without forced unload.
+
+Native 32x1024, 32x3072 and full-2048x1024 projections each passed two
+independent vectors, all original block data/scales, exact half read/flit
+counts, nonfinite-scale and prepared-format refusal, bit-identical reuse
+and clean END (state 2, PCI/host 1/1, cold 0). The 2048-row results have the
+same relative L2 `9.13021911e-8 / 9.70029151e-8` as expanded Q8. Its exact
+counters are **4096/36864/4096/4096 for 8192 math tiles**. Lifecycle foreign-FD,
+inherited-team, duplicate/final-close checks, expanded Q8, original BF16/FP16,
+fixed K1024 GEMV and post PCIe/HDMA audit passed. Assistant remains team2705,
+idle with the same experimental TinyStories model; no GUI/model switch.
+
+The compact scalar decoder is **slower**, despite halving weight bytes:
+the full query's second CPU wall time was **75,016 us**, including 63,423
+compute/proof and 6,062 PIO, versus expanded Q8's 29,821 / 18,360 / 6,044 us.
+This is an explicit negative performance result, not a speedup. Compact
+storage still helps memory capacity and cold upload, but a direct integer
+unpacker or substantially better decoder plus multicore/bulk dispatch is
+needed for practical throughput. Completed native logs are in the compact
+folder; no whole-model compact result is claimed yet.
 
 The standalone verifier additionally has `--benchmark-int8-q8` and
 `--benchmark-compact-q8`. Only after its original four-token bootstrap
@@ -254,13 +270,50 @@ The standalone ggml adapter now retains original Q8 signed bytes/scales
 without weight dequantization, uses pinned GGML activation quantization
 once, and dispatches this scaled operation. Its offline pinned-ABI tests
 passed two vectors/one upload, original-byte packing, immutable format and
-wrong-math/no-fallback rejection. **A native full-model run is in progress**
-with binary `2430136a355a7cb8e193015dc4df7a81199ead5e7dc9c3f1702d8538df278f72`.
-No accepted Qwen tokens or speedup have yet been established. Storage still
-expands integer operands to 2.25 bytes/parameter, is limited to bank 0 / 2 GiB,
-and uses one core. Compact mixed quantization, wider models, multicore/bulk
-dispatch and matched repeated benchmarks remain required. Assistant is not
-changed to expose an unverified faster-Qwen mode.
+wrong-math/no-fallback rejection. The expanded F16-KV native full-model run
+with binary `2430136a355a7cb8e193015dc4df7a81199ead5e7dc9c3f1702d8538df278f72`
+**ended in a numerical failure, not a hardware fault**. It retained all 197
+matrices / 1,340,964,864 bytes / 327,384 pages. Prompt positions 0..4 passed
+all-vocabulary logits with relative L2 `1.6e-8 / 1.7e-8 / 1.1e-8 / 1.7e-8 /
+1.6e-8`, matching argmax each. The original layer25 FFN-down failure was
+passed (position0 graph input/output L2 `3e-9 / 1.6e-8`).
+
+At prompt position **5**, the first noticeable graph difference appeared
+after layer13 attention (`blk.13.attn_output.weight` input/output L2
+`0.000020351 / 0.000038141`), then quantization amplified it in subsequent
+FFNs. The unchanged per-layer gate stopped at `blk.19.attn_v.weight` graph
+output L2 **0.020091322**. The independently checked card primitive still
+had L2 `1.06e-7`; applying the same CPU Q8 activation emulation to that
+diverged input gave `0.020091430`, so a bad matrix product is not supported
+by this trace. It generated **zero** accepted reply tokens. The 1,305 real
+matvec calls ended with explicit END2, PCI/host1/1, cold0, followed by a
+clean audit and unchanged Assistant. Total 1,787.818 s, of which
+1,728.703916 s was weight preparation/upload, 45.548620 matvec/staging/result,
+3.270967 primitive diagnostics. Failure vector/log are preserved locally
+and in `/boot/home/pioneer-q8-scaled-20261015/`.
+
+The matching pinned native CPU library disassembly confirms
+`ggml_vec_dot_q8_0_q8_0` uses a separate scale multiply followed by true IEEE
+`fmadd.s` at `0x40194 / 0x4019c`; its quantizer tail-calls
+`quantize_row_q8_0_ref`. Blackhole SFPMAD is only partially fused. Tiny
+rounding changes crossing half-precision attention/KV boundaries are a
+**hypothesis**, not a proven cause. A new explicit precision experiment,
+`--diagnose-compact-q8-f32-kv`, sets **both** independent contexts' K and V
+cache types to FP32 and prints that choice. Original graph/logit/greedy
+acceptance limits remain unchanged. It additionally reports full pre-cache
+K/V projection FP16-rounding disagreements; K normalization/RoPE occur later,
+so this diagnostic alone cannot prove the actual stored-key difference.
+
+This new native run is active with binary
+`24ae9f4c32222a3856e525d9c44ab9fa5aebeaf291ac8198190e4321ec1ccf1c`,
+named `tenstorrent_haiku_qwen_f32_kv`, log
+`/boot/home/pioneer-q8-compact-20261015/full-qwen-f32-kv-first.log`.
+It is the sole current card owner: no card queries, driver replacement,
+reset/reload or competing test until its authoritative terminal result.
+No accepted Qwen reply tokens or CPU speedup have yet been established.
+The runtime still uses one core and bank0 / 2GiB. Compact mixed quantization,
+wider models, multicore/bulk dispatch and matched repeated benchmarks remain
+required. Assistant is not changed to expose an unverified faster-Qwen mode.
 
 #### Native integer-8 arithmetic candidate (not scaled Qwen inference)
 

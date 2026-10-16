@@ -126,6 +126,15 @@ static bool CheckProjection(const ggml_tensor* w,const float* x,const float* y,c
 		fprintf(stderr,"  GRAPH CPU reference input-L2 %.9f output-L2 %.9f; CPU-Q8-activation emulation vs graph-output L2 %.9f\n",
 			inputError,outputError,sqrt(cpuQuantDelta/(graphOutputNorm+1e-30)));
 		passed &= isfinite(inputError) && isfinite(outputError) && inputError<.02 && outputError<.02;
+		if (sQ8 && (strstr(w->name,".attn_v.weight") || strstr(w->name,".attn_k.weight"))) {
+			unsigned halfDifferences=0; float maxDifference=0;
+			for (unsigned row=0;row<outputs;row++) {
+				float reference=found->second.output[row];
+				halfDifferences+=ggml_fp32_to_fp16(y[row])!=ggml_fp32_to_fp16(reference);
+				float difference=fabsf(y[row]-reference); if (difference>maxDifference) maxDifference=difference;
+			}
+			fprintf(stderr,"  KV PRECISION pre-cache projection half-rounding disagreements %u/%u, max FP32 difference %.9g; diagnostic only, K normalization/RoPE occur downstream\n",halfDifferences,outputs,maxDifference);
+		}
 	}
 	if (!passed && sDiagnosticVector) {
 		int fd=open(sDiagnosticVector,O_WRONLY|O_CREAT|O_EXCL,0600);
