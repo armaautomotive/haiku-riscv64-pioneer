@@ -45,6 +45,7 @@ struct BulkQ8Machine:NativeF32Q8Machine {
 	}
 	bool Guards() const { for (unsigned w=2304;w<4096;w++) if (l1[2048+w]!=0xcafebabe) return false; return true; }
 };
+#ifndef PIONEER_BULK_Q8_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8BulkCodeWord(w));
@@ -70,3 +71,4 @@ int main(int argc,char** argv) {
 	}
 	printf("PASS: OFFLINE9216-byte/16-tile reader, all K/N4096 IEEE bits, data/header bounds and failures; model reads %u vs %u, RISC steps %u vs %u; NOT hardware/performance, no driver exposure\n",bulk.requests,prior.requests,bulk.steps,prior.steps);
 }
+#endif

@@ -7,10 +7,17 @@
  */
 .option norvc
 .option norelax
+.ifdef TT_RUNTIME_Q8_READBACK
+	.set TT_RUNTIME_Q8_BULK,1
+.endif
 .section .boot,"ax"
 .global _start
 _start:
+.ifdef TT_RUNTIME_Q8_READBACK
+	j runtime_readback_dispatch
+.else
 	j main
+.endif
 
 .macro emit value
 	li t0, \value
@@ -893,6 +900,60 @@ q8_exact_sequence:
 	.word 0x8a000002 /* disable conditional execution, all lanes restored */
 	.word 0x850a1300 /* result0 = RN(s1+odd(u3)) */
 q8_exact_end:
+.ifdef TT_RUNTIME_Q8_READBACK
+	/* OFFLINE candidate only: an alternate boot entry reuses the qualified
+	 * bulk math verbatim. The small tail is a read-only, bounded RISC exact
+	 * comparison, never a checksum, NoC request or supplied-code interface.
+	 * Host DMA must already be completed and BME proved off before release.
+	 * Original output84000 and fresh readback88000 must be separately owned.
+	 * Private descriptor7050c:0=math,1=compare;70508=count/16 (1..128). */
+	.org 0xf54,0
+	.global runtime_readback_dispatch,runtime_readback_done,runtime_readback_park,runtime_readback_end
+runtime_readback_dispatch:
+	li a0,0x70500
+	lw t0,12(a0)
+	li t1,1
+	beq t0,t1,runtime_readback_verify
+	beq t0,zero,main
+	j runtime_readback_invalid
+runtime_readback_verify:
+	lw a1,8(a0)
+	addi t0,a1,-1
+	srli t0,t0,7
+	bne t0,zero,runtime_readback_invalid
+	slli a1,a1,4
+	mv a7,a1
+	li a2,0x84000
+	li a3,0x88000
+	li a4,0
+runtime_readback_word:
+	lw t0,0(a2)
+	lw t1,0(a3)
+	xor t0,t0,t1
+	or a4,a4,t0
+	addi a2,a2,4
+	addi a3,a3,4
+	addi a1,a1,-1
+	bne a1,zero,runtime_readback_word
+runtime_readback_done:
+	li a0,0x17ffc0
+	sw a7,4(a0)
+	sw a4,12(a0)
+	la t0,runtime_readback_done
+	sw t0,0(a0)
+	li t0,0x52565731 /* RVW1: compared word count + exact mismatch OR */
+	sw t0,8(a0)
+	lw t0,8(a0)
+	andi t0,t0,0
+	fence
+runtime_readback_park:
+	j runtime_readback_park
+runtime_readback_invalid:
+	li a7,0
+	li a4,-1
+	j runtime_readback_done
+runtime_readback_end:
+.endif
 .endif
 .else
 	.global q8_compact_expand, q8_compact_lookup

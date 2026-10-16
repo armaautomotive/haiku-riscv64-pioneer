@@ -184,8 +184,8 @@ int main()
 	{
 		RuntimeMock trial; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
 		assert(Prepared(trial,h,s) && Run(trial,h,s,c,r,true)); dmaWrites=trial.Mock::writes;
-		assert(r.stopped && !r.recovery_required && trial.outputDmaWrites==1 && trial.outputPioReads==4096);
-		assert(Run(trial,h,s,c,r,true) && trial.outputDmaWrites==2 && trial.outputPioReads==4096);
+		assert(r.stopped && !r.recovery_required && trial.outputDmaWrites==1 && trial.outputPioReads==5120);
+		assert(Run(trial,h,s,c,r,true) && trial.outputDmaWrites==2 && trial.outputPioReads==6144);
 		assert(PioneerRuntimeMatvecClose(trial,b,n,s,c)); trial.Restored();
 		assert(PioneerResidentLeaseEnd(trial,n,s) && trial.ReleaseHostPage()==0); trial.Safe();
 	}

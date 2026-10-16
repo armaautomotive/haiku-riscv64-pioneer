@@ -7,10 +7,13 @@ struct OutputMock:StoreMock {
 	uint32_t values[4096]={};
 	unsigned pioReads=0,outputPages=0,writePage=0,visibilityReads=0;
 	bool held=true,omitPayload=false,omitWord=false,badPadding=false,lateMutation=false,delayVisibility=false;
+	bool omitReadback=false,corruptReadback=false,corruptFiniteWrite=false;
+	unsigned faultWord=7;
 	OutputMock() { for (auto& value:values) value=0x7fc00000; }
 	uint32_t ResetRead() { return held?0x47800:0x46800; }
 	void HostPageWrite(unsigned w,uint32_t value) { assert(!uncertain); PageMock::HostPageWrite(w,value); }
 	uint32_t ResidentL1Read(unsigned w) { pioReads++; return StoreMock::ResidentL1Read(w); }
+	uint32_t RuntimeBufferRead(unsigned w) { assert(w>=4096 && w<8192 && held && !uncertain); pioReads++; return values[w-4096]; }
 	uint32_t HostPageRead(unsigned w) {
 		if (delayVisibility && outputPages && ++visibilityReads==2049)
 			for (unsigned i=0;i<1024;i++) page[i]=values[writePage*1024+i];
@@ -39,9 +42,11 @@ struct OutputMock:StoreMock {
 			if (!omitPayload && !delayVisibility) for (unsigned w=0;w<1024;w++)
 				if (!omitWord || w!=7) page[w]=values[writePage*1024+w];
 			if (badPadding) page[1023]=0x40000000;
+			if (corruptFiniteWrite) page[faultWord]^=1;
 			writeCounters[0]++; writeCounters[1]+=64; accepted++; writeCounters[3]++;
 		} else {
-			for (unsigned w=0;w<1024;w++) destination[1024+w]=page[w];
+			if (!omitReadback) for (unsigned w=0;w<1024;w++) destination[1024+w]=page[w];
+			if (corruptReadback) destination[1024+faultWord]^=1;
 			if (lateMutation) page[5]^=1;
 			counters[0]++; counters[1]+=64; accepted++; counters[3]++;
 		}
@@ -66,7 +71,7 @@ int main() {
 			assert(PioneerRuntimeOutputPage(io,io.Baseline(),io.Compute(),h,l,p,words,snapshot,output+p*1024,r));
 			assert(r.requests==3 && r.completed==3 && r.host_visible && r.readback_complete && !r.mismatches && !r.recovery_required);
 		}
-		assert(io.pioReads==reads && !memcmp(output,io.values,count*4));
+		assert(io.pioReads==reads+2048*((count+1023)/1024) && !memcmp(output,io.values,count*4));
 		assert(PioneerResidentLeaseEnd(io,io.Compute(),l) && io.ReleaseHostPage()==0); io.Safe();
 	}
 	unsigned writes=0;
@@ -89,18 +94,26 @@ int main() {
 		assert(!RunOutput(io,h,l,32,output,r) && !r.host_write_issued && !r.recovery_required && r.mismatches);
 		assert(PioneerResidentLeaseEnd(io,io.Compute(),l) && io.ReleaseHostPage()==0); io.Safe();
 	}
-	for (unsigned fault=0;fault<14;fault++) {
+	for (unsigned fault=0;fault<17;fault++) {
 		OutputMock io; tt_host_page_result h; PioneerResidentLease l; tt_resident_stream_result r; uint32_t output[32]={};
 		SetValues(io,32); assert(Prepared(io,h,l));
 		io.held=fault!=0; io.failRequest=fault>=1 && fault<=3?fault:0;
 		io.omitPayload=fault==4; io.omitWord=fault==5; io.badPadding=fault==6; io.lateMutation=fault==7;
 		io.changed=fault==8; io.lateMapChange=fault==9; io.clearFails=fault==10; io.badFlits=fault==11;
 		io.pciePending=fault==12; if (fault==13) io.values[0]=0xffffffff;
+		io.omitReadback=fault==14; io.corruptReadback=fault==15; io.corruptFiniteWrite=fault==16;
 		assert(!RunOutput(io,h,l,32,output,r) && r.recovery_required && io.quarantined);
 		assert(!PioneerResidentLeaseEnd(io,io.Compute(),l) && !io.releases);
 		for (unsigned v:output) assert(v==0);
 		if (fault==4 || fault==5 || fault==6 || fault==13) assert(r.host_write_issued && !r.host_visible && !r.readback_complete);
 		if (fault==7) assert(r.host_visible && r.readback_complete && r.mismatches);
+	}
+	for (unsigned word=0;word<1024;word++) for (unsigned fault=0;fault<2;fault++) {
+		OutputMock io; tt_host_page_result h; PioneerResidentLease l; tt_resident_stream_result r; uint32_t output[1024]={};
+		SetValues(io,1024); assert(Prepared(io,h,l)); io.faultWord=word;
+		io.corruptReadback=fault==0; io.corruptFiniteWrite=fault==1;
+		assert(!RunOutput(io,h,l,1024,output,r) && r.recovery_required && io.quarantined && r.mismatches);
+		for (unsigned v:output) assert(!v);
 	}
 	{
 		OutputMock io; tt_host_page_result h; PioneerResidentLease l; tt_resident_stream_result r; uint32_t output[32]={},snapshot[1024]={};

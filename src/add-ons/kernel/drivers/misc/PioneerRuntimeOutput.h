@@ -56,7 +56,16 @@ bool PioneerRuntimeOutputPage(IO& io,const tt_dram_samples_result& baseline,cons
 		if (!PioneerResidentStreamGuard(io,baseline,noc,host,lease,0x406)) { lease.recovery_required=true; break; }
 		for (unsigned w=0;w<1024;w++) {
 			uint32_t value=io.HostPageRead(w);
-			r.mismatches+=value!=snapshot[w] || (w<words?value==0xffffffff:value!=0x7fc00000);
+			// Counter completion and rereading the HOST page do not prove
+			// what arrived in the fresh L1 destination, or that the original
+			// result survived the write unchanged. This conservative baseline
+			// checks all three byte streams, padding included. A future device-
+			// side exact comparison can remove these slow payload PIO reads;
+			// it must not replace them with a CRC or weaken this equality gate.
+			uint32_t returned=io.ResidentL1Read(1024+w);
+			uint32_t original=io.RuntimeBufferRead(4096+page*1024+w);
+			r.mismatches+=value!=snapshot[w] || returned!=snapshot[w] || original!=snapshot[w]
+				|| (w<words?value==0xffffffff:value!=0x7fc00000);
 		}
 		if (r.mismatches) { r.state=TT_STORE_CHANGED; lease.recovery_required=true; break; }
 		r.state=TT_STORE_PASSED;

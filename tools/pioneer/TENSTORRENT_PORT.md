@@ -3,13 +3,18 @@
 ## Status
 
 Latest October15 local / October16 UTC: standalone Qwen3-0.6B Q8_0 now
-passes its full22-position bootstrap under Haiku, with all197 learned
-matrices on P100A, full-vocabulary checks at every position and four
+passes its full22-position bootstrap under Haiku on two fixed P100A cores,
+with all197 learned matrices, full-vocabulary checks at every position and four
 CPU-identical greedy reply tokens. Compensated SFPU accumulation fixed the
 reproduced rounding drift. This is **correctness, not speed qualification**:
-the three-sample warm diagnostic is0.115836tokens/s, not a matched benchmark
-or a CPU speedup. Assistant remains unchanged;27B/mixed quantization and
-practical acceleration still require further work. See the exact-scale record.
+the three-sample warm diagnostic is0.140525tokens/s (prior one-core exact
+0.115836), not a matched benchmark or CPU speedup. Assistant remains unchanged;
+27B/mixed quantization and practical acceleration still require further work.
+The activation-reuse driver installation requires explicit approval; the proven
+two-core driver remains installed. See the full two-core record below.
+
+The following early milestones are chronological; their narrower intermediate
+limitations do not supersede the current standalone Qwen correctness result.
 
 Source/feasibility investigation started 2026-09-15. On October 15,
 TinyStories-260K generated eight verified tokens under Haiku with every
@@ -47,7 +52,8 @@ weights in those GEMV fixtures are still re-uploaded. A separate exclusive
 storage session now retains model data across requests. It is connected to a
 new bounded matrix-vector runtime: real Qwen query and FFN-down matrices
 run with retained weights and separate vectors. Full Qwen chat remains
-CPU-only; a model-graph backend and an actual CPU speedup are still missing.
+CPU-only at that stage; a standalone model-graph backend now works as above,
+but an actual CPU speedup is still missing.
 Dedicated, owned high-address host buffers now pass 4 KiB transfers in both
 directions. Card-to-host writes additionally require CPU-visible payload and
 distinct poisoned-L1 readback proof before releasing their buffer. These
@@ -427,9 +433,15 @@ pass. Pristine pinned-ggml fake tests run both client modes, exact outputs,
 active flag immutability, invalid flag combinations and device failure/no
 fallback; these fake results are NOT model or hardware throughput evidence.
 
-Driver25454115f888e9bfcff2e1b57315ba35a25d2479c08c896bb789530c181bb97d
+Initially staged driver25454115f888e9bfcff2e1b57315ba35a25d2479c08c896bb789530c181bb97d
 and CLI411c1a73d94e9ee2d6d6ede30c15ed2861fbf87167efa59aabfdd7d8b855773e
-are built and staged in `/boot/home/pioneer-dual-reuse-20261015`, NOT installed.
+were built and staged in `/boot/home/pioneer-dual-reuse-20261015`, NOT installed.
+That frozen driver is superseded by the stricter output-validation source
+below; do not install it. Replacement4ca653a3ff622b0976d1dde86d08d4a49dd8b07d8cd5e7cd61c75f78660d3c0f
+has built locally in `/private/tmp/pioneer-dual-reuse-checked-tools-20261015`
+with all31 diagnostic tools; CLI/lifecycle hashes above are unchanged. It has
+not been staged on Haiku or installed. Approval still gates installation;
+there has been no attempt to bypass the rejected operation.
 The full-model run closed with known END/stop/cleanup and independent audit.
 Automatic safety review then rejected installing this unqualified activation-
 reuse kernel driver as higher risk needing explicit user approval. Do not
@@ -444,6 +456,59 @@ refusal and all per-core proofs. Qwen CLI modes are
 the same reference/thread/quality gates. Standalone verifier
 3f3f674b25a8e8f299d4d9c5c9995d6dd4c1721787de0b74ff4258cd309faa71 is built
 locally, not run. No native cache correctness or speedup is claimed yet.
+
+###### Exact result transport prerequisites (offline only)
+
+An adversarial test exposed a validation gap in the older experimental54be
+output-DMA helper: after the ordered read it compared the host page to its
+host snapshot, not the actual fresh L1 readback or original device output.
+Omitted readback data could therefore pass despite complete NoC counters.
+The old native projection comparisons remain historical evidence for those
+particular vectors, not proof of this stronger transport property. Qwen's
+passing native modes use PIO and reject Q8/integer output-DMA combinations;
+their correctness result is unaffected. No native driver was changed here.
+
+The source helper now compares ALL words of original output, fresh L1 return
+and the CPU-visible host snapshot, including padding. Tests reject omitted
+readback, every one-word corruption of all1024 returned words and all1024
+finite posted-write words, leaving output unaccepted/quarantined. Existing
+lost-control/poison, visibility, counter, route and cleanup tests still pass.
+This conservative baseline adds2048 payload PIO reads/page. It is intentionally
+NOT a speedup; future optimization must preserve this byte-identity gate.
+
+A separate `TT_RUNTIME_Q8_READBACK` image is assembled/model-tested but has
+NO driver opcode/capability/native selector. It preserves the qualified bulk
+math bytes and original park, with alternate entry7556a06f to a164-byte routine
+in previously zero tail70f54..70ff7. Selector0 enters unchanged math; selector1
+compares fixed original84000 against fixed fresh return88000,16..2048 words.
+It ORs every word's XOR difference (not a collision-prone checksum), records
+count/mismatch mask/phase70fb4/markerRVW1 and parks70fe8. Invalid selectors or
+counts refuse before any payload read. It cannot write payload, NIU, SFPU,
+reset or DMA registers. Future execution must happen only AFTER transfer
+completion and BME-off proof, preserving no host DMA during compute.
+The metadata predicate alone is NOT a complete acceptance gate: the future
+controller must also prove fresh clearing/readback of all FOUR status words,
+immutable image/descriptor, owner/mappings/source/PCI/idle state, zero new
+NoC traffic, and both verified stops before accepting either result.
+
+ASan/UBSan model tests pass assembled-byte equality, all3184 independent word
+corruptions across16/32/64/1024/2048 words, double-bit cancellations that would
+defeat XOR checksums, signed-zero differences, nonzero initial registers,
+wrong count/selector/marker/PC and complete data/register-write bounds. Normal
+bulk math remains IEEE-bit-identical for all K; old BF16/FP16/INT8/native-FP32
+and fixed-image regressions pass. These are NOT native or timing results.
+
+`PioneerOutputBuffer.h` separately models a private16KiB output area's owner
+lifecycle. It requires four contiguous high physical pages, exact whole-area
+size, no input-page overlap, noncacheable attributes, four pattern passes and
+stable whole/per-page remaps. Pending/uncertain/failed-release areas cannot
+be freed. Tests cover every16384 lost store, all four noncontiguous/short-page
+cases, input aliases, high-address/overflow limits, map/cache failures and
+release/quarantine behavior. There is NO native allocator/adapter, public
+address API or output-DMA controller for this buffer. A future controller
+must quarantine BOTH owned areas after uncertainty and prove readback identity
+before accepting output. Integration and hardware validation remain pending
+explicit approval and the existing native gates.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 
@@ -925,7 +990,12 @@ and cleanup still passed, with a clean audit/cold 0. This floating-mode probe
 is not an exact integer proof, and is retained as a failure. The integer
 arithmetic candidate above is separate, not a relaxed gate.
 
-#### Checked output DMA (native projection proof, no speedup)
+#### Checked output DMA (historical projection comparison, not stronger readback proof)
+
+**Audit correction:** the originally tested helper did not inspect fresh L1
+return/original output words. The source fix and stronger offline fault tests
+are documented above; they add conservative PIO and are not deployed. Do not
+infer full readback-integrity qualification from the older samples below.
 
 A separate data-only matvec ioctl `54be`, capability bit 64 (candidate
 support capabilities 127), collects results through the session's owned
@@ -950,7 +1020,8 @@ ASan/UBSan covers all four pages, partial-page padding, counter wrap,
 delayed/missing/partial host visibility, late mutation, unsafe core state,
 all lost poison/control writes and incomplete commands. Integrated runtime
 tests additionally drop every post-upload control write (87 DMA cases),
-require a verified stop before output DMA and reject any PIO fallback.
+require a verified stop before output DMA and rejected any PIO fallback at
+that stage. The stronger current baseline uses explicit source/readback PIO.
 The candidate builds through Jam and all 30 tools cross-build. The new CLI
 `--compare-qwen-resident-output-dma` executes two independent input vectors
 through both paths, requiring bit-identical outputs as well as the original

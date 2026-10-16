@@ -6,4 +6,4 @@ trap 'rm -f "$temporary/test"; rmdir "$temporary"' EXIT HUP INT TERM
 ${CXX:-c++} -std=c++17 -O1 -Wall -Wextra -Werror -fsanitize=address,undefined \
  "$directory/pioneer_runtime_output_test.cpp" -o "$temporary/test"
 "$temporary/test"
-printf 'PASS: owned output DMA, posted-write visibility/order, no payload PCI reads, faults quarantine without accepting output\n'
+printf 'PASS: owned output DMA, posted-write visibility/order, exact source/host/fresh-L1 identity (conservative PIO), faults quarantine without accepting output\n'

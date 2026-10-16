@@ -261,6 +261,7 @@ struct Machine {
 	virtual unsigned StepLimit() const { return 20000; }
 	virtual uint32_t ParkPc() const { return BlackholeTensixParkPc(sfpuSmoke); }
 	virtual uint32_t FinalPhase() const { return BlackholeTensixFinalPhase(sfpuSmoke); }
+	virtual uint32_t FinalMarker() const { return 0x4d415431; }
 	virtual unsigned ExpectedFixtures() const { return 2; }
 	virtual bool CodeAddress(uint32_t address) const {
 		return address==0x6000 || (address>=0x70000
@@ -286,8 +287,8 @@ struct Machine {
 				else { assert((f3 == 1 || f3 == 5) && (instruction>>25) == 0); result = f3 == 1 ? regs[rs1] << (instruction>>20 & 31) : regs[rs1] >> (instruction>>20 & 31); }
 				write = true;
 			} else if (op == 0x33) {
-				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 6 || f3 == 7));
-				result = f3 == 0 ? regs[rs1] + regs[rs2] : f3 == 6 ? regs[rs1] | regs[rs2] : regs[rs1] & regs[rs2]; write = true;
+				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 4 || f3 == 6 || f3 == 7));
+				result = f3 == 0 ? regs[rs1] + regs[rs2] : f3 == 4 ? regs[rs1] ^ regs[rs2] : f3 == 6 ? regs[rs1] | regs[rs2] : regs[rs1] & regs[rs2]; write = true;
 			} else if (op == 0x23) {
 				assert(f3 == 1 || f3 == 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
 				if (f3==1) Store16(regs[rs1]+imm,uint16_t(regs[rs2])); else Store(regs[rs1]+imm,regs[rs2]);
@@ -310,7 +311,7 @@ struct Machine {
 			regs[0] = 0; pc = next;
 		}
 		assert(l1[Index(pc)] == 0x0000006f && drained);
-		assert(l1[Index(0x17ffc0)] == FinalPhase() && l1[Index(0x17ffc4)] == ExpectedFixtures() && l1[Index(0x17ffc8)] == 0x4d415431);
+		assert(l1[Index(0x17ffc0)] == FinalPhase() && l1[Index(0x17ffc4)] == ExpectedFixtures() && l1[Index(0x17ffc8)] == FinalMarker());
 	}
 	bool Correct() {
 		for (unsigned i = 0; i < 256; i++) {
