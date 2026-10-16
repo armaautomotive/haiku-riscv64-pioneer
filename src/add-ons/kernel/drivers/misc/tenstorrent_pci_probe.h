@@ -29,6 +29,7 @@
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerRuntimeDual.h"
+#include "PioneerAttentionTile.h"
 #include "PioneerOutputBufferProbe.h"
 #include "PioneerResidentStream.h"
 
@@ -158,6 +159,7 @@
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL_REUSE (B_DEVICE_OP_CODES_END + 0x54cb)
 #define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_PROBE (B_DEVICE_OP_CODES_END + 0x54cc)
 #define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT (B_DEVICE_OP_CODES_END + 0x54cd)
+#define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST (B_DEVICE_OP_CODES_END + 0x54ce)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -166,7 +168,8 @@
 #define TT_PIONEER_CAP_Q8_SECOND 65536U
 #define TT_PIONEER_CAP_Q8_DUAL 131072U
 #define TT_PIONEER_CAP_Q8_DUAL_REUSE 262144U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE)
+#define TT_PIONEER_CAP_ATTENTION_TILE_TEST 524288U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -314,6 +317,16 @@ struct tt_pioneer_runtime_q8_matvec {
 	tt_pioneer_runtime_matvec matvec; // original ABI unchanged
 	uint32_t scale[TT_RUNTIME_MATVEC_INPUTS_MAX/32]; // finite FP32 dX bits
 };
+
+// Separate root-only qualification command. Two F32 query heads sharing one
+// F16 K/V head; fixed width128, causal prefix1..256. Dedicated session only.
+// No host pointer, device address, arbitrary dimensions or program payload.
+struct tt_pioneer_attention_tile_test {
+	uint32_t version,tokens,reserved[2];
+	uint32_t query[256],key[16384],value[16384],output[256];
+	tt_attention_tile_result result;
+};
+static_assert(sizeof(tt_pioneer_attention_tile_test)==133236,"fixed attention test ABI");
 
 struct tt_pioneer_runtime_dual_matvec {
 	tt_pioneer_runtime_q8_matvec q8; // result is the all-worker aggregate

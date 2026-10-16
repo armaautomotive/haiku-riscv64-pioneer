@@ -2,6 +2,14 @@
 
 ## Status
 
+October16 attention checkpoint: QK products and PV accumulation now execute
+on the P100A SFPU, with reductions and softmax on the card's TRISC0. The
+dedicated qualification path passes all448 grouped-head tiles from56 public
+Qwen fixtures, plus synthetic1/3/256-key cases, including verified stop and
+restoration. **Assistant still uses CPU attention.** Full-model scheduling,
+shared matrix/attention ownership and resident KV optimization remain to be
+integrated; this checkpoint is not a faster-inference claim. Details below.
+
 Latest October16: standalone Qwen3-0.6B Q8_0 now
 passes its full22-position bootstrap under Haiku on two fixed P100A cores,
 with all197 learned matrices, full-vocabulary checks at every position and four
@@ -125,6 +133,85 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 16: native attention kernel qualification (not Assistant integration)
+
+The fixed kernel in `blackhole_attention.cpp` handles two F32 query heads
+sharing one F16 K/V head, width128, one query position and a causal prefix
+of1..256 keys. Eight such tiles cover Qwen3-0.6B's16Q/8KV heads. All QK
+multiplications and weighted-value accumulation use the32-lane Tensix SFPU;
+dot reductions, stable max-subtracted softmax and normalization use the
+P100A's TRISC0. No host attention result is substituted. The compensated
+SFPU sequence preserves the existing partial-FMA correctness constraint.
+The first implementation stages the entire used K/V prefix through checked
+PIO. It does **not** retain the KV cache in GDDR and is not a speed win.
+
+The instruction contract was checked against official Tenstorrent ISA
+revision `8a34e25e04d1ad7dd129ac9231e126b85923fac3`, including
+[BabyRISCV FP limitations](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md).
+The image uses no floating divide/sqrt, unsupported rounding-mode assumption,
+host pointers, NoC commands, firmware services or allocation. Immutable
+fixed-address code and separately saved stack/data regions are bounded by
+the linker and actual-image interpreter. Observed stack use is1136/8192bytes.
+
+`TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST` is a separate root-only operation,
+restricted to an exclusive **dedicated qualification session**. It refuses
+mixing with the matrix runtime or uploaded model pages. The driver accepts
+only finite fixed-shape inputs, not programs/addresses/coordinates, verifies
+all staged bytes and poisoned output, and requires exact marker, count,
+two parked-PC samples and unchanged NoC counters before stopping. Missing
+completion/stop proof quarantines the host page and latches cold recovery;
+no reset/retry/module reload may bypass it. Clean END verifies original
+boot/code/descriptor/stack/data and restores the resident lease/PCI route.
+
+Offline ASan/UBSan checks pass elementary math, all finite half patterns,
+independent double-precision attention, n1..256 and all public fixtures.
+The actual linked RV32IMF bytes execute in a restricted memory/MMIO model
+using Blackhole's partial-FMA arithmetic, with arithmetic/lane/input/timeout
+fault injection. Maximum synthetic relative-L2 versus double is1.614e-6.
+The policy suite drops all descriptor/status/reset/launch/stop writes plus
+sampled payload writes (24 cases) and checks restoration/uncertainty faults.
+Existing matvec, second-core, dual-core and activation-reuse suites pass.
+
+Native Haiku qualification on October16, all with END state2, PCI/host1/1,
+cold0:
+
+- One key: exact output; first-call ioctl wall0.141907s.
+- Three keys: relative-L2 versus scalar FP32 `8.24314812e-8`;
+  first-call wall0.140170s.
+- 256 keys: relative-L2 `2.22631067e-6`; first-call wall0.255883s.
+- All56 captured fixed-public-`Hello` Qwen layer/position fixtures, eight
+  tiles each:448 operations, strict FP32-reference and captured-ggml-F16
+  gates passed. Total ioctl wall3.004265s, whole test3.251825s. These include
+  staging/guards, not device-only timings or inference tokens/second.
+
+Build/test commands:
+
+```sh
+sh tools/pioneer/build_attention_image.sh CONFIGURED_BUILD FRESH_ABSOLUTE_OUTPUT
+sh tools/pioneer/tests/run_pioneer_attention_math_tests.sh [PUBLIC_FIXTURES...]
+sh tools/pioneer/tests/run_pioneer_attention_image_tests.sh IMAGE_OUTPUT [PUBLIC_FIXTURES...]
+sh tools/pioneer/tests/run_pioneer_attention_tile_policy_tests.sh
+```
+
+Explicit native tool options are `--check-support`, `--run-synthetic 1..256`
+and `--run-public-fixtures FILE...`; do not run them while Assistant owns
+the P100A. The CPU-only shape/capture tool links no Pioneer backend and
+captures only the fixed public `Hello` test, never user conversations.
+
+Installed qualification driver SHA256:
+`1cf6da7d8397c6c416318b641fb96ab763877ab36f23b1062884b44387bd6e9c`.
+Native probe SHA256:
+`66bbc891b65e7bc45e41565362fea5a580a21bc0b2a2604d010f953a2c7c4a3d`.
+TRISC image SHA256:
+`d9dfbf093a23b0beb00e2ea49220af6457fc8286e3c3e868b3f2bc7a3b94786b`.
+Evidence/backup: `/boot/home/pioneer-attention-20261016/tile-a/`;
+original proven driver preserved as `original-driver-fd1672b3`.
+Local ignored evidence: `generated.pioneer/tenstorrent/attention-20261016/`.
+Assistant was normally unloaded before device tests; chat/model selection
+were retained. Ordinary atomic driver update was discovered after a delay;
+no reboot, firmware/boot/SD change, forced module unload or cold-latch bypass
+was needed. Do not describe this as full-model attention integration yet.
 
 ### October 16: P100A Fast target without CPU reference validation
 

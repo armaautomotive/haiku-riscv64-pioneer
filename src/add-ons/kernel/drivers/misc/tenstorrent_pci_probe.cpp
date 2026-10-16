@@ -1265,6 +1265,10 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 	uint32* secondRuntimeSaved=NULL;
 	uint32* secondLeaseSaved=NULL;
 	uint32* runtimeStage=NULL;
+	area_id attentionArea=-1;
+	volatile uint32* attentionView=NULL;
+	uint32* attentionSaved=NULL;
+	bool attentionMapAttempted=false;
 	unsigned runtimeCore=0;
 	bool runtimeMapAttempted=false,runtimeMapped=false;
 	unsigned runtimeBufferWords=8192;
@@ -1274,7 +1278,9 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 		: PioneerHostWriteIO(p,a,t,c,d,n,h,auditResult,r,4096) {}
 	~PioneerSessionIO() {
 		for (unsigned i=0;i<5;i++) if (runtimeAreas[i]>=B_OK) delete_area(runtimeAreas[i]);
+		if (attentionArea>=B_OK) delete_area(attentionArea);
 		free(runtimeSaved); free(secondRuntimeSaved); free(secondLeaseSaved); free(runtimeStage);
+		free(attentionSaved);
 	}
 	bool MapRuntime(bool bulk=false) {
 		unsigned words=bulk?TT_Q8_BULK_SAVED_BUFFER_WORDS:8192;
@@ -1312,6 +1318,30 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 		if (!secondRuntimeSaved) secondRuntimeSaved=(uint32*)malloc((1025+runtimeBufferWords)*sizeof(uint32));
 		return secondRuntimeSaved!=NULL;
 	}
+	bool MapAttention() {
+		if (runtimeCore!=0 || !MapRuntime()) return false;
+		if (attentionView) return true;
+		if (attentionMapAttempted) return false;
+		attentionMapAttempted=true;
+		attentionSaved=(uint32*)malloc(TT_ATTN_TILE_SAVED_WORDS*sizeof(uint32));
+		if (!attentionSaved) return false;
+		void* view=NULL;
+		attentionArea=map_physical_memory("P100A fixed attention qualification L1",profile.bar0_host_start+0x19072000,
+			0x42000,B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (attentionArea<B_OK) return false;
+		attentionView=(volatile uint32*)view; return true;
+	}
+	uint32* AttentionSavedWords() { return attentionSaved; }
+	uint32 AttentionReadWord(unsigned w) {
+		uint32 address=PioneerAttentionTileWordAddress(w);
+		if (address==0x6000) return RuntimeCodeRead(0);
+		return address!=UINT32_MAX && attentionView?PioneerRead32(attentionView+(address-0x72000)/4):UINT32_MAX;
+	}
+	void AttentionWriteWord(unsigned w,uint32 value) {
+		uint32 address=PioneerAttentionTileWordAddress(w);
+		if (address==0x6000) RuntimeCodeWrite(0,value);
+		else if (address!=UINT32_MAX && attentionView) PioneerWrite32(attentionView+(address-0x72000)/4,value);
+	}
 	uint32* HostReadBackup(unsigned words) {
 		if (!runtimeCore) return PioneerHostWriteIO::HostReadBackup(words);
 		if (words!=2048 || secondLeaseSaved) return NULL;
@@ -1336,6 +1366,9 @@ struct PioneerSessionIO : PioneerHostWriteIO {
 	void RuntimeStatusWrite(unsigned w,uint32 value) { if (w<3) ResidentL1Write((0x1fc0/4)+w,value); }
 	bool Unmap() {
 		bool okay=true;
+		if (attentionArea>=B_OK) {
+			if (delete_area(attentionArea)==B_OK) { attentionArea=-1; attentionView=NULL; } else okay=false;
+		}
 		for (unsigned i=0;i<5;i++) if (runtimeAreas[i]>=B_OK) {
 			if (delete_area(runtimeAreas[i])==B_OK) runtimeAreas[i]=-1; else okay=false;
 		}
@@ -1546,6 +1579,7 @@ struct PioneerStoreContext {
 	PioneerResidentLease lease;
 	PioneerRuntimeMatvecLease compute;
 	PioneerRuntimeMatvecLease secondCompute;
+	PioneerAttentionTileLease attention;
 	PioneerRuntimeActivationCache activation[2];
 	PioneerResidentLease secondLease;
 	tt_compute_noc_result secondNoc={};
@@ -1567,7 +1601,7 @@ struct PioneerStoreContext {
 	~PioneerStoreContext() { free(initialized); free(hashes); }
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
-		return compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
+		return attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
 			|| secondLease.pending || secondLease.recovery_required || secondNoc.recovery_required
 			|| lease.pending || lease.recovery_required || idle.recovery_required || baseline.audit.recovery_required || baseline.baseline.path.recovery_required
 			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
@@ -1591,6 +1625,11 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
+	if (context->attention.saved) {
+		if (!clean) context->attention.unsafe=true;
+		clean=PioneerAttentionTileClose(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->lease,context->attention) && clean;
+	}
 	if (context->secondCompute.saved || context->secondLease.saved) {
 		// Global uncertainty forbids restoring even a known-finished peer.
 		if (clean && context->lease.ready && context->secondLease.ready) {
@@ -1733,6 +1772,7 @@ ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size
 	if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (context==NULL || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (context->runtimeCoreMode==4) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->offset)) status=B_BAD_VALUE;
 	else {
 		bool upload=operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD;
@@ -1778,6 +1818,7 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (context->runtimeCoreMode==4) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->offset)) status=B_BAD_VALUE;
 	else {
 		request->result={}; request->result.version=1; request->result.state=TT_STORE_CONFIG_FAILED;
@@ -1890,6 +1931,47 @@ RuntimeProfileControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
+AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (data==NULL || length!=sizeof(tt_pioneer_attention_tile_test)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_attention_tile_test*)malloc(sizeof(tt_pioneer_attention_tile_test));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=1 || request->reserved[0] || request->reserved[1]
+		|| !PioneerAttentionTileInputValid(request->tokens,request->query,request->key,request->value)) {
+		free(request); return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	PioneerStoreContext* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (context->uploadedPages || (context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=4)
+		|| context->compute.saved || context->secondCompute.saved || context->secondLease.saved) status=B_NOT_ALLOWED;
+	else {
+		context->runtimeCoreMode=4; // dedicated attention session; never mix code/boot owners
+		request->result={}; request->result.version=1; request->result.state=TT_ATTN_TILE_CONFIG_FAILED;
+		memset(request->output,0,sizeof(request->output));
+		bool ready=context->lease.ready;
+		if (!ready && !context->lease.saved)
+			ready=PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease);
+		ready=ready && context->io.MapAttention()
+			&& PioneerAttentionTilePrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
+				context->baseline.baseline.baseline.noc,context->lease,context->attention);
+		if (ready) PioneerAttentionTileRun(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->lease,context->attention,
+			request->tokens,request->query,request->key,request->value,request->output,request->result);
+		if (context->Unsafe()) {
+			context->lease.recovery_required=true; context->io.QuarantineHostPage();
+			request->result.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock); free(request); return status;
+}
+
+static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
@@ -1918,6 +2000,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	}
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
 		return RuntimeProfileControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST)
+		return AttentionTileTestControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)
 		return ResidentStreamControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_SUPPORT || operation==TT_PCI_PROBE_PIONEER_HOST_WRITE_PAGE_SUPPORT) {
