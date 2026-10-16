@@ -11,11 +11,22 @@
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
 static int Device() { return open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); }
 static bool sSecondProbe=false;
+static bool sOutputProbe=false;
 static bool Legacy(int fd,bool busy)
 {
 	uint32_t version=0; errno=0;
 	int result=ioctl(fd,TT_PCI_PROBE_PIONEER_HOST_READ_PAGE_SUPPORT,&version,sizeof(version));
-	return busy?result<0 && errno==EBUSY:result==0 && version==1;
+	bool passed=busy?result<0 && errno==EBUSY:result==0 && version==1;
+	if (sOutputProbe) {
+		version=0; errno=0;
+		result=ioctl(fd,TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT,&version,sizeof(version));
+		passed &= busy?result<0 && errno==EBUSY:result==0 && version==1;
+		if (busy) {
+			tt_output_buffer_probe_result probe={}; errno=0;
+			passed &= ioctl(fd,TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_PROBE,&probe,sizeof(probe))<0 && errno==EBUSY;
+		}
+	}
+	return passed;
 }
 static bool QuantizedDenied(int fd,uint32_t capabilities,int expected)
 {
@@ -150,6 +161,9 @@ int main(int argc,char** argv)
 	if (r.version!=1 || (r.capabilities&3)!=3) { close(fd); return 1; }
 	uint32_t secondVersion=0;
 	sSecondProbe=ioctl(fd,TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC_SUPPORT,&secondVersion,sizeof(secondVersion))==0 && secondVersion==2;
+	uint32_t outputVersion=0;
+	sOutputProbe=ioctl(fd,TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT,&outputVersion,sizeof(outputVersion))==0 && outputVersion==1;
+	if (sOutputProbe) puts("CPU-only output-buffer support/allocation must obey the legacy session conflict gate");
 	if (support) { close(fd); return 0; }
 	if (store) {
 		bool passed=(r.capabilities&12)==12 && (!stream || (r.capabilities&32)) && StoreFile(fd,argv[2],automaticClose,stream); close(fd);
@@ -185,6 +199,7 @@ int main(int argc,char** argv)
 			tt_resident_session_result info={}; errno=0;
 			bool denied=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&info,sizeof(info))<0 && errno==EPERM;
 			denied &= QuantizedDenied(fd,r.capabilities,EPERM);
+			denied &= Legacy(fd,true); // inherited legacy probes also cannot bypass an active owner
 			if (r.capabilities&256) {
 				tt_runtime_profile_result profile={}; errno=0;
 				denied &= ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&profile,sizeof(profile))<0 && errno==EPERM;

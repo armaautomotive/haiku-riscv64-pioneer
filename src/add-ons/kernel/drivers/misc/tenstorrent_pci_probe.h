@@ -29,6 +29,7 @@
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerRuntimeDual.h"
+#include "PioneerOutputBufferProbe.h"
 #include "PioneerResidentStream.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
@@ -155,6 +156,8 @@
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND (B_DEVICE_OP_CODES_END + 0x54c9)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL (B_DEVICE_OP_CODES_END + 0x54ca)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL_REUSE (B_DEVICE_OP_CODES_END + 0x54cb)
+#define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_PROBE (B_DEVICE_OP_CODES_END + 0x54cc)
+#define TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT (B_DEVICE_OP_CODES_END + 0x54cd)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U

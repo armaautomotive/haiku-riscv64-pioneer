@@ -138,6 +138,67 @@ struct PioneerHostPageIO {
 	}
 };
 
+// CPU-only standalone probe adapter, NOT part of a resident context or DMA
+// path. A future transport controller still needs explicit ownership wiring.
+struct PioneerOutputBufferProbeIO : PioneerHostPageIO {
+	area_id outputArea=-1;
+	volatile uint32* outputPage=NULL;
+	uint64 outputPhysical=0;
+	bool outputReleaseAttempted=false,outputQuarantined=false;
+	~PioneerOutputBufferProbeIO() {
+		if (outputArea>=B_OK && !outputReleaseAttempted && !outputQuarantined) ReleaseOutputBuffer();
+	}
+	int32 AllocateOutputBuffer() {
+		if (outputArea>=B_OK || B_PAGE_SIZE!=4096) return B_BAD_VALUE;
+		virtual_address_restrictions virtualRestrictions={};
+		virtualRestrictions.address_specification=B_ANY_KERNEL_ADDRESS;
+		physical_address_restrictions physicalRestrictions={};
+		physicalRestrictions.low_address=UINT64_C(0x100000000);
+		physicalRestrictions.high_address=UINT64_C(0x1000000000000);
+		physicalRestrictions.alignment=4096;
+		void* address=NULL;
+		outputArea=create_area_etc(B_SYSTEM_TEAM,"P100A CPU-only private output-buffer probe",
+			TT_OUTPUT_BUFFER_BYTES,B_CONTIGUOUS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,
+			0,0,&virtualRestrictions,&physicalRestrictions,&address);
+		if (outputArea<B_OK) return outputArea;
+		outputPage=(volatile uint32*)address; return B_OK;
+	}
+	int32 OutputBufferMap(uint64_t& address,uint64_t& bytes) {
+		if (outputArea<B_OK || !outputPage) return B_BAD_VALUE;
+		physical_entry entry={};
+		status_t status=get_memory_map((const void*)outputPage,TT_OUTPUT_BUFFER_BYTES,&entry,1);
+		if (status!=B_OK) return status;
+		address=entry.address; bytes=entry.size;
+		if (PioneerOutputBufferAddress(address,bytes)) outputPhysical=address;
+		return B_OK;
+	}
+	int32 OutputBufferPageMap(unsigned page,uint64_t& address,uint64_t& bytes) {
+		if (page>=4 || outputArea<B_OK || !outputPage) return B_BAD_VALUE;
+		physical_entry entry={};
+		status_t status=get_memory_map((const void*)(outputPage+page*1024),4096,&entry,1);
+		if (status!=B_OK) return status;
+		address=entry.address; bytes=entry.size; return B_OK;
+	}
+	int32 SetOutputBufferNonCached() {
+#if defined(__riscv)
+		if (outputArea<B_OK || !PioneerOutputBufferAddress(outputPhysical,TT_OUTPUT_BUFFER_BYTES)) return B_BAD_VALUE;
+		return vm_set_area_memory_type(outputArea,outputPhysical,B_WRITE_THROUGH_MEMORY);
+#else
+		return B_UNSUPPORTED;
+#endif
+	}
+	uint32 OutputBufferRead(unsigned w) { return outputArea>=B_OK && w<TT_OUTPUT_BUFFER_WORDS?PioneerRead32(outputPage+w):UINT32_MAX; }
+	void OutputBufferWrite(unsigned w,uint32 value) { if (outputArea>=B_OK && w<TT_OUTPUT_BUFFER_WORDS) PioneerWrite32(outputPage+w,value); }
+	int32 ReleaseOutputBuffer() {
+		if (outputArea<B_OK || outputReleaseAttempted || outputQuarantined) return B_BAD_VALUE;
+		outputReleaseAttempted=true;
+		status_t status=delete_area(outputArea);
+		if (status==B_OK) { outputArea=-1; outputPage=NULL; }
+		return status;
+	}
+	void QuarantineOutputBuffer() { outputQuarantined=true; } // retain wired system-team ownership
+};
+
 static bool
 FindCard(pci_module_info* pci, pci_info& card)
 {
@@ -1973,6 +2034,20 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 			result.audit.recovery_required=1; sColdRecoveryRequired=true;
 		}
 		sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
+		release_sem(sLock); return user_memcpy(data,&result,sizeof(result));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_SUPPORT) {
+		if (data==NULL || length!=sizeof(uint32)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		release_sem(sLock); const uint32 version=1;
+		return user_memcpy(data,&version,sizeof(version));
+	}
+	if (operation==TT_PCI_PROBE_PIONEER_OUTPUT_BUFFER_PROBE) {
+		if (data==NULL || length!=sizeof(tt_output_buffer_probe_result)) return B_BAD_VALUE;
+		status_t status=AcquireProbeLock(); if (status!=B_OK) return status;
+		tt_output_buffer_probe_result result={};
+		PioneerOutputBufferProbeIO io;
+		PioneerOutputBufferProbe(io,result); // CPU-only, no physical address escapes to user/device
 		release_sem(sLock); return user_memcpy(data,&result,sizeof(result));
 	}
 	if (operation==TT_PCI_PROBE_PIONEER_HOST_PAGE_SUPPORT) {

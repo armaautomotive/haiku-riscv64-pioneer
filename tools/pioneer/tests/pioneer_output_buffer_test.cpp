@@ -25,6 +25,7 @@ static tt_host_page_result Input()
 	tt_host_page_result r={}; r.version=1; r.state=TT_HOST_PAGE_READY; r.allocated=r.memory_type_set=r.map_stable=1;
 	r.physical=UINT64_C(0x120000000); r.bytes=4096; return r;
 }
+#ifndef PIONEER_OUTPUT_BUFFER_MOCK_ONLY
 int main()
 {
 	auto input=Input(); unsigned stores=0;
@@ -77,3 +78,4 @@ int main()
 	}
 	puts("PASS: OFFLINE private16KiB output ownership, all4 physical pages, no input alias, every16384 lost store, cache/map failures, no release after pending/uncertainty; NO native/DMA interface");
 }
+#endif

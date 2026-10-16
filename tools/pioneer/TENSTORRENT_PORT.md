@@ -2,19 +2,20 @@
 
 ## Status
 
-Latest October15 local / October16 UTC: standalone Qwen3-0.6B Q8_0 now
+Latest October16: standalone Qwen3-0.6B Q8_0 now
 passes its full22-position bootstrap under Haiku on two fixed P100A cores,
 with all197 learned matrices, full-vocabulary checks at every position and four
 CPU-identical greedy reply tokens. Compensated SFPU accumulation fixed the
 reproduced rounding drift. This is **correctness, not speed qualification**:
-the three-sample warm diagnostic is0.140525tokens/s (prior one-core exact
-0.115836), not a matched benchmark or CPU speedup. Assistant remains unchanged;
+the three-sample warm diagnostic with exact activation reuse is0.148549tokens/s
+(prior uncached two-core0.140525; one-core exact0.115836), not a matched
+benchmark or CPU speedup. Assistant remains unchanged;
 27B/mixed quantization and practical acceleration still require further work.
 On October16 the user explicitly approved the activation-reuse kernel test,
 including possible freeze/power-cycle recovery. The replacement driver is now
 installed with the proven two-core driver preserved for rollback. Small and
-full-size native projections pass exact-bit, reuse, ownership and cleanup
-checks; full Qwen verification is in progress. See the records below.
+full-size native projections AND full Qwen generation pass their exact-bit,
+reuse, ownership, logit/token and cleanup checks. See the records below.
 
 The following early milestones are chronological; their narrower intermediate
 limitations do not supersede the current standalone Qwen correctness result.
@@ -412,7 +413,7 @@ about21% in rate across the new bulk+dual path, not an isolated kernel A/B,
 matched repeated real-world benchmark, CPU speedup, Assistant or27B claim.
 No forced unload, firmware/clock/boot change or Assistant model/backend change.
 
-###### Exact activation reuse (native projections qualified; full Qwen pending)
+###### Exact activation reuse (full native Qwen correctness qualified)
 
 Separate54cb / bit262144 / profile11 adds per-core private CPU operand/scale
 shadows to the same fixed two-core bulk image. Its session mode3 cannot
@@ -474,11 +475,23 @@ Qwen CLI modes are
 the same reference/thread/quality gates. Standalone verifier
 3f3f674b25a8e8f299d4d9c5c9995d6dd4c1721787de0b74ff4258cd309faa71 is built
 locally and hash-verified with the pinned model/libraries on Haiku. Full
-`--verify-dual-reuse-q8-host1` is running in
-`full-qwen-dual-reuse-host1-first.log` (job46638); no full-model cache or
-speedup result is claimed until that run closes and passes its post-audit.
+`--verify-dual-reuse-q8-host1` job46638 exited0: all22 positions report full-
+vocabulary cosine1/L2 zero and matching argmax, and all four strict reply
+tokens match CPU: `The capital of France`. All197 tensors/670,482,432bytes,
+163,692 uploads and5,148 real dual-reuse matvec calls are covered. END2/
+PCI-host1/1/cold0, independent post-audit, installed/rollback hashes and
+unchanged idle Assistant all pass. The complete public log and exit marker
+are `full-qwen-dual-reuse-host1-first.log` / `.exit`; local copies are under
+`generated.pioneer/tenstorrent/dual-reuse-20261016/`.
 
-###### Exact result transport prerequisites (offline only)
+Total1042.955s: weight preparation864.444809s, activation preprocessing0.368205,
+matvec/staging/result145.080888 and diagnostics0.000259. Warm positions take
+about6.67..6.80s; three generated-input samples20.195347s =0.148549tokens/s,
+about5.7% higher than the prior uncached dual diagnostic0.140525. This is
+NOT an isolated repeated A/B or CPU-speedup qualification. The result remains
+far short of practical accelerated Qwen and does not qualify27B or Assistant.
+
+###### Exact result transport prerequisites (native baseline; optimized path offline)
 
 An adversarial test exposed a validation gap in the older experimental54be
 output-DMA helper: after the ordered read it compared the host page to its
@@ -498,6 +511,27 @@ finite posted-write words, leaving output unaccepted/quarantined. Existing
 lost-control/poison, visibility, counter, route and cleanup tests still pass.
 This conservative baseline adds2048 payload PIO reads/page. It is intentionally
 NOT a speedup; future optimization must preserve this byte-identity gate.
+
+The stricter baseline is now native-tested under4ca653 with32x1024 and full
+2048x1024 real query projections. Both independent vectors pass, including
+every original/fresh-return/host word and poisoned padding, with zero result
+bit differences from separately rerun PIO executions. END2/PCI-host1/1/cold0
+and independent post-audits pass. These are the legacy BF16 projection's
+existing numerical gates, NOT exact-Q8 or full-Qwen output-DMA qualification.
+Public logs are `strict-output-32x1024-first.log` and
+`strict-output-2048x1024-first.log` in the dual-reuse folder. At2048 outputs,
+the strict DMA phase takes about18.6ms versus6.1ms PIO: safety baseline only,
+not a performance win.
+
+Before these tests, the real legacy diagnostic's error paths were hardened:
+failed BEGIN/upload/matvec/status requests, incomplete transfer/compute/stop,
+cold-session reports and unsafe profiling now cause close-only, with no
+explicit END or subsequent card command. The C++11 ASan/UBSan test compiles
+the REAL main against synthetic syscalls/model data, rejects all62 failing
+ioctl boundaries with/without profiling and eight ambiguous-success cases.
+This test is explicitly synthetic, never model/device/performance evidence.
+Native CLI7a88fe4b86cc8a0d206c3f65f0936afe5c1304b80af61d283b080078899aebde
+was used for the stricter tests; all32 tools now cross-build.
 
 A separate `TT_RUNTIME_Q8_READBACK` image is assembled/model-tested but has
 NO driver opcode/capability/native selector. It preserves the qualified bulk
@@ -549,11 +583,43 @@ size, no input-page overlap, noncacheable attributes, four pattern passes and
 stable whole/per-page remaps. Pending/uncertain/failed-release areas cannot
 be freed. Tests cover every16384 lost store, all four noncontiguous/short-page
 cases, input aliases, high-address/overflow limits, map/cache failures and
-release/quarantine behavior. There is NO native allocator/adapter, public
-address API or output-DMA controller for this buffer. A future controller
-must quarantine BOTH owned areas after uncertainty and prove readback identity
-before accepting output. Integration and hardware validation remain pending
-explicit approval and the existing native gates.
+release/quarantine behavior. There is still NO resident transport adapter,
+public address API or output-DMA controller for this buffer. A future
+controller must quarantine BOTH owned areas after uncertainty and prove
+readback identity before accepting output; CPU-only allocator qualification
+below does not establish DMA coherency, freshness/order or acceleration.
+
+A separate CPU-only probe54cc/support54cd v1 now qualifies the native allocator
+without sending any address to a device or exposing it to the caller. It
+allocates a private4KiB input and contiguous16KiB output above4GiB, verifies
+all4 pages/no alias/noncached pattern passes and remaps, then releases both.
+No PCI/MMIO, NoC/DMA, core execution, caller address or persistent resident
+buffer is available through this operation. ASan/UBSan model tests cover all
+18,432 lost stores, each bad/short page, alias/cache/map/allocation/release
+failures and retained ownership after failed release.
+
+Driverfd1672b327f655cb739b7a481367b9ecb5d76a8a304d995c2077c4b35e950d9a
+and probeea8459b04a3a101c25720786bd822be65981afc00f7bd48bfe99c0fb1af80136
+built and were installed in `/boot/home/pioneer-output-buffer-20261016`
+under the user's approved kernel-test scope. Full-Qwen-proven4ca653 is saved
+there as `tenstorrent_pci_probe.before-output-buffer-4ca`; no forced reload
+was used. Native CPU-only probe PASS:4096/16384bytes,33/33 address bits,
+2/4 pattern passes,0/0 mismatches, all4 mappings stable, both owners released
+and no quarantine. Resident compute/DMA capabilities remain520191, unchanged.
+
+Updated lifecycle CLI14fda8d216582c2e88accbae4868c2d31cbcf9c351c1b590232a8ea2b82549ad
+proves both new support/allocation requests are denied EBUSY while a session
+is active, including owner, foreign and inherited legacy handles. Existing
+creator-team denial, duplicate-FD retention and final-close cleanup still pass.
+The complete2048x1024 exact dual-reuse query regression also passes both
+changed vectors, every CPU FP32 bit, output-only cache hit, all format gates,
+both worker proofs and END2/PCI-host1/1/cold0. These are CPU-only allocator
+and unchanged-path regressions, not another full-model or speed result.
+Logs are `output-buffer-first.log`, `lifecycle-output-probe-first.log` and
+`reuse-query-regression-first.log` in the fresh output-buffer folder.
+Independent post-audit passes with PCI commands0/0, TLB/PCI restored1/1 and
+cold0. Installed/rollback hashes match, and Assistant remains team2705,
+ready/idle, three model loads and the unchanged TinyStories backend.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 

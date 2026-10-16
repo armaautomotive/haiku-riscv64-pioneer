@@ -15,6 +15,7 @@ static bool Profile(int fd,bool fp16,bool dma,bool int8,uint64_t& previous,bool&
 	bool valid=p.version==1 && p.available && p.clock_stable && p.sequence>previous
 		&& p.format==(int8?3U:fp16?2U:dma?1U:0U) && p.mask==(dma?0x1dfU:0x17fU)
 		&& p.state==TT_RUNTIME_PASSED && p.started && p.completed && p.stopped && !p.recovery_required;
+	closeOnly |= p.recovery_required || (p.started && (!p.completed || !p.stopped));
 	uint64_t last=0;
 	for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) if (p.mask&(1U<<slot)) {
 		valid &= p.microseconds[slot]>=last; last=p.microseconds[slot];
@@ -87,10 +88,16 @@ int main(int argc,char** argv)
 	if (integerProbe) printf("INTEGER BLOCK PROBE: first 32 raw Q8 integers per real row, zero padding, %s, exact dot gate. Scales are NOT applied; not a quantized inference backend.\n",int8?"integer-8 encoded operands":"exactly represented BF16 operands");
 	if (int8) puts("INTEGER ENGINE: forced integer-8 matrix arithmetic with int32 destination/readback; FP16 unpack is ONLY an operand bit overlay, not FP16 arithmetic.");
 	session={}; session.version=1; session.bytes=bytes;
-	if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session))==0 && session.active && session.state==TT_RESIDENT_SESSION_READY;
+	if (passed) {
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session));
+		closeOnly=status!=0; cold=session.cold!=0;
+		passed=!status && !cold && session.active && session.state==TT_RESIDENT_SESSION_READY;
+	}
 	for (unsigned offset=0;offset<bytes && passed;offset+=4096) {
 		tt_pioneer_resident_page page={}; page.version=1; page.offset=offset; memcpy(page.data,packed+offset/4,4096);
-		passed=ioctl(fd,TT_PCI_PROBE_PIONEER_STORE_UPLOAD,&page,sizeof(page))==0 && page.result.state==TT_STORE_PASSED && !page.result.recovery_required;
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_STORE_UPLOAD,&page,sizeof(page));
+		closeOnly=status!=0 || page.result.requests!=page.result.completed;
+		passed=!status && !closeOnly && page.result.state==TT_STORE_PASSED && !page.result.recovery_required;
 		cold=page.result.recovery_required!=0;
 	}
 	if (passed) printf("Weights uploaded once: %u pages; running two independent vectors\n",bytes/4096);
@@ -110,6 +117,7 @@ int main(int argc,char** argv)
 		int status=ioctl(fd,int8?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8:fp16?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16:dma?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC,request,sizeof(*request));
 		double elapsed=Seconds()-start;
 		const auto& r=request->result; cold=r.recovery_required!=0;
+		closeOnly=status!=0 || (r.started && (!r.completed || !r.stopped));
 		printf("Trial %u state %u start/complete/stop %u/%u/%u staged %u polls %u phase/tiles/marker %x/%u/%x PC %x/%x cold %u %.6fs\n",
 			trial,r.state,r.started,r.completed,r.stopped,r.staged_pages,r.polls,r.phase,r.tiles,r.marker,r.pc[0],r.pc[1],r.recovery_required,elapsed);
 		printf("  device weight reads response/flits/accepted/sent %u/%u/%u/%u\n",uint32_t(r.after[0]-r.before[0]),uint32_t(r.after[1]-r.before[1]),uint32_t(r.after[2]-r.before[2]),uint32_t(r.after[3]-r.before[3]));
@@ -159,7 +167,12 @@ int main(int argc,char** argv)
 		if (integerProbe) printf("  Exact integer-block mismatches %u of %u\n",integerMismatches,outputs);
 		passed=!integerMismatches && !mismatches && isfinite(cosine) && cosine>.9999 && relative<.01;
 		if (passed && int8) memcpy(pioReference,request->output,outputs*4);
-		if (passed) passed=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&session,sizeof(session))==0 && session.uploaded_pages==bytes/4096;
+		if (passed) {
+			int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_STATUS,&session,sizeof(session));
+			closeOnly=status!=0 || !session.active || session.state!=TT_RESIDENT_SESSION_READY;
+			cold=session.cold!=0;
+			passed=!closeOnly && !cold && session.uploaded_pages==bytes/4096;
+		}
 	}
 	if (passed && int8) {
 		uint32_t saved=request->input[0]; request->input[0]=0x40004080; // +128 is outside signed-byte input range
@@ -187,7 +200,7 @@ int main(int argc,char** argv)
 		}
 	}
 	if (cold) fprintf(stderr,"STOP: cold recovery required, no retry/reset/reload\n");
-	else if (closeOnly) fprintf(stderr,"STOP: metadata request failed; close-only, no further card commands or timing claim\n");
+	else if (closeOnly) fprintf(stderr,"STOP: request failed or completion uncertain; close-only, no further card commands or timing claim\n");
 	else if (session.active) {
 		if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_END,&session,sizeof(session))) passed=false;
 		printf("Close state %u PCI/host %u/%u cold %u\n",session.state,session.pci_restored,session.host_released,session.cold);
