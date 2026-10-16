@@ -9,6 +9,7 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ8CompactLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Unpack.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ8NativeF32Layout.h"
 
 static inline uint16_t PioneerResidentBf16(float value)
 {
@@ -36,11 +37,12 @@ template<class IO> class PioneerResidentTensorCache {
 	const bool fp16;
 	const bool compact;
 	const bool native;
+	const bool f32Scales;
 	unsigned mode=0; // one immutable packing/operation format per cache
 	std::vector<Entry> entries;
 public:
 	uint64_t uploadedPages=0,matvecCalls=0;
-	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false,bool rawBytes=false,bool hardwareUnpack=false):io(transport),capacity(bytes),fp16(half),compact(rawBytes),native(hardwareUnpack) { failed=native && (!compact || fp16); }
+	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false):io(transport),capacity(bytes),fp16(half),compact(rawBytes),native(hardwareUnpack),f32Scales(exactScales) { failed=(native && (!compact || fp16)) || (f32Scales && !native); }
 	bool Failed() const { return failed; }
 	size_t Tensors() const { return entries.size(); }
 	uint64_t Bytes() const { return next; }
@@ -132,11 +134,12 @@ public:
 					int q=data[2+i]; if (q>=128) q-=256;
 					uint8_t encoded=data[2+i];
 					if (native && !PioneerInt8UnpackEncode(q,encoded)) { failed=true; return false; }
-					uint64_t byte=compact?PioneerQ8CompactValueByte(inputs,block*32+i,r):PioneerMatvecWeightElement(inputs,block*32+i,r);
+					uint64_t byte=f32Scales?PioneerQ8NativeF32ValueByte(inputs,block*32+i,r):compact?PioneerQ8CompactValueByte(inputs,block*32+i,r):PioneerMatvecWeightElement(inputs,block*32+i,r);
 					packed[size_t(byte/4)]|=uint32_t(compact?uint16_t(encoded):PioneerInt8Operand(q))<<(8*(byte&3));
 				}
-				uint64_t byte=compact?PioneerQ8CompactScaleByte(inputs,block,r):uint64_t(block*2+1)*576+544+r*2;
-				packed[size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
+				uint64_t byte=f32Scales?PioneerQ8NativeF32ScaleByte(inputs,block,r):compact?PioneerQ8CompactScaleByte(inputs,block,r):uint64_t(block*2+1)*576+544+r*2;
+				if (f32Scales) packed[size_t(byte/4)]=PioneerQ8HalfToFloatBits(d);
+				else packed[size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
 			}
 			for (unsigned page=0;page<tileBytes;page+=4096) {
 				if (!io.Upload(next+uint64_t(row/rowStep)*tileBytes+page,packed.data()+page/4)) { failed=true; return false; }

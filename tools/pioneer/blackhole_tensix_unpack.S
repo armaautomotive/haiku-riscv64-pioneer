@@ -720,8 +720,13 @@ q8_broadcast_scale:
 	emit 0x70630004
 	emit 0x84046940 /* LReg4 = dW_even*dX + constant LReg9(+0) */
 	emit 0x84056950
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	j q8_exact_accumulate /* compensated product + round-to-odd, no host sums */
+q8_exact_return:
+.else
 	emit 0x84024000 /* accumulator_even = dot_even*scale_even + accumulator_even */
 	emit 0x84035110
+.endif
 	jal ra, drain
 	addi t0, s4, 1
 	bne t0, s8, q8_accumulate_return
@@ -781,6 +786,81 @@ q8_native_header:
 	sw zero, 8(t2)
 	sw zero, 12(t2)
 	j nonuniform_inputs
+.ifdef TT_RUNTIME_Q8_NATIVE_F32
+	.org 0xd80, 0
+	.global q8_exact_accumulate, q8_exact_sequence, q8_exact_end
+q8_exact_accumulate:
+	/* Spill both parities to private Dst8..19 before reusing all 8 LRegs.
+	 * Scales remain Dst0..7, integer matrix products Dst32..35. */
+	la a5, q8_exact_spill
+	la a6, q8_exact_sequence
+	la a7, q8_exact_spilled
+	j q8_exact_emit
+q8_exact_spilled:
+	jal ra, drain
+	li a4, 0
+q8_exact_parity:
+	li t0, 0x70230008 /* c, a, b from private accumulator/dot/scale copies */
+	or t0, t0, a4
+	sw t0, 0(s0)
+	li t0, 0x7003000c
+	or t0, t0, a4
+	sw t0, 0(s0)
+	li t0, 0x70130010
+	or t0, t0, a4
+	sw t0, 0(s0)
+	la a5, q8_exact_sequence
+	la a6, q8_exact_end
+	la a7, q8_exact_computed
+	j q8_exact_emit
+q8_exact_computed:
+	li t0, 0x72030008
+	or t0, t0, a4
+	sw t0, 0(s0)
+	jal ra, drain /* Dst store completes before either parity is reloaded */
+	addi a4, a4, 2
+	li t0, 4
+	bne a4, t0, q8_exact_parity
+	emit 0x70030008
+	emit 0x7013000a
+	j q8_exact_return
+q8_exact_emit:
+	lw t0, 0(a5)
+	sw t0, 0(s0)
+	addi a5, a5, 4
+	bne a5, a6, q8_exact_emit
+	jalr zero, 0(a7)
+	.org 0xea8, 0
+q8_exact_spill:
+	.word 0x72030008,0x7213000a,0x7223000c,0x7233000e,0x72430010,0x72530012
+q8_exact_sequence:
+	/* a0,b1,c2; exact 12-bit product decomposition, all products <=24 bits.
+	 * Every SFPMAD below is exact-product or multiply-by-one addition. */
+	.word 0x84001930 /* p3 = RN(a*b) */
+	.word 0x7170ffff,0x717af000 /* mask7 = fffff000 */
+	.word 0x7e000741,0x7e001751 /* ah4, bh5 */
+	.word 0x850a0462,0x850a1572 /* al6=a-ah, bl7=b-bh */
+	.word 0x84045302 /* e0 = ah*bh-p */
+	.word 0x84065000,0x84047000,0x84067000 /* e += al*bh, ah*bl, al*bl */
+	/* TwoSum(p,c) -> s1,t2; TwoSum(e,t) -> u3,low0. */
+	.word 0x850a3210,0x850a1342 /* s1=p3+c2; v4=s1-p3 */
+	.word 0x850a1452,0x850a3552 /* tmp5=s1-v4; tmp5=p3-tmp5 */
+	.word 0x850a2462,0x850a5620 /* tmp6=c2-v4; t2=tmp5+tmp6 */
+	.word 0x850a0230,0x850a3042 /* u3=e0+t2; w4=u3-e0 */
+	.word 0x850a3452,0x850a0552 /* tmp5=u3-w4; tmp5=e0-tmp5 */
+	.word 0x850a2462,0x850a5600 /* tmp6=t2-w4; low0=tmp5+tmp6 */
+	/* Round u3 to odd only if low!=0 and u3 even. Delta is +1 for
+	 * equal signs, -1 for opposite signs. Restore all lanes afterwards. */
+	.word 0x71220001,0x7e003261 /* mask2=1; lsb6=u3&1 */
+	.word 0x7d000051 /* abs(low0) ->5, including negative zero */
+	.word 0x7c000340,0x8d000040 /* xor4=u3^low0 */
+	.word 0x7afe1443,0x7a001441,0x79001445 /* delta4=(xor>>31)*2+1 */
+	.word 0x8a001002,0x7b000502,0x7b000606 /* enable; low!=0 AND lsb==0 */
+	.word 0x79000434 /* u3 += delta4, flags unchanged */
+	.word 0x8a000002 /* disable conditional execution, all lanes restored */
+	.word 0x850a1300 /* result0 = RN(s1+odd(u3)) */
+q8_exact_end:
+.endif
 .else
 	.global q8_compact_expand, q8_compact_lookup
 q8_compact_expand:

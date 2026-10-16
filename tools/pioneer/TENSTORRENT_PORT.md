@@ -163,15 +163,26 @@ The original working7d09 driver is preserved in
 Support12287 was observed before submitting the corrected native trial.
 No forced module unload, cold-gate bypass, firmware or boot change was used.
 
-###### Exact FP32 weight-scale hot-loop candidate (offline qualified only)
+###### Exact FP32 scale / compensated SFPU candidate (offline qualified only)
 
 A distinct `TT_RUNTIME_Q8_NATIVE_F32` candidate expands each original finite
 FP16 weight scale to exact FP32 bits once at packing time. Its 576-byte tile
 is64 scale bytes plus512 signed native quant bytes, with no padding. The
 on-card reader copies those sixteen scale words instead of repeating sixteen
-integer half-to-float conversions for every 32-K output block. Arithmetic,
-activation quantization/scales, weight values and total footprint do not change.
+integer half-to-float conversions for every 32-K output block. Activation
+quantization/scales, weight values and total footprint do not change.
 This is **not** the earlier FP32 K/V-cache experiment.
+
+The candidate now also replaces partially fused dot/scale accumulation with
+a fixed SFPU sequence: 12-bit product decomposition, two error-free sums
+and round-to-odd before final FP32 rounding. All learned integer products,
+scales and accumulation remain on the card, without host correction or
+reference substitution. Both parities spill only to private Dst8..19; scale
+rows0..7 and integer matrix output32..35 are disjoint. The trusted instruction
+table70ea8..70f53 is read-only data, not executed by the RISC. The helper is
+70d80..70e3f. Everything fits the original saved4KiB code/data page; common
+completion/park and exact NoC counters are unchanged. Conditional execution
+is explicitly disabled again before either parity finishes.
 
 The separate immutable mode has ioctl54c5, capability16384, profile7; candidate
 support28671 retains the qualified native8192 bit and all original modes.
@@ -181,8 +192,14 @@ The pack layout is tested for complete, non-overlapping byte coverage. All
 65,536 half patterns are checked independently (nonfinite values still must
 be refused by packers), including signed zero/subnormals. All K/N4096 shapes,
 two vectors, corruption/omission and bounded NoC failure parks pass ASan/UBSan.
-The independent RISC model executes68,457 steps versus91,113 for native-FP16
-scales on the same small case: this is not hardware timing or a speedup claim.
+The original scale-copy-only candidate used68,457 modeled RISC steps; it is
+superseded before deployment. With compensated SFPU the same small case uses
+96,617 versus91,113 for native-FP16 scales. This is not hardware timing or a
+speedup claim. The actual assembled table passes262,144 independent randomized
+finite-Q8 lanes, including severe cancellation. All supported K / N4096
+outputs match independent IEEE FP32 FMA bits. A separate formula test passes
+millions of finite-Q8 random/cancellation cases. These are offline proofs,
+not hardware or universal IEEE FMA claims.
 Both native scale formats pass all65 dropped-control-write policy cases,
 immutable-format refusal and timeout/bad-PC/flits/stop/source quarantine tests.
 Legacy assembled-image regressions, Jam and all31 utilities build.
@@ -447,11 +464,29 @@ CPU-clone control failed; no conclusion about post-RoPE rounding was accepted.
 The position input had to be snapshotted during the original callback rather
 than reread after the whole CPU graph reused its scratch buffers. After that
 fix, `--probe-cpu-rope-reference` passes bit-identically on Haiku, using only
-explicit CPU registration (no P100A backend/open/ioctl). The updated native
-post-RoPE replay has not yet run; do not confuse the CPU-only self-check with
-a hardware post-RoPE result. These diagnostics do not accept generated tokens.
+explicit CPU registration (no P100A backend/open/ioctl). The corrected native
+Q13 replay, binary7f1ee15e..., passes that bit-identical control. Its actual
+projection differs in407/2048 FP32 values at L2 `2.62849577e-8`, with no raw
+projection half changes. After private CPU norm/RoPE, exactly one half boundary
+changes: Qcur13 index1059, `-0.0724792629/aca4` versus CPU `-0.072479181/aca3`.
+END2/PCI-host1/1/cold0 and post-audit pass; Assistant remains idle/unchanged.
 
-The **existing** `--verify-native-q8` contract is now being tested separately
+The explicit `--probe-native-q8-rounding` diagnostic, binary
+`0ac83f85f18f816a7d1648b82d73aed5770853066df29664b0fbd6f80b661120`,
+compares a finite-Q8 specialization of Tenstorrent's Apache-2.0
+[bit-perfect FMA model](https://github.com/tenstorrent/tt-isa-documentation/blob/main/Miscellaneous/FMA/fma.c).
+It predicts **all2048 actual card FP32 bits exactly**, including407 CPU
+differences and the same post-RoPE half crossing. Independent IEEE simulation
+matches all2048 CPU bits. A CPU-only compensated/round-odd SFPU candidate also
+matches every CPU bit and removes that crossing. Partial accumulation is thus
+established for this captured projection, not merely assumed from its ISA.
+This does not establish a full-model fix. END2 and post-audit pass. Public
+log: `focused-native-q13-rounding-first.log` in the native test folder.
+`--probe-cpu-q8-rounding` explicitly registers only CPU and never opens P100A;
+simulated vectors never enter the real model graph/output. These diagnostics
+do not accept generated tokens.
+
+The **existing** `--verify-native-q8` contract was tested separately
 with the already qualified native-FP16-scale driver and binary2413f6...,
 log `full-qwen-native-verify-first.log` in the native test folder. CPU32
 reference is created before P100A registration. Unlike diagnostic mode,
@@ -460,9 +495,23 @@ every prompt/generated position and requires four CPU-identical greedy reply
 tokens, rather than adding the per-layer diagnostic comparisons. Those
 thresholds and no-fallback rules are unchanged. The prior diagnostic failure
 is not reclassified as passed. This tests whether its intermediate drift
-actually violates final-output quality; it is not a speed benchmark. This
-process alone owns the card until a known terminal result. Only public log
-reads, explicit CPU-only diagnostics and offline work may overlap it.
+actually violates final-output quality; it is not a speed benchmark. The run
+failed at position5: cosine `.999685102` passed, but all-vocabulary relative
+L2 `.025594734` exceeded the unchanged `.02` limit. Argmax still matched897/897;
+zero reply tokens were accepted. It made1404 matvecs and retained197 tensors/
+670,482,432bytes/163,692 pages. Total1169.759s, preparation873.078168s and
+matvec/staging47.568583s. END2/PCI-host1/1/cold0, post-audit and unchanged idle
+Assistant all pass. Final-output quality is affected; that failure is not waived.
+
+Explicit host1 modes keep the independent CPU reference at32 threads and
+change only the card context's host glue to1. Both thread counts are checked
+and reported. Warm benchmark JSON records the card host count and preserves
+the CPU32/batch128 baseline and existing gates. This targets the large host
+thread overhead in verify32, not the rounding failure. Exact-scale backend/
+cache wiring is a distinct immutable mode; missing capability, invalid
+combinations, -128 weights and nonfinite scales fail without fallback. Its
+focused replay additionally requires **every FP32 output bit** to match the
+independent CPU. Native qualification of the compensated kernel is pending.
 No accepted Qwen reply tokens or CPU speedup have yet been established.
 The runtime still uses one core and bank0 / 2GiB. Compact mixed quantization,
 wider models, multicore/bulk dispatch and matched repeated benchmarks remain

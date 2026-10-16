@@ -27,6 +27,7 @@ void PioneerGgmlFp16Operands(bool enabled);
 void PioneerGgmlQ8Operands(bool enabled);
 void PioneerGgmlQ8Compact(bool enabled);
 void PioneerGgmlQ8Native(bool enabled);
+void PioneerGgmlQ8Exact(bool enabled);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);
@@ -34,7 +35,8 @@ void PioneerGgmlBeginPosition(unsigned position);
 bool PioneerGgmlCompareTap(ggml_tensor* tensor,bool ask,void*);
 // CPU model/context and its immutable weights must remain alive. Replays
 // only one captured public-test projection, never a generated conversation.
-bool PioneerGgmlReplayReference(const char* tensorName);
+bool PioneerGgmlReplayReference(const char* tensorName,bool roundingModel=false);
 // CPU-only diagnostic control; never opens or computes on P100A.
 bool PioneerGgmlReplayCpuRope(const char* tensorName);
+bool PioneerGgmlReplayRoundingReference(const char* tensorName);
 #endif

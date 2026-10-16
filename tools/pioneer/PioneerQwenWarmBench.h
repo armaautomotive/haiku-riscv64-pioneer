@@ -5,12 +5,14 @@
 #include <vector>
 // Standalone public-prompt benchmark only, never Assistant state. The CPU
 // context MUST have been created before registering P100A, with batch 128;
-// P100A uses batch 1. Both use 32 threads and identical quantized weights.
+// P100A uses batch 1 and an explicitly reported host-thread count. The CPU
+// reference keeps 32 threads and identical quantized weights.
 // Weight upload is already warm and must not recur in any measured request.
 // Timings sum synchronous decode+greedy-sampling CPU wall time; logit checks,
 // tokenization, KV reset, logging, model load and cold weight upload excluded.
-static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama_context* card,uint64_t expectedTensors)
+static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama_context* card,uint64_t expectedTensors,unsigned cardThreads=32)
 {
+	if (cardThreads!=1 && cardThreads!=32) return false;
 	const llama_vocab* vocab=llama_model_get_vocab(model); int vocabulary=llama_vocab_n_tokens(vocab);
 	const char* questions[]={
 		"Explain why the sky looks blue in a detailed paragraph of at least one hundred words.",
@@ -20,7 +22,7 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 	PioneerGgmlStats warm={};
 	if (!PioneerGgmlSnapshot(warm) || warm.failed || warm.tensors!=expectedTensors || !warm.bytes || !warm.matvecs || warm.uploads!=warm.bytes/4096) return false;
 	bool allFaster=true;
-	puts("WARM BENCH: three public requests, up to 16 greedy output tokens each; CPU32 batch128 vs P100A/CPU32 batch1. Cold load/upload, KV reset, tokenization and diagnostics excluded; not device-only throughput.");
+	printf("WARM BENCH: three public requests, up to 16 greedy output tokens each; CPU32 batch128 vs P100A/CPU%u batch1. Cold load/upload, KV reset, tokenization and diagnostics excluded; not device-only throughput.\n",cardThreads);
 	for (unsigned repeat=0;repeat<3;repeat++) {
 		std::string prompt=std::string("<|im_start|>user\n")+questions[repeat]+"<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		std::vector<llama_token> input(128),golden;
@@ -72,8 +74,8 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 			|| after.bytes!=warm.bytes || after.matvecs<=warm.matvecs || !isfinite(cardPrompt) || !isfinite(cardGeneration) || cardPrompt<=0 || cardGeneration<=0) return false;
 		double cpuTotal=cpuPrompt+cpuGeneration,cardTotal=cardPrompt+cardGeneration;
 		bool faster=cardTotal<cpuTotal*.95 && cardGeneration<cpuGeneration*.95; allFaster &= faster;
-		printf("{\"warm_request\":%u,\"cpu_threads\":32,\"cpu_prompt_batch\":128,\"card_prompt_batch\":1,\"prompt_tokens\":%d,\"output_tokens\":%zu,\"generation_samples\":%zu,\"cpu_ttft_s\":%.9f,\"p100a_ttft_s\":%.9f,\"cpu_generation_s\":%.9f,\"p100a_generation_s\":%.9f,\"cpu_total_s\":%.9f,\"p100a_total_s\":%.9f,\"cpu_tps\":%.9f,\"p100a_tps\":%.9f,\"total_speedup\":%.9f,\"generation_speedup\":%.9f,\"quality_passed\":true,\"no_weight_reupload\":true,\"faster_by_5_percent\":%s}\n",
-			repeat,n,golden.size(),golden.size()-1,cpuPrompt,cardPrompt,cpuGeneration,cardGeneration,cpuTotal,cardTotal,
+		printf("{\"warm_request\":%u,\"cpu_threads\":32,\"card_host_threads\":%u,\"cpu_prompt_batch\":128,\"card_prompt_batch\":1,\"prompt_tokens\":%d,\"output_tokens\":%zu,\"generation_samples\":%zu,\"cpu_ttft_s\":%.9f,\"p100a_ttft_s\":%.9f,\"cpu_generation_s\":%.9f,\"p100a_generation_s\":%.9f,\"cpu_total_s\":%.9f,\"p100a_total_s\":%.9f,\"cpu_tps\":%.9f,\"p100a_tps\":%.9f,\"total_speedup\":%.9f,\"generation_speedup\":%.9f,\"quality_passed\":true,\"no_weight_reupload\":true,\"faster_by_5_percent\":%s}\n",
+			repeat,cardThreads,n,golden.size(),golden.size()-1,cpuPrompt,cardPrompt,cpuGeneration,cardGeneration,cpuTotal,cardTotal,
 			double(golden.size()-1)/cpuGeneration,double(golden.size()-1)/cardGeneration,cpuTotal/cardTotal,cpuGeneration/cardGeneration,faster?"true":"false");
 	}
 	printf("WARM SPEEDUP %s: all three requests must improve both generation and total decode+sampling latency by at least 5%%; not an Assistant/27B qualification\n",allFaster?"PASS":"FAIL");

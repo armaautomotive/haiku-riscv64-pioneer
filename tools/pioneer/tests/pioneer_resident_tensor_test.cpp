@@ -11,6 +11,7 @@ struct TensorIO {
 	bool fp16=false;
 	bool compact=false;
 	bool native=false;
+	bool exact=false;
 	TensorIO():storage(16*1024*1024/4,0xfeedface) {}
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		assert(!(offset%4096) && offset/4+1024<=storage.size());
@@ -42,15 +43,16 @@ struct TensorIO {
 			for (unsigned block=0;block<inputs/32;block++) {
 				int dot=0;
 				for (unsigned i=0;i<32;i++) {
-					unsigned k=block*32+i; uint64_t p=offset+(compact?((uint64_t(row/16)*(inputs/32)+block)*576+32+(k%32)*16+row%16):((uint64_t(row/16)*(inputs/16)+k/16)*576+16+(k%16)*32+(row%16)*2));
+					unsigned k=block*32+i; uint64_t p=offset+(compact?((uint64_t(row/16)*(inputs/32)+block)*576+(exact?64:32)+(k%32)*16+row%16):((uint64_t(row/16)*(inputs/16)+k/16)*576+16+(k%16)*32+(row%16)*2));
 					uint16_t a=uint16_t(storage[size_t(p/4)]>>(8*(p&3))),b=uint16_t(x[k/2]>>(16*(k&1)));
 					if (compact) { int q=native?int(a&127)*((a&128)?-1:1):int(a&255); if (!native && q>=128) q-=256; a=PioneerInt8Operand(q); }
 					assert(PioneerInt8OperandValid(a) && PioneerInt8OperandValid(b));
 					dot+=int(a&1023)*((a&0x8000)?-1:1)*int(b&1023)*((b&0x8000)?-1:1);
 				}
-				uint64_t p=offset+(compact?((uint64_t(row/16)*(inputs/32)+block)*576+(row%16)*2):((uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2));
+				uint64_t p=offset+(compact?((uint64_t(row/16)*(inputs/32)+block)*576+(row%16)*(exact?4:2)):((uint64_t(row/16)*(inputs/16)+block*2+1)*576+544+(row%16)*2));
 				float dw=PioneerHalfFloat(uint16_t(storage[size_t(p/4)]>>(8*(p&3))));
-				sum+=float(dot)*(dw*Float(scales[block]));
+				if (exact) { dw=Float(storage[size_t(p/4)]); sum=fmaf(float(dot),dw*Float(scales[block]),sum); }
+				else sum+=float(dot)*(dw*Float(scales[block]));
 			}
 			if (nonfinite) sum=INFINITY;
 			memcpy(y+row,&sum,4);
@@ -63,12 +65,13 @@ static void QBlock(unsigned r,unsigned b,uint8_t* out,bool native=false) {
 	uint16_t h=QScale(r,b); out[0]=uint8_t(h); out[1]=uint8_t(h>>8);
 	for (unsigned i=0;i<32;i++) out[2+i]=native?uint8_t(int((r*37+b*13+i*17)%255)-127):uint8_t(r*37+b*13+i*17);
 }
-static float QReference(unsigned row,unsigned inputs,const uint8_t* x,bool native=false) {
+static float QReference(unsigned row,unsigned inputs,const uint8_t* x,bool native=false,bool exact=false) {
 	float sum=0;
 	for (unsigned b=0;b<inputs/32;b++) {
 		uint8_t w[34]; QBlock(row,b,w,native); const uint8_t* v=x+b*34; int dot=0;
 		for (unsigned i=0;i<32;i++) { int a=w[2+i],q=v[2+i]; if (a>=128) a-=256; if (q>=128) q-=256; dot+=a*q; }
-		float dw=PioneerHalfFloat(QScale(row,b)),dx=PioneerHalfFloat(uint16_t(v[0])|(uint16_t(v[1])<<8)); sum+=float(dot)*(dw*dx);
+		float dw=PioneerHalfFloat(QScale(row,b)),dx=PioneerHalfFloat(uint16_t(v[0])|(uint16_t(v[1])<<8));
+		if (exact) sum=fmaf(float(dot),dw*dx,sum); else sum+=float(dot)*(dw*dx);
 	}
 	return sum;
 }
@@ -136,9 +139,9 @@ int main() {
 		assert(!c.Weights(&first,8,1024,32,[](unsigned,float* data) { for (unsigned k=0;k<1024;k++) data[k]=100000; return true; },offset));
 		assert(c.Failed() && !half.calls && !half.uploads);
 	}
-	for (unsigned format=0;format<3;format++) for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) {
-		bool compact=format!=0,native=format==2;
-		TensorIO quant; quant.compact=compact; quant.native=native; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024,false,compact,native);
+	for (unsigned format=0;format<4;format++) for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) {
+		bool compact=format!=0,native=format>=2,exact=format==3;
+		TensorIO quant; quant.compact=compact; quant.native=native; quant.exact=exact; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024,false,compact,native,exact);
 		unsigned rows=k==1024?(compact?4128:4112):32;
 		assert(c.Q8Weights(&first,8,k,rows,[&](unsigned r,unsigned b,uint8_t* out) { QBlock(r,b,out,native); return true; },offset));
 		unsigned uploads=quant.uploads;
@@ -148,7 +151,7 @@ int main() {
 		for (unsigned t=0;t<2;t++) {
 			for (unsigned b=0;b<k/32;b++) QBlock(t+3,b,x.data()+b*34);
 			assert(c.Q8Multiply(offset,k,rows,x.data(),y.data()));
-			for (unsigned row=0;row<rows;row++) assert(y[row]==QReference(row,k,x.data(),native));
+			for (unsigned row=0;row<rows;row++) assert(y[row]==QReference(row,k,x.data(),native,exact));
 		}
 		assert(c.uploadedPages==c.Bytes()/4096 && c.matvecCalls==(rows>4096?4:2) && quant.uploads==uploads);
 		unsigned calls=quant.calls; x[0]=0; x[1]=0x7c;
@@ -160,6 +163,13 @@ int main() {
 		assert(!c.Q8Weights(&first,8,1024,32,[&](unsigned r,unsigned b,uint8_t* out) { QBlock(r,b,out,true); out[2]=128; return true; },offset));
 		assert(c.Failed() && !quant.uploads && !quant.calls);
 		assert(!c.Q8Multiply(0,1024,32,NULL,output) && !quant.calls);
+	}
+	for (unsigned fault=0;fault<3;fault++) {
+		TensorIO quant; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024,false,true,fault!=0,true);
+		assert(!c.Q8Weights(&first,8,1024,32,[&](unsigned r,unsigned b,uint8_t* out) {
+			QBlock(r,b,out,true); if (fault==1) out[2]=128; if (fault==2) { out[0]=0; out[1]=0x7c; } return true;
+		},offset));
+		assert(c.Failed() && !quant.uploads && !quant.calls);
 	}
 	for (bool compact:{false,true}) for (unsigned fault=0;fault<6;fault++) {
 		TensorIO quant; quant.compact=compact; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024,false,compact);

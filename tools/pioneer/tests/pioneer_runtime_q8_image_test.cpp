@@ -3,7 +3,7 @@
 #include "pioneer_runtime_matvec_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8MatvecImage.h"
 struct Q8Machine:RuntimeMachine {
-	uint32_t lanes[10][32]={};
+	uint32_t lanes[11][32]={};
 	unsigned casts=0,mads=0,scales=0;
 	bool omitCast=false,omitScale=false,omitAccumulate=false;
 	unsigned trial;

@@ -7,6 +7,7 @@
 #endif
 #include "ggml-backend-impl.h"
 #include "TenstorrentGgufQuant.h"
+#include "PioneerBlackholeFma.h"
 #include <new>
 #include <errno.h>
 #include <fcntl.h>
@@ -26,8 +27,9 @@ struct PioneerGgmlContext {
 	const bool q8;
 	const bool compact;
 	const bool native;
+	const bool exact;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack):cache(device,Arena,half,rawBytes,hardwareUnpack),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -38,6 +40,7 @@ static bool sFp16=false;
 static bool sQ8=false;
 static bool sCompact=false;
 static bool sNative=false;
+static bool sExact=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -190,7 +193,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
@@ -235,8 +238,8 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	return GGML_STATUS_SUCCESS;
 }
 static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
-	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact)) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact); if (!ctx) return NULL;
 	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
 	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
@@ -280,6 +283,7 @@ void PioneerGgmlFp16Operands(bool enabled) { if (!sActive) sFp16=enabled; }
 void PioneerGgmlQ8Operands(bool enabled) { if (!sActive) sQ8=enabled; }
 void PioneerGgmlQ8Compact(bool enabled) { if (!sActive) sCompact=enabled; }
 void PioneerGgmlQ8Native(bool enabled) { if (!sActive) sNative=enabled; }
+void PioneerGgmlQ8Exact(bool enabled) { if (!sActive) sExact=enabled; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
@@ -307,7 +311,7 @@ bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {
 	return true;
 }
 size_t PioneerGgmlReferenceCount() { return sReference.size(); }
-static bool ReplayPostRope(const char* tensorName,const float* actual,size_t elements,bool fromCard=true) {
+static bool ReplayPostRope(const char* tensorName,const float* actual,size_t elements,const char* source="actual card projection") {
 	unsigned layer=0; char which=0;
 	if (sscanf(tensorName,"blk.%u.attn_%c.weight",&layer,&which)!=2 || (which!='k' && which!='q')) return true;
 	// This observer copies public test data into a private CPU graph. It
@@ -360,13 +364,13 @@ static bool ReplayPostRope(const char* tensorName,const float* actual,size_t ele
 		unsigned halfChanged=0,changed=0; double error2=0,norm2=0;
 		for (size_t i=0;i<elements;i++) {
 			float a=((float*)result->data)[i],r=(*reference)[i]; uint16_t ah=ggml_fp32_to_fp16(a),rh=ggml_fp32_to_fp16(r);
-			if (ah!=rh && halfChanged<4) fprintf(stderr,"POST-ROPE HALF %s index%zu card-derived %.9g/%04x reference %.9g/%04x\n",name.c_str(),i,a,unsigned(ah),r,unsigned(rh));
+			if (ah!=rh && halfChanged<4) fprintf(stderr,"POST-ROPE HALF %s index%zu source[%s] %.9g/%04x reference %.9g/%04x\n",name.c_str(),i,source,a,unsigned(ah),r,unsigned(rh));
 			halfChanged+=ah!=rh; changed+=memcmp(&a,&r,4)!=0;
 			double difference=double(a)-r; error2+=difference*difference; norm2+=double(r)*r;
 			passed &= isfinite(a) && isfinite(r);
 		}
 		double relative=sqrt(error2/(norm2+1e-30)); passed &= isfinite(relative) && relative<.02;
-		fprintf(stderr,"POST-ROPE REPLAY %s %s + private CPU norm/RoPE, changed %u/%zu half changes %u L2 %.9g; observer only, not complete attention/inference\n",name.c_str(),fromCard?"actual card projection":"CPU-only control projection",changed,elements,halfChanged,relative);
+		fprintf(stderr,"POST-ROPE REPLAY %s %s + private CPU norm/RoPE, changed %u/%zu half changes %u L2 %.9g; observer only, not complete attention/inference\n",name.c_str(),source,changed,elements,halfChanged,relative);
 	}
 	if (cpu) ggml_backend_free(cpu);
 	ggml_free(ctx); return passed;
@@ -375,9 +379,49 @@ bool PioneerGgmlReplayCpuRope(const char* tensorName) {
 	unsigned layer=0; char which=0;
 	if (sscanf(tensorName,"blk.%u.attn_%c.weight",&layer,&which)!=2 || (which!='k' && which!='q')) return false;
 	auto projection=sReference.find(tensorName);
-	return !sActive && projection!=sReference.end() && ReplayPostRope(tensorName,projection->second.output.data(),projection->second.output.size(),false);
+	return !sActive && projection!=sReference.end() && ReplayPostRope(tensorName,projection->second.output.data(),projection->second.output.size(),"CPU-only control projection");
 }
-bool PioneerGgmlReplayReference(const char* tensorName) {
+// Offline prediction from public diagnostic data only. Never returns a
+// simulated vector to a real model graph, cache or device output buffer.
+static bool RoundingReference(const char* name,const float* card) {
+	auto found=sReference.find(name);
+	if (found==sReference.end() || !found->second.weights) return false;
+	const auto& ref=found->second; auto* w=ref.weights;
+	unsigned k=unsigned(w->ne[0]),n=unsigned(w->ne[1]);
+	if (w->type!=GGML_TYPE_Q8_0 || k%32 || ref.input.size()!=k || ref.output.size()!=n) return false;
+	std::vector<uint8_t> input(k/32*34);
+	ggml_get_type_traits(GGML_TYPE_Q8_0)->from_float_ref(ref.input.data(),input.data(),k);
+	std::vector<float> ieee(n),partial(n),accurate(n); unsigned ieeeDiff=0,partialDiff=0,cardDiff=0,accurateDiff=0;
+	for (unsigned r=0;r<n;r++) {
+		float a=0,b=0,c=0;
+		for (unsigned block=0;block<k/32;block++) {
+			const auto* wb=(const uint8_t*)w->data+r*w->nb[1]+block*34; const auto* xb=input.data()+block*34;
+			int dot=0;
+			for (unsigned i=2;i<34;i++) { int x=wb[i],y=xb[i]; if (x>=128) x-=256; if (y>=128) y-=256; dot+=x*y; }
+			float dw=PioneerHalfFloat(uint16_t(wb[0])|(uint16_t(wb[1])<<8)),dx=PioneerHalfFloat(uint16_t(xb[0])|(uint16_t(xb[1])<<8));
+			float scale=dw*dx;
+			a=fmaf(float(dot),scale,a); b=PioneerBlackholeFma(float(dot),scale,b);
+			c=PioneerBlackholeAccurateFma(float(dot),scale,c);
+		}
+		ieee[r]=a; partial[r]=b; accurate[r]=c;
+		ieeeDiff+=PioneerFmaBits(a)!=PioneerFmaBits(ref.output[r]);
+		partialDiff+=PioneerFmaBits(b)!=PioneerFmaBits(ref.output[r]);
+		accurateDiff+=PioneerFmaBits(c)!=PioneerFmaBits(ref.output[r]);
+		if (card && PioneerFmaBits(b)!=PioneerFmaBits(card[r])) {
+			if (cardDiff<4) fprintf(stderr,"ROUNDING MODEL card mismatch row%u model %08x actual %08x\n",r,PioneerFmaBits(b),PioneerFmaBits(card[r]));
+			cardDiff++;
+		}
+		if (!isfinite(a) || !isfinite(b) || !isfinite(c)) return false;
+	}
+	fprintf(stderr,"ROUNDING MODEL %s IEEE vs CPU %u/%u, partial-SFPU vs CPU %u/%u, partial-SFPU vs actual card %s %u; OFFLINE predictions, no replacement/fallback\n",name,ieeeDiff,n,partialDiff,n,card?"mismatches":"NOT MEASURED",cardDiff);
+	fprintf(stderr,"ROUNDING CANDIDATE split-product/round-odd partial-SFPU sequence vs CPU mismatches %u/%u; CPU-only prediction, NO device kernel qualification\n",accurateDiff,n);
+	return !ieeeDiff && !accurateDiff && (!card || !cardDiff)
+		&& ReplayPostRope(name,ieee.data(),n,"CPU-only IEEE simulated projection")
+		&& ReplayPostRope(name,partial.data(),n,"CPU-only partial-SFPU simulated projection")
+		&& ReplayPostRope(name,accurate.data(),n,"CPU-only accurate-SFPU candidate simulated projection");
+}
+bool PioneerGgmlReplayRoundingReference(const char* name) { return !sActive && RoundingReference(name,NULL); }
+bool PioneerGgmlReplayReference(const char* tensorName,bool roundingModel) {
 	auto found=sReference.find(tensorName);
 	if (sActive || found==sReference.end() || !found->second.weights) return false;
 	const auto& reference=found->second; const ggml_tensor* source=reference.weights;
@@ -410,7 +454,9 @@ bool PioneerGgmlReplayReference(const char* tensorName) {
 		double relative=sqrt(error2/(norm2+1e-30)); passed &= isfinite(relative) && relative<.02;
 		fprintf(stderr,"FOCUSED REPLAY %s [%lld,%lld] original CPU input, changed FP32 %u/%zu max ULP %u half-rounding changes %u full-output L2 %.9g; numerical gates unchanged; NOT full inference/timing\n",
 			tensorName,(long long)source->ne[0],(long long)source->ne[1],changed,reference.output.size(),maxUlp,halfChanged,relative);
+		if (sExact) { passed &= changed==0; fprintf(stderr,"EXACT SFPU focused gate: all output FP32 bits must match independent CPU; %s\n",changed?"FAIL":"PASS"); }
 		if (passed) passed=ReplayPostRope(tensorName,(const float*)result->data,reference.output.size());
+		if (passed && roundingModel) passed=RoundingReference(tensorName,(const float*)result->data);
 	}
 	bool clean=PioneerGgmlFinish(); passed &= clean;
 	if (backend) ggml_backend_free(backend);

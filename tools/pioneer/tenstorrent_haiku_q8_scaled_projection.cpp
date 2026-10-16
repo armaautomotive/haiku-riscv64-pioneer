@@ -64,7 +64,7 @@ int main(int argc,char** argv)
 	printf("Real Qwen Q8_0 tensor [%u,%llu], %u rows, %u bytes retained; all %u blocks/row, integer dots + device scales + SFPU accumulation\n",
 		inputs,(unsigned long long)tensor.outputs,outputs,bytes,blocks);
 	printf("Weight format %s; NoC reads per matvec %u (math tiles %u)\n",native?"native sign-magnitude bytes, 1.125 bytes/parameter":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlay, 2.25 bytes/parameter",(inputs/16)*(outputs/16)/(compact?2:1),(inputs/16)*(outputs/16));
-	if (f32Scales) puts("Distinct exact FP32 weight scales; same original half values and footprint, no hot-loop half conversion; NOT cache precision");
+	if (f32Scales) puts("Distinct exact FP32 weight scales + compensated SFPU/round-to-odd accumulation; same original half values/footprint; NOT cache precision or full Qwen qualification");
 	session={}; session.version=1; session.bytes=bytes;
 	if (passed) {
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session));

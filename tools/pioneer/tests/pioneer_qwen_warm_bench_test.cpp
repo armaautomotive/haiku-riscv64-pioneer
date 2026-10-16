@@ -42,10 +42,15 @@ static void Reset() { now=1; state={}; wrong=badLogits=reupload=earlyEos=longPro
 int main() {
 	puts("OFFLINE CONTROLLER FAKE: every timing/rate below is SYNTHETIC, NOT P100A/model performance");
 	llama_model model;
-	{
+	for (unsigned hostThreads:{1U,32U}) {
 		Reset(); llama_context cpu={true,.3},card={false,.1};
-		assert(PioneerQwenWarmBenchmark(&model,&cpu,&card,197));
+		assert(PioneerQwenWarmBenchmark(&model,&cpu,&card,197,hostThreads));
 		assert(cpu.clears==3 && card.clears==3 && cpu.calls==48 && card.calls==54 && state.uploads==1);
+	}
+	for (unsigned invalidThreads:{0U,2U,64U}) {
+		Reset(); llama_context cpu={true,.3},card={false,.1};
+		assert(!PioneerQwenWarmBenchmark(&model,&cpu,&card,197,invalidThreads));
+		assert(!cpu.calls && !card.calls && !cpu.clears && !card.clears);
 	}
 	{
 		Reset(); llama_context cpu={true,.3},card={false,.5};

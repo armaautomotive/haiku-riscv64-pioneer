@@ -279,6 +279,7 @@ struct Machine {
 			int32_t imm = Sign(instruction>>20,12);
 			uint32_t result = 0; bool write = false;
 			if (op == 0x37) { result = instruction & 0xfffff000; write = true; }
+			else if (op == 0x17) { result = pc+(instruction&0xfffff000); write = true; }
 			else if (op == 0x13) {
 				if (f3 == 0) result = regs[rs1] + imm;
 				else if (f3 == 7) result = regs[rs1] & imm;

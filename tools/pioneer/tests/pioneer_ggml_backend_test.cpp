@@ -85,16 +85,18 @@ int main() {
 	}
 	assert(PioneerGgmlSnapshot(stats) && stats.tensors==1 && stats.uploads==18 && stats.matvecs==1);
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlFp16Operands(false);
-	for (unsigned format=0;format<3;format++) {
-	bool compact=format!=0,native=format==2;
+	for (unsigned format=0;format<4;format++) {
+	bool compact=format!=0,native=format>=2,exact=format==3;
 	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(compact); PioneerGgmlQ8Native(native);
+	PioneerGgmlQ8Exact(exact);
 	backend=ggml_backend_dev_init(dev,NULL); assert(backend); PioneerGgmlQ8Operands(false); // immutable while live
 	PioneerGgmlQ8Compact(!compact); // also immutable while live
 	PioneerGgmlQ8Native(!native);
+	PioneerGgmlQ8Exact(!exact);
 	for (unsigned trial=0;trial<2;trial++) {
 		for (unsigned k=0;k<1024;k++) ((float*)input->data)[k]=float(int((k*17+trial*29)%257)-128)/257;
 		traits->from_float_ref((const float*)input->data,qx.data(),1024);
-		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS && io.q8 && !io.fp16 && io.compact==compact && io.native==native);
+		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS && io.q8 && !io.fp16 && io.compact==compact && io.native==native && io.exact==exact);
 		for (unsigned row=0;row<32;row++) {
 			float reference=0;
 			for (unsigned block=0;block<32;block++) {
@@ -102,14 +104,14 @@ int main() {
 				const uint8_t* x=qx.data()+block*34; int dot=0;
 				for (unsigned i=0;i<32;i++) { int a=w[2+i],b=x[2+i]; if (a>=128) a-=256; if (b>=128) b-=256; dot+=a*b; }
 				float dw=PioneerHalfFloat(uint16_t(w[0])|(uint16_t(w[1])<<8)),dx=PioneerHalfFloat(uint16_t(x[0])|(uint16_t(x[1])<<8));
-				reference+=float(dot)*(dw*dx);
+				if (exact) reference=fmaf(float(dot),dw*dx,reference); else reference+=float(dot)*(dw*dx);
 			}
 			assert(((float*)result->data)[row]==reference);
 		}
 	}
 	assert(PioneerGgmlSnapshot(stats) && !stats.failed && stats.tensors==1 && stats.uploads==(compact?9U:18U) && stats.matvecs==2 && io.calls==2);
 	io.badMath=true; assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED);
-	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Native(false);
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend); PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Native(false); PioneerGgmlQ8Exact(false);
 	}
 	io=PioneerGgmlHostState(); PioneerGgmlDiagnose(true); PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true);
 	backend=ggml_backend_dev_init(dev,NULL); assert(backend);
@@ -118,6 +120,9 @@ int main() {
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
 	io=PioneerGgmlHostState(); assert(!PioneerGgmlReplayReference("missing") && !PioneerGgmlReplayCpuRope("missing") && !io.opens);
 	assert(PioneerGgmlReplayReference(weights->name) && io.opens==1 && io.calls==1 && io.uploads==9 && io.finishes==1);
+	io=PioneerGgmlHostState(); PioneerGgmlQ8Exact(true);
+	assert(PioneerGgmlReplayReference(weights->name) && io.exact && io.opens==1 && io.calls==1 && io.uploads==9 && io.finishes==1);
+	PioneerGgmlQ8Exact(false);
 	io=PioneerGgmlHostState(); io.badMath=true;
 	assert(!PioneerGgmlReplayReference(weights->name) && io.finishes==1);
 	PioneerGgmlQ8Operands(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Native(false);

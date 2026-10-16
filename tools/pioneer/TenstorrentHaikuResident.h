@@ -9,13 +9,13 @@
 // never substitutes a CPU product, and owns one exclusive session lifetime.
 class PioneerResidentDevice {
 	int fd=-1;
-	bool active=false,failed=false,cold=false,finished=false,stream=false,fp16=false,q8=false,compact=false,native=false,closeOnly=false;
+	bool active=false,failed=false,cold=false,finished=false,stream=false,fp16=false,q8=false,compact=false,native=false,f32Scales=false,closeOnly=false;
 	tt_pioneer_runtime_matvec* request=NULL;
 public:
 	uint64_t uploads=0,calls=0;
 	~PioneerResidentDevice() { Finish(); free(request); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false) {
-		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || !PioneerResidentCapacity(bytes)) return false;
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false) {
+		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || !PioneerResidentCapacity(bytes)) return false;
 		fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 		if (fd<0) { perror("resident open"); failed=true; return false; }
 		tt_resident_session_result s={};
@@ -27,13 +27,16 @@ public:
 		q8=quant;
 		compact=rawBytes;
 		native=hardwareUnpack;
+		f32Scales=exactScales;
 		if (fp16 && !(s.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (q8 && !(s.capabilities&1024)) { fprintf(stderr,"Scaled Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (compact && !(s.capabilities&2048)) { fprintf(stderr,"Compact Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (native && !(s.capabilities&TT_PIONEER_CAP_NATIVE_Q8_UNPACK)) { fprintf(stderr,"Aligned native INT8-unpack Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
+		if (f32Scales && !(s.capabilities&TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES)) { fprintf(stderr,"Exact-scale/compensated-SFPU Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
+		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
 		request=(tt_pioneer_runtime_matvec*)calloc(1,sizeof(tt_pioneer_runtime_q8_matvec));
 		if (!request) { failed=true; return false; }
 		s={}; s.version=1; s.bytes=bytes;
@@ -84,7 +87,7 @@ public:
 		auto* quant=(tt_pioneer_runtime_q8_matvec*)request;
 		memset(quant,0,sizeof(*quant)); request->version=1; request->inputs=inputs; request->outputs=outputs; request->weight_offset=offset;
 		memcpy(request->input,vector,inputs*2); memcpy(quant->scale,scales,inputs/32*4);
-		int status=ioctl(fd,native?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE:compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,quant,sizeof(*quant));
+		int status=ioctl(fd,f32Scales?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES:native?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE:compact?TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT:TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8,quant,sizeof(*quant));
 		const auto& r=request->result; cold=r.recovery_required!=0;
 		if (status || r.version!=1 || r.state!=TT_RUNTIME_PASSED || !r.started || !r.completed || !r.stopped || cold) {
 			closeOnly=status!=0;
