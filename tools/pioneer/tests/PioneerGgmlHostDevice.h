@@ -7,7 +7,7 @@
 #include <cassert>
 struct PioneerGgmlHostState {
 	unsigned opens=0,finishes=0,uploads=0,calls=0;
-	bool fail=false,badMath=false,fp16=false,q8=false,compact=false,native=false,exact=false;
+	bool fail=false,badMath=false,fp16=false,q8=false,compact=false,native=false,exact=false,dual=false;
 	std::vector<uint32_t> bytes;
 	PioneerGgmlHostState():bytes(1024*1024/4) {}
 };
@@ -16,7 +16,7 @@ class PioneerResidentDevice {
 	bool active=false;
 public:
 	~PioneerResidentDevice() { Finish(); }
-	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false) { assert(capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native)); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; return true; }
+	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false) { assert(capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact)); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; return true; }
 	bool Finish() { if (active) PioneerHostDeviceState().finishes++; active=false; return true; }
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		auto& s=PioneerHostDeviceState(); assert(active && !(offset%4096) && offset+4096<=s.bytes.size()*4);
@@ -42,6 +42,7 @@ public:
 	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* x,const uint32_t* scales,uint32_t* output) {
 		auto& s=PioneerHostDeviceState(); assert(active && s.q8 && !s.fp16); s.calls++; if (s.fail) return false;
+		assert(!s.dual || (outputs>=64 && !(outputs&63)));
 		for (unsigned row=0;row<outputs;row++) {
 			float sum=0;
 			for (unsigned block=0;block<inputs/32;block++) {

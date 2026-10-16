@@ -28,8 +28,9 @@ struct PioneerGgmlContext {
 	const bool compact;
 	const bool native;
 	const bool exact;
+	const bool dual;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -41,6 +42,7 @@ static bool sQ8=false;
 static bool sCompact=false;
 static bool sNative=false;
 static bool sExact=false;
+static bool sDual=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -63,7 +65,7 @@ static bool TraceTensor(const ggml_tensor* t) {
 }
 static const char* Name(ggml_backend_t) { return "P100A-resident-experimental"; }
 static const char* DeviceName(ggml_backend_dev_t) { return "P100A-resident"; }
-static const char* Description(ggml_backend_dev_t) { return "P100A single-core resident matrix prototype (not a verified speedup)"; }
+static const char* Description(ggml_backend_dev_t) { return sDual?"P100A two-core resident matrix prototype (not a verified speedup)":"P100A single-core resident matrix prototype (not a verified speedup)"; }
 static bool View(enum ggml_op op) {
 	return op==GGML_OP_NONE || op==GGML_OP_RESHAPE || op==GGML_OP_VIEW || op==GGML_OP_PERMUTE || op==GGML_OP_TRANSPOSE;
 }
@@ -77,6 +79,7 @@ static bool Supports(ggml_backend_dev_t,const ggml_tensor* op) {
 		&& w->ne[0]>0 && w->ne[0]<=TT_RUNTIME_MATVEC_INPUTS_MAX && w->ne[1]>0 && w->ne[1]<=262144
 		&& PioneerResidentTensorShape(unsigned(w->ne[0]),unsigned(w->ne[1]))
 		&& (!sCompact || PioneerQ8CompactTensorShape(unsigned(w->ne[0]),unsigned(w->ne[1])))
+		&& (!sDual || (w->ne[1]>=64 && !(w->ne[1]&63)))
 		&& w->ne[2]==1 && w->ne[3]==1 && x->ne[0]==w->ne[0] && x->ne[1]==1 && x->ne[2]==1 && x->ne[3]==1
 		&& op->ne[0]==w->ne[1] && op->ne[1]==1 && op->ne[2]==1 && op->ne[3]==1
 		&& ggml_is_contiguous(w) && ggml_is_contiguous(x) && ggml_is_contiguous(op)
@@ -193,7 +196,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		const auto* w=op->src[0]; unsigned inputs=unsigned(w->ne[0]),outputs=unsigned(w->ne[1]);
@@ -238,8 +241,8 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	return GGML_STATUS_SUCCESS;
 }
 static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
-	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative)) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual); if (!ctx) return NULL;
 	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
 	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
@@ -284,6 +287,7 @@ void PioneerGgmlQ8Operands(bool enabled) { if (!sActive) sQ8=enabled; }
 void PioneerGgmlQ8Compact(bool enabled) { if (!sActive) sCompact=enabled; }
 void PioneerGgmlQ8Native(bool enabled) { if (!sActive) sNative=enabled; }
 void PioneerGgmlQ8Exact(bool enabled) { if (!sActive) sExact=enabled; }
+void PioneerGgmlQ8Dual(bool enabled) { if (!sActive) sDual=enabled; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {

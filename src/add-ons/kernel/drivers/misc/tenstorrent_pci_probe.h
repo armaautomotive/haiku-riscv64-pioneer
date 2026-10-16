@@ -28,6 +28,7 @@
 #include "PioneerResidentSession.h"
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeMatvec.h"
+#include "PioneerRuntimeDual.h"
 #include "PioneerResidentStream.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
@@ -152,13 +153,15 @@
 #define TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC (B_DEVICE_OP_CODES_END + 0x54c7)
 #define TT_PCI_PROBE_PIONEER_SECOND_COMPUTE_NOC_SUPPORT (B_DEVICE_OP_CODES_END + 0x54c8)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND (B_DEVICE_OP_CODES_END + 0x54c9)
+#define TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL (B_DEVICE_OP_CODES_END + 0x54ca)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
 #define TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES 16384U
 #define TT_PIONEER_CAP_Q8_BULK 32768U
 #define TT_PIONEER_CAP_Q8_SECOND 65536U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND)
+#define TT_PIONEER_CAP_Q8_DUAL 131072U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -306,6 +309,12 @@ struct tt_pioneer_runtime_q8_matvec {
 	tt_pioneer_runtime_matvec matvec; // original ABI unchanged
 	uint32_t scale[TT_RUNTIME_MATVEC_INPUTS_MAX/32]; // finite FP32 dX bits
 };
+
+struct tt_pioneer_runtime_dual_matvec {
+	tt_pioneer_runtime_q8_matvec q8; // result is the all-worker aggregate
+	tt_runtime_matvec_result core[2]; // independent completion/counter proofs
+};
+static_assert(sizeof(tt_pioneer_runtime_dual_matvec)==sizeof(tt_pioneer_runtime_q8_matvec)+2*sizeof(tt_runtime_matvec_result),"dual proof ABI has no hidden payload or pointer");
 
 struct tt_pioneer_resident_stream {
 	uint32_t version,reserved;

@@ -138,6 +138,47 @@ int main() {
 	result->op=GGML_OP_MUL; assert(!PioneerGgmlCompareTap(result,false,NULL)); result->op=GGML_OP_RMS_NORM;
 	PioneerGgmlBeginPosition(18); assert(!PioneerGgmlCompareTap(result,false,NULL));
 	PioneerGgmlTrace(false); assert(!PioneerGgmlCompareTap(result,true,NULL));
+	// New two-core mode is explicit/immutable and requires exact native Q8.
+	PioneerGgmlQ8Dual(true); assert(!ggml_backend_dev_init(dev,NULL));
+	PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true); PioneerGgmlQ8Exact(true);
+	PioneerGgmlDiagnose(false); io=PioneerGgmlHostState();
+	backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+	result->op=GGML_OP_MUL_MAT; assert(!ggml_backend_dev_supports_op(dev,result)); // 32 rows cannot split
+	auto* dualWeights=ggml_new_tensor_2d(ctx,GGML_TYPE_Q8_0,1024,64);
+	auto* dualResult=ggml_mul_mat(ctx,dualWeights,input);
+	auto* dualWeightBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(dualWeights)); assert(dualWeightBuffer);
+	dualWeights->buffer=dualWeightBuffer; dualWeights->data=ggml_backend_buffer_get_base(dualWeightBuffer);
+	ggml_backend_buffer_set_usage(dualWeightBuffer,GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+	auto* dualResultBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(dualResult)); assert(dualResultBuffer);
+	dualResult->buffer=dualResultBuffer; dualResult->data=ggml_backend_buffer_get_base(dualResultBuffer);
+	for (unsigned row=0;row<64;row++) memcpy((uint8_t*)dualWeights->data+row*1088,(const uint8_t*)weights->data+(row%32)*1088,1088);
+	std::vector<float> dualDecoded(64*1024); traits->to_float(dualWeights->data,dualDecoded.data(),dualDecoded.size());
+	auto* dualGraph=ggml_new_graph(ctx); ggml_build_forward_expand(dualGraph,dualResult); dualResult->flags|=GGML_TENSOR_FLAG_COMPUTE;
+	PioneerGgmlQ8Dual(false); // ignored during an active backend
+	for (unsigned trial=0;trial<2;trial++) {
+		for (unsigned k=0;k<1024;k++) ((float*)input->data)[k]=float(int((k*17+trial*29)%257)-128)/256;
+		assert(ggml_backend_graph_compute(backend,dualGraph)==GGML_STATUS_SUCCESS && io.dual && io.exact);
+		uint8_t quantized[1088]; traits->from_float_ref((const float*)input->data,quantized,1024);
+		float activation[1024]; traits->to_float(quantized,activation,1024);
+		for (unsigned row=0;row<64;row++) {
+			float reference=0;
+			for (unsigned block=0;block<32;block++) {
+				int dot=0; const auto* a=(const int8_t*)dualWeights->data+row*1088+block*34+2;
+				const auto* b=(const int8_t*)quantized+block*34+2;
+				for (unsigned i=0;i<32;i++) dot+=int(a[i])*int(b[i]);
+				uint16_t dw,dx; memcpy(&dw,a-2,2); memcpy(&dx,b-2,2);
+				reference=fmaf(float(dot),PioneerHalfFloat(dw)*PioneerHalfFloat(dx),reference);
+			}
+			assert(!memcmp((float*)dualResult->data+row,&reference,4));
+		}
+	}
+	assert(io.opens==1 && io.uploads==18 && io.calls==2);
+	io.fail=true; for (unsigned row=0;row<64;row++) ((float*)dualResult->data)[row]=NAN;
+	assert(ggml_backend_graph_compute(backend,dualGraph)==GGML_STATUS_FAILED);
+	for (unsigned row=0;row<64;row++) assert(isnan(((float*)dualResult->data)[row]));
+	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
+	PioneerGgmlQ8Dual(false); PioneerGgmlQ8Exact(false); PioneerGgmlQ8Native(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Operands(false);
+	dualWeights->buffer=NULL; dualResult->buffer=NULL; ggml_backend_buffer_free(dualWeightBuffer); ggml_backend_buffer_free(dualResultBuffer);
 	weights->buffer=NULL; input->buffer=NULL; result->buffer=NULL;
 	ggml_backend_buffer_free(buffer); ggml_backend_buffer_free(inputBuffer); ggml_backend_buffer_free(resultBuffer); ggml_free(ctx);
 	printf("PASS: pinned ggml registration, strict support policy, two vectors/one upload, graph failure/no fallback, exclusive cleanup; OFFLINE ONLY\n");

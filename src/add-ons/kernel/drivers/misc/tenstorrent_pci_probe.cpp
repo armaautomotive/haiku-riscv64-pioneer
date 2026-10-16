@@ -1531,6 +1531,14 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
 	if (context->secondCompute.saved || context->secondLease.saved) {
 		// Global uncertainty forbids restoring even a known-finished peer.
+		if (clean && context->lease.ready && context->secondLease.ready) {
+			clean=context->io.SelectRuntimeCore(0) && context->io.ResetRead()==0x47800
+				&& BlackholeResidentIdle(context->io) && PioneerRuntimeSources(context->io,
+					context->baseline.baseline.baseline.baseline.dram,context->baseline.baseline.baseline.noc,context->lease);
+			clean=context->io.SelectRuntimeCore(1) && clean && context->io.ResetRead()==0x47800
+				&& BlackholeResidentIdle(context->io) && PioneerRuntimeSources(context->io,
+					context->baseline.baseline.baseline.baseline.dram,context->secondNoc,context->secondLease);
+		}
 		if (!context->io.SelectRuntimeCore(1)) clean=false;
 		if (!clean) { context->secondCompute.unsafe=true; context->secondLease.recovery_required=true; }
 		clean=PioneerRuntimeMatvecClose(context->io,context->baseline.baseline.baseline.baseline.dram,
@@ -1727,9 +1735,9 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false,bool bulk=false,bool second=false)
+RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dmaOutput,bool fp16,bool int8,bool q8=false,bool compact=false,bool native=false,bool f32Scales=false,bool bulk=false,bool second=false,bool dual=false)
 {
-	size_t bytes=q8?sizeof(tt_pioneer_runtime_q8_matvec):sizeof(tt_pioneer_runtime_matvec);
+	size_t bytes=dual?sizeof(tt_pioneer_runtime_dual_matvec):q8?sizeof(tt_pioneer_runtime_q8_matvec):sizeof(tt_pioneer_runtime_matvec);
 	if (data==NULL || length!=bytes) return B_BAD_VALUE;
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
 	if (status!=B_OK) return status;
@@ -1738,7 +1746,7 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 	if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,bytes);
 	const uint32_t* scales=q8?((tt_pioneer_runtime_q8_matvec*)request)->scale:NULL;
-	if (status!=B_OK || request->version!=1 || request->reserved || !(compact?PioneerQ8CompactShape(request->inputs,request->outputs):PioneerMatvecShape(request->inputs,request->outputs))) {
+	if (status!=B_OK || request->version!=1 || request->reserved || !(dual?PioneerRuntimeDualShape(request->inputs,request->outputs):compact?PioneerQ8CompactShape(request->inputs,request->outputs):PioneerMatvecShape(request->inputs,request->outputs))) {
 		free(request); return status!=B_OK?status:B_BAD_VALUE;
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
@@ -1746,16 +1754,18 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
 	else if (!(compact?PioneerQ8CompactWeightRange(context->bytes,request->weight_offset,request->inputs,request->outputs):PioneerMatvecWeightRange(context->bytes,request->weight_offset,request->inputs,request->outputs))) status=B_BAD_VALUE;
 	else {
-		uint64 bytes=compact?PioneerQ8CompactWeightBytes(request->inputs,request->outputs):PioneerMatvecWeightBytes(request->inputs,request->outputs);
+		uint64 weightBytes=compact?PioneerQ8CompactWeightBytes(request->inputs,request->outputs):PioneerMatvecWeightBytes(request->inputs,request->outputs);
 		bool initialized=true;
-		for (uint64 page=request->weight_offset/4096;page<(request->weight_offset+bytes+4095)/4096;page++)
+		for (uint64 page=request->weight_offset/4096;page<(request->weight_offset+weightBytes+4095)/4096;page++)
 			initialized &= context->initialized[page]!=0;
 		if (!initialized) status=B_ENTRY_NOT_FOUND;
 		else {
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
+			if (dual) memset(((tt_pioneer_runtime_dual_matvec*)request)->core,0,sizeof(((tt_pioneer_runtime_dual_matvec*)request)->core));
 			memset(request->output,0,sizeof(request->output));
-			context->io.runtimeProfile.Begin(uint64(system_time()),second?9:bulk?8:f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
-			bool ready=context->runtimeCoreMode<0 || context->runtimeCoreMode==int(second);
+			context->io.runtimeProfile.Begin(uint64(system_time()),dual?10:second?9:bulk?8:f32Scales?7:native?6:compact?5:q8?4:int8?3:fp16?2:dmaOutput?1:0);
+			int coreMode=dual?2:int(second);
+			bool ready=context->runtimeCoreMode<0 || context->runtimeCoreMode==coreMode;
 			ready=ready && (context->lease.ready || (!context->lease.saved
 				&& PioneerResidentLeaseBegin(context->io,context->baseline.baseline.baseline.noc,context->lease)));
 			if (ready) ready=context->io.MapRuntime(bulk);
@@ -1768,11 +1778,27 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 			auto& lease=second?context->secondLease:context->lease;
 			auto& noc=second?context->secondNoc:context->baseline.baseline.baseline.noc;
 			if (ready && second && !lease.ready) ready=!lease.saved && PioneerResidentLeaseBegin(context->io,noc,lease,3);
-			if (ready) context->runtimeCoreMode=int(second);
+			if (ready) context->runtimeCoreMode=coreMode;
 			if (ready) ready=PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
 				noc,lease,compute,fp16,int8,q8,compact,native,f32Scales,bulk);
+			if (ready && dual) ready=context->io.SelectRuntimeCore(0)
+				&& PioneerRuntimeMatvecPrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
+					context->baseline.baseline.baseline.noc,context->lease,context->compute,false,true,true,true,true,true,true);
 			if (ready) context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
-			if (ready) PioneerRuntimeMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
+			if (ready && dual) {
+				auto& parts=((tt_pioneer_runtime_dual_matvec*)request)->core;
+				PioneerRuntimeDualMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
+					context->baseline.baseline.baseline.noc,context->secondNoc,context->host,context->lease,context->secondLease,
+					context->compute,context->secondCompute,context->bytes,request->weight_offset,request->inputs,request->outputs,
+					request->input,scales,request->output,parts);
+				auto& total=request->result; total=parts[0];
+				total.state=parts[0].state==TT_RUNTIME_PASSED?parts[1].state:parts[0].state;
+				total.prepared=parts[0].prepared && parts[1].prepared;
+				total.started=parts[0].started && parts[1].started; total.completed=parts[0].completed && parts[1].completed;
+				total.stopped=parts[0].stopped && parts[1].stopped; total.recovery_required=parts[0].recovery_required || parts[1].recovery_required;
+				total.staged_pages+=parts[1].staged_pages; total.tiles+=parts[1].tiles; total.polls+=parts[1].polls; total.nonfinite+=parts[1].nonfinite;
+				for (unsigned w=0;w<4;w++) total.after[w]+=parts[1].after[w]-parts[1].before[w];
+			} else if (ready) PioneerRuntimeMatvec(context->io,context->baseline.baseline.baseline.baseline.dram,
 				noc,context->host,lease,compute,context->bytes,
 				request->weight_offset,request->inputs,request->outputs,request->input,request->output,request->result,dmaOutput,scales,second?3:2);
 			if (second && !context->io.SelectRuntimeCore(0)) context->secondLease.recovery_required=true;
@@ -1782,7 +1808,7 @@ RuntimeMatvecControl(PioneerProbeCookie* cookie,void* data,size_t length,bool dm
 			}
 			const auto& r=request->result;
 			context->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
-			status=user_memcpy(data,request,sizeof(*request));
+			status=user_memcpy(data,request,dual?bytes:sizeof(*request));
 		}
 	}
 	release_sem(sLock); free(request); return status;
@@ -1816,15 +1842,16 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT
 		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK
-		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND) {
-		bool second=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND;
+		|| operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL) {
+		bool dual=operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_DUAL;
+		bool second=dual || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_SECOND;
 		bool bulk=second || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_BULK;
 		bool f32Scales=bulk || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE_F32_SCALES;
 		bool native=f32Scales || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_NATIVE;
 		bool compact=native || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8_COMPACT;
 		bool q8=compact || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_Q8;
 		return RuntimeMatvecControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_DMA,
-			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact,native,f32Scales,bulk,second);
+			operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_FP16,q8 || operation==TT_PCI_PROBE_PIONEER_RUNTIME_MATVEC_INT8,q8,compact,native,f32Scales,bulk,second,dual);
 	}
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE)
 		return RuntimeProfileControl(instance,data,length);

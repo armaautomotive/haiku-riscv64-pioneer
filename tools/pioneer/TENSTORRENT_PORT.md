@@ -328,8 +328,71 @@ switch between first/second runtime modes. Global uncertainty blocks payload
 restoration on either core, quarantines the one system-owned host page, and
 permits only PCI/TLB rollback. No new coordinates/physical pointers/code API.
 The model passes all65 post-upload dropped control writes, destination checks,
-tail rollback and timeout/PC/flits/stop/source faults. Native compute is pending;
-this candidate is still NOT parallel compute or a speedup.
+tail rollback and timeout/PC/flits/stop/source faults.
+
+Native fixed second-core computation now passes32x1024, full2048x1024 query
+and full1024x3072 FFN, both independent vectors with EVERY output FP32 bit
+matching CPU IEEE FMA. All NoC deltas, format/nonfinite refusals and identical
+reuse pass. Driver636e77bf915599f5505624ede21c9c2440c14e4d1cc927be19934dfac6985122,
+CLI5c79c9142d28cbd3abb803641e67de847216d16177e95aea985e8054264d3cee,
+support126975. Logs are in `/boot/home/pioneer-second-compute-20261015`.
+Warm query total29,037us / compute-proof17,443 / PIO6,065; warm FFN35,255 /
+26,850 /3,032. This establishes a second independent worker, NOT parallel
+execution or a CPU speedup. All END2/PCI-host1/1/cold0 and audits pass, as does
+updated ownership/last-close lifecycle. Assistant is unchanged.
+
+###### Two-core scheduler (native projections qualified; full Qwen running)
+
+New54ca / capability131072 / profile10 partitions rows equally between fixed
+(1,2)/(1,3), with N a multiple of64. Both derived half ranges remain page-
+aligned and wholly inside the initialized parent matrix. No K reduction is
+split, so each row keeps the qualified summation order. The same fixed bulk
+image/packing is used on each worker. Both input/scale/result buffers and
+commands are staged and context-armed before either launch; BME is off before
+any core executes. Both must independently prove exact phase/tile/marker,
+two park PCs, all four NoC deltas, idle/source/PCI state before ANY output is
+collected or either core stopped. Each stop is verified twice. Timeout,
+mapping/route uncertainty or one failed stop forbids resetting the peer or
+restoring either payload and quarantines the host page. END prechecks both
+cores before restoring either. Only established PCI/TLB rollback is allowed.
+The distinct ABI reports both complete per-core proofs plus a checked total;
+creator-team/exclusive ownership and immutable per-session mode remain.
+
+Offline ASan/UBSan tests pass130 individually dropped post-upload writes,
+all12 success-path mapping boundaries, timeout/PC/flits/stop/host-request/
+source faults on either worker, safe numerical refusal, reuse and complete
+shape/range partition coverage. Both must be armed before the first launch
+and the first must still be released at the second launch. This is not a
+native computation, end-to-end model result or measured speedup claim.
+
+Installed frozen driver235079a0c6ff66bcf3cb9e8b1d991e46bf2ab7bdd729e311bff0501a7371e152
+loaded distinct support258047 naturally; native-qualified636e is preserved as
+`tenstorrent_pci_probe.before-dual-636e` in `/boot/home/pioneer-dual-compute-20261015`.
+Native64x1024, full2048x1024 query and full1024x3072 FFN pass both vectors,
+EVERY CPU output bit, independent per-worker NoC/phase/PC/stop proofs,
+nonfinite/mode refusals and identical reuse. All END2/PCI-host1/1/cold0 and
+independent audits pass, including dual-op foreign/inherited/last-close checks.
+Warm query25,544us includes10,159 compute/proof and6,077 PIO; FFN29,805 /
+15,233 /3,075. Same-driver one-core query control31,893 /20,478 /6,044. These
+are directional individual projection samples, not matched repeated inference
+or CPU speedups. Small64-row dispatch still costs12,094us warm. The CLI is
+da121deae344f5915ad20fb137c7889e1bfdaa6af30f5e31227d6903b32b1ec0.
+
+The standalone ggml/native client now has an explicit immutable two-core flag,
+requires the distinct capability before BEGIN, enforces N multiples of64,
+and accepts outputs only with BOTH independent proofs (including counter
+deltas/PCs/markers), otherwise close-only with no fallback/retry. Offline
+pristine pinned-ggml tests cover two vectors, exact FP32 outputs, one upload,
+active-mode immutability, unsupported shape, invalid flag combinations and
+device failure with output left poisoned. Every critical proof field is
+independently corrupted on either worker and refused. Old modes remain.
+
+Full `--verify-dual-q8-host1` is running in `full-qwen-dual-host1-first.log`
+with binary8eb46f58f6d5be2995a107549aef6f98914e85bb226cf4b098e622408014d877.
+It preserves CPU32 reference creation before card registration, all197 learned
+matrix coverage, original cache/flash settings, all-vocabulary gates and four
+strict reply tokens. No result or speedup is claimed while it is running.
+No forced unload, firmware/clock/boot change or Assistant model/backend change.
 
 ##### Compact Q8 candidate (native projections qualified, not full inference)
 

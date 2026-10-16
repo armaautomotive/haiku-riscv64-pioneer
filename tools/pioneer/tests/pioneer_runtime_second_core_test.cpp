@@ -56,6 +56,7 @@ static void SecondClose(SecondRuntimeMock& io,tt_host_page_result& h,PioneerResi
 	assert(PioneerRuntimeMatvecClose(io,b,n,s,c) && PioneerResidentLeaseEnd(io,n,s));
 	io.Restored(); assert(io.ReleaseHostPage()==0); io.Safe();
 }
+#ifndef PIONEER_SECOND_CORE_MOCK_ONLY
 int main()
 {
 	SecondRuntimeMock io; tt_host_page_result h; PioneerResidentLease s; PioneerRuntimeMatvecLease c;
@@ -93,3 +94,4 @@ int main()
 	}
 	printf("PASS: fixed second-core destination, exact bulk lease, completion-tail rollback and %u dropped control writes; not native or parallel\n",cases);
 }
+#endif
