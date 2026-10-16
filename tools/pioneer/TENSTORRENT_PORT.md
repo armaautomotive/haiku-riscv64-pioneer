@@ -341,7 +341,7 @@ Warm query total29,037us / compute-proof17,443 / PIO6,065; warm FFN35,255 /
 execution or a CPU speedup. All END2/PCI-host1/1/cold0 and audits pass, as does
 updated ownership/last-close lifecycle. Assistant is unchanged.
 
-###### Two-core scheduler (native projections qualified; full Qwen running)
+###### Two-core scheduler (full Qwen correctness qualified; not CPU-faster)
 
 New54ca / capability131072 / profile10 partitions rows equally between fixed
 (1,2)/(1,3), with N a multiple of64. Both derived half ranges remain page-
@@ -387,11 +387,20 @@ active-mode immutability, unsupported shape, invalid flag combinations and
 device failure with output left poisoned. Every critical proof field is
 independently corrupted on either worker and refused. Old modes remain.
 
-Full `--verify-dual-q8-host1` is running in `full-qwen-dual-host1-first.log`
+Full `--verify-dual-q8-host1` passed in `full-qwen-dual-host1-first.log`
 with binary8eb46f58f6d5be2995a107549aef6f98914e85bb226cf4b098e622408014d877.
 It preserves CPU32 reference creation before card registration, all197 learned
 matrix coverage, original cache/flash settings, all-vocabulary gates and four
-strict reply tokens. No result or speedup is claimed while it is running.
+strict reply tokens. All22 positions report cosine1 / L2 zero and matching
+argmax; four real tokens are `The capital of France`. All197 tensors /
+670,482,432bytes /163,692 uploads and5,148 actual dual matvec calls are covered.
+END2/PCI-host1/1/cold0, independent post-audit and unchanged Assistant pass.
+Total1063.167s: weight preparation884.641915s, activation preprocessing0.369106,
+matvec/staging/result154.343633 and diagnostics0.000260. Warm positions are
+7.08..7.24s. Three generated-token input samples total21.348551s =0.140525tps,
+versus prior one-core exact0.115836tps. This is a diagnostic improvement of
+about21% in rate across the new bulk+dual path, not an isolated kernel A/B,
+matched repeated real-world benchmark, CPU speedup, Assistant or27B claim.
 No forced unload, firmware/clock/boot change or Assistant model/backend change.
 
 ###### Exact activation reuse (offline-qualified; staged, NOT installed)
@@ -421,8 +430,13 @@ fallback; these fake results are NOT model or hardware throughput evidence.
 Driver25454115f888e9bfcff2e1b57315ba35a25d2479c08c896bb789530c181bb97d
 and CLI411c1a73d94e9ee2d6d6ede30c15ed2861fbf87167efa59aabfdd7d8b855773e
 are built and staged in `/boot/home/pioneer-dual-reuse-20261015`, NOT installed.
-The current full-model run must close first with known END/stop/cleanup, then
-an independent audit, before considering installation/natural support520191.
+The full-model run closed with known END/stop/cleanup and independent audit.
+Automatic safety review then rejected installing this unqualified activation-
+reuse kernel driver as higher risk needing explicit user approval. Do not
+work around that rejection: leave the proven235079 dual driver in place and
+request approval explaining potential Haiku freeze/power-cycle recovery.
+The rejected installation did not run. Native support520191 and tests remain
+pending that approval; a module reload is never cold recovery.
 Native reuse diagnostics will require full staging for BOTH changed vectors,
 bit-identical repeated results, exact output-only page counts, immutable-mode
 refusal and all per-core proofs. Qwen CLI modes are
