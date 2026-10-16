@@ -144,6 +144,13 @@ count, and an availability list supplied by the resident service.
   model hash, finite output, per-position matrix/attention coverage,
   completion/stop, ownership and recovery gates remain mandatory. Missing
   card attention fails the request; it never accepts a CPU attention fallback.
+  Native verification matched CPU full logits exactly at all22 evaluated
+  positions and generated four matching greedy tokens. The installed service
+  then answered the public France-capital question with eight output tokens,
+  728 card attention ops across26 positions, zero CPU reference decodes, and
+  success. Its seven warm samples averaged0.093 tokens/s; the first-use
+  request including upload took1117.4s. Idle mode switching, strict request
+  rejection, busy memory guards and Load/Unload/reload tests also passed.
 
 Changing hardware is rejected during model loading or an active request.
 Unknown IDs, unsupported backends, malformed settings and invalid thread

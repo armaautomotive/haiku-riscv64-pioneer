@@ -305,8 +305,17 @@ zero uploads/compute. The installed service passed idle mode round-trip,
 malformed/unpinned request rejection and Load/Unload/reload preservation
 tests. The GUI and standalone Hardware chooser were both updated; only
 empty chat/draft lengths were inspected before their normal restart. The
-installed service's separate public-question smoke test is still in progress
-in `assistant-wide-a/`; the standalone full-logit result above is complete.
+installed service's separate public-question smoke test also **passed** in
+`assistant-wide-a/`: `The capital of France is **Paris**`, eight output tokens,
+26 evaluated positions/728 card attention ops, zero CPU reference decodes,
+success1/exit0. Seven warm generated-token inputs took75.293s (0.093tok/s);
+first-use total1117.4s included the fresh device upload. This is a short
+application smoke test, not a speed benchmark. Busy-state Load/Unload
+rejection also passed. The service is left idle/ready in Attention mode with
+the model/device weights resident; the old CPU model and32-thread preference
+are retained. Main chat/draft lengths remained0; no conversation text was
+read. GUI/service/control/standalone-Hardware backups and settings snapshot
+remain in `assistant-wide-a/`. No additional boot/card/firmware change.
 
 ### October 16: P100A Fast target without CPU reference validation
 
