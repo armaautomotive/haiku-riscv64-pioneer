@@ -19,9 +19,24 @@
 static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); return t.tv_sec+t.tv_nsec*1e-9; }
 
 static const uint64_t Arena=UINT64_C(2)*1024*1024*1024;
+static bool sCreateExecutable=true;
+static PioneerGgmlBoundaryCallback sBoundary=NULL;
+static void* sBoundaryData=NULL;
+static bool Boundary() { return !sBoundary || sBoundary(sBoundaryData); }
+struct PioneerGgmlDevice:PioneerResidentDevice {
+	bool Upload(uint64_t offset,const uint32_t* data) {
+		return Boundary() && PioneerResidentDevice::Upload(offset,data) && Boundary();
+	}
+	bool Q8Matvec(uint64_t offset,unsigned k,unsigned n,const uint32_t* x,const uint32_t* d,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::Q8Matvec(offset,k,n,x,d,y) && Boundary();
+	}
+	bool Matvec(uint64_t offset,unsigned k,unsigned n,const uint32_t* x,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::Matvec(offset,k,n,x,y) && Boundary();
+	}
+};
 struct PioneerGgmlContext {
-	PioneerResidentDevice device;
-	PioneerResidentTensorCache<PioneerResidentDevice> cache;
+	PioneerGgmlDevice device;
+	PioneerResidentTensorCache<PioneerGgmlDevice> cache;
 	bool opened=false,failed=false;
 	const bool fp16;
 	const bool q8;
@@ -65,7 +80,7 @@ static bool TraceTensor(const ggml_tensor* t) {
 	for (const char* p:prefixes) if (!strncmp(t->name,p,strlen(p))) return true;
 	return false;
 }
-static const char* Name(ggml_backend_t) { return "P100A-resident-experimental"; }
+static const char* Name(ggml_backend_t backend) { return backend->context?"P100A-resident-experimental":"P100A-disabled-for-CPU-context"; }
 static const char* DeviceName(ggml_backend_dev_t) { return "P100A-resident"; }
 static const char* Description(ggml_backend_dev_t) { return sDual?"P100A two-core resident matrix prototype (not a verified speedup)":"P100A single-core resident matrix prototype (not a verified speedup)"; }
 static bool View(enum ggml_op op) {
@@ -192,7 +207,7 @@ static bool CheckProjection(const ggml_tensor* w,const float* x,const float* y,c
 }
 static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	auto* ctx=(PioneerGgmlContext*)backend->context;
-	if (ctx->failed) return GGML_STATUS_FAILED;
+	if (!ctx || ctx->failed) return GGML_STATUS_FAILED;
 	for (int i=0;i<ggml_graph_n_nodes(graph);i++) {
 		auto* op=ggml_graph_node(graph,i);
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
@@ -242,11 +257,34 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	}
 	return GGML_STATUS_SUCCESS;
 }
+static bool DisabledSupports(ggml_backend_dev_t,const ggml_tensor*) { return false; }
+static bool DisabledBuffer(ggml_backend_dev_t,ggml_backend_buffer_type_t type) {
+	// ggml requires every scheduler backend to accept its default storage.
+	// This is host storage only; rejecting ALL operations is what prevents
+	// scheduling or executing any card work in this inert backend.
+	return type==ggml_backend_cpu_buffer_type();
+}
+static const char* DisabledName(ggml_backend_dev_t) { return "P100A-disabled-for-CPU-context"; }
+static void DisabledMemory(ggml_backend_dev_t,size_t* available,size_t* total) { *available=*total=0; }
+static void DisabledProps(ggml_backend_dev_t,ggml_backend_dev_props* p) {
+	memset(p,0,sizeof(*p)); p->name=p->description="P100A-disabled-for-CPU-context"; p->type=GGML_BACKEND_DEVICE_TYPE_ACCEL;
+}
 static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
+	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
+	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
+	if (!sCreateExecutable) {
+		// Do not claim sActive or allow any graph operation. The scheduler
+		// still requires compatibility with our default host storage.
+		// CPU contexts remain safe alongside a warm
+		// P100A context and after its registration in the global registry.
+		static ggml_backend_device disabled={}; disabled=*dev;
+		disabled.iface.get_name=DisabledName; disabled.iface.get_description=DisabledName;
+		disabled.iface.get_memory=DisabledMemory; disabled.iface.get_props=DisabledProps;
+		disabled.iface.supports_op=DisabledSupports; disabled.iface.supports_buft=DisabledBuffer;
+		return new(std::nothrow) ggml_backend {&guid,iface,&disabled,NULL};
+	}
 	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual)) return NULL;
 	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse); if (!ctx) return NULL;
-	ggml_backend_i iface={}; iface.get_name=Name; iface.free=Free; iface.graph_compute=Compute;
-	static ggml_guid guid={0xb2,0x6f,0x01,0x04,0x76,0xe1,0x41,0x3b,0x85,0xa2,0x66,0x22,0x91,0x16,0x32,0x08};
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -274,6 +312,8 @@ static ggml_backend_dev_t Device(ggml_backend_reg_t reg,size_t index) {
 ggml_backend_reg_t PioneerGgmlReg() {
 	static ggml_backend_reg reg={GGML_BACKEND_API_VERSION,{RegName,Count,Device,NULL},NULL}; return &reg;
 }
+void PioneerGgmlContextExecution(bool enabled) { sCreateExecutable=enabled; }
+void PioneerGgmlBoundary(PioneerGgmlBoundaryCallback callback,void* data) { sBoundary=callback; sBoundaryData=data; }
 bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats={}; if (!sActive) return false;
 	stats.tensors=sActive->cache.Tensors(); stats.bytes=sActive->cache.Bytes(); stats.uploads=sActive->cache.uploadedPages;

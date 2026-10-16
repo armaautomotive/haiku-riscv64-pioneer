@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 	BApplication app("application/x-vnd.Haiku-AssistantControl");
 	BMessenger service(kServiceSignature);
 	if (argc < 2) {
-		fprintf(stderr, "Usage: assistantctl status | hardware | hardware cpu|p100a [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
+		fprintf(stderr, "Usage: assistantctl status | hardware | hardware cpu|p100a|p100a-qwen [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
 		return 2;
 	}
 	if (strcmp(argv[1], "models") == 0) {
@@ -159,6 +159,9 @@ int main(int argc, char** argv)
 	if (strcmp(backend, "p100a") == 0) {
 		prompt = argv[2]; request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8);
 	}
+	if (!strcmp(backend,"p100a-qwen")) {
+		prompt=argv[2]; request.AddString("prompt_format","qwen-p100a"); request.AddInt32("max_tokens",8);
+	}
 	request.AddInt64("id", id);
 	request.AddMessenger("target", target);
 	request.AddString("prompt", prompt.c_str());
@@ -172,7 +175,7 @@ int main(int argc, char** argv)
 	}
 	if (result == B_OK)
 		result = acquire_sem_etc(receiver->done, 1, B_RELATIVE_TIMEOUT,
-			strcmp(backend, "p100a") == 0 ? 900000000 : 180000000);
+			strcmp(backend,"p100a-qwen")==0 ? 2400000000LL : strcmp(backend, "p100a") == 0 ? 900000000 : 180000000);
 	bool success = result == B_OK && (cancel ? !receiver->success : receiver->success);
 	if (receiver->Lock()) receiver->Quit();
 	return success ? 0 : 1;

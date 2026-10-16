@@ -15,12 +15,19 @@ static const AssistantHardware kAssistantHardware[] = {
 	{"cpu", "CPU (llama.cpp)",
 		"Runs supported Qwen3 chat models on the system CPUs.\n"
 		"CPU threads apply to the next request; they do not change CPU affinity."},
-	{"p100a", "Tenstorrent P100A",
+	{"p100a", "P100A — TinyStories (legacy experiment)",
 		"Experimental TinyStories-260K story completion only — NOT Qwen chat.\n"
 		"Selecting P100A also selects TinyStories (install it in Models first).\n"
 		"Real card projections; CPU attention/KV/norms and independent verification.\n"
 		"Short ASCII story beginnings; 8 output tokens; roughly 15 seconds/token.\n"
-		"Stop waits for a completed batch. No CPU fallback or firmware changes."}
+		"Stop waits for a completed batch. No CPU fallback or firmware changes."},
+	{"p100a-qwen", "P100A — Qwen3 0.6B (experimental, slow)",
+		"Runs the verified Qwen3-0.6B Q8_0 model on two P100A cores.\n"
+		"Currently SLOWER than CPU: about 0.15 output tokens/second.\n"
+		"First request uploads weights (~15 minutes); later requests reuse them.\n"
+		"Short questions only: 512 UTF-8 bytes / 192 prompt tokens, 8 output tokens.\n"
+		"CPU attention + independent validation; no tools/history or CPU fallback.\n"
+		"Stop waits for the current checked transfer/matvec. Other models unsupported."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 

@@ -40,7 +40,7 @@ ModelManager::ModelManager()
 	fCancel->SetEnabled(false);
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
-		.Add(new BStringView("backend", "Qwen3 chat: CPU. TinyStories: experimental P100A + CPU story completion (not Qwen)."))
+		.Add(new BStringView("backend", "Qwen3: CPU; Qwen3 0.6B also has a slow experimental P100A option in Hardware…"))
 		.Add(new BScrollView("model list", fList, 0, false, true))
 		.Add(details, 1)
 		.Add(fProgress)
@@ -104,6 +104,8 @@ ModelManager::Details()
 		text << "Not available for installation/selection yet: the installed llama runtime\n"
 			"does not support this architecture, and the P100A chat backend is unfinished.\n"
 			"P100A TinyStories experiments are not a general chat backend.";
+	if (index==0) text << "\nTo run this exact model on P100A, open Hardware and select P100A — Qwen3 0.6B.\n"
+		"Experimental and slower than CPU; first request uploads weights for about 15 minutes.";
 	fDetails->SetText(text.String());
 	fSelect->SetLabel((size_t)index == kAssistantTinyModel ? "Use on P100A (story mode)" : "Use on CPU (chat)");
 	bool present = AssistantModelPresent(index);

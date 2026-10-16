@@ -2,6 +2,7 @@
 #include "PioneerGgmlHostDevice.h"
 #include "../PioneerGgmlBackend.h"
 #include "ggml.h"
+#include "ggml-backend-impl.h"
 PioneerGgmlHostState& PioneerHostDeviceState() { static PioneerGgmlHostState state; return state; }
 static float Bf16(float f) { uint32_t bits=uint32_t(PioneerResidentBf16(f))<<16; memcpy(&f,&bits,4); return f; }
 int main() {
@@ -10,6 +11,11 @@ int main() {
 	assert(ggml_backend_dev_type(dev)==GGML_BACKEND_DEVICE_TYPE_ACCEL);
 	auto* backend=ggml_backend_dev_init(dev,NULL); assert(backend);
 	assert(!ggml_backend_dev_init(dev,NULL)); // one exclusive session instance
+	PioneerGgmlContextExecution(false);
+	auto* disabled=ggml_backend_dev_init(dev,NULL); assert(disabled);
+	auto* disabledDevice=ggml_backend_get_device(disabled);
+	assert(disabledDevice!=dev && ggml_backend_supports_buft(disabled,ggml_backend_cpu_buffer_type()));
+	PioneerGgmlContextExecution(true);
 	ggml_init_params params={2*1024*1024,NULL,false}; auto* ctx=ggml_init(params); assert(ctx);
 	auto* weights=ggml_new_tensor_2d(ctx,GGML_TYPE_Q8_0,1024,32);
 	auto* input=ggml_new_tensor_2d(ctx,GGML_TYPE_F32,1024,1);
@@ -34,6 +40,23 @@ int main() {
 	traits->from_float_ref(original.data(),weights->data,int64_t(original.size()));
 	traits->to_float(weights->data,decoded.data(),int64_t(decoded.size()));
 	auto* graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,result); result->flags|=GGML_TENSOR_FLAG_COMPUTE;
+	assert(!ggml_backend_dev_supports_op(disabledDevice,result));
+	assert(ggml_backend_graph_compute(disabled,graph)==GGML_STATUS_FAILED);
+	assert(PioneerHostDeviceState().opens==0 && PioneerHostDeviceState().calls==0);
+	// Model the scheduler's required final CPU backend without compiling a
+	// CPU arithmetic implementation: reserve/assignment only, no execution.
+	ggml_backend_device cpuDevice=*disabledDevice;
+	cpuDevice.iface.get_type=[](ggml_backend_dev_t) { return GGML_BACKEND_DEVICE_TYPE_CPU; };
+	cpuDevice.iface.supports_op=[](ggml_backend_dev_t,const ggml_tensor*) { return true; };
+	ggml_backend cpuBackend=*disabled; cpuBackend.device=&cpuDevice;
+	ggml_backend_t schedBackends[]={disabled,&cpuBackend};
+	auto* scheduler=ggml_backend_sched_new(schedBackends,NULL,2,2048,false,false); assert(scheduler);
+	assert(ggml_backend_sched_reserve(scheduler,graph));
+	assert(ggml_backend_sched_alloc_graph(scheduler,graph));
+	assert(ggml_backend_sched_get_tensor_backend(scheduler,result)==&cpuBackend);
+	ggml_backend_sched_free(scheduler);
+	assert(PioneerHostDeviceState().opens==0 && PioneerHostDeviceState().calls==0);
+	ggml_backend_free(disabled);
 	for (unsigned trial=0;trial<2;trial++) {
 		for (unsigned k=0;k<1024;k++) ((float*)input->data)[k]=float(int((k*17+trial*29)%257)-128)/256;
 		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS);
@@ -44,6 +67,11 @@ int main() {
 		}
 	}
 	PioneerGgmlStats stats={}; assert(PioneerGgmlSnapshot(stats) && stats.tensors==1 && stats.uploads==18 && stats.matvecs==2 && !stats.failed);
+	PioneerGgmlContextExecution(false);
+	disabled=ggml_backend_dev_init(dev,NULL); assert(disabled);
+	ggml_backend_free(disabled);
+	assert(PioneerGgmlSnapshot(stats) && stats.matvecs==2); // inert free never frees active card owner
+	PioneerGgmlContextExecution(true);
 	auto& io=PioneerHostDeviceState(); assert(io.opens==1 && io.uploads==18 && io.calls==2);
 	io.fail=true;
 	for (unsigned i=0;i<32;i++) ((float*)result->data)[i]=NAN;
@@ -183,6 +211,17 @@ int main() {
 	assert(PioneerGgmlFinish()); ggml_backend_free(backend);
 	PioneerGgmlQ8DualReuse(false); PioneerGgmlQ8Dual(false); PioneerGgmlQ8Exact(false); PioneerGgmlQ8Native(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Operands(false);
 	dualWeights->buffer=NULL; dualResult->buffer=NULL; ggml_backend_buffer_free(dualWeightBuffer); ggml_backend_buffer_free(dualResultBuffer);
+	}
+	for (unsigned reject:{1U,2U,36U,37U,38U}) {
+		io=PioneerGgmlHostState(); PioneerGgmlDiagnose(false);
+		backend=ggml_backend_dev_init(dev,NULL); assert(backend);
+		struct StopAt { unsigned calls=0,limit; } stop; stop.limit=reject;
+		PioneerGgmlBoundary([](void* data) { auto& s=*static_cast<StopAt*>(data); return ++s.calls!=s.limit; },&stop);
+		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED && stop.calls==reject);
+		unsigned stopped=stop.calls;
+		assert(ggml_backend_graph_compute(backend,graph)==GGML_STATUS_FAILED && stop.calls==stopped);
+		assert(io.opens==1 && io.uploads<=18 && io.calls<=1 && PioneerGgmlSnapshot(stats) && stats.failed);
+		PioneerGgmlBoundary(NULL,NULL); assert(PioneerGgmlFinish()); ggml_backend_free(backend);
 	}
 	weights->buffer=NULL; input->buffer=NULL; result->buffer=NULL;
 	ggml_backend_buffer_free(buffer); ggml_backend_buffer_free(inputBuffer); ggml_backend_buffer_free(resultBuffer); ggml_free(ctx);

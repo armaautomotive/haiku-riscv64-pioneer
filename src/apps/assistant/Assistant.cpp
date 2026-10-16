@@ -166,19 +166,20 @@ public:
 						const char* path = ""; const char* error = "";
 						reply.FindBool("loading", &loading);
 						reply.FindString("model_path", &path); reply.FindString("model_error", &error);
-						// A temporary empty path during service restart/loading is
-						// not a successful model change; keep the conversation.
-						if (ready && !loading && *path && fModelPath != path) {
-							fModelPath = path; fTurns.clear(); fTranscript->SetText("");
-						}
 						const char* backend = "cpu";
 						reply.FindString("backend_id", &backend);
+						// A temporary empty path during service restart/loading is
+						// not a successful model change; keep the conversation.
+						if (ready && !loading && *path && (fModelPath != path || fBackend != backend)) {
+							fModelPath = path; fBackend=backend; fTurns.clear(); fTranscript->SetText("");
+						}
 						bool story = strcmp(backend, "p100a") == 0;
-						fThreads->SetEnabled(!story && fThreadsLoaded);
-						fApplyThreads->SetEnabled(!story && fThreadsLoaded);
-						fThreadHint->SetText(story ? "P100A host path: 1 thread; CPU setting retained"
+						bool cardQwen=strcmp(backend,"p100a-qwen")==0;
+						fThreads->SetEnabled(!story && !cardQwen && fThreadsLoaded);
+						fApplyThreads->SetEnabled(!story && !cardQwen && fThreadsLoaded);
+						fThreadHint->SetText(story || cardQwen ? "P100A host path: 1 thread; CPU setting retained"
 							: "Saved; applies to next CPU request");
-						BString label(story ? "P100A + CPU (experimental story mode): "
+						BString label(cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model loaded");
 						fModelLabel->SetText(label.String());
@@ -279,7 +280,7 @@ private:
 			fStatus->SetText("This preview is for P100A stories only. Select P100A in Hardware first."); return;
 		}
 #endif
-		if (fModelPath != path) { fModelPath = path; fTurns.clear(); fTranscript->SetText(""); }
+		if (fModelPath != path || fBackend != backend) { fModelPath = path; fBackend=backend; fTurns.clear(); fTranscript->SetText(""); }
 		fPending = fInput->Text();
 		size_t bytes = fPending.size();
 		for (size_t i = 0; i < fTurns.size(); i++)
@@ -301,6 +302,13 @@ private:
 			+ " /no_think<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		fDisplay += "You: " + fPending + "\n\nQwen: ";
 		bool story = strcmp(backend, "p100a") == 0;
+		bool cardQwen=strcmp(backend,"p100a-qwen")==0;
+		if (cardQwen) {
+			prompt=fPending;
+			fDisplay="Experimental P100A Qwen3-0.6B — slower than CPU; first upload can take 15 minutes.\n"
+				"Single short question; no history or system tools. Eight checked output tokens.\n\nYou: "+fPending+"\n\nQwen (P100A): ";
+			fService=BMessenger(kServiceSignature);
+		}
 		if (story) {
 			// This base model is not instruction-tuned. No chat history,
 			// ChatML, tools, system instructions or hidden CPU fallback.
@@ -318,6 +326,7 @@ private:
 		request.AddString("model_path", fModelPath.c_str());
 		request.AddString("backend_id", backend);
 		if (story) { request.AddString("prompt_format", "story"); request.AddInt32("max_tokens", 8); }
+		if (cardQwen) { request.AddString("prompt_format","qwen-p100a"); request.AddInt32("max_tokens",8); }
 		if (fService.SendMessage(&request, (BHandler*)NULL, 100000) != B_OK) {
 			fStatus->SetText("Service did not accept the request.");
 			return;
@@ -341,6 +350,7 @@ private:
 	BMessenger fModelWindow;
 	BMessenger fHardwareWindow;
 	std::string fModelPath;
+	std::string fBackend;
 	bool fThreadsLoaded;
 	BMessageRunner* fCheck;
 	ToolSession* fSession;

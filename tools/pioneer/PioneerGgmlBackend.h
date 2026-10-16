@@ -7,6 +7,14 @@
 // Q8_0 weights; supported learned matrix operations execute on the card.
 // Norms/attention/activations remain CPU operations, not hidden fallbacks.
 ggml_backend_reg_t PioneerGgmlReg();
+// A registered ACCEL device is initialized even for CPU-only llama contexts.
+// Disable execution during their creation: they receive an inert backend
+// that supports NO operations and can never open the card. Its default
+// host-storage buffer remains accepted to satisfy ggml's scheduler contract.
+void PioneerGgmlContextExecution(bool enabled);
+typedef bool (*PioneerGgmlBoundaryCallback)(void*);
+// Called only between completed uploads/matvecs, never during an ioctl.
+void PioneerGgmlBoundary(PioneerGgmlBoundaryCallback callback,void* data);
 struct PioneerGgmlStats {
 	uint64_t tensors,bytes,uploads,matvecs;
 	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds;

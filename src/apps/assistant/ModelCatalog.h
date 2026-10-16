@@ -4,6 +4,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include <string.h>
 
 struct AssistantModel {
 	const char* name;
@@ -45,6 +46,11 @@ static const AssistantModel kAssistantTinyTokenizer = {
 static inline const char* AssistantModelBackend(size_t index)
 {
 	return index == kAssistantTinyModel ? "p100a" : "cpu";
+}
+static inline bool AssistantModelSupportsBackend(size_t index,const char* backend)
+{
+	return index<kAssistantModelCount && kAssistantModels[index].compatible && backend
+		&& (!strcmp(AssistantModelBackend(index),backend) || (index==0 && !strcmp(backend,"p100a-qwen")));
 }
 
 #endif

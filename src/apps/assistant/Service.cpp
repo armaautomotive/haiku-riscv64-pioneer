@@ -3,6 +3,8 @@
 #include "Settings.h"
 #include "ModelStore.h"
 #include "P100ABackend.h"
+#include "P100AQwen.h"
+#include "../../../tools/pioneer/PioneerGgmlBackend.h"
 
 #include <Application.h>
 #include <Autolock.h>
@@ -50,7 +52,7 @@ public:
 		: BApplication(kServiceSignature), fWake(create_sem(0, "assistant requests")),
 			fWorker(-1), fRequest(NULL), fQuit(false), fReady(false), fLoads(0),
 			fThreads(LoadAssistantThreads()), fActiveThreads(0), fModel(NULL), fContext(NULL),
-			fLoading(true), fPersistModel(false), fTiny(NULL), fP100ASupported(false)
+			fLoading(true), fPersistModel(false), fTiny(NULL), fP100ASupported(false), fQwen(NULL), fP100AQwenSupported(false)
 	{
 		fHardware = LoadAssistantHardware();
 		const char* overridePath = getenv("LLAMA_MODEL");
@@ -66,7 +68,7 @@ public:
 		const char* lastCPU;
 		fStartupPath = settings.FindString("last_cpu_model_path", &lastCPU) == B_OK
 			? BString(lastCPU) : AssistantModelPath(0);
-		if (AssistantModelIndex(fPendingPath.String()) >= 0
+		if (fHardware=="cpu" && AssistantModelIndex(fPendingPath.String()) >= 0
 			&& AssistantModelIndex(fPendingPath.String()) != (int)kAssistantTinyModel)
 			fStartupPath = fPendingPath;
 	}
@@ -115,11 +117,12 @@ public:
 				if (fLoading || fRequest != NULL) {
 					status = B_BUSY; explanation = "Finish/stop the current reply or wait for model loading, then try again.";
 				} else if (threadStatus == B_OK || threadStatus == B_NAME_NOT_FOUND) {
-					BString path = strcmp(id, "p100a") == 0 ? AssistantModelPath(kAssistantTinyModel)
+					BString path = strcmp(id, "p100a-qwen") == 0 ? AssistantModelPath(0)
+						: strcmp(id, "p100a") == 0 ? AssistantModelPath(kAssistantTinyModel)
 						: (fHardware == "cpu" && !fModelPath.IsEmpty() ? fModelPath : fStartupPath);
 					status = QueueSelection(path, id, threads);
 					explanation = status == B_OK
-						? "Verifying model/hardware pair; saved only after success. P100A selects experimental TinyStories; CPU restores its previous model."
+						? "Verifying model/hardware pair; saved only after success. P100A Qwen uses 0.6B only, is slower than CPU, and first-use upload can take 15 minutes."
 						: "Could not select hardware. Install its supported model and check driver availability; previous selection kept.";
 				}
 			}
@@ -165,7 +168,8 @@ public:
 			reply.AddBool("loading", fLoading);
 			reply.AddString("model_path", fModelPath);
 			reply.AddString("model_error", fModelError);
-			reply.AddString("backend", fHardware == "p100a" ? "P100A TinyStories experimental hybrid (not Qwen)"
+			reply.AddString("backend", fHardware == "p100a-qwen" ? "P100A Qwen3-0.6B exact dual-reuse hybrid (experimental, slower than CPU)"
+				: fHardware == "p100a" ? "P100A TinyStories experimental hybrid (not Qwen)"
 				: (fHardware == "cpu" ? "CPU (llama.cpp)" : "Unavailable hardware; no fallback"));
 			reply.AddString("backend_id", fHardware);
 			reply.AddString("active_backend_id", fReady.load() ? fHardware.String() : "");
@@ -173,7 +177,8 @@ public:
 				BMessage hardware;
 				hardware.AddString("id", kAssistantHardware[i].id);
 				hardware.AddString("name", kAssistantHardware[i].name);
-				hardware.AddBool("available", i == 0 || (fP100ASupported.load() && AssistantModelPresent(kAssistantTinyModel)));
+				hardware.AddBool("available", i == 0 || (i==1 && fP100ASupported.load() && AssistantModelPresent(kAssistantTinyModel))
+					|| (i==2 && fP100AQwenSupported.load() && AssistantModelPresent(0)));
 				hardware.AddString("description", kAssistantHardware[i].description);
 				reply.AddMessage("hardware", &hardware);
 			}
@@ -230,6 +235,18 @@ public:
 				delete request; return;
 			}
 		}
+		if (fHardware == "p100a-qwen") {
+			const char* format=NULL;
+			const char* pinnedModel=NULL;
+			status_t tokensStatus=message->FindInt32("max_tokens",&request->tokens);
+			if (backendStatus!=B_OK || message->FindString("model_path",&pinnedModel)!=B_OK || fModelPath!=pinnedModel
+				|| message->FindString("prompt_format",&format)!=B_OK || strcmp(format,"qwen-p100a")
+				|| (tokensStatus!=B_OK && tokensStatus!=B_NAME_NOT_FOUND) || request->tokens<1 || request->tokens>16
+				|| request->prompt.empty() || request->prompt.size()>512 || !fP100AQwenSupported.load()) {
+				Reply(request,kDone,"","P100A Qwen requires explicit short-question mode, 512 bytes and 1-16 output tokens. No CPU fallback.");
+				delete request; return;
+			}
+		}
 		if (fLoading || fRequest != NULL || request->prompt.size() > 12000) {
 			Reply(request, kDone, "", (fLoading || fRequest != NULL)
 				? "Service is loading or busy. Try again shortly." : "Prompt is too long.");
@@ -251,9 +268,10 @@ private:
 		if (fLoading || fRequest != NULL) return B_BUSY;
 		int index = AssistantModelIndex(path.String());
 		if (index < 0 || !kAssistantModels[index].compatible
-			|| strcmp(AssistantModelBackend(index), backend) != 0
+			|| !AssistantModelSupportsBackend(index,backend)
 			|| threads < 1 || threads > AssistantMaxThreads()) return B_BAD_VALUE;
 		if (strcmp(backend, "p100a") == 0 && !fP100ASupported.load()) return B_NOT_SUPPORTED;
+		if (strcmp(backend, "p100a-qwen") == 0 && !fP100AQwenSupported.load()) return B_NOT_SUPPORTED;
 		if (!AssistantModelPresent(index)) return B_ENTRY_NOT_FOUND;
 		if (fReady.load() && fHardware == backend && fModelPath == path) {
 			status_t status = SaveAssistantHardware(backend, threads);
@@ -288,7 +306,9 @@ private:
 	{
 		llama_backend_init();
 		ggml_backend_load_all();
+		PioneerGgmlContextExecution(false);
 		fP100ASupported.store(AssistantP100A::Available());
+		fP100AQwenSupported.store(AssistantP100AQwen::Available());
 		while (!fQuit.load()) {
 			if (acquire_sem(fWake) != B_OK || fQuit.load()) break;
 			BString path, backend;
@@ -317,12 +337,28 @@ private:
 					if (fTiny != NULL && fTiny->Faulted()) {
 						BAutolock lock(&fLock);
 						fP100ASupported.store(false); fReady.store(false); fModelError = error.c_str();
+						fP100AQwenSupported.store(false);
+					}
+				} else if (fHardware == "p100a-qwen") {
+					fActiveThreads.store(1);
+					success=fQwen && fQwen->Complete(request->prompt,request->tokens,answer,error,
+						[&]() { return fQuit.load() || request->cancelled.load(); },
+						[&](const std::string& text,const char* status) {
+							if (!strncmp(status,"P100A Qwen:",11)) request->summary=status;
+							Reply(request,kUpdate,text,status);
+						});
+					if (fQwen && fQwen->Faulted()) {
+						BAutolock lock(&fLock); fP100AQwenSupported.store(false); fReady.store(false); fModelError=error.c_str();
+						fP100ASupported.store(false);
 					}
 				} else success = Complete(request, answer, error);
 			}
 			if (!fReady.load() && error.empty()) error = "No model is ready. Open Models to select or retry a model.";
 			if (request->cancelled.load()) {
-				success = false; error = fHardware == "p100a"
+				success = false;
+				// Do not replace a device/cleanup failure with a reassuring
+				// cancellation message when Stop races with that failure.
+				if (error.empty()) error = fHardware != "cpu"
 					? "Stopped safely between P100A batches. No CPU fallback."
 					: "Stopped. Model remains loaded.";
 			}
@@ -331,13 +367,14 @@ private:
 				fRequest = NULL;
 			}
 			Reply(request, kDone, answer, success
-				? (fHardware == "p100a" ? request->summary.c_str()
+				? (fHardware != "cpu" ? request->summary.c_str()
 					: "Ready. Model stays loaded in the background.") : error.c_str(), success);
 			delete request;
 		}
 		if (fContext != NULL) llama_free(fContext);
 		if (fModel != NULL) llama_model_free(fModel);
 		delete fTiny; fTiny = NULL;
+		delete fQwen; fQwen=NULL;
 		llama_backend_free();
 	}
 
@@ -355,12 +392,20 @@ private:
 		int index = AssistantModelIndex(path.String());
 		status_t status = B_NOT_SUPPORTED;
 		if (index >= 0 && kAssistantModels[index].compatible
-			&& backend == AssistantModelBackend(index))
+			&& AssistantModelSupportsBackend(index,backend.String()))
 			status = VerifyAssistantModel(index, path.String(), fQuit, error);
 		else error = "Model is outside the supported catalog. Open Models to choose a supported Qwen3 model.";
 		llama_model* model = NULL;
 		llama_context* context = NULL;
 		AssistantP100A* tiny = NULL;
+		AssistantP100AQwen* qwen=NULL;
+		if (status==B_OK && backend=="p100a-qwen") {
+			if (!fP100AQwenSupported.load()) error="P100A exact Qwen driver unavailable or disabled after a fault; no fallback.";
+			else {
+				qwen=new AssistantP100AQwen; std::string reason;
+				if (!qwen->Load(path.String(),reason)) { error=reason.c_str(); delete qwen; qwen=NULL; }
+			}
+		}
 		if (status == B_OK && backend == "p100a") {
 			if (!fP100ASupported.load()) error = "P100A driver unavailable or disabled after a fault; no fallback.";
 			else {
@@ -384,11 +429,12 @@ private:
 			params.n_ubatch = 64;
 			params.n_threads = threads;
 			params.n_threads_batch = params.n_threads;
+			params.op_offload = false; // explicit CPU mode, even after P100A registration
 			context = llama_init_from_model(model, params);
 			if (context != NULL) llama_set_abort_callback(context, Abort, this);
 		}
 		BAutolock lock(&fLock);
-		bool loaded = context != NULL || tiny != NULL;
+		bool loaded = context != NULL || tiny != NULL || qwen != NULL;
 		if (loaded && fPersistModel) {
 			BMessage settings; LoadAssistantSettings(settings);
 			status_t saved = UpdateAssistantHardwareSettings(settings, backend.String(), threads);
@@ -399,6 +445,7 @@ private:
 				error = "Could not save model/hardware pair; previous selection kept.";
 		}
 		if (loaded && error.IsEmpty()) {
+			delete fQwen; fQwen=qwen;
 			if (backend == "cpu") {
 				if (fContext != NULL) llama_free(fContext);
 				if (fModel != NULL) llama_model_free(fModel);
@@ -406,6 +453,7 @@ private:
 			} else { delete fTiny; fTiny = tiny; fLoads.fetch_add(1); }
 			fModelPath = path; fHardware = backend; fThreads.store(threads); fReady.store(true);
 		} else {
+			delete qwen;
 			delete tiny;
 			if (context != NULL) llama_free(context);
 			if (model != NULL) llama_model_free(model);
@@ -418,6 +466,10 @@ private:
 
 	bool Complete(Request* request, std::string& answer, std::string& error)
 	{
+		PioneerGgmlStats unexpected={};
+		if (PioneerGgmlSnapshot(unexpected)) {
+			error="CPU isolation check failed; no request was executed on either backend."; return false;
+		}
 		// Only the worker touches the context, between complete requests.
 		llama_set_n_threads(fContext, request->threads, request->threads);
 		fActiveThreads.store(request->threads);
@@ -501,6 +553,8 @@ private:
 	int32 fPendingThreads;
 	AssistantP100A* fTiny;
 	std::atomic<bool> fP100ASupported;
+	AssistantP100AQwen* fQwen;
+	std::atomic<bool> fP100AQwenSupported;
 };
 
 int main()

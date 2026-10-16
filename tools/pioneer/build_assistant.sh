@@ -63,17 +63,24 @@ shasum -a 256 "$assistant_output"
 	"$assistant_root/src/apps/assistant/HardwareTest.cpp" -lbe -o "${assistant_output}HardwareTest"
 
 if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
-	"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar \
+	# Public/implementation ABI headers must match the pinned native runtime;
+	# unrelated user edits in the llama checkout are neither built nor changed.
+	[ "$(git -C "$assistant_root/src/libs/llama.cpp" rev-parse HEAD)" = c060ca974c773c7c3d17fd1b66dc9d312bc292c0 ]
+	git -C "$assistant_root/src/libs/llama.cpp" diff --quiet HEAD -- include ggml/include ggml/src/ggml-backend-impl.h
+	"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar -fno-exceptions -fno-rtti \
 		"$@" -I"$assistant_root/src/libs/llama.cpp/include" \
 		-I"$assistant_root/src/libs/llama.cpp/ggml/include" \
+		-I"$assistant_root/src/libs/llama.cpp/ggml/src" \
 		-I"$assistant_root/headers/private/libroot" \
 		-B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
 		-L"$assistant_release/system/libroot" -L"$ASSISTANT_LLAMA_LIB_DIR" \
 		-Wl,-rpath-link,"$ASSISTANT_LLAMA_LIB_DIR" \
 		"$assistant_root/src/apps/assistant/Service.cpp" \
 		"$assistant_root/src/apps/assistant/P100ABackend.cpp" \
+		"$assistant_root/src/apps/assistant/P100AQwen.cpp" \
+		"$assistant_root/tools/pioneer/PioneerGgmlBackend.cpp" \
 		"$assistant_root/src/apps/assistant/ModelStore.cpp" \
-		-lbe -l:libllama.so.0.2.0 -l:libggml.so.0 \
+		-lbe -l:libllama.so.0.2.0 -l:libggml.so.0 -l:libggml-base.so.0 -l:libggml-cpu.so.0.21.0 \
 		-o "${assistant_output}Service"
 	"$assistant_host_tools/rc/rc" -o "$assistant_resources/Service.rsrc" \
 		"$assistant_root/src/apps/assistant/Service.rdef"

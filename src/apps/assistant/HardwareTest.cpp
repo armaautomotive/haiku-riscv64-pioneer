@@ -1,5 +1,6 @@
 /* Copyright 2026. Distributed under the terms of the MIT License. */
 #include "Hardware.h"
+#include "ModelCatalog.h"
 #include "Protocol.h"
 #include "Settings.h"
 #include <Application.h>
@@ -9,6 +10,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include <string>
 
 class RejectionReceiver : public BLooper {
 public:
@@ -51,6 +53,11 @@ int main(int argc, char** argv)
 	assert(AssistantHardwareCanChat("p100a") && !AssistantHardwareCanChat("auto"));
 	assert(!AssistantHardwareCanChat(NULL) && AssistantHardwareIndex(NULL) == -1);
 	assert(AssistantHardwareIndex("cpu") == 0 && AssistantHardwareIndex("p100a") == 1);
+	assert(AssistantHardwareIndex("p100a-qwen")==2 && AssistantHardwareCanChat("p100a-qwen"));
+	assert(AssistantModelSupportsBackend(0,"cpu") && AssistantModelSupportsBackend(0,"p100a-qwen"));
+	assert(!AssistantModelSupportsBackend(1,"p100a-qwen") && !AssistantModelSupportsBackend(3,"p100a-qwen"));
+	assert(!AssistantModelSupportsBackend(kAssistantTinyModel,"p100a-qwen"));
+	assert(!AssistantModelSupportsBackend(0,NULL) && !AssistantModelSupportsBackend(kAssistantModelCount,"p100a-qwen"));
 	BMessage settings;
 	assert(AssistantHardwareSetting(settings) == "cpu");
 	settings.AddString("backend_id", "p100a");
@@ -60,6 +67,7 @@ int main(int argc, char** argv)
 	settings.AddString("model_path", "/test/model.gguf"); settings.AddString("unrelated", "keep");
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a", 1) == B_OK);
+	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "unknown", 1) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 0) == B_BAD_VALUE);
@@ -72,7 +80,7 @@ int main(int argc, char** argv)
 	puts("PASS: hardware policy, fail-closed saved IDs, thread limits and field preservation (no settings written)");
 	if (argc == 1) return 0;
 	if (argc != 2 || (strcmp(argv[1], "--loading-test") != 0 && strcmp(argv[1], "--service-tests") != 0
-		&& strcmp(argv[1], "--p100a-tests") != 0)) return 2;
+		&& strcmp(argv[1], "--p100a-tests") != 0 && strcmp(argv[1],"--p100a-qwen-tests")!=0)) return 2;
 	BMessenger service(kServiceSignature);
 	if (!service.IsValid()) { puts("SKIP: resident service is not running"); return 77; }
 	BMessage state = Query(service);
@@ -87,6 +95,27 @@ int main(int argc, char** argv)
 	bool initiallyReady = false; state.FindBool("ready", &initiallyReady);
 	if (loading || busy || !initiallyReady) { puts("SKIP: service tests require a ready, idle model"); return 77; }
 	const char* initialBackend = ""; state.FindString("backend_id", &initialBackend);
+	if (!strcmp(argv[1],"--p100a-qwen-tests")) {
+		if (strcmp(initialBackend,"p100a-qwen")) { puts("SKIP: experimental P100A Qwen must be selected/idle"); return 77; }
+		const char* model=""; assert(state.FindString("model_path",&model)==B_OK);
+		RejectionReceiver* receiver=new RejectionReceiver; receiver->Run();
+		for (int test=0;test<10;test++) {
+			BMessage request(kGenerate); request.AddMessenger("target",BMessenger(receiver)); request.AddInt64("id",system_time());
+			if (test!=0) request.AddString("backend_id",test==1?"cpu":"p100a-qwen");
+			if (test!=2) request.AddString("model_path",test==3?"/wrong/model.gguf":model);
+			if (test!=4) request.AddString("prompt_format",test==5?"story":"qwen-p100a");
+			request.AddString("prompt",test==8?std::string(513,'x').c_str():test==9?"":"Public rejection test");
+			if (test==6) request.AddInt32("max_tokens",17);
+			if (test==7) request.AddString("max_tokens","8");
+			assert(service.SendMessage(&request)==B_OK);
+			assert(acquire_sem_etc(receiver->done,1,B_RELATIVE_TIMEOUT,2000000)==B_OK && receiver->failed);
+			if (test!=3) assert(receiver->rejected);
+		}
+		if (receiver->Lock()) receiver->Quit();
+		BMessage after=Query(service); bool ready=false; after.FindBool("ready",&ready); assert(ready);
+		assert(after.FindString("backend_id",&value)==B_OK && !strcmp(value,"p100a-qwen"));
+		puts("PASS: P100A Qwen rejects missing/wrong hardware/model/format, token limit/type and question bounds; no inference or CPU fallback"); return 0;
+	}
 	if (strcmp(argv[1], "--p100a-tests") == 0) {
 		if (strcmp(initialBackend, "p100a")) { puts("SKIP: P100A must be selected and idle"); return 77; }
 		RejectionReceiver* receiver = new RejectionReceiver; receiver->Run();

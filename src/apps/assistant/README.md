@@ -1,8 +1,10 @@
 # Haiku Assistant
 
 Native local Qwen chat, backed by a separate resident llama.cpp service.
-Experimental P100A story completion is also available with TinyStories-260K;
-it is **not** a Qwen accelerator or a general chat model.
+Hardware now also offers **P100A — Qwen3 0.6B (experimental, slow)**, using
+the exact, two-core resident Q8_0 runtime. It is currently slower than CPU,
+not a practical acceleration claim. The older TinyStories experiment remains
+available separately.
 No kernel changes or network listener. A native tools bridge is under testing;
 desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 
@@ -51,6 +53,15 @@ count, and an availability list supplied by the resident service.
   Choosing it also selects TinyStories. Choosing CPU restores the previous
   Qwen model. Both model/backend fields are saved only after successful load.
   This is execution capability, not PCI card detection or Qwen compatibility.
+- **P100A — Qwen3 0.6B (experimental, slow)** selects the already installed,
+  hash-verified Qwen3-0.6B Q8_0 model. It does not support 1.7B, 4B or 27B.
+  First use uploads roughly 639 MiB of packed weights (about 15 minutes).
+  Later questions keep all 197 matrices resident. Expect about 0.15 output
+  tokens/second after upload, plus prompt evaluation and CPU validation.
+  Questions are single-turn: 512 UTF-8 bytes / 192 prompt tokens, eight output
+  tokens in the GUI (service limit 1–16), 256-token context. No history or
+  system tools are used in this experimental mode. CPU mode restores the
+  previous CPU model/thread setting.
 
 Changing hardware is rejected during model loading or an active request.
 Unknown IDs, unsupported backends, malformed settings and invalid thread
@@ -63,11 +74,33 @@ to CPU. There is no Auto mode or automatic CPU fallback.
 
 Hardware selection does not execute card work, load firmware, change power or
 download models. Capability detection reads driver ABI metadata only. Actual
-P100A generation uses the existing guarded data-tile transactions, which
+TinyStories generation uses the existing guarded data-tile transactions, which
 temporarily map BAR0/BAR2, execute/check/stop the tile, and restore L1/TLB/PCI
 state. BAR4 stays unforwarded and bus mastering/DMA remain disabled. A failed
 card transaction disables the backend for that service session; a driver cold
 recovery latch is never bypassed, even after restarting the service.
+
+P100A Qwen instead uses the separately verified owned resident session and
+two fixed workers. Every learned matrix/classifier product must run on the
+card: each evaluated position requires 197 retained tensors, 163,692 verified
+upload pages and 234 real matvec calls. CPU handles attention/KV/norms,
+activation preprocessing and an independent 32-thread full-logit reference.
+Cosine >= .999, relative L2 <= .02 and CPU-identical greedy output tokens are
+required; failed output is never substituted. Card failures disable both
+card choices for the service session, with no automatic CPU fallback.
+The existing driver owns mappings/high host memory, checks both completion/
+stop proofs, and retains quarantine/cold-recovery gates. This update does not
+change the kernel, firmware, boot media or runtime libraries.
+
+Uploads and matvecs report progress and honor Stop only between completed
+transactions; no thread is killed during an ioctl. Cancelling clears the
+partial card context safely and can require a fresh upload next time. Closing
+the service or explicitly switching hardware releases its resident session.
+CPU contexts remain CPU-only even after accelerator registration: they use
+an inert backend with no supported operations and no card access. It accepts
+only its default host-storage buffer to satisfy ggml's scheduler contract.
+An additional service guard refuses CPU inference if an executable card
+context unexpectedly exists.
 
 Diagnostics: `assistantctl hardware` lists capabilities; `assistantctl hardware
 cpu [THREADS]` selects CPU, while `assistantctl hardware p100a` queues the
@@ -79,6 +112,55 @@ resident service, writes only the current CPU/thread selection, and tests
 that a P100A-tagged request is rejected without inference.
 Service-dependent test modes return skip code 77 if their ready/loading
 preconditions are no longer true; they do not stop the service to satisfy them.
+Use `assistantctl hardware p100a-qwen` for the new Qwen/card pair;
+`HaikuAssistantHardwareTest --p100a-qwen-tests` checks rejection of unpinned
+hardware/model, wrong request format, output bounds and question limits
+without executing inference.
+
+### Qwen/P100A integration checks on Pioneer (2026-10-16)
+
+The full standalone cross-build passes with warnings as errors against the
+pinned native llama runtime. Native hardware-policy/settings, loading-lock,
+service capability/selection and model-store tests pass. Ten deliberately
+invalid Qwen/P100A requests are rejected without inference. After registering
+the accelerator and selecting Qwen/P100A, explicitly switching back to CPU
+restores Qwen3-1.7B and 32 threads; the public prompt `Reply with the single
+word READY.` returns `READY`, success true. A one-second public cancellation
+test succeeds before card upload begins and retains the selected model.
+
+An initial inactive-backend implementation rejected its own default host
+buffer, triggering ggml's scheduler assertion during CPU switch-back, before
+any card execution. The corrected backend accepts that storage but rejects
+**every operation**. Native CPU switch-back/inference now passes; a new
+ASan/UBSan scheduler-reservation/assignment regression verifies that the
+inactive backend is never chosen and opens no device. The backend suite also
+injects cancellation before/after completed uploads and matvecs, sticky device
+failure and exclusive-owner cleanup. Separate resident session, stream,
+tensor-cache and benchmark-controller software tests pass. These offline
+fixtures are not native performance evidence.
+
+The final service's first full public request, `What is the capital of
+France?`, exits zero and returns `The capital of France is **Paris**`:
+eight independently checked output tokens in 1,075.5 seconds including cold
+upload. Each evaluated position passes the full-logit, greedy-output and
+exact device-coverage gates above. All 197 matrices remain resident afterward;
+the service stays ready with no model error. This is a correctness/integration
+result, not a CPU speedup or support for a larger model.
+
+The approved ordinary GUI is reopened with the new Hardware dialog. Its
+actual Send action returns the same eight-token public answer using the
+warm weights, with no further upload or model reload. Selected/running both
+remain `p100a-qwen`, all three hardware choices are listed, and the correct
+experimental description is shown. Applying the already selected pair keeps
+the warm model; the rejection tests still pass afterward. The GUI is left
+open with this public reply and the card model ready. This warm test is not
+a generation-throughput or CPU-speed comparison.
+
+Original application/service/dialog/control/settings backups and this
+integration's public test logs are retained privately on the Pioneer under
+`/boot/home/pioneer-assistant-qwen-20261016`. No existing conversation text was
+read. Runtime libraries, model data, kernel, firmware and boot configuration
+are unchanged; the pre-inference card audit passes with cold-recovery zero.
 
 ## Model installation and selection
 
@@ -126,15 +208,12 @@ start a fresh GUI conversation, and multi-step tool sessions pin their model
 path to prevent silently switching mid-request.
 
 The window explicitly lists **Qwen3.8 27B as unsupported** and disables install
-and activation. All Qwen entries use CPU. Only TinyStories uses the P100A;
-neither a full-Qwen P100A backend nor Qwen3.8 architecture support exists in
-this pinned llama runtime yet.
-
-The subsequent device-residency work has verified a fixed on-card GDDR-to-L1
-read with complete restoration, but has not added a resident Qwen backend
-or demonstrated a Qwen speedup. The hardware menu deliberately remains
-unchanged. The required performance gates and repeated CPU comparison are
-recorded in [the port log](../../../tools/pioneer/TENSTORRENT_PORT.md#october-15-device-residency-prerequisite-not-qwen-acceleration).
+and activation. Models' normal **Use on CPU** action remains CPU-only;
+choose **Hardware… → P100A — Qwen3 0.6B** for the experimental card runtime.
+The pinned llama runtime still lacks Qwen3.8 architecture support. Correct
+standalone 0.6B generation is verified, but practical CPU-beating performance
+is not. The detailed qualification history is in
+[the port log](../../../tools/pioneer/TENSTORRENT_PORT.md).
 
 ### P100A experimental story mode
 
@@ -186,8 +265,9 @@ Pinned llama revision: `c060ca974c773c7c3d17fd1b66dc9d312bc292c0`.
 Model: Qwen3-0.6B-Q8_0, with its explicit ChatML/non-thinking template.
 CPU threads default to the lesser of 32 or the available CPU count. Change the
 saved value in the GUI or with `assistantctl threads N`; it applies to the next
-request without reloading the model. Context is 4,096 tokens, batches are 64,
-and the maximum response is 256 tokens.
+request without reloading the model. CPU-mode context is 4,096 tokens,
+batches are 64, and the maximum response is 256 tokens. The experimental
+card mode has the separate, smaller limits documented above.
 The Apply button saves `~/config/settings/HaikuAssistant_settings`. Both prompt
 processing and generation use this count; an in-flight request keeps its old
 count. This controls worker threads, not CPU affinity or every service helper

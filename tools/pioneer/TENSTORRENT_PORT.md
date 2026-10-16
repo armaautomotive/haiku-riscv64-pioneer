@@ -9,7 +9,8 @@ CPU-identical greedy reply tokens. Compensated SFPU accumulation fixed the
 reproduced rounding drift. This is **correctness, not speed qualification**:
 the three-sample warm diagnostic with exact activation reuse is0.148549tokens/s
 (prior uncached two-core0.140525; one-core exact0.115836), not a matched
-benchmark or CPU speedup. Assistant remains unchanged;
+benchmark or CPU speedup. Assistant now offers this runtime as the explicit
+experimental `p100a-qwen` hardware option for the pinned 0.6B model only;
 27B/mixed quantization and practical acceleration still require further work.
 On October16 the user explicitly approved the activation-reuse kernel test,
 including possible freeze/power-cycle recovery. The replacement driver is now
@@ -18,7 +19,7 @@ full-size native projections AND full Qwen generation pass their exact-bit,
 reuse, ownership, logit/token and cleanup checks. See the records below.
 
 The following early milestones are chronological; their narrower intermediate
-limitations do not supersede the current standalone Qwen correctness result.
+limitations do not supersede the current Qwen correctness/integration results.
 
 Source/feasibility investigation started 2026-09-15. On October 15,
 TinyStories-260K generated eight verified tokens under Haiku with every
@@ -121,6 +122,69 @@ panicked. See [the SD/xHCI recovery record](XHCI_RECOVERY_20261012.md).
 Jam has now been restored for the USB driver build. The cleanup fix is not
 a PCI-allocation fix or evidence of a functioning accelerator. Keep the P100A
 out while establishing the Haiku port baseline.
+
+### October 16: explicit Qwen/P100A mode in Assistant
+
+The ordinary Assistant, Hardware dialog and control tool now select the
+verified Qwen3-0.6B Q8_0/two-core exact dual-reuse pair as `p100a-qwen`.
+CPU and legacy TinyStories remain separate explicit choices. The CPU model
+and thread preference are preserved. The new mode is clearly labeled slower
+than CPU: one short raw question, no history/tools, eight output tokens in
+the GUI, 512 input bytes / 192 prompt tokens and a 256-token context.
+No model download, kernel, firmware, boot, power or runtime-library change
+is involved. The installed driver remains `fd1672b327f655cb739b7a481367b9ecb5d76a8a304d995c2077c4b35e950d9a`.
+
+Every evaluated position requires all 197 learned matrices, 670,482,432 packed
+bytes, exactly 163,692 verified upload pages and 234 real matvecs. The CPU
+handles attention/KV/norms and an independent 32-thread full-vocabulary check;
+output comes only from card logits, never reference substitution. Existing
+cosine/L2 and CPU-identical greedy output gates remain enforced. A device or
+uncertain-cleanup fault disables both card options for the service session;
+there is no automatic retry or CPU fallback. Stop is honored only between
+completed uploads/matvecs. Successful requests retain weights and ownership.
+
+The first complete native Assistant request `What is the capital of France?`
+returns `The capital of France is **Paris**`, eight checked output tokens,
+success true and exit zero, in 1,075.5 seconds including first-use upload.
+All matrices remain resident and the service is ready without a model error.
+This is integration/correctness evidence, **not practical acceleration or
+27B qualification**. The earlier standalone performance figures remain
+diagnostics, not an Assistant benchmark.
+
+The reopened ordinary GUI's real Send action also returns the same checked
+eight-token public answer, reusing warm weights without any upload or model
+reload. Hardware shows selected/running `p100a-qwen`, three choices and the
+experimental limitations. Applying the current pair retains its single model
+load; malformed-request checks still pass afterward. The GUI and model are
+left ready, with this public reply visible and the resident session warm.
+This is not a warm throughput or CPU-comparison benchmark. The public GUI
+evidence is `public-gui-qwen.log` in the native folder below; local copies of
+public evidence are ignored under `generated.pioneer/tenstorrent/assistant-qwen-20261016/`.
+
+Native settings/capability, busy-loading, malformed-request and model-store
+checks pass. CPU switch-back after accelerator registration restores the
+saved Qwen3-1.7B/32-thread pair and answers the public READY prompt. An initial
+inactive-backend scheduler assertion was caught before card execution: the
+inactive device must accept its default host buffer while rejecting every
+operation. The corrected native CPU round-trip and a new ASan/UBSan scheduler
+assignment regression pass. Boundary-cancellation/failure/cache software
+tests and resident session/stream/tensor/benchmark-controller regressions pass.
+The one-second native cancellation test stops before opening the device;
+it is not evidence of cancellation during a native transfer. The pre-test
+card audit passes with cold-recovery zero. No competing card probes are run
+while Assistant retains its warm exclusive session.
+
+The human approved reopening the saved-chat GUI. Original userland/settings
+backups and public logs are retained in
+`/boot/home/pioneer-assistant-qwen-20261016`; no private conversation was read.
+Final service SHA-256 is `7f0f199d14ee931a17d44305d2ad715191e2fb40c2235aeaba48cd0d9e10340b`,
+GUI `30d19d8a9e7f0b38ecc0916b8988ca6968643b08bff113a2a74707e917bdcf86`,
+Hardware dialog `6ef3f18d44797af23ccd51687c98d5b9885c3915298a30bf25b2303f939f4011`,
+and control `ae1d8343fdd137012a4f71176465ee3bd6894cb8f4c1d0a01981e4a9cca5921a`.
+The full standalone cross-build passes with warnings as errors. Reviewed
+sources are synced to the existing build mirror; the user's dirty llama.cpp
+submodule is neither built from nor changed. See the
+[Assistant integration checks](../../src/apps/assistant/README.md#qwenp100a-integration-checks-on-pioneer-2026-10-16).
 
 ### October 15: checked streamed uploads and numerical localization
 
