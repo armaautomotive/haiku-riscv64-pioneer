@@ -2,6 +2,51 @@
 
 ## Status
 
+### October17: OFFLINE whole-position decoder candidate (07:18 UTC)
+
+Fast native Qwen is NOT achieved. Installed native driver remains contract12
+and its measured short decode rate~0.51tok/s. This new candidate is NOT in
+the driver,Assistant or native inference. No model-speed claim is made.
+
+`blackhole_decoder.cpp` compiles a fixed28-layer Qwen3-0.6B whole-position
+program into16376 bytes,within the separate32KiB code region. Candidate SHA
+`3a70bd5a3c3c10afd8a128d83945485850e4c783d6fd699c63a9b267e6f7843f`.
+Private data at146000 fits4KiB without overlapping NoC scratch147000.
+Hidden/residual,Q/K,norm/gate,input and attention scratch lifetimes are
+explicit. It combines RMSNorm,learned norm scales,Q/K/V,NEOX RoPE,device KV
+attention,O,residual,FFN and final norm/classifier;only the final full
+vocabulary uses the owned host buffer. No intermediate host transfer.
+
+Actual linked master/scalar/attention/SFPU instruction tests pass all28
+layers with ZERO and independent sparse NONZERO matrix-peer fixtures.
+The sparse test passes TWO sequential positions,changed embedding/RoPE,
+exact full-vocabulary outputs and every cached K/V word against an
+independent CPU reference. All197 projections,28FFNs,224 heads,10871 peer
+executions,119 sequence budgets,physical counter wrap and all151936
+returned words are checked. These are modeled sparse peers,NOT execution
+of the entire native learned model;unchanged real worker bytes are tested
+separately by existing matrix/FFN/wide suites. Stack low6fa0c is inside the
+owned8KiB stack. Malformed descriptors,first-read timeout/counter errors,
+dropped first/gate copies and dropped/partial/paired-corrupt final host
+transfers are rejected without valid output publication.
+
+RMS/sqrt prerequisites pass2M exact IEEE sqrt cases and40000 CPU-reference
+rows;linked scalar RMS/NEOX code also passes actual-instruction tests.
+512 nontrivial RoPE vectors match in-place/out-of-place CPU arithmetic.
+No unsupported integer DIV/REM or floating divide/sqrt is linked. One
+test oracle incorrectly used the OLD half converter that flushes very
+small values;it was corrected to independent host IEEE binary16,NOT by
+changing GPU arithmetic or relaxing checks. A coefficient-read fence was
+added before any CPU-equivalent scalar consumption.
+
+Existing resident-attention image still rebuilds to its original
+`ac1c7a4a079fffb36223e1a4b4a10eaaf48505544c851b782109a6b214d4c05f`;
+contract12 layer image still rebuilds byte-for-byte to`b9dae241...39b1e`.
+The next REQUIRED gates are a dedicated fail-closed kernel ownership/code
+controller and fault tests,immutable model registration,then actual native
+whole-Qwen numerical/coverage/timing qualification. The candidate must NOT
+be installed merely because these offline tests passed.
+
 ### October17: narrow worker protocol/full Qwen contract v12 (06:59 UTC)
 
 Fast Qwen is STILL NOT achieved. Native small-matrix timings and exact

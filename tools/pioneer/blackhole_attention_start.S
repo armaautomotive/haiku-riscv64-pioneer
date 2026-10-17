@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 .option norvc
 .option norelax
+.ifndef TT_ATTENTION_DATA_ONLY
 .section .boot,"ax"
 .global _start
 _start:
@@ -28,6 +29,7 @@ attention_fault_park:
 	lw t1,0(t0)
 	fence
 1: j 1b
+.endif
 
 .section .rodata.attention,"a"
 .balign 4

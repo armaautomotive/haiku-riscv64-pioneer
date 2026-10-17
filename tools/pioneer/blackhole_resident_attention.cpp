@@ -36,7 +36,10 @@ static void Transfer(bool write,uint32_t local,uint32_t remote,unsigned bytes)
 	attention_fault_park(); // No retry, reset or output publication.
 }
 
-extern "C" unsigned attention_main()
+#ifndef PIONEER_RESIDENT_ATTENTION_NAME
+#define PIONEER_RESIDENT_ATTENTION_NAME attention_main
+#endif
+extern "C" unsigned PIONEER_RESIDENT_ATTENTION_NAME()
 {
 	volatile uint32_t* descriptor=Words(0x74000);
 	unsigned tokens=descriptor[1],layer=descriptor[2];

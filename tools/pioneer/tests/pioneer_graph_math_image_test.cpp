@@ -1,7 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_COORDINATED_MACHINE_ONLY
 #include "pioneer_coordinated_worker_test.cpp"
-#include "../PioneerGraphMath.h"
+#include "../PioneerGraphNorm.h"
+#include "../PioneerGraphRope.h"
 #include <map>
 #include <string>
 struct ScalarMachine:Machine {
@@ -13,14 +14,16 @@ struct ScalarMachine:Machine {
 		std::string directory(root); code=Read((directory+"/code.bin").c_str()); auto boot=Read((directory+"/boot.bin").c_str());
 		assert(boot.size()==4 && code.size()<32764 && !(code.size()&3)); l1[0]=Word(boot,0);
 		for (unsigned i=0;i<code.size()/4;i++) l1[1+i]=Word(code,i*4);
-		memory[0x74000]=0x31504c47; memory[0x74004]=n; memory[0x74008]=mode; memory[0x7400c]=0;
+		memory[0x74000]=0x31504c47; memory[0x74004]=n; memory[0x74008]=mode; memory[0x7400c]=mode==5?(n%1024?128:1024):0;
 		memory[0x17ffc0]=memory[0x17ffc4]=memory[0x17ffc8]=0;
 		for (unsigned i=0;i<3072;i++) {
-			float a=mode==2?float(i+1)*.00137f:float(sin(i*.713)*12.7),b=mode==2?float(i+3)*.0193f:float(cos(i*.219)*3.1);
+			float a=mode==2 || mode==4?float(i+1)*.00137f:float(sin(i*.713)*12.7),b=mode==2?float(i+3)*.0193f:float(cos(i*.219)*3.1);
 			memory[0x84000+i*4]=PioneerAttentionBits(a); memory[0x87000+i*4]=PioneerAttentionBits(b);
 			memory[0x90000+i*4]=0xdeadbeef;
 		}
 		for (unsigned i=0;i<1536;i++) memory[0x80000+i*4]=0xdeadbeef;
+		if (mode==6) for (unsigned i=0;i<64;i++) { memory[0x87000+i*8]=PioneerAttentionBits(float(cos(i*.193)));
+			memory[0x87004+i*8]=PioneerAttentionBits(float(sin(i*.193))); }
 		for (unsigned i=0;i<96;i++) memory[0x83000+i*4]=0xdeadbeef;
 	}
 	static bool Range(uint32_t a,uint32_t first,unsigned bytes) { return a>=first && a-first<bytes; }
@@ -83,14 +86,31 @@ struct ScalarMachine:Machine {
 	}
 	void Verify() {
 		assert(outputWrites==n);
+		if (mode==6) {
+			for (unsigned head=0;head<n;head+=128) for (unsigned i=0;i<64;i++) {
+				float a=PioneerAttentionFloat(memory.at(0x84000+(head+i)*4)),b=PioneerAttentionFloat(memory.at(0x84000+(head+64+i)*4));
+				float c=PioneerAttentionFloat(memory.at(0x87000+i*8)),s=PioneerAttentionFloat(memory.at(0x87004+i*8));
+				assert(memory.at(0x90000+(head+i)*4)==PioneerAttentionBits(a*c-b*s) && memory.at(0x90000+(head+64+i)*4)==PioneerAttentionBits(a*s+b*c));
+			}
+			assert(!operandWrites && !scaleWrites); return;
+		}
+		if (mode==5) {
+			unsigned width=memory.at(0x7400c);
+			for (unsigned start=0;start<n;start+=width) {
+				double sum=0; for (unsigned i=0;i<width;i++) { float x=PioneerAttentionFloat(memory.at(0x84000+(start+i)*4)); sum+=double(x*x); }
+				float mean=float(sum/width),scale=1.0f/sqrtf(mean+1e-6f);
+				for (unsigned i=0;i<width;i++) assert(memory.at(0x90000+(start+i)*4)==PioneerAttentionBits(PioneerAttentionFloat(memory.at(0x84000+(start+i)*4))*scale));
+			}
+			assert(!operandWrites && !scaleWrites); return;
+		}
 		for (unsigned i=0;i<n;i++) {
 			float a=PioneerAttentionFloat(memory.at(0x84000+i*4)),b=PioneerAttentionFloat(memory.at(0x87000+i*4));
 			float actual=PioneerAttentionFloat(memory.at(0x90000+i*4));
-			float reference=mode==2?a/b:mode?(a/(1.0f+expf(-a)))*b:a;
-			if (mode==2 || !mode) assert(PioneerAttentionBits(actual)==PioneerAttentionBits(reference));
+			float reference=mode==4?sqrtf(a):mode==2?a/b:mode?(a/(1.0f+expf(-a)))*b:a;
+			if (mode==2 || mode==4 || !mode) assert(PioneerAttentionBits(actual)==PioneerAttentionBits(reference));
 			else assert(isfinite(actual) && fabsf(actual-reference)<3e-6f*(1+fabsf(reference)));
 		}
-		if (mode==2) { assert(!operandWrites && !scaleWrites); return; }
+		if (mode==2 || mode==4) { assert(!operandWrites && !scaleWrites); return; }
 		assert(operandWrites==n/2 && scaleWrites==n/32);
 		for (unsigned block=0;block<n/32;block++) {
 			float maximum=0;
@@ -108,16 +128,22 @@ struct ScalarMachine:Machine {
 int main(int argc,char** argv)
 {
 	assert(argc==2);
-	for (unsigned mode:{0U,1U,2U,3U}) for (unsigned n:{32U,64U,1024U,3072U}) {
+	for (unsigned mode:{0U,1U,2U,3U,4U,5U,6U}) for (unsigned n:{32U,64U,128U,1024U,2048U,3072U}) {
+		if (mode==5 && n<128) continue;
+		if (mode==6 && n!=1024 && n!=2048) continue;
 		ScalarMachine machine(argv[1],n,mode); assert(machine.RunScalar()); machine.Verify();
 		printf("OFFLINE actual RV32IMF graph math mode%u n%u steps%u stack%08x PASS\n",mode,n,machine.steps,machine.minStack);
 	}
 	for (unsigned field=0;field<5;field++) {
 		ScalarMachine m(argv[1],32,1);
 		if (field==0) m.memory[0x74000]^=1; if (field==1) m.memory[0x74004]=0;
-		if (field==2) m.memory[0x74004]=3104; if (field==3) m.memory[0x74008]=4; if (field==4) m.memory[0x7400c]=1;
+		if (field==2) m.memory[0x74004]=3104; if (field==3) m.memory[0x74008]=7; if (field==4) m.memory[0x7400c]=1;
 		assert(!m.RunScalar() && !m.outputWrites && !m.operandWrites && !m.scaleWrites);
 	}
 	{ ScalarMachine m(argv[1],32,1); m.memory[0x84000]=0x7f800000; assert(!m.RunScalar() && !m.operandWrites && !m.scaleWrites); }
-	puts("PASS OFFLINE actual scalar instruction image,SiLU/Q8/division bounds,all used words,refused malformed/nonfinite input,no fdiv/fsqrt/NoC/control/reset/driver exposure");
+	for (unsigned field=0;field<4;field++) { ScalarMachine m(argv[1],128,5);
+		if (field==0) m.memory[0x7400c]=64; if (field==1) m.memory[0x84000]=0x7f800000;
+		if (field==2) m.memory[0x84000]=1; if (field==3) m.memory[0x84000]=0x47800000;
+		assert(!m.RunScalar() && !m.outputWrites && !m.operandWrites && !m.scaleWrites); }
+	puts("PASS OFFLINE actual scalar instruction image,SiLU/Q8/division/sqrt/RMS bounds,all used words,refused malformed/nonfinite input,no fdiv/fsqrt/NoC/control/reset/driver exposure");
 }

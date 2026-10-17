@@ -12,12 +12,14 @@ case ${PIONEER_COORDINATOR_COMPACT_INPUT:-0} in 0|1) ;; *) echo 'Compact-input i
 case ${PIONEER_COORDINATOR_LAYER:-0} in 0|1) ;; *) echo 'Layer-image flag must be0 or1' >&2; exit 2;; esac
 case ${PIONEER_COORDINATOR_WIDE_OUTPUT:-0} in 0|1) ;; *) echo 'Wide-output flag must be0 or1' >&2; exit 2;; esac
 case ${PIONEER_COORDINATOR_SPAN_UPLOAD:-0} in 0|1) ;; *) echo 'Span-upload flag must be0 or1' >&2; exit 2;; esac
+case ${PIONEER_COORDINATOR_DECODER:-0} in 0|1) ;; *) echo 'Decoder flag must be0 or1' >&2; exit 2;; esac
 [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_FUSED_OUTPUT:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ]; } || exit 2
 [ "${PIONEER_COORDINATOR_COMPACT_INPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_FUSED_OUTPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_LAYER:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_COMPACT_INPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_WIDE_OUTPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_COMPACT_INPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_SPAN_UPLOAD:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_WIDE_OUTPUT:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_LAYER:-0}" = 1 ]; } || exit 2
+[ "${PIONEER_COORDINATOR_DECODER:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_WIDE_OUTPUT:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_LAYER:-0}" = 1 ]; } || exit 2
 case "$output" in /*) ;; *) echo 'Absolute output required' >&2; exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || { echo 'Fresh output required' >&2; exit 2; }
 umask 077
@@ -38,6 +40,7 @@ if [ "${PIONEER_COORDINATOR_LAYER:-0}" = 1 ]; then
  isa=rv32imf
  set -- -ffp-contract=off
 fi
+if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decoder.cpp; fi
 "$cross-g++" -std=c++11 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti "$@" \
  -fno-stack-protector -fno-pic -fno-pie -ffunction-sections -fdata-sections -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march="$isa" -mabi=ilp32 \
@@ -50,8 +53,13 @@ fi
  -DPIONEER_COORDINATOR_SPAN_UPLOAD=${PIONEER_COORDINATOR_SPAN_UPLOAD:-0} \
  -c "$directory/$source_file" -o "$output/program.o"
 "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"
+set --
+if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then
+ "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax --defsym TT_ATTENTION_DATA_ONLY=1 "$directory/blackhole_attention_start.S" -o "$output/attention-exact.o"
+ set -- "$output/attention-exact.o"
+fi
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/$link_file" \
- "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"
+ "$output/start.o" "$output/program.o" "$@" -Map "$output/program.map" -o "$output/program.elf"
 "$cross-objcopy" -O binary -j .text "$output/program.elf" "$output/code.bin"
 "$cross-objcopy" -O binary -j .boot "$output/program.elf" "$output/boot.bin"
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
