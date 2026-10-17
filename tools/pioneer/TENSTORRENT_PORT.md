@@ -2,6 +2,78 @@
 
 ## Status
 
+### October17: requested Qwen3.8-27B download verified on Mac (18:07 UTC)
+
+The complete `Qwen3.8-27B-Q4_K_M.gguf` is downloaded to the ignored local
+`generated.pioneer/models/` directory. Exact length18,973,870,528B and full
+SHA256 `c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`
+match the [published pinned quantization](https://huggingface.co/ggml-org/Qwen3.8-27B-GGUF/blob/71bc7b627595dc8a91039addd9c791ae548d6747/Qwen3.8-27B-Q4_K_M.gguf).
+Revision71bc7b627595dc8a91039addd9c791ae548d6747. Weights are NOT committed
+to Git. Native Haiku copy is still IN PROGRESS and NOT yet accepted or run.
+
+Read-only bounded GGUF inspection validates ALL851 tensor names/shapes/
+formats/file extents. This is a Qwen35-family HYBRID:64 layers,48 Gated
+DeltaNet +16 gated full-attention,NOT a larger instance of the qualified
+Qwen3-0.6B backend. Mixed weights:193Q4_K/288Q8_0/17Q6_K/353F32. New
+`tenstorrent_qwen38_plan.py` proposes packed row partitions across seven
+conservative3GiB bank budgets,without full BF16 expansion. At8K context,
+proposed total allocations20,128,735,232B include150,994,944B FP32 delta
+state,5,898,240B convolution history,536,870,912B FP16 KV and64MiB scratch
+PER bank. This is an OFFLINE manifest,NOT route/allocation/driver authority;
+installed driver still permits only its qualified bank-zero2GiB arena.
+Guarded multi-bank leases,mixed packed kernels,GatedDeltaNet/convolution/
+gated-attention execution and whole-model validation remain UNIMPLEMENTED.
+No27B P100A throughput or usability claim. Qualified43 remains unchanged.
+
+Native HTTPS initially refused because Haiku's wall clock was1970;corrected
+UTC time from the trusted host,NEVER disabled certificate validation.
+Native network throughput remains slow. Temporary PUBLIC-file-only LAN
+server verifies source SHA BEFORE listening,serves only a hash-named path
+to Pioneer10.0.0.247,permits only declared ranges/resume suffixes,and closes
+after all ranges or a bounded deadline. No keys,templates,other files,
+uploads or directory listing. Receiver must independently hash the WHOLE
+assembled native file before publishing its final name. Partial files are
+never treated as executable models. `wget` needs BOTH Range and matching
+`--start-pos`;manual Range alone produced empty files and was rejected.
+Resumes append through buffered `dd`,never truncate an existing part.
+
+Standalone assembly helper accepts only regular non-symlink parts totaling
+the exact pinned full length,creates a FRESH0600 output with O_EXCL,checks
+all I/O and source identity/length,then fsyncs. Full SHA is STILL mandatory.
+Cross-built helperfce389b56ec3153cac86360c3cfd6431e839719709b4de3d1ffa647cbae4e8bd
+was independently hash-verified on Haiku. Host ASan/UBSan assembly fixtures
+pass byte-for-byte concatenation,existing-output preservation,source and
+destination symlink/empty/short/oversized refusal. GGUF6/planner3/transfer5/
+assembly1 tests PASS,including every tensor geometry/format corruption,
+all rows/source bytes/bank bounds,and range/peer/path/resume refusals.
+All four existing native CPU runtime library hashes match prior pins;
+CPU-only full-model load smoke is planned AFTER native full SHA passes.
+No GPU work,driver replacement,reboot,SD/default-boot change,Assistant
+restart or build/read of the dirty llama implementation occurred here.
+
+At18:13 UTC,the slow native copy is continuing. ONE last-range `wget`
+was explicitly stopped by its verified PID3327;its750,874,832B prefix is
+unchanged. Experimental standalone PUBLIC-data receiver198f33d7 requests
+only the remaining1,240,074,506B into a FRESH suffix file,with4MiB socket
+buffer and1MiB body I/O. It requires exact206/length/range headers,rejects
+redirect/chunked/duplicate-length/duplicate-range responses,and opens only
+O_EXCL/O_NOFOLLOW0600 output. Full assembled SHA remains mandatory;this
+is NOT a model/GPU loader. Its host parser ASan/UBSan test passes,including
+wrong status/length/range/full-size,truncation,extra bytes and integer
+overflow refusals. Native throughput improvement is NOT established.
+
+Hash-verified one-shot completion process waits boundedly for exact parts
+and no remaining download writers,assembles to a fresh file,hashes the
+ENTIRE native output,then publishes the final model name ONLY on an exact
+match. Original parts remain preserved. If successful,it rechecks all four
+native CPU library pins and attempts ONE CPU-only `llama-bench` generated
+token with GPU layers/KV/op offload disabled,no warmup/network,32 threads
+and a900s process timeout. This is a load/architecture smoke,NOT generated
+text quality,steady throughput or27B P100A support. Progress/results:
+`/boot/home/models/qwen38-parallel-20261017/finish-copy.log`,with fresh
+`cpu-smoke.json`/`cpu-smoke.stderr` only after native model verification.
+No native full-SHA/CPU-smoke result is claimed before those logs complete.
+
 ### October17:whole QKV private11 image OFFLINE PASS (17:28 UTC)
 
 Pioneer remains ON and responsive in Haiku64/full127.62GiB,qualified43

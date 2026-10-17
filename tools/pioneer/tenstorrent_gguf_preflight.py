@@ -70,7 +70,7 @@ class Reader:
         return {"array_type": element, "count": count} if keep else None
 
 
-def inspect(data, full_size):
+def inspect(data, full_size, include_tensors=False):
     if not 24 <= full_size < 2**63:
         raise ValueError("invalid declared full size")
     r = Reader(data)
@@ -118,7 +118,7 @@ def inspect(data, full_size):
             raise ValueError("overlapping tensor or bounds beyond declared full file")
         end = tensor["offset"]+tensor["bytes"]
         tensor["file_offset"] = data_start+tensor["offset"]
-    return {"metadata": metadata, "tensor_count": tensor_count,
+    result = {"metadata": metadata, "tensor_count": tensor_count,
             "header_bytes": r.offset, "data_start": data_start,
             "declared_full_bytes": full_size, "tensor_bytes": sum(t["bytes"] for t in tensors),
             "formats": dict(collections.Counter(t["format"] for t in tensors)),
@@ -130,6 +130,9 @@ def inspect(data, full_size):
                                           for t in tensors if t["format"] == "Q8_0" and len(t["shape"]) == 2),
             "selected_tensors": [t for t in tensors if t["name"].startswith(("blk.0.", "blk.3."))],
             "header_only_not_runnable": len(data) < full_size}
+    if include_tensors:
+        result["tensors"] = tensors
+    return result
 
 
 def main():

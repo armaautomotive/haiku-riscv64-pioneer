@@ -66,6 +66,13 @@ class PreflightTests(unittest.TestCase):
         self.assertEqual(result["q8_packed_matrix_bytes"], 73728)
         self.assertTrue(result["header_only_not_runnable"])
 
+    def test_all_tensor_inventory_is_explicit_and_excludes_templates(self):
+        self.assertNotIn("tensors", module.inspect(fixture(), 1024))
+        result = module.inspect(fixture(), 1024, include_tensors=True)
+        self.assertEqual(len(result["tensors"]), 1)
+        self.assertEqual(result["tensors"], result["selected_tensors"])
+        self.assertNotIn("tokenizer.chat_template", result["metadata"])
+
 
 if __name__ == "__main__":
     unittest.main()
