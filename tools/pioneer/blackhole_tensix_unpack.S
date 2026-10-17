@@ -18,6 +18,14 @@
 	.error "Native partial accumulation requires the separate inline image"
 .endif
 .endif
+.ifdef TT_RUNTIME_Q8_PHASE_PIPE
+.ifndef TT_RUNTIME_Q8_INLINE
+	.error "Fidelity pipeline requires the separate inline image"
+.endif
+.ifdef TT_RUNTIME_Q8_PARTIAL
+	.error "Fidelity pipeline retains the exact accumulation engine"
+.endif
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -456,6 +464,24 @@ copy_nonuniform_word:
 	.org 0x480, 0
 .endif
 full_bf16_math:
+.ifdef TT_RUNTIME_Q8_PHASE_PIPE
+	/* Official Blackhole ADDR_MOD_DST_SEC1 register29:only fidelity +=1.
+	 * Configure/drain once per operand tile,not between every phase.
+	 * Keep this inside the reserved block:ALL public completion PCs and
+	 * final status/readback/fence instructions remain byte-for-byte. */
+	emit 0xb21d2000
+	jal ra, drain
+	/* Same exact four integer partial products. AddrMod1 advances the
+	 * FPU-owned fidelity RWC after each operation;four increments wrap0.
+	 * No CFGEXU/FPU race,per-phase RISC handshake,replay or lost phase.
+	 * Existing full drain still precedes any accumulator/SFPU consumer. */
+	emit 0x26004020
+	emit 0x26004020
+	emit 0x26004020
+	emit 0x26c04020
+	jal ra, drain
+	j full_bf16_return
+.else
 	li t2, 0
 full_bf16_phase:
 	li t0, 0xb20b0000 /* ThreadConfig FIDELITY_BASE.Phase, documented index 11 */
@@ -473,6 +499,7 @@ full_bf16_emit:
 	li t3, 4
 	bne t2, t3, full_bf16_phase
 	j full_bf16_return
+.endif
 .endif
 .macro bf16_small value
 .ifdef TT_UNPACK_RESIDENT

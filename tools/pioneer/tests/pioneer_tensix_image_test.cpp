@@ -34,6 +34,7 @@ struct Machine {
 	bool dropLowFidelity = false;
 	bool dropUnpack = false, backendWait = false;
 	uint32_t gpr63 = 0;
+	unsigned fidelityPhase=0,phaseVisits[4]={};
 	unsigned unpackReads = 0, inputStores = 0;
 	unsigned adcX0[2] = {}, adcX1[2] = {};
 	bool UnpackBoundsValid() { return adcX0[0] == 0 && adcX1[0] == 255 && adcX0[1] == 0 && adcX1[1] == 127; }
@@ -113,6 +114,7 @@ struct Machine {
 		} else if (op == 0x3700000f) {
 			// All increments are zero and all RWCs are reset by this exact opcode.
 			assert(thread[0] == 0);
+			fidelityPhase=0;
 		} else if (opcode == 0x71) {
 			unsigned reg = (op >> 20) & 15;
 			assert(reg < 2 && ((op >> 16) & 15) == 0);
@@ -164,7 +166,10 @@ struct Machine {
 			}
 			moveInstructions++;
 		}
-		else if (op == 0x26000020 || op == 0x26c00020) {
+		else if ((op&~0x4000U) == 0x26000020 || (op&~0x4000U) == 0x26c00020) {
+			unsigned modifier=(op>>14)&3; assert(modifier<=1);
+			if (modifier) assert(thread[13]==0 && thread[29]==0x2000 && thread[48]==0);
+			unsigned phase=(thread[11]+fidelityPhase)&3; phaseVisits[phase]++;
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
 			assert(config[0] == (NativeInt8Unpack()?0x423eU:Fp16Operands()?0x4231U:0x42b5U) && config[1] == (NativeInt8Unpack()?0xa03c0000U:Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
@@ -174,7 +179,6 @@ struct Machine {
 				if (!dropMatrix) for (unsigned k = 0; k < 16; k++) {
 					float av = transposeA ? a[col][k] : a[k][col], bv = b[row][k];
 					if (Int8Arithmetic()) {
-						unsigned phase=thread[11]; assert(phase<4);
 						int32_t ai=int32_t(fabsf(av))&(phase&1?31:224),bi=int32_t(fabsf(bv))&(phase&2?15:1008);
 						integerValue+=(av<0?-ai:ai)*(bv<0?-bi:bi); continue;
 					}
@@ -182,7 +186,6 @@ struct Machine {
 					// its least significant mantissa bit. SrcB keeps all ten.
 					if (Fp16Operands()) av=Float(Bits(av)&~0x2000U);
 					if (sfpuSmoke == 24) {
-						unsigned phase = thread[11]; assert(phase < 4);
 						float highA = Float(Bits(av)&0xfff80000), highB = Float(Bits(bv)&0xfffe0000);
 						av = (phase&1) ? av-highA : highA;
 						bv = (phase&2) ? bv-highB : highB;
@@ -195,7 +198,8 @@ struct Machine {
 				dstInt[32+row][col]=int32_t(integerValue);
 			}
 			for (unsigned row = 32; row < 40; row++) valid[row] = true;
-			if (op == 0x26c00020) { assert(sfpuSmoke == 16 || sfpuSmoke == 20 || sfpuSmoke == 21 || sfpuSmoke == 24); ownerA = ownerB = false; }
+			if ((op&~0x4000U) == 0x26c00020) { assert(sfpuSmoke == 16 || sfpuSmoke == 20 || sfpuSmoke == 21 || sfpuSmoke == 24); ownerA = ownerB = false; }
+			if (modifier) fidelityPhase=(fidelityPhase+((thread[29]>>13)&3))&3;
 		} else assert(false);
 		drained = false;
 	}

@@ -2,6 +2,48 @@
 
 ## Status
 
+### October17: peer-fetch24 native FAIL;exact fidelity-pipeline25 trial (10:57 UTC)
+
+Native24 FAILS its FIRST full-logit quality check:all zero logits,
+cosineNaN,L2=1,argmax0/1479. Root cause is NOT yet established;offline
+instruction/NoC models did not reproduce it. No speed claim. The one full
+position completes197 projections/28 attention and clean END2/PCI-host1-1/
+cold0/cleanup1;qualified23 restored IDLE. Log:`qwen-pull-v24-benchmark.log`.
+Parallel-fetch24 is NOT qualified or promoted. A smaller native input
+diagnostic is still needed before another whole-model24 trial.
+
+Separate explicit25/model-registry10 uses the qualified23 transport and
+cached-query image6bd701b7,NOT peer-fetch24. Root remains qualified paired
+f1cd3404,private version5,unchanged all119 sequences/9219 jobs/NoC budgets/
+stage3/128B result/full IEEE accumulation. The distinct4096B math image
+keeps ALL FOUR integer fidelity phases,but uses the FPU-owned fidelity
+RWC increment after each MVMUL rather than per-phase CFGEXU writes and
+RISC handshakes. ADDR_MOD1 has SrcA/B/Dst/bias increments0 and fidelity+1;
+four increments wrap0. SETC16 register29=0x2000 is separately drained once
+per operand tile;one final full drain precedes all SFPU/accumulator use.
+There is no reduced precision,replay,new buffer/mapping or supplied code.
+The first offline prototype shifted a completion PC and was REJECTED by
+coordinated tests;setup was moved into the reserved70600 block. The final
+image preserves EVERY original completion PC/status/readback/fence.
+
+Actual instruction tests pass all120 coordinates,all K,N4096,repeated IEEE
+outputs/guards/STOP,balanced fidelity phase visits and source bank release.
+Small case steps83381 ->65333,drains1544 ->776,identical matrix operations.
+Actual coordinated all119/source/counter/GLU/attention/STOP tests pass;
+all119 immutable feature mismatches and nine-mode unknown-state controller
+fault tests pass. REAL client requires25 BEFORE BEGIN. Flag OFF rebuilds
+the existing6d138ce0 inline image word-for-word. Native25 correctness and
+sustained performance PENDING. Math
+`f56a0fe3ee2f47dc86c33efdd3774390a172442a7ce44ee8d8283ab35c31dd6f`;
+driver`831ebe144d48dd8b1d5681a2c7fc8ee9a8399c8dedf56bf217564a99e6d17599`;
+verifier`fdf39036fda214e5f15961806f0086662fdad8201059abe443920ffc1f759667`.
+Log:`qwen-phase-v25-benchmark.log`. Qualified23 fallback preserved/verified.
+Fast Qwen NOT achieved;no Assistant/boot/CPU/RAM/firmware/SD changes.
+
+Phase encoding references:[official Blackhole address-mod setup](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/tt-llk/tt_llk_blackhole/common/inc/ckernel_addrmod.h),
+[official Blackhole thread register bits](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/hw/inc/internal/tt-1xx/blackhole/cfg_defines.h),
+[MVMUL fidelity/RWC semantics](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md).
+
 ### October17: cached23 native PASS;parallel validated input-fetch24 trial (10:44 UTC)
 
 Fast Qwen remains NOT achieved. Contract23 passes all22 full-vocabulary

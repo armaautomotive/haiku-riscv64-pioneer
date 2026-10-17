@@ -14,6 +14,7 @@ struct CoordinatedMachine:PersistentMachine {
 		for (unsigned i=0;i<16;i++) l1[Index(0x71380+i*4)]=expectedSource[i]=0x10000+i;
 		if (getenv("PIONEER_COORDINATED_INLINE_MATH")) Inline();
 		if (getenv("PIONEER_COORDINATED_PARTIAL_MATH")) Partial();
+		if (getenv("PIONEER_COORDINATED_PHASE_MATH")) Phase();
 	}
 	bool CodeAddress(uint32_t address) const override {
 		return (address>=0x71000 && address<0x71300) || (address>=0x71500 && address<0x71700)

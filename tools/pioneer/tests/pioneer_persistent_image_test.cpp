@@ -5,6 +5,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeFleetPersistentImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8InlineImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8PartialImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8PhaseImage.h"
 struct PersistentMachine:BulkQ8Machine {
 	unsigned worker,jobs=0,previousReads=0,inputReads=0,completedInputs=0;
 	uint32_t command[10]={},source[4096]={};
@@ -30,6 +31,13 @@ struct PersistentMachine:BulkQ8Machine {
 	void Partial() {
 		Inline(); partialMath=true;
 		for (unsigned i=0;i<1024;i++) l1[1+i]=BlackholeRuntimeQ8PartialCodeWord(i);
+		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
+		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
+		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);
+	}
+	void Phase() {
+		Inline();
+		for (unsigned i=0;i<1024;i++) l1[1+i]=BlackholeRuntimeQ8PhaseCodeWord(i);
 		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
 		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
 		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);

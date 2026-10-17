@@ -123,6 +123,14 @@ int main() {
 	{ PersistentFixture f(4); for (unsigned w=1;w<4;w++) {
 		f.io.current=w; auto& core=*f.io.core[w]; auto& worker=f.fleet[w]; worker.persistentPrepared=false; worker.noc.version=0x100+w;
 		core.code[1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4]=0x0000006f;
+		assert(!PioneerPersistentPrepare(f.io,worker,true,true,true,true,true,true,true) && !worker.persistentPrepared);
+		assert(PioneerPersistentPrepare(f.io,worker,true,true,true,true,true,false,true) && worker.phasePipeline && !worker.partialMath);
+		for (unsigned i=0;i<1024;i++) assert(core.code[1+i]==(i==(TT_RUNTIME_Q8_PARK_PC-0x70000)/4?TT_PERSISTENT_MATH_RETURN:BlackholeRuntimeQ8PhaseCodeWord(i)));
+		assert(!PioneerPersistentPrepare(f.io,worker,true,true,true,true,true,false,false));
+	} }
+	{ PersistentFixture f(4); for (unsigned w=1;w<4;w++) {
+		f.io.current=w; auto& core=*f.io.core[w]; auto& worker=f.fleet[w]; worker.persistentPrepared=false; worker.noc.version=0x100+w;
+		core.code[1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4]=0x0000006f;
 		assert(!PioneerPersistentPrepare(f.io,worker,true,true,true,true,false,true) && !worker.persistentPrepared);
 		assert(PioneerPersistentPrepare(f.io,worker,true,true,true,true,true,true) && worker.partialMath);
 		for (unsigned i=0;i<1024;i++) assert(core.code[1+i]==(i==(TT_RUNTIME_Q8_PARK_PC-0x70000)/4?TT_PERSISTENT_MATH_RETURN:BlackholeRuntimeQ8PartialCodeWord(i)));
