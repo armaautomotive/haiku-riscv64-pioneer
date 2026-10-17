@@ -2,6 +2,48 @@
 
 ## Status
 
+### October17: parallel head31 native PASS;autonomous-generation prerequisite (12:32 UTC)
+
+Fast Qwen STILL NOT achieved. Contract31 passes all22 full-vocabulary and
+exact token/selected-bit replays plus all three sustained natural requests
+with untimed full-logit replay/quality/coverage. GPU5.319296/5.292254/5.399531
+tok/s versus CPU32 1.059246/.968921/1.552794. Prompt4.793729/4.969939/4.436375s.
+About13% faster than29,but this remains far below the requested fast mode.
+Position21 master RMS9.185M ->3.478M ticks;serial RoPE16.841M ->0,inside
+eight attention owners instead. Attention24.228M ->27.503M,as expected;
+matrix53.115M,vocabulary8.410M,total120.999927M versus29's141.441M.
+Complete312 GPU positions/61464 projections/8736 attention/156 full+156
+small/zero warm uploads;END2/PCI-host1-1/cold0/cleanup1. Cold112.699262s,
+registry9.170262s,upload93.565104s. Short6.006042tok/s is diagnostic ONLY.
+Log:`qwen-rope-v31-benchmark.log`,copied locally. Qualified31 is backed up
+as`driver-v31-e64ed1f2-backup`;29/28/27/25 preserved. No Assistant promotion.
+
+Next larger direction:avoid returning to the host after EVERY generated
+token. OFFLINE tied-embedding prerequisite reads the selected1024-wide
+row directly from the sealed native classifier packing,with two independent
+complete576B reads per K block and ALL-bit comparison. No dequantization
+or learned arithmetic fallback on CPU is proposed. Geometry/tied embedding
+is FIXED to this qualified0.6B model;no separate output tensor assumption.
+Host ASan/UBSan tests pass first/last vocabulary tiles/all16 lanes/exact
+independent GGUF-style IEEE dequant,all64 read faults and bounds/format
+refusals. Compiled RV32IMF prototype2dadd77e passes the same64 token rows,
+all1024 bits/input guards/9216 source-word loads,1152B temporary buffers,
+malformed descriptor/scale refusals and strict no-NoC/MMIO/code/input-write
+instruction checks. Stack minimum6fb3c remains inside existing8KiB stack.
+This prototype is NOT wired into the driver or native inference;it does NOT
+yet remove a host round trip. A bounded multi-position job,immutable RoPE
+table,complete sequence/KV/result proof and unknown-state quarantine are
+required before any native autonomous-generation trial.
+
+OFFLINE batch-plan/packet/counter prerequisite also passes all context and
+all119-peer sequence-overflow limits,wrapped counter proofs,all24 summary
+words and token/logit/EOS/unused-zero packet rules. Initial limit is TWO
+positions,not16:the existing65535 polls/job maximum then remains below a
+single32-bit counter wrap for the ENTIRE job. Larger batches need explicit
+carry/epoch proofs,not unchecked multiplication of the old limits. Planned
+single final256B host packet has no host transfer between its two positions.
+This is a protocol prerequisite,NOT an implemented/native batch decoder.
+
 ### October17: parallel head preparation31 native trial (12:26 UTC)
 
 Fast Qwen STILL NOT achieved. Explicit31/model-registry16/private GPU job9

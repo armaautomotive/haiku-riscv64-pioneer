@@ -125,6 +125,7 @@ struct ScalarMachine:Machine {
 		}
 	}
 };
+#ifndef PIONEER_GRAPH_MATH_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2);
@@ -147,3 +148,4 @@ int main(int argc,char** argv)
 		assert(!m.RunScalar() && !m.outputWrites && !m.operandWrites && !m.scaleWrites); }
 	puts("PASS OFFLINE actual scalar instruction image,SiLU/Q8/division/sqrt/RMS bounds,all used words,refused malformed/nonfinite input,no fdiv/fsqrt/NoC/control/reset/driver exposure");
 }
+#endif
