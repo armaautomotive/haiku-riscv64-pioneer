@@ -2,6 +2,66 @@
 
 ## Status
 
+### October17: native27B authenticated; network comparison prepared (23:13 UTC)
+
+No27B P100A inference or requested-fast result yet. Qualified43 is unchanged,
+still UNLOADED after cold recovery; experimental44 remains staged only.
+User authorized restart or network repair. Pinned SSH normal shutdown timed
+out,so relay recovery was unclean: one off hold,full180s rest,one on pulse.
+Linux booted normally with64 CPUs; staged three authenticated repair blocks
+on `/mnt/ssd/pioneer-qwen38-repair-20261017-b` as spare copies. Haiku's existing
+JMB585 port4 isolation means that disk is not exposed; we DID NOT remove this
+storage safeguard. Same pinned helper/profile restored64 CPUs and
+137,034,936,320 usable bytes with unchanged OS/firmware/default boot/cards.
+
+Fresh-only bounded receiver successfully copied ALL three64MiB suspect leaves
+on FIRST attempts using16KiB bursts/~1MiB/s and ZERO interface recoveries.
+Each native leaf SHA matched independently. Bounded read-only capture printed
+60 same-interface/counter/ping/filtered-thread snapshots to a fresh log AND
+UART; all stayed responsive. Final209MB RX had zero errors/drops,as did TX.
+This establishes one successful THROTTLED transfer,NOT a network-driver fix.
+The public-only one-client/exact-range listener closed after all three sends.
+
+Pinned4036e409 patch utility compared the ENTIRE old64MiB region before each
+write,retaining original bad parts and fresh repair leaves. Whole native SHA
+then PASSED at23:10:41 UTC:
+`c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`.
+Only THEN was the assembly published as
+`/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf`. Native pinned80f28759 inspector
+passed ALL851 layouts/8,162,688 finite boundary values and1/8K/32K blueprints.
+Thus model integrity is fixed,not merely assumed from three repaired blocks.
+One-token32-thread CPU-only benchmark is pending with900s bound,zero GPU
+layers/KV/op offload/offline/no warmup; no pass/text quality/steady-speed claim.
+Frozen CPU launcher23fe07f6,bench library1b24d022/commonbf603e98 and four
+previous runtime libraries were verified; no dirty llama implementation read,
+built,synced or modified. Log `qwen38-parallel-20261017/cpu-smoke-20261017-b.log`.
+
+New DEFAULT-OFF `HAIKU_PIONEER_RTL_SERIALIZE` compares a source-level locking
+mismatch. `IFF_NEEDSGIANT` send/ioctl,callout tick and deferred TX kick use
+Giant; MPSAFE interrupt bypasses it. The private variant selects the actual
+compatibility thread's Giant lock,directly issues the existing TX doorbell
+AFTER normal descriptor sync,and avoids a queued NEEDSGIANT callback that
+reset could drain while owning Giant. System-error reinitialization does NOT
+recursively acquire Haiku's nonrecursive Giant. No new DMA,firmware changes,
+polling completions,global shim policy or unbounded recovery loop is added.
+Separate candidate has900 read-only diagnostic ticks; ordinary16/off profiles
+unchanged. Tests execute actual production selection,PCI flag translation,
+compatibility interrupt thread and driver helpers under ASan/UBSan,including
+default and foreign-profile preservation/nonrecursive-error path. Existing
+diagnostic null/index/off/limit and MSI-selection regressions pass.
+
+Standalone SDK/compat-archive builder does NOT sync/build unrelated sources
+or install anything. Two fresh c/d builds reproduce candidate
+`0b83ceed0071f3dab3f9b175355bd83fe7364176676264ae66d751ddba2b7c9a`;
+MSI-only build control1a2e242c is NOT the qualifiedfe6273c9 backup. Kernel
+strong imports link cleanly. Exact offline installer is prepared for identity-
+checked native Linux/unmounted clean Samsung,private COW rehearsal first,
+old/new/package hashes,backup outside driver directories,and exact rollback.
+It has NOT RUN; no NIC replacement or native candidate result is claimed.
+Private helper/verifier copies change ONLY the NIC pin and verifier pin/path,
+keeping kernel,bundle,memory,CPU,firmware and default boot unchanged:
+helperSHA0bfe2647,verifierSHA32b924b7. Original helper/verifier are preserved.
+
 ### October17: native SHA failure isolated; guarded repair pending (22:03 UTC)
 
 Requested-fast27B P100A inference remains UNACHIEVED. Installed qualified43

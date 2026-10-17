@@ -15,8 +15,12 @@ awk '
 copy { print }
 ' "$directory/../../../src/add-ons/kernel/drivers/network/ether/rtl8125/dev/pci/if_rge.c" > "$temporary/production_select.inc"
 test -s "$temporary/production_select.inc"
-for profile in enabled disabled; do
-	if [ "$profile" = enabled ]; then flags='-D__riscv -DHAIKU_PIONEER_RTL_DIAGNOSTICS=1'; else flags='-D__riscv'; fi
+for profile in enabled serialized disabled; do
+	case "$profile" in
+	 enabled) flags='-D__riscv -DHAIKU_PIONEER_RTL_DIAGNOSTICS=1';;
+	 serialized) flags='-D__HAIKU__ -D__riscv -DHAIKU_PIONEER_RTL_DIAGNOSTICS=1 -DHAIKU_PIONEER_RTL_SERIALIZE=1';;
+	 disabled) flags='-D__riscv';;
+	esac
 	${CC:-cc} -std=c11 -Wall -Wextra -Werror -Wno-unused-function \
 		-fsanitize=address,undefined $flags -I "$temporary" \
 		"$directory/pioneer_rtl_diagnostics_test.c" -o "$temporary/test"

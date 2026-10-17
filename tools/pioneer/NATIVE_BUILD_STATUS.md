@@ -1,33 +1,42 @@
 # Native build status
 
-Latest checkpoint (October17,22:03 UTC): P100A installed; both SD cards
+Latest checkpoint (October17,23:13 UTC): P100A installed; both SD cards
 out. User-authorized cold recovery and unchanged SD-free handoff restored
 Haiku SSH with64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
 Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
 fixed Qwen3-0.6B Q8_0 result was7.428707..7.557277tok/s; requested-fast
 Qwen/27B and a new Assistant performance target remain UNACHIEVED.
 
-Requested Qwen3.8-27B Q4_K_M18,973,870,528B is downloaded and fully
-SHA-verified on Mac. Native interrupted parts survived; one sequential
-bounded resume ALSO lost networking while desktop/input stayed live.
-User's explicit wired down/up recovered ping/SSH WITHOUT reboot;64 CPUs
-and full RAM are unchanged. No disk-read-only problem was established:
-Terminal's failed redirection used `/dev/printf` rather than `/dev/dprintf`.
-Fresh sequential append-only copy completed ALL remaining ranges; however,
-native assembly's whole SHA FAILED (`a229b2f9...`,not published`c600de03...`).
-It was NOT published or run. Preserved component hashes isolate failures
-to parts0/3/4; prefix/parts1/2/5/6/7/suffix match the source. Bad64MiB leaves
-containing previous interrupted-resume boundaries are identified,but their
-repair is NOT yet proof of the entire model. Original parts/assembly remain.
-A fresh whole-part retry timed out; a smaller fresh-leaf retry then stalled
-networking. User reports desktop/input work and toggled the interface, but
-SSH still times out as of22:03 UTC; current IPv4 confirmation requested.
-The exact public-file sender was closed; no transfer listener remains.
-Fresh-only,exact-range receiver and guarded fixed-leaf patch utility pass
-host tests. A one-shot copy wrapper allows at most TWO NIC down/up recoveries
-ONLY after the receiver exits and source HEAD fails; it is NOT staged/run yet.
-Full native SHA must match BEFORE publication/CPU-only smoke/inspection.
-No27B GPU or native CPU result is claimed.
+Requested Qwen3.8-27B Q4_K_M18,973,870,528B now passes WHOLE native SHA
+`c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`.
+After user authorized restart/network work,unreachable SSH required one
+relay off hold/180s rest/on pulse; this was NOT a confirmed graceful Haiku
+shutdown. Default Linux recovered,then the unchanged64-CPU/full-RAM handoff
+restored Haiku. A local-disk repair route was checked,but the existing AHCI
+second-disk isolation hides the Linux build disk; that safeguard was KEPT.
+Linux-staged repair blocks are only spare copies,not used by Haiku.
+Three fixed64MiB leaves were freshly copied with16KiB source bursts/~1MiB/s,
+ALL passed native SHA on FIRST attempts with ZERO interface recoveries.
+Bounded60-sample UART/network capture stayed responsive;209MB received with
+zero RX/TX errors or drops at completion. This is a WORKAROUND,not a NIC fix.
+Guarded native patch compared entire old leaves to preserved bad parts,then
+patched ONLY the unpublished assembly. Whole SHA passed23:10:41 UTC BEFORE
+publication; read-only native851-tensor/8,162,688-value inspection passed.
+Original bad parts/repair inputs remain preserved. Public sender CLOSED.
+One-token32-thread CPU-only smoke is running (900s bound),not yet a pass;
+no27B GPU result,quality or steady-speed claim. Installed qualified43 and
+NIC MSI-only SHAfe6273c9 remain unchanged; card driver is still unloaded.
+
+Default-off HAIKU_PIONEER_RTL_SERIALIZE comparison addresses a source-level
+locking risk: native send/ioctl/tick use Giant,but MPSAFE interrupt does not.
+It serializes that interrupt,directly issues the existing TX doorbell instead
+of queuing a NEEDSGIANT callback reset could drain,and avoids recursive Giant
+acquisition on system-error reset. Actual production selection/compatibility
+interrupt/helpers pass ASan/UBSan/default/foreign-profile tests. Candidate
+SHA0b83ceed reproduces across two builds; MSI control1a2e242c is NOT the backup.
+900 bounded read-only NIC ticks are enabled only for this private comparison.
+Offline exact-target/COW-rehearsal/rollback installer is prepared,NOT RUN.
+Candidate is NOT installed or native-qualified; live stall cause unproven.
 New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
 packed integer dots, Q8_K/Q8_0 activation quantization and four actual local
 RV32 images pass independent

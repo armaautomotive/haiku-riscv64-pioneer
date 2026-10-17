@@ -79,6 +79,8 @@ int rge_debug = 0;
 //void		rge_attach(struct device *, struct device *, void *);
 int		rge_activate(struct device *, int);
 int		rge_intr(void *);
+static void	rge_kick_tx(struct rge_softc *);
+static void	rge_system_error(struct ifnet *);
 int		rge_ioctl(struct ifnet *, u_long, caddr_t);
 void		rge_start(struct ifnet *);
 void		rge_watchdog(struct ifnet *);
@@ -311,7 +313,17 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 		goto fail;
 	}
 	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE, rge_intr,
+	/* PIONEER_RTL_SERIALIZE_LEVEL_BEGIN */
+	int interrupt_level = IPL_NET | IPL_MPSAFE;
+#if defined(__HAIKU__) && defined(__riscv) && defined(HAIKU_PIONEER_RTL_SERIALIZE)
+	/* The Haiku send/ioctl/tick paths use Giant, not OpenBSD NET_LOCK.
+	 * Keep this private comparison outside INTR_MPSAFE so the compatibility
+	 * interrupt thread takes the SAME lock. No global shim behavior changes. */
+	interrupt_level = IPL_NET;
+	printf("PIONEER-RTL: serialized interrupt/direct TX-kick comparison\n");
+#endif
+	/* PIONEER_RTL_SERIALIZE_LEVEL_END */
+	sc->sc_ih = pci_intr_establish(pc, ih, interrupt_level, rge_intr,
 		sc, DEVNAME(sc));
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
@@ -525,9 +537,7 @@ rge_intr(void *arg)
 		rv |= rge_txeof(q);
 
 		if (status & RGE_ISR_SYSTEM_ERR) {
-			KERNEL_LOCK();
-			rge_init(ifp);
-			KERNEL_UNLOCK();
+			rge_system_error(ifp);
 		}
 		claimed = 1;
 	}
@@ -800,7 +810,7 @@ rge_start(struct ifqueue *ifq)
 	ifp->if_timer = 5;
 
 	q->q_tx.rge_txq_prodidx = idx;
-	ifq_serialize(ifq, &sc->sc_task);
+	rge_kick_tx(sc);
 }
 
 void
@@ -1662,7 +1672,7 @@ rge_txeof(struct rge_queues *q)
 		ifq_restart(&ifp->if_snd);
 #endif
 	else if (free == 2)
-		ifq_serialize(&ifp->if_snd, &sc->sc_task);
+		rge_kick_tx(sc);
 	else
 		ifp->if_timer = 0;
 
@@ -3835,6 +3845,37 @@ rge_txstart(void *arg)
 	RGE_WRITE_2(sc, RGE_TXSTART, RGE_TXSTART_START);
 }
 
+/* PIONEER_RTL_SERIALIZE_HELPERS_BEGIN */
+static void
+rge_kick_tx(struct rge_softc *sc)
+{
+#if defined(__HAIKU__) && defined(__riscv) && defined(HAIKU_PIONEER_RTL_SERIALIZE)
+	/* Only the existing doorbell write,after the normal descriptor syncs.
+	 * Do not enqueue a NEEDSGIANT task that reset could drain while holding
+	 * Giant. No new DMA, polling completion, allocation or unbounded loop. */
+	mtx_assert(&Giant, MA_OWNED);
+	rge_txstart(sc);
+#else
+	ifq_serialize(&sc->sc_arpcom.ac_if.if_snd, &sc->sc_task);
+#endif
+}
+
+static void
+rge_system_error(struct ifnet *ifp)
+{
+#if defined(__HAIKU__) && defined(__riscv) && defined(HAIKU_PIONEER_RTL_SERIALIZE)
+	/* Giant is NOT recursive in Haiku. The selected interrupt thread already
+	 * owns it; never acquire it again in this path. */
+	mtx_assert(&Giant, MA_OWNED);
+	rge_init(ifp);
+#else
+	KERNEL_LOCK();
+	rge_init(ifp);
+	KERNEL_UNLOCK();
+#endif
+}
+/* PIONEER_RTL_SERIALIZE_HELPERS_END */
+
 void
 rge_tick(void *arg)
 {
@@ -3846,7 +3887,12 @@ rge_tick(void *arg)
 #if defined(HAIKU_PIONEER_RTL_DIAGNOSTICS) && defined(__riscv)
 	/* Read-only, bounded warm-boot diagnosis. No packet contents or polling
 	 * completion workaround: preserve the failing interrupt/DMA behavior. */
-	if (sc->rge_diagnostic_ticks < 16) {
+	uint32_t diagnostic_limit = 16;
+#if defined(__HAIKU__) && defined(HAIKU_PIONEER_RTL_SERIALIZE)
+	/* Cover one bounded transfer,not just DHCP. This is NOT polling recovery. */
+	diagnostic_limit = 900;
+#endif
+	if (sc->rge_diagnostic_ticks < diagnostic_limit) {
 		struct rge_queues *q = sc->sc_queues;
 		uint32_t tick = sc->rge_diagnostic_ticks++;
 		printf("PIONEER-RTL %s tick=%u irq=%u cmd=%#x isr=%#x imr=%#x\n",

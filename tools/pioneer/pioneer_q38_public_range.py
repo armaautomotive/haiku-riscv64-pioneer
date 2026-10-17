@@ -18,7 +18,8 @@ def identity(fd):
 def main():
     if len(sys.argv) != 3:
         raise SystemExit("Usage:pioneer_q38_public_range.py VERIFIED_MODEL RANGE_INDEX|--repair-tails")
-    if sys.argv[2] == "--repair-tails":
+    repair_leaves = sys.argv[2] == "--repair-tails"
+    if repair_leaves:
         # Only the three64MiB leaves containing known interrupted-resume
         # boundaries;whole receiver SHA must still prove the entire model.
         specs = [(1, 1610612736), (4, 1342177280), (5, 1409286144)]
@@ -98,12 +99,18 @@ def main():
                     while sent < length:
                         if identity(fd) != before:
                             raise OSError("source changed")
-                        chunk = os.pread(fd, min(1024 * 1024, length - sent), first + sent)
+                        # The repair path deliberately limits bursts to16KiB
+                        # and about1MiB/s. This is NOT a NIC fix: preserve
+                        # network diagnostics and the receiver's SHA gate.
+                        quantum = 16 * 1024 if repair_leaves else 1024 * 1024
+                        chunk = os.pread(fd, min(quantum, length - sent), first + sent)
                         if not chunk:
                             raise OSError("short source")
                         self.wfile.write(chunk)
                         digest.update(chunk)
                         sent += len(chunk)
+                        if repair_leaves:
+                            time.sleep(len(chunk) / (1024 * 1024))
                     self.wfile.flush()
                     self.server.completed.add(ranges[0])
                     self.server.success = len(self.server.completed) == len(allowed)

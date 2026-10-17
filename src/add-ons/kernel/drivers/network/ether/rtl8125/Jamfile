@@ -6,6 +6,9 @@ if $(TARGET_ARCH) = riscv64 && $(HAIKU_PIONEER_RTL_DIAGNOSTICS) = 1 {
 if $(TARGET_ARCH) = riscv64 && $(HAIKU_PIONEER_RTL_MSI_ONLY) = 1 {
 	SubDirCcFlags [ FDefines HAIKU_PIONEER_RTL_MSI_ONLY=1 ] ;
 }
+if $(TARGET_ARCH) = riscv64 && $(HAIKU_PIONEER_RTL_SERIALIZE) = 1 {
+	SubDirCcFlags [ FDefines HAIKU_PIONEER_RTL_SERIALIZE=1 ] ;
+}
 
 UseHeaders [ FDirName $(HAIKU_TOP) src libs compat openbsd_network compat ] : true ;
 UseHeaders [ FDirName $(HAIKU_TOP) src libs compat freebsd_network compat ] : true ;

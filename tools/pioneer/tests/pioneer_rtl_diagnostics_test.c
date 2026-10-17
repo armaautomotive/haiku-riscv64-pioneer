@@ -69,18 +69,25 @@ int main(void)
 	assert(schedules == 20 && links == 20);
 	assert(sc.rge_diagnostic_interrupts == 123);
 #if defined(HAIKU_PIONEER_RTL_DIAGNOSTICS) && defined(__riscv)
-	assert(sc.rge_diagnostic_ticks == 16 && reads == 48 && lines == 32);
+	unsigned limit = 16;
+#if defined(__HAIKU__) && defined(HAIKU_PIONEER_RTL_SERIALIZE)
+	limit = 900;
+#endif
+	unsigned count = limit < 20 ? limit : 20;
+	assert(sc.rge_diagnostic_ticks == count && reads == count*3 && lines == count*2);
+	for (unsigned i=20; i<1000; i++) rge_tick(&sc);
+	assert(sc.rge_diagnostic_ticks == limit && reads == limit*3 && lines == limit*2);
 	sc.rge_diagnostic_ticks = 0;
 	q.q_tx.rge_txq_considx = -1;
 	rge_tick(&sc);
-	assert(lines == 33); /* Invalid index: never dereference descriptors. */
+	assert(lines == limit*2+1); /* Invalid index: never dereference descriptors. */
 	q.q_tx.rge_txq_considx = 0;
 	q.q_tx.rge_tx_list_map = NULL;
 	rge_tick(&sc);
-	assert(lines == 34); /* Incomplete DMA map must also be safe. */
+	assert(lines == limit*2+2); /* Incomplete DMA map must also be safe. */
 	sc.sc_queues = NULL;
 	rge_tick(&sc);
-	assert(lines == 35);
+	assert(lines == limit*2+3);
 #else
 	assert(sc.rge_diagnostic_ticks == 0 && reads == 0 && lines == 0);
 #endif
