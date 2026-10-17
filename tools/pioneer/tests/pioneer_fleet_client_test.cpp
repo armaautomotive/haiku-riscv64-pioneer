@@ -25,6 +25,20 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	}
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
+	if (op==TT_PCI_PROBE_PIONEER_LAYER_SPAN) {
+		auto& p=*static_cast<tt_pioneer_layer_span*>(data); assert(p.version==1 && !p.reserved[0] && !p.reserved[1] && bytes==PioneerSpanRequestBytes(p.bytes));
+		auto& r=p.result; r={}; r.bytes=p.bytes; r.pages=p.bytes/4096; r.matched_words=p.bytes/4; r.host_exact=1;
+		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=1; m.count=r.pages; m.nonce=++coordinatedNonce;
+		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
+		m.phase=TT_LAYER_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_LAYER_PARK;
+		unsigned chunks=(p.bytes+16383)/16384,reads=4*chunks,rf=p.bytes/16,writes=3*chunks,wf=3*(p.bytes/64);
+		const unsigned delta[]={reads,rf,reads+writes,reads,writes,wf,reads+writes,writes};
+		r.summary[0]=reads; r.summary[1]=rf; r.summary[2]=writes; r.summary[3]=wf;
+		r.summary[4]=r.pages; r.summary[5]=p.bytes; r.summary[6]=m.nonce; r.summary[7]=7;
+		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
+		if (fault) { failed=true; if (fault==1) { errno=EIO; return -1; } if (fault==2) reinterpret_cast<uint32_t*>(&r)[field]^=1; }
+		return 0;
+	}
 	if (op==TT_PCI_PROBE_PIONEER_LAYER_WIDE) {
 		auto& p=*static_cast<tt_pioneer_coordinated_fleet*>(data);
 		assert(p.version==1 && bytes==PioneerCoordinatedRequestBytes(p.outputs)); PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
@@ -236,7 +250,7 @@ int main() {
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
-	for (unsigned contract:{0U,2U,3U,4U,5U,6U,11U}) {
+	for (unsigned contract:{0U,2U,3U,4U,5U,6U,12U}) {
 		Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==2 && closes==1 && !ends);
@@ -258,6 +272,19 @@ int main() {
 				for (auto value:output) assert(value==0xdeadbeef);
 				unsigned before=calls; assert(!d.Q8WideMatvec(0,1024,6144,x,scale,output.data()) && !d.Finish() && calls==before);
 			}
+		}
+		assert(ends==unsigned(!f) && closes==1);
+	}
+	coordinatedContract=11;
+	for (unsigned f:{0U,1U,2U}) for (unsigned word=0;word<(f==2?sizeof(tt_layer_span_result)/4:1);word++) {
+		Reset(f,0,word);
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,3));
+			assert(d.UploadPageLimit()==256); std::vector<uint32_t> source(262144,0x7fc00001);
+			assert(d.UploadPages(0,source.data(),256)==!f);
+			if (!f) {
+				assert(d.uploads==256 && d.spanCalls==1 && d.UploadPages(0x100000,source.data(),1));
+				assert(d.Q8WideMatvec(0,1024,6144,x,scale,output.data()) && d.LayerFfn(0,0x800000,0x1000000,x,scale,output.data()) && d.Finish());
+			} else { unsigned before=calls; assert(!d.UploadPages(0,source.data(),256) && !d.Finish() && calls==before && !d.uploads); }
 		}
 		assert(ends==unsigned(!f) && closes==1);
 	}

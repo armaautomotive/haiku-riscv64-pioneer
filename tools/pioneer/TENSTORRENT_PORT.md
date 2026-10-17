@@ -2,6 +2,37 @@
 
 ## Status
 
+### October17: native NEW-weight span transport contract v11 (06:50 UTC)
+
+Fast Qwen remains NOT achieved;no Assistant promotion. Native span transfers
+passed4096,12288,16384,20480,65536 and1048576 bytes with complete frozen-CPU
+transport echo. Warm1MiB=117.453ms;initial4KiB347ms includes code/owner
+preparation. Subsequent changed-input6144/32/6144-row matrices were exact,
+END2/PCI-host1-1/cold0/cleanup1. Log:`span-v11-native.log`,utility SHA
+`f5b63d6f6258ca595ae500ed0b0b282a33cc403edc66003b71a087ffbc5e84e6`.
+Driver`f6e91d956e5bd7f29e53f9f1866565fc5f163be66137bc5a55b787bce2a8aa63`,
+layer image`ecc68864d3c6599a4ec87edbba26c3a2ad4bce3079382eb413b5522d2037bb95`.
+Full-Qwen verification is RUNNING,not yet qualified at this checkpoint.
+
+Private`54de` freezes an exact-length1..256-page inline request in one
+kernel copy. ONLY new immutable below-KV pages in mode8 may be written.
+The separate1MiB host owner is staged/fully read back,then fixed GPU code
+proves EVERY GDDR word and ordered complement/original host echoes. The
+kernel independently compares EVERY final echo word with frozen input;
+only the whole successful proof commits all initialized-page metadata.
+No partial bits,retry,checksum or CPU learned-math validation. Unknown
+completion/source/map/echo disables BME and retains ALL owners without
+reset/code restore. The packed-input shadow is always invalidated because
+the upload's private original mirror occupies80000.
+
+Explicit wide-output clients on contract11 can pack consecutive row tiles
+into up to256-page batches;legacy transports retain their four-page
+boundary. Packing tests compare complete legacy/new byte layouts at
+K1024/3072/6144. Actual linked image,independent controller and REAL client
+ASan/UBSan fault tests pass;FFN/GLU/full-vocabulary regressions also pass.
+The existing v10 driver was preserved and natural driver turnover used.
+No reboot,SD/firmware/default boot/CPU/RAM/model/preferences changes.
+
 ### October17: full Qwen wide-output contract v10 (06:43 UTC)
 
 Fast Qwen remains NOT achieved; no Assistant promotion. Full verification

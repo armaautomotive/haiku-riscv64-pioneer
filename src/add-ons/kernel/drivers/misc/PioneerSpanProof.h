@@ -2,7 +2,7 @@
 #ifndef PIONEER_SPAN_PROOF_H
 #define PIONEER_SPAN_PROOF_H
 #include "PioneerCoordinatedFleet.h"
-// OFFLINE prerequisite. No driver operation selects the span image yet.
+// Dedicated contract11 span predicate,not a learned-arithmetic validation.
 struct tt_layer_span_result {
 	tt_coordinator_probe_result master;
 	uint32_t bytes,pages,matched_words,host_exact,summary[24];

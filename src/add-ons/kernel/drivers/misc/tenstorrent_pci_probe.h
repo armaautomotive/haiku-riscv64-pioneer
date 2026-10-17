@@ -43,6 +43,7 @@
 #include "PioneerCoordinatorProbe.h"
 #include "PioneerCoordinatedFleet.h"
 #include "PioneerLayerGlu.h"
+#include "PioneerSpanUpload.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -186,6 +187,7 @@
 #define TT_PCI_PROBE_PIONEER_LAYER_FFN (B_DEVICE_OP_CODES_END + 0x54db)
 #define TT_PCI_PROBE_PIONEER_LAYER_GLU (B_DEVICE_OP_CODES_END + 0x54dc)
 #define TT_PCI_PROBE_PIONEER_LAYER_WIDE (B_DEVICE_OP_CODES_END + 0x54dd)
+#define TT_PCI_PROBE_PIONEER_LAYER_SPAN (B_DEVICE_OP_CODES_END + 0x54de)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -422,6 +424,19 @@ struct tt_pioneer_coordinated_fleet {
 struct tt_coordinated_support {
 	uint32_t version,max_workers,attention_version,immutable_weights,gather_max;
 };
+// Private immutable NEW weights only. Inline bytes are copied/frozen once;
+// no user pointers,physical addresses,code or routes enter the device job.
+struct tt_pioneer_layer_span {
+	uint32_t version,bytes,reserved[2];
+	uint64_t offset;
+	tt_layer_span_result result;
+	uint32_t payload_reserved;
+	uint32_t data[TT_WIDE_OUTPUT_WORDS];
+};
+static_assert(offsetof(tt_pioneer_layer_span,data)==sizeof(tt_pioneer_layer_span)-TT_WIDE_OUTPUT_BYTES,"span inline ABI has no tail padding");
+static inline size_t PioneerSpanRequestBytes(unsigned bytes) {
+	return bytes && bytes<=TT_WIDE_OUTPUT_BYTES && !(bytes&4095)?offsetof(tt_pioneer_layer_span,data)+bytes:0;
+}
 // Fixed Qwen0.6B feed-forward graph ONLY. No caller code,physical address,
 // NoC route or sequence. All three immutable weight extents are validated.
 struct tt_pioneer_layer_ffn {

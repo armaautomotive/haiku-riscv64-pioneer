@@ -26,13 +26,15 @@ class PioneerResidentDevice {
 	bool coordinated=false;
 	bool coordinatedDebug=false;
 	bool coordinatedWide=false;
+	bool coordinatedSpan=false;
 	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
 	uint64_t activationReuses=0;
-	uint64_t wideCalls=0;
+	uint64_t wideCalls=0,spanCalls=0;
+	unsigned UploadPageLimit() const { return coordinatedSpan?256:4; }
 	unsigned lastActivationPages=0;
 	// Diagnostic cohort tuning only; no new driver authority or active
 	// job mutation. The kernel independently partitions every request.
@@ -81,12 +83,13 @@ public:
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>10
-				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer==3 && support.version!=10)
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>11
+				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer==3 && support.version<10)
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
 			coordinatedVersion=support.version;
+			coordinatedSpan=coordinatedWide && support.version==11;
 		}
 		if (payloadBlocks && (s.capabilities&(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD))
 			!=(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD)) {
@@ -111,6 +114,7 @@ public:
 		if (attention && !(s.capabilities&TT_PIONEER_CAP_ATTENTION_TILE_SHARED)) { fprintf(stderr,"Shared attention capability unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
 		if (bulkUpload) fprintf(stderr,"Explicit owned bulk upload: synchronous 1..4 pages, six exact proofs and full CPU comparisons\n");
+		if (coordinatedSpan) fprintf(stderr,"Explicit contract11 NEW-weight upload:1..256 pages,card-side full GDDR/echo proof and frozen-CPU transport comparison\n");
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
 		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
@@ -153,7 +157,23 @@ public:
 		return true;
 	}
 	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
-		if (!active || failed || finished || cold || !data || !pages || pages>4) return false;
+		if (!active || failed || finished || cold || !data || !pages || pages>UploadPageLimit()) return false;
+		if (coordinatedSpan) {
+			unsigned bytes=pages*4096; size_t size=PioneerSpanRequestBytes(bytes);
+			auto* p=static_cast<tt_pioneer_layer_span*>(calloc(1,size)); if (!p) { failed=true; return false; }
+			p->version=1; p->bytes=bytes; p->offset=offset; memcpy(p->data,data,bytes);
+			int status=ioctl(fd,TT_PCI_PROBE_PIONEER_LAYER_SPAN,p,size); cold=p->result.master.recovery_required!=0;
+			bool proved=!status && PioneerSpanProof(p->result,bytes,coordinatorNonce+1);
+			if (!proved) {
+				const auto& m=p->result.master;
+				fprintf(stderr,"Span upload STOP status%d state%u bytes%u nonce%u s/c/s%u/%u/%u PC%x marker%x cold%u; close only,no fallback/retry\n",
+					status,m.state,bytes,m.nonce,m.started,m.completed,m.stopped,m.pc[1],m.marker,cold);
+				failed=true; closeOnly=true; free(p); return false;
+			}
+			coordinatorNonce=p->result.master.nonce; uploads+=pages; spanCalls++; free(p);
+			if (uploads%4096<pages) fprintf(stderr,"Resident span upload verified: %llu MiB\n",(unsigned long long)(uploads/256));
+			return true;
+		}
 		if (!bulkUpload) {
 			for (unsigned page=0;page<pages;page++) if (!Upload(offset+page*4096,data+page*1024)) return false;
 			return true;
@@ -187,7 +207,7 @@ public:
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
-	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=10 && active && !failed && !cold && !finished; }
+	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=11 && active && !failed && !cold && !finished; }
 	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {
 		if (!HasLayerFfn() || coordinatedVersion<9 || !n || n>3072 || (n&31) || !gate || !up || !output) return false;
 		tt_pioneer_layer_glu p={}; p.version=1; p.outputs=n; memcpy(p.gate,gate,n*4); memcpy(p.up,up,n*4);
@@ -223,7 +243,7 @@ public:
 	}
 	bool Q8WideMatvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
 		PioneerFleetPlan plan;
-		if (!HasLayerFfn() || coordinatedVersion!=10 || !q8 || !vector || !scales || !result || !PioneerFleetPartition(inputs,outputs,fleet,plan)) return false;
+		if (!HasLayerFfn() || coordinatedVersion<10 || !q8 || !vector || !scales || !result || !PioneerFleetPartition(inputs,outputs,fleet,plan)) return false;
 		if (!coordinatedRequest) coordinatedRequest=(tt_pioneer_coordinated_fleet*)malloc(sizeof(tt_pioneer_coordinated_fleet));
 		if (!coordinatedRequest) { failed=true; return false; }
 		size_t size=PioneerCoordinatedRequestBytes(outputs); auto& p=*coordinatedRequest;

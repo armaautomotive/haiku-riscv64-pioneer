@@ -36,7 +36,7 @@ static void LayerGlu(unsigned n,bool debug)
 	Fence();
 }
 #if PIONEER_COORDINATOR_SPAN_UPLOAD
-// OFFLINE candidate ONLY. No driver exposes this operation yet.
+// Contract11 fixed NEW-weight transport;caller owns and freezes both ends.
 static void SpanStorage(bool write,uint32_t local,uint32_t address,unsigned words)
 {
 	if (!words || words>4096 || (words&1023) || (address&4095) || local!=(write?0x144000U:0x84000U) || !PacketIdle()) coordinator_fault_park();

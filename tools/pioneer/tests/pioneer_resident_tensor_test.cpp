@@ -62,10 +62,11 @@ struct TensorIO {
 	}
 };
 struct BatchTensorIO:TensorIO {
-	unsigned spans=0,spanFail=0;
+	unsigned spans=0,spanFail=0,limit=4;
+	unsigned UploadPageLimit() const { return limit; }
 	std::vector<unsigned> sizes;
 	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
-		assert(pages>=1 && pages<=4); sizes.push_back(pages);
+		assert(pages>=1 && pages<=limit); sizes.push_back(pages);
 		if (++spans==spanFail) return false;
 		for (unsigned p=0;p<pages;p++) if (!Upload(offset+p*4096,data+p*1024)) return false;
 		return true;
@@ -87,6 +88,15 @@ static float QReference(unsigned row,unsigned inputs,const uint8_t* x,bool nativ
 	return sum;
 }
 int main() {
+	for (unsigned k:{1024U,3072U,6144U}) {
+		unsigned rows=k==1024?3072:1024; int identity=0; uint64_t a=0,b=0;
+		BatchTensorIO ordinary,span; span.limit=256;
+		PioneerResidentTensorCache<BatchTensorIO> ca(ordinary,16*1024*1024,false,true,true,true,true),cb(span,16*1024*1024,false,true,true,true,true);
+		auto decode=[](unsigned r,unsigned block,uint8_t* out) { QBlock(r,block,out,true); return true; };
+		assert(ca.Q8Weights(&identity,8,k,rows,decode,a) && cb.Q8Weights(&identity,8,k,rows,decode,b));
+		assert(a==b && ca.Bytes()==cb.Bytes() && ordinary.storage==span.storage && ordinary.uploads==span.uploads && span.spans<ordinary.spans);
+		unsigned spans=span.spans; assert(cb.Q8Weights(&identity,8,k,rows,decode,b) && span.spans==spans);
+	}
 	TensorIO io; PioneerResidentTensorCache<TensorIO> cache(io,16*1024*1024);
 	int first=0,second=0; uint64_t offset=0;
 	auto decode=[](unsigned row,float* data) { for (unsigned k=0;k<1024;k++) data[k]=Weight(row,k); return true; };

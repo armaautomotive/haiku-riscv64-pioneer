@@ -2359,7 +2359,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={10,119,3,1,8192}; // v10 adds separate owned1MiB wide-output ABI;ordinary matrix/debug paths unchanged
+	tt_coordinated_support support={11,119,3,1,8192}; // v11 adds bounded NEW-weight span uploads;older operations remain unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2398,6 +2398,67 @@ PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug)
 			&& PioneerFleetPreludePrepare(c.io,f) && PioneerPersistentPrepare(c.io,f,false,true) && PioneerPersistentBoot(c.io,f);
 	}
 	return ready && c.io.SelectRuntimeCore(0);
+}
+
+static status_t
+LayerSpanControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	const size_t prefix=offsetof(tt_pioneer_layer_span,data);
+	if (!data || length<prefix || length>sizeof(tt_pioneer_layer_span)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_layer_span*)malloc(length); if (!request) return B_NO_MEMORY;
+	// Freeze the complete request in ONE user copy; no double-fetch size or
+	// later caller mutation can change the kernel-private upload/comparison.
+	status=user_memcpy(request,data,length);
+	if (status!=B_OK || request->version!=1 || request->reserved[0] || request->reserved[1]
+		|| request->payload_reserved || length!=PioneerSpanRequestBytes(request->bytes)) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if ((c->runtimeCoreMode!=-1 && c->runtimeCoreMode!=8) || c->bytes!=UINT64_C(0x80000000)
+		|| (c->coordinator.ready && (!c->coordinator.fused || !c->coordinator.compact))) status=B_NOT_ALLOWED;
+	else if (!PioneerResidentOffset(c->bytes,request->offset) || request->offset>=c->bytes-TT_RESIDENT_KV_BYTES
+		|| request->bytes>c->bytes-TT_RESIDENT_KV_BYTES-request->offset) status=B_BAD_VALUE;
+	else {
+		unsigned first=unsigned(request->offset/4096),pages=request->bytes/4096; bool fresh=true;
+		for (unsigned p=0;p<pages;p++) fresh &= !c->initialized[first+p];
+		if (!fresh) status=B_NOT_ALLOWED;
+		else {
+			request->result={}; request->result.master.version=1; request->result.master.state=TT_RUNTIME_CONFIG_FAILED;
+			c->io.runtimeProfile.Begin(uint64(system_time()),19); auto& dram=c->baseline.baseline.baseline.baseline.dram;
+			bool ready=c->lease.ready || (!c->lease.saved && PioneerResidentLeaseBegin(c->io,c->baseline.baseline.baseline.noc,c->lease));
+			if (ready && c->runtimeCoreMode==8) ready=PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready);
+			if (ready) ready=c->io.SelectRuntimeCore(0) && c->io.MapBulk();
+			if (ready && !c->bulkHost.allocated) ready=PioneerPrepareOutputBuffer(c->io,c->host,c->bulkHost);
+			ready=ready && c->bulkHost.ready && PioneerBulkUploadPrepare(c->io,dram,c->baseline.baseline.baseline.noc,
+				c->host,c->lease,c->bulkHost,c->bulk);
+			ready=ready && PrepareCoordinatedFleet(*c,0,false) && PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready)
+				&& c->io.MapLayer() && PioneerLayerPrepare(c->io,dram,c->fleet[0].noc,c->lease,c->coordinator,c->layer);
+			if (ready && !c->wideHost.ready) ready=!c->wideHost.allocated && PioneerPrepareWideOutput(c->io,c->host,c->bulkHost,c->wideHost);
+			if (ready) {
+				c->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
+				PioneerSpanUpload(c->io,dram,c->host,c->bulkHost,c->wideHost,c->fleet,c->bulk,c->coordinator,c->layer,c->attention.ready,
+					c->bytes,request->offset,request->bytes,request->data,request->result);
+			}
+			if (c->Unsafe()) {
+				c->layer.unsafe=c->coordinator.unsafe=c->bulk.unsafe=true; c->lease.recovery_required=true; c->io.QuarantineHostPage();
+				PioneerQuarantineOutputBuffer(c->io,c->bulkHost); PioneerQuarantineWideOutput(c->io,c->wideHost);
+				sColdRecoveryRequired=true; request->result.master.recovery_required=1;
+			}
+			auto& r=request->result.master;
+			c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
+			// Only the COMPLETE transport proof and independent frozen CPU
+			// echo permit ALL pages to become initialized. Never partial bits.
+			if (PioneerSpanProof(request->result,request->bytes,c->coordinator.nonce)) for (unsigned p=0;p<pages;p++) {
+				c->hashes[first+p]=PioneerResidentPageHash(request->data+p*1024); c->initialized[first+p]=1; c->uploadedPages++;
+			}
+			// Return metadata only,not a redundant1MiB payload copy.
+			status=user_memcpy(data,request,prefix);
+		}
+	}
+	release_sem(sLock); free(request); return status;
 }
 
 static status_t
@@ -3044,6 +3105,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return LayerGluControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_WIDE)
 		return LayerWideControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_LAYER_SPAN)
+		return LayerSpanControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT)
 		return CoordinatedSupportControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PERSISTENT_FLEET)

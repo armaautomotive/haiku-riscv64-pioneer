@@ -29,6 +29,8 @@ static inline uint64_t PioneerResidentTensorBytes(unsigned inputs,unsigned outpu
 // Prefer a synchronous bounded span when the transport exposes it. Legacy
 // adapters retain their exact page-at-a-time behaviour, including failure
 // boundaries. Neither path queues data beyond this call.
+template<class IO> auto PioneerTensorUploadLimit(const IO& io,int)->decltype(io.UploadPageLimit()) { return io.UploadPageLimit(); }
+template<class IO> unsigned PioneerTensorUploadLimit(const IO&,long) { return 4; }
 template<class IO>
 auto PioneerTensorUpload(IO& io,uint64_t offset,const uint32_t* data,unsigned pages,uint64_t& uploaded,int)
 	-> decltype(io.UploadPages(offset,data,pages),bool())
@@ -143,12 +145,16 @@ public:
 		if (!identity || !bytes || !PioneerResidentCapacity(capacity) || next>capacity || bytes>capacity-next) { failed=true; return false; }
 		const unsigned rowStep=compact?32:16;
 		const unsigned tileBytes=unsigned(compact?PioneerQ8CompactWeightBytes(inputs,rowStep):PioneerMatvecWeightBytes(inputs,rowStep));
-		std::vector<uint32_t> packed(tileBytes/4);
-		for (unsigned row=0;row<outputs;row+=rowStep) {
-			memset(packed.data(),0,tileBytes);
-			for (unsigned r=0;r<rowStep;r++) for (unsigned block=0;block<inputs/32;block++) {
+		unsigned uploadPages=PioneerTensorUploadLimit(io,0);
+		if (!uploadPages || uploadPages>256) { failed=true; return false; }
+		unsigned tilesPerBatch=uploadPages*4096/tileBytes; if (!tilesPerBatch) tilesPerBatch=1;
+		std::vector<uint32_t> packed(size_t(tileBytes/4)*tilesPerBatch);
+		for (unsigned row=0;row<outputs;) {
+			unsigned tiles=(outputs-row)/rowStep; if (tiles>tilesPerBatch) tiles=tilesPerBatch;
+			unsigned batchBytes=tiles*tileBytes; memset(packed.data(),0,batchBytes);
+			for (unsigned tile=0;tile<tiles;tile++) for (unsigned r=0;r<rowStep;r++) for (unsigned block=0;block<inputs/32;block++) {
 				uint8_t data[34];
-				if (!decode(row+r,block,data)) { failed=true; return false; }
+				if (!decode(row+tile*rowStep+r,block,data)) { failed=true; return false; }
 				uint16_t d=uint16_t(data[0])|(uint16_t(data[1])<<8);
 				if ((d&0x7c00)==0x7c00) { failed=true; return false; }
 				for (unsigned i=0;i<32;i++) {
@@ -156,16 +162,17 @@ public:
 					uint8_t encoded=data[2+i];
 					if (native && !PioneerInt8UnpackEncode(q,encoded)) { failed=true; return false; }
 					uint64_t byte=f32Scales?PioneerQ8NativeF32ValueByte(inputs,block*32+i,r):compact?PioneerQ8CompactValueByte(inputs,block*32+i,r):PioneerMatvecWeightElement(inputs,block*32+i,r);
-					packed[size_t(byte/4)]|=uint32_t(compact?uint16_t(encoded):PioneerInt8Operand(q))<<(8*(byte&3));
+					packed[size_t(tile)*tileBytes/4+size_t(byte/4)]|=uint32_t(compact?uint16_t(encoded):PioneerInt8Operand(q))<<(8*(byte&3));
 				}
 				uint64_t byte=f32Scales?PioneerQ8NativeF32ScaleByte(inputs,block,r):compact?PioneerQ8CompactScaleByte(inputs,block,r):uint64_t(block*2+1)*576+544+r*2;
-				if (f32Scales) packed[size_t(byte/4)]=PioneerQ8HalfToFloatBits(d);
-				else packed[size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
+				if (f32Scales) packed[size_t(tile)*tileBytes/4+size_t(byte/4)]=PioneerQ8HalfToFloatBits(d);
+				else packed[size_t(tile)*tileBytes/4+size_t(byte/4)]|=uint32_t(d)<<(8*(byte&3));
 			}
-			for (unsigned page=0;page<tileBytes;page+=16384) {
-				unsigned pages=(tileBytes-page)/4096; if (pages>4) pages=4;
+			for (unsigned page=0;page<batchBytes;page+=uploadPages*4096) {
+				unsigned pages=(batchBytes-page)/4096; if (pages>uploadPages) pages=uploadPages;
 				if (!PioneerTensorUpload(io,next+uint64_t(row/rowStep)*tileBytes+page,packed.data()+page/4,pages,uploadedPages,0)) { failed=true; return false; }
 			}
+			row+=tiles*rowStep;
 		}
 		offset=next; next+=bytes; entries.push_back({identity,encoding,inputs,outputs,offset}); return true;
 	}

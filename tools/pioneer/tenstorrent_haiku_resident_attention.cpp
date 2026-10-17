@@ -9,7 +9,9 @@ static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); 
 int main(int argc,char** argv)
 {
 	bool blocks=argc==2 && !strcmp(argv[1],"--run-blocks-and-restore");
+	bool span=argc==2 && !strcmp(argv[1],"--coordinated-span-and-restore");
 	bool wideDma=argc==2 && (!strcmp(argv[1],"--coordinated-wide-dma-and-restore") || !strcmp(argv[1],"--coordinated-vocabulary-dma-and-restore"));
+	wideDma |= span;
 	bool debug=argc==2 && !strcmp(argv[1],"--coordinated-debug-wide-and-restore");
 	bool shapes=argc==2 && (!strcmp(argv[1],"--coordinated-shapes-and-restore") || !strcmp(argv[1],"--coordinated-debug-shapes-and-restore"));
 	debug |= shapes && !strcmp(argv[1],"--coordinated-debug-shapes-and-restore");
@@ -26,7 +28,7 @@ int main(int argc,char** argv)
 		int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) return 1;
 		tt_coordinated_support s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&s,sizeof(s)); close(fd);
 		printf("Coordinated support status%d v%u workers%u KV-v%u immutable%u gather%u\n",status,s.version,s.max_workers,s.attention_version,s.immutable_weights,s.gather_max);
-		return status || s.version<7 || s.version>10 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
+		return status || s.version<7 || s.version>11 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
 	}
 	bool coordinated=wide || vocabulary || coordinatedAttention || (argc==2 && !strcmp(argv[1],"--coordinated-matrices-and-restore"));
 	if (!blocks && !coordinated && (argc!=2 || strcmp(argv[1],"--run-and-restore"))) { fprintf(stderr,"Usage: %s --run-and-restore|--run-blocks-and-restore|--coordinated-matrices-and-restore|--coordinated-wide-and-restore|--coordinated-vocabulary-and-restore|--coordinated-attention-and-restore|--check-coordinated-support\n",argv[0]); return 2; }
@@ -48,9 +50,20 @@ int main(int argc,char** argv)
 	for (auto& w:x) w=0x40004000; // valid integer-overlay zeros
 	for (auto& w:scale) w=0x3f800000;
 	bool okay=true;
-	for (uint64_t at=0;at<weightBytes && okay;at+=16384) {
-		unsigned pages=unsigned((weightBytes-at)/4096); if (pages>4) pages=4;
+	if (span) {
+		okay=device.UploadPageLimit()==256; std::vector<uint32_t> raw(TT_WIDE_OUTPUT_WORDS);
+		for (unsigned i=0;i<raw.size();i++) raw[i]=0x7fc00001U^(i*0x9e3779b9U);
+		uint64_t offset=0x1000000;
+		for (unsigned bytes:{4096U,12288U,16384U,20480U,65536U,1048576U}) {
+			double start=Seconds(); okay=okay && device.UploadPages(offset,raw.data(),bytes/4096);
+			printf("NATIVE span bytes%u complete-frozen-echo%u wall%.6fs calls%llu pages%llu\n",bytes,okay,Seconds()-start,(unsigned long long)device.spanCalls,(unsigned long long)device.uploads);
+			offset+=0x100000;
+		}
+	}
+	for (uint64_t at=0;at<weightBytes && okay;) {
+		unsigned pages=unsigned((weightBytes-at)/4096); if (pages>device.UploadPageLimit()) pages=device.UploadPageLimit();
 		okay=device.UploadPages(at,packed.data()+at/4,pages);
+		at+=pages*4096;
 	}
 	okay=okay && (wideDma?device.Q8WideMatvec(0,1024,rows,x,scale,y.data()):device.Q8Matvec(0,1024,rows,x,scale,y.data()));
 	if (shapes) {

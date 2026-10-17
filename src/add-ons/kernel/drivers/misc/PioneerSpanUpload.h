@@ -2,7 +2,8 @@
 #ifndef PIONEER_SPAN_UPLOAD_H
 #define PIONEER_SPAN_UPLOAD_H
 #include "PioneerSpanProof.h"
-// OFFLINE controller candidate ONLY. No driver/client ABI exposes it yet.
+// Contract11 private NEW-weight transport. Caller freezes bytes and commits
+// initialized-page metadata only after the complete proof returned here.
 template<class IO>
 bool PioneerSpanUpload(IO& io,const tt_dram_samples_result& baseline,const tt_host_page_result& host,
 	PioneerOutputBufferLease& transfer,PioneerWideOutputLease& wide,PioneerFleetWorker* fleet,PioneerBulkUploadLease& bulk,
