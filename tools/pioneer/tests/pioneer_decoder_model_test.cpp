@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderModel.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderBatchModel.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -26,5 +27,25 @@ int main()
 	initialized[0x7e400000/4096]=1; assert(!PioneerDecoderModelRegister(offsets,initialized.data(),0x80000000ULL,job)); initialized[0x7e400000/4096]=0;
 	assert(!PioneerDecoderModelRegister(offsets,initialized.data(),0x40000000ULL,job));
 	assert(PioneerDecoderModelRegister(offsets,initialized.data(),0x80000000ULL,job));
+	uint64_t ropeOffset=next;
+	for (uint64_t page=ropeOffset/4096;page<ropeOffset/4096+32;page++) initialized[page]=1;
+	assert(PioneerDecoderBatchModelRegister(offsets,ropeOffset,151643,151645,initialized.data(),0x80000000ULL,job)
+		&& job.reserved[1]==0x04000000+ropeOffset && job.reserved[2]==151643 && job.reserved[3]==151645 && !job.reserved[0] && !job.magic && !job.hostHigh);
+	for (unsigned page=0;page<32;page++) {
+		initialized[ropeOffset/4096+page]=0;
+		assert(!PioneerDecoderBatchModelRegister(offsets,ropeOffset,151643,151645,initialized.data(),0x80000000ULL,job) && !job.vocabulary);
+		initialized[ropeOffset/4096+page]=1;
+	}
+	for (unsigned i=0;i<sizeof(offsets)/8;i++) {
+		uint64_t collision=reinterpret_cast<const uint64_t*>(&offsets)[i];
+		assert(!PioneerDecoderBatchModelRegister(offsets,collision,151643,151645,initialized.data(),0x80000000ULL,job) && !job.vocabulary);
+	}
+	for (uint64_t invalid:{ropeOffset+1,UINT64_MAX,UINT64_C(0x7e3ff000),UINT64_C(0x7e400000)})
+		assert(!PioneerDecoderBatchModelRegister(offsets,invalid,151643,151645,initialized.data(),0x80000000ULL,job) && !job.vocabulary);
+	assert(!PioneerDecoderBatchModelRegister(offsets,ropeOffset,151643,151643,initialized.data(),0x80000000ULL,job));
+	assert(!PioneerDecoderBatchModelRegister(offsets,ropeOffset,151936,151645,initialized.data(),0x80000000ULL,job));
+	assert(!PioneerDecoderBatchModelRegister(offsets,ropeOffset,151643,151936,initialized.data(),0x80000000ULL,job));
+	assert(PioneerDecoderBatchModelRegister(offsets,ropeOffset,151643,151645,initialized.data(),0x80000000ULL,job));
+	puts("PASS OFFLINE autonomous-model prerequisite:all32 immutable RoPE pages,disjoint fromALL310 weight/norm extents and KV tail,EOG bounds,failed derivation clears control data;NOT driver/native");
 	printf("PASS OFFLINE fixed decoder model registration,310 immutable extents/all first+last pages,KV-tail separation,64-bit overflow/alignment/uninitialized refusal,private address derivation;NO driver exposure\n");
 }

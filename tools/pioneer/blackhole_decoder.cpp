@@ -7,6 +7,10 @@
 #define PIONEER_ATTENTION_EXACT_HALF_PRODUCT 1
 #include "PioneerGraphNorm.h"
 #include "PioneerGraphRope.h"
+#if PIONEER_COORDINATOR_BATCH
+#include "PioneerDecoderEmbedding.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderBatch.h"
+#endif
 #include "PioneerCoordinatedAttentionProof.h"
 #include "PioneerCoordinatedGluProof.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderStageProfile.h"
@@ -55,8 +59,17 @@ static void DecoderCopy(unsigned destination,unsigned source,unsigned words)
 }
 static void DecoderRead(unsigned destination,uint32_t source,unsigned bytes,uint32_t (&total)[4])
 {
+#if PIONEER_COORDINATOR_BATCH
+	const volatile auto& root=DecoderJob();
+	bool fixedInput=destination==0x80000 && !(source&31)
+		&& ((bytes==512 && source==root.reserved[1]+(root.tokens-1)*512)
+			|| (bytes==576 && source>=root.vocabulary && source-root.vocabulary<=175030272-576));
+	if (!fixedInput && ((source&511) || (destination&511) || (bytes!=512 && bytes!=4096) || destination!=TT_DECODER_NORM)) coordinator_fault_park();
+	if (source<0x04000000 || source>=0x82400000 || bytes>0x82400000-source || !PacketIdle()) coordinator_fault_park();
+#else
 	if ((source&511) || (destination&511) || (bytes!=512 && bytes!=4096) || source<0x04000000 || source>=0x82400000
 		|| bytes>0x82400000-source || destination!=TT_DECODER_NORM || !PacketIdle()) coordinator_fault_park();
+#endif
 	volatile uint32_t* noc=Words(0xffb20000); volatile uint32_t command[10]; uint32_t expected[4];
 	for (unsigned i=0;i<10;i++) command[i]=0;
 	for (unsigned i=0;i<4;i++) expected[i]=noc[(0x208+i*4)/4]+(i==1?bytes/64:1);
@@ -70,6 +83,27 @@ static void DecoderRead(unsigned destination,uint32_t source,unsigned bytes,uint
 	}
 	coordinator_fault_park();
 }
+#if PIONEER_COORDINATOR_BATCH
+struct DecoderEmbeddingIO {
+	uint32_t (&total)[4]; unsigned tile,reads;
+	bool ReadNativeEmbeddingBlock(uint32_t source,uint32_t (&output)[144]) {
+		if (reads>=64 || source!=tile+(reads>>1)*576) return false;
+		reads++; DecoderRead(0x80000,source,576,total);
+		for (unsigned i=0;i<144;i++) output[i]=Words(0x80000)[i];
+		Fence(); return true;
+	}
+};
+static void DecoderBatchRope(uint32_t (&total)[4]) {
+	const volatile auto& root=DecoderJob(); unsigned source=root.reserved[1]+(root.tokens-1)*512;
+	DecoderRead(0x80000,source,512,total); DecoderCopy(0x147e00,0x80000,128);
+	DecoderRead(0x80000,source,512,total);
+	for (unsigned i=0;i<128;i++) {
+		unsigned value=Words(0x147e00)[i],absolute=value&0x7fffffff;
+		if (Words(0x80000)[i]!=value || absolute>0x3f800000 || (absolute && absolute<0x26800000)) coordinator_fault_park();
+	}
+	Fence();
+}
+#endif
 static void DecoderQuantize(unsigned source,unsigned n)
 {
 	DECODER_STAGE_BEGIN();
@@ -91,9 +125,12 @@ static void DecoderMatrix(uint32_t base,unsigned k,unsigned n,uint32_t (&total)[
 	volatile uint32_t* j=Words(0x140000); volatile auto& root=DecoderJob();
 	for (unsigned i=0;i<64;i++) j[i]=0;
 	j[0]=0x31445243; j[1]=final?6:1; j[2]=119; j[3]=k; j[4]=n; j[5]=base; j[6]=root.nonce;
-	if (final) { j[7]=root.hostLow; j[8]=root.hostHigh; j[9]=root.hostBytes; }
+	if (final && !PIONEER_COORDINATOR_BATCH) { j[7]=root.hostLow; j[8]=root.hostHigh; j[9]=root.hostBytes; }
 #if PIONEER_COORDINATOR_GREEDY
 	if (final && root.operation==9) { j[1]=9; j[10]=root.tokens; }
+#if PIONEER_COORDINATOR_BATCH
+	if (final) { j[1]=11; j[10]=root.tokens; }
+#endif
 #endif
 	// A variable power-of-two divisor otherwise becomes unqualified DIVU
 	// at -Os. The fixed tile size is represented by a shift explicitly.
@@ -286,7 +323,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PARALLEL_ROPE?9:PIONEER_COORDINATOR_SMALL_ROWS?8:PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_BATCH?10:PIONEER_COORDINATOR_PARALLEL_ROPE?9:PIONEER_COORDINATOR_SMALL_ROWS?8:PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 #if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
 	if (root.operation!=8) return 0; // Never a sampling/inference target.
 	for (unsigned i=0;i<16;i++) Words(0x147900)[i]=0;
@@ -294,19 +331,26 @@ extern "C" unsigned coordinator_main()
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
-	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_PARALLEL_ROPE?4:PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
+	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_BATCH?5:PIONEER_COORDINATOR_PARALLEL_ROPE?4:PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
 #endif
 	for (unsigned i=0;i<1024;i++) if ((Words(TT_DECODER_INPUT)[i]&0x7fffffff)>0x477fe000) return 0;
 	uint32_t before[8],total[4]={}; for (unsigned i=0;i<8;i++) before[i]=*Words(0xffb20000+CounterOffset(i));
+#if PIONEER_COORDINATOR_BATCH
+	unsigned firstTokens=root.tokens,completed=0;
+	for (unsigned i=0;i<64;i++) Words(0x146c00)[i]=0;
+	for (unsigned step=0;step<root.reserved[0];step++) {
+		DecoderBatchRope(total);
+#endif
 	DecoderCopy(TT_DECODER_HIDDEN,TT_DECODER_INPUT,1024);
 	const float* rope=Floats(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,rope));
-#if PIONEER_COORDINATOR_PARALLEL_ROPE
+#if PIONEER_COORDINATOR_PARALLEL_ROPE && !PIONEER_COORDINATOR_BATCH
 	// Frozen through every attention completion for this position. These
 	// three512B spans are in the existing140000..148000 bulk backup,not
 	// in matrix gathers144000 or NoC scratch147000..147940.
 	DecoderCopy(0x147e00,TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,rope),128);
 	(void)rope;
 #endif
+	(void)rope;
 	for (unsigned layer=0;layer<28;layer++) {
 		const volatile auto& l=root.layers[layer];
 		DecoderCopy(TT_DECODER_RESIDUAL,TT_DECODER_HIDDEN,1024);
@@ -359,6 +403,31 @@ extern "C" unsigned coordinator_main()
 	}
 	DecoderNorm(TT_DECODER_HIDDEN,0x84000,1024,1024,root.finalNorm,total); DecoderQuantize(0x84000,1024);
 	DecoderMatrix(root.vocabulary,1024,151936,total,true);
+#if PIONEER_COORDINATOR_BATCH
+	uint32_t tokenPacket[32]; for (unsigned i=0;i<32;i++) tokenPacket[i]=Words(0x84000)[i];
+	if (!PioneerDecoderGreedyValid(tokenPacket,root.nonce,root.tokens)) coordinator_fault_park();
+	unsigned selected=tokenPacket[3];
+	Words(0x146c00)[8+step]=selected; Words(0x146c00)[24+step]=tokenPacket[4]; completed++;
+	if (selected==root.reserved[2] || selected==root.reserved[3] || completed==root.reserved[0]) break;
+	DecoderEmbeddingIO io={total,root.vocabulary+(selected>>4)*18432,0};
+	if (!PioneerDecoderEmbedding(io,selected,root.vocabulary,Floats(TT_DECODER_INPUT)) || io.reads!=64) coordinator_fault_park();
+	root.tokens++; Fence();
+	}
+	Words(0x146c00)[0]=TT_DECODER_BATCH_MAGIC; Words(0x146c00)[1]=root.nonce; Words(0x146c00)[2]=151936;
+	Words(0x146c00)[3]=completed; Words(0x146c00)[4]=firstTokens; Words(0x146c00)[5]=root.tokens;
+	Words(0x146c00)[6]=119; Words(0x146c00)[7]=TT_DECODER_BATCH_OPERATION;
+	unsigned verified=0;
+	if (!PioneerDecoderBatchPacket(Words(0x146c00),root.nonce,firstTokens,root.reserved[0],root.reserved[2],root.reserved[3],verified)
+		|| verified!=completed) coordinator_fault_park();
+	DecoderCopy(0x84000,0x146c00,64);
+	uint32_t prior[4]; for (unsigned i=0;i<4;i++) prior[i]=Words(0x143000)[i];
+	HostTransfer(true,root.hostLow,root.hostHigh,64); HostTransfer(false,root.hostLow,root.hostHigh,64);
+	for (unsigned i=0;i<64;i++) if (Words(0x84000)[i]!=Words(0x144000)[i]) coordinator_fault_park();
+	for (unsigned i=0;i<4;i++) total[i]+=Words(0x143000)[i]-prior[i];
+#if PIONEER_COORDINATOR_STAGE_PROFILE
+	Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[20]=completed;
+#endif
+#endif
 	volatile uint32_t* stats=Words(0x143000); for (unsigned i=0;i<24;i++) stats[i]=0;
 	for (unsigned i=0;i<4;i++) stats[i]=total[i];
 	stats[5]=151936; stats[6]=root.nonce; stats[7]=PIONEER_COORDINATOR_GREEDY?root.operation:8;

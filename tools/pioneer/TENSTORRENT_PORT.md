@@ -2,6 +2,36 @@
 
 ## Status
 
+### October17: autonomous two-position decoder OFFLINE PASS (12:44 UTC)
+
+This is NOT native-qualified or exposed by any ioctl. The installed card
+remains idle on qualified31 (5.29..5.40tok/s);fast Qwen STILL NOT achieved.
+Compiled master87d999df implements private job10/two positions,local argmax,
+exact resident tied-embedding dequant and independently read immutable RoPE
+table,with one final256B ordered host write/read/ALL-bit compare. There is
+NO host transfer between positions. Existing31 attention/GLU images and29
+math remain unchanged. New packet146c00..146d00 is wholly in the EXISTING
+backed-up bulk span beyond the2284B private job,not the live attention gather.
+Input reads use existing80000 scratch;no new map/DMA/VRAM authority.
+
+Actual RV32IMF master plus all8 actual group images pass zero/sparse,
+one/two positions and early EOS,independent complete KV and exact selected
+token/logit bits,ALL119 sequence budgets,one host packet,113 norm reads per
+position,64 embedding/2 RoPE input reads and exact profilev5/counter proofs.
+Two-position sparse case78088943 scalar interpreter steps is NOT hardware
+performance. Initial RoPE timeout/ALL-bit read corruption refuses before
+any host result. Broader native-owner/controller/debug validation remains
+required before installation. Standalone embedding prerequisite separately
+tests ALL64 packet corruption/timeout cases. Fixed batch counter bounds
+remain below2^32 for at mostTWO positions,not an unproved16-position batch.
+
+Separate OFFLINE immutable-table registration prerequisite passes every
+one of32 RoPE pages,EOG limits,all310 weight/norm collision refusals and KV
+tail/overflow/alignment bounds. Failed derivation clears the private model.
+The table has no native registration/API yet. No source from the unrelated
+dirty llama.cpp submodule is built/committed/synced. No Assistant promotion,
+all-Qwen/Q4/27B claim or boot/CPU/RAM/SD change.
+
 ### October17: parallel head31 native PASS;autonomous-generation prerequisite (12:32 UTC)
 
 Fast Qwen STILL NOT achieved. Contract31 passes all22 full-vocabulary and

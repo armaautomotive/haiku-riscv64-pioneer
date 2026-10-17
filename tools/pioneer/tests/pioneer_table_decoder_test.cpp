@@ -21,6 +21,7 @@ struct TableDecoder:GreedyDecoder {
 		GreedyDecoder::Submit(); if (corrupt) { const unsigned counters[]={4,5,2,7}; counts[counters[counterFault-1]]++; counterInjected=true; }
 	}
 };
+#ifndef PIONEER_TABLE_DECODER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); compactImage=true;
@@ -36,3 +37,4 @@ int main(int argc,char** argv)
 		assert(!m.RunDecoder() && m.counterInjected && m.issued==1 && !m.hostWrites); }
 	puts("PASS OFFLINE actual table-master/8 attention/6 GLU,full+128B zero/sparse/two positions,ALL logits/KV/119 sequences/counters,NO root descriptor writes;peer lookups separately instruction-tested;NOT native qualification");
 }
+#endif

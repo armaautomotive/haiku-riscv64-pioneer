@@ -1,3 +1,6 @@
+#ifndef PIONEER_COORDINATOR_BATCH
+#define PIONEER_COORDINATOR_BATCH 0
+#endif
 /* SPDX-License-Identifier: MIT */
 // Fixed immutable image, exposed only through guarded private coordinator ABIs.
 // Master0 coordinates fixed peers1..119; all addresses/routes are fixed or
@@ -198,6 +201,9 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_GREEDY
 		&& operation!=9
 #endif
+#if PIONEER_COORDINATOR_BATCH
+		&& operation!=11
+#endif
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		&& operation!=10
 #endif
@@ -209,7 +215,7 @@ extern "C" unsigned coordinator_main()
 		) && (!n || n>262144 || !job[8] || job[8]>0xffff || (job[7]&0xfffff)
 		|| (job[8]==0xffff && job[7]>0xfff00000) || job[9]!=0x100000)) return 0;
 #if PIONEER_COORDINATOR_GREEDY
-	if (operation==9 && (n!=151936 || k!=1024 || limit!=119 || !job[10] || job[10]>256)) return 0;
+	if ((operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)) && (n!=151936 || k!=1024 || limit!=119 || !job[10] || job[10]>256)) return 0;
 #endif
 #if PIONEER_COORDINATOR_PAIRED_FFN
 	if (operation==10) {
@@ -369,7 +375,7 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
 			|| operation==6
 #if PIONEER_COORDINATOR_GREEDY
-			|| operation==9
+			|| operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)
 #endif
 #endif
 		) {
@@ -378,7 +384,7 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
 			if (operation==6
 #if PIONEER_COORDINATOR_GREEDY
-				|| operation==9
+				|| operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)
 #endif
 				) outputRow=0;
 #endif
@@ -398,7 +404,7 @@ extern "C" unsigned coordinator_main()
 			for (unsigned i=0;i<rows;i++) if ((Words(0x84000)[outputRow+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
 #endif
 #if PIONEER_COORDINATOR_GREEDY
-			if (operation==9) for (unsigned i=0;i<rows;i++) {
+			if (operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)) for (unsigned i=0;i<rows;i++) {
 				uint32_t bits=Words(0x84000)[i],key=PioneerDecoderLogitKey(bits);
 				if (!firstRow && !i) { best=0; bestBits=bits; bestKey=key; }
 				else if (key>bestKey) { best=firstRow+i; bestBits=bits; bestKey=key; }
@@ -416,15 +422,17 @@ extern "C" unsigned coordinator_main()
 		firstRow+=rows;
 	}
 #if PIONEER_COORDINATOR_GREEDY
-	if (operation==9) {
+	if (operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)) {
 		if (firstRow!=151936) coordinator_fault_park();
 		for (unsigned i=0;i<32;i++) Words(0x84000)[i]=0;
 		Words(0x84000)[0]=TT_DECODER_GREEDY_MAGIC; Words(0x84000)[1]=job[6]; Words(0x84000)[2]=151936;
 		Words(0x84000)[3]=best; Words(0x84000)[4]=bestBits; Words(0x84000)[5]=job[10];
 		Words(0x84000)[6]=119; Words(0x84000)[7]=9; Fence();
-		HostTransfer(true,job[7],job[8],32); HostTransfer(false,job[7],job[8],32);
-		uint32_t mismatch=0; for (unsigned i=0;i<32;i++) mismatch|=Words(0x84000)[i]^Words(0x144000)[i];
-		if (mismatch) coordinator_fault_park();
+		if (operation==9) {
+			HostTransfer(true,job[7],job[8],32); HostTransfer(false,job[7],job[8],32);
+			uint32_t mismatch=0; for (unsigned i=0;i<32;i++) mismatch|=Words(0x84000)[i]^Words(0x144000)[i];
+			if (mismatch) coordinator_fault_park();
+		}
 	}
 #endif
 #if PIONEER_COORDINATOR_FUSED_OUTPUT

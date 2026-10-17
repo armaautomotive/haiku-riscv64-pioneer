@@ -29,7 +29,7 @@ static inline bool PioneerDecoderPlanBatch(unsigned firstTokens,unsigned request
 	}
 	return true;
 }
-static inline bool PioneerDecoderBatchPacket(const uint32_t* packet,unsigned nonce,unsigned firstTokens,
+static inline bool PioneerDecoderBatchPacket(const volatile uint32_t* packet,unsigned nonce,unsigned firstTokens,
 	unsigned requested,unsigned eos0,unsigned eos1,unsigned& completed)
 {
 	completed=0;

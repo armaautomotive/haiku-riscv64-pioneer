@@ -20,6 +20,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTableDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeSmallRowsDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRopeDecoderImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeBatchDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #define Machine DecoderSfpuMachine
 #define Image DecoderSfpuImage
@@ -83,8 +84,8 @@ struct DecoderMachine:CoordinatorMachine {
 			x[head+i]=fmaf(a,c,-(b*s)); x[head+64+i]=fmaf(a,s,b*c); }
 		return x;
 	}
-	void Reference() {
-		std::vector<float> hidden(1024); for (unsigned i=0;i<1024;i++) { hidden[i]=float(sin(i*.173+(positions-1)*.317)*.1+.125); memory[TT_DECODER_INPUT+i*4]=Bits(hidden[i]); }
+	void Reference(const std::vector<float>* initial=nullptr) {
+		std::vector<float> hidden(1024); for (unsigned i=0;i<1024;i++) { hidden[i]=initial?initial->at(i):float(sin(i*.173+(positions-1)*.317)*.1+.125); memory[TT_DECODER_INPUT+i*4]=Bits(hidden[i]); }
 		for (unsigned layer=0;layer<28;layer++) {
 			auto residual=hidden,normalized=Norm(hidden,1024),v=ReferenceMatrix(normalized,1024,1),k=Rope(Norm(ReferenceMatrix(normalized,1024,2),128));
 			auto q=Rope(Norm(ReferenceMatrix(normalized,2048,0),128));
@@ -106,19 +107,20 @@ struct DecoderMachine:CoordinatorMachine {
 		bool unrolled=greedy && code.size()==TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS*4;
 		bool fastRms=greedy && code.size()==TT_GREEDY_RMS_DECODER_IMAGE_WORDS*4;
 		bool cumulative=greedy && code.size()==TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS*4;
-		assert(code.size()==unsigned(attention.parallelRope?TT_ROPE_DECODER_IMAGE_WORDS:getenv("PIONEER_GREEDY_SMALL_ROWS")?TT_SMALL_ROWS_DECODER_IMAGE_WORDS:getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?TT_TABLE_DECODER_IMAGE_WORDS:diagnostic?TT_PULL_DIAGNOSTIC_DECODER_IMAGE_WORDS:attention.inputPull?TT_PULL_INPUT_DECODER_IMAGE_WORDS:paired?TT_PAIRED_DECODER_IMAGE_WORDS:cumulative?TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS:fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
-		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((attention.parallelRope?BlackholeRopeDecoderCodeWord(i):getenv("PIONEER_GREEDY_SMALL_ROWS")?BlackholeSmallRowsDecoderCodeWord(i):getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?BlackholeTableDecoderCodeWord(i):diagnostic?BlackholePullDiagnosticDecoderCodeWord(i):attention.inputPull?BlackholePullInputDecoderCodeWord(i):paired?BlackholePairedDecoderCodeWord(i):cumulative?BlackholeGreedyCountersDecoderCodeWord(i):fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+		assert(code.size()==unsigned(getenv("PIONEER_GREEDY_BATCH")?TT_BATCH_DECODER_IMAGE_WORDS:attention.parallelRope?TT_ROPE_DECODER_IMAGE_WORDS:getenv("PIONEER_GREEDY_SMALL_ROWS")?TT_SMALL_ROWS_DECODER_IMAGE_WORDS:getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?TT_TABLE_DECODER_IMAGE_WORDS:diagnostic?TT_PULL_DIAGNOSTIC_DECODER_IMAGE_WORDS:attention.inputPull?TT_PULL_INPUT_DECODER_IMAGE_WORDS:paired?TT_PAIRED_DECODER_IMAGE_WORDS:cumulative?TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS:fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
+		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((getenv("PIONEER_GREEDY_BATCH")?BlackholeBatchDecoderCodeWord(i):attention.parallelRope?BlackholeRopeDecoderCodeWord(i):getenv("PIONEER_GREEDY_SMALL_ROWS")?BlackholeSmallRowsDecoderCodeWord(i):getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?BlackholeTableDecoderCodeWord(i):diagnostic?BlackholePullDiagnosticDecoderCodeWord(i):attention.inputPull?BlackholePullInputDecoderCodeWord(i):paired?BlackholePairedDecoderCodeWord(i):cumulative?BlackholeGreedyCountersDecoderCodeWord(i):fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		for (unsigned a=0x80000;a<0x8c000;a+=4) memory[a]=0;
 		for (unsigned a=0x90000;a<0xb2400;a+=4) memory[a]=0;
 		for (unsigned a=0x140000;a<0x148000;a+=4) memory[a]=0;
 		for (unsigned a=0x74000;a<0x74010;a+=4) memory[a]=0;
 		for (unsigned a=0x17ffc0;a<0x17ffcc;a+=4) memory[a]=0;
-		PioneerDecoderJob j={}; j.magic=0x31444344; j.operation=8; j.version=attention.parallelRope?9:getenv("PIONEER_GREEDY_SMALL_ROWS")?8:getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?7:attention.inputPull?6:paired?5:greedy?4:glu?3:parallel?2:1; j.tokens=j.nonce=1;
+		PioneerDecoderJob j={}; j.magic=0x31444344; j.operation=8; j.version=getenv("PIONEER_GREEDY_BATCH")?10:attention.parallelRope?9:getenv("PIONEER_GREEDY_SMALL_ROWS")?8:getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?7:attention.inputPull?6:paired?5:greedy?4:glu?3:parallel?2:1; j.tokens=j.nonce=1;
 		j.kvBase=0x82400000; j.finalNorm=0x30000000; j.vocabulary=WeightBase(7); j.hostLow=0x80000000; j.hostHigh=1; j.hostBytes=0x100000; j.workers=119;
 		for (auto& l:j.layers) { auto* words=reinterpret_cast<uint32_t*>(&l); for (unsigned i=0;i<7;i++) words[i]=WeightBase(i); for (unsigned i=7;i<11;i++) words[i]=0x30000000; }
+		if (getenv("PIONEER_GREEDY_BATCH")) { j.operation=10; j.reserved[0]=2; j.reserved[1]=0x31000000; j.reserved[2]=151643; j.reserved[3]=151645; }
 		for (auto& value:j.sequence) value=1;
 		for (unsigned i=0;i<64;i++) j.rope[2*i]=0x3f800000;
-		assert(PioneerDecoderJobValid(j,attention.parallelRope?9:getenv("PIONEER_GREEDY_SMALL_ROWS")?8:getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?7:attention.inputPull?6:paired?5:greedy?4:glu?3:parallel?2:1));
+		assert(PioneerDecoderJobValid(j,getenv("PIONEER_GREEDY_BATCH")?10:attention.parallelRope?9:getenv("PIONEER_GREEDY_SMALL_ROWS")?8:getenv("PIONEER_GREEDY_DESCRIPTOR_TABLE")?7:attention.inputPull?6:paired?5:greedy?4:glu?3:parallel?2:1));
 		for (unsigned i=0;i<sizeof(j)/4;i++) memory[TT_DECODER_JOB_BASE+i*4]=reinterpret_cast<uint32_t*>(&j)[i];
 		if (nonzero) Reference();
 	}

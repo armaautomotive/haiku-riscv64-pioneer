@@ -40,13 +40,16 @@ static inline bool PioneerDecoderNorm(uint32_t base)
 }
 static inline bool PioneerDecoderJobValid(const volatile PioneerDecoderJob& job,unsigned requiredVersion=1)
 {
-	if ((requiredVersion<1 || requiredVersion>9) || job.magic!=0x31444344 || (job.operation!=8 && !(requiredVersion>=4 && job.operation==9)) || job.version!=requiredVersion || !job.tokens || job.tokens>256
+	if ((requiredVersion<1 || requiredVersion>10) || job.magic!=0x31444344 || (requiredVersion==10?job.operation!=10:(job.operation!=8 && !(requiredVersion>=4 && job.operation==9))) || job.version!=requiredVersion || !job.tokens || job.tokens>256
 		|| !job.nonce || job.nonce>=0x7fffffff || job.kvBase!=0x82400000 || job.workers!=119
 		|| !job.hostHigh || job.hostHigh>0xffff || (job.hostLow&0xfffff) || job.hostBytes!=0x100000
 		|| (job.hostHigh==0xffff && job.hostLow>0xfff00000) || !PioneerDecoderNorm(job.finalNorm)
 		|| !PioneerDecoderWeight(job.vocabulary,1024,151936)) return false;
-	for (unsigned i=0;i<4;i++) if (job.reserved[i]) return false;
-	for (unsigned i=0;i<119;i++) if (!job.sequence[i] || job.sequence[i]>0x7fffffff-PioneerDecoderSequenceAdvance(i,requiredVersion>=2,requiredVersion>=3,requiredVersion>=5,requiredVersion==8)) return false;
+	if (requiredVersion==10) {
+		if (!job.reserved[0] || job.reserved[0]>2 || job.reserved[0]>257-job.tokens || (job.reserved[1]&4095)
+			|| job.reserved[1]<0x04000000 || job.reserved[1]>0x823e0000 || job.reserved[2]>=151936 || job.reserved[3]>=151936 || job.reserved[2]==job.reserved[3]) return false;
+	} else for (unsigned i=0;i<4;i++) if (job.reserved[i]) return false;
+	for (unsigned i=0;i<119;i++) if (!job.sequence[i] || job.sequence[i]>0x7fffffff-PioneerDecoderSequenceAdvance(i,requiredVersion>=2,requiredVersion>=3,requiredVersion>=5,requiredVersion==8)*(requiredVersion==10?job.reserved[0]:1)) return false;
 	for (unsigned i=0;i<128;i++) { uint32_t a=job.rope[i]&0x7fffffff; if (a>0x3f800000 || (a && a<0x26800000)) return false; }
 	for (unsigned i=0;i<28;i++) {
 		const volatile auto& l=job.layers[i];
