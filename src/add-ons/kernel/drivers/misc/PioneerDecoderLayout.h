@@ -4,10 +4,10 @@
 #ifndef PIONEER_ATTENTION_FREESTANDING
 #include <stdint.h>
 #endif
-// OFFLINE fixed Qwen3-0.6B decoder candidate ONLY. This is PRIVATE GPU data,
+// Fixed experimental Qwen3-0.6B decoder. This is PRIVATE GPU data,
 // not a public ioctl: a future controller must derive addresses/sequences,
 // verify every immutable initialized extent and own all referenced leases.
-// No driver/backend currently stages,loads or selects this job.
+// Only the separate explicit model/run ABI may construct this private job.
 enum { TT_DECODER_JOB_BASE=0x146000,TT_DECODER_JOB_BYTES=4096,TT_DECODER_LAYERS=28,
 	TT_DECODER_WORKERS=119,TT_DECODER_INPUT=0x84000,TT_DECODER_HIDDEN=0x8a000,
 	TT_DECODER_RESIDUAL=0x8b000,TT_DECODER_Q=0x87000,TT_DECODER_K=0x86000,

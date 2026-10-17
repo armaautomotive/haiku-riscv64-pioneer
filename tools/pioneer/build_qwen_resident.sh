@@ -62,4 +62,11 @@ shasum -a 256 "$output/tenstorrent_haiku_attention_precision"
  -l:libllama.so.0.2.0 -l:libggml.so.0 -l:libggml-base.so.0 -l:libggml-cpu.so.0.21.0 \
  -o "$output/P100AQwenHostTest"
 shasum -a 256 "$output/P100AQwenHostTest"
+"$cxx" -std=c++11 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti "$@" \
+ -I"$source/include" -I"$source/ggml/include" -I"$source/ggml/src" \
+ -B"$release/system/glue/" -L"$release/system/libroot" -L"$libraries" -Wl,-rpath-link,"$libraries" \
+ "$project/tools/pioneer/tenstorrent_haiku_qwen_decoder.cpp" \
+ -l:libllama.so.0.2.0 -l:libggml.so.0 -l:libggml-base.so.0 -l:libggml-cpu.so.0.21.0 \
+ -o "$output/tenstorrent_haiku_qwen_decoder"
+shasum -a 256 "$output/tenstorrent_haiku_qwen_decoder"
 printf 'Built standalone experimental Qwen resident test; no device or Assistant was accessed\n'

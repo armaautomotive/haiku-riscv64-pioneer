@@ -28,6 +28,8 @@ class PioneerResidentDevice {
 	bool coordinatedWide=false;
 	bool coordinatedSpan=false;
 	bool coordinatedNarrow=false;
+	bool decoderRequested=false,decoderRegistered=false;
+	tt_pioneer_decoder_run* decoderRequest=NULL;
 	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
 	size_t requestBytes=0;
 public:
@@ -35,7 +37,7 @@ public:
 	unsigned peakWorkers=0;
 	uint64_t activationReuses=0;
 	uint64_t wideCalls=0,spanCalls=0,narrowCalls=0;
-	unsigned UploadPageLimit() const { return coordinatedSpan?256:4; }
+	unsigned UploadPageLimit() const { return decoderRegistered?0:coordinatedSpan?256:4; }
 	bool NarrowEnabled() const { return coordinatedNarrow; }
 	unsigned lastActivationPages=0;
 	// Diagnostic cohort tuning only; no new driver authority or active
@@ -51,9 +53,9 @@ public:
 			&& result.format==(wide?18U:coordinatedNarrow?20U:15U) && result.mask==0x13f && result.state==TT_RUNTIME_PASSED
 			&& result.started && result.completed && result.stopped && !result.recovery_required;
 	}
-	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); }
+	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); free(decoderRequest); }
 	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,unsigned requireLayer=0) {
-		if (requireLayer>3 || (requireLayer && (!coordinatorMode || debugOutput))) return false;
+		if (requireLayer>4 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer==4 && workerLimit!=119)) return false;
 		if (debugOutput && !coordinatorMode) return false;
 		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
@@ -79,14 +81,16 @@ public:
 		payloadBlocks=blockPayload;
 		coordinated=coordinatorMode;
 		coordinatedDebug=debugOutput;
-		coordinatedWide=requireLayer==3;
+		coordinatedWide=requireLayer>=3;
+		decoderRequested=requireLayer==4;
 		if (coordinated && !(s.capabilities&TT_PIONEER_CAP_COORDINATED_FLEET)) {
 			fprintf(stderr,"Explicit on-card coordinator capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>12
-				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer==3 && support.version<10)
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>13
+				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer>=3 && support.version<10)
+				|| (requireLayer==4 && support.version!=13)
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
@@ -119,6 +123,7 @@ public:
 		if (bulkUpload) fprintf(stderr,"Explicit owned bulk upload: synchronous 1..4 pages, six exact proofs and full CPU comparisons\n");
 		if (coordinatedSpan) fprintf(stderr,"Explicit contract11 NEW-weight upload:1..256 pages,card-side full GDDR/echo proof and frozen-CPU transport comparison\n");
 		if (coordinatedNarrow) fprintf(stderr,"Explicit contract12 narrow matrices:published worker source/idle/math proof,one owned output write/read/all-word compare; strict diagnostic path unchanged\n");
+		if (decoderRequested) fprintf(stderr,"EXPERIMENTAL contract13 fixed whole-position decoder requested;must register all immutable weights/norms before running;NOT a qualified speedup\n");
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
 		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
@@ -139,7 +144,7 @@ public:
 		return true;
 	}
 	bool Upload(uint64_t offset,const uint32_t* data) {
-		if (!active || failed || finished || cold || !data) return false;
+		if (!active || failed || finished || cold || decoderRegistered || !data) return false;
 		int status=0; uint32_t state=0; bool complete=false;
 		if (stream) {
 			tt_pioneer_resident_stream p={}; p.version=1; p.offset=offset; memcpy(p.data,data,4096);
@@ -211,7 +216,34 @@ public:
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
-	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=12 && active && !failed && !cold && !finished; }
+	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=13 && !decoderRegistered && active && !failed && !cold && !finished; }
+	bool RegisterDecoder(const PioneerDecoderModelOffsets& offsets) {
+		if (!decoderRequested || coordinatedVersion!=13 || !active || failed || finished || cold || decoderRegistered) return false;
+		tt_pioneer_decoder_model p={}; p.version=1; p.offsets=offsets;
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_MODEL,&p,sizeof(p)); cold=p.recovery_required!=0;
+		if (status || p.state!=TT_RUNTIME_PASSED || p.ready!=1 || p.extents!=310 || cold) {
+			fprintf(stderr,"Whole-decoder register STOP status%d state%u ready%u extents%u cold%u;close only,no retry/fallback\n",status,p.state,p.ready,p.extents,cold);
+			failed=closeOnly=true; return false;
+		}
+		decoderRegistered=true; return true;
+	}
+	bool DecodeWhole(unsigned tokens,const uint32_t* embedding,const uint32_t* rope,uint32_t* output) {
+		if (!decoderRequested || !decoderRegistered || !active || failed || finished || cold || !tokens || tokens>256 || !embedding || !rope || !output) return false;
+		if (!decoderRequest) decoderRequest=static_cast<tt_pioneer_decoder_run*>(malloc(sizeof(tt_pioneer_decoder_run)));
+		if (!decoderRequest) { failed=true; return false; }
+		auto& p=*decoderRequest; memset(&p,0,offsetof(tt_pioneer_decoder_run,output)); p.version=1; p.tokens=tokens;
+		memcpy(p.embedding,embedding,sizeof(p.embedding)); memcpy(p.rope,rope,sizeof(p.rope));
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_RUN,&p,sizeof(p)); cold=p.result.master.recovery_required!=0;
+		bool proved=!status && PioneerDecoderProof(p.result,tokens,coordinatorNonce+1);
+		for (unsigned i=0;i<151936;i++) proved &= (p.output[i]&0x7f800000)!=0x7f800000;
+		if (!proved) { const auto& m=p.result.master;
+			fprintf(stderr,"Whole-decoder STOP status%d state%u nonce%u s/c/s%u/%u/%u seq%u words%u PC%x marker%x cold%u;close only,no retry/fallback\n",
+				status,m.state,m.nonce,m.started,m.completed,m.stopped,p.result.sequences,p.result.words,m.pc[1],m.marker,cold);
+			failed=closeOnly=true; return false;
+		}
+		coordinatorNonce=p.result.master.nonce; memcpy(output,p.output,sizeof(p.output)); calls+=197; attentionCalls+=28; wideCalls++;
+		return true;
+	}
 	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {
 		if (!HasLayerFfn() || coordinatedVersion<9 || !n || n>3072 || (n&31) || !gate || !up || !output) return false;
 		tt_pioneer_layer_glu p={}; p.version=1; p.outputs=n; memcpy(p.gate,gate,n*4); memcpy(p.up,up,n*4);
@@ -270,6 +302,7 @@ public:
 		return true;
 	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
+		if (decoderRequested) return false;
 		if (coordinatedWide && outputs>4096) return Q8WideMatvec(offset,inputs,outputs,vector,scales,result);
 		if (coordinatedNarrow) return Q8WideMatvec(offset,inputs,outputs,vector,scales,result,true);
 		if (coordinated) {

@@ -1357,6 +1357,8 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	volatile uint32* layerView=NULL;
 	uint32* layerSaved=NULL;
 	bool layerMapAttempted=false;
+	uint32* decoderSaved=NULL;
+	bool decoderMapAttempted=false;
 	area_id fleetArea=-1;
 	volatile uint32* fleetView=NULL;
 	uint32* fleetRuntimeSaved[TT_PIONEER_WORKERS]={};
@@ -1376,6 +1378,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		free(coordinatorSaved);
 		if (layerArea>=B_OK) delete_area(layerArea);
 		free(layerSaved);
+		free(decoderSaved);
 		free(runtimeSaved); free(secondRuntimeSaved); free(secondLeaseSaved); free(runtimeStage);
 		free(attentionSaved);
 		free(bulkSaved);
@@ -1420,6 +1423,18 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	uint32* LayerSavedWords() { return layerSaved; }
 	uint32 LayerCodeRead(unsigned w) { return w<TT_LAYER_CODE_WORDS && layerView?PioneerRead32(layerView+w):UINT32_MAX; }
 	void LayerCodeWrite(unsigned w,uint32 value) { if (w<TT_LAYER_CODE_WORDS && layerView) PioneerWrite32(layerView+w,value); }
+	bool MapDecoder() {
+		if (runtimeCore!=0) return false;
+		if (decoderSaved) return LayerMappingStable();
+		if (decoderMapAttempted) return false;
+		decoderMapAttempted=true;
+		if (!MapLayer()) return false;
+		decoderSaved=(uint32*)malloc(TT_DECODER_CODE_WORDS*4);
+		return decoderSaved!=NULL;
+	}
+	bool DecoderMappingStable() { return decoderSaved && LayerMappingStable(); }
+	bool DecoderAttentionMappingStable() { return runtimeCore==0 && attentionArea>=B_OK && attentionView && attentionSaved; }
+	uint32* DecoderSavedWords() { return decoderSaved; }
 	bool MapBulk() {
 		if (runtimeCore!=0) return false;
 		if (bulkView) return true;
@@ -1825,6 +1840,9 @@ struct PioneerStoreContext {
 	PioneerResidentAttentionLease residentAttention;
 	PioneerCoordinatorLease coordinator;
 	PioneerLayerLease layer;
+	PioneerDecoderLease decoder;
+	PioneerDecoderJob decoderModel={};
+	bool decoderReady=false;
 	PioneerBulkUploadLease bulk;
 	PioneerOutputBufferLease bulkHost;
 	PioneerWideOutputLease wideHost;
@@ -1833,7 +1851,7 @@ struct PioneerStoreContext {
 	tt_compute_noc_result secondNoc={};
 	PioneerFleetWorker* fleet=NULL;
 	bool fleetRoutes=false;
-	int runtimeCoreMode=-1; // immutable after the first runtime preparation
+	int runtimeCoreMode=-1; // mode8 may ONE-WAY seal a fixed immutable model into decoder mode9
 	uint64 bytes;
 	uint8* initialized=NULL;
 	uint32* hashes=NULL;
@@ -1853,7 +1871,7 @@ struct PioneerStoreContext {
 	bool Unsafe() {
 		if (fleet) for (unsigned w=0;w<TT_PIONEER_WORKERS;w++) if (fleet[w].Compute().unsafe || fleet[w].Compute().running
 			|| fleet[w].Store().pending || fleet[w].Store().recovery_required || fleet[w].noc.recovery_required) return true;
-		return wideHost.pending || wideHost.quarantined || io.wideQuarantined || layer.running || layer.unsafe || coordinator.running || coordinator.unsafe || bulk.unsafe || bulkHost.pending || bulkHost.quarantined || attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
+		return decoder.running || decoder.unsafe || wideHost.pending || wideHost.quarantined || io.wideQuarantined || layer.running || layer.unsafe || coordinator.running || coordinator.unsafe || bulk.unsafe || bulkHost.pending || bulkHost.quarantined || attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
 			|| secondLease.pending || secondLease.recovery_required || secondNoc.recovery_required
 			|| lease.pending || lease.recovery_required || idle.recovery_required || baseline.audit.recovery_required || baseline.baseline.path.recovery_required
 			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
@@ -1938,7 +1956,7 @@ static bool
 CloseFleet(PioneerStoreContext& context,bool clean)
 {
 	if (!context.fleet) return clean;
-	if (clean && (context.runtimeCoreMode==6 || context.runtimeCoreMode==7 || context.runtimeCoreMode==8)) clean=PioneerPersistentStop(context.io,
+	if (clean && (context.runtimeCoreMode==6 || context.runtimeCoreMode==7 || context.runtimeCoreMode==8 || context.runtimeCoreMode==9)) clean=PioneerPersistentStop(context.io,
 		context.baseline.baseline.baseline.baseline.dram,context.fleet);
 	if (clean) clean=FleetHeld(context);
 	// Establish the global held/idle proof BEFORE restoring any one peer.
@@ -1967,6 +1985,8 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
 	clean=CloseFleet(*context,clean);
+	clean=PioneerDecoderClose(context->io,context->baseline.baseline.baseline.baseline.dram,
+		context->baseline.baseline.baseline.noc,context->lease,context->decoder,clean) && clean;
 	clean=PioneerLayerClose(context->io,context->baseline.baseline.baseline.baseline.dram,
 		context->baseline.baseline.baseline.noc,context->lease,context->layer,clean) && clean;
 	clean=PioneerCoordinatorClose(context->io,context->baseline.baseline.baseline.baseline.dram,
@@ -2138,7 +2158,7 @@ ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size
 	if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (context==NULL || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
-	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7 || context->runtimeCoreMode==8) status=B_NOT_ALLOWED;
+	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7 || context->runtimeCoreMode==8 || context->runtimeCoreMode==9) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->offset)
 		|| (context->residentAttention.reserved && request->offset>=context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
 	else {
@@ -2185,7 +2205,7 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
-	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7 || context->runtimeCoreMode==8) status=B_NOT_ALLOWED;
+	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7 || context->runtimeCoreMode==8 || context->runtimeCoreMode==9) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->offset)
 		|| (context->residentAttention.reserved && request->offset>=context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
 	else {
@@ -2359,7 +2379,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={12,119,3,1,8192}; // v12 adds separate trusted-idle narrow matrix ABI;older operations remain unchanged
+	tt_coordinated_support support={13,119,3,1,8192}; // v13 adds separate fixed whole-decoder model/run ABIs;older operations remain unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2398,6 +2418,72 @@ PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug)
 			&& PioneerFleetPreludePrepare(c.io,f) && PioneerPersistentPrepare(c.io,f,false,true) && PioneerPersistentBoot(c.io,f);
 	}
 	return ready && c.io.SelectRuntimeCore(0);
+}
+
+static status_t
+DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_decoder_model)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_decoder_model*)malloc(length); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,length);
+	if (status!=B_OK || request->version!=1 || request->reserved[0] || request->reserved[1] || request->reserved[2]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (c->runtimeCoreMode!=8 || c->decoder.saved || c->decoderReady || c->bytes!=UINT64_C(0x80000000) || !c->fleet
+		|| !c->bulk.ready || !c->bulkHost.ready || !c->wideHost.ready || c->residentAttention.reserved) status=B_NOT_ALLOWED;
+	else if (!PioneerDecoderModelRegister(request->offsets,c->initialized,c->bytes,c->decoderModel)) status=B_ENTRY_NOT_FOUND;
+	else {
+		request->state=TT_RUNTIME_CONFIG_FAILED; request->ready=request->extents=request->recovery_required=0;
+		auto& dram=c->baseline.baseline.baseline.baseline.dram;
+		bool ready=PrepareCoordinatedFleet(*c,119,false) && PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready);
+		// One-way seal:all legacy mutable/runtime operations reject mode9,
+		// including both legacy page/stream paths. END still live-stops ALL
+		// persistent workers before restoring either separate code owner.
+		c->runtimeCoreMode=9;
+		ready=ready && PioneerLayerClose(c->io,dram,c->fleet[0].noc,c->lease,c->layer,true)
+			&& c->io.MapAttention() && PioneerAttentionTilePrepare(c->io,dram,c->fleet[0].noc,c->lease,c->attention,true)
+			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder);
+		if (ready && (!PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,true)
+			|| !PioneerWideOutputMapStable(c->io,c->wideHost,c->host,c->bulkHost))) { c->decoder.unsafe=true; ready=false; }
+		if (ready) {
+			c->residentAttention.reserved=c->residentAttention.payloadBlocks=c->residentAttention.coordinated=true;
+			c->decoderReady=true; request->state=TT_RUNTIME_PASSED; request->ready=1; request->extents=310;
+		}
+		if (c->Unsafe()) { c->lease.recovery_required=true; c->io.QuarantineHostPage(); sColdRecoveryRequired=true; request->recovery_required=1; }
+		status=user_memcpy(data,request,length);
+	}
+	release_sem(sLock); free(request); return status;
+}
+
+static status_t
+DecoderRunControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_decoder_run)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_decoder_run*)malloc(length); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,offsetof(tt_pioneer_decoder_run,result));
+	if (status!=B_OK || request->version!=1 || !request->tokens || request->tokens>256 || request->reserved[0] || request->reserved[1]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (c->runtimeCoreMode!=9 || !c->decoderReady || !c->decoder.ready || !c->fleet) status=B_NOT_ALLOWED;
+	else {
+		request->result={}; memset(request->output,0,sizeof(request->output)); c->io.runtimeProfile.Begin(uint64(system_time()),21);
+		c->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
+		PioneerDecoderRun(c->io,c->baseline.baseline.baseline.baseline.dram,c->host,c->bulkHost,c->wideHost,c->fleet,c->bulk,
+			c->coordinator,c->decoder,c->attention,c->residentAttention,c->decoderModel,request->tokens,request->embedding,request->rope,request->output,request->result);
+		if (c->Unsafe()) { c->lease.recovery_required=true; c->io.QuarantineHostPage(); sColdRecoveryRequired=true; request->result.master.recovery_required=1; }
+		auto& r=request->result.master; c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
+		if (!PioneerDecoderProof(request->result,request->tokens,c->coordinator.nonce)) memset(request->output,0,sizeof(request->output));
+		status=user_memcpy(data,request,length);
+	}
+	release_sem(sLock); free(request); return status;
 }
 
 static status_t
@@ -3108,6 +3194,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return LayerWideControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_NARROW)
 		return LayerWideControl(instance,data,length,true);
+	if (operation==TT_PCI_PROBE_PIONEER_DECODER_MODEL)
+		return DecoderModelControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_DECODER_RUN)
+		return DecoderRunControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_SPAN)
 		return LayerSpanControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT)

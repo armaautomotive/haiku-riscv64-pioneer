@@ -5,7 +5,7 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerGraphNorm.h"
 #include "PioneerGraphRope.h"
-#include "PioneerDecoderLayout.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include <stddef.h>
 #define coordinator_main decoder_matrix_main
 #include "blackhole_coordinator.cpp"

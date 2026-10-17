@@ -44,6 +44,8 @@
 #include "PioneerCoordinatedFleet.h"
 #include "PioneerLayerGlu.h"
 #include "PioneerSpanUpload.h"
+#include "PioneerDecoderController.h"
+#include "PioneerDecoderModel.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -189,6 +191,8 @@
 #define TT_PCI_PROBE_PIONEER_LAYER_WIDE (B_DEVICE_OP_CODES_END + 0x54dd)
 #define TT_PCI_PROBE_PIONEER_LAYER_SPAN (B_DEVICE_OP_CODES_END + 0x54de)
 #define TT_PCI_PROBE_PIONEER_LAYER_NARROW (B_DEVICE_OP_CODES_END + 0x54df)
+#define TT_PCI_PROBE_PIONEER_DECODER_MODEL (B_DEVICE_OP_CODES_END + 0x54e0)
+#define TT_PCI_PROBE_PIONEER_DECODER_RUN (B_DEVICE_OP_CODES_END + 0x54e1)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -424,6 +428,19 @@ struct tt_pioneer_coordinated_fleet {
 };
 struct tt_coordinated_support {
 	uint32_t version,max_workers,attention_version,immutable_weights,gather_max;
+};
+// Explicit fixed Qwen3-0.6B experiment:ONLY immutable offsets,not device
+// addresses,code,NoC routes,host physical memory or worker sequences.
+struct tt_pioneer_decoder_model {
+	uint32_t version,reserved[3];
+	PioneerDecoderModelOffsets offsets;
+	uint32_t state,ready,extents,recovery_required;
+};
+struct tt_pioneer_decoder_run {
+	uint32_t version,tokens,reserved[2];
+	uint32_t embedding[1024],rope[128];
+	tt_decoder_candidate_result result;
+	uint32_t output[151936];
 };
 // Private immutable NEW weights only. Inline bytes are copied/frozen once;
 // no user pointers,physical addresses,code or routes enter the device job.

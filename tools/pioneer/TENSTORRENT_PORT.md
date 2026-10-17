@@ -2,6 +2,43 @@
 
 ## Status
 
+### October17: experimental native whole-decoder contract13 prepared (07:40 UTC)
+
+NOT yet native-qualified or installed at this checkpoint;fast Qwen remains
+unachieved. The dedicated controller,immutable model registry and REAL
+client pass ASan/UBSan tests. A separate explicit mode9 seals310 validated
+immutable offsets,private KV ownership and all119 persistent workers.
+All legacy page/stream/runtime mutation paths refuse the sealed mode.
+END still live-stops every worker BEFORE restoring either code owner.
+
+The controller verifies independent code/stack/attention/bulk/data/wide
+owners,full metadata readback,all119 whole-position sequence advances,
+fresh physical-counter summary and two parked PCs BEFORE reset. It uses
+the appropriate released-core source/maps/PCI guard at completion rather
+than weakening the held-only bulk staging guard. Unknown completion,
+source/map/sequence/metadata/host data quarantines ALL owners without
+reset/retry/restore/free. Full output is published only after the dedicated
+proof;no CPU learned arithmetic validates native production results.
+Tests cover all result words,15 unknown-state faults,all code image/padding
+regions,failed restore,late page maps,KV commit/reset and old-contract
+refusal BEFORE BEGIN. Model tests cover all310 first/last pages,64-bit
+offset overflow,alignment,uninitialized data and private KV-tail separation.
+
+Experimental driver SHA
+`c9f84652d6bb373ff330687ac08d5d1db85fac59e184aa36f8c4ac03037a313b`.
+Separate whole-model verifier SHA
+`cedc29dc2714e583188dd58ef4c307ec6e4a95186dc186aaaa871399ee75dc07`.
+The verifier's READ-ONLY native inspection passes all fixed architecture,
+197 Q8 matrix and113 FP32 norm contracts. This model has tied output and
+token embeddings;the binding matches the pinned Qwen3 loader exactly and
+a present malformed output tensor remains refused. Pinned clean runtime
+libraries only;unrelated llama.cpp changes remain excluded.
+
+Whole-position zero/nonzero/two-position instruction tests and pinned GGML
+regressions pass. The existing native v12 driver/Assistant/default boot,
+CPU/RAM,SD and firmware remain unchanged at this checkpoint. Next:preserve
+v12,controlled v13 native quality/coverage/clean-END test,then measure speed.
+
 ### October17: OFFLINE whole-position decoder candidate (07:18 UTC)
 
 Fast native Qwen is NOT achieved. Installed native driver remains contract12

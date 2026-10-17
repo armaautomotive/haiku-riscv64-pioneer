@@ -5,7 +5,8 @@
 #define PIONEER_COORDINATOR_MACHINE_ONLY
 #include "pioneer_coordinator_image_test.cpp"
 #include "PioneerScalarInstruction.h"
-#include "../PioneerDecoderLayout.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeDecoderCandidateImage.h"
 #define Machine DecoderSfpuMachine
 #define Image DecoderSfpuImage
 #define Read DecoderSfpuRead
@@ -88,6 +89,8 @@ struct DecoderMachine:CoordinatorMachine {
 		expected=ReferenceMatrix(Norm(hidden,1024),151936,7);
 	}
 	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed) {
+		assert(code.size()==TT_DECODER_IMAGE_WORDS*4 && l1[0]==TT_DECODER_BOOT);
+		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert(BlackholeDecoderCodeWord(i)==(i<code.size()/4?Word(code,i*4):0));
 		for (unsigned a=0x80000;a<0x8c000;a+=4) memory[a]=0;
 		for (unsigned a=0x90000;a<0xb2400;a+=4) memory[a]=0;
 		for (unsigned a=0x140000;a<0x148000;a+=4) memory[a]=0;

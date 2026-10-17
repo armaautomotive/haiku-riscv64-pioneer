@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#include "../PioneerDecoderLayout.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include "../PioneerGraphRope.h"
 #include <cassert>
 #include <cmath>
