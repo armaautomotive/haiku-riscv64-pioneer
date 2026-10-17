@@ -2,6 +2,52 @@
 
 ## Status
 
+### October17: cached23 native PASS;parallel validated input-fetch24 trial (10:44 UTC)
+
+Fast Qwen remains NOT achieved. Contract23 passes all22 full-vocabulary
+quality/token/selected-bit checks and three longer natural-request complete
+replays/coverage/speed gates. Sustained GPU4.104165/4.089360/4.152650tok/s
+versus CPU32 2.719270/.920205/1.557472. Prompt6.455707/6.691606/5.987207s is
+still poor. Complete312 GPU positions/61464 projections/8736 attention,
+156 full plus156 small results,zero warm uploads,END2/PCI-host1-1/cold0/
+cleanup1. Cold110.336868s includes91.694486s upload. Short4.493830tok/s is
+diagnostic ONLY. Log:`qwen-cached-v23-benchmark.log`. Qualified23 backed up IDLE.
+
+Explicit24/model-registry9/private root6 lets all8 attention/all6 GLU peers
+fetch fixed frozen master input spans themselves. Each span is read TWICE
+with independent exact physical counter/command/ID0 completion proof,and
+EVERY bit is compared locally. Scratch91800..92000 is inside the existing
+backed query owner. Master inputs stay immutable until ALL peers finish;
+no supplied addresses,host transfers,new mappings,NoC inline writes,retry,
+reset privilege or arithmetic change. The root no longer serially pushes
+and reads back these payloads. Every dispatch still stages/readbacks its
+full descriptor/arguments. Full ALL4-initiator/ALL32-ID/source proofs remain
+at job boundaries;serial inner packets use only initiator0/ID0,as in the
+qualified root transport,with all ten command fields/four counters/fences.
+Peer proofs explicitly mark pull mode and include4 extra reads:attention
+48 response flits,GLU128. Root minimum full R/RF/W/WF
+38452/80257/18949/28326;small38334/70763/18831/18832,plus bounded poll pairs.
+119 sequence advances/9219 jobs and stage3 counts are unchanged.
+
+Actual peer instructions pass n1..256/all8 groups/all6 GLUs,wrapped counts,
+all ten dropped command fields,ALL four physical counter faults on each
+input read,corrupt primary/independent-copy payloads,missing completions and
+late other-initiator/ID faults. Whole actual decoder passes zero/nonzero/
+TWO positions,independent logits/token/KV/Q8/119 sequences/NoC/profile and
+full/small result modes. Test models assert frozen source bits until ALL
+peers finish;controller/client/lease tests cover exact24 refusal BEFORE
+BEGIN and all-owner unknown-state quarantine without retry/reset/free.
+Legacy baked images are unchanged. Flag-OFF attention rebuilds6bd701b7
+byte-identically;the default root rebuild has only a commutative BNE
+operand-order swap,not a semantic change,and is NOT substituted for its
+qualified baked asset. Native24 correctness/performance PENDING.
+Root`b620492b969318badd3f100c30297350d7a4c1903dc5d04dcd970d45f1d00443`;
+peer`d9d1eefe0431fdce644141e3ef6f39f74f9e0992cf99048df6871f68fd105775`;
+driver`331ac1cf5307ec236b063227cca3ac820eb864382984ce3e98de4d63506d11d7`;
+verifier`afbc61b2a0b36a35ad2f1f3ab7075208333d899ace47af03a004ad5aa9b6a04a`.
+Read-only24 observed before BEGIN;log`qwen-pull-v24-benchmark.log`.
+No Assistant promotion,boot/CPU/RAM/firmware/SD change or all-Qwen/27B/Q4 claim.
+
 ### October17: partial22 REJECTED;exact query-cache23 prepared (10:28 UTC)
 
 Native22 FAILS the unchanged full-logit L2 gate at position5:

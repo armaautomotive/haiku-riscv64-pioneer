@@ -13,6 +13,7 @@
 #include "BlackholeGreedyRmsDecoderImage.h"
 #include "BlackholeGreedyCountersDecoderImage.h"
 #include "BlackholePairedDecoderCandidateImage.h"
+#include "BlackholePullInputDecoderImage.h"
 #include "PioneerDecoderGreedy.h"
 #include "PioneerDecoderStageProfile.h"
 #include <stddef.h>
@@ -20,12 +21,12 @@ struct PioneerDecoderLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false,parallel=false;
 	PioneerAttentionTileLease* peers=nullptr;
 	bool profiling=false;
-	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false;
+	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false,inputPull=false;
 	tt_decoder_stage_profile stages={};
 };
 static inline uint32_t PioneerDecoderCodeWord(const PioneerDecoderLease& code,unsigned word)
 {
-	return code.paired?BlackholePairedDecoderCodeWord(word):code.greedy?BlackholeGreedyRmsDecoderCodeWord(word):code.glu?BlackholeGluDecoderCodeWord(word):code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
+	return code.inputPull?BlackholePullInputDecoderCodeWord(word):code.paired?BlackholePairedDecoderCodeWord(word):code.greedy?BlackholeGreedyRmsDecoderCodeWord(word):code.glu?BlackholeGluDecoderCodeWord(word):code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
 }
 template<class IO>
 bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDecoderLease& code)
@@ -36,7 +37,7 @@ bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDeco
 	if (!fleet || !code.peers || !io.DecoderPeerMappingsStable()) return false;
 	for (unsigned i=0;i<8;i++) { const auto& p=code.peers[i];
 		if (!p.saved || !p.ready || !p.code_dirty || !p.coordinatedGroup || p.resident || p.unsafe
-			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery) return false;
+			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery || p.inputPull!=code.inputPull) return false;
 	}
 	return true;
 }
@@ -44,27 +45,27 @@ struct tt_decoder_candidate_result {
 	tt_coordinator_probe_result master;
 	uint32_t tokens,sequences,words,nonfinite,summary[24];
 };
-static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsigned tokens,unsigned nonce,bool parallel=false,bool glu=false,bool greedy=false,bool paired=false)
+static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsigned tokens,unsigned nonce,bool parallel=false,bool glu=false,bool greedy=false,bool paired=false,bool inputPull=false)
 {
 	const auto& m=r.master;
 	return r.tokens==tokens && r.sequences==119 && r.words==(greedy?32U:151936U) && !r.nonfinite && m.version==1 && m.state==TT_RUNTIME_PASSED
 		&& m.workers==119 && m.matched==119 && m.nonce==nonce && m.prepared==1 && m.started==1 && m.completed==1
 		&& m.stopped==1 && !m.recovery_required && m.polls && m.phase==TT_DECODER_DONE && m.count==119
 		&& m.marker==TT_COORDINATOR_MARKER && m.pc[0]==TT_DECODER_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
-		&& PioneerDecoderSummary(r.summary,tokens,nonce,m.before,m.after,parallel,glu,greedy,paired);
+		&& PioneerDecoderSummary(r.summary,tokens,nonce,m.before,m.after,parallel,glu,greedy,paired,inputPull);
 }
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
-	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false)
+	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false)
 {
-	if ((cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
+	if ((inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;
-	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && PioneerDecoderPeerOwners(io,fleet,code);
+	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && PioneerDecoderPeerOwners(io,fleet,code);
 	if (code.saved || code.unsafe || !io.DecoderSavedWords()) return false;
-	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery;
+	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull;
 	if (!PioneerDecoderPeerOwners(io,fleet,code)) return false;
 	for (unsigned i=0;i<8192;i++) io.DecoderSavedWords()[i]=io.LayerCodeRead(i);
 	code.saved=true;
@@ -120,12 +121,12 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 	if (!stage) return false;
 	auto& job=*reinterpret_cast<PioneerDecoderJob*>(stage); const auto* original=reinterpret_cast<const uint32_t*>(&model);
 	for (unsigned i=0;i<sizeof(job)/4;i++) stage[i]=original[i];
-	job.magic=0x31444344; job.operation=greedy?9:8; job.version=code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1; job.tokens=tokens; job.nonce=stack.nonce+1; job.workers=119;
+	job.magic=0x31444344; job.operation=greedy?9:8; job.version=code.inputPull?6:code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1; job.tokens=tokens; job.nonce=stack.nonce+1; job.workers=119;
 	job.kvBase=0x82400000; job.hostLow=uint32_t(wide.physical); job.hostHigh=uint32_t(wide.physical>>32); job.hostBytes=0x100000;
 	for (unsigned i=0;i<4;i++) job.reserved[i]=0;
 	for (unsigned i=0;i<119;i++) job.sequence[i]=fleet[i+1].persistentSequence+1;
 	for (unsigned i=0;i<128;i++) job.rope[i]=rope[i];
-	if (!PioneerDecoderJobValid(job,code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1)) return false;
+	if (!PioneerDecoderJobValid(job,code.inputPull?6:code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1)) return false;
 	stack.inputValid=false; stack.inputK=0; m.state=TT_RUNTIME_CONFIG_FAILED;
 	do {
 		if (!PioneerCoordinatedMasterBoundary(io,baseline,fleet,true) || (!io.DecoderMappingStable() || !PioneerDecoderPeerOwners(io,fleet,code)) || !io.DecoderAttentionMappingStable()
@@ -172,7 +173,7 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 		if (!m.completed || io.ResetRead()!=0x46800 || !PioneerCoordinatorSources(io,baseline,master.noc,store,0x406)
 			|| (!io.DecoderMappingStable() || !PioneerDecoderPeerOwners(io,fleet,code)) || !io.DecoderAttentionMappingStable() || !BlackholeResidentIdle(io)) { uncertain=true; break; }
 		PioneerResidentAttentionCounters(io,m.after); for (unsigned i=0;i<24;i++) r.summary[i]=io.BulkL1Read(3072+i);
-		if (!PioneerDecoderSummary(r.summary,tokens,m.nonce,m.before,m.after,code.parallel,code.glu,greedy,code.paired)) { uncertain=true; break; }
+		if (!PioneerDecoderSummary(r.summary,tokens,m.nonce,m.before,m.after,code.parallel,code.glu,greedy,code.paired,code.inputPull)) { uncertain=true; break; }
 		const unsigned seq=offsetof(PioneerDecoderJob,sequence)/4;
 		for (unsigned i=0;i<sizeof(job)/4;i++) {
 			uint32_t value=io.BulkL1Read(6144+i);
@@ -215,7 +216,7 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 		m.recovery_required=1; code.unsafe=stack.unsafe=attention.unsafe=bulk.unsafe=true; store.recovery_required=true;
 		PioneerQuarantineWideOutput(io,wide); PioneerPersistentQuarantine(io,fleet); PioneerQuarantineOutputBuffer(io,transfer);
 	}
-	bool proved=!uncertain && PioneerDecoderProof(r,tokens,stack.nonce,code.parallel,code.glu,greedy,code.paired);
+	bool proved=!uncertain && PioneerDecoderProof(r,tokens,stack.nonce,code.parallel,code.glu,greedy,code.paired,code.inputPull);
 	if (proved && code.profiling) {
 		tt_decoder_stage_profile candidate={};
 		for (unsigned i=0;i<32;i++) reinterpret_cast<uint32_t*>(&candidate)[i]=io.BulkL1Read((TT_DECODER_STAGE_L1-TT_BULK_UPLOAD_L1)/4+i);

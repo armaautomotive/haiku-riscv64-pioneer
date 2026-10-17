@@ -34,6 +34,8 @@ case ${PIONEER_GRAPH_FAST_RMS:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_CUMULATIVE_COUNTERS:-0} in 0|1) ;; *) exit 2;; esac
 [ "${PIONEER_COORDINATOR_CUMULATIVE_COUNTERS:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_UNROLL_TRANSFER:-0}" = 1 ] || exit 2
 case ${PIONEER_COORDINATOR_PAIRED_FFN:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_COORDINATOR_PULL_INPUT:-0} in 0|1) ;; *) exit 2;; esac
+[ "${PIONEER_COORDINATOR_PULL_INPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_GREEDY:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_FUSED_OUTPUT:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ]; } || exit 2
@@ -86,6 +88,7 @@ if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decod
  -DPIONEER_GRAPH_FAST_RMS=${PIONEER_GRAPH_FAST_RMS:-0} \
  -DPIONEER_COORDINATOR_CUMULATIVE_COUNTERS=${PIONEER_COORDINATOR_CUMULATIVE_COUNTERS:-0} \
  -DPIONEER_COORDINATOR_PAIRED_FFN=${PIONEER_COORDINATOR_PAIRED_FFN:-0} \
+ -DPIONEER_COORDINATOR_PULL_INPUT=${PIONEER_COORDINATOR_PULL_INPUT:-0} \
  -c "$directory/$source_file" -o "$output/program.o"
 "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"
 set --

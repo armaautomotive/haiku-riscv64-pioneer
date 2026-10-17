@@ -19,7 +19,9 @@ struct GluDecoder:ProfileDecoder {
 	void CompleteGlu() {
 		assert(gluIssued==63 && !gluCompleted); gluBatches++;
 		for (unsigned p=0;p<6;p++) {
-			auto& m=*pendingGlu[p]; m.Run(); m.VerifyGlu();
+			auto& m=*pendingGlu[p];
+			if (groupImage.inputPull) for (const auto& word:m.masterInput) assert(word.second==memory.at(word.first)); // no down-projection reuse before ALL peers finish
+			m.Run(m.corruptPull!=0); if (m.corruptPull) { peerMemory[p][0x17ffc8]=0x464e5441; return; } m.VerifyGlu();
 			for (unsigned a=0x91000;a<0x91440;a+=4) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned a=0x91500;a<0x91580;a+=4) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned i=0;i<16;i++) peerMemory[p][0x71340+i*4]=i<4?m.mem[0x91500/4+i]:i<8?m.mem[0x91520/4+i-4]
@@ -33,6 +35,7 @@ struct GluDecoder:ProfileDecoder {
 	uint32_t PeerRead(unsigned w,uint32_t a) override {
 		unsigned p=w-1;
 		if (p<6 && descriptor[p][7]==0x314c4741) {
+			if (a==0x17ffc8) return peerMemory[p].count(a)?peerMemory[p][a]:0;
 			if (Range(a,0x71300,16)) {
 				if (gluIssued==63 && !gluCompleted) CompleteGlu();
 				unsigned i=(a-0x71300)/4; return i==0?sequence[p]:i==1?sequence[p]-((gluCompleted&(1U<<p))?0:1):i==2?0:0x43524431;
@@ -51,7 +54,11 @@ struct GluDecoder:ProfileDecoder {
 			pendingGlu[p].reset(new GluMachine(groupImage,peerMemory[p].at(0x74008),p)); auto& m=*pendingGlu[p];
 			for (unsigned i=0;i<8;i++) m.mem[0x70500/4+i]=descriptor[p][i];
 			for (unsigned i=0;i<4;i++) m.mem[0x74000/4+i]=peerMemory[p].at(0x74000+i*4);
-			for (unsigned i=0;i<1024;i++) m.mem[0x90000/4+i]=peerMemory[p].at(0x90000+i*4);
+			if (groupImage.inputPull) {
+				for (unsigned i=0;i<512;i++) { m.masterInput[0x87000+p*2048+i*4]=memory.at(0x87000+p*2048+i*4);
+					m.masterInput[0x84000+p*2048+i*4]=memory.at(0x84000+p*2048+i*4); }
+				if (dropGluInput && p==5) m.corruptPull=3;
+			} else for (unsigned i=0;i<1024;i++) m.mem[0x90000/4+i]=peerMemory[p].at(0x90000+i*4);
 			gluIssued|=1U<<p; return;
 		}
 		ParallelDecoder::PeerWrite(w,a,value);

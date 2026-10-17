@@ -27,8 +27,10 @@ struct ParallelDecoder:DecoderMachine {
 		assert(issuedGroups==255 && !completedGroups); parallelBatches++;
 		for (unsigned p=0;p<8;p++) {
 			auto& m=*pendingGroups[p]; m.dram.swap(kv);
-			m.Run(failGroup==p+1); m.dram.swap(kv);
-			if (failGroup==p+1) { peerMemory[p][0x17ffc8]=0x464e5441; return; }
+			if (groupImage.inputPull) for (const auto& word:m.masterInput) assert(word.second==memory.at(word.first)); // frozen until ALL peers complete
+			bool fail=failGroup==p+1 || m.corruptPull;
+			m.Run(fail); m.dram.swap(kv);
+			if (fail) { peerMemory[p][0x17ffc8]=0x464e5441; return; }
 			m.Verify();
 			for (unsigned a:{0x74000U,0x74004U,0x74008U,0x7400cU}) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned a=0x90600;a<0x90660;a+=4) peerMemory[p][a]=m.mem[a/4];
@@ -70,7 +72,11 @@ struct ParallelDecoder:DecoderMachine {
 			pendingGroups[p].reset(new GroupMachine(groupImage,positions,layer,p)); auto& m=*pendingGroups[p];
 			for (unsigned i=0;i<8;i++) m.mem[0x70500/4+i]=descriptor[p][i];
 			for (unsigned i=0;i<4;i++) m.mem[0x74000/4+i]=peerMemory[p].at(0x74000+i*4);
-			for (unsigned i=0;i<384;i++) m.mem[0x90000/4+i]=peerMemory[p].at(0x90000+i*4);
+			if (groupImage.inputPull) {
+				for (unsigned i=0;i<256;i++) m.masterInput[0x140000+p*1024+i*4]=memory.at(0x140000+p*1024+i*4);
+				for (unsigned i=0;i<128;i++) m.masterInput[0x142000+p*512+i*4]=memory.at(0x142000+p*512+i*4);
+				if (dropGroupInput && p==7) m.corruptPull=3;
+			} else for (unsigned i=0;i<384;i++) m.mem[0x90000/4+i]=peerMemory[p].at(0x90000+i*4);
 			if (failGroup==p+1) m.failCommand=1;
 			issuedGroups|=1U<<p; return;
 		}

@@ -6,6 +6,7 @@
 #include "BlackholeCoordinatedAttentionImage.h"
 #include "BlackholeCoordinatedGluImage.h"
 #include "BlackholeCachedQueryGluImage.h"
+#include "BlackholePullInputGluImage.h"
 #include "PioneerRuntimeMatvec.h"
 
 // Dedicated qualification session, not the inference/KV-cache ABI.
@@ -40,6 +41,7 @@ struct PioneerAttentionTileLease {
 	bool coordinatedGroup=false; // distinct fixed group/route image
 	bool coordinatedGlu=false;
 	bool cachedQuery=false; // immutable exact half-query reuse,GLU/group only
+	bool inputPull=false; // frozen-master input,independent completed readback/ALL-bit compare
 };
 static inline bool PioneerAttentionTileInputValid(unsigned tokens,const uint32_t* query,
 	const uint32_t* key,const uint32_t* value)
@@ -61,12 +63,13 @@ bool PioneerAttentionTileHeld(IO& io,const tt_dram_samples_result& baseline,
 }
 template<class IO>
 bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& noc,const PioneerResidentLease& store,PioneerAttentionTileLease& compute,bool resident=false,bool group=false,bool glu=false,bool cachedQuery=false)
+	const tt_compute_noc_result& noc,const PioneerResidentLease& store,PioneerAttentionTileLease& compute,bool resident=false,bool group=false,bool glu=false,bool cachedQuery=false,bool inputPull=false)
 {
+	if (inputPull && !cachedQuery) return false;
 	if (cachedQuery && !glu) return false;
 	if (glu && !group) return false;
 	if (group && (resident || noc.version<0x101 || noc.version>0x108)) return false;
-	if (compute.ready) return compute.resident==resident && compute.coordinatedGroup==group && compute.coordinatedGlu==glu && compute.cachedQuery==cachedQuery && !compute.unsafe && !compute.running;
+	if (compute.ready) return compute.resident==resident && compute.coordinatedGroup==group && compute.coordinatedGlu==glu && compute.cachedQuery==cachedQuery && compute.inputPull==inputPull && !compute.unsafe && !compute.running;
 	uint32_t* saved=io.AttentionSavedWords();
 	if (!saved || compute.saved || !PioneerAttentionTileHeld(io,baseline,noc,store)) return false;
 	for (unsigned w=0;w<3;w++) {
@@ -81,10 +84,11 @@ bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
 	compute.coordinatedGroup=group;
 	compute.coordinatedGlu=glu;
 	compute.cachedQuery=cachedQuery;
-	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) io.AttentionWriteWord(w+1,cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
+	compute.inputPull=inputPull;
+	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) io.AttentionWriteWord(w+1,inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
 	io.AttentionWriteWord(0,TT_ATTENTION_TILE_BOOT);
 	bool valid=io.AttentionReadWord(0)==TT_ATTENTION_TILE_BOOT;
-	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) valid &= io.AttentionReadWord(w+1)==(cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
+	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) valid &= io.AttentionReadWord(w+1)==(inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
 	compute.ready=valid; return valid;
 }
 template<class IO>

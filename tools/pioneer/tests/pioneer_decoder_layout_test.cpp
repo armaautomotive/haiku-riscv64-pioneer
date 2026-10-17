@@ -39,9 +39,18 @@ int main()
 			assert((PioneerDecoderLogitKey(a)>PioneerDecoderLogitKey(b))==(PioneerAttentionFloat(a)>PioneerAttentionFloat(b))); }
 	}
 	auto job=Job(); assert(PioneerDecoderJobValid(job) && sizeof(job)<=4096);
-	{ auto j=job; j.version=5; for (unsigned op:{8U,9U}) { j.operation=op; assert(PioneerDecoderJobValid(j,5) && !PioneerDecoderJobValid(j,4)); }
+	for (unsigned version:{5U,6U}) { auto j=job; j.version=version; for (unsigned op:{8U,9U}) { j.operation=op; assert(PioneerDecoderJobValid(j,version) && !PioneerDecoderJobValid(j,version-1)); }
 		for (unsigned i=0;i<119;i++) { unsigned advance=PioneerDecoderSequenceAdvance(i,true,true,true); auto bounded=j;
-			bounded.sequence[i]=0x7fffffff-advance; assert(PioneerDecoderJobValid(bounded,5)); bounded.sequence[i]++; assert(!PioneerDecoderJobValid(bounded,5)); }
+			bounded.sequence[i]=0x7fffffff-advance; assert(PioneerDecoderJobValid(bounded,version)); bounded.sequence[i]++; assert(!PioneerDecoderJobValid(bounded,version)); }
+	}
+	for (bool small:{false,true}) for (unsigned polls:{0U,2U,131070U}) {
+		unsigned r=(small?38334:38452)+polls,rf=(small?70763:80257)+polls,w=small?18831:18949,wf=small?18832:28326;
+		uint32_t before[8],after[8],s[24]={r,rf,w,wf,119,151936,17,small?9U:8U};
+		const unsigned delta[]={r,rf,r+w,r,w,wf,r+w,w};
+		for (unsigned i=0;i<8;i++) { before[i]=i==6?0xfffffff2:0xfffffff0+i; after[i]=before[i]+delta[i]; s[8+i]=before[i]; s[16+i]=after[i]; }
+		assert(PioneerDecoderSummary(s,256,17,before,after,true,true,small,true,true));
+		assert(!PioneerDecoderSummary(s,256,17,before,after,true,true,small,true,false));
+		for (unsigned i=0;i<24;i++) { s[i]^=1; assert(!PioneerDecoderSummary(s,256,17,before,after,true,true,small,true,true)); s[i]^=1; }
 	}
 	{ auto greedy=job; greedy.version=4; for (unsigned op:{8U,9U}) { greedy.operation=op;
 		assert(PioneerDecoderJobValid(greedy,4) && !PioneerDecoderJobValid(greedy,3)); }

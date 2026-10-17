@@ -155,6 +155,7 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 	for (unsigned group=0;group<8;group++) {
 		unsigned worker=group+1; uint32_t sequence=root.sequence[group];
 		if (!PeerReleased(worker,sequence-1)) coordinator_fault_park();
+#if !PIONEER_COORDINATOR_PULL_INPUT
 		// Stage/return/compare EVERY input bit before releasing this peer.
 		Transfer(true,worker,0x140000+group*1024,0x90000,1024);
 		Transfer(false,worker,0x143100,0x90000,1024);
@@ -162,6 +163,7 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		Transfer(true,worker,0x142000+group*512,0x90400,512);
 		Transfer(false,worker,0x143100,0x90400,512);
 		for (unsigned i=0;i<128;i++) if (Words(0x143100)[i]!=Words(0x142000)[group*128+i]) coordinator_fault_park();
+#endif
 		volatile uint32_t* args=Words(0x147100);
 		args[0]=0x31475441; args[1]=root.tokens; args[2]=layer; args[3]=group; Fence();
 		Transfer(true,worker,0x147100,0x74000,16); Transfer(false,worker,0x147120,0x74000,16);
@@ -187,7 +189,7 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		if (snapshot[8]!=0x7200c || snapshot[9]!=root.tokens || snapshot[10]!=0x314e5441 || snapshot[11]!=sequence) coordinator_fault_park();
 		Transfer(false,worker,0x143100,0x90600,96);
 		volatile uint32_t* proof=Words(0x143100);
-		if (!PioneerCoordinatedAttentionProof(proof,root.tokens,layer,group)) coordinator_fault_park();
+		if (!PioneerCoordinatedAttentionProof(proof,root.tokens,layer,group,PIONEER_COORDINATOR_PULL_INPUT)) coordinator_fault_park();
 		for (unsigned i=0;i<4;i++) if (snapshot[i]!=proof[i] || snapshot[4+i]!=proof[8+i]) coordinator_fault_park();
 		Transfer(false,worker,0x144000+group*1024,0xb2000,1024);
 		for (unsigned i=0;i<256;i++) if ((Words(0x144000)[group*256+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
@@ -210,10 +212,12 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 	for (unsigned group=0;group<6;group++) {
 		unsigned worker=group+1; uint32_t sequence=root.sequence[group];
 		if (!PeerReleased(worker,sequence-1)) coordinator_fault_park();
+#if !PIONEER_COORDINATOR_PULL_INPUT
 		Transfer(true,worker,0x87000+group*2048,0x90000,2048); Transfer(false,worker,0x143100,0x90000,2048);
 		for (unsigned i=0;i<512;i++) if (Words(0x143100)[i]!=Words(0x87000)[group*512+i]) coordinator_fault_park();
 		Transfer(true,worker,0x84000+group*2048,0x90800,2048); Transfer(false,worker,0x143100,0x90800,2048);
 		for (unsigned i=0;i<512;i++) if (Words(0x143100)[i]!=Words(0x84000)[group*512+i]) coordinator_fault_park();
+#endif
 		volatile uint32_t* args=Words(0x147100); args[0]=0x314c4741; args[1]=512; args[2]=layer; args[3]=group; Fence();
 		Transfer(true,worker,0x147100,0x74000,16); Transfer(false,worker,0x147120,0x74000,16);
 		for (unsigned i=0;i<4;i++) if (Words(0x147120)[i]!=args[i]) coordinator_fault_park();
@@ -234,7 +238,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 		Transfer(false,worker,0x147180,0x71340,64); volatile uint32_t* snapshot=Words(0x147180);
 		if (snapshot[8]!=0x7200c || snapshot[9]!=512 || snapshot[10]!=0x314e5441 || snapshot[11]!=sequence) coordinator_fault_park();
 		Transfer(false,worker,0x143100,0x91500,128); volatile uint32_t* proof=Words(0x143100);
-		if (!PioneerCoordinatedGluProof(proof,layer,group)) coordinator_fault_park();
+		if (!PioneerCoordinatedGluProof(proof,layer,group,PIONEER_COORDINATOR_PULL_INPUT)) coordinator_fault_park();
 		for (unsigned i=0;i<4;i++) if (snapshot[i]!=proof[i] || snapshot[4+i]!=proof[8+i]) coordinator_fault_park();
 		Transfer(false,worker,0x80000+group*1024,0x91000,1024);
 		Transfer(false,worker,0x81800+group*64,0x91400,64);
@@ -255,7 +259,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
