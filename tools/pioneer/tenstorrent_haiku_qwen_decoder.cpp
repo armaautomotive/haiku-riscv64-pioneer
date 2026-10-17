@@ -78,7 +78,7 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 	if (benchmark) cp.n_batch=cp.n_ubatch=128;
 	cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.offload_kqv=false; cp.op_offload=false;
 	cpu.context=llama_init_from_model(cpu.model,cp); if (!cpu.context || llama_n_threads(cpu.context)!=32) return 1;
-	printf("MODEL decoder scheduler:%s\n",parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
+	printf("MODEL decoder scheduler:%s\n",stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
 	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,stages?6:parallel?5:4)) return 1;
 	PioneerResidentTensorCache<PioneerResidentDevice> cache(card,0x80000000ULL,false,true,true,true,true);
 	PioneerDecoderModelOffsets offsets={}; double uploadStart=Seconds(); bool okay=true;
@@ -151,10 +151,11 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 int main(int argc,char** argv)
 {
 	bool inspect=argc==3 && !strcmp(argv[1],"--inspect-model");
-	bool benchmark=argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder");
-	bool stages=argc==3 && !strcmp(argv[1],"--profile-parallel-decoder");
+	bool stageBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-profile-decoder");
+	bool benchmark=stageBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder"));
+	bool stages=stageBenchmark || (argc==3 && !strcmp(argv[1],"--profile-parallel-decoder"));
 	bool parallel=stages || benchmark || (argc==3 && !strcmp(argv[1],"--verify-parallel-decoder"));
-	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder MODEL.gguf\n",argv[0]); return 2; }
+	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder MODEL.gguf\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0); llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_register(ggml_backend_cpu_reg());
 	int result=Run(argv[2],inspect,parallel,benchmark,stages); llama_backend_free(); return result;
 }

@@ -2,6 +2,9 @@
 #ifndef PIONEER_GRAPH_ROPE_H
 #define PIONEER_GRAPH_ROPE_H
 #include "PioneerGraphFma.h"
+#if PIONEER_GRAPH_ROPE_FAST_FMA
+#include "PioneerGraphFmaFast.h"
+#endif
 // OFFLINE decoder prerequisite. The exact pinned-CPU cos/sin table may be
 // computed once per position/model,not learned CPU attention arithmetic.
 // Fixed128-dimensional NEOX rotation only;no YaRN/MRoPE/partial rotation.
@@ -18,7 +21,11 @@ static inline bool PioneerGraphRopeNeox(unsigned n,const float* input,const floa
 		// Pinned Haiku CPU disassembly: FMUL(b,s), FMSUB(a,c,product)
 		// and FMUL(b,c), FMADD(a,s,product). Emulate exact FMA, not the
 		// partially-fused SFPMAD or an unqualified BRISC FMADD opcode.
+#if PIONEER_GRAPH_ROPE_FAST_FMA
+		float x=PioneerGraphFmaHybrid(a,c,-(b*s)),y=PioneerGraphFmaHybrid(a,s,b*c);
+#else
 		float x=PioneerGraphFma(a,c,-(b*s)),y=PioneerGraphFma(a,s,b*c);
+#endif
 		if ((PioneerAttentionBits(x)&0x7f800000)==0x7f800000 || (PioneerAttentionBits(y)&0x7f800000)==0x7f800000) return false;
 		output[head+i]=x; output[head+64+i]=y;
 	}

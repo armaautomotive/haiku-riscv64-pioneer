@@ -2,12 +2,18 @@
 #ifndef PIONEER_GRAPH_MATH_H
 #define PIONEER_GRAPH_MATH_H
 #include "PioneerAttentionMath.h"
+#if PIONEER_GRAPH_FAST_DIVIDE
+#include "PioneerGraphDivideFast.h"
+#endif
 // Card-side layer math plus independent offline/native fixture references.
 // Never called for learned CPU arithmetic by a native inference fallback.
 // BRISC has no qualified fdiv.s: positive IEEE binary32 division is done
 // with bounded integer long division and one RNE (including subnormals).
 static inline float PioneerGraphDividePositive(float a,float b)
 {
+#if PIONEER_GRAPH_FAST_DIVIDE
+	float proposed=0; if (PioneerGraphDivideNormalFast(a,b,proposed)) return proposed;
+#endif
 	uint32_t aa=PioneerAttentionBits(a),bb=PioneerAttentionBits(b);
 	if ((aa|bb)&0x80000000U) return PioneerAttentionFloat(0x7fc00000);
 	if (aa>0x7f800000 || bb>0x7f800000 || (!aa && !bb) || (aa==0x7f800000 && bb==aa)) return PioneerAttentionFloat(0x7fc00000);

@@ -2,6 +2,36 @@
 
 ## Status
 
+### October17: native exact RoPE hot path accelerated (08:40 UTC)
+
+Fast Qwen is STILL NOT achieved. Native stage profiling itself passes22
+exact full-vocabulary positions/four greedy tokens and clean END. At
+position21:196 matrices34.28%,RMS5.76%,Q8 quantization7.53%,RoPE22.29%,
+SiLU11.23%,attention12.28%,classifier4.00% of measured device ticks.
+Log:`qwen-profile-v15-verify.log`,short generation2.129579tok/s.
+
+A bounded compensated scalar FMA now replaces the integer48-bit FMA for
+ordinary RoPE values. Explicit magnitude bounds keep ALL intermediates
+normal FP32;outside that domain the original exact integer arithmetic
+runs ON THE GPU,not a CPU fallback or model validation. Nearly10M finite/
+bounded/cancellation cases match independent `fmaf`;actual scalar RoPE
+instructions and complete profiled zero/nonzero/repeated-KV decoder tests
+pass. Mode6 n2048 instruction count1468622 ->264604. General old code and
+all other native images retain the default-off path.
+
+Native test PASSES22 EXACT full logits/four greedy tokens,4334 projections,
+616 attention,22 full results,zero warm uploads. RoPE device ticks at
+position21 drop71864090 ->16840503 (~4.27x),whole short generation
+3/1.219299s=2.460430tok/s (~15.5% higher). END2/PCI-host1-1/cold0/cleanup1.
+Log:`qwen-hybrid-v15-verify.log`;image
+`dc6c400243de8b6e3ad14f86eca7d5da3411de08c55d7542ecac05c7cb606e2e`,
+installed experimental driver
+`22fbd0b143e9d861afb9ace72082441a09d3b2525971f3c0c34d83027fbedc7e`.
+This is NOT the repeated CPU speedup gate or Assistant qualification.
+Next exact-division proposal has passed~10M offline cases and actual
+scalar instructions,but is NOT yet installed/native-qualified. No
+Assistant/default boot/CPU/RAM/firmware/SD changes.
+
 ### October17: longer warm benchmark fails speed gate;stage profiler prepared (08:30 UTC)
 
 Fast Qwen remains unachieved. All THREE public requests pass full-logit,
