@@ -30,6 +30,11 @@ struct PioneerFleetWorker {
 	PioneerResidentLease& Store() { return masterStore?*masterStore:store; }
 	PioneerRuntimeMatvecLease& Compute() { return masterCompute?*masterCompute:compute; }
 	bool preludeSaved=false,preludeDirty=false;
+	// Separate from an executing math job: a persistent RISC may be
+	// provably idle in its local mailbox loop without being held in reset.
+	bool persistentPrepared=false,persistentActive=false,persistentIdle=false;
+	bool inlineMath=false;
+	uint32_t persistentSequence=0;
 };
 struct tt_runtime_fleet_result {
 	uint32_t version,state,workers,started,completed,stopped,recovery_required,staged_pages;

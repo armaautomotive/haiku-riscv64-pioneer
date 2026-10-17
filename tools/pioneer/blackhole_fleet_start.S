@@ -10,9 +10,21 @@
 .section .text,"ax"
 .global fleet_start,fleet_fault_park,fleet_end
 fleet_start:
+.ifdef TT_FLEET_PERSISTENT
+	li a0,0x71300
+	li t0,0x50525331
+	sw t0,12(a0)
+	fence
+	j fleet_persistent_wait
+.endif
+fleet_job:
 	li a0,0x70500
 	lw t0,12(a0)
+.ifdef TT_FLEET_PERSISTENT
+	beq t0,zero,fleet_weights
+.else
 	beq t0,zero,fleet_poison
+.endif
 	li t1,1
 	bne t0,t1,fleet_fault
 	li a1,0xffb20000
@@ -69,6 +81,18 @@ fleet_next:
 fleet_weights:
 	fence /* discard RISC L0 before any activation consumption */
 	/* Reconfigure the same sole initiator for the unchanged bulk reader. */
+.ifdef TT_FLEET_PERSISTENT
+	li a1,0xffb20000
+	lw t0,0x40(a1)
+	bne t0,zero,fleet_fault
+	sw zero,4(a1)
+	sw zero,16(a1)
+	lw t0,16(a0)
+	sw t0,20(a1)
+	sw zero,24(a1)
+	sw zero,28(a1)
+	sw zero,36(a1)
+.endif
 	lw t0,0(a0)
 	sw t0,0(a1)
 	li t0,786 /* qualified bank0=(18,12) */
@@ -104,4 +128,39 @@ fleet_fault:
 	fence
 fleet_fault_park:
 	j fleet_fault_park
+.ifdef TT_FLEET_PERSISTENT
+	/* No reset or host control transfer between jobs. The kernel owns
+	 * both descriptors and monotonic doorbells; users cannot supply code.
+	 * A math completion branches here only AFTER the existing full drain.
+	 * FENCE invalidates the RISC data L0 before mailbox/activation loads. */
+	.org 0x200,0
+	.global fleet_persistent_done,fleet_persistent_wait,fleet_persistent_wait_end,fleet_persistent_stop_park
+fleet_persistent_done:
+	li a0,0x71300
+	lw t0,0(a0)
+	sw t0,4(a0)
+	fence
+fleet_persistent_wait:
+	li a0,0x71300
+	fence
+	lw t0,0(a0)
+	lw t1,4(a0)
+	beq t0,t1,fleet_persistent_wait
+	addi t1,t1,1
+	bne t0,t1,fleet_fault
+	lw t1,8(a0)
+	beq t1,zero,fleet_job
+	li t2,1
+	bne t1,t2,fleet_fault
+	sw t0,4(a0)
+	li t0,0x53544f50
+	sw t0,12(a0)
+	fence
+fleet_persistent_stop_park:
+	j fleet_persistent_stop_park
+fleet_persistent_wait_end:
+	/* Data-only mailbox: issued, finished, stop request, ready marker. */
+	.org 0x300,0
+	.word 0,0,0,0
+.endif
 fleet_end:

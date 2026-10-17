@@ -2,6 +2,132 @@
 
 ## Status
 
+### October17: persistent-worker foundation, NOT usable inference speed yet
+
+The requested fast self-hosted Qwen decoder is **not finished**. The installed
+Assistant's last end-to-end result remains0.108111tokens/s, which is unusable.
+The following work qualifies a separate matrix runtime; it does not change
+Assistant hardware targets, establish a new model tokens/s result, or qualify
+all Qwen models. More small primitive gains are not the acceptance criterion.
+
+New explicit ioctl`54d5` has bounded inline operands/results, no supplied code,
+coordinates, host/device pointers or arbitrary NoC commands. Version1 selects
+the existing exact bulk math, version2 a separate direct-instruction image.
+Capabilities`0x1000000`/`0x2000000` distinguish these choices. The first runtime
+selection fixes the session's format; all weights must be uploaded BEFORE it.
+Later weight mutation/other compute ABIs are refused, not silently retried.
+
+Workers boot once and wait in a local mailbox loop between math jobs. The
+trusted bulk math's final drained park branches to a private completion
+dispatcher instead of resetting the coprocessor. Mailboxes at`71300` contain
+issued/finished monotonic sequence numbers, STOP request and ready marker.
+Every accepted job still needs all participating workers' new-sequence,
+complete-row/tile, finite-result, exact NoC-counter, source/idle and two-PC
+proofs. The PC loop range alone is NEVER a completion proof. Inputs/scales
+remain immutable until all participants finish; nonparticipating workers
+receive no command. A complete-fleet audit is required for final teardown.
+
+The result ABI deliberately reports idle workers and`stopped=0`: completed
+math is NOT a stopped RISC. END sends a separate STOP command and proves
+every worker at the fixed STOP park before resetting even the first peer.
+Only then may the existing reverse-order L1/code/NIU/PCI restoration run.
+Missing/partial job or STOP proofs quarantine the whole owned fleet and both
+host allocations. There is no forced reset, replay or reload recovery.
+
+The separate direct-instruction candidate uses Tenstorrent's documented
+[rotate-left-two `.ttinsn` encoding](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/PushTensixInstruction.md).
+It keeps exact compensated IEEE arithmetic and existing NoC/completion PCs;
+the static SFPU sequence executes directly instead of being copied instruction
+by instruction into the FIFO. Conservative SFPNOP gaps follow FP arithmetic,
+including the documented scoreboard exceptions. No replay/SFPLOADMACRO,
+firmware, clock or configuration-policy change is used. Measured gains from
+this change ALONE are small; it is not a practical-inference speed result.
+
+Persistent sessions additionally use boundary-fenced fills/full scans of the
+ordinary private noncacheable HOST input page. All1024 words are still read
+back. Only three phase fences replace per-word host-RAM fences; PCI, MMIO,
+NoC, device L1, DMA ownership and completion ordering are unchanged. Legacy
+checked/Assistant modes retain their original per-word host-page path.
+
+The first native candidate`c8f4054b...` correctly latched cold recovery when
+its early marker sample was zero even though a later sequence/PC sample had
+already observed completion. That result was rejected. The fix snapshots ALL
+math metadata AFTER the idle/sequence proof; a dedicated regression reproduces
+the earlier sample. No subsequent card operation/reset/reload was performed
+after the latch. Ordinary Haiku shutdown, relay cold-off/on, default NVMe
+Linux and the unchanged hash-pinned SD-free full-memory profile recovered
+Haiku with64 CPUs/127.62GiB usable RAM. No SD, firmware or boot-file edit.
+
+Native real-model tests subsequently passed independent IEEE FMA comparisons
+on changed public input vectors, all participating-worker proofs, zero
+relaunches after the first job, and explicit END2/PCI-host1/1/cold0:
+
+| bounded projection | workers | representative warm whole operation |
+| --- | ---: | ---: |
+| Qwen0.6B K1024/N64, persistent bulk |2 |4.595ms |
+| same, direct instructions only |2 |4.600ms (no material gain) |
+| same, direct + host staging |2 |4.317ms |
+| real Qwen1.7B FFN-down K6144/N64 |2 |7.239ms |
+| full Qwen0.6B FFN-down K3072/N1024 |2 |18.213ms |
+| Qwen0.6B classifier K1024/N3840 |120 |118.692ms (earlier reset-per-job192.122ms) |
+| full Qwen0.6B classifier K1024/N151936 |120 |563.822–566.429ms |
+
+These include guards, staging, control/proof and PIO; CPU golden computation
+and first-use weight upload/code preparation are outside each warm call.
+They are small diagnostic samples, not matched full-model benchmarks.
+All151936 full-classifier rows were independently IEEE-bit-identical on four
+changed inputs; each warm call had zero worker relaunches and the final
+STOP/END was clean. The CPU-wall profile isolates about449–452ms in result
+PIO after computation/proof. Thus even this one operator's host readback
+alone prevents useful inference speed; changing worker count or arithmetic
+feed cannot remove that cost. Device/backend sampling is an architectural
+requirement, not an optional tuning detail.
+The1.7B row qualifies only that projection, not full1.7B inference. All120
+workers compute real classifier rows, but host dispatch still serializes
+per-worker commands/collection; sustained all-core utilization is unproved.
+
+Final driver candidate:
+`d61a86ea399e0705c8d01b0f924531ae977c2f2babcf2438b7b9957f6980f0f8`,
+capabilities`0x3ffefff`; native diagnostic:
+`34ae6656154ffbfa230b608ae01111d196874a4f106b9261e7a10392d692c027`.
+Persistent prelude SHA256:
+`c003c3831db9beaa96959274f0b695087efbb88216c9853032aae3413048f8dc`;
+direct math SHA256:
+`6d138ce007494af107d212b078c4fe3c1d042790585e147f1539b8f7327c8595`.
+Evidence/backups are in`/boot/home/pioneer-persistent-20261017-a/`, including
+the original installed`49e082c5...`, qualified persistent`37033b93...` and
+qualified inline`d76e0746...` drivers. The original failed trial is retained,
+not relabeled a pass. The Assistant binaries and model files are unchanged.
+After the final clean END, the unchanged Assistant/hardware dialog was
+reopened: service team570,ready1,busy0,one resident host model, saved
+`p100a-qwen-throughput` selection and32-thread CPU preference; chat/draft
+counts0/0. Device weights are cold and upload on first reply. No new public
+request or full-model performance measurement was run. As usual, normally
+unload and prove clean cleanup before another independent card experiment.
+All22 scoped files were synchronized/checksummed to the plain build mirror;
+the unrelated dirty llama.cpp submodule remains excluded.
+
+ASan/UBSan checks execute the actually assembled persistent/direct images,
+all120 fixed coordinates, changed inputs across jobs WITHOUT resetting
+RISC/coprocessor state, every supported K and4096 local rows. Controller tests
+cover sequence/PC/counter/proof corruption, worker-count changes, immutable
+image choice, transient early-marker sampling, partial jobs and STOPs, all
+four-worker mapping/PCI/source failures, no reset before all STOP proofs,
+and exact restoration. Host staging tests reject each of1024 dropped stores
+and1024 corrupted readback words. Existing fleet, dual/reuse, bulk transport,
+shared attention, profile, tensor-cache and84 public GGML attention fixtures
+pass; the dirty user llama.cpp submodule is not rebuilt or modified.
+
+Next architectural gate: device-owned attention/KV prefixes (upload only a
+new token, not every prior token for every layer/head), a device-side fleet
+dispatcher/collector, then fused decoder intermediates and device sampling.
+The pinned inference library has an experimental backend-sampling interface;
+using that, rather than fabricating a sparse CPU logit vector, could avoid
+full-vocabulary PIO. The matrix-only persistent ABI must NOT be exposed as a
+new fast Assistant mode until compatible attention/lifetime handling and
+end-to-end quality/speed tests are complete. Multi-bank weight placement and
+larger/mixed-quantization models remain separate unqualified work.
+
 ### October16: separate multicore throughput path
 
 The new explicit `p100a-qwen-throughput` path keeps the earlier checked,
@@ -80,7 +206,7 @@ preserves the saved32-thread CPU preference. Hardware switch and unload were
 rejected while the request was busy. Host-only tests also covered transitions
 between Throughput/Attention/Fast/checked contexts with zero device opens or
 decodes. GUI chat/draft lengths remained0/0; no existing chat text was read.
-The service remains ready/idle with the model and exclusive P100A session
+At that checkpoint the service was ready/idle with its exclusive session
 warm. **Do not probe/reset/reload independently: normally unload and prove
 clean END before the next hardware experiment.**
 

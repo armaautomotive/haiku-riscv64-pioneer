@@ -10,10 +10,20 @@ static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); 
 static uint32_t Bits(float f) { uint32_t b; memcpy(&b,&f,4); return b; }
 static int Input(unsigned k,unsigned trial) { return int((k*17+trial*29)%256)-128; }
 static float Scale(unsigned b,unsigned trial) { return float(int((b*7+trial*3)%31)-15)/1024.0f; }
-int main(int argc,char** argv) {
-	if (argc!=7 || strcmp(argv[1],"--run-fleet-and-restore")) {
-		fprintf(stderr,"Usage: %s --run-fleet-and-restore MODEL TENSOR OUTPUT_ROWS WORKERS TRIALS\nReal learned Q8_0 rows; CPU validation on public vectors, no inference or speedup claim.\n",argv[0]); return 2;
-	}
+static bool Proof(const tt_runtime_fleet_result& r,unsigned k,unsigned n,unsigned w) { return PioneerFleetProof(r,k,n,w); }
+static bool Proof(const tt_runtime_persistent_fleet_result& r,unsigned k,unsigned n,unsigned w) { return PioneerPersistentProof(r,k,n,w); }
+static const tt_runtime_matvec_result& Core(const tt_runtime_fleet_result& r,unsigned w) { return r.core[w]; }
+static const tt_runtime_matvec_result& Core(const tt_runtime_persistent_fleet_result& r,unsigned w) { return r.core[w].math; }
+static unsigned Stopped(const tt_runtime_fleet_result& r) { return r.stopped; }
+static unsigned Stopped(const tt_runtime_persistent_fleet_result&) { return 0; }
+static bool ReuseProof(const tt_runtime_fleet_result&,unsigned) { return true; }
+static bool ReuseProof(const tt_runtime_persistent_fleet_result& r,unsigned trial) {
+	unsigned launches=0;
+	for (unsigned w=0;w<r.workers;w++) { launches+=r.core[w].launched; if (r.core[w].sequence!=trial+1 || r.core[w].launched!=(trial==0)) return false; }
+	printf(" Persistent idle%u actual launches%u sequence%u; RISCs remain alive until explicit END/STOP\n",r.idle,launches,r.core[0].sequence);
+	return true;
+}
+template<class Request> int Run(char** argv,bool persistent,bool inlineMath=false) {
 	unsigned numbers[3];
 	for (unsigned i=0;i<3;i++) { char* end=NULL; unsigned long v=strtoul(argv[4+i],&end,10); if (!end || end==argv[4+i] || *end || v>262144) return 2; numbers[i]=unsigned(v); }
 	unsigned outputs=numbers[0],workers=numbers[1],trials=numbers[2];
@@ -26,7 +36,7 @@ int main(int argc,char** argv) {
 	uint64_t bytes=PioneerQ8CompactWeightBytes(inputs,outputs);
 	uint8_t* raw=(uint8_t*)malloc(size_t(outputs)*blocks*34);
 	uint32_t* packed=(uint32_t*)calloc(size_t(bytes/4),4);
-	auto* request=(tt_pioneer_runtime_fleet*)calloc(1,sizeof(tt_pioneer_runtime_fleet));
+	auto* request=(Request*)calloc(1,sizeof(Request));
 	if (!raw || !packed || !request) { fclose(model); free(raw); free(packed); free(request); return 1; }
 	bool passed=fread(raw,34,size_t(outputs)*blocks,model)==size_t(outputs)*blocks;
 	fclose(model);
@@ -45,6 +55,11 @@ int main(int argc,char** argv) {
 	setvbuf(stdout,NULL,_IONBF,0);
 	int fd=passed?open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR):-1;
 	if (fd<0) { free(raw); free(packed); free(request); return 1; }
+	if (persistent) {
+		tt_resident_session_result support={};
+		if (ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&support,sizeof(support)) || support.cold
+			|| !(support.capabilities&(inlineMath?TT_PIONEER_CAP_INLINE_PERSISTENT_FLEET:TT_PIONEER_CAP_PERSISTENT_FLEET))) { close(fd); free(raw); free(packed); free(request); return 1; }
+	}
 	tt_resident_session_result session={}; session.version=1; session.bytes=bytes;
 	bool closeOnly=false,cold=false;
 	int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_BEGIN,&session,sizeof(session));
@@ -58,17 +73,19 @@ int main(int argc,char** argv) {
 		passed=!status && r.state==TT_STORE_PASSED && r.completed==6 && r.host_visible && r.readback_complete && !r.mismatches && !cold;
 	}
 	for (unsigned trial=0;trial<trials && passed;trial++) {
-		size_t requestBytes=PioneerFleetRequestBytes(outputs);
-		memset(request,0,requestBytes); request->version=2; request->inputs=inputs; request->outputs=outputs; request->workers=workers;
+		size_t requestBytes=persistent?PioneerPersistentRequestBytes(outputs):PioneerFleetRequestBytes(outputs);
+		memset(request,0,requestBytes); request->version=inlineMath?2:persistent?1:2; request->inputs=inputs; request->outputs=outputs; request->workers=workers;
 		for (unsigned k=0;k<inputs;k++) request->input[k/2]|=uint32_t(PioneerInt8Operand(Input(k,trial)))<<(16*(k&1));
 		for (unsigned b=0;b<blocks;b++) request->scale[b]=Bits(Scale(b,trial));
-		double start=Seconds(); status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_Q8_FLEET,request,requestBytes); double elapsed=Seconds()-start;
+		double start=Seconds(); status=ioctl(fd,persistent?TT_PCI_PROBE_PIONEER_RUNTIME_PERSISTENT_FLEET:TT_PCI_PROBE_PIONEER_RUNTIME_Q8_FLEET,request,requestBytes); double elapsed=Seconds()-start;
 		const auto& r=request->result; closeOnly=status!=0; cold=r.recovery_required;
-		passed=!status && PioneerFleetProof(r,inputs,outputs,workers);
-		printf("Trial%u status%d state%u workers%u start/complete/stop%u/%u/%u pages%u cold%u %.6fs\n",trial,status,r.state,r.workers,r.started,r.completed,r.stopped,r.staged_pages,cold,elapsed);
+		passed=!status && Proof(r,inputs,outputs,workers);
+		if (!passed) closeOnly=true; // a malformed/incomplete proof authorizes no follow-up ioctl
+		printf("Trial%u status%d state%u workers%u start/complete/stop%u/%u/%u pages%u cold%u %.6fs\n",trial,status,r.state,r.workers,r.started,r.completed,Stopped(r),r.staged_pages,cold,elapsed);
 		for (unsigned w=0;w<r.workers && w<120;w++) if (!passed || w<2 || w+2>=r.workers) {
-			const auto& c=r.core[w]; printf(" Core%u rows%u state%u s/c/s%u/%u/%u phase/tiles/marker %x/%u/%x PC%x/%x NoC %u/%u/%u/%u cold%u\n",w,plan.rows[w],c.state,c.started,c.completed,c.stopped,c.phase,c.tiles,c.marker,c.pc[0],c.pc[1],c.after[0]-c.before[0],c.after[1]-c.before[1],c.after[2]-c.before[2],c.after[3]-c.before[3],c.recovery_required);
+			const auto& c=Core(r,w); printf(" Core%u rows%u state%u s/c/s%u/%u/%u phase/tiles/marker %x/%u/%x PC%x/%x NoC %u/%u/%u/%u cold%u\n",w,plan.rows[w],c.state,c.started,c.completed,c.stopped,c.phase,c.tiles,c.marker,c.pc[0],c.pc[1],c.after[0]-c.before[0],c.after[1]-c.before[1],c.after[2]-c.before[2],c.after[3]-c.before[3],c.recovery_required);
 		}
+		passed=passed && ReuseProof(r,trial);
 		if (!passed) break;
 		unsigned differences=0;
 		for (unsigned row=0;row<outputs;row++) {
@@ -93,4 +110,12 @@ int main(int argc,char** argv) {
 		passed &= !status && session.state==TT_RESIDENT_SESSION_CLOSED && session.pci_restored && session.host_released && !session.cold;
 	} else fprintf(stderr,"STOP: close-only; no reset/retry/reload after uncertainty\n");
 	close(fd); free(raw); free(packed); free(request); return passed?0:1;
+}
+int main(int argc,char** argv) {
+	bool inlineMath=argc==7 && !strcmp(argv[1],"--run-inline-persistent-and-restore");
+	bool persistent=inlineMath || (argc==7 && !strcmp(argv[1],"--run-persistent-and-restore"));
+	if (!persistent && (argc!=7 || strcmp(argv[1],"--run-fleet-and-restore"))) {
+		fprintf(stderr,"Usage: %s --run-fleet-and-restore|--run-persistent-and-restore|--run-inline-persistent-and-restore MODEL TENSOR OUTPUT_ROWS WORKERS TRIALS\nReal learned Q8_0 rows; CPU validation on changed public vectors, no inference or speedup claim.\n",argv[0]); return 2;
+	}
+	return persistent?Run<tt_pioneer_runtime_persistent_fleet>(argv,true,inlineMath):Run<tt_pioneer_runtime_fleet>(argv,false);
 }

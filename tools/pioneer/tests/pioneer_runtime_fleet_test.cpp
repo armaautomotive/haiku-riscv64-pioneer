@@ -109,6 +109,7 @@ struct FleetFixture {
 		}
 	}
 };
+#ifndef PIONEER_FLEET_POLICY_MOCK_ONLY
 int main() {
 	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) for (unsigned n:{32U,64U,1024U,2048U,3072U,3840U,4096U,6144U,151936U,262144U}) {
 		PioneerFleetPlan p; assert(PioneerFleetPartition(k,n,120,p)); unsigned rows=0;
@@ -136,3 +137,4 @@ int main() {
 	{ FleetFixture f(4); f.io.core[3]->nonfinite=true; assert(!f.Run() && !f.io.quarantined && f.result.stopped==4); f.Close(); }
 	puts("PASS offline120-worker coverage,independent counter/PC proofs,all worker faults,all4-worker select failures,global quarantine/no peer reset,no host DMA after launch");
 }
+#endif

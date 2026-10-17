@@ -51,6 +51,7 @@ struct Machine {
 	virtual bool Int8Arithmetic() const { return false; }
 	virtual bool Int8ConvertedRead() const { return Int8Arithmetic(); }
 	virtual bool NativeInt8Unpack() const { return false; }
+	virtual bool InlineTensix() const { return false; }
 	virtual uint32_t NativePayloadBase(unsigned half) const { return 0x706e0+half*256; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
@@ -268,8 +269,9 @@ struct Machine {
 			&& address<0x70000+BlackholeTensixCodeWords(sfpuSmoke)*4
 			&& (sfpuSmoke<16 || address<0x70700) && (sfpuSmoke<20 || address<0x70500));
 	}
-	void Run() {
-		while (pc != ParkPc() || steps == 0) {
+	// Single instruction entry also permits persistent-kernel tests to keep
+	// ALL coprocessor/RISC state alive across job boundaries, without reset.
+	void Step() {
 			++steps;
 			if (steps >= StepLimit() || !CodeAddress(pc))
 				fprintf(stderr,"RISC execution bound: pc=%08x steps=%u limit=%u allowed=%u\n",pc,steps,StepLimit(),CodeAddress(pc));
@@ -279,7 +281,8 @@ struct Machine {
 			unsigned rs1 = (instruction>>15)&31, rs2 = (instruction>>20)&31;
 			int32_t imm = Sign(instruction>>20,12);
 			uint32_t result = 0; bool write = false;
-			if (op == 0x37) { result = instruction & 0xfffff000; write = true; }
+			if ((instruction&3)!=3) { assert(InlineTensix()); Instruction((instruction>>2)|(instruction<<30)); }
+			else if (op == 0x37) { result = instruction & 0xfffff000; write = true; }
 			else if (op == 0x17) { result = pc+(instruction&0xfffff000); write = true; }
 			else if (op == 0x13) {
 				if (f3 == 0) result = regs[rs1] + imm;
@@ -309,7 +312,9 @@ struct Machine {
 			else assert(instruction == 0x0ff0000f);
 			if (write && rd != 0) regs[rd] = result;
 			regs[0] = 0; pc = next;
-		}
+	}
+	void Run() {
+		while (pc != ParkPc() || steps == 0) Step();
 		assert(l1[Index(pc)] == 0x0000006f && drained);
 		assert(l1[Index(0x17ffc0)] == FinalPhase() && l1[Index(0x17ffc4)] == ExpectedFixtures() && l1[Index(0x17ffc8)] == FinalMarker());
 	}

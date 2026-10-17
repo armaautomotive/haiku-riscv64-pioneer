@@ -13,6 +13,7 @@
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeOutput.h"
 #include "PioneerRuntimeProfile.h"
+#include "PioneerRuntimeHostStage.h"
 enum { TT_RUNTIME_REFUSED=0,TT_RUNTIME_PASSED=1,TT_RUNTIME_CONFIG_FAILED=2,TT_RUNTIME_STAGE_FAILED=3,
 	TT_RUNTIME_START_FAILED=4,TT_RUNTIME_COMPLETION_FAILED=5,TT_RUNTIME_NONFINITE=6,TT_RUNTIME_COLD=7,TT_RUNTIME_READ_FAILED=8 };
 struct tt_runtime_matvec_result {
@@ -105,8 +106,7 @@ bool PioneerRuntimeStage(IO& io,const tt_dram_samples_result& baseline,const tt_
 	if (!PioneerRuntimeSources(io,baseline,noc,store) || !BlackholeResidentIdle(io) || !BlackholeHostReadMapStable(io,host)) {
 		store.recovery_required=true; return false;
 	}
-	for (unsigned w=0;w<1024;w++) io.HostPageWrite(w,data[w]);
-	for (unsigned w=0;w<1024;w++) if (io.HostPageRead(w)!=data[w]) return false;
+	if (!PioneerRuntimeHostStage(io,data,0)) return false;
 	bool touched=true,passed=false;
 	do {
 		io.HostPciWrite(1,4,2,0x406); if (io.HostPciRead(1,4,2)!=0x406) break;

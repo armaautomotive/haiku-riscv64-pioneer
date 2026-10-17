@@ -10,6 +10,9 @@
 .ifdef TT_RUNTIME_Q8_READBACK
 	.set TT_RUNTIME_Q8_BULK,1
 .endif
+.ifdef TT_RUNTIME_Q8_INLINE
+	.set TT_RUNTIME_Q8_BULK,1
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -20,8 +23,32 @@ _start:
 .endif
 
 .macro emit value
+.ifdef TT_RUNTIME_Q8_INLINE
+	/* Official .ttinsn = rotate-left-two. Preserve legacy completion PCs.
+	 * Only the hot exact sequence below removes all footprint padding. */
+	.word (((\value)<<2)|((\value)>>30)) & 0xffffffff
+	nop
+	.if ((\value)&0xfff)!=0
+		nop
+	.endif
+.else
 	li t0, \value
 	sw t0, 0(s0)
+.endif
+.endm
+.macro exact_ops values:vararg
+	.irp operation,\values
+.ifdef TT_RUNTIME_Q8_INLINE
+	.word (((\operation)<<2)|((\operation)>>30)) & 0xffffffff
+	/* Explicit SFPU cycle after arithmetic avoids scoreboard exceptions
+	 * for subsequent bitwise/shift operations. No replay/load-macro. */
+	.if ((\operation)>>24)==0x84 || ((\operation)>>24)==0x85
+	.word 0x3c000002 /* .ttinsn SFPNOP (0x8f000000) */
+	.endif
+.else
+	.word \operation
+.endif
+	.endr
 .endm
 .macro config index, value
 	li t0, \value
@@ -865,40 +892,54 @@ q8_exact_computed:
 	emit 0x7013000a
 	j q8_exact_return
 q8_exact_emit:
+.ifdef TT_RUNTIME_Q8_INLINE
+	jalr zero,0(a5)
+	nop
+	nop
+	nop
+	nop
+.else
 	lw t0, 0(a5)
 	sw t0, 0(s0)
 	addi a5, a5, 4
 	bne a5, a6, q8_exact_emit
 	jalr zero, 0(a7)
+.endif
 	.org 0xea8, 0
 q8_exact_spill:
-	.word 0x72030008,0x7213000a,0x7223000c,0x7233000e,0x72430010,0x72530012
+	exact_ops 0x72030008,0x7213000a,0x7223000c,0x7233000e,0x72430010,0x72530012
+.ifdef TT_RUNTIME_Q8_INLINE
+	jalr zero,0(a7)
+.endif
 q8_exact_sequence:
 	/* a0,b1,c2; exact 12-bit product decomposition, all products <=24 bits.
 	 * Every SFPMAD below is exact-product or multiply-by-one addition. */
-	.word 0x84001930 /* p3 = RN(a*b) */
-	.word 0x7170ffff,0x717af000 /* mask7 = fffff000 */
-	.word 0x7e000741,0x7e001751 /* ah4, bh5 */
-	.word 0x850a0462,0x850a1572 /* al6=a-ah, bl7=b-bh */
-	.word 0x84045302 /* e0 = ah*bh-p */
-	.word 0x84065000,0x84047000,0x84067000 /* e += al*bh, ah*bl, al*bl */
+	exact_ops 0x84001930 /* p3 = RN(a*b) */
+	exact_ops 0x7170ffff,0x717af000 /* mask7 = fffff000 */
+	exact_ops 0x7e000741,0x7e001751 /* ah4, bh5 */
+	exact_ops 0x850a0462,0x850a1572 /* al6=a-ah, bl7=b-bh */
+	exact_ops 0x84045302 /* e0 = ah*bh-p */
+	exact_ops 0x84065000,0x84047000,0x84067000 /* e += al*bh, ah*bl, al*bl */
 	/* TwoSum(p,c) -> s1,t2; TwoSum(e,t) -> u3,low0. */
-	.word 0x850a3210,0x850a1342 /* s1=p3+c2; v4=s1-p3 */
-	.word 0x850a1452,0x850a3552 /* tmp5=s1-v4; tmp5=p3-tmp5 */
-	.word 0x850a2462,0x850a5620 /* tmp6=c2-v4; t2=tmp5+tmp6 */
-	.word 0x850a0230,0x850a3042 /* u3=e0+t2; w4=u3-e0 */
-	.word 0x850a3452,0x850a0552 /* tmp5=u3-w4; tmp5=e0-tmp5 */
-	.word 0x850a2462,0x850a5600 /* tmp6=t2-w4; low0=tmp5+tmp6 */
+	exact_ops 0x850a3210,0x850a1342 /* s1=p3+c2; v4=s1-p3 */
+	exact_ops 0x850a1452,0x850a3552 /* tmp5=s1-v4; tmp5=p3-tmp5 */
+	exact_ops 0x850a2462,0x850a5620 /* tmp6=c2-v4; t2=tmp5+tmp6 */
+	exact_ops 0x850a0230,0x850a3042 /* u3=e0+t2; w4=u3-e0 */
+	exact_ops 0x850a3452,0x850a0552 /* tmp5=u3-w4; tmp5=e0-tmp5 */
+	exact_ops 0x850a2462,0x850a5600 /* tmp6=t2-w4; low0=tmp5+tmp6 */
 	/* Round u3 to odd only if low!=0 and u3 even. Delta is +1 for
 	 * equal signs, -1 for opposite signs. Restore all lanes afterwards. */
-	.word 0x71220001,0x7e003261 /* mask2=1; lsb6=u3&1 */
-	.word 0x7d000051 /* abs(low0) ->5, including negative zero */
-	.word 0x7c000340,0x8d000040 /* xor4=u3^low0 */
-	.word 0x7afe1443,0x7a001441,0x79001445 /* delta4=(xor>>31)*2+1 */
-	.word 0x8a001002,0x7b000502,0x7b000606 /* enable; low!=0 AND lsb==0 */
-	.word 0x79000434 /* u3 += delta4, flags unchanged */
-	.word 0x8a000002 /* disable conditional execution, all lanes restored */
-	.word 0x850a1300 /* result0 = RN(s1+odd(u3)) */
+	exact_ops 0x71220001,0x7e003261 /* mask2=1; lsb6=u3&1 */
+	exact_ops 0x7d000051 /* abs(low0) ->5, including negative zero */
+	exact_ops 0x7c000340,0x8d000040 /* xor4=u3^low0 */
+	exact_ops 0x7afe1443,0x7a001441,0x79001445 /* delta4=(xor>>31)*2+1 */
+	exact_ops 0x8a001002,0x7b000502,0x7b000606 /* enable; low!=0 AND lsb==0 */
+	exact_ops 0x79000434 /* u3 += delta4, flags unchanged */
+	exact_ops 0x8a000002 /* disable conditional execution, all lanes restored */
+	exact_ops 0x850a1300 /* result0 = RN(s1+odd(u3)) */
+.ifdef TT_RUNTIME_Q8_INLINE
+	jalr zero,0(a7)
+.endif
 q8_exact_end:
 .ifdef TT_RUNTIME_Q8_READBACK
 	/* OFFLINE candidate only: an alternate boot entry reuses the qualified
