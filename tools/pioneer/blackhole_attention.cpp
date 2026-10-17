@@ -20,6 +20,12 @@
 #ifndef PIONEER_ATTENTION_INLINE_SFPU
 #define PIONEER_ATTENTION_INLINE_SFPU 0
 #endif
+#ifndef PIONEER_ATTENTION_FAST_HALF
+#define PIONEER_ATTENTION_FAST_HALF 0
+#endif
+#if PIONEER_ATTENTION_FAST_HALF
+#include "PioneerFiniteHalf.h"
+#endif
 #if PIONEER_ATTENTION_FAST_SOFTMAX
 #include "PioneerFastSoftmax.h"
 #endif
@@ -95,7 +101,12 @@ static void WriteQuery(const float* query)
 static void WriteHalf(const uint16_t* input, unsigned row)
 {
 	volatile uint32_t* dst = Words(0xffbd8000 + row * 64);
-	for (unsigned i = 0; i < 32; i++) dst[LaneOffset(i)] = PioneerAttentionBits(PioneerAttentionHalf(input[i]));
+	for (unsigned i = 0; i < 32; i++)
+#if PIONEER_ATTENTION_FAST_HALF
+		dst[LaneOffset(i)] = PioneerFiniteHalfBits(input[i]);
+#else
+		dst[LaneOffset(i)] = PioneerAttentionBits(PioneerAttentionHalf(input[i]));
+#endif
 	(void)dst[LaneOffset(31)]; Fence();
 }
 

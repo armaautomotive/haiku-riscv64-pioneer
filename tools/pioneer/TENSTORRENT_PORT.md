@@ -2,6 +2,54 @@
 
 ## Status
 
+### October17:optimized attention40 native PASS;finite-half prerequisite (15:25 UTC)
+
+Fast Qwen STILL NOT achieved. Qualified40 GPU7.045853/7.002837/7.141068
+tok/s versus39 6.366710/6.314192/6.465534,roughly10..11% faster. Prompts
+3.847118/3.984395/3.558617s;CPU32 1.078052/.894810/1.080034tok/s.
+ALL22 full-vocabulary/exact selected-bit checks and all three sustained
+natural requests/untimed complete-logit quality+coverage replays PASS.
+Complete312 positions/61464 projections/8736 attention/156 full+156
+selected positions/24 batches/zero warm uploads;END2/PCI-host1-1/cold0/
+cleanup1. Position21 total96.045473M ticks versus39 103.625120M;
+attention20.448780M versus27.267899M,SiLU6.656642M versus7.414886M;
+matrix45.788909M,Q87.282769M,RMS3.470370M,vocabulary7.675998M.
+Short7.543185tok/s is diagnostic ONLY. Driverfc08fe02 preserved as
+`driver-v40-fc08fe02-backup`,native log copied locally. Preserve39/38/36
+and older rollbacks. No requested-fast/Assistant/Q4/27B/all-Qwen claim.
+
+Next OFFLINE finite-half specialization keeps ALL complete K/V entry
+validation BEFORE any SFPU mutation. It only rebiases a proven finite
+normal half's exponent directly inside the hot loop;zero/subnormal signs
+and bits use the SAME old helper. Exhaust ALL63488 finite encodings versus
+independent IEEE widening and the old helper,including signed zeros and
+every subnormal. Never call this helper for unvalidated Inf/NaN;entry
+refusal is unchanged and fault-tested. Primarye30cd327(7800B),extra04ca5511
+(7276B) stay inside SAME code owners. Compiled group/paired ALL-output-bit/
+whole-KV/GLU/proof comparison and ALL source/counter/Dst/ACK faults pass;
+full master passes full/small/zero+sparse/one+two/early-EOG/all logits/KV/
+119 sequences/ALL16 bad combined proofs+prefix restoration faults. At256
+tokens interpreter steps4030280 versus40 4600181,NOT a native speed claim.
+No finite-half specialization is driver-selected or native-qualified yet.
+
+### October17:optimized attention40 ready for native trial (15:16 UTC)
+
+Fast Qwen remains UNACHIEVED. Candidate40/model24/private10 binds the
+exact -O2 attention/GLU code as a distinct immutable flag on ALL8 group
+leases. Retains39's SAME masterd58d80bf,exact63efcbae math,all119 peers,
+descriptor tables,input/proof/output spans,routes,NoC/counters/sequences,
+EOG/batch bounds and all-owner UNKNOWN quarantine. Reject ANY mixed/live
+upgrade before code staging. No larger code owner or new instruction.
+
+Actual frozen group paired comparison and ALL fault tests pass. Composed
+actual master passes full/small,zero+sparse,one/two positions,early EOG,
+ALL logits/KV/119 sequences and ALL16 combined-proof/prefix-restoration
+faults. Group-owner ALL-word stage/readback/restoration,client40 capability
+refusal BEFORE BEGIN and full/small/batch corruption,and controller/mixed
+cohort/all-owner quarantine tests pass ASan/UBSan. Driverfc08fe02 and
+qwen-a3892ae5 staged;qualified39/8189d545 retained. NO native40 compute
+session yet,and NO new performance/Assistant/all-model claim.
+
 ### October17:optimized39 native PASS;exact attention codegen (15:12 UTC)
 
 Fast Qwen STILL NOT achieved. Qualified39 GPU6.366710/6.314192/6.465534

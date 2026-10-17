@@ -112,14 +112,14 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	bool CloseDecoder(bool stopped=true) { return PioneerDecoderClose(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),decoder,stopped); }
 };
 struct BatchControllerFixture:DecoderControllerFixture {
-	bool gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster;
-	BatchControllerFixture(bool fused=false,bool direct=false,bool vector=false,bool rounded=false,bool inlineGroup=false,bool optimized=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused),directQuant(direct),vectorGlu(vector),roundedProduct(rounded),inlineAttention(inlineGroup),optimizedMaster(optimized) {
+	bool gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster,optimizedAttention;
+	BatchControllerFixture(bool fused=false,bool direct=false,bool vector=false,bool rounded=false,bool inlineGroup=false,bool optimized=false,bool optimizedGroup=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused),directQuant(direct),vectorGlu(vector),roundedProduct(rounded),inlineAttention(inlineGroup),optimizedMaster(optimized),optimizedAttention(optimizedGroup) {
 		model.reserved[1]=0x31000000; model.reserved[2]=151643; model.reserved[3]=5;
-		for (auto& peer:peers) { peer.vectorGlu=vector; peer.inlineAttention=inlineGroup; }
+		for (auto& peer:peers) { peer.vectorGlu=vector; peer.inlineAttention=inlineGroup; peer.optimizedAttention=optimizedGroup; }
 		for (unsigned w=1;w<120;w++) { fleet[w].fusedGather=fused; fleet[w].roundedProduct=rounded; }
 	}
 	bool PrepareBatch() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster,optimizedAttention); }
 	bool DecodeBatch(unsigned tokens=1,unsigned steps=2) {
 		uint32_t input[1024]={},rope[128]={},prior[119]; for (unsigned w=0;w<119;w++) prior[w]=fleet[w+1].persistentSequence;
 		std::vector<uint32_t> output(1024,0xabcdef00);
@@ -139,6 +139,12 @@ struct BatchControllerFixture:DecoderControllerFixture {
 int main()
 {
 	(void)Run; (void)Input;
+	{ BatchControllerFixture f(true,true,true,false,true,true,true); assert(f.PrepareBatch() && f.decoder.optimizedAttention && !f.decoder.roundedProduct && f.Decode(1,false) && f.Decode(1,true) && f.DecodeBatch(1,2) && f.DecodeBatch(3,2));
+		f.optimizedAttention=false; assert(!f.PrepareBatch()); f.optimizedAttention=true;
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
+	for (unsigned peer=0;peer<8;peer++) { BatchControllerFixture f(true,true,true,false,true,true,true); f.peers[peer].optimizedAttention=false;
+		assert(!f.PrepareBatch() && !f.decoder.saved && !f.io.starts); }
+	{ BatchControllerFixture f(true,true,true,false,true,false,true); assert(!f.PrepareBatch() && !f.decoder.saved && !f.io.starts); }
 	{ BatchControllerFixture f(true,true,true,false,true,true); assert(f.PrepareBatch() && f.decoder.optimizedMaster && !f.decoder.roundedProduct && f.Decode(1,false) && f.Decode(1,true) && f.DecodeBatch(1,2) && f.DecodeBatch(3,2));
 		f.optimizedMaster=false; assert(!f.PrepareBatch()); f.optimizedMaster=true;
 		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }

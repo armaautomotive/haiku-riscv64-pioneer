@@ -7,6 +7,7 @@ attention_cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unk
 attention_output=$2
 attention_program=blackhole_attention.cpp
 case ${PIONEER_ATTENTION_OPT_LEVEL:-s} in s|2) ;; *) exit 2;; esac
+case ${PIONEER_ATTENTION_FAST_HALF:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_SFPU_DIVIDE_PROBE:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_GLU_VECTOR:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_ATTENTION_FAST_SOFTMAX:-0} in 0|1) ;; *) exit 2;; esac
@@ -26,6 +27,7 @@ case ${PIONEER_ATTENTION_PARALLEL_ROPE:-0} in 0|1) ;; *) exit 2;; esac
 [ "${PIONEER_ATTENTION_FAST_SOFTMAX:-0}" = 0 ] || [ "${PIONEER_GLU_VECTOR:-0}" = 1 ] || exit 2
 [ "${PIONEER_ATTENTION_TOKEN_LANES:-0}" = 0 ] || [ "${PIONEER_GLU_VECTOR:-0}" = 1 ] || exit 2
 [ "${PIONEER_ATTENTION_INLINE_SFPU:-0}" = 0 ] || { [ "${PIONEER_GLU_VECTOR:-0}" = 1 ] && [ "${PIONEER_ATTENTION_FAST_SOFTMAX:-0}" = 0 ] && [ "${PIONEER_ATTENTION_TOKEN_LANES:-0}" = 0 ]; } || exit 2
+[ "${PIONEER_ATTENTION_FAST_HALF:-0}" = 0 ] || { [ "${PIONEER_ATTENTION_OPT_LEVEL:-s}" = 2 ] && [ "${PIONEER_ATTENTION_INLINE_SFPU:-0}" = 1 ]; } || exit 2
 case ${PIONEER_RESIDENT_ATTENTION:-0} in
  0) ;;
  1) attention_program=blackhole_resident_attention.cpp ;;
@@ -53,6 +55,7 @@ mkdir -m 700 "$attention_output"
  -DPIONEER_ATTENTION_FAST_SOFTMAX=${PIONEER_ATTENTION_FAST_SOFTMAX:-0} \
  -DPIONEER_ATTENTION_TOKEN_LANES=${PIONEER_ATTENTION_TOKEN_LANES:-0} \
  -DPIONEER_ATTENTION_INLINE_SFPU=${PIONEER_ATTENTION_INLINE_SFPU:-0} \
+ -DPIONEER_ATTENTION_FAST_HALF=${PIONEER_ATTENTION_FAST_HALF:-0} \
  -DPIONEER_ATTENTION_CACHED_QUERY=${PIONEER_ATTENTION_CACHED_QUERY:-0} \
  -DPIONEER_COORDINATED_PULL_INPUT=${PIONEER_COORDINATED_PULL_INPUT:-0} \
  -DPIONEER_ATTENTION_PARALLEL_ROPE=${PIONEER_ATTENTION_PARALLEL_ROPE:-0} -c "$attention_source/$attention_program" -o "$attention_output/program.o"

@@ -10,6 +10,7 @@
 #include "BlackholeRopeGluImage.h"
 #include "BlackholeVectorGluImage.h"
 #include "BlackholeInlineAttentionImage.h"
+#include "BlackholeOptimizedAttentionImage.h"
 #include "PioneerRuntimeMatvec.h"
 
 // Dedicated qualification session, not the inference/KV-cache ABI.
@@ -48,6 +49,7 @@ struct PioneerAttentionTileLease {
 	bool cachedQuery=false; // immutable exact half-query reuse,GLU/group only
 	bool inputPull=false; // frozen-master input,independent completed readback/ALL-bit compare
 	bool parallelRope=false; // immutable extra code owner and fixed three-head preparation
+	bool optimizedAttention=false; // immutable -O2,SAME exact arithmetic/owners
 	bool inlineAttention=false; // immutable direct emission,SAME exact SFPU arithmetic
 	bool vectorGlu=false; // immutable exact SFPU GLU, same code/data owners and transport
 };
@@ -71,8 +73,9 @@ bool PioneerAttentionTileHeld(IO& io,const tt_dram_samples_result& baseline,
 }
 template<class IO>
 bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& noc,const PioneerResidentLease& store,PioneerAttentionTileLease& compute,bool resident=false,bool group=false,bool glu=false,bool cachedQuery=false,bool inputPull=false,bool parallelRope=false,bool vectorGlu=false,bool inlineAttention=false)
+	const tt_compute_noc_result& noc,const PioneerResidentLease& store,PioneerAttentionTileLease& compute,bool resident=false,bool group=false,bool glu=false,bool cachedQuery=false,bool inputPull=false,bool parallelRope=false,bool vectorGlu=false,bool inlineAttention=false,bool optimizedAttention=false)
 {
+	if (optimizedAttention && !inlineAttention) return false;
 	if (inlineAttention && !vectorGlu) return false;
 	if (vectorGlu && (!parallelRope || !glu)) return false;
 	if (parallelRope && (!inputPull || !io.AttentionRopeMappingStable())) return false;
@@ -80,7 +83,7 @@ bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
 	if (cachedQuery && !glu) return false;
 	if (glu && !group) return false;
 	if (group && (resident || noc.version<0x101 || noc.version>0x108)) return false;
-	if (compute.ready) return compute.resident==resident && compute.coordinatedGroup==group && compute.coordinatedGlu==glu && compute.cachedQuery==cachedQuery && compute.inputPull==inputPull && compute.parallelRope==parallelRope && compute.vectorGlu==vectorGlu && compute.inlineAttention==inlineAttention && !compute.unsafe && !compute.running;
+	if (compute.ready) return compute.resident==resident && compute.coordinatedGroup==group && compute.coordinatedGlu==glu && compute.cachedQuery==cachedQuery && compute.inputPull==inputPull && compute.parallelRope==parallelRope && compute.vectorGlu==vectorGlu && compute.inlineAttention==inlineAttention && compute.optimizedAttention==optimizedAttention && !compute.unsafe && !compute.running;
 	uint32_t* saved=io.AttentionSavedWords();
 	if (!saved || compute.saved || !PioneerAttentionTileHeld(io,baseline,noc,store)) return false;
 	for (unsigned w=0;w<3;w++) {
@@ -91,7 +94,7 @@ bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
 	for (unsigned w=0;w<savedWords;w++) saved[w]=io.AttentionReadWord(w);
 	compute.saved=true;
 	compute.parallelRope=parallelRope;
-	compute.vectorGlu=vectorGlu; compute.inlineAttention=inlineAttention;
+	compute.vectorGlu=vectorGlu; compute.inlineAttention=inlineAttention; compute.optimizedAttention=optimizedAttention;
 	if (!PioneerAttentionTileHeld(io,baseline,noc,store)) { compute.unsafe=true; return false; }
 	compute.code_dirty=true;
 	compute.resident=resident;
@@ -99,12 +102,12 @@ bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
 	compute.coordinatedGlu=glu;
 	compute.cachedQuery=cachedQuery;
 	compute.inputPull=inputPull;
-	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) io.AttentionWriteWord(w+1,inlineAttention?BlackholeInlineAttentionCodeWord(w):vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
-	if (parallelRope) for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) io.AttentionWriteWord(TT_ATTN_TILE_SAVED_WORDS+w,inlineAttention?BlackholeInlineAttentionExtraWord(w):vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w));
+	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) io.AttentionWriteWord(w+1,optimizedAttention?BlackholeOptimizedAttentionCodeWord(w):inlineAttention?BlackholeInlineAttentionCodeWord(w):vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
+	if (parallelRope) for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) io.AttentionWriteWord(TT_ATTN_TILE_SAVED_WORDS+w,optimizedAttention?BlackholeOptimizedAttentionExtraWord(w):inlineAttention?BlackholeInlineAttentionExtraWord(w):vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w));
 	io.AttentionWriteWord(0,TT_ATTENTION_TILE_BOOT);
 	bool valid=io.AttentionReadWord(0)==TT_ATTENTION_TILE_BOOT;
-	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) valid &= io.AttentionReadWord(w+1)==(inlineAttention?BlackholeInlineAttentionCodeWord(w):vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
-	if (parallelRope) for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) valid &= io.AttentionReadWord(TT_ATTN_TILE_SAVED_WORDS+w)==(inlineAttention?BlackholeInlineAttentionExtraWord(w):vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w));
+	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) valid &= io.AttentionReadWord(w+1)==(optimizedAttention?BlackholeOptimizedAttentionCodeWord(w):inlineAttention?BlackholeInlineAttentionCodeWord(w):vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
+	if (parallelRope) for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) valid &= io.AttentionReadWord(TT_ATTN_TILE_SAVED_WORDS+w)==(optimizedAttention?BlackholeOptimizedAttentionExtraWord(w):inlineAttention?BlackholeInlineAttentionExtraWord(w):vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w));
 	compute.ready=valid; return valid;
 }
 template<class IO>
