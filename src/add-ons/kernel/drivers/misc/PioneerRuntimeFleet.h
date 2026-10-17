@@ -36,6 +36,7 @@ struct PioneerFleetWorker {
 	bool persistentPrepared=false,persistentActive=false,persistentIdle=false;
 	bool inlineMath=false;
 	bool coordinatedInline=false; // explicit whole-decoder composition,never a live upgrade
+	bool partialMath=false; // separate native-rounding image,never implicit
 	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	bool attentionDispatch=false; // separately owned fixed-group image
 	bool gluDispatch=false;

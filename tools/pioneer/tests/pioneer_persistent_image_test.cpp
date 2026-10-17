@@ -4,11 +4,12 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerComputeFleet.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeFleetPersistentImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8InlineImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8PartialImage.h"
 struct PersistentMachine:BulkQ8Machine {
 	unsigned worker,jobs=0,previousReads=0,inputReads=0,completedInputs=0;
 	uint32_t command[10]={},source[4096]={};
 	bool inputPending=false;
-	bool inlineMath=false;
+	bool inlineMath=false,partialMath=false;
 	PersistentMachine(unsigned k,unsigned n,unsigned w):BulkQ8Machine(k,n,0),worker(w) {
 		for (unsigned i=0;i<1024;i++) l1[6144+i]=BlackholeFleetPersistentCodeWord(i);
 		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
@@ -25,6 +26,28 @@ struct PersistentMachine:BulkQ8Machine {
 		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
 		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
 		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);
+	}
+	void Partial() {
+		Inline(); partialMath=true;
+		for (unsigned i=0;i<1024;i++) l1[1+i]=BlackholeRuntimeQ8PartialCodeWord(i);
+		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
+		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
+		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);
+	}
+	bool CorrectExpected() const {
+		if (!partialMath) return CorrectIeee();
+		if (conditional) return false;
+		for (unsigned row=0;row<outputs;row++) {
+			float expected=0;
+			for (unsigned block=0;block<inputs/32;block++) {
+				int dot=0; for (unsigned i=0;i<32;i++) dot+=NativeWeight(row,block*32+i)*Input(block*32+i,trial);
+				// Independent native partial-product oracle, never host fmaf.
+				float scale=PioneerBlackholeFma(Half(WeightScale(row,block)),InputScale(block,trial),0);
+				expected=PioneerBlackholeFma(float(dot),scale,expected);
+			}
+			if (Bits(expected)!=buffers[4096+row]) return false;
+		}
+		return true;
 	}
 	unsigned Index(uint32_t a) override {
 		if (a>=0x71000 && a<0x72000) { assert(!(a&3)); return 6144+(a-0x71000)/4; }
@@ -88,7 +111,7 @@ struct PersistentMachine:BulkQ8Machine {
 		if (worker) for (unsigned i=0;i<4096;i++) buffers[i]=0xcafebabe;
 		l1[Index(0x71300)]=++jobs;
 		Until(TT_PERSISTENT_WAIT);
-		assert(l1[Index(0x71304)]==jobs && CorrectIeee() && Guards());
+		assert(l1[Index(0x71304)]==jobs && CorrectExpected() && Guards());
 		assert(!memcmp(source,buffers,sizeof(source)) && inputReads==(worker?jobs:0));
 	}
 	void Stop() {

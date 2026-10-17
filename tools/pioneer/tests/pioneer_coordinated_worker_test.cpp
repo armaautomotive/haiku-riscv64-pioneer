@@ -13,6 +13,7 @@ struct CoordinatedMachine:PersistentMachine {
 		for (unsigned i=0;i<1024;i++) l1[Index(0x71000+i*4)]=i<code.size()/4?Word(code,i*4):0;
 		for (unsigned i=0;i<16;i++) l1[Index(0x71380+i*4)]=expectedSource[i]=0x10000+i;
 		if (getenv("PIONEER_COORDINATED_INLINE_MATH")) Inline();
+		if (getenv("PIONEER_COORDINATED_PARTIAL_MATH")) Partial();
 	}
 	bool CodeAddress(uint32_t address) const override {
 		return (address>=0x71000 && address<0x71300) || (address>=0x71500 && address<0x71700)
@@ -48,7 +49,7 @@ struct CoordinatedMachine:PersistentMachine {
 		}
 		for (unsigned b=0;b<inputs/32;b++) source[3072+b]=Bits(InputScale(b,trial));
 		l1[Index(0x71300)]=++jobs; UntilCoord(CoordWait);
-		assert(l1[Index(0x71304)]==jobs && CorrectIeee() && Guards() && !memcmp(buffers,source,sizeof(source)));
+		assert(l1[Index(0x71304)]==jobs && CorrectExpected() && Guards() && !memcmp(buffers,source,sizeof(source)));
 		unsigned reads=ExpectedFixtures()/32;
 		for (unsigned i=0;i<4;i++) assert(uint32_t(l1[Index(0x71350+i*4)]-l1[Index(0x71340+i*4)])==(i==1?reads*144+256:reads+1));
 		assert(l1[Index(0x71360)]==0x703ec && l1[Index(0x71364)]==ExpectedFixtures()
@@ -78,6 +79,6 @@ int main(int argc,char** argv)
 		bool failed=false; try { m.JobCoord(0); } catch (uint32_t marker) { failed=marker==0x4e4f4346; }
 		assert(failed && !m.matrixInstructions && m.l1[m.Index(0x71304)]==0);
 	}
-	puts("PASS OFFLINE coordinated-worker actual RISC/exact math,all119 peers,all K,N4096,changed jobs without reset,fresh counter/status snapshots,STOP/source/NoC faults; NOT native speed");
+	puts("PASS OFFLINE coordinated-worker actual RISC/selected arithmetic oracle,all119 peers,all K,N4096,changed jobs without reset,fresh counter/status snapshots,STOP/source/NoC faults; NOT native speed or full-model quality");
 }
 #endif

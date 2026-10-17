@@ -13,6 +13,11 @@
 .ifdef TT_RUNTIME_Q8_INLINE
 	.set TT_RUNTIME_Q8_BULK,1
 .endif
+.ifdef TT_RUNTIME_Q8_PARTIAL
+.ifndef TT_RUNTIME_Q8_INLINE
+	.error "Native partial accumulation requires the separate inline image"
+.endif
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -767,7 +772,15 @@ q8_broadcast_scale:
 	emit 0x84046940 /* LReg4 = dW_even*dX + constant LReg9(+0) */
 	emit 0x84056950
 .ifdef TT_RUNTIME_Q8_NATIVE_F32
+.ifdef TT_RUNTIME_Q8_PARTIAL
+	/* Experimental native partial-product rounding, NOT IEEE fused FMA.
+	 * Separate immutable image/contract; full-model quality gate required.
+	 * Never silently substitute for the qualified exact/debug engine. */
+	emit 0x84024000
+	emit 0x84035110
+.else
 	j q8_exact_accumulate /* compensated product + round-to-odd, no host sums */
+.endif
 q8_exact_return:
 .else
 	emit 0x84024000 /* accumulator_even = dot_even*scale_even + accumulator_even */

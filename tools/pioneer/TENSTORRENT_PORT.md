@@ -2,6 +2,35 @@
 
 ## Status
 
+### October17: exact inline native PASS;native-rounding22 trial (10:24 UTC)
+
+Contract21 passes every full-vocabulary quality comparison and exact
+token/selected-bit replay,including all three longer natural requests.
+Sustained GPU3.673979/3.645607/3.732186tok/s versus CPU32
+2.843985/1.545481/1.556835. Prompt6.795609/7.052253/6.283682s remains poor.
+312 GPU positions,61464 logical projections/8736 attention,156 full plus
+156 token-only results,zero warm uploads;END2/PCI-host1-1/cold0/cleanup1.
+Cold107.469655s includes88.741776s upload. Short4.204867tok/s is diagnostic
+ONLY. Full-logit cosine1/L2zero is printed to nine decimals,not a separate
+binary comparison of every CPU/GPU logit. Log:`qwen-inline-v21-benchmark.log`.
+Qualified21 is backed up separately while idle;fast Qwen is NOT achieved.
+
+Explicit experimental22/model-registry7 selects a DISTINCT native partial-
+product accumulation image. It removes the37-op compensated IEEE sequence
+in favor of two native SFPMADs;rounding is NOT IEEE fused FMA. Offline actual
+instruction tests match the independent native arithmetic oracle for all
+120 workers,all K,N4096,repeated jobs/STOP;366 test jobs intentionally differ
+from IEEE. Coordinated dispatch/GLU/attention/source faults and immutable
+per119-peer arithmetic-mode/controller/client refusal tests pass. Exact
+engines remain separate and default-off22 never silently changes them.
+Full-model gates are UNCHANGED:cosine>=.999,L2<=.02,all generated greedy
+tokens match CPU,full-logit/selected-bit replay and complete coverage.
+Native22 PENDING;no speed or quality qualification yet. Driver
+`1acef182fbde6e3383fdf77adfcd1419a7aa79ac105caacd6918deb7b3273f53`;
+verifier`e913061b58e7c88639a73a8fc638a12a34b721fba97cc503ecb48303690d9675`;
+math image`e1a56d2767570ca909ffa7d645e0f71aa9207203b550022bb12b839377d117bc`.
+Log:`qwen-partial-v22-benchmark.log`. No Assistant/boot/CPU/RAM/firmware/SD change.
+
 ### October17: paired native PASS;exact inline composition trial (10:16 UTC)
 
 Fast Qwen is STILL NOT achieved. Contract20 passes22 EXACT full-vocabulary
