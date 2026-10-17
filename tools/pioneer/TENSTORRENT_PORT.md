@@ -120,6 +120,9 @@ messages,no new panic. Desktop state has been requested; no second blind
 power cycle has been issued. This disproves treating parallel transfer
 concurrency alone as a sufficient explanation/fix; underlying cause remains
 unconfirmed. No new P100A code was installed or executed in either trial.
+The task's exact public-model listener PID1249 was then stopped with SIGINT;
+it exited130. No background source listener is left running. Native pieces
+remain preserved; a later resume needs a freshly verified bounded listener.
 
 ### October17: requested Qwen3.8-27B download verified on Mac (18:07 UTC)
 
