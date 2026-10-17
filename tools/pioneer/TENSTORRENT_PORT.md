@@ -12,7 +12,14 @@ END2/PCI-host1-1/cold0/cleanup1. Log:`span-v11-native.log`,utility SHA
 `f5b63d6f6258ca595ae500ed0b0b282a33cc403edc66003b71a087ffbc5e84e6`.
 Driver`f6e91d956e5bd7f29e53f9f1866565fc5f163be66137bc5a55b787bce2a8aa63`,
 layer image`ecc68864d3c6599a4ec87edbba26c3a2ad4bce3079382eb413b5522d2037bb95`.
-Full-Qwen verification is RUNNING,not yet qualified at this checkpoint.
+Full-Qwen verification subsequently PASSED all22 exact full-vocabulary
+positions and four identical greedy tokens. Coverage197 matrices,28FFNs,
+zero standalone GLUs,28/224 attention and one wide output per position.
+END2/PCI-host1-1/cold0/cleanup1. Weight preparation/upload fell from
+326.170284s to83.408894s(3.91x);total398.153s to155.683s. Short warm decode
+remains0.517088tok/s(3/5.801718s),so upload acceleration is NOT a generation
+speedup. Log:`qwen-span-v11-verify.log`,binary SHA
+`9dd268eda8ede7bbea762f8f259ffbb1092ec81ef1e80d00b538223dcd8a3c27`.
 
 Private`54de` freezes an exact-length1..256-page inline request in one
 kernel copy. ONLY new immutable below-KV pages in mode8 may be written.
