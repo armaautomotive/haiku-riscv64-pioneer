@@ -27,6 +27,7 @@ struct GatherWorker:TableWorker {
 		for (unsigned i=0;i<16;i++) assert(buffers[4080+i]==l1[Index(0x71340+i*4)]);
 	}
 };
+#ifndef PIONEER_GATHER_WORKER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==4); const auto plain=Read(argv[1]),attention=Read(argv[2]),glu=Read(argv[3]);
@@ -57,3 +58,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual fused-gather worker,all119 peers/repeated exact math/ALL16 proof words BEFORE finished,attention+GLU/STOP do not touch prefix,ALL16 lost stores refuse publication;NOT native/driver");
 }
+#endif

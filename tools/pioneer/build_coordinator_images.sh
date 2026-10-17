@@ -8,6 +8,8 @@ output=$2
 case ${PIONEER_COORDINATOR_OPT_LEVEL:-s} in s|2|3) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_HOT_QUANT:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_FIXED_ROUTES:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_COORDINATOR_PAIRED_QKV:-0} in 0|1) ;; *) exit 2;; esac
+[ "${PIONEER_COORDINATOR_PAIRED_QKV:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_FUSED_GATHER:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_FIXED_ROUTES:-0}" = 1 ]; } || exit 2
 pioneer_coordinator_init_span=0
 [ "${PIONEER_COORDINATOR_OPT_LEVEL:-s}" != 3 ] || pioneer_coordinator_init_span=1
 case ${PIONEER_COORDINATOR_PACKET_IDLE:-0} in 0|1) ;; *) echo 'Packet-idle image flag must be0 or1' >&2; exit 2;; esac
@@ -105,6 +107,7 @@ if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decod
  -DPIONEER_COORDINATOR_INIT_SPAN=$pioneer_coordinator_init_span \
  -DPIONEER_COORDINATOR_HOT_QUANT=${PIONEER_COORDINATOR_HOT_QUANT:-0} \
  -DPIONEER_COORDINATOR_FIXED_ROUTES=${PIONEER_COORDINATOR_FIXED_ROUTES:-0} \
+ -DPIONEER_COORDINATOR_PAIRED_QKV=${PIONEER_COORDINATOR_PAIRED_QKV:-0} \
  -fno-stack-protector -fno-pic -fno-pie -ffunction-sections -fdata-sections -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march="$isa" -mabi=ilp32 \
  -fstack-usage -DPIONEER_COORDINATOR_PACKET_IDLE=${PIONEER_COORDINATOR_PACKET_IDLE:-0} \

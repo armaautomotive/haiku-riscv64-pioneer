@@ -2,6 +2,68 @@
 
 ## Status
 
+### October17:unpack-gate43 native PASS;QKV prerequisites OFFLINE (17:18 UTC)
+
+Fast Qwen remains UNACHIEVED. User explicitly authorized starting after
+the rest;ONE relay ON pulse succeeded. Pinned Linux64/NVMe/empty kexec/
+helper verified,then unchanged full-memory SD-free handoff
+`smp64-maintenance43-20261017-a`. Haiku64,127.62GiB usable;fresh image scan
+one header/47 images/ZERO P100A images/no failure. Repeated this immediately
+before replacing ONLY the regular drivers/bin file with staged43,after
+installed42/backup42/staged43 SHA checks and no compute owners. Unchanged
+dev/misc symlink. Metadata-only fixed checker90a3a0b1 accepted exact43;
+all four native runtime library hashes verified before ONE trial. No loaded
+driver was overwritten,forced unloaded or reloaded. Default boot/SDs/
+Assistant/user's dirty llama implementation remain unchanged.
+
+Qualified43 GPU7.463158/7.428707/7.557277tok/s versus42
+7.283226/7.246373/7.377537,about2.5% faster. CPU32
+1.183862/.804422/.749211tok/s;prompt3.655529/3.788328/3.386404s.
+ALL22 full-vocabulary/exact selected-bit startup checks and three sustained
+requests/untimed complete-logit replays/quality+coverage PASS. Complete312
+positions/61464 logical projections/8736 attention/156 full+156 selected
+positions/24 batches/zero warm upload;END2/PCI-host1-1/cold0/cleanup1.
+Position21 total90.629659M ticks versus42 93.315680M;matrix42.758370M
+versus45.113844M,vocabulary7.330020M versus7.665134M. Unchanged Q8/RMS/
+SiLU/attention within measurement variation. Initial immutable upload
+91.634533s. Short7.905659tok/s is diagnostic ONLY. Driver9e098d02 preserved
+as `driver-v43-9e098d02-backup`;native log copied locally,SHA
+8c455bdca26f2f8c8e4306efb8a94a698c84fa529c98a83a5ab4a4860e499ce8.
+Currently Haiku ON,qualified43 loaded but NO compute owner. This is fixed
+Qwen3-0.6B Q8_0 ONLY,not requested-fast/Assistant/Q4/27B/all-Qwen promotion.
+
+Separately,DEFAULT-OFF `PIONEER_COORDINATOR_PAIRED_QKV` is an OFFLINE
+dispatcher prerequisite,NOT selected by any driver/client/root caller.
+Same119 peers/tables/weight format/math/scratch owners/routes:Q2048 over
+60 peers,V1024 over30,K1024 over29,exactly nine64-row spans plus11032-row
+spans,each wholly inside ONE tensor. A hypothetical complete schedule has
+8575 math+224 attention+168 GLU jobs instead of9219;every one of197 tensor
+rows is covered exactly once. Table maximum169 entries stays inside the
+existing225-entry owner. Reverse gather MUST first release ALL shared
+input readers;Q0's64B prefix borders ALREADY gathered K and MUST preserve/
+read back ALL bits. Forward gather and omitted preservation are explicit
+failing counterexamples,not performance alternatives.
+
+Two compiled OFFLINE dispatcher builds match70621267,23460B inside SAME
+32KiB code owner;flag disabled regenerates qualified42 rootd1addc8d byte
+for byte. Invalid flag/missing required paired/table/gather/fixed-route
+builds refuse. Actual linked operation12 instructions pass ALL119 routes/
+ten command-word lost stores/ALL4096 output bits/guard words/K-prefix
+restore/wrapped counters/ALL16 combined-proof and restore faults,ALL3
+extent+reserved+shape refusals,ALL119 sequence/ALL4 initiator/ALL32 ID
+preflight faults and Q/V/K nonfinite outputs. Synthetic already-sealed
+peers isolate dispatcher transport here,NOT a math/inference oracle. An
+additional actual frozen worker/math test joins the planned first QKV
+descriptor to ALL119 real32/64-row workers,three changed-input IEEE-exact
+jobs/cursor wrap/ALL prefix bits/STOP. Independent local-row fixtures,
+NOT full QKV inference. All tests ASan/UBSan;retained plan gDkAprbk,
+descriptor zNwgXYfr,dispatcher hCdsX2Lk,workers yW7h8CaX. A new test initially
+treated existing operation0 as invalid;corrected its fixture to unknown13,
+without changing runtime acceptance. No new native compute contract or
+QKV timing claim. Full root/private-version/sequence+counter proof/controller/
+registry/client/UNKNOWN fault gates remain required before any native QKV
+trial. Current build mirror/native43 are deliberately NOT this offline image.
+
 ### October17:fixed-route42 native PASS;exact unpack-gate43 ready (16:58 UTC)
 
 Fast Qwen remains UNACHIEVED. User reported power ON after the long rest;

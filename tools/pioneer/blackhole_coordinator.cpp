@@ -4,6 +4,17 @@
 #ifndef PIONEER_COORDINATOR_FUSED_GATHER
 #define PIONEER_COORDINATOR_FUSED_GATHER 0
 #endif
+#ifndef PIONEER_COORDINATOR_PAIRED_QKV
+#define PIONEER_COORDINATOR_PAIRED_QKV 0
+#endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+// OFFLINE dispatcher prerequisite ONLY. No live root calls operation12;
+// no driver/client may select it without a new sealed schedule contract.
+#if !PIONEER_COORDINATOR_PAIRED_FFN || !PIONEER_COORDINATOR_FUSED_GATHER || !PIONEER_COORDINATOR_DESCRIPTOR_TABLE || !PIONEER_COORDINATOR_FIXED_ROUTES
+#error Paired QKV requires the immutable paired/table/reverse-gather cohort
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerPairedQkvPlan.h"
+#endif
 // Offline -O3 variant initializes the conditional paired span explicitly
 // to satisfy aggressive dataflow analysis;warnings remain errors. Default
 // and -O2 variants preserve their qualified bytecode exactly.
@@ -244,6 +255,9 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		&& operation!=10
 #endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+		&& operation!=12
+#endif
 		) || !limit || limit>119) return 0;
 	if ((operation==6
 #if PIONEER_COORDINATOR_GREEDY
@@ -258,6 +272,13 @@ extern "C" unsigned coordinator_main()
 	if (operation==10) {
 		if (k!=1024 || n!=6144 || limit!=119 || !PioneerDecoderWeight(base,1024,3072) || !PioneerDecoderWeight(job[10],1024,3072)) return 0;
 		for (unsigned i=11;i<64;i++) if (job[i]) return 0;
+	}
+#endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+	if (operation==12) {
+		if (k!=1024 || n!=4096 || limit!=119 || !PioneerDecoderWeight(base,1024,2048)
+			|| !PioneerDecoderWeight(job[10],1024,1024) || !PioneerDecoderWeight(job[11],1024,1024)) return 0;
+		for (unsigned i=12;i<64;i++) if (job[i]) return 0;
 	}
 #endif
 #else
@@ -317,6 +338,9 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_PAIRED_FFN
 	if (operation==10) bytes=3072*rowBytes;
 #endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+	if (operation==12) bytes=2048*rowBytes; // Q extent,NOT the aggregate4096 rows
+#endif
 	if (bytes>0x82400000-base) return 0;
 	// Whole tensors and final128B host subspans retain their32-row shape.
 	// ONLY private hidden-projection peer chunks use the native16-row tile.
@@ -351,6 +375,10 @@ extern "C" unsigned coordinator_main()
 		unsigned weightBase=base+firstRow*rowBytes;
 		if (operation==10) { PioneerPairedFfnSpan span PIONEER_COORDINATOR_SPAN_INIT; if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park();
 			rows=span.rows; weightBase=(span.tensor?job[10]:base)+span.first*rowBytes; }
+#endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+		if (operation==12) { PioneerPairedQkvSpan span PIONEER_COORDINATOR_SPAN_INIT; if (!PioneerPairedQkvWorker(worker,span)) coordinator_fault_park();
+			rows=span.rows; weightBase=(span.tensor==0?base:span.tensor==1?job[10]:job[11])+span.first*rowBytes; }
 #endif
 		volatile uint32_t* descriptor=Words(0x147100);
 #if !PIONEER_COORDINATOR_DESCRIPTOR_TABLE
@@ -401,8 +429,8 @@ extern "C" unsigned coordinator_main()
 	// Every shared-input reader is now permanently parked until OUR next
 	// doorbell. Only now may an output prefix touch unused83fc0 scratch.
 	// Descending destinations overwrite only not-yet-gathered output,so
-	// no per-peer prefix save/copy/restore is needed. Paired gate0 alone
-	// borders the ALREADY gathered up tensor and must preserve that64B.
+	// no per-peer prefix save/copy/restore is needed except cross-tensor
+	// boundaries:paired gate0 borders up;Q0 borders ALREADY gathered K.
 	unsigned gatheredRows=0;
 	for (unsigned worker=workers;worker;worker--) {
 		unsigned ordinal=worker-1;
@@ -414,6 +442,10 @@ extern "C" unsigned coordinator_main()
 		PioneerPairedFfnSpan span PIONEER_COORDINATOR_SPAN_INIT;
 		if (operation==10) { if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park(); rows=span.rows; }
 #endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+		PioneerPairedQkvSpan qkvSpan PIONEER_COORDINATOR_SPAN_INIT;
+		if (operation==12) { if (!PioneerPairedQkvWorker(worker,qkvSpan)) coordinator_fault_park(); rows=qkvSpan.rows; }
+#endif
 #if PIONEER_COORDINATOR_FUSED_GATHER
 		// OFFLINE immutable-cohort candidate. Fetch the SAME completed peer
 		// proof and output in ONE read after ALL readers finished. This is
@@ -423,6 +455,9 @@ extern "C" unsigned coordinator_main()
 		if (operation==6 || operation==9 || operation==11) gatherOutput=0x84000;
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		if (operation==10) { gatherOutput=(span.tensor?0x84000:0x87000)+span.first*4; preservePrefix=!span.tensor && !span.first; }
+#endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+		if (operation==12) { gatherOutput=PioneerPairedQkvDestination(qkvSpan); preservePrefix=PioneerPairedQkvPreservePrefix(qkvSpan); }
 #endif
 		if (!rows || rows>1312 || gatherOutput<0x84000 || gatherOutput>0x8a000-rows*4) coordinator_fault_park();
 		uint32_t previousPrefix[16];
@@ -468,6 +503,9 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_PAIRED_FFN
 			unsigned outputBase=0x84000+outputRow*4;
 			if (operation==10) outputBase=(span.tensor?0x84000:0x87000)+span.first*4;
+#if PIONEER_COORDINATOR_PAIRED_QKV
+			if (operation==12) outputBase=PioneerPairedQkvDestination(qkvSpan);
+#endif
 #if PIONEER_COORDINATOR_FUSED_GATHER
 			if (outputBase!=gatherOutput) coordinator_fault_park();
 #else
