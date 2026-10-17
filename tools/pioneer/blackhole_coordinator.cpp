@@ -373,6 +373,12 @@ extern "C" unsigned coordinator_main()
 			unsigned outputBase=0x84000+outputRow*4;
 			if (operation==10) outputBase=(span.tensor?0x84000:0x87000)+span.first*4;
 			Transfer(false,worker,outputBase,0x84000,rows*4);
+#if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
+			// Explicit diagnostic image ONLY:overwrite16 full-result slots
+			// with fixed root/peer input readbacks,NOT model output. No extra
+			// host DMA or address authority;normal arithmetic targets unchanged.
+			if (operation==6 && worker==1) for (unsigned i=0;i<16;i++) Words(outputBase)[i]=Words(0x147900)[i];
+#endif
 			for (unsigned i=0;i<rows;i++) if ((Words(outputBase)[i]&0x7f800000)==0x7f800000) coordinator_fault_park();
 #else
 			Transfer(false,worker,0x84000+outputRow*4,0x84000,rows*4);

@@ -22,6 +22,7 @@ struct GluDecoder:ProfileDecoder {
 			auto& m=*pendingGlu[p];
 			if (groupImage.inputPull) for (const auto& word:m.masterInput) assert(word.second==memory.at(word.first)); // no down-projection reuse before ALL peers finish
 			m.Run(m.corruptPull!=0); if (m.corruptPull) { peerMemory[p][0x17ffc8]=0x464e5441; return; } m.VerifyGlu();
+			if (groupImage.inputPull) for (unsigned i=0;i<1024;i++) peerMemory[p][0x90000+i*4]=m.mem[0x90000/4+i];
 			for (unsigned a=0x91000;a<0x91440;a+=4) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned a=0x91500;a<0x91580;a+=4) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned i=0;i<16;i++) peerMemory[p][0x71340+i*4]=i<4?m.mem[0x91500/4+i]:i<8?m.mem[0x91520/4+i-4]

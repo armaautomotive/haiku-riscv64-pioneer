@@ -42,7 +42,7 @@ static int Argmax(const float* values) {
 	int best=0; for (unsigned i=0;i<151936;i++) { if (!isfinite(values[i])) return -1; if (values[i]>values[best]) best=int(i); } return best;
 }
 #include "PioneerWholeQwenBench.h"
-static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages,bool glu,bool greedy,bool rms,bool counters,bool paired,bool direct,bool partial,bool cached,bool pull,bool phases)
+static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages,bool glu,bool greedy,bool rms,bool counters,bool paired,bool direct,bool partial,bool cached,bool pull,bool phases,bool diagnostic)
 {
 	double coldStart=Seconds();
 	RawModel raw; gguf_init_params rp={false,&raw.tensors}; raw.metadata=gguf_init_from_file(path,rp);
@@ -78,8 +78,8 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 	if (benchmark) cp.n_batch=cp.n_ubatch=128;
 	cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.offload_kqv=false; cp.op_offload=false;
 	cpu.context=llama_init_from_model(cpu.model,cp); if (!cpu.context || llama_n_threads(cpu.context)!=32) return 1;
-	printf("MODEL decoder scheduler:%s\n",phases?"exact four-phase FPU pipeline/cached23 transport (experimental contract25)":pull?"exact math/parallel frozen-input fetch and ALL-bit readback (experimental contract24)":cached?"exact math/once-per-job cached query (experimental contract23)":partial?"experimental native partial-product accumulation (contract22,quality NOT qualified)":direct?"exact direct-instruction math/paired gate-up/eight KV/six GLU (experimental contract21)":paired?"119-peer paired gate/up,eight KV,six GLU,on-card argmax/RMS (experimental contract20)":counters?"eight KV/six GLU/on-card argmax/RMS/cumulative expectations (experimental contract19)":rms?"eight KV/six GLU/on-card argmax/positive FastTwoSum RMS (experimental contract18)":greedy?"eight KV/six GLU/on-card argmax (experimental contract17)":glu?"eight KV/six GLU groups (experimental contract16)":stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
-	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,phases?16:pull?15:cached?14:partial?13:direct?12:paired?11:counters?10:rms?9:greedy?8:glu?7:stages?6:parallel?5:4)) return 1;
+	printf("MODEL decoder scheduler:%s\n",diagnostic?"FIXED ROOT/PEER INPUT DIAGNOSTIC ONLY;NOT inference (contract26)":phases?"exact four-phase FPU pipeline/cached23 transport (experimental contract25)":pull?"exact math/parallel frozen-input fetch and ALL-bit readback (experimental contract24)":cached?"exact math/once-per-job cached query (experimental contract23)":partial?"experimental native partial-product accumulation (contract22,quality NOT qualified)":direct?"exact direct-instruction math/paired gate-up/eight KV/six GLU (experimental contract21)":paired?"119-peer paired gate/up,eight KV,six GLU,on-card argmax/RMS (experimental contract20)":counters?"eight KV/six GLU/on-card argmax/RMS/cumulative expectations (experimental contract19)":rms?"eight KV/six GLU/on-card argmax/positive FastTwoSum RMS (experimental contract18)":greedy?"eight KV/six GLU/on-card argmax (experimental contract17)":glu?"eight KV/six GLU groups (experimental contract16)":stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
+	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,diagnostic?17:phases?16:pull?15:cached?14:partial?13:direct?12:paired?11:counters?10:rms?9:greedy?8:glu?7:stages?6:parallel?5:4)) return 1;
 	PioneerResidentTensorCache<PioneerResidentDevice> cache(card,0x80000000ULL,false,true,true,true,true);
 	PioneerDecoderModelOffsets offsets={}; double uploadStart=Seconds(); bool okay=true;
 	for (unsigned layer=0;layer<28 && okay;layer++) {
@@ -116,6 +116,15 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 		for (unsigned i=0;i<64;i++) { rope[2*i]=PioneerAttentionBits(cosf(theta)); rope[2*i+1]=PioneerAttentionBits(sinf(theta)); theta*=step; }
 		okay=card.DecodeWhole(position+1,reinterpret_cast<const uint32_t*>(input.data()),rope,reinterpret_cast<uint32_t*>(logits.data()));
 		double elapsed=Seconds()-start; if (!okay) break;
+		if (diagnostic) {
+			const char* names[]={"tag","root_Q","peer_Q","root_K","peer_K","root_gate","peer_gate","root_up","peer_up","layer","Q_K_mismatched_words","gate_up_mismatched_words","reserved12","reserved13","reserved14","reserved15"};
+			puts("FIXED INPUT DIAGNOSTIC:these16 output slots are NOT model logits;NO inference/quality/performance qualification");
+			for (unsigned i=0;i<16;i++) printf(" INPUT_TRACE %s=%.9g bits%08x\n",names[i],double(logits[i]),PioneerAttentionBits(logits[i]));
+			bool tagged=PioneerAttentionBits(logits[0])==0x4640e400 && logits[9]==27.0f;
+			bool clean=card.Finish();
+			printf("DIAGNOSTIC completed%u cleanup%u generated0 projections%llu attention%llu full-results%llu;NOT an inference target\n",tagged,clean,(unsigned long long)card.calls,(unsigned long long)card.attentionCalls,(unsigned long long)card.wideCalls);
+			return tagged && clean?0:1;
+		}
 		const float* reference=llama_get_logits_ith(cpu.context,-1); double dot=0,a2=0,b2=0,d2=0;
 		for (unsigned i=0;i<151936;i++) { double a=logits[i],b=reference[i],d=a-b; dot+=a*b; a2+=a*a; b2+=b*b; d2+=d*d; }
 		double cosine=dot/sqrt(a2*b2),relative=sqrt(d2/(b2+1e-30)); int actual=Argmax(logits.data()),expected=Argmax(reference);
@@ -162,12 +171,13 @@ int main(int argc,char** argv)
 	bool countersBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-counters-decoder");
 	bool counters=countersBenchmark || (argc==3 && !strcmp(argv[1],"--verify-counters-decoder"));
 	bool pairedBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-paired-decoder");
+	bool diagnostic=argc==3 && !strcmp(argv[1],"--diagnose-pull-input");
 	bool phaseBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-phase-decoder");
 	bool phases=phaseBenchmark || (argc==3 && !strcmp(argv[1],"--verify-phase-decoder"));
 	bool pullBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-pull-decoder");
 	bool pull=pullBenchmark || (argc==3 && !strcmp(argv[1],"--verify-pull-decoder"));
 	bool cachedBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-cached-decoder");
-	bool cached=phases || pull || cachedBenchmark || (argc==3 && !strcmp(argv[1],"--verify-cached-decoder"));
+	bool cached=diagnostic || phases || pull || cachedBenchmark || (argc==3 && !strcmp(argv[1],"--verify-cached-decoder"));
 	bool partialBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-partial-decoder");
 	bool partial=partialBenchmark || (argc==3 && !strcmp(argv[1],"--verify-partial-decoder"));
 	bool directBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-inline-decoder");
@@ -181,7 +191,7 @@ int main(int argc,char** argv)
 	bool benchmark=phaseBenchmark || pullBenchmark || cachedBenchmark || partialBenchmark || directBenchmark || pairedBenchmark || countersBenchmark || rmsBenchmark || greedyBenchmark || gluBenchmark || stageBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder"));
 	bool stages=glu || stageBenchmark || (argc==3 && !strcmp(argv[1],"--profile-parallel-decoder"));
 	bool parallel=stages || benchmark || (argc==3 && !strcmp(argv[1],"--verify-parallel-decoder"));
-	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder|--verify-glu-decoder|--benchmark-glu-decoder|--verify-greedy-decoder|--benchmark-greedy-decoder|--verify-rms-decoder|--benchmark-rms-decoder|--verify-counters-decoder|--benchmark-counters-decoder|--verify-paired-decoder|--benchmark-paired-decoder|--verify-inline-decoder|--benchmark-inline-decoder|--verify-partial-decoder|--benchmark-partial-decoder|--verify-cached-decoder|--benchmark-cached-decoder|--verify-pull-decoder|--benchmark-pull-decoder|--verify-phase-decoder|--benchmark-phase-decoder MODEL.gguf\n",argv[0]); return 2; }
+	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder|--verify-glu-decoder|--benchmark-glu-decoder|--verify-greedy-decoder|--benchmark-greedy-decoder|--verify-rms-decoder|--benchmark-rms-decoder|--verify-counters-decoder|--benchmark-counters-decoder|--verify-paired-decoder|--benchmark-paired-decoder|--verify-inline-decoder|--benchmark-inline-decoder|--verify-partial-decoder|--benchmark-partial-decoder|--verify-cached-decoder|--benchmark-cached-decoder|--verify-pull-decoder|--benchmark-pull-decoder|--verify-phase-decoder|--benchmark-phase-decoder|--diagnose-pull-input MODEL.gguf\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0); llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_register(ggml_backend_cpu_reg());
-	int result=Run(argv[2],inspect,parallel,benchmark,stages,glu,greedy,rms,counters,paired,direct,partial,cached,pull,phases); llama_backend_free(); return result;
+	int result=Run(argv[2],inspect,parallel,benchmark,stages,glu,greedy,rms,counters,paired,direct,partial,cached,pull,phases,diagnostic); llama_backend_free(); return result;
 }

@@ -2,6 +2,42 @@
 
 ## Status
 
+### October17: exact pipeline25 native PASS;fixed-input diagnostic26 (11:14 UTC)
+
+Fast Qwen is STILL NOT achieved. Contract25 passes22 full-vocabulary quality
+comparisons/exact token-selected-bit replays and all three longer natural
+request full replays/coverage/speed gates. Sustained GPU
+4.451618/4.430258/4.505130tok/s versus CPU32 2.814557/1.074470/.625475.
+Prompt5.894547/6.110964/5.465626s remains poor. Position21 matrix ticks
+73.745M ->60.952M (~17% lower),vocabulary11.335M ->9.188M;attention unchanged.
+Complete312 GPU positions,61464 logical projections/8736 attention,156 full
+plus156 small results,zero warm uploads;END2/PCI-host1-1/cold0/cleanup1.
+Cold108.138200s includes89.192516s upload. Short4.908297tok/s is diagnostic
+ONLY. Log:`qwen-phase-v25-benchmark.log`. Qualified25 preserved separately.
+
+Separate26/model-registry11 is DIAGNOSTIC ONLY,not an inference target.
+It uses the failed24 transport,not pipeline25,and adds four fixed32B root
+readbacks per layer:peer Q/K/gate/up versus their frozen master source.
+It exposes16 finite trace values in the first16 full-result slots,NOT model
+logits;all other slots remain normal. It cannot sample:client AND kernel
+refuse token-only calls before work. No new public pointers,address/code
+selection,host DMA,owner or mapping. Trace147900..147960 lies in the existing
+backed bulk owner. Completion/counter proofs explicitly account112 extra
+reads/112 response flits;all other source/sequence/NoC/host proofs remain.
+The command exits after ONE diagnostic position and reports generated0;
+success means the trace/cleanup finished,NEVER model quality or performance.
+
+Actual diagnostic instructions pass zero/nonzero fixtures,fixed trace
+root/peer equality and mismatch fields,all remaining151920 logits/KV/119
+sequences/NoC/profile checks. Sampling refuses before any launch. All ten
+command/four physical counter faults and ten-mode ownership/unknown-state
+controller/client tests pass. Native diagnostic26 PENDING,log
+`qwen-diagnostic-v26-input.log`;root
+`a724b0c57a3d944489d5bf49186e070f4cb7a1e470a7dda75b3eabf4e0d7c0cb`;
+driver`788ac7b26f2355c1c20ebb3a840fb547e6f1b45bbcf1d8fc3955f8a8afb220f7`;
+utility`5bfee36dcb24d107254f0884abaaf4880a647d98ecedcb07cb09d08f7122840e`.
+No Assistant promotion,boot/CPU/RAM/firmware/SD changes or all-Qwen/27B/Q4 claim.
+
 ### October17: peer-fetch24 native FAIL;exact fidelity-pipeline25 trial (10:57 UTC)
 
 Native24 FAILS its FIRST full-logit quality check:all zero logits,

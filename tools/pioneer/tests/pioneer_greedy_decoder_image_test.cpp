@@ -66,6 +66,7 @@ struct GreedyDecoder:GluDecoder {
 		GluDecoder::Submit(); if (corrupt) { counts[counterFault-1]++; counterInjected=true; }
 	}
 };
+#ifndef PIONEER_GREEDY_DECODER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); compactImage=true; DecoderSfpuImage image(argv[2],false,true,true);
@@ -97,3 +98,4 @@ int main(int argc,char** argv)
 	if (faultsOnly) { puts("PASS OFFLINE actual master Transfer:ALL ten individually dropped command stores and ALL four independently corrupted physical counter deltas rejected before any peer launch;full functional image tests separate"); return 0; }
 	puts("PASS OFFLINE actual full decoder/8 attention/6 GLU/on-card first-argmax,128B sole ordered/all-bit-compared result,exact independent tokens/logit bits/KV/119 sequences/profile/NoC budgets,TWO positions,retained full-vocabulary mode,zero/negative/tie/nonfinite/posted faults;NOT native qualification");
 }
+#endif

@@ -194,6 +194,17 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		Transfer(false,worker,0x144000+group*1024,0xb2000,1024);
 		for (unsigned i=0;i<256;i++) if ((Words(0x144000)[group*256+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
 		root.sequence[group]++; Fence();
+#if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
+		if (!group) {
+			volatile uint32_t* d=Words(0x147900); d[0]=0x4640e400; // 12345.0f,DIAGNOSTIC ONLY
+			Transfer(false,worker,0x147940,0x90000,32); d[1]=Words(0x140000)[0]; d[2]=Words(0x147940)[0];
+			unsigned mismatch=0; for (unsigned i=0;i<8;i++) mismatch+=Words(0x140000)[i]!=Words(0x147940)[i];
+			Transfer(false,worker,0x147940,0x90400,32); d[3]=PioneerAttentionBits(PioneerAttentionHalf(uint16_t(Words(0x142000)[0])));
+			d[4]=PioneerAttentionBits(PioneerAttentionHalf(uint16_t(Words(0x147940)[0])));
+			for (unsigned i=0;i<8;i++) mismatch+=Words(0x142000)[i]!=Words(0x147940)[i];
+			d[9]=PioneerAttentionBits(float(layer)); d[10]=PioneerAttentionBits(float(mismatch)); Fence();
+		}
+#endif
 	}
 	for (unsigned i=0;i<4;i++) total[i]+=stats[i];
 	DECODER_STAGE_END(5);
@@ -251,6 +262,16 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 			if ((bits&0x80000000) || bits>0x477fe000 || PioneerAttentionBits(PioneerAttentionHalf(PioneerAttentionToHalf(PioneerAttentionFloat(bits))))!=bits) coordinator_fault_park();
 		}
 		root.sequence[group]++; Fence();
+#if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
+		if (!group) {
+			volatile uint32_t* d=Words(0x147900);
+			Transfer(false,worker,0x147940,0x90000,32); d[5]=Words(0x87000)[0]; d[6]=Words(0x147940)[0];
+			unsigned mismatch=0; for (unsigned i=0;i<8;i++) mismatch+=Words(0x87000)[i]!=Words(0x147940)[i];
+			Transfer(false,worker,0x147940,0x90800,32); d[7]=Words(0x84000)[0]; d[8]=Words(0x147940)[0];
+			for (unsigned i=0;i<8;i++) mismatch+=Words(0x84000)[i]!=Words(0x147940)[i];
+			d[11]=PioneerAttentionBits(float(mismatch)); Fence();
+		}
+#endif
 	}
 	for (unsigned i=0;i<4;i++) total[i]+=stats[i];
 	DECODER_STAGE_END(4);
@@ -260,6 +281,10 @@ extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
 	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+#if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
+	if (root.operation!=8) return 0; // Never a sampling/inference target.
+	for (unsigned i=0;i<16;i++) Words(0x147900)[i]=0;
+#endif
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;

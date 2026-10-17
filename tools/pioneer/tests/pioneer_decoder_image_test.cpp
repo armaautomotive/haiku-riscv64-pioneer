@@ -16,6 +16,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyCountersDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholePairedDecoderCandidateImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholePullInputDecoderImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholePullDiagnosticDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #define Machine DecoderSfpuMachine
 #define Image DecoderSfpuImage
@@ -38,7 +39,7 @@
 #undef main
 struct DecoderMachine:CoordinatorMachine {
 	DecoderSfpuMachine sfpu;
-	bool nonzero,parallel,fusedGlu,sampling,paired;
+	bool nonzero,parallel,fusedGlu,sampling,paired,diagnostic;
 	unsigned positions=1;
 	std::vector<float> peerOutput[119],expected;
 	std::vector<uint16_t> expectedK[28],expectedV[28];
@@ -98,12 +99,12 @@ struct DecoderMachine:CoordinatorMachine {
 		}
 		expected=ReferenceMatrix(Norm(hidden,1024),151936,7);
 	}
-	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false,bool profile=false,bool glu=false,bool greedy=false,bool together=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent),fusedGlu(glu),sampling(greedy),paired(together) {
+	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false,bool profile=false,bool glu=false,bool greedy=false,bool together=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent),fusedGlu(glu),sampling(greedy),paired(together),diagnostic(getenv("PIONEER_PULL_DIAGNOSTIC")!=nullptr) {
 		bool unrolled=greedy && code.size()==TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS*4;
 		bool fastRms=greedy && code.size()==TT_GREEDY_RMS_DECODER_IMAGE_WORDS*4;
 		bool cumulative=greedy && code.size()==TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS*4;
-		assert(code.size()==unsigned(attention.inputPull?TT_PULL_INPUT_DECODER_IMAGE_WORDS:paired?TT_PAIRED_DECODER_IMAGE_WORDS:cumulative?TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS:fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
-		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((attention.inputPull?BlackholePullInputDecoderCodeWord(i):paired?BlackholePairedDecoderCodeWord(i):cumulative?BlackholeGreedyCountersDecoderCodeWord(i):fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+		assert(code.size()==unsigned(diagnostic?TT_PULL_DIAGNOSTIC_DECODER_IMAGE_WORDS:attention.inputPull?TT_PULL_INPUT_DECODER_IMAGE_WORDS:paired?TT_PAIRED_DECODER_IMAGE_WORDS:cumulative?TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS:fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
+		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((diagnostic?BlackholePullDiagnosticDecoderCodeWord(i):attention.inputPull?BlackholePullInputDecoderCodeWord(i):paired?BlackholePairedDecoderCodeWord(i):cumulative?BlackholeGreedyCountersDecoderCodeWord(i):fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		for (unsigned a=0x80000;a<0x8c000;a+=4) memory[a]=0;
 		for (unsigned a=0x90000;a<0xb2400;a+=4) memory[a]=0;
 		for (unsigned a=0x140000;a<0x148000;a+=4) memory[a]=0;
@@ -228,7 +229,9 @@ struct DecoderMachine:CoordinatorMachine {
 			&& memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,sequence)+i*4)==sequence[i]+1);
 		if (small) { unsigned best=0; if (nonzero) for (unsigned i=1;i<151936;i++) if (expected[i]>expected[best]) best=i;
 			assert(PioneerDecoderGreedyValid(wide.data(),positions,positions) && wide[3]==best && wide[4]==(nonzero?Bits(expected[best]):0)); }
-		else for (unsigned i=0;i<151936;i++) assert(wide[i]==(nonzero?Bits(expected[i]):0));
+		else for (unsigned i=diagnostic?16:0;i<151936;i++) assert(wide[i]==(nonzero?Bits(expected[i]):0));
+		if (diagnostic) { assert(!small && wide[0]==Bits(12345) && wide[9]==Bits(27));
+			assert(wide[1]==wide[2] && wide[3]==wide[4] && wide[5]==wide[6] && wide[7]==wide[8] && !wide[10] && !wide[11]); }
 		if (nonzero) for (unsigned layer=0;layer<28;layer++) for (unsigned t=0;t<positions;t++) for (unsigned g=0;g<8;g++) for (unsigned i=0;i<64;i++) {
 			unsigned p=t*1024+g*128+i*2;
 			assert(kv.at(0x82400000+layer*0x100000+g*0x20000+t*256+i*4)==(expectedK[layer][p]|(uint32_t(expectedK[layer][p+1])<<16)));
@@ -236,7 +239,7 @@ struct DecoderMachine:CoordinatorMachine {
 		for (unsigned i=small?32:151936;i<wide.size();i++) assert(wide[i]==0xffffffff);
 		uint32_t s[24],before[8],after[8]; for (unsigned i=0;i<24;i++) s[i]=memory.at(0x143000+i*4);
 		for (unsigned i=0;i<8;i++) { before[i]=s[8+i]; after[i]=s[16+i]; }
-		assert(PioneerDecoderSummary(s,positions,positions,before,after,parallel,fusedGlu,small,paired,sfpu.image.inputPull));
+		assert(PioneerDecoderSummary(s,positions,positions,before,after,parallel,fusedGlu,small,paired,sfpu.image.inputPull,diagnostic));
 		printf("PASS OFFLINE ACTUAL master/scalar/attention/SFPU whole28-layer decoder,independently modeled %s math peers,197 projections/28 FFN/224 heads,one final vocabulary transfer,all counters/119 sequences,steps%u stack%08x;NOT full-model/native qualification\n",nonzero?"SPARSE NONZERO":"ZERO",steps,minStack); fflush(stdout);
 	}
 };

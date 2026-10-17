@@ -32,6 +32,7 @@ struct ParallelDecoder:DecoderMachine {
 			m.Run(fail); m.dram.swap(kv);
 			if (fail) { peerMemory[p][0x17ffc8]=0x464e5441; return; }
 			m.Verify();
+			if (groupImage.inputPull) for (unsigned i=0;i<384;i++) peerMemory[p][0x90000+i*4]=m.mem[0x90000/4+i];
 			for (unsigned a:{0x74000U,0x74004U,0x74008U,0x7400cU}) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned a=0x90600;a<0x90660;a+=4) peerMemory[p][a]=m.mem[a/4];
 			for (unsigned i=0;i<256;i++) peerMemory[p][0xb2000+i*4]=m.mem[0xb2000/4+i];
