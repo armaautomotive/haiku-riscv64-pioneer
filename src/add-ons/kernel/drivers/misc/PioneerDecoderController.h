@@ -55,6 +55,13 @@ static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsi
 		&& m.marker==TT_COORDINATOR_MARKER && m.pc[0]==TT_DECODER_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
 		&& PioneerDecoderSummary(r.summary,tokens,nonce,m.before,m.after,parallel,glu,greedy,paired,inputPull,diagnostic);
 }
+// Kernel return boundaries must derive EVERY transport flag from the sealed
+// lease. Omitting a newer optional flag silently rejects valid counters and
+// clears otherwise valid output after a clean device completion.
+static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsigned tokens,unsigned nonce,const PioneerDecoderLease& code,bool greedy)
+{
+	return PioneerDecoderProof(r,tokens,nonce,code.parallel,code.glu,greedy,code.paired,code.inputPull,code.diagnostic);
+}
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
@@ -217,7 +224,7 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 		m.recovery_required=1; code.unsafe=stack.unsafe=attention.unsafe=bulk.unsafe=true; store.recovery_required=true;
 		PioneerQuarantineWideOutput(io,wide); PioneerPersistentQuarantine(io,fleet); PioneerQuarantineOutputBuffer(io,transfer);
 	}
-	bool proved=!uncertain && PioneerDecoderProof(r,tokens,stack.nonce,code.parallel,code.glu,greedy,code.paired,code.inputPull,code.diagnostic);
+	bool proved=!uncertain && PioneerDecoderProof(r,tokens,stack.nonce,code,greedy);
 	if (proved && code.profiling) {
 		tt_decoder_stage_profile candidate={};
 		for (unsigned i=0;i<32;i++) reinterpret_cast<uint32_t*>(&candidate)[i]=io.BulkL1Read((TT_DECODER_STAGE_L1-TT_BULK_UPLOAD_L1)/4+i);

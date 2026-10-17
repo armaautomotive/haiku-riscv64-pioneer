@@ -78,6 +78,12 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 			model,tokens,input,rope,output.data(),decoded,small);
 		if (okay) { assert(PioneerDecoderProof(decoded,tokens,coordinator.nonce,parallel,glu,small,paired,inputPull,diagnostic) && !wide.pending && !transfer.pending && !decoder.running && !attention.running
 				&& !coordinator.inputValid && !io.pioWords && io.C().pciCommand[0]==0x402 && io.C().pciCommand[1]==0x402);
+			// Exercise the SAME sealed-lease overload used at the final ioctl
+			// output-clearing boundary,not just the lower-level controller.
+			assert(PioneerDecoderProof(decoded,tokens,coordinator.nonce,decoder,small));
+			if (inputPull) assert(!PioneerDecoderProof(decoded,tokens,coordinator.nonce,parallel,glu,small,paired));
+			for (unsigned word=0;word<sizeof(decoded)/4;word++) { auto bad=decoded; reinterpret_cast<uint32_t*>(&bad)[word]^=1;
+				if (word!=10) assert(!PioneerDecoderProof(bad,tokens,coordinator.nonce,decoder,small)); }
 			if (small) { assert(PioneerDecoderGreedyValid(output.data(),coordinator.nonce,tokens) && output[3]==111 && output[4]==0x40000000);
 				for (unsigned i=32;i<output.size();i++) assert(output[i]==0xabcdef00); }
 			else for (auto value:output) assert(value==0x40000000);

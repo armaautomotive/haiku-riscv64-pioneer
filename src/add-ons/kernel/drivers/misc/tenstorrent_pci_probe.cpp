@@ -2510,7 +2510,7 @@ DecoderRunControlImpl(PioneerProbeCookie* cookie,void* data,size_t length,bool g
 			c->coordinator,c->decoder,c->attention,c->residentAttention,c->decoderModel,request->tokens,request->embedding,request->rope,request->output,request->result,greedy);
 		if (c->Unsafe()) { c->lease.recovery_required=true; c->io.QuarantineHostPage(); sColdRecoveryRequired=true; request->result.master.recovery_required=1; }
 		auto& r=request->result.master; c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
-		if (!PioneerDecoderProof(request->result,request->tokens,c->coordinator.nonce,c->decoder.parallel,c->decoder.glu,greedy,c->decoder.paired)) memset(request->output,0,sizeof(request->output));
+		if (!PioneerDecoderProof(request->result,request->tokens,c->coordinator.nonce,c->decoder,greedy)) memset(request->output,0,sizeof(request->output));
 		status=user_memcpy(data,request,length);
 	}
 	release_sem(sLock); free(request); return status;

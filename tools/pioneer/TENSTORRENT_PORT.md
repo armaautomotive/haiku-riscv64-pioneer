@@ -2,6 +2,26 @@
 
 ## Status
 
+### October17: located24/26 zero-output return-boundary bug (11:19 UTC)
+
+The first26 diagnostic completed its full device/counter/sequence proof and
+clean END,including112 extra diagnostic reads,but all16 trace slots returned
+zero,even the fixed12345 marker. Inspection found a HOST KERNEL return-boundary
+bug:DecoderRunControlImpl called PioneerDecoderProof without inputPull and
+diagnostic flags. The inner controller and userspace used the correct flags;
+the intermediate final check rejected the changed counters and zeroed the
+entire otherwise completed payload. This ALSO explains the all-zero24 result;
+it does NOT prove that transport or model arithmetic are correct yet.
+
+Both kernel boundaries now use the SAME sealed-lease overload,so no transport
+flag can be omitted. Controller regression exercises that exact overload for
+all modes,demonstrates the old truncated call rejects pull results,and flips
+every proof word to check rejection (except the intentionally variable polls).
+ASan/UBSan controller PASS. Corrected26 driver
+`535ed5ba71aaf827c34ba2cf579127ab8f1f986ba0e3d6d2b89700a64cf261d7`.
+Native diagnostic retry pending;qualified25 backup unchanged. Still NO fast
+Qwen/all-Qwen/27B/Q4 claim or Assistant promotion.
+
 ### October17: exact pipeline25 native PASS;fixed-input diagnostic26 (11:14 UTC)
 
 Fast Qwen is STILL NOT achieved. Contract25 passes22 full-vocabulary quality
