@@ -8,6 +8,7 @@ enum { TT_RESIDENT_KV_BYTES=28*1024*1024, TT_RESIDENT_ATTN_INPUT_WORDS=3072 };
 struct PioneerResidentAttentionLease {
 	bool reserved=false;
 	bool payloadBlocks=false; // immutable v2 choice, independent capability
+	bool coordinated=false; // explicit v3, only immutable mode8 may select it
 	unsigned tokens[28]={};
 	uint32_t snapshot[2048]={}; // private ordinary kernel RAM, never a DMA owner
 };
@@ -15,9 +16,10 @@ struct tt_resident_attention_result {
 	tt_attention_tile_result math;
 	uint32_t layer,groups,before[8],after[8];
 };
-static inline bool PioneerResidentAttentionVersion(unsigned version,const PioneerResidentAttentionLease& kv)
+static inline bool PioneerResidentAttentionVersion(unsigned version,const PioneerResidentAttentionLease& kv,bool coordinated=false)
 {
-	return (version==1 || version==2) && (!kv.reserved || kv.payloadBlocks==(version==2));
+	return (coordinated?version==3:(version==1 || version==2))
+		&& (!kv.reserved || (kv.payloadBlocks==(version>=2) && kv.coordinated==coordinated));
 }
 static inline bool PioneerResidentAttentionCapacity(uint64_t bytes)
 {

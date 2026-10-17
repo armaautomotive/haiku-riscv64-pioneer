@@ -35,6 +35,7 @@ struct PioneerFleetWorker {
 	// provably idle in its local mailbox loop without being held in reset.
 	bool persistentPrepared=false,persistentActive=false,persistentIdle=false;
 	bool inlineMath=false;
+	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	uint32_t persistentSequence=0;
 };
 struct tt_runtime_fleet_result {

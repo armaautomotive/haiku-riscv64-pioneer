@@ -57,6 +57,9 @@ void PioneerGgmlResidentKV(bool enabled);
 // Separate opt-in: bounded SRAM-data transfers use phase fences rather
 // than serializing every DWORD. All control/NoC/reset fences stay unchanged.
 void PioneerGgmlPayloadBlocks(bool enabled);
+// Explicit separate mode8: master dispatcher + <=119 persistent math
+// peers, device KV-v3 handoff. No CPU reference/fallback or speed guarantee.
+void PioneerGgmlCoordinated(bool enabled);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);

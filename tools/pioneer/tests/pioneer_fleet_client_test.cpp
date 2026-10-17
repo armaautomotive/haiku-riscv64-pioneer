@@ -9,6 +9,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 static unsigned calls=0,ends=0,closes=0,fault=0,target=0,field=0,missing=0;
 static bool failed=false;
+static unsigned coordinatedNonce=0;
 static int MockOpen(const char*,int) { return 91; }
 static int MockClose(int fd) { assert(fd==91); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
@@ -16,8 +17,34 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT) {
 		auto& s=*(tt_resident_session_result*)data; s.version=1; s.capabilities=TT_PIONEER_RESIDENT_CAPABILITIES&~missing; return 0;
 	}
+	if (op==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT) {
+		assert(bytes==sizeof(tt_coordinated_support)); auto& s=*static_cast<tt_coordinated_support*>(data);
+		s={2,119,3,1,8192}; return 0;
+	}
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
+	if (op==TT_PCI_PROBE_PIONEER_COORDINATED_FLEET) {
+		auto& p=*(tt_pioneer_coordinated_fleet*)data; assert(p.version==1 && p.workers<=119 && bytes==PioneerCoordinatedRequestBytes(p.outputs));
+		PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
+		auto& r=p.result; r={}; r.inputs=p.inputs; r.outputs=p.outputs; r.workers=plan.workers;
+		r.staged_pages=(p.inputs*2+4095)/4096+1; r.gathered=p.outputs<=8192?p.outputs:0;
+		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=plan.workers; m.nonce=++coordinatedNonce;
+		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
+		m.phase=TT_COORDINATOR_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_COORDINATOR_PARK;
+		unsigned reads=(p.outputs<=8192?11:10)*plan.workers,flits=p.outputs<=8192?reads-plan.workers+p.outputs/16:reads,writes=2*plan.workers;
+		const unsigned delta[]={reads,flits,reads+writes,reads,writes,writes,reads+writes,writes};
+		r.summary[0]=reads; r.summary[1]=flits; r.summary[2]=r.summary[3]=writes; r.summary[4]=plan.workers;
+		r.summary[5]=p.outputs; r.summary[6]=m.nonce; r.summary[7]=1;
+		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
+		for (unsigned i=0;i<p.outputs;i++) p.output[i]=0x3f800000+i;
+		if (fault) {
+			failed=true;
+			if (fault==1) { errno=EIO; return -1; }
+			if (fault==2) reinterpret_cast<uint32_t*>(&r)[field]^=1;
+			if (fault==4) p.output[field]=0x7fc00000;
+		}
+		return 0;
+	}
 	if (op==TT_PCI_PROBE_PIONEER_RUNTIME_Q8_FLEET) {
 		auto& p=*(tt_pioneer_runtime_fleet*)data; assert(p.version==2 && bytes==PioneerFleetRequestBytes(p.outputs));
 		PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
@@ -81,7 +108,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 #undef ioctl
 #undef close
 #undef open
-static void Reset(unsigned f=0,unsigned t=0,unsigned word=0) { calls=ends=closes=missing=0; failed=false; fault=f; target=t; field=word; }
+static void Reset(unsigned f=0,unsigned t=0,unsigned word=0) { coordinatedNonce=calls=ends=closes=missing=0; failed=false; fault=f; target=t; field=word; }
 static bool Open(PioneerResidentDevice& d) { return d.Open(2*1024*1024,false,true,true,true,true,true,true,true,1,120); }
 int main() {
 	uint32_t x[512],scale[32]; for (auto& v:x) v=0x40014001; for (auto& v:scale) v=0x3c800000;
@@ -137,6 +164,27 @@ int main() {
 		Reset(); missing=absent;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,120,true,true)); }
 		assert(calls==1 && !ends && closes==1);
+	}
+	{
+		Reset(); missing=TT_PIONEER_CAP_COORDINATED_FLEET;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
+		assert(calls==1 && closes==1 && !ends);
+	}
+	for (unsigned n:{64U,6144U,8192U,151936U}) {
+		Reset(); output.assign(n,0xdeadbeef);
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true));
+			assert(d.Q8Matvec(0,1024,n,x,scale,output.data()) && d.Q8Matvec(0,1024,n,x,scale,output.data()));
+			for (unsigned i=0;i<n;i++) assert(output[i]==0x3f800000+i);
+			assert(d.Finish()); }
+		assert(ends==1 && closes==1);
+	}
+	for (unsigned f:{1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_coordinated_fleet_result)/4:1);word++) {
+		Reset(f,0,word); output.assign(64,0xdeadbeef);
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true));
+			assert(!d.Q8Matvec(0,1024,64,x,scale,output.data()));
+			for (auto value:output) assert(value==0xdeadbeef);
+			unsigned previous=calls; assert(!d.Q8Matvec(0,1024,64,x,scale,output.data()) && !d.Finish() && calls==previous); }
+		assert(!ends && closes==1);
 	}
 	puts("PASS REAL fleet client, variable inline ABI,120 worker proofs/all8 attention groups,wrapped counters,no partial outputs,close-only/no retry on faults,capability refusal BEFORE BEGIN; NO hardware");
 }

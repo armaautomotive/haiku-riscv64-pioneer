@@ -61,6 +61,11 @@ int main()
 		PioneerResidentAttentionLease kv; kv.reserved=reserved; kv.payloadBlocks=blocks;
 		assert(PioneerResidentAttentionVersion(version,kv)==((version==1 || version==2) && (!reserved || blocks==(version==2))));
 	}
+	for (bool reserved:{false,true}) for (bool blocks:{false,true}) for (bool coordinated:{false,true}) for (unsigned version=0;version<5;version++) {
+		PioneerResidentAttentionLease kv; kv.reserved=reserved; kv.payloadBlocks=blocks; kv.coordinated=coordinated;
+		assert(PioneerResidentAttentionVersion(version,kv,true)==(version==3 && (!reserved || (blocks && coordinated))));
+		assert(PioneerResidentAttentionVersion(version,kv,false)==((version==1 || version==2) && (!reserved || (!coordinated && blocks==(version==2)))));
+	}
 	for (unsigned n=1;n<=256;n++) {
 		uint32_t a[8]={},b[8]; unsigned reads=16*((n+63)/64);
 		const unsigned expected[8]={reads,64*n,reads+16,reads,16,64,reads+16,16};

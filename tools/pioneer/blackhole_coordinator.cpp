@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// OFFLINE candidate. No driver operation exposes this image yet.
+// Fixed immutable image, exposed only through guarded private coordinator ABIs.
 // Master0 coordinates fixed peers1..119; all addresses/routes are fixed or
 // derived from a shape/arena checked twice (kernel and immutable program).
 // Peer math is unchanged. No PCI/host DMA, arbitrary code or CSR writes.

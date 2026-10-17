@@ -41,6 +41,7 @@
 #include "PioneerResidentAttention.h"
 #include "PioneerPeerPcRead.h"
 #include "PioneerCoordinatorProbe.h"
+#include "PioneerCoordinatedFleet.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -179,6 +180,8 @@
 #define TT_PCI_PROBE_PIONEER_RESIDENT_ATTENTION (B_DEVICE_OP_CODES_END + 0x54d6)
 #define TT_PCI_PROBE_PIONEER_PEER_PC_READ (B_DEVICE_OP_CODES_END + 0x54d7)
 #define TT_PCI_PROBE_PIONEER_COORDINATOR_PROBE (B_DEVICE_OP_CODES_END + 0x54d8)
+#define TT_PCI_PROBE_PIONEER_COORDINATED_FLEET (B_DEVICE_OP_CODES_END + 0x54d9)
+#define TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT (B_DEVICE_OP_CODES_END + 0x54da)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -199,7 +202,8 @@
 #define TT_PIONEER_CAP_WIDE_PAYLOAD 268435456U
 #define TT_PIONEER_CAP_PEER_PC_READ 536870912U
 #define TT_PIONEER_CAP_COORDINATOR_PROBE 1073741824U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD | TT_PIONEER_CAP_Q8_FLEET | TT_PIONEER_CAP_FLEET_ATTENTION | TT_PIONEER_CAP_PERSISTENT_FLEET | TT_PIONEER_CAP_INLINE_PERSISTENT_FLEET | TT_PIONEER_CAP_RESIDENT_ATTENTION | TT_PIONEER_CAP_PAYLOAD_BLOCKS | TT_PIONEER_CAP_WIDE_PAYLOAD | TT_PIONEER_CAP_PEER_PC_READ | TT_PIONEER_CAP_COORDINATOR_PROBE)
+#define TT_PIONEER_CAP_COORDINATED_FLEET 2147483648U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD | TT_PIONEER_CAP_Q8_FLEET | TT_PIONEER_CAP_FLEET_ATTENTION | TT_PIONEER_CAP_PERSISTENT_FLEET | TT_PIONEER_CAP_INLINE_PERSISTENT_FLEET | TT_PIONEER_CAP_RESIDENT_ATTENTION | TT_PIONEER_CAP_PAYLOAD_BLOCKS | TT_PIONEER_CAP_WIDE_PAYLOAD | TT_PIONEER_CAP_PEER_PC_READ | TT_PIONEER_CAP_COORDINATOR_PROBE | TT_PIONEER_CAP_COORDINATED_FLEET)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -400,6 +404,24 @@ static_assert(offsetof(tt_pioneer_runtime_persistent_fleet,output)==sizeof(tt_pi
 static inline size_t PioneerPersistentRequestBytes(unsigned outputs) {
 	return outputs>=32 && outputs<=TT_FLEET_OUTPUTS_MAX && !(outputs&31)
 		?sizeof(tt_pioneer_runtime_persistent_fleet)-(TT_FLEET_OUTPUTS_MAX-outputs)*sizeof(uint32_t):0;
+}
+
+// Explicit mode8: one coordinator +1..119 persistent math peers. New
+// lazy weights only; existing initialized weights cannot be mutated.
+struct tt_pioneer_coordinated_fleet {
+	uint32_t version,inputs,outputs,workers;
+	uint64_t weight_offset;
+	uint32_t input[TT_RUNTIME_MATVEC_INPUTS_MAX/2],scale[TT_RUNTIME_MATVEC_INPUTS_MAX/32];
+	tt_coordinated_fleet_result result;
+	uint32_t output[TT_FLEET_OUTPUTS_MAX];
+};
+struct tt_coordinated_support {
+	uint32_t version,max_workers,attention_version,immutable_weights,gather_max;
+};
+static_assert(offsetof(tt_pioneer_coordinated_fleet,output)==sizeof(tt_pioneer_coordinated_fleet)-TT_FLEET_OUTPUTS_MAX*sizeof(uint32_t),"coordinated inline ABI has no tail padding");
+static inline size_t PioneerCoordinatedRequestBytes(unsigned outputs) {
+	return outputs>=32 && outputs<=TT_FLEET_OUTPUTS_MAX && !(outputs&31)
+		?sizeof(tt_pioneer_coordinated_fleet)-(TT_FLEET_OUTPUTS_MAX-outputs)*sizeof(uint32_t):0;
 }
 
 // Eight grouped-head tiles, one host call, exact bounded prefix payload.

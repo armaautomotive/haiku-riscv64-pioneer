@@ -2,10 +2,10 @@
 #ifndef BLACKHOLE_COORDINATOR_IMAGE_H
 #define BLACKHOLE_COORDINATOR_IMAGE_H
 #include <stdint.h>
-// Immutable bounded coordinator; only read-only held-peer qualification is exposed.
+// Immutable bounded coordinator; guarded read-only and fixed-shape matrix ABIs.
 // tools/pioneer/blackhole_coordinator.cpp + start.S, RV32IM, no relaxation.
 // SHA256 359fb6e5e5af9fdcd248afe8e329391b4218ba4e87bc4ebc1fd67762b39bb100
-// Math/dispatch paths remain OFFLINE, not selectable by the probe ABI.
+// The read-only probe cannot select math/dispatch or caller-supplied code.
 enum { TT_COORDINATOR_IMAGE_WORDS=860,TT_COORDINATOR_CODE_WORDS=2048,
  TT_COORDINATOR_SAVED_WORDS=4096,TT_COORDINATOR_BOOT=0x0006606f,
  TT_COORDINATOR_DONE=0x6c00c,TT_COORDINATOR_PARK=0x6c038,

@@ -215,12 +215,12 @@ int main(int argc,char** argv) {
 	}
 	// Fixed fused-attention contract and 28-layer coverage. The transport is
 	// explicitly software-only here; native shared handoff is tested separately.
-	for (unsigned fleetMode=0;fleetMode<4;fleetMode++) {
+	for (unsigned fleetMode=0;fleetMode<5;fleetMode++) {
 		PioneerGgmlAttention(true); assert(!ggml_backend_dev_init(dev,NULL));
 		PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true);
 		PioneerGgmlQ8Exact(true); PioneerGgmlQ8Dual(true); PioneerGgmlQ8DualReuse(true);
-		PioneerGgmlBulkUpload(fleetMode?1:0); PioneerGgmlFleet(fleetMode?120:0);
-		PioneerGgmlResidentKV(fleetMode>=2); PioneerGgmlPayloadBlocks(fleetMode==3);
+		PioneerGgmlBulkUpload(fleetMode?1:0); PioneerGgmlFleet(fleetMode==4?119:fleetMode?120:0);
+		PioneerGgmlResidentKV(fleetMode>=2); PioneerGgmlPayloadBlocks(fleetMode>=3); PioneerGgmlCoordinated(fleetMode==4);
 		io=PioneerGgmlHostState(); backend=ggml_backend_dev_init(dev,NULL); assert(backend);
 		ggml_init_params ap={8*1024*1024,NULL,false}; auto* ac=ggml_init(ap); assert(ac);
 		auto* qr=ggml_new_tensor_3d(ac,GGML_TYPE_F32,128,16,1);
@@ -292,6 +292,7 @@ int main(int argc,char** argv) {
 		assert(PioneerGgmlFinish()); ggml_backend_free(backend); ggml_free(ac);
 		PioneerGgmlAttention(false); PioneerGgmlQ8DualReuse(false); PioneerGgmlQ8Dual(false); PioneerGgmlQ8Exact(false);
 		PioneerGgmlFleet(0); PioneerGgmlBulkUpload(0);
+		PioneerGgmlCoordinated(false);
 		PioneerGgmlResidentKV(false); PioneerGgmlPayloadBlocks(false);
 		PioneerGgmlQ8Native(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Operands(false);
 	}

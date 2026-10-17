@@ -19,8 +19,10 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool blockBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-blocks-kv-q8-host1");
-	bool payloadBlocks=blockBenchmark || (argc==3 && !strcmp(argv[1],"--verify-blocks-kv-q8-host1"));
+	bool coordinatedBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-coordinated-kv-q8-host1");
+	bool coordinated=coordinatedBenchmark || (argc==3 && !strcmp(argv[1],"--verify-coordinated-kv-q8-host1"));
+	bool blockBenchmark=coordinatedBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-blocks-kv-q8-host1"));
+	bool payloadBlocks=coordinated || blockBenchmark || (argc==3 && !strcmp(argv[1],"--verify-blocks-kv-q8-host1"));
 	bool residentBenchmark=blockBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-resident-kv-q8-host1"));
 	bool residentKV=payloadBlocks || residentBenchmark || (argc==3 && !strcmp(argv[1],"--verify-resident-kv-q8-host1"));
 	bool fleet=residentKV || (argc==3 && !strcmp(argv[1],"--verify-fleet-attention-q8-host1"));
@@ -78,9 +80,10 @@ int main(int argc,char** argv) {
 	PioneerGgmlQ8DualReuse(reuse);
 	PioneerGgmlAttention(deviceAttention);
 	PioneerGgmlBulkUpload(bulkUpload);
-	PioneerGgmlFleet(fleet?120:0);
+	PioneerGgmlFleet(fleet?(coordinated?119:120):0);
 	PioneerGgmlResidentKV(residentKV);
 	PioneerGgmlPayloadBlocks(payloadBlocks);
+	PioneerGgmlCoordinated(coordinated);
 	if (deviceAttention) {
 		params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_ENABLED;
 		params.offload_kqv=true; params.op_offload=true;
@@ -147,7 +150,7 @@ int main(int argc,char** argv) {
 				(unsigned long long)(stats.matvecs-coverageBefore.matvecs));
 			if (stats.attentionOps-coverageBefore.attentionOps!=28 || stats.attentionTiles-coverageBefore.attentionTiles!=224
 				|| stats.matvecs-coverageBefore.matvecs!=(fleet?197U:234U)
-				|| (fleet && stats.peakWorkers!=120)) { fprintf(stderr,"Strict device attention/multicore coverage failed; no CPU fallback or accepted result\n"); passed=false; break; }
+				|| (fleet && stats.peakWorkers!=(coordinated?119U:120U))) { fprintf(stderr,"Strict device attention/multicore coverage failed; no CPU fallback or accepted result\n"); passed=false; break; }
 		}
 		printf("Position %d: card decode %.6fs cosine %.9f relative-L2 %.9f argmax card/CPU %d/%d tensors %llu pages %llu matvecs %llu\n",
 			position,elapsed,cosine,relative,next,cpu,(unsigned long long)stats.tensors,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs);

@@ -7,6 +7,7 @@
 #include <memory>
 #include <string>
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatorImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerCoordinatedFleet.h"
 struct CoordinatorMachine:Machine {
 	std::vector<uint8_t> code,workerImage;
 	std::map<uint32_t,uint32_t> memory;
@@ -162,6 +163,12 @@ struct CoordinatorMachine:Machine {
 			assert(readFlits==(operation && n<=8192?read-count+n/16:read));
 			const unsigned expected[]={read,readFlits,read+write,read,write,writeFlits,read+write,write};
 			for (unsigned i=0;i<8;i++) assert(uint32_t(memory.at(0x143040+i*4)-memory.at(0x143020+i*4))==expected[i]);
+			if (operation) {
+				uint32_t summary[24],before[8],after[8];
+				for (unsigned i=0;i<24;i++) summary[i]=memory.at(0x143000+i*4);
+				for (unsigned i=0;i<8;i++) { before[i]=summary[8+i]; after[i]=summary[16+i]; }
+				assert(PioneerCoordinatedSummary(summary,n,count,nonce,before,after));
+			}
 		}
 		return memory.at(0x17ffc4)!=0;
 	}

@@ -11,6 +11,13 @@ transfers. Full-model and three warm-request quality gates passed, but
 installed Assistant answered a public request at0.222tok/s (seven samples,
 CPU validation OFF/reference decodes0); still not practical speed. Its model
 was cleanly unloaded before subsequent isolated transport development.
+New native-qualified mode8 uses an on-card dispatcher plus119 persistent
+math peers, whole hidden-result gather and shared attention KV-v3. All6144
+and151936-row primitives, changed worker cohorts, interleaved attention and
+clean STOP/restoration pass. A false odd-cohort counter rejection was fixed
+and followed by a full cold recovery, preserving64 CPUs/full RAM. A fresh
+full-Qwen/CPU32 comparison is running; no new model rate or Assistant
+promotion is claimed. See the latest P100A status for exact artifacts.
 Card firmware/default Linux boot and the
 user's unrelated llama.cpp edits are unchanged. See the current
 [P100A status](TENSTORRENT_PORT.md#status) and the

@@ -69,6 +69,7 @@ struct CoordinatorFixture {
 	}
 	bool Close() { return PioneerCoordinatorClose(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),lease,!io.quarantined); }
 };
+#ifndef PIONEER_COORDINATOR_PROBE_MOCK_ONLY
 int main()
 {
 	{
@@ -94,3 +95,4 @@ int main()
 	}
 	puts("PASS OFFLINE coordinator probe ownership,code/stack restoration,fresh nonce/full summary/NoC/PC proof,changed peer/dropped stores/timeout faults; no reset/restore after unknown completion");
 }
+#endif

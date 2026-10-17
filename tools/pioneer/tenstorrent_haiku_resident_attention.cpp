@@ -9,13 +9,26 @@ static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); 
 int main(int argc,char** argv)
 {
 	bool blocks=argc==2 && !strcmp(argv[1],"--run-blocks-and-restore");
-	if (!blocks && (argc!=2 || strcmp(argv[1],"--run-and-restore"))) { fprintf(stderr,"Usage: %s --run-and-restore|--run-blocks-and-restore\n",argv[0]); return 2; }
+	bool wide=argc==2 && !strcmp(argv[1],"--coordinated-wide-and-restore");
+	bool vocabulary=argc==2 && !strcmp(argv[1],"--coordinated-vocabulary-and-restore");
+	bool coordinatedAttention=argc==2 && !strcmp(argv[1],"--coordinated-attention-and-restore");
+	bool support=argc==2 && !strcmp(argv[1],"--check-coordinated-support");
+	if (support) {
+		int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) return 1;
+		tt_coordinated_support s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&s,sizeof(s)); close(fd);
+		printf("Coordinated support status%d v%u workers%u KV-v%u immutable%u gather%u\n",status,s.version,s.max_workers,s.attention_version,s.immutable_weights,s.gather_max);
+		return status || s.version!=2 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
+	}
+	bool coordinated=wide || vocabulary || coordinatedAttention || (argc==2 && !strcmp(argv[1],"--coordinated-matrices-and-restore"));
+	if (!blocks && !coordinated && (argc!=2 || strcmp(argv[1],"--run-and-restore"))) { fprintf(stderr,"Usage: %s --run-and-restore|--run-blocks-and-restore|--coordinated-matrices-and-restore|--coordinated-wide-and-restore|--coordinated-vocabulary-and-restore|--coordinated-attention-and-restore|--check-coordinated-support\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	PioneerResidentDevice device;
-	if (!device.Open(UINT64_C(0x80000000),false,true,true,true,true,true,true,true,1,120,true,blocks)) return 1;
-	uint32_t x[512],scale[32],y[64]={};
-	std::vector<uint32_t> packed(73728/4,0);
-	for (unsigned row=0;row<64;row++) for (unsigned b=0;b<32;b++) {
+	if (!device.Open(UINT64_C(0x80000000),false,true,true,true,true,true,true,true,1,coordinated?119:120,true,blocks||coordinated,coordinated)) return 1;
+	unsigned rows=vocabulary?151936:wide?6144:64;
+	uint32_t x[512],scale[32]; std::vector<uint32_t> y(rows,0);
+	uint64_t weightBytes=PioneerQ8CompactWeightBytes(1024,rows);
+	std::vector<uint32_t> packed(size_t(weightBytes/4),0);
+	for (unsigned row=0;row<rows;row++) for (unsigned b=0;b<32;b++) {
 		packed[PioneerQ8NativeF32ScaleByte(1024,b,row)/4]=0x3f800000;
 		for (unsigned i=0;i<32;i++) {
 			unsigned k=b*32+i; int q=int((row*13+k*7)%31)-15;
@@ -26,11 +39,29 @@ int main(int argc,char** argv)
 	for (auto& w:x) w=0x40004000; // valid integer-overlay zeros
 	for (auto& w:scale) w=0x3f800000;
 	bool okay=true;
-	for (uint64_t at=0;at<73728 && okay;at+=16384) {
-		unsigned pages=unsigned((73728-at)/4096); if (pages>4) pages=4;
+	for (uint64_t at=0;at<weightBytes && okay;at+=16384) {
+		unsigned pages=unsigned((weightBytes-at)/4096); if (pages>4) pages=4;
 		okay=device.UploadPages(at,packed.data()+at/4,pages);
 	}
-	okay=okay && device.Q8Matvec(0,1024,64,x,scale,y);
+	okay=okay && device.Q8Matvec(0,1024,rows,x,scale,y.data());
+	if (coordinated && !coordinatedAttention) {
+		for (unsigned trial=0;trial<3 && okay;trial++) {
+			for (unsigned k=0;k<1024;k++) {
+				uint32_t v=PioneerInt8Operand(int((k*17+trial*7)%31)-15);
+				if (!(k&1)) x[k/2]=v; else x[k/2]|=v<<16;
+			}
+			unsigned currentRows=trial==1?32:rows;
+			double start=Seconds(); okay=device.Q8Matvec(0,1024,currentRows,x,scale,y.data()); double elapsed=Seconds()-start;
+			for (unsigned row=0;row<currentRows && okay;row++) {
+				int sum=0; for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+trial*7)%31)-15);
+				okay=y[row]==PioneerAttentionBits(float(sum));
+			}
+			printf("NATIVE on-card coordinator trial%u full%u rows peak%u math workers %s wall%.6fs; CPU reference OUTSIDE clock\n",trial,currentRows,device.peakWorkers,okay?"PASS":"FAIL",elapsed);
+		}
+		bool clean=device.Finish();
+		printf("%s coordinated matrix primitive; cleanup%u; NOT model/attention qualification or tokens/s\n",okay && clean?"PASS":"FAIL",clean);
+		return okay && clean?0:1;
+	}
 	std::vector<uint32_t> q(2048),k(512),v(512),output(2048);
 	std::vector<uint16_t> historyK(4*1024),historyV(4*1024);
 	for (unsigned n=1;n<=4 && okay;n++) {
@@ -59,7 +90,7 @@ int main(int argc,char** argv)
 				uint32_t v=PioneerInt8Operand(int((k*17+n*7+layer*11)%31)-15);
 				if (!(k&1)) x[k/2]=v; else x[k/2]|=v<<16;
 			}
-			okay=device.Q8Matvec(0,1024,64,x,scale,y);
+			okay=device.Q8Matvec(0,1024,64,x,scale,y.data());
 			for (unsigned row=0;row<64 && okay;row++) {
 				int sum=0;
 				for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+n*7+layer*11)%31)-15);

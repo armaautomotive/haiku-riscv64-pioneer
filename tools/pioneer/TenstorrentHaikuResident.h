@@ -22,12 +22,15 @@ class PioneerResidentDevice {
 	bool residentKV=false;
 	bool payloadBlocks=false;
 	unsigned coordinatorNonce=0;
+	bool coordinated=false;
+	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
-	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false) {
+	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); }
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false) {
+		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
 		if (deviceKV && (!workerLimit || !deviceAttention || !PioneerResidentAttentionCapacity(bytes))) return false;
 		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || groupedUpload>2 || (groupedUpload && !reuseInput) || workerLimit>120 || (workerLimit && (!reuseInput || !groupedUpload)) || !PioneerResidentCapacity(bytes)) return false;
@@ -49,6 +52,17 @@ public:
 		fleet=workerLimit;
 		residentKV=deviceKV;
 		payloadBlocks=blockPayload;
+		coordinated=coordinatorMode;
+		if (coordinated && !(s.capabilities&TT_PIONEER_CAP_COORDINATED_FLEET)) {
+			fprintf(stderr,"Explicit on-card coordinator capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
+		}
+		if (coordinated) {
+			tt_coordinated_support support={};
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version!=2
+				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
+				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
+			}
+		}
 		if (payloadBlocks && (s.capabilities&(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD))
 			!=(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD)) {
 			fprintf(stderr,"Explicit bounded payload block capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
@@ -75,9 +89,10 @@ public:
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
 		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
-		if (dual) fprintf(stderr,"Two fixed bulk workers: disjoint rows, both complete/stop proofs required; NOT a CPU speedup qualification\n");
-		if (reuse) fprintf(stderr,"Explicit per-core exact-byte activation reuse; output poison/full completion proofs retained\n");
-		if (fleet) fprintf(stderr,"Throughput candidate: up to%u row workers, one shared activation upload/whole projection, on-card input distribution/output poison; no CPU reference validation implied\n",fleet);
+		if (dual && !coordinated) fprintf(stderr,"Two fixed bulk workers: disjoint rows, both complete/stop proofs required; NOT a CPU speedup qualification\n");
+		if (reuse && !coordinated) fprintf(stderr,"Explicit per-core exact-byte activation reuse; output poison/full completion proofs retained\n");
+		if (coordinated) fprintf(stderr,"Explicit on-card dispatcher + up to%u persistent math peers; one shared activation upload, on-card completion/source/counter proof/gather; no CPU reference validation implied\n",fleet);
+		else if (fleet) fprintf(stderr,"Throughput candidate: up to%u row workers, one shared activation upload/whole projection, on-card input distribution/output poison; no CPU reference validation implied\n",fleet);
 		requestBytes=dual?sizeof(tt_pioneer_runtime_dual_matvec):sizeof(tt_pioneer_runtime_q8_matvec);
 		request=(tt_pioneer_runtime_matvec*)calloc(1,requestBytes);
 		if (!request) { failed=true; return false; }
@@ -147,6 +162,33 @@ public:
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
+		if (coordinated) {
+			PioneerFleetPlan plan;
+			if (!active || failed || finished || cold || !q8 || !vector || !scales || !result
+				|| !PioneerFleetPartition(inputs,outputs,fleet,plan)) return false;
+			if (!coordinatedRequest) coordinatedRequest=(tt_pioneer_coordinated_fleet*)malloc(sizeof(tt_pioneer_coordinated_fleet));
+			if (!coordinatedRequest) { failed=true; return false; }
+			size_t size=PioneerCoordinatedRequestBytes(outputs); auto& p=*coordinatedRequest;
+			memset(&p,0,size); p.version=1; p.inputs=inputs; p.outputs=outputs; p.workers=fleet; p.weight_offset=offset;
+			memcpy(p.input,vector,inputs*2); memcpy(p.scale,scales,inputs/32*4);
+			int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_FLEET,&p,size); cold=p.result.master.recovery_required!=0;
+			bool proved=!status && PioneerCoordinatedProof(p.result,inputs,outputs,fleet,coordinatorNonce+1);
+			for (unsigned i=0;i<outputs;i++) proved &= (p.output[i]&0x7f800000)!=0x7f800000;
+			if (!proved) {
+				const auto& m=p.result.master;
+				fprintf(stderr,"Coordinated matrix STOP status%d state%u workers%u nonce%u start/complete/stop%u/%u/%u PC%x marker%x cold%u; no fallback/retry\n",
+					status,m.state,p.result.workers,m.nonce,m.started,m.completed,m.stopped,m.pc[1],m.marker,cold);
+				fprintf(stderr,"  scoped summary R/flits/W/flits %u/%u/%u/%u peers/N/nonce/op %u/%u/%u/%u\n",
+					p.result.summary[0],p.result.summary[1],p.result.summary[2],p.result.summary[3],p.result.summary[4],p.result.summary[5],p.result.summary[6],p.result.summary[7]);
+				fprintf(stderr,"  physical delta8");
+				for (unsigned i=0;i<8;i++) fprintf(stderr," %u",uint32_t(m.after[i]-m.before[i]));
+				fprintf(stderr,"\n");
+				failed=true; closeOnly=true; return false;
+			}
+			coordinatorNonce=p.result.master.nonce; memcpy(result,p.output,outputs*4); calls++;
+			if (plan.workers>peakWorkers) peakWorkers=plan.workers;
+			return true;
+		}
 		if (fleet) {
 			// Measured fixed-worker dispatch is expensive for tiny row sets.
 			// Use2 for small learned projections; the whole vocabulary uses
@@ -235,7 +277,7 @@ public:
 			|| !tokens || tokens>256 || layer>=28) return false;
 		if (!residentAttention) residentAttention=(tt_pioneer_resident_attention*)malloc(sizeof(tt_pioneer_resident_attention));
 		if (!residentAttention) { failed=true; return false; }
-		auto& p=*residentAttention; memset(&p,0,sizeof(p)); p.version=payloadBlocks?2:1; p.tokens=tokens; p.layer=layer;
+		auto& p=*residentAttention; memset(&p,0,sizeof(p)); p.version=coordinated?3:payloadBlocks?2:1; p.tokens=tokens; p.layer=layer;
 		memcpy(p.input,query,8192);
 		for (unsigned g=0;g<8;g++) { memcpy(p.input+2048+g*128,keys+g*64,256); memcpy(p.input+2048+g*128+64,values+g*64,256); }
 		if (!PioneerResidentAttentionInput(tokens,layer,p.input)) return false;

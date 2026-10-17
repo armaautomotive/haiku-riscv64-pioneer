@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_PERSISTENT_MACHINE_ONLY
 #include "pioneer_persistent_image_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedWorkerImage.h"
 enum { CoordWait=0x71280,CoordWaitLast=0x71294,CoordStop=0x712c4,CoordFault=0x711ac,
 	CoordReady=0x43524431,CoordStopped=0x43535450 };
 struct CoordinatedMachine:PersistentMachine {
@@ -60,7 +61,8 @@ struct CoordinatedMachine:PersistentMachine {
 #ifndef PIONEER_COORDINATED_MACHINE_ONLY
 int main(int argc,char** argv)
 {
-	assert(argc==2); auto image=Read(argv[1]);
+	assert(argc==2); auto image=Read(argv[1]); assert(image.size()==TT_COORDINATED_WORKER_WORDS*4);
+	for (unsigned i=0;i<1024;i++) assert(BlackholeCoordinatedWorkerCodeWord(i)==(i<image.size()/4?Word(image,i*4):0));
 	for (unsigned w=1;w<120;w++) { CoordinatedMachine m(image,1024,32,w); m.BootCoord(); m.JobCoord(0); m.JobCoord(9); m.StopCoord(); }
 	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) { CoordinatedMachine m(image,k,64,119); m.BootCoord(); m.JobCoord(2); m.JobCoord(3); m.StopCoord(); }
 	{ CoordinatedMachine m(image,1024,4096,1); m.BootCoord(); m.JobCoord(1); m.JobCoord(2); m.StopCoord(); }

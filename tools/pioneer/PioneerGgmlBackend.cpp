@@ -63,11 +63,12 @@ struct PioneerGgmlContext {
 	const unsigned fleet;
 	const bool residentKV;
 	const bool payloadBlocks;
+	const bool coordinated;
 	PioneerAttentionPrefixCache prefix;
 	uint64_t attentionOps=0,attentionTiles=0;
 	unsigned attentionLayer=0;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0,attentionSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention,unsigned workers,bool deviceKV,bool blocks):cache(device,Arena-(deviceKV?PIONEER_RESIDENT_KV_BYTES:0),half,rawBytes,hardwareUnpack,accurate,workers!=0),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention),fleet(workers),residentKV(deviceKV),payloadBlocks(blocks) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention,unsigned workers,bool deviceKV,bool blocks,bool coordinator):cache(device,Arena-(deviceKV?PIONEER_RESIDENT_KV_BYTES:0),half,rawBytes,hardwareUnpack,accurate,workers!=0),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention),fleet(workers),residentKV(deviceKV),payloadBlocks(blocks),coordinated(coordinator) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -86,6 +87,7 @@ static unsigned sBulkUpload=0;
 static unsigned sFleet=0;
 static bool sResidentKV=false;
 static bool sPayloadBlocks=false;
+static bool sCoordinated=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -283,7 +285,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks,ctx->coordinated);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		if (op->op==GGML_OP_FLASH_ATTN_EXT) {
@@ -360,7 +362,8 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse) || sBulkUpload>2 || (sBulkUpload && !sDualReuse) || sFleet>120 || (sFleet && (!sDualReuse || !sBulkUpload))) return NULL;
 	if (sResidentKV && (!sFleet || !sAttention)) return NULL;
 	if (sPayloadBlocks && !sResidentKV) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet,sResidentKV,sPayloadBlocks); if (!ctx) return NULL;
+	if (sCoordinated && (!sResidentKV || !sPayloadBlocks || !sFleet || sFleet>119)) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet,sResidentKV,sPayloadBlocks,sCoordinated); if (!ctx) return NULL;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -415,6 +418,7 @@ void PioneerGgmlBulkUpload(unsigned mode) { if (!sActive) sBulkUpload=mode; }
 void PioneerGgmlFleet(unsigned workers) { if (!sActive) sFleet=workers; }
 void PioneerGgmlResidentKV(bool enabled) { if (!sActive) sResidentKV=enabled; }
 void PioneerGgmlPayloadBlocks(bool enabled) { if (!sActive) sPayloadBlocks=enabled; }
+void PioneerGgmlCoordinated(bool enabled) { if (!sActive) sCoordinated=enabled; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {

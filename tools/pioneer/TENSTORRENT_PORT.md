@@ -2,6 +2,70 @@
 
 ## Status
 
+### October17: persistent dispatcher / shared KV native checkpoint
+
+Fast Qwen is **NOT achieved**. Installed Assistant remains the qualified
+mode5 target measured at0.222tok/s below. The new explicit coordinated
+candidate is native-qualified for primitives; a fresh full-Qwen/CPU32
+comparison is running. No new model rate or Assistant promotion is claimed.
+
+Private`54d9` mode8 uses master0 as a held-between-jobs dispatcher plus
+persistent math peers1..119. The image verifies ALL prior idle sequences
+before any launch, writes/readbacks shape-derived descriptors, issues fresh
+doorbells, validates every peer's source/idle/counter/status/PC/sequence,
+and gathers <=8192 hidden rows over device NoC. Large classifiers retain
+full host logit readback. Exact Q8 arithmetic is unchanged. Host per-peer
+launch/poll loops are removed. Explicit attention v3 shares the existing KV
+image while peers wait in their immutable NoC-free mailbox loops. Below-tail
+lazy upload accepts NEW pages only; existing learned weights cannot mutate.
+Every master stop still needs physical counters/source/two-PC proof. END
+live-audits all peers and proves ALL STOPs before ANY reset/restoration.
+
+Metadata-only`54da` reports contract v2,119 math peers,KV-v3,immutable1,
+gather8192 before BEGIN. v2 omits unused descriptor padding: every word
+consumed by the actual image is staged/read back (64+p words,max732 bytes).
+Legacy mode5/6/7 remain separate. No user code/address/route is accepted.
+
+Evidence in `/boot/home/pioneer-resident-kv-20261017-a/`:
+
+- `coordinated-matrix-native.log`: initial d45e1917,two persistent workers,
+ changed vectors/all64 rows exact,7.328–7.363ms,clean END. Superseded driver.
+- `coordinated-wide-native.log`: REJECTED119-worker attempt. The dispatcher
+ completed, but CPU accounting omitted ONE gather read/peer and falsely
+ rejected odd cohorts. No result/retry/reset/reload after cold latch.
+ Normal shutdown/relay cold cycle/hash-verified SD-free handoff restored
+ Haiku64 CPUs/full127.6GiB. The actual executed image now feeds the actual
+ production acceptance test, reproducing the bug before correction:
+ minimum11p reads for gathered output,10p ungathered; extra polls in pairs.
+- `coordinated-wide-fixed-native.log`: corrected75d0d285,all6144 rows exact,
+119 peers→one peer→119,19.890/7.280/19.936ms,clean END.
+- `coordinated-vocabulary-native.log`: all151936 rows exact,119 peers,
+ shrink/expand,252.939/252.527ms including full logits; reference outside
+ clock; explicit END2/PCI-host1/1/cold0/cleanup1.
+- `coordinated-attention-native.log`: all8 heads,layers0/27,n1..4,L2=0,
+ interleaved changed-input matrix jobs exact,clean END.
+- `coordinated-short-wide.log` / `coordinated-short-attention.log`: current
+779fc4eb,contract v2,all numeric/cohort/attention/cleanup gates pass again.
+6144-row calls18.495/18.497ms,32-row call5.824ms. NOT tokens/s.
+- `qwen-coordinated-short-benchmark.log`: full-Qwen and three warm CPU32
+ requests IN PROGRESS. Immutable executable`qwen-coordinated-short-8bc20db9`.
+ Do not replace that executable or driver while it owns the card.
+
+Current driver SHA256:
+`779fc4eb906fb6bc36ce4df3311cebea383a43b5cf17ca18cc9e2aef2601d5ac`.
+Current primitive CLI SHA256:
+`2da6e2a636ae7433b9e3d064d346635fde3f755c183586ffd88a4789f4c5b7e2`.
+Benchmark SHA256:
+`8bc20db977021be18e0903f7f3cf72a19fd02bb30171ab5c67232d029eea8559`.
+Corrected previous driver75d0d285 and all rollback copies remain available.
+Pristine pinned GGML tests pass all five backend modes; real-client fake
+syscalls cover the variable inline ABI, every proof field, no partial output,
+close-only on errors and capability/contract refusal BEFORE BEGIN. Offline
+controller/image tests are NOT native performance evidence. Host norms/RoPE/
+KV mirror,197 matrix+28 attention calls/position,single-bank weights,PIO
+logits and2GiB arena remain. Full device graph execution and27B/4-bit models
+are separate unmet requirements; firmware/default boot/CPU/RAM are unchanged.
+
 ### October17: device-resident attention KV and wide SRAM candidate
 
 Fast self-hosted Qwen is **still not achieved**. This follow-up replaces the

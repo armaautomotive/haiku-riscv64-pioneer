@@ -4,6 +4,7 @@
 #include "PioneerRuntimeFleet.h"
 #include "BlackholeFleetPersistentImage.h"
 #include "BlackholeRuntimeQ8InlineImage.h"
+#include "BlackholeCoordinatedWorkerImage.h"
 
 // A completed math job is NOT a stopped RISC. Keep that distinction in the
 // ABI, lease and teardown. An unknown command completion forbids ANY reset.
@@ -17,6 +18,9 @@ struct tt_runtime_persistent_fleet_result {
 };
 static inline bool PioneerPersistentWaitPc(uint32_t pc) {
 	return pc>=TT_PERSISTENT_WAIT && pc<=TT_PERSISTENT_WAIT_LAST && !(pc&3);
+}
+static inline bool PioneerPersistentWorkerWaitPc(const PioneerFleetWorker& f,uint32_t pc) {
+	return f.coordinated?(pc>=TT_COORDINATED_WAIT && pc<=TT_COORDINATED_WAIT_LAST && !(pc&3)):PioneerPersistentWaitPc(pc);
 }
 static inline bool PioneerPersistentProof(const tt_runtime_persistent_fleet_result& r,unsigned k,unsigned n,unsigned limit) {
 	PioneerFleetPlan p;
@@ -50,10 +54,10 @@ bool PioneerPersistentIdle(IO& io,PioneerFleetWorker& f,uint32_t* pc=nullptr) {
 		|| io.ResetRead()!=0x46800 || io.FleetCodeRead(TT_PERSISTENT_MAILBOX)!=f.persistentSequence
 		|| io.FleetCodeRead(TT_PERSISTENT_MAILBOX+1)!=f.persistentSequence
 		|| io.FleetCodeRead(TT_PERSISTENT_MAILBOX+2)!=0
-		|| io.FleetCodeRead(TT_PERSISTENT_MAILBOX+3)!=TT_PERSISTENT_READY) return false;
+		|| io.FleetCodeRead(TT_PERSISTENT_MAILBOX+3)!=(f.coordinated?uint32_t(TT_COORDINATED_READY):uint32_t(TT_PERSISTENT_READY))) return false;
 	uint32_t first=io.RuntimePcRead(); io.Pause(); uint32_t second=io.RuntimePcRead();
 	if (pc) { pc[0]=first; pc[1]=second; }
-	return PioneerPersistentWaitPc(first) && PioneerPersistentWaitPc(second)
+	return PioneerPersistentWorkerWaitPc(f,first) && PioneerPersistentWorkerWaitPc(f,second)
 		&& io.FleetCodeRead(TT_PERSISTENT_MAILBOX)==f.persistentSequence
 		&& io.FleetCodeRead(TT_PERSISTENT_MAILBOX+1)==f.persistentSequence
 		&& BlackholeResidentIdle(io) && PioneerFleetLocalSources(io,f.noc,f.Store());
@@ -73,21 +77,26 @@ bool PioneerPersistentAllIdle(IO& io,const tt_dram_samples_result& baseline,Pion
 	return io.SelectRuntimeCore(0) && PioneerFleetGlobalSources(io,baseline);
 }
 template<class IO>
-bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false) {
-	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath;
+bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false) {
+	if (coordinated && (f.noc.version<0x101 || f.noc.version>0x177)) return false; // peers1..119, never master0
+	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinated==coordinated;
 	if (!f.preludeSaved || !f.preludeDirty || !f.Compute().ready || f.Compute().unsafe
 		|| f.Compute().running || io.ResetRead()!=0x47800
 		|| io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)!=0x0000006f) return false;
-	for (unsigned w=0;w<1024;w++) io.FleetCodeWrite(w,BlackholeFleetPersistentCodeWord(w));
+	for (unsigned w=0;w<1024;w++) io.FleetCodeWrite(w,coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
 	bool okay=true;
-	for (unsigned w=0;w<1024;w++) okay &= io.FleetCodeRead(w)==BlackholeFleetPersistentCodeWord(w);
+	for (unsigned w=0;w<1024;w++) okay &= io.FleetCodeRead(w)==(coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
+	if (coordinated) {
+		for (unsigned w=0;w<16;w++) io.FleetCodeWrite(TT_COORDINATED_SOURCE_WORD+w,w?f.noc.source[0][w]:f.Store().config|0x10000);
+		for (unsigned w=0;w<16;w++) okay &= io.FleetCodeRead(TT_COORDINATED_SOURCE_WORD+w)==(w?f.noc.source[0][w]:f.Store().config|0x10000);
+	}
 	if (inlineMath) {
 		for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,BlackholeRuntimeQ8InlineCodeWord(w));
 		for (unsigned w=0;w<1024;w++) okay &= io.RuntimeCodeRead(1+w)==BlackholeRuntimeQ8InlineCodeWord(w);
 	}
 	io.RuntimeCodeWrite(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4,TT_PERSISTENT_MATH_RETURN);
 	okay &= io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)==TT_PERSISTENT_MATH_RETURN;
-	f.persistentPrepared=okay; f.inlineMath=inlineMath; return okay;
+	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinated=coordinated; return okay;
 }
 template<class IO>
 bool PioneerPersistentBoot(IO& io,PioneerFleetWorker& f) {
@@ -126,9 +135,9 @@ bool PioneerPersistentStop(IO& io,const tt_dram_samples_result& baseline,Pioneer
 			if (io.ResetRead()!=0x46800) break;
 			if (io.FleetCodeRead(TT_PERSISTENT_MAILBOX)==f.persistentSequence
 				&& io.FleetCodeRead(TT_PERSISTENT_MAILBOX+1)==f.persistentSequence
-				&& io.FleetCodeRead(TT_PERSISTENT_MAILBOX+3)==TT_PERSISTENT_STOPPED) {
+				&& io.FleetCodeRead(TT_PERSISTENT_MAILBOX+3)==(f.coordinated?uint32_t(TT_COORDINATED_STOPPED):uint32_t(TT_PERSISTENT_STOPPED))) {
 				uint32_t first=io.RuntimePcRead(); io.Pause(); uint32_t second=io.RuntimePcRead();
-				stopped=first==TT_PERSISTENT_STOP_PC && second==first && BlackholeResidentIdle(io)
+				stopped=first==(f.coordinated?uint32_t(TT_COORDINATED_STOP_PC):uint32_t(TT_PERSISTENT_STOP_PC)) && second==first && BlackholeResidentIdle(io)
 					&& PioneerFleetLocalSources(io,f.noc,f.Store());
 				if (stopped) break;
 			}
