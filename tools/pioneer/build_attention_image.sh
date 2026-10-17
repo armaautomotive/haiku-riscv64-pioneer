@@ -9,6 +9,7 @@ attention_program=blackhole_attention.cpp
 case ${PIONEER_COORDINATED_ATTENTION:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATED_GLU:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_GRAPH_FAST_DIVIDE:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_ATTENTION_CACHED_QUERY:-0} in 0|1) ;; *) exit 2;; esac
 [ "${PIONEER_COORDINATED_GLU:-0}" = 0 ] || [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 1 ] || exit 2
 case ${PIONEER_RESIDENT_ATTENTION:-0} in
  0) ;;
@@ -28,7 +29,8 @@ mkdir -m 700 "$attention_output"
  -ffunction-sections -fdata-sections -ffp-contract=off -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
  -march=rv32imf -mabi=ilp32 -fstack-usage -DPIONEER_COORDINATED_GLU=${PIONEER_COORDINATED_GLU:-0} \
- -DPIONEER_GRAPH_FAST_DIVIDE=${PIONEER_GRAPH_FAST_DIVIDE:-0} -c "$attention_source/$attention_program" -o "$attention_output/program.o"
+ -DPIONEER_GRAPH_FAST_DIVIDE=${PIONEER_GRAPH_FAST_DIVIDE:-0} \
+ -DPIONEER_ATTENTION_CACHED_QUERY=${PIONEER_ATTENTION_CACHED_QUERY:-0} -c "$attention_source/$attention_program" -o "$attention_output/program.o"
 set --
 if [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 1 ]; then set -- --defsym TT_ATTENTION_COORDINATED=1; fi
 "$attention_cross-as" -march=rv32imf -mabi=ilp32 -mno-relax "$@" \

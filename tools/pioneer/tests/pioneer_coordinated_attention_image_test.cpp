@@ -83,7 +83,7 @@ struct GroupMachine:Machine {
 #ifndef PIONEER_COORDINATED_ATTENTION_MACHINE_ONLY
 int main(int argc,char** argv)
 {
-	assert(argc==2); setvbuf(stdout,NULL,_IONBF,0); Image image(argv[1],false,true);
+	assert(argc==2); setvbuf(stdout,NULL,_IONBF,0); Image image(argv[1],false,true,getenv("PIONEER_ATTENTION_CACHED_QUERY")!=nullptr);
 	for (unsigned n:{1U,2U,3U,64U,65U,256U}) for (unsigned group=0;group<8;group++) {
 		GroupMachine m(image,n,n&1?27:0,group); std::vector<float> q(256),expected(256); std::vector<uint16_t> k(n*128),v(n*128);
 		for (unsigned i=0;i<256;i++) q[i]=float(sin(i*.173+group*.137)*1.7);

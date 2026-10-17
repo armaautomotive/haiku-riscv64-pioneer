@@ -76,6 +76,18 @@ static void Clean(AttentionMock& io,PioneerResidentLease& store,PioneerAttention
 }
 int main()
 {
+	for (unsigned group=0;group<8;group++) {
+		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
+		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;
+		unsigned writes=io.attentionWrites;
+		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,false,true) && io.attentionWrites==writes);
+		assert(PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true) && lease.cachedQuery);
+		for (unsigned i=0;i<2048;i++) assert(io.words[1+i]==BlackholeCachedQueryGluCodeWord(i));
+		writes=io.attentionWrites;
+		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,false) && io.attentionWrites==writes);
+		lease.data_dirty=true; io.words[TT_ATTN_TILE_QUERY+0x800/4]=0xcafebabe;
+		assert(PioneerAttentionTileClose(io,io.Baseline(),noc,store,lease)); io.Restored();
+	}
 	for (bool glu:{false,true}) for (unsigned group=0;group<8;group++) {
 		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
 		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;

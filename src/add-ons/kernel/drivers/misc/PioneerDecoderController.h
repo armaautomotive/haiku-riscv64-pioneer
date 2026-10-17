@@ -20,7 +20,7 @@ struct PioneerDecoderLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false,parallel=false;
 	PioneerAttentionTileLease* peers=nullptr;
 	bool profiling=false;
-	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false;
+	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false;
 	tt_decoder_stage_profile stages={};
 };
 static inline uint32_t PioneerDecoderCodeWord(const PioneerDecoderLease& code,unsigned word)
@@ -36,7 +36,7 @@ bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDeco
 	if (!fleet || !code.peers || !io.DecoderPeerMappingsStable()) return false;
 	for (unsigned i=0;i<8;i++) { const auto& p=code.peers[i];
 		if (!p.saved || !p.ready || !p.code_dirty || !p.coordinatedGroup || p.resident || p.unsafe
-			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu) return false;
+			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery) return false;
 	}
 	return true;
 }
@@ -56,15 +56,15 @@ static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsi
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
-	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false)
+	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false)
 {
-	if ((partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
+	if ((cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;
-	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && PioneerDecoderPeerOwners(io,fleet,code);
+	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && PioneerDecoderPeerOwners(io,fleet,code);
 	if (code.saved || code.unsafe || !io.DecoderSavedWords()) return false;
-	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath;
+	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery;
 	if (!PioneerDecoderPeerOwners(io,fleet,code)) return false;
 	for (unsigned i=0;i<8192;i++) io.DecoderSavedWords()[i]=io.LayerCodeRead(i);
 	code.saved=true;

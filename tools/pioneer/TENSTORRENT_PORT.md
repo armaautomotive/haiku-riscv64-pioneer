@@ -2,6 +2,37 @@
 
 ## Status
 
+### October17: partial22 REJECTED;exact query-cache23 prepared (10:28 UTC)
+
+Native22 FAILS the unchanged full-logit L2 gate at position5:
+cosine.999685102,L2.025594734>.02,despite matching greedy token897. Earlier
+positions were close;this does not qualify approximate inference. No warm
+speed gate or speedup claim. Clean END2/PCI-host1-1/cold0/cleanup1;11 complete
+positions,2167 projections/308 attention,6 full/5 small results. Qualified
+exact21 restored IDLE. Log:`qwen-partial-v22-benchmark.log` retained.
+
+Explicit23/model-registry8 uses EXACT inline math,NOT partial22,and caches
+the256 half-rounded query values ONCE per attention job instead of once per
+cached token. Scratch90800..90c00 is inside the existing backed8KiB query
+owner,disjoint from input90000..90600 and proof90600..90660. Same scratch is
+used by GLU only in separate proved-idle jobs. Code is still7856B within the
+8KiB lease;no new mapping/owner/NoC request or arithmetic change. Image
+`6bd701b7d4d5e001421432f3cb85ab4dd61844d1028b99445bd19a5e9239d43f`.
+Flag OFF rebuilds qualified attention image216e96aa byte-identically.
+Every peer attention lease locks the cache feature;mode swaps are refused.
+Offline old/new actual instruction comparisons pass all256 output/input/
+cache bits,KV/NoC/proofs/guards for n1/2/17/64/65/256,groups0/7,including
+signed zero/subnormal/max-half rounding edges. All8 group/source/counter/
+timeout/bad-data tests and all6 GLU branches pass. Attention scalar steps
+at n256:10.54M ->6.08M;this is NOT native performance. Full-decoder regression
+and native correctness/performance PENDING. Driver
+`f4e1cd97f3ecf6ddf59537fd65808eba33a511cc781e563b56456d0847ee3447`;
+verifier`21c5f0419e7e6f8338749c4549e075978aadc9230b97f597cd56b74f4d092fb6`.
+Full actual decoder/8-attention/6-GLU tests now PASS zero/nonzero/TWO positions,
+full/small modes,independent output/KV/119 sequences/profile/NoC proof and all
+command/counter/nonfinite faults. Native23 PENDING,log`qwen-cached-v23-benchmark.log`.
+Fast Qwen NOT achieved;no Assistant/boot/CPU/RAM/firmware/SD changes.
+
 ### October17: exact inline native PASS;native-rounding22 trial (10:24 UTC)
 
 Contract21 passes every full-vocabulary quality comparison and exact

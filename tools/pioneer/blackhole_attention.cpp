@@ -8,6 +8,9 @@
 #ifndef PIONEER_ATTENTION_EXACT_HALF_PRODUCT
 #define PIONEER_ATTENTION_EXACT_HALF_PRODUCT 0
 #endif
+#ifndef PIONEER_ATTENTION_CACHED_QUERY
+#define PIONEER_ATTENTION_CACHED_QUERY 0
+#endif
 
 static inline volatile uint32_t* Words(uint32_t address)
 {
@@ -61,7 +64,7 @@ static void WriteQuery(const float* query)
 {
 	volatile uint32_t* dst = Words(0xffbd8000);
 	for (unsigned i = 0; i < 32; i++)
-		dst[LaneOffset(i)] = PioneerAttentionBits(PioneerAttentionHalf(PioneerAttentionToHalf(query[i])));
+		dst[LaneOffset(i)] = PIONEER_ATTENTION_CACHED_QUERY?PioneerAttentionBits(query[i]):PioneerAttentionBits(PioneerAttentionHalf(PioneerAttentionToHalf(query[i])));
 	(void)dst[LaneOffset(31)]; Fence();
 }
 static void WriteHalf(const uint16_t* input, unsigned row)
@@ -145,6 +148,16 @@ extern "C" unsigned attention_main()
 		if ((PioneerAttentionBits(query[i]) & 0x7fffffff) > 0x477fe000) return 0;
 	for (unsigned i = 0; i < tokens * 128; i++)
 		if ((keys[i] & 0x7c00) == 0x7c00 || (values[i] & 0x7c00) == 0x7c00) return 0;
+#if PIONEER_ATTENTION_CACHED_QUERY
+	// Query rounding is independent of the token/key. Prepare all256 once,
+	// then reuse EXACT same FP32-expanded half bits for every dot product.
+	// Existing separately backed8KiB query owner:90800..90c00 is disjoint
+	// from query90000..90400,current KV90400..90600 and proof90600..90660.
+	// GLU uses the same scratch only in a different,proved-idle job.
+	float* preparedQuery=reinterpret_cast<float*>(0x90800);
+	for (unsigned i=0;i<256;i++) preparedQuery[i]=PioneerAttentionHalf(PioneerAttentionToHalf(query[i]));
+	query=preparedQuery;
+#endif
 	Setup();
 	for (unsigned head = 0; head < 2; head++) {
 		float scores[256], maximum = -3.4028234663852886e38f;

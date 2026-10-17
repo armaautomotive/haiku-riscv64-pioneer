@@ -8,11 +8,13 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeResidentAttentionImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedAttentionImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedGluImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeCachedQueryGluImage.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <fstream>
 #include <iterator>
 #include <map>
@@ -36,7 +38,7 @@ static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&
 struct Image {
 	std::vector<uint8_t> boot,code;
 	std::map<std::string,uint32_t> symbols;
-	bool resident,coordinated,glu;
+	bool resident,coordinated,glu,cachedQuery=false;
 	explicit Image(const char* path,bool kv=false,bool group=false,bool activation=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group),glu(activation) {
 		assert(!glu || coordinated);
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
@@ -49,9 +51,10 @@ struct Image {
 			for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++)
 				assert((resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 		} else {
-			assert(code.size()==unsigned(glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
+			cachedQuery=glu && getenv("PIONEER_ATTENTION_CACHED_QUERY");
+			assert(code.size()==unsigned(cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
 			for (unsigned w=0;w<TT_COORDINATED_ATTENTION_CODE_WORDS;w++)
-				assert((glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+				assert((cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 		}
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());
 		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE
@@ -70,7 +73,7 @@ struct Machine {
 	uint32_t x[32]={},fp[32]={},lanes[11][32]={},dst[12][16]={},config[224]={},thread[68]={};
 	bool flags[32]={},conditional=false,drained=true,waiting=false;
 	uint32_t pc=0x6000,ack=0;
-	unsigned tokens,steps=0,mads=0,drains=0,mmioWrites=0,outputWrites=0,minStack=0x78000;
+	unsigned tokens,steps=0,mads=0,drains=0,mmioWrites=0,outputWrites=0,minStack=0x78000,queryCacheWrites=0;
 	bool dropMultiply=false,dropValue=false,omitAccumulation=false,dropAck=false,transposeLanes=false;
 	explicit Machine(const Image& i,unsigned n):image(i),mem(0x180000/4,0xdeadbeef),tokens(n) {
 		mem[0x6000/4]=Word(i.boot,0);
@@ -148,7 +151,7 @@ struct Machine {
 		if (Range(a,0xffef0000,224*4)) { assert(drained); return config[(a-0xffef0000)/4]; }
 		if (Range(a,0xffbd8000,12*64)) { assert(drained && !config[3]); return dst[(a-0xffbd8000)/64][((a-0xffbd8000)/4)%16]; }
 		assert(Range(a,0x72000,unsigned(image.code.size())) || Range(a,0x74000,16)
-			|| Range(a,0x76000,8192) || Range(a,0x90000,1024)
+			|| Range(a,0x76000,8192) || Range(a,0x90000,1024) || (image.cachedQuery && Range(a,0x90800,1024))
 			|| Range(a,0x92000,tokens*256) || Range(a,0xa2000,tokens*256) || Range(a,0x17ffc0,12));
 		return mem[a/4];
 	}
@@ -167,8 +170,9 @@ struct Machine {
 			assert(!(col&1)); if (transposeLanes) row=(row/4)*4+(3-row%4);
 			dst[row][col]=dropValue?0:value; mmioWrites++; return;
 		}
-		assert(Range(a,0x76000,8192) || Range(a,0xb2000,1024) || Range(a,0x17ffc0,12));
+		assert(Range(a,0x76000,8192) || Range(a,0xb2000,1024) || Range(a,0x17ffc0,12) || (image.cachedQuery && Range(a,0x90800,1024)));
 		if (Range(a,0xb2000,1024)) outputWrites++;
+		if (image.cachedQuery && Range(a,0x90800,1024)) queryCacheWrites++;
 		if (Range(a,0x76000,8192) && a<minStack) minStack=a;
 		mem[a/4]=value;
 	}
