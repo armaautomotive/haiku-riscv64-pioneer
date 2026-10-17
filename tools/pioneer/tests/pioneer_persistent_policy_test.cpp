@@ -120,6 +120,14 @@ struct PersistentFixture {
 	}
 };
 int main() {
+	{ PersistentFixture f(4); for (unsigned w=1;w<4;w++) {
+		f.io.current=w; auto& core=*f.io.core[w]; auto& worker=f.fleet[w]; worker.persistentPrepared=false; worker.noc.version=0x100+w;
+		core.code[1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4]=0x0000006f;
+		assert(!PioneerPersistentPrepare(f.io,worker,true,true,true,true) && !worker.persistentPrepared);
+		assert(PioneerPersistentPrepare(f.io,worker,true,true,true,true,true) && worker.coordinatedInline && worker.inlineMath && worker.gluDispatch);
+		for (unsigned i=0;i<1024;i++) assert(core.code[1+i]==(i==(TT_RUNTIME_Q8_PARK_PC-0x70000)/4?TT_PERSISTENT_MATH_RETURN:BlackholeRuntimeQ8InlineCodeWord(i)));
+		assert(!PioneerPersistentPrepare(f.io,worker,false,true,true,true) && !PioneerPersistentPrepare(f.io,worker,true,true,true,true,false));
+	} }
 	{ PersistentFixture f(120); for (unsigned t=0;t<4;t++) { assert(f.Run()); for (unsigned w=0;w<120;w++) assert(f.io.launches[w]==1 && f.result.core[w].sequence==t+1 && f.result.core[w].launched==(t==0)); }
 		for (unsigned w=0;w<120;w++) for (unsigned field=0;field<sizeof(tt_persistent_core_result)/4;field++) {
 			auto bad=f.result; ((uint32_t*)&bad.core[w])[field]^=1;

@@ -2,6 +2,37 @@
 
 ## Status
 
+### October17: paired native PASS;exact inline composition trial (10:16 UTC)
+
+Fast Qwen is STILL NOT achieved. Contract20 passes22 EXACT full-vocabulary
+positions and distinct token/selected-bit replays plus all three natural
+request full-logit/replay/coverage gates. Sustained GPU
+3.506063/3.480707/3.556371tok/s versus CPU32
+2.191395/2.430744/2.821352;all three speed gates pass this run. Prompt times
+7.195568/7.460135/6.650918s remain poor. Complete312 GPU positions,
+61464 logical projections/8736 attention,156 full results plus156 token-only
+results,zero warm uploads. END2/PCI-host1-1/cold0/cleanup1. Cold108.940444s
+includes90.638172s upload. Short3/0.753153s=3.983254tok/s is diagnostic ONLY.
+Log:`qwen-paired-v20-benchmark.log`. Driver20 remains the qualified fallback.
+
+Source audit confirms the coordinated decoder still uses FIFO-fed exact
+math,not the separately qualified exact direct-instruction image. Explicit
+contract21/model-registry6 now composes that existing4096B image with paired
+gate/up,eight attention and six GLU dispatchers. Arithmetic,root image,
+source/NoC/counter/sequence proofs and result formats are unchanged. All119
+peer leases must agree with the decoder's immutable instruction mode;
+in-place mode changes are rejected. Legacy modes remain default-off and
+unchanged. Offline actual-instruction tests pass all119 workers/all K/N4096,
+repeated exact matrix jobs,GLU/attention returns and live STOP. Controller
+tests cover every peer mode mismatch and unknown-state quarantine;REAL
+client tests cover exact21 refusal BEFORE BEGIN and all output faults.
+Native21 correctness/performance PENDING. No Assistant promotion,boot/CPU/
+RAM/firmware/SD change,all-Qwen/27B/Q4 support or fast-inference claim.
+Trial driver`c19964ecd38a19836cd7c4edca5189e077226261da8907144e12db7e8a188477`;
+verifier`d2075d3006e22630f33284574433c132b3185e72fc0f9efb3b58c369298df957`.
+Read-only metadata21 observed before BEGIN;qualified20 backed up while idle.
+Native log:`qwen-inline-v21-benchmark.log`.
+
 ### October17: counter candidate rejected for speed;paired gate/up trial (10:00 UTC)
 
 Fast Qwen is STILL NOT achieved. Contract19 passes all native exact22-position

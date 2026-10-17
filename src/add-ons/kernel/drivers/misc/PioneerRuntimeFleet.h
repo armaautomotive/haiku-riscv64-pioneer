@@ -35,6 +35,7 @@ struct PioneerFleetWorker {
 	// provably idle in its local mailbox loop without being held in reset.
 	bool persistentPrepared=false,persistentActive=false,persistentIdle=false;
 	bool inlineMath=false;
+	bool coordinatedInline=false; // explicit whole-decoder composition,never a live upgrade
 	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	bool attentionDispatch=false; // separately owned fixed-group image
 	bool gluDispatch=false;

@@ -55,17 +55,18 @@ struct DecoderControllerIO:WideControllerIO {
 };
 struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	PioneerDecoderLease decoder; PioneerWideOutputLease wide; PioneerAttentionTileLease attention; PioneerResidentAttentionLease kv;
-	PioneerAttentionTileLease peers[8]; bool parallel,profiling,glu,sampling,paired;
+	PioneerAttentionTileLease peers[8]; bool parallel,profiling,glu,sampling,paired,inlineMath;
 	tt_decoder_candidate_result decoded={}; PioneerDecoderJob model={};
-	DecoderControllerFixture(bool concurrent=false,bool timing=false,bool activation=false,bool greedy=false,bool together=false):parallel(concurrent),profiling(timing),glu(activation),sampling(greedy),paired(together) {
+	DecoderControllerFixture(bool concurrent=false,bool timing=false,bool activation=false,bool greedy=false,bool together=false,bool direct=false):parallel(concurrent),profiling(timing),glu(activation),sampling(greedy),paired(together),inlineMath(direct) {
 		io.decoder=&decoder; attention.ready=attention.saved=attention.resident=true; kv.reserved=kv.payloadBlocks=kv.coordinated=true;
 		model.finalNorm=model.vocabulary=0x04000000;
 		for (auto& l:model.layers) for (unsigned i=0;i<11;i++) reinterpret_cast<uint32_t*>(&l)[i]=0x04000000;
+		for (unsigned w=1;w<120;w++) fleet[w].inlineMath=fleet[w].coordinatedInline=inlineMath;
 		if (parallel) { io.peerMaps=true; for (unsigned i=0;i<8;i++) { peers[i].saved=peers[i].ready=peers[i].code_dirty=peers[i].coordinatedGroup=true;
 			peers[i].coordinatedGlu=glu; fleet[i+1].attentionDispatch=true; fleet[i+1].gluDispatch=glu; } }
 	}
 	bool PrepareDecoder() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,parallel,parallel?peers:nullptr,profiling,glu,sampling,paired); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,parallel,parallel?peers:nullptr,profiling,glu,sampling,paired,inlineMath); }
 	bool Decode(unsigned tokens=1,bool small=false) {
 		uint32_t input[1024],rope[128]={}; for (auto& value:input) value=0x3f000000; for (unsigned i=0;i<64;i++) rope[2*i]=0x3f800000;
 		std::vector<uint32_t> output(151936,0xabcdef00);
@@ -85,6 +86,12 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 int main()
 {
 	(void)Run; (void)Input;
+	{ DecoderControllerFixture f(true,true,true,true,true,true); assert(f.PrepareDecoder());
+		for (unsigned n:{1U,2U,3U,1U}) assert(f.Decode(n,true) && f.Decode(n,false));
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
+	for (unsigned w=1;w<120;w++) for (bool field:{false,true}) { DecoderControllerFixture f(true,true,true,true,true,true);
+		if (field) f.fleet[w].coordinatedInline=false; else f.fleet[w].inlineMath=false;
+		assert(!f.PrepareDecoder() && !f.decoder.saved && !f.io.starts); }
 	{ DecoderControllerFixture f(true,true,true,true,true); assert(f.PrepareDecoder());
 		for (unsigned n:{1U,2U,3U,1U}) { assert(f.Decode(n,true) && f.Decode(n,false) && f.Decode(n,true));
 			assert(PioneerDecoderStageValid(f.decoder.stages,f.coordinator.nonce,n,3)); }
@@ -121,8 +128,8 @@ int main()
 		if (fault==4) p.resident=true; if (fault==5) p.unsafe=true; if (fault==6) p.running=true; if (fault==7) f.fleet[i+1].attentionDispatch=false;
 		assert(!f.PrepareDecoder() && !f.io.starts && !f.decoder.saved);
 	}
-	for (unsigned mode:{0U,1U,2U,3U}) for (unsigned fault=0;fault<16;fault++) {
-		bool glu=mode>=1,small=mode>=2; DecoderControllerFixture f(true,glu,glu,small,mode==3); assert(f.PrepareDecoder());
+	for (unsigned mode:{0U,1U,2U,3U,4U}) for (unsigned fault=0;fault<16;fault++) {
+		bool glu=mode>=1,small=mode>=2; DecoderControllerFixture f(true,glu,glu,small,mode>=3,mode==4); assert(f.PrepareDecoder());
 		f.io.executeTimeout=fault==0; f.io.badPc=fault==1; f.io.badCount=fault==2; f.io.badNoc=fault==3;
 		f.io.badMarker=fault==4; f.io.stopFails=fault==5; f.io.staleSummary=fault==6; f.io.badSummary=fault==7;
 		f.io.badLiveMap=fault==8; f.io.nonfinite=fault==9; f.io.omitWidePayload=fault==10; f.io.layerLost=fault==11;

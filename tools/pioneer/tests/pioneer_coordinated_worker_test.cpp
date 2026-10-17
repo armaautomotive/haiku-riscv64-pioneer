@@ -12,9 +12,11 @@ struct CoordinatedMachine:PersistentMachine {
 		assert(w && w<120 && code.size()>0x500 && code.size()<0x910);
 		for (unsigned i=0;i<1024;i++) l1[Index(0x71000+i*4)]=i<code.size()/4?Word(code,i*4):0;
 		for (unsigned i=0;i<16;i++) l1[Index(0x71380+i*4)]=expectedSource[i]=0x10000+i;
+		if (getenv("PIONEER_COORDINATED_INLINE_MATH")) Inline();
 	}
 	bool CodeAddress(uint32_t address) const override {
 		return (address>=0x71000 && address<0x71300) || (address>=0x71500 && address<0x71700)
+			|| (inlineMath && address>=0x70ea8 && address<0x70fac)
 			|| (address<0x71000 && BulkQ8Machine::CodeAddress(address));
 	}
 	uint32_t Load(uint32_t a) override {
