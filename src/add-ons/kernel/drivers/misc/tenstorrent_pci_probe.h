@@ -42,6 +42,7 @@
 #include "PioneerPeerPcRead.h"
 #include "PioneerCoordinatorProbe.h"
 #include "PioneerCoordinatedFleet.h"
+#include "PioneerLayerGlu.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -183,6 +184,7 @@
 #define TT_PCI_PROBE_PIONEER_COORDINATED_FLEET (B_DEVICE_OP_CODES_END + 0x54d9)
 #define TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT (B_DEVICE_OP_CODES_END + 0x54da)
 #define TT_PCI_PROBE_PIONEER_LAYER_FFN (B_DEVICE_OP_CODES_END + 0x54db)
+#define TT_PCI_PROBE_PIONEER_LAYER_GLU (B_DEVICE_OP_CODES_END + 0x54dc)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -427,6 +429,12 @@ struct tt_pioneer_layer_ffn {
 	uint32_t input[512],scale[32];
 	tt_coordinated_fleet_result result;
 	uint32_t output[1024];
+};
+struct tt_pioneer_layer_glu {
+	uint32_t version,outputs,reserved[2];
+	uint32_t gate[3072],up[3072];
+	tt_coordinated_fleet_result result;
+	uint32_t output[3072];
 };
 static_assert(offsetof(tt_pioneer_coordinated_fleet,output)==sizeof(tt_pioneer_coordinated_fleet)-TT_FLEET_OUTPUTS_MAX*sizeof(uint32_t),"coordinated inline ABI has no tail padding");
 static inline size_t PioneerCoordinatedRequestBytes(unsigned outputs) {

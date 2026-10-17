@@ -2301,7 +2301,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={8,119,3,1,8192}; // v8 adds a separate fixed FFN ABI; ordinary v7/debug matrix paths unchanged
+	tt_coordinated_support support={9,119,3,1,8192}; // v9 adds separately scheduled card GLU; fixed FFN and ordinary matrix paths unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2340,6 +2340,42 @@ PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug)
 			&& PioneerFleetPreludePrepare(c.io,f) && PioneerPersistentPrepare(c.io,f,false,true) && PioneerPersistentBoot(c.io,f);
 	}
 	return ready && c.io.SelectRuntimeCore(0);
+}
+
+static status_t
+LayerGluControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_layer_glu)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_layer_glu*)malloc(length); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,offsetof(tt_pioneer_layer_glu,result));
+	if (status!=B_OK || request->version!=1 || !request->outputs || request->outputs>3072 || (request->outputs&31)
+		|| request->reserved[0] || request->reserved[1]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if ((c->runtimeCoreMode!=-1 && c->runtimeCoreMode!=8) || c->bytes!=UINT64_C(0x80000000)
+		|| !c->bulk.ready || !c->bulkHost.ready || (c->coordinator.ready && (!c->coordinator.fused || !c->coordinator.compact))) status=B_NOT_ALLOWED;
+	else {
+		request->result={}; request->result.master.version=1; request->result.master.state=TT_RUNTIME_CONFIG_FAILED;
+		memset(request->output,0,sizeof(request->output)); c->io.runtimeProfile.Begin(uint64(system_time()),17);
+		auto& dram=c->baseline.baseline.baseline.baseline.dram;
+		bool ready=PrepareCoordinatedFleet(*c,0,false) && PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready)
+			&& c->io.MapLayer() && PioneerLayerPrepare(c->io,dram,c->fleet[0].noc,c->lease,c->coordinator,c->layer);
+		if (ready) PioneerLayerGlu(c->io,dram,c->host,c->bulkHost,c->fleet,c->bulk,c->coordinator,c->layer,c->attention.ready,
+			request->outputs,request->gate,request->up,request->output,request->result);
+		if (c->Unsafe()) {
+			c->layer.unsafe=true; c->coordinator.unsafe=true; c->lease.recovery_required=true; c->io.QuarantineHostPage();
+			PioneerQuarantineOutputBuffer(c->io,c->bulkHost); sColdRecoveryRequired=true; request->result.master.recovery_required=1;
+		}
+		auto& r=request->result.master;
+		c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
+		if (!PioneerLayerGluProof(request->result,request->outputs,c->coordinator.nonce)) memset(request->output,0,sizeof(request->output));
+		status=user_memcpy(data,request,length);
+	}
+	release_sem(sLock); free(request); return status;
 }
 
 static status_t
@@ -2892,6 +2928,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return CoordinatedFleetControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_FFN)
 		return LayerFfnControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_LAYER_GLU)
+		return LayerGluControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT)
 		return CoordinatedSupportControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PERSISTENT_FLEET)

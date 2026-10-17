@@ -45,7 +45,7 @@ int main(int argc,char** argv)
 	if (argc!=2 || strcmp(argv[1],"--run-and-restore")) { fprintf(stderr,"Usage: %s --run-and-restore\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	PioneerResidentDevice device;
-	if (!device.Open(UINT64_C(0x80000000),false,true,true,true,true,true,true,true,1,119,true,true,true,false,true)) return 1;
+	if (!device.Open(UINT64_C(0x80000000),false,true,true,true,true,true,true,true,1,119,true,true,true,false,2)) return 1;
 	bool okay=device.HasLayerFfn(); uint64_t offsets[3]={0,0x800000,0x1000000};
 	for (unsigned phase=0;phase<3 && okay;phase++) {
 		unsigned k=phase==2?3072:1024,n=phase==2?1024:3072;
@@ -82,6 +82,10 @@ int main(int argc,char** argv)
 			hidden[i]=PioneerAttentionBits(PioneerGraphSiluFast(PioneerAttentionFloat(gate[i]))*PioneerAttentionFloat(up[i]));
 		}
 		okay=okay && Quantize(hidden,downInput,downScales) && device.Q8Matvec(offsets[2],3072,1024,downInput,downScales,split);
+		if (!okay) break;
+		uint32_t cardHidden[3072]; double gluStart=Seconds(); okay=device.LayerGlu(3072,gate,up,cardHidden); double gluWall=Seconds()-gluStart;
+		unsigned gluExact=0; for (unsigned i=0;i<3072 && okay;i++) gluExact+=hidden[i]==cardHidden[i];
+		okay &= gluExact==3072; printf("NATIVE separately scheduled GPU GLU trial%u exact%u/3072 wall%.6fs PASS%u\n",trial,gluExact,gluWall,okay);
 		if (!okay) break;
 		double start=Seconds(); okay=device.LayerFfn(offsets[0],offsets[1],offsets[2],input,scales,fused); double wall=Seconds()-start;
 		unsigned exact=0; double diff=0,norm=0;

@@ -2,8 +2,8 @@
 #ifndef PIONEER_GRAPH_MATH_H
 #define PIONEER_GRAPH_MATH_H
 #include "PioneerAttentionMath.h"
-// OFFLINE prerequisite for on-card layer execution. No driver, backend,
-// native operation or inference fallback calls these functions yet.
+// Card-side layer math plus independent offline/native fixture references.
+// Never called for learned CPU arithmetic by a native inference fallback.
 // BRISC has no qualified fdiv.s: positive IEEE binary32 division is done
 // with bounded integer long division and one RNE (including subnormals).
 static inline float PioneerGraphDividePositive(float a,float b)

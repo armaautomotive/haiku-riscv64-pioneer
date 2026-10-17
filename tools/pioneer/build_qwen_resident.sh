@@ -10,7 +10,7 @@ case "$output" in /*) ;; *) echo 'Output must be absolute' >&2; exit 1;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || { echo 'Output already exists' >&2; exit 1; }
 source=$project/src/libs/llama.cpp
 [ "$(git -C "$source" rev-parse HEAD)" = c060ca974c773c7c3d17fd1b66dc9d312bc292c0 ] || { echo 'Expected pinned llama revision' >&2; exit 1; }
-git -C "$source" diff --quiet HEAD -- include/llama.h ggml/include ggml/src/ggml-backend-impl.h
+git -C "$source" diff --quiet HEAD -- include/llama.h ggml/include ggml/src/ggml-backend-impl.h ggml/src/ggml-impl.h
 # These are the matching runtime binaries used by the independent native
 # CPU baseline. A different build needs a deliberate ABI/baseline recheck.
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do

@@ -38,11 +38,11 @@ struct LayerIO:CoordinatedIO {
 		status[0]=TT_LAYER_DONE; status[1]=pg+(badCount?1:0); status[2]=badMarker?TT_COORDINATOR_FAULT:TT_COORDINATOR_MARKER;
 	}
 };
-struct LayerFixture {
-	LayerIO io; std::vector<PioneerFleetWorker> fleet=std::vector<PioneerFleetWorker>(120);
+template<class IO=LayerIO> struct LayerFixtureBase {
+	IO io; std::vector<PioneerFleetWorker> fleet=std::vector<PioneerFleetWorker>(120);
 	PioneerBulkUploadLease bulk; PioneerOutputBufferLease transfer; PioneerCoordinatorLease coordinator;
 	PioneerLayerLease code; tt_coordinated_fleet_result result={}; tt_host_page_result host={};
-	LayerFixture() {
+	LayerFixtureBase() {
 		io.layer=&code; io.compactMode=io.fusedMode=true; io.fleet=fleet.data();
 		for (unsigned w=0;w<120;w++) {
 			auto& c=*io.core[w]; auto& f=fleet[w]; assert(Prepared(c,host,f.Store())); f.noc=c.Compute();
@@ -71,6 +71,8 @@ struct LayerFixture {
 		return okay;
 	}
 };
+using LayerFixture=LayerFixtureBase<>;
+#ifndef PIONEER_LAYER_CONTROLLER_MOCK_ONLY
 int main()
 {
 	(void)Run; (void)Input; // shared fixture helpers,not exercised by this graph test
@@ -101,3 +103,4 @@ int main()
 	{ LayerFixture f; assert(f.Prepare()); f.fleet[96].persistentSequence=0x7ffffffb; assert(!f.Run() && !f.io.starts); assert(f.Close()); }
 	puts("PASS OFFLINE fixed FFN controller,independent code lease,all cohort sizes,sequences,full proof mutation,source/map/PCI/host/timeout faults; no reset/result/code restore on unknown completion");
 }
+#endif

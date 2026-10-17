@@ -46,8 +46,8 @@ public:
 			&& result.started && result.completed && result.stopped && !result.recovery_required;
 	}
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,bool requireLayer=false) {
-		if (requireLayer && (!coordinatorMode || debugOutput)) return false;
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,unsigned requireLayer=0) {
+		if (requireLayer>2 || (requireLayer && (!coordinatorMode || debugOutput))) return false;
 		if (debugOutput && !coordinatorMode) return false;
 		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
@@ -78,8 +78,8 @@ public:
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || (support.version!=7 && support.version!=8)
-				|| (requireLayer && support.version!=8) || support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>9
+				|| (requireLayer && support.version<8) || (requireLayer==2 && support.version!=9) || support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
 			coordinatedVersion=support.version;
@@ -183,7 +183,21 @@ public:
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
-	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion==8 && active && !failed && !cold && !finished; }
+	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=9 && active && !failed && !cold && !finished; }
+	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {
+		if (!HasLayerFfn() || coordinatedVersion!=9 || !n || n>3072 || (n&31) || !gate || !up || !output) return false;
+		tt_pioneer_layer_glu p={}; p.version=1; p.outputs=n; memcpy(p.gate,gate,n*4); memcpy(p.up,up,n*4);
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_LAYER_GLU,&p,sizeof(p)); cold=p.result.master.recovery_required!=0;
+		bool proved=!status && PioneerLayerGluProof(p.result,n,coordinatorNonce+1);
+		for (unsigned i=0;i<n;i++) proved &= (p.output[i]&0x7f800000)!=0x7f800000;
+		if (!proved) {
+			const auto& m=p.result.master;
+			fprintf(stderr,"Fixed GPU GLU STOP status%d state%u nonce%u start/complete/stop%u/%u/%u PC%x marker%x cold%u; no fallback/retry\n",
+				status,m.state,m.nonce,m.started,m.completed,m.stopped,m.pc[1],m.marker,cold);
+			failed=true; closeOnly=true; return false;
+		}
+		coordinatorNonce=p.result.master.nonce; memcpy(output,p.output,n*4); return true;
+	}
 	bool LayerFfn(uint64_t gate,uint64_t up,uint64_t down,const uint32_t* vector,const uint32_t* scales,uint32_t* output) {
 		if (!HasLayerFfn() || !vector || !scales || !output) return false;
 		tt_pioneer_layer_ffn p={}; p.version=1; p.workers=fleet; p.gate_offset=gate; p.up_offset=up; p.down_offset=down;

@@ -6,6 +6,10 @@
 #include "TenstorrentHaikuResident.h"
 #endif
 #include "ggml-backend-impl.h"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#include "ggml-impl.h"
+#pragma GCC diagnostic pop
 #include "TenstorrentGgufQuant.h"
 #include "PioneerBlackholeFma.h"
 #include "PioneerGgmlAttention.h"
@@ -26,6 +30,12 @@ static PioneerGgmlBoundaryCallback sBoundary=NULL;
 static void* sBoundaryData=NULL;
 static bool Boundary() { return !sBoundary || sBoundary(sBoundaryData); }
 struct PioneerGgmlDevice:PioneerResidentDevice {
+	bool LayerFfn(uint64_t gate,uint64_t up,uint64_t down,const uint32_t* x,const uint32_t* d,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::LayerFfn(gate,up,down,x,d,y) && Boundary();
+	}
+	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::LayerGlu(n,gate,up,y) && Boundary();
+	}
 	bool UploadPages(uint64_t offset,const uint32_t* data,unsigned pages) {
 		return Boundary() && PioneerResidentDevice::UploadPages(offset,data,pages) && Boundary();
 	}
@@ -65,6 +75,8 @@ struct PioneerGgmlContext {
 	const bool residentKV;
 	const bool payloadBlocks;
 	const bool coordinated;
+	bool layerFfn=false;
+	uint64_t ffnOps=0,gluOps=0;
 	PioneerAttentionPrefixCache prefix;
 	uint64_t attentionOps=0,attentionTiles=0;
 	unsigned attentionLayer=0;
@@ -89,6 +101,7 @@ static unsigned sFleet=0;
 static bool sResidentKV=false;
 static bool sPayloadBlocks=false;
 static bool sCoordinated=false;
+static bool sLayerFfn=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -115,8 +128,16 @@ static const char* Description(ggml_backend_dev_t) { return sFleet?"P100A whole-
 static bool View(enum ggml_op op) {
 	return op==GGML_OP_NONE || op==GGML_OP_RESHAPE || op==GGML_OP_VIEW || op==GGML_OP_PERMUTE || op==GGML_OP_TRANSPOSE;
 }
+static bool GluContract(const ggml_tensor* op) {
+	if (!op || op->op!=GGML_OP_GLU || ggml_get_glu_op(op)!=GGML_GLU_OP_SWIGLU || !op->src[0] || !op->src[1]) return false;
+	int32_t swapped=0; memcpy(&swapped,op->op_params+1,sizeof(swapped)); if (swapped) return false;
+	for (const auto* t:{op,static_cast<const ggml_tensor*>(op->src[0]),static_cast<const ggml_tensor*>(op->src[1])})
+		if (t->type!=GGML_TYPE_F32 || t->ne[0]!=3072 || t->ne[1]!=1 || t->ne[2]!=1 || t->ne[3]!=1 || !ggml_is_contiguous(t)) return false;
+	return true;
+}
 static bool Supports(ggml_backend_dev_t,const ggml_tensor* op) {
 	if (View(op->op)) return true;
+	if (sLayerFfn && op->op==GGML_OP_GLU) return GluContract(op);
 	if (sAttention && op->op==GGML_OP_FLASH_ATTN_EXT) return PioneerGgmlAttentionContract(op);
 	if (op->op!=GGML_OP_MUL_MAT || !op->src[0] || !op->src[1]) return false;
 	const auto* w=op->src[0]; const auto* x=op->src[1];
@@ -278,6 +299,44 @@ static bool ComputeAttention(PioneerGgmlContext& ctx,ggml_tensor* op)
 	ctx.attentionLayer=(ctx.attentionLayer+1)%28;
 	return true;
 }
+struct FfnGraph { ggml_tensor *gate,*up,*glu,*down; };
+static bool MatchFfn(ggml_cgraph* graph,int first,FfnGraph& f)
+{
+	if (!graph->use_counts || !graph->visited_hash_set.size || first+4>ggml_graph_n_nodes(graph)) return false;
+	auto* a=ggml_graph_node(graph,first); auto* b=ggml_graph_node(graph,first+1);
+	f.glu=ggml_graph_node(graph,first+2); f.down=ggml_graph_node(graph,first+3);
+	if (!GluContract(f.glu) || !Supports(NULL,a) || !Supports(NULL,b) || !Supports(NULL,f.down)
+		|| a->op!=GGML_OP_MUL_MAT || b->op!=GGML_OP_MUL_MAT || f.down->op!=GGML_OP_MUL_MAT
+		|| a->src[1]!=b->src[1] || a->src[0]->ne[0]!=1024 || a->src[0]->ne[1]!=3072
+		|| b->src[0]->ne[0]!=1024 || b->src[0]->ne[1]!=3072 || f.down->src[0]->ne[0]!=3072
+		|| f.down->src[0]->ne[1]!=1024 || f.down->src[1]!=f.glu) return false;
+	if (f.glu->src[0]==a && f.glu->src[1]==b) { f.gate=a; f.up=b; }
+	else if (f.glu->src[0]==b && f.glu->src[1]==a) { f.gate=b; f.up=a; } else return false;
+	// ggml_graph_view preserves GLOBAL use_counts/hash table. Looking only
+	// for consumers in this scheduler slice would miss later CPU consumers.
+	for (int i=0;i<3;i++) if (!ggml_node_has_n_uses(graph,first+i,1)) return false;
+	for (auto* t:{a,b,f.glu,f.down}) if (!(t->flags&GGML_TENSOR_FLAG_COMPUTE) || !t->data) return false;
+	return a->src[1]->data && a->src[0]->data && b->src[0]->data && f.down->src[0]->data;
+}
+static bool ComputeFfn(PioneerGgmlContext& ctx,const FfnGraph& f)
+{
+	uint64_t offsets[3]; const ggml_tensor* weights[]={f.gate->src[0],f.up->src[0],f.down->src[0]};
+	double start=Seconds();
+	for (unsigned i=0;i<3;i++) {
+		auto* w=weights[i]; unsigned k=unsigned(w->ne[0]),n=unsigned(w->ne[1]); size_t before=ctx.cache.Tensors();
+		if (!ctx.cache.Q8Weights(w->data,unsigned(w->type),k,n,[&](unsigned row,unsigned b,uint8_t* out) {
+			memcpy(out,static_cast<const uint8_t*>(w->data)+row*w->nb[1]+b*34,34); return true;
+		},offsets[i])) return false;
+		if (ctx.cache.Tensors()!=before) fprintf(stderr,"P100A retained FFN %s [%u,%u],total%zu tensors\n",w->name,k,n,ctx.cache.Tensors());
+	}
+	ctx.weightSeconds+=Seconds()-start;
+	const float* input=static_cast<const float*>(f.gate->src[1]->data);
+	for (unsigned i=0;i<1024;i++) if (!isfinite(input[i])) return false;
+	uint8_t blocks[32*34]; start=Seconds();
+	ggml_get_type_traits(GGML_TYPE_Q8_0)->from_float_ref(input,blocks,1024); ctx.inputSeconds+=Seconds()-start;
+	start=Seconds(); bool okay=ctx.cache.Q8Ffn(offsets[0],offsets[1],offsets[2],blocks,static_cast<float*>(f.down->data));
+	ctx.matvecSeconds+=Seconds()-start; if (okay) ctx.ffnOps++; return okay;
+}
 static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	auto* ctx=(PioneerGgmlContext*)backend->context;
 	if (!ctx || ctx->failed) return GGML_STATUS_FAILED;
@@ -298,8 +357,20 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks,ctx->coordinated);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks,ctx->coordinated,false,ctx->layerFfn?2:0);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
+		}
+		FfnGraph f={};
+		if (ctx->layerFfn && !sTrace && !sDiagnose && MatchFfn(graph,i,f)) {
+			if (!ComputeFfn(*ctx,f)) { ctx->failed=true; return GGML_STATUS_FAILED; }
+			i+=3; continue;
+		}
+		if (op->op==GGML_OP_GLU) {
+			std::vector<uint32_t> values(3072); double start=Seconds();
+			bool okay=ctx->layerFfn && ctx->device.LayerGlu(3072,static_cast<const uint32_t*>(op->src[0]->data),static_cast<const uint32_t*>(op->src[1]->data),values.data());
+			ctx->matvecSeconds+=Seconds()-start;
+			if (!okay) { ctx->failed=true; return GGML_STATUS_FAILED; }
+			memcpy(op->data,values.data(),values.size()*4); ctx->gluOps++; continue;
 		}
 		if (op->op==GGML_OP_FLASH_ATTN_EXT) {
 			if (!ComputeAttention(*ctx,op)) { ctx->failed=true; return GGML_STATUS_FAILED; }
@@ -376,7 +447,9 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 	if (sResidentKV && (!sFleet || !sAttention)) return NULL;
 	if (sPayloadBlocks && !sResidentKV) return NULL;
 	if (sCoordinated && (!sResidentKV || !sPayloadBlocks || !sFleet || sFleet>119)) return NULL;
+	if (sLayerFfn && (!sCoordinated || sTrace || sDiagnose)) return NULL;
 	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet,sResidentKV,sPayloadBlocks,sCoordinated); if (!ctx) return NULL;
+	ctx->layerFfn=sLayerFfn;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -412,12 +485,14 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats.matvecs=sActive->cache.matvecCalls; stats.failed=sActive->failed || sActive->cache.Failed();
 	stats.peakWorkers=sActive->device.peakWorkers;
 	stats.activationReuses=sActive->device.activationReuses;
+	stats.ffnOps=sActive->ffnOps; stats.gluOps=sActive->gluOps;
 	stats.attentionOps=sActive->attentionOps; stats.attentionTiles=sActive->attentionTiles;
 	stats.attentionSeconds=sActive->attentionSeconds;
 	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;
 	stats.matvecSeconds=sActive->matvecSeconds; stats.diagnosticSeconds=sActive->diagnosticSeconds; return true;
 }
 bool PioneerGgmlFinish() { return !sActive || sActive->device.Finish(); }
+void PioneerGgmlLayerFfn(bool enabled) { if (!sActive) sLayerFfn=enabled; }
 void PioneerGgmlDiagnose(bool enabled,const char* vectorPath) { if (!sActive) { sDiagnose=enabled; sDiagnosticVector=vectorPath; sReference.clear(); } }
 void PioneerGgmlCpuActivationQuantization(bool enabled) { if (!sActive) sCpuActivationQuantization=enabled; }
 void PioneerGgmlFp16Operands(bool enabled) { if (!sActive) sFp16=enabled; }

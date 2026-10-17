@@ -10,7 +10,7 @@
 // Weight upload is already warm and must not recur in any measured request.
 // Timings sum synchronous decode+greedy-sampling CPU wall time; logit checks,
 // tokenization, KV reset, logging, model load and cold weight upload excluded.
-static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama_context* card,uint64_t expectedTensors,unsigned cardThreads=32)
+static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama_context* card,uint64_t expectedTensors,unsigned cardThreads=32,bool layerFfn=false)
 {
 	if (cardThreads!=1 && cardThreads!=32) return false;
 	const llama_vocab* vocab=llama_model_get_vocab(model); int vocabulary=llama_vocab_n_tokens(vocab);
@@ -24,6 +24,8 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 	bool allFaster=true;
 	printf("WARM BENCH: three public requests, up to 16 greedy output tokens each; CPU32 batch128 vs P100A/CPU%u batch1. Cold load/upload, KV reset, tokenization and diagnostics excluded; not device-only throughput.\n",cardThreads);
 	for (unsigned repeat=0;repeat<3;repeat++) {
+		PioneerGgmlStats coverageBefore={};
+		if (layerFfn && (!PioneerGgmlSnapshot(coverageBefore) || coverageBefore.failed)) return false;
 		std::string prompt=std::string("<|im_start|>user\n")+questions[repeat]+"<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		std::vector<llama_token> input(128),golden;
 		std::vector<float> logits;
@@ -76,6 +78,14 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 		PioneerGgmlStats after={};
 		if (!PioneerGgmlSnapshot(after) || after.failed || after.tensors!=warm.tensors || after.uploads!=warm.uploads
 			|| after.bytes!=warm.bytes || after.matvecs<=warm.matvecs || !isfinite(cardPrompt) || !isfinite(cardGeneration) || cardPrompt<=0 || cardGeneration<=0) return false;
+		if (layerFfn) {
+			uint64_t positions=uint64_t(n)+golden.size()-1;
+			if (after.ffnOps-coverageBefore.ffnOps!=28*positions || after.gluOps!=coverageBefore.gluOps
+				|| after.matvecs-coverageBefore.matvecs!=197*positions || after.attentionOps-coverageBefore.attentionOps!=28*positions
+				|| after.attentionTiles-coverageBefore.attentionTiles!=224*positions) {
+				fprintf(stderr,"Warm fused FFN/attention/matrix coverage failed; no accepted speed result\n"); return false;
+			}
+		}
 		double cpuTotal=cpuPrompt+cpuGeneration,cardTotal=cardPrompt+cardGeneration;
 		bool faster=cardTotal<cpuTotal*.95 && cardGeneration<cpuGeneration*.95; allFaster &= faster;
 		printf("{\"warm_request\":%u,\"cpu_threads\":32,\"card_host_threads\":%u,\"cpu_prompt_batch\":128,\"card_prompt_batch\":1,\"prompt_tokens\":%d,\"output_tokens\":%zu,\"generation_samples\":%zu,\"cpu_ttft_s\":%.9f,\"p100a_ttft_s\":%.9f,\"cpu_generation_s\":%.9f,\"p100a_generation_s\":%.9f,\"cpu_total_s\":%.9f,\"p100a_total_s\":%.9f,\"cpu_tps\":%.9f,\"p100a_tps\":%.9f,\"total_speedup\":%.9f,\"generation_speedup\":%.9f,\"quality_passed\":true,\"no_weight_reupload\":true,\"faster_by_5_percent\":%s}\n",

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// OFFLINE fixed Qwen0.6B layer candidate ONLY. No driver selects this image.
+// Fixed Qwen0.6B private FFN/GLU image,not a complete decoder/speed claim.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerGraphMath.h"
 #define coordinator_main layer_matrix_main

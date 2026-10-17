@@ -171,6 +171,24 @@ public:
 	}
 	// Activation blocks are produced by the pinned GGML reference quantizer,
 	// not by an approximate local rounding implementation.
+	bool Q8Ffn(uint64_t gate,uint64_t up,uint64_t down,const uint8_t* blocks,float* output)
+	{
+		if (failed || fp16 || mode!=2 || !wholeProjection || !f32Scales || !blocks || !output) { failed=true; return false; }
+		bool found[3]={}; const uint64_t offsets[]={gate,up,down};
+		for (const auto& e:entries) for (unsigned i=0;i<3;i++) found[i] |= e.offset==offsets[i]
+			&& e.inputs==(i==2?3072U:1024U) && e.outputs==(i==2?1024U:3072U);
+		if (!found[0] || !found[1] || !found[2]) { failed=true; return false; }
+		uint32_t vector[512]={},scales[32],result[1024];
+		for (unsigned b=0;b<32;b++) {
+			const uint8_t* data=blocks+b*34; uint16_t d=uint16_t(data[0])|(uint16_t(data[1])<<8);
+			if ((d&0x7c00)==0x7c00) { failed=true; return false; }
+			scales[b]=PioneerQ8HalfToFloatBits(d);
+			for (unsigned i=0;i<32;i++) { int q=data[2+i]; if (q>=128) q-=256; vector[b*16+i/2]|=uint32_t(PioneerInt8Operand(q))<<(16*(i&1)); }
+		}
+		if (!io.LayerFfn(gate,up,down,vector,scales,result)) { failed=true; return false; }
+		for (unsigned i=0;i<1024;i++) if ((result[i]&0x7f800000)==0x7f800000) { failed=true; return false; }
+		memcpy(output,result,4096); matvecCalls+=3; return true;
+	}
 	bool Q8Multiply(uint64_t offset,unsigned inputs,unsigned outputs,const uint8_t* blocks,float* output)
 	{
 		if (failed || fp16 || mode!=2) { failed=true; return false; }

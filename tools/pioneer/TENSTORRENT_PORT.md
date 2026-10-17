@@ -2,6 +2,48 @@
 
 ## Status
 
+### October17: full Qwen FFN graph verification contract v9 (06:15 UTC)
+
+Fast Qwen is STILL NOT achieved; no Assistant promotion. The full verifier
+passed all22 positions with exact full-vocabulary logits and all four
+CPU-identical greedy reply tokens. Every position had28 fused GPU FFNs,
+zero separately scheduled GLUs,197 learned projections and28/224 attention
+operations/tiles.197 learned projections now use141 matrix/FFN host calls,
+plus28 attention calls. The old summary line in the log still printed197
+matrix host calls;source reporting is corrected,not the underlying counters.
+
+Log:`qwen-layer-v9-verify.log`,binary SHA
+`b6fb6fdef354b5aaad1ac4a160a6be529bc6d650ff67270c8bd92f67f029c964`.
+Retained197 tensors/670482432 bytes/163692 pages,4334 projections,616 fused
+FFNs,1232 skipped repeated input uploads. END2/PCI-host1-1/cold0/cleanup1.
+Diagnostic warm generation3 samples/6.337664s=0.473361tok/s versus v7's
+0.401768tok/s. This remains a short diagnostic,NOT a repeated warm CPU
+speedup benchmark. Total402.996s,weight prep331.118875s,matvec38.270141s,
+attention11.553895s. The result is still too slow for practical use.
+
+The explicit GGML FFN opt-in requires contract9 BEFORE BEGIN. A four-node
+gate/up/SWIGLU/down matcher checks exact shapes,immutable Q8 weights,shared
+input,operator semantics and GLOBAL use counts preserved by graph views.
+An outside-slice consumer,view or requested intermediate output prevents
+elision. The separately scheduled private`54dc` GPU GLU handles that case;
+there is no CPU nonlinear fallback. Failed jobs publish no accepted result,
+and the client remains close-only. Diagnostic/trace contexts refuse FFN
+fusion. The separate warm benchmark option also requires complete28-layer
+FFN/matrix/attention coverage and unchanged weights for every request.
+
+`ffn-v9-native.log` passes all3072 standalone GLU and all1024 fused FFN
+words exactly on four changed generated inputs. Warm standalone GLU28.45ms
+includes deliberately simple full PIO input verification;the normally fused
+FFN remains12.19–12.25ms and avoids those intermediate transfers entirely.
+Native primitive CLI SHA`5a670c5005f6b88af78924d48c978d4e61f63661ffc44f154e0846e05d80b103`.
+Driver SHA`25bbf7b8e343bfd7193c58d54cdfdc591eb0db650617c1fb67a92e91bbe553e3`.
+Layer image is unchanged from v8. Independent GLU ownership/controller,
+REAL client and pristine-pinned GGML ASan/UBSan tests pass,including global
+outside-slice consumers,explicit outputs,old-contract refusal,proof mutations,
+source/map/host/timeout faults and no reset after uncertain completion.
+No native session is left running. Assistant/SD/default boot/CPU/RAM/firmware,
+model/preferences and unrelated dirty llama.cpp edits remain unchanged.
+
 ### October17: native fixed feed-forward graph contract v8 (05:54 UTC)
 
 Fast Qwen remains NOT achieved. The new fixed FFN primitive passed natively:

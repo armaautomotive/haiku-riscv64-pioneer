@@ -36,4 +36,8 @@ if [ -n "$attention_fixture_dir" ]; then
 else
  UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"
 fi
+${CXX:-c++} -std=c++17 -Wall -Wextra -Werror "$@" -DPIONEER_GGML_OFFLINE_TEST \
+ "$directory/../PioneerGgmlBackend.cpp" "$directory/pioneer_ggml_ffn_test.cpp" \
+ "$temporary"/*.o -o "$temporary/ffn-test"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/ffn-test"
 printf 'Pristine pinned ggml test build retained at %s; NO hardware was accessed\n' "$temporary"

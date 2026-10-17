@@ -17,7 +17,7 @@ typedef bool (*PioneerGgmlBoundaryCallback)(void*);
 // Called only between completed uploads/matvecs, never during an ioctl.
 void PioneerGgmlBoundary(PioneerGgmlBoundaryCallback callback,void* data);
 struct PioneerGgmlStats {
-	uint64_t tensors,bytes,uploads,matvecs,attentionOps,attentionTiles,activationReuses;
+	uint64_t tensors,bytes,uploads,matvecs,attentionOps,attentionTiles,activationReuses,ffnOps,gluOps;
 	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds,attentionSeconds;
 	bool failed;
 	unsigned peakWorkers;
@@ -60,6 +60,9 @@ void PioneerGgmlPayloadBlocks(bool enabled);
 // Explicit separate mode8: master dispatcher + <=119 persistent math
 // peers, device KV-v3 handoff. No CPU reference/fallback or speed guarantee.
 void PioneerGgmlCoordinated(bool enabled);
+// Explicit v9 candidate: GPU GLU and globally single-use fixed FFN fusion.
+// No CPU nonlinear fallback. Not a qualified CPU speedup or Assistant mode.
+void PioneerGgmlLayerFfn(bool enabled);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);
