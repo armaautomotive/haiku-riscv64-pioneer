@@ -3,6 +3,8 @@
 // NO driver/client ABI loads this image. It needs independent code,stack,
 // math buffers,attention data/KV and1MiB host owners before native exposure.
 #define PIONEER_ATTENTION_FREESTANDING
+// Whole-decoder-only optimization;legacy attention images remain byte exact.
+#define PIONEER_ATTENTION_EXACT_HALF_PRODUCT 1
 #include "PioneerGraphNorm.h"
 #include "PioneerGraphRope.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"

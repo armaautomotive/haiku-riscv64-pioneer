@@ -2,12 +2,20 @@
 // OFFLINE arithmetic model, not a hardware/LLM performance test.
 #include "../PioneerBlackholeFma.h"
 #include "../PioneerFloat16.h"
+#include "../PioneerAttentionMath.h"
 #include <cmath>
 #include <cstdio>
 #include <initializer_list>
 static uint32_t seed=0x12345678;
 static uint32_t Random() { seed^=seed<<13; seed^=seed>>17; seed^=seed<<5; return seed; }
 int main() {
+	// Exercise FULL IEEE half subnormals too,not the older flushing matrix
+	// converter. Every finite half pair has an exact normal-FP32 product.
+	for (unsigned i=0;i<65536;i++) for (uint16_t b:{uint16_t(0),uint16_t(1),uint16_t(0x3ff),uint16_t(0x400),uint16_t(0x3c00),uint16_t(0x7bff),uint16_t(0x8000),uint16_t(0x8001),uint16_t(0xfbff)}) {
+		if ((i&0x7c00)==0x7c00) continue;
+		float a=PioneerAttentionHalf(uint16_t(i)),v=PioneerAttentionHalf(b);
+		assert(PioneerFmaBits(PioneerBlackholeFma(a,v,0))==PioneerFmaBits(std::fma(a,v,0.0f)));
+	}
 	unsigned partialDiff=0,accurateDiff=0;
 	for (unsigned i=0;i<1000000;i++) {
 		uint16_t ah=uint16_t(Random()),bh=uint16_t(Random());

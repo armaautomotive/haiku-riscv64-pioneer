@@ -5,6 +5,9 @@
 // Reductions/softmax execute on the card's TRISC0, not the host CPU.
 // No NoC, PCIe, DRAM, firmware, arbitrary pointers, allocation or OS calls.
 #include "PioneerAttentionMath.h"
+#ifndef PIONEER_ATTENTION_EXACT_HALF_PRODUCT
+#define PIONEER_ATTENTION_EXACT_HALF_PRODUCT 0
+#endif
 
 static inline volatile uint32_t* Words(uint32_t address)
 {
@@ -84,7 +87,13 @@ static float Dot(const float* query, const uint16_t* key)
 		WriteQuery(query + block * 32); WriteHalf(key + block * 32, 4);
 		Emit(0x70030000); Emit(0x70130004); // q0, k1
 		Emit(0x702b0000); // c2 = 0, no stale accumulator
-		AccurateMad(); // exact RN(q*k) -> 0
+		// Q and K have BOTH been converted to IEEE half. Their product has
+		// at most22 significant bits and is exactly representable in FP32,
+		// including half subnormals. The separate whole-decoder candidate
+		// can use the already-qualified standalone SFPMAD product; general
+		// Q8 dot*scale+accumulator still REQUIRES the exact-FMA sequence.
+		if (PIONEER_ATTENTION_EXACT_HALF_PRODUCT) Emit(0x84001900);
+		else AccurateMad(); // exact RN(q*k) -> 0
 		Emit(0x72030008); Drain(); // result -> rows8..11
 		volatile uint32_t* dst = Words(0xffbd8200);
 		for (unsigned i = 0; i < 32; i++) PioneerAttentionAdd(PioneerAttentionFloat(dst[LaneOffset(i)]), high, low);

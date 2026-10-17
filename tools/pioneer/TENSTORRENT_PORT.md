@@ -2,6 +2,29 @@
 
 ## Status
 
+### October17: exact half-product attention reduction (08:02 UTC)
+
+Native whole Qwen remains too slow. The whole-decoder-only Dot path now
+uses one standalone SFPMAD product instead of37 exact-FMA instructions:
+both operands are IEEE half,so their product is EXACT normal FP32,even
+for half subnormals. General matrix dot*scale+accumulator is unchanged.
+Offline tests cover every finite half paired with edge values including
+subnormals,plus the existing million random arithmetic trials. Complete
+linked whole-decoder repeated-KV/fault tests pass. Legacy resident
+attention still rebuilds byte-exact to`ac1c7a4a...c05f`.
+
+Native retest PASSES22 EXACT full-logit positions/four greedy tokens,
+4334 projections/616 attention/22 full results,no warm weight uploads.
+Short generation3/2.314752s=1.296035tok/s versus1.251689:only3.54% faster,
+NOT a repeated CPU speedup gate or Assistant qualification. Preparation
+93.033716s;position21 wall.785753s,GPU721.086ms. END2/PCI-host1-1/cold0/
+cleanup1. Log:`qwen-whole-v13-halfdot-verify.log`.
+Image SHA`4d97a8de31d1f7ea0099209c42a68e3ec2bd72aa5e86e8bad15c42114c8a2e84`;
+installed experimental driver
+`63670f19233436e412fc709059fdb982c798b11cc965de89df2f1d08fec80f4d`.
+Assistant/default boot/CPU/RAM/firmware/SD remain unchanged. Next work is
+separately tested concurrent attention groups;no concurrency claim yet.
+
 ### October17: native whole-decoder precision corrected (07:56 UTC)
 
 Fast Qwen is NOT yet qualified. The first native whole-position run safely
