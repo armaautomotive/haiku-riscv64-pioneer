@@ -18,7 +18,14 @@ static void Check(float a,float b,float c)
 }
 int main()
 {
+	for (unsigned bit=0;bit<64;bit++) {
+		PioneerGraphU64 power=PioneerGraphU64(1)<<bit;
+		assert(PioneerGraphHighest(power)==bit && PioneerGraphHighest(power|(power-1))==bit);
+		if (bit) assert(PioneerGraphHighest(power-1)==bit-1);
+	}
 	for (unsigned i=0;i<2000000;i++) {
+		PioneerGraphU64 value=(PioneerGraphU64(Next())<<32)|Next();
+		if (value) { unsigned bit=0; for (auto v=value;v>>1;v>>=1) bit++; assert(PioneerGraphHighest(value)==bit); }
 		float a=PioneerAttentionFloat(Next()),b=PioneerAttentionFloat(Next()),c=PioneerAttentionFloat(Next());
 		if (isfinite(a) && isfinite(b) && isfinite(c)) Check(a,b,c);
 	}

@@ -11,6 +11,12 @@
 #ifndef PIONEER_COORDINATED_PULL_INPUT
 #define PIONEER_COORDINATED_PULL_INPUT 0
 #endif
+#ifndef PIONEER_ATTENTION_PARALLEL_ROPE
+#define PIONEER_ATTENTION_PARALLEL_ROPE 0
+#endif
+#if PIONEER_ATTENTION_PARALLEL_ROPE
+extern "C" bool attention_prepare_rope_group();
+#endif
 static bool GroupIdle()
 {
 	bool idle=true; volatile uint32_t* noc=Words(0xffb20000);
@@ -87,7 +93,11 @@ static void GroupTransfer(bool write,uint32_t local,uint32_t remote,unsigned byt
 }
 #endif
 #if PIONEER_COORDINATED_GLU
+#if PIONEER_ATTENTION_PARALLEL_ROPE
+static __attribute__((section(".rope_ext"),noinline)) unsigned GroupGlu()
+#else
 static unsigned GroupGlu()
+#endif
 {
 	volatile uint32_t* descriptor=Words(0x74000),*parameters=Words(0x70500),*proof=Words(0x91500);
 	unsigned layer=descriptor[2],group=descriptor[3],self=1+((group+3)<<6);
@@ -136,13 +146,22 @@ extern "C" unsigned attention_main()
 	// Only peers1..8 on column1,rows3..10. No supplied routes/addresses:
 	// the descriptor must match its fixed group-to-worker assignment.
 	unsigned self=1+((group+3)<<6);
-	if (descriptor[0]!=0x31475441 || !tokens || tokens>256 || layer>=28 || group>=8
+	if (descriptor[0]!=(PIONEER_ATTENTION_PARALLEL_ROPE?0x32575441U:0x31475441U) || !tokens || tokens>256 || layer>=28 || group>=8
 		|| parameters[0] || parameters[1] || parameters[2] || parameters[3]!=1
 		|| parameters[4]!=self || parameters[5] || parameters[6] || parameters[7]!=0x31475441 || !GroupIdle()) return 0;
 #if PIONEER_COORDINATED_PULL_INPUT
 	GroupSnapshot(proof);
 	GroupPull(0x90000,0x140000+group*1024,1024,self);
+#if PIONEER_ATTENTION_PARALLEL_ROPE
+	GroupPull(0x90400,0x86000+group*512,512,self);
+	GroupPull(0x90c00,0x147a00,512,self);
+	GroupPull(0x90e00,0x147c00,512,self);
+	GroupPull(0x91000,0x147e00,512,self);
+	if (!attention_prepare_rope_group()) attention_fault_park();
+	GroupPull(0x90500,0x142100+group*512,256,self);
+#else
 	GroupPull(0x90400,0x142000+group*512,512,self);
+#endif
 #endif
 	for (unsigned i=0;i<256;i++) if ((Words(0x90000)[i]&0x7fffffff)>0x477fe000) return 0;
 	for (unsigned i=0;i<128;i++) { uint32_t v=Words(0x90400)[i];
@@ -171,6 +190,9 @@ extern "C" unsigned attention_main()
 	proof[16]=tokens; proof[17]=layer; proof[18]=group; proof[19]=0x31475441;
 #if PIONEER_COORDINATED_PULL_INPUT
 	proof[20]=1;
+#endif
+#if PIONEER_ATTENTION_PARALLEL_ROPE
+	proof[21]=1;
 #endif
 	Fence(); return tokens;
 }

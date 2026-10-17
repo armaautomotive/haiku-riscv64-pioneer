@@ -28,7 +28,7 @@ class PioneerResidentDevice {
 	bool coordinatedWide=false;
 	bool coordinatedSpan=false;
 	bool coordinatedNarrow=false;
-	bool decoderRequested=false,decoderRegistered=false,decoderParallel=false,decoderStageRequested=false,decoderGlu=false,decoderGreedy=false,decoderRms=false,decoderCounters=false,decoderPaired=false,decoderInline=false,decoderPartial=false,decoderCachedQuery=false,decoderInputPull=false,decoderPhasePipeline=false,decoderDiagnostic=false,decoderDescriptorTable=false,decoderAccumPipeline=false,decoderSmallRows=false;
+	bool decoderRequested=false,decoderRegistered=false,decoderParallel=false,decoderStageRequested=false,decoderGlu=false,decoderGreedy=false,decoderRms=false,decoderCounters=false,decoderPaired=false,decoderInline=false,decoderPartial=false,decoderCachedQuery=false,decoderInputPull=false,decoderPhasePipeline=false,decoderDiagnostic=false,decoderDescriptorTable=false,decoderAccumPipeline=false,decoderSmallRows=false,decoderParallelRope=false;
 	unsigned decoderTokens=0;
 	tt_pioneer_decoder_run* decoderRequest=NULL;
 	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
@@ -49,7 +49,7 @@ public:
 	unsigned lastActivationPages=0;
 	bool DecoderStages(tt_decoder_stage_profile& p) {
 		return decoderStageRequested && decoderRegistered && decoderTokens && active && !failed && !finished && !cold
-			&& !ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_STAGES,&p,sizeof(p)) && PioneerDecoderStageValid(p,coordinatorNonce,decoderTokens,decoderPaired?3:decoderGlu?2:1);
+			&& !ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_STAGES,&p,sizeof(p)) && PioneerDecoderStageValid(p,coordinatorNonce,decoderTokens,decoderParallelRope?4:decoderPaired?3:decoderGlu?2:1);
 	}
 	// Diagnostic cohort tuning only; no new driver authority or active
 	// job mutation. The kernel independently partitions every request.
@@ -66,7 +66,7 @@ public:
 	}
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); free(decoderRequest); }
 	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,unsigned requireLayer=0) {
-		if (requireLayer>21 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer>=4 && workerLimit!=119)) return false;
+		if (requireLayer>22 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer>=4 && workerLimit!=119)) return false;
 		if (debugOutput && !coordinatorMode) return false;
 		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
@@ -93,13 +93,13 @@ public:
 		coordinated=coordinatorMode;
 		coordinatedDebug=debugOutput;
 		coordinatedWide=requireLayer>=3;
-		decoderRequested=requireLayer>=4; decoderParallel=requireLayer>=5; decoderStageRequested=requireLayer>=6; decoderGlu=requireLayer>=7; decoderGreedy=requireLayer>=8; decoderRms=requireLayer>=9; decoderCounters=requireLayer==10; decoderPaired=requireLayer>=11; decoderInline=requireLayer>=12; decoderPartial=requireLayer==13; decoderCachedQuery=requireLayer>=14; decoderInputPull=requireLayer==15 || requireLayer==17 || requireLayer>=18; decoderPhasePipeline=requireLayer==16 || requireLayer>=18; decoderDiagnostic=requireLayer==17; decoderDescriptorTable=requireLayer>=19; decoderAccumPipeline=requireLayer>=20; decoderSmallRows=requireLayer==21;
+		decoderRequested=requireLayer>=4; decoderParallel=requireLayer>=5; decoderStageRequested=requireLayer>=6; decoderGlu=requireLayer>=7; decoderGreedy=requireLayer>=8; decoderRms=requireLayer>=9; decoderCounters=requireLayer==10; decoderPaired=requireLayer>=11; decoderInline=requireLayer>=12; decoderPartial=requireLayer==13; decoderCachedQuery=requireLayer>=14; decoderInputPull=requireLayer==15 || requireLayer==17 || requireLayer>=18; decoderPhasePipeline=requireLayer==16 || requireLayer>=18; decoderDiagnostic=requireLayer==17; decoderDescriptorTable=requireLayer>=19; decoderAccumPipeline=requireLayer>=20; decoderSmallRows=requireLayer==21; decoderParallelRope=requireLayer==22;
 		if (coordinated && !(s.capabilities&TT_PIONEER_CAP_COORDINATED_FLEET)) {
 			fprintf(stderr,"Explicit on-card coordinator capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>30
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>31
 				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer>=3 && support.version<10)
 				|| (requireLayer==4 && support.version!=13)
 				|| (requireLayer==5 && support.version!=14)
@@ -119,6 +119,7 @@ public:
 				|| (requireLayer==19 && support.version!=28)
 				|| (requireLayer==20 && support.version!=29)
 				|| (requireLayer==21 && support.version!=30)
+				|| (requireLayer==22 && support.version!=31)
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
@@ -246,8 +247,8 @@ public:
 	}
 	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=30 && !decoderRegistered && active && !failed && !cold && !finished; }
 	bool RegisterDecoder(const PioneerDecoderModelOffsets& offsets) {
-		if (!decoderRequested || coordinatedVersion!=(decoderDiagnostic?26U:decoderSmallRows?30U:decoderAccumPipeline?29U:decoderDescriptorTable?28U:decoderPhasePipeline&&decoderInputPull?27U:decoderPhasePipeline?25U:decoderInputPull?24U:decoderCachedQuery?23U:decoderPartial?22U:decoderInline?21U:decoderPaired?20U:decoderCounters?19U:decoderRms?18U:decoderGreedy?17U:decoderGlu?16U:decoderStageRequested?15U:decoderParallel?14U:13U) || !active || failed || finished || cold || decoderRegistered) return false;
-		tt_pioneer_decoder_model p={}; p.version=decoderDiagnostic?11:decoderSmallRows?15:decoderAccumPipeline?14:decoderDescriptorTable?13:decoderPhasePipeline&&decoderInputPull?12:decoderPhasePipeline?10:decoderInputPull?9:decoderCachedQuery?8:decoderPartial?7:decoderInline?6:decoderPaired?5:decoderGreedy?4:decoderGlu?3:decoderParallel?2:1; p.offsets=offsets;
+		if (!decoderRequested || coordinatedVersion!=(decoderParallelRope?31U:decoderDiagnostic?26U:decoderSmallRows?30U:decoderAccumPipeline?29U:decoderDescriptorTable?28U:decoderPhasePipeline&&decoderInputPull?27U:decoderPhasePipeline?25U:decoderInputPull?24U:decoderCachedQuery?23U:decoderPartial?22U:decoderInline?21U:decoderPaired?20U:decoderCounters?19U:decoderRms?18U:decoderGreedy?17U:decoderGlu?16U:decoderStageRequested?15U:decoderParallel?14U:13U) || !active || failed || finished || cold || decoderRegistered) return false;
+		tt_pioneer_decoder_model p={}; p.version=decoderParallelRope?16:decoderDiagnostic?11:decoderSmallRows?15:decoderAccumPipeline?14:decoderDescriptorTable?13:decoderPhasePipeline&&decoderInputPull?12:decoderPhasePipeline?10:decoderInputPull?9:decoderCachedQuery?8:decoderPartial?7:decoderInline?6:decoderPaired?5:decoderGreedy?4:decoderGlu?3:decoderParallel?2:1; p.offsets=offsets;
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_MODEL,&p,sizeof(p)); cold=p.recovery_required!=0;
 		if (status || p.state!=TT_RUNTIME_PASSED || p.ready!=1 || p.extents!=310 || cold) {
 			fprintf(stderr,"Whole-decoder register STOP status%d state%u ready%u extents%u cold%u;close only,no retry/fallback\n",status,p.state,p.ready,p.extents,cold);

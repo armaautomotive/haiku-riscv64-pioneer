@@ -2,6 +2,68 @@
 
 ## Status
 
+### October17: parallel head preparation31 native trial (12:26 UTC)
+
+Fast Qwen STILL NOT achieved. Explicit31/model-registry16/private GPU job9
+moves all24 Q/K head RMS normalizations and exact NEOX rotations per layer
+from the single master onto the eight attention owners. Each owner handles
+two128-wide Q heads and one128-wide K head before its existing attention.
+All113 norm-page reads remain;the56 Q/K weight pages and per-position RoPE
+table are staged in frozen147a00/147c00/147e00 master bulk spans. Raw K86000
+and Q140000 remain frozen through ALL eight completions,not a gather buffer.
+KV layout/FP16 conversion/197 projections/119 math peers/exact29 accumulator/
+resident tables/classifier/128B token result are unchanged. This is NOT Q4,
+27B,all-Qwen or Assistant support. No measured31 throughput claim yet.
+
+Existing8KiB attention code owner was almost full. New fixed primary6912B
+and extension5444B are independently held-stage/read-back verified. The
+extension has an EXPLICIT additional2040-word backup74020..76000,excluding
+descriptor74000..74010 and guard74010..74020;stack76000..78000 is unchanged.
+Only the new immutable peer flag permits that mapping. Legacy sessions keep
+the original40965-word owner;new owners save43005 words. Entire extension
+and primary restore only after known ALL-peer STOP. Unknown completion or
+lost mapping forbids restore/reset/retry/free and quarantines all owners.
+
+Each group independently reads and ALL-bit compares its raw Q,K,Q/K norm
+weights,RoPE table and packed V. Exact peer proof now12 input read requests/
+104 flits instead of4/48;ALL4 initiators/32 IDs/source/counter proofs remain.
+Master transport counts and9219 peer jobs remain29,NOT slower30 chunks.
+Profilev4 counts168/57/85/0/28/28/1/1 reflect normalization/rotation moved
+inside attention,not omitted work. Scalar FMA uses the same exact arithmetic;
+its integer fallback has a fixed-depth normalizer instead of a61-bit walk,
+with no new scalar opcode. Nearly10M finite/bounded/cancellation cases per
+old/new mode match independent IEEE FMA;all64 leading-bit boundaries pass.
+
+Actual compiled group tests pass all8 groups,n1/2/17/64/65/256,independent
+double RMS/exact fused RoPE/full attention/KV bits,72 packet faults and
+malformed source cases;unchanged GLU also passes. Actual whole master plus
+all8 group images pass full+128B,zero/sparse,two consecutive positions,ALL
+logits/KV/119 sequences/113 norm reads/counters and command-write faults.
+Fifteen-mode ownership/quarantine tests,all8 immutable flag refusals,real
+client through31,private job9 limits,explicit extension mapping/guards,
+dropped extension writes/full restoration and unsafe-no-restore pass
+ASan/UBSan. Standalone native benchmark uses pinned CLEAN llama runtime;
+unrelated dirty submodule and installed Assistant are untouched.
+
+Native31 PENDING:driver`e64ed1f20d7138094750f81f41d62079830f78ab8a2ab1958454523300543371`,
+verifier`e17c21fbef1312ce18317a6c619eea708ad65515d9a0933a13a06791ce8381c1`.
+Root`91af0d75`,group primary`78f63179`,extra`4063396f`. Qualified29 rollback
+retained. Default-off source rebuild is NOT byte-identical after the private
+layout/proof changes;frozen historical image headers are NOT regenerated or
+replaced with that unqualified rebuild. No boot/CPU/RAM/SD changes.
+
+### October17: wider-core30 correct but slower;retain29 (12:14 UTC)
+
+Contract30 passes22 full-logit/selected-bit comparisons and all three
+sustained natural-request/full-replay/coverage gates. GPU4.604285/4.576552/
+4.660239tok/s,CPU32 .667288/.662732/1.255129;prompt5.679737/5.879118/5.256942s.
+Matrix56.223M versus29's53.137M ticks;total144.543M versus141.441M. Extra
+5124 jobs outweighed greater hidden-projection core occupancy. Do NOT promote
+it as a speed improvement. Complete312 positions/61464 projections/8736
+attention/156 full+156 small/zero warm uploads;END2/PCI-host1-1/cold0/cleanup1.
+Log:`qwen-smallrows-v30-benchmark.log`. Short5.099578tok/s diagnostic ONLY.
+Verified29 was restored after clean END;30 remains separately backed up.
+
 ### October17: private16-row scheduling30 native trial (12:05 UTC)
 
 Fast Qwen STILL NOT achieved. Explicit30/model-registry15/private GPU job8

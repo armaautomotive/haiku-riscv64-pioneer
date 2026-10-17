@@ -17,6 +17,7 @@
 #include "BlackholePullDiagnosticDecoderImage.h"
 #include "BlackholeTableDecoderImage.h"
 #include "BlackholeSmallRowsDecoderImage.h"
+#include "BlackholeRopeDecoderImage.h"
 #include "PioneerDecoderGreedy.h"
 #include "PioneerDecoderStageProfile.h"
 #include <stddef.h>
@@ -24,12 +25,12 @@ struct PioneerDecoderLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false,parallel=false;
 	PioneerAttentionTileLease* peers=nullptr;
 	bool profiling=false;
-	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false,inputPull=false,phasePipeline=false,diagnostic=false,descriptorTable=false,accumPipeline=false,smallRows=false;
+	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false,inputPull=false,phasePipeline=false,diagnostic=false,descriptorTable=false,accumPipeline=false,smallRows=false,parallelRope=false;
 	tt_decoder_stage_profile stages={};
 };
 static inline uint32_t PioneerDecoderCodeWord(const PioneerDecoderLease& code,unsigned word)
 {
-	return code.smallRows?BlackholeSmallRowsDecoderCodeWord(word):code.descriptorTable?BlackholeTableDecoderCodeWord(word):code.diagnostic?BlackholePullDiagnosticDecoderCodeWord(word):code.inputPull?BlackholePullInputDecoderCodeWord(word):code.paired?BlackholePairedDecoderCodeWord(word):code.greedy?BlackholeGreedyRmsDecoderCodeWord(word):code.glu?BlackholeGluDecoderCodeWord(word):code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
+	return code.parallelRope?BlackholeRopeDecoderCodeWord(word):code.smallRows?BlackholeSmallRowsDecoderCodeWord(word):code.descriptorTable?BlackholeTableDecoderCodeWord(word):code.diagnostic?BlackholePullDiagnosticDecoderCodeWord(word):code.inputPull?BlackholePullInputDecoderCodeWord(word):code.paired?BlackholePairedDecoderCodeWord(word):code.greedy?BlackholeGreedyRmsDecoderCodeWord(word):code.glu?BlackholeGluDecoderCodeWord(word):code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
 }
 template<class IO>
 bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDecoderLease& code)
@@ -38,9 +39,10 @@ bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDeco
 	for (unsigned i=1;i<120;i++) if (fleet[i].inlineMath!=code.inlineMath || fleet[i].coordinatedInline!=code.inlineMath || fleet[i].partialMath!=code.partialMath || fleet[i].phasePipeline!=code.phasePipeline || fleet[i].descriptorTable!=code.descriptorTable || fleet[i].accumPipeline!=code.accumPipeline || fleet[i].smallRows!=code.smallRows || (code.descriptorTable && !fleet[i].descriptorTablePrepared)) return false;
 	if (!code.parallel) return !code.peers;
 	if (!fleet || !code.peers || !io.DecoderPeerMappingsStable()) return false;
+	if (code.parallelRope && !io.DecoderRopeMappingsStable()) return false;
 	for (unsigned i=0;i<8;i++) { const auto& p=code.peers[i];
 		if (!p.saved || !p.ready || !p.code_dirty || !p.coordinatedGroup || p.resident || p.unsafe
-			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery || p.inputPull!=code.inputPull) return false;
+			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery || p.inputPull!=code.inputPull || p.parallelRope!=code.parallelRope) return false;
 	}
 	return true;
 }
@@ -67,15 +69,16 @@ static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsi
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
-	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false,bool descriptorTable=false,bool accumPipeline=false,bool smallRows=false)
+	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false,bool descriptorTable=false,bool accumPipeline=false,bool smallRows=false,bool parallelRope=false)
 {
+	if (parallelRope && (!accumPipeline || smallRows)) return false;
 	if ((smallRows && !accumPipeline) || (accumPipeline && !descriptorTable) || (descriptorTable && (!phasePipeline || !inputPull || diagnostic)) || (diagnostic && (!inputPull || phasePipeline)) || (phasePipeline && !cachedQuery) || (inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;
-	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && code.phasePipeline==phasePipeline && code.diagnostic==diagnostic && code.descriptorTable==descriptorTable && code.accumPipeline==accumPipeline && code.smallRows==smallRows && PioneerDecoderPeerOwners(io,fleet,code);
+	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && code.phasePipeline==phasePipeline && code.diagnostic==diagnostic && code.descriptorTable==descriptorTable && code.accumPipeline==accumPipeline && code.smallRows==smallRows && code.parallelRope==parallelRope && PioneerDecoderPeerOwners(io,fleet,code);
 	if (code.saved || code.unsafe || !io.DecoderSavedWords()) return false;
-	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull; code.phasePipeline=phasePipeline; code.diagnostic=diagnostic; code.descriptorTable=descriptorTable; code.accumPipeline=accumPipeline; code.smallRows=smallRows;
+	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull; code.phasePipeline=phasePipeline; code.diagnostic=diagnostic; code.descriptorTable=descriptorTable; code.accumPipeline=accumPipeline; code.smallRows=smallRows; code.parallelRope=parallelRope;
 	if (!PioneerDecoderPeerOwners(io,fleet,code)) return false;
 	for (unsigned i=0;i<8192;i++) io.DecoderSavedWords()[i]=io.LayerCodeRead(i);
 	code.saved=true;
@@ -131,12 +134,12 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 	if (!stage) return false;
 	auto& job=*reinterpret_cast<PioneerDecoderJob*>(stage); const auto* original=reinterpret_cast<const uint32_t*>(&model);
 	for (unsigned i=0;i<sizeof(job)/4;i++) stage[i]=original[i];
-	job.magic=0x31444344; job.operation=greedy?9:8; job.version=code.smallRows?8:code.descriptorTable?7:code.inputPull?6:code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1; job.tokens=tokens; job.nonce=stack.nonce+1; job.workers=119;
+	job.magic=0x31444344; job.operation=greedy?9:8; job.version=code.parallelRope?9:code.smallRows?8:code.descriptorTable?7:code.inputPull?6:code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1; job.tokens=tokens; job.nonce=stack.nonce+1; job.workers=119;
 	job.kvBase=0x82400000; job.hostLow=uint32_t(wide.physical); job.hostHigh=uint32_t(wide.physical>>32); job.hostBytes=0x100000;
 	for (unsigned i=0;i<4;i++) job.reserved[i]=0;
 	for (unsigned i=0;i<119;i++) job.sequence[i]=fleet[i+1].persistentSequence+1;
 	for (unsigned i=0;i<128;i++) job.rope[i]=rope[i];
-	if (!PioneerDecoderJobValid(job,code.smallRows?8:code.descriptorTable?7:code.inputPull?6:code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1)) return false;
+	if (!PioneerDecoderJobValid(job,code.parallelRope?9:code.smallRows?8:code.descriptorTable?7:code.inputPull?6:code.paired?5:code.greedy?4:code.glu?3:code.parallel?2:1)) return false;
 	stack.inputValid=false; stack.inputK=0; m.state=TT_RUNTIME_CONFIG_FAILED;
 	do {
 		if (!PioneerCoordinatedMasterBoundary(io,baseline,fleet,true) || (!io.DecoderMappingStable() || !PioneerDecoderPeerOwners(io,fleet,code)) || !io.DecoderAttentionMappingStable()
@@ -230,7 +233,7 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 	if (proved && code.profiling) {
 		tt_decoder_stage_profile candidate={};
 		for (unsigned i=0;i<32;i++) reinterpret_cast<uint32_t*>(&candidate)[i]=io.BulkL1Read((TT_DECODER_STAGE_L1-TT_BULK_UPLOAD_L1)/4+i);
-		if (PioneerDecoderStageValid(candidate,m.nonce,tokens,code.paired?3:code.glu?2:1)) code.stages=candidate;
+		if (PioneerDecoderStageValid(candidate,m.nonce,tokens,code.parallelRope?4:code.paired?3:code.glu?2:1)) code.stages=candidate;
 	}
 	return proved; // Diagnostic availability NEVER authorizes inference/reset.
 }

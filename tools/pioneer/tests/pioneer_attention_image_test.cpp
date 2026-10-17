@@ -10,6 +10,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedGluImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCachedQueryGluImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholePullInputGluImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeRopeGluImage.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -37,9 +38,9 @@ static uint32_t B(float value) { return PioneerAttentionBits(value); }
 static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&0x80000000); }
 
 struct Image {
-	std::vector<uint8_t> boot,code;
+	std::vector<uint8_t> boot,code,rope;
 	std::map<std::string,uint32_t> symbols;
-	bool resident,coordinated,glu,cachedQuery=false,inputPull=false;
+	bool resident,coordinated,glu,cachedQuery=false,inputPull=false,parallelRope=false;
 	explicit Image(const char* path,bool kv=false,bool group=false,bool activation=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group),glu(activation) {
 		assert(!glu || coordinated);
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
@@ -54,9 +55,15 @@ struct Image {
 		} else {
 			inputPull=glu && getenv("PIONEER_COORDINATED_PULL_INPUT");
 			cachedQuery=glu && (inputPull || getenv("PIONEER_ATTENTION_CACHED_QUERY"));
-			assert(code.size()==unsigned(inputPull?TT_PULL_INPUT_GLU_IMAGE_WORDS:cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
+			parallelRope=inputPull && getenv("PIONEER_ATTENTION_PARALLEL_ROPE");
+			assert(code.size()==unsigned(parallelRope?TT_ROPE_GLU_IMAGE_WORDS:inputPull?TT_PULL_INPUT_GLU_IMAGE_WORDS:cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
 			for (unsigned w=0;w<TT_COORDINATED_ATTENTION_CODE_WORDS;w++)
-				assert((inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+				assert((parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+			if (parallelRope) {
+				rope=Read(std::string(path)+"/rope.bin"); assert(rope.size()==TT_ROPE_GLU_EXTRA_WORDS*4 && rope.size()<=0x1fe0);
+				assert(symbols.at("attention_rope_end")==0x74020+rope.size());
+				for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert(BlackholeRopeGluExtraWord(w)==(w<rope.size()/4?Word(rope,w*4):0));
+			}
 		}
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());
 		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE
@@ -80,6 +87,7 @@ struct Machine {
 	explicit Machine(const Image& i,unsigned n):image(i),mem(0x180000/4,0xdeadbeef),tokens(n) {
 		mem[0x6000/4]=Word(i.boot,0);
 		for (unsigned at=0;at<i.code.size();at+=4) mem[(0x72000+at)/4]=Word(i.code,at);
+		for (unsigned at=0;at<i.rope.size();at+=4) mem[(0x74020+at)/4]=Word(i.rope,at);
 		mem[0x74000/4]=0x314e5441; mem[0x74004/4]=n; mem[0x74008/4]=1; mem[0x7400c/4]=0;
 		for (unsigned lane=0;lane<32;lane++) lanes[10][lane]=B(1);
 		for (unsigned j=0;j<3;j++) mem[0x17ffc0/4+j]=0;
@@ -152,7 +160,7 @@ struct Machine {
 		if (a==0xffe000fc) return ack;
 		if (Range(a,0xffef0000,224*4)) { assert(drained); return config[(a-0xffef0000)/4]; }
 		if (Range(a,0xffbd8000,12*64)) { assert(drained && !config[3]); return dst[(a-0xffbd8000)/64][((a-0xffbd8000)/4)%16]; }
-		assert(Range(a,0x72000,unsigned(image.code.size())) || Range(a,0x74000,16)
+		assert(Range(a,0x72000,unsigned(image.code.size())) || (image.parallelRope && Range(a,0x74020,unsigned(image.rope.size()))) || Range(a,0x74000,16)
 			|| Range(a,0x76000,8192) || Range(a,0x90000,1024) || (image.cachedQuery && Range(a,0x90800,1024))
 			|| (image.inputPull && Range(a,0x91800,2048))
 			|| Range(a,0x92000,tokens*256) || Range(a,0xa2000,tokens*256) || Range(a,0x17ffc0,12));
@@ -183,7 +191,7 @@ struct Machine {
 		uint32_t park=image.coordinated?0x71200:image.symbols.at("attention_park"),faultPark=image.symbols.at("attention_fault_park")+28;
 		while (pc!=(fault?faultPark:park)) {
 			assert(++steps<(image.resident?500000000U:30000000U));
-			assert(pc==0x6000 || Range(pc,0x72000,image.symbols.at("attention_exact_begin")-0x72000));
+			assert(pc==0x6000 || Range(pc,0x72000,image.symbols.at("attention_exact_begin")-0x72000) || (image.parallelRope && Range(pc,0x74020,unsigned(image.rope.size()))));
 			uint32_t i=mem[pc/4],next=pc+4,r=0;
 			unsigned op=i&127,d=(i>>7)&31,s=(i>>15)&31,t=(i>>20)&31,f=(i>>12)&7,hi=i>>25;
 			int32_t imm=Sign(i>>20,12); bool write=false;

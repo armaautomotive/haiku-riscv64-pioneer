@@ -33,6 +33,7 @@ struct GroupMachine:Machine {
 		}
 	}
 	uint32_t Load(uint32_t a) override {
+		if (image.parallelRope && Range(a,0x90000,0x1200)) return mem[a/4];
 		if (Range(a,0xffb20000,sizeof(noc))) {
 			unsigned off=a-0xffb20000;
 			assert(off<=36 || off==0x40 || off==0x840 || off==0x1040 || off==0x1840 || off==0x204 || off==0x208
@@ -45,6 +46,7 @@ struct GroupMachine:Machine {
 		return Machine::Load(a);
 	}
 	void Store(uint32_t a,uint32_t value) override {
+		if (image.parallelRope && Range(a,0x90000,0x600)) { mem[a/4]=value; return; }
 		if (Range(a,0xffb20000,sizeof(noc))) {
 			unsigned w=(a-0xffb20000)/4; assert(w<10 || w==0x40/4);
 			if (w!=0x40/4) { noc[w]=value; return; }
@@ -64,7 +66,11 @@ struct GroupMachine:Machine {
 				bool up=bytes==2048 && remote==0x84000+group*2048 && local==0x90800;
 				bool scratch=local==0x91800 && ((bytes==1024 && remote==0x140000+group*1024) || (bytes==512 && remote==0x142000+group*512)
 					|| (bytes==2048 && (remote==0x87000+group*2048 || remote==0x84000+group*2048)));
-				assert(query || kv || gate || up || scratch);
+				bool rope=image.parallelRope && ((bytes==512 && ((remote==0x86000+group*512 && (local==0x90400 || local==0x91800))
+					|| (remote==0x147a00 && (local==0x90c00 || local==0x91800)) || (remote==0x147c00 && (local==0x90e00 || local==0x91800))
+					|| (remote==0x147e00 && (local==0x91000 || local==0x91800))))
+					|| (bytes==256 && remote==0x142100+group*512 && (local==0x90500 || local==0x91800)));
+				assert(query || kv || gate || up || scratch || rope);
 				for (unsigned i=0;i<bytes;i+=4) { assert(masterInput.count(remote+i)); mem[(local+i)/4]=masterInput.at(remote+i); }
 				pullReads++; if (pullReads==corruptPull) mem[(local+bytes-4)/4]^=1;
 				reads++;
@@ -92,14 +98,14 @@ struct GroupMachine:Machine {
 		Machine::Store(a,value);
 	}
 	void Verify() {
-		assert(mem[0x17ffc4/4]==tokens && outputWrites==256 && reads==2*((tokens+63)/64)+(image.inputPull?4:0) && writes==2 && proofWrites==unsigned(image.inputPull?37:36));
-		assert(pullReads==unsigned(image.inputPull?4:0));
-		const unsigned deltas[]={reads,8*tokens+(image.inputPull?48:0),reads+writes,reads,writes,8,reads+writes,writes};
+		assert(mem[0x17ffc4/4]==tokens && outputWrites==256 && reads==2*((tokens+63)/64)+(image.parallelRope?12:image.inputPull?4:0) && writes==2 && proofWrites==unsigned(image.parallelRope?38:image.inputPull?37:36));
+		assert(pullReads==unsigned(image.parallelRope?12:image.inputPull?4:0));
+		const unsigned deltas[]={reads,8*tokens+(image.parallelRope?104:image.inputPull?48:0),reads+writes,reads,writes,8,reads+writes,writes};
 		for (unsigned i=0;i<8;i++) assert(uint32_t(mem[0x90620/4+i]-mem[0x90600/4+i])==deltas[i]);
 		assert(mem[0x90640/4]==tokens && mem[0x90644/4]==layer && mem[0x90648/4]==group && mem[0x9064c/4]==0x31475441);
 		uint32_t proof[24]; for (unsigned i=0;i<24;i++) proof[i]=mem[0x90600/4+i];
-		assert(PioneerCoordinatedAttentionProof(proof,tokens,layer,group,image.inputPull));
-		for (unsigned i=0;i<24;i++) { proof[i]^=1; assert(!PioneerCoordinatedAttentionProof(proof,tokens,layer,group,image.inputPull)); proof[i]^=1; }
+		assert(PioneerCoordinatedAttentionProof(proof,tokens,layer,group,image.inputPull,image.parallelRope));
+		for (unsigned i=0;i<24;i++) { proof[i]^=1; assert(!PioneerCoordinatedAttentionProof(proof,tokens,layer,group,image.inputPull,image.parallelRope)); proof[i]^=1; }
 	}
 };
 #ifndef PIONEER_COORDINATED_ATTENTION_MACHINE_ONLY

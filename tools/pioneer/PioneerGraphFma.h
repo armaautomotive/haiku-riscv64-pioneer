@@ -29,6 +29,20 @@ static inline PioneerGraphU64 PioneerGraphShiftJam(PioneerGraphU64 value,unsigne
 	PioneerGraphU64 result=PioneerGraphRight(value,shift);
 	return result|(PioneerGraphLeft(result,shift)!=value);
 }
+// A fixed-depth normalizer avoids walking up to61 bits in every exact
+// fallback. Only qualified low-word shifts/comparisons; no CLZ/MULHU ISA
+// expansion. The caller has already excluded zero. Keep legacy images
+// byte-identical unless this separately tested build option is selected.
+static inline unsigned PioneerGraphHighest(PioneerGraphU64 value)
+{
+	uint32_t high=uint32_t(value>>32),word=high?high:uint32_t(value);
+	unsigned bit=high?32:0;
+	if (word>=0x10000) { word>>=16; bit+=16; }
+	if (word>=0x100) { word>>=8; bit+=8; }
+	if (word>=0x10) { word>>=4; bit+=4; }
+	if (word>=4) { word>>=2; bit+=2; }
+	return bit+(word>=2);
+}
 static inline float PioneerGraphFma(float a,float b,float c)
 {
 	uint32_t aa=PioneerAttentionBits(a),bb=PioneerAttentionBits(b),cc=PioneerAttentionBits(c);
@@ -55,7 +69,11 @@ static inline float PioneerGraphFma(float a,float b,float c)
 	else if (product>=addend) result=product-addend;
 	else { result=addend-product; ps=cs; }
 	if (!result) return 0; // Exact cancellation is +0 under RNE.
+#if PIONEER_GRAPH_FMA_FIXED_NORMALIZE
+	unsigned highest=PioneerGraphHighest(result);
+#else
 	unsigned highest=0; for (PioneerGraphU64 v=result;v>>1;v>>=1) highest++;
+#endif
 	int e=exponent+int(highest)-60;
 	int shift=e< -126?-exponent-89:int(highest)-23;
 	PioneerGraphU64 rounded;

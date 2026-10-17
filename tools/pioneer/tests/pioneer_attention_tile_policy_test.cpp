@@ -11,7 +11,9 @@ struct AttentionMock:StoreMock {
 	unsigned starts=0,stops=0,attentionWrites=0;
 	bool timeout=false,badPc=false,badCount=false,badCounters=false,stopFails=false;
 	bool badControl=false,restoreCodeFails=false,restoreDataFails=false,nonfinite=false,badSource=false;
-	AttentionMock():words(TT_ATTN_TILE_SAVED_WORDS),saved(TT_ATTN_TILE_SAVED_WORDS) {
+	bool ropeMapping=true;
+	bool AttentionRopeMappingStable() { return ropeMapping; }
+	AttentionMock():words(TT_ATTN_TILE_ROPE_SAVED_WORDS),saved(TT_ATTN_TILE_ROPE_SAVED_WORDS) {
 		for (unsigned w=0;w<words.size();w++) words[w]=0xab000000+w;
 	}
 	uint32_t ResetRead() { return reset; }
@@ -76,6 +78,41 @@ static void Clean(AttentionMock& io,PioneerResidentLease& store,PioneerAttention
 }
 int main()
 {
+	// Explicit extended owner,never an accidental consequence of a broad
+	// PCIe aperture. Descriptor/gap guards and every extension word survive.
+	{ std::vector<bool> used(0x180000/4);
+		for (unsigned w=0;w<TT_ATTN_TILE_ROPE_SAVED_WORDS;w++) {
+			uint32_t a=PioneerAttentionTileWordAddress(w,true); assert(a<0x180000 && !(a&3) && !used[a/4]); used[a/4]=true;
+			if (w>=TT_ATTN_TILE_SAVED_WORDS) assert(a>=0x74020 && a<0x76000 && PioneerAttentionTileWordAddress(w)==UINT32_MAX);
+		}
+		for (unsigned a=0x74010;a<0x74020;a+=4) assert(!used[a/4]);
+		assert(PioneerAttentionTileWordAddress(TT_ATTN_TILE_ROPE_SAVED_WORDS,true)==UINT32_MAX);
+	}
+	for (unsigned group=0;group<8;group++) for (unsigned drop:{0U,1U,1024U,2040U}) {
+		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
+		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;
+		if (drop) io.Mock::drop=io.Mock::writes+2048+drop;
+		bool passed=PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true);
+		assert(passed==!drop && lease.saved && lease.code_dirty && lease.parallelRope && !lease.running && !io.starts);
+		if (passed) for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert(io.words[TT_ATTN_TILE_SAVED_WORDS+w]==BlackholeRopeGluExtraWord(w));
+		unsigned writes=io.attentionWrites;
+		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,false) && io.attentionWrites==writes);
+		io.Mock::drop=0;
+		assert(PioneerAttentionTileClose(io,io.Baseline(),noc,store,lease)); io.Restored();
+	}
+	{ AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
+		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101; io.ropeMapping=false; unsigned writes=io.attentionWrites;
+		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true) && !lease.saved && writes==io.attentionWrites);
+	}
+	for (unsigned failure=0;failure<3;failure++) {
+		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
+		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101;
+		assert(PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true));
+		if (!failure) lease.running=true; else if (failure==1) io.ropeMapping=false; else io.restoreDataFails=true;
+		unsigned writes=io.attentionWrites;
+		assert(!PioneerAttentionTileClose(io,io.Baseline(),noc,store,lease) && lease.unsafe && store.recovery_required && !io.starts && !io.stops);
+		if (failure<2) assert(writes==io.attentionWrites); // UNKNOWN => no code/extra restore
+	}
 	for (unsigned group=0;group<8;group++) {
 		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
 		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;

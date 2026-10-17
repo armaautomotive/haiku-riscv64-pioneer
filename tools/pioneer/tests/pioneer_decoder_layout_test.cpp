@@ -39,8 +39,8 @@ int main()
 			assert((PioneerDecoderLogitKey(a)>PioneerDecoderLogitKey(b))==(PioneerAttentionFloat(a)>PioneerAttentionFloat(b))); }
 	}
 	auto job=Job(); assert(PioneerDecoderJobValid(job) && sizeof(job)<=4096);
-	for (unsigned version:{5U,6U,7U,8U}) { auto j=job; j.version=version; for (unsigned op:{8U,9U}) { j.operation=op; assert(PioneerDecoderJobValid(j,version) && !PioneerDecoderJobValid(j,version-1)); }
-		for (unsigned i=0;i<119;i++) { unsigned advance=PioneerDecoderSequenceAdvance(i,true,true,true,version>=8); auto bounded=j;
+	for (unsigned version:{5U,6U,7U,8U,9U}) { auto j=job; j.version=version; for (unsigned op:{8U,9U}) { j.operation=op; assert(PioneerDecoderJobValid(j,version) && !PioneerDecoderJobValid(j,version-1)); }
+		for (unsigned i=0;i<119;i++) { unsigned advance=PioneerDecoderSequenceAdvance(i,true,true,true,version==8); auto bounded=j;
 			bounded.sequence[i]=0x7fffffff-advance; assert(PioneerDecoderJobValid(bounded,version)); bounded.sequence[i]++; assert(!PioneerDecoderJobValid(bounded,version)); }
 	}
 	for (bool narrow:{false,true}) for (bool table:{false,true}) if (!narrow || table) for (bool small:{false,true}) for (unsigned polls:{0U,2U,131070U}) {

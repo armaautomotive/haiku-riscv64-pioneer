@@ -167,7 +167,7 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		for (unsigned i=0;i<128;i++) if (Words(0x143100)[i]!=Words(0x142000)[group*128+i]) coordinator_fault_park();
 #endif
 		volatile uint32_t* args=Words(0x147100);
-		args[0]=0x31475441; args[1]=root.tokens; args[2]=layer; args[3]=group; Fence();
+		args[0]=PIONEER_COORDINATOR_PARALLEL_ROPE?0x32575441:0x31475441; args[1]=root.tokens; args[2]=layer; args[3]=group; Fence();
 		Transfer(true,worker,0x147100,0x74000,16); Transfer(false,worker,0x147120,0x74000,16);
 		for (unsigned i=0;i<4;i++) if (Words(0x147120)[i]!=args[i]) coordinator_fault_park();
 #if !PIONEER_COORDINATOR_DESCRIPTOR_TABLE
@@ -193,7 +193,7 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		if (snapshot[8]!=0x7200c || snapshot[9]!=root.tokens || snapshot[10]!=0x314e5441 || snapshot[11]!=sequence) coordinator_fault_park();
 		Transfer(false,worker,0x143100,0x90600,96);
 		volatile uint32_t* proof=Words(0x143100);
-		if (!PioneerCoordinatedAttentionProof(proof,root.tokens,layer,group,PIONEER_COORDINATOR_PULL_INPUT)) coordinator_fault_park();
+		if (!PioneerCoordinatedAttentionProof(proof,root.tokens,layer,group,PIONEER_COORDINATOR_PULL_INPUT,PIONEER_COORDINATOR_PARALLEL_ROPE)) coordinator_fault_park();
 		for (unsigned i=0;i<4;i++) if (snapshot[i]!=proof[i] || snapshot[4+i]!=proof[8+i]) coordinator_fault_park();
 		Transfer(false,worker,0x144000+group*1024,0xb2000,1024);
 		for (unsigned i=0;i<256;i++) if ((Words(0x144000)[group*256+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
@@ -286,7 +286,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_SMALL_ROWS?8:PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PARALLEL_ROPE?9:PIONEER_COORDINATOR_SMALL_ROWS?8:PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 #if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
 	if (root.operation!=8) return 0; // Never a sampling/inference target.
 	for (unsigned i=0;i<16;i++) Words(0x147900)[i]=0;
@@ -294,12 +294,19 @@ extern "C" unsigned coordinator_main()
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
-	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
+	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_PARALLEL_ROPE?4:PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
 #endif
 	for (unsigned i=0;i<1024;i++) if ((Words(TT_DECODER_INPUT)[i]&0x7fffffff)>0x477fe000) return 0;
 	uint32_t before[8],total[4]={}; for (unsigned i=0;i<8;i++) before[i]=*Words(0xffb20000+CounterOffset(i));
 	DecoderCopy(TT_DECODER_HIDDEN,TT_DECODER_INPUT,1024);
 	const float* rope=Floats(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,rope));
+#if PIONEER_COORDINATOR_PARALLEL_ROPE
+	// Frozen through every attention completion for this position. These
+	// three512B spans are in the existing140000..148000 bulk backup,not
+	// in matrix gathers144000 or NoC scratch147000..147940.
+	DecoderCopy(0x147e00,TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,rope),128);
+	(void)rope;
+#endif
 	for (unsigned layer=0;layer<28;layer++) {
 		const volatile auto& l=root.layers[layer];
 		DecoderCopy(TT_DECODER_RESIDUAL,TT_DECODER_HIDDEN,1024);
@@ -309,6 +316,10 @@ extern "C" unsigned coordinator_main()
 		for (unsigned g=0;g<8;g++) for (unsigned i=0;i<64;i++) Words(0x142100)[g*128+i]
 			=PioneerAttentionToHalf(Floats(0x84000)[g*128+i*2])|(uint32_t(PioneerAttentionToHalf(Floats(0x84000)[g*128+i*2+1]))<<16);
 		DecoderMatrix(l.k,1024,1024,total); DecoderCopy(TT_DECODER_K,0x84000,1024);
+#if PIONEER_COORDINATOR_PARALLEL_ROPE
+		DecoderRead(TT_DECODER_NORM,l.qNorm,512,total); DecoderCopy(0x147a00,TT_DECODER_NORM,128);
+		DecoderRead(TT_DECODER_NORM,l.kNorm,512,total); DecoderCopy(0x147c00,TT_DECODER_NORM,128);
+#else
 		DecoderNorm(TT_DECODER_Q,TT_DECODER_Q,2048,128,l.qNorm,total);
 		DecoderNorm(TT_DECODER_K,TT_DECODER_K,1024,128,l.kNorm,total);
 		{ DECODER_STAGE_BEGIN();
@@ -318,6 +329,7 @@ extern "C" unsigned coordinator_main()
 		}
 		for (unsigned g=0;g<8;g++) for (unsigned i=0;i<64;i++) Words(0x142000)[g*128+i]
 			=PioneerAttentionToHalf(Floats(TT_DECODER_K)[g*128+i*2])|(uint32_t(PioneerAttentionToHalf(Floats(TT_DECODER_K)[g*128+i*2+1]))<<16);
+#endif
 		DecoderCopy(0x140000,TT_DECODER_Q,2048);
 #if PIONEER_COORDINATOR_PARALLEL_ATTENTION
 		DecoderParallelAttention(layer,total);

@@ -16,11 +16,11 @@ struct ProfileDecoder:ParallelDecoder {
 	}
 	void VerifyProfile() {
 		tt_decoder_stage_profile p={}; for (unsigned i=0;i<32;i++) reinterpret_cast<uint32_t*>(&p)[i]=memory.at(TT_DECODER_STAGE_L1+i*4);
-		assert(PioneerDecoderStageValid(p,positions,positions,paired?3:fusedGlu?2:1) && timerReads==2*((paired?168:196)+113+(fusedGlu?85:113)+28+28+28+1+1)*positions);
+		assert(PioneerDecoderStageValid(p,positions,positions,groupImage.parallelRope?4:paired?3:fusedGlu?2:1) && timerReads==2*((paired?168:196)+(groupImage.parallelRope?57:113)+(fusedGlu?85:113)+(groupImage.parallelRope?0:28)+28+28+1+1)*positions);
 		printf("OFFLINE scalar-step stage diagnostic ONLY:matrices%u RMS%u Q8%u RoPE%u GLU%u attention%u vocabulary%u total%u\n",p.cycles[0],p.cycles[1],p.cycles[2],p.cycles[3],p.cycles[4],p.cycles[5],p.cycles[6],p.cycles[7]);
 		for (unsigned i=0;i<32;i++) { auto broken=p;
-			if (i>=4 && i<12) { reinterpret_cast<uint32_t*>(&broken)[i]=0; } else reinterpret_cast<uint32_t*>(&broken)[i]^=1;
-			assert(!PioneerDecoderStageValid(broken,positions,positions,paired?3:fusedGlu?2:1));
+			if (i>=4 && i<12) { reinterpret_cast<uint32_t*>(&broken)[i]=reinterpret_cast<uint32_t*>(&broken)[i]?0:1; } else reinterpret_cast<uint32_t*>(&broken)[i]^=1;
+			assert(!PioneerDecoderStageValid(broken,positions,positions,groupImage.parallelRope?4:paired?3:fusedGlu?2:1));
 		}
 	}
 };
