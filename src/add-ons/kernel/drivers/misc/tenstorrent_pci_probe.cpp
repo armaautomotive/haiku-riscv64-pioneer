@@ -2276,7 +2276,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={2,119,3,1,8192}; // v2 verifies only the consumed job span, not unused padding
+	tt_coordinated_support support={6,119,3,1,8192}; // v6: fused owned output (request1), separate-launch debug (request2)
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2291,7 +2291,7 @@ CoordinatedFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	auto* request=(tt_pioneer_coordinated_fleet*)malloc(length); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,prefix);
 	PioneerFleetPlan plan;
-	if (status!=B_OK || request->version!=1 || !request->workers || request->workers>119
+	if (status!=B_OK || (request->version!=1 && request->version!=2) || !request->workers || request->workers>119
 		|| length!=PioneerCoordinatedRequestBytes(request->outputs)
 		|| !PioneerFleetPartition(request->inputs,request->outputs,request->workers,plan)) {
 		free(request); return status!=B_OK?status:B_BAD_VALUE;
@@ -2302,6 +2302,7 @@ CoordinatedFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
 	else if ((context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=8) || context->bytes!=UINT64_C(0x80000000)
 		|| !context->bulk.ready || !context->bulkHost.ready) status=B_NOT_ALLOWED;
+	else if (context->coordinator.ready && context->coordinator.fused!=(request->version==1)) status=B_NOT_ALLOWED;
 	else if (!PioneerResidentOffset(context->bytes,request->weight_offset) || !bytes
 		|| request->weight_offset>=context->bytes-TT_RESIDENT_KV_BYTES
 		|| bytes>context->bytes-TT_RESIDENT_KV_BYTES-request->weight_offset) status=B_BAD_VALUE;
@@ -2334,7 +2335,7 @@ CoordinatedFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 				ready=context->io.AllocateFleetWorker(0) && context->io.SelectRuntimeCore(0)
 					&& PioneerRuntimeMatvecPrepare(context->io,dram,f.noc,f.Store(),f.Compute(),false,true,true,true,true,true,true)
 					&& PioneerFleetPreludePrepare(context->io,f) && context->io.MapCoordinator()
-					&& PioneerCoordinatorPrepare(context->io,dram,f.noc,f.Store(),context->coordinator);
+					&& PioneerCoordinatorPrepare(context->io,dram,f.noc,f.Store(),context->coordinator,true,request->version==2,request->version==1);
 			}
 			if (ready) ready=PioneerCoordinatedMasterBoundary(context->io,dram,context->fleet,context->attention.ready);
 			for (unsigned w=1;w<=plan.workers && ready;w++) {
@@ -2348,7 +2349,7 @@ CoordinatedFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 			}
 			if (ready) {
 				context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
-				PioneerCoordinatedMatvec(context->io,dram,context->host,context->fleet,context->bulk,context->coordinator,
+				PioneerCoordinatedMatvec(context->io,dram,context->host,context->bulkHost,context->fleet,context->bulk,context->coordinator,
 					context->attention.ready,context->bytes,request->weight_offset,request->inputs,request->outputs,request->workers,
 					request->input,request->scale,request->output,request->result);
 			}
@@ -2359,7 +2360,7 @@ CoordinatedFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 			}
 			auto& r=request->result.master;
 			context->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
-			if (!PioneerCoordinatedProof(request->result,request->inputs,request->outputs,request->workers,context->coordinator.nonce))
+			if (!PioneerCoordinatedProof(request->result,request->inputs,request->outputs,request->workers,context->coordinator.nonce,request->version==2))
 				memset(request->output,0,request->outputs*4);
 			status=user_memcpy(data,request,length);
 		}

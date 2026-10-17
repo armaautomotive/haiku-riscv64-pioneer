@@ -27,6 +27,20 @@ static bool NocIdle()
 	for (unsigned i=0;i<32;i++) idle &= !(noc[(0x240+i*4)/4]&255);
 	return idle;
 }
+#if PIONEER_COORDINATOR_PACKET_IDLE
+// Separate fast image. Kernel entry/exit prove ALL initiators/IDs idle;
+// other RISCs/NoC initiators on master0 are held and no code uses them.
+// This immutable program uses only initiator0/transaction-ID0, serially.
+// Exact command readback/counters/ID0/fences remain per packet. A full
+// independent ALL-ID proof remains mandatory before final publication.
+static bool PacketIdle()
+{
+	volatile uint32_t* noc=Words(0xffb20000);
+	return !noc[0x40/4] && !(noc[0x240/4]&255);
+}
+#else
+static bool PacketIdle() { return NocIdle(); }
+#endif
 static unsigned CounterOffset(unsigned word)
 {
 	static const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};
@@ -34,6 +48,9 @@ static unsigned CounterOffset(unsigned word)
 }
 static unsigned Complete(unsigned workers)
 {
+#if PIONEER_COORDINATOR_PACKET_IDLE
+	if (!NocIdle()) coordinator_fault_park();
+#endif
 	volatile uint32_t* stats=Words(0x143000);
 	stats[4]=workers;
 	for (unsigned i=0;i<8;i++) stats[16+i]=*Words(0xffb20000+CounterOffset(i));
@@ -41,7 +58,7 @@ static unsigned Complete(unsigned workers)
 }
 static void Transfer(bool write,unsigned worker,uint32_t local,uint32_t remote,unsigned bytes)
 {
-	if (!worker || worker>=120 || !bytes || bytes>16384 || ((remote^local)&31) || !NocIdle()) coordinator_fault_park();
+	if (!worker || worker>=120 || !bytes || bytes>16384 || ((remote^local)&31) || !PacketIdle()) coordinator_fault_park();
 	volatile uint32_t* noc=Words(0xffb20000);
 	const unsigned offsets[4]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
 	uint32_t expected[4];
@@ -57,7 +74,7 @@ static void Transfer(bool write,unsigned worker,uint32_t local,uint32_t remote,u
 	for (unsigned attempt=0;attempt<65536;attempt++) {
 		bool complete=!noc[0x40/4];
 		for (unsigned i=0;i<4;i++) complete &= noc[offsets[i]/4]==expected[i];
-		if (complete && NocIdle()) {
+		if (complete && PacketIdle()) {
 			volatile uint32_t* stats=Words(0x143000);
 			stats[write?2:0]++; stats[write?3:1]+=(bytes+63)/64;
 			Fence(); return;
@@ -70,6 +87,37 @@ static uint32_t Pc(unsigned worker)
 	Transfer(false,worker,0x147040,0xffb13140,4);
 	return *Words(0x147040);
 }
+#if PIONEER_COORDINATOR_FUSED_OUTPUT
+// Fixed kernel-owned16KiB host owner only. This separate immutable image
+// has no arbitrary code, coordinates or host address from a userspace ABI.
+// Exact kernel staging + ownership bounds precede BME enable. Only this
+// bounded final write/read pair may reach PCIe; peers remain device-only.
+static void HostTransfer(bool write,uint32_t low,uint32_t high,unsigned words)
+{
+	if (!words || words>4096 || (words&31) || !high || high>0xffff || (low&4095)
+		|| (high==0xffff && low>0xffffc000) || !PacketIdle()) coordinator_fault_park();
+	volatile uint32_t* noc=Words(0xffb20000);
+	const unsigned offsets[4]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
+	uint32_t expected[4];
+	for (unsigned i=0;i<4;i++) expected[i]=noc[offsets[i]/4]+(i==1?words/16:1);
+	volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;
+	command[0]=write?0x84000:low; command[1]=write?0:high; command[2]=write?129U:1555U;
+	command[3]=write?low:0x144000; command[4]=write?high:0; command[5]=write?1555U:129U;
+	command[7]=write?0x212U:0; command[8]=words*4;
+	for (unsigned i=0;i<10;i++) noc[i]=command[i];
+	for (unsigned i=0;i<10;i++) if (noc[i]!=command[i]) coordinator_fault_park();
+	Fence(); noc[0x40/4]=1; (void)noc[0x40/4]; Fence();
+	for (unsigned attempt=0;attempt<65536;attempt++) {
+		bool complete=!noc[0x40/4];
+		for (unsigned i=0;i<4;i++) complete &= noc[offsets[i]/4]==expected[i];
+		if (complete && PacketIdle()) {
+			Words(0x143000)[write?2:0]++; Words(0x143000)[write?3:1]+=words/16;
+			Fence(); return;
+		}
+	}
+	coordinator_fault_park();
+}
+#endif
 static bool WaitPc(uint32_t pc) { return pc>=0x71280 && pc<=0x71294 && !(pc&3); }
 static void ResetHeld(unsigned worker,uint32_t expected)
 {
@@ -93,13 +141,35 @@ extern "C" unsigned coordinator_main()
 	volatile uint32_t* job=Words(0x140000);
 	unsigned operation=job[1],limit=job[2],k=job[3],n=job[4];
 	uint32_t base=job[5];
-	if (job[0]!=0x31445243 || operation>1 || !limit || limit>119) return 0;
+#if PIONEER_COORDINATOR_FUSED_OUTPUT
+	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3) || !limit || limit>119) return 0;
+	if (operation==3 && (!n || n>4096 || !job[8] || job[8]>0xffff || (job[7]&4095)
+		|| (job[8]==0xffff && job[7]>0xffffc000) || job[9]!=16384)) return 0;
+	if (operation!=3 && (job[7] || job[8] || job[9])) return 0;
+#else
+	if (job[0]!=0x31445243 || operation>(PIONEER_COORDINATOR_OUTPUT_COMPARE?2U:1U) || !limit || limit>119) return 0;
+#endif
 	if (!job[6] || job[6]>=0x7fffffff || !NocIdle()) return 0;
 	volatile uint32_t* stats=Words(0x143000);
 	for (unsigned i=0;i<24;i++) stats[i]=0;
 	stats[5]=n; stats[6]=job[6]; stats[7]=operation;
 	for (unsigned i=0;i<8;i++) stats[8+i]=*Words(0xffb20000+CounterOffset(i));
 	Fence();
+#if PIONEER_COORDINATOR_OUTPUT_COMPARE
+	if (operation==2) {
+		// No NoC/host DMA here. Kernel must FIRST establish fresh ordered
+		// host readback into its owned144000..148000 scratch and turn BME
+		// OFF. Compare every original/readback bit, never a hash or sum.
+		if (limit!=1 || (k!=0 && k!=4096) || !n || n>4096 || (n&31) || base) return 0;
+		uint32_t mismatch=0;
+		for (unsigned i=0;i<n;i++) {
+			uint32_t original=Words(0x84000)[k+i],returned=Words(0x144000)[i];
+			mismatch |= original^returned;
+			mismatch |= (original&0x7f800000)==0x7f800000;
+		}
+		stats[0]=mismatch; stats[1]=k; Fence(); return Complete(n);
+	}
+#endif
 	if (!operation) {
 		// Read-only image qualification. CPU preflight records each held PC.
 		for (unsigned worker=1;worker<=limit;worker++) {
@@ -164,5 +234,14 @@ extern "C" unsigned coordinator_main()
 		}
 		firstRow+=rows;
 	}
+#if PIONEER_COORDINATOR_FUSED_OUTPUT
+	if (operation==3) {
+		HostTransfer(true,job[7],job[8],n);
+		HostTransfer(false,job[7],job[8],n); // ordered fresh read, never an ACK-only proof
+		uint32_t mismatch=0;
+		for (unsigned i=0;i<n;i++) mismatch |= Words(0x84000)[i]^Words(0x144000)[i];
+		if (mismatch) coordinator_fault_park(); // ALL bits, not XOR/hash across words
+	}
+#endif
 	Fence(); return firstRow==n?Complete(workers):0;
 }

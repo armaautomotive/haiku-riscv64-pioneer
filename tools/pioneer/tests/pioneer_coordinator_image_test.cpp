@@ -7,7 +7,13 @@
 #include <memory>
 #include <string>
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatorImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeFastCoordinatorImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatorReadbackImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeFusedCoordinatorImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerCoordinatedFleet.h"
+static bool fastImage=false;
+static bool readbackImage=false;
+static bool fusedImage=false;
 struct CoordinatorMachine:Machine {
 	std::vector<uint8_t> code,workerImage;
 	std::map<uint32_t,uint32_t> memory;
@@ -19,12 +25,17 @@ struct CoordinatorMachine:Machine {
 	bool pending=false,dropDoorbell=false,badOutput=false,badPeerPc=false,badPeerReset=false;
 	unsigned minStack=0x70000;
 	unsigned nonce=0;
+	uint32_t host[4096]={};
+	bool dropPosted=false,partialPosted=false,pairedCorrupt=false;
+	unsigned corruptHost=~0U,hostWrites=0,hostReads=0,comparedOriginal=0,comparedReturned=0;
+	unsigned busyAddress=0,busyAfter=0;
 	std::vector<std::string> events;
 	CoordinatorMachine(const char* path):peer(120) {
 		std::string root(path); code=Read((root+"/code.bin").c_str()); workerImage=Read((root+"/worker.bin").c_str());
 		auto boot=Read((root+"/boot.bin").c_str()); assert(boot.size()==4 && code.size()<=8192 && !(code.size()&3));
-		assert(Word(boot,0)==TT_COORDINATOR_BOOT && code.size()==TT_COORDINATOR_IMAGE_WORDS*4);
-		for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert(BlackholeCoordinatorCodeWord(i)==(i<code.size()/4?Word(code,i*4):0));
+		unsigned size=fusedImage?unsigned(TT_FUSED_COORDINATOR_IMAGE_WORDS):readbackImage?unsigned(TT_COORDINATOR_READBACK_IMAGE_WORDS):fastImage?unsigned(TT_FAST_COORDINATOR_IMAGE_WORDS):unsigned(TT_COORDINATOR_IMAGE_WORDS);
+		assert(Word(boot,0)==TT_COORDINATOR_BOOT && code.size()==size*4);
+		for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert((fusedImage?BlackholeFusedCoordinatorCodeWord(i):readbackImage?BlackholeCoordinatorReadbackCodeWord(i):fastImage?BlackholeFastCoordinatorCodeWord(i):BlackholeCoordinatorCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		l1[0]=Word(boot,0);
 		for (unsigned i=0;i<code.size()/4;i++) l1[i+1]=Word(code,i*4);
 		for (auto& count:counts) count=0xfffffff8; counts[6]=counts[2];
@@ -42,6 +53,7 @@ struct CoordinatorMachine:Machine {
 		memory[0x140000]=0x31445243; memory[0x140004]=op; memory[0x140008]=limit;
 		memory[0x14000c]=k; memory[0x140010]=n; memory[0x140014]=0x04000000;
 		memory[0x140018]=++nonce;
+		memory[0x14001c]=memory[0x140020]=memory[0x140024]=0;
 		for (unsigned i=0;i<8192;i++) memory[0x84000+i*4]=0x7fc00000;
 		if (!op) {
 			for (unsigned w=1;w<=limit;w++) memory[0x140100+(w-1)*4]=0x70400+w*4;
@@ -71,6 +83,11 @@ struct CoordinatorMachine:Machine {
 		for (unsigned i=0;i<4096;i++) memory[0x80000+i*4]=0;
 		for (unsigned i=0;i<k;i++) memory[0x80000+(i/2)*4]|=uint32_t(PioneerInt8Operand(Q8Machine::Input(i,t)))<<(16*(i&1));
 		for (unsigned i=0;i<k/32;i++) memory[0x83000+i*4]=Bits(Q8Machine::InputScale(i,t));
+	}
+	void SetupFused(unsigned inputs,unsigned outputs,unsigned workerLimit,unsigned t=0) {
+		Setup(1,inputs,outputs,workerLimit,t); operation=3; memory[0x140004]=3;
+		memory[0x14001c]=0x80000000; memory[0x140020]=1; memory[0x140024]=16384;
+		for (auto& word:host) word=0xffffffff;
 	}
 	void Advance() {
 		for (auto& pointer:peer) if (pointer) {
@@ -111,8 +128,18 @@ struct CoordinatorMachine:Machine {
 		transfers++; if (transfers==failTransfer) { pending=true; return; }
 		bool write=command[7]==0x212; assert(write || !command[7]);
 		uint32_t xy=write?command[5]:command[2],local=write?command[0]:command[3],remote=write?command[3]:command[0],bytes=command[8];
-		assert(!command[1] && !command[4] && !command[6] && !command[9] && bytes && bytes<=16384
+		assert(!(write?command[1]:command[4]) && !command[6] && !command[9] && bytes && bytes<=16384
 			&& !((local^remote)&31) && (write?command[2]:command[5])==129);
+		if (xy==1555) {
+			assert(operation==3 && n<=4096 && remote==0x80000000 && (write?command[4]:command[1])==1 && bytes==n*4
+				&& local==(write?0x84000:0x144000));
+			if (write) {
+				hostWrites++;
+				if (!dropPosted) for (unsigned i=0;i<n-(partialPosted?1:0);i++) host[i]=memory.at(0x84000+i*4)^(i==corruptHost?1:0);
+				if (pairedCorrupt) { host[0]^=1; host[1]^=1; }
+			} else { hostReads++; for (unsigned i=0;i<n;i++) memory[0x144000+i*4]=host[i]; }
+		} else {
+		assert(!command[1] && !command[4]);
 		unsigned worker=0; for (unsigned w=1;w<120;w++) if (xy==(PioneerWorkerX(w)|(PioneerWorkerY(w)<<6))) worker=w;
 		assert(worker && worker<=limit);
 		if (write) assert((remote==0x70500 && local==0x147100 && bytes==32) || (remote==0x71300 && local==0x147140 && bytes==4));
@@ -126,12 +153,18 @@ struct CoordinatorMachine:Machine {
 			if (write) PeerWrite(worker,remote+i,memory.at(local+i));
 			else memory[local+i]=PeerRead(worker,remote+i);
 		}
+		}
 		unsigned at=write?4:0;
 		counts[at]++; counts[at+1]+=(bytes+63)/64; counts[2]++; counts[6]=counts[2]; counts[at+3]++;
 		if (transfers==badCounter) counts[at+3]++;
 	}
 	uint32_t Load(uint32_t a) override {
 		assert(!(a&3));
+		if (operation==3 && hostReads) {
+			if (Range(a,0x84000,n*4)) comparedOriginal++;
+			if (Range(a,0x144000,n*4)) comparedReturned++;
+		}
+		if (a==busyAddress && transfers>=busyAfter) return 1;
 		if (Range(a,0x6c000,unsigned(code.size()))) return l1[Index(a)];
 		if (Range(a,0xffb20000,40)) return command[(a-0xffb20000)/4];
 		if (a==0xffb20040) return pending;
@@ -154,20 +187,39 @@ struct CoordinatorMachine:Machine {
 		assert(l1[Index(pc)]==0x0000006f);
 		if (pc==0x6c058) { assert(memory.at(0x17ffc8)==0x46445243 && !memory.at(0x17ffc4)); return false; }
 		assert(memory.at(0x17ffc0)==0x6c00c && memory.at(0x17ffc8)==0x31445243 && !pending);
+		if (operation==2) {
+			if (!memory.at(0x17ffc4)) return false;
+			assert(memory.at(0x17ffc4)==n && memory.at(0x143010)==n && memory.at(0x143014)==n
+				&& memory.at(0x143018)==nonce && memory.at(0x14301c)==2 && memory.at(0x143004)==k);
+			for (unsigned i=0;i<8;i++) assert(memory.at(0x143020+i*4)==memory.at(0x143040+i*4));
+			uint32_t summary[24]; for (unsigned i=0;i<24;i++) summary[i]=memory.at(0x143000+i*4);
+			assert(PioneerCoordinatedOutputSummary(summary,k,n,nonce,counts,counts));
+			for (unsigned word=1;word<24;word++) {
+				summary[word]^=1; assert(!PioneerCoordinatedOutputSummary(summary,k,n,nonce,counts,counts)); summary[word]^=1;
+			}
+			assert(!transfers && !issued && !controlWrites);
+			return !memory.at(0x143000);
+		}
 		if (memory.at(0x17ffc4)) {
 			unsigned count=operation?workers:limit;
 			assert(memory.at(0x143010)==count && memory.at(0x143014)==n && memory.at(0x143018)==nonce && memory.at(0x14301c)==operation);
 			unsigned read=memory.at(0x143000),readFlits=memory.at(0x143004),write=memory.at(0x143008),writeFlits=memory.at(0x14300c);
-			assert(write==(operation?2*count:0) && writeFlits==write);
+			bool fused=operation==3;
+			assert(write==(operation?2*count:0)+(fused?1:0) && writeFlits==(operation?2*count:0)+(fused?n/16:0));
 			assert(operation?read>=10*count:read==4*count);
-			assert(readFlits==(operation && n<=8192?read-count+n/16:read));
+			assert(readFlits==(operation && n<=8192?read-count+n/16+(fused?n/16-1:0):read));
 			const unsigned expected[]={read,readFlits,read+write,read,write,writeFlits,read+write,write};
 			for (unsigned i=0;i<8;i++) assert(uint32_t(memory.at(0x143040+i*4)-memory.at(0x143020+i*4))==expected[i]);
 			if (operation) {
 				uint32_t summary[24],before[8],after[8];
 				for (unsigned i=0;i<24;i++) summary[i]=memory.at(0x143000+i*4);
 				for (unsigned i=0;i<8;i++) { before[i]=summary[8+i]; after[i]=summary[16+i]; }
-				assert(PioneerCoordinatedSummary(summary,n,count,nonce,before,after));
+				assert(PioneerCoordinatedSummary(summary,n,count,nonce,before,after,fused));
+				if (fused) {
+					assert(hostWrites==1 && hostReads==1 && comparedOriginal==n && comparedReturned==n);
+					for (unsigned i=0;i<n;i++) assert(host[i]==memory.at(0x84000+i*4));
+					for (unsigned i=n;i<4096;i++) assert(host[i]==0xffffffff);
+				}
 			}
 		}
 		return memory.at(0x17ffc4)!=0;
@@ -188,7 +240,62 @@ struct CoordinatorMachine:Machine {
 };
 int main(int argc,char** argv)
 {
-	assert(argc==2);
+	assert(argc==2 || (argc==3 && (std::string(argv[2])=="--fast" || std::string(argv[2])=="--readback" || std::string(argv[2])=="--fused")));
+	fastImage=argc==3;
+	readbackImage=argc==3 && std::string(argv[2])=="--readback";
+	fusedImage=argc==3 && std::string(argv[2])=="--fused";
+	if (fusedImage) {
+		for (unsigned k:{2048U,3072U,5120U,6144U}) { CoordinatorMachine m(argv[1]); m.SetupFused(k,64,119,2); assert(m.RunCoord()); m.Verify(); }
+		for (unsigned n:{32U,64U,1024U,2048U,3072U,4096U}) {
+			{ CoordinatorMachine m(argv[1]); m.SetupFused(1024,n,119,3); assert(m.RunCoord()); m.Verify(); }
+			for (unsigned fault=0;fault<6;fault++) {
+				CoordinatorMachine m(argv[1]); m.SetupFused(1024,n,119,3);
+				m.dropPosted=fault==0; m.partialPosted=fault==1; m.pairedCorrupt=fault==2;
+				m.corruptHost=fault==3?0:fault==4?n/2:fault==5?n-1:~0U;
+				assert(!m.RunCoord() && !m.memory.at(0x17ffc4));
+			}
+			printf("OFFLINE fused owned-host output n%u exact all-word comparison/finite math/one write-read pair/partial or corrupted posted write rejection PASS\n",n);
+		}
+		for (unsigned fault=0;fault<8;fault++) {
+			CoordinatorMachine m(argv[1]); m.SetupFused(1024,64,119);
+			if (fault==0) m.memory[0x140020]=0; if (fault==1) m.memory[0x140020]=0x10000;
+			if (fault==2) m.memory[0x14001c]=1; if (fault==3) m.memory[0x140024]=32768;
+			if (fault==4) m.memory[0x140010]=8192; if (fault==5) m.memory[0x140004]=2;
+			if (fault==6) m.memory[0x140004]=1; if (fault==7) m.memory[0x140000]^=1;
+			assert(!m.RunCoord() && !m.issued && !m.transfers);
+		}
+		unsigned total=0;
+		{ CoordinatorMachine m(argv[1]); m.SetupFused(1024,64,119); assert(m.RunCoord()); total=m.transfers; }
+		for (unsigned command:{total-1,total}) for (unsigned fault=0;fault<2;fault++) {
+			CoordinatorMachine m(argv[1]); m.SetupFused(1024,64,119);
+			if (fault) m.badCounter=command; else m.failTransfer=command;
+			assert(!m.RunCoord() && !m.memory.at(0x17ffc4));
+		}
+	}
+	if (readbackImage) {
+		for (unsigned n:{32U,64U,1024U,2048U,4096U}) for (unsigned offset:{0U,4096U}) {
+			auto setup=[&](CoordinatorMachine& m) {
+				m.Setup(0,0,0,1); m.operation=2; m.k=offset; m.n=n;
+				m.memory[0x140004]=2; m.memory[0x14000c]=offset; m.memory[0x140010]=n; m.memory[0x140014]=0;
+				for (unsigned i=0;i<n;i++) m.memory[0x84000+(offset+i)*4]=m.memory[0x144000+i*4]=0x3f000000+i*17;
+			};
+			{ CoordinatorMachine m(argv[1]); setup(m); assert(m.RunCoord()); }
+			for (unsigned word=0;word<n;word++) {
+				CoordinatorMachine m(argv[1]); setup(m); m.memory[0x144000+word*4]^=1U<<(word%32); assert(!m.RunCoord());
+			}
+			{ CoordinatorMachine m(argv[1]); setup(m); m.memory[0x144000]^=1; m.memory[0x144004]^=1; assert(!m.RunCoord()); }
+			{ CoordinatorMachine m(argv[1]); setup(m); m.memory[0x84000+offset*4]=m.memory[0x144000]=0x7f800000; assert(!m.RunCoord()); }
+			printf("OFFLINE actual output comparison all%u words,offset%u,single/paired corruptions,nonfinite,no NoC/control/payload writes PASS\n",n,offset);
+		}
+	}
+	// A channel not used by this immutable program is checked at BOTH
+	// job boundaries even in fast mode. No final publication when busy.
+	for (unsigned address:{0xffb20840U,0xffb21040U,0xffb21840U,0xffb202bcU,0xffb20240U})
+		for (unsigned after:{0U,1U,9U}) {
+			CoordinatorMachine m(argv[1]); m.Setup(1,1024,64,119); m.busyAddress=address; m.busyAfter=after;
+			assert(!m.RunCoord() && !m.memory.at(0x17ffc4));
+			if (!after) assert(!m.transfers && !m.issued);
+		}
 	{ CoordinatorMachine m(argv[1]); m.Setup(0,0,0,119); assert(m.RunCoord() && m.transfers==476 && !m.issued); }
 	for (unsigned n:{32U,64U,160U,3808U,6144U,8192U}) {
 		CoordinatorMachine m(argv[1]); m.Setup(1,1024,n,n==8192?3:119); assert(m.RunCoord()); m.Verify();

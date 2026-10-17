@@ -4,10 +4,21 @@
 #include "PioneerPeerPcRead.h"
 #include "PioneerResidentAttention.h"
 #include "BlackholeCoordinatorImage.h"
+#include "BlackholeFastCoordinatorImage.h"
+#include "BlackholeCoordinatorReadbackImage.h"
+#include "BlackholeFusedCoordinatorImage.h"
 struct PioneerCoordinatorLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false;
+	bool fast=false; // immutable for this code/stack ownership lease
+	bool readback=false;
+	bool fused=false;
+	uint32_t readbackNonce=0;
 	uint32_t nonce=0,expected[119]={};
 };
+static inline uint32_t PioneerCoordinatorWord(bool fast,bool readback,unsigned word,bool fused=false)
+{
+	return fused?BlackholeFusedCoordinatorCodeWord(word):readback?BlackholeCoordinatorReadbackCodeWord(word):fast?BlackholeFastCoordinatorCodeWord(word):BlackholeCoordinatorCodeWord(word);
+}
 struct tt_coordinator_probe_result {
 	uint32_t version,state,workers,matched,nonce,prepared,started,completed,stopped,recovery_required;
 	uint32_t polls,phase,count,marker,pc[2],before[8],after[8],summary_verified;
@@ -30,10 +41,10 @@ static inline bool PioneerCoordinatorProbeProof(const tt_coordinator_probe_resul
 }
 template<class IO>
 bool PioneerCoordinatorSources(IO& io,const tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& noc,const PioneerResidentLease& store)
+	const tt_compute_noc_result& noc,const PioneerResidentLease& store,uint32_t pci=0x402)
 {
 	if (!store.ready || store.pending || store.recovery_required || !io.CoordinatorMappingStable()
-		|| !io.BulkMappingStable() || !PioneerRuntimeSources(io,baseline,noc,store)) return false;
+		|| !io.BulkMappingStable() || !PioneerRuntimeSources(io,baseline,noc,store,pci)) return false;
 	for (unsigned s=0;s<2;s++) for (unsigned w=0;w<3;w++)
 		if (io.DramTlbRead(s,w)!=BlackholeDramFixedTlbWord(s?0xffa00000:0,1,2,false,w)) return false;
 	return true;
@@ -47,18 +58,19 @@ bool PioneerCoordinatorLocalHeld(IO& io,const tt_dram_samples_result& baseline,
 }
 template<class IO>
 bool PioneerCoordinatorPrepare(IO& io,const tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& noc,PioneerResidentLease& store,PioneerCoordinatorLease& lease)
+	const tt_compute_noc_result& noc,PioneerResidentLease& store,PioneerCoordinatorLease& lease,bool fast=false,bool readback=false,bool fused=false)
 {
-	if (lease.ready) return !lease.unsafe && !lease.running;
+	if ((readback && !fast) || (fused && (!fast || readback))) return false;
+	if (lease.ready) return !lease.unsafe && !lease.running && lease.fast==fast && lease.readback==readback && lease.fused==fused;
 	if (lease.saved || lease.unsafe || !io.CoordinatorSavedWords() || !PioneerCoordinatorLocalHeld(io,baseline,noc,store)) return false;
 	uint32_t* saved=io.CoordinatorSavedWords();
 	for (unsigned w=0;w<TT_COORDINATOR_SAVED_WORDS;w++) saved[w]=io.CoordinatorRead(w);
-	lease.saved=true;
+	lease.saved=true; lease.fast=fast; lease.readback=readback; lease.fused=fused;
 	if (!PioneerCoordinatorLocalHeld(io,baseline,noc,store)) { lease.unsafe=true; return false; }
 	lease.dirty=true;
-	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) io.CoordinatorWrite(w,BlackholeCoordinatorCodeWord(w));
+	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) io.CoordinatorWrite(w,PioneerCoordinatorWord(fast,readback,w,fused));
 	bool exact=true;
-	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) exact &= io.CoordinatorRead(w)==BlackholeCoordinatorCodeWord(w);
+	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) exact &= io.CoordinatorRead(w)==PioneerCoordinatorWord(fast,readback,w,fused);
 	lease.ready=exact; return exact;
 }
 template<class IO>
@@ -85,7 +97,7 @@ bool PioneerCoordinatorProbe(IO& io,const tt_dram_samples_result& baseline,Pione
 {
 	r={}; r.version=1; r.workers=workers;
 	if (!workers || workers>119 || !fleet || !bulk.ready || !bulk.saved || bulk.unsafe
-		|| !lease.ready || lease.running || lease.unsafe || lease.nonce>=0x7ffffffe
+		|| !lease.ready || lease.fast || lease.running || lease.unsafe || lease.nonce>=0x7ffffffe
 		|| !PioneerPeerPcMasterHeld(io,baseline,fleet,attentionReady)) return false;
 	auto& store=fleet[0].Store(); const auto& noc=fleet[0].noc;
 	r.prepared=1; r.state=TT_RUNTIME_CONFIG_FAILED;

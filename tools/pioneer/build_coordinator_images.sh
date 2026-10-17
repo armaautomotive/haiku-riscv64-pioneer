@@ -5,6 +5,11 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
+case ${PIONEER_COORDINATOR_PACKET_IDLE:-0} in 0|1) ;; *) echo 'Packet-idle image flag must be0 or1' >&2; exit 2;; esac
+case ${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0} in 0|1) ;; *) echo 'Output-compare image flag must be0 or1' >&2; exit 2;; esac
+case ${PIONEER_COORDINATOR_FUSED_OUTPUT:-0} in 0|1) ;; *) echo 'Fused-output image flag must be0 or1' >&2; exit 2;; esac
+[ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] || exit 2
+[ "${PIONEER_COORDINATOR_FUSED_OUTPUT:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ]; } || exit 2
 case "$output" in /*) ;; *) echo 'Absolute output required' >&2; exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || { echo 'Fresh output required' >&2; exit 2; }
 umask 077
@@ -18,7 +23,10 @@ mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -Os -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
  -fno-stack-protector -fno-pic -fno-pie -ffunction-sections -fdata-sections -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march=rv32im -mabi=ilp32 \
- -fstack-usage -c "$directory/blackhole_coordinator.cpp" -o "$output/program.o"
+ -fstack-usage -DPIONEER_COORDINATOR_PACKET_IDLE=${PIONEER_COORDINATOR_PACKET_IDLE:-0} \
+ -DPIONEER_COORDINATOR_OUTPUT_COMPARE=${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0} \
+ -DPIONEER_COORDINATOR_FUSED_OUTPUT=${PIONEER_COORDINATOR_FUSED_OUTPUT:-0} \
+ -c "$directory/blackhole_coordinator.cpp" -o "$output/program.o"
 "$cross-as" -march=rv32im -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_coordinator.ld" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"

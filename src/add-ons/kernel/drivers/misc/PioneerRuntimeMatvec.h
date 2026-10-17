@@ -32,12 +32,13 @@ struct PioneerRuntimeMatvecLease {
 	unsigned buffer_words=8192;
 };
 template<class IO>
-bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,const PioneerResidentLease& store)
+bool PioneerRuntimeSources(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,const PioneerResidentLease& store,uint32_t pci=0x402)
 {
+	if (pci!=0x402 && pci!=0x406) return false;
 	bool stable=true;
 	for (unsigned w=0;w<16;w++) stable &= io.ResidentNocRead(BlackholeDramSourceOffset(w))==(w?noc.source[0][w]:store.config|0x10000);
 	return stable
-		&& BlackholeDramSourceStable(io,baseline) && BlackholeHostReadPciQuiet(io,0x402);
+		&& BlackholeDramSourceStable(io,baseline) && BlackholeHostReadPciQuiet(io,pci);
 }
 template<class IO>
 bool PioneerRuntimeMatvecPrepare(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,

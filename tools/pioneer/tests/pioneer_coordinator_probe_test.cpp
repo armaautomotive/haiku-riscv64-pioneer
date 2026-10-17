@@ -74,6 +74,15 @@ int main()
 {
 	{
 		CoordinatorFixture f;
+		assert(!PioneerCoordinatorPrepare(f.io,f.io.core[0]->Baseline(),f.fleet[0].noc,f.fleet[0].Store(),f.lease,false,true) && !f.lease.saved);
+		assert(PioneerCoordinatorPrepare(f.io,f.io.core[0]->Baseline(),f.fleet[0].noc,f.fleet[0].Store(),f.lease,true,true));
+		unsigned writes=f.io.codeWrites;
+		assert(!PioneerCoordinatorPrepare(f.io,f.io.core[0]->Baseline(),f.fleet[0].noc,f.fleet[0].Store(),f.lease,true,false) && f.io.codeWrites==writes);
+		assert(!PioneerCoordinatorProbe(f.io,f.io.core[0]->Baseline(),f.fleet.data(),f.bulk,f.lease,false,1,f.result) && !f.io.starts);
+		assert(f.Close());
+	}
+	{
+		CoordinatorFixture f;
 		for (unsigned workers:{1U,2U,119U,1U}) { assert(f.Run(workers)); assert(f.result.nonce==f.io.starts && f.io.stops==f.io.starts); }
 		for (unsigned word=0;word<sizeof(f.result)/4;word++) { auto r=f.result; reinterpret_cast<uint32_t*>(&r)[word]^=1; assert(!PioneerCoordinatorProbeProof(r,1,f.lease.nonce)); }
 		assert(f.Close()); for (unsigned w=0;w<4096;w++) assert(f.io.program[w]==0xdada0000+w);

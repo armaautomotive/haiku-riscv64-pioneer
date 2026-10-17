@@ -10,6 +10,7 @@
 static unsigned calls=0,ends=0,closes=0,fault=0,target=0,field=0,missing=0;
 static bool failed=false;
 static unsigned coordinatedNonce=0;
+static unsigned coordinatedContract=6;
 static int MockOpen(const char*,int) { return 91; }
 static int MockClose(int fd) { assert(fd==91); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
@@ -19,22 +20,24 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	}
 	if (op==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT) {
 		assert(bytes==sizeof(tt_coordinated_support)); auto& s=*static_cast<tt_coordinated_support*>(data);
-		s={2,119,3,1,8192}; return 0;
+		s={coordinatedContract,119,3,1,8192}; return 0;
 	}
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_COORDINATED_FLEET) {
-		auto& p=*(tt_pioneer_coordinated_fleet*)data; assert(p.version==1 && p.workers<=119 && bytes==PioneerCoordinatedRequestBytes(p.outputs));
+		auto& p=*(tt_pioneer_coordinated_fleet*)data; assert((p.version==1 || p.version==2) && p.workers<=119 && bytes==PioneerCoordinatedRequestBytes(p.outputs));
 		PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
 		auto& r=p.result; r={}; r.inputs=p.inputs; r.outputs=p.outputs; r.workers=plan.workers;
-		r.staged_pages=(p.inputs*2+4095)/4096+1; r.gathered=p.outputs<=8192?p.outputs:0;
+		bool fused=p.version==1 && p.outputs<=4096;
+		r.staged_pages=4; r.gathered=p.outputs<=8192?p.outputs:0; r.dma_words=((p.version==2 && p.outputs<=8192) || fused)?p.outputs:0;
 		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=plan.workers; m.nonce=++coordinatedNonce;
 		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
 		m.phase=TT_COORDINATOR_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_COORDINATOR_PARK;
-		unsigned reads=(p.outputs<=8192?11:10)*plan.workers,flits=p.outputs<=8192?reads-plan.workers+p.outputs/16:reads,writes=2*plan.workers;
-		const unsigned delta[]={reads,flits,reads+writes,reads,writes,writes,reads+writes,writes};
-		r.summary[0]=reads; r.summary[1]=flits; r.summary[2]=r.summary[3]=writes; r.summary[4]=plan.workers;
-		r.summary[5]=p.outputs; r.summary[6]=m.nonce; r.summary[7]=1;
+		unsigned reads=(p.outputs<=8192?11:10)*plan.workers+(fused?1:0),flits=p.outputs<=8192?reads-plan.workers+p.outputs/16+(fused?p.outputs/16-1:0):reads;
+		unsigned writes=2*plan.workers+(fused?1:0),writeFlits=2*plan.workers+(fused?p.outputs/16:0);
+		const unsigned delta[]={reads,flits,reads+writes,reads,writes,writeFlits,reads+writes,writes};
+		r.summary[0]=reads; r.summary[1]=flits; r.summary[2]=writes; r.summary[3]=writeFlits; r.summary[4]=plan.workers;
+		r.summary[5]=p.outputs; r.summary[6]=m.nonce; r.summary[7]=fused?3:1;
 		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
 		for (unsigned i=0;i<p.outputs;i++) p.output[i]=0x3f800000+i;
 		if (fault) {
@@ -170,14 +173,20 @@ int main() {
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==1 && closes==1 && !ends);
 	}
-	for (unsigned n:{64U,6144U,8192U,151936U}) {
+	for (bool debug:{false,true}) for (unsigned n:{64U,1024U,2048U,3072U,4096U,6144U,8192U,151936U}) {
 		Reset(); output.assign(n,0xdeadbeef);
-		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true));
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,debug));
 			assert(d.Q8Matvec(0,1024,n,x,scale,output.data()) && d.Q8Matvec(0,1024,n,x,scale,output.data()));
 			for (unsigned i=0;i<n;i++) assert(output[i]==0x3f800000+i);
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
+	for (unsigned contract:{0U,2U,3U,4U,5U,7U}) {
+		Reset(); coordinatedContract=contract;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
+		assert(calls==2 && closes==1 && !ends);
+	}
+	coordinatedContract=6;
 	for (unsigned f:{1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_coordinated_fleet_result)/4:1);word++) {
 		Reset(f,0,word); output.assign(64,0xdeadbeef);
 		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true));

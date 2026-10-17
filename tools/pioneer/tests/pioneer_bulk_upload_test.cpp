@@ -85,6 +85,7 @@ static void Close(BulkMock& io,Owners& own,bool clean)
 	} else assert(own.bulk.unsafe && io.HostReadMock::quarantined && io.OutputBufferMock::quarantined
 		&& !PioneerReleaseOutputBuffer(io,own.host,false) && !io.OutputBufferMock::releases && !io.PageMock::releases);
 }
+#ifndef PIONEER_BULK_UPLOAD_MOCK_ONLY
 int main()
 {
 	(void)&Input;
@@ -149,3 +150,4 @@ int main()
 		&& !PioneerBulkUploadRange(32768,1,4) && PioneerBulkUploadRange(32768,16384,4));
 	puts("PASS: OFFLINE 1..4-page owned bulk upload, fixed scratch restoration, six exact transfer proofs, all8192 dropped host stores/all4096 late word corruptions, control/completion/map/visibility/PCI failures, dual-owner quarantine; no hardware");
 }
+#endif

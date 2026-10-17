@@ -2,6 +2,94 @@
 
 ## Status
 
+### October17: fused output / explicit debug contract v6 (04:59 UTC)
+
+Fast Qwen is NOT achieved; no Assistant promotion. Current driver
+`ecbaaf5dfbb0339368cccb25676199951873167dbbf6f1f4a92868ba58fcd669`
+reports metadata contract6 before BEGIN. Request1 selects an immutable fused
+result image; request2 explicitly keeps the slower separate-launch debug
+comparison. The image choice cannot change within an ownership lease.
+Legacy mode5/6/7 and the strict read-only probe remain separate.
+
+For <=4096 outputs, kernel-derived job words bind ONLY the existing distinct,
+pinned/noncacheable16KiB host owner. The immutable GPU validates its exact
+bounds, writes the gathered result, performs an ordered fresh host READ,
+and compares EVERY original/returned bit before its original completion.
+No CPU learned sums, checksum or extra host-controlled comparison launch.
+Bus mastering is bounded to that owned job; both PCI command words must be
+402 again before a known master stop and host snapshot. All physical NoC
+counters include the extra write/read/flits; full source,ALL-ID idle,two-PC,
+fresh nonce/shape/summary proof precede ANY reset. Unknown completion disables
+BME but NEVER resets/rewrites/retries the running image, and quarantines both
+host owners. Larger outputs retain PIO and BME-off device-only execution.
+
+The actual linked RISC/worker interpreter tests all K/routes,finite exact
+math,owned host bounds,full original/readback equality,partial/dropped/paired
+corruptions,control/NoC/timeouts. Its executed summaries feed the production
+acceptance predicate. Controller/real-client ASan/UBSan tests cover both
+explicit modes,all proof fields,refusal of old contracts BEFORE BEGIN,and
+no CPU output/reset/restore after uncertainty. Other ownership/attention/
+persistent/pristine-pinned-GGML tests pass; unrelated llama.cpp edits remain.
+
+Native evidence in the same unique-path directory:
+
+- `coordinated-v6-small.log`: 32/64 rows exact,7.35–7.37ms,clean END.
+- `coordinated-v6-attention.log`: all8 heads,layers0/27,n1..4 exact L2=0,
+ interleaved fused output jobs exact,clean END.
+- `coordinated-v6-shapes.log`: every row exact,32..6144 outputs,clean END.
+1024/2048/3072/4096 rows about8.2/9.0/10.0/10.8ms;6144 PIO17.6ms.
+3072-row host snapshot is<0.7ms; activation staging still about3.6ms.
+- `coordinated-v6-vocabulary.log`: IN PROGRESS, no completion claim yet.
+Full-Qwen/warm-CPU benchmark has NOT run for this revision yet.
+
+Current tool46922c85,shape tool e0459322,full-Qwen candidate92c5b9a8 live at
+unique paths only. GPU image SHA c6c0ed0b36faaddef14911ae1876a1c1796924c99f613499cc5cbdc5ab3d9e33.
+Previous debug5/v4 copies remain available. Default boot,SD,64 CPUs/full
+127.6GiB usable RAM,firmware/model/settings and installed Assistant unchanged.
+
+### October17: coordinator transport follow-up (04:46 UTC)
+
+Fast Qwen is still NOT achieved. The contract-v2 warm benchmark completed
+with exact quality and no weight reupload, but FAILED all three CPU speedup
+gates: P100A0.306/0.305/0.310tok/s versus CPU32 2.890/1.578/1.579tok/s.
+END2,PCI/host1/1,cold0,cleanup1. Log:`qwen-coordinated-short-benchmark.log`.
+
+Contract v4 combined one owned16KiB activation/scales READ with a separate
+immutable serial-ID0 coordinator. Per-packet command readback, counters,
+ID0 idle and fences remain; full ALL-initiator/32-ID entry/exit proofs stay.
+The strict debug image is byte-identical. Small/wide/vocabulary/shared-KV
+tests all passed natively. Wide6144 rows17.49–17.52ms,vocabulary251.3–251.9ms.
+`qwen-coordinated-v4-verify.log` passed all22 full-logit comparisons exactly,
+197 resident tensors,119 math peers,clean END; diagnostic3 samples/8.806s
+=0.340672tok/s, NOT a warm CPU speedup benchmark. Driver2d474e32,CLI d2430a0a,
+full-model verifier aa7ec7d6 remain at unique rollback paths.
+
+Native cohort profiling (`coordinated-v4-sweep.log`) identified about9ms of
+payload PIO and3.4ms of activation staging in a17.4ms wide call.32–64 peers
+slightly beat119 for that shape; fewer peers are NOT generally faster.
+
+Contract v5 is a correct but SLOWER debug output transport, NOT a fast-target
+promotion. It uses the existing distinct pinned/noncacheable16KiB owner,
+finite poison replacement,frozen CPU snapshot,ordered host READ to144000,
+then BME OFF before a separate immutable all-word original/readback compare.
+Both chunks support8192 hidden outputs. No checksum or learned CPU sum.
+Full physical counter/PC/nonce/source proof precedes reset; uncertainty
+quarantines both owners and refuses reset/retry/restore. The executing
+image's summary is fed into the production predicate in offline tests.
+Every output-word corruption,paired flips,dropped/partial writes,stale
+proofs,map/control/PCI/timeout faults and wrapping counters are tested.
+
+Current driver8e251c8a,CLI33ed3b7b: native32/64-row tests PASS at10.2–10.6ms
+and6144-row two-chunk tests PASS at20.61–20.67ms,all exact with clean END.
+This is slower than v4's6.2ms/17.5ms; the extra host-controlled comparison
+launch defeats the DMA saving. Assistant remains the earlier qualified
+mode5 build,currently closed for exclusive diagnostics. No settings/model,
+firmware/default boot,SD,CPU/RAM or unrelated dirty llama.cpp change.
+
+Next: fuse owned output transfer and exact comparison into the already
+running coordinator, so the fast path does not pay another host-controlled
+launch. This is NOT implemented or qualified by this checkpoint.
+
 ### October17: persistent dispatcher / shared KV native checkpoint
 
 Fast Qwen is **NOT achieved**. Installed Assistant remains the qualified
