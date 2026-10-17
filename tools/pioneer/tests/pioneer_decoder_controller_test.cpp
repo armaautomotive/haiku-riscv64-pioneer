@@ -37,6 +37,7 @@ struct DecoderControllerIO:WideControllerIO {
 		if (decoder->smallRows) { r+=15372; rf+=10248; w+=5124; wf+=5124; }
 		if (decoder->batch) { if (batched) { r=29116*completed+64*(completed-1)+1; rf=61558*completed+576*(completed-1)+4; w=9611*completed+1; wf=9611*completed+4; }
 			else { r+=2; rf+=16; } }
+		if (decoder->fusedGather) r-=8827*completed;
 		const unsigned delta[]={r,rf,r+w,r,w,wf,r+w,w};
 		data[3072]=r; data[3073]=rf; data[3074]=w; data[3075]=wf; data[3076]=119;
 		data[3077]=151936; data[3078]=j.nonce-(staleSummary?1:0); data[3079]=batched?10:small?9:8;
@@ -93,7 +94,7 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 		std::vector<uint32_t> output(151936,0xabcdef00);
 		bool okay=PioneerDecoderRun(io,io.core[0]->Baseline(),host,transfer,wide,fleet.data(),bulk,coordinator,decoder,attention,kv,
 			model,tokens,input,rope,output.data(),decoded,small);
-		if (okay) { assert(PioneerDecoderProof(decoded,tokens,coordinator.nonce,parallel,glu,small,paired,inputPull,diagnostic,descriptorTable,smallRows,decoder.batch) && !wide.pending && !transfer.pending && !decoder.running && !attention.running
+		if (okay) { assert(PioneerDecoderProof(decoded,tokens,coordinator.nonce,parallel,glu,small,paired,inputPull,diagnostic,descriptorTable,smallRows,decoder.batch,decoder.fusedGather) && !wide.pending && !transfer.pending && !decoder.running && !attention.running
 				&& !coordinator.inputValid && !io.pioWords && io.C().pciCommand[0]==0x402 && io.C().pciCommand[1]==0x402);
 			// Exercise the SAME sealed-lease overload used at the final ioctl
 			// output-clearing boundary,not just the lower-level controller.
@@ -111,11 +112,13 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	bool CloseDecoder(bool stopped=true) { return PioneerDecoderClose(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),decoder,stopped); }
 };
 struct BatchControllerFixture:DecoderControllerFixture {
-	BatchControllerFixture():DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true) {
+	bool gather;
+	BatchControllerFixture(bool fused=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused) {
 		model.reserved[1]=0x31000000; model.reserved[2]=151643; model.reserved[3]=5;
+		for (unsigned w=1;w<120;w++) fleet[w].fusedGather=fused;
 	}
 	bool PrepareBatch() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather); }
 	bool DecodeBatch(unsigned tokens=1,unsigned steps=2) {
 		uint32_t input[1024]={},rope[128]={},prior[119]; for (unsigned w=0;w<119;w++) prior[w]=fleet[w+1].persistentSequence;
 		std::vector<uint32_t> output(1024,0xabcdef00);
@@ -135,16 +138,19 @@ struct BatchControllerFixture:DecoderControllerFixture {
 int main()
 {
 	(void)Run; (void)Input;
-	{ BatchControllerFixture f; assert(f.PrepareBatch() && f.Decode(1,false) && f.Decode(1,true) && f.DecodeBatch(1,2) && f.DecodeBatch(3,2));
+	for (bool gather:{false,true}) { BatchControllerFixture f(gather);
+		bool prepared=f.PrepareBatch(),full=prepared && f.Decode(1,false),small=full && f.Decode(1,true),first=small && f.DecodeBatch(1,2),next=first && f.DecodeBatch(3,2);
+		if (!next) { printf("FUSED CONTROLLER TRACE gather%u prepared%u full%u small%u first%u next%u unsafe%u summary%u state%u nonfinite%u\n",gather,prepared,full,small,first,next,f.decoder.unsafe,f.decoded.master.summary_verified,f.decoded.master.state,f.decoded.nonfinite); fflush(stdout); }
+		assert(next);
 		assert(!f.PrepareDecoder() && f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
-	{ BatchControllerFixture f; f.io.endsEarly=true; assert(f.PrepareBatch() && f.DecodeBatch(1,2) && f.DecodeBatch(2,2));
+	for (bool gather:{false,true}) { BatchControllerFixture f(gather); f.io.endsEarly=true; assert(f.PrepareBatch() && f.DecodeBatch(1,2) && f.DecodeBatch(2,2));
 		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
-	for (unsigned word=1;word<=64;word++) { BatchControllerFixture f; assert(f.PrepareBatch()); f.io.badPacket=word;
+	for (bool gather:{false,true}) for (unsigned word=1;word<=64;word++) { BatchControllerFixture f(gather); assert(f.PrepareBatch()); f.io.badPacket=word;
 		assert(!f.DecodeBatch() && f.io.quarantined && f.io.wideQuarantined && f.decoder.unsafe && f.decoded.master.recovery_required);
 		unsigned stops=f.io.stops; assert(!f.DecodeBatch() && !f.CloseDecoder() && f.io.stops==stops); }
-	{ BatchControllerFixture f; assert(f.PrepareBatch()); f.io.mutateTokens=true;
+	for (bool gather:{false,true}) { BatchControllerFixture f(gather); assert(f.PrepareBatch()); f.io.mutateTokens=true;
 		assert(!f.DecodeBatch() && !f.io.stops && f.decoder.unsafe && f.io.quarantined); }
-	for (unsigned fault=0;fault<16;fault++) { BatchControllerFixture f; assert(f.PrepareBatch());
+	for (bool gather:{false,true}) for (unsigned fault=0;fault<16;fault++) { BatchControllerFixture f(gather); assert(f.PrepareBatch());
 		f.io.executeTimeout=fault==0; f.io.badPc=fault==1; f.io.badCount=fault==2; f.io.badNoc=fault==3;
 		f.io.badMarker=fault==4; f.io.stopFails=fault==5; f.io.staleSummary=fault==6; f.io.badSummary=fault==7;
 		f.io.badLiveMap=fault==8; f.io.nonfinite=fault==9; f.io.omitWidePayload=fault==10; f.io.layerLost=fault==11;
@@ -154,6 +160,8 @@ int main()
 		if (fault!=5 && fault!=9 && fault!=10) assert(!f.io.stops);
 		unsigned stops=f.io.stops; assert(!f.DecodeBatch() && !f.CloseDecoder() && f.io.stops==stops);
 	}
+	for (unsigned w=1;w<120;w++) { BatchControllerFixture f(true); f.fleet[w].fusedGather=false;
+		assert(!f.PrepareBatch() && !f.decoder.saved && !f.io.starts); }
 	{ DecoderControllerFixture f(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true); assert(f.PrepareDecoder());
 		for (unsigned n:{1U,2U,3U,1U}) assert(f.Decode(n,true) && f.Decode(n,false));
 		f.parallelRope=false; assert(!f.PrepareDecoder()); f.parallelRope=true;

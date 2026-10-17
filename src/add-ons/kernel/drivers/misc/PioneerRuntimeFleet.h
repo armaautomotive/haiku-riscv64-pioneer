@@ -40,6 +40,7 @@ struct PioneerFleetWorker {
 	bool phasePipeline=false; // exact four phases with FPU-owned fidelity increments
 	bool descriptorTable=false,descriptorTablePrepared=false; // immutable fixed-model schedule,not a live upgrade
 	bool accumPipeline=false; // exact SFPU Dst timing and once/job AddrMod1 setup
+	bool fusedGather=false; // separate immutable proof-prefix publisher cohort
 	bool smallRows=false; // private hidden-projection16-row chunks,whole tensors unchanged
 	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	bool attentionDispatch=false; // separately owned fixed-group image

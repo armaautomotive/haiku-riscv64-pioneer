@@ -2,6 +2,52 @@
 
 ## Status
 
+### October17: combined gather34 native PASS (13:49 UTC)
+
+Fast Qwen STILL NOT achieved. GPU5.789076/5.743399/5.874760tok/s across
+the same three sustained natural requests,CPU32 1.537184/2.850390/.820962.
+Prompt4.523459/4.689763/4.182505s. About5..6% faster than33,not a claim
+that this meets the user's fast target. ALL22 full-vocabulary/exact token
+replays and every sustained/untimed full-logit replay/coverage gate pass.
+Complete312 positions/61464 projections/8736 attention/156 full+156 selected
+positions/24 autonomous jobs/zero warm uploads;END2/PCI-host1-1/cold0/
+cleanup1. Position21 matrix53.139M ->48.254M ticks,vocabulary8.414M ->8.147M,
+total115.936672M. RMS3.480M,Q813.279M,SiLU9.415M,attention27.491M remain.
+Short6.362713tok/s is diagnostic ONLY. Cold113.120033s including upload
+93.255095s and registry9.170857s. Log`qwen-gather-v34-benchmark.log` copied
+locally. Driver985b0729 is preserved as`driver-v34-985b0729-backup`;33/31
+and older qualified rollbacks remain. No Assistant promotion,Q4/27B/all-
+Qwen claim or boot/CPU/RAM/SD change. Continue optimizing remaining serial
+activation work without dropping exact rounding or source ownership.
+
+### October17: combined gather34 ready for native trial (13:43 UTC)
+
+Fast Qwen STILL NOT achieved. Qualified33 remains5.44..5.57tok/s. New
+contract34/model18 selects the separately frozen144d5643 master and
+b836f547/60dae7e7/5cb85c97 plain/attention/GLU prefix-publisher cohorts.
+Private job10/two-position/result ABI,math29,attention31,weight/KV layouts,
+RoPE/EOG encoding and fixed owned host buffer are unchanged. Every matrix
+first waits for ALL current input readers to finish and publish full source/
+NoC proof. Reverse gathers combine the SAME64B proof and output in one
+read. The sole completed gate/up boundary is ALL-bit restored. Argmax ties
+still select the lowest token ID. Exactly8827 master reads/position are
+removed,NOT any read flits,math/completion/source or output quality checks.
+
+Runtime leases now bind the gather cohort on every one of119 peers;old/new
+cohorts cannot mix or live-upgrade. Mixed cohort rejection and all held-only
+prelude/table staging/restoration tests pass. Controller tests cover full/
+small/batch/early-EOG/repeated jobs,all64 result faults,all16 uncertain-state
+faults and each119-peer mismatch. They exposed a missing gather flag in the
+INTERNAL NoC-summary check BEFORE any installation. Corrected985b0729 uses
+sealed-lease overloads at that boundary as well as the final return proof.
+All controller/client tests now pass,including exact capability refusal
+BEFORE BEGIN,contract33 and34 paths,all outputs unchanged on failure and
+all-owner quarantine/no retry/reset/restore/free on unknown completion.
+Native clientb6be55e2 links only the pinned clean CPU libraries;no dirty
+llama.cpp source is built/synced/committed. No Assistant promotion or native
+34 speed claim yet. Preserve33/31 and older rollbacks;only one controlled
+benchmark is planned after SHA identity/no-owner/exact metadata34 checks.
+
 ### October17: autonomous33 native PASS;combined-gather prototype (13:33 UTC)
 
 Fast Qwen STILL NOT achieved. Contract33 passes the complete22-position

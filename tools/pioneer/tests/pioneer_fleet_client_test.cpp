@@ -28,17 +28,17 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_DECODER_STAGES) {
-		assert(coordinatedContract>=15 && coordinatedContract<=33 && bytes==sizeof(tt_decoder_stage_profile)); auto& p=*static_cast<tt_decoder_stage_profile*>(data); p={};
-		p.magic=0x31525044; p.nonce=coordinatedNonce; p.tokens=decoderTokens; p.version=coordinatedContract==33?5:coordinatedContract==31?4:coordinatedContract>=20?3:coordinatedContract>=16?2:1;
-		const unsigned c[]={coordinatedContract>=20?168U:196U,coordinatedContract>=31?57U:113U,coordinatedContract>=16?85U:113U,coordinatedContract>=31?0U:28U,28,28,1,1}; for (unsigned i=0;i<8;i++) { p.cycles[i]=!c[i]?0:i==7?100:i+1; p.calls[i]=c[i]*(coordinatedContract==33 && i!=7?decoderPositions:1); }
-		if (coordinatedContract==33) p.reserved[0]=decoderPositions;
+		assert(coordinatedContract>=15 && coordinatedContract<=34 && bytes==sizeof(tt_decoder_stage_profile)); auto& p=*static_cast<tt_decoder_stage_profile*>(data); p={};
+		p.magic=0x31525044; p.nonce=coordinatedNonce; p.tokens=decoderTokens; p.version=coordinatedContract>=33?5:coordinatedContract==31?4:coordinatedContract>=20?3:coordinatedContract>=16?2:1;
+		const unsigned c[]={coordinatedContract>=20?168U:196U,coordinatedContract>=31?57U:113U,coordinatedContract>=16?85U:113U,coordinatedContract>=31?0U:28U,28,28,1,1}; for (unsigned i=0;i<8;i++) { p.cycles[i]=!c[i]?0:i==7?100:i+1; p.calls[i]=c[i]*(coordinatedContract>=33 && i!=7?decoderPositions:1); }
+		if (coordinatedContract>=33) p.reserved[0]=decoderPositions;
 		if (fault && target==3) { if (field>=4 && field<12) reinterpret_cast<uint32_t*>(&p)[field]=reinterpret_cast<uint32_t*>(&p)[field]?0:1;
 			else if (field==2) p.tokens++; else reinterpret_cast<uint32_t*>(&p)[field]^=1; }
 		return 0;
 	}
 	if (op==TT_PCI_PROBE_PIONEER_DECODER_MODEL) {
-		auto& p=*static_cast<tt_pioneer_decoder_model*>(data); assert(bytes==sizeof(p) && p.version==(coordinatedContract==33?17U:coordinatedContract==31?16U:coordinatedContract==30?15U:coordinatedContract==29?14U:coordinatedContract==28?13U:coordinatedContract==27?12U:coordinatedContract==26?11U:coordinatedContract==25?10U:(coordinatedContract==24 || coordinatedContract==27)?9U:coordinatedContract==23?8U:coordinatedContract==22?7U:coordinatedContract==21?6U:coordinatedContract==20?5U:coordinatedContract>=17?4U:coordinatedContract==16?3U:coordinatedContract>=14?2U:1U) && (coordinatedContract==33?(p.reserved[0]==0x30000000 && p.reserved[1]==151643 && p.reserved[2]==5):(!p.reserved[0] && !p.reserved[1] && !p.reserved[2])));
-		p.state=TT_RUNTIME_PASSED; p.ready=1; p.extents=coordinatedContract==33?311:310; p.recovery_required=0;
+		auto& p=*static_cast<tt_pioneer_decoder_model*>(data); assert(bytes==sizeof(p) && p.version==(coordinatedContract==34?18U:coordinatedContract>=33?17U:coordinatedContract==31?16U:coordinatedContract==30?15U:coordinatedContract==29?14U:coordinatedContract==28?13U:coordinatedContract==27?12U:coordinatedContract==26?11U:coordinatedContract==25?10U:(coordinatedContract==24 || coordinatedContract==27)?9U:coordinatedContract==23?8U:coordinatedContract==22?7U:coordinatedContract==21?6U:coordinatedContract==20?5U:coordinatedContract>=17?4U:coordinatedContract==16?3U:coordinatedContract>=14?2U:1U) && (coordinatedContract>=33?(p.reserved[0]==0x30000000 && p.reserved[1]==151643 && p.reserved[2]==5):(!p.reserved[0] && !p.reserved[1] && !p.reserved[2])));
+		p.state=TT_RUNTIME_PASSED; p.ready=1; p.extents=coordinatedContract>=33?311:310; p.recovery_required=0;
 		if (fault && target==1) { failed=true; if (fault==1) { errno=EIO; return -1; } if (fault==2) p.ready=0; if (fault==3) p.extents=309; if (fault==4) p.recovery_required=1; }
 		return 0;
 	}
@@ -57,7 +57,8 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 		if (coordinatedContract==26) { reads+=112; rf+=112; }
 		if (coordinatedContract>=28) { reads-=9219; rf-=9219; w-=9219; wf-=9219; }
 		if (coordinatedContract==30) { reads+=15372; rf+=10248; w+=5124; wf+=5124; }
-		if (coordinatedContract==33) { reads+=2; rf+=16; }
+		if (coordinatedContract>=33) { reads+=2; rf+=16; }
+		if (coordinatedContract==34) reads-=8827;
 		const unsigned delta[]={reads,rf,reads+w,reads,w,wf,reads+w,w};
 		r.summary[0]=reads; r.summary[1]=rf; r.summary[2]=w; r.summary[3]=wf; r.summary[4]=119; r.summary[5]=151936; r.summary[6]=m.nonce; r.summary[7]=8;
 		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
@@ -66,13 +67,13 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 		return 0;
 	}
 	if (op==TT_PCI_PROBE_PIONEER_DECODER_GREEDY) {
-		auto& p=*static_cast<tt_pioneer_decoder_greedy*>(data); assert(coordinatedContract>=17 && coordinatedContract<=33 && bytes==sizeof(p) && p.version==1 && p.tokens && p.tokens<=256 && !p.reserved[0] && !p.reserved[1]);
+		auto& p=*static_cast<tt_pioneer_decoder_greedy*>(data); assert(coordinatedContract>=17 && coordinatedContract<=34 && bytes==sizeof(p) && p.version==1 && p.tokens && p.tokens<=256 && !p.reserved[0] && !p.reserved[1]);
 		decoderTokens=p.tokens; decoderPositions=1; auto& r=p.result; r={}; r.tokens=p.tokens; r.sequences=119; r.words=32;
 		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=119; m.nonce=++coordinatedNonce;
 		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
 		m.phase=TT_DECODER_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_DECODER_PARK;
 		bool paired=coordinatedContract>=20;
-		const unsigned reads=coordinatedContract==33?29117:coordinatedContract==30?44487:coordinatedContract>=28?29115:(coordinatedContract==24 || coordinatedContract==27)?38334:paired?39118:47294,rf=coordinatedContract==33?61560:coordinatedContract==30?71792:coordinatedContract>=28?61544:(coordinatedContract==24 || coordinatedContract==27)?70763:paired?86891:93023,w=coordinatedContract==30?14736:coordinatedContract>=28?9612:(coordinatedContract==24 || coordinatedContract==27)?18831:paired?19615:23703,wf=coordinatedContract==30?14737:coordinatedContract>=28?9613:(coordinatedContract==24 || coordinatedContract==27)?18832:paired?34960:39048,delta[]={reads,rf,reads+w,reads,w,wf,reads+w,w};
+		const unsigned reads=coordinatedContract==34?20290:coordinatedContract>=33?29117:coordinatedContract==30?44487:coordinatedContract>=28?29115:(coordinatedContract==24 || coordinatedContract==27)?38334:paired?39118:47294,rf=coordinatedContract>=33?61560:coordinatedContract==30?71792:coordinatedContract>=28?61544:(coordinatedContract==24 || coordinatedContract==27)?70763:paired?86891:93023,w=coordinatedContract==30?14736:coordinatedContract>=28?9612:(coordinatedContract==24 || coordinatedContract==27)?18831:paired?19615:23703,wf=coordinatedContract==30?14737:coordinatedContract>=28?9613:(coordinatedContract==24 || coordinatedContract==27)?18832:paired?34960:39048,delta[]={reads,rf,reads+w,reads,w,wf,reads+w,w};
 		r.summary[0]=reads; r.summary[1]=rf; r.summary[2]=w; r.summary[3]=wf; r.summary[4]=119; r.summary[5]=151936; r.summary[6]=m.nonce; r.summary[7]=9;
 		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
 		memset(p.output,0,sizeof(p.output)); p.output[0]=TT_DECODER_GREEDY_MAGIC; p.output[1]=m.nonce; p.output[2]=151936;
@@ -82,14 +83,14 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 		return 0;
 	}
 	if (op==TT_PCI_PROBE_PIONEER_DECODER_BATCH) {
-		auto& p=*static_cast<tt_pioneer_decoder_batch*>(data); assert(coordinatedContract==33 && bytes==sizeof(p) && p.version==1 && p.reserved[0] && p.reserved[0]<=2 && !p.reserved[1]);
+		auto& p=*static_cast<tt_pioneer_decoder_batch*>(data); assert(coordinatedContract>=33 && bytes==sizeof(p) && p.version==1 && p.reserved[0] && p.reserved[0]<=2 && !p.reserved[1]);
 		for (auto value:p.rope) assert(!value);
 		unsigned count=batchEarly?1:p.reserved[0]; decoderTokens=p.tokens+count-1; decoderPositions=count;
 		auto& r=p.result; r={}; r.tokens=p.tokens; r.sequences=119; r.words=64;
 		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=119; m.nonce=++coordinatedNonce;
 		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
 		m.phase=TT_DECODER_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_DECODER_PARK;
-		unsigned reads=29116*count+64*(count-1)+1,rf=61558*count+576*(count-1)+4,w=9611*count+1,wf=9611*count+4;
+		unsigned reads=(29116-(coordinatedContract==34?8827:0))*count+64*(count-1)+1,rf=61558*count+576*(count-1)+4,w=9611*count+1,wf=9611*count+4;
 		const unsigned delta[]={reads,rf,reads+w,reads,w,wf,reads+w,w};
 		r.summary[0]=reads; r.summary[1]=rf; r.summary[2]=w; r.summary[3]=wf; r.summary[4]=119; r.summary[5]=151936; r.summary[6]=m.nonce; r.summary[7]=10;
 		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
@@ -260,7 +261,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 static void Reset(unsigned f=0,unsigned t=0,unsigned word=0) { coordinatedNonce=calls=ends=closes=missing=0; decoderPositions=1; batchEarly=false; failed=false; fault=f; target=t; field=word; }
 static bool Open(PioneerResidentDevice& d) { return d.Open(2*1024*1024,false,true,true,true,true,true,true,true,1,120); }
 static bool RegisterTestDecoder(PioneerResidentDevice& d,const PioneerDecoderModelOffsets& model) {
-	return coordinatedContract==33?d.RegisterDecoder(model,0x30000000,151643,5):d.RegisterDecoder(model);
+	return coordinatedContract>=33?d.RegisterDecoder(model,0x30000000,151643,5):d.RegisterDecoder(model);
 }
 int main() {
 	uint32_t x[512],scale[32]; for (auto& v:x) v=0x40014001; for (auto& v:scale) v=0x3c800000;
@@ -330,7 +331,7 @@ int main() {
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
-	for (unsigned contract:{0U,2U,3U,4U,5U,6U,34U}) {
+	for (unsigned contract:{0U,2U,3U,4U,5U,6U,35U}) {
 		Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==2 && closes==1 && !ends);
@@ -442,11 +443,14 @@ int main() {
 	for (unsigned contract=7;contract<=34;contract++) if (contract!=33) { Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,23)); }
 		assert(calls==2 && closes==1 && !ends); }
-	for (unsigned f:{0U,1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_decoder_candidate_result)/4:f==4?64:1);word++) {
+	for (unsigned contract=7;contract<=35;contract++) if (contract!=34) { Reset(); coordinatedContract=contract;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,24)); }
+		assert(calls==2 && closes==1 && !ends); }
+	for (unsigned batchContract:{33U,34U}) for (unsigned f:{0U,1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_decoder_candidate_result)/4:f==4?64:1);word++) {
 		if (f==2 && word==10) continue;
-		Reset(f,0,word); coordinatedContract=33; uint32_t packet[64],embedding[1024]={}; for (auto& value:packet) value=0xabcdef01;
+		Reset(f,0,word); coordinatedContract=batchContract; uint32_t packet[64],embedding[1024]={}; for (auto& value:packet) value=0xabcdef01;
 		{ PioneerResidentDevice d; PioneerDecoderModelOffsets model={};
-			assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,23) && RegisterTestDecoder(d,model) && d.BatchEnabled());
+			assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,batchContract-10) && RegisterTestDecoder(d,model) && d.BatchEnabled());
 			unsigned before=calls; assert(!d.DecodeBatch(1,0,embedding,packet) && !d.DecodeBatch(256,2,embedding,packet) && !d.DecodeBatch(1,3,embedding,packet) && calls==before);
 			assert(d.DecodeBatch(1,2,embedding,packet)==!f);
 			if (!f) { assert(packet[3]==2 && packet[5]==2 && d.batchCalls==1 && d.greedyCalls==2 && d.calls==394 && d.attentionCalls==56);
@@ -456,13 +460,13 @@ int main() {
 		}
 		assert(ends==unsigned(!f) && closes==1);
 	}
-	{ Reset(); coordinatedContract=33; batchEarly=true; uint32_t packet[64],embedding[1024]={}; PioneerResidentDevice d; PioneerDecoderModelOffsets model={};
-		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,23) && RegisterTestDecoder(d,model)
+	for (unsigned batchContract:{33U,34U}) { Reset(); coordinatedContract=batchContract; batchEarly=true; uint32_t packet[64],embedding[1024]={}; PioneerResidentDevice d; PioneerDecoderModelOffsets model={};
+		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,batchContract-10) && RegisterTestDecoder(d,model)
 			&& d.DecodeBatch(1,2,embedding,packet) && packet[3]==1 && packet[8]==151645 && packet[5]==1 && d.calls==197 && d.Finish()); }
 	for (unsigned contract=7;contract<=33;contract++) if (contract!=31) { Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,22)); }
 		assert(calls==2 && closes==1 && !ends); }
-	for (unsigned contract:{13U,14U,15U,16U,17U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U,28U,29U,30U,31U,33U}) { coordinatedContract=contract; unsigned requirement=(contract==33?23:contract-9);
+	for (unsigned contract:{13U,14U,15U,16U,17U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U,28U,29U,30U,31U,33U,34U}) { coordinatedContract=contract; unsigned requirement=(contract>=33?contract-10:contract-9);
 	for (unsigned f:{1U,2U,3U,4U}) { Reset(f,1); { PioneerResidentDevice d; PioneerDecoderModelOffsets model={};
 		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,requirement) && !RegisterTestDecoder(d,model));
 		unsigned before=calls; assert(!RegisterTestDecoder(d,model) && !d.Finish() && calls==before); } assert(!ends && closes==1); }
@@ -481,12 +485,12 @@ int main() {
 		assert(ends==unsigned(!f) && closes==1);
 	}
 	}
-	for (unsigned contract:{17U,18U,19U,20U,21U,22U,23U,24U,25U,27U,28U,29U,30U,31U,33U}) { coordinatedContract=contract;
+	for (unsigned contract:{17U,18U,19U,20U,21U,22U,23U,24U,25U,27U,28U,29U,30U,31U,33U,34U}) { coordinatedContract=contract;
 	for (unsigned f:{0U,1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_decoder_candidate_result)/4:f==4?32:1);word++) {
 		if (f==2 && word==10) continue;
 		Reset(f,0,word); uint32_t token=0xdeadbeef,logit=0xabcdef01,embedding[1024]={},rope[128]={};
 		{ PioneerResidentDevice d; PioneerDecoderModelOffsets model={};
-			assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,(contract==33?23:contract-9)) && RegisterTestDecoder(d,model));
+			assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,(contract>=33?contract-10:contract-9)) && RegisterTestDecoder(d,model));
 			assert(d.DecodeGreedy(1,embedding,rope,token,logit)==!f);
 			if (!f) { assert(token==111 && logit==0x3f123456 && d.greedyCalls==1 && !d.wideCalls);
 				assert(d.DecodeGreedy(2,embedding,rope,token,logit) && d.calls==394 && d.attentionCalls==56 && d.greedyCalls==2 && d.Finish()); }
@@ -499,8 +503,8 @@ int main() {
 	{ Reset(); coordinatedContract=26; PioneerResidentDevice d; PioneerDecoderModelOffsets model={}; uint32_t embedding[1024]={},rope[128]={},token=0xdeadbeef,logit=0xabcdef01;
 		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,17) && RegisterTestDecoder(d,model));
 		unsigned before=calls; assert(!d.DecodeGreedy(1,embedding,rope,token,logit) && calls==before && token==0xdeadbeef && logit==0xabcdef01 && d.Finish()); }
-	for (unsigned contract:{15U,16U,17U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U,28U,29U,30U,31U,33U}) { Reset(); coordinatedContract=contract; PioneerResidentDevice d; PioneerDecoderModelOffsets model={}; uint32_t embedding[1024]={},rope[128]={}; output.assign(151936,0);
-		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,(contract==33?23:contract-9)) && RegisterTestDecoder(d,model)
+	for (unsigned contract:{15U,16U,17U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U,28U,29U,30U,31U,33U,34U}) { Reset(); coordinatedContract=contract; PioneerResidentDevice d; PioneerDecoderModelOffsets model={}; uint32_t embedding[1024]={},rope[128]={}; output.assign(151936,0);
+		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,(contract>=33?contract-10:contract-9)) && RegisterTestDecoder(d,model)
 			&& d.DecodeWhole(1,embedding,rope,output.data()));
 		for (field=0;field<32;field++) { fault=2; target=3; tt_decoder_stage_profile p={}; assert(!d.DecoderStages(p)); }
 		fault=target=0; assert(d.DecodeWhole(2,embedding,rope,output.data()) && d.Finish());

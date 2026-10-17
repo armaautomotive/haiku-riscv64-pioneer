@@ -9,6 +9,7 @@
 // never substitutes a CPU product, and owns one exclusive session lifetime.
 class PioneerResidentDevice {
 	int fd=-1;
+	bool decoderFusedGather=false;
 	bool active=false,failed=false,cold=false,finished=false,stream=false,fp16=false,q8=false,compact=false,native=false,f32Scales=false,closeOnly=false;
 	tt_pioneer_runtime_matvec* request=NULL;
 	tt_pioneer_attention_tile_test* attentionRequest=NULL;
@@ -68,7 +69,7 @@ public:
 	}
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); free(decoderRequest); }
 	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,unsigned requireLayer=0) {
-		if (requireLayer>23 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer>=4 && workerLimit!=119)) return false;
+		if (requireLayer>24 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer>=4 && workerLimit!=119)) return false;
 		if (debugOutput && !coordinatorMode) return false;
 		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
@@ -95,13 +96,13 @@ public:
 		coordinated=coordinatorMode;
 		coordinatedDebug=debugOutput;
 		coordinatedWide=requireLayer>=3;
-		decoderRequested=requireLayer>=4; decoderParallel=requireLayer>=5; decoderStageRequested=requireLayer>=6; decoderGlu=requireLayer>=7; decoderGreedy=requireLayer>=8; decoderRms=requireLayer>=9; decoderCounters=requireLayer==10; decoderPaired=requireLayer>=11; decoderInline=requireLayer>=12; decoderPartial=requireLayer==13; decoderCachedQuery=requireLayer>=14; decoderInputPull=requireLayer==15 || requireLayer==17 || requireLayer>=18; decoderPhasePipeline=requireLayer==16 || requireLayer>=18; decoderDiagnostic=requireLayer==17; decoderDescriptorTable=requireLayer>=19; decoderAccumPipeline=requireLayer>=20; decoderSmallRows=requireLayer==21; decoderParallelRope=requireLayer>=22; decoderBatch=requireLayer==23;
+		decoderRequested=requireLayer>=4; decoderParallel=requireLayer>=5; decoderStageRequested=requireLayer>=6; decoderGlu=requireLayer>=7; decoderGreedy=requireLayer>=8; decoderRms=requireLayer>=9; decoderCounters=requireLayer==10; decoderPaired=requireLayer>=11; decoderInline=requireLayer>=12; decoderPartial=requireLayer==13; decoderCachedQuery=requireLayer>=14; decoderInputPull=requireLayer==15 || requireLayer==17 || requireLayer>=18; decoderPhasePipeline=requireLayer==16 || requireLayer>=18; decoderDiagnostic=requireLayer==17; decoderDescriptorTable=requireLayer>=19; decoderAccumPipeline=requireLayer>=20; decoderSmallRows=requireLayer==21; decoderParallelRope=requireLayer>=22; decoderBatch=requireLayer>=23; decoderFusedGather=requireLayer==24;
 		if (coordinated && !(s.capabilities&TT_PIONEER_CAP_COORDINATED_FLEET)) {
 			fprintf(stderr,"Explicit on-card coordinator capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>33
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>34
 				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer>=3 && support.version<10)
 				|| (requireLayer==4 && support.version!=13)
 				|| (requireLayer==5 && support.version!=14)
@@ -123,6 +124,7 @@ public:
 				|| (requireLayer==21 && support.version!=30)
 				|| (requireLayer==22 && support.version!=31)
 				|| (requireLayer==23 && support.version!=33)
+				|| (requireLayer==24 && support.version!=34)
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
@@ -251,8 +253,8 @@ public:
 	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=30 && !decoderRegistered && active && !failed && !cold && !finished; }
 	bool RegisterDecoder(const PioneerDecoderModelOffsets& offsets,uint64_t ropeOffset=0,unsigned eogBase=0,uint32_t eogMask=0) {
 		if (decoderBatch?((ropeOffset&4095) || ropeOffset>0x7e3e0000 || !PioneerDecoderEogSetValid(eogBase,eogMask)):(ropeOffset || eogBase || eogMask)) return false;
-		if (!decoderRequested || coordinatedVersion!=(decoderBatch?33U:decoderParallelRope?31U:decoderDiagnostic?26U:decoderSmallRows?30U:decoderAccumPipeline?29U:decoderDescriptorTable?28U:decoderPhasePipeline&&decoderInputPull?27U:decoderPhasePipeline?25U:decoderInputPull?24U:decoderCachedQuery?23U:decoderPartial?22U:decoderInline?21U:decoderPaired?20U:decoderCounters?19U:decoderRms?18U:decoderGreedy?17U:decoderGlu?16U:decoderStageRequested?15U:decoderParallel?14U:13U) || !active || failed || finished || cold || decoderRegistered) return false;
-		tt_pioneer_decoder_model p={}; p.version=decoderBatch?17:decoderParallelRope?16:decoderDiagnostic?11:decoderSmallRows?15:decoderAccumPipeline?14:decoderDescriptorTable?13:decoderPhasePipeline&&decoderInputPull?12:decoderPhasePipeline?10:decoderInputPull?9:decoderCachedQuery?8:decoderPartial?7:decoderInline?6:decoderPaired?5:decoderGreedy?4:decoderGlu?3:decoderParallel?2:1; p.offsets=offsets;
+		if (!decoderRequested || coordinatedVersion!=(decoderFusedGather?34U:decoderBatch?33U:decoderParallelRope?31U:decoderDiagnostic?26U:decoderSmallRows?30U:decoderAccumPipeline?29U:decoderDescriptorTable?28U:decoderPhasePipeline&&decoderInputPull?27U:decoderPhasePipeline?25U:decoderInputPull?24U:decoderCachedQuery?23U:decoderPartial?22U:decoderInline?21U:decoderPaired?20U:decoderCounters?19U:decoderRms?18U:decoderGreedy?17U:decoderGlu?16U:decoderStageRequested?15U:decoderParallel?14U:13U) || !active || failed || finished || cold || decoderRegistered) return false;
+		tt_pioneer_decoder_model p={}; p.version=decoderFusedGather?18:decoderBatch?17:decoderParallelRope?16:decoderDiagnostic?11:decoderSmallRows?15:decoderAccumPipeline?14:decoderDescriptorTable?13:decoderPhasePipeline&&decoderInputPull?12:decoderPhasePipeline?10:decoderInputPull?9:decoderCachedQuery?8:decoderPartial?7:decoderInline?6:decoderPaired?5:decoderGreedy?4:decoderGlu?3:decoderParallel?2:1; p.offsets=offsets;
 		if (decoderBatch) { p.reserved[0]=uint32_t(ropeOffset); p.reserved[1]=eogBase; p.reserved[2]=eogMask; }
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_MODEL,&p,sizeof(p)); cold=p.recovery_required!=0;
 		if (status || p.state!=TT_RUNTIME_PASSED || p.ready!=1 || p.extents!=(decoderBatch?311U:310U) || cold) {
@@ -268,7 +270,7 @@ public:
 		auto& p=*decoderRequest; memset(&p,0,offsetof(tt_pioneer_decoder_run,output)); p.version=1; p.tokens=tokens;
 		memcpy(p.embedding,embedding,sizeof(p.embedding)); memcpy(p.rope,rope,sizeof(p.rope));
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_RUN,&p,sizeof(p)); cold=p.result.master.recovery_required!=0;
-		bool proved=!status && PioneerDecoderProof(p.result,tokens,coordinatorNonce+1,decoderParallel,decoderGlu,false,decoderPaired,decoderInputPull,decoderDiagnostic,decoderDescriptorTable,decoderSmallRows,decoderBatch);
+		bool proved=!status && PioneerDecoderProof(p.result,tokens,coordinatorNonce+1,decoderParallel,decoderGlu,false,decoderPaired,decoderInputPull,decoderDiagnostic,decoderDescriptorTable,decoderSmallRows,decoderBatch,decoderFusedGather);
 		for (unsigned i=0;i<151936;i++) proved &= (p.output[i]&0x7f800000)!=0x7f800000;
 		if (!proved) { const auto& m=p.result.master;
 			fprintf(stderr,"Whole-decoder STOP status%d state%u nonce%u s/c/s%u/%u/%u seq%u words%u PC%x marker%x cold%u;close only,no retry/fallback\n",
@@ -283,7 +285,7 @@ public:
 		tt_pioneer_decoder_greedy p={}; p.version=1; p.tokens=tokens;
 		memcpy(p.embedding,embedding,sizeof(p.embedding)); memcpy(p.rope,rope,sizeof(p.rope));
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_GREEDY,&p,sizeof(p)); cold=p.result.master.recovery_required!=0;
-		bool proved=!status && PioneerDecoderProof(p.result,tokens,coordinatorNonce+1,true,true,true,decoderPaired,decoderInputPull,decoderDiagnostic,decoderDescriptorTable,decoderSmallRows,decoderBatch)
+		bool proved=!status && PioneerDecoderProof(p.result,tokens,coordinatorNonce+1,true,true,true,decoderPaired,decoderInputPull,decoderDiagnostic,decoderDescriptorTable,decoderSmallRows,decoderBatch,decoderFusedGather)
 			&& PioneerDecoderGreedyValid(p.output,coordinatorNonce+1,tokens);
 		if (!proved) { const auto& m=p.result.master;
 			fprintf(stderr,"Greedy-decoder STOP status%d state%u nonce%u s/c/s%u/%u/%u seq%u words%u PC%x marker%x cold%u;close only,no retry/fallback\n",
@@ -298,7 +300,7 @@ public:
 		tt_pioneer_decoder_batch p={}; p.version=1; p.tokens=tokens; p.reserved[0]=steps; memcpy(p.embedding,embedding,sizeof(p.embedding));
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_BATCH,&p,sizeof(p)); cold=p.result.master.recovery_required!=0; unsigned completed=0;
 		bool proved=!status && PioneerDecoderBatchPacket(p.output,coordinatorNonce+1,tokens,steps,decoderEogBase,decoderEogMask,completed)
-			&& PioneerDecoderBatchResultProof(p.result,tokens,completed,coordinatorNonce+1);
+			&& PioneerDecoderBatchResultProof(p.result,tokens,completed,coordinatorNonce+1,decoderFusedGather);
 		if (!proved) {
 			fprintf(stderr,"Autonomous decoder STOP status%d state%u requested%u reported%u words%u cold%u;close only,no retry/fallback\n",status,p.result.master.state,steps,p.output[3],p.result.words,cold);
 			failed=closeOnly=true; return false;

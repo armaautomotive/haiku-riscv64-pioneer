@@ -2,8 +2,8 @@
 #ifndef BLACKHOLE_GATHER_DECODER_IMAGE_H
 #define BLACKHOLE_GATHER_DECODER_IMAGE_H
 #include "BlackholeBatchDecoderImage.h"
-// OFFLINE ONLY:one combined peer proof/output read;same exact math.
-// No driver/model registration selects this image yet.
+// Explicit model18/contract34:ALL readers finish BEFORE reverse combined
+// proof/output gather;same exact math. Separate native qualification.
 // SHA256 144d5643c2164214488d541d3d4780df3458db49cfea042b78799ae11a92f0f4
 enum { TT_GATHER_DECODER_IMAGE_WORDS=4549 };
 static inline uint32_t BlackholeGatherDecoderCodeWord(unsigned word) {

@@ -21,19 +21,20 @@ static PioneerDecoderJob Model() {
 	for (auto& l:model.layers) for (unsigned role=0;role<7;role++) reinterpret_cast<uint32_t*>(&l)[role]=0x04000000+role*0x1000000;
 	return model;
 }
-static void Prepare(TableStageIO& io,PioneerFleetWorker& f,unsigned worker,bool accum=false) {
+static void Prepare(TableStageIO& io,PioneerFleetWorker& f,unsigned worker,bool accum=false,bool gather=false) {
 	tt_host_page_result host={}; auto& c=io.C(); assert(Prepared(c,host,f.Store())); f.noc=c.Compute(); f.noc.version=PioneerWorkerVersion(worker);
 	assert(PioneerRuntimeMatvecPrepare(c,c.Baseline(),f.noc,f.Store(),f.Compute(),false,true,true,true,true,true,true));
 	assert(PioneerFleetPreludePrepare(io,f));
 	assert(!PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,false,true));
-	assert(PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,true,accum));
-	assert(f.accumPipeline==accum);
+	assert(PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,true,accum,gather));
+	assert(f.accumPipeline==accum && f.fusedGather==gather);
+	if (gather) assert(!PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,true,accum,false));
 	assert(f.descriptorTable && !f.descriptorTablePrepared && !PioneerPersistentBoot(io,f) && !c.starts);
 }
 int main() {
 	auto model=Model();
-	for (unsigned mode:{0U,1U,2U}) { bool accum=mode>=1,smallRows=mode==2; TableStageIO io(120); std::vector<PioneerFleetWorker> fleet(120);
-		for (unsigned worker=1;worker<120;worker++) { io.current=worker; auto& f=fleet[worker]; Prepare(io,f,worker,accum);
+	for (unsigned mode:{0U,1U,2U,3U}) { bool accum=mode>=1,smallRows=mode==2,gather=mode==3; TableStageIO io(120); std::vector<PioneerFleetWorker> fleet(120);
+		for (unsigned worker=1;worker<120;worker++) { io.current=worker; auto& f=fleet[worker]; Prepare(io,f,worker,accum,gather);
 			std::vector<uint32_t> before(io.C().buffers,io.C().buffers+12288);
 			assert(PioneerPersistentTablePrepare(io,io.C().Baseline(),f,model,worker,smallRows) && f.smallRows==smallRows && f.descriptorTablePrepared && f.Compute().buffers_dirty && !io.C().starts);
 			unsigned count=PioneerDecoderDescriptorCount(worker,smallRows);
