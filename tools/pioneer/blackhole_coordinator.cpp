@@ -21,6 +21,31 @@ typedef __UINT32_TYPE__ uint32_t;
 static volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static void Fence() { asm volatile("fence" ::: "memory"); }
 extern "C" void coordinator_fault_park() __attribute__((noreturn));
+#if PIONEER_COORDINATOR_FIXED_ROUTES
+// Immutable translated routes for this SAME proved 120-core cohort.
+// This removes repeated software quotient/remainder loops, not route checks.
+// No coordinate comes from the descriptor or a userspace address.
+static unsigned XY(unsigned worker)
+{
+	static const uint32_t routes[]={
+		129,193,257,321,385,449,513,577,641,705,
+		130,194,258,322,386,450,514,578,642,706,
+		131,195,259,323,387,451,515,579,643,707,
+		132,196,260,324,388,452,516,580,644,708,
+		133,197,261,325,389,453,517,581,645,709,
+		134,198,262,326,390,454,518,582,646,710,
+		135,199,263,327,391,455,519,583,647,711,
+		138,202,266,330,394,458,522,586,650,714,
+		139,203,267,331,395,459,523,587,651,715,
+		140,204,268,332,396,460,524,588,652,716,
+		141,205,269,333,397,461,525,589,653,717,
+		142,206,270,334,398,462,526,590,654,718
+	};
+	static_assert(sizeof(routes)/sizeof(routes[0])==120,"fixed cohort");
+	if (worker>=120) coordinator_fault_park();
+	return routes[worker];
+}
+#else
 static unsigned X(unsigned worker)
 {
 	static const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
@@ -33,6 +58,7 @@ static unsigned XY(unsigned worker)
 	unsigned row=worker; while (row>=10) row-=10;
 	return X(worker)|((2+row)<<6);
 }
+#endif
 static bool NocIdle()
 {
 	volatile uint32_t* noc=Words(0xffb20000);

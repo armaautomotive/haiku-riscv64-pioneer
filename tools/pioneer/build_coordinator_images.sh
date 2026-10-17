@@ -7,6 +7,7 @@ cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
 case ${PIONEER_COORDINATOR_OPT_LEVEL:-s} in s|2|3) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_HOT_QUANT:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_COORDINATOR_FIXED_ROUTES:-0} in 0|1) ;; *) exit 2;; esac
 pioneer_coordinator_init_span=0
 [ "${PIONEER_COORDINATOR_OPT_LEVEL:-s}" != 3 ] || pioneer_coordinator_init_span=1
 case ${PIONEER_COORDINATOR_PACKET_IDLE:-0} in 0|1) ;; *) echo 'Packet-idle image flag must be0 or1' >&2; exit 2;; esac
@@ -103,6 +104,7 @@ if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decod
 "$cross-g++" -std=c++11 -O${PIONEER_COORDINATOR_OPT_LEVEL:-s} -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti "$@" \
  -DPIONEER_COORDINATOR_INIT_SPAN=$pioneer_coordinator_init_span \
  -DPIONEER_COORDINATOR_HOT_QUANT=${PIONEER_COORDINATOR_HOT_QUANT:-0} \
+ -DPIONEER_COORDINATOR_FIXED_ROUTES=${PIONEER_COORDINATOR_FIXED_ROUTES:-0} \
  -fno-stack-protector -fno-pic -fno-pie -ffunction-sections -fdata-sections -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax -march="$isa" -mabi=ilp32 \
  -fstack-usage -DPIONEER_COORDINATOR_PACKET_IDLE=${PIONEER_COORDINATOR_PACKET_IDLE:-0} \

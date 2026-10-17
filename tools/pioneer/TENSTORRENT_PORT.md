@@ -2,6 +2,59 @@
 
 ## Status
 
+### October17:finite-half41 native PASS;fixed-route42 offline gates (16:34 UTC)
+
+Fast Qwen remains UNACHIEVED. Qualified41 GPU7.206016/7.162185/7.290277
+tok/s versus40 7.045853/7.002837/7.141068,about2% faster. CPU32
+1.047453/2.591181/1.244878tok/s;prompt3.805602/3.941445/3.525497s.
+ALL22 full-vocabulary/exact selected-bit startup checks and three sustained
+requests/untimed complete-logit replay/quality+coverage PASS. Complete312
+positions/61464 projections/8736 attention/156 full+156 selected positions/
+24 autonomous batches/zero warm uploads;END2/PCI-host1-1/cold0/cleanup1.
+Position21 total94.646759M ticks versus40 96.045473M;attention19.055259M
+versus20.448780M. Matrix45.785374M,Q87.283382M,RMS3.470988M,
+SiLU6.652639M,vocabulary7.676618M. Short7.628250tok/s is diagnostic ONLY.
+Driveraf25ebc3 preserved as `driver-v41-af25ebc3-backup`;native log copied
+locally,SHA1b1023daf0b1b97304db6d7b94fcc128e2880de42028ee361351e9bcee9c3f8d.
+No Assistant/Q4/27B/all-Qwen/requested-fast qualification claim.
+
+The user authorized controlled maintenance restarts and continued safe work.
+Normal Haiku shutdown/settle/relay off7s/cooldown/on/default Linux/unchanged
+hash-pinned64-CPU/full-memory SD-free handoff succeeded. Fresh Haiku's
+`listimage 1` reported exactly one KERNEL TEAM header,47 images,ZERO P100A
+images and no scan failure. NO GPU client was opened before installation.
+The repeated prewrite guard again proved zero loaded P100A images and no
+compute owners;only THEN replaced the exact regular `drivers/bin` file,
+with old/candidate/backup hashes verified. `dev/misc` is the unchanged
+`../../bin/tenstorrent_pci_probe` symlink,NOT an independent regular file.
+An initial regular-file guard correctly refused that symlink before writes.
+Exact support41 was checked only AFTER installation. This did not bypass
+the prior loaded-driver refusal. Never overwrite the loaded driver;repeat
+this controlled unloaded-image lifecycle for subsequent installations.
+SDs,boot defaults,firmware,Assistant and user's dirty llama edits unchanged.
+
+Next42/model26/private10 changes ONLY the immutable coordinator image:
+same120 translated routes as a checked constant lookup,plus function-local
+-O3 exact quantization with -O2 elsewhere;no fast-math or FP contraction.
+ALL routes,119 peers,NoC commands/counter/source proofs/ownership/arithmetic/
+full-validation/STOP/UNKNOWN quarantine/batch bounds remain unchanged.
+Masterd1addc8d is22856B inside SAME32KiB code owner;math63efcbae and ALL
+finite-half41 groups are unchanged. Distinct immutable `fixedRoutes` lease
+requires finiteHalf and refuses live/mixed upgrades before code writes.
+Hot-quant-only actual master passes all cases;its header is OFFLINE ONLY.
+Combined actual frozen42 master passes full/small,zero+sparse,one/two/early
+EOG,all logits/KV/119 sequences and ALL16 combined-proof/prefix faults
+(`pioneer-gather-decoder.aKoptBu7`). Zero full22208277 scalar steps versus
+39/41 master23221550;NOT native timing. Controller ALL-word stage/readback/
+restore,full/small/batch and ALL16 unknown-state faults PASS;no retry/reset/
+restore/free on uncertainty. Real client42 full/small/batch/capability
+refusal BEFORE BEGIN and all corruption/coverage gates PASS. The first
+client test correctly exposed its stale unknown-version42 fixture;updated
+that fixture to43,not any acceptance or quality gate. ControllerOUYzScAT,
+cliento1DXHip2,table9KcAwQzY,attention-policyQhs9KuIW retained.
+Driver651b1922,qwen588c9df4,supportc2bf4699 staged separately;NO42 native
+compute yet. Qualified41/40/39/38/36/35 and older rollbacks preserved.
+
 ### October17:41 native trial paused by driver-install safety review (15:38 UTC)
 
 Goal remains UNACHIEVED. Qualified40/fc08fe02 remains installed and idle;
