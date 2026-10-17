@@ -198,6 +198,9 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_GREEDY
 		&& operation!=9
 #endif
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		&& operation!=10
+#endif
 		) || !limit || limit>119) return 0;
 	if ((operation==6
 #if PIONEER_COORDINATOR_GREEDY
@@ -207,6 +210,12 @@ extern "C" unsigned coordinator_main()
 		|| (job[8]==0xffff && job[7]>0xfff00000) || job[9]!=0x100000)) return 0;
 #if PIONEER_COORDINATOR_GREEDY
 	if (operation==9 && (n!=151936 || k!=1024 || limit!=119 || !job[10] || job[10]>256)) return 0;
+#endif
+#if PIONEER_COORDINATOR_PAIRED_FFN
+	if (operation==10) {
+		if (k!=1024 || n!=6144 || limit!=119 || !PioneerDecoderWeight(base,1024,3072) || !PioneerDecoderWeight(job[10],1024,3072)) return 0;
+		for (unsigned i=11;i<64;i++) if (job[i]) return 0;
+	}
 #endif
 #else
 	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3) || !limit || limit>119) return 0;
@@ -262,6 +271,9 @@ extern "C" unsigned coordinator_main()
 	if ((k!=1024 && k!=2048 && k!=3072 && k!=5120 && k!=6144) || !n || n>262144 || (n&31)
 		|| (base&4095) || base<0x04000000 || base>=0x82400000) return 0;
 	unsigned rowBytes=k+(k>>3),bytes=n*rowBytes;
+#if PIONEER_COORDINATOR_PAIRED_FFN
+	if (operation==10) bytes=3072*rowBytes;
+#endif
 	if (bytes>0x82400000-base) return 0;
 	unsigned blocks=n>>5,workers=blocks<limit?blocks:limit,blocksPerWorker=0,extra=blocks;
 	while (extra>=workers) { extra-=workers; blocksPerWorker++; }
@@ -289,9 +301,19 @@ extern "C" unsigned coordinator_main()
 	unsigned firstRow=0;
 	for (unsigned worker=1;worker<=workers;worker++) {
 		unsigned rows=(blocksPerWorker+((worker-1)<extra))*32;
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		unsigned weightBase=base+firstRow*rowBytes;
+		if (operation==10) { PioneerPairedFfnSpan span; if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park();
+			rows=span.rows; weightBase=(span.tensor?job[10]:base)+span.first*rowBytes; }
+#endif
 		volatile uint32_t* descriptor=Words(0x147100);
 		for (unsigned i=0;i<8;i++) descriptor[i]=0;
-		descriptor[0]=base+firstRow*rowBytes; descriptor[1]=k>>4; descriptor[2]=rows>>4; descriptor[3]=1; descriptor[4]=XY(worker);
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		descriptor[0]=weightBase;
+#else
+		descriptor[0]=base+firstRow*rowBytes;
+#endif
+		descriptor[1]=k>>4; descriptor[2]=rows>>4; descriptor[3]=1; descriptor[4]=XY(worker);
 		Fence();
 		Transfer(true,worker,0x147100,0x70500,32);
 		Transfer(false,worker,0x147120,0x70500,32);
@@ -319,6 +341,10 @@ extern "C" unsigned coordinator_main()
 		}
 		if (!idle) coordinator_fault_park();
 		unsigned rows=(blocksPerWorker+((worker-1)<extra))*32;
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		PioneerPairedFfnSpan span;
+		if (operation==10) { if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park(); rows=span.rows; }
+#endif
 		Transfer(false,worker,0x147180,0x71340,64);
 		volatile uint32_t* proof=Words(0x147180);
 		unsigned tiles=(k>>4)*(rows>>4),reads=tiles>>5;
@@ -343,8 +369,15 @@ extern "C" unsigned coordinator_main()
 #endif
 				) outputRow=0;
 #endif
+#if PIONEER_COORDINATOR_PAIRED_FFN
+			unsigned outputBase=0x84000+outputRow*4;
+			if (operation==10) outputBase=(span.tensor?0x84000:0x87000)+span.first*4;
+			Transfer(false,worker,outputBase,0x84000,rows*4);
+			for (unsigned i=0;i<rows;i++) if ((Words(outputBase)[i]&0x7f800000)==0x7f800000) coordinator_fault_park();
+#else
 			Transfer(false,worker,0x84000+outputRow*4,0x84000,rows*4);
 			for (unsigned i=0;i<rows;i++) if ((Words(0x84000)[outputRow+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
+#endif
 #if PIONEER_COORDINATOR_GREEDY
 			if (operation==9) for (unsigned i=0;i<rows;i++) {
 				uint32_t bits=Words(0x84000)[i],key=PioneerDecoderLogitKey(bits);

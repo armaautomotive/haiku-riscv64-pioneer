@@ -23,9 +23,10 @@ struct PioneerDecoderJob {
 	uint32_t rope[128]; // interleaved exact cos/sin table for THIS position
 };
 static_assert(sizeof(PioneerDecoderJob)<=TT_DECODER_JOB_BYTES,"private decoder args must not overlap NoC scratch at147000");
-static inline unsigned PioneerDecoderSequenceAdvance(unsigned index,bool parallel=false,bool glu=false)
+static inline unsigned PioneerDecoderSequenceAdvance(unsigned index,bool parallel=false,bool glu=false,bool paired=false)
 {
-	return index>=119?0:(index<32?197:index<64?85:index<96?57:1)+(parallel && index<8?28:0)+(glu && index<6?28:0);
+	if (!paired) return index>=119?0:(index<32?197:index<64?85:index<96?57:1)+(parallel && index<8?28:0)+(glu && index<6?28:0);
+	return index>=119?0:(index<32?169:index<64?57:29)+(parallel && index<8?28:0)+(glu && index<6?28:0);
 }
 static inline bool PioneerDecoderWeight(uint32_t base,unsigned k,unsigned n)
 {
@@ -38,13 +39,13 @@ static inline bool PioneerDecoderNorm(uint32_t base)
 }
 static inline bool PioneerDecoderJobValid(const volatile PioneerDecoderJob& job,unsigned requiredVersion=1)
 {
-	if ((requiredVersion<1 || requiredVersion>4) || job.magic!=0x31444344 || (job.operation!=8 && !(requiredVersion==4 && job.operation==9)) || job.version!=requiredVersion || !job.tokens || job.tokens>256
+	if ((requiredVersion<1 || requiredVersion>5) || job.magic!=0x31444344 || (job.operation!=8 && !(requiredVersion>=4 && job.operation==9)) || job.version!=requiredVersion || !job.tokens || job.tokens>256
 		|| !job.nonce || job.nonce>=0x7fffffff || job.kvBase!=0x82400000 || job.workers!=119
 		|| !job.hostHigh || job.hostHigh>0xffff || (job.hostLow&0xfffff) || job.hostBytes!=0x100000
 		|| (job.hostHigh==0xffff && job.hostLow>0xfff00000) || !PioneerDecoderNorm(job.finalNorm)
 		|| !PioneerDecoderWeight(job.vocabulary,1024,151936)) return false;
 	for (unsigned i=0;i<4;i++) if (job.reserved[i]) return false;
-	for (unsigned i=0;i<119;i++) if (!job.sequence[i] || job.sequence[i]>0x7fffffff-PioneerDecoderSequenceAdvance(i,requiredVersion>=2,requiredVersion>=3)) return false;
+	for (unsigned i=0;i<119;i++) if (!job.sequence[i] || job.sequence[i]>0x7fffffff-PioneerDecoderSequenceAdvance(i,requiredVersion>=2,requiredVersion>=3,requiredVersion==5)) return false;
 	for (unsigned i=0;i<128;i++) { uint32_t a=job.rope[i]&0x7fffffff; if (a>0x3f800000 || (a && a<0x26800000)) return false; }
 	for (unsigned i=0;i<28;i++) {
 		const volatile auto& l=job.layers[i];
@@ -55,16 +56,17 @@ static inline bool PioneerDecoderJobValid(const volatile PioneerDecoderJob& job,
 	}
 	return true;
 }
-static inline bool PioneerDecoderSummary(const uint32_t* s,unsigned tokens,unsigned nonce,const uint32_t* before,const uint32_t* after,bool parallel=false,bool glu=false,bool greedy=false)
+static inline bool PioneerDecoderSummary(const uint32_t* s,unsigned tokens,unsigned nonce,const uint32_t* before,const uint32_t* after,bool parallel=false,bool glu=false,bool greedy=false,bool paired=false)
 {
-	if ((greedy && !glu) || (glu && !parallel) || !s || !before || !after || !tokens || tokens>256 || !nonce || nonce>=0x7fffffff || s[4]!=119 || s[5]!=151936
+	if ((paired && !glu) || (greedy && !glu) || (glu && !parallel) || !s || !before || !after || !tokens || tokens>256 || !nonce || nonce>=0x7fffffff || s[4]!=119 || s[5]!=151936
 		|| s[6]!=nonce || s[7]!=(greedy?9U:8U) || before[2]!=before[6] || after[2]!=after[6]) return false;
 	// 28*(64+32+32+32+96+96+32) ordinary matrix peers,119 final wide
 	// peers,113 immutable norm reads and28 complete8-group attention ops.
 	unsigned r=s[0],minimum=glu?47412:parallel?45732:43716+448*((tokens+63)>>6),w=glu?23821:parallel?22981:22309,wf=glu?48542:parallel?37286:33030;
 	if (greedy) { minimum-=118; w-=118; wf-=9494; }
-	if (r<minimum || r>minimum+2*65535*(glu?11263U:parallel?11095U:10871U) || ((r-minimum)&1)
-		|| s[1]!=(glu?102517:parallel?87733:77205+1792*tokens)-(greedy?9494:0)+(r-minimum) || s[2]!=w || s[3]!=wf) return false;
+	if (paired) { minimum-=8176; w-=4088; wf-=4088; }
+	if (r<minimum || r>minimum+2*65535*(paired?9219U:glu?11263U:parallel?11095U:10871U) || ((r-minimum)&1)
+		|| s[1]!=(glu?102517:parallel?87733:77205+1792*tokens)-(greedy?9494:0)-(paired?6132:0)+(r-minimum) || s[2]!=w || s[3]!=wf) return false;
 	const unsigned delta[]={r,s[1],r+w,r,w,wf,r+w,w};
 	for (unsigned i=0;i<8;i++) if (s[8+i]!=before[i] || s[16+i]!=after[i] || uint32_t(after[i]-before[i])!=delta[i]) return false;
 	return true;

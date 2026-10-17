@@ -12,6 +12,7 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderStageProfile.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerPairedFfnPlan.h"
 #include <stddef.h>
 #define coordinator_main decoder_matrix_main
 #include "blackhole_coordinator.cpp"
@@ -118,6 +119,19 @@ static void DecoderNorm(unsigned input,unsigned output,unsigned n,unsigned width
 	Fence();
 	DECODER_STAGE_END(1);
 }
+#if PIONEER_COORDINATOR_PAIRED_FFN
+static void DecoderPairedFfn(uint32_t gate,uint32_t up,uint32_t (&total)[4])
+{
+	DECODER_STAGE_BEGIN(); volatile uint32_t* j=Words(0x140000); volatile auto& root=DecoderJob();
+	for (unsigned i=0;i<64;i++) j[i]=0;
+	j[0]=0x31445243; j[1]=10; j[2]=119; j[3]=1024; j[4]=6144; j[5]=gate; j[6]=root.nonce; j[10]=up;
+	for (unsigned i=0;i<119;i++) j[64+i]=root.sequence[i];
+	Fence(); if (decoder_matrix_main()!=119) coordinator_fault_park();
+	for (unsigned i=0;i<4;i++) total[i]+=Words(0x143000)[i];
+	for (unsigned i=0;i<119;i++) root.sequence[i]++;
+	Fence(); DECODER_STAGE_END(0);
+}
+#endif
 static void DecoderAddResidual()
 {
 	for (unsigned i=0;i<1024;i++) {
@@ -241,11 +255,11 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
-	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
+	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
 #endif
 	for (unsigned i=0;i<1024;i++) if ((Words(TT_DECODER_INPUT)[i]&0x7fffffff)>0x477fe000) return 0;
 	uint32_t before[8],total[4]={}; for (unsigned i=0;i<8;i++) before[i]=*Words(0xffb20000+CounterOffset(i));
@@ -280,7 +294,11 @@ extern "C" unsigned coordinator_main()
 		DecoderQuantize(0x144000,2048); DecoderMatrix(l.o,2048,1024,total); DecoderAddResidual();
 		DecoderCopy(TT_DECODER_RESIDUAL,TT_DECODER_HIDDEN,1024);
 		DecoderNorm(TT_DECODER_HIDDEN,0x84000,1024,1024,l.ffnNorm,total); DecoderQuantize(0x84000,1024);
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		DecoderPairedFfn(l.gate,l.up,total);
+#else
 		DecoderMatrix(l.gate,1024,3072,total); DecoderCopy(0x87000,0x84000,3072); DecoderMatrix(l.up,1024,3072,total);
+#endif
 #if PIONEER_COORDINATOR_PARALLEL_GLU
 		DecoderParallelGlu(layer,total);
 #else

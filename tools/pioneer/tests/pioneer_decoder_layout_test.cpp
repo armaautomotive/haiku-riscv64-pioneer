@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerPairedFfnPlan.h"
 #include "../PioneerGraphRope.h"
 #include <cassert>
 #include <cmath>
@@ -17,6 +18,16 @@ static PioneerDecoderJob Job()
 }
 int main()
 {
+	{ unsigned cover[2][96]={},workers[2]={},advance[119]={}; PioneerPairedFfnSpan s={};
+		assert(!PioneerPairedFfnWorker(0,s) && !PioneerPairedFfnWorker(120,s));
+		for (unsigned w=1;w<=119;w++) { assert(PioneerPairedFfnWorker(w,s) && s.tensor<2 && (s.rows==32 || s.rows==64) && !(s.first&31) && s.first+s.rows<=3072);
+			workers[s.tensor]++; for (unsigned b=s.first/32;b<(s.first+s.rows)/32;b++) cover[s.tensor][b]++; }
+		assert(workers[0]==60 && workers[1]==59); for (auto& tensor:cover) for (unsigned hits:tensor) assert(hits==1);
+		for (unsigned layer=0;layer<28;layer++) { for (unsigned count:{64U,32U,32U,32U,119U,32U}) for (unsigned w=0;w<count;w++) advance[w]++;
+			for (unsigned w=0;w<8;w++) advance[w]++; for (unsigned w=0;w<6;w++) advance[w]++; }
+		for (unsigned w=0;w<119;w++) assert(++advance[w]==PioneerDecoderSequenceAdvance(w,true,true,true));
+		assert(advance[0]==225 && advance[6]==197 && advance[8]==169 && advance[32]==57 && advance[64]==29 && advance[118]==29);
+	}
 	{ uint32_t packet[32]={TT_DECODER_GREEDY_MAGIC,17,151936,151935,0x80000000,256,119,9};
 		assert(PioneerDecoderGreedyValid(packet,17,256));
 		for (unsigned i=0;i<32;i++) { auto saved=packet[i]; packet[i]=i==3?151936:i==4?0x7fc00000:saved^1;
@@ -28,6 +39,10 @@ int main()
 			assert((PioneerDecoderLogitKey(a)>PioneerDecoderLogitKey(b))==(PioneerAttentionFloat(a)>PioneerAttentionFloat(b))); }
 	}
 	auto job=Job(); assert(PioneerDecoderJobValid(job) && sizeof(job)<=4096);
+	{ auto j=job; j.version=5; for (unsigned op:{8U,9U}) { j.operation=op; assert(PioneerDecoderJobValid(j,5) && !PioneerDecoderJobValid(j,4)); }
+		for (unsigned i=0;i<119;i++) { unsigned advance=PioneerDecoderSequenceAdvance(i,true,true,true); auto bounded=j;
+			bounded.sequence[i]=0x7fffffff-advance; assert(PioneerDecoderJobValid(bounded,5)); bounded.sequence[i]++; assert(!PioneerDecoderJobValid(bounded,5)); }
+	}
 	{ auto greedy=job; greedy.version=4; for (unsigned op:{8U,9U}) { greedy.operation=op;
 		assert(PioneerDecoderJobValid(greedy,4) && !PioneerDecoderJobValid(greedy,3)); }
 		greedy.operation=10; assert(!PioneerDecoderJobValid(greedy,4)); }

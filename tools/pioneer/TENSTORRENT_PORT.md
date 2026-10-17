@@ -2,6 +2,51 @@
 
 ## Status
 
+### October17: counter candidate rejected for speed;paired gate/up trial (10:00 UTC)
+
+Fast Qwen is STILL NOT achieved. Contract19 passes all native exact22-position
+replays and three natural-request full-logit/selected-bit/coverage gates,
+with clean END2/PCI-host1-1/cold0/cleanup1. Its3.393950/3.370542/3.441817tok/s
+is slightly below the matched18 results3.400617/3.376853/3.450321;there is NO
+measurable performance benefit. Log:`qwen-counters-v19-benchmark.log`.
+It was not promoted,and the faster qualified18 driver was restored IDLE.
+
+Next explicit contract20/model-registry5 pairs each layer's gate/up matrices
+in ONE device dispatch across119 existing math peers:60 gate/59 up,each
+owns one32/64-row contiguous span of one separately validated3072-row
+tensor. All119 jobs are issued before waiting. Shared Q8 input stays frozen;
+outputs gather directly into the existing disjoint gate87000..8a000/up
+84000..87000 owners. No new hardware arithmetic,buffer,address,host round
+trip or CPU learned work is introduced. The old gate-copy loop is removed.
+Attention/GLU/math dispatch images,source/idle/physical counter/sequence/
+finite output checks and all-owner unknown-state quarantine stay intact.
+Private root version5 advances peers0..5 by225,6..7 by197,8..31 by169,
+32..63 by57,and64..118 by29 per position:9219 peer executions versus11263.
+Full-result minimum R/RF/W/WF=39236/96385/19733/44454;token-only
+39118/86891/19615/34960 plus bounded unsuccessful poll pairs. Stage profile3
+has168 ordinary matrix dispatches,113 RMS,85 Q8,28 each RoPE/GLU/attention,
+one classifier and one total. These are still197 LOGICAL projections.
+
+Independent plan tests cover every row of both tensors exactly once. Actual
+master/eight attention/six GLU/sampling instruction tests pass zero/nonzero/
+TWO positions,exact complete logits/token/selected bits/EVERY KV/Q8 word,
+119 sequences,counters and profile counts,in BOTH result modes. Extended
+tests count every paired row/batch independently and reject bad up base,
+K/N/worker count/reserved field before paired launch,late nonfinite up
+output,all ten dropped command stores and all four counter faults. Controller
+and REAL client tests cover alternating full/token calls,version5 sequence
+overflow,diagnostic3 metadata,exact contract refusal BEFORE BEGIN and all
+16 unknown-state faults without retry/reset/restore/free. Default-off19
+still rebuilds EXACTLY after preserving the original sequence expression.
+
+Candidate uses the faster18 transport (cumulative snapshot flag OFF).
+Root`f1cd3404e7d1a704cb957c10d9dd074aabad5ecec4d1e0daca80342072509988`;
+driver`7d13cfa88549838e30a838e291c590b2899e23c25c4b7840b56b62668c0484ad`;
+verifier`66c545f5e10657550d587f8444476a59fd90b7c1197ea7141cae4fcd2436c9e5`.
+Installed IDLE for controlled native trial,qualified18 preserved separately.
+Native correctness/performance PENDING. No Assistant/boot/CPU/RAM/firmware/
+SD changes;fixed0.6B Q8_0 only,NOT all-Qwen/27B/Q4 support or fast inference.
+
 ### October17: exact RMS native PASS;counter-snapshot candidate prepared (09:37 UTC)
 
 Fast Qwen remains unachieved. Contract18 passes22 EXACT full-vocabulary

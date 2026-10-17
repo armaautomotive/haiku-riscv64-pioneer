@@ -15,7 +15,7 @@
 struct GluDecoder:ProfileDecoder {
 	std::unique_ptr<GluMachine> pendingGlu[6];
 	unsigned gluIssued=0,gluCompleted=0,gluBatches=0,badGluProof=0,dropGluInput=0,badPacked=0,badScale=0;
-	GluDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool greedy=false):ProfileDecoder(path,image,nz,true,greedy) {}
+	GluDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool greedy=false,bool paired=false):ProfileDecoder(path,image,nz,true,greedy,paired) {}
 	void CompleteGlu() {
 		assert(gluIssued==63 && !gluCompleted); gluBatches++;
 		for (unsigned p=0;p<6;p++) {

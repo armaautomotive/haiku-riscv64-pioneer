@@ -42,7 +42,7 @@ static int Argmax(const float* values) {
 	int best=0; for (unsigned i=0;i<151936;i++) { if (!isfinite(values[i])) return -1; if (values[i]>values[best]) best=int(i); } return best;
 }
 #include "PioneerWholeQwenBench.h"
-static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages,bool glu,bool greedy,bool rms,bool counters)
+static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages,bool glu,bool greedy,bool rms,bool counters,bool paired)
 {
 	double coldStart=Seconds();
 	RawModel raw; gguf_init_params rp={false,&raw.tensors}; raw.metadata=gguf_init_from_file(path,rp);
@@ -78,8 +78,8 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 	if (benchmark) cp.n_batch=cp.n_ubatch=128;
 	cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.offload_kqv=false; cp.op_offload=false;
 	cpu.context=llama_init_from_model(cpu.model,cp); if (!cpu.context || llama_n_threads(cpu.context)!=32) return 1;
-	printf("MODEL decoder scheduler:%s\n",counters?"eight KV/six GLU/on-card argmax/RMS/cumulative expectations (experimental contract19)":rms?"eight KV/six GLU/on-card argmax/positive FastTwoSum RMS (experimental contract18)":greedy?"eight KV/six GLU/on-card argmax (experimental contract17)":glu?"eight KV/six GLU groups (experimental contract16)":stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
-	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,counters?10:rms?9:greedy?8:glu?7:stages?6:parallel?5:4)) return 1;
+	printf("MODEL decoder scheduler:%s\n",paired?"119-peer paired gate/up,eight KV,six GLU,on-card argmax/RMS (experimental contract20)":counters?"eight KV/six GLU/on-card argmax/RMS/cumulative expectations (experimental contract19)":rms?"eight KV/six GLU/on-card argmax/positive FastTwoSum RMS (experimental contract18)":greedy?"eight KV/six GLU/on-card argmax (experimental contract17)":glu?"eight KV/six GLU groups (experimental contract16)":stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
+	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,paired?11:counters?10:rms?9:greedy?8:glu?7:stages?6:parallel?5:4)) return 1;
 	PioneerResidentTensorCache<PioneerResidentDevice> cache(card,0x80000000ULL,false,true,true,true,true);
 	PioneerDecoderModelOffsets offsets={}; double uploadStart=Seconds(); bool okay=true;
 	for (unsigned layer=0;layer<28 && okay;layer++) {
@@ -161,15 +161,17 @@ int main(int argc,char** argv)
 	bool rmsBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-rms-decoder");
 	bool countersBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-counters-decoder");
 	bool counters=countersBenchmark || (argc==3 && !strcmp(argv[1],"--verify-counters-decoder"));
-	bool rms=counters || rmsBenchmark || (argc==3 && !strcmp(argv[1],"--verify-rms-decoder"));
+	bool pairedBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-paired-decoder");
+	bool paired=pairedBenchmark || (argc==3 && !strcmp(argv[1],"--verify-paired-decoder"));
+	bool rms=paired || counters || rmsBenchmark || (argc==3 && !strcmp(argv[1],"--verify-rms-decoder"));
 	bool greedyBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-greedy-decoder");
 	bool greedy=rms || greedyBenchmark || (argc==3 && !strcmp(argv[1],"--verify-greedy-decoder"));
 	bool gluBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-glu-decoder");
 	bool glu=greedy || gluBenchmark || (argc==3 && !strcmp(argv[1],"--verify-glu-decoder"));
-	bool benchmark=countersBenchmark || rmsBenchmark || greedyBenchmark || gluBenchmark || stageBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder"));
+	bool benchmark=pairedBenchmark || countersBenchmark || rmsBenchmark || greedyBenchmark || gluBenchmark || stageBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder"));
 	bool stages=glu || stageBenchmark || (argc==3 && !strcmp(argv[1],"--profile-parallel-decoder"));
 	bool parallel=stages || benchmark || (argc==3 && !strcmp(argv[1],"--verify-parallel-decoder"));
-	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder|--verify-glu-decoder|--benchmark-glu-decoder|--verify-greedy-decoder|--benchmark-greedy-decoder|--verify-rms-decoder|--benchmark-rms-decoder|--verify-counters-decoder|--benchmark-counters-decoder MODEL.gguf\n",argv[0]); return 2; }
+	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder|--verify-glu-decoder|--benchmark-glu-decoder|--verify-greedy-decoder|--benchmark-greedy-decoder|--verify-rms-decoder|--benchmark-rms-decoder|--verify-counters-decoder|--benchmark-counters-decoder|--verify-paired-decoder|--benchmark-paired-decoder MODEL.gguf\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0); llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_register(ggml_backend_cpu_reg());
-	int result=Run(argv[2],inspect,parallel,benchmark,stages,glu,greedy,rms,counters); llama_backend_free(); return result;
+	int result=Run(argv[2],inspect,parallel,benchmark,stages,glu,greedy,rms,counters,paired); llama_backend_free(); return result;
 }
