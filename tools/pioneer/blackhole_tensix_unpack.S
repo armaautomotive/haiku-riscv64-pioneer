@@ -18,6 +18,14 @@
 	.error "Native partial accumulation requires the separate inline image"
 .endif
 .endif
+.ifdef TT_RUNTIME_Q8_ROUNDED_PRODUCT
+.ifndef TT_RUNTIME_Q8_ACCUM_PIPE
+	.error "Separate multiply/add candidate requires the accumulator pipeline"
+.endif
+.ifdef TT_RUNTIME_Q8_PARTIAL
+	.error "Separate rounded product is NOT the rejected partially fused MAD"
+.endif
+.endif
 .ifdef TT_RUNTIME_Q8_PHASE_PIPE
 .ifndef TT_RUNTIME_Q8_INLINE
 	.error "Fidelity pipeline requires the separate inline image"
@@ -916,6 +924,18 @@ q8_native_header:
 	.org 0xd80, 0
 	.global q8_exact_accumulate, q8_exact_sequence, q8_exact_end
 q8_exact_accumulate:
+.ifdef TT_RUNTIME_Q8_ROUNDED_PRODUCT
+	/* OFFLINE candidate: RN(dot*scale), then RN(accumulator+product).
+	 * SFPMAD with +0 is an independently checked rounded multiply;
+	 * SFPADD performs a separate rounded addition. This is deliberately
+	 * NOT IEEE fused FMA and NOT the rejected partially-fused MAD.
+	 * Same input/scales/dot/accumulator registers,source banks,final full
+	 * drain and ALL public PCs. No new instruction,owner,NoC or Dst traffic.
+	 * Confined to the SAME reserved control span d80..ea8;the original
+	 * immutable exact arithmetic constants remain present but unused. */
+	exact_ops 0x84024920,0x84035930,0x850a0200,0x850a1310
+	j q8_exact_return
+.else
 	/* Spill both parities to private Dst8..19 before reusing all 8 LRegs.
 	 * Scales remain Dst0..7, integer matrix products Dst32..35. */
 	la a5, q8_exact_spill
@@ -997,6 +1017,7 @@ q8_exact_direct:
 	addi a5, a5, 4
 	bne a5, a6, q8_exact_emit
 	jalr zero, 0(a7)
+.endif
 .endif
 	.org 0xea8, 0
 q8_exact_spill:

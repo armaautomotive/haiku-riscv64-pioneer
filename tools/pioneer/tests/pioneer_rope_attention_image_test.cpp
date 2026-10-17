@@ -44,6 +44,14 @@ struct RopeGroupMachine:GroupMachine {
 			==uint32_t(referenceKey[(tokens-1)*128+i*2])+(uint32_t(referenceKey[(tokens-1)*128+i*2+1])<<16));
 	}
 };
+struct VectorGluFaultMachine:GluMachine {
+	unsigned writesToDst=0,badDst=0;
+	VectorGluFaultMachine(const Image& i):GluMachine(i,27,5) {}
+	void Store(uint32_t a,uint32_t value) override {
+		if (Range(a,0xffbd8000,8*64) && ++writesToDst==badDst) value^=1;
+		GluMachine::Store(a,value);
+	}
+};
 int main(int argc,char** argv)
 {
 	assert(argc==2); setvbuf(stdout,NULL,_IONBF,0); Image image(argv[1],false,true,true); assert(image.parallelRope);
@@ -60,5 +68,12 @@ int main(int argc,char** argv)
 		RopeGroupMachine m(image,1,0,0,2); m.masterInput[source]=0x7f800000; m.Run(source!=0x142100); assert(!m.outputWrites && !m.writes && !m.mem[0x17ffc4/4]);
 	}
 	for (unsigned layer:{0U,27U}) for (unsigned group=0;group<6;group++) { GluMachine m(image,layer,group); m.Run(); m.VerifyGlu(); }
-	puts("PASS OFFLINE fixed parallel three-head RMS/exact fused RoPE/attention and unchanged GLU,all source bits/counters/guards/extension instruction bounds;NOT native qualification");
+	if (image.vectorGlu) {
+		for (unsigned word=1;word<=128;word++) { VectorGluFaultMachine m(image); m.badDst=word; m.Run(true);
+			assert(!m.operandWrites && !m.scaleWrites && !m.mem[0x17ffc4/4]); }
+		for (unsigned word:{1921U,1984U,1985U,2048U}) { VectorGluFaultMachine m(image); m.badDst=word; m.Run(true);
+			assert(!m.mem[0x17ffc4/4] && m.operandWrites==240 && m.scaleWrites==15); }
+		VectorGluFaultMachine m(image); m.dropAck=true; m.Run(true); assert(!m.operandWrites && !m.scaleWrites && !m.mem[0x17ffc4/4]);
+	}
+	puts("PASS OFFLINE fixed parallel three-head RMS/exact fused RoPE/attention and exact GLU packing,all source bits/counters/guards/extension instruction bounds;NOT native qualification");
 }

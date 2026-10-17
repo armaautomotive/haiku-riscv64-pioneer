@@ -11,6 +11,8 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCachedQueryGluImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholePullInputGluImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRopeGluImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeSfpuDivideProbeImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeVectorGluImage.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -40,7 +42,7 @@ static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&
 struct Image {
 	std::vector<uint8_t> boot,code,rope;
 	std::map<std::string,uint32_t> symbols;
-	bool resident,coordinated,glu,cachedQuery=false,inputPull=false,parallelRope=false;
+	bool resident,coordinated,glu,cachedQuery=false,inputPull=false,parallelRope=false,sfpuDivideProbe=false,vectorGlu=false;
 	explicit Image(const char* path,bool kv=false,bool group=false,bool activation=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group),glu(activation) {
 		assert(!glu || coordinated);
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
@@ -48,7 +50,11 @@ struct Image {
 		while (file>>std::hex>>address>>type>>name) symbols[name]=address;
 		assert(boot.size()==4 && Word(boot,0)==0x0006c06f && code.size()<=8192);
 		assert(Word(boot,0)==TT_ATTENTION_TILE_BOOT);
-		if (!coordinated) {
+		sfpuDivideProbe=getenv("PIONEER_SFPU_DIVIDE_PROBE")!=nullptr;
+		if (sfpuDivideProbe) {
+			assert(!resident && !coordinated && code.size()==TT_SFPU_DIVIDE_PROBE_IMAGE_WORDS*4);
+			for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) assert(BlackholeSfpuDivideProbeCodeWord(w)==(w<code.size()/4?Word(code,w*4):0));
+		} else if (!coordinated) {
 			assert(code.size()==unsigned(resident?TT_RESIDENT_ATTN_IMAGE_WORDS:TT_ATTENTION_TILE_IMAGE_WORDS)*4);
 			for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++)
 				assert((resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
@@ -56,19 +62,23 @@ struct Image {
 			inputPull=glu && getenv("PIONEER_COORDINATED_PULL_INPUT");
 			cachedQuery=glu && (inputPull || getenv("PIONEER_ATTENTION_CACHED_QUERY"));
 			parallelRope=inputPull && getenv("PIONEER_ATTENTION_PARALLEL_ROPE");
-			assert(code.size()==unsigned(parallelRope?TT_ROPE_GLU_IMAGE_WORDS:inputPull?TT_PULL_INPUT_GLU_IMAGE_WORDS:cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
+			vectorGlu=parallelRope && getenv("PIONEER_GLU_VECTOR");
+			assert(code.size()==unsigned(vectorGlu?TT_VECTOR_GLU_IMAGE_WORDS:parallelRope?TT_ROPE_GLU_IMAGE_WORDS:inputPull?TT_PULL_INPUT_GLU_IMAGE_WORDS:cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
 			for (unsigned w=0;w<TT_COORDINATED_ATTENTION_CODE_WORDS;w++)
-				assert((parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+				assert((vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 			if (parallelRope) {
-				rope=Read(std::string(path)+"/rope.bin"); assert(rope.size()==TT_ROPE_GLU_EXTRA_WORDS*4 && rope.size()<=0x1fe0);
+				rope=Read(std::string(path)+"/rope.bin"); assert(rope.size()==unsigned(vectorGlu?TT_VECTOR_GLU_EXTRA_WORDS:TT_ROPE_GLU_EXTRA_WORDS)*4 && rope.size()<=0x1fe0);
 				assert(symbols.at("attention_rope_end")==0x74020+rope.size());
-				for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert(BlackholeRopeGluExtraWord(w)==(w<rope.size()/4?Word(rope,w*4):0));
+				for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert((vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w))==(w<rope.size()/4?Word(rope,w*4):0));
 			}
 		}
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());
 		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE
 			&& symbols.at("attention_park")==unsigned(TT_ATTENTION_TILE_PARK)+(coordinated?12:0));
-		if (!coordinated) assert(symbols.at("attention_exact_end")-symbols.at("attention_exact_begin")==37*4);
+		if (sfpuDivideProbe) {
+			assert(!symbols.count("attention_exact_begin") && !symbols.count("attention_exact_end"));
+			symbols["attention_exact_begin"]=symbols.at("attention_image_end");
+		} else if (!coordinated) assert(symbols.at("attention_exact_end")-symbols.at("attention_exact_begin")==37*4);
 		else { // Standalone exact half products need no general FMA table.
 			assert(!symbols.count("attention_exact_begin") && !symbols.count("attention_exact_end"));
 			symbols["attention_exact_begin"]=symbols.at("attention_image_end");

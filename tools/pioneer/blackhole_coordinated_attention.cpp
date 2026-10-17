@@ -17,6 +17,9 @@
 #if PIONEER_ATTENTION_PARALLEL_ROPE
 extern "C" bool attention_prepare_rope_group();
 #endif
+#if PIONEER_GLU_VECTOR
+#include "blackhole_vector_silu.h"
+#endif
 static bool GroupIdle()
 {
 	bool idle=true; volatile uint32_t* noc=Words(0xffb20000);
@@ -116,9 +119,16 @@ static unsigned GroupGlu()
 	for (unsigned i=0;i<8;i++) proof[i]=*Words(0xffb20000+GroupCounter(i));
 #endif
 	for (unsigned i=8;i<32;i++) proof[i]=0;
+#if PIONEER_GLU_VECTOR
+	Setup();
+#endif
 	for (unsigned block=0;block<16;block++) {
 		float values[32]; uint32_t operand[16],scale=0;
+#if PIONEER_GLU_VECTOR
+		GroupVectorSilu(gate+block*32,up+block*32,values);
+#else
 		for (unsigned i=0;i<32;i++) values[i]=PioneerGraphSiluFast(gate[block*32+i])*up[block*32+i];
+#endif
 		if (!PioneerGraphQuantize32(values,operand,scale)) attention_fault_park();
 		for (unsigned i=0;i<16;i++) Words(0x91000)[block*16+i]=operand[i];
 		Words(0x91400)[block]=scale;

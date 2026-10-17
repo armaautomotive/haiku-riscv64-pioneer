@@ -50,7 +50,7 @@ struct PersistentMachine:BulkQ8Machine {
 		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
 		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);
 	}
-	bool CorrectExpected() const {
+	virtual bool CorrectExpected() const {
 		if (!partialMath) return CorrectIeee();
 		if (conditional) return false;
 		for (unsigned row=0;row<outputs;row++) {

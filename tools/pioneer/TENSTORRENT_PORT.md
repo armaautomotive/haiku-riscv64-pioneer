@@ -2,6 +2,57 @@
 
 ## Status
 
+### October17: vector GLU36 native PASS;matrix prototype (14:38 UTC)
+
+Fast Qwen STILL NOT achieved. Native36 GPU5.916261/5.871315/6.006622tok/s
+versus35 5.829558/5.796573/5.926380,only about1..2% faster. CPU32 trial
+1.532736/2.746050/.970746;GPU prompts4.407186/4.578486/4.079088s.
+ALL22 full-vocabulary/selected-bit checks and all three sustained requests
+plus untimed complete-logit quality/coverage replays PASS. Complete312
+positions/61464 projections/8736 attention/156 full+156 selected positions/
+24 batches/zero warm uploads;END2/PCI-host1-1/cold0/cleanup1. Position21
+SiLU9.414M ->7.615456M ticks,total112.951191M;matrix48.252782M and
+attention27.490909M remain. Log`qwen-vector-v36-benchmark.log` copied locally;
+driver6ab257a2 preserved as`driver-v36-6ab257a2-backup`. Keep35/34 and older
+rollbacks. No Assistant,Q4/27B/all-Qwen promotion or requested-fast claim.
+
+Next OFFLINE matrix prototype changes only the reserved d80..ea8 control
+span in the SAME4096B math owner. Compute RN(dot*scale),then RN(acc+product)
+with four already-qualified SFPU operations,instead of the37-op exact fused
+engine. This is NOT fused FMA and NOT rejected22's partially-fused MAD.
+Unchanged public/status/STOP PCs,constants,source-bank ownership,NoC and
+final full drain. The default exact image regenerates byte-identically
+(63efcbae). Actual new8e76cd8d image passes all120 peers,K1024..6144,N4096,
+changed repeated inputs,independent two-operation IEEE oracle,Dst hazards
+and STOP;47817 versus60361 interpreter steps,NOT a hardware speed claim.
+No rounded-product code is installed or full-model qualified yet. Its
+native quality gates must remain unchanged;never promote a quality failure.
+
+### October17: exact vector GLU36 offline validation (14:30 UTC)
+
+Fast Qwen remains UNACHIEVED. Native35 is idle and preserved. Experimental
+36/model20/private10 reuses the SAME35 master,119 math peers,eight group
+code/data owners,NoC routes/proofs/counters and two-position transport.
+Only the fixed group math changes:32-lane SFPU degree8 SiLU denominator
+with separate rounded multiply/add,then branchless exact integer restoring
+division and the unchanged card-side corner path. No host CPU fallback,
+new instruction,NoC command,DMA extent or additional ownership authority.
+Primary7000B and extension7108B fit the SAME8192B/8160B sealed code owners.
+Mixed/live-upgraded group leases are refused before code staging.
+
+Unchanged strict SFPU interpreter passes1310720 exact normal divisions,
+1048576 bit-exact SiLU inputs and the compiled standalone divide probe
+(32768 outputs,ALL64 Dst input-readback faults,descriptor/domain/ACK faults).
+The compiled full group passes48 RMS/RoPE/attention cases through256 tokens,
+all six GLU groups at layers0/27,exact packed Q8/half scales,all source/counter
+faults,ALL128 first-block Dst corruptions and late-block/ACK faults.
+Separate owner staging/restore,controller quarantine,real-client contract36
+and resident-table tests pass ASan/UBSan. Actual full-master replay also
+passes full/small,zero+sparse,one/two positions,early EOG,ALL logits/KV/119
+sequences and ALL16 combined-proof/prefix-restoration faults before host
+output. NO native36 compute session yet. Standalone divide probe is never
+registered in the driver. These offline counts are NOT hardware speed claims.
+
 ### October17: exact packing35 native PASS (14:08 UTC)
 
 Fast Qwen STILL NOT achieved. GPU5.829558/5.796573/5.926380tok/s,CPU32

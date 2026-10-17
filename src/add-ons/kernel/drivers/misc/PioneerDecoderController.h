@@ -28,7 +28,7 @@
 struct PioneerDecoderLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false,parallel=false;
 	PioneerAttentionTileLease* peers=nullptr;
-	bool profiling=false,fusedGather=false,directQuant=false;
+	bool profiling=false,fusedGather=false,directQuant=false,vectorGlu=false;
 	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false,inputPull=false,phasePipeline=false,diagnostic=false,descriptorTable=false,accumPipeline=false,smallRows=false,parallelRope=false,batch=false;
 	tt_decoder_stage_profile stages={};
 };
@@ -46,7 +46,7 @@ bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDeco
 	if (code.parallelRope && !io.DecoderRopeMappingsStable()) return false;
 	for (unsigned i=0;i<8;i++) { const auto& p=code.peers[i];
 		if (!p.saved || !p.ready || !p.code_dirty || !p.coordinatedGroup || p.resident || p.unsafe
-			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery || p.inputPull!=code.inputPull || p.parallelRope!=code.parallelRope) return false;
+			|| p.running!=code.running || !fleet[i+1].attentionDispatch || p.coordinatedGlu!=code.glu || fleet[i+1].gluDispatch!=code.glu || p.cachedQuery!=code.cachedQuery || p.inputPull!=code.inputPull || p.parallelRope!=code.parallelRope || p.vectorGlu!=code.vectorGlu) return false;
 	}
 	return true;
 }
@@ -100,16 +100,16 @@ static inline bool PioneerDecoderBatchProof(const tt_decoder_candidate_result& r
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
-	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false,bool descriptorTable=false,bool accumPipeline=false,bool smallRows=false,bool parallelRope=false,bool batch=false,bool fusedGather=false,bool directQuant=false)
+	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false,bool descriptorTable=false,bool accumPipeline=false,bool smallRows=false,bool parallelRope=false,bool batch=false,bool fusedGather=false,bool directQuant=false,bool vectorGlu=false)
 {
-	if ((directQuant && !fusedGather) || (fusedGather && !batch) || (batch && !parallelRope) || (parallelRope && (!accumPipeline || smallRows))) return false;
+	if ((vectorGlu && (!directQuant || !parallelRope)) || (directQuant && !fusedGather) || (fusedGather && !batch) || (batch && !parallelRope) || (parallelRope && (!accumPipeline || smallRows))) return false;
 	if ((smallRows && !accumPipeline) || (accumPipeline && !descriptorTable) || (descriptorTable && (!phasePipeline || !inputPull || diagnostic)) || (diagnostic && (!inputPull || phasePipeline)) || (phasePipeline && !cachedQuery) || (inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;
-	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && code.phasePipeline==phasePipeline && code.diagnostic==diagnostic && code.descriptorTable==descriptorTable && code.accumPipeline==accumPipeline && code.smallRows==smallRows && code.parallelRope==parallelRope && code.batch==batch && code.fusedGather==fusedGather && code.directQuant==directQuant && PioneerDecoderPeerOwners(io,fleet,code);
+	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && code.phasePipeline==phasePipeline && code.diagnostic==diagnostic && code.descriptorTable==descriptorTable && code.accumPipeline==accumPipeline && code.smallRows==smallRows && code.parallelRope==parallelRope && code.batch==batch && code.fusedGather==fusedGather && code.directQuant==directQuant && code.vectorGlu==vectorGlu && PioneerDecoderPeerOwners(io,fleet,code);
 	if (code.saved || code.unsafe || !io.DecoderSavedWords()) return false;
-	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull; code.phasePipeline=phasePipeline; code.diagnostic=diagnostic; code.descriptorTable=descriptorTable; code.accumPipeline=accumPipeline; code.smallRows=smallRows; code.parallelRope=parallelRope; code.batch=batch; code.fusedGather=fusedGather; code.directQuant=directQuant;
+	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull; code.phasePipeline=phasePipeline; code.diagnostic=diagnostic; code.descriptorTable=descriptorTable; code.accumPipeline=accumPipeline; code.smallRows=smallRows; code.parallelRope=parallelRope; code.batch=batch; code.fusedGather=fusedGather; code.directQuant=directQuant; code.vectorGlu=vectorGlu;
 	if (!PioneerDecoderPeerOwners(io,fleet,code)) return false;
 	for (unsigned i=0;i<8192;i++) io.DecoderSavedWords()[i]=io.LayerCodeRead(i);
 	code.saved=true;

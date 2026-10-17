@@ -21,7 +21,7 @@ struct GluMachine:GroupMachine {
 		return GroupMachine::Load(a);
 	}
 	void Store(uint32_t a,uint32_t value) override {
-		assert(a!=0xffe40000 && (image.inputPull || !Range(a,0xffb20000,sizeof(noc)))); // No SFPU;only explicit peer-pull branch may read fixed master input.
+		assert((image.vectorGlu || a!=0xffe40000) && (image.inputPull || !Range(a,0xffb20000,sizeof(noc)))); // SFPU only in explicit vector image;NoC only in explicit peer-pull image.
 		if (Range(a,0x91000,1024) || Range(a,0x91400,64) || Range(a,0x91500,128)) {
 			if (Range(a,0x91000,1024)) operandWrites++; if (Range(a,0x91400,64)) scaleWrites++;
 			mem[a/4]=value; return;
@@ -29,7 +29,7 @@ struct GluMachine:GroupMachine {
 		GroupMachine::Store(a,value);
 	}
 	void VerifyGlu() {
-		assert(mem[0x17ffc4/4]==512 && commands==unsigned(image.inputPull?4:0) && !mmioWrites && operandWrites==256 && scaleWrites==16);
+		assert(mem[0x17ffc4/4]==512 && commands==unsigned(image.inputPull?4:0) && (image.vectorGlu?mmioWrites>0:!mmioWrites) && operandWrites==256 && scaleWrites==16);
 		for (unsigned block=0;block<16;block++) {
 			float values[32],maximum=0;
 			for (unsigned i=0;i<32;i++) { unsigned at=block*32+i; values[i]=PioneerGraphSiluFast(F(mem[0x90000/4+at]))*F(mem[0x90800/4+at]); maximum=fmaxf(maximum,fabsf(values[i])); }

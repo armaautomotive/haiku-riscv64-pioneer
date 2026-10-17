@@ -6,6 +6,9 @@ attention_source=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 attention_cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 attention_output=$2
 attention_program=blackhole_attention.cpp
+case ${PIONEER_SFPU_DIVIDE_PROBE:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_GLU_VECTOR:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_GRAPH_PACKED_Q8:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATED_ATTENTION:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATED_GLU:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_GRAPH_FAST_DIVIDE:-0} in 0|1) ;; *) exit 2;; esac
@@ -15,6 +18,7 @@ case ${PIONEER_ATTENTION_PARALLEL_ROPE:-0} in 0|1) ;; *) exit 2;; esac
 [ "${PIONEER_ATTENTION_PARALLEL_ROPE:-0}" = 0 ] || [ "${PIONEER_COORDINATED_PULL_INPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATED_PULL_INPUT:-0}" = 0 ] || { [ "${PIONEER_COORDINATED_GLU:-0}" = 1 ] && [ "${PIONEER_ATTENTION_CACHED_QUERY:-0}" = 1 ]; } || exit 2
 [ "${PIONEER_COORDINATED_GLU:-0}" = 0 ] || [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 1 ] || exit 2
+[ "${PIONEER_GLU_VECTOR:-0}" = 0 ] || { [ "${PIONEER_ATTENTION_PARALLEL_ROPE:-0}" = 1 ] && [ "${PIONEER_COORDINATED_GLU:-0}" = 1 ]; } || exit 2
 case ${PIONEER_RESIDENT_ATTENTION:-0} in
  0) ;;
  1) attention_program=blackhole_resident_attention.cpp ;;
@@ -23,6 +27,10 @@ esac
 if [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 1 ]; then
  [ "${PIONEER_RESIDENT_ATTENTION:-0}" = 0 ] || exit 2
  attention_program=blackhole_coordinated_attention.cpp
+fi
+if [ "${PIONEER_SFPU_DIVIDE_PROBE:-0}" = 1 ]; then
+ [ "${PIONEER_RESIDENT_ATTENTION:-0}" = 0 ] && [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 0 ] && [ "${PIONEER_ATTENTION_PARALLEL_ROPE:-0}" = 0 ] || exit 2
+ attention_program=blackhole_sfpu_divide_probe.cpp
 fi
 case "$attention_output" in /*) ;; *) echo 'Absolute output required' >&2; exit 2;; esac
 [ ! -e "$attention_output" ] && [ ! -L "$attention_output" ] || { echo 'Fresh output required' >&2; exit 2; }
@@ -34,6 +42,7 @@ mkdir -m 700 "$attention_output"
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
  -march=rv32imf -mabi=ilp32 -fstack-usage -DPIONEER_COORDINATED_GLU=${PIONEER_COORDINATED_GLU:-0} \
  -DPIONEER_GRAPH_FAST_DIVIDE=${PIONEER_GRAPH_FAST_DIVIDE:-0} \
+ -DPIONEER_GLU_VECTOR=${PIONEER_GLU_VECTOR:-0} -DPIONEER_GRAPH_PACKED_Q8=${PIONEER_GRAPH_PACKED_Q8:-0} \
  -DPIONEER_ATTENTION_CACHED_QUERY=${PIONEER_ATTENTION_CACHED_QUERY:-0} \
  -DPIONEER_COORDINATED_PULL_INPUT=${PIONEER_COORDINATED_PULL_INPUT:-0} \
  -DPIONEER_ATTENTION_PARALLEL_ROPE=${PIONEER_ATTENTION_PARALLEL_ROPE:-0} -c "$attention_source/$attention_program" -o "$attention_output/program.o"
