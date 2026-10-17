@@ -2,6 +2,28 @@
 
 ## Status
 
+### October17:26 input readbacks PASS;combined27 trial (11:23 UTC)
+
+Corrected26 diagnostic returns12345 marker,layer27,and matching fixed peer0
+input samples:Q2.13243842,K.0099029541,gate7.0033536,up-1.74198365;
+Q/K and gate/up32B sample mismatches both0. Clean END2/PCI-host1-1/cold0/
+cleanup1. This confirms the earlier zero payload was the kernel return check;
+it is NOT a whole-model quality or speed qualification. Log:
+`qwen-diagnostic-v26-returnfix.log`. Cold113.730324s,upload94.642308s.
+
+Explicit27/model-registry12 composes the existing24 frozen-input peer fetch
+with the exact25 four-fidelity pipeline. No GPU instruction image changes,
+new addresses/routes/DMA,owner,source authority or relaxed numerical gate.
+Root remainsb620492b,attentiond9d1eefe,mathf56a0fe3;private GPU jobversion6,
+existing pull counters/119 sequences/128B result proofs unchanged. All119
+immutable math flags and all8 input-owner flags still match the sealed lease.
+All eleven-mode ownership/fault and real-client tests pass ASan/UBSan,
+including final return-boundary proof and refusal before BEGIN for wrong
+contracts. Native27 correctness/sustained performance PENDING;driver
+`8b8ad6a28bf3acfb4e58742fcefe12c91ea5035ba57c2326e6d0e2d0d0b4d852`;
+verifier`4c2320c10f323f21bf3250236b5408562c5a0227922127710af60f41645ecbed`.
+Qualified25 preserved;no Assistant promotion or fast/all-Qwen/27B/Q4 claim.
+
 ### October17: located24/26 zero-output return-boundary bug (11:19 UTC)
 
 The first26 diagnostic completed its full device/counter/sequence proof and

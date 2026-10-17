@@ -67,7 +67,7 @@ bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,Pioneer
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
 	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false)
 {
-	if ((diagnostic && !inputPull) || (phasePipeline && (!cachedQuery || inputPull)) || (inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
+	if ((diagnostic && (!inputPull || phasePipeline)) || (phasePipeline && !cachedQuery) || (inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;

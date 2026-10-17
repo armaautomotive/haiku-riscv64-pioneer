@@ -2395,7 +2395,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={26,119,3,1,8192}; // v26 fixed ROOT/PEER readback diagnostic,NOT inference;qualified25 remains separate
+	tt_coordinated_support support={27,119,3,1,8192}; // v27 composes exact four-fidelity math with validated peer-input pulls
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2453,7 +2453,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	auto* request=(tt_pioneer_decoder_model*)malloc(length); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,length);
-	if (status!=B_OK || request->version<1 || request->version>11 || request->reserved[0] || request->reserved[1] || request->reserved[2]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	if (status!=B_OK || request->version<1 || request->version>12 || request->reserved[0] || request->reserved[1] || request->reserved[2]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
@@ -2463,7 +2463,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	else {
 		request->state=TT_RUNTIME_CONFIG_FAILED; request->ready=request->extents=request->recovery_required=0;
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
-		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11,phasePipeline=request->version==10,diagnostic=request->version==11,ready=true;
+		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version==12,phasePipeline=request->version==10 || request->version==12,diagnostic=request->version==11,ready=true;
 		// The parallel registry must precede ANY peer preparation. Weight
 		// spans prepare only master0. Never replace an executing/idle peer's
 		// immutable code to upgrade an existing matrix session.

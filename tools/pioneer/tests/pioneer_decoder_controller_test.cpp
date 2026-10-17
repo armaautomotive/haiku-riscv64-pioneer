@@ -108,7 +108,9 @@ int main()
 		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
 	for (unsigned w=1;w<120;w++) { DecoderControllerFixture f(true,true,true,true,true,true,false,true,false,true); f.fleet[w].phasePipeline=false;
 		assert(!f.PrepareDecoder() && !f.decoder.saved && !f.io.starts); }
-	{ DecoderControllerFixture f(true,true,true,true,true,true,false,true,true,true); assert(!f.PrepareDecoder() && !f.decoder.saved && !f.io.starts); }
+	{ DecoderControllerFixture f(true,true,true,true,true,true,false,true,true,true); assert(f.PrepareDecoder());
+		for (unsigned n:{1U,2U,3U,1U}) assert(f.Decode(n,true) && f.Decode(n,false));
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
 	{ DecoderControllerFixture f(true,true,true,true,true,true,false,true,true); assert(f.PrepareDecoder());
 		for (unsigned n:{1U,2U,3U,1U}) assert(f.Decode(n,true) && f.Decode(n,false));
 		f.inputPull=false; assert(!f.PrepareDecoder()); f.inputPull=true;
@@ -172,8 +174,8 @@ int main()
 		if (fault==4) p.resident=true; if (fault==5) p.unsafe=true; if (fault==6) p.running=true; if (fault==7) f.fleet[i+1].attentionDispatch=false;
 		assert(!f.PrepareDecoder() && !f.io.starts && !f.decoder.saved);
 	}
-	for (unsigned mode:{0U,1U,2U,3U,4U,5U,6U,7U,8U,9U}) for (unsigned fault=0;fault<16;fault++) {
-		bool glu=mode>=1,small=mode>=2 && mode!=9; DecoderControllerFixture f(true,glu,glu,mode>=2,mode>=3,mode>=4,mode==5,mode>=6,mode==7 || mode==9,mode==8,mode==9); assert(f.PrepareDecoder());
+	for (unsigned mode:{0U,1U,2U,3U,4U,5U,6U,7U,8U,9U,10U}) for (unsigned fault=0;fault<16;fault++) {
+		bool glu=mode>=1,small=mode>=2 && mode!=9; DecoderControllerFixture f(true,glu,glu,mode>=2,mode>=3,mode>=4,mode==5,mode>=6,mode==7 || mode==9 || mode==10,mode==8 || mode==10,mode==9); assert(f.PrepareDecoder());
 		f.io.executeTimeout=fault==0; f.io.badPc=fault==1; f.io.badCount=fault==2; f.io.badNoc=fault==3;
 		f.io.badMarker=fault==4; f.io.stopFails=fault==5; f.io.staleSummary=fault==6; f.io.badSummary=fault==7;
 		f.io.badLiveMap=fault==8; f.io.nonfinite=fault==9; f.io.omitWidePayload=fault==10; f.io.layerLost=fault==11;
