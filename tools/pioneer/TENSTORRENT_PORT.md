@@ -2,6 +2,125 @@
 
 ## Status
 
+### October17: 27B prerequisites tested; network loss repeated (19:23 UTC)
+
+**Qwen3.8-27B is NOT yet running on P100A.** No Assistant target, device
+driver selection, GPU execution or speed claim is added by this checkpoint.
+Qualified43 and its bank-zero2GiB ownership policy remain unchanged.
+
+New read-only `PioneerQwen38Gguf.h` validates the exact checkpoint's851
+tensor identities, shapes, formats, required hybrid metadata, bounds and
+non-overlap. It reads packed pages or individual reference rows without
+expanding the whole model or evaluating chat templates. Layout checks do
+NOT authenticate weights: published whole-file SHA256 remains mandatory.
+`PioneerQwen38PackedPlan.h` creates a canonical semantic-order seven-bank
+OFFLINE blueprint and bounded zero-padded4096B pages, bound to one source
+and open epoch. This is NOT an allocator, route, upload or launch authority.
+Plans for1/8192/32768 context pass complete row/source-byte coverage and
+bank/non-overlap/NIU-reservation checks. Its head-major KV blueprint still
+needs an explicit adapter to the reference attention's token-major cache.
+
+`PioneerQwen38Hybrid.h` adds buffer-only convolution, Gated DeltaNet,
+gated full-attention and split Q/gate RMS/partial-RoPE primitives. Previous
+recurrent state is immutable; scratch becomes publishable only on success.
+GGUF V heads are TILED (`valueHead % 16`), not the HF grouped order, and
+GGUF `ssm_a` already contains negative exponentiated A. Full attention has
+24Q/4KV256d heads, per-head interleaved Q/gate,64 rotated dimensions,
+and explicit F32 versus GGML-F16 precision. Pinned primary references:
+[model graph](https://github.com/ggml-org/llama.cpp/blob/c060ca974c773c7c3d17fd1b66dc9d312bc292c0/src/models/qwen35.cpp),
+[converter](https://github.com/ggml-org/llama.cpp/blob/c060ca974c773c7c3d17fd1b66dc9d312bc292c0/conversion/qwen.py).
+No implicit native CPU fallback is registered.
+
+`PioneerQwen38PackedDot.h` performs direct packed Q4_K/Q6_K/Q8_0
+integer reductions with explicit F32 activation scales, Q4 minima and
+signed Q6 scales, without BF16/F32 weight expansion. It accepts already
+quantized activations. `PioneerQwen38Activation.h` now supplies a separate
+OFFLINE local Q8_K activation image: first greatest-absolute SIGNED maximum,
+negative-capable F32 scale, nearest ties EVEN (not Q8_0 ties away),256
+signed bytes and16 signed group sums. Zero blocks canonicalize every byte;
+subnormal source/scale or nonfinite/alias/size input refuses BEFORE output.
+No unsupported fdiv/fcvt/byte-store opcode or host inference fallback.
+Scale semantics match the [pinned primary quantizer](https://github.com/ggml-org/llama.cpp/blob/c060ca974c773c7c3d17fd1b66dc9d312bc292c0/ggml/src/ggml-quants.c).
+This scalar arithmetic is NOT the fast Tensix matrix kernel,not selected
+by a driver or integrated into the model graph.
+
+Three distinct fixed-address local RV32IMF images were compiled and their
+ACTUAL instructions executed by the strict existing instruction model:
+GDN944B/codeSHA `be965ed41a054ed10468f5d854ed53928d68414149c66dc7f396cdfbae0b404c`;
+packed1532B/codeSHA `7809e49dc73f1a8ade0a657f1bb5c725715d14c03fd15303e4640d092c5d27ce`.
+Activation1444B/codeSHA `4ee6a5cfc8ed85ad1bdc09285510699d347213a7f4f6482ade6c50e062746deb`.
+All bootSHA `d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6`.
+Fresh builds reproduce the bytes; frozen getters compare EVERY code slot
+and zero padding. All have distinct descriptor/completion/fault identities,
+fixed local buffers and no supplied addresses, NoC/DRAM/DMA/PCI/reset or
+driver exposure. Initial packed build's unqualified LB opcode was refused;
+source now uses the ALREADY qualified LBU plus integer sign conversion.
+The instruction whitelist was NOT weakened. GDN stack low6fdc0,packed
+6ffd4 and activation6fe7c stay inside the same6e000..70000 owner.
+
+ASan/UBSan tests PASS:
+
+- `run_pioneer_qwen38_hybrid_tests.sh`: twelve convolution steps across
+  all10240 channels; eight recurrent positions/all48 heads/ALL state values
+  against independent double HF-grouped/reordered reference; both attention
+  precision policies, partial RoPE,8192-token bound, alias/nonfinite guards.
+- `run_pioneer_qwen38_gguf_tests.sh MODEL`: all851 layout/shape/format
+  corruption checks, metadata/offset/source-change guards, complete blueprint
+  coverage/pages; actual checkpoint first+last rows,8,162,688 finite values,
+ 18,962,876,416 packed bytes and negative-A coefficients.
+- `run_pioneer_qwen38_packed_tests.sh MODEL`:3072 independently dequantized
+  randomized dot comparisons plus996 real checkpoint blocks; malformed
+  sizes, NaN/Inf, alias and signed-scale/min-correction guards.
+- `run_pioneer_qwen38_delta_image_tests.sh IMAGE_DIR`: actual linked
+  instructions, four fixtures/ALL16,384 next-state and128 output values,
+  every descriptor bit and nonfinite/gate-bound refusal; old state immutable.
+- `run_pioneer_qwen38_packed_image_tests.sh IMAGE_DIR`: actual linked
+  instructions/all three formats/signed-scale fixtures, every descriptor
+  bit, nonfinite refusals, immutable inputs and strict memory whitelist.
+- `run_pioneer_qwen38_activation_tests.sh`:4096 random blocks/ALL292
+  bytes versus independent IEEE division/nearbyint oracle, signed scale,
+  nearest-even half boundaries, zero canonicalization, invalid-input
+  preservation;256 independently dequantized composed Q4_K/Q6_K dots.
+- `run_pioneer_qwen38_activation_image_tests.sh IMAGE_DIR`: ACTUAL linked
+  instructions,32 changed blocks with wide normal exponent range/ALL292
+  bytes, every descriptor bit, EVERY source position's NaN/Inf/subnormal
+  refusal with untouched output; immutable source/strict local whitelist.
+
+All new headers also pass a standalone RISC-V Haiku cross-compile/link
+portability gate using the existing packaged SDK,without any llama source.
+
+Remaining implementation: kernel-owned multi-bank leases and immutable
+routes, fast mixed packed Tensix kernels and activation-quantizer integration,
+64-layer prefill/decode graph plus state/cache transactions, then native
+whole-model quality and performance qualification BEFORE Assistant exposure.
+The dirty llama.cpp submodule was NOT read, built, synced or modified.
+
+Native copy lost network connectivity while Haiku desktop remained live;
+user's wired toggle did not restore SSH and normal Restart did not finish.
+This correlation does NOT establish the network fault's cause. User then
+authorized power recovery. One OFF hold, three-minute rest and one ON pulse
+recovered Linux. Unchanged SD-free64/full-RAM profile booted Haiku again;
+SSH and64 CPUs/137,034,936,320 total usable bytes are verified. Driver43
+SHA9e098d02 remains identical. No new GPU work preceded this network issue.
+Both SDs/default Linux boot/Assistant/firmware remain unchanged.
+
+14,550,758,118 native model bytes survived;4,423,112,410 remained. A fresh
+2400s-bounded SEQUENTIAL append-only resume was started, followed only on
+success by the existing whole-SHA/fresh-assembly/CPU-only smoke pipeline.
+Log: `/boot/home/models/qwen38-parallel-20261017/resume-20261017-b.log`.
+No native model acceptance or CPU result is claimed yet. Older parallel
+download logs/pieces are preserved; no existing part was truncated.
+
+The sequential trial ALSO lost connectivity by19:21 UTC. Parts0 and1
+completed at1,990,949,338B each; part2's last sampled size was1,506,312,232B
+at19:19:16 UTC. Server then recorded BrokenPipe at source byte8,558,603,980.
+SSH retry and ping fail; host IPv4 remains10.0.0.211,ARP retains the same
+Pioneer MAC. Serial ends19:19:22 with normal userspace process/disconnect
+messages,no new panic. Desktop state has been requested; no second blind
+power cycle has been issued. This disproves treating parallel transfer
+concurrency alone as a sufficient explanation/fix; underlying cause remains
+unconfirmed. No new P100A code was installed or executed in either trial.
+
 ### October17: requested Qwen3.8-27B download verified on Mac (18:07 UTC)
 
 The complete `Qwen3.8-27B-Q4_K_M.gguf` is downloaded to the ignored local

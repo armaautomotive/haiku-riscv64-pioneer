@@ -1,25 +1,26 @@
-# Native build status (2026-09-07)
+# Native build status
 
-Latest checkpoint (October17): P100A installed; both SD cards out; Haiku
-reachable through the private SD-free RAM handoff with64 CPUs and full RAM.
-Native Qwen3-0.6B learned matrices and attention now execute on P100A with
-resident GDDR weights; correct inference is established but practical speed
-is NOT. The installed Assistant's prior seven-sample result was0.108111tok/s.
-A separately qualified device-resident KV path now removes host prefix
-transfers. Full-model and three warm-request quality gates passed, but
-0.209–0.211tok/s FAILED CPU32's0.596–1.249tok/s comparison. The updated
-installed Assistant answered a public request at0.222tok/s (seven samples,
-CPU validation OFF/reference decodes0); still not practical speed. Its model
-was cleanly unloaded before subsequent isolated transport development.
-New native-qualified mode8 uses an on-card dispatcher plus119 persistent
-math peers, whole hidden-result gather and shared attention KV-v3. All6144
-and151936-row primitives, changed worker cohorts, interleaved attention and
-clean STOP/restoration pass. A false odd-cohort counter rejection was fixed
-and followed by a full cold recovery, preserving64 CPUs/full RAM. A fresh
-full-Qwen/CPU32 comparison is running; no new model rate or Assistant
-promotion is claimed. See the latest P100A status for exact artifacts.
-Card firmware/default Linux boot and the
-user's unrelated llama.cpp edits are unchanged. See the current
+Latest checkpoint (October17,19:23 UTC): P100A installed; both SD cards
+out. User-authorized cold recovery and unchanged SD-free handoff restored
+Haiku SSH with64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
+Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
+fixed Qwen3-0.6B Q8_0 result was7.428707..7.557277tok/s; requested-fast
+Qwen/27B and a new Assistant performance target remain UNACHIEVED.
+
+Requested Qwen3.8-27B Q4_K_M18,973,870,528B is downloaded and fully
+SHA-verified on Mac. Native interrupted parts survived; one sequential
+bounded resume completed two more pieces but ALSO lost network connectivity
+by19:21 UTC. SSH/ping fail without a new serial panic; desktop state is
+requested before further recovery. Whole-file native SHA remains required
+before a CPU-only load smoke. No27B GPU or native CPU result is claimed yet.
+New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
+packed integer dots, Q8_K activation quantization and three actual local
+RV32 images pass independent
+ASan/UBSan and strict instruction/memory tests. They are NOT selected by
+any driver/backend/Assistant. Kernel multi-bank leases, fast mixed Tensix
+kernels, activation-quantizer integration, full graph and native qualification
+remain. Card firmware/default Linux boot/Assistant and user's dirty
+llama.cpp submodule are unchanged. See the current
 [P100A status](TENSTORRENT_PORT.md#status) and the
 [Assistant integration record](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).
 See [the current P100A bring-up record](TENSTORRENT_PORT.md) for exact artifacts,
