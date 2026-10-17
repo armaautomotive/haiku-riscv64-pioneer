@@ -1,6 +1,6 @@
 # Native build status
 
-Latest checkpoint (October17,21:34 UTC): P100A installed; both SD cards
+Latest checkpoint (October17,22:03 UTC): P100A installed; both SD cards
 out. User-authorized cold recovery and unchanged SD-free handoff restored
 Haiku SSH with64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
 Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
@@ -13,12 +13,21 @@ bounded resume ALSO lost networking while desktop/input stayed live.
 User's explicit wired down/up recovered ping/SSH WITHOUT reboot;64 CPUs
 and full RAM are unchanged. No disk-read-only problem was established:
 Terminal's failed redirection used `/dev/printf` rather than `/dev/dprintf`.
-Fresh sequential append-only copy completed ALL remaining ranges on first
-attempts with ZERO further recoveries;public source listener closed.
-Native one-shot fresh assembly is progressing slowly (past17.18GB at21:34 UTC).
-Whole-file native SHA remains required before final publication/CPU-only
-load smoke. A bounded read-only layout/sample check follows that job.
-No27B GPU or native CPU result is claimed yet.
+Fresh sequential append-only copy completed ALL remaining ranges; however,
+native assembly's whole SHA FAILED (`a229b2f9...`,not published`c600de03...`).
+It was NOT published or run. Preserved component hashes isolate failures
+to parts0/3/4; prefix/parts1/2/5/6/7/suffix match the source. Bad64MiB leaves
+containing previous interrupted-resume boundaries are identified,but their
+repair is NOT yet proof of the entire model. Original parts/assembly remain.
+A fresh whole-part retry timed out; a smaller fresh-leaf retry then stalled
+networking. User reports desktop/input work and toggled the interface, but
+SSH still times out as of22:03 UTC; current IPv4 confirmation requested.
+The exact public-file sender was closed; no transfer listener remains.
+Fresh-only,exact-range receiver and guarded fixed-leaf patch utility pass
+host tests. A one-shot copy wrapper allows at most TWO NIC down/up recoveries
+ONLY after the receiver exits and source HEAD fails; it is NOT staged/run yet.
+Full native SHA must match BEFORE publication/CPU-only smoke/inspection.
+No27B GPU or native CPU result is claimed.
 New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
 packed integer dots, Q8_K/Q8_0 activation quantization and four actual local
 RV32 images pass independent

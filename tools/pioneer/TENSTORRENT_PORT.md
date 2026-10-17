@@ -2,6 +2,63 @@
 
 ## Status
 
+### October17: native SHA failure isolated; guarded repair pending (22:03 UTC)
+
+Requested-fast27B P100A inference remains UNACHIEVED. Installed qualified43
+SHA9e098d02 is unchanged; NO GPU work or27B CPU smoke occurred. Experimental44
+is separately staged,NOT installed/exercised. A specific guarded installer
+now pins old/candidate/client hashes,requires TWO parsed kernel image lists
+proving the card driver UNLOADED,and no possible compute owners. The loaded
+native control correctly REFUSED before backup/replacement;43hash unchanged.
+Never replace a loaded driver or force unload/reload.
+
+Native19GB assembly completed,but SHA was
+`a229b2f9a50a0d46e1fc4ba90de81ddf8d83da57bc0799a40bebf10bf0a1c85d`,
+NOT published`c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`.
+Both follow-up jobs stopped BEFORE inference/acceptance; final model filename
+is absent. All original components and failed assembly are preserved.
+Full read-only native component hashes match source for prefix/1/2/5/6/7/
+suffix,but fail for0/3/4. The first bytes of each bad part match;4KiB samples
+immediately BEFORE interrupted-resume boundaries mismatch and samples AFTER
+match. This localizes observed corruption but does NOT establish root cause
+or prove no other bytes are bad.
+
+Three64MiB suspect leaves' absolute starts are4656888560,10361301118,
+12419359320. Replacement source SHAs are respectively
+`b3bf92bd99d64b110113b07bb36edd0895e110c720147b1c4e7ee5084d3254c4`,
+`883e6eaa3be7eacef0458886cbfe5e44c991357d1471d09c20af274e32bc477d`,
+`8a2d90530aeef8f16a1c9ca1a019d6485f2b40c6abc94dee4d5ea772f00ec2e4`.
+Mac source whole SHA reverified. Fresh-part retry timed out after300s; fresh
+leaf retry then lost networking after7MiB. NO patch was applied. User says
+desktop/input remain live and toggled wired connection; SSH still times out
+at22:03 UTC. Asked current IPv4; no power/SD/firmware change. Sender closed.
+
+`pioneer_model_patch.cpp` is intentionally restricted to these THREE fixed
+leaves in the UNPUBLISHED assembly. It compares the ENTIRE old target region
+to preserved bad component BEFORE ANY write; exact regular lengths,no
+symlinks/hardlinks/aliasing,source identity guards,fsync/close,and refuses if
+final name exists. Replacement SHA is an external mandatory precondition;
+whole19GB SHA is mandatory AFTER patching and BEFORE publication/execution.
+Two native crossbuilds reproduce
+`4036e409b780407fe701463f0414fed42e8ef6f96dee7e7dab8d162fe6057aa9`.
+ASan/UBSan tests pass exact surrounding/original preservation,replay/last-
+block mismatch/shortfile/link refusal. It is NOT staged or run natively.
+`pioneer_q38_repair_copy.sh` is fresh-only/no append,three fixed64MiB leaves,
+per-leaf SHA,120s receive/800s overall checks,at most TWO temporary same-NIC
+down/up recoveries ONLY after a stopped receiver AND failed bounded HEAD.
+No persistent watchdog/startup changes. It is NOT staged/run yet.
+
+Separately,OFFLINE lossless16-output-row byte-major weight tiling is now
+tested. Q8_0/Q4_K/Q6_K tiles preserve ALL quant bits/scales/minima/signed
+bytes,including-128; no weight expansion/clipping/re-quantization/inference.
+64B-aligned tiles,zero padding,one <=1MiB packed-row cache/FILE/epoch,4KiB
+pages; default raw blueprint unchanged. ASan/UBSan tests independently
+reconstruct all884,736 synthetic bytes in both page orders and7102 boundary
+pages across ALL851 real-model fragments. Weights19,397,646,336B and exact
+1/8K/32K-context allocations fit seven3GiB banks. Neither43 norstorage44 can
+execute this layout. Fast mixed Tensix kernels/full graph/native correctness
+and speed qualification remain; tiling alone is NOT a performance result.
+
 ### October17: experimental seven-bank kernel storage path built (21:34 UTC)
 
 Still NOT27B GPU inference or requested-fast performance. Qualified native43
