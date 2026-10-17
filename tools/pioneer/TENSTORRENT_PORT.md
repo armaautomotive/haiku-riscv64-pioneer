@@ -2,6 +2,56 @@
 
 ## Status
 
+### October17: experimental seven-bank kernel storage path built (21:34 UTC)
+
+Still NOT27B GPU inference or requested-fast performance. Qualified native43
+SHA9e098d02 remains installed/unchanged; NO new GPU transfer/launch occurred.
+Native assembly has passed17.18GB; whole SHA/CPU smoke/native inspector are
+still pending. Free Samsung BFS space50.1GiB; no original model pieces removed.
+
+`PioneerResidentBanks.h` adds a KERNEL-private all-seven-bank owner,3GiB each,
+64MiB low reservation and bounded page addressing below0xc4000000. Logical
+bank3 maps to enabled PHYSICAL bank4,never harvested physical bank3. Routes
+must be rebuilt from the verified fixed firmware translation slots and match
+all three independent endpoint samples. No user coordinates/physical address
+or arbitrary DMA is accepted. Binding cannot be transferred by copying the
+proof. Invalid bank/range/alignment/overflow refuses before device access;
+quarantine is irreversible for EVERY bank in that context.
+
+Opt-in `TT_PIONEER_EXPERIMENTAL_Q38_BANKS` driver44 adds a separate storage-only
+ABI/complete all-bank page bookkeeping. It shares the original exclusive team/
+FD/global PCI owner,blocks EVERY legacy runtime request while active,tracks
+initialized pages/hashes per bank,invalidates mismatched pages,handles failed
+BEGIN copyout without orphaning an owner,and globally quarantines uncertain
+completion without retry/reload/free. Repeated BEGIN refuses WITHOUT closing
+the existing allocation. Default build keeps the new ABI disabled; candidate
+reports44,never impersonates the qualified43. No graph/image execution added.
+
+ASan/UBSan tests validate all14 distinct first/last bank pages AFTER ALL writes,
+all21 bank/transfer-stage UNKNOWN injections,route/endpoint/range corruption,
+all-bank invalidation/no unsafe writes/free. A second test executes the ACTUAL
+extracted kernel control/lock functions,including team isolation,foreign FD,
+legacy refusal,repeated BEGIN,copyout cleanup,bank-specific hashes and automatic
+global quarantine. Existing bank-zero store/stream/bulk/session,BRISC lock,
+runtime-matvec and120-worker fault/rollback tests also pass.
+
+`build_qwen38_banks_driver.sh` cross-compiles/links candidate AND feature-off
+control using the existing SDK/kernel with no undefined symbols; it NEVER
+syncs/installs/reloads a driver or reads/builds llama implementation. Two fresh
+builds reproduce candidateSHA
+`ca6c7fdf71658f7b53ee8c30a0ead6097d9dabc45a1343f548bc2e67544c1e67`.
+Default-controlSHAd37ca49a is ONLY a build gate,NOT the qualified backup.
+Bounded native storage test clientSHA
+`d5b2a74231f4c946420a50a189081793976443d8f80fc5ade89b8f866340654c`
+also reproduces. Both are staged separately at
+`/boot/home/pioneer-qwen38-banks-20261017-a/`,NOT installed. Client `--support`
+against installed43 correctly refuses the new ABI BEFORE BEGIN/map/transfer.
+`--exercise` remains UNRUN: it writes only14 owned pages,then reads all patterns
+and requires known clean END; it is NOT a capacity,whole-model or speed test.
+Native qualification requires controlled driver switch/reboot AFTER current
+model assembly/check jobs finish. Frozen43 backup/firmware/default boot/cards,
+Assistant and dirty llama submodule remain unchanged.
+
 ### October17: all native ranges arrived; assembly/checks pending (21:12 UTC)
 
 All18,973,870,528 native source bytes are now present. The six remaining

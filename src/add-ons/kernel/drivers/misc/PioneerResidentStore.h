@@ -3,6 +3,7 @@
 #define PIONEER_RESIDENT_STORE_H
 #include "PioneerResidentSession.h"
 #include "BlackholeHostWriteProbe.h"
+#include "PioneerResidentBanks.h"
 enum { TT_STORE_REFUSED=0,TT_STORE_PASSED=1,TT_STORE_CONFIG_FAILED=2,TT_STORE_TIMEOUT=3,TT_STORE_MISMATCH=4,TT_STORE_CHANGED=5 };
 struct tt_resident_store_result {
 	uint32_t version,state,phase,requests,completed,recovery_required,mismatches,wrote_device;
@@ -99,13 +100,21 @@ bool PioneerResidentStoreCommand(IO& io,PioneerResidentLease& lease,const uint32
 template<class IO>
 bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& host,PioneerResidentLease& lease,uint64_t capacity,uint64_t offset,
-	bool upload,uint32_t* data,tt_resident_store_result& r)
+	bool upload,uint32_t* data,tt_resident_store_result& r,
+	const PioneerResidentBanks* banks=nullptr,unsigned bank=0)
 {
 	r={}; r.version=1;
-	if (!data || !lease.ready || lease.pending || lease.recovery_required || !PioneerResidentOffset(capacity,offset)
+	uint32_t address=0,route=0,index=0;
+	if (banks) {
+		if (capacity!=PioneerResidentBanks::Capacity || !banks->Page(baseline,bank,offset,address,route,index)) return false;
+	} else {
+		if (bank || !PioneerResidentOffset(capacity,offset)) return false;
+		address=PioneerResidentAddress(capacity,offset);
+		route=baseline.translated[0][0]|(baseline.translated[0][1]<<6);
+	}
+	if (!data || !lease.ready || lease.pending || lease.recovery_required
 		|| host.state!=TT_HOST_PAGE_READY || !host.memory_type_set || host.released) return false;
 	r.state=TT_STORE_CONFIG_FAILED;
-	uint32_t address=PioneerResidentAddress(capacity,offset);
 	bool good=BlackholeResidentSourceStable(io,noc,lease.config|0x10000)
 		&& BlackholeDramSourceStable(io,baseline) && BlackholeResidentIdle(io)
 		&& BlackholeHostReadPciQuiet(io,0x402) && BlackholeHostReadMapStable(io,host);
@@ -134,7 +143,7 @@ bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,cons
 				|| !BlackholeDramSourceStable(io,baseline) || !BlackholeHostReadMapStable(io,host)) {
 				r.state=TT_STORE_CHANGED; lease.recovery_required=true; break;
 			}
-			const uint32_t toGddr[]={0x17e000,0,1|(2<<6),address,0,baseline.translated[0][0]|(baseline.translated[0][1]<<6),0,0x212,4096,0};
+			const uint32_t toGddr[]={0x17e000,0,1|(2<<6),address,0,route,0,0x212,4096,0};
 			r.wrote_device=1;
 			if (!PioneerResidentStoreCommand(io,lease,toGddr,true,1,r)) break;
 			if (!BlackholeResidentSourceStable(io,noc,lease.config|0x10000)
@@ -143,7 +152,7 @@ bool PioneerResidentStorePage(IO& io,const tt_dram_samples_result& baseline,cons
 			}
 		}
 		// Return to the initiating NIU, never to a different DRAM NIU.
-		const uint32_t fromGddr[]={address,0,baseline.translated[0][0]|(baseline.translated[0][1]<<6),0x17f000,0,1|(2<<6),0,0,4096,0};
+		const uint32_t fromGddr[]={address,0,route,0x17f000,0,1|(2<<6),0,0,4096,0};
 		if (!PioneerResidentStoreCommand(io,lease,fromGddr,false,upload?2:0,r)) break;
 		if (!BlackholeResidentSourceStable(io,noc,lease.config|0x10000)
 			|| !BlackholeDramSourceStable(io,baseline) || !BlackholeHostReadMapStable(io,host)

@@ -47,6 +47,9 @@
 #include "PioneerDecoderController.h"
 #include "PioneerDecoderModel.h"
 #include "PioneerDecoderBatchModel.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
+#include "PioneerQ38BankProtocol.h"
+#endif
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)

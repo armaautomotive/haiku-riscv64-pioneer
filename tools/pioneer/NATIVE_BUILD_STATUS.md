@@ -1,6 +1,6 @@
 # Native build status
 
-Latest checkpoint (October17,21:12 UTC): P100A installed; both SD cards
+Latest checkpoint (October17,21:34 UTC): P100A installed; both SD cards
 out. User-authorized cold recovery and unchanged SD-free handoff restored
 Haiku SSH with64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
 Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
@@ -15,7 +15,7 @@ and full RAM are unchanged. No disk-read-only problem was established:
 Terminal's failed redirection used `/dev/printf` rather than `/dev/dprintf`.
 Fresh sequential append-only copy completed ALL remaining ranges on first
 attempts with ZERO further recoveries;public source listener closed.
-Native one-shot fresh assembly is progressing slowly (3.22GB at21:12 UTC).
+Native one-shot fresh assembly is progressing slowly (past17.18GB at21:34 UTC).
 Whole-file native SHA remains required before final publication/CPU-only
 load smoke. A bounded read-only layout/sample check follows that job.
 No27B GPU or native CPU result is claimed yet.
@@ -23,9 +23,14 @@ New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
 packed integer dots, Q8_K/Q8_0 activation quantization and four actual local
 RV32 images pass independent
 ASan/UBSan and strict instruction/memory tests. They are NOT selected by
-any driver/backend/Assistant. Kernel multi-bank leases, fast mixed Tensix
-kernels, activation-quantizer integration, full graph and native qualification
-remain. Card firmware/default Linux boot/Assistant and user's dirty
+any driver/backend/Assistant. Separate experimental44 seven-bank STORAGE-only
+kernel ABI/immutable route ownership and all-bank quarantine now build/link
+and pass host policy/actual control-handler tests. Reproducible candidate
+SHAca6c7fdf/clientd5b2a742 are staged separately,NOT installed/exercised. Installed
+43 correctly refuses the metadata-only new ABI BEFORE any GPU work. Native
+memory qualification,fast mixed Tensix kernels,activation integration,full
+graph and whole-model quality/performance qualification remain. Card
+firmware/default Linux boot/Assistant and user's dirty
 llama.cpp submodule are unchanged. See the current
 [P100A status](TENSTORRENT_PORT.md#status) and the
 [Assistant integration record](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).

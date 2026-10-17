@@ -66,7 +66,7 @@ struct StoreMock : HostReadMock {
 		pending=false; done=true;
 	}
 };
-static bool Prepared(StoreMock& io,tt_host_page_result& host,PioneerResidentLease& lease)
+static inline bool Prepared(StoreMock& io,tt_host_page_result& host,PioneerResidentLease& lease)
 {
 	return PioneerPrepareHostPage(io,host) && PioneerResidentLeaseBegin(io,io.Compute(),lease);
 }
