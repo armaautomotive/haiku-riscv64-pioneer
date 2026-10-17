@@ -2,6 +2,7 @@
 #define PIONEER_GREEDY_DECODER_MACHINE_ONLY
 #include "pioneer_greedy_decoder_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderDescriptorTable.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQkvDescriptorPlan.h"
 struct TableDecoder:GreedyDecoder {
 	PioneerDecoderJob frozen={}; unsigned lookups=0;
 	TableDecoder(const char* root,const DecoderSfpuImage& image,bool nonzero,bool small):GreedyDecoder(root,image,nonzero,small) {
@@ -10,7 +11,8 @@ struct TableDecoder:GreedyDecoder {
 	void PeerWrite(unsigned worker,uint32_t address,uint32_t value) override {
 		assert(!(address>=0x70500 && address<0x70520)); // NO root descriptor staging
 		if (address==0x71300) { PioneerDecoderDescriptor entry;
-			assert(PioneerDecoderDescriptorEntry(frozen,worker,sequence[worker-1]%PioneerDecoderDescriptorCount(worker,getenv("PIONEER_GREEDY_SMALL_ROWS")!=nullptr),entry,getenv("PIONEER_GREEDY_SMALL_ROWS")!=nullptr));
+			if (getenv("PIONEER_GREEDY_PAIRED_QKV")) assert(PioneerQkvDescriptorEntry(frozen,worker,sequence[worker-1]%PioneerQkvDescriptorCount(worker),entry));
+			else assert(PioneerDecoderDescriptorEntry(frozen,worker,sequence[worker-1]%PioneerDecoderDescriptorCount(worker,getenv("PIONEER_GREEDY_SMALL_ROWS")!=nullptr),entry,getenv("PIONEER_GREEDY_SMALL_ROWS")!=nullptr));
 			for (unsigned i=0;i<8;i++) descriptor[worker-1][i]=entry.words[i];
 			lookups++;
 		}

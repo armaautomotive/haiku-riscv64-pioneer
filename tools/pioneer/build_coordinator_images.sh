@@ -10,6 +10,7 @@ case ${PIONEER_COORDINATOR_HOT_QUANT:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_FIXED_ROUTES:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PAIRED_QKV:-0} in 0|1) ;; *) exit 2;; esac
 [ "${PIONEER_COORDINATOR_PAIRED_QKV:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_FUSED_GATHER:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_FIXED_ROUTES:-0}" = 1 ]; } || exit 2
+[ "${PIONEER_COORDINATOR_PAIRED_QKV:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_BATCH:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_PARALLEL_ROPE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_PARALLEL_ATTENTION:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_PARALLEL_GLU:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_SMALL_ROWS:-0}" = 0 ] && [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; } || exit 2
 pioneer_coordinator_init_span=0
 [ "${PIONEER_COORDINATOR_OPT_LEVEL:-s}" != 3 ] || pioneer_coordinator_init_span=1
 case ${PIONEER_COORDINATOR_PACKET_IDLE:-0} in 0|1) ;; *) echo 'Packet-idle image flag must be0 or1' >&2; exit 2;; esac

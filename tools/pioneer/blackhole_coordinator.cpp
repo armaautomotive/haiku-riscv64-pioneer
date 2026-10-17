@@ -8,10 +8,12 @@
 #define PIONEER_COORDINATOR_PAIRED_QKV 0
 #endif
 #if PIONEER_COORDINATOR_PAIRED_QKV
-// OFFLINE dispatcher prerequisite ONLY. No live root calls operation12;
-// no driver/client may select it without a new sealed schedule contract.
+// OFFLINE private11 candidate ONLY. No live driver/client selects this image.
 #if !PIONEER_COORDINATOR_PAIRED_FFN || !PIONEER_COORDINATOR_FUSED_GATHER || !PIONEER_COORDINATOR_DESCRIPTOR_TABLE || !PIONEER_COORDINATOR_FIXED_ROUTES
 #error Paired QKV requires the immutable paired/table/reverse-gather cohort
+#endif
+#if !PIONEER_COORDINATOR_BATCH || !PIONEER_COORDINATOR_PARALLEL_ROPE || !PIONEER_COORDINATOR_PARALLEL_ATTENTION || !PIONEER_COORDINATOR_PARALLEL_GLU || PIONEER_COORDINATOR_SMALL_ROWS
+#error Paired QKV requires the exact full-row parallel batch schedule
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerPairedQkvPlan.h"
 #endif

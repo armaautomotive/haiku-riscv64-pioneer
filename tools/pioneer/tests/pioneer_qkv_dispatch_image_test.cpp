@@ -15,6 +15,7 @@ static unsigned Symbol(const char* root,const char* wanted)
 struct QkvDispatch:CoordinatorMachine {
 	unsigned entry,fault,gathers=0,readerCount=0,lastWorker=0,lastPrefix=0;
 	unsigned badProof=0,badRestore=0,nonfiniteWorker=0;
+	unsigned delayWorker=0,delayedReads=0;
 	bool readers[119]={};
 	static uint32_t Value(unsigned tensor,unsigned row) { return 0x3e000000+tensor*0x100000+row; }
 	QkvDispatch(const char* root):CoordinatorMachine(root,true,true),entry(Symbol(root,"decoder_matrix_main")),fault(Symbol(root,"coordinator_fault_park")) {
@@ -54,7 +55,11 @@ struct QkvDispatch:CoordinatorMachine {
 		} else if (remote==0x71300) {
 			assert(issued==119 && !gathers && local==0x147000 && bytes==16 && !readers[worker-1]);
 			for (unsigned i=0;i<4;i++) memory[local+i*4]=i<2?1:i==3?0x43524431:0;
-			readers[worker-1]=true; readerCount++;
+			if (worker==delayWorker && delayedReads<2) { memory[local+4]=0; delayedReads++; }
+			else { readers[worker-1]=true; readerCount++; }
+		} else if (remote==0x17ffc8) {
+			assert(worker==delayWorker && delayedReads && !gathers && local==0x147088 && bytes==4);
+			memory[local]=0;
 		} else {
 			assert(remote==0x83fc0 && readerCount==119 && worker==119-gathers);
 			for (bool done:readers) assert(done);
@@ -75,7 +80,7 @@ struct QkvDispatch:CoordinatorMachine {
 		return pc==0x6000 && regs[10]==119 && !pending;
 	}
 	void Verify() {
-		assert(issued==119 && readerCount==119 && gathers==119 && transfers==357);
+		assert(issued==119 && readerCount==119 && gathers==119 && transfers==357+2*delayedReads);
 		for (unsigned t=0;t<3;t++) {
 			unsigned base=t==0?0x87000:t==1?0x84000:0x86000,rows=t?1024:2048;
 			for (unsigned row=0;row<rows;row++) assert(memory.at(base+row*4)==Value(t,row));
@@ -85,7 +90,7 @@ struct QkvDispatch:CoordinatorMachine {
 			for (unsigned i=0;i<span.rows*4+64;i+=4) touched[(a-64+i-0x83fc0)/4]=true; }
 		for (unsigned i=0;i<sizeof(touched)/sizeof(touched[0]);i++) if (!touched[i]) assert(memory.at(0x83fc0+i*4)==0xabcdef01);
 		assert(memory.at(0x143010)==119 && memory.at(0x143014)==4096 && memory.at(0x143018)==1 && memory.at(0x14301c)==12);
-		unsigned read=238,rf=119+119+4096/16,write=119;
+		unsigned read=238+2*delayedReads,rf=119+119+4096/16+2*delayedReads,write=119;
 		assert(memory.at(0x143000)==read && memory.at(0x143004)==rf && memory.at(0x143008)==write && memory.at(0x14300c)==write);
 		unsigned delta[]={read,rf,read+write,read,write,write,read+write,write};
 		for (unsigned i=0;i<8;i++) assert(uint32_t(memory.at(0x143040+i*4)-memory.at(0x143020+i*4))==delta[i]);
@@ -97,6 +102,8 @@ int main(int argc,char** argv)
 	{ QkvDispatch m(argv[1]); assert(m.Run()); m.Verify(); printf("PASS OFFLINE actual QKV dispatcher instructions,steps%u\n",m.steps); }
 	// Q may end exactly at the bank limit:validate Q2048,NOT aggregate4096.
 	{ QkvDispatch m(argv[1]); m.memory[0x140014]=0x82400000-2048*1152; assert(m.Run()); m.Verify(); }
+	for (unsigned worker:{1U,60U,61U,90U,91U,119U}) { QkvDispatch m(argv[1]); m.delayWorker=worker;
+		assert(m.Run() && m.delayedReads==2); m.Verify(); }
 	for (unsigned word=1;word<=16;word++) {
 		QkvDispatch proof(argv[1]); proof.badProof=word; assert(!proof.Run() && proof.gathers==1);
 		QkvDispatch restore(argv[1]); restore.badRestore=word; assert(!restore.Run() && restore.gathers==119);

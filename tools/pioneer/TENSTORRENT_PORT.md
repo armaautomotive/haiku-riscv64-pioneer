@@ -2,6 +2,66 @@
 
 ## Status
 
+### October17:whole QKV private11 image OFFLINE PASS (17:28 UTC)
+
+Pioneer remains ON and responsive in Haiku64/full127.62GiB,qualified43
+driver9e098d02/backup identical and NO compute owner. Last native speed
+7.428707..7.557277tok/s;fast Qwen remains UNACHIEVED. Nothing below is
+installed,native-qualified,exposed by a driver/client or an Assistant target.
+
+DEFAULT-OFF QKV flag now builds a DISTINCT private11 whole-position root:
+one operation12 per layer replaces three serialized Q/V/K jobs;Q and K
+gather directly into their SAME existing owned spans,V stays84000. No new
+GDDR/L1/NoC/host owner,route,weight format,math instruction,precision or
+timed CPU fallback. All119 worker/table identities and existing43 exact
+math/41 finite-half groups remain required. Exact private11 job check keeps
+ALL old v10 shape/extent/EOG/two-position checks through a word-complete
+local snapshot,with DISTINCT ALL119 cursor bounds. No implicit v10 accept
+or upgrade. An initial freestanding link rejected aggregate zeroing's
+unresolved memset;removed that redundant initialization because EVERY word
+is explicitly copied before use. No check was removed. Actual stack low
+6f14c remains within the SAME6e000..70000 tested stack owner.
+
+Two fresh roots match3b9a06aa,23880B/5970words inside SAME32KiB code owner;
+frozen getter compares ALL8192 slots against the linked image/padding.
+Default flag-off root STILL regenerates qualifiedd1addc8d byte for byte.
+Full root actual scalar/master + frozen eight attention/GLU/SFPU groups
+passes full+selected+one/two-position+early-EOS,zero and independent sparse
+nonzero models,including a SECOND full-vocabulary position. ALL logits/
+selected token bits/KV/119 sequences/197-tensor coverage/paired-FFN rows/
+112 matrix dispatches/profile6 match. ALL16 combined-proof and Q0's K-prefix
+restore faults refuse before any host output. Old/private0/10/12/max refuse
+BEFORE transfers. Matrix peers here are independently modeled;the unchanged
+actual worker/math instructions were separately joined to all119 planned
+32/64-row descriptors/three changed IEEE-exact inputs/cursor wrap/STOP.
+This is NOT native model quality,performance or safe kernel integration.
+
+Exact counters independently derived then matched ACTUAL instructions:
+full19904/70550/9478/18855;selected19786/61056/9360/9361,ordered as
+R/RF/W/WF. For S=1..2 autonomous positions,R=19785S+64(S-1)+1,
+RF=61054S+576(S-1)+4,W=9359S+1,WF=9359S+4;each poll adds2R/2RF.
+252 fewer math jobs remove exactly504 fixed read packets/flits and252
+doorbells/position;ALL Q/V/K output-data flits remain. Actual two-position
+39635/122688/18719/18722 matches. Max-poll two-position32-bit bounds proved,
+ALL32 bits of ALL24 physical-summary words reject corruption. Profile6
+is distinct;old profile5 rejects it. Job proof tests cover ALL119 cursor
+boundaries and ALL308 tensor/norm invalid extents without modifying input.
+Dispatcher also delays completion at all six Q/V/K cohort boundaries and
+proves no output-prefix write before ALL119 input readers finish.
+
+ASan/UBSan tests retained:whole-rootGq4d6gBK,proofzS0JfZWB,
+delayed-dispatch7cw5fyx3,workersyW7h8CaX;unchanged qualified42/43 root
+full/small/zero+sparse/one+two/early-EOS/ALL16 faults regression6rmxsLEg
+also PASS. Zero master22053845 scalar steps versus baseline22208277;
+NOT native timing. Build guards refuse missing canonical batch/parallel
+attention+GLU/RoPE/decoder,or small-row mode. Before native QKV testing,
+still require DISTINCT immutable kernel root+ALL119 peer/table selection,
+registry/model metadata,strict client private11/profile6/counter gates,
+mixed-mode/controller/staging/UNKNOWN quarantine tests,then controlled
+restart/unloaded-image installation. Do NOT stage this as43 or overwrite
+the loaded qualified driver. Build mirror remains43;these candidate sources
+and frozen image are deliberately OFFLINE only. All rollbacks/user edits kept.
+
 ### October17:unpack-gate43 native PASS;QKV prerequisites OFFLINE (17:18 UTC)
 
 Fast Qwen remains UNACHIEVED. User explicitly authorized starting after

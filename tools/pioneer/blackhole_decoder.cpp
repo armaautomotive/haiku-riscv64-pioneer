@@ -17,6 +17,9 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerPairedFfnPlan.h"
+#if PIONEER_COORDINATOR_PAIRED_QKV
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQkvDecoderProof.h"
+#endif
 #include <stddef.h>
 #define coordinator_main decoder_matrix_main
 #include "blackhole_coordinator.cpp"
@@ -187,6 +190,19 @@ static void DecoderPairedFfn(uint32_t gate,uint32_t up,uint32_t (&total)[4])
 	Fence(); DECODER_STAGE_END(0);
 }
 #endif
+#if PIONEER_COORDINATOR_PAIRED_QKV
+static void DecoderPairedQkv(uint32_t q,uint32_t v,uint32_t k,uint32_t (&total)[4])
+{
+	DECODER_STAGE_BEGIN(); volatile uint32_t* j=Words(0x140000); volatile auto& root=DecoderJob();
+	for (unsigned i=0;i<64;i++) j[i]=0;
+	j[0]=0x31445243; j[1]=12; j[2]=119; j[3]=1024; j[4]=4096; j[5]=q; j[6]=root.nonce; j[10]=v; j[11]=k;
+	for (unsigned i=0;i<119;i++) j[64+i]=root.sequence[i];
+	Fence(); if (decoder_matrix_main()!=119) coordinator_fault_park();
+	for (unsigned i=0;i<4;i++) total[i]+=Words(0x143000)[i];
+	for (unsigned i=0;i<119;i++) root.sequence[i]++;
+	Fence(); DECODER_STAGE_END(0);
+}
+#endif
 static void DecoderAddResidual()
 {
 	for (unsigned i=0;i<1024;i++) {
@@ -339,7 +355,11 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
+#if PIONEER_COORDINATOR_PAIRED_QKV
+	if (!PioneerQkvDecoderJobValid(root) || !NocIdle()) return 0;
+#else
 	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_BATCH?10:PIONEER_COORDINATOR_PARALLEL_ROPE?9:PIONEER_COORDINATOR_SMALL_ROWS?8:PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+#endif
 #if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
 	if (root.operation!=8) return 0; // Never a sampling/inference target.
 	for (unsigned i=0;i<16;i++) Words(0x147900)[i]=0;
@@ -347,7 +367,7 @@ extern "C" unsigned coordinator_main()
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
-	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_BATCH?5:PIONEER_COORDINATOR_PARALLEL_ROPE?4:PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
+	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=PIONEER_COORDINATOR_PAIRED_QKV?6:PIONEER_COORDINATOR_BATCH?5:PIONEER_COORDINATOR_PARALLEL_ROPE?4:PIONEER_COORDINATOR_PAIRED_FFN?3:PIONEER_COORDINATOR_PARALLEL_GLU?2:1; Fence();
 #endif
 	for (unsigned i=0;i<1024;i++) if ((Words(TT_DECODER_INPUT)[i]&0x7fffffff)>0x477fe000) return 0;
 	uint32_t before[8],total[4]={}; for (unsigned i=0;i<8;i++) before[i]=*Words(0xffb20000+CounterOffset(i));
@@ -372,11 +392,17 @@ extern "C" unsigned coordinator_main()
 		const volatile auto& l=root.layers[layer];
 		DecoderCopy(TT_DECODER_RESIDUAL,TT_DECODER_HIDDEN,1024);
 		DecoderNorm(TT_DECODER_HIDDEN,0x84000,1024,1024,l.attentionNorm,total); DecoderQuantize(0x84000,1024);
+#if PIONEER_COORDINATOR_PAIRED_QKV
+		DecoderPairedQkv(l.q,l.v,l.k,total); // Q/K already in their existing owned spans.
+#else
 		DecoderMatrix(l.q,1024,2048,total); DecoderCopy(TT_DECODER_Q,0x84000,2048);
 		DecoderMatrix(l.v,1024,1024,total);
+#endif
 		for (unsigned g=0;g<8;g++) for (unsigned i=0;i<64;i++) Words(0x142100)[g*128+i]
 			=PioneerAttentionToHalf(Floats(0x84000)[g*128+i*2])|(uint32_t(PioneerAttentionToHalf(Floats(0x84000)[g*128+i*2+1]))<<16);
+#if !PIONEER_COORDINATOR_PAIRED_QKV
 		DecoderMatrix(l.k,1024,1024,total); DecoderCopy(TT_DECODER_K,0x84000,1024);
+#endif
 #if PIONEER_COORDINATOR_PARALLEL_ROPE
 		DecoderRead(TT_DECODER_NORM,l.qNorm,512,total); DecoderCopy(0x147a00,TT_DECODER_NORM,128);
 		DecoderRead(TT_DECODER_NORM,l.kNorm,512,total); DecoderCopy(0x147c00,TT_DECODER_NORM,128);

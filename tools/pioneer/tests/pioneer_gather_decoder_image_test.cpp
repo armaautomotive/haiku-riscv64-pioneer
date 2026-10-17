@@ -39,6 +39,7 @@ struct GatherDecoder:BatchDecoder {
 		BatchDecoder::Submit();
 	}
 };
+#ifndef PIONEER_GATHER_DECODER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); compactImage=true;
@@ -59,3 +60,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual combined-gather decoder,full/small/one+two-position zero+sparse,exact logits/KV/119 sequences/unchanged flits,ALL16 bad proofs+prefix restoration faults before host output;NOT wired/native");
 }
+#endif
