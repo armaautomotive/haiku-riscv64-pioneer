@@ -14,6 +14,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeSfpuDivideProbeImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeVectorGluImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeInlineAttentionImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeOptimizedAttentionImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTokenLaneAttentionImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeFastSoftmaxImage.h"
 #undef NDEBUG
@@ -45,7 +46,7 @@ static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&
 struct Image {
 	std::vector<uint8_t> boot,code,rope;
 	std::map<std::string,uint32_t> symbols;
-	bool resident,coordinated,glu,cachedQuery=false,inputPull=false,parallelRope=false,sfpuDivideProbe=false,vectorGlu=false,fastSoftmax=false,tokenLanes=false,inlineSfpu=false;
+	bool resident,coordinated,glu,cachedQuery=false,inputPull=false,parallelRope=false,sfpuDivideProbe=false,vectorGlu=false,fastSoftmax=false,tokenLanes=false,inlineSfpu=false,optimizedAttention=false;
 	explicit Image(const char* path,bool kv=false,bool group=false,bool activation=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group),glu(activation) {
 		assert(!glu || coordinated);
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
@@ -69,15 +70,16 @@ struct Image {
 			fastSoftmax=vectorGlu && getenv("PIONEER_ATTENTION_FAST_SOFTMAX");
 			tokenLanes=vectorGlu && getenv("PIONEER_ATTENTION_TOKEN_LANES");
 			inlineSfpu=vectorGlu && getenv("PIONEER_ATTENTION_INLINE_SFPU");
+			optimizedAttention=inlineSfpu && getenv("PIONEER_ATTENTION_OPTIMIZED");
 			assert(!inlineSfpu || (!tokenLanes && !fastSoftmax));
 			assert(!(tokenLanes && fastSoftmax));
-			assert(code.size()==unsigned(inlineSfpu?TT_INLINE_ATTN_IMAGE_WORDS:tokenLanes?TT_TOKEN_LANE_ATTN_IMAGE_WORDS:fastSoftmax?TT_FAST_SOFTMAX_IMAGE_WORDS:vectorGlu?TT_VECTOR_GLU_IMAGE_WORDS:parallelRope?TT_ROPE_GLU_IMAGE_WORDS:inputPull?TT_PULL_INPUT_GLU_IMAGE_WORDS:cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
+			assert(code.size()==unsigned(optimizedAttention?TT_OPTIMIZED_ATTN_IMAGE_WORDS:inlineSfpu?TT_INLINE_ATTN_IMAGE_WORDS:tokenLanes?TT_TOKEN_LANE_ATTN_IMAGE_WORDS:fastSoftmax?TT_FAST_SOFTMAX_IMAGE_WORDS:vectorGlu?TT_VECTOR_GLU_IMAGE_WORDS:parallelRope?TT_ROPE_GLU_IMAGE_WORDS:inputPull?TT_PULL_INPUT_GLU_IMAGE_WORDS:cachedQuery?TT_CACHED_QUERY_GLU_IMAGE_WORDS:glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
 			for (unsigned w=0;w<TT_COORDINATED_ATTENTION_CODE_WORDS;w++)
-				assert((inlineSfpu?BlackholeInlineAttentionCodeWord(w):tokenLanes?BlackholeTokenLaneAttentionCodeWord(w):fastSoftmax?BlackholeFastSoftmaxCodeWord(w):vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+				assert((optimizedAttention?BlackholeOptimizedAttentionCodeWord(w):inlineSfpu?BlackholeInlineAttentionCodeWord(w):tokenLanes?BlackholeTokenLaneAttentionCodeWord(w):fastSoftmax?BlackholeFastSoftmaxCodeWord(w):vectorGlu?BlackholeVectorGluCodeWord(w):parallelRope?BlackholeRopeGluCodeWord(w):inputPull?BlackholePullInputGluCodeWord(w):cachedQuery?BlackholeCachedQueryGluCodeWord(w):glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 			if (parallelRope) {
-				rope=Read(std::string(path)+"/rope.bin"); assert(rope.size()==unsigned(inlineSfpu?TT_INLINE_ATTN_EXTRA_WORDS:tokenLanes?TT_TOKEN_LANE_ATTN_EXTRA_WORDS:fastSoftmax?TT_FAST_SOFTMAX_EXTRA_WORDS:vectorGlu?TT_VECTOR_GLU_EXTRA_WORDS:TT_ROPE_GLU_EXTRA_WORDS)*4 && rope.size()<=0x1fe0);
+				rope=Read(std::string(path)+"/rope.bin"); assert(rope.size()==unsigned(optimizedAttention?TT_OPTIMIZED_ATTN_EXTRA_WORDS:inlineSfpu?TT_INLINE_ATTN_EXTRA_WORDS:tokenLanes?TT_TOKEN_LANE_ATTN_EXTRA_WORDS:fastSoftmax?TT_FAST_SOFTMAX_EXTRA_WORDS:vectorGlu?TT_VECTOR_GLU_EXTRA_WORDS:TT_ROPE_GLU_EXTRA_WORDS)*4 && rope.size()<=0x1fe0);
 				assert(symbols.at("attention_rope_end")==0x74020+rope.size());
-				for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert((inlineSfpu?BlackholeInlineAttentionExtraWord(w):tokenLanes?BlackholeTokenLaneAttentionExtraWord(w):fastSoftmax?BlackholeFastSoftmaxExtraWord(w):vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w))==(w<rope.size()/4?Word(rope,w*4):0));
+				for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert((optimizedAttention?BlackholeOptimizedAttentionExtraWord(w):inlineSfpu?BlackholeInlineAttentionExtraWord(w):tokenLanes?BlackholeTokenLaneAttentionExtraWord(w):fastSoftmax?BlackholeFastSoftmaxExtraWord(w):vectorGlu?BlackholeVectorGluExtraWord(w):BlackholeRopeGluExtraWord(w))==(w<rope.size()/4?Word(rope,w*4):0));
 			}
 		}
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());

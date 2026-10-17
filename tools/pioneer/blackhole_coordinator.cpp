@@ -4,6 +4,14 @@
 #ifndef PIONEER_COORDINATOR_FUSED_GATHER
 #define PIONEER_COORDINATOR_FUSED_GATHER 0
 #endif
+// Offline -O3 variant initializes the conditional paired span explicitly
+// to satisfy aggressive dataflow analysis;warnings remain errors. Default
+// and -O2 variants preserve their qualified bytecode exactly.
+#if PIONEER_COORDINATOR_INIT_SPAN
+#define PIONEER_COORDINATOR_SPAN_INIT = {}
+#else
+#define PIONEER_COORDINATOR_SPAN_INIT
+#endif
 /* SPDX-License-Identifier: MIT */
 // Fixed immutable image, exposed only through guarded private coordinator ABIs.
 // Master0 coordinates fixed peers1..119; all addresses/routes are fixed or
@@ -315,7 +323,7 @@ extern "C" unsigned coordinator_main()
 		unsigned rows=(blocksPerWorker+((worker-1)<extra))<<rowShift;
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		unsigned weightBase=base+firstRow*rowBytes;
-		if (operation==10) { PioneerPairedFfnSpan span; if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park();
+		if (operation==10) { PioneerPairedFfnSpan span PIONEER_COORDINATOR_SPAN_INIT; if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park();
 			rows=span.rows; weightBase=(span.tensor?job[10]:base)+span.first*rowBytes; }
 #endif
 		volatile uint32_t* descriptor=Words(0x147100);
@@ -377,7 +385,7 @@ extern "C" unsigned coordinator_main()
 #endif
 		unsigned rows=(blocksPerWorker+((worker-1)<extra))<<rowShift;
 #if PIONEER_COORDINATOR_PAIRED_FFN
-		PioneerPairedFfnSpan span;
+		PioneerPairedFfnSpan span PIONEER_COORDINATOR_SPAN_INIT;
 		if (operation==10) { if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park(); rows=span.rows; }
 #endif
 #if PIONEER_COORDINATOR_FUSED_GATHER

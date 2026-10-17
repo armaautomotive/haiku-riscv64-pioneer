@@ -104,6 +104,12 @@ static void DecoderBatchRope(uint32_t (&total)[4]) {
 	Fence();
 }
 #endif
+#if PIONEER_COORDINATOR_HOT_QUANT
+// OFFLINE function-local code-generation candidate. Exact quantization
+// source/rounding and ALL existing input/output bounds/readbacks remain.
+// Keep the surrounding coordinator at -O2;no fast-math or reassociation.
+__attribute__((optimize("O3"),noinline))
+#endif
 static void DecoderQuantize(unsigned source,unsigned n)
 {
 	DECODER_STAGE_BEGIN();

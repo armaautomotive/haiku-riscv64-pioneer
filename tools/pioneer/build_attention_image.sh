@@ -6,6 +6,7 @@ attention_source=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 attention_cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 attention_output=$2
 attention_program=blackhole_attention.cpp
+case ${PIONEER_ATTENTION_OPT_LEVEL:-s} in s|2) ;; *) exit 2;; esac
 case ${PIONEER_SFPU_DIVIDE_PROBE:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_GLU_VECTOR:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_ATTENTION_FAST_SOFTMAX:-0} in 0|1) ;; *) exit 2;; esac
@@ -42,7 +43,7 @@ case "$attention_output" in /*) ;; *) echo 'Absolute output required' >&2; exit 
 [ ! -e "$attention_output" ] && [ ! -L "$attention_output" ] || { echo 'Fresh output required' >&2; exit 2; }
 umask 077
 mkdir -m 700 "$attention_output"
-"$attention_cross-g++" -std=c++11 -Os -Wall -Wextra -Werror -ffreestanding -DPIONEER_ATTENTION_FREESTANDING \
+"$attention_cross-g++" -std=c++11 -O${PIONEER_ATTENTION_OPT_LEVEL:-s} -Wall -Wextra -Werror -ffreestanding -DPIONEER_ATTENTION_FREESTANDING \
  -fno-exceptions -fno-rtti -fno-stack-protector -fno-pic -fno-pie \
  -ffunction-sections -fdata-sections -ffp-contract=off -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \

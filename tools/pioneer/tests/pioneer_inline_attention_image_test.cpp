@@ -4,9 +4,11 @@
 int main(int argc,char** argv) {
 	assert(argc==3); setvbuf(stdout,NULL,_IONBF,0);
 	for (const char* key:{"PIONEER_COORDINATED_PULL_INPUT","PIONEER_ATTENTION_PARALLEL_ROPE","PIONEER_GLU_VECTOR"}) setenv(key,"1",1);
-	for (const char* key:{"PIONEER_ATTENTION_FAST_SOFTMAX","PIONEER_ATTENTION_TOKEN_LANES","PIONEER_ATTENTION_INLINE_SFPU"}) unsetenv(key);
+	bool optimized=getenv("PIONEER_COMPARE_OPTIMIZED_ATTENTION")!=nullptr;
+	for (const char* key:{"PIONEER_ATTENTION_FAST_SOFTMAX","PIONEER_ATTENTION_TOKEN_LANES","PIONEER_ATTENTION_INLINE_SFPU","PIONEER_ATTENTION_OPTIMIZED"}) unsetenv(key);
 	Image prior(argv[1],false,true,true); setenv("PIONEER_ATTENTION_INLINE_SFPU","1",1);
-	Image next(argv[2],false,true,true); assert(next.inlineSfpu && !prior.inlineSfpu);
+	if (optimized) setenv("PIONEER_ATTENTION_OPTIMIZED","1",1);
+	Image next(argv[2],false,true,true); assert(next.inlineSfpu && !prior.inlineSfpu && next.optimizedAttention==optimized);
 	for (unsigned tokens:{1U,2U,8U,17U,31U,32U,33U,64U,65U,127U,128U,129U,255U,256U}) for (unsigned group:{0U,7U}) {
 		RopeGroupMachine a(prior,tokens,27,group,tokens-1),b(next,tokens,27,group,tokens-1);
 		a.Run(); b.Run(); a.VerifyRope(); b.VerifyRope();

@@ -2,6 +2,41 @@
 
 ## Status
 
+### October17:optimized39 native PASS;exact attention codegen (15:12 UTC)
+
+Fast Qwen STILL NOT achieved. Qualified39 GPU6.366710/6.314192/6.465534
+tok/s versus38 5.923731/5.880072/6.016333,roughly7..8% faster. Prompts
+4.058904/4.204970/3.746308s;CPU32 .923163/1.569144/.708026tok/s.
+ALL22 full-vocabulary/exact selected-bit checks and all three sustained
+natural requests/untimed complete-logit quality+coverage replays PASS.
+Complete312 positions/61464 projections/8736 attention/156 full+156
+selected positions/24 batches/zero warm uploads;END2/PCI-host1-1/cold0/
+cleanup1. Position21 total103.625120M ticks versus38 112.858189M;
+Q87.282858M,matrix45.789704M,RMS3.470441M,SiLU7.414886M,
+attention27.267899M,vocabulary7.676699M. Short7.058558tok/s is diagnostic
+ONLY. Driver8189d545 preserved as`driver-v39-8189d545-backup`,native log
+copied locally;38/36/35/34 and older rollbacks remain. No requested-fast,
+Assistant,Q4/27B or all-Qwen qualification claim.
+
+Next OFFLINE attention codegen uses -O2,NO fast-math/contraction changes,
+on the SAME exact inline attention/vector GLU source;separate RMS/RoPE
+object stays unchanged. Primary4d940cbf(7956B),extra612b3824(7276B) fit
+SAME8192B/8160B code owners. Actual group suite passes all48 attention
+cases/allGLU/source/counter/Dst/ACK faults. Independent comparison to36
+matches ALL256 attention output words/whole KV/counters in28 cases across
+every32-lane boundary,and ALL272 GLU operand/scale words for all six groups
+at layers0/27. At256 tokens,interpreter steps4600181 versus6491719;this
+is NOT a native speed claim. Full-master composition is still testing.
+No optimized attention code is driver-selected or native-qualified yet.
+
+Other OFFLINE coordinator prototypes:global -O3/fa1722d4 fits31544B and
+passes full/small/zero+sparse/one+two/early-EOG/all logits/KV/119 sequences/
+ALL16 proof+prefix faults,but mixed step results do NOT establish a win.
+The explicit paired-span initialization is limited to this variant;
+warnings remain errors. A function-local -O3 quantizer with -O2 surrounding
+master also builds(a0f74a2a),but has NOT passed full instruction/model gates.
+Neither program is driver-selected. Keep exact39 as native reference.
+
 ### October17:exact38 native PASS,speed-neutral;optimized39 (15:04 UTC)
 
 Fast Qwen STILL NOT achieved. Exact38 GPU5.923731/5.880072/6.016333tok/s
