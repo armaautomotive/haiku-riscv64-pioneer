@@ -2,6 +2,68 @@
 
 ## Status
 
+### October17:fixed-route42 native PASS;exact unpack-gate43 ready (16:58 UTC)
+
+Fast Qwen remains UNACHIEVED. User reported power ON after the long rest;
+no relay action was sent in that resume. Fresh serial/default Linux and
+pinned SSH returned,all64 CPUs/NVMe root/empty kexec/pinned helper verified.
+Unchanged full-memory SD-free handoff `smp64-maintenance42-20261017-b`
+returned Haiku64/full127.62GiB. Fresh kernel scan:one header,46 images,
+ZERO P100A images,no error/no compute owner. Repeated that guard before
+installing the hash-verified42 staged regular `drivers/bin` file;retained
+qualified41 backup and unchanged dev/misc symlink. Never wrote a loaded
+driver. The native metadata query correctly reported42,but the old helper
+still returned failure for versions>41. NO compute had started. Fixed only
+the diagnostic ceiling to the implemented43 maximum,kept ALL shape/KV/
+immutable/gather gates. REAL CLI ASan/UBSan test exhausts versions0..64,
+every bit of ALL four metadata fields and ioctl errors,exactly ONE query/
+close and NO BEGIN or compute. Native fixed checker90a3a0b1 returns zero
+for exact42. Preserve the old helper only as historical evidence,not for
+new42/43 acceptance. Client's exact private-version gate is unchanged.
+
+Qualified42 GPU7.283226/7.246373/7.377537tok/s versus41
+7.206016/7.162185/7.290277,roughly1% faster. CPU32
+2.716139/.807691/.918497tok/s;prompt3.755714/3.893310/3.481663s.
+ALL22 full-vocabulary/exact selected-bit startup checks and three sustained
+requests/untimed complete-logit replay/quality+coverage PASS. Complete312
+positions/61464 projections/8736 attention/156 full+156 selected positions/
+24 batches/zero warm uploads;END2/PCI-host1-1/cold0/cleanup1. Position21
+total93.315680M ticks versus41 94.646759M;matrix45.113844M versus45.785374M,
+Q86.652563M versus7.283382M,attention19.048274M versus19.055259M.
+Short7.730265tok/s is diagnostic ONLY. Qualified driver651b1922 backed up
+as `driver-v42-651b1922-backup`;native log copied locally,SHA
+36f2c63712a8a398535a247670611fe215ee8d67d20403de94a2e9e54a50d5fd.
+NO requested-fast/Assistant/Q4/27B/all-Qwen promotion claim.
+
+Next43/model27/private10/requireLayer33 binds the previously OFFLINE
+ONE-word8180a243 unpack scheduling image to a DISTINCT immutable
+`unpackWaitGate` flag on ALL119 math peer leases and the root lease.
+Requires exact accumulator/fused gather/fixed-route42/finite-half41;
+rounded-product/partial/mixed/live upgrades refused BEFORE staging/launch.
+Same42 masterd1addc8d,41 eight groups,workers,ALL4092 other math bytes,
+four fidelity phases/compensated exact FMA,preceding/final drains,NoC/
+counters/source proofs/data owners/sequences/batch/EOG and UNKNOWN rules.
+No replay,new instruction,route,owner or authority. Old model versions do
+NOT silently select this new image. Exact support43 required BEFORE BEGIN.
+Actual asynchronous math/frozen getter matches ALL1024 compiled words;
+all120 workers/four A/B delay schedules/all K/N4096/IEEE/repeated jobs/STOP/
+Dst hazards PASS. Actual119 gathered workers/mixed attention+GLU/ALL16 lost
+prefix faults PASS;unchanged full master ALL output/KV/sequence/early-EOG/
+ALL16 combined-proof/prefix faults PASS. Held table staging/ALL119 code/
+surrounding-word restoration PASS,including lost changed-word write and
+ALL32 changed-word readback bit faults BEFORE launch with exact held-only
+restoration. ALL119 mixed-image refusals,controller full/small/batch and
+ALL16 UNKNOWN faults PASS;no retry/reset/restore/free after uncertainty.
+Real client43 full/small/batch/corruption and capability refusal BEFORE
+BEGIN PASS. Tests retained:controllerSHp7S3Xr,clientR4CJ3aor,
+table8aG8xobc,workeriT2E9Bmh,instructionIG4heWgd,rootyUmNCWJb,
+persistentQfxEAjWQ,supportCLIUwXlZjyD. Driver9e098d02,qwenbafe1e2e and
+fixed checker90a3a0b1 staged under separate inactive names. NO43 compute
+or installation yet. Current source/build mirror43,installed/qualified42;
+never copy shared build output over the loaded42 driver. Repeat controlled
+restart and prove zero loaded images before replacement;allow a long rest
+and do NOT repeatedly pulse power. All rollbacks and user llama edits kept.
+
 ### October17:hardware waiting at user's request;unpack-gate OFFLINE (16:41 UTC)
 
 The user reports the Pioneer needs more rest and explicitly requested more

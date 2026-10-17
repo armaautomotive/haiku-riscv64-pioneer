@@ -447,6 +447,7 @@ struct tt_pioneer_decoder_model {
 	// Version24/contract40 selects -O2 exact attention/GLU,SAME sealed owners/transport.
 	// Version25/contract41 selects exact finite-half widening,SAME complete input validation.
 	// Version26/contract42 selects immutable same-route lookup/local exact quant codegen.
+	// Version27/contract43 selects the distinct exact unpack source Wait Gate math image.
 	// Other versions require zeros. No raw device address or supplied code.
 	uint32_t version,reserved[3];
 	PioneerDecoderModelOffsets offsets;

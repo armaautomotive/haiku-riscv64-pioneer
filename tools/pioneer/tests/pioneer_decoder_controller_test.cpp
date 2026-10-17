@@ -112,14 +112,14 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	bool CloseDecoder(bool stopped=true) { return PioneerDecoderClose(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),decoder,stopped); }
 };
 struct BatchControllerFixture:DecoderControllerFixture {
-	bool gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster,optimizedAttention,finiteHalf,fixedRoutes;
-	BatchControllerFixture(bool fused=false,bool direct=false,bool vector=false,bool rounded=false,bool inlineGroup=false,bool optimized=false,bool optimizedGroup=false,bool finite=false,bool fixed=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused),directQuant(direct),vectorGlu(vector),roundedProduct(rounded),inlineAttention(inlineGroup),optimizedMaster(optimized),optimizedAttention(optimizedGroup),finiteHalf(finite),fixedRoutes(fixed) {
+	bool gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster,optimizedAttention,finiteHalf,fixedRoutes,unpackWaitGate;
+	BatchControllerFixture(bool fused=false,bool direct=false,bool vector=false,bool rounded=false,bool inlineGroup=false,bool optimized=false,bool optimizedGroup=false,bool finite=false,bool fixed=false,bool unpack=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused),directQuant(direct),vectorGlu(vector),roundedProduct(rounded),inlineAttention(inlineGroup),optimizedMaster(optimized),optimizedAttention(optimizedGroup),finiteHalf(finite),fixedRoutes(fixed),unpackWaitGate(unpack) {
 		model.reserved[1]=0x31000000; model.reserved[2]=151643; model.reserved[3]=5;
 		for (auto& peer:peers) { peer.vectorGlu=vector; peer.inlineAttention=inlineGroup; peer.optimizedAttention=optimizedGroup; peer.finiteHalf=finite; }
-		for (unsigned w=1;w<120;w++) { fleet[w].fusedGather=fused; fleet[w].roundedProduct=rounded; }
+		for (unsigned w=1;w<120;w++) { fleet[w].fusedGather=fused; fleet[w].roundedProduct=rounded; fleet[w].unpackWaitGate=unpack; }
 	}
 	bool PrepareBatch() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster,optimizedAttention,finiteHalf,fixedRoutes); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather,directQuant,vectorGlu,roundedProduct,inlineAttention,optimizedMaster,optimizedAttention,finiteHalf,fixedRoutes,unpackWaitGate); }
 	bool DecodeBatch(unsigned tokens=1,unsigned steps=2) {
 		uint32_t input[1024]={},rope[128]={},prior[119]; for (unsigned w=0;w<119;w++) prior[w]=fleet[w+1].persistentSequence;
 		std::vector<uint32_t> output(1024,0xabcdef00);
@@ -139,6 +139,22 @@ struct BatchControllerFixture:DecoderControllerFixture {
 int main()
 {
 	(void)Run; (void)Input;
+	{ BatchControllerFixture f(true,true,true,false,true,true,true,true,true,true); assert(f.PrepareBatch() && f.decoder.unpackWaitGate && !f.decoder.roundedProduct);
+		assert(f.Decode(1,false) && f.Decode(1,true) && f.DecodeBatch(1,2) && f.DecodeBatch(3,2));
+		f.unpackWaitGate=false; assert(!f.PrepareBatch()); f.unpackWaitGate=true;
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
+	for (unsigned w=1;w<120;w++) { BatchControllerFixture f(true,true,true,false,true,true,true,true,true,true); f.fleet[w].unpackWaitGate=false;
+		assert(!f.PrepareBatch() && !f.decoder.saved && !f.io.starts); }
+	{ BatchControllerFixture f(true,true,true,false,true,true,true,true,false,true); assert(!f.PrepareBatch() && !f.decoder.saved && !f.io.starts); }
+	for (unsigned fault=0;fault<16;fault++) { BatchControllerFixture f(true,true,true,false,true,true,true,true,true,true); assert(f.PrepareBatch());
+		f.io.executeTimeout=fault==0; f.io.badPc=fault==1; f.io.badCount=fault==2; f.io.badNoc=fault==3;
+		f.io.badMarker=fault==4; f.io.stopFails=fault==5; f.io.staleSummary=fault==6; f.io.badSummary=fault==7;
+		f.io.badLiveMap=fault==8; f.io.nonfinite=fault==9; f.io.omitWidePayload=fault==10; f.io.layerLost=fault==11;
+		f.io.attentionLost=fault==12; f.io.mutateSequence=fault==13; f.io.mutateModel=fault==14; f.io.peerMapsLost=fault==15;
+		assert(!f.Decode(1,true) && f.io.quarantined && f.io.wideQuarantined && f.decoder.unsafe && f.decoded.master.recovery_required);
+		for (auto& p:f.peers) assert(p.unsafe);
+		unsigned resets=f.io.stops,writes=f.io.layerWrites;
+		assert(!f.Decode(1,true) && !f.CloseDecoder() && f.io.stops==resets && f.io.layerWrites==writes); }
 	{ BatchControllerFixture f(true,true,true,false,true,true,true,true,true); assert(f.PrepareBatch() && f.decoder.fixedRoutes && !f.decoder.roundedProduct);
 		for (unsigned w=0;w<8192;w++) assert(PioneerDecoderCodeWord(f.decoder,w)==BlackholeFixedRouteDecoderCodeWord(w));
 		assert(f.Decode(1,false) && f.Decode(1,true) && f.DecodeBatch(1,2) && f.DecodeBatch(3,2));

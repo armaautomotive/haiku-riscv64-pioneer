@@ -5,10 +5,16 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTableWorkerImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTableAttentionWorkerImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeTableGluWorkerImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8UnpackGateImage.h"
 struct TableWorker:AttentionWorker {
 	unsigned corruptCopy=0; bool corrupted=false;
 	TableWorker(const std::vector<uint8_t>& code,unsigned worker):AttentionWorker(code,worker) {
 		if (getenv("PIONEER_COORDINATED_ACCUM_MATH")) Accum(); else Phase(); l1[Index(TT_DECODER_TABLE_COUNT)]=3;
+		if (getenv("PIONEER_COORDINATED_UNPACK_GATE_MATH")) {
+			assert(getenv("PIONEER_COORDINATED_ACCUM_MATH"));
+			for (unsigned w=0;w<1024;w++) l1[1+w]=BlackholeRuntimeQ8UnpackGateCodeWord(w);
+			l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
+		}
 		for (unsigned i=0;i<3;i++) Put(i,false,false);
 	}
 	void Put(unsigned index,bool attention,bool glu) {

@@ -2,6 +2,7 @@
 // OFFLINE producer/consumer scheduling model, not hardware timing evidence.
 #define PIONEER_ACCUM_MACHINE_ONLY
 #include "pioneer_accum_image_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8UnpackGateImage.h"
 struct UnpackGateMachine:AccumMachine {
 	bool producer[2]={},waitGate=true;
 	unsigned delayA=0,delayB=0,dropProducer=0;
@@ -65,6 +66,8 @@ struct UnpackGateMachine:AccumMachine {
 };
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
+	for (unsigned w=0;w<1024;w++) assert(Word(code,w*4)==BlackholeRuntimeQ8UnpackGateCodeWord(w));
+	assert(!BlackholeRuntimeQ8UnpackGateCodeWord(1024) && !BlackholeRuntimeQ8UnpackGateCodeWord(UINT32_MAX));
 	unsigned differences=0;
 	for (unsigned byte=0;byte<4096;byte+=4) if (Word(code,byte)!=BlackholeRuntimeQ8AccumCodeWord(byte/4)) {
 		assert(byte==0x370 && Word(code,byte)==0x00000013);

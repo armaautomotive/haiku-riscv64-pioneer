@@ -8,6 +8,7 @@
 #include "BlackholeRuntimeQ8PhaseImage.h"
 #include "BlackholeRuntimeQ8AccumImage.h"
 #include "BlackholeRuntimeQ8RoundedImage.h"
+#include "BlackholeRuntimeQ8UnpackGateImage.h"
 #include "BlackholeCoordinatedWorkerImage.h"
 #include "BlackholeAttentionWorkerImage.h"
 #include "BlackholeGluWorkerImage.h"
@@ -97,7 +98,8 @@ bool PioneerPersistentAllIdle(IO& io,const tt_dram_samples_result& baseline,Pion
 	return io.SelectRuntimeCore(0) && PioneerFleetGlobalSources(io,baseline);
 }
 template<class IO>
-bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false,bool attentionDispatch=false,bool gluDispatch=false,bool coordinatedInline=false,bool partialMath=false,bool phasePipeline=false,bool descriptorTable=false,bool accumPipeline=false,bool fusedGather=false,bool roundedProduct=false) {
+bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false,bool attentionDispatch=false,bool gluDispatch=false,bool coordinatedInline=false,bool partialMath=false,bool phasePipeline=false,bool descriptorTable=false,bool accumPipeline=false,bool fusedGather=false,bool roundedProduct=false,bool unpackWaitGate=false) {
+	if (unpackWaitGate && (!accumPipeline || !coordinatedInline || partialMath || roundedProduct || !fusedGather)) return false;
 	if (roundedProduct && (!accumPipeline || !inlineMath || partialMath)) return false;
 	if (fusedGather && !accumPipeline) return false;
 	if (accumPipeline && (!descriptorTable || !phasePipeline)) return false;
@@ -108,7 +110,7 @@ bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false
 	if (gluDispatch && !attentionDispatch) return false;
 	if (attentionDispatch && (!coordinated || (inlineMath && !coordinatedInline) || f.noc.version<0x101 || f.noc.version>0x108)) return false;
 	if (coordinated && (f.noc.version<0x101 || f.noc.version>0x177)) return false; // peers1..119, never master0
-	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinatedInline==coordinatedInline && f.partialMath==partialMath && f.phasePipeline==phasePipeline && f.descriptorTable==descriptorTable && f.accumPipeline==accumPipeline && f.roundedProduct==roundedProduct && f.fusedGather==fusedGather && f.coordinated==coordinated && f.attentionDispatch==attentionDispatch && f.gluDispatch==gluDispatch;
+	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinatedInline==coordinatedInline && f.partialMath==partialMath && f.phasePipeline==phasePipeline && f.descriptorTable==descriptorTable && f.accumPipeline==accumPipeline && f.roundedProduct==roundedProduct && f.unpackWaitGate==unpackWaitGate && f.fusedGather==fusedGather && f.coordinated==coordinated && f.attentionDispatch==attentionDispatch && f.gluDispatch==gluDispatch;
 	if (!f.preludeSaved || !f.preludeDirty || !f.Compute().ready || f.Compute().unsafe
 		|| f.Compute().running || io.ResetRead()!=0x47800
 		|| io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)!=0x0000006f) return false;
@@ -120,12 +122,12 @@ bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false
 		for (unsigned w=0;w<16;w++) okay &= io.FleetCodeRead(TT_COORDINATED_SOURCE_WORD+w)==(w?f.noc.source[0][w]:f.Store().config|0x10000);
 	}
 	if (inlineMath) {
-		for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,roundedProduct?BlackholeRuntimeQ8RoundedCodeWord(w):accumPipeline?BlackholeRuntimeQ8AccumCodeWord(w):phasePipeline?BlackholeRuntimeQ8PhaseCodeWord(w):partialMath?BlackholeRuntimeQ8PartialCodeWord(w):BlackholeRuntimeQ8InlineCodeWord(w));
-		for (unsigned w=0;w<1024;w++) okay &= io.RuntimeCodeRead(1+w)==(roundedProduct?BlackholeRuntimeQ8RoundedCodeWord(w):accumPipeline?BlackholeRuntimeQ8AccumCodeWord(w):phasePipeline?BlackholeRuntimeQ8PhaseCodeWord(w):partialMath?BlackholeRuntimeQ8PartialCodeWord(w):BlackholeRuntimeQ8InlineCodeWord(w));
+		for (unsigned w=0;w<1024;w++) io.RuntimeCodeWrite(1+w,unpackWaitGate?BlackholeRuntimeQ8UnpackGateCodeWord(w):roundedProduct?BlackholeRuntimeQ8RoundedCodeWord(w):accumPipeline?BlackholeRuntimeQ8AccumCodeWord(w):phasePipeline?BlackholeRuntimeQ8PhaseCodeWord(w):partialMath?BlackholeRuntimeQ8PartialCodeWord(w):BlackholeRuntimeQ8InlineCodeWord(w));
+		for (unsigned w=0;w<1024;w++) okay &= io.RuntimeCodeRead(1+w)==(unpackWaitGate?BlackholeRuntimeQ8UnpackGateCodeWord(w):roundedProduct?BlackholeRuntimeQ8RoundedCodeWord(w):accumPipeline?BlackholeRuntimeQ8AccumCodeWord(w):phasePipeline?BlackholeRuntimeQ8PhaseCodeWord(w):partialMath?BlackholeRuntimeQ8PartialCodeWord(w):BlackholeRuntimeQ8InlineCodeWord(w));
 	}
 	io.RuntimeCodeWrite(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4,TT_PERSISTENT_MATH_RETURN);
 	okay &= io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)==TT_PERSISTENT_MATH_RETURN;
-	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinatedInline=coordinatedInline; f.partialMath=partialMath; f.phasePipeline=phasePipeline; f.descriptorTable=descriptorTable; f.accumPipeline=accumPipeline; f.roundedProduct=roundedProduct; f.fusedGather=fusedGather; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; f.gluDispatch=gluDispatch; return okay;
+	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinatedInline=coordinatedInline; f.partialMath=partialMath; f.phasePipeline=phasePipeline; f.descriptorTable=descriptorTable; f.accumPipeline=accumPipeline; f.roundedProduct=roundedProduct; f.unpackWaitGate=unpackWaitGate; f.fusedGather=fusedGather; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; f.gluDispatch=gluDispatch; return okay;
 }
 template<class IO>
 bool PioneerPersistentTablePrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker& f,const PioneerDecoderJob& model,unsigned worker,bool smallRows=false)
