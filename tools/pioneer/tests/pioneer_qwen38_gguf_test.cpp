@@ -65,6 +65,7 @@ struct Fixture {
 		assert(!fseeko(file,off_t(offset),SEEK_SET) && fwrite(bytes.data(),1,bytes.size(),file)==bytes.size() && !fflush(file));
 	}
 };
+#ifndef PIONEER_Q38_FIXTURE_ONLY
 static void Fixtures()
 {
 	Fixture fixture; PioneerQwen38Gguf index;
@@ -198,3 +199,4 @@ int main(int argc,char** argv)
 	assert(argc==1 || argc==2); Fixtures(); BankPlan(); if (argc==2) RealModel(argv[1]);
 	puts("PASS: bounded Qwen3.8 packed tensor reader,ALL851 shape/format refusals,metadata/layout/range/change/NaN/Inf guards,no template execution or device access");
 }
+#endif
