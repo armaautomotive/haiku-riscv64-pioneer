@@ -88,20 +88,21 @@ int main()
 		for (unsigned a=0x74010;a<0x74020;a+=4) assert(!used[a/4]);
 		assert(PioneerAttentionTileWordAddress(TT_ATTN_TILE_ROPE_SAVED_WORDS,true)==UINT32_MAX);
 	}
-	for (unsigned variant:{0U,1U,2U}) for (unsigned group=0;group<8;group++) for (unsigned drop:{0U,1U,1024U,2040U}) {
-		bool inlineGroup=variant>=1,optimizedGroup=variant==2;
+	for (unsigned variant:{0U,1U,2U,3U}) for (unsigned group=0;group<8;group++) for (unsigned drop:{0U,1U,1024U,2040U}) {
+		bool inlineGroup=variant>=1,optimizedGroup=variant>=2,finiteGroup=variant==3;
 		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
 		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;
 		unsigned writes=io.attentionWrites;
 		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,false,true) && io.attentionWrites==writes && !lease.saved);
 		if (drop) io.Mock::drop=io.Mock::writes+2048+drop;
-		bool passed=PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true,true,inlineGroup,optimizedGroup);
-		assert(passed==!drop && lease.saved && lease.code_dirty && lease.parallelRope && lease.vectorGlu && lease.inlineAttention==inlineGroup && lease.optimizedAttention==optimizedGroup && !lease.running && !io.starts);
+		bool passed=PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true,true,inlineGroup,optimizedGroup,finiteGroup);
+		assert(passed==!drop && lease.saved && lease.code_dirty && lease.parallelRope && lease.vectorGlu && lease.inlineAttention==inlineGroup && lease.optimizedAttention==optimizedGroup && lease.finiteHalf==finiteGroup && !lease.running && !io.starts);
 		if (passed) {
-			for (unsigned w=0;w<2048;w++) assert(io.words[w+1]==(optimizedGroup?BlackholeOptimizedAttentionCodeWord(w):inlineGroup?BlackholeInlineAttentionCodeWord(w):BlackholeVectorGluCodeWord(w)));
-			for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert(io.words[TT_ATTN_TILE_SAVED_WORDS+w]==(optimizedGroup?BlackholeOptimizedAttentionExtraWord(w):inlineGroup?BlackholeInlineAttentionExtraWord(w):BlackholeVectorGluExtraWord(w)));
+			for (unsigned w=0;w<2048;w++) assert(io.words[w+1]==(finiteGroup?BlackholeFiniteHalfAttentionCodeWord(w):optimizedGroup?BlackholeOptimizedAttentionCodeWord(w):inlineGroup?BlackholeInlineAttentionCodeWord(w):BlackholeVectorGluCodeWord(w)));
+			for (unsigned w=0;w<TT_ROPE_GLU_EXTRA_CAPACITY;w++) assert(io.words[TT_ATTN_TILE_SAVED_WORDS+w]==(finiteGroup?BlackholeFiniteHalfAttentionExtraWord(w):optimizedGroup?BlackholeOptimizedAttentionExtraWord(w):inlineGroup?BlackholeInlineAttentionExtraWord(w):BlackholeVectorGluExtraWord(w)));
 		}
 		writes=io.attentionWrites;
+		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true,true,inlineGroup,optimizedGroup,!finiteGroup) && io.attentionWrites==writes);
 		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true,true,inlineGroup,!optimizedGroup) && io.attentionWrites==writes);
 		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true,true,!inlineGroup) && io.attentionWrites==writes);
 		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,true,true,true,true,false) && io.attentionWrites==writes);

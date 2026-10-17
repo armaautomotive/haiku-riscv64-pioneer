@@ -436,7 +436,7 @@ struct tt_coordinated_support {
 // Explicit fixed Qwen3-0.6B experiment:ONLY immutable offsets,not device
 // addresses,code,NoC routes,host physical memory or worker sequences.
 struct tt_pioneer_decoder_model {
-	// Versions17..24:reserved={RoPE byte offset,packed EOG word0,word1}.
+	// Versions17..25:reserved={RoPE byte offset,packed EOG word0,word1}.
 	// Contract33 distinguishes the exact28-token window+one outlier encoding.
 	// Version18/contract34 additionally seals the fused-gather cohort.
 	// Version19/contract35 changes only exact local activation packing.
@@ -445,6 +445,7 @@ struct tt_pioneer_decoder_model {
 	// Version22/contract38 restores exact matrix math and selects exact inline attention/GLU.
 	// Version23/contract39 selects -O2 exact coordinator,SAME peers/owners/transport.
 	// Version24/contract40 selects -O2 exact attention/GLU,SAME sealed owners/transport.
+	// Version25/contract41 selects exact finite-half widening,SAME complete input validation.
 	// Other versions require zeros. No raw device address or supplied code.
 	uint32_t version,reserved[3];
 	PioneerDecoderModelOffsets offsets;

@@ -2,6 +2,38 @@
 
 ## Status
 
+### October17:41 native trial paused by driver-install safety review (15:38 UTC)
+
+Goal remains UNACHIEVED. Qualified40/fc08fe02 remains installed and idle;
+last clean result7.00..7.14tok/s with all quality/coverage and END proofs.
+The attempted41 replacement was REJECTED BEFORE process execution by the
+safety reviewer because no compute owner is insufficient proof that the
+kernel driver is unloaded. NO41 compute session or driver replacement ran.
+Read-only `listimage 1` confirms the40 driver is still loaded. The actual
+Haiku legacy-driver code unloads/reloads at lifecycle boundaries;`rescan`
+republishes devices and is not an unconditional unload command. Do NOT
+bypass this refusal with renamed files,indirect execution or forced reload.
+Preserve the idle qualified40 and ask for a controlled restart/unloaded-
+driver installation before native41 testing. ALL41 source,binaries and
+offline tests remain saved;staged driveraf25ebc3,qwen-d82043b3/support-a1626f65
+are NOT installed. No math synchronization barrier was changed;that review
+remained research only. SDs/boot defaults/Assistant remain unchanged.
+
+### October17:finite-half41 ready for native trial (15:30 UTC)
+
+Fast Qwen remains UNACHIEVED;qualified40 remains7.00..7.14tok/s. New
+41/model25/private10 binds exact finite-half code to an immutable flag
+on ALL8 group leases. SAME complete prefix validation BEFORE SFPU,SAME
+39 master/63efcbae math/all119 peers/NoC/proof/output/counters/sequences/
+EOG/batch bounds and all-owner UNKNOWN policy. No new code/data owner,
+instruction,NoC command or route. Reject mixed/live upgrades before writes.
+Independent exhaustive finite-half oracle,compiled full group/all source/
+counter/Dst/ACK faults,paired ALL output bits/whole KV/GLU,full composed
+master including ALL16 proof+prefix faults,and client41/immutable stage/
+restore/controller/quarantine tests pass ASan/UBSan. Driveraf25ebc3 and
+qwen-d82043b3 staged;qualified40/fc08fe02 rollback retained. NO native41
+compute session yet;NO new speed/Assistant/all-Qwen qualification claim.
+
 ### October17:optimized attention40 native PASS;finite-half prerequisite (15:25 UTC)
 
 Fast Qwen STILL NOT achieved. Qualified40 GPU7.045853/7.002837/7.141068
