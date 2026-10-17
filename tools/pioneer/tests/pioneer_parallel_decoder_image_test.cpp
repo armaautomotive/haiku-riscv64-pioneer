@@ -22,7 +22,7 @@ struct ParallelDecoder:DecoderMachine {
 	unsigned issuedGroups=0,completedGroups=0,parallelBatches=0;
 	unsigned badGroupProof=0,corruptGroupOutput=0,dropGroupInput=0,failGroup=0;
 	bool delayFirst=false,delayed=false;
-	ParallelDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool profile=false,bool glu=false):DecoderMachine(path,image,nz,true,profile,glu),groupImage(image) {}
+	ParallelDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool profile=false,bool glu=false,bool greedy=false):DecoderMachine(path,image,nz,true,profile,glu,greedy),groupImage(image) {}
 	void CompleteGroups() {
 		assert(issuedGroups==255 && !completedGroups); parallelBatches++;
 		for (unsigned p=0;p<8;p++) {

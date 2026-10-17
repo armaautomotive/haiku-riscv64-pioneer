@@ -8,6 +8,14 @@ static uint32_t state=0x89abcdef;
 static uint32_t Next() { state^=state<<13; state^=state>>17; state^=state<<5; return state; }
 int main()
 {
+	{ PioneerAttentionWide full={0,0},fast={0,0};
+		for (unsigned i=0;i<2000000;i++) {
+			if (!(i&1023)) full=fast={0,0};
+			float term=i%31?PioneerAttentionFloat(((Next()%132+27)<<23)|(Next()&0x7fffff)):0;
+			full=PioneerAttentionWideAdd(full,{term,0}); fast=PioneerGraphRmsAddPositive(fast,term);
+			assert(PioneerAttentionBits(full.high)==PioneerAttentionBits(fast.high) && full.low==fast.low);
+		}
+	}
 	for (unsigned i=0;i<2000000;i++) {
 		uint32_t bits=Next()&0x7fffffff; if (bits>=0x7f800000) continue;
 		float x=PioneerAttentionFloat(bits); assert(PioneerAttentionBits(PioneerGraphSqrtPositive(x))==PioneerAttentionBits(sqrtf(x)));

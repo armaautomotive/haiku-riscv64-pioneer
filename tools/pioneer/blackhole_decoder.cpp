@@ -11,6 +11,7 @@
 #include "PioneerCoordinatedGluProof.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderStageProfile.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #include <stddef.h>
 #define coordinator_main decoder_matrix_main
 #include "blackhole_coordinator.cpp"
@@ -90,6 +91,9 @@ static void DecoderMatrix(uint32_t base,unsigned k,unsigned n,uint32_t (&total)[
 	for (unsigned i=0;i<64;i++) j[i]=0;
 	j[0]=0x31445243; j[1]=final?6:1; j[2]=119; j[3]=k; j[4]=n; j[5]=base; j[6]=root.nonce;
 	if (final) { j[7]=root.hostLow; j[8]=root.hostHigh; j[9]=root.hostBytes; }
+#if PIONEER_COORDINATOR_GREEDY
+	if (final && root.operation==9) { j[1]=9; j[10]=root.tokens; }
+#endif
 	unsigned peers=n/32; if (peers>119) peers=119;
 	for (unsigned i=0;i<peers;i++) j[64+i]=root.sequence[i];
 	Fence();
@@ -227,7 +231,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 	DECODER_STAGE_BEGIN();
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
@@ -282,7 +286,7 @@ extern "C" unsigned coordinator_main()
 	DecoderMatrix(root.vocabulary,1024,151936,total,true);
 	volatile uint32_t* stats=Words(0x143000); for (unsigned i=0;i<24;i++) stats[i]=0;
 	for (unsigned i=0;i<4;i++) stats[i]=total[i];
-	stats[5]=151936; stats[6]=root.nonce; stats[7]=8;
+	stats[5]=151936; stats[6]=root.nonce; stats[7]=PIONEER_COORDINATOR_GREEDY?root.operation:8;
 	for (unsigned i=0;i<8;i++) stats[8+i]=before[i];
 	DECODER_STAGE_END(7);
 #if PIONEER_COORDINATOR_STAGE_PROFILE

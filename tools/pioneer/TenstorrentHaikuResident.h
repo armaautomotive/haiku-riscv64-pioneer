@@ -28,7 +28,7 @@ class PioneerResidentDevice {
 	bool coordinatedWide=false;
 	bool coordinatedSpan=false;
 	bool coordinatedNarrow=false;
-	bool decoderRequested=false,decoderRegistered=false,decoderParallel=false,decoderStageRequested=false,decoderGlu=false;
+	bool decoderRequested=false,decoderRegistered=false,decoderParallel=false,decoderStageRequested=false,decoderGlu=false,decoderGreedy=false,decoderRms=false;
 	unsigned decoderTokens=0;
 	tt_pioneer_decoder_run* decoderRequest=NULL;
 	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
@@ -37,7 +37,7 @@ public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
 	uint64_t activationReuses=0;
-	uint64_t wideCalls=0,spanCalls=0,narrowCalls=0;
+	uint64_t wideCalls=0,spanCalls=0,narrowCalls=0,greedyCalls=0;
 	unsigned UploadPageLimit() const { return decoderRegistered?0:coordinatedSpan?256:4; }
 	bool NarrowEnabled() const { return coordinatedNarrow; }
 	bool DecoderProfile(tt_runtime_profile_result& result) {
@@ -66,7 +66,7 @@ public:
 	}
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); free(decoderRequest); }
 	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,unsigned requireLayer=0) {
-		if (requireLayer>7 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer>=4 && workerLimit!=119)) return false;
+		if (requireLayer>9 || (requireLayer && (!coordinatorMode || debugOutput)) || (requireLayer>=4 && workerLimit!=119)) return false;
 		if (debugOutput && !coordinatorMode) return false;
 		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
@@ -93,18 +93,20 @@ public:
 		coordinated=coordinatorMode;
 		coordinatedDebug=debugOutput;
 		coordinatedWide=requireLayer>=3;
-		decoderRequested=requireLayer>=4; decoderParallel=requireLayer>=5; decoderStageRequested=requireLayer>=6; decoderGlu=requireLayer==7;
+		decoderRequested=requireLayer>=4; decoderParallel=requireLayer>=5; decoderStageRequested=requireLayer>=6; decoderGlu=requireLayer>=7; decoderGreedy=requireLayer>=8; decoderRms=requireLayer==9;
 		if (coordinated && !(s.capabilities&TT_PIONEER_CAP_COORDINATED_FLEET)) {
 			fprintf(stderr,"Explicit on-card coordinator capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>16
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>18
 				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer>=3 && support.version<10)
 				|| (requireLayer==4 && support.version!=13)
 				|| (requireLayer==5 && support.version!=14)
 				|| (requireLayer==6 && support.version!=15)
 				|| (requireLayer==7 && support.version!=16)
+				|| (requireLayer==8 && support.version!=17)
+				|| (requireLayer==9 && support.version!=18)
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
@@ -230,10 +232,10 @@ public:
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
-	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=16 && !decoderRegistered && active && !failed && !cold && !finished; }
+	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=18 && !decoderRegistered && active && !failed && !cold && !finished; }
 	bool RegisterDecoder(const PioneerDecoderModelOffsets& offsets) {
-		if (!decoderRequested || coordinatedVersion!=(decoderGlu?16U:decoderStageRequested?15U:decoderParallel?14U:13U) || !active || failed || finished || cold || decoderRegistered) return false;
-		tt_pioneer_decoder_model p={}; p.version=decoderGlu?3:decoderParallel?2:1; p.offsets=offsets;
+		if (!decoderRequested || coordinatedVersion!=(decoderRms?18U:decoderGreedy?17U:decoderGlu?16U:decoderStageRequested?15U:decoderParallel?14U:13U) || !active || failed || finished || cold || decoderRegistered) return false;
+		tt_pioneer_decoder_model p={}; p.version=decoderGreedy?4:decoderGlu?3:decoderParallel?2:1; p.offsets=offsets;
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_MODEL,&p,sizeof(p)); cold=p.recovery_required!=0;
 		if (status || p.state!=TT_RUNTIME_PASSED || p.ready!=1 || p.extents!=310 || cold) {
 			fprintf(stderr,"Whole-decoder register STOP status%d state%u ready%u extents%u cold%u;close only,no retry/fallback\n",status,p.state,p.ready,p.extents,cold);
@@ -256,6 +258,21 @@ public:
 			failed=closeOnly=true; return false;
 		}
 		coordinatorNonce=p.result.master.nonce; decoderTokens=tokens; memcpy(output,p.output,sizeof(p.output)); calls+=197; attentionCalls+=28; wideCalls++;
+		return true;
+	}
+	bool DecodeGreedy(unsigned tokens,const uint32_t* embedding,const uint32_t* rope,uint32_t& token,uint32_t& logit) {
+		if (!decoderGreedy || !decoderRegistered || !active || failed || finished || cold || !tokens || tokens>256 || !embedding || !rope) return false;
+		tt_pioneer_decoder_greedy p={}; p.version=1; p.tokens=tokens;
+		memcpy(p.embedding,embedding,sizeof(p.embedding)); memcpy(p.rope,rope,sizeof(p.rope));
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_DECODER_GREEDY,&p,sizeof(p)); cold=p.result.master.recovery_required!=0;
+		bool proved=!status && PioneerDecoderProof(p.result,tokens,coordinatorNonce+1,true,true,true)
+			&& PioneerDecoderGreedyValid(p.output,coordinatorNonce+1,tokens);
+		if (!proved) { const auto& m=p.result.master;
+			fprintf(stderr,"Greedy-decoder STOP status%d state%u nonce%u s/c/s%u/%u/%u seq%u words%u PC%x marker%x cold%u;close only,no retry/fallback\n",
+				status,m.state,m.nonce,m.started,m.completed,m.stopped,p.result.sequences,p.result.words,m.pc[1],m.marker,cold);
+			failed=closeOnly=true; return false;
+		}
+		coordinatorNonce=p.result.master.nonce; decoderTokens=tokens; token=p.output[3]; logit=p.output[4]; calls+=197; attentionCalls+=28; greedyCalls++;
 		return true;
 	}
 	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {

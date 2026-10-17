@@ -34,6 +34,19 @@ static inline float PioneerGraphSqrtPositive(float value)
 // pinned CPU's float square before its double reduction. The two-float
 // expansion and power-of-two mean avoid unsupported double instructions.
 // This remains OFFLINE until actual scalar instructions/full models pass.
+static inline PioneerAttentionWide PioneerGraphRmsAddPositive(PioneerAttentionWide sum,float value)
+{
+	// Internal bounded RMS specialization. Every term is a nonnegative
+	// rounded square >=2^-100 (or0),and at most1024 terms stay below2^42.
+	// Thus all sums/errors are multiples of2^-123:nonzero intermediates
+	// stay NORMAL. Order the first FastTwoSum by magnitude;its residual
+	// plus the old low part remains far smaller than high for the second.
+	// This preserves the two-float expansion,not a plain float reduction.
+	float high=sum.high+value;
+	float error=PioneerAttentionBits(sum.high)>=PioneerAttentionBits(value)?(sum.high-high)+value:(value-high)+sum.high;
+	float low=error+sum.low,normalized=high+low;
+	return {normalized,low-(normalized-high)};
+}
 static inline bool PioneerGraphRmsNorm(unsigned n,const float* input,float epsilon,float* output)
 {
 	if ((n!=128 && n!=1024) || !input || !output || (PioneerAttentionBits(epsilon)&0x80000000)
@@ -45,7 +58,11 @@ static inline bool PioneerGraphRmsNorm(unsigned n,const float* input,float epsil
 		// flushing. Larger decoder coverage needs separate qualification.
 		if (absolute>0x477fe000 || (absolute && absolute<0x26800000)) return false;
 		float product=input[i]*input[i];
+#if PIONEER_GRAPH_FAST_RMS
+		sum=PioneerGraphRmsAddPositive(sum,product);
+#else
 		sum=PioneerAttentionWideAdd(sum,{product,0});
+#endif
 	}
 	float mean=(sum.high+sum.low)*(n==128?0.0078125f:0.0009765625f);
 	float denominator=PioneerGraphSqrtPositive(mean+epsilon);

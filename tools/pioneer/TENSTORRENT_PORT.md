@@ -2,6 +2,103 @@
 
 ## Status
 
+### October17: unrolled native speedup;RMS contract18 trial (09:29 UTC)
+
+Fast Qwen is STILL NOT achieved. The unrolled controller passes ALL22 exact
+full-logit/token/selected-bit replays and all three longer request/replay/
+coverage/speed gates. Sustained GPU3.271797/3.249808/3.316004tok/s versus
+CPU32 .732593/2.833542/.555258 in this run. GPU prompts7.809205/8.095164/
+7.227612s remain poor. Complete312 positions,61464 projections/8736 attention,
+156 full results plus156 separate128B samples,zero warm uploads. END2/
+PCI-host1-1/cold0/cleanup1. Complete cold105.281194s. Short3/0.814839s=
+3.681709tok/s is diagnostic only. Log:`qwen-greedy-unrolled-v17-benchmark.log`.
+Driver`17ab5904438cb6f1e65ab305687fe99dac63d392191f5622191d071c362458a0`.
+Position21 ordinary matrices109.46M ->87.99M measured device ticks. This is
+NOT1000tok/s,all-Qwen/27B/Q4 support or an Assistant promotion.
+
+A separately identified contract18 keeps the same token/full-result ABI,
+ownership and ALL NoC proofs,adding bounded positive FastTwoSum RMS reduction.
+Each rounded square is0 or>=2^-100;all1024-term sums stay below2^42 and all
+nonzero sum/error intermediates are multiples of2^-123 (NORMAL FP32). Two
+ordered FastTwoSum steps retain the two-float expansion rather than switching
+to plain float accumulation. The flag stays DEFAULT OFF for older images.
+2M positive accumulation steps match both old expansion parts;2M independent
+sqrt cases and40000 pinned-CPU RMS rows pass with ZERO output-bit differences.
+Actual linked full decoder/8 attention/6 GLU/sampling instructions pass zero,
+nonzero,TWO positions,EACH KV/Q8/full-logit/token/sequence/counter/profile word,
+retained full-result mode,and dropped command stores/all four counter faults.
+Offline RMS scalar instructions10.25M ->6.50M per nonzero position;NOT native
+timing. No unsupported division/sqrt/FMA/mul-high instruction is emitted.
+
+RMS root`e88e77c3431c5fd26c00c57f60b9ac70b9acb08fd1c51b5443bf4fc47f61391a`;
+driver`acaab499f9fe1a7066eed0b97c35637eccfaa45213acafb802937b732347a5d0`;
+verifier`45763f00e3cc3a8193ded9e53cd90ec5cdfb786e4625270b6aafc57e1998563a`.
+Installed IDLE with qualified17ab backed up. The verifier requires EXACT18
+BEFORE BEGIN,so cached17 cannot masquerade as this trial. Native correctness/
+performance PENDING. Assistant/default boot/CPU/RAM/firmware/SD/dirty llama
+sources remain unchanged. This work is fixed Qwen3-0.6B Q8_0 only.
+
+### October17: token-only sampling candidate under native test (09:15 UTC)
+
+Fast Qwen remains unachieved. The six-GLU longer benchmark passes ALL quality,
+natural greedy and coverage checks at2.562685/2.556134/2.596274tok/s. CPU32
+is2.828986/.545930/.713252 in the same run,so the ALL-request speed gate
+correctly FAILS. GPU prompts10.212954/10.548109/9.441189s remain much slower
+than CPU. Total156 positions/30732 projections/4368 attention/156 full results,
+zero warm uploads,END2/PCI-host1-1/cold0/cleanup1. Log:
+`qwen-glu-v16-benchmark.log`. No Assistant promotion or cherry-picked claim.
+
+An explicit contract17/model-registry4 candidate retains full-vocabulary
+debug mode and adds a SEPARATE128B greedy result/ioctl54e3. The GPU still
+computes and checks EVERY151936 logit,retaining the first strict maximum,
+including signed-zero ties. Its final packet binds magic,nonce,vocabulary,
+token,original selected FP32 bits,position,119 peers,operation9 and24 zero
+reserved words. ONE ordered host write/read pair compares ALL128 payload
+bytes;not a hash or checksum. Kernel/client validate the distinct
+packet and full completion/119 source/sequence/physical NoC proof before
+publishing a token or committing all28 KV prefixes. The third1MiB host owner
+and all256 page-map checks remain;only32 words are poisoned/copied per sample.
+Minimum counters:47294 reads,93023 read flits plus poll pairs,23703 writes,
+39048 write flits. Unknown state still quarantines ALL owners with no retry,
+reset,restore or free. Full/debug shape and public request remain unchanged.
+
+Actual whole-decoder instruction tests pass zero/nonzero/TWO positions with
+independent exact token/selected bits/EVERY KV/Q8/119 sequences/profile and
+NoC budgets. The same image also passes full-vocabulary mode. Negative/zero
+ties,late NaN/Inf and dropped/partial/paired posted transfers are covered.
+2M finite float pairs independently prove the ordered-key comparison. Real
+client/controller tests exercise every packet/proof metadata fault,alternating
+full/token calls,uncommitted KV on rejected packet and all-owner quarantine.
+The default-off contract16 image still rebuilds byte-identically.
+
+Native driver`b347bfe1d3a0b2f1cfa196442149c4826fa6c0e2c47be47f09e41c46fcddb3b9`,
+verifier`458e6ec0ab6d24a3acf3b85be01e5623658c20db5727b881f72cfb6399363199`,
+root`873ffae1ba56f90f5e4e8f2e82f2cc01c7e8fbd8a0205c469d5b5e2ed1edfdc7`.
+Installed IDLE with native-qualified contract16 backed up. Native test FIRST
+requires22 full-logit/greedy selected-bit replays,then three timed token-only
+requests with NO CPU validation/host argmax/vocabulary transfer inside timers.
+Untimed complete full-logit replay follows EVERY request and checks natural
+tokens,selected bits,original quality gates and coverage. Native result and
+performance initially pending;native qualification now PASSES. All22 full
+positions have EXACT logits and matching token-only selected-bit replays.
+Three natural requests achieve2.982492/2.965395/3.020050tok/s versus CPU32
+1.540081/2.337518/1.077402. ALL quality/replay/coverage/speed gates pass in
+this run;do not imply a matched CPU peak benchmark or useful performance.
+GPU prompts8.694619/9.008308/8.053378s are still poor. Total312 GPU positions,
+61464 projections/8736 attention,156 full results plus156 distinct128B
+samples,zero warm uploads. END2/PCI-host1-1/cold0/cleanup1. Complete cold
+107.209676s including88.889432s upload. Short3/0.902793s=3.323021tok/s is
+diagnostic only. Log:`qwen-greedy-v17-benchmark.log`. Fast Qwen is NOT achieved.
+
+A further default-off unrolled transfer candidate removes only volatile
+stack/indexed setup loops,retaining ALL ten command register readbacks,four
+exact counter checks,ordering,bounds and idle proofs. Independent actual
+whole-decoder fixtures reduce scalar instructions88.35M ->69.18M on the
+nonzero case,not a native speed prediction. Its code SHA
+`26af50de9664c115246a79ced6da3d09cb03798a31e9f20f64f16ed2931bb52b`.
+It is not yet installed/native-qualified. Fixed0.6B Q8_0 ONLY,not27B/Q4/all-Qwen support. Assistant,
+boot,firmware,SD,CPU/RAM and unrelated dirty llama sources remain unchanged.
+
 ### October17: exact division native benchmark;parallel GLU trial (09:02 UTC)
 
 Fast Qwen is STILL NOT achieved. Combined exact compensated RoPE and bounded

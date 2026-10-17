@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #include "../PioneerGraphRope.h"
 #include <cassert>
 #include <cmath>
@@ -16,7 +17,20 @@ static PioneerDecoderJob Job()
 }
 int main()
 {
+	{ uint32_t packet[32]={TT_DECODER_GREEDY_MAGIC,17,151936,151935,0x80000000,256,119,9};
+		assert(PioneerDecoderGreedyValid(packet,17,256));
+		for (unsigned i=0;i<32;i++) { auto saved=packet[i]; packet[i]=i==3?151936:i==4?0x7fc00000:saved^1;
+			assert(!PioneerDecoderGreedyValid(packet,17,256)); packet[i]=saved; }
+		assert(!PioneerDecoderGreedyValid(packet,0,256) && !PioneerDecoderGreedyValid(packet,17,0));
+		assert(PioneerDecoderLogitKey(0)==PioneerDecoderLogitKey(0x80000000));
+		uint32_t seed=0x9182a7fb; auto random=[&]() { seed^=seed<<13; seed^=seed>>17; seed^=seed<<5; return seed; };
+		for (unsigned i=0;i<2000000;i++) { uint32_t a=random(),b=random(); if ((a&0x7f800000)==0x7f800000 || (b&0x7f800000)==0x7f800000) continue;
+			assert((PioneerDecoderLogitKey(a)>PioneerDecoderLogitKey(b))==(PioneerAttentionFloat(a)>PioneerAttentionFloat(b))); }
+	}
 	auto job=Job(); assert(PioneerDecoderJobValid(job) && sizeof(job)<=4096);
+	{ auto greedy=job; greedy.version=4; for (unsigned op:{8U,9U}) { greedy.operation=op;
+		assert(PioneerDecoderJobValid(greedy,4) && !PioneerDecoderJobValid(greedy,3)); }
+		greedy.operation=10; assert(!PioneerDecoderJobValid(greedy,4)); }
 	{ auto glu=job; glu.version=3; assert(!PioneerDecoderJobValid(glu) && !PioneerDecoderJobValid(glu,2) && PioneerDecoderJobValid(glu,3));
 		for (unsigned w=0;w<119;w++) { unsigned advance=PioneerDecoderSequenceAdvance(w,true)+(w<6?28:0);
 			assert(PioneerDecoderSequenceAdvance(w,true,true)==advance); auto j=glu; j.sequence[w]=0x7fffffff-advance;

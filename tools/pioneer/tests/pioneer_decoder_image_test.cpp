@@ -10,6 +10,10 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeParallelDecoderCandidateImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeProfileDecoderCandidateImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeGluDecoderCandidateImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyDecoderCandidateImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyUnrolledDecoderImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyRmsDecoderImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #define Machine DecoderSfpuMachine
 #define Image DecoderSfpuImage
 #define Read DecoderSfpuRead
@@ -31,7 +35,7 @@
 #undef main
 struct DecoderMachine:CoordinatorMachine {
 	DecoderSfpuMachine sfpu;
-	bool nonzero,parallel,fusedGlu;
+	bool nonzero,parallel,fusedGlu,sampling;
 	unsigned positions=1;
 	std::vector<float> peerOutput[119],expected;
 	std::vector<uint16_t> expectedK[28],expectedV[28];
@@ -91,20 +95,22 @@ struct DecoderMachine:CoordinatorMachine {
 		}
 		expected=ReferenceMatrix(Norm(hidden,1024),151936,7);
 	}
-	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false,bool profile=false,bool glu=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent),fusedGlu(glu) {
-		assert(code.size()==unsigned(glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
-		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false,bool profile=false,bool glu=false,bool greedy=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent),fusedGlu(glu),sampling(greedy) {
+		bool unrolled=greedy && code.size()==TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS*4;
+		bool fastRms=greedy && code.size()==TT_GREEDY_RMS_DECODER_IMAGE_WORDS*4;
+		assert(code.size()==unsigned(fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
+		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		for (unsigned a=0x80000;a<0x8c000;a+=4) memory[a]=0;
 		for (unsigned a=0x90000;a<0xb2400;a+=4) memory[a]=0;
 		for (unsigned a=0x140000;a<0x148000;a+=4) memory[a]=0;
 		for (unsigned a=0x74000;a<0x74010;a+=4) memory[a]=0;
 		for (unsigned a=0x17ffc0;a<0x17ffcc;a+=4) memory[a]=0;
-		PioneerDecoderJob j={}; j.magic=0x31444344; j.operation=8; j.version=glu?3:parallel?2:1; j.tokens=j.nonce=1;
+		PioneerDecoderJob j={}; j.magic=0x31444344; j.operation=8; j.version=greedy?4:glu?3:parallel?2:1; j.tokens=j.nonce=1;
 		j.kvBase=0x82400000; j.finalNorm=0x30000000; j.vocabulary=WeightBase(7); j.hostLow=0x80000000; j.hostHigh=1; j.hostBytes=0x100000; j.workers=119;
 		for (auto& l:j.layers) { auto* words=reinterpret_cast<uint32_t*>(&l); for (unsigned i=0;i<7;i++) words[i]=WeightBase(i); for (unsigned i=7;i<11;i++) words[i]=0x30000000; }
 		for (auto& value:j.sequence) value=1;
 		for (unsigned i=0;i<64;i++) j.rope[2*i]=0x3f800000;
-		assert(PioneerDecoderJobValid(j,glu?3:parallel?2:1));
+		assert(PioneerDecoderJobValid(j,greedy?4:glu?3:parallel?2:1));
 		for (unsigned i=0;i<sizeof(j)/4;i++) memory[TT_DECODER_JOB_BASE+i*4]=reinterpret_cast<uint32_t*>(&j)[i];
 		if (nonzero) Reference();
 	}
@@ -210,20 +216,23 @@ struct DecoderMachine:CoordinatorMachine {
 		assert(memory.at(0x17ffc0)==TT_LAYER_DONE && memory.at(0x17ffc8)==TT_COORDINATOR_MARKER); return memory.at(0x17ffc4)!=0;
 	}
 	void Verify() {
+		bool small=memory.at(TT_DECODER_JOB_BASE+4)==9;
 		printf("Decoder fixture counters:pending%u issued%u hostW/R%u/%u compared%u/%u bankR/W%u/%u count%u\n",pending,issued,hostWrites,hostReads,originalWords,returnedWords,bankReads,bankWrites,memory.at(0x17ffc4)); fflush(stdout);
-		assert(!pending && issued==(fusedGlu?11263U:parallel?11095U:10871U)*positions && hostWrites==119*positions && hostReads==119*positions && originalWords==151936*positions && returnedWords==151936*positions
+		assert(!pending && issued==(fusedGlu?11263U:parallel?11095U:10871U)*positions && hostWrites==(small?1U:119U)*positions && hostReads==hostWrites && originalWords==(small?32U:151936U)*positions && returnedWords==originalWords
 			&& bankReads==(parallel?113U:113+28*16)*positions && bankWrites==(parallel?0U:28*16)*positions && memory.at(0x17ffc4)==119);
 		for (unsigned i=0;i<119;i++) assert(sequence[i]==PioneerDecoderSequenceAdvance(i,parallel,fusedGlu)*positions
 			&& memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,sequence)+i*4)==sequence[i]+1);
-		for (unsigned i=0;i<151936;i++) assert(wide[i]==(nonzero?Bits(expected[i]):0));
+		if (small) { unsigned best=0; if (nonzero) for (unsigned i=1;i<151936;i++) if (expected[i]>expected[best]) best=i;
+			assert(PioneerDecoderGreedyValid(wide.data(),positions,positions) && wide[3]==best && wide[4]==(nonzero?Bits(expected[best]):0)); }
+		else for (unsigned i=0;i<151936;i++) assert(wide[i]==(nonzero?Bits(expected[i]):0));
 		if (nonzero) for (unsigned layer=0;layer<28;layer++) for (unsigned t=0;t<positions;t++) for (unsigned g=0;g<8;g++) for (unsigned i=0;i<64;i++) {
 			unsigned p=t*1024+g*128+i*2;
 			assert(kv.at(0x82400000+layer*0x100000+g*0x20000+t*256+i*4)==(expectedK[layer][p]|(uint32_t(expectedK[layer][p+1])<<16)));
 			assert(kv.at(0x82410000+layer*0x100000+g*0x20000+t*256+i*4)==(expectedV[layer][p]|(uint32_t(expectedV[layer][p+1])<<16))); }
-		for (unsigned i=151936;i<wide.size();i++) assert(wide[i]==0xffffffff);
+		for (unsigned i=small?32:151936;i<wide.size();i++) assert(wide[i]==0xffffffff);
 		uint32_t s[24],before[8],after[8]; for (unsigned i=0;i<24;i++) s[i]=memory.at(0x143000+i*4);
 		for (unsigned i=0;i<8;i++) { before[i]=s[8+i]; after[i]=s[16+i]; }
-		assert(PioneerDecoderSummary(s,positions,positions,before,after,parallel,fusedGlu));
+		assert(PioneerDecoderSummary(s,positions,positions,before,after,parallel,fusedGlu,small));
 		printf("PASS OFFLINE ACTUAL master/scalar/attention/SFPU whole28-layer decoder,independently modeled %s math peers,197 projections/28 FFN/224 heads,one final vocabulary transfer,all counters/119 sequences,steps%u stack%08x;NOT full-model/native qualification\n",nonzero?"SPARSE NONZERO":"ZERO",steps,minStack); fflush(stdout);
 	}
 };

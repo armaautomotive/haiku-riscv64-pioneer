@@ -60,6 +60,17 @@ static void Transfer(bool write,unsigned worker,uint32_t local,uint32_t remote,u
 {
 	if (!worker || worker>=120 || !bytes || bytes>16384 || ((remote^local)&31) || !PacketIdle()) coordinator_fault_park();
 	volatile uint32_t* noc=Words(0xffb20000);
+#if PIONEER_COORDINATOR_UNROLL_TRANSFER
+	// Same command,ALL ten readbacks,four exact counter deltas and idle
+	// proof. Avoid the volatile stack command and indexed setup loops;
+	// this changes NO transfer authority,ordering or acceptance condition.
+	unsigned c0=write?local:remote,c2=write?129U:XY(worker),c3=write?remote:local,c5=write?XY(worker):129U,c7=write?0x212U:0;
+	unsigned o0=write?0x204U:0x208U,o1=write?0x220U:0x20cU,o3=write?0x228U:0x214U;
+	uint32_t e0=noc[o0/4]+1,e1=noc[o1/4]+((bytes+63)>>6),e2=noc[0x210/4]+1,e3=noc[o3/4]+1;
+	noc[0]=c0; noc[1]=0; noc[2]=c2; noc[3]=c3; noc[4]=0; noc[5]=c5; noc[6]=0; noc[7]=c7; noc[8]=bytes; noc[9]=0;
+	uint32_t mismatch=(noc[0]^c0)|noc[1]|(noc[2]^c2)|(noc[3]^c3)|noc[4]|(noc[5]^c5)|noc[6]|(noc[7]^c7)|(noc[8]^bytes)|noc[9];
+	if (mismatch) coordinator_fault_park();
+#else
 	const unsigned offsets[4]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
 	uint32_t expected[4];
 	for (unsigned i=0;i<4;i++) expected[i]=noc[offsets[i]/4]+(i==1?(bytes+63)/64:1);
@@ -70,10 +81,15 @@ static void Transfer(bool write,unsigned worker,uint32_t local,uint32_t remote,u
 	command[7]=write?0x212U:0; command[8]=bytes;
 	for (unsigned i=0;i<10;i++) noc[i]=command[i];
 	for (unsigned i=0;i<10;i++) if (noc[i]!=command[i]) coordinator_fault_park();
+#endif
 	Fence(); noc[0x40/4]=1; (void)noc[0x40/4]; Fence();
 	for (unsigned attempt=0;attempt<65536;attempt++) {
 		bool complete=!noc[0x40/4];
+#if PIONEER_COORDINATOR_UNROLL_TRANSFER
+		complete &= noc[o0/4]==e0; complete &= noc[o1/4]==e1; complete &= noc[0x210/4]==e2; complete &= noc[o3/4]==e3;
+#else
 		for (unsigned i=0;i<4;i++) complete &= noc[offsets[i]/4]==expected[i];
+#endif
 		if (complete && PacketIdle()) {
 			volatile uint32_t* stats=Words(0x143000);
 			stats[write?2:0]++; stats[write?3:1]+=(bytes+63)/64;
@@ -168,9 +184,20 @@ extern "C" unsigned coordinator_main()
 	uint32_t base=job[5];
 #if PIONEER_COORDINATOR_FUSED_OUTPUT
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
-	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3 && operation!=6) || !limit || limit>119) return 0;
-	if (operation==6 && (!n || n>262144 || !job[8] || job[8]>0xffff || (job[7]&0xfffff)
+	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3 && operation!=6
+#if PIONEER_COORDINATOR_GREEDY
+		&& operation!=9
+#endif
+		) || !limit || limit>119) return 0;
+	if ((operation==6
+#if PIONEER_COORDINATOR_GREEDY
+		|| operation==9
+#endif
+		) && (!n || n>262144 || !job[8] || job[8]>0xffff || (job[7]&0xfffff)
 		|| (job[8]==0xffff && job[7]>0xfff00000) || job[9]!=0x100000)) return 0;
+#if PIONEER_COORDINATOR_GREEDY
+	if (operation==9 && (n!=151936 || k!=1024 || limit!=119 || !job[10] || job[10]>256)) return 0;
+#endif
 #else
 	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3) || !limit || limit>119) return 0;
 #endif
@@ -179,6 +206,9 @@ extern "C" unsigned coordinator_main()
 	if (operation!=3 && (job[7] || job[8] || job[9])
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
 		&& operation!=6
+#if PIONEER_COORDINATOR_GREEDY
+		&& operation!=9
+#endif
 #endif
 	) return 0;
 #else
@@ -259,6 +289,9 @@ extern "C" unsigned coordinator_main()
 	}
 	if (firstRow!=n) coordinator_fault_park();
 	firstRow=0;
+#if PIONEER_COORDINATOR_GREEDY
+	unsigned best=0,bestBits=0,bestKey=0;
+#endif
 	for (unsigned worker=1;worker<=workers;worker++) {
 		uint32_t sequence=job[64+worker-1];
 		bool idle=false;
@@ -283,15 +316,29 @@ extern "C" unsigned coordinator_main()
 		if (n<=8192
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
 			|| operation==6
+#if PIONEER_COORDINATOR_GREEDY
+			|| operation==9
+#endif
 #endif
 		) {
 			// No host per-peer remapping/readback for hidden projections.
 			unsigned outputRow=firstRow;
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
-			if (operation==6) outputRow=0;
+			if (operation==6
+#if PIONEER_COORDINATOR_GREEDY
+				|| operation==9
+#endif
+				) outputRow=0;
 #endif
 			Transfer(false,worker,0x84000+outputRow*4,0x84000,rows*4);
 			for (unsigned i=0;i<rows;i++) if ((Words(0x84000)[outputRow+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
+#if PIONEER_COORDINATOR_GREEDY
+			if (operation==9) for (unsigned i=0;i<rows;i++) {
+				uint32_t bits=Words(0x84000)[i],key=PioneerDecoderLogitKey(bits);
+				if (!firstRow && !i) { best=0; bestBits=bits; bestKey=key; }
+				else if (key>bestKey) { best=firstRow+i; bestBits=bits; bestKey=key; }
+			}
+#endif
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
 			if (operation==6) {
 				uint32_t low=job[7]+firstRow*4,high=job[8]+(low<job[7]);
@@ -303,6 +350,18 @@ extern "C" unsigned coordinator_main()
 		}
 		firstRow+=rows;
 	}
+#if PIONEER_COORDINATOR_GREEDY
+	if (operation==9) {
+		if (firstRow!=151936) coordinator_fault_park();
+		for (unsigned i=0;i<32;i++) Words(0x84000)[i]=0;
+		Words(0x84000)[0]=TT_DECODER_GREEDY_MAGIC; Words(0x84000)[1]=job[6]; Words(0x84000)[2]=151936;
+		Words(0x84000)[3]=best; Words(0x84000)[4]=bestBits; Words(0x84000)[5]=job[10];
+		Words(0x84000)[6]=119; Words(0x84000)[7]=9; Fence();
+		HostTransfer(true,job[7],job[8],32); HostTransfer(false,job[7],job[8],32);
+		uint32_t mismatch=0; for (unsigned i=0;i<32;i++) mismatch|=Words(0x84000)[i]^Words(0x144000)[i];
+		if (mismatch) coordinator_fault_park();
+	}
+#endif
 #if PIONEER_COORDINATOR_FUSED_OUTPUT
 	if (operation==3) {
 		HostTransfer(true,job[7],job[8],n);

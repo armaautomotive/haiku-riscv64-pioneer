@@ -15,7 +15,7 @@
 struct GluDecoder:ProfileDecoder {
 	std::unique_ptr<GluMachine> pendingGlu[6];
 	unsigned gluIssued=0,gluCompleted=0,gluBatches=0,badGluProof=0,dropGluInput=0,badPacked=0,badScale=0;
-	GluDecoder(const char* path,const DecoderSfpuImage& image,bool nz):ProfileDecoder(path,image,nz,true) {}
+	GluDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool greedy=false):ProfileDecoder(path,image,nz,true,greedy) {}
 	void CompleteGlu() {
 		assert(gluIssued==63 && !gluCompleted); gluBatches++;
 		for (unsigned p=0;p<6;p++) {
@@ -57,6 +57,7 @@ struct GluDecoder:ProfileDecoder {
 		ParallelDecoder::PeerWrite(w,a,value);
 	}
 };
+#ifndef PIONEER_GLU_DECODER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); compactImage=true; DecoderSfpuImage image(argv[2],false,true,true);
@@ -68,3 +69,4 @@ int main(int argc,char** argv)
 		assert(!m.RunDecoder() && !m.hostWrites); }
 	puts("PASS OFFLINE actual whole master/8 attention/6 GLU scalar+SFPU images,all6 GLUs issued BEFORE waits,2 positions/exact full logits/KV/Q8/119 sequences/counters,per-word/operand/scale/staging faults;matrix peers independent model,NOT native qualification");
 }
+#endif
