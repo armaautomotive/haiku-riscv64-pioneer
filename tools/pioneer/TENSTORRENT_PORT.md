@@ -62,6 +62,46 @@ intermediates, multi-bank weights and reduced vocabulary readback remain
 necessary before practical acceleration/zero per-op host round trips can be
 claimed. The installed Assistant's end-to-end result is recorded separately.
 
+Installed Assistant qualification completed at00:17UTC October17 (October16
+local). The same public capital-of-France request produced the correct eight-
+token answer ending in`**Paris**`, success1,26 device positions,728 card
+attention ops, peak120 workers, CPU validation OFF and zero reference decodes.
+Seven generated-input samples took64.748s (0.108111tokens/s), versus76.595s
+(0.091390tokens/s) in the earlier installed Attention path: about18.3% higher
+diagnostic generation throughput. Total first reply552.1s versus613.3s. This
+is a small public-request diagnostic, NOT a matched CPU benchmark, useful
+accelerator performance or proof that all host round trips are eliminated.
+
+The earlier checked/Fast/Attention targets remain. The native hardware
+policy test passed; the new target is advertised only with both new driver
+capabilities. The actual GUI shows the correct Throughput label and button,
+enables Apply when idle, disables the CPU-thread control for this target and
+preserves the saved32-thread CPU preference. Hardware switch and unload were
+rejected while the request was busy. Host-only tests also covered transitions
+between Throughput/Attention/Fast/checked contexts with zero device opens or
+decodes. GUI chat/draft lengths remained0/0; no existing chat text was read.
+The service remains ready/idle with the model and exclusive P100A session
+warm. **Do not probe/reset/reload independently: normally unload and prove
+clean END before the next hardware experiment.**
+
+Installed artifacts, with earlier binaries/settings backed up in the native
+evidence directory:
+
+- driver:`49e082c5c551688e774c926fc497cd408f53c958439a39656ea239339df84f1d`,
+  capabilities`0xffefff`;
+- GUI:`dd949f94dd921b1ece355e74c24473449615b47aa34e04ba3dc1951ac999770d`;
+- service:`bfa01499703d566d32ecc0a2257985f3eb553052875901a121ed61083f9a52f7`;
+- hardware app:`ced56545865ee460d4da30d68e0dab7871322ac027904f91ff25960d463ae1db`;
+- control:`6cd158ab8040f1fe6f0f962198eb352cc4f1f2379e807d3090b974b2e3236848`.
+
+Only the final GUI labels were refreshed after the public test; the tested
+service and its warm model were not restarted. Evidence includes
+`assistant-throughput-public.log`, `gui-throughput.log`, `fleet-opt-*.log`,
+`full-qwen-fleet.log` and`host-modes.log`, with ignored local copies under
+`generated.pioneer/tenstorrent/fleet-20261016/`. All38 scoped source/test/doc
+files were synced/checksummed to the plain build mirror. No power cycle,
+SD change, firmware/kernel/boot edit or model download was needed.
+
 Offline ASan/UBSan checks cover120 unique physical workers, all dropped TLB
 writes, assembled input fetch/output poison with all supported K widths and
 4096 rows, exact arithmetic, counter wrap and fault parking. Runtime tests

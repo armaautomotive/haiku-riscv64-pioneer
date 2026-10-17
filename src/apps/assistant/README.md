@@ -26,6 +26,11 @@ remain, and it is not a device-resident decoder, all-model support or a
 faster-than-CPU guarantee. Switching to/from it rebuilds the graph and
 requires another first-use weight upload. Native performance qualification
 is recorded in[the port log](../../../tools/pioneer/TENSTORRENT_PORT.md).
+The installed target passed the same public eight-token question with zero
+CPU reference decodes,728 card attention ops and peak120 workers. Its warm
+diagnostic improved from0.091 to0.108tokens/s (about18%); first reply552.1s
+versus613.3s. It is still much slower than CPU and is not practical GPU-like
+acceleration. The model is left loaded on the selected Throughput target.
 
 ## Components
 
