@@ -2,6 +2,58 @@
 
 ## Status
 
+### October17: exact division native benchmark;parallel GLU trial (09:02 UTC)
+
+Fast Qwen is STILL NOT achieved. Combined exact compensated RoPE and bounded
+division proposal passes22 initial EXACT full-vocabulary positions/four greedy
+tokens,then all three16-token public-request quality/coverage gates. Sustained
+GPU generation is2.322983/2.311914/2.351387tok/s versus CPU32
+.926495/1.346722/1.555593 in this run. The all-request speed gate passes,
+but the GPU remains below the earlier CPU peak2.808143 and is NOT promoted
+to Assistant. GPU prompt times11.412200/11.835653/10.579300s remain poor.
+Complete156 positions/30732 projections/4368 attention/156 full results,
+zero warm uploads,END2/PCI-host1-1/cold0/cleanup1. Log:
+`qwen-combined-v15-benchmark.log`;driver
+`95347ec34a508fb40344973c5b78ee081f700a07500b0e807bb29c1dbeded8ed`,
+verifier`e3523b39bb898c4f106852997d0489d162ffa936f2f91129d89ead6f6790d5df`,
+root image`9cdaee27de32676cf41bd340c1ff6ab0a565100a67b717fc2f8f894e8a485a94`.
+
+An explicit contract16/model-registry3 candidate now dispatches six512-value
+SiLU*up/Q8 groups BEFORE waiting. It reuses the first six independently owned
+attention query/code/stack leases;the same dual image retains all eight KV
+group entries. Inputs/descriptor/parameters are staged,returned and ALL-bit
+compared. Completion cross-checks full physical snapshots,all reserved proof
+words,every packed Q8 operand and exact half-representable scale. The master
+gathers packed activation/scales directly into its existing down-projection
+input;NO new host intermediate or CPU arithmetic is introduced. All119 matrix
+peers remain available. Private root version3 advances the first six peer
+sequences253 times/position,next two225,then197/85/57/1 by cohort. Independent
+summary budget:minimum47412 reads,102517 read flits plus poll pairs,23821
+writes,48542 write flits,11263 completed peer jobs/position.
+
+Actual linked master/eight attention/six GLU instruction tests pass zero,
+nonzero and TWO sequential positions with exact full vocabulary/EVERY KV/Q8
+word,counters,119 sequences and stage-profile2 counts. Tests prove all six
+jobs issue before waiting and reject each proof-word fault,bad packed value,
+scale,staging corruption and nonfinite input before publication. Controller/
+real client/lease tests cover image/feature mismatches,exact contract refusal
+BEFORE BEGIN,all-owner quarantine and no retry/reset/restore on unknown state.
+New image sizes fit existing owners:root17832B,dual group7856B,dispatch1508B.
+Driver`1c27c4afec89154f0fed4e75cf7c803053a1665a36505ecc06728997967c1fe2`
+is installed IDLE for the controlled native trial;the preceding exact-result
+driver is backed up. Verifier
+`f23176a27b7812547ff661201d289c91fa12685bbe66ccc3f8d04f1ddbb1eb7e`.
+Native contract16 verification PASSES22 EXACT full-vocabulary positions/four
+greedy tokens,4334 projections/616 attention/22 full results,zero warm uploads.
+Short generation3/1.061114s=2.827217tok/s versus the preceding2.529558
+short sample;NOT a repeated warm speedup gate. Position21 activation+its Q8
+stage drops~39M to10.31M ticks;master Q8 calls113 ->85. Matrix work now
+accounts for47.94% of measured ticks. Upload88.978611s,complete cold107.469226s.
+END2/PCI-host1-1/cold0/cleanup1. Log:`qwen-glu-v16-verify.log`.
+Longer three-request benchmark PENDING. Assistant/default boot/
+CPU/RAM/firmware/SD remain unchanged. Fixed Qwen3-0.6B Q8_0 only:NOT evidence
+for other Qwen geometries,4-bit27B or useful real-world performance.
+
 ### October17: native exact RoPE hot path accelerated (08:40 UTC)
 
 Fast Qwen is STILL NOT achieved. Native stage profiling itself passes22

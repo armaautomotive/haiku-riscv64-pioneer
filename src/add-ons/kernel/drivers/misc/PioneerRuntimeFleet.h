@@ -37,6 +37,7 @@ struct PioneerFleetWorker {
 	bool inlineMath=false;
 	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	bool attentionDispatch=false; // separately owned fixed-group image
+	bool gluDispatch=false;
 	uint32_t persistentSequence=0;
 };
 struct tt_runtime_fleet_result {

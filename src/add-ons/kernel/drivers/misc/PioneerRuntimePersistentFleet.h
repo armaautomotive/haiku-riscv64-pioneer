@@ -6,6 +6,7 @@
 #include "BlackholeRuntimeQ8InlineImage.h"
 #include "BlackholeCoordinatedWorkerImage.h"
 #include "BlackholeAttentionWorkerImage.h"
+#include "BlackholeGluWorkerImage.h"
 
 // A completed math job is NOT a stopped RISC. Keep that distinction in the
 // ABI, lease and teardown. An unknown command completion forbids ANY reset.
@@ -78,16 +79,17 @@ bool PioneerPersistentAllIdle(IO& io,const tt_dram_samples_result& baseline,Pion
 	return io.SelectRuntimeCore(0) && PioneerFleetGlobalSources(io,baseline);
 }
 template<class IO>
-bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false,bool attentionDispatch=false) {
+bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false,bool attentionDispatch=false,bool gluDispatch=false) {
+	if (gluDispatch && !attentionDispatch) return false;
 	if (attentionDispatch && (!coordinated || inlineMath || f.noc.version<0x101 || f.noc.version>0x108)) return false;
 	if (coordinated && (f.noc.version<0x101 || f.noc.version>0x177)) return false; // peers1..119, never master0
-	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinated==coordinated && f.attentionDispatch==attentionDispatch;
+	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinated==coordinated && f.attentionDispatch==attentionDispatch && f.gluDispatch==gluDispatch;
 	if (!f.preludeSaved || !f.preludeDirty || !f.Compute().ready || f.Compute().unsafe
 		|| f.Compute().running || io.ResetRead()!=0x47800
 		|| io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)!=0x0000006f) return false;
-	for (unsigned w=0;w<1024;w++) io.FleetCodeWrite(w,attentionDispatch?BlackholeAttentionWorkerCodeWord(w):coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
+	for (unsigned w=0;w<1024;w++) io.FleetCodeWrite(w,gluDispatch?BlackholeGluWorkerCodeWord(w):attentionDispatch?BlackholeAttentionWorkerCodeWord(w):coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
 	bool okay=true;
-	for (unsigned w=0;w<1024;w++) okay &= io.FleetCodeRead(w)==(attentionDispatch?BlackholeAttentionWorkerCodeWord(w):coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
+	for (unsigned w=0;w<1024;w++) okay &= io.FleetCodeRead(w)==(gluDispatch?BlackholeGluWorkerCodeWord(w):attentionDispatch?BlackholeAttentionWorkerCodeWord(w):coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
 	if (coordinated) {
 		for (unsigned w=0;w<16;w++) io.FleetCodeWrite(TT_COORDINATED_SOURCE_WORD+w,w?f.noc.source[0][w]:f.Store().config|0x10000);
 		for (unsigned w=0;w<16;w++) okay &= io.FleetCodeRead(TT_COORDINATED_SOURCE_WORD+w)==(w?f.noc.source[0][w]:f.Store().config|0x10000);
@@ -98,7 +100,7 @@ bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false
 	}
 	io.RuntimeCodeWrite(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4,TT_PERSISTENT_MATH_RETURN);
 	okay &= io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)==TT_PERSISTENT_MATH_RETURN;
-	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; return okay;
+	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; f.gluDispatch=gluDispatch; return okay;
 }
 template<class IO>
 bool PioneerPersistentBoot(IO& io,PioneerFleetWorker& f) {

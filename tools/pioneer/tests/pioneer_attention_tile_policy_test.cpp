@@ -76,11 +76,11 @@ static void Clean(AttentionMock& io,PioneerResidentLease& store,PioneerAttention
 }
 int main()
 {
-	for (unsigned group=0;group<8;group++) {
+	for (bool glu:{false,true}) for (unsigned group=0;group<8;group++) {
 		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
 		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;
-		assert(PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true) && lease.coordinatedGroup && !lease.resident);
-		for (unsigned i=0;i<2048;i++) assert(io.words[1+i]==BlackholeCoordinatedAttentionCodeWord(i));
+		assert(PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true,glu) && lease.coordinatedGroup && lease.coordinatedGlu==glu && !lease.resident);
+		for (unsigned i=0;i<2048;i++) assert(io.words[1+i]==(glu?BlackholeCoordinatedGluCodeWord(i):BlackholeCoordinatedAttentionCodeWord(i)));
 		uint32_t query[256]={},key[64]={},value[64]={},out[256]={}; tt_attention_tile_result result={}; unsigned writes=io.attentionWrites;
 		assert(!PioneerAttentionTileRun(io,io.Baseline(),noc,store,lease,1,query,key,value,out,result) && io.attentionWrites==writes);
 		assert(PioneerAttentionTileClose(io,io.Baseline(),noc,store,lease)); io.Restored();

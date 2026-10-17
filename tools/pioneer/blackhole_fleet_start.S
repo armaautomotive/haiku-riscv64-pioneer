@@ -33,7 +33,12 @@ fleet_job:
 	lw t1,0(t0)
 	beq t1,zero,1f
 	li t0,0x31475441
+.ifdef TT_FLEET_GLU
+	beq t1,t0,2f
+	li t0,0x314c4741
+.endif
 	bne t1,t0,fleet_fault
+2:
 	li t0,0x72000
 	jr t0
 1:

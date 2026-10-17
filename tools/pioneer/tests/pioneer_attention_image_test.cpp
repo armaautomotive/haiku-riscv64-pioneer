@@ -7,6 +7,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeAttentionTileImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeResidentAttentionImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedAttentionImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedGluImage.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -35,8 +36,9 @@ static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&
 struct Image {
 	std::vector<uint8_t> boot,code;
 	std::map<std::string,uint32_t> symbols;
-	bool resident,coordinated;
-	explicit Image(const char* path,bool kv=false,bool group=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group) {
+	bool resident,coordinated,glu;
+	explicit Image(const char* path,bool kv=false,bool group=false,bool activation=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group),glu(activation) {
+		assert(!glu || coordinated);
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
 		std::string name; char type; uint32_t address;
 		while (file>>std::hex>>address>>type>>name) symbols[name]=address;
@@ -47,9 +49,9 @@ struct Image {
 			for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++)
 				assert((resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 		} else {
-			assert(code.size()==TT_COORDINATED_ATTENTION_IMAGE_WORDS*4);
+			assert(code.size()==unsigned(glu?TT_COORDINATED_GLU_IMAGE_WORDS:TT_COORDINATED_ATTENTION_IMAGE_WORDS)*4);
 			for (unsigned w=0;w<TT_COORDINATED_ATTENTION_CODE_WORDS;w++)
-				assert(BlackholeCoordinatedAttentionCodeWord(w)==(w<code.size()/4?Word(code,w*4):0));
+				assert((glu?BlackholeCoordinatedGluCodeWord(w):BlackholeCoordinatedAttentionCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 		}
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());
 		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE

@@ -15,14 +15,14 @@ struct AttentionWorker:CoordinatedMachine {
 		}
 		return value;
 	}
-	void Enter() {
+	void Enter(bool glu=false) {
 		assert(pc==CoordWait && l1[Index(0x71300)]==jobs && l1[Index(0x71304)]==jobs);
-		l1[Index(0x7051c)]=0x31475441; l1[Index(0x71300)]=++jobs;
+		l1[Index(0x7051c)]=glu?0x314c4741:0x31475441; l1[Index(0x71300)]=++jobs;
 		UntilCoord(0x72000); assert(l1[Index(0x71304)]==jobs-1);
 	}
-	void CompleteStub(unsigned n) {
-		assert(pc==0x72000 && n && n<=256);
-		extraReads+=2*((n+63)/64); extraFlits+=8*n; extraWrites+=2;
+	void CompleteStub(unsigned n,bool glu=false) {
+		assert(pc==0x72000 && (glu?n==512:n && n<=256));
+		if (!glu) { extraReads+=2*((n+63)/64); extraFlits+=8*n; extraWrites+=2; }
 		// The separate group-byte tests prove arithmetic/NoC/final drain.
 		// This controlled stub isolates actual post-return publication.
 		l1[Index(0x17ffc0)]=0x7200c; l1[Index(0x17ffc4)]=n; l1[Index(0x17ffc8)]=0x314e5441; pc=0x71200;
@@ -31,6 +31,7 @@ struct AttentionWorker:CoordinatedMachine {
 			&& l1[Index(0x71368)]==0x314e5441 && l1[Index(0x7136c)]==jobs);
 	}
 };
+#ifndef PIONEER_ATTENTION_WORKER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2); auto code=Read(argv[1]);
@@ -51,3 +52,4 @@ int main(int argc,char** argv)
 		assert(failed && !m.l1[m.Index(0x71304)] && !m.matrixInstructions); }
 	puts("PASS OFFLINE actual matrix/attention dispatch,peers1..8,unchanged matrix-only peers,source proof BEFORE finished publication,live STOP,bad tag refusal;attention entry is stubbed here,NOT concurrent native qualification");
 }
+#endif

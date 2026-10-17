@@ -15,7 +15,11 @@ static inline bool PioneerGraphDivideNormalFast(float a,float b,float& output)
 	if (exponent<1 || exponent>254) return false;
 	float an=PioneerAttentionFloat((aa&0x7fffff)|0x3f800000),bn=PioneerAttentionFloat((bb&0x7fffff)|0x3f800000);
 	float inverse=PioneerAttentionFloat(0x7ef311c3U-PioneerAttentionBits(bn));
-	for (unsigned i=0;i<4;i++) inverse=inverse*(2.0f-bn*inverse);
+	// The Q8 scale divisor is fixed;its normalized reciprocal is a
+	// trusted compile-time constant. Other divisors need only3 Newton
+	// proposals:the exact bounded remainder correction is authoritative.
+	if (bb==0x42fe0000) inverse=64.0f/127.0f;
+	else for (unsigned i=0;i<3;i++) inverse=inverse*(2.0f-bn*inverse);
 	float estimate=an*inverse; if (ma<mb) estimate=estimate*2.0f;
 	uint32_t bits=PioneerAttentionBits(estimate),m=(bits&0x7fffff)|0x800000;
 	unsigned e=bits>>23;

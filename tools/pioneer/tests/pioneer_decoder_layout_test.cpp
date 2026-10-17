@@ -17,6 +17,11 @@ static PioneerDecoderJob Job()
 int main()
 {
 	auto job=Job(); assert(PioneerDecoderJobValid(job) && sizeof(job)<=4096);
+	{ auto glu=job; glu.version=3; assert(!PioneerDecoderJobValid(glu) && !PioneerDecoderJobValid(glu,2) && PioneerDecoderJobValid(glu,3));
+		for (unsigned w=0;w<119;w++) { unsigned advance=PioneerDecoderSequenceAdvance(w,true)+(w<6?28:0);
+			assert(PioneerDecoderSequenceAdvance(w,true,true)==advance); auto j=glu; j.sequence[w]=0x7fffffff-advance;
+			assert(PioneerDecoderJobValid(j,3)); j.sequence[w]++; assert(!PioneerDecoderJobValid(j,3)); }
+	}
 	{ auto parallel=job; parallel.version=2; assert(!PioneerDecoderJobValid(parallel) && PioneerDecoderJobValid(parallel,2));
 		for (unsigned w=0;w<119;w++) {
 			unsigned advance=PioneerDecoderSequenceAdvance(w)+(w<8?28:0);

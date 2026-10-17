@@ -4,6 +4,7 @@
 #include "BlackholeAttentionTileImage.h"
 #include "BlackholeResidentAttentionImage.h"
 #include "BlackholeCoordinatedAttentionImage.h"
+#include "BlackholeCoordinatedGluImage.h"
 #include "PioneerRuntimeMatvec.h"
 
 // Dedicated qualification session, not the inference/KV-cache ABI.
@@ -36,6 +37,7 @@ struct PioneerAttentionTileLease {
 	bool saved=false,code_dirty=false,data_dirty=false,ready=false,running=false,unsafe=false;
 	bool resident=false; // immutable code selection for this lease
 	bool coordinatedGroup=false; // distinct fixed group/route image
+	bool coordinatedGlu=false;
 };
 static inline bool PioneerAttentionTileInputValid(unsigned tokens,const uint32_t* query,
 	const uint32_t* key,const uint32_t* value)
@@ -57,10 +59,11 @@ bool PioneerAttentionTileHeld(IO& io,const tt_dram_samples_result& baseline,
 }
 template<class IO>
 bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& noc,const PioneerResidentLease& store,PioneerAttentionTileLease& compute,bool resident=false,bool group=false)
+	const tt_compute_noc_result& noc,const PioneerResidentLease& store,PioneerAttentionTileLease& compute,bool resident=false,bool group=false,bool glu=false)
 {
+	if (glu && !group) return false;
 	if (group && (resident || noc.version<0x101 || noc.version>0x108)) return false;
-	if (compute.ready) return compute.resident==resident && compute.coordinatedGroup==group && !compute.unsafe && !compute.running;
+	if (compute.ready) return compute.resident==resident && compute.coordinatedGroup==group && compute.coordinatedGlu==glu && !compute.unsafe && !compute.running;
 	uint32_t* saved=io.AttentionSavedWords();
 	if (!saved || compute.saved || !PioneerAttentionTileHeld(io,baseline,noc,store)) return false;
 	for (unsigned w=0;w<3;w++) {
@@ -73,10 +76,11 @@ bool PioneerAttentionTilePrepare(IO& io,const tt_dram_samples_result& baseline,
 	compute.code_dirty=true;
 	compute.resident=resident;
 	compute.coordinatedGroup=group;
-	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) io.AttentionWriteWord(w+1,group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
+	compute.coordinatedGlu=glu;
+	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) io.AttentionWriteWord(w+1,glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
 	io.AttentionWriteWord(0,TT_ATTENTION_TILE_BOOT);
 	bool valid=io.AttentionReadWord(0)==TT_ATTENTION_TILE_BOOT;
-	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) valid &= io.AttentionReadWord(w+1)==(group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
+	for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++) valid &= io.AttentionReadWord(w+1)==(glu?BlackholeCoordinatedGluCodeWord(w):group?BlackholeCoordinatedAttentionCodeWord(w):resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w));
 	compute.ready=valid; return valid;
 }
 template<class IO>
@@ -120,7 +124,7 @@ bool PioneerAttentionTileRun(IO& io,const tt_dram_samples_result& baseline,
 {
 	r={}; r.version=1;
 	if (!output || !PioneerAttentionTileInputValid(tokens,query,key,value) || !compute.ready
-		|| compute.resident || compute.coordinatedGroup || compute.unsafe || compute.running || !PioneerAttentionTileHeld(io,baseline,noc,store)) return false;
+		|| compute.resident || compute.coordinatedGroup || compute.coordinatedGlu || compute.unsafe || compute.running || !PioneerAttentionTileHeld(io,baseline,noc,store)) return false;
 	r.tokens=tokens; r.prepared=1; r.state=TT_ATTN_TILE_STAGE_FAILED;
 	compute.data_dirty=true; // includes the stack used by this fixed compiled image
 	if (!PioneerAttentionTileStage(io,TT_ATTN_TILE_QUERY,256,query)

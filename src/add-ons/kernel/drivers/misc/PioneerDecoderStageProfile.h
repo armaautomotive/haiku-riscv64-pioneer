@@ -11,10 +11,10 @@ struct tt_decoder_stage_profile {
 	uint32_t magic,nonce,tokens,version,cycles[8],calls[8],reserved[12];
 };
 static_assert(sizeof(tt_decoder_stage_profile)==128,"fixed data-only trace");
-static inline bool PioneerDecoderStageValid(const tt_decoder_stage_profile& p,unsigned nonce,unsigned tokens)
+static inline bool PioneerDecoderStageValid(const tt_decoder_stage_profile& p,unsigned nonce,unsigned tokens,unsigned version=1)
 {
-	if (p.magic!=0x31525044 || p.version!=1 || p.nonce!=nonce || !nonce || p.tokens!=tokens || !tokens || tokens>256) return false;
-	const unsigned counts[]={196,113,113,28,28,28,1,1}; uint32_t sum=0;
+	if ((version!=1 && version!=2) || p.magic!=0x31525044 || p.version!=version || p.nonce!=nonce || !nonce || p.tokens!=tokens || !tokens || tokens>256) return false;
+	const unsigned counts[]={196,113,version==2?85U:113U,28,28,28,1,1}; uint32_t sum=0;
 	for (unsigned i=0;i<8;i++) {
 		if (p.calls[i]!=counts[i] || !p.cycles[i]) return false;
 		if (i<7) { if (p.cycles[i]>uint32_t(-1)-sum) return false; sum+=p.cycles[i]; }
