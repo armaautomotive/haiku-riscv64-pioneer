@@ -15,11 +15,12 @@ struct CoordinatedMachine:PersistentMachine {
 		if (getenv("PIONEER_COORDINATED_INLINE_MATH")) Inline();
 		if (getenv("PIONEER_COORDINATED_PARTIAL_MATH")) Partial();
 		if (getenv("PIONEER_COORDINATED_PHASE_MATH")) Phase();
+		if (getenv("PIONEER_COORDINATED_ACCUM_MATH")) Accum();
 	}
 	bool CodeAddress(uint32_t address) const override {
 		return (address>=0x71000 && address<0x71300) || (address>=0x71500 && address<0x71700)
 			|| (inlineMath && address>=0x70ea8 && address<0x70fac)
-			|| (address<0x71000 && BulkQ8Machine::CodeAddress(address));
+			|| (address<0x71000 && PersistentMachine::CodeAddress(address));
 	}
 	uint32_t Load(uint32_t a) override {
 		for (unsigned i=0;i<16;i++) if (a==0xffb20000+BlackholeDramSourceOffset(i)) {

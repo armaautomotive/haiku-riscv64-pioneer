@@ -8,7 +8,7 @@
 struct TableWorker:AttentionWorker {
 	unsigned corruptCopy=0; bool corrupted=false;
 	TableWorker(const std::vector<uint8_t>& code,unsigned worker):AttentionWorker(code,worker) {
-		Phase(); l1[Index(TT_DECODER_TABLE_COUNT)]=3;
+		if (getenv("PIONEER_COORDINATED_ACCUM_MATH")) Accum(); else Phase(); l1[Index(TT_DECODER_TABLE_COUNT)]=3;
 		for (unsigned i=0;i<3;i++) Put(i,false,false);
 	}
 	void Put(unsigned index,bool attention,bool glu) {

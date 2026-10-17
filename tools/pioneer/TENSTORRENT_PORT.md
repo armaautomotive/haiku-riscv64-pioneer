@@ -2,6 +2,46 @@
 
 ## Status
 
+### October17: resident28 native PASS;exact arithmetic29 trial (11:50 UTC)
+
+Fast Qwen STILL NOT achieved. Contract28 passes22 full-logit comparisons/
+selected-bit token replays,all three sustained natural requests with untimed
+full replay and exact coverage. GPU4.524383/4.497713/4.576531tok/s versus
+CPU32 2.330177/1.055874/.753593. Prompt5.786870/5.998434/5.369057s.
+Matrix60.945M ->58.551M ticks atposition21;total150.113M ->147.634M.
+Cold113.129901s,registry9.070746s. Complete312 GPU positions,61464 logical
+projections/8736 attention,156 full+156 small,zero warm uploads;
+END2/PCI-host1-1/cold0/cleanup1. Short5.005957tok/s is diagnostic ONLY.
+Log:`qwen-table-v28-benchmark.log`. Qualified28 backup retained with27/25.
+
+Separate explicit29/model-registry14 changes ONLY exact-math scheduling.
+The same compensated37-op arithmetic,ALL four integer fidelity phases and
+all input/result/owner/NoC/sequence proofs remain. Three internal RISC/ThCon
+handshakes become four REAL SFPU NOPs each,keeping Dst writes at least FIVE
+instruction cycles before a read of the same aligned8x16 block. ALL final
+RISC consumers/full drains remain. Only first K/output tile s4=s9=0 sets
+AddrMod1 register29=0x2000,then drains;thread config is scrubbed once per
+matrix job and no subsequent instruction changes that modifier. No new
+scratch,mutable flag,replay buffer,DMA,register authority or source mapping.
+
+Final4096B math63efcbae changes only reserved70600..70680 and70d80..70ea8;
+EVERY public status/park/readback/fence PC stays unchanged. Earlier3ded2912
+was offline-only and superseded. All120 peers/all K/N4096/repeated jobs/
+IEEE bits/STOP/source releases pass;explicit SFPU Dst hazard model checks
+every SFPLOAD against preceding stores. Steps60361 vs65333,drains457 vs776
+per small test. Actual119-peer matrix/attention/GLU/table dispatch pass.
+13-mode unknown-state controller and real-client gates pass;all119 immutable
+math-flag mismatches refuse before launch. Both table/math modes pass held
+staging and complete buffer/prelude restoration. Default phase build remains
+f56a0fe3 BYTE-EXACT when new flag OFF. Native29 quality/speed PENDING;driver
+`cf14312eb8dc4ee346efff5c4e8188f392477c2e71a74919d05c7ff7af07e361`;
+verifier`98c2f688db6101bc4aa41f02caf0d4c080c17fc867452312d3d631a975a6198a`.
+No Assistant promotion,all-Qwen/27B/Q4 claim or boot/CPU/RAM/SD changes.
+
+Scheduling references:[Blackhole Dst hazard interval](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/Dst.md#instruction-scheduling),
+[Blackhole SFPLOAD](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md),
+[Blackhole SFPMAD scoreboard rules](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPMAD.md#instruction-scheduling).
+
 ### October17: sealed resident-descriptor28 native trial (11:39 UTC)
 
 Fast Qwen is STILL NOT achieved. Explicit28/model-registry13 uses exact27

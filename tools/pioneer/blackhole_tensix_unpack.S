@@ -26,6 +26,11 @@
 	.error "Fidelity pipeline retains the exact accumulation engine"
 .endif
 .endif
+.ifdef TT_RUNTIME_Q8_ACCUM_PIPE
+.ifndef TT_RUNTIME_Q8_PHASE_PIPE
+	.error "Accumulator pipeline requires the separate exact fidelity pipeline"
+.endif
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -469,8 +474,17 @@ full_bf16_math:
 	 * Configure/drain once per operand tile,not between every phase.
 	 * Keep this inside the reserved block:ALL public completion PCs and
 	 * final status/readback/fence instructions remain byte-for-byte. */
+.ifdef TT_RUNTIME_Q8_ACCUM_PIPE
+	/* Thread config is scrubbed ONCE in main. s4/s9 are the trusted K
+	 * and output-tile indices;only their first0/0 tile needs this immutable
+	 * register setup/drain. Every four-phase group still wraps fidelity0,
+	 * and no later operation writes AddrMod1. No mutable flag or new owner. */
+	or t0,s4,s9
+	bne t0,zero,full_bf16_phase_ready
+.endif
 	emit 0xb21d2000
 	jal ra, drain
+full_bf16_phase_ready:
 	/* Same exact four integer partial products. AddrMod1 advances the
 	 * FPU-owned fidelity RWC after each operation;four increments wrap0.
 	 * No CFGEXU/FPU race,per-phase RISC handshake,replay or lost phase.
@@ -904,7 +918,16 @@ q8_exact_accumulate:
 	la a7, q8_exact_spilled
 	j q8_exact_emit
 q8_exact_spilled:
+.ifdef TT_RUNTIME_Q8_ACCUM_PIPE
+	/* Blackhole SFPSTORE/LOAD have1-cycle SFPU latency,but Dst's aligned
+	 * 8x16 block cannot be read for the next FOUR cycles after a write.
+	 * Four real SFPU NOPs satisfy that bound without a RISC/ThCon round
+	 * trip. All arithmetic and the final consumer/full drain are unchanged.
+	 * Only SFPU instructions touch private Dst8..19 during this interval. */
+	exact_ops 0x8f000000,0x8f000000,0x8f000000,0x8f000000
+.else
 	jal ra, drain
+.endif
 	li a4, 0
 q8_exact_parity:
 	li t0, 0x70230008 /* c, a, b from private accumulator/dot/scale copies */
@@ -924,7 +947,11 @@ q8_exact_computed:
 	li t0, 0x72030008
 	or t0, t0, a4
 	sw t0, 0(s0)
+.ifdef TT_RUNTIME_Q8_ACCUM_PIPE
+	exact_ops 0x8f000000,0x8f000000,0x8f000000,0x8f000000
+.else
 	jal ra, drain /* Dst store completes before either parity is reloaded */
+.endif
 	addi a4, a4, 2
 	li t0, 4
 	bne a4, t0, q8_exact_parity

@@ -21,17 +21,19 @@ static PioneerDecoderJob Model() {
 	for (auto& l:model.layers) for (unsigned role=0;role<7;role++) reinterpret_cast<uint32_t*>(&l)[role]=0x04000000+role*0x1000000;
 	return model;
 }
-static void Prepare(TableStageIO& io,PioneerFleetWorker& f,unsigned worker) {
+static void Prepare(TableStageIO& io,PioneerFleetWorker& f,unsigned worker,bool accum=false) {
 	tt_host_page_result host={}; auto& c=io.C(); assert(Prepared(c,host,f.Store())); f.noc=c.Compute(); f.noc.version=PioneerWorkerVersion(worker);
 	assert(PioneerRuntimeMatvecPrepare(c,c.Baseline(),f.noc,f.Store(),f.Compute(),false,true,true,true,true,true,true));
 	assert(PioneerFleetPreludePrepare(io,f));
-	assert(PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,true));
+	assert(!PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,false,true));
+	assert(PioneerPersistentPrepare(io,f,true,true,worker<=8,worker<=6,true,false,true,true,accum));
+	assert(f.accumPipeline==accum);
 	assert(f.descriptorTable && !f.descriptorTablePrepared && !PioneerPersistentBoot(io,f) && !c.starts);
 }
 int main() {
 	auto model=Model();
-	{ TableStageIO io(120); std::vector<PioneerFleetWorker> fleet(120);
-		for (unsigned worker=1;worker<120;worker++) { io.current=worker; auto& f=fleet[worker]; Prepare(io,f,worker);
+	for (bool accum:{false,true}) { TableStageIO io(120); std::vector<PioneerFleetWorker> fleet(120);
+		for (unsigned worker=1;worker<120;worker++) { io.current=worker; auto& f=fleet[worker]; Prepare(io,f,worker,accum);
 			std::vector<uint32_t> before(io.C().buffers,io.C().buffers+12288);
 			assert(PioneerPersistentTablePrepare(io,io.C().Baseline(),f,model,worker) && f.descriptorTablePrepared && f.Compute().buffers_dirty && !io.C().starts);
 			unsigned count=PioneerDecoderDescriptorCount(worker);

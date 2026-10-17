@@ -6,11 +6,12 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8InlineImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8PartialImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8PhaseImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeQ8AccumImage.h"
 struct PersistentMachine:BulkQ8Machine {
 	unsigned worker,jobs=0,previousReads=0,inputReads=0,completedInputs=0;
 	uint32_t command[10]={},source[4096]={};
 	bool inputPending=false;
-	bool inlineMath=false,partialMath=false;
+	bool inlineMath=false,partialMath=false,accumPipeline=false;
 	PersistentMachine(unsigned k,unsigned n,unsigned w):BulkQ8Machine(k,n,0),worker(w) {
 		for (unsigned i=0;i<1024;i++) l1[6144+i]=BlackholeFleetPersistentCodeWord(i);
 		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
@@ -42,6 +43,13 @@ struct PersistentMachine:BulkQ8Machine {
 		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
 		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);
 	}
+	void Accum() {
+		Phase(); accumPipeline=true;
+		for (unsigned i=0;i<1024;i++) l1[1+i]=BlackholeRuntimeQ8AccumCodeWord(i);
+		l1[Index(TT_RUNTIME_Q8_PARK_PC)]=TT_PERSISTENT_MATH_RETURN;
+		l1[Index(0x70500)]=base; l1[Index(0x70504)]=inputs/16; l1[Index(0x70508)]=outputs/16;
+		l1[Index(0x7050c)]=worker!=0; l1[Index(0x70510)]=PioneerWorkerX(worker)|(PioneerWorkerY(worker)<<6);
+	}
 	bool CorrectExpected() const {
 		if (!partialMath) return CorrectIeee();
 		if (conditional) return false;
@@ -62,7 +70,7 @@ struct PersistentMachine:BulkQ8Machine {
 		return BulkQ8Machine::Index(a);
 	}
 	bool CodeAddress(uint32_t a) const override {
-		return (a>=0x71000 && a<0x71300) || (inlineMath && a>=0x70ea8 && a<0x70fac) || BulkQ8Machine::CodeAddress(a);
+		return (a>=0x71000 && a<0x71300) || (inlineMath && a>=0x70ea8 && a<0x70fac) || (accumPipeline && a>=0x70d80 && a<0x70ea8) || BulkQ8Machine::CodeAddress(a);
 	}
 	void Store(uint32_t a,uint32_t v) override {
 		if (a>=0x71300 && a<0x71310) {

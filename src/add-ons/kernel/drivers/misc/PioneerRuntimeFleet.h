@@ -39,6 +39,7 @@ struct PioneerFleetWorker {
 	bool partialMath=false; // separate native-rounding image,never implicit
 	bool phasePipeline=false; // exact four phases with FPU-owned fidelity increments
 	bool descriptorTable=false,descriptorTablePrepared=false; // immutable fixed-model schedule,not a live upgrade
+	bool accumPipeline=false; // exact SFPU Dst timing and once/job AddrMod1 setup
 	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	bool attentionDispatch=false; // separately owned fixed-group image
 	bool gluDispatch=false;

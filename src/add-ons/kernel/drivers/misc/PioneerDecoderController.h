@@ -23,7 +23,7 @@ struct PioneerDecoderLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false,parallel=false;
 	PioneerAttentionTileLease* peers=nullptr;
 	bool profiling=false;
-	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false,inputPull=false,phasePipeline=false,diagnostic=false,descriptorTable=false;
+	bool glu=false,greedy=false,paired=false,inlineMath=false,partialMath=false,cachedQuery=false,inputPull=false,phasePipeline=false,diagnostic=false,descriptorTable=false,accumPipeline=false;
 	tt_decoder_stage_profile stages={};
 };
 static inline uint32_t PioneerDecoderCodeWord(const PioneerDecoderLease& code,unsigned word)
@@ -34,7 +34,7 @@ template<class IO>
 bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDecoderLease& code)
 {
 	if (!fleet) return false;
-	for (unsigned i=1;i<120;i++) if (fleet[i].inlineMath!=code.inlineMath || fleet[i].coordinatedInline!=code.inlineMath || fleet[i].partialMath!=code.partialMath || fleet[i].phasePipeline!=code.phasePipeline || fleet[i].descriptorTable!=code.descriptorTable || (code.descriptorTable && !fleet[i].descriptorTablePrepared)) return false;
+	for (unsigned i=1;i<120;i++) if (fleet[i].inlineMath!=code.inlineMath || fleet[i].coordinatedInline!=code.inlineMath || fleet[i].partialMath!=code.partialMath || fleet[i].phasePipeline!=code.phasePipeline || fleet[i].descriptorTable!=code.descriptorTable || fleet[i].accumPipeline!=code.accumPipeline || (code.descriptorTable && !fleet[i].descriptorTablePrepared)) return false;
 	if (!code.parallel) return !code.peers;
 	if (!fleet || !code.peers || !io.DecoderPeerMappingsStable()) return false;
 	for (unsigned i=0;i<8;i++) { const auto& p=code.peers[i];
@@ -66,15 +66,15 @@ static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsi
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
-	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false,bool descriptorTable=false)
+	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false,bool glu=false,bool greedy=false,bool paired=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool diagnostic=false,bool descriptorTable=false,bool accumPipeline=false)
 {
-	if ((descriptorTable && (!phasePipeline || !inputPull || diagnostic)) || (diagnostic && (!inputPull || phasePipeline)) || (phasePipeline && !cachedQuery) || (inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
+	if ((accumPipeline && !descriptorTable) || (descriptorTable && (!phasePipeline || !inputPull || diagnostic)) || (diagnostic && (!inputPull || phasePipeline)) || (phasePipeline && !cachedQuery) || (inputPull && !cachedQuery) || (cachedQuery && (!inlineMath || partialMath)) || (partialMath && !inlineMath) || (inlineMath && !paired) || (paired && !greedy) || (greedy && !glu) || (glu && (!profiling || !parallel)) || (profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;
-	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && code.phasePipeline==phasePipeline && code.diagnostic==diagnostic && code.descriptorTable==descriptorTable && PioneerDecoderPeerOwners(io,fleet,code);
+	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && code.glu==glu && code.greedy==greedy && code.paired==paired && code.inlineMath==inlineMath && code.partialMath==partialMath && code.cachedQuery==cachedQuery && code.inputPull==inputPull && code.phasePipeline==phasePipeline && code.diagnostic==diagnostic && code.descriptorTable==descriptorTable && code.accumPipeline==accumPipeline && PioneerDecoderPeerOwners(io,fleet,code);
 	if (code.saved || code.unsafe || !io.DecoderSavedWords()) return false;
-	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull; code.phasePipeline=phasePipeline; code.diagnostic=diagnostic; code.descriptorTable=descriptorTable;
+	code.parallel=parallel; code.peers=peers; code.profiling=profiling; code.glu=glu; code.greedy=greedy; code.paired=paired; code.inlineMath=inlineMath; code.partialMath=partialMath; code.cachedQuery=cachedQuery; code.inputPull=inputPull; code.phasePipeline=phasePipeline; code.diagnostic=diagnostic; code.descriptorTable=descriptorTable; code.accumPipeline=accumPipeline;
 	if (!PioneerDecoderPeerOwners(io,fleet,code)) return false;
 	for (unsigned i=0;i<8192;i++) io.DecoderSavedWords()[i]=io.LayerCodeRead(i);
 	code.saved=true;
