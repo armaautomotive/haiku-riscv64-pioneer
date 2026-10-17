@@ -5,8 +5,26 @@
 #include <string.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
+#include <stdlib.h>
 int main(int argc,char** argv)
 {
+	if (argc==2 && (!strcmp(argv[1],"--check-fleet-support") || !strcmp(argv[1],"--read-fleet-noc-and-restore"))) {
+		int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) { perror("fleet open"); return 1; }
+		if (!strcmp(argv[1],"--check-fleet-support")) {
+			uint32_t workers=0; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_FLEET_NOC_SUPPORT,&workers,sizeof(workers)); close(fd);
+			printf("Fixed read-only fleet support: %u workers, status %d; no execution submitted\n",workers,status);
+			return !status && workers==120?0:1;
+		}
+		auto* r=(tt_pioneer_fleet_noc_result*)calloc(1,sizeof(tt_pioneer_fleet_noc_result));
+		if (!r) { close(fd); return 1; }
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_FLEET_NOC,r,sizeof(*r)); close(fd);
+		const auto& pci=r->baseline.control.control.control.pci;
+		printf("Fleet v%u checked/passed %u/%u, PCI restored %u, cold %u status %d; READ ONLY, no core starts\n",r->version,r->checked,r->passed,pci.restored,r->recovery_required,status);
+		for (unsigned w=0;w<r->checked && w<TT_PIONEER_WORKERS;w++) printf("Worker %u logical(%u,%u) physical-node %08x endpoint %08x state %u TLB %u cold %u\n",
+			w,PioneerWorkerX(w),PioneerWorkerY(w),r->worker[w].node[0][0],r->worker[w].node[0][1],r->worker[w].state,r->worker[w].tlb_restored,r->worker[w].recovery_required);
+		bool okay=!status && r->version==1 && r->checked==120 && r->passed==120 && pci.restored && !r->recovery_required;
+		free(r); return okay?0:1;
+	}
 	bool second=argc==2 && (!strcmp(argv[1],"--check-second-support") || !strcmp(argv[1],"--read-second-compute-noc-and-restore"));
 	bool support=argc==2 && (!strcmp(argv[1],"--check-support") || !strcmp(argv[1],"--check-second-support"));
 	if (!support && (argc!=2 || (strcmp(argv[1],"--read-compute-noc-and-restore") && strcmp(argv[1],"--read-second-compute-noc-and-restore")))) {

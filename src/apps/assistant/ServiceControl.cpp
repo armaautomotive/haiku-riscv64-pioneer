@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 	BApplication app("application/x-vnd.Haiku-AssistantControl");
 	BMessenger service(kServiceSignature);
 	if (argc < 2) {
-		fprintf(stderr, "Usage: assistantctl status | load | unload | hardware | hardware cpu|p100a|p100a-qwen|p100a-qwen-fast|p100a-qwen-attention [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
+		fprintf(stderr, "Usage: assistantctl status | load | unload | hardware | hardware cpu|p100a|p100a-qwen|p100a-qwen-fast|p100a-qwen-attention|p100a-qwen-throughput [THREADS] | models | install INDEX | verify INDEX | model INDEX | threads N | stop | toggle | ask TEXT | cancel-test TEXT\n");
 		return 2;
 	}
 	if (strcmp(argv[1], "models") == 0) {

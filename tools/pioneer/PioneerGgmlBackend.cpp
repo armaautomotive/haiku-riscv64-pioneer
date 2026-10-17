@@ -40,6 +40,9 @@ struct PioneerGgmlDevice:PioneerResidentDevice {
 	bool AttentionTile(unsigned n,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* y) {
 		return Boundary() && PioneerResidentDevice::AttentionTile(n,q,k,v,y) && Boundary();
 	}
+	bool AttentionGroups(unsigned n,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::AttentionGroups(n,q,k,v,y) && Boundary();
+	}
 };
 struct PioneerGgmlContext {
 	PioneerGgmlDevice device;
@@ -53,10 +56,11 @@ struct PioneerGgmlContext {
 	const bool dual;
 	const bool reuse;
 	const bool attention;
+	const unsigned fleet;
 	uint64_t attentionOps=0,attentionTiles=0;
 	unsigned attentionLayer=0;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0,attentionSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention,unsigned workers):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate,workers!=0),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention),fleet(workers) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -72,6 +76,7 @@ static bool sDual=false;
 static bool sDualReuse=false;
 static bool sAttention=false;
 static unsigned sBulkUpload=0;
+static unsigned sFleet=0;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -94,7 +99,7 @@ static bool TraceTensor(const ggml_tensor* t) {
 }
 static const char* Name(ggml_backend_t backend) { return backend->context?"P100A-resident-experimental":"P100A-disabled-for-CPU-context"; }
 static const char* DeviceName(ggml_backend_dev_t) { return "P100A-resident"; }
-static const char* Description(ggml_backend_dev_t) { return sDual?"P100A two-core resident matrix prototype (not a verified speedup)":"P100A single-core resident matrix prototype (not a verified speedup)"; }
+static const char* Description(ggml_backend_dev_t) { return sFleet?"P100A whole-projection prototype (up to120 workers; not a verified CPU speedup)":sDual?"P100A two-core resident matrix prototype (not a verified speedup)":"P100A single-core resident matrix prototype (not a verified speedup)"; }
 static bool View(enum ggml_op op) {
 	return op==GGML_OP_NONE || op==GGML_OP_RESHAPE || op==GGML_OP_VIEW || op==GGML_OP_PERMUTE || op==GGML_OP_TRANSPOSE;
 }
@@ -109,7 +114,7 @@ static bool Supports(ggml_backend_dev_t,const ggml_tensor* op) {
 		&& w->ne[0]>0 && w->ne[0]<=TT_RUNTIME_MATVEC_INPUTS_MAX && w->ne[1]>0 && w->ne[1]<=262144
 		&& PioneerResidentTensorShape(unsigned(w->ne[0]),unsigned(w->ne[1]))
 		&& (!sCompact || PioneerQ8CompactTensorShape(unsigned(w->ne[0]),unsigned(w->ne[1])))
-		&& (!sDual || (w->ne[1]>=64 && !(w->ne[1]&63)))
+		&& (sFleet || !sDual || (w->ne[1]>=64 && !(w->ne[1]&63)))
 		&& w->ne[2]==1 && w->ne[3]==1 && x->ne[0]==w->ne[0] && x->ne[1]==1 && x->ne[2]==1 && x->ne[3]==1
 		&& op->ne[0]==w->ne[1] && op->ne[1]==1 && op->ne[2]==1 && op->ne[3]==1
 		&& ggml_is_contiguous(w) && ggml_is_contiguous(x) && ggml_is_contiguous(op)
@@ -236,7 +241,15 @@ static bool ComputeAttention(PioneerGgmlContext& ctx,ggml_tensor* op)
 	const auto* k=static_cast<const uint8_t*>(op->src[1]->data);
 	const auto* v=static_cast<const uint8_t*>(op->src[2]->data);
 	double started=Seconds();
-	for (unsigned group=0;group<8;group++) {
+	if (ctx.fleet) {
+		std::vector<uint32_t> allKeys(tokens*512),allValues(tokens*512);
+		for (unsigned group=0;group<8;group++) for (unsigned t=0;t<tokens;t++) {
+			memcpy(allKeys.data()+group*tokens*64+t*64,k+t*2048+group*256,256);
+			memcpy(allValues.data()+group*tokens*64+t*64,v+t*2048+group*256,256);
+		}
+		if (!ctx.device.AttentionGroups(tokens,reinterpret_cast<const uint32_t*>(q),allKeys.data(),allValues.data(),result.data())) return false;
+		ctx.attentionTiles+=8;
+	} else for (unsigned group=0;group<8;group++) {
 		memcpy(query.data(),q+group*1024,1024);
 		for (unsigned t=0;t<tokens;t++) {
 			memcpy(keys.data()+t*64,k+t*2048+group*256,256);
@@ -259,7 +272,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		if (op->op==GGML_OP_FLASH_ATTN_EXT) {
@@ -333,8 +346,8 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 		disabled.iface.supports_op=DisabledSupports; disabled.iface.supports_buft=DisabledBuffer;
 		return new(std::nothrow) ggml_backend {&guid,iface,&disabled,NULL};
 	}
-	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse) || sBulkUpload>2 || (sBulkUpload && !sDualReuse)) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention); if (!ctx) return NULL;
+	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse) || sBulkUpload>2 || (sBulkUpload && !sDualReuse) || sFleet>120 || (sFleet && (!sDualReuse || !sBulkUpload))) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet); if (!ctx) return NULL;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -368,6 +381,7 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats={}; if (!sActive) return false;
 	stats.tensors=sActive->cache.Tensors(); stats.bytes=sActive->cache.Bytes(); stats.uploads=sActive->cache.uploadedPages;
 	stats.matvecs=sActive->cache.matvecCalls; stats.failed=sActive->failed || sActive->cache.Failed();
+	stats.peakWorkers=sActive->device.peakWorkers;
 	stats.attentionOps=sActive->attentionOps; stats.attentionTiles=sActive->attentionTiles;
 	stats.attentionSeconds=sActive->attentionSeconds;
 	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;
@@ -385,6 +399,7 @@ void PioneerGgmlQ8Dual(bool enabled) { if (!sActive) sDual=enabled; }
 void PioneerGgmlQ8DualReuse(bool enabled) { if (!sActive) sDualReuse=enabled; }
 void PioneerGgmlAttention(bool enabled) { if (!sActive) sAttention=enabled; }
 void PioneerGgmlBulkUpload(unsigned mode) { if (!sActive) sBulkUpload=mode; }
+void PioneerGgmlFleet(unsigned workers) { if (!sActive) sFleet=workers; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {

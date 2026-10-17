@@ -19,7 +19,8 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool bulkUpload=argc==3 && !strcmp(argv[1],"--verify-device-attention-bulk-upload-q8-host1");
+	bool fleet=argc==3 && !strcmp(argv[1],"--verify-fleet-attention-q8-host1");
+	bool bulkUpload=fleet || (argc==3 && !strcmp(argv[1],"--verify-device-attention-bulk-upload-q8-host1"));
 	bool deviceAttention=bulkUpload || (argc==3 && !strcmp(argv[1],"--verify-device-attention-q8-host1"));
 	bool reuse=deviceAttention || (argc==3 && (!strcmp(argv[1],"--verify-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-reuse-q8-host1")));
 	bool dual=reuse || (argc==3 && (!strcmp(argv[1],"--verify-dual-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1")));
@@ -72,6 +73,7 @@ int main(int argc,char** argv) {
 	PioneerGgmlQ8DualReuse(reuse);
 	PioneerGgmlAttention(deviceAttention);
 	PioneerGgmlBulkUpload(bulkUpload);
+	PioneerGgmlFleet(fleet?120:0);
 	if (deviceAttention) {
 		params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_ENABLED;
 		params.offload_kqv=true; params.op_offload=true;
@@ -136,7 +138,8 @@ int main(int argc,char** argv) {
 				(unsigned long long)(stats.attentionOps-coverageBefore.attentionOps),(unsigned long long)(stats.attentionTiles-coverageBefore.attentionTiles),
 				(unsigned long long)(stats.matvecs-coverageBefore.matvecs));
 			if (stats.attentionOps-coverageBefore.attentionOps!=28 || stats.attentionTiles-coverageBefore.attentionTiles!=224
-				|| stats.matvecs-coverageBefore.matvecs!=234) { fprintf(stderr,"Strict device attention coverage failed; no CPU fallback or accepted result\n"); passed=false; break; }
+				|| stats.matvecs-coverageBefore.matvecs!=(fleet?197U:234U)
+				|| (fleet && stats.peakWorkers!=120)) { fprintf(stderr,"Strict device attention/multicore coverage failed; no CPU fallback or accepted result\n"); passed=false; break; }
 		}
 		printf("Position %d: card decode %.6fs cosine %.9f relative-L2 %.9f argmax card/CPU %d/%d tensors %llu pages %llu matvecs %llu\n",
 			position,elapsed,cosine,relative,next,cpu,(unsigned long long)stats.tensors,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs);
@@ -165,6 +168,7 @@ int main(int argc,char** argv) {
 		passed?"PASS":"FAIL",generated,(unsigned long long)stats.tensors,(unsigned long long)stats.bytes,(unsigned long long)stats.uploads,(unsigned long long)stats.matvecs,clean,Seconds()-begin);
 	printf("Backend phase totals: weight preparation/upload/cache %.6fs, activation preprocessing %.6fs, matvec/staging/result %.6fs, attention/staging/result %.6fs, primitive diagnostics %.6fs; not device-only timing\n",
 		stats.weightSeconds,stats.inputSeconds,stats.matvecSeconds,stats.attentionSeconds,stats.diagnosticSeconds);
+	if (fleet) printf("Whole-projection path: peak workers%u,197 matrix+28 attention host calls/position (old234+224); still host norms/RoPE/KV, NOT zero-round-trip decoding\n",stats.peakWorkers);
 	if (passed && decodeSeconds>0 && !diagnose) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
 	llama_free(actual); llama_free(reference); llama_model_free(model); llama_backend_free(); return passed?0:1;
 }

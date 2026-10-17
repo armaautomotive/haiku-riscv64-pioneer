@@ -15,6 +15,18 @@ matching optional P100A driver. No firmware/boot change or network listener.
 A native tools bridge is under testing;
 desktop mutations require one-time native approval (see [TOOLS.md](TOOLS.md)).
 
+The separate **P100A Throughput — Qwen3 0.6B (multicore)** target uses one
+host call per whole learned projection, up to120 row workers, one shared
+activation upload with on-card peer input fetches, and one call per complete
+attention layer. Small matrices use fewer workers to reduce dispatch cost.
+CPU reference validation is OFF; hardware ownership/completion/recovery
+checks stay. The older checked mode remains available for diagnostics.
+This target is still experimental: host norms/RoPE/KV and result readback
+remain, and it is not a device-resident decoder, all-model support or a
+faster-than-CPU guarantee. Switching to/from it rebuilds the graph and
+requires another first-use weight upload. Native performance qualification
+is recorded in[the port log](../../../tools/pioneer/TENSTORRENT_PORT.md).
+
 ## Components
 
 - `HaikuAssistant`: conversation/input window. Send or Ctrl+Enter submits.

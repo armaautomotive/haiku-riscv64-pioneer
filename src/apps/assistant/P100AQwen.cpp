@@ -17,6 +17,7 @@ struct AssistantP100AQwen::Data {
 	llama_context* actual=NULL;
 	bool validate=true;
 	bool attention=false;
+	bool throughput=false;
 	bool stoppedAtBoundary=false;
 	unsigned referenceDecodes=0,positions=0;
 	double generationSeconds=0;
@@ -48,6 +49,7 @@ struct AssistantP100AQwen::Data {
 		PioneerGgmlQ8Exact(true); PioneerGgmlQ8Dual(true); PioneerGgmlQ8DualReuse(true);
 		PioneerGgmlAttention(attention);
 		PioneerGgmlBulkUpload(2); // capability selection before BEGIN; no error fallback
+		PioneerGgmlFleet(throughput?120:0);
 		static bool registered=false;
 		if (!registered) { ggml_backend_register(PioneerGgmlReg()); registered=true; }
 		llama_context_params p=llama_context_default_params();
@@ -65,7 +67,7 @@ struct AssistantP100AQwen::Data {
 		if (self.progress && now-self.last>=1) {
 			PioneerGgmlStats s={}; PioneerGgmlSnapshot(s); char status[240];
 			if (s.tensors<197) snprintf(status,sizeof(status),"P100A first-use upload: %.1f/639.4 MiB, %llu/197 matrices; can take several minutes. Stop is transfer-boundary safe.",double(s.uploads)/256,(unsigned long long)s.tensors);
-			else snprintf(status,sizeof(status),"P100A Qwen%s: %llu matrices, %llu card attention ops, %.1fs; %s attention; CPU validation %s.",self.attention?" Attention":self.validate?"":" Fast",(unsigned long long)s.matvecs,(unsigned long long)s.attentionOps,now-self.started,self.attention?"P100A":"CPU",self.validate?"ON":"OFF");
+			else snprintf(status,sizeof(status),"P100A Qwen%s: %llu matrices, %llu card attention ops, %.1fs; %s attention; CPU validation %s.",self.throughput?" Throughput":self.attention?" Attention":self.validate?"":" Fast",(unsigned long long)s.matvecs,(unsigned long long)s.attentionOps,now-self.started,self.attention?"P100A":"CPU",self.validate?"ON":"OFF");
 			(*self.progress)(*self.answer,status); self.last=now;
 		}
 		return true;
@@ -73,11 +75,12 @@ struct AssistantP100AQwen::Data {
 };
 AssistantP100AQwen::AssistantP100AQwen():fData(NULL),fFaulted(false) {}
 AssistantP100AQwen::~AssistantP100AQwen() { delete fData; }
-bool AssistantP100AQwen::Available(bool attention) {
+bool AssistantP100AQwen::Available(bool attention,bool throughput) {
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) return false;
 	tt_resident_session_result s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&s,sizeof(s)); close(fd);
 	return !status && s.version==1 && !s.cold && (s.capabilities&TT_PIONEER_CAP_Q8_DUAL_REUSE)!=0
-		&& (!attention || (s.capabilities&TT_PIONEER_CAP_ATTENTION_TILE_SHARED)!=0);
+		&& (!attention || (s.capabilities&TT_PIONEER_CAP_ATTENTION_TILE_SHARED)!=0)
+		&& (!throughput || ((s.capabilities&TT_PIONEER_CAP_Q8_FLEET)!=0 && (!attention || (s.capabilities&TT_PIONEER_CAP_FLEET_ATTENTION)!=0)));
 }
 bool AssistantP100AQwen::Unload(std::string& error) {
 	bool clean=!fData || fData->CloseActual();
@@ -89,10 +92,11 @@ bool AssistantP100AQwen::Unload(std::string& error) {
 	return clean;
 }
 bool AssistantP100AQwen::Load(const char* path,std::string& error,bool validate,
-	const std::function<bool(float,const char*)>& progress,bool attention) {
+	const std::function<bool(float,const char*)>& progress,bool attention,bool throughput) {
 	Data* data=new Data;
 	data->validate=validate;
 	data->attention=attention;
+	data->throughput=throughput;
 	PioneerGgmlContextExecution(false);
 	llama_model_params m=llama_model_default_params(); m.n_gpu_layers=0;
 	if (progress) {
@@ -115,19 +119,20 @@ bool AssistantP100AQwen::Load(const char* path,std::string& error,bool validate,
 	return true;
 }
 bool AssistantP100AQwen::SetValidation(bool enabled,std::string& error) {
-	return SetMode(enabled,fData && fData->attention,error);
+	return SetMode(enabled,fData && fData->attention,error,fData && fData->throughput);
 }
-bool AssistantP100AQwen::SetMode(bool enabled,bool attention,std::string& error) {
+bool AssistantP100AQwen::SetMode(bool enabled,bool attention,std::string& error,bool throughput) {
 	if (!fData || fFaulted || (enabled && !fData->CreateReference())) {
 		error="Could not configure CPU validation; previous Qwen mode retained. No CPU fallback."; return false;
 	}
-	if (fData->attention!=attention) {
+	if (fData->attention!=attention || fData->throughput!=throughput) {
 		if (!fData->CloseActual()) {
 			fFaulted=true; error="P100A mode cleanup failed; backend disabled, no retry/fallback."; return false;
 		}
-		bool previous=fData->attention; fData->attention=attention;
+		bool previous=fData->attention,previousThroughput=fData->throughput;
+		fData->attention=attention; fData->throughput=throughput;
 		if (!fData->CreateActual()) {
-			fData->CloseActual(); fData->attention=previous;
+			fData->CloseActual(); fData->attention=previous; fData->throughput=previousThroughput;
 			// Pure host-context creation only: no device Open/BEGIN/compute
 			// until a later explicitly requested inference.
 			if (!fData->CreateActual()) fFaulted=true;
@@ -173,7 +178,8 @@ bool AssistantP100AQwen::Complete(const std::string& question,int limit,std::str
 		PioneerGgmlStats before={},after={};
 		if (!PioneerGgmlSnapshot(before) || llama_decode(fData->actual,batch)
 			|| !PioneerGgmlSnapshot(after) || after.failed || after.tensors!=197 || after.bytes!=670482432
-			|| after.uploads!=163692 || after.matvecs-before.matvecs!=234) {
+			|| after.uploads!=163692 || after.matvecs-before.matvecs!=(fData->throughput?197U:234U)
+			|| (fData->throughput && after.peakWorkers!=120)) {
 			error="P100A execution/coverage stopped; no CPU fallback or result substitution."; success=false; break;
 		}
 		if (fData->attention && (after.attentionOps-before.attentionOps!=28 || after.attentionTiles-before.attentionTiles!=224)) {
@@ -213,6 +219,6 @@ bool AssistantP100AQwen::Complete(const std::string& question,int limit,std::str
 		return false;
 	}
 	PioneerGgmlStats completed={}; PioneerGgmlSnapshot(completed);
-	char status[448]; snprintf(status,sizeof(status),"P100A Qwen: %d output tokens, %.1fs; CPU validation %s, reference decodes %u, device positions %u; attention %s (%llu card ops); generation %u samples/%.3fs (%.3f tok/s). Experimental, not a CPU speedup.",generated,Now()-fData->started,fData->validate?"ON":"OFF",fData->referenceDecodes,fData->positions,fData->attention?"P100A":"CPU",(unsigned long long)completed.attentionOps,fData->generationSamples,fData->generationSeconds,fData->generationSeconds>0?fData->generationSamples/fData->generationSeconds:0);
+	char status[448]; snprintf(status,sizeof(status),"P100A Qwen: %d output tokens, %.1fs; CPU validation %s, reference decodes %u, device positions %u; attention %s (%llu card ops); peak workers %u; generation %u samples/%.3fs (%.3f tok/s). Experimental, not a CPU speedup.",generated,Now()-fData->started,fData->validate?"ON":"OFF",fData->referenceDecodes,fData->positions,fData->attention?"P100A":"CPU",(unsigned long long)completed.attentionOps,fData->throughput?completed.peakWorkers:2,fData->generationSamples,fData->generationSeconds,fData->generationSeconds>0?fData->generationSamples/fData->generationSeconds:0);
 	fprintf(stderr,"%s\n",status); progress(answer,status); return true;
 }

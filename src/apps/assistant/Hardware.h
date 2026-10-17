@@ -43,7 +43,16 @@ static const AssistantHardware kAssistantHardware[] = {
 		"No independent CPU validation or CPU attention fallback.\n"
 		"PIO-staged KV prototype: NOT a speedup; may be slower than Fast.\n"
 		"Same short-question/eight-token limits, no history/tools.\n"
-		"Switching attention modes reloads device weights; upload can take 15+ minutes."}
+		"Switching attention modes reloads device weights; upload takes several minutes."},
+	{"p100a-qwen-throughput", "P100A Throughput — Qwen3 0.6B (multicore)",
+		"Whole learned projections use up to120 P100A compute cores.\n"
+		"Small projections use fewer workers to reduce dispatch overhead.\n"
+		"One shared input upload; peers fetch it over the card's internal network.\n"
+		"Card attention: one host call per layer, not one per head group.\n"
+		"CPU reference validation OFF; ownership/completion/recovery checks stay.\n"
+		"Host still handles KV/norms/RoPE. Not a device-resident decoder.\n"
+		"Experimental 0.6B Q8_0 only; no CPU fallback or speed guarantee.\n"
+		"Changing to/from this mode reloads device weights on first use."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 
@@ -57,7 +66,7 @@ static inline int AssistantHardwareIndex(const char* id)
 
 static inline bool AssistantHardwareIsP100AQwen(const char* id)
 {
-	return id != NULL && (!strcmp(id,"p100a-qwen") || !strcmp(id,"p100a-qwen-fast") || !strcmp(id,"p100a-qwen-attention"));
+	return id != NULL && (!strcmp(id,"p100a-qwen") || !strcmp(id,"p100a-qwen-fast") || !strcmp(id,"p100a-qwen-attention") || !strcmp(id,"p100a-qwen-throughput"));
 }
 
 static inline bool AssistantHardwareIsP100AFast(const char* id)
@@ -67,7 +76,12 @@ static inline bool AssistantHardwareIsP100AFast(const char* id)
 
 static inline bool AssistantHardwareIsP100AAttention(const char* id)
 {
-	return id != NULL && !strcmp(id,"p100a-qwen-attention");
+	return id != NULL && (!strcmp(id,"p100a-qwen-attention") || !strcmp(id,"p100a-qwen-throughput"));
+}
+
+static inline bool AssistantHardwareIsP100AThroughput(const char* id)
+{
+	return id != NULL && !strcmp(id,"p100a-qwen-throughput");
 }
 
 static inline bool AssistantHardwareSkipsValidation(const char* id)
@@ -77,7 +91,8 @@ static inline bool AssistantHardwareSkipsValidation(const char* id)
 
 static inline const char* AssistantHardwareQwenFormat(const char* id)
 {
-	return AssistantHardwareIsP100AAttention(id)?"qwen-p100a-attention"
+	return AssistantHardwareIsP100AThroughput(id)?"qwen-p100a-throughput"
+		:AssistantHardwareIsP100AAttention(id)?"qwen-p100a-attention"
 		:AssistantHardwareIsP100AFast(id)?"qwen-p100a-fast"
 		:(id && !strcmp(id,"p100a-qwen")?"qwen-p100a":NULL);
 }

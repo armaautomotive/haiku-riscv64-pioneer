@@ -145,7 +145,8 @@ public:
 						bool cardQwen=AssistantHardwareIsP100AQwen(backend);
 						bool fast=AssistantHardwareIsP100AFast(backend);
 						bool attention=AssistantHardwareIsP100AAttention(backend);
-						BString label(attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
+						bool throughput=AssistantHardwareIsP100AThroughput(backend);
+						BString label(throughput?"P100A Throughput (multicore; validation OFF): ":attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model selected");
 						if (!ready && !changing) label << " (unloaded)";
@@ -258,9 +259,12 @@ private:
 		bool cardQwen=AssistantHardwareIsP100AQwen(backend);
 		bool fast=AssistantHardwareIsP100AFast(backend);
 		bool attention=AssistantHardwareIsP100AAttention(backend);
+		bool throughput=AssistantHardwareIsP100AThroughput(backend);
 		if (cardQwen) {
 			prompt=fPending;
-			fDisplay=attention?"P100A Attention Qwen3-0.6B — matrices and attention run on card; CPU validation OFF.\n"
+			fDisplay=throughput?"P100A Throughput Qwen3-0.6B — up to120 row workers; CPU validation OFF.\n"
+				"Whole projections + grouped card attention. Hybrid host KV/norms; eight tokens, no tools/history.\n"
+				:attention?"P100A Attention Qwen3-0.6B — matrices and attention run on card; CPU validation OFF.\n"
 				"Experimental PIO-staged KV; may be slower than Fast. Eight tokens; no tools/history.\n"
 				:fast?"P100A Fast Qwen3-0.6B — CPU validation OFF; experimental, no CPU-speedup guarantee.\n"
 				"CPU attention remains. Device safety checks retained. Eight output tokens; no tools/history.\n"

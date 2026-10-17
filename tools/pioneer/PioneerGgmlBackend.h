@@ -20,6 +20,7 @@ struct PioneerGgmlStats {
 	uint64_t tensors,bytes,uploads,matvecs,attentionOps,attentionTiles;
 	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds,attentionSeconds;
 	bool failed;
+	unsigned peakWorkers;
 };
 bool PioneerGgmlSnapshot(PioneerGgmlStats& stats);
 bool PioneerGgmlFinish();
@@ -45,6 +46,10 @@ void PioneerGgmlAttention(bool enabled);
 // 0: legacy; 1: require bulk capability; 2: prefer it when advertised at
 // initial open, before BEGIN. Never switch/fall back after any transfer error.
 void PioneerGgmlBulkUpload(unsigned mode);
+// Separate throughput candidate: whole projections, shared device input,
+// up to120 workers and one call per complete grouped-head attention op.
+// Still host norms/RoPE/KV; NOT a device-resident decoder or speed guarantee.
+void PioneerGgmlFleet(unsigned workers);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);

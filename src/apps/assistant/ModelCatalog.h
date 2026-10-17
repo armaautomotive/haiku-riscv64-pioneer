@@ -51,7 +51,7 @@ static inline bool AssistantModelSupportsBackend(size_t index,const char* backen
 {
 	return index<kAssistantModelCount && kAssistantModels[index].compatible && backend
 		&& (!strcmp(AssistantModelBackend(index),backend) || (index==0
-			&& (!strcmp(backend,"p100a-qwen") || !strcmp(backend,"p100a-qwen-fast") || !strcmp(backend,"p100a-qwen-attention"))));
+			&& (!strcmp(backend,"p100a-qwen") || !strcmp(backend,"p100a-qwen-fast") || !strcmp(backend,"p100a-qwen-attention") || !strcmp(backend,"p100a-qwen-throughput"))));
 }
 
 #endif

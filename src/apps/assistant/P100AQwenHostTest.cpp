@@ -23,10 +23,14 @@ int main(int argc,char** argv)
 		assert(qwen.SetMode(false,false,error)); HostOnly();
 		assert(qwen.SetMode(true,true,error)); HostOnly();
 		assert(qwen.SetMode(false,true,error)); HostOnly();
+		assert(qwen.SetMode(false,true,error,true)); HostOnly();
+		assert(qwen.SetValidation(true,error)); HostOnly();
+		assert(qwen.SetValidation(false,error)); HostOnly();
+		assert(qwen.SetMode(false,true,error,false)); HostOnly();
 		assert(qwen.SetMode(false,false,error)); HostOnly();
 		assert(qwen.Unload(error) && qwen.Unload(error) && !qwen.Faulted());
 		PioneerGgmlStats stats={}; assert(!PioneerGgmlSnapshot(stats));
 	}
 	llama_backend_free();
-	puts("PASS: HOST ONLY attention/Fast/checked graph changes, disabled CPU reference backend, idle unload/idempotence; zero uploads/matrices/attention ops. No decode/card/settings/chat operation.");
+	puts("PASS: HOST ONLY throughput/attention/Fast/checked graph changes, disabled CPU reference backend, idle unload/idempotence; zero uploads/matrices/attention ops. No decode/card/settings/chat operation.");
 }

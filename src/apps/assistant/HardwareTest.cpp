@@ -89,6 +89,11 @@ int main(int argc, char** argv)
 	assert(AssistantHardwareIsP100AFast("p100a-qwen-fast") && !AssistantHardwareIsP100AFast("p100a-qwen"));
 	assert(!AssistantHardwareIsP100AFast(NULL));
 	assert(AssistantHardwareIndex("p100a-qwen-attention")==4 && AssistantHardwareCanChat("p100a-qwen-attention"));
+	assert(AssistantHardwareIndex("p100a-qwen-throughput")==5 && AssistantHardwareCanChat("p100a-qwen-throughput"));
+	assert(AssistantHardwareIsP100AQwen("p100a-qwen-throughput") && AssistantHardwareIsP100AAttention("p100a-qwen-throughput"));
+	assert(AssistantHardwareIsP100AThroughput("p100a-qwen-throughput") && !AssistantHardwareIsP100AThroughput(NULL) && !AssistantHardwareIsP100AThroughput("p100a-qwen-attention"));
+	assert(AssistantHardwareSkipsValidation("p100a-qwen-throughput"));
+	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen-throughput"),"qwen-p100a-throughput"));
 	assert(AssistantHardwareIsP100AQwen("p100a-qwen-attention") && AssistantHardwareIsP100AAttention("p100a-qwen-attention"));
 	assert(!AssistantHardwareIsP100AAttention(NULL) && !AssistantHardwareIsP100AAttention("p100a-qwen-fast"));
 	assert(AssistantHardwareSkipsValidation("p100a-qwen-attention") && AssistantHardwareSkipsValidation("p100a-qwen-fast"));
@@ -102,6 +107,8 @@ int main(int argc, char** argv)
 	assert(!AssistantModelSupportsBackend(kAssistantTinyModel,"p100a-qwen"));
 	assert(AssistantModelSupportsBackend(0,"p100a-qwen-fast"));
 	assert(AssistantModelSupportsBackend(0,"p100a-qwen-attention"));
+	assert(AssistantModelSupportsBackend(0,"p100a-qwen-throughput"));
+	for (size_t index=1;index<kAssistantModelCount;index++) assert(!AssistantModelSupportsBackend(index,"p100a-qwen-throughput"));
 	for (size_t index=1;index<kAssistantModelCount;index++) assert(!AssistantModelSupportsBackend(index,"p100a-qwen-attention"));
 	for (size_t index=1;index<kAssistantModelCount;index++) assert(!AssistantModelSupportsBackend(index,"p100a-qwen-fast"));
 	assert(!AssistantModelSupportsBackend(0,NULL) && !AssistantModelSupportsBackend(kAssistantModelCount,"p100a-qwen"));
@@ -117,6 +124,7 @@ int main(int argc, char** argv)
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-fast", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-attention", 1) == B_OK);
+	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-throughput", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "unknown", 1) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 0) == B_BAD_VALUE);

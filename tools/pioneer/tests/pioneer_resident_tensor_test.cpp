@@ -12,6 +12,7 @@ struct TensorIO {
 	bool compact=false;
 	bool native=false;
 	bool exact=false;
+	bool whole=false;
 	TensorIO():storage(16*1024*1024/4,0xfeedface) {}
 	bool Upload(uint64_t offset,const uint32_t* data) {
 		assert(!(offset%4096) && offset/4+1024<=storage.size());
@@ -37,7 +38,7 @@ struct TensorIO {
 		return true;
 	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* x,const uint32_t* scales,uint32_t* y) {
-		assert(PioneerMatvecShape(inputs,outputs) && !(offset%4096)); if (++calls==callFail) return false;
+		assert((whole?PioneerQ8CompactTensorShape(inputs,outputs):PioneerMatvecShape(inputs,outputs)) && !(offset%4096)); if (++calls==callFail) return false;
 		for (unsigned row=0;row<outputs;row++) {
 			float sum=0;
 			for (unsigned block=0;block<inputs/32;block++) {
@@ -173,6 +174,18 @@ int main() {
 		assert(!c.Q8Weights(&first,8,1024,32,[&](unsigned r,unsigned b,uint8_t* out) { QBlock(r,b,out,true); out[2]=128; return true; },offset));
 		assert(c.Failed() && !quant.uploads && !quant.calls);
 		assert(!c.Q8Multiply(0,1024,32,NULL,output) && !quant.calls);
+	}
+	// Whole learned projection is explicit: same packed bytes and exact
+	// sums, but an8192-row matrix makes ONE transport call instead of two.
+	{
+		TensorIO quant; quant.compact=quant.native=quant.exact=quant.whole=true;
+		PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024,false,true,true,true,true);
+		assert(c.Q8Weights(&first,8,1024,8192,[&](unsigned r,unsigned b,uint8_t* out) { QBlock(r,b,out,true); return true; },offset));
+		std::vector<uint8_t> x(32*34); for (unsigned b=0;b<32;b++) QBlock(4,b,x.data()+b*34);
+		std::vector<float> y(8192);
+		assert(c.Q8Multiply(offset,1024,8192,x.data(),y.data()) && quant.calls==1 && c.matvecCalls==1);
+		for (unsigned row=0;row<8192;row++) assert(y[row]==QReference(row,1024,x.data(),true,true));
+		quant.callFail=2; assert(!c.Q8Multiply(offset,1024,8192,x.data(),y.data()) && c.Failed() && quant.calls==2);
 	}
 	for (unsigned fault=0;fault<3;fault++) {
 		TensorIO quant; PioneerResidentTensorCache<TensorIO> c(quant,16*1024*1024,false,true,fault!=0,true);

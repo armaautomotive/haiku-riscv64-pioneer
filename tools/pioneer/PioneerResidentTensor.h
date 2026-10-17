@@ -58,11 +58,12 @@ template<class IO> class PioneerResidentTensorCache {
 	const bool compact;
 	const bool native;
 	const bool f32Scales;
+	const bool wholeProjection;
 	unsigned mode=0; // one immutable packing/operation format per cache
 	std::vector<Entry> entries;
 public:
 	uint64_t uploadedPages=0,matvecCalls=0;
-	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false):io(transport),capacity(bytes),fp16(half),compact(rawBytes),native(hardwareUnpack),f32Scales(exactScales) { failed=(native && (!compact || fp16)) || (f32Scales && !native); }
+	PioneerResidentTensorCache(IO& transport,uint64_t bytes,bool half=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool whole=false):io(transport),capacity(bytes),fp16(half),compact(rawBytes),native(hardwareUnpack),f32Scales(exactScales),wholeProjection(whole) { failed=(native && (!compact || fp16)) || (f32Scales && !native) || (whole && !exactScales); }
 	bool Failed() const { return failed; }
 	size_t Tensors() const { return entries.size(); }
 	uint64_t Bytes() const { return next; }
@@ -190,9 +191,12 @@ public:
 				vector[k/2]|=uint32_t(PioneerInt8Operand(q))<<(16*(k&1));
 			}
 		}
-		uint32_t result[TT_RUNTIME_MATVEC_OUTPUTS_MAX];
-		for (unsigned row=0;row<outputs;row+=TT_RUNTIME_MATVEC_OUTPUTS_MAX) {
-			unsigned n=outputs-row; if (n>TT_RUNTIME_MATVEC_OUTPUTS_MAX) n=TT_RUNTIME_MATVEC_OUTPUTS_MAX;
+		uint32_t local[TT_RUNTIME_MATVEC_OUTPUTS_MAX];
+		std::vector<uint32_t> large(wholeProjection?outputs:0);
+		uint32_t* result=wholeProjection?large.data():local;
+		unsigned step=wholeProjection?outputs:unsigned(TT_RUNTIME_MATVEC_OUTPUTS_MAX);
+		for (unsigned row=0;row<outputs;row+=step) {
+			unsigned n=outputs-row; if (n>step) n=step;
 			uint64_t position=offset+uint64_t(row/16)*(inputs/(compact?32:16))*576;
 			if (!io.Q8Matvec(position,inputs,n,vector,scales,result)) { failed=true; return false; }
 			matvecCalls++;

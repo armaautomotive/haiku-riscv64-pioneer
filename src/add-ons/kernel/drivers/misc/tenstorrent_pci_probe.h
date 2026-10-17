@@ -29,6 +29,9 @@
 #include "PioneerResidentStore.h"
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerRuntimeDual.h"
+#include "PioneerComputeFleet.h"
+#include "PioneerRuntimeFleet.h"
+#include <stddef.h>
 #include "PioneerAttentionTile.h"
 #include "PioneerRuntimeAttention.h"
 #include "PioneerOutputBufferProbe.h"
@@ -164,6 +167,10 @@
 #define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST (B_DEVICE_OP_CODES_END + 0x54ce)
 #define TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED (B_DEVICE_OP_CODES_END + 0x54cf)
 #define TT_PCI_PROBE_PIONEER_BULK_UPLOAD (B_DEVICE_OP_CODES_END + 0x54d0)
+#define TT_PCI_PROBE_PIONEER_FLEET_NOC (B_DEVICE_OP_CODES_END + 0x54d1)
+#define TT_PCI_PROBE_PIONEER_FLEET_NOC_SUPPORT (B_DEVICE_OP_CODES_END + 0x54d2)
+#define TT_PCI_PROBE_PIONEER_RUNTIME_Q8_FLEET (B_DEVICE_OP_CODES_END + 0x54d3)
+#define TT_PCI_PROBE_PIONEER_FLEET_ATTENTION (B_DEVICE_OP_CODES_END + 0x54d4)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -175,7 +182,9 @@
 #define TT_PIONEER_CAP_ATTENTION_TILE_TEST 524288U
 #define TT_PIONEER_CAP_ATTENTION_TILE_SHARED 1048576U
 #define TT_PIONEER_CAP_BULK_UPLOAD 2097152U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD)
+#define TT_PIONEER_CAP_Q8_FLEET 4194304U
+#define TT_PIONEER_CAP_FLEET_ATTENTION 8388608U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD | TT_PIONEER_CAP_Q8_FLEET | TT_PIONEER_CAP_FLEET_ATTENTION)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -269,6 +278,12 @@ struct tt_pioneer_compute_noc_result {
 	tt_compute_noc_result noc;
 };
 
+struct tt_pioneer_fleet_noc_result {
+	tt_pioneer_dram_samples_result baseline;
+	uint32_t version,checked,passed,recovery_required;
+	tt_compute_noc_result worker[TT_PIONEER_WORKERS];
+};
+
 struct tt_pioneer_resident_read_result {
 	tt_pioneer_compute_noc_result baseline;
 	tt_resident_read_result read;
@@ -338,6 +353,35 @@ struct tt_pioneer_runtime_dual_matvec {
 	tt_pioneer_runtime_q8_matvec q8; // result is the all-worker aggregate
 	tt_runtime_matvec_result core[2]; // independent completion/counter proofs
 };
+
+// Whole learned projection, no caller pointers/coordinates/code. Deliberately
+// separate from the old4096-row ABI. Maximum1MiB output is copied only after
+// every participating worker has completed AND stopped cleanly.
+struct tt_pioneer_runtime_fleet {
+	uint32_t version,inputs,outputs,workers;
+	uint64_t weight_offset;
+	uint32_t input[TT_RUNTIME_MATVEC_INPUTS_MAX/2],scale[TT_RUNTIME_MATVEC_INPUTS_MAX/32];
+	tt_runtime_fleet_result result;
+	uint32_t output[TT_FLEET_OUTPUTS_MAX];
+};
+static_assert(offsetof(tt_pioneer_runtime_fleet,output)==sizeof(tt_pioneer_runtime_fleet)-TT_FLEET_OUTPUTS_MAX*sizeof(uint32_t),"fleet inline output has no tail padding");
+static inline size_t PioneerFleetRequestBytes(unsigned outputs) {
+	return outputs>=32 && outputs<=TT_FLEET_OUTPUTS_MAX && !(outputs&31)
+		?sizeof(tt_pioneer_runtime_fleet)-(TT_FLEET_OUTPUTS_MAX-outputs)*sizeof(uint32_t):0;
+}
+
+// Eight grouped-head tiles, one host call, exact bounded prefix payload.
+// prefix[group*tokens*128 + {0,tokens*64}] contains packed F16 K/V.
+struct tt_pioneer_fleet_attention {
+	uint32_t version,tokens,reserved[2];
+	uint32_t query[2048],output[2048];
+	tt_attention_tile_result result[8];
+	uint32_t prefix[256*1024];
+};
+static_assert(offsetof(tt_pioneer_fleet_attention,prefix)==sizeof(tt_pioneer_fleet_attention)-256*1024*sizeof(uint32_t),"attention inline prefix has no tail padding");
+static inline size_t PioneerFleetAttentionBytes(unsigned tokens) {
+	return tokens && tokens<=256?sizeof(tt_pioneer_fleet_attention)-(256-tokens)*1024*sizeof(uint32_t):0;
+}
 static_assert(sizeof(tt_pioneer_runtime_dual_matvec)==sizeof(tt_pioneer_runtime_q8_matvec)+2*sizeof(tt_runtime_matvec_result),"dual proof ABI has no hidden payload or pointer");
 
 struct tt_pioneer_resident_stream {

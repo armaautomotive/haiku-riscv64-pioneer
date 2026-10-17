@@ -2,7 +2,86 @@
 
 ## Status
 
-October16 current attention checkpoint: the installed Assistant can execute
+### October16: separate multicore throughput path
+
+The new explicit `p100a-qwen-throughput` path keeps the earlier checked,
+Fast and Attention modes. It does not create/decode an independent CPU model
+in normal use. All device ownership, complete-row coverage, finite-output,
+counter/park/stop and cold-recovery gates remain. This is still a hybrid,
+not a device-resident decoder or a claim that every Qwen model is supported.
+
+Native read-only identity/source/idle checks passed on all120 fixed compute
+cores, including the harvested die's logical-to-physical X translation.
+Native real-Qwen projection tests then passed on1,2,4 and120 workers, with
+zero independent IEEE-FMA bit differences and END2/PCI1/host1/cold0. The
+120-worker3840-row test covered all workers on three changed public vectors.
+The immutable existing compensated bulk math image is unchanged. A separately
+saved RV32I prelude at`0x71000` lets peers pull the16KiB input/scales region
+from owned worker0 over NoC and poisons each local output before computation.
+It issues no host DMA. Its binary SHA256 is
+`a6bd488515f395cab6ac81961af03dbdc65aa708bed718b4fe2ccab1462f7fae`.
+
+The version2 whole-projection ABI has bounded inline input/output, no caller
+pointer/coordinate/program/device address, and copies only the active rows.
+It can cover the whole151936-row vocabulary with one call, instead of38.
+An additional grouped-attention ABI executes all eight existing head-group
+tiles in one call and publishes no output unless every proof succeeds.
+Qwen0.6B therefore uses197 matrix+28 attention calls per position, versus
+234+224 previously. CPU norms/RoPE/activation quantization, KV storage/prefix
+staging and full-vocabulary result readback remain;225 calls is NOT zero.
+Small projections use fewer workers; more workers alone can be slower.
+
+The initial native all-core candidate exposed redundant120-core audits on
+every matrix after attention was prepared. Its early full-model positions
+were CPU-identical but took about17s each, worse than the earlier~11s card
+attention path. It is not a performance success. The revised controller
+audits the whole prepared fleet at actual program handoffs and teardown,
+while each projection retains every participating worker's live local and
+completion proofs. Shared PCI/PCIe-source state is checked at phase boundaries
+instead of resampled for each worker. Legacy debug paths are unchanged.
+The whole projection/attention graph passed all22 independent full-vocabulary
+CPU logit checks exactly (cosine1/L2=0), four greedy tokens,4334 matrices,
+616 attention ops/4928 tiles and clean END. This initial controller took
+769.734s total and0.051809tokens/s warm; it was rejected as a speed result.
+
+The revised driver also allocates/copies the exact bounded inline request,
+not a new maximum1MiB heap object for every small projection. Native changed-
+vector tests passed again with zero bit differences and clean END:
+
+| revised projection | workers | warm whole operation |
+| --- | ---: | ---: |
+| K1024/N64 |2 |5.949ms (initial candidate21.683ms) |
+| K1024/N3840 |120 |192.122ms (initial candidate267.934ms) |
+| real Qwen1.7B FFN-down K6144/N64 |2 |9.197ms |
+
+The1.7B result qualifies only that bounded projection, NOT full1.7B generation
+or its Assistant catalog entry. All120 workers participate in large matrices,
+but launch/stop and handoff are still host-driven and serialize significant
+control traffic. A persistent device dispatcher/barrier, resident KV/decoder
+intermediates, multi-bank weights and reduced vocabulary readback remain
+necessary before practical acceleration/zero per-op host round trips can be
+claimed. The installed Assistant's end-to-end result is recorded separately.
+
+Offline ASan/UBSan checks cover120 unique physical workers, all dropped TLB
+writes, assembled input fetch/output poison with all supported K widths and
+4096 rows, exact arithmetic, counter wrap and fault parking. Runtime tests
+cover every worker's completion/PC/counter/stop faults, every four-worker
+mapping failure, shared PCI/source failures, global quarantine and no peer
+reset after uncertainty. Real-client synthetic-syscall tests reject all
+worker/head-group proof faults without partial results, retry or fallback;
+missing capabilities refuse before BEGIN. Pinned ggml tests pass both paths
+against84 corrected public attention captures. The earlier pre-precision
+`public-fixtures-2tokens` captures are not the corrected goldens and fail
+the unchanged legacy path too; use`precision-public/public-fixtures`.
+
+Evidence is isolated in`/boot/home/pioneer-fleet-20261016-a/`, with the proven
+bulk driver backed up as`original-driver-f29ab031`. Model files, firmware,
+kernel, SD-free boot configuration and the user's dirty llama.cpp submodule
+are unchanged. Native runtime libraries remain the pinned CPU-baseline build.
+
+### Earlier two-core attention/loading checkpoint
+
+Earlier October16 attention checkpoint: the installed Assistant can execute
 Qwen3-0.6B Q8_0 learned matrices AND attention on the P100A. QK/PV run on the
 SFPU; reductions and softmax run on card TRISC0. The complete standalone
 22-position test has CPU-identical logits and greedy tokens, and the
@@ -47,7 +126,7 @@ limitations do not supersede the current Qwen correctness/integration results.
 
 The existing exact two-core path is a bring-up runtime, not a throughput-
 optimized decoder. It performs234 matrix ioctls and224 grouped-head attention
-ioctls per position. Only two fixed compute workers are qualified, weights
+ioctls per position. At that checkpoint only two compute workers were qualified, weights
 use one GDDR bank, and the full attention prefix is host-staged. Neither
 "on card" nor disabling independent CPU validation implies fast inference.
 No evidence currently establishes1000 tokens/s, support for every Qwen

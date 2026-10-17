@@ -15,12 +15,16 @@ class PioneerResidentDevice {
 	bool dual=false,reuse=false;
 	bool attention=false;
 	bool bulkUpload=false;
+	unsigned fleet=0;
+	tt_pioneer_runtime_fleet* fleetRequest=NULL;
+	tt_pioneer_fleet_attention* fleetAttention=NULL;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
-	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0) {
-		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || groupedUpload>2 || (groupedUpload && !reuseInput) || !PioneerResidentCapacity(bytes)) return false;
+	unsigned peakWorkers=0;
+	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); }
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0) {
+		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || groupedUpload>2 || (groupedUpload && !reuseInput) || workerLimit>120 || (workerLimit && (!reuseInput || !groupedUpload)) || !PioneerResidentCapacity(bytes)) return false;
 		fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 		if (fd<0) { perror("resident open"); failed=true; return false; }
 		tt_resident_session_result s={};
@@ -36,6 +40,10 @@ public:
 		dual=twoCores;
 		reuse=reuseInput;
 		attention=deviceAttention;
+		fleet=workerLimit;
+		if (fleet && (!(s.capabilities&TT_PIONEER_CAP_Q8_FLEET) || (attention && !(s.capabilities&TT_PIONEER_CAP_FLEET_ATTENTION)))) {
+			fprintf(stderr,"Explicit multicore/whole-attention capability unavailable; no BEGIN/compute/fallback\n"); failed=true; return false;
+		}
 		bulkUpload=groupedUpload && (s.capabilities&TT_PIONEER_CAP_BULK_UPLOAD);
 		if (groupedUpload==1 && !bulkUpload) { fprintf(stderr,"Explicit owned bulk upload unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		if (fp16 && !(s.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec unavailable; no compute submitted\n"); failed=true; return false; }
@@ -53,6 +61,7 @@ public:
 		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
 		if (dual) fprintf(stderr,"Two fixed bulk workers: disjoint rows, both complete/stop proofs required; NOT a CPU speedup qualification\n");
 		if (reuse) fprintf(stderr,"Explicit per-core exact-byte activation reuse; output poison/full completion proofs retained\n");
+		if (fleet) fprintf(stderr,"Throughput candidate: up to%u row workers, one shared activation upload/whole projection, on-card input distribution/output poison; no CPU reference validation implied\n",fleet);
 		requestBytes=dual?sizeof(tt_pioneer_runtime_dual_matvec):sizeof(tt_pioneer_runtime_q8_matvec);
 		request=(tt_pioneer_runtime_matvec*)calloc(1,requestBytes);
 		if (!request) { failed=true; return false; }
@@ -122,6 +131,25 @@ public:
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
+		if (fleet) {
+			// Measured fixed-worker dispatch is expensive for tiny row sets.
+			// Use2 for small learned projections; the whole vocabulary uses
+			// up to120. More cores must not be equated with a faster decode.
+			unsigned limit=outputs<=6144 && fleet>2?2:fleet;
+			PioneerFleetPlan plan;
+			if (!active || failed || finished || cold || !q8 || !vector || !scales || !result || !PioneerFleetPartition(inputs,outputs,limit,plan)) return false;
+			if (!fleetRequest) fleetRequest=(tt_pioneer_runtime_fleet*)malloc(sizeof(tt_pioneer_runtime_fleet));
+			if (!fleetRequest) { failed=true; return false; }
+			size_t size=PioneerFleetRequestBytes(outputs); auto& p=*fleetRequest;
+			memset(&p,0,size); p.version=2; p.inputs=inputs; p.outputs=outputs; p.workers=limit; p.weight_offset=offset;
+			memcpy(p.input,vector,inputs*2); memcpy(p.scale,scales,inputs/32*4);
+			int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_Q8_FLEET,&p,size); cold=p.result.recovery_required!=0;
+			if (status || !PioneerFleetProof(p.result,inputs,outputs,limit)) {
+				fprintf(stderr,"Whole-projection STOP status%d state%u workers%u s/c/s%u/%u/%u cold%u; close-only, no fallback/retry\n",status,p.result.state,p.result.workers,p.result.started,p.result.completed,p.result.stopped,cold);
+				failed=true; closeOnly=true; return false;
+			}
+			memcpy(result,p.output,outputs*4); calls++; if (plan.workers>peakWorkers) peakWorkers=plan.workers; return true;
+		}
 		if (!active || failed || finished || cold || !q8 || !vector || !scales || !result || !(dual?PioneerRuntimeDualShape(inputs,outputs):compact?PioneerQ8CompactShape(inputs,outputs):PioneerMatvecShape(inputs,outputs))) return false;
 		auto* quant=(tt_pioneer_runtime_q8_matvec*)request;
 		memset(quant,0,requestBytes); request->version=1; request->inputs=inputs; request->outputs=outputs; request->weight_offset=offset;
@@ -137,6 +165,29 @@ public:
 			fprintf(stderr,"Resident two-core proof mismatch; output not accepted, close-only, no fallback/retry\n"); failed=true; closeOnly=true; return false;
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
+	}
+	bool AttentionGroups(unsigned tokens,const uint32_t* query,const uint32_t* keys,const uint32_t* values,uint32_t* output) {
+		if (!active || failed || finished || cold || !fleet || !attention || !query || !keys || !values || !output || !PioneerFleetAttentionBytes(tokens)) return false;
+		if (!fleetAttention) fleetAttention=(tt_pioneer_fleet_attention*)malloc(sizeof(tt_pioneer_fleet_attention));
+		if (!fleetAttention) { failed=true; return false; }
+		auto& p=*fleetAttention; size_t bytes=PioneerFleetAttentionBytes(tokens);
+		memset(&p,0,bytes); p.version=1; p.tokens=tokens; memcpy(p.query,query,8192);
+		for (unsigned g=0;g<8;g++) {
+			if (!PioneerAttentionTileInputValid(tokens,query+g*256,keys+g*tokens*64,values+g*tokens*64)) return false;
+			memcpy(p.prefix+g*tokens*128,keys+g*tokens*64,tokens*256);
+			memcpy(p.prefix+g*tokens*128+tokens*64,values+g*tokens*64,tokens*256);
+		}
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_FLEET_ATTENTION,&p,bytes);
+		bool proved=!status;
+		for (const auto& r:p.result) {
+			cold |= r.recovery_required!=0;
+			proved &= r.version==1 && r.state==TT_ATTN_TILE_PASSED && r.prepared && r.context_reset && r.started && r.completed && r.stopped && !r.recovery_required
+				&& r.tokens==tokens && r.count==tokens && !r.nonfinite && r.staged_words==256+tokens*128
+				&& r.phase==TT_ATTENTION_TILE_DONE && r.marker==TT_ATTENTION_TILE_MARKER && r.pc[0]==TT_ATTENTION_TILE_PARK && r.pc[1]==r.pc[0];
+			for (unsigned w=0;w<4;w++) proved &= r.before[w]==r.after[w];
+		}
+		if (!proved) { failed=true; closeOnly=true; fprintf(stderr,"Whole-attention STOP status%d cold%u; close-only, no fallback/retry\n",status,cold); return false; }
+		memcpy(output,p.output,8192); attentionCalls+=8; return true;
 	}
 	bool AttentionTile(unsigned tokens,const uint32_t* query,const uint32_t* keys,const uint32_t* values,uint32_t* result) {
 		if (!active || failed || finished || cold || !attention || !result
