@@ -2395,7 +2395,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={14,119,3,1,8192}; // v14 separately qualifies eight owned attention-group workers
+	tt_coordinated_support support={15,119,3,1,8192}; // v15 adds diagnostic read-only per-stage clock metadata
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2476,7 +2476,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		c->runtimeCoreMode=9;
 		ready=ready && PioneerLayerClose(c->io,dram,c->fleet[0].noc,c->lease,c->layer,true)
 			&& c->io.MapAttention() && PioneerAttentionTilePrepare(c->io,dram,c->fleet[0].noc,c->lease,c->attention,true)
-			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL);
+			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel);
 		if (ready && (!PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,true)
 			|| !PioneerWideOutputMapStable(c->io,c->wideHost,c->host,c->bulkHost))) { c->decoder.unsafe=true; ready=false; }
 		if (ready) {
@@ -2514,6 +2514,22 @@ DecoderRunControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		status=user_memcpy(data,request,length);
 	}
 	release_sem(sLock); free(request); return status;
+}
+
+static status_t
+DecoderStageProfileControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_decoder_stage_profile)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
+	auto* c=cookie->context;
+	// PRIVATE CPU snapshot only. No map,MMIO,DMA,probe,launch or reset.
+	if (!c || sRuntimeOwner!=cookie || c->runtimeCoreMode!=9 || !c->decoderReady || !c->decoder.profiling
+		|| c->decoder.running || c->decoder.unsafe || c->decoder.stages.magic!=0x31525044) status=B_DEV_NOT_READY;
+	else status=user_memcpy(data,&c->decoder.stages,sizeof(c->decoder.stages));
+	release_sem(sLock); return status;
 }
 
 static status_t
@@ -3228,6 +3244,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return DecoderModelControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_DECODER_RUN)
 		return DecoderRunControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_DECODER_STAGES)
+		return DecoderStageProfileControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_SPAN)
 		return LayerSpanControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT)

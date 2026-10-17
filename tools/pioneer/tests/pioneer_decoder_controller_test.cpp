@@ -5,7 +5,7 @@
 struct DecoderControllerIO:WideControllerIO {
 	std::vector<uint32_t> decoderBackup=std::vector<uint32_t>(8192);
 	PioneerDecoderLease* decoder=nullptr;
-	bool attentionLost=false,mutateSequence=false,mutateModel=false,peerMaps=false,peerMapsLost=false;
+	bool attentionLost=false,mutateSequence=false,mutateModel=false,peerMaps=false,peerMapsLost=false,badStage=false;
 	uint32_t* DecoderSavedWords() { return decoderBackup.data(); }
 	bool DecoderMappingStable() { return LayerMappingStable(); }
 	bool DecoderAttentionMappingStable() { return !(attentionLost && starts); }
@@ -18,7 +18,7 @@ struct DecoderControllerIO:WideControllerIO {
 			WideControllerIO::RuntimeResetWrite(value); return;
 		}
 		assert(!current && !quarantined && !wideQuarantined && !wideDirty && C().reset==0x87ffff && C().code[0]==TT_DECODER_BOOT && decoder->running);
-		for (unsigned i=0;i<8192;i++) assert(layerProgram[i]==(decoder->parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i)));
+		for (unsigned i=0;i<8192;i++) assert(layerProgram[i]==PioneerDecoderCodeWord(*decoder,i));
 		auto& j=*reinterpret_cast<PioneerDecoderJob*>(data.data()+6144); assert(PioneerDecoderJobValid(j,decoder->parallel?2:1));
 		for (unsigned w=1;w<120;w++) assert(fleet[w].Compute().running && !fleet[w].persistentIdle
 			&& fleet[w].persistentSequence==j.sequence[w-1]+PioneerDecoderSequenceAdvance(w-1,decoder->parallel)-1);
@@ -34,20 +34,27 @@ struct DecoderControllerIO:WideControllerIO {
 		if (mutateSequence) j.sequence[118]++; if (mutateModel) j.layers[27].k+=4096;
 		if (!omitWidePayload) for (unsigned i=0;i<151936;i++) wideData[i]=nonfinite && !i?0x7f800000:0x40000000;
 		status[0]=TT_DECODER_DONE; status[1]=119+(badCount?1:0); status[2]=badMarker?TT_COORDINATOR_FAULT:TT_COORDINATOR_MARKER;
+		if (decoder->profiling) {
+			tt_decoder_stage_profile p={}; p.magic=0x31525044; p.nonce=j.nonce; p.tokens=tokens; p.version=1;
+			const unsigned c[]={196,113,113,28,28,28,1,1};
+			for (unsigned i=0;i<8;i++) { p.cycles[i]=i==7?100:i+1; p.calls[i]=c[i]; }
+			if (badStage) p.reserved[11]=1;
+			for (unsigned i=0;i<32;i++) data[(TT_DECODER_STAGE_L1-TT_BULK_UPLOAD_L1)/4+i]=reinterpret_cast<uint32_t*>(&p)[i];
+		}
 	}
 };
 struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	PioneerDecoderLease decoder; PioneerWideOutputLease wide; PioneerAttentionTileLease attention; PioneerResidentAttentionLease kv;
-	PioneerAttentionTileLease peers[8]; bool parallel;
+	PioneerAttentionTileLease peers[8]; bool parallel,profiling;
 	tt_decoder_candidate_result decoded={}; PioneerDecoderJob model={};
-	DecoderControllerFixture(bool concurrent=false):parallel(concurrent) {
+	DecoderControllerFixture(bool concurrent=false,bool timing=false):parallel(concurrent),profiling(timing) {
 		io.decoder=&decoder; attention.ready=attention.saved=attention.resident=true; kv.reserved=kv.payloadBlocks=kv.coordinated=true;
 		model.finalNorm=model.vocabulary=0x04000000;
 		for (auto& l:model.layers) for (unsigned i=0;i<11;i++) reinterpret_cast<uint32_t*>(&l)[i]=0x04000000;
 		if (parallel) { io.peerMaps=true; for (unsigned i=0;i<8;i++) { peers[i].saved=peers[i].ready=peers[i].code_dirty=peers[i].coordinatedGroup=true; fleet[i+1].attentionDispatch=true; } }
 	}
 	bool PrepareDecoder() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,parallel,parallel?peers:nullptr); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,parallel,parallel?peers:nullptr,profiling); }
 	bool Decode(unsigned tokens=1) {
 		uint32_t input[1024],rope[128]={}; for (auto& value:input) value=0x3f000000; for (unsigned i=0;i<64;i++) rope[2*i]=0x3f800000;
 		std::vector<uint32_t> output(151936,0xabcdef00);
@@ -64,6 +71,10 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 int main()
 {
 	(void)Run; (void)Input;
+	for (bool bad:{false,true}) { DecoderControllerFixture f(true,true); assert(f.PrepareDecoder()); f.io.badStage=bad;
+		for (unsigned n:{1U,2U,3U}) { assert(f.Decode(n)); assert(PioneerDecoderStageValid(f.decoder.stages,f.coordinator.nonce,n)==!bad); }
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true));
+	}
 	{ DecoderControllerFixture f(true); assert(f.PrepareDecoder()); for (unsigned n:{1U,2U,3U,1U}) assert(f.Decode(n));
 		for (unsigned word=0;word<sizeof(f.decoded)/4;word++) { auto r=f.decoded; reinterpret_cast<uint32_t*>(&r)[word]^=1;
 			if (word!=10) assert(!PioneerDecoderProof(r,1,f.coordinator.nonce,true)); }

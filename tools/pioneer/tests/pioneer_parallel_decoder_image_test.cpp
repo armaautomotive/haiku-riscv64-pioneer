@@ -22,7 +22,7 @@ struct ParallelDecoder:DecoderMachine {
 	unsigned issuedGroups=0,completedGroups=0,parallelBatches=0;
 	unsigned badGroupProof=0,corruptGroupOutput=0,dropGroupInput=0,failGroup=0;
 	bool delayFirst=false,delayed=false;
-	ParallelDecoder(const char* path,const DecoderSfpuImage& image,bool nz):DecoderMachine(path,image,nz,true),groupImage(image) {}
+	ParallelDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool profile=false):DecoderMachine(path,image,nz,true,profile),groupImage(image) {}
 	void CompleteGroups() {
 		assert(issuedGroups==255 && !completedGroups); parallelBatches++;
 		for (unsigned p=0;p<8;p++) {
@@ -90,6 +90,7 @@ struct ParallelDecoder:DecoderMachine {
 		if (transfers==badCounter) counts[at+3]++;
 	}
 };
+#ifndef PIONEER_PARALLEL_DECODER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); compactImage=true; DecoderSfpuImage image(argv[2],false,true);
@@ -101,3 +102,4 @@ int main(int argc,char** argv)
 		assert(!m.RunDecoder() && !m.hostWrites); }
 	puts("PASS OFFLINE actual whole master + all8 actual scalar/SFPU KV groups,all8 dispatched BEFORE any wait,2 positions/exact KV/full logits/counters/119 sequences,delayed completion and per-word/fault refusal;matrix peers independently modeled,NOT native concurrency/performance qualification");
 }
+#endif

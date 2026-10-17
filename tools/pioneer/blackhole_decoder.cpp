@@ -8,6 +8,7 @@
 #include "PioneerGraphNorm.h"
 #include "PioneerGraphRope.h"
 #include "PioneerCoordinatedAttentionProof.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderStageProfile.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include <stddef.h>
 #define coordinator_main decoder_matrix_main
@@ -28,6 +29,21 @@
 extern "C" void attention_fault_park() { coordinator_fault_park(); }
 static float* Floats(unsigned address) { return reinterpret_cast<float*>(address); }
 static volatile PioneerDecoderJob& DecoderJob() { return *reinterpret_cast<volatile PioneerDecoderJob*>(TT_DECODER_JOB_BASE); }
+#if PIONEER_COORDINATOR_STAGE_PROFILE
+// Tenstorrent's get_timestamp_32b() reads this SAME documented timer.
+// https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/hw/inc/internal/tt-1xx/risc_common.h
+// READ ONLY:never arm/freeze/write performance-control registers.
+static unsigned DecoderStageClock() { Fence(); unsigned t=*Words(0xffb121f0); Fence(); return t; }
+static void DecoderStageEnd(unsigned slot,unsigned start) {
+	unsigned elapsed=DecoderStageClock()-start;
+	Words(TT_DECODER_STAGE_L1)[4+slot]+=elapsed; Words(TT_DECODER_STAGE_L1)[12+slot]++; Fence();
+}
+#define DECODER_STAGE_BEGIN() unsigned stageStart=DecoderStageClock()
+#define DECODER_STAGE_END(slot) DecoderStageEnd(slot,stageStart)
+#else
+#define DECODER_STAGE_BEGIN()
+#define DECODER_STAGE_END(slot)
+#endif
 static void DecoderCopy(unsigned destination,unsigned source,unsigned words)
 {
 	for (unsigned i=0;i<words;i++) Words(destination)[i]=Words(source)[i];
@@ -53,6 +69,7 @@ static void DecoderRead(unsigned destination,uint32_t source,unsigned bytes,uint
 }
 static void DecoderQuantize(unsigned source,unsigned n)
 {
+	DECODER_STAGE_BEGIN();
 	if (n!=1024 && n!=2048 && n!=3072) coordinator_fault_park();
 	for (unsigned b=0;b<n/32;b++) {
 		float values[32]; uint32_t operand[16],scale=0;
@@ -63,9 +80,11 @@ static void DecoderQuantize(unsigned source,unsigned n)
 		for (unsigned i=0;i<16;i++) if (Words(0x80000)[b*16+i]!=operand[i]) coordinator_fault_park();
 		if (Words(0x80000+n*2)[b]!=scale) coordinator_fault_park();
 	}
+	DECODER_STAGE_END(2);
 }
 static void DecoderMatrix(uint32_t base,unsigned k,unsigned n,uint32_t (&total)[4],bool final=false)
 {
+	DECODER_STAGE_BEGIN();
 	volatile uint32_t* j=Words(0x140000); volatile auto& root=DecoderJob();
 	for (unsigned i=0;i<64;i++) j[i]=0;
 	j[0]=0x31445243; j[1]=final?6:1; j[2]=119; j[3]=k; j[4]=n; j[5]=base; j[6]=root.nonce;
@@ -77,9 +96,11 @@ static void DecoderMatrix(uint32_t base,unsigned k,unsigned n,uint32_t (&total)[
 	for (unsigned i=0;i<4;i++) total[i]+=Words(0x143000)[i];
 	for (unsigned i=0;i<peers;i++) root.sequence[i]++;
 	Fence();
+	DECODER_STAGE_END(final?6:0);
 }
 static void DecoderNorm(unsigned input,unsigned output,unsigned n,unsigned width,uint32_t weight,uint32_t (&total)[4])
 {
+	DECODER_STAGE_BEGIN();
 	DecoderRead(TT_DECODER_NORM,weight,width*4,total);
 	for (unsigned head=0;head<n;head+=width) {
 		if (!PioneerGraphRmsNorm(width,Floats(input)+head,1e-6f,Floats(output)+head)) coordinator_fault_park();
@@ -90,6 +111,7 @@ static void DecoderNorm(unsigned input,unsigned output,unsigned n,unsigned width
 		}
 	}
 	Fence();
+	DECODER_STAGE_END(1);
 }
 static void DecoderAddResidual()
 {
@@ -103,6 +125,7 @@ static void DecoderAddResidual()
 #if PIONEER_COORDINATOR_PARALLEL_ATTENTION
 static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 {
+	DECODER_STAGE_BEGIN();
 	volatile auto& root=DecoderJob(); volatile uint32_t* stats=Words(0x143000);
 	for (unsigned i=0;i<4;i++) stats[i]=0;
 	for (unsigned group=0;group<8;group++) {
@@ -147,12 +170,18 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		root.sequence[group]++; Fence();
 	}
 	for (unsigned i=0;i<4;i++) total[i]+=stats[i];
+	DECODER_STAGE_END(5);
 }
 #endif
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
 	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	DECODER_STAGE_BEGIN();
+#if PIONEER_COORDINATOR_STAGE_PROFILE
+	for (unsigned i=0;i<32;i++) Words(TT_DECODER_STAGE_L1)[i]=0;
+	Words(TT_DECODER_STAGE_L1)[1]=root.nonce; Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[3]=1; Fence();
+#endif
 	for (unsigned i=0;i<1024;i++) if ((Words(TT_DECODER_INPUT)[i]&0x7fffffff)>0x477fe000) return 0;
 	uint32_t before[8],total[4]={}; for (unsigned i=0;i<8;i++) before[i]=*Words(0xffb20000+CounterOffset(i));
 	DecoderCopy(TT_DECODER_HIDDEN,TT_DECODER_INPUT,1024);
@@ -168,8 +197,11 @@ extern "C" unsigned coordinator_main()
 		DecoderMatrix(l.k,1024,1024,total); DecoderCopy(TT_DECODER_K,0x84000,1024);
 		DecoderNorm(TT_DECODER_Q,TT_DECODER_Q,2048,128,l.qNorm,total);
 		DecoderNorm(TT_DECODER_K,TT_DECODER_K,1024,128,l.kNorm,total);
-		if (!PioneerGraphRopeNeox(2048,Floats(TT_DECODER_Q),rope,Floats(TT_DECODER_Q))
-			|| !PioneerGraphRopeNeox(1024,Floats(TT_DECODER_K),rope,Floats(TT_DECODER_K))) coordinator_fault_park();
+		{ DECODER_STAGE_BEGIN();
+			if (!PioneerGraphRopeNeox(2048,Floats(TT_DECODER_Q),rope,Floats(TT_DECODER_Q))
+				|| !PioneerGraphRopeNeox(1024,Floats(TT_DECODER_K),rope,Floats(TT_DECODER_K))) coordinator_fault_park();
+			DECODER_STAGE_END(3);
+		}
 		for (unsigned g=0;g<8;g++) for (unsigned i=0;i<64;i++) Words(0x142000)[g*128+i]
 			=PioneerAttentionToHalf(Floats(TT_DECODER_K)[g*128+i*2])|(uint32_t(PioneerAttentionToHalf(Floats(TT_DECODER_K)[g*128+i*2+1]))<<16);
 		DecoderCopy(0x140000,TT_DECODER_Q,2048);
@@ -184,7 +216,10 @@ extern "C" unsigned coordinator_main()
 		DecoderCopy(TT_DECODER_RESIDUAL,TT_DECODER_HIDDEN,1024);
 		DecoderNorm(TT_DECODER_HIDDEN,0x84000,1024,1024,l.ffnNorm,total); DecoderQuantize(0x84000,1024);
 		DecoderMatrix(l.gate,1024,3072,total); DecoderCopy(0x87000,0x84000,3072); DecoderMatrix(l.up,1024,3072,total);
-		for (unsigned i=0;i<3072;i++) Floats(0x84000)[i]=PioneerGraphSiluFast(Floats(0x87000)[i])*Floats(0x84000)[i];
+		{ DECODER_STAGE_BEGIN();
+			for (unsigned i=0;i<3072;i++) Floats(0x84000)[i]=PioneerGraphSiluFast(Floats(0x87000)[i])*Floats(0x84000)[i];
+			DECODER_STAGE_END(4);
+		}
 		Fence(); DecoderQuantize(0x84000,3072); DecoderMatrix(l.down,3072,1024,total); DecoderAddResidual();
 	}
 	DecoderNorm(TT_DECODER_HIDDEN,0x84000,1024,1024,root.finalNorm,total); DecoderQuantize(0x84000,1024);
@@ -193,5 +228,9 @@ extern "C" unsigned coordinator_main()
 	for (unsigned i=0;i<4;i++) stats[i]=total[i];
 	stats[5]=151936; stats[6]=root.nonce; stats[7]=8;
 	for (unsigned i=0;i<8;i++) stats[8+i]=before[i];
+	DECODER_STAGE_END(7);
+#if PIONEER_COORDINATOR_STAGE_PROFILE
+	Words(TT_DECODER_STAGE_L1)[0]=0x31525044; Fence();
+#endif
 	Fence(); return Complete(119);
 }

@@ -2,7 +2,46 @@
 
 ## Status
 
-### October17: concurrent-attention contract14 native test prepared (08:16 UTC)
+### October17: longer warm benchmark fails speed gate;stage profiler prepared (08:30 UTC)
+
+Fast Qwen remains unachieved. All THREE public requests pass full-logit,
+natural greedy-token and complete coverage gates,with NO CPU reference
+decode inside timed GPU requests and zero warm weight uploads. Each reply
+has16 natural output tokens/15 measured generation positions. P100A:
+1.982445/1.974205/2.000881tok/s;CPU32:2.808143/.576679/.788084tok/s.
+The required ALL-request speed gate correctly FAILS:do not cherry-pick
+the two slower CPU runs. GPU prompt times13.599/14.060/12.612s versus CPU
+1.791/1.322/1.214s. Total156 positions/30732 projections/4368 attention/
+156 full results. END2/PCI-host1-1/cold0/cleanup1;no Assistant promotion.
+Log:`qwen-parallel-v14-benchmark.log`,verifier`6f65026f...a4d7`.
+Upload86.942090s,registry/owners8.334689s,COMPLETE cold105.206801s.
+
+To locate the remaining cost,a separately selected diagnostic contract15
+reads ONLY the documented clock-low register at`ffb121f0`,with no counter
+arm/freeze/control write. Source:[Tenstorrent get_timestamp_32b](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/hw/inc/internal/tt-1xx/risc_common.h).
+Eight stages are measured in DEVICE TICKS,never called host microseconds:
+196 ordinary matrices,113 RMS,113 Q8 quantizations,28 RoPE,28 SiLU,
+28 parallel attention,1 vocabulary projection,and total. The fixed128B
+trace at147800 is inside the existing fully backed-up bulk owner. Native
+exposure uses a private CPU snapshot copied only AFTER complete inference
+proof/known stop. The read-only metadata ioctl issues NO device operation.
+Bad/stale/incomplete/wrapped diagnostics become unavailable and NEVER
+authorize inference,reset,cleanup or a fallback.
+
+Actual full-decoder instruction tests pass exact zero/nonzero/two-position
+quality/KV/counters/sequences plus clock wrap,trace bounds/all stage counts.
+Controller and REAL client tests cover profile image selection,old contract
+refusal BEFORE BEGIN,all diagnostic metadata failures and independence
+from inference acceptance. Driver
+`ff66cb8cb689964e567bdf738223aa7003e257063dafc3cd7ff86fd12b147fa2`
+is installed for a controlled native diagnostic trial;verifier
+`fa904026f10ef30181cf1ee1bde9b71036e7092d93cf74b00b49503e5ff3163b`.
+Previous exact-result v14 is backed up. Diagnostic image SHA
+`3e8b33991d3b40249db0fd625f290ab7fd39e91dcd92820856b442fac0045ec5`.
+Native diagnostic qualification/timings pending. No Assistant/default
+boot/CPU/RAM/firmware/SD changes.
+
+### October17: concurrent-attention contract14 native quality PASS (08:20 UTC)
 
 Fast Qwen is NOT achieved. The new explicit model registry version2 seals
 eight independently backed-up code/stack/query/KV-prefix/output leases on
@@ -38,8 +77,17 @@ Experimental driver installed for the controlled test:
 separately named verifier
 `34f3d533400cf978de75fcccc3945cd319678e7841e58951a620e9baa726ab31`.
 Root image`ecd4636c...0505`,dispatch`6f58f16d...5fff`,group`3de94441...bc2a`.
-The native-exact v13 rollback is preserved. Native quality/performance
-retest is pending;Assistant/default boot/CPU/RAM/firmware/SD unchanged.
+The native-exact v13 rollback is preserved. Native retest PASSED22 EXACT
+full-logit positions/four greedy tokens,4334 projections/616 attention/
+22 full results,zero warm weight uploads. Short generation:
+3/1.424566s=2.105905tok/s versus serial1.296035,about1.625x faster.
+Position21 wall.474952s,GPU407.444ms. This is NOT a repeated CPU speedup
+gate or Assistant qualification and remains below the desired performance.
+END2/PCI-host1-1/cold0/cleanup1. Log:`qwen-parallel-v14-verify.log`.
+Its reported88.740352s preparation was weight/norm UPLOAD ONLY,excluding
+registry/model/CPU-context setup;the next verifier reports those separately
+and provides a three-public-request CPU32 warm benchmark. Assistant/
+default boot/CPU/RAM/firmware/SD remain unchanged.
 
 ### October17: exact half-product attention reduction (08:02 UTC)
 

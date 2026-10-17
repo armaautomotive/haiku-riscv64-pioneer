@@ -6,11 +6,19 @@
 #include "PioneerDecoderLayout.h"
 #include "BlackholeDecoderCandidateImage.h"
 #include "BlackholeParallelDecoderCandidateImage.h"
+#include "BlackholeProfileDecoderCandidateImage.h"
+#include "PioneerDecoderStageProfile.h"
 #include <stddef.h>
 struct PioneerDecoderLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false,parallel=false;
 	PioneerAttentionTileLease* peers=nullptr;
+	bool profiling=false;
+	tt_decoder_stage_profile stages={};
 };
+static inline uint32_t PioneerDecoderCodeWord(const PioneerDecoderLease& code,unsigned word)
+{
+	return code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
+}
 template<class IO>
 bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDecoderLease& code)
 {
@@ -38,22 +46,22 @@ static inline bool PioneerDecoderProof(const tt_decoder_candidate_result& r,unsi
 template<class IO>
 bool PioneerDecoderPrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker* fleet,
 	const PioneerCoordinatorLease& stack,const PioneerLayerLease& previous,const PioneerAttentionTileLease& attention,PioneerDecoderLease& code,
-	bool parallel=false,PioneerAttentionTileLease* peers=nullptr)
+	bool parallel=false,PioneerAttentionTileLease* peers=nullptr,bool profiling=false)
 {
-	if (!fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
+	if ((profiling && !parallel) || !fleet || !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| previous.ready || previous.dirty || previous.running || previous.unsafe || !attention.ready || !attention.saved || !attention.resident
 		|| attention.running || attention.unsafe || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerCoordinatedMasterBoundary(io,baseline,fleet,true)) return false;
-	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && PioneerDecoderPeerOwners(io,fleet,code);
+	if (code.ready) return !code.running && !code.unsafe && code.parallel==parallel && code.peers==peers && code.profiling==profiling && PioneerDecoderPeerOwners(io,fleet,code);
 	if (code.saved || code.unsafe || !io.DecoderSavedWords()) return false;
-	code.parallel=parallel; code.peers=peers;
+	code.parallel=parallel; code.peers=peers; code.profiling=profiling;
 	if (!PioneerDecoderPeerOwners(io,fleet,code)) return false;
 	for (unsigned i=0;i<8192;i++) io.DecoderSavedWords()[i]=io.LayerCodeRead(i);
 	code.saved=true;
 	if (!PioneerCoordinatedMasterBoundary(io,baseline,fleet,true) || !io.DecoderMappingStable() || !PioneerDecoderPeerOwners(io,fleet,code)) { code.unsafe=true; return false; }
 	code.dirty=true;
-	for (unsigned i=0;i<8192;i++) io.LayerCodeWrite(i,parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i));
-	bool exact=true; for (unsigned i=0;i<8192;i++) exact &= io.LayerCodeRead(i)==(parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i));
+	for (unsigned i=0;i<8192;i++) io.LayerCodeWrite(i,PioneerDecoderCodeWord(code,i));
+	bool exact=true; for (unsigned i=0;i<8192;i++) exact &= io.LayerCodeRead(i)==PioneerDecoderCodeWord(code,i);
 	if (exact && (!PioneerCoordinatedMasterBoundary(io,baseline,fleet,true) || !io.DecoderMappingStable() || !io.DecoderAttentionMappingStable()
 		|| !PioneerDecoderPeerOwners(io,fleet,code))) {
 		code.unsafe=true; fleet[0].Store().recovery_required=true; io.QuarantineHostPage(); return false;
@@ -82,7 +90,7 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 	PioneerCoordinatorLease& stack,PioneerDecoderLease& code,PioneerAttentionTileLease& attention,PioneerResidentAttentionLease& kv,
 	const PioneerDecoderJob& model,unsigned tokens,const uint32_t* embedding,const uint32_t* rope,uint32_t* output,tt_decoder_candidate_result& r)
 {
-	r={}; r.tokens=tokens; auto& m=r.master; m.version=1; m.workers=119;
+	r={}; code.stages={}; r.tokens=tokens; auto& m=r.master; m.version=1; m.workers=119;
 	if (!fleet || !embedding || !rope || !output || !tokens || tokens>256 || !code.ready || !code.saved || code.running || code.unsafe || !PioneerDecoderPeerOwners(io,fleet,code)
 		|| !stack.ready || !stack.saved || !stack.fast || !stack.fused || !stack.compact || stack.readback || stack.running || stack.unsafe
 		|| stack.nonce>=0x7ffffffe || !bulk.ready || !bulk.saved || bulk.unsafe || !kv.reserved || !kv.coordinated || !kv.payloadBlocks
@@ -195,6 +203,12 @@ bool PioneerDecoderRun(IO& io,const tt_dram_samples_result& baseline,const tt_ho
 		m.recovery_required=1; code.unsafe=stack.unsafe=attention.unsafe=bulk.unsafe=true; store.recovery_required=true;
 		PioneerQuarantineWideOutput(io,wide); PioneerPersistentQuarantine(io,fleet); PioneerQuarantineOutputBuffer(io,transfer);
 	}
-	return !uncertain && PioneerDecoderProof(r,tokens,stack.nonce,code.parallel);
+	bool proved=!uncertain && PioneerDecoderProof(r,tokens,stack.nonce,code.parallel);
+	if (proved && code.profiling) {
+		tt_decoder_stage_profile candidate={};
+		for (unsigned i=0;i<32;i++) reinterpret_cast<uint32_t*>(&candidate)[i]=io.BulkL1Read((TT_DECODER_STAGE_L1-TT_BULK_UPLOAD_L1)/4+i);
+		if (PioneerDecoderStageValid(candidate,m.nonce,tokens)) code.stages=candidate;
+	}
+	return proved; // Diagnostic availability NEVER authorizes inference/reset.
 }
 #endif

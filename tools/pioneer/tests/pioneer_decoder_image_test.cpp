@@ -8,6 +8,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderLayout.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeDecoderCandidateImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeParallelDecoderCandidateImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeProfileDecoderCandidateImage.h"
 #define Machine DecoderSfpuMachine
 #define Image DecoderSfpuImage
 #define Read DecoderSfpuRead
@@ -89,9 +90,9 @@ struct DecoderMachine:CoordinatorMachine {
 		}
 		expected=ReferenceMatrix(Norm(hidden,1024),151936,7);
 	}
-	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent) {
-		assert(code.size()==unsigned(parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
-		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false,bool profile=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent) {
+		assert(code.size()==unsigned(profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
+		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		for (unsigned a=0x80000;a<0x8c000;a+=4) memory[a]=0;
 		for (unsigned a=0x90000;a<0xb2400;a+=4) memory[a]=0;
 		for (unsigned a=0x140000;a<0x148000;a+=4) memory[a]=0;

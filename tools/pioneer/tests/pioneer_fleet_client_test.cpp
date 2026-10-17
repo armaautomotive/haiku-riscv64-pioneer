@@ -12,6 +12,7 @@ static unsigned calls=0,ends=0,closes=0,fault=0,target=0,field=0,missing=0;
 static bool failed=false;
 static unsigned coordinatedNonce=0;
 static unsigned coordinatedContract=7;
+static unsigned decoderTokens=0;
 static int MockOpen(const char*,int) { return 91; }
 static int MockClose(int fd) { assert(fd==91); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
@@ -25,19 +26,28 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	}
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
+	if (op==TT_PCI_PROBE_PIONEER_DECODER_STAGES) {
+		assert(coordinatedContract==15 && bytes==sizeof(tt_decoder_stage_profile)); auto& p=*static_cast<tt_decoder_stage_profile*>(data); p={};
+		p.magic=0x31525044; p.nonce=coordinatedNonce; p.tokens=decoderTokens; p.version=1;
+		const unsigned c[]={196,113,113,28,28,28,1,1}; for (unsigned i=0;i<8;i++) { p.cycles[i]=i==7?100:i+1; p.calls[i]=c[i]; }
+		if (fault && target==3) { if (field>=4 && field<12) reinterpret_cast<uint32_t*>(&p)[field]=0;
+			else if (field==2) p.tokens++; else reinterpret_cast<uint32_t*>(&p)[field]^=1; }
+		return 0;
+	}
 	if (op==TT_PCI_PROBE_PIONEER_DECODER_MODEL) {
-		auto& p=*static_cast<tt_pioneer_decoder_model*>(data); assert(bytes==sizeof(p) && p.version==(coordinatedContract==14?2U:1U) && !p.reserved[0] && !p.reserved[1] && !p.reserved[2]);
+		auto& p=*static_cast<tt_pioneer_decoder_model*>(data); assert(bytes==sizeof(p) && p.version==(coordinatedContract>=14?2U:1U) && !p.reserved[0] && !p.reserved[1] && !p.reserved[2]);
 		p.state=TT_RUNTIME_PASSED; p.ready=1; p.extents=310; p.recovery_required=0;
 		if (fault && target==1) { failed=true; if (fault==1) { errno=EIO; return -1; } if (fault==2) p.ready=0; if (fault==3) p.extents=309; if (fault==4) p.recovery_required=1; }
 		return 0;
 	}
 	if (op==TT_PCI_PROBE_PIONEER_DECODER_RUN) {
 		auto& p=*static_cast<tt_pioneer_decoder_run*>(data); assert(bytes==sizeof(p) && p.version==1 && p.tokens && p.tokens<=256 && !p.reserved[0] && !p.reserved[1]);
+		decoderTokens=p.tokens;
 		auto& r=p.result; r={}; r.tokens=p.tokens; r.sequences=119; r.words=151936;
 		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=119; m.nonce=++coordinatedNonce;
 		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
 		m.phase=TT_DECODER_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_DECODER_PARK;
-		bool parallel=coordinatedContract==14;
+		bool parallel=coordinatedContract>=14;
 		unsigned reads=parallel?45732:43716+448*((p.tokens+63)>>6),rf=parallel?87733:77205+1792*p.tokens,w=parallel?22981:22309,wf=parallel?37286:33030;
 		const unsigned delta[]={reads,rf,reads+w,reads,w,wf,reads+w,w};
 		r.summary[0]=reads; r.summary[1]=rf; r.summary[2]=w; r.summary[3]=wf; r.summary[4]=119; r.summary[5]=151936; r.summary[6]=m.nonce; r.summary[7]=8;
@@ -273,7 +283,7 @@ int main() {
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
-	for (unsigned contract:{0U,2U,3U,4U,5U,6U,15U}) {
+	for (unsigned contract:{0U,2U,3U,4U,5U,6U,16U}) {
 		Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==2 && closes==1 && !ends);
@@ -334,7 +344,10 @@ int main() {
 	for (unsigned contract:{7U,8U,9U,10U,11U,12U,13U,15U}) { Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,5)); }
 		assert(calls==2 && closes==1 && !ends); }
-	for (unsigned contract:{13U,14U}) { coordinatedContract=contract; unsigned requirement=contract==14?5:4;
+	for (unsigned contract:{7U,8U,9U,10U,11U,12U,13U,14U,16U}) { Reset(); coordinatedContract=contract;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,6)); }
+		assert(calls==2 && closes==1 && !ends); }
+	for (unsigned contract:{13U,14U,15U}) { coordinatedContract=contract; unsigned requirement=contract-9;
 	for (unsigned f:{1U,2U,3U,4U}) { Reset(f,1); { PioneerResidentDevice d; PioneerDecoderModelOffsets model={};
 		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,requirement) && !d.RegisterDecoder(model));
 		unsigned before=calls; assert(!d.RegisterDecoder(model) && !d.Finish() && calls==before); } assert(!ends && closes==1); }
@@ -345,12 +358,19 @@ int main() {
 			assert(!d.UploadPageLimit() && !d.UploadPages(0,x,1));
 			assert(d.DecodeWhole(1,embedding,rope,output.data())==!f);
 			if (!f) { for (unsigned i=0;i<151936;i++) assert(output[i]==0x3f800000+i);
+				if (contract==15) { tt_decoder_stage_profile profile={}; assert(d.DecoderStages(profile) && profile.tokens==1 && profile.nonce==coordinatedNonce); }
 				assert(d.DecodeWhole(2,embedding,rope,output.data()) && d.calls==394 && d.attentionCalls==56 && d.wideCalls==2 && d.Finish()); }
 			else { for (auto value:output) assert(value==0xdeadbeef); unsigned before=calls;
 				assert(!d.DecodeWhole(2,embedding,rope,output.data()) && !d.Finish() && calls==before); }
 		}
 		assert(ends==unsigned(!f) && closes==1);
 	}
+	}
+	{ Reset(); coordinatedContract=15; PioneerResidentDevice d; PioneerDecoderModelOffsets model={}; uint32_t embedding[1024]={},rope[128]={}; output.assign(151936,0);
+		assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,6) && d.RegisterDecoder(model)
+			&& d.DecodeWhole(1,embedding,rope,output.data()));
+		for (field=0;field<32;field++) { fault=2; target=3; tt_decoder_stage_profile p={}; assert(!d.DecoderStages(p)); }
+		fault=target=0; assert(d.DecodeWhole(2,embedding,rope,output.data()) && d.Finish());
 	}
 	for (unsigned contract:{7U,8U}) {
 		Reset(); coordinatedContract=contract;

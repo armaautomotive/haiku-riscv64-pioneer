@@ -41,8 +41,10 @@ static ggml_tensor* Norm(ggml_context* ctx,const std::string& name,unsigned n) {
 static int Argmax(const float* values) {
 	int best=0; for (unsigned i=0;i<151936;i++) { if (!isfinite(values[i])) return -1; if (values[i]>values[best]) best=int(i); } return best;
 }
-static int Run(const char* path,bool inspect,bool parallel)
+#include "PioneerWholeQwenBench.h"
+static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages)
 {
+	double coldStart=Seconds();
 	RawModel raw; gguf_init_params rp={false,&raw.tensors}; raw.metadata=gguf_init_from_file(path,rp);
 	if (!raw.metadata || !raw.tensors) return 1;
 	bool valid=MetaU32(raw.metadata,"qwen3.block_count",28) && MetaU32(raw.metadata,"qwen3.embedding_length",1024)
@@ -73,10 +75,11 @@ static int Run(const char* path,bool inspect,bool parallel)
 	const llama_vocab* vocab=llama_model_get_vocab(cpu.model);
 	if (llama_model_n_embd(cpu.model)!=1024 || llama_model_n_layer(cpu.model)!=28 || llama_vocab_n_tokens(vocab)!=151936) return 1;
 	llama_context_params cp=llama_context_default_params(); cp.n_ctx=256; cp.n_batch=cp.n_ubatch=1; cp.n_threads=cp.n_threads_batch=32;
+	if (benchmark) cp.n_batch=cp.n_ubatch=128;
 	cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.offload_kqv=false; cp.op_offload=false;
 	cpu.context=llama_init_from_model(cpu.model,cp); if (!cpu.context || llama_n_threads(cpu.context)!=32) return 1;
 	printf("MODEL decoder scheduler:%s\n",parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
-	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,parallel?5:4)) return 1;
+	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,stages?6:parallel?5:4)) return 1;
 	PioneerResidentTensorCache<PioneerResidentDevice> cache(card,0x80000000ULL,false,true,true,true,true);
 	PioneerDecoderModelOffsets offsets={}; double uploadStart=Seconds(); bool okay=true;
 	for (unsigned layer=0;layer<28 && okay;layer++) {
@@ -95,8 +98,11 @@ static int Run(const char* path,bool inspect,bool parallel)
 	for (unsigned layer=0;layer<28 && okay;layer++) { auto* out=reinterpret_cast<uint64_t*>(&offsets.layers[layer]);
 		for (unsigned role=7;role<11 && okay;role++) okay=uploadNorm(tensors[layer][role],out[role]); }
 	if (okay) okay=uploadNorm(finalNorm,offsets.finalNorm);
-	printf("Decoder cold preparation%.6fs tensors%zu bytes%llu uploaded pages%llu span calls%llu\n",Seconds()-uploadStart,cache.Tensors(),(unsigned long long)normAt,(unsigned long long)card.uploads,(unsigned long long)card.spanCalls);
-	if (!okay || cache.Tensors()!=197 || !card.RegisterDecoder(offsets)) { card.Finish(); return 1; }
+	printf("Decoder immutable upload%.6fs tensors%zu bytes%llu uploaded pages%llu span calls%llu\n",Seconds()-uploadStart,cache.Tensors(),(unsigned long long)normAt,(unsigned long long)card.uploads,(unsigned long long)card.spanCalls);
+	if (!okay || cache.Tensors()!=197) { card.Finish(); return 1; }
+	double registryStart=Seconds();
+	if (!card.RegisterDecoder(offsets)) { card.Finish(); return 1; }
+	printf("Decoder registry/owners ready%.6fs;complete cold preparation%.6fs including model/CPU context/upload/registry\n",Seconds()-registryStart,Seconds()-coldStart);
 	const uint64_t uploads=card.uploads;
 	const char* prompt="<|im_start|>user\nWhat is the capital of France?<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 	std::vector<llama_token> tokens(256); int count=llama_tokenize(vocab,prompt,int(strlen(prompt)),tokens.data(),int(tokens.size()),false,true);
@@ -123,9 +129,19 @@ static int Run(const char* path,bool inspect,bool parallel)
 			}
 			printf("\n");
 		}
+		if (stages) {
+			tt_decoder_stage_profile p={};
+			if (card.DecoderStages(p)) {
+				const char* names[]={"matrices","RMS","Q8","RoPE","SiLU","attention","vocabulary","total"};
+				printf(" WHOLE device clock ticks (diagnostic,NOT microseconds)");
+				for (unsigned i=0;i<8;i++) printf(" %s=%u/%.2f%%/calls%u",names[i],p.cycles[i],100.0*p.cycles[i]/p.cycles[7],p.calls[i]);
+				printf("\n");
+			} else puts(" WHOLE device stage timing unavailable;inference proof is independent");
+		}
 		if (position>=unsigned(count)) decodeSeconds+=elapsed;
 		if (position+1>=unsigned(count)) { token=actual; generated++; printf("OUTPUT greedy token%d\n",actual); }
 	}
+	if (okay && generated==4 && benchmark) okay=PioneerWholeQwenBenchmark(card,cpu.model,cpu.context,embedding);
 	bool clean=card.Finish(); okay &= clean && generated==4;
 	printf("%s experimental whole decoder:generated%u projections%llu attention%llu full-vocab%llu cleanup%u;CPU32 reference OUTSIDE card timer,no model reupload\n",
 		okay?"PASS":"FAIL",generated,(unsigned long long)card.calls,(unsigned long long)card.attentionCalls,(unsigned long long)card.wideCalls,clean);
@@ -135,8 +151,10 @@ static int Run(const char* path,bool inspect,bool parallel)
 int main(int argc,char** argv)
 {
 	bool inspect=argc==3 && !strcmp(argv[1],"--inspect-model");
-	bool parallel=argc==3 && !strcmp(argv[1],"--verify-parallel-decoder");
-	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder MODEL.gguf\n",argv[0]); return 2; }
+	bool benchmark=argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder");
+	bool stages=argc==3 && !strcmp(argv[1],"--profile-parallel-decoder");
+	bool parallel=stages || benchmark || (argc==3 && !strcmp(argv[1],"--verify-parallel-decoder"));
+	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder MODEL.gguf\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0); llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_register(ggml_backend_cpu_reg());
-	int result=Run(argv[2],inspect,parallel); llama_backend_free(); return result;
+	int result=Run(argv[2],inspect,parallel,benchmark,stages); llama_backend_free(); return result;
 }
