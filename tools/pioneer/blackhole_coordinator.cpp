@@ -307,6 +307,7 @@ extern "C" unsigned coordinator_main()
 			rows=span.rows; weightBase=(span.tensor?job[10]:base)+span.first*rowBytes; }
 #endif
 		volatile uint32_t* descriptor=Words(0x147100);
+#if !PIONEER_COORDINATOR_DESCRIPTOR_TABLE
 		for (unsigned i=0;i<8;i++) descriptor[i]=0;
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		descriptor[0]=weightBase;
@@ -318,6 +319,15 @@ extern "C" unsigned coordinator_main()
 		Transfer(true,worker,0x147100,0x70500,32);
 		Transfer(false,worker,0x147120,0x70500,32);
 		for (unsigned i=0;i<8;i++) if (Words(0x147120)[i]!=descriptor[i]) coordinator_fault_park();
+#else
+		// Dedicated sealed-table image only. Every descriptor was derived,
+		// staged and ALL-bit read back while held before boot. The immutable
+		// worker copies and compares its next table entry locally on demand.
+		(void)descriptor;
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		(void)weightBase;
+#endif
+#endif
 		*Words(0x147140)=job[64+worker-1]; Fence();
 		Transfer(true,worker,0x147140,0x71300,4);
 		firstRow+=rows;

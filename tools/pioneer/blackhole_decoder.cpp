@@ -168,10 +168,12 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 		args[0]=0x31475441; args[1]=root.tokens; args[2]=layer; args[3]=group; Fence();
 		Transfer(true,worker,0x147100,0x74000,16); Transfer(false,worker,0x147120,0x74000,16);
 		for (unsigned i=0;i<4;i++) if (Words(0x147120)[i]!=args[i]) coordinator_fault_park();
+#if !PIONEER_COORDINATOR_DESCRIPTOR_TABLE
 		for (unsigned i=0;i<8;i++) args[i]=0;
 		args[3]=1; args[4]=XY(worker); args[7]=0x31475441; Fence();
 		Transfer(true,worker,0x147100,0x70500,32); Transfer(false,worker,0x147120,0x70500,32);
 		for (unsigned i=0;i<8;i++) if (Words(0x147120)[i]!=args[i]) coordinator_fault_park();
+#endif
 		*Words(0x147140)=sequence; Fence(); Transfer(true,worker,0x147140,0x71300,4);
 	}
 	// All eight jobs have been issued BEFORE waiting for any completion.
@@ -232,10 +234,12 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 		volatile uint32_t* args=Words(0x147100); args[0]=0x314c4741; args[1]=512; args[2]=layer; args[3]=group; Fence();
 		Transfer(true,worker,0x147100,0x74000,16); Transfer(false,worker,0x147120,0x74000,16);
 		for (unsigned i=0;i<4;i++) if (Words(0x147120)[i]!=args[i]) coordinator_fault_park();
+#if !PIONEER_COORDINATOR_DESCRIPTOR_TABLE
 		for (unsigned i=0;i<8;i++) args[i]=0;
 		args[3]=1; args[4]=XY(worker); args[7]=0x314c4741; Fence();
 		Transfer(true,worker,0x147100,0x70500,32); Transfer(false,worker,0x147120,0x70500,32);
 		for (unsigned i=0;i<8;i++) if (Words(0x147120)[i]!=args[i]) coordinator_fault_park();
+#endif
 		*Words(0x147140)=sequence; Fence(); Transfer(true,worker,0x147140,0x71300,4);
 	}
 	for (unsigned group=0;group<6;group++) {
@@ -280,7 +284,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 #if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
 	if (root.operation!=8) return 0; // Never a sampling/inference target.
 	for (unsigned i=0;i<16;i++) Words(0x147900)[i]=0;

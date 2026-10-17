@@ -9,6 +9,16 @@
 #include "BlackholeCoordinatedWorkerImage.h"
 #include "BlackholeAttentionWorkerImage.h"
 #include "BlackholeGluWorkerImage.h"
+#include "BlackholeTableWorkerImage.h"
+#include "BlackholeTableAttentionWorkerImage.h"
+#include "BlackholeTableGluWorkerImage.h"
+#include "PioneerDecoderDescriptorTable.h"
+
+static inline uint32_t PioneerPersistentPreludeWord(unsigned word,bool coordinated,bool attention,bool glu,bool table)
+{
+	return table?(glu?BlackholeTableGluWorkerCodeWord(word):attention?BlackholeTableAttentionWorkerCodeWord(word):BlackholeTableWorkerCodeWord(word))
+		:glu?BlackholeGluWorkerCodeWord(word):attention?BlackholeAttentionWorkerCodeWord(word):coordinated?BlackholeCoordinatedWorkerCodeWord(word):BlackholeFleetPersistentCodeWord(word);
+}
 
 // A completed math job is NOT a stopped RISC. Keep that distinction in the
 // ABI, lease and teardown. An unknown command completion forbids ANY reset.
@@ -81,20 +91,21 @@ bool PioneerPersistentAllIdle(IO& io,const tt_dram_samples_result& baseline,Pion
 	return io.SelectRuntimeCore(0) && PioneerFleetGlobalSources(io,baseline);
 }
 template<class IO>
-bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false,bool attentionDispatch=false,bool gluDispatch=false,bool coordinatedInline=false,bool partialMath=false,bool phasePipeline=false) {
+bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false,bool coordinated=false,bool attentionDispatch=false,bool gluDispatch=false,bool coordinatedInline=false,bool partialMath=false,bool phasePipeline=false,bool descriptorTable=false) {
+	if (descriptorTable && (!phasePipeline || !coordinatedInline || partialMath)) return false;
 	if (phasePipeline && (!coordinatedInline || partialMath)) return false;
 	if (partialMath && !coordinatedInline) return false;
 	if ((coordinatedInline && (!coordinated || !inlineMath)) || (coordinated && inlineMath && !coordinatedInline)) return false;
 	if (gluDispatch && !attentionDispatch) return false;
 	if (attentionDispatch && (!coordinated || (inlineMath && !coordinatedInline) || f.noc.version<0x101 || f.noc.version>0x108)) return false;
 	if (coordinated && (f.noc.version<0x101 || f.noc.version>0x177)) return false; // peers1..119, never master0
-	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinatedInline==coordinatedInline && f.partialMath==partialMath && f.phasePipeline==phasePipeline && f.coordinated==coordinated && f.attentionDispatch==attentionDispatch && f.gluDispatch==gluDispatch;
+	if (f.persistentPrepared) return f.Compute().ready && !f.Compute().unsafe && f.inlineMath==inlineMath && f.coordinatedInline==coordinatedInline && f.partialMath==partialMath && f.phasePipeline==phasePipeline && f.descriptorTable==descriptorTable && f.coordinated==coordinated && f.attentionDispatch==attentionDispatch && f.gluDispatch==gluDispatch;
 	if (!f.preludeSaved || !f.preludeDirty || !f.Compute().ready || f.Compute().unsafe
 		|| f.Compute().running || io.ResetRead()!=0x47800
 		|| io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)!=0x0000006f) return false;
-	for (unsigned w=0;w<1024;w++) io.FleetCodeWrite(w,gluDispatch?BlackholeGluWorkerCodeWord(w):attentionDispatch?BlackholeAttentionWorkerCodeWord(w):coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
+	for (unsigned w=0;w<1024;w++) io.FleetCodeWrite(w,PioneerPersistentPreludeWord(w,coordinated,attentionDispatch,gluDispatch,descriptorTable));
 	bool okay=true;
-	for (unsigned w=0;w<1024;w++) okay &= io.FleetCodeRead(w)==(gluDispatch?BlackholeGluWorkerCodeWord(w):attentionDispatch?BlackholeAttentionWorkerCodeWord(w):coordinated?BlackholeCoordinatedWorkerCodeWord(w):BlackholeFleetPersistentCodeWord(w));
+	for (unsigned w=0;w<1024;w++) okay &= io.FleetCodeRead(w)==PioneerPersistentPreludeWord(w,coordinated,attentionDispatch,gluDispatch,descriptorTable);
 	if (coordinated) {
 		for (unsigned w=0;w<16;w++) io.FleetCodeWrite(TT_COORDINATED_SOURCE_WORD+w,w?f.noc.source[0][w]:f.Store().config|0x10000);
 		for (unsigned w=0;w<16;w++) okay &= io.FleetCodeRead(TT_COORDINATED_SOURCE_WORD+w)==(w?f.noc.source[0][w]:f.Store().config|0x10000);
@@ -105,11 +116,34 @@ bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false
 	}
 	io.RuntimeCodeWrite(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4,TT_PERSISTENT_MATH_RETURN);
 	okay &= io.RuntimeCodeRead(1+(TT_RUNTIME_Q8_PARK_PC-0x70000)/4)==TT_PERSISTENT_MATH_RETURN;
-	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinatedInline=coordinatedInline; f.partialMath=partialMath; f.phasePipeline=phasePipeline; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; f.gluDispatch=gluDispatch; return okay;
+	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinatedInline=coordinatedInline; f.partialMath=partialMath; f.phasePipeline=phasePipeline; f.descriptorTable=descriptorTable; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; f.gluDispatch=gluDispatch; return okay;
+}
+template<class IO>
+bool PioneerPersistentTablePrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker& f,const PioneerDecoderJob& model,unsigned worker)
+{
+	unsigned count=PioneerDecoderDescriptorCount(worker);
+	if (!count || !f.descriptorTable || f.descriptorTablePrepared || !f.persistentPrepared || f.persistentActive || f.persistentSequence
+		|| !f.Compute().ready || !f.Compute().saved || !f.Compute().bulk || f.Compute().running || f.Compute().unsafe
+		|| f.Compute().buffer_words!=TT_Q8_BULK_SAVED_BUFFER_WORDS || io.RuntimeBufferWords()!=TT_Q8_BULK_SAVED_BUFFER_WORDS
+		|| io.ResetRead()!=0x47800 || !PioneerRuntimeSources(io,baseline,f.noc,f.Store()) || !BlackholeResidentIdle(io)) return false;
+	f.Compute().buffers_dirty=true;
+	const unsigned first=(TT_DECODER_TABLE_BASE-0x80000)/4;
+	for (unsigned index=0;index<count;index++) { PioneerDecoderDescriptor entry;
+		if (!PioneerDecoderDescriptorEntry(model,worker,index,entry)) return false;
+		for (unsigned word=0;word<8;word++) io.RuntimeBufferWrite(first+index*8+word,entry.words[word]);
+	}
+	for (unsigned index=0;index<count;index++) { PioneerDecoderDescriptor entry;
+		if (!PioneerDecoderDescriptorEntry(model,worker,index,entry)) return false;
+		for (unsigned word=0;word<8;word++) if (io.RuntimeBufferRead(first+index*8+word)!=entry.words[word]) return false;
+	}
+	io.FleetCodeWrite((TT_DECODER_TABLE_COUNT-0x71000)/4,count); io.FleetCodeWrite((TT_DECODER_TABLE_CURSOR-0x71000)/4,0);
+	if (io.FleetCodeRead((TT_DECODER_TABLE_COUNT-0x71000)/4)!=count || io.FleetCodeRead((TT_DECODER_TABLE_CURSOR-0x71000)/4)
+		|| io.ResetRead()!=0x47800 || !PioneerRuntimeSources(io,baseline,f.noc,f.Store()) || !BlackholeResidentIdle(io)) return false;
+	f.descriptorTablePrepared=true; return true;
 }
 template<class IO>
 bool PioneerPersistentBoot(IO& io,PioneerFleetWorker& f) {
-	if (!f.persistentPrepared || f.persistentActive || f.persistentSequence || io.ResetRead()!=0x47800
+	if (!f.persistentPrepared || (f.descriptorTable && !f.descriptorTablePrepared) || f.persistentActive || f.persistentSequence || io.ResetRead()!=0x47800
 		|| !PioneerFleetLocalSources(io,f.noc,f.Store()) || !BlackholeResidentIdle(io)) return false;
 	io.RuntimeResetWrite(0x87ffff); io.Pause();
 	if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) return false;

@@ -2,6 +2,63 @@
 
 ## Status
 
+### October17: sealed resident-descriptor28 native trial (11:39 UTC)
+
+Fast Qwen is STILL NOT achieved. Explicit28/model-registry13 uses exact27
+arithmetic/input fetching but removes the root's descriptor write/readback
+pair for ALL9219 peer jobs per position. The kernel derives a fixed table
+from sealed initialized model extents for each of119 peers,stages and checks
+EVERY word while held before boot,and retains the table read-only until all
+peers STOP. Existing bulk backup owns86000..87c20;classifier ends85400 and
+raw weights start88000. Cursor/count713c0/c4 lie in existing prelude backup;
+max225 entries. Actual peer locally copies AND compares ALL8 descriptor
+words before its unchanged source snapshot/dispatch. Attention/GLU argument
+staging/readback,doorbells,all4 initiators/32 IDs,full source/counter/status,
+all119 monotonic sequences and ordered ALL-bit host result proof remain.
+No new routes/host DMA,mapping,external pointers,arbitrary code or precision.
+
+Separate root20b88265/private job7 and plain/attention/GLU prelude
+5198dcda/ff64a3e3/40a03a11 preserve ALL wait/STOP PCs and math71910..71a20.
+Flag OFF retains the old instructions. Full min R/RF/W/WF now
+29233/71038/9730/19107;small29115/61544/9612/9613:exactly9219 fewer reads,
+response flits,writes,write flits,not relaxed proof. Device maths/cache images
+remainf56a0fe3/d9d1eefe. Wrong/missing table or any immutable owner flag
+refuses before launch;unknown completion still quarantines all owners.
+
+ASan/UBSan:independent complete row/schedule planner;actual119-peer
+instructions/exact phase maths/repeated wrap/mixed groups/STOP/copy and
+cursor faults;actual root/full+128B zero/sparse TWO positions/all logits/KV/
+sequences/counters/NO root descriptor writes;all command/counter faults;
+held-only ALL-word staging/all119 peers/surrounding guard words/exact table
+and prelude restoration;12-mode ownership faults and real-client ABI gates
+all PASS. One test-harness fault initially poisoned read counters during a
+WRITE and was corrected to the four actual write counter slots;no hardware
+run or acceptance gate was changed. Native28 quality/speed PENDING;driver
+`a04bd6fcc29e69c52656845ce1aca50fca9b58bb49592675e87ce70cfda37368`;
+verifier`77c2509d6cb3ba4eccd0d59cd845d0a7ddffe465bc1bc237d0a9277488d49489`.
+Qualified27 and25 backups preserved. No Assistant/boot/CPU/RAM/SD changes.
+
+### October17: combined27 native PASS;descriptor-table prerequisite (11:28 UTC)
+
+Contract27 passes22 full-logit comparisons/exact selected-bit token replays
+and all three sustained natural-request untimed complete replays/coverage:
+GPU4.481135/4.456699/4.533879tok/s versus CPU32 1.371181/1.062392/.705225.
+Prompt5.849777/6.062104/5.425203s. Matrix ticks60.945M remain essentially25;
+attention24.258M vs25.434M atposition21. Cold114.101298s includes94.855469s
+upload. Complete312 GPU positions,61464 projections/8736 attention,156 full
+plus156 small,zero warm uploads;clean END2/PCI-host1-1/cold0/cleanup1.
+Log:`qwen-phase-pull-v27-benchmark.log`. Short4.941306tok/s is diagnostic
+ONLY. Qualified27 backed up separately as well as25. This is a SMALL gain,
+NOT fast Qwen/all-Qwen/27B/Q4 or Assistant qualification.
+
+The next descriptor schedule remains OFFLINE ONLY,NOT wired into the driver.
+Fixed119-peer planner covers every row of all projections,paired tensor
+boundaries and9219 jobs/position. Max22532B entries fit86000..87c20 inside
+existing peer bulk-L1,disjoint from max classifier output84000..85400 and
+raw weight buffer88000 onward. The candidate prelude copies/ALL-bit checks
+its next immutable descriptor locally;STOP bypasses it. No new routes/DMA.
+Planner ASan/UBSan PASS;actual instruction/ownership/native tests PENDING.
+
 ### October17:26 input readbacks PASS;combined27 trial (11:23 UTC)
 
 Corrected26 diagnostic returns12345 marker,layer27,and matching fixed peer0

@@ -38,6 +38,7 @@ struct PioneerFleetWorker {
 	bool coordinatedInline=false; // explicit whole-decoder composition,never a live upgrade
 	bool partialMath=false; // separate native-rounding image,never implicit
 	bool phasePipeline=false; // exact four phases with FPU-owned fidelity increments
+	bool descriptorTable=false,descriptorTablePrepared=false; // immutable fixed-model schedule,not a live upgrade
 	bool coordinated=false; // separate source-snapshot/marker/PC contract
 	bool attentionDispatch=false; // separately owned fixed-group image
 	bool gluDispatch=false;

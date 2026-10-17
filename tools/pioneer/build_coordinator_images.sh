@@ -36,6 +36,8 @@ case ${PIONEER_COORDINATOR_CUMULATIVE_COUNTERS:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PAIRED_FFN:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PULL_INPUT:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PULL_DIAGNOSTIC:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0} in 0|1) ;; *) exit 2;; esac
+[ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PULL_DIAGNOSTIC:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PULL_INPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PULL_INPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_GREEDY:-0}" = 1 ] || exit 2
@@ -53,6 +55,17 @@ mkdir -m 700 "$output"
 set --
 if [ "${PIONEER_COORDINATOR_ATTENTION_WORKER:-0}" = 1 ]; then set -- --defsym TT_FLEET_ATTENTION=1; fi
 if [ "${PIONEER_COORDINATOR_PARALLEL_GLU:-0}" = 1 ]; then set -- "$@" --defsym TT_FLEET_GLU=1; fi
+if [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ]; then set -- "$@" --defsym TT_FLEET_DESCRIPTOR_TABLE=1; fi
+case ${PIONEER_TABLE_WORKER_ROLE:-auto} in
+ auto) ;;
+ plain|attention|glu)
+  [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ] || exit 2
+  set -- --defsym TT_FLEET_DESCRIPTOR_TABLE=1
+  if [ "$PIONEER_TABLE_WORKER_ROLE" != plain ]; then set -- "$@" --defsym TT_FLEET_ATTENTION=1; fi
+  if [ "$PIONEER_TABLE_WORKER_ROLE" = glu ]; then set -- "$@" --defsym TT_FLEET_GLU=1; fi
+  ;;
+ *) exit 2;;
+esac
 "$cross-as" -march=rv32i -mabi=ilp32 -mno-relax --defsym TT_FLEET_PERSISTENT=1 --defsym TT_FLEET_COORDINATED=1 "$@" \
  "$directory/blackhole_fleet_start.S" -o "$output/worker.o"
 "$cross-ld" -m elf32lriscv --no-relax -T "$directory/blackhole_fleet_start.ld" "$output/worker.o" -o "$output/worker.elf"
@@ -92,6 +105,7 @@ if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decod
  -DPIONEER_COORDINATOR_PAIRED_FFN=${PIONEER_COORDINATOR_PAIRED_FFN:-0} \
  -DPIONEER_COORDINATOR_PULL_INPUT=${PIONEER_COORDINATOR_PULL_INPUT:-0} \
  -DPIONEER_COORDINATOR_PULL_DIAGNOSTIC=${PIONEER_COORDINATOR_PULL_DIAGNOSTIC:-0} \
+ -DPIONEER_COORDINATOR_DESCRIPTOR_TABLE=${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0} \
  -c "$directory/$source_file" -o "$output/program.o"
 "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"
 set --

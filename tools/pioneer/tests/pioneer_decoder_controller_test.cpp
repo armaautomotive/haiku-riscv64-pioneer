@@ -20,7 +20,7 @@ struct DecoderControllerIO:WideControllerIO {
 		}
 		assert(!current && !quarantined && !wideQuarantined && !wideDirty && C().reset==0x87ffff && C().code[0]==TT_DECODER_BOOT && decoder->running);
 		for (unsigned i=0;i<8192;i++) assert(layerProgram[i]==PioneerDecoderCodeWord(*decoder,i));
-		auto& j=*reinterpret_cast<PioneerDecoderJob*>(data.data()+6144); assert(PioneerDecoderJobValid(j,decoder->inputPull?6:decoder->paired?5:decoder->greedy?4:decoder->glu?3:decoder->parallel?2:1));
+		auto& j=*reinterpret_cast<PioneerDecoderJob*>(data.data()+6144); assert(PioneerDecoderJobValid(j,decoder->descriptorTable?7:decoder->inputPull?6:decoder->paired?5:decoder->greedy?4:decoder->glu?3:decoder->parallel?2:1));
 		for (unsigned w=1;w<120;w++) assert(fleet[w].Compute().running && !fleet[w].persistentIdle
 			&& fleet[w].persistentSequence==j.sequence[w-1]+PioneerDecoderSequenceAdvance(w-1,decoder->parallel,decoder->glu,decoder->paired)-1);
 		C().reset=value; starts++; if (executeTimeout) return;
@@ -30,6 +30,7 @@ struct DecoderControllerIO:WideControllerIO {
 		if (decoder->paired) { r-=8176; rf-=6132; w-=4088; wf-=4088; }
 		if (decoder->inputPull) { r-=784; rf-=16128; w-=784; wf-=16128; }
 		if (decoder->diagnostic) { r+=112; rf+=112; }
+		if (decoder->descriptorTable) { r-=9219; rf-=9219; w-=9219; wf-=9219; }
 		const unsigned delta[]={r,rf,r+w,r,w,wf,r+w,w};
 		data[3072]=r; data[3073]=rf; data[3074]=w; data[3075]=wf; data[3076]=119;
 		data[3077]=151936; data[3078]=j.nonce-(staleSummary?1:0); data[3079]=small?9:8;
@@ -57,26 +58,26 @@ struct DecoderControllerIO:WideControllerIO {
 };
 struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	PioneerDecoderLease decoder; PioneerWideOutputLease wide; PioneerAttentionTileLease attention; PioneerResidentAttentionLease kv;
-	PioneerAttentionTileLease peers[8]; bool parallel,profiling,glu,sampling,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic;
+	PioneerAttentionTileLease peers[8]; bool parallel,profiling,glu,sampling,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable;
 	tt_decoder_candidate_result decoded={}; PioneerDecoderJob model={};
-	DecoderControllerFixture(bool concurrent=false,bool timing=false,bool activation=false,bool greedy=false,bool together=false,bool direct=false,bool partial=false,bool cached=false,bool pull=false,bool phases=false,bool trace=false):parallel(concurrent),profiling(timing),glu(activation),sampling(greedy),paired(together),inlineMath(direct),partialMath(partial),cachedQuery(cached),inputPull(pull),phasePipeline(phases),diagnostic(trace) {
+	DecoderControllerFixture(bool concurrent=false,bool timing=false,bool activation=false,bool greedy=false,bool together=false,bool direct=false,bool partial=false,bool cached=false,bool pull=false,bool phases=false,bool trace=false,bool table=false):parallel(concurrent),profiling(timing),glu(activation),sampling(greedy),paired(together),inlineMath(direct),partialMath(partial),cachedQuery(cached),inputPull(pull),phasePipeline(phases),diagnostic(trace),descriptorTable(table) {
 		io.decoder=&decoder; attention.ready=attention.saved=attention.resident=true; kv.reserved=kv.payloadBlocks=kv.coordinated=true;
 		model.finalNorm=model.vocabulary=0x04000000;
 		for (auto& l:model.layers) for (unsigned i=0;i<11;i++) reinterpret_cast<uint32_t*>(&l)[i]=0x04000000;
 		for (unsigned w=1;w<120;w++) fleet[w].inlineMath=fleet[w].coordinatedInline=inlineMath;
 		for (unsigned w=1;w<120;w++) fleet[w].partialMath=partialMath;
-		for (unsigned w=1;w<120;w++) fleet[w].phasePipeline=phasePipeline;
+		for (unsigned w=1;w<120;w++) { fleet[w].phasePipeline=phasePipeline; fleet[w].descriptorTable=fleet[w].descriptorTablePrepared=descriptorTable; }
 		if (parallel) { io.peerMaps=true; for (unsigned i=0;i<8;i++) { peers[i].saved=peers[i].ready=peers[i].code_dirty=peers[i].coordinatedGroup=true;
 			peers[i].coordinatedGlu=glu; peers[i].cachedQuery=cachedQuery; peers[i].inputPull=inputPull; fleet[i+1].attentionDispatch=true; fleet[i+1].gluDispatch=glu; } }
 	}
 	bool PrepareDecoder() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,parallel,parallel?peers:nullptr,profiling,glu,sampling,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,parallel,parallel?peers:nullptr,profiling,glu,sampling,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable); }
 	bool Decode(unsigned tokens=1,bool small=false) {
 		uint32_t input[1024],rope[128]={}; for (auto& value:input) value=0x3f000000; for (unsigned i=0;i<64;i++) rope[2*i]=0x3f800000;
 		std::vector<uint32_t> output(151936,0xabcdef00);
 		bool okay=PioneerDecoderRun(io,io.core[0]->Baseline(),host,transfer,wide,fleet.data(),bulk,coordinator,decoder,attention,kv,
 			model,tokens,input,rope,output.data(),decoded,small);
-		if (okay) { assert(PioneerDecoderProof(decoded,tokens,coordinator.nonce,parallel,glu,small,paired,inputPull,diagnostic) && !wide.pending && !transfer.pending && !decoder.running && !attention.running
+		if (okay) { assert(PioneerDecoderProof(decoded,tokens,coordinator.nonce,parallel,glu,small,paired,inputPull,diagnostic,descriptorTable) && !wide.pending && !transfer.pending && !decoder.running && !attention.running
 				&& !coordinator.inputValid && !io.pioWords && io.C().pciCommand[0]==0x402 && io.C().pciCommand[1]==0x402);
 			// Exercise the SAME sealed-lease overload used at the final ioctl
 			// output-clearing boundary,not just the lower-level controller.
@@ -96,6 +97,15 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 int main()
 {
 	(void)Run; (void)Input;
+	{ DecoderControllerFixture f(true,true,true,true,true,true,false,true,true,true,false,true); assert(f.PrepareDecoder());
+		for (unsigned n:{1U,2U,3U,1U}) assert(f.Decode(n,true) && f.Decode(n,false));
+		f.descriptorTable=false; assert(!f.PrepareDecoder()); f.descriptorTable=true;
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
+	for (unsigned worker=1;worker<120;worker++) for (bool flag:{false,true}) {
+		DecoderControllerFixture f(true,true,true,true,true,true,false,true,true,true,false,true);
+		if (flag) f.fleet[worker].descriptorTable=false; else f.fleet[worker].descriptorTablePrepared=false;
+		assert(!f.PrepareDecoder() && !f.decoder.saved && !f.io.starts);
+	}
 	{ DecoderControllerFixture f(true,true,true,true,true,true,false,true,true,false,true); assert(f.PrepareDecoder());
 		unsigned starts=f.io.starts; assert(!f.Decode(1,true) && f.io.starts==starts);
 		assert(f.Decode(1,false) && f.Decode(2,false));
@@ -174,8 +184,8 @@ int main()
 		if (fault==4) p.resident=true; if (fault==5) p.unsafe=true; if (fault==6) p.running=true; if (fault==7) f.fleet[i+1].attentionDispatch=false;
 		assert(!f.PrepareDecoder() && !f.io.starts && !f.decoder.saved);
 	}
-	for (unsigned mode:{0U,1U,2U,3U,4U,5U,6U,7U,8U,9U,10U}) for (unsigned fault=0;fault<16;fault++) {
-		bool glu=mode>=1,small=mode>=2 && mode!=9; DecoderControllerFixture f(true,glu,glu,mode>=2,mode>=3,mode>=4,mode==5,mode>=6,mode==7 || mode==9 || mode==10,mode==8 || mode==10,mode==9); assert(f.PrepareDecoder());
+	for (unsigned mode:{0U,1U,2U,3U,4U,5U,6U,7U,8U,9U,10U,11U}) for (unsigned fault=0;fault<16;fault++) {
+		bool glu=mode>=1,small=mode>=2 && mode!=9; DecoderControllerFixture f(true,glu,glu,mode>=2,mode>=3,mode>=4,mode==5,mode>=6,mode==7 || mode==9 || mode>=10,mode==8 || mode>=10,mode==9,mode==11); assert(f.PrepareDecoder());
 		f.io.executeTimeout=fault==0; f.io.badPc=fault==1; f.io.badCount=fault==2; f.io.badNoc=fault==3;
 		f.io.badMarker=fault==4; f.io.stopFails=fault==5; f.io.staleSummary=fault==6; f.io.badSummary=fault==7;
 		f.io.badLiveMap=fault==8; f.io.nonfinite=fault==9; f.io.omitWidePayload=fault==10; f.io.layerLost=fault==11;

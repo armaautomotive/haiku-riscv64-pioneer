@@ -39,7 +39,7 @@ static inline bool PioneerDecoderNorm(uint32_t base)
 }
 static inline bool PioneerDecoderJobValid(const volatile PioneerDecoderJob& job,unsigned requiredVersion=1)
 {
-	if ((requiredVersion<1 || requiredVersion>6) || job.magic!=0x31444344 || (job.operation!=8 && !(requiredVersion>=4 && job.operation==9)) || job.version!=requiredVersion || !job.tokens || job.tokens>256
+	if ((requiredVersion<1 || requiredVersion>7) || job.magic!=0x31444344 || (job.operation!=8 && !(requiredVersion>=4 && job.operation==9)) || job.version!=requiredVersion || !job.tokens || job.tokens>256
 		|| !job.nonce || job.nonce>=0x7fffffff || job.kvBase!=0x82400000 || job.workers!=119
 		|| !job.hostHigh || job.hostHigh>0xffff || (job.hostLow&0xfffff) || job.hostBytes!=0x100000
 		|| (job.hostHigh==0xffff && job.hostLow>0xfff00000) || !PioneerDecoderNorm(job.finalNorm)
@@ -56,9 +56,9 @@ static inline bool PioneerDecoderJobValid(const volatile PioneerDecoderJob& job,
 	}
 	return true;
 }
-static inline bool PioneerDecoderSummary(const uint32_t* s,unsigned tokens,unsigned nonce,const uint32_t* before,const uint32_t* after,bool parallel=false,bool glu=false,bool greedy=false,bool paired=false,bool pull=false,bool diagnostic=false)
+static inline bool PioneerDecoderSummary(const uint32_t* s,unsigned tokens,unsigned nonce,const uint32_t* before,const uint32_t* after,bool parallel=false,bool glu=false,bool greedy=false,bool paired=false,bool pull=false,bool diagnostic=false,bool descriptorTable=false)
 {
-	if ((diagnostic && (!pull || greedy)) || (pull && !paired) || (paired && !glu) || (greedy && !glu) || (glu && !parallel) || !s || !before || !after || !tokens || tokens>256 || !nonce || nonce>=0x7fffffff || s[4]!=119 || s[5]!=151936
+	if ((descriptorTable && (!pull || diagnostic)) || (diagnostic && (!pull || greedy)) || (pull && !paired) || (paired && !glu) || (greedy && !glu) || (glu && !parallel) || !s || !before || !after || !tokens || tokens>256 || !nonce || nonce>=0x7fffffff || s[4]!=119 || s[5]!=151936
 		|| s[6]!=nonce || s[7]!=(greedy?9U:8U) || before[2]!=before[6] || after[2]!=after[6]) return false;
 	// 28*(64+32+32+32+96+96+32) ordinary matrix peers,119 final wide
 	// peers,113 immutable norm reads and28 complete8-group attention ops.
@@ -67,8 +67,9 @@ static inline bool PioneerDecoderSummary(const uint32_t* s,unsigned tokens,unsig
 	if (paired) { minimum-=8176; w-=4088; wf-=4088; }
 	if (pull) { minimum-=784; w-=784; wf-=16128; }
 	if (diagnostic) minimum+=112; // four explicit32B root/peer diagnostic readbacks per layer
+	if (descriptorTable) { minimum-=9219; w-=9219; wf-=9219; }
 	if (r<minimum || r>minimum+2*65535*(paired?9219U:glu?11263U:parallel?11095U:10871U) || ((r-minimum)&1)
-		|| s[1]!=(glu?102517:parallel?87733:77205+1792*tokens)-(greedy?9494:0)-(paired?6132:0)-(pull?16128:0)+(diagnostic?112:0)+(r-minimum) || s[2]!=w || s[3]!=wf) return false;
+		|| s[1]!=(glu?102517:parallel?87733:77205+1792*tokens)-(greedy?9494:0)-(paired?6132:0)-(pull?16128:0)+(diagnostic?112:0)-(descriptorTable?9219:0)+(r-minimum) || s[2]!=w || s[3]!=wf) return false;
 	const unsigned delta[]={r,s[1],r+w,r,w,wf,r+w,w};
 	for (unsigned i=0;i<8;i++) if (s[8+i]!=before[i] || s[16+i]!=after[i] || uint32_t(after[i]-before[i])!=delta[i]) return false;
 	return true;

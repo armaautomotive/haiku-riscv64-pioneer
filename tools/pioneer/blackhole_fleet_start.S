@@ -22,6 +22,10 @@ fleet_start:
 	j fleet_persistent_wait
 .endif
 fleet_job:
+.ifdef TT_FLEET_DESCRIPTOR_TABLE
+	j fleet_table_job
+fleet_table_return:
+.endif
 .ifdef TT_FLEET_COORDINATED
 	li t3,0x71340
 	jal ra,fleet_snapshot
@@ -278,5 +282,54 @@ fleet_snapshot:
 	fence
 	ret
 .endif
+.endif
+.ifdef TT_FLEET_DESCRIPTOR_TABLE
+	/* Separate OFFLINE candidate. All entries are kernel-derived from the
+	 * sealed fixed model,ALL-bit staged/read back while held before boot.
+	 * No peer/runtime writer ever touches86000..87c20;math results end85400,
+	 * incoming raw weights start88000. STOP bypasses this entire path.
+	 * Preserve ALL existing wait/STOP/snapshot PCs and math71910..71a20. */
+	.org 0x700,0
+fleet_table_job:
+	li t0,0x713c0
+	lw t1,0(t0)
+	lw t2,4(t0)
+	beq t1,zero,fleet_fault
+	li t3,225
+	bltu t3,t1,fleet_fault
+	bgeu t2,t1,fleet_fault
+	slli t3,t2,5
+	li t4,0x86000
+	add t3,t3,t4
+	li t4,0x70500
+	li t5,8
+1:
+	lw t6,0(t3)
+	sw t6,0(t4)
+	addi t3,t3,4
+	addi t4,t4,4
+	addi t5,t5,-1
+	bne t5,zero,1b
+	fence
+	addi t3,t3,-32
+	addi t4,t4,-32
+	li t5,8
+2:
+	lw t6,0(t3)
+	lw a1,0(t4)
+	bne t6,a1,fleet_fault
+	addi t3,t3,4
+	addi t4,t4,4
+	addi t5,t5,-1
+	bne t5,zero,2b
+	addi t2,t2,1
+	bltu t2,t1,3f
+	li t2,0
+3:
+	sw t2,4(t0)
+	lw t3,4(t0)
+	bne t2,t3,fleet_fault
+	fence
+	j fleet_table_return
 .endif
 fleet_end:
