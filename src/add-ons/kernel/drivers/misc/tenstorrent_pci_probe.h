@@ -182,6 +182,7 @@
 #define TT_PCI_PROBE_PIONEER_COORDINATOR_PROBE (B_DEVICE_OP_CODES_END + 0x54d8)
 #define TT_PCI_PROBE_PIONEER_COORDINATED_FLEET (B_DEVICE_OP_CODES_END + 0x54d9)
 #define TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT (B_DEVICE_OP_CODES_END + 0x54da)
+#define TT_PCI_PROBE_PIONEER_LAYER_FFN (B_DEVICE_OP_CODES_END + 0x54db)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -417,6 +418,15 @@ struct tt_pioneer_coordinated_fleet {
 };
 struct tt_coordinated_support {
 	uint32_t version,max_workers,attention_version,immutable_weights,gather_max;
+};
+// Fixed Qwen0.6B feed-forward graph ONLY. No caller code,physical address,
+// NoC route or sequence. All three immutable weight extents are validated.
+struct tt_pioneer_layer_ffn {
+	uint32_t version,workers,reserved[2];
+	uint64_t gate_offset,up_offset,down_offset;
+	uint32_t input[512],scale[32];
+	tt_coordinated_fleet_result result;
+	uint32_t output[1024];
 };
 static_assert(offsetof(tt_pioneer_coordinated_fleet,output)==sizeof(tt_pioneer_coordinated_fleet)-TT_FLEET_OUTPUTS_MAX*sizeof(uint32_t),"coordinated inline ABI has no tail padding");
 static inline size_t PioneerCoordinatedRequestBytes(unsigned outputs) {

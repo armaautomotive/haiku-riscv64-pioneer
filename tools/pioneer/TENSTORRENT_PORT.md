@@ -2,6 +2,51 @@
 
 ## Status
 
+### October17: native fixed feed-forward graph contract v8 (05:54 UTC)
+
+Fast Qwen remains NOT achieved. The new fixed FFN primitive passed natively:
+all1024 final FP32 words match independently executed split-card operations
+for four changed inputs. First call64.043ms includes code preparation;
+warm calls12.156/12.231/12.228ms. This is NOT full-model tok/s,CPU speedup,
+or Assistant qualification. Log:`ffn-v8-native.log`,END2/PCI-host1-1/cold0,
+cleanup1. Three generated fixture weights were uploaded once; reference
+SiLU/quantization/comparison work was OUTSIDE the fused timer.
+
+Private`54db` accepts ONLY fixed1024->3072->1024 Qwen0.6B FFN shapes and
+three initialized immutable below-KV weight extents. One immutable job runs
+gate/up,fast SiLU,Q8 quantization and down,then one owned host write/ordered
+read/ALL-bit comparison. It uses up to96 gate/up and32 down workers;all
+unneeded peers remain idle. Fresh sequence increments are derived privately
+and bounded BEFORE launch. No intermediate activation crosses PCIe.
+The graph always invalidates the ordinary matrix input shadow.
+
+A separate backed-up32KiB code lease at64000..6c000 must coexist with the
+existing coordinator stack lease. All code is fixed,fully read back and
+restored only after known completion and all-peer STOP at END. The faster
+peer protocol relies on the fixed worker's source/ALL-ID/counter proof
+BEFORE fresh finished publication;that worker cannot issue another NoC
+operation until our next doorbell. Full proof/descriptor readback/physical
+counters remain. The graph has a SEPARATE summary predicate,not the stricter
+single-matrix predicate. Unknown completion disables BME and quarantines
+both owners WITHOUT reset/retry/code restore.
+
+Actual linked RV32IMF/master + unchanged persistent worker bytecode tests
+cover32/64/119 cohorts,fast/debug SiLU,Q8 quantization,full physical counter
+wrap,all summary mutations,malformed bounds,dropped writes/doorbells,
+source faults,partial/paired-corrupt host results. Independent ownership
+controller and REAL native-client ASan/UBSan tests cover all proof fields,
+old-contract refusal BEFORE BEGIN,shared matrix/graph nonces and close-only
+after error. Compact activation/strict probe/actual compact image regressions
+also pass. Unrelated llama.cpp edits remain untouched.
+
+Installed driver SHA`65f2f2788ec6229951d09a313fa03ccc69f5c48f88100e8dc23df4cdab943451`,
+native CLI`c1f22012c0fcc84b6aebc9e36b633fde9a544045e5963e919807024d696c80e7`,
+fixed layer image`24e8bf0cc3f7fed1bc3057dafa30f6738edc158032123e209c7deafb1b4e67eb`.
+v7 rollback retained at a unique path. Natural module turnover,no forced
+unload/reboot/firmware/SD/default boot/CPU/RAM/settings change. Assistant
+remains closed for isolation. GGML graph fusion is the NEXT gate: it is not
+implemented by this checkpoint,so the full-model v7 rate below is unchanged.
+
 ### October17: compact activation / exact reuse contract v7 (05:40 UTC)
 
 Fast Qwen is NOT achieved. The native full-model verifier passed all22

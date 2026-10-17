@@ -32,22 +32,26 @@ struct CoordinatorMachine:Machine {
 	unsigned corruptHost=~0U,hostWrites=0,hostReads=0,comparedOriginal=0,comparedReturned=0;
 	unsigned busyAddress=0,busyAfter=0;
 	unsigned scaleStores=0,dropScale=0;
+	unsigned codeBase=0x6c000;
 	std::vector<std::string> events;
-	CoordinatorMachine(const char* path):peer(120) {
+	CoordinatorMachine(const char* path,bool offlineLayer=false):peer(120) {
+		if (offlineLayer) codeBase=0x64000;
 		std::string root(path); code=Read((root+"/code.bin").c_str()); workerImage=Read((root+"/worker.bin").c_str());
-		auto boot=Read((root+"/boot.bin").c_str()); assert(boot.size()==4 && code.size()<=8192 && !(code.size()&3));
+		auto boot=Read((root+"/boot.bin").c_str()); assert(boot.size()==4 && code.size()<=(offlineLayer?32764U:8192U) && !(code.size()&3));
 		unsigned size=compactImage?unsigned(TT_COMPACT_COORDINATOR_IMAGE_WORDS):fusedImage?unsigned(TT_FUSED_COORDINATOR_IMAGE_WORDS):readbackImage?unsigned(TT_COORDINATOR_READBACK_IMAGE_WORDS):fastImage?unsigned(TT_FAST_COORDINATOR_IMAGE_WORDS):unsigned(TT_COORDINATOR_IMAGE_WORDS);
-		assert(Word(boot,0)==TT_COORDINATOR_BOOT && code.size()==size*4);
-		for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert((compactImage?BlackholeCompactCoordinatorCodeWord(i):fusedImage?BlackholeFusedCoordinatorCodeWord(i):readbackImage?BlackholeCoordinatorReadbackCodeWord(i):fastImage?BlackholeFastCoordinatorCodeWord(i):BlackholeCoordinatorCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+		if (!offlineLayer) {
+			assert(Word(boot,0)==TT_COORDINATOR_BOOT && code.size()==size*4);
+			for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert((compactImage?BlackholeCompactCoordinatorCodeWord(i):fusedImage?BlackholeFusedCoordinatorCodeWord(i):readbackImage?BlackholeCoordinatorReadbackCodeWord(i):fastImage?BlackholeFastCoordinatorCodeWord(i):BlackholeCoordinatorCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+		}
 		l1[0]=Word(boot,0);
 		for (unsigned i=0;i<code.size()/4;i++) l1[i+1]=Word(code,i*4);
 		for (auto& count:counts) count=0xfffffff8; counts[6]=counts[2];
 	}
 	unsigned Index(uint32_t a) override {
 		if (a==0x6000) return 0;
-		assert(a>=0x6c000 && a-0x6c000<code.size() && !(a&3)); return 1+(a-0x6c000)/4;
+		assert(a>=codeBase && a-codeBase<code.size() && !(a&3)); return 1+(a-codeBase)/4;
 	}
-	bool CodeAddress(uint32_t a) const override { return a==0x6000 || (a>=0x6c000 && a-0x6c000<code.size()); }
+	bool CodeAddress(uint32_t a) const override { return a==0x6000 || (a>=codeBase && a-codeBase<code.size()); }
 	unsigned StepLimit() const override { return 30000000; }
 	static bool Range(uint32_t a,uint32_t first,unsigned bytes) { return a>=first && a-first<bytes; }
 	void Setup(unsigned op,unsigned inputs,unsigned outputs,unsigned workerLimit,unsigned t=0) {
@@ -102,7 +106,7 @@ struct CoordinatorMachine:Machine {
 			}
 		}
 	}
-	uint32_t PeerRead(unsigned w,uint32_t a) {
+	virtual uint32_t PeerRead(unsigned w,uint32_t a) {
 		if (a==0xffb13140) return operation?(badPeerPc?0x70000:peer[w]->pc):0x70400+w*4;
 		if (a==0xffb121b0) return badPeerReset?0:operation?0x46800:0x47800;
 		assert(operation && peer[w]); auto& m=*peer[w];
@@ -115,7 +119,7 @@ struct CoordinatorMachine:Machine {
 		if (badOutput && a==0x84000+(m.outputs-1)*4) value=0x7fc00000;
 		return value;
 	}
-	void PeerWrite(unsigned w,uint32_t a,uint32_t value) {
+	virtual void PeerWrite(unsigned w,uint32_t a,uint32_t value) {
 		assert(operation && peer[w]); auto& m=*peer[w];
 		if (Range(a,0x70500,32)) {
 			assert(m.pc==CoordWait && m.l1[m.Index(0x71300)]==m.l1[m.Index(0x71304)]);
@@ -128,7 +132,7 @@ struct CoordinatorMachine:Machine {
 		for (unsigned i=0;i<4096;i++) m.source[i]=memory.at(0x80000+i*4);
 		m.l1[m.Index(a)]=value;
 	}
-	void Submit() {
+	virtual void Submit() {
 		transfers++; if (transfers==failTransfer) { pending=true; return; }
 		bool write=command[7]==0x212; assert(write || !command[7]);
 		uint32_t xy=write?command[5]:command[2],local=write?command[0]:command[3],remote=write?command[3]:command[0],bytes=command[8];
@@ -170,7 +174,7 @@ struct CoordinatorMachine:Machine {
 			if (Range(a,0x144000,n*4)) comparedReturned++;
 		}
 		if (a==busyAddress && transfers>=busyAfter) return 1;
-		if (Range(a,0x6c000,unsigned(code.size()))) return l1[Index(a)];
+		if (Range(a,codeBase,unsigned(code.size()))) return l1[Index(a)];
 		if (Range(a,0xffb20000,40)) return command[(a-0xffb20000)/4];
 		if (a==0xffb20040) return pending;
 		if (a==0xffb20840 || a==0xffb21040 || a==0xffb21840 || Range(a,0xffb20240,128)) return 0;
@@ -246,6 +250,7 @@ struct CoordinatorMachine:Machine {
 		for (unsigned w=1;w<=workers;w++) assert(peer[w]->pc==CoordWait && peer[w]->l1[peer[w]->Index(0x71300)]==peer[w]->l1[peer[w]->Index(0x71304)]);
 	}
 };
+#ifndef PIONEER_COORDINATOR_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || (argc==3 && (std::string(argv[2])=="--fast" || std::string(argv[2])=="--readback" || std::string(argv[2])=="--fused" || std::string(argv[2])=="--compact")));
@@ -351,3 +356,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE linked coordinator/worker image protocol,all119 routes,all K,gather bounds,fresh full proofs,changed inputs,no reset/DMA,timeout/stale/corruption/drop faults; NO DRIVER EXPOSURE / NATIVE SPEED CLAIM");
 }
+#endif

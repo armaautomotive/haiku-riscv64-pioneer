@@ -2,6 +2,7 @@
 // REAL native client with synthetic syscalls only. No card/model access.
 #include <cassert>
 #include <cstring>
+#include <algorithm>
 #include <errno.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
@@ -24,6 +25,28 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	}
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
+	if (op==TT_PCI_PROBE_PIONEER_LAYER_FFN) {
+		auto& p=*static_cast<tt_pioneer_layer_ffn*>(data);
+		assert(bytes==sizeof(p) && p.version==1 && p.workers && p.workers<=119 && !p.reserved[0] && !p.reserved[1]
+			&& p.gate_offset==0 && p.up_offset==0x800000 && p.down_offset==0x1000000);
+		auto& r=p.result; r={}; unsigned pg=std::min(p.workers,96U),pd=std::min(p.workers,32U),peers=2*pg+pd;
+		r.inputs=r.outputs=1024; r.workers=pg; r.staged_pages=1; r.dma_words=r.gathered=1024;
+		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=pg; m.nonce=++coordinatedNonce;
+		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
+		m.phase=TT_LAYER_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_LAYER_PARK;
+		unsigned reads=4*peers+1,flits=reads-peers+511,writes=2*peers+1,writeFlits=2*peers+64;
+		const unsigned delta[]={reads,flits,reads+writes,reads,writes,writeFlits,reads+writes,writes};
+		r.summary[0]=reads; r.summary[1]=flits; r.summary[2]=writes; r.summary[3]=writeFlits;
+		r.summary[4]=pg; r.summary[5]=1024; r.summary[6]=m.nonce; r.summary[7]=4;
+		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
+		for (unsigned i=0;i<1024;i++) p.output[i]=0x3f800000+i;
+		if (fault) {
+			failed=true; if (fault==1) { errno=EIO; return -1; }
+			if (fault==2) reinterpret_cast<uint32_t*>(&r)[field]^=1;
+			if (fault==4) p.output[field]=0x7f800000;
+		}
+		return 0;
+	}
 	if (op==TT_PCI_PROBE_PIONEER_COORDINATED_FLEET) {
 		auto& p=*(tt_pioneer_coordinated_fleet*)data; assert((p.version==1 || p.version==2) && p.workers<=119 && bytes==PioneerCoordinatedRequestBytes(p.outputs));
 		PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
@@ -181,10 +204,30 @@ int main() {
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
-	for (unsigned contract:{0U,2U,3U,4U,5U,6U,8U}) {
+	for (unsigned contract:{0U,2U,3U,4U,5U,6U,9U}) {
 		Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==2 && closes==1 && !ends);
+	}
+	{
+		Reset(); coordinatedContract=7;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,true)); }
+		assert(calls==2 && closes==1 && !ends);
+	}
+	coordinatedContract=8;
+	for (unsigned f:{0U,1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_coordinated_fleet_result)/4:1);word++) {
+		Reset(f,0,word); output.assign(1024,0xdeadbeef);
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,true));
+			assert(d.HasLayerFfn()); bool okay=d.LayerFfn(0,0x800000,0x1000000,x,scale,output.data()); assert(okay==!f);
+			if (!f) {
+				for (unsigned i=0;i<1024;i++) assert(output[i]==0x3f800000+i);
+				assert(d.Q8Matvec(0,1024,1024,x,scale,output.data()) && d.LayerFfn(0,0x800000,0x1000000,x,scale,output.data()) && d.Finish());
+			} else {
+				for (auto value:output) assert(value==0xdeadbeef);
+				unsigned previous=calls; assert(!d.LayerFfn(0,0x800000,0x1000000,x,scale,output.data()) && !d.Finish() && calls==previous);
+			}
+		}
+		assert(ends==unsigned(!f) && closes==1);
 	}
 	coordinatedContract=7;
 	for (unsigned f:{1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_coordinated_fleet_result)/4:1);word++) {
