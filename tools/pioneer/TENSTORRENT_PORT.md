@@ -2,6 +2,53 @@
 
 ## Status
 
+### October17:hardware waiting at user's request;unpack-gate OFFLINE (16:41 UTC)
+
+The user reports the Pioneer needs more rest and explicitly requested more
+time. Last physical confirmation:Fans/LEDs OFF. The42 maintenance restart
+had already requested ordinary Haiku shutdown after41's clean END,then
+off/wait/on,without a subsequent Linux/serial startup. A proposed additional
+power-on was REJECTED BEFORE process execution after the user's more-time
+message. NO additional pulse ran. NO further relay action until the user
+says ready;do not bypass that refusal or infer readiness from elapsed time.
+Last installed driver remains QUALIFIED41/af25ebc3,last compute END2/
+PCI-host1-1/cold0/cleanup1;42's three hash-verified inactive staged artifacts
+remain untouched. No42 compute or installation occurred. Current source
+and build mirror advertise42,NOT41. Preserve the distinct native41 tools
+and backup;use the guarded unloaded-image installation only after recovery.
+
+Unaffected OFFLINE work:default-off `TT_RUNTIME_Q8_WAIT_GATE` changes
+exactly ONE word at0x70370 from the post-UNPACR full-drain call to RV32 NOP.
+ALL other4092 bytes,37-op exact compensated FMA,four fidelity phases,
+preceding RWC/ZEROACC full drain,matrix-to-SFPU full drain,final consumers,
+NoC traffic,source checks and public PCs are unchanged. No replay or new
+instruction/buffer/route/authority. Require the exact accumulator pipeline
+and reject rounded-product/replay combinations. This is NOT driver-selected,
+staged or native-qualified;do NOT silently include it in42. Candidate
+8180a243ebc308bf4942ff925da511ed58c8485e7a9b5ef043ca4c61c2a4e307,
+4096B. THREE identical candidate builds;default math regenerates byte-for-
+byte qualified63efcbae in two fresh builds.
+
+The reason this may be valid is the documented producer/consumer ownership
+protocol,not a guessed delay:[MVMUL's architectural Wait Gate](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md)
+waits for BOTH source banks;[UNPACR's shared Blackhole functional model](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md)
+publishes each bank only after unpack completion. The actual-bytecode test
+holds old source contents until independently delayed A/B publications,
+checks alternating banks and forbids L1/config mutation while producers own
+inputs. All120 workers,four asymmetric schedules including1000003-cycle
+delay,all K1024..6144/N4096,repeated IEEE-bit-exact jobs,STOP and Dst hazards
+PASS ASan/UBSan. Removing the architectural gate or either producer refuses
+before output. Tile0 retains its AddrMod-setup full drain;the disabled-gate
+fault must therefore fail at tile1,after four matrix operations,NOT tile0.
+The original test expectation was corrected for that retained synchronization;
+no source/output/quality/ownership gate was removed. Retained test
+`pioneer-unpack-gate.py3NzHke`. Diagnostic model drains329 versus457 and
+scalar steps58185 versus60361 are NOT native performance evidence. Before
+any native trial this needs a distinct immutable all119-peer/kernel/client
+contract,held-owner all-word staging/restore/mixed-mode fault tests,then
+unchanged full-model quality and explicit clean END proof. Do NOT reuse42
+metadata or remove any further barrier based only on this offline result.
+
 ### October17:finite-half41 native PASS;fixed-route42 offline gates (16:34 UTC)
 
 Fast Qwen remains UNACHIEVED. Qualified41 GPU7.206016/7.162185/7.290277

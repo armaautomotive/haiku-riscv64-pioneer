@@ -44,6 +44,17 @@
 	.error "Fixed replay candidate requires the separate exact accumulator pipeline"
 .endif
 .endif
+.ifdef TT_RUNTIME_Q8_WAIT_GATE
+.ifndef TT_RUNTIME_Q8_ACCUM_PIPE
+	.error "unpack wait-gate candidate requires the exact accumulation pipeline"
+.endif
+.ifdef TT_RUNTIME_Q8_ROUNDED_PRODUCT
+	.error "unpack wait-gate candidate must retain exact FMA"
+.endif
+.ifdef TT_RUNTIME_Q8_REPLAY
+	.error "unpack wait-gate candidate does not own replay state"
+.endif
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -320,7 +331,18 @@ gemv_keep_accumulator:
 	emit 0x5460000f /* zero Z/W ADCs for both unpackers/channels */
 	emit 0x420000c1 /* normal unpack0, explicit thread, set valid, last */
 	emit 0x428000c1 /* normal unpack1, explicit thread, set valid, last */
+	.global q8_unpack_consumer_gate
+q8_unpack_consumer_gate:
+.ifdef TT_RUNTIME_Q8_WAIT_GATE
+	/* OFFLINE ONLY: UNPACR's FlipSrc publishes each completed source bank.
+	 * MVMUL's documented Wait Gate waits for BOTH AllowedClient values.
+	 * Retain the preceding RWC/ZEROACC full drain, all FOUR fidelity phases,
+	 * matrix-to-SFPU full drain and every final RISC/NoC consumer drain.
+	 * Exactly ONE word differs; no new opcode, buffer, route or authority. */
+	nop
+.else
 	jal ra, drain
+.endif
 .ifdef TT_UNPACK_SRCA
 	emit 0x12002020 /* SrcA eight rows -> Dst32; no multiplication */
 .else
