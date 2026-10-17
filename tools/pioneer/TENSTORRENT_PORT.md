@@ -2,6 +2,46 @@
 
 ## Status
 
+### October17: wired recovery without reboot; native copy resumed (21:01 UTC)
+
+User confirmed the desktop/input remained responsive during network loss.
+The supplied Terminal photo showed the redirection had been mistyped as
+`/dev/printf` rather than `/dev/dprintf`; that error did NOT establish a
+read-only Samsung filesystem. Native follow-up confirms `/dev/dprintf`
+exists and Samsung BFS is writable. Photo showed the same10.0.0.247 and
+1Gb/s link,857291 RX packets/zero RX errors and376 TX drops; these counters
+alone do NOT establish the underlying failure mechanism.
+
+User ran `ifconfig /dev/net/rtl8125/1 down`, then `up`. Serial shows the
+driver close/free/open and link down/up; ping and pinned SSH recovered.
+Same Haiku boot still has64 CPUs/137,034,936,320 total usable bytes. No
+reboot,relay,SD,firmware,default-boot or P100A-driver change was needed.
+
+Native parts0/1/2 now have1,990,949,338B each. Before this resume,
+3,190,162,422B remained. Fresh sender reverified the WHOLE Mac source SHA,
+serves ONLY the same public hash-named file to10.0.0.247 and the six exact
+remaining ranges/resume suffixes; deadline3600s. The fresh hash-verified
+native job (`resume-20261017-c.sh`,SHAf8c3f8790699ae08700c6dfccab8ed6cf36ac2cf82e816f50c9d36156f928ba4)
+is sequential/append-only,per-attempt180s/outer2400s bounded. It allows
+at most TWO same-interface down/up recoveries ONLY after an interrupted
+request AND unreachable source HEAD. No persistent watchdog/startup or
+network settings change. This is a bounded recovery measure,NOT a driver
+fix. All old pieces/logs are kept. Whole native SHA must match before final
+publication and the already-scoped CPU-only one-token smoke. No native
+whole-model success is claimed while those steps remain pending.
+Current log: `/boot/home/models/qwen38-parallel-20261017/resume-20261017-c.log`.
+
+New standalone `pioneer_qwen38_inspect.cpp` checks exact851 layouts,
+first+last rows/8,162,688 finite sample values/negative A,and proposed
+1/8K/32K-context blueprints. It uses O_RDONLY/O_NOFOLLOW and NEVER evaluates
+templates,expands the whole model,executes inference or accesses a device.
+It explicitly does NOT authenticate unsampled weights; whole SHA remains
+mandatory. Host ASan/UBSan real-file and argument/missing/directory/empty/
+symlink refusal tests pass. Separate Haiku cross-buildSHA
+`80f287599a06de1445e418a1c38752a5df72ddb08f2fcadd8dec65d69f052d98`
+is hash-verified on Haiku; native ABI/partial-prefix refusal PASS. Native
+full-file layout inspection awaits complete authenticated assembly.
+
 ### October17: 27B prerequisites tested; network loss repeated (19:23 UTC)
 
 **Qwen3.8-27B is NOT yet running on P100A.** No Assistant target, device

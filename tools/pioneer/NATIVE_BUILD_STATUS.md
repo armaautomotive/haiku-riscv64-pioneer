@@ -1,6 +1,6 @@
 # Native build status
 
-Latest checkpoint (October17,19:23 UTC): P100A installed; both SD cards
+Latest checkpoint (October17,21:01 UTC): P100A installed; both SD cards
 out. User-authorized cold recovery and unchanged SD-free handoff restored
 Haiku SSH with64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
 Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
@@ -9,10 +9,13 @@ Qwen/27B and a new Assistant performance target remain UNACHIEVED.
 
 Requested Qwen3.8-27B Q4_K_M18,973,870,528B is downloaded and fully
 SHA-verified on Mac. Native interrupted parts survived; one sequential
-bounded resume completed two more pieces but ALSO lost network connectivity
-by19:21 UTC. SSH/ping fail without a new serial panic; desktop state is
-requested before further recovery. Whole-file native SHA remains required
-before a CPU-only load smoke. No27B GPU or native CPU result is claimed yet.
+bounded resume ALSO lost networking while desktop/input stayed live.
+User's explicit wired down/up recovered ping/SSH WITHOUT reboot;64 CPUs
+and full RAM are unchanged. No disk-read-only problem was established:
+Terminal's failed redirection used `/dev/printf` rather than `/dev/dprintf`.
+Fresh sequential append-only copy,with bounded optional same-interface
+recovery,is active. Whole-file native SHA remains required before a
+CPU-only load smoke. No27B GPU or native CPU result is claimed yet.
 New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
 packed integer dots, Q8_K activation quantization and three actual local
 RV32 images pass independent
