@@ -2,7 +2,7 @@
 
 ## Status
 
-### October17: native27B authenticated; network comparison prepared (23:13 UTC)
+### October17: native27B authenticated; CPU smoke passed; NIC trial next (23:21 UTC)
 
 No27B P100A inference or requested-fast result yet. Qualified43 is unchanged,
 still UNLOADED after cold recovery; experimental44 remains staged only.
@@ -30,8 +30,11 @@ Only THEN was the assembly published as
 `/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf`. Native pinned80f28759 inspector
 passed ALL851 layouts/8,162,688 finite boundary values and1/8K/32K blueprints.
 Thus model integrity is fixed,not merely assumed from three repaired blocks.
-One-token32-thread CPU-only benchmark is pending with900s bound,zero GPU
-layers/KV/op offload/offline/no warmup; no pass/text quality/steady-speed claim.
+One-token32-thread CPU-only benchmark PASSED at23:16:41 UTC with900s bound,
+zero GPU layers/KV/op offload/offline/no warmup. JSON reports CPU backend,
+26,895,998,464 parameters and196.819781s for one unwarmed token (0.005081tok/s).
+This is a load/execution smoke,NOT text-quality or steady-speed qualification
+and certainly NOT a P100A result. No CPU speedup claim is made.
 Frozen CPU launcher23fe07f6,bench library1b24d022/commonbf603e98 and four
 previous runtime libraries were verified; no dirty llama implementation read,
 built,synced or modified. Log `qwen38-parallel-20261017/cpu-smoke-20261017-b.log`.
@@ -61,6 +64,16 @@ It has NOT RUN; no NIC replacement or native candidate result is claimed.
 Private helper/verifier copies change ONLY the NIC pin and verifier pin/path,
 keeping kernel,bundle,memory,CPU,firmware and default boot unchanged:
 helperSHA0bfe2647,verifierSHA32b924b7. Original helper/verifier are preserved.
+
+After ALL jobs exited,evidence was saved under Mac temporary task directory
+`/private/tmp/pioneer-q38-local-repair.SdY52i0Y/evidence/`. Requested native
+`sync; shutdown -s`; SSH terminated and serial showed service termination/
+existing BFS index warnings,but no final shutdown-complete marker. After
+more than90s,one relay off hold completed at23:20 UTC. Board is resting180s
+before the offline NIC trial. This is not a claim of confirmed graceful halt.
+New fixed-range source test mode will serve ONLY the same three public leaves
+three times without throttling; nine fresh native files require exact SHA,
+no retry/interface recovery/GPU work. This native qualification is UNRUN.
 
 ### October17: native SHA failure isolated; guarded repair pending (22:03 UTC)
 

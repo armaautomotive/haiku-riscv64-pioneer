@@ -1,8 +1,8 @@
 # Native build status
 
-Latest checkpoint (October17,23:13 UTC): P100A installed; both SD cards
-out. User-authorized cold recovery and unchanged SD-free handoff restored
-Haiku SSH with64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
+Latest checkpoint (October17,23:21 UTC): P100A installed; both SD cards
+out. Board powered off/resting for offline NIC trial. Last unchanged SD-free
+handoff had64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
 Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
 fixed Qwen3-0.6B Q8_0 result was7.428707..7.557277tok/s; requested-fast
 Qwen/27B and a new Assistant performance target remain UNACHIEVED.
@@ -23,8 +23,9 @@ Guarded native patch compared entire old leaves to preserved bad parts,then
 patched ONLY the unpublished assembly. Whole SHA passed23:10:41 UTC BEFORE
 publication; read-only native851-tensor/8,162,688-value inspection passed.
 Original bad parts/repair inputs remain preserved. Public sender CLOSED.
-One-token32-thread CPU-only smoke is running (900s bound),not yet a pass;
-no27B GPU result,quality or steady-speed claim. Installed qualified43 and
+One-token32-thread CPU-only smoke PASSED23:16:41 UTC. It reports CPU only,
+zero GPU layers/KV/op offload,one unwarmed token taking196.82s; this is NOT
+a text-quality or steady-speed benchmark. No27B GPU result. Qualified43 and
 NIC MSI-only SHAfe6273c9 remain unchanged; card driver is still unloaded.
 
 Default-off HAIKU_PIONEER_RTL_SERIALIZE comparison addresses a source-level
@@ -35,6 +36,8 @@ acquisition on system-error reset. Actual production selection/compatibility
 interrupt/helpers pass ASan/UBSan/default/foreign-profile tests. Candidate
 SHA0b83ceed reproduces across two builds; MSI control1a2e242c is NOT the backup.
 900 bounded read-only NIC ticks are enabled only for this private comparison.
+Normal synced Haiku shutdown terminated SSH; no final completion marker was
+observed. Finished one relay off hold at23:20 UTC;180s rest required before on.
 Offline exact-target/COW-rehearsal/rollback installer is prepared,NOT RUN.
 Candidate is NOT installed or native-qualified; live stall cause unproven.
 New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
