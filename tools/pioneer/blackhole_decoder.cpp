@@ -133,6 +133,11 @@ static void DecoderParallelAttention(unsigned layer,uint32_t (&total)[4])
 	DECODER_STAGE_BEGIN();
 	volatile auto& root=DecoderJob(); volatile uint32_t* stats=Words(0x143000);
 	for (unsigned i=0;i<4;i++) stats[i]=0;
+#if PIONEER_COORDINATOR_CUMULATIVE_COUNTERS
+	if (!NocIdle()) coordinator_fault_park();
+	for (unsigned i=0;i<8;i++) stats[8+i]=*Words(0xffb20000+CounterOffset(i));
+	if (stats[10]!=stats[14]) coordinator_fault_park();
+#endif
 	for (unsigned group=0;group<8;group++) {
 		unsigned worker=group+1; uint32_t sequence=root.sequence[group];
 		if (!PeerReleased(worker,sequence-1)) coordinator_fault_park();
@@ -183,6 +188,11 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 {
 	DECODER_STAGE_BEGIN(); volatile auto& root=DecoderJob(); volatile uint32_t* stats=Words(0x143000);
 	for (unsigned i=0;i<4;i++) stats[i]=0;
+#if PIONEER_COORDINATOR_CUMULATIVE_COUNTERS
+	if (!NocIdle()) coordinator_fault_park();
+	for (unsigned i=0;i<8;i++) stats[8+i]=*Words(0xffb20000+CounterOffset(i));
+	if (stats[10]!=stats[14]) coordinator_fault_park();
+#endif
 	for (unsigned group=0;group<6;group++) {
 		unsigned worker=group+1; uint32_t sequence=root.sequence[group];
 		if (!PeerReleased(worker,sequence-1)) coordinator_fault_park();

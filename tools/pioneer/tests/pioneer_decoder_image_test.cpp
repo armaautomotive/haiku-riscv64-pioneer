@@ -13,6 +13,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyDecoderCandidateImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyUnrolledDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyRmsDecoderImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeGreedyCountersDecoderImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDecoderGreedy.h"
 #define Machine DecoderSfpuMachine
 #define Image DecoderSfpuImage
@@ -98,8 +99,9 @@ struct DecoderMachine:CoordinatorMachine {
 	DecoderMachine(const char* root,const DecoderSfpuImage& attention,bool changed=false,bool concurrent=false,bool profile=false,bool glu=false,bool greedy=false):CoordinatorMachine(root,true,true),sfpu(attention,1),nonzero(changed),parallel(concurrent),fusedGlu(glu),sampling(greedy) {
 		bool unrolled=greedy && code.size()==TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS*4;
 		bool fastRms=greedy && code.size()==TT_GREEDY_RMS_DECODER_IMAGE_WORDS*4;
-		assert(code.size()==unsigned(fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
-		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+		bool cumulative=greedy && code.size()==TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS*4;
+		assert(code.size()==unsigned(cumulative?TT_GREEDY_COUNTERS_DECODER_IMAGE_WORDS:fastRms?TT_GREEDY_RMS_DECODER_IMAGE_WORDS:unrolled?TT_GREEDY_UNROLLED_DECODER_IMAGE_WORDS:greedy?TT_GREEDY_DECODER_IMAGE_WORDS:glu?TT_GLU_DECODER_IMAGE_WORDS:profile?TT_PROFILE_DECODER_IMAGE_WORDS:parallel?TT_PARALLEL_DECODER_IMAGE_WORDS:TT_DECODER_IMAGE_WORDS)*4 && l1[0]==TT_DECODER_BOOT);
+		for (unsigned i=0;i<TT_DECODER_CODE_WORDS;i++) assert((cumulative?BlackholeGreedyCountersDecoderCodeWord(i):fastRms?BlackholeGreedyRmsDecoderCodeWord(i):unrolled?BlackholeGreedyUnrolledDecoderCodeWord(i):greedy?BlackholeGreedyDecoderCodeWord(i):glu?BlackholeGluDecoderCodeWord(i):profile?BlackholeProfileDecoderCodeWord(i):parallel?BlackholeParallelDecoderCodeWord(i):BlackholeDecoderCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		for (unsigned a=0x80000;a<0x8c000;a+=4) memory[a]=0;
 		for (unsigned a=0x90000;a<0xb2400;a+=4) memory[a]=0;
 		for (unsigned a=0x140000;a<0x148000;a+=4) memory[a]=0;

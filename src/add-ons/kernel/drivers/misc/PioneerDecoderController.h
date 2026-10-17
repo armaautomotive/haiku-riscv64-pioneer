@@ -11,6 +11,7 @@
 #include "BlackholeGreedyDecoderCandidateImage.h"
 #include "BlackholeGreedyUnrolledDecoderImage.h"
 #include "BlackholeGreedyRmsDecoderImage.h"
+#include "BlackholeGreedyCountersDecoderImage.h"
 #include "PioneerDecoderGreedy.h"
 #include "PioneerDecoderStageProfile.h"
 #include <stddef.h>
@@ -23,7 +24,7 @@ struct PioneerDecoderLease {
 };
 static inline uint32_t PioneerDecoderCodeWord(const PioneerDecoderLease& code,unsigned word)
 {
-	return code.greedy?BlackholeGreedyRmsDecoderCodeWord(word):code.glu?BlackholeGluDecoderCodeWord(word):code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
+	return code.greedy?BlackholeGreedyCountersDecoderCodeWord(word):code.glu?BlackholeGluDecoderCodeWord(word):code.profiling?BlackholeProfileDecoderCodeWord(word):code.parallel?BlackholeParallelDecoderCodeWord(word):BlackholeDecoderCodeWord(word);
 }
 template<class IO>
 bool PioneerDecoderPeerOwners(IO& io,PioneerFleetWorker* fleet,const PioneerDecoderLease& code)

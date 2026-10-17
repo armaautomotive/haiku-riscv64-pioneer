@@ -2,6 +2,47 @@
 
 ## Status
 
+### October17: exact RMS native PASS;counter-snapshot candidate prepared (09:37 UTC)
+
+Fast Qwen remains unachieved. Contract18 passes22 EXACT full-vocabulary
+positions/token/selected-bit replays and all three longer quality/replay/
+coverage/speed gates. GPU3.400617/3.376853/3.450321tok/s versus CPU32
+1.508728/2.828617/2.840236. GPU prompts7.460919/7.735340/6.901944s remain
+poor. Complete312 positions,61464 projections/8736 attention,156 full
+results plus156 distinct128B tokens,zero warm uploads. END2/PCI-host1-1/
+cold0/cleanup1. Complete cold111.362346s including93.188399s upload. Short
+3/0.779400s=3.849115tok/s is diagnostic ONLY. Position21 RMS ticks fall
+18.51M ->9.18M with exact outputs. Log:`qwen-rms-v18-benchmark.log`.
+Qualified driver`acaab499f9fe1a7066eed0b97c35637eccfaa45213acafb802937b732347a5d0`.
+This does not establish useful real-world/all-Qwen/27B/Q4 performance.
+
+Next explicit contract19 derives each transfer's expected FOUR physical
+completion counters from its operation's ALL-idle eight-counter snapshot
+and already proved packet/flit totals. ALL four physical counter checks
+still happen AFTER every packet,with unchanged ten command readbacks,
+doorbell ordering,bounds,completion/source/ID/full-summary proof. Matrix
+operations already own the starting snapshot;attention/GLU now capture a
+fresh one before their first transfer. Duplicate accepted-counter slots
+must agree. Host-transfer totals stay included,including full-debug mode.
+No new address,owner,register write,DMA privilege or host round trip.
+
+Actual complete scalar/SFPU decoder tests pass zero/nonzero/TWO positions,
+independent tokens/selected bits/EVERY KV/Q8/counter/sequence/profile word,
+full-vocabulary mode,late NaN/Inf,posted-transfer faults,ALL ten dropped
+command fields,ALL four corrupted physical completion counters and ALL
+eight corrupted operation snapshot fields (each injected before any peer
+launch). The native-qualified18 image rebuilds byte-identically with the
+new flag OFF. Candidate code SHA
+`14e1d34adb0c266b1bf500ee1e3f4769e90df6f02224b2623ac7e90b4a9dce13`.
+The snapshot calculation ADDS~1.29M scalar instructions versus18;fewer MMIO
+reads may or may not improve native speed. Native correctness/performance
+PENDING;do not claim a gain. Driver
+`acbca70f049415846910fcdabf03ba06f0e149e62fd804244f159fe7907ba080`
+is installed IDLE with qualified18 backed up;verifier
+`ab8efbc82f19c2fa8a95923076c124a2f7fd26ae6369028a9f3bf5e4edbc8197`
+requires exact19 BEFORE BEGIN. Controlled native benchmark in progress,
+log`qwen-counters-v19-benchmark.log`. Assistant/boot/CPU/RAM/firmware/SD unchanged.
+
 ### October17: unrolled native speedup;RMS contract18 trial (09:29 UTC)
 
 Fast Qwen is STILL NOT achieved. The unrolled controller passes ALL22 exact

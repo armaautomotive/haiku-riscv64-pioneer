@@ -4,6 +4,7 @@
 struct GreedyDecoder:GluDecoder {
 	unsigned edge=0;
 	unsigned dropCommand=0,counterFault=0; bool commandPoisoned=false,counterInjected=false;
+	unsigned badSnapshot=0,nocStatusReads=0; bool snapshotInjected=false;
 	GreedyDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool small=true):GluDecoder(path,image,nz,true) {
 		memory[TT_DECODER_JOB_BASE+4]=small?9:8;
 	}
@@ -17,6 +18,14 @@ struct GreedyDecoder:GluDecoder {
 			return 0;
 		}
 		return GluDecoder::PeerRead(w,a);
+	}
+	uint32_t Load(uint32_t a) override {
+		if (Range(a,0xffb20200,64)) nocStatusReads++;
+		uint32_t value=GluDecoder::Load(a);
+		if (badSnapshot && !snapshotInjected && a==0x143020+(badSnapshot-1)*4 && memory.at(0x140000)==0x31445243 && memory.at(0x140004)==1 && !issued) {
+			snapshotInjected=true; value^=1;
+		}
+		return value;
 	}
 	void Store(uint32_t a,uint32_t value) override {
 		if (dropCommand && Range(a,0xffb20000,40) && memory.at(0x140000)==0x31445243 && memory.at(0x140004)==1 && !issued) {
@@ -50,6 +59,8 @@ int main(int argc,char** argv)
 		assert(!m.RunDecoder() && m.commandPoisoned && !m.issued && !m.hostWrites); }
 	for (unsigned counter:{1U,2U,3U,4U}) { GreedyDecoder m(argv[1],image,false); m.counterFault=counter;
 		assert(!m.RunDecoder() && m.counterInjected && !m.issued && !m.hostWrites); }
+	if (getenv("PIONEER_GREEDY_COUNTER_SNAPSHOT_FAULTS")) for (unsigned word=1;word<=8;word++) { GreedyDecoder m(argv[1],image,false); m.badSnapshot=word;
+		assert(!m.RunDecoder() && m.snapshotInjected && !m.issued && !m.hostWrites); }
 	if (faultsOnly) { puts("PASS OFFLINE actual master Transfer:ALL ten individually dropped command stores and ALL four independently corrupted physical counter deltas rejected before any peer launch;full functional image tests separate"); return 0; }
 	puts("PASS OFFLINE actual full decoder/8 attention/6 GLU/on-card first-argmax,128B sole ordered/all-bit-compared result,exact independent tokens/logit bits/KV/119 sequences/profile/NoC budgets,TWO positions,retained full-vocabulary mode,zero/negative/tie/nonfinite/posted faults;NOT native qualification");
 }

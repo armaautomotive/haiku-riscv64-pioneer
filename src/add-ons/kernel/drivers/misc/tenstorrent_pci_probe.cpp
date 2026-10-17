@@ -2395,7 +2395,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={18,119,3,1,8192}; // v18 separately identifies bounded positive FastTwoSum RMS;v17 sampling ABI retained
+	tt_coordinated_support support={19,119,3,1,8192}; // v19 derives transfer expectations from immutable operation snapshot/completed totals;all physical completion checks retained
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 

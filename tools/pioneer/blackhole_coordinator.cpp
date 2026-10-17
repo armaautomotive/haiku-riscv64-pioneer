@@ -66,7 +66,17 @@ static void Transfer(bool write,unsigned worker,uint32_t local,uint32_t remote,u
 	// this changes NO transfer authority,ordering or acceptance condition.
 	unsigned c0=write?local:remote,c2=write?129U:XY(worker),c3=write?remote:local,c5=write?XY(worker):129U,c7=write?0x212U:0;
 	unsigned o0=write?0x204U:0x208U,o1=write?0x220U:0x20cU,o3=write?0x228U:0x214U;
+#if PIONEER_COORDINATOR_CUMULATIVE_COUNTERS
+	// The operation starts with an ALL-idle physical snapshot in stats8..15.
+	// Derive the SAME four exact post-packet counters from that snapshot and
+	// the proved completed-packet totals. Every physical completion counter
+	// is STILL checked. No moving pre-packet hardware baseline is needed.
+	volatile uint32_t* s=Words(0x143000);
+	uint32_t e0=s[write?12:8]+s[write?2:0]+1,e1=s[write?13:9]+s[write?3:1]+((bytes+63)>>6);
+	uint32_t e2=s[10]+s[0]+s[2]+1,e3=s[write?15:11]+s[write?2:0]+1;
+#else
 	uint32_t e0=noc[o0/4]+1,e1=noc[o1/4]+((bytes+63)>>6),e2=noc[0x210/4]+1,e3=noc[o3/4]+1;
+#endif
 	noc[0]=c0; noc[1]=0; noc[2]=c2; noc[3]=c3; noc[4]=0; noc[5]=c5; noc[6]=0; noc[7]=c7; noc[8]=bytes; noc[9]=0;
 	uint32_t mismatch=(noc[0]^c0)|noc[1]|(noc[2]^c2)|(noc[3]^c3)|noc[4]|(noc[5]^c5)|noc[6]|(noc[7]^c7)|(noc[8]^bytes)|noc[9];
 	if (mismatch) coordinator_fault_park();
@@ -219,6 +229,9 @@ extern "C" unsigned coordinator_main()
 	for (unsigned i=0;i<24;i++) stats[i]=0;
 	stats[5]=n; stats[6]=job[6]; stats[7]=operation;
 	for (unsigned i=0;i<8;i++) stats[8+i]=*Words(0xffb20000+CounterOffset(i));
+#if PIONEER_COORDINATOR_CUMULATIVE_COUNTERS
+	if (stats[10]!=stats[14]) coordinator_fault_park();
+#endif
 	Fence();
 #if PIONEER_COORDINATOR_OUTPUT_COMPARE
 	if (operation==2) {
