@@ -11,13 +11,36 @@
 #ifndef PIONEER_ATTENTION_CACHED_QUERY
 #define PIONEER_ATTENTION_CACHED_QUERY 0
 #endif
+#ifndef PIONEER_ATTENTION_FAST_SOFTMAX
+#define PIONEER_ATTENTION_FAST_SOFTMAX 0
+#endif
+#ifndef PIONEER_ATTENTION_TOKEN_LANES
+#define PIONEER_ATTENTION_TOKEN_LANES 0
+#endif
+#ifndef PIONEER_ATTENTION_INLINE_SFPU
+#define PIONEER_ATTENTION_INLINE_SFPU 0
+#endif
+#if PIONEER_ATTENTION_FAST_SOFTMAX
+#include "PioneerFastSoftmax.h"
+#endif
 
 static inline volatile uint32_t* Words(uint32_t address)
 {
 	return reinterpret_cast<volatile uint32_t*>(address);
 }
 static inline void Fence() { asm volatile("fence" ::: "memory"); }
-static inline void Emit(uint32_t instruction) { *Words(0xffe40000) = instruction; }
+static inline __attribute__((always_inline)) void Emit(uint32_t instruction) {
+#if PIONEER_ATTENTION_INLINE_SFPU
+	// Same rotate-left-two encoding as the native-qualified matrix image.
+	// ONLY compiler-constant trusted instructions become inline words;
+	// data-dependent immediate loads retain the existing command-store path.
+	if (__builtin_constant_p(instruction)) {
+		asm volatile(".word %0" :: "i"((instruction<<2)|(instruction>>30)) : "memory");
+		return;
+	}
+#endif
+	*Words(0xffe40000) = instruction;
+}
 extern "C" void attention_fault_park() __attribute__((noreturn));
 
 static void Drain()
@@ -60,6 +83,7 @@ static inline unsigned LaneOffset(unsigned lane)
 {
 	return (lane / 8) * 16 + (lane % 8) * 2;
 }
+#if !PIONEER_ATTENTION_TOKEN_LANES
 static void WriteQuery(const float* query)
 {
 	volatile uint32_t* dst = Words(0xffbd8000);
@@ -67,6 +91,7 @@ static void WriteQuery(const float* query)
 		dst[LaneOffset(i)] = PIONEER_ATTENTION_CACHED_QUERY?PioneerAttentionBits(query[i]):PioneerAttentionBits(PioneerAttentionHalf(PioneerAttentionToHalf(query[i])));
 	(void)dst[LaneOffset(31)]; Fence();
 }
+#endif
 static void WriteHalf(const uint16_t* input, unsigned row)
 {
 	volatile uint32_t* dst = Words(0xffbd8000 + row * 64);
@@ -78,6 +103,7 @@ static void WriteHalf(const uint16_t* input, unsigned row)
 // This is the previously tested Q8 exact-FMA sequence, with a0,b1,c2.
 // Blackhole SFPMAD is only partially fused; do not substitute a plain MAD.
 extern "C" const uint32_t attention_exact_begin[], attention_exact_end[];
+#if !PIONEER_ATTENTION_TOKEN_LANES
 static void AccurateMad()
 {
 	for (const uint32_t* p = attention_exact_begin; p != attention_exact_end; p++) Emit(*p);
@@ -103,6 +129,37 @@ static float Dot(const float* query, const uint16_t* key)
 	}
 	return (high + low) * 0.0883883461356163f;
 }
+#else
+// Exact dot products in token-parallel lanes. Each lane preserves the
+// SAME128-dimension product/TwoSum order as Dot;only independent tokens
+// execute concurrently. All operations already occur in WeightedValues.
+// Same query/KV/Dst/stack owners;no new NoC or memory authority.
+static void TokenLaneScores(const float* query,const uint16_t* keys,unsigned tokens,float* scores)
+{
+	volatile uint32_t* input=Words(0xffbd8000),*output=Words(0xffbd8200);
+	for (unsigned first=0;first<tokens;first+=32) {
+		unsigned count=tokens-first; if (count>32) count=32;
+		Emit(0x702b0000); Emit(0x703b0000); Drain();
+		for (unsigned lane=count;lane<32;lane++) input[LaneOffset(lane)]=0;
+		Fence();
+		for (unsigned dimension=0;dimension<128;dimension++) {
+			for (unsigned lane=0;lane<count;lane++)
+				input[LaneOffset(lane)]=PioneerAttentionBits(PioneerAttentionHalf(keys[(first+lane)*128+dimension]));
+			(void)input[LaneOffset(count-1)]; Fence();
+			Emit(0x70030000);
+			uint32_t q=PioneerAttentionBits(PIONEER_ATTENTION_CACHED_QUERY?query[dimension]:PioneerAttentionHalf(PioneerAttentionToHalf(query[dimension])));
+			Emit(0x71100000|(q>>16)); Emit(0x711a0000|(q&65535));
+			Emit(0x84001940); // product4 = exact half-key0 * half-query1
+			Emit(0x850a2450); Emit(0x850a5262); Emit(0x850a5672);
+			Emit(0x850a2772); Emit(0x850a4662); Emit(0x850a7670);
+			Emit(0x850a3730); Emit(0x7c000520); Drain();
+		}
+		Emit(0x850a2300); Emit(0x72030008); Drain();
+		for (unsigned lane=0;lane<count;lane++)
+			scores[first+lane]=PioneerAttentionFloat(output[LaneOffset(lane)])*0.0883883461356163f;
+	}
+}
+#endif
 
 static void WeightedValues(const uint16_t* values, const float* probabilities,
 	unsigned tokens, float* output)
@@ -161,13 +218,22 @@ extern "C" unsigned attention_main()
 	Setup();
 	for (unsigned head = 0; head < 2; head++) {
 		float scores[256], maximum = -3.4028234663852886e38f;
+#if PIONEER_ATTENTION_TOKEN_LANES
+		TokenLaneScores(query+head*128,keys,tokens,scores);
+#endif
 		for (unsigned t = 0; t < tokens; t++) {
+#if !PIONEER_ATTENTION_TOKEN_LANES
 			scores[t] = Dot(query + head * 128, keys + t * 128);
+#endif
 			if (scores[t] > maximum) maximum = scores[t];
 		}
 		float denominator = 0, denominatorLow = 0;
 		for (unsigned t = 0; t < tokens; t++) {
+#if PIONEER_ATTENTION_FAST_SOFTMAX
+			scores[t] = PioneerFastSoftmaxExp(scores[t] - maximum);
+#else
 			scores[t] = PioneerAttentionExp(scores[t] - maximum);
+#endif
 			PioneerAttentionAdd(scores[t], denominator, denominatorLow);
 		}
 		float inverse = PioneerAttentionReciprocal(denominator, denominatorLow);

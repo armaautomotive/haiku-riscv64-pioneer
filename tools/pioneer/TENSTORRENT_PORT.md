@@ -2,6 +2,90 @@
 
 ## Status
 
+### October17:exact38 native PASS,speed-neutral;optimized39 (15:04 UTC)
+
+Fast Qwen STILL NOT achieved. Exact38 GPU5.923731/5.880072/6.016333tok/s
+versus36 5.916261/5.871315/6.006622:essentially speed-neutral,not a useful
+breakthrough. ALL22 full-logit/selected-bit checks and three sustained
+natural requests/untimed complete replay/quality/coverage PASS. Complete
+312 positions/61464 projections/8736 attention/156 full+156 selected
+positions/24 batches/zero warm uploads;END2/PCI-host1-1/cold0/cleanup1.
+Position21 total112.858189M ticks,attention27.343844M,SiLU7.665738M,
+matrix48.253915M. Qualified`driver-v38-2f248665-backup` and full native
+log preserved;36/35/34 and older rollbacks remain. No Assistant/all-Qwen
+promotion or requested-fast claim.
+
+Next39/model23/private10 changes ONLY compiler optimization of the SAME
+exact master source (-O2,NO fast-math,contraction still disabled). Master
+d58d80bf is20816B,within the SAME32768B code owner;stack high-water is
+6f8e0 versus6f8ac. Retains38's SAME exact math63efcbae,inline attention/
+GLU,all119 peers/descriptor tables,NoC/proofs/counters/seqs/batch limits.
+Master selection is an immutable separate lease flag;live upgrades refuse.
+Default master regenerates95744a6f byte-identically. Zero full replay uses
+23221550 versus29368101 interpreter steps,sparse full26615263 versus
+33842155;these are NOT native speed claims. Full/small/one/two/early-EOG/
+all logits/KV/counters/119-sequence replays AND ALL16 injected combined
+proof/prefix-restoration faults PASS. Client39 and immutable controller/
+quarantine tests pass ASan/UBSan. NO optimized39 native compute session yet.
+
+### October17:37 REJECTED;exact inline-attention38 validation (14:56 UTC)
+
+Fast Qwen STILL NOT achieved;36 remains the qualified~5.87..6.01tok/s
+rollback. Separate multiply/add37 FAILED unchanged native quality at
+position1:cosine.998921879 and L2.054747001>.02 (position0 L2.001176400).
+Do NOT promote37,reduce its gate,or describe its short timing as qualified.
+It ended cleanly:END2/PCI-host1-1/cold0/cleanup1;qualified36/6ab257a2 was
+restored with no cold recovery. Failed log retained locally. ALL future
+exact-attention38 math peers explicitly select63efcbae,NOT rounded8e76cd8d.
+
+Candidate38/model22/private10 emits trusted constant SFPU operations using
+the SAME rotate-left-two encoding as native21/29 matrix instructions.
+Dynamic immediate operations retain command stores. Exact36 arithmetic,
+wide softmax,K/V/GLU packing and every NoC/sequence/owner are unchanged.
+Primary974d6a90(6852B),extra9bebc840(6648B) fit the SAME two code owners.
+The strict instruction model unwraps inline words ONLY for this frozen
+image,then uses the SAME existing SFPU opcode/operand whitelist. No new
+arithmetic operation,address,route,NoC command or cleanup permission.
+
+Actual group passes all48 attention cases and allGLU/source/counter/Dst/
+ACK fault checks. Independent paired compiled-image test passes ALL256
+attention output bits/whole KV/counters versus36 at1/2/8/17/31/32/33/64/
+65/127/128/129/255/256 tokens,groups0/7,and ALL272 packed GLU words at
+all six groups/layers0/27. At256 tokens,command stores243878 ->204893;
+eachGLU7379 ->2604. Interpreter GLU steps actually rise116850 ->118738:
+NEVER treat reduced command stores as proven native speed. Full-master
+replay now PASSES full/small/zero+sparse/one+two positions/early EOG/all
+logits/KV/119 sequences/ALL16 combined-proof and prefix-restoration faults.
+Contract38 client,immutable group-owner staging/restore and all-owner
+controller/quarantine tests pass ASan/UBSan. Default36 code regenerates
+byte-identically. Driver2f248665 staged;NO native38 compute session yet.
+
+Other OFFLINE-only experiments are not driver-selected:token-parallel
+exact dot products match ALL256 output bits/whole KV across the same28
+paired cases,but use MORE interpreter steps;single-float softmax passes
+1063546 cases(max relative1.19121403e-7),full group and full-master
+zero/sparse/fault tests,but is NOT bit-identical or full-model qualified.
+Preserve all qualified36/35/34 and older rollback artifacts.
+
+### October17: separate-RN matrix37 ready for native trial (14:42 UTC)
+
+Experimental37/model21/private10 binds rounded-product8e76cd8d as an
+immutable flag on ALL119 math leases;ANY mixed peer/live upgrade refuses
+before staging. Retains36's exact vector GLU,eight code/data group owners,
+35's exact Q8 master and34's fused-gather workers. NO new NoC command,
+source bank,DMA span,counter/sequence change or weakened UNKNOWN rule.
+The only math instruction changes fit the SAME d80..ea8 control region;
+all public return/status/STOP PCs and final full drain are byte-identical.
+Default exact math regenerates63efcbae;new image matches all1024 frozen
+words. Independent separate-IEEE-product/add oracle passes all120 workers,
+all supported K/N4096/repeated inputs/STOP and strict Dst timing. ALL119
+math/table staging+restoration and real-client37 full/small/batch/early-EOG/
+every-output-word corruption/mismatched-contract refusal pass ASan/UBSan.
+Controller passes every119 mixed peer refusal,full/small/batch/whole KV/
+all-owner quarantine fault tests. No rounded-product native session yet.
+Native36 remains qualified rollback;unchanged full-model quality and
+natural-request/replay gates must decide37,NOT interpreter step savings.
+
 ### October17: vector GLU36 native PASS;matrix prototype (14:38 UTC)
 
 Fast Qwen STILL NOT achieved. Native36 GPU5.916261/5.871315/6.006622tok/s

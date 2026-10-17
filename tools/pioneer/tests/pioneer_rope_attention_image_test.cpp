@@ -52,6 +52,7 @@ struct VectorGluFaultMachine:GluMachine {
 		GluMachine::Store(a,value);
 	}
 };
+#ifndef PIONEER_ROPE_GROUP_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2); setvbuf(stdout,NULL,_IONBF,0); Image image(argv[1],false,true,true); assert(image.parallelRope);
@@ -77,3 +78,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE fixed parallel three-head RMS/exact fused RoPE/attention and exact GLU packing,all source bits/counters/guards/extension instruction bounds;NOT native qualification");
 }
+#endif
