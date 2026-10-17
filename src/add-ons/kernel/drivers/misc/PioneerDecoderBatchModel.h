@@ -2,7 +2,7 @@
 #ifndef PIONEER_DECODER_BATCH_MODEL_H
 #define PIONEER_DECODER_BATCH_MODEL_H
 #include "PioneerDecoderModel.h"
-// OFFLINE prerequisite. No existing model ioctl accepts these fields.
+// Explicit experimental model17/contract33 registration prerequisite.
 // The32-page immutable256-position RoPE table must be initialized and
 // entirely disjoint from EVERY registered weight/norm and mutable KV tail.
 static inline bool PioneerDecoderBatchModelRegister(const PioneerDecoderModelOffsets& offsets,
@@ -10,7 +10,7 @@ static inline bool PioneerDecoderBatchModelRegister(const PioneerDecoderModelOff
 {
 	if (!PioneerDecoderModelRegister(offsets,initialized,capacity,job)) return false;
 	uint32_t rope=0;
-	bool valid=eos0<151936 && eos1<151936 && eos0!=eos1
+	bool valid=PioneerDecoderEogSetValid(eos0,eos1)
 		&& PioneerDecoderModelRange(ropeOffset,0x20000,initialized,rope);
 	const unsigned k[]={1024,1024,1024,2048,1024,1024,3072},n[]={2048,1024,1024,1024,3072,3072,1024};
 	for (unsigned l=0;l<28 && valid;l++) for (unsigned i=0;i<11;i++) {

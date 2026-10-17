@@ -42,6 +42,7 @@ struct CoordinatedMachine:PersistentMachine {
 		assert(pc==target && drained && !pending && !inputPending);
 	}
 	void BootCoord() { UntilCoord(CoordWait); assert(l1[Index(0x7130c)]==CoordReady && !matrixInstructions && !requests); }
+	virtual bool ActivationUnchanged() const { return !memcmp(buffers,source,sizeof(source)); }
 	void JobCoord(unsigned trial) {
 		assert(pc==CoordWait && l1[Index(0x71300)]==jobs && l1[Index(0x71304)]==jobs);
 		previousReads+=responses; requests=responses=0; this->trial=trial;
@@ -51,7 +52,7 @@ struct CoordinatedMachine:PersistentMachine {
 		}
 		for (unsigned b=0;b<inputs/32;b++) source[3072+b]=Bits(InputScale(b,trial));
 		l1[Index(0x71300)]=++jobs; UntilCoord(CoordWait);
-		assert(l1[Index(0x71304)]==jobs && CorrectExpected() && Guards() && !memcmp(buffers,source,sizeof(source)));
+		assert(l1[Index(0x71304)]==jobs && CorrectExpected() && Guards() && ActivationUnchanged());
 		unsigned reads=ExpectedFixtures()/32;
 		for (unsigned i=0;i<4;i++) assert(uint32_t(l1[Index(0x71350+i*4)]-l1[Index(0x71340+i*4)])==(i==1?reads*144+256:reads+1));
 		assert(l1[Index(0x71360)]==0x703ec && l1[Index(0x71364)]==ExpectedFixtures()

@@ -42,7 +42,7 @@ static int Argmax(const float* values) {
 	int best=0; for (unsigned i=0;i<151936;i++) { if (!isfinite(values[i])) return -1; if (values[i]>values[best]) best=int(i); } return best;
 }
 #include "PioneerWholeQwenBench.h"
-static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages,bool glu,bool greedy,bool rms,bool counters,bool paired,bool direct,bool partial,bool cached,bool pull,bool phases,bool diagnostic,bool table,bool accum,bool smallRows,bool parallelRope)
+static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool stages,bool glu,bool greedy,bool rms,bool counters,bool paired,bool direct,bool partial,bool cached,bool pull,bool phases,bool diagnostic,bool table,bool accum,bool smallRows,bool parallelRope,bool batched)
 {
 	double coldStart=Seconds();
 	RawModel raw; gguf_init_params rp={false,&raw.tensors}; raw.metadata=gguf_init_from_file(path,rp);
@@ -73,13 +73,25 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 	CpuReference cpu; llama_model_params mp=llama_model_default_params(); mp.n_gpu_layers=0;
 	cpu.model=llama_model_load_from_file(path,mp); if (!cpu.model) return 1;
 	const llama_vocab* vocab=llama_model_get_vocab(cpu.model);
+	unsigned eogBase=0,eogCount=0; uint32_t eogMask=0;
+	if (batched) {
+		if (classifier!=embedding) { fprintf(stderr,"Autonomous fixed model requires a tied classifier/embedding;refused BEFORE card open\n"); return 1; }
+		std::vector<unsigned> eog;
+		for (unsigned id=0;id<unsigned(llama_vocab_n_tokens(vocab));id++) if (llama_vocab_is_eog(vocab,llama_token(id))) eog.push_back(id);
+		eogCount=unsigned(eog.size());
+		printf("MODEL complete pinned EOG set count%u ids",eogCount); for (unsigned id:eog) printf(" %u",id); puts("");
+		if (!PioneerDecoderPackEog(eog.data(),eogCount,eogBase,eogMask)) {
+			fprintf(stderr,"Complete EOG set exceeds exact28-token window plus one outlier;refused BEFORE card open\n"); return 1;
+		}
+		printf("MODEL complete EOG encoding %08x/%08x;fixed tied embedding PASS\n",eogBase,eogMask);
+	}
 	if (llama_model_n_embd(cpu.model)!=1024 || llama_model_n_layer(cpu.model)!=28 || llama_vocab_n_tokens(vocab)!=151936) return 1;
 	llama_context_params cp=llama_context_default_params(); cp.n_ctx=256; cp.n_batch=cp.n_ubatch=1; cp.n_threads=cp.n_threads_batch=32;
 	if (benchmark) cp.n_batch=cp.n_ubatch=128;
 	cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.offload_kqv=false; cp.op_offload=false;
 	cpu.context=llama_init_from_model(cpu.model,cp); if (!cpu.context || llama_n_threads(cpu.context)!=32) return 1;
-	printf("MODEL decoder scheduler:%s\n",parallelRope?"parallel exact head RMS/RoPE/eight KV groups (experimental contract31)":smallRows?"private16-row hidden chunks/exact accumulator/resident descriptors (experimental contract30)":accum?"exact SFPU accumulation/fidelity pipeline/resident descriptors (experimental contract29)":table?"sealed resident descriptors/exact four-fidelity pipeline/parallel input fetch (experimental contract28)":diagnostic?"FIXED ROOT/PEER INPUT DIAGNOSTIC ONLY;NOT inference (contract26)":phases&&pull?"exact four-fidelity pipeline/parallel verified input fetch (experimental contract27)":phases?"exact four-phase FPU pipeline/cached23 transport (experimental contract25)":pull?"exact math/parallel frozen-input fetch and ALL-bit readback (experimental contract24)":cached?"exact math/once-per-job cached query (experimental contract23)":partial?"experimental native partial-product accumulation (contract22,quality NOT qualified)":direct?"exact direct-instruction math/paired gate-up/eight KV/six GLU (experimental contract21)":paired?"119-peer paired gate/up,eight KV,six GLU,on-card argmax/RMS (experimental contract20)":counters?"eight KV/six GLU/on-card argmax/RMS/cumulative expectations (experimental contract19)":rms?"eight KV/six GLU/on-card argmax/positive FastTwoSum RMS (experimental contract18)":greedy?"eight KV/six GLU/on-card argmax (experimental contract17)":glu?"eight KV/six GLU groups (experimental contract16)":stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
-	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,parallelRope?22:smallRows?21:accum?20:table?19:diagnostic?17:phases&&pull?18:phases?16:pull?15:cached?14:partial?13:direct?12:paired?11:counters?10:rms?9:greedy?8:glu?7:stages?6:parallel?5:4)) return 1;
+	printf("MODEL decoder scheduler:%s\n",batched?"two autonomous positions/local tied embedding/EOG mask (experimental contract33)":parallelRope?"parallel exact head RMS/RoPE/eight KV groups (experimental contract31)":smallRows?"private16-row hidden chunks/exact accumulator/resident descriptors (experimental contract30)":accum?"exact SFPU accumulation/fidelity pipeline/resident descriptors (experimental contract29)":table?"sealed resident descriptors/exact four-fidelity pipeline/parallel input fetch (experimental contract28)":diagnostic?"FIXED ROOT/PEER INPUT DIAGNOSTIC ONLY;NOT inference (contract26)":phases&&pull?"exact four-fidelity pipeline/parallel verified input fetch (experimental contract27)":phases?"exact four-phase FPU pipeline/cached23 transport (experimental contract25)":pull?"exact math/parallel frozen-input fetch and ALL-bit readback (experimental contract24)":cached?"exact math/once-per-job cached query (experimental contract23)":partial?"experimental native partial-product accumulation (contract22,quality NOT qualified)":direct?"exact direct-instruction math/paired gate-up/eight KV/six GLU (experimental contract21)":paired?"119-peer paired gate/up,eight KV,six GLU,on-card argmax/RMS (experimental contract20)":counters?"eight KV/six GLU/on-card argmax/RMS/cumulative expectations (experimental contract19)":rms?"eight KV/six GLU/on-card argmax/positive FastTwoSum RMS (experimental contract18)":greedy?"eight KV/six GLU/on-card argmax (experimental contract17)":glu?"eight KV/six GLU groups (experimental contract16)":stages?"eight concurrent KV groups/device stages (experimental contract15)":parallel?"eight concurrent KV groups (experimental contract14)":"serial groups (contract13)");
+	PioneerResidentDevice card; if (!card.Open(0x80000000ULL,false,true,true,true,true,true,true,true,1,119,true,true,true,false,batched?23:parallelRope?22:smallRows?21:accum?20:table?19:diagnostic?17:phases&&pull?18:phases?16:pull?15:cached?14:partial?13:direct?12:paired?11:counters?10:rms?9:greedy?8:glu?7:stages?6:parallel?5:4)) return 1;
 	PioneerResidentTensorCache<PioneerResidentDevice> cache(card,0x80000000ULL,false,true,true,true,true);
 	PioneerDecoderModelOffsets offsets={}; double uploadStart=Seconds(); bool okay=true;
 	for (unsigned layer=0;layer<28 && okay;layer++) {
@@ -98,10 +110,19 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 	for (unsigned layer=0;layer<28 && okay;layer++) { auto* out=reinterpret_cast<uint64_t*>(&offsets.layers[layer]);
 		for (unsigned role=7;role<11 && okay;role++) okay=uploadNorm(tensors[layer][role],out[role]); }
 	if (okay) okay=uploadNorm(finalNorm,offsets.finalNorm);
+	uint64_t ropeOffset=0;
+	if (okay && batched) {
+		std::vector<uint32_t> ropeTable(256*128); ropeOffset=normAt;
+		for (unsigned position=0;position<256;position++) {
+			float theta=float(position),step=powf(1000000.0f,-2.0f/128);
+			for (unsigned i=0;i<64;i++) { ropeTable[position*128+i*2]=PioneerAttentionBits(cosf(theta)); ropeTable[position*128+i*2+1]=PioneerAttentionBits(sinf(theta)); theta*=step; }
+		}
+		okay=card.UploadPages(ropeOffset,ropeTable.data(),32); normAt+=131072;
+	}
 	printf("Decoder immutable upload%.6fs tensors%zu bytes%llu uploaded pages%llu span calls%llu\n",Seconds()-uploadStart,cache.Tensors(),(unsigned long long)normAt,(unsigned long long)card.uploads,(unsigned long long)card.spanCalls);
 	if (!okay || cache.Tensors()!=197) { card.Finish(); return 1; }
 	double registryStart=Seconds();
-	if (!card.RegisterDecoder(offsets)) { card.Finish(); return 1; }
+	if (!card.RegisterDecoder(offsets,ropeOffset,eogBase,eogMask)) { card.Finish(); return 1; }
 	printf("Decoder registry/owners ready%.6fs;complete cold preparation%.6fs including model/CPU context/upload/registry\n",Seconds()-registryStart,Seconds()-coldStart);
 	const uint64_t uploads=card.uploads;
 	const char* prompt="<|im_start|>user\nWhat is the capital of France?<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
@@ -155,11 +176,12 @@ static int Run(const char* path,bool inspect,bool parallel,bool benchmark,bool s
 		if (position>=unsigned(count)) decodeSeconds+=elapsed;
 		if (position+1>=unsigned(count)) { token=actual; generated++; printf("OUTPUT greedy token%d\n",actual); }
 	}
-	if (okay && generated==4 && benchmark) okay=PioneerWholeQwenBenchmark(card,cpu.model,cpu.context,embedding,greedy);
+	if (okay && generated==4 && benchmark) okay=PioneerWholeQwenBenchmark(card,cpu.model,cpu.context,embedding,greedy,batched);
 	bool clean=card.Finish(); okay &= clean && generated==4;
 	printf("%s experimental whole decoder:generated%u projections%llu attention%llu full-vocab%llu cleanup%u;CPU32 reference OUTSIDE card timer,no model reupload\n",
 		okay?"PASS":"FAIL",generated,(unsigned long long)card.calls,(unsigned long long)card.attentionCalls,(unsigned long long)card.wideCalls,clean);
-	if (greedy) printf("Distinct128B token results%llu;full-vocabulary results above are diagnostic ONLY\n",(unsigned long long)card.greedyCalls);
+	if (batched) printf("Token results%llu,including up toTWO per256B autonomous result;batch jobs%llu;full-vocabulary replays are untimed diagnostics\n",(unsigned long long)card.greedyCalls,(unsigned long long)card.batchCalls);
+	else if (greedy) printf("Distinct128B token results%llu;full-vocabulary results above are diagnostic ONLY\n",(unsigned long long)card.greedyCalls);
 	if (okay && decodeSeconds>0) printf("Diagnostic whole-decoder generation3/%.6fs=%.6ftok/s;NOT a repeated warm CPU speedup gate or Assistant qualification\n",decodeSeconds,3/decodeSeconds);
 	return okay?0:1;
 }
@@ -173,7 +195,8 @@ int main(int argc,char** argv)
 	bool pairedBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-paired-decoder");
 	bool diagnostic=argc==3 && !strcmp(argv[1],"--diagnose-pull-input");
 	bool smallRows=argc==3 && !strcmp(argv[1],"--benchmark-smallrows-decoder");
-	bool parallelRope=argc==3 && !strcmp(argv[1],"--benchmark-rope-decoder");
+	bool batched=argc==3 && !strcmp(argv[1],"--benchmark-batch-decoder");
+	bool parallelRope=batched || (argc==3 && !strcmp(argv[1],"--benchmark-rope-decoder"));
 	bool accum=parallelRope || smallRows || (argc==3 && !strcmp(argv[1],"--benchmark-accum-decoder"));
 	bool table=accum || (argc==3 && !strcmp(argv[1],"--benchmark-table-decoder"));
 	bool phasePull=table || (argc==3 && !strcmp(argv[1],"--benchmark-phase-pull-decoder"));
@@ -196,7 +219,7 @@ int main(int argc,char** argv)
 	bool benchmark=phasePull || phaseBenchmark || pullBenchmark || cachedBenchmark || partialBenchmark || directBenchmark || pairedBenchmark || countersBenchmark || rmsBenchmark || greedyBenchmark || gluBenchmark || stageBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-parallel-decoder"));
 	bool stages=glu || stageBenchmark || (argc==3 && !strcmp(argv[1],"--profile-parallel-decoder"));
 	bool parallel=stages || benchmark || (argc==3 && !strcmp(argv[1],"--verify-parallel-decoder"));
-	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder|--verify-glu-decoder|--benchmark-glu-decoder|--verify-greedy-decoder|--benchmark-greedy-decoder|--verify-rms-decoder|--benchmark-rms-decoder|--verify-counters-decoder|--benchmark-counters-decoder|--verify-paired-decoder|--benchmark-paired-decoder|--verify-inline-decoder|--benchmark-inline-decoder|--verify-partial-decoder|--benchmark-partial-decoder|--verify-cached-decoder|--benchmark-cached-decoder|--verify-pull-decoder|--benchmark-pull-decoder|--verify-phase-decoder|--benchmark-phase-decoder|--benchmark-phase-pull-decoder|--benchmark-table-decoder|--benchmark-accum-decoder|--benchmark-smallrows-decoder|--benchmark-rope-decoder|--diagnose-pull-input MODEL.gguf\n",argv[0]); return 2; }
+	if (argc!=3 || (!inspect && !parallel && strcmp(argv[1],"--verify-whole-decoder"))) { fprintf(stderr,"Usage:%s --inspect-model|--verify-whole-decoder|--verify-parallel-decoder|--benchmark-parallel-decoder|--profile-parallel-decoder|--benchmark-profile-decoder|--verify-glu-decoder|--benchmark-glu-decoder|--verify-greedy-decoder|--benchmark-greedy-decoder|--verify-rms-decoder|--benchmark-rms-decoder|--verify-counters-decoder|--benchmark-counters-decoder|--verify-paired-decoder|--benchmark-paired-decoder|--verify-inline-decoder|--benchmark-inline-decoder|--verify-partial-decoder|--benchmark-partial-decoder|--verify-cached-decoder|--benchmark-cached-decoder|--verify-pull-decoder|--benchmark-pull-decoder|--verify-phase-decoder|--benchmark-phase-decoder|--benchmark-phase-pull-decoder|--benchmark-table-decoder|--benchmark-accum-decoder|--benchmark-smallrows-decoder|--benchmark-rope-decoder|--benchmark-batch-decoder|--diagnose-pull-input MODEL.gguf\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0); llama_log_set(Log,NULL); llama_backend_init(); ggml_backend_register(ggml_backend_cpu_reg());
-	int result=Run(argv[2],inspect,parallel,benchmark,stages,glu,greedy,rms,counters,paired,direct,partial,cached,pull,phases,diagnostic,table,accum,smallRows,parallelRope); llama_backend_free(); return result;
+	int result=Run(argv[2],inspect,parallel,benchmark,stages,glu,greedy,rms,counters,paired,direct,partial,cached,pull,phases,diagnostic,table,accum,smallRows,parallelRope,batched); llama_backend_free(); return result;
 }

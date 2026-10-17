@@ -24,6 +24,7 @@ struct TableWorker:AttentionWorker {
 	}
 	unsigned Cursor() { return l1[Index(TT_DECODER_TABLE_CURSOR)]; }
 };
+#ifndef PIONEER_DESCRIPTOR_WORKER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==4); const auto plain=Read(argv[1]),attention=Read(argv[2]),glu=Read(argv[3]);
@@ -62,3 +63,4 @@ int main(int argc,char** argv)
 	{ TableWorker m(plain,119); m.BootCoord(); m.l1[m.Index(TT_DECODER_TABLE_COUNT)]=0; m.StopCoord(); }
 	puts("PASS OFFLINE actual static-descriptor copy/ALL-bit check,all119 peers/exact phase math/repeated cursor wrap,mixed attention/GLU,STOP bypass,all copy/count/index faults before compute;NOT native qualification");
 }
+#endif

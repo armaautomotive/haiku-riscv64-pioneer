@@ -1,6 +1,9 @@
 #ifndef PIONEER_COORDINATOR_BATCH
 #define PIONEER_COORDINATOR_BATCH 0
 #endif
+#ifndef PIONEER_COORDINATOR_FUSED_GATHER
+#define PIONEER_COORDINATOR_FUSED_GATHER 0
+#endif
 /* SPDX-License-Identifier: MIT */
 // Fixed immutable image, exposed only through guarded private coordinator ABIs.
 // Master0 coordinates fixed peers1..119; all addresses/routes are fixed or
@@ -359,18 +362,58 @@ extern "C" unsigned coordinator_main()
 			if (*Words(0x147088)==0x4e4f4346) coordinator_fault_park();
 		}
 		if (!idle) coordinator_fault_park();
+#if PIONEER_COORDINATOR_FUSED_GATHER
+	}
+	// Every shared-input reader is now permanently parked until OUR next
+	// doorbell. Only now may an output prefix touch unused83fc0 scratch.
+	// Descending destinations overwrite only not-yet-gathered output,so
+	// no per-peer prefix save/copy/restore is needed. Paired gate0 alone
+	// borders the ALREADY gathered up tensor and must preserve that64B.
+	unsigned gatheredRows=0;
+	for (unsigned worker=workers;worker;worker--) {
+		unsigned ordinal=worker-1;
+		firstRow=(ordinal*blocksPerWorker+(ordinal<extra?ordinal:extra))<<rowShift;
+		uint32_t sequence=job[64+worker-1];
+#endif
 		unsigned rows=(blocksPerWorker+((worker-1)<extra))<<rowShift;
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		PioneerPairedFfnSpan span;
 		if (operation==10) { if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park(); rows=span.rows; }
 #endif
+#if PIONEER_COORDINATOR_FUSED_GATHER
+		// OFFLINE immutable-cohort candidate. Fetch the SAME completed peer
+		// proof and output in ONE read after ALL readers finished. This is
+		// not permission to omit ANY completion/source/counter proof.
+		unsigned gatherOutput=0x84000+firstRow*4;
+		bool preservePrefix=false;
+		if (operation==6 || operation==9 || operation==11) gatherOutput=0x84000;
+#if PIONEER_COORDINATOR_PAIRED_FFN
+		if (operation==10) { gatherOutput=(span.tensor?0x84000:0x87000)+span.first*4; preservePrefix=!span.tensor && !span.first; }
+#endif
+		if (!rows || rows>1312 || gatherOutput<0x84000 || gatherOutput>0x8a000-rows*4) coordinator_fault_park();
+		uint32_t previousPrefix[16];
+		if (preservePrefix) for (unsigned i=0;i<16;i++) previousPrefix[i]=Words(gatherOutput-64)[i];
+		Transfer(false,worker,gatherOutput-64,0x83fc0,rows*4+64);
+		volatile uint32_t* proof=Words(gatherOutput-64);
+#else
 		Transfer(false,worker,0x147180,0x71340,64);
 		volatile uint32_t* proof=Words(0x147180);
+#endif
 		unsigned tiles=(k>>4)*(rows>>4),reads=tiles>>5;
 		if (proof[8]!=0x703ec || proof[9]!=tiles || proof[10]!=0x4d415431 || proof[11]!=sequence) coordinator_fault_park();
 		for (unsigned i=0;i<4;i++) if (uint32_t(proof[4+i]-proof[i])!=(i==1?reads*144+256:reads+1)) coordinator_fault_park();
+#if PIONEER_COORDINATOR_FUSED_GATHER
+		for (unsigned i=12;i<16;i++) if (proof[i]) coordinator_fault_park();
+#endif
 		// Keep the full peer proof device-resident for debug retrieval.
 		for (unsigned i=0;i<16;i++) Words(0x141000)[(worker-1)*16+i]=proof[i];
+#if PIONEER_COORDINATOR_FUSED_GATHER
+		if (preservePrefix) {
+			for (unsigned i=0;i<16;i++) Words(gatherOutput-64)[i]=previousPrefix[i];
+			Fence();
+			for (unsigned i=0;i<16;i++) if (Words(gatherOutput-64)[i]!=previousPrefix[i]) coordinator_fault_park();
+		}
+#endif
 		if (n<=8192
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
 			|| operation==6
@@ -391,7 +434,11 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_PAIRED_FFN
 			unsigned outputBase=0x84000+outputRow*4;
 			if (operation==10) outputBase=(span.tensor?0x84000:0x87000)+span.first*4;
+#if PIONEER_COORDINATOR_FUSED_GATHER
+			if (outputBase!=gatherOutput) coordinator_fault_park();
+#else
 			Transfer(false,worker,outputBase,0x84000,rows*4);
+#endif
 #if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
 			// Explicit diagnostic image ONLY:overwrite16 full-result slots
 			// with fixed root/peer input readbacks,NOT model output. No extra
@@ -406,8 +453,12 @@ extern "C" unsigned coordinator_main()
 #if PIONEER_COORDINATOR_GREEDY
 			if (operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)) for (unsigned i=0;i<rows;i++) {
 				uint32_t bits=Words(0x84000)[i],key=PioneerDecoderLogitKey(bits);
+#if PIONEER_COORDINATOR_FUSED_GATHER
+				if ((worker==workers && !i) || key>bestKey || (key==bestKey && firstRow+i<best)) { best=firstRow+i; bestBits=bits; bestKey=key; }
+#else
 				if (!firstRow && !i) { best=0; bestBits=bits; bestKey=key; }
 				else if (key>bestKey) { best=firstRow+i; bestBits=bits; bestKey=key; }
+#endif
 			}
 #endif
 #if PIONEER_COORDINATOR_WIDE_OUTPUT
@@ -419,8 +470,15 @@ extern "C" unsigned coordinator_main()
 			}
 #endif
 		}
+#if PIONEER_COORDINATOR_FUSED_GATHER
+		gatheredRows+=rows;
+#else
 		firstRow+=rows;
+#endif
 	}
+#if PIONEER_COORDINATOR_FUSED_GATHER
+	firstRow=gatheredRows;
+#endif
 #if PIONEER_COORDINATOR_GREEDY
 	if (operation==9 || (PIONEER_COORDINATOR_BATCH && operation==11)) {
 		if (firstRow!=151936) coordinator_fault_park();

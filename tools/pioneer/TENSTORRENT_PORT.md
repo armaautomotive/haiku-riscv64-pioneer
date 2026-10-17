@@ -2,6 +2,88 @@
 
 ## Status
 
+### October17: autonomous33 native PASS;combined-gather prototype (13:33 UTC)
+
+Fast Qwen STILL NOT achieved. Contract33 passes the complete22-position
+full-vocabulary/exact selected-bit gate and all three sustained natural
+requests plus untimed full-logit replay/coverage. GPU5.490439/5.443787/
+5.566935tok/s,CPU32 1.498938/1.064846/.658329. Prompt4.798015/4.979825/
+4.439898s. A modest3..4% gain over31,not the requested fast target.
+Cold108.665163s including upload89.093638s and registry9.186943s. Complete
+312 positions/61464 projections/8736 attention/156 full+156 selected-token
+positions,24 autonomous jobs,zero warm reupload. END2/PCI-host1-1/cold0/
+cleanup1. Log`qwen-batch-v33-benchmark.log` is copied locally. Qualified
+driver e0f30090 is preserved as`driver-v33-e0f30090-backup`;31 and earlier
+backups remain. Complete measured EOG set is128247,151643,151645,151662,
+151663,151664,encoded d3e2505b/70380005. No CPU learned fallback or quality
+check inside the timed GPU loop. No Assistant promotion or all-Qwen claim.
+
+Next OFFLINE prototype combines each matrix peer's SAME64B proof and
+output into one read. There are8827 matrix jobs,NOT9219:224 attention and
+168 GLU dispatches remain unchanged. Expected master read requests reduce
+by8827 per position;read flits/weight arithmetic/packet proof are unchanged.
+Worker proof83fc0..83fff is within the EXISTING saved80000..8bfff bulk owner,
+beyond all192 input scales. ALL119 actual compiled peers,three immutable
+roles,repeated exact math,mixed attention/GLU/STOP and all16 lost prefix
+stores pass offline. Attention/GLU do not write the prefix.
+
+Initial unqualified masteraf784469 passed arithmetic/counters but could
+temporarily touch MASTER shared activation scratch while another peer
+still read it. It was NEVER installed. Corrected144d5643 first waits for
+ALL cohort readers to publish finished/source/NoC proof,then gathers in
+descending destination order. Only the gate/up tensor boundary requires
+a64B local save/ALL-bit restore;unused input-tail scratch is never a live
+reader source during gather. Descending argmax preserves lowest-ID ties.
+Actual full/small/autonomous/early-EOG and all16 proof/restore faults plus
+all-readers-first assertions PASS offline. Sparse two-position72099282
+interpreter steps versus33's78088913 is NOT native throughput. Stack6f8ac
+remains inside the existing8KiB master stack. No native throughput claim,
+driver registration or hardware trial for this prototype yet. No new DMA,
+map,VRAM authority,approximate arithmetic or relaxed acceptance condition.
+
+After33's clean END,whitelist-only operating telemetry also restores all
+PCI/TLB state:idle AI800MHz/AXI960MHz,300W board limit,93W input and zero
+recorded thermal trips. This does NOT establish under-load clocks and no
+clock/power/voltage setting was changed.
+
+### October17: autonomous decoder33 ready for native trial (13:18 UTC)
+
+Fast Qwen STILL NOT achieved. Qualified31 remains the performance winner
+at5.29..5.40tok/s. The first32 trial refused during CPU-only preflight,
+BEFORE opening the card:no BEGIN,NoC operation or uncertain owner. The
+pinned loader also recognizes a distant legacy `</s>` EOG token128247,
+so the proposed single32-token EOG window cannot encode the complete set.
+No EOG token is omitted. Corrected33 uses an exact28-token window plus
+one arbitrary outlier in the same two sealed words. CPU preflight scans
+the COMPLETE pinned-vocabulary set and refuses any unrepresentable set.
+ASan/UBSan tests exhaust all151936 outlying IDs,window/end-of-vocabulary
+bounds,exact membership and refusal cases. Actual compiled masterfd89551c
+passes full/small debug and one/two-position zero/sparse models plus early
+stopping on both zero and nonzero OUTLYING selected tokens. All119 sequence
+budgets,whole KV,selected bits,profilev5,one256B host pair and exact counters
+pass. Strict compiled instruction model remains unchanged.
+
+New explicit batch ioctl54e4 requires1..2 positions,zero unused input RoPE
+and fixed owned256B output. Model17 registers all32 immutable RoPE pages,
+disjoint fromALL310 weight/norm extents and KV tail. Kernel controller
+derives flags from the sealed lease at BOTH proof boundaries. It commits
+KV/sequences by actual completed positions only AFTER full packet proof;
+early EOG does not pessimistically advance two positions. Input/metadata/
+counter/sequence/stop/result uncertainty quarantines ALL owners,with no
+retry/reset/restore/free. Controller fault matrix and full client ABI tests
+are required before the native attempt. A distinct capability33 prevents
+using a cached32 image with the corrected EOG encoding. The prior native
+31 driver is backed up as`driver-v31-e64ed1f2-backup`.
+
+The benchmark keeps CPU references and full-logit replay OUTSIDE the timed
+autonomous path. Its three natural requests measure real selected tokens,
+local tied-embedding fetch and a single256B host result for up to two
+positions;not teacher forcing,CPU learned fallback or a relaxed quality
+gate. The full22-position startup and each untimed full-logit replay still
+must pass. No measured33 throughput claim yet. Driver e0f30090,client
+cfd207ee,metadata33/model17/private10. No Assistant promotion,Q4/27B/all-Qwen
+claim,dirty llama.cpp build/sync/commit or boot/CPU/RAM/SD change.
+
 ### October17: autonomous two-position decoder OFFLINE PASS (12:44 UTC)
 
 This is NOT native-qualified or exposed by any ioctl. The installed card

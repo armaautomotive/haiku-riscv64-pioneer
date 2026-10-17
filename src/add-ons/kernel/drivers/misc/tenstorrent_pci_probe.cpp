@@ -2399,7 +2399,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={31,119,3,1,8192}; // v31 separately owned parallel head RMS/exact RoPE,unchanged119-peer math
+	tt_coordinated_support support={33,119,3,1,8192}; // v33 exact complete EOG window+outlier;bounded two-position job
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2461,17 +2461,18 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	auto* request=(tt_pioneer_decoder_model*)malloc(length); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,length);
-	if (status!=B_OK || request->version<1 || request->version>16 || request->reserved[0] || request->reserved[1] || request->reserved[2]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	if (status!=B_OK || request->version<1 || request->version>17 || (request->version!=17 && (request->reserved[0] || request->reserved[1] || request->reserved[2]))) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
 	else if (c->runtimeCoreMode!=8 || c->decoder.saved || c->decoderReady || c->bytes!=UINT64_C(0x80000000) || !c->fleet
 		|| !c->bulk.ready || !c->bulkHost.ready || !c->wideHost.ready || c->residentAttention.reserved) status=B_NOT_ALLOWED;
-	else if (!PioneerDecoderModelRegister(request->offsets,c->initialized,c->bytes,c->decoderModel)) status=B_ENTRY_NOT_FOUND;
+	else if (request->version==17?!PioneerDecoderBatchModelRegister(request->offsets,request->reserved[0],request->reserved[1],request->reserved[2],c->initialized,c->bytes,c->decoderModel)
+		:!PioneerDecoderModelRegister(request->offsets,c->initialized,c->bytes,c->decoderModel)) status=B_ENTRY_NOT_FOUND;
 	else {
 		request->state=TT_RUNTIME_CONFIG_FAILED; request->ready=request->extents=request->recovery_required=0;
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
-		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version>=12,phasePipeline=request->version==10 || request->version>=12,diagnostic=request->version==11,descriptorTable=request->version>=13,accumPipeline=request->version>=14,smallRows=request->version==15,parallelRope=request->version==16,ready=true;
+		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version>=12,phasePipeline=request->version==10 || request->version>=12,diagnostic=request->version==11,descriptorTable=request->version>=13,accumPipeline=request->version>=14,smallRows=request->version==15,parallelRope=request->version>=16,batch=request->version==17,ready=true;
 		// The parallel registry must precede ANY peer preparation. Weight
 		// spans prepare only master0. Never replace an executing/idle peer's
 		// immutable code to upgrade an existing matrix session.
@@ -2484,12 +2485,12 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		c->runtimeCoreMode=9;
 		ready=ready && PioneerLayerClose(c->io,dram,c->fleet[0].noc,c->lease,c->layer,true)
 			&& c->io.MapAttention() && PioneerAttentionTilePrepare(c->io,dram,c->fleet[0].noc,c->lease,c->attention,true)
-			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel,glu,greedy,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable,accumPipeline,smallRows,parallelRope);
+			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel,glu,greedy,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable,accumPipeline,smallRows,parallelRope,batch);
 		if (ready && (!PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,true)
 			|| !PioneerWideOutputMapStable(c->io,c->wideHost,c->host,c->bulkHost))) { c->decoder.unsafe=true; ready=false; }
 		if (ready) {
 			c->residentAttention.reserved=c->residentAttention.payloadBlocks=c->residentAttention.coordinated=true;
-			c->decoderReady=true; request->state=TT_RUNTIME_PASSED; request->ready=1; request->extents=310;
+			c->decoderReady=true; request->state=TT_RUNTIME_PASSED; request->ready=1; request->extents=batch?311:310;
 		}
 		if (c->Unsafe()) { c->lease.recovery_required=true; c->io.QuarantineHostPage(); sColdRecoveryRequired=true; request->recovery_required=1; }
 		status=user_memcpy(data,request,length);
@@ -2498,7 +2499,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 template<class Run> static status_t
-DecoderRunControlImpl(PioneerProbeCookie* cookie,void* data,size_t length,bool greedy)
+DecoderRunControlImpl(PioneerProbeCookie* cookie,void* data,size_t length,bool greedy,bool batch=false)
 {
 	if (!data || length!=sizeof(Run)) return B_BAD_VALUE;
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
@@ -2506,19 +2507,21 @@ DecoderRunControlImpl(PioneerProbeCookie* cookie,void* data,size_t length,bool g
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	auto* request=(Run*)malloc(length); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,offsetof(Run,result));
-	if (status!=B_OK || request->version!=1 || !request->tokens || request->tokens>256 || request->reserved[0] || request->reserved[1]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	if (status!=B_OK || request->version!=1 || !request->tokens || request->tokens>256 || (batch?(!request->reserved[0] || request->reserved[0]>2 || request->reserved[0]>257-request->tokens):request->reserved[0]!=0) || request->reserved[1]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	if (batch) for (unsigned i=0;i<128;i++) if (request->rope[i]) { free(request); return B_BAD_VALUE; }
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
-	else if (c->runtimeCoreMode!=9 || !c->decoderReady || !c->decoder.ready || !c->fleet || (greedy && !c->decoder.greedy)) status=B_NOT_ALLOWED;
+	else if (c->runtimeCoreMode!=9 || !c->decoderReady || !c->decoder.ready || !c->fleet || (greedy && !c->decoder.greedy) || (batch && !c->decoder.batch)) status=B_NOT_ALLOWED;
 	else {
 		request->result={}; memset(request->output,0,sizeof(request->output)); c->io.runtimeProfile.Begin(uint64(system_time()),21);
 		c->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
 		PioneerDecoderRun(c->io,c->baseline.baseline.baseline.baseline.dram,c->host,c->bulkHost,c->wideHost,c->fleet,c->bulk,
-			c->coordinator,c->decoder,c->attention,c->residentAttention,c->decoderModel,request->tokens,request->embedding,request->rope,request->output,request->result,greedy);
+			c->coordinator,c->decoder,c->attention,c->residentAttention,c->decoderModel,request->tokens,request->embedding,request->rope,request->output,request->result,greedy,batch?request->reserved[0]:0);
 		if (c->Unsafe()) { c->lease.recovery_required=true; c->io.QuarantineHostPage(); sColdRecoveryRequired=true; request->result.master.recovery_required=1; }
 		auto& r=request->result.master; c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
-		if (!PioneerDecoderProof(request->result,request->tokens,c->coordinator.nonce,c->decoder,greedy)) memset(request->output,0,sizeof(request->output));
+		if (batch?!PioneerDecoderBatchProof(request->result,request->tokens,request->output[3],c->coordinator.nonce,c->decoder)
+			:!PioneerDecoderProof(request->result,request->tokens,c->coordinator.nonce,c->decoder,greedy)) memset(request->output,0,sizeof(request->output));
 		status=user_memcpy(data,request,length);
 	}
 	release_sem(sLock); free(request); return status;
@@ -2527,6 +2530,8 @@ static status_t DecoderRunControl(PioneerProbeCookie* cookie,void* data,size_t l
 { return DecoderRunControlImpl<tt_pioneer_decoder_run>(cookie,data,length,false); }
 static status_t DecoderGreedyControl(PioneerProbeCookie* cookie,void* data,size_t length)
 { return DecoderRunControlImpl<tt_pioneer_decoder_greedy>(cookie,data,length,true); }
+static status_t DecoderBatchControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{ return DecoderRunControlImpl<tt_pioneer_decoder_batch>(cookie,data,length,false,true); }
 
 static status_t
 DecoderStageProfileControl(PioneerProbeCookie* cookie,void* data,size_t length)
@@ -3258,6 +3263,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return DecoderRunControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_DECODER_GREEDY)
 		return DecoderGreedyControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_DECODER_BATCH)
+		return DecoderBatchControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_DECODER_STAGES)
 		return DecoderStageProfileControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_SPAN)

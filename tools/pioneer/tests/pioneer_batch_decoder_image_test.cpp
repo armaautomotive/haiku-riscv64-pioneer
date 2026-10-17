@@ -9,7 +9,12 @@ struct BatchDecoder:TableDecoder {
 		memory[TT_DECODER_JOB_BASE+4]=10; memory[TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)]=steps;
 		std::vector<float> first(1024); for (unsigned i=0;i<1024;i++) first[i]=Float(memory.at(TT_DECODER_INPUT+i*4));
 		selected[0]=Best(); selectedBits[0]=nz?Bits(expected[selected[0]]):0;
-		if (stop) memory[TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)+8]=selected[0];
+		if (stop) {
+			assert(selected[0]<151643); unsigned ids[]={selected[0],151643,151645},word0=0; uint32_t word1=0;
+			assert(PioneerDecoderPackEog(ids,3,word0,word1));
+			memory[TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)+8]=word0;
+			memory[TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)+12]=word1;
+		}
 		if (expectedSteps==2) {
 			std::vector<float> embedding(1024,0); if (nz) embedding[(selected[0]*13+49)%1024]=selected[0]%3==0?-.25f:.25f;
 			positions=2; SetRope(1); if (nz) Reference(&embedding);
@@ -58,7 +63,7 @@ struct BatchDecoder:TableDecoder {
 	void VerifyBatch() {
 		assert(positions==expectedSteps && issued==9219*positions && lookups==issued && hostWrites==1 && hostReads==1 && originalWords==64 && returnedWords==64);
 		assert(ropeReads==positions*2 && embeddingReads==(positions-1)*64 && bankReads==113*positions);
-		unsigned count=0; assert(PioneerDecoderBatchPacket(wide.data(),1,1,requested,memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)+8),151645,count) && count==positions);
+		unsigned count=0; assert(PioneerDecoderBatchPacket(wide.data(),1,1,requested,memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)+8),memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)+12),count) && count==positions);
 		for (unsigned i=0;i<positions;i++) assert(wide[8+i]==selected[i] && wide[24+i]==selectedBits[i]);
 		for (unsigned w=0;w<119;w++) assert(sequence[w]==PioneerDecoderSequenceAdvance(w,true,true,true)*positions
 			&& memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,sequence)+w*4)==sequence[w]+1);
@@ -67,20 +72,29 @@ struct BatchDecoder:TableDecoder {
 			assert(kv.at(0x82410000+layer*0x100000+g*0x20000+t*256+i*4)==(expectedV[layer][p]|(uint32_t(expectedV[layer][p+1])<<16))); }
 		uint32_t summary[24],before[8],after[8]; for (unsigned i=0;i<24;i++) summary[i]=memory.at(0x143000+i*4);
 		for (unsigned i=0;i<8;i++) { before[i]=summary[8+i]; after[i]=summary[16+i]; }
-		assert(PioneerDecoderBatchSummary(summary,positions,1,before,after));
+		assert(PioneerDecoderBatchSummary(summary,positions,1,before,after,getenv("PIONEER_GREEDY_FUSED_GATHER")!=nullptr));
 		tt_decoder_stage_profile profile={}; for (unsigned i=0;i<32;i++) reinterpret_cast<uint32_t*>(&profile)[i]=memory.at(TT_DECODER_STAGE_L1+i*4);
 		assert(PioneerDecoderStageValid(profile,1,positions,5,positions));
 		printf("PASS OFFLINE actual batch positions%u/%u,119-peer sequences/whole KV/exact token bits/one256B host pair/profile/counters,steps%u;NOT native\n",positions,requested,steps); fflush(stdout);
 	}
 };
+struct BatchDebugDecoder:BatchDecoder {
+	BatchDebugDecoder(const char* root,const DecoderSfpuImage& image,bool nz,bool small):BatchDecoder(root,image,nz,1) { memory[TT_DECODER_JOB_BASE+4]=small?9:8; }
+	void VerifyDebug() { TableDecoder::Verify(); VerifyProfile(); assert(lookups==9219 && ropeReads==2 && !embeddingReads); }
+};
+#ifndef PIONEER_BATCH_DECODER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); compactImage=true;
 	for (const char* key:{"PIONEER_COORDINATED_PULL_INPUT","PIONEER_ATTENTION_PARALLEL_ROPE","PIONEER_GREEDY_PAIRED_FFN","PIONEER_GREEDY_DESCRIPTOR_TABLE","PIONEER_GREEDY_BATCH"}) setenv(key,"1",1);
 	DecoderSfpuImage image(argv[2],false,true,true);
+	if (!getenv("PIONEER_BATCH_FAULTS_ONLY")) {
+	for (bool nonzero:{false,true}) for (bool small:{false,true}) { BatchDebugDecoder m(argv[1],image,nonzero,small); assert(m.RunDecoder()); m.VerifyDebug(); }
 	for (bool nonzero:{false,true}) for (unsigned steps:{1U,2U}) { BatchDecoder m(argv[1],image,nonzero,steps); assert(m.RunDecoder()); m.VerifyBatch(); }
-	{ BatchDecoder m(argv[1],image,true,2,true); assert(m.RunDecoder()); m.VerifyBatch(); }
+	for (bool nonzero:{false,true}) { BatchDecoder m(argv[1],image,nonzero,2,true); assert(m.RunDecoder()); m.VerifyBatch(); }
+	}
 	for (unsigned fault:{1U,2U,3U,4U}) { BatchDecoder m(argv[1],image,true,2); if (fault<3) m.failInput=fault; else m.corruptInput=fault-2;
 		assert(!m.RunDecoder() && !m.hostWrites); }
 	puts("PASS OFFLINE actual two-position decoder/card-side tied embedding/immutable RoPE and local sampling,independent CPU sparse model,NO host call between positions,early EOS/input faults;NOT wired/native qualification");
 }
+#endif

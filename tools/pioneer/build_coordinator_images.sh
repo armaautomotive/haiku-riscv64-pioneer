@@ -40,6 +40,8 @@ case ${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_SMALL_ROWS:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PARALLEL_ROPE:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_BATCH:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_COORDINATOR_FUSED_GATHER:-0} in 0|1) ;; *) exit 2;; esac
+[ "${PIONEER_COORDINATOR_FUSED_GATHER:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_BATCH:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PARALLEL_ROPE:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PARALLEL_ROPE:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_PULL_INPUT:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_SMALL_ROWS:-0}" = 0 ]; } || exit 2
 case ${PIONEER_GRAPH_FMA_FIXED_NORMALIZE:-0} in 0|1) ;; *) exit 2;; esac
@@ -73,6 +75,7 @@ case ${PIONEER_TABLE_WORKER_ROLE:-auto} in
   ;;
  *) exit 2;;
 esac
+if [ "${PIONEER_COORDINATOR_FUSED_GATHER:-0}" = 1 ]; then set -- "$@" --defsym TT_FLEET_FUSED_GATHER=1; fi
 "$cross-as" -march=rv32i -mabi=ilp32 -mno-relax --defsym TT_FLEET_PERSISTENT=1 --defsym TT_FLEET_COORDINATED=1 "$@" \
  "$directory/blackhole_fleet_start.S" -o "$output/worker.o"
 "$cross-ld" -m elf32lriscv --no-relax -T "$directory/blackhole_fleet_start.ld" "$output/worker.o" -o "$output/worker.elf"
@@ -116,6 +119,7 @@ if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decod
  -DPIONEER_COORDINATOR_SMALL_ROWS=${PIONEER_COORDINATOR_SMALL_ROWS:-0} \
  -DPIONEER_COORDINATOR_PARALLEL_ROPE=${PIONEER_COORDINATOR_PARALLEL_ROPE:-0} \
  -DPIONEER_COORDINATOR_BATCH=${PIONEER_COORDINATOR_BATCH:-0} \
+ -DPIONEER_COORDINATOR_FUSED_GATHER=${PIONEER_COORDINATOR_FUSED_GATHER:-0} \
  -DPIONEER_GRAPH_FMA_FIXED_NORMALIZE=${PIONEER_GRAPH_FMA_FIXED_NORMALIZE:-0} \
  -c "$directory/$source_file" -o "$output/program.o"
 "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"

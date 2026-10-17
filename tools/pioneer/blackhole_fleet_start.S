@@ -7,6 +7,11 @@
  */
 .option norvc
 .option norelax
+.ifdef TT_FLEET_FUSED_GATHER
+.ifndef TT_FLEET_DESCRIPTOR_TABLE
+.error "Fused gather requires the separate immutable descriptor-table cohort"
+.endif
+.endif
 .section .text,"ax"
 .global fleet_start,fleet_fault_park,fleet_end
 fleet_start:
@@ -180,6 +185,9 @@ fleet_persistent_done:
 	lw t2,0(t0)
 	sw t2,12(t1)
 	fence
+.ifdef TT_FLEET_FUSED_GATHER
+	jal ra,fleet_gather_prefix
+.endif
 .endif
 	li a0,0x71300
 	lw t0,0(a0)
@@ -331,5 +339,34 @@ fleet_table_job:
 	bne t2,t3,fleet_fault
 	fence
 	j fleet_table_return
+.endif
+.ifdef TT_FLEET_FUSED_GATHER
+	/* OFFLINE cohort only. Same completed proof as71340..7137f,adjacent
+	 * to output84000. Saved bulk data83fc0..83fff is beyond ALL192 input
+	 * scales(83000..832ff),not code/a table/mailbox/new owner. Publish only
+	 * for matrix jobs,AFTER the full source/ALL-NoC snapshot and BEFORE
+	 * finished. Attention/GLU keep their existing local data unchanged. */
+	.org 0x7c0,0
+fleet_gather_prefix:
+.ifdef TT_FLEET_ATTENTION
+	li t0,0x7051c
+	lw t0,0(t0)
+	bne t0,zero,3f
+.endif
+	li t0,0x71340
+	li t1,0x83fc0
+	li t2,16
+1:
+	lw t3,0(t0)
+	sw t3,0(t1)
+	lw t4,0(t1)
+	bne t3,t4,fleet_fault
+	addi t0,t0,4
+	addi t1,t1,4
+	addi t2,t2,-1
+	bne t2,zero,1b
+	fence
+3:
+	ret
 .endif
 fleet_end:

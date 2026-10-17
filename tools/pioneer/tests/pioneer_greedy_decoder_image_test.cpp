@@ -8,6 +8,7 @@ struct GreedyDecoder:GluDecoder {
 	unsigned pairCoverage[2][3072]={},pairBatches=0,badPairJob=0; bool pairJobInjected=false,badPairFinite=false;
 	GreedyDecoder(const char* path,const DecoderSfpuImage& image,bool nz,bool small=true):GluDecoder(path,image,nz,true,getenv("PIONEER_GREEDY_PAIRED_FFN")!=nullptr) {
 		memory[TT_DECODER_JOB_BASE+4]=small?9:8;
+		if (getenv("PIONEER_GREEDY_BATCH")) memory[TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,reserved)]=1;
 	}
 	uint32_t PeerRead(unsigned w,uint32_t a) override {
 		if (paired && badPairFinite && Range(a,0x84000,16384) && Phase(descriptor[w-1][0])==5) {

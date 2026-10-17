@@ -2,7 +2,7 @@
 #ifndef PIONEER_DECODER_BATCH_H
 #define PIONEER_DECODER_BATCH_H
 #include "PioneerDecoderLayout.h"
-// OFFLINE protocol prerequisite ONLY. No ioctl or native image selects it.
+// Explicit experimental autonomous decoder protocol;not an Assistant target.
 // Start with at most TWO positions:the existing worst-case65535 polling
 // rounds/job then fits unambiguously in one unsigned32 NoC counter delta.
 // Larger batches require explicit carry/epoch proofs,not relaxed bounds.
@@ -34,7 +34,7 @@ static inline bool PioneerDecoderBatchPacket(const volatile uint32_t* packet,uns
 {
 	completed=0;
 	if (!packet || !nonce || nonce>=0x7fffffff || !firstTokens || firstTokens>256 || !requested || requested>TT_DECODER_BATCH_MAX
-		|| requested>257-firstTokens || eos0>=151936 || eos1>=151936 || eos0==eos1
+		|| requested>257-firstTokens || !PioneerDecoderEogSetValid(eos0,eos1)
 		|| packet[0]!=TT_DECODER_BATCH_MAGIC || packet[1]!=nonce || packet[2]!=151936
 		|| !packet[3] || packet[3]>requested || packet[4]!=firstTokens || packet[5]!=firstTokens+packet[3]-1
 		|| packet[6]!=119 || packet[7]!=TT_DECODER_BATCH_OPERATION) return false;
@@ -43,14 +43,14 @@ static inline bool PioneerDecoderBatchPacket(const volatile uint32_t* packet,uns
 		if (i>=count) { if (packet[8+i] || packet[24+i]) return false; continue; }
 		unsigned token=packet[8+i];
 		if (token>=151936 || (packet[24+i]&0x7f800000)==0x7f800000
-			|| (i+1<count && (token==eos0 || token==eos1))) return false;
+			|| (i+1<count && PioneerDecoderIsEog(token,eos0,eos1))) return false;
 	}
-	if (count<requested && packet[8+count-1]!=eos0 && packet[8+count-1]!=eos1) return false;
+	if (count<requested && !PioneerDecoderIsEog(packet[8+count-1],eos0,eos1)) return false;
 	for (unsigned i=40;i<64;i++) if (packet[i]) return false;
 	completed=count; return true;
 }
 static inline bool PioneerDecoderBatchSummary(const uint32_t* summary,unsigned completed,unsigned nonce,
-	const uint32_t* before,const uint32_t* after)
+	const uint32_t* before,const uint32_t* after,bool fusedGather=false)
 {
 	if (!summary || !before || !after || !completed || completed>TT_DECODER_BATCH_MAX || !nonce || nonce>=0x7fffffff
 		|| summary[4]!=119 || summary[5]!=151936 || summary[6]!=nonce || summary[7]!=TT_DECODER_BATCH_OPERATION
@@ -59,6 +59,7 @@ static inline bool PioneerDecoderBatchSummary(const uint32_t* summary,unsigned c
 	// EVERY position;64x576B embedding reads BETWEEN positions;one256B
 	// ordered host write/read at the END. No per-token host transfer.
 	unsigned minimum=29116*completed+64*(completed-1)+1;
+	if (fusedGather) minimum-=8827*completed;
 	unsigned readFlits=61558*completed+576*(completed-1)+4;
 	unsigned writes=9611*completed+1,writeFlits=9611*completed+4,r=summary[0];
 	if (r<minimum || r>minimum+2U*65535*9219*completed || ((r-minimum)&1)

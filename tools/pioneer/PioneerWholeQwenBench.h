@@ -3,7 +3,7 @@
 #define PIONEER_WHOLE_QWEN_BENCH_H
 // Public-prompt diagnostic ONLY. Full CPU references are computed BEFORE
 // each timed GPU request. Never supplies reference tokens as a fallback.
-static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* model,llama_context* cpu,ggml_tensor* embedding,bool greedy=false)
+static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* model,llama_context* cpu,ggml_tensor* embedding,bool greedy=false,bool batched=false)
 {
 	const char* questions[]={
 		"Explain why the sky looks blue in a detailed paragraph of at least one hundred words.",
@@ -12,6 +12,7 @@ static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* m
 	};
 	const llama_vocab* vocab=llama_model_get_vocab(model); const uint64_t uploads=card.uploads;
 	std::vector<float> input(1024),output(151936); uint32_t rope[128],cardToken=0,cardLogit=0; bool allFaster=true;
+	if (batched && (!greedy || !card.BatchEnabled())) return false;
 	auto decode=[&](llama_token token,unsigned position,bool small) {
 		ggml_get_type_traits(embedding->type)->to_float(static_cast<const uint8_t*>(embedding->data)+uint64_t(token)*embedding->nb[1],input.data(),1024);
 		float theta=float(position),step=powf(1000000.0f,-2.0f/128);
@@ -21,6 +22,7 @@ static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* m
 	};
 	puts("WHOLE WARM BENCH:three public requests/up to16 greedy tokens;CPU32 batch128 vs whole-P100A batch1;decode+sampling wall time. Model load/upload/registry/KV reset/tokenization/logging/quality checks excluded. NO CPU reference decode inside any timed GPU request.");
 	if (greedy) puts("GREEDY BENCH:timed GPU path returns one128B on-card token packet,NO host vocabulary/argmax/reference validation. Complete full-logit replay and selected-bit/token/coverage checks follow EACH timed request,not inside its timers.");
+	if (batched) puts("BATCH BENCH:up toTWO on-card positions per256B result;NO host call between positions,all CPU reference/quality validation outside timed GPU generation.");
 	for (unsigned repeat=0;repeat<3;repeat++) {
 		std::string prompt=std::string("<|im_start|>user\n")+questions[repeat]+"<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		std::vector<llama_token> tokens(128),golden; std::vector<float> references;
@@ -41,7 +43,7 @@ static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* m
 		}
 		if (golden.size()<8 || !(cpuPrompt>0) || !(cpuGeneration>0)) { fprintf(stderr,"Whole benchmark lacks enough natural generation samples/timing\n"); return false; }
 		printf("WHOLE WARM request%u CPU32 prompt%d %.6fs,output%zu generation%.6fs %.6ftok/s;GPU quality pending\n",repeat,n,cpuPrompt,golden.size(),cpuGeneration,double(golden.size()-1)/cpuGeneration);
-		uint64_t projections=card.calls,attention=card.attentionCalls,wide=card.wideCalls,smallCalls=card.greedyCalls; double cardPrompt=0,cardGeneration=0;
+		uint64_t projections=card.calls,attention=card.attentionCalls,wide=card.wideCalls,smallCalls=card.greedyCalls,batchCalls=card.batchCalls; double cardPrompt=0,cardGeneration=0;
 		std::vector<llama_token> actual; std::vector<uint32_t> bestBits;
 		for (int position=0;position<n;position++) {
 			start=Seconds(); if (!decode(tokens[size_t(position)],unsigned(position),greedy)) return false;
@@ -49,7 +51,20 @@ static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* m
 			cardPrompt+=Seconds()-start;
 			if ((position+1)%8==0 || position+1==n) printf("WHOLE WARM request%u GPU prefill%d/%d %.6fs\n",repeat,position+1,n,cardPrompt);
 		}
-		for (unsigned generated=0;generated<golden.size();generated++) {
+		if (batched) {
+			if (token<0 || token>=151936) return false;
+			actual.push_back(token); bestBits.push_back(cardLogit);
+			while (actual.size()<golden.size() && !llama_vocab_is_eog(vocab,actual.back())) {
+				unsigned remaining=unsigned(golden.size()-actual.size()),steps=remaining<2?remaining:2;
+				unsigned first=unsigned(n)+unsigned(actual.size()); uint32_t packet[64];
+				start=Seconds();
+				ggml_get_type_traits(embedding->type)->to_float(static_cast<const uint8_t*>(embedding->data)+uint64_t(actual.back())*embedding->nb[1],input.data(),1024);
+				if (!card.DecodeBatch(first,steps,reinterpret_cast<const uint32_t*>(input.data()),packet)) return false;
+				cardGeneration+=Seconds()-start;
+				for (unsigned i=0;i<packet[3];i++) { actual.push_back(int(packet[8+i])); bestBits.push_back(packet[24+i]); }
+			}
+			if (actual.size()!=golden.size()) { fprintf(stderr,"Autonomous generation length/EOG mismatch;NO reference substitution\n"); return false; }
+		} else for (unsigned generated=0;generated<golden.size();generated++) {
 			if (token<0 || token>=151936) return false;
 			if (greedy) { actual.push_back(token); bestBits.push_back(cardLogit); }
 			else {
@@ -84,6 +99,7 @@ static bool PioneerWholeQwenBenchmark(PioneerResidentDevice& card,llama_model* m
 		}
 		if (card.uploads!=uploads || card.calls-projections!=197*positions*(greedy?2:1) || card.attentionCalls-attention!=28*positions*(greedy?2:1)
 			|| card.wideCalls-wide!=positions || card.greedyCalls-smallCalls!=(greedy?positions:0)
+			|| card.batchCalls-batchCalls!=(batched?golden.size()/2:0)
 			|| !(cardPrompt>0) || !(cardGeneration>0) || !isfinite(cardGeneration)) return false;
 		bool faster=cardGeneration<cpuGeneration; allFaster &= faster;
 		printf("WHOLE WARM request%u PASS full logits/greedy/coverage;GPU prompt%.6fs generation%.6fs %.6ftok/s CPU%.6ftok/s speedup%.6fx faster%u uploads%llu\n",

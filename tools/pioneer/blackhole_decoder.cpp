@@ -125,11 +125,11 @@ static void DecoderMatrix(uint32_t base,unsigned k,unsigned n,uint32_t (&total)[
 	volatile uint32_t* j=Words(0x140000); volatile auto& root=DecoderJob();
 	for (unsigned i=0;i<64;i++) j[i]=0;
 	j[0]=0x31445243; j[1]=final?6:1; j[2]=119; j[3]=k; j[4]=n; j[5]=base; j[6]=root.nonce;
-	if (final && !PIONEER_COORDINATOR_BATCH) { j[7]=root.hostLow; j[8]=root.hostHigh; j[9]=root.hostBytes; }
+	if (final && (!PIONEER_COORDINATOR_BATCH || root.operation!=10)) { j[7]=root.hostLow; j[8]=root.hostHigh; j[9]=root.hostBytes; }
 #if PIONEER_COORDINATOR_GREEDY
 	if (final && root.operation==9) { j[1]=9; j[10]=root.tokens; }
 #if PIONEER_COORDINATOR_BATCH
-	if (final) { j[1]=11; j[10]=root.tokens; }
+	if (final && root.operation==10) { j[1]=11; j[10]=root.tokens; }
 #endif
 #endif
 	// A variable power-of-two divisor otherwise becomes unqualified DIVU
@@ -337,6 +337,7 @@ extern "C" unsigned coordinator_main()
 	uint32_t before[8],total[4]={}; for (unsigned i=0;i<8;i++) before[i]=*Words(0xffb20000+CounterOffset(i));
 #if PIONEER_COORDINATOR_BATCH
 	unsigned firstTokens=root.tokens,completed=0;
+	bool autonomous=root.operation==10;
 	for (unsigned i=0;i<64;i++) Words(0x146c00)[i]=0;
 	for (unsigned step=0;step<root.reserved[0];step++) {
 		DecoderBatchRope(total);
@@ -404,15 +405,17 @@ extern "C" unsigned coordinator_main()
 	DecoderNorm(TT_DECODER_HIDDEN,0x84000,1024,1024,root.finalNorm,total); DecoderQuantize(0x84000,1024);
 	DecoderMatrix(root.vocabulary,1024,151936,total,true);
 #if PIONEER_COORDINATOR_BATCH
+	if (!autonomous) { completed=1; break; }
 	uint32_t tokenPacket[32]; for (unsigned i=0;i<32;i++) tokenPacket[i]=Words(0x84000)[i];
 	if (!PioneerDecoderGreedyValid(tokenPacket,root.nonce,root.tokens)) coordinator_fault_park();
 	unsigned selected=tokenPacket[3];
 	Words(0x146c00)[8+step]=selected; Words(0x146c00)[24+step]=tokenPacket[4]; completed++;
-	if (selected==root.reserved[2] || selected==root.reserved[3] || completed==root.reserved[0]) break;
+	if (PioneerDecoderIsEog(selected,root.reserved[2],root.reserved[3]) || completed==root.reserved[0]) break;
 	DecoderEmbeddingIO io={total,root.vocabulary+(selected>>4)*18432,0};
 	if (!PioneerDecoderEmbedding(io,selected,root.vocabulary,Floats(TT_DECODER_INPUT)) || io.reads!=64) coordinator_fault_park();
 	root.tokens++; Fence();
 	}
+	if (autonomous) {
 	Words(0x146c00)[0]=TT_DECODER_BATCH_MAGIC; Words(0x146c00)[1]=root.nonce; Words(0x146c00)[2]=151936;
 	Words(0x146c00)[3]=completed; Words(0x146c00)[4]=firstTokens; Words(0x146c00)[5]=root.tokens;
 	Words(0x146c00)[6]=119; Words(0x146c00)[7]=TT_DECODER_BATCH_OPERATION;
@@ -424,6 +427,7 @@ extern "C" unsigned coordinator_main()
 	HostTransfer(true,root.hostLow,root.hostHigh,64); HostTransfer(false,root.hostLow,root.hostHigh,64);
 	for (unsigned i=0;i<64;i++) if (Words(0x84000)[i]!=Words(0x144000)[i]) coordinator_fault_park();
 	for (unsigned i=0;i<4;i++) total[i]+=Words(0x143000)[i]-prior[i];
+	}
 #if PIONEER_COORDINATOR_STAGE_PROFILE
 	Words(TT_DECODER_STAGE_L1)[2]=root.tokens; Words(TT_DECODER_STAGE_L1)[20]=completed;
 #endif
