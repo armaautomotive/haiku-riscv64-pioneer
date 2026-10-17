@@ -56,12 +56,21 @@ static inline bool PioneerCoordinatedProof(const tt_coordinated_fleet_result& r,
 	PioneerFleetPlan p; const auto& m=r.master;
 	bool fused=!debug && n<=4096;
 	return limit && limit<=119 && PioneerFleetPartition(k,n,limit,p) && r.inputs==k && r.outputs==n && r.workers==p.workers
-		&& r.staged_pages==4 && !r.nonfinite && r.dma_words==((debug?n<=8192:fused)?n:0) && r.gathered==(n<=8192?n:0)
+		&& (debug?r.staged_pages==4:(!r.staged_pages || r.staged_pages==(k*2+k/8+4095)/4096))
+		&& !r.nonfinite && r.dma_words==((debug?n<=8192:fused)?n:0) && r.gathered==(n<=8192?n:0)
 		&& m.version==1 && m.state==TT_RUNTIME_PASSED && m.workers==p.workers && m.matched==p.workers && m.nonce==nonce
 		&& m.prepared==1 && m.started==1 && m.completed==1 && m.stopped==1 && !m.recovery_required && m.polls
 		&& m.phase==TT_COORDINATOR_DONE && m.count==p.workers && m.marker==TT_COORDINATOR_MARKER
 		&& m.pc[0]==TT_COORDINATOR_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
 		&& PioneerCoordinatedSummary(r.summary,n,p.workers,nonce,m.before,m.after,fused);
+}
+static inline bool PioneerCoordinatedInputMatches(const PioneerCoordinatorLease& lease,unsigned k,const uint32_t* input,const uint32_t* scales)
+{
+	if (!lease.ready || !lease.fast || !lease.fused || lease.readback || !lease.compact || lease.running || lease.unsafe
+		|| !lease.inputValid || lease.inputK!=k || !input || !scales || !PioneerQ8CompactShape(k,32)) return false;
+	for (unsigned i=0;i<k/2;i++) if (lease.inputShadow[i]!=input[i]) return false;
+	for (unsigned i=0;i<k/32;i++) if (lease.scaleShadow[i]!=scales[i]) return false;
+	return true; // exact bits, including signed zero; never hash-only
 }
 template<class IO>
 auto PioneerCoordinatedGatherRead(IO& io,unsigned words,uint32_t* output,int)
@@ -84,7 +93,8 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 	if (!fleet || !input || !scales || !output || !limit || limit>119 || !PioneerFleetPartition(k,n,limit,p)
 		|| capacity!=UINT64_C(0x80000000) || !PioneerResidentOffset(capacity,offset) || !bytes
 		|| offset>=capacity-TT_RESIDENT_KV_BYTES || bytes>capacity-TT_RESIDENT_KV_BYTES-offset
-		|| !lease.ready || !lease.fast || (lease.readback==lease.fused) || lease.unsafe || lease.running || lease.nonce>=0x7ffffffe || !bulk.ready || bulk.unsafe) return false;
+		|| !lease.ready || !lease.fast || (lease.readback==lease.fused) || (lease.fused && !lease.compact)
+		|| lease.unsafe || lease.running || lease.nonce>=0x7ffffffe || !bulk.ready || bulk.unsafe) return false;
 	for (unsigned i=0;i<k/2;i++) if (!PioneerInt8OperandValid(uint16_t(input[i])) || !PioneerInt8OperandValid(uint16_t(input[i]>>16))) return false;
 	for (unsigned i=0;i<k/32;i++) if ((scales[i]&0x7f800000)==0x7f800000) return false;
 	for (unsigned w=1;w<=p.workers;w++) {
@@ -95,13 +105,32 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 	r.workers=p.workers; m.workers=p.workers; m.state=TT_RUNTIME_CONFIG_FAILED;
 	auto& master=fleet[0]; auto& store=master.Store();
 	uint32_t previous=0; bool uncertain=false,bmeTouched=false,fused=lease.fused && n<=4096;
+	bool inputHit=false;
 	do {
 		if (!PioneerCoordinatedMasterBoundary(io,baseline,fleet,attentionReady) || !PioneerCoordinatorLocalHeld(io,baseline,master.noc,store)
 			|| !BlackholeHostReadMapStable(io,host)) { uncertain=true; break; }
 		previous=io.RuntimeCodeRead(0);
 		uint32_t* stage=io.RuntimeStageWords(); if (!stage) break;
-		tt_bulk_upload_result staged={}; bool exact=PioneerCoordinatedActivation(io,baseline,master.noc,host,store,transfer,bulk,master.Compute(),k,input,scales,staged);
-		r.staged_pages=staged.pages; if (!exact) break;
+		inputHit=PioneerCoordinatedInputMatches(lease,k,input,scales);
+		bool exact=false;
+		if (inputHit) {
+			const auto& owned=master.Compute();
+			if (!owned.saved || !owned.bulk || !owned.buffers_dirty || owned.buffer_words!=TT_Q8_BULK_SAVED_BUFFER_WORDS
+				|| io.RuntimeBufferWords()!=TT_Q8_BULK_SAVED_BUFFER_WORDS) { uncertain=true; break; }
+			// This private shadow was sealed ONLY after a complete successful
+			// matrix. Every allowed mode8 image/transport leaves the packed
+			// consumed packed input unchanged (canonical scale copy is outside
+			// that span, or the identical6144 source/destination).
+			// Full ownership/source/NoC/PCI/host guards STILL precede every hit.
+			exact=PioneerBulkUploadGuard(io,baseline,master.noc,host,store,transfer,0x402);
+			if (!exact) { uncertain=true; break; }
+		} else {
+			lease.inputValid=false; lease.inputK=0;
+			tt_bulk_upload_result staged={};
+			exact=PioneerCoordinatedActivation(io,baseline,master.noc,host,store,transfer,bulk,master.Compute(),k,input,scales,staged,lease.compact);
+			r.staged_pages=staged.pages;
+		}
+		if (!exact) break;
 		for (unsigned i=0;i<1024;i++) stage[i]=0;
 		stage[0]=0x31445243; stage[1]=fused?3:1; stage[2]=limit; stage[3]=k; stage[4]=n;
 		stage[5]=PioneerResidentAddress(capacity,offset); stage[6]=++lease.nonce; m.nonce=lease.nonce;
@@ -224,6 +253,14 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		PioneerPersistentQuarantine(io,fleet);
 		PioneerQuarantineOutputBuffer(io,transfer);
 	}
-	return !uncertain && PioneerCoordinatedProof(r,k,n,limit,lease.nonce,lease.readback);
+	bool proved=!uncertain && PioneerCoordinatedProof(r,k,n,limit,lease.nonce,lease.readback);
+	if (proved && lease.compact && !inputHit) {
+		// Nothing between jobs may mutate this owned packed input. Neither
+		// the shadow alone nor a partial/failed DMA can seal a cache entry.
+		for (unsigned i=0;i<k/2;i++) lease.inputShadow[i]=input[i];
+		for (unsigned i=0;i<k/32;i++) lease.scaleShadow[i]=scales[i];
+		lease.inputK=k; lease.inputValid=true;
+	} else if (!proved) { lease.inputValid=false; lease.inputK=0; }
+	return proved;
 }
 #endif

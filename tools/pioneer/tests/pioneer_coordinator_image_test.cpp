@@ -10,10 +10,12 @@
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeFastCoordinatorImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatorReadbackImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeFusedCoordinatorImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeCompactCoordinatorImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerCoordinatedFleet.h"
 static bool fastImage=false;
 static bool readbackImage=false;
 static bool fusedImage=false;
+static bool compactImage=false;
 struct CoordinatorMachine:Machine {
 	std::vector<uint8_t> code,workerImage;
 	std::map<uint32_t,uint32_t> memory;
@@ -29,13 +31,14 @@ struct CoordinatorMachine:Machine {
 	bool dropPosted=false,partialPosted=false,pairedCorrupt=false;
 	unsigned corruptHost=~0U,hostWrites=0,hostReads=0,comparedOriginal=0,comparedReturned=0;
 	unsigned busyAddress=0,busyAfter=0;
+	unsigned scaleStores=0,dropScale=0;
 	std::vector<std::string> events;
 	CoordinatorMachine(const char* path):peer(120) {
 		std::string root(path); code=Read((root+"/code.bin").c_str()); workerImage=Read((root+"/worker.bin").c_str());
 		auto boot=Read((root+"/boot.bin").c_str()); assert(boot.size()==4 && code.size()<=8192 && !(code.size()&3));
-		unsigned size=fusedImage?unsigned(TT_FUSED_COORDINATOR_IMAGE_WORDS):readbackImage?unsigned(TT_COORDINATOR_READBACK_IMAGE_WORDS):fastImage?unsigned(TT_FAST_COORDINATOR_IMAGE_WORDS):unsigned(TT_COORDINATOR_IMAGE_WORDS);
+		unsigned size=compactImage?unsigned(TT_COMPACT_COORDINATOR_IMAGE_WORDS):fusedImage?unsigned(TT_FUSED_COORDINATOR_IMAGE_WORDS):readbackImage?unsigned(TT_COORDINATOR_READBACK_IMAGE_WORDS):fastImage?unsigned(TT_FAST_COORDINATOR_IMAGE_WORDS):unsigned(TT_COORDINATOR_IMAGE_WORDS);
 		assert(Word(boot,0)==TT_COORDINATOR_BOOT && code.size()==size*4);
-		for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert((fusedImage?BlackholeFusedCoordinatorCodeWord(i):readbackImage?BlackholeCoordinatorReadbackCodeWord(i):fastImage?BlackholeFastCoordinatorCodeWord(i):BlackholeCoordinatorCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
+		for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert((compactImage?BlackholeCompactCoordinatorCodeWord(i):fusedImage?BlackholeFusedCoordinatorCodeWord(i):readbackImage?BlackholeCoordinatorReadbackCodeWord(i):fastImage?BlackholeFastCoordinatorCodeWord(i):BlackholeCoordinatorCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		l1[0]=Word(boot,0);
 		for (unsigned i=0;i<code.size()/4;i++) l1[i+1]=Word(code,i*4);
 		for (auto& count:counts) count=0xfffffff8; counts[6]=counts[2];
@@ -82,7 +85,8 @@ struct CoordinatorMachine:Machine {
 		}
 		for (unsigned i=0;i<4096;i++) memory[0x80000+i*4]=0;
 		for (unsigned i=0;i<k;i++) memory[0x80000+(i/2)*4]|=uint32_t(PioneerInt8Operand(Q8Machine::Input(i,t)))<<(16*(i&1));
-		for (unsigned i=0;i<k/32;i++) memory[0x83000+i*4]=Bits(Q8Machine::InputScale(i,t));
+		for (unsigned i=0;i<k/32;i++) memory[0x83000+i*4]=compactImage?0x7fc00000:Bits(Q8Machine::InputScale(i,t));
+		if (compactImage) for (unsigned i=0;i<k/32;i++) memory[0x80000+k*2+i*4]=Bits(Q8Machine::InputScale(i,t));
 	}
 	void SetupFused(unsigned inputs,unsigned outputs,unsigned workerLimit,unsigned t=0) {
 		Setup(1,inputs,outputs,workerLimit,t); operation=3; memory[0x140004]=3;
@@ -160,6 +164,7 @@ struct CoordinatorMachine:Machine {
 	}
 	uint32_t Load(uint32_t a) override {
 		assert(!(a&3));
+		if (compactImage && (Range(a,0x80000,k*2+k/8) || Range(a,0x83000,k/32*4))) return memory.at(a);
 		if (operation==3 && hostReads) {
 			if (Range(a,0x84000,n*4)) comparedOriginal++;
 			if (Range(a,0x144000,n*4)) comparedReturned++;
@@ -176,6 +181,9 @@ struct CoordinatorMachine:Machine {
 	}
 	void Store(uint32_t a,uint32_t value) override {
 		assert(!(a&3));
+		if (compactImage && Range(a,0x83000,k/32*4)) {
+			if (++scaleStores!=dropScale) memory[a]=value; return;
+		}
 		if (Range(a,0xffb20000,40)) { assert(!pending); if (++controlWrites!=dropControl) command[(a-0xffb20000)/4]=value; return; }
 		if (a==0xffb20040) { assert(value==1 && !pending); Submit(); return; }
 		assert(Range(a,0x6e000,8192) || Range(a,0x141000,0x3000) || Range(a,0x147000,0x1000) || Range(a,0x17ffc0,12));
@@ -240,10 +248,15 @@ struct CoordinatorMachine:Machine {
 };
 int main(int argc,char** argv)
 {
-	assert(argc==2 || (argc==3 && (std::string(argv[2])=="--fast" || std::string(argv[2])=="--readback" || std::string(argv[2])=="--fused")));
+	assert(argc==2 || (argc==3 && (std::string(argv[2])=="--fast" || std::string(argv[2])=="--readback" || std::string(argv[2])=="--fused" || std::string(argv[2])=="--compact")));
 	fastImage=argc==3;
 	readbackImage=argc==3 && std::string(argv[2])=="--readback";
-	fusedImage=argc==3 && std::string(argv[2])=="--fused";
+	compactImage=argc==3 && std::string(argv[2])=="--compact";
+	fusedImage=argc==3 && (std::string(argv[2])=="--fused" || compactImage);
+	if (compactImage) for (unsigned k:{1024U,2048U,3072U,5120U}) for (unsigned word=1;word<=k/32;word++) {
+		CoordinatorMachine m(argv[1]); m.SetupFused(k,64,119); m.dropScale=word;
+		assert(!m.RunCoord() && !m.issued && !m.transfers);
+	}
 	if (fusedImage) {
 		for (unsigned k:{2048U,3072U,5120U,6144U}) { CoordinatorMachine m(argv[1]); m.SetupFused(k,64,119,2); assert(m.RunCoord()); m.Verify(); }
 		for (unsigned n:{32U,64U,1024U,2048U,3072U,4096U}) {

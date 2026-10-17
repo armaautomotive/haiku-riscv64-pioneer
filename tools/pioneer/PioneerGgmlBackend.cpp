@@ -49,6 +49,7 @@ struct PioneerGgmlDevice:PioneerResidentDevice {
 	}
 };
 struct PioneerGgmlContext {
+	unsigned schedulerGraphs=0;
 	PioneerGgmlDevice device;
 	PioneerResidentTensorCache<PioneerGgmlDevice> cache;
 	bool opened=false,failed=false;
@@ -280,6 +281,18 @@ static bool ComputeAttention(PioneerGgmlContext& ctx,ggml_tensor* op)
 static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 	auto* ctx=(PioneerGgmlContext*)backend->context;
 	if (!ctx || ctx->failed) return GGML_STATUS_FAILED;
+	if (ctx->coordinated && ctx->schedulerGraphs<12) {
+		// Public model graph structure only, no prompt/token/tensor values.
+		// Bounded cold diagnostics reveal which operations can be fused;
+		// no logging in the repeated warm path after these first12 graphs.
+		fprintf(stderr,"COORD scheduler graph%u nodes%d",ctx->schedulerGraphs,ggml_graph_n_nodes(graph));
+		for (int i=0;i<ggml_graph_n_nodes(graph) && i<8;i++) {
+			auto* node=ggml_graph_node(graph,i);
+			fprintf(stderr," [%s:%s]",ggml_op_name(node->op),node->op==GGML_OP_MUL_MAT && node->src[0]?node->src[0]->name:node->name);
+		}
+		fprintf(stderr,"\n");
+	}
+	ctx->schedulerGraphs++;
 	for (int i=0;i<ggml_graph_n_nodes(graph);i++) {
 		auto* op=ggml_graph_node(graph,i);
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
@@ -398,6 +411,7 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats.tensors=sActive->cache.Tensors(); stats.bytes=sActive->cache.Bytes(); stats.uploads=sActive->cache.uploadedPages;
 	stats.matvecs=sActive->cache.matvecCalls; stats.failed=sActive->failed || sActive->cache.Failed();
 	stats.peakWorkers=sActive->device.peakWorkers;
+	stats.activationReuses=sActive->device.activationReuses;
 	stats.attentionOps=sActive->attentionOps; stats.attentionTiles=sActive->attentionTiles;
 	stats.attentionSeconds=sActive->attentionSeconds;
 	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;

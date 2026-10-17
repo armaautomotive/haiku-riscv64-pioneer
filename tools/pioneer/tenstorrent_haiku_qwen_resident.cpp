@@ -180,6 +180,7 @@ int main(int argc,char** argv) {
 	printf("Backend phase totals: weight preparation/upload/cache %.6fs, activation preprocessing %.6fs, matvec/staging/result %.6fs, attention/staging/result %.6fs, primitive diagnostics %.6fs; not device-only timing\n",
 		stats.weightSeconds,stats.inputSeconds,stats.matvecSeconds,stats.attentionSeconds,stats.diagnosticSeconds);
 	if (fleet) printf("Whole-projection path: peak workers%u,197 matrix+28 attention host calls/position (old234+224); still host norms/RoPE/KV, NOT zero-round-trip decoding\n",stats.peakWorkers);
+	if (coordinated) printf("Compact activation staging: %llu exact same-input uploads skipped; all device arithmetic/completion proofs retained; NOT an end-to-end speed claim\n",(unsigned long long)stats.activationReuses);
 	if (passed && decodeSeconds>0 && !diagnose) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
 	llama_free(actual); llama_free(reference); llama_model_free(model); llama_backend_free(); return passed?0:1;
 }

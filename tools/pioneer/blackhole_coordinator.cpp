@@ -118,13 +118,16 @@ static void HostTransfer(bool write,uint32_t low,uint32_t high,unsigned words)
 	coordinator_fault_park();
 }
 #endif
+#if !PIONEER_COORDINATOR_TRUSTED_IDLE
 static bool WaitPc(uint32_t pc) { return pc>=0x71280 && pc<=0x71294 && !(pc&3); }
+#endif
 static void ResetHeld(unsigned worker,uint32_t expected)
 {
 	// Read only! A NoC read has no authority to reset a peer.
 	Transfer(false,worker,0x147090,0xffb121b0,4);
 	if (*Words(0x147090)!=expected) coordinator_fault_park();
 }
+#if !PIONEER_COORDINATOR_TRUSTED_IDLE
 static bool PeerIdle(unsigned worker,uint32_t sequence)
 {
 	Transfer(false,worker,0x147000,0x71300,16);
@@ -136,6 +139,19 @@ static bool PeerIdle(unsigned worker,uint32_t sequence)
 	ResetHeld(worker,0x46800);
 	return true;
 }
+#else
+static bool PeerReleased(unsigned worker,uint32_t sequence)
+{
+	// The fixed worker publishes finished ONLY after its full source,
+	// NoC-idle,counter/status proof. It cannot issue another NoC operation
+	// until OUR next doorbell. Kernel boot/previous-job ownership proves
+	// the initial idle state; END still live-audits every STOP before reset.
+	Transfer(false,worker,0x147000,0x71300,16);
+	volatile uint32_t* mailbox=Words(0x147000);
+	if (mailbox[2] || mailbox[3]!=0x43524431) coordinator_fault_park();
+	return mailbox[0]==sequence && mailbox[1]==sequence;
+}
+#endif
 extern "C" unsigned coordinator_main()
 {
 	volatile uint32_t* job=Words(0x140000);
@@ -188,11 +204,25 @@ extern "C" unsigned coordinator_main()
 	unsigned blocks=n>>5,workers=blocks<limit?blocks:limit,blocksPerWorker=0,extra=blocks;
 	while (extra>=workers) { extra-=workers; blocksPerWorker++; }
 	if (blocksPerWorker+(extra!=0)>128) return 0; // peer output lease <=4096 rows
+#if PIONEER_COORDINATOR_COMPACT_INPUT
+	// One compact owned host READ contains exactly the vector followed by
+	// its scales. Keep the qualified peer ABI unchanged: relocate/verify
+	// scales into83000 locally, without PCIe padding or another host call.
+	// Source and destination never overlap except the identical6144 case.
+	for (unsigned i=0;i<(k>>5);i++) Words(0x83000)[i]=Words(0x80000+k*2)[i];
+	Fence();
+	for (unsigned i=0;i<(k>>5);i++)
+		if (Words(0x83000)[i]!=Words(0x80000+k*2)[i]) coordinator_fault_park();
+#endif
 	// Prove the ENTIRE cohort idle and every monotonic sequence before
 	// the first descriptor write or doorbell. No global wrap or reuse.
 	for (unsigned worker=1;worker<=workers;worker++) {
 		uint32_t sequence=job[64+worker-1];
+#if PIONEER_COORDINATOR_TRUSTED_IDLE
+		if (!sequence || sequence>=0x7fffffff) coordinator_fault_park();
+#else
 		if (!sequence || sequence>=0x7fffffff || !PeerIdle(worker,sequence-1)) coordinator_fault_park();
+#endif
 	}
 	unsigned firstRow=0;
 	for (unsigned worker=1;worker<=workers;worker++) {
@@ -214,7 +244,11 @@ extern "C" unsigned coordinator_main()
 		uint32_t sequence=job[64+worker-1];
 		bool idle=false;
 		for (unsigned attempt=0;attempt<65536;attempt++) {
+#if PIONEER_COORDINATOR_TRUSTED_IDLE
+			if (PeerReleased(worker,sequence)) { idle=true; break; }
+#else
 			if (PeerIdle(worker,sequence)) { idle=true; break; }
+#endif
 			Transfer(false,worker,0x147088,0x17ffc8,4);
 			if (*Words(0x147088)==0x4e4f4346) coordinator_fault_park();
 		}

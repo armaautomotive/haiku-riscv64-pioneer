@@ -2,6 +2,58 @@
 
 ## Status
 
+### October17: compact activation / exact reuse contract v7 (05:40 UTC)
+
+Fast Qwen is NOT achieved. The native full-model verifier passed all22
+positions with exact full-logit agreement and a clean END, but its diagnostic
+warm decode was only0.401768tok/s. This is NOT a CPU speedup benchmark or an
+Assistant promotion. The v6 three-request warm benchmark also completed:
+all quality/no-reupload checks passed, but all three speed gates FAILED
+(P100A about0.33tok/s,CPU32 about0.64/1.57/1.78tok/s). Its END was clean.
+
+Installed v7 driver SHA-256:
+`c12f73b16bb4bb31008236e810f7ff1594a0efcd7c9d89d4b79ce58833821281`.
+The private metadata contract is checked before BEGIN. Fast mode transfers
+exactly K*2+K/8 activation/scales bytes, not16KiB padding; the fixed image
+relocates and verifies every scale on card. An exact kernel-private input
+shadow skips a repeated upload only after a fully proven prior job. Every
+hit still checks exclusive ownership,mappings,source,PCI/ALL-ID idle and
+completion. Changed K/input/scales/signed zero misses; uncertain jobs
+invalidate the shadow. Explicit debug mode retains the old full transfer.
+There are no learned CPU sums or validation arithmetic in the timed path.
+
+Native evidence at `/boot/home/pioneer-resident-kv-20261017-a/`:
+
+- `coordinated-v7-shapes.log`:32..6144 rows exact,changed/identical pairs,
+  14 upload reuses/28 calls,clean END.4096-row hit about8.7ms vs10.0ms miss.
+- `coordinated-v7-reuse-attention.log`:all8 heads,layers0/27,n1..4 exact,
+  seven upload reuses across KV jobs,clean END.
+- `coordinated-v7-vocabulary.log`:all151936 rows exact,119 peers,250.46ms,
+  cohort shrink/expand,clean END.
+- `qwen-coordinated-v7-verify.log`:197 tensors,670482432 resident bytes,
+  4334 matvecs,1848 redundant input uploads skipped,all22 full-logit
+  comparisons exact,END2/PCI-host1-1/cold0/cleanup1.
+
+The actual compact image is byte-reproducible at
+`50fed70cfabf916d8c0bcb246c7fe9060bcedaa89744f2f824e5990dd89074f0`.
+Actual-instruction,controller,client,ownership and pinned-GGML tests pass.
+Cold graph tracing confirms197 matrix and28 attention host calls per
+position; CPU norms/RoPE/GLU still split the graph. Those round trips now
+dominate, so the next work is a fixed card-side feed-forward graph.
+
+`PioneerGraphMath.h`,the scalar instruction probe and the separate layer
+coordinator are OFFLINE prerequisites ONLY. No driver exposes or selects
+the layer image. Actual RV32IMF scalar tests cover fast/debug SiLU,Q8
+quantization,integer IEEE division and malformed/nonfinite rejection.
+They do not establish native performance or full-model quality. The layer
+prototype still needs executed graph/worker tests and independent ownership
+and result predicates before any native exposure. Qualified compact and
+legacy images remain unchanged by its compile-time branch.
+
+Assistant remains closed for isolated tests; its installed build/settings,
+model,SD-free default boot,64 CPUs/full127.6GiB and firmware are unchanged.
+Unrelated dirty llama.cpp edits remain untouched and are not in the runtime.
+
 ### October17: fused output / explicit debug contract v6 (04:59 UTC)
 
 Fast Qwen is NOT achieved; no Assistant promotion. Current driver
@@ -39,8 +91,9 @@ Native evidence in the same unique-path directory:
 - `coordinated-v6-shapes.log`: every row exact,32..6144 outputs,clean END.
 1024/2048/3072/4096 rows about8.2/9.0/10.0/10.8ms;6144 PIO17.6ms.
 3072-row host snapshot is<0.7ms; activation staging still about3.6ms.
-- `coordinated-v6-vocabulary.log`: IN PROGRESS, no completion claim yet.
-Full-Qwen/warm-CPU benchmark has NOT run for this revision yet.
+- `coordinated-v6-vocabulary.log`: subsequently completed,all rows exact,
+ clean END. Full warm benchmark subsequently FAILED all three speed gates;
+ see the v7 checkpoint above. No fast-target promotion.
 
 Current tool46922c85,shape tool e0459322,full-Qwen candidate92c5b9a8 live at
 unique paths only. GPU image SHA c6c0ed0b36faaddef14911ae1876a1c1796924c99f613499cc5cbdc5ab3d9e33.

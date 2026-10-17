@@ -17,7 +17,7 @@ typedef bool (*PioneerGgmlBoundaryCallback)(void*);
 // Called only between completed uploads/matvecs, never during an ioctl.
 void PioneerGgmlBoundary(PioneerGgmlBoundaryCallback callback,void* data);
 struct PioneerGgmlStats {
-	uint64_t tensors,bytes,uploads,matvecs,attentionOps,attentionTiles;
+	uint64_t tensors,bytes,uploads,matvecs,attentionOps,attentionTiles,activationReuses;
 	double weightSeconds,inputSeconds,matvecSeconds,diagnosticSeconds,attentionSeconds;
 	bool failed;
 	unsigned peakWorkers;

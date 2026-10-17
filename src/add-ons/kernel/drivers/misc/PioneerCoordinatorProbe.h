@@ -7,17 +7,20 @@
 #include "BlackholeFastCoordinatorImage.h"
 #include "BlackholeCoordinatorReadbackImage.h"
 #include "BlackholeFusedCoordinatorImage.h"
+#include "BlackholeCompactCoordinatorImage.h"
 struct PioneerCoordinatorLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false;
 	bool fast=false; // immutable for this code/stack ownership lease
 	bool readback=false;
 	bool fused=false;
+	bool compact=false,inputValid=false;
+	uint32_t inputK=0,inputShadow[3072]={},scaleShadow[192]={};
 	uint32_t readbackNonce=0;
 	uint32_t nonce=0,expected[119]={};
 };
-static inline uint32_t PioneerCoordinatorWord(bool fast,bool readback,unsigned word,bool fused=false)
+static inline uint32_t PioneerCoordinatorWord(bool fast,bool readback,unsigned word,bool fused=false,bool compact=false)
 {
-	return fused?BlackholeFusedCoordinatorCodeWord(word):readback?BlackholeCoordinatorReadbackCodeWord(word):fast?BlackholeFastCoordinatorCodeWord(word):BlackholeCoordinatorCodeWord(word);
+	return compact?BlackholeCompactCoordinatorCodeWord(word):fused?BlackholeFusedCoordinatorCodeWord(word):readback?BlackholeCoordinatorReadbackCodeWord(word):fast?BlackholeFastCoordinatorCodeWord(word):BlackholeCoordinatorCodeWord(word);
 }
 struct tt_coordinator_probe_result {
 	uint32_t version,state,workers,matched,nonce,prepared,started,completed,stopped,recovery_required;
@@ -58,19 +61,20 @@ bool PioneerCoordinatorLocalHeld(IO& io,const tt_dram_samples_result& baseline,
 }
 template<class IO>
 bool PioneerCoordinatorPrepare(IO& io,const tt_dram_samples_result& baseline,
-	const tt_compute_noc_result& noc,PioneerResidentLease& store,PioneerCoordinatorLease& lease,bool fast=false,bool readback=false,bool fused=false)
+	const tt_compute_noc_result& noc,PioneerResidentLease& store,PioneerCoordinatorLease& lease,bool fast=false,bool readback=false,bool fused=false,bool compact=false)
 {
-	if ((readback && !fast) || (fused && (!fast || readback))) return false;
-	if (lease.ready) return !lease.unsafe && !lease.running && lease.fast==fast && lease.readback==readback && lease.fused==fused;
+	if ((readback && !fast) || (fused && (!fast || readback)) || (compact && !fused)) return false;
+	if (lease.ready) return !lease.unsafe && !lease.running && lease.fast==fast && lease.readback==readback && lease.fused==fused && lease.compact==compact;
 	if (lease.saved || lease.unsafe || !io.CoordinatorSavedWords() || !PioneerCoordinatorLocalHeld(io,baseline,noc,store)) return false;
 	uint32_t* saved=io.CoordinatorSavedWords();
 	for (unsigned w=0;w<TT_COORDINATOR_SAVED_WORDS;w++) saved[w]=io.CoordinatorRead(w);
-	lease.saved=true; lease.fast=fast; lease.readback=readback; lease.fused=fused;
+	lease.saved=true; lease.fast=fast; lease.readback=readback; lease.fused=fused; lease.compact=compact;
+	lease.inputValid=false; lease.inputK=0;
 	if (!PioneerCoordinatorLocalHeld(io,baseline,noc,store)) { lease.unsafe=true; return false; }
 	lease.dirty=true;
-	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) io.CoordinatorWrite(w,PioneerCoordinatorWord(fast,readback,w,fused));
+	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) io.CoordinatorWrite(w,PioneerCoordinatorWord(fast,readback,w,fused,compact));
 	bool exact=true;
-	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) exact &= io.CoordinatorRead(w)==PioneerCoordinatorWord(fast,readback,w,fused);
+	for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) exact &= io.CoordinatorRead(w)==PioneerCoordinatorWord(fast,readback,w,fused,compact);
 	lease.ready=exact; return exact;
 }
 template<class IO>

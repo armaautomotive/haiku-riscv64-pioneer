@@ -16,13 +16,14 @@ int main(int argc,char** argv)
 	wide |= debug || shapes;
 	bool sweep=argc==2 && !strcmp(argv[1],"--coordinated-sweep-and-restore"); wide |= sweep;
 	bool vocabulary=argc==2 && !strcmp(argv[1],"--coordinated-vocabulary-and-restore");
-	bool coordinatedAttention=argc==2 && !strcmp(argv[1],"--coordinated-attention-and-restore");
+	bool reuseAttention=argc==2 && !strcmp(argv[1],"--coordinated-reuse-attention-and-restore");
+	bool coordinatedAttention=reuseAttention || (argc==2 && !strcmp(argv[1],"--coordinated-attention-and-restore"));
 	bool support=argc==2 && !strcmp(argv[1],"--check-coordinated-support");
 	if (support) {
 		int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) return 1;
 		tt_coordinated_support s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&s,sizeof(s)); close(fd);
 		printf("Coordinated support status%d v%u workers%u KV-v%u immutable%u gather%u\n",status,s.version,s.max_workers,s.attention_version,s.immutable_weights,s.gather_max);
-		return status || s.version!=6 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
+		return status || s.version!=7 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
 	}
 	bool coordinated=wide || vocabulary || coordinatedAttention || (argc==2 && !strcmp(argv[1],"--coordinated-matrices-and-restore"));
 	if (!blocks && !coordinated && (argc!=2 || strcmp(argv[1],"--run-and-restore"))) { fprintf(stderr,"Usage: %s --run-and-restore|--run-blocks-and-restore|--coordinated-matrices-and-restore|--coordinated-wide-and-restore|--coordinated-vocabulary-and-restore|--coordinated-attention-and-restore|--check-coordinated-support\n",argv[0]); return 2; }
@@ -50,18 +51,19 @@ int main(int argc,char** argv)
 	}
 	okay=okay && device.Q8Matvec(0,1024,rows,x,scale,y.data());
 	if (shapes) {
-		for (unsigned current:{32U,64U,1024U,2048U,3072U,4096U,6144U}) for (unsigned trial=0;trial<2 && okay;trial++) {
+		for (unsigned current:{32U,64U,1024U,2048U,3072U,4096U,6144U}) for (unsigned trial=0;trial<4 && okay;trial++) {
 			for (unsigned k=0;k<1024;k++) {
-				uint32_t value=PioneerInt8Operand(int((k*17+trial*7)%31)-15);
+				uint32_t value=PioneerInt8Operand(int((k*17+(trial/2)*7)%31)-15);
 				if (!(k&1)) x[k/2]=value; else x[k/2]|=value<<16;
 			}
 			double start=Seconds(); okay=device.Q8Matvec(0,1024,current,x,scale,y.data()); double elapsed=Seconds()-start;
 			for (unsigned row=0;row<current && okay;row++) {
-				int sum=0; for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+trial*7)%31)-15);
+				int sum=0; for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+(trial/2)*7)%31)-15);
 				okay=y[row]==PioneerAttentionBits(float(sum));
 			}
 			tt_runtime_profile_result p={}; bool profiled=okay && device.CoordinatedProfile(p);
-			printf("NATIVE shape sweep debug%u rows%u trial%u exact%u wall%.6fs profile%u",debug,current,trial,okay,elapsed,profiled);
+			okay &= debug || device.lastActivationPages==((trial&1)?0U:1U);
+			printf("NATIVE shape sweep debug%u rows%u trial%u exact%u staged%u reused%llu wall%.6fs profile%u",debug,current,trial,okay,device.lastActivationPages,(unsigned long long)device.activationReuses,elapsed,profiled);
 			if (profiled) for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) if (p.mask&(1U<<slot)) printf(" t%u=%llu",slot,(unsigned long long)p.microseconds[slot]);
 			printf("\n");
 		}
@@ -133,16 +135,18 @@ int main(int argc,char** argv)
 			printf("NATIVE resident-KV all8 groups layer%u n%u wall%.6fs reference-L2%.9g %s\n",layer,n,elapsed,error,okay?"PASS":"FAIL");
 			if (!okay) break;
 			for (unsigned k=0;k<1024;k++) {
-				uint32_t v=PioneerInt8Operand(int((k*17+n*7+layer*11)%31)-15);
+				unsigned seed=reuseAttention?0:n*7+layer*11;
+				uint32_t v=PioneerInt8Operand(int((k*17+seed)%31)-15);
 				if (!(k&1)) x[k/2]=v; else x[k/2]|=v<<16;
 			}
 			okay=device.Q8Matvec(0,1024,64,x,scale,y.data());
 			for (unsigned row=0;row<64 && okay;row++) {
 				int sum=0;
-				for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+n*7+layer*11)%31)-15);
+				for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+(reuseAttention?0:n*7+layer*11))%31)-15);
 				okay=y[row]==PioneerAttentionBits(float(sum));
 			}
-			printf("NATIVE adjacent2-worker projection changed-input full64 rows %s\n",okay?"PASS":"FAIL");
+			if (reuseAttention && (n!=1 || layer!=0)) okay &= device.lastActivationPages==0;
+			printf("NATIVE adjacent2-worker projection full64 rows staged%u reused%llu %s\n",device.lastActivationPages,(unsigned long long)device.activationReuses,okay?"PASS":"FAIL");
 		}
 	}
 	bool clean=device.Finish();

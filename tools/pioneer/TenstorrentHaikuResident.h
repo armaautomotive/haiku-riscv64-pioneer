@@ -29,6 +29,8 @@ class PioneerResidentDevice {
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
+	uint64_t activationReuses=0;
+	unsigned lastActivationPages=0;
 	// Diagnostic cohort tuning only; no new driver authority or active
 	// job mutation. The kernel independently partitions every request.
 	bool CoordinatedLimit(unsigned workers) {
@@ -74,7 +76,7 @@ public:
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version!=6
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version!=7
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
@@ -203,6 +205,7 @@ public:
 				failed=true; closeOnly=true; return false;
 			}
 			coordinatorNonce=p.result.master.nonce; memcpy(result,p.output,outputs*4); calls++;
+			lastActivationPages=p.result.staged_pages; if (!lastActivationPages) activationReuses++;
 			if (plan.workers>peakWorkers) peakWorkers=plan.workers;
 			return true;
 		}

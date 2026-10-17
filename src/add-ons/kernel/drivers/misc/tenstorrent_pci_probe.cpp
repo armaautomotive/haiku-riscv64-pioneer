@@ -2276,7 +2276,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={6,119,3,1,8192}; // v6: fused owned output (request1), separate-launch debug (request2)
+	tt_coordinated_support support={7,119,3,1,8192}; // v7: compact exact input + sealed same-input reuse; explicit debug request2 unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2335,7 +2335,7 @@ CoordinatedFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 				ready=context->io.AllocateFleetWorker(0) && context->io.SelectRuntimeCore(0)
 					&& PioneerRuntimeMatvecPrepare(context->io,dram,f.noc,f.Store(),f.Compute(),false,true,true,true,true,true,true)
 					&& PioneerFleetPreludePrepare(context->io,f) && context->io.MapCoordinator()
-					&& PioneerCoordinatorPrepare(context->io,dram,f.noc,f.Store(),context->coordinator,true,request->version==2,request->version==1);
+					&& PioneerCoordinatorPrepare(context->io,dram,f.noc,f.Store(),context->coordinator,true,request->version==2,request->version==1,request->version==1);
 			}
 			if (ready) ready=PioneerCoordinatedMasterBoundary(context->io,dram,context->fleet,context->attention.ready);
 			for (unsigned w=1;w<=plan.workers && ready;w++) {

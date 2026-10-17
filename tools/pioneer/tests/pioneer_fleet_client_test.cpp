@@ -10,7 +10,7 @@
 static unsigned calls=0,ends=0,closes=0,fault=0,target=0,field=0,missing=0;
 static bool failed=false;
 static unsigned coordinatedNonce=0;
-static unsigned coordinatedContract=6;
+static unsigned coordinatedContract=7;
 static int MockOpen(const char*,int) { return 91; }
 static int MockClose(int fd) { assert(fd==91); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
@@ -29,7 +29,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 		PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
 		auto& r=p.result; r={}; r.inputs=p.inputs; r.outputs=p.outputs; r.workers=plan.workers;
 		bool fused=p.version==1 && p.outputs<=4096;
-		r.staged_pages=4; r.gathered=p.outputs<=8192?p.outputs:0; r.dma_words=((p.version==2 && p.outputs<=8192) || fused)?p.outputs:0;
+		r.staged_pages=p.version==2?4:(p.inputs*2+p.inputs/8+4095)/4096; r.gathered=p.outputs<=8192?p.outputs:0; r.dma_words=((p.version==2 && p.outputs<=8192) || fused)?p.outputs:0;
 		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=plan.workers; m.nonce=++coordinatedNonce;
 		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
 		m.phase=TT_COORDINATOR_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_COORDINATOR_PARK;
@@ -43,7 +43,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 		if (fault) {
 			failed=true;
 			if (fault==1) { errno=EIO; return -1; }
-			if (fault==2) reinterpret_cast<uint32_t*>(&r)[field]^=1;
+			if (fault==2) reinterpret_cast<uint32_t*>(&r)[field]^=field==offsetof(tt_coordinated_fleet_result,staged_pages)/4?4:1;
 			if (fault==4) p.output[field]=0x7fc00000;
 		}
 		return 0;
@@ -181,12 +181,12 @@ int main() {
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
-	for (unsigned contract:{0U,2U,3U,4U,5U,7U}) {
+	for (unsigned contract:{0U,2U,3U,4U,5U,6U,8U}) {
 		Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==2 && closes==1 && !ends);
 	}
-	coordinatedContract=6;
+	coordinatedContract=7;
 	for (unsigned f:{1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_coordinated_fleet_result)/4:1);word++) {
 		Reset(f,0,word); output.assign(64,0xdeadbeef);
 		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true));

@@ -10,7 +10,7 @@ struct CoordinatedIO:CoordinatorIO,OutputBufferMock {
 	PioneerFleetWorker* fleet=nullptr;
 	unsigned pioWords=0;
 	bool nonfinite=false,hostDirty=false,inputTimeout=false;
-	bool fusedMode=false,omitFusedPayload=false;
+	bool fusedMode=false,omitFusedPayload=false,compactMode=false;
 	unsigned inputReads=0,outputWrites=0,outputReads=0,compareStarts=0;
 	unsigned RuntimeBufferWords() { return C().RuntimeBufferWords(); }
 	void BulkHostFence() { hostDirty=false; }
@@ -42,15 +42,16 @@ struct CoordinatedIO:CoordinatorIO,OutputBufferMock {
 			return;
 		}
 		uint32_t before[]={C().counters[0],C().counters[1],C().accepted,C().counters[3]};
-		if (offset==0x40 && C().command[3]==0x80000 && C().command[8]==16384) {
+		if (offset==0x40 && C().command[3]==0x80000) {
 			assert(!current && value==1 && !hostDirty && allocated && !cached);
-			const uint32_t expected[]={uint32_t(physical),uint32_t(physical>>32),19|(24<<6),0x80000,0,129,0,0,16384,0};
+			unsigned bytes=C().command[8]; assert(compactMode?(bytes>=2176 && bytes<=13056 && !(bytes&63)):bytes==16384);
+			const uint32_t expected[]={uint32_t(physical),uint32_t(physical>>32),19|(24<<6),0x80000,0,129,0,0,bytes,0};
 			assert(!memcmp(C().command,expected,sizeof(expected)) && C().pciCommand[0]==0x406 && C().pciCommand[1]==0x406);
 			inputReads++; C().requests++; C().doorbells++; C().doorbellRead=false;
 			C().pending=inputTimeout; C().done=!inputTimeout;
 			if (!inputTimeout) {
-				for (unsigned i=0;i<4096;i++) C().buffers[i]=OutputBufferMock::data[i];
-				C().counters[0]++; C().counters[1]+=256; C().accepted++; C().counters[3]++;
+				for (unsigned i=0;i<bytes/4;i++) C().buffers[i]=OutputBufferMock::data[i];
+				C().counters[0]++; C().counters[1]+=bytes/64; C().accepted++; C().counters[3]++;
 			}
 		} else FleetIO::ResidentNocWrite(offset,value);
 		uint32_t after[]={C().counters[0],C().counters[1],C().accepted,C().counters[3]};
@@ -60,7 +61,7 @@ struct CoordinatedIO:CoordinatorIO,OutputBufferMock {
 	void RuntimeResetWrite(uint32_t value) {
 		if (value!=0x46800) { CoordinatorIO::RuntimeResetWrite(value); return; }
 		assert(!current && !quarantined && C().reset==0x87ffff && data[0]==0x31445243 && (data[1]==1 || data[1]==2 || data[1]==3));
-		for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) assert(program[w]==PioneerCoordinatorWord(true,!fusedMode,w,fusedMode));
+		for (unsigned w=0;w<TT_COORDINATOR_CODE_WORDS;w++) assert(program[w]==PioneerCoordinatorWord(true,!fusedMode,w,fusedMode,compactMode));
 		C().reset=value; starts++; if (executeTimeout) return;
 		if (data[1]==2) {
 			assert(C().pciCommand[0]==0x402 && C().pciCommand[1]==0x402); compareStarts++;
@@ -72,6 +73,7 @@ struct CoordinatedIO:CoordinatorIO,OutputBufferMock {
 			status[0]=TT_COORDINATOR_DONE; status[1]=words; status[2]=TT_COORDINATOR_MARKER; return;
 		}
 		unsigned k=data[3],n=data[4]; PioneerFleetPlan p; assert(PioneerFleetPartition(k,n,data[2],p));
+		if (compactMode) for (unsigned i=0;i<k/32;i++) C().buffers[3072+i]=C().buffers[k/2+i];
 		for (unsigned w=1;w<=p.workers;w++) assert(fleet[w].Compute().running && !fleet[w].persistentIdle
 			&& fleet[w].persistentSequence==data[64+w-1]);
 		bool fused=data[1]==3;
@@ -108,7 +110,7 @@ struct CoordinatedFixture {
 	CoordinatedIO io; std::vector<PioneerFleetWorker> fleet=std::vector<PioneerFleetWorker>(120);
 	PioneerBulkUploadLease bulk; PioneerOutputBufferLease transfer; PioneerCoordinatorLease lease; tt_coordinated_fleet_result result={}; tt_host_page_result host={};
 	CoordinatedFixture(bool fused=false) {
-		io.fusedMode=fused;
+		io.compactMode=io.fusedMode=fused;
 		io.fleet=fleet.data();
 		for (unsigned w=0;w<120;w++) {
 			auto& c=*io.core[w]; auto& f=fleet[w];
@@ -120,15 +122,20 @@ struct CoordinatedFixture {
 		}
 		bulk.saved=bulk.ready=true;
 		assert(PioneerPrepareOutputBuffer(io,host,transfer));
-		assert(PioneerCoordinatorPrepare(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),lease,true,!fused,fused));
+		assert(PioneerCoordinatorPrepare(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),lease,true,!fused,fused,fused));
 	}
-	bool Run(unsigned k=1024,unsigned n=64,unsigned limit=119) {
+	bool Run(unsigned k=1024,unsigned n=64,unsigned limit=119,unsigned change=0) {
 		std::vector<uint32_t> input(k/2,0x40014001),scale(k/32,0x3f800000),output(n,0xabcdef00);
+		if (change==1) input[0]^=1;
+		if (change==2) scale[0]=0;
+		if (change==3) scale[0]=0x80000000;
+		bool hit=PioneerCoordinatedInputMatches(lease,k,input.data(),scale.data()); unsigned reads=io.inputReads;
 		bool okay=PioneerCoordinatedMatvec(io,io.core[0]->Baseline(),host,transfer,fleet.data(),bulk,lease,false,
 			UINT64_C(0x80000000),0,k,n,limit,input.data(),scale.data(),output.data(),result);
 		if (okay) {
 			assert(PioneerCoordinatedProof(result,k,n,limit,lease.nonce,lease.readback)); for (auto value:output) assert(value==0x40000000);
-			assert(io.inputReads==io.starts-io.compareStarts && io.C().pciCommand[0]==0x402 && io.C().pciCommand[1]==0x402);
+			assert(io.inputReads==reads+(hit?0:1) && io.C().pciCommand[0]==0x402 && io.C().pciCommand[1]==0x402);
+			assert(result.staged_pages==(hit?0:lease.compact?(k*2+k/8+4095)/4096:4));
 		}
 		return okay;
 	}
@@ -137,12 +144,27 @@ struct CoordinatedFixture {
 int main()
 {
 	{
+		CoordinatedFixture f(true); assert(f.Run(6144));
+		uint32_t x[3072],s[192]; for (auto& w:x) w=0x40014001; for (auto& w:s) w=0x3f800000;
+		assert(PioneerCoordinatedInputMatches(f.lease,6144,x,s));
+		for (unsigned i=0;i<3072;i++) { f.lease.inputShadow[i]^=1; assert(!PioneerCoordinatedInputMatches(f.lease,6144,x,s)); f.lease.inputShadow[i]^=1; }
+		for (unsigned i=0;i<192;i++) { f.lease.scaleShadow[i]^=1; assert(!PioneerCoordinatedInputMatches(f.lease,6144,x,s)); f.lease.scaleShadow[i]^=1; }
+	}
+	for (unsigned fault=0;fault<5;fault++) {
+		CoordinatedFixture f(true); assert(f.Run()); unsigned starts=f.io.starts,reads=f.io.inputReads;
+		auto& owned=f.fleet[0].Compute();
+		if (fault==0) owned.saved=false; if (fault==1) owned.bulk=false; if (fault==2) owned.buffers_dirty=false;
+		if (fault==3) owned.buffer_words=8192; if (fault==4) f.io.C().bufferWords=8192;
+		assert(!f.Run() && f.io.quarantined && !f.lease.inputValid && f.io.starts==starts && f.io.inputReads==reads);
+	}
+	{
 		CoordinatedFixture f(true);
 		for (unsigned n:{32U,64U,1024U,2048U,3072U,4096U,6144U,8192U,151936U,64U}) {
 			unsigned before=f.io.pioWords; assert(f.Run(1024,n) && f.io.starts==f.io.stops && !f.transfer.pending && !f.io.compareStarts);
 			if (n<=4096) assert(f.io.pioWords==before && f.result.dma_words==n);
 		}
 		for (unsigned k:{2048U,3072U,5120U,6144U}) assert(f.Run(k));
+		for (unsigned change:{0U,0U,1U,1U,2U,2U,3U,3U,0U,0U}) assert(f.Run(1024,64,119,change));
 	}
 	for (unsigned fault=0;fault<11;fault++) {
 		CoordinatedFixture f(true); f.io.executeTimeout=fault==0; f.io.badPc=fault==1; f.io.badCount=fault==2; f.io.badNoc=fault==3;

@@ -71,9 +71,11 @@ bool PioneerBulkUploadPrepare(IO& io,const tt_dram_samples_result& baseline,cons
 }
 template<class IO>
 bool PioneerBulkUploadCommand(IO& io,PioneerResidentLease& store,PioneerOutputBufferLease& host,
-	const uint32_t* command,bool write,unsigned step,unsigned pages,tt_resident_stream_result& r)
+	const uint32_t* command,bool write,unsigned step,unsigned pages,tt_resident_stream_result& r,unsigned exactBytes=0)
 {
 	if (step>=6 || !pages || pages>4 || !BlackholeResidentIdle(io)) return false;
+	if (exactBytes && (exactBytes>16384 || (exactBytes&63) || command[8]!=exactBytes)) return false;
+	unsigned flits=exactBytes?exactBytes/64:64*pages;
 	for (unsigned w=0;w<10;w++) io.ResidentNocWrite(w*4,command[w]);
 	for (unsigned w=0;w<10;w++) if (io.ResidentNocRead(w*4)!=command[w]) return false;
 	for (unsigned w=0;w<4;w++) r.before[step][w]=io.ResidentNocRead(write?BlackholeHostWriteCounter(w):0x208+w*4);
@@ -84,7 +86,7 @@ bool PioneerBulkUploadCommand(IO& io,PioneerResidentLease& store,PioneerOutputBu
 		r.polls[step]++; uint32_t pending=io.ResidentNocRead(0x40);
 		for (unsigned w=0;w<4;w++) r.after[step][w]=io.ResidentNocRead(write?BlackholeHostWriteCounter(w):0x208+w*4);
 		if (!pending && uint32_t(r.after[step][0]-r.before[step][0])==1
-			&& uint32_t(r.after[step][1]-r.before[step][1])==64*pages
+			&& uint32_t(r.after[step][1]-r.before[step][1])==flits
 			&& uint32_t(r.after[step][2]-r.before[step][2])==1
 			&& uint32_t(r.after[step][3]-r.before[step][3])==1 && BlackholeResidentIdle(io)) {
 			store.pending=false; host.pending=false; r.completed++; return true;
