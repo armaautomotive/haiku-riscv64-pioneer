@@ -65,4 +65,35 @@ static inline bool PioneerQ38QuantizeK(const float* input,unsigned count,Pioneer
 	for (unsigned i=0;i<73;i++) output->words[i]=scratch[i];
 	return true;
 }
+
+// Q8_0 counterpart for the288 Q8_0 learned matrices. Positive FP16 scale,
+// ties AWAY,not Q8_K's signed F32/ties-even convention. Nine local words
+// contain the exact34 GGML bytes plus TWO canonical zero padding bytes.
+// Word stores avoid any unqualified byte-store instruction. Explicitly
+// refuse subnormal source/overflow; a scale rounded to FP16 zero is valid.
+struct PioneerQ38Activation0 { uint32_t words[9]; };
+static_assert(sizeof(PioneerQ38Activation0)==36,"34 GGML bytes +2 local padding");
+static inline bool PioneerQ38Quantize0(const float* input,unsigned count,PioneerQ38Activation0* output)
+{
+	if (count!=32 || !PioneerQ38Disjoint(input,32,reinterpret_cast<const float*>(output),9)) return false;
+	uint32_t maximum=0;
+	for (unsigned i=0;i<32;i++) {
+		uint32_t magnitude=PioneerAttentionBits(input[i])&0x7fffffff;
+		if (magnitude>=0x7f800000 || (magnitude && magnitude<0x00800000)) return false;
+		if (magnitude>maximum) maximum=magnitude;
+	}
+	float scale=maximum?PioneerGraphDividePositive(PioneerAttentionFloat(maximum),127.0f):0;
+	float inverse=maximum?PioneerGraphDividePositive(1.0f,scale):0;
+	uint16_t half=PioneerAttentionToHalf(scale);
+	if ((half&0x7c00)==0x7c00 || !PioneerQ38Finite(inverse)) return false;
+	uint32_t scratch[9]; for (unsigned i=0;i<9;i++) scratch[i]=0;
+	scratch[0]=half;
+	for (unsigned i=0;i<32;i++) {
+		int value=PioneerGraphRoundQ8(input[i]*inverse);
+		if (value<-127 || value>127) return false;
+		unsigned byte=i+2; scratch[byte/4]|=(uint32_t(value)&255)<<((byte%4)*8);
+	}
+	for (unsigned i=0;i<9;i++) output->words[i]=scratch[i];
+	return true;
+}
 #endif

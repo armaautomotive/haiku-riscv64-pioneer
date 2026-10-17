@@ -2,6 +2,51 @@
 
 ## Status
 
+### October17: all native ranges arrived; assembly/checks pending (21:12 UTC)
+
+All18,973,870,528 native source bytes are now present. The six remaining
+requests finished at21:05:49 UTC,each on its FIRST attempt,with ZERO
+automatic network recoveries. The public-only listener closed successfully
+after all six ranges; no network sender remains running. Manual wired
+down/up restored this session,NOT a full-machine restart or disk repair.
+The underlying NIC stall is still not diagnosed/fixed.
+
+The one-shot native job PID583 is concatenating preserved parts into a
+FRESH file. At21:12:18 UTC it had passed3,221,388,016B. Local disk I/O is
+slow; assembly is still pending,so NO native full-SHA/model acceptance or
+CPU inference success is claimed. The exact full SHA must pass before
+publishing the final filename or running the bounded CPU-only one-token
+smoke. Originals remain preserved; partial assembly is NOT a usable model.
+Additional hash-verified one-shot post-check waits boundedly for that
+exact job to exit,requires BOTH full-SHA and publication markers,then runs
+the read-only native inspector. It performs no inference/device/network
+or persistent settings action. ScriptSHA
+`dc666e30fb0c8c882d82327b2b89a3062e0b7368baab3876682f74717ad64b49`,
+outer5400s,inspector300s. Log:
+`/boot/home/models/qwen38-parallel-20261017/inspect-native-20261017-c.log`.
+
+Separately added OFFLINE `PioneerQ38Quantize0` for the288 Q8_0 matrices:
+positive FP16 scale and ties AWAY,distinct from Q8_K's signed F32/ties EVEN.
+Exact34 GGML bytes plus2 zero local padding bytes are stored using qualified
+word stores,with no weight expansion,host learned-arithmetic fallback,
+fdiv/fcvt/byte-store opcode or device permission. Nonfinite/subnormal source,
+size/alias/null or FP16 scale overflow refuses without publishing output;
+FP16 scale underflow to zero is explicitly supported.
+
+ASan/UBSan4096 Q8_0 blocks compare ALL bytes to independent native IEEE
+division/roundf/HARDWARE binary16 conversion,then compose with independently
+dequantized Q8_0 dots. Existing4096 Q8_K blocks/256 composed K-format dots
+and their actual frozen RV32 image regressions also PASS; original Q8_K
+codeSHA4ee6a5cf remains byte-identical. Distinct local Q8_0 image1308B/SHA
+`524f68a9f871f5a5603d3d675d3b54cfd47d20c0d3b8c8cf74d864d02267eb8c`
+reproduces across fresh builds. BootSHA remainsd0565e4e. Its ACTUAL linked
+instructions pass32 changed inputs/ALL34+padding bytes,EVERY descriptor bit,
+EVERY input's nonfinite/subnormal/overflow refusal,immutable source and
+strict local-only memory/instruction whitelist. Frozen getter compares
+ALL1024 code/padding slots; stack low6ffac is inside6e000..70000.
+No driver/client selects or uploads it; no native P100A result,fast matrix
+kernel,whole27B execution or Assistant target is claimed.
+
 ### October17: wired recovery without reboot; native copy resumed (21:01 UTC)
 
 User confirmed the desktop/input remained responsive during network loss.

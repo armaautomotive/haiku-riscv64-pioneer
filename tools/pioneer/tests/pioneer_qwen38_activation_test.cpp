@@ -66,5 +66,43 @@ int main()
 		for (unsigned i=0;i<256;i++) { double p=double(decoded[i])*(int(qs[i])-int((qs[i]&128)*2))*PioneerAttentionFloat(oracle[0]); wanted+=p; absolute+=fabs(p); }
 		assert(fabs(actual-wanted)<=1e-6+absolute*5e-7);
 	}
-	puts("PASS OFFLINE Q8_K activation4096 random blocks/exact signed F32 scales/ALL bytes+16 sums/first-max sign/nearest-even half boundaries/zero canonicalization/nonfinite+subnormal+alias refusals/256 composed Q4_K+Q6_K dots;NOT installed");
+	for (unsigned trial=0;trial<4096;trial++) {
+		float scale=ldexpf(1.0f,int(trial%110)-100);
+		for (unsigned i=0;i<32;i++) input[i]=float(int(random()%20001)-10000)*scale;
+		PioneerQ38Activation0 actual; uint32_t wanted[9];
+		assert(PioneerQ38Quantize0(input,32,&actual)); Q38Activation0Reference(input,wanted);
+		assert(!std::memcmp(actual.words,wanted,sizeof(wanted)));
+		uint8_t packed[34]; packed[0]=0; packed[1]=0x3c;
+		for (unsigned i=2;i<34;i++) packed[i]=uint8_t(random());
+		float dot=0,decoded[32]; assert(PioneerDecodeQ8_0(packed,decoded));
+		assert(PioneerQ38PackedDot(8,packed,34,reinterpret_cast<const PioneerQ38Int8*>(actual.words)+2,32,
+			PioneerAttentionHalf(uint16_t(actual.words[0])),&dot));
+		double expected=0,absolute=0; const uint8_t* bytes=reinterpret_cast<const uint8_t*>(wanted);
+		_Float16 half; std::memcpy(&half,bytes,2);
+		for (unsigned i=0;i<32;i++) { double p=double(decoded[i])*(int(bytes[2+i])-int((bytes[2+i]&128)*2))*float(half);
+			expected+=p; absolute+=fabs(p); }
+		assert(fabs(dot-expected)<=1e-6+absolute*5e-7);
+	}
+	for (unsigned sign=0;sign<2;sign++) {
+		for (unsigned i=0;i<32;i++) input[i]=float(int(i)-16)+.5f;
+		input[31]=sign?-127.0f:127.0f;
+		PioneerQ38Activation0 actual; uint32_t wanted[9];
+		assert(PioneerQ38Quantize0(input,32,&actual)); Q38Activation0Reference(input,wanted);
+		assert(!std::memcmp(actual.words,wanted,sizeof(wanted)));
+	}
+	for (float bad:{INFINITY,-INFINITY,std::numeric_limits<float>::quiet_NaN(),
+		std::numeric_limits<float>::denorm_min(),-std::numeric_limits<float>::denorm_min(),1e12f}) {
+		for (unsigned i=0;i<32;i++) input[i]=1;
+		input[31]=bad; PioneerQ38Activation0 actual,before0;
+		std::memset(&actual,0xa5,sizeof(actual)); before0=actual;
+		assert(!PioneerQ38Quantize0(input,32,&actual) && !std::memcmp(&actual,&before0,sizeof(actual)));
+		assert(!PioneerQ38Quantize0(input,31,&actual) && !std::memcmp(&actual,&before0,sizeof(actual)));
+		assert(!PioneerQ38Quantize0(input,32,reinterpret_cast<PioneerQ38Activation0*>(input)));
+	}
+	for (float zero:{0.0f,-0.0f}) { for (unsigned i=0;i<32;i++) input[i]=zero;
+		PioneerQ38Activation0 actual; assert(PioneerQ38Quantize0(input,32,&actual));
+		for (auto word:actual.words) assert(!word); }
+	{ PioneerQ38Activation0 actual;
+		assert(!PioneerQ38Quantize0(nullptr,32,&actual) && !PioneerQ38Quantize0(input,32,nullptr)); }
+	puts("PASS OFFLINE Q8_K activation4096 random blocks/signed F32/ties-even/ALL bytes+sums/256 composed K dots;Q8_0 activation4096 blocks/hardware-F16/ties-away/ALL34+padding bytes/composed Q8 dots/zero+invalid refusals;NOT installed");
 }
