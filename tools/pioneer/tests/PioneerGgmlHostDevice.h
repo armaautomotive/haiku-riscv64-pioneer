@@ -11,6 +11,7 @@ struct PioneerGgmlHostState {
 	unsigned opens=0,finishes=0,uploads=0,calls=0,attentionCalls=0,ffnCalls=0,gluCalls=0;
 	bool attention=false;
 	bool coordinated=false;
+	bool wide=false;
 	unsigned fleet=0;
 	bool fail=false,badMath=false,fp16=false,q8=false,compact=false,native=false,exact=false,dual=false,reuse=false;
 	std::vector<uint32_t> bytes;
@@ -23,8 +24,9 @@ class PioneerResidentDevice {
 public:
 	unsigned peakWorkers=0;
 	uint64_t activationReuses=0;
+	uint64_t wideCalls=0;
 	~PioneerResidentDevice() { Finish(); }
-	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false,bool reuse=false,bool attention=false,unsigned bulkUpload=0,unsigned fleet=0,bool resident=false,bool blocks=false,bool coordinated=false,bool debug=false,unsigned requireLayer=0) { assert(!debug && requireLayer<=2 && (!requireLayer || coordinated) && capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact) && (!reuse || dual) && (!attention || reuse) && bulkUpload<=2 && (!bulkUpload || reuse) && fleet<=120 && (!fleet || (reuse && bulkUpload)) && (!resident || (fleet && attention)) && (!blocks || resident) && (!coordinated || (resident && blocks && fleet && fleet<=119))); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; PioneerHostDeviceState().reuse=reuse; PioneerHostDeviceState().attention=attention; PioneerHostDeviceState().fleet=fleet; PioneerHostDeviceState().coordinated=coordinated; return true; }
+	bool Open(uint64_t capacity,bool fp16=false,bool q8=false,bool compact=false,bool native=false,bool exact=false,bool dual=false,bool reuse=false,bool attention=false,unsigned bulkUpload=0,unsigned fleet=0,bool resident=false,bool blocks=false,bool coordinated=false,bool debug=false,unsigned requireLayer=0) { assert(!debug && requireLayer<=3 && (!requireLayer || coordinated) && capacity==UINT64_C(2)*1024*1024*1024 && !(fp16 && q8) && (!compact || q8) && (!native || compact) && (!exact || native) && (!dual || exact) && (!reuse || dual) && (!attention || reuse) && bulkUpload<=2 && (!bulkUpload || reuse) && fleet<=120 && (!fleet || (reuse && bulkUpload)) && (!resident || (fleet && attention)) && (!blocks || resident) && (!coordinated || (resident && blocks && fleet && fleet<=119))); active=true; PioneerHostDeviceState().opens++; PioneerHostDeviceState().fp16=fp16; PioneerHostDeviceState().q8=q8; PioneerHostDeviceState().compact=compact; PioneerHostDeviceState().native=native; PioneerHostDeviceState().exact=exact; PioneerHostDeviceState().dual=dual; PioneerHostDeviceState().reuse=reuse; PioneerHostDeviceState().attention=attention; PioneerHostDeviceState().fleet=fleet; PioneerHostDeviceState().coordinated=coordinated; PioneerHostDeviceState().wide=requireLayer==3; return true; }
 	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {
 		auto& s=PioneerHostDeviceState(); assert(active && s.coordinated && n==3072); s.gluCalls++;
 		if (s.fail) return false;
@@ -117,6 +119,7 @@ public:
 			if (s.badMath) sum+=1;
 			memcpy(output+row,&sum,4);
 		}
+		if (s.wide && outputs>4096) wideCalls++;
 		return true;
 	}
 };

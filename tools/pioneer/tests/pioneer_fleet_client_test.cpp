@@ -25,6 +25,23 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 	}
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_BEGIN) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_READY; s.active=s.host_ready=1; return 0; }
 	if (op==TT_PCI_PROBE_PIONEER_SESSION_END) { auto& s=*(tt_resident_session_result*)data; s.state=TT_RESIDENT_SESSION_CLOSED; s.pci_restored=s.host_released=1; ends++; return 0; }
+	if (op==TT_PCI_PROBE_PIONEER_LAYER_WIDE) {
+		auto& p=*static_cast<tt_pioneer_coordinated_fleet*>(data);
+		assert(p.version==1 && bytes==PioneerCoordinatedRequestBytes(p.outputs)); PioneerFleetPlan plan; assert(PioneerFleetPartition(p.inputs,p.outputs,p.workers,plan));
+		auto& r=p.result; r={}; r.inputs=p.inputs; r.outputs=p.outputs; r.workers=plan.workers;
+		r.staged_pages=(p.inputs*2+p.inputs/8+4095)/4096; r.gathered=r.dma_words=p.outputs;
+		auto& m=r.master; m.version=1; m.state=TT_RUNTIME_PASSED; m.workers=m.matched=m.count=plan.workers; m.nonce=++coordinatedNonce;
+		m.prepared=m.started=m.completed=m.stopped=m.polls=m.summary_verified=1;
+		m.phase=TT_LAYER_DONE; m.marker=TT_COORDINATOR_MARKER; m.pc[0]=m.pc[1]=TT_LAYER_PARK;
+		unsigned reads=5*plan.workers,flits=reads-2*plan.workers+p.outputs/8,writes=3*plan.workers,wf=2*plan.workers+p.outputs/16;
+		const unsigned delta[]={reads,flits,reads+writes,reads,writes,wf,reads+writes,writes};
+		r.summary[0]=reads; r.summary[1]=flits; r.summary[2]=writes; r.summary[3]=wf;
+		r.summary[4]=plan.workers; r.summary[5]=p.outputs; r.summary[6]=m.nonce; r.summary[7]=6;
+		for (unsigned i=0;i<8;i++) { m.before[i]=r.summary[8+i]=UINT32_MAX-7; m.after[i]=r.summary[16+i]=m.before[i]+delta[i]; }
+		for (unsigned i=0;i<p.outputs;i++) p.output[i]=0x3f800000+i;
+		if (fault) { failed=true; if (fault==1) { errno=EIO; return -1; } if (fault==2) reinterpret_cast<uint32_t*>(&r)[field]^=field==offsetof(tt_coordinated_fleet_result,staged_pages)/4?8:1; if (fault==4) p.output[field]=0x7f800000; }
+		return 0;
+	}
 	if (op==TT_PCI_PROBE_PIONEER_LAYER_GLU) {
 		auto& p=*static_cast<tt_pioneer_layer_glu*>(data); unsigned n=p.outputs;
 		assert(bytes==sizeof(p) && p.version==1 && n && n<=3072 && !(n&31) && !p.reserved[0] && !p.reserved[1]);
@@ -219,10 +236,30 @@ int main() {
 			assert(d.Finish()); }
 		assert(ends==1 && closes==1);
 	}
-	for (unsigned contract:{0U,2U,3U,4U,5U,6U,10U}) {
+	for (unsigned contract:{0U,2U,3U,4U,5U,6U,11U}) {
 		Reset(); coordinatedContract=contract;
 		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true)); }
 		assert(calls==2 && closes==1 && !ends);
+	}
+	for (unsigned contract:{7U,8U,9U}) {
+		Reset(); coordinatedContract=contract;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,3)); }
+		assert(calls==2 && closes==1 && !ends);
+	}
+	coordinatedContract=10;
+	for (unsigned f:{0U,1U,2U,4U}) for (unsigned word=0;word<(f==2?sizeof(tt_coordinated_fleet_result)/4:1);word++) {
+		Reset(f,0,word); output.assign(6144,0xdeadbeef);
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,119,true,true,true,false,3));
+			bool okay=d.Q8WideMatvec(0,1024,6144,x,scale,output.data()); assert(okay==!f);
+			if (!f) {
+				for (unsigned i=0;i<6144;i++) assert(output[i]==0x3f800000+i);
+				assert(d.Q8Matvec(0,1024,6144,x,scale,output.data()) && d.LayerFfn(0,0x800000,0x1000000,x,scale,output.data()) && d.Q8Matvec(0,1024,32,x,scale,output.data()) && d.Finish());
+			} else {
+				for (auto value:output) assert(value==0xdeadbeef);
+				unsigned before=calls; assert(!d.Q8WideMatvec(0,1024,6144,x,scale,output.data()) && !d.Finish() && calls==before);
+			}
+		}
+		assert(ends==unsigned(!f) && closes==1);
 	}
 	for (unsigned contract:{7U,8U}) {
 		Reset(); coordinatedContract=contract;

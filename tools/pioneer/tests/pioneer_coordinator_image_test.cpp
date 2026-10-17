@@ -34,12 +34,12 @@ struct CoordinatorMachine:Machine {
 	unsigned scaleStores=0,dropScale=0;
 	unsigned codeBase=0x6c000;
 	std::vector<std::string> events;
-	CoordinatorMachine(const char* path,bool offlineLayer=false):peer(120) {
+	CoordinatorMachine(const char* path,bool offlineLayer=false,bool offlineWide=false):peer(120) {
 		if (offlineLayer) codeBase=0x64000;
 		std::string root(path); code=Read((root+"/code.bin").c_str()); workerImage=Read((root+"/worker.bin").c_str());
 		auto boot=Read((root+"/boot.bin").c_str()); assert(boot.size()==4 && code.size()<=(offlineLayer?32764U:8192U) && !(code.size()&3));
 		unsigned size=compactImage?unsigned(TT_COMPACT_COORDINATOR_IMAGE_WORDS):fusedImage?unsigned(TT_FUSED_COORDINATOR_IMAGE_WORDS):readbackImage?unsigned(TT_COORDINATOR_READBACK_IMAGE_WORDS):fastImage?unsigned(TT_FAST_COORDINATOR_IMAGE_WORDS):unsigned(TT_COORDINATOR_IMAGE_WORDS);
-		if (!offlineLayer) {
+		if (!offlineLayer && !offlineWide) {
 			assert(Word(boot,0)==TT_COORDINATOR_BOOT && code.size()==size*4);
 			for (unsigned i=0;i<TT_COORDINATOR_CODE_WORDS;i++) assert((compactImage?BlackholeCompactCoordinatorCodeWord(i):fusedImage?BlackholeFusedCoordinatorCodeWord(i):readbackImage?BlackholeCoordinatorReadbackCodeWord(i):fastImage?BlackholeFastCoordinatorCodeWord(i):BlackholeCoordinatorCodeWord(i))==(i<code.size()/4?Word(code,i*4):0));
 		}

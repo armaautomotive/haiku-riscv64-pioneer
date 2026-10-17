@@ -19,8 +19,10 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool layerBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-layer-kv-q8-host1");
-	bool layerFfn=layerBenchmark || (argc==3 && !strcmp(argv[1],"--verify-layer-kv-q8-host1"));
+	bool wideBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-wide-layer-kv-q8-host1");
+	bool wideOutput=wideBenchmark || (argc==3 && !strcmp(argv[1],"--verify-wide-layer-kv-q8-host1"));
+	bool layerBenchmark=wideBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-layer-kv-q8-host1"));
+	bool layerFfn=wideOutput || layerBenchmark || (argc==3 && !strcmp(argv[1],"--verify-layer-kv-q8-host1"));
 	bool coordinatedBenchmark=layerBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-coordinated-kv-q8-host1"));
 	bool coordinated=layerFfn || coordinatedBenchmark || (argc==3 && !strcmp(argv[1],"--verify-coordinated-kv-q8-host1"));
 	bool blockBenchmark=coordinatedBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-blocks-kv-q8-host1"));
@@ -87,6 +89,7 @@ int main(int argc,char** argv) {
 	PioneerGgmlPayloadBlocks(payloadBlocks);
 	PioneerGgmlCoordinated(coordinated);
 	PioneerGgmlLayerFfn(layerFfn);
+	PioneerGgmlWideOutput(wideOutput);
 	if (deviceAttention) {
 		params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_ENABLED;
 		params.offload_kqv=true; params.op_offload=true;
@@ -124,6 +127,7 @@ int main(int argc,char** argv) {
 	if (deviceAttention) puts("DEVICE ATTENTION: all28 fused attention operations/224 grouped-head tiles per position REQUIRED; QK/PV on SFPU, softmax on card TRISC0; host KV prefix staging, NOT a speedup claim");
 	if (residentKV) puts("RESIDENT KV: separate immutable all8-head image; private28MiB tail; new KV token only; host prefix coherence check/replay, no CPU attention fallback");
 	if (layerFfn) puts("FIXED FFN candidate: GPU gate/up/SiLU/Q8/down in one job; GLOBAL use-count/shape proofs; separately scheduled GLU also on GPU; no speedup claim");
+	if (wideOutput) puts("WIDE OUTPUT candidate: private1MiB owned host buffer,per-chunk exact ordered GPU readback,full vocabulary returned; no PIO/logit truncation/CPU learned sums");
 	if (bulkUpload) puts("EXPLICIT BULK UPLOAD: synchronous 1..4-page owned transfer; original learned tensor bytes and all numerical/coverage/cleanup gates unchanged");
 	printf("Both independent contexts K/V cache types: %d/%d (%s); graph/logit/greedy gates unchanged\n",int(params.type_k),int(params.type_v),f32Kv?"explicit FP32 precision experiment":"library defaults");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;
@@ -148,6 +152,7 @@ int main(int argc,char** argv) {
 		int next=Argmax(a,count),cpu=Argmax(r,count);
 		PioneerGgmlStats stats={}; bool live=PioneerGgmlSnapshot(stats);
 		if (deviceAttention) {
+			if (wideOutput && stats.wideCalls-coverageBefore.wideCalls!=1) { fprintf(stderr,"Strict wide-output coverage failed; no accepted result\n"); passed=false; break; }
 			if (layerFfn && (stats.ffnOps-coverageBefore.ffnOps!=28 || stats.gluOps!=coverageBefore.gluOps)) {
 				fprintf(stderr,"Strict fused FFN coverage failed: deltaFFN%llu deltaGLU%llu,expected28/0; no accepted result\n",(unsigned long long)(stats.ffnOps-coverageBefore.ffnOps),(unsigned long long)(stats.gluOps-coverageBefore.gluOps)); passed=false; break;
 			}
@@ -179,7 +184,7 @@ int main(int argc,char** argv) {
 	bool warmQualified=passed && generated==4;
 	if (benchmark && warmQualified) {
 		puts("Bootstrap Qwen generation verification PASS; starting separate repeated warm speed/quality gate");
-		passed=PioneerQwenWarmBenchmark(model,reference,actual,expectedTensors,unsigned(params.n_threads),layerFfn);
+		passed=PioneerQwenWarmBenchmark(model,reference,actual,expectedTensors,unsigned(params.n_threads),layerFfn,wideOutput);
 		passed &= PioneerGgmlSnapshot(stats) && !stats.failed;
 	}
 	bool clean=PioneerGgmlFinish(); passed &= clean && generated==4;

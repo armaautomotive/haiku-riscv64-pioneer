@@ -94,8 +94,17 @@ static uint32_t Pc(unsigned worker)
 // bounded final write/read pair may reach PCIe; peers remain device-only.
 static void HostTransfer(bool write,uint32_t low,uint32_t high,unsigned words)
 {
+#if PIONEER_COORDINATOR_WIDE_OUTPUT
+	// Only the new fixed wide-owner image permits128B-aligned subspans.
+	// Its parent validates the ENTIRE private1MiB owner before any launch.
+	// A transfer remains<=16KiB,within48bits,fully ordered and compared.
+	uint32_t last=low+words*4-1;
+	if (!words || words>4096 || (words&31) || !high || high>0xffff || (low&31)
+		|| (high==0xffff && last<low) || !PacketIdle()) coordinator_fault_park();
+#else
 	if (!words || words>4096 || (words&31) || !high || high>0xffff || (low&4095)
 		|| (high==0xffff && low>0xffffc000) || !PacketIdle()) coordinator_fault_park();
+#endif
 	volatile uint32_t* noc=Words(0xffb20000);
 	const unsigned offsets[4]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
 	uint32_t expected[4];
@@ -158,10 +167,20 @@ extern "C" unsigned coordinator_main()
 	unsigned operation=job[1],limit=job[2],k=job[3],n=job[4];
 	uint32_t base=job[5];
 #if PIONEER_COORDINATOR_FUSED_OUTPUT
+#if PIONEER_COORDINATOR_WIDE_OUTPUT
+	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3 && operation!=6) || !limit || limit>119) return 0;
+	if (operation==6 && (!n || n>262144 || !job[8] || job[8]>0xffff || (job[7]&0xfffff)
+		|| (job[8]==0xffff && job[7]>0xfff00000) || job[9]!=0x100000)) return 0;
+#else
 	if (job[0]!=0x31445243 || (operation!=0 && operation!=1 && operation!=3) || !limit || limit>119) return 0;
+#endif
 	if (operation==3 && (!n || n>4096 || !job[8] || job[8]>0xffff || (job[7]&4095)
 		|| (job[8]==0xffff && job[7]>0xffffc000) || job[9]!=16384)) return 0;
-	if (operation!=3 && (job[7] || job[8] || job[9])) return 0;
+	if (operation!=3 && (job[7] || job[8] || job[9])
+#if PIONEER_COORDINATOR_WIDE_OUTPUT
+		&& operation!=6
+#endif
+	) return 0;
 #else
 	if (job[0]!=0x31445243 || operation>(PIONEER_COORDINATOR_OUTPUT_COMPARE?2U:1U) || !limit || limit>119) return 0;
 #endif
@@ -261,10 +280,26 @@ extern "C" unsigned coordinator_main()
 		for (unsigned i=0;i<4;i++) if (uint32_t(proof[4+i]-proof[i])!=(i==1?reads*144+256:reads+1)) coordinator_fault_park();
 		// Keep the full peer proof device-resident for debug retrieval.
 		for (unsigned i=0;i<16;i++) Words(0x141000)[(worker-1)*16+i]=proof[i];
-		if (n<=8192) {
+		if (n<=8192
+#if PIONEER_COORDINATOR_WIDE_OUTPUT
+			|| operation==6
+#endif
+		) {
 			// No host per-peer remapping/readback for hidden projections.
-			Transfer(false,worker,0x84000+firstRow*4,0x84000,rows*4);
-			for (unsigned i=0;i<rows;i++) if ((Words(0x84000)[firstRow+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
+			unsigned outputRow=firstRow;
+#if PIONEER_COORDINATOR_WIDE_OUTPUT
+			if (operation==6) outputRow=0;
+#endif
+			Transfer(false,worker,0x84000+outputRow*4,0x84000,rows*4);
+			for (unsigned i=0;i<rows;i++) if ((Words(0x84000)[outputRow+i]&0x7f800000)==0x7f800000) coordinator_fault_park();
+#if PIONEER_COORDINATOR_WIDE_OUTPUT
+			if (operation==6) {
+				uint32_t low=job[7]+firstRow*4,high=job[8]+(low<job[7]);
+				HostTransfer(true,low,high,rows); HostTransfer(false,low,high,rows);
+				uint32_t mismatch=0; for (unsigned i=0;i<rows;i++) mismatch|=Words(0x84000)[i]^Words(0x144000)[i];
+				if (mismatch) coordinator_fault_park();
+			}
+#endif
 		}
 		firstRow+=rows;
 	}

@@ -25,12 +25,14 @@ class PioneerResidentDevice {
 	unsigned coordinatedVersion=0;
 	bool coordinated=false;
 	bool coordinatedDebug=false;
+	bool coordinatedWide=false;
 	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
 	uint64_t activationReuses=0;
+	uint64_t wideCalls=0;
 	unsigned lastActivationPages=0;
 	// Diagnostic cohort tuning only; no new driver authority or active
 	// job mutation. The kernel independently partitions every request.
@@ -38,16 +40,16 @@ public:
 		if (!coordinated || !active || failed || finished || cold || !workers || workers>119) return false;
 		fleet=workers; return true;
 	}
-	bool CoordinatedProfile(tt_runtime_profile_result& result) {
+	bool CoordinatedProfile(tt_runtime_profile_result& result,bool wide=false) {
 		if (!coordinated || !active || failed || finished || cold) return false;
 		return !ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&result,sizeof(result))
 			&& result.version==1 && result.available && result.clock_stable
-			&& result.format==15 && result.mask==0x13f && result.state==TT_RUNTIME_PASSED
+			&& result.format==(wide?18U:15U) && result.mask==0x13f && result.state==TT_RUNTIME_PASSED
 			&& result.started && result.completed && result.stopped && !result.recovery_required;
 	}
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); }
 	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false,bool coordinatorMode=false,bool debugOutput=false,unsigned requireLayer=0) {
-		if (requireLayer>2 || (requireLayer && (!coordinatorMode || debugOutput))) return false;
+		if (requireLayer>3 || (requireLayer && (!coordinatorMode || debugOutput))) return false;
 		if (debugOutput && !coordinatorMode) return false;
 		if (coordinatorMode && (!deviceKV || !blockPayload || !workerLimit || workerLimit>119 || bytes!=UINT64_C(0x80000000))) return false;
 		if (blockPayload && !deviceKV) return false;
@@ -73,13 +75,15 @@ public:
 		payloadBlocks=blockPayload;
 		coordinated=coordinatorMode;
 		coordinatedDebug=debugOutput;
+		coordinatedWide=requireLayer==3;
 		if (coordinated && !(s.capabilities&TT_PIONEER_CAP_COORDINATED_FLEET)) {
 			fprintf(stderr,"Explicit on-card coordinator capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>9
-				|| (requireLayer && support.version<8) || (requireLayer==2 && support.version!=9) || support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>10
+				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer==3 && support.version!=10)
+				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
 			coordinatedVersion=support.version;
@@ -113,7 +117,7 @@ public:
 		if (dual && !coordinated) fprintf(stderr,"Two fixed bulk workers: disjoint rows, both complete/stop proofs required; NOT a CPU speedup qualification\n");
 		if (reuse && !coordinated) fprintf(stderr,"Explicit per-core exact-byte activation reuse; output poison/full completion proofs retained\n");
 		if (coordinated) fprintf(stderr,"Explicit on-card dispatcher + up to%u persistent math peers; one shared activation upload, on-card completion/source/counter proof/gather; no CPU reference validation implied\n",fleet);
-		if (coordinated) fprintf(stderr,"Coordinated result policy: %s; no CPU learned sums\n",coordinatedDebug?"debug separate-launch exact ordered readback":"fast fused owned-host output for <=4096 rows; larger outputs retain PIO");
+		if (coordinated) fprintf(stderr,"Coordinated result policy: %s; no CPU learned sums\n",coordinatedDebug?"debug separate-launch exact ordered readback":coordinatedWide?"fused narrow output plus explicit private1MiB wide DMA/all-word verification":"fast fused owned-host output for <=4096 rows; larger outputs retain PIO");
 		else if (fleet) fprintf(stderr,"Throughput candidate: up to%u row workers, one shared activation upload/whole projection, on-card input distribution/output poison; no CPU reference validation implied\n",fleet);
 		requestBytes=dual?sizeof(tt_pioneer_runtime_dual_matvec):sizeof(tt_pioneer_runtime_q8_matvec);
 		request=(tt_pioneer_runtime_matvec*)calloc(1,requestBytes);
@@ -183,9 +187,9 @@ public:
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
-	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=9 && active && !failed && !cold && !finished; }
+	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=10 && active && !failed && !cold && !finished; }
 	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {
-		if (!HasLayerFfn() || coordinatedVersion!=9 || !n || n>3072 || (n&31) || !gate || !up || !output) return false;
+		if (!HasLayerFfn() || coordinatedVersion<9 || !n || n>3072 || (n&31) || !gate || !up || !output) return false;
 		tt_pioneer_layer_glu p={}; p.version=1; p.outputs=n; memcpy(p.gate,gate,n*4); memcpy(p.up,up,n*4);
 		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_LAYER_GLU,&p,sizeof(p)); cold=p.result.master.recovery_required!=0;
 		bool proved=!status && PioneerLayerGluProof(p.result,n,coordinatorNonce+1);
@@ -217,7 +221,30 @@ public:
 		if (p.result.workers>peakWorkers) peakWorkers=p.result.workers;
 		return true;
 	}
+	bool Q8WideMatvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
+		PioneerFleetPlan plan;
+		if (!HasLayerFfn() || coordinatedVersion!=10 || !q8 || !vector || !scales || !result || !PioneerFleetPartition(inputs,outputs,fleet,plan)) return false;
+		if (!coordinatedRequest) coordinatedRequest=(tt_pioneer_coordinated_fleet*)malloc(sizeof(tt_pioneer_coordinated_fleet));
+		if (!coordinatedRequest) { failed=true; return false; }
+		size_t size=PioneerCoordinatedRequestBytes(outputs); auto& p=*coordinatedRequest;
+		memset(&p,0,size); p.version=1; p.inputs=inputs; p.outputs=outputs; p.workers=fleet; p.weight_offset=offset;
+		memcpy(p.input,vector,inputs*2); memcpy(p.scale,scales,inputs/32*4);
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_LAYER_WIDE,&p,size); cold=p.result.master.recovery_required!=0;
+		bool proved=!status && PioneerLayerWideProof(p.result,inputs,outputs,fleet,coordinatorNonce+1);
+		for (unsigned i=0;i<outputs;i++) proved &= (p.output[i]&0x7f800000)!=0x7f800000;
+		if (!proved) {
+			const auto& m=p.result.master;
+			fprintf(stderr,"Wide owned output STOP status%d state%u nonce%u start/complete/stop%u/%u/%u PC%x marker%x cold%u; no fallback/retry\n",status,m.state,m.nonce,m.started,m.completed,m.stopped,m.pc[1],m.marker,cold);
+			fprintf(stderr," wide R/flits/W/flits%u/%u/%u/%u peers/N/nonce/op%u/%u/%u/%u\n",p.result.summary[0],p.result.summary[1],p.result.summary[2],p.result.summary[3],p.result.summary[4],p.result.summary[5],p.result.summary[6],p.result.summary[7]);
+			failed=true; closeOnly=true; return false;
+		}
+		coordinatorNonce=p.result.master.nonce; memcpy(result,p.output,outputs*4); calls++; wideCalls++;
+		lastActivationPages=p.result.staged_pages; if (!lastActivationPages) activationReuses++;
+		if (plan.workers>peakWorkers) peakWorkers=plan.workers;
+		return true;
+	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
+		if (coordinatedWide && outputs>4096) return Q8WideMatvec(offset,inputs,outputs,vector,scales,result);
 		if (coordinated) {
 			PioneerFleetPlan plan;
 			if (!active || failed || finished || cold || !q8 || !vector || !scales || !result

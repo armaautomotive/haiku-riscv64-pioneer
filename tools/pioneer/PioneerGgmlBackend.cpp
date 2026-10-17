@@ -76,6 +76,7 @@ struct PioneerGgmlContext {
 	const bool payloadBlocks;
 	const bool coordinated;
 	bool layerFfn=false;
+	bool wideOutput=false;
 	uint64_t ffnOps=0,gluOps=0;
 	PioneerAttentionPrefixCache prefix;
 	uint64_t attentionOps=0,attentionTiles=0;
@@ -102,6 +103,7 @@ static bool sResidentKV=false;
 static bool sPayloadBlocks=false;
 static bool sCoordinated=false;
 static bool sLayerFfn=false;
+static bool sWideOutput=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -357,7 +359,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks,ctx->coordinated,false,ctx->layerFfn?2:0);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks,ctx->coordinated,false,ctx->wideOutput?3:ctx->layerFfn?2:0);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		FfnGraph f={};
@@ -448,8 +450,10 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 	if (sPayloadBlocks && !sResidentKV) return NULL;
 	if (sCoordinated && (!sResidentKV || !sPayloadBlocks || !sFleet || sFleet>119)) return NULL;
 	if (sLayerFfn && (!sCoordinated || sTrace || sDiagnose)) return NULL;
+	if (sWideOutput && (!sLayerFfn || !sCoordinated)) return NULL;
 	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet,sResidentKV,sPayloadBlocks,sCoordinated); if (!ctx) return NULL;
 	ctx->layerFfn=sLayerFfn;
+	ctx->wideOutput=sWideOutput;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -486,6 +490,7 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats.peakWorkers=sActive->device.peakWorkers;
 	stats.activationReuses=sActive->device.activationReuses;
 	stats.ffnOps=sActive->ffnOps; stats.gluOps=sActive->gluOps;
+	stats.wideCalls=sActive->device.wideCalls;
 	stats.attentionOps=sActive->attentionOps; stats.attentionTiles=sActive->attentionTiles;
 	stats.attentionSeconds=sActive->attentionSeconds;
 	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;
@@ -493,6 +498,7 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 }
 bool PioneerGgmlFinish() { return !sActive || sActive->device.Finish(); }
 void PioneerGgmlLayerFfn(bool enabled) { if (!sActive) sLayerFfn=enabled; }
+void PioneerGgmlWideOutput(bool enabled) { if (!sActive) sWideOutput=enabled; }
 void PioneerGgmlDiagnose(bool enabled,const char* vectorPath) { if (!sActive) { sDiagnose=enabled; sDiagnosticVector=vectorPath; sReference.clear(); } }
 void PioneerGgmlCpuActivationQuantization(bool enabled) { if (!sActive) sCpuActivationQuantization=enabled; }
 void PioneerGgmlFp16Operands(bool enabled) { if (!sActive) sFp16=enabled; }

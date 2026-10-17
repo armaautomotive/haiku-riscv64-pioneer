@@ -2,6 +2,48 @@
 
 ## Status
 
+### October17: full Qwen wide-output contract v10 (06:43 UTC)
+
+Fast Qwen remains NOT achieved; no Assistant promotion. Full verification
+passed all22 positions with exact full-vocabulary logits and four identical
+greedy tokens. Coverage remains197 learned projections,28 fused FFNs,
+zero standalone GLUs and28/224 attention operations/tiles per position,
+now with exactly ONE wide-output operation per position. No CPU fallback.
+END2/PCI-host1-1/cold0/cleanup1. Log:`qwen-wide-v10-verify.log`,binary SHA
+`c56bb39d7218dc4960e980bc4586c881936cb0feda9017855285bf17999815d5`.
+Diagnostic warm generation3/5.775715s=0.519416tok/s,not a repeated warm CPU
+comparison or speedup claim. Total398.153s,weight preparation326.170284s,
+matrix34.319189s,attention11.563695s.141 matrix/FFN plus28 attention host
+calls and host norms/RoPE/KV still prevent zero-round-trip decoding.
+
+Private`54dd` uses a separately owned,1MiB-aligned pinned/noncacheable
+1MiB host buffer. All256 physical pages are checked independently and
+separated from the older input and16KiB owners. A single fixed layer-image
+job gathers each worker's complete result,performs an owned host write,
+ordered host read and EVERY-bit comparison before reusing its scratch.
+Full151936-row vocabulary values return without truncation or argmax-only
+substitution. Exact source,physical counters,fresh sequence and PC proofs
+precede any reset. Unknown completion retains/quarantines ALL three owners.
+Independent summary/proof predicates cover this protocol;legacy/debug
+predicates are not weakened. Exact activation reuse remains valid because
+the wide-output job does not overwrite the packed input.
+
+Native changed-input primitives passed6144 rows in11.85–11.90ms and all
+151936 rows in72.32–72.41ms,including shrink/expand reuse and clean END.
+These are primitive measurements,NOT model-generation rates. Driver SHA
+`e2cb3ad240cb401480592b7555124f6b186766d54b7ee2edafb56838e8e7aec4`,
+layer image`246a4df34e1983c70719dda0864e4ee4386485bdc627435dd595bfccb1972b7e`.
+Actual-instruction tests,all-page owner/controller fault injection,real
+client and pinned GGML ASan/UBSan tests pass. No firmware,SD,default boot,
+CPU/RAM,model/preferences or unrelated llama.cpp edits were changed.
+
+An additional1MiB upload-span prototype is OFFLINE ONLY,behind a default-off
+image build flag,with no driver/client ABI. Actual-instruction tests cover
+all-word GDDR comparison,complement/original host echoes,packet/store faults
+and malformed bounds. Its independent ASan/UBSan controller tests also pass
+frozen-input echo,all proof words and unknown-completion quarantine. This
+checkpoint does NOT claim native upload acceleration or initialized pages.
+
 ### October17: full Qwen FFN graph verification contract v9 (06:15 UTC)
 
 Fast Qwen is STILL NOT achieved; no Assistant promotion. The full verifier

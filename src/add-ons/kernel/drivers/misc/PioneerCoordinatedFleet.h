@@ -84,6 +84,17 @@ static inline bool PioneerCoordinatedLayerProof(const tt_coordinated_fleet_resul
 		&& m.pc[0]==TT_LAYER_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
 		&& PioneerLayerSummary(r.summary,4,limit,1024,nonce,m.before,m.after);
 }
+static inline bool PioneerLayerWideProof(const tt_coordinated_fleet_result& r,unsigned k,unsigned n,unsigned limit,unsigned nonce)
+{
+	const auto& m=r.master; PioneerFleetPlan p;
+	return limit && limit<=119 && PioneerFleetPartition(k,n,limit,p) && r.inputs==k && r.outputs==n && r.workers==p.workers
+		&& (!r.staged_pages || r.staged_pages==(k*2+k/8+4095)/4096) && !r.nonfinite && r.dma_words==n && r.gathered==n
+		&& m.version==1 && m.state==TT_RUNTIME_PASSED && m.workers==p.workers && m.matched==p.workers && m.nonce==nonce
+		&& m.prepared==1 && m.started==1 && m.completed==1 && m.stopped==1 && !m.recovery_required && m.polls
+		&& m.phase==TT_LAYER_DONE && m.count==p.workers && m.marker==TT_COORDINATOR_MARKER
+		&& m.pc[0]==TT_LAYER_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
+		&& PioneerWideOutputSummary(r.summary,n,p.workers,nonce,m.before,m.after,true);
+}
 template<class IO>
 auto PioneerCoordinatedGatherRead(IO& io,unsigned words,uint32_t* output,int)
 	-> decltype(io.CoordinatorPayloadRead(words,output)) { return io.CoordinatorPayloadRead(words,output); }
@@ -101,42 +112,46 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 	const uint32_t* scales,uint32_t* output,tt_coordinated_fleet_result& r,const PioneerLayerJob* layer=NULL)
 {
 	r={}; auto& m=r.master; m.version=1; r.inputs=k; r.outputs=n;
-	PioneerFleetPlan p; uint64_t bytes=layer?PioneerQ8CompactWeightBytes(1024,3072):PioneerQ8CompactWeightBytes(k,n);
+	bool wide=layer && layer->operation==6,ffn=layer && layer->operation==4;
+	PioneerFleetPlan p; uint64_t bytes=ffn?PioneerQ8CompactWeightBytes(1024,3072):PioneerQ8CompactWeightBytes(k,n);
 	if (!fleet || !input || !scales || !output || !limit || limit>119 || !PioneerFleetPartition(k,n,limit,p)
 		|| capacity!=UINT64_C(0x80000000) || !PioneerResidentOffset(capacity,offset) || !bytes
 		|| offset>=capacity-TT_RESIDENT_KV_BYTES || bytes>capacity-TT_RESIDENT_KV_BYTES-offset
 		|| !lease.ready || !lease.fast || (lease.readback==lease.fused) || (lease.fused && !lease.compact)
 		|| lease.unsafe || lease.running || lease.nonce>=0x7ffffffe || !bulk.ready || bulk.unsafe) return false;
 	if (layer) {
-		if (k!=1024 || n!=1024 || !layer->code || !layer->code->ready || !layer->code->saved || layer->code->unsafe
+		if ((!ffn && !wide) || (ffn && (k!=1024 || n!=1024)) || !layer->code || !layer->code->ready || !layer->code->saved || layer->code->unsafe
 			|| layer->code->running || !lease.fused || !lease.compact || lease.readback || !PioneerLayerMapping(io,0)) return false;
-		for (unsigned i=0;i<2;i++) {
+		if (wide && (!layer->wide || !layer->wide->ready || !layer->wide->allocated || !layer->wide->memory_type_set
+			|| layer->wide->pending || layer->wide->released || layer->wide->quarantined || layer->upOffset || layer->downOffset)) return false;
+		for (unsigned i=0;ffn && i<2;i++) {
 			uint64_t at=i?layer->downOffset:layer->upOffset;
 			if (!PioneerResidentOffset(capacity,at) || at>=capacity-TT_RESIDENT_KV_BYTES
 				|| bytes>capacity-TT_RESIDENT_KV_BYTES-at) return false;
 		}
-		p.workers=limit<96?limit:96;
+		if (ffn) p.workers=limit<96?limit:96;
 		// The graph replaces the packed vector with down-projection input.
 		// Never reuse or seal a single-matrix input shadow across this job.
-		lease.inputValid=false; lease.inputK=0;
+		if (ffn) { lease.inputValid=false; lease.inputK=0; }
 	}
 	for (unsigned i=0;i<k/2;i++) if (!PioneerInt8OperandValid(uint16_t(input[i])) || !PioneerInt8OperandValid(uint16_t(input[i]>>16))) return false;
 	for (unsigned i=0;i<k/32;i++) if ((scales[i]&0x7f800000)==0x7f800000) return false;
 	for (unsigned w=1;w<=p.workers;w++) {
 		auto& f=fleet[w];
 		if (!f.coordinated || !f.persistentPrepared || !f.persistentActive || !f.persistentIdle || f.Compute().running
-			|| f.Compute().unsafe || f.Store().pending || f.Store().recovery_required || f.persistentSequence>=(layer?0x7ffffffbU:0x7ffffffeU)) return false;
+			|| f.Compute().unsafe || f.Store().pending || f.Store().recovery_required || f.persistentSequence>=(ffn?0x7ffffffbU:0x7ffffffeU)) return false;
 	}
 	r.workers=p.workers; m.workers=p.workers; m.state=TT_RUNTIME_CONFIG_FAILED;
 	auto& master=fleet[0]; auto& store=master.Store();
-	uint32_t previous=0; bool uncertain=false,bmeTouched=false,fused=lease.fused && n<=4096;
+	uint32_t previous=0; bool uncertain=false,bmeTouched=false,fused=wide || (lease.fused && n<=4096);
 	bool inputHit=false;
 	do {
 		if (!PioneerCoordinatedMasterBoundary(io,baseline,fleet,attentionReady) || !PioneerCoordinatorLocalHeld(io,baseline,master.noc,store)
-			|| !BlackholeHostReadMapStable(io,host) || (layer && !PioneerLayerMapping(io,0))) { uncertain=true; break; }
+			|| !BlackholeHostReadMapStable(io,host) || (layer && !PioneerLayerMapping(io,0))
+			|| (wide && !PioneerWideMapping(io,*layer->wide,host,transfer,0))) { uncertain=true; break; }
 		previous=io.RuntimeCodeRead(0);
 		uint32_t* stage=io.RuntimeStageWords(); if (!stage) break;
-		inputHit=!layer && PioneerCoordinatedInputMatches(lease,k,input,scales);
+		inputHit=!ffn && PioneerCoordinatedInputMatches(lease,k,input,scales);
 		bool exact=false;
 		if (inputHit) {
 			const auto& owned=master.Compute();
@@ -157,10 +172,10 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		}
 		if (!exact) break;
 		for (unsigned i=0;i<1024;i++) stage[i]=0;
-		stage[0]=0x31445243; stage[1]=layer?4:fused?3:1; stage[2]=limit; stage[3]=k; stage[4]=n;
+		stage[0]=0x31445243; stage[1]=wide?6:ffn?4:fused?3:1; stage[2]=limit; stage[3]=k; stage[4]=n;
 		stage[5]=PioneerResidentAddress(capacity,offset); stage[6]=++lease.nonce; m.nonce=lease.nonce;
-		if (fused) { stage[7]=uint32_t(transfer.physical); stage[8]=uint32_t(transfer.physical>>32); stage[9]=16384; }
-		if (layer) { stage[10]=PioneerResidentAddress(capacity,layer->upOffset); stage[11]=PioneerResidentAddress(capacity,layer->downOffset); }
+		if (fused) { uint64_t physical=wide?layer->wide->physical:transfer.physical; stage[7]=uint32_t(physical); stage[8]=uint32_t(physical>>32); stage[9]=wide?TT_WIDE_OUTPUT_BYTES:16384; }
+		if (ffn) { stage[10]=PioneerResidentAddress(capacity,layer->upOffset); stage[11]=PioneerResidentAddress(capacity,layer->downOffset); }
 		for (unsigned w=1;w<=p.workers;w++) stage[64+w-1]=fleet[w].persistentSequence+1;
 		bulk.dirty=true;
 		// Every word the fixed image reads is verified, including all
@@ -181,12 +196,14 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 			// Fully qualified exclusive owner; exact finite poison proves
 			// every requested host word is replaced, not an old result.
 			if (!PioneerBulkUploadGuard(io,baseline,master.noc,host,store,transfer,0x402)) { uncertain=true; break; }
-			io.BulkHostFence(); for (unsigned i=0;i<n;i++) io.BulkHostStore(i,0xffffffff); io.BulkHostFence();
-			for (unsigned i=0;i<n;i++) exact &= io.BulkHostLoad(i)==0xffffffff;
+			if (wide && !PioneerWideMapping(io,*layer->wide,host,transfer,0)) { uncertain=true; break; }
+			io.BulkHostFence(); for (unsigned i=0;i<n;i++) { if (wide) exact &= PioneerWideStore(io,i,0xffffffff,0); else io.BulkHostStore(i,0xffffffff); } io.BulkHostFence();
+			for (unsigned i=0;i<n;i++) exact &= (wide?PioneerWideLoad(io,i,0):io.BulkHostLoad(i))==0xffffffff;
 			io.BulkHostFence(); if (!exact) break;
 			bmeTouched=true; io.HostPciWrite(1,4,2,0x406); if (io.HostPciRead(1,4,2)!=0x406) { uncertain=true; break; }
 			io.HostPciWrite(0,4,2,0x406);
 			if (!PioneerBulkUploadGuard(io,baseline,master.noc,host,store,transfer,0x406)) { uncertain=true; break; }
+			if (wide && !PioneerWideMapping(io,*layer->wide,host,transfer,0)) { uncertain=true; break; }
 		}
 		io.RuntimeResetWrite(0x87ffff); io.Pause();
 		if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff || !PioneerCoordinatorSources(io,baseline,master.noc,store,executionPci)
@@ -194,10 +211,10 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		PioneerResidentAttentionCounters(io,m.before);
 		// No participating peer is considered idle again until the whole
 		// immutable on-card proof AND known master stop have succeeded.
-		for (unsigned w=1;w<=p.workers;w++) { fleet[w].persistentSequence+=layer?(w<=(limit<32?limit:32)?3:2):1; fleet[w].persistentIdle=false; fleet[w].Compute().running=true; }
+		for (unsigned w=1;w<=p.workers;w++) { fleet[w].persistentSequence+=ffn?(w<=(limit<32?limit:32)?3:2):1; fleet[w].persistentIdle=false; fleet[w].Compute().running=true; }
 		if (layer) layer->code->running=true;
 		lease.running=true; m.started=1; m.state=TT_RUNTIME_COMPLETION_FAILED;
-		if (fused) transfer.pending=true;
+		if (fused) { if (wide) layer->wide->pending=true; else transfer.pending=true; }
 		io.RuntimeProfileMark(TT_PROFILE_LAUNCHED);
 		io.RuntimeResetWrite(0x46800);
 		for (unsigned attempt=0;attempt<50000;attempt++) {
@@ -217,7 +234,7 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		for (unsigned i=0;i<24;i++) r.summary[i]=io.BulkL1Read(3072+i);
 		// Counter/nonce/shape summary must be proved BEFORE even the
 		// coordinator reset; an unaccounted NoC completion is unknown.
-		if (!(layer?PioneerLayerSummary(r.summary,4,limit,n,lease.nonce,m.before,m.after)
+		if (!(wide?PioneerWideOutputSummary(r.summary,n,p.workers,lease.nonce,m.before,m.after,true):ffn?PioneerLayerSummary(r.summary,4,limit,n,lease.nonce,m.before,m.after)
 			:PioneerCoordinatedSummary(r.summary,n,p.workers,lease.nonce,m.before,m.after,fused))) { uncertain=true; break; }
 		m.summary_verified=1;
 		if (fused) {
@@ -226,6 +243,8 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 				|| !BlackholeHostReadMapStable(io,host) || !PioneerCoordinatorSources(io,baseline,master.noc,store)
 				|| !BlackholeResidentIdle(io) || (layer && !PioneerLayerMapping(io,0))) { uncertain=true; break; }
 			bmeTouched=false; transfer.pending=false;
+			if (wide && !PioneerWideMapping(io,*layer->wide,host,transfer,0)) { uncertain=true; break; }
+			if (wide) layer->wide->pending=false;
 		}
 		io.RuntimeResetWrite(0x87ffff); io.Pause();
 		if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) { uncertain=true; break; }
@@ -240,9 +259,10 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 			// Exact original/ordered-readback equality was established by
 			// the SAME immutable GPU job; no CPU reference or second launch.
 			io.BulkHostFence();
-			for (unsigned i=0;i<n;i++) { output[i]=io.BulkHostLoad(i); r.nonfinite+=(output[i]&0x7f800000)==0x7f800000; }
+			for (unsigned i=0;i<n;i++) { output[i]=wide?PioneerWideLoad(io,i,0):io.BulkHostLoad(i); r.nonfinite+=(output[i]&0x7f800000)==0x7f800000; }
 			io.BulkHostFence();
 			if (r.nonfinite || !PioneerBulkUploadGuard(io,baseline,master.noc,host,store,transfer,0x402)) { uncertain=true; break; }
+			if (wide && !PioneerWideMapping(io,*layer->wide,host,transfer,0)) { uncertain=true; break; }
 			r.dma_words=r.gathered=n;
 		} else if (n<=8192 && lease.readback) {
 			for (unsigned at=0;at<n;at+=4096) {
@@ -281,19 +301,20 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		}
 	} else uncertain=true;
 	if (uncertain) {
+		if (wide) PioneerQuarantineWideOutput(io,*layer->wide);
 		if (layer) layer->code->unsafe=true;
 		m.recovery_required=1; lease.unsafe=true; store.recovery_required=true; bulk.unsafe=true;
 		PioneerPersistentQuarantine(io,fleet);
 		PioneerQuarantineOutputBuffer(io,transfer);
 	}
-	bool proved=!uncertain && (layer?PioneerCoordinatedLayerProof(r,limit,lease.nonce):PioneerCoordinatedProof(r,k,n,limit,lease.nonce,lease.readback));
-	if (proved && !layer && lease.compact && !inputHit) {
+	bool proved=!uncertain && (wide?PioneerLayerWideProof(r,k,n,limit,lease.nonce):ffn?PioneerCoordinatedLayerProof(r,limit,lease.nonce):PioneerCoordinatedProof(r,k,n,limit,lease.nonce,lease.readback));
+	if (proved && !ffn && lease.compact && !inputHit) {
 		// Nothing between jobs may mutate this owned packed input. Neither
 		// the shadow alone nor a partial/failed DMA can seal a cache entry.
 		for (unsigned i=0;i<k/2;i++) lease.inputShadow[i]=input[i];
 		for (unsigned i=0;i<k/32;i++) lease.scaleShadow[i]=scales[i];
 		lease.inputK=k; lease.inputValid=true;
-	} else if (!proved || layer) { lease.inputValid=false; lease.inputK=0; }
+	} else if (!proved || ffn) { lease.inputValid=false; lease.inputK=0; }
 	return proved;
 }
 #endif

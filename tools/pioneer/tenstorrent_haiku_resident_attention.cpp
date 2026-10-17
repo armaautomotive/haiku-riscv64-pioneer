@@ -9,13 +9,16 @@ static double Seconds() { struct timespec t; clock_gettime(CLOCK_MONOTONIC,&t); 
 int main(int argc,char** argv)
 {
 	bool blocks=argc==2 && !strcmp(argv[1],"--run-blocks-and-restore");
+	bool wideDma=argc==2 && (!strcmp(argv[1],"--coordinated-wide-dma-and-restore") || !strcmp(argv[1],"--coordinated-vocabulary-dma-and-restore"));
 	bool debug=argc==2 && !strcmp(argv[1],"--coordinated-debug-wide-and-restore");
 	bool shapes=argc==2 && (!strcmp(argv[1],"--coordinated-shapes-and-restore") || !strcmp(argv[1],"--coordinated-debug-shapes-and-restore"));
 	debug |= shapes && !strcmp(argv[1],"--coordinated-debug-shapes-and-restore");
 	bool wide=argc==2 && !strcmp(argv[1],"--coordinated-wide-and-restore");
+	wide |= wideDma;
 	wide |= debug || shapes;
 	bool sweep=argc==2 && !strcmp(argv[1],"--coordinated-sweep-and-restore"); wide |= sweep;
 	bool vocabulary=argc==2 && !strcmp(argv[1],"--coordinated-vocabulary-and-restore");
+	vocabulary |= wideDma && !strcmp(argv[1],"--coordinated-vocabulary-dma-and-restore");
 	bool reuseAttention=argc==2 && !strcmp(argv[1],"--coordinated-reuse-attention-and-restore");
 	bool coordinatedAttention=reuseAttention || (argc==2 && !strcmp(argv[1],"--coordinated-attention-and-restore"));
 	bool support=argc==2 && !strcmp(argv[1],"--check-coordinated-support");
@@ -23,13 +26,13 @@ int main(int argc,char** argv)
 		int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) return 1;
 		tt_coordinated_support s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&s,sizeof(s)); close(fd);
 		printf("Coordinated support status%d v%u workers%u KV-v%u immutable%u gather%u\n",status,s.version,s.max_workers,s.attention_version,s.immutable_weights,s.gather_max);
-		return status || s.version!=7 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
+		return status || s.version<7 || s.version>10 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
 	}
 	bool coordinated=wide || vocabulary || coordinatedAttention || (argc==2 && !strcmp(argv[1],"--coordinated-matrices-and-restore"));
 	if (!blocks && !coordinated && (argc!=2 || strcmp(argv[1],"--run-and-restore"))) { fprintf(stderr,"Usage: %s --run-and-restore|--run-blocks-and-restore|--coordinated-matrices-and-restore|--coordinated-wide-and-restore|--coordinated-vocabulary-and-restore|--coordinated-attention-and-restore|--check-coordinated-support\n",argv[0]); return 2; }
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	PioneerResidentDevice device;
-	if (!device.Open(UINT64_C(0x80000000),false,true,true,true,true,true,true,true,1,coordinated?119:120,true,blocks||coordinated,coordinated,debug)) return 1;
+	if (!device.Open(UINT64_C(0x80000000),false,true,true,true,true,true,true,true,1,coordinated?119:120,true,blocks||coordinated,coordinated,debug,wideDma?3:0)) return 1;
 	unsigned rows=vocabulary?151936:wide?6144:64;
 	uint32_t x[512],scale[32]; std::vector<uint32_t> y(rows,0);
 	uint64_t weightBytes=PioneerQ8CompactWeightBytes(1024,rows);
@@ -49,7 +52,7 @@ int main(int argc,char** argv)
 		unsigned pages=unsigned((weightBytes-at)/4096); if (pages>4) pages=4;
 		okay=device.UploadPages(at,packed.data()+at/4,pages);
 	}
-	okay=okay && device.Q8Matvec(0,1024,rows,x,scale,y.data());
+	okay=okay && (wideDma?device.Q8WideMatvec(0,1024,rows,x,scale,y.data()):device.Q8Matvec(0,1024,rows,x,scale,y.data()));
 	if (shapes) {
 		for (unsigned current:{32U,64U,1024U,2048U,3072U,4096U,6144U}) for (unsigned trial=0;trial<4 && okay;trial++) {
 			for (unsigned k=0;k<1024;k++) {
@@ -99,12 +102,18 @@ int main(int argc,char** argv)
 				if (!(k&1)) x[k/2]=v; else x[k/2]|=v<<16;
 			}
 			unsigned currentRows=trial==1?32:rows;
-			double start=Seconds(); okay=device.Q8Matvec(0,1024,currentRows,x,scale,y.data()); double elapsed=Seconds()-start;
+			double start=Seconds(); okay=wideDma?device.Q8WideMatvec(0,1024,currentRows,x,scale,y.data()):device.Q8Matvec(0,1024,currentRows,x,scale,y.data()); double elapsed=Seconds()-start;
 			for (unsigned row=0;row<currentRows && okay;row++) {
 				int sum=0; for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+trial*7)%31)-15);
 				okay=y[row]==PioneerAttentionBits(float(sum));
 			}
 			printf("NATIVE on-card coordinator trial%u full%u rows peak%u math workers %s wall%.6fs; CPU reference OUTSIDE clock\n",trial,currentRows,device.peakWorkers,okay?"PASS":"FAIL",elapsed);
+			if (wideDma && okay) {
+				tt_runtime_profile_result p={}; bool profiled=device.CoordinatedProfile(p,true); okay &= profiled;
+				printf(" NATIVE wide owner profile%u mask%x",profiled,p.mask);
+				if (profiled) for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) if (p.mask&(1U<<slot)) printf(" t%u=%llu",slot,(unsigned long long)p.microseconds[slot]);
+				printf("\n");
+			}
 		}
 		bool clean=device.Finish();
 		printf("%s coordinated matrix primitive; cleanup%u; NOT model/attention qualification or tokens/s\n",okay && clean?"PASS":"FAIL",clean);

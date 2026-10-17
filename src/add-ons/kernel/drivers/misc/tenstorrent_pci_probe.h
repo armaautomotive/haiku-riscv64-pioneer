@@ -185,6 +185,7 @@
 #define TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT (B_DEVICE_OP_CODES_END + 0x54da)
 #define TT_PCI_PROBE_PIONEER_LAYER_FFN (B_DEVICE_OP_CODES_END + 0x54db)
 #define TT_PCI_PROBE_PIONEER_LAYER_GLU (B_DEVICE_OP_CODES_END + 0x54dc)
+#define TT_PCI_PROBE_PIONEER_LAYER_WIDE (B_DEVICE_OP_CODES_END + 0x54dd)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U

@@ -4,12 +4,17 @@
 #include "PioneerCoordinatorProbe.h"
 #include "PioneerLayerProof.h"
 #include "BlackholeLayerCoordinatorImage.h"
+#include "PioneerWideOutput.h"
 struct PioneerLayerLease {
 	bool saved=false,dirty=false,ready=false,running=false,unsafe=false;
 };
 struct PioneerLayerJob {
 	PioneerLayerLease* code;
 	uint64_t upOffset,downOffset;
+	unsigned operation;
+	PioneerWideOutputLease* wide;
+	PioneerLayerJob(PioneerLayerLease* lease,uint64_t up,uint64_t down,unsigned op=4,PioneerWideOutputLease* out=NULL)
+		:code(lease),upOffset(up),downOffset(down),operation(op),wide(out) {}
 };
 template<class IO> auto PioneerLayerMapping(IO& io,int)->decltype(io.LayerMappingStable()) { return io.LayerMappingStable(); }
 template<class IO> bool PioneerLayerMapping(IO&,long) { return false; }

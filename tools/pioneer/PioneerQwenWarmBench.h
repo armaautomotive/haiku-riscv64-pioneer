@@ -10,7 +10,7 @@
 // Weight upload is already warm and must not recur in any measured request.
 // Timings sum synchronous decode+greedy-sampling CPU wall time; logit checks,
 // tokenization, KV reset, logging, model load and cold weight upload excluded.
-static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama_context* card,uint64_t expectedTensors,unsigned cardThreads=32,bool layerFfn=false)
+static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama_context* card,uint64_t expectedTensors,unsigned cardThreads=32,bool layerFfn=false,bool wideOutput=false)
 {
 	if (cardThreads!=1 && cardThreads!=32) return false;
 	const llama_vocab* vocab=llama_model_get_vocab(model); int vocabulary=llama_vocab_n_tokens(vocab);
@@ -80,6 +80,7 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 			|| after.bytes!=warm.bytes || after.matvecs<=warm.matvecs || !isfinite(cardPrompt) || !isfinite(cardGeneration) || cardPrompt<=0 || cardGeneration<=0) return false;
 		if (layerFfn) {
 			uint64_t positions=uint64_t(n)+golden.size()-1;
+			if (wideOutput && after.wideCalls-coverageBefore.wideCalls!=positions) { fprintf(stderr,"Warm wide-output coverage failed\n"); return false; }
 			if (after.ffnOps-coverageBefore.ffnOps!=28*positions || after.gluOps!=coverageBefore.gluOps
 				|| after.matvecs-coverageBefore.matvecs!=197*positions || after.attentionOps-coverageBefore.attentionOps!=28*positions
 				|| after.attentionTiles-coverageBefore.attentionTiles!=224*positions) {

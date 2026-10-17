@@ -200,6 +200,58 @@ struct PioneerOutputBufferIO {
 };
 struct PioneerOutputBufferProbeIO : PioneerHostPageIO,PioneerOutputBufferIO {};
 
+struct PioneerWideOutputIO {
+	area_id wideArea=-1;
+	volatile uint32* widePage=NULL;
+	uint64 widePhysical=0;
+	bool wideReleaseAttempted=false,wideQuarantined=false;
+	~PioneerWideOutputIO() { if (wideArea>=B_OK && !wideReleaseAttempted && !wideQuarantined) ReleaseWideOutput(); }
+	int32 AllocateWideOutput() {
+		if (wideArea>=B_OK || B_PAGE_SIZE!=4096) return B_BAD_VALUE;
+		virtual_address_restrictions virtualRestrictions={}; virtualRestrictions.address_specification=B_ANY_KERNEL_ADDRESS;
+		physical_address_restrictions physicalRestrictions={};
+		physicalRestrictions.low_address=UINT64_C(0x100000000); physicalRestrictions.high_address=UINT64_C(0x1000000000000);
+		physicalRestrictions.alignment=TT_WIDE_OUTPUT_BYTES;
+		void* address=NULL;
+		wideArea=create_area_etc(B_SYSTEM_TEAM,"P100A private1MiB wide result owner",TT_WIDE_OUTPUT_BYTES,B_CONTIGUOUS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA,0,0,&virtualRestrictions,&physicalRestrictions,&address);
+		if (wideArea<B_OK) return wideArea;
+		widePage=(volatile uint32*)address; return B_OK;
+	}
+	int32 WideOutputMap(uint64_t& address,uint64_t& bytes) {
+		if (wideArea<B_OK || !widePage) return B_BAD_VALUE;
+		physical_entry entry={}; status_t status=get_memory_map((const void*)widePage,TT_WIDE_OUTPUT_BYTES,&entry,1);
+		if (status!=B_OK) return status;
+		address=entry.address; bytes=entry.size;
+		if (PioneerWideOutputAddress(address,bytes)) widePhysical=address;
+		return B_OK;
+	}
+	int32 WideOutputPageMap(unsigned page,uint64_t& address,uint64_t& bytes) {
+		if (page>=TT_WIDE_OUTPUT_PAGES || wideArea<B_OK || !widePage) return B_BAD_VALUE;
+		physical_entry entry={}; status_t status=get_memory_map((const void*)(widePage+page*1024),4096,&entry,1);
+		if (status!=B_OK) return status;
+		address=entry.address; bytes=entry.size; return B_OK;
+	}
+	int32 SetWideOutputNonCached() {
+#if defined(__riscv)
+		if (wideArea<B_OK || !PioneerWideOutputAddress(widePhysical,TT_WIDE_OUTPUT_BYTES)) return B_BAD_VALUE;
+		return vm_set_area_memory_type(wideArea,widePhysical,B_WRITE_THROUGH_MEMORY);
+#else
+		return B_UNSUPPORTED;
+#endif
+	}
+	void WideHostFence() { PioneerIoFence(); }
+	uint32 WideHostLoad(unsigned w) { return wideArea>=B_OK && widePage && w<TT_WIDE_OUTPUT_WORDS?B_LENDIAN_TO_HOST_INT32(widePage[w]):UINT32_MAX; }
+	void WideHostStore(unsigned w,uint32 value) { if (wideArea>=B_OK && widePage && w<TT_WIDE_OUTPUT_WORDS) widePage[w]=B_HOST_TO_LENDIAN_INT32(value); }
+	int32 ReleaseWideOutput() {
+		if (wideArea<B_OK || wideReleaseAttempted || wideQuarantined) return B_BAD_VALUE;
+		wideReleaseAttempted=true; status_t status=delete_area(wideArea);
+		if (status==B_OK) { wideArea=-1; widePage=NULL; }
+		return status;
+	}
+	void QuarantineWideOutput() { wideQuarantined=true; } // retain wired system-team ownership
+};
+
 static bool
 FindCard(pci_module_info* pci, pci_info& card)
 {
@@ -1273,7 +1325,7 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 	}
 };
 
-struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO {
+struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
 	PioneerRuntimeProfile runtimeProfile;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1};
 	volatile uint32* runtimeEntry=NULL;
@@ -1333,6 +1385,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO {
 	void QuarantineHostPage() {
 		PioneerHostPageIO::QuarantineHostPage();
 		if (outputArea>=B_OK) QuarantineOutputBuffer();
+		if (wideArea>=B_OK) QuarantineWideOutput();
 	}
 	bool MapCoordinator() {
 		if (runtimeCore!=0) return false;
@@ -1774,6 +1827,7 @@ struct PioneerStoreContext {
 	PioneerLayerLease layer;
 	PioneerBulkUploadLease bulk;
 	PioneerOutputBufferLease bulkHost;
+	PioneerWideOutputLease wideHost;
 	PioneerRuntimeActivationCache activation[2];
 	PioneerResidentLease secondLease;
 	tt_compute_noc_result secondNoc={};
@@ -1799,7 +1853,7 @@ struct PioneerStoreContext {
 	bool Unsafe() {
 		if (fleet) for (unsigned w=0;w<TT_PIONEER_WORKERS;w++) if (fleet[w].Compute().unsafe || fleet[w].Compute().running
 			|| fleet[w].Store().pending || fleet[w].Store().recovery_required || fleet[w].noc.recovery_required) return true;
-		return layer.running || layer.unsafe || coordinator.running || coordinator.unsafe || bulk.unsafe || bulkHost.pending || bulkHost.quarantined || attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
+		return wideHost.pending || wideHost.quarantined || io.wideQuarantined || layer.running || layer.unsafe || coordinator.running || coordinator.unsafe || bulk.unsafe || bulkHost.pending || bulkHost.quarantined || attention.running || attention.unsafe || compute.running || compute.unsafe || secondCompute.running || secondCompute.unsafe
 			|| secondLease.pending || secondLease.recovery_required || secondNoc.recovery_required
 			|| lease.pending || lease.recovery_required || idle.recovery_required || baseline.audit.recovery_required || baseline.baseline.path.recovery_required
 			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
@@ -1967,6 +2021,10 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	BlackholePioneerMmioEnd(context->io,context->Pci(),context->transaction);
 	clean &= !context->Unsafe() && context->Pci().restored;
 	result.active=0; result.pci_restored=context->Pci().restored;
+	if (context->wideHost.allocated) {
+		if (!clean) PioneerQuarantineWideOutput(context->io,context->wideHost);
+		else clean=PioneerReleaseWideOutput(context->io,context->wideHost,true) && clean;
+	}
 	if (context->bulkHost.allocated) {
 		if (!clean) PioneerQuarantineOutputBuffer(context->io,context->bulkHost);
 		else clean=PioneerReleaseOutputBuffer(context->io,context->bulkHost,true) && clean;
@@ -1979,7 +2037,7 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 		}
 	}
 	result.host_released=(!context->host.allocated || context->host.released)
-		&& (!context->bulkHost.allocated || context->bulkHost.released);
+		&& (!context->bulkHost.allocated || context->bulkHost.released) && (!context->wideHost.allocated || context->wideHost.released);
 	if (!clean || !result.host_released) sColdRecoveryRequired=true;
 	result.cold=sColdRecoveryRequired;
 	result.state=clean && result.host_released?TT_RESIDENT_SESSION_CLOSED:TT_RESIDENT_SESSION_CLEANUP_FAILED;
@@ -2301,7 +2359,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={9,119,3,1,8192}; // v9 adds separately scheduled card GLU; fixed FFN and ordinary matrix paths unchanged
+	tt_coordinated_support support={10,119,3,1,8192}; // v10 adds separate owned1MiB wide-output ABI;ordinary matrix/debug paths unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2340,6 +2398,60 @@ PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug)
 			&& PioneerFleetPreludePrepare(c.io,f) && PioneerPersistentPrepare(c.io,f,false,true) && PioneerPersistentBoot(c.io,f);
 	}
 	return ready && c.io.SelectRuntimeCore(0);
+}
+
+static status_t
+LayerWideControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	const size_t prefix=offsetof(tt_pioneer_coordinated_fleet,output);
+	if (!data || length<prefix || length>sizeof(tt_pioneer_coordinated_fleet)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_coordinated_fleet*)malloc(length); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,prefix); PioneerFleetPlan plan;
+	if (status!=B_OK || request->version!=1 || !request->workers || request->workers>119
+		|| length!=PioneerCoordinatedRequestBytes(request->outputs)
+		|| !PioneerFleetPartition(request->inputs,request->outputs,request->workers,plan)) {
+		free(request); return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context; uint64 bytes=PioneerQ8CompactWeightBytes(request->inputs,request->outputs);
+	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if ((c->runtimeCoreMode!=-1 && c->runtimeCoreMode!=8) || c->bytes!=UINT64_C(0x80000000)
+		|| !c->bulk.ready || !c->bulkHost.ready || (c->coordinator.ready && (!c->coordinator.fused || !c->coordinator.compact))) status=B_NOT_ALLOWED;
+	else if (!PioneerResidentOffset(c->bytes,request->weight_offset) || !bytes || request->weight_offset>=c->bytes-TT_RESIDENT_KV_BYTES
+		|| bytes>c->bytes-TT_RESIDENT_KV_BYTES-request->weight_offset) status=B_BAD_VALUE;
+	else {
+		bool initialized=true;
+		for (uint64 page=request->weight_offset/4096;page<(request->weight_offset+bytes+4095)/4096;page++) initialized &= c->initialized[page]!=0;
+		if (!initialized) status=B_ENTRY_NOT_FOUND;
+		else {
+			request->result={}; request->result.master.version=1; request->result.master.state=TT_RUNTIME_CONFIG_FAILED;
+			memset(request->output,0,request->outputs*4); c->io.runtimeProfile.Begin(uint64(system_time()),18);
+			auto& dram=c->baseline.baseline.baseline.baseline.dram;
+			bool ready=PrepareCoordinatedFleet(*c,plan.workers,false)
+				&& PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready)
+				&& c->io.MapLayer() && PioneerLayerPrepare(c->io,dram,c->fleet[0].noc,c->lease,c->coordinator,c->layer);
+			if (ready && !c->wideHost.ready) ready=!c->wideHost.allocated && PioneerPrepareWideOutput(c->io,c->host,c->bulkHost,c->wideHost);
+			if (ready) {
+				c->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
+				PioneerLayerJob job(&c->layer,0,0,6,&c->wideHost);
+				PioneerCoordinatedMatvec(c->io,dram,c->host,c->bulkHost,c->fleet,c->bulk,c->coordinator,c->attention.ready,c->bytes,
+					request->weight_offset,request->inputs,request->outputs,request->workers,request->input,request->scale,request->output,request->result,&job);
+			}
+			if (c->Unsafe()) {
+				c->layer.unsafe=true; c->coordinator.unsafe=true; c->lease.recovery_required=true; c->io.QuarantineHostPage();
+				PioneerQuarantineOutputBuffer(c->io,c->bulkHost); PioneerQuarantineWideOutput(c->io,c->wideHost);
+				sColdRecoveryRequired=true; request->result.master.recovery_required=1;
+			}
+			auto& r=request->result.master;
+			c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
+			if (!PioneerLayerWideProof(request->result,request->inputs,request->outputs,request->workers,c->coordinator.nonce)) memset(request->output,0,request->outputs*4);
+			status=user_memcpy(data,request,length);
+		}
+	}
+	release_sem(sLock); free(request); return status;
 }
 
 static status_t
@@ -2930,6 +3042,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return LayerFfnControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_GLU)
 		return LayerGluControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_LAYER_WIDE)
+		return LayerWideControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT)
 		return CoordinatedSupportControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_RUNTIME_PERSISTENT_FLEET)

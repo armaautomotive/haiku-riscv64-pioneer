@@ -27,6 +27,7 @@ int main()
 {
 	ggml_backend_register(PioneerGgmlReg()); auto* dev=ggml_backend_reg_dev_get(PioneerGgmlReg(),0);
 	PioneerGgmlLayerFfn(true); assert(!ggml_backend_dev_init(dev,NULL));
+	PioneerGgmlWideOutput(true);
 	PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true); PioneerGgmlQ8Exact(true);
 	PioneerGgmlQ8Dual(true); PioneerGgmlQ8DualReuse(true); PioneerGgmlAttention(true); PioneerGgmlBulkUpload(1);
 	PioneerGgmlFleet(119); PioneerGgmlResidentKV(true); PioneerGgmlPayloadBlocks(true); PioneerGgmlCoordinated(true);
@@ -66,6 +67,20 @@ int main()
 		for (auto* t:{gate,up,glu}) for (unsigned i=0;i<3072;i++) assert(isnan(static_cast<float*>(t->data)[i]));
 	}
 	PioneerGgmlStats stats={}; assert(PioneerGgmlSnapshot(stats) && stats.ffnOps==2 && !stats.gluOps && stats.matvecs==6 && stats.tensors==3);
+	assert(io.wide);
+	// Verify the new explicit mode's wide-output route without changing the
+	// independent transport/model arithmetic or hiding vocabulary values.
+	auto* classifier=ggml_new_tensor_2d(ctx,GGML_TYPE_Q8_0,1024,6144);
+	auto classifierBuffer=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(classifier)); assert(classifierBuffer);
+	classifier->buffer=classifierBuffer; classifier->data=ggml_backend_buffer_get_base(classifierBuffer);
+	ggml_backend_buffer_set_usage(classifierBuffer,GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
+	std::vector<float> classSource(1024*6144); for (unsigned i=0;i<classSource.size();i++) classSource[i]=(int(i*7%31)-15)*.0009765625f;
+	ggml_get_type_traits(GGML_TYPE_Q8_0)->from_float_ref(classSource.data(),classifier->data,classSource.size());
+	auto* logits=ggml_mul_mat(ctx,classifier,x); logits->flags|=GGML_TENSOR_FLAG_COMPUTE;
+	auto* classGraph=ggml_new_graph(ctx); ggml_build_forward_expand(classGraph,logits);
+	assert(ggml_backend_graph_compute(backend,classGraph)==GGML_STATUS_SUCCESS && PioneerGgmlSnapshot(stats) && stats.wideCalls==1);
+	auto classRef=Reference(classifier,static_cast<float*>(x->data));
+	for (unsigned i=0;i<6144;i++) assert(static_cast<float*>(logits->data)[i]==classRef[i]);
 	// A later CPU consumer lies OUTSIDE the scheduler slice. Global counts
 	// forbid elision,so normal card matrices+card GLU must materialize gate.
 	auto* consumer=ggml_add(ctx,gate,gate); ggml_build_forward_expand(graph,consumer);
@@ -83,6 +98,7 @@ int main()
 	unsigned calls=io.calls; assert(ggml_backend_graph_compute(backend,fresh)==GGML_STATUS_FAILED && io.calls==calls);
 	assert(PioneerGgmlSnapshot(stats) && stats.failed && PioneerGgmlFinish()); ggml_backend_free(backend);
 	for (unsigned i=0;i<3;i++) { weights[i]->buffer=NULL; ggml_backend_buffer_free(buffers[i]); }
+	classifier->buffer=NULL; ggml_backend_buffer_free(classifierBuffer);
 	ggml_free(ctx);
 	puts("PASS OFFLINE pinned GGML FFN fusion,independent reference,global outside-slice consumers/outputs preserved,card GLU split path,unchanged warm weights,no CPU fallback or output publication on failure");
 }

@@ -10,10 +10,14 @@ case ${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0} in 0|1) ;; *) echo 'Output-compare
 case ${PIONEER_COORDINATOR_FUSED_OUTPUT:-0} in 0|1) ;; *) echo 'Fused-output image flag must be0 or1' >&2; exit 2;; esac
 case ${PIONEER_COORDINATOR_COMPACT_INPUT:-0} in 0|1) ;; *) echo 'Compact-input image flag must be0 or1' >&2; exit 2;; esac
 case ${PIONEER_COORDINATOR_LAYER:-0} in 0|1) ;; *) echo 'Layer-image flag must be0 or1' >&2; exit 2;; esac
+case ${PIONEER_COORDINATOR_WIDE_OUTPUT:-0} in 0|1) ;; *) echo 'Wide-output flag must be0 or1' >&2; exit 2;; esac
+case ${PIONEER_COORDINATOR_SPAN_UPLOAD:-0} in 0|1) ;; *) echo 'Span-upload flag must be0 or1' >&2; exit 2;; esac
 [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_FUSED_OUTPUT:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_PACKET_IDLE:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_OUTPUT_COMPARE:-0}" = 0 ]; } || exit 2
 [ "${PIONEER_COORDINATOR_COMPACT_INPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_FUSED_OUTPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_LAYER:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_COMPACT_INPUT:-0}" = 1 ] || exit 2
+[ "${PIONEER_COORDINATOR_WIDE_OUTPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_COMPACT_INPUT:-0}" = 1 ] || exit 2
+[ "${PIONEER_COORDINATOR_SPAN_UPLOAD:-0}" = 0 ] || { [ "${PIONEER_COORDINATOR_WIDE_OUTPUT:-0}" = 1 ] && [ "${PIONEER_COORDINATOR_LAYER:-0}" = 1 ]; } || exit 2
 case "$output" in /*) ;; *) echo 'Absolute output required' >&2; exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || { echo 'Fresh output required' >&2; exit 2; }
 umask 077
@@ -42,6 +46,8 @@ fi
  -DPIONEER_COORDINATOR_FUSED_OUTPUT=${PIONEER_COORDINATOR_FUSED_OUTPUT:-0} \
  -DPIONEER_COORDINATOR_COMPACT_INPUT=${PIONEER_COORDINATOR_COMPACT_INPUT:-0} \
  -DPIONEER_COORDINATOR_TRUSTED_IDLE=${PIONEER_COORDINATOR_LAYER:-0} \
+ -DPIONEER_COORDINATOR_WIDE_OUTPUT=${PIONEER_COORDINATOR_WIDE_OUTPUT:-0} \
+ -DPIONEER_COORDINATOR_SPAN_UPLOAD=${PIONEER_COORDINATOR_SPAN_UPLOAD:-0} \
  -c "$directory/$source_file" -o "$output/program.o"
 "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/$link_file" \
