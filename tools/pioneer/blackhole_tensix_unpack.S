@@ -31,6 +31,11 @@
 	.error "Accumulator pipeline requires the separate exact fidelity pipeline"
 .endif
 .endif
+.ifdef TT_RUNTIME_Q8_REPLAY
+.ifndef TT_RUNTIME_Q8_ACCUM_PIPE
+	.error "Fixed replay candidate requires the separate exact accumulator pipeline"
+.endif
+.endif
 .section .boot,"ax"
 .global _start
 _start:
@@ -960,6 +965,27 @@ q8_exact_computed:
 	j q8_exact_return
 q8_exact_emit:
 .ifdef TT_RUNTIME_Q8_INLINE
+.ifdef TT_RUNTIME_Q8_REPLAY
+	/* OFFLINE candidate:only slots0..31 of this exclusive TRISC0 replay
+	 * buffer. Record the first32 immutable arithmetic/NOP instructions on
+	 * first K-block/output/parity while executing them,then reuse that
+	 * SAME prefix. Remaining exact arithmetic stays direct and unchanged.
+	 * Count32 is within the public shared minimum;no macro/gathering mode,
+	 * supplied instructions,addresses or data-dependent record length. */
+	la t0,q8_exact_sequence
+	bne a5,t0,q8_exact_direct
+	addi t0,s4,-1
+	or t0,t0,s9
+	or t0,t0,a4
+	bne t0,zero,q8_exact_replay
+	exact_ops 0x04000203 /* REPLAY(0,32,execute=1,load=1) */
+	jalr zero,0(a5)
+q8_exact_replay:
+	exact_ops 0x04000200 /* REPLAY(0,32,execute=0,load=0) */
+	la t0,q8_exact_sequence+128
+	jalr zero,0(t0)
+q8_exact_direct:
+.endif
 	jalr zero,0(a5)
 	nop
 	nop

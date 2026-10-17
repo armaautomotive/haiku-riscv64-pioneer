@@ -27,6 +27,7 @@ struct AccumMachine:PersistentMachine {
 		for (unsigned n:phaseVisits) assert(n*4==matrixInstructions);
 	}
 };
+#ifndef PIONEER_ACCUM_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2); auto code=Read(argv[1]); assert(code.size()==4096);
 	for (unsigned word=0;word<1024;word++) assert(Word(code,word*4)==BlackholeRuntimeQ8AccumCodeWord(word));
@@ -44,3 +45,4 @@ int main(int argc,char** argv) {
 	assert(proposed.steps<previous.steps && proposed.drains<previous.drains && proposed.matrixInstructions==previous.matrixInstructions);
 	printf("PASS OFFLINE exact accumulation pipeline,all120 peers/all K/N4096/IEEE output bits/repeated jobs/STOP,ALL SFPU Dst block hazards spaced>4 cycles,unchanged public PCs;steps%u vs%u,drains%u vs%u;NOT native performance\n",proposed.steps,previous.steps,proposed.drains,previous.drains);
 }
+#endif

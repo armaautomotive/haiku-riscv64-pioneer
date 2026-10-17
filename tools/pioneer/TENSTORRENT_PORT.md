@@ -2,6 +2,35 @@
 
 ## Status
 
+### October17: exact arithmetic29 native PASS;next prototypes (11:57 UTC)
+
+Fast Qwen STILL NOT achieved. Contract29 passes all22 full-vocabulary/
+selected-bit token checks and three sustained requests/full replays/coverage.
+GPU4.692277/4.667188/4.750968tok/s versus CPU32 1.060467/1.544012/2.842223.
+Prompt5.558463/5.756261/5.148475s. Matrix58.551M ->53.137M ticks atposition21;
+vocabulary9.188M ->8.410M;total147.634M ->141.441M. Complete312 GPU positions,
+61464 projections/8736 attention,156 full+156 small,zero warm uploads;
+END2/PCI-host1-1/cold0/cleanup1. Cold106.099132s,registry9.008283s.
+Short5.211636tok/s is diagnostic ONLY. Log:`qwen-accum-v29-benchmark.log`.
+Qualified29 backed up,with28/27/25 preserved. No Assistant promotion.
+
+Fixed32-slot replay prototype remains OFFLINE ONLY,NOT wired into driver.
+It records+executes the first32 constant arithmetic/NOP instructions once
+per matrix job,then expands that prefix on the coprocessor using CURRENT
+operands. All remaining exact arithmetic stays direct. Shared documented
+minimum32-slot bound is used,NOT guessed larger Blackhole limits. No external
+instruction stream or record count. Actual instruction model passes all120
+peers/all K/N4096/repeated IEEE bits/STOP/Dst hazards/unchanged public PCs,
+fresh record per matrix job,57767 vs60361 RISC steps (127 prefix replays in
+small case). This predicts NO native throughput claim. Math prototype
+`c534a8003c81ba72f5cafed1e4b5baf51b55ae322caebf17c6e8fdbd31fc6e1c`.
+Next higher-impact investigation:private16-row peer chunks to use more cores
+in V/K/O/down. Whole tensor/page bounds and final vocabulary chunks MUST
+remain unchanged. No all-Qwen/Q4/27B support is implied.
+
+Replay references:[official shared functional model](https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/REPLAY.md),
+[Blackhole opcode fields](https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/tt-llk/tt_llk_blackhole/common/inc/ckernel_ops.h).
+
 ### October17: resident28 native PASS;exact arithmetic29 trial (11:50 UTC)
 
 Fast Qwen STILL NOT achieved. Contract28 passes22 full-logit comparisons/
