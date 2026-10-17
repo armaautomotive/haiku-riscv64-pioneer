@@ -10,10 +10,12 @@ int main(int argc,char** argv)
 {
 	bool blocks=argc==2 && !strcmp(argv[1],"--run-blocks-and-restore");
 	bool span=argc==2 && !strcmp(argv[1],"--coordinated-span-and-restore");
+	bool fastShapes=argc==2 && !strcmp(argv[1],"--coordinated-fast-shapes-and-restore");
 	bool wideDma=argc==2 && (!strcmp(argv[1],"--coordinated-wide-dma-and-restore") || !strcmp(argv[1],"--coordinated-vocabulary-dma-and-restore"));
-	wideDma |= span;
+	wideDma |= span || fastShapes;
 	bool debug=argc==2 && !strcmp(argv[1],"--coordinated-debug-wide-and-restore");
 	bool shapes=argc==2 && (!strcmp(argv[1],"--coordinated-shapes-and-restore") || !strcmp(argv[1],"--coordinated-debug-shapes-and-restore"));
+	shapes |= fastShapes;
 	debug |= shapes && !strcmp(argv[1],"--coordinated-debug-shapes-and-restore");
 	bool wide=argc==2 && !strcmp(argv[1],"--coordinated-wide-and-restore");
 	wide |= wideDma;
@@ -28,7 +30,7 @@ int main(int argc,char** argv)
 		int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR); if (fd<0) return 1;
 		tt_coordinated_support s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&s,sizeof(s)); close(fd);
 		printf("Coordinated support status%d v%u workers%u KV-v%u immutable%u gather%u\n",status,s.version,s.max_workers,s.attention_version,s.immutable_weights,s.gather_max);
-		return status || s.version<7 || s.version>11 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
+		return status || s.version<7 || s.version>12 || s.max_workers!=119 || s.attention_version!=3 || s.immutable_weights!=1 || s.gather_max!=8192;
 	}
 	bool coordinated=wide || vocabulary || coordinatedAttention || (argc==2 && !strcmp(argv[1],"--coordinated-matrices-and-restore"));
 	if (!blocks && !coordinated && (argc!=2 || strcmp(argv[1],"--run-and-restore"))) { fprintf(stderr,"Usage: %s --run-and-restore|--run-blocks-and-restore|--coordinated-matrices-and-restore|--coordinated-wide-and-restore|--coordinated-vocabulary-and-restore|--coordinated-attention-and-restore|--check-coordinated-support\n",argv[0]); return 2; }
@@ -50,6 +52,7 @@ int main(int argc,char** argv)
 	for (auto& w:x) w=0x40004000; // valid integer-overlay zeros
 	for (auto& w:scale) w=0x3f800000;
 	bool okay=true;
+	if (fastShapes) okay=device.NarrowEnabled();
 	if (span) {
 		okay=device.UploadPageLimit()==256; std::vector<uint32_t> raw(TT_WIDE_OUTPUT_WORDS);
 		for (unsigned i=0;i<raw.size();i++) raw[i]=0x7fc00001U^(i*0x9e3779b9U);
@@ -77,7 +80,7 @@ int main(int argc,char** argv)
 				int sum=0; for (unsigned k=0;k<1024;k++) sum+=(int((row*13+k*7)%31)-15)*(int((k*17+(trial/2)*7)%31)-15);
 				okay=y[row]==PioneerAttentionBits(float(sum));
 			}
-			tt_runtime_profile_result p={}; bool profiled=okay && device.CoordinatedProfile(p);
+			tt_runtime_profile_result p={}; bool profiled=okay && device.CoordinatedProfile(p,fastShapes && current>4096);
 			okay &= debug || device.lastActivationPages==((trial&1)?0U:1U);
 			printf("NATIVE shape sweep debug%u rows%u trial%u exact%u staged%u reused%llu wall%.6fs profile%u",debug,current,trial,okay,device.lastActivationPages,(unsigned long long)device.activationReuses,elapsed,profiled);
 			if (profiled) for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) if (p.mask&(1U<<slot)) printf(" t%u=%llu",slot,(unsigned long long)p.microseconds[slot]);

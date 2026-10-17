@@ -153,6 +153,7 @@ int main(int argc,char** argv) {
 		PioneerGgmlStats stats={}; bool live=PioneerGgmlSnapshot(stats);
 		if (deviceAttention) {
 			if (wideOutput && stats.wideCalls-coverageBefore.wideCalls!=1) { fprintf(stderr,"Strict wide-output coverage failed; no accepted result\n"); passed=false; break; }
+			if (stats.narrowEnabled && stats.narrowCalls-coverageBefore.narrowCalls!=112) { fprintf(stderr,"Strict narrow-matrix coverage failed; no accepted result\n"); passed=false; break; }
 			if (layerFfn && (stats.ffnOps-coverageBefore.ffnOps!=28 || stats.gluOps!=coverageBefore.gluOps)) {
 				fprintf(stderr,"Strict fused FFN coverage failed: deltaFFN%llu deltaGLU%llu,expected28/0; no accepted result\n",(unsigned long long)(stats.ffnOps-coverageBefore.ffnOps),(unsigned long long)(stats.gluOps-coverageBefore.gluOps)); passed=false; break;
 			}
@@ -194,6 +195,8 @@ int main(int argc,char** argv) {
 		stats.weightSeconds,stats.inputSeconds,stats.matvecSeconds,stats.attentionSeconds,stats.diagnosticSeconds);
 	if (fleet) printf("Whole-projection path: peak workers%u,197 learned projections via%u matrix/FFN +28 attention host calls/position; still host norms/RoPE/KV,NOT zero-round-trip decoding\n",stats.peakWorkers,layerFfn?141U:197U);
 	if (coordinated) printf("Compact activation staging: %llu exact same-input uploads skipped; all device arithmetic/completion proofs retained; NOT an end-to-end speed claim\n",(unsigned long long)stats.activationReuses);
+	if (wideOutput) printf("Explicit fast coverage: span uploads%llu,narrow matrices%llu (enabled%u),wide outputs%llu;full quality gates unchanged\n",
+		(unsigned long long)stats.spanCalls,(unsigned long long)stats.narrowCalls,stats.narrowEnabled,(unsigned long long)stats.wideCalls);
 	if (passed && decodeSeconds>0 && !diagnose) printf("Diagnostic warm decode: 3 samples / %.6fs = %.6f tokens/s; CPU reference excluded, NOT a benchmark or speedup claim\n",decodeSeconds,3/decodeSeconds);
 	llama_free(actual); llama_free(reference); llama_model_free(model); llama_backend_free(); return passed?0:1;
 }

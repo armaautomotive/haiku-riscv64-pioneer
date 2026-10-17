@@ -2,6 +2,43 @@
 
 ## Status
 
+### October17: narrow worker protocol/full Qwen contract v12 (06:59 UTC)
+
+Fast Qwen is STILL NOT achieved. Native small-matrix timings and exact
+results pass,but full-model generation did NOT improve:3/5.834276s=
+0.514203tok/s versus v11's0.517088tok/s. No repeated CPU speedup claim,
+no Assistant promotion. Keeping this evidence prevents confusing a
+qualified primitive/protocol improvement with useful model performance.
+
+Full Qwen passed all22 exact full-vocabulary positions/four greedy tokens,
+197 tensors/670482432 bytes/163692 pages. Exact coverage per position:
+197 learned projections,28 FFNs,zero standalone GLUs,28/224 attention,
+112 narrow matrix jobs and one wide output. Totals786 span uploads,
+2464 narrow matrices,22 wide results;no warm weight uploads.141 matrix/FFN
+plus28 attention host calls STILL remain. END2/PCI-host1-1/cold0/cleanup1,
+total151.091s,weights86.552216s,matvec34.476631s,attention11.578397s.
+Log:`qwen-narrow-v12-verify.log`,binary SHA
+`870bfe84cf39d9c70390189c24c8eccb5036598becc890617a560560aefba87e`.
+
+Private`54df` selects the fixed layer image's trusted-idle narrow matrix,
+K1024/2048/3072/5120/6144,N32..4096. It retains fresh descriptor readback,
+published worker source/ALL-ID/math/counter proof,gather and one owned16KiB
+host write/read/EVERY-bit comparison. Kernel last-proved idle ownership is
+valid until its next doorbell;END live-audits ALL STOPs. Dedicated narrow
+summary predicate;the strict legacy/debug protocol is unchanged. Unknown
+source/map/counter/completion never authorizes reset/retry/code restore.
+Native sweep passes changed inputs,all N,exact input reuse,wide transition
+and clean END. Warm1024/2048-row calls~6.2/6.7ms. Actual linked image,
+independent controller,REAL client,pinned GGML and FFN/GLU/span/full-vocab
+regressions pass. A simulator-only fault-test step bound was raised to
+cover the complete existing bounded lost-doorbell loop;native limits
+were NOT extended. Driver SHA
+`9e6dc3b28a38afa5a7f0076c27d13ec18df497211aab96843fcb568094f464ae`,
+layer image`b9dae241610337249b6877cea698bf9754b0a39b07a3e5b7124e283817e39b1e`,
+native utility`8dec54932f6a6ac1c5acc5071f351b6bba98b951cbd2767089a280a9d7ac4e61`.
+v11 rollback retained;natural driver turnover,no firmware/reboot/SD/default
+boot/CPU/RAM/model/preferences or unrelated llama.cpp changes.
+
 ### October17: native NEW-weight span transport contract v11 (06:50 UTC)
 
 Fast Qwen remains NOT achieved;no Assistant promotion. Native span transfers

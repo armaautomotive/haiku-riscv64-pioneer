@@ -81,6 +81,7 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 		if (layerFfn) {
 			uint64_t positions=uint64_t(n)+golden.size()-1;
 			if (wideOutput && after.wideCalls-coverageBefore.wideCalls!=positions) { fprintf(stderr,"Warm wide-output coverage failed\n"); return false; }
+			if (after.narrowEnabled && after.narrowCalls-coverageBefore.narrowCalls!=112*positions) { fprintf(stderr,"Warm narrow-matrix coverage failed\n"); return false; }
 			if (after.ffnOps-coverageBefore.ffnOps!=28*positions || after.gluOps!=coverageBefore.gluOps
 				|| after.matvecs-coverageBefore.matvecs!=197*positions || after.attentionOps-coverageBefore.attentionOps!=28*positions
 				|| after.attentionTiles-coverageBefore.attentionTiles!=224*positions) {

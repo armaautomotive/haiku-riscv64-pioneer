@@ -101,6 +101,10 @@ static unsigned SpanUpload()
 #endif
 extern "C" unsigned coordinator_main()
 {
+	// Explicit contract12 narrow matrix uses the qualified fixed worker's
+	// full published idle/source/math proof,like FFN and wide output. It
+	// retains one complete owned16KiB host write/read/all-bit comparison.
+	if (Words(0x140000)[1]==3) return layer_matrix_main();
 #if PIONEER_COORDINATOR_SPAN_UPLOAD
 	if (Words(0x140000)[1]==7) return SpanUpload();
 #endif

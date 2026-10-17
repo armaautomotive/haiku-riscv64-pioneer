@@ -95,6 +95,28 @@ static inline bool PioneerLayerWideProof(const tt_coordinated_fleet_result& r,un
 		&& m.pc[0]==TT_LAYER_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
 		&& PioneerWideOutputSummary(r.summary,n,p.workers,nonce,m.before,m.after,true);
 }
+static inline bool PioneerLayerNarrowSummary(const uint32_t* s,unsigned n,unsigned workers,unsigned nonce,const uint32_t* before,const uint32_t* after)
+{
+	if (!s || !before || !after || !workers || workers>119 || !n || n>4096 || (n&31) || !nonce || nonce>=0x7fffffff
+		|| s[4]!=workers || s[5]!=n || s[6]!=nonce || s[7]!=3) return false;
+	unsigned r=s[0],minimum=4*workers+1,w=2*workers+1,wf=2*workers+n/16;
+	if (r<minimum || r>minimum+2*65535*workers || ((r-minimum)&1) || s[1]!=r-workers+n/8-1 || s[2]!=w || s[3]!=wf
+		|| before[2]!=before[6] || after[2]!=after[6]) return false;
+	const unsigned delta[]={r,s[1],r+w,r,w,wf,r+w,w};
+	for (unsigned i=0;i<8;i++) if (s[8+i]!=before[i] || s[16+i]!=after[i] || uint32_t(after[i]-before[i])!=delta[i]) return false;
+	return true;
+}
+static inline bool PioneerLayerNarrowProof(const tt_coordinated_fleet_result& r,unsigned k,unsigned n,unsigned limit,unsigned nonce)
+{
+	const auto& m=r.master; PioneerFleetPlan p;
+	return limit && limit<=119 && PioneerFleetPartition(k,n,limit,p) && r.inputs==k && r.outputs==n && r.workers==p.workers
+		&& (!r.staged_pages || r.staged_pages==(k*2+k/8+4095)/4096) && !r.nonfinite && r.dma_words==n && r.gathered==n
+		&& m.version==1 && m.state==TT_RUNTIME_PASSED && m.workers==p.workers && m.matched==p.workers && m.nonce==nonce
+		&& m.prepared==1 && m.started==1 && m.completed==1 && m.stopped==1 && !m.recovery_required && m.polls
+		&& m.phase==TT_LAYER_DONE && m.count==p.workers && m.marker==TT_COORDINATOR_MARKER
+		&& m.pc[0]==TT_LAYER_PARK && m.pc[1]==m.pc[0] && m.summary_verified==1
+		&& PioneerLayerNarrowSummary(r.summary,n,p.workers,nonce,m.before,m.after);
+}
 template<class IO>
 auto PioneerCoordinatedGatherRead(IO& io,unsigned words,uint32_t* output,int)
 	-> decltype(io.CoordinatorPayloadRead(words,output)) { return io.CoordinatorPayloadRead(words,output); }
@@ -112,7 +134,7 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 	const uint32_t* scales,uint32_t* output,tt_coordinated_fleet_result& r,const PioneerLayerJob* layer=NULL)
 {
 	r={}; auto& m=r.master; m.version=1; r.inputs=k; r.outputs=n;
-	bool wide=layer && layer->operation==6,ffn=layer && layer->operation==4;
+	bool wide=layer && layer->operation==6,ffn=layer && layer->operation==4,narrow=layer && layer->operation==3;
 	PioneerFleetPlan p; uint64_t bytes=ffn?PioneerQ8CompactWeightBytes(1024,3072):PioneerQ8CompactWeightBytes(k,n);
 	if (!fleet || !input || !scales || !output || !limit || limit>119 || !PioneerFleetPartition(k,n,limit,p)
 		|| capacity!=UINT64_C(0x80000000) || !PioneerResidentOffset(capacity,offset) || !bytes
@@ -120,7 +142,8 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		|| !lease.ready || !lease.fast || (lease.readback==lease.fused) || (lease.fused && !lease.compact)
 		|| lease.unsafe || lease.running || lease.nonce>=0x7ffffffe || !bulk.ready || bulk.unsafe) return false;
 	if (layer) {
-		if ((!ffn && !wide) || (ffn && (k!=1024 || n!=1024)) || !layer->code || !layer->code->ready || !layer->code->saved || layer->code->unsafe
+		if ((!ffn && !wide && !narrow) || (narrow && (n>4096 || layer->upOffset || layer->downOffset || layer->wide))
+			|| (ffn && (k!=1024 || n!=1024)) || !layer->code || !layer->code->ready || !layer->code->saved || layer->code->unsafe
 			|| layer->code->running || !lease.fused || !lease.compact || lease.readback || !PioneerLayerMapping(io,0)) return false;
 		if (wide && (!layer->wide || !layer->wide->ready || !layer->wide->allocated || !layer->wide->memory_type_set
 			|| layer->wide->pending || layer->wide->released || layer->wide->quarantined || layer->upOffset || layer->downOffset)) return false;
@@ -234,7 +257,7 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		for (unsigned i=0;i<24;i++) r.summary[i]=io.BulkL1Read(3072+i);
 		// Counter/nonce/shape summary must be proved BEFORE even the
 		// coordinator reset; an unaccounted NoC completion is unknown.
-		if (!(wide?PioneerWideOutputSummary(r.summary,n,p.workers,lease.nonce,m.before,m.after,true):ffn?PioneerLayerSummary(r.summary,4,limit,n,lease.nonce,m.before,m.after)
+		if (!(narrow?PioneerLayerNarrowSummary(r.summary,n,p.workers,lease.nonce,m.before,m.after):wide?PioneerWideOutputSummary(r.summary,n,p.workers,lease.nonce,m.before,m.after,true):ffn?PioneerLayerSummary(r.summary,4,limit,n,lease.nonce,m.before,m.after)
 			:PioneerCoordinatedSummary(r.summary,n,p.workers,lease.nonce,m.before,m.after,fused))) { uncertain=true; break; }
 		m.summary_verified=1;
 		if (fused) {
@@ -307,7 +330,7 @@ bool PioneerCoordinatedMatvec(IO& io,const tt_dram_samples_result& baseline,cons
 		PioneerPersistentQuarantine(io,fleet);
 		PioneerQuarantineOutputBuffer(io,transfer);
 	}
-	bool proved=!uncertain && (wide?PioneerLayerWideProof(r,k,n,limit,lease.nonce):ffn?PioneerCoordinatedLayerProof(r,limit,lease.nonce):PioneerCoordinatedProof(r,k,n,limit,lease.nonce,lease.readback));
+	bool proved=!uncertain && (narrow?PioneerLayerNarrowProof(r,k,n,limit,lease.nonce):wide?PioneerLayerWideProof(r,k,n,limit,lease.nonce):ffn?PioneerCoordinatedLayerProof(r,limit,lease.nonce):PioneerCoordinatedProof(r,k,n,limit,lease.nonce,lease.readback));
 	if (proved && !ffn && lease.compact && !inputHit) {
 		// Nothing between jobs may mutate this owned packed input. Neither
 		// the shadow alone nor a partial/failed DMA can seal a cache entry.

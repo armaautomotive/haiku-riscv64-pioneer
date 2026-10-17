@@ -491,6 +491,9 @@ bool PioneerGgmlSnapshot(PioneerGgmlStats& stats) {
 	stats.activationReuses=sActive->device.activationReuses;
 	stats.ffnOps=sActive->ffnOps; stats.gluOps=sActive->gluOps;
 	stats.wideCalls=sActive->device.wideCalls;
+	stats.spanCalls=sActive->device.spanCalls;
+	stats.narrowCalls=sActive->device.narrowCalls;
+	stats.narrowEnabled=sActive->device.NarrowEnabled();
 	stats.attentionOps=sActive->attentionOps; stats.attentionTiles=sActive->attentionTiles;
 	stats.attentionSeconds=sActive->attentionSeconds;
 	stats.weightSeconds=sActive->weightSeconds; stats.inputSeconds=sActive->inputSeconds;

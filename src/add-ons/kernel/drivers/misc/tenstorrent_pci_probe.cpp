@@ -2359,7 +2359,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={11,119,3,1,8192}; // v11 adds bounded NEW-weight span uploads;older operations remain unchanged
+	tt_coordinated_support support={12,119,3,1,8192}; // v12 adds separate trusted-idle narrow matrix ABI;older operations remain unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2462,7 +2462,7 @@ LayerSpanControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
-LayerWideControl(PioneerProbeCookie* cookie,void* data,size_t length)
+LayerWideControl(PioneerProbeCookie* cookie,void* data,size_t length,bool narrow=false)
 {
 	const size_t prefix=offsetof(tt_pioneer_coordinated_fleet,output);
 	if (!data || length<prefix || length>sizeof(tt_pioneer_coordinated_fleet)) return B_BAD_VALUE;
@@ -2473,7 +2473,7 @@ LayerWideControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=user_memcpy(request,data,prefix); PioneerFleetPlan plan;
 	if (status!=B_OK || request->version!=1 || !request->workers || request->workers>119
 		|| length!=PioneerCoordinatedRequestBytes(request->outputs)
-		|| !PioneerFleetPartition(request->inputs,request->outputs,request->workers,plan)) {
+		|| (narrow && request->outputs>4096) || !PioneerFleetPartition(request->inputs,request->outputs,request->workers,plan)) {
 		free(request); return status!=B_OK?status:B_BAD_VALUE;
 	}
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
@@ -2489,15 +2489,15 @@ LayerWideControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		if (!initialized) status=B_ENTRY_NOT_FOUND;
 		else {
 			request->result={}; request->result.master.version=1; request->result.master.state=TT_RUNTIME_CONFIG_FAILED;
-			memset(request->output,0,request->outputs*4); c->io.runtimeProfile.Begin(uint64(system_time()),18);
+			memset(request->output,0,request->outputs*4); c->io.runtimeProfile.Begin(uint64(system_time()),narrow?20:18);
 			auto& dram=c->baseline.baseline.baseline.baseline.dram;
 			bool ready=PrepareCoordinatedFleet(*c,plan.workers,false)
 				&& PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready)
 				&& c->io.MapLayer() && PioneerLayerPrepare(c->io,dram,c->fleet[0].noc,c->lease,c->coordinator,c->layer);
-			if (ready && !c->wideHost.ready) ready=!c->wideHost.allocated && PioneerPrepareWideOutput(c->io,c->host,c->bulkHost,c->wideHost);
+			if (ready && !narrow && !c->wideHost.ready) ready=!c->wideHost.allocated && PioneerPrepareWideOutput(c->io,c->host,c->bulkHost,c->wideHost);
 			if (ready) {
 				c->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
-				PioneerLayerJob job(&c->layer,0,0,6,&c->wideHost);
+				PioneerLayerJob job(&c->layer,0,0,narrow?3:6,narrow?NULL:&c->wideHost);
 				PioneerCoordinatedMatvec(c->io,dram,c->host,c->bulkHost,c->fleet,c->bulk,c->coordinator,c->attention.ready,c->bytes,
 					request->weight_offset,request->inputs,request->outputs,request->workers,request->input,request->scale,request->output,request->result,&job);
 			}
@@ -2508,7 +2508,8 @@ LayerWideControl(PioneerProbeCookie* cookie,void* data,size_t length)
 			}
 			auto& r=request->result.master;
 			c->io.runtimeProfile.End(uint64(system_time()),r.state,r.recovery_required,r.started,r.completed,r.stopped);
-			if (!PioneerLayerWideProof(request->result,request->inputs,request->outputs,request->workers,c->coordinator.nonce)) memset(request->output,0,request->outputs*4);
+			if (!(narrow?PioneerLayerNarrowProof(request->result,request->inputs,request->outputs,request->workers,c->coordinator.nonce)
+				:PioneerLayerWideProof(request->result,request->inputs,request->outputs,request->workers,c->coordinator.nonce))) memset(request->output,0,request->outputs*4);
 			status=user_memcpy(data,request,length);
 		}
 	}
@@ -3105,6 +3106,8 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return LayerGluControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_WIDE)
 		return LayerWideControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_LAYER_NARROW)
+		return LayerWideControl(instance,data,length,true);
 	if (operation==TT_PCI_PROBE_PIONEER_LAYER_SPAN)
 		return LayerSpanControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT)

@@ -27,14 +27,16 @@ class PioneerResidentDevice {
 	bool coordinatedDebug=false;
 	bool coordinatedWide=false;
 	bool coordinatedSpan=false;
+	bool coordinatedNarrow=false;
 	tt_pioneer_coordinated_fleet* coordinatedRequest=NULL;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
 	uint64_t activationReuses=0;
-	uint64_t wideCalls=0,spanCalls=0;
+	uint64_t wideCalls=0,spanCalls=0,narrowCalls=0;
 	unsigned UploadPageLimit() const { return coordinatedSpan?256:4; }
+	bool NarrowEnabled() const { return coordinatedNarrow; }
 	unsigned lastActivationPages=0;
 	// Diagnostic cohort tuning only; no new driver authority or active
 	// job mutation. The kernel independently partitions every request.
@@ -46,7 +48,7 @@ public:
 		if (!coordinated || !active || failed || finished || cold) return false;
 		return !ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&result,sizeof(result))
 			&& result.version==1 && result.available && result.clock_stable
-			&& result.format==(wide?18U:15U) && result.mask==0x13f && result.state==TT_RUNTIME_PASSED
+			&& result.format==(wide?18U:coordinatedNarrow?20U:15U) && result.mask==0x13f && result.state==TT_RUNTIME_PASSED
 			&& result.started && result.completed && result.stopped && !result.recovery_required;
 	}
 	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); free(coordinatedRequest); }
@@ -83,13 +85,14 @@ public:
 		}
 		if (coordinated) {
 			tt_coordinated_support support={};
-			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>11
+			if (ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATED_SUPPORT,&support,sizeof(support)) || support.version<7 || support.version>12
 				|| (requireLayer && support.version<8) || (requireLayer>=2 && support.version<9) || (requireLayer==3 && support.version<10)
 				|| support.max_workers!=119 || support.attention_version!=3 || support.immutable_weights!=1 || support.gather_max!=8192) {
 				fprintf(stderr,"Required coordinated-matrix/KV-v3 contract unavailable; no BEGIN/fallback\n"); failed=true; return false;
 			}
 			coordinatedVersion=support.version;
-			coordinatedSpan=coordinatedWide && support.version==11;
+			coordinatedSpan=coordinatedWide && support.version>=11;
+			coordinatedNarrow=coordinatedWide && support.version==12;
 		}
 		if (payloadBlocks && (s.capabilities&(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD))
 			!=(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD)) {
@@ -115,6 +118,7 @@ public:
 		fprintf(stderr,"Resident upload path: %s\n",stream?"verified six-step stream":"legacy PIO-checked");
 		if (bulkUpload) fprintf(stderr,"Explicit owned bulk upload: synchronous 1..4 pages, six exact proofs and full CPU comparisons\n");
 		if (coordinatedSpan) fprintf(stderr,"Explicit contract11 NEW-weight upload:1..256 pages,card-side full GDDR/echo proof and frozen-CPU transport comparison\n");
+		if (coordinatedNarrow) fprintf(stderr,"Explicit contract12 narrow matrices:published worker source/idle/math proof,one owned output write/read/all-word compare; strict diagnostic path unchanged\n");
 		fprintf(stderr,"Resident operand format: %s\n",q8?"original Q8_0 signed bytes/scales; integer dots + SFPU accumulation":fp16?"FP16, four fidelity phases, explicit subnormal flush":"BF16");
 		if (q8) fprintf(stderr,"Resident Q8 weight layout: %s\n",native?"native signed INT8 unpack, 1.125 bytes/parameter; refuse -128 weights":compact?"compact signed bytes, 1.125 bytes/parameter":"expanded integer overlays, 2.25 bytes/parameter");
 		if (f32Scales) fprintf(stderr,"Resident native scale mode: exact FP32 scale bits, compensated SFPU product + round-to-odd; no CPU learned sums\n");
@@ -207,7 +211,7 @@ public:
 		}
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
-	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=11 && active && !failed && !cold && !finished; }
+	bool HasLayerFfn() const { return coordinated && !coordinatedDebug && coordinatedVersion>=8 && coordinatedVersion<=12 && active && !failed && !cold && !finished; }
 	bool LayerGlu(unsigned n,const uint32_t* gate,const uint32_t* up,uint32_t* output) {
 		if (!HasLayerFfn() || coordinatedVersion<9 || !n || n>3072 || (n&31) || !gate || !up || !output) return false;
 		tt_pioneer_layer_glu p={}; p.version=1; p.outputs=n; memcpy(p.gate,gate,n*4); memcpy(p.up,up,n*4);
@@ -241,16 +245,18 @@ public:
 		if (p.result.workers>peakWorkers) peakWorkers=p.result.workers;
 		return true;
 	}
-	bool Q8WideMatvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
+	bool Q8WideMatvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result,bool narrow=false) {
 		PioneerFleetPlan plan;
 		if (!HasLayerFfn() || coordinatedVersion<10 || !q8 || !vector || !scales || !result || !PioneerFleetPartition(inputs,outputs,fleet,plan)) return false;
+		if (narrow && (!coordinatedNarrow || outputs>4096)) return false;
 		if (!coordinatedRequest) coordinatedRequest=(tt_pioneer_coordinated_fleet*)malloc(sizeof(tt_pioneer_coordinated_fleet));
 		if (!coordinatedRequest) { failed=true; return false; }
 		size_t size=PioneerCoordinatedRequestBytes(outputs); auto& p=*coordinatedRequest;
 		memset(&p,0,size); p.version=1; p.inputs=inputs; p.outputs=outputs; p.workers=fleet; p.weight_offset=offset;
 		memcpy(p.input,vector,inputs*2); memcpy(p.scale,scales,inputs/32*4);
-		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_LAYER_WIDE,&p,size); cold=p.result.master.recovery_required!=0;
-		bool proved=!status && PioneerLayerWideProof(p.result,inputs,outputs,fleet,coordinatorNonce+1);
+		int status=ioctl(fd,narrow?TT_PCI_PROBE_PIONEER_LAYER_NARROW:TT_PCI_PROBE_PIONEER_LAYER_WIDE,&p,size); cold=p.result.master.recovery_required!=0;
+		bool proved=!status && (narrow?PioneerLayerNarrowProof(p.result,inputs,outputs,fleet,coordinatorNonce+1)
+			:PioneerLayerWideProof(p.result,inputs,outputs,fleet,coordinatorNonce+1));
 		for (unsigned i=0;i<outputs;i++) proved &= (p.output[i]&0x7f800000)!=0x7f800000;
 		if (!proved) {
 			const auto& m=p.result.master;
@@ -258,13 +264,14 @@ public:
 			fprintf(stderr," wide R/flits/W/flits%u/%u/%u/%u peers/N/nonce/op%u/%u/%u/%u\n",p.result.summary[0],p.result.summary[1],p.result.summary[2],p.result.summary[3],p.result.summary[4],p.result.summary[5],p.result.summary[6],p.result.summary[7]);
 			failed=true; closeOnly=true; return false;
 		}
-		coordinatorNonce=p.result.master.nonce; memcpy(result,p.output,outputs*4); calls++; wideCalls++;
+		coordinatorNonce=p.result.master.nonce; memcpy(result,p.output,outputs*4); calls++; if (narrow) narrowCalls++; else wideCalls++;
 		lastActivationPages=p.result.staged_pages; if (!lastActivationPages) activationReuses++;
 		if (plan.workers>peakWorkers) peakWorkers=plan.workers;
 		return true;
 	}
 	bool Q8Matvec(uint64_t offset,unsigned inputs,unsigned outputs,const uint32_t* vector,const uint32_t* scales,uint32_t* result) {
 		if (coordinatedWide && outputs>4096) return Q8WideMatvec(offset,inputs,outputs,vector,scales,result);
+		if (coordinatedNarrow) return Q8WideMatvec(offset,inputs,outputs,vector,scales,result,true);
 		if (coordinated) {
 			PioneerFleetPlan plan;
 			if (!active || failed || finished || cold || !q8 || !vector || !scales || !result
