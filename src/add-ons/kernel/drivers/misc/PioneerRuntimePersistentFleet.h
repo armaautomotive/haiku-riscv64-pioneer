@@ -121,9 +121,10 @@ bool PioneerPersistentPrepare(IO& io,PioneerFleetWorker& f,bool inlineMath=false
 	f.persistentPrepared=okay; f.inlineMath=inlineMath; f.coordinatedInline=coordinatedInline; f.partialMath=partialMath; f.phasePipeline=phasePipeline; f.descriptorTable=descriptorTable; f.accumPipeline=accumPipeline; f.coordinated=coordinated; f.attentionDispatch=attentionDispatch; f.gluDispatch=gluDispatch; return okay;
 }
 template<class IO>
-bool PioneerPersistentTablePrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker& f,const PioneerDecoderJob& model,unsigned worker)
+bool PioneerPersistentTablePrepare(IO& io,const tt_dram_samples_result& baseline,PioneerFleetWorker& f,const PioneerDecoderJob& model,unsigned worker,bool smallRows=false)
 {
-	unsigned count=PioneerDecoderDescriptorCount(worker);
+	unsigned count=PioneerDecoderDescriptorCount(worker,smallRows);
+	if (smallRows && !f.accumPipeline) return false;
 	if (!count || !f.descriptorTable || f.descriptorTablePrepared || !f.persistentPrepared || f.persistentActive || f.persistentSequence
 		|| !f.Compute().ready || !f.Compute().saved || !f.Compute().bulk || f.Compute().running || f.Compute().unsafe
 		|| f.Compute().buffer_words!=TT_Q8_BULK_SAVED_BUFFER_WORDS || io.RuntimeBufferWords()!=TT_Q8_BULK_SAVED_BUFFER_WORDS
@@ -131,17 +132,17 @@ bool PioneerPersistentTablePrepare(IO& io,const tt_dram_samples_result& baseline
 	f.Compute().buffers_dirty=true;
 	const unsigned first=(TT_DECODER_TABLE_BASE-0x80000)/4;
 	for (unsigned index=0;index<count;index++) { PioneerDecoderDescriptor entry;
-		if (!PioneerDecoderDescriptorEntry(model,worker,index,entry)) return false;
+		if (!PioneerDecoderDescriptorEntry(model,worker,index,entry,smallRows)) return false;
 		for (unsigned word=0;word<8;word++) io.RuntimeBufferWrite(first+index*8+word,entry.words[word]);
 	}
 	for (unsigned index=0;index<count;index++) { PioneerDecoderDescriptor entry;
-		if (!PioneerDecoderDescriptorEntry(model,worker,index,entry)) return false;
+		if (!PioneerDecoderDescriptorEntry(model,worker,index,entry,smallRows)) return false;
 		for (unsigned word=0;word<8;word++) if (io.RuntimeBufferRead(first+index*8+word)!=entry.words[word]) return false;
 	}
 	io.FleetCodeWrite((TT_DECODER_TABLE_COUNT-0x71000)/4,count); io.FleetCodeWrite((TT_DECODER_TABLE_CURSOR-0x71000)/4,0);
 	if (io.FleetCodeRead((TT_DECODER_TABLE_COUNT-0x71000)/4)!=count || io.FleetCodeRead((TT_DECODER_TABLE_CURSOR-0x71000)/4)
 		|| io.ResetRead()!=0x47800 || !PioneerRuntimeSources(io,baseline,f.noc,f.Store()) || !BlackholeResidentIdle(io)) return false;
-	f.descriptorTablePrepared=true; return true;
+	f.smallRows=smallRows; f.descriptorTablePrepared=true; return true;
 }
 template<class IO>
 bool PioneerPersistentBoot(IO& io,PioneerFleetWorker& f) {

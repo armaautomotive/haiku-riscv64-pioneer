@@ -2,6 +2,43 @@
 
 ## Status
 
+### October17: private16-row scheduling30 native trial (12:05 UTC)
+
+Fast Qwen STILL NOT achieved. Explicit30/model-registry15/private GPU job8
+changes ONLY hidden-projection partitioning. Q uses up to119 peers instead
+of64;V/K/O/down use64 instead of32. Paired gate/up and final vocabulary
+KEEP original32/64 and32-row chunks,including all128B host subspan bounds.
+Whole tensors/197 initialized extents/page alignment,packing,bank0 arena,
+ALL exact29 arithmetic and8 attention/6 GLU roles remain unchanged.
+Private16-row K1024/K3072 starts may be2048 modulo4096,but ALWAYS satisfy
+the qualified32B NoC congruence and stay wholly within sealed initialized
+tensor spans. Existing native math handles16 rows without new bytecode.
+
+More real peer jobs are now expected:14343 instead of9219. New per-position
+sequences:first6=225,next2=197,9..64=169,65..119=57;max225 keeps the SAME
+existing table owner. Exact full min R/RF/W/WF44605/81286/14854/24231;
+small44487/71792/14736/14737. Relative to28/29,+5124 matrix jobs add3 reads,
+2 fixed read flits and1 doorbell write/flit each;total gathered output flits
+are unchanged. All source/sequence/NoC/counter/host result proofs persist,
+and all119 immutable small-row flags match the sealed lease. No routes,
+host DMA,VRAM capacity,public shape/page rule,precision or arbitrary code.
+
+First offline master9b0335f5 was REJECTED by actual-instruction tests:
+compiler emitted unqualified DIVU for a variable16/32 divisor. Corrected
+explicit shift produces rootd2d1135e with NO DIV/REM/MULH/FDIV/FSQRT/FMADD.
+No rejected image was installed. Final root passes actual master/group
+images,full+128B zero/sparse/two consecutive positions,ALL logits/KV/119
+sequences/counters and command/write-counter faults. Independent planner
+passes EVERY tensor row and14343-job coverage;actual math16-row K1024/
+2048/3072 and half-page starts passes repeated IEEE bits/guard words.
+Actual119-peer table/math/mixed dispatch and three-mode complete held table
+staging/restore pass. Fourteen-mode ownership faults,all119 flag mismatch
+refusals,private sequence/counter bounds and REAL client/ABI gates pass
+ASan/UBSan. Native30 speed/quality PENDING;driver
+`b249fcfa697e95095d0ed971ffb848a9692b07f64c36f7d9c84a546e38660b6e`;
+verifier`0e0a7ee47ba1b955c05546b586dc997c4dfe929d2a7147ace0182b421ba7e314`.
+Qualified29/28/27/25 preserved. No Assistant/all-Qwen/27B/Q4 promotion.
+
 ### October17: exact arithmetic29 native PASS;next prototypes (11:57 UTC)
 
 Fast Qwen STILL NOT achieved. Contract29 passes all22 full-vocabulary/

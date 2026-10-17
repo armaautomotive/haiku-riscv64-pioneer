@@ -2395,14 +2395,14 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={29,119,3,1,8192}; // v29 exact SFPU schedule,one AddrMod1 setup per job;resident descriptors unchanged
+	tt_coordinated_support support={30,119,3,1,8192}; // v30 private16-row peer chunks;whole tensors and final vocabulary unchanged
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
 static bool
-PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug,bool parallel=false,bool glu=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool descriptorTable=false,bool accumPipeline=false,const PioneerDecoderJob* model=NULL)
+PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug,bool parallel=false,bool glu=false,bool inlineMath=false,bool partialMath=false,bool cachedQuery=false,bool inputPull=false,bool phasePipeline=false,bool descriptorTable=false,bool accumPipeline=false,bool smallRows=false,const PioneerDecoderJob* model=NULL)
 {
-	if (accumPipeline && !descriptorTable) return false;
+	if ((smallRows && !accumPipeline) || (accumPipeline && !descriptorTable)) return false;
 	if (descriptorTable && (!model || !phasePipeline || !inputPull || !cachedQuery || !inlineMath || partialMath || !glu || !parallel)) return false;
 	bool ready=c.lease.ready && c.io.MapRuntime(true);
 	if (ready && !c.fleet) {
@@ -2429,7 +2429,7 @@ PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug,bool 
 	if (ready) ready=PioneerCoordinatedMasterBoundary(c.io,dram,c.fleet,c.attention.ready);
 	for (unsigned w=1;w<=workers && ready;w++) {
 		auto& f=c.fleet[w];
-		if (f.persistentActive) { ready=f.coordinated && f.persistentIdle && !f.Compute().running && f.attentionDispatch==(parallel && w<=8) && f.gluDispatch==(glu && w<=8) && f.inlineMath==inlineMath && f.coordinatedInline==inlineMath && f.partialMath==partialMath && f.phasePipeline==phasePipeline && f.descriptorTable==descriptorTable && f.accumPipeline==accumPipeline && (!descriptorTable || f.descriptorTablePrepared) && (w>8 || (c.peerAttention[w-1].cachedQuery==cachedQuery && c.peerAttention[w-1].inputPull==inputPull)); continue; }
+		if (f.persistentActive) { ready=f.coordinated && f.persistentIdle && !f.Compute().running && f.attentionDispatch==(parallel && w<=8) && f.gluDispatch==(glu && w<=8) && f.inlineMath==inlineMath && f.coordinatedInline==inlineMath && f.partialMath==partialMath && f.phasePipeline==phasePipeline && f.descriptorTable==descriptorTable && f.accumPipeline==accumPipeline && f.smallRows==smallRows && (!descriptorTable || f.descriptorTablePrepared) && (w>8 || (c.peerAttention[w-1].cachedQuery==cachedQuery && c.peerAttention[w-1].inputPull==inputPull)); continue; }
 		ready=c.io.AllocateFleetWorker(w) && c.io.SelectRuntimeCore(w);
 		if (ready && !f.Store().ready) ready=!f.Store().saved && PioneerFleetLeaseBegin(c.io,dram,w,f);
 		if (ready) ready=PioneerRuntimeMatvecPrepare(c.io,dram,f.noc,f.Store(),f.Compute(),false,true,true,true,true,true,true)
@@ -2442,7 +2442,7 @@ PrepareCoordinatedFleet(PioneerStoreContext& c,unsigned workers,bool debug,bool 
 			else { c.io.RuntimeCodeWrite(0,0x0006b06f); ready &= c.io.RuntimeCodeRead(0)==0x0006b06f; }
 		}
 		if (ready) ready=PioneerPersistentPrepare(c.io,f,inlineMath,true,parallel && w<=8,glu && w<=8,inlineMath,partialMath,phasePipeline,descriptorTable,accumPipeline)
-			&& (!descriptorTable || PioneerPersistentTablePrepare(c.io,dram,f,*model,w)) && PioneerPersistentBoot(c.io,f);
+			&& (!descriptorTable || PioneerPersistentTablePrepare(c.io,dram,f,*model,w,smallRows)) && PioneerPersistentBoot(c.io,f);
 	}
 	return ready && c.io.SelectRuntimeCore(0);
 }
@@ -2456,7 +2456,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	auto* request=(tt_pioneer_decoder_model*)malloc(length); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,length);
-	if (status!=B_OK || request->version<1 || request->version>14 || request->reserved[0] || request->reserved[1] || request->reserved[2]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	if (status!=B_OK || request->version<1 || request->version>15 || request->reserved[0] || request->reserved[1] || request->reserved[2]) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
@@ -2466,12 +2466,12 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	else {
 		request->state=TT_RUNTIME_CONFIG_FAILED; request->ready=request->extents=request->recovery_required=0;
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
-		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version>=12,phasePipeline=request->version==10 || request->version>=12,diagnostic=request->version==11,descriptorTable=request->version>=13,accumPipeline=request->version==14,ready=true;
+		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version>=12,phasePipeline=request->version==10 || request->version>=12,diagnostic=request->version==11,descriptorTable=request->version>=13,accumPipeline=request->version>=14,smallRows=request->version==15,ready=true;
 		// The parallel registry must precede ANY peer preparation. Weight
 		// spans prepare only master0. Never replace an executing/idle peer's
 		// immutable code to upgrade an existing matrix session.
 		if (parallel) for (unsigned w=1;w<120;w++) ready &= !c->fleet[w].Compute().saved && !c->fleet[w].persistentPrepared && !c->fleet[w].persistentActive;
-		if (ready) { c->io.peerAttentionEnabled=parallel; ready=PrepareCoordinatedFleet(*c,119,false,parallel,glu,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,descriptorTable,accumPipeline,descriptorTable?&c->decoderModel:NULL); }
+		if (ready) { c->io.peerAttentionEnabled=parallel; ready=PrepareCoordinatedFleet(*c,119,false,parallel,glu,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,descriptorTable,accumPipeline,smallRows,descriptorTable?&c->decoderModel:NULL); }
 		ready=ready && PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,c->attention.ready);
 		// One-way seal:all legacy mutable/runtime operations reject mode9,
 		// including both legacy page/stream paths. END still live-stops ALL
@@ -2479,7 +2479,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		c->runtimeCoreMode=9;
 		ready=ready && PioneerLayerClose(c->io,dram,c->fleet[0].noc,c->lease,c->layer,true)
 			&& c->io.MapAttention() && PioneerAttentionTilePrepare(c->io,dram,c->fleet[0].noc,c->lease,c->attention,true)
-			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel,glu,greedy,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable,accumPipeline);
+			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel,glu,greedy,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable,accumPipeline,smallRows);
 		if (ready && (!PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,true)
 			|| !PioneerWideOutputMapStable(c->io,c->wideHost,c->host,c->bulkHost))) { c->decoder.unsafe=true; ready=false; }
 		if (ready) {

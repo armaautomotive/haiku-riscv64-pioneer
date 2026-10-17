@@ -95,7 +95,9 @@ static void DecoderMatrix(uint32_t base,unsigned k,unsigned n,uint32_t (&total)[
 #if PIONEER_COORDINATOR_GREEDY
 	if (final && root.operation==9) { j[1]=9; j[10]=root.tokens; }
 #endif
-	unsigned peers=n/32; if (peers>119) peers=119;
+	// A variable power-of-two divisor otherwise becomes unqualified DIVU
+	// at -Os. The fixed tile size is represented by a shift explicitly.
+	unsigned peers=n>>(PIONEER_COORDINATOR_SMALL_ROWS && n<=8192?4:5); if (peers>119) peers=119;
 	for (unsigned i=0;i<peers;i++) j[64+i]=root.sequence[i];
 	Fence();
 	if (decoder_matrix_main()!=peers) coordinator_fault_park();
@@ -284,7 +286,7 @@ static void DecoderParallelGlu(unsigned layer,uint32_t (&total)[4])
 extern "C" unsigned coordinator_main()
 {
 	volatile auto& root=DecoderJob();
-	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
+	if (!PioneerDecoderJobValid(root,PIONEER_COORDINATOR_SMALL_ROWS?8:PIONEER_COORDINATOR_DESCRIPTOR_TABLE?7:PIONEER_COORDINATOR_PULL_INPUT?6:PIONEER_COORDINATOR_PAIRED_FFN?5:PIONEER_COORDINATOR_GREEDY?4:PIONEER_COORDINATOR_PARALLEL_GLU?3:PIONEER_COORDINATOR_PARALLEL_ATTENTION?2:1) || !NocIdle()) return 0;
 #if PIONEER_COORDINATOR_PULL_DIAGNOSTIC
 	if (root.operation!=8) return 0; // Never a sampling/inference target.
 	for (unsigned i=0;i<16;i++) Words(0x147900)[i]=0;

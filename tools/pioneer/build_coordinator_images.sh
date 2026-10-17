@@ -37,6 +37,8 @@ case ${PIONEER_COORDINATOR_PAIRED_FFN:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PULL_INPUT:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_PULL_DIAGNOSTIC:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_COORDINATOR_SMALL_ROWS:-0} in 0|1) ;; *) exit 2;; esac
+[ "${PIONEER_COORDINATOR_SMALL_ROWS:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PULL_DIAGNOSTIC:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PULL_INPUT:-0}" = 1 ] || exit 2
 [ "${PIONEER_COORDINATOR_PULL_INPUT:-0}" = 0 ] || [ "${PIONEER_COORDINATOR_PAIRED_FFN:-0}" = 1 ] || exit 2
@@ -106,6 +108,7 @@ if [ "${PIONEER_COORDINATOR_DECODER:-0}" = 1 ]; then source_file=blackhole_decod
  -DPIONEER_COORDINATOR_PULL_INPUT=${PIONEER_COORDINATOR_PULL_INPUT:-0} \
  -DPIONEER_COORDINATOR_PULL_DIAGNOSTIC=${PIONEER_COORDINATOR_PULL_DIAGNOSTIC:-0} \
  -DPIONEER_COORDINATOR_DESCRIPTOR_TABLE=${PIONEER_COORDINATOR_DESCRIPTOR_TABLE:-0} \
+ -DPIONEER_COORDINATOR_SMALL_ROWS=${PIONEER_COORDINATOR_SMALL_ROWS:-0} \
  -c "$directory/$source_file" -o "$output/program.o"
 "$cross-as" -march="$isa" -mabi=ilp32 -mno-relax "$directory/blackhole_coordinator_start.S" -o "$output/start.o"
 set --

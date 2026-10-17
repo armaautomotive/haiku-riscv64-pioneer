@@ -10,7 +10,7 @@ struct TableDecoder:GreedyDecoder {
 	void PeerWrite(unsigned worker,uint32_t address,uint32_t value) override {
 		assert(!(address>=0x70500 && address<0x70520)); // NO root descriptor staging
 		if (address==0x71300) { PioneerDecoderDescriptor entry;
-			assert(PioneerDecoderDescriptorEntry(frozen,worker,sequence[worker-1]%PioneerDecoderDescriptorCount(worker),entry));
+			assert(PioneerDecoderDescriptorEntry(frozen,worker,sequence[worker-1]%PioneerDecoderDescriptorCount(worker,getenv("PIONEER_GREEDY_SMALL_ROWS")!=nullptr),entry,getenv("PIONEER_GREEDY_SMALL_ROWS")!=nullptr));
 			for (unsigned i=0;i<8;i++) descriptor[worker-1][i]=entry.words[i];
 			lookups++;
 		}
@@ -27,8 +27,8 @@ int main(int argc,char** argv)
 	setenv("PIONEER_COORDINATED_PULL_INPUT","1",1); setenv("PIONEER_GREEDY_PAIRED_FFN","1",1); setenv("PIONEER_GREEDY_DESCRIPTOR_TABLE","1",1);
 	DecoderSfpuImage image(argv[2],false,true,true);
 	if (!getenv("PIONEER_TABLE_FAULTS_ONLY")) for (bool small:{false,true}) for (bool nonzero:{false,true}) {
-		TableDecoder m(argv[1],image,nonzero,small); assert(m.RunDecoder()); m.Verify(); m.VerifyProfile(); assert(m.lookups==9219);
-		if (nonzero) { m.Next(); assert(m.RunDecoder()); m.Verify(); m.VerifyProfile(); assert(m.lookups==18438); }
+		TableDecoder m(argv[1],image,nonzero,small); assert(m.RunDecoder()); m.Verify(); m.VerifyProfile(); assert(m.lookups==(getenv("PIONEER_GREEDY_SMALL_ROWS")?14343U:9219U));
+		if (nonzero) { m.Next(); assert(m.RunDecoder()); m.Verify(); m.VerifyProfile(); assert(m.lookups==(getenv("PIONEER_GREEDY_SMALL_ROWS")?28686U:18438U)); }
 	}
 	for (unsigned word=1;word<=10;word++) { TableDecoder m(argv[1],image,false,true); m.dropCommand=word;
 		assert(!m.RunDecoder() && m.commandPoisoned && !m.issued && !m.hostWrites); }

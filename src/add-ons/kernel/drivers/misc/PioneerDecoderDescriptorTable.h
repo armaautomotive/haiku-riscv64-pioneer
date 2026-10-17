@@ -10,30 +10,31 @@ enum { TT_DECODER_TABLE_BASE=0x86000,TT_DECODER_TABLE_ENTRIES=225,
 	TT_DECODER_TABLE_WORDS=225*8,TT_DECODER_TABLE_COUNT=0x713c0,
 	TT_DECODER_TABLE_CURSOR=0x713c4 };
 struct PioneerDecoderDescriptor { uint32_t words[8]; };
-static inline unsigned PioneerDecoderDescriptorCount(unsigned worker)
+static inline unsigned PioneerDecoderDescriptorCount(unsigned worker,bool smallRows=false)
 {
-	return worker && worker<=119?PioneerDecoderSequenceAdvance(worker-1,true,true,true):0;
+	return worker && worker<=119?PioneerDecoderSequenceAdvance(worker-1,true,true,true,smallRows):0;
 }
 static inline unsigned PioneerDecoderDescriptorXY(unsigned worker)
 {
 	const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
 	return worker && worker<=119?columns[worker/10]|((2+worker%10)<<6):0;
 }
-static inline bool PioneerDecoderDescriptorMatrix(uint32_t base,unsigned k,unsigned n,unsigned worker,PioneerDecoderDescriptor& entry)
+static inline bool PioneerDecoderDescriptorMatrix(uint32_t base,unsigned k,unsigned n,unsigned worker,PioneerDecoderDescriptor& entry,bool smallRows=false)
 {
 	if (!worker || worker>119 || !PioneerDecoderWeight(base,k,n)) return false;
-	unsigned blocks=n/32,workers=blocks<119?blocks:119;
+	unsigned quantum=smallRows && n<=8192?16:32;
+	unsigned blocks=n/quantum,workers=blocks<119?blocks:119;
 	if (worker>workers) return false;
 	unsigned per=blocks/workers,extra=blocks%workers,ordinal=worker-1;
-	unsigned first=(ordinal*per+(ordinal<extra?ordinal:extra))*32;
-	unsigned rows=(per+(ordinal<extra))*32;
+	unsigned first=(ordinal*per+(ordinal<extra?ordinal:extra))*quantum;
+	unsigned rows=(per+(ordinal<extra))*quantum;
 	entry={}; entry.words[0]=base+first*(k+k/8); entry.words[1]=k/16;
 	entry.words[2]=rows/16; entry.words[3]=1; entry.words[4]=PioneerDecoderDescriptorXY(worker);
 	return true;
 }
-static inline bool PioneerDecoderDescriptorEntry(const PioneerDecoderJob& model,unsigned worker,unsigned index,PioneerDecoderDescriptor& entry)
+static inline bool PioneerDecoderDescriptorEntry(const PioneerDecoderJob& model,unsigned worker,unsigned index,PioneerDecoderDescriptor& entry,bool smallRows=false)
 {
-	entry={}; if (index>=PioneerDecoderDescriptorCount(worker)) return false;
+	entry={}; if (index>=PioneerDecoderDescriptorCount(worker,smallRows)) return false;
 	unsigned at=0;
 	for (unsigned layer=0;layer<28;layer++) {
 		const auto& l=model.layers[layer];
@@ -49,10 +50,10 @@ static inline bool PioneerDecoderDescriptorEntry(const PioneerDecoderJob& model,
 				return true;
 			}
 			unsigned role=phase<3?phase:phase<6?phase-1:5;
-			unsigned limit=outputs[role]/32; if (limit>119) limit=119;
+			unsigned limit=outputs[role]/(smallRows?16:32); if (limit>119) limit=119;
 			if (worker>limit) continue;
 			if (at++!=index) continue;
-			if (role!=4) return PioneerDecoderDescriptorMatrix(base[role],inputs[role],outputs[role],worker,entry);
+			if (role!=4) return PioneerDecoderDescriptorMatrix(base[role],inputs[role],outputs[role],worker,entry,smallRows);
 			PioneerPairedFfnSpan span; if (!PioneerPairedFfnWorker(worker,span)
 				|| !PioneerDecoderWeight(l.gate,1024,3072) || !PioneerDecoderWeight(l.up,1024,3072)) return false;
 			entry.words[0]=(span.tensor?l.up:l.gate)+span.first*1152;
@@ -60,6 +61,6 @@ static inline bool PioneerDecoderDescriptorEntry(const PioneerDecoderJob& model,
 			entry.words[4]=PioneerDecoderDescriptorXY(worker); return true;
 		}
 	}
-	return at==index && PioneerDecoderDescriptorMatrix(model.vocabulary,1024,151936,worker,entry);
+	return at==index && PioneerDecoderDescriptorMatrix(model.vocabulary,1024,151936,worker,entry,smallRows);
 }
 #endif

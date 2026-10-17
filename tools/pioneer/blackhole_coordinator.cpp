@@ -275,9 +275,12 @@ extern "C" unsigned coordinator_main()
 	if (operation==10) bytes=3072*rowBytes;
 #endif
 	if (bytes>0x82400000-base) return 0;
-	unsigned blocks=n>>5,workers=blocks<limit?blocks:limit,blocksPerWorker=0,extra=blocks;
+	// Whole tensors and final128B host subspans retain their32-row shape.
+	// ONLY private hidden-projection peer chunks use the native16-row tile.
+	unsigned rowShift=PIONEER_COORDINATOR_SMALL_ROWS && n<=8192?4:5;
+	unsigned blocks=n>>rowShift,workers=blocks<limit?blocks:limit,blocksPerWorker=0,extra=blocks;
 	while (extra>=workers) { extra-=workers; blocksPerWorker++; }
-	if (blocksPerWorker+(extra!=0)>128) return 0; // peer output lease <=4096 rows
+	if (blocksPerWorker+(extra!=0)>(4096U>>rowShift)) return 0; // peer output lease <=4096 rows
 #if PIONEER_COORDINATOR_COMPACT_INPUT
 	// One compact owned host READ contains exactly the vector followed by
 	// its scales. Keep the qualified peer ABI unchanged: relocate/verify
@@ -300,7 +303,7 @@ extern "C" unsigned coordinator_main()
 	}
 	unsigned firstRow=0;
 	for (unsigned worker=1;worker<=workers;worker++) {
-		unsigned rows=(blocksPerWorker+((worker-1)<extra))*32;
+		unsigned rows=(blocksPerWorker+((worker-1)<extra))<<rowShift;
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		unsigned weightBase=base+firstRow*rowBytes;
 		if (operation==10) { PioneerPairedFfnSpan span; if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park();
@@ -350,7 +353,7 @@ extern "C" unsigned coordinator_main()
 			if (*Words(0x147088)==0x4e4f4346) coordinator_fault_park();
 		}
 		if (!idle) coordinator_fault_park();
-		unsigned rows=(blocksPerWorker+((worker-1)<extra))*32;
+		unsigned rows=(blocksPerWorker+((worker-1)<extra))<<rowShift;
 #if PIONEER_COORDINATOR_PAIRED_FFN
 		PioneerPairedFfnSpan span;
 		if (operation==10) { if (!PioneerPairedFfnWorker(worker,span)) coordinator_fault_park(); rows=span.rows; }

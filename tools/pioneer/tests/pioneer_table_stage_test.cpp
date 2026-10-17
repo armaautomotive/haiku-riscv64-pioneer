@@ -32,12 +32,12 @@ static void Prepare(TableStageIO& io,PioneerFleetWorker& f,unsigned worker,bool 
 }
 int main() {
 	auto model=Model();
-	for (bool accum:{false,true}) { TableStageIO io(120); std::vector<PioneerFleetWorker> fleet(120);
+	for (unsigned mode:{0U,1U,2U}) { bool accum=mode>=1,smallRows=mode==2; TableStageIO io(120); std::vector<PioneerFleetWorker> fleet(120);
 		for (unsigned worker=1;worker<120;worker++) { io.current=worker; auto& f=fleet[worker]; Prepare(io,f,worker,accum);
 			std::vector<uint32_t> before(io.C().buffers,io.C().buffers+12288);
-			assert(PioneerPersistentTablePrepare(io,io.C().Baseline(),f,model,worker) && f.descriptorTablePrepared && f.Compute().buffers_dirty && !io.C().starts);
-			unsigned count=PioneerDecoderDescriptorCount(worker);
-			for (unsigned i=0;i<count;i++) { PioneerDecoderDescriptor entry; assert(PioneerDecoderDescriptorEntry(model,worker,i,entry));
+			assert(PioneerPersistentTablePrepare(io,io.C().Baseline(),f,model,worker,smallRows) && f.smallRows==smallRows && f.descriptorTablePrepared && f.Compute().buffers_dirty && !io.C().starts);
+			unsigned count=PioneerDecoderDescriptorCount(worker,smallRows);
+			for (unsigned i=0;i<count;i++) { PioneerDecoderDescriptor entry; assert(PioneerDecoderDescriptorEntry(model,worker,i,entry,smallRows));
 				for (unsigned w=0;w<8;w++) assert(io.C().buffers[6144+i*8+w]==entry.words[w]); }
 			for (unsigned w=0;w<12288;w++) if (w<6144 || w>=6144+count*8) assert(io.C().buffers[w]==before[w]);
 			assert(!PioneerPersistentTablePrepare(io,io.C().Baseline(),f,model,worker));

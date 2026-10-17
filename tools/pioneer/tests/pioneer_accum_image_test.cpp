@@ -39,6 +39,15 @@ int main(int argc,char** argv) {
 		for (unsigned trial:{0U,1U,9U}) { m.Job(trial); m.Verify(); } m.Stop();
 	}
 	for (unsigned k:{1024U,2048U,3072U,5120U,6144U}) { AccumMachine m(code,k,64,119); m.Boot(); m.Job(2); m.Verify(); m.Job(3); m.Verify(); m.Stop(); }
+	// Private per-peer16-row chunks only. Whole tensor/public page shapes
+	// remain multiples32. First16 rows have the SAME packed byte layout.
+	for (unsigned k:{1024U,2048U,3072U}) for (unsigned worker:{1U,64U,119U}) {
+		AccumMachine m(code,k,32,worker); m.outputs=16; m.weights.resize(size_t(k)*16*9/8/4);
+		m.base+=16*(k+k/8); m.l1[m.Index(0x70500)]=m.base; m.l1[m.Index(0x70508)]=1;
+		m.Boot(); for (unsigned t:{0U,1U,9U}) { m.Job(t); m.Verify();
+			for (unsigned row=16;row<4096;row++) assert(m.buffers[4096+row]==0x7fc00000); }
+		m.Stop();
+	}
 	AccumMachine full(code,1024,4096,1); full.Boot(); full.Job(0); full.Verify(); full.Job(1); full.Verify(); full.Stop();
 	AccumMachine proposed(code,1024,32,1); proposed.Boot(); proposed.Job(0); proposed.Verify();
 	PersistentMachine previous(1024,32,1); previous.Phase(); previous.Boot(); previous.Job(0);

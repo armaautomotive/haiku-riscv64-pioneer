@@ -33,8 +33,11 @@ int main(int argc,char** argv)
 		assert(BlackholeTableAttentionWorkerCodeWord(i)==(i<attention.size()/4?Word(attention,i*4):0));
 		assert(BlackholeTableGluWorkerCodeWord(i)==(i<glu.size()/4?Word(glu,i*4):0));
 	}
-	for (unsigned worker=1;worker<=119;worker++) {
-		TableWorker m(worker<=6?glu:worker<=8?attention:plain,worker); m.BootCoord();
+	for (bool smallRows:{false,true}) for (unsigned worker=1;worker<=119;worker++) {
+		TableWorker m(worker<=6?glu:worker<=8?attention:plain,worker);
+		if (smallRows) { m.outputs=16; m.weights.resize(size_t(m.inputs)*16*9/8/4); m.base+=16*(m.inputs+m.inputs/8);
+			for (unsigned i=0;i<3;i++) m.Put(i,false,false); }
+		m.BootCoord();
 		for (unsigned trial:{0U,9U,1U,2U}) { m.JobCoord(trial); assert(m.Cursor()==m.jobs%3); }
 		for (unsigned i=0;i<24;i++) { unsigned slot=i/8,word=i%8;
 			const unsigned expected[]={m.base,m.inputs/16,m.outputs/16,1,PioneerDecoderDescriptorXY(worker),0,0,0};
