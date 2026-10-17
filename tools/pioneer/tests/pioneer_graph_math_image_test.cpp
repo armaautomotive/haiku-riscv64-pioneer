@@ -90,7 +90,7 @@ struct ScalarMachine:Machine {
 			for (unsigned head=0;head<n;head+=128) for (unsigned i=0;i<64;i++) {
 				float a=PioneerAttentionFloat(memory.at(0x84000+(head+i)*4)),b=PioneerAttentionFloat(memory.at(0x84000+(head+64+i)*4));
 				float c=PioneerAttentionFloat(memory.at(0x87000+i*8)),s=PioneerAttentionFloat(memory.at(0x87004+i*8));
-				assert(memory.at(0x90000+(head+i)*4)==PioneerAttentionBits(a*c-b*s) && memory.at(0x90000+(head+64+i)*4)==PioneerAttentionBits(a*s+b*c));
+				assert(memory.at(0x90000+(head+i)*4)==PioneerAttentionBits(fmaf(a,c,-(b*s))) && memory.at(0x90000+(head+64+i)*4)==PioneerAttentionBits(fmaf(a,s,b*c)));
 			}
 			assert(!operandWrites && !scaleWrites); return;
 		}

@@ -2,6 +2,47 @@
 
 ## Status
 
+### October17: native whole-decoder precision corrected (07:56 UTC)
+
+Fast Qwen is NOT yet qualified. The first native whole-position run safely
+completed18 positions with one GPU job each,197 projections/28 attention
+calls per position and zero intermediate host transfers. Cold preparation
+was91.552827s. Positions0..15 had identical full-vocabulary logits at
+0.359034..0.623095s/position. Position16 L2=.015730012 passed;position17
+L2=.029254553 FAILED the unchanged .02 gate,despite matching argmax.
+The run stopped without generation/Assistant promotion. END2/PCI-host1-1/
+cold0/cleanup1:the numerical failure did NOT require a power recovery.
+Log:`qwen-whole-v13-verify.log`,original driver`c9f84652...313b`,verifier
+`cedc29dc...dc07`.
+
+Pinned clean Haiku CPU disassembly proves RoPE uses FMSUB/FMADD after
+rounding the other product. The original offline oracle incorrectly
+assumed both products were rounded separately. A new integer exact-RNE
+FMA matches2M arbitrary finite cases,near cancellation,subnormals,overflow
+and signed zero. Four12-bit products avoid unqualified MULHU;explicit
+32-bit variable shifts avoid runtime helpers. No BRISC FMADD is assumed.
+512 fused RoPE vectors match independent `fmaf` in/out-of-place,and the
+actual scalar/whole-decoder instruction tests and ownership faults pass.
+The oracle now matches the actual pinned CPU;quality gates are unchanged.
+
+New experimental image SHA
+`5b0ad6e845d3ffc65dd7476ff864bea7d8efe23fb6132119f86459c2564768b6`
+(17880 bytes),driver
+`6596f09ca05d4f4c2cb7791edf4eba48d2eff8cdad1dded4deba3e50a7ba30c5`,
+separately named profiling verifier
+`f962a9de15fd212906c8821fa71286b81e686593f88dc153610fab5b59528487`.
+The previous v13 and v12 drivers remain backed up. Native retest PASSED all
+22 positions with EXACT full-vocabulary logits and four greedy tokens:
+4334 projections,616 attention calls,22 full results,no warm model upload.
+Cold preparation93.129110s;short generation3/2.396762s=1.251689tok/s,
+about2.43x the preceding narrow path. This is NOT a repeated CPU speedup
+gate or Assistant qualification and remains too slow. Kernel timings show
+position21:input10.875ms,metadata20.081ms,GPU749.161ms,completion24.398ms,
+snapshot0.653ms. END2/PCI-host1-1/cold0/cleanup1.
+Log:`qwen-whole-v13-fma-verify.log`. Existing Assistant/default boot,
+CPU/RAM,SD and firmware remain unchanged. Next:reduce redundant GPU
+attention instructions,then parallelize its still-serial group execution.
+
 ### October17: experimental native whole-decoder contract13 prepared (07:40 UTC)
 
 NOT yet native-qualified or installed at this checkpoint;fast Qwen remains

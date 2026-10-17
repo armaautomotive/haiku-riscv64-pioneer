@@ -114,6 +114,14 @@ static int Run(const char* path,bool inspect)
 		double cosine=dot/sqrt(a2*b2),relative=sqrt(d2/(b2+1e-30)); int actual=Argmax(logits.data()),expected=Argmax(reference);
 		okay=isfinite(cosine) && isfinite(relative) && cosine>=.999 && relative<=.02 && actual>=0 && actual==expected && card.uploads==uploads;
 		printf("WHOLE pos%u wall%.6fs cosine%.9f L2%.9f argmax%d/%d quality%u uploads%llu one GPU job/position\n",position,elapsed,cosine,relative,actual,expected,okay,(unsigned long long)card.uploads);
+		tt_runtime_profile_result profile={};
+		if (card.DecoderProfile(profile)) {
+			printf(" WHOLE kernel phase us");
+			for (unsigned slot=0;slot<TT_PROFILE_SLOTS;slot++) {
+				if (profile.mask&(1U<<slot)) printf(" t%u=%llu",slot,(unsigned long long)profile.microseconds[slot]);
+			}
+			printf("\n");
+		}
 		if (position>=unsigned(count)) decodeSeconds+=elapsed;
 		if (position+1>=unsigned(count)) { token=actual; generated++; printf("OUTPUT greedy token%d\n",actual); }
 	}

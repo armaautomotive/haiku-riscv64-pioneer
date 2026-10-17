@@ -66,7 +66,7 @@ struct DecoderMachine:CoordinatorMachine {
 	std::vector<float> Rope(std::vector<float> x) {
 		for (unsigned head=0;head<x.size();head+=128) for (unsigned i=0;i<64;i++) {
 			float a=x[head+i],b=x[head+64+i],c=Float(memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,rope)+i*8)),s=Float(memory.at(TT_DECODER_JOB_BASE+offsetof(PioneerDecoderJob,rope)+i*8+4));
-			x[head+i]=a*c-b*s; x[head+64+i]=a*s+b*c; }
+			x[head+i]=fmaf(a,c,-(b*s)); x[head+64+i]=fmaf(a,s,b*c); }
 		return x;
 	}
 	void Reference() {

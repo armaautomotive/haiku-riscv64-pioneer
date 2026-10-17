@@ -57,7 +57,7 @@ int main()
 		inplace=input; assert(PioneerGraphRopeNeox(n,input.data(),table,output.data()) && PioneerGraphRopeNeox(n,inplace.data(),table,inplace.data()) && output==inplace);
 		for (unsigned head=0;head<n;head+=128) for (unsigned i=0;i<64;i++) {
 			float a=input[head+i],b=input[head+64+i],c=table[2*i],s=table[2*i+1];
-			assert(PioneerAttentionBits(output[head+i])==PioneerAttentionBits(a*c-b*s) && PioneerAttentionBits(output[head+64+i])==PioneerAttentionBits(a*s+b*c));
+			assert(PioneerAttentionBits(output[head+i])==PioneerAttentionBits(fmaf(a,c,-(b*s))) && PioneerAttentionBits(output[head+64+i])==PioneerAttentionBits(fmaf(a,s,b*c)));
 		}
 		vectors++;
 	}

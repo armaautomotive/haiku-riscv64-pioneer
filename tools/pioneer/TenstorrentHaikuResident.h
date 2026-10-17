@@ -39,6 +39,12 @@ public:
 	uint64_t wideCalls=0,spanCalls=0,narrowCalls=0;
 	unsigned UploadPageLimit() const { return decoderRegistered?0:coordinatedSpan?256:4; }
 	bool NarrowEnabled() const { return coordinatedNarrow; }
+	bool DecoderProfile(tt_runtime_profile_result& result) {
+		if (!decoderRegistered || !active || failed || finished || cold) return false;
+		return !ioctl(fd,TT_PCI_PROBE_PIONEER_RUNTIME_PROFILE,&result,sizeof(result))
+			&& result.version==1 && result.available && result.clock_stable && result.format==21 && result.mask==0x13f
+			&& result.state==TT_RUNTIME_PASSED && result.started && result.completed && result.stopped && !result.recovery_required;
+	}
 	unsigned lastActivationPages=0;
 	// Diagnostic cohort tuning only; no new driver authority or active
 	// job mutation. The kernel independently partitions every request.
