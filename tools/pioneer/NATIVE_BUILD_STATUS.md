@@ -1,12 +1,19 @@
 # Native build status (2026-09-07)
 
-Latest checkpoint (October 15): P100A installed; both SD cards out; Haiku
-reachable through the private SD-free RAM handoff with 64 CPUs and full RAM.
-The native Assistant now offers experimental TinyStories-260K story completion
-using real P100A projections plus CPU attention/KV/norms and verification.
-An eight-output-token native GUI run passed; CPU chat remains a separate Qwen
-backend. Full Qwen/P100A inference, resident GDDR weights and DMA are **not**
-working yet. Card firmware/default Linux boot are unchanged. See the
+Latest checkpoint (October17): P100A installed; both SD cards out; Haiku
+reachable through the private SD-free RAM handoff with64 CPUs and full RAM.
+Native Qwen3-0.6B learned matrices and attention now execute on P100A with
+resident GDDR weights; correct inference is established but practical speed
+is NOT. The installed Assistant's prior seven-sample result was0.108111tok/s.
+A separately qualified device-resident KV path now removes host prefix
+transfers. Full-model and three warm-request quality gates passed, but
+0.209–0.211tok/s FAILED CPU32's0.596–1.249tok/s comparison. The updated
+installed Assistant answered a public request at0.222tok/s (seven samples,
+CPU validation OFF/reference decodes0); still not practical speed. Its model
+was cleanly unloaded before subsequent isolated transport development.
+Card firmware/default Linux boot and the
+user's unrelated llama.cpp edits are unchanged. See the current
+[P100A status](TENSTORRENT_PORT.md#status) and the
 [Assistant integration record](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).
 See [the current P100A bring-up record](TENSTORRENT_PORT.md) for exact artifacts,
 rollback evidence and the remaining startup/cache gate. Older entries below

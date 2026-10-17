@@ -37,6 +37,29 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
 		}
 		return 0;
 	}
+	if (op==TT_PCI_PROBE_PIONEER_RESIDENT_ATTENTION) {
+		auto& p=*(tt_pioneer_resident_attention*)data;
+		assert((p.version==1 || p.version==2) && bytes==sizeof(p) && PioneerResidentAttentionInput(p.tokens,p.layer,p.input));
+		for (unsigned w=0;w<2048;w++) assert(p.input[w]==0x3f800000);
+		for (unsigned g=0;g<8;g++) for (unsigned w=0;w<64;w++) {
+			assert(p.input[2048+g*128+w]==0x38003800 && p.input[2048+g*128+64+w]==0x3c003c00);
+		}
+		auto& r=p.result.math; r={}; r.version=1; r.state=TT_ATTN_TILE_PASSED;
+		r.prepared=r.context_reset=r.started=r.completed=r.stopped=r.polls=1;
+		r.tokens=r.count=p.tokens; r.staged_words=3072; r.phase=TT_ATTENTION_TILE_DONE; r.marker=TT_ATTENTION_TILE_MARKER;
+		r.pc[0]=r.pc[1]=TT_ATTENTION_TILE_PARK; p.result.layer=p.layer; p.result.groups=8;
+		unsigned reads=16*((p.tokens+63)/64); const unsigned expected[8]={reads,64*p.tokens,reads+16,reads,16,64,reads+16,16};
+		for (unsigned w=0;w<8;w++) { p.result.before[w]=UINT32_MAX-7; p.result.after[w]=p.result.before[w]+expected[w]; }
+		for (unsigned w=0;w<4;w++) { r.before[w]=p.result.before[w]; r.after[w]=p.result.after[w]; }
+		for (auto& w:p.output) w=0x3f800000;
+		if (fault) {
+			failed=true;
+			if (fault==1) { errno=EIO; return -1; }
+			if (fault==2) ((uint32_t*)&p.result)[field]^=1;
+			if (fault==4) p.output[field]=0x7fc00000;
+		}
+		return 0;
+	}
 	assert(op==TT_PCI_PROBE_PIONEER_FLEET_ATTENTION);
 	auto& p=*(tt_pioneer_fleet_attention*)data; assert(p.version==1 && bytes==PioneerFleetAttentionBytes(p.tokens));
 	for (unsigned g=0;g<8;g++) {
@@ -91,6 +114,29 @@ int main() {
 	}
 	for (unsigned absent:{TT_PIONEER_CAP_Q8_FLEET,TT_PIONEER_CAP_FLEET_ATTENTION}) {
 		Reset(); missing=absent; { PioneerResidentDevice d; assert(!Open(d)); } assert(calls==1 && closes==1 && !ends);
+	}
+	for (bool blocks:{false,true}) for (unsigned n:{1U,65U,256U}) for (unsigned layer:{0U,27U}) for (unsigned word=0;word<43;word++) {
+		Reset(2,0,word); uint32_t query[2048],keys[512],values[512],result[2048];
+		for (auto& w:query) w=0x3f800000;
+		for (auto& w:keys) w=0x38003800;
+		for (auto& w:values) w=0x3c003c00;
+		for (auto& w:result) w=0xdeadbeef;
+		{ PioneerResidentDevice d; assert(d.Open(0x80000000,false,true,true,true,true,true,true,true,1,120,true,blocks));
+			assert(!d.ResidentAttentionStep(n,layer,query,keys,values,result));
+			for (auto w:result) assert(w==0xdeadbeef);
+			unsigned previous=calls; assert(!d.Finish() && calls==previous);
+		}
+		assert(!ends && closes==1);
+	}
+	for (unsigned absent:{TT_PIONEER_CAP_RESIDENT_ATTENTION,TT_PIONEER_CAP_BULK_UPLOAD}) {
+		Reset(); missing=absent;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,2,120,true)); }
+		assert(calls==1 && !ends && closes==1);
+	}
+	for (unsigned absent:{TT_PIONEER_CAP_PAYLOAD_BLOCKS,TT_PIONEER_CAP_WIDE_PAYLOAD}) {
+		Reset(); missing=absent;
+		{ PioneerResidentDevice d; assert(!d.Open(0x80000000,false,true,true,true,true,true,true,true,1,120,true,true)); }
+		assert(calls==1 && !ends && closes==1);
 	}
 	puts("PASS REAL fleet client, variable inline ABI,120 worker proofs/all8 attention groups,wrapped counters,no partial outputs,close-only/no retry on faults,capability refusal BEFORE BEGIN; NO hardware");
 }

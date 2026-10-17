@@ -50,6 +50,13 @@ void PioneerGgmlBulkUpload(unsigned mode);
 // up to120 workers and one call per complete grouped-head attention op.
 // Still host norms/RoPE/KV; NOT a device-resident decoder or speed guarantee.
 void PioneerGgmlFleet(unsigned workers);
+// Explicit separate image/ABI, private28MiB tail; host prefix coherence
+// bookkeeping, new-token-only transfers during ordinary sequential decode.
+// This is not a full device-resident decoder or CPU-speedup guarantee.
+void PioneerGgmlResidentKV(bool enabled);
+// Separate opt-in: bounded SRAM-data transfers use phase fences rather
+// than serializing every DWORD. All control/NoC/reset fences stay unchanged.
+void PioneerGgmlPayloadBlocks(bool enabled);
 // Public bootstrap graph diagnostics only. Reference capture and comparison
 // are separate observers; neither changes tensor data or numerical gates.
 void PioneerGgmlTrace(bool enabled);

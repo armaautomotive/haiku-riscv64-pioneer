@@ -263,7 +263,7 @@ private:
 		if (cardQwen) {
 			prompt=fPending;
 			fDisplay=throughput?"P100A Throughput Qwen3-0.6B — up to120 row workers; CPU validation OFF.\n"
-				"Whole projections + grouped card attention. Hybrid host KV/norms; eight tokens, no tools/history.\n"
+				"Whole projections + resident card KV/attention. Hybrid host norms; eight tokens, no tools/history.\n"
 				:attention?"P100A Attention Qwen3-0.6B — matrices and attention run on card; CPU validation OFF.\n"
 				"Experimental PIO-staged KV; may be slower than Fast. Eight tokens; no tools/history.\n"
 				:fast?"P100A Fast Qwen3-0.6B — CPU validation OFF; experimental, no CPU-speedup guarantee.\n"

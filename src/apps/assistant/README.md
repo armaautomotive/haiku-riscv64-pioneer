@@ -91,6 +91,30 @@ or Models without restarting.
 
 ## Hardware selection
 
+### Resident-KV throughput checkpoint, 2026-10-17
+
+The installed Throughput target now uses a private28MiB device-resident
+attention KV cache and fixed12KiB/layer delta uploads. The v2 mode uses
+phase-fenced aligned64-bit SRAM data transfers, keeping control/ownership/
+completion checks intact. Legacy checked/Fast/Attention targets retain their
+previous paths. This is still experimental, NOT a CPU speedup.
+
+Installed GUI`c7072558...`, service`d26de810...`, Hardware`1cbd3a3f...`,
+control`6cd158ab...`; originals retained under
+`/boot/home/pioneer-resident-kv-20261017-a/original-apps/`. Native hardware
+policy and host-only lifecycle tests passed with no settings writes/device
+operations respectively. Empty conversation/draft counts were checked
+before restart. No model or pinned CPU runtime was replaced.
+
+The installed Assistant answered the public France/capital question with
+Paris: success1, CPU validation OFF/reference decodes0,26 device positions,
+728 card attention operations, peak120 workers. Seven generation samples
+took31.472s (0.222tok/s); cold total444.1s. Separate full-model testing
+verified all151936 logits at22 positions exactly against CPU, then all three
+warm requests passed quality/no-reupload but FAILED CPU-speedup checks.
+Their P100A rates were0.209–0.211tok/s vs CPU32's0.596–1.249tok/s.
+See [the detailed qualification record](../../../tools/pioneer/TENSTORRENT_PORT.md#status).
+
 ### Model-memory controls verified on Pioneer, 2026-10-16
 
 - The standalone RISC-V build passed with warnings as errors. Native tests

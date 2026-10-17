@@ -19,7 +19,11 @@ static void Piece(const llama_vocab* vocab,llama_token token) {
 }
 #include "PioneerQwenWarmBench.h"
 int main(int argc,char** argv) {
-	bool fleet=argc==3 && !strcmp(argv[1],"--verify-fleet-attention-q8-host1");
+	bool blockBenchmark=argc==3 && !strcmp(argv[1],"--benchmark-blocks-kv-q8-host1");
+	bool payloadBlocks=blockBenchmark || (argc==3 && !strcmp(argv[1],"--verify-blocks-kv-q8-host1"));
+	bool residentBenchmark=blockBenchmark || (argc==3 && !strcmp(argv[1],"--benchmark-resident-kv-q8-host1"));
+	bool residentKV=payloadBlocks || residentBenchmark || (argc==3 && !strcmp(argv[1],"--verify-resident-kv-q8-host1"));
+	bool fleet=residentKV || (argc==3 && !strcmp(argv[1],"--verify-fleet-attention-q8-host1"));
 	bool bulkUpload=fleet || (argc==3 && !strcmp(argv[1],"--verify-device-attention-bulk-upload-q8-host1"));
 	bool deviceAttention=bulkUpload || (argc==3 && !strcmp(argv[1],"--verify-device-attention-q8-host1"));
 	bool reuse=deviceAttention || (argc==3 && (!strcmp(argv[1],"--verify-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-reuse-q8-host1")));
@@ -33,7 +37,7 @@ int main(int argc,char** argv) {
 	bool trace=(argc==3 || argc==4) && (!strcmp(argv[1],"--trace-native-q8") || !strcmp(argv[1],"--trace-native-q8-exact"));
 	bool native=exact || host1 || (probe && !cpuProbe) || trace || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-native-q8") || !strcmp(argv[1],"--verify-native-q8") || !strcmp(argv[1],"--benchmark-native-q8")));
 	bool f32Kv=(argc==3 || argc==4) && !strcmp(argv[1],"--diagnose-compact-q8-f32-kv");
-	bool benchmark=argc==3 && (!strcmp(argv[1],"--benchmark-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1") || !strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8") || !strcmp(argv[1],"--benchmark-native-q8") || !strcmp(argv[1],"--benchmark-native-q8-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1"));
+	bool benchmark=residentBenchmark || (argc==3 && (!strcmp(argv[1],"--benchmark-dual-reuse-q8-host1") || !strcmp(argv[1],"--benchmark-dual-q8-host1") || !strcmp(argv[1],"--benchmark-compact-q8") || !strcmp(argv[1],"--benchmark-int8-q8") || !strcmp(argv[1],"--benchmark-native-q8") || !strcmp(argv[1],"--benchmark-native-q8-host1") || !strcmp(argv[1],"--benchmark-native-q8-exact-host1")));
 	bool compact=native || f32Kv || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-compact-q8") || !strcmp(argv[1],"--verify-compact-q8") || !strcmp(argv[1],"--benchmark-compact-q8")));
 	bool q8=compact || benchmark || ((argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-int8-q8") || !strcmp(argv[1],"--verify-int8-q8")));
 	bool fp16=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-fp16-cpu-q8") || !strcmp(argv[1],"--verify-fp16-cpu-q8"));
@@ -42,6 +46,7 @@ int main(int argc,char** argv) {
 	bool cpuActivations=diagnoseCpuActivations || verifyCpuActivations || benchmark;
 	bool diagnose=(argc==3 || argc==4) && (!strcmp(argv[1],"--diagnose-qwen") || diagnoseCpuActivations);
 	if (!diagnose && !verifyCpuActivations && !benchmark && (argc!=3 || strcmp(argv[1],"--verify-qwen"))) {
+		fprintf(stderr,"Resident KV qualification: %s --verify-resident-kv-q8-host1 MODEL\n",argv[0]);
 		fprintf(stderr,"Usage: %s --verify-qwen|--verify-cpu-q8|--verify-fp16-cpu-q8|--verify-int8-q8|--verify-compact-q8|--verify-native-q8|--verify-native-q8-host1|--benchmark-int8-q8|--benchmark-compact-q8|--benchmark-native-q8|--benchmark-native-q8-host1 MODEL | --diagnose-qwen|--diagnose-cpu-q8|--diagnose-fp16-cpu-q8|--diagnose-int8-q8|--diagnose-compact-q8|--diagnose-compact-q8-f32-kv|--diagnose-native-q8|--trace-native-q8 MODEL [FRESH_FAILED_INPUT_FILE] | --probe-native-q8-reference|--probe-cpu-rope-reference MODEL [TENSOR]\nExperimental single-token resident hybrid. Independent CPU reference; not a speedup claim or Assistant change.\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
@@ -74,6 +79,8 @@ int main(int argc,char** argv) {
 	PioneerGgmlAttention(deviceAttention);
 	PioneerGgmlBulkUpload(bulkUpload);
 	PioneerGgmlFleet(fleet?120:0);
+	PioneerGgmlResidentKV(residentKV);
+	PioneerGgmlPayloadBlocks(payloadBlocks);
 	if (deviceAttention) {
 		params.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_ENABLED;
 		params.offload_kqv=true; params.op_offload=true;
@@ -109,6 +116,7 @@ int main(int argc,char** argv) {
 	if (dual) puts("Two fixed bulk workers; no reduction-dimension split; every matvec requires BOTH independent completion/stop/NoC proofs; not a CPU speedup claim");
 	if (reuse) puts("Explicit guarded per-core input/scales reuse; every result still computed, poisoned, read and proved; no CPU learned products or result substitution");
 	if (deviceAttention) puts("DEVICE ATTENTION: all28 fused attention operations/224 grouped-head tiles per position REQUIRED; QK/PV on SFPU, softmax on card TRISC0; host KV prefix staging, NOT a speedup claim");
+	if (residentKV) puts("RESIDENT KV: separate immutable all8-head image; private28MiB tail; new KV token only; host prefix coherence check/replay, no CPU attention fallback");
 	if (bulkUpload) puts("EXPLICIT BULK UPLOAD: synchronous 1..4-page owned transfer; original learned tensor bytes and all numerical/coverage/cleanup gates unchanged");
 	printf("Both independent contexts K/V cache types: %d/%d (%s); graph/logit/greedy gates unchanged\n",int(params.type_k),int(params.type_v),f32Kv?"explicit FP32 precision experiment":"library defaults");
 	double begin=Seconds(),decodeSeconds=0; unsigned generated=0; llama_token token=0;

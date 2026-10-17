@@ -9,6 +9,7 @@
 #include "TenstorrentGgufQuant.h"
 #include "PioneerBlackholeFma.h"
 #include "PioneerGgmlAttention.h"
+#include "PioneerAttentionPrefixCache.h"
 #include <new>
 #include <errno.h>
 #include <fcntl.h>
@@ -43,6 +44,9 @@ struct PioneerGgmlDevice:PioneerResidentDevice {
 	bool AttentionGroups(unsigned n,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* y) {
 		return Boundary() && PioneerResidentDevice::AttentionGroups(n,q,k,v,y) && Boundary();
 	}
+	bool ResidentAttentionStep(unsigned n,unsigned layer,const uint32_t* q,const uint32_t* k,const uint32_t* v,uint32_t* y) {
+		return Boundary() && PioneerResidentDevice::ResidentAttentionStep(n,layer,q,k,v,y) && Boundary();
+	}
 };
 struct PioneerGgmlContext {
 	PioneerGgmlDevice device;
@@ -57,10 +61,13 @@ struct PioneerGgmlContext {
 	const bool reuse;
 	const bool attention;
 	const unsigned fleet;
+	const bool residentKV;
+	const bool payloadBlocks;
+	PioneerAttentionPrefixCache prefix;
 	uint64_t attentionOps=0,attentionTiles=0;
 	unsigned attentionLayer=0;
 	double weightSeconds=0,inputSeconds=0,matvecSeconds=0,diagnosticSeconds=0,attentionSeconds=0;
-	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention,unsigned workers):cache(device,Arena,half,rawBytes,hardwareUnpack,accurate,workers!=0),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention),fleet(workers) {}
+	PioneerGgmlContext(bool half,bool quant,bool rawBytes,bool hardwareUnpack,bool accurate,bool twoCores,bool reuseInput,bool deviceAttention,unsigned workers,bool deviceKV,bool blocks):cache(device,Arena-(deviceKV?PIONEER_RESIDENT_KV_BYTES:0),half,rawBytes,hardwareUnpack,accurate,workers!=0),fp16(half),q8(quant),compact(rawBytes),native(hardwareUnpack),exact(accurate),dual(twoCores),reuse(reuseInput),attention(deviceAttention),fleet(workers),residentKV(deviceKV),payloadBlocks(blocks) {}
 };
 // One exclusive backend instance per process, matching the current device
 // session contract. Driver handle and cache are destroyed with the backend.
@@ -77,6 +84,8 @@ static bool sDualReuse=false;
 static bool sAttention=false;
 static unsigned sBulkUpload=0;
 static unsigned sFleet=0;
+static bool sResidentKV=false;
+static bool sPayloadBlocks=false;
 static bool sTrace=false;
 static const char* sDiagnosticVector=NULL;
 struct ReferenceProjection { std::vector<float> input,output; const ggml_tensor* weights=NULL; };
@@ -247,7 +256,9 @@ static bool ComputeAttention(PioneerGgmlContext& ctx,ggml_tensor* op)
 			memcpy(allKeys.data()+group*tokens*64+t*64,k+t*2048+group*256,256);
 			memcpy(allValues.data()+group*tokens*64+t*64,v+t*2048+group*256,256);
 		}
-		if (!ctx.device.AttentionGroups(tokens,reinterpret_cast<const uint32_t*>(q),allKeys.data(),allValues.data(),result.data())) return false;
+		bool okay=ctx.residentKV?ctx.prefix.Run(ctx.device,layer,tokens,reinterpret_cast<const uint32_t*>(q),allKeys.data(),allValues.data(),result.data())
+			:ctx.device.AttentionGroups(tokens,reinterpret_cast<const uint32_t*>(q),allKeys.data(),allValues.data(),result.data());
+		if (!okay) return false;
 		ctx.attentionTiles+=8;
 	} else for (unsigned group=0;group<8;group++) {
 		memcpy(query.data(),q+group*1024,1024);
@@ -272,7 +283,7 @@ static enum ggml_status Compute(ggml_backend_t backend,ggml_cgraph* graph) {
 		if (!(op->flags&GGML_TENSOR_FLAG_COMPUTE) || View(op->op)) continue;
 		if (!Supports(NULL,op) || !op->data || !op->src[0]->data || !op->src[1]->data) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		if (!ctx->opened) {
-			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet);
+			ctx->opened=ctx->device.Open(Arena,ctx->fp16,ctx->q8,ctx->compact,ctx->native,ctx->exact,ctx->dual,ctx->reuse,ctx->attention,sBulkUpload,ctx->fleet,ctx->residentKV,ctx->payloadBlocks);
 			if (!ctx->opened) { ctx->failed=true; return GGML_STATUS_FAILED; }
 		}
 		if (op->op==GGML_OP_FLASH_ATTN_EXT) {
@@ -347,7 +358,9 @@ static ggml_backend_t Init(ggml_backend_dev_t dev,const char*) {
 		return new(std::nothrow) ggml_backend {&guid,iface,&disabled,NULL};
 	}
 	if (sActive || (sFp16 && sQ8) || (sCompact && !sQ8) || (sNative && !sCompact) || (sExact && !sNative) || (sDual && !sExact) || (sDualReuse && !sDual) || (sAttention && !sDualReuse) || sBulkUpload>2 || (sBulkUpload && !sDualReuse) || sFleet>120 || (sFleet && (!sDualReuse || !sBulkUpload))) return NULL;
-	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet); if (!ctx) return NULL;
+	if (sResidentKV && (!sFleet || !sAttention)) return NULL;
+	if (sPayloadBlocks && !sResidentKV) return NULL;
+	auto* ctx=new(std::nothrow) PioneerGgmlContext(sFp16,sQ8,sCompact,sNative,sExact,sDual,sDualReuse,sAttention,sFleet,sResidentKV,sPayloadBlocks); if (!ctx) return NULL;
 	auto* backend=new(std::nothrow) ggml_backend {&guid,iface,dev,ctx};
 	if (!backend) { delete ctx; return NULL; }
 	sActive=ctx; return backend;
@@ -400,6 +413,8 @@ void PioneerGgmlQ8DualReuse(bool enabled) { if (!sActive) sDualReuse=enabled; }
 void PioneerGgmlAttention(bool enabled) { if (!sActive) sAttention=enabled; }
 void PioneerGgmlBulkUpload(unsigned mode) { if (!sActive) sBulkUpload=mode; }
 void PioneerGgmlFleet(unsigned workers) { if (!sActive) sFleet=workers; }
+void PioneerGgmlResidentKV(bool enabled) { if (!sActive) sResidentKV=enabled; }
+void PioneerGgmlPayloadBlocks(bool enabled) { if (!sActive) sPayloadBlocks=enabled; }
 void PioneerGgmlTrace(bool enabled) { if (!sActive) sTrace=enabled; }
 void PioneerGgmlBeginPosition(unsigned position) { sPosition=position; sReference.clear(); sIntermediate.clear(); sIntermediateNodes.clear(); sRopePositions.clear(); }
 bool PioneerGgmlReferenceTap(ggml_tensor* t,bool ask,void*) {

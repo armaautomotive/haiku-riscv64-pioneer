@@ -48,6 +48,8 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 		// Never pad an early EOS or force CPU tokens into the card trajectory
 		// to manufacture a generation rate. A short reply is not this test.
 		if (golden.size()<8 || !isfinite(cpuGeneration) || cpuGeneration<=0) { fprintf(stderr,"Warm benchmark lacks enough natural generation samples/timing\n"); return false; }
+		printf("WARM request%u CPU32 baseline: prompt%d output%zu samples%zu generation%.6fs (%.6f tok/s); quality comparison still pending\n",
+			repeat,n,golden.size(),golden.size()-1,cpuGeneration,double(golden.size()-1)/cpuGeneration);
 		llama_memory_clear(llama_get_memory(card),true);
 		double cardPrompt=0,cardGeneration=0;
 		for (int position=0;position<n;position++) {
@@ -55,6 +57,7 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 			if (llama_decode(card,batch)) return false;
 			if (position+1==n) { values=llama_get_logits(card); if (!values) return false; token=Argmax(values,vocabulary); }
 			cardPrompt+=Seconds()-start;
+			if ((position+1)%8==0 || position+1==n) printf("WARM request%u P100A prefill%d/%d decoded; cumulative%.6fs\n",repeat,position+1,n,cardPrompt);
 		}
 		for (unsigned generated=0;generated<golden.size();generated++) {
 			if (token<0 || token!=golden[generated]) { fprintf(stderr,"Warm benchmark greedy mismatch; no reference substitution\n"); return false; }
@@ -68,6 +71,7 @@ static bool PioneerQwenWarmBenchmark(llama_model* model,llama_context* cpu,llama
 			if (llama_decode(card,batch)) return false;
 			values=llama_get_logits(card); if (!values) return false;
 			token=Argmax(values,vocabulary); cardGeneration+=Seconds()-start;
+			if ((generated+1)%8==0) printf("WARM request%u P100A generation%u/%zu decoded; cumulative%.6fs; checks outside timing\n",repeat,generated+1,golden.size()-1,cardGeneration);
 		}
 		PioneerGgmlStats after={};
 		if (!PioneerGgmlSnapshot(after) || after.failed || after.tensors!=warm.tensors || after.uploads!=warm.uploads

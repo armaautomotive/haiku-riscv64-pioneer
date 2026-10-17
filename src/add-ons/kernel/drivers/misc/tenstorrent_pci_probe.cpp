@@ -1296,6 +1296,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO {
 	unsigned runtimeCore=0;
 	bool fleetEnabled=false;
 	bool persistentHostStages=false;
+	bool payloadBlocks=false;
 	area_id fleetArea=-1;
 	volatile uint32* fleetView=NULL;
 	uint32* fleetRuntimeSaved[TT_PIONEER_WORKERS]={};
@@ -1344,6 +1345,43 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO {
 	}
 	void BulkHostStore(unsigned w,uint32 value) {
 		if (w<TT_BULK_UPLOAD_WORDS && outputArea>=B_OK && outputPage) outputPage[w]=B_HOST_TO_LENDIAN_INT32(value);
+	}
+	struct PayloadIO {
+		volatile uint32* view;
+		void PayloadFence() { PioneerIoFence(); }
+		uint32 PayloadRead(unsigned w) { return B_LENDIAN_TO_HOST_INT32(view[w]); }
+		void PayloadWrite(unsigned w,uint32 value) { view[w]=B_HOST_TO_LENDIAN_INT32(value); }
+		uint64 PayloadReadPair(unsigned w) {
+			// All mapped bases are page aligned; generic block helpers align
+			// the word index and never read a pair beyond the checked span.
+			typedef uint64 Alias64 __attribute__((__may_alias__));
+			return B_LENDIAN_TO_HOST_INT64(*reinterpret_cast<const volatile Alias64*>(view+w));
+		}
+		void PayloadWritePair(unsigned w,uint32 low,uint32 high) {
+			typedef uint64 Alias64 __attribute__((__may_alias__));
+			*reinterpret_cast<volatile Alias64*>(view+w)=B_HOST_TO_LENDIAN_INT64(uint64(low)|(uint64(high)<<32));
+		}
+	};
+	bool RuntimePayloadRead(unsigned first,unsigned words,uint32* output) {
+		if (!output || !runtimeMapped || !runtimeBuffers || !words || first!=4096 || words>4096
+			|| first>=runtimeBufferWords || words>runtimeBufferWords-first) return false;
+		if (payloadBlocks) { PayloadIO data={runtimeBuffers}; return PioneerPayloadReadBlock(data,first,words,runtimeBufferWords,output); }
+		for (unsigned w=0;w<words;w++) output[w]=RuntimeBufferRead(first+w);
+		return true;
+	}
+	bool BulkPayloadStage(const uint32* input,unsigned words) {
+		if (!input || !BulkMappingStable() || !words || words>3072) return false;
+		if (payloadBlocks) { PayloadIO data={bulkView}; return PioneerPayloadStageBlock(data,words,3072,input); }
+		for (unsigned w=0;w<words;w++) BulkL1Write(w,input[w]);
+		bool exact=true;
+		for (unsigned w=0;w<words;w++) exact &= BulkL1Read(w)==input[w];
+		return exact;
+	}
+	bool BulkPayloadRead(unsigned first,unsigned words,uint32* output) {
+		if (!output || !BulkMappingStable() || first!=4096 || words!=2048) return false;
+		if (payloadBlocks) { PayloadIO data={bulkView}; return PioneerPayloadReadBlock(data,first,words,8192,output); }
+		for (unsigned w=0;w<words;w++) output[w]=BulkL1Read(first+w);
+		return true;
 	}
 	bool MapRuntime(bool bulk=false) {
 		unsigned words=bulk?TT_Q8_BULK_SAVED_BUFFER_WORDS:8192;
@@ -1681,6 +1719,7 @@ struct PioneerStoreContext {
 	PioneerRuntimeMatvecLease compute;
 	PioneerRuntimeMatvecLease secondCompute;
 	PioneerAttentionTileLease attention;
+	PioneerResidentAttentionLease residentAttention;
 	PioneerBulkUploadLease bulk;
 	PioneerOutputBufferLease bulkHost;
 	PioneerRuntimeActivationCache activation[2];
@@ -1760,6 +1799,23 @@ SelectFleetEntry(PioneerStoreContext& context,bool attention,bool alreadyHeld=fa
 	// alreadyHeld is private to one locked ioctl: between the audit and
 	// this switch, only held-core code upload/readback has been performed.
 	bool okay=(alreadyHeld || FleetHeld(context)) && (!attention || context.attention.ready);
+	if (okay) {
+		uint32 selected=attention?uint32(TT_ATTENTION_TILE_BOOT):0x0006b06f;
+		context.io.RuntimeCodeWrite(0,selected); okay=context.io.RuntimeCodeRead(0)==selected;
+	}
+	if (!okay) {
+		context.compute.unsafe=true; context.lease.recovery_required=true;
+		context.attention.unsafe=true; context.io.QuarantineHostPage();
+	}
+	return okay;
+}
+
+static bool
+SelectResidentFleetEntry(PioneerStoreContext& context,bool attention)
+{
+	bool okay=context.residentAttention.reserved && (!attention || context.attention.ready)
+		&& PioneerFleetMasterBoundary(context.io,context.baseline.baseline.baseline.baseline.dram,
+			context.fleet,context.attention.ready);
 	if (okay) {
 		uint32 selected=attention?uint32(TT_ATTENTION_TILE_BOOT):0x0006b06f;
 		context.io.RuntimeCodeWrite(0,selected); okay=context.io.RuntimeCodeRead(0)==selected;
@@ -1968,7 +2024,8 @@ ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size
 	PioneerStoreContext* context=cookie->context;
 	if (context==NULL || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
 	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7) status=B_NOT_ALLOWED;
-	else if (!PioneerResidentOffset(context->bytes,request->offset)) status=B_BAD_VALUE;
+	else if (!PioneerResidentOffset(context->bytes,request->offset)
+		|| (context->residentAttention.reserved && request->offset>=context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
 	else {
 		bool upload=operation==TT_PCI_PROBE_PIONEER_STORE_UPLOAD;
 		unsigned page=unsigned(request->offset/4096);
@@ -2014,7 +2071,8 @@ ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
 	else if (context->runtimeCoreMode==4 || context->runtimeCoreMode==6 || context->runtimeCoreMode==7) status=B_NOT_ALLOWED;
-	else if (!PioneerResidentOffset(context->bytes,request->offset)) status=B_BAD_VALUE;
+	else if (!PioneerResidentOffset(context->bytes,request->offset)
+		|| (context->residentAttention.reserved && request->offset>=context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
 	else {
 		request->result={}; request->result.version=1; request->result.state=TT_STORE_CONFIG_FAILED;
 		bool ready=context->lease.ready;
@@ -2048,7 +2106,8 @@ BulkUploadControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	PioneerStoreContext* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
 	else if (context->runtimeCoreMode!=-1 && context->runtimeCoreMode!=3 && context->runtimeCoreMode!=5) status=B_NOT_ALLOWED;
-	else if (!PioneerBulkUploadRange(context->bytes,request->offset,request->pages)) status=B_BAD_VALUE;
+	else if (!PioneerBulkUploadRange(context->bytes,request->offset,request->pages)
+		|| (context->residentAttention.reserved && request->offset+request->pages*4096>context->bytes-TT_RESIDENT_KV_BYTES)) status=B_BAD_VALUE;
 	else {
 		request->result={}; request->result.transfer.version=1; request->result.transfer.state=TT_STORE_CONFIG_FAILED;
 		bool ready=context->lease.ready;
@@ -2056,7 +2115,9 @@ BulkUploadControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		if (ready && context->runtimeCoreMode==3) ready=PioneerRuntimeAttentionPeersHeld(context->io,
 			context->baseline.baseline.baseline.baseline.dram,context->baseline.baseline.baseline.noc,context->secondNoc,
 			context->lease,context->secondLease,context->compute,context->secondCompute,context->attention);
-		if (ready && context->runtimeCoreMode==5) ready=FleetHeld(*context);
+		if (ready && context->runtimeCoreMode==5) ready=context->residentAttention.reserved
+			?PioneerFleetMasterBoundary(context->io,context->baseline.baseline.baseline.baseline.dram,context->fleet,context->attention.ready)
+			:FleetHeld(*context);
 		if (ready) ready=context->io.SelectRuntimeCore(0) && context->io.MapBulk();
 		if (ready && !context->bulkHost.allocated) ready=PioneerPrepareOutputBuffer(context->io,context->host,context->bulkHost);
 		ready=ready && context->bulkHost.ready && PioneerBulkUploadPrepare(context->io,
@@ -2230,7 +2291,8 @@ RuntimeFleetControl(PioneerProbeCookie* cookie,void* data,size_t length)
 			}
 			if (ready && context->attention.saved) {
 				ready=context->io.SelectRuntimeCore(0);
-				if (ready && context->io.RuntimeCodeRead(0)!=0x0006b06f) ready=SelectFleetEntry(*context,false);
+				if (ready && context->io.RuntimeCodeRead(0)!=0x0006b06f) ready=context->residentAttention.reserved
+					?SelectResidentFleetEntry(*context,false):SelectFleetEntry(*context,false);
 			}
 			if (ready) {
 				context->io.RuntimeProfileMark(TT_PROFILE_PREPARED);
@@ -2333,6 +2395,87 @@ RuntimeProfileControl(PioneerProbeCookie* cookie,void* data,size_t length)
 }
 
 static status_t
+ResidentAttentionControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_resident_attention)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	auto* request=(tt_pioneer_resident_attention*)malloc(length); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,length);
+	if (status!=B_OK || (request->version!=1 && request->version!=2) || request->reserved
+		|| !PioneerResidentAttentionInput(request->tokens,request->layer,request->input)) {
+		free(request); return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (context->runtimeCoreMode!=5 || !context->fleet || !context->compute.ready
+		|| !context->uploadedPages || !PioneerResidentAttentionCapacity(context->bytes)) status=B_NOT_ALLOWED;
+	else {
+		memset(&request->result,0,sizeof(request->result)); memset(request->output,0,sizeof(request->output));
+		auto& kv=context->residentAttention;
+		bool ready=(!context->attention.saved || context->attention.resident)
+			&& request->tokens<=kv.tokens[request->layer]+1
+			&& PioneerResidentAttentionVersion(request->version,kv);
+		if (ready && !kv.reserved) {
+			for (uint64 page=(context->bytes-TT_RESIDENT_KV_BYTES)/4096;page<context->bytes/4096;page++)
+				ready &= !context->initialized[page];
+			if (ready) {
+				kv.reserved=true; kv.payloadBlocks=request->version==2;
+				context->io.payloadBlocks=kv.payloadBlocks;
+				context->io.persistentHostStages=kv.payloadBlocks;
+			}
+		}
+		ready=ready && PioneerFleetMasterBoundary(context->io,context->baseline.baseline.baseline.baseline.dram,context->fleet,context->attention.ready)
+			&& context->io.MapAttention() && context->io.BulkMappingStable()
+			&& PioneerAttentionTilePrepare(context->io,context->baseline.baseline.baseline.baseline.dram,
+				context->baseline.baseline.baseline.noc,context->lease,context->attention,true)
+			&& SelectResidentFleetEntry(*context,true);
+		if (ready) ready=PioneerResidentAttentionRun(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->baseline.baseline.baseline.noc,context->lease,context->attention,context->bulk,kv,
+			context->bytes,request->tokens,request->layer,request->input,request->output,request->result);
+		if (context->Unsafe()) {
+			context->lease.recovery_required=true; context->io.QuarantineHostPage();
+			PioneerQuarantineOutputBuffer(context->io,context->bulkHost); sColdRecoveryRequired=true;
+			request->result.math.recovery_required=1;
+		}
+		if (!ready) memset(request->output,0,sizeof(request->output));
+		status=user_memcpy(data,request,length);
+	}
+	release_sem(sLock); free(request); return status;
+}
+
+static status_t
+PeerPcReadControl(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_peer_pc_read)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_peer_pc_read request={};
+	status=user_memcpy(&request,data,sizeof(request));
+	if (status!=B_OK || request.version!=1 || !request.worker || request.worker>=TT_PIONEER_WORKERS
+		|| request.reserved[0] || request.reserved[1]) return status!=B_OK?status:B_BAD_VALUE;
+	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
+	auto* context=cookie->context;
+	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
+	else if (context->runtimeCoreMode!=5 || !context->fleet || !context->fleetRoutes
+		|| !context->compute.ready || !context->bulk.ready || !context->uploadedPages) status=B_NOT_ALLOWED;
+	else {
+		PioneerPeerPcRead(context->io,context->baseline.baseline.baseline.baseline.dram,
+			context->fleet,context->bulk,context->attention.ready,request.worker,request.result);
+		if (context->Unsafe()) {
+			context->lease.recovery_required=true; context->io.QuarantineHostPage();
+			PioneerQuarantineOutputBuffer(context->io,context->bulkHost); sColdRecoveryRequired=true;
+			request.result.recovery_required=1;
+		}
+		status=user_memcpy(data,&request,sizeof(request));
+	}
+	release_sem(sLock); return status;
+}
+
+static status_t
 FleetAttentionControl(PioneerProbeCookie* cookie,void* data,size_t length)
 {
 	const size_t fixed=sizeof(tt_pioneer_fleet_attention)-256*1024*sizeof(uint32_t);
@@ -2351,7 +2494,7 @@ FleetAttentionControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	auto* context=cookie->context;
 	if (!context || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
-	else if (context->runtimeCoreMode!=5 || !context->fleet || !context->compute.ready || !context->uploadedPages) status=B_NOT_ALLOWED;
+	else if (context->runtimeCoreMode!=5 || context->residentAttention.reserved || !context->fleet || !context->compute.ready || !context->uploadedPages) status=B_NOT_ALLOWED;
 	else {
 		memset(request->result,0,sizeof(request->result)); memset(request->output,0,sizeof(request->output));
 		bool ready=FleetHeld(*context) && context->io.MapAttention()
@@ -2457,6 +2600,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return RuntimePersistentFleetControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_FLEET_ATTENTION)
 		return FleetAttentionControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_RESIDENT_ATTENTION)
+		return ResidentAttentionControl(instance,data,length);
+	if (operation==TT_PCI_PROBE_PIONEER_PEER_PC_READ)
+		return PeerPcReadControl(instance,data,length);
 	if (operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_TEST || operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED)
 		return AttentionTileTestControl(instance,data,length,operation==TT_PCI_PROBE_PIONEER_ATTENTION_TILE_SHARED);
 	if (operation==TT_PCI_PROBE_PIONEER_STREAM_UPLOAD)

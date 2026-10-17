@@ -4,6 +4,7 @@
 #include "PioneerComputeFleet.h"
 #include "PioneerRuntimeMatvec.h"
 #include "BlackholeFleetStartImage.h"
+#include "PioneerPayloadBlock.h"
 
 enum { TT_FLEET_OUTPUTS_MAX=262144,TT_FLEET_START_WORDS=1024 };
 struct PioneerFleetPlan {
@@ -52,6 +53,29 @@ bool PioneerFleetLocalSources(IO& io,const tt_compute_noc_result& noc,const Pion
 	bool stable=store.ready && !store.pending && !store.recovery_required;
 	for (unsigned w=0;w<16;w++) stable &= io.ResidentNocRead(BlackholeDramSourceOffset(w))==(w?noc.source[0][w]:store.config|0x10000);
 	return stable;
+}
+// A master-only entry switch/device-local KV job cannot affect a stopped
+// peer. Under the exclusive FD/team lock, each peer's last independent
+// completion/hold proof remains valid until this driver next touches it.
+// Audit all ownership/unsafe/pending metadata, then LIVE-audit the master
+// and shared PCIe source. Matrix jobs still LIVE-audit every participant;
+// END still LIVE-audits the entire prepared fleet before restoration.
+// No reset, code/data write, DMA, peer launch or ownership release here.
+template<class IO>
+bool PioneerFleetMasterBoundary(IO& io,const tt_dram_samples_result& baseline,
+	PioneerFleetWorker* fleet,bool attentionReady)
+{
+	if (!fleet || !fleet[0].Store().ready || !fleet[0].Compute().ready || !fleet[0].preludeDirty) return false;
+	for (unsigned w=0;w<TT_PIONEER_WORKERS;w++) {
+		auto& f=fleet[w]; auto& s=f.Store(); auto& c=f.Compute();
+		if (f.persistentActive || c.running || c.unsafe || s.pending || s.recovery_required || f.noc.recovery_required
+			|| (s.controls_saved && !s.ready) || (c.saved && !c.ready) || (f.preludeSaved && !f.preludeDirty)) return false;
+	}
+	if (!PioneerFleetGlobalSources(io,baseline) || !io.SelectRuntimeCore(0)
+		|| io.ResetRead()!=0x47800 || io.ResetRead()!=0x47800 || !BlackholeResidentIdle(io)
+		|| !PioneerFleetLocalSources(io,fleet[0].noc,fleet[0].Store())) return false;
+	uint32_t entry=io.RuntimeCodeRead(0);
+	return (entry==0x0006b06f || (attentionReady && entry==0x0006c06f)) && PioneerFleetGlobalSources(io,baseline);
 }
 static inline bool PioneerFleetCoreProof(const tt_runtime_matvec_result& r,unsigned inputs,unsigned rows,unsigned worker)
 {
@@ -223,8 +247,9 @@ bool PioneerFleetMatvec(IO& io,const tt_dram_samples_result& baseline,const tt_h
 		for (unsigned w=0;w<p.workers;w++) {
 			if (!io.SelectRuntimeCore(w)) { uncertain=true; break; }
 			auto& r=result.core[w];
+			if (!PioneerRuntimePayloadRead(io,4096,p.rows[w],output+p.first[w],0)) { uncertain=true; break; }
 			for (unsigned i=0;i<p.rows[w];i++) {
-				uint32_t value=io.RuntimeBufferRead(4096+i); output[p.first[w]+i]=value;
+				uint32_t value=output[p.first[w]+i];
 				r.nonfinite+=(value&0x7f800000)==0x7f800000;
 			}
 		}

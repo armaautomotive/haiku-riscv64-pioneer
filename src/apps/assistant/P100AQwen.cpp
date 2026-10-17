@@ -50,6 +50,8 @@ struct AssistantP100AQwen::Data {
 		PioneerGgmlAttention(attention);
 		PioneerGgmlBulkUpload(2); // capability selection before BEGIN; no error fallback
 		PioneerGgmlFleet(throughput?120:0);
+		PioneerGgmlResidentKV(throughput);
+		PioneerGgmlPayloadBlocks(throughput);
 		static bool registered=false;
 		if (!registered) { ggml_backend_register(PioneerGgmlReg()); registered=true; }
 		llama_context_params p=llama_context_default_params();
@@ -80,7 +82,10 @@ bool AssistantP100AQwen::Available(bool attention,bool throughput) {
 	tt_resident_session_result s={}; int status=ioctl(fd,TT_PCI_PROBE_PIONEER_SESSION_SUPPORT,&s,sizeof(s)); close(fd);
 	return !status && s.version==1 && !s.cold && (s.capabilities&TT_PIONEER_CAP_Q8_DUAL_REUSE)!=0
 		&& (!attention || (s.capabilities&TT_PIONEER_CAP_ATTENTION_TILE_SHARED)!=0)
-		&& (!throughput || ((s.capabilities&TT_PIONEER_CAP_Q8_FLEET)!=0 && (!attention || (s.capabilities&TT_PIONEER_CAP_FLEET_ATTENTION)!=0)));
+		&& (!throughput || (attention && (s.capabilities&TT_PIONEER_CAP_Q8_FLEET)!=0
+			&& (s.capabilities&TT_PIONEER_CAP_BULK_UPLOAD)!=0
+			&& (s.capabilities&TT_PIONEER_CAP_FLEET_ATTENTION)!=0 && (s.capabilities&TT_PIONEER_CAP_RESIDENT_ATTENTION)!=0
+			&& (s.capabilities&TT_PIONEER_CAP_PAYLOAD_BLOCKS)!=0 && (s.capabilities&TT_PIONEER_CAP_WIDE_PAYLOAD)!=0));
 }
 bool AssistantP100AQwen::Unload(std::string& error) {
 	bool clean=!fData || fData->CloseActual();

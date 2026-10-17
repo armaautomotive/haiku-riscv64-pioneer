@@ -54,6 +54,14 @@ struct FleetIO {
 		for (unsigned i=0;i<core.size();i++) assert(pcReads[i]>=2 && !core[i]->executeTimeout && !core[i]->badPc);
 		return C().RuntimeBufferRead(w);
 	}
+	bool RuntimePayloadRead(unsigned first,unsigned words,uint32_t* output) {
+		struct Payload {
+			FleetIO& io;
+			void PayloadFence() {}
+			uint32_t PayloadRead(unsigned w) { return io.RuntimeBufferRead(w); }
+		} data={*this};
+		return PioneerPayloadReadBlock(data,first,words,12288,output);
+	}
 	void RuntimeResetWrite(uint32_t v) {
 		assert(!quarantined);
 		if (v==0x46800 && !allStarts) for (auto& c:core) assert(c->reset==0x87ffff);
@@ -119,6 +127,24 @@ int main() {
 	for (unsigned w:{0U,121U,~0U}) { PioneerFleetPlan p; assert(!PioneerFleetPartition(1024,3840,w,p)); }
 	for (unsigned n:{0U,16U,33U,262176U}) { PioneerFleetPlan p; assert(!PioneerFleetPartition(1024,n,120,p)); }
 	FleetFixture good(120); assert(good.Run());
+	{
+		unsigned selected=good.io.selects;
+		assert(PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false));
+		assert(good.io.selects-selected==1); // never120 unrelated MMIO remaps
+		for (unsigned w=0;w<120;w++) {
+			auto& f=good.fleet[w];
+			f.Compute().running=true; assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false)); f.Compute().running=false;
+			f.Store().pending=true; assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false)); f.Store().pending=false;
+			f.Compute().unsafe=true; assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false)); f.Compute().unsafe=false;
+			f.persistentActive=true; assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false)); f.persistentActive=false;
+		}
+		good.io.core[0]->reset=0x46800; assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false)); good.io.core[0]->reset=0x47800;
+		good.io.core[0]->code[0]=0x0006c06f;
+		assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false));
+		assert(PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),true));
+		good.io.core[0]->code[0]=0x0006b06f;
+		good.io.failSelect=good.io.selects+1; assert(!PioneerFleetMasterBoundary(good.io,good.io.core[0]->Baseline(),good.fleet.data(),false)); good.io.failSelect=0;
+	}
 	for (unsigned w=0;w<120;w++) for (unsigned field:{0U,1U,2U,3U,4U,5U,6U,7U,10U,11U,12U,13U,14U,15U,16U,17U,18U,19U,20U,21U,22U,23U}) {
 		auto corrupt=good.result; ((uint32_t*)&corrupt.core[w])[field]^=1; assert(!PioneerFleetProof(corrupt,1024,3840,120));
 	}

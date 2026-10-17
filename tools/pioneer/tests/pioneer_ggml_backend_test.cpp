@@ -215,11 +215,12 @@ int main(int argc,char** argv) {
 	}
 	// Fixed fused-attention contract and 28-layer coverage. The transport is
 	// explicitly software-only here; native shared handoff is tested separately.
-	for (unsigned fleetMode=0;fleetMode<2;fleetMode++) {
+	for (unsigned fleetMode=0;fleetMode<4;fleetMode++) {
 		PioneerGgmlAttention(true); assert(!ggml_backend_dev_init(dev,NULL));
 		PioneerGgmlQ8Operands(true); PioneerGgmlQ8Compact(true); PioneerGgmlQ8Native(true);
 		PioneerGgmlQ8Exact(true); PioneerGgmlQ8Dual(true); PioneerGgmlQ8DualReuse(true);
 		PioneerGgmlBulkUpload(fleetMode?1:0); PioneerGgmlFleet(fleetMode?120:0);
+		PioneerGgmlResidentKV(fleetMode>=2); PioneerGgmlPayloadBlocks(fleetMode==3);
 		io=PioneerGgmlHostState(); backend=ggml_backend_dev_init(dev,NULL); assert(backend);
 		ggml_init_params ap={8*1024*1024,NULL,false}; auto* ac=ggml_init(ap); assert(ac);
 		auto* qr=ggml_new_tensor_3d(ac,GGML_TYPE_F32,128,16,1);
@@ -249,7 +250,7 @@ int main(int argc,char** argv) {
 			names(layer); assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS);
 			for (unsigned h=0;h<16;h++) for (unsigned d=0;d<128;d++) assert(static_cast<float*>(attention->data)[h*128+d]==float(h/2+d%3+.5)/8);
 		}
-		assert(PioneerGgmlSnapshot(stats) && stats.attentionOps==28 && stats.attentionTiles==224 && !stats.matvecs && io.attentionCalls==224 && io.opens==1);
+		assert(PioneerGgmlSnapshot(stats) && stats.attentionOps==28 && stats.attentionTiles==224 && !stats.matvecs && io.attentionCalls==(fleetMode>=2?448U:224U) && io.opens==1);
 		// Optional public captures exercise nonuniform Q/K/V, every head
 		// and layer, and position-major cache packing through the real
 		// GGML integration. Goldens come from an independent native CPU
@@ -265,7 +266,8 @@ int main(int argc,char** argv) {
 				&& fgetc(file)==EOF && fclose(file)==0);
 			for (unsigned t=0;t<256;t++) static_cast<uint16_t*>(mask->data)[t]=t<h.tokens?0:0xfc00;
 			names(h.layer); unsigned calls=io.attentionCalls;
-			assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS && io.attentionCalls-calls==8);
+			assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS && io.attentionCalls-calls>=8
+				&& io.attentionCalls-calls<=(fleetMode>=2?8*h.tokens:8U));
 			assert(!memcmp(attention->data,expected.data(),8192));
 			printf("PUBLIC GGML attention layer=%u n=%u all-head exact CPU-nonflash output PASS (OFFLINE)\n",h.layer,h.tokens);
 		}
@@ -277,9 +279,11 @@ int main(int argc,char** argv) {
 		}
 		// Same fixed shape, now the entire 256-key prefix; uniform keys have
 		// an independent analytic mean, no local numerical-model dependency.
-		memset(mask->data,0,512); names(0);
+		unsigned boundary=fleetMode>=2?4:256;
+		for (unsigned t=0;t<256;t++) static_cast<uint16_t*>(mask->data)[t]=t<boundary?0:0xfc00;
+		names(0);
 		assert(ggml_backend_graph_compute(backend,ag)==GGML_STATUS_SUCCESS);
-		for (unsigned h=0;h<16;h++) for (unsigned d=0;d<128;d++) assert(fabsf(static_cast<float*>(attention->data)[h*128+d]-float(127.5+h/2+d%3)/8)<.00001f);
+		for (unsigned h=0;h<16;h++) for (unsigned d=0;d<128;d++) assert(fabsf(static_cast<float*>(attention->data)[h*128+d]-float((boundary-1)*.5+h/2+d%3)/8)<.00001f);
 		// Non-causal hole refuses before any partial output is published.
 		names(1); uint16_t hidden=0xfc00; memcpy(static_cast<uint8_t*>(mask->data)+4,&hidden,2);
 		std::vector<float> before(2048); memcpy(before.data(),attention->data,8192); unsigned calls=io.attentionCalls;
@@ -288,6 +292,7 @@ int main(int argc,char** argv) {
 		assert(PioneerGgmlFinish()); ggml_backend_free(backend); ggml_free(ac);
 		PioneerGgmlAttention(false); PioneerGgmlQ8DualReuse(false); PioneerGgmlQ8Dual(false); PioneerGgmlQ8Exact(false);
 		PioneerGgmlFleet(0); PioneerGgmlBulkUpload(0);
+		PioneerGgmlResidentKV(false); PioneerGgmlPayloadBlocks(false);
 		PioneerGgmlQ8Native(false); PioneerGgmlQ8Compact(false); PioneerGgmlQ8Operands(false);
 	}
 	for (unsigned reject:{1U,2U,36U,37U,38U}) {

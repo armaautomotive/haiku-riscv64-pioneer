@@ -57,6 +57,7 @@ struct AttentionMock:StoreMock {
 		for (unsigned w=0;w<words.size();w++) assert(words[w]==0xab000000+w);
 	}
 };
+#ifndef PIONEER_ATTENTION_MOCK_ONLY
 static bool RunAttention(AttentionMock& io,PioneerResidentLease& store,PioneerAttentionTileLease& compute,tt_attention_tile_result& r)
 {
 	uint32_t query[256],key[128],value[128],output[256]={};
@@ -137,3 +138,4 @@ int main()
 	v[63]=0x7c00; assert(!PioneerAttentionTileInputValid(1,q,k,v));
 	printf("PASS: OFFLINE dedicated attention lease; full L1/code/stack restoration, no-NoC completion/PC proofs, immutable bounds; %u dropped writes, launch/timeout/stop/restore/nonfinite faults; no reset/restore after uncertainty\n",tested);
 }
+#endif

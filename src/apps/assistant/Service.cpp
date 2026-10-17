@@ -204,7 +204,7 @@ public:
 			reply.AddString("loading_backend_id", fLoading ? fLoadingHardware.String() : "");
 			reply.AddString("model_path", fModelPath);
 			reply.AddString("model_error", fModelError);
-			reply.AddString("backend", AssistantHardwareIsP100AThroughput(fHardware.String()) ? "P100A Throughput Qwen3-0.6B (up to120 cores; card attention; CPU validation OFF)"
+			reply.AddString("backend", AssistantHardwareIsP100AThroughput(fHardware.String()) ? "P100A Throughput Qwen3-0.6B (up to120 cores; resident KV/attention; CPU validation OFF)"
 				: AssistantHardwareIsP100AAttention(fHardware.String()) ? "P100A Attention Qwen3-0.6B (card attention; CPU validation OFF; experimental)"
 				: AssistantHardwareIsP100AFast(fHardware.String()) ? "P100A Fast Qwen3-0.6B (CPU reference validation OFF; experimental)"
 				: fHardware == "p100a-qwen" ? "P100A Qwen3-0.6B exact dual-reuse hybrid (experimental, slower than CPU)"

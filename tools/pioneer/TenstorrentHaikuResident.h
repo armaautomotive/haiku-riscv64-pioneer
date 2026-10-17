@@ -18,12 +18,17 @@ class PioneerResidentDevice {
 	unsigned fleet=0;
 	tt_pioneer_runtime_fleet* fleetRequest=NULL;
 	tt_pioneer_fleet_attention* fleetAttention=NULL;
+	tt_pioneer_resident_attention* residentAttention=NULL;
+	bool residentKV=false;
+	bool payloadBlocks=false;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
 	unsigned peakWorkers=0;
-	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); }
-	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0) {
+	~PioneerResidentDevice() { Finish(); free(request); free(attentionRequest); free(fleetRequest); free(fleetAttention); free(residentAttention); }
+	bool Open(uint64_t bytes,bool half=false,bool quant=false,bool rawBytes=false,bool hardwareUnpack=false,bool exactScales=false,bool twoCores=false,bool reuseInput=false,bool deviceAttention=false,unsigned groupedUpload=0,unsigned workerLimit=0,bool deviceKV=false,bool blockPayload=false) {
+		if (blockPayload && !deviceKV) return false;
+		if (deviceKV && (!workerLimit || !deviceAttention || !PioneerResidentAttentionCapacity(bytes))) return false;
 		if (fd>=0 || failed || finished || (half && quant) || (rawBytes && !quant) || (hardwareUnpack && !rawBytes) || (exactScales && !hardwareUnpack) || (twoCores && !exactScales) || (reuseInput && !twoCores) || (deviceAttention && !reuseInput) || groupedUpload>2 || (groupedUpload && !reuseInput) || workerLimit>120 || (workerLimit && (!reuseInput || !groupedUpload)) || !PioneerResidentCapacity(bytes)) return false;
 		fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR);
 		if (fd<0) { perror("resident open"); failed=true; return false; }
@@ -41,10 +46,20 @@ public:
 		reuse=reuseInput;
 		attention=deviceAttention;
 		fleet=workerLimit;
+		residentKV=deviceKV;
+		payloadBlocks=blockPayload;
+		if (payloadBlocks && (s.capabilities&(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD))
+			!=(TT_PIONEER_CAP_PAYLOAD_BLOCKS|TT_PIONEER_CAP_WIDE_PAYLOAD)) {
+			fprintf(stderr,"Explicit bounded payload block capability unavailable; no BEGIN/fallback\n"); failed=true; return false;
+		}
+		if (residentKV && !(s.capabilities&TT_PIONEER_CAP_RESIDENT_ATTENTION)) {
+			fprintf(stderr,"Explicit device-resident KV attention unavailable; no BEGIN/fallback\n"); failed=true; return false;
+		}
 		if (fleet && (!(s.capabilities&TT_PIONEER_CAP_Q8_FLEET) || (attention && !(s.capabilities&TT_PIONEER_CAP_FLEET_ATTENTION)))) {
 			fprintf(stderr,"Explicit multicore/whole-attention capability unavailable; no BEGIN/compute/fallback\n"); failed=true; return false;
 		}
 		bulkUpload=groupedUpload && (s.capabilities&TT_PIONEER_CAP_BULK_UPLOAD);
+		if (residentKV && !bulkUpload) { fprintf(stderr,"Resident KV requires owned bulk scratch capability; no BEGIN/fallback\n"); failed=true; return false; }
 		if (groupedUpload==1 && !bulkUpload) { fprintf(stderr,"Explicit owned bulk upload unavailable; no BEGIN/compute submitted\n"); failed=true; return false; }
 		if (fp16 && !(s.capabilities&128)) { fprintf(stderr,"Fixed FP16 matvec unavailable; no compute submitted\n"); failed=true; return false; }
 		if (q8 && !(s.capabilities&1024)) { fprintf(stderr,"Scaled Q8 matvec unavailable; no compute submitted\n"); failed=true; return false; }
@@ -167,6 +182,7 @@ public:
 		memcpy(result,request->output,outputs*4); calls++; return true;
 	}
 	bool AttentionGroups(unsigned tokens,const uint32_t* query,const uint32_t* keys,const uint32_t* values,uint32_t* output) {
+		if (residentKV) return false; // distinct image/ABI; never silently switch
 		if (!active || failed || finished || cold || !fleet || !attention || !query || !keys || !values || !output || !PioneerFleetAttentionBytes(tokens)) return false;
 		if (!fleetAttention) fleetAttention=(tt_pioneer_fleet_attention*)malloc(sizeof(tt_pioneer_fleet_attention));
 		if (!fleetAttention) { failed=true; return false; }
@@ -187,6 +203,43 @@ public:
 			for (unsigned w=0;w<4;w++) proved &= r.before[w]==r.after[w];
 		}
 		if (!proved) { failed=true; closeOnly=true; fprintf(stderr,"Whole-attention STOP status%d cold%u; close-only, no fallback/retry\n",status,cold); return false; }
+		memcpy(output,p.output,8192); attentionCalls+=8; return true;
+	}
+	bool PeerPcProbe(unsigned worker) {
+		if (!active || failed || finished || cold || !fleet || !worker || worker>=120) return false;
+		tt_pioneer_peer_pc_read p={}; p.version=1; p.worker=worker;
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_PEER_PC_READ,&p,sizeof(p));
+		cold=p.result.recovery_required!=0;
+		bool okay=!status && PioneerPeerPcReadProof(p.result,worker);
+		fprintf(stderr,"Peer-PC worker%u CPU%x/%x NoC%x/%x requests%u completed%u state%u cold%u %s\n",
+			worker,p.result.cpu_before[0],p.result.cpu_after[1],p.result.noc_pc[0],p.result.noc_pc[1],
+			p.result.requests,p.result.completed,p.result.state,cold,okay?"PASS":"FAIL");
+		if (!okay) { failed=true; closeOnly=true; } // no retry, fallback or result publication
+		return okay;
+	}
+	bool ResidentAttentionStep(unsigned tokens,unsigned layer,const uint32_t* query,const uint32_t* keys,const uint32_t* values,uint32_t* output) {
+		if (!active || failed || finished || cold || !residentKV || !query || !keys || !values || !output
+			|| !tokens || tokens>256 || layer>=28) return false;
+		if (!residentAttention) residentAttention=(tt_pioneer_resident_attention*)malloc(sizeof(tt_pioneer_resident_attention));
+		if (!residentAttention) { failed=true; return false; }
+		auto& p=*residentAttention; memset(&p,0,sizeof(p)); p.version=payloadBlocks?2:1; p.tokens=tokens; p.layer=layer;
+		memcpy(p.input,query,8192);
+		for (unsigned g=0;g<8;g++) { memcpy(p.input+2048+g*128,keys+g*64,256); memcpy(p.input+2048+g*128+64,values+g*64,256); }
+		if (!PioneerResidentAttentionInput(tokens,layer,p.input)) return false;
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_RESIDENT_ATTENTION,&p,sizeof(p));
+		const auto& r=p.result.math; cold=r.recovery_required!=0;
+		bool proved=!status && r.version==1 && r.state==TT_ATTN_TILE_PASSED && r.prepared && r.context_reset
+			&& r.started && r.completed && r.stopped && r.polls && !cold && !r.nonfinite && r.tokens==tokens && r.count==tokens
+			&& r.staged_words==3072 && p.result.groups==8 && p.result.layer==layer
+			&& r.phase==TT_ATTENTION_TILE_DONE && r.marker==TT_ATTENTION_TILE_MARKER && r.pc[0]==TT_ATTENTION_TILE_PARK && r.pc[1]==r.pc[0]
+			&& PioneerResidentAttentionCounterProof(tokens,p.result.before,p.result.after);
+		for (unsigned w=0;w<4;w++) proved &= r.before[w]==p.result.before[w] && r.after[w]==p.result.after[w];
+		for (auto value:p.output) proved &= (value&0x7f800000)!=0x7f800000;
+		if (!proved) {
+			failed=true; closeOnly=true;
+			fprintf(stderr,"Resident-KV attention STOP status%d state%u n%u layer%u s/c/s%u/%u/%u pc%x phase%x count%u marker%x cold%u; no fallback/retry\n",
+				status,r.state,tokens,layer,r.started,r.completed,r.stopped,r.pc[1],r.phase,r.count,r.marker,cold); return false;
+		}
 		memcpy(output,p.output,8192); attentionCalls+=8; return true;
 	}
 	bool AttentionTile(unsigned tokens,const uint32_t* query,const uint32_t* keys,const uint32_t* values,uint32_t* result) {

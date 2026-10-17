@@ -5,6 +5,7 @@
 #include "../PioneerBlackholeFma.h"
 #include "../PioneerFloat16.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeAttentionTileImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeResidentAttentionImage.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -33,14 +34,15 @@ static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&
 struct Image {
 	std::vector<uint8_t> boot,code;
 	std::map<std::string,uint32_t> symbols;
-	explicit Image(const char* path):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")) {
+	bool resident;
+	explicit Image(const char* path,bool kv=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv) {
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
 		std::string name; char type; uint32_t address;
 		while (file>>std::hex>>address>>type>>name) symbols[name]=address;
 		assert(boot.size()==4 && Word(boot,0)==0x0006c06f && code.size()<=8192);
-		assert(Word(boot,0)==TT_ATTENTION_TILE_BOOT && code.size()==TT_ATTENTION_TILE_IMAGE_WORDS*4);
+		assert(Word(boot,0)==TT_ATTENTION_TILE_BOOT && code.size()==unsigned(resident?TT_RESIDENT_ATTN_IMAGE_WORDS:TT_ATTENTION_TILE_IMAGE_WORDS)*4);
 		for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++)
-			assert(BlackholeAttentionTileCodeWord(w)==(w<code.size()/4?Word(code,w*4):0));
+			assert((resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());
 		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE && symbols.at("attention_park")==TT_ATTENTION_TILE_PARK);
 		assert(symbols.at("attention_exact_end")-symbols.at("attention_exact_begin")==37*4);
@@ -124,7 +126,8 @@ struct Machine {
 		}
 		drained=false;
 	}
-	uint32_t Load(uint32_t a) {
+	virtual ~Machine() = default;
+	virtual uint32_t Load(uint32_t a) {
 		assert(!(a&3));
 		if (a==0xffe000fc) return ack;
 		if (Range(a,0xffef0000,224*4)) { assert(drained); return config[(a-0xffef0000)/4]; }
@@ -134,7 +137,7 @@ struct Machine {
 			|| Range(a,0x92000,tokens*256) || Range(a,0xa2000,tokens*256) || Range(a,0x17ffc0,12));
 		return mem[a/4];
 	}
-	void Store(uint32_t a,uint32_t value) {
+	virtual void Store(uint32_t a,uint32_t value) {
 		assert(!(a&3));
 		if (a==0xffe40000) { mmioWrites++; Sfp(value); return; }
 		if (a==0xffe000fc) { assert(!value); mmioWrites++; ack=0; return; }
@@ -157,7 +160,7 @@ struct Machine {
 	void Run(bool fault=false) {
 		uint32_t park=image.symbols.at("attention_park"),faultPark=image.symbols.at("attention_fault_park")+28;
 		while (pc!=(fault?faultPark:park)) {
-			assert(++steps<30000000);
+			assert(++steps<(image.resident?500000000U:30000000U));
 			assert(pc==0x6000 || Range(pc,0x72000,image.symbols.at("attention_exact_begin")-0x72000));
 			uint32_t i=mem[pc/4],next=pc+4,r=0;
 			unsigned op=i&127,d=(i>>7)&31,s=(i>>15)&31,t=(i>>20)&31,f=(i>>12)&7,hi=i>>25;
@@ -309,4 +312,5 @@ int main(int argc,char** argv)
 	}
 	assert(maxStack<8192);
 	printf("PASS: OFFLINE actual RV32IMF/SFPU tile; strict fixed memory/MMIO; partial-FMA model; grouped/causal/softmax, n1..256, input/numeric/timeout faults; stack=%u max-double-L2=%.9g. NO DRIVER OR HARDWARE EXPOSURE\n",maxStack,maximumError);
+	return 0;
 }

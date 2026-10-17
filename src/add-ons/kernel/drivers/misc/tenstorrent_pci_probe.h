@@ -38,6 +38,8 @@
 #include "PioneerOutputBufferProbe.h"
 #include "PioneerResidentStream.h"
 #include "PioneerBulkUpload.h"
+#include "PioneerResidentAttention.h"
+#include "PioneerPeerPcRead.h"
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
 #define TT_PCI_PROBE_BAR4_ADDRESS (B_DEVICE_OP_CODES_END + 0x5451)
@@ -173,6 +175,8 @@
 #define TT_PCI_PROBE_PIONEER_RUNTIME_Q8_FLEET (B_DEVICE_OP_CODES_END + 0x54d3)
 #define TT_PCI_PROBE_PIONEER_FLEET_ATTENTION (B_DEVICE_OP_CODES_END + 0x54d4)
 #define TT_PCI_PROBE_PIONEER_RUNTIME_PERSISTENT_FLEET (B_DEVICE_OP_CODES_END + 0x54d5)
+#define TT_PCI_PROBE_PIONEER_RESIDENT_ATTENTION (B_DEVICE_OP_CODES_END + 0x54d6)
+#define TT_PCI_PROBE_PIONEER_PEER_PC_READ (B_DEVICE_OP_CODES_END + 0x54d7)
 // Bit4096 belonged to an unpublished, alignment-unsafe prototype. Do not
 // accept it as proof that the corrected native image has been loaded.
 #define TT_PIONEER_CAP_NATIVE_Q8_UNPACK 8192U
@@ -188,7 +192,11 @@
 #define TT_PIONEER_CAP_FLEET_ATTENTION 8388608U
 #define TT_PIONEER_CAP_PERSISTENT_FLEET 16777216U
 #define TT_PIONEER_CAP_INLINE_PERSISTENT_FLEET 33554432U
-#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD | TT_PIONEER_CAP_Q8_FLEET | TT_PIONEER_CAP_FLEET_ATTENTION | TT_PIONEER_CAP_PERSISTENT_FLEET | TT_PIONEER_CAP_INLINE_PERSISTENT_FLEET)
+#define TT_PIONEER_CAP_RESIDENT_ATTENTION 67108864U
+#define TT_PIONEER_CAP_PAYLOAD_BLOCKS 134217728U
+#define TT_PIONEER_CAP_WIDE_PAYLOAD 268435456U
+#define TT_PIONEER_CAP_PEER_PC_READ 536870912U
+#define TT_PIONEER_RESIDENT_CAPABILITIES (4095U | TT_PIONEER_CAP_NATIVE_Q8_UNPACK | TT_PIONEER_CAP_NATIVE_Q8_F32_SCALES | TT_PIONEER_CAP_Q8_BULK | TT_PIONEER_CAP_Q8_SECOND | TT_PIONEER_CAP_Q8_DUAL | TT_PIONEER_CAP_Q8_DUAL_REUSE | TT_PIONEER_CAP_ATTENTION_TILE_TEST | TT_PIONEER_CAP_ATTENTION_TILE_SHARED | TT_PIONEER_CAP_BULK_UPLOAD | TT_PIONEER_CAP_Q8_FLEET | TT_PIONEER_CAP_FLEET_ATTENTION | TT_PIONEER_CAP_PERSISTENT_FLEET | TT_PIONEER_CAP_INLINE_PERSISTENT_FLEET | TT_PIONEER_CAP_RESIDENT_ATTENTION | TT_PIONEER_CAP_PAYLOAD_BLOCKS | TT_PIONEER_CAP_WIDE_PAYLOAD | TT_PIONEER_CAP_PEER_PC_READ)
 
 struct tt_arc_query_support { uint32_t version, message, queue, entries, csm_bytes; };
 struct tt_arc_clock_support { uint32_t version, query, busy, idle, before_mhz, max_mhz; };
@@ -398,6 +406,17 @@ struct tt_pioneer_fleet_attention {
 	uint32_t query[2048],output[2048];
 	tt_attention_tile_result result[8];
 	uint32_t prefix[256*1024];
+};
+// Query[8][256], then new K/V[8][2][64] packed half words. One token
+// per call, private arena-derived KV tail; no caller addresses or programs.
+struct tt_pioneer_resident_attention {
+	uint32_t version,tokens,layer,reserved;
+	uint32_t input[TT_RESIDENT_ATTN_INPUT_WORDS],output[2048];
+	tt_resident_attention_result result;
+};
+struct tt_pioneer_peer_pc_read {
+	uint32_t version,worker,reserved[2];
+	tt_peer_pc_read_result result;
 };
 static_assert(offsetof(tt_pioneer_fleet_attention,prefix)==sizeof(tt_pioneer_fleet_attention)-256*1024*sizeof(uint32_t),"attention inline prefix has no tail padding");
 static inline size_t PioneerFleetAttentionBytes(unsigned tokens) {

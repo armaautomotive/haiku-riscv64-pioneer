@@ -48,9 +48,9 @@ static const AssistantHardware kAssistantHardware[] = {
 		"Whole learned projections use up to120 P100A compute cores.\n"
 		"Small projections use fewer workers to reduce dispatch overhead.\n"
 		"One shared input upload; peers fetch it over the card's internal network.\n"
-		"Card attention: one host call per layer, not one per head group.\n"
+		"Card attention keeps KV on device; sends only each token's new K/V.\n"
 		"CPU reference validation OFF; ownership/completion/recovery checks stay.\n"
-		"Host still handles KV/norms/RoPE. Not a device-resident decoder.\n"
+		"Host mirrors KV for coherence and handles norms/RoPE. Hybrid decoder.\n"
 		"Experimental 0.6B Q8_0 only; no CPU fallback or speed guarantee.\n"
 		"Changing to/from this mode reloads device weights on first use."}
 };

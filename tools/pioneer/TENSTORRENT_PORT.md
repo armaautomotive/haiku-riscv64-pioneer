@@ -2,10 +2,141 @@
 
 ## Status
 
+### October17: device-resident attention KV and wide SRAM candidate
+
+Fast self-hosted Qwen is **still not achieved**. This follow-up replaces the
+repeated host attention-history transfers, not the whole host-controlled
+decoder. The fresh, uniquely named full-model/warm-CPU comparison passed
+correctness but FAILED the CPU speedup gate. Do not promote primitive gains
+to a practical-speed claim.
+
+The separate `54d6` data-only ABI accepts eight queries plus ONE new K/V token:
+8192+4096 bytes per layer, independent of prefix length. Its immutable 5200-byte
+RV32IMF image reuses the existing exact attention arithmetic. For each of eight
+groups it writes the new packed-half K/V to a private bank0 tail, fetches the
+prefix over device NoC in <=16KiB bursts, runs both query heads, and collects
+all outputs. One RISC start/stop covers the entire layer. All newly written K/V
+words are compared on-card after the GDDR readback, and every fetched prefix
+still passes the original finite-input checks. No host DMA or caller-supplied
+address, program, routing coordinate or arbitrary command is added.
+
+The28MiB tail is kernel-derived from the session arena, with disjoint fixed
+slots for28 layers /8 groups /256 tokens / K and V. Reservation requires that
+NONE of its pages was uploaded as weights, then refuses every overlapping
+legacy/stream/bulk transfer. Below-tail lazy weight upload remains allowed.
+Each layer records its initialized prefix length; gaps cannot be read. Host
+prefix-coherence bookkeeping detects changed/restored conversations and
+explicitly rebuilds the affected prefix on the card, never with CPU attention.
+Qwen's host KV mirror, norms, RoPE and activation preprocessing still exist.
+
+Every accepted result requires complete count/marker/two-PC/idle/source/hold
+proofs, finite output and exact wrapping READ and WRITE counters. At n tokens:
+read requests=16*ceil(n/64), read flits=64*n, acknowledged writes=16, write
+flits=64, shared accepted requests=reads+16. A partial/unknown transfer or stop
+quarantines both host allocations and the owned fleet. END retains the full
+prepared-fleet live audit and reverse restoration. Under the exclusive team/FD
+lock, master-only handoffs now check all peer ownership/quiescence metadata
+and live-audit the master/shared PCIe source; each matrix still live-audits
+every participating worker before launch and verifies every completion.
+
+Capability`0x4000000` selects resident KV. The additional explicit v2 choice
+requires`0x8000000` and`0x10000000`: phase-fenced, aligned64-bit SRAM DATA
+transfers, with scalar32-bit alignment/tails and no over-read. All control,
+NoC, reset, code upload/restore, ownership and completion fences remain on
+their existing paths. The private HOST input page uses the already qualified
+three-fence/full-readback staging policy. Legacy checked/Fast/Attention and
+persistent qualification modes retain their previous paths. The intermediate
+32-bit phase-fenced experiment was correct but had negligible native benefit.
+
+Offline qualification includes actual linked RV32IMF/SFPU execution for all
+eight groups, changed sequential tokens, layer27, n31/64/65/128/256, wrapping
+NoC counters, invalid descriptors/values and uncertain transfers. It strictly
+bounds the GDDR/L1 transactions. Controller tests include every3072 dropped
+input store, both halves of wide transfers, all43 result-proof fields, prefix
+restart/rewind/replay, all120 peer-state refusals and no reset/restore after
+uncertainty. Real GGML integration tests cover the original84 public captures
+in legacy, fleet, resident-KV and payload-block modes. The old attention image
+still rebuilds byte-identically (`0d46bb39...`). The new image SHA256 is
+`ac1c7a4a079fffb36223e1a4b4a10eaaf48505544c851b782109a6b214d4c05f`.
+
+Native evidence in `/boot/home/pioneer-resident-kv-20261017-a/`:
+
+- `full-qwen.log`: initial resident-KV driver43a1925e, all22 positions / all
+ 151936 logits identical to the independent CPU context (cosine1, L2=0),
+ four greedy outputs,197 tensors /670482432 bytes /163692 pages. END2,
+ PCI/host1/1, cold0. Three diagnostic generation samples took20.556989s
+ (0.145936tok/s); this is NOT the unchanged Assistant's seven-sample rate.
+- `native-optimized.log`: bounded master handoff, all eight groups on layers0
+ and27 for n1..4, exact independent results, warm calls20–22ms, clean END.
+- `native-blocks.log`: 32-bit block experiment, same attention proof plus
+ interleaved changed-input two-worker64-row projections, all exact; clean END.
+- `native-wide.log`: aligned64-bit candidate271c4abf, the same complete
+ interleaving/numeric/cleanup checks, attention warm calls12–14ms. This is
+ an attention-operator result, not tokens/s.
+- `benchmark-wide.log`: fresh full-Qwen and repeated warm CPU32 comparison,
+ binary`qwen-wide-275aa8b3`. All22 bootstrap positions /151936 logits exact,
+ then three independent public requests of16 output tokens each. All quality
+ and no-reupload checks passed, explicit END2/PCI-host1/1/cold0/cleanup1.
+ Generation was0.209836 /0.208870 /0.211259tok/s versus CPU32's0.596272 /
+ 0.760404 /1.249012tok/s. P100A TTFT130.855 /135.595 /121.747s versus
+ CPU1.908 /2.171 /2.012s. All three5%-speedup gates FAILED (test exit1),
+ not a hardware-completion failure. Entire1111.791s qualifier: weights
+ 321.374s, matrix/stage/result591.626s, attention/stage/result107.742s,
+ activation preprocessing2.573s. CPU-reference diagnostics outside timing.
+- `assistant-wide-public.log`: actually installed service`d26de810...`,
+ public question "What is the capital of France?" answered Paris, success1,
+ CPU validation OFF / reference decodes0,26 device positions,728 attention
+ calls, peak120 workers. Seven generation samples31.472s,0.222tok/s;
+ cold request444.1s. This is about twice the old0.108111tok/s, NOT fast.
+ The idle model then unloaded with explicit END2/PCI-host1/1/cold0/clean1.
+
+`benchmark-optimized.log` is **REJECTED**: its executable was mistakenly
+overwritten while the first warm request was running, then the test stopped
+in the user debugger. It is not valid benchmark evidence. Only the identified
+test team1472 was terminated; its driver-owned close passed the cold/ownership
+gate without a reboot, reload or SD swap. Subsequent independent native
+qualifications again proved explicit END2/PCI-host1/1/cold0. All further
+native executables use new content-specific filenames; never SCP over an
+executing file, even when a new build has the same original basename.
+
+The installed Assistant opts Throughput into the new explicit path and requires
+all capabilities before BEGIN; original debug targets remain. GUI/service/
+Hardware/control were installed atomically with rollback copies, native
+hardware-policy tests passed without settings writes, and host-only lifecycle
+tests passed with zero device operations. No model, pinned CPU runtime,
+firmware, default boot, CPU/RAM profile,
+SD state or user's58-line llama.cpp work was changed. Practical speed, full
+device-resident graph execution, sampling without full-logit PIO, multi-bank
+weights and wider/4-bit Qwen models remain separate unmet requirements.
+
+#### On-card dispatcher prerequisite: held-peer PC transport
+
+The separate diagnostic`54d7`/capability`0x20000000` reads only the fixed
+TRISC debug-PC register`ffb13140` of one kernel-selected peer1..119 through
+master0's NoC. Both RISCs stay held; no peer write, core release/reset or
+host DMA is performed by the diagnostic. Two4-byte reads must each prove
+all four wrapping counters+1, all initiators/IDs idle, stable source/PCI/TLB,
+and match four independent CPU PC samples. The sole local scratch word is
+within the saved bulk lease. Unknown completion/hold/source quarantines the
+session without retry/reset; a known data mismatch is not accepted.
+
+Driver`103f16d99bc6bda9212b920c4ef6b3b38617744ffae235fdd4fd1d3e5424ada2`
+was installed atomically ONLY AFTER Assistant's explicit clean unload and
+closing its empty GUI/idle service. Loaded capability1073737727 confirmed
+the asynchronous watcher, not merely the file hash. Qualifier
+`peerpc-f00ef195` (SHA256
+`f00ef1956133bfa696b29ac45c0664a16e3001fd2bb52aaa707378241ec53e3f`)
+then passed ALL119 peers, both NoC reads / all CPU observations exact,
+explicit END2/PCI-host1/1/cold0/cleanup1. Evidence`peer-pc-transport.log` in
+the same native directory. ASan/UBSan tests cover every route, proof word,
+counter wrap, dropped command/poison stores, changed/stale PC, mapping and
+ownership faults. No on-card launch/polling dispatcher or speedup is claimed
+yet; this proves its bounded read transport prerequisite.
+
 ### October17: persistent-worker foundation, NOT usable inference speed yet
 
 The requested fast self-hosted Qwen decoder is **not finished**. The installed
-Assistant's last end-to-end result remains0.108111tokens/s, which is unusable.
+Assistant's result at that checkpoint was0.108111tokens/s, which is unusable.
 The following work qualifies a separate matrix runtime; it does not change
 Assistant hardware targets, establish a new model tokens/s result, or qualify
 all Qwen models. More small primitive gains are not the acceptance criterion.
