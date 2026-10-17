@@ -52,6 +52,7 @@ struct PeerFixture {
 		return passed;
 	}
 };
+#ifndef PIONEER_PEER_PC_MOCK_ONLY
 int main()
 {
 	for (unsigned peer=1;peer<120;peer++) {
@@ -82,3 +83,4 @@ int main()
 	}
 	puts("PASS: fixed peer-PC NoC reads, all119 routes/wrapping proofs, dropped writes, timeout/stale/changed-PC/map/ownership faults; no reset/DMA/retry");
 }
+#endif

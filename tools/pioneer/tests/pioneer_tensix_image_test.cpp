@@ -281,17 +281,39 @@ struct Machine {
 			unsigned rs1 = (instruction>>15)&31, rs2 = (instruction>>20)&31;
 			int32_t imm = Sign(instruction>>20,12);
 			uint32_t result = 0; bool write = false;
-			if ((instruction&3)!=3) { assert(InlineTensix()); Instruction((instruction>>2)|(instruction<<30)); }
+			if ((instruction&3)!=3) {
+				if (!InlineTensix()) fprintf(stderr,"Unexpected non-RISC instruction %08x at %08x\n",instruction,pc);
+				assert(InlineTensix()); Instruction((instruction>>2)|(instruction<<30));
+			}
 			else if (op == 0x37) { result = instruction & 0xfffff000; write = true; }
 			else if (op == 0x17) { result = pc+(instruction&0xfffff000); write = true; }
 			else if (op == 0x13) {
 				if (f3 == 0) result = regs[rs1] + imm;
+				else if (f3 == 2) result = int32_t(regs[rs1]) < imm;
+				else if (f3 == 3) result = regs[rs1] < uint32_t(imm);
+				else if (f3 == 4) result = regs[rs1] ^ imm;
+				else if (f3 == 6) result = regs[rs1] | imm;
 				else if (f3 == 7) result = regs[rs1] & imm;
-				else { assert((f3 == 1 || f3 == 5) && (instruction>>25) == 0); result = f3 == 1 ? regs[rs1] << (instruction>>20 & 31) : regs[rs1] >> (instruction>>20 & 31); }
+				else { unsigned high=instruction>>25; assert((f3==1 && !high) || (f3==5 && (high==0 || high==32)));
+					result=f3==1?regs[rs1]<<(rs2&31):high?uint32_t(int32_t(regs[rs1])>>(rs2&31)):regs[rs1]>>(rs2&31); }
 				write = true;
 			} else if (op == 0x33) {
-				assert((instruction>>25) == 0 && (f3 == 0 || f3 == 4 || f3 == 6 || f3 == 7));
-				result = f3 == 0 ? regs[rs1] + regs[rs2] : f3 == 4 ? regs[rs1] ^ regs[rs2] : f3 == 6 ? regs[rs1] | regs[rs2] : regs[rs1] & regs[rs2]; write = true;
+				unsigned high=instruction>>25;
+				if (high==1) { assert(!f3); result=uint32_t(uint64_t(regs[rs1])*regs[rs2]); }
+				else {
+					assert(high==0 || (high==32 && (f3==0 || f3==5)));
+					switch (f3) {
+						case 0: result=high?regs[rs1]-regs[rs2]:regs[rs1]+regs[rs2]; break;
+						case 1: result=regs[rs1]<<(regs[rs2]&31); break;
+						case 2: result=int32_t(regs[rs1])<int32_t(regs[rs2]); break;
+						case 3: result=regs[rs1]<regs[rs2]; break;
+						case 4: result=regs[rs1]^regs[rs2]; break;
+						case 5: result=high?uint32_t(int32_t(regs[rs1])>>(regs[rs2]&31)):regs[rs1]>>(regs[rs2]&31); break;
+						case 6: result=regs[rs1]|regs[rs2]; break;
+						case 7: result=regs[rs1]&regs[rs2]; break;
+						default: assert(false);
+					}
+				} write=true;
 			} else if (op == 0x23) {
 				assert(f3 == 1 || f3 == 2); imm = Sign(((instruction>>25)<<5) | (instruction>>7 & 31),12);
 				if (f3==1) Store16(regs[rs1]+imm,uint16_t(regs[rs2])); else Store(regs[rs1]+imm,regs[rs2]);
@@ -302,9 +324,14 @@ struct Machine {
 				write=true;
 			}
 			else if (op == 0x63) {
-				assert(f3 == 0 || f3 == 1);
 				imm = Sign(((instruction>>31)<<12) | ((instruction>>7 & 1)<<11) | ((instruction>>25 & 63)<<5) | ((instruction>>8 & 15)<<1),13);
-				if ((regs[rs1] == regs[rs2]) == (f3 == 0)) next = pc + imm;
+				bool take=false;
+				switch (f3) {
+					case 0: take=regs[rs1]==regs[rs2]; break; case 1: take=regs[rs1]!=regs[rs2]; break;
+					case 4: take=int32_t(regs[rs1])<int32_t(regs[rs2]); break; case 5: take=int32_t(regs[rs1])>=int32_t(regs[rs2]); break;
+					case 6: take=regs[rs1]<regs[rs2]; break; case 7: take=regs[rs1]>=regs[rs2]; break; default: assert(false);
+				}
+				if (take) next=pc+imm;
 			} else if (op == 0x6f) {
 				imm = Sign(((instruction>>31)<<20) | ((instruction>>12 & 255)<<12) | ((instruction>>20 & 1)<<11) | ((instruction>>21 & 1023)<<1),21);
 				result = next; next = pc + imm; write = true;

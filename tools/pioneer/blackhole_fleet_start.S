@@ -12,12 +12,20 @@
 fleet_start:
 .ifdef TT_FLEET_PERSISTENT
 	li a0,0x71300
+.ifdef TT_FLEET_COORDINATED
+	li t0,0x43524431 /* CRD1: separate immutable coordinated-worker image */
+.else
 	li t0,0x50525331
+.endif
 	sw t0,12(a0)
 	fence
 	j fleet_persistent_wait
 .endif
 fleet_job:
+.ifdef TT_FLEET_COORDINATED
+	li t3,0x71340
+	jal ra,fleet_snapshot
+.endif
 	li a0,0x70500
 	lw t0,12(a0)
 .ifdef TT_FLEET_PERSISTENT
@@ -136,10 +144,30 @@ fleet_fault_park:
 	.org 0x200,0
 	.global fleet_persistent_done,fleet_persistent_wait,fleet_persistent_wait_end,fleet_persistent_stop_park
 fleet_persistent_done:
+.ifdef TT_FLEET_COORDINATED
+	li t3,0x71350
+	jal ra,fleet_snapshot
+	li t0,0x17ffc0
+	li t1,0x71360
+	lw t2,0(t0)
+	sw t2,0(t1)
+	lw t2,4(t0)
+	sw t2,4(t1)
+	lw t2,8(t0)
+	sw t2,8(t1)
+	li t0,0x71300
+	lw t2,0(t0)
+	sw t2,12(t1)
+	fence
+.endif
 	li a0,0x71300
 	lw t0,0(a0)
 	sw t0,4(a0)
 	fence
+.ifdef TT_FLEET_COORDINATED
+	j fleet_persistent_wait
+	.org 0x280,0
+.endif
 fleet_persistent_wait:
 	li a0,0x71300
 	fence
@@ -153,7 +181,11 @@ fleet_persistent_wait:
 	li t2,1
 	bne t1,t2,fleet_fault
 	sw t0,4(a0)
+.ifdef TT_FLEET_COORDINATED
+	li t0,0x43535450 /* CSTP, not legacy STOP proof */
+.else
 	li t0,0x53544f50
+.endif
 	sw t0,12(a0)
 	fence
 fleet_persistent_stop_park:
@@ -162,5 +194,72 @@ fleet_persistent_wait_end:
 	/* Data-only mailbox: issued, finished, stop request, ready marker. */
 	.org 0x300,0
 	.word 0,0,0,0
+.ifdef TT_FLEET_COORDINATED
+	/* 71340..7137f: before/after counters, math metadata, sequence.
+	 * 71380..713bf: exact kernel-owned expected source words.
+	 * Keep helpers below71910: the unchanged math uses71910..71a20. */
+	.org 0x500,0
+fleet_snapshot:
+	fence
+	li t6,0xffb20000
+	li t5,0x71380
+	li t4,0
+1:
+	beq t4,zero,2f
+	li t0,15
+	beq t4,t0,3f
+	li t0,13
+	bltu t4,t0,4f
+	slli t0,t4,2
+	addi t0,t0,0x11c
+	j 5f
+2:
+	li t0,0x100
+	j 5f
+3:
+	li t0,0x16c
+	j 5f
+4:
+	slli t0,t4,2
+	addi t0,t0,0x114
+5:
+	add t0,t0,t6
+	lw t1,0(t0)
+	lw t2,0(t5)
+	bne t1,t2,fleet_fault
+	addi t5,t5,4
+	addi t4,t4,1
+	li t0,16
+	bltu t4,t0,1b
+	li t4,4
+	li t5,0xffb20040
+6:
+	lw t0,0(t5)
+	bne t0,zero,fleet_fault
+	li t0,0x800
+	add t5,t5,t0
+	addi t4,t4,-1
+	bne t4,zero,6b
+	li t4,32
+	li t5,0xffb20240
+7:
+	lw t0,0(t5)
+	andi t0,t0,255
+	bne t0,zero,fleet_fault
+	addi t5,t5,4
+	addi t4,t4,-1
+	bne t4,zero,7b
+	li t4,4
+	li t5,0xffb20208
+8:
+	lw t0,0(t5)
+	sw t0,0(t3)
+	addi t3,t3,4
+	addi t5,t5,4
+	addi t4,t4,-1
+	bne t4,zero,8b
+	fence
+	ret
+.endif
 .endif
 fleet_end:

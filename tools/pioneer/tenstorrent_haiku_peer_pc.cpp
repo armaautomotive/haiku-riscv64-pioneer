@@ -2,8 +2,9 @@
 #include "TenstorrentHaikuResident.h"
 int main(int argc,char** argv)
 {
-	if (argc!=2 || strcmp(argv[1],"--read-held-peers-and-restore")) {
-		fprintf(stderr,"Usage: %s --read-held-peers-and-restore\nFixed read-only peer-PC transport qualification, NOT an inference benchmark\n",argv[0]); return 2;
+	bool coordinator=argc==2 && !strcmp(argv[1],"--coordinator-probe-and-restore");
+	if (!coordinator && (argc!=2 || strcmp(argv[1],"--read-held-peers-and-restore"))) {
+		fprintf(stderr,"Usage: %s --read-held-peers-and-restore|--coordinator-probe-and-restore\nFixed read-only peer-PC transport qualification, NOT an inference benchmark\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IONBF,0); setvbuf(stderr,NULL,_IONBF,0);
 	PioneerResidentDevice device;
@@ -26,8 +27,11 @@ int main(int argc,char** argv)
 		okay=device.UploadPages(at,weights+at/4,pages);
 	}
 	okay=okay && device.Q8Matvec(0,1024,64,x,scale,y);
-	for (unsigned worker=1;worker<120 && okay;worker++) okay=device.PeerPcProbe(worker);
+	if (coordinator) {
+		const unsigned peers[]={1,2,119,1};
+		for (unsigned count:peers) if (okay) okay=device.CoordinatorProbe(count);
+	} else for (unsigned worker=1;worker<120 && okay;worker++) okay=device.PeerPcProbe(worker);
 	bool clean=device.Finish();
-	printf("%s fixed119 peer-PC read transport; cleanup%u; no peer writes/RISC releases in probe; NOT inference speed\n",okay && clean?"PASS":"FAIL",clean);
+	printf("%s %s peer-PC read transport; cleanup%u; no peer writes/RISC releases in probe; NOT inference speed\n",okay && clean?"PASS":"FAIL",coordinator?"on-card coordinator":"fixed119",clean);
 	return okay && clean?0:1;
 }

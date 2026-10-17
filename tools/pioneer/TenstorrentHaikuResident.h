@@ -21,6 +21,7 @@ class PioneerResidentDevice {
 	tt_pioneer_resident_attention* residentAttention=NULL;
 	bool residentKV=false;
 	bool payloadBlocks=false;
+	unsigned coordinatorNonce=0;
 	size_t requestBytes=0;
 public:
 	uint64_t uploads=0,calls=0,attentionCalls=0;
@@ -204,6 +205,18 @@ public:
 		}
 		if (!proved) { failed=true; closeOnly=true; fprintf(stderr,"Whole-attention STOP status%d cold%u; close-only, no fallback/retry\n",status,cold); return false; }
 		memcpy(output,p.output,8192); attentionCalls+=8; return true;
+	}
+	bool CoordinatorProbe(unsigned workers) {
+		if (!active || failed || finished || cold || !fleet || !workers || workers>119 || coordinatorNonce>=0x7ffffffe) return false;
+		tt_pioneer_coordinator_probe p={}; p.version=1; p.workers=workers;
+		int status=ioctl(fd,TT_PCI_PROBE_PIONEER_COORDINATOR_PROBE,&p,sizeof(p));
+		cold=p.result.recovery_required!=0;
+		bool okay=!status && PioneerCoordinatorProbeProof(p.result,workers,coordinatorNonce+1);
+		fprintf(stderr,"On-card coordinator read-only peers%u matched%u nonce%u launch/complete/stop%u/%u/%u state%u PC%x cold%u %s\n",
+			workers,p.result.matched,p.result.nonce,p.result.started,p.result.completed,p.result.stopped,p.result.state,p.result.pc[1],cold,okay?"PASS":"FAIL");
+		if (!okay) { failed=true; closeOnly=true; }
+		else coordinatorNonce=p.result.nonce;
+		return okay;
 	}
 	bool PeerPcProbe(unsigned worker) {
 		if (!active || failed || finished || cold || !fleet || !worker || worker>=120) return false;

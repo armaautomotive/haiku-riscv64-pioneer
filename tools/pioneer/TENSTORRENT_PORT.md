@@ -133,6 +133,60 @@ counter wrap, dropped command/poison stores, changed/stale PC, mapping and
 ownership faults. No on-card launch/polling dispatcher or speedup is claimed
 yet; this proves its bounded read transport prerequisite.
 
+#### Dispatcher images: native read-only qualification, math still offline
+
+`blackhole_coordinator.cpp` now contains an immutable master0 dispatcher
+candidate. Its separate code/stack lease is`6c000..70000`, disjoint from
+the math/attention images. The proposed math path uses peers1..119 as
+persistent row workers, on-card descriptor readback/monotonic doorbells,
+full peer idle/two-PC/reset-state/source/counter/metadata checks, and NoC
+gather into the already-owned master result SRAM for <=8192 rows. Larger
+classifiers retain full host logit readback. This path is **OFFLINE ONLY**;
+it is NOT selectable by any installed ioctl or Assistant target yet.
+
+The coordinated worker variant of`blackhole_fleet_start.S` keeps the
+qualified bulk Q8 math and records exact source/NoC-idle/counter proofs
+before and after each job, with fresh math metadata and sequence before
+publishing completion. Its helper avoids the math's71910..71a20 scratch.
+All code/data fit the already-backed-up71000 page. The legacy persistent
+image remains byte-identical and its native contract unchanged.
+
+Actual linked-RISC/SFPU interpreter tests pass all119 routes, all supported
+K, N4096 per worker, changed inputs without reset, independent global-row
+IEEE results, up to119 workers, hidden-output gather through N8192, sequence
+preflight BEFORE any launch, input/arena bounds, every proof-word corruption,
+dropped descriptors/doorbells/commands, nonfinite output and uncertain NoC
+completion. The first worker candidate fell into alignment padding after
+completion; offline execution caught it, an explicit jump fixed it, and
+it was never installed. Image hashes now:
+
+- worker1508B:`437e56eea3362fbe6c495569bdc0943ee347eda6687c90a51e4bba30ebae35ea`;
+- coordinator3440B:`359fb6e5e5af9fdcd248afe8e329391b4218ba4e87bc4ebc1fd67762b39bb100`.
+
+Only the separate fixed READ-ONLY operation`54d8`/capability`0x40000000`
+is exposed. The kernel fixes operation0, supplies all routes/expected held
+PCs and a fresh per-lease nonce, verifies every staged word, and forbids
+caller-supplied commands/programs. The master reads each peer's reset state
+and PC twice (four4-byte reads/peer), never writes a peer or releases its
+RISC. Acceptance requires the complete fresh physical-counter summary,
+two master PCs, exact marker/count, independent CPU before/after peer PCs,
+known stop, previous entry restoration, and complete code/stack restoration
+at END. Unknown completion/source/hold means quarantine/no retry/reset.
+
+Driver`69675ae3118da0972073d0abf8c0428c54438bd9e712726f5330bcaa994ccccc`
+was installed atomically with no active owner; loaded capability2147479551
+confirmed the watcher. Native qualifier`coord-probe-d3b9cbc0` (SHA256
+`d3b9cbc09980fee7c87e1a1407f579e0c7f40558956f6384a48986f64e00b7b1`)
+passed peers1,2,119,1 with fresh nonces1..4, master PC6c038, all
+launch/complete/stop1/1/1, cold0. Explicit END2/PCI-host1/1/cleanup1.
+Evidence`coordinator-readonly-native.log` in the same native directory.
+ASan/UBSan controller tests cover code AND stack restoration, stale summary/
+nonce, all result proof words, source/map/PC/NoC/stop faults and no reset or
+restoration after an unknown completion. This is a working native control
+channel, NOT an improved Qwen timing. Matrix-dispatch driver integration,
+native persistent-worker qualification, shared-KV handoff and full-model
+performance qualification remain to be implemented.
+
 ### October17: persistent-worker foundation, NOT usable inference speed yet
 
 The requested fast self-hosted Qwen decoder is **not finished**. The installed
