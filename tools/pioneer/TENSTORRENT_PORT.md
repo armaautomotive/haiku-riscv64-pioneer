@@ -2,6 +2,45 @@
 
 ## Status
 
+### October17: concurrent-attention contract14 native test prepared (08:16 UTC)
+
+Fast Qwen is NOT achieved. The new explicit model registry version2 seals
+eight independently backed-up code/stack/query/KV-prefix/output leases on
+peers1..8 BEFORE any peer boots. Their immutable dispatch prelude returns
+through the existing full source/idle proof and monotonic mailbox. All
+119 math peers remain available;the first8 additionally run one fixed KV
+group per layer. Every input is staged/returned/bit-compared;all8 jobs are
+issued BEFORE waiting. Each completion proves phase/count/sequence,full
+8 physical counters,all reserved metadata and finite output. No host
+intermediate transfer or CPU learned arithmetic is introduced.
+
+The root image passes actual instruction tests with all8 actual group
+scalar/SFPU images,independent sparse matrix peers,TWO sequential positions,
+exact full vocabulary/EVERY KV word,11095 peer executions/position,all119
+sequence advances and independent master/peer counter proofs. Per-word
+proof faults,delayed completion,bad input,failed transfer and nonfinite
+group output are refused before host publication. Group images separately
+pass all8 groups/layer boundaries,n1..256,counter wrap/input/NoC faults.
+Dispatch tests use a controlled attention-entry stub and independently
+prove source checks BEFORE finished publication and live STOP;they are
+NOT a claim of native concurrent performance.
+
+Controller ASan/UBSan tests cover all8 independent lease-field refusals,
+serial and parallel full-result mutations,16 unknown-state faults
+including peer-map loss,all-owner quarantine and no retry/reset/restore.
+REAL client syscall tests require exact contract14 BEFORE BEGIN,refuse
+old contracts,validate the parallel summary and never publish partial
+outputs. END live-stops ALL peers before restoring any attention owner.
+Legacy group/serial images and default-off dispatch still rebuild exactly.
+
+Experimental driver installed for the controlled test:
+`b8583340043980f6ff4251c3459c13572799a3d148cdecc781be0e25a429af6b`;
+separately named verifier
+`34f3d533400cf978de75fcccc3945cd319678e7841e58951a620e9baa726ab31`.
+Root image`ecd4636c...0505`,dispatch`6f58f16d...5fff`,group`3de94441...bc2a`.
+The native-exact v13 rollback is preserved. Native quality/performance
+retest is pending;Assistant/default boot/CPU/RAM/firmware/SD unchanged.
+
 ### October17: exact half-product attention reduction (08:02 UTC)
 
 Native whole Qwen remains too slow. The whole-decoder-only Dot path now

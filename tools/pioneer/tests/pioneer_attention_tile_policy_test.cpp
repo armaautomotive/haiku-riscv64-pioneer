@@ -76,6 +76,20 @@ static void Clean(AttentionMock& io,PioneerResidentLease& store,PioneerAttention
 }
 int main()
 {
+	for (unsigned group=0;group<8;group++) {
+		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
+		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=0x101+group;
+		assert(PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true) && lease.coordinatedGroup && !lease.resident);
+		for (unsigned i=0;i<2048;i++) assert(io.words[1+i]==BlackholeCoordinatedAttentionCodeWord(i));
+		uint32_t query[256]={},key[64]={},value[64]={},out[256]={}; tt_attention_tile_result result={}; unsigned writes=io.attentionWrites;
+		assert(!PioneerAttentionTileRun(io,io.Baseline(),noc,store,lease,1,query,key,value,out,result) && io.attentionWrites==writes);
+		assert(PioneerAttentionTileClose(io,io.Baseline(),noc,store,lease)); io.Restored();
+	}
+	for (unsigned version:{0U,0x100U,0x109U,0x177U}) {
+		AttentionMock io; tt_host_page_result host; PioneerResidentLease store; PioneerAttentionTileLease lease;
+		assert(Prepared(io,host,store)); auto noc=io.Compute(); noc.version=version; unsigned writes=io.attentionWrites;
+		assert(!PioneerAttentionTilePrepare(io,io.Baseline(),noc,store,lease,false,true) && io.attentionWrites==writes);
+	}
 	// Flattening is injective, bounded, and excludes all unused L1 gaps.
 	std::vector<bool> used(0x180000/4);
 	for (unsigned w=0;w<TT_ATTN_TILE_SAVED_WORDS;w++) {

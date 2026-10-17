@@ -20,6 +20,12 @@ attention_done:
 	sw t1,8(t0)
 	lw t1,8(t0)
 	fence
+.ifdef TT_ATTENTION_COORDINATED
+	/* Only a separately qualified dispatch image may enter this variant.
+	 * Full source/NoC proof and mailbox publication remain in the prelude. */
+	li t0,0x71200
+	jr t0
+.endif
 attention_park:
 	j attention_park
 attention_fault_park:

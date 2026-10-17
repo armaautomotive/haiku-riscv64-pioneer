@@ -6,6 +6,7 @@
 #include "../PioneerFloat16.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeAttentionTileImage.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeResidentAttentionImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeCoordinatedAttentionImage.h"
 #undef NDEBUG
 #include <assert.h>
 #include <math.h>
@@ -34,18 +35,30 @@ static float Flush(float value) { return (B(value)&0x7f800000)?value:F(B(value)&
 struct Image {
 	std::vector<uint8_t> boot,code;
 	std::map<std::string,uint32_t> symbols;
-	bool resident;
-	explicit Image(const char* path,bool kv=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv) {
+	bool resident,coordinated;
+	explicit Image(const char* path,bool kv=false,bool group=false):boot(Read(std::string(path)+"/boot.bin")),code(Read(std::string(path)+"/code.bin")),resident(kv),coordinated(group) {
 		std::ifstream file(std::string(path)+"/program.symbols"); assert(file.good());
 		std::string name; char type; uint32_t address;
 		while (file>>std::hex>>address>>type>>name) symbols[name]=address;
 		assert(boot.size()==4 && Word(boot,0)==0x0006c06f && code.size()<=8192);
-		assert(Word(boot,0)==TT_ATTENTION_TILE_BOOT && code.size()==unsigned(resident?TT_RESIDENT_ATTN_IMAGE_WORDS:TT_ATTENTION_TILE_IMAGE_WORDS)*4);
-		for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++)
-			assert((resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+		assert(Word(boot,0)==TT_ATTENTION_TILE_BOOT);
+		if (!coordinated) {
+			assert(code.size()==unsigned(resident?TT_RESIDENT_ATTN_IMAGE_WORDS:TT_ATTENTION_TILE_IMAGE_WORDS)*4);
+			for (unsigned w=0;w<TT_ATTENTION_TILE_CODE_WORDS;w++)
+				assert((resident?BlackholeResidentAttentionCodeWord(w):BlackholeAttentionTileCodeWord(w))==(w<code.size()/4?Word(code,w*4):0));
+		} else {
+			assert(code.size()==TT_COORDINATED_ATTENTION_IMAGE_WORDS*4);
+			for (unsigned w=0;w<TT_COORDINATED_ATTENTION_CODE_WORDS;w++)
+				assert(BlackholeCoordinatedAttentionCodeWord(w)==(w<code.size()/4?Word(code,w*4):0));
+		}
 		assert(symbols.at("attention_entry")==0x72000 && symbols.at("attention_image_end")==0x72000+code.size());
-		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE && symbols.at("attention_park")==TT_ATTENTION_TILE_PARK);
-		assert(symbols.at("attention_exact_end")-symbols.at("attention_exact_begin")==37*4);
+		assert(symbols.at("attention_done")==TT_ATTENTION_TILE_DONE
+			&& symbols.at("attention_park")==unsigned(TT_ATTENTION_TILE_PARK)+(coordinated?12:0));
+		if (!coordinated) assert(symbols.at("attention_exact_end")-symbols.at("attention_exact_begin")==37*4);
+		else { // Standalone exact half products need no general FMA table.
+			assert(!symbols.count("attention_exact_begin") && !symbols.count("attention_exact_end"));
+			symbols["attention_exact_begin"]=symbols.at("attention_image_end");
+		}
 	}
 };
 
@@ -158,7 +171,7 @@ struct Machine {
 		mem[a/4]=value;
 	}
 	void Run(bool fault=false) {
-		uint32_t park=image.symbols.at("attention_park"),faultPark=image.symbols.at("attention_fault_park")+28;
+		uint32_t park=image.coordinated?0x71200:image.symbols.at("attention_park"),faultPark=image.symbols.at("attention_fault_park")+28;
 		while (pc!=(fault?faultPark:park)) {
 			assert(++steps<(image.resident?500000000U:30000000U));
 			assert(pc==0x6000 || Range(pc,0x72000,image.symbols.at("attention_exact_begin")-0x72000));
@@ -222,7 +235,7 @@ struct Machine {
 			}
 			x[0]=0; pc=next;
 		}
-		assert(mem[pc/4]==0x0000006f);
+		if (!image.coordinated || fault) assert(mem[pc/4]==0x0000006f);
 		if (fault) assert(mem[0x17ffc8/4]==0x464e5441);
 		else assert(drained && mem[0x17ffc0/4]==image.symbols.at("attention_done") && mem[0x17ffc8/4]==0x314e5441);
 	}

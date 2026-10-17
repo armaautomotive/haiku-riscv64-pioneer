@@ -6,11 +6,16 @@ attention_source=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 attention_cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 attention_output=$2
 attention_program=blackhole_attention.cpp
+case ${PIONEER_COORDINATED_ATTENTION:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_RESIDENT_ATTENTION:-0} in
  0) ;;
  1) attention_program=blackhole_resident_attention.cpp ;;
  *) echo 'PIONEER_RESIDENT_ATTENTION must be 0 or 1' >&2; exit 2;;
 esac
+if [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 1 ]; then
+ [ "${PIONEER_RESIDENT_ATTENTION:-0}" = 0 ] || exit 2
+ attention_program=blackhole_coordinated_attention.cpp
+fi
 case "$attention_output" in /*) ;; *) echo 'Absolute output required' >&2; exit 2;; esac
 [ ! -e "$attention_output" ] && [ ! -L "$attention_output" ] || { echo 'Fresh output required' >&2; exit 2; }
 umask 077
@@ -20,7 +25,9 @@ mkdir -m 700 "$attention_output"
  -ffunction-sections -fdata-sections -ffp-contract=off -fno-unwind-tables \
  -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
  -march=rv32imf -mabi=ilp32 -fstack-usage -c "$attention_source/$attention_program" -o "$attention_output/program.o"
-"$attention_cross-as" -march=rv32imf -mabi=ilp32 -mno-relax \
+set --
+if [ "${PIONEER_COORDINATED_ATTENTION:-0}" = 1 ]; then set -- --defsym TT_ATTENTION_COORDINATED=1; fi
+"$attention_cross-as" -march=rv32imf -mabi=ilp32 -mno-relax "$@" \
  "$attention_source/blackhole_attention_start.S" -o "$attention_output/start.o"
 "$attention_cross-ld" -m elf32lriscv --no-relax --gc-sections \
  -T "$attention_source/blackhole_attention.ld" "$attention_output/start.o" "$attention_output/program.o" \

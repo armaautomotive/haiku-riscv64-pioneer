@@ -26,6 +26,18 @@ fleet_job:
 	li t3,0x71340
 	jal ra,fleet_snapshot
 .endif
+.ifdef TT_FLEET_ATTENTION
+	/* Distinct immutable prelude. Legacy matrix descriptors always zero
+	 * this reserved word;only a future sealed whole-decoder may set ATG1. */
+	li t0,0x7051c
+	lw t1,0(t0)
+	beq t1,zero,1f
+	li t0,0x31475441
+	bne t1,t0,fleet_fault
+	li t0,0x72000
+	jr t0
+1:
+.endif
 	li a0,0x70500
 	lw t0,12(a0)
 .ifdef TT_FLEET_PERSISTENT

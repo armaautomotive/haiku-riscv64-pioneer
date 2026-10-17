@@ -17,6 +17,15 @@ static PioneerDecoderJob Job()
 int main()
 {
 	auto job=Job(); assert(PioneerDecoderJobValid(job) && sizeof(job)<=4096);
+	{ auto parallel=job; parallel.version=2; assert(!PioneerDecoderJobValid(parallel) && PioneerDecoderJobValid(parallel,2));
+		for (unsigned w=0;w<119;w++) {
+			unsigned advance=PioneerDecoderSequenceAdvance(w)+(w<8?28:0);
+			assert(PioneerDecoderSequenceAdvance(w,true)==advance);
+			auto j=parallel; j.sequence[w]=0x7fffffff-advance; assert(PioneerDecoderJobValid(j,2));
+			j.sequence[w]++; assert(!PioneerDecoderJobValid(j,2));
+		}
+		assert(!PioneerDecoderJobValid(parallel,0) && !PioneerDecoderJobValid(parallel,3));
+	}
 	unsigned advances[119]={};
 	for (unsigned layer=0;layer<28;layer++) for (unsigned peers:{64U,32U,32U,32U,96U,96U,32U}) for (unsigned w=0;w<peers;w++) advances[w]++;
 	for (unsigned w=0;w<119;w++) { advances[w]++; assert(advances[w]==PioneerDecoderSequenceAdvance(w));
