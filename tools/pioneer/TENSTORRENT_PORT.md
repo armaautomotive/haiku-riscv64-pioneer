@@ -2,6 +2,53 @@
 
 ## Status
 
+### October17: exact packing35 native PASS (14:08 UTC)
+
+Fast Qwen STILL NOT achieved. GPU5.829558/5.796573/5.926380tok/s,CPU32
+1.345113/1.073473/1.565223,with prompt4.479629/4.646283/4.142304s. About1%
+faster than34,not a breakthrough or acceptance of the requested fast target.
+ALL22 full-vocabulary/exact selected-bit and all three sustained/untimed
+full-logit quality/coverage gates pass. Complete312 positions/61464
+projections/8736 attention/156 full+156 selected positions/24 batch jobs/
+zero warm uploads;END2/PCI-host1-1/cold0/cleanup1. Position21 Q813.279M ->
+12.096754M ticks,total114.751453M;matrix48.253M,SiLU9.414M,attention27.491M
+remain. Cold108.288136s includes upload89.049840s and registry9.107258s.
+Short6.415342tok/s is diagnostic ONLY. Log`qwen-packed-v35-benchmark.log`
+copied locally;driver7e394bf4 saved as`driver-v35-7e394bf4-backup`. Preserve
+34/33/31 and older rollbacks. No Assistant,Q4/27B/all-Qwen promotion.
+
+The small control gains alone are insufficient. Next research direction
+is exact32-lane integer/SFPU arithmetic for the remaining scalar divisions
+and elementwise work,not lower numerical quality or new unproved NoC/DMA
+authority. No vector-divide program is installed or native-qualified yet.
+
+### October17: exact direct activation packing35 ready for trial (14:00 UTC)
+
+Fast Qwen STILL NOT achieved. Qualified34 remains5.74..5.87tok/s. New
+35/model19/private10 changes ONLY local activation quantization:read the
+already-frozen84000 or144000 L1 source directly instead of copying each
+32-float block onto the stack,and produce packed sign-magnitude operands
+without signed-int/negation/repacking round trips. Exact division,FP16
+scales,ties AWAY,negative128,canonical +0 and range refusal are unchanged.
+Do not substitute `fcvt` rounding modes:BabyRISCV ignores those mode bits
+([vendor instruction limitations](https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md)).
+No new instruction,NoC command,source/destination span,map,owner,PCI/host
+DMA,sequence or completion rule. The SAME34 worker/attention/GLU images,
+math29 and complete transport proof remain. New master95744a6f is bound by
+a separate local-math lease flag;live image upgrades are refused.
+
+ASan/UBSan exhaust ALL134217730 signed boundary encodings from.5 through
+128,one million full-domain cases and20000 independent pinned Q8 blocks.
+Compiled scalar187dbe7a passes all modes/counts/RMS/RoPE/nonfinite/bounds
+under the UNCHANGED strict ISA/MMIO rules. Whole master passes full/small/
+one+two-position zero/sparse,early EOG,ALL logits/KV/119 sequences,all16
+proof/restore faults and all-readers-idle rules. Sparse two-position
+70612776 interpreter steps versus34's72099282 is NOT native throughput.
+Client/controller/held staging tests pass old+new modes,capability refusal
+BEFORE BEGIN,exact output/no partial failure and quarantine/no retry on
+uncertainty. Driver7e394bf4,client06c2c797 are staged for one controlled
+native trial. No35 speed claim or Assistant/all-Qwen/Q4/27B promotion yet.
+
 ### October17: combined gather34 native PASS (13:49 UTC)
 
 Fast Qwen STILL NOT achieved. GPU5.789076/5.743399/5.874760tok/s across

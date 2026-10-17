@@ -114,6 +114,20 @@ static inline int PioneerGraphRoundQ8(float value)
 	unsigned q=(mantissa+(1U<<(shift-1)))>>shift; // ties AWAY, matching pinned quantizer
 	return bits&0x80000000?-int(q):int(q);
 }
+// OFFLINE exact packing candidate. Avoid magnitude -> signed integer ->
+// magnitude conversions. Preserve ties AWAY,negative128 and canonical +0.
+// No fcvt rounding-mode assumption:BabyRISCV ignores rounding-mode bits.
+static inline bool PioneerGraphPackQ8Operand(float value,uint32_t& operand)
+{
+	uint32_t bits=PioneerAttentionBits(value),absolute=bits&0x7fffffff;
+	if (absolute<0x3f000000) { operand=0x4000; return true; }
+	if (absolute>=0x43000000) return false;
+	unsigned shift=150-(absolute>>23); // proven17..24 in [.5,128)
+	unsigned magnitude=((absolute&0x7fffff)+0x800000+(1U<<(shift-1)))>>shift;
+	unsigned sign=(bits>>16)&0x8000;
+	if (magnitude>127+(sign>>15)) return false;
+	operand=0x4000|sign|magnitude; return true;
+}
 static inline bool PioneerGraphQuantize32(const float* input,uint32_t* operand,uint32_t& scale)
 {
 	if (!input || !operand) return false;
@@ -129,10 +143,15 @@ static inline bool PioneerGraphQuantize32(const float* input,uint32_t* operand,u
 	if ((half&0x7c00)==0x7c00 || (PioneerAttentionBits(inverse)&0x7f800000)==0x7f800000) return false;
 	scale=PioneerAttentionBits(PioneerAttentionHalf(half));
 	for (unsigned i=0;i<16;i++) {
+#if PIONEER_GRAPH_PACKED_Q8
+		uint32_t low=0,high=0;
+		if (!PioneerGraphPackQ8Operand(input[i*2]*inverse,low) || !PioneerGraphPackQ8Operand(input[i*2+1]*inverse,high)) return false;
+#else
 		int a=PioneerGraphRoundQ8(input[i*2]*inverse),b=PioneerGraphRoundQ8(input[i*2+1]*inverse);
 		if (a<-128 || a>127 || b<-128 || b>127) return false;
 		uint32_t low=0x4000U|(a<0?0x8000U|unsigned(-a):unsigned(a));
 		uint32_t high=0x4000U|(b<0?0x8000U|unsigned(-b):unsigned(b));
+#endif
 		operand[i]=low|(high<<16);
 	}
 	return true;

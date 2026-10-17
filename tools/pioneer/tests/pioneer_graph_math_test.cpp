@@ -36,4 +36,5 @@ int main()
 	assert(PioneerAttentionBits(PioneerGraphSilu(-0.0f))==0x80000000);
 	assert(PioneerAttentionBits(PioneerGraphSilu(PioneerAttentionFloat(0x7f800000)))==0x7fc00000);
 	printf("PASS OFFLINE graph math: one million IEEE divisions,SiLU debug/fast max%u/%u ULP,20000 exact pinned Q8-ref blocks,zero/sign/nonfinite bounds; NO driver/device/inference exposure\n",maxUlp,maxFastUlp);
+	return 0;
 }

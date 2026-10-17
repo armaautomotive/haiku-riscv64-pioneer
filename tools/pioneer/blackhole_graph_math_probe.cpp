@@ -33,9 +33,14 @@ extern "C" unsigned scalar_main()
 		Words(0x90000)[i]=PioneerAttentionBits(value);
 	}
 	if (mode!=2 && mode!=4) for (unsigned block=0;block<n/32;block++) {
+#if PIONEER_GRAPH_PACKED_Q8
+		uint32_t operand[16],scale=0;
+		if (!PioneerGraphQuantize32(reinterpret_cast<const float*>(0x90000+block*128),operand,scale)) scalar_fault_park();
+#else
 		float values[32]; uint32_t operand[16],scale=0;
 		for (unsigned i=0;i<32;i++) values[i]=PioneerAttentionFloat(Words(0x90000)[block*32+i]);
 		if (!PioneerGraphQuantize32(values,operand,scale)) scalar_fault_park();
+#endif
 		for (unsigned i=0;i<16;i++) Words(0x80000)[block*16+i]=operand[i];
 		Words(0x83000)[block]=scale;
 	}

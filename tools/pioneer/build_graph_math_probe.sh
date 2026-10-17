@@ -9,6 +9,7 @@ program=blackhole_graph_math_probe.cpp
 case ${PIONEER_GRAPH_EMBEDDING_PROBE:-0} in 0) ;; 1) program=blackhole_embedding_probe.cpp;; *) exit 2;; esac
 case ${PIONEER_GRAPH_ROPE_FAST_FMA:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_GRAPH_FAST_DIVIDE:-0} in 0|1) ;; *) exit 2;; esac
+case ${PIONEER_GRAPH_PACKED_Q8:-0} in 0|1) ;; *) exit 2;; esac
 case ${PIONEER_GRAPH_FMA_FIXED_NORMALIZE:-0} in 0|1) ;; *) exit 2;; esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 2
@@ -19,6 +20,7 @@ mkdir -m 700 "$output"
  -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
  -march=rv32imf -mabi=ilp32 -fstack-usage -DPIONEER_GRAPH_ROPE_FAST_FMA=${PIONEER_GRAPH_ROPE_FAST_FMA:-0} \
  -DPIONEER_GRAPH_FAST_DIVIDE=${PIONEER_GRAPH_FAST_DIVIDE:-0} \
+ -DPIONEER_GRAPH_PACKED_Q8=${PIONEER_GRAPH_PACKED_Q8:-0} \
  -DPIONEER_GRAPH_FMA_FIXED_NORMALIZE=${PIONEER_GRAPH_FMA_FIXED_NORMALIZE:-0} \
  -c "$directory/$program" -o "$output/program.o"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_scalar_start.S" -o "$output/start.o"

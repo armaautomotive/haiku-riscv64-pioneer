@@ -436,9 +436,10 @@ struct tt_coordinated_support {
 // Explicit fixed Qwen3-0.6B experiment:ONLY immutable offsets,not device
 // addresses,code,NoC routes,host physical memory or worker sequences.
 struct tt_pioneer_decoder_model {
-	// Versions17/18:reserved={RoPE byte offset,packed EOG word0,word1}.
+	// Versions17..19:reserved={RoPE byte offset,packed EOG word0,word1}.
 	// Contract33 distinguishes the exact28-token window+one outlier encoding.
 	// Version18/contract34 additionally seals the fused-gather cohort.
+	// Version19/contract35 changes only exact local activation packing.
 	// Other versions require zeros. No raw device address or supplied code.
 	uint32_t version,reserved[3];
 	PioneerDecoderModelOffsets offsets;

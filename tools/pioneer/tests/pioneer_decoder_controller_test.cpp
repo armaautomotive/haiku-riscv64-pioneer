@@ -112,13 +112,13 @@ struct DecoderControllerFixture:LayerFixtureBase<DecoderControllerIO> {
 	bool CloseDecoder(bool stopped=true) { return PioneerDecoderClose(io,io.core[0]->Baseline(),fleet[0].noc,fleet[0].Store(),decoder,stopped); }
 };
 struct BatchControllerFixture:DecoderControllerFixture {
-	bool gather;
-	BatchControllerFixture(bool fused=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused) {
+	bool gather,directQuant;
+	BatchControllerFixture(bool fused=false,bool direct=false):DecoderControllerFixture(true,true,true,true,true,true,false,true,true,true,false,true,true,false,true),gather(fused),directQuant(direct) {
 		model.reserved[1]=0x31000000; model.reserved[2]=151643; model.reserved[3]=5;
 		for (unsigned w=1;w<120;w++) fleet[w].fusedGather=fused;
 	}
 	bool PrepareBatch() { return PioneerPrepareWideOutput(io,host,transfer,wide)
-		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather); }
+		&& PioneerDecoderPrepare(io,io.core[0]->Baseline(),fleet.data(),coordinator,code,attention,decoder,true,peers,true,true,true,true,true,false,true,true,true,false,true,true,false,true,true,gather,directQuant); }
 	bool DecodeBatch(unsigned tokens=1,unsigned steps=2) {
 		uint32_t input[1024]={},rope[128]={},prior[119]; for (unsigned w=0;w<119;w++) prior[w]=fleet[w+1].persistentSequence;
 		std::vector<uint32_t> output(1024,0xabcdef00);
@@ -138,6 +138,12 @@ struct BatchControllerFixture:DecoderControllerFixture {
 int main()
 {
 	(void)Run; (void)Input;
+	{ BatchControllerFixture f(true,true); assert(f.PrepareBatch() && f.decoder.directQuant && f.Decode(1,false) && f.Decode(1,true) && f.DecodeBatch(1,2) && f.DecodeBatch(3,2));
+		f.directQuant=false; assert(!f.PrepareBatch()); f.directQuant=true;
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
+	{ BatchControllerFixture f(true,true); f.io.endsEarly=true; assert(f.PrepareBatch() && f.DecodeBatch(1,2) && f.DecodeBatch(2,2));
+		assert(f.CloseDecoder() && PioneerReleaseWideOutput(f.io,f.wide,true)); }
+	{ BatchControllerFixture f(false,true); assert(!f.PrepareBatch() && !f.decoder.saved && !f.io.starts); }
 	for (bool gather:{false,true}) { BatchControllerFixture f(gather);
 		bool prepared=f.PrepareBatch(),full=prepared && f.Decode(1,false),small=full && f.Decode(1,true),first=small && f.DecodeBatch(1,2),next=first && f.DecodeBatch(3,2);
 		if (!next) { printf("FUSED CONTROLLER TRACE gather%u prepared%u full%u small%u first%u next%u unsafe%u summary%u state%u nonfinite%u\n",gather,prepared,full,small,first,next,f.decoder.unsafe,f.decoded.master.summary_verified,f.decoded.master.state,f.decoded.nonfinite); fflush(stdout); }

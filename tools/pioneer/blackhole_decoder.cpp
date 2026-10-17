@@ -108,10 +108,20 @@ static void DecoderQuantize(unsigned source,unsigned n)
 {
 	DECODER_STAGE_BEGIN();
 	if (n!=1024 && n!=2048 && n!=3072) coordinator_fault_park();
+#if PIONEER_COORDINATOR_DIRECT_QUANTIZE
+	if (source!=0x84000 && !(source==0x144000 && n==2048)) coordinator_fault_park();
+#endif
 	for (unsigned b=0;b<n/32;b++) {
+#if PIONEER_COORDINATOR_DIRECT_QUANTIZE
+		uint32_t operand[16],scale=0;
+		// Exclusive master L1;all previous NoC producers are proved idle.
+		// Both allowed source spans are disjoint from the80000 destination.
+		if (!PioneerGraphQuantize32(Floats(source)+b*32,operand,scale)) coordinator_fault_park();
+#else
 		float values[32]; uint32_t operand[16],scale=0;
 		for (unsigned i=0;i<32;i++) values[i]=Floats(source)[b*32+i];
 		if (!PioneerGraphQuantize32(values,operand,scale)) coordinator_fault_park();
+#endif
 		for (unsigned i=0;i<16;i++) Words(0x80000)[b*16+i]=operand[i];
 		Words(0x80000+n*2)[b]=scale; Fence();
 		for (unsigned i=0;i<16;i++) if (Words(0x80000)[b*16+i]!=operand[i]) coordinator_fault_park();

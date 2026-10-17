@@ -2399,7 +2399,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	status=AcquireProbeLock(cookie); if (status!=B_OK) return status;
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
-	tt_coordinated_support support={34,119,3,1,8192}; // v34 ALL-readers-idle/reverse fused proof+output gather
+	tt_coordinated_support support={35,119,3,1,8192}; // v35 exact direct Q8 packing;unchanged gather34 transport
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
 
@@ -2462,7 +2462,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
 	auto* request=(tt_pioneer_decoder_model*)malloc(length); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,length);
-	if (status!=B_OK || request->version<1 || request->version>18 || (request->version<17 && (request->reserved[0] || request->reserved[1] || request->reserved[2]))) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	if (status!=B_OK || request->version<1 || request->version>19 || (request->version<17 && (request->reserved[0] || request->reserved[1] || request->reserved[2]))) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
 	status=AcquireProbeLock(cookie); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie) status=B_DEV_NOT_READY;
@@ -2473,7 +2473,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	else {
 		request->state=TT_RUNTIME_CONFIG_FAILED; request->ready=request->extents=request->recovery_required=0;
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
-		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version>=12,phasePipeline=request->version==10 || request->version>=12,diagnostic=request->version==11,descriptorTable=request->version>=13,accumPipeline=request->version>=14,smallRows=request->version==15,parallelRope=request->version>=16,batch=request->version>=17,fusedGather=request->version==18,ready=true;
+		bool parallel=request->version>=2,glu=request->version>=3,greedy=request->version>=4,paired=request->version>=5,inlineMath=request->version>=6,partialMath=request->version==7,cachedQuery=request->version>=8,inputPull=request->version==9 || request->version==11 || request->version>=12,phasePipeline=request->version==10 || request->version>=12,diagnostic=request->version==11,descriptorTable=request->version>=13,accumPipeline=request->version>=14,smallRows=request->version==15,parallelRope=request->version>=16,batch=request->version>=17,fusedGather=request->version>=18,directQuant=request->version==19,ready=true;
 		// The parallel registry must precede ANY peer preparation. Weight
 		// spans prepare only master0. Never replace an executing/idle peer's
 		// immutable code to upgrade an existing matrix session.
@@ -2486,7 +2486,7 @@ DecoderModelControl(PioneerProbeCookie* cookie,void* data,size_t length)
 		c->runtimeCoreMode=9;
 		ready=ready && PioneerLayerClose(c->io,dram,c->fleet[0].noc,c->lease,c->layer,true)
 			&& c->io.MapAttention() && PioneerAttentionTilePrepare(c->io,dram,c->fleet[0].noc,c->lease,c->attention,true)
-			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel,glu,greedy,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable,accumPipeline,smallRows,parallelRope,batch,fusedGather);
+			&& c->io.MapDecoder() && PioneerDecoderPrepare(c->io,dram,c->fleet,c->coordinator,c->layer,c->attention,c->decoder,parallel,parallel?c->peerAttention:NULL,parallel,glu,greedy,paired,inlineMath,partialMath,cachedQuery,inputPull,phasePipeline,diagnostic,descriptorTable,accumPipeline,smallRows,parallelRope,batch,fusedGather,directQuant);
 		if (ready && (!PioneerCoordinatedMasterBoundary(c->io,dram,c->fleet,true)
 			|| !PioneerWideOutputMapStable(c->io,c->wideHost,c->host,c->bulkHost))) { c->decoder.unsafe=true; ready=false; }
 		if (ready) {
