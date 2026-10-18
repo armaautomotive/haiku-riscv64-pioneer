@@ -41,7 +41,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
 	if (op==TT_PCI_PROBE_Q38_COHORT_SUPPORT) {
-		assert(bytes==sizeof(tt_q38_cohort_support)); *static_cast<tt_q38_cohort_support*>(data)={fault==4?50U:51U,1,120,256,17408,7,64,0}; return 0;
+		assert(bytes==sizeof(tt_q38_cohort_support)); *static_cast<tt_q38_cohort_support*>(data)={fault==4?unsigned(TT_Q38_COHORT_DRIVER)-1:unsigned(TT_Q38_COHORT_DRIVER),TT_Q38_COHORT_ABI,120,256,17408,7,64,0}; return 0;
 	}
 	if (op==TT_PCI_PROBE_Q38_BANK_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_bank_support)); *static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,fault==5?3U:4U,1,PioneerResidentBanks::Capacity}; return 0;

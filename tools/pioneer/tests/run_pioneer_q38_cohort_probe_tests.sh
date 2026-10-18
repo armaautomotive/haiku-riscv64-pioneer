@@ -17,4 +17,9 @@ done
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_q38_cohort_control_test.cpp" -o "$temporary/control"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/control"
+for sourceName in probe control; do
+ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED -I"$temporary" "$directory/pioneer_q38_cohort_${sourceName}_test.cpp" -o "$temporary/sealed-$sourceName"
+ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sealed-$sourceName"
+done
 printf 'Offline cohort policy evidence retained at %s\n' "$temporary"

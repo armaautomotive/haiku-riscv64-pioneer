@@ -58,7 +58,14 @@ template<class IO> bool PioneerQ38CohortPrepareWorker(IO& io,const tt_dram_sampl
 		|| noc.recovery_required || (worker && (noc.version!=PioneerWorkerVersion(worker) || !PioneerWorkerRoute(dram,noc.source[0],worker)))
 		|| (!worker && noc.version!=1) || image.unsafe || image.running
 		|| !io.SelectRuntimeCore(worker) || !PioneerQ38PanelHeld(io,dram,noc,store,banks)) return false;
-	if (image.ready) return PioneerQ38CohortCodeMatches(io);
+	// Separate52 only:the same exclusive owner has NO API that can modify
+	// this image after prepare. Local/stream/legacy launches are excluded,
+	// storage targets PRIVATE DRAM only,and the proven image writes bounded
+	// data/scratch only. Verify code ONCE here and AGAIN before END restore.
+	// Debug51 retains all three per-call rereads.52 does NOT detect random
+	// code-memory corruption during a call;END still quarantines it. It never
+	// removes completion/PC/source/command/counter/UNKNOWN/whole-cohort proofs.
+	if (image.ready) return !TT_Q38_COHORT_PER_CALL_CODE || PioneerQ38CohortCodeMatches(io);
 	uint32_t* saved=io.Q38PanelSavedWords(); if (!saved || image.saved) return false;
 	for (unsigned i=0;i<3;i++) { uint32_t value=io.RuntimeControlRead(i); if (i?value!=0:value&1) return false; }
 	saved[0]=io.RuntimeCodeRead(0);
@@ -106,7 +113,7 @@ template<class IO> bool PioneerQ38CohortRun(IO& io,const tt_dram_samples_result&
 	for (auto& row:job.output) for (auto& value:row) value=0;
 	bool unknown=false,staged=true;
 	do {
-		if (!PioneerQ38CohortHeld(io,dram,banks,lease,true)) { unknown=true; break; }
+		if (!PioneerQ38CohortHeld(io,dram,banks,lease,TT_Q38_COHORT_PER_CALL_CODE)) { unknown=true; break; }
 		if (!io.SelectRuntimeCore(0)) { unknown=true; break; }
 		unsigned padded=((job.inputs/PioneerQ38CohortBlockInputs(job.type))*4+63)&~63U;
 		if (!PioneerQ38PanelStage(io,0xa0000,job.activation,job.inputs/2)
@@ -167,12 +174,15 @@ template<class IO> bool PioneerQ38CohortRun(IO& io,const tt_dram_samples_result&
 			io.Pause();
 		}
 		if (unknown) break;
-		// Prove ALL completions/code/sources/commands/counters BEFORE any
-		// stop or output read. Shared accepted0x210 is NOT a forbidden write.
+		// Prove ALL completions/sources/commands/counters BEFORE any stop or
+		// output read.51 ALSO rereads code;52 trusts its exclusively owned
+		// immutable image until END's full code audit. Shared accepted0x210
+		// is NOT a forbidden write.
 		for (unsigned w=0;w<job.workers;w++) {
 			auto& node=lease.worker[w]; auto& core=r.core[w]; const auto& e=extent[w];
 			if (!io.SelectRuntimeCore(w) || io.ResetRead()!=0x46800 || !PioneerQ38PanelSources(io,dram,node.noc,node.Store(),banks)
-				|| !PioneerQ38CohortCodeMatches(io) || !PioneerQ38CohortCommandMatches(io,e,job.type,w,true)) { unknown=true; break; }
+				|| (TT_Q38_COHORT_PER_CALL_CODE && !PioneerQ38CohortCodeMatches(io))
+				|| !PioneerQ38CohortCommandMatches(io,e,job.type,w,true)) { unknown=true; break; }
 			for (unsigned c=0;c<8;c++) {
 				core.after[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c));
 				uint32_t expected=c==1?e.flits:(c==0 || c==2 || c==3 || c==6)?e.reads:0;

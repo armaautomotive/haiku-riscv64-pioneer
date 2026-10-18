@@ -33,7 +33,7 @@ int main()
 	// Full120-worker request:each part lies inside its own non-overlapping
 	// byte extent;all have nonzero64B head,distributed over seven banks.
 	auto r=std::make_unique<tt_q38_cohort_probe>(); *r={};
-	r->version=1; r->type=12; r->inputs=5120; r->workers=120;
+	r->version=TT_Q38_COHORT_ABI; r->type=12; r->inputs=5120; r->workers=120;
 	for (unsigned w=0;w<2560;w++) r->activation[w]=PioneerInt8Operand(-128)|(uint32_t(PioneerInt8Operand(127))<<16);
 	for (unsigned b=0;b<20;b++) r->scales[b]=b%2?0xbc800000:0x3c800000;
 	for (unsigned w=0;w<120;w++) r->part[w]={w%7,1,64+uint64_t(w/7)*65536};
@@ -52,7 +52,7 @@ int main()
 	for (unsigned bad=0;bad<24;bad++) {
 		auto copy=std::make_unique<tt_q38_cohort_probe>(*r);
 		switch(bad) {
-			case 0:copy->version=2;break; case 1:copy->type=13;break; case 2:copy->inputs=17409;break;
+			case 0:copy->version++;break; case 1:copy->type=13;break; case 2:copy->inputs=17409;break;
 			case 3:copy->workers=0;break; case 4:copy->workers=121;break; case 5:copy->reserved[3]=1;break;
 			case 6:copy->part[119].bank=7;break; case 7:copy->part[119].groups=0;break; case 8:copy->part[119].groups=17;break;
 			case 9:copy->part[119].offset=1;break; case 10:copy->part[119].offset=UINT64_MAX;break;

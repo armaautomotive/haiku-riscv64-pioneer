@@ -2,6 +2,42 @@
 
 ## Status
 
+### October17: native shared-input51 ALL120 passed;52 staged (October18,03:16 UTC)
+
+CURRENT Haiku UP/SSH/full64CPU+137034936320B RAM/NIC0b83/zero network
+errors+drops.51ab7b913f installed AND LOADED,known clean/no active job or
+UNKNOWN/cold latch. Pinned SD-free `cohort51-20261017-a`,both SDs out. Two
+unloaded/no-owner installer proofs preserved50 AND qualified43 backups.
+
+Native2 workers9synthetic+8real,7 workers3synthetic+8real,120 workers
+3synthetic+8real ALL PASS,each suite exact outputs and known-clean END.
+Full-card authenticated suite completed before03:14:59. Private MEMORY
+SHA725504B checked BEFORE card open;real tests interleave first/last16-row
+groups,NOT one contiguous checkpoint matrix. ALL workers start/complete/
+PC72038 twice/stop/private commands/source/exact read+flit+shared-accepted/
+zero actual writes verified. Shared root input is now native-qualified.
+Logs `pioneer-qwen38-cohort-20261017-a/{synthetic,public}-{two,seven,120}-20261017-a.log`;
+Mac copies beside51build. Native1431 worker-matrix sample executions total.
+NOT whole-model residency/full graph/hybrid inference/generated tokens/speed.
+
+Timing includes preparation/staging/proofs,NOT pure matrix time or tokens:
+120-worker51 cold Q8call29.445479s,warm Q4K17408call4.536407s (real4.524046s).
+Code is reread THREE times per warm call. Separate52/ABI2 removes these
+per-call rereads under exclusive immutable-image ownership;still verifies
+code at prepare and END,and retains ALL PC/completion/source/command/counter/
+UNKNOWN proofs. No local/stream/legacy code writer can coexist. It does NOT
+detect random code corruption on every call:injection tests require detection
+AT END and whole-cohort quarantine BEFORE any restore.51 debug stays exact.
+
+52driver1de41744/clientc5f50b03/installer0274540c staged,NOT installed/native.
+51/52 authority/policy/extracted real prepare+handler+lock/client auth+proof-
+corruption tests PASS.51ab7b913f/ffcabade/default43control2df0e0f8 rebuild
+EXACT. New52 client refused51 before BEGIN;installer refused loaded driver
+with NO writes. Next cold52 trial,never live replacement/unload/retry UNKNOWN.
+Restore current51 ONLY using `switch-unloaded51.sh --restore43` on NEW cold
+boot before card open. All backups retained;Assistant/firmware/OS/kernel/
+defaultLinux/dirty llama unchanged. End-to-end27B/quality/speed still remain.
+
 ### October17: shared-input cohort51 OFFLINE/staged (October18,02:58 UTC)
 
 Native50 still UP/loaded/known clean. Separate candidate51ab7b913f and

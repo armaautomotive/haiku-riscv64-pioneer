@@ -57,7 +57,7 @@ int main()
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
 	PioneerProbeCookie cookie,foreign; tt_q38_cohort_support support={};
 	assert(Q38CohortControl(&cookie,TT_PCI_PROBE_Q38_COHORT_SUPPORT,&support,sizeof(support))==B_OK
-		&& support.driver==51 && support.version==1 && support.workers==120 && support.rows==256 && support.max_inputs==17408
+		&& support.driver==TT_Q38_COHORT_DRIVER && support.version==TT_Q38_COHORT_ABI && support.workers==120 && support.rows==256 && support.max_inputs==17408
 		&& support.banks==7 && support.offset_alignment==64 && !support.model_inference && !cookie.context);
 	Begin(cookie); auto job=std::make_unique<tt_q38_cohort_probe>(*cookie.context->job);
 	assert(AcquireProbeLock(&cookie)==B_NOT_ALLOWED);

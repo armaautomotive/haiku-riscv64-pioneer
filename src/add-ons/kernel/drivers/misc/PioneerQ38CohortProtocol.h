@@ -2,11 +2,17 @@
 #ifndef PIONEER_Q38_COHORT_PROTOCOL_H
 #define PIONEER_Q38_COHORT_PROTOCOL_H
 #include "PioneerQ38PanelProbe.h"
-// Separate OFFLINE-only51 candidate. Native49/50 MUST NOT accept this ABI.
+// Separate51 debug /52 boundary-code-sealed qualification,NOT inference.
+// Native49/50 MUST NOT accept these ABIs;51/52 also reject each other.
 // DATA only:logical bank+64B offset,never code,coordinates or NoC addresses.
 #define TT_PCI_PROBE_Q38_COHORT_SUPPORT (B_DEVICE_OP_CODES_END + 0x54f0)
 #define TT_PCI_PROBE_Q38_COHORT_RUN (B_DEVICE_OP_CODES_END + 0x54f1)
-enum { TT_Q38_COHORT_DRIVER=51,TT_Q38_COHORT_ABI=1,TT_Q38_COHORT_WORKERS=120,
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED
+enum { TT_Q38_COHORT_DRIVER=52,TT_Q38_COHORT_ABI=2,TT_Q38_COHORT_PER_CALL_CODE=0 };
+#else
+enum { TT_Q38_COHORT_DRIVER=51,TT_Q38_COHORT_ABI=1,TT_Q38_COHORT_PER_CALL_CODE=1 };
+#endif
+enum { TT_Q38_COHORT_WORKERS=120,
 	TT_Q38_COHORT_INPUT_WORDS=8704,TT_Q38_COHORT_SCALE_WORDS=544,TT_Q38_COHORT_ROWS=256 };
 struct tt_q38_cohort_support { uint32_t driver,version,workers,rows,max_inputs,banks,offset_alignment,model_inference; };
 struct tt_q38_cohort_part { uint32_t bank,groups; uint64_t offset; };

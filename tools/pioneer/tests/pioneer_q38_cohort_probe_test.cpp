@@ -10,7 +10,7 @@
 // executes every candidate instruction and verifies the NoC copy contents.
 struct CohortIO {
 	std::vector<std::unique_ptr<PanelIO>> core;
-	unsigned current=0,starts=0,stops=0,scenario=0,badWorker=0,selects=0;
+	unsigned current=0,starts=0,stops=0,scenario=0,badWorker=0,selects=0,codeReads=0;
 	unsigned pcReads[120]={}; uint64_t now=0; bool quarantined=false,closing=false,fleetEnabled=false;
 	CohortIO(unsigned workers) { for (unsigned w=0;w<workers;w++) core.emplace_back(new PanelIO); }
 	PanelIO& C() { return *core[current]; }
@@ -56,6 +56,7 @@ struct CohortIO {
 	C_WRITE(ResidentNocWrite,(uint32_t a,uint32_t v),(a,v))
 	void QuarantineHostPage() { quarantined=true; }
 	uint32_t Q38PanelRead(uint32_t a) {
+		if (a>=0x70000 && a<0x74000 && PioneerQ38PanelImmutable(a)) codeReads++;
 		if (starts && a>=0x84000 && a<0x88000) {
 			assert(starts==core.size() && stops==core.size());
 			for (unsigned w=0;w<core.size();w++) assert(pcReads[w]>=2);
@@ -117,7 +118,7 @@ struct CohortFixture {
 	CohortFixture(unsigned workers,unsigned type=12,unsigned inputs=5120,unsigned groups=1)
 		:io(workers),lease(new PioneerQ38CohortLease),job(new tt_q38_cohort_probe{}),initialized(PioneerResidentBanks::Pages,1) {
 		dram=BankProof(*io.core[0]); assert(banks.Bind(dram)); lease->prepared=workers;
-		job->version=1; job->type=type; job->inputs=inputs; job->workers=workers;
+		job->version=TT_Q38_COHORT_ABI; job->type=type; job->inputs=inputs; job->workers=workers;
 		for (unsigned w=0;w<inputs/2;w++) job->activation[w]=PioneerInt8Operand(-128)|(uint32_t(PioneerInt8Operand(127))<<16);
 		for (unsigned b=0;b<inputs/PioneerQ38CohortBlockInputs(type);b++) job->scales[b]=0x3c800000;
 		for (unsigned w=0;w<workers;w++) {
@@ -162,12 +163,27 @@ int main()
 	}
 	for (unsigned workers:{1U,2U,7U,120U}) for (unsigned type:{8U,12U,14U}) {
 		CohortFixture f(workers,type,workers==7?17408:5120,workers==2?16:1);
+		unsigned reads=f.io.codeReads;
 		assert(f.Run() && f.job->result.started==workers && f.job->result.completed==workers && f.job->result.stopped==workers);
+		assert(TT_Q38_COHORT_PER_CALL_CODE?f.io.codeReads>reads:f.io.codeReads==reads);
 		for (unsigned w=0;w<workers;w++) for (unsigned row=0;row<f.job->part[w].groups*16;row++) assert(f.job->output[w][row]==0x3f800000+w*256+row);
 		f.Close(true);
 	}
 	for (unsigned scenario=1;scenario<=18;scenario++) for (unsigned bad:{0U,2U}) {
 		CohortFixture f(3); f.io.scenario=scenario; f.io.badWorker=bad;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED
+		if (scenario==5) {
+			//52's explicit contract detects injected random code corruption at
+			//END,NOT during every job. It MUST quarantine BEFORE any restoration.
+			assert(f.Run() && !f.lease->unsafe);
+			unsigned writes=0,resets=0; for (auto& c:f.io.core) { writes+=c->panelWrites; resets+=unsigned(c->resets.size()); }
+			assert(!PioneerQ38CohortClose(f.io,f.dram,f.banks,*f.lease,true) && f.lease->unsafe && f.banks.Quarantined());
+			unsigned afterWrites=0,afterResets=0; for (auto& c:f.io.core) { afterWrites+=c->panelWrites; afterResets+=unsigned(c->resets.size()); }
+			assert(writes==afterWrites && resets==afterResets); f.io.quarantined=true;
+			unsigned selects=f.io.selects; assert(!f.Run() && !PioneerQ38CohortClose(f.io,f.dram,f.banks,*f.lease,false));
+			assert(selects==f.io.selects); continue;
+		}
+#endif
 		assert(!f.Run()); bool known=scenario==16;
 		assert(bool(f.job->result.recovery_required)==!known && f.lease->unsafe==!known && f.banks.Quarantined()==!known);
 		f.Close(known);
@@ -181,5 +197,6 @@ int main()
 		assert(!f.Run() && !f.io.starts && f.io.Writes()==writes); f.Close(true);
 	}
 	puts("PASS OFFLINE actual cohort policy:12 type/width/row/1..120-worker shapes,exact264KiB+entry restore,ONE input upload,ALL completion proofs before ANY stop/output,36 fault placements+120-worker first/middle/last faults;UNKNOWN quarantines ALL banks/workers with ZERO retry/reset/restore/free;NOT native/arithmetic/inference/speed");
+	printf("CODE_CHECK_POLICY driver%u ABI%u per_call=%u;52 code corruption detected at END before ANY restore,not during each call\n",TT_Q38_COHORT_DRIVER,TT_Q38_COHORT_ABI,TT_Q38_COHORT_PER_CALL_CODE);
 }
 #endif

@@ -69,7 +69,7 @@ static bool Reference(const tt_q38_cohort_probe& r,const std::vector<uint8_t>& p
 }
 static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsigned groups,unsigned ordinal,const std::vector<uint8_t>& publicRows,const unsigned* rowOffsets)
 {
-	auto r=std::make_unique<tt_q38_cohort_probe>(); *r={}; r->version=1; r->type=type; r->inputs=inputs; r->workers=workers;
+	auto r=std::make_unique<tt_q38_cohort_probe>(); *r={}; r->version=TT_Q38_COHORT_ABI; r->type=type; r->inputs=inputs; r->workers=workers;
 	unsigned count=PioneerQ38CohortBlockInputs(type),blocks=inputs/count,tileBytes=PioneerQ38PanelTileBytes(type),groupBytes=blocks*tileBytes;
 	for (unsigned k=0;k<inputs;k++) r->activation[k/2]|=uint32_t(PioneerInt8Operand(int((k*29+17)%256)-128))<<((k%2)*16);
 	for (unsigned b=0;b<blocks;b++) r->scales[b]=PioneerAttentionBits(b%3?-.03125f:.012345f);
@@ -138,7 +138,7 @@ int main(int argc,char** argv)
 	}
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
 	tt_q38_cohort_support support={};
-	bool okay=Call(fd,TT_PCI_PROBE_Q38_COHORT_SUPPORT,&support,sizeof(support)) && support.driver==51 && support.version==1 && support.workers==120
+	bool okay=Call(fd,TT_PCI_PROBE_Q38_COHORT_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_COHORT_DRIVER && support.version==TT_Q38_COHORT_ABI && support.workers==120
 		&& support.rows==256 && support.max_inputs==17408 && support.banks==7 && support.offset_alignment==64 && !support.model_inference;
 	printf("COHORT_METADATA observed_driver=%u ABI=%u workers=%u rows=%u max_K=%u banks=%u alignment=%u inference=%u accepted=%u;NO_BEGIN_YET\n",
 		support.driver,support.version,support.workers,support.rows,support.max_inputs,support.banks,support.offset_alignment,support.model_inference,unsigned(okay));

@@ -1,5 +1,37 @@
 # Native build status
 
+Latest checkpoint (October18,03:16 UTC): Haiku UP/SSH,64 CPUs/full RAM,
+NIC0b83/zero errors+drops.51ab7b913f installed AND LOADED,KNOWN CLEAN,
+NO active job/UNKNOWN/cold latch. Both SDs out. Normal shutdown02:58:19,
+off complete before02:59:39,on03:02:54 after FULL180s,pinned SD-free
+`cohort51-20261017-a` prepared/dispatched03:05,fullCPU/RAM/no card module
+confirmed03:06:59;exact unloaded-only installer passed BOTH guards.
+
+Native51 ALL suites PASS with known-clean END:2 workers9synthetic+8real,
+7 workers3synthetic+8real,120 workers3synthetic+8real. Last full-card real
+END confirmed before03:14:59. Every output exact;ALL worker completion/PC/
+stop/private command/source/counter/zero-write proofs;root input shared
+on-card. Real cases INTERLEAVE authenticated first/last16-row groups,NOT
+one contiguous full matrix. Full725504B private MEMORY SHA before card FD.
+Logs `pioneer-qwen38-cohort-20261017-a/{synthetic,public}-{two,seven,120}-20261017-a.log`;
+Mac copies beside51build. Restore helper `switch-unloaded51.sh --restore43`
+ONLY on a NEW cold/unloaded boot.51+50+43 backups retained. NOT full-model
+residency/sealed graph/hybrid decoder/27B inference/tokens/Assistant target.
+
+120-worker51 first checked call29.445479s (prepare),warm Q4K17408/N16 per
+worker4.536407s;real warm4.524046s.51 deliberately rereads ALL code THREE
+times per warm call. Separate52/ABI2 candidate1de41744/clientc5f50b03 staged
+NOT installed/native. It verifies immutable code once at PREPARE and again
+before END restore,NOT every call. Explicit exclusive owner/no code-writer
+API +bounded fixed image;ALL source/PC/completion/command/counter/UNKNOWN
+proofs retained. Injected random code corruption detected AT END,not during
+each call;tests prove quarantine BEFORE restoration.51 debug unchanged and
+rebuilds EXACTab7b913f/ffcabade/default43control2df0e0f8. Both51/52 authority,
+policy/extracted prepare-handler-lock and real-client auth/corruption tests
+PASS.52 new client native REFUSES51 before BEGIN;installer0274540c REFUSES
+loaded module with NO writes. Next normal cold52 timing trial,not live swap.
+No firmware/OS/kernel/defaultLinux/Assistant/dirty llama changes.
+
 Latest checkpoint (October18,02:58 UTC): Haiku still UP/loaded qualified50,
 known clean/no active job/UNKNOWN. Separate51 staged,NOT installed/native:
 driverab7b913f,clientffcabade,installer ecb1e8b9 in

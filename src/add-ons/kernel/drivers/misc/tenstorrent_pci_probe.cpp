@@ -34,6 +34,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS)
 #error Q38 cohort requires full saved-view/banked row ownership
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT)
+#error Q38 sealed cohort requires the exclusive immutable-image cohort owner
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -2660,7 +2663,7 @@ Q38CohortControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT) {
 		if (length!=sizeof(tt_q38_cohort_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_cohort_support support={51,1,120,256,17408,7,64,0};
+		const tt_q38_cohort_support support={TT_Q38_COHORT_DRIVER,TT_Q38_COHORT_ABI,120,256,17408,7,64,0};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_COHORT_RUN || length!=sizeof(tt_q38_cohort_probe)) return B_BAD_VALUE;
