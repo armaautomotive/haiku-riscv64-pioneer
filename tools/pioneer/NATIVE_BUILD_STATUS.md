@@ -1,5 +1,38 @@
 # Native build status
 
+October18,21:23 UTC diagnostic55 again returned UNKNOWN/exit1/processgone:
+root_phase54000201,count2,marker464d3851,started1/completed0/held0.
+This is controlled rejection of peer2 status,NOT merely overall timeout;
+underlying peer fault cause still unknown. Haiku64/fullRAM/SSH responsive.
+Saved /private/tmp/pioneer-q38-vector-native-returned-failure-20261018-i.log.
+NO retry/END/reset/restore/read after failure;graceful shutdown then off
+completed21:18 UTC. User clarified PSU switch must be off5min if the WHOLE
+BOARD stalls/refuses power-on. If next single pulse fails,STOP and ask
+for that physical PSU-switch cycle;do not repeatedly pulse. User now
+confirms proceed normally because Haiku itself was responsive.
+
+Isolated OFFLINE57 fault-return diagnostic21835897/clienteae679e4,root
+48631dfb(7828B),peer673313ca(8040B),BOTH unchanged8KiB bounds. Existing
+fault stub stores ra into existing status[3] BEFORE fault publication;
+normal status unchanged. Root's EXISTING64B status read preserves that
+already-read marker/return-PC at checkpoint54000280|worker. No extra NoC
+packet/host IO or weaker proof. Fault park720a4 remains disjoint from
+accepted STOP72060/72064. New57f2/57f3 namespace,model_inference0,ONLY
+guarded integer-vector lifecycle;no57 model binary/Assistant capability.
+Actual emitted root+peers real rows/bit-exact repeated math+injected peer2
+fault verifies exact original return-PC/zero gathers/no late IO PASS
+fA0H6QXH. Full ASan/UBSan boundary:RUNWBp7VUB1,ENDe5jCS9JV,proofKw5BHDt1,
+handler1aBbUNJq,bootQA4nx6uj,sessionOYChwxNN,MMIOKg6oMZVT.220 actual shell
+installer/restore tests PASS;helper1901bae0 ONLY cold/unloaded,requires
+exact55/prior43/52/54 backups,preserves55 separately.54/55/56/57 all mutually
+reject support/RUN before IO and wrong metadata before BEGIN. Old54/55/56
+handlerhw4eNuQT/ArjBeeed/1Px3zgIg andsessionsJH40N3Wh/ZbjAa0du/dNO0mmAZ
+PASS;default54/55/56/43 rebuild EXACT93f2/9353/8098/2df0. Not staged/native57.
+
+Native Pioneer ordinary-file-only scheduler diagnostic8b9d2919 PASS:
+497 matrices/47,101 jobs fingerprint94ab20f5488d9f1a,6,461 metadata calls,
+0.030242s. This is NOT model/card speed or measured native old/new ratio.
+
 October18,21:07 UTC failed-client diagnostics are now tested against REAL
 debug client with synthetic syscalls for54/55/56:uta52qHY/sHBF4TLl/Q0SE8GoH.
 Both ioctl-error and returned UNKNOWN copy only existing request status,

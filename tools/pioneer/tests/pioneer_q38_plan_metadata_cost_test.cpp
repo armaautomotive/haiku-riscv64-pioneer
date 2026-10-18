@@ -5,7 +5,10 @@
 static uint64_t metadataCalls=0;
 static int CountMetadata(int fd,struct stat* result) { metadataCalls++; return ::fstat(fd,result); }
 #define fstat CountMetadata
-#include "../PioneerQwen38FleetPlan.h"
+#ifndef PIONEER_Q38_PLAN_DIAGNOSTIC_HEADER
+#define PIONEER_Q38_PLAN_DIAGNOSTIC_HEADER "../PioneerQwen38FleetPlan.h"
+#endif
+#include PIONEER_Q38_PLAN_DIAGNOSTIC_HEADER
 #undef fstat
 #include <chrono>
 #include <cassert>
@@ -29,7 +32,11 @@ int main(int argc,char** argv)
 	double seconds=std::chrono::duration<double>(std::chrono::steady_clock::now()-start).count();
 	assert(matrices==497);
 	assert(jobs==47101 && fingerprint==UINT64_C(0x94ab20f5488d9f1a));
+#ifdef PIONEER_Q38_PLAN_PREOPTIMIZATION
+	assert(metadataCalls==4322409); // explicit pinned old-header diagnostic control ONLY
+#else
 	assert(metadataCalls<10000); // original no-IO loop made4,322,409 syscalls
+#endif
 	printf("OFFLINE scheduling %u matrices/%u jobs fingerprint%016llx metadata_syscalls%llu seconds%.6f;NOT native model/card speed\n",matrices,jobs,(unsigned long long)fingerprint,(unsigned long long)metadataCalls,seconds);
 	assert(fclose(f)==0);
 }

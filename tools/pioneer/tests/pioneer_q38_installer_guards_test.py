@@ -44,7 +44,8 @@ def check(script, fault=None, restore=None, text_override=None):
         path(original['stage']).mkdir(parents=True)
         installed = put(original['installed'], old)
         for key, pin in [('candidate', 'new'), ('client', 'clientsha'), ('inference', 'inferencesha')]:
-            put(original[key], payloads[original[pin]])
+            if key in original:
+                put(original[key], payloads[original[pin]])
         if 'source43' in original:
             put(original['source43'], q43)
         if 'prior' in original:
@@ -144,6 +145,8 @@ if __name__ == '__main__':
     count = 0
     for script in scripts:
         for fault in faults:
+            if fault == 'inference' and 'inference' not in assignments(script.read_text()):
+                continue  # diagnostic57 deliberately has NO model binary/capability
             check(script, fault=fault)
             count += 1
         restores = [None, '--restore43', '--restore52']

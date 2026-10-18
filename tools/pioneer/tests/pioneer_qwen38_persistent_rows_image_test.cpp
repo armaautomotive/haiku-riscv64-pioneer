@@ -44,6 +44,11 @@ struct PersistentRows:SharedRowsMachine {
 	}
 	void Store(uint32_t a,uint32_t value) override {
 		if (Range(a,0x74140,64)) {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
+			// Exact57 fault stub's bounded terminal diagnostic ONLY. This
+			// is a local L1 store,not another packet while NoC is uncertain.
+			if (a==0x7414c && value==regs[1] && pc==0x72088) { memory[a]=value; return; }
+#endif
 			if (a!=0x74148 && value!=0x46503851) assert(!pending && drained);
 			memory[a]=value; return;
 		}

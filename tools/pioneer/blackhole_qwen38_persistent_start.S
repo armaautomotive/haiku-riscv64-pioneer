@@ -30,6 +30,12 @@ block_peer_stopped: j block_peer_stopped
 .org 0x80
 block_fault_park:
 	li t0,0x74148
+.ifdef PIONEER_Q38_FAULT_RETURN
+	/* Separate diagnostic ONLY:the existing fault-status transfer also
+	 * carries the fault caller's return PC. No new NoC packet/host read. */
+	sw ra,4(t0)
+	fence
+.endif
 	li t1,0x46503851 /* Q8PF:distinct from native51..53 */
 	sw t1,0(t0)
 	lw t1,0(t0)

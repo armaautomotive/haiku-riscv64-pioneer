@@ -24,6 +24,7 @@ case "${PIONEER_Q38_VECTOR_CLIENT:-0}" in
  0) ;;
  1) [ "$source" = pioneer_q38_dispatch_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR";;
  2) [ "$source" = pioneer_q38_dispatch_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT";;
+ 3) [ "$source" = pioneer_q38_dispatch_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN";;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_FIXTURE_CLIENT:-0}" in

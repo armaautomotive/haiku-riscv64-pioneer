@@ -49,6 +49,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR)
 #error Q38 BF16 peer requires the complete guarded vector dispatcher lifecycle
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT))
+#error Q38 fault-return57 requires the guarded integer vector dispatcher only
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;

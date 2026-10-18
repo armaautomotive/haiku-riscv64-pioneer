@@ -38,7 +38,7 @@ struct DispatchSessionIO:SessionIO {
 		if (op==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 			assert(bytes==sizeof(tt_q38_dispatch_support));
 			unsigned driver=fault==1?52U:fault==14?(TT_Q38_DISPATCH_DRIVER==55?54U:55U):
-				fault==15?(TT_Q38_DISPATCH_DRIVER==56?54U:56U):unsigned(TT_Q38_DISPATCH_DRIVER);
+				fault==15?(TT_Q38_DISPATCH_DRIVER==56?54U:56U):fault==16?(TT_Q38_DISPATCH_DRIVER==57?54U:57U):unsigned(TT_Q38_DISPATCH_DRIVER);
 			*static_cast<tt_q38_dispatch_support*>(data)={driver,1,119,256,17408,7,64,1,0}; return true;
 		}
 		if (op!=TT_PCI_PROBE_Q38_DISPATCH_RUN) return SessionIO::Call(fd,op,data,bytes);
@@ -87,7 +87,7 @@ int main()
 		unsigned calls=io.uploads+io.runs+io.ends;
 		assert(!session.Multiply(index,input.data(),5120,output.data(),1024,1) && !session.Finish() && calls==io.uploads+io.runs+io.ends);
 	}
-	for (unsigned wrong:{14U,15U}) {
+	for (unsigned wrong:{14U,15U,16U}) {
 		DispatchSessionIO io(source,index); io.fault=wrong;
 		PioneerQ38DispatchSession<DispatchSessionIO,FakeSource> session(io,source);
 		assert(!session.Open() && !io.begins && !io.uploads && !io.runs && io.closes==1 && !session.Finish());

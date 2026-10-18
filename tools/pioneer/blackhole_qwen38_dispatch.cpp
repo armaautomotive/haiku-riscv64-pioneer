@@ -75,7 +75,12 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 {
 	Transfer(false,worker,0x75000,0x74140,64); Words(0x7f800)[10]++;
 	const volatile uint32_t* status=Words(0x75000);
+#ifdef PIONEER_Q38_FAULT_RETURN
+	// ALREADY transferred local status;normal status remains unchanged.
+	Checkpoint(0x54000280|worker,status[3]);
+#else
 	Checkpoint(0x54000201,worker);
+#endif
 	if (status[2] || status[3]!=0x32503851 || status[0]>sequence || status[1]>sequence || status[4]>2) block_fault_park();
 	for (unsigned i=5;i<16;i++) if (status[i]) block_fault_park();
 	Checkpoint(previous?0x54000202:0x54000203,worker);

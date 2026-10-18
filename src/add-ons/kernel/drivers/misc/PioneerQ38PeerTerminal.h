@@ -7,7 +7,13 @@
 // Status nonce+STOP marker,exact sealed code/source/NoC proofs and ALL-role
 // audits remain mandatory before any hold/restoration.
 enum { TT_Q38_PEER_STOP=0x72060,TT_Q38_PEER_STOP_FETCH=0x72064,
-	TT_Q38_PEER_FAULT_ENTRY=0x72080,TT_Q38_PEER_FAULT_PARK=0x7209c };
+	TT_Q38_PEER_FAULT_ENTRY=0x72080,
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
+	TT_Q38_PEER_FAULT_PARK=0x720a4
+#else
+	TT_Q38_PEER_FAULT_PARK=0x7209c
+#endif
+};
 static inline bool PioneerQ38PeerTerminalPc(unsigned pc)
 { return pc==TT_Q38_PEER_STOP || pc==TT_Q38_PEER_STOP_FETCH; }
 #endif

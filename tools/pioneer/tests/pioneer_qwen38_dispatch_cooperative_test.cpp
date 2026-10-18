@@ -114,6 +114,12 @@ int main(int argc,char** argv)
 	{
 		CooperativeDispatch m(argv[1],argv[2],2,12,5120); m.actual[1]->faultAt=5;
 		assert(!m.RunRoot() && m.unknown && m.actual[1]->pending && !m.gathers);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
+		unsigned site=m.actual[1]->memory.at(0x7414c);
+		assert(site==m.actual[1]->regs[1] && site>=0x72000 && site<0x74000 && !(site&3));
+		assert(m.l1[m.Index(0x17ffc0)]==0x54000282 && m.l1[m.Index(0x17ffc4)]==site);
+		puts("PASS57 injected peer2 fault return-PC preserved by EXISTING status transfer;zero output gathers/extra packets after UNKNOWN");
+#endif
 	}
 	if (argc==4) {
 		FILE* f=fopen(argv[3],"rb"); assert(f); PioneerQwen38Gguf model; assert(model.Open(f));
