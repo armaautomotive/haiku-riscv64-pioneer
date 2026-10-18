@@ -2,6 +2,39 @@
 
 ## Status
 
+### October17: first complete27B GPU position passes;warm trial STILL RUNNING (October18,06:22 UTC)
+
+PUBLIC27B_POSITION0 passes:token11,ALL497 learned projections on P100A,
+finite logits,no CPU reference/fallback,4,558,653 uploaded pages/505 calls.
+Cold position7510.527793s is extremely slow and NOT usable performance.
+Final vocabulary matrix5120x248320:422.656311s,including407.781757s checked
+bulk upload,9.646651s source permutation,4.854159s checked run. Three
+retained-weight positions are STILL running under the SAME52/7643314f owner.
+No clean END,warm throughput,text-quality or steady-speed qualification yet.
+Leave its driver/power untouched and do not start another GPU owner.
+
+### October17: all block projections pass;vector packing prerequisites OFFLINE (October18,06:20 UTC)
+
+Native52/7643314f remains ACTIVE:496 projections through layer63 pass,
+4,301,600 pages last reported. Large final vocabulary projection is still
+in progress. No completed token/position/throughput yet. Leave the only
+accelerator owner,module and power alone.54 staging-b9ebc33ea is NOT installed.
+
+Separate OFFLINE vector operand/span helpers pass1,053,184 exhaustive raw
+Q8/Q4/Q6 byte/plane combinations,including exact signed-128. Existing
+integer SFPU operations only,maximum21 instructions per32 weights;no new
+CAST/flags or floating-point approximation. Randomized Dst/layout tests
+match the original scalar decoder for8,704 panels/2,228,224 weights,with
+physically disjoint raw Dst16 and opaque decoded Dst32 regions,all even/odd
+lane placements,HI16 and physical19-bit MOVD2A source shuffling. Pinned
+vendor [Dst](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/TensixCoprocessor/Dst.md),
+[SFPLOAD](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md),
+[SFPSTORE](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md)
+and MOVD2A semantics define the mapping. Actual unpack/config ownership and
+hazard/scheduling/image tests are STILL REQUIRED;no driver selects this code
+and no native/speed result is implied. Existing Blackhole13-bit STALLWAIT
+drain0xa2101816 is correct and unchanged;do not apply Wormhole15-bit fields.
+
 ### October17:54 retained-owner END tightened;NOT deployed (October18,06:06 UTC)
 
 Current52/7643314f full-model test remains ACTIVE:last observed434 matrix

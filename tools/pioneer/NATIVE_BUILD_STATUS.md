@@ -1,5 +1,36 @@
 # Native build status
 
+Latest checkpoint (October18,06:22 UTC): FIRST complete native27B position
+PASSES on52/7643314f:PUBLIC27B_POSITION0 selected_token11,7510.527793s cold,
+ALL497 learned projections,finite logits,4,558,653 uploaded pages,505 calls.
+Final output.weight5120x248320 took422.656311s:source permutation9.646651s,
+checked bulk407.781757s,checked run4.854159s. This is a correctness milestone,
+NOT usable performance,text quality,steady throughput or clean END yet.
+The same sole owner is STILL executing three retained-weight positions.
+Do NOT touch driver/power/start another accelerator job until known-clean END.
+
+Latest checkpoint (October18,06:20 UTC): native52/7643314f STILL ACTIVE.
+ALL496 block projections through blk.63.ffn_down pass,4,301,600 pages last
+reported. Large final vocabulary projection is still in progress;NO token/
+position or throughput result yet. Keep its sole owner/module/power unchanged.
+54 candidate9ebc33ea staging-b remains UNINSTALLED/UNRUN.
+
+OFFLINE vector operand/span prerequisites now pass1,053,184 exhaustive
+raw Q8/Q4/Q6 byte/plane cases across all32 lanes,including signed-128.
+At most21 existing trusted integer SFPU instructions per32 operands;no
+CAST,new conditional flags or FP approximation. Raw Dst16 rows0..31 and
+opaque Dst32 rows64..79 (physical128..159,config220=0) stay disjoint.
+8,704 randomized panels/2,228,224 weights match the original scalar decoder
+with exact even/odd lane mapping,HI16 storage and documented physical19-bit
+MOVD2A shuffle/overlay. Evidence vector-operand.q94EwXm1 and
+vector-layout.pFgVWtdy. This is NOT an actual unpack/ownership/scheduling
+image,driver,native arithmetic or speed qualification;neither52 nor54
+selects these headers. Next must model actual unpack/config/ownership and
+instruction hazards before any new image. Pinned official ISA8a34e25e fetched
+read-only into /private/tmp/pioneer-tt-isa-20261017.git. Important:Blackhole
+STALLWAIT has13 condition bits,not Wormhole15;existing0xa2101816 drain is
+correct for BH CFG/unpack/FPU/SFPU idle and remains UNCHANGED.
+
 Latest checkpoint (October18,06:06 UTC): Native52/7643314f remains ACTIVE;
 last observed434 learned matrix calls through layer55 pass,3,763,900 pages
 uploaded. No complete position/token yet. Leave its owner/module/power alone.
