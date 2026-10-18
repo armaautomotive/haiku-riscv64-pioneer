@@ -1,6 +1,30 @@
 # Native build status
 
-Latest checkpoint (October18,01:24 UTC / October17 Vancouver): normal synced
+Latest checkpoint (October18,01:34 UTC / October17 Vancouver): Haiku UP/SSH,
+64 CPUs/137034936320B RAM/NIC0b83ceed. Driver48 ef865831 is installed AND
+LOADED after cold rest/off01:25/on01:28:27/default Linux/pinned SD-free
+`block48-20261017-a`. Two unloaded/no-owner guards passed;47 and qualified43
+backed up outside driver paths. Native48 synthetic AND authenticated public
+model-fragment COMPLETE quantization-block tests PASSED12 cases each,EXACT
+outputs/last-panel metadata,zero NoC,known start/completion/stable PC72038/
+stop/clean END/coldfalse. No active job. NOT fullK/graph/27B inference/speed.
+Logs `pioneer-qwen38-block-20261017-a/{synthetic,public-fixtures}-20261017-a.log`.
+Restore helper now `switch-unloaded48.sh --restore43`,ONLY on a NEW cold
+boot before any card open. No force unload/retry UNKNOWN.
+
+Follow-on fullK image is OFFLINE ONLY,not selected by48. Full packed-weight
+stream K5120/6144/17408,9 mixed-quant shapes +8 real full row-groups pass
+actual RV32IMF/Tensix instructions,bit-exact sequential FP32+independent
+dequantized-double references,NoC first/middle/last timeout and bad counter
+park without retry. Base image53615bc3;four-row word-unpack fast11ec8679
+also passes and cuts actual instruction counts (NOT measured speed).
+Fast helper matches original bits for384 random and996 real edge tiles,
+including-128/half subnormals/minima;bad initial exponent caught offline,
+corrected before any native use.48's immutable image still reproduces
+EXACTLY ba94d01e. FullK native ownership/launch ABI is NOT implemented yet.
+Kernel/OS/firmware/default Linux/Assistant/dirty llama unchanged.
+
+Previous checkpoint (October18,01:24 UTC / October17 Vancouver): normal synced
 Haiku shutdown dispatched for a controlled cold48 trial; not yet powered on
 or installed. Disk/previously loaded driver is still47 aab1ea67,known clean.
 Separate48 staged at `pioneer-qwen38-block-20261017-a`: driver ef865831,

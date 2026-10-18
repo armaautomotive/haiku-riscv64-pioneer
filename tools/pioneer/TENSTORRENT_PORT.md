@@ -2,6 +2,55 @@
 
 ## Status
 
+### October17: native complete-block48 passed; fullK loop OFFLINE (October18,01:34 UTC)
+
+CURRENT Haiku UP/SSH,64 CPUs/full137034936320B RAM/NIC0b83ceed.48 ef865831
+installed AND LOADED,no active job/UNKNOWN/cold latch. P100A installed,both
+SD cards out. Still NOT full27B inference/generated tokens/useful speed.
+
+Normal shutdown01:24:32,one off hold before01:25:24,one on01:28:27 after
+FULL180s rest. Default Linux rootNVMe/P100A COMMAND0000/noLinux driver
+confirmed01:30:10. Pinned network-serialized SD-free prepare+boot
+`block48-20261017-a` used unchanged64/fullRAM profile. Fresh Haiku retained
+NIC/CPUs/RAM,no loaded card. Installerb1c2878c passed TWO unloaded/no-owner
+guards,backed up native-qualified47 and43 outside driver paths,installed48.
+Metadata-only client accepted distinct48/ABI3/local-only256-column support.
+
+Native synthetic12 cases completed before01:33:52;authentic public-model
+fragment12 cases completed before01:34:30. Each executes ALL2(Q8_0) or
+16(Q4_K/Q6_K) panels and per-panel FP32 affine accumulation ON the card.
+ALL16 final outputs and last-panel metadata matched EXACT bits. Known
+start/complete/stop,stable PC72038 twice,zero NoC,clean END/PCI/host release/
+coldfalse. Public12,544B MEMORY SHA passed BEFORE card open. Logs:
+`pioneer-qwen38-block-20261017-a/synthetic-20261017-a.log` and
+`.../public-fixtures-20261017-a.log`;copies retained beside exact Mac build.
+No full19GB model hash was rerun;46 whole-model qualification remains separate.
+Restore48 ONLY using `switch-unloaded48.sh --restore43` on a NEW cold boot
+BEFORE opening the card. NEVER replace a loaded module or retry UNKNOWN.
+
+Separate OFFLINE fullK follow-on streams one packed quantization block at a
+time from synthetic owned-GDDR addresses,keeps partial sums on card for
+K5120/6144/17408. No installed driver selects it;kernel extent/launch authority
+is NOT implemented. Actual instruction tests pass9 mixed-quant shapes and
+8 REAL full16-row groups from Q8 attention,Q4 embedding,Q6 output and17408
+FFN down weights,matching bit-exact sequential FP32 and independent double
+dequantization references. Immutable vector/scales/descriptor,bounded one-
+block NoC reads,first/middle/last timeout and bad response-counter parks
+WITHOUT retry. Base text53615bc3cdd0157cde1133795223d8bcf698d2bf57dc324c3119c7256cf11716.
+
+Optional four-row packed-word unpack keeps exact overlay/coeff/min bits,
+avoids byte-at-a-time RMW and zero fill. Initial wrong raw-exponent constant
+was caught by BOTH host and instruction tests,corrected OFFLINE;no native
+use. Corrected helper matches384 random/996 real edge tiles (all panel bits,
+-128/half subnormals/affine minima);same existing16,777,216 half/factor check
+passes. Fast fullK text11ec8679bb87e8d3886136269014ff69daa3a64bda3cb6ffe86cc7ad2e841838,
+4368B,816B nested stack. Same17 fullK cases/fault checks pass. Actual
+K17408 instruction counts:Q8 12,689,109->8,452,437;Q4 15,442,436->9,456,260;
+Q6 19,333,454->9,317,326. These are instruction counts,NOT native timings or
+tokens/sec. FullK fast image is not registered as a model/Assistant backend.
+48 image still reproduces EXACT ba94d01e. Next: private initialized extent+
+NoC-route ownership/native fullK,then multiworker/full64-layer hybrid graph.
+
 ### October17: complete quantization-block48 staged (October18,01:24 UTC)
 
 CURRENT normal synced Haiku shutdown dispatched for the next cold trial.

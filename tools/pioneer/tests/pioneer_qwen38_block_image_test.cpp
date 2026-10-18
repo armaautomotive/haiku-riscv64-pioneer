@@ -11,12 +11,12 @@ struct BlockMachine:RuntimeMachine {
 	std::map<uint32_t,uint32_t> memory;
 	uint32_t fp[32]={}; unsigned type,count,floatOps=0,minStack=0x70000;
 	float scale;
-	BlockMachine(const char* root,unsigned kind,unsigned trial,float activationScale,const uint8_t* source=nullptr)
+	BlockMachine(const char* root,unsigned kind,unsigned trial,float activationScale,const uint8_t* source=nullptr,bool stream=false)
 		:RuntimeMachine(1024,32,0,0x04000000,false,true,true),type(kind),count(kind==8?32:256),scale(activationScale) {
 		std::string path(root); code=Read((path+"/text.bin").c_str()); auto boot=Read((path+"/boot.bin").c_str());
 		assert(boot.size()==4 && !code.empty() && code.size()<=8192 && !(code.size()&3));
 		assert(Word(boot,0)==TT_Q38_BLOCK_BOOT);
-		for (unsigned w=0;w<2048;w++) assert(PioneerQ38BlockWord(w)==(w<code.size()/4?Word(code,w*4):0));
+		if (!stream) for (unsigned w=0;w<2048;w++) assert(PioneerQ38BlockWord(w)==(w<code.size()/4?Word(code,w*4):0));
 		l1[0]=Word(boot,0); for (unsigned w=0;w<code.size()/4;w++) l1[Index(0x72000+w*4)]=Word(code,w*4);
 		tile.assign(PioneerQ38PanelTileBytes(type),0); unsigned bytes=PioneerQ38BlockBytes(type);
 		for (unsigned row=0;row<16;row++) {
@@ -126,6 +126,7 @@ struct BlockMachine:RuntimeMachine {
 		return true;
 	}
 };
+#ifndef PIONEER_Q38_BLOCK_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -171,3 +172,4 @@ int main(int argc,char** argv)
 	}
 	printf("PASS OFFLINE actual complete Q8/Q4/Q6 block matrices+ALL2/16 affine accumulation,separate FP32 and dequantized-double references,%u real blocks,signed scale limits/immutable inputs/zero NoC/fault sensitivity;NOT fullK/resident/native/inference/speed\n",real);
 }
+#endif
