@@ -87,10 +87,29 @@ def check(script, fault=None, restore=None, text_override=None):
             teams.append('999 ./inference-pool-frontend-f2096ee7')
         if fault == 'owner-absolute-inference':
             teams.append('999 /boot/home/config/non-packaged/bin/inference-q38-public')
+        if fault == 'listimage-too-few':
+            images = images[:20]
+        if fault == 'listimage-missing-kernel':
+            images[1] = images[1].replace('kernel_riscv64', 'not-the-kernel')
+        image_body = 'printf "%s\\n" ' + ' '.join(map(shlex.quote, images)) + ';'
+        team_body = 'printf "%s\\n" ' + ' '.join(map(shlex.quote, teams)) + ';'
+        def late_body(name, body, extra):
+            counter = shlex.quote(str(root / (name + '-count')))
+            return ('n=0; if test -f ' + counter + '; then read -r n < ' + counter + '; fi; '
+                    'n=$((n+1)); printf "%s\\n" "$n" > ' + counter + '; ' + body +
+                    ' if test "$n" -ge 2; then printf "%s\\n" ' + shlex.quote(extra) + '; fi; return 0;')
+        if fault == 'loaded-late':
+            image_body = late_body('images', image_body, '999 0x0 0x0 0 0 tenstorrent_pci_probe')
+        if fault == 'owner-late':
+            team_body = late_body('teams', team_body, '999 ./inference-vector-62fef745')
+        if fault == 'listimage-error':
+            image_body = 'return 1;'
+        if fault == 'listimage-empty':
+            image_body = 'return 0;'
         mocks = '\n'.join([
             'uname() { printf "%s\\n" ' + ('Linux' if fault == 'platform' else 'Haiku') + '; }',
-            'listimage() { printf "%s\\n" ' + ' '.join(map(shlex.quote, images)) + '; }',
-            'ps() { printf "%s\\n" ' + ' '.join(map(shlex.quote, teams)) + '; }',
+            'listimage() { ' + image_body + ' }',
+            'ps() { ' + team_body + ' }',
             'sha256sum() { ' + shlex.quote(shutil.which('shasum')) + ' -a 256 "$@"; }',
             'sync() { :; }',
         ])
@@ -107,7 +126,7 @@ def check(script, fault=None, restore=None, text_override=None):
             assert result.returncode == 0 and installed.read_bytes() == new, (script.name, result.stdout, result.stderr)
             if restore:
                 result = subprocess.run(['/bin/sh', str(local), restore], capture_output=True, text=True, timeout=15)
-                expected = q43 if restore == '--restore43' else q52
+                expected = old if restore == '--restore54' else q43 if restore == '--restore43' else q52
                 assert result.returncode == 0 and installed.read_bytes() == expected, (script.name, restore, result.stdout, result.stderr)
 
 
@@ -116,13 +135,18 @@ if __name__ == '__main__':
     assert len(scripts) >= 5
     faults = ['candidate', 'client', 'inference', 'installed', 'candidate-symlink', 'stage-symlink',
               'backup-exists', 'incoming-exists', 'device-link', 'loaded', 'owner', 'owner-truncated',
-              'owner-relative-inference', 'owner-absolute-inference', 'platform']
+              'owner-relative-inference', 'owner-absolute-inference', 'platform',
+              'loaded-late', 'owner-late', 'listimage-error', 'listimage-empty',
+              'listimage-too-few', 'listimage-missing-kernel']
     count = 0
     for script in scripts:
         for fault in faults:
             check(script, fault=fault)
             count += 1
-        for restore in [None, '--restore43', '--restore52']:
+        restores = [None, '--restore43', '--restore52']
+        if '--restore54' in script.read_text():
+            restores.append('--restore54')
+        for restore in restores:
             check(script, restore=restore)
             count += 1
     # Demonstrate that this harness rejects the ACTUAL failure mode,not

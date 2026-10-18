@@ -181,6 +181,7 @@ struct Machine {
 					float av = transposeA ? a[col][k] : a[k][col], bv = b[row][k];
 					if (Int8Arithmetic()) {
 						int32_t ai=int32_t(fabsf(av))&(phase&1?31:224),bi=int32_t(fabsf(bv))&(phase&2?15:1008);
+						if (dropLowFidelity && phase!=0) continue;
 						integerValue+=(av<0?-ai:ai)*(bv<0?-bi:bi); continue;
 					}
 					// The documented FP16 SrcA fidelity phases do not consume

@@ -1,5 +1,46 @@
 # Native build status
 
+Latest checkpoint (October18,20:01 UTC): native54/team848 full27B profile
+STILL ACTIVE,layer41/calls321/pages2,771,572 all success by20:01 UTC.
+Cold first position still loading;NO new token-rate result. Installed
+driver93f2c0db and all hardware/card/SD/power state unchanged. Do NOT run
+another GPU job,stage a replacement or apply an installer while848 owns it.
+
+OFFLINE55 now5a393ab4,exact peer6d863397 (8036B inside original8KiB view;
+compute368B+main288B frames),root026229e2 unchanged. Fixed unpack format
+plus resident immutable-block metadata eliminates redundant cache copies:
+fixed destination/read-only coefficient/minimum lifetime,strict panel order,
+rebind/alias refusal;Q6 HALF*signed8 remains exact. All16,252,928 finite
+products/16,576 panels/996 real tiles PASS(r1EeQjdg);old cache regression
+Ff25dk6u. Matrix phases use RWC modifier1 (AB13=0,Dst29=2000,Bias48=0)
+instead of per-phase SETC11. ALL FOUR exact integer phases,each matrix
+drain,bank flip ONLY at final phase remain.65,536 product/schedule cases
+EiQdvgMb PASS. New actual model asserts each phase visit count and its
+integer low-fidelity fault injector now correctly rejects lost phases.
+
+Actual rows+all-K/real edges L4ty3fgb,repeated persistent/maxN256/fault/
+duplicate/STOP nBnuzWmI,root+peers+exact baked image Q8pnzyf5 PASS. Row
+instruction counts3.76..4.42x below same-workload original scalar,NOT native
+timing. Full55 reruns:bootSB1ig5Dm,RUN both payloadsVfjoBf9Z,proof
+fenwb9Bb,END both modes6spRAN8R,handler/retention4aRq72BR,host session
+6C0KQFXN,MMIO-ENDQXEsoEJL PASS ASan/UBSan. Default54 EXACT93f2c0db,
+default43 EXACT2df0e0f8. Client6f641118/inference62fef745 unchanged.
+
+NEW55 installer tools/pioneer/pioneer_q38_dispatch_vector_switch_unloaded.sh
+SHA3a654a21 only for FRESH physically cold/unloaded Haiku,stage-h. Pins old
+93f2/new5a393,all artifacts/backups;two independent unloaded/no-owner
+proofs. Restore54/52/43 supported ONLY while unloaded.169 actual shell
+tests PASS incl malformed/failed image lists and owner/loaded transitions
+between first and final checks. NOT staged/applied;do not use old native
+helper copies. Dirty llama implementation remains untouched.
+
+Separate BF16 bounded-integer arithmetic prerequisite ONLY(oOR6tO7T):
+1,053,184 exact raw Q8/Q4/Q6 decodes through SM32 CAST;257 valid activation
+encodings incl canonical zero/-128,86,016 exhaustive products/98,304
+16-term dots. Signed8 integers fit BF16 exactly;mathematically Q8 needs
+two floating fidelity phases,Q4/Q6 one. NO BF16 image/format/driver/native
+selection or speed qualification;55 STILL uses all FOUR integer phases.
+
 Latest checkpoint (October18,19:50 UTC): native54 full27B profile STILL
 ACTIVE,team848/stage-g public-four-frontend-g.log. Layer32/calls253/
 pages2,182,616 all success at19:47:25 UTC;first token/cold transfer still

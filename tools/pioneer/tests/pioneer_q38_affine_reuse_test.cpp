@@ -1,18 +1,26 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQ38AffineReuse.h"
+#include "../PioneerQ38AffineResident.h"
 #include "../PioneerQwen38Gguf.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <vector>
 static unsigned panels=0;
+#ifdef PIONEER_Q38_TEST_AFFINE_RESIDENT
+using AffineTest=PioneerQ38AffineResident;
+#else
+using AffineTest=PioneerQ38AffineReuse;
+#endif
 static void Check(unsigned type,const std::vector<uint8_t>& tile)
 {
-	PioneerQ38AffineReuse cache; assert(cache.Prepare(type,tile.data(),unsigned(tile.size())));
+	AffineTest cache; assert(cache.Prepare(type,tile.data(),unsigned(tile.size())));
 	PioneerQ38Panel output,expected; for (auto& word:output.operand) word=0xdeadbeef;
 	for (unsigned p=0;p<(type==8?2U:16U);p++) {
 		assert(PioneerQ38AffineOnly(type,tile.data(),unsigned(tile.size()),p,&expected));
+#ifndef PIONEER_Q38_TEST_AFFINE_RESIDENT
 		for (unsigned row=0;row<16;row++) output.coefficient[row]=output.minimum[row]=0x7fc00000;
+#endif
 		assert(cache.Panel(p,&output));
 		for (unsigned row=0;row<16;row++) { assert(output.coefficient[row]==expected.coefficient[row]); assert(output.minimum[row]==expected.minimum[row]); }
 		for (uint32_t word:output.operand) assert(word==0xdeadbeef); panels++;
@@ -32,9 +40,15 @@ int main(int argc,char** argv)
 			if (type==12) { tile[32+row]=uint8_t(half); tile[48+row]=uint8_t(half>>8); }
 		}
 		Check(type,tile);
-		PioneerQ38AffineReuse ordered; assert(ordered.Prepare(type,tile.data(),unsigned(tile.size())));
+		AffineTest ordered; assert(ordered.Prepare(type,tile.data(),unsigned(tile.size())));
 		PioneerQ38Panel output={}; auto before=output;
 		assert(!ordered.Panel(1,&output) && !ordered.Panel(0,&output) && !memcmp(&before,&output,sizeof(output)));
+#ifdef PIONEER_Q38_TEST_AFFINE_RESIDENT
+		AffineTest rebound; assert(rebound.Prepare(type,tile.data(),unsigned(tile.size())) && rebound.Panel(0,&output));
+		PioneerQ38Panel second={}; auto secondBefore=second; before=output;
+		assert(!rebound.Panel(1,&second) && !rebound.Panel(1,&output));
+		assert(!memcmp(&before,&output,sizeof(output)) && !memcmp(&secondBefore,&second,sizeof(second)));
+#endif
 	}
 	// All finite HALF x signed8 products,including signed zeros/subnormals,
 	// are EXACT FP32;this validates the new Q6 multiply independently.
@@ -62,5 +76,11 @@ int main(int argc,char** argv)
 		}
 		assert(real==996 && model.Stable()); fclose(f);
 	}
-	printf("PASS OFFLINE affine reuse:%u exact panels/%u real tiles,%u exhaustive HALF*signed8 FP32 products incl signed zeros/half subnormals,strict panel order/one block lifetime/operand canaries/no retry;NO image/native/speed qualification\n",panels,real,products);
+	printf("PASS OFFLINE affine %s:%u exact panels/%u real tiles,%u exhaustive HALF*signed8 FP32 products incl signed zeros/half subnormals,strict panel order/one block lifetime/operand canaries/no retry;NO image/native/speed qualification\n",
+#ifdef PIONEER_Q38_TEST_AFFINE_RESIDENT
+		"resident fixed destination/read-only metadata/rebind refusal",
+#else
+		"reuse",
+#endif
+		panels,real,products);
 }

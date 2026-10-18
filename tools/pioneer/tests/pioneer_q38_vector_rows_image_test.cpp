@@ -21,6 +21,7 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 	bool wrote[1024][16]={},sources[2]={},rawPending=false,publish=false,enabled=false;
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
+	unsigned metadataWrites=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
 	bool rawFloat=false,affineEligible=false;
@@ -150,7 +151,7 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 		}
 		if (code==0x26) assert(panelMoves==4 && sources[mathBank] && !rawPending);
 		Base::Instruction(op);
-		if (op==0x26c00020) { sources[mathBank]=false; mathBank^=1; affineEligible=true; assert(unpackBank==mathBank); if (corruptDotRange) dstInt[32][0]=262145; }
+		if ((op&~0x4000U)==0x26c00020) { sources[mathBank]=false; mathBank^=1; affineEligible=true; assert(unpackBank==mathBank); if (corruptDotRange) dstInt[32][0]=262145; }
 	}
 	void Store(uint32_t address,uint32_t value) override {
 		if (Range(address,0xffef0000,224*4)) {
@@ -166,6 +167,7 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 			config[index]=value; configWrites++; return;
 		}
 		assert(!Range(address,0x70710,512)); // NO decoded operand staging/copy
+		if (Range(address,0x91200,128)) metadataWrites++;
 		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
@@ -189,7 +191,8 @@ int main(int argc,char** argv)
 	for (unsigned type:{8U,12U,14U}) for (unsigned k:{5120U,6144U,17408U}) {
 		VectorRowsMachine m(argv[1],type,k,k==17408?3:1); m.delay=3;
 		assert(m.RunVector() && m.CorrectRows());
-		printf("OFFLINE VECTOR actual type%u K%u N%u steps%u rawBytes%u SFPUops%u exact FP32+double PASS\n",type,k,m.groups*16,m.steps,m.rawReads,m.vectorOps);
+		for (unsigned phase=0;phase<4;phase++) assert(m.phaseVisits[phase]==m.groups*(m.inputs/16));
+		printf("OFFLINE VECTOR actual type%u K%u N%u steps%u rawBytes%u SFPUops%u metadataWrites%u exact FP32+double PASS\n",type,k,m.groups*16,m.steps,m.rawReads,m.vectorOps,m.metadataWrites);
 		if (argc==4) {
 			RowsMachine scalar(argv[3],type,k,m.groups); scalar.delay=3;
 			assert(scalar.RunRows() && scalar.CorrectRows());
@@ -198,6 +201,7 @@ int main(int argc,char** argv)
 		}
 	}
 	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.corruptMove=true; assert(m.RunVector() && !m.CorrectRows()); }
+	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.dropLowFidelity=true; assert(m.RunVector() && !m.CorrectRows()); }
 	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.corruptDotRange=true; assert(!m.RunVector()); }
 	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.negativeDotZero=true; assert(m.RunVector() && m.CorrectRows()); }
 	for (unsigned fault:{1U,20U,60U}) {

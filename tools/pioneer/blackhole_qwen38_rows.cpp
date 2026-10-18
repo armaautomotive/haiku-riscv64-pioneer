@@ -7,6 +7,9 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
+#include "PioneerQ38MatrixPhases.h"
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorUnpack.h"
@@ -17,7 +20,14 @@
 #endif
 #endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
+#ifdef PIONEER_Q38_AFFINE_RESIDENT
+#include "PioneerQ38AffineResident.h"
+#ifdef PIONEER_Q38_VECTOR_AFFINE
+#error Resident metadata is read-only between panels and cannot use the mutable FP32 staging experiment
+#endif
+#else
 #include "PioneerQ38AffineReuse.h"
+#endif
 #endif
 #ifdef PIONEER_Q38_VECTOR_AFFINE
 #include "PioneerQ38VectorAffineData.h"
@@ -104,10 +114,14 @@ static void Matrix()
 	Emit(0x420000c1);
 #endif
 	Emit(0x428000c1); Drain();
+#ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
+	VectorPanelEmitter e; PioneerQ38MatrixPhases(e);
+#else
 	for (unsigned phase=0;phase<4;phase++) {
 		Emit(0xb20b0000|phase); Drain();
 		Emit(phase==3?0x26c00020:0x26000020); Drain();
 	}
+#endif
 }
 #ifdef PIONEER_Q38_STREAM
 // OFFLINE follow-on ONLY. No installed driver selects this image. A future
@@ -208,6 +222,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
 	VectorPanelEmitter setupEmitter; PioneerQ38VectorFixedSetup(setupEmitter);
 #endif
+#ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
+	VectorPanelEmitter phasesEmitter; PioneerQ38MatrixPhasesSetup(phasesEmitter);
+#endif
 	for (unsigned row=0;row<groups*16;row++) Words(0x84000)[row]=0;
 	unsigned panels=count/16;
 	for (unsigned group=0;group<groups;group++) {
@@ -219,7 +236,11 @@ extern "C" unsigned block_main()
 	float scale=Float(scaleBits);
 #endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
+#ifdef PIONEER_Q38_AFFINE_RESIDENT
+	PioneerQ38AffineResident affine;
+#else
 	PioneerQ38AffineReuse affine;
+#endif
 	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
 #endif
 	for (unsigned p=0;p<panels;p++) {
