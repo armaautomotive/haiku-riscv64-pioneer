@@ -14,6 +14,11 @@ release=$build/objects/haiku/riscv64/release
 cxx=$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
 kernel=$release/system/kernel/kernel.so
 test -f "$kernel"
+case "${PIONEER_Q38_PANEL_DRIVER:-0}" in
+ 0) extra=; variant=45;;
+ 1) extra=-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL; variant=46;;
+ *) exit 2;;
+esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \
@@ -31,7 +36,7 @@ for source in PioneerPciProfile tenstorrent_pci_probe; do
  "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
   -ffreestanding -finline -fno-semantic-interposition -fno-tree-vectorize -fno-use-cxa-atexit \
   -fno-strict-aliasing -fno-delete-null-pointer-checks -mcmodel=medany -fpic \
-  -D_KERNEL_MODE -DTT_PIONEER_EXPERIMENTAL_Q38_BANKS "$@" \
+  -D_KERNEL_MODE -DTT_PIONEER_EXPERIMENTAL_Q38_BANKS $extra "$@" \
   -c "$project/src/add-ons/kernel/drivers/misc/$source.cpp" -o "$output/$source.o"
 done
 begin=$("$cxx" -print-file-name=crtbeginS.o)
@@ -40,8 +45,8 @@ libgcc=$("$cxx" -print-file-name=libgcc.a)
 "$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=tenstorrent_pci_probe \
  "$begin" "$release/system/glue/haiku_version_glue.o" \
  "$output/tenstorrent_pci_probe.o" "$output/PioneerPciProfile.o" "$kernel" "$libgcc" "$end" \
- -o "$output/tenstorrent_pci_probe-driver45"
-shasum -a 256 "$output/tenstorrent_pci_probe-driver45"
+ -o "$output/tenstorrent_pci_probe-driver$variant"
+shasum -a 256 "$output/tenstorrent_pci_probe-driver$variant"
 # Compile/link the default (feature disabled) branch too. This catches any
 # accidental new ABI dependency in the preserved ordinary driver build.
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \

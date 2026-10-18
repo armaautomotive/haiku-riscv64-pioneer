@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_BANKS)
+#error Q38 local panel probe requires the exclusive seven-bank owner
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -1337,6 +1340,12 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+	area_id q38PanelArea=-1;
+	volatile uint32* q38PanelView=NULL;
+	uint32* q38PanelSaved=NULL;
+	bool q38PanelMapAttempted=false;
+#endif
 	PioneerRuntimeProfile runtimeProfile;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1};
 	volatile uint32* runtimeEntry=NULL;
@@ -1385,6 +1394,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		tt_compute_noc_result& n,tt_host_path_result& h,tt_host_dma_audit_result& auditResult,tt_host_write_result& r)
 		: PioneerHostWriteIO(p,a,t,c,d,n,h,auditResult,r,4096) {}
 	~PioneerSessionIO() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+		if (q38PanelArea>=B_OK) delete_area(q38PanelArea);
+		free(q38PanelSaved);
+#endif
 		for (unsigned i=0;i<5;i++) if (runtimeAreas[i]>=B_OK) delete_area(runtimeAreas[i]);
 		if (attentionArea>=B_OK) delete_area(attentionArea);
 		if (bulkArea>=B_OK) delete_area(bulkArea);
@@ -1405,6 +1418,31 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (outputArea>=B_OK) QuarantineOutputBuffer();
 		if (wideArea>=B_OK) QuarantineWideOutput();
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+	bool MapQ38Panel() {
+		if (runtimeCore || !MapRuntime()) return false;
+		if (q38PanelView) return Q38PanelMappingStable();
+		if (q38PanelMapAttempted) return false;
+		q38PanelMapAttempted=true;
+		q38PanelSaved=(uint32*)malloc((TT_Q38_PANEL_VIEW_WORDS+1)*sizeof(uint32));
+		if (!q38PanelSaved) return false;
+		void* view=NULL;
+		q38PanelArea=map_physical_memory("P100A exact local Q38 panel probe saved L1",profile.bar0_host_start+0x1906e000,
+			TT_Q38_PANEL_VIEW_BYTES,B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (q38PanelArea<B_OK) return false;
+		q38PanelView=(volatile uint32*)view; return true;
+	}
+	bool Q38PanelMappingStable() { return !runtimeCore && q38PanelArea>=B_OK && q38PanelView && q38PanelSaved; }
+	uint32* Q38PanelSavedWords() { return q38PanelSaved; }
+	uint32 Q38PanelRead(uint32 a) {
+		return q38PanelView && !(a&3) && a>=TT_Q38_PANEL_VIEW_BASE && a-TT_Q38_PANEL_VIEW_BASE<TT_Q38_PANEL_VIEW_BYTES
+			?PioneerRead32(q38PanelView+(a-TT_Q38_PANEL_VIEW_BASE)/4):UINT32_MAX;
+	}
+	void Q38PanelWrite(uint32 a,uint32 value) {
+		if (q38PanelView && !(a&3) && a>=TT_Q38_PANEL_VIEW_BASE && a-TT_Q38_PANEL_VIEW_BASE<TT_Q38_PANEL_VIEW_BYTES)
+			PioneerWrite32(q38PanelView+(a-TT_Q38_PANEL_VIEW_BASE)/4,value);
+	}
+#endif
 	bool MapCoordinator() {
 		if (runtimeCore!=0) return false;
 		if (coordinatorView) return true;
@@ -1851,6 +1889,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+	PioneerQ38PanelLease panelProbe;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 	PioneerResidentBanks banks;
 	bool bankStorageOnly=false;
@@ -1898,6 +1939,9 @@ struct PioneerStoreContext {
 	~PioneerStoreContext() { delete[] fleet; free(initialized); free(hashes); }
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+		if (panelProbe.running || panelProbe.unsafe) return true;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 		if (banks.Quarantined()) return true;
 #endif
@@ -2025,6 +2069,10 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+	clean=PioneerQ38PanelClose(context->io,context->baseline.baseline.baseline.baseline.dram,
+		context->baseline.baseline.baseline.noc,context->lease,context->banks,context->panelProbe,clean) && clean;
+#endif
 	clean=CloseFleet(*context,clean);
 	clean=PioneerDecoderClose(context->io,context->baseline.baseline.baseline.baseline.dram,
 		context->baseline.baseline.baseline.noc,context->lease,context->decoder,clean) && clean;
@@ -2389,6 +2437,50 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 // PIONEER_Q38_BANK_CONTROL_END
 #endif
 
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+// PIONEER_Q38_PANEL_CONTROL_BEGIN
+static status_t
+Q38PanelControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_PANEL_SUPPORT) {
+		if (length!=sizeof(tt_q38_panel_support)) return B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		const tt_q38_panel_support support={46,1,1,16,16,0x5100};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_PANEL_RUN || length!=sizeof(tt_q38_panel_probe)) return B_BAD_VALUE;
+	auto* request=(tt_q38_panel_probe*)malloc(sizeof(tt_q38_panel_probe));
+	if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || !PioneerQ38PanelProbeValid(*request)) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+	else {
+		auto& dram=c->baseline.baseline.baseline.baseline.dram;
+		auto& noc=c->baseline.baseline.baseline.noc;
+		request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
+		for (unsigned row=0;row<16;row++) request->dot[row]=request->coefficient[row]=request->minimum[row]=0;
+		bool ready=c->lease.ready;
+		if (!ready && !c->lease.saved) ready=PioneerResidentLeaseBegin(c->io,noc,c->lease);
+		ready=ready && c->io.SelectRuntimeCore(0) && c->io.MapQ38Panel()
+			&& PioneerQ38PanelPrepare(c->io,dram,noc,c->lease,c->banks,c->panelProbe);
+		if (ready) PioneerQ38PanelRun(c->io,dram,noc,c->lease,c->banks,c->panelProbe,*request);
+		if (c->Unsafe() || request->result.recovery_required) {
+			c->banks.Quarantine(); c->panelProbe.unsafe=true; c->lease.recovery_required=true;
+			c->io.QuarantineHostPage(); request->result.recovery_required=1; sColdRecoveryRequired=true;
+		}
+		status=user_memcpy(data,request,sizeof(*request));
+	}
+	release_sem(sLock); free(request); return status;
+}
+// PIONEER_Q38_PANEL_CONTROL_END
+#endif
+
 static status_t
 ResidentStreamControl(PioneerProbeCookie* cookie,void* data,size_t length)
 {
@@ -2580,6 +2672,9 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	tt_coordinated_support support={43,119,3,1,8192}; // v43 exact unpack source Wait Gate;SAME math bytes except ONE scheduling word/owners/proofs
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 	support.version=TT_Q38_BANK_DRIVER; // separate experimental build; NEVER masquerade as qualified43
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+	support.version=46; // local panel arithmetic probe,NOT full model support
 #endif
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
@@ -3413,6 +3508,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 	if (operation>=TT_PCI_PROBE_Q38_BANK_SUPPORT && operation<=TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD)
 		return Q38BankControl(instance,operation,data,length);
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
+	if (operation==TT_PCI_PROBE_Q38_PANEL_SUPPORT || operation==TT_PCI_PROBE_Q38_PANEL_RUN)
+		return Q38PanelControl(instance,operation,data,length);
 #endif
 	if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN || operation==TT_PCI_PROBE_PIONEER_SESSION_END
 		|| operation==TT_PCI_PROBE_PIONEER_SESSION_STATUS || operation==TT_PCI_PROBE_PIONEER_SESSION_SUPPORT)

@@ -49,6 +49,7 @@
 #include "PioneerDecoderBatchModel.h"
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #include "PioneerQ38BankProtocol.h"
+#include "PioneerQ38PanelProbe.h"
 #endif
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"
