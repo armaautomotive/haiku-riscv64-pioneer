@@ -2,6 +2,46 @@
 
 ## Status
 
+### October17: native fullK49 passed REAL Qwen matrices (October18,02:00 UTC)
+
+CURRENT Haiku UP/SSH,64 CPUs/full137034936320B RAM/NIC0b83ceed.49 637db0a6
+is installed AND LOADED,known clean/no active job/UNKNOWN/cold latch. P100A
+installed,both SDs out. Still NO full27B graph/inference/generated tokens/
+steady token rate/full-capacity model loading or Assistant model target.
+
+Default Linux recovered on NVMe with P100A COMMAND0000/noLinux driver.
+Pinned same SD-free `stream49-20261017-a` prepared and boot dispatched
+01:54:53;fresh Haiku verified fullCPU/RAM/NIC and no card module01:56:10.
+Exact159d6754 installer passed TWO unloaded/no-owner guards and installed49,
+preserving native-qualified48 and43 outside driver paths. Metadata49/ABI1/
+N16/maxK17408/seven banks/NOT inference accepted.
+
+Native synthetic test completed before01:58:36:ALL9 Q8_0/Q4_K/Q6_K x
+K5120/6144/17408 cases,all seven private banks/alternating first-last ranges,
+EXACT16 output bits. Native authentic full-row test completed before01:59:35:
+EXACT725504B MEMORY SHA checked BEFORE any card open,then ALL8 genuine
+first/last FULL16-row groups from Q8 attention,Q4 embedding,Q6 output and
+Q4 K17408 FFN down passed. EACH has known start/completion/stable PC72038
+twice/stop,exact read/flit/shared-accepted and zero actual write counters.
+Both sessions clean END/PCI/host release/coldfalse. This is real card-side
+packed-weight GDDR reading and fullK accumulation,ONE core/N16 primitives,
+NOT full-model inference/multiworker or measured tokens/sec. Logs:
+`pioneer-qwen38-stream-20261017-a/synthetic-20261017-a.log` and
+`.../public-rows-20261017-a.log`;Mac copies beside exact49 build.
+
+Separate diagnostic-only client22dc6d7c3e52144c112e9f9d2be9e5dcdb11b9e703d571d9c784749576ef063a
+was used for native tests. It prints ONLY already-returned completion/counter
+buffers on failure,no additional GPU IO/retry. Ordinary AND diagnostic real
+client+memory auth/fault tests pass;ordinary binary still reproduces49bc095f
+and original installer remains159d6754. No loaded-module changes after install.
+
+Post checks02:00:06 retain64 CPUs/fullRAM/network0 errors+drops,no compute
+or Assistant job. Restore49 ONLY via `switch-unloaded49.sh --restore43`
+after NEW cold boot BEFORE card open;never replace loaded or retry UNKNOWN.
+48/43 backups preserved. Batch row prototype1111a05c remains OFFLINE only,
+not registered/launched;next is batched row ownership,then parallel workers
+and full hybrid graph. No OS/kernel/firmware/defaultLinux/dirty llama edits.
+
 ### October17: cold49 trial starting;batch-row follow-on OFFLINE (October18,01:53 UTC)
 
 CURRENT default Linux is booting after controlled cold recovery:normal

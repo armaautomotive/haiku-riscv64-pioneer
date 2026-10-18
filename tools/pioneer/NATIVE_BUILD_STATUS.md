@@ -1,6 +1,31 @@
 # Native build status
 
-Latest checkpoint (October18,01:53 UTC / October17 Vancouver): normal synced
+Latest checkpoint (October18,02:00 UTC / October17 Vancouver): Haiku UP/SSH,
+64 CPUs/137034936320B RAM/NIC0b83ceed. Disk/LOADED driver49 637db0a6,
+known clean/no active job/UNKNOWN/cold latch. Cold recovery completed via
+same pinned SD-free `stream49-20261017-a`;fresh boot had no card module,
+two unloaded/no-owner guards passed,preserving48 AND qualified43 outside
+driver paths. Native49 synthetic ALL9 fullK type/width/seven-bank cases PASS
+before01:58:36,authentic public FULL16-row groups ALL8 PASS before01:59:35.
+All16 outputs EXACT bits,known start/completion/PC72038 twice/stop/exact
+read/flit/shared-accepted counters/zero writes/clean END/coldfalse. Genuine
+Q8/Q4/Q6 K5120 plusQ4 K17408 matrices;single core,N16. NOT multiworker/
+full graph/27B inference/generated tokens/speed or full21GiB residency.
+Logs `pioneer-qwen38-stream-20261017-a/{synthetic,public-rows}-20261017-a.log`,
+Mac copies beside exact49 build. Post checks fullCPU/RAM,network0 errors/
+drops,no compute/Assistant job. Restore now `switch-unloaded49.sh --restore43`
+ONLY on a NEW cold-recovered Haiku boot BEFORE any card open. Never replace
+loaded modules/force unload/retry UNKNOWN. No SD/card/power changes needed.
+
+Separate diagnostic client22dc6d7c prints already-returned proof/counter
+buffers on failure,NO later hardware IO/retry. Native tests used it. Both
+ordinary and diagnostic real-client+memory SHA/fail-stop tests PASS;normal
+client remains EXACT49bc095f. Original installer pins normal client unchanged.
+Batch-row image remains OFFLINE only;next batched ownership/launch path
+not implemented yet. Kernel/OS/firmware/Linux default/Assistant/dirty llama
+unchanged. Latest fully pushed source before diagnostic follow-up191a1e28ec.
+
+Previous checkpoint (October18,01:53 UTC / October17 Vancouver): normal synced
 Haiku shutdown dispatched01:47:24;one off hold completed before01:48:50,
 one on01:52:07 after FULL180s rest. Default Linux is booting;Haiku handoff
 `stream49-20261017-a` NOT prepared/dispatched yet. Disk still48 ef865831;

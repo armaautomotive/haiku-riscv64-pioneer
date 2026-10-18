@@ -76,6 +76,14 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 		okay &= uint32_t(v.after[i]-v.before[i])==count;
 	}
 	unsigned mismatches=0; for (unsigned row=0;row<16;row++) mismatches+=r.output[row]!=PioneerAttentionBits(expected[row]);
+#ifdef PIONEER_Q38_STREAM_DIAGNOSTICS
+	if (!okay || mismatches) {
+		printf("FAIL_PROOF phase=%x panels=%u expected=%u marker=%x polls=%u prepared=%u context_reset=%u\n",
+			v.phase,v.panels,inputs/16,v.marker,v.polls,v.prepared,v.context_reset);
+		for (unsigned i=0;i<8;i++) printf("FAIL_COUNTER%u before=%u after=%u delta=%u expected=%u\n",i,v.before[i],v.after[i],uint32_t(v.after[i]-v.before[i]),
+			i==1?bytes/64:(i==0 || i==2 || i==3 || i==6)?blocks:0);
+	}
+#endif
 	printf("FULL_K_PRIMITIVE type=%u K=%u bank=%u last=%u state=%u start/complete/stop=%u/%u/%u cold=%u pc=%x/%x exact_errors=%u\n",
 		type,inputs,r.bank,ordinal&1,v.state,v.started,v.completed,v.stopped,v.recovery_required,v.pc[0],v.pc[1],mismatches);
 	return okay && !mismatches;

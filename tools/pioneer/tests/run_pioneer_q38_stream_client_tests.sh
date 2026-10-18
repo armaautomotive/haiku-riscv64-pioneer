@@ -12,3 +12,11 @@ else
  exit 1
 fi
 printf 'Offline fullK real-client evidence retained at %s\n' "$temporary"
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_Q38_STREAM_DIAGNOSTICS -I"$directory/cli-stubs" "$directory/pioneer_q38_stream_client_test.cpp" -o "$temporary/diagnostic"
+if UBSAN_OPTIONS=halt_on_error=1 "$temporary/diagnostic" "$1" > "$temporary/diagnostic.log" 2>&1; then
+ tail -n 1 "$temporary/diagnostic.log"
+else
+ tail -n 40 "$temporary/diagnostic.log"
+ exit 1
+fi
