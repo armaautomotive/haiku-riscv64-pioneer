@@ -2,6 +2,7 @@
 #define PIONEER_Q38_PERSISTENT_IMAGE
 #define PIONEER_Q38_SHARED_ROOT_MACHINE_ONLY
 #include "pioneer_qwen38_shared_rows_image_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchImages.h"
 // Exact RV32/FPU/NoC execution,NOT a native route/launch permission. The
 // test harness stands in for a future private root's descriptor handoff.
 struct PersistentRows:SharedRowsMachine {
@@ -10,6 +11,7 @@ struct PersistentRows:SharedRowsMachine {
 	unsigned logicalWorker;
 	bool changeDescriptor=false;
 	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker=69):SharedRowsMachine(path,type,k,groups),logicalWorker(worker) {
+		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(worker,word)==(word<code.size()/4?Word(code,word*4):0));
 		assert(inputReads>=2 && packets[inputReads-1].address==0x94000);
 		packets[inputReads-1].address=0xab000;
 		for (unsigned at=0;at<packets[inputReads-1].bytes;at+=4) {

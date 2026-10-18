@@ -2,6 +2,31 @@
 
 ## Status
 
+### October17: persistent lifecycle controllers pass OFFLINE;native layer39 (October18,05:28 UTC)
+
+Native7643314f remains the SOLE active accelerator owner on driver52:
+307 learned projections through layer39 pass,2,651,780 pages uploaded.
+No completed27B position/token/throughput result yet. Do not replace the
+loaded module or disturb power while it runs.
+
+Separate OFFLINE54/ABI1 protocol,private authority and bootstrap/RUN/END
+controllers now exist;NO native handler selects them. Persistent WAIT is
+not a fabricated old stopped flag. ALL initialized extents are privately
+authorized before IO;ALL metadata/counter/source/last-command/input proofs
+precede output reads;ALL finite-output proofs precede root hold. Peers
+remain waiting between jobs without reset. END proves ALL119 terminal
+PCs/source/code before ANY core reset and ALL120 held/code before ANY
+restoration. Single-attempt NIU/L1/TLB restoration stops on bad readback.
+Any uncertainty quarantines ALL roles/banks with no retry/reset/free.
+
+ASan/UBSan tests combine actual emitted dispatcher instructions with the
+controller fabric:1/7/119 peers xQ8/Q4/Q6 twice,10 RUN faults,36 first/
+middle/last END faults,root timeout/fault,all64 STOP-stat mutations. Both
+ordinary and paired payload paths pass. Bootstrap24 faults and independent
+WAIT-proof all-field/source/counter/nonfinite tests pass. Exact root/peer
+image arrays are independently pinned. No native54/model/Assistant target
+or performance claim follows from these OFFLINE tests.
+
 ### October17: cooperative dispatcher+peers pass OFFLINE;native layer20 (October18,04:54 UTC)
 
 The native7643314f full-model smoke remains RUNNING on52:at least161

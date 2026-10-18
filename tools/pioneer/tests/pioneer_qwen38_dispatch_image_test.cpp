@@ -4,6 +4,7 @@
 #include "pioneer_qwen38_block_image_test.cpp"
 #endif
 #include <array>
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchImages.h"
 // Actual ROOT RV32 instructions;synthetic private peer proof fabric,NOT
 // arithmetic/inference/native authority. Real peer math has separate tests.
 struct DispatchMachine:BlockMachine {
@@ -18,6 +19,7 @@ struct DispatchMachine:BlockMachine {
 	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false;
 	DispatchMachine(const char* path,unsigned workers,unsigned type=12,unsigned inputs=5120)
 		:BlockMachine(path,8,0,1,nullptr,true),active(workers),kind(type),k(inputs) {
+		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(0,word)==(word<code.size()/4?Word(code,word*4):0));
 		for (unsigned c=0;c<8;c++) counts[c]=UINT32_MAX-15-c;
 		for (unsigned w=0;w<119;w++) for (unsigned c=0;c<16;c++) memory[0x7d800+w*64+c*4]=c?0x12340000+c:0x16005;
 		Configure(1);
@@ -54,7 +56,7 @@ struct DispatchMachine:BlockMachine {
 		proof[16]=d[7]*d[5]/16; proof[17]=d[12]; proof[18]=worker; proof[19]=0x32503851;
 		const uint32_t cmd[]={d[6]+(d[7]*blocks-1)*d[2],0,d[8],0x90000,0,Route(worker),0,0,d[2],0};
 		for (unsigned i=0;i<10;i++) proof[20+i]=cmd[i];
-		proof[30]=0x16005; proof[31]=Route(worker);
+		proof[30]=memory.at(0x7d800+(worker-1)*64); proof[31]=Route(worker);
 		for (unsigned i=0;i<16;i++) proof[32+i]=memory.at(0x7d800+(worker-1)*64+i*4);
 		return proof;
 	}

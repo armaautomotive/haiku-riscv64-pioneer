@@ -1,5 +1,31 @@
 # Native build status
 
+Latest checkpoint (October18,05:28 UTC): sole native7643314f full-model run
+STILL active on52/1de41744,307 learned projections through layer39 pass,
+2,651,780 pages uploaded. NO completed position/token/speed result yet.
+Leave its driver,owner and power unchanged until known-clean END.
+
+New OFFLINE54/ABI1 proposal uses distinct54f2/54f3 operations and private
+root+119-peer authority;NO native handler exists yet. Exact793ae113/263015f2
+image arrays are pinned by actual-instruction tests. Persistent WAIT is
+separate from old per-call STOP. Bootstrap saves every264KiB role+entry,
+arms ALL119 before release,then requires ALL physical wait/source/idle/
+zero-NoC proofs. RUN authorizes ALL initialized extents before IO,validates
+ALL root/peer metadata,physical counters,last command and immutable inputs
+before output reads,ALL output proofs before root HOLD. No per-job peer
+reset. Any uncertainty clears output and quarantines ALL banks/roles.
+
+END pre-audits ALL code/source/wait PCs before private ALL119 STOP,then
+requires ALL physical terminal/source/code proofs BEFORE ANY hardware
+reset. ALL120 held/code-audited before FIRST restoration. NIU/L1/TLB
+restoration is single-attempt;bad readback forbids later writes/retries.
+ASan/UBSan bootstrap24 faults,proof all64 stats/perpeer fields,10 RUN faults
+and36 first/middle/last END faults+root timeout/fault pass. RUN/END test
+both ordinary and paired payload paths. Evidence dispatch-boot.pwyIxaXs,
+dispatch-proof.rwhyFvMU,dispatch-run.eGthc0MF and dispatch-close.GggoYe3t
+under the Mac task temp directory. These are OFFLINE controller prerequisites,
+NOT installed/native driver54,LLM speed or Assistant qualification.
+
 Latest checkpoint (October18,04:54 UTC): Native public7643314f trial STILL
 RUNNING on52,at least161 learned projections through layer20 pass,about
 5.7GB retained. NO completed token/position or speed result yet,no UNKNOWN.
