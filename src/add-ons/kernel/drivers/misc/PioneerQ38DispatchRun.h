@@ -103,7 +103,14 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	io.RuntimeResetWrite(0x46800); if (io.ResetRead()!=0x46800) return PioneerQ38DispatchRunFail(lease,banks,job);
 	const uint64_t deadline=io.Q38CohortNow()+UINT64_C(30000000); bool complete=false;
 	while (io.Q38CohortNow()<deadline) {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+		// Same fixed THREE-read monitoring sample,not another card read or
+		// retry. Terminal marker is published LAST by the root;sample it
+		// FIRST so a recognized terminal sample has stable detail words.
+		r.root_marker=io.RuntimeStatusRead(2); r.root_phase=io.RuntimeStatusRead(0); r.root_count=io.RuntimeStatusRead(1);
+#else
 		r.root_phase=io.RuntimeStatusRead(0); r.root_count=io.RuntimeStatusRead(1); r.root_marker=io.RuntimeStatusRead(2);
+#endif
 		if (r.root_marker==TT_Q38_DISPATCH_FAULT) break;
 		if (r.root_phase==TT_Q38_DISPATCH_DONE && r.root_count==job.peers && r.root_marker==TT_Q38_DISPATCH_MARKER) {
 			io.Pause(); r.root_pc[0]=io.RuntimePcRead(); io.Pause(); r.root_pc[1]=io.RuntimePcRead();

@@ -1,5 +1,33 @@
 # Native build status
 
+October18,22:03 UTC native59 diagnostic09ef first RUN FAILED/exit1/process
+gone,returned phase54000102/count1/FAULT. Exact log preserved at
+/private/tmp/pioneer-q38-progress-native-failure-20261018-l.log. Haiku
+responsive64/fullRAM;graceful shutdown/channel1 off before22:02:23 UTC.
+ALL roles/banks/owners quarantined;NO retry/END/reset/restore/free/card read.
+Installed09ef remains until a NEW physical cold boot/unloaded-only switch.
+
+Found a HOST DIAGNOSTIC RACE:old monitor reads phase,count,marker in that
+order,so terminal publication between reads can pair old detail with a new
+FAULT. Actual RUN-controller test publishes fault after the first read:
+legacy54 reproduces mixed phase54000102/count5/FAULT;59 marker-first gets
+stable59020205/count5/FAULT. PASS WvPAn4PY BOTH paired/PIO modes;legacy
+negative control KzK5Vaxt BOTH modes. This demonstrates the race,NOT that it
+caused the native compute failure. Do not infer a precise hardware stall
+location from prior possibly torn tuples.
+
+Candidate59 marker-first HOST-only fix876dda11. Rootb04785a9/peerdf33e3b9,
+ABI/client7722dc5e/ALL math/proofs/limits unchanged. Every monitor sample
+still uses exactly THREE existing reads;terminal marker FIRST,then stable
+detail. If marker was zero,normal monitoring continues;no command retry,
+new NoC packet/extra diagnostic read or output/reset/hold after failure.
+Only isolated59 enables this order;54..58 unchanged. NO model capability
+or native performance claim. New snapshot-stage helper requires exact
+old09ef/cold/unloaded and preserves59 separately plus43/52/54;prior58/55/57
+backups remain unchanged.296 actual installer/restore tests PASS,helper
+64d6a393. Extracted handler/retention da5lAFtl PASS. Hardware re-test pending
+after >=300s off rest.
+
 October18,21:56 UTC native58 first two-worker RUN FAILED/exit1/processgone,
 root_phase54000203,count2,marker464d3851. No transfer-mask failure or peer
 fault return-PC captured. This later status checkpoint does NOT establish

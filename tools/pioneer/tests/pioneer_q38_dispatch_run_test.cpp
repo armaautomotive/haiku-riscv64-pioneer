@@ -20,7 +20,18 @@ struct RunIO:BootstrapIO {
 	bool peerStopped[119]={},stopExecuted=false;
 	unsigned stopSlowWorker=0;
 	unsigned stopSnapshotMode=0,pcSamples[120]={};
+	bool asynchronousFault=false; std::vector<unsigned> statusOrder;
 	explicit RunIO(const char* path):image(path) {}
+	uint32_t RuntimeStatusRead(unsigned index) {
+		uint32_t value=BootstrapIO::RuntimeStatusRead(index);
+		if (!current && rootExecuted && asynchronousFault) {
+			statusOrder.push_back(index);
+			if (statusOrder.size()==1) {
+				C().destination[2032]=0x59020205; C().destination[2033]=5; C().destination[2034]=TT_Q38_DISPATCH_FAULT;
+			}
+		}
+		return value;
+	}
 	uint32_t RuntimePcRead() {
 		bool next=stopSnapshotMode==1 || (stopSnapshotMode==2 && (pcSamples[current]++&1));
 		return current?(peerStopped[current-1]?(next?TT_Q38_PEER_STOP_FETCH:TT_Q38_PEER_STOP):BootstrapIO::RuntimePcRead()):
@@ -66,6 +77,10 @@ struct RunIO:BootstrapIO {
 		if (rootFault==6) c.view[(0x80000+(n-1)*1024-TT_Q38_PANEL_VIEW_BASE)/4]=0x7f800000;
 		if (rootFault==7) c.config^=1;
 		if (rootFault==10) c.command[2]^=1;
+		if (rootFault==11) {
+			c.destination[2032]=0x54000102; c.destination[2033]=1; c.destination[2034]=0;
+			asynchronousFault=true;
+		}
 	}
 	void RuntimeResetWrite(uint32_t value) {
 		if (current) { BootstrapIO::RuntimeResetWrite(value); return; }
@@ -126,6 +141,20 @@ int main(int argc,char** argv)
 		for (const auto& rows:f.job->output) for (unsigned value:rows) assert(!value);
 		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true; assert(!f.Run());
 		assert(f.io.Writes()==writes && f.io.selects==selects);
+	}
+	{
+		RunFixture f(argv[1],2); f.io.rootFault=11; assert(!f.Run());
+		assert(f.lease->unsafe && f.banks.Quarantined() && !f.io.outputReads && !f.io.rootStops && !f.io.rootHolds);
+		assert(f.job->result.root_marker==TT_Q38_DISPATCH_FAULT);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+		assert((f.io.statusOrder==std::vector<unsigned>{2,0,1,2,0,1}));
+		assert(f.job->result.root_phase==0x59020205 && f.job->result.root_count==5);
+		puts("PASS59 marker-first ORIGINAL three-read sample captures stable fault detail;publication during first sample waits for next normal monitor sample;no output/reset/hold/extra diagnostic read");
+#else
+		assert((f.io.statusOrder==std::vector<unsigned>{0,1,2}));
+		assert(f.job->result.root_phase==0x54000102 && f.job->result.root_count==5);
+		puts("EXPECTED legacy diagnostic torn tuple reproduced:old checkpoint paired with new fault marker;no native claim");
+#endif
 	}
 	{
 		RunFixture f(argv[1],7); f.initialized[0]=0; unsigned writes=f.io.Writes(),selects=f.io.selects;
