@@ -42,7 +42,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	assert(fd==73 && !failed);
 	if (op==TT_PCI_PROBE_Q38_PANEL_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_panel_support));
-		*static_cast<tt_q38_panel_support*>(data)={fault==4?45U:unsigned(TT_Q38_PANEL_CURRENT_DRIVER),TT_Q38_PANEL_ABI_VERSION,1,16,16,0x5100}; return 0;
+		*static_cast<tt_q38_panel_support*>(data)={fault==4?45U:unsigned(TT_Q38_PANEL_CURRENT_DRIVER),TT_Q38_PANEL_ABI_VERSION,1,16,TT_Q38_PANEL_COLUMNS,0x5100}; return 0;
 	}
 	if (op==TT_PCI_PROBE_Q38_BANK_BEGIN || op==TT_PCI_PROBE_Q38_BANK_END) {
 		assert(bytes==sizeof(tt_q38_bank_session)); auto& r=static_cast<tt_q38_bank_session*>(data)->result;
@@ -53,6 +53,29 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	}
 	assert(op==TT_PCI_PROBE_Q38_PANEL_RUN && bytes==sizeof(tt_q38_panel_probe));
 	auto& p=*static_cast<tt_q38_panel_probe*>(data); assert(PioneerQ38PanelProbeValid(p)); runs++;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	PioneerQ38Panel reference={}; float accumulated[16]={};
+	for (unsigned panel=0;panel<PioneerQ38PanelExpectedCount(p.type);panel++) {
+		assert(PioneerQ38UnpackPanel(p.type,reinterpret_cast<const uint8_t*>(p.tile),p.bytes,panel,&reference));
+		int inputSum=0;
+		for (unsigned k=0;k<16;k++) {
+			unsigned at=panel*16+k; uint16_t a=uint16_t(p.activation[at/2]>>((at%2)*16));
+			inputSum+=int(a&1023)*((a&0x8000)?-1:1);
+		}
+		for (unsigned row=0;row<16;row++) {
+			int dot=0;
+			for (unsigned k=0;k<16;k++) {
+				unsigned e=k*16+row,at=panel*16+k; uint16_t w=uint16_t(reference.operand[e/2]>>((e%2)*16)),a=uint16_t(p.activation[at/2]>>((at%2)*16));
+				dot+=int(w&1023)*((w&0x8000)?-1:1)*int(a&1023)*((a&0x8000)?-1:1);
+			}
+			float scale,coefficient,minimum; memcpy(&scale,&p.activation_scale,4); memcpy(&coefficient,&reference.coefficient[row],4); memcpy(&minimum,&reference.minimum[row],4);
+			float product=(coefficient*scale)*float(dot),correction=(minimum*scale)*float(inputSum); accumulated[row]+=product+correction;
+		}
+	}
+	for (unsigned row=0;row<16;row++) {
+		memcpy(&p.dot[row],&accumulated[row],4); p.coefficient[row]=reference.coefficient[row]; p.minimum[row]=reference.minimum[row];
+	}
+#else
 	PioneerQ38Panel reference={}; assert(PioneerQ38UnpackPanel(p.type,reinterpret_cast<const uint8_t*>(p.tile),p.bytes,p.panel,&reference));
 	for (unsigned row=0;row<16;row++) {
 		int sum=0;
@@ -74,8 +97,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 #endif
 		p.coefficient[row]=reference.coefficient[row]; p.minimum[row]=reference.minimum[row];
 	}
+#endif
 	auto& r=p.result; r={}; r.version=1; r.state=TT_RUNTIME_PASSED; r.prepared=r.started=r.completed=r.stopped=r.context_reset=1;
-	r.phase=TT_Q38_PANEL_DONE; r.panels=1; r.marker=0x4d415431; r.pc[0]=r.pc[1]=TT_Q38_PANEL_PARK;
+	r.phase=TT_Q38_LOCAL_DONE; r.panels=PioneerQ38PanelExpectedCount(p.type); r.marker=TT_Q38_PANEL_SUCCESS_MARKER; r.pc[0]=r.pc[1]=TT_Q38_LOCAL_PARK;
 	for (unsigned i=0;i<8;i++) r.before[i]=r.after[i]=UINT32_MAX-i;
 	if (fault==1) { failed=true; errno=EIO; return -1; }
 	if (fault==2) {
@@ -84,7 +108,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 			case 0:r.version=2;break; case 1:r.state=TT_RUNTIME_NONFINITE;break;
 			case 2:r.prepared=0;break; case 3:r.started=0;break; case 4:r.completed=0;break; case 5:r.stopped=0;break;
 			case 6:r.recovery_required=1;break; case 7:r.context_reset=0;break; case 8:r.phase++;break;
-			case 9:r.panels=2;break; case 10:r.marker=0;break; case 11:r.pc[0]++;break; case 12:r.pc[1]++;break;
+			case 9:r.panels++;break; case 10:r.marker=0;break; case 11:r.pc[0]++;break; case 12:r.pc[1]++;break;
 			default:r.after[field-13]++;break;
 		}
 	}

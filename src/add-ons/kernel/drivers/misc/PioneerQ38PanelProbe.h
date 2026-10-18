@@ -4,11 +4,25 @@
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerResidentBanks.h"
 #include "PioneerQ38PanelProbeImage.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+#include "PioneerQ38BlockProbeImage.h"
+enum { TT_Q38_PANEL_CURRENT_DRIVER=48,TT_Q38_PANEL_ABI_VERSION=3,
+	TT_Q38_PANEL_INPUT_WORDS=128,TT_Q38_PANEL_COLUMNS=256,
+	TT_Q38_PANEL_SUCCESS_MARKER=0x31423851,TT_Q38_PANEL_FAULT_MARKER=0x46423851 };
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 #include "PioneerQ38AffineProbeImage.h"
 enum { TT_Q38_PANEL_CURRENT_DRIVER=47,TT_Q38_PANEL_ABI_VERSION=2 };
 #else
 enum { TT_Q38_PANEL_CURRENT_DRIVER=46,TT_Q38_PANEL_ABI_VERSION=1 };
+#endif
+enum { TT_Q38_PANEL_INPUT_WORDS=8,TT_Q38_PANEL_COLUMNS=16,
+	TT_Q38_PANEL_SUCCESS_MARKER=0x4d415431,TT_Q38_PANEL_FAULT_MARKER=0x46383350 };
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+enum { TT_Q38_LOCAL_DONE=TT_Q38_BLOCK_DONE,TT_Q38_LOCAL_PARK=TT_Q38_BLOCK_PARK };
+#else
+enum { TT_Q38_LOCAL_DONE=TT_Q38_PANEL_DONE,TT_Q38_LOCAL_PARK=TT_Q38_PANEL_PARK };
 #endif
 
 #define TT_PCI_PROBE_Q38_PANEL_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ec)
@@ -31,7 +45,7 @@ struct tt_q38_panel_probe {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 	uint32_t activation_scale; // bounded signed FP32,not an address
 #endif
-	uint32_t tile[848],activation[8];
+	uint32_t tile[848],activation[TT_Q38_PANEL_INPUT_WORDS];
 	tt_q38_panel_result result;
 	uint32_t dot[16],coefficient[16],minimum[16];
 };
@@ -46,15 +60,38 @@ static inline unsigned PioneerQ38PanelProbeByte(const uint32_t* tile,unsigned by
 {
 	return (tile[byte/4]>>((byte%4)*8))&255;
 }
+static inline unsigned PioneerQ38PanelInputWords(unsigned type)
+{
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	return type==8?16:128;
+#else
+	(void)type; return 8;
+#endif
+}
+static inline unsigned PioneerQ38PanelExpectedCount(unsigned type)
+{
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	return type==8?2:16;
+#else
+	(void)type; return 1;
+#endif
+}
 static inline bool PioneerQ38PanelProbeValid(const tt_q38_panel_probe& r)
 {
 	unsigned bytes=PioneerQ38PanelProbeBytes(r.type),payload=r.type==8?544:r.type==12?2304:3360;
-	if (r.version!=TT_Q38_PANEL_ABI_VERSION || r.reserved[0] || r.reserved[1] || !bytes || r.bytes!=bytes || r.panel>=(r.type==8?2U:16U)) return false;
+	if (r.version!=TT_Q38_PANEL_ABI_VERSION || r.reserved[0] || r.reserved[1] || !bytes || r.bytes!=bytes) return false;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	if (r.panel) return false; // whole block only,not a code/address/panel selector
+#else
+	if (r.panel>=(r.type==8?2U:16U)) return false;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 	uint32_t scale=r.activation_scale&0x7fffffff;
 	if (scale && (scale<0x2f800000 || scale>0x47800000)) return false; // explicit LOCAL probe range2^-32..2^16
 #endif
-	for (unsigned w=0;w<8;w++) if (!PioneerInt8OperandValid(uint16_t(r.activation[w])) || !PioneerInt8OperandValid(uint16_t(r.activation[w]>>16))) return false;
+	unsigned inputs=PioneerQ38PanelInputWords(r.type);
+	for (unsigned w=0;w<inputs;w++) if (!PioneerInt8OperandValid(uint16_t(r.activation[w])) || !PioneerInt8OperandValid(uint16_t(r.activation[w]>>16))) return false;
+	for (unsigned w=inputs;w<TT_Q38_PANEL_INPUT_WORDS;w++) if (r.activation[w]) return false;
 	for (unsigned row=0;row<16;row++) {
 		unsigned at=(r.type==14?208:0)*16+row;
 		uint16_t scale=uint16_t(PioneerQ38PanelProbeByte(r.tile,at)|(PioneerQ38PanelProbeByte(r.tile,at+16)<<8));
@@ -69,11 +106,17 @@ static inline bool PioneerQ38PanelProbeValid(const tt_q38_panel_probe& r)
 }
 static inline bool PioneerQ38PanelImmutable(uint32_t address)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	return !(address>=0x70700 && address<0x70a20);
+#else
 	return !(address>=0x70500 && address<0x7050c) && !(address>=0x70700 && address<0x70a20);
+#endif
 }
 static inline uint32_t PioneerQ38PanelProgram(uint32_t address)
 {
-#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	return address>=0x72000?PioneerQ38BlockWord((address-0x72000)/4):0;
+#elif defined(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE)
 	return address<0x71000?PioneerQ38AffineMainWord((address-0x70000)/4):address<0x72000?
 		PioneerQ38AffineBridgeWord((address-0x71000)/4):PioneerQ38AffineUnpackWord((address-0x72000)/4);
 #else
@@ -97,7 +140,12 @@ bool PioneerQ38PanelHeld(IO& io,const tt_dram_samples_result& dram,const tt_comp
 template<class IO>
 bool PioneerQ38PanelCodeMatches(IO& io)
 {
-	bool okay=io.RuntimeCodeRead(0)==TT_Q38_PANEL_BOOT;
+	bool okay=io.RuntimeCodeRead(0)==
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+		TT_Q38_BLOCK_BOOT;
+#else
+		TT_Q38_PANEL_BOOT;
+#endif
 	for (uint32_t a=0x70000;a<0x74000;a+=4) if (PioneerQ38PanelImmutable(a)) okay &= io.Q38PanelRead(a)==PioneerQ38PanelProgram(a);
 	return okay;
 }
@@ -117,7 +165,13 @@ bool PioneerQ38PanelPrepare(IO& io,const tt_dram_samples_result& dram,const tt_c
 	if (!PioneerQ38PanelHeld(io,dram,noc,store,banks)) { lease.unsafe=true; return false; }
 	lease.dirty=true;
 	for (uint32_t a=0x70000;a<0x74000;a+=4) io.Q38PanelWrite(a,PioneerQ38PanelProgram(a));
-	io.RuntimeCodeWrite(0,TT_Q38_PANEL_BOOT);
+	io.RuntimeCodeWrite(0,
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+		TT_Q38_BLOCK_BOOT
+#else
+		TT_Q38_PANEL_BOOT
+#endif
+	);
 	lease.ready=PioneerQ38PanelCodeMatches(io); return lease.ready;
 }
 template<class IO>
@@ -140,13 +194,18 @@ bool PioneerQ38PanelRun(IO& io,const tt_dram_samples_result& dram,const tt_compu
 	r.state=TT_RUNTIME_CONFIG_FAILED; r.prepared=1;
 	if (!PioneerQ38PanelCodeMatches(io)) return false;
 	{
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+		const uint32_t descriptor[]={0x31423851,job.type,job.bytes,0,job.activation_scale};
+		if (!PioneerQ38PanelStage(io,0x74000,descriptor,sizeof(descriptor)/4)
+#else
 		const uint32_t matrix[]={0,1,1},descriptor[]={0x50383355,job.type,job.bytes,job.panel
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 			,job.activation_scale
 #endif
 		};
 		if (!PioneerQ38PanelStage(io,0x70500,matrix,3) || !PioneerQ38PanelStage(io,0x74000,descriptor,sizeof(descriptor)/4)
-			|| !PioneerQ38PanelStage(io,0x90000,job.tile,848) || !PioneerQ38PanelStage(io,0x80000,job.activation,8)) return false;
+#endif
+			|| !PioneerQ38PanelStage(io,0x90000,job.tile,848) || !PioneerQ38PanelStage(io,0x80000,job.activation,PioneerQ38PanelInputWords(job.type))) return false;
 		for (unsigned w=0;w<160;w++) io.Q38PanelWrite(0x91000+w*4,0x7fc00000);
 		for (unsigned w=0;w<16;w++) io.Q38PanelWrite(0x84000+w*4,0x80000000);
 		for (unsigned w=0;w<160;w++) if (io.Q38PanelRead(0x91000+w*4)!=0x7fc00000) return false;
@@ -165,10 +224,12 @@ bool PioneerQ38PanelRun(IO& io,const tt_dram_samples_result& dram,const tt_compu
 		r.polls++;
 		if (io.ResetRead()!=0x46800) break;
 		r.phase=io.RuntimeStatusRead(0); r.panels=io.RuntimeStatusRead(1); r.marker=io.RuntimeStatusRead(2);
-		if (r.marker==0x46383350) break;
-		if (r.phase==TT_Q38_PANEL_DONE && r.panels==1 && r.marker==0x4d415431) {
+		if (r.marker==TT_Q38_PANEL_FAULT_MARKER) break;
+		if (r.phase==TT_Q38_LOCAL_DONE
+			&& r.panels==PioneerQ38PanelExpectedCount(job.type) && r.marker==TT_Q38_PANEL_SUCCESS_MARKER) {
 			io.Pause(); r.pc[0]=io.RuntimePcRead(); io.Pause(); r.pc[1]=io.RuntimePcRead();
-			if (r.pc[0]==TT_Q38_PANEL_PARK && r.pc[1]==r.pc[0]) { r.completed=1; break; }
+			if (r.pc[0]==TT_Q38_LOCAL_PARK
+				&& r.pc[1]==r.pc[0]) { r.completed=1; break; }
 		}
 		io.Pause();
 	}

@@ -30,7 +30,7 @@ struct PanelIO:BanksMock {
 	uint32_t ResetRead() { return coreReset; }
 	uint32_t RuntimeStatusRead(unsigned w) { assert(w<3); return destination[2032+w]; }
 	void RuntimeStatusWrite(unsigned w,uint32_t value) { assert(w<3); destination[2032+w]=value; }
-	uint32_t RuntimePcRead() { return scenario==4?TT_Q38_PANEL_PARK+4:TT_Q38_PANEL_PARK; }
+	uint32_t RuntimePcRead() { return scenario==4?TT_Q38_LOCAL_PARK+4:TT_Q38_LOCAL_PARK; }
 	uint32_t ResidentNocRead(uint32_t offset) {
 		uint32_t value=StoreMock::ResidentNocRead(offset);
 		return value+(lateCounter && offset==0x208?1:0);
@@ -43,8 +43,10 @@ struct PanelIO:BanksMock {
 		if (value!=0x46800) return;
 		launches++;
 		if (scenario==2) return; // timeout, NO successful completion
-		if (scenario==3) { destination[2034]=0x46383350; return; }
-		destination[2032]=TT_Q38_PANEL_DONE; destination[2033]=1; destination[2034]=0x4d415431;
+		if (scenario==3) { destination[2034]=TT_Q38_PANEL_FAULT_MARKER; return; }
+		destination[2032]=TT_Q38_LOCAL_DONE;
+		destination[2033]=PioneerQ38PanelExpectedCount(view[(0x74004-TT_Q38_PANEL_VIEW_BASE)/4]);
+		destination[2034]=TT_Q38_PANEL_SUCCESS_MARKER;
 		for (unsigned row=0;row<16;row++) {
 			view[(0x84000-TT_Q38_PANEL_VIEW_BASE)/4+row]=(scenario==7 && !row)?
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
@@ -58,6 +60,9 @@ struct PanelIO:BanksMock {
 		}
 		lateCounter=scenario==5;
 		if (scenario==6) config^=1; // a source changed after start
+		if (scenario==10) view[(0x72000-TT_Q38_PANEL_VIEW_BASE)/4]^=1;
+		if (scenario==11) destination[2033]++;
+		if (scenario==12) destination[2034]^=1;
 	}
 	void Pause() {}
 };
@@ -75,7 +80,7 @@ static tt_q38_panel_probe Job(unsigned type=12,unsigned panel=0)
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 	r.activation_scale=0xbc800000; //-.015625
 #endif
-	for (unsigned w=0;w<8;w++) r.activation[w]=PioneerInt8Operand(-128)|(uint32_t(PioneerInt8Operand(127))<<16);
+	for (unsigned w=0;w<PioneerQ38PanelInputWords(type);w++) r.activation[w]=PioneerInt8Operand(-128)|(uint32_t(PioneerInt8Operand(127))<<16);
 	return r;
 }
 static bool PreparePanel(PanelIO& io,PanelOwners& o)
@@ -98,7 +103,13 @@ static void Finish(PanelIO& io,PanelOwners& o)
 int main()
 {
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
-	for (unsigned type:{8U,12U,14U}) for (unsigned panel=0;panel<(type==8?2U:16U);panel++) {
+	for (unsigned type:{8U,12U,14U}) for (unsigned panel=0;panel<
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+		1;
+#else
+		(type==8?2U:16U);
+#endif
+		panel++) {
 		PanelIO io; auto before=io.view; uint32_t entry=io.entry; PanelOwners own(io); auto job=Job(type,panel);
 		assert(PioneerQ38PanelProbeValid(job) && PreparePanel(io,own) && Run(io,own,job));
 		assert(job.result.started && job.result.completed && job.result.stopped && !job.result.recovery_required);
@@ -107,7 +118,7 @@ int main()
 		assert(Run(io,own,job) && io.launches==2 && ClosePanel(io,own));
 		assert(io.view==before && io.entry==entry && !io.requests); Finish(io,own);
 	}
-	for (unsigned scenario=1;scenario<=9;scenario++) {
+	for (unsigned scenario=1;scenario<=12;scenario++) {
 		PanelIO io; PanelOwners own(io); auto job=Job(); assert(PreparePanel(io,own)); io.scenario=scenario;
 		assert(!Run(io,own,job) && io.launches==1);
 		bool knownBad=scenario==7 || scenario==8;
@@ -127,7 +138,7 @@ int main()
 		if (fault==0) job.version=TT_Q38_PANEL_ABI_VERSION+1;
 		if (fault==1) job.type=0;
 		if (fault==2) job.bytes--;
-		if (fault==3) job.panel=16;
+		if (fault==3) job.panel=1U<<4;
 		if (fault==4) job.reserved[0]=1;
 		if (fault==5) job.reserved[1]=1;
 		if (fault==6) job.activation[7]=0;
@@ -146,6 +157,16 @@ int main()
 		assert(!Run(io,own,job) && !io.launches && writes==io.panelWrites && ClosePanel(io,own)); Finish(io,own);
 	}
 #endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	// Every additional vector word is validated BEFORE card writes. Q8
+	// unused tail must be zero,not silently treated as another operand.
+	for (unsigned type:{8U,12U,14U}) for (unsigned w=0;w<TT_Q38_PANEL_INPUT_WORDS;w++) {
+		auto job=Job(type); job.activation[w]=w<PioneerQ38PanelInputWords(type)?0:1;
+		assert(!PioneerQ38PanelProbeValid(job));
+		PanelIO io; PanelOwners own(io); assert(PreparePanel(io,own)); unsigned writes=io.panelWrites;
+		assert(!Run(io,own,job) && !io.launches && writes==io.panelWrites && ClosePanel(io,own)); Finish(io,own);
+	}
+#endif
 	// Lost preparation/stage/restore writes never become accepted execution.
 	{
 		PanelIO io; auto before=io.view; PanelOwners own(io); io.dropWrite=1;
@@ -160,6 +181,6 @@ int main()
 		io.dropWrite=io.panelWrites+(0x70000-TT_Q38_PANEL_VIEW_BASE)/4+1;
 		assert(!ClosePanel(io,own) && own.panel.unsafe && own.store.recovery_required && !io.PageMock::releases);
 	}
-	puts("PASS: OFFLINE fixed-panel launch policy/all34 shapes/reuse/exact L1+entry restoration,zero NoC,bounds+finite+padding guards,lost writes and ALL9 start/completion/counter/source/result/stop faults;NO reset/restore/free after UNKNOWN");
+	printf("PASS: OFFLINE driver%u local panel/block launch policy/reuse/exact L1+entry restoration,zero NoC,bounds+finite+padding guards,lost writes and ALL12 start/completion/counter/source/result/stop/code/count/marker faults;NO reset/restore/free after UNKNOWN\n",unsigned(TT_Q38_PANEL_CURRENT_DRIVER));
 }
 #endif

@@ -1,6 +1,26 @@
 # Native build status
 
-Latest checkpoint (October18,01:12 UTC / October17 Vancouver): Haiku is UP,
+Latest checkpoint (October18,01:24 UTC / October17 Vancouver): normal synced
+Haiku shutdown dispatched for a controlled cold48 trial; not yet powered on
+or installed. Disk/previously loaded driver is still47 aab1ea67,known clean.
+Separate48 staged at `pioneer-qwen38-block-20261017-a`: driver ef865831,
+client90ad1ef8,installerb1c2878c. Native loaded-guard rehearsal REFUSED with
+NO driver/backup/incoming writes. Full-block candidate keeps ALL2(Q8_0) or
+16(Q4_K/Q6_K) matrix panels and FP32 affine accumulation on one card core,
+zero NoC. OFFLINE actual RV32IMF/Tensix instructions match both sequential
+bit-exact FP32 and independent dequantized-double references for996 real
+checkpoint blocks,plus invalid descriptor/vector/scale and fault sensitivity.
+Immutable header matches every code byte and zero padding. Dual builds
+reproduce boot e678476d/text ba94d01e,driver/client; default43 control still
+2df0e0f8. Original46/47 clients byte-reproduce;47 driver text/rodata identical
+(one compiler constprop symbol suffix differs in the rebuilt ELF). Actual
+46/47/48 kernel handler/lock and12 uncertain/result/code/count/marker fault
+policies PASS; real client+fixture memory-auth/fail-stop tests PASS. NOT
+native48 qualification/fullK/residency/model execution or speed. No48
+accelerator FD has been opened. Same SD-free/NIC/CPU/RAM profile intended;
+kernel/OS/firmware/Linux default/Assistant/dirty llama untouched.
+
+Previous checkpoint (October18,01:12 UTC / October17 Vancouver): Haiku is UP,
 SSH reachable,64 CPUs/full RAM/NIC0b83ceed. Disk/LOADED module now47 aab1ea67,
 after full cold recovery/same SD-free `affine47-20261017-a` and TWO unloaded
 guards. Native47 BOTH synthetic and authentic public model-fragment scaled

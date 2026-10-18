@@ -64,7 +64,8 @@ int main()
 	(void)&PreparePanel; (void)&Run; (void)&ClosePanel; (void)&Finish;
 	PioneerProbeCookie cookie,foreign; tt_q38_panel_support support={};
 	assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support))==B_OK
-		&& support.driver==TT_Q38_PANEL_CURRENT_DRIVER && support.version==TT_Q38_PANEL_ABI_VERSION && support.local_only && support.type_mask==0x5100 && !cookie.context);
+		&& support.driver==TT_Q38_PANEL_CURRENT_DRIVER && support.version==TT_Q38_PANEL_ABI_VERSION && support.local_only
+		&& support.columns==TT_Q38_PANEL_COLUMNS && support.type_mask==0x5100 && !cookie.context);
 	team=18; assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support))==B_NOT_ALLOWED); team=17;
 	auto job=Job();
 	assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_RUN,&job,sizeof(job))==B_NOT_ALLOWED);
@@ -82,7 +83,7 @@ int main()
 	Begin(cookie); job=Job(); failCopy=copyCalls+2;
 	assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_RUN,&job,sizeof(job))==-99 && cookie.context && sRuntimeOwner==&cookie
 		&& cookie.context->io.launches==1 && !cookie.context->Unsafe()); failCopy=0; End(cookie,true);
-	for (unsigned scenario=1;scenario<=9;scenario++) {
+	for (unsigned scenario=1;scenario<=12;scenario++) {
 		Begin(cookie); cookie.context->io.scenario=scenario; job=Job();
 		assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_RUN,&job,sizeof(job))==B_OK);
 		bool clean=scenario==7 || scenario==8;

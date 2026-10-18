@@ -2,6 +2,52 @@
 
 ## Status
 
+### October17: complete quantization-block48 staged (October18,01:24 UTC)
+
+CURRENT normal synced Haiku shutdown dispatched for the next cold trial.
+Disk/previously loaded module remains47 aab1ea67,known clean;48 is NOT yet
+installed/native-qualified. Both SD cards out,P100A installed. Full27B
+inference/generated tokens/useful speed remain UNACHIEVED.
+
+Added a separate RV32IMF/Tensix full quantization-block image,one core,
+16 output rows:Q8_0 K32 or Q4_K/Q6_K K256. ALL2/16 integer matrix panels,
+per-panel scales/minima and FP32 accumulation stay on the card. No host
+partial sums,NoC/GDDR/PCI/DMA authority. Four fidelity phases/full drains,
+independent Dst clear per unequal-scale panel. Explicit local signed scale
+range2^-32..2^16 or signed zero;not a general model activation policy.
+
+OFFLINE actual instruction test passed996 real checkpoint blocks against
+bit-exact sequential FP32 and independently dequantized-double references,
+synthetic signed-scale limits,immutable inputs/bounded stack/zero NoC,
+descriptor/vector refusal before matrix work and math/unpack/clear/data
+fault sensitivity. Compiled immutable header matches EVERY code word and
+zero padding. Reproduced boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b,
+text ba94d01ed19833cc3ad998daa84b52f4485f0d065e03312fdcfec7ae7f062e31.
+
+Version48/ABI3 has separate max256-column/local-only support metadata,
+exact2/16 completion count/new marker/new stable park proof. ALL input
+vector words validated,unused Q8 tail must be zero;fixed data-only protocol.
+Reuses full144KiB owned L1 save/restore and all-bank/team/FD global lease.
+46/47/48 ASan/UBSan policy+REAL extracted handler/lock tests pass ALL12
+start/timeout/fault/PC/counter/source/result/stop/code/count/marker scenarios.
+UNKNOWN quarantines ALL banks+host without retry/reset/restore/free. Real
+client tests cover all21 completion proofs,3 output corruptions,ioctl error,
+fixed public-fragment MEMORY SHA and corrupt/truncated refusal before open.
+
+Driver48 ef86583131ef4d81eeb6199cb68ce773302e6ca090722ba67e78d43866765b4c,
+client90ad1ef8b8c638f481c1b0ba58d18accfab4a212d7bb0f5609d47a1200ea3d3d
+reproduced twice;default43 control remains2df0e0f8. Old46/47 clients reproduce
+EXACTLY;rebuilt47 code+rodata identical,one local constprop symbol suffix
+differs. Native-qualified47 binary remains untouched and will be backed up.
+
+Staged `pioneer-qwen38-block-20261017-a/switch-unloaded48.sh` SHA
+b1c2878cc2061bb3459c0acb6d827d23a21d71dddc55447b40529a800afcbac5
+pins candidate/client/old47/qualified43. Native loaded-guard rehearsal
+REFUSED with installed47 unchanged and NO backup/incoming writes. Install
+ONLY after new cold boot,TWO unloaded/no-owner proofs;preserve47+43 outside
+driver paths. No new Assistant target. Next is native synthetic/public-real
+block qualification,then resident/fullK/multiworker/hybrid graph.
+
 ### October17: native47 scaled real-weight fragments passed (October18,01:12 UTC)
 
 CURRENT Haiku UP/SSH available,64 CPUs/full RAM/NIC0b83ceed.47 aab1ea67 is

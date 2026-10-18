@@ -17,4 +17,12 @@ UBSAN_OPTIONS=halt_on_error=1 "$temporary/affine"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -I"$temporary" "$directory/pioneer_q38_panel_control_test.cpp" -o "$temporary/affine-control"
 UBSAN_OPTIONS=halt_on_error=1 "$temporary/affine-control"
-printf 'Offline local-panel policy evidence retained at %s\n' "$temporary"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK \
+ "$directory/pioneer_q38_panel_probe_test.cpp" -o "$temporary/block"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/block"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK \
+ -I"$temporary" "$directory/pioneer_q38_panel_control_test.cpp" -o "$temporary/block-control"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/block-control"
+printf 'Offline local-panel/block policy evidence retained at %s\n' "$temporary"

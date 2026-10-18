@@ -21,6 +21,15 @@ if [ "$#" = 1 ]; then
   tail -n 30 "$temporary/fixture.log"
   exit 1
  fi
+ ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK -DPIONEER_Q38_PUBLIC_FIXTURES \
+  -I"$directory/cli-stubs" "$directory/pioneer_q38_panel_client_test.cpp" -o "$temporary/block"
+ if UBSAN_OPTIONS=halt_on_error=1 "$temporary/block" "$1" > "$temporary/block.log" 2>&1; then
+  tail -n 1 "$temporary/block.log"
+ else
+  tail -n 30 "$temporary/block.log"
+  exit 1
+ fi
 fi
 printf 'Offline local-panel client evidence retained at %s\n' "$temporary"
 ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \

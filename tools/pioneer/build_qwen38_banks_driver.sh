@@ -18,6 +18,7 @@ case "${PIONEER_Q38_PANEL_DRIVER:-0}" in
  0) extra=; variant=45;;
  1) extra=-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL; variant=46;;
  2) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE'; variant=47;;
+ 3) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK'; variant=48;;
  *) exit 2;;
 esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \

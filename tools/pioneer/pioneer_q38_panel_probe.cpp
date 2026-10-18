@@ -76,6 +76,45 @@ static bool Call(int fd,uint32_t operation,void* data,size_t bytes)
 }
 static bool Execute(int fd,unsigned type,unsigned panel,const uint8_t* tile,unsigned trial)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	if (panel) return false;
+	tt_q38_panel_probe request={}; request.version=TT_Q38_PANEL_ABI_VERSION; request.type=type; request.bytes=PioneerQ38PanelTileBytes(type);
+	request.activation_scale=PioneerAttentionBits(trial?-.03125f:.012345f);
+	memcpy(request.tile,tile,request.bytes);
+	unsigned inputs=PioneerQ38PanelInputWords(type)*2,panels=PioneerQ38PanelExpectedCount(type);
+	for (unsigned k=0;k<inputs;k++) request.activation[k/2]|=uint32_t(PioneerInt8Operand(int((k*29+trial*17)%256)-128))<<((k%2)*16);
+	float expected[16]={}; PioneerQ38Panel last={}; float scale=PioneerAttentionFloat(request.activation_scale);
+	for (unsigned p=0;p<panels;p++) {
+		if (!PioneerQ38UnpackPanel(type,tile,request.bytes,p,&last)) return false;
+		int inputSum=0;
+		for (unsigned k=0;k<16;k++) {
+			unsigned at=p*16+k; uint16_t a=uint16_t(request.activation[at/2]>>((at%2)*16));
+			inputSum+=int(a&1023)*((a&0x8000)?-1:1);
+		}
+		for (unsigned row=0;row<16;row++) {
+			int dot=0;
+			for (unsigned k=0;k<16;k++) {
+				unsigned e=k*16+row,at=p*16+k; uint16_t w=uint16_t(last.operand[e/2]>>((e%2)*16)),a=uint16_t(request.activation[at/2]>>((at%2)*16));
+				dot+=int(w&1023)*((w&0x8000)?-1:1)*int(a&1023)*((a&0x8000)?-1:1);
+			}
+			float product=(PioneerAttentionFloat(last.coefficient[row])*scale)*float(dot);
+			float correction=(PioneerAttentionFloat(last.minimum[row])*scale)*float(inputSum);
+			expected[row]+=product+correction;
+		}
+	}
+	if (!Call(fd,TT_PCI_PROBE_Q38_PANEL_RUN,&request,sizeof(request))) return false;
+	const auto& r=request.result;
+	bool okay=r.version==1 && r.state==TT_RUNTIME_PASSED && r.prepared && r.started && r.completed && r.stopped
+		&& !r.recovery_required && r.context_reset && r.phase==TT_Q38_LOCAL_DONE && r.panels==panels && r.marker==TT_Q38_PANEL_SUCCESS_MARKER
+		&& r.pc[0]==TT_Q38_LOCAL_PARK && r.pc[1]==r.pc[0];
+	for (unsigned i=0;i<8;i++) okay &= r.before[i]==r.after[i];
+	unsigned mismatches=0;
+	for (unsigned row=0;row<16;row++) mismatches+=request.dot[row]!=PioneerAttentionBits(expected[row])
+		|| request.coefficient[row]!=last.coefficient[row] || request.minimum[row]!=last.minimum[row];
+	printf("LOCAL_FULL_BLOCK type=%u panels=%u trial=%u state=%u start/complete/stop=%u/%u/%u cold=%u pc=%x/%x exact_errors=%u\n",
+		type,panels,trial,r.state,r.started,r.completed,r.stopped,r.recovery_required,r.pc[0],r.pc[1],mismatches); fflush(stdout);
+	return okay && !mismatches;
+#else
 	tt_q38_panel_probe request={}; request.version=TT_Q38_PANEL_ABI_VERSION; request.type=type; request.bytes=PioneerQ38PanelTileBytes(type); request.panel=panel;
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 	request.activation_scale=PioneerAttentionBits(trial?-.03125f:.012345f);
@@ -116,6 +155,7 @@ static bool Execute(int fd,unsigned type,unsigned panel,const uint8_t* tile,unsi
 	printf("LOCAL_PANEL type=%u panel=%u trial=%u state=%u start/complete/stop=%u/%u/%u cold=%u pc=%x/%x exact_errors=%u\n",
 		type,panel,trial,r.state,r.started,r.completed,r.stopped,r.recovery_required,r.pc[0],r.pc[1],mismatches); fflush(stdout);
 	return okay && !mismatches;
+#endif
 }
 int main(int argc,char** argv)
 {
@@ -147,7 +187,7 @@ int main(int argc,char** argv)
 	if (fd<0) { if (file) fclose(file); perror("open P100A"); return 1; }
 	tt_q38_panel_support support={};
 	bool okay=Call(fd,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_PANEL_CURRENT_DRIVER
-		&& support.version==TT_Q38_PANEL_ABI_VERSION && support.local_only==1 && support.rows==16 && support.columns==16 && support.type_mask==0x5100;
+		&& support.version==TT_Q38_PANEL_ABI_VERSION && support.local_only==1 && support.rows==16 && support.columns==TT_Q38_PANEL_COLUMNS && support.type_mask==0x5100;
 	if (!okay || !strcmp(argv[1],"--support")) { close(fd); if (file) fclose(file); return okay?0:1; }
 	tt_q38_bank_session session={}; session.version=1;
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_READY
@@ -180,7 +220,13 @@ int main(int argc,char** argv)
 		}
 		for (unsigned trial=0;trial<2 && okay;trial++) {
 			if (useModel && !model.Stable()) { okay=false; break; }
-			okay=Execute(fd,type,end?(type==8?1:15):0,tile,trial); if (okay) cases++;
+			okay=Execute(fd,type,
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+				0,
+#else
+				end?(type==8?1:15):0,
+#endif
+				tile,trial); if (okay) cases++;
 		}
 	}
 	if (file) { okay &= model.Stable(); fclose(file); }
@@ -192,7 +238,14 @@ int main(int argc,char** argv)
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored && session.result.host_released && !session.result.cold;
 	if (close(fd)) okay=false;
-#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+	printf("%s_LOCAL_SCALED_COMPLETE_%s_BLOCKS cases=%u;KNOWN_CLEAN_END=%u;NOT_FULL_K_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",
+		useModel?"MODEL":
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+		useFixtures?"PUBLIC_FIXTURE":
+#endif
+		"SYNTHETIC",cases,unsigned(okay));
+#elif defined(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE)
 	printf("%s_LOCAL_SCALED_%s_PANELS cases=%u;KNOWN_CLEAN_END=%u;NOT_FULL_MATVEC_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",useModel?"MODEL":
 #ifdef PIONEER_Q38_PUBLIC_FIXTURES
 		useFixtures?"PUBLIC_FIXTURE":

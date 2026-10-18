@@ -22,6 +22,11 @@ case "${PIONEER_Q38_FIXTURE_CLIENT:-0}" in
  1) [ "${PIONEER_Q38_AFFINE_CLIENT:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_PUBLIC_FIXTURES";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_BLOCK_CLIENT:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_AFFINE_CLIENT:-0}" = 1 ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK";;
+ *) exit 2;;
+esac
 sdk=$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop
 release=$build/objects/haiku/riscv64/release
 cxx=$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
