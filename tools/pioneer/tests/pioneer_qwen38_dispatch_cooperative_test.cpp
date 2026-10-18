@@ -145,6 +145,22 @@ int main(int argc,char** argv)
 		assert(model.Stable()); fclose(f);
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+	for (bool drop:{false,true}) {
+		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
+		for (auto& p:m.actual) {
+			for (unsigned row=0;row<64;row++) for (unsigned col=0;col<16;col++) {
+				p->valid[row]=true; p->dstInt[row][col]=0x3c6f3720;
+				p->dst[row][col]=123456.0f;
+			}
+			for (unsigned row=0;row<1024;row++) for (unsigned col=0;col<16;col++) {
+				p->defined[row]=true; p->physical[row][col]=uint16_t(row*1237+col*29+0x635a); p->wrote[row][col]=true;
+			}
+			p->dropClear=drop;
+		}
+		if (!drop) { assert(m.RunRoot()); for (auto& p:m.actual) assert(p->CorrectRows()); }
+		else assert(!m.RunRoot() && m.unknown && !m.gathers);
+		puts("PASS59 poisoned power-on Dst/valid bits:exact math with clears;omitting clears refuses ALL output;OFFLINE initialization experiment only");
+	}
 	for (unsigned reason:{10U,11U}) {
 		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
 		if (reason==11) m.actual[1]->corruptDotRange=true;

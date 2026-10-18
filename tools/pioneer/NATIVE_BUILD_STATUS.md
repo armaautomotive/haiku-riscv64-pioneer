@@ -1,5 +1,33 @@
 # Native build status
 
+October18,22:35 UTC native refined59 eb8ed4d8 FAILED first Q8/K5120
+two-worker RUN:phase5a0b0100,reason11/worker1,raw signed32 dot2089054156
+=0x7c846fcc,well outside[-262144,262144]. This is now an exact on-card
+numeric guard refusal,NOT a metadata-specific fault or Haiku/SMP/RAM
+freeze. Source path may be stale accumulator/validity state,incorrect
+operand/format/readback or another issue;cause NOT proven yet. Saved
+/private/tmp/pioneer-q38-fault-stage-native-failure-20261018-n.log.
+No retry/END/reset/restore/free/card read;Haiku responsive,clean shutdown
+and off confirmed before22:31:40 UTC.321 actual stage-n guard tests PASS
+(helper123daec9);final fault tests+RA assertion PASS Nvx8njFj.
+
+New OFFLINE59 initialization experiment43f59de8/peer49441b71 adds SAME
+scalar ZEROACC ALL10180000+full drain ONCE immediately after Setup and
+BEFORE defining vector Dst rows. Dot-only clear still occurs per panel;
+never clear ALL after vector rows have been written. Pinned shared Dst.md
+states power-on valid bits true with unpredictable storage and recommends
+scrubbing/ALL invalidation at initialization. This motivates the test,
+NOT proof that it fixes the native failure. All numeric guards,private
+source authority,RA/reason/value reporting/host snapshot order unchanged.
+Root05058ecf unchanged,client7722dc5e/ABI59 diagnostic-only,inference0.
+Actual emitted root+peers real rows/repeated exact math and poisoned
+power-on Dst bits PASS MZ5OBTls;dropping clears refuses ALL outputs.
+Original bounds retained;default sources/54..58 images untouched.
+Native43f59de8 not staged/installed. Cold/unloaded stage-o helper requires
+exact installedeb8ed4d8 and stage-n43/52/54 backups;keeps old59 separately.
+ASan/UBSan RUN ddfoXLde BOTH modes,handler/retention iPJQscly,bootstrap
+KkklAogT PASS;346 actual shell guard/restore cases PASS helper87c9123a.
+
 October18,22:21 UTC marker-first59 native876d returned COHERENT peer1
 fault:root_phase54000281,count469600=RA0x72a60,FAULT,exit1/processgone.
 Saved /private/tmp/pioneer-q38-snapshot-native-failure-20261018-m.log.

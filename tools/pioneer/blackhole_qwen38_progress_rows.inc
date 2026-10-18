@@ -307,6 +307,11 @@ extern "C" unsigned block_main()
 	PeerProgress(2);
 #endif
 	Setup();
+	// Isolated initialization candidate:Dst powers on with valid bits set
+	// but unpredictable storage. Use the known scalar ALL-row invalidation
+	// ONCE before defining any vector rows. Per-panel dot-only clear stays;
+	// never invalidate live decoded/metadata rows between unpack and MVMUL.
+	Emit(0x10180000); Drain();
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #ifdef PIONEER_Q38_PEER_PROGRESS
 	PeerProgress(3);
