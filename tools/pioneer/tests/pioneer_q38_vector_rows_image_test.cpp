@@ -6,9 +6,10 @@
 #include <memory>
 #include "../PioneerBlackholeFma.h"
 #include "../PioneerQ38VectorFixedFormat.h"
+#include "../PioneerQ38BFloatPanel.h"
 // ACTUAL compiled RV32/FPU image plus independent exact integer SFPU subset.
 // Not a silicon cycle model or permission to select a new native image.
-template<class Base,bool Persistent=false> struct VectorRows:Base {
+template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:Base {
 	using Base::memory; using Base::config; using Base::thread; using Base::ownerA;
 	using Base::pending; using Base::drained; using Base::tile; using Base::tiles; using Base::backendWait;
 	using Base::adcX0; using Base::adcX1; using Base::pc; using Base::configWrites;
@@ -17,22 +18,32 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 	using Base::Index; using Base::StepBlock; using Base::Operand16;
 	using Base::moveInstructions; using Base::a;
 	using Base::dstInt; using Base::outputReads;
+	using Base::type;
 	uint16_t physical[1024][16]={}; uint32_t lr[8][32]={};
 	bool wrote[1024][16]={},sources[2]={},rawPending=false,publish=false,enabled=false;
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	unsigned metadataWrites=0;
+	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
+	uint32_t badFloatDot=0;
 	bool rawFloat=false,affineEligible=false;
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
+	bool Int8Arithmetic() const override { return BFloat?false:Base::Int8Arithmetic(); }
+	bool Int8ConvertedRead() const override { return BFloat?false:Base::Int8ConvertedRead(); }
+	bool Fp16Operands() const override { return BFloat?false:Base::Fp16Operands(); }
+	bool FloatFidelityArithmetic() const override { return BFloat?true:Base::FloatFidelityArithmetic(); }
+	unsigned MatrixPhasesPerPanel() const override { return BFloat?(type==8?2U:1U):Base::MatrixPhasesPerPanel(); }
+	float Operand16(uint16_t half) const override { return BFloat?Float(uint32_t(half)<<16):Base::Operand16(half); }
 	uint32_t MatrixArithmeticConfig1() const override {
 		// Read-only model of the pinned MVMUL fields,NOT a change to CSR
 		// state:only the two proven ignored fields may differ under forced
 		// A/B FP16 interpretation and disabled implied formats. All source
 		// ownership,integer phases and input/output bits stay unmodified.
+		if (BFloat) return PioneerQ38BFloatMatrixEquivalent(config[0],config[1],thread[2],thread[3])?0x20aa0000:config[1];
 		return PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])?0xa0220000:config[1];
 	}
 	static unsigned Adj(unsigned row) { return ((row&0x1f8)<<1)|(row&0x207); }
@@ -59,7 +70,7 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 				assert(rawAddress==(rawRow==96?0x91200U:rawRow==100?0x91240U:rawAddress));
 				if (rawRow==104) assert(!(rawAddress&63) && Range(rawAddress,0x84000,groups*64));
 			} else {
-				assert(config[1]==0xa03c8000 && config[64]==0x10001e && config[65]==16 && config[72]==14
+				assert(config[1]==(BFloat?0x203c8000U:0xa03c8000U) && config[64]==0x10001e && config[65]==16 && config[72]==14
 					&& adc1==255 && (op==0x42000081 || op==0x420000c1));
 				assert(rawRow==0 || rawRow==16);
 				assert(rawAddress>=0x90000 && rawAddress-0x90000+256<=tile.size());
@@ -83,7 +94,8 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 		if (op==0x8f000000) { vectorOps++; drained=false; return; }
 		if ((code>=0x70 && code<=0x8d) || code==8 || code==0x90) {
 			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible) && thread[2]==1
-				&& (config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3]))
+				&& (BFloat?PioneerQ38BFloatMatrixEquivalent(config[0],config[1],thread[2],thread[3]):
+					(config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])))
 				&& config[220]==0 && thread[5]==4);
 			vectorOps++;
 			if (op==0x8a000002) { enabled=true; return; }
@@ -96,7 +108,11 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 					if (code==0x70 && mode==5) { assert(ownerA && reg<2 && row<32 && wrote[row][col]); uint16_t v=physical[row][col]; lr[reg][lane]=(uint32_t(v>>15)<<31)|((v>>5)&255); }
 					else if (code==0x70 && mode==4) { assert(affineEligible && !reg && row>=32 && row<36); int v=dstInt[row][col]; lr[0][lane]=(v<0 || (!v && negativeDotZero)?0x80000000U:0)|unsigned(v<0?-v:v); }
 					else if (code==0x70 && mode==3) { assert(affineEligible && (reg==1 || reg==2 || reg==5) && row>=96 && row<108); lr[reg][lane]=FloatDst(row,col); }
-					else if (code==0x72 && mode==3) { assert(affineEligible && !reg && row>=108 && row<112); StoreFloatDst(row,col,lr[reg][lane]); }
+					else if (code==0x72 && mode==3) {
+						if (BFloat) assert(ownerA && !reg && row>=64 && row<80 && !(lr[reg][lane]&65535));
+						else assert(affineEligible && !reg && row>=108 && row<112);
+						StoreFloatDst(row,col,lr[reg][lane]);
+					}
 					else {
 						assert(code==0x72 && mode==7); unsigned hi=Adj(row),lo=hi+8;
 						if (!reg) assert(ownerA && row>=64 && row<80 && hi>=128 && hi<160 && !wrote[hi][col] && !wrote[lo][col]);
@@ -111,6 +127,10 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 				unsigned source=(op>>17)&63,row=op&1023;
 				assert(!(op&0x0081dc00) && (op&0x2000) && source==panelMoves*4 && row==64+source && source<=12);
 				for (unsigned k=0;k<4;k++) for (unsigned col=0;col<16;col++) {
+					if (BFloat) {
+						uint32_t value=FloatDst(row+k,col); assert(!(value&65535));
+						a[source+k][col]=Float(value)+(corruptMove && !source && !k && !col?1:0); continue;
+					}
 					unsigned hi=Adj(row+k),lo=hi+8; assert(wrote[hi][col] && wrote[lo][col] && !physical[lo][col]);
 					uint16_t v=physical[hi][col];
 					unsigned src=((uint32_t(v)&0xffe0)<<3)|(v&31);
@@ -135,8 +155,8 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 				}
 				assert(vc<8 && vd<8); auto& v=lr[vd][lane];
 				switch (code) {
-				case 0x90: { assert(affineEligible && !mod && (vc==0 || vc==4)); uint32_t sm=lr[vc][lane],mag=sm&0x7fffffff;
-					assert(mag<=(vc==0?262144U:2048U) && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
+				case 0x90: { assert(!mod && (vc==0 || (!BFloat && vc==4)) && (BFloat?!affineEligible:affineEligible)); uint32_t sm=lr[vc][lane],mag=sm&0x7fffffff;
+					assert(mag<=(BFloat?128U:vc==0?262144U:2048U) && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
 				case 0x7c: assert(!mod); v=lr[vc][lane]; break;
 				case 0x7e: { unsigned vb=(op>>12)&15; assert(mod==1 && vb<8); v=lr[vb][lane]&lr[vc][lane]; break; }
 				case 0x8d: assert(!mod); v^=lr[vc][lane]; break;
@@ -151,7 +171,12 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 		}
 		if (code==0x26) assert(panelMoves==4 && sources[mathBank] && !rawPending);
 		Base::Instruction(op);
-		if ((op&~0x4000U)==0x26c00020) { sources[mathBank]=false; mathBank^=1; affineEligible=true; assert(unpackBank==mathBank); if (corruptDotRange) dstInt[32][0]=262145; }
+		if ((op&~0x4000U)==0x26c00020) {
+			sources[mathBank]=false; mathBank^=1; affineEligible=true; assert(unpackBank==mathBank);
+			if (corruptDotRange) { if (BFloat) Base::dst[32][0]=262145; else dstInt[32][0]=262145; }
+			if (BFloat && badFloatDot) Base::dst[32][0]=Float(badFloatDot);
+			if (BFloat && negativeDotZero && !Base::dst[32][0]) Base::dst[32][0]=-0.0f;
+		}
 	}
 	void Store(uint32_t address,uint32_t value) override {
 		if (Range(address,0xffef0000,224*4)) {
@@ -160,17 +185,31 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 			if (setupConfiguration<25) {
 				// Independent exact trace,not read from the candidate table.
 				const unsigned indices[]={0,1,2,3,6,7,220,20,24,28,50,56,59,64,65,72,73,76,84,86,112,113,120,121,124};
-				const uint32_t values[]={0x4231,0xa0220000,0,0x10000,0,0,0,0,0xffff,0x100,0x100,0x100000,0x100,
-					0x100011,16,1,3,0x7070,0x400040,0x100010,0x100011,8,1,3,0x7091};
+				const uint32_t values[]={BFloat?0x42b5U:0x4231U,BFloat?0x203c8000U:0xa0220000U,0,BFloat?0U:0x10000U,0,0,0,0,0xffff,0x100,0x100,0x100000,0x100,
+					BFloat?0x10001eU:0x100011U,16,BFloat?14U:1U,BFloat?0x13U:3U,0x7070,0x400040,0x100010,BFloat?0x100015U:0x100011U,8,BFloat?5U:1U,3,0x7091};
 				assert(index==indices[setupConfiguration] && value==values[setupConfiguration]); setupConfiguration++;
 			}
 			config[index]=value; configWrites++; return;
 		}
 		assert(!Range(address,0x70710,512)); // NO decoded operand staging/copy
+		if (BFloat && Range(address,0x95000,34816)) {
+			assert(Range(address,0x95000,inputs*2) && !(address&3));
+			if (address==0x95000) { assert(!cacheNext || cacheNext==inputs*2); cacheNext=0; cacheJobs++; }
+			assert(address==0x95000+cacheNext); uint32_t raw=Base::Load(0xa0000+cacheNext),expected=0;
+			for (unsigned lane=0;lane<2;lane++) { uint16_t v=uint16_t(raw>>(lane*16)); assert(PioneerInt8OperandValid(v));
+				int exact=int(v&1023)*((v&0x8000)?-1:1); expected|=(Bits(float(exact))>>16)<<(lane*16); }
+			assert(value==expected); memory[address]=value; cacheNext+=4; return;
+		}
+		if (BFloat && Range(address,0x70920,32)) {
+			assert(drained && !(address&3)); for (unsigned lane=0;lane<2;lane++) {
+				float f=Float(uint32_t(uint16_t(value>>(lane*16)))<<16); assert(f>=-128 && f<=127 && f==float(int(f))); }
+			l1[Index(address)]=value; return;
+		}
 		if (Range(address,0x91200,128)) metadataWrites++;
 		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
+		if (BFloat && Range(address,0x95000,34816)) { assert(cacheNext==inputs*2 && Range(address,0x95000,inputs*2)); return memory.at(address); }
 		if (Range(address,0xffef0000,224*4)) { assert(!rawPending && drained); return config[(address-0xffef0000)/4]; }
 		if (Range(address,0xffbd9b00,64)) { assert(affineEligible && !config[3] && !rawPending && drained); outputReads++; return FloatDst(108,(address-0xffbd9b00)/4); }
 		return Base::Load(address);
@@ -183,7 +222,11 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 		return l1[Index(0x17ffc4)]==groups*(inputs/16) && requests==tiles.size() && requests==responses && !pending;
 	}
 };
+#ifdef PIONEER_Q38_TEST_BFLOAT
+using VectorRowsMachine=VectorRows<RowsMachine,false,true>;
+#else
 using VectorRowsMachine=VectorRows<RowsMachine>;
+#endif
 #ifndef PIONEER_Q38_VECTOR_ROWS_MODEL_ONLY
 int main(int argc,char** argv)
 {
@@ -191,7 +234,7 @@ int main(int argc,char** argv)
 	for (unsigned type:{8U,12U,14U}) for (unsigned k:{5120U,6144U,17408U}) {
 		VectorRowsMachine m(argv[1],type,k,k==17408?3:1); m.delay=3;
 		assert(m.RunVector() && m.CorrectRows());
-		for (unsigned phase=0;phase<4;phase++) assert(m.phaseVisits[phase]==m.groups*(m.inputs/16));
+		for (unsigned phase=0;phase<4;phase++) assert(m.phaseVisits[phase]==(phase<m.MatrixPhasesPerPanel()?m.groups*(m.inputs/16):0));
 		printf("OFFLINE VECTOR actual type%u K%u N%u steps%u rawBytes%u SFPUops%u metadataWrites%u exact FP32+double PASS\n",type,k,m.groups*16,m.steps,m.rawReads,m.vectorOps,m.metadataWrites);
 		if (argc==4) {
 			RowsMachine scalar(argv[3],type,k,m.groups); scalar.delay=3;
@@ -201,9 +244,26 @@ int main(int argc,char** argv)
 		}
 	}
 	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.corruptMove=true; assert(m.RunVector() && !m.CorrectRows()); }
-	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.dropLowFidelity=true; assert(m.RunVector() && !m.CorrectRows()); }
+	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1);
+#ifdef PIONEER_Q38_TEST_BFLOAT
+		m.dropMatrix=true;
+#else
+		m.dropLowFidelity=true;
+#endif
+		assert(m.RunVector() && !m.CorrectRows()); }
 	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.corruptDotRange=true; assert(!m.RunVector()); }
 	for (unsigned type:{8U,12U,14U}) { VectorRowsMachine m(argv[1],type,5120,1); m.negativeDotZero=true; assert(m.RunVector() && m.CorrectRows()); }
+#ifdef PIONEER_Q38_TEST_BFLOAT
+	for (unsigned bad:{0x7f800000U,0xff800000U,0x7fc00001U,0xffc01234U}) {
+		VectorRowsMachine m(argv[1],12,5120,1); m.badFloatDot=bad; assert(!m.RunVector());
+	}
+	for (unsigned k:{5120U,17408U}) for (unsigned at:{0U,k/2,k-1}) for (unsigned bad:{0U,0xffffU,0x4080U,0xc081U}) {
+		VectorRowsMachine m(argv[1],12,k,1); unsigned address=0xa0000+(at/2)*4,shift=(at%2)*16;
+		m.memory[address]=(m.memory.at(address)&~(65535U<<shift))|(bad<<shift);
+		assert(!m.RunVector() && !m.matrixInstructions && !m.requests);
+		for (unsigned row=0;row<4096;row++) assert(m.buffers[4096+row]==0x7fc00000);
+	}
+#endif
 	for (unsigned fault:{1U,20U,60U}) {
 		VectorRowsMachine m(argv[1],12,5120,3); m.faultAt=fault;
 		assert(!m.RunVector() && m.pending && m.requests==fault && m.responses==fault-1);
@@ -222,6 +282,10 @@ int main(int argc,char** argv)
 		}
 		assert(model.Stable()); fclose(f);
 	}
+#ifdef PIONEER_Q38_TEST_BFLOAT
+	puts("PASS OFFLINE ACTUAL BF16-row image:EXACT all-K Q8/Q4/Q6 FP32+double math,Q8 TWO/Q4+Q6 ONE matrix phases,whole-job private activation cache overwritten before read,raw/Dst/matrix ownership,dot bounds/canonical zero,UNKNOWN inert park;NOT native/persistent/coordinator/cycle/speed qualification");
+#else
 	puts("PASS OFFLINE ACTUAL vector-row image:exact all-K Q8/Q4/Q6 math,raw Dst/vector/Matrix source-bank ownership,zero scalar operand writes,all4 fidelity phases,source bounds,UNKNOWN inert park;NOT native/persistent/coordinator/cycle/speed qualification");
+#endif
 }
 #endif

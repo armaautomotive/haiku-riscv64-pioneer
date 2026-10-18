@@ -10,6 +10,9 @@
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 #include "PioneerQ38MatrixPhases.h"
 #endif
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+#include "PioneerQ38BFloatPanel.h"
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorUnpack.h"
@@ -80,8 +83,15 @@ static void Setup()
 	// SAME exact ordered writes/readbacks. Compact immutable tables keep
 	// the separate persistent candidate inside the unchanged8KiB code view.
 	static const uint8_t indices[]={0,1,2,3,6,7,220,20,24,28,50,56,59,64,65,72,73,76,84,86,112,113,120,121,124};
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+	// Separate format contract:forced BF16 A/B,FP32 natural readback,
+	// fixed unsigned raw-A UNPACK,ordinary BF16 B UNPACK. Same25 writes.
+	static const uint32_t values[]={0x42b5,0x203c8000,0,0,0,0,0,0,0xffff,0x100,0x100,0x100000,0x100,
+		0x10001e,16,14,0x13,0x7070,0x400040,0x100010,0x100015,8,5,3,0x7091};
+#else
 	static const uint32_t values[]={0x4231,0xa0220000,0,0x10000,0,0,0,0,0xffff,0x100,0x100,0x100000,0x100,
 		0x100011,16,1,3,0x7070,0x400040,0x100010,0x100011,8,1,3,0x7091};
+#endif
 	static_assert(sizeof(indices)==sizeof(values)/sizeof(values[0]),"exact unchanged configuration pairs");
 	for (unsigned i=0;i<sizeof(indices);i++) Config(indices[i],values[i]);
 #else
@@ -105,7 +115,11 @@ struct VectorPanelEmitter {
 	void Drain() { ::Drain(); }
 };
 #endif
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+static void Matrix(unsigned type)
+#else
 static void Matrix()
+#endif
 {
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
 	Emit(0x10180000); Drain(); // clear Dst,NOT an integer sum across unequal scales
@@ -115,7 +129,15 @@ static void Matrix()
 #endif
 	Emit(0x428000c1); Drain();
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
-	VectorPanelEmitter e; PioneerQ38MatrixPhases(e);
+	VectorPanelEmitter e;
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+	// The bounded integer operands are EXACT in BF16. Q8 uses phases0/1;
+	// Q4<=15 and Q6[-32,31] fit phase0 exactly. EACH MVMUL still drains.
+	if (type==8) { e.Op(0x26004020); e.Drain(); }
+	e.Op(0x26c04020); e.Drain();
+#else
+	PioneerQ38MatrixPhases(e);
+#endif
 #else
 	for (unsigned phase=0;phase<4;phase++) {
 		Emit(0xb20b0000|phase); Drain();
@@ -216,10 +238,19 @@ extern "C" unsigned block_main()
 #endif
 	for (unsigned w=0;w<inputs/2;w++) {
 		uint32_t word=Words(inputBase)[w];
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+		// Peer-private95000..9d800 (max34816B),disjoint from raw block,
+		// metadata,results,scales and original authenticated shared input.
+		// Overwrite EVERY word each job before ANY matrix/cache read.
+		uint16_t lo,hi;
+		if (!PioneerQ38BFloatActivation(uint16_t(word),lo) || !PioneerQ38BFloatActivation(uint16_t(word>>16),hi)) return 0;
+		Words(0x95000)[w]=uint32_t(lo)|(uint32_t(hi)<<16);
+#else
 		if (!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16))) return 0;
+#endif
 	}
 	Setup();
-#ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+#if defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) && !defined(PIONEER_Q38_BFLOAT_PANEL)
 	VectorPanelEmitter setupEmitter; PioneerQ38VectorFixedSetup(setupEmitter);
 #endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
@@ -265,7 +296,12 @@ extern "C" unsigned block_main()
 #endif
 		int sum=0;
 		for (unsigned w=0;w<8;w++) {
-			uint32_t word=Words(inputBase)[block*(count/2)+p*8+w]; Words(0x70920)[w]=word;
+			uint32_t word=Words(inputBase)[block*(count/2)+p*8+w];
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+			Words(0x70920)[w]=Words(0x95000)[block*(count/2)+p*8+w];
+#else
+			Words(0x70920)[w]=word;
+#endif
 			for (unsigned lane=0;lane<2;lane++) {
 				uint16_t value=uint16_t(word>>(lane*16)); sum+=int(value&1023)*((value&0x8000)?-1:1);
 			}
@@ -276,13 +312,21 @@ extern "C" unsigned block_main()
 		(void)Words(0x70920)[7]; Fence();
 #ifdef PIONEER_Q38_VECTOR_PANEL
 		VectorPanelEmitter emitter;
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+		if (!PioneerQ38BFloatPanel(emitter,type,p)) block_fault_park();
+#else
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
 		if (!PioneerQ38VectorFixedUnpack(emitter,type,p)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
 #endif
 #endif
+#endif
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+		Matrix(type);
+#else
 		Matrix();
+#endif
 #ifdef PIONEER_Q38_VECTOR_AFFINE
 		// Preserve the original ALL16 dot range checks before vector math.
 		for (unsigned row=0;row<16;row++) {
@@ -298,7 +342,13 @@ extern "C" unsigned block_main()
 #else
 		for (unsigned row=0;row<16;row++) {
 			static_assert(sizeof(int)==4,"fixed signed32 integer dot");
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+			uint32_t raw=Words(0xffbd8800)[row]; float dot=Float(raw);
+			if ((raw&0x7f800000)==0x7f800000 || dot<-262144.0f || dot>262144.0f) block_fault_park();
+			if (!(raw&0x7fffffff)) dot=0; // canonical original integer zero
+#else
 			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();
+#endif
 			float product=(Float(local->coefficient[row])*scale)*float(dot);
 			float correction=(Float(local->minimum[row])*scale)*float(sum);
 			float value=Float(Words(0x84000)[group*16+row])+(product+correction);

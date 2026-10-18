@@ -75,13 +75,14 @@ int main(int argc,char** argv)
 	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&support,sizeof(support))==B_OK
 		&& support.driver==TT_Q38_DISPATCH_DRIVER && support.version==1 && support.peers==119 && support.rows==256 && support.max_inputs==17408
 		&& support.banks==7 && support.offset_alignment==64 && support.persistent==1 && !support.model_inference && !cookie.context);
-	//55 and54 must reject EACH OTHER'S namespace before allocation/IO.
-	unsigned other=TT_Q38_DISPATCH_DRIVER==55?0x54f2:0x55f2;
-	assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+other,&support,sizeof(support))==B_BAD_VALUE && !cookie.context);
+	//54/55/56 reject EACH OTHER'S support/RUN before allocation/IO.
+	for (unsigned other:{0x54f2U,0x55f2U,0x56f2U}) if (B_DEVICE_OP_CODES_END+other!=TT_PCI_PROBE_Q38_DISPATCH_SUPPORT)
+		assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+other,&support,sizeof(support))==B_BAD_VALUE && !cookie.context);
 	Begin(cookie,argv[1]); auto job=Request();
 	unsigned namespaceWrites=cookie.context->io.Writes(),namespaceSelects=cookie.context->io.selects;
-	assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+other+1,job.get(),sizeof(*job))==B_BAD_VALUE
-		&& !cookie.context->q38Dispatch && cookie.context->io.Writes()==namespaceWrites && cookie.context->io.selects==namespaceSelects);
+	for (unsigned other:{0x54f3U,0x55f3U,0x56f3U}) if (B_DEVICE_OP_CODES_END+other!=TT_PCI_PROBE_Q38_DISPATCH_RUN)
+		assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+other,job.get(),sizeof(*job))==B_BAD_VALUE
+			&& !cookie.context->q38Dispatch && cookie.context->io.Writes()==namespaceWrites && cookie.context->io.selects==namespaceSelects);
 	assert(AcquireProbeLock(&cookie)==B_NOT_ALLOWED);
 	assert(Q38DispatchControl(&foreign,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_BUSY);
 	team=18; assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_NOT_ALLOWED); team=17;

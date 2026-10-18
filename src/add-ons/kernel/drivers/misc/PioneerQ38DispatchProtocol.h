@@ -6,6 +6,12 @@
 // qualification;the default and51..53 drivers do not handle these operations.
 // Persistent WAIT is NOT the old per-job stopped=1 proof. Caller supplies
 // logical DATA only;kernel alone derives all routes,addresses and nonces.
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT
+// Separate56 lossless BF16 operand namespace,NEVER a54/55 code substitution.
+#define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x56f2)
+#define TT_PCI_PROBE_Q38_DISPATCH_RUN (B_DEVICE_OP_CODES_END + 0x56f3)
+enum { TT_Q38_DISPATCH_DRIVER=56,TT_Q38_DISPATCH_ABI=1,TT_Q38_DISPATCH_PEERS=119 };
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
 // Separate55 ABI namespace;NEVER selects new code under a54 caller/driver.
 #define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x55f2)
@@ -15,6 +21,7 @@ enum { TT_Q38_DISPATCH_DRIVER=55,TT_Q38_DISPATCH_ABI=1,TT_Q38_DISPATCH_PEERS=119
 #define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54f2)
 #define TT_PCI_PROBE_Q38_DISPATCH_RUN (B_DEVICE_OP_CODES_END + 0x54f3)
 enum { TT_Q38_DISPATCH_DRIVER=54,TT_Q38_DISPATCH_ABI=1,TT_Q38_DISPATCH_PEERS=119 };
+#endif
 #endif
 struct tt_q38_dispatch_support { uint32_t driver,version,peers,rows,max_inputs,banks,offset_alignment,persistent,model_inference; };
 struct tt_q38_dispatch_result {

@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT
+#include "PioneerQ38BFloatPeerImage.h"
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
 #include "PioneerQ38VectorPeerImage.h"
+#endif
 #endif
 // Generated exact experimental54 images;offline tests are not native
 // qualification. Default and51..53 drivers never select/launch these roles.
@@ -508,10 +512,14 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT
+ return worker>=120?UINT32_MAX:worker?PioneerQ38BFloatPeerWord(word):PioneerQ38DispatchRootWord(word);
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
  return worker>=120?UINT32_MAX:worker?PioneerQ38VectorPeerWord(word):PioneerQ38DispatchRootWord(word);
 #else
  return worker>=120?UINT32_MAX:worker?PioneerQ38PersistentPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
 #endif
 }
 #endif

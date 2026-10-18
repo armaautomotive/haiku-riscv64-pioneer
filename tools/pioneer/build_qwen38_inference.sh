@@ -14,6 +14,7 @@ esac
 case "${PIONEER_Q38_VECTOR_INFERENCE:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_DISPATCH_INFERENCE:-0}" = 1 ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR";;
+ 2) [ "${PIONEER_Q38_DISPATCH_INFERENCE:-0}" = 1 ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT";;
  *) exit 2;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac

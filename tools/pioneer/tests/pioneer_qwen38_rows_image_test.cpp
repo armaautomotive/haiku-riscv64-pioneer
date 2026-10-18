@@ -20,6 +20,7 @@ struct RowsMachine:StreamMachine {
 		}
 	}
 	unsigned StepLimit() const override { return 1000000000; }
+	virtual unsigned MatrixPhasesPerPanel() const { return 4; }
 	uint32_t Load(uint32_t a) override { if (a==0x7401c) return memory.at(a); return StreamMachine::Load(a); }
 	void Store(uint32_t a,uint32_t v) override {
 		if (Range(a,0x84000,16384)) { assert(drained && !(a&3) && Range(a,0x84000,groups*64)); buffers[4096+(a-0x84000)/4]=v; return; }
@@ -33,9 +34,9 @@ struct RowsMachine:StreamMachine {
 		return l1[Index(0x17ffc4)]==groups*(inputs/16) && requests==tiles.size() && responses==requests && !pending;
 	}
 	bool CorrectRows() const {
-		if (matrixInstructions!=4*groups*(inputs/16)) {
+		if (matrixInstructions!=MatrixPhasesPerPanel()*groups*(inputs/16)) {
 #ifdef PIONEER_Q38_REF_DIAGNOSTIC
-			fprintf(stderr,"ROW_DIAGNOSTIC matrix instructions%u expected%u type%u K%u\n",matrixInstructions,4*groups*(inputs/16),type,inputs);
+			fprintf(stderr,"ROW_DIAGNOSTIC matrix instructions%u expected%u type%u K%u\n",matrixInstructions,MatrixPhasesPerPanel()*groups*(inputs/16),type,inputs);
 #endif
 			return false;
 		}

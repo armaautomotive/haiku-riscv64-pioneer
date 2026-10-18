@@ -5,13 +5,34 @@
 #define PIONEER_Q38_VECTOR_HAS_ROWS_MACHINE
 #define PIONEER_Q38_VECTOR_ROWS_MODEL_ONLY
 #include "pioneer_q38_vector_rows_image_test.cpp"
+#ifdef PIONEER_Q38_TEST_BFLOAT
+using VectorPersistent=VectorRows<PersistentRows,true,true>;
+#else
 using VectorPersistent=VectorRows<PersistentRows,true>;
+#endif
+#ifdef PIONEER_Q38_TEST_BFLOAT
+static void FreshInputs(VectorPersistent& m)
+{
+	// Poison ALL previous derived cache words and change the public input
+	// between completed jobs. Actual code must regenerate every word.
+	for (unsigned w=0;w<m.inputs/2;w++) m.memory[0x95000+w*4]=0x7fc17fc1;
+	for (unsigned k=0;k<m.inputs;k++) {
+		m.vector[k]=PioneerInt8Operand(int((k*37+19)%256)-128);
+		uint32_t& word=m.root[0xa0000+(k/2)*4]; unsigned shift=(k%2)*16;
+		word=(word&~(65535U<<shift))|(uint32_t(m.vector[k])<<shift);
+	}
+}
+#endif
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
 	for (unsigned type:{8U,12U,14U}) for (unsigned k:{5120U,6144U,17408U}) {
 		VectorPersistent m(argv[1],type,k,k==17408?3:1); m.delay=3; assert(m.Boot());
-		assert(m.Job(1)); m.NextPackets(); assert(m.Job(2));
+		assert(m.Job(1)); m.NextPackets();
+#ifdef PIONEER_Q38_TEST_BFLOAT
+		FreshInputs(m);
+#endif
+		assert(m.Job(2));
 		unsigned requests=m.requests,matrices=m.matrixInstructions;
 		for (unsigned i=0;i<1000;i++) m.StepBlock();
 		assert(m.requests==requests && m.matrixInstructions==matrices && !m.rawPending);
@@ -27,7 +48,11 @@ int main(int argc,char** argv)
 	}
 	for (unsigned type:{8U,12U,14U}) {
 		VectorPersistent m(argv[1],type,5120,16); assert(m.Boot() && m.Job(1));
-		m.NextPackets(); assert(m.Job(2) && m.Job(3,2));
+		m.NextPackets();
+#ifdef PIONEER_Q38_TEST_BFLOAT
+		FreshInputs(m);
+#endif
+		assert(m.Job(2) && m.Job(3,2));
 		printf("OFFLINE VECTOR persistent type%u MAXIMUM N256 repeated exact/STOP PASS\n",type);
 	}
 	for (unsigned field=0;field<8;field++) {

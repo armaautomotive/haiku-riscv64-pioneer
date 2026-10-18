@@ -54,6 +54,7 @@ struct Machine {
 	virtual bool NativeInt8Unpack() const { return false; }
 	virtual bool InlineTensix() const { return false; }
 	virtual uint32_t MatrixArithmeticConfig1() const { return config[1]; }
+	virtual bool FloatFidelityArithmetic() const { return sfpuSmoke==24; }
 	virtual uint32_t NativePayloadBase(unsigned half) const { return 0x706e0+half*256; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
@@ -187,7 +188,7 @@ struct Machine {
 					// The documented FP16 SrcA fidelity phases do not consume
 					// its least significant mantissa bit. SrcB keeps all ten.
 					if (Fp16Operands()) av=Float(Bits(av)&~0x2000U);
-					if (sfpuSmoke == 24) {
+					if (FloatFidelityArithmetic()) {
 						float highA = Float(Bits(av)&0xfff80000), highB = Float(Bits(bv)&0xfffe0000);
 						av = (phase&1) ? av-highA : highA;
 						bv = (phase&2) ? bv-highB : highB;

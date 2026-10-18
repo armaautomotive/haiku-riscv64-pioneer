@@ -2,6 +2,7 @@
 #define PIONEER_NATIVE_F32_Q8_MACHINE_ONLY
 #include "pioneer_runtime_q8_native_f32_image_test.cpp"
 #include "../PioneerQ38BFloatOperand.h"
+#include "../PioneerQ38BFloatPanel.h"
 struct BFloatEmitter {
 	NativeF32Q8Machine& machine; unsigned count=0;
 	void Op(uint32_t word) { if (word!=0x8f000000) machine.Instruction(word); count++; }
@@ -24,6 +25,13 @@ int main()
 {
 	(void)Read; (void)Word;
 	NativeF32Q8Machine m(1024,32,0); unsigned operands=0,maximum=0,valid=0;
+	uint32_t fields[]={0x42b5,0x203c8000,1,1};
+	assert(PioneerQ38BFloatMatrixEquivalent(fields[0],fields[1],fields[2],fields[3]));
+	for (unsigned field=0;field<4;field++) for (unsigned bit=0;bit<32;bit++) {
+		fields[field]^=uint32_t(1)<<bit;
+		assert(!PioneerQ38BFloatMatrixEquivalent(fields[0],fields[1],fields[2],fields[3]));
+		fields[field]^=uint32_t(1)<<bit;
+	}
 	for (unsigned type:{8U,12U,14U}) for (unsigned panel=0;panel<(type==8?2U:16U);panel++) {
 		unsigned combinations=type==14?65536:256;
 		for (unsigned first=0;first<combinations;first+=32) {
@@ -52,6 +60,11 @@ int main()
 		}
 	}
 	uint32_t seed=0xb51638a7; unsigned dots=0;
+	for (int a:{-128,-127,-32,-31,-1,0,1,15,31,32,127}) for (int b:{-128,-127,-1,0,1,127}) {
+		float actual=0;
+		for (unsigned phase=0;phase<2;phase++) { float partial=0; for (unsigned k=0;k<16;k++) partial+=APhase(float(a),phase)*float(b); actual+=partial; }
+		assert(actual==float(16*a*b) && std::abs(16*a*b)<=262144);
+	}
 	auto random=[&]() { seed^=seed<<13; seed^=seed>>17; seed^=seed<<5; return seed; };
 	for (unsigned type:{8U,12U,14U}) for (unsigned trial=0;trial<32768;trial++) {
 		int a[16],b[16],dot=0;

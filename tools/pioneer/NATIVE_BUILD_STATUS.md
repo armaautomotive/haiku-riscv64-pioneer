@@ -1,5 +1,44 @@
 # Native build status
 
+Latest checkpoint (October18,20:15 UTC): native54/team848 still ACTIVE,
+layer49/calls388/pages3,363,272 all success by20:14:47 UTC. Cold first
+position still loading;NO new full-model token rate. No native driver/
+power/card/SD changes or parallel GPU job. Let current profile END cleanly.
+
+Separate OFFLINE56 lossless BF16-integer candidate6781a34f/client3cd95fec/
+frozen-library inferencef789f207. Exact private peer7d4a2e67 (7816B,original
+8KiB bound;compute368B+main288B),root026229e2 unchanged. Same lossless
+GDDR layout and exact original FP32 affine rounding points. Bounded signed8
+integers are EXACT in BF16:Q8 TWO floating phases,Q4/Q6 ONE;ALL remaining
+MVMUL waits retained. Explicit forced BF16 A/B formats,natural FP32 dot
+readback,ALL finite/range checks and canonical integer zero. Private peer
+activation cache95000..9d800 regenerated EVERY job before first read;
+original authenticated input/scales stay unchanged. No whole-model float
+expansion,re-quantization,-128 clipping or CPU learned products/fallback.
+
+Actual full-K/real first+last48-row math exact FP32 AND independent FP64
+PASS(idjX1J09),including24 malformed input positions and4 nonfinite dot
+refusals. Bounded raw decode/CAST+BF16 format128-field mutations/exhaustive
+products/extreme dots PASS(nuor3OQa). Repeated/maxN256 persistent with ALL
+old cache words poisoned and changed inputs PASS(tWF5w57p). Actual root+
+BF16 peers+EXACT baked image/UNKNOWN atomic output PASS(11fGeukd). Row
+RV counts3.44..4.25x below original scalar but~4..9% ABOVE vector55;
+fewer matrix phases/waits are NOT yet measured hardware speed. Keep BOTH
+candidates for native comparison;do not assume56 faster from phase count.
+
+Full56 ASan/UBSan boundary:bootK9xvwdfy,RUN both payloadsqBEw3THN,proof
+3xHtKdLz,END both modes pj9GM2zc,handler/retentionFZTfxehS,sessionkdxmVevv,
+MMIO-ENDkvlc2xAh PASS.54/55/56 mutually refuse support/RUN before IO and
+wrong driver metadata before BEGIN. Old54/55 handler+host tests rerun PASS:
+VRKTGCbz/90KfKywc andld05VJT2/KT0fTDqP. Rebuilt55 EXACT5a393ab4,
+54 EXACT93f2c0db,43 EXACT2df0e0f8. Kernel max stack3136B.
+
+New56 cold/unloaded-only installer SHAe60c38c4,stage-i,requires exact55
+installed plus prior stage-h43/52/54 backups. Preserves55 separately and
+can restore55/54/52/43 ONLY while unloaded.195 ACTUAL shell guard/restore
+tests PASS incl late loaded/owner transitions. NEITHER55 nor56 staged/
+installed/run natively yet. Dirty llama implementation untouched.
+
 Latest checkpoint (October18,20:01 UTC): native54/team848 full27B profile
 STILL ACTIVE,layer41/calls321/pages2,771,572 all success by20:01 UTC.
 Cold first position still loading;NO new token-rate result. Installed

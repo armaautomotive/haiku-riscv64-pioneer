@@ -2,6 +2,32 @@
 
 ## Status
 
+### October18,20:15 UTC:separate lossless BF16 candidate passes offline lifecycle
+
+Native54/team848 still loading first27B position:layer49/calls388/
+pages3,363,272 success by20:14:47 UTC. No new token rate;all hardware,
+loaded driver and cards unchanged. Current owner must finish before tests.
+
+OFFLINE56/6781a34f pins peer7d4a2e67 (7816B inside original8KiB) and
+unchanged dispatcher. BF16 represents these bounded integer operands
+EXACTLY,including -128:Q8 needs two floating matrix phases,Q4/Q6 one.
+Original lossless GDDR tiles and every FP32 affine rounding point remain.
+Explicit formats/ownership/drains,whole-job peer-private activation cache,
+finite/range/zero handling tested in ACTUAL compiled RV32/FPU/NoC/SFPU
+model. Full-K and real first/last48-row results are bit-identical to old
+FP32 AND pass independent FP64;bad inputs/nonfinite dots refused. Repeated
+jobs regenerate poisoned caches from changed inputs. No host learned math.
+
+All56 bootstrap/RUN/proof/END/handler/retention/session/MMIO-END suites and
+actual root+peer exact code pins PASS. Distinct56 command/metadata namespace;
+all54/55/56 cross-version commands/metadata refused before IO/BEGIN. Old
+55/54/43 build byte-identically.195 installer tests PASS,including safe
+unloaded-only55/54/52/43 restore.56 installer requires exact prior55 stage-h
+and a fresh physically cold/unloaded boot. NEITHER55 nor56 is staged or
+natively qualified. BF16 has FEWER matrix phases but MORE RISC instructions
+than55;measure both on hardware,do not claim a speedup from this alone.
+Dirty llama implementation untouched.
+
 ### October18,20:01 UTC:resident metadata candidate ready OFFLINE;native full model still loading
 
 Native54/team848 is still active at layer41/calls321/pages2,771,572 success.
