@@ -1,5 +1,48 @@
 # Native build status
 
+Latest checkpoint (October18,18:38 UTC): frontend54/93f2c0db passed ALL SIX
+native debug sessions:synthetic/authentic rows at2,7,119 peers. All39
+primitive cases (78 repeated computations) exact,each BANK_END state2/
+active0/pci_restored1/host_released1/cold0/accepted1,KNOWN_CLEAN_END1,
+wrapper exit0/process gone. Gated batch QUALIFICATION_BATCH_EXIT0;NO
+overlap/retry. Public evidence saved under /private/tmp/
+pioneer-q38-dispatch-frontend-{public-two,synthetic-seven,public-seven,
+synthetic-119,public-119}-frontend-g.log and seven-and-119-master-g.log.
+Frozen native four-library/inference hashes exact. Full learned FFN ggml
+graph started18:37:04 UTC with SAME-FD full19GB auth BEFORE card FD;still
+hashing. Native full-ffn-frontend-g.log/output in stage-g. New full-matrix/
+27B timing/independent numeric qualification still pending.
+
+OFFLINE next performance prerequisite:PioneerQ38VectorUnpack.h emits fixed
+bounded raw256B UNPACR-to-Dst,explicit unsigned/config/address/context,
+Q6 two-plane no-early-flip,restore-before-MOVD2A and drains. Independent
+strict actual-op subset model covers BOTH source banks,nonzero initial ADCs,
+delayed unpack publication,Dst16/32 canaries and original scalar operands:
+2176 panels/1,114,112 exact weights,408 malformed sequences rejected;
+ASan/UBSan vector-unpack.zqoXi8WK. Existing vector-layout.WAC1VUG9 regression
+8704 panels/2,228,224 weights PASS. NO image/driver/native selection or
+cycle-level/performance claim;full integrated image/hazard/math proof still
+required. Dirty llama implementation unchanged.
+
+Latest checkpoint (October18,18:30 UTC): frontend-safe54/93f2c0db is now
+installed on fresh SD-free Haiku64/full RAM. Matching client961db867 and
+inferencef2096ee7 plus hardened installera97ea705 explicitly SHA verified.
+First native two-peer test:ALL18 repeated Q8/Q4/Q6 full-K cases exact;
+BANK_END state2/active0/pci_restored1/host_released1/cold0/accepted1,
+KNOWN_CLEAN_END=1,wrapper exit0,process gone. This qualifies the previously
+failing cleanup for THIS synthetic test,NOT all119/model/speed yet.
+Evidence:/private/tmp/pioneer-q38-dispatch-frontend-synthetic-two-20261018-g.log.
+Real model two-peer fixtures started next;do not overlap sessions.
+
+Initial stage-g driver SCP reset left an empty staged file;preserved as
+failed-empty-driver-upload. Throttled1024kbit/s sequential retry plus all
+individual checksums succeeded BEFORE installation. Installer conservatively
+matched its OWN full-path shell command and refused without writes. Launch
+from /boot/home then relative stage/relative script avoids self-matching;
+NO guard bypass/change. Installed93f2 only after both unloaded/no-owner
+proofs. Prior e07 and qualified43/52 backups preserved. Old native helper
+copies remain prohibited;never overwrite a loaded module/retry UNKNOWN.
+
 Latest checkpoint (October18,18:19 UTC): native e07f3123 exact18-case arithmetic
 and root STOP proof PASS,but host worker1 PC audit rejects72064/72064 versus
 required72060 (phase53,detail200). No resets/restoration after rejection;

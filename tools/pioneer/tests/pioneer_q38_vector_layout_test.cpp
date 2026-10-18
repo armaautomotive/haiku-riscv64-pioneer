@@ -51,6 +51,7 @@ struct VectorLayout:NativeF32Q8Machine {
 		return uint16_t(((src&0x40000)>>3)|((src&31)<<10)|((src>>8)&1023));
 	}
 };
+#ifndef PIONEER_Q38_VECTOR_LAYOUT_MACHINE_ONLY
 int main()
 {
 	(void)Read; (void)Word;
@@ -85,3 +86,4 @@ int main()
 	}
 	printf("PASS OFFLINE vector layout:%u panels/%u exact weights against original scalar decoder,raw Dst16 rows0..31 and opaque decoded Dst32 rows64..79 physically disjoint,ALL32 even/odd lane placement/HI16/MOVD2A overlays/bounds/canaries;NO actual unpack/ownership/scheduling/image/native/speed qualification\n",panels,weights);
 }
+#endif

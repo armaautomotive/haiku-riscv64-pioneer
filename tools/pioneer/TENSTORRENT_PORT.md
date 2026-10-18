@@ -2,6 +2,34 @@
 
 ## Status
 
+### October18,18:38 UTC:all119 persistent workers pass exact+clean qualification
+
+All SIX2/7/119-peer synthetic/authentic-row native sessions PASS:78 exact
+repeated computations,ALL six clean END/restoration/process exits. Driver
+93f2c0db now qualifies this boundary,NOT full-matrix/model speed. Full learned
+FFN17408x5120 repeat/export started18:37:04 UTC after verifying frozen libs;
+still authenticating entire same-FD19GB source before any card FD.
+
+New OFFLINE bounded raw-UNPACR/vector-decoder sequence+independent actual-op
+subset model:2176 panels/1,114,112 exact weights across both SrcA banks,
+408 malformed sequences rejected;existing2,228,224-weight layout regression
+PASS ASan/UBSan. Includes context/header/unsigned/256B bounds,delayed unpack
+publication,Q6 no-early-bank-flip,format restore,Dst canaries. No image/native
+selection/cycle timing claim;integrated arithmetic/hazard proof still needed.
+
+### October18,18:30 UTC:safe terminal images pass first native clean END
+
+Fresh SD-free Haiku64/full RAM;exact93f2c0db driver/961db867 debug client/
+f2096ee7 inference installed only after all upload hashes and cold/unloaded/
+owner checks. ALL18 two-peer Q8/Q4/Q6 computations exact,then BANK_END
+state2 active0 pci_restored1 host_released1 cold0 accepted1,KNOWN_CLEAN_END1,
+wrapper exit0/process gone. The previously failing cleanup now passes THIS
+test. Real model rows,seven/all119 workers and full learned FFN/model still
+require qualification before claiming improved speed or Assistant readiness.
+Local log:/private/tmp/pioneer-q38-dispatch-frontend-synthetic-two-20261018-g.log.
+Interrupted stage upload was preserved/retried at1024kbit/s and hash-checked;
+installer self-match refusal fixed by relative launch,not weakened guards.
+
 ### October18,18:19 UTC:speculative-PC false rejection isolated;safe new terminal images ready
 
 Native e07f3123 completes all18 arithmetic cases and root STOP proof,then
