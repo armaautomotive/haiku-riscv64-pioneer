@@ -2,6 +2,17 @@
 
 ## Status
 
+### October17: exact binary normalization prototype OFFLINE (October18,02:42 UTC)
+
+Native50 remains loaded/known clean as below. A separate opt-in image uses
+at most five integer normalization steps instead of the scale helper's
+up-to23 loop trips. All16777216 half/small-scale patterns are bit-exact;
+384 synthetic+996 real panels and9 synthetic+6 real contiguous matrix
+instruction cases pass with bounds/fault checks. Text6d469c25 lowers total
+instruction count about3..8%,not native timing/model speed. Qualified50
+text1111a05c remains byte-identical in two new default builds;no driver
+selects the new image. No Assistant/inference claim or dirty llama changes.
+
 ### October17: native batched50 passed;checked primitive timing (October18,02:29 UTC)
 
 CURRENT Haiku UP/SSH,64 CPUs/full137034936320B RAM/NIC0b83,network0 errors/

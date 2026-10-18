@@ -16,6 +16,11 @@ case "${PIONEER_Q38_STREAM_FAST:-0}" in
  1) [ "${PIONEER_Q38_STREAM_IMAGE:-0}" != 0 ] || exit 2; cppflag=-DPIONEER_Q38_FAST_PANEL;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_FAST_SCALE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_STREAM_FAST:-0}" = 1 ] || exit 2; cppflag="$cppflag -DPIONEER_Q38_FAST_SCALE";;
+ *) exit 2;;
+esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"

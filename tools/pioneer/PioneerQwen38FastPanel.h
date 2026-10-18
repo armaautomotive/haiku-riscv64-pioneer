@@ -2,6 +2,12 @@
 #ifndef PIONEER_QWEN38_FAST_PANEL_H
 #define PIONEER_QWEN38_FAST_PANEL_H
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_FAST_SCALE
+#include "PioneerQ38BinaryScale.h"
+#define PioneerQ38ChosenPanelScale PioneerQ38BinaryScale
+#else
+#define PioneerQ38ChosenPanelScale PioneerQ38PanelScale
+#endif
 // OFFLINE candidate only: decode FOUR output rows per integer word,without
 // zero-fill/RMW/byte-at-a-time unpack. Same exact integer overlay and affine
 // bits as the qualified scalar helper;no re-quantization or SM7 clipping.
@@ -41,11 +47,11 @@ static inline bool PioneerQ38FastPanel(unsigned type,const uint8_t* tile,unsigne
 			else { factor=int((PioneerQ38PanelByte(tile,(8+group)*16+row)&15)|((PioneerQ38PanelByte(tile,group*16+row)>>6)<<4));
 				minimum=(PioneerQ38PanelByte(tile,(8+group)*16+row)>>4)|((PioneerQ38PanelByte(tile,(4+group)*16+row)>>6)<<4); }
 			uint16_t minHalf=uint16_t(PioneerQ38PanelByte(tile,32+row)|(PioneerQ38PanelByte(tile,48+row)<<8));
-			if (!PioneerQ38PanelScale(minHalf,-int(minimum),stage.minimum[row])) return false;
+			if (!PioneerQ38ChosenPanelScale(minHalf,-int(minimum),stage.minimum[row])) return false;
 		} else if (type==14) {
 			unsigned value=PioneerQ38PanelByte(tile,(192+panel)*16+row); factor=int(value)-int((value&128)*2);
 		}
-		if (!PioneerQ38PanelScale(half,factor,stage.coefficient[row])) return false;
+		if (!PioneerQ38ChosenPanelScale(half,factor,stage.coefficient[row])) return false;
 	}
 	for (unsigned lane=0;lane<16;lane++) for (unsigned row=0;row<16;row+=4) {
 		uint32_t magnitude,sign;

@@ -6,7 +6,9 @@ struct RowsMachine:StreamMachine {
 	unsigned groups;
 	RowsMachine(const char* root,unsigned type,unsigned inputs,unsigned rows)
 		:StreamMachine(root,type,inputs),groups(rows) {
+#ifndef PIONEER_Q38_BINARY_SCALE_IMAGE
 		for (unsigned w=0;w<2048;w++) assert(PioneerQ38RowsWord(w)==(w<code.size()/4?Word(code,w*4):0));
+#endif
 		memory[0x74000]=0x31523851; memory[0x7401c]=groups;
 		auto initial=tiles;
 		for (unsigned group=1;group<groups;group++) for (auto tile:initial) {

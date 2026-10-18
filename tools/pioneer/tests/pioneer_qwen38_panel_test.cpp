@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQwen38Panel.h"
 #include "../PioneerQwen38FastPanel.h"
+#include "../PioneerQ38BinaryScale.h"
 #include "../PioneerQwen38TiledReader.h"
 #include "../TenstorrentGgufQuant.h"
 #include <cassert>
@@ -35,6 +36,7 @@ int main(int argc,char** argv)
 	// Exhaust ALL finite/invalid half bit patterns and signed scale factors.
 	for (unsigned bits=0;bits<65536;bits++) for (int factor=-128;factor<=127;factor++) {
 		uint32_t output=0x12345678; bool valid=PioneerQ38PanelScale(uint16_t(bits),factor,output);
+		uint32_t binary=0x12345678; assert(PioneerQ38BinaryScale(uint16_t(bits),factor,binary)==valid && binary==output);
 		assert(valid==((bits&0x7c00)!=0x7c00));
 		if (valid) assert(output==PioneerAttentionBits(PioneerAttentionHalf(uint16_t(bits))*float(factor)));
 		else assert(output==0x12345678);

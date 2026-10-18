@@ -1,5 +1,14 @@
 # Native build status
 
+Latest source-only checkpoint (October18,02:42 UTC): current native50 state
+below unchanged/clean. OFFLINE exact binary normalization prototype passes
+all16777216 half/scale bit patterns,384 synthetic+996 real panel cases and
+actual image9 synthetic+6 real contiguous matrix instruction cases. Candidate
+text6d469c25 reduces instructions about3..8%,NOT measured native/model speed.
+Default50 remains EXACT1111a05c in two new builds;candidate is NOT selected by
+any driver. Next work is shared on-card inputs/parallel cohort,not a new
+Assistant target. Dirty llama remains untouched.
+
 Latest checkpoint (October18,02:29 UTC / October17 Vancouver): Haiku UP/SSH,
 64 CPUs/full137034936320B RAM/NIC0b83,network0 errors+drops. Disk/LOADED50
 ce918971,known clean/no active job/UNKNOWN/cold latch. Same pinned SD-free
