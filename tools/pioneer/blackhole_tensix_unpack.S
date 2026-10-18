@@ -7,6 +7,14 @@
  */
 .option norvc
 .option norelax
+.ifdef TT_Q38_LOCAL_PANEL16
+.ifndef TT_RUNTIME_INT8
+	.error "Q38 local panel probe requires the integer-overlay matrix engine"
+.endif
+.ifdef TT_RUNTIME_Q8
+	.error "Q38 local panel probe is a separate raw integer-dot contract"
+.endif
+.endif
 .ifdef TT_RUNTIME_Q8_READBACK
 	.set TT_RUNTIME_Q8_BULK,1
 .endif
@@ -274,10 +282,14 @@ fixture:
 	sw zero, 8(t2)
 	sw zero, 12(t2)
 .ifdef TT_UNPACK_NONUNIFORM
+.ifdef TT_Q38_LOCAL_PANEL16
+	j q38_panel_inputs /* fixed local packed panel, ZERO NoC submissions */
+.else
 .ifdef TT_UNPACK_RESIDENT
 	j resident_fetch
 .else
 	j nonuniform_inputs
+.endif
 .endif
 	nop /* same width as li, preserve every common code address */
 .else
@@ -1173,4 +1185,37 @@ q8_compact_lookup:
 	.org 0x1000, 0
 .else
 	.org 0xa20, 0
+.endif
+.ifdef TT_Q38_LOCAL_PANEL16
+.section .q38bridge,"ax"
+.global q38_panel_inputs,q38_panel_fault
+q38_panel_inputs:
+	/* Private one-panel qualification. The C++ unpacker checks BOTH
+	 * descriptors, expands only640 local bytes, and uses no FP/NoC/DMA.
+	 * Preserve the qualified unpack/math/four-fidelity/drain/readback path.
+	 */
+	li sp,0x70000
+	addi sp,sp,-16
+	sw a1,12(sp) /* the assembly engine's fixture counter is caller-saved */
+	call q38_local_panel
+	lw a1,12(sp)
+	addi sp,sp,16
+	beq a0,zero,q38_panel_fault
+	li t2,0x91000
+	li t3,0x70710
+	li t1,128
+q38_panel_copy:
+	lw t0,0(t2)
+	sw t0,0(t3)
+	addi t2,t2,4
+	addi t3,t3,4
+	addi t1,t1,-1
+	bne t1,zero,q38_panel_copy
+	j nonuniform_inputs
+q38_panel_fault:
+	li t0,0x46383350 /* P38F; NOT a successful dot or NoC completion */
+	sw t0,8(s3)
+	lw t0,8(s3)
+	fence
+1: j 1b
 .endif

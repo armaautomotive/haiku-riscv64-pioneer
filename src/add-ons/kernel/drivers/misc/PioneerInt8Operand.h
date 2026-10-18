@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_INT8_OPERAND_H
 #define PIONEER_INT8_OPERAND_H
+#ifdef PIONEER_ATTENTION_FREESTANDING
+typedef __UINT16_TYPE__ uint16_t;
+#else
 #include <stdint.h>
+#endif
 // Integer "8" source values overlay FP16: sign, fixed raw exponent 16,
 // magnitude. This is data packing, NOT floating-point multiplication.
 static inline bool PioneerInt8OperandValid(uint16_t value)

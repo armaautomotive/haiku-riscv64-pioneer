@@ -2,6 +2,73 @@
 
 ## Status
 
+### October17: native seven-bank DMA bulk sample passed (October18,00:20 UTC)
+
+CURRENT: experimental storage45 is installed AND LOADED, not43; Haiku/SSH,
+64 CPUs/full RAM/NIC0b83ceed remain available, cards unchanged. There is no
+active model/compute owner. No27B inference or new Assistant target exists.
+
+Extended the existing verified16KiB/six-proof DMA path with optional private
+seven-bank route authority. Legacy<=2GiB bank-zero bounds remain unchanged;
+only the private bank owner authorizes3GiB per bank. New inline-byte ABI
+accepts1..4 pages in exactly ONE logical bank, no user pointers/coordinates.
+Actual handler tests pass independent PIO reads after cross-bank bulk writes,
+page-hash invalidation/replacement, team/FD ownership and all42 bank/stage
+UNKNOWN injections (global quarantine/no subsequent requests/host release).
+Old bulk/page/stream/session/client regressions pass ASan/UBSan too.
+
+Two fresh builds reproduce driver45:
+`f7d80213a47164aa0c63a2b855e8254c8ea4704058946fd2a3e95a4324325148`.
+The default43 build control2df0e0f8 is NOT the qualified backup. Native client
+two-build SHA:
+`ab9a76153e913328adb412c9c44330d407cb7e519882ac02f6a6234f65d02925`.
+Its REAL code passes synthetic-syscall tests for old-driver refusal,
+all56 bulk shapes/112 independent PIO pages,38 proof-field failures/ioctl
+error/untouched-neighbour corruption,close-only/no retry or user END on failure.
+
+Exact `pioneer_q38_bulk_install.sh` SHA
+`0c86b3fd49219f698b1a6da1cff9089085d5905304c684f00c7314b512d4b7bc`
+passed TWO parsed kernel-image/possible-owner guards BEFORE replacement.
+It is staged at `/boot/home/pioneer-qwen38-bulk-20261017-a/switch-unloaded45.sh`.
+Qualified43 backup is in that directory OUTSIDE driver paths. Metadata-only
+support confirmed driver45/banks7/max_pages4/storage_only1. Native sample ran
+00:11:08–11 UTC:112 endpoint pages initialized by PIO,56 varied1..4-page DMA
+uploads across ALL seven banks,then112 independently PIO-read pages including
+unchanged neighbours. ALL matched;56*6+112*3+112=784 known NoC requests.
+573,440B uploaded in0.365018s of timed calls; steady16KiB calls~0.00643s
+(~2.5MB/s), NOT a whole-model loading rate or inference benchmark. END was
+CLOSED/PCI restored/host released/coldfalse; NO UNKNOWN or recovery occurred.
+Log `.../bulk-sample-20261017-a.log`, Mac copy
+`/private/tmp/pioneer-q38-driver45-20261017-b/native-bulk-sample.log`.
+
+RESTORE POLICY: NEVER replace this loaded module. After a NEW complete cold
+recovery and SD-free Haiku boot,BEFORE opening the card,run the exact helper
+with `--restore43`; it again requires two UNLOADED/no-owner proofs and exact
+45/43/client hashes. No forced unload/reload or uncertain-completion retry.
+The existing NIC-pinned SD-free helper is unchanged and does not pin P100A
+driver bytes. All prior backups/default boot/OS/firmware remain preserved.
+
+Separately, an OFFLINE packed-panel integer Tensix probe now runs in the strict
+instruction model. It expands only one640B LOCAL operand/affine-metadata panel
+from the existing lossless byte-major Q4_K/Q6_K/Q8_0 tile. Original GDDR layout
+stays packed; no whole-weight FP16/F32 expansion/re-quantization/-128 clipping.
+Half*small-integer coefficients are computed EXACTLY with integer operations,
+including signed zero/half subnormals; all16,777,216 half/factor combinations,
+384 randomized tiles and996 real-checkpoint edge tiles match independent
+dequantization. Actual RV32IM helper + existing four-fidelity integer Tensix
+engine pass ALL34 panel shapes and1,992 real edge panels,raw integer dots,
+640B metadata,descriptor/nonfinite/missing-copy/unpack/math failure tests,
+immutable inputs/strict stack+code ranges and ZERO NoC access. Tests caught
+and fixed preservation of assembly's caller-saved fixture counter across
+the C++ helper. Main page differs from prior integer engine by ONE jump.
+Default qualified wait-gate image still reproduces8180a243 unchanged.
+
+Distinct image main3fa32dd6/bridged8d09892/unpack5ce61f79 is NOT installed or
+kernel-selected. It currently returns integer dots plus affine metadata,
+NOT scaled matrix results, resident mixed execution, full capacity loading,
+model inference, or fast27B. A guarded native launch/cleanup protocol, then
+on-card affine accumulation/multi-panel/resident/full hybrid graph remain.
+
 ### October17: full-rate NIC test and seven-bank storage sample passed;43 restored (October18,00:02 UTC)
 
 CURRENT: Haiku is reachable by pinned SSH at10.0.0.247, with64 CPUs and

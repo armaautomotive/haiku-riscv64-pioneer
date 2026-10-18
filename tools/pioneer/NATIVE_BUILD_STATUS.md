@@ -1,11 +1,18 @@
 # Native build status
 
-Latest checkpoint (October18,00:02 UTC / October17 Vancouver): Haiku is
+Latest checkpoint (October18,00:20 UTC / October17 Vancouver): Haiku is
 running, SSH10.0.0.247 responds, P100A installed, both SD cards out. SD-free
 handoff verified64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
-Tested serialized NIC SHA0b83ceed is retained. Qualified P100A43 SHA9e098d02
-was RESTORED offline after the clean storage44 test; card driver is UNLOADED
-on this boot. Assistant/firmware/default Linux boot/dirty llama submodule
+Tested serialized NIC SHA0b83ceed is retained. Experimental storage45
+SHAf7d80213 is now installed/LOADED after the twice-UNLOADED installation
+guard. Qualified43 SHA9e098d02 is preserved outside driver paths. Native
+seven-bank1..4-page DMA sample passed ALL56 uploads/112 independent PIO
+pages including untouched neighbours,784 KNOWN NoC requests,clean END;
+no UNKNOWN.573,440B upload calls took0.365018s (not a full-model benchmark).
+No live model/GPU job remains. Restore43 only after a NEW cold-recovered
+Haiku boot with its card driver still UNLOADED,using the exact trial helper
+`pioneer-qwen38-bulk-20261017-a/switch-unloaded45.sh --restore43`.
+NEVER replace a loaded driver. Assistant/firmware/default boot/dirty submodule
 are unchanged. Requested-fast27B P100A inference remains UNACHIEVED.
 
 The default-off HAIKU_PIONEER_RTL_SERIALIZE variant addresses a source-level
