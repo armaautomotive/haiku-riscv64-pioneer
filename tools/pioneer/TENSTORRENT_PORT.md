@@ -2,6 +2,26 @@
 
 ## Status
 
+### October18,19:50 UTC:fixed-format vector candidate passes offline driver boundary
+
+Native54 full27B cold first-token/profile remains ACTIVE,team848,layer32/
+calls253/pages2,182,616 all success at19:47:25 UTC. No new token rate or
+Assistant-ready result;do not touch loaded driver/card or overlap owners.
+
+OFFLINE55 candidate61a02df8 now pins cached/fixed-format peerde7e0d66,
+8164B inside unchanged8KiB code view. Primary [configuration fields](https://github.com/tenstorrent/tt-metal/blob/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/cfg_defines.h)
+and pinned [MVMUL semantics](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md)
+prove explicit FP16 matrix-source overrides ignore the raw unsigned/default
+unpacker fields. Keep those fields fixed instead of rewriting/restoring
+per panel;ALL drains and supported Thread5=0->4 ownership handoffs remain.
+128 field mutation refusals,all-K/real first/last48-row arithmetic,repeated
+jobs,maxN256,counter/nonce/source faults,UNKNOWN output refusal,STOP,actual
+root+peer and exact baked image tests PASS. Full55 bootstrap/RUN/proof/END/
+handler/retention/session/MMIO-END suites PASS ASan/UBSan. Default54/43
+remain byte-identical. Same-workload RV instruction reductions3.36..4.01x
+are NOT hardware timing. Client/inference unchanged,NO staging/install/
+native qualification. Dirty llama implementation untouched.
+
 ### October18,19:33 UTC:cached vector peer fits8KiB;full native profile continues
 
 Native54 full27B profile still active(team848,stage-g public-four log),

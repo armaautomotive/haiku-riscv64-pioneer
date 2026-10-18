@@ -9,6 +9,7 @@ case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in
  0) source=blackhole_qwen38_persistent.cpp;;
  1) source=blackhole_qwen38_vector_persistent.cpp;;
  2) source=blackhole_qwen38_vector_reuse_persistent.cpp;;
+ 3) source=blackhole_qwen38_vector_fixed_persistent.cpp;;
  *) exit 2;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac

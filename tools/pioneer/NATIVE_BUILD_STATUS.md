@@ -1,5 +1,31 @@
 # Native build status
 
+Latest checkpoint (October18,19:50 UTC): native54 full27B profile STILL
+ACTIVE,team848/stage-g public-four-frontend-g.log. Layer32/calls253/
+pages2,182,616 all success at19:47:25 UTC;first token/cold transfer still
+in progress. No new full-model speed result. Installed54/93f2 and all
+power/SD/card state UNCHANGED;no parallel card open or installation.
+
+New OFFLINE55 candidate61a02df8 embeds exact cached/fixed-format vector
+peerde7e0d66 (8164B,unchanged8KiB limit,compute496B+main288B frames),root
+026229e2 unchanged. Primary pinned cfg81989dcdb and ISA8a34e25e show
+Config0 forces both matrix sources to FP16 while Config1 raw unsigned/default
+fields affect UNPACK only. Keep those raw fields fixed;retain ALL drains,
+Thread5=0 for raw UNPACK and4 before ordinary SrcB UNPACK/MOV. No relaxed
+format authority or unsupported SrcB/Thread5=0.128 field mutations rejected,
+34 exact panel sequences PASS(J88jzilZ). Actual full-K/real-edge math
+e6UU8lNh,repeated persistent/maxN256/real-edge/fault/STOP a0Yk0xdF,actual
+root+peers with EXACT baked image PuLS4fBN PASS. Same synthetic workloads
+use3.36..4.01x fewer RV instructions than original scalar,NOT native timing.
+
+All55 boundary tests rerun ASan/UBSan:bootstrap8Geu0KFZ,RUN both payload
+modesFN1eOhE9,proofPL3l2wYZ,END both modes38NkRBQq,actual handler/retention
+b48TChe1,host sessionTp19ytFz,MMIO-ENDdlOgQxkP.54/55 namespace refusal
+and fail-closed whole-owner retention remain. Client6f641118/inference
+62fef745 rebuild exactly;default54 EXACT93f2c0db/default43 EXACT2df0e0f8.
+108 actual installer guard tests PASS. Candidate NOT staged/installed/
+natively run;no55 installer yet. Dirty llama implementation untouched.
+
 Latest checkpoint (October18,19:33 UTC): native54 full-model profile remains
 ACTIVE,team848/logpublic-four-frontend-g.log in stage-g;layer21/calls170/
 pages1,469,082 success at19:30:46 UTC. No new token rate yet. ALL card/SD/

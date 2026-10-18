@@ -5,6 +5,7 @@
 #endif
 #include <memory>
 #include "../PioneerBlackholeFma.h"
+#include "../PioneerQ38VectorFixedFormat.h"
 // ACTUAL compiled RV32/FPU image plus independent exact integer SFPU subset.
 // Not a silicon cycle model or permission to select a new native image.
 template<class Base,bool Persistent=false> struct VectorRows:Base {
@@ -26,6 +27,13 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
+	uint32_t MatrixArithmeticConfig1() const override {
+		// Read-only model of the pinned MVMUL fields,NOT a change to CSR
+		// state:only the two proven ignored fields may differ under forced
+		// A/B FP16 interpretation and disabled implied formats. All source
+		// ownership,integer phases and input/output bits stay unmodified.
+		return PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])?0xa0220000:config[1];
+	}
 	static unsigned Adj(unsigned row) { return ((row&0x1f8)<<1)|(row&0x207); }
 	uint32_t FloatDst(unsigned row,unsigned col) const {
 		unsigned hi=Adj(row),lo=hi+8; assert(wrote[hi][col] && wrote[lo][col]);
@@ -74,7 +82,8 @@ template<class Base,bool Persistent=false> struct VectorRows:Base {
 		if (op==0x8f000000) { vectorOps++; drained=false; return; }
 		if ((code>=0x70 && code<=0x8d) || code==8 || code==0x90) {
 			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible) && thread[2]==1
-				&& config[1]==0xa0220000 && config[220]==0 && thread[5]==4);
+				&& (config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3]))
+				&& config[220]==0 && thread[5]==4);
 			vectorOps++;
 			if (op==0x8a000002) { enabled=true; return; }
 			assert(enabled);

@@ -53,6 +53,7 @@ struct Machine {
 	virtual bool Int8ConvertedRead() const { return Int8Arithmetic(); }
 	virtual bool NativeInt8Unpack() const { return false; }
 	virtual bool InlineTensix() const { return false; }
+	virtual uint32_t MatrixArithmeticConfig1() const { return config[1]; }
 	virtual uint32_t NativePayloadBase(unsigned half) const { return 0x706e0+half*256; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
@@ -171,7 +172,7 @@ struct Machine {
 			if (modifier) assert(thread[13]==0 && thread[29]==0x2000 && thread[48]==0);
 			unsigned phase=(thread[11]+fidelityPhase)&3; phaseVisits[phase]++;
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
-			assert(config[0] == (NativeInt8Unpack()?0x423eU:Fp16Operands()?0x4231U:0x42b5U) && config[1] == (NativeInt8Unpack()?0xa03c0000U:Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
+			assert(config[0] == (NativeInt8Unpack()?0x423eU:Fp16Operands()?0x4231U:0x42b5U) && MatrixArithmeticConfig1() == (NativeInt8Unpack()?0xa03c0000U:Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);
 			matrixInstructions++;
 			for (unsigned row = 0; row < 8; row++) for (unsigned col = 0; col < 16; col++) {
 				float value = valid[32+row] ? dst[32+row][col] : 0;

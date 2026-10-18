@@ -10,6 +10,12 @@
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorUnpack.h"
+#ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+#include "PioneerQ38VectorFixedFormat.h"
+#ifdef PIONEER_Q38_VECTOR_AFFINE
+#error Fixed raw format and experimental FP32 metadata unpack are separate unqualified variants
+#endif
+#endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
 #include "PioneerQ38AffineReuse.h"
 #endif
@@ -199,6 +205,9 @@ extern "C" unsigned block_main()
 		if (!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16))) return 0;
 	}
 	Setup();
+#ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+	VectorPanelEmitter setupEmitter; PioneerQ38VectorFixedSetup(setupEmitter);
+#endif
 	for (unsigned row=0;row<groups*16;row++) Words(0x84000)[row]=0;
 	unsigned panels=count/16;
 	for (unsigned group=0;group<groups;group++) {
@@ -246,7 +255,11 @@ extern "C" unsigned block_main()
 		(void)Words(0x70920)[7]; Fence();
 #ifdef PIONEER_Q38_VECTOR_PANEL
 		VectorPanelEmitter emitter;
+#ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+		if (!PioneerQ38VectorFixedUnpack(emitter,type,p)) block_fault_park();
+#else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
+#endif
 #endif
 		Matrix();
 #ifdef PIONEER_Q38_VECTOR_AFFINE
