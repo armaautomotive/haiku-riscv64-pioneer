@@ -2,6 +2,50 @@
 
 ## Status
 
+### October17: batch-row50 staged,NOT installed (October18,02:10 UTC)
+
+CURRENT Haiku UP/SSH,49 637db0a6 on disk AND LOADED,known clean/no job or
+UNKNOWN.50 is separately staged,NOT installed/native-qualified. Next cold
+SD-free session planned `rows50-20261017-a`;not dispatched. No full27B tokens.
+
+Added separate compile-time50/ABI2 batch ownership/launch path for1..16
+groups,N<=256,K5120/6144/17408. Exact immutable1111a05c rows image,one input
+vector and per-block scales reused for all groups,no host partial sums.
+Kernel validates total same-bank initialized extent,not just first group;
+scales remain bounded by INPUT blocks,not aggregate read count. Fixed owned
+L1 arrays/output finite checks,exact total read/flit/shared-accepted/zero
+write counters,distinct Q8R1/fault and total panels/stable park proof. One
+explicit bounded15s launch permits larger rows;NO retries after uncertainty.
+Same all-bank/host quarantine and264KiB+entry restore policy. No arbitrary
+code/coordinate API,firmware or ordinary43/49 support changes.
+
+OFFLINE actual instructions pass9 synthetic N16/48/256 +6 REAL contiguous
+first/last N48 matrix cases,exact FP32+dequantized-double references,all code
+bytes/padding,output canaries/input immutability and cross-group UNKNOWN.
+378 private extent shapes +189 launch shapes and actual extracted handler/
+lock tests pass;input-group/padding/overflow,missing pages and all15 faults.
+Real client tests pass ordinary49/diag49/batch50,9 synthetic/8 authenticated
+row samples,21 completion/38 bulk proof corruptions,wrapping counters,
+old-ABI refusal and final-row255 corruption -> CLOSE ONLY/no END/retry.
+
+Batch public sample mode explicitly INTERLEAVES authenticated first/last
+16-row groups from unchanged725504B pack a0611645 in49 staging. It is NOT
+one contiguous N-row checkpoint fragment (offline REAL contiguous N48
+tests remain separate). Exact private MEMORY SHA still precedes any card
+open;no mutable reread/arbitrary filename. No whole-model SHA weakening.
+No full graph/multiworker/inference or performance qualification.
+
+Driver50 reproduciblyce918971bdfe6a530589a18c849008c6eefe80b0dad67f744a2a2b2f81504606,
+debug clientd7101b8417589d03f4585d00ab4c21ed94d47c4a84e499cfea02b3c19229f512.
+Rebuilt49 driver637db0a6 AND normal client49bc095f remain EXACTLY unchanged;
+default43 control remains2df0e0f8. All staged native hashes match.
+`pioneer-qwen38-rows-20261017-a/switch-unloaded50.sh` SHA
+86d321cddef08c3dbdad46792ab1a9cfedb4c812246ce3f0c711fd40b6ff4d72
+pinsold49/new50/client/qualified43. Native new client observed49/ABI1/N16
+and REFUSED at metadata with NO BEGIN;actual installer REFUSED loaded49,
+no driver/backup/incoming writes. Install ONLY after NEW cold boot,TWO
+unloaded/no-owner proofs;preserve49+43 outside driver paths. No SD change.
+
 ### October17: native fullK49 passed REAL Qwen matrices (October18,02:00 UTC)
 
 CURRENT Haiku UP/SSH,64 CPUs/full137034936320B RAM/NIC0b83ceed.49 637db0a6

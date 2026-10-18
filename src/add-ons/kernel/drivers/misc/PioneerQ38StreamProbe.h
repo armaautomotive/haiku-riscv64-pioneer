@@ -3,14 +3,30 @@
 #define PIONEER_Q38_STREAM_PROBE_H
 #include "PioneerQ38StreamProtocol.h"
 #include "PioneerQ38StreamProbeImage.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+#include "PioneerQ38RowsProbeImage.h"
+#define PioneerQ38ActiveStreamWord PioneerQ38RowsWord
+#define TT_Q38_ACTIVE_BOOT TT_Q38_ROWS_BOOT
+#define TT_Q38_ACTIVE_DONE TT_Q38_ROWS_DONE
+#define TT_Q38_ACTIVE_PARK TT_Q38_ROWS_PARK
+#define TT_Q38_ACTIVE_MARKER TT_Q38_ROWS_MARKER
+#define TT_Q38_ACTIVE_FAULT TT_Q38_ROWS_FAULT
+#else
+#define PioneerQ38ActiveStreamWord PioneerQ38StreamWord
+#define TT_Q38_ACTIVE_BOOT TT_Q38_STREAM_BOOT
+#define TT_Q38_ACTIVE_DONE TT_Q38_STREAM_DONE
+#define TT_Q38_ACTIVE_PARK TT_Q38_STREAM_PARK
+#define TT_Q38_ACTIVE_MARKER TT_Q38_STREAM_MARKER
+#define TT_Q38_ACTIVE_FAULT TT_Q38_STREAM_FAULT
+#endif
 // Same full-view save/restore and UNKNOWN quarantine policy as qualified48.
 // A session must choose local-block OR fullK lease,never both over one L1.
 using PioneerQ38StreamLease=PioneerQ38PanelLease;
 template<class IO> bool PioneerQ38StreamCodeMatches(IO& io)
 {
-	bool okay=io.RuntimeCodeRead(0)==TT_Q38_STREAM_BOOT;
+	bool okay=io.RuntimeCodeRead(0)==TT_Q38_ACTIVE_BOOT;
 	for (uint32_t a=0x70000;a<0x74000;a+=4) if (PioneerQ38PanelImmutable(a))
-		okay &= io.Q38PanelRead(a)==(a<0x72000?0:PioneerQ38StreamWord((a-0x72000)/4));
+		okay &= io.Q38PanelRead(a)==(a<0x72000?0:PioneerQ38ActiveStreamWord((a-0x72000)/4));
 	return okay;
 }
 template<class IO> bool PioneerQ38StreamPrepare(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
@@ -26,8 +42,8 @@ template<class IO> bool PioneerQ38StreamPrepare(IO& io,const tt_dram_samples_res
 	lease.saved=true;
 	if (!PioneerQ38PanelHeld(io,dram,noc,store,banks)) { lease.unsafe=true; return false; }
 	lease.dirty=true;
-	for (uint32_t a=0x70000;a<0x74000;a+=4) io.Q38PanelWrite(a,a<0x72000?0:PioneerQ38StreamWord((a-0x72000)/4));
-	io.RuntimeCodeWrite(0,TT_Q38_STREAM_BOOT); lease.ready=PioneerQ38StreamCodeMatches(io); return lease.ready;
+	for (uint32_t a=0x70000;a<0x74000;a+=4) io.Q38PanelWrite(a,a<0x72000?0:PioneerQ38ActiveStreamWord((a-0x72000)/4));
+	io.RuntimeCodeWrite(0,TT_Q38_ACTIVE_BOOT); lease.ready=PioneerQ38StreamCodeMatches(io); return lease.ready;
 }
 template<class IO> bool PioneerQ38StreamCommandMatches(IO& io,const PioneerQ38StreamExtent& extent,unsigned type,bool complete)
 {
@@ -48,11 +64,21 @@ template<class IO> bool PioneerQ38StreamRun(IO& io,const tt_dram_samples_result&
 	r.state=TT_RUNTIME_CONFIG_FAILED; r.prepared=1;
 	if (!PioneerQ38StreamCodeMatches(io)) return false;
 	{
-		const uint32_t descriptor[]={0x31533851,job.type,PioneerQ38PanelProbeBytes(job.type),0,0,job.inputs,extent.address};
-		if (!PioneerQ38PanelStage(io,0x74000,descriptor,7) || !PioneerQ38PanelStage(io,0x94000,job.scales,extent.blocks)
+		const uint32_t descriptor[]={TT_Q38_ACTIVE_MARKER,job.type,PioneerQ38PanelProbeBytes(job.type),0,0,job.inputs,extent.address
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+			,job.groups
+#endif
+		};
+		if (!PioneerQ38PanelStage(io,0x74000,descriptor,sizeof(descriptor)/4) || !PioneerQ38PanelStage(io,0x94000,job.scales,
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+			job.inputs/PioneerQ38StreamBlockInputs(job.type)
+#else
+			extent.blocks
+#endif
+			)
 			|| !PioneerQ38PanelStage(io,0xa0000,job.activation,job.inputs/2)) return false;
-		for (unsigned w=0;w<16;w++) io.Q38PanelWrite(0x84000+w*4,0x7fc00000);
-		for (unsigned w=0;w<16;w++) if (io.Q38PanelRead(0x84000+w*4)!=0x7fc00000) return false;
+		for (unsigned w=0;w<PioneerQ38StreamRows(job);w++) io.Q38PanelWrite(0x84000+w*4,0x7fc00000);
+		for (unsigned w=0;w<PioneerQ38StreamRows(job);w++) if (io.Q38PanelRead(0x84000+w*4)!=0x7fc00000) return false;
 		const uint32_t command[]={extent.address,0,extent.route,0x90000,0,1|(2<<6),0,0,PioneerQ38PanelProbeBytes(job.type),0};
 		if (!BlackholeHostWriteCommand(io,command) || !PioneerQ38StreamCommandMatches(io,extent,job.type,false)) return false;
 	}
@@ -65,13 +91,19 @@ template<class IO> bool PioneerQ38StreamRun(IO& io,const tt_dram_samples_result&
 	for (unsigned i=0;i<8;i++) r.before[i]=io.ResidentNocRead(PioneerQ38PanelCounter(i));
 	r.started=1; lease.running=true; r.state=TT_RUNTIME_COMPLETION_FAILED;
 	io.RuntimeResetWrite(0x46800);
-	for (unsigned attempt=0;attempt<10000;attempt++) {
+	for (unsigned attempt=0;attempt<
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+		150000; // explicit15s bound for up to16 row groups,not a retry
+#else
+		10000;
+#endif
+		attempt++) {
 		r.polls++; if (io.ResetRead()!=0x46800) break;
 		r.phase=io.RuntimeStatusRead(0); r.panels=io.RuntimeStatusRead(1); r.marker=io.RuntimeStatusRead(2);
-		if (r.marker==TT_Q38_STREAM_FAULT) break;
-		if (r.phase==TT_Q38_STREAM_DONE && r.panels==job.inputs/16 && r.marker==TT_Q38_STREAM_MARKER) {
+		if (r.marker==TT_Q38_ACTIVE_FAULT) break;
+		if (r.phase==TT_Q38_ACTIVE_DONE && r.panels==PioneerQ38StreamGroups(job)*(job.inputs/16) && r.marker==TT_Q38_ACTIVE_MARKER) {
 			io.Pause(); r.pc[0]=io.RuntimePcRead(); io.Pause(); r.pc[1]=io.RuntimePcRead();
-			if (r.pc[0]==TT_Q38_STREAM_PARK && r.pc[1]==r.pc[0]) { r.completed=1; break; }
+			if (r.pc[0]==TT_Q38_ACTIVE_PARK && r.pc[1]==r.pc[0]) { r.completed=1; break; }
 		}
 		io.Pause();
 	}
@@ -84,7 +116,7 @@ template<class IO> bool PioneerQ38StreamRun(IO& io,const tt_dram_samples_result&
 		if (uint32_t(r.after[i]-r.before[i])!=expected) goto uncertain;
 	}
 	r.state=TT_RUNTIME_PASSED;
-	for (unsigned row=0;row<16;row++) {
+	for (unsigned row=0;row<PioneerQ38StreamRows(job);row++) {
 		job.output[row]=io.Q38PanelRead(0x84000+row*4);
 		if ((job.output[row]&0x7f800000)==0x7f800000) r.state=TT_RUNTIME_NONFINITE;
 	}

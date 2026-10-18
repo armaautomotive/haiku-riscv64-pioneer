@@ -11,9 +11,9 @@ int main()
 	(void)&PrepareStream; (void)&Stream;
 	PioneerProbeCookie cookie,foreign; tt_q38_stream_support support={};
 	assert(Q38StreamControl(&cookie,TT_PCI_PROBE_Q38_STREAM_SUPPORT,&support,sizeof(support))==B_OK
-		&& support.driver==49 && support.version==1 && support.local_rows==16 && support.max_inputs==17408
+		&& support.driver==TT_Q38_STREAM_DRIVER && support.version==TT_Q38_STREAM_ABI && support.local_rows==TT_Q38_STREAM_OUTPUT_ROWS && support.max_inputs==17408
 		&& support.banks==7 && !support.model_inference && !cookie.context);
-	auto job=StreamJob();
+	auto job=StreamJob(12,5120,0,3);
 	assert(Q38StreamControl(&cookie,TT_PCI_PROBE_Q38_STREAM_RUN,&job,sizeof(job))==B_NOT_ALLOWED);
 	Begin(cookie);
 	assert(AcquireProbeLock(&cookie)==B_NOT_ALLOWED);
@@ -34,11 +34,11 @@ int main()
 	writes=cookie.context->io.panelWrites;
 	assert(Q38StreamControl(&cookie,TT_PCI_PROBE_Q38_STREAM_RUN,&job,sizeof(job))==B_NOT_ALLOWED && writes==cookie.context->io.panelWrites);
 	End(cookie,true);
-	Begin(cookie); job=StreamJob(); failCopy=copyCalls+2;
+	Begin(cookie); job=StreamJob(12,5120,0,3); failCopy=copyCalls+2;
 	assert(Q38StreamControl(&cookie,TT_PCI_PROBE_Q38_STREAM_RUN,&job,sizeof(job))==-99 && cookie.context && sRuntimeOwner==&cookie
 		&& cookie.context->io.launches==1 && !cookie.context->Unsafe()); failCopy=0; End(cookie,true);
 	for (unsigned scenario=1;scenario<=15;scenario++) {
-		Begin(cookie); cookie.context->io.scenario=scenario; job=StreamJob();
+		Begin(cookie); cookie.context->io.scenario=scenario; job=StreamJob(12,5120,0,3);
 		assert(Q38StreamControl(&cookie,TT_PCI_PROBE_Q38_STREAM_RUN,&job,sizeof(job))==B_OK);
 		bool clean=scenario==7 || scenario==8;
 		assert(bool(job.result.recovery_required)==!clean && sColdRecoveryRequired==!clean && cookie.context->banks.Quarantined()==!clean);

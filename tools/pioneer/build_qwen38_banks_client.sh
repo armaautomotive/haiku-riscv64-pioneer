@@ -29,6 +29,11 @@ case "${PIONEER_Q38_BLOCK_CLIENT:-0}" in
  *) exit 2;;
 esac
 if [ "$source" = pioneer_q38_stream_probe ]; then extra="$extra -ffp-contract=off"; fi
+case "${PIONEER_Q38_ROWS_CLIENT:-0}" in
+ 0) ;;
+ 1) [ "$source" = pioneer_q38_stream_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_STREAM_DIAGNOSTICS:-0}" in
  0) ;;
  1) [ "$source" = pioneer_q38_stream_probe ] || exit 2; extra="$extra -DPIONEER_Q38_STREAM_DIAGNOSTICS";;

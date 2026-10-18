@@ -44,6 +44,52 @@ static bool Upload(int fd,unsigned bank,uint64_t offset,const uint8_t* data,unsi
 }
 static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8_t>& packed,unsigned trial,unsigned ordinal)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	unsigned groups=ordinal%3==0?1:ordinal%3==1?3:16;
+	tt_q38_stream_probe r={}; r.version=TT_Q38_STREAM_ABI; r.type=type; r.inputs=inputs; r.bank=ordinal%7; r.groups=groups;
+	unsigned bytes=PioneerQ38StreamBytes(r),columns=PioneerQ38StreamBlockInputs(type),blocks=inputs/columns,tileBytes=PioneerQ38PanelTileBytes(type),rows=groups*16;
+	if (packed.size()!=bytes) return false;
+	r.offset=(ordinal&1)?PioneerResidentBanks::Capacity-uint64_t((bytes+4095)/4096)*4096:0;
+	for (unsigned k=0;k<inputs;k++) r.activation[k/2]|=uint32_t(PioneerInt8Operand(int((k*29+trial*17)%256)-128))<<((k%2)*16);
+	for (unsigned b=0;b<blocks;b++) r.scales[b]=PioneerAttentionBits(b%3?-.03125f:.012345f);
+	float expected[256]={};
+	for (unsigned group=0;group<groups;group++) for (unsigned b=0;b<blocks;b++) for (unsigned p=0;p<columns/16;p++) {
+		PioneerQ38Panel panel;
+		if (!PioneerQ38UnpackPanel(type,packed.data()+(group*blocks+b)*tileBytes,tileBytes,p,&panel)) return false;
+		int inputSum=0;
+		for (unsigned k=0;k<16;k++) { unsigned at=b*columns+p*16+k; uint16_t a=uint16_t(r.activation[at/2]>>((at%2)*16)); inputSum+=int(a&1023)*((a&0x8000)?-1:1); }
+		for (unsigned row=0;row<16;row++) {
+			int dot=0;
+			for (unsigned k=0;k<16;k++) {
+				unsigned e=k*16+row,at=b*columns+p*16+k; uint16_t w=uint16_t(panel.operand[e/2]>>((e%2)*16)),a=uint16_t(r.activation[at/2]>>((at%2)*16));
+				dot+=int(w&1023)*((w&0x8000)?-1:1)*int(a&1023)*((a&0x8000)?-1:1);
+			}
+			float scale=PioneerAttentionFloat(r.scales[b]);
+			float product=(PioneerAttentionFloat(panel.coefficient[row])*scale)*float(dot),correction=(PioneerAttentionFloat(panel.minimum[row])*scale)*float(inputSum);
+			expected[group*16+row]+=product+correction;
+		}
+	}
+	if (!Upload(fd,r.bank,r.offset,packed.data(),bytes) || !Call(fd,TT_PCI_PROBE_Q38_STREAM_RUN,&r,sizeof(r))) return false;
+	const auto& v=r.result;
+	bool okay=v.version==1 && v.state==TT_RUNTIME_PASSED && v.prepared && v.started && v.completed && v.stopped && !v.recovery_required
+		&& v.context_reset && v.phase==0x7200c && v.panels==groups*(inputs/16) && v.marker==0x31523851 && v.pc[0]==0x72038 && v.pc[1]==v.pc[0];
+	for (unsigned i=0;i<8;i++) {
+		unsigned n=i==1?bytes/64:(i==0 || i==2 || i==3 || i==6)?groups*blocks:0;
+		okay &= uint32_t(v.after[i]-v.before[i])==n;
+	}
+	unsigned mismatches=0; for (unsigned row=0;row<rows;row++) mismatches+=r.output[row]!=PioneerAttentionBits(expected[row]);
+#ifdef PIONEER_Q38_STREAM_DIAGNOSTICS
+	if (!okay || mismatches) {
+		printf("FAIL_BATCH_PROOF phase=%x panels=%u expected=%u marker=%x polls=%u prepared=%u context_reset=%u\n",
+			v.phase,v.panels,groups*(inputs/16),v.marker,v.polls,v.prepared,v.context_reset);
+		for (unsigned i=0;i<8;i++) printf("FAIL_COUNTER%u before=%u after=%u delta=%u expected=%u\n",i,v.before[i],v.after[i],uint32_t(v.after[i]-v.before[i]),
+			i==1?bytes/64:(i==0 || i==2 || i==3 || i==6)?groups*blocks:0);
+	}
+#endif
+	printf("BATCH_FULL_K_PRIMITIVE type=%u K=%u N=%u bank=%u last=%u state=%u start/complete/stop=%u/%u/%u cold=%u pc=%x/%x exact_errors=%u\n",
+		type,inputs,rows,r.bank,ordinal&1,v.state,v.started,v.completed,v.stopped,v.recovery_required,v.pc[0],v.pc[1],mismatches);
+	return okay && !mismatches;
+#else
 	tt_q38_stream_probe r={}; r.version=1; r.type=type; r.inputs=inputs; r.bank=ordinal%7;
 	unsigned bytes=PioneerQ38StreamBytes(r),columns=PioneerQ38StreamBlockInputs(type),blocks=inputs/columns,tileBytes=PioneerQ38PanelTileBytes(type);
 	if (packed.size()!=bytes) return false;
@@ -87,6 +133,7 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 	printf("FULL_K_PRIMITIVE type=%u K=%u bank=%u last=%u state=%u start/complete/stop=%u/%u/%u cold=%u pc=%x/%x exact_errors=%u\n",
 		type,inputs,r.bank,ordinal&1,v.state,v.started,v.completed,v.stopped,v.recovery_required,v.pc[0],v.pc[1],mismatches);
 	return okay && !mismatches;
+#endif
 }
 int main(int argc,char** argv)
 {
@@ -100,8 +147,12 @@ int main(int argc,char** argv)
 	}
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
 	tt_q38_stream_support support={}; tt_q38_bank_support storage={};
-	bool okay=Call(fd,TT_PCI_PROBE_Q38_STREAM_SUPPORT,&support,sizeof(support)) && support.driver==49 && support.version==1
-		&& support.local_rows==16 && support.max_inputs==17408 && support.banks==7 && !support.model_inference;
+	bool okay=Call(fd,TT_PCI_PROBE_Q38_STREAM_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_STREAM_DRIVER && support.version==TT_Q38_STREAM_ABI
+		&& support.local_rows==TT_Q38_STREAM_OUTPUT_ROWS && support.max_inputs==17408 && support.banks==7 && !support.model_inference;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	printf("BATCH_METADATA observed_driver=%u ABI=%u max_rows=%u max_K=%u banks=%u inference=%u accepted=%u;NO_BEGIN_YET\n",
+		support.driver,support.version,support.local_rows,support.max_inputs,support.banks,support.model_inference,unsigned(okay));
+#endif
 	if (!okay || !strcmp(argv[1],"--support")) { close(fd); return okay?0:1; }
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&storage,sizeof(storage)) && storage.driver==45 && storage.version==1 && storage.banks==7
 		&& storage.page_bytes==4096 && storage.max_pages==4 && storage.storage_only==1 && storage.bytes_per_bank==PioneerResidentBanks::Capacity;
@@ -111,14 +162,38 @@ int main(int argc,char** argv)
 		&& session.result.active && session.result.host_ready && !session.result.cold && !session.result.capabilities && session.result.bytes==PioneerResidentBanks::Total;
 	unsigned cases=0,at=0;
 	const unsigned kinds[]={8,8,12,12,14,14,12,12},widths[]={5120,5120,5120,5120,5120,5120,17408,17408};
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	unsigned rowOffsets[8]={};
+	if (real) for (unsigned i=0;i<8;i++) { rowOffsets[i]=at; at+=(widths[i]/PioneerQ38StreamBlockInputs(kinds[i]))*PioneerQ38PanelTileBytes(kinds[i]); }
+#endif
 	for (unsigned ordinal=0;okay && ordinal<(real?8U:9U);ordinal++) {
 		unsigned type=real?kinds[ordinal]:(ordinal/3==0?8:ordinal/3==1?12:14),inputs=real?widths[ordinal]:(ordinal%3==0?5120:ordinal%3==1?6144:17408);
 		unsigned columns=PioneerQ38StreamBlockInputs(type),tileBytes=PioneerQ38PanelTileBytes(type),blockBytes=type==8?34:type==12?144:210;
 		std::vector<uint8_t> packed((inputs/columns)*tileBytes,0);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+		unsigned groups=ordinal%3==0?1:ordinal%3==1?3:16,groupBytes=unsigned(packed.size()); packed.resize(groupBytes*groups,0);
+#endif
 		if (real) {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+			// Authenticated first/last16-row groups are INTERLEAVED samples,
+			// NOT a claim of one contiguous N-row checkpoint tensor fragment.
+			for (unsigned g=0;g<groups;g++) {
+				unsigned source=rowOffsets[(ordinal&~1U)+((g+ordinal)%2)];
+				if (source>publicRows.size() || groupBytes>publicRows.size()-source) { okay=false; break; }
+				memcpy(packed.data()+g*groupBytes,publicRows.data()+source,groupBytes);
+			}
+			if (!okay) break;
+#else
 			if (at>publicRows.size() || packed.size()>publicRows.size()-at) { okay=false; break; }
 			memcpy(packed.data(),publicRows.data()+at,packed.size()); at+=unsigned(packed.size());
-		} else for (unsigned b=0;b<inputs/columns;b++) for (unsigned row=0;row<16;row++) {
+#endif
+		} else for (unsigned b=0;b<
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+			packed.size()/tileBytes;
+#else
+			inputs/columns;
+#endif
+			b++) for (unsigned row=0;row<16;row++) {
 			uint8_t* tile=packed.data()+b*tileBytes;
 			for (unsigned byte=0;byte<blockBytes;byte++) tile[byte*16+row]=uint8_t(byte*37+row*59+b*13);
 			unsigned d=type==14?208:0; uint16_t half=row%3?uint16_t(0x3c00+row*13):uint16_t(1+row);
@@ -134,6 +209,10 @@ int main(int argc,char** argv)
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored && session.result.host_released && !session.result.cold;
 	if (close(fd)) okay=false;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	printf("%s_BATCH_FULL_K_%s_PRIMITIVES cases=%u;KNOWN_CLEAN_END=%u;NOT_CONTIGUOUS_CHECKPOINT_MATRIX_OR_MULTIWORKER_OR_GRAPH_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",real?"AUTHENTIC_ROW_MIXES":"SYNTHETIC",cases,unsigned(okay));
+#else
 	printf("%s_LOCAL_FULL_K_%s_PRIMITIVES cases=%u;KNOWN_CLEAN_END=%u;NOT_MULTIWORKER_OR_GRAPH_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",real?"PUBLIC_ROWS":"SYNTHETIC",cases,unsigned(okay));
+#endif
 	return okay && cases==(real?8U:9U)?0:1;
 }

@@ -28,6 +28,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_BLOCK)
 #error Q38 fullK stream requires the qualified block protocol and all-bank owner
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM)
+#error Q38 batch rows require the guarded fullK/all-bank owner
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -2515,7 +2518,7 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	if (operation==TT_PCI_PROBE_Q38_STREAM_SUPPORT) {
 		if (length!=sizeof(tt_q38_stream_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_stream_support support={49,1,16,17408,7,0};
+		const tt_q38_stream_support support={TT_Q38_STREAM_DRIVER,TT_Q38_STREAM_ABI,TT_Q38_STREAM_OUTPUT_ROWS,17408,7,0};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_STREAM_RUN || length!=sizeof(tt_q38_stream_probe)) return B_BAD_VALUE;
@@ -2533,7 +2536,7 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 			uint32(c->bytes/4096),*request,extent)) status=B_ENTRY_NOT_FOUND;
 		else {
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
-			for (unsigned row=0;row<16;row++) request->output[row]=0;
+			for (unsigned row=0;row<TT_Q38_STREAM_OUTPUT_ROWS;row++) request->output[row]=0;
 			bool ready=c->lease.ready;
 			if (!ready && !c->lease.saved) ready=PioneerResidentLeaseBegin(c->io,noc,c->lease);
 			ready=ready && c->io.SelectRuntimeCore(0) && c->io.MapQ38Panel()
@@ -2753,7 +2756,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	support.version=48; // complete LOCAL quantization block,NOT fullK/model support
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
-	support.version=49; // guarded sixteen-row fullK probe,NOT model/Assistant support
+	support.version=TT_Q38_STREAM_DRIVER; // guarded fullK primitive,NOT model/Assistant support
 #endif
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }

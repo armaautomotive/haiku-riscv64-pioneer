@@ -15,4 +15,10 @@ done
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_q38_stream_control_test.cpp" -o "$temporary/control"
 UBSAN_OPTIONS=halt_on_error=1 "$temporary/control"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS "$directory/pioneer_q38_stream_probe_test.cpp" -o "$temporary/rows"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/rows"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS -I"$temporary" "$directory/pioneer_q38_stream_control_test.cpp" -o "$temporary/rows-control"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/rows-control"
 printf 'Offline fullK launch policy evidence retained at %s\n' "$temporary"

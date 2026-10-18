@@ -1,6 +1,31 @@
 # Native build status
 
-Latest checkpoint (October18,02:00 UTC / October17 Vancouver): Haiku UP/SSH,
+Latest checkpoint (October18,02:10 UTC / October17 Vancouver): Haiku UP/SSH,
+disk/LOADED49 637db0a6,known clean/no active job/UNKNOWN. Batched50 is
+separately staged at `pioneer-qwen38-rows-20261017-a`,NOT installed/native-
+qualified. Driverce918971/clientd7101b84 reproducible;old49 driver637db0a6,
+normal client49bc095f and default43control2df0e0f8 EXACT unchanged. Native
+new-client metadata observed49/ABI1/N16 and REFUSED before BEGIN;installer
+86d321cd REFUSED loaded49 with NO backup/incoming/driver writes. Native cold
+trial planned with same SD-free `rows50-20261017-a`;not dispatched yet.
+
+50/ABI2 owns1..16 output groups,N<=256,K5120/6144/17408;one vector/scales,
+private complete initialized span,exact total NoC reads/flits/shared-accepted/
+zero write counts,new Q8R1 marker/count/PC proof,all output finite checks,
+explicit15s single-launch bound (NOT retry). OFFLINE378 extent shapes,189
+launch shapes and actual extracted handler/lock/fail-stop tests PASS. Actual
+frozen image1111a05c matches every instruction/zero-padding word and passes
+9 synthetic+6 REAL contiguous N48 first/last matrices. Ordinary49/diag49/
+batch50 real-client tests pass9 synthetic/8 authenticated sample groups,
+21 completion+38 bulk corruptions,all256 outputs INCLUDING injected LAST
+row255 corruption. Native50 public qualification will INTERLEAVE existing
+authenticated first/last16-row groups,NOT claim one contiguous checkpoint
+matrix. Exact725504B MEMORY SHA still required BEFORE card open. Both old
+49 and native50 use unchanged fixed sample file in49 staging. No new model/
+Assistant target or full graph/inference/speed claim. Firmware/OS/kernel/
+Linux default/dirty llama untouched.
+
+Previous checkpoint (October18,02:00 UTC / October17 Vancouver): Haiku UP/SSH,
 64 CPUs/137034936320B RAM/NIC0b83ceed. Disk/LOADED driver49 637db0a6,
 known clean/no active job/UNKNOWN/cold latch. Cold recovery completed via
 same pinned SD-free `stream49-20261017-a`;fresh boot had no card module,

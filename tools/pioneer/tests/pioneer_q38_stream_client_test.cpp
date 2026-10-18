@@ -39,7 +39,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
 	if (op==TT_PCI_PROBE_Q38_STREAM_SUPPORT) {
-		assert(bytes==sizeof(tt_q38_stream_support)); *static_cast<tt_q38_stream_support*>(data)={fault==4?48U:49U,1,16,17408,7,0}; return 0;
+		assert(bytes==sizeof(tt_q38_stream_support)); *static_cast<tt_q38_stream_support*>(data)={fault==4?unsigned(TT_Q38_STREAM_DRIVER)-1:unsigned(TT_Q38_STREAM_DRIVER),TT_Q38_STREAM_ABI,TT_Q38_STREAM_OUTPUT_ROWS,17408,7,0}; return 0;
 	}
 	if (op==TT_PCI_PROBE_Q38_BANK_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_bank_support)); *static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,fault==5?3U:4U,1,PioneerResidentBanks::Capacity}; return 0;
@@ -79,9 +79,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 		auto found=pages.find((uint64_t(r.bank)<<32)|(r.offset+p*4096)); assert(found!=pages.end());
 		unsigned copy=unsigned(packed.size())-p*4096; if (copy>4096) copy=4096; memcpy(packed.data()+p*4096,found->second.data(),copy);
 	}
-	float expected[16]={}; unsigned columns=PioneerQ38StreamBlockInputs(r.type),blocks=r.inputs/columns,tileBytes=PioneerQ38PanelTileBytes(r.type);
-	for (unsigned b=0;b<blocks;b++) for (unsigned p=0;p<columns/16;p++) {
-		PioneerQ38Panel panel; assert(PioneerQ38UnpackPanel(r.type,packed.data()+b*tileBytes,tileBytes,p,&panel));
+	float expected[TT_Q38_STREAM_OUTPUT_ROWS]={}; unsigned columns=PioneerQ38StreamBlockInputs(r.type),blocks=r.inputs/columns,tileBytes=PioneerQ38PanelTileBytes(r.type),groups=PioneerQ38StreamGroups(r);
+	for (unsigned group=0;group<groups;group++) for (unsigned b=0;b<blocks;b++) for (unsigned p=0;p<columns/16;p++) {
+		PioneerQ38Panel panel; assert(PioneerQ38UnpackPanel(r.type,packed.data()+(group*blocks+b)*tileBytes,tileBytes,p,&panel));
 		int inputSum=0;
 		for (unsigned k=0;k<16;k++) { unsigned at=b*columns+p*16+k; auto a=uint16_t(r.activation[at/2]>>((at%2)*16)); inputSum+=int(a&1023)*((a&0x8000)?-1:1); }
 		for (unsigned row=0;row<16;row++) {
@@ -91,14 +91,20 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 				dot+=int(w&1023)*((w&0x8000)?-1:1)*int(a&1023)*((a&0x8000)?-1:1);
 			}
 			float scale=PioneerAttentionFloat(r.scales[b]),product=(PioneerAttentionFloat(panel.coefficient[row])*scale)*float(dot),correction=(PioneerAttentionFloat(panel.minimum[row])*scale)*float(inputSum);
-			expected[row]+=product+correction;
+			expected[group*16+row]+=product+correction;
 		}
 	}
-	for (unsigned row=0;row<16;row++) r.output[row]=PioneerAttentionBits(expected[row]);
+	for (unsigned row=0;row<PioneerQ38StreamRows(r);row++) r.output[row]=PioneerAttentionBits(expected[row]);
 	auto& v=r.result; v={}; v.version=1; v.state=TT_RUNTIME_PASSED; v.prepared=v.started=v.completed=v.stopped=v.context_reset=1;
-	v.phase=0x7200c; v.panels=r.inputs/16; v.marker=0x31533851; v.pc[0]=v.pc[1]=0x72038;
+	v.phase=0x7200c; v.panels=groups*(r.inputs/16);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	v.marker=0x31523851;
+#else
+	v.marker=0x31533851;
+#endif
+	v.pc[0]=v.pc[1]=0x72038;
 	for (unsigned i=0;i<8;i++) {
-		unsigned n=i==1?unsigned(packed.size())/64:(i==0 || i==2 || i==3 || i==6)?blocks:0;
+		unsigned n=i==1?unsigned(packed.size())/64:(i==0 || i==2 || i==3 || i==6)?groups*blocks:0;
 		v.before[i]=UINT32_MAX-10; v.after[i]=v.before[i]+n;
 	}
 	if (fault==1) { failed=true; errno=EIO; return -1; }
@@ -112,6 +118,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 		}
 	}
 	if (fault==3) { failed=true; r.output[15]^=1; }
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	if (fault==7 && r.groups==16) { failed=true; r.output[255]^=1; }
+#endif
 	return 0;
 }
 #define open MockOpen
@@ -142,6 +151,9 @@ int main(int argc,char** argv)
 	for (unsigned w=0;w<38;w++) {
 		Reset(6,w); assert(Run("--synthetic")==1 && failed && uploads==1 && !runs && begins==1 && !ends && closes==1);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_ROWS
+	Reset(7); assert(Run("--synthetic")==1 && failed && runs==3 && begins==1 && !ends && closes==1);
+#endif
 	for (unsigned f:{1U,2U}) {
 		Reset(); authFault=f; assert(Run("--public-fixtures")==1 && !opens && !begins && !uploads && !runs); authFault=0;
 	}
