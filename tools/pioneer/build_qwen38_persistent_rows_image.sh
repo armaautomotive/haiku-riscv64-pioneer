@@ -7,6 +7,7 @@ cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
 case "${PIONEER_Q38_FAULT_RETURN:-0}" in 0) fault_as=;; 1) fault_as='--defsym PIONEER_Q38_FAULT_RETURN=1';; *) exit 2;; esac
 case "${PIONEER_Q38_PEER_DWARF:-0}" in 0) dwarf=;; 1) dwarf=-g;; *) exit 2;; esac
+case "${PIONEER_Q38_PEER_PROGRESS:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 1:8 ] || exit 2; dwarf="$dwarf -DPIONEER_Q38_PEER_PROGRESS";; *) exit 2;; esac
 case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in
  0) source=blackhole_qwen38_persistent.cpp;;
  1) source=blackhole_qwen38_vector_persistent.cpp;;
@@ -16,6 +17,7 @@ case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in
  5) source=blackhole_qwen38_vector_resident_persistent.cpp;;
  6) source=blackhole_qwen38_bfloat_persistent.cpp;;
  7) source=blackhole_qwen38_sfpu_accumulator_persistent.cpp;;
+ 8) [ "${PIONEER_Q38_PEER_PROGRESS:-0}" = 1 ] || exit 2; source=blackhole_qwen38_progress_persistent.cpp;;
  *) exit 2;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac

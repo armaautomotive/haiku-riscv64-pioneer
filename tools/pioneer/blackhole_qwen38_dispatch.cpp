@@ -103,8 +103,21 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 	Checkpoint(0x54000201,worker);
 #endif
 	if (status[2] || status[3]!=0x32503851 || status[0]>sequence || status[1]>sequence || status[4]>2) block_fault_park();
-	for (unsigned i=5;i<16;i++) if (status[i]) block_fault_park();
+	for (unsigned i=
+#ifdef PIONEER_Q38_PEER_PROGRESS
+		6
+#else
+		5
+#endif
+		;i<16;i++) if (status[i]) block_fault_park();
+#ifdef PIONEER_Q38_PEER_PROGRESS
+	// Isolated diagnostic protocol ONLY. Bounded marker permitted ONLY
+	// while the peer is running;ALL terminal/WAIT/proof fields stay exact.
+	if (status[5]>8 || (status[4]!=1 && status[5])) block_fault_park();
+	Checkpoint(0x59020000|(worker<<8)|(status[0]==sequence?1U:0U)|(status[1]==sequence?2U:0U)|(status[4]<<2),status[5]);
+#else
 	Checkpoint(previous?0x54000202:0x54000203,worker);
+#endif
 	if (previous) {
 		if (status[0]!=sequence || status[1]!=sequence || status[4]) block_fault_park();
 	} else {

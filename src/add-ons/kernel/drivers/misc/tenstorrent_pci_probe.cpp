@@ -55,6 +55,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Q38 transfer58 diagnostics require the guarded fault-return lifecycle
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC)
+#error Q38 progress59 diagnostics require the guarded transfer-diagnostic lifecycle
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;

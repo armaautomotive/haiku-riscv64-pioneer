@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+#include "PioneerQ38ProgressImages.h"
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC
 #include "PioneerQ38TransferRootImage.h"
 #endif
@@ -27,6 +30,9 @@ enum { TT_Q38_DISPATCH_BOOT=0x0006c06f,TT_Q38_DISPATCH_DONE=0x7200c,
  TT_Q38_PEER_MARKER=0x32503851,TT_Q38_PEER_WAIT_LOAD=0x7204c,TT_Q38_PEER_WAIT_BRANCH=0x72050 };
 static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+ return PioneerQ38ProgressRootWord(word);
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC
  return PioneerQ38TransferRootWord(word);
 #else
@@ -283,6 +289,7 @@ static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
  return word<sizeof(code)/sizeof(code[0])?code[word]:0;
 #endif
 #endif
+#endif
 }
 static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 {
@@ -526,6 +533,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+ return worker>=120?UINT32_MAX:worker?PioneerQ38ProgressPeerWord(word):PioneerQ38DispatchRootWord(word);
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
  return worker>=120?UINT32_MAX:worker?PioneerQ38FaultPeerWord(word):PioneerQ38DispatchRootWord(word);
 #else
@@ -536,6 +546,7 @@ static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
  return worker>=120?UINT32_MAX:worker?PioneerQ38VectorPeerWord(word):PioneerQ38DispatchRootWord(word);
 #else
  return worker>=120?UINT32_MAX:worker?PioneerQ38PersistentPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
 #endif
 #endif
 #endif

@@ -76,11 +76,11 @@ int main(int argc,char** argv)
 		&& support.driver==TT_Q38_DISPATCH_DRIVER && support.version==1 && support.peers==119 && support.rows==256 && support.max_inputs==17408
 		&& support.banks==7 && support.offset_alignment==64 && support.persistent==1 && !support.model_inference && !cookie.context);
 	//54/55/56 reject EACH OTHER'S support/RUN before allocation/IO.
-	for (unsigned other:{0x54f2U,0x55f2U,0x56f2U,0x57f2U,0x58f2U}) if (B_DEVICE_OP_CODES_END+other!=TT_PCI_PROBE_Q38_DISPATCH_SUPPORT)
+	for (unsigned other:{0x54f2U,0x55f2U,0x56f2U,0x57f2U,0x58f2U,0x59f2U}) if (B_DEVICE_OP_CODES_END+other!=TT_PCI_PROBE_Q38_DISPATCH_SUPPORT)
 		assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+other,&support,sizeof(support))==B_BAD_VALUE && !cookie.context);
 	Begin(cookie,argv[1]); auto job=Request();
 	unsigned namespaceWrites=cookie.context->io.Writes(),namespaceSelects=cookie.context->io.selects;
-	for (unsigned other:{0x54f3U,0x55f3U,0x56f3U,0x57f3U,0x58f3U}) if (B_DEVICE_OP_CODES_END+other!=TT_PCI_PROBE_Q38_DISPATCH_RUN)
+	for (unsigned other:{0x54f3U,0x55f3U,0x56f3U,0x57f3U,0x58f3U,0x59f3U}) if (B_DEVICE_OP_CODES_END+other!=TT_PCI_PROBE_Q38_DISPATCH_RUN)
 		assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+other,job.get(),sizeof(*job))==B_BAD_VALUE
 			&& !cookie.context->q38Dispatch && cookie.context->io.Writes()==namespaceWrites && cookie.context->io.selects==namespaceSelects);
 	assert(AcquireProbeLock(&cookie)==B_NOT_ALLOWED);

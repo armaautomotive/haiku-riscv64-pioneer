@@ -1,5 +1,43 @@
 # Native build status
 
+October18,21:56 UTC native58 first two-worker RUN FAILED/exit1/processgone,
+root_phase54000203,count2,marker464d3851. No transfer-mask failure or peer
+fault return-PC captured. This later status checkpoint does NOT establish
+the cause or prove the peer is hung rather than unfinished. Exact host log
+/private/tmp/pioneer-q38-transfer-native-failure-20261018-k.log. NO retry,
+END/reset/restore/free/extra card read. Clean Haiku shutdown/channel1 off
+confirmed before21:48:38 UTC. After >=300s rest,ONE normal on succeeded;
+Linux64/NVMe root/unbound PCI COMMAND0000 verified. No PSU-switch/SD change.
+
+New OFFLINE59 diagnostic09ef868a/client7722dc5e,rootb04785a9(8032B),peer
+df33e3b9(7584B),unchanged8192B bounds. Separate fixed-format/resident-affine/
+four-phase diagnostic sources preserve original compute configuration and
+default sources unchanged;only diagnostic Drain/Config are outlined to
+fit. Existing status[5] gains BOUNDED0..8 progress ONLY while RUNNING;
+it MUST be zero for WAIT/STOP/completion. Remaining unused words and ALL
+final code/source/counter/output/terminal/cleanup proofs remain exact.
+No extra NoC/host read/packet or retry. Separate59f2/59f3,inference0,NO
+59 model binary/Assistant mode. Progress1 shared-input/validation,2 Setup,
+3 Dst initialization,4 fetch/affine preparation,5 vector unpack,6 Matrix,
+7 dot-readback/affine accumulation,8 post-math proof. Existing packet
+checkpoint59020000|worker<<8|started-equals-seq[0]|finished-equals-seq[1]|
+phase[3:2],detail=progress. Fault RA and transfer-mask diagnostics retained.
+Exact debug ELF /private/tmp/pioneer-q38-progress-peer-image-20261018-q/program.elf.
+
+ASan/UBSan exact root+actual peers/real rows/repeated FP32+FP64 parity and
+frozen stages3/5/6/8 with zero gathers after UNKNOWN PASS xQEMTgDr.
+RUN GGiT05fZ,END Z55vaYtx BOTH modes,handler yB2iSvHg,boot yLiQxC7B;
+same-root proof dYIZikSy,root fault masks+forbidden completed progress
+p6ADdmmb,session rXwMJh8U,MMIO XmbcM3Ag,real failed-client8DLw4LAw PASS.
+54..58 all reject59 before IO/BEGIN (handlers w1Caq0df/C2C1VADN/BBaPXft6/
+jSYBteLJ/96mBhV8D;sessions TFjAJYUy/ElU82TJO/Saxs8V2e/S2tc43eb/WfDBPKnp).
+Default57 RESIDENT-affine image rebuild is EXACT673313ca;plain vector
+variant1 is a DIFFERENT unselected image,not the57/55 artifact. Early59
+plain-vector draft1a1664dd/e2ac2626 WITHHELD;only final09ef/df33 pins apply.
+271 actual installer/restore tests PASS;helper26c62c6c requires cold/unloaded
+58,preserves58 and43/52/54 separately;prior55/57 backups remain unchanged
+in stage-k. Native59 not yet staged/installed.
+
 October18,21:39 UTC native57 FAILED two-worker first RUN,exit1/processgone:
 root_phase54000102,count1,marker464d3851,started1/completed0/held0. This
 is a transfer completion rejection,not the earlier peer2-status rejection;

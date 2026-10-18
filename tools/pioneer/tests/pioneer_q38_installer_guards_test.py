@@ -133,7 +133,7 @@ def check(script, fault=None, restore=None, text_override=None):
             assert result.returncode == 0 and installed.read_bytes() == new, (script.name, result.stdout, result.stderr)
             if restore:
                 result = subprocess.run(['/bin/sh', str(local), restore], capture_output=True, text=True, timeout=15)
-                expected = old if restore == '--restore57' else q55 if restore == '--restore55' else q54 if restore == '--restore54' else q43 if restore == '--restore43' else q52
+                expected = old if restore in ['--restore57', '--restore58'] else q55 if restore == '--restore55' else q54 if restore == '--restore54' else q43 if restore == '--restore43' else q52
                 assert result.returncode == 0 and installed.read_bytes() == expected, (script.name, restore, result.stdout, result.stderr)
 
 
@@ -159,6 +159,8 @@ if __name__ == '__main__':
             restores.append('--restore55')
         if '--restore57' in script.read_text():
             restores.append('--restore57')
+        if '--restore58' in script.read_text():
+            restores.append('--restore58')
         for restore in restores:
             check(script, restore=restore)
             count += 1

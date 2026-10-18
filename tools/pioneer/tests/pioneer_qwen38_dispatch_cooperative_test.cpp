@@ -30,6 +30,7 @@ using CooperativePeer=PersistentRows;
 // Only the wire/GDDR and read-only debug reset register are simulated.
 struct CooperativeDispatch:DispatchMachine {
 	std::vector<std::unique_ptr<CooperativePeer>> actual;
+	unsigned freezeWorker=0,freezeStage=0; bool frozen=false;
 	CooperativeDispatch(const char* root,const char* peer,unsigned workers,unsigned type,unsigned inputs)
 		:DispatchMachine(root,workers,type,inputs) {
 		for (unsigned w=0;w<workers;w++) {
@@ -54,6 +55,9 @@ struct CooperativeDispatch:DispatchMachine {
 	void StepPeer(unsigned w) {
 		auto& p=*actual[w];
 		for (unsigned step=0;step<10000;step++) {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+			if (w+1==freezeWorker && p.memory.at(0x74154)==freezeStage) { frozen=true; break; }
+#endif
 			if (p.pc==TT_Q38_PEER_FAULT_PARK || (p.memory.at(0x74144)==peers[w].requested && (p.pc==0x7204c || p.pc==0x72060))) break;
 			p.StepBlock();
 		}
@@ -136,5 +140,13 @@ int main(int argc,char** argv)
 		}
 		assert(model.Stable()); fclose(f);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+	for (unsigned stage:{3U,5U,6U,8U}) {
+		CooperativeDispatch m(argv[1],argv[2],2,8,5120); m.freezeWorker=2; m.freezeStage=stage;
+		assert(!m.RunRoot() && m.unknown && m.frozen && !m.gathers);
+		assert(m.l1[m.Index(0x17ffc0)]==0x59020205 && m.l1[m.Index(0x17ffc4)]==stage);
+		puts("PASS59 frozen actual peer2 stage captured by ORIGINAL status packet;zero outputs/extra packets after UNKNOWN");
+	}
+#endif
 	puts("PASS OFFLINE cooperative actual ROOT+PEER instructions,ALL completions before outputs,retained peers/no reset,exact math,one-peer UNKNOWN refuses ALL output;NO native/kernel/whole-model/inference/speed qualification");
 }

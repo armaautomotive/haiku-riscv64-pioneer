@@ -18,6 +18,7 @@ struct DispatchMachine:BlockMachine {
 	unsigned faultAt=0,corruptProof=UINT32_MAX,corruptWorker=0,badPcWorker=0,nonfiniteWorker=0;
 	unsigned stopSlowWorker=0; // vary completion order independently of index
 	unsigned stopSnapshotMode=0,pcSamples[119]={};
+	unsigned corruptProgress=0;
 	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false,stuckResponseTag=false;
 	DispatchMachine(const char* path,unsigned workers,unsigned type=12,unsigned inputs=5120)
 		:BlockMachine(path,8,0,1,nullptr,true),active(workers),kind(type),k(inputs) {
@@ -95,6 +96,7 @@ struct DispatchMachine:BlockMachine {
 			for (unsigned i=0;i<16;i++) memory[local+i*4]=0;
 			memory[local]=peer.requested; memory[local+4]=peer.finished; memory[local+12]=0x32503851;
 			memory[local+16]=peer.launched?(peer.finished==peer.requested?(peer.operation==2?2:0):1):0;
+			if (corruptProgress && peer.launched && peer.finished==peer.requested) memory[local+20]=corruptProgress;
 		} else if (remote==0xffb13140) {
 			assert(bytes==4);
 			bool next=stopSnapshotMode==1 || (stopSnapshotMode==2 && (pcSamples[worker-1]++&1));
@@ -195,6 +197,12 @@ int main(int argc,char** argv)
 		assert(!tag.RunRoot() && tag.unknown && !tag.pending && tag.packets==1 && !tag.gathers);
 		assert(tag.l1[tag.Index(0x17ffc0)]==0x58010280 && !tag.l1[tag.Index(0x17ffc4)]);
 		puts("PASS58 ORIGINAL polling values distinguish pending packet/counter mismatch/tag-not-idle;exact remote/worker/delta;NO additional packet or result gather");
+	}
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+	for (unsigned value:{1U,8U,9U}) {
+		DispatchMachine m(argv[1],2); m.corruptProgress=value;
+		assert(!m.RunRoot() && m.unknown && !m.gathers);
 	}
 #endif
 	puts("PASS OFFLINE actual root dispatcher instructions:1/2/7/119 synthetic peers,repeat+ALL119 STOP,ALL descriptors before doors/ALL physical completions before gathers,64 proof faults,nonfinite/PC/NoC/immutable-task faults;NO real-peer/native/kernel/graph/inference/speed qualification");
