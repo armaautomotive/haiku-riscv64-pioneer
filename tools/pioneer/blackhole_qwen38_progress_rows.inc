@@ -55,6 +55,12 @@ static __attribute__((noinline)) void PeerProgress(unsigned stage)
 {
 	Words(0x74140)[5]=stage; Fence();
 }
+static __attribute__((noinline,noreturn)) void PeerFailure(unsigned reason,uint32_t value)
+{
+	// Terminal local diagnostics ONLY;value was ALREADY read/computed.
+	// No extra NoC/host/MMIO read. Normal completion never writes word6.
+	Words(0x74140)[6]=value; PeerProgress(reason); block_fault_park();
+}
 #endif
 #ifdef PIONEER_Q38_VECTOR_INLINE
 // Separate OFFLINE candidate:constant Tensix instructions use the SAME
@@ -350,7 +356,7 @@ extern "C" unsigned block_main()
 #else
 	PioneerQ38AffineReuse affine;
 #endif
-	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
+	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) PeerFailure(9,(type<<16)|bytes);
 #endif
 #endif
 	for (unsigned p=0;p<panels;p++) {
@@ -361,7 +367,7 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 		if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
 #else
-		if (!affine.Panel(p,local)) block_fault_park();
+		if (!affine.Panel(p,local)) PeerFailure(10,(type<<16)|p);
 #endif
 #else
 		if (!
@@ -431,7 +437,7 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_VECTOR_AFFINE
 		// Preserve the original ALL16 dot range checks before vector math.
 		for (unsigned row=0;row<16;row++) {
-			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();
+			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) PeerFailure(11,uint32_t(dot));
 		}
 		if (!PioneerQ38VectorAffineData(emitter,group,Bits(scale),sum)) block_fault_park();
 		for (unsigned row=0;row<16;row++) {
@@ -448,12 +454,12 @@ extern "C" unsigned block_main()
 			if ((raw&0x7f800000)==0x7f800000 || dot<-262144.0f || dot>262144.0f) block_fault_park();
 			if (!(raw&0x7fffffff)) dot=0; // canonical original integer zero
 #else
-			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();
+			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) PeerFailure(11,uint32_t(dot));
 #endif
 			float product=(Float(local->coefficient[row])*scale)*float(dot);
 			float correction=(Float(local->minimum[row])*scale)*float(sum);
 			float value=Float(Words(0x84000)[group*16+row])+(product+correction);
-			if ((Bits(value)&0x7f800000)==0x7f800000) block_fault_park();
+			if ((Bits(value)&0x7f800000)==0x7f800000) PeerFailure(12,Bits(value));
 			Words(0x84000)[group*16+row]=Bits(value);
 		}
 #endif

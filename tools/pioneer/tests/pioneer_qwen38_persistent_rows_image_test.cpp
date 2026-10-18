@@ -10,7 +10,7 @@ struct PersistentRows:SharedRowsMachine {
 	unsigned changeSource=UINT32_MAX;
 	unsigned logicalWorker;
 	bool changeDescriptor=false;
-	bool progressSeen[9]={};
+	bool progressSeen[13]={};
 	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker=69):SharedRowsMachine(path,type,k,groups),logicalWorker(worker) {
 #if !defined(PIONEER_Q38_VECTOR_PERSISTENT_IMAGE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR)
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(worker,word)==(word<code.size()/4?Word(code,word*4):0));
@@ -47,7 +47,7 @@ struct PersistentRows:SharedRowsMachine {
 		if (Range(a,0x74140,64)) {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 			if (a==0x74154) {
-				assert(value<=8 && (!value || memory.at(0x74150)==1)); progressSeen[value]=true;
+				assert(value<=12 && (!value || memory.at(0x74150)==1)); progressSeen[value]=true;
 			}
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
@@ -88,7 +88,7 @@ struct PersistentRows:SharedRowsMachine {
 		if (operation==2) return pc==0x72060 && memory.at(0x74150)==2;
 		assert(pc==0x7204c && !memory.at(0x74150));
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
-		assert(!memory.at(0x74154)); for (bool seen:progressSeen) assert(seen);
+		assert(!memory.at(0x74154)); for (unsigned stage=0;stage<=8;stage++) assert(progressSeen[stage]);
 #endif
 		for (const auto& v:root) assert(memory.at(v.first>=0xab000?0x94000+v.first-0xab000:v.first)==v.second);
 		assert(memory.at(0x83f40)==groups*inputs/16 && memory.at(0x83f44)==sequence

@@ -1,5 +1,39 @@
 # Native build status
 
+October18,22:21 UTC marker-first59 native876d returned COHERENT peer1
+fault:root_phase54000281,count469600=RA0x72a60,FAULT,exit1/processgone.
+Saved /private/tmp/pioneer-q38-snapshot-native-failure-20261018-m.log.
+Exact DWARF callsite0x72a5c maps to shared q38_compute_once guard block.
+IMPORTANT CORRECTION:compiler merged Prepare/Panel/dot/finite branches
+into that SAME call;line353 is NOT proof of a metadata-specific failure
+or that it happened before vector/matrix work. Do not repeat that claim.
+The valid on-card fault return is useful progress,NOT model success.
+Haiku responsive64/fullRAM;clean shutdown/off confirmed before22:16:16.
+No retry/END/reset/restore/free/additional card read.876d remains installed
+and quarantined until the next physical cold boot/unloaded-only switch.
+
+New OFFLINE59 fault-stage/value diagnostic eb8ed4d8,root05058ecf8100B,
+peer496d01b87704B;original8192B bounds. SAME computation and ALL guards;
+terminal reason9=Prepare(value type<<16|bytes),10=Panel metadata(value
+type<<16|panel),11=integer dot range(value ALREADY-read raw signed32),
+12=nonfinite accumulation(value ALREADY-computed FP32 bits). Local
+status[5] carries reason;word6 written ONLY on terminal fault. ALL final
+WAIT/STOP/success unused words remain zero/exact. Root uses EXISTING64B
+status packet:phase5a000000|progress/reason[23:16]|worker[15:8];detail
+word6 for reasons9..12,otherwise original fault-RA/normal marker. No extra
+NoC/host/MMIO read,command retry,route authority,reset or relaxed result.
+Native59 not yet installed;client/ABI unchanged diagnostic-only/inference0.
+
+ASan/UBSan exact root+actual real-row peers/repeated FP32+FP64 parity,
+injected metadata-NaN and out-of-range dot return EXACT reason+value and
+zero gathers,plus frozen stages3/5/6/8 PASS Ds8bHnjo. Initial test mutated
+an unused template tile instead of the fetched tiles[];fixed fixture,
+not a compute change. RUN oK0UBhtE BOTH modes,END Q1kKwhxq BOTH modes,
+handler/retention ZebiXnih,proof pBZUK6xD,boot SdaHXdPT PASS. All native
+output/code/source/ownership/terminal/retention proof requirements stay.
+Fresh stage-n installer requires exact old876d/cold/unloaded,preserves
+old59 and43/52/54;all other previous-stage backups retained.
+
 October18,22:03 UTC native59 diagnostic09ef first RUN FAILED/exit1/process
 gone,returned phase54000102/count1/FAULT. Exact log preserved at
 /private/tmp/pioneer-q38-progress-native-failure-20261018-l.log. Haiku

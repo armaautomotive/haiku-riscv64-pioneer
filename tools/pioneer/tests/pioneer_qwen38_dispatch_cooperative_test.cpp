@@ -121,7 +121,11 @@ int main(int argc,char** argv)
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
 		unsigned site=m.actual[1]->memory.at(0x7414c);
 		assert(site==m.actual[1]->regs[1] && site>=0x72000 && site<0x74000 && !(site&3));
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+		assert(m.l1[m.Index(0x17ffc0)]==(0x5a000200|(m.actual[1]->memory.at(0x74154)<<16)) && m.l1[m.Index(0x17ffc4)]==site);
+#else
 		assert(m.l1[m.Index(0x17ffc0)]==0x54000282 && m.l1[m.Index(0x17ffc4)]==site);
+#endif
 		puts("PASS57 injected peer2 fault return-PC preserved by EXISTING status transfer;zero output gathers/extra packets after UNKNOWN");
 #endif
 	}
@@ -141,6 +145,18 @@ int main(int argc,char** argv)
 		assert(model.Stable()); fclose(f);
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+	for (unsigned reason:{10U,11U}) {
+		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
+		if (reason==11) m.actual[1]->corruptDotRange=true;
+		else { m.actual[1]->tiles.front()[0]=0; m.actual[1]->tiles.front()[16]=0x7c; }
+		assert(!m.RunRoot() && m.unknown && !m.gathers);
+		assert(m.actual[1]->memory.at(0x74154)==reason);
+		assert(m.l1[m.Index(0x17ffc0)]==(0x5a000200|(reason<<16)));
+		assert(m.l1[m.Index(0x17ffc4)]==(reason==11?262145U:8U<<16));
+		assert(m.l1[m.Index(0x17ffc4)]==m.actual[1]->memory.at(0x74158));
+		assert(m.actual[1]->memory.at(0x7414c)==m.actual[1]->regs[1]);
+		puts("PASS59 actual nonfinite metadata/out-of-range dot:exact reason/value and retained fault RA in EXISTING status packet;zero gathers");
+	}
 	for (unsigned stage:{3U,5U,6U,8U}) {
 		CooperativeDispatch m(argv[1],argv[2],2,8,5120); m.freezeWorker=2; m.freezeStage=stage;
 		assert(!m.RunRoot() && m.unknown && m.frozen && !m.gathers);

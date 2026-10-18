@@ -98,7 +98,11 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 	const volatile uint32_t* status=Words(0x75000);
 #ifdef PIONEER_Q38_FAULT_RETURN
 	// ALREADY transferred local status;normal status remains unchanged.
+#ifdef PIONEER_Q38_PEER_PROGRESS
+	Checkpoint(0x5a000000|(worker<<8)|((status[5]&255U)<<16),status[5]>=9 && status[5]<=12?status[6]:status[3]);
+#else
 	Checkpoint(0x54000280|worker,status[3]);
+#endif
 #else
 	Checkpoint(0x54000201,worker);
 #endif
@@ -113,7 +117,7 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 #ifdef PIONEER_Q38_PEER_PROGRESS
 	// Isolated diagnostic protocol ONLY. Bounded marker permitted ONLY
 	// while the peer is running;ALL terminal/WAIT/proof fields stay exact.
-	if (status[5]>8 || (status[4]!=1 && status[5])) block_fault_park();
+	if (status[5]>12 || (status[4]!=1 && status[5])) block_fault_park();
 	Checkpoint(0x59020000|(worker<<8)|(status[0]==sequence?1U:0U)|(status[1]==sequence?2U:0U)|(status[4]<<2),status[5]);
 #else
 	Checkpoint(previous?0x54000202:0x54000203,worker);
