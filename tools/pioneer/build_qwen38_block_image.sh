@@ -11,6 +11,7 @@ case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  2) source=blackhole_qwen38_rows.cpp; asmflag='--defsym TT_Q38_ROWS=1';;
  3) source=blackhole_qwen38_shared_rows.cpp; asmflag='--defsym TT_Q38_SHARED_ROWS=1';;
  4) source=blackhole_qwen38_vector_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
+ 5) source=blackhole_qwen38_vector_inline_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_STREAM_FAST:-0}" in

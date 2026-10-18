@@ -43,6 +43,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD)
 #error Q38 persistent dispatcher requires the guarded payload/all-bank owner
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH)
+#error Q38 vector peer requires the complete private persistent dispatcher lifecycle
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -2842,7 +2845,7 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 		if (length!=sizeof(tt_q38_dispatch_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_dispatch_support support={54,1,119,256,17408,7,64,1,0};
+		const tt_q38_dispatch_support support={TT_Q38_DISPATCH_DRIVER,1,119,256,17408,7,64,1,0};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_DISPATCH_RUN || length!=sizeof(tt_q38_dispatch_probe)) return B_BAD_VALUE;

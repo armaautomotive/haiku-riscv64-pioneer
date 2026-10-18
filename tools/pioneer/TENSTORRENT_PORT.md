@@ -2,6 +2,26 @@
 
 ## Status
 
+### October18,19:01 UTC:native full FFN ~3.76x faster,exact accuracy;full model profiling active
+
+Driver54 full learned FFN17408x5120 repeat now0.123357s vs52's0.464385s;
+clean END/exit0. All5120 outputs bit-identical to52 AND independently pass
+original-row FP64 reference(maxabs1.5499535948e-6,relL26.19988202096e-7).
+Injected first/middle/last errors rejected. This is ONE layer,not token rate.
+Full27B four-position profile started18:50:51 UTC;auth/model load PASS,
+retained32-thread CPU pool active,497 weights recognized;layer2/calls23/
+pages193368 success at19:01 UTC. Cold bulk transfers dominate. Do NOT
+change/reload driver or open another GPU owner while this profile runs.
+
+Separate OFFLINE55 vector-inline persistent candidate9a5b12b3,client6f641118,
+frozen-library inference62fef745. Exact private peer6a7b9b69 (7868B),root
+026229e2 unchanged. All actual peer/root repeated math+real-row/cooperative
+tests,119-role bootstrap,RUN/proof/END/both payload modes,actual handler/
+retention,host session,strict MMIO-END faults pass. Distinct55 namespace,
+mutual54/55 command/metadata refusal before device IO. Existing54 and43
+recompile byte-identically. NOT staged/installed/natively qualified;no
+installer yet. Inline vector instruction counts improve,not native timing.
+
 ### October18,18:46 UTC:separate vector-row image passes actual-instruction tests OFFLINE
 
 New7297962c image5776B/stack288 uses raw bounded UNPACR-to-Dst,exact32-lane

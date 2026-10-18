@@ -1,8 +1,19 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_VECTOR_COOPERATIVE
+#define PIONEER_Q38_VECTOR_PERSISTENT_IMAGE
+#endif
 #define PIONEER_Q38_PERSISTENT_ROWS_MACHINE_ONLY
 #define PIONEER_Q38_REF_DIAGNOSTIC
 #define PIONEER_Q38_REFERENCE_ROUNDING_BOUND
 #include "pioneer_qwen38_persistent_rows_image_test.cpp"
+#ifdef PIONEER_Q38_VECTOR_COOPERATIVE
+#define PIONEER_Q38_VECTOR_HAS_ROWS_MACHINE
+#define PIONEER_Q38_VECTOR_ROWS_MODEL_ONLY
+#include "pioneer_q38_vector_rows_image_test.cpp"
+using CooperativePeer=VectorRows<PersistentRows,true>;
+#else
+using CooperativePeer=PersistentRows;
+#endif
 #define PIONEER_Q38_DISPATCH_BASE_ALREADY_INCLUDED
 #define PIONEER_Q38_DISPATCH_MACHINE_ONLY
 #include "pioneer_qwen38_dispatch_image_test.cpp"
@@ -10,11 +21,11 @@
 // Both ROOT and PEERS execute actual emitted RV32/FPU/NoC instructions.
 // Only the wire/GDDR and read-only debug reset register are simulated.
 struct CooperativeDispatch:DispatchMachine {
-	std::vector<std::unique_ptr<PersistentRows>> actual;
+	std::vector<std::unique_ptr<CooperativePeer>> actual;
 	CooperativeDispatch(const char* root,const char* peer,unsigned workers,unsigned type,unsigned inputs)
 		:DispatchMachine(root,workers,type,inputs) {
 		for (unsigned w=0;w<workers;w++) {
-			actual.emplace_back(new PersistentRows(peer,type,inputs,1+w%3,w+1));
+			actual.emplace_back(new CooperativePeer(peer,type,inputs,1+w%3,w+1));
 			assert(actual.back()->Boot());
 		}
 		Bind();

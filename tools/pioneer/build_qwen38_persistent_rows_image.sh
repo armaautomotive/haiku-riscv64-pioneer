@@ -5,6 +5,11 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
+case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in
+ 0) source=blackhole_qwen38_persistent.cpp;;
+ 1) source=blackhole_qwen38_vector_persistent.cpp;;
+ *) exit 2;;
+esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
@@ -12,7 +17,7 @@ umask 077; mkdir -m 700 "$output"
  -fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
  -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
  -march=rv32imf -mabi=ilp32 -fstack-usage -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_SCALE \
- -c "$directory/blackhole_qwen38_persistent.cpp" -o "$output/program.o"
+ -c "$directory/$source" -o "$output/program.o"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_qwen38_block.ld" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"

@@ -1,16 +1,27 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_VECTOR_HAS_ROWS_MACHINE
 #define PIONEER_Q38_SHARED_ROWS_MACHINE_ONLY
 #include "pioneer_qwen38_rows_image_test.cpp"
+#endif
 #include <memory>
 // ACTUAL compiled RV32/FPU image plus independent exact integer SFPU subset.
 // Not a silicon cycle model or permission to select a new native image.
-struct VectorRowsMachine:RowsMachine {
+template<class Base,bool Persistent=false> struct VectorRows:Base {
+	using Base::memory; using Base::config; using Base::thread; using Base::ownerA;
+	using Base::pending; using Base::drained; using Base::tile; using Base::tiles; using Base::backendWait;
+	using Base::adcX0; using Base::adcX1; using Base::pc; using Base::configWrites;
+	using Base::Range; using Base::buffers; using Base::groups; using Base::inputs;
+	using Base::requests; using Base::responses; using Base::minStack; using Base::l1;
+	using Base::Index; using Base::StepBlock; using Base::Operand16;
+	using Base::moveInstructions; using Base::a;
 	uint16_t physical[1024][16]={}; uint32_t lr[8][32]={};
 	bool wrote[1024][16]={},sources[2]={},rawPending=false,publish=false,enabled=false;
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	bool corruptMove=false;
-	VectorRowsMachine(const char* path,unsigned type,unsigned k,unsigned groups):RowsMachine(path,type,k,groups) { memory[0x74000]=0x31563851; }
+	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
+	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
+	bool InlineTensix() const override { return true; }
 	static unsigned Adj(unsigned row) { return ((row&0x1f8)<<1)|(row&0x207); }
 	void Instruction(uint32_t op) override {
 		unsigned code=op>>24;
@@ -90,17 +101,17 @@ struct VectorRowsMachine:RowsMachine {
 			drained=false; return;
 		}
 		if (code==0x26) assert(panelMoves==4 && sources[mathBank] && !rawPending);
-		RowsMachine::Instruction(op);
+		Base::Instruction(op);
 		if (op==0x26c00020) { sources[mathBank]=false; mathBank^=1; assert(unpackBank==mathBank); }
 	}
 	void Store(uint32_t address,uint32_t value) override {
 		if (Range(address,0xffef0000,224*4)) { assert(!rawPending && drained); config[(address-0xffef0000)/4]=value; configWrites++; return; }
 		assert(!Range(address,0x70710,512)); // NO decoded operand staging/copy
-		RowsMachine::Store(address,value);
+		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
 		if (Range(address,0xffef0000,224*4)) { assert(!rawPending && drained); return config[(address-0xffef0000)/4]; }
-		return RowsMachine::Load(address);
+		return Base::Load(address);
 	}
 	bool RunVector() {
 		while (pc!=0x72038 && pc!=0x72058) StepBlock();
@@ -110,6 +121,8 @@ struct VectorRowsMachine:RowsMachine {
 		return l1[Index(0x17ffc4)]==groups*(inputs/16) && requests==tiles.size() && requests==responses && !pending;
 	}
 };
+using VectorRowsMachine=VectorRows<RowsMachine>;
+#ifndef PIONEER_Q38_VECTOR_ROWS_MODEL_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc>=2 && argc<=4);
@@ -145,3 +158,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE ACTUAL vector-row image:exact all-K Q8/Q4/Q6 math,raw Dst/vector/Matrix source-bank ownership,zero scalar operand writes,all4 fidelity phases,source bounds,UNKNOWN inert park;NOT native/persistent/coordinator/cycle/speed qualification");
 }
+#endif

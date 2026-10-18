@@ -17,7 +17,19 @@
 extern "C" void block_fault_park() __attribute__((noreturn));
 static inline volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static inline void Fence() { asm volatile("fence" ::: "memory"); }
+#ifdef PIONEER_Q38_VECTOR_INLINE
+// Separate OFFLINE candidate:constant Tensix instructions use the SAME
+// rotate-left-two inline encoding as qualified native F32/Q8 programs.
+// Dynamic fields retain the old instruction-buffer store. No approximation
+// or replay;the strict actual-instruction test decodes BOTH issue paths.
+static __attribute__((always_inline)) inline void Emit(uint32_t command)
+{
+	if (__builtin_constant_p(command)) asm volatile(".word %0" :: "i"((command<<2)|(command>>30)) : "memory");
+	else *Words(0xffe40000)=command;
+}
+#else
 static inline void Emit(uint32_t command) { *Words(0xffe40000)=command; }
+#endif
 static inline uint32_t Bits(float f) { uint32_t u; __builtin_memcpy(&u,&f,4); return u; }
 static inline float Float(uint32_t u) { float f; __builtin_memcpy(&f,&u,4); return f; }
 static void Drain()

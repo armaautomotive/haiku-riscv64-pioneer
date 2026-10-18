@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
+#include "PioneerQ38VectorPeerImage.h"
+#endif
 // Generated exact experimental54 images;offline tests are not native
 // qualification. Default and51..53 drivers never select/launch these roles.
 // Root text SHA256026229e212e9e749b3291fc6a3a401c51007572552d23fed610299926959f413
@@ -504,6 +507,12 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
  return word<sizeof(code)/sizeof(code[0])?code[word]:0;
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
-{ return worker>=120?UINT32_MAX:worker?PioneerQ38PersistentPeerWord(word):PioneerQ38DispatchRootWord(word); }
+{
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
+ return worker>=120?UINT32_MAX:worker?PioneerQ38VectorPeerWord(word):PioneerQ38DispatchRootWord(word);
+#else
+ return worker>=120?UINT32_MAX:worker?PioneerQ38PersistentPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
+}
 #endif
 

@@ -11,7 +11,9 @@ struct PersistentRows:SharedRowsMachine {
 	unsigned logicalWorker;
 	bool changeDescriptor=false;
 	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker=69):SharedRowsMachine(path,type,k,groups),logicalWorker(worker) {
+#if !defined(PIONEER_Q38_VECTOR_PERSISTENT_IMAGE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR)
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(worker,word)==(word<code.size()/4?Word(code,word*4):0));
+#endif
 		assert(inputReads>=2 && packets[inputReads-1].address==0x94000);
 		packets[inputReads-1].address=0xab000;
 		for (unsigned at=0;at<packets[inputReads-1].bytes;at+=4) {

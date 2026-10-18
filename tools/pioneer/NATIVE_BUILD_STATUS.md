@@ -1,5 +1,36 @@
 # Native build status
 
+Latest checkpoint (October18,19:01 UTC): native54 full learned FFN ggml
+repeat/export PASS clean END/exit0/process gone. first45.063173s,warm
+0.123357s vs qualified52's0.464385s (~3.76x faster THIS layer,NOT token rate).
+All5120 exported floats BYTE IDENTICAL to52;new independent original-row
+FP64 observer PASS:zero errors,maxabs1.5499535948e-6,relL26.19988202096e-7,
+cosine1;injected first/middle/last corruptions correctly REJECTED. Evidence:
+/private/tmp/pioneer-q38-dispatch-frontend-full-ffn-20261018-g.{log,bin},
+full-reference.lFi5C4Z8. Full27B four-position profile started18:50:51 UTC,
+same-FD auth/model load PASS,persistent32-thread CPU pool/poll0,recognized
+497 learned weights;currently layer2/calls23/pages193368 all success.
+ACTIVE: /boot/home/pioneer-qwen38-dispatch-20261018-g/public-four-frontend-g.log,
+team848. NO driver install/reload/second GPU job while this owner runs.
+Cold bulk transfers dominate;warm model/token timing still pending.
+
+Next OFFLINE55 candidate9a5b12b3/debug6f641118/inference62fef745 embeds
+EXACT vector-inline persistent peer6a7b9b69 (7868B,main288B+compute240B
+frames) and unchanged root026229e2. Distinct55f2/55f3 namespace anddriver55
+metadata;54/55 reject each other's support/RUN BEFORE IO;host refuses
+wrong-version metadata BEFORE BEGIN. No native selection/staging/installer.
+Actual persistent repeated jobs/real edges/duplicate inert/STOP/UNKNOWN
+CO3m1HMe and actual root+vector-peer math/cooperative unknown+baked image
+pins wWGuYQUX PASS. BootstrapWcfa4l6G,RUN both payloadshb2hnuql,
+proofXu7eXZwm,END both payloadsfJ1Qf8Y2,actual handler/retention+namespace
+ZzHSmhe7,host session+cross-versionXJmbxvh8,MMIO-ENDvWk2JUhE PASS ASan/UBSan.
+Default54 recompiles EXACT93f2c0db;default43 EXACT2df0e0f8. Default54
+handler lPUos1NT/sessiondUncXh7G regressions PASS. NOTE some reused test
+messages still say54;above tests explicitly compiled VECTOR flag for55.
+Inline vector-row image014b6257 (5108B,frame240B) also passes actual math/
+real rows (34D4rkK1):2.27..2.93x fewer RV steps vs same scalar workload,
+NOT native cycles or model speed. No dirty llama implementation work.
+
 Latest checkpoint (October18,18:46 UTC): separate OFFLINE vector-row image
 7297962c (5776B,stack288B) now integrates raw UNPACR-to-Dst/exact32-lane
 SFPU decode/MOVD2A with existing four-phase integer matrix/affine math.

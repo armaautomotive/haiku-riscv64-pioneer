@@ -12,7 +12,7 @@ struct PioneerQ38DispatchSessionMode {
 	PioneerQ38DispatchHistory history;
 	template<class IO> bool Support(IO& io,int fd) {
 		tt_q38_dispatch_support s={};
-		return io.Call(fd,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&s,sizeof(s)) && s.driver==54 && s.version==1
+		return io.Call(fd,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&s,sizeof(s)) && s.driver==TT_Q38_DISPATCH_DRIVER && s.version==1
 			&& s.peers==119 && s.rows==256 && s.max_inputs==17408 && s.banks==7 && s.offset_alignment==64 && s.persistent==1 && !s.model_inference;
 	}
 	static auto Request(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input) { return PioneerQ38DispatchRequest(wave,input); }
