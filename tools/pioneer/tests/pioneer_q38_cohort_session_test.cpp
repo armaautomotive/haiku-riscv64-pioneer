@@ -60,6 +60,11 @@ struct SessionIO {
 		return true;
 	}
 };
+struct TimedSessionIO:SessionIO {
+	uint64_t ticks=1;
+	TimedSessionIO(FakeSource& s,unsigned t):SessionIO(s,t) {}
+	uint64_t NowNanos() { return ticks+=100; } // ordinary host clock,NO transport side effects
+};
 int main()
 {
 	(void)&Check; (void)&CohortHostTestMain;
@@ -68,13 +73,14 @@ int main()
 	unsigned index=unsigned(tensor-source.Model().Tensors().data());
 	std::vector<float> input(5120,.125f),output(1024,-99),before=output;
 	{
-		SessionIO io(source,index); PioneerQ38CohortSession<SessionIO,FakeSource> session(io,source);
+		TimedSessionIO io(source,index); PioneerQ38CohortSession<TimedSessionIO,FakeSource> session(io,source);
 		assert(session.Open() && !session.Open() && io.begins==1);
 		assert(session.Multiply(index,input.data(),5120,output.data(),1024,1));
 		for (unsigned row=0;row<output.size();row++) assert(output[row]==float(row+1));
 		unsigned uploads=io.uploads,runs=io.runs; assert(uploads && runs>1);
 		assert(session.Multiply(index,input.data(),5120,output.data(),1024,1) && io.uploads==uploads && io.runs==runs*2);
 		assert(session.pagesUploaded && session.bytesRetained && session.calls==runs*2 && session.peakWorkers==1);
+		assert(session.sourceReadNanos>0 && session.bulkUploadNanos>0 && session.runNanos==uint64_t(runs)*200);
 		assert(session.Finish() && session.Finish() && io.ends==1 && io.closes==1);
 	}
 	for (unsigned fault=1;fault<=9;fault++) {

@@ -4,6 +4,8 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+template<class IO> auto PioneerQ38SessionNow(IO& io,int) -> decltype(io.NowNanos()) { return io.NowNanos(); }
+template<class IO> uint64_t PioneerQ38SessionNow(IO&,long) { return 0; } // offline transport without clock
 // Explicit transport strategy;production instantiates ONLY the fixed fully
 // authenticated source. Offline tests use a synthetic source+NO-device IO.
 // No retry,CPU products,substituted output or physical-coordinate capability.
@@ -13,6 +15,10 @@ template<class IO,class Source=PioneerQ38PublicModelSource> class PioneerQ38Coho
 	std::vector<uint8_t> uploaded;
 	int fd=-1;
 	bool attempted=false,active=false,failed=false,finished=false,clean=false;
+	void Elapsed(uint64_t start,uint64_t& total) {
+		uint64_t end=PioneerQ38SessionNow(io,0);
+		if (start && end>=start) total+=end-start; // diagnostic ONLY,not a completion/timeout authority
+	}
 	bool Stop() {
 		failed=true; active=false; finished=true;
 		if (fd>=0) { io.Close(fd); fd=-1; } // CLOSE ONLY:kernel retains UNKNOWN owners
@@ -33,9 +39,15 @@ template<class IO,class Source=PioneerQ38PublicModelSource> class PioneerQ38Coho
 				tt_q38_bank_bulk bulk={}; bulk.version=1; bulk.bank=part.bank;
 				bulk.offset=uint64_t(part.proposedAddress)-layout.Base+uint64_t(page)*4096;
 				bulk.pages=part.allocated/4096-page; if (bulk.pages>4) bulk.pages=4;
+				uint64_t readStart=PioneerQ38SessionNow(io,0);
 				for (unsigned p=0;p<bulk.pages;p++) if (!source.ReadWeightPage(layout,f,page+p,
 					reinterpret_cast<uint8_t*>(bulk.data+p*1024),4096)) return Stop();
-				if (!source.Ready() || !io.Call(fd,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk)) || !BulkProof(bulk)) return Stop();
+				Elapsed(readStart,sourceReadNanos);
+				if (!source.Ready()) return Stop();
+				uint64_t uploadStart=PioneerQ38SessionNow(io,0);
+				bool transferred=io.Call(fd,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk));
+				Elapsed(uploadStart,bulkUploadNanos);
+				if (!transferred || !BulkProof(bulk)) return Stop();
 				pagesUploaded+=bulk.pages; page+=bulk.pages;
 			}
 			if (!source.Ready()) return Stop();
@@ -45,6 +57,7 @@ template<class IO,class Source=PioneerQ38PublicModelSource> class PioneerQ38Coho
 	}
 public:
 	uint64_t pagesUploaded=0,bytesRetained=0,calls=0;
+	uint64_t sourceReadNanos=0,bulkUploadNanos=0,runNanos=0;
 	unsigned peakWorkers=0;
 	PioneerQ38CohortSession(IO& transport,Source& authenticatedSource):io(transport),source(authenticatedSource) {}
 	~PioneerQ38CohortSession() { Finish(); }
@@ -86,7 +99,11 @@ public:
 			PioneerQ38CohortWave wave;
 			if (!source.Ready() || !wave.Build(source.Model(),layout,schedule,waveNumber)) return Stop();
 			auto request=PioneerQ38CohortRequest(wave,quantized);
-			if (!request || !io.Call(fd,TT_PCI_PROBE_Q38_COHORT_RUN,request.get(),sizeof(*request))) return Stop();
+			if (!request) return Stop();
+			uint64_t runStart=PioneerQ38SessionNow(io,0);
+			bool executed=io.Call(fd,TT_PCI_PROBE_Q38_COHORT_RUN,request.get(),sizeof(*request));
+			Elapsed(runStart,runNanos);
+			if (!executed) return Stop();
 			if (!source.Ready() || !PioneerQ38CohortCollect(wave,quantized,*request,scratch.data(),outputs)) return Stop();
 			calls++; if (peakWorkers<wave.workers) peakWorkers=wave.workers;
 		}

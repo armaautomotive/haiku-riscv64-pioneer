@@ -5,7 +5,14 @@
 #include "../PioneerQwen38Activation.h"
 int main(int argc,char** argv)
 {
-	if (argc!=3) return 2;
+	if (argc!=3 && argc!=4) return 2;
+	unsigned corrupt=5120;
+	if (argc==4) {
+		if (!strcmp(argv[3],"--test-corrupt-first")) corrupt=0;
+		else if (!strcmp(argv[3],"--test-corrupt-middle")) corrupt=2560;
+		else if (!strcmp(argv[3],"--test-corrupt-last")) corrupt=5119;
+		else return 2;
+	}
 	FILE* file=fopen(argv[1],"rb"); if (!file) return 1;
 	PioneerQwen38Gguf model; if (!model.Open(file)) { fclose(file); return 1; }
 	const auto* t=model.Find("blk.0.ffn_down.weight");
@@ -15,6 +22,7 @@ int main(int argc,char** argv)
 	std::vector<float> actual(5120),weight(17408),input(17408),activation(17408);
 	bool okay=fread(actual.data(),4,5120,exported)==5120 && fgetc(exported)==EOF && !ferror(exported);
 	fclose(exported);
+	if (okay && corrupt<5120) actual[corrupt]+=1000000; // offline observer self-test,never changes exported FILE
 	for (unsigned k=0;k<17408;k++) input[k]=float(int((k*29+17)%255)-127)*.00390625f;
 	for (unsigned b=0;okay && b<17408/256;b++) {
 		PioneerQ38ActivationK q; okay=PioneerQ38QuantizeK(input.data()+b*256,256,&q);

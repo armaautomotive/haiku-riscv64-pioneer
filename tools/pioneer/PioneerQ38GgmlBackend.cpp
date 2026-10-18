@@ -8,6 +8,7 @@ PioneerQ38GgmlDispatch dispatch;
 PioneerQ38GgmlStats stats;
 uint64_t epoch=0;
 bool configured=false,claimed=false;
+bool recognized[851]={};
 ggml_backend_t active=nullptr;
 bool Ready() {
 	return configured && !stats.failed && !stats.finished && dispatch.model->Epoch()==epoch
@@ -35,7 +36,10 @@ bool Contract(const ggml_tensor* op,unsigned* index=nullptr) {
 		|| op->type!=GGML_TYPE_F32 || op->ne[0]!=w->ne[1] || op->ne[1]!=1 || op->ne[2]!=1 || op->ne[3]!=1
 		|| !ggml_is_contiguous(w) || !ggml_is_contiguous(x) || !ggml_is_contiguous(op)
 		|| !w->buffer || ggml_backend_buffer_get_usage(w->buffer)!=GGML_BACKEND_BUFFER_USAGE_WEIGHTS) return false;
-	if (index) *index=unsigned(t-dispatch.model->Tensors().data());
+	unsigned selected=unsigned(t-dispatch.model->Tensors().data());
+	if (selected>=851) return false;
+	if (!recognized[selected]) { recognized[selected]=true; stats.recognizedWeights++; }
+	if (index) *index=selected;
 	return true;
 }
 bool Supports(ggml_backend_dev_t,const ggml_tensor* t) { return Contract(t); }

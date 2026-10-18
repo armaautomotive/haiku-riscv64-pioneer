@@ -59,6 +59,7 @@ int main(int argc,char** argv)
 		if (fault) break;
 	}
 	unsigned calls=fake.calls;
+	assert(PioneerQ38GgmlSnapshot().recognizedWeights==(fault?1U:3U));
 	assert(PioneerQ38GgmlFinish()==!fault);
 	auto stats=PioneerQ38GgmlSnapshot(); assert(stats.finished && stats.failed==bool(fault) && stats.clean==!fault);
 	assert(fake.ends==unsigned(!fault) && fake.aborts==unsigned(bool(fault)));

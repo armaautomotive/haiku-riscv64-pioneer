@@ -17,10 +17,13 @@ struct State {
 		auto& s=*static_cast<State*>(p);
 		if (!s.opened) { if (!s.session.Open()) return false; s.opened=true; }
 		uint64_t before=s.session.pagesUploaded;
+		uint64_t readBefore=s.session.sourceReadNanos,bulkBefore=s.session.bulkUploadNanos,runBefore=s.session.runNanos;
 		double start=Seconds(); bool okay=s.session.Multiply(tensor,x,k,y,n);
 		if (before!=s.session.pagesUploaded || !okay) printf("PUBLIC_MATRIX %s K%u N%u seconds%.6f pages%llu calls%llu success%u;NOT_TOKEN_RATE\n",
 			s.source.Model().Tensors()[tensor].name.c_str(),k,n,Seconds()-start,(unsigned long long)s.session.pagesUploaded,
 			(unsigned long long)s.session.calls,unsigned(okay));
+		if (before!=s.session.pagesUploaded || !okay) printf(" PUBLIC_MATRIX_PHASES source_repack_seconds%.6f checked_bulk_seconds%.6f checked_run_seconds%.6f;DIAGNOSTIC_HOST_TIMES_NOT_PURE_GPU\n",
+			double(s.session.sourceReadNanos-readBefore)*1e-9,double(s.session.bulkUploadNanos-bulkBefore)*1e-9,double(s.session.runNanos-runBefore)*1e-9);
 		return okay;
 	}
 	static bool Finish(void* p) { return static_cast<State*>(p)->session.Finish(); }
@@ -79,7 +82,8 @@ static int GraphSmoke(State& state,const char* output)
 int main(int argc,char** argv)
 {
 	bool graph=argc==3 && !strcmp(argv[1],"--public-ffn-graph-export");
-	if (!graph && (argc!=2 || strcmp(argv[1],"--public-one-token"))) return 2;
+	bool four=argc==2 && !strcmp(argv[1],"--public-four-tokens");
+	if (!graph && !four && (argc!=2 || strcmp(argv[1],"--public-one-token"))) return 2;
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
 	puts("PUBLIC27B_INFERENCE_AUTH_BEGIN;NO_ACCELERATOR_FD_YET;NO_CPU_REFERENCE_OR_FALLBACK");
 	State state; if (!state.source.Open()) return 1;
@@ -87,7 +91,7 @@ int main(int argc,char** argv)
 	FILE* file=state.source.BorrowForModelLoad(); if (!file) return 1;
 	llama_log_set(Log,nullptr); llama_backend_init();
 	llama_model_params mp=llama_model_default_params();
-	ggml_backend_dev_t hostOnly[]={nullptr}; mp.devices=hostOnly; mp.n_gpu_layers=0; mp.load_mode=LLAMA_LOAD_MODE_MMAP;
+	ggml_backend_dev_t hostOnly[]={nullptr}; mp.devices=hostOnly; mp.n_gpu_layers=0; mp.load_mode=LLAMA_LOAD_MODE_MMAP; mp.use_extra_bufts=false;
 	double loadStart=Seconds(); auto model=llama_model_load_from_file_ptr(file,mp);
 	if (!model || !state.source.Ready()) { if (model) llama_model_free(model); llama_backend_free(); return 1; }
 	printf("PUBLIC27B_SAME_FD_MODEL_LOADED seconds%.6f;HOST_WEIGHTS_NOT_CARD_RESIDENCY\n",Seconds()-loadStart);
@@ -97,29 +101,44 @@ int main(int argc,char** argv)
 	llama_context_params cp=llama_context_default_params(); cp.n_ctx=128; cp.n_batch=cp.n_ubatch=1;
 	cp.n_threads=cp.n_threads_batch=32; cp.offload_kqv=false; cp.op_offload=true; cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED;
 	auto context=llama_init_from_model(model,cp);
-	bool okay=context && state.source.Ready();
+	unsigned recognized=PioneerQ38GgmlSnapshot().recognizedWeights;
+	printf("PUBLIC27B_GRAPH_COVERAGE recognized_learned_weights%u expected497;RESERVATION_ONLY_NOT_EXECUTION\n",recognized);
+	bool okay=context && state.source.Ready() && recognized==497;
 	const auto vocab=llama_model_get_vocab(model); llama_token tokens[8]={};
 	int count=llama_tokenize(vocab,"Hello",5,tokens,8,false,false);
 	okay=okay && count==1; // fixed PUBLIC one-position smoke,not private chat
-	double start=Seconds();
-	if (okay) { auto batch=llama_batch_get_one(tokens,1); okay=llama_decode(context,batch)==0; }
-	double end=Seconds();
-	auto stats=PioneerQ38GgmlSnapshot();
-	// This exact architecture has497 learned projections per position.
-	// Refuse to call a silent CPU-only/partial-learned result a P100A smoke.
-	okay=okay && stats.projections==497 && !stats.failed && state.opened;
-	llama_token best=-1;
-	if (okay) {
-		const float* logits=llama_get_logits_ith(context,-1); int size=llama_vocab_n_tokens(vocab);
-		for (int i=0;okay && i<size;i++) {
-			if (!isfinite(logits[i])) okay=false;
-			else if (best<0 || logits[i]>logits[best]) best=i;
+	double start=Seconds(),warmSeconds=0,firstSeconds=0;
+	unsigned generated=0,limit=four?4:1; uint64_t retainedPages=0;
+	llama_token token=tokens[0],best=-1;
+	for (unsigned position=0;okay && position<limit;position++) {
+		uint64_t before=PioneerQ38GgmlSnapshot().projections;
+		double began=Seconds(); auto batch=llama_batch_get_one(&token,1); okay=llama_decode(context,batch)==0;
+		double elapsed=Seconds()-began; auto current=PioneerQ38GgmlSnapshot();
+		// Exactly497 learned projections per position. Refuse to call a
+		// silent CPU-only/partial-learned result a complete P100A smoke.
+		okay=okay && current.projections-before==497 && !current.failed && state.opened;
+		best=-1;
+		if (okay) {
+			const float* logits=llama_get_logits_ith(context,-1); int size=llama_vocab_n_tokens(vocab);
+			for (int i=0;okay && i<size;i++) {
+				if (!isfinite(logits[i])) okay=false;
+				else if (best<0 || logits[i]>logits[best]) best=i;
+			}
 		}
+		if (!position) { retainedPages=state.session.pagesUploaded; firstSeconds=elapsed; }
+		else { okay=okay && retainedPages==state.session.pagesUploaded; warmSeconds+=elapsed; }
+		printf("PUBLIC27B_POSITION %u selected_token%d seconds%.6f learned_projections%llu pages%llu success%u;NO_CPU_REFERENCE_OR_FALLBACK\n",
+			position,best,elapsed,(unsigned long long)(current.projections-before),(unsigned long long)state.session.pagesUploaded,unsigned(okay));
+		if (okay) { generated++; token=best; }
 	}
+	double end=Seconds(); auto stats=PioneerQ38GgmlSnapshot();
 	bool clean=PioneerQ38GgmlFinish();
-	printf("%s_PUBLIC27B_ONE_TOKEN public_prompt_Hello selected_token%d seconds%.6f projections%llu uploaded_pages%llu calls%llu workers%u clean_end%u;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY\n",
-		okay && clean?"PASS":"FAIL",best,end-start,(unsigned long long)stats.projections,(unsigned long long)state.session.pagesUploaded,
+	printf("%s_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated%u selected_token%d seconds%.6f projections%llu uploaded_pages%llu calls%llu workers%u clean_end%u;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY\n",
+		okay && clean?"PASS":"FAIL",generated,best,end-start,(unsigned long long)stats.projections,(unsigned long long)state.session.pagesUploaded,
 		(unsigned long long)state.session.calls,state.session.peakWorkers,unsigned(clean));
+	if (four) printf("%s_PUBLIC27B_FOUR_TOKEN generated%u first_position_seconds%.6f subsequent_positions%u subsequent_seconds%.6f sample_tokens_per_second%.9f retained_weights%u;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY\n",
+		okay && clean && generated==4?"PASS":"FAIL",generated,firstSeconds,generated?generated-1:0,warmSeconds,
+		warmSeconds>0 && generated>1?double(generated-1)/warmSeconds:0,unsigned(retainedPages && retainedPages==state.session.pagesUploaded));
 	if (context) llama_free(context);
 	llama_model_free(model); llama_backend_free();
 	return okay && clean && end>=start?0:1;

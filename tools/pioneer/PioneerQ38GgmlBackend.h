@@ -17,6 +17,6 @@ struct PioneerQ38GgmlDispatch {
 bool PioneerQ38GgmlConfigure(const PioneerQ38GgmlDispatch& dispatch);
 ggml_backend_reg_t PioneerQ38GgmlReg();
 bool PioneerQ38GgmlFinish();
-struct PioneerQ38GgmlStats { uint64_t projections=0; bool failed=false,finished=false,clean=false; };
+struct PioneerQ38GgmlStats { uint64_t projections=0; unsigned recognizedWeights=0; bool failed=false,finished=false,clean=false; };
 PioneerQ38GgmlStats PioneerQ38GgmlSnapshot();
 #endif
