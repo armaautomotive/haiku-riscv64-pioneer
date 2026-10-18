@@ -1,6 +1,20 @@
 # Native build status
 
-Latest checkpoint (October18,00:20 UTC / October17 Vancouver): Haiku is
+Latest checkpoint (October18,00:32 UTC / October17 Vancouver): Pioneer is
+powered OFF/resting for the new native local-panel arithmetic trial. Normal
+synced Haiku shutdown closed SSH00:30:22; no final halt marker was observed.
+One relay off hold completed before00:32:24; keep FULL180s rest before on.
+Disk still has experimental45; candidate46 SHA3e5e3e61/client2aeb5b4d/helper
+b9c5e6ab are separately staged at `pioneer-qwen38-panel-20261017-a`,NOT
+installed or exercised. Before any card open after the cold/SD-free boot,
+the exact switch-unloaded46 helper must prove unloaded twice and preserve
+45/qualified43. Full launch/cleanup and ACTUAL extracted kernel handler,
+team/FD/global-owner/UNKNOWN/copyout tests pass ASan/UBSan. Actual client
+tests cover12 cases and24 completion/value failures with close-only/no
+retry. Model mode hashes the SAME open19GB FD before ANY device open.
+This is a LOCAL integer-dot debug qualification,NOT27B inference or speed.
+
+Previous checkpoint (00:20 UTC): Haiku was
 running, SSH10.0.0.247 responds, P100A installed, both SD cards out. SD-free
 handoff verified64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
 Tested serialized NIC SHA0b83ceed is retained. Experimental storage45

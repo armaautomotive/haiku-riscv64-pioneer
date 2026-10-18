@@ -2,6 +2,46 @@
 
 ## Status
 
+### October17: local mixed-quant arithmetic46 staged; cold restart in progress (October18,00:32 UTC)
+
+CURRENT hardware powered OFF/resting, both SD cards out, P100A unchanged.
+Normal synced Haiku shutdown closed SSH00:30:22 UTC; no final halt marker
+was seen. One off hold completed before00:32:24; FULL180s rest before on.
+Disk remains45. New46/client/helper are staged separately,NOT installed or
+exercised. Next: default Linux, same NIC-pinned64-CPU/full-RAM handoff,
+then exact unloaded-only46 switch BEFORE opening the card. No forced unload.
+
+`PioneerQ38PanelProbe.h` adds kernel-owned local144KiB L1/entry backup,
+fixed immutable image/one fixed tile,validated inline data/finite scales/
+canonical padding,exact code/readback and zero-NoC counters. Completion
+requires BOTH parked-PC samples,exact status/count/marker,sources/idle and
+unchanged read+write counters. Only KNOWN completion permits stop/reset;
+UNKNOWN forbids later launch/reset/restore/free and quarantines every bank
+and owned host buffer. Known bad outputs are stopped but never accepted.
+Full saved L1/boot entry is restored at clean session END. This is a LOCAL
+16x16 raw integer-dot/affine-metadata probe,NOT a resident/scaled model runner.
+
+ASan/UBSan tests execute the real prepare/run/close and extracted kernel
+control/lock:all34 shapes/reuse/full restoration,bounds/NaN/padding/lost writes,
+nine reset/completion/counter/source/output/stop fault scenarios,team/FD/
+global-owner/legacy isolation and failed-copyout cleanup. REAL native-client
+synthetic-syscall tests cover12 shapes,all21 completion proofs,three value
+corruptions/ioctl failure/old-driver refusal,close-only/no END/retry on failure.
+Model mode reads ONLY the fixed published GGUF; full SHA of the SAME open FD
+via fixed system sha256sum precedes ANY card open,then851-layout validation.
+
+Two builds reproduce separate46:
+`3e5e3e616bbdd64953b60537c3351958182f44d64abe1eda17e3505df2113162`;
+client `2aeb5b4d57869f1a9d26641cff6ba0f4eaebe29926d7108042df1fcf6b776f61`.
+Feature-off43 control remains2df0e0f8 and storage45 control remainsf7d80213;
+neither substitutes for native qualified43 backup9e098d02. Exact helper SHA
+`b9c5e6ab060c022b17c7f7f66f9d047715dfebd18aba4d33f7c924637986cb7c`
+is staged as `pioneer-qwen38-panel-20261017-a/switch-unloaded46.sh`. It pins
+current45/new46/client/qualified43 bytes,requires two UNLOADED/no-owner
+proofs,backs up45 AND43 outside driver paths,and supports `--restore43`
+ONLY after a fresh cold boot with the driver still unloaded. Source/tests
+are pushed in32e54e7d52; no dirty llama implementation was read/built/synced.
+
 ### October17: native seven-bank DMA bulk sample passed (October18,00:20 UTC)
 
 CURRENT: experimental storage45 is installed AND LOADED, not43; Haiku/SSH,
