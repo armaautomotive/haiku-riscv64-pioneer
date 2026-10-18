@@ -98,17 +98,27 @@ bool PioneerBulkUploadCommand(IO& io,PioneerResidentLease& store,PioneerOutputBu
 template<class IO>
 bool PioneerBulkUpload(IO& io,const tt_dram_samples_result& baseline,const tt_compute_noc_result& noc,
 	const tt_host_page_result& input,PioneerResidentLease& store,PioneerOutputBufferLease& host,
-	PioneerBulkUploadLease& bulk,uint64_t capacity,uint64_t offset,unsigned pages,const uint32_t* data,tt_bulk_upload_result& result)
+	PioneerBulkUploadLease& bulk,uint64_t capacity,uint64_t offset,unsigned pages,const uint32_t* data,tt_bulk_upload_result& result,
+	const PioneerResidentBanks* banks=nullptr,unsigned bank=0)
 {
 	result={}; auto& r=result.transfer; r.version=1;
-	if (!data || !PioneerBulkUploadRange(capacity,offset,pages) || !bulk.ready || bulk.unsafe
+	if (!data || !bulk.ready || bulk.unsafe
 		|| !host.ready || host.pending || host.quarantined || store.pending || store.recovery_required) return false;
+	// Optional KERNEL-PRIVATE all-bank authority. The legacy path remains
+	// bank zero only. Never accept user coordinates or infer an owned route
+	// merely from the public baseline's translated fields.
+	uint32_t address=PioneerResidentAddress(capacity,offset);
+	uint32_t route=baseline.translated[0][0]|(baseline.translated[0][1]<<6),index=0;
+	if (banks) {
+		if (capacity!=PioneerResidentBanks::Capacity || !banks->Range(baseline,bank,offset,pages)
+			|| !banks->Page(baseline,bank,offset,address,route,index)) return false;
+	} else if (bank || !PioneerBulkUploadRange(capacity,offset,pages)) return false;
 	result.pages=pages; result.host_words=pages*1024; result.host_ready=1; result.l1_prepared=1;
 	r.state=TT_STORE_CONFIG_FAILED;
-	unsigned words=pages*1024,bytes=pages*4096; uint32_t address=PioneerResidentAddress(capacity,offset);
+	unsigned words=pages*1024,bytes=pages*4096;
 	const uint32_t hostRead[]={uint32_t(host.physical),uint32_t(host.physical>>32),19|(24<<6),TT_BULK_UPLOAD_L1,0,1|(2<<6),0,0,bytes,0};
-	const uint32_t toGddr[]={TT_BULK_UPLOAD_L1,0,1|(2<<6),address,0,baseline.translated[0][0]|(baseline.translated[0][1]<<6),0,0x212,bytes,0};
-	const uint32_t fromGddr[]={address,0,baseline.translated[0][0]|(baseline.translated[0][1]<<6),TT_BULK_RETURN_L1,0,1|(2<<6),0,0,bytes,0};
+	const uint32_t toGddr[]={TT_BULK_UPLOAD_L1,0,1|(2<<6),address,0,route,0,0x212,bytes,0};
+	const uint32_t fromGddr[]={address,0,route,TT_BULK_RETURN_L1,0,1|(2<<6),0,0,bytes,0};
 	const uint32_t toHost[]={TT_BULK_RETURN_L1,0,1|(2<<6),uint32_t(host.physical),uint32_t(host.physical>>32),19|(24<<6),0,0x212,bytes,0};
 	bool touched=false;
 	do {

@@ -25,6 +25,8 @@ struct PioneerStoreContext {
 	BanksMock io;
 	PioneerResidentBanks banks;
 	PioneerResidentLease lease;
+	PioneerBulkUploadLease bulk;
+	PioneerOutputBufferLease bulkHost;
 	tt_host_page_result host={};
 	bool bankStorageOnly=true;
 	uint8_t* initialized;
@@ -40,7 +42,8 @@ struct PioneerStoreContext {
 		assert(PioneerPrepareHostPage(io,host));
 	}
 	~PioneerStoreContext() { free(initialized); free(hashes); }
-	bool Unsafe() { return banks.Quarantined() || lease.pending || lease.recovery_required; }
+	bool Unsafe() { return banks.Quarantined() || lease.pending || lease.recovery_required
+		|| bulk.unsafe || bulkHost.pending || bulkHost.quarantined; }
 	void Snapshot(tt_resident_session_result& r) {
 		r={}; r.version=1; r.state=TT_RESIDENT_SESSION_READY;
 		r.bytes=PioneerResidentBanks::Total; r.active=1; r.uploaded_pages=uploadedPages;
@@ -66,9 +69,17 @@ static status_t BeginResidentSession(PioneerProbeCookie* cookie,uint64 bytes,tt_
 static void EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& r,bool recheck) {
 	assert(recheck && cookie->context); endCalls++;
 	auto* c=cookie->context; bool clean=!c->Unsafe();
+	if (c->bulk.saved) clean=PioneerBulkUploadClose(c->io,c->baseline.baseline.baseline.baseline.dram,
+		c->baseline.baseline.baseline.noc,c->host,c->lease,c->bulkHost,c->bulk) && clean;
 	if (c->lease.saved) clean=PioneerResidentLeaseEnd(c->io,c->baseline.baseline.baseline.noc,c->lease) && clean;
-	if (clean) { assert(c->io.ReleaseHostPage()==0); if (c->lease.saved) c->io.Safe(); }
-	else { assert(c->io.quarantined && !c->io.releases); sColdRecoveryRequired=true; }
+	if (clean) {
+		if (c->bulkHost.allocated) assert(PioneerReleaseOutputBuffer(c->io,c->bulkHost,true));
+		assert(c->io.ReleaseHostPage()==0); if (c->lease.saved) c->io.Safe();
+	} else {
+		assert(c->io.HostReadMock::quarantined && !c->io.PageMock::releases);
+		if (c->bulkHost.allocated) assert(c->io.OutputBufferMock::quarantined && !c->io.OutputBufferMock::releases);
+		sColdRecoveryRequired=true;
+	}
 	r={}; r.state=clean?TT_RESIDENT_SESSION_CLOSED:TT_RESIDENT_SESSION_CLEANUP_FAILED;
 	r.host_released=clean; r.pci_restored=clean; r.cold=!clean;
 	delete c; cookie->context=nullptr; sRuntimeOwner=nullptr; sBankStorageOnly=false;
@@ -86,11 +97,12 @@ static void End(PioneerProbeCookie& cookie) {
 }
 int main()
 {
+	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
 	PioneerProbeCookie cookie,foreign;
 	tt_q38_bank_support support={};
 	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_SUPPORT,&support,sizeof(support))==B_OK);
-	assert(support.driver==44 && support.version==1 && support.banks==7 && support.storage_only
-		&& support.bytes_per_bank==PioneerResidentBanks::Capacity && support.max_pages==1 && !beginCalls);
+	assert(support.driver==45 && support.version==1 && support.banks==7 && support.storage_only
+		&& support.bytes_per_bank==PioneerResidentBanks::Capacity && support.max_pages==4 && !beginCalls);
 	team=18; assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_SUPPORT,&support,sizeof(support))==B_NOT_ALLOWED); team=17;
 	threadStatus=-97; assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_SUPPORT,&support,sizeof(support))==-97); threadStatus=0;
 	for (unsigned version:{0U,2U,44U,UINT32_MAX}) {
@@ -124,6 +136,61 @@ int main()
 	page.bank=0; page.offset=UINT64_MAX;
 	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_UPLOAD,&page,sizeof(page))==B_BAD_VALUE);
 	assert(cookie.context->io.requests==requests); End(cookie);
+	// Actual bulk dispatch + transport. Vary sizes and placement; write all
+	// banks before independent PIO reads, including untouched neighbours.
+	Begin(cookie);
+	tt_q38_bank_bulk bulk={}; bulk.version=1;
+	uint32_t expected[7][8][1024]={};
+	for (unsigned bank=0;bank<7;bank++) for (unsigned pages=1;pages<=4;pages++) {
+		bulk.bank=bank; bulk.pages=pages;
+		bulk.offset=PioneerResidentBanks::Capacity-32768+(pages%2)*4096;
+		for (unsigned w=0;w<4096;w++) bulk.data[w]=0x37200000U^(bank<<20)^(pages<<16)^w;
+		assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk))==B_OK);
+		assert(bulk.result.transfer.state==TT_STORE_PASSED && bulk.result.transfer.completed==6
+			&& bulk.result.transfer.readback_complete && !bulk.result.transfer.recovery_required);
+		for (unsigned p=0;p<pages;p++) memcpy(expected[bank][pages%2+p],bulk.data+p*1024,4096);
+	}
+	assert(cookie.context->uploadedPages==7*4);
+	for (unsigned bank=0;bank<7;bank++) for (unsigned p=0;p<4;p++) {
+		page={}; page.version=1; page.bank=bank; page.offset=PioneerResidentBanks::Capacity-32768+p*4096;
+		assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_READ,&page,sizeof(page))==B_OK);
+		assert(page.result.state==TT_STORE_PASSED && !memcmp(page.data,expected[bank][p],4096));
+	}
+	requests=cookie.context->io.requests;
+	for (unsigned fault=0;fault<9;fault++) {
+		bulk={}; bulk.version=1; bulk.pages=4;
+		if (fault==0) bulk.version=2;
+		if (fault==1) bulk.bank=7;
+		if (fault==2) bulk.reserved=1;
+		if (fault==3) bulk.pages=0;
+		if (fault==4) bulk.pages=5;
+		if (fault==5) bulk.offset=1;
+		if (fault==6) bulk.offset=PioneerResidentBanks::Capacity-4096;
+		if (fault==7) bulk.offset=UINT64_MAX-4095;
+		assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk)-(fault==8))==B_BAD_VALUE);
+	}
+	assert(requests==cookie.context->io.requests);
+	bulk={}; bulk.version=1; bulk.pages=4;
+	assert(Q38BankControl(&foreign,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk))==B_BUSY);
+	team=18; assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk))==B_NOT_ALLOWED); team=17;
+	End(cookie);
+	// Every bank and every stage can become UNKNOWN. No subsequent upload,
+	// END via normal gate, host release, or bank-local recovery is allowed.
+	for (unsigned bank=0;bank<7;bank++) for (unsigned step=1;step<=6;step++) {
+		Begin(cookie); bulk={}; bulk.version=1; bulk.bank=bank; bulk.pages=4;
+		cookie.context->io.failRequest=step;
+		assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk))==B_OK);
+		assert(bulk.result.transfer.recovery_required && sColdRecoveryRequired && cookie.context->banks.Quarantined());
+		requests=cookie.context->io.requests;
+		for (unsigned other=0;other<7;other++) {
+			bulk.bank=other;
+			assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD,&bulk,sizeof(bulk))==B_DEV_NOT_READY);
+		}
+		assert(requests==cookie.context->io.requests);
+		EndResidentSession(&cookie,session.result,true); assert(session.result.cold && !session.result.host_released);
+		// Test-only simulated NEW cold boot, not a runtime retry/unquarantine.
+		sColdRecoveryRequired=false;
+	}
 	// A successful begin whose user result cannot be copied must unwind;
 	// no orphan global owner/pinned host page is left behind.
 	session={}; session.version=1; failCopy=copyCalls+2;

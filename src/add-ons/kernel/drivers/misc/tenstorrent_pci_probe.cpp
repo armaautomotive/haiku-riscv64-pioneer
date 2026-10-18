@@ -2250,9 +2250,58 @@ ResidentStoreControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size
 
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 // PIONEER_Q38_BANK_CONTROL_BEGIN
-// Experimental44: storage-only, disjoint ABI, no code image/core release.
+// Experimental45: storage-only, disjoint ABI, no code image/core release.
 // An arena consumes the SAME global owner as legacy inference. There is no
 // bank-local recovery/retry: uncertainty quarantines the entire card owner.
+static status_t
+Q38BankBulkUpload(PioneerProbeCookie* cookie,void* data,size_t length)
+{
+	if (length!=sizeof(tt_q38_bank_bulk)) return B_BAD_VALUE;
+	auto* request=(tt_q38_bank_bulk*)malloc(sizeof(tt_q38_bank_bulk));
+	if (!request) return B_NO_MEMORY;
+	status_t status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || request->version!=TT_Q38_BANK_PROTOCOL || request->bank>=7 || request->reserved
+		|| !PioneerQ38BankBulkRange(request->bank,request->offset,request->pages)) {
+		free(request); return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+	else {
+		auto& dram=c->baseline.baseline.baseline.baseline.dram;
+		auto& noc=c->baseline.baseline.baseline.noc;
+		uint32 address=0,route=0,index=0;
+		if (!c->banks.Range(dram,request->bank,request->offset,request->pages)
+			|| !c->banks.Page(dram,request->bank,request->offset,address,route,index)) status=B_DEV_NOT_READY;
+		else {
+			request->result={}; request->result.transfer.version=1; request->result.transfer.state=TT_STORE_CONFIG_FAILED;
+			bool ready=c->lease.ready;
+			if (!ready && !c->lease.saved) ready=PioneerResidentLeaseBegin(c->io,noc,c->lease);
+			if (ready) ready=c->io.SelectRuntimeCore(0) && c->io.MapBulk();
+			if (ready && !c->bulkHost.allocated) ready=PioneerPrepareOutputBuffer(c->io,c->host,c->bulkHost);
+			ready=ready && c->bulkHost.ready && PioneerBulkUploadPrepare(c->io,dram,noc,c->host,c->lease,c->bulkHost,c->bulk);
+			bool passed=ready && PioneerBulkUpload(c->io,dram,noc,c->host,c->lease,c->bulkHost,c->bulk,
+				PioneerResidentBanks::Capacity,request->offset,request->pages,request->data,request->result,&c->banks,request->bank);
+			for (unsigned p=0;p<request->pages;p++) {
+				if (request->result.transfer.wrote_device && c->initialized[index+p]) {
+					c->initialized[index+p]=0; c->uploadedPages--;
+				}
+				if (passed) {
+					c->hashes[index+p]=PioneerResidentPageHash(request->data+p*1024);
+					c->initialized[index+p]=1; c->uploadedPages++;
+				}
+			}
+			if (c->Unsafe() || request->result.transfer.recovery_required) {
+				c->banks.Quarantine(); c->bulk.unsafe=true; c->lease.recovery_required=true;
+				c->io.QuarantineHostPage(); PioneerQuarantineOutputBuffer(c->io,c->bulkHost);
+				request->result.transfer.recovery_required=1; sColdRecoveryRequired=true;
+			}
+			status=user_memcpy(data,request,sizeof(*request));
+		}
+	}
+	release_sem(sLock); free(request); return status;
+}
+
 static status_t
 Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
@@ -2260,10 +2309,11 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
 	if (status!=B_OK) return status;
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD) return Q38BankBulkUpload(cookie,data,length);
 	if (operation==TT_PCI_PROBE_Q38_BANK_SUPPORT) {
 		if (length!=sizeof(tt_q38_bank_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_bank_support support={TT_Q38_BANK_DRIVER,TT_Q38_BANK_PROTOCOL,7,4096,1,1,
+		const tt_q38_bank_support support={TT_Q38_BANK_DRIVER,TT_Q38_BANK_PROTOCOL,7,4096,4,1,
 			PioneerResidentBanks::Capacity};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
@@ -2529,7 +2579,7 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 	// CPU metadata only. No map/read/write/probe/start/reset/DMA operation.
 	tt_coordinated_support support={43,119,3,1,8192}; // v43 exact unpack source Wait Gate;SAME math bytes except ONE scheduling word/owners/proofs
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
-	support.version=44; // separate unqualified build; NEVER masquerade as qualified43
+	support.version=TT_Q38_BANK_DRIVER; // separate experimental build; NEVER masquerade as qualified43
 #endif
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
@@ -3361,7 +3411,7 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 		return B_NOT_ALLOWED;
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
-	if (operation>=TT_PCI_PROBE_Q38_BANK_SUPPORT && operation<=TT_PCI_PROBE_Q38_BANK_READ)
+	if (operation>=TT_PCI_PROBE_Q38_BANK_SUPPORT && operation<=TT_PCI_PROBE_Q38_BANK_BULK_UPLOAD)
 		return Q38BankControl(instance,operation,data,length);
 #endif
 	if (operation==TT_PCI_PROBE_PIONEER_SESSION_BEGIN || operation==TT_PCI_PROBE_PIONEER_SESSION_END

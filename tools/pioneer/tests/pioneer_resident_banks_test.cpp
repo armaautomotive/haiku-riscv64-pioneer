@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-#define PIONEER_RESIDENT_STORE_MOCK_ONLY
-#include "pioneer_resident_store_test.cpp"
+#define PIONEER_BULK_UPLOAD_MOCK_ONLY
+#include "pioneer_bulk_upload_test.cpp"
 #include <array>
 #include <map>
 static tt_dram_samples_result BankProof(StoreMock& io)
@@ -15,21 +15,14 @@ static tt_dram_samples_result BankProof(StoreMock& io)
 	}
 	return result;
 }
-struct BanksMock : StoreMock {
-	std::map<uint64_t,std::array<uint32_t,1024>> memory;
-	uint32_t seen=0;
-	unsigned Logical(uint32_t route) {
-		const unsigned ys[]={12,15,18,12,15,18,21};
-		for (unsigned b=0;b<7;b++) if (route==((b<3?18U:17U)|(ys[b]<<6))) return b;
-		assert(false); return 7;
-	}
-	uint64_t Key(uint32_t route,uint32_t address) {
-		unsigned b=Logical(route); seen|=1U<<b;
-		assert(address>=0x04000000 && !(address&4095) && address<=0xc3fff000);
-		return uint64_t(b)*PioneerResidentBanks::Capacity+address-0x04000000;
-	}
+struct BanksMock : BulkMock {
+	BanksMock() { sevenBanks=true; }
 	void ResidentNocWrite(uint32_t offset,uint32_t value) {
 		if (offset!=0x40) { StoreMock::ResidentNocWrite(offset,value); return; }
+		if (command[0]==TT_BULK_UPLOAD_L1 || command[3]==TT_BULK_UPLOAD_L1
+			|| command[0]==TT_BULK_RETURN_L1 || command[3]==TT_BULK_RETURN_L1) {
+			BulkMock::ResidentNocWrite(offset,value); return;
+		}
 		assert(!uncertain && !pending && value==1 && config==0x16005);
 		doorbells++; doorbellRead=false;
 		if (++Mock::writes==Mock::drop) { uncertain=true; return; }
@@ -45,7 +38,7 @@ struct BanksMock : StoreMock {
 		} else {
 			assert(!command[7] && !command[4] && command[5]==(1|(2<<6)));
 			if (command[2]==(19|(24<<6))) {
-				assert(command[0]==uint32_t(physical) && command[1]==uint32_t(physical>>32) && command[3]==0x17e000);
+				assert(command[0]==uint32_t(StoreMock::physical) && command[1]==uint32_t(StoreMock::physical>>32) && command[3]==0x17e000);
 				assert(pciCommand[0]==0x406 && pciCommand[1]==0x406);
 				for (unsigned w=0;w<1024;w++) destination[w]=page[w];
 			} else {
@@ -61,6 +54,7 @@ struct BanksMock : StoreMock {
 #ifndef PIONEER_BANKS_MOCK_ONLY
 int main()
 {
+	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
 	static_assert(PioneerResidentBanks::Pages==5505024,"all-bank page bookkeeping");
 	BanksMock io; auto baseline=BankProof(io); auto noc=io.Compute();
 	PioneerResidentBanks banks;
@@ -128,12 +122,12 @@ int main()
 		assert(owner.Bind(proof)); tt_host_page_result h; PioneerResidentLease l;
 		assert(Prepared(trial,h,l)); trial.failRequest=step;
 		assert(!PioneerResidentStorePage(trial,proof,noc,h,l,PioneerResidentBanks::Capacity,0,true,data,r,&owner,b));
-		assert(r.recovery_required && trial.quarantined && !trial.releases);
+		assert(r.recovery_required && trial.HostReadMock::quarantined && !trial.PageMock::releases);
 		owner.Quarantine(); assert(owner.Quarantined() && !owner.Bind(proof));
 		unsigned issued=trial.requests,writes=trial.Mock::writes;
 		for (unsigned other=0;other<7;other++) assert(!PioneerResidentStorePage(trial,proof,noc,h,l,PioneerResidentBanks::Capacity,0,true,data,r,&owner,other));
 		assert(trial.requests==issued && trial.Mock::writes==writes);
-		assert(!PioneerResidentLeaseEnd(trial,noc,l) && !trial.releases);
+		assert(!PioneerResidentLeaseEnd(trial,noc,l) && !trial.PageMock::releases);
 	}
 	// A source change invalidates an already bound owner,not just new binds.
 	baseline.source[1]^=1; assert(!banks.Matches(baseline));

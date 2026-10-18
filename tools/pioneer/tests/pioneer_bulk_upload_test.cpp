@@ -5,11 +5,29 @@
 #include "pioneer_output_buffer_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerBulkUpload.h"
 #include <vector>
+#include <array>
+#include <map>
 struct BulkMock:StoreMock,OutputBufferMock {
 	uint32_t l1[8192],saved[8192],gddr[8192];
 	unsigned bulkWrites=0,dropBulk=0,fences=0,hostReads=0,hostStores=0;
 	unsigned dropHost=0,corruptWord=~0U,lateWord=~0U;
 	bool hostDirty=false,badBulkMap=false,dropPosted=false,partialPosted=false,latePosted=false;
+	bool sevenBanks=false;
+	uint32_t seen=0;
+	std::map<uint64_t,std::array<uint32_t,1024>> memory;
+	unsigned Logical(uint32_t route) {
+		assert(sevenBanks);
+		const unsigned ys[]={12,15,18,12,15,18,21};
+		for (unsigned b=0;b<7;b++) if (route==((b<3?18U:17U)|(ys[b]<<6))) return b;
+		assert(false); return 7;
+	}
+	uint64_t Key(uint32_t route,uint32_t address) {
+		unsigned b=Logical(route); seen|=1U<<b;
+		assert(address>=0x04000000 && !(address&4095) && address<=0xc3fff000);
+		return uint64_t(b)*PioneerResidentBanks::Capacity+address-0x04000000;
+	}
+	bool SelectRuntimeCore(unsigned core) { return core==0; }
+	bool MapBulk() { return !badBulkMap; }
 	BulkMock() {
 		for (unsigned w=0;w<8192;w++) { l1[w]=0x91730000+w; gddr[w]=0x24680000+w; }
 	}
@@ -44,19 +62,31 @@ struct BulkMock:StoreMock,OutputBufferMock {
 			if (!dropPosted) for (unsigned w=0;w<words-(partialPosted?1:0);w++) OutputBufferMock::data[w]=l1[4096+w]^(w==corruptWord?1:0);
 		} else if (writing) {
 			assert(command[0]==TT_BULK_UPLOAD_L1 && command[1]==0 && command[2]==(1|(2<<6)));
-			assert(command[4]==0 && command[5]==(18|(12<<6)) && pciCommand[0]==0x402 && pciCommand[1]==0x402);
-			unsigned at=(command[3]-0x04000000)/4; assert(at+words<=8192);
-			for (unsigned w=0;w<words;w++) gddr[at+w]=l1[w];
+			assert(command[4]==0 && pciCommand[0]==0x402 && pciCommand[1]==0x402);
+			if (sevenBanks) for (unsigned p=0;p<words/1024;p++) {
+				auto& destination=memory[Key(command[5],command[3]+p*4096)];
+				for (unsigned w=0;w<1024;w++) destination[w]=l1[p*1024+w];
+			} else {
+				assert(command[5]==(18|(12<<6)));
+				unsigned at=(command[3]-0x04000000)/4; assert(at+words<=8192);
+				for (unsigned w=0;w<words;w++) gddr[at+w]=l1[w];
+			}
 		} else if (command[2]==(19|(24<<6))) {
 			assert(command[0]==uint32_t(OutputBufferMock::physical) && command[1]==uint32_t(OutputBufferMock::physical>>32));
 			assert(command[3]==TT_BULK_UPLOAD_L1 && command[4]==0 && command[5]==(1|(2<<6)) && command[7]==0);
 			assert(pciCommand[0]==0x406 && pciCommand[1]==0x406);
 			for (unsigned w=0;w<words;w++) l1[w]=OutputBufferMock::data[w];
 		} else {
-			assert(command[2]==(18|(12<<6)) && command[1]==0 && command[3]==TT_BULK_RETURN_L1
+			assert(command[1]==0 && command[3]==TT_BULK_RETURN_L1
 				&& command[4]==0 && command[5]==(1|(2<<6)) && command[7]==0);
-			unsigned at=(command[0]-0x04000000)/4; assert(at+words<=8192);
-			for (unsigned w=0;w<words;w++) l1[4096+w]=gddr[at+w];
+			if (sevenBanks) for (unsigned p=0;p<words/1024;p++) {
+				auto found=memory.find(Key(command[2],command[0]+p*4096)); assert(found!=memory.end());
+				for (unsigned w=0;w<1024;w++) l1[4096+p*1024+w]=found->second[w];
+			} else {
+				assert(command[2]==(18|(12<<6)));
+				unsigned at=(command[0]-0x04000000)/4; assert(at+words<=8192);
+				for (unsigned w=0;w<words;w++) l1[4096+w]=gddr[at+w];
+			}
 		}
 		uint32_t* count=writing?writeCounters:counters;
 		count[0]++; count[1]+=flits+(badFlits?1:0); accepted++; count[3]++;

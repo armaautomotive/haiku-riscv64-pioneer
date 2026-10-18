@@ -12,4 +12,4 @@ awk '/PIONEER_Q38_BANK_CONTROL_BEGIN/ {copying=1;next} /PIONEER_Q38_BANK_CONTROL
 ${CXX:-c++} -std=c++17 -O1 -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I "$temporary" "$directory/pioneer_q38_bank_control_test.cpp" -o "$temporary/control"
 "$temporary/control"
-printf 'PASS: seven-bank private route/page authority,all-bank ownership/bounds,independent first/last-page roundtrips,ALL21 unknown stages quarantine EVERY bank\n'
+printf 'PASS: seven-bank private page/bulk route authority,actual control handler,all-bank ownership/bounds,independent PIO roundtrips,ALL21 page+42 bulk unknown stages quarantine EVERY bank\n'

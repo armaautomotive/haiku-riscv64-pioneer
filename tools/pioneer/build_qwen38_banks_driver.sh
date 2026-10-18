@@ -1,5 +1,5 @@
 #!/bin/sh
-# Offline driver44 candidate and default43 control. NEVER syncs,installs,
+# Offline driver45 candidate and default43 control. NEVER syncs,installs,
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
@@ -40,8 +40,8 @@ libgcc=$("$cxx" -print-file-name=libgcc.a)
 "$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=tenstorrent_pci_probe \
  "$begin" "$release/system/glue/haiku_version_glue.o" \
  "$output/tenstorrent_pci_probe.o" "$output/PioneerPciProfile.o" "$kernel" "$libgcc" "$end" \
- -o "$output/tenstorrent_pci_probe-driver44"
-shasum -a 256 "$output/tenstorrent_pci_probe-driver44"
+ -o "$output/tenstorrent_pci_probe-driver45"
+shasum -a 256 "$output/tenstorrent_pci_probe-driver45"
 # Compile/link the default (feature disabled) branch too. This catches any
 # accidental new ABI dependency in the preserved ordinary driver build.
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
