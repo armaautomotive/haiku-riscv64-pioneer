@@ -2,6 +2,17 @@
 
 ## Status
 
+### October18,17:51 UTC:STOP proof passes;worker1 physical audit still rejects
+
+Nativeec0813e7:18 exact arithmetic cases PASS,root STOP DONE/all119 and
+exact root statistics/final-command checks PASS,but worker1 physical audit
+fails before any reset/restoration. Card/owner quarantine,normal shutdown,
+off confirmed17:48:09 UTC;five-minute rest before recovery. Next e07f3123
+adds source/code/status subphases and already-read mismatch details only;
+root/peer/math/ABI/proof unchanged. END/order/all faults/retained-owner tests
+pass offline,including diagnostic immutability after quarantine. Native
+staging-f test still required;no new model/Assistant performance result.
+
 ### October18,17:36 UTC:ordered STOP native test faults;finer diagnostics ready
 
 Linux cold/unbound state and SD-free Haiku full64 CPU/128GB verified. Native

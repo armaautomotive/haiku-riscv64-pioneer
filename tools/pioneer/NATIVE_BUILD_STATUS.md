@@ -1,5 +1,25 @@
 # Native build status
 
+Latest checkpoint (October18,17:51 UTC): checkpoint54/ec0813e7 runs all18
+two-peer arithmetic cases exactly and reaches STOP DONE7200c/count119/
+marker314d3851. Exact root STOP statistics/final-command proof PASS. It then
+rejects independent physical audit of worker1 at close phase50 BEFORE ANY
+reset/restore. All owners/banks quarantined;no later accelerator ioctl.
+Normal shutdown/off confirmed17:48:09 UTC;five-minute rest before cold boot.
+Evidence:/private/tmp/pioneer-q38-dispatch-checkpoint-synthetic-two-20261018-e.log.
+
+Next diagnostic54/e07f3123 keeps SAME root41d577cb/peer263015f2/ABI/math,
+splits physical audit into source51/code52/status53,and records first
+code/status/PC mismatch using ONLY values read by the existing audit.
+No added device reads after failure and no relaxed proof/reset/restore.
+Both payload END/order/fault suites PASS with exact diagnostic-value and
+repeat-quarantine immutability assertions(dispatch-close.aj060eHA);actual
+handler/retained-owner tests PASS(control.iPS54rGk),default43 exact2df0e0f8.
+Fresh-cold/unloaded staging-f installer pins prior ec0813e7,new e07f3123,
+and preserved43/52 backups. NOT staged/installed/run yet. Root STOP fault
+from prior34feba3c did not reproduce with checkpoint timing;do not claim
+the cleanup ordering fix fully qualified or infer a new model speed.
+
 Latest checkpoint (October18,17:36 UTC): user-powered cold Linux returned;
 P100A unbound/COMMAND0000,helper hashes exact. Fresh SD-free Haiku has64 CPUs
 and137,034,936,320 bytes RAM. Guarded unloaded-only ordered54/34feba3c install

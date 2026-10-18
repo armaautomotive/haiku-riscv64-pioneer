@@ -16,6 +16,7 @@ struct PioneerQ38DispatchLease {
 	// never an excuse for extra device reads/writes after uncertainty.
 	unsigned closePhase=0,closeWorker=0;
 	uint32_t closeStatus[3]={};
+	uint32_t closeDetail[4]={};
 	bool bootAttempted=false,booted=false,unsafe=false,closed=false,rootRunning=false;
 };
 static inline bool PioneerQ38DispatchUnsafe(const PioneerQ38DispatchLease& lease)
@@ -42,11 +43,22 @@ template<class IO> bool PioneerQ38DispatchSources(IO& io,const tt_dram_samples_r
 		&& banks.Matches(dram) && io.Q38PanelMappingStable() && io.ResetRead()==reset && io.ResetRead()==reset
 		&& PioneerRuntimeSources(io,dram,node.noc,node.Store()) && BlackholeResidentIdle(io);
 }
-template<class IO> bool PioneerQ38DispatchCodeMatches(IO& io,unsigned worker)
+template<class IO> bool PioneerQ38DispatchCodeMatches(IO& io,unsigned worker,PioneerQ38DispatchLease* diagnostic=nullptr)
 {
-	bool okay=worker<120 && io.RuntimeCodeRead(0)==TT_Q38_DISPATCH_BOOT;
-	for (uint32_t a=0x70000;a<0x74000;a+=4) if (!worker || PioneerQ38PanelImmutable(a))
-		okay &= io.Q38PanelRead(a)==(a<0x72000?0:PioneerQ38DispatchRoleWord(worker,(a-0x72000)/4));
+	if (worker>=120) return false;
+	uint32_t entry=io.RuntimeCodeRead(0); bool okay=entry==TT_Q38_DISPATCH_BOOT;
+	if (!okay && diagnostic && !diagnostic->closeDetail[0]) {
+		diagnostic->closeDetail[0]=0x300; diagnostic->closeDetail[1]=0x6000;
+		diagnostic->closeDetail[2]=entry; diagnostic->closeDetail[3]=TT_Q38_DISPATCH_BOOT;
+	}
+	for (uint32_t a=0x70000;a<0x74000;a+=4) if (!worker || PioneerQ38PanelImmutable(a)) {
+		uint32_t actual=io.Q38PanelRead(a),expected=a<0x72000?0:PioneerQ38DispatchRoleWord(worker,(a-0x72000)/4);
+		if (actual!=expected && diagnostic && !diagnostic->closeDetail[0]) {
+			diagnostic->closeDetail[0]=0x300; diagnostic->closeDetail[1]=a;
+			diagnostic->closeDetail[2]=actual; diagnostic->closeDetail[3]=expected;
+		}
+		okay &= actual==expected;
+	}
 	return okay;
 }
 template<class IO> bool PioneerQ38DispatchPrepareRole(IO& io,const tt_dram_samples_result& dram,

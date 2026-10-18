@@ -2081,6 +2081,8 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 	dprintf("PIONEER-P100A:54 RETAIN end=%u close=%u worker=%u status=%08x/%08x/%08x prepared=%u booted=%u closed=%u;NO_LATER_CARD_IO\n",
 		c.q38EndPhase,d?d->closePhase:0,d?d->closeWorker:0,d?d->closeStatus[0]:0,d?d->closeStatus[1]:0,d?d->closeStatus[2]:0,
 		d?d->prepared:0,unsigned(d && d->booted),unsigned(d && d->closed));
+	if (d) dprintf("PIONEER-P100A:54 DETAIL %08x/%08x/%08x/%08x;ALREADY_READ_VALUES_ONLY\n",
+		d->closeDetail[0],d->closeDetail[1],d->closeDetail[2],d->closeDetail[3]);
 #endif
 }
 static bool

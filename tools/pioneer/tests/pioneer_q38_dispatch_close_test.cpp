@@ -125,10 +125,21 @@ int main(int argc,char** argv)
 	for (unsigned fault=1;fault<=12;fault++) for (unsigned target:{1U,60U,119U}) {
 		CloseFixture f(argv[1]); f.io.closing=true; f.io.closeFault=fault; f.io.target=target;
 		assert(!f.Close() && f.lease->unsafe && f.banks.Quarantined());
+		if (fault==1 || fault==2) assert(f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==0x72000
+			&& (f.lease->closeDetail[2]^f.lease->closeDetail[3])==1);
+		if (fault==2) assert(f.lease->closePhase==52);
+		if (fault==3) assert(f.lease->closePhase==53 && f.lease->closeDetail[0]==0x200
+			&& f.lease->closeDetail[1]==TT_Q38_PEER_WAIT_LOAD && f.lease->closeDetail[2]==TT_Q38_PEER_WAIT_LOAD
+			&& f.lease->closeDetail[3]==TT_Q38_PEER_STOP);
+		if (fault==4) assert(f.lease->closePhase==53 && f.lease->closeDetail[0]==0x101
+			&& f.lease->closeDetail[1]==f.lease->closeDetail[2]+1);
+		if (fault==9) assert(f.lease->closePhase==51);
 		if (fault<=5 || fault==9) assert(!f.io.endHolds && !f.io.restored);
 		if (fault==1) assert(!f.io.stopExecuted);
 		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
+		uint32_t detail[4]; memcpy(detail,f.lease->closeDetail,sizeof(detail));
 		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
+		assert(!memcmp(detail,f.lease->closeDetail,sizeof(detail)));
 		for (unsigned w=0;w<120;w++) assert(f.lease->worker[w].image.unsafe && f.lease->worker[w].Store().recovery_required);
 	}
 	for (unsigned fault:{1U,2U}) {
