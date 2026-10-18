@@ -3,6 +3,7 @@
 #include <cassert>
 #include <cstring>
 #include <cerrno>
+#include <cstdio>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -12,11 +13,30 @@
 #include "../PioneerQwen38Panel.h"
 static unsigned opens=0,closes=0,begins=0,ends=0,runs=0,fault=0,field=0;
 static bool failed=false;
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+static const char* hostFixture=nullptr;
+static unsigned authFault=0;
+static FILE* MockFopen(const char* path,const char* mode)
+{
+	assert(hostFixture && !strcmp(path,"/boot/home/pioneer-qwen38-affine-20261017-a/public-model-panels-eb62d234.bin") && !strcmp(mode,"rb"));
+	FILE* source=fopen(hostFixture,"rb"); assert(source);
+	if (!authFault) return source;
+	uint8_t data[12544]; assert(fread(data,1,sizeof(data),source)==sizeof(data)); fclose(source);
+	FILE* temporary=tmpfile(); assert(temporary); data[0]^=1;
+	assert(fwrite(data,1,sizeof(data)-(authFault==2),temporary)==sizeof(data)-(authFault==2)); fflush(temporary); rewind(temporary); return temporary;
+}
+static int MockExecv(const char* path,char* const*)
+{
+	assert(!strcmp(path,"/bin/sha256sum"));
+	char name[]="shasum",option[]="-a",bits[]="256"; char* args[]={name,option,bits,NULL};
+	return execv("/usr/bin/shasum",args); // same stdin digest format,host-only test
+}
+#endif
 static int MockOpen(const char* path,int flags)
 {
 	assert(!strcmp(path,"/dev/" TT_PCI_PROBE_DEVICE) && flags==(O_RDWR|O_CLOEXEC)); opens++; return 73;
 }
-static int MockClose(int fd) { assert(fd==73); closes++; return 0; }
+static int MockClose(int fd) { if (fd==73) { closes++; return 0; } return close(fd); }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
@@ -74,19 +94,32 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 #define open MockOpen
 #define close MockClose
 #define ioctl MockIoctl
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+#define fopen MockFopen
+#define execv MockExecv
+#endif
 #define main Q38PanelMain
 #include "../pioneer_q38_panel_probe.cpp"
 #undef main
 #undef ioctl
 #undef close
 #undef open
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+#undef fopen
+#undef execv
+#endif
 static int Run(const char* argument)
 {
 	char name[]="panel"; char* argv[]={name,const_cast<char*>(argument)}; return Q38PanelMain(2,argv);
 }
 static void Reset(unsigned f=0,unsigned w=0) { opens=closes=begins=ends=runs=0; failed=false; fault=f; field=w; }
-int main()
+int main(int argc,char** argv)
 {
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+	assert(argc==2); hostFixture=argv[1];
+#else
+	(void)argv; assert(argc==1);
+#endif
 	Reset(); assert(Run("--support")==0 && opens==1 && closes==1 && !begins && !runs);
 	Reset(4); assert(Run("--synthetic")==1 && opens==1 && closes==1 && !begins && !runs);
 	Reset(); assert(Run("--synthetic")==0 && begins==1 && ends==1 && runs==12 && closes==1);
@@ -94,5 +127,13 @@ int main()
 		Reset(f,w); assert(Run("--synthetic")==1 && failed && begins==1 && runs==1 && !ends && closes==1);
 	}
 	Reset(); assert(Run("--bad-argument")==2 && !opens);
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+	Reset(); assert(Run("--public-fixtures")==0 && begins==1 && ends==1 && runs==12 && closes==1);
+	for (unsigned bad=1;bad<=2;bad++) {
+		Reset(); authFault=bad; assert(Run("--public-fixtures")==1 && !opens && !begins && !runs && !ends); authFault=0;
+	}
+	puts("PASS: REAL public-fragment client+MEMORY SHA pipeline,all12 authentic scaled panels,corrupt+truncated fixture refuses BEFORE device open;NO card/network access");
+#else
 	puts("PASS: REAL local-panel debug client,metadata-only/old-driver refusal,all12 mixed shapes,ALL21 completion proofs+3 value corruptions/ioctl error close-only;NO card/network/model access");
+#endif
 }

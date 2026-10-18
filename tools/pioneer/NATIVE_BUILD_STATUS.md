@@ -1,6 +1,25 @@
 # Native build status
 
-Latest checkpoint (October18,00:56 UTC / October17 Vancouver): Normal synced
+Latest checkpoint (October18,01:12 UTC / October17 Vancouver): Haiku is UP,
+SSH reachable,64 CPUs/full RAM/NIC0b83ceed. Disk/LOADED module now47 aab1ea67,
+after full cold recovery/same SD-free `affine47-20261017-a` and TWO unloaded
+guards. Native47 BOTH synthetic and authentic public model-fragment scaled
+panels PASSED12 cases each,EXACT float+metadata bits,zero NoC/known start/
+completion/stop/clean END/coldfalse. No jobs remain. NOT fullK/graph/inference
+or speed;47 WHOLE-model mode was NOT rerun.46 previously passed full same-FD
+19GB SHA/layout/native real integer panels. Public fragments were produced
+after rechecking Mac WHOLE SHA,independently match17,408 decoded model values,
+and exact12,544-byte MEMORY SHA is checked BEFORE any device open. Full-model
+loading still retains whole-SHA authentication. Native fixture log:
+`pioneer-qwen38-affine-20261017-a/public-fixtures-20261017-a.log`.
+Kernel/firmware/default Linux/OS/Assistant/dirty llama submodule unchanged.
+Qualified43/46 backups outside driver paths. Restore helper is now
+`pioneer-qwen38-affine-20261017-a/switch-unloaded47.sh --restore43`,ONLY
+after a NEW cold boot with the card driver still unloaded. Never replace
+loaded modules/force unload/retry UNKNOWN. Next full-block accumulation is
+not implemented/qualified yet.
+
+Previous checkpoint (00:56 UTC): Normal synced
 Haiku shutdown closed SSH before00:56:48 for the next controlled cold restart;
 no final halt marker seen. Disk still46;47 is separately staged,NOT installed.
 Last boot verified64 CPUs/full RAM/NIC0b83ceed with unchanged SD-free profile

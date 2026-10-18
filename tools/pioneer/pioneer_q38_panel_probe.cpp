@@ -18,6 +18,9 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PanelProbe.h"
 #include "PioneerQwen38Panel.h"
 #include "PioneerQwen38Gguf.h"
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+#include "PioneerQ38PublicFixtures.h"
+#endif
 static const char* const ModelPath="/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf";
 static bool FullSha(FILE* file)
 {
@@ -116,10 +119,21 @@ static bool Execute(int fd,unsigned type,unsigned panel,const uint8_t* tile,unsi
 }
 int main(int argc,char** argv)
 {
-	if (argc!=2 || (strcmp(argv[1],"--support") && strcmp(argv[1],"--synthetic") && strcmp(argv[1],"--model"))) {
+	if (argc!=2 || (strcmp(argv[1],"--support") && strcmp(argv[1],"--synthetic") && strcmp(argv[1],"--model")
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+		&& strcmp(argv[1],"--public-fixtures")
+#endif
+		)) {
 		fprintf(stderr,"Usage:%s --support|--synthetic|--model;DEBUG_LOCAL_16x16_DOTS_ONLY_NOT_INFERENCE\n",argv[0]); return 2;
 	}
 	setvbuf(stdout,NULL,_IOLBF,0); bool useModel=!strcmp(argv[1],"--model");
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+	bool useFixtures=!strcmp(argv[1],"--public-fixtures"); uint8_t fixtures[PIONEER_Q38_PUBLIC_FIXTURE_BYTES]; unsigned fixtureOffset=0;
+	if (useFixtures) {
+		if (!PioneerQ38LoadPublicFixtures(fixtures,sizeof(fixtures))) { fprintf(stderr,"STOP:EXACT_PUBLIC_FIXTURE_MEMORY_SHA_REQUIRED_BEFORE_DEVICE_OPEN\n"); return 1; }
+		puts("PUBLIC_MODEL_FRAGMENT_MEMORY_SHA_PASS_12544_BYTES;NOT_WHOLE_MODEL_OR_INFERENCE");
+	}
+#endif
 	FILE* file=NULL; PioneerQwen38Gguf model;
 	if (useModel) {
 		file=fopen(ModelPath,"rb");
@@ -149,7 +163,15 @@ int main(int argc,char** argv)
 				uint8_t raw[210]={}; okay=model.ReadPacked(index,uint64_t(first+row)*rowBytes+(end?rowBytes-block:0),block,raw,block);
 				for (unsigned b=0;b<block;b++) tile[b*16+row]=raw[b];
 			}
-		} else for (unsigned row=0;row<16;row++) {
+		}
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+		else if (useFixtures) {
+			unsigned bytes=PioneerQ38PanelTileBytes(type);
+			if (fixtureOffset>sizeof(fixtures) || bytes>sizeof(fixtures)-fixtureOffset) { okay=false; break; }
+			memcpy(tile,fixtures+fixtureOffset,bytes); fixtureOffset+=bytes;
+		}
+#endif
+		else for (unsigned row=0;row<16;row++) {
 			for (unsigned b=0;b<block;b++) tile[b*16+row]=uint8_t(row*17+b*29+end*59);
 			unsigned d=type==14?208:0; uint16_t half=row%3?uint16_t(0x3c00+row*13):uint16_t(1+row);
 			tile[d*16+row]=uint8_t(half); tile[(d+1)*16+row]=uint8_t(half>>8);
@@ -162,13 +184,20 @@ int main(int argc,char** argv)
 		}
 	}
 	if (file) { okay &= model.Stable(); fclose(file); }
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+	if (useFixtures) okay &= fixtureOffset==sizeof(fixtures);
+#endif
 	if (!okay) { fprintf(stderr,"STOP:LOCAL_PROBE_FAILURE;CLOSE_ONLY_NO_END_RETRY_OR_RESET\n"); close(fd); return 1; }
 	session={}; session.version=1;
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored && session.result.host_released && !session.result.cold;
 	if (close(fd)) okay=false;
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
-	printf("%s_LOCAL_SCALED_%s_PANELS cases=%u;KNOWN_CLEAN_END=%u;NOT_FULL_MATVEC_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",useModel?"MODEL":"SYNTHETIC",cases,unsigned(okay));
+	printf("%s_LOCAL_SCALED_%s_PANELS cases=%u;KNOWN_CLEAN_END=%u;NOT_FULL_MATVEC_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",useModel?"MODEL":
+#ifdef PIONEER_Q38_PUBLIC_FIXTURES
+		useFixtures?"PUBLIC_FIXTURE":
+#endif
+		"SYNTHETIC",cases,unsigned(okay));
 #else
 	printf("%s_LOCAL_%s_PANELS cases=%u;KNOWN_CLEAN_END=%u;NOT_SCALED_MATVEC_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",useModel?"MODEL":"SYNTHETIC",cases,unsigned(okay));
 #endif

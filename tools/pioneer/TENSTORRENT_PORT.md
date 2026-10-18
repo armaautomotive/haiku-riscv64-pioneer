@@ -2,6 +2,55 @@
 
 ## Status
 
+### October17: native47 scaled real-weight fragments passed (October18,01:12 UTC)
+
+CURRENT Haiku UP/SSH available,64 CPUs/full RAM/NIC0b83ceed.47 aab1ea67 is
+installed AND LOADED, no jobs/UNKNOWN/cold latch. P100A installed,SDs out.
+Still NOT fullK/whole graph/27B inference/generated tokens or speed.
+
+Synced normal shutdown closed SSH before00:56:48; no final halt marker.
+One off hold completed before00:58:35,one on01:01:45 after FULL180s rest.
+Default Linux/COMMAND0000 recovered; same pinned `affine47-20261017-a`
+64/fullRAM/noSD profile booted01:05:54. Native confirmed no loaded card,
+retained NIC/fullCPU/RAM. Exact d68ed39f helper passed TWO unloaded/no-owner
+guards and switched46->47,preserving46 AND qualified43 outside driver paths.
+Metadata confirmed47/ABI2/local-only. No firmware/default Linux/OS changes.
+
+Native47 synthetic test01:09:23–24 UTC PASSED ALL12 cases. Card performs
+integer matrix math AND affine weight scales/minima/activation scale before
+completion. All16 scaled results/metadata matched FP32 reference BITS,known
+start/complete/stop,PC70400 twice,zero NoC and clean CLOSED/PCI/host/coldfalse
+END. Native `pioneer-qwen38-affine-20261017-a/synthetic-20261017-a.log`.
+
+Avoided repeating ten-minute whole-model reads for tiny DEBUG primitives by
+adding a separate PUBLIC fragment fixture client,not weakening model mode.
+Mac WHOLE c600de03 source SHA was reverified before fresh data generation.
+Six fixed Q8/Q4/Q6 first/last row/block tiles,total12,544B,independently match
+ALL17,408 decoded values from FULL GGUF rows. Fixture SHA:
+`eb62d234359d028a62e3dcf8ee1729c970cc2470e4999c6327ab3f01198a4f51`.
+Native helper reads the full fixed pack,closes its file,then hashes the
+EXACT MEMORY buffer via fixed sha256sum stdin pipe BEFORE any card open.
+Only this authenticated buffer is used; no later mutable path/FD reads.
+REAL-client tests execute that pipeline on the host plus corruption/truncation
+refusal BEFORE device open. No arbitrary file/command/code path is accepted.
+All original46/47 model modes still require whole same-FD SHA/layout checks.
+
+Separate fixture client reproduces
+`8b1622268670e1fe853cbef462235ada68caadb1c89308527222806bfc073c1d`;
+original47 client still reproduces8f40b413. Native fixture/data hashes passed,
+then01:10:41–43 ALL12 genuine scaled Q8/Q4/Q6 fragment cases PASSED with
+EXACT outputs/metadata,known completion/stop/zero NoC/clean END/coldfalse.
+Log `.../public-fixtures-20261017-a.log`;Mac evidence
+`/private/tmp/pioneer-q38-affine-driver47-20261017-b/native-public-fixtures.log`.
+47 WHOLE-model mode was NOT rerun;46's full native SHA/real integer-panel
+pass remains separate. These are local model MATERIAL tests,NOT inference,
+capacity/residency/fullK accumulation/whole graph or performance claims.
+
+Restore47 only via `switch-unloaded47.sh --restore43` after a NEW cold boot
+BEFORE opening the card;never replace a loaded module or force unload. No
+dirty llama implementation read/built/synced. Next: full quantization-block
+accumulation,then resident/fullK/multiworker/hybrid graph;not implemented yet.
+
 ### October17: real27B local integer panels passed; affine47 staged (October18,00:56 UTC)
 
 CURRENT synced normal shutdown closed SSH before00:56:48 for a controlled
