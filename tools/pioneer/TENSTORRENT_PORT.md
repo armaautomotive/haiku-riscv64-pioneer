@@ -2,6 +2,56 @@
 
 ## Status
 
+### October17: guarded fullK49 staged,NOT installed (October18,01:46 UTC)
+
+CURRENT Haiku UP/SSH,48 ef865831 on disk AND LOADED,known clean/no active
+job. All64 CPUs/full RAM/NIC0b83 retained.49 is NOT native-qualified or
+installed. Controlled cold trial planned,same SD-free profile/session
+`stream49-20261017-a`;not dispatched yet. Full27B inference/speed unachieved.
+
+Added separate49/ABI1 fullK data-only ioctls. User supplies only logical
+bank/page offset,exact5120/6144/17408 inputs,integer overlay and finite
+bounded per-block scales. Kernel derives complete initialized extent/route
+from private7-bank proofs and same-owner bitmap. ALL126 type/width/bank/
+first-last extents tested;missing first/middle/last page,wrong bitmap size,
+route changes/quarantine/overflow/invalid vectors/scales/padding refuse.
+
+Immutable pinned fast image11ec8679 performs one-block bounded GDDR reads
+and all accumulation on one fixed core. Expanded saved view264KiB is only
+enabled in49. Exact code/marker/count/park/command-table checks,mod32 read
+counts and flits;0x210 is SHARED accepted count so both aliases must grow
+with reads while all actual write counters stay unchanged. ALL63 shapes/
+reuse/exact L1+entry restore and ALL15 failure scenarios pass. Actual kernel
+handler+lock tests prove same-team/FD/global ownership,legacy isolation,
+all initialized pages checked BEFORE preparation,block/fullK leases cannot
+overlap,known failed-copy cleanup;UNKNOWN quarantines ALL banks+host with
+NO later commands/reset/restore/free. Prior46/47/48 and bank/bulk regressions
+still pass.49 driver reproducibly
+637db0a65bbffa3d56b1117dec4c2ae1f3bafeaf3ca1084058bd0e9173e373a1;
+default43control2df0e0f8 and rebuilt48 ef865831 remain EXACTLY unchanged.
+
+Mac WHOLE19GB source SHA c600de03 reverified before fresh fixed public-row
+data generation. Eight complete first/last16-row groups from Q8 attention,
+Q4 embedding,Q6 output andQ4 K17408 FFN down,total725504B,all bytes AND
+1048576 dequantized values independently match FULL original GGUF rows.
+Fixture SHA a0611645d36e05800a71b6b63dcf5dfeee9d9dcfe722d4dafea2873c7464e231.
+Separate fullK debug client verifies exact immutable MEMORY buffer before
+ANY accelerator open;no arbitrary path/code/coordinate support. Full-model
+loader's whole SHA remains required. Real-client host tests execute9
+synthetic/8 authentic groups via synthetic device syscalls,all21 completion
+and38 bulk proof corruptions,counter wrap,numeric corruption/ioctl error
+close-only,old-driver/storage refusal and corrupt/truncated memory SHA
+failure before open. Client reproducibly
+49bc095f00065c75fed62ac31bfe7f0cb502a1a8e06ef2564e030dcd0aa0beba.
+
+Staged at `pioneer-qwen38-stream-20261017-a`;all native file hashes match.
+`switch-unloaded49.sh` SHA159d67548e27ab1920140308ca72dda56d055d6b9604286f19b75fab1803964b
+pins48/new49/client/43,and actual loaded-guard rehearsal REFUSED without
+driver/backup/incoming writes. Install only on a NEW cold-recovered Haiku
+boot,TWO unloaded/no-owner proofs;keep48+43 backups outside driver paths.
+No new Assistant target or performance claim. Kernel/OS/firmware/default
+Linux/dirty llama unchanged. Next native synthetic/public fullK qualification.
+
 ### October17: native complete-block48 passed; fullK loop OFFLINE (October18,01:34 UTC)
 
 CURRENT Haiku UP/SSH,64 CPUs/full137034936320B RAM/NIC0b83ceed.48 ef865831

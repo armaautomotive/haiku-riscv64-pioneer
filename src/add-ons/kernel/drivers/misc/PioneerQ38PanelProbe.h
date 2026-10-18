@@ -34,7 +34,12 @@ struct tt_q38_panel_support {
 // Separate experimental46 LOCAL arithmetic qualification, NOT a resident
 // model runner. Caller supplies DATA only; kernel owns the one fixed core,
 // immutable image, all addresses, saved L1 and start/completion/stop proof.
-enum { TT_Q38_PANEL_VIEW_BASE=0x6e000,TT_Q38_PANEL_VIEW_BYTES=0x24000,
+enum { TT_Q38_PANEL_VIEW_BASE=0x6e000,
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+	TT_Q38_PANEL_VIEW_BYTES=0x42000,
+#else
+	TT_Q38_PANEL_VIEW_BYTES=0x24000,
+#endif
 	TT_Q38_PANEL_VIEW_WORDS=TT_Q38_PANEL_VIEW_BYTES/4 };
 struct tt_q38_panel_result {
 	uint32_t version,state,prepared,started,completed,stopped,recovery_required,context_reset;

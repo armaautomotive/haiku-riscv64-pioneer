@@ -3,6 +3,9 @@
 // no installed driver/card/host-DMA/PCI/firmware access.
 #define PIONEER_Q38_BLOCK_MACHINE_ONLY
 #include "pioneer_qwen38_block_image_test.cpp"
+#ifdef PIONEER_Q38_STREAM_PINNED
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StreamProbeImage.h"
+#endif
 struct StreamMachine:BlockMachine {
 	std::vector<std::vector<uint8_t>> tiles;
 	std::vector<uint32_t> scales;
@@ -10,6 +13,9 @@ struct StreamMachine:BlockMachine {
 	bool badCounter=false;
 	StreamMachine(const char* root,unsigned kind,unsigned k,unsigned trial=1)
 		:BlockMachine(root,kind,trial,.012345f,nullptr,true) {
+#ifdef PIONEER_Q38_STREAM_PINNED
+		for (unsigned w=0;w<2048;w++) assert(PioneerQ38StreamWord(w)==(w<code.size()/4?Word(code,w*4):0));
+#endif
 		inputs=k; vector.resize(k); unsigned blocks=k/count;
 		memory[0x74000]=0x31533851; memory[0x74010]=0;
 		memory[0x74014]=k; memory[0x74018]=base;

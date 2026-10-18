@@ -1,6 +1,31 @@
 # Native build status
 
-Latest checkpoint (October18,01:34 UTC / October17 Vancouver): Haiku UP/SSH,
+Latest checkpoint (October18,01:46 UTC / October17 Vancouver): Haiku UP/SSH,
+disk/LOADED48 ef865831,known clean/no job. FullK49 is separately staged at
+`pioneer-qwen38-stream-20261017-a`,NOT installed/native-qualified. Driver
+637db0a6/client49bc095f dual-build reproduce;default43 control2df0e0f8 and
+rebuild48 ef865831 unchanged. Exact installer159d6754 pins old48/new49/client/
+qualified43 and native loaded-guard REFUSED with NO driver/backup/incoming
+writes. Next controlled cold restart/pinned noSD profile will use session
+`stream49-20261017-a`;not dispatched yet. Never replace loaded/retry UNKNOWN.
+
+FullK kernel/private authority/actual handler+lock now implemented OFFLINE:
+ALL126 type/width/seven-bank/first-last initialized extent checks;ALL63 launch
+shapes,exact264KiB+entry restoration,all15 completion/command/code/counter/
+stop faults. Read/shared-accepted/zero-write counts exact,mutually exclusive
+block/fullK leases. Unknown quarantines ALL banks+host without retry/reset/
+restore/free. Real-client tests pass9 synthetic/8 authentic full-row groups,
+21 completion+38 bulk proofs,wrapping counters,old ABI refusal,corrupt or
+truncated sample MEMORY auth refusal BEFORE any device open. Reverified
+WHOLE Mac c600de03 SHA,then generated725504B fixed full-row fixture pack
+a0611645d36e05800a71b6b63dcf5dfeee9d9dcfe722d4dafea2873c7464e231;
+all bytes/1048576 decoded values independently match FULL source GGUF rows.
+Native sample SHA verified;never weakens full-model SHA policy. Pinned fast
+image matches EVERY compiled word+zero padding. NOT native49/full graph/
+multiworker/27B inference/tokens/speed. Kernel/OS/firmware/defaultLinux/
+Assistant/dirty llama unchanged.
+
+Previous checkpoint (October18,01:34 UTC / October17 Vancouver): Haiku UP/SSH,
 64 CPUs/137034936320B RAM/NIC0b83ceed. Driver48 ef865831 is installed AND
 LOADED after cold rest/off01:25/on01:28:27/default Linux/pinned SD-free
 `block48-20261017-a`. Two unloaded/no-owner guards passed;47 and qualified43

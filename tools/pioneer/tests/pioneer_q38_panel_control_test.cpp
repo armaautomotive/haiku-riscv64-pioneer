@@ -3,12 +3,20 @@
 // only Haiku syscalls/mappings/PCI reservation are synthetic.
 #define PIONEER_Q38_PANEL_POLICY_MOCK_ONLY
 #define B_DEVICE_OP_CODES_END 1000
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+#define PIONEER_Q38_STREAM_POLICY_MOCK_ONLY
+#include "pioneer_q38_stream_probe_test.cpp"
+#else
 #include "pioneer_q38_panel_probe_test.cpp"
+#endif
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 using status_t=int;
 using uint32=uint32_t;
 constexpr status_t B_OK=0,B_DEV_NOT_READY=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,
 	B_BAD_VALUE=-4,B_NO_MEMORY=-5;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+constexpr status_t B_ENTRY_NOT_FOUND=-6;
+#endif
 struct thread_info { int team; };
 static int team=17,threadStatus=0;
 static int find_thread(void*) { return 1; }
@@ -19,7 +27,15 @@ struct Base3 { Base2 baseline; };
 struct Base4 { Base3 baseline; };
 struct PioneerStoreContext {
 	Base4 baseline;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+	StreamIO io;
+	PioneerQ38StreamLease streamProbe;
+	std::vector<uint8_t> streamPages=std::vector<uint8_t>(PioneerResidentBanks::Pages,1);
+	uint8_t* initialized=streamPages.data();
+	uint64_t bytes=PioneerResidentBanks::Total;
+#else
 	PanelIO io;
+#endif
 	PioneerResidentBanks banks;
 	PioneerResidentLease lease;
 	PioneerQ38PanelLease panelProbe;
@@ -29,7 +45,11 @@ struct PioneerStoreContext {
 		baseline.baseline.baseline.baseline.dram=BankProof(io); baseline.baseline.baseline.noc=io.Compute();
 		assert(banks.Bind(baseline.baseline.baseline.baseline.dram) && PioneerPrepareHostPage(io,host));
 	}
-	bool Unsafe() { return panelProbe.running || panelProbe.unsafe || banks.Quarantined() || lease.pending || lease.recovery_required; }
+	bool Unsafe() { return
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+		streamProbe.running || streamProbe.unsafe ||
+#endif
+		panelProbe.running || panelProbe.unsafe || banks.Quarantined() || lease.pending || lease.recovery_required; }
 };
 struct PioneerProbeCookie { int team=17; PioneerStoreContext* context=nullptr; };
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
@@ -43,6 +63,9 @@ static status_t user_memcpy(void* to,const void* from,size_t bytes) {
 	memcpy(to,from,bytes); return B_OK;
 }
 #include "pioneer_q38_panel_control.inc"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+#include "pioneer_q38_stream_control.inc"
+#endif
 static void Begin(PioneerProbeCookie& cookie)
 {
 	assert(!cookie.context && !sRuntimeOwner); cookie.context=new PioneerStoreContext;
@@ -52,12 +75,16 @@ static void End(PioneerProbeCookie& cookie,bool clean)
 {
 	auto* c=cookie.context; assert(c);
 	auto& dram=c->baseline.baseline.baseline.baseline.dram; auto& noc=c->baseline.baseline.baseline.noc;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+	assert(PioneerQ38PanelClose(c->io,dram,noc,c->lease,c->banks,c->streamProbe,clean)==clean);
+#endif
 	assert(PioneerQ38PanelClose(c->io,dram,noc,c->lease,c->banks,c->panelProbe,clean)==clean);
 	if (c->lease.saved) assert(PioneerResidentLeaseEnd(c->io,noc,c->lease)==clean);
 	if (clean) { assert(!c->Unsafe() && c->io.ReleaseHostPage()==0); if (c->lease.saved) c->io.Safe(); }
 	else assert(c->io.HostReadMock::quarantined && !c->io.PageMock::releases);
 	delete c; cookie.context=nullptr; sRuntimeOwner=nullptr; sBankStorageOnly=false;
 }
+#ifndef PIONEER_Q38_SKIP_PANEL_CONTROL_MAIN
 int main()
 {
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
@@ -99,3 +126,4 @@ int main()
 	assert(acquired==released);
 	puts("PASS: REAL local-panel kernel handler+lock,team/FD/global-owner/legacy isolation,precopy bounds,known copyout cleanup,ALL uncertain launches quarantine ALL banks+host with no later commands/free;NO hardware");
 }
+#endif
