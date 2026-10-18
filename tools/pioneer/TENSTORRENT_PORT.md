@@ -2,6 +2,28 @@
 
 ## Status
 
+### October17: four-position27B smoke completes;performance work continues (October18,06:38 UTC)
+
+52/7643314f PASSES all1,988 GPU learned projections over four positions,
+finite logits,retained weights,clean_end1 and process exit0;no CPU learned
+reference/fallback. Warm positions310.917873/308.574505/309.227006 seconds
+(tiny-sample0.003230255 tokens/s) are NOT usable performance. No text-quality
+or steady benchmark claim. Cold first position7510.527793 seconds.
+
+New frozen-library inference252b6b9c attaches one32-thread sleeping CPU pool
+instead of implicit disposable pools per graph fragment,plus per-position
+matrix/ioctl/other wall diagnostics. CPU-only64-graph lifecycle/addition
+probe fd50a71d PASSES natively. Optimization attribution/speed unmeasured.
+Dirty llama implementation untouched;all four frozen hashes unchanged.
+54 driver9ebc33ea remains only staged. After clean52 exit and shutdown,
+channel1 off completed06:38:02 UTC;>=180s rest before fresh SD-free Haiku
+and guarded unloaded54 install/2,7,119-peer qualification. No54 native claim.
+
+OFFLINE vector transform now emits actual load/integer operand/store/MOVD2A
+sequence and matches2,228,224 weights across8,704 randomized panels under
+ASan/UBSan,including strict opcode/layout/canary tests. Actual unpack/config/
+ownership/hazard/image qualification is still required;no driver selects it.
+
 ### October17: first complete27B GPU position passes;warm trial STILL RUNNING (October18,06:22 UTC)
 
 PUBLIC27B_POSITION0 passes:token11,ALL497 learned projections on P100A,

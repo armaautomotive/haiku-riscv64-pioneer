@@ -1,5 +1,33 @@
 # Native build status
 
+Latest checkpoint (October18,06:38 UTC):52/7643314f full27B four-position
+smoke PASSES with clean_end1,process exit0,and all1,988 learned projections
+on P100A without CPU learned reference/fallback. Warm positions310.917873,
+308.574505,309.227006s:0.003230255 tokens/s for this tiny public sample,
+NOT useful performance,steady throughput or text-quality qualification.
+Cold position7510.527793s;4,558,653 pages retained without repeat upload.
+Full log saved in /private/tmp/pioneer-q38-cohort-driver52-20261017-a/.
+
+Frozen clean pinned CPU backend creates/frees disposable pools per CPU graph
+fragment if no pool is supplied. New inference252b6b9c attaches a caller-owned
+32-thread poll0 pool and reports matrix-callback/ioctl/other graph wall time.
+This is an unmeasured optimization,NOT proven attribution of the309s delay.
+CPU-only64-graph exact vector-add/lifecycle probe fd50a71d PASSES natively;
+no accelerator FD/model/reference. All four frozen library hashes unchanged;
+no dirty llama implementation read/built/synced. Both new binaries staged
+as additional files in dispatch staging-b,not replacing pinned installer files.
+
+New exact vector transform emits SFPLOAD/operand/SFPSTORE/MOVD2A sequence;
+8,704 randomized panels/2,228,224 weights pass ASan/UBSan with strict actual
+instruction decoding,disjoint physical regions,and all destination canaries
+(vector-layout.iTO3uUqQ). STILL NO unpack/config/ownership/hazard/native image
+qualification and NOT selected by any driver.
+
+Haiku shut down after clean GPU exit/CPU-only probe;channel1 off completed
+06:38:02 UTC. Rest >=180s before power on. Next:Linux/SD-free fresh Haiku,
+verify unloaded driver,guarded54 install,2/7/119-peer qualification before
+any model/speed or Assistant claim.54 native results still NONE.
+
 Latest checkpoint (October18,06:22 UTC): FIRST complete native27B position
 PASSES on52/7643314f:PUBLIC27B_POSITION0 selected_token11,7510.527793s cold,
 ALL497 learned projections,finite logits,4,558,653 uploaded pages,505 calls.

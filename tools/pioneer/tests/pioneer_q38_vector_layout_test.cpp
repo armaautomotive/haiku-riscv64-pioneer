@@ -5,6 +5,7 @@
 #include "../PioneerQwen38Panel.h"
 struct VectorLayout:NativeF32Q8Machine {
 	uint16_t physical[1024][16]={}; bool written[1024][16]={}; unsigned words=0;
+	uint16_t moved[256]={}; unsigned moves[256]={};
 	VectorLayout():NativeF32Q8Machine(1024,32,0) {}
 	static unsigned Adj32(unsigned row) { return ((row&0x1f8)<<1)|(row&0x207); } // config220=0
 	void Raw(unsigned row,unsigned col,unsigned byte) {
@@ -19,6 +20,21 @@ struct VectorLayout:NativeF32Q8Machine {
 		}
 	}
 	void Op(uint32_t word) { Instruction(word); words++; }
+	void Instruction(uint32_t word) override {
+		unsigned op=word>>24,reg=(word>>20)&15,mode=(word>>16)&15,address=word&1023;
+		if (op==0x70 && mode==5) { assert(!(word&0x0000fc00)); LoadLanes(reg,address); return; }
+		if (op==0x72 && mode==7) { assert(!reg && !(word&0x0000fc00)); StoreLanes(address); return; }
+		if (op==8) {
+			unsigned source=(word>>17)&63;
+			assert(!(word&0x0081dc00) && (word&0x2000) && address>=64 && address<=76 && !(address&3)
+				&& source==address-64 && source<=12);
+			for (unsigned k=0;k<4;k++) for (unsigned col=0;col<16;col++) {
+				unsigned at=(source+k)*16+col; assert(!moves[at]); moves[at]++; moved[at]=Move(source+k,col);
+			}
+			return;
+		}
+		NativeF32Q8Machine::Instruction(word);
+	}
 	void StoreLanes(unsigned address) {
 		assert(address>=64 && address<80 && !(address&1));
 		for (unsigned lane=0;lane<32;lane++) {
@@ -55,12 +71,9 @@ int main()
 				m->Raw(k,row,tile[span.low+k*16+row]);
 				if (span.second) m->Raw(16+k,row,tile[span.high+k*16+row]);
 			}
-			for (unsigned block=0;block<16;block+=4) for (unsigned parity:{0U,2U}) {
-				m->LoadLanes(0,block+parity); if (span.second) m->LoadLanes(1,16+block+parity);
-				assert(PioneerQ38VectorOperand(*m,type,panel)); m->StoreLanes(64+block+parity);
-			}
+			assert(PioneerQ38VectorTransform(*m,type,panel));
 			for (unsigned k=0;k<16;k++) for (unsigned row=0;row<16;row++) {
-				unsigned e=k*16+row; assert(m->Move(k,row)==uint16_t(expected.operand[e/2]>>((e%2)*16))); weights++;
+				unsigned e=k*16+row; assert(m->moves[e]==1 && m->moved[e]==uint16_t(expected.operand[e/2]>>((e%2)*16))); weights++;
 			}
 			for (unsigned row=32;row<1024;row++) if (row<128 || row>=160) for (unsigned col=0;col<16;col++) assert(!m->written[row][col]);
 			panels++;
@@ -68,6 +81,7 @@ int main()
 	}
 	for (unsigned type:{0U,8U,12U,14U,99U}) {
 		PioneerQ38VectorPanelSpan s={7,9,true}; assert(!PioneerQ38VectorPanel(type,type==8?2:16,s) && s.low==7 && s.high==9 && s.second);
+		auto m=std::make_unique<VectorLayout>(); assert(!PioneerQ38VectorTransform(*m,type,type==8?2:16) && !m->words);
 	}
 	printf("PASS OFFLINE vector layout:%u panels/%u exact weights against original scalar decoder,raw Dst16 rows0..31 and opaque decoded Dst32 rows64..79 physically disjoint,ALL32 even/odd lane placement/HI16/MOVD2A overlays/bounds/canaries;NO actual unpack/ownership/scheduling/image/native/speed qualification\n",panels,weights);
 }

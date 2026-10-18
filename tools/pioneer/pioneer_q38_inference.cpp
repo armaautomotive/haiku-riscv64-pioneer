@@ -11,6 +11,9 @@ struct State {
 	PioneerQ38NativeTransport io;
 	PioneerQ38NativeSession session;
 	bool opened=false;
+	double matrixWallSeconds=0;
+	uint64_t matrixCallbacks=0;
+	bool profileValid=true;
 	State():session(io,source) {}
 	static bool Ready(void* p) { auto& s=*static_cast<State*>(p); return s.source.Ready() && !s.session.Failed(); }
 	static bool Multiply(void* p,unsigned tensor,const float* x,unsigned k,float* y,unsigned n) {
@@ -19,6 +22,9 @@ struct State {
 		uint64_t before=s.session.pagesUploaded;
 		uint64_t readBefore=s.session.sourceReadNanos,bulkBefore=s.session.bulkUploadNanos,runBefore=s.session.runNanos;
 		double start=Seconds(); bool okay=s.session.Multiply(tensor,x,k,y,n);
+		double finish=Seconds(); s.matrixCallbacks++;
+		if (start>=0 && finish>=start) s.matrixWallSeconds+=finish-start;
+		else s.profileValid=false; // diagnostics ONLY,not completion/timeout authority
 		if (before!=s.session.pagesUploaded || !okay) printf("PUBLIC_MATRIX %s K%u N%u seconds%.6f pages%llu calls%llu success%u;NOT_TOKEN_RATE\n",
 			s.source.Model().Tensors()[tensor].name.c_str(),k,n,Seconds()-start,(unsigned long long)s.session.pagesUploaded,
 			(unsigned long long)s.session.calls,unsigned(okay));
@@ -101,9 +107,21 @@ int main(int argc,char** argv)
 	llama_context_params cp=llama_context_default_params(); cp.n_ctx=128; cp.n_batch=cp.n_ubatch=1;
 	cp.n_threads=cp.n_threads_batch=32; cp.offload_kqv=false; cp.op_offload=true; cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED;
 	auto context=llama_init_from_model(model,cp);
+	// The frozen CPU backend otherwise creates/frees a disposable worker
+	// pool for EVERY CPU graph fragment between accelerator projections.
+	// Attach one caller-owned sleeping pool BEFORE any accelerator FD opens.
+	ggml_threadpool_t cpuPool=nullptr;
+	if (context) {
+		auto poolParams=ggml_threadpool_params_default(32); poolParams.poll=0;
+		cpuPool=ggml_threadpool_new(&poolParams);
+		if (cpuPool) llama_attach_threadpool(context,cpuPool,cpuPool);
+	}
+	// Frozen library exports new/free,not the optional get_n_threads accessor.
+	bool poolReady=cpuPool!=nullptr;
+	printf("PUBLIC27B_CPU_POOL persistent%u threads%u poll0;NON_MATRIX_CPU_WORK_ONLY_NO_CPU_REFERENCE\n",unsigned(poolReady),poolReady?32:0);
 	unsigned recognized=PioneerQ38GgmlSnapshot().recognizedWeights;
 	printf("PUBLIC27B_GRAPH_COVERAGE recognized_learned_weights%u expected497;RESERVATION_ONLY_NOT_EXECUTION\n",recognized);
-	bool okay=context && state.source.Ready() && recognized==497;
+	bool okay=context && poolReady && state.source.Ready() && recognized==497;
 	const auto vocab=llama_model_get_vocab(model); llama_token tokens[8]={};
 	int count=llama_tokenize(vocab,"Hello",5,tokens,8,false,false);
 	okay=okay && count==1; // fixed PUBLIC one-position smoke,not private chat
@@ -112,6 +130,8 @@ int main(int argc,char** argv)
 	llama_token token=tokens[0],best=-1;
 	for (unsigned position=0;okay && position<limit;position++) {
 		uint64_t before=PioneerQ38GgmlSnapshot().projections;
+		double matrixBefore=state.matrixWallSeconds;
+		uint64_t callbacksBefore=state.matrixCallbacks,runBefore=state.session.runNanos;
 		double began=Seconds(); auto batch=llama_batch_get_one(&token,1); okay=llama_decode(context,batch)==0;
 		double elapsed=Seconds()-began; auto current=PioneerQ38GgmlSnapshot();
 		// Exactly497 learned projections per position. Refuse to call a
@@ -129,6 +149,10 @@ int main(int argc,char** argv)
 		else { okay=okay && retainedPages==state.session.pagesUploaded; warmSeconds+=elapsed; }
 		printf("PUBLIC27B_POSITION %u selected_token%d seconds%.6f learned_projections%llu pages%llu success%u;NO_CPU_REFERENCE_OR_FALLBACK\n",
 			position,best,elapsed,(unsigned long long)(current.projections-before),(unsigned long long)state.session.pagesUploaded,unsigned(okay));
+		double matrixSeconds=state.matrixWallSeconds-matrixBefore;
+		printf("PUBLIC27B_WALL_PROFILE position%u valid%u matrix_callbacks%llu matrix_callback_seconds%.6f checked_matrix_ioctl_seconds%.6f other_ggml_seconds%.6f;HOST_WALL_DIAGNOSTICS_NOT_PURE_GPU_OR_CPU_TIMES\n",
+			position,unsigned(state.profileValid),(unsigned long long)(state.matrixCallbacks-callbacksBefore),matrixSeconds,
+			double(state.session.runNanos-runBefore)*1e-9,elapsed-matrixSeconds);
 		if (okay) { generated++; token=best; }
 	}
 	double end=Seconds(); auto stats=PioneerQ38GgmlSnapshot();
@@ -139,7 +163,8 @@ int main(int argc,char** argv)
 	if (four) printf("%s_PUBLIC27B_FOUR_TOKEN generated%u first_position_seconds%.6f subsequent_positions%u subsequent_seconds%.6f sample_tokens_per_second%.9f retained_weights%u;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY\n",
 		okay && clean && generated==4?"PASS":"FAIL",generated,firstSeconds,generated?generated-1:0,warmSeconds,
 		warmSeconds>0 && generated>1?double(generated-1)/warmSeconds:0,unsigned(retainedPages && retainedPages==state.session.pagesUploaded));
-	if (context) llama_free(context);
+	if (context) { llama_synchronize(context); llama_detach_threadpool(context); llama_free(context); }
+	if (cpuPool) ggml_threadpool_free(cpuPool);
 	llama_model_free(model); llama_backend_free();
 	return okay && clean && end>=start?0:1;
 }
