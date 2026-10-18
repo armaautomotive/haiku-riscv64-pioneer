@@ -2,6 +2,34 @@
 
 ## Status
 
+### October17: native model executing layer8;OFFLINE persistent peer passes (October18,04:32 UTC)
+
+Full public7643314f model smoke is STILL RUNNING on qualified52/ABI2.
+Coverage497/497,at least66 learned projections through layer8 passed,
+about2.3GB retained. No completed27B token/position yet,no UNKNOWN/cold
+latch. First58MB QKV:source permutation0.548818s,checked bulk23.610834s,
+initial checked run26.607478s including120-worker cold prepare. Warm learned
+calls~0.09..0.48s are NOT token throughput. Do not start another owner,
+replace loaded driver or power-cycle while this generation trial runs.
+
+OFFLINE persistent-peer image263015f2 reuses the exact mixed-quant body
+across sequenced jobs/no reset. Actual RV32/FPU/strict NoC tests pass nine
+type/K shapes twice and six authentic first/last48-row groups twice,with
+exact FP32 and separate double references. All16 source-word changes,8
+bad boot fields,skipped/wrapping nonce,duplicate inertness,descriptor
+mutation,packet UNKNOWN and terminal STOP are tested. The emitter uses
+only the already-qualified instruction subset;stack main288B/math112B.
+
+Root exclusively owns descriptor74000/64B,immutable boot74040/32B and
+doorbell74100;peer owns status74140 and256B proof83f00+bounded outputs.
+Root input/scales must stay frozen until ALL readers finish and physical
+wait PCs/reset/source/command/counters are proven. Root scalesAB000 move
+ONLY in this new image;peer-local scales remain94000. Existing51..53 image
+still builds EXACT6baa910a. Future dispatcher/kernel must enforce full bank
+authority,source preparation/END audits,ALL output publication and terminal
+STOP before ANY restore. NO driver selects this image,NO native capability,
+coordinator/graph/inference/performance qualification is implied.
+
 ### October17: complete native ggml FFN independently verified;full model trial running (October18,04:16 UTC)
 
 Haiku UP/SSH/full64CPU+RAM/NIC0b83,52/ABI2 1de41744 remains LOADED. Native

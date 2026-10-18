@@ -1,5 +1,31 @@
 # Native build status
 
+Latest checkpoint (October18,04:32 UTC): FULL public27B trial7643314f remains
+RUNNING on qualified52,graph coverage497/497;at least66 learned projections
+through layer8 pass. No completed position/token yet;no UNKNOWN/cold latch.
+About2.3GB retained so far. Loading is slow:58MB first QKV source permutation
+0.548818s vs checked bulk23.610834s;initial checked run26.607478s includes
+cold120-worker prepare. Warm individual learned calls~0.09..0.48s,NOT token
+rates. Keep this ONLY accelerator owner uninterrupted;do not replace driver.
+
+New OFFLINE persistent-peer image263015f2 (boot e678476d) runs SAME exact
+Q8/Q4/Q6 math across multiple jobs without reset. Nine type/K shapes,each
+twice,plus six authentic first/last48-row groups each twice pass actual RV32/
+FPU/NoC instruction emulation with exact FP32+independent double checks.
+Tests cover ALL16 changed source words,all8 boot fields,nonce skips/wrap,
+duplicate inertness,descriptor mutation,first/middle/last packet UNKNOWN,
+and terminal STOP with no retry. No unqualified divide instruction;stack
+main288B/math112B. Private descriptor/boot/doorbell/status ownership and
+root input immutability are enforced. Persistent root scalesAB000 are
+separate from peer-local94000;future root output80000..9dc00 stays disjoint.
+
+This is NOT installed/selected by ANY driver,NOT a dispatcher/graph/native
+capability or speed qualification. Future root+kernel must prove ALL source
+words at prepare/END,physical peer PCs/reset,ALL completions before outputs,
+full private bank extents,and whole-owner UNKNOWN quarantine. Existing
+native shared-row image still reproduces EXACT6baa910a,so51/52/53 remain
+unchanged. Current source/session/Assistant/firmware/OS boot unchanged.
+
 Latest checkpoint (October18,04:16 UTC): Haiku UP/SSH/fullCPU+RAM/NIC0b83,
 52/ABI2 1de41744 remains LOADED,NO UNKNOWN/cold latch. Native4fa88472 ggml
 bridge ran the COMPLETE learned FFN17408x5120 twice,retained repeat0.464385s,

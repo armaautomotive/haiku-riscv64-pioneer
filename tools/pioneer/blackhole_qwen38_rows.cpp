@@ -97,8 +97,15 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 		ReadCommand(0xa0000+at,1|(2<<6),0xa0000+at,bytes);
 		FetchBlock(0xa0000+at); at+=bytes;
 	}
+#ifdef PIONEER_Q38_PERSISTENT_ROWS
+	// Future root outputs occupy80000..9dc00. Keep ROOT scales outside that
+	// range while preserving this peer's LOCAL94000 arithmetic layout.
+	ReadCommand(0xab000,1|(2<<6),0x94000,(blocks*4+63)&~63U);
+	FetchBlock(0xab000);
+#else
 	ReadCommand(0x94000,1|(2<<6),0x94000,(blocks*4+63)&~63U);
 	FetchBlock(0x94000);
+#endif
 }
 #endif
 #endif

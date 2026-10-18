@@ -12,7 +12,9 @@ struct SharedRowsMachine:RowsMachine {
 	unsigned inputReads=0; bool peer; uint32_t counterBase=0; bool badReadback=false;
 	SharedRowsMachine(const char* path,unsigned type,unsigned k,unsigned groups,bool shared=true)
 		:RowsMachine(path,type,k,groups),peer(shared) {
+#ifndef PIONEER_Q38_PERSISTENT_IMAGE
 		for (unsigned w=0;w<2048;w++) assert(PioneerQ38CohortWord(w)==(w<code.size()/4?Word(code,w*4):0));
+#endif
 		memory[0x74000]=0x31483851; memory[0x74020]=0x47; memory[0x74024]=peer?1:0;
 		// Non-root self XY,including the harvested logical column7. The image
 		// must neither guess physical coordinates nor change its destination.
@@ -88,6 +90,7 @@ struct SharedRowsMachine:RowsMachine {
 		for (const auto& word:root) assert(memory.at(word.first)==word.second);
 	}
 };
+#ifndef PIONEER_Q38_SHARED_ROOT_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -147,3 +150,4 @@ int main(int argc,char** argv)
 	}
 	printf("PASS OFFLINE shared-root input actual instructions:21 shapes,real%u,root immutable,peer destinations private,exact FP32+double,no host intermediates,UNKNOWN parks;NOT native/fleet/graph/inference/speed\n",real);
 }
+#endif
