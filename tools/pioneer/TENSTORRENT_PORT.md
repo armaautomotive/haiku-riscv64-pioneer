@@ -2,6 +2,21 @@
 
 ## Status
 
+### October18,18:46 UTC:separate vector-row image passes actual-instruction tests OFFLINE
+
+New7297962c image5776B/stack288 uses raw bounded UNPACR-to-Dst,exact32-lane
+integer SFPU weight decode,MOVD2A and unchanged four-phase integer matrix/
+affine math;NO scalar decoded-operand staging writes. Distinct Q8V1/Q8VF
+tags,NOT selected by any driver. All-K Q8/Q4/Q6 exact FP32+independent-double
+tests,real first/last48rows qkv/FFN/output,source bank ownership,Dst canaries,
+corrupt-move sensitivity and UNKNOWN inert park PASS ASan/UBSan.
+Same-workload outputs bit-identical to old scalar;2.17..2.73x fewer RV
+instructions,NOT measured native speed. Persistent/coordinator/END/native
+integration remains. Old installed peer/root compile byte-identically.
+Prerequisite test also passes996 real tiles/5,144,576 operands and rejects
+442 malformed sequences,including missing explicit all-lane enable.
+Native FFN graph still in same-FD whole-file authentication at18:46 UTC.
+
 ### October18,18:38 UTC:all119 persistent workers pass exact+clean qualification
 
 All SIX2/7/119-peer synthetic/authentic-row native sessions PASS:78 exact

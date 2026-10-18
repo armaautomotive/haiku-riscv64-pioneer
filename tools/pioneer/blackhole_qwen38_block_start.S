@@ -17,6 +17,9 @@ block_done:
 .ifdef TT_Q38_DISPATCH_ROOT
 	li t1,0x314d3851 /* Q8M1:OFFLINE persistent-dispatch root ONLY */
 .else
+.ifdef TT_Q38_VECTOR_ROWS
+	li t1,0x31563851 /* Q8V1:OFFLINE vector-unpack rows ONLY */
+.else
 .ifdef TT_Q38_SHARED_ROWS
 	li t1,0x31483851 /* Q8H1:shared root inputs,NOT driver50 */
 .else
@@ -27,6 +30,7 @@ block_done:
 	li t1,0x31533851 /* Q8S1:OFFLINE fullK stream,not local block48 */
 .else
 	li t1,0x31423851 /* Q8B1:distinct from one-panel completion */
+.endif
 .endif
 .endif
 .endif
@@ -46,6 +50,9 @@ block_fault_park:
 .ifdef TT_Q38_DISPATCH_ROOT
 	li t1,0x464d3851 /* Q8MF:UNKNOWN,no later packet/reset/restore */
 .else
+.ifdef TT_Q38_VECTOR_ROWS
+	li t1,0x46563851 /* Q8VF:UNKNOWN,NO further packet/reset/restore */
+.else
 .ifdef TT_Q38_SHARED_ROWS
 	li t1,0x46483851 /* Q8HF:NO retry/reset/restore after UNKNOWN */
 .else
@@ -56,6 +63,7 @@ block_fault_park:
 	li t1,0x46533851 /* Q8SF:NO retry/reset/restore after uncertain fetch */
 .else
 	li t1,0x46423851 /* Q8BF:NO success/stop permission */
+.endif
 .endif
 .endif
 .endif

@@ -39,6 +39,7 @@ template<class E> static bool PioneerQ38VectorUnpack(E& e,unsigned type,unsigned
 	e.Config(73,3); e.Config(76,0x7070); e.Config(84,0x00400040);
 	e.Op(0xb2050004); e.Drain();
 	e.Op(0x3700000f);
+	e.Op(0x8a000002); // explicitly disable lane predication,ALL32 enabled
 	if (!PioneerQ38VectorTransform(e,type,panel)) return false;
 	e.Drain();
 	return true;

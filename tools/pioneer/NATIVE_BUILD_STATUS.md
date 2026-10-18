@@ -1,5 +1,27 @@
 # Native build status
 
+Latest checkpoint (October18,18:46 UTC): separate OFFLINE vector-row image
+7297962c (5776B,stack288B) now integrates raw UNPACR-to-Dst/exact32-lane
+SFPU decode/MOVD2A with existing four-phase integer matrix/affine math.
+Distinct Q8V1/Q8VF descriptor/completion/fault tags;NO native driver selects
+it. No scalar operand decode/staging writes to70710. Actual compiled RV32/
+FPU/NoC/strict SFPU subset tests PASS ASan/UBSan for all3 quant kinds and
+K5120/6144/17408 throughN48,real first/last48rows of qkv/FFN/output,all4
+fidelity phases,alternating source banks,Dst bounds,corrupt-move sensitivity,
+UNKNOWN inert park. Evidence vector-rows.IYDDzuj5. Same synthetic workload
+vs exact original scalar image6d469c25 produces identical outputs and
+2.17..2.73x fewer RV instructions;NOT cycle/native throughput or token rate.
+Persistent119/coordinator/END integration and native qualification remain.
+
+Raw unpack prerequisite now explicitly disables lane predication and is
+tested from disabled lanes/nonzero ADCs:2176 synthetic+7872 real panels
+(996 tiles),5,144,576 exact operands,both source banks,442 malformed
+sequences rejected(vector-unpack.MDNyGsY1). Exhaustive1,053,184 operand
+regression PASS(vector-operand.g9WT9bU2). Existing persistent peer still
+EXACTcb799c3c and dispatcher rootEXACT026229e2 after conditional source/
+assembly additions;no installed/loaded code changed. Native FFN started
+18:37:04 UTC STILL authenticating same public19GB file,no card FD yet.
+
 Latest checkpoint (October18,18:38 UTC): frontend54/93f2c0db passed ALL SIX
 native debug sessions:synthetic/authentic rows at2,7,119 peers. All39
 primitive cases (78 repeated computations) exact,each BANK_END state2/

@@ -7,6 +7,10 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_VECTOR_PANEL
+#include "PioneerQ38AffineOnly.h"
+#include "PioneerQ38VectorUnpack.h"
+#endif
 #ifdef PIONEER_Q38_FAST_PANEL
 #include "PioneerQwen38FastPanel.h"
 #endif
@@ -47,11 +51,22 @@ static void Setup()
 	for (unsigned w=0;w<64;w++) Words(0x70920)[w]=0;
 	Fence();
 }
+#ifdef PIONEER_Q38_VECTOR_PANEL
+struct VectorPanelEmitter {
+	void Op(uint32_t value) { Emit(value); }
+	void Config(unsigned index,uint32_t value) { ::Config(index,value); }
+	void Drain() { ::Drain(); }
+};
+#endif
 static void Matrix()
 {
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
 	Emit(0x10180000); Drain(); // clear Dst,NOT an integer sum across unequal scales
-	Emit(0x5160000a); Emit(0x5460000f); Emit(0x420000c1); Emit(0x428000c1); Drain();
+	Emit(0x5160000a); Emit(0x5460000f);
+#ifndef PIONEER_Q38_VECTOR_PANEL
+	Emit(0x420000c1);
+#endif
+	Emit(0x428000c1); Drain();
 	for (unsigned phase=0;phase<4;phase++) {
 		Emit(0xb20b0000|phase); Drain();
 		Emit(phase==3?0x26c00020:0x26000020); Drain();
@@ -120,7 +135,11 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_SHARED_ROWS
 		0x31483851
 #else
+#ifdef PIONEER_Q38_VECTOR_PANEL
+		0x31563851 // separate OFFLINE vector descriptor,NOT rows/persistent ABI
+#else
 		0x31523851
+#endif
 #endif
 		|| !PioneerQ38PanelTileBytes(type) || bytes!=PioneerQ38PanelTileBytes(type)
 		|| job[3] || job[4] || !groups || groups>16 || (inputs!=5120 && inputs!=6144 && inputs!=17408) || inputs%count
@@ -162,13 +181,19 @@ extern "C" unsigned block_main()
 	for (unsigned p=0;p<panels;p++) {
 		auto* local=reinterpret_cast<PioneerQ38Panel*>(0x91000);
 		if (!
+#ifdef PIONEER_Q38_VECTOR_PANEL
+			PioneerQ38AffineOnly
+#else
 #ifdef PIONEER_Q38_FAST_PANEL
 			PioneerQ38FastPanel
 #else
 			PioneerQ38UnpackPanel
 #endif
+#endif
 			(type,reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();
+#ifndef PIONEER_Q38_VECTOR_PANEL
 		for (unsigned w=0;w<128;w++) Words(0x70710)[w]=local->operand[w];
+#endif
 		int sum=0;
 		for (unsigned w=0;w<8;w++) {
 			uint32_t word=Words(inputBase)[block*(count/2)+p*8+w]; Words(0x70920)[w]=word;
@@ -176,7 +201,14 @@ extern "C" unsigned block_main()
 				uint16_t value=uint16_t(word>>(lane*16)); sum+=int(value&1023)*((value&0x8000)?-1:1);
 			}
 		}
-		(void)Words(0x70710)[127]; (void)Words(0x70920)[7]; Fence();
+#ifndef PIONEER_Q38_VECTOR_PANEL
+		(void)Words(0x70710)[127];
+#endif
+		(void)Words(0x70920)[7]; Fence();
+#ifdef PIONEER_Q38_VECTOR_PANEL
+		VectorPanelEmitter emitter;
+		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
+#endif
 		Matrix();
 		for (unsigned row=0;row<16;row++) {
 			static_assert(sizeof(int)==4,"fixed signed32 integer dot");

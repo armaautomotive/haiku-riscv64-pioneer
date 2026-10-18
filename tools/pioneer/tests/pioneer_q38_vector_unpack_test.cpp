@@ -2,6 +2,7 @@
 #define PIONEER_Q38_VECTOR_LAYOUT_MACHINE_ONLY
 #include "pioneer_q38_vector_layout_test.cpp"
 #include "../PioneerQ38VectorUnpack.h"
+#include "../PioneerQwen38Gguf.h"
 struct UnpackEvent { unsigned kind,index; uint32_t value; };
 struct UnpackProgram {
 	std::vector<UnpackEvent> events;
@@ -20,6 +21,7 @@ struct UnpackMachine:VectorLayout {
 	UnpackMachine(const std::vector<uint8_t>& bytes,unsigned bank):tile(bytes),unpackBank(bank),mathBank(bank) {
 		cfg[1]=0xa0220000; cfg[64]=0x100011; cfg[65]=16; cfg[72]=1;
 		cfg[73]=3; cfg[76]=0x7070; cfg[84]=0x400040;
+		conditional=true; for (bool& enabled:flags) enabled=false;
 	}
 	bool Require(bool value) { okay &= value; return okay; }
 	void Event(const UnpackEvent& e) {
@@ -64,13 +66,15 @@ struct UnpackMachine:VectorLayout {
 		if (!Require(!pending && owner[mathBank] && clobbered[mathBank]
 			&& cfg[1]==0xa0220000 && cfg[64]==0x100011 && cfg[65]==16
 			&& cfg[72]==1 && cfg[73]==3 && cfg[76]==0x7070 && cfg[84]==0x400040 && tc5==4)) return;
+		if (op!=0x8a000002 && !Require(!conditional)) return;
 		if ((op>>24)==8 && !Require(cfg[220]==0)) return;
 		VectorLayout::Instruction(op);
 	}
 	bool Complete() const { return okay && !pending && owner[mathBank] && !owner[mathBank^1] && unpackBank==(mathBank^1); }
 };
-int main()
+int main(int argc,char** argv)
 {
+	assert(argc==1 || argc==2);
 	(void)Read; (void)Word;
 	unsigned panels=0,weights=0,faults=0;
 	for (unsigned type:{8U,12U,14U}) for (unsigned trial=0;trial<64;trial++) {
@@ -94,7 +98,7 @@ int main()
 			panels++;
 			// Drop each required drain/config/publication/address field in
 			// isolation. A malformed model MUST NOT qualify final operands.
-			if (!trial) for (unsigned fault=0;fault<12;fault++) {
+			if (!trial) for (unsigned fault=0;fault<13;fault++) {
 				auto events=p.events;
 				bool changed=false;
 				for (unsigned i=0;i<events.size() && !changed;i++) {
@@ -111,6 +115,7 @@ int main()
 					if (fault==9 && e.kind==1 && e.index==64 && e.value==0x10001e) { e.value^=16; changed=true; }
 					if (fault==10 && e.kind==2 && e.value==0x5120000a) { events.erase(events.begin()+i); changed=true; }
 					if (fault==11 && e.kind==2 && e.value==0xb2050004) { e.value=0xb2050000; changed=true; }
+					if (fault==12 && e.kind==2 && e.value==0x8a000002) { events.erase(events.begin()+i); changed=true; }
 				}
 				assert(changed); auto bad=std::make_unique<UnpackMachine>(tile,0);
 				for (const auto& e:events) bad->Event(e);
@@ -118,6 +123,35 @@ int main()
 			}
 		}
 	}
+	unsigned realTiles=0,realPanels=0;
+	if (argc==2) {
+		FILE* file=fopen(argv[1],"rb"); assert(file); PioneerQwen38Gguf model; assert(model.Open(file));
+		for (unsigned tensor=0;tensor<model.Tensors().size();tensor++) {
+			const auto& t=model.Tensors()[tensor]; if (!t.type) continue;
+			unsigned bytes=PioneerQ38BlockBytes(t.type),rowBytes=unsigned(t.bytes/t.outputs);
+			for (unsigned end=0;end<2;end++) {
+				std::vector<uint8_t> tile(PioneerQ38PanelTileBytes(t.type));
+				unsigned first=end?unsigned(t.outputs)-16:0;
+				for (unsigned row=0;row<16;row++) {
+					uint8_t raw[210]={}; assert(model.ReadPacked(tensor,uint64_t(first+row)*rowBytes+(end?rowBytes-bytes:0),bytes,raw,bytes));
+					for (unsigned b=0;b<bytes;b++) tile[b*16+row]=raw[b];
+				}
+				for (unsigned panel=0;panel<(t.type==8?2U:16U);panel++) {
+					UnpackProgram p; assert(PioneerQ38VectorUnpack(p,t.type,panel));
+					PioneerQ38Panel expected; assert(PioneerQ38UnpackPanel(t.type,tile.data(),unsigned(tile.size()),panel,&expected));
+					for (unsigned bank=0;bank<2;bank++) {
+						auto m=std::make_unique<UnpackMachine>(tile,bank);
+						for (const auto& e:p.events) m->Event(e);
+						assert(m->Complete());
+						for (unsigned i=0;i<256;i++) { assert(m->moves[i]==1 && m->moved[i]==uint16_t(expected.operand[i/2]>>(16*(i%2)))); weights++; }
+					}
+					realPanels++;
+				}
+				realTiles++;
+			}
+		}
+		assert(realTiles==996 && model.Stable()); fclose(file);
+	}
 	for (unsigned type:{0U,8U,12U,14U,99U}) { UnpackProgram p; assert(!PioneerQ38VectorUnpack(p,type,type==8?2:16) && p.events.empty()); }
-	printf("PASS OFFLINE raw UNPACR-to-Dst/vector decode:%u panels/%u exact weights,both SrcA banks,unsigned byte conversion,context/header/256-byte bounds,two-plane no-early-flip,delayed unpack publication,config restore,Dst canaries;%u malformed sequences rejected;NO image/native/cycle-performance qualification\n",panels,weights,faults);
+	printf("PASS OFFLINE raw UNPACR-to-Dst/vector decode:%u synthetic panels+%u real panels/%u real tiles/%u exact weights,both SrcA banks,unsigned byte conversion,context/header/256-byte bounds,two-plane no-early-flip,delayed unpack publication,config restore,explicit all32 lane enable,Dst canaries;%u malformed sequences rejected;NO image/native/cycle-performance qualification\n",panels,realPanels,realTiles,weights,faults);
 }
