@@ -4,6 +4,7 @@
 #define PIONEER_Q38_DISPATCH_MACHINE_ONLY
 #include "pioneer_qwen38_dispatch_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchRun.h"
+#include "../PioneerQ38DispatchHost.h"
 struct ControllerMachine:DispatchMachine {
 	uint32_t ownSource[16];
 	ControllerMachine(const char* path,unsigned n,unsigned type,unsigned k,const uint32_t* source):DispatchMachine(path,n,type,k)
@@ -97,7 +98,15 @@ int main(int argc,char** argv)
 	assert(argc==2);
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
 	for (unsigned n:{1U,7U,119U}) for (unsigned type:{8U,12U,14U}) {
-		RunFixture f(argv[1],n,type,type==12?17408:5120); assert(f.Run() && f.Run());
+		RunFixture f(argv[1],n,type,type==12?17408:5120); PioneerQ38DispatchHistory history;
+		assert(f.Run() && history.Accept(*f.job) && !history.Accept(*f.job) && f.Run());
+		for (unsigned i=0;i<64;i++) {
+			f.job->result.stats[i]^=1; assert(!history.Accept(*f.job)); f.job->result.stats[i]^=1;
+		}
+		for (unsigned w=0;w<n;w++) for (unsigned i=0;i<64;i++) {
+			f.job->result.peer[w][i]^=1; assert(!history.Accept(*f.job)); f.job->result.peer[w][i]^=1;
+		}
+		assert(history.Accept(*f.job) && !history.Accept(*f.job));
 		assert(f.lease->rootNonce==2 && f.io.rootArms==2 && f.io.rootStops==2 && f.io.rootHolds==2 && !f.lease->unsafe);
 		for (unsigned w=1;w<120;w++) assert(f.io.core[w]->resets.size()==2 && f.io.core[w]->coreReset==0x46800);
 	}
@@ -114,6 +123,6 @@ int main(int argc,char** argv)
 		RunFixture f(argv[1],7); f.initialized[0]=0; unsigned writes=f.io.Writes(),selects=f.io.selects;
 		assert(!f.Run() && !f.lease->unsafe && f.io.Writes()==writes && f.io.selects==selects);
 	}
-	puts("PASS OFFLINE persistent RUN controller+actual dispatcher:1/7/119 peers xQ8/Q4/Q6 twice,no peer resets,ALL authority before IO,ALL metadata before output reads,ALL proofs before root HOLD,10 late faults zero output/quarantine ALL/no retry/reset/restore/free;NO native handler/driver/inference qualification");
+	puts("PASS OFFLINE persistent RUN controller+actual dispatcher:1/7/119 peers xQ8/Q4/Q6 twice,host history ALL64 stats/perpeer mutations+duplicate replies refused,no peer resets,ALL authority before IO,ALL metadata before output reads,ALL proofs before root HOLD,10 late faults zero output/quarantine ALL/no retry/reset/restore/free;NO native card/inference qualification");
 }
 #endif

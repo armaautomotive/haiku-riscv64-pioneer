@@ -4,7 +4,7 @@
 #include "PioneerQ38CohortProbe.h"
 #include "PioneerQ38DispatchImages.h"
 #include "PioneerQ38DispatchProof.h"
-// OFFLINE controller prerequisite ONLY;not wired into a native driver.
+// Experimental54 controller. Native qualification is separate from tests.
 // This large object and every request/authority MUST be heap-owned (kernel
 // stack16KiB). Persistent running peers are expected,NOT old cohort Unsafe.
 struct PioneerQ38DispatchLease {
@@ -14,6 +14,17 @@ struct PioneerQ38DispatchLease {
 	unsigned prepared=0;
 	bool bootAttempted=false,booted=false,unsafe=false,closed=false,rootRunning=false;
 };
+static inline bool PioneerQ38DispatchUnsafe(const PioneerQ38DispatchLease& lease)
+{
+	if (lease.unsafe || lease.rootRunning || (lease.bootAttempted && !lease.booted && !lease.closed)) return true;
+	for (unsigned w=0;w<lease.prepared;w++) {
+		const auto& n=lease.worker[w];
+		const auto& store=n.master?*n.master:n.store;
+		if (n.image.unsafe || n.noc.recovery_required || store.pending || store.recovery_required
+			|| n.image.running!=bool(w && lease.booted && !lease.closed)) return true;
+	}
+	return false;
+}
 static inline bool PioneerQ38DispatchQuarantine(PioneerQ38DispatchLease& lease,PioneerResidentBanks& banks)
 {
 	lease.unsafe=true; banks.Quarantine();

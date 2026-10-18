@@ -40,6 +40,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED)
 #error Q38 payload blocks require the exclusive boundary-code-sealed cohort owner
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD)
+#error Q38 persistent dispatcher requires the guarded payload/all-bank owner
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -1946,6 +1949,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	PioneerQ38DispatchLease* q38Dispatch=NULL;
+	bool q38DispatchRoutes=false;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	PioneerQ38CohortLease* q38Cohort=NULL;
 	bool q38CohortRoutes=false;
@@ -2001,6 +2008,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+		delete q38Dispatch;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 		delete q38Cohort;
 #endif
@@ -2008,6 +2018,9 @@ struct PioneerStoreContext {
 	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+		if (q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) return true;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 		if (q38Cohort) {
 			if (q38Cohort->unsafe) return true;
@@ -2150,6 +2163,10 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	if (context->q38Dispatch) clean=PioneerQ38DispatchClose(context->io,context->baseline.baseline.baseline.baseline.dram,
+		context->banks,*context->q38Dispatch,clean) && clean;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	if (context->q38Cohort) clean=PioneerQ38CohortClose(context->io,context->baseline.baseline.baseline.baseline.dram,
 		context->banks,*context->q38Cohort,clean) && clean;
@@ -2639,7 +2656,7 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 // PIONEER_Q38_STREAM_CONTROL_END
 #endif
 
-#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH)
 // PIONEER_Q38_COHORT_PREPARE_BEGIN
 static bool
 PrepareQ38Cohort(PioneerStoreContext& c,unsigned workers)
@@ -2714,6 +2731,87 @@ Q38CohortControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	release_sem(sLock); free(request); return status;
 }
 // PIONEER_Q38_COHORT_CONTROL_END
+#endif
+
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+// PIONEER_Q38_DISPATCH_PREPARE_BEGIN
+static bool
+PrepareQ38Dispatch(PioneerStoreContext& c)
+{
+	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
+	if (c.q38Dispatch && c.q38Dispatch->booted) return !PioneerQ38DispatchUnsafe(*c.q38Dispatch) && !c.q38Dispatch->closed;
+	if (c.q38Dispatch) return false; // no second prepare/retry after any attempt
+	if (!c.io.SelectRuntimeCore(0)) return false;
+	bool ready=c.lease.ready;
+	if (!ready && !c.lease.saved) ready=PioneerResidentLeaseBegin(c.io,noc,c.lease);
+	if (!ready || !c.io.MapRuntime()) return false;
+	c.q38Dispatch=new(std::nothrow) PioneerQ38DispatchLease;
+	if (!c.q38Dispatch) return false;
+	auto& lease=*c.q38Dispatch; c.io.fleetEnabled=true; lease.worker[0].master=&c.lease; lease.worker[0].noc=noc;
+	ready=BlackholeDramAllCoresHeld(c.io,dram);
+	for (unsigned w=1;w<120 && ready;w++) ready=PioneerWorkerNocProbe(c.io,dram,w,lease.worker[w].noc);
+	c.q38DispatchRoutes=ready;
+	for (unsigned w=0;w<120 && ready;w++) {
+		auto& node=lease.worker[w];
+		ready=c.io.SelectRuntimeCore(w) && c.io.MapQ38Panel();
+		if (ready && w) ready=PioneerQ38CohortPeerLeaseBegin(c.io,dram,w,node);
+		if (ready) ready=PioneerQ38DispatchPrepareRole(c.io,dram,c.banks,lease,w);
+		if (!ready) lease.prepared=w+1; // include any just-touched peer NIU
+	}
+	if (!ready) return PioneerQ38DispatchQuarantine(lease,c.banks);
+	return PioneerQ38DispatchBootstrap(c.io,dram,c.banks,lease);
+}
+// PIONEER_Q38_DISPATCH_PREPARE_END
+// PIONEER_Q38_DISPATCH_CONTROL_BEGIN
+static status_t
+Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
+		if (length!=sizeof(tt_q38_dispatch_support)) return B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		const tt_q38_dispatch_support support={54,1,119,256,17408,7,64,1,0};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_DISPATCH_RUN || length!=sizeof(tt_q38_dispatch_probe)) return B_BAD_VALUE;
+	auto* request=(tt_q38_dispatch_probe*)malloc(sizeof(tt_q38_dispatch_probe)); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || !PioneerQ38DispatchValid(*request)) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total
+		|| c->q38Cohort || c->panelProbe.saved || c->streamProbe.saved) status=B_NOT_ALLOWED;
+	else {
+		auto& dram=c->baseline.baseline.baseline.baseline.dram; bool authorized=true;
+		// Complete ALL logical initialized extents BEFORE prepare/boot/IO.
+		for (unsigned w=0;w<request->peers;w++) {
+			PioneerQ38CohortExtent extent;
+			authorized &= PioneerQ38CohortAuthorizePart(c->banks,dram,c->initialized,uint32(c->bytes/4096),
+				request->type,request->inputs,request->part[w],w+1,extent);
+		}
+		if (!authorized) status=B_ENTRY_NOT_FOUND;
+		else {
+			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
+			for (auto& row:request->output) for (auto& value:row) value=0;
+			bool prepared=PrepareQ38Dispatch(*c);
+			if (prepared) PioneerQ38DispatchRun(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);
+			bool unsafe=!prepared || c->Unsafe() || request->result.recovery_required;
+			if (!unsafe && !c->io.SelectRuntimeCore(0)) unsafe=true;
+			if (unsafe) {
+				if (c->q38Dispatch) PioneerQ38DispatchQuarantine(*c->q38Dispatch,c->banks);
+				c->banks.Quarantine(); c->lease.recovery_required=true; c->io.QuarantineHostPage(); sColdRecoveryRequired=true;
+				request->result.state=TT_RUNTIME_COMPLETION_FAILED; request->result.recovery_required=1;
+				for (auto& row:request->output) for (auto& value:row) value=0;
+			}
+			status=user_memcpy(data,request,sizeof(*request));
+		}
+	}
+	release_sem(sLock); free(request); return status;
+}
+// PIONEER_Q38_DISPATCH_CONTROL_END
 #endif
 
 static status_t
@@ -2922,6 +3020,9 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	support.version=TT_Q38_COHORT_DRIVER; // separate shared-input cohort qualification,NOT inference
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	support.version=TT_Q38_DISPATCH_DRIVER; // separate persistent dispatch,NOT model qualification
 #endif
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
@@ -3752,9 +3853,16 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 		return B_NOT_ALLOWED;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
+		return Q38DispatchControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT || operation==TT_PCI_PROBE_Q38_COHORT_RUN
+		|| operation==TT_PCI_PROBE_Q38_PANEL_RUN || operation==TT_PCI_PROBE_Q38_STREAM_RUN) return B_NOT_ALLOWED;
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT || operation==TT_PCI_PROBE_Q38_COHORT_RUN)
 		return Q38CohortControl(instance,operation,data,length);
+#endif
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	if (operation==TT_PCI_PROBE_Q38_STREAM_SUPPORT || operation==TT_PCI_PROBE_Q38_STREAM_RUN)

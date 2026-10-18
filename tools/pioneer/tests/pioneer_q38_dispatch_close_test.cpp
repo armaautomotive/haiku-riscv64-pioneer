@@ -87,6 +87,7 @@ struct CloseFixture {
 	}
 	bool Close() { return PioneerQ38DispatchClose(io,dram,banks,*lease,true); }
 };
+#ifndef PIONEER_Q38_DISPATCH_CLOSE_MOCK_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2);
@@ -120,5 +121,6 @@ int main(int argc,char** argv)
 		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
 		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
 	}
-	puts("PASS OFFLINE persistent END controller+actual dispatcher STOP:ALL119 terminal physical/code/source proofs before ANY reset,ALL120 held before ANY restoration,64 STOP-stat faults+36 first/middle/last late faults+root timeout/fault quarantine ALL/no retry/reset/restore/free;NO native handler/driver/inference qualification");
+	puts("PASS OFFLINE persistent END controller+actual dispatcher STOP:ALL119 terminal physical/code/source proofs before ANY reset,ALL120 held before ANY restoration,64 STOP-stat faults+36 first/middle/last late faults+root timeout/fault quarantine ALL/no retry/reset/restore/free;NO native card/inference qualification");
 }
+#endif

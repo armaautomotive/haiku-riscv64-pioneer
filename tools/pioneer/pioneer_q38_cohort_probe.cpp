@@ -17,8 +17,14 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CohortProtocol.h"
 #include "PioneerQwen38Panel.h"
 #include "PioneerQ38RowFixtures.h"
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+#include "PioneerQ38DispatchHost.h"
+using Q38Probe=tt_q38_dispatch_probe;
+#else
+using Q38Probe=tt_q38_cohort_probe;
 static uint32_t PioneerAttentionBits(float value) { uint32_t bits; memcpy(&bits,&value,4); return bits; }
 static float PioneerAttentionFloat(uint32_t bits) { float value; memcpy(&value,&bits,4); return value; }
+#endif
 static bool Call(int fd,uint32_t op,void* data,size_t bytes)
 {
 	if (!ioctl(fd,op,data,bytes)) return true;
@@ -47,7 +53,7 @@ static bool Upload(int fd,unsigned bank,uint64_t offset,const std::vector<uint8_
 	}
 	return true;
 }
-static bool Reference(const tt_q38_cohort_probe& r,const std::vector<uint8_t>& packed,unsigned worker,float* output)
+static bool Reference(const Q38Probe& r,const std::vector<uint8_t>& packed,unsigned worker,float* output)
 {
 	unsigned count=PioneerQ38CohortBlockInputs(r.type),blocks=r.inputs/count,tileBytes=PioneerQ38PanelTileBytes(r.type);
 	for (unsigned g=0;g<r.part[worker].groups;g++) for (unsigned b=0;b<blocks;b++) for (unsigned p=0;p<count/16;p++) {
@@ -67,9 +73,18 @@ static bool Reference(const tt_q38_cohort_probe& r,const std::vector<uint8_t>& p
 	}
 	return true;
 }
-static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsigned groups,unsigned ordinal,const std::vector<uint8_t>& publicRows,const unsigned* rowOffsets)
+static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsigned groups,unsigned ordinal,const std::vector<uint8_t>& publicRows,const unsigned* rowOffsets
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+	,PioneerQ38DispatchHistory& history
+#endif
+)
 {
-	auto r=std::make_unique<tt_q38_cohort_probe>(); *r={}; r->version=TT_Q38_COHORT_ABI; r->type=type; r->inputs=inputs; r->workers=workers;
+	auto r=std::make_unique<Q38Probe>(); *r={}; r->type=type; r->inputs=inputs;
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+	r->version=1; r->peers=workers;
+#else
+	r->version=TT_Q38_COHORT_ABI; r->workers=workers;
+#endif
 	unsigned count=PioneerQ38CohortBlockInputs(type),blocks=inputs/count,tileBytes=PioneerQ38PanelTileBytes(type),groupBytes=blocks*tileBytes;
 	for (unsigned k=0;k<inputs;k++) r->activation[k/2]|=uint32_t(PioneerInt8Operand(int((k*29+17)%256)-128))<<((k%2)*16);
 	for (unsigned b=0;b<blocks;b++) r->scales[b]=PioneerAttentionBits(b%3?-.03125f:.012345f);
@@ -97,6 +112,19 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 		if (!Upload(fd,w%7,offset-head,upload)) return false;
 	}
 	double launched=Seconds(); if (launched<start) return false;
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+	double previous=launched;
+	for (unsigned repeat=0;repeat<2;repeat++) {
+		if (!Call(fd,TT_PCI_PROBE_Q38_DISPATCH_RUN,r.get(),sizeof(*r)) || !history.Accept(*r)) return false;
+		double finish=Seconds(); if (finish<previous) return false; unsigned errors=0;
+		for (unsigned w=0;w<workers;w++) for (unsigned row=0;row<256;row++) errors+=r->output[w][row]!=PioneerAttentionBits(expected[w*256+row]);
+		printf("DISPATCH_DEBUG type%u K%u peers%u rows_per_peer%u repeat%u nonce%u waiting%u cold%u exact_errors%u checked_call_s%.6f;CPU_REFERENCE_DEBUG_ONLY_NOT_MODEL_OR_TOKEN_RATE\n",
+			type,inputs,workers,groups*16,repeat,r->result.nonce,r->result.waiting,r->result.recovery_required,errors,finish-previous);
+		if (errors) return false;
+		previous=finish;
+	}
+	return true;
+#else
 	printf("COHORT_RUN_BEGIN type=%u K=%u workers=%u N_per_worker=%u;ONE_ROOT_INPUT;NOT_INFERENCE\n",type,inputs,workers,groups*16);
 	if (!Call(fd,TT_PCI_PROBE_Q38_COHORT_RUN,r.get(),sizeof(*r))) return false;
 	double finish=Seconds(); if (finish<launched) return false;
@@ -118,6 +146,7 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 	printf("COHORT_PRIMITIVE type=%u K=%u workers=%u N_per_worker=%u start/complete/stop=%u/%u/%u cold=%u exact_errors=%u checked_call_s=%.6f prep_reference_upload_s=%.6f;NOT_TOKEN_RATE\n",
 		type,inputs,workers,groups*16,result.started,result.completed,result.stopped,result.recovery_required,errors,finish-launched,launched-start);
 	return okay && !errors;
+#endif
 }
 int main(int argc,char** argv)
 {
@@ -125,10 +154,18 @@ int main(int argc,char** argv)
 	bool supportOnly=!strcmp(argv[1],"--support"),real=false; unsigned workers=0;
 	if (!strcmp(argv[1],"--synthetic")) workers=2;
 	else if (!strcmp(argv[1],"--synthetic-seven")) workers=7;
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+	else if (!strcmp(argv[1],"--synthetic-119")) workers=119;
+#else
 	else if (!strcmp(argv[1],"--synthetic-120")) workers=120;
+#endif
 	else if (!strcmp(argv[1],"--public-fixtures")) { real=true; workers=2; }
 	else if (!strcmp(argv[1],"--public-fixtures-seven")) { real=true; workers=7; }
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+	else if (!strcmp(argv[1],"--public-fixtures-119")) { real=true; workers=119; }
+#else
 	else if (!strcmp(argv[1],"--public-fixtures-120")) { real=true; workers=120; }
+#endif
 	else if (!supportOnly) return 2;
 	setvbuf(stdout,NULL,_IOLBF,0); std::vector<uint8_t> publicRows;
 	if (real) {
@@ -137,11 +174,20 @@ int main(int argc,char** argv)
 		puts("PUBLIC_ROW_MEMORY_SHA_PASS_725504_BYTES;INTERLEAVED_GROUPS_NOT_FULL_MODEL");
 	}
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+	tt_q38_dispatch_support support={};
+	bool okay=Call(fd,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&support,sizeof(support)) && support.driver==54 && support.version==1 && support.peers==119
+		&& support.rows==256 && support.max_inputs==17408 && support.banks==7 && support.offset_alignment==64 && support.persistent==1 && !support.model_inference;
+	printf("DISPATCH_METADATA driver%u ABI%u peers%u persistent%u inference%u accepted%u;NO_BEGIN_YET\n",
+		support.driver,support.version,support.peers,support.persistent,support.model_inference,unsigned(okay));
+	PioneerQ38DispatchHistory history;
+#else
 	tt_q38_cohort_support support={};
 	bool okay=Call(fd,TT_PCI_PROBE_Q38_COHORT_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_COHORT_DRIVER && support.version==TT_Q38_COHORT_ABI && support.workers==120
 		&& support.rows==256 && support.max_inputs==17408 && support.banks==7 && support.offset_alignment==64 && !support.model_inference;
 	printf("COHORT_METADATA observed_driver=%u ABI=%u workers=%u rows=%u max_K=%u banks=%u alignment=%u inference=%u accepted=%u;NO_BEGIN_YET\n",
 		support.driver,support.version,support.workers,support.rows,support.max_inputs,support.banks,support.offset_alignment,support.model_inference,unsigned(okay));
+#endif
 	if (!okay || supportOnly) { close(fd); return okay?0:1; }
 	tt_q38_bank_support storage={};
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&storage,sizeof(storage)) && storage.driver==45 && storage.version==1 && storage.banks==7
@@ -157,7 +203,11 @@ int main(int argc,char** argv)
 	for (unsigned ordinal=0;okay && ordinal<limit;ordinal++) {
 		unsigned type=real?kinds[ordinal]:workers==2?(ordinal/3==0?8:ordinal/3==1?12:14):(ordinal==0?8:ordinal==1?12:14);
 		unsigned inputs=real?widths[ordinal]:workers==2?(ordinal%3==0?5120:ordinal%3==1?6144:17408):(ordinal==1?17408:5120);
-		okay=Execute(fd,type,inputs,workers,real && workers==2?3:1,ordinal,publicRows,rowOffsets); if (okay) cases++;
+		okay=Execute(fd,type,inputs,workers,real && workers==2?3:1,ordinal,publicRows,rowOffsets
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+			,history
+#endif
+		); if (okay) cases++;
 	}
 	if (!okay) { fprintf(stderr,"STOP:COHORT_PRIMITIVE_FAILURE;CLOSE_ONLY_NO_END_RETRY_RESET\n"); close(fd); return 1; }
 	session={}; session.version=1;

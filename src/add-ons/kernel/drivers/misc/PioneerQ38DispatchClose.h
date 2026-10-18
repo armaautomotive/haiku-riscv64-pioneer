@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_DISPATCH_CLOSE_H
 #define PIONEER_Q38_DISPATCH_CLOSE_H
 #include "PioneerQ38DispatchRun.h"
-// OFFLINE persistent END controller only;no native handler selects it.
+// Experimental54 END controller;not native-qualified by offline tests.
 // STOP is a private operation,never a userspace request/sequence capability.
 template<class IO> bool PioneerQ38DispatchPeerStatus(IO& io,uint32_t nonce,bool stopped)
 {

@@ -10,6 +10,9 @@
 #include <unistd.h>
 #include <time.h>
 #include "PioneerQ38CohortSession.h"
+#ifdef PIONEER_Q38_DISPATCH_INFERENCE
+#include "PioneerQ38DispatchSession.h"
+#endif
 class PioneerQ38NativeTransport {
 public:
 	int Open() { return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC); }
@@ -17,5 +20,9 @@ public:
 	int Close(int fd) { return close(fd); }
 	uint64_t NowNanos() { timespec t={}; return clock_gettime(CLOCK_MONOTONIC,&t)?0:uint64_t(t.tv_sec)*1000000000+uint64_t(t.tv_nsec); }
 };
+#ifdef PIONEER_Q38_DISPATCH_INFERENCE
+using PioneerQ38NativeSession=PioneerQ38DispatchSession<PioneerQ38NativeTransport>;
+#else
 using PioneerQ38NativeSession=PioneerQ38CohortSession<PioneerQ38NativeTransport>;
+#endif
 #endif

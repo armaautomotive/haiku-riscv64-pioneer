@@ -6,6 +6,11 @@ project=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 build=$(CDPATH= cd -- "$1" && pwd)
 libraries=$(CDPATH= cd -- "$2" && pwd)
 output=$3
+case "${PIONEER_Q38_DISPATCH_INFERENCE:-0}" in
+ 0) extra=;;
+ 1) extra=-DPIONEER_Q38_DISPATCH_INFERENCE;;
+ *) exit 2;;
+esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do
@@ -28,7 +33,7 @@ set -- -I"$sdk/headers" -idirafter "$sdk/headers/posix"
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do [ ! -d "$include" ] || set -- "$@" -isystem "$include"; done
 for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$library"; done
 "$cxx" -std=c++17 -O2 -ffp-contract=off -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
- -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED "$@" -I"$temporary/include" -I"$temporary/ggml/include" -I"$temporary/ggml/src" \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED $extra "$@" -I"$temporary/include" -I"$temporary/ggml/include" -I"$temporary/ggml/src" \
  -B"$release/system/glue/" -L"$release/system/libroot" -L"$libraries" -Wl,-rpath-link,"$libraries" \
  "$project/tools/pioneer/PioneerQ38GgmlBackend.cpp" "$project/tools/pioneer/pioneer_q38_inference.cpp" \
  -l:libllama.so.0.2.0 -l:libggml.so.0.21.0 -l:libggml-base.so.0.21.0 -l:libggml-cpu.so.0.21.0 -o "$output"

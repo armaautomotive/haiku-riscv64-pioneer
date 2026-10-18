@@ -65,6 +65,7 @@ struct TimedSessionIO:SessionIO {
 	TimedSessionIO(FakeSource& s,unsigned t):SessionIO(s,t) {}
 	uint64_t NowNanos() { return ticks+=100; } // ordinary host clock,NO transport side effects
 };
+#ifndef PIONEER_Q38_SESSION_MOCK_ONLY
 int main()
 {
 	(void)&Check; (void)&CohortHostTestMain;
@@ -106,3 +107,4 @@ int main()
 	source.valid=true;
 	puts("PASS OFFLINE persistent cohort session:source before accelerator FD,old ABI/storage refusal,ALL page proofs,retained weights across repeated complete multiwave matrices,late-wave failures preserve caller output,CLOSE ONLY without END/retry/fallback,clean END exactly once;SYNTHETIC source/device,NOT native inference");
 }
+#endif

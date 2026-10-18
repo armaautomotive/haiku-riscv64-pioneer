@@ -1,5 +1,40 @@
 # Native build status
 
+Latest checkpoint (October18,05:43 UTC): native52/7643314f STILL running,
+371 learned projections through layer47 pass,3,213,960 pages uploaded.
+NO completed token/position yet. Do not disturb owner/module/power.
+
+Separate experimental54/ABI1 persistent dispatcher now has an OFFLINE-built
+kernel handler,distinct119-WAIT client/model session,and frozen-library
+inference binary. NO54 installation/card launch/throughput qualification yet.
+Candidate /private/tmp/pioneer-q38-dispatch-driver54-20261017-c:
+e4642e6882845e861174e54ea4f2bc691100ca0a17730a92ea7c3330a146ee32.
+Debug client38b60320 and inferencea175f26a are separate;ONLY debug client
+contains CPU reference products. Production strategy reuses authenticated
+same-FD source,exact bulk/cache/all-wave publication,with119-peer protocol
+and sequence/source history;never fabricates old stopped=1. Kernel derives
+ALL addresses/routes/sequences privately,uses separate lease/Unsafe state,
+requires complete initialized extents BEFORE prepare,excludes old local/
+stream/cohort/legacy owners,and quarantines BOTH host owners on UNKNOWN.
+
+ASan/UBSan actual extracted handler/prepare/lock+emitted root instructions
+pass full120-role bootstrap,two persistent jobs,team/FD/isolation/copyout
+checks and7 late faults (dispatch-control.KHn7W76A). New model strategy
+passes13 metadata/storage/source/late-wave/seal faults with atomic caller
+output and CLOSE-only failure (dispatch-session.mck4WJ6W). Reply history
+rejects ALL64 stats/perpeer mutations and duplicate nonces after its first
+kernel-validated reply;it is coherence,NOT a substitute for PRIVATE kernel
+source/extent authorization (dispatch-run.bqhg5K8q). Paired input comparison
+still compares EVERY bit;all dropped stores/late corruptions/ALL119 proof/
+output slots/canaries/bounds pass (dispatch-payload.Q4XGCH07). END tests pass
+both ordinary/paired paths (dispatch-close.AS8lWTJV). Kernel frames:handler
+400B,bootstrap480B,END512B,common END240B;all large objects heap-owned.
+Disabled54 rebuild of qualified52 is EXACT1de41744;default43 EXACT2df0e0f8.
+Old51/52/53 actual policy/handler/client and default model-session tests pass.
+Guarded54 switch script requires NEW cold/unloaded boot and exact52/43
+backups;NEVER invoke on the current active52 boot. No Assistant,firmware,
+kernel/boot settings or dirty llama implementation changed.
+
 Latest checkpoint (October18,05:28 UTC): sole native7643314f full-model run
 STILL active on52/1de41744,307 learned projections through layer39 pass,
 2,651,780 pages uploaded. NO completed position/token/speed result yet.

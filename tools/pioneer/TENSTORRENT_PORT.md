@@ -2,6 +2,34 @@
 
 ## Status
 
+### October17: separate54 driver/model client builds OFFLINE;native layer47 (October18,05:43 UTC)
+
+Current52/7643314f full-model trial remains active:371 learned projections
+through layer47 pass,3,213,960 pages uploaded. No completed position/token
+or speed result yet. Keep its ONLY owner,loaded module and power unchanged.
+
+Experimental54/ABI1 kernel handler and separate119-WAIT client/model strategy
+now build OFFLINE. Candidatee4642e68,debug client38b60320,inferencea175f26a.
+Private routes/extents/nonces/source ownership,complete authorization BEFORE
+prepare,separate persistent lease/Unsafe state,all-owner exclusion and BOTH
+host-owner UNKNOWN quarantine are enforced. Production reuses same-FD full
+authentication,exact bulk/cache/all-wave atomic output;CPU reference exists
+ONLY in the distinct debug executable. No fake old per-call stopped flag.
+
+ASan/UBSan extracted REAL handler/prepare/lock with actual emitted dispatcher
+passes bootstrap/two jobs,FD/team/isolation/copyout checks and7 late faults.
+Model strategy passes13 ABI/storage/source/late-wave/seal failures without
+partial output,END retry or CPU fallback. Reply coherence history rejects
+all64 stats/perpeer mutations and duplicate nonces;PRIVATE kernel authority
+still independently proves first source/extent snapshots. Paired reads compare
+EVERY input bit;all dropped stores/late corruptions/119 proof+output slots/
+canaries/bounds tested. END ordinary/paired tests pass. Kernel handler400B,
+bootstrap480B,END512B;large requests/role views/authority are heap-owned.
+Existing52/default43 builds still byte-identical;old policy/client/session
+regressions pass. No54 deployed/native-qualified,no Assistant/firmware/boot
+or dirty llama implementation changed. Next cold/unloaded transition ONLY
+after the active full-model trial ends;guarded exact52/43 backups retained.
+
 ### October17: persistent lifecycle controllers pass OFFLINE;native layer39 (October18,05:28 UTC)
 
 Native7643314f remains the SOLE active accelerator owner on driver52:

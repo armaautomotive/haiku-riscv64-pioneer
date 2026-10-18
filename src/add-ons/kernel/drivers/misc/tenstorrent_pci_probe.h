@@ -56,6 +56,9 @@
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 #include "PioneerQ38CohortProbe.h"
 #endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+#include "PioneerQ38DispatchClose.h"
+#endif
 #endif
 
 #define TT_PCI_PROBE_DEVICE "misc/tenstorrent_pci_probe"

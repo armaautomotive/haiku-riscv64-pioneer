@@ -2,7 +2,8 @@
 #ifndef PIONEER_Q38_DISPATCH_IMAGES_H
 #define PIONEER_Q38_DISPATCH_IMAGES_H
 #include <stdint.h>
-// Generated exact OFFLINE images;NO driver currently selects/launches them.
+// Generated exact experimental54 images;offline tests are not native
+// qualification. Default and51..53 drivers never select/launch these roles.
 // Root text SHA256793ae113063477adca987ea71f1d8f8e9e51a79fd2d46abf58e17756a7dbaa10
 // Peer text SHA256263015f2b0cbd7a10a3803b3d2a5113a35f947b2ba3ba303dcdf7c5384e264f4
 // Both boot SHA256e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b

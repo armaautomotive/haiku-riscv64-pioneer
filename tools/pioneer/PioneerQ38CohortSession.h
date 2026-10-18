@@ -6,11 +6,24 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 template<class IO> auto PioneerQ38SessionNow(IO& io,int) -> decltype(io.NowNanos()) { return io.NowNanos(); }
 template<class IO> uint64_t PioneerQ38SessionNow(IO&,long) { return 0; } // offline transport without clock
+struct PioneerQ38CohortSessionMode {
+	static constexpr unsigned Workers=120,Operation=TT_PCI_PROBE_Q38_COHORT_RUN;
+	template<class IO> bool Support(IO& io,int fd) {
+		tt_q38_cohort_support support={};
+		return io.Call(fd,TT_PCI_PROBE_Q38_COHORT_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_COHORT_DRIVER
+			&& support.version==TT_Q38_COHORT_ABI && support.workers==120 && support.rows==256 && support.max_inputs==17408
+			&& support.banks==7 && support.offset_alignment==64 && !support.model_inference;
+	}
+	static auto Request(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input) { return PioneerQ38CohortRequest(wave,input); }
+	bool Collect(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input,const tt_q38_cohort_probe& reply,float* scratch,unsigned rows)
+	{ return PioneerQ38CohortCollect(wave,input,reply,scratch,rows); }
+};
 // Explicit transport strategy;production instantiates ONLY the fixed fully
 // authenticated source. Offline tests use a synthetic source+NO-device IO.
 // No retry,CPU products,substituted output or physical-coordinate capability.
-template<class IO,class Source=PioneerQ38PublicModelSource> class PioneerQ38CohortSession {
+template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38CohortSessionMode> class PioneerQ38CohortSession {
 	IO& io; Source& source;
+	Mode mode;
 	PioneerQwen38PackedPlan layout;
 	std::vector<uint8_t> uploaded;
 	int fd=-1;
@@ -71,10 +84,8 @@ public:
 		if (!source.Ready() || !layout.Build(source.Model(),8192,true)) return Stop(); // BEFORE accelerator FD
 		uploaded.assign(layout.Parts().size(),0);
 		fd=io.Open(); if (fd<0) return Stop();
-		tt_q38_cohort_support support={}; tt_q38_bank_support storage={};
-		if (!io.Call(fd,TT_PCI_PROBE_Q38_COHORT_SUPPORT,&support,sizeof(support)) || support.driver!=TT_Q38_COHORT_DRIVER
-			|| support.version!=TT_Q38_COHORT_ABI || support.workers!=120 || support.rows!=256 || support.max_inputs!=17408
-			|| support.banks!=7 || support.offset_alignment!=64 || support.model_inference) return Stop();
+		tt_q38_bank_support storage={};
+		if (!mode.Support(io,fd)) return Stop();
 		if (!io.Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&storage,sizeof(storage)) || storage.driver!=45 || storage.version!=1 || storage.banks!=7
 			|| storage.page_bytes!=4096 || storage.max_pages!=4 || storage.storage_only!=1 || storage.bytes_per_bank!=PioneerResidentBanks::Capacity) return Stop();
 		tt_q38_bank_session session={}; session.version=1;
@@ -84,13 +95,13 @@ public:
 			|| r.bytes!=PioneerResidentBanks::Total) return Stop();
 		active=true; return true;
 	}
-	bool Multiply(unsigned tensor,const float* input,unsigned inputs,float* output,unsigned outputs,unsigned workers=120) {
+	bool Multiply(unsigned tensor,const float* input,unsigned inputs,float* output,unsigned outputs,unsigned workers=Mode::Workers) {
 		if (!active || failed || finished) return false;
 		if (!source.Ready() || tensor>=source.Model().Tensors().size()) return Stop();
 		const auto& t=source.Model().Tensors()[tensor];
 		if (inputs!=t.inputs || outputs!=t.outputs || !PioneerQ38Disjoint(input,inputs,output,outputs)) return Stop();
 		PioneerQwen38FleetPlan schedule;
-		if (!schedule.Build(source.Model(),layout,tensor,workers)) return Stop();
+		if (!workers || workers>Mode::Workers || !schedule.Build(source.Model(),layout,tensor,workers)) return Stop();
 		PioneerQ38CohortInput quantized;
 		if (!PioneerQ38CohortQuantize(t.type,inputs,input,quantized) || !UploadTensor(tensor)) return Stop();
 		std::vector<float> scratch(outputs,0); // NEVER caller output until EVERY wave succeeds
@@ -98,13 +109,13 @@ public:
 		for (unsigned waveNumber=0;waveNumber<count;waveNumber++) {
 			PioneerQ38CohortWave wave;
 			if (!source.Ready() || !wave.Build(source.Model(),layout,schedule,waveNumber)) return Stop();
-			auto request=PioneerQ38CohortRequest(wave,quantized);
+			auto request=mode.Request(wave,quantized);
 			if (!request) return Stop();
 			uint64_t runStart=PioneerQ38SessionNow(io,0);
-			bool executed=io.Call(fd,TT_PCI_PROBE_Q38_COHORT_RUN,request.get(),sizeof(*request));
+			bool executed=io.Call(fd,Mode::Operation,request.get(),sizeof(*request));
 			Elapsed(runStart,runNanos);
 			if (!executed) return Stop();
-			if (!source.Ready() || !PioneerQ38CohortCollect(wave,quantized,*request,scratch.data(),outputs)) return Stop();
+			if (!source.Ready() || !mode.Collect(wave,quantized,*request,scratch.data(),outputs)) return Stop();
 			calls++; if (peakWorkers<wave.workers) peakWorkers=wave.workers;
 		}
 		if (!source.Ready()) return Stop();

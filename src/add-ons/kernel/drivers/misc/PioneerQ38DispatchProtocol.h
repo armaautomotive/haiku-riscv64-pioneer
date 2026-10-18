@@ -2,7 +2,8 @@
 #ifndef PIONEER_Q38_DISPATCH_PROTOCOL_H
 #define PIONEER_Q38_DISPATCH_PROTOCOL_H
 #include "PioneerQ38CohortProtocol.h"
-// OFFLINE54 proposal ONLY. No driver handles these distinct operations.
+// Experimental54 ABI. Native launch requires separate lifecycle/card
+// qualification;the default and51..53 drivers do not handle these operations.
 // Persistent WAIT is NOT the old per-job stopped=1 proof. Caller supplies
 // logical DATA only;kernel alone derives all routes,addresses and nonces.
 #define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54f2)

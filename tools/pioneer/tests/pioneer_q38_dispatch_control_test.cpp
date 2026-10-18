@@ -1,0 +1,107 @@
+/* SPDX-License-Identifier: MIT */
+#define B_DEVICE_OP_CODES_END 1000
+#define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
+#define PIONEER_Q38_DISPATCH_CLOSE_MOCK_ONLY
+#include "pioneer_q38_dispatch_close_test.cpp"
+using status_t=int; using uint32=uint32_t;
+constexpr status_t B_OK=0,B_DEV_NOT_READY=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_BAD_VALUE=-4,B_NO_MEMORY=-5,B_ENTRY_NOT_FOUND=-6;
+struct thread_info { int team; };
+static int team=17,threadStatus=0;
+static int find_thread(void*) { return 1; }
+static int get_thread_info(int,thread_info* info) { info->team=team; return threadStatus; }
+struct Ref1 { tt_dram_samples_result& dram; };
+struct Ref2 { Ref1 baseline; tt_compute_noc_result noc; };
+struct Ref3 { Ref2 baseline; };
+struct Ref4 { Ref3 baseline; };
+struct BoundContext {
+	CloseIO io; PanelOwners root;
+	tt_dram_samples_result dram; PioneerResidentBanks banks; Ref4 baseline;
+	PioneerResidentLease& lease;
+	PioneerQ38DispatchLease* q38Dispatch=nullptr; PioneerQ38CohortLease* q38Cohort=nullptr;
+	bool q38DispatchRoutes=false,bankStorageOnly=true;
+	PioneerQ38PanelLease panelProbe,streamProbe;
+	std::vector<uint8_t> initializedVector; uint8_t* initialized; uint64_t bytes=PioneerResidentBanks::Total;
+	explicit BoundContext(const char* image):io(image),root(*io.core[0]),dram(root.dram),baseline{{{{dram},root.noc}}},
+		lease(root.store),initializedVector(PioneerResidentBanks::Pages,1),initialized(initializedVector.data()) { assert(banks.Bind(dram)); }
+	bool Unsafe() { return (q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) || banks.Quarantined() || lease.recovery_required || panelProbe.unsafe || streamProbe.unsafe; }
+	~BoundContext() { delete q38Dispatch; }
+};
+using PioneerStoreContext=BoundContext;
+struct PioneerProbeCookie { int team=17; BoundContext* context=nullptr; };
+static PioneerProbeCookie* sRuntimeOwner=nullptr;
+static bool sBankStorageOnly=false,sColdRecoveryRequired=false;
+static int sLock=1,acquired=0,released=0,copyCalls=0,failCopy=0;
+static status_t acquire_sem(int lock) { assert(lock==1); acquired++; return B_OK; }
+static void release_sem(int lock) { assert(lock==1); released++; }
+#include "pioneer_lock.inc"
+static status_t user_memcpy(void* to,const void* from,size_t bytes) {
+	if (++copyCalls==failCopy) return -99; memcpy(to,from,bytes); return B_OK;
+}
+#include "pioneer_q38_dispatch_prepare.inc"
+#include "pioneer_q38_dispatch_control.inc"
+static void Begin(PioneerProbeCookie& cookie,const char* image) {
+	assert(!cookie.context && !sRuntimeOwner); cookie.context=new BoundContext(image);
+	sRuntimeOwner=&cookie; sBankStorageOnly=true;
+}
+static void End(PioneerProbeCookie& cookie,bool clean) {
+	auto& c=*cookie.context; c.io.closing=true;
+	if (clean) {
+		if (c.q38Dispatch) assert(PioneerQ38DispatchClose(c.io,c.dram,c.banks,*c.q38Dispatch,true));
+		assert(!c.Unsafe());
+	} else {
+		assert(c.Unsafe()); unsigned writes=c.io.Writes(),selects=c.io.selects;
+		if (c.q38Dispatch) assert(!PioneerQ38DispatchClose(c.io,c.dram,c.banks,*c.q38Dispatch,false));
+		assert(writes==c.io.Writes() && selects==c.io.selects);
+	}
+	delete cookie.context; cookie.context=nullptr; sRuntimeOwner=nullptr; sBankStorageOnly=false;
+}
+static std::unique_ptr<tt_q38_dispatch_probe> Request() {
+	auto r=std::make_unique<tt_q38_dispatch_probe>(); r->version=1; r->type=12; r->inputs=5120; r->peers=7;
+	for (unsigned w=0;w<7;w++) r->part[w]={w,1,64};
+	for (unsigned w=0;w<2560;w++) r->activation[w]=0x40014001;
+	for (unsigned b=0;b<20;b++) r->scales[b]=0x3c800000;
+	return r;
+}
+int main(int argc,char** argv)
+{
+	assert(argc==2);
+	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
+	PioneerProbeCookie cookie,foreign; tt_q38_dispatch_support support={};
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&support,sizeof(support))==B_OK
+		&& support.driver==54 && support.version==1 && support.peers==119 && support.rows==256 && support.max_inputs==17408
+		&& support.banks==7 && support.offset_alignment==64 && support.persistent==1 && !support.model_inference && !cookie.context);
+	Begin(cookie,argv[1]); auto job=Request();
+	assert(AcquireProbeLock(&cookie)==B_NOT_ALLOWED);
+	assert(Q38DispatchControl(&foreign,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_BUSY);
+	team=18; assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_NOT_ALLOWED); team=17;
+	job->part[2].offset++;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_BAD_VALUE && !cookie.context->q38Dispatch);
+	job->part[2].offset--;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job)-1)==B_BAD_VALUE);
+	cookie.context->initialized[0]=0; unsigned writes=cookie.context->io.Writes(),selects=cookie.context->io.selects;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_ENTRY_NOT_FOUND
+		&& !cookie.context->q38Dispatch && cookie.context->io.Writes()==writes && cookie.context->io.selects==selects);
+	cookie.context->initialized[0]=1;
+	cookie.context->panelProbe.saved=true;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_NOT_ALLOWED);
+	cookie.context->panelProbe.saved=false;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK
+		&& job->result.waiting==7 && !sColdRecoveryRequired && !cookie.context->Unsafe());
+	PioneerQ38DispatchHistory history; assert(history.Accept(*job) && !history.Accept(*job));
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK && job->result.nonce==2 && history.Accept(*job));
+	End(cookie,true);
+	Begin(cookie,argv[1]); job=Request(); failCopy=copyCalls+2;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==-99
+		&& cookie.context && sRuntimeOwner==&cookie && !cookie.context->Unsafe());
+	failCopy=0; End(cookie,true);
+	for (unsigned fault:{2U,3U,4U,5U,6U,7U,10U}) {
+		Begin(cookie,argv[1]); job=Request(); cookie.context->io.rootFault=fault;
+		assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK);
+		assert(job->result.recovery_required && sColdRecoveryRequired && cookie.context->Unsafe());
+		for (const auto& rows:job->output) for (unsigned value:rows) assert(!value);
+		assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_DEV_NOT_READY);
+		End(cookie,false); sColdRecoveryRequired=false;
+	}
+	assert(acquired==released);
+	puts("PASS REAL extracted54 prepare/handler/lock+actual dispatcher:ALL120 private routes/roles and119 bootstrap,team/FD/legacy isolation,ALL initialized extents before prepare IO,two jobs with persistent WAIT,copyout failure clean END,7 late faults whole-owner cold quarantine/no retry;NO native card qualification");
+}

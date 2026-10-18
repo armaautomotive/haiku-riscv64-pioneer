@@ -3,7 +3,7 @@
 #define PIONEER_Q38_DISPATCH_RUN_H
 #include "PioneerQ38DispatchBootstrap.h"
 #include "PioneerPayloadBlock.h"
-// OFFLINE persistent controller ONLY. It is not wired to a native driver.
+// Experimental54 controller. OFFLINE tests are not native qualification.
 static inline bool PioneerQ38DispatchStageRange(uint32_t a,unsigned words)
 {
 	return (a==0x74000 && words==16) || (a>=0x74080 && a<0x74f60 && !((a-0x74080)&31) && words==8)
@@ -36,16 +36,28 @@ template<class IO> bool PioneerQ38DispatchRead(IO& io,uint32_t a,uint32_t* outpu
 	for (unsigned i=0;i<words;i++) output[i]=io.Q38PanelRead(a+i*4);
 	return true;
 }
+template<class IO> auto PioneerQ38DispatchInputCompare(IO& io,uint32_t a,const uint32_t* input,unsigned words,int)
+	-> decltype(io.Q38PayloadData(a),bool())
+{
+	if (!input || (a!=0xa0000 && a!=0xab000) || !PioneerQ38DispatchStageRange(a,words) || !io.Q38PanelMappingStable()) return false;
+	auto data=io.Q38PayloadData(a); bool okay=true; data.PayloadFence();
+	for (unsigned w=0;w<words;w+=2) {
+		uint64_t value=PioneerPayloadPairRead(data,w,0);
+		okay &= uint32_t(value)==input[w]; okay &= uint32_t(value>>32)==input[w+1];
+	}
+	data.PayloadFence(); return okay; // ALL bits compared,not a checksum
+}
+template<class IO> bool PioneerQ38DispatchInputCompare(IO& io,uint32_t a,const uint32_t* input,unsigned words,long)
+{
+	if (!input || (a!=0xa0000 && a!=0xab000) || !PioneerQ38DispatchStageRange(a,words) || !io.Q38PanelMappingStable()) return false;
+	bool okay=true; for (unsigned w=0;w<words;w++) okay &= io.Q38PanelRead(a+w*4)==input[w];
+	return okay;
+}
 template<class IO> bool PioneerQ38DispatchInputsMatch(IO& io,const tt_q38_dispatch_probe& job)
 {
-	uint32_t block[16]; bool okay=true;
-	// Tiny bounded stack;read ALL words even after a mismatch. No checksum.
-	for (unsigned at=0;at<job.inputs/2;at+=16) {
-		for (unsigned i=0;i<16;i++) block[i]=io.Q38PanelRead(0xa0000+(at+i)*4);
-		for (unsigned i=0;i<16;i++) okay &= block[i]==job.activation[at+i];
-	}
 	unsigned padded=(job.inputs/PioneerQ38CohortBlockInputs(job.type)+15)&~15U;
-	for (unsigned i=0;i<padded;i++) okay &= io.Q38PanelRead(0xab000+i*4)==job.scales[i];
+	bool okay=PioneerQ38DispatchInputCompare(io,0xa0000,job.activation,job.inputs/2,0);
+	okay &= PioneerQ38DispatchInputCompare(io,0xab000,job.scales,padded,0);
 	return okay;
 }
 static inline bool PioneerQ38DispatchRunFail(PioneerQ38DispatchLease& lease,PioneerResidentBanks& banks,tt_q38_dispatch_probe& job)

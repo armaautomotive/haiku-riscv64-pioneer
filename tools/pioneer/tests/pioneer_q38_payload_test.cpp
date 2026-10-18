@@ -18,6 +18,7 @@ struct IO {
 	};
 	View Q38PayloadData(uint32_t a) { assert(!(a&7) && a>=0x6e000 && a<0xb0000); views++; return View{*this,(a-0x6e000)/4}; }
 };
+#ifndef PIONEER_Q38_PAYLOAD_MOCK_ONLY
 int main()
 {
 	std::vector<uint32_t> input(8704),out(256); for (unsigned w=0;w<input.size();w++) input[w]=0x12345678^(w*0x713);
@@ -45,3 +46,4 @@ int main()
 	assert(!PioneerQ38PayloadReadOutput(io,256,out.data()) && !io.views);
 	printf("PASS OFFLINE Q38 bounded phase-fenced DATA transport:ALL valid inputs/scales/descriptor/output spans,each dropped input store/corrupt compare,32/64-bit exact coverage/canaries,code/control/unaligned/overflow/unstable mapping refused BEFORE view;NO hardware\n");
 }
+#endif
