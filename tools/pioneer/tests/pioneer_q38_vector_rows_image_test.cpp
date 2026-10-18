@@ -7,6 +7,7 @@
 #include "../PioneerBlackholeFma.h"
 #include "../PioneerQ38VectorFixedFormat.h"
 #include "../PioneerQ38BFloatPanel.h"
+#include "pioneer_blackhole_sfp_load.h"
 // ACTUAL compiled RV32/FPU image plus independent exact integer SFPU subset.
 // Not a silicon cycle model or permission to select a new native image.
 template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=false> struct VectorRows:Base {
@@ -31,7 +32,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	uint32_t badFloatDot=0;
 	bool rawFloat=false,rawInitial=false,affineEligible=false;
 	// Negative controls for the independent pinned-ISA observer only.
-	bool omitDstInitialization=false,allRowsClear=false,truncateRawByte=false;
+	bool omitDstInitialization=false,allRowsClear=false,wormholeRawByte=false;
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
@@ -63,7 +64,6 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	void Instruction(uint32_t op) override {
 		if (omitDstInitialization && op==0x42000091) return;
 		if (allRowsClear && op==0x10280002) op=0x10180000;
-		if (truncateRawByte && (op>>24)==0x70 && ((op>>16)&15)==13) op=(op&~0xf0000U)|0x50000;
 		unsigned code=op>>24;
 		if (op==0x10180000) for (auto& value:defined) value=false; // ALL1024 physical row-valid bits
 		if (op==0x10280002) for (unsigned row=32;row<48;row++) defined[Adj(row)]=false;
@@ -131,8 +131,8 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 					unsigned row=(addr&~3U)+lane/8,col=(lane&7)*2+((addr&2)!=0);
 					if (code==0x70 && (mode==5 || mode==13)) {
 						assert(ownerA && reg<2 && row<32 && defined[row] && wrote[row][col]); uint16_t v=physical[row][col];
-						unsigned mag=(v>>5)&(mode==5?127U:1023U);
-						lr[reg][lane]=mode==5?((uint32_t(v>>15)<<31)|mag):uint32_t(int(mag)*((v>>15)?-1:1));
+						lr[reg][lane]=BlackholeRawSfpLoad(v,mode);
+						if (wormholeRawByte) lr[reg][lane]&=0x8000007fU; // deliberately WRONG architecture negative control
 					}
 					else if (code==0x70 && mode==4) { assert(affineEligible && !reg && row>=32 && row<36); int v=dstInt[row][col]; lr[0][lane]=(v<0 || (!v && negativeDotZero)?0x80000000U:0)|unsigned(v<0?-v:v); }
 					else if (code==0x70 && mode==3) {

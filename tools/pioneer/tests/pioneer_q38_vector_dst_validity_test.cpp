@@ -38,6 +38,11 @@ static void UndefinedMustAbort(const char* image,bool omit,bool all)
 int main(int argc,char** argv)
 {
 	assert(argc==2);
+	for (unsigned sign=0;sign<2;sign++) for (unsigned mag=0;mag<1024;mag++) {
+		uint16_t raw=uint16_t((sign<<15)|(mag<<5)|16);
+		assert(BlackholeRawSfpLoad(raw,5)==((sign<<31)|(mag&255)));
+		assert(BlackholeRawSfpLoad(raw,13)==((sign<<31)|mag));
+	}
 	for (bool bf:{false,true}) for (bool metadata:{false,true}) for (bool fixed:{false,true}) {
 		Initialization e(bf,metadata,fixed); PioneerQ38VectorDstInit(e,bf,metadata,fixed);
 		assert(e.unpacks==(metadata?2U:1U) && e.drains==e.unpacks+2 && e.thread==4
@@ -49,8 +54,8 @@ int main(int argc,char** argv)
 	UndefinedMustAbort(argv[1],true,false);
 	UndefinedMustAbort(argv[1],false,true);
 	for (unsigned type:{8U,12U,14U}) {
-		VectorRowsMachine m(argv[1],type,5120,1); m.truncateRawByte=true;
+		VectorRowsMachine m(argv[1],type,5120,1); m.wormholeRawByte=true;
 		assert(m.RunVector() && !m.CorrectRows());
 	}
-	puts("PASS Dst initialization/config restoration,undefined partial writes and ALL-row ZEROACC rejected,mode5 truncation caught for ALL quant types;OFFLINE ISA observer only");
+	puts("PASS Dst initialization/config restoration,undefined partial writes and ALL-row ZEROACC rejected;Blackhole mode5/13 magnitude+sign semantics,simulated WRONG Wormhole7bit truncation caught for ALL quant types;OFFLINE ISA observer only");
 }

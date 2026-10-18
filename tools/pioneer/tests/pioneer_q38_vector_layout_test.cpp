@@ -3,6 +3,7 @@
 #include "pioneer_runtime_q8_native_f32_image_test.cpp"
 #include "../PioneerQ38VectorPanel.h"
 #include "../PioneerQwen38Panel.h"
+#include "pioneer_blackhole_sfp_load.h"
 struct VectorLayout:NativeF32Q8Machine {
 	uint16_t physical[1024][16]={}; bool written[1024][16]={}; unsigned words=0;
 	bool defined[1024]={};
@@ -22,7 +23,7 @@ struct VectorLayout:NativeF32Q8Machine {
 		for (unsigned lane=0;lane<32;lane++) {
 			unsigned row=(address&~3U)+lane/8,col=(lane%8)*2+((address&2)!=0);
 			assert(defined[row] && written[row][col] && !(physical[row][col]&0x8000));
-			lanes[reg][lane]=(physical[row][col]>>5)&(mode==5?127U:1023U);
+			lanes[reg][lane]=BlackholeRawSfpLoad(physical[row][col],mode);
 		}
 	}
 	void Op(uint32_t word) { Instruction(word); words++; }

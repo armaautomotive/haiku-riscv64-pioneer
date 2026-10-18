@@ -1,5 +1,43 @@
 # Native build status
 
+October18,21:07 UTC failed-client diagnostics are now tested against REAL
+debug client with synthetic syscalls for54/55/56:uta52qHY/sHBF4TLl/Q0SE8GoH.
+Both ioctl-error and returned UNKNOWN copy only existing request status,
+then exactly one CLOSE;no extra ioctl/END/reset/read/retry. New diagnostic
+client55=61656a91,56=9520d6b8,SEPARATE names;installer artifacts/pins remain
+unchanged. First failed log preserved;graceful shutdown and channel1 off
+completed21:04:42 UTC. Keep >=300s off before next single on pulse.
+Native55 failed;NO56 native test. Candidate55 remains installed93539e4b.
+BH observer erratum regressions aO6iEiR4/tRN3jc20,layoutwFkcVG7I,actual
+all-K/real edges aoTBxGg4/UTDkEZPI PASS;no native speed qualification.
+Unselected SFPU rows now pass strict physical validity fMHMfPNQ;research
+persistent image still FAILS unchanged8KiB link bound,even size-local init.
+
+October18,21:06 UTC ISA OBSERVER ERRATUM:the7-bit mode5 interpretation
+below was for Wormhole,NOT Blackhole. Pinned BlackholeA0/SFPLOAD.md explicitly
+preserves8 magnitude bits in mode5;mode13 preserves10,returns SIGN-MAGNITUDE
+(not TC). Original raw mode5 was therefore NOT a P100A high-bit bug. The
+Dst undefined-row issue remains valid. Current55/56 use mode13 only on
+UNSIGNED positive raw0..255,whose bits are identical under either correct
+BH mode;this erratum DOES NOT explain the native failure or change their
+compiled images. Observer now explicitly models BH5/13 incl signed inputs;
+7-bit behavior is ONLY a deliberate wrong-architecture negative control.
+
+October18,21:02 UTC NATIVE55 FAILED FIRST TWO-WORKER SYNTHETIC TEST.
+Driver93539e4b installed ONLY after cold Linux/unbound/COMMAND0000 ->
+fresh unloaded Haiku64/fullRAM and exact double installer gates;support
+driver55 accepted. First RUN returned failure before ANY debug math line.
+No clean END,wrapperexit1,processgone. Existing serial bookkeeping:
+RETAIN end10 close0 worker0 prepared120 booted1 closed0,detail all0.
+Thus ALL119 peers booted,but first RUN did not yield a validated result.
+Exact cause NOT established;the old client omitted already-returned
+root-status diagnostics. Do NOT call this a numeric mismatch or RAM/SMP
+regression. Card/ALL roles/banks/BOTH host owners QUARANTINED;NO retry,
+END/reset/restore/free/extra card read. Mac evidence:
+/private/tmp/pioneer-q38-vector-native-first-failure-20261018-h.log.
+Physical cold recovery required before ANY next card operation.55/56
+OFFLINE passes are NOT native qualification. Haiku itself/SSH still worked.
+
 October18,20:58 UTC OFFLINE host scheduling fix:original FleetPlan loop
 called Parts()->Stable()->fstat twice PER unrelated fragment,per matrix.
 Same497 matrices/47,101 jobs fingerprint94ab20f5488d9f1a:4,322,409 metadata
@@ -34,7 +72,8 @@ IMPORTANT WITHDRAWAL: prior55/56 offline image qualifications below were
 based on an incomplete observer and DO NOT authorize those old binaries.
 Pinned ISA8a34e25e shows ZEROACC10180000 clears ALL1024 Dst row-valid bits,
 not just numeric rows0..63;SFPSTORE partial-column writes to undefined rows
-are undefined. Also SFPLOAD mode5 retains only7 magnitude bits,not8.
+are undefined. The separate mode5 concern was WRONG for Blackhole;see
+the architecture-specific erratum above. Do not repeat that obsolete claim.
 NO affected vector image has been installed/run on hardware;scalar54 is
 unaffected. Old55=5a393ab4/peer6d863397 and56=6781a34f/peer7d4a2e67
 are WITHHELD. Never use their old staged/installer pins as qualification.
@@ -48,7 +87,7 @@ weights/metadata. INT8_COMP mode13 preserves exact unsigned bytes0..255.
 Strict actual-instruction observer now tracks ALL1024 physical valid bits,
 full/partial writes,and each panel's separate decoded-write generation.
 New negative controls prove omitted init and ALL-row clear ABORT and mode5
-truncation FAILS independent math for ALL3 quant types.55/56 guards PASS
+simulated WRONG Wormhole truncation FAILS independent math for ALL3 quant types.55/56 guards PASS
 Ik2CUaz4/86IgBkl1. Full-K/real edges PASS xlGqyCHT/B3EgNmLc,repeated/maxN256
 jobs+STOP PASS034Adir0/g9MxuKUf,actual root+EXACT baked peers PASS
 5iPhAsfG/NvRIqWvj. Layout2,228,224weights BKjPvSKO and real/synthetic raw

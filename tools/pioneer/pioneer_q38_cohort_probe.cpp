@@ -115,7 +115,16 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 #ifdef PIONEER_Q38_DISPATCH_CLIENT
 	double previous=launched;
 	for (unsigned repeat=0;repeat<2;repeat++) {
-		if (!Call(fd,TT_PCI_PROBE_Q38_DISPATCH_RUN,r.get(),sizeof(*r)) || !history.Accept(*r)) return false;
+		bool executed=Call(fd,TT_PCI_PROBE_Q38_DISPATCH_RUN,r.get(),sizeof(*r));
+		if (!executed || !history.Accept(*r)) {
+			// ALREADY returned ordinary host memory ONLY. Never issue a
+			// second ioctl/register read,END,reset or retry after uncertainty.
+			const auto& v=r->result;
+			fprintf(stderr,"STOP:DISPATCH_RETURNED type%u K%u peers%u repeat%u ioctl%u state%u cold%u root_phase%08x count%u marker%08x pc%08x/%08x nonce%u started%u completed%u held%u;HOST_COPY_ONLY_NO_ADDITIONAL_CARD_IO\n",
+				type,inputs,workers,repeat,unsigned(executed),v.state,v.recovery_required,v.root_phase,v.root_count,v.root_marker,
+				v.root_pc[0],v.root_pc[1],v.nonce,v.root_started,v.root_completed,v.root_held);
+			return false;
+		}
 		double finish=Seconds(); if (finish<previous) return false; unsigned errors=0;
 		for (unsigned w=0;w<workers;w++) for (unsigned row=0;row<256;row++) errors+=r->output[w][row]!=PioneerAttentionBits(expected[w*256+row]);
 		printf("DISPATCH_DEBUG type%u K%u peers%u rows_per_peer%u repeat%u nonce%u waiting%u cold%u exact_errors%u checked_call_s%.6f;CPU_REFERENCE_DEBUG_ONLY_NOT_MODEL_OR_TOKEN_RATE\n",

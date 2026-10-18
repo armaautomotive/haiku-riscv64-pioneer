@@ -8,7 +8,11 @@
 // Source a0000..a0400 is an already validated part of the original input.
 // Each SM16 pair interpreted as FP32 is finite;AllDatumsAreZero(bit4)
 // overrides it to EXACT0. No uninitialized read/extra L1 zero buffer.
-template<class E> static void PioneerQ38VectorDstInit(E& e,bool bfloat,bool metadata,bool fixed)
+template<class E>
+#if defined(PIONEER_Q38_SFPU_ACCUMULATOR) && defined(__GNUC__) && !defined(__clang__)
+__attribute__((noinline,optimize("Os")))
+#endif
+static void PioneerQ38VectorDstInit(E& e,bool bfloat,bool metadata,bool fixed)
 {
 	e.Op(0x3700000f); e.Op(0x5e23fc00); e.Op(0x5120000a); e.Op(0x5420000f);
 	e.Op(0xb2050000); e.Drain();
