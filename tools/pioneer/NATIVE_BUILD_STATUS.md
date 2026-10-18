@@ -1,5 +1,16 @@
 # Native build status
 
+October18,21:30 UTC cold recovery powered on normally;fresh SD-free
+dispatch57-fault-20261018-j reached Haiku userland and advancing RTL ticks.
+SSH/ARP currently unavailable;NO card open,57 staging/install/run pending.
+Requested desktop observation/wired-toggle,not another power pulse.
+Optional PIONEER_Q38_PEER_DWARF=1 now retains source-line information in
+the private peer ELF ONLY. Exact57 boot/text bytes MATCH the non-debug
+673313ca peer;program.elf in /private/tmp/pioneer-q38-fault-peer-dwarf-20261018-j
+can resolve a captured fault return PC without changing the native image.
+Default metadata-cost regression rerun PASS ROh7SRDj:6461 calls,same
+94ab20f5488d9f1a fingerprint. No new model/card speed claim.
+
 October18,21:23 UTC diagnostic55 again returned UNKNOWN/exit1/processgone:
 root_phase54000201,count2,marker464d3851,started1/completed0/held0.
 This is controlled rejection of peer2 status,NOT merely overall timeout;
