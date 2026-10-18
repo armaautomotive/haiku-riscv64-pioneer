@@ -155,6 +155,11 @@ extern "C" unsigned block_main()
 	for (unsigned round=0;round<65536 && finished<workers;round++) for (unsigned w=0;w<workers;w++)
 		if (!complete[w] && Peer(w+1,parts[w][3],operation==2,false)) { complete[w]=1; finished++; }
 	if (finished!=workers) block_fault_park();
+	// Completion order is arbitrary. STOP has no ordered output gathers,
+	// so explicitly finish with worker119's terminal physical audit. This
+	// makes the final NIU command deterministic for the kernel's existing
+	// exact proof;do not weaken that proof to accept an arbitrary command.
+	if (operation==2 && !Peer(workers,parts[workers-1][3],true,false)) block_fault_park();
 	// ALL readers finished BEFORE ANY proof/output gather or publication.
 	for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;

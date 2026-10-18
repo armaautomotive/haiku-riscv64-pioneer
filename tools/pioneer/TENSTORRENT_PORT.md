@@ -2,6 +2,20 @@
 
 ## Status
 
+### October18,07:00 UTC:STOP-order regression reproduced and fixed OFFLINE
+
+Native diagnostic54 still rejects END phase40 despite root STOP DONE/count119;
+all18 arithmetic cases exact,then quarantine/no later card IO. Shutdown/off
+confirmed06:58:50 UTC. OFFLINE delayed worker1 reproduces phase40 with valid
+STOP stats but final reset-read route193 instead of required119 route718,
+zero holds/restores. Old mock completion timing hid this ordering assumption.
+New root5c3fc897 explicitly audits terminal worker119 after ALL119 completions;
+host exact proof unchanged,not loosened. Candidate34feba3c,root7184B/4672B
+stack;peer/boot/quant math/ABI unchanged. Instruction/cooperative/RUN/handler/
+retention and delayed-worker cleanup tests pass offline. Native fixed-image
+test still required;fresh cold/unloaded staging-d switch only.54 remains
+unqualified and no new model-speed claim is made.
+
 ### October18,06:50 UTC:54 exact arithmetic passes;cleanup failure isolated safely
 
 First native54/9ebc33ea two-peer synthetic run passes18 repeated full-K

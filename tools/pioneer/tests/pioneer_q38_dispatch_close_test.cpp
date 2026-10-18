@@ -92,6 +92,17 @@ int main(int argc,char** argv)
 {
 	assert(argc==2);
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
+	for (unsigned slow:{1U,60U,119U}) {
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.stopSlowWorker=slow;
+		if (!f.Close()) {
+			printf("FAIL_OFFLINE_STOP_COMPLETION_ORDER slow_worker%u close_phase%u valid_stop_stats%u actual_final_route%u required_final_route%u holds%u restores%u;NO_NATIVE_CARD\n",
+				slow,f.lease->closePhase,unsigned(PioneerQ38DispatchStopProof(f.io.stopStats,f.lease->authority)),
+				f.io.core[0]->command[2],PioneerWorkerX(119)|(PioneerWorkerY(119)<<6),f.io.endHolds,f.io.restored);
+			return 1;
+		}
+		assert(f.io.endHolds==120 && f.io.restored==120);
+	}
+	puts("PASS OFFLINE STOP completion-order regression:first/middle/last slow worker,deterministic final119 reset-status audit,unchanged exact command proof,ALL120 held/restored");
 	for (bool boot:{false,true}) {
 		CloseFixture f(argv[1],boot); f.io.closing=true; assert(f.Close() && f.lease->closed && !f.lease->unsafe);
 		assert(!boot || (f.io.endHolds==120 && f.io.restored==120));

@@ -1,5 +1,28 @@
 # Native build status
 
+Latest checkpoint (October18,07:00 UTC): diagnostic54/f3b12221 reproduces
+native exact18-case arithmetic PASS but END state5/active1/host_released0/
+cold1,close phase40. Root DONE7200c/count119/marker314d3851 means all STOP
+acknowledgements arrived;no physical holds/restoration followed rejection.
+Normal shutdown/channel1 off confirmed06:58:50 UTC;>=180s cold rest.
+
+OFFLINE regression reproduces IDENTICAL phase40 with VALID STOP statistics:
+delay worker1,final NoC reset-read route193 instead of assumed119 route718,
+zero holds/restores. Completion order was not guaranteed by the root image;
+the original mock's timing accidentally always ended at119. New root image
+5c3fc897 explicitly re-audits terminal worker119 AFTER ALL completions,
+keeping the kernel's exact final-command proof UNCHANGED. Native cause is
+strongly indicated,not confirmed until the fixed image passes natively.
+Root7184B/stack4672B,peer263015f2/boot unchanged;no quant math or ABI changes.
+
+Candidate54/34feba3c built/default43 remains EXACT2df0e0f8. Actual root image
+tests(dispatch.wb8CCXFy),actual root+peer cooperative tests(cooperative.7kKst3vg),
+RUN both payload modes(dispatch-run.3rau9aYS),actual handler/retention gate
+(dispatch-control.zoh7JLhk) PASS ASan/UBSan. Close regression now passes
+first/middle/last delayed worker plus existing faults,both payload modes
+(dispatch-close.asta9Wcw). New fresh-cold/unloaded ordered-STOP installer staging-d
+requires exact installedf3b12221 and preserved43/52 backups. NOT installed yet.
+
 Latest checkpoint (October18,06:50 UTC):54/9ebc33ea first native two-peer
 synthetic test PASSES all18 exact Q8/Q4/Q6 full-K computations in persistent
 WAIT,zero numeric errors/cold0 during RUN,but FAILS KNOWN_CLEAN_END=0 and

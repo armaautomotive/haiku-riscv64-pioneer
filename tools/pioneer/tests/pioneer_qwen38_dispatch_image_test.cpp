@@ -16,6 +16,7 @@ struct DispatchMachine:BlockMachine {
 	uint32_t command[10]={},counts[8]={}; bool seen[10]={};
 	unsigned active,kind,k,operation=1,packets=0,responses=0,descriptors=0,readbacks=0,doorbells=0,gathers=0;
 	unsigned faultAt=0,corruptProof=UINT32_MAX,corruptWorker=0,badPcWorker=0,nonfiniteWorker=0;
+	unsigned stopSlowWorker=0; // vary completion order independently of index
 	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false;
 	DispatchMachine(const char* path,unsigned workers,unsigned type=12,unsigned inputs=5120)
 		:BlockMachine(path,8,0,1,nullptr,true),active(workers),kind(type),k(inputs) {
@@ -87,7 +88,8 @@ struct DispatchMachine:BlockMachine {
 			for (unsigned i=0;i<16;i++) memory[local+i*4]=peer.descriptor[i];
 		} else if (remote==0x74140) {
 			assert(bytes==64);
-			if (peer.launched && ++peer.polls>1+worker%3) peer.finished=peer.requested;
+			unsigned delay=operation==2 && worker==stopSlowWorker?10:1+worker%3;
+			if (peer.launched && ++peer.polls>delay) peer.finished=peer.requested;
 			for (unsigned i=0;i<16;i++) memory[local+i*4]=0;
 			memory[local]=peer.requested; memory[local+4]=peer.finished; memory[local+12]=0x32503851;
 			memory[local+16]=peer.launched?(peer.finished==peer.requested?(peer.operation==2?2:0):1):0;
