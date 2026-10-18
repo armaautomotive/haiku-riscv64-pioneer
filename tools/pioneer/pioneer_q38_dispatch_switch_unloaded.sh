@@ -36,7 +36,7 @@ unloaded()
  ' || { echo STOP_LOADED_OR_UNPROVEN_KERNEL_IMAGE_LIST_NO_WRITES; return 1; }
  dispatch_teams=$(ps -o Id -o Team) || return 1
  printf '%s\n' "$dispatch_teams" | awk '
-  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/pioneer_q38|\/pioneer-q38|\/pioneer-qwen38/ {owner++}
+  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/inference-|\/pioneer_q38|\/pioneer-q38|\/pioneer-qwen38/ {owner++}
   END {if(owner) exit 1}
  ' || { echo STOP_POSSIBLE_COMPUTE_OWNER_NO_WRITES; return 1; }
 }

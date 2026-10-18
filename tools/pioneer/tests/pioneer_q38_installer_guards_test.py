@@ -83,6 +83,10 @@ def check(script, fault=None, restore=None, text_override=None):
             teams.append('999 /boot/home/pioneer-qwen38-dispatch-20261018-f/pioneer-q38-client')
         if fault == 'owner-truncated':
             teams.append('999 /boot/home/pioneer-qwen38-dispatch-20261018-f/pioneer-q')
+        if fault == 'owner-relative-inference':
+            teams.append('999 ./inference-pool-frontend-f2096ee7')
+        if fault == 'owner-absolute-inference':
+            teams.append('999 /boot/home/config/non-packaged/bin/inference-q38-public')
         mocks = '\n'.join([
             'uname() { printf "%s\\n" ' + ('Linux' if fault == 'platform' else 'Haiku') + '; }',
             'listimage() { printf "%s\\n" ' + ' '.join(map(shlex.quote, images)) + '; }',
@@ -111,7 +115,8 @@ if __name__ == '__main__':
     scripts = sorted(DIRECTORY.glob('pioneer_q38_dispatch*switch_unloaded.sh'))
     assert len(scripts) >= 5
     faults = ['candidate', 'client', 'inference', 'installed', 'candidate-symlink', 'stage-symlink',
-              'backup-exists', 'incoming-exists', 'device-link', 'loaded', 'owner', 'owner-truncated', 'platform']
+              'backup-exists', 'incoming-exists', 'device-link', 'loaded', 'owner', 'owner-truncated',
+              'owner-relative-inference', 'owner-absolute-inference', 'platform']
     count = 0
     for script in scripts:
         for fault in faults:

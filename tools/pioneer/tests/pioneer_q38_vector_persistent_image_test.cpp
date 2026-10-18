@@ -25,6 +25,19 @@ int main(int argc,char** argv)
 		assert(!m.Job(1) && m.pending && m.requests==fault && m.responses==fault-1);
 		unsigned requests=m.requests; for (unsigned i=0;i<1000;i++) m.StepBlock(); assert(m.requests==requests && m.pending);
 	}
+	for (unsigned type:{8U,12U,14U}) {
+		VectorPersistent m(argv[1],type,5120,16); assert(m.Boot() && m.Job(1));
+		m.NextPackets(); assert(m.Job(2) && m.Job(3,2));
+		printf("OFFLINE VECTOR persistent type%u MAXIMUM N256 repeated exact/STOP PASS\n",type);
+	}
+	for (unsigned field=0;field<8;field++) {
+		VectorPersistent m(argv[1],8,5120,1); m.memory[0x74040+field*4]^=1;
+		assert(!m.Boot() && !m.requests && !m.matrixInstructions);
+	}
+	{
+		VectorPersistent m(argv[1],14,5120,1); m.counterBase=UINT32_MAX-2; m.flitBase=UINT32_MAX-2;
+		assert(m.Boot() && m.Job(1)); m.NextPackets(); assert(m.Job(2) && m.Job(3,2));
+	}
 	for (unsigned source=0;source<16;source++) {
 		VectorPersistent m(argv[1],8,5120,1); assert(m.Boot()); m.changeSource=source;
 		assert(!m.Job(1) && !m.memory.at(0x74144));

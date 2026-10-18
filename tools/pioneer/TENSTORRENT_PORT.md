@@ -2,6 +2,22 @@
 
 ## Status
 
+### October18,19:33 UTC:cached vector peer fits8KiB;full native profile continues
+
+Native54 full27B profile still active(team848,stage-g public-four log),
+layer21/calls170/pages1,469,082 success at19:30:46 UTC. No new token rate,
+no live driver/card changes. Existing full-FFN~3.76x result remains exact.
+
+OFFLINE cached vector peer e9d6d386 (8184B) reuses Q8/Q4 metadata and exact
+preconverted Q6 half scales.16.25million exhaustive products,996 real tiles,
+repeated/maxN256 actual peer tests,root+peer independent math/UNKNOWN/STOP
+tests pass. Same25 Setup writes/readbacks independently traced;8KiB bound
+unchanged. Still NOT kernel-baked/installed;55 stays prior9a5b12b3/6a7b9b69.
+An exact vector FP32 epilogue experiment adds staging overhead and is kept
+OUT of the fast candidate.108 installer guard tests now include absolute/
+relative inference-* owner detection. Old native helper copies must not be
+reused. Dirty llama implementation remains untouched.
+
 ### October18,19:01 UTC:native full FFN ~3.76x faster,exact accuracy;full model profiling active
 
 Driver54 full learned FFN17408x5120 repeat now0.123357s vs52's0.464385s;

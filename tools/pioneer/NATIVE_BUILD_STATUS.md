@@ -1,5 +1,43 @@
 # Native build status
 
+Latest checkpoint (October18,19:33 UTC): native54 full-model profile remains
+ACTIVE,team848/logpublic-four-frontend-g.log in stage-g;layer21/calls170/
+pages1,469,082 success at19:30:46 UTC. No new token rate yet. ALL card/SD/
+loaded driver state unchanged;no parallel GPU test or installation.
+
+OFFLINE metadata reuse:Q8 shares both panels,Q4 adjacent pairs;Q6 converts
+HALF once per immutable fetched block then exact FP32*signed8. All
+16,252,928 finite HALF/factor products incl signed zeros/subnormals match
+original bits;16,576 panels/996 real tiles exact,operand canaries and
+one-block/ordered/no-retry lifetime pass(jXvZbeIG). Word-sized lifecycle
+fields avoid introducing unqualified SB stores. Cached vector peer e9d6d386
+fits unchanged8KiB code view:8184B,compute496B+main288B frames. Compact
+Setup table issues SAME25 ordered config writes/readbacks;independent
+actual-instruction trace verifies each value/order. NO safety-limit widening.
+Repeated jobs/all3 quant types/all K,maxN256,real first/last48rows,boot
+fields,source faults,wrap,duplicate inert/STOP PASS(tXzqPP7g);actual root+
+cached peers exact+UNKNOWN atomic output proof PASS(RJuOMjoB). Still NOT
+baked into any driver or natively selected:driver55 remains prior9a5b12b3/
+peer6a7b9b69 until explicit new pin/build/ALL lifecycle tests. Last cached
+row evidence MZemdKvs (same compiled helper/table) shows~3.14..3.74x fewer
+RV instructions vs original scalar,NOT hardware timing.
+
+Separate rejected-for-fast-path experiment:14-op vector affine arithmetic
+passes1,048,576 exact scalar FP32 cases+3 latency refusals(KRxwhO3g).
+Integrated isolated imagef0534207 (6296B) loads metadata into disjoint Dst
+rows96..111,retains ALL16 integer-dot bounds/finite-result checks,canonicalizes
+SM32 negative-zero dots. Actual full-K/real rows/corrupt-dot/negative-zero
+tests pass(xc2VlmCy),but extra metadata UNPACK/config overhead INCREASES RV
+steps versus vector-inline:keep isolated,DO NOT adopt as fast path or claim
+native speed. Both arithmetic/metadata experiments leave dirty llama alone.
+
+All SIX local54 deployment guards now also detect relative/absolute
+inference-* owner names (the long profiling binary uses this name). Loaded
+module protection already refused writes;this adds missing owner coverage.
+108 actual shell guard/restore cases PASS incl both new owner fixtures and
+vulnerable-AND-chain regression rejection. Native helper copies predate
+this guard;NEVER rerun old copies/use them as new deployment templates.
+
 Latest checkpoint (October18,19:01 UTC): native54 full learned FFN ggml
 repeat/export PASS clean END/exit0/process gone. first45.063173s,warm
 0.123357s vs qualified52's0.464385s (~3.76x faster THIS layer,NOT token rate).

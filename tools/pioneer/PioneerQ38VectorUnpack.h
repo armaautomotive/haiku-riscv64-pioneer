@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_VECTOR_UNPACK_H
 #define PIONEER_Q38_VECTOR_UNPACK_H
 #include "PioneerQ38VectorPanel.h"
-// OFFLINE instruction-sequence prerequisite ONLY. No image/driver selects
+// OFFLINE instruction-sequence prerequisite ONLY. No installed driver selects
 // this helper. Fixed owned local block90000,not caller-provided addresses.
 // Entry:qualified rows Setup,all prior matrix work drained,both source
 // banks released,ADCs/RWCs private. Exit:the CURRENT MatrixUnit SrcA bank

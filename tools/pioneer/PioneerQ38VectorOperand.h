@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_VECTOR_OPERAND_H
 #define PIONEER_Q38_VECTOR_OPERAND_H
 #include "PioneerSfpuDivide.h"
-// OFFLINE arithmetic prerequisite ONLY;NO image/driver selects this helper.
+// OFFLINE arithmetic prerequisite ONLY;NO installed driver selects this helper.
 // ALL32 lanes enabled;LReg0=UNSIGNED raw low byte,LReg1=unsigned Q6 high
 // byte. The future caller owns/proves UNPACK-to-Dst,disjoint Dst16/Dst32
 // windows,load/store/move scheduling and exact same source panel indices.

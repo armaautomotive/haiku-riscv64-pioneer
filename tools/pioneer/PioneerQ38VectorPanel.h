@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_VECTOR_PANEL_H
 #define PIONEER_Q38_VECTOR_PANEL_H
 #include "PioneerQ38VectorOperand.h"
-// OFFLINE fixed-layout prerequisite. NO native image/handler selects it.
+// OFFLINE fixed-layout prerequisite. NO installed image/handler selects it.
 // The raw planes each contain sixteen consecutive16-byte row slices from
 // the original lossless tiled block. These are DATA OFFSETS,not addresses.
 struct PioneerQ38VectorPanelSpan { unsigned low=0,high=0; bool second=false; };

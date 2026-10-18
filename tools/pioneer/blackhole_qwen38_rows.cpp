@@ -10,6 +10,12 @@
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorUnpack.h"
+#ifdef PIONEER_Q38_AFFINE_REUSE
+#include "PioneerQ38AffineReuse.h"
+#endif
+#ifdef PIONEER_Q38_VECTOR_AFFINE
+#include "PioneerQ38VectorAffineData.h"
+#endif
 #endif
 #ifdef PIONEER_Q38_FAST_PANEL
 #include "PioneerQwen38FastPanel.h"
@@ -39,6 +45,9 @@ static void Drain()
 	for (unsigned attempt=0;attempt<1000000;attempt++) if (*ack) { Fence(); return; }
 	block_fault_park();
 }
+#if defined(PIONEER_Q38_VECTOR_AFFINE) || defined(PIONEER_Q38_AFFINE_REUSE)
+__attribute__((noinline))
+#endif
 static void Config(unsigned index,uint32_t value)
 {
 	volatile uint32_t* target=Words(0xffef0000+index*4); *target=value;
@@ -51,6 +60,15 @@ static void Setup()
 	Emit(0xb2000000); Drain();
 	for (unsigned i=1;i<68;i++) Emit(0xb2000000|(i<<16));
 	Emit(0xb2020001); Emit(0xb2030001); Emit(0xb2050004); Drain();
+#ifdef PIONEER_Q38_AFFINE_REUSE
+	// SAME exact ordered writes/readbacks. Compact immutable tables keep
+	// the separate persistent candidate inside the unchanged8KiB code view.
+	static const uint8_t indices[]={0,1,2,3,6,7,220,20,24,28,50,56,59,64,65,72,73,76,84,86,112,113,120,121,124};
+	static const uint32_t values[]={0x4231,0xa0220000,0,0x10000,0,0,0,0,0xffff,0x100,0x100,0x100000,0x100,
+		0x100011,16,1,3,0x7070,0x400040,0x100010,0x100011,8,1,3,0x7091};
+	static_assert(sizeof(indices)==sizeof(values)/sizeof(values[0]),"exact unchanged configuration pairs");
+	for (unsigned i=0;i<sizeof(indices);i++) Config(indices[i],values[i]);
+#else
 	Config(0,0x4231); Config(1,0xa0220000); Config(2,0); Config(3,0x10000);
 	Config(6,0); Config(7,0); Config(220,0);
 	Config(20,0); Config(24,0xffff); Config(28,0x100); Config(50,0x100);
@@ -58,6 +76,7 @@ static void Setup()
 	Config(64,0x100011); Config(65,16); Config(72,1); Config(73,3); Config(76,0x7070);
 	Config(84,0x400040); Config(86,0x100010);
 	Config(112,0x100011); Config(113,8); Config(120,1); Config(121,3); Config(124,0x7091);
+#endif
 	Emit(0x5e23fc00); Emit(0x5e41fc00); Drain();
 	for (unsigned w=0;w<4;w++) { Words(0x70700)[w]=0; Words(0x70910)[w]=0; }
 	for (unsigned w=0;w<64;w++) Words(0x70920)[w]=0;
@@ -190,8 +209,15 @@ extern "C" unsigned block_main()
 #else
 	float scale=Float(scaleBits);
 #endif
+#ifdef PIONEER_Q38_AFFINE_REUSE
+	PioneerQ38AffineReuse affine;
+	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
+#endif
 	for (unsigned p=0;p<panels;p++) {
 		auto* local=reinterpret_cast<PioneerQ38Panel*>(0x91000);
+#ifdef PIONEER_Q38_AFFINE_REUSE
+		if (!affine.Panel(p,local)) block_fault_park();
+#else
 		if (!
 #ifdef PIONEER_Q38_VECTOR_PANEL
 			PioneerQ38AffineOnly
@@ -203,6 +229,7 @@ extern "C" unsigned block_main()
 #endif
 #endif
 			(type,reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();
+#endif
 #ifndef PIONEER_Q38_VECTOR_PANEL
 		for (unsigned w=0;w<128;w++) Words(0x70710)[w]=local->operand[w];
 #endif
@@ -222,6 +249,19 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
 #endif
 		Matrix();
+#ifdef PIONEER_Q38_VECTOR_AFFINE
+		// Preserve the original ALL16 dot range checks before vector math.
+		for (unsigned row=0;row<16;row++) {
+			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();
+		}
+		if (!PioneerQ38VectorAffineData(emitter,group,Bits(scale),sum)) block_fault_park();
+		for (unsigned row=0;row<16;row++) {
+			uint32_t value=Words(0xffbd9b00)[row];
+			if ((value&0x7f800000)==0x7f800000) block_fault_park();
+			Words(0x84000)[group*16+row]=value;
+		}
+		Fence(); Config(3,0x10000);
+#else
 		for (unsigned row=0;row<16;row++) {
 			static_assert(sizeof(int)==4,"fixed signed32 integer dot");
 			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();
@@ -231,6 +271,7 @@ extern "C" unsigned block_main()
 			if ((Bits(value)&0x7f800000)==0x7f800000) block_fault_park();
 			Words(0x84000)[group*16+row]=Bits(value);
 		}
+#endif
 		Fence();
 	}
 	}
