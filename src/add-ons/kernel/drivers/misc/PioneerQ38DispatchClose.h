@@ -63,11 +63,13 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 	if (lease.unsafe) return false; // especially NO select/reset/restore/free
 	if (!clean || lease.rootRunning) return PioneerQ38DispatchQuarantine(lease,banks);
 	if (lease.closed) return true;
+	lease.closePhase=1; lease.closeWorker=0;
 	if (!lease.prepared) { lease.closed=true; return true; }
 	if (lease.bootAttempted && !lease.booted) return PioneerQ38DispatchQuarantine(lease,banks);
 	if (lease.booted && (lease.prepared!=120 || lease.rootNonce>=0x7ffffffe)) return PioneerQ38DispatchQuarantine(lease,banks);
 	// ALL current role code/source/physical state audited BEFORE ANY STOP.
 	for (unsigned w=0;w<lease.prepared;w++) {
+		lease.closePhase=10; lease.closeWorker=w;
 		auto& node=lease.worker[w];
 		if (!node.image.saved || !node.image.ready || (w && lease.peerNonce[w-1]>=0x7ffffffe)
 			|| !io.SelectRuntimeCore(w) || !PioneerQ38DispatchSources(io,dram,banks,node,w && lease.booted?0x46800:0x47800)
@@ -75,6 +77,7 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 			|| (w && lease.booted && !PioneerQ38DispatchPeerStatus(io,lease.peerNonce[w-1],false))) return PioneerQ38DispatchQuarantine(lease,banks);
 	}
 	if (lease.booted) {
+		lease.closePhase=20; lease.closeWorker=0;
 		auto& a=lease.authority; auto& root=lease.worker[0]; a.nextRoot=lease.rootNonce+1;
 		if (!io.SelectRuntimeCore(0)) return PioneerQ38DispatchQuarantine(lease,banks);
 		for (unsigned w=0;w<119;w++) {
@@ -93,9 +96,11 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 		io.RuntimeResetWrite(0x87ffff); io.Pause();
 		if (!PioneerQ38DispatchSources(io,dram,banks,root,0x87ffff)) return PioneerQ38DispatchQuarantine(lease,banks);
 		io.RuntimeResetWrite(0x46800); if (io.ResetRead()!=0x46800) return PioneerQ38DispatchQuarantine(lease,banks);
+		lease.closePhase=30;
 		const uint64_t deadline=io.Q38CohortNow()+UINT64_C(30000000); bool complete=false;
 		while (io.Q38CohortNow()<deadline) {
 			uint32_t phase=io.RuntimeStatusRead(0),count=io.RuntimeStatusRead(1),marker=io.RuntimeStatusRead(2);
+			lease.closeStatus[0]=phase; lease.closeStatus[1]=count; lease.closeStatus[2]=marker;
 			if (marker==TT_Q38_DISPATCH_FAULT) break;
 			if (phase==TT_Q38_DISPATCH_DONE && count==119 && marker==TT_Q38_DISPATCH_MARKER) {
 				io.Pause(); uint32_t first=io.RuntimePcRead(); io.Pause(); uint32_t second=io.RuntimePcRead();
@@ -104,6 +109,7 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 			io.Pause();
 		}
 		if (!complete || !PioneerQ38DispatchSources(io,dram,banks,root,0x46800)) return PioneerQ38DispatchQuarantine(lease,banks);
+		lease.closePhase=40;
 		for (unsigned c=0;c<8;c++) a.after[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c));
 		uint32_t stats[64];
 		if (!PioneerQ38DispatchRead(io,0x7f800,stats,64,0) || !PioneerQ38DispatchStopProof(stats,a)) return PioneerQ38DispatchQuarantine(lease,banks);
@@ -111,12 +117,14 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 		for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PioneerQ38DispatchQuarantine(lease,banks);
 		// Independent ALL120 physical audits AFTER STOP and BEFORE ANY hold.
 		for (unsigned w=0;w<120;w++) {
+			lease.closePhase=50; lease.closeWorker=w;
 			if (!io.SelectRuntimeCore(w) || !PioneerQ38DispatchSources(io,dram,banks,lease.worker[w],0x46800)
 				|| !PioneerQ38DispatchCodeMatches(io,w)
 				|| (w && !PioneerQ38DispatchPeerStatus(io,a.nextPeer[w-1],true))) return PioneerQ38DispatchQuarantine(lease,banks);
 		}
 		// No reset above. Only after EVERY terminal proof may ANY core hold.
 		for (unsigned w=0;w<120;w++) {
+			lease.closePhase=60; lease.closeWorker=w;
 			if (!io.SelectRuntimeCore(w)) return PioneerQ38DispatchQuarantine(lease,banks);
 			io.RuntimeResetWrite(0x87ffff); io.Pause();
 			if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) return PioneerQ38DispatchQuarantine(lease,banks);
@@ -127,15 +135,18 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 		lease.rootRunning=false;
 	}
 	// ALL held,source and code rechecked BEFORE restoring the FIRST byte.
-	for (unsigned w=0;w<lease.prepared;w++) if (!io.SelectRuntimeCore(w)
-		|| !PioneerQ38DispatchSources(io,dram,banks,lease.worker[w],0x47800)
-		|| !PioneerQ38DispatchCodeMatches(io,w)) return PioneerQ38DispatchQuarantine(lease,banks);
+	for (unsigned w=0;w<lease.prepared;w++) {
+		lease.closePhase=70; lease.closeWorker=w;
+		if (!io.SelectRuntimeCore(w) || !PioneerQ38DispatchSources(io,dram,banks,lease.worker[w],0x47800)
+			|| !PioneerQ38DispatchCodeMatches(io,w)) return PioneerQ38DispatchQuarantine(lease,banks);
+	}
 	for (unsigned end=lease.prepared;end;end--) {
 		unsigned w=end-1; auto& node=lease.worker[w];
+		lease.closePhase=80; lease.closeWorker=w;
 		if (!io.SelectRuntimeCore(w) || !PioneerQ38PanelClose(io,dram,node.noc,node.Store(),banks,node.image,true)
 			|| (w && !PioneerQ38DispatchPeerLeaseEnd(io,node.noc,node.Store()))) return PioneerQ38DispatchQuarantine(lease,banks);
 	}
 	if (!io.SelectRuntimeCore(0)) return PioneerQ38DispatchQuarantine(lease,banks);
-	lease.booted=false; lease.closed=true; return true;
+	lease.booted=false; lease.closed=true; lease.closePhase=90; lease.closeWorker=0; return true;
 }
 #endif

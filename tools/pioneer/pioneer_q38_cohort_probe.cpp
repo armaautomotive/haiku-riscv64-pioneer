@@ -213,6 +213,8 @@ int main(int argc,char** argv)
 	session={}; session.version=1;
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored && session.result.host_released && !session.result.cold;
+	printf("BANK_END state%u active%u pci_restored%u host_released%u cold%u accepted%u;NO_RETRY_OR_ADDITIONAL_CARD_READ\n",
+		session.result.state,session.result.active,session.result.pci_restored,session.result.host_released,session.result.cold,unsigned(okay));
 	if (close(fd)) okay=false;
 	printf("%s_COHORT_%s_PRIMITIVES cases=%u workers=%u KNOWN_CLEAN_END=%u;NOT_CONTIGUOUS_MATRIX_OR_GRAPH_OR_MODEL_INFERENCE_OR_SPEED\n",
 		okay?"PASS":"FAIL",real?"AUTHENTIC_ROW_MIXES":"SYNTHETIC",cases,workers,unsigned(okay));

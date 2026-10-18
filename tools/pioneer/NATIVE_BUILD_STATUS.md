@@ -1,5 +1,27 @@
 # Native build status
 
+Latest checkpoint (October18,06:50 UTC):54/9ebc33ea first native two-peer
+synthetic test PASSES all18 exact Q8/Q4/Q6 full-K computations in persistent
+WAIT,zero numeric errors/cold0 during RUN,but FAILS KNOWN_CLEAN_END=0 and
+exit1. No later GPU ioctl/retry/reset/unload/file replacement was attempted.
+Treat entire card/owners/banks as quarantined. Haiku normal shutdown then
+channel1 off confirmed06:48:42 UTC;>=180s rest before recovery.
+This is NOT native54 qualification. Evidence saved locally as
+/private/tmp/pioneer-q38-dispatch-synthetic-two-20261018-a.log.
+
+Diagnostic-only54 candidatef3b12221+client7b7999d3 records cleanup phases,
+worker,last already-read status and BANK_END flags. No extra card IO or
+weakened proof/cleanup rules. Close/control/retention ASan/UBSan suites pass
+(dispatch-close.NeHrETls,dispatch-control.LYoe20mK);default43 rebuild remains
+EXACT2df0e0f8. New guarded installer staging-c requires fresh cold/unloaded
+boot and exact prior9ebc33ea,43/52 backups. NOT staged/installed/executed yet.
+
+CPU-only timing513e8d58 natively PASSES64 exact vector-add graphs:32-thread
+disposable pools18.072146s versus persistent poll0 pool0.345141s. This is
+microbenchmark evidence for real thread-management overhead,NOT actual
+27B optimization attribution or GPU/model speed. Saved pool inference252b
+has not yet executed a model.
+
 Latest checkpoint (October18,06:38 UTC):52/7643314f full27B four-position
 smoke PASSES with clean_end1,process exit0,and all1,988 learned projections
 on P100A without CPU learned reference/fallback. Warm positions310.917873,

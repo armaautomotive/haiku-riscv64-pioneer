@@ -1952,6 +1952,7 @@ struct PioneerStoreContext {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	PioneerQ38DispatchLease* q38Dispatch=NULL;
 	bool q38DispatchRoutes=false,dispatchOwnerRetained=false;
+	unsigned q38EndPhase=0;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	PioneerQ38CohortLease* q38Cohort=NULL;
@@ -2075,6 +2076,12 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 	if (c.wideHost.allocated && !c.wideHost.released) { c.wideHost.ready=false; c.wideHost.quarantined=true; }
 	sColdRecoveryRequired=true; result.active=1; result.host_released=0; result.cold=1;
 	result.state=TT_RESIDENT_SESSION_CLEANUP_FAILED;
+#ifdef _KERNEL_MODE
+	const auto* d=c.q38Dispatch;
+	dprintf("PIONEER-P100A:54 RETAIN end=%u close=%u worker=%u status=%08x/%08x/%08x prepared=%u booted=%u closed=%u;NO_LATER_CARD_IO\n",
+		c.q38EndPhase,d?d->closePhase:0,d?d->closeWorker:0,d?d->closeStatus[0]:0,d?d->closeStatus[1]:0,d?d->closeStatus[2]:0,
+		d?d->prepared:0,unsigned(d && d->booted),unsigned(d && d->closed));
+#endif
 }
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
@@ -2190,12 +2197,16 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	if (!context->dispatchOwnerRetained) context->q38EndPhase=10;
 	if (!EndQ38DispatchOwnership(*context,result,clean)) return;
 	if (context->bankStorageOnly) {
 		// Dedicated54 clean path:single-attempt bulk/root restoration,never
 		// fall through to legacy root-lease retry/rollback after a failure.
-		if (!CloseBulkScratch(*context,true) || (context->lease.saved && !PioneerQ38DispatchPeerLeaseEnd(context->io,
-			context->baseline.baseline.baseline.noc,context->lease))) { RetainQ38DispatchOwner(*context,result); return; }
+		context->q38EndPhase=20;
+		if (!CloseBulkScratch(*context,true)) { RetainQ38DispatchOwner(*context,result); return; }
+		context->q38EndPhase=30;
+		if (context->lease.saved && !PioneerQ38DispatchPeerLeaseEnd(context->io,
+			context->baseline.baseline.baseline.noc,context->lease)) { RetainQ38DispatchOwner(*context,result); return; }
 		goto q38_dispatch_owned_restored;
 	}
 #endif
@@ -2262,6 +2273,7 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 q38_dispatch_owned_restored:
+	context->q38EndPhase=40;
 #endif
 	if (recheck && clean) {
 		clean=context->io.PioneerHostDmaAuditIO::AfterNodeId(context->Pci().node_id[0])
@@ -2270,12 +2282,19 @@ q38_dispatch_owned_restored:
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	if (context->bankStorageOnly) {
+		context->q38EndPhase=50;
 		if (!clean || !PioneerQ38DispatchMmioEnd(context->io,context->Pci(),context->transaction)) { RetainQ38DispatchOwner(*context,result); return; }
 	} else
 #endif
 	BlackholePioneerMmioEnd(context->io,context->Pci(),context->transaction);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	context->q38EndPhase=60;
+#endif
 	clean &= !context->Unsafe() && context->Pci().restored;
 	result.active=0; result.pci_restored=context->Pci().restored;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	context->q38EndPhase=70;
+#endif
 	if (context->wideHost.allocated) {
 		if (!clean) PioneerQuarantineWideOutput(context->io,context->wideHost);
 		else clean=PioneerReleaseWideOutput(context->io,context->wideHost,true) && clean;

@@ -2,6 +2,23 @@
 
 ## Status
 
+### October18,06:50 UTC:54 exact arithmetic passes;cleanup failure isolated safely
+
+First native54/9ebc33ea two-peer synthetic run passes18 repeated full-K
+Q8/Q4/Q6 computations with exact CPU-debug comparison and persistent WAIT.
+Final KNOWN_CLEAN_END=0/exit1 means the driver is NOT qualified. No later
+card work/retry/reset/unload/replacement;full owner/bank quarantine assumed.
+Normal Haiku shutdown and channel1 off confirmed06:48:42 UTC,>=180s rest.
+Diagnostic-only candidatef3b12221/client7b7999d3 adds memory-only cleanup
+stage/worker/previous-status reporting and END flags,without weaker checks
+or extra card IO. Offline close/control/retention faults pass;default43
+remains byte-identical. Fresh cold/unloaded staging-c install required next.
+
+Separate CPU-only64-graph exact-add timing:32-thread disposable pools18.072146s
+versus persistent poll0 pool0.345141s. Confirms substantial thread-pool cost
+in this microbenchmark,NOT actual27B speedup/GPU performance. No new model
+result yet;pool/profile inference252b6b9c is staged only.
+
 ### October17: four-position27B smoke completes;performance work continues (October18,06:38 UTC)
 
 52/7643314f PASSES all1,988 GPU learned projections over four positions,

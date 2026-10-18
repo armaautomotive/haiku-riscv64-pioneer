@@ -12,6 +12,10 @@ struct PioneerQ38DispatchLease {
 	PioneerQ38DispatchAuthority authority;
 	uint32_t bootCounter[120][8]={},peerNonce[119]={},rootNonce=0;
 	unsigned prepared=0;
+	// Diagnostic bookkeeping ONLY. Never a completion/source authority and
+	// never an excuse for extra device reads/writes after uncertainty.
+	unsigned closePhase=0,closeWorker=0;
+	uint32_t closeStatus[3]={};
 	bool bootAttempted=false,booted=false,unsafe=false,closed=false,rootRunning=false;
 };
 static inline bool PioneerQ38DispatchUnsafe(const PioneerQ38DispatchLease& lease)
