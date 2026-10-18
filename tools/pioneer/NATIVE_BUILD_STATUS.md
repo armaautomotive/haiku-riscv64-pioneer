@@ -1,6 +1,25 @@
 # Native build status
 
-Latest checkpoint (October18,02:10 UTC / October17 Vancouver): Haiku UP/SSH,
+Latest checkpoint (October18,02:17 UTC / October17 Vancouver): default Linux
+is booting after cold recovery for50. Normal synchronous Haiku shutdown
+closed SSH02:11:13;one off hold confirmed complete before02:13:18,one on
+02:16:34 after FULL180s rest. Disk still49 637db0a6;50 staged NOT installed/
+native-qualified. Pinned same SD-free `rows50-20261017-a` NOT prepared or
+dispatched yet. No active accelerator job/UNKNOWN. SDs out/P100A installed.
+Source fully pushedc3eddb5ae2 before new offline scheduler work.
+
+OFFLINE fleet blueprint now covers all498 quantized tensors x1/7/119/120
+workers against BOTH synthetic and actual GGUF geometry:exact rows/bytes/
+bank/fragment bounds,no gaps/duplicates/duplicate worker in a wave,all
+workers used when enough row groups. Invalid shape/12 corrupted part fields/
+wrong source/raw layout/stale epoch refuse atomically;explicit same-source
+binding added to packed plan. This is data-only,NO allocation/coordinates/
+kernel/NoC/launch authority. Fine distribution needs64B offsets whereas
+native49/50 require page offsets:DO NOT submit it to those ABIs. Future
+private initialized-span/per-worker route ownership remains unimplemented.
+No change to staged50 or qualified49 images/builds. No full27B inference.
+
+Previous checkpoint (October18,02:10 UTC / October17 Vancouver): Haiku UP/SSH,
 disk/LOADED49 637db0a6,known clean/no active job/UNKNOWN. Batched50 is
 separately staged at `pioneer-qwen38-rows-20261017-a`,NOT installed/native-
 qualified. Driverce918971/clientd7101b84 reproducible;old49 driver637db0a6,

@@ -45,6 +45,7 @@ public:
 	static const uint32_t Base=0x04000000;
 	bool Ready() const { return ready && boundSource && boundSource->Epoch()==epoch && boundSource->Stable(); }
 	bool Tiled() const { return Ready() && tiled; }
+	bool MatchesSource(const PioneerQwen38Gguf& source) const { return Ready() && boundSource==&source && source.Epoch()==epoch; }
 	const std::vector<PioneerQ38PackedPart>& Parts() const { return Ready()?parts:empty; }
 	uint64_t Used(unsigned bank) const { return Ready() && bank<7?used[bank]:0; }
 	bool Build(const PioneerQwen38Gguf& source,unsigned context,bool tileMajor=false) {

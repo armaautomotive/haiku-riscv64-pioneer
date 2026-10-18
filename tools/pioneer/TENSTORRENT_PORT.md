@@ -2,6 +2,32 @@
 
 ## Status
 
+### October17: cold50 trial booting;fleet blueprint OFFLINE (October18,02:17 UTC)
+
+CURRENT default Linux booting after normal synchronous Haiku shutdown
+closed SSH02:11:13,one off hold confirmed before02:13:18 and one on02:16:34
+after FULL180s rest. Disk still49 637db0a6;50 staged NOT installed/native-
+qualified. Same SD-free `rows50-20261017-a` NOT prepared/dispatched yet.
+No UNKNOWN/active compute job;P100A installed,both SDs out. No27B inference.
+
+While resting,added OFFLINE data-only fleet scheduler for lossless tiled
+matrix parts. It allocates bounded1..16-row-group jobs proportionally among
+private logical bank fragments,then interleaves banks across worker waves.
+All498 quantized tensor geometries x1/7/119/120 workers pass against BOTH
+synthetic and actual GGUF metadata:every output row exactly once,byte/part/
+bank ranges exact,no duplicate worker within a wave,all workers used when
+there are enough groups. Small matrices use only useful workers. All twelve
+corrupted part-field cases/invalid counts/raw layout/different source/stale
+source epoch refuse atomically with empty results;packed plan now exposes
+explicit same-source binding check. No model data/NoC/GPU execution occurs.
+
+IMPORTANT:this blueprint needs64B-aligned offsets to balance small Q6 jobs;
+current native49/50 require4KiB offsets and CANNOT consume it. It is NOT a
+coordinate API or private GPU ownership/initialized-page/worker-route proof.
+A future sealed tensor registry and per-worker launch authority is still
+required. No public/native caller can submit this plan to current drivers.
+50/49 staged/qualified image bytes are unchanged. No performance claim.
+
 ### October17: batch-row50 staged,NOT installed (October18,02:10 UTC)
 
 CURRENT Haiku UP/SSH,49 637db0a6 on disk AND LOADED,known clean/no job or
