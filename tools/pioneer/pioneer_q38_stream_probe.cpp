@@ -16,6 +16,14 @@
 #include "PioneerQwen38Panel.h"
 #include "PioneerQwen38Gguf.h"
 #include "PioneerQ38RowFixtures.h"
+#ifdef PIONEER_Q38_PRIMITIVE_TIMING
+#include <time.h>
+static double PrimitiveSeconds()
+{
+	timespec now={}; if (clock_gettime(CLOCK_MONOTONIC,&now)) return -1;
+	return double(now.tv_sec)+double(now.tv_nsec)*1e-9;
+}
+#endif
 static bool Call(int fd,uint32_t op,void* data,size_t bytes)
 {
 	if (!ioctl(fd,op,data,bytes)) return true;
@@ -49,6 +57,9 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 	tt_q38_stream_probe r={}; r.version=TT_Q38_STREAM_ABI; r.type=type; r.inputs=inputs; r.bank=ordinal%7; r.groups=groups;
 	unsigned bytes=PioneerQ38StreamBytes(r),columns=PioneerQ38StreamBlockInputs(type),blocks=inputs/columns,tileBytes=PioneerQ38PanelTileBytes(type),rows=groups*16;
 	if (packed.size()!=bytes) return false;
+#ifdef PIONEER_Q38_PRIMITIVE_TIMING
+	double referenceStart=PrimitiveSeconds(); if (referenceStart<0) return false;
+#endif
 	r.offset=(ordinal&1)?PioneerResidentBanks::Capacity-uint64_t((bytes+4095)/4096)*4096:0;
 	for (unsigned k=0;k<inputs;k++) r.activation[k/2]|=uint32_t(PioneerInt8Operand(int((k*29+trial*17)%256)-128))<<((k%2)*16);
 	for (unsigned b=0;b<blocks;b++) r.scales[b]=PioneerAttentionBits(b%3?-.03125f:.012345f);
@@ -69,7 +80,17 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 			expected[group*16+row]+=product+correction;
 		}
 	}
-	if (!Upload(fd,r.bank,r.offset,packed.data(),bytes) || !Call(fd,TT_PCI_PROBE_Q38_STREAM_RUN,&r,sizeof(r))) return false;
+#ifdef PIONEER_Q38_PRIMITIVE_TIMING
+	double uploadStart=PrimitiveSeconds(); if (uploadStart<referenceStart) return false;
+#endif
+	if (!Upload(fd,r.bank,r.offset,packed.data(),bytes)) return false;
+#ifdef PIONEER_Q38_PRIMITIVE_TIMING
+	double kernelStart=PrimitiveSeconds(); if (kernelStart<uploadStart) return false;
+#endif
+	if (!Call(fd,TT_PCI_PROBE_Q38_STREAM_RUN,&r,sizeof(r))) return false;
+#ifdef PIONEER_Q38_PRIMITIVE_TIMING
+	double finish=PrimitiveSeconds(); if (finish<kernelStart) return false;
+#endif
 	const auto& v=r.result;
 	bool okay=v.version==1 && v.state==TT_RUNTIME_PASSED && v.prepared && v.started && v.completed && v.stopped && !v.recovery_required
 		&& v.context_reset && v.phase==0x7200c && v.panels==groups*(inputs/16) && v.marker==0x31523851 && v.pc[0]==0x72038 && v.pc[1]==v.pc[0];
@@ -78,6 +99,10 @@ static bool Execute(int fd,unsigned type,unsigned inputs,const std::vector<uint8
 		okay &= uint32_t(v.after[i]-v.before[i])==n;
 	}
 	unsigned mismatches=0; for (unsigned row=0;row<rows;row++) mismatches+=r.output[row]!=PioneerAttentionBits(expected[row]);
+#ifdef PIONEER_Q38_PRIMITIVE_TIMING
+	printf("PROFILE_PRIMITIVE type=%u K=%u N=%u cpu_reference_s=%.6f sample_upload_s=%.6f checked_kernel_call_s=%.6f total_s=%.6f;INCLUDES_STAGE_PROOFS_NOT_TOKEN_RATE\n",
+		type,inputs,rows,uploadStart-referenceStart,kernelStart-uploadStart,finish-kernelStart,finish-referenceStart);
+#endif
 #ifdef PIONEER_Q38_STREAM_DIAGNOSTICS
 	if (!okay || mismatches) {
 		printf("FAIL_BATCH_PROOF phase=%x panels=%u expected=%u marker=%x polls=%u prepared=%u context_reset=%u\n",

@@ -29,3 +29,12 @@ else
  tail -n 40 "$temporary/rows.log"
  exit 1
 fi
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS -DPIONEER_Q38_STREAM_DIAGNOSTICS -DPIONEER_Q38_PRIMITIVE_TIMING \
+ -I"$directory/cli-stubs" "$directory/pioneer_q38_stream_client_test.cpp" -o "$temporary/timed"
+if UBSAN_OPTIONS=halt_on_error=1 "$temporary/timed" "$1" > "$temporary/timed.log" 2>&1; then
+ tail -n 1 "$temporary/timed.log"
+else
+ tail -n 40 "$temporary/timed.log"
+ exit 1
+fi

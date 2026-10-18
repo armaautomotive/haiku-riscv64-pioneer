@@ -2,6 +2,52 @@
 
 ## Status
 
+### October17: native batched50 passed;checked primitive timing (October18,02:29 UTC)
+
+CURRENT Haiku UP/SSH,64 CPUs/full137034936320B RAM/NIC0b83,network0 errors/
+drops.50 ce918971 installed AND LOADED,known clean/no active job/UNKNOWN/
+cold latch. P100A installed,both SDs out. NO full27B inference/token rate.
+
+Pinned same SD-free `rows50-20261017-a` dispatched02:19:12;fresh Haiku
+retained fullCPU/RAM/NIC/no card module02:20:16. Exact86d321cd installer
+passed TWO unloaded/no-owner guards,backed up49 AND qualified43 outside
+driver paths,installed50. Metadata50/ABI2/N<=256/maxK17408/NOT inference
+accepted. NEVER replace loaded modules or force unload/retry UNKNOWN.
+
+Native synthetic ALL9 cases completed before02:22:19:Q8_0/Q4_K/Q6_K at
+K5120/6144/17408 andN16/48/256,all seven logical banks/first-last ranges.
+Every active output EXACT bits. Native public ROW MIXES ALL8 completed
+before02:22:56 after exact725504B MEMORY SHA before card open;Q8/Q4/Q6 at
+K5120 andQ4 K17408,N16/48/256. These INTERLEAVE authenticated first/last
+16-row groups,not one contiguous N-row checkpoint fragment. Separate real
+contiguous N48 OFFLINE instruction tests remain distinct. Each native case
+known start/completion/stable PC72038 twice/stop,exact aggregate read/flit/
+shared-accepted counters/zero writes. Both clean END/PCI/host/coldfalse.
+No full model/multiworker/hybrid graph or quality/token-speed claim.
+
+Logs `pioneer-qwen38-rows-20261017-a/synthetic-20261017-a.log` and
+`.../public-row-mixes-20261017-a.log`;Mac copies beside exact50 build.
+Restore helper now `switch-unloaded50.sh --restore43`,ONLY after NEW cold
+boot before any card open;49/43 backups preserved. No further module writes.
+
+Added opt-in timing-only debug client354e5cb8ba788168932b54f790b485ba33ee37e251133c29aa89cfdbe71065ba.
+Ordinary batch client remains EXACTd7101b84. Same real-client/auth/corruption/
+fail-stop tests pass for timed mode;native timed public samples ALL8 exact
+and clean END before02:27:55. No loaded-driver change. Case times separate
+single-thread debug reference,six-proof sample upload and checked kernel
+call. They are NOT optimized CPU benchmarks,pure GPU math times,token rates
+or full model loading. First call includes one-time L1/image preparation.
+
+Warm examples:Q4 K5120/N256 reference0.027814s,upload0.298194s,checked call
+0.117592s;Q6 same shape reference0.042945s,upload0.455919s,call0.113765s.
+Q4 K17408/N48 call0.120302s;first Q8 K5120/N16 call0.252951s including cold
+prepare. Native `timed-public-row-mixes-20261017-a.log`;Mac copy retained.
+These show substantial per-call staging/proof/transport costs;the offline
+instruction counts separately show expensive scalar unpack/control work.
+Next:shared on-card inputs,parallel workers/sealed graph and hot-loop work.
+Fleet blueprint is still data-only and NOT accepted by current page ABIs.
+No OS/kernel/firmware/defaultLinux/Assistant/dirty llama changes.
+
 ### October17: cold50 trial booting;fleet blueprint OFFLINE (October18,02:17 UTC)
 
 CURRENT default Linux booting after normal synchronous Haiku shutdown

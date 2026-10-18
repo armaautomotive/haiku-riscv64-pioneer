@@ -1,6 +1,37 @@
 # Native build status
 
-Latest checkpoint (October18,02:17 UTC / October17 Vancouver): default Linux
+Latest checkpoint (October18,02:29 UTC / October17 Vancouver): Haiku UP/SSH,
+64 CPUs/full137034936320B RAM/NIC0b83,network0 errors+drops. Disk/LOADED50
+ce918971,known clean/no active job/UNKNOWN/cold latch. Same pinned SD-free
+`rows50-20261017-a` dispatched02:19:12,fresh fullCPU/RAM/NIC/no card module
+verified02:20:16. Exact86d321cd installer passed TWO unloaded/no-owner guards,
+preserved49+qualified43 outside driver paths,metadata50/ABI2/N<=256 accepted.
+
+Native50 ALL9 synthetic mixed types/K5120/6144/17408,N16/48/256/all seven
+banks passed before02:22:19;ALL8 MEMORY-authenticated public ROW MIXES
+passed before02:22:56. ALL active outputs EXACT bits,known start/completion/
+PC72038 twice/stop/exact total reads+flits+shared accepted/zero writes and
+clean END/coldfalse. Public batches INTERLEAVE first/last16-row samples;
+not one contiguous checkpoint matrix. Separate OFFLINE actual contiguous
+N48 instruction tests remain distinct. NOT multiworker/full graph/27B
+inference/generated tokens/speed/full capacity residency. Logs in
+`pioneer-qwen38-rows-20261017-a/{synthetic,public-row-mixes}-20261017-a.log`.
+Restore50 ONLY via `switch-unloaded50.sh --restore43` on NEW cold boot
+BEFORE any card open. Never replace a loaded module or retry UNKNOWN.
+
+Separate timing-only debug client354e5cb8 passed same host real-client/auth/
+fault tests and native eight sample cases/clean END before02:27:55;ordinary
+client still EXACTd7101b84. Native timed log beside50 Mac build. Warm checked
+kernel-call samples:Q4 K5120/N2560.117592s (sample upload0.298194s),Q6 same
+shape0.113765s (upload0.455919s),Q4 K17408/N480.120302s. FIRST Q8/N16 call
+includes cold prepare0.252951s. Times include L1 staging/validation/matrix/
+completion proofs,NOT pure GPU timings/token rates/optimized CPU comparison
+or full-model loading. Profiling source flag is opt-in,no module changes.
+Main remaining work:shared input/parallel workers,sealed whole graph/native
+hybrid ops and hot-loop work;data-only fleet planner NOT executable yet.
+No firmware/OS/kernel/defaultLinux/Assistant/dirty llama changes.
+
+Previous checkpoint (October18,02:17 UTC / October17 Vancouver): default Linux
 is booting after cold recovery for50. Normal synchronous Haiku shutdown
 closed SSH02:11:13;one off hold confirmed complete before02:13:18,one on
 02:16:34 after FULL180s rest. Disk still49 637db0a6;50 staged NOT installed/

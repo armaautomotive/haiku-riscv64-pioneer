@@ -39,6 +39,11 @@ case "${PIONEER_Q38_STREAM_DIAGNOSTICS:-0}" in
  1) [ "$source" = pioneer_q38_stream_probe ] || exit 2; extra="$extra -DPIONEER_Q38_STREAM_DIAGNOSTICS";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_PRIMITIVE_TIMING:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_ROWS_CLIENT:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_PRIMITIVE_TIMING";;
+ *) exit 2;;
+esac
 sdk=$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop
 release=$build/objects/haiku/riscv64/release
 cxx=$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
