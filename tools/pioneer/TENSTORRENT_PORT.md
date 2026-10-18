@@ -2,6 +2,18 @@
 
 ## Status
 
+### October18,17:36 UTC:ordered STOP native test faults;finer diagnostics ready
+
+Linux cold/unbound state and SD-free Haiku full64 CPU/128GB verified. Native
+34feba3c passes ALL18 two-peer exact arithmetic cases but faults during STOP
+(close phase30,root marker464d3851),so cleanup/driver remain UNQUALIFIED.
+No retry/card IO after failure;normal shutdown/off confirmed17:33:33 UTC.
+All qualified backups preserved. Candidateec0813e7/root41d577cb adds ONLY
+owned runtime-status checkpoint words;no new packets/reset/DMA or weaker
+proofs. Root/cooperative/RUN/END/fault/retained-owner offline tests PASS,
+default43 remains identical. Fresh cold/unloaded staging-e native diagnostic
+test next. No new27B speed or Assistant result.
+
 ### October18,07:06 UTC:fixed image ready;native test waiting for power-state confirmation
 
 34feba3c/ordered-STOP root5c3fc897 committed/pushed,NOT installed or executed.

@@ -8,6 +8,13 @@ typedef __UINT32_TYPE__ uint32_t;
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 static volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static void Fence() { asm volatile("fence" ::: "memory"); }
+// Diagnostic ONLY in the separately owned/saved runtime-status L1. Normal
+// completion overwrites BOTH words with the exact fixed DONE/count proof.
+// Fault park preserves them;NO extra NoC packet/host DMA/source authority.
+static __attribute__((noinline)) void Checkpoint(unsigned stage,unsigned detail)
+{
+	Words(0x17ffc0)[0]=stage; Words(0x17ffc0)[1]=detail; Fence();
+}
 extern "C" void block_fault_park() __attribute__((noreturn));
 static unsigned XY(unsigned worker)
 {
@@ -49,8 +56,10 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 	uint32_t expected[4]; for (unsigned c=0;c<4;c++) expected[c]=*Words(0xffb20000+offset[c])+(c==1?(bytes+63)/64:1);
 	uint32_t command[]={write?local:remote,0,write?129U:XY(worker),write?remote:local,0,write?XY(worker):129U,0,write?0x212U:0,bytes,0};
 	for (unsigned i=0;i<10;i++) Words(0xffb20000)[i]=command[i];
+	Checkpoint(0x54000101,worker);
 	for (unsigned i=0;i<10;i++) if (Words(0xffb20000)[i]!=command[i]) block_fault_park();
 	Fence(); *Words(0xffb20040)=1; (void)*Words(0xffb20040); Fence();
+	Checkpoint(0x54000102,worker);
 	for (unsigned attempt=0;attempt<65536;attempt++) {
 		bool complete=!*Words(0xffb20040);
 		for (unsigned c=0;c<4;c++) complete &= *Words(0xffb20000+offset[c])==expected[c];
@@ -65,8 +74,10 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 {
 	Transfer(false,worker,0x75000,0x74140,64); Words(0x7f800)[10]++;
 	const volatile uint32_t* status=Words(0x75000);
+	Checkpoint(0x54000201,worker);
 	if (status[2] || status[3]!=0x32503851 || status[0]>sequence || status[1]>sequence || status[4]>2) block_fault_park();
 	for (unsigned i=5;i<16;i++) if (status[i]) block_fault_park();
+	Checkpoint(previous?0x54000202:0x54000203,worker);
 	if (previous) {
 		if (status[0]!=sequence || status[1]!=sequence || status[4]) block_fault_park();
 	} else {
@@ -77,12 +88,14 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 	Transfer(false,worker,0x75000,0xffb13140,4); unsigned first=*Words(0x75000);
 	Transfer(false,worker,0x75000,0xffb13140,4); unsigned second=*Words(0x75000);
 	Transfer(false,worker,0x75010,0xffb121b0,4); unsigned reset=*Words(0x75010);
+	Checkpoint(0x54000204,(worker<<24)|(first&0xffffff));
 	if (reset!=0x46800 || first<0x72000 || first>=0x74000 || second<0x72000 || second>=0x74000 || ((first|second)&3)) block_fault_park();
 	return stopped?first==0x72060 && second==first:WaitPc(first) && WaitPc(second);
 }
 static unsigned Tile(unsigned type) { return type==8?576:type==12?2304:type==14?3392:0; }
 extern "C" unsigned block_main()
 {
+	Checkpoint(0x54000001,0);
 	volatile uint32_t* job=Words(0x74000); uint32_t header[16];
 	for (unsigned i=0;i<16;i++) header[i]=job[i];
 	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
@@ -119,6 +132,7 @@ extern "C" unsigned block_main()
 			if (b>=blocks?bits!=0:magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return 0;
 		}
 	}
+	Checkpoint(0x54000002,operation);
 	if (!Idle()) block_fault_park();
 	uint32_t source[16]; for (unsigned i=0;i<16;i++) source[i]=*Words(0xffb20000+SourceOffset(i));
 	for (unsigned i=0;i<64;i++) Words(0x7f800)[i]=0;
@@ -155,11 +169,16 @@ extern "C" unsigned block_main()
 	for (unsigned round=0;round<65536 && finished<workers;round++) for (unsigned w=0;w<workers;w++)
 		if (!complete[w] && Peer(w+1,parts[w][3],operation==2,false)) { complete[w]=1; finished++; }
 	if (finished!=workers) block_fault_park();
+	Checkpoint(0x54000300,workers);
 	// Completion order is arbitrary. STOP has no ordered output gathers,
 	// so explicitly finish with worker119's terminal physical audit. This
 	// makes the final NIU command deterministic for the kernel's existing
 	// exact proof;do not weaken that proof to accept an arbitrary command.
-	if (operation==2 && !Peer(workers,parts[workers-1][3],true,false)) block_fault_park();
+	if (operation==2) {
+		bool terminal=Peer(workers,parts[workers-1][3],true,false);
+		Checkpoint(0x54000301,workers);
+		if (!terminal) block_fault_park();
+	}
 	// ALL readers finished BEFORE ANY proof/output gather or publication.
 	for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
@@ -181,15 +200,19 @@ extern "C" unsigned block_main()
 		for (unsigned row=0;row<256;row++) Words(0x80000)[w*256+row]=row<groups*16?proof[64+row]:0;
 	}
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) if (parts[w][i]!=Words(0x74080)[w*8+i]) block_fault_park();
+	Checkpoint(0x54000401,workers);
 	for (unsigned bank=0;bank<8;bank++) if (banks[bank]!=Words(0x74040)[bank]) block_fault_park();
 	for (unsigned i=0;i<16;i++) if (header[i]!=job[i] || source[i]!=*Words(0xffb20000+SourceOffset(i))) block_fault_park();
+	Checkpoint(0x54000402,workers);
 	if (!Idle()) block_fault_park();
 	for (unsigned c=0;c<8;c++) Words(0x7f800)[24+c]=*Words(0xffb20000+Offset(c));
 	unsigned groups=0; for (unsigned w=0;w<workers;w++) groups+=parts[w][2];
 	unsigned reads=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers*(operation==1?2:1);
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
+	Checkpoint(0x54000403,reads);
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=workers*2 || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=workers*2) block_fault_park();
 	for (unsigned c=0;c<8;c++) {
+		Checkpoint(0x54000410+c,reads);
 		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+workers*2:workers*2;
 		if (uint32_t(Words(0x7f800)[24+c]-Words(0x7f800)[16+c])!=expected) block_fault_park();
 	}

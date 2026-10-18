@@ -1,5 +1,29 @@
 # Native build status
 
+Latest checkpoint (October18,17:36 UTC): user-powered cold Linux returned;
+P100A unbound/COMMAND0000,helper hashes exact. Fresh SD-free Haiku has64 CPUs
+and137,034,936,320 bytes RAM. Guarded unloaded-only ordered54/34feba3c install
+and metadata pass. Native two-peer synthetic:ALL18 Q8/Q4/Q6 cases exact,cold0
+during RUN,but END fails state5/active1/host_released0/cold1. New root faults
+at close phase30 (status0/0/464d3851),rather than prior phase40/DONE. No later
+accelerator ioctl/retry/reset/unload. Log saved locally at
+/private/tmp/pioneer-q38-dispatch-ordered-synthetic-two-20261018-c.log.
+Normal Haiku shutdown then channel1 off confirmed17:33:33 UTC. Extended rest
+before another cold boot;installed file34feba3c,known-good43/52 preserved.
+
+The out-of-order STOP regression fix is NOT yet natively qualified. Next
+diagnostic54/ec0813e7 embeds root41d577cb (7772B,root stack4672B/checkpoint16B)
+with last-stage/detail writes ONLY in already-owned/saved runtime-status L1.
+Normal assembly overwrites diagnostics with unchanged exact DONE/count;
+fault park preserves them. No extra NoC/host DMA/reset or relaxed checks.
+Root instructions(dispatch.q10vZUQW),actual root+peer(cooperative.2JaF1mWJ),
+RUN both payload modes(dispatch-run.8h83fT1H),END ordering+all existing faults
+(dispatch-close.aXbgD2em),extracted handler/retention(control.xsK5swUM) PASS
+ASan/UBSan;default43 remains EXACT2df0e0f8. Separate staging-e installer pins
+ec0813e7/new root,exact prior34feba3c and43/52 backups. NOT staged/run yet.
+No new model performance or Assistant change;dirty llama implementation
+still untouched.
+
 Latest checkpoint (October18,07:06 UTC): fixed54/34feba3c is committed/pushed
 but NOT staged/installed/run. Cold-recovery off confirmed06:58:50 UTC,on pulse
 completed after07:02:52 UTC (>180s rest). No new serial output or Linux SSH
