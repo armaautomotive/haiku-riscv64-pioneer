@@ -12,6 +12,11 @@ case "${PIONEER_Q38_PANEL_CLIENT:-0}" in
  1) source=pioneer_q38_panel_probe;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_AFFINE_CLIENT:-0}" in
+ 0) extra=;;
+ 1) [ "$source" = pioneer_q38_panel_probe ] || exit 2; extra='-DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -ffp-contract=off';;
+ *) exit 2;;
+esac
 sdk=$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop
 release=$build/objects/haiku/riscv64/release
 cxx=$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
@@ -21,7 +26,7 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
 done
 for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$library"; done
 umask 077
-"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti "$@" \
+"$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti $extra "$@" \
  -B"$release/system/glue/" -L"$release/system/libroot" \
  "$project/tools/pioneer/$source.cpp" -o "$output"
 shasum -a 256 "$output"

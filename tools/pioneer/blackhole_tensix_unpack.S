@@ -15,6 +15,11 @@
 	.error "Q38 local panel probe is a separate raw integer-dot contract"
 .endif
 .endif
+.ifdef TT_Q38_LOCAL_AFFINE
+.ifndef TT_Q38_LOCAL_PANEL16
+	.error "Q38 local affine probe requires the separately qualified panel image"
+.endif
+.endif
 .ifdef TT_RUNTIME_Q8_READBACK
 	.set TT_RUNTIME_Q8_BULK,1
 .endif
@@ -420,7 +425,11 @@ copy_output:
 	jal ra, drain
 .else
 	/* Preserve identical code/park addresses across the three variants. */
+.ifdef TT_Q38_LOCAL_AFFINE
+	j q38_panel_finish
+.else
 	nop
+.endif
 	nop
 	nop
 .endif
@@ -1218,4 +1227,16 @@ q38_panel_fault:
 	lw t0,8(s3)
 	fence
 1: j 1b
+.ifdef TT_Q38_LOCAL_AFFINE
+.global q38_panel_finish
+q38_panel_finish:
+	li sp,0x70000
+	addi sp,sp,-16
+	sw a1,12(sp)
+	call q38_local_affine
+	lw a1,12(sp)
+	addi sp,sp,16
+	beq a0,zero,q38_panel_fault
+	j finish_fixture
+.endif
 .endif

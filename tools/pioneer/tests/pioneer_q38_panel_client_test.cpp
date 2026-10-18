@@ -22,7 +22,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	assert(fd==73 && !failed);
 	if (op==TT_PCI_PROBE_Q38_PANEL_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_panel_support));
-		*static_cast<tt_q38_panel_support*>(data)={fault==4?45U:46U,1,1,16,16,0x5100}; return 0;
+		*static_cast<tt_q38_panel_support*>(data)={fault==4?45U:unsigned(TT_Q38_PANEL_CURRENT_DRIVER),TT_Q38_PANEL_ABI_VERSION,1,16,16,0x5100}; return 0;
 	}
 	if (op==TT_PCI_PROBE_Q38_BANK_BEGIN || op==TT_PCI_PROBE_Q38_BANK_END) {
 		assert(bytes==sizeof(tt_q38_bank_session)); auto& r=static_cast<tt_q38_bank_session*>(data)->result;
@@ -41,7 +41,18 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 			uint16_t a=uint16_t(p.activation[k/2]>>((k%2)*16));
 			sum+=int(w&1023)*((w&0x8000)?-1:1)*int(a&1023)*((a&0x8000)?-1:1);
 		}
-		p.dot[row]=uint32_t(sum); p.coefficient[row]=reference.coefficient[row]; p.minimum[row]=reference.minimum[row];
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+		int inputSum=0; for (unsigned k=0;k<16;k++) {
+			uint16_t a=uint16_t(p.activation[k/2]>>((k%2)*16)); inputSum+=int(a&1023)*((a&0x8000)?-1:1);
+		}
+		float scale; memcpy(&scale,&p.activation_scale,4);
+		float coefficient,minimum; memcpy(&coefficient,&reference.coefficient[row],4); memcpy(&minimum,&reference.minimum[row],4);
+		float product=(coefficient*scale)*float(sum),correction=(minimum*scale)*float(inputSum),value=product+correction;
+		memcpy(&p.dot[row],&value,4);
+#else
+		p.dot[row]=uint32_t(sum);
+#endif
+		p.coefficient[row]=reference.coefficient[row]; p.minimum[row]=reference.minimum[row];
 	}
 	auto& r=p.result; r={}; r.version=1; r.state=TT_RUNTIME_PASSED; r.prepared=r.started=r.completed=r.stopped=r.context_reset=1;
 	r.phase=TT_Q38_PANEL_DONE; r.panels=1; r.marker=0x4d415431; r.pc[0]=r.pc[1]=TT_Q38_PANEL_PARK;

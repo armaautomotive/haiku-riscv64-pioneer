@@ -4,6 +4,12 @@
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerResidentBanks.h"
 #include "PioneerQ38PanelProbeImage.h"
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+#include "PioneerQ38AffineProbeImage.h"
+enum { TT_Q38_PANEL_CURRENT_DRIVER=47,TT_Q38_PANEL_ABI_VERSION=2 };
+#else
+enum { TT_Q38_PANEL_CURRENT_DRIVER=46,TT_Q38_PANEL_ABI_VERSION=1 };
+#endif
 
 #define TT_PCI_PROBE_Q38_PANEL_SUPPORT (B_DEVICE_OP_CODES_END + 0x54ec)
 #define TT_PCI_PROBE_Q38_PANEL_RUN (B_DEVICE_OP_CODES_END + 0x54ed)
@@ -22,6 +28,9 @@ struct tt_q38_panel_result {
 };
 struct tt_q38_panel_probe {
 	uint32_t version,type,bytes,panel,reserved[2];
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	uint32_t activation_scale; // bounded signed FP32,not an address
+#endif
 	uint32_t tile[848],activation[8];
 	tt_q38_panel_result result;
 	uint32_t dot[16],coefficient[16],minimum[16];
@@ -40,7 +49,11 @@ static inline unsigned PioneerQ38PanelProbeByte(const uint32_t* tile,unsigned by
 static inline bool PioneerQ38PanelProbeValid(const tt_q38_panel_probe& r)
 {
 	unsigned bytes=PioneerQ38PanelProbeBytes(r.type),payload=r.type==8?544:r.type==12?2304:3360;
-	if (r.version!=1 || r.reserved[0] || r.reserved[1] || !bytes || r.bytes!=bytes || r.panel>=(r.type==8?2U:16U)) return false;
+	if (r.version!=TT_Q38_PANEL_ABI_VERSION || r.reserved[0] || r.reserved[1] || !bytes || r.bytes!=bytes || r.panel>=(r.type==8?2U:16U)) return false;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	uint32_t scale=r.activation_scale&0x7fffffff;
+	if (scale && (scale<0x2f800000 || scale>0x47800000)) return false; // explicit LOCAL probe range2^-32..2^16
+#endif
 	for (unsigned w=0;w<8;w++) if (!PioneerInt8OperandValid(uint16_t(r.activation[w])) || !PioneerInt8OperandValid(uint16_t(r.activation[w]>>16))) return false;
 	for (unsigned row=0;row<16;row++) {
 		unsigned at=(r.type==14?208:0)*16+row;
@@ -60,8 +73,13 @@ static inline bool PioneerQ38PanelImmutable(uint32_t address)
 }
 static inline uint32_t PioneerQ38PanelProgram(uint32_t address)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	return address<0x71000?PioneerQ38AffineMainWord((address-0x70000)/4):address<0x72000?
+		PioneerQ38AffineBridgeWord((address-0x71000)/4):PioneerQ38AffineUnpackWord((address-0x72000)/4);
+#else
 	return address<0x71000?PioneerQ38PanelMainWord((address-0x70000)/4):address<0x72000?
 		PioneerQ38PanelBridgeWord((address-0x71000)/4):PioneerQ38PanelUnpackWord((address-0x72000)/4);
+#endif
 }
 template<class IO>
 bool PioneerQ38PanelSources(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
@@ -122,8 +140,12 @@ bool PioneerQ38PanelRun(IO& io,const tt_dram_samples_result& dram,const tt_compu
 	r.state=TT_RUNTIME_CONFIG_FAILED; r.prepared=1;
 	if (!PioneerQ38PanelCodeMatches(io)) return false;
 	{
-		const uint32_t matrix[]={0,1,1},descriptor[]={0x50383355,job.type,job.bytes,job.panel};
-		if (!PioneerQ38PanelStage(io,0x70500,matrix,3) || !PioneerQ38PanelStage(io,0x74000,descriptor,4)
+		const uint32_t matrix[]={0,1,1},descriptor[]={0x50383355,job.type,job.bytes,job.panel
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+			,job.activation_scale
+#endif
+		};
+		if (!PioneerQ38PanelStage(io,0x70500,matrix,3) || !PioneerQ38PanelStage(io,0x74000,descriptor,sizeof(descriptor)/4)
 			|| !PioneerQ38PanelStage(io,0x90000,job.tile,848) || !PioneerQ38PanelStage(io,0x80000,job.activation,8)) return false;
 		for (unsigned w=0;w<160;w++) io.Q38PanelWrite(0x91000+w*4,0x7fc00000);
 		for (unsigned w=0;w<16;w++) io.Q38PanelWrite(0x84000+w*4,0x80000000);
@@ -160,7 +182,11 @@ bool PioneerQ38PanelRun(IO& io,const tt_dram_samples_result& dram,const tt_compu
 	for (unsigned row=0;row<16;row++) {
 		job.dot[row]=io.Q38PanelRead(0x84000+row*4);
 		job.coefficient[row]=io.Q38PanelRead(0x91200+row*4); job.minimum[row]=io.Q38PanelRead(0x91240+row*4);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+		if ((job.dot[row]&0x7f800000)==0x7f800000
+#else
 		if (int32_t(job.dot[row])<-262144 || int32_t(job.dot[row])>262144
+#endif
 			|| (job.coefficient[row]&0x7f800000)==0x7f800000 || (job.minimum[row]&0x7f800000)==0x7f800000) r.state=TT_RUNTIME_NONFINITE;
 	}
 	io.RuntimeResetWrite(0x87ffff); io.Pause();

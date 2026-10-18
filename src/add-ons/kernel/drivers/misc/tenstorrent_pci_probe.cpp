@@ -19,6 +19,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_BANKS)
 #error Q38 local panel probe requires the exclusive seven-bank owner
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL)
+#error Q38 affine probe requires the guarded local panel protocol
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -2449,7 +2452,7 @@ Q38PanelControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t le
 	if (operation==TT_PCI_PROBE_Q38_PANEL_SUPPORT) {
 		if (length!=sizeof(tt_q38_panel_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_panel_support support={46,1,1,16,16,0x5100};
+		const tt_q38_panel_support support={TT_Q38_PANEL_CURRENT_DRIVER,TT_Q38_PANEL_ABI_VERSION,1,16,16,0x5100};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_PANEL_RUN || length!=sizeof(tt_q38_panel_probe)) return B_BAD_VALUE;
@@ -2675,6 +2678,9 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 	support.version=46; // local panel arithmetic probe,NOT full model support
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	support.version=47; // separate scaled-local-panel probe,NOT full model support
 #endif
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }

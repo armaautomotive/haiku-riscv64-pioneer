@@ -4,6 +4,7 @@
 #include "../PioneerQwen38Panel.h"
 #include "../PioneerQwen38Gguf.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38PanelProbeImage.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38AffineProbeImage.h"
 #include <map>
 #include <string>
 struct PanelMachine:RuntimeMachine {
@@ -11,21 +12,26 @@ struct PanelMachine:RuntimeMachine {
 	std::map<uint32_t,uint32_t> memory;
 	PioneerQ38Panel expected={};
 	unsigned panelWords=0,copied=0,minStack=0x70000;
-	bool dropCopy=false;
-	PanelMachine(const char* directory,unsigned type,unsigned panel,unsigned trial,const uint8_t* sourceTile=nullptr):RuntimeMachine(1024,32,0,0x04000000,false,true,true) {
+	bool dropCopy=false,affineImage=false;
+	PanelMachine(const char* directory,unsigned type,unsigned panel,unsigned trial,const uint8_t* sourceTile=nullptr,bool affine=false):RuntimeMachine(1024,32,0,0x04000000,false,true,true),affineImage(affine) {
 		std::string root(directory);
 		auto main=Read((root+"/text.bin").c_str()),boot=Read((root+"/boot.bin").c_str());
 		bridge=Read((root+"/bridge.bin").c_str()); unpack=Read((root+"/unpack.bin").c_str());
-		assert(main.size()==4096 && boot.size()==4 && bridge.size()==100 && unpack.size()<=8192);
+		assert(main.size()==4096 && boot.size()==4 && bridge.size()==(affine?136U:100U) && unpack.size()<=8192);
 		l1[0]=Word(boot,0);
 		for (unsigned w=0;w<1024;w++) {
 			// Exactly ONE jump differs from the prior integer matrix page.
-			assert(Word(main,w*4)==(w==0x2ac/4?0x5550006f:BlackholeRuntimeInt8MatvecCodeWord(w)));
+			assert(Word(main,w*4)==(affine && w==0x3c8/4?0x49d0006f:w==0x2ac/4?0x5550006f:BlackholeRuntimeInt8MatvecCodeWord(w)));
 			l1[1+w]=Word(main,w*4);
-			assert(PioneerQ38PanelMainWord(w)==Word(main,w*4));
+			assert((affine?PioneerQ38AffineMainWord(w):PioneerQ38PanelMainWord(w))==Word(main,w*4));
 		}
-		for (unsigned w=0;w<1024;w++) assert(PioneerQ38PanelBridgeWord(w)==(w<bridge.size()/4?Word(bridge,w*4):0));
-		for (unsigned w=0;w<2048;w++) assert(PioneerQ38PanelUnpackWord(w)==(w<unpack.size()/4?Word(unpack,w*4):0));
+		if (!affine) {
+			for (unsigned w=0;w<1024;w++) assert(PioneerQ38PanelBridgeWord(w)==(w<bridge.size()/4?Word(bridge,w*4):0));
+			for (unsigned w=0;w<2048;w++) assert(PioneerQ38PanelUnpackWord(w)==(w<unpack.size()/4?Word(unpack,w*4):0));
+		} else {
+			for (unsigned w=0;w<1024;w++) assert(PioneerQ38AffineBridgeWord(w)==(w<bridge.size()/4?Word(bridge,w*4):0));
+			for (unsigned w=0;w<2048;w++) assert(PioneerQ38AffineUnpackWord(w)==(w<unpack.size()/4?Word(unpack,w*4):0));
+		}
 		for (unsigned w=0;w<bridge.size()/4;w++) l1[Index(0x71000+w*4)]=Word(bridge,w*4);
 		for (unsigned w=0;w<unpack.size()/4;w++) l1[Index(0x72000+w*4)]=Word(unpack,w*4);
 		inputs=outputs=16; l1[Index(0x70500)]=0; l1[Index(0x70504)]=l1[Index(0x70508)]=1;
@@ -61,7 +67,7 @@ struct PanelMachine:RuntimeMachine {
 	uint32_t Load(uint32_t a) override {
 		assert(!(a&3) && !Range(a,0xffb20000,0x4000)); // ZERO NoC/PCI/DMA access
 		if (Range(a,0x71000,unsigned(bridge.size())) || Range(a,0x72000,unsigned(unpack.size()))) return l1[Index(a)];
-		if (Range(a,0x6e000,8192) || Range(a,0x74000,16) || Range(a,0x90000,3392) || Range(a,0x91000,640)) {
+		if (Range(a,0x6e000,8192) || Range(a,0x74000,affineImage?20:16) || Range(a,0x90000,3392) || Range(a,0x91000,640)) {
 			assert(memory.count(a)); return memory.at(a);
 		}
 		return RuntimeMachine::Load(a);
@@ -75,12 +81,15 @@ struct PanelMachine:RuntimeMachine {
 			if (!dropCopy) l1[Index(a)]=v;
 			return;
 		}
-		if (a==0x17ffc8 && v==0x46383350) { assert(!matrixInstructions && !panelWords); memory[a]=v; return; }
+		if (a==0x17ffc8 && v==0x46383350) {
+			assert((!matrixInstructions && !panelWords) || (affineImage && matrixInstructions==4 && panelWords==160)); memory[a]=v; return;
+		}
 		RuntimeMachine::Store(a,v);
 	}
 	void Store16(uint32_t,uint16_t) override { assert(false && "unqualified half-store in integer-only unpacker"); }
+	virtual void StepPanel() { Step(); }
 	bool RunPanel() {
-		while (pc!=ParkPc() && pc!=0x71060) Step();
+		while (pc!=ParkPc() && pc!=0x71060) StepPanel();
 		assert(!requests && !responses && minStack>=0x6e000);
 		if (pc==0x71060) return false;
 		assert(l1[Index(0x17ffc0)]==FinalPhase() && l1[Index(0x17ffc4)]==1 && l1[Index(0x17ffc8)]==0x4d415431);
@@ -103,6 +112,7 @@ struct PanelMachine:RuntimeMachine {
 		return true;
 	}
 };
+#ifndef PIONEER_Q38_PANEL_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -157,3 +167,4 @@ int main(int argc,char** argv)
 	}
 	printf("PASS OFFLINE actual RV32IM unpack+four-fidelity Tensix integer panels,ALL34 panel shapes/full-range -128,%u real-checkpoint panels,exact640B metadata/immutable image bytes,strict memory/zero NoC/descriptor+fault refusals;NOT native or model inference\n",real);
 }
+#endif

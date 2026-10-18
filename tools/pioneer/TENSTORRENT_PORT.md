@@ -2,6 +2,99 @@
 
 ## Status
 
+### October17: real27B local integer panels passed; affine47 staged (October18,00:56 UTC)
+
+CURRENT synced normal shutdown closed SSH before00:56:48 for a controlled
+cold restart. Disk still46;47 is separately staged,NOT installed/exercised.
+No test/hash/Assistant job remains. Last Haiku boot retained64 CPUs/full RAM/
+NIC0b83ceed/P100A installed/both SD cards out. No full27B inference/speed.
+
+REAL-model client finished00:52:41 UTC,exit0. FULL SHA of the SAME19GB open
+FD and ALL851 layouts passed BEFORE opening the card. Then all12 real
+Q8_0/Q4_K/Q6_K first/last edge-panel tests matched EVERY integer dot and
+affine metadata bit,with known start/completion/stop,unchanged read/write
+NoC counters,PC70400 twice and clean CLOSED/PCI/host/coldfalse END. No
+UNKNOWN/retry occurred. Full-file guard+test took~604s,NOT a GPU speed or
+disk-throughput benchmark. Native log:
+`pioneer-qwen38-panel-20261017-a/model-panels-20261017-a.log`;
+Mac evidence `pioneer-q38-panel-driver46-20261017-b/native-{synthetic,model-panels}.log`.
+This establishes LOCAL real packed-weight arithmetic,NOT model residency,
+affine application/full-K matvec/64-layer graph or generated tokens.
+
+Separate47 adds on-card affine epilogue AFTER the qualified integer matrix
+dot and BEFORE the original completion publication. It preserves assembly's
+fixture counter,adds one main-page jump,uses the SAME one-core/memory/
+NoC-zero ownership/cleanup protocol and returns scaled FP32 panel outputs.
+Explicit ABI2/driver47 prevents accidental raw-integer46 interpretation.
+The initial LOCAL probe range2^-32..2^16 or signed zero is enforced before
+launch AND in the device image,NOT assumed general-model activation policy.
+Scale/minimum calculations are local; no additional NoC/host round trip.
+Default46 image/driver/client reproduce EXACT prior hashes. Default43 build
+control remains2df0e0f8,not the qualified backup9e098d02.
+
+Strict RV32IMF/Tensix tests pass all34 shapes/seven signed scale boundaries,
+1,992 real panels,all immutable image words,zero NoC/strict memory and
+nonfinite/out-of-range refusal. BOTH46 and47 real launch/close+extracted
+handler/lock tests pass all ownership/copyout/UNKNOWN/bounds failures;
+real client tests cover all21 proof fields+three corrupted result classes.
+47 model authentication adds READ-OFFSET progress from the shared FD,clearly
+not digest acceptance; full SHA/stable identity/layout still precede card open.
+
+Two builds reproduce47
+`aab1ea675a39bebf54d57a1e38c6aad1db00d11a97c596b4ca3c1a8b15b0b69e`;
+client `8f40b41317aa8d99a2d171949b5b036114ddc98eb3b6470cb7edd6f452fc723f`.
+Native staging `pioneer-qwen38-affine-20261017-a`; exact unloaded-only
+helper `switch-unloaded47.sh` SHA
+`d68ed39ff911d8a3aad7706ed3793c0136aa183bf53880a63fed997b23c91018`.
+After fresh cold/SD-free boot it must prove46 UNLOADED twice before switching,
+preserve46 AND qualified43 outside driver paths,and supports `--restore43`
+only on another fresh cold boot.47 is NOT native-qualified or inference.
+
+### October17: native mixed integer-panel46 passed; real-file authentication pending (October18,00:48 UTC)
+
+CURRENT Haiku up/SSH reachable with64 CPUs/137,034,936,320 usable bytes,
+retained NIC0b83ceed/P100A installed/SD cards out. New46 SHA3e5e3e61 is
+installed AND LOADED. No native27B inference or new fast Assistant target.
+Qualified43 and storage45 backups remain outside driver directories.
+
+One cold on pulse00:35:36 UTC after the FULL rest recovered default Linux.
+Pinned helper hashes checked under root (initial non-root hash attempt
+stopped permission-denied BEFORE prepare/no writes). `panel46-20261017-a`
+prepared64/full-RAM/no-SD profile and booted via normal Linux shutdown
+00:39:27,default NVMe boot unchanged. Haiku SSH confirmed fullCPU/RAM,
+NIC and NO loaded card image. Exact helperb9c5e6ab passed TWO unloaded/
+no-owner guards,switched45->46,verified46/45/43/client hashes. Metadata
+support accepted46/local-only16x16/types0x5100,without starting a core.
+
+Native synthetic sample00:41:35–36 UTC PASSED12 cases:Q8_0 first/last
+16K panel and Q4_K/Q6_K first/last panels,two signed full-range inputs each.
+EVERY integer dot and both16-value affine-metadata arrays matched exactly;
+status phase703e8/count1/markerMAT1,PC70400 twice,known start/complete/stop,
+unchanged ALL eight read/write counters,zero recovery flag. END verified
+CLOSED/PCI restore/host release/coldfalse. This is raw integer panel
+qualification,NOT affine application/fullmatvec/model inference/speed.
+Native `pioneer-qwen38-panel-20261017-a/synthetic-20261017-a.log`.
+
+Real-model client started00:42:37 UTC with1200s bound; it hashes the SAME
+open full19GB FD BEFORE opening the accelerator. At00:46:48 hash still
+running and file cache~8GB,growing; SSH/NIC remained responsive/error-free.
+No model panel success yet. Teams501(parent)/502(sha),log
+`.../model-panels-20261017-a.log`. Do NOT replace a loaded module or restart
+while this job is pending. Exact restore helper now switch-unloaded46 with
+`--restore43` ONLY after a new cold boot BEFORE card open; firmware/default
+Linux/OS/dirty llama implementation remain unchanged.
+
+Separately, OFFLINE affine epilogue candidate main7536db97/bridge67f5831d/
+unpack15e159d6 applies scales/minima/activation scale ON CARD after the
+Tensix dot,with zero additional NoC/host round trip. ALL34 panel shapes,
+seven signed scale boundaries and1,992 real edge panels match local FP32
+arithmetic BIT-EXACT in the strict RV32IMF/Tensix model. Explicit initial
+local-probe scale range2^-32..2^16 avoids overflow/scalar subnormal inputs;
+this is NOT silently a general-model activation policy. Invalid scale
+cannot publish successful completion. Default46 image still reproduces
+ALL original bytes. Candidate is NOT installed/native-qualified; it still
+does NOT accumulate full K,execute a resident model or establish speed.
+
 ### October17: local mixed-quant arithmetic46 staged; cold restart in progress (October18,00:32 UTC)
 
 CURRENT hardware powered OFF/resting, both SD cards out, P100A unchanged.

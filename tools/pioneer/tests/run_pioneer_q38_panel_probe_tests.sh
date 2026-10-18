@@ -11,4 +11,10 @@ awk '/PIONEER_Q38_PANEL_CONTROL_BEGIN/ {copying=1;next} /PIONEER_Q38_PANEL_CONTR
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  -I"$temporary" "$directory/pioneer_q38_panel_control_test.cpp" -o "$temporary/control"
 UBSAN_OPTIONS=halt_on_error=1 "$temporary/control"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE "$directory/pioneer_q38_panel_probe_test.cpp" -o "$temporary/affine"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/affine"
+${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -I"$temporary" "$directory/pioneer_q38_panel_control_test.cpp" -o "$temporary/affine-control"
+UBSAN_OPTIONS=halt_on_error=1 "$temporary/affine-control"
 printf 'Offline local-panel policy evidence retained at %s\n' "$temporary"

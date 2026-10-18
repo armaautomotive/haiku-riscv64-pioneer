@@ -11,3 +11,11 @@ else
  exit 1
 fi
 printf 'Offline local-panel client evidence retained at %s\n' "$temporary"
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -I"$directory/cli-stubs" "$directory/pioneer_q38_panel_client_test.cpp" -o "$temporary/affine"
+if UBSAN_OPTIONS=halt_on_error=1 "$temporary/affine" > "$temporary/affine.log" 2>&1; then
+ tail -n 1 "$temporary/affine.log"
+else
+ tail -n 30 "$temporary/affine.log"
+ exit 1
+fi

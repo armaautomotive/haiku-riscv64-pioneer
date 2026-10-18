@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+#include <sys/select.h>
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PanelProbe.h"
@@ -33,7 +36,23 @@ static bool FullSha(FILE* file)
 	close(channel[1]);
 	if (child<0) { close(channel[0]); return false; }
 	char digest[96]={}; unsigned used=0; bool overflow=false;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	uint64_t reported=0;
+#endif
 	for (;;) {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+		fd_set ready; FD_ZERO(&ready); FD_SET(channel[0],&ready); timeval interval={5,0};
+		int available=select(channel[0]+1,&ready,NULL,NULL,&interval);
+		if (available<0 && errno==EINTR) continue;
+		if (!available) {
+			off_t at=lseek(fileno(file),0,SEEK_CUR);
+			if (at>=0 && uint64_t(at)>=reported+UINT64_C(1073741824)) {
+				reported=uint64_t(at); printf("MODEL_SHA_READ_OFFSET=%llu/%llu;NOT_DIGEST_ACCEPTANCE\n",(unsigned long long)reported,(unsigned long long)PioneerQwen38Gguf::FullBytes);
+			}
+			continue;
+		}
+		if (available<0) overflow=true;
+#endif
 		char data[96]; ssize_t count=read(channel[0],data,sizeof(data));
 		if (count<0 && errno==EINTR) continue;
 		if (count<=0) { if (count<0) overflow=true; break; }
@@ -54,7 +73,10 @@ static bool Call(int fd,uint32_t operation,void* data,size_t bytes)
 }
 static bool Execute(int fd,unsigned type,unsigned panel,const uint8_t* tile,unsigned trial)
 {
-	tt_q38_panel_probe request={}; request.version=1; request.type=type; request.bytes=PioneerQ38PanelTileBytes(type); request.panel=panel;
+	tt_q38_panel_probe request={}; request.version=TT_Q38_PANEL_ABI_VERSION; request.type=type; request.bytes=PioneerQ38PanelTileBytes(type); request.panel=panel;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	request.activation_scale=PioneerAttentionBits(trial?-.03125f:.012345f);
+#endif
 	memcpy(request.tile,tile,request.bytes);
 	for (unsigned k=0;k<16;k++) request.activation[k/2]|=uint32_t(PioneerInt8Operand(int((k*29+trial*17)%256)-128))<<((k%2)*16);
 	PioneerQ38Panel expected={};
@@ -66,6 +88,12 @@ static bool Execute(int fd,unsigned type,unsigned panel,const uint8_t* tile,unsi
 		&& r.pc[0]==TT_Q38_PANEL_PARK && r.pc[1]==r.pc[0];
 	for (unsigned i=0;i<8;i++) okay &= r.before[i]==r.after[i];
 	unsigned mismatches=0;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	int inputSum=0;
+	for (unsigned k=0;k<16;k++) {
+		uint16_t input=uint16_t(request.activation[k/2]>>((k%2)*16)); inputSum+=int(input&1023)*((input&0x8000)?-1:1);
+	}
+#endif
 	for (unsigned row=0;row<16;row++) {
 		int expectedDot=0;
 		for (unsigned k=0;k<16;k++) {
@@ -73,7 +101,14 @@ static bool Execute(int fd,unsigned type,unsigned panel,const uint8_t* tile,unsi
 			uint16_t input=uint16_t(request.activation[k/2]>>((k%2)*16));
 			expectedDot+=int(weight&1023)*((weight&0x8000)?-1:1)*int(input&1023)*((input&0x8000)?-1:1);
 		}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+		float scale=PioneerAttentionFloat(request.activation_scale);
+		float product=(PioneerAttentionFloat(expected.coefficient[row])*scale)*float(expectedDot);
+		float correction=(PioneerAttentionFloat(expected.minimum[row])*scale)*float(inputSum);
+		mismatches+=request.dot[row]!=PioneerAttentionBits(product+correction) || request.coefficient[row]!=expected.coefficient[row] || request.minimum[row]!=expected.minimum[row];
+#else
 		mismatches+=int32_t(request.dot[row])!=expectedDot || request.coefficient[row]!=expected.coefficient[row] || request.minimum[row]!=expected.minimum[row];
+#endif
 	}
 	printf("LOCAL_PANEL type=%u panel=%u trial=%u state=%u start/complete/stop=%u/%u/%u cold=%u pc=%x/%x exact_errors=%u\n",
 		type,panel,trial,r.state,r.started,r.completed,r.stopped,r.recovery_required,r.pc[0],r.pc[1],mismatches); fflush(stdout);
@@ -97,8 +132,8 @@ int main(int argc,char** argv)
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC);
 	if (fd<0) { if (file) fclose(file); perror("open P100A"); return 1; }
 	tt_q38_panel_support support={};
-	bool okay=Call(fd,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support)) && support.driver==46
-		&& support.version==1 && support.local_only==1 && support.rows==16 && support.columns==16 && support.type_mask==0x5100;
+	bool okay=Call(fd,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_PANEL_CURRENT_DRIVER
+		&& support.version==TT_Q38_PANEL_ABI_VERSION && support.local_only==1 && support.rows==16 && support.columns==16 && support.type_mask==0x5100;
 	if (!okay || !strcmp(argv[1],"--support")) { close(fd); if (file) fclose(file); return okay?0:1; }
 	tt_q38_bank_session session={}; session.version=1;
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_READY
@@ -132,6 +167,10 @@ int main(int argc,char** argv)
 	okay=Call(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_CLOSED
 		&& !session.result.active && session.result.pci_restored && session.result.host_released && !session.result.cold;
 	if (close(fd)) okay=false;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	printf("%s_LOCAL_SCALED_%s_PANELS cases=%u;KNOWN_CLEAN_END=%u;NOT_FULL_MATVEC_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",useModel?"MODEL":"SYNTHETIC",cases,unsigned(okay));
+#else
 	printf("%s_LOCAL_%s_PANELS cases=%u;KNOWN_CLEAN_END=%u;NOT_SCALED_MATVEC_OR_INFERENCE_OR_SPEED\n",okay?"PASS":"FAIL",useModel?"MODEL":"SYNTHETIC",cases,unsigned(okay));
+#endif
 	return okay && cases==12?0:1;
 }

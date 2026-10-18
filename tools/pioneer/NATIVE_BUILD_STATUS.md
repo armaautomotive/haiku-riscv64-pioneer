@@ -1,6 +1,29 @@
 # Native build status
 
-Latest checkpoint (October18,00:32 UTC / October17 Vancouver): Pioneer is
+Latest checkpoint (October18,00:56 UTC / October17 Vancouver): Normal synced
+Haiku shutdown closed SSH before00:56:48 for the next controlled cold restart;
+no final halt marker seen. Disk still46;47 is separately staged,NOT installed.
+Last boot verified64 CPUs/full RAM/NIC0b83ceed with unchanged SD-free profile
+`panel46-20261017-a`. Experimental46 SHA3e5e3e61 was LOADED;45/qualified43
+backups are preserved outside driver paths. All12 NATIVE synthetic mixed
+Q4_K/Q6_K/Q8_0 local integer panels passed00:41:35–36 UTC,exact dot/640B
+affine metadata,zero NoC,known start/complete/stop and clean END/coldfalse.
+This is NOT scaled/full-matrix execution,27B inference or speed.
+REAL-model test PASSED00:52:41 UTC after FULL SAME-FD SHA and851-layout
+validation BEFORE card open. All12 actual Q8/Q4/Q6 edge-panel cases matched
+EXACTLY with zero NoC/known completion/stop/clean END/coldfalse. NOT full
+matvec/graph/inference/speed. No test/hash job remains. Model log:
+`pioneer-qwen38-panel-20261017-a/model-panels-20261017-a.log`.
+Native fallback helper now `switch-unloaded46.sh --restore43`,ONLY after
+a NEW cold boot whose card driver is still unloaded. A separate OFFLINE
+affine epilogue candidate47 aab1ea67/client8f40b413/helperd68ed39f is staged
+at `pioneer-qwen38-affine-20261017-a`. It passes1,992 real instruction-model
+panels and dual46/47 launch/handler/client fault tests,NOT native qualification
+or a full model backend. It must be installed ONLY after a NEW cold boot with
+TWO unloaded/no-owner proofs. Helper supports qualified43 restore on a later
+fresh cold boot. Never replace loaded modules/force unload/retry UNKNOWN.
+
+Previous checkpoint (00:32 UTC): Pioneer was
 powered OFF/resting for the new native local-panel arithmetic trial. Normal
 synced Haiku shutdown closed SSH00:30:22; no final halt marker was observed.
 One relay off hold completed before00:32:24; keep FULL180s rest before on.

@@ -64,7 +64,7 @@ int main()
 	(void)&PreparePanel; (void)&Run; (void)&ClosePanel; (void)&Finish;
 	PioneerProbeCookie cookie,foreign; tt_q38_panel_support support={};
 	assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support))==B_OK
-		&& support.driver==46 && support.version==1 && support.local_only && support.type_mask==0x5100 && !cookie.context);
+		&& support.driver==TT_Q38_PANEL_CURRENT_DRIVER && support.version==TT_Q38_PANEL_ABI_VERSION && support.local_only && support.type_mask==0x5100 && !cookie.context);
 	team=18; assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_SUPPORT,&support,sizeof(support))==B_NOT_ALLOWED); team=17;
 	auto job=Job();
 	assert(Q38PanelControl(&cookie,TT_PCI_PROBE_Q38_PANEL_RUN,&job,sizeof(job))==B_NOT_ALLOWED);

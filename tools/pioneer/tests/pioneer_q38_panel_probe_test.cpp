@@ -46,7 +46,13 @@ struct PanelIO:BanksMock {
 		if (scenario==3) { destination[2034]=0x46383350; return; }
 		destination[2032]=TT_Q38_PANEL_DONE; destination[2033]=1; destination[2034]=0x4d415431;
 		for (unsigned row=0;row<16;row++) {
-			view[(0x84000-TT_Q38_PANEL_VIEW_BASE)/4+row]=(scenario==7 && !row)?0x80000000:row;
+			view[(0x84000-TT_Q38_PANEL_VIEW_BASE)/4+row]=(scenario==7 && !row)?
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+				0x7f800000:
+#else
+				0x80000000:
+#endif
+				row;
 			view[(0x91200-TT_Q38_PANEL_VIEW_BASE)/4+row]=(scenario==8 && !row)?0x7f800000:0x3f800000;
 			view[(0x91240-TT_Q38_PANEL_VIEW_BASE)/4+row]=0;
 		}
@@ -65,7 +71,10 @@ struct PanelOwners {
 };
 static tt_q38_panel_probe Job(unsigned type=12,unsigned panel=0)
 {
-	tt_q38_panel_probe r={}; r.version=1; r.type=type; r.bytes=PioneerQ38PanelProbeBytes(type); r.panel=panel;
+	tt_q38_panel_probe r={}; r.version=TT_Q38_PANEL_ABI_VERSION; r.type=type; r.bytes=PioneerQ38PanelProbeBytes(type); r.panel=panel;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	r.activation_scale=0xbc800000; //-.015625
+#endif
 	for (unsigned w=0;w<8;w++) r.activation[w]=PioneerInt8Operand(-128)|(uint32_t(PioneerInt8Operand(127))<<16);
 	return r;
 }
@@ -115,7 +124,7 @@ int main()
 	}
 	for (unsigned fault=0;fault<11;fault++) {
 		auto job=Job();
-		if (fault==0) job.version=2;
+		if (fault==0) job.version=TT_Q38_PANEL_ABI_VERSION+1;
 		if (fault==1) job.type=0;
 		if (fault==2) job.bytes--;
 		if (fault==3) job.panel=16;
@@ -130,6 +139,13 @@ int main()
 		PanelIO io; PanelOwners own(io); assert(PreparePanel(io,own)); unsigned writes=io.panelWrites;
 		assert(!Run(io,own,job) && !io.launches && writes==io.panelWrites && ClosePanel(io,own)); Finish(io,own);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+	for (uint32_t scale:{0x7f800000U,0xff800000U,0x7fc00001U,1U,0x2f7fffffU,0x47800001U}) {
+		auto job=Job(); job.activation_scale=scale; assert(!PioneerQ38PanelProbeValid(job));
+		PanelIO io; PanelOwners own(io); assert(PreparePanel(io,own)); unsigned writes=io.panelWrites;
+		assert(!Run(io,own,job) && !io.launches && writes==io.panelWrites && ClosePanel(io,own)); Finish(io,own);
+	}
+#endif
 	// Lost preparation/stage/restore writes never become accepted execution.
 	{
 		PanelIO io; auto before=io.view; PanelOwners own(io); io.dropWrite=1;
