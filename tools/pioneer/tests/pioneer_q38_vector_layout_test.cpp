@@ -5,24 +5,30 @@
 #include "../PioneerQwen38Panel.h"
 struct VectorLayout:NativeF32Q8Machine {
 	uint16_t physical[1024][16]={}; bool written[1024][16]={}; unsigned words=0;
+	bool defined[1024]={};
 	uint16_t moved[256]={}; unsigned moves[256]={};
-	VectorLayout():NativeF32Q8Machine(1024,32,0) {}
+	VectorLayout():NativeF32Q8Machine(1024,32,0) {
+		// Arithmetic/layout component PRECONDITION ONLY. Actual full-image
+		// tests require explicit full-row UNPACK initialization to define these.
+		for (unsigned row=64;row<80;row++) defined[Adj32(row)]=true;
+	}
 	static unsigned Adj32(unsigned row) { return ((row&0x1f8)<<1)|(row&0x207); } // config220=0
 	void Raw(unsigned row,unsigned col,unsigned byte) {
 		assert(row<32 && col<16 && byte<256); physical[row][col]=uint16_t((byte<<5)|(byte?16:0)); written[row][col]=true;
+		if (col==15) defined[row]=true;
 	}
-	void LoadLanes(unsigned reg,unsigned address) {
+	void LoadLanes(unsigned reg,unsigned address,unsigned mode) {
 		assert(reg<2 && address<32 && !(address&1));
 		for (unsigned lane=0;lane<32;lane++) {
 			unsigned row=(address&~3U)+lane/8,col=(lane%8)*2+((address&2)!=0);
-			assert(written[row][col] && !(physical[row][col]&0x8000));
-			lanes[reg][lane]=(physical[row][col]>>5)&255; // SFPLOAD INT8
+			assert(defined[row] && written[row][col] && !(physical[row][col]&0x8000));
+			lanes[reg][lane]=(physical[row][col]>>5)&(mode==5?127U:1023U);
 		}
 	}
 	void Op(uint32_t word) { Instruction(word); words++; }
 	void Instruction(uint32_t word) override {
 		unsigned op=word>>24,reg=(word>>20)&15,mode=(word>>16)&15,address=word&1023;
-		if (op==0x70 && mode==5) { assert(!(word&0x0000fc00)); LoadLanes(reg,address); return; }
+		if (op==0x70 && (mode==5 || mode==13)) { assert(!(word&0x0000fc00)); LoadLanes(reg,address,mode); return; }
 		if (op==0x72 && mode==7) { assert(!reg && !(word&0x0000fc00)); StoreLanes(address); return; }
 		if (op==8) {
 			unsigned source=(word>>17)&63;
@@ -39,7 +45,7 @@ struct VectorLayout:NativeF32Q8Machine {
 		assert(address>=64 && address<80 && !(address&1));
 		for (unsigned lane=0;lane<32;lane++) {
 			unsigned row=(address&~3U)+lane/8,col=(lane%8)*2+((address&2)!=0),hi=Adj32(row),lo=hi+8;
-			assert(hi>=128 && hi<160 && lo>=128 && lo<160 && !written[hi][col] && !written[lo][col]);
+			assert(hi>=128 && hi<160 && lo>=128 && lo<160 && defined[hi] && !written[hi][col] && !written[lo][col]);
 			physical[hi][col]=uint16_t(lanes[0][lane]>>16); physical[lo][col]=uint16_t(lanes[0][lane]);
 			written[hi][col]=written[lo][col]=true; // SFPSTORE HI16 opaque32
 		}

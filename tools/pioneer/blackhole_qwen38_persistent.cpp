@@ -13,7 +13,11 @@ extern "C" unsigned block_peer_wait(unsigned previous);
 extern "C" void block_peer_stopped() __attribute__((noreturn));
 static unsigned Counter(unsigned c)
 {
+#ifdef PIONEER_Q38_VECTOR_PANEL
+	static const unsigned offset[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};
+#else
 	const unsigned offset[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};
+#endif
 	return *Words(0xffb20000+offset[c]);
 }
 static bool IdleAll()
@@ -38,7 +42,11 @@ static bool SourceMatches(const uint32_t (&source)[16])
 }
 static unsigned Route(unsigned worker)
 {
+#ifdef PIONEER_Q38_VECTOR_PANEL
+	static const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
+#else
 	const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
+#endif
 	unsigned column=0,row=worker;
 	while (row>=10) { row-=10; column++; }
 	if (worker>=120 || column>=12) block_fault_park();

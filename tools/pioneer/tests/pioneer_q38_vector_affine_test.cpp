@@ -40,7 +40,12 @@ struct AffineVector {
 static uint32_t SM(int value) { return (value<0?0x80000000U:0)|unsigned(value<0?-value:value); }
 int main()
 {
-	AffineWords program; PioneerQ38VectorAffine(program); assert(program.words.size()==14);
+	AffineWords program;
+#ifdef PIONEER_Q38_AFFINE_FLOAT_DOT_TEST
+	PioneerQ38VectorAffineFloatDot(program); assert(program.words.size()==13);
+#else
+	PioneerQ38VectorAffine(program); assert(program.words.size()==14);
+#endif
 	uint32_t seed=0x8f15b3d7; unsigned cases=0;
 	auto random=[&]() { seed^=seed<<13; seed^=seed>>17; seed^=seed<<5; return seed; };
 	for (unsigned trial=0;trial<32768;trial++) {
@@ -58,6 +63,9 @@ int main()
 			if (!(trial%29)) sum=0;
 			if (!(trial%23)) scale=random()&0x80000000;
 			m.lr[0][lane]=SM(dot); m.lr[1][lane]=coefficient; m.lr[2][lane]=minimum;
+#ifdef PIONEER_Q38_AFFINE_FLOAT_DOT_TEST
+			m.lr[0][lane]=PioneerFmaBits(float(dot));
+#endif
 			m.lr[3][lane]=scale; m.lr[4][lane]=SM(sum); m.lr[5][lane]=accumulated;
 			float product=(PioneerFmaFloat(coefficient)*PioneerFmaFloat(scale))*float(dot);
 			float correction=(PioneerFmaFloat(minimum)*PioneerFmaFloat(scale))*float(sum);
@@ -79,5 +87,5 @@ int main()
 		if (!m.okay) timingFaults++;
 	}
 	assert(timingFaults>=3);
-	printf("PASS OFFLINE vector affine:%u exact scalar-RISC FP32 comparisons,ALL32 lanes,canonical integer bounds,half/factor metadata,activation scale limits,signed zeros,non-fused rounding;14 instructions and%u dependent-latency faults rejected;NO Dst loading/image/driver/native/cycle-speed qualification\n",cases,timingFaults);
+	printf("PASS OFFLINE vector affine:%u exact scalar-RISC FP32 comparisons,ALL32 lanes,canonical integer bounds,half/factor metadata,activation scale limits,signed zeros,non-fused rounding;%zu instructions and%u dependent-latency faults rejected;NO Dst loading/image/driver/native/cycle-speed qualification\n",cases,program.words.size(),timingFaults);
 }

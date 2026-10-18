@@ -10,10 +10,14 @@
 #define PIONEER_Q38_VECTOR_HAS_ROWS_MACHINE
 #define PIONEER_Q38_VECTOR_ROWS_MODEL_ONLY
 #include "pioneer_q38_vector_rows_image_test.cpp"
+#ifdef PIONEER_Q38_TEST_ACCUMULATOR
+using CooperativePeer=VectorRows<PersistentRows,true,true,true>;
+#else
 #ifdef PIONEER_Q38_TEST_BFLOAT
 using CooperativePeer=VectorRows<PersistentRows,true,true>;
 #else
 using CooperativePeer=VectorRows<PersistentRows,true>;
+#endif
 #endif
 #else
 using CooperativePeer=PersistentRows;

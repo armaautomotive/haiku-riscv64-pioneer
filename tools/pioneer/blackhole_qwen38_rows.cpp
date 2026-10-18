@@ -13,8 +13,12 @@
 #ifdef PIONEER_Q38_BFLOAT_PANEL
 #include "PioneerQ38BFloatPanel.h"
 #endif
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+#include "PioneerQ38SfpuAccumulator.h"
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
+#include "PioneerQ38VectorDstInit.h"
 #include "PioneerQ38VectorUnpack.h"
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
 #include "PioneerQ38VectorFixedFormat.h"
@@ -110,6 +114,9 @@ static void Setup()
 }
 #ifdef PIONEER_Q38_VECTOR_PANEL
 struct VectorPanelEmitter {
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+	__attribute__((always_inline)) inline
+#endif
 	void Op(uint32_t value) { Emit(value); }
 	void Config(unsigned index,uint32_t value) { ::Config(index,value); }
 	void Drain() { ::Drain(); }
@@ -122,7 +129,11 @@ static void Matrix()
 #endif
 {
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
-	Emit(0x10180000); Drain(); // clear Dst,NOT an integer sum across unequal scales
+#ifdef PIONEER_Q38_VECTOR_PANEL
+	Emit(0x10280002); Drain(); // ONLY FP32 rows32..47;preserve defined vector/metadata rows
+#else
+	Emit(0x10180000); Drain(); // original scalar path unchanged
+#endif
 	Emit(0x5160000a); Emit(0x5460000f);
 #ifndef PIONEER_Q38_VECTOR_PANEL
 	Emit(0x420000c1);
@@ -197,6 +208,30 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 }
 #endif
 #endif
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+// Private fixed-frame caller ONLY:sealed loops p=0..last per fetched block,
+// raw90000..90d40,metadata91000..91280,stack6e000..70000 are DISJOINT.
+// This avoids generic pointer/lifetime bookkeeping for these static facts.
+// ALL finite metadata checks and atomic16-row publication still apply.
+static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&base)[16])
+{
+	const uint8_t* raw=reinterpret_cast<const uint8_t*>(0x90000);
+	auto* out=reinterpret_cast<PioneerQ38Panel*>(0x91000);
+	if (type!=14) return (panel&1) || PioneerQ38AffineOnly(type,raw,bytes,panel,out);
+	if (!panel) for (unsigned row=0;row<16;row++) {
+		uint16_t half=uint16_t(PioneerQ38PanelByte(raw,208*16+row)|(PioneerQ38PanelByte(raw,209*16+row)<<8));
+		if (!PioneerQ38BinaryScale(half,1,base[row])) return false;
+	}
+	uint32_t stage[16];
+	for (unsigned row=0;row<16;row++) {
+		unsigned v=PioneerQ38PanelByte(raw,(192+panel)*16+row);
+		stage[row]=Bits(Float(base[row])*float(int(v)-int((v&128)*2)));
+		if ((stage[row]&0x7f800000)==0x7f800000) return false;
+	}
+	for (unsigned row=0;row<16;row++) { out->coefficient[row]=stage[row]; out->minimum[row]=0; }
+	return true;
+}
+#endif
 extern "C" unsigned block_main()
 {
 	const volatile uint32_t* job=Words(0x74000);
@@ -250,8 +285,26 @@ extern "C" unsigned block_main()
 #endif
 	}
 	Setup();
-#if defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) && !defined(PIONEER_Q38_BFLOAT_PANEL)
-	VectorPanelEmitter setupEmitter; PioneerQ38VectorFixedSetup(setupEmitter);
+#ifdef PIONEER_Q38_VECTOR_PANEL
+	VectorPanelEmitter initEmitter; PioneerQ38VectorDstInit(initEmitter,
+#ifdef PIONEER_Q38_BFLOAT_PANEL
+		true
+#else
+		false
+#endif
+	,
+#if defined(PIONEER_Q38_VECTOR_AFFINE) || defined(PIONEER_Q38_SFPU_ACCUMULATOR)
+		true
+#else
+		false
+#endif
+	,
+#ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+		true
+#else
+		false
+#endif
+	);
 #endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 	VectorPanelEmitter phasesEmitter; PioneerQ38MatrixPhasesSetup(phasesEmitter);
@@ -267,6 +320,9 @@ extern "C" unsigned block_main()
 	float scale=Float(scaleBits);
 #endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+	uint32_t affineBase[16];
+#else
 #ifdef PIONEER_Q38_AFFINE_RESIDENT
 	PioneerQ38AffineResident affine;
 #else
@@ -274,10 +330,17 @@ extern "C" unsigned block_main()
 #endif
 	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
 #endif
+#endif
 	for (unsigned p=0;p<panels;p++) {
+#ifndef PIONEER_Q38_SFPU_ACCUMULATOR
 		auto* local=reinterpret_cast<PioneerQ38Panel*>(0x91000);
+#endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+		if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
+#else
 		if (!affine.Panel(p,local)) block_fault_park();
+#endif
 #else
 		if (!
 #ifdef PIONEER_Q38_VECTOR_PANEL
@@ -327,6 +390,13 @@ extern "C" unsigned block_main()
 #else
 		Matrix();
 #endif
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+		for (unsigned row=0;row<16;row++) {
+			uint32_t raw=Words(0xffbd8800)[row]; float dot=Float(raw);
+			if ((raw&0x7f800000)==0x7f800000 || dot<-262144.0f || dot>262144.0f) block_fault_park();
+		}
+		if (!PioneerQ38SfpuAccumulator(emitter,type,!block && !p,type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
+#else
 #ifdef PIONEER_Q38_VECTOR_AFFINE
 		// Preserve the original ALL16 dot range checks before vector math.
 		for (unsigned row=0;row<16;row++) {
@@ -357,8 +427,20 @@ extern "C" unsigned block_main()
 		}
 #endif
 		Fence();
+#endif
 	}
 	}
+#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+	// Bounded finite inputs imply |accumulator|<2^68,normal-or-zero
+	// intermediates and NO overflow/underflow. ALL dot checks remain per
+	// panel;publish only final finite results after the entire group.
+	for (unsigned row=0;row<16;row++) {
+		uint32_t value=Words(0xffbd9b00)[row];
+		if ((value&0x7f800000)==0x7f800000) block_fault_park();
+		Words(0x84000)[group*16+row]=value;
+	}
+	Fence();
+#endif
 	}
 	return groups*blocks*panels;
 }

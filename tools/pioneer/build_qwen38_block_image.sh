@@ -18,6 +18,7 @@ case "${PIONEER_Q38_STREAM_IMAGE:-0}" in
  9) source=blackhole_qwen38_vector_phase_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  10) source=blackhole_qwen38_vector_resident_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  11) source=blackhole_qwen38_bfloat_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
+ 12) source=blackhole_qwen38_sfpu_accumulator_rows.cpp; asmflag='--defsym TT_Q38_VECTOR_ROWS=1';;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_STREAM_FAST:-0}" in

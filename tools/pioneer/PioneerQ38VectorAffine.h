@@ -34,4 +34,16 @@ template<class E> static void PioneerQ38VectorAffine(E& e)
 	PioneerQ38VectorAffineAdd(e,0,4,0);
 	PioneerQ38VectorAffineAdd(e,5,0,0);
 }
+// Separate OFFLINE variant:dot0 is already canonical exact FP32 integer
+// from the lossless BF16 matrix path. SAME non-fused rounding points.
+template<class E> static void PioneerQ38VectorAffineFloatDot(E& e)
+{
+	e.Op(0x90000440);
+	PioneerQ38VectorAffineMul(e,1,3,6);
+	PioneerQ38VectorAffineMul(e,2,3,7);
+	PioneerQ38VectorAffineMul(e,6,0,0);
+	PioneerQ38VectorAffineMul(e,7,4,4);
+	PioneerQ38VectorAffineAdd(e,0,4,0);
+	PioneerQ38VectorAffineAdd(e,5,0,0);
+}
 #endif

@@ -135,6 +135,10 @@ struct Machine {
 			if (op == 0x10180000) {
 				assert(sfpuSmoke >= 16);
 				if (!dropClear) for (unsigned row = 0; row < 64; row++) valid[row] = false;
+			} else if (op==0x10280002) {
+				// Mode16_ROWS=1,UseDst32b=1,Imm10=2:logical32..47.
+				assert(sfpuSmoke>=16);
+				if (!dropClear) for (unsigned row=32;row<48;row++) valid[row]=false;
 			} else {
 				assert((op & 0xffffff00) == 0x10000000 && (op & 255) >= 32 && (op & 255) < 40);
 				valid[op & 255] = false;

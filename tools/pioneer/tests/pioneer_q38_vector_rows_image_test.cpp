@@ -9,7 +9,7 @@
 #include "../PioneerQ38BFloatPanel.h"
 // ACTUAL compiled RV32/FPU image plus independent exact integer SFPU subset.
 // Not a silicon cycle model or permission to select a new native image.
-template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:Base {
+template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=false> struct VectorRows:Base {
 	using Base::memory; using Base::config; using Base::thread; using Base::ownerA;
 	using Base::pending; using Base::drained; using Base::tile; using Base::tiles; using Base::backendWait;
 	using Base::adcX0; using Base::adcX1; using Base::pc; using Base::configWrites;
@@ -21,6 +21,7 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 	using Base::type;
 	uint16_t physical[1024][16]={}; uint32_t lr[8][32]={};
 	bool wrote[1024][16]={},sources[2]={},rawPending=false,publish=false,enabled=false;
+	bool defined[1024]={},decoded[16][16]={};
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	unsigned metadataWrites=0;
@@ -28,7 +29,9 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
 	uint32_t badFloatDot=0;
-	bool rawFloat=false,affineEligible=false;
+	bool rawFloat=false,rawInitial=false,affineEligible=false;
+	// Negative controls for the independent pinned-ISA observer only.
+	bool omitDstInitialization=false,allRowsClear=false,truncateRawByte=false;
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
@@ -48,7 +51,7 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 	}
 	static unsigned Adj(unsigned row) { return ((row&0x1f8)<<1)|(row&0x207); }
 	uint32_t FloatDst(unsigned row,unsigned col) const {
-		unsigned hi=Adj(row),lo=hi+8; assert(wrote[hi][col] && wrote[lo][col]);
+		unsigned hi=Adj(row),lo=hi+8; assert(defined[hi] && wrote[hi][col] && wrote[lo][col]);
 		uint16_t h=physical[hi][col]; unsigned ieee=(h&0x8000)|((h&255)<<7)|((h>>8)&127);
 		return (ieee<<16)|physical[lo][col];
 	}
@@ -58,23 +61,36 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 		physical[lo][col]=uint16_t(value); wrote[hi][col]=wrote[lo][col]=true;
 	}
 	void Instruction(uint32_t op) override {
+		if (omitDstInitialization && op==0x42000091) return;
+		if (allRowsClear && op==0x10280002) op=0x10180000;
+		if (truncateRawByte && (op>>24)==0x70 && ((op>>16)&15)==13) op=(op&~0xf0000U)|0x50000;
 		unsigned code=op>>24;
+		if (op==0x10180000) for (auto& value:defined) value=false; // ALL1024 physical row-valid bits
+		if (op==0x10280002) for (unsigned row=32;row<48;row++) defined[Adj(row)]=false;
 		if (code==0x42 && !(op&0x800000)) {
 			assert(!rawPending && !pending && !sources[unpackBank] && !ownerA
 				&& !config[49] && config[73]==0x13 && thread[5]==0 && !adc0);
 			rawFloat=config[72]==0;
+			rawInitial=op==0x42000091;
 			rawAddress=(config[76]+1)*16; rawRow=((config[84]&65535)/16)-4;
 			if (rawFloat) {
-				assert(affineEligible && config[1]==0xa0200000 && config[64]==0x100010 && config[65]==1
-					&& adc1==15 && op==0x42000081 && (rawRow==96 || rawRow==100 || rawRow==104));
-				assert(rawAddress==(rawRow==96?0x91200U:rawRow==100?0x91240U:rawAddress));
-				if (rawRow==104) assert(!(rawAddress&63) && Range(rawAddress,0x84000,groups*64));
+				assert(config[1]==(BFloat?0x20200000U:0xa0200000U) && config[64]==0x100010);
+				if (rawInitial) {
+					assert(config[65]==16 && adc1==255 && rawAddress==0xa0000 && (rawRow==64 || rawRow==96));
+				} else {
+					assert(affineEligible && config[65]==1 && adc1==15 && op==0x42000081 && (rawRow==96 || rawRow==100 || rawRow==104));
+					assert(rawAddress==(rawRow==96?0x91200U:rawRow==100?0x91240U:rawAddress));
+					if (rawRow==104) assert(!(rawAddress&63) && Range(rawAddress,0x84000,groups*64));
+				}
 			} else {
 				assert(config[1]==(BFloat?0x203c8000U:0xa03c8000U) && config[64]==0x10001e && config[65]==16 && config[72]==14
 					&& adc1==255 && (op==0x42000081 || op==0x420000c1));
 				assert(rawRow==0 || rawRow==16);
 				assert(rawAddress>=0x90000 && rawAddress-0x90000+256<=tile.size());
-				if (!rawRow) { memset(physical,0,sizeof(physical)); memset(wrote,0,sizeof(wrote)); panelMoves=0; affineEligible=false; }
+				if (!rawRow) {
+					memset(decoded,0,sizeof(decoded)); // generation tracking,NOT a hardware valid-bit reset
+					panelMoves=0; affineEligible=false;
+				}
 			}
 			rawPending=true; publish=op&64; rawUnpacks++; drained=false; return;
 		}
@@ -83,10 +99,18 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 		if (op==0x5120000a || op==0x5420000f) { assert(!rawPending); return; }
 		if (op==0x4500017e && rawPending) {
 			assert(backendWait && !pending);
-			if (rawFloat) for (unsigned i=0;i<16;i++) { StoreFloatDst(rawRow,i,Base::Load(rawAddress+i*4)); rawReads+=4; }
+			if (rawFloat) {
+				for (unsigned i=0;i<(rawInitial?256U:16U);i++) {
+					uint32_t data=Base::Load(rawAddress+i*4);
+					if (rawInitial) { assert(PioneerInt8OperandValid(uint16_t(data)) && PioneerInt8OperandValid(uint16_t(data>>16))); data=0; }
+					StoreFloatDst(rawRow+i/16,i%16,data); rawReads+=4;
+				}
+				for (unsigned row=rawRow;row<rawRow+(rawInitial?16U:1U);row++) defined[Adj(row)]=true;
+			}
 			else for (unsigned i=0;i<256;i++) {
 				unsigned address=rawAddress+i; uint32_t word=memory.at(address&~3U),byte=(word>>(8*(address&3)))&255;
 				physical[rawRow+i/16][i%16]=uint16_t((byte<<5)|(byte?16:0)); wrote[rawRow+i/16][i%16]=true; rawReads++;
+				if (i%16==15) defined[rawRow+i/16]=true;
 			}
 			if (publish) { sources[unpackBank]=true; unpackBank^=1; ownerA=sources[mathBank]; }
 			rawPending=false;
@@ -105,18 +129,28 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 				assert(reg<8 && !(op&0xfc00) && !(addr&1));
 				for (unsigned lane=0;lane<32;lane++) {
 					unsigned row=(addr&~3U)+lane/8,col=(lane&7)*2+((addr&2)!=0);
-					if (code==0x70 && mode==5) { assert(ownerA && reg<2 && row<32 && wrote[row][col]); uint16_t v=physical[row][col]; lr[reg][lane]=(uint32_t(v>>15)<<31)|((v>>5)&255); }
+					if (code==0x70 && (mode==5 || mode==13)) {
+						assert(ownerA && reg<2 && row<32 && defined[row] && wrote[row][col]); uint16_t v=physical[row][col];
+						unsigned mag=(v>>5)&(mode==5?127U:1023U);
+						lr[reg][lane]=mode==5?((uint32_t(v>>15)<<31)|mag):uint32_t(int(mag)*((v>>15)?-1:1));
+					}
 					else if (code==0x70 && mode==4) { assert(affineEligible && !reg && row>=32 && row<36); int v=dstInt[row][col]; lr[0][lane]=(v<0 || (!v && negativeDotZero)?0x80000000U:0)|unsigned(v<0?-v:v); }
-					else if (code==0x70 && mode==3) { assert(affineEligible && (reg==1 || reg==2 || reg==5) && row>=96 && row<108); lr[reg][lane]=FloatDst(row,col); }
+					else if (code==0x70 && mode==3) {
+						if (Accumulate && !reg) { assert(affineEligible && row>=32 && row<36 && Base::valid[row]); lr[0][lane]=Bits(Base::dst[row][col]); }
+						else { assert(affineEligible && (reg==1 || reg==2 || reg==5) && row>=96 && row<(Accumulate?112U:108U)); lr[reg][lane]=FloatDst(row,col); }
+					}
 					else if (code==0x72 && mode==3) {
-						if (BFloat) assert(ownerA && !reg && row>=64 && row<80 && !(lr[reg][lane]&65535));
+						assert(defined[Adj(row)] && "partial FP32 store to undefined Dst row");
+						if (BFloat && !affineEligible) assert(ownerA && !reg && row>=64 && row<80 && !(lr[reg][lane]&65535));
 						else assert(affineEligible && !reg && row>=108 && row<112);
 						StoreFloatDst(row,col,lr[reg][lane]);
+						if (row>=64 && row<80) { assert(!decoded[row-64][col]); decoded[row-64][col]=true; }
 					}
 					else {
 						assert(code==0x72 && mode==7); unsigned hi=Adj(row),lo=hi+8;
-						if (!reg) assert(ownerA && row>=64 && row<80 && hi>=128 && hi<160 && !wrote[hi][col] && !wrote[lo][col]);
-						else assert(affineEligible && reg==7 && row>=96 && row<108 && !lr[reg][lane]);
+						assert(defined[hi] && "partial opaque store to undefined Dst row");
+						if (!reg) { assert(ownerA && row>=64 && row<80 && hi>=128 && hi<160 && !decoded[row-64][col]); decoded[row-64][col]=true; }
+						else assert(affineEligible && reg==7 && row>=96 && row<(Accumulate?112U:108U) && !lr[reg][lane]);
 						physical[hi][col]=uint16_t(lr[reg][lane]>>16); physical[lo][col]=uint16_t(lr[reg][lane]); wrote[hi][col]=wrote[lo][col]=true;
 					}
 				}
@@ -127,6 +161,7 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 				unsigned source=(op>>17)&63,row=op&1023;
 				assert(!(op&0x0081dc00) && (op&0x2000) && source==panelMoves*4 && row==64+source && source<=12);
 				for (unsigned k=0;k<4;k++) for (unsigned col=0;col<16;col++) {
+					assert(defined[Adj(row+k)] && decoded[row+k-64][col]);
 					if (BFloat) {
 						uint32_t value=FloatDst(row+k,col); assert(!(value&65535));
 						a[source+k][col]=Float(value)+(corruptMove && !source && !k && !col?1:0); continue;
@@ -155,8 +190,8 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 				}
 				assert(vc<8 && vd<8); auto& v=lr[vd][lane];
 				switch (code) {
-				case 0x90: { assert(!mod && (vc==0 || (!BFloat && vc==4)) && (BFloat?!affineEligible:affineEligible)); uint32_t sm=lr[vc][lane],mag=sm&0x7fffffff;
-					assert(mag<=(BFloat?128U:vc==0?262144U:2048U) && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
+				case 0x90: { assert(!mod && ((BFloat && !affineEligible)?vc==0:affineEligible && (vc==4 || (!BFloat && vc==0)))); uint32_t sm=lr[vc][lane],mag=sm&0x7fffffff;
+					assert(mag<=((BFloat && !affineEligible)?128U:vc==0?262144U:2048U) && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
 				case 0x7c: assert(!mod); v=lr[vc][lane]; break;
 				case 0x7e: { unsigned vb=(op>>12)&15; assert(mod==1 && vb<8); v=lr[vb][lane]&lr[vc][lane]; break; }
 				case 0x8d: assert(!mod); v^=lr[vc][lane]; break;
@@ -171,6 +206,7 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 		}
 		if (code==0x26) assert(panelMoves==4 && sources[mathBank] && !rawPending);
 		Base::Instruction(op);
+		if (code==0x26) for (unsigned row=32;row<40;row++) defined[Adj(row)]=true;
 		if ((op&~0x4000U)==0x26c00020) {
 			sources[mathBank]=false; mathBank^=1; affineEligible=true; assert(unpackBank==mathBank);
 			if (corruptDotRange) { if (BFloat) Base::dst[32][0]=262145; else dstInt[32][0]=262145; }
@@ -222,10 +258,14 @@ template<class Base,bool Persistent=false,bool BFloat=false> struct VectorRows:B
 		return l1[Index(0x17ffc4)]==groups*(inputs/16) && requests==tiles.size() && requests==responses && !pending;
 	}
 };
+#ifdef PIONEER_Q38_TEST_ACCUMULATOR
+using VectorRowsMachine=VectorRows<RowsMachine,false,true,true>;
+#else
 #ifdef PIONEER_Q38_TEST_BFLOAT
 using VectorRowsMachine=VectorRows<RowsMachine,false,true>;
 #else
 using VectorRowsMachine=VectorRows<RowsMachine>;
+#endif
 #endif
 #ifndef PIONEER_Q38_VECTOR_ROWS_MODEL_ONLY
 int main(int argc,char** argv)
@@ -282,10 +322,14 @@ int main(int argc,char** argv)
 		}
 		assert(model.Stable()); fclose(f);
 	}
+#ifdef PIONEER_Q38_TEST_ACCUMULATOR
+	puts("PASS OFFLINE ACTUAL resident SFPU accumulator:EXACT all-K/real-edge FP32+double,disjoint retained Dst metadata/accumulators,initialized group padding,no scalar per-panel affine/output staging,ALL per-panel dot bounds/NaN guards,final finite export,activation-cache lifetime/UNKNOWN;NO native/driver/cycle speed qualification");
+#else
 #ifdef PIONEER_Q38_TEST_BFLOAT
 	puts("PASS OFFLINE ACTUAL BF16-row image:EXACT all-K Q8/Q4/Q6 FP32+double math,Q8 TWO/Q4+Q6 ONE matrix phases,whole-job private activation cache overwritten before read,raw/Dst/matrix ownership,dot bounds/canonical zero,UNKNOWN inert park;NOT native/persistent/coordinator/cycle/speed qualification");
 #else
 	puts("PASS OFFLINE ACTUAL vector-row image:exact all-K Q8/Q4/Q6 math,raw Dst/vector/Matrix source-bank ownership,zero scalar operand writes,all4 fidelity phases,source bounds,UNKNOWN inert park;NOT native/persistent/coordinator/cycle/speed qualification");
+#endif
 #endif
 }
 #endif

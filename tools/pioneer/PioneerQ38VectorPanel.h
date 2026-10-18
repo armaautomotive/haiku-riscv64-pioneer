@@ -29,8 +29,8 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
 	for (unsigned block=0;block<16;block+=4) for (unsigned parity=0;parity<4;parity+=2) {
-		e.Op(0x70050000|block|parity); // LReg0 INT8,raw Dst16 low plane
-		if (span.second) e.Op(0x70150000|(16+block)|parity); // LReg1 Q6 high plane
+		e.Op(0x700d0000|block|parity); // INT8_COMP keeps ALL10 magnitude bits,raw unsigned0..255
+		if (span.second) e.Op(0x701d0000|(16+block)|parity);
 		if (!PioneerQ38VectorOperand(e,type,panel)) return false;
 		e.Op(0x72070000|(64+block)|parity); // LReg0 opaque32 HI16 into disjoint Dst32
 	}

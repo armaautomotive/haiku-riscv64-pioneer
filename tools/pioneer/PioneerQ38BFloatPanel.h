@@ -26,8 +26,8 @@ template<class E> static bool PioneerQ38BFloatPanel(E& e,unsigned type,unsigned 
 	e.Op(0xb2050004); e.Drain();
 	e.Op(0x3700000f); e.Op(0x8a000002);
 	for (unsigned block=0;block<16;block+=4) for (unsigned parity=0;parity<4;parity+=2) {
-		e.Op(0x70050000|block|parity);
-		if (span.second) e.Op(0x70150000|(16+block)|parity);
+		e.Op(0x700d0000|block|parity);
+		if (span.second) e.Op(0x701d0000|(16+block)|parity);
 		if (!PioneerQ38BFloatOperand(e,type,panel)) return false;
 		e.Op(0x72030000|(64+block)|parity); // FP32 encoding,NOT opaque integer overlay
 	}

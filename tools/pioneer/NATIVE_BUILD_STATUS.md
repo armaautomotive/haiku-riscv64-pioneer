@@ -1,5 +1,58 @@
 # Native build status
 
+Latest checkpoint (October18,20:53 UTC): native54 FULL four-position smoke
+FINISHED clean END/exit0/process gone. Same token IDs11/353/2688/264 as52.
+Cold6373.675199s;warm46.470747/45.684933/45.879533s,three-position sample
+0.021733585tok/s (~6.7x52,STILL UNUSABLE;NOT steady benchmark/text quality).
+497 learned projections per position/1988 total,2020 RUN calls,119 workers,
+4,558,653 uploaded pages retained;NO CPU learned products/reference/fallback.
+Warm matrix callbacks44.424/44.464/44.440s,checked RUN31.241/31.249/31.238s,
+other graph2.047/1.221/1.440s. ~13.2s/token host callback time outside RUN
+is now a separately measured target;RUN time is NOT pure accelerator time.
+Evidence /private/tmp/pioneer-q38-dispatch-frontend-native-four-20261018-g.log,
+SHA47e36ba88d1df40d07a51b7385b4fe313d313697333102a2a857a8a4872e7152.
+Haiku gracefully shutdown,relay off completed20:50:08 UTC. Rest >=300s
+before ONE new on pulse. No active GPU owner;54 remains installed93f2.
+
+IMPORTANT WITHDRAWAL: prior55/56 offline image qualifications below were
+based on an incomplete observer and DO NOT authorize those old binaries.
+Pinned ISA8a34e25e shows ZEROACC10180000 clears ALL1024 Dst row-valid bits,
+not just numeric rows0..63;SFPSTORE partial-column writes to undefined rows
+are undefined. Also SFPLOAD mode5 retains only7 magnitude bits,not8.
+NO affected vector image has been installed/run on hardware;scalar54 is
+unaffected. Old55=5a393ab4/peer6d863397 and56=6781a34f/peer7d4a2e67
+are WITHHELD. Never use their old staged/installer pins as qualification.
+
+Repaired55=93539e4b/peer8396ec5e(8032B),56=8098b130/peer707e0b53(7880B).
+Explicit full-row zero UNPACK from original fully validated input defines
+decoded Dst64..79 before partial writes;optional metadata96..111 too.
+NoFlip/ALL256 datums/config/RWC/thread/drain proofs remain. Dot-only
+ZEROACC10280002 invalidates FP32 logical32..47 ONLY,retaining disjoint
+weights/metadata. INT8_COMP mode13 preserves exact unsigned bytes0..255.
+Strict actual-instruction observer now tracks ALL1024 physical valid bits,
+full/partial writes,and each panel's separate decoded-write generation.
+New negative controls prove omitted init and ALL-row clear ABORT and mode5
+truncation FAILS independent math for ALL3 quant types.55/56 guards PASS
+Ik2CUaz4/86IgBkl1. Full-K/real edges PASS xlGqyCHT/B3EgNmLc,repeated/maxN256
+jobs+STOP PASS034Adir0/g9MxuKUf,actual root+EXACT baked peers PASS
+5iPhAsfG/NvRIqWvj. Layout2,228,224weights BKjPvSKO and real/synthetic raw
+decode5,144,576weights PqdPUfXq PASS. Full lifecycle reruns PASS:
+55 RUN2uYROqeP/ENDIZPBdwLu/prooftzAsroMm/handlerJ8MRAEcE/bootiyHsVRPY/
+sessiono786ICUv/MMIOgv5hqkG3;56 RUNdAqD6Tr4/ENDOJF50CmO/proof1btMrAqc/
+handlerfBNTRLta/boott2C0xHP5/sessionSeJnME6N/MMIO0Lxbjgou. ASan/UBSan,
+paired+PIO payload modes,all ownership/source/code/terminal/retention checks
+unchanged. Default54 handlerzyaEKmIG/sessionpBorjuvj PASS.195 ACTUAL shell
+guard/restore cases PASS. Repaired55 installer SHA69260460,56d9cbdbf1.
+Client/inference hashes unchanged.54/43 rebuild
+EXACT93f2/2df0. Dirty llama implementation remains untouched.
+
+Unselected SFPU-resident accumulator prototype is OFFLINE RESEARCH ONLY.
+Its earlier tests predate the validity fix and are NOT qualification.
+No kernel variant/header/installer/native selection exists for it. Keep
+original8KiB bound;must rebuild/requalify after Dst repair or leave withheld.
+Repaired persistent SFPU build currently FAILS the original link bound
+(block image overlaps descriptor);DO NOT widen that bound or deploy it.
+
 Latest checkpoint (October18,20:15 UTC): native54/team848 still ACTIVE,
 layer49/calls388/pages3,363,272 all success by20:14:47 UTC. Cold first
 position still loading;NO new full-model token rate. No native driver/
