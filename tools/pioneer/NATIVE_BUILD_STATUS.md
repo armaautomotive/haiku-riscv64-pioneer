@@ -1,5 +1,21 @@
 # Native build status
 
+October18,20:58 UTC OFFLINE host scheduling fix:original FleetPlan loop
+called Parts()->Stable()->fstat twice PER unrelated fragment,per matrix.
+Same497 matrices/47,101 jobs fingerprint94ab20f5488d9f1a:4,322,409 metadata
+calls/1.709105s ->6,461 calls/0.009491s on Mac (NOT native model speed).
+UploadTensor had the same hot loop;both now hold a function-local const
+reference to their privately owned immutable layout metadata ONLY. Live
+source/epoch checks before+after planning,and before EVERY page upload,
+RUN and output publication remain. No learned-byte/file-authentication
+cache and no result-proof relaxation. Frozen inference55 rebuild21e18126.
+Fleet all498 tensors x1/7/119/120 synthetic+real t1qVRMzG,host cohort
+all498 exact/forged+source-refusal kMKCOEHw,source cAxXbtnI,cohort session
+weFRN0uH,54/55/56 sessionsh1hL4SeD/oyolQl0E/uyX0qvfr PASS. Diagnostic
+regression71QC1oyd asserts exact all-job fingerprint and<10,000 calls.
+Separate from installed candidate:installer still requires prior62fef745;
+do not silently substitute the new host binary under its old hash/name.
+
 Latest checkpoint (October18,20:53 UTC): native54 FULL four-position smoke
 FINISHED clean END/exit0/process gone. Same token IDs11/353/2688/264 as52.
 Cold6373.675199s;warm46.470747/45.684933/45.879533s,three-position sample

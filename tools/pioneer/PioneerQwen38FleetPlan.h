@@ -31,8 +31,12 @@ public:
 		if (!t.type || !rowBytes || !t.outputs || (t.outputs&15) || (t.inputs!=5120 && t.inputs!=6144 && t.inputs!=17408) || (groupBytes&63)) return false;
 		struct Piece { unsigned fragment,groups,quota,done=0,emitted=0; const PioneerQ38PackedPart* part; };
 		std::vector<Piece> pieces; bool banks[7]={}; unsigned minJobs=0,total=0;
-		for (unsigned i=0;i<plan.Parts().size();i++) {
-			const auto& p=plan.Parts()[i]; if (p.kind!=PIONEER_Q38_WEIGHT || p.tensor!=tensor) continue;
+		// Private immutable layout metadata,NOT learned bytes or a cached file
+		// identity. Keep the existing source/epoch checks before AND after this
+		// no-IO loop;do not repeat fstat twice for EVERY unrelated fragment.
+		const auto& parts=plan.Parts();
+		for (unsigned i=0;i<parts.size();i++) {
+			const auto& p=parts[i]; if (p.kind!=PIONEER_Q38_WEIGHT || p.tensor!=tensor) continue;
 			if (p.bank>=7 || banks[p.bank] || !p.rows || (p.firstRow&15) || (p.rows&15) || p.firstRow>t.outputs || p.rows>t.outputs-p.firstRow
 				|| p.rowBytes!=rowBytes || uint64_t(p.rows)*rowBytes!=p.bytes || (p.proposedAddress&4095) || p.proposedAddress<plan.Base
 				|| !p.allocated || (p.allocated&4095) || p.bytes>p.allocated || p.allocated-p.bytes>=4096

@@ -46,8 +46,13 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 		return true;
 	}
 	bool UploadTensor(unsigned tensor) {
-		for (unsigned f=0;f<layout.Parts().size();f++) {
-			const auto& part=layout.Parts()[f]; if (part.kind!=PIONEER_Q38_WEIGHT || part.tensor!=tensor || uploaded[f]) continue;
+		if (!source.Ready() || !layout.MatchesSource(source.Model())) return Stop();
+		// The session exclusively owns this immutable layout. Only metadata
+		// iteration is cached;EVERY page read/upload and result publication
+		// retains its existing live-source authentication and proof gates.
+		const auto& parts=layout.Parts();
+		for (unsigned f=0;f<parts.size();f++) {
+			const auto& part=parts[f]; if (part.kind!=PIONEER_Q38_WEIGHT || part.tensor!=tensor || uploaded[f]) continue;
 			for (unsigned page=0;page<part.allocated/4096;) {
 				tt_q38_bank_bulk bulk={}; bulk.version=1; bulk.bank=part.bank;
 				bulk.offset=uint64_t(part.proposedAddress)-layout.Base+uint64_t(page)*4096;
@@ -66,7 +71,7 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 			if (!source.Ready()) return Stop();
 			uploaded[f]=1; bytesRetained+=part.allocated;
 		}
-		return true;
+		return source.Ready() || Stop();
 	}
 public:
 	uint64_t pagesUploaded=0,bytesRetained=0,calls=0;
