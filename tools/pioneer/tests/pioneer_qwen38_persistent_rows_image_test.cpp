@@ -10,7 +10,7 @@ struct PersistentRows:SharedRowsMachine {
 	unsigned changeSource=UINT32_MAX;
 	unsigned logicalWorker;
 	bool changeDescriptor=false;
-	bool progressSeen[13]={};
+	bool progressSeen[14]={};
 	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker=69):SharedRowsMachine(path,type,k,groups),logicalWorker(worker) {
 #if !defined(PIONEER_Q38_VECTOR_PERSISTENT_IMAGE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR)
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(worker,word)==(word<code.size()/4?Word(code,word*4):0));
@@ -47,7 +47,7 @@ struct PersistentRows:SharedRowsMachine {
 		if (Range(a,0x74140,64)) {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 			if (a==0x74154) {
-				assert(value<=12 && (!value || memory.at(0x74150)==1)); progressSeen[value]=true;
+				assert(value<=13 && (!value || memory.at(0x74150)==1)); progressSeen[value]=true;
 			}
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN

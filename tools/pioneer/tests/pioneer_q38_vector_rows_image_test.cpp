@@ -29,6 +29,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
+	bool corruptDecodedProbe=false; unsigned decodedProbeReads=0;
 	uint32_t badFloatDot=0;
 	bool rawFloat=false,rawInitial=false,affineEligible=false;
 	// Negative controls for the independent pinned-ISA observer only.
@@ -245,6 +246,15 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+		if (Range(address,0xffbd9000,1024)) {
+			assert(type==8 && config[3]==0x10000 && !rawPending && drained && panelMoves==4);
+			unsigned i=(address-0xffbd9000)/4; decodedProbeReads++;
+			if (corruptDecodedProbe && i==37) return 0x13572468;
+			uint32_t bits=FloatDst(64+i/16,i%16);
+			return bits&0x80000000?0U-(bits&0x7fffffff):bits;
+		}
+#endif
 		if (BFloat && Range(address,0x95000,34816)) { assert(cacheNext==inputs*2 && Range(address,0x95000,inputs*2)); return memory.at(address); }
 		if (Range(address,0xffef0000,224*4)) { assert(!rawPending && drained); return config[(address-0xffef0000)/4]; }
 		if (Range(address,0xffbd9b00,64)) { assert(affineEligible && !config[3] && !rawPending && drained); outputReads++; return FloatDst(108,(address-0xffbd9b00)/4); }

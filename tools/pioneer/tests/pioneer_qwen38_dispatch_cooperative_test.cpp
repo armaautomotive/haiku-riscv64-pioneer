@@ -26,6 +26,9 @@ using CooperativePeer=PersistentRows;
 #define PIONEER_Q38_DISPATCH_MACHINE_ONLY
 #include "pioneer_qwen38_dispatch_image_test.cpp"
 #include <memory>
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+#include "../PioneerQ38DecodedProbe.h"
+#endif
 // Both ROOT and PEERS execute actual emitted RV32/FPU/NoC instructions.
 // Only the wire/GDDR and read-only debug reset register are simulated.
 struct CooperativeDispatch:DispatchMachine {
@@ -145,6 +148,20 @@ int main(int argc,char** argv)
 		assert(model.Stable()); fclose(f);
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+	for (unsigned code=0;code<256;code++) {
+		int value=int(code)-int((code&128)*2);
+		unsigned magnitude=unsigned(value<0?-value:value);
+		uint32_t canonical=0x08000000+(magnitude%8)*0x10000000+(magnitude/8)*0x10000;
+		assert(PioneerQ38DecodedQ8Risc(code)==(value<0?0U-canonical:canonical));
+	}
+	{
+		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
+		m.actual[1]->corruptDecodedProbe=true;
+		assert(!m.RunRoot() && m.unknown && !m.gathers);
+		assert(m.actual[1]->decodedProbeReads==38 && !m.actual[1]->matrixInstructions);
+		assert(m.l1[m.Index(0x17ffc0)]==0x5a0d0225 && m.l1[m.Index(0x17ffc4)]==0x13572468);
+		puts("PASS59 independent converted-Dst Q8 operand probe:exact first bad index37/value before ANY peer2 matrix;existing status packet,zero gathers");
+	}
 	for (bool drop:{false,true}) {
 		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
 		for (auto& p:m.actual) {

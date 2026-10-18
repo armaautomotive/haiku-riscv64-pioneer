@@ -1,5 +1,34 @@
 # Native build status
 
+October18,23:02 UTC explicit-phase59 a0a1d9ab FAILED native first
+Q8/K5120 two-worker RUN with SAME phase5a0b0200/raw0xfffbd7c3=-272445.
+This isolates removal of automatic phase reuse as NOT a fix. No output,
+retry/END/reset/restore/free/extra card IO. Exit1/processgone;Haiku still
+responsive,graceful shutdown/channel1 off before22:57:47 UTC. Off rest
+until at least23:02:47 UTC. Log preserved from observed SSH result at
+/private/tmp/pioneer-q38-explicit-phase-native-failure-20261018-p.log
+(6fa6d38d);ordinary remote log remains stage-p/synthetic-explicit-phase-p.log.
+
+Next59 decoded-operand diagnostic f0778f22,root0f1481ce8132B,
+peere568a8a98032B;original8192B code/stack bounds retained. No math fix:
+after existing drained vector unpack/MOV and BEFORE Matrix,Q8 ONLY reads
+ALL256 locally owned decoded Dst32 values through unchanged converted
+signed32 RISC view. Independent original scalar byte->operand packing and
+pinned Dst bit permutation compare each. First mismatch reports reason13,
+index0..255 in root phase low8,value via existing status[6],index via[7].
+Same64B status packet;NO new host/NoC diagnostics. ALL diagnostic words
+must still be zero at successful WAIT/STOP/completion;no normal status
+acceptance relaxed. Diagnostic ONLY/inference0/client7722dc5e unchanged.
+
+Actual emitted root+peer real/repeated exact FP32+FP64,poisoned Dst,
+ALL256 independent expected-byte checks and injected first mismatch37
+value13572468 before ANY peer2 Matrix/zero gathers PASS uj1Q0FX6.
+ASan/UBSan RUN5OvlFHjw BOTH modes,END SGXXOSdy BOTH modes,
+handler/retention pQVFnw7S,bootstrap hFKDaY3B PASS.396 actual unloaded
+installer guard/restore cases PASS;stage-q helper7b15b0bb pins olda0a1d9ab
+and stage-p43/52/54 backups,keeps old59 separately;double unloaded/owner
+check. Default43 control remains2df0e0f8. Native diagnostic pending.
+
 October18,22:53 UTC full-Dst initialization59 43f59de8 FAILED first
 native Q8/K5120 two-worker RUN:phase5a0b0200,reason11/worker2,raw
 0xfffbd7c3=signed -272445 outside[-262144,262144]. No output gather,
