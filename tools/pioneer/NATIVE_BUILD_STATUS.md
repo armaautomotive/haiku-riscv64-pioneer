@@ -1,5 +1,28 @@
 # Native build status
 
+October18,22:53 UTC full-Dst initialization59 43f59de8 FAILED first
+native Q8/K5120 two-worker RUN:phase5a0b0200,reason11/worker2,raw
+0xfffbd7c3=signed -272445 outside[-262144,262144]. No output gather,
+retry/END/reset/restore/free or additional card read. Haiku stayed
+responsive;clean shutdown and channel1 off completed before22:46:00 UTC.
+Log /private/tmp/pioneer-q38-dst-scrub-native-failure-20261018-o.log.
+This does NOT establish startup clearing fixed anything;still failed.
+Normal power-on after five-minute off rest succeeded;Linux6.1.31/64CPUs,
+NVMe root,P100A unbound/COMMAND0000,exact pinned SD-free helpers verified.
+
+Next isolated59 explicit-phase A/B a0a1d9ab,peer1e8945457776B keeps
+vector decoder/fixed formats/resident affine/full startup clear and ALL
+numeric/source/ownership checks. Removes ONLY automatic fidelity-phase
+reuse;uses native54 explicit SETC11 phase0..3/drains/MVMUL modifier0.
+Root05058ecf8100B and client7722dc5e unchanged;original8192B bounds.
+Diagnostic-only/inference0;NOT native-qualified or a speed result.
+Actual root+peer/real-row/repeated exact math/poisoned Dst PASS GmATWyFK.
+Bootstrap c3vIVwuT,END bQuzUyD4 BOTH modes passed;RUN OKMijgo2 and
+handler/retention QYix8sVt evidence retained.371 actual installer cases
+PASS;new stage-p helperc0ff34ce requires exact installed43f59de8 and
+stage-o43/52/54 backups,keeps old59 separately,checks unloaded/no owner
+twice before replacement. Native installation/test pending.
+
 October18,22:35 UTC native refined59 eb8ed4d8 FAILED first Q8/K5120
 two-worker RUN:phase5a0b0100,reason11/worker1,raw signed32 dot2089054156
 =0x7c846fcc,well outside[-262144,262144]. This is now an exact on-card

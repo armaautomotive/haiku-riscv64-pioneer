@@ -1,7 +1,8 @@
 #define PIONEER_Q38_VECTOR_PANEL
 #define PIONEER_Q38_VECTOR_INLINE
 #define PIONEER_Q38_AFFINE_RESIDENT
-#define PIONEER_Q38_MATRIX_PHASE_REUSE
+// Isolated A/B:use the native54 explicit SETC11 fidelity-phase sequence.
+// Keep the vector operand decoder/fixed formats/ALL numeric guards.
 #define PIONEER_Q38_VECTOR_FIXED_FORMAT
 #define PIONEER_Q38_AFFINE_REUSE
 /* SPDX-License-Identifier: MIT */
