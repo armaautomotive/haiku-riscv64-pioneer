@@ -6,6 +6,12 @@
 // qualification;the default and51..53 drivers do not handle these operations.
 // Persistent WAIT is NOT the old per-job stopped=1 proof. Caller supplies
 // logical DATA only;kernel alone derives all routes,addresses and nonces.
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC
+// Isolated58 transfer diagnostics;NO model-inference capability.
+#define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x58f2)
+#define TT_PCI_PROBE_Q38_DISPATCH_RUN (B_DEVICE_OP_CODES_END + 0x58f3)
+enum { TT_Q38_DISPATCH_DRIVER=58,TT_Q38_DISPATCH_ABI=1,TT_Q38_DISPATCH_PEERS=119 };
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN
 // Isolated57 diagnostics,NEVER a55/56 code substitution/model capability.
 #define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x57f2)
@@ -27,6 +33,7 @@ enum { TT_Q38_DISPATCH_DRIVER=55,TT_Q38_DISPATCH_ABI=1,TT_Q38_DISPATCH_PEERS=119
 #define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT (B_DEVICE_OP_CODES_END + 0x54f2)
 #define TT_PCI_PROBE_Q38_DISPATCH_RUN (B_DEVICE_OP_CODES_END + 0x54f3)
 enum { TT_Q38_DISPATCH_DRIVER=54,TT_Q38_DISPATCH_ABI=1,TT_Q38_DISPATCH_PEERS=119 };
+#endif
 #endif
 #endif
 #endif

@@ -52,6 +52,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT))
 #error Q38 fault-return57 requires the guarded integer vector dispatcher only
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
+#error Q38 transfer58 diagnostics require the guarded fault-return lifecycle
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;

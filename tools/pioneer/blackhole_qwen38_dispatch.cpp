@@ -61,13 +61,34 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 	for (unsigned i=0;i<10;i++) if (Words(0xffb20000)[i]!=command[i]) block_fault_park();
 	Fence(); *Words(0xffb20040)=1; (void)*Words(0xffb20040); Fence();
 	Checkpoint(0x54000102,worker);
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	// Separate diagnostic ONLY. Reuse the ORIGINAL command/counter reads;
+	// do not issue another packet/read/retry after the fixed polling limit.
+	unsigned pending=0,delta=0;
+#endif
 	for (unsigned attempt=0;attempt<65536;attempt++) {
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+		pending=*Words(0xffb20040)?16U:0U; delta=0;
+		for (unsigned c=0;c<4;c++) {
+			unsigned value=*Words(0xffb20000+offset[c]);
+			if (value!=expected[c]) { pending|=1U<<c; delta=value-expected[c]; }
+		}
+		bool complete=!pending;
+#else
 		bool complete=!*Words(0xffb20040);
 		for (unsigned c=0;c<4;c++) complete &= *Words(0xffb20000+offset[c])==expected[c];
+#endif
 		if (complete && PacketIdle()) {
 			Words(0x7f800)[write?7:6]++; Words(0x7f800)[write?9:8]+=(bytes+63)/64; Fence(); return;
 		}
 	}
+#ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
+	// stage:58|worker[22:16]|write[15]|remote[13:4] at[14:5]|
+	// cmd-busy[4]|counter-mismatch[3:0]. detail:LAST mismatching counter's
+	// observed-minus-expected,mod2^32 (highest set bit identifies counter).
+	// pending==0 means the original final PacketIdle check rejected.
+	Checkpoint(0x58000000|(worker<<16)|(write?0x8000U:0U)|(((remote>>4)&1023U)<<5)|pending,delta);
+#endif
 	block_fault_park(); // UNKNOWN:no later packet/reset/restore/retry
 }
 static bool WaitPc(unsigned pc) { return pc==0x7204c || pc==0x72050; }

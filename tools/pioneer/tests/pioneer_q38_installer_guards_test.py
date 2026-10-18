@@ -41,6 +41,7 @@ def check(script, fault=None, restore=None, text_override=None):
         q43 = payloads[original.get('qualified43', original.get('qualified'))]
         q52 = payloads[original.get('qualified52', original['old'])]
         q54 = payloads[original.get('qualified54', original['old'])]
+        q55 = payloads[original.get('qualified55', original['old'])]
         path(original['stage']).mkdir(parents=True)
         installed = put(original['installed'], old)
         for key, pin in [('candidate', 'new'), ('client', 'clientsha'), ('inference', 'inferencesha')]:
@@ -55,6 +56,8 @@ def check(script, fault=None, restore=None, text_override=None):
                 put(original['prior'] + '/' + name, q52)
             if 'qualified54' in original:
                 put(original['prior'] + '/qualified54-frontend-backup', q54)
+            if 'qualified55' in original:
+                put(original['prior'] + '/prior55-vector-backup', q55)
         device = path(original['device'])
         device.parent.mkdir(parents=True)
         device.symlink_to('../../bin/tenstorrent_pci_probe')
@@ -130,7 +133,7 @@ def check(script, fault=None, restore=None, text_override=None):
             assert result.returncode == 0 and installed.read_bytes() == new, (script.name, result.stdout, result.stderr)
             if restore:
                 result = subprocess.run(['/bin/sh', str(local), restore], capture_output=True, text=True, timeout=15)
-                expected = old if restore == '--restore55' else q54 if restore == '--restore54' else q43 if restore == '--restore43' else q52
+                expected = old if restore == '--restore57' else q55 if restore == '--restore55' else q54 if restore == '--restore54' else q43 if restore == '--restore43' else q52
                 assert result.returncode == 0 and installed.read_bytes() == expected, (script.name, restore, result.stdout, result.stderr)
 
 
@@ -154,6 +157,8 @@ if __name__ == '__main__':
             restores.append('--restore54')
         if '--restore55' in script.read_text():
             restores.append('--restore55')
+        if '--restore57' in script.read_text():
+            restores.append('--restore57')
         for restore in restores:
             check(script, restore=restore)
             count += 1

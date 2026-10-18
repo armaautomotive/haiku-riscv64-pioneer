@@ -18,7 +18,7 @@ struct DispatchMachine:BlockMachine {
 	unsigned faultAt=0,corruptProof=UINT32_MAX,corruptWorker=0,badPcWorker=0,nonfiniteWorker=0;
 	unsigned stopSlowWorker=0; // vary completion order independently of index
 	unsigned stopSnapshotMode=0,pcSamples[119]={};
-	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false;
+	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false,stuckResponseTag=false;
 	DispatchMachine(const char* path,unsigned workers,unsigned type=12,unsigned inputs=5120)
 		:BlockMachine(path,8,0,1,nullptr,true),active(workers),kind(type),k(inputs) {
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(0,word)==(word<code.size()/4?Word(code,word*4):0));
@@ -114,7 +114,7 @@ struct DispatchMachine:BlockMachine {
 		if (Range(a,0xffb20000,40)) { unsigned w=(a-0xffb20000)/4; seen[w]=true; return command[w]^(badReadback && w==2?1:0); }
 		if (a==0xffb20040) { if (pending && packets!=faultAt) Packet(); return pending?1:0; }
 		for (unsigned c=1;c<4;c++) if (a==0xffb20040+c*0x800) return 0;
-		if (a>=0xffb20240 && a<0xffb202c0) return pending?1:0;
+		if (a>=0xffb20240 && a<0xffb202c0) return pending || (stuckResponseTag && responses)?1:0;
 		const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};
 		for (unsigned c=0;c<8;c++) if (a==0xffb20000+offsets[c]) return counts[c==6?2:c]^(badCounter && responses && c==0?1:0);
 		for (unsigned w=0;w<16;w++) if (a==0xffb20000+BlackholeDramSourceOffset(w)) return w?0x12340000+w:0x16005;
@@ -174,11 +174,29 @@ int main(int argc,char** argv)
 	}
 	for (unsigned packet:{1U,20U,40U}) {
 		DispatchMachine m(argv[1],7); m.faultAt=packet; assert(!m.RunRoot() && m.unknown && m.pending && m.packets==packet);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC
+		unsigned remote=m.command[7]?m.command[3]:m.command[0];
+		unsigned worker=m.Worker(m.command[7]?m.command[5]:m.command[2]);
+		unsigned stage=0x58000000|(worker<<16)|(m.command[7]?0x8000U:0U)|(((remote>>4)&1023U)<<5)|31U;
+		assert(m.l1[m.Index(0x17ffc0)]==stage);
+		assert(m.l1[m.Index(0x17ffc4)]==UINT32_MAX);
+#endif
 	}
 	for (unsigned fault=0;fault<3;fault++) {
 		DispatchMachine m(argv[1],7); m.badReadback=fault==0; m.badCounter=fault==1; m.mutateTasks=fault==2;
 		assert(!m.RunRoot() && m.unknown);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC
+	{
+		DispatchMachine m(argv[1],2); m.badCounter=true;
+		assert(!m.RunRoot() && m.unknown && !m.pending && m.packets==1 && !m.gathers);
+		assert(m.l1[m.Index(0x17ffc0)]==0x58010281 && m.l1[m.Index(0x17ffc4)]==UINT32_MAX);
+		DispatchMachine tag(argv[1],2); tag.stuckResponseTag=true;
+		assert(!tag.RunRoot() && tag.unknown && !tag.pending && tag.packets==1 && !tag.gathers);
+		assert(tag.l1[tag.Index(0x17ffc0)]==0x58010280 && !tag.l1[tag.Index(0x17ffc4)]);
+		puts("PASS58 ORIGINAL polling values distinguish pending packet/counter mismatch/tag-not-idle;exact remote/worker/delta;NO additional packet or result gather");
+	}
+#endif
 	puts("PASS OFFLINE actual root dispatcher instructions:1/2/7/119 synthetic peers,repeat+ALL119 STOP,ALL descriptors before doors/ALL physical completions before gathers,64 proof faults,nonfinite/PC/NoC/immutable-task faults;NO real-peer/native/kernel/graph/inference/speed qualification");
 }
 #endif

@@ -1,5 +1,39 @@
 # Native build status
 
+October18,21:39 UTC native57 FAILED two-worker first RUN,exit1/processgone:
+root_phase54000102,count1,marker464d3851,started1/completed0/held0. This
+is a transfer completion rejection,not the earlier peer2-status rejection;
+no peer fault-PC was captured. Cause STILL UNKNOWN. Saved exact host log
+/private/tmp/pioneer-q38-fault-native-failure-20261018-j.log. Haiku64/fullRAM
+and SSH remained responsive;graceful shutdown then channel1 off complete
+before21:34:53 UTC. NO retry/END/reset/restore/free/additional card read.
+Leave >=300s off,then ONE on pulse;ask for PSU-switch5min if no start.
+Candidate57 remains installed21835897,quarantined until physical cold boot.
+
+Native pinned preoptimization ordinary-file scheduler control3a0cfae9:
+4,322,409 metadata calls/6.241780s,exact497/47101/fingerprint94ab20f5488d9f1a,
+exit0. Optimized prior native run6461 calls/0.030242s. Different boots,
+NOT full model/card speed or a token-rate estimate.
+
+New OFFLINE58 transfer diagnostic65d8e69e/clientbdce5155,root44c1c731
+7932B,EXACT57 peer673313ca8040B,both original8KiB bounds. Fixed65536 poll
+limit/ALL original command+four counter reads and completion conditions
+unchanged. On failure copies ONLY those last already-read values into
+existing root checkpoint:phase58|worker[22:16]|write[15]|remote[13:4]
+at[14:5]|command-busy[4]|counter-mismatch[3:0];detail observed-expected
+for HIGHEST mismatching counter(mod2^32). Zero mask means final PacketIdle
+rejected. No additional NoC read/packet/host IO,retry/reset/proof relaxation.
+Separate58f2/58f3/model_inference0,NO58 inference binary/Assistant mode.
+ASan/UBSan actual root+real vector peers50rOIJWj,root fault mask/delta tests
+EY4zriXW,RUNojDhdOZ8,ENDQjHFvkM4,proofFr3wNCUc,handlereP45bRSu,boot7ojccm3W,
+sessionrdY2yjHU,MMIOdYgf97Pn,actual failed-clientST2LsEqa PASS.246 actual
+installer guard/restore cases PASS;helperc6549076 requires cold/unloaded
+57 and exact prior43/52/54/55 backups,preserves57 separately.54/55/56/57
+namespace handlersFWSVH27I/I6WIM2sG/lnKcmlEf/YGJC36pS and wrong-metadata
+sessions1YwnKr8B/0mvpTAW0/HNrD6WhX/MWVKAl9k all refuse58 before BEGIN/IO.
+Original root54/57 rebuild byte-identical026229e2/48631dfb;57 driver2183
+and default43 control2df0 unchanged. Not yet staged/native58.
+
 October18,21:30 UTC cold recovery powered on normally;fresh SD-free
 dispatch57-fault-20261018-j reached Haiku userland and advancing RTL ticks.
 SSH/ARP currently unavailable;NO card open,57 staging/install/run pending.
