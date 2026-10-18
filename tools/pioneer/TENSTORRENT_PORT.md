@@ -2,6 +2,39 @@
 
 ## Status
 
+### October17: native52 ALL120 passed;12..13x checked-call gain (October18,03:39 UTC)
+
+CURRENT Haiku UP/SSH/full64CPU+137034936320B RAM/NIC0b83,52/ABI2 1de41744
+installed AND LOADED,known clean/no active job/UNKNOWN/cold latch. New cold
+boot used unchanged pinned SD-free `cohort52-20261017-a`;installer0274540c
+passed TWO unloaded/no-owner proofs,preserved51 and qualified43. SDs out.
+
+ALL52 synthetic/authenticated suites for2/7/120 workers pass exact outputs
+and known-clean END:39 cases/1431 worker-matrix executions. Full-card final
+confirmation03:35:08;network0 errors/drops. Native52 logs synthetic-two,
+public-two,seven-combined,120-combined-20261017-a.log;Mac copies beside52
+build. Real cases INTERLEAVE memory-authenticated first/last16-row groups,
+NOT full contiguous matrices. Whole725504B sample MEMORY SHA before FD.
+
+Comparable120-worker warm checked calls:Q6 K5120/N16 per worker51=4.487617s,
+52=0.344090s;Q4 K17408 51=4.536407s,52=0.393477s. About12..13x for THESE
+primitive calls;real samples~0.343s/~0.391s respectively. First call still
+~26s to prepare all workers. Times include input staging/proofs,not pure
+matrix time,tokens/sec or full27B model performance. No generated27B tokens.
+52 verifies code at prepare+END (not each call),retains ALL other proofs;
+51 debug remains preserved. Restore ONLY via `switch-unloaded52.sh
+--restore43` on NEW cold/unloaded boot;no live replacement or UNKNOWN retry.
+
+OFFLINE whole-matrix host data adapter now binds exact source/layout/fleet
+schedule+epoch,formats correct Q8_0 vsQ8_K activations,checks whole result
+and assembles caller-private scratch without any CPU dot product or fallback.
+All498 quantized tensors x1/7/120 workers/21234 waves EACH against synthetic
+and real GGUF geometry pass,as do40 result/input/counter corruptions and10
+forged wave fields/cross-source/stale-epoch guards. It has NO FD/launch
+authority. Next:full-file authenticated persistent model session/graph
+integration and scalar unpack optimization. NOT inference/Assistant target.
+Firmware/OS/kernel/defaultLinux/dirty llama unchanged.
+
 ### October17: native shared-input51 ALL120 passed;52 staged (October18,03:16 UTC)
 
 CURRENT Haiku UP/SSH/full64CPU+137034936320B RAM/NIC0b83/zero network

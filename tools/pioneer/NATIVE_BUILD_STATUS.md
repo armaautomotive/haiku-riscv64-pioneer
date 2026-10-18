@@ -1,5 +1,34 @@
 # Native build status
 
+Latest checkpoint (October18,03:39 UTC): Haiku UP/SSH/full64CPU+RAM/NIC0b83,
+52/ABI2 1de41744 installed AND LOADED,KNOWN CLEAN,no active job/UNKNOWN/cold
+latch. Normal shutdown03:16:49,off before03:17:41,on03:20:42 after FULL180s.
+Same pinned SD-free `cohort52-20261017-a`,fresh fullCPU/RAM/no card module
+confirmed03:25:42;exact0274540c installer passed BOTH unloaded/no-owner
+proofs,preserved51ab7b913f AND qualified43 outside driver paths.
+
+Native52 ALL2/7/120-worker synthetic+authenticated suites PASS/exact/clean
+END (same39 cases/1431 worker matrices as51),last full-card confirmation
+03:35:08. No network errors/drops. Logs in52 staging:synthetic-two,
+public-two,seven-combined,120-combined-20261017-a.log;Mac copies beside52
+build. Real tests interleave authentic first/last16-row groups,NOT one
+contiguous checkpoint matrix. FULL725504B private MEMORY SHA before FD.
+120-worker warm Q6 K5120 checked call4.487617->0.344090s;Q4 K17408
+4.536407->0.393477s (51->52),about12..13x THESE primitive calls. Real
+warm Q6~0.343s,Q4 K17408~0.391s. Cold prepare still~26s. NOT tokens/sec,
+pure GPU timings,full-matrix/whole-model loading or27B inference/Assistant.
+
+OFFLINE host adapter now binds exact source+layout+fleet schedule/epoch,
+formats distinct Q8_0/Q8_K activations and assembles private matrix scratch
+from validated cohort outputs WITHOUT CPU products/substitution. All498
+quantized tensors x1/7/120workers,21234 waves EACH against synthetic+real
+GGUF geometry pass;40 result/input/counter corruptions+10 forged wave fields
+refuse atomically,stale/cross-source plans refused. This helper has NO FD/
+launch authority. Whole-file authentication/session/backend remain work in
+progress;not a registered target. Dirty llama untouched. Restore52 ONLY
+via `switch-unloaded52.sh --restore43` on NEW cold/unloaded boot. Never
+replace loaded modules or retry/reset/restore/free UNKNOWN.
+
 Latest checkpoint (October18,03:16 UTC): Haiku UP/SSH,64 CPUs/full RAM,
 NIC0b83/zero errors+drops.51ab7b913f installed AND LOADED,KNOWN CLEAN,
 NO active job/UNKNOWN/cold latch. Both SDs out. Normal shutdown02:58:19,

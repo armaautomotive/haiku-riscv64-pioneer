@@ -19,6 +19,7 @@ class PioneerQwen38FleetPlan {
 	std::vector<PioneerQ38FleetPart> jobs,empty;
 public:
 	bool Ready() const { return source && packed && source->Epoch()==epoch && source->Stable() && packed->Tiled() && packed->MatchesSource(*source); }
+	bool MatchesSource(const PioneerQwen38Gguf& model,const PioneerQwen38PackedPlan& layout) const { return Ready() && source==&model && packed==&layout; }
 	const std::vector<PioneerQ38FleetPart>& Jobs() const { return Ready()?jobs:empty; }
 	unsigned Tensor() const { return Ready()?selected:851; }
 	unsigned Workers() const { return Ready()?workerCount:0; }
