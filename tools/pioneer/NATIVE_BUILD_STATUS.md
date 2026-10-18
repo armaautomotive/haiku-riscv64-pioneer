@@ -1,5 +1,29 @@
 # Native build status
 
+Latest checkpoint (October18,04:54 UTC): Native public7643314f trial STILL
+RUNNING on52,at least161 learned projections through layer20 pass,about
+5.7GB retained. NO completed token/position or speed result yet,no UNKNOWN.
+Keep its sole owner/driver/power untouched until known-clean END.
+
+OFFLINE dispatcher793ae113 (7040B,stack4672B;Transfer112B/Peer32B) and
+persistent peer263015f2 reproduce exactly. ROOT actual-instruction fabric
+passes1/2/7/119 peers/types8/12/14 twice,ALL119 STOP,ALL64 peer-proof field
+faults,PC/nonfinite/NoC/immutable-task failures. Descriptor readbacks ALL
+precede ANY doorbell;ALL physical completions precede ANY output gather.
+
+Cooperative actual ROOT+1/2 actual PEER RV32/FPU/NoC emulators pass two
+jobs/type and six REAL checkpoint first/last row-group cases twice. One
+peer's UNKNOWN refuses all gathers. Exact FP32 parity ALWAYS required;
+injected1-bit errors refused. Secondary FP64 observer for artificial long
+unipolar input uses derived gamma_n=(n*u)/(1-n*u),n=panels+8,u=2^-24,
+against expanded unsigned affine terms BEFORE cancellation. Old strict
+observer/default tests and native independent full-FFN comparison unchanged.
+No numerical or validation code changed in native execution. Existing
+51..53 shared image still EXACT6baa910a. NO driver selects dispatcher/peer;
+NO kernel/native54,model target or speed qualification exists. Next is a
+SEPARATE persistent-wait proof schema/controller;never falsely report old
+per-call core.stopped=1 while peers remain running at their wait PCs.
+
 Latest checkpoint (October18,04:32 UTC): FULL public27B trial7643314f remains
 RUNNING on qualified52,graph coverage497/497;at least66 learned projections
 through layer8 pass. No completed position/token yet;no UNKNOWN/cold latch.

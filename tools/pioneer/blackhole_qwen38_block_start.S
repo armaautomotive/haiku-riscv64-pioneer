@@ -14,6 +14,9 @@ block_done:
 	sw a0,4(t0)
 	la t1,block_done
 	sw t1,0(t0)
+.ifdef TT_Q38_DISPATCH_ROOT
+	li t1,0x314d3851 /* Q8M1:OFFLINE persistent-dispatch root ONLY */
+.else
 .ifdef TT_Q38_SHARED_ROWS
 	li t1,0x31483851 /* Q8H1:shared root inputs,NOT driver50 */
 .else
@@ -27,12 +30,16 @@ block_done:
 .endif
 .endif
 .endif
+.endif
 	sw t1,8(t0)
 	lw t1,8(t0)
 	fence
 block_park: j block_park
 block_fault_park:
 	li t0,0x17ffc8
+.ifdef TT_Q38_DISPATCH_ROOT
+	li t1,0x464d3851 /* Q8MF:UNKNOWN,no later packet/reset/restore */
+.else
 .ifdef TT_Q38_SHARED_ROWS
 	li t1,0x46483851 /* Q8HF:NO retry/reset/restore after UNKNOWN */
 .else
@@ -43,6 +50,7 @@ block_fault_park:
 	li t1,0x46533851 /* Q8SF:NO retry/reset/restore after uncertain fetch */
 .else
 	li t1,0x46423851 /* Q8BF:NO success/stop permission */
+.endif
 .endif
 .endif
 .endif

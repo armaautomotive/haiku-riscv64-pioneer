@@ -33,10 +33,18 @@ struct RowsMachine:StreamMachine {
 		return l1[Index(0x17ffc4)]==groups*(inputs/16) && requests==tiles.size() && responses==requests && !pending;
 	}
 	bool CorrectRows() const {
-		if (matrixInstructions!=4*groups*(inputs/16)) return false;
+		if (matrixInstructions!=4*groups*(inputs/16)) {
+#ifdef PIONEER_Q38_REF_DIAGNOSTIC
+			fprintf(stderr,"ROW_DIAGNOSTIC matrix instructions%u expected%u type%u K%u\n",matrixInstructions,4*groups*(inputs/16),type,inputs);
+#endif
+			return false;
+		}
 		unsigned blocks=inputs/count;
 		for (unsigned group=0;group<groups;group++) {
 			float expected[16]={}; double reference[16]={},absolute[16]={};
+#ifdef PIONEER_Q38_REFERENCE_ROUNDING_BOUND
+			double expanded[16]={};
+#endif
 			for (unsigned b=0;b<blocks;b++) {
 				const auto& tile=tiles[group*blocks+b];
 				for (unsigned p=0;p<count/16;p++) {
@@ -48,6 +56,11 @@ struct RowsMachine:StreamMachine {
 						for (unsigned k=0;k<16;k++) {
 							unsigned e=k*16+row; uint16_t w=uint16_t(panel.operand[e/2]>>((e%2)*16)),a=vector[b*count+p*16+k];
 							dot+=int(w&1023)*((w&0x8000)?-1:1)*int(a&1023)*((a&0x8000)?-1:1);
+#ifdef PIONEER_Q38_REFERENCE_ROUNDING_BOUND
+							double wi=int(w&1023)*((w&0x8000)?-1:1),xi=int(a&1023)*((a&0x8000)?-1:1);
+							expanded[row]+=fabs(double(Float(panel.coefficient[row]))*Float(scales[b])*wi*xi)
+								+fabs(double(Float(panel.minimum[row]))*Float(scales[b])*xi);
+#endif
 						}
 						float product=(Float(panel.coefficient[row])*Float(scales[b]))*float(dot),correction=(Float(panel.minimum[row])*Float(scales[b]))*float(inputSum);
 						expected[row]+=product+correction;
@@ -60,7 +73,28 @@ struct RowsMachine:StreamMachine {
 					for (unsigned k=0;k<count;k++) { auto a=vector[b*count+k]; double v=double(decoded[k])*int(a&1023)*((a&0x8000)?-1:1)*Float(scales[b]); reference[row]+=v; absolute[row]+=fabs(v); }
 				}
 			}
-			for (unsigned row=0;row<16;row++) if (buffers[4096+group*16+row]!=Bits(expected[row]) || fabs(double(expected[row])-reference[row])>1e-6+absolute[row]*2e-6) return false;
+			for (unsigned row=0;row<16;row++) {
+				double bound=1e-6+absolute[row]*2e-6;
+#ifdef PIONEER_Q38_REFERENCE_ROUNDING_BOUND
+				// EXACT FP32 parity remains mandatory below. For a SECONDARY
+				// independent FP64 observer on long unipolar vectors,use the
+				// standard gamma_n=n*u/(1-n*u),u=2^-24 bound. n accumulations
+				// plus8 conservatively covers two affine multiply chains,their
+				// sum and original-row dequantization roundoff. Expanded sums
+				// include BOTH unsigned affine terms BEFORE cancellation,not
+				// just abs(dequantized_weight*input). Normal finite operands are
+				// already enforced by the image's separate contract tests.
+				double nu=double(inputs/16+8)*0x1p-24;
+				bound=1e-6+nu/(1-nu)*expanded[row];
+#endif
+				if (buffers[4096+group*16+row]!=Bits(expected[row]) || fabs(double(expected[row])-reference[row])>bound) {
+#ifdef PIONEER_Q38_REF_DIAGNOSTIC
+				fprintf(stderr,"ROW_DIAGNOSTIC type%u K%u group%u row%u actual%08x expected%08x FP64%.12g absolute%.12g delta%.12g\n",
+					type,inputs,group,row,buffers[4096+group*16+row],Bits(expected[row]),reference[row],absolute[row],fabs(double(expected[row])-reference[row]));
+#endif
+				return false;
+				}
+			}
 		}
 		for (unsigned row=groups*16;row<4096;row++) if (buffers[4096+row]!=0x7fc00000) return false;
 		return true;

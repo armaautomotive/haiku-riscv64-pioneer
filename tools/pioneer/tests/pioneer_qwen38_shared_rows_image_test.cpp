@@ -10,6 +10,7 @@ struct SharedRowsMachine:RowsMachine {
 	std::map<uint32_t,uint32_t> root;
 	uint32_t command[10]={}; bool readback[10]={};
 	unsigned inputReads=0; bool peer; uint32_t counterBase=0; bool badReadback=false;
+	unsigned selfRoute=7|(11<<6);
 	SharedRowsMachine(const char* path,unsigned type,unsigned k,unsigned groups,bool shared=true)
 		:RowsMachine(path,type,k,groups),peer(shared) {
 #ifndef PIONEER_Q38_PERSISTENT_IMAGE
@@ -18,7 +19,7 @@ struct SharedRowsMachine:RowsMachine {
 		memory[0x74000]=0x31483851; memory[0x74020]=0x47; memory[0x74024]=peer?1:0;
 		// Non-root self XY,including the harvested logical column7. The image
 		// must neither guess physical coordinates nor change its destination.
-		command[5]=7|(11<<6);
+		command[5]=selfRoute;
 		for (unsigned w=0;w<k/2;w++) {
 			root[0xa0000+w*4]=memory.at(0xa0000+w*4);
 			if (peer) memory[0xa0000+w*4]=0xdeadbeef;
@@ -71,7 +72,7 @@ struct SharedRowsMachine:RowsMachine {
 			assert(v==1 && drained && !pending && requests<packets.size());
 			const auto& p=packets.at(requests);
 			assert(command[0]==p.address && command[2]==p.route && command[3]==p.destination && command[8]==p.bytes);
-			assert(!command[1] && !command[4] && command[5]==(7|(11<<6)) && !command[6] && !command[7] && !command[9]);
+			assert(!command[1] && !command[4] && command[5]==selfRoute && !command[6] && !command[7] && !command[9]);
 			assert(readback[0] && readback[2] && readback[3] && readback[8]);
 			assert(!(p.bytes&63) && p.bytes<=16384);
 			requests++; pending=true; waits=0; doorbellRead=false; return;

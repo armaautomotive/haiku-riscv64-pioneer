@@ -7,15 +7,18 @@
 struct PersistentRows:SharedRowsMachine {
 	unsigned flitBase=0;
 	unsigned changeSource=UINT32_MAX;
+	unsigned logicalWorker;
 	bool changeDescriptor=false;
-	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups):SharedRowsMachine(path,type,k,groups) {
+	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker=69):SharedRowsMachine(path,type,k,groups),logicalWorker(worker) {
 		assert(inputReads>=2 && packets[inputReads-1].address==0x94000);
 		packets[inputReads-1].address=0xab000;
 		for (unsigned at=0;at<packets[inputReads-1].bytes;at+=4) {
 			root[0xab000+at]=root.at(0x94000+at); root.erase(0x94000+at);
 		}
 		for (unsigned w=0;w<16;w++) if (!memory.count(0x74000+w*4)) memory[0x74000+w*4]=0;
-		const uint32_t boot[]={0x32503851,69,7|(11<<6),0x16005,0,0,0,0};
+		const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
+		selfRoute=columns[worker/10]|((worker%10+2)<<6); command[5]=selfRoute;
+		const uint32_t boot[]={0x32503851,worker,selfRoute,0x16005,0,0,0,0};
 		for (unsigned w=0;w<8;w++) memory[0x74040+w*4]=boot[w];
 		for (unsigned w=0;w<16;w++) { memory[0x74100+w*4]=0; memory[0x74140+w*4]=0xdeadbeef; }
 		for (unsigned w=0;w<64;w++) memory[0x83f00+w*4]=0xdeadbeef;
@@ -57,7 +60,7 @@ struct PersistentRows:SharedRowsMachine {
 		requests=responses=0; matrixInstructions=0; doorbellRead=false;
 	}
 	bool Job(unsigned sequence,unsigned operation=1) {
-		memory[0x74028]=0x32503851; memory[0x7402c]=69;
+		memory[0x74028]=0x32503851; memory[0x7402c]=logicalWorker;
 		memory[0x74030]=sequence; memory[0x74034]=operation; memory[0x74100]=sequence;
 		auto frozenRoot=root;
 		for (;;) {
@@ -71,14 +74,15 @@ struct PersistentRows:SharedRowsMachine {
 		assert(pc==0x7204c && !memory.at(0x74150));
 		for (const auto& v:root) assert(memory.at(v.first>=0xab000?0x94000+v.first-0xab000:v.first)==v.second);
 		assert(memory.at(0x83f40)==groups*inputs/16 && memory.at(0x83f44)==sequence
-			&& memory.at(0x83f48)==69 && memory.at(0x83f4c)==0x32503851);
+			&& memory.at(0x83f48)==logicalWorker && memory.at(0x83f4c)==0x32503851);
 		for (unsigned i=0;i<10;i++) assert(memory.at(0x83f50+i*4)==command[i]);
-		assert(memory.at(0x83f78)==0x16005 && memory.at(0x83f7c)==(7|(11<<6)));
+		assert(memory.at(0x83f78)==0x16005 && memory.at(0x83f7c)==selfRoute);
 		for (unsigned i=32;i<48;i++) assert(memory.at(0x83f00+i*4)==(i==32?0x16005:0x12340000+i-32));
 		for (unsigned i=48;i<64;i++) assert(!memory.at(0x83f00+i*4));
 		return requests==packets.size() && CorrectRows();
 	}
 };
+#ifndef PIONEER_Q38_PERSISTENT_ROWS_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -130,3 +134,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual persistent mixed-quant peer instructions:repeated jobs/no reset,exact FP32+independent double,immutable root/private handshake/proof,duplicate inert,nonce wrap/skips/descriptor mutation refuse,UNKNOWN parks without retry,terminal STOP;NO driver/native/coordinator/graph/inference/speed qualification");
 }
+#endif

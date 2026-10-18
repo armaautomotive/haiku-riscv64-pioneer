@@ -2,6 +2,36 @@
 
 ## Status
 
+### October17: cooperative dispatcher+peers pass OFFLINE;native layer20 (October18,04:54 UTC)
+
+The native7643314f full-model smoke remains RUNNING on52:at least161
+learned projections through layer20 pass,~5.7GB retained. No completed
+token/position/steady-speed result or UNKNOWN. Do not change its owner,
+loaded driver or power. The following work is entirely OFFLINE.
+
+Root dispatcher793ae113 is7040B/4672B stack (Transfer112B/Peer32B),no libc,
+unqualified divide/byte-store or mutable globals. Strict actual-instruction
+fabric passes1/2/7/119 synthetic peers xQ8/Q4/Q6 twice and ALL119 terminal
+STOP,64 peer-proof corruptions,PC/nonfinite/NoC/task mutation failures.
+ALL descriptors+readbacks precede ANY doorbell;ALL physical completion/PC/
+reset checks precede ANY proof/output gather. No host DMA or peer code/
+boot/reset writes exist. Private kernel source/bank/task authority is still
+REQUIRED before any future launch;there is NO native driver selecting it.
+
+Actual root+1/2 actual persistent-peer emulators also pass two math/NoC jobs
+for each type,plus six authentic first/last GGUF row-group cases twice.
+One peer's uncertain transfer prevents ALL output gathers. Exact FP32
+reference parity is mandatory and injected1-bit errors are rejected. For
+artificial long unipolar inputs,ONLY the secondary independent FP64 observer
+uses a derived gamma_n bound(n=panels+8,u=2^-24) on expanded absolute affine
+terms before cancellation. This handles ordinary summation roundoff without
+relaxing exact FP32 parity;old/default observers/native execution unchanged.
+
+Root/peer images reproduce793ae113/263015f2;old51..53 image still6baa910a.
+No54 kernel/controller,registered target,native dispatch/inference or speed
+claim. New result semantics MUST report persistent WAIT,not fabricate the
+old per-job stopped flag;END must prove ALL119 terminal STOP before reset.
+
 ### October17: native model executing layer8;OFFLINE persistent peer passes (October18,04:32 UTC)
 
 Full public7643314f model smoke is STILL RUNNING on qualified52/ABI2.
