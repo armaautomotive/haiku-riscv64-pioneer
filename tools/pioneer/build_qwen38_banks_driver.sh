@@ -21,6 +21,7 @@ case "${PIONEER_Q38_PANEL_DRIVER:-0}" in
  3) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK'; variant=48;;
  4) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK -DTT_PIONEER_EXPERIMENTAL_Q38_STREAM'; variant=49;;
  5) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK -DTT_PIONEER_EXPERIMENTAL_Q38_STREAM -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS'; variant=50;;
+ 6) extra='-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK -DTT_PIONEER_EXPERIMENTAL_Q38_STREAM -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT'; variant=51;;
  *) exit 2;;
 esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
@@ -37,7 +38,7 @@ done
 umask 077
 mkdir -m 700 "$output"
 for source in PioneerPciProfile tenstorrent_pci_probe; do
- "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+ "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -fstack-usage \
   -ffreestanding -finline -fno-semantic-interposition -fno-tree-vectorize -fno-use-cxa-atexit \
   -fno-strict-aliasing -fno-delete-null-pointer-checks -mcmodel=medany -fpic \
   -D_KERNEL_MODE -DTT_PIONEER_EXPERIMENTAL_Q38_BANKS $extra "$@" \
@@ -53,7 +54,7 @@ libgcc=$("$cxx" -print-file-name=libgcc.a)
 shasum -a 256 "$output/tenstorrent_pci_probe-driver$variant"
 # Compile/link the default (feature disabled) branch too. This catches any
 # accidental new ABI dependency in the preserved ordinary driver build.
-"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+"$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -fstack-usage \
  -ffreestanding -finline -fno-semantic-interposition -fno-tree-vectorize -fno-use-cxa-atexit \
  -fno-strict-aliasing -fno-delete-null-pointer-checks -mcmodel=medany -fpic \
  -D_KERNEL_MODE "$@" -c "$project/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" \

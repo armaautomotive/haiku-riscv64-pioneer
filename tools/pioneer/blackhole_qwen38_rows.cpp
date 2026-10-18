@@ -74,6 +74,33 @@ static void FetchBlock(uint32_t address)
 	}
 	block_fault_park();
 }
+#ifdef PIONEER_Q38_SHARED_ROWS
+// FUTURE PRIVATE kernel descriptor only. This image has NO native handler.
+// Retarget ONLY an idle,read-only command to fixed root L1,self destination
+// unchanged. Never touch upper address/control/doorbell fields after UNKNOWN.
+static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,unsigned bytes)
+{
+	if (*Words(0xffb20040) || (*Words(0xffb20240)&255)) block_fault_park();
+	const unsigned offsets[]={0,8,12,32};
+	const uint32_t values[]={address,route,destination,bytes};
+	for (unsigned w=0;w<4;w++) {
+		*Words(0xffb20000+offsets[w])=values[w];
+		if (*Words(0xffb20000+offsets[w])!=values[w]) block_fault_park();
+	}
+}
+static void SharedInputs(unsigned inputs,unsigned blocks)
+{
+	// Root logical worker(1,2),fixed immutable vector/scales until EVERY peer
+	// completes. <=16KiB messages,64B alignment,padded scale tail is zero.
+	for (unsigned at=0;at<inputs*2;) {
+		unsigned bytes=inputs*2-at; if (bytes>16384) bytes=16384;
+		ReadCommand(0xa0000+at,1|(2<<6),0xa0000+at,bytes);
+		FetchBlock(0xa0000+at); at+=bytes;
+	}
+	ReadCommand(0x94000,1|(2<<6),0x94000,(blocks*4+63)&~63U);
+	FetchBlock(0x94000);
+}
+#endif
 #endif
 extern "C" unsigned block_main()
 {
@@ -82,9 +109,22 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_STREAM
 	unsigned inputs=job[5],blocks=inputs/count,groups=job[7];
 	uint32_t first=job[6];
-	if (job[0]!=0x31523851 || !PioneerQ38PanelTileBytes(type) || bytes!=PioneerQ38PanelTileBytes(type)
+	if (job[0]!=
+#ifdef PIONEER_Q38_SHARED_ROWS
+		0x31483851
+#else
+		0x31523851
+#endif
+		|| !PioneerQ38PanelTileBytes(type) || bytes!=PioneerQ38PanelTileBytes(type)
 		|| job[3] || job[4] || !groups || groups>16 || (inputs!=5120 && inputs!=6144 && inputs!=17408) || inputs%count
 		|| first<0x04000000 || (first&31) || uint32_t(groups*blocks*bytes)>0xc4000000-first || first>=0xc4000000) return 0;
+#ifdef PIONEER_Q38_SHARED_ROWS
+	// Both fields are PRIVATE kernel-derived,not new caller capabilities.
+	// Root uses0,peers1. Destination XY in command remains kernel-owned.
+	if (job[9]>1) return 0;
+	if (job[9]) SharedInputs(inputs,blocks);
+	ReadCommand(first,job[8],0x90000,bytes);
+#endif
 	for (unsigned b=0;b<blocks;b++) {
 		uint32_t magnitude=Words(0x94000)[b]&0x7fffffff;
 		if (magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return 0;

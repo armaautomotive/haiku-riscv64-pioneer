@@ -6,7 +6,7 @@ struct RowsMachine:StreamMachine {
 	unsigned groups;
 	RowsMachine(const char* root,unsigned type,unsigned inputs,unsigned rows)
 		:StreamMachine(root,type,inputs),groups(rows) {
-#ifndef PIONEER_Q38_BINARY_SCALE_IMAGE
+#if !defined(PIONEER_Q38_BINARY_SCALE_IMAGE) && !defined(PIONEER_Q38_SHARED_ROWS_MACHINE_ONLY)
 		for (unsigned w=0;w<2048;w++) assert(PioneerQ38RowsWord(w)==(w<code.size()/4?Word(code,w*4):0));
 #endif
 		memory[0x74000]=0x31523851; memory[0x7401c]=groups;
@@ -77,6 +77,7 @@ struct RowsMachine:StreamMachine {
 		}
 	}
 };
+#ifndef PIONEER_Q38_SHARED_ROWS_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -111,3 +112,4 @@ int main(int argc,char** argv)
 	printf("OFFLINE real multiple-row cases=%u\n",real);
 	puts("PASS OFFLINE actual mixed-quant fullK/multiple16-row groups through N256,no host intermediates,exact FP32+independent double references,immutable inputs/scales,bounds/canaries and cross-group UNKNOWN parks;NOT installed/native/multiworker/graph/inference/speed");
 }
+#endif

@@ -31,6 +31,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM)
 #error Q38 batch rows require the guarded fullK/all-bank owner
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_ROWS)
+#error Q38 cohort requires full saved-view/banked row ownership
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -1357,6 +1360,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	volatile uint32* q38PanelView=NULL;
 	uint32* q38PanelSaved=NULL;
 	bool q38PanelMapAttempted=false;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	uint32* q38CohortSaved[TT_Q38_COHORT_WORKERS]={};
+#endif
 #endif
 	PioneerRuntimeProfile runtimeProfile;
 	area_id runtimeAreas[5]={-1,-1,-1,-1,-1};
@@ -1409,6 +1415,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 		if (q38PanelArea>=B_OK) delete_area(q38PanelArea);
 		free(q38PanelSaved);
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+		for (unsigned w=1;w<TT_Q38_COHORT_WORKERS;w++) free(q38CohortSaved[w]);
+#endif
 #endif
 		for (unsigned i=0;i<5;i++) if (runtimeAreas[i]>=B_OK) delete_area(runtimeAreas[i]);
 		if (attentionArea>=B_OK) delete_area(attentionArea);
@@ -1432,20 +1441,35 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 	bool MapQ38Panel() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+		if (runtimeCore>=120 || (runtimeCore && !fleetEnabled) || !MapRuntime()) return false;
+		uint32*& saved=runtimeCore?q38CohortSaved[runtimeCore]:q38PanelSaved;
+		if (!saved) saved=(uint32*)malloc((TT_Q38_PANEL_VIEW_WORDS+1)*4);
+		if (!saved) return false;
+#else
 		if (runtimeCore || !MapRuntime()) return false;
+#endif
 		if (q38PanelView) return Q38PanelMappingStable();
 		if (q38PanelMapAttempted) return false;
 		q38PanelMapAttempted=true;
+#ifndef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 		q38PanelSaved=(uint32*)malloc((TT_Q38_PANEL_VIEW_WORDS+1)*sizeof(uint32));
 		if (!q38PanelSaved) return false;
+#endif
 		void* view=NULL;
 		q38PanelArea=map_physical_memory("P100A exact local Q38 panel probe saved L1",profile.bar0_host_start+0x1906e000,
 			TT_Q38_PANEL_VIEW_BYTES,B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
 		if (q38PanelArea<B_OK) return false;
 		q38PanelView=(volatile uint32*)view; return true;
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	bool Q38PanelMappingStable() { return runtimeCore<120 && (!runtimeCore || fleetEnabled) && q38PanelArea>=B_OK && q38PanelView && Q38PanelSavedWords(); }
+	uint32* Q38PanelSavedWords() { return runtimeCore<120?(runtimeCore?q38CohortSaved[runtimeCore]:q38PanelSaved):NULL; }
+	uint64 Q38CohortNow() { return uint64(system_time()); }
+#else
 	bool Q38PanelMappingStable() { return !runtimeCore && q38PanelArea>=B_OK && q38PanelView && q38PanelSaved; }
 	uint32* Q38PanelSavedWords() { return q38PanelSaved; }
+#endif
 	uint32 Q38PanelRead(uint32 a) {
 		return q38PanelView && !(a&3) && a>=TT_Q38_PANEL_VIEW_BASE && a-TT_Q38_PANEL_VIEW_BASE<TT_Q38_PANEL_VIEW_BYTES
 			?PioneerRead32(q38PanelView+(a-TT_Q38_PANEL_VIEW_BASE)/4):UINT32_MAX;
@@ -1901,6 +1925,10 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	PioneerQ38CohortLease* q38Cohort=NULL;
+	bool q38CohortRoutes=false;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	PioneerQ38StreamLease streamProbe;
 #endif
@@ -1951,9 +1979,23 @@ struct PioneerStoreContext {
 		initialized=(uint8*)calloc(capacity/4096,1);
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
-	~PioneerStoreContext() { delete[] fleet; free(initialized); free(hashes); }
+	~PioneerStoreContext() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+		delete q38Cohort;
+#endif
+		delete[] fleet; free(initialized); free(hashes);
+	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+		if (q38Cohort) {
+			if (q38Cohort->unsafe) return true;
+			for (unsigned w=0;w<120;w++) {
+				auto& n=q38Cohort->worker[w];
+				if (n.noc.recovery_required || n.image.running || n.image.unsafe || n.Store().pending || n.Store().recovery_required) return true;
+			}
+		}
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 		if (streamProbe.running || streamProbe.unsafe) return true;
 #endif
@@ -2087,6 +2129,10 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	PioneerStoreContext* context=cookie->context;
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	if (context->q38Cohort) clean=PioneerQ38CohortClose(context->io,context->baseline.baseline.baseline.baseline.dram,
+		context->banks,*context->q38Cohort,clean) && clean;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	clean=PioneerQ38PanelClose(context->io,context->baseline.baseline.baseline.baseline.dram,
 		context->baseline.baseline.baseline.noc,context->lease,context->banks,context->streamProbe,clean) && clean;
@@ -2471,7 +2517,13 @@ Q38PanelControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t le
 	if (operation==TT_PCI_PROBE_Q38_PANEL_SUPPORT) {
 		if (length!=sizeof(tt_q38_panel_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_panel_support support={TT_Q38_PANEL_CURRENT_DRIVER,TT_Q38_PANEL_ABI_VERSION,1,16,TT_Q38_PANEL_COLUMNS,0x5100};
+		const tt_q38_panel_support support={
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+			TT_Q38_COHORT_DRIVER,
+#else
+			TT_Q38_PANEL_CURRENT_DRIVER,
+#endif
+			TT_Q38_PANEL_ABI_VERSION,1,16,TT_Q38_PANEL_COLUMNS,0x5100};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_PANEL_RUN || length!=sizeof(tt_q38_panel_probe)) return B_BAD_VALUE;
@@ -2482,6 +2534,9 @@ Q38PanelControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t le
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	else if (c->q38Cohort) status=B_NOT_ALLOWED; // never overlap local and cohort L1 owners
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	else if (c->streamProbe.saved) status=B_NOT_ALLOWED; // overlapping L1 leases NEVER coexist
 #endif
@@ -2518,7 +2573,13 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	if (operation==TT_PCI_PROBE_Q38_STREAM_SUPPORT) {
 		if (length!=sizeof(tt_q38_stream_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
-		const tt_q38_stream_support support={TT_Q38_STREAM_DRIVER,TT_Q38_STREAM_ABI,TT_Q38_STREAM_OUTPUT_ROWS,17408,7,0};
+		const tt_q38_stream_support support={
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+			TT_Q38_COHORT_DRIVER,
+#else
+			TT_Q38_STREAM_DRIVER,
+#endif
+			TT_Q38_STREAM_ABI,TT_Q38_STREAM_OUTPUT_ROWS,17408,7,0};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation!=TT_PCI_PROBE_Q38_STREAM_RUN || length!=sizeof(tt_q38_stream_probe)) return B_BAD_VALUE;
@@ -2529,6 +2590,9 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->panelProbe.saved) status=B_NOT_ALLOWED;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	else if (c->q38Cohort) status=B_NOT_ALLOWED;
+#endif
 	else {
 		auto& dram=c->baseline.baseline.baseline.baseline.dram; auto& noc=c->baseline.baseline.baseline.noc;
 		PioneerQ38StreamExtent extent;
@@ -2552,6 +2616,83 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	release_sem(sLock); free(request); return status;
 }
 // PIONEER_Q38_STREAM_CONTROL_END
+#endif
+
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+// PIONEER_Q38_COHORT_PREPARE_BEGIN
+static bool
+PrepareQ38Cohort(PioneerStoreContext& c,unsigned workers)
+{
+	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
+	if (!workers || workers>120 || !c.io.SelectRuntimeCore(0)) return false;
+	bool ready=c.lease.ready;
+	if (!ready && !c.lease.saved) ready=PioneerResidentLeaseBegin(c.io,noc,c.lease);
+	if (!ready || !c.io.MapRuntime()) return false;
+	if (!c.q38Cohort) {
+		c.q38Cohort=new(std::nothrow) PioneerQ38CohortLease;
+		if (!c.q38Cohort) return false;
+		c.io.fleetEnabled=true; c.q38Cohort->worker[0].master=&c.lease; c.q38Cohort->worker[0].noc=noc;
+	}
+	if (!c.q38CohortRoutes) {
+		ready=BlackholeDramAllCoresHeld(c.io,dram);
+		for (unsigned w=1;w<120 && ready;w++) ready=PioneerWorkerNocProbe(c.io,dram,w,c.q38Cohort->worker[w].noc);
+		c.q38CohortRoutes=ready;
+	}
+	for (unsigned w=0;w<workers && ready;w++) {
+		auto& node=c.q38Cohort->worker[w];
+		ready=c.io.SelectRuntimeCore(w) && c.io.MapQ38Panel();
+		if (!ready) break;
+		if (c.q38Cohort->prepared<w+1) c.q38Cohort->prepared=w+1;
+		if (w && !node.Store().ready) ready=!node.Store().saved && PioneerQ38CohortPeerLeaseBegin(c.io,dram,w,node);
+		if (ready) ready=PioneerQ38CohortPrepareWorker(c.io,dram,c.banks,node,w);
+	}
+	return ready;
+}
+// PIONEER_Q38_COHORT_PREPARE_END
+// PIONEER_Q38_COHORT_CONTROL_BEGIN
+static status_t
+Q38CohortControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT) {
+		if (length!=sizeof(tt_q38_cohort_support)) return B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		const tt_q38_cohort_support support={51,1,120,256,17408,7,64,0};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_COHORT_RUN || length!=sizeof(tt_q38_cohort_probe)) return B_BAD_VALUE;
+	auto* request=(tt_q38_cohort_probe*)malloc(sizeof(tt_q38_cohort_probe)); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || !PioneerQ38CohortValid(*request)) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->panelProbe.saved || c->streamProbe.saved) status=B_NOT_ALLOWED;
+	else {
+		auto& dram=c->baseline.baseline.baseline.baseline.dram;
+		if (c->bytes!=PioneerResidentBanks::Total || !PioneerQ38CohortAuthorize(c->banks,dram,c->initialized,
+			uint32(c->bytes/4096),*request,nullptr)) status=B_ENTRY_NOT_FOUND;
+		else {
+			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
+			for (auto& row:request->output) for (auto& value:row) value=0;
+			if (PrepareQ38Cohort(*c,request->workers)) PioneerQ38CohortRun(c->io,dram,c->banks,*c->q38Cohort,
+				c->initialized,uint32(c->bytes/4096),*request);
+			bool unsafe=c->Unsafe() || request->result.recovery_required;
+			if (!unsafe && !c->io.SelectRuntimeCore(0)) unsafe=true;
+			if (unsafe) {
+				if (c->q38Cohort) PioneerQ38CohortQuarantine(*c->q38Cohort,c->banks);
+				c->banks.Quarantine(); c->lease.recovery_required=true; c->io.QuarantineHostPage();
+				request->result.recovery_required=1; sColdRecoveryRequired=true;
+				for (auto& row:request->output) for (auto& value:row) value=0;
+			}
+			status=user_memcpy(data,request,sizeof(*request));
+		}
+	}
+	release_sem(sLock); free(request); return status;
+}
+// PIONEER_Q38_COHORT_CONTROL_END
 #endif
 
 static status_t
@@ -2757,6 +2898,9 @@ CoordinatedSupportControl(PioneerProbeCookie* cookie,void* data,size_t length)
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	support.version=TT_Q38_STREAM_DRIVER; // guarded fullK primitive,NOT model/Assistant support
+#endif
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	support.version=TT_Q38_COHORT_DRIVER; // separate shared-input cohort qualification,NOT inference
 #endif
 	status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 }
@@ -3587,6 +3731,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 		return B_NOT_ALLOWED;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
+	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT || operation==TT_PCI_PROBE_Q38_COHORT_RUN)
+		return Q38CohortControl(instance,operation,data,length);
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	if (operation==TT_PCI_PROBE_Q38_STREAM_SUPPORT || operation==TT_PCI_PROBE_Q38_STREAM_RUN)
 		return Q38StreamControl(instance,operation,data,length);

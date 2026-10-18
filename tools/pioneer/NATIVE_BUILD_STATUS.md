@@ -1,5 +1,28 @@
 # Native build status
 
+Latest checkpoint (October18,02:58 UTC): Haiku still UP/loaded qualified50,
+known clean/no active job/UNKNOWN. Separate51 staged,NOT installed/native:
+driverab7b913f,clientffcabade,installer ecb1e8b9 in
+`pioneer-qwen38-cohort-20261017-a`. Native metadata client REFUSED old50
+before BEGIN;installer REFUSED loaded module with NO backup/incoming/driver
+writes. Default43control2df0e0f8 and rebuilt50ce918971 EXACT unchanged.
+
+Candidate shared-input image6baa910a is reproducible and independently
+executes21 synthetic+6 real contiguous matrix cases,exact FP32+double,
+root immutable/private peer destination,<=16KiB fixed-root reads,delayed/
+first-middle-last failed transfers/counter wrap/readback/idle faults. New
+51 ABI has logical64B offsets only;1512 extent shapes/seven banks/120-worker
+atomic initialized-span guards pass. Actual launch policy passes1/2/7/120
+worker shapes,36 fault placements plus120-worker first/middle/last faults,
+ALL completion/code/source/counter proofs before ANY stop/output. UNKNOWN
+quarantines ALL banks/workers/host;ZERO retry/reset/restore/free. Extracted
+prepare+handler+lock and real-client auth/corruption tests pass. Stack audit
+reduced handler frame11984->528B with heap-owned private extents,not a
+large120-element kernel-stack copy. Client rejects corrupt/truncated sample
+BEFORE card open;last-worker/unused-output/proof corruption closes ONLY.
+Native two-worker trial still pending;NOT graph/inference/tokens/speed.
+No OS/kernel/firmware/defaultLinux/Assistant/dirty llama changes.
+
 Latest source-only checkpoint (October18,02:42 UTC): current native50 state
 below unchanged/clean. OFFLINE exact binary normalization prototype passes
 all16777216 half/scale bit patterns,384 synthetic+996 real panel cases and

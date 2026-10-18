@@ -2,6 +2,29 @@
 
 ## Status
 
+### October17: shared-input cohort51 OFFLINE/staged (October18,02:58 UTC)
+
+Native50 still UP/loaded/known clean. Separate candidate51ab7b913f and
+CPU-check clientffcabade staged with exact-hash unloaded-only installer
+ecb1e8b9. Both new-client metadata refusal on old50 (BEFORE BEGIN) and
+loaded-installer refusal (NO driver/backup/incoming writes) verified.
+Rebuilt50ce918971/default43control2df0e0f8 remain EXACT unchanged.
+
+Shared-root image6baa910a passes actual21 synthetic+6 real contiguous matrix
+instruction cases,private self destinations/root immutable/bounded<=16KiB
+input fetches/exact FP32+double/UNKNOWN no retry. Separate51 ABI validates
+logical64B offsets/ALL covered initialized pages/1512 extent shapes/seven
+banks. Cohort policy tests1..120 workers and36 fault placements plus120-worker
+first/middle/last failures. ALL completion/code/source/counter proofs before
+ANY stop/output;UNKNOWN quarantines whole cohort+all banks+host,no reset/
+restore/free. Extracted real prepare/handler/lock and real-client auth/bulk/
+completion/numeric-corruption tests pass. Kernel-stack audit found and fixed
+nested large arrays:handler11984->528B,private authority now heap-owned.
+Candidate removes per-peer PCIe input copies;NOT native performance yet.
+Next is controlled cold recovery/two-worker trial,then7/120 if clean.
+NOT a sealed graph/full27B inference/token rate/Assistant target. Both SDs
+remain out;OS/kernel/firmware/defaultLinux/dirty llama unchanged.
+
 ### October17: exact binary normalization prototype OFFLINE (October18,02:42 UTC)
 
 Native50 remains loaded/known clean as below. A separate opt-in image uses
