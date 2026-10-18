@@ -1,5 +1,32 @@
 # Native build status
 
+Latest checkpoint (October18,04:03 UTC): Haiku UP/SSH/full64CPU+RAM/NIC0b83,
+driver52/ABI2 1de41744 STILL loaded. No UNKNOWN/cold latch. The complete
+original18973870528B public checkpoint passed native same-open-FD SHA256
+c600de03 using16b3534f,then all851 tensors/4342 tiled plan parts validated.
+
+Native full learned blk.0.ffn_down.weight Q4_K17408x5120 now passed TWO
+complete120-worker executions via aa713e8f. First47.089022s includes50,135,040B
+upload+cold preparation/proofs;retained repeat0.461979s,zero bit differences,
+no repeat upload,known-clean END. This proves whole-matrix repeatability,
+NOT independent numeric accuracy,LLM inference,steady tokens/sec or speedup.
+Evidence native-full-matrix-repeat.log beside52 build;native staging log
+full-matrix-repeat-20261017-a.log. Hardware was clean after that session.
+
+New standalone source/session/ggml bridge uses original same-FD weights,
+strict named Q8/Q4/Q6 batch-one matrices and private all-wave publication.
+No CPU product/reference/fallback in native code. Frozen ABI-matching runtime
+is linked,dirty llama implementation untouched. ASan/UBSan source/session
+and pristine pinned ggml bridge fault0..4 tests pass. Whole-model mode is
+EXPERIMENTAL/UNRUN,not an Assistant target or speed qualification.
+
+ONE detached native ggml FFN/export trial4fa88472 is IN PROGRESS,currently
+authenticating its own full source BEFORE accelerator FD. Do NOT launch a
+second accelerator job or alter loaded driver/power. Log
+pioneer-qwen38-cohort-sealed-20261017-a/native-ffn-ggml-export-20261017-a.log.
+Separate offline original-row FP64 observer is prepared but NOT run against
+native results yet. UNKNOWN always CLOSE ONLY/quarantine until cold recovery.
+
 Latest checkpoint (October18,03:39 UTC): Haiku UP/SSH/full64CPU+RAM/NIC0b83,
 52/ABI2 1de41744 installed AND LOADED,KNOWN CLEAN,no active job/UNKNOWN/cold
 latch. Normal shutdown03:16:49,off before03:17:41,on03:20:42 after FULL180s.

@@ -92,4 +92,5 @@ int main(int argc,char** argv)
 {
 	assert(argc<=2); Fixture fixture; PioneerQwen38Gguf model; assert(model.Open(fixture.file)); Check(model,fixture.file);
 	if (argc==2) { FILE* f=fopen(argv[1],"rb"); assert(f); PioneerQwen38Gguf real; assert(real.Open(f)); Check(real,f); fclose(f); }
+	return 0;
 }

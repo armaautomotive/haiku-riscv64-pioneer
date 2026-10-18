@@ -2,6 +2,37 @@
 
 ## Status
 
+### October17: full native learned FFN repeat passes;ggml bridge testing (October18,04:03 UTC)
+
+Haiku UP/SSH/full64CPU+RAM/NIC0b83;52/ABI2 1de41744 remains LOADED. Full
+same-FD public model authentication passed natively (16b3534f,c600de03,
+18973870528 bytes),then all851 tensors/4342 tiled plan parts parsed.
+
+The persistent52 session ran complete blk.0.ffn_down.weight Q4_K17408x5120
+twice with120 workers,not sample-group interleaving. First47.089022s includes
+50,135,040B upload and cold preparation/proofs. Retained repeat0.461979s,
+zero bit differences,no re-upload,clean END. This is whole-matrix
+REPEATABILITY,not independent arithmetic verification or27B token speed.
+Native full-matrix-repeat-20261017-a.log;local native-full-matrix-repeat.log
+beside52 build. Source/session ASan/UBSan tests pass failure/retention/close-
+only policies. Never retry/reset/restore/free an UNKNOWN owner.
+
+New separate ggml bridge supports exact named immutable learned Q8_0/Q4_K/
+Q6_K batch-one matrices only. Host buffers remain for CPU non-matrix ops;
+GPU failure stops graph,never invokes a CPU reference or replacement dot.
+Native model loader borrows SAME authenticated FILE (pinned loader does not
+close it);no reopened-path race. Pristine pinned ggml tests fault0..4 pass,
+including wrong names/types/strides/batches,source/epoch changes,exclusive
+one-shot context,failed dispatch and repeated Finish/free. Frozen pinned
+native libraries are linked;dirty llama implementation is untouched.
+
+ONE detached4fa88472 native ggml FFN/export trial is CURRENTLY running its
+own whole-source authentication BEFORE card FD. No concurrent card work,
+driver replacement or power action. Its output will be checked by a SEPARATE
+offline FP64 original-GGUF-row observer;that check is NOT complete yet.
+Full public one-token mode exists but is UNRUN/experimental. No27B generated
+tokens,steady-speed result,new Assistant mode or full21GiB residency claim.
+
 ### October17: native52 ALL120 passed;12..13x checked-call gain (October18,03:39 UTC)
 
 CURRENT Haiku UP/SSH/full64CPU+137034936320B RAM/NIC0b83,52/ABI2 1de41744
