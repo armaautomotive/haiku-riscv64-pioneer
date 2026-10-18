@@ -2,6 +2,94 @@
 
 ## Status
 
+### October17: full-rate NIC test and seven-bank storage sample passed;43 restored (October18,00:02 UTC)
+
+CURRENT: Haiku is reachable by pinned SSH at10.0.0.247, with64 CPUs and
+137,034,936,320 usable bytes. P100A remains installed; both SD cards are out.
+Final boot `post-restore43-20261017-a` verified NIC0b83ceed and qualified
+P100A43 SHA9e098d02. The card driver is UNLOADED on this boot. Assistant,
+card firmware, default Linux boot and dirty llama.cpp submodule are unchanged.
+No27B P100A inference, text quality, or requested-fast speed result exists.
+The authenticated19GB model and one-token CPU smoke described below passed.
+
+The exact `pioneer_rtl_serialize_install.sh` (SHA329c97e5) passed its Linux
+identity/card-COMMAND0000/kexec0/unmounted-CLEAN/package/default-boot gates,
+then private COW rehearsal with physical source read-only, then application.
+Only the NIC file was replaced, with full readback. Prior qualified NIC
+`fe6273c985de229e0c6d8fba9dcc27d7978cb9ab2b419670058ceb0198a13c00`
+is retained OUTSIDE driver directories at
+`/boot/home/pioneer-rtl-serialize-20261017-a/qualified-msi-fe627-backup`.
+Installed native candidate is
+`0b83ceed0071f3dab3f9b175355bd83fe7364176676264ae66d751ddba2b7c9a`.
+This remains a default-off build comparison, not a global compatibility change.
+
+`pioneer_rtl_fullrate_test.sh` SHAb954715e ran23:32:05–23:35:08 UTC:
+three fixed public-model64MiB leaves, three rounds, nine FRESH native files.
+ALL nine SHA checks passed:603,979,776B/576MiB, no throttling, retries,
+interface recovery, or GPU work. Final NIC counters had RX630,168,998B,
+TX11,485,640B, zero reported errors/drops. The one-client/exact-range public
+listener closed after the nine sends. Do NOT interpret183s (including disk
+writes/hashes) as link peak throughput. Native result:
+`/boot/home/pioneer-rtl-serialize-20261017-a/fullrate-20261017-a.log`.
+
+Read-only60-sample capture SHAdd92a45f stopped at sample4 after ONE2s ping
+timeout (`ifconfig=0,ping=2`). Data and SSH continued through all nine passes;
+post-load pings passed3/3, and final post-restoration pings passed3/3 with
+3.377/18.628/31.400ms and zero NIC errors/drops. Capture log is
+`.../network-capture-20261017-a.log`. The serialized IRQ/direct TX path was
+active, with no deferred fasttaskq CPU time. This supports a useful bounded
+improvement, NOT proof of the original failure's cause or long-term stability.
+Source-selection/nonrecursive-Giant/diagnostic/MSI tests pass ASan/UBSan.
+
+OPERATIONS: the original spin-idle-runtime-6 boot helper still expects old
+NICfe6273c9 and now correctly FAILS CLOSED. Use the separately pinned helper:
+`/mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-1.sh`
+with `prepare|boot SESSION 64 memory128-spin-idle6-nosd-control`.
+Helper SHA:
+`0bfe264777c2d75918b1d62a3eec35c7ecd94eb97035607df8491a877fd3b8f0`.
+Companion `pioneer_verify_samsung_journal_view_network-serialized-1.sh` SHA:
+`32b924b77480f315f5cca6415f0c0b7fdc7d19ed774403e9404fc646ac6f231d`.
+Only the NIC pin and verifier pin/path differ; original helpers remain intact.
+Kernel91c3de00/bundlef0dac326/profile/default boot are unchanged. Do not
+work around a failed helper guard by silently modifying its expected hash.
+
+After the model/NIC jobs finished, two parsed kernel-image checks established
+the P100A driver UNLOADED and no possible compute owners. Guarded install
+`pioneer_q38_banks_install.sh` SHA968e0970 installed storage-only44:
+`ca6c7fdf71658f7b53ee8c30a0ead6097d9dabc45a1343f548bc2e67544c1e67`.
+Native clientd5b2a742 `--support` succeeded, then `--exercise` passed at
+23:40:44–45 UTC. Repeated BEGIN refusedB_BUSY without destroying the owner;
+legacy operation refusedB_NOT_ALLOWED; foreign FD refusedB_BUSY and closing
+it did not end the owner. All14 first/last4KiB bank pages were written BEFORE
+any reads, then all14 distinct patterns matched. Logical3 used physical4,
+skipping harvested physical3. All56 NoC requests had KNOWN completion.
+END reported CLOSED/inactive/PCI restored/host released/cold=false; FD closed
+successfully. NO UNKNOWN/quarantine occurred. This is a14-page storage sample,
+NOT full21GiB capacity qualification, compute, or model inference.
+Native logs `pioneer-qwen38-banks-20261017-a/{support,exercise}-20261017-a.log`;
+qualified43 backup remains in that directory outside all driver paths.
+
+Storage44 changes the legacy ABI, so it was not left installed. Synced
+shutdown terminated SSH at23:44:22; no final halt marker was observed. Relay
+off completed23:46:47, full rest, on23:50:16. Default Linux recovered with
+clean Samsung journal, no kexec, card COMMAND0000. Exact offline restore
+`pioneer_q38_banks_restore43.sh` SHA
+`5e0ec5a63f7705f7bffe3666207ecaa811dc89729349bed2e0406966b5a40de9`
+passed private read-only-source COW rehearsal, then one-file application and
+readback. Temporary44 is preserved at
+`/boot/home/pioneer-restore43-20261017-a/experimental44-ca6-backup`.
+Both checkfs checks reported0 missing/duplicate blocks and unchanged17,665
+freeable blocks; no repair ran. Final native qualified43 full SHA:
+`9e098d02dc9646bebb9f8a1ae076fc68cbf834541cd8f7d09cd4142cfa43d7bd`.
+NIC, package, symlink and default boot checks passed; COW/NBD cleaned up.
+
+Model full SHA c600de03 remains accepted at its final native filename.
+Remaining27B gates: full-capacity/model upload qualification, fast mixed
+Q4_K/Q6_K/Q8_0 Tensix kernels, activation integration, complete64-layer
+hybrid GDN/attention/cache/sampling, native quality and steady-speed tests.
+Existing host tiling/math/RV32 tests and this storage sample do NOT implement
+those gates. No new fast27B Assistant target is advertised.
+
 ### October17: native27B authenticated; CPU smoke passed; NIC trial next (23:21 UTC)
 
 No27B P100A inference or requested-fast result yet. Qualified43 is unchanged,

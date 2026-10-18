@@ -1,58 +1,62 @@
 # Native build status
 
-Latest checkpoint (October17,23:21 UTC): P100A installed; both SD cards
-out. Board powered off/resting for offline NIC trial. Last unchanged SD-free
-handoff had64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
-Installed qualified43 driver SHA9e098d02 is unchanged. Its last qualified
-fixed Qwen3-0.6B Q8_0 result was7.428707..7.557277tok/s; requested-fast
-Qwen/27B and a new Assistant performance target remain UNACHIEVED.
+Latest checkpoint (October18,00:02 UTC / October17 Vancouver): Haiku is
+running, SSH10.0.0.247 responds, P100A installed, both SD cards out. SD-free
+handoff verified64 CPUs and137,034,936,320 total usable bytes (127.62GiB).
+Tested serialized NIC SHA0b83ceed is retained. Qualified P100A43 SHA9e098d02
+was RESTORED offline after the clean storage44 test; card driver is UNLOADED
+on this boot. Assistant/firmware/default Linux boot/dirty llama submodule
+are unchanged. Requested-fast27B P100A inference remains UNACHIEVED.
 
-Requested Qwen3.8-27B Q4_K_M18,973,870,528B now passes WHOLE native SHA
+The default-off HAIKU_PIONEER_RTL_SERIALIZE variant addresses a source-level
+locking mismatch: send/ioctl/tick use Giant, MPSAFE interrupt bypasses it.
+It serializes that interrupt, directly rings the existing TX doorbell after
+descriptor sync, and avoids recursive Giant on system-error reset. Actual
+production selection/compatibility/helper tests pass ASan/UBSan, preserving
+default/foreign profiles. Candidate0b83ceed reproduces across two builds.
+Exact Linux installer passed read-only-source private COW rehearsal, then
+one-file application/readback. Qualified prior NICfe6273c9 is preserved
+outside driver directories. Native nine FRESH unthrottled64MiB transfers
+passed ALL hashes:603,979,776 bytes, ZERO retries/interface resets/GPU work,
+zero reported NIC errors/drops. One2s ping timed out under load; SSH/data
+continued, and post-load/final three-ping checks passed. This is bounded
+native qualification, NOT proof of the old stall's cause or long-term cure.
+The public source listener closed. Diagnostic900-tick limit is bounded.
+
+IMPORTANT: use the separate Linux handoff helper
+`/mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-1.sh`
+(SHA0bfe2647) with `prepare|boot SESSION 64 memory128-spin-idle6-nosd-control`.
+Its companion verifier SHA32b924b7 pins NIC0b83ceed. The preserved ORIGINAL
+spin-idle-runtime-6 helper expectsfe6273c9 and now correctly FAILS CLOSED.
+Kernel/bundle/64-CPU/full-RAM profile are unchanged; see exact pins below.
+
+Requested Qwen3.8-27B Q4_K_M18,973,870,528B passes WHOLE native SHA
 `c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747`.
-After user authorized restart/network work,unreachable SSH required one
-relay off hold/180s rest/on pulse; this was NOT a confirmed graceful Haiku
-shutdown. Default Linux recovered,then the unchanged64-CPU/full-RAM handoff
-restored Haiku. A local-disk repair route was checked,but the existing AHCI
-second-disk isolation hides the Linux build disk; that safeguard was KEPT.
-Linux-staged repair blocks are only spare copies,not used by Haiku.
-Three fixed64MiB leaves were freshly copied with16KiB source bursts/~1MiB/s,
-ALL passed native SHA on FIRST attempts with ZERO interface recoveries.
-Bounded60-sample UART/network capture stayed responsive;209MB received with
-zero RX/TX errors or drops at completion. This is a WORKAROUND,not a NIC fix.
-Guarded native patch compared entire old leaves to preserved bad parts,then
-patched ONLY the unpublished assembly. Whole SHA passed23:10:41 UTC BEFORE
-publication; read-only native851-tensor/8,162,688-value inspection passed.
-Original bad parts/repair inputs remain preserved. Public sender CLOSED.
-One-token32-thread CPU-only smoke PASSED23:16:41 UTC. It reports CPU only,
-zero GPU layers/KV/op offload,one unwarmed token taking196.82s; this is NOT
-a text-quality or steady-speed benchmark. No27B GPU result. Qualified43 and
-NIC MSI-only SHAfe6273c9 remain unchanged; card driver is still unloaded.
+Three authenticated leaves repaired ONLY the unpublished assembly after
+entire-old-leaf checks; whole SHA passed BEFORE final-name publication.
+851 layouts/8,162,688 finite boundary values passed native inspection.
+Original bad parts/repair inputs remain preserved. CPU-only one-token smoke
+passed with32 threads/zero offload:196.82s for ONE unwarmed token. This is
+NOT text quality, steady speed, or a P100A performance result.
 
-Default-off HAIKU_PIONEER_RTL_SERIALIZE comparison addresses a source-level
-locking risk: native send/ioctl/tick use Giant,but MPSAFE interrupt does not.
-It serializes that interrupt,directly issues the existing TX doorbell instead
-of queuing a NEEDSGIANT callback reset could drain,and avoids recursive Giant
-acquisition on system-error reset. Actual production selection/compatibility
-interrupt/helpers pass ASan/UBSan/default/foreign-profile tests. Candidate
-SHA0b83ceed reproduces across two builds; MSI control1a2e242c is NOT the backup.
-900 bounded read-only NIC ticks are enabled only for this private comparison.
-Normal synced Haiku shutdown terminated SSH; no final completion marker was
-observed. Finished one relay off hold at23:20 UTC;180s rest required before on.
-Offline exact-target/COW-rehearsal/rollback installer is prepared,NOT RUN.
-Candidate is NOT installed or native-qualified; live stall cause unproven.
-New OFFLINE exact GGUF reader/seven-bank packed blueprint, hybrid math,
-packed integer dots, Q8_K/Q8_0 activation quantization and four actual local
-RV32 images pass independent
-ASan/UBSan and strict instruction/memory tests. They are NOT selected by
-any driver/backend/Assistant. Separate experimental44 seven-bank STORAGE-only
-kernel ABI/immutable route ownership and all-bank quarantine now build/link
-and pass host policy/actual control-handler tests. Reproducible candidate
-SHAca6c7fdf/clientd5b2a742 are staged separately,NOT installed/exercised. Installed
-43 correctly refuses the metadata-only new ABI BEFORE any GPU work. Native
-memory qualification,fast mixed Tensix kernels,activation integration,full
-graph and whole-model quality/performance qualification remain. Card
-firmware/default Linux boot/Assistant and user's dirty
-llama.cpp submodule are unchanged. See the current
+Experimental storage-only44 ca6c7fdf/clientd5b2a742 passed the native sample:
+exclusive seven-bank owner, repeated/foreign BEGIN and legacy refusals,
+write ALL14 distinct first/last4KiB pages then independently read all14,
+56 known NoC requests, clean END/PCI restore/host release, NO UNKNOWN.
+This is NOT full21GiB capacity qualification, compute, or model inference.
+After synced shutdown/cold recovery, exact restore helper SHA5e0ec5a6 passed
+private COW rehearsal/application; final native readback is qualified43
+SHA9e098d02. Temporary44 backup is preserved outside driver directories.
+Both offline checkfs runs reported0 missing/duplicate blocks and unchanged
+17,665 freeable blocks; no filesystem repair was performed.
+
+OFFLINE exact GGUF reader/lossless tiling/seven-bank packed blueprint,
+hybrid math, packed dots, activation quantizers and four local RV32 images
+pass host tests but are NOT selected by driver/backend/Assistant. Fast
+mixed Tensix kernels, bulk model upload, activation integration, full graph
+and whole-model quality/steady-speed qualification remain. Qualified43's
+last fixed Qwen3-0.6B Q8_0 result remains7.428707..7.557277tok/s, not fast27B.
+See the current
 [P100A status](TENSTORRENT_PORT.md#status) and the
 [Assistant integration record](../../src/apps/assistant/README.md#p100a-integration-verification-on-pioneer-2026-10-15).
 See [the current P100A bring-up record](TENSTORRENT_PORT.md) for exact artifacts,
