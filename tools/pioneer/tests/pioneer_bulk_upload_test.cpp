@@ -45,6 +45,10 @@ struct BulkMock:StoreMock,OutputBufferMock {
 		assert(!hostDirty && OutputBufferMock::allocated && !OutputBufferMock::cached && w<4096); hostReads++;
 		return OutputBufferMock::data[w]^((doorbells>=6 && w==lateWord)?1:0);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	uint64_t BulkHostPairLoad(unsigned w) { assert(!(w&1) && w<4095); uint64_t low=BulkHostLoad(w); return low|(uint64_t(BulkHostLoad(w+1))<<32); }
+	void BulkHostPairStore(unsigned w,uint32_t low,uint32_t high) { assert(!(w&1) && w<4095); BulkHostStore(w,low); BulkHostStore(w+1,high); }
+#endif
 	void ResidentNocWrite(uint32_t offset,uint32_t value) {
 		if (offset!=0x40) { StoreMock::ResidentNocWrite(offset,value); return; }
 		assert(!uncertain && !pending && !hostDirty && value==1 && config==0x16005);

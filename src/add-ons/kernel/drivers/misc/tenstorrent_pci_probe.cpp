@@ -37,6 +37,9 @@
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT)
 #error Q38 sealed cohort requires the exclusive immutable-image cohort owner
 #endif
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED)
+#error Q38 payload blocks require the exclusive boundary-code-sealed cohort owner
+#endif
 
 int32 api_version = B_CUR_DRIVER_API_VERSION;
 static pci_module_info* sPCI;
@@ -1557,6 +1560,18 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	void BulkHostStore(unsigned w,uint32 value) {
 		if (w<TT_BULK_UPLOAD_WORDS && outputArea>=B_OK && outputPage) outputPage[w]=B_HOST_TO_LENDIAN_INT32(value);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	uint64 BulkHostPairLoad(unsigned w) {
+		typedef uint64 Alias64 __attribute__((__may_alias__));
+		return !(w&1) && w<TT_BULK_UPLOAD_WORDS-1 && outputArea>=B_OK && outputPage
+			?B_LENDIAN_TO_HOST_INT64(*reinterpret_cast<const volatile Alias64*>(outputPage+w)):UINT64_MAX;
+	}
+	void BulkHostPairStore(unsigned w,uint32 low,uint32 high) {
+		typedef uint64 Alias64 __attribute__((__may_alias__));
+		if (!(w&1) && w<TT_BULK_UPLOAD_WORDS-1 && outputArea>=B_OK && outputPage)
+			*reinterpret_cast<volatile Alias64*>(outputPage+w)=B_HOST_TO_LENDIAN_INT64(uint64(low)|(uint64(high)<<32));
+	}
+#endif
 	struct PayloadIO {
 		volatile uint32* view;
 		void PayloadFence() { PioneerIoFence(); }
@@ -1573,6 +1588,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 			*reinterpret_cast<volatile Alias64*>(view+w)=B_HOST_TO_LENDIAN_INT64(uint64(low)|(uint64(high)<<32));
 		}
 	};
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	PayloadIO Q38PayloadData(uint32 a) { return PayloadIO{q38PanelView+(a-TT_Q38_PANEL_VIEW_BASE)/4}; }
+#endif
 	bool RuntimePayloadRead(unsigned first,unsigned words,uint32* output) {
 		if (!output || !runtimeMapped || !runtimeBuffers || !words || first!=4096 || words>4096
 			|| first>=runtimeBufferWords || words>runtimeBufferWords-first) return false;

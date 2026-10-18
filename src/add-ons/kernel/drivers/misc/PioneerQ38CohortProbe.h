@@ -4,7 +4,10 @@
 #include "PioneerQ38CohortProtocol.h"
 #include "PioneerQ38CohortImage.h"
 #include "PioneerComputeFleet.h"
-// OFFLINE candidate policy. No installed driver dispatches this protocol.
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+#include "PioneerQ38Payload.h"
+#endif
+// Isolated experimental cohort policy,not a production/Assistant target.
 // One all-bank owner,one root input upload,read-only peer fetches. No splitK.
 struct PioneerQ38CohortWorker {
 	tt_compute_noc_result noc={};
@@ -97,11 +100,26 @@ template<class IO> bool PioneerQ38CohortCommandMatches(IO& io,const PioneerQ38Co
 }
 template<class IO> bool PioneerQ38CohortInputsMatch(IO& io,const tt_q38_cohort_probe& job)
 {
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	unsigned padded=((job.inputs/PioneerQ38CohortBlockInputs(job.type))*4+63)&~63U;
+	bool input=PioneerQ38PayloadCompare(io,0xa0000,job.activation,job.inputs/2);
+	bool scales=PioneerQ38PayloadCompare(io,0x94000,job.scales,padded/4);
+	return input && scales;
+#else
 	bool okay=true;
 	for (unsigned w=0;w<job.inputs/2;w++) okay &= io.Q38PanelRead(0xa0000+w*4)==job.activation[w];
 	unsigned padded=((job.inputs/PioneerQ38CohortBlockInputs(job.type))*4+63)&~63U;
 	for (unsigned w=0;w<padded/4;w++) okay &= io.Q38PanelRead(0x94000+w*4)==job.scales[w];
 	return okay;
+#endif
+}
+template<class IO> bool PioneerQ38CohortStage(IO& io,uint32_t a,const uint32_t* input,unsigned words)
+{
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	return PioneerQ38PayloadStage(io,a,input,words);
+#else
+	return PioneerQ38PanelStage(io,a,input,words);
+#endif
 }
 template<class IO> bool PioneerQ38CohortRun(IO& io,const tt_dram_samples_result& dram,PioneerResidentBanks& banks,
 	PioneerQ38CohortLease& lease,const uint8_t* initialized,uint32_t initializedPages,tt_q38_cohort_probe& job)
@@ -116,8 +134,8 @@ template<class IO> bool PioneerQ38CohortRun(IO& io,const tt_dram_samples_result&
 		if (!PioneerQ38CohortHeld(io,dram,banks,lease,TT_Q38_COHORT_PER_CALL_CODE)) { unknown=true; break; }
 		if (!io.SelectRuntimeCore(0)) { unknown=true; break; }
 		unsigned padded=((job.inputs/PioneerQ38CohortBlockInputs(job.type))*4+63)&~63U;
-		if (!PioneerQ38PanelStage(io,0xa0000,job.activation,job.inputs/2)
-			|| !PioneerQ38PanelStage(io,0x94000,job.scales,padded/4)) break;
+		if (!PioneerQ38CohortStage(io,0xa0000,job.activation,job.inputs/2)
+			|| !PioneerQ38CohortStage(io,0x94000,job.scales,padded/4)) break;
 		// Stage EVERY participant before any arm/release. Only root receives
 		// activation/scales from PCIe;the immutable peers fetch fixed root L1.
 		for (unsigned w=0;w<job.workers;w++) {
@@ -125,7 +143,7 @@ template<class IO> bool PioneerQ38CohortRun(IO& io,const tt_dram_samples_result&
 			if (!io.SelectRuntimeCore(w) || !PioneerQ38PanelHeld(io,dram,node.noc,node.Store(),banks)) { unknown=true; break; }
 			const uint32_t descriptor[]={TT_Q38_COHORT_MARKER,job.type,PioneerQ38PanelProbeBytes(job.type),0,0,
 				job.inputs,extent[w].address,job.part[w].groups,extent[w].route,unsigned(w!=0)};
-			if (!PioneerQ38PanelStage(io,0x74000,descriptor,10)) { staged=false; break; }
+			if (!PioneerQ38CohortStage(io,0x74000,descriptor,10)) { staged=false; break; }
 			for (unsigned row=0;row<job.part[w].groups*16;row++) io.Q38PanelWrite(0x84000+row*4,0x7fc00000);
 			for (unsigned row=0;row<job.part[w].groups*16;row++) if (io.Q38PanelRead(0x84000+row*4)!=0x7fc00000) staged=false;
 			const uint32_t command[]={extent[w].address,0,extent[w].route,0x90000,0,PioneerWorkerX(w)|(PioneerWorkerY(w)<<6),
@@ -209,8 +227,13 @@ template<class IO> bool PioneerQ38CohortRun(IO& io,const tt_dram_samples_result&
 		for (unsigned w=0;w<job.workers;w++) {
 			if (!io.SelectRuntimeCore(w)) { unknown=true; break; }
 			auto& core=r.core[w]; core.state=TT_RUNTIME_PASSED;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+			if (!PioneerQ38PayloadReadOutput(io,job.part[w].groups*16,job.output[w])) { unknown=true; break; }
+#endif
 			for (unsigned row=0;row<job.part[w].groups*16;row++) {
+#ifndef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
 				job.output[w][row]=io.Q38PanelRead(0x84000+row*4);
+#endif
 				if ((job.output[w][row]&0x7f800000)==0x7f800000) core.state=r.state=TT_RUNTIME_NONFINITE;
 			}
 		}

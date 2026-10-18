@@ -22,4 +22,10 @@ for sourceName in probe control; do
   -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED -I"$temporary" "$directory/pioneer_q38_cohort_${sourceName}_test.cpp" -o "$temporary/sealed-$sourceName"
  ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/sealed-$sourceName"
 done
+for sourceName in probe control; do
+ ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+  -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD \
+  -I"$temporary" "$directory/pioneer_q38_cohort_${sourceName}_test.cpp" -o "$temporary/payload-$sourceName"
+ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/payload-$sourceName"
+done
 printf 'Offline cohort policy evidence retained at %s\n' "$temporary"

@@ -2,6 +2,37 @@
 
 ## Status
 
+### October17: complete native ggml FFN independently verified;full model trial running (October18,04:16 UTC)
+
+Haiku UP/SSH/full64CPU+RAM/NIC0b83,52/ABI2 1de41744 remains LOADED. Native
+4fa88472 bridge executed complete Q4_K FFN17408x5120 twice with120workers,
+retained repeat0.464385s,clean END. Exported ALL5120 results pass a SEPARATE
+offline FP64 dot from original row-major GGUF dequantization,max absolute
+1.5499535948e-6,relative L2 6.19988202096e-7,cosine1. Deliberate first/middle/
+last row errors are rejected. Mac full source SHA c600de03 verified again.
+This is one learned matrix,NOT27B text generation/tokens/sec. Observer is
+not linked into native executable or used for fallback/validation overhead.
+
+ONE detached7643314f public four-token generation trial started04:10 UTC;
+currently authenticating its own SAME opened source FILE. Graph reservation
+must recognize all497 learned projections BEFORE card FD. Same-FD model
+loader uses frozen matching llama runtime,original quantization/no CPU extra
+weight repacking. Distinct timing counters separate source permutation,
+checked bulk transfer and checked matrix calls. Repeated positions must
+retain all weights/no upload. This mode is EXPERIMENTAL,not yet passed or
+an Assistant target. Leave its accelerator owner,driver and power alone.
+
+Candidate53/ABI3 is OFFLINE ONLY,not installed:fixed allowed SRAM descriptor/
+input/scale/output DATA ranges use existing phase-fenced32/64-bit helpers;
+ordinary noncached HOST RAM fills/scans use aligned pairs with exact per-word
+comparison. ALL six bulk transfer proofs,source/command/counter/completion/
+PC/stop/code-boundary/UNKNOWN policies remain. No NoC/reset/control fence
+changes or new DMA/route/code capability. Driver8d01244c,client20e5dced
+build;default43 control2df0e0f8 and feature-disabled521de41744 reproduce
+byte-for-byte. ASan/UBSan full payload bounds/drop/corrupt/canary tests,
+actual51/52/53 policy+extracted kernel controls,client faults and ordinary/
+paired bulk suites pass. No native53 arithmetic or performance result.
+
 ### October17: full native learned FFN repeat passes;ggml bridge testing (October18,04:03 UTC)
 
 Haiku UP/SSH/full64CPU+RAM/NIC0b83;52/ABI2 1de41744 remains LOADED. Full

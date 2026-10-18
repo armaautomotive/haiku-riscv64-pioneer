@@ -35,6 +35,11 @@ case "${PIONEER_Q38_COHORT_SEALED:-0}" in
  1) [ "$source" = pioneer_q38_cohort_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_COHORT_PAYLOAD:-0}" in
+ 0) ;;
+ 1) [ "$source" = pioneer_q38_cohort_probe ] && [ "${PIONEER_Q38_COHORT_SEALED:-0}" = 1 ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_ROWS_CLIENT:-0}" in
  0) ;;
  1) [ "$source" = pioneer_q38_stream_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS";;

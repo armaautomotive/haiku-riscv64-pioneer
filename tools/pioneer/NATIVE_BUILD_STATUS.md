@@ -1,5 +1,33 @@
 # Native build status
 
+Latest checkpoint (October18,04:16 UTC): Haiku UP/SSH/fullCPU+RAM/NIC0b83,
+52/ABI2 1de41744 remains LOADED,NO UNKNOWN/cold latch. Native4fa88472 ggml
+bridge ran the COMPLETE learned FFN17408x5120 twice,retained repeat0.464385s,
+clean END/export. Separate offline FP64 observer from ORIGINAL row-major
+GGUF passes ALL5120 rows:max absolute1.5499535948e-6,relative L2
+6.19988202096e-7,cosine1. It rejects injected first/middle/last row errors.
+The CPU observer is NOT linked into native inference/used as a fallback.
+Full original Mac GGUF SHA c600de03 was independently verified again.
+Native log/output and independent-full-ffn-reference.log retained beside52
+build. These are NOT27B generated tokens or model speed qualifications.
+
+ONE detached FULL public four-token model trial7643314f is RUNNING since
+04:10 UTC,currently authenticating its own SAME opened FILE. It will first
+require graph recognition of ALL497 learned projections BEFORE card access,
+then upload weights lazily and generate four positions without CPU reference
+or GPU-error fallback. Source/repack,checked-bulk and checked-run clocks are
+separate diagnostics. Log native-public-four-tokens-20261017-a.log in52
+staging. Do NOT start another card job or touch driver/power while it runs.
+
+OFFLINE ONLY candidate53/ABI3 adds whitelisted32/64-bit phase-fenced SRAM
+DATA blocks and paired ordinary uncached HOST RAM transfers. Every data bit,
+six bulk proofs,ALL completion/source/command/counter/UNKNOWN rules remain;
+control/NoC/reset/code accesses are unchanged. It is NOT installed or native-
+qualified. Candidate8d01244c and client20e5dced build;default43 control still
+2df0e0f8,disabled52 rebuild EXACT1de41744. ASan/UBSan whitelist/drop/corrupt/
+canary tests,actual51/52/53 cohort policy+extracted control,ALL client proof
+faults and full ordinary/paired bulk fault suites pass. No53 speed claim.
+
 Latest checkpoint (October18,04:03 UTC): Haiku UP/SSH/full64CPU+RAM/NIC0b83,
 driver52/ABI2 1de41744 STILL loaded. No UNKNOWN/cold latch. The complete
 original18973870528B public checkpoint passed native same-open-FD SHA256

@@ -68,6 +68,17 @@ struct CohortIO {
 		if (!closing && ((a>=0xa0000 && a<0xab000) || (a>=0x94000 && a<0x95000))) assert(!current && !starts); // ONE host upload only
 		C().Q38PanelWrite(a,v);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	struct DataView {
+		CohortIO& io; uint32_t base;
+		void PayloadFence() { assert(!io.quarantined); }
+		uint32_t PayloadRead(unsigned w) { return io.Q38PanelRead(base+w*4); }
+		void PayloadWrite(unsigned w,uint32_t value) { io.Q38PanelWrite(base+w*4,value); }
+		uint64_t PayloadReadPair(unsigned w) { assert(!(w&1)); uint64_t low=PayloadRead(w); return low|(uint64_t(PayloadRead(w+1))<<32); }
+		void PayloadWritePair(unsigned w,uint32_t low,uint32_t high) { assert(!(w&1)); PayloadWrite(w,low); PayloadWrite(w+1,high); }
+	};
+	DataView Q38PayloadData(uint32_t a) { return DataView{*this,a}; }
+#endif
 	uint32_t RuntimePcRead() { pcReads[current]++; return scenario==3 && current==badWorker?TT_Q38_COHORT_PARK+4:TT_Q38_COHORT_PARK; }
 	void RuntimeResetWrite(uint32_t value) {
 		assert(!quarantined); auto& c=C(); bool fault=current==badWorker;

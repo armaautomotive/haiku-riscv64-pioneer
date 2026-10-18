@@ -30,7 +30,13 @@ bool PioneerBulkHostFill(IO& io,const uint32_t* data,unsigned words,bool complem
 {
 	if (!data || !words || words>TT_BULK_UPLOAD_WORDS) return false;
 	io.BulkHostFence();
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	unsigned w=0;
+	for (;words-w>=2;w+=2) io.BulkHostPairStore(w,complement?~data[w]:data[w],complement?~data[w+1]:data[w+1]);
+	if (w<words) io.BulkHostStore(w,complement?~data[w]:data[w]);
+#else
 	for (unsigned w=0;w<words;w++) io.BulkHostStore(w,complement?~data[w]:data[w]);
+#endif
 	io.BulkHostFence();
 	return true;
 }
@@ -39,7 +45,17 @@ unsigned PioneerBulkHostMismatches(IO& io,const uint32_t* data,unsigned words,bo
 {
 	if (!data || !words || words>TT_BULK_UPLOAD_WORDS) return UINT32_MAX;
 	unsigned mismatches=0; io.BulkHostFence();
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	unsigned w=0;
+	for (;words-w>=2;w+=2) {
+		uint64_t value=io.BulkHostPairLoad(w);
+		mismatches+=uint32_t(value)!=(complement?~data[w]:data[w]);
+		mismatches+=uint32_t(value>>32)!=(complement?~data[w+1]:data[w+1]);
+	}
+	if (w<words) mismatches+=io.BulkHostLoad(w)!=(complement?~data[w]:data[w]);
+#else
 	for (unsigned w=0;w<words;w++) mismatches+=io.BulkHostLoad(w)!=(complement?~data[w]:data[w]);
+#endif
 	io.BulkHostFence(); return mismatches;
 }
 template<class IO>

@@ -2,12 +2,14 @@
 #ifndef PIONEER_Q38_COHORT_PROTOCOL_H
 #define PIONEER_Q38_COHORT_PROTOCOL_H
 #include "PioneerQ38PanelProbe.h"
-// Separate51 debug /52 boundary-code-sealed qualification,NOT inference.
-// Native49/50 MUST NOT accept these ABIs;51/52 also reject each other.
+// Separate51 debug/52 code-sealed/53 data-payload qualification,NOT inference.
+// Native49/50 MUST NOT accept these ABIs;51/52/53 also reject each other.
 // DATA only:logical bank+64B offset,never code,coordinates or NoC addresses.
 #define TT_PCI_PROBE_Q38_COHORT_SUPPORT (B_DEVICE_OP_CODES_END + 0x54f0)
 #define TT_PCI_PROBE_Q38_COHORT_RUN (B_DEVICE_OP_CODES_END + 0x54f1)
-#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED
+#if defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD)
+enum { TT_Q38_COHORT_DRIVER=53,TT_Q38_COHORT_ABI=3,TT_Q38_COHORT_PER_CALL_CODE=0 };
+#elif defined(TT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED)
 enum { TT_Q38_COHORT_DRIVER=52,TT_Q38_COHORT_ABI=2,TT_Q38_COHORT_PER_CALL_CODE=0 };
 #else
 enum { TT_Q38_COHORT_DRIVER=51,TT_Q38_COHORT_ABI=1,TT_Q38_COHORT_PER_CALL_CODE=1 };
