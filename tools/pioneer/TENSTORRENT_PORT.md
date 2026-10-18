@@ -2,6 +2,27 @@
 
 ## Status
 
+### October18,18:19 UTC:speculative-PC false rejection isolated;safe new terminal images ready
+
+Native e07f3123 completes all18 arithmetic cases and root STOP proof,then
+rejects worker1 PC72064 (expected72060). Vendor [PC snapshot semantics](https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot)
+identify speculative frontend—not retirement—observations. Old next-word
+addresses aliased fault entries and are NOT safe to accept. New root/peer
+images place TWO immutable safe branches at each terminal site and move
+fault paths away. All nonce/status/source/code/counter/all-role requirements
+remain. Candidate93f2c0db/root026229e2/peercb799c3c/client961db867/inference
+f2096ee7 pass offline exact math,real rows,cooperative/RUN/proof/END/fault and
+base/next/mixed snapshot tests. Fresh cold native staging-g test required.
+
+An interrupted client upload exposed a shell set-e/AND guard bug before
+GPU launch. Exact valid driver was installed but empty client was not refused.
+Client was safely reuploaded,all artifacts/backups explicitly reverified,
+then tested above. All SIX local54 installers now fail closed explicitly;
+96 actual-shell isolated guard/restore cases pass and reject the vulnerable
+baseline. OLD native helper copies MUST NOT be rerun;use explicitly hashed
+hardened copies only. No loaded driver replacement,dirty llama build or
+new model-performance claim. Board recovered cold;Linux verified again.
+
 ### October18,17:51 UTC:STOP proof passes;worker1 physical audit still rejects
 
 Nativeec0813e7:18 exact arithmetic cases PASS,root STOP DONE/all119 and

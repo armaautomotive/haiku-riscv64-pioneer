@@ -3,6 +3,7 @@
 #define PIONEER_Q38_DISPATCH_PROOF_H
 #include "PioneerQ38DispatchProtocol.h"
 #include "PioneerComputeFleet.h"
+#include "PioneerQ38RootTerminal.h"
 // KERNEL-PRIVATE expected authority,NOT a userspace struct/capability. Every
 // extent MUST first come from full initialized all-bank authorization and
 // every source from the privately proved immutable boot cohort. Physical
@@ -24,7 +25,7 @@ static inline bool PioneerQ38DispatchProof(const tt_q38_dispatch_probe& job,cons
 	if (r.version!=1 || r.state!=TT_RUNTIME_PASSED || r.peers!=job.peers || r.started!=job.peers || r.completed!=job.peers
 		|| r.waiting!=job.peers || r.recovery_required || r.root_sources_verified!=1 || r.nonce!=a.nextRoot
 		|| r.root_started!=1 || r.root_completed!=1 || r.root_held!=unsigned(finalHeld) || r.root_phase!=0x7200c || r.root_count!=job.peers
-		|| r.root_marker!=0x314d3851 || r.root_pc[0]!=0x72038 || r.root_pc[1]!=r.root_pc[0]) return false;
+		|| r.root_marker!=0x314d3851 || !PioneerQ38RootTerminalPc(r.root_pc[0]) || !PioneerQ38RootTerminalPc(r.root_pc[1])) return false;
 	const auto* s=r.stats;
 	if (s[0]!=0x314d3851 || s[1]!=1 || s[2]!=1 || s[3]!=job.type || s[4]!=job.inputs || s[5]!=job.peers
 		|| s[12]!=a.nextRoot || s[13] || s[14] || s[15] || s[10]<2*job.peers || s[11]<2*job.peers || s[11]>s[10]

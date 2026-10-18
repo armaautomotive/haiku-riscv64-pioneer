@@ -6,6 +6,7 @@
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
 static volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static void Fence() { asm volatile("fence" ::: "memory"); }
 // Diagnostic ONLY in the separately owned/saved runtime-status L1. Normal
@@ -90,7 +91,7 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 	Transfer(false,worker,0x75010,0xffb121b0,4); unsigned reset=*Words(0x75010);
 	Checkpoint(0x54000204,(worker<<24)|(first&0xffffff));
 	if (reset!=0x46800 || first<0x72000 || first>=0x74000 || second<0x72000 || second>=0x74000 || ((first|second)&3)) block_fault_park();
-	return stopped?first==0x72060 && second==first:WaitPc(first) && WaitPc(second);
+	return stopped?PioneerQ38PeerTerminalPc(first) && PioneerQ38PeerTerminalPc(second):WaitPc(first) && WaitPc(second);
 }
 static unsigned Tile(unsigned type) { return type==8?576:type==12?2304:type==14?3392:0; }
 extern "C" unsigned block_main()

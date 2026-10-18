@@ -37,38 +37,38 @@ unloaded()
  ' || { echo STOP_LOADED_OR_UNPROVEN_KERNEL_IMAGE_LIST_NO_WRITES; return 1; }
  dispatch_teams=$(ps -o Id -o Team) || return 1
  printf '%s\n' "$dispatch_teams" | awk '
-  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/pioneer_q38|\/pioneer-q38/ {owner++}
+  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/pioneer_q38|\/pioneer-q38|\/pioneer-qwen38/ {owner++}
   END {if(owner) exit 1}
  ' || { echo STOP_POSSIBLE_COMPUTE_OWNER_NO_WRITES; return 1; }
 }
-test -d "$stage" && test ! -L "$stage"
-test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe
-exact "$candidate" "$new" && exact "$client" "$clientsha" && exact "$inference" "$inferencesha"
-test ! -e "$incoming" && test ! -L "$incoming"
+test -d "$stage" && test ! -L "$stage" || exit 1
+test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe || exit 1
+exact "$candidate" "$new" && exact "$client" "$clientsha" && exact "$inference" "$inferencesha" || exit 1
+test ! -e "$incoming" && test ! -L "$incoming" || exit 1
 if [ "$mode" = --apply ]; then
  exact "$installed" "$old"
  exact "$prior/qualified43-backup" "$qualified43"
  exact "$prior/qualified52-backup" "$qualified52"
- for item in "$backup43" "$backup52" "$backup54"; do test ! -e "$item" && test ! -L "$item"; done
- unloaded
+ for item in "$backup43" "$backup52" "$backup54"; do test ! -e "$item" && test ! -L "$item" || exit 1; done
+ unloaded || exit 1
  cp -p "$installed" "$backup54"
  cp -p "$prior/qualified43-backup" "$backup43"
  cp -p "$prior/qualified52-backup" "$backup52"
- exact "$backup43" "$qualified43" && exact "$backup52" "$qualified52" && exact "$backup54" "$old"
+ exact "$backup43" "$qualified43" && exact "$backup52" "$qualified52" && exact "$backup54" "$old" || exit 1
  source=$candidate; expected=$old; result=$new
 else
- exact "$installed" "$new" && exact "$backup43" "$qualified43" && exact "$backup52" "$qualified52" && exact "$backup54" "$old"
- unloaded
+ exact "$installed" "$new" && exact "$backup43" "$qualified43" && exact "$backup52" "$qualified52" && exact "$backup54" "$old" || exit 1
+ unloaded || exit 1
  expected=$new
  if [ "$mode" = --restore52 ]; then source=$backup52; result=$qualified52
  else source=$backup43; result=$qualified43; fi
 fi
 cp -p "$source" "$incoming"
 chmod 755 "$incoming"
-exact "$incoming" "$result" && exact "$installed" "$expected"
-unloaded
+exact "$incoming" "$result" && exact "$installed" "$expected" || exit 1
+unloaded || exit 1
 mv -f "$incoming" "$installed"
 sync
-exact "$installed" "$result" && exact "$backup43" "$qualified43" && exact "$backup52" "$qualified52" && exact "$backup54" "$old"
-test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe
+exact "$installed" "$result" && exact "$backup43" "$qualified43" && exact "$backup52" "$qualified52" && exact "$backup54" "$old" || exit 1
+test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe || exit 1
 echo "UNLOADED_PHYSICAL_AUDIT54_SWITCH_$mode;SHA=$result;NO_GPU_EXECUTION_YET"

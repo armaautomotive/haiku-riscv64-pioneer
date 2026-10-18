@@ -19,8 +19,13 @@ struct RunIO:BootstrapIO {
 	uint32_t peerDone[119]={}; bool rootExecuted=false;
 	bool peerStopped[119]={},stopExecuted=false;
 	unsigned stopSlowWorker=0;
+	unsigned stopSnapshotMode=0,pcSamples[120]={};
 	explicit RunIO(const char* path):image(path) {}
-	uint32_t RuntimePcRead() { return current?(peerStopped[current-1]?TT_Q38_PEER_STOP:BootstrapIO::RuntimePcRead()):TT_Q38_DISPATCH_PARK; }
+	uint32_t RuntimePcRead() {
+		bool next=stopSnapshotMode==1 || (stopSnapshotMode==2 && (pcSamples[current]++&1));
+		return current?(peerStopped[current-1]?(next?TT_Q38_PEER_STOP_FETCH:TT_Q38_PEER_STOP):BootstrapIO::RuntimePcRead()):
+			(next?TT_Q38_DISPATCH_PARK_FETCH:TT_Q38_DISPATCH_PARK);
+	}
 	uint32_t Q38PanelRead(uint32_t a) {
 		if (!current && rootExecuted && a>=0x80000 && a<0x9dc00) outputReads++;
 		return C().Q38PanelRead(a);
@@ -32,6 +37,7 @@ struct RunIO:BootstrapIO {
 		ControllerMachine m(image,n,type,k,source);
 		bool stop=c.view[base+2]==2; if (stop) m.Configure(1,true);
 		m.stopSlowWorker=stopSlowWorker;
+		m.stopSnapshotMode=stopSnapshotMode;
 		for (unsigned word=0;word<c.view.size();word++) m.memory[TT_Q38_PANEL_VIEW_BASE+word*4]=c.view[word];
 		for (unsigned i=0;i<8;i++) m.counts[i]=c.ResidentNocRead(PioneerQ38PanelCounter(i));
 		for (unsigned w=0;w<119;w++) m.peers[w].requested=m.peers[w].finished=peerDone[w];

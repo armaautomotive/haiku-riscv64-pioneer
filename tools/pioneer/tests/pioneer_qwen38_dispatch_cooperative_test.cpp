@@ -35,7 +35,7 @@ struct CooperativeDispatch:DispatchMachine {
 	void StepPeer(unsigned w) {
 		auto& p=*actual[w];
 		for (unsigned step=0;step<10000;step++) {
-			if (p.pc==0x72080 || (p.memory.at(0x74144)==peers[w].requested && (p.pc==0x7204c || p.pc==0x72060))) break;
+			if (p.pc==TT_Q38_PEER_FAULT_PARK || (p.memory.at(0x74144)==peers[w].requested && (p.pc==0x7204c || p.pc==0x72060))) break;
 			p.StepBlock();
 		}
 		peers[w].requested=p.memory.at(0x74140); peers[w].finished=p.memory.at(0x74144);

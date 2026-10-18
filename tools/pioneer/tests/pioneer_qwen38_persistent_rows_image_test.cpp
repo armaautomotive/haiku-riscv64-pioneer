@@ -24,7 +24,7 @@ struct PersistentRows:SharedRowsMachine {
 		for (unsigned w=0;w<8;w++) memory[0x74040+w*4]=boot[w];
 		for (unsigned w=0;w<16;w++) { memory[0x74100+w*4]=0; memory[0x74140+w*4]=0xdeadbeef; }
 		for (unsigned w=0;w<64;w++) memory[0x83f00+w*4]=0xdeadbeef;
-		assert(Word(code,0x4c)==0x0002a503 && Word(code,0x60)==0x0000006f);
+		assert(Word(code,0x4c)==0x0002a503 && Word(code,0x60)==0x0000006f && Word(code,0x64)==0xffdff06f);
 	}
 	uint32_t Load(uint32_t a) override {
 		if (Range(a,0x74000,0xc0) || Range(a,0x74100,0x80) || Range(a,0x83f00,256)) return memory.at(a);
@@ -50,8 +50,8 @@ struct PersistentRows:SharedRowsMachine {
 		SharedRowsMachine::Store(a,value);
 	}
 	bool Boot() {
-		while (pc!=0x7204c && pc!=0x72080) StepBlock();
-		if (pc==0x72080) return false;
+		while (pc!=0x7204c && pc!=TT_Q38_PEER_FAULT_PARK) StepBlock();
+		if (pc==TT_Q38_PEER_FAULT_PARK) return false;
 		assert(pc==0x7204c && !requests && !matrixInstructions && memory.at(0x7414c)==0x32503851
 			&& !memory.at(0x74140) && !memory.at(0x74144) && !memory.at(0x74148));
 		return true;
@@ -67,7 +67,7 @@ struct PersistentRows:SharedRowsMachine {
 		auto frozenRoot=root;
 		for (;;) {
 			StepBlock();
-			if (pc==0x72080) { assert(root==frozenRoot && memory.at(0x74148)==0x46503851); return false; }
+			if (pc==TT_Q38_PEER_FAULT_PARK) { assert(root==frozenRoot && memory.at(0x74148)==0x46503851); return false; }
 			if (pc==0x72060 || (pc==0x7204c && memory.at(0x74144)==sequence)) break;
 		}
 		assert(root==frozenRoot && !pending && memory.at(0x74140)==sequence && memory.at(0x74144)==sequence
@@ -95,6 +95,9 @@ int main(int argc,char** argv)
 		for (unsigned i=0;i<1000;i++) m.StepBlock(); // duplicate doorbell is inert,not a retry
 		assert(m.requests==requests && m.matrixInstructions==matrices);
 		assert(m.Job(3,2) && m.requests==requests && m.matrixInstructions==matrices);
+		m.pc=TT_Q38_PEER_STOP_FETCH;
+		for (unsigned i=0;i<100;i++) m.StepBlock();
+		assert(m.pc==TT_Q38_PEER_STOP && m.requests==requests && m.matrixInstructions==matrices);
 		printf("OFFLINE persistent peer type%u K%u N%u:two exact jobs,duplicate inert,clean terminal STOP PASS\n",type,k,m.groups*16);
 	}
 	for (unsigned fault:{1U,5U,40U,208U}) {

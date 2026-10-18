@@ -107,7 +107,7 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 		if (r.root_marker==TT_Q38_DISPATCH_FAULT) break;
 		if (r.root_phase==TT_Q38_DISPATCH_DONE && r.root_count==job.peers && r.root_marker==TT_Q38_DISPATCH_MARKER) {
 			io.Pause(); r.root_pc[0]=io.RuntimePcRead(); io.Pause(); r.root_pc[1]=io.RuntimePcRead();
-			if (r.root_pc[0]==TT_Q38_DISPATCH_PARK && r.root_pc[1]==r.root_pc[0]) { complete=true; break; }
+			if (PioneerQ38RootTerminalPc(r.root_pc[0]) && PioneerQ38RootTerminalPc(r.root_pc[1])) { complete=true; break; }
 		}
 		io.Pause();
 	}

@@ -24,6 +24,10 @@ block_peer_wait_branch:
 	ret
 .org 0x60
 block_peer_stopped: j block_peer_stopped
+	/* Frontend PC snapshots can observe the next fetched instruction.
+	 * Give that address a SAFE jump too;NEVER alias the fault entry. */
+	j block_peer_stopped
+.org 0x80
 block_fault_park:
 	li t0,0x74148
 	li t1,0x46503851 /* Q8PF:distinct from native51..53 */

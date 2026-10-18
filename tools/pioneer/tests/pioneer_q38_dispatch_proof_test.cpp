@@ -37,9 +37,22 @@ struct ProofFixture {
 int main(int argc,char** argv)
 {
 	assert(argc==2);
+	for (unsigned pc=0x70000;pc<0x74000;pc++) {
+		assert(PioneerQ38PeerTerminalPc(pc)==(pc==0x72060 || pc==0x72064));
+		assert(PioneerQ38RootTerminalPc(pc)==(pc==0x72038 || pc==0x7203c));
+	}
 	for (unsigned peers:{1U,2U,7U,119U}) for (unsigned type:{8U,12U,14U}) {
 		ProofFixture f(argv[1],peers,type,type==12?17408:5120);
 		auto& j=*f.job; auto& a=*f.authority;
+		for (unsigned first:{TT_Q38_DISPATCH_PARK,TT_Q38_DISPATCH_PARK_FETCH})
+			for (unsigned second:{TT_Q38_DISPATCH_PARK,TT_Q38_DISPATCH_PARK_FETCH}) {
+				j.result.root_pc[0]=first; j.result.root_pc[1]=second; assert(PioneerQ38DispatchProof(j,a));
+			}
+		j.result.root_pc[1]=TT_Q38_DISPATCH_PARK;
+		for (unsigned bad:{unsigned(TT_Q38_DISPATCH_FAULT_ENTRY),unsigned(TT_Q38_DISPATCH_FAULT_PARK),0x72040U,0U,UINT32_MAX}) {
+			j.result.root_pc[0]=bad; assert(!PioneerQ38DispatchProof(j,a));
+		}
+		j.result.root_pc[0]=TT_Q38_DISPATCH_PARK;
 		j.result.root_held=0; assert(PioneerQ38DispatchProof(j,a,false) && !PioneerQ38DispatchProof(j,a));
 		j.result.root_held=1; assert(!PioneerQ38DispatchProof(j,a,false) && PioneerQ38DispatchProof(j,a));
 		for (unsigned i=0;i<64;i++) { j.result.stats[i]^=1; assert(!PioneerQ38DispatchProof(j,a)); j.result.stats[i]^=1; }

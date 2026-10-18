@@ -1,5 +1,42 @@
 # Native build status
 
+Latest checkpoint (October18,18:19 UTC): native e07f3123 exact18-case arithmetic
+and root STOP proof PASS,but host worker1 PC audit rejects72064/72064 versus
+required72060 (phase53,detail200). No resets/restoration after rejection;
+shutdown/off confirmed18:09:50 UTC,extended rest,now cold Linux unbound/
+COMMAND0000/helper hashes exact. Public evidence saved locally as
+/private/tmp/pioneer-q38-dispatch-physical-synthetic-two-20261018-f.log.
+
+Pinned vendor8a34e25e BabyRISCV README documents that PC snapshots are
+speculative FRONTEND addresses,not retirement observations. OLD peer72064
+and root7203c aliased fault entries;NEVER whitelist those OLD code images.
+New private peer cb799c3c (7468B) has safe branches at72060/64,fault entry80/
+park9c;new root026229e2 (7820B) branches at72038/3c,fault entry60/park7c.
+Only each role's TWO exact safe words are allowed;nonce/STOP status,exact
+code/source/counter proofs,ALL120 audits before any hold/restore unchanged.
+Default43 remains exact2df0e0f8. Candidate93f2c0db,debug961db867,inference
+f2096ee7 (same frozen libraries/retained CPU pool) built,NOT deployed yet.
+Peer synthetic+real edges(persistent-rows.Lss1u86K),root(dispatch.PRd2ivz3),
+cooperative(vxgkCrES),RUN(NSq9RVpv),proof(tV0ise76),handler(7p6wCTD2),END
+base/next/mixed snapshots,delayed workers,actual safe branch execution,
+old fault-entry code rejection/fault PCs/quarantine(eVWaTD1B) PASS ASan/UBSan.
+
+Deployment guard bug found BEFORE any GPU launch in stage-f:interrupted
+SCP left client empty;set-e did NOT stop an intermediate failed AND-chain
+hash check. Installed module was nevertheless EXACT e07f3123 (not modified
+after auto-load). Empty file preserved,client replaced through a separate
+incoming SHA-verified file,driver/client/inference/43+52 backups all explicitly
+verified BEFORE the above native test. ALL SIX local54 switch scripts now
+use explicit fail-closed exits and match truncated stage-directory owners.
+96 isolated ACTUAL shell apply/restore/negative cases PASS;removing the
+artifact-chain exit reproduces the unsafe install in a private fixture.
+IMPORTANT:old NATIVE helper copies remain vulnerable;NEVER rerun them.
+Only stage-f switch-unloaded54-physical-audit-hardened.sh SHA7a2f84b0 or
+new hardened copies may be used after fresh-cold/unloaded guards.
+Stage-g installer SHAa97ea705 pins93f2c0db/961db867/f2096ee7,prior e07f3123
+and preserved43/52. Uploads should be sequential,hash verified,then switch.
+Dirty llama implementation remains untouched;no new model speed claim.
+
 Latest checkpoint (October18,17:51 UTC): checkpoint54/ec0813e7 runs all18
 two-peer arithmetic cases exactly and reaches STOP DONE7200c/count119/
 marker314d3851. Exact root STOP statistics/final-command proof PASS. It then

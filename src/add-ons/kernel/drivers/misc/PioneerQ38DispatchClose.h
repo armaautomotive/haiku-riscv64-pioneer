@@ -17,12 +17,12 @@ template<class IO> bool PioneerQ38DispatchPeerStatus(IO& io,uint32_t nonce,bool 
 		okay &= actual==expected;
 	}
 	io.Pause(); uint32_t first=io.RuntimePcRead(); io.Pause(); uint32_t second=io.RuntimePcRead();
-	bool pc=stopped?first==TT_Q38_PEER_STOP && second==first
+	bool pc=stopped?PioneerQ38PeerTerminalPc(first) && PioneerQ38PeerTerminalPc(second)
 		:(first==TT_Q38_PEER_WAIT_LOAD || first==TT_Q38_PEER_WAIT_BRANCH)
 		&& (second==TT_Q38_PEER_WAIT_LOAD || second==TT_Q38_PEER_WAIT_BRANCH);
 	if (!pc && diagnostic && !diagnostic->closeDetail[0]) {
 		diagnostic->closeDetail[0]=0x200; diagnostic->closeDetail[1]=first;
-		diagnostic->closeDetail[2]=second; diagnostic->closeDetail[3]=stopped?TT_Q38_PEER_STOP:TT_Q38_PEER_WAIT_LOAD;
+		diagnostic->closeDetail[2]=second; diagnostic->closeDetail[3]=stopped?unsigned(TT_Q38_PEER_STOP):unsigned(TT_Q38_PEER_WAIT_LOAD);
 	}
 	return okay && pc;
 }
@@ -114,7 +114,7 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 			if (marker==TT_Q38_DISPATCH_FAULT) break;
 			if (phase==TT_Q38_DISPATCH_DONE && count==119 && marker==TT_Q38_DISPATCH_MARKER) {
 				io.Pause(); uint32_t first=io.RuntimePcRead(); io.Pause(); uint32_t second=io.RuntimePcRead();
-				if (first==TT_Q38_DISPATCH_PARK && second==first) { complete=true; break; }
+				if (PioneerQ38RootTerminalPc(first) && PioneerQ38RootTerminalPc(second)) { complete=true; break; }
 			}
 			io.Pause();
 		}

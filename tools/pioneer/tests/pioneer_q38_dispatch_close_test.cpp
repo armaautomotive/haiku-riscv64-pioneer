@@ -9,10 +9,14 @@ struct CloseIO:RunIO {
 	explicit CloseIO(const char* path):RunIO(path) {}
 	uint32_t RuntimePcRead() {
 		if (stopExecuted) { postPc[current]++; if (current==target && closeFault==3) return 0x7204c; }
+		if (stopExecuted && current==target && closeFault==13) return TT_Q38_PEER_FAULT_ENTRY;
+		if (stopExecuted && current==target && closeFault==14) return TT_Q38_PEER_FAULT_PARK;
 		return RunIO::RuntimePcRead();
 	}
 	uint32_t Q38PanelRead(uint32_t a) {
 		if (current==target && a==0x72000 && (closeFault==1 || (stopExecuted && closeFault==2))) return RunIO::Q38PanelRead(a)^1;
+		if (current==target && a==TT_Q38_PEER_STOP_FETCH && closeFault==15) return 0x000742b7; // OLD image fault-entry opcode,not a safe jump
+		if (!current && a==TT_Q38_DISPATCH_PARK_FETCH && closeFault==16) return 0x001802b7; // OLD root fault entry
 		if (stopExecuted && current==target && closeFault==4 && a==0x74144) return RunIO::Q38PanelRead(a)+1;
 		if (restored && current==target && closeFault==8 && a==0x6e000) return RunIO::Q38PanelRead(a)^1;
 		return RunIO::Q38PanelRead(a);
@@ -92,8 +96,8 @@ int main(int argc,char** argv)
 {
 	assert(argc==2);
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
-	for (unsigned slow:{1U,60U,119U}) {
-		CloseFixture f(argv[1]); f.io.closing=true; f.io.stopSlowWorker=slow;
+	for (unsigned mode:{0U,1U,2U}) for (unsigned slow:{1U,60U,119U}) {
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.stopSlowWorker=slow; f.io.stopSnapshotMode=mode;
 		if (!f.Close()) {
 			printf("FAIL_OFFLINE_STOP_COMPLETION_ORDER slow_worker%u close_phase%u valid_stop_stats%u actual_final_route%u required_final_route%u holds%u restores%u;NO_NATIVE_CARD\n",
 				slow,f.lease->closePhase,unsigned(PioneerQ38DispatchStopProof(f.io.stopStats,f.lease->authority)),
@@ -103,6 +107,11 @@ int main(int argc,char** argv)
 		assert(f.io.endHolds==120 && f.io.restored==120);
 	}
 	puts("PASS OFFLINE STOP completion-order regression:first/middle/last slow worker,deterministic final119 reset-status audit,unchanged exact command proof,ALL120 held/restored");
+	{
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.closeFault=16;
+		assert(!f.Close() && f.lease->closePhase==10 && !f.io.stopExecuted && !f.io.endHolds && !f.io.restored
+			&& f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==TT_Q38_DISPATCH_PARK_FETCH);
+	}
 	for (bool boot:{false,true}) {
 		CloseFixture f(argv[1],boot); f.io.closing=true; assert(f.Close() && f.lease->closed && !f.lease->unsafe);
 		assert(!boot || (f.io.endHolds==120 && f.io.restored==120));
@@ -122,7 +131,7 @@ int main(int argc,char** argv)
 		assert(!PioneerQ38DispatchPeerLeaseEnd(f.io,f.lease->worker[0].noc,f.lease->worker[0].Store())
 			&& f.io.Writes()==writes && f.io.selects==selects);
 	}
-	for (unsigned fault=1;fault<=12;fault++) for (unsigned target:{1U,60U,119U}) {
+	for (unsigned fault=1;fault<=15;fault++) for (unsigned target:{1U,60U,119U}) {
 		CloseFixture f(argv[1]); f.io.closing=true; f.io.closeFault=fault; f.io.target=target;
 		assert(!f.Close() && f.lease->unsafe && f.banks.Quarantined());
 		if (fault==1 || fault==2) assert(f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==0x72000
@@ -134,7 +143,9 @@ int main(int argc,char** argv)
 		if (fault==4) assert(f.lease->closePhase==53 && f.lease->closeDetail[0]==0x101
 			&& f.lease->closeDetail[1]==f.lease->closeDetail[2]+1);
 		if (fault==9) assert(f.lease->closePhase==51);
-		if (fault<=5 || fault==9) assert(!f.io.endHolds && !f.io.restored);
+		if (fault==13 || fault==14) assert(f.lease->closePhase==53 && f.lease->closeDetail[0]==0x200);
+		if (fault==15) assert(f.lease->closePhase==10 && f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==TT_Q38_PEER_STOP_FETCH);
+		if (fault<=5 || fault==9 || fault>=13) assert(!f.io.endHolds && !f.io.restored);
 		if (fault==1) assert(!f.io.stopExecuted);
 		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
 		uint32_t detail[4]; memcpy(detail,f.lease->closeDetail,sizeof(detail));

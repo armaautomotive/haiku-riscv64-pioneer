@@ -17,10 +17,12 @@ struct DispatchMachine:BlockMachine {
 	unsigned active,kind,k,operation=1,packets=0,responses=0,descriptors=0,readbacks=0,doorbells=0,gathers=0;
 	unsigned faultAt=0,corruptProof=UINT32_MAX,corruptWorker=0,badPcWorker=0,nonfiniteWorker=0;
 	unsigned stopSlowWorker=0; // vary completion order independently of index
+	unsigned stopSnapshotMode=0,pcSamples[119]={};
 	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false;
 	DispatchMachine(const char* path,unsigned workers,unsigned type=12,unsigned inputs=5120)
 		:BlockMachine(path,8,0,1,nullptr,true),active(workers),kind(type),k(inputs) {
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(0,word)==(word<code.size()/4?Word(code,word*4):0));
+		assert(Word(code,0x38)==0x0000006f && Word(code,0x3c)==0xffdff06f);
 		for (unsigned c=0;c<8;c++) counts[c]=UINT32_MAX-15-c;
 		for (unsigned w=0;w<119;w++) for (unsigned c=0;c<16;c++) memory[0x7d800+w*64+c*4]=c?0x12340000+c:0x16005;
 		Configure(1);
@@ -94,7 +96,10 @@ struct DispatchMachine:BlockMachine {
 			memory[local]=peer.requested; memory[local+4]=peer.finished; memory[local+12]=0x32503851;
 			memory[local+16]=peer.launched?(peer.finished==peer.requested?(peer.operation==2?2:0):1):0;
 		} else if (remote==0xffb13140) {
-			assert(bytes==4); memory[local]=worker==badPcWorker?0xdeadc0dc:peer.operation==2 && peer.launched?0x72060:0x7204c;
+			assert(bytes==4);
+			bool next=stopSnapshotMode==1 || (stopSnapshotMode==2 && (pcSamples[worker-1]++&1));
+			memory[local]=worker==badPcWorker?0xdeadc0dc:peer.operation==2 && peer.launched?
+				(next?TT_Q38_PEER_STOP_FETCH:TT_Q38_PEER_STOP):0x7204c;
 		} else if (remote==0xffb121b0) { assert(bytes==4); memory[local]=0x46800; }
 		else {
 			assert(remote==0x83f00 && operation==1 && AllFinished() && bytes==256+peer.descriptor[7]*64); gathers++;
@@ -132,9 +137,9 @@ struct DispatchMachine:BlockMachine {
 	}
 	unsigned StepLimit() const override { return 1000000000; }
 	bool RunRoot() {
-		while (pc!=0x72038 && pc!=0x72058) StepBlock();
+		while (pc!=TT_Q38_DISPATCH_PARK && pc!=TT_Q38_DISPATCH_FAULT_PARK) StepBlock();
 		assert(minStack>=0x6e000);
-		if (pc==0x72058) return false;
+		if (pc==TT_Q38_DISPATCH_FAULT_PARK) return false;
 		assert(l1[Index(0x17ffc8)]==0x314d3851);
 		if (l1[Index(0x17ffc4)]!=active) return false;
 		assert(!pending && descriptors==active && readbacks==active && doorbells==active && gathers==(operation==1?active:0));
@@ -156,6 +161,8 @@ int main(int argc,char** argv)
 	}
 	{
 		DispatchMachine m(argv[1],7); assert(m.RunRoot()); m.active=119; m.Configure(3,true); assert(m.RunRoot());
+		unsigned packets=m.packets; m.pc=TT_Q38_DISPATCH_PARK_FETCH; m.StepBlock();
+		assert(m.pc==TT_Q38_DISPATCH_PARK && m.packets==packets && !m.pending);
 	}
 	for (unsigned field=0;field<64;field++) {
 		DispatchMachine m(argv[1],7); m.corruptWorker=7; m.corruptProof=field;

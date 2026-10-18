@@ -35,6 +35,12 @@ block_done:
 	lw t1,8(t0)
 	fence
 block_park: j block_park
+.ifdef TT_Q38_DISPATCH_ROOT
+	/* Both the architectural branch and speculative next fetch are SAFE.
+	 * Never make the accepted next address alias the fault entry. */
+	j block_park
+.org 0x60
+.endif
 block_fault_park:
 	li t0,0x17ffc8
 .ifdef TT_Q38_DISPATCH_ROOT

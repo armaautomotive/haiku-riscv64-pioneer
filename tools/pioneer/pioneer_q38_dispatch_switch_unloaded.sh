@@ -36,36 +36,36 @@ unloaded()
  ' || { echo STOP_LOADED_OR_UNPROVEN_KERNEL_IMAGE_LIST_NO_WRITES; return 1; }
  dispatch_teams=$(ps -o Id -o Team) || return 1
  printf '%s\n' "$dispatch_teams" | awk '
-  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/pioneer_q38|\/pioneer-q38/ {owner++}
+  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/pioneer_q38|\/pioneer-q38|\/pioneer-qwen38/ {owner++}
   END {if(owner) exit 1}
  ' || { echo STOP_POSSIBLE_COMPUTE_OWNER_NO_WRITES; return 1; }
 }
-test -d "$stage" && test ! -L "$stage"
-test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe
-exact "$candidate" "$new" && exact "$client" "$clientsha" && exact "$inference" "$inferencesha" && exact "$source43" "$qualified"
-test ! -e "$incoming" && test ! -L "$incoming"
+test -d "$stage" && test ! -L "$stage" || exit 1
+test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe || exit 1
+exact "$candidate" "$new" && exact "$client" "$clientsha" && exact "$inference" "$inferencesha" && exact "$source43" "$qualified" || exit 1
+test ! -e "$incoming" && test ! -L "$incoming" || exit 1
 if [ "$mode" = --apply ]; then
  exact "$installed" "$old"
- test ! -e "$backup43" && test ! -L "$backup43"
- test ! -e "$backup52" && test ! -L "$backup52"
- unloaded
+ test ! -e "$backup43" && test ! -L "$backup43" || exit 1
+ test ! -e "$backup52" && test ! -L "$backup52" || exit 1
+ unloaded || exit 1
  cp -p "$installed" "$backup52"
  cp -p "$source43" "$backup43"
- exact "$backup43" "$qualified" && exact "$backup52" "$old"
+ exact "$backup43" "$qualified" && exact "$backup52" "$old" || exit 1
  source=$candidate; expected=$old; result=$new
 else
- exact "$installed" "$new" && exact "$backup43" "$qualified" && exact "$backup52" "$old"
- unloaded
+ exact "$installed" "$new" && exact "$backup43" "$qualified" && exact "$backup52" "$old" || exit 1
+ unloaded || exit 1
  expected=$new
  if [ "$mode" = --restore52 ]; then source=$backup52; result=$old
  else source=$backup43; result=$qualified; fi
 fi
 cp -p "$source" "$incoming"
 chmod 755 "$incoming"
-exact "$incoming" "$result" && exact "$installed" "$expected"
-unloaded
+exact "$incoming" "$result" && exact "$installed" "$expected" || exit 1
+unloaded || exit 1
 mv -f "$incoming" "$installed"
 sync
-exact "$installed" "$result" && exact "$backup43" "$qualified" && exact "$backup52" "$old"
-test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe
+exact "$installed" "$result" && exact "$backup43" "$qualified" && exact "$backup52" "$old" || exit 1
+test -L "$device" && test "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe || exit 1
 echo "UNLOADED_PERSISTENT_DISPATCH_DRIVER_SWITCH_$mode;SHA=$result;NO_GPU_EXECUTION_YET"
