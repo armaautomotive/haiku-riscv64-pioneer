@@ -105,6 +105,11 @@ int main(int argc,char** argv)
 			assert(PioneerQ38DispatchStopProof(f.io.stopStats,f.lease->authority));
 			for (unsigned i=0;i<64;i++) { f.io.stopStats[i]^=1; assert(!PioneerQ38DispatchStopProof(f.io.stopStats,f.lease->authority)); f.io.stopStats[i]^=1; }
 		}
+		assert(PioneerQ38DispatchPeerLeaseEnd(f.io,f.lease->worker[0].noc,f.lease->worker[0].Store()));
+		for (unsigned w=0;w<2048;w++) assert(f.io.core[0]->destination[w]==f.lease->worker[0].Store().saved[w]);
+		writes=f.io.Writes(); selects=f.io.selects;
+		assert(!PioneerQ38DispatchPeerLeaseEnd(f.io,f.lease->worker[0].noc,f.lease->worker[0].Store())
+			&& f.io.Writes()==writes && f.io.selects==selects);
 	}
 	for (unsigned fault=1;fault<=12;fault++) for (unsigned target:{1U,60U,119U}) {
 		CloseFixture f(argv[1]); f.io.closing=true; f.io.closeFault=fault; f.io.target=target;
@@ -121,6 +126,14 @@ int main(int argc,char** argv)
 		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
 		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
 	}
-	puts("PASS OFFLINE persistent END controller+actual dispatcher STOP:ALL119 terminal physical/code/source proofs before ANY reset,ALL120 held before ANY restoration,64 STOP-stat faults+36 first/middle/last late faults+root timeout/fault quarantine ALL/no retry/reset/restore/free;NO native card/inference qualification");
+	for (unsigned fault:{10U,11U,12U}) {
+		CloseFixture f(argv[1]); f.io.closing=true; assert(f.Close());
+		f.io.closeFault=fault; f.io.target=0; f.io.tlbWritten=false;
+		assert(!PioneerQ38DispatchPeerLeaseEnd(f.io,f.lease->worker[0].noc,f.lease->worker[0].Store()));
+		assert(!PioneerQ38DispatchQuarantine(*f.lease,f.banks));
+		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
+		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
+	}
+	puts("PASS OFFLINE persistent END controller+actual dispatcher STOP:ALL119 terminal physical/code/source proofs before ANY reset,ALL120 held before ANY restoration,exact root2048-word status restore,64 STOP-stat faults+36 peer/3 root restoration faults+root timeout/fault quarantine ALL/no retry/reset/restore/free;NO native card/inference qualification");
 }
 #endif

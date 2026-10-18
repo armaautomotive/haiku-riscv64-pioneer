@@ -5,7 +5,7 @@
 set -eu
 case "${1-}" in --apply|--restore52|--restore43) mode=$1;; *) exit 2;; esac
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
-stage=/boot/home/pioneer-qwen38-dispatch-20261017-a
+stage=/boot/home/pioneer-qwen38-dispatch-20261017-b
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
 candidate=$stage/tenstorrent_pci_probe-driver54
@@ -16,7 +16,7 @@ backup43=$stage/qualified43-9e098d02-backup
 backup52=$stage/qualified52-1de41744-backup
 incoming=$stage/tenstorrent_pci_probe.incoming
 old=1de4174478be974ce024bf2161fb3a8f3e39956d5c55237ec61b334abaa20967
-new=e4642e6882845e861174e54ea4f2bc691100ca0a17730a92ea7c3330a146ee32
+new=9ebc33eacedf23c9dc5a324061e4fc511058039c771f31ed9d82175217008265
 qualified=9e098d02dc9646bebb9f8a1ae076fc68cbf834541cd8f7d09cd4142cfa43d7bd
 clientsha=38b6032090a663c6de5a06703bde7f9eea15a7bf19ada609c79645b48f3ff118
 inferencesha=a175f26a922f79cf575e674175008f15eb15580b1bacc193d85271436785b509

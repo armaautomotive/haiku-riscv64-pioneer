@@ -1,5 +1,35 @@
 # Native build status
 
+Latest checkpoint (October18,06:06 UTC): Native52/7643314f remains ACTIVE;
+last observed434 learned matrix calls through layer55 pass,3,763,900 pages
+uploaded. No complete position/token yet. Leave its owner/module/power alone.
+
+54 candidateh9ebc33ea SUPERSEDES e4642e68/53e1dabf/a4df10a4;the old
+staging-a MUST NOT be installed. New staging-b contains hash-verified ONLY,
+NOT installed/executed:
+driver9ebc33eacedf23c9dc5a324061e4fc511058039c771f31ed9d82175217008265,
+debug client38b60320,inferencea175f26a,installer d397d1f8.
+Installer requires exact52 installed/43 backup and fresh cold/unloaded boot.
+
+New54 END gate+actual cookie release retain the entire cookie/context/PCI
+reservation/mappings/ALL role views/BOTH host leases after preflight/run/
+terminal-STOP uncertainty;NO fallthrough to legacy cleanup/unreserve/delete.
+Kernel source confirms legacy drivers stay cached while published;NEVER
+overwrite their loaded file,which could trigger a subsequent cached reload.
+Dedicated54 clean path uses one-attempt bulk/root restoration and a one-shot
+final MMIO transaction;failed unmap/config readback forbids later PCI writes
+or retry,retains all unreleased owners. Runtime root status writes now mark
+the separately saved17e000..180000 store dirty;ALL2048 words restore exactly.
+
+ASan/UBSan actual handler/END gate/cookie release+emitted dispatcher pass
+(dispatch-control.9QesNryC),RUN both payload modes+reply history pass
+(dispatch-run.yW23mAa1),ordinary/paired END with36 peer+3 root restoration
+faults/root2048-word exact restoration pass(dispatch-close.C2Rag2n6),strict
+final MMIO success+unmap/EVERY11 write/readback faults refuse all later
+writes/repeated IO(dispatch-mmio-end.kxqc37dP). Disabled54 rebuild52 remains
+EXACT1de41744/default43 EXACT2df0e0f8. Native54 STILL UNQUALIFIED;no speed/
+Assistant claim. Full physically cold recovery required after UNKNOWN.
+
 Latest checkpoint (October18,05:43 UTC): native52/7643314f STILL running,
 371 learned projections through layer47 pass,3,213,960 pages uploaded.
 NO completed token/position yet. Do not disturb owner/module/power.

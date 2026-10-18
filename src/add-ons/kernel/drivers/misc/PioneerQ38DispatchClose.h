@@ -84,6 +84,7 @@ template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_res
 		}
 		const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,2,0,0,119,a.nextRoot,0,0,0,0,0,0,0,0,0};
 		if (!PioneerQ38DispatchStage(io,0x74000,header,16,0)) return PioneerQ38DispatchQuarantine(lease,banks);
+		root.Store().l1_dirty=true; root.Store().l1_restored=false;
 		for (unsigned c=0;c<3;c++) io.RuntimeStatusWrite(c,0);
 		for (unsigned c=0;c<3;c++) if (io.RuntimeStatusRead(c)) return PioneerQ38DispatchQuarantine(lease,banks);
 		if (!PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchQuarantine(lease,banks);

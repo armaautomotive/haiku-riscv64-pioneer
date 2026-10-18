@@ -91,6 +91,7 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	}
 	const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,1,job.type,job.inputs,job.peers,a.nextRoot,0,0,0,0,0,0,0,0,0};
 	if (!PioneerQ38DispatchStage(io,0x74000,header,16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	root.Store().l1_dirty=true; root.Store().l1_restored=false; // runtime status lives in separately saved17e000..180000
 	for (unsigned c=0;c<3;c++) io.RuntimeStatusWrite(c,0);
 	for (unsigned c=0;c<3;c++) if (io.RuntimeStatusRead(c)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	if (!PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchRunFail(lease,banks,job);

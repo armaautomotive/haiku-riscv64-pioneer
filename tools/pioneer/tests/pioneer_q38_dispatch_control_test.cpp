@@ -18,7 +18,8 @@ struct BoundContext {
 	tt_dram_samples_result dram; PioneerResidentBanks banks; Ref4 baseline;
 	PioneerResidentLease& lease;
 	PioneerQ38DispatchLease* q38Dispatch=nullptr; PioneerQ38CohortLease* q38Cohort=nullptr;
-	bool q38DispatchRoutes=false,bankStorageOnly=true;
+	bool q38DispatchRoutes=false,bankStorageOnly=true,dispatchOwnerRetained=false;
+	struct HostLease { bool allocated=true,released=false,ready=true,quarantined=false; } bulkHost,wideHost;
 	PioneerQ38PanelLease panelProbe,streamProbe;
 	std::vector<uint8_t> initializedVector; uint8_t* initialized; uint64_t bytes=PioneerResidentBanks::Total;
 	explicit BoundContext(const char* image):io(image),root(*io.core[0]),dram(root.dram),baseline{{{{dram},root.noc}}},
@@ -27,7 +28,7 @@ struct BoundContext {
 	~BoundContext() { delete q38Dispatch; }
 };
 using PioneerStoreContext=BoundContext;
-struct PioneerProbeCookie { int team=17; BoundContext* context=nullptr; };
+struct PioneerProbeCookie { uint32_t magic=0x50313030; int team=17; BoundContext* context=nullptr; };
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sBankStorageOnly=false,sColdRecoveryRequired=false;
 static int sLock=1,acquired=0,released=0,copyCalls=0,failCopy=0;
@@ -39,6 +40,7 @@ static status_t user_memcpy(void* to,const void* from,size_t bytes) {
 }
 #include "pioneer_q38_dispatch_prepare.inc"
 #include "pioneer_q38_dispatch_control.inc"
+#include "pioneer_q38_dispatch_retain.inc"
 static void Begin(PioneerProbeCookie& cookie,const char* image) {
 	assert(!cookie.context && !sRuntimeOwner); cookie.context=new BoundContext(image);
 	sRuntimeOwner=&cookie; sBankStorageOnly=true;
@@ -50,7 +52,9 @@ static void End(PioneerProbeCookie& cookie,bool clean) {
 		assert(!c.Unsafe());
 	} else {
 		assert(c.Unsafe()); unsigned writes=c.io.Writes(),selects=c.io.selects;
-		if (c.q38Dispatch) assert(!PioneerQ38DispatchClose(c.io,c.dram,c.banks,*c.q38Dispatch,false));
+		tt_resident_session_result result={}; bool known=false;
+		assert(!EndQ38DispatchOwnership(c,result,known) && c.dispatchOwnerRetained && result.active==1 && result.cold==1 && !result.host_released
+			&& c.bulkHost.quarantined && c.wideHost.quarantined && sRuntimeOwner==&cookie && cookie.context==&c);
 		assert(writes==c.io.Writes() && selects==c.io.selects);
 	}
 	delete cookie.context; cookie.context=nullptr; sRuntimeOwner=nullptr; sBankStorageOnly=false;
@@ -62,6 +66,7 @@ static std::unique_ptr<tt_q38_dispatch_probe> Request() {
 	for (unsigned b=0;b<20;b++) r->scales[b]=0x3c800000;
 	return r;
 }
+#ifndef PIONEER_Q38_DISPATCH_CONTROL_MOCK_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2);
@@ -105,3 +110,4 @@ int main(int argc,char** argv)
 	assert(acquired==released);
 	puts("PASS REAL extracted54 prepare/handler/lock+actual dispatcher:ALL120 private routes/roles and119 bootstrap,team/FD/legacy isolation,ALL initialized extents before prepare IO,two jobs with persistent WAIT,copyout failure clean END,7 late faults whole-owner cold quarantine/no retry;NO native card qualification");
 }
+#endif

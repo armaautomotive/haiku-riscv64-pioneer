@@ -1951,7 +1951,7 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 struct PioneerStoreContext {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	PioneerQ38DispatchLease* q38Dispatch=NULL;
-	bool q38DispatchRoutes=false;
+	bool q38DispatchRoutes=false,dispatchOwnerRetained=false;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	PioneerQ38CohortLease* q38Cohort=NULL;
@@ -2061,6 +2061,32 @@ struct PioneerStoreContext {
 	}
 };
 
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+// PIONEER_Q38_DISPATCH_RETAIN_BEGIN
+// Memory bookkeeping ONLY. In particular,NO legacy PCI/TLB/SRAM rollback,
+// mapping/host release,unreserve,context destruction or cookie destruction.
+static void
+RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
+{
+	c.dispatchOwnerRetained=true;
+	if (c.q38Dispatch) PioneerQ38DispatchQuarantine(*c.q38Dispatch,c.banks);
+	c.banks.Quarantine(); c.lease.recovery_required=true; c.io.QuarantineHostPage();
+	if (c.bulkHost.allocated && !c.bulkHost.released) { c.bulkHost.ready=false; c.bulkHost.quarantined=true; }
+	if (c.wideHost.allocated && !c.wideHost.released) { c.wideHost.ready=false; c.wideHost.quarantined=true; }
+	sColdRecoveryRequired=true; result.active=1; result.host_released=0; result.cold=1;
+	result.state=TT_RESIDENT_SESSION_CLEANUP_FAILED;
+}
+static bool
+EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
+{
+	if (!c.bankStorageOnly) return true;
+	if (clean && c.q38Dispatch) clean=PioneerQ38DispatchClose(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,true);
+	if (clean) return true;
+	RetainQ38DispatchOwner(c,result); return false;
+}
+// PIONEER_Q38_DISPATCH_RETAIN_END
+#endif
+
 // sLock held. On uncertainty only the established PCI/TLB rollback is used;
 // a wired system-team page is retained, never freed through a destructor.
 static bool
@@ -2164,8 +2190,14 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	context->Snapshot(result);
 	bool clean=!sColdRecoveryRequired && !context->Unsafe();
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
-	if (context->q38Dispatch) clean=PioneerQ38DispatchClose(context->io,context->baseline.baseline.baseline.baseline.dram,
-		context->banks,*context->q38Dispatch,clean) && clean;
+	if (!EndQ38DispatchOwnership(*context,result,clean)) return;
+	if (context->bankStorageOnly) {
+		// Dedicated54 clean path:single-attempt bulk/root restoration,never
+		// fall through to legacy root-lease retry/rollback after a failure.
+		if (!CloseBulkScratch(*context,true) || (context->lease.saved && !PioneerQ38DispatchPeerLeaseEnd(context->io,
+			context->baseline.baseline.baseline.noc,context->lease))) { RetainQ38DispatchOwner(*context,result); return; }
+		goto q38_dispatch_owned_restored;
+	}
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	if (context->q38Cohort) clean=PioneerQ38CohortClose(context->io,context->baseline.baseline.baseline.baseline.dram,
@@ -2228,11 +2260,19 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 		if (!clean) context->lease.recovery_required=true;
 		clean=PioneerResidentLeaseEnd(context->io,context->baseline.baseline.baseline.noc,context->lease) && clean;
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+q38_dispatch_owned_restored:
+#endif
 	if (recheck && clean) {
 		clean=context->io.PioneerHostDmaAuditIO::AfterNodeId(context->Pci().node_id[0])
 			&& BlackholeHostReadPciQuiet(context->io,0x402)
 			&& PioneerResidentSessionIdle(context->io,context->baseline.baseline.baseline.noc,context->idle);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	if (context->bankStorageOnly) {
+		if (!clean || !PioneerQ38DispatchMmioEnd(context->io,context->Pci(),context->transaction)) { RetainQ38DispatchOwner(*context,result); return; }
+	} else
+#endif
 	BlackholePioneerMmioEnd(context->io,context->Pci(),context->transaction);
 	clean &= !context->Unsafe() && context->Pci().restored;
 	result.active=0; result.pci_restored=context->Pci().restored;
@@ -2256,6 +2296,9 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	if (!clean || !result.host_released) sColdRecoveryRequired=true;
 	result.cold=sColdRecoveryRequired;
 	result.state=clean && result.host_released?TT_RESIDENT_SESSION_CLOSED:TT_RESIDENT_SESSION_CLEANUP_FAILED;
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	if (context->bankStorageOnly && (!clean || !result.host_released)) { RetainQ38DispatchOwner(*context,result); return; }
+#endif
 	sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
 	cookie->context=NULL; sRuntimeOwner=NULL;
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
@@ -2264,6 +2307,7 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 	delete context;
 }
 
+// PIONEER_Q38_DISPATCH_COOKIE_RELEASE_BEGIN
 static status_t
 ReleaseResidentCookie(PioneerProbeCookie* cookie)
 {
@@ -2277,8 +2321,12 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		EndResidentSession(cookie,result,!sColdRecoveryRequired);
 		release_sem(sLock);
 	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	if (cookie->context && cookie->context->dispatchOwnerRetained) return B_OK; // retain cookie/owner too until cold recovery
+#endif
 	cookie->magic=0; delete cookie; return B_OK;
 }
+// PIONEER_Q38_DISPATCH_COOKIE_RELEASE_END
 
 // sLock held; exact capacity/policy has already been selected by its ABI.
 static status_t

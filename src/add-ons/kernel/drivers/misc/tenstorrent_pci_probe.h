@@ -58,6 +58,7 @@
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 #include "PioneerQ38DispatchClose.h"
+#include "PioneerQ38DispatchMmioEnd.h"
 #endif
 #endif
 

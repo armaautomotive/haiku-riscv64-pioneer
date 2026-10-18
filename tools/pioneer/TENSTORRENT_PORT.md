@@ -2,6 +2,29 @@
 
 ## Status
 
+### October17:54 retained-owner END tightened;NOT deployed (October18,06:06 UTC)
+
+Current52/7643314f full-model test remains ACTIVE:last observed434 matrix
+calls through layer55 pass,3,763,900 pages uploaded. No complete position/
+token yet;do not disturb the active driver/owner/power.
+
+Candidateh9ebc33ea supersedes ALL earlier54 builds. Staging-b is hash-verified
+but NOT installed/executed;staging-a is obsolete and MUST NOT be installed.
+Client38b60320,inferencea175f26a,guarded installer d397d1f8. Fresh physically
+cold/unloaded boot required. Existing52/default43 still rebuild byte-identical.
+
+After preflight/run/terminal-STOP uncertainty,new54 retains the whole cookie,
+context,PCI reservation,role views/mappings and BOTH host owners until cold
+recovery. It cannot fall through to legacy cleanup/unreserve/destruction.
+Clean54 bulk/root restoration is single-attempt;final MMIO transaction is
+one-shot and stops at the first failed unmap/config readback. Root runtime
+status writes explicitly dirty the separately saved store;all2048 status-
+buffer words restore exactly. Actual extracted END gate/cookie release,
+39 peer/root restoration faults,all11 final config write/readback faults,
+root timeout/fault and both payload modes pass ASan/UBSan. No native54,
+model throughput or Assistant qualification yet. Loaded driver files must
+never be overwritten;legacy device manager can reload updated cached files.
+
 ### October17: separate54 driver/model client builds OFFLINE;native layer47 (October18,05:43 UTC)
 
 Current52/7643314f full-model trial remains active:371 learned projections
