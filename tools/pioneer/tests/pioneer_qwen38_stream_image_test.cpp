@@ -113,6 +113,7 @@ struct StreamMachine:BlockMachine {
 		}
 	}
 };
+#ifndef PIONEER_Q38_STREAM_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -154,3 +155,4 @@ int main(int argc,char** argv)
 	printf("OFFLINE real fullK groups=%u\n",real);
 	puts("PASS OFFLINE actual fullK mixed-quant stream image,9 shapes,exact FP32+independent double references,immutable vector/scales/descriptor,bounded one-block reads and first/middle/last UNKNOWN parks WITHOUT retry;NOT installed/native/whole graph/inference/speed");
 }
+#endif

@@ -2,6 +2,34 @@
 
 ## Status
 
+### October17: cold49 trial starting;batch-row follow-on OFFLINE (October18,01:53 UTC)
+
+CURRENT default Linux is booting after controlled cold recovery:normal
+synced Haiku shutdown01:47:24,one off completed before01:48:50,one on01:52:07
+after FULL180s rest. Disk still48 ef865831;49 staged NOT installed/native-
+qualified. `stream49-20261017-a` Haiku handoff not prepared/dispatched yet.
+No UNKNOWN or active accelerator job. SDs out,P100A installed. No27B tokens.
+
+Separate OFFLINE `blackhole_qwen38_rows.cpp` loops multiple16-row output
+groups without host partial sums or input/scales re-submission. One raw
+packed block per NoC request,fullK5120/6144/17408,groups1..16,N<=256;
+distinct Q8R1/Q8RF markers. No native driver selects this image and no user
+command/code/coordinate API was added. Actual RV32IMF/Tensix tests PASS9
+synthetic N16/48/256 cases +6 REAL first/last N48 matrix groups from Q8
+attention,Q4 K17408 FFN down,Q6 output. Every output matches sequential
+FP32 bits AND independent dequantized-double reference;unused output
+canaries,immutable vector/scales/descriptor,bounded stack and cross-group
+first/middle/last UNKNOWN parks WITHOUT retry also pass. Not native,batch
+kernel ownership,multiworker,graph,inference or speed qualification.
+
+Image1111a05c43848a451d7b2b11832121ef81ad1e48e6cb8d1d1bcbb2cbabeffb4f,
+4600B,832B nested stack. Current49 fast11ec8679 and48 ba94d01e images
+reproduce EXACTLY after adding the separate batch source/assembly selector.
+Rerun private fullK extent/policy/REAL kernel-handler/client tests all pass;
+46/47/48 policy/client and seven-bank actual handler regressions pass too.
+Normal shutdown source was inspected:default is asynchronous non-quick,
+no forced app bypass. No firmware/default Linux/OS/Assistant/dirty llama edits.
+
 ### October17: guarded fullK49 staged,NOT installed (October18,01:46 UTC)
 
 CURRENT Haiku UP/SSH,48 ef865831 on disk AND LOADED,known clean/no active

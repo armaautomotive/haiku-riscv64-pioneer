@@ -1,6 +1,25 @@
 # Native build status
 
-Latest checkpoint (October18,01:46 UTC / October17 Vancouver): Haiku UP/SSH,
+Latest checkpoint (October18,01:53 UTC / October17 Vancouver): normal synced
+Haiku shutdown dispatched01:47:24;one off hold completed before01:48:50,
+one on01:52:07 after FULL180s rest. Default Linux is booting;Haiku handoff
+`stream49-20261017-a` NOT prepared/dispatched yet. Disk still48 ef865831;
+49 remains separately staged,NOT installed/native-qualified. No UNKNOWN.
+Latest source pushed04163fe0c1;dirty llama submodule remains untouched.
+
+While resting,added a separate OFFLINE multi-output-row image,not selected
+by49/48. Reuses one input/scales and keeps group loops/partial sums on card
+through N16/48/256 (groups1/3/16),bounded GDDR reads,distinct marker/fault.
+Actual instructions pass9 synthetic +6 authentic first/last N48 matrices,
+exact sequential FP32+independent dequantized-double references,output
+canaries/immutable vector/scales/descriptor and cross-group timeout parks.
+Text1111a05c43848a451d7b2b11832121ef81ad1e48e6cb8d1d1bcbb2cbabeffb4f,
+4600B,832B nested stack. NOT a kernel-registered/native/multiworker/graph/
+inference/performance result.49 fast11ec8679 AND48 ba94d01e image bytes
+still reproduce EXACTLY. Existing fullK authorization/handler/client and
+46/47/48/bank/bulk regression checks pass.
+
+Previous checkpoint (October18,01:46 UTC / October17 Vancouver): Haiku UP/SSH,
 disk/LOADED48 ef865831,known clean/no job. FullK49 is separately staged at
 `pioneer-qwen38-stream-20261017-a`,NOT installed/native-qualified. Driver
 637db0a6/client49bc095f dual-build reproduce;default43 control2df0e0f8 and
