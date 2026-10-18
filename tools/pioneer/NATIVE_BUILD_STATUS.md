@@ -1,5 +1,19 @@
 # Native build status
 
+October18,23:05 UTC HARDWARE HANDOFF:after clean shutdown and at least
+five-minute off rest,ONE channel1 on pulse completed around23:03 UTC.
+No fresh firmware/UART output or Linux SSH after more than two minutes.
+Existing SCREEN72956 still owns UART115200;capture flushed,unchanged
+57004630B/last shutdown tail. Bounded SSH checks time out. NO additional
+power pulses/card operations. Cannot prove whether PSU/startup lockout,
+physical power state or another hardware issue;DO NOT call this a Haiku
+kernel freeze. User previously requires physical PSU switch OFF five
+minutes for this condition. Need user to do that,restore PSU and confirm
+ready BEFORE one new normal start. Leave cards/cables unchanged.
+Candidate f0778f22 remains OFFLINE ONLY,not staged/installed/native-tested.
+Last installed driver a0a1d9ab remains UNKNOWN/quarantined until verified
+new physical boot. Stage-p/backups preserved;no active inference.
+
 October18,23:02 UTC explicit-phase59 a0a1d9ab FAILED native first
 Q8/K5120 two-worker RUN with SAME phase5a0b0200/raw0xfffbd7c3=-272445.
 This isolates removal of automatic phase reuse as NOT a fix. No output,
