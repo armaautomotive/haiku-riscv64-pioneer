@@ -1,5 +1,25 @@
 # Native build status
 
+Latest checkpoint (October18,07:06 UTC): fixed54/34feba3c is committed/pushed
+but NOT staged/installed/run. Cold-recovery off confirmed06:58:50 UTC,on pulse
+completed after07:02:52 UTC (>180s rest). No new serial output or Linux SSH
+response followed;existing serial SCREEN72956 is alive and ports present.
+Board power/boot state UNKNOWN;do not send another pulse or touch cards.
+User fan/LED-state question pending. Installed file remains diagnostic54
+f3b12221 from staging-c;all prior43/52 backups and default Linux untouched.
+Next once power state is resolved:verify cold Linux/unbound PCI command0000,
+prepare/boot a UNIQUE SD-free Haiku session,stage ordered-STOP staging-d,
+guarded unloaded-only switch,2/7/119 native exact+END tests,then full FFN
+and pool/profile model tests. Never resume a quarantined session.
+
+Separate OFFLINE vector prerequisite PioneerQ38AffineOnly decodes exact
+16-row scale/minimum metadata without decoding/zeroing/touching scalar
+operands. Atomic metadata publication,unchanged operand canaries and late
+invalid-row rejection pass BOTH panel modes with ALL16,777,216 half/factor
+combinations,384 random tiles and996 actual public model edge tiles under
+ASan/UBSan(panel.w447mYME). Existing images/driver/Assistant do NOT select it;
+raw UNPACK/config/ownership/hazard/image/native qualification still needed.
+
 Latest checkpoint (October18,07:00 UTC): diagnostic54/f3b12221 reproduces
 native exact18-case arithmetic PASS but END state5/active1/host_released0/
 cold1,close phase40. Root DONE7200c/count119/marker314d3851 means all STOP

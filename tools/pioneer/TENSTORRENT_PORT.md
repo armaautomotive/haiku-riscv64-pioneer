@@ -2,6 +2,21 @@
 
 ## Status
 
+### October18,07:06 UTC:fixed image ready;native test waiting for power-state confirmation
+
+34feba3c/ordered-STOP root5c3fc897 committed/pushed,NOT installed or executed.
+After confirmed off06:58:50 and full rest,on pulse after07:02:52 produced no
+new serial or Linux SSH response. Existing serial logger is alive. Power/
+boot state UNKNOWN;fan/LED question pending,NO further pulse/card changes.
+Installed file still diagnosticf3b12221;qualified43/52 backups/default Linux
+preserved. Resolve power state before fresh SD-free Haiku/unloaded switch
+and full native2/7/119 exact+clean-END qualification. Do not retry quarantine.
+
+OFFLINE affine-only helper now avoids unnecessary scalar weight decoding
+in the future vector path;exact metadata/unchanged operand canaries/late-row
+failure atomicity pass384 random and996 real model tiles,both modes,along
+with all16,777,216 half/factor combinations. No image/native speed claim.
+
 ### October18,07:00 UTC:STOP-order regression reproduced and fixed OFFLINE
 
 Native diagnostic54 still rejects END phase40 despite root STOP DONE/count119;

@@ -2,6 +2,7 @@
 #include "../PioneerQwen38Panel.h"
 #include "../PioneerQwen38FastPanel.h"
 #include "../PioneerQ38BinaryScale.h"
+#include "../PioneerQ38AffineOnly.h"
 #include "../PioneerQwen38TiledReader.h"
 #include "../TenstorrentGgufQuant.h"
 #include <cassert>
@@ -17,6 +18,11 @@ static void Compare(unsigned type,const uint8_t* tiled,const uint8_t* raw,unsign
 	for (unsigned p=0;p<(type==8?2U:16U);p++) {
 		PioneerQ38Panel panel={}; assert(PioneerQ38UnpackPanel(type,tiled,PioneerQ38TileBytes(type),p,&panel));
 		PioneerQ38Panel fast={}; assert(PioneerQ38FastPanel(type,tiled,PioneerQ38TileBytes(type),p,&fast) && !memcmp(&panel,&fast,sizeof(panel)));
+		PioneerQ38Panel affine; memset(&affine,0xa5,sizeof(affine)); auto untouched=affine;
+		assert(PioneerQ38AffineOnly(type,tiled,PioneerQ38TileBytes(type),p,&affine)
+			&& !memcmp(affine.operand,untouched.operand,sizeof(affine.operand))
+			&& !memcmp(affine.coefficient,panel.coefficient,sizeof(affine.coefficient))
+			&& !memcmp(affine.minimum,panel.minimum,sizeof(affine.minimum)));
 		for (unsigned row=0;row<16;row++) {
 			float values[256]={}; const uint8_t* source=raw+row*rowBytes;
 			assert(type==8?PioneerDecodeQ8_0(source,values):type==12?PioneerDecodeQ4K(source,values):PioneerDecodeQ6K(source,values));
@@ -58,6 +64,13 @@ int main(int argc,char** argv)
 		assert(!PioneerQ38UnpackPanel(type,tile,tileBytes-1,0,&output) && !memcmp(&output,&before,sizeof(output)));
 		assert(!PioneerQ38UnpackPanel(type,tile,tileBytes,type==8?2:16,&output) && !memcmp(&output,&before,sizeof(output)));
 		assert(!PioneerQ38UnpackPanel(type,tile,tileBytes,0,reinterpret_cast<PioneerQ38Panel*>(tile)));
+		assert(!PioneerQ38AffineOnly(type,tile,tileBytes-1,0,&output) && !memcmp(&output,&before,sizeof(output)));
+		assert(!PioneerQ38AffineOnly(type,tile,tileBytes,type==8?2:16,&output) && !memcmp(&output,&before,sizeof(output)));
+		assert(!PioneerQ38AffineOnly(type,tile,tileBytes,0,reinterpret_cast<PioneerQ38Panel*>(tile)));
+		// Late invalid metadata must publish neither earlier rows nor operands.
+		unsigned late=(type==14?208:0)*16+15; uint8_t saved=tile[late+16]; tile[late+16]=0x7c;
+		assert(!PioneerQ38AffineOnly(type,tile,tileBytes,0,&output) && !memcmp(&output,&before,sizeof(output)));
+		tile[late+16]=saved;
 		unsigned d=type==14?208:0; tile[d*16]=1; tile[(d+1)*16]=0x7c;
 		assert(!PioneerQ38UnpackPanel(type,tile,tileBytes,0,&output) && !memcmp(&output,&before,sizeof(output)));
 		assert(!PioneerQ38FastPanel(type,tile,tileBytes,0,&output) && !memcmp(&output,&before,sizeof(output)));
