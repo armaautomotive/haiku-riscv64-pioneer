@@ -1,5 +1,20 @@
 # Native build status
 
+October18,20:34 Vancouver (October19,03:34 UTC) FAST55 MATRIX QUALIFIED:
+39cases/78repeats across synthetic and authenticated real first/last
+Q8/Q4/Q6 row groups,2/7/119 workers,ALL exact_errors0. SIX sessions
+ended state2,active0,pci_restored1,host_released1,cold0,accepted1,
+KNOWN_CLEAN_END1;all processes gone,QUALIFICATION_ALL_EXIT0. Installed55
+9ecb313b qualifies THESE matrices,NOT full27B inference/token speed.
+Local synthetic log56c44b32 and qualification log41320dd7:
+/private/tmp/pioneer-q38-vector-clear-native-synthetic-20261018-t.log
+/private/tmp/pioneer-q38-vector-clear-native-qualification-20261018-t.log.
+Complete real GGML FFN17408x5120 graph/repeat/export now RUNNING via
+unchanged frozen-ABI host binary21e18126 in stage-t;no native CPU learned
+reference/fallback. Need clean END/export,independent offline FP64 check
+and byte comparison against54 BEFORE full-model testing. No Assistant
+update or full-model speed claim. Haiku64/fullRAM,SD cards still out.
+
 October18,20:28 Vancouver (October19,03:28 UTC) FAST55 FIRST NATIVE PASS:
 Restart restored Linux SSH;6.1.31/64 CPUs/NVMe ext4 root,unbound P100A
 COMMAND0000 and both pinned SD-free helper hashes verified. No new NVMe
