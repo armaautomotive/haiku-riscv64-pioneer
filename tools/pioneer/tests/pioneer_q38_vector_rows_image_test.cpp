@@ -42,7 +42,21 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	bool Int8ConvertedRead() const override { return BFloat?false:Base::Int8ConvertedRead(); }
 	bool Fp16Operands() const override { return BFloat?false:Base::Fp16Operands(); }
 	bool FloatFidelityArithmetic() const override { return BFloat?true:Base::FloatFidelityArithmetic(); }
-	unsigned MatrixPhasesPerPanel() const override { return BFloat?(type==8?2U:1U):Base::MatrixPhasesPerPanel(); }
+	unsigned MatrixPhasesPerPanel() const override {
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+		static_assert(!BFloat,"two-phase candidate keeps integer formats");
+		return type==12?2:4;
+#else
+		return BFloat?(type==8?2U:1U):Base::MatrixPhasesPerPanel();
+#endif
+	}
+	unsigned MatrixFidelityStep() const override {
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+		return type==12?2:1;
+#else
+		return Base::MatrixFidelityStep();
+#endif
+	}
 	float Operand16(uint16_t half) const override { return BFloat?Float(uint32_t(half)<<16):Base::Operand16(half); }
 	uint32_t MatrixArithmeticConfig1() const override {
 		// Read-only model of the pinned MVMUL fields,NOT a change to CSR

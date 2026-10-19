@@ -1,5 +1,95 @@
 # Native build status
 
+October19,15:51 Vancouver (22:51 UTC) WORK STAGING / Q4 / PRELOAD NATIVE PASS:
+Current guarded55 e44c3e3c69a37a04639ae9e816bd80fa043be531752b88738632aef96d092929,
+tag2026101900060001,generation20. Idle after successful strict-span FFN
+handoff;quiesced0,cold0,active_owner0,open_count1. SAME resident guard
+d1ce2aa4,64 CPUs and full137034936320B RAM verified. No reboot,power,SD
+or Assistant action. Dirty llama.cpp and unrelated tools/firefox untouched.
+These results are NOT 20tok/s or a new full-model generation benchmark.
+
+Three separately tested improvements follow the prior a2 Work build:
+1. PIONEER_Q38_WORK_POSTED_STAGE:fixed owned DATA writes,then ONE
+same-device nonposted header read after the COMPLETE job frame,before
+any arm/release. CPU fences alone cannot drain posted PCIe writes.
+No numeric payload readback in Work;checked path remains exhaustive.
+2. PIONEER_Q38_WORK_COHORT_CACHE:private Work selector skips ONLY the
+redundant PRIOR peer audit and descriptor echo. Exactly FIVE fewer NoC
+packets per worker. Current physical PC/reset,ALL64 final peer proof
+words,source/counter/nonce/command/numeric checks and STOP remain.
+Root ba2670093a1d8432e0c8ce74f26d58a67d3f9071601673df73926cd6ae836aa5,
+8128B within original8192B. No user selector/physical authority added.
+3. PIONEER_Q38_Q4_TWO_PHASE:EXACT INTEGER phases1/3 for Q4 operands0..15;
+Q8/Q6 retain ALL4. No BF16 format change;failed BF16 artifact NOT reused.
+Physical Dst clear fix,all matrix drains and source guards remain.
+Only once/job Setup is size-optimized. Final peer60a8a7b9,8164B/8192B,
+boot e678476d unchanged. Constant MVMUL issue avoids instruction-buffer
+stores. The earlier e71705ee two-phase variant was exact but slower.
+
+No-logging119-worker Q4/K17408 input MISS mean24.797 ->13.790ms;
+input HIT14.590 ->12.221ms,TWO samples each,separate sessions,NOT token
+throughput. Final direct-issue54c3d8db/gen19 passed18 synthetic+16 real-row
+RUNs,ALL exact,then full contiguous FFN K17408/N5120/12240pages TWICE.
+Warm0.026693s vs earlier Work0.029510s (9.55% less),ONE warm sample.
+Both full outputs SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56,
+identical to all previously qualified FFN outputs. Log41ef474c... retained.
+Intermediate3c1592d3 also passed34 debug RUNs+two full FFNs,warm0.026898s.
+Posted2d7f3e9f passed16 real-row RUNs;cohort-cachea60fadcc passed18 synthetic,
+16 real-row and18 old-checked RUNs. CPU-only profileabacb9a2 passed16 real
+rows before restoration. Total152 debug RUNs and SIX full-FFN executions,
+13 known-clean sessions including the transport-only test;no failures.
+
+NEW PIONEER_Q38_SPAN_PRELOAD opt-in native adapter:1MiB private high-physical
+host owner,all7 logical banks,fresh initialized-page authority,full existing
+on-card complement/original echoes and independent CPU byte comparison.
+Separate60f4/60f5/60f6 support/upload/code-END operations. No user physical
+pointer,route,code or nonce. Old <=4-page bank ABI is NOT widened. ALL page
+hashes/initialized bits commit ONLY after complete transport proofs.
+SPAN_END restores code BEFORE the first cohort RUN;BANK_END is separately
+required. Premature BANK_END or close,even after SPAN_END but before
+BANK_END,retains cookie/context/PCI/ALL host leases with ZERO device IO.
+Legacy bank/compute overlap is refused while the span code lease is open.
+
+Native span client5ffa5743 passed21 fixed PUBLIC transfers:4KiB,20KiB and
+1MiB at every bank,including high-end extents. 7512064 exact bytes,clean
+SPAN_END+BANK_END,EXIT0. Full1MiB calls0.1422..0.1435s (~7.3MB/s),not pure
+PCIe bandwidth. Then frozen-library Work4b581364 loaded authentic FFN
+weights through this adapter:50135040B/12240pages,source repack0.400049s,
+span upload7.274978s vs prior checked bulk17.691281s (2.43x). Code-owner
+handoff+two complete matrices+clean END+EXACT05cda52a... output all PASS.
+First graph34.614614s vs44.738256s;warm0.039791s exposed a NEW host loop
+regression:repeated Parts() calls performed thousands of fstats. Fixed by
+caching the immutable private metadata reference,retaining live-source
+checks at IO/publication boundaries. Fix is offline-tested;native retest
+pending with the next Work loader. Do not claim that warm regression fixed
+on hardware yet. Strict-span inference4b581364 is the old measured binary.
+
+NEXT CANDIDATE,NOT INSTALLED/NOT NATIVE-QUALIFIED YET:6dcf1e71/tag...60002,
+PIONEER_Q38_SPAN_FAST. Separate60f7/60f8 Work transport interface,no silent
+fallback to strict data verification. Mode2 issues ONLY owned host READ ->
+private GDDR acknowledged WRITE (two packets/chunk vs seven),no host writes,
+byte comparisons or local mirror/echo copies. Same initialized extents,
+ALL sources/command/counter/ACK/idle/physical-PC/BME/terminal/retention proofs.
+Mode1 retains the full strict transport in the SAME new3320B image9b4e950f.
+host_exact/matched_words are deliberately ZERO for Work. A separate PUBLIC
+debug clientab1485d6 independently reads/compares EVERY original test byte
+AFTER code restoration;the production Work runtime2ecb16b4 contains NONE.
+This is a loading optimization,not a whole-GPU graph or model-speed claim.
+
+ASan/UBSan exact RV32+NoC/Tensix/SFPU/root/peer Q4 tests PHZ19n5d,687792
+exhaustive integer products plus real model edges,all9 widths/types and
+repeated/STOP/UNKNOWN PASS. Final Work stage/session suite sWIU6gc8,real
+handler/retention fECSNt7c/mIAjADPr,span adapter/session/public-client OOFzmzv9
+and final fast-aware TxubBvnM,actual span controller AK3hyoDj/ygWsm2JC,
+fast image o4Is6xml and actual dispatch/retention1MEQWuWk PASS. Pure Work
+numeric-corruption negative controls intentionally ACCEPT wrong data while
+independent debug observers reject it. Command/ownership failures never
+permit another device operation. Updater851 actual filesystem/hash/owner/
+handshake/failure cases PASS;fadf8dfd currently pins apply/restore-work-span.
+Default-off54c3d8db driver,43control2df0e0f8 and Work af4b9d7d inference
+rebuild EXACT. Frozen libs and dirty llama tree remain unmodified/unbuilt.
+Evidence:/private/tmp/pioneer-q38-work-fast-native-20261019.lQIaCFsg.
+
 October19,14:36 Vancouver (21:36 UTC) WORK / CPU-VALIDATED NATIVE PASS:
 Implementation1e48625acd is pushed to pioneer-riscv64. Current guarded55
 a2a7179add3c5bf5eb06e0ef8cd063a3113169232a7e0445ba8e2d5b06daf683,

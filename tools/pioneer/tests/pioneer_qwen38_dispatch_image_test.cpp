@@ -36,6 +36,14 @@ struct DispatchMachine:BlockMachine {
 	}
 	static unsigned Route(unsigned worker) { const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14}; return columns[worker/10]|((worker%10+2)<<6); }
 	static unsigned Bytes(unsigned type) { return type==8?576:type==12?2304:3392; }
+	bool WorkCached() const {
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+		return operation==1 && memory.at(0x74020)==1;
+#else
+		return false;
+#endif
+	}
+	unsigned DescriptorEchoes() const { return WorkCached()?0:active; }
 	void Configure(unsigned nonce,bool stop=false) {
 		operation=stop?2:1; descriptors=readbacks=doorbells=gathers=0;
 		const uint32_t header[]={0x314d3851,1,operation,stop?0:kind,stop?0:k,active,nonce,0,0,0,0,0,0,0,0,0};
@@ -101,7 +109,7 @@ struct DispatchMachine:BlockMachine {
 				if (operation==1) assert(d[0]==0x31483851 && d[1]==kind && d[2]==Bytes(kind) && !d[3] && !d[4] && d[5]==k
 					&& d[6]==memory.at(base) && d[7]==memory.at(base+8) && d[8]==memory.at(base+16) && d[9]==1);
 			} else {
-				assert(remote==0x74100 && bytes==4 && descriptors==active && readbacks==active && !peer.launched);
+				assert(remote==0x74100 && bytes==4 && descriptors==active && readbacks==DescriptorEchoes() && !peer.launched);
 				assert(memory.at(local)==peer.descriptor[12] && memory.at(local)==peer.finished+1); doorbells++;
 				peer.requested=memory.at(local); peer.operation=operation; peer.launched=true;
 				if (mutateTasks) memory[0x74080+(active-1)*32+28]=1;
@@ -167,7 +175,7 @@ struct DispatchMachine:BlockMachine {
 		if (pc==TT_Q38_DISPATCH_FAULT_PARK) return false;
 		assert(l1[Index(0x17ffc8)]==0x314d3851);
 		if (l1[Index(0x17ffc4)]!=active) return false;
-		assert(!pending && descriptors==active && readbacks==active && doorbells==active && gathers==(operation==1?active:0));
+		assert(!pending && descriptors==active && readbacks==DescriptorEchoes() && doorbells==active && gathers==(operation==1?active:0));
 		if (operation==1) for (unsigned w=0;w<119;w++) for (unsigned row=0;row<256;row++) {
 			unsigned groups=w<active?peers[w].descriptor[7]:0;
 			assert(memory.at(0x80000+w*1024+row*4)==(row<groups*16?ExpectedOutput(w,row):0));

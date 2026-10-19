@@ -54,5 +54,25 @@ int main(int argc,char** argv)
 	cookie->context->io.closing=true;
 #endif
 	assert(ReleaseResidentCookie(cookie)==B_OK && genericCleanup==1 && !sRuntimeOwner && !sBankStorageOnly && !sColdRecoveryRequired);
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	for (unsigned state:{0U,1U,2U}) {
+		cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto& c=*cookie->context;
+		c.q38Span=new PioneerQ38SpanLease; c.q38Span->saved=c.q38Span->ready=true;
+		c.q38Span->closed=state==2;
+		unsigned writes=c.io.Writes(),selects=c.io.selects;
+		if (state) assert(ReleaseResidentCookie(cookie)==B_OK);
+		else { tt_resident_session_result r={}; bool clean=true;
+			assert(!EndQ38DispatchOwnership(c,r,clean) && !clean); }
+		assert(c.dispatchOwnerRetained && c.q38Span && c.q38Span->closed==(state==2) && sColdRecoveryRequired && genericCleanup==1
+			&& writes==c.io.Writes() && selects==c.io.selects && c.bulkHost.quarantined && c.wideHost.quarantined);
+		writes=c.io.Writes(); assert(ReleaseResidentCookie(cookie)==B_OK && c.io.Writes()==writes);
+		delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false;
+	}
+	cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); cookie->context->q38Span=new PioneerQ38SpanLease;
+	cookie->context->q38Span->closed=true;
+	tt_resident_session_result spanEnd={}; EndResidentSession(cookie,spanEnd,true); // explicit BANK_END
+	assert(ReleaseResidentCookie(cookie)==B_OK && genericCleanup==2 && !sRuntimeOwner && !sColdRecoveryRequired);
+	puts("PASS REAL span lifetime handoff: premature BANK_END or implicit close retains cookie/context/PCI/BOTH host owners with ZERO device IO; completed SPAN_END plus explicit BANK_END permits normal cleanup");
+#endif
 	puts("PASS REAL extracted54 END gate+cookie release:preflight/run/terminal-STOP uncertainty retains cookie/context/PCI owner/BOTH host leases,no generic cleanup/unreserve/delete/reset/mapping restore or repeated IO;known clean STOP proceeds once;NO native hardware qualification");
 }

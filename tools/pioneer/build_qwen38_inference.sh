@@ -24,6 +24,18 @@ case "${PIONEER_Q38_EXECUTION_MODE:-checked}" in
  *) exit 2;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac
+case "${PIONEER_Q38_SPAN_PRELOAD:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}" = work ] || exit 2
+    extra="$extra -DPIONEER_Q38_SPAN_PRELOAD";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_SPAN_FAST:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_SPAN_PRELOAD:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_SPAN_FAST";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do
  case "$name" in

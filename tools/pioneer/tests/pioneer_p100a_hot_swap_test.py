@@ -24,7 +24,7 @@ def check(mode, fault=None):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
             return target
-        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'guardsha']}
+        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'guardsha']}
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
             '--apply-a': ('hashb', 'hasha', 'tagb'), '--apply-b': ('hasha', 'hashb', 'taga'),
@@ -35,6 +35,12 @@ def check(mode, fault=None):
             '--apply-reuse': ('hashf', 'hashr', 'tagf'), '--restore-reuse': ('hashr', 'hashf', 'tagr'),
             '--apply-cross-reuse': ('hashr', 'hashx', 'tagr'), '--restore-cross-reuse': ('hashx', 'hashr', 'tagx'),
             '--apply-work': ('hashx', 'hashw', 'tagx'), '--restore-work': ('hashw', 'hashx', 'tagw'),
+            '--apply-work-profile': ('hashw', 'hashwp', 'tagw'), '--restore-work-profile': ('hashwp', 'hashw', 'tagwp'),
+            '--apply-work-posted': ('hashw', 'hashws', 'tagw'), '--restore-work-posted': ('hashws', 'hashw', 'tagws'),
+            '--apply-work-cohort': ('hashws', 'hashwc', 'tagws'), '--restore-work-cohort': ('hashwc', 'hashws', 'tagwc'),
+            '--apply-work-q4': ('hashwc', 'hashw4', 'tagwc'), '--restore-work-q4': ('hashw4', 'hashwc', 'tagw4'),
+            '--apply-work-q4-inline': ('hashw4', 'hashw4i', 'tagw4'), '--restore-work-q4-inline': ('hashw4i', 'hashw4', 'tagw4i'),
+            '--apply-work-span': ('hashw4i', 'hashwsp', 'tagw4i'), '--restore-work-span': ('hashwsp', 'hashw4i', 'tagwsp'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -47,6 +53,12 @@ def check(mode, fault=None):
         put('candidater', payloads['hashr'])
         put('candidatex', payloads['hashx'])
         put('candidatew', payloads['hashw'])
+        put('candidatewp', payloads['hashwp'])
+        put('candidatews', payloads['hashws'])
+        put('candidatewc', payloads['hashwc'])
+        put('candidatew4', payloads['hashw4'])
+        put('candidatew4i', payloads['hashw4i'])
+        put('candidatewsp', payloads['hashwsp'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -80,7 +92,7 @@ def check(mode, fault=None):
             ' *) exit 1;;\nesac\n').encode()
         client = put('client', client_body)
         client.chmod(0o700)
-        if fault in ['candidatea', 'candidateb', 'candidatep', 'candidateq', 'candidatec', 'candidatef', 'candidater', 'candidatex', 'candidatew', 'guardsource', 'client', 'installed', 'guard']:
+        if fault in ['candidatea', 'candidateb', 'candidatep', 'candidateq', 'candidatec', 'candidatef', 'candidater', 'candidatex', 'candidatew', 'candidatewp', 'candidatews', 'candidatewc', 'candidatew4', 'candidatew4i', 'candidatewsp', 'guardsource', 'client', 'installed', 'guard']:
             path(values[fault]).write_bytes(b'wrong')
         if fault in ['candidatea-link', 'client-link', 'guard-link', 'installed-link']:
             target = path(values[fault.removesuffix('-link')])
@@ -139,8 +151,8 @@ if __name__ == '__main__':
               'installed-link', 'device-link', 'stage-link', 'incoming', 'guardincoming', 'backup', 'platform']
     hot = ['guard', 'guard-link', 'cold', 'active', 'open', 'tag', 'generation', 'quiesced', 'guard-version',
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
-    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work']:
-        candidate = {'--apply-profile': ['candidatep'], '--apply-batch': ['candidateq'], '--apply-compact': ['candidatec'], '--apply-fast': ['candidatef'], '--apply-reuse': ['candidater'], '--restore-reuse': ['candidatef'], '--apply-cross-reuse': ['candidatex'], '--restore-cross-reuse': ['candidater'], '--apply-work': ['candidatew'], '--restore-work': ['candidatex']}.get(mode, [])
+    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span']:
+        candidate = {'--apply-profile': ['candidatep'], '--apply-batch': ['candidateq'], '--apply-compact': ['candidatec'], '--apply-fast': ['candidatef'], '--apply-reuse': ['candidater'], '--restore-reuse': ['candidatef'], '--apply-cross-reuse': ['candidatex'], '--restore-cross-reuse': ['candidater'], '--apply-work': ['candidatew'], '--restore-work': ['candidatex'], '--apply-work-profile': ['candidatewp'], '--restore-work-profile': ['candidatew'], '--apply-work-posted': ['candidatews'], '--restore-work-posted': ['candidatew'], '--apply-work-cohort': ['candidatewc'], '--restore-work-cohort': ['candidatews'], '--apply-work-q4': ['candidatew4'], '--restore-work-q4': ['candidatewc'], '--apply-work-q4-inline': ['candidatew4i'], '--restore-work-q4-inline': ['candidatew4'], '--apply-work-span': ['candidatewsp'], '--restore-work-span': ['candidatew4i']}.get(mode, [])
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

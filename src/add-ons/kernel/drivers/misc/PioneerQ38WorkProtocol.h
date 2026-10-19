@@ -24,10 +24,20 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 		|| r.root_marker!=0x314d3851 || !PioneerQ38RootTerminalPc(r.root_pc[0]) || !PioneerQ38RootTerminalPc(r.root_pc[1])) return false;
 	const auto* s=r.stats;
 	if (s[0]!=0x314d3851 || s[1]!=1 || s[2]!=1 || s[3]!=job.type || s[4]!=job.inputs || s[5]!=job.peers
-		|| s[12]!=a.nextRoot || s[13] || s[14] || s[15] || s[10]<2*job.peers || s[11]<2*job.peers || s[11]>s[10]
+		|| s[12]!=a.nextRoot || s[13] || s[14] || s[15]
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+		|| s[10]<job.peers || s[11]<job.peers
+#else
+		|| s[10]<2*job.peers || s[11]<2*job.peers
+#endif
+		|| s[11]>s[10]
 		|| s[10]>2*65536*job.peers) return false;
 	unsigned groups=0; for (unsigned w=0;w<job.peers;w++) groups+=job.part[w].groups;
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+	uint32_t reads=s[10]+3*s[11]+job.peers,flits=s[10]+3*s[11]+4*job.peers+groups,writes=2*job.peers;
+#else
 	uint32_t reads=s[10]+3*s[11]+2*job.peers,flits=s[10]+3*s[11]+5*job.peers+groups,writes=2*job.peers;
+#endif
 	if (s[6]!=reads || s[7]!=writes || s[8]!=flits || s[9]!=writes) return false;
 	for (unsigned c=0;c<8;c++) {
 		uint32_t expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+writes:writes;
@@ -35,7 +45,12 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 			|| uint32_t(a.after[c]-a.before[c])!=expected) return false;
 	}
 	for (unsigned i=0;i<16;i++) if (s[32+i]!=a.source[0][i]) return false;
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+	if (s[48]!=1) return false;
+	for (unsigned i=49;i<64;i++) if (s[i]) return false;
+#else
 	for (unsigned i=48;i<64;i++) if (s[i]) return false;
+#endif
 	return true;
 }
 #endif

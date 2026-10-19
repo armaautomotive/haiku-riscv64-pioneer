@@ -53,6 +53,9 @@
 #include "PioneerDecoderBatchModel.h"
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #include "PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+#include "PioneerQ38SpanService.h"
+#endif
 #include "PioneerQ38PanelProbe.h"
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #include "PioneerQ38StreamProbe.h"

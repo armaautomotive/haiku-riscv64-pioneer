@@ -24,6 +24,7 @@ struct WorkSessionIO:DispatchSessionIO {
 		return DispatchSessionIO::Call(fd,op,data,bytes);
 	}
 };
+#ifndef PIONEER_Q38_MODE_SESSION_MOCK_ONLY
 int main()
 {
 	(void)&Check; (void)&CohortHostTestMain;
@@ -58,3 +59,4 @@ int main()
 	puts("PASS WORK SESSION:own explicit ioctl,no checked fallback,no peer/input/result validation,multiwave assembly,source/transaction failures CLOSE ONLY,clean END;NO DEVICE IO");
 #endif
 }
+#endif

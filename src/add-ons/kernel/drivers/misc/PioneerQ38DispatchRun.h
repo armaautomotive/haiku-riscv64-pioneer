@@ -57,6 +57,15 @@ template<class IO> bool PioneerQ38DispatchRead(IO& io,uint32_t a,uint32_t* outpu
 	for (unsigned i=0;i<words;i++) output[i]=io.Q38PanelRead(a+i*4);
 	return true;
 }
+#ifdef PIONEER_Q38_WORK_POSTED_STAGE
+#ifndef TT_PIONEER_Q38_WORK_MODE
+#error Posted staging is exclusive to explicit Work mode
+#endif
+#include "PioneerQ38WorkStage.h"
+#define PIONEER_Q38_STAGE_CALL PioneerQ38WorkStage<IO,Work>
+#else
+#define PIONEER_Q38_STAGE_CALL PioneerQ38DispatchStage
+#endif
 template<class IO> auto PioneerQ38DispatchInputCompare(IO& io,uint32_t a,const uint32_t* input,unsigned words,int)
 	-> decltype(io.Q38PayloadData(a),bool())
 {
@@ -121,14 +130,14 @@ template<class IO
 	for (auto& rows:job.output) for (auto& word:rows) word=0;
 	if (!io.SelectRuntimeCore(0) || !PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	unsigned padded=(job.inputs/PioneerQ38CohortBlockInputs(job.type)+15)&~15U;
-	if (!reuse && (!PioneerQ38DispatchStage(io,0xa0000,
+	if (!reuse && (!PIONEER_Q38_STAGE_CALL(io,0xa0000,
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 		a.packedActivation,packedWords,
 #else
 		job.activation,job.inputs/2,
 #endif
 		0)
-		|| !PioneerQ38DispatchStage(io,0xab000,job.scales,padded,0))) return PioneerQ38DispatchRunFail(lease,banks,job);
+		|| !PIONEER_Q38_STAGE_CALL(io,0xab000,job.scales,padded,0))) return PioneerQ38DispatchRunFail(lease,banks,job);
 	for (unsigned w=0;w<119;w++) {
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
 		uint32_t* task=a.taskFrame+w*8;
@@ -139,11 +148,11 @@ template<class IO
 		if (w<job.peers) { task[0]=a.extent[w].address; task[1]=job.part[w].bank; task[2]=job.part[w].groups;
 			task[3]=a.nextPeer[w]; task[4]=a.extent[w].route; task[5]=a.source[w+1][0]; }
 #ifndef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
-		if (!PioneerQ38DispatchStage(io,0x74080+w*32,task,8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+		if (!PIONEER_Q38_STAGE_CALL(io,0x74080+w*32,task,8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
 #endif
 	}
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
-	if (!PioneerQ38DispatchStage(io,0x74080,a.taskFrame,119*8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PIONEER_Q38_STAGE_CALL(io,0x74080,a.taskFrame,119*8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
 #endif
 	const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,1,job.type,job.inputs,job.peers,a.nextRoot,
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
@@ -151,8 +160,15 @@ template<class IO
 #else
 		0,
 #endif
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+		Work?1U:0U,0,0,0,0,0,0,0};
+#else
 		0,0,0,0,0,0,0,0};
-	if (!PioneerQ38DispatchStage(io,0x74000,header,16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#endif
+	if (!PIONEER_Q38_STAGE_CALL(io,0x74000,header,16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#ifdef PIONEER_Q38_WORK_POSTED_STAGE
+	if constexpr (Work) if (!PioneerQ38WorkDrain(io,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#endif
 	profile.Mark(); // source proof+ALL input/task/header staging and readback
 	root.Store().l1_dirty=true; root.Store().l1_restored=false; // runtime status lives in separately saved17e000..180000
 	for (unsigned c=0;c<3;c++) io.RuntimeStatusWrite(c,0);
@@ -251,4 +267,5 @@ template<class IO
 	profile.Publish(job.type,job.inputs,job.peers); // CPU-only,successful jobs ONLY
 	return true;
 }
+#undef PIONEER_Q38_STAGE_CALL
 #endif

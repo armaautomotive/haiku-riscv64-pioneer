@@ -52,6 +52,7 @@ struct Machine {
 	virtual bool Int8Arithmetic() const { return false; }
 	virtual bool Int8ConvertedRead() const { return Int8Arithmetic(); }
 	virtual bool NativeInt8Unpack() const { return false; }
+	virtual unsigned MatrixFidelityStep() const { return 1; }
 	virtual bool InlineTensix() const { return false; }
 	virtual uint32_t MatrixArithmeticConfig1() const { return config[1]; }
 	virtual bool FloatFidelityArithmetic() const { return sfpuSmoke==24; }
@@ -174,7 +175,7 @@ struct Machine {
 		}
 		else if ((op&~0x4000U) == 0x26000020 || (op&~0x4000U) == 0x26c00020) {
 			unsigned modifier=(op>>14)&3; assert(modifier<=1);
-			if (modifier) assert(thread[13]==0 && thread[29]==0x2000 && thread[48]==0);
+			if (modifier) assert(thread[13]==0 && thread[29]==MatrixFidelityStep()*0x2000 && thread[48]==0);
 			unsigned phase=(thread[11]+fidelityPhase)&3; phaseVisits[phase]++;
 			assert(ownerA && ownerB && thread[2] == 1 && thread[3] == 1);
 			assert(config[0] == (NativeInt8Unpack()?0x423eU:Fp16Operands()?0x4231U:0x42b5U) && MatrixArithmeticConfig1() == (NativeInt8Unpack()?0xa03c0000U:Int8Arithmetic()?0xa0220000U:Fp16Operands()?0x20220000U:0x20aa0000U) && config[2] == 0 && config[3] == (Int8ConvertedRead()?0x10000U:0U) && config[6] == 0 && config[7] == 0 && config[220] == 0);

@@ -10,6 +10,12 @@
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 #include "PioneerQ38MatrixPhases.h"
 #endif
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+#if !defined(PIONEER_Q38_MATRIX_PHASE_REUSE) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL)
+#error Q4 two-phase candidate requires the fixed integer vector peer
+#endif
+#include "PioneerQ38Q4Phases.h"
+#endif
 #ifdef PIONEER_Q38_BFLOAT_PANEL
 #include "PioneerQ38BFloatPanel.h"
 #endif
@@ -76,6 +82,11 @@ static void Config(unsigned index,uint32_t value)
 	volatile uint32_t* target=Words(0xffef0000+index*4); *target=value;
 	if (*target!=value) block_fault_park();
 }
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+// Keep the candidate inside the unchanged 8KiB view. Only this once/job
+// fixed startup sequence is compacted; the hot compute loop remains O2.
+__attribute__((noinline,optimize("Os")))
+#endif
 static void Setup()
 {
 	// Same source overlay,integer engine,FOUR fidelity phases,converted
@@ -122,7 +133,7 @@ struct VectorPanelEmitter {
 	void Drain() { ::Drain(); }
 };
 #endif
-#ifdef PIONEER_Q38_BFLOAT_PANEL
+#if defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_Q4_TWO_PHASE)
 static void Matrix(unsigned type)
 #else
 static void Matrix()
@@ -150,7 +161,11 @@ static void Matrix()
 	if (type==8) { e.Op(0x26004020); e.Drain(); }
 	e.Op(0x26c04020); e.Drain();
 #else
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+	PioneerQ38Q4Phases(e,type);
+#else
 	PioneerQ38MatrixPhases(e);
+#endif
 #endif
 #else
 	for (unsigned phase=0;phase<4;phase++) {
@@ -312,7 +327,12 @@ extern "C" unsigned block_main()
 	);
 #endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
-	VectorPanelEmitter phasesEmitter; PioneerQ38MatrixPhasesSetup(phasesEmitter);
+	VectorPanelEmitter phasesEmitter;
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+	PioneerQ38Q4PhasesSetup(phasesEmitter,type);
+#else
+	PioneerQ38MatrixPhasesSetup(phasesEmitter);
+#endif
 #endif
 	for (unsigned row=0;row<groups*16;row++) Words(0x84000)[row]=0;
 	unsigned panels=count/16;
@@ -390,7 +410,7 @@ extern "C" unsigned block_main()
 #endif
 #endif
 #endif
-#ifdef PIONEER_Q38_BFLOAT_PANEL
+#if defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_Q4_TWO_PHASE)
 		Matrix(type);
 #else
 		Matrix();

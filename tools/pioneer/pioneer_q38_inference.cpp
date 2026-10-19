@@ -14,11 +14,24 @@ struct State {
 	double matrixWallSeconds=0;
 	uint64_t matrixCallbacks=0;
 	bool profileValid=true;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	bool singleFfnSpan=false;
+#endif
 	State():session(io,source) {}
 	static bool Ready(void* p) { auto& s=*static_cast<State*>(p); return s.source.Ready() && !s.session.Failed(); }
 	static bool Multiply(void* p,unsigned tensor,const float* x,unsigned k,float* y,unsigned n) {
 		auto& s=*static_cast<State*>(p);
-		if (!s.opened) { if (!s.session.Open()) return false; s.opened=true; }
+		if (!s.opened) {
+			if (!s.session.Open()) return false;
+			s.opened=true;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+			double preloadStart=Seconds();
+			if (!s.session.PrimeSpan(s.singleFfnSpan?tensor:UINT32_MAX)) return false;
+			printf("PUBLIC_PRECOHORT_SPAN_PRIMED pages%llu bytes%llu seconds%.6f source_repack_seconds%.6f span_upload_seconds%.6f;CODE_RESTORED_BEFORE_ANY_COHORT_RUN\n",
+				(unsigned long long)s.session.pagesUploaded,(unsigned long long)s.session.bytesRetained,Seconds()-preloadStart,
+				double(s.session.sourceReadNanos)*1e-9,double(s.session.bulkUploadNanos)*1e-9);
+#endif
+		}
 		uint64_t before=s.session.pagesUploaded;
 		uint64_t readBefore=s.session.sourceReadNanos,bulkBefore=s.session.bulkUploadNanos,runBefore=s.session.runNanos;
 		double start=Seconds(); bool okay=s.session.Multiply(tensor,x,k,y,n);
@@ -40,6 +53,9 @@ static int GraphSmoke(State& state,const char* output)
 	const auto* t=state.source.Model().Find("blk.0.ffn_down.weight");
 	if (!t || t->type!=12 || t->inputs!=17408 || t->outputs!=5120) return 1;
 	PioneerQ38GgmlDispatch d={&state,&state.source.Model(),State::Ready,State::Multiply,State::Finish,State::Abort};
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	state.singleFfnSpan=true;
+#endif
 	if (!PioneerQ38GgmlConfigure(d)) return 1;
 	auto dev=ggml_backend_reg_dev_get(PioneerQ38GgmlReg(),0); auto backend=ggml_backend_dev_init(dev,nullptr);
 	ggml_init_params p={1024*1024,nullptr,true}; auto ctx=ggml_init(p);
@@ -100,6 +116,12 @@ int main(int argc,char** argv)
 	bool four=argc==2 && !strcmp(argv[1],"--public-four-tokens");
 	if (!graph && !four && (argc!=2 || strcmp(argv[1],"--public-one-token"))) return 2;
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+#ifdef PIONEER_Q38_SPAN_FAST
+	puts("PUBLIC27B_WORK_TRANSPORT NO_CPU_DATA_VALIDATION;NO_DEVICE_ECHO_READBACK;OWNED_BOUNDS_SOURCE_ACK_COMPLETION_CHECKS_RETAINED");
+#endif
+	puts("PUBLIC27B_TRANSPORT PRECOHORT_SPAN_1M;ALL_SELECTED_WEIGHTS_BEFORE_ANY_COHORT;NO_LEGACY_UPLOAD_FALLBACK");
+#endif
 #ifdef PIONEER_Q38_CPU_VALIDATION
 	puts("PUBLIC27B_MODE CPU_VALIDATED_DEBUG;EVERY_LEARNED_MATRIX_INDEPENDENT_CPU_REFERENCE;NO_CPU_FALLBACK;SLOW_DIAGNOSTIC");
 	puts("PUBLIC27B_INFERENCE_AUTH_BEGIN;NO_ACCELERATOR_FD_YET;CPU_REFERENCE_ENABLED_NO_FALLBACK");

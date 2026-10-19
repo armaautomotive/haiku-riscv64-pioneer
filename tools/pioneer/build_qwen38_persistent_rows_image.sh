@@ -21,12 +21,18 @@ case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in
  *) exit 2;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac
+case "${PIONEER_Q38_Q4_TWO_PHASE:-0}" in
+ 0) q4_phases=;;
+ 1) [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 5 ] || exit 2
+    q4_phases=-DPIONEER_Q38_Q4_TWO_PHASE;;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
  -fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
  -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
- -march=rv32imf -mabi=ilp32 -fstack-usage $dwarf -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_SCALE \
+ -march=rv32imf -mabi=ilp32 -fstack-usage $dwarf $q4_phases -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_SCALE \
  -c "$directory/$source" -o "$output/program.o"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax $fault_as "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_qwen38_block.ld" \

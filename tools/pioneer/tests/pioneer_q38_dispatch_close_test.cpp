@@ -3,6 +3,9 @@
 #include "pioneer_q38_dispatch_run_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
 struct CloseIO:RunIO {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	bool q38SpanAllowed=true;
+#endif
 	unsigned closeFault=0,target=119,postPc[120]={},endHolds=0,restored=0;
 	bool failedRestore=false,tlbWritten=false;
 	uint32_t stopStats[64]={};

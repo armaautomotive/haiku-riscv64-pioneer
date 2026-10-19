@@ -14,6 +14,8 @@ struct SpanControlIO:PanelIO {
 	std::vector<uint32_t> wideWords=std::vector<uint32_t>(TT_WIDE_OUTPUT_WORDS,0xabcdef00);
 	uint64_t widePhysical=UINT64_C(0x140000000),clock=0;
 	unsigned touches=0,pciWrites=0,rootStarts=0,rootStops=0,rootHolds=0,pcSamples=0;
+	unsigned wideLoads=0;
+	std::vector<uint32_t> lastDeviceWords;
 	unsigned packetFault=0,summaryFault=~0U,descriptorFault=~0U,commandFault=~0U;
 	unsigned dropPci=0,dropReset=0,dropEntry=0,entryWrites=0;
 	unsigned latePcFault=0,sourceFault=~0U,lateWideFault=~0U,initialWideFault=~0U;
@@ -26,6 +28,8 @@ struct SpanControlIO:PanelIO {
 	SpanControlIO(const char* path):image(path) {}
 	void Touch() { assert(!HostReadMock::quarantined && !wideQuarantined); touches++; }
 	bool SpanBeforeCohort() { return !activeCohort; } // metadata ONLY
+	bool MapBulk() { Touch(); return !bulkMapLost; }
+	bool MapQ38Panel() { Touch(); return !coreMapLost && mapping; }
 	bool SpanViewCapacity(unsigned words) { return capacity && words<=saved.size(); }
 	bool SpanOtherCoresHeld() { Touch(); return othersHeld; } // mock physical proof; NO reset
 	bool SelectRuntimeCore(unsigned w) { Touch(); return w==0; }
@@ -54,7 +58,7 @@ struct SpanControlIO:PanelIO {
 	void WideHostFence() { Touch(); wideDirty=false; }
 	void WideHostStore(unsigned w,uint32_t v) { Touch(); assert(wideAllocated && !wideReleased && !wideCached && coreReset==0x47800);
 		wideWords.at(w)=v; wideDirty=true; }
-	uint32_t WideHostLoad(unsigned w) { Touch(); assert(wideAllocated && !wideReleased && !wideCached && !wideDirty);
+	uint32_t WideHostLoad(unsigned w) { Touch(); wideLoads++; assert(wideAllocated && !wideReleased && !wideCached && !wideDirty);
 		return wideWords.at(w)^((!rootStarts && w==initialWideFault) || (rootStarts && w==lateWideFault)?1:0); }
 	int ReleaseWideOutput() { Touch(); assert(!wideReleased); wideReleased=true; return 0; }
 	void QuarantineWideOutput() { wideQuarantined=true; }
@@ -76,6 +80,7 @@ struct SpanControlIO:PanelIO {
 		for (unsigned w=0;w<10;w++) m.command[w]=command[w];
 		m.failPacket=packetFault; m.dropPacket=int(deviceDropPacket); m.corruptPacket=int(deviceCorruptPacket);
 		(void)m.Run();
+		lastDeviceWords=m.gddr;
 		std::copy(m.hostData.begin(),m.hostData.end(),wideWords.begin());
 		for (unsigned w=0;w<view.size();w++) view[w]=m.memory.at(TT_Q38_SPAN_VIEW_BASE+w*4);
 		for (unsigned w=0;w<8192;w++) l1[w]=m.memory.at(0x140000+w*4);
@@ -143,6 +148,7 @@ struct SpanControlFixture {
 		assert(PioneerResidentLeaseEnd(io,owner.noc,owner.store) && !io.ReleaseHostPage()); io.Safe();
 	}
 };
+#ifndef PIONEER_Q38_SPAN_SERVICE_MOCK_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2);
@@ -258,3 +264,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual span controller:metadata refusal before IO;single-attempt restore/close;UNKNOWN retains full context and all3 host owners;NO native driver/ABI/inference/speed qualification");
 }
+#endif

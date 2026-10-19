@@ -23,4 +23,9 @@ for mode in work cpu; do
   "$directory/pioneer_q38_mode_session_test.cpp" -o "$temporary/session-$mode"
  ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/session-$mode"
 done
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_Q38_COMPACT_ACTIVATIONS -DPIONEER_Q38_REUSE_ACTIVATIONS -DPIONEER_Q38_REUSE_CROSS_QUANT \
+ -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_Q38_WORK_MODE -DPIONEER_Q38_WORK_POSTED_STAGE \
+ "$directory/pioneer_q38_work_stage_test.cpp" -o "$temporary/stage"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/stage"
 printf 'Offline Work/CPU validation evidence retained at %s\n' "$temporary"

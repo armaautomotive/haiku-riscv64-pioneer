@@ -76,12 +76,15 @@ template<class IO> bool PioneerQ38SpanPrepare(IO& io,const tt_dram_samples_resul
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
 	lease.ready=true; return true;
 }
-template<class IO> bool PioneerQ38SpanUpload(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
+template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
 	PioneerResidentBanks& banks,const tt_host_page_result& input,PioneerResidentLease& store,PioneerBulkUploadLease& bulk,
 	PioneerOutputBufferLease& transfer,PioneerWideOutputLease& wide,PioneerQ38SpanLease& lease,
 	const uint8_t* initialized,uint32_t initializedPages,unsigned bank,uint64_t offset,unsigned bytes,
 	const uint32_t* data,unsigned dataWords,PioneerQ38SpanResult& r)
 {
+#ifndef PIONEER_Q38_SPAN_FAST
+	static_assert(!Work,"Work transport requires the separate two-packet image");
+#endif
 	r={}; r.version=1; r.state=TT_RUNTIME_CONFIG_FAILED;
 	PioneerQ38SpanExtent e;
 	if (!data || dataWords!=bytes/4 || !lease.ready || lease.unsafe || lease.running || lease.closed
@@ -95,10 +98,12 @@ template<class IO> bool PioneerQ38SpanUpload(IO& io,const tt_dram_samples_result
 		|| !PioneerQ38SpanCodeMatches(io)) return fail();
 	io.WideHostFence();
 	for (unsigned w=0;w<dataWords;w++) io.WideHostStore(w,data[w]);
-	io.WideHostFence(); bool exact=true;
-	for (unsigned w=0;w<dataWords;w++) exact &= io.WideHostLoad(w)==data[w];
-	io.WideHostFence(); if (!exact) return fail();
-	uint32_t d[64]={}; d[0]=TT_Q38_SPAN_MARKER; d[1]=d[2]=1; d[4]=bytes; d[5]=e.address;
+	io.WideHostFence();
+	if constexpr (!Work) {
+		bool exact=true; for (unsigned w=0;w<dataWords;w++) exact &= io.WideHostLoad(w)==data[w];
+		io.WideHostFence(); if (!exact) return fail();
+	}
+	uint32_t d[64]={}; d[0]=TT_Q38_SPAN_MARKER; d[1]=1; d[2]=Work?2:1; d[4]=bytes; d[5]=e.address;
 	d[6]=lease.nonce+1; d[7]=uint32_t(wide.physical); d[8]=uint32_t(wide.physical>>32);
 	d[9]=TT_WIDE_OUTPUT_BYTES; d[10]=bank; d[11]=e.route;
 	for (unsigned w=0;w<16;w++) d[16+w]=w?noc.source[0][w]:store.config|0x10000;
@@ -139,11 +144,14 @@ template<class IO> bool PioneerQ38SpanUpload(IO& io,const tt_dram_samples_result
 	if (!PioneerQ38SpanSummary(r.summary,d,r.before,r.after)) return fail();
 	for (unsigned w=0;w<64;w++) if (io.BulkL1Read(w)!=d[w]) return fail();
 	unsigned last=(bytes-1)&~16383U;
-	const uint32_t command[]={d[7]+last,d[8],1555,0x144000,0,129,0,0,bytes-last,0};
+	const uint32_t command[]={Work?0x144000:d[7]+last,Work?0U:d[8],Work?129U:1555U,
+		Work?d[5]+last:0x144000,0,Work?d[11]:129U,0,Work?0x212U:0U,bytes-last,0};
 	for (unsigned w=0;w<10;w++) if (io.ResidentNocRead(w*4)!=command[w]) return fail();
-	io.WideHostFence(); exact=true;
-	for (unsigned w=0;w<dataWords;w++) { bool same=io.WideHostLoad(w)==data[w]; exact &= same; r.matched_words+=same; }
-	io.WideHostFence(); if (!exact) return fail();
+	if constexpr (!Work) {
+		io.WideHostFence(); bool exact=true;
+		for (unsigned w=0;w<dataWords;w++) { bool same=io.WideHostLoad(w)==data[w]; exact &= same; r.matched_words+=same; }
+		io.WideHostFence(); if (!exact) return fail();
+	}
 	PioneerQ38SpanExtent confirmed;
 	if (!PioneerQ38SpanAuthorize(banks,dram,initialized,initializedPages,bank,offset,bytes,confirmed)
 		|| confirmed.address!=e.address || confirmed.route!=e.route || confirmed.index!=e.index
@@ -160,7 +168,7 @@ template<class IO> bool PioneerQ38SpanUpload(IO& io,const tt_dram_samples_result
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x87ffff,0x402)) return fail();
 	io.RuntimeResetWrite(0x47800); io.Pause();
 	if (!PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402)) return fail();
-	lease.running=false; wide.pending=false; r.held=r.host_exact=1; r.pages=e.pages; r.state=TT_RUNTIME_PASSED;
+	lease.running=false; wide.pending=false; r.held=1; r.host_exact=Work?0:1; r.pages=e.pages; r.state=TT_RUNTIME_PASSED;
 	return true; // ONLY future kernel handler may now commit ALL initialized pages
 }
 template<class IO> bool PioneerQ38SpanClose(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,

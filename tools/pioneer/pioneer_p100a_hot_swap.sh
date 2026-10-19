@@ -1,10 +1,10 @@
 #!/bin/sh
 # Guarded development A/B exchange,NOT physical PCIe hotplug or cold recovery.
-# All candidates retain the qualified55 matrix code. No force/reset/unload
+# Candidates pin their complete qualified/offline-tested code. No force/reset/unload
 # command and NO automatic rollback after an unproven replacement.
 set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
-case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work) mode=$1;; *) exit 2;; esac
+case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span) mode=$1;; *) exit 2;; esac
 stage=/boot/home/pioneer-p100a-hot-reload-20261019-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
@@ -19,6 +19,12 @@ candidatef=$stage/tenstorrent_pci_probe-compact-fast-30423874
 candidater=$stage/tenstorrent_pci_probe-reuse-cac152f0
 candidatex=$stage/tenstorrent_pci_probe-cross-reuse-f31c8385
 candidatew=$stage/tenstorrent_pci_probe-work-a2a7179a
+candidatewp=$stage/tenstorrent_pci_probe-work-profile-abacb9a2
+candidatews=$stage/tenstorrent_pci_probe-work-posted-2d7f3e9f
+candidatewc=$stage/tenstorrent_pci_probe-work-cohort-a60fadcc
+candidatew4=$stage/tenstorrent_pci_probe-work-q4-3c1592d3
+candidatew4i=$stage/tenstorrent_pci_probe-work-q4-inline-54c3d8db
+candidatewsp=$stage/tenstorrent_pci_probe-work-span-e44c3e3c
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -32,6 +38,12 @@ hashf=30423874c662e57ea29328b376edb03ca923af1a0e4073ee52a3138b45e71aa2
 hashr=cac152f0b4560acb9e48f1f104870226114b419e7a1399b4ca2d0c34799aae25
 hashx=f31c83854eef0f922c5e156394615853a30d0a3a73116a3cd763d66e36a321e1
 hashw=a2a7179add3c5bf5eb06e0ef8cd063a3113169232a7e0445ba8e2d5b06daf683
+hashwp=abacb9a24ad02a59dd2bdca0752234a13ec2010a1539c21e8721ddaa1d989b62
+hashws=2d7f3e9f102d0e23a61a85f0651ee6c59337e92e44b9517965fe3f27eeddc3ac
+hashwc=a60fadccaec7a3349ee75c08e3c2ecaa75f97550d2dae6a3ab495ae424253b58
+hashw4=3c1592d3dade9b5f9276c232f56281308987ddefdf946344d1ab9efaef1539ff
+hashw4i=54c3d8db6cdb21868fa08109c6a8be7139f2a6f649df6a133f2a5be934688182
+hashwsp=e44c3e3c69a37a04639ae9e816bd80fa043be531752b88738632aef96d092929
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -43,6 +55,12 @@ tagf=2026101900020004
 tagr=2026101900030001
 tagx=2026101900030002
 tagw=2026101900040002
+tagwp=2026101900050001
+tagws=2026101900050002
+tagwc=2026101900050003
+tagw4=2026101900050004
+tagw4i=2026101900050005
+tagwsp=2026101900060001
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -102,6 +120,18 @@ else
  elif [ "$mode" = --restore-cross-reuse ]; then source=$candidater; expected=$hashx; result=$hashr; oldtag=$tagx; newtag=$tagr
  elif [ "$mode" = --apply-work ]; then source=$candidatew; expected=$hashx; result=$hashw; oldtag=$tagx; newtag=$tagw
  elif [ "$mode" = --restore-work ]; then source=$candidatex; expected=$hashw; result=$hashx; oldtag=$tagw; newtag=$tagx
+ elif [ "$mode" = --apply-work-profile ]; then source=$candidatewp; expected=$hashw; result=$hashwp; oldtag=$tagw; newtag=$tagwp
+ elif [ "$mode" = --restore-work-profile ]; then source=$candidatew; expected=$hashwp; result=$hashw; oldtag=$tagwp; newtag=$tagw
+ elif [ "$mode" = --apply-work-posted ]; then source=$candidatews; expected=$hashw; result=$hashws; oldtag=$tagw; newtag=$tagws
+ elif [ "$mode" = --restore-work-posted ]; then source=$candidatew; expected=$hashws; result=$hashw; oldtag=$tagws; newtag=$tagw
+ elif [ "$mode" = --apply-work-cohort ]; then source=$candidatewc; expected=$hashws; result=$hashwc; oldtag=$tagws; newtag=$tagwc
+ elif [ "$mode" = --restore-work-cohort ]; then source=$candidatews; expected=$hashwc; result=$hashws; oldtag=$tagwc; newtag=$tagws
+ elif [ "$mode" = --apply-work-q4 ]; then source=$candidatew4; expected=$hashwc; result=$hashw4; oldtag=$tagwc; newtag=$tagw4
+ elif [ "$mode" = --restore-work-q4 ]; then source=$candidatewc; expected=$hashw4; result=$hashwc; oldtag=$tagw4; newtag=$tagwc
+ elif [ "$mode" = --apply-work-q4-inline ]; then source=$candidatew4i; expected=$hashw4; result=$hashw4i; oldtag=$tagw4; newtag=$tagw4i
+ elif [ "$mode" = --restore-work-q4-inline ]; then source=$candidatew4; expected=$hashw4i; result=$hashw4; oldtag=$tagw4i; newtag=$tagw4
+ elif [ "$mode" = --apply-work-span ]; then source=$candidatewsp; expected=$hashw4i; result=$hashwsp; oldtag=$tagw4i; newtag=$tagwsp
+ elif [ "$mode" = --restore-work-span ]; then source=$candidatew4i; expected=$hashwsp; result=$hashw4i; oldtag=$tagwsp; newtag=$tagw4i
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

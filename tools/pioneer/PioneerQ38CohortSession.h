@@ -4,6 +4,9 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
+#endif
 #ifdef PIONEER_Q38_CPU_VALIDATION
 #ifdef PIONEER_Q38_WORK_INFERENCE
 #error Work mode must never contain a CPU reference path
@@ -35,6 +38,9 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	std::vector<uint8_t> uploaded;
 	int fd=-1;
 	bool attempted=false,active=false,failed=false,finished=false,clean=false;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	bool spanPrimed=false,spanAttempted=false;
+#endif
 	void Elapsed(uint64_t start,uint64_t& total) {
 		uint64_t end=PioneerQ38SessionNow(io,0);
 		if (start && end>=start) total+=end-start; // diagnostic ONLY,not a completion/timeout authority
@@ -54,10 +60,20 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	}
 	bool UploadTensor(unsigned tensor) {
 		if (!source.Ready() || !layout.MatchesSource(source.Model())) return Stop();
+		const auto& parts=layout.Parts(); // immutable private metadata; do not fstat on every loop condition
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+		// NEVER fall back to the legacy upload, or replace code after peers
+		// have booted. Only the explicit pre-cohort priming owns this path.
+		if (!spanPrimed) return Stop();
+		for (unsigned f=0;f<parts.size();f++) {
+			const auto& p=parts[f];
+			if (p.kind==PIONEER_Q38_WEIGHT && p.tensor==tensor && !uploaded[f]) return Stop();
+		}
+		return source.Ready() || Stop();
+#else
 		// The session exclusively owns this immutable layout. Only metadata
 		// iteration is cached;EVERY page read/upload and result publication
 		// retains its existing live-source authentication and proof gates.
-		const auto& parts=layout.Parts();
 		for (unsigned f=0;f<parts.size();f++) {
 			const auto& part=parts[f]; if (part.kind!=PIONEER_Q38_WEIGHT || part.tensor!=tensor || uploaded[f]) continue;
 			for (unsigned page=0;page<part.allocated/4096;) {
@@ -79,6 +95,7 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 			uploaded[f]=1; bytesRetained+=part.allocated;
 		}
 		return source.Ready() || Stop();
+#endif
 	}
 public:
 	uint64_t pagesUploaded=0,bytesRetained=0,calls=0;
@@ -98,6 +115,18 @@ public:
 		fd=io.Open(); if (fd<0) return Stop();
 		tt_q38_bank_support storage={};
 		if (!mode.Support(io,fd)) return Stop();
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+		tt_q38_span_support span={};
+		if (!io.Call(fd,
+#ifdef PIONEER_Q38_SPAN_FAST
+			TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT,
+#else
+			TT_PCI_PROBE_Q38_SPAN_SUPPORT,
+#endif
+			&span,sizeof(span)) || span.driver!=55 || span.version!=1
+			|| span.banks!=7 || span.page_bytes!=4096 || span.max_bytes!=1048576 || span.before_cohort!=1
+			|| span.explicit_end!=1 || span.reserved) return Stop(); // BEFORE BANK_BEGIN
+#endif
 		if (!io.Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&storage,sizeof(storage)) || storage.driver!=45 || storage.version!=1 || storage.banks!=7
 			|| storage.page_bytes!=4096 || storage.max_pages!=4 || storage.storage_only!=1 || storage.bytes_per_bank!=PioneerResidentBanks::Capacity) return Stop();
 		tt_q38_bank_session session={}; session.version=1;
@@ -107,6 +136,58 @@ public:
 			|| r.bytes!=PioneerResidentBanks::Total) return Stop();
 		active=true; return true;
 	}
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	// UINT32_MAX means ALL original learned projection weights. CPU-only
+	// embeddings/FP32 metadata are not needlessly copied to the card. A FFN
+	// graph may request just its ONE tensor for bounded transport comparison.
+	// Neither path can prime again or upload after the first cohort RUN.
+	bool PrimeSpan(unsigned tensor=UINT32_MAX) {
+		if (!active || failed || finished || spanAttempted || calls || !source.Ready()
+			|| (tensor!=UINT32_MAX && tensor>=source.Model().Tensors().size())) return Stop();
+		spanAttempted=true; auto request=std::make_unique<tt_q38_span_upload>(); unsigned nonce=0,parts=0;
+		const auto& fragments=layout.Parts();
+		for (unsigned f=0;f<fragments.size();f++) {
+			const auto& p=fragments[f]; if (p.kind!=PIONEER_Q38_WEIGHT || (tensor!=UINT32_MAX && p.tensor!=tensor)) continue;
+			const auto& t=source.Model().Tensors()[p.tensor];
+			if (!t.type || t.rank!=2 || t.name=="token_embd.weight") continue;
+			for (unsigned page=0;page<p.allocated/4096;) {
+				unsigned pages=unsigned(p.allocated/4096)-page; if (pages>256) pages=256;
+				request->version=1; request->bank=p.bank; request->bytes=pages*4096; request->reserved=0;
+				request->offset=uint64_t(p.proposedAddress)-layout.Base+uint64_t(page)*4096; request->result={};
+				uint64_t start=PioneerQ38SessionNow(io,0);
+				for (unsigned at=0;at<pages;at++) if (!source.ReadWeightPage(layout,f,page+at,
+					reinterpret_cast<uint8_t*>(request->data+at*1024),4096)) return Stop();
+				Elapsed(start,sourceReadNanos);
+				if (!source.Ready()) return Stop();
+				start=PioneerQ38SessionNow(io,0);
+				bool okay=io.Call(fd,
+#ifdef PIONEER_Q38_SPAN_FAST
+					TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,
+#else
+					TT_PCI_PROBE_Q38_SPAN_UPLOAD,
+#endif
+					request.get(),sizeof(*request));
+				Elapsed(start,bulkUploadNanos); const auto& r=request->result;
+				if (!okay || !source.Ready() || r.version!=1 || r.state!=TT_RUNTIME_PASSED || r.bytes!=pages*4096
+					|| r.pages!=pages || r.nonce!=++nonce || r.started!=1 || r.completed!=1 || r.held!=1
+#ifdef PIONEER_Q38_SPAN_FAST
+					|| r.host_exact || r.matched_words
+#else
+					|| r.host_exact!=1 || r.matched_words!=pages*1024
+#endif
+					|| r.recovery_required || r.reserved) return Stop();
+				pagesUploaded+=pages; page+=pages;
+			}
+			if (!source.Ready()) return Stop();
+			uploaded[f]=1; bytesRetained+=p.allocated; parts++;
+		}
+		if (!parts || !source.Ready()) return Stop();
+		tt_q38_span_end end={1,0,0,0};
+		if (!io.Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end)) || end.version!=1 || end.reserved
+			|| end.closed!=1 || end.recovery_required || !source.Ready()) return Stop();
+		spanPrimed=true; return true;
+	}
+#endif
 	bool Multiply(unsigned tensor,const float* input,unsigned inputs,float* output,unsigned outputs,unsigned workers=Mode::Workers) {
 		if (!active || failed || finished) return false;
 		if (!source.Ready() || tensor>=source.Model().Tensors().size()) return Stop();

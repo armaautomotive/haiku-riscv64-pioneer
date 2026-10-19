@@ -198,7 +198,12 @@ static Q38_ROOT_SMALL bool HeaderValid(const uint32_t* header)
 		|| !nonce || nonce>=0x7fffffff || (operation==2 && (type || inputs || workers!=119))
 		|| (operation==1 && (!Tile(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)))) return false;
 	if (operation==2?header[7]:header[7]-1U>1U) return false;
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+	if (operation==2?header[8]:header[8]>1) return false;
+	for (unsigned i=9;i<16;i++) if (header[i]) return false;
+#else
 	for (unsigned i=8;i<16;i++) if (header[i]) return false;
+#endif
 	return true;
 }
 static Q38_ROOT_SMALL bool PartsValid(const uint32_t parts[119][8],const uint32_t* banks,const uint32_t* header)
@@ -229,6 +234,9 @@ extern "C" unsigned block_main()
 	volatile uint32_t* job=Words(0x74000); uint32_t header[16];
 	for (unsigned i=0;i<16;i++) header[i]=job[i];
 	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+	const bool work=operation==1 && header[8]==1;
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	if (!HeaderValid(header)) return 0;
 #else
@@ -297,6 +305,14 @@ extern "C" unsigned block_main()
 	// Verify ALL previous idle sequences/physical PCs/reset before staging
 	// ANY doorbell. No host MMIO per peer is needed in this future image.
 	for (unsigned w=0;w<workers;w++) {
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+		// Kernel owns this immutable cohort exclusively. Bootstrap proved
+		// ALL119 WAIT PCs;each successful prior RUN proved CURRENT physical
+		// WAIT PCs/reset/source/counters before publication. No peer writer
+		// exists between jobs. Reuse that prior proof ONLY for WORK;keep the
+		// full CURRENT completion/physical-PC audit below and ALL STOP audits.
+		if (work) continue;
+#endif
 		bool ready=false;
 		for (unsigned attempt=0;attempt<65536 && !ready;attempt++) ready=Peer(w+1,parts[w][3]-1,false,true);
 		if (!ready) block_fault_park();
@@ -312,6 +328,12 @@ extern "C" unsigned block_main()
 		for (unsigned i=0;i<16;i++) Words(0x75000)[i]=descriptor[i];
 		Fence();
 		Transfer(true,worker,0x75000,0x74000,64);
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+		// Transfer returns only after exact ACK/counter completion. The peer
+		// independently validates its immutable descriptor and publishes it
+		// in the mandatory full final proof. No redundant descriptor echo.
+		if (work) continue;
+#endif
 		Transfer(false,worker,0x75040,0x74000,64);
 		for (unsigned i=0;i<16;i++) if (Words(0x75040)[i]!=descriptor[i]) block_fault_park();
 	}
@@ -361,8 +383,14 @@ extern "C" unsigned block_main()
 	if (!Idle()) block_fault_park();
 	for (unsigned c=0;c<8;c++) Words(0x7f800)[24+c]=*Words(0xffb20000+Offset(c));
 	unsigned groups=0; for (unsigned w=0;w<workers;w++) groups+=parts[w][2];
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+	Words(0x7f800)[48]=work;
+	unsigned reads=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers*(operation==1 && !work?2:1);
+	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+(work?0:workers)+(operation==1?4*workers+groups:0);
+#else
 	unsigned reads=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers*(operation==1?2:1);
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
+#endif
 	Checkpoint(0x54000403,reads);
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=workers*2 || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=workers*2) block_fault_park();
 	for (unsigned c=0;c<8;c++) {

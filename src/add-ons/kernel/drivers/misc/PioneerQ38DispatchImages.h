@@ -10,6 +10,9 @@
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 #include "PioneerQ38ReuseRootImage.h"
 #endif
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+#include "PioneerQ38WorkCohortRootImage.h"
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 #include "PioneerQ38ProgressImages.h"
 #endif
@@ -23,6 +26,9 @@
 #include "PioneerQ38BFloatPeerImage.h"
 #else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+#include "PioneerQ38Q4PeerImage.h"
+#endif
 #include "PioneerQ38VectorPeerImage.h"
 #endif
 #endif
@@ -38,7 +44,11 @@ static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+#ifdef PIONEER_Q38_WORK_COHORT_CACHE
+ return PioneerQ38WorkCohortRootWord(word);
+#else
  return PioneerQ38ReuseRootWord(word);
+#endif
 #else
  return PioneerQ38CompactRootWord(word);
 #endif
@@ -557,7 +567,11 @@ static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
  return worker>=120?UINT32_MAX:worker?PioneerQ38BFloatPeerWord(word):PioneerQ38DispatchRootWord(word);
 #else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR
+#ifdef PIONEER_Q38_Q4_TWO_PHASE
+ return worker>=120?UINT32_MAX:worker?PioneerQ38Q4PeerWord(word):PioneerQ38DispatchRootWord(word);
+#else
  return worker>=120?UINT32_MAX:worker?PioneerQ38VectorPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
 #else
  return worker>=120?UINT32_MAX:worker?PioneerQ38PersistentPeerWord(word):PioneerQ38DispatchRootWord(word);
 #endif

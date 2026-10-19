@@ -2,16 +2,28 @@
 #ifndef PIONEER_Q38_SPAN_IMAGE_H
 #define PIONEER_Q38_SPAN_IMAGE_H
 #include <stdint.h>
+#ifdef PIONEER_Q38_SPAN_FAST
+#include "PioneerQ38FastSpanImage.h"
+#endif
 // EXACT OFFLINE research image;NO driver/ABI selects it. A future owner
 // must prove root/ALL other cores held,ALL bank/host/source bounds,lifetime,
 // physical terminal/counters/CPU byte echo and single-attempt restoration.
 // Text SHA256 10cc657069152a0f8b216490105fee287a517b680cc6af04f3d598906a448b61
 // Original8192B code bound preserved;3248B text,400B main+128B packet frames.
-enum { TT_Q38_SPAN_CODE_BYTES=3248,TT_Q38_SPAN_BOOT=0x0006c06f,
+enum { TT_Q38_SPAN_CODE_BYTES=
+#ifdef PIONEER_Q38_SPAN_FAST
+ TT_Q38_FAST_SPAN_CODE_BYTES,
+#else
+ 3248,
+#endif
+ TT_Q38_SPAN_BOOT=0x0006c06f,
  TT_Q38_SPAN_DONE=0x7200c,TT_Q38_SPAN_PARK=0x72038,TT_Q38_SPAN_PARK_FETCH=0x7203c,
  TT_Q38_SPAN_FAULT_ENTRY=0x72060,TT_Q38_SPAN_FAULT_PARK=0x7207c };
 static inline uint32_t PioneerQ38SpanCodeWord(unsigned word)
 {
+#ifdef PIONEER_Q38_SPAN_FAST
+ return PioneerQ38FastSpanCodeWord(word);
+#else
  static const uint32_t code[]={
   0x00070137,0x00000097,0x4a0080e7,0x001802b7,0xfc028293,0x00a2a223,0x00000317,0xff430313,
   0x0062a023,0x31554337,0x85130313,0x0062a423,0x0082a303,0x0ff0000f,0x0000006f,0xffdff06f,
@@ -118,5 +130,6 @@ static inline uint32_t PioneerQ38SpanCodeWord(unsigned word)
  };
  static_assert(sizeof(code)==TT_Q38_SPAN_CODE_BYTES,"exact sealed span length");
  return word>=2048?UINT32_MAX:word<sizeof(code)/sizeof(code[0])?code[word]:0;
+#endif
 }
 #endif

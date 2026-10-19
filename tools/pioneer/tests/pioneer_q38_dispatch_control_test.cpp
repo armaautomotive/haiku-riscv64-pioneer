@@ -3,6 +3,9 @@
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #define PIONEER_Q38_DISPATCH_CLOSE_MOCK_ONLY
 #include "pioneer_q38_dispatch_close_test.cpp"
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
+#endif
 using status_t=int; using uint32=uint32_t;
 constexpr status_t B_OK=0,B_DEV_NOT_READY=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_BAD_VALUE=-4,B_NO_MEMORY=-5,B_ENTRY_NOT_FOUND=-6;
 struct thread_info { int team; };
@@ -14,6 +17,9 @@ struct Ref2 { Ref1 baseline; tt_compute_noc_result noc; };
 struct Ref3 { Ref2 baseline; };
 struct Ref4 { Ref3 baseline; };
 struct BoundContext {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	PioneerQ38SpanLease* q38Span=nullptr;
+#endif
 	CloseIO io; PanelOwners root;
 	tt_dram_samples_result dram; PioneerResidentBanks banks; Ref4 baseline;
 	PioneerResidentLease& lease;
@@ -24,8 +30,17 @@ struct BoundContext {
 	std::vector<uint8_t> initializedVector; uint8_t* initialized; uint64_t bytes=PioneerResidentBanks::Total;
 	explicit BoundContext(const char* image):io(image),root(*io.core[0]),dram(root.dram),baseline{{{{dram},root.noc}}},
 		lease(root.store),initializedVector(PioneerResidentBanks::Pages,1),initialized(initializedVector.data()) { assert(banks.Bind(dram)); }
-	bool Unsafe() { return (q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) || banks.Quarantined() || lease.recovery_required || panelProbe.unsafe || streamProbe.unsafe; }
-	~BoundContext() { delete q38Dispatch; }
+	bool Unsafe() { return
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+		(q38Span && (q38Span->unsafe || q38Span->running)) ||
+#endif
+		(q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) || banks.Quarantined() || lease.recovery_required || panelProbe.unsafe || streamProbe.unsafe; }
+	~BoundContext() {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+		delete q38Span;
+#endif
+		delete q38Dispatch;
+	}
 };
 using PioneerStoreContext=BoundContext;
 struct PioneerProbeCookie { uint32_t magic=0x50313030; int team=17; BoundContext* context=nullptr; };

@@ -1475,6 +1475,12 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	bool q38SpanAllowed=true;
+	bool SpanBeforeCohort() { return q38SpanAllowed && !fleetEnabled; }
+	bool SpanViewCapacity(unsigned words) { return words<=TT_Q38_PANEL_VIEW_WORDS+1; }
+	bool SpanOtherCoresHeld() { return BlackholeDramAllCoresHeld(*this,dram); }
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 	area_id q38PanelArea=-1;
 	volatile uint32* q38PanelView=NULL;
@@ -2070,6 +2076,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	PioneerQ38SpanLease* q38Span=NULL;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	PioneerQ38DispatchLease* q38Dispatch=NULL;
 	bool q38DispatchRoutes=false,dispatchOwnerRetained=false;
@@ -2130,6 +2139,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+		delete q38Span;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 		delete q38Dispatch;
 #endif
@@ -2140,6 +2152,9 @@ struct PioneerStoreContext {
 	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+		if (q38Span && (q38Span->unsafe || q38Span->running)) return true;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 		if (q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) return true;
 #endif
@@ -2187,6 +2202,7 @@ struct PioneerStoreContext {
 // PIONEER_Q38_DISPATCH_RETAIN_BEGIN
 // Memory bookkeeping ONLY. In particular,NO legacy PCI/TLB/SRAM rollback,
 // mapping/host release,unreserve,context destruction or cookie destruction.
+// PIONEER_Q38_RETAIN_MEMORY_BEGIN
 static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
@@ -2206,10 +2222,16 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 		d->closeDetail[0],d->closeDetail[1],d->closeDetail[2],d->closeDetail[3]);
 #endif
 }
+// PIONEER_Q38_RETAIN_MEMORY_END
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
 	if (!c.bankStorageOnly) return true;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	// SPAN_END is an explicit prerequisite, never an implicit cleanup path.
+	// A caller-only failure may be invisible to transport completion metadata.
+	if (c.q38Span && !c.q38Span->closed) clean=false;
+#endif
 	if (clean && c.q38Dispatch) clean=PioneerQ38DispatchClose(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,true);
 	if (clean) return true;
 	RetainQ38DispatchOwner(c,result); return false;
@@ -2465,7 +2487,11 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		// cleanup. A userspace CPU-reference/graph failure can be invisible
 		// to the kernel:close WITHOUT END must retain ALL owners with NO
 		// device IO/reset/STOP,even when the last RUN's metadata passed.
-		if (cookie->context->bankStorageOnly && cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
+		if (cookie->context->bankStorageOnly && ((cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+			|| cookie->context->q38Span
+#endif
+			))
 			RetainQ38DispatchOwner(*cookie->context,result);
 		else
 #endif
@@ -2620,6 +2646,9 @@ Q38BankBulkUpload(PioneerProbeCookie* cookie,void* data,size_t length)
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
+#endif
 	else {
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
 		auto& noc=c->baseline.baseline.baseline.noc;
@@ -2706,6 +2735,9 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
+#endif
 	else {
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
 		auto& noc=c->baseline.baseline.baseline.noc;
@@ -2742,6 +2774,83 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 // PIONEER_Q38_BANK_CONTROL_END
 #endif
 
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+// PIONEER_Q38_SPAN_CONTROL_BEGIN
+static status_t
+Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_SPAN_SUPPORT
+#ifdef PIONEER_Q38_SPAN_FAST
+		|| operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT
+#endif
+		) {
+		if (length!=sizeof(tt_q38_span_support)) return B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		const tt_q38_span_support support={55,1,7,4096,TT_Q38_SPAN_PUBLIC_BYTES,1,1,0};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation==TT_PCI_PROBE_Q38_SPAN_END) {
+		if (length!=sizeof(tt_q38_span_end)) return B_BAD_VALUE;
+		tt_q38_span_end request={}; status=user_memcpy(&request,data,sizeof(request));
+		if (status!=B_OK || request.version!=1 || request.reserved) return status!=B_OK?status:B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		auto* c=cookie->context;
+		if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || !c->q38Span) status=B_NOT_ALLOWED;
+		else {
+			request.closed=unsigned(PioneerQ38SpanEndService(*c)); request.recovery_required=0;
+			if (!request.closed) {
+				c->q38Span->unsafe=true; tt_resident_session_result retained={}; RetainQ38DispatchOwner(*c,retained);
+				request.recovery_required=1;
+			}
+			status=user_memcpy(data,&request,sizeof(request));
+		}
+		release_sem(sLock); return status;
+	}
+	if ((operation!=TT_PCI_PROBE_Q38_SPAN_UPLOAD
+#ifdef PIONEER_Q38_SPAN_FAST
+		&& operation!=TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD
+#endif
+		) || length!=sizeof(tt_q38_span_upload)) return B_BAD_VALUE;
+	auto* request=(tt_q38_span_upload*)malloc(sizeof(tt_q38_span_upload)); if (!request) return B_NO_MEMORY;
+	status=user_memcpy(request,data,sizeof(*request));
+	if (status!=B_OK || !PioneerQ38SpanPublicShape(request->version,request->bank,request->offset,request->bytes,request->reserved)) {
+		free(request); return status!=B_OK?status:B_BAD_VALUE;
+	}
+	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie || !PioneerQ38SpanOwner(*c) || (c->q38Span && c->q38Span->closed)) status=B_NOT_ALLOWED;
+	else {
+		PioneerQ38SpanExtent extent;
+		if (!PioneerQ38SpanAuthorize(c->banks,c->baseline.baseline.baseline.baseline.dram,c->initialized,
+			uint32(c->bytes/4096),request->bank,request->offset,request->bytes,extent)) status=B_ENTRY_NOT_FOUND;
+		else {
+			if (!c->q38Span) c->q38Span=new(std::nothrow) PioneerQ38SpanLease;
+			if (!c->q38Span) status=B_NO_MEMORY;
+			else {
+				bool passed;
+#ifdef PIONEER_Q38_SPAN_FAST
+				if (operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD) passed=PioneerQ38SpanUploadService<PioneerStoreContext,true>(*c,*request);
+				else
+#endif
+				passed=PioneerQ38SpanUploadService(*c,*request);
+				if (!passed || c->Unsafe()) {
+					c->q38Span->unsafe=true; tt_resident_session_result retained={}; RetainQ38DispatchOwner(*c,retained);
+					request->result.state=TT_RUNTIME_COMPLETION_FAILED; request->result.pages=0;
+					request->result.host_exact=0; request->result.recovery_required=1;
+				}
+				status=user_memcpy(data,request,sizeof(*request));
+			}
+		}
+	}
+	release_sem(sLock); free(request); return status;
+}
+// PIONEER_Q38_SPAN_CONTROL_END
+#endif
+
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 // PIONEER_Q38_PANEL_CONTROL_BEGIN
 static status_t
@@ -2771,6 +2880,9 @@ Q38PanelControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t le
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	else if (c->q38Cohort) status=B_NOT_ALLOWED; // never overlap local and cohort L1 owners
 #endif
@@ -2827,6 +2939,9 @@ Q38StreamControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->panelProbe.saved) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	else if (c->q38Cohort) status=B_NOT_ALLOWED;
 #endif
@@ -2907,6 +3022,9 @@ Q38CohortControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->panelProbe.saved || c->streamProbe.saved) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
+#endif
 	else {
 		auto& dram=c->baseline.baseline.baseline.baseline.dram;
 		if (c->bytes!=PioneerResidentBanks::Total || !PioneerQ38CohortAuthorize(c->banks,dram,c->initialized,
@@ -2937,6 +3055,10 @@ Q38CohortControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t l
 static bool
 PrepareQ38Dispatch(PioneerStoreContext& c)
 {
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	if (c.q38Span && !c.q38Span->closed) return false;
+	c.io.q38SpanAllowed=false; // one-way ownership handoff, even if prepare fails
+#endif
 	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
 	if (c.q38Dispatch && c.q38Dispatch->booted) return !PioneerQ38DispatchUnsafe(*c.q38Dispatch) && !c.q38Dispatch->closed;
 	if (c.q38Dispatch) return false; // no second prepare/retry after any attempt
@@ -3001,6 +3123,9 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total
 		|| c->q38Cohort || c->panelProbe.saved || c->streamProbe.saved) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span && !c->q38Span->closed) status=B_NOT_ALLOWED;
+#endif
 	else {
 		auto& dram=c->baseline.baseline.baseline.baseline.dram; bool authorized=true;
 		// Complete ALL logical initialized extents BEFORE prepare/boot/IO.
@@ -4116,6 +4241,16 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	if (operation>=TT_PCI_PROBE_Q38_SPAN_SUPPORT && operation<=
+#ifdef PIONEER_Q38_SPAN_FAST
+		TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD
+#else
+		TT_PCI_PROBE_Q38_SPAN_END
+#endif
+		)
+		return Q38SpanControl(instance,operation,data,length);
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 #ifdef TT_PIONEER_Q38_WORK_MODE

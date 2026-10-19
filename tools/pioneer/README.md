@@ -1,5 +1,40 @@
 # Pioneer relay control
 
+## 27B Work performance and weight preloading (October 19)
+
+The opt-in Work driver now stages posted data without numeric readback,
+reuses the prior completed-job ownership proof, and executes the exact Q4
+integer multiply with phases 1/3. Q8/Q6 still use all four phases. Current
+completion, physical-PC, source, ownership and failure-containment checks
+remain. The checked/CPU-validated execution path stays separate.
+
+The new `PIONEER_Q38_SPAN_PRELOAD=1` build loads selected learned weights
+through a private 1 MiB DMA buffer **before any compute peers boot**. It
+then restores the loader code and hands ownership to the compute cohort.
+It never replaces code during an active cohort or falls back to the legacy
+uploader. `SPAN_END` and then `BANK_END` are explicit; close alone retains
+the owner without touching the card. Public requests contain logical
+bank/offset/inline data, not physical addresses or code.
+
+The strict loader passed all-seven-bank hardware tests and an authenticated
+full FFN graph. Its 50.1 MB of weights loaded in 7.27 seconds versus 17.69
+seconds previously, with identical final output. This is a loading result,
+not tokens/sec. A separate Work loader (`PIONEER_Q38_SPAN_FAST=1`) is still
+under native qualification: it removes data comparisons/echo transfers but
+retains DMA completion and memory-safety proofs. Its independent debug
+client reads back every test byte; production Work does not. See
+[native status](NATIVE_BUILD_STATUS.md) for exact build identities and limits.
+
+```sh
+PIONEER_Q38_SPAN_PRELOAD=1 sh tools/pioneer/build_qwen38_mode_inference.sh work SDK_DIRECTORY FROZEN_LIBRARY_DIRECTORY /absolute/new-strict-preload-test
+PIONEER_Q38_SPAN_PRELOAD=1 PIONEER_Q38_SPAN_FAST=1 sh tools/pioneer/build_qwen38_mode_inference.sh work SDK_DIRECTORY FROZEN_LIBRARY_DIRECTORY /absolute/new-work-preload-test
+sh tools/pioneer/tests/run_pioneer_q38_span_service_tests.sh STRICT_SPAN_IMAGE_DIRECTORY
+CXX='c++ -DPIONEER_Q38_SPAN_FAST' sh tools/pioneer/tests/run_pioneer_q38_span_service_tests.sh WORK_SPAN_IMAGE_DIRECTORY
+```
+
+These remain fixed-public test programs, not installed 27B Assistant targets.
+20 tokens/sec and whole-GPU model execution have **not** been achieved.
+
 ## Experimental Qwen 27B execution modes (October 19)
 
 The experimental 27B engine now has **separate executables**, selected at

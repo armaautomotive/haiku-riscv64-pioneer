@@ -32,6 +32,12 @@ static void Packet(bool write,bool host,unsigned at,unsigned words,const uint32_
 	// Exactly four packet shapes:host<->fixed L1,bank<->fixed L1.
 	if (!words || words>4096 || (words&1023) || at>d[4] || words*4>d[4]-at
 		|| (at&4095) || !Sources(d) || !Idle()) block_fault_park();
+#ifdef PIONEER_Q38_SPAN_FAST
+	// WORK transport can ONLY read owned host data or write private GDDR.
+	// It can NEVER issue a host write, nor a bank readback. Both packet
+	// completions still require ALL exact source/counter/ACK/idle proofs.
+	if (d[2]==2 && write==host) block_fault_park();
+#endif
 	unsigned remote=(host?d[7]:d[5])+at,high=host?d[8]:0,route=host?1555U:d[11];
 	unsigned local=host?(write?0x84000U:0x144000U):(write?0x144000U:0x84000U);
 	const unsigned offsets[]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
@@ -65,11 +71,19 @@ extern "C" unsigned block_main()
 	volatile uint32_t* s=Words(0x143000);
 	for (unsigned i=0;i<TT_Q38_SPAN_STATS_WORDS;i++) s[i]=0;
 	s[5]=d[4]; s[6]=d[6]; s[7]=TT_Q38_SPAN_MARKER;
-	s[24]=d[10]; s[25]=d[11]; s[26]=d[5]; s[27]=d[7]; s[28]=d[8]; s[29]=d[9]; s[30]=1;
+	s[24]=d[10]; s[25]=d[11]; s[26]=d[5]; s[27]=d[7]; s[28]=d[8]; s[29]=d[9];
+#ifdef PIONEER_Q38_SPAN_FAST
+	s[30]=d[2];
+#else
+	s[30]=1;
+#endif
 	for (unsigned i=0;i<8;i++) s[8+i]=*Words(0xffb20000+Counter(i));
 	for (unsigned at=0;at<d[4];at+=16384) {
 		unsigned words=(d[4]-at)/4; if (words>4096) words=4096;
 		Packet(false,true,at,words,d);
+#ifdef PIONEER_Q38_SPAN_FAST
+		if (d[2]==2) { Packet(true,false,at,words,d); continue; }
+#endif
 		for (unsigned i=0;i<words;i++) Words(0x80000)[i]=Words(0x144000)[i];
 		Fence();
 		for (unsigned i=0;i<words;i++) if (Words(0x80000)[i]!=Words(0x144000)[i]) block_fault_park();

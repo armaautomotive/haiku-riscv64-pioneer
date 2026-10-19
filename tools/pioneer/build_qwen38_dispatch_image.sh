@@ -17,6 +17,12 @@ case "${PIONEER_Q38_REUSE_ACTIVATIONS:-0}" in
     fault_cpp="$fault_cpp -DPIONEER_Q38_REUSE_ACTIVATIONS -fomit-frame-pointer";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_COHORT_CACHE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_REUSE_ACTIVATIONS:-0}" = 1 ] || exit 2
+    fault_cpp="$fault_cpp -DPIONEER_Q38_WORK_COHORT_CACHE";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}" = 1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_TRANSFER_DIAGNOSTIC";; *) exit 2;; esac
 case "${PIONEER_Q38_PEER_PROGRESS:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" = 1:1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_PEER_PROGRESS";; *) exit 2;; esac
 case "$output" in /*) ;; *) exit 2;; esac

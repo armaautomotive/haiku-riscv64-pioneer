@@ -74,6 +74,36 @@ case "${PIONEER_Q38_WORK_MODE:-0}" in
     extra="$extra -DTT_PIONEER_Q38_WORK_MODE";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_POSTED_STAGE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_POSTED_STAGE";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_WORK_COHORT_CACHE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_POSTED_STAGE:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_COHORT_CACHE";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_Q4_TWO_PHASE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_COHORT_CACHE:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_Q4_TWO_PHASE";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_SPAN_PRELOAD:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_MODE:-0}" = 1 ] && [ "${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_SPAN_PRELOAD";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_SPAN_FAST:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_SPAN_PRELOAD:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_SPAN_FAST";;
+ *) exit 2;;
+esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \

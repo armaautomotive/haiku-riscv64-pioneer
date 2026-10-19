@@ -92,7 +92,7 @@ struct Q38SpanMachine:BlockMachine {
 };
 void Q38SpanMachine::Submit()
 {
-	unsigned packet=transfers%7; transfers++;
+	bool fast=descriptor[2]==2; unsigned packet=transfers%(fast?2U:7U); transfers++;
 	if (transfers==failPacket) { pending=true; return; }
 	bool write=command[7]==0x212; assert(write || !command[7]);
 	unsigned xy=write?command[5]:command[2],local=write?command[0]:command[3],remote=write?command[3]:command[0];
@@ -104,8 +104,8 @@ void Q38SpanMachine::Submit()
 	unsigned firstAddress=host?hostLow:base; assert(remote>=firstAddress && !((remote-firstAddress)&4095));
 	unsigned first=(remote-firstAddress)/4; assert(first<golden.size() && words<=golden.size()-first);
 	assert(local==(host?(write?0x84000U:0x144000U):(write?0x144000U:0x84000U)));
-	assert((packet==0 && host && !write) || (packet==1 && !host && write) || (packet==2 && !host && !write)
-		|| ((packet==3 || packet==5) && host && write) || ((packet==4 || packet==6) && host && !write));
+	assert((packet==0 && host && !write) || (packet==1 && !host && write) || (!fast && ((packet==2 && !host && !write)
+		|| ((packet==3 || packet==5) && host && write) || ((packet==4 || packet==6) && host && !write))));
 	auto& external=host?hostData:gddr;
 	if (int(packet)!=dropPacket) for (unsigned i=0;i<words;i++) {
 		if (write) external[first+i]=memory.at(local+i*4)^(int(packet)==corruptPacket && !i?1:0);

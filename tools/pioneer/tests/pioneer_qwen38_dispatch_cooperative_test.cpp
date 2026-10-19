@@ -85,7 +85,7 @@ struct CooperativeDispatch:DispatchMachine {
 			for (unsigned i=0;i<16;i++) state.descriptor[i]=p.memory[remote+i*4]=memory.at(local+i*4);
 			assert(state.descriptor[11]==worker && state.descriptor[12]==state.finished+1 && state.descriptor[13]==1);
 		} else if (write) {
-			assert(remote==0x74100 && bytes==4 && descriptors==active && readbacks==active && !state.launched);
+			assert(remote==0x74100 && bytes==4 && descriptors==active && readbacks==DescriptorEchoes() && !state.launched);
 			assert(memory.at(local)==state.descriptor[12]); p.memory[remote]=memory.at(local);
 			state.requested=memory.at(local); state.launched=true; state.operation=1; doorbells++;
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
@@ -111,6 +111,7 @@ struct CooperativeDispatch:DispatchMachine {
 		responses++; pending=false;
 	}
 };
+#ifndef PIONEER_Q38_COOPERATIVE_MOCK_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3 || argc==4);
@@ -285,3 +286,4 @@ int main(int argc,char** argv)
 #endif
 	puts("PASS OFFLINE cooperative actual ROOT+PEER instructions,ALL completions before outputs,retained peers/no reset,exact math,one-peer UNKNOWN refuses ALL output;NO native/kernel/whole-model/inference/speed qualification");
 }
+#endif

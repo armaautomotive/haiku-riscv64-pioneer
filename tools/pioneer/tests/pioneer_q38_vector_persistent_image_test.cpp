@@ -92,4 +92,5 @@ int main(int argc,char** argv)
 		assert(model.Stable()); fclose(f);
 	}
 	puts("PASS OFFLINE ACTUAL vector persistent peer:repeated exact FP32+double,zero scalar operand writes,source-bank/Dst ownership,immutable root/descriptor/private nonce/proof,duplicate inert,UNKNOWN parks/STOP safe;NOT kernel/coordinator/native/cycle/model speed qualification");
+	return 0;
 }

@@ -13,6 +13,7 @@ case "${PIONEER_Q38_PANEL_CLIENT:-0}" in
  2) source=pioneer_q38_stream_probe;;
  3) source=pioneer_q38_cohort_probe;;
  4) source=pioneer_q38_dispatch_probe;;
+ 5) source=pioneer_q38_span_probe;;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_AFFINE_CLIENT:-0}" in

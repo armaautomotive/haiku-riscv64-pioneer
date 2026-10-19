@@ -23,7 +23,11 @@ static inline uint32_t PioneerQ38SpanRoute(unsigned bank)
 }
 static inline bool PioneerQ38SpanShape(const uint32_t* d)
 {
-	if (!d || d[0]!=TT_Q38_SPAN_MARKER || d[1]!=1 || d[2]!=1 || d[3]
+	if (!d || d[0]!=TT_Q38_SPAN_MARKER || d[1]!=1 || (d[2]!=1
+#ifdef PIONEER_Q38_SPAN_FAST
+		&& d[2]!=2
+#endif
+		) || d[3]
 		|| !d[4] || d[4]>TT_Q38_SPAN_HOST_BYTES || (d[4]&4095)
 		|| (d[5]&4095) || d[5]<0x04000000 || d[5]>=0xc4000000 || d[4]>0xc4000000-d[5]
 		|| !d[6] || d[6]>=0x7fffffff || (d[7]&(TT_Q38_SPAN_HOST_BYTES-1))
@@ -38,13 +42,19 @@ static inline bool PioneerQ38SpanShape(const uint32_t* d)
 static inline bool PioneerQ38SpanSummary(const uint32_t* s,const uint32_t* d,const uint32_t* before,const uint32_t* after)
 {
 	if (!s || !PioneerQ38SpanShape(d) || !before || !after) return false;
-	unsigned bytes=d[4],chunks=(bytes+16383)/16384,reads=4*chunks,writes=3*chunks;
-	if (s[0]!=reads || s[1]!=bytes/16 || s[2]!=writes || s[3]!=3*(bytes/64)
+	unsigned bytes=d[4],chunks=(bytes+16383)/16384;
+#ifdef PIONEER_Q38_SPAN_FAST
+	bool fast=d[2]==2;
+#else
+	const bool fast=false;
+#endif
+	unsigned reads=(fast?1:4)*chunks,writes=(fast?1:3)*chunks,readFlits=(fast?1:4)*(bytes/64),writeFlits=(fast?1:3)*(bytes/64);
+	if (s[0]!=reads || s[1]!=readFlits || s[2]!=writes || s[3]!=writeFlits
 		|| s[4]!=bytes/4096 || s[5]!=bytes || s[6]!=d[6] || s[7]!=TT_Q38_SPAN_MARKER
 		|| s[24]!=d[10] || s[25]!=d[11] || s[26]!=d[5] || s[27]!=d[7]
-		|| s[28]!=d[8] || s[29]!=d[9] || s[30]!=1 || s[31]
+		|| s[28]!=d[8] || s[29]!=d[9] || s[30]!=(fast?2U:1U) || s[31]
 		|| before[2]!=before[6] || after[2]!=after[6]) return false;
-	const unsigned delta[]={reads,bytes/16,reads+writes,reads,writes,3*(bytes/64),reads+writes,writes};
+	const unsigned delta[]={reads,readFlits,reads+writes,reads,writes,writeFlits,reads+writes,writes};
 	for (unsigned i=0;i<8;i++) if (s[8+i]!=before[i] || s[16+i]!=after[i]
 		|| uint32_t(after[i]-before[i])!=delta[i]) return false;
 	return true;
