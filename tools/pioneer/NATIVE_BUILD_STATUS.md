@@ -1,5 +1,97 @@
 # Native build status
 
+October19,14:36 Vancouver (21:36 UTC) WORK / CPU-VALIDATED NATIVE PASS:
+Implementation1e48625acd is pushed to pioneer-riscv64. Current guarded55
+a2a7179add3c5bf5eb06e0ef8cd063a3113169232a7e0445ba8e2d5b06daf683,
+tag2026101900040002,generation13. BOTH full-FFN tests PASS,EXIT0,clean END.
+Final loaded image26492,quiesced0,cold0,active_owner0,open_count1. No test
+process remains. Haiku64 CPUs/fullRAM137034936320B verified;leave idle.
+No reboot,power,SD or Assistant action. Guard11243/d1ce2aa4 unchanged.
+
+Work uses NEW60f2/60f3 operations and support version2. No CPU learned
+reference,per-peer proof readback,expanded-input ALL-bit readback or output
+numeric validation. Immutable ON-CARD checks remain. Kernel still proves
+owned initialized extents,root source/counters/nonce/completion/terminal PC,
+final hold and safe output bounds. Host does transaction/range bookkeeping,
+not numeric validation. No silent fallback to the old checked operation.
+Work hints NEVER authorize checked input-cache hits;switching modes stages
+fresh inputs. Root377b6a60/peer bdc70e59/math/weights/bulk protocol unchanged.
+
+CPU-validated is a SEPARATE executable. Every learned projection reads
+original rows from the fully authenticated SAME GGUF FD,independently
+computes the quantized-input FP32 matrix on CPU,and compares ALL output
+bits BEFORE caller publication. No CPU-result substitution/fallback. Both
+new modes still use existing CPU non-matrix graph work. The old checked
+mode has metadata/input checks,but NO CPU learned-matrix reference;the
+old0.039706501tok/s benchmark already excluded CPU learned reference work.
+
+Support version2 additionally requires EXPLICIT END. A userspace numeric
+mismatch can be invisible to kernel completion metadata:closing a live
+persistent session WITHOUT END now retains the cookie/context/PCI owner/
+BOTH host leases and sticky-cold latches with NO device IO/STOP/reset or
+automatic rollback. Both new programs refuse old support before BEGIN.
+Offline real cookie-release tests cover a fully PASSED RUN followed only
+by close:zero further device IO,owner retained;explicit clean END restores
+once. Kernel fault containment is NOT disabled by Work.
+
+Build build_qwen38_mode_inference.sh work|cpu-validated SDK FROZEN_LIBS
+NEW_ABSOLUTE_OUTPUT. Work af4b9d7d797e26f65ae08ae1b101992b53259df84b5e3642c2e359907cf0b0f0;
+CPU-validated44c3fd9b3d5561ac99d92c037113eb71436fd3cc69dd2b3d76f9c6837c55d3a8.
+Rebuilt FINAL binaries match exactly. Work has NO CpuValidate symbol;
+diagnostic does. Fixed-public CLI only,NOT installed Assistant27B targets.
+Existing0.6B Assistant targets/chat/settings and dirty llama.cpp untouched.
+Same archived c060ca974c77 headers and four frozen-library hashes retained.
+
+Native Work ABI2 a5e2dd80 debug client passed16 authenticated119-worker
+Q8/Q4_K/Q6_K runs,ALL outputs exact,clean END,EXIT0. TWO warm samples:
+Q4/K5120 mean10.8775ms vs previous cross-reuse checked26.306ms;
+Q4/K17408 mean14.590ms vs39.213ms. Prior baseline,not same-process A/B.
+These are operation latencies,NOT model token throughput. Log
+work-auth119-20261019-a.log SHA99b7b95295e5ebfefbcad1650fb8ec3b5055c4b4ef2a1e7c59f3e7e472cefb14.
+Earlier preliminary Work3e25184d/gen11 passed18 synthetic jobs,all9
+type/width cases,then clean END;restored qualifiedf31/gen12 before final
+hardened a2/gen13. That earlier version1 is NOT selected by new programs.
+
+Full native CPU-validated FFN graph PASS,EXIT0,clean_end1. Authentic
+blk.0.ffn_down Q4/K17408/N5120,12240pages,TWO full executions. First
+46.543184s,warm1.715717s INCLUDING independent CPU reference each time.
+ALL5120 output bits match the previously qualified FFN SHA
+05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Log full-ffn-cpu-validated-20261019-a.log SHA
+67ae727c797beec00048ef20575473d5fd87cce5f1e36eb1e5fe168ba9c9b682.
+
+Full native WORK FFN graph also PASS,EXIT0,clean_end1. SAME authenticated
+original matrix/input/12240pages,TWO executions,NO CPU reference in binary.
+First44.617301s,warm0.029510s versus previous checked/no-reference0.054093s:
+45.45% less warm time,ONE warm sample,NOT whole-model throughput. Cold
+44.4s callback remains dominated by bootstrap and original checked bulk
+upload;Work does not claim a loading-speed fix. Both modes exported ALL
+5120 identical floats with the SAME05cda52a... hash above,also matching
+older qualified55/54/compact/reuse outputs. Work log
+full-ffn-work-20261019-a.log SHA
+0ebd8ed355898e71f81ce65736fda1dac9f173f042e5b2f133c30db29ca368a0.
+Native total:18 preliminary synthetic+16 final authentic debug RUNs,FOUR
+full-FFN executions,FOUR known-clean ENDs,NO failure/reboot/power action.
+Final installed driver/guard and ALL4 native frozen-library hashes match;
+final status log51f37340598ab110d2c107d53c3c2e135b90c0f00714ff8df01d0efca7c967e3.
+No new full-model tokens/second claim;last qualified rate0.039706501tok/s.
+20tok/s on27B is NOT achieved. Next performance work remains data-plane
+PIO/DMA overhead and larger on-card graph execution,not CPU validation.
+
+Default-off binary isolation verified:original55 EXACT9ecb313b,43 EXACT
+2df0e0f8,cross-reusef31c8385 and frozen inference21e18126 EXACT. ASan/UBSan
+Work/controller/cache-provenance and independent original-row CPU math
+for all3 widths xQ8/Q4/Q6 including affine minima PASS xq3hyMlZ. Work
+session refuses checked fallback;CPU diagnostic refuses old close contract,
+rejects numeric mismatches BEFORE publication/CLOSE ONLY. Real checked
+RUN full-fault suite iNWHC5ou,handler/retention s4dTso9b,real-client failure
+Z9q4qk3W,legacy sessions uyZOkAgI/XmNiSHUw,reload guard fJnNgyKx PASS.
+491 ACTUAL updater filesystem/hash/owner/handshake/failure cases PASS.
+Latest pinned updater5c15c340f766b6f157a66c2cdc6d0d26d1168258312972e4b8ab19529043652e;
+--apply-work f31->a2,--restore-work a2->f31,ONLY clean/idle. All three
+native transitions used the real guard handshake,NO force unload/reset.
+Local native evidence:/private/tmp/pioneer-q38-work-native-20261019.nkBUfyCv.
+
 October19,13:46 Vancouver (20:46 UTC) RESIDENT INPUT REUSE / NATIVE PASS:
 Current guarded55 f31c83854eef0f922c5e156394615853a30d0a3a73116a3cd763d66e36a321e1,
 tag2026101900030002,generation10. No reboot/power/SD action. Same resident
