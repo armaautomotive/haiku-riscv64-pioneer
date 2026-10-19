@@ -1,5 +1,40 @@
 # Native build status
 
+October19,00:25 UTC native decoded-probe59 f0778f22 FAILED first
+Q8/K5120 two-worker RUN with SAME phase5a0b0200/raw0xfffbd7c3=-272445.
+Importantly NO reason13 decoded-operand mismatch occurred BEFORE worker2
+reached the dot guard;the independent256-value decoded-Dst check precedes
+EVERY Q8 Matrix call. This narrows this observed fault beyond the decoded
+Dst values;does NOT qualify all rows/models or prove a specific cause.
+Exact local log /private/tmp/pioneer-q38-decoded-probe-native-failure-20261018-q.log
+SHA753e772e. No output/retry/END/reset/restore/free/additional card read.
+Process gone,Haiku responsive64/fullRAM,clean shutdown/channel1 off before
+00:22:08 UTC. Rest until at least00:27:08 UTC. Installed f0778f22 remains
+UNKNOWN/quarantined until verified new physical boot.
+
+Next59 source-round-trip diagnostic f8516b02,root46f054aa8152B,
+peerc9b7683e8056B. Retains decoded-Dst check/all original numeric/proof
+guards;adds ONLY two MOVA2D eight-row copies from CURRENT owned SrcA to
+COMPLETE disjoint Dst32 rows96..111,then full drain/256-value RISC compare
+BEFORE Matrix. No bank flip or learned-product fallback. Pinned Blackhole
+MOVA2D FP32 mode reinterprets source as TF32;independent expected view
+is sign|16<<23|integer magnitude<<13. Reason14,index via status[7],value
+via[6];SAME64B status packet/NO new host/NoC packet or relaxed success.
+Normal diagnostic words still ALL zero. Client7722dc5e/ABI59/inference0.
+Two oversized OFFLINE drafts REFUSED by unchanged8192B linker bound.
+Byte-domain algebraic packing/size-only helper optimization fits bounds;
+all256 cases independently checked against scalar operand-bit reference.
+Default43 control2df0e0f8 unchanged;no54..58 baked image/source change.
+
+Actual root+peer real-row/repeated exact FP32+FP64/poisoned Dst and bad
+decoded/source-move fault reporting PASS WPLwN2ae. Injected MOVD2A error
+is caught at index0 with exact value BEFORE peer2 matrix/zero gathers.
+ASan/UBSan RUN WhZ9cROB BOTH modes,END FPZ4TGbm BOTH modes,
+handler/retention R02dkwgg,bootstrap dWcFd5BC PASS. Stage-r unloaded-only
+helper50165147 pins installedf0778f22/stage-q43/52/54 backups,keeps old59
+separately.421 actual installer guard/restore cases PASS. Native staging
+still pending. No token-speed result.
+
 October19,00:16 UTC recovery resumed:human reported PSU off at23:52 UTC
 and powering on at00:15 UTC. Fresh SOPHGO ZSBL/DDR/firmware serial output
 confirmed physical startup;NO relay pulse sent this continuation. Linux

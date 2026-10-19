@@ -151,8 +151,12 @@ int main(int argc,char** argv)
 	for (unsigned code=0;code<256;code++) {
 		int value=int(code)-int((code&128)*2);
 		unsigned magnitude=unsigned(value<0?-value:value);
-		uint32_t canonical=0x08000000+(magnitude%8)*0x10000000+(magnitude/8)*0x10000;
+		uint16_t operand=PioneerInt8Operand(value);
+		uint32_t raw=(uint32_t(operand&0x8000)<<16)|(uint32_t(operand&1023)<<21)|0x00100000;
+		uint32_t canonical=((raw&0x7f000000)>>8)|((raw&0x00ff0000)<<7);
 		assert(PioneerQ38DecodedQ8Risc(code)==(value<0?0U-canonical:canonical));
+		uint32_t source=0x08000000+magnitude*8192;
+		assert(PioneerQ38DecodedQ8Risc(code,true)==(value<0?0U-source:source));
 	}
 	{
 		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
@@ -161,6 +165,14 @@ int main(int argc,char** argv)
 		assert(m.actual[1]->decodedProbeReads==38 && !m.actual[1]->matrixInstructions);
 		assert(m.l1[m.Index(0x17ffc0)]==0x5a0d0225 && m.l1[m.Index(0x17ffc4)]==0x13572468);
 		puts("PASS59 independent converted-Dst Q8 operand probe:exact first bad index37/value before ANY peer2 matrix;existing status packet,zero gathers");
+	}
+	{
+		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
+		m.actual[1]->corruptMove=true;
+		assert(!m.RunRoot() && m.unknown && !m.gathers);
+		assert(m.actual[1]->sourceProbeReads==1 && !m.actual[1]->matrixInstructions);
+		assert(m.l1[m.Index(0x17ffc0)]==0x5a0e0200 && m.l1[m.Index(0x17ffc4)]==0U-(0x08000000U|(127U<<13)));
+		puts("PASS59 actual corrupted MOVD2A source captured by independent MOVA2D TF32 round-trip BEFORE matrix;index0/value exact,zero gathers");
 	}
 	for (bool drop:{false,true}) {
 		CooperativeDispatch m(argv[1],argv[2],2,8,5120);

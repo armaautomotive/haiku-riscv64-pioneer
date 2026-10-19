@@ -30,6 +30,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
 	bool corruptDecodedProbe=false; unsigned decodedProbeReads=0;
+	unsigned sourceProbeRows=0,sourceProbeReads=0;
 	uint32_t badFloatDot=0;
 	bool rawFloat=false,rawInitial=false,affineEligible=false;
 	// Negative controls for the independent pinned-ISA observer only.
@@ -91,6 +92,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 				if (!rawRow) {
 					memset(decoded,0,sizeof(decoded)); // generation tracking,NOT a hardware valid-bit reset
 					panelMoves=0; affineEligible=false;
+					sourceProbeRows=0;
 				}
 			}
 			rawPending=true; publish=op&64; rawUnpacks++; drained=false; return;
@@ -116,6 +118,24 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			if (publish) { sources[unpackBank]=true; unpackBank^=1; ownerA=sources[mathBank]; }
 			rawPending=false;
 		}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+		if (code==0x12) {
+			assert(type==8 && !BFloat && ownerA && sources[mathBank] && panelMoves==4 && !rawPending
+				&& config[0]==0x4231 && config[1]==0xa03c8000 && thread[2]==1 && sourceProbeRows<16);
+			assert(op==(0x12002060U|(sourceProbeRows<<17)|sourceProbeRows));
+			// Independent pinned MOVA2D semantics:FP32 forces TF32 source
+			// interpretation,retains ALL10 source mantissa bits,no clipping.
+			for (unsigned row=sourceProbeRows;row<sourceProbeRows+8;row++) {
+				for (unsigned col=0;col<16;col++) {
+					float value=a[row][col]; assert(value==float(int(value)) && value>=-128 && value<=127);
+					unsigned magnitude=unsigned(value<0?-value:value);
+					StoreFloatDst(96+row,col,(value<0?0x80000000U:0U)|0x08000000U|(magnitude<<13));
+				}
+				defined[Adj(96+row)]=true;
+			}
+			sourceProbeRows+=8; drained=false; return;
+		}
+#endif
 		if (op==0x8f000000) { vectorOps++; drained=false; return; }
 		if ((code>=0x70 && code<=0x8d) || code==8 || code==0x90) {
 			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible) && thread[2]==1
@@ -247,6 +267,12 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	}
 	uint32_t Load(uint32_t address) override {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+		if (Range(address,0xffbd9800,1024)) {
+			assert(type==8 && config[3]==0x10000 && !rawPending && drained && sourceProbeRows==16);
+			unsigned i=(address-0xffbd9800)/4; sourceProbeReads++;
+			uint32_t bits=FloatDst(96+i/16,i%16);
+			return bits&0x80000000?0U-(bits&0x7fffffff):bits;
+		}
 		if (Range(address,0xffbd9000,1024)) {
 			assert(type==8 && config[3]==0x10000 && !rawPending && drained && panelMoves==4);
 			unsigned i=(address-0xffbd9000)/4; decodedProbeReads++;

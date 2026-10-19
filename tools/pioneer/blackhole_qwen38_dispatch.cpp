@@ -99,7 +99,7 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 #ifdef PIONEER_Q38_FAULT_RETURN
 	// ALREADY transferred local status;normal status remains unchanged.
 #ifdef PIONEER_Q38_PEER_PROGRESS
-	Checkpoint(0x5a000000|(worker<<8)|((status[5]&255U)<<16)|(status[5]==13?(status[7]&255U):0U),status[5]>=9 && status[5]<=13?status[6]:status[3]);
+	Checkpoint(0x5a000000|(worker<<8)|((status[5]&255U)<<16)|(status[5]>=13 && status[5]<=14?(status[7]&255U):0U),status[5]>=9 && status[5]<=14?status[6]:status[3]);
 #else
 	Checkpoint(0x54000280|worker,status[3]);
 #endif

@@ -62,16 +62,17 @@ static __attribute__((noinline,noreturn)) void PeerFailure(unsigned reason,uint3
 	Words(0x74140)[6]=value; PeerProgress(reason); block_fault_park();
 }
 #include "PioneerQ38DecodedProbe.h"
-static __attribute__((noinline)) void ProbeQ8Decoded(unsigned panel)
+static __attribute__((noinline,optimize("Os"))) void ProbeQ8Decoded(unsigned panel,unsigned stage)
 {
-	// Vector unpack+MOV already fully drained. Read ONLY our defined
-	// decoded rows64..79,not matrix output or any remote/host aperture.
+	// Vector unpack+MOV already fully drained. Stage13 reads defined
+	// decoded rows64..79;stage14 reads the COMPLETE disjoint SrcA round-
+	// trip rows96..111. Never matrix output or any remote/host aperture.
 	for (unsigned i=0;i<256;i++) {
 		unsigned code=PioneerQ38PanelByte(reinterpret_cast<const uint8_t*>(0x90000),(2+panel*16)*16+i);
-		uint32_t actual=Words(0xffbd9000)[i];
-		if (actual!=PioneerQ38DecodedQ8Risc(code)) {
+		uint32_t actual=Words(stage==13?0xffbd9000:0xffbd9800)[i];
+		if (actual!=PioneerQ38DecodedQ8Risc(code,stage==14)) {
 			Words(0x74140)[7]=i;
-			PeerFailure(13,actual);
+			PeerFailure(stage,actual);
 		}
 	}
 }
@@ -436,7 +437,13 @@ extern "C" unsigned block_main()
 #endif
 #endif
 #ifdef PIONEER_Q38_PEER_PROGRESS
-		if (type==8) ProbeQ8Decoded(p);
+		if (type==8) {
+			ProbeQ8Decoded(p,13);
+			// DIAGNOSTIC ONLY:round-trip current owned SrcA into complete
+			// disjoint Dst32 rows96..111. No source-bank flip or math change.
+			Emit(0x12002060); Emit(0x12102068); Drain();
+			ProbeQ8Decoded(p,14);
+		}
 		PeerProgress(6);
 #endif
 #ifdef PIONEER_Q38_BFLOAT_PANEL
