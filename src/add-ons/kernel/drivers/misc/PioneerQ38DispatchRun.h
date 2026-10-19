@@ -4,6 +4,9 @@
 #include "PioneerQ38DispatchBootstrap.h"
 #include "PioneerPayloadBlock.h"
 #include "PioneerQ38DispatchProfile.h"
+#ifdef TT_PIONEER_Q38_WORK_MODE
+#include "PioneerQ38WorkProtocol.h"
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "PioneerQ38ActivationPacking.h"
 #endif
@@ -84,7 +87,11 @@ static inline bool PioneerQ38DispatchRunFail(PioneerQ38DispatchLease& lease,Pion
 	for (auto& rows:job.output) for (auto& word:rows) word=0;
 	return PioneerQ38DispatchQuarantine(lease,banks);
 }
-template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_result& dram,PioneerResidentBanks& banks,
+template<class IO
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	,bool Work=false
+#endif
+	> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_result& dram,PioneerResidentBanks& banks,
 	PioneerQ38DispatchLease& lease,const uint8_t* initialized,uint32_t initializedPages,tt_q38_dispatch_probe& job)
 {
 	if (lease.unsafe || !lease.booted || lease.closed || lease.rootRunning || !PioneerQ38DispatchValid(job)
@@ -98,6 +105,9 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	for (unsigned w=0;w<job.peers;w++) a.nextPeer[w]=lease.peerNonce[w]+1;
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	bool reuse=lease.inputReuse.Matches(job,lease.rootNonce,lease.inputEpoch);
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	reuse &= lease.inputCacheWork==Work;
+#endif
 	lease.inputReuse.valid=false; // no stale hint survives ANY attempted execution
 #else
 	const bool reuse=false;
@@ -180,6 +190,11 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	r.root_completed=r.root_sources_verified=1; r.peers=r.started=r.completed=r.waiting=job.peers;
 	r.nonce=a.nextRoot; r.state=TT_RUNTIME_PASSED;
 	if (!PioneerQ38DispatchRead(io,0x7f800,r.stats,64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	if constexpr (Work) {
+		if (!PioneerQ38WorkSafety(job,a,false)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	} else {
+#endif
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
 	// Flat private heap scratch avoids pointer arithmetic beyond a peer's
 	// 64-element subarray. Copy ONLY active records after the complete read.
@@ -189,6 +204,9 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x76000+w*256,r.peer[w],64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
 #endif
 	if (!PioneerQ38DispatchProof(job,a,false,false) || !PioneerQ38DispatchInputsMatch(io,job)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	}
+#endif
 	const uint32_t command[]={0x83f00,0,PioneerWorkerX(job.peers)|(PioneerWorkerY(job.peers)<<6),0x75000,0,129,0,0,
 		256+job.part[job.peers-1].groups*64,0};
 	for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PioneerQ38DispatchRunFail(lease,banks,job);
@@ -197,7 +215,11 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	// the kernel-private request until final hold/proof succeeds.
 	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x80000+w*1024,job.output[w],job.part[w].groups*16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	profile.Mark(); // output readback ONLY after every metadata proof
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	if (!(Work?PioneerQ38WorkSafety(job,a,false):PioneerQ38DispatchProof(job,a,false))) {
+#else
 	if (!PioneerQ38DispatchProof(job,a,false)) {
+#endif
 		for (auto& rows:job.output) for (auto& word:rows) word=0;
 		return PioneerQ38DispatchRunFail(lease,banks,job);
 	}
@@ -212,11 +234,18 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 		return PioneerQ38DispatchRunFail(lease,banks,job);
 	}
 	lease.rootRunning=root.image.running=false; r.root_held=1;
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	if (!(Work?PioneerQ38WorkSafety(job,a):PioneerQ38DispatchProof(job,a))) return PioneerQ38DispatchRunFail(lease,banks,job);
+#else
 	if (!PioneerQ38DispatchProof(job,a)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#endif
 	profile.Mark(); // final proof+hold+source proof;still no caller publication
 	lease.rootNonce=a.nextRoot; for (unsigned w=0;w<job.peers;w++) lease.peerNonce[w]=a.nextPeer[w];
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	lease.inputReuse.Commit(job,lease.rootNonce,lease.inputEpoch);
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	lease.inputCacheWork=Work;
+#endif
 #endif
 	profile.Mark(); // private nonce commit
 	profile.Publish(job.type,job.inputs,job.peers); // CPU-only,successful jobs ONLY

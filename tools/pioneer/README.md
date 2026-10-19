@@ -1,5 +1,59 @@
 # Pioneer relay control
 
+## Experimental Qwen 27B execution modes (October 19)
+
+The experimental 27B engine now has **separate executables**, selected at
+build time. These are not new installed Assistant chat targets yet.
+
+- `work`: P100A learned matrices, no CPU reference comparison, no exhaustive
+  CPU peer-proof/expanded-input readback or output-number validation. No
+  fallback to the checked path. Required address, ownership, source,
+  completion and failure-containment checks remain.
+- `cpu-validated`: diagnostic mode. Independently reads original authenticated
+  GGUF rows, computes every learned matrix on the CPU using the same
+  quantized-input FP32 contract, and compares all output bits before
+  publication. A mismatch stops; it never substitutes a CPU answer.
+
+Both still use the existing CPU non-matrix graph operations. Neither is a
+claim of GPU-only model execution or 20 tokens/second. Normal `checked`
+builds retain the old behavior: exhaustive driver metadata/input checks,
+but **not** a CPU learned-matrix reference.
+
+Build with the frozen ABI-matching libraries (not the dirty llama.cpp tree):
+
+```sh
+sh tools/pioneer/build_qwen38_mode_inference.sh work SDK_DIRECTORY FROZEN_LIBRARY_DIRECTORY /absolute/new-work-binary
+sh tools/pioneer/build_qwen38_mode_inference.sh cpu-validated SDK_DIRECTORY FROZEN_LIBRARY_DIRECTORY /absolute/new-debug-binary
+```
+
+The existing fixed-public CLI remains: `--public-one-token`,
+`--public-four-tokens`, or `--public-ffn-graph-export NEW_OUTPUT`. Full model
+cold loading is still very slow. These are bounded qualification programs,
+not an arbitrary-prompt chat interface. The startup log names the mode.
+
+Work uses its own `0x60f2/0x60f3` operations; support version **2** requires
+explicit END. Both new modes reject older drivers before BEGIN. Closing a
+persistent session without explicit END retains the whole owner and cold
+latches it with **no device cleanup/STOP/reset**: a CPU-only mismatch may be
+invisible to the driver's completion metadata. Only clean explicit END
+permits normal restoration. Work-accepted input-cache hints cannot authorize
+a checked-mode hit. `--apply-work` / `--restore-work` in the pinned hot-swap
+script are clean/idle-only; there is no automatic rollback after failure.
+
+`PIONEER_Q38_WORK_MODE=1` additionally enables the kernel interface in the
+existing compact/reuse/cross-format guarded55 build. Default-off builds are
+unchanged. `PIONEER_Q38_WORK_CLIENT=1` builds a **separate qualification client**
+that deliberately compares CPU answers while testing Work ioctls; this is
+not the production Work executable. Offline tests:
+
+```sh
+sh tools/pioneer/tests/run_pioneer_q38_work_tests.sh QUALIFIED_REUSE_ROOT_IMAGE
+sh tools/pioneer/tests/run_pioneer_q38_dispatch_client_failure_tests.sh
+python3 tools/pioneer/tests/pioneer_p100a_hot_swap_test.py
+```
+
+## Relay wiring
+
 The DSD TECH SH-UR04A relay appears on this Mac as
 `/dev/cu.usbserial-1`. The Pioneer serial console is the separate
 `/dev/cu.usbserial-0001` device; the scripts deliberately exclude that port

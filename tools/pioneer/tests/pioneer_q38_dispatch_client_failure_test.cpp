@@ -11,6 +11,13 @@
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchProtocol.h"
+#ifdef PIONEER_Q38_WORK_CLIENT_TEST
+#include "../PioneerQ38WorkSession.h"
+#undef TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
+#undef TT_PCI_PROBE_Q38_DISPATCH_RUN
+#define TT_PCI_PROBE_Q38_DISPATCH_SUPPORT TT_PCI_PROBE_Q38_WORK_SUPPORT
+#define TT_PCI_PROBE_Q38_DISPATCH_RUN TT_PCI_PROBE_Q38_WORK_RUN
+#endif
 static unsigned opens=0,closes=0,begins=0,runs=0,uploads=0,ends=0,fault=0;
 static bool failed=false;
 static int MockOpen(const char* path,int flags)
@@ -23,7 +30,13 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	assert(fd==73 && !failed);
 	if (op==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_dispatch_support));
-		*static_cast<tt_q38_dispatch_support*>(data)={TT_Q38_DISPATCH_DRIVER,1,119,256,17408,7,64,1,0}; return 0;
+		*static_cast<tt_q38_dispatch_support*>(data)={TT_Q38_DISPATCH_DRIVER,
+#ifdef PIONEER_Q38_WORK_CLIENT_TEST
+			TT_Q38_WORK_SUPPORT_VERSION,
+#else
+			1,
+#endif
+			119,256,17408,7,64,1,0}; return 0;
 	}
 	if (op==TT_PCI_PROBE_Q38_BANK_SUPPORT) {
 		*static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,4,1,PioneerResidentBanks::Capacity}; return 0;
@@ -62,6 +75,9 @@ static bool MockFixtures(uint8_t* data,unsigned bytes) { assert(bytes==PIONEER_Q
 #define PIONEER_Q38_REUSE_MAIN DispatchClientMain
 #include "../pioneer_q38_reuse_probe.cpp"
 #undef PioneerQ38LoadRowFixtures
+#elif defined(PIONEER_Q38_WORK_CLIENT_TEST)
+#define PIONEER_Q38_WORK_PROBE_MAIN DispatchClientMain
+#include "../pioneer_q38_work_probe.cpp"
 #else
 #define main DispatchClientMain
 #include "../pioneer_q38_cohort_probe.cpp"

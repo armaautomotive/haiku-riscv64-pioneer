@@ -33,6 +33,13 @@ public:
 			&& !fstat(fileno(file),&current) && Same(identity,current);
 	}
 	const PioneerQwen38Gguf& Model() const { return model; }
+#ifdef PIONEER_Q38_CPU_VALIDATION
+	// Diagnostic build ONLY. Same authenticated file description;never
+	// reopens a pathname or replaces accelerator results with CPU outputs.
+	bool ReadReferencePacked(unsigned tensor,uint64_t offset,unsigned bytes,void* out,unsigned capacity) {
+		return Ready() && model.ReadPacked(tensor,offset,bytes,out,capacity) && Ready();
+	}
+#endif
 	// Pinned llama_model_load_from_file_ptr borrows (does NOT close) this
 	// FILE. Load synchronously BEFORE session.Open/any page reads. The
 	// source outlives the llama model; never reopen a possibly replaced path.

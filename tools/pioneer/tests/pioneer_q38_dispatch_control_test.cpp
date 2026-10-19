@@ -114,6 +114,23 @@ int main(int argc,char** argv)
 	sQ38InputEpoch=1;
 #endif
 	End(cookie,true);
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_SUPPORT,&support,sizeof(support))==B_OK && support.driver==55);
+	Begin(cookie,argv[1]); job=Request();
+	assert(Q38DispatchControl(&foreign,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_BUSY);
+	team=18; assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_NOT_ALLOWED); team=17;
+	for (unsigned op:{unsigned(TT_PCI_PROBE_Q38_WORK_RUN),unsigned(TT_PCI_PROBE_Q38_WORK_RUN),unsigned(TT_PCI_PROBE_Q38_DISPATCH_RUN),unsigned(TT_PCI_PROBE_Q38_DISPATCH_RUN)}) {
+		assert(Q38DispatchControl(&cookie,op,job.get(),sizeof(*job))==B_OK && !cookie.context->Unsafe());
+		if (op==TT_PCI_PROBE_Q38_WORK_RUN) for (const auto& peer:job->result.peer) for (auto word:peer) assert(!word);
+	}
+	End(cookie,true);
+	Begin(cookie,argv[1]); job=Request(); cookie.context->io.rootFault=4;
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_OK && sColdRecoveryRequired && cookie.context->Unsafe());
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_DEV_NOT_READY);
+	End(cookie,false); sColdRecoveryRequired=false;
+#else
+	assert(Q38DispatchControl(&cookie,B_DEVICE_OP_CODES_END+0x60f2,&support,sizeof(support))==B_BAD_VALUE);
+#endif
 	Begin(cookie,argv[1]); job=Request(); failCopy=copyCalls+2;
 	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==-99
 		&& cookie.context && sRuntimeOwner==&cookie && !cookie.context->Unsafe());

@@ -18,6 +18,9 @@ struct PioneerQ38DispatchLease {
 	PioneerQ38ActivationReuse inputReuse;
 	uint64_t inputEpoch=1; // set under the driver's lock before every RUN
 #endif
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	bool inputCacheWork=false; // Work hints NEVER authorize a checked-mode cache hit
+#endif
 	unsigned prepared=0;
 	// Diagnostic bookkeeping ONLY. Never a completion/source authority and
 	// never an excuse for extra device reads/writes after uncertainty.

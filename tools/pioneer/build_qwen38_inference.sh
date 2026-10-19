@@ -17,6 +17,12 @@ case "${PIONEER_Q38_VECTOR_INFERENCE:-0}" in
  2) [ "${PIONEER_Q38_DISPATCH_INFERENCE:-0}" = 1 ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_EXECUTION_MODE:-checked}" in
+ checked) ;;
+ work) [ "${PIONEER_Q38_VECTOR_INFERENCE:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_WORK_INFERENCE";;
+ cpu-validated) [ "${PIONEER_Q38_VECTOR_INFERENCE:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_CPU_VALIDATION";;
+ *) exit 2;;
+esac
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do

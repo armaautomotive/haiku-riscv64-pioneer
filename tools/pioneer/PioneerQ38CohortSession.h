@@ -4,6 +4,12 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_CPU_VALIDATION
+#ifdef PIONEER_Q38_WORK_INFERENCE
+#error Work mode must never contain a CPU reference path
+#endif
+#include "PioneerQ38CpuValidation.h"
+#endif
 template<class IO> auto PioneerQ38SessionNow(IO& io,int) -> decltype(io.NowNanos()) { return io.NowNanos(); }
 template<class IO> uint64_t PioneerQ38SessionNow(IO&,long) { return 0; } // offline transport without clock
 struct PioneerQ38CohortSessionMode {
@@ -20,7 +26,8 @@ struct PioneerQ38CohortSessionMode {
 };
 // Explicit transport strategy;production instantiates ONLY the fixed fully
 // authenticated source. Offline tests use a synthetic source+NO-device IO.
-// No retry,CPU products,substituted output or physical-coordinate capability.
+// No retry,substituted output or physical-coordinate capability. CPU learned
+// products exist ONLY in the separately compiled CPU_VALIDATION diagnostic.
 template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38CohortSessionMode> class PioneerQ38CohortSession {
 	IO& io; Source& source;
 	Mode mode;
@@ -124,6 +131,10 @@ public:
 			calls++; if (peakWorkers<wave.workers) peakWorkers=wave.workers;
 		}
 		if (!source.Ready()) return Stop();
+#ifdef PIONEER_Q38_CPU_VALIDATION
+		// No result publication and NO END/retry/substitution on mismatch.
+		if (!PioneerQ38CpuValidate(source,tensor,input,inputs,scratch.data(),outputs)) return Stop();
+#endif
 		memcpy(output,scratch.data(),outputs*4); return true;
 	}
 	bool Finish() {

@@ -38,7 +38,21 @@ int main(int argc,char** argv)
 	}
 	auto* cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto job=Request();
 	assert(Q38DispatchControl(cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK);
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	// A CPU numeric mismatch is invisible to kernel metadata. Closing
+	// after an otherwise passed RUN MUST NOT silently execute STOP/END.
+	auto& retained=*cookie->context; unsigned writes=retained.io.Writes(),selects=retained.io.selects;
+	assert(ReleaseResidentCookie(cookie)==B_OK && cookie->context==&retained && retained.dispatchOwnerRetained
+		&& sColdRecoveryRequired && !genericCleanup && writes==retained.io.Writes() && selects==retained.io.selects);
+	assert(ReleaseResidentCookie(cookie)==B_OK && writes==retained.io.Writes() && selects==retained.io.selects);
+	delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false;
+	cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); job=Request();
+	assert(Q38DispatchControl(cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_OK);
+	cookie->context->io.closing=true; tt_resident_session_result result={};
+	EndResidentSession(cookie,result,true); // explicit END before close
+#else
 	cookie->context->io.closing=true;
+#endif
 	assert(ReleaseResidentCookie(cookie)==B_OK && genericCleanup==1 && !sRuntimeOwner && !sBankStorageOnly && !sColdRecoveryRequired);
 	puts("PASS REAL extracted54 END gate+cookie release:preflight/run/terminal-STOP uncertainty retains cookie/context/PCI owner/BOTH host leases,no generic cleanup/unreserve/delete/reset/mapping restore or repeated IO;known clean STOP proceeds once;NO native hardware qualification");
 }

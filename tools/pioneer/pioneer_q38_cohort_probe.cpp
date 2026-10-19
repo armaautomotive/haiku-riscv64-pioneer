@@ -203,7 +203,10 @@ int main(int argc,char** argv)
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
 #ifdef PIONEER_Q38_DISPATCH_CLIENT
 	tt_q38_dispatch_support support={};
-	bool okay=Call(fd,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_DISPATCH_DRIVER && support.version==1 && support.peers==119
+#ifndef PIONEER_Q38_DISPATCH_SUPPORT_VERSION
+#define PIONEER_Q38_DISPATCH_SUPPORT_VERSION 1
+#endif
+	bool okay=Call(fd,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&support,sizeof(support)) && support.driver==TT_Q38_DISPATCH_DRIVER && support.version==PIONEER_Q38_DISPATCH_SUPPORT_VERSION && support.peers==119
 		&& support.rows==256 && support.max_inputs==17408 && support.banks==7 && support.offset_alignment==64 && support.persistent==1 && !support.model_inference;
 	printf("DISPATCH_METADATA driver%u ABI%u peers%u persistent%u inference%u accepted%u;NO_BEGIN_YET\n",
 		support.driver,support.version,support.peers,support.persistent,support.model_inference,unsigned(okay));

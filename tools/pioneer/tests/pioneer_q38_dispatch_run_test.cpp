@@ -24,7 +24,7 @@ struct RunIO:BootstrapIO {
 	bool peerStopped[119]={},stopExecuted=false;
 	unsigned stopSlowWorker=0;
 	unsigned stopSnapshotMode=0,pcSamples[120]={};
-	bool asynchronousFault=false; std::vector<unsigned> statusOrder;
+	bool asynchronousFault=false,workOptionalChecks=false; std::vector<unsigned> statusOrder;
 	explicit RunIO(const char* path):image(path) {}
 	uint32_t RuntimeStatusRead(unsigned index) {
 		uint32_t value=BootstrapIO::RuntimeStatusRead(index);
@@ -99,7 +99,7 @@ struct RunIO:BootstrapIO {
 		if (current) { BootstrapIO::RuntimeResetWrite(value); return; }
 		assert(!quarantined); auto& c=C(); c.resets.push_back(value);
 		if (value==0x87ffff) {
-			if (c.coreReset==0x46800) { rootStops++; assert(rootFault==0 || rootFault==8 || rootFault==9); if (rootFault==8) return; }
+			if (c.coreReset==0x46800) { rootStops++; assert(rootFault==0 || rootFault==8 || rootFault==9 || (workOptionalChecks && (rootFault==3 || rootFault==5 || rootFault==6))); if (rootFault==8) return; }
 			else { rootArms++; rootExecuted=false; }
 			c.coreReset=value; return;
 		}

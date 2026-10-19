@@ -2460,6 +2460,15 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		status_t status=acquire_sem(sLock);
 		if (status!=B_OK) return status; // retain ownership, never silently free a possibly live page
 		tt_resident_session_result result={};
+#ifdef TT_PIONEER_Q38_WORK_MODE
+		// After a persistent RUN,ONLY explicit BANK_END authorizes normal
+		// cleanup. A userspace CPU-reference/graph failure can be invisible
+		// to the kernel:close WITHOUT END must retain ALL owners with NO
+		// device IO/reset/STOP,even when the last RUN's metadata passed.
+		if (cookie->context->bankStorageOnly && cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
+			RetainQ38DispatchOwner(*cookie->context,result);
+		else
+#endif
 		EndResidentSession(cookie,result,!sColdRecoveryRequired);
 		release_sem(sLock);
 	}
@@ -2960,13 +2969,27 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
 	if (status!=B_OK) return status;
 	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	// PIONEER_Q38_WORK_SUPPORT_BEGIN
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	if (operation==TT_PCI_PROBE_Q38_WORK_SUPPORT) {
+		if (length!=sizeof(tt_q38_dispatch_support)) return B_BAD_VALUE;
+		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+		const tt_q38_dispatch_support support={TT_Q38_DISPATCH_DRIVER,TT_Q38_WORK_SUPPORT_VERSION,119,256,17408,7,64,1,0};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+#endif
+	// PIONEER_Q38_WORK_SUPPORT_END
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 		if (length!=sizeof(tt_q38_dispatch_support)) return B_BAD_VALUE;
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
 		const tt_q38_dispatch_support support={TT_Q38_DISPATCH_DRIVER,1,119,256,17408,7,64,1,0};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
-	if (operation!=TT_PCI_PROBE_Q38_DISPATCH_RUN || length!=sizeof(tt_q38_dispatch_probe)) return B_BAD_VALUE;
+	if ((operation!=TT_PCI_PROBE_Q38_DISPATCH_RUN
+#ifdef TT_PIONEER_Q38_WORK_MODE
+		&& operation!=TT_PCI_PROBE_Q38_WORK_RUN
+#endif
+		) || length!=sizeof(tt_q38_dispatch_probe)) return B_BAD_VALUE;
 	auto* request=(tt_q38_dispatch_probe*)malloc(sizeof(tt_q38_dispatch_probe)); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,sizeof(*request));
 	if (status!=B_OK || !PioneerQ38DispatchValid(*request)) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
@@ -2994,7 +3017,13 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 			if (prepared) c->q38Dispatch->inputEpoch=sQ38InputEpoch;
 #endif
-			if (prepared) PioneerQ38DispatchRun(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);
+			if (prepared) {
+#ifdef TT_PIONEER_Q38_WORK_MODE
+				if (operation==TT_PCI_PROBE_Q38_WORK_RUN) PioneerQ38DispatchRun<decltype(c->io),true>(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);
+				else
+#endif
+				PioneerQ38DispatchRun(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);
+			}
 			bool unsafe=!prepared || c->Unsafe() || request->result.recovery_required;
 			if (!unsafe && !c->io.SelectRuntimeCore(0)) unsafe=true;
 			if (unsafe) {
@@ -4089,6 +4118,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return DriverReloadControl(instance,operation,data,length);
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+#ifdef TT_PIONEER_Q38_WORK_MODE
+	if (operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN)
+		return Q38DispatchControl(instance,operation,data,length);
+#endif
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
 		return Q38DispatchControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT || operation==TT_PCI_PROBE_Q38_COHORT_RUN

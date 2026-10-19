@@ -66,6 +66,9 @@ static int GraphSmoke(State& state,const char* output)
 			(unsigned long long)state.session.pagesUploaded);
 		okay=okay && !memcmp(first.data(),y->data,5120*4) && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==2;
 	}
+#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
+	if (!okay) State::Abort(&state); // graph/repeat mismatch is CLOSE ONLY too
+#endif
 	bool clean=PioneerQ38GgmlFinish(); okay=okay && clean;
 	// Publish PUBLIC numeric diagnostic ONLY after clean END;never overwrite.
 	if (okay) {
@@ -82,7 +85,13 @@ static int GraphSmoke(State& state,const char* output)
 	if (xb) ggml_backend_buffer_free(xb);
 	if (wb) ggml_backend_buffer_free(wb);
 	ggml_backend_free(backend); ggml_free(ctx);
-	printf("%s_PUBLIC_FFN_GGML_EXPORT clean_end%u;REPEATABILITY_NOT_INDEPENDENT_NUMERIC_REFERENCE_OR_LLM_INFERENCE\n",okay?"PASS":"FAIL",unsigned(clean));
+	printf("%s_PUBLIC_FFN_GGML_EXPORT clean_end%u;"
+#ifdef PIONEER_Q38_CPU_VALIDATION
+		"CPU_REFERENCE_ALL_OUTPUTS_PLUS_REPEATABILITY_NOT_LLM_INFERENCE\n",
+#else
+		"REPEATABILITY_NOT_INDEPENDENT_NUMERIC_REFERENCE_OR_LLM_INFERENCE\n",
+#endif
+		okay?"PASS":"FAIL",unsigned(clean));
 	return okay?0:1;
 }
 int main(int argc,char** argv)
@@ -91,7 +100,15 @@ int main(int argc,char** argv)
 	bool four=argc==2 && !strcmp(argv[1],"--public-four-tokens");
 	if (!graph && !four && (argc!=2 || strcmp(argv[1],"--public-one-token"))) return 2;
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_CPU_VALIDATION
+	puts("PUBLIC27B_MODE CPU_VALIDATED_DEBUG;EVERY_LEARNED_MATRIX_INDEPENDENT_CPU_REFERENCE;NO_CPU_FALLBACK;SLOW_DIAGNOSTIC");
+	puts("PUBLIC27B_INFERENCE_AUTH_BEGIN;NO_ACCELERATOR_FD_YET;CPU_REFERENCE_ENABLED_NO_FALLBACK");
+#else
+#ifdef PIONEER_Q38_WORK_INFERENCE
+	puts("PUBLIC27B_MODE WORK;NO_CPU_REFERENCE_OR_RESULT_VALIDATION;MANDATORY_DRIVER_SAFETY_ONLY;NO_CHECKED_FALLBACK");
+#endif
 	puts("PUBLIC27B_INFERENCE_AUTH_BEGIN;NO_ACCELERATOR_FD_YET;NO_CPU_REFERENCE_OR_FALLBACK");
+#endif
 	State state; if (!state.source.Open()) return 1;
 	if (graph) return GraphSmoke(state,argv[2]);
 	FILE* file=state.source.BorrowForModelLoad(); if (!file) return 1;
@@ -118,7 +135,13 @@ int main(int argc,char** argv)
 	}
 	// Frozen library exports new/free,not the optional get_n_threads accessor.
 	bool poolReady=cpuPool!=nullptr;
-	printf("PUBLIC27B_CPU_POOL persistent%u threads%u poll0;NON_MATRIX_CPU_WORK_ONLY_NO_CPU_REFERENCE\n",unsigned(poolReady),poolReady?32:0);
+	printf("PUBLIC27B_CPU_POOL persistent%u threads%u poll0;NON_MATRIX_CPU_WORK_ONLY"
+#ifdef PIONEER_Q38_CPU_VALIDATION
+		"_SEPARATE_SERIAL_CPU_REFERENCE_ENABLED\n"
+#else
+		"_NO_CPU_REFERENCE\n"
+#endif
+		,unsigned(poolReady),poolReady?32:0);
 	unsigned recognized=PioneerQ38GgmlSnapshot().recognizedWeights;
 	printf("PUBLIC27B_GRAPH_COVERAGE recognized_learned_weights%u expected497;RESERVATION_ONLY_NOT_EXECUTION\n",recognized);
 	bool okay=context && poolReady && state.source.Ready() && recognized==497;
@@ -147,7 +170,12 @@ int main(int argc,char** argv)
 		}
 		if (!position) { retainedPages=state.session.pagesUploaded; firstSeconds=elapsed; }
 		else { okay=okay && retainedPages==state.session.pagesUploaded; warmSeconds+=elapsed; }
-		printf("PUBLIC27B_POSITION %u selected_token%d seconds%.6f learned_projections%llu pages%llu success%u;NO_CPU_REFERENCE_OR_FALLBACK\n",
+		printf("PUBLIC27B_POSITION %u selected_token%d seconds%.6f learned_projections%llu pages%llu success%u;"
+#ifdef PIONEER_Q38_CPU_VALIDATION
+			"CPU_REFERENCE_ENABLED_NO_FALLBACK\n",
+#else
+			"NO_CPU_REFERENCE_OR_FALLBACK\n",
+#endif
 			position,best,elapsed,(unsigned long long)(current.projections-before),(unsigned long long)state.session.pagesUploaded,unsigned(okay));
 		double matrixSeconds=state.matrixWallSeconds-matrixBefore;
 		printf("PUBLIC27B_WALL_PROFILE position%u valid%u matrix_callbacks%llu matrix_callback_seconds%.6f checked_matrix_ioctl_seconds%.6f other_ggml_seconds%.6f;HOST_WALL_DIAGNOSTICS_NOT_PURE_GPU_OR_CPU_TIMES\n",
@@ -156,6 +184,9 @@ int main(int argc,char** argv)
 		if (okay) { generated++; token=best; }
 	}
 	double end=Seconds(); auto stats=PioneerQ38GgmlSnapshot();
+#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
+	if (!okay) State::Abort(&state); // never END after a user-only graph failure
+#endif
 	bool clean=PioneerQ38GgmlFinish();
 	printf("%s_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated%u selected_token%d seconds%.6f projections%llu uploaded_pages%llu calls%llu workers%u clean_end%u;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY\n",
 		okay && clean?"PASS":"FAIL",generated,best,end-start,(unsigned long long)stats.projections,(unsigned long long)state.session.pagesUploaded,

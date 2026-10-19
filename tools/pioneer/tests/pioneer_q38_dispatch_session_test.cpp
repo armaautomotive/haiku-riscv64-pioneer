@@ -35,6 +35,11 @@ struct DispatchSessionIO:SessionIO {
 	DispatchSessionIO(FakeSource& source,unsigned tensor):SessionIO(source,tensor) {}
 	bool Call(int fd,uint32_t op,void* data,size_t bytes) {
 		assert(fd==73 && !stopped);
+#ifdef PIONEER_Q38_CPU_VALIDATION
+		if (op==TT_PCI_PROBE_Q38_WORK_SUPPORT) {
+			*static_cast<tt_q38_dispatch_support*>(data)={55,fault==19?1U:unsigned(TT_Q38_WORK_SUPPORT_VERSION),119,256,17408,7,64,1,0}; return true;
+		}
+#endif
 		if (op==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 			assert(bytes==sizeof(tt_q38_dispatch_support));
 			unsigned driver=fault==1?52U:fault==14?(TT_Q38_DISPATCH_DRIVER==55?54U:55U):
@@ -61,6 +66,7 @@ struct DispatchSessionIO:SessionIO {
 		return true;
 	}
 };
+#ifndef PIONEER_Q38_DISPATCH_SESSION_MOCK_ONLY
 int main()
 {
 	(void)&Check; (void)&CohortHostTestMain;
@@ -100,3 +106,4 @@ int main()
 	}
 	puts("PASS OFFLINE54 model session:strict metadata distinct119-WAIT protocol,authenticated source BEFORE FD,ALL bulk proofs,full multiwave atomic assembly/repeated retained weights,13 ABI/storage/source/late-wave/proof/source-seal faults preserve output,CLOSE ONLY/no END/retry/CPU products/fallback;clean END once;NO native inference qualification");
 }
+#endif

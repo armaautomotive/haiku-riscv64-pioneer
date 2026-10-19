@@ -4,7 +4,7 @@
 # command and NO automatic rollback after an unproven replacement.
 set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
-case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse) mode=$1;; *) exit 2;; esac
+case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work) mode=$1;; *) exit 2;; esac
 stage=/boot/home/pioneer-p100a-hot-reload-20261019-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
@@ -18,6 +18,7 @@ candidatec=$stage/tenstorrent_pci_probe-compact-dc564559
 candidatef=$stage/tenstorrent_pci_probe-compact-fast-30423874
 candidater=$stage/tenstorrent_pci_probe-reuse-cac152f0
 candidatex=$stage/tenstorrent_pci_probe-cross-reuse-f31c8385
+candidatew=$stage/tenstorrent_pci_probe-work-a2a7179a
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -30,6 +31,7 @@ hashc=dc564559106418fc9c68f070a9dae41df3a41e0aec801800c8198fa1a9aca08e
 hashf=30423874c662e57ea29328b376edb03ca923af1a0e4073ee52a3138b45e71aa2
 hashr=cac152f0b4560acb9e48f1f104870226114b419e7a1399b4ca2d0c34799aae25
 hashx=f31c83854eef0f922c5e156394615853a30d0a3a73116a3cd763d66e36a321e1
+hashw=a2a7179add3c5bf5eb06e0ef8cd063a3113169232a7e0445ba8e2d5b06daf683
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -40,6 +42,7 @@ tagc=2026101900020003
 tagf=2026101900020004
 tagr=2026101900030001
 tagx=2026101900030002
+tagw=2026101900040002
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -97,6 +100,8 @@ else
  elif [ "$mode" = --restore-reuse ]; then source=$candidatef; expected=$hashr; result=$hashf; oldtag=$tagr; newtag=$tagf
  elif [ "$mode" = --apply-cross-reuse ]; then source=$candidatex; expected=$hashr; result=$hashx; oldtag=$tagr; newtag=$tagx
  elif [ "$mode" = --restore-cross-reuse ]; then source=$candidater; expected=$hashx; result=$hashr; oldtag=$tagx; newtag=$tagr
+ elif [ "$mode" = --apply-work ]; then source=$candidatew; expected=$hashx; result=$hashw; oldtag=$tagx; newtag=$tagw
+ elif [ "$mode" = --restore-work ]; then source=$candidatex; expected=$hashw; result=$hashx; oldtag=$tagw; newtag=$tagx
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

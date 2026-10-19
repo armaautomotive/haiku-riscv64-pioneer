@@ -12,6 +12,9 @@ struct FakeSource {
 	bool ReadWeightPage(const PioneerQwen38PackedPlan& p,unsigned f,unsigned n,uint8_t* data,unsigned bytes) {
 		return Ready() && p.ReadWeightPage(model,f,n,data,bytes);
 	}
+	bool ReadReferencePacked(unsigned t,uint64_t offset,unsigned bytes,void* out,unsigned capacity) {
+		return Ready() && model.ReadPacked(t,offset,bytes,out,capacity) && Ready();
+	}
 };
 struct SessionIO {
 	FakeSource& source; unsigned tensor,opens=0,closes=0,begins=0,ends=0,uploads=0,runs=0,fault=0,failWave=0;
