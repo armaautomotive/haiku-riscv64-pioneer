@@ -1,5 +1,26 @@
 # Native build status
 
+October18,21:07 Vancouver (October19,04:07 UTC) QUALIFIED55 RESTORED:
+Fresh normal startup worked (NO five-minute delay);Linux preflight and
+pinned SD-free session dispatch55-restore-20261018-v succeeded. Haiku64/
+fullRAM137034936320B,unloaded/no owners proved by guarded stage-u restore;
+installed55 exact9ecb313b. Failed56 is WITHHELD,not installed or qualified.
+Full27B fixed-public-Hello FOUR-position test now ACTIVE via unchanged
+inference21e18126,stage-t/public-four-vector-clear-v.log,wrapperTEAM475.
+Started04:06:51 UTC;currently authenticating FULL same-FD model BEFORE
+accelerator FD. Cold upload previously~6374s,so expect a long test;do NOT
+interrupt/reload driver/start parallel card tests. Need all497 learned
+projections/position,retained pages,matching tokens11/353/2688/264 and
+clean END BEFORE a new token-speed claim/Assistant integration.
+
+DEBUG-only future numeric-failure detail now logs ONLY first8 mismatched
+public host-copy values,counts ALL mismatches,never extra ioctl/card read
+or result substitution. Bad shape refuses. Actual-client syscall harness
+PASS54/55/56 (0v36nnn6/pm7mfLOP/ojXCj2A4),including existing UNKNOWN/ioctl
+failure exactly-one-RUN/one-CLOSE/no-END rules. New56 diagnostic client
+43d4646b is OFFLINE ONLY;old staged9520d6b8 remains untouched so original
+stage-u restore hash chain stays valid. No runtime/model inference change.
+
 October18,20:59 Vancouver (October19,03:59 UTC) NATIVE56 REFUSED:
 Normal restart worked without five-minute rest. Linux6.1.31/64/NVMe root,
 unbound COMMAND0000/exact helpers/no new storage errors verified;stage-u

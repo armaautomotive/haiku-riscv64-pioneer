@@ -73,6 +73,24 @@ static bool Reference(const Q38Probe& r,const std::vector<uint8_t>& packed,unsig
 	}
 	return true;
 }
+#ifdef PIONEER_Q38_DISPATCH_CLIENT
+// DEBUG ONLY:inspect the ALREADY returned public-fixture host copy. This
+// must never issue an ioctl/read a card or substitute a numeric result.
+static unsigned ReturnedNumericErrors(const Q38Probe& r,const std::vector<float>& expected,FILE* diagnostics)
+{
+	if (!r.peers || r.peers>119 || expected.size()!=size_t(r.peers)*256) return ~0U;
+	unsigned errors=0;
+	for (unsigned w=0;w<r.peers;w++) for (unsigned row=0;row<256;row++) {
+		uint32_t actual=r.output[w][row],wanted=PioneerAttentionBits(expected[w*256+row]);
+		if (actual==wanted) continue;
+		if (diagnostics && errors<8) fprintf(diagnostics,
+			"STOP:DISPATCH_NUMERIC worker%u row%u actual%08x expected%08x;HOST_COPY_ONLY_NO_ADDITIONAL_CARD_IO\n",
+			w,row,actual,wanted);
+		errors++;
+	}
+	return errors;
+}
+#endif
 static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsigned groups,unsigned ordinal,const std::vector<uint8_t>& publicRows,const unsigned* rowOffsets
 #ifdef PIONEER_Q38_DISPATCH_CLIENT
 	,PioneerQ38DispatchHistory& history
@@ -125,8 +143,8 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 				v.root_pc[0],v.root_pc[1],v.nonce,v.root_started,v.root_completed,v.root_held);
 			return false;
 		}
-		double finish=Seconds(); if (finish<previous) return false; unsigned errors=0;
-		for (unsigned w=0;w<workers;w++) for (unsigned row=0;row<256;row++) errors+=r->output[w][row]!=PioneerAttentionBits(expected[w*256+row]);
+		double finish=Seconds(); if (finish<previous) return false;
+		unsigned errors=ReturnedNumericErrors(*r,expected,stderr);
 		printf("DISPATCH_DEBUG type%u K%u peers%u rows_per_peer%u repeat%u nonce%u waiting%u cold%u exact_errors%u checked_call_s%.6f;CPU_REFERENCE_DEBUG_ONLY_NOT_MODEL_OR_TOKEN_RATE\n",
 			type,inputs,workers,groups*16,repeat,r->result.nonce,r->result.waiting,r->result.recovery_required,errors,finish-previous);
 		if (errors) return false;

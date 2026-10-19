@@ -67,5 +67,23 @@ int main()
 		char name[]="dispatch",arg[]="--synthetic"; char* argv[]={name,arg};
 		assert(DispatchClientMain(2,argv)==1 && failed && opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
 	}
+	auto numeric=std::make_unique<Q38Probe>(); *numeric={}; numeric->peers=2;
+	std::vector<float> expected(512,0); FILE* diagnostics=tmpfile(); assert(diagnostics);
+	assert(!ReturnedNumericErrors(*numeric,expected,diagnostics) && !ftell(diagnostics));
+	for (unsigned w=0;w<2;w++) for (unsigned row=0;row<16;row++) {
+		numeric->output[w][row]=0x40000000; expected[w*256+row]=1;
+	}
+	assert(ReturnedNumericErrors(*numeric,expected,diagnostics)==32);
+	rewind(diagnostics); char line[256]; unsigned lines=0;
+	while (fgets(line,sizeof(line),diagnostics)) {
+		assert(strstr(line,"actual40000000 expected3f800000;HOST_COPY_ONLY_NO_ADDITIONAL_CARD_IO"));
+		lines++;
+	}
+	assert(lines==8 && !ferror(diagnostics)); fclose(diagnostics);
+	numeric->peers=0; assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
+	numeric->peers=120; assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
+	numeric->peers=2; expected.pop_back(); assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
+	assert(opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
+	puts("PASS numeric failure details:32 mismatches counted,ONLY first8 public HOST-copy words logged,bad shape refused,NO syscall/card IO");
 	puts("PASS REAL dispatch debug client:failed ioctl/returned UNKNOWN diagnostics from HOST COPY ONLY;exactly one RUN,one CLOSE,NO subsequent ioctl/END/reset/retry;NO native/device IO");
 }
