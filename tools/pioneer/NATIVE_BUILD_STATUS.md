@@ -1,5 +1,52 @@
 # Native build status
 
+October19,09:38 Vancouver (16:38 UTC) NATIVE HOT RELOAD PASSED / ENABLED:
+User saved work/approved initial restart. Clean Haiku shutdown,one normal
+off/on cycle (NO five-minute wait;first startup succeeded),pinned Linux
+preflight and SD-free hot-reload55-20261019-a profile succeeded. Fresh
+Haiku64/fullRAM137034936320B and unloaded/no-owner checks passed before
+guarded --bootstrap. Original qualified55 9ecb313b preserved in stage.
+
+Actual loaded A(tag2026101900010001,generation2,image11327) ->
+B(tag...0002,generation3,image12034) -> A(tag...0001,generation4,image12805),
+BOTH swaps EXIT0/HOT_RELOAD_VERIFIED without another reboot. SAME resident
+guard image11243 throughout;kernel/uptime stayed continuous. This is
+loaded-image/tag/generation evidence,NOT merely a copied driver file.
+
+Native busy probe ef0fe100:extra independent FD (open_count2,no owner) and
+ACTIVE BANK owner (open_count1,active_owner1) BOTH quiesce requests refused
+with actual EBUSY. Metadata remained unquiesced,same tag/generation,cold0;
+the real bank owner then ended cleanly. No matrix execution in busy probe.
+Build via PIONEER_RELOAD_BUSY_PROBE=1 build_p100a_reload_client.sh.
+
+After hot swap,B synthetic2-worker9cases/18repeats PASS;after reverse swap,
+A synthetic7-worker3cases/6repeats and authenticated REAL119-worker
+8cases/16repeats PASS. Independent log parser:40 exact_errors0 runs,
+20 cases,THREE known-clean matrix ENDs;ALL native wrappers EXIT0 and
+processes gone. Q8/Q4_K/Q6_K,including K17408. These debug checks use CPU
+references ONLY in their separate test client,never the production model.
+This qualifies clean-idle software exchange+these matrices,NOT a new
+full27B benchmark,arbitrary driver compatibility or general fault recovery.
+
+Final metadata A77d0f396/tag...0001/generation4,quiesced0,cold0,no owner;
+guardd1ce2aa4 still pinned,64 CPUs/fullRAM,original55 backup9ecb313b exact.
+Leave this build installed and idle. Future driver changes must be built
+with the guarded reload feature,then pin/qualify their new hashes/tags.
+Unload/end the model BEFORE a driver update. Do NOT hot-reload a loaded
+model/active owner or bypass cold recovery after an UNKNOWN event. Resident
+cold-latch behavior is tested offline;no deliberate native fault injection.
+
+Native logs retained in /boot/home/pioneer-p100a-hot-reload-20261019-a and
+/private/tmp/pioneer-p100a-hot-reload-native-20261019.1O6779Sk:
+swap-a-to-b-native.log SHAcafd361333e80328edc39d1364e21e643d8f9d5e85046e07b95e2d7c74699096
+swap-b-to-a-native.log SHA41e8967384f16fd2d098732612dcad5cc5074ba9f9481562d90aa18ab93e4ae0
+busy-native-a.log SHAde540d0b9a7218312a9147a7418cca3779d99480b6437664fe9d02f267168c23
+synthetic-hot-b.log SHA49db4588e163a873dcfd2faca4e56e1011a2a7f3f68cbf7e02831dc0002263ad
+synthetic-seven-hot-a.log SHA35f7698556d00a03f56b49aaefcefdc22ab856761ad57ffee4677a76904470be
+authentic-119-hot-a.log SHAfe3bd570d8e0063989fc59a2ef80a59f30c271fb5c53a3ff2d11788e4f9012eb
+final-native-status.log SHAc8796384622f40fb36f9e0255b5496ea8152a768bfff94bbc0d84d446102228c
+No further power/SD action needed. Dirty llama implementation untouched.
+
 October19,09:17 Vancouver (16:17 UTC) HOT-RELOAD SUPPORT OFFLINE:
 User requested safe no-reboot P100A driver updates. Implemented opt-in
 TT_PIONEER_DRIVER_RELOAD,root-only metadata status/quiesce,private build

@@ -15,7 +15,8 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do
 done
 for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$library"; done
 umask 077
+case "${PIONEER_RELOAD_BUSY_PROBE:-0}" in 0) source=pioneer_p100a_reload;; 1) source=pioneer_p100a_reload_busy_probe;; *) exit 2;; esac
 "$cxx" -std=c++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti "$@" \
  -B"$release/system/glue/" -L"$release/system/libroot" \
- "$project/tools/pioneer/pioneer_p100a_reload.cpp" -o "$output"
+ "$project/tools/pioneer/$source.cpp" -o "$output"
 shasum -a 256 "$output"

@@ -2,6 +2,31 @@
 
 ## Status
 
+### October19:software hot reload enabled and verified natively
+
+After the user-approved one-time enablement boot,the guarded55 driver was
+exchanged A->B->A **without another reboot**. Actual loaded image IDs changed
+11327->12034->12805,build tags changed ...0001->...0002->...0001,and the
+resident guard preserved monotonic generations2->3->4. Guard image11243
+stayed loaded throughout. Both updater invocations verified success.
+
+The native acceptance probe confirmed actual `EBUSY` refusal for an extra
+independent handle AND an active bank session with only one open cookie.
+Neither refusal quiesced the device or changed its tag/generation;the bank
+owner ended cleanly. After the exchanges,40 matrix runs across2/7/119
+workers matched exactly,including authenticated public Qwen row groups,
+with three clean matrix-session ENDs. All64 CPUs/full128GiB remain present.
+This is not a new model-throughput benchmark or intentional hardware-fault
+qualification. The native logs/hashes are in `NATIVE_BUILD_STATUS.md`.
+
+Current installed build is A77d0f396,tag2026101900010001,generation4,with no
+active GPU owner or recovery fault. The original qualified55 file is backed
+up. For this pinned acceptance pair,the staged `hot-swap.sh --apply-b` and
+`--apply-a` now run without reboot. For future code changes,build with
+reload support and update the exact candidate hash/tag pins first. Never
+hot-swap a loaded model:unload it and require a clean session end. A faulted
+card is deliberately NOT made reloadable as a recovery shortcut.
+
 ### October19:guarded software driver hot-reload implementation (offline only)
 
 Haiku already watches legacy driver files and reloads an idle updated image;
