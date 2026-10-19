@@ -38,6 +38,24 @@ if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
  [ "${#PIONEER_DRIVER_BUILD_TAG}" = 16 ] && [ "$PIONEER_DRIVER_BUILD_TAG" != 0000000000000000 ] || exit 2
  extra="$extra -DTT_PIONEER_DRIVER_RELOAD -DPIONEER_DRIVER_BUILD_TAG=0x${PIONEER_DRIVER_BUILD_TAG}ULL"
 fi
+case "${PIONEER_Q38_DISPATCH_PROFILE:-0}" in
+ 0) ;;
+ 1) [ "$variant" = 55 ] && [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ] || exit 2
+    extra="$extra -DTT_PIONEER_Q38_DISPATCH_PROFILE";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_DISPATCH_BATCHED_PIO:-0}" in
+ 0) ;;
+ 1) [ "$variant" = 55 ] && [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ] || exit 2
+    extra="$extra -DTT_PIONEER_Q38_DISPATCH_BATCHED_PIO";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_COMPACT_ACTIVATIONS:-0}" in
+ 0) ;;
+ 1) [ "$variant" = 55 ] && [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_COMPACT_ACTIVATIONS";;
+ *) exit 2;;
+esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \

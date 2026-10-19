@@ -1573,6 +1573,16 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool Q38PanelMappingStable() { return runtimeCore<120 && (!runtimeCore || fleetEnabled) && q38PanelArea>=B_OK && q38PanelView && Q38PanelSavedWords(); }
 	uint32* Q38PanelSavedWords() { return runtimeCore<120?(runtimeCore?q38CohortSaved[runtimeCore]:q38PanelSaved):NULL; }
 	uint64 Q38CohortNow() { return uint64(system_time()); }
+#ifdef TT_PIONEER_Q38_DISPATCH_PROFILE
+	void Q38DispatchProfile(unsigned type,unsigned inputs,unsigned peers,bool valid,const uint64_t* t) {
+		// The caller has already completed ALL proofs/hold/nonce commit.
+		// One diagnostic line,no card reads or additional operations.
+		dprintf("P100A_Q38_PROFILE type%u K%u peers%u valid%u us authority%llu stage%llu arm%llu execute%llu proof%llu output%llu hold%llu commit%llu;CPU_WALL_NOT_PURE_GPU\n",
+			type,inputs,peers,unsigned(valid),(unsigned long long)t[0],(unsigned long long)t[1],
+			(unsigned long long)t[2],(unsigned long long)t[3],(unsigned long long)t[4],
+			(unsigned long long)t[5],(unsigned long long)t[6],(unsigned long long)t[7]);
+	}
+#endif
 #else
 	bool Q38PanelMappingStable() { return !runtimeCore && q38PanelArea>=B_OK && q38PanelView && q38PanelSaved; }
 	uint32* Q38PanelSavedWords() { return q38PanelSaved; }

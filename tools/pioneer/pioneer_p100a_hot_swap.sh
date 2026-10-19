@@ -1,10 +1,10 @@
 #!/bin/sh
 # Guarded development A/B exchange,NOT physical PCIe hotplug or cold recovery.
-# Both candidates retain the qualified55 matrix code. No force/reset/unload
+# All candidates retain the qualified55 matrix code. No force/reset/unload
 # command and NO automatic rollback after an unproven replacement.
 set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
-case "$1" in --bootstrap|--apply-a|--apply-b) mode=$1;; *) exit 2;; esac
+case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast) mode=$1;; *) exit 2;; esac
 stage=/boot/home/pioneer-p100a-hot-reload-20261019-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
@@ -12,16 +12,28 @@ guard=/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload
 client=$stage/pioneer-p100a-reload
 candidatea=$stage/tenstorrent_pci_probe-hot-a
 candidateb=$stage/tenstorrent_pci_probe-hot-b
+candidatep=$stage/tenstorrent_pci_probe-profile-c43d21c8
+candidateq=$stage/tenstorrent_pci_probe-batch-3cfa6513
+candidatec=$stage/tenstorrent_pci_probe-compact-dc564559
+candidatef=$stage/tenstorrent_pci_probe-compact-fast-30423874
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
 original=9ecb313bd669df9b6e80100586a0bc3b092a490c20ea0bf426ef41ab27689aea
 hasha=77d0f396433b229eb5937b633e1a57f183b85612ae1f7503b2b5bbd48e261679
 hashb=67f2b14bd8a0a17c934e51a4952949223e1e0bddbb3e7a29f2664cb0a9f568c9
+hashp=c43d21c84b7fd1946343268d4cd413987cd666c07ef40a4b8c83d4094a89a2d6
+hashq=3cfa65134ad584fbd716593b7beec592735336f6d8887be29e92133576fe1fe5
+hashc=dc564559106418fc9c68f070a9dae41df3a41e0aec801800c8198fa1a9aca08e
+hashf=30423874c662e57ea29328b376edb03ca923af1a0e4073ee52a3138b45e71aa2
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
 tagb=2026101900010002
+tagp=2026101900020001
+tagq=2026101900020002
+tagc=2026101900020003
+tagf=2026101900020004
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -67,7 +79,16 @@ if [ "$mode" = --bootstrap ]; then
 else
  exact "$guard" "$guardsha" || exit 1
  if [ "$mode" = --apply-b ]; then source=$candidateb; expected=$hasha; result=$hashb; oldtag=$taga; newtag=$tagb
+ elif [ "$mode" = --apply-profile ]; then source=$candidatep; expected=$hasha; result=$hashp; oldtag=$taga; newtag=$tagp
+ elif [ "$mode" = --restore-profile ]; then source=$candidatea; expected=$hashp; result=$hasha; oldtag=$tagp; newtag=$taga
+ elif [ "$mode" = --apply-batch ]; then source=$candidateq; expected=$hashp; result=$hashq; oldtag=$tagp; newtag=$tagq
+ elif [ "$mode" = --restore-batch ]; then source=$candidatea; expected=$hashq; result=$hasha; oldtag=$tagq; newtag=$taga
+ elif [ "$mode" = --apply-compact ]; then source=$candidatec; expected=$hashq; result=$hashc; oldtag=$tagq; newtag=$tagc
+ elif [ "$mode" = --restore-compact ]; then source=$candidatea; expected=$hashc; result=$hasha; oldtag=$tagc; newtag=$taga
+ elif [ "$mode" = --apply-fast ]; then source=$candidatef; expected=$hashc; result=$hashf; oldtag=$tagc; newtag=$tagf
+ elif [ "$mode" = --restore-fast ]; then source=$candidatea; expected=$hashf; result=$hasha; oldtag=$tagf; newtag=$taga
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
+ exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1
  metadata=$("$client" --status) || exit 1
  printf '%s\n' "$metadata"

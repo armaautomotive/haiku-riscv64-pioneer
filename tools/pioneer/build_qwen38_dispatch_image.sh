@@ -6,6 +6,11 @@ directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
 case "${PIONEER_Q38_FAULT_RETURN:-0}" in 0) fault_cpp=;; 1) fault_cpp=-DPIONEER_Q38_FAULT_RETURN;; *) exit 2;; esac
+case "${PIONEER_Q38_COMPACT_ACTIVATIONS:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}" = 0 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_COMPACT_ACTIVATIONS";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}" = 1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_TRANSFER_DIAGNOSTIC";; *) exit 2;; esac
 case "${PIONEER_Q38_PEER_PROGRESS:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" = 1:1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_PEER_PROGRESS";; *) exit 2;; esac
 case "$output" in /*) ;; *) exit 2;; esac

@@ -15,6 +15,10 @@ struct ControllerMachine:DispatchMachine {
 	}
 };
 struct RunIO:BootstrapIO {
+	unsigned profiles=0;
+	void Q38DispatchProfile(unsigned type,unsigned inputs,unsigned peers,bool valid,const uint64_t*) {
+		assert(type && inputs && peers && valid); profiles++;
+	}
 	const char* image; unsigned rootFault=0,rootArms=0,rootStops=0,rootHolds=0,outputReads=0;
 	uint32_t peerDone[119]={}; bool rootExecuted=false;
 	bool peerStopped[119]={},stopExecuted=false;
@@ -46,6 +50,11 @@ struct RunIO:BootstrapIO {
 		unsigned type=c.view[base+3],k=c.view[base+4],n=c.view[base+5];
 		uint32_t source[16]; for (unsigned i=0;i<16;i++) source[i]=i?c.source[i]:c.config;
 		ControllerMachine m(image,n,type,k,source);
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		// Controller fixtures intentionally use this original constant input;
+		// the direct/cooperative image tests separately vary all257 states.
+		for (auto& value:m.originalInputs) value=0x40014001;
+#endif
 		bool stop=c.view[base+2]==2; if (stop) m.Configure(1,true);
 		m.stopSlowWorker=stopSlowWorker;
 		m.stopSnapshotMode=stopSnapshotMode;
@@ -63,6 +72,9 @@ struct RunIO:BootstrapIO {
 			}
 		}
 		for (const auto& value:m.memory) if ((value.first>=0x75000 && value.first<0x75800)
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+			|| (value.first>=0xa0000 && value.first<0xa0000+k*2)
+#endif
 			|| (value.first>=0x76000 && value.first<0x7d700) || (value.first>=0x7f800 && value.first<0x7f900)
 			|| (value.first>=0x80000 && value.first<0x9dc00)) c.view[(value.first-TT_Q38_PANEL_VIEW_BASE)/4]=value.second;
 		c.counters[0]=m.counts[0]; c.counters[1]=m.counts[1]; c.accepted=m.counts[2]; c.counters[3]=m.counts[3];
@@ -119,6 +131,17 @@ struct RunFixture {
 int main(int argc,char** argv)
 {
 	assert(argc==2);
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	// Odd compressed stage sizes MUST NOT widen the original even-word
+	// post-execution input comparator or its 64-bit pair-read contract.
+	for (unsigned words:{1707U,2048U,5803U}) {
+		assert(PioneerQ38DispatchCompactStageRange(0xa0000,words));
+		assert(!PioneerQ38DispatchStageRange(0xa0000,words));
+		assert(!PioneerQ38DispatchReadRange(0xa0000,words));
+		RunFixture f(argv[1],1);
+		assert(!PioneerQ38DispatchInputCompare(f.io,0xa0000,f.job->activation,words,0));
+	}
+#endif
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
 	for (unsigned n:{1U,7U,119U}) for (unsigned type:{8U,12U,14U}) {
 		RunFixture f(argv[1],n,type,type==12?17408:5120); PioneerQ38DispatchHistory history;
@@ -131,11 +154,17 @@ int main(int argc,char** argv)
 		}
 		assert(history.Accept(*f.job) && !history.Accept(*f.job));
 		assert(f.lease->rootNonce==2 && f.io.rootArms==2 && f.io.rootStops==2 && f.io.rootHolds==2 && !f.lease->unsafe);
+#ifdef TT_PIONEER_Q38_DISPATCH_PROFILE
+		assert(f.io.profiles==2);
+#else
+		assert(!f.io.profiles);
+#endif
 		for (unsigned w=1;w<120;w++) assert(f.io.core[w]->resets.size()==2 && f.io.core[w]->coreReset==0x46800);
 	}
 	for (unsigned fault=1;fault<=10;fault++) {
 		RunFixture f(argv[1],7); f.io.rootFault=fault; assert(!f.Run());
 		assert(f.lease->unsafe && f.banks.Quarantined() && f.job->result.recovery_required && f.job->result.state!=TT_RUNTIME_PASSED);
+		assert(!f.io.profiles); // no report after ANY uncertain operation
 		if (fault<=7 || fault==10) assert(!f.io.rootStops && !f.io.rootHolds);
 		if (fault==3 || fault==4 || fault==5 || fault==7 || fault==10) assert(!f.io.outputReads);
 		for (const auto& rows:f.job->output) for (unsigned value:rows) assert(!value);

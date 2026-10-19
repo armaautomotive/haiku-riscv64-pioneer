@@ -50,7 +50,13 @@ struct CooperativeDispatch:DispatchMachine {
 				p.packets[i].route=memory.at(0x74080+w*32+16);
 			}
 			for (auto& v:p.root) v.second=memory.at(v.first);
-			for (unsigned i=0;i<k;i++) p.vector[i]=uint16_t(memory.at(0xa0000+(i/2)*4)>>((i%2)*16));
+			for (unsigned i=0;i<k;i++) p.vector[i]=uint16_t(
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+				originalInputs[i/2]
+#else
+				memory.at(0xa0000+(i/2)*4)
+#endif
+				>>((i%2)*16));
 			for (unsigned b=0;b<p.scales.size();b++) p.scales[b]=memory.at(0xab000+b*4);
 		}
 	}
@@ -82,6 +88,11 @@ struct CooperativeDispatch:DispatchMachine {
 			assert(remote==0x74100 && bytes==4 && descriptors==active && readbacks==active && !state.launched);
 			assert(memory.at(local)==state.descriptor[12]); p.memory[remote]=memory.at(local);
 			state.requested=memory.at(local); state.launched=true; state.operation=1; doorbells++;
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+			// Model the peer's actual NoC reads of the NOW-expanded root
+			// inputs,not the pre-launch compressed snapshot taken by Bind.
+			for (auto& value:p.root) value.second=memory.at(value.first);
+#endif
 		} else if (remote==0x74000) {
 			assert(bytes==64 && !doorbells); readbacks++;
 			for (unsigned i=0;i<16;i++) memory[local+i*4]=p.memory.at(remote+i*4);

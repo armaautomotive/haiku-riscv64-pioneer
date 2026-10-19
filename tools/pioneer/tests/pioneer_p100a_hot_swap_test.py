@@ -24,17 +24,30 @@ def check(mode, fault=None):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
             return target
-        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'guardsha']}
-        installed = put('installed', payloads['original' if mode == '--bootstrap' else 'hasha' if mode == '--apply-b' else 'hashb'])
+        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'guardsha']}
+        routes = {
+            '--bootstrap': ('original', 'hasha', 'taga'),
+            '--apply-a': ('hashb', 'hasha', 'tagb'), '--apply-b': ('hasha', 'hashb', 'taga'),
+            '--apply-profile': ('hasha', 'hashp', 'taga'), '--restore-profile': ('hashp', 'hasha', 'tagp'),
+            '--apply-batch': ('hashp', 'hashq', 'tagp'), '--restore-batch': ('hashq', 'hasha', 'tagq'),
+            '--apply-compact': ('hashq', 'hashc', 'tagq'), '--restore-compact': ('hashc', 'hasha', 'tagc'),
+            '--apply-fast': ('hashc', 'hashf', 'tagc'), '--restore-fast': ('hashf', 'hasha', 'tagf'),
+        }
+        starting, ending, oldtagkey = routes[mode]
+        installed = put('installed', payloads[starting])
         put('candidatea', payloads['hasha'])
         put('candidateb', payloads['hashb'])
+        put('candidatep', payloads['hashp'])
+        put('candidateq', payloads['hashq'])
+        put('candidatec', payloads['hashc'])
+        put('candidatef', payloads['hashf'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
         device = path(values['device'])
         device.parent.mkdir(parents=True, exist_ok=True)
         device.symlink_to('../../bin/tenstorrent_pci_probe')
-        oldtag = values['taga' if mode != '--apply-a' else 'tagb']
+        oldtag = values[oldtagkey]
         status = f'P100A_RELOAD driver55 tag{oldtag} generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
         if fault == 'cold':
             status = status.replace('cold0', 'cold1')
@@ -61,7 +74,7 @@ def check(mode, fault=None):
             ' *) exit 1;;\nesac\n').encode()
         client = put('client', client_body)
         client.chmod(0o700)
-        if fault in ['candidatea', 'candidateb', 'guardsource', 'client', 'installed', 'guard']:
+        if fault in ['candidatea', 'candidateb', 'candidatep', 'candidateq', 'candidatec', 'candidatef', 'guardsource', 'client', 'installed', 'guard']:
             path(values[fault]).write_bytes(b'wrong')
         if fault in ['candidatea-link', 'client-link', 'guard-link', 'installed-link']:
             target = path(values[fault.removesuffix('-link')])
@@ -105,11 +118,11 @@ def check(mode, fault=None):
             if fault != 'wait-error':
                 assert installed.read_bytes() == before, (mode, fault, 'REPLACED_DESPITE_GUARD_FAILURE')
             else:
-                assert installed.read_bytes() == payloads['hashb' if mode == '--apply-b' else 'hasha']
+                assert installed.read_bytes() == payloads[ending]
                 assert 'NO_AUTOMATIC_ROLLBACK_OR_RESET' in result.stdout
         else:
             assert result.returncode == 0, (mode, result.stdout, result.stderr)
-            assert installed.read_bytes() == payloads['hashb' if mode == '--apply-b' else 'hasha']
+            assert installed.read_bytes() == payloads[ending]
             if mode != '--bootstrap':
                 assert (root / 'calls').read_text().splitlines() == ['--status', '--quiesce', '--wait']
 
@@ -120,8 +133,9 @@ if __name__ == '__main__':
               'installed-link', 'device-link', 'stage-link', 'incoming', 'guardincoming', 'backup', 'platform']
     hot = ['guard', 'guard-link', 'cold', 'active', 'open', 'tag', 'generation', 'quiesced', 'guard-version',
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
-    for mode in ['--bootstrap', '--apply-a', '--apply-b']:
-        for fault in [None] + common + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
+    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast']:
+        candidate = {'--apply-profile': ['candidatep'], '--apply-batch': ['candidateq'], '--apply-compact': ['candidatec'], '--apply-fast': ['candidatef']}.get(mode, [])
+        for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1
     print(f'PASS {count} actual updater filesystem/handshake/hash/symlink/owner/failure cases;NO native reload/reset or automatic rollback')

@@ -2,6 +2,33 @@
 
 ## Status
 
+### October 19: measured generation overhead and lossless input packing
+
+The native 27B path still transfers projection data through Haiku; it is not
+a card-only decoder. Resident weights do not eliminate these transfers.
+For 119-worker Q4/K17408 samples, the checked RUN profile is 52.748 ms:
+16.375 ms staging, 7.957 ms execution/monitor/source checks, 24.259 ms proof
+and input readback, and 4.158 ms other work. These are CPU-clock wall
+diagnostics, not pure GPU timings. Faster weight loading is a separate task.
+
+Opt-in PIONEER_Q38_COMPACT_ACTIVATIONS=1 now qualifies lossless three-operand
+packing and card-side expansion. Full input-bit comparisons and every
+source/extent/ownership/completion guard remain. Final no-logging driver
+30423874/tag2026101900020004/gen8 keeps the qualified arithmetic peer.
+Four no-logging Q4 samples per width: K5120 30.703 -> 29.4725 ms;
+K17408 53.73325 -> 49.77175 ms. These 4.01%/7.37% reductions are row-mixture
+call latencies, not new model token rates. Batched PIO alone did not help
+and is disabled. Default 55/43/root remain byte-identical.
+See NATIVE_BUILD_STATUS for hashes, tests, guarded hot-swap/restore commands
+and the complete FFN graph test currently in progress.
+
+The larger target is a device-resident hybrid decoder: keep intermediate
+tensors and state on card and chain projections with normalization,
+activation, attention and recurrent/state updates. CPU prompt/token handling
+is compatible with that goal. Removing CPU learned products alone (already
+done) does not remove the current PCIe-bound execution boundary. Do not
+claim card-only execution or usable 27B performance from this packing change.
+
 ### October19:software hot reload enabled and verified natively
 
 After the user-approved one-time enablement boot,the guarded55 driver was

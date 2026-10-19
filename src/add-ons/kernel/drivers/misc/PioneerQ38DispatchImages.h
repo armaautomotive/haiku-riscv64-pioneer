@@ -4,6 +4,9 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+#include "PioneerQ38CompactRootImage.h"
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 #include "PioneerQ38ProgressImages.h"
 #endif
@@ -30,6 +33,9 @@ enum { TT_Q38_DISPATCH_BOOT=0x0006c06f,TT_Q38_DISPATCH_DONE=0x7200c,
  TT_Q38_PEER_MARKER=0x32503851,TT_Q38_PEER_WAIT_LOAD=0x7204c,TT_Q38_PEER_WAIT_BRANCH=0x72050 };
 static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+ return PioneerQ38CompactRootWord(word);
+#else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
  return PioneerQ38ProgressRootWord(word);
 #else
@@ -287,6 +293,7 @@ static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
   0x0000000c,0x0000000d,0x0000000e,
  };
  return word<sizeof(code)/sizeof(code[0])?code[word]:0;
+#endif
 #endif
 #endif
 #endif

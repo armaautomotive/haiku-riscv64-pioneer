@@ -1,5 +1,76 @@
 # Native build status
 
+October19,10:22 Vancouver (17:22 UTC) LOSSLESS ACTIVATION PACKING NATIVE PASS:
+Installed guarded55 30423874c662e57ea29328b376edb03ca923af1a0e4073ee52a3138b45e71aa2,
+tag2026101900020004,generation8,image17574. SAME resident guard11243/d1ce2aa4,
+kernel/uptime continuous,64 CPUs/fullRAM137034936320B. No reboot/power/SD
+action in this qualification. Final pre-FFN metadata:quiesced0,cold0,no owner.
+
+Measured the actual checked RUN in eight CPU-clock-only phases. For Q4
+K17408/119 workers,baseline52.748ms comprised staging16.375ms,execution+
+monitor/source proof7.957ms,proof/input readback24.259ms and other4.158ms.
+These are HOST WALL stages,NOT pure GPU times. Most delay is PCIe data
+transactions;CPU non-matrix computation is not the main measured bottleneck.
+Weight loading is a SEPARATE unchanged16KiB/six-transfer bulk path.
+
+New compact private RUN packs THREE9-bit sign/magnitude operands per word,
+then expands backwards IN PLACE on the root BEFORE original validation or
+ANY peer descriptor/doorbell. ALL257 valid source encodings,including -0
+and -128,preserved EXACTLY. No re-quantization/new matrix math/new NoC/DMA
+packet. Original FULL expanded-input bitwise comparison still occurs before
+output publication. Compressed stage sizes do NOT widen the original even-
+word input comparator/read ranges. Original shape/source/extent/counter/
+terminal/whole-owner retention/clean-END guards remain. Private header7=1
+for this root's RUN;STOP remains0. Public55 ABI/client/inference unchanged.
+
+Root6a6ba833204f12d407fc7c6e4d00bbffc435c62222fbdedfc09f6d4722a8e263
+is8116B within ORIGINAL8192B;boot e678476d unchanged. Removes division from
+expansion and keeps immutable routing tables static ONLY in this variant.
+Arithmetic peer remains qualified55 bdc70e59;failed BF16 candidate NOT used.
+Build: PIONEER_Q38_COMPACT_ACTIVATIONS=1 sh tools/pioneer/build_p100a_hot_reload_driver.sh
+SDK NEW_OUTPUT 2026101900020004. Default55/43 rebuild EXACT9ecb313b/2df0e0f8;
+default root EXACT026229e2. New features remain opt-in,not a default upgrade.
+
+CPU-only profiling baselinec43d21c8/tag...0001;batched-PIO comparison3cfa6513/
+tag...0002;compact profilingdc564559/tag...0003;final no-logging30423874/
+tag...0004. ALL four hot swaps from A/gen4 to final/gen8 verified. Batching
+alone showed NO meaningful gain and is NOT enabled in final30423874.
+Do NOT compare logging-enabled ioctl wall times against no-logging ones.
+
+Same no-logging authenticated119-worker Q4 row-mixture calls,FOUR samples:
+K5120 mean30.703->29.4725ms (4.01% less);K17408 mean53.73325->49.77175ms
+(7.37% less). Not contiguous full-matrix/model token-rate benchmarks. ALL
+four candidates passed synthetic2-worker9cases+authenticated119-worker
+8cases,twice each:68 cases,136 exact_errors0 runs,EIGHT known-clean ENDs,
+ALL native wrappers EXIT0. Final30423874 also includes range-isolation audit.
+Debug client CPU references are TEST ONLY;production model math has none.
+
+ASan/UBSan:all65536 input halfwords in each triple lane;all3 widths/tails/
+overlap/canaries;ACTUAL RV32 root valid/invalid packed inputs;actual root+
+unchanged peer exact FP32+independent FP64 math;RUN all3quant/all1/7/119
+peers,payload modes+profiling on/off;extracted handler/retention and sticky
+reload guard PASS.311 ACTUAL updater filesystem/handshake/failure cases PASS.
+Final RUN ntUwIQTc,handleruGkBmGy6,rootkCr48DzY,cooperativePLqVjVDw,
+packingOxnGSPQU,reloadZgPHnDnw. Invalid inputs never authorize extra IO.
+
+Evidence /private/tmp/pioneer-q38-pio-native-20261019.tdzMGpQ5 and native
+stage /boot/home/pioneer-qwen38-vector-clear-20261018-t;updater/driver backups
+remain /boot/home/pioneer-p100a-hot-reload-20261019-a. Final updater
+hot-swap-fast-0dbb5d04.sh SHA0dbb5d044aae143e349eb82fbe1ba662257572a6f57f53a90c4ac559c412d50f;
+--restore-fast returns to qualified A ONLY when clean/idle. No forced unload
+or rollback after UNKNOWN. Earlier intermediate6ce2e69d is NOT selected.
+
+Complete PUBLIC FFN graph test STARTED17:21 UTC,session26241,unchanged frozen
+inference21e18126. It authenticates the FULL same-FD19GB model before opening
+the card,then runs blk.0.ffn_down twice and exports after clean END. Native
+log full-ffn-compact-fast-20261019-a.log/output full-ffn-output-compact-fast-20261019-a.bin.
+No result yet. Do NOT change drivers/power/start another card job while it
+runs. NO new full27B token rate/Assistant-ready claim. Last full-model rate
+remains0.039706501tok/s and is STILL UNUSABLE. Next major performance work
+must reduce per-projection host transfers/retain intermediate tensors and
+port the remaining hybrid recurrent/attention graph;packing is incremental.
+Dirty llama implementation remains untouched and is NOT staged/committed.
+
 October19,09:38 Vancouver (16:38 UTC) NATIVE HOT RELOAD PASSED / ENABLED:
 User saved work/approved initial restart. Clean Haiku shutdown,one normal
 off/on cycle (NO five-minute wait;first startup succeeded),pinned Linux

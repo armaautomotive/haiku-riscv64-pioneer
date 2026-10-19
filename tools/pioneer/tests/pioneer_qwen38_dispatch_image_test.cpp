@@ -4,10 +4,16 @@
 #include "pioneer_qwen38_block_image_test.cpp"
 #endif
 #include <array>
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ActivationPacking.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchImages.h"
 // Actual ROOT RV32 instructions;synthetic private peer proof fabric,NOT
 // arithmetic/inference/native authority. Real peer math has separate tests.
 struct DispatchMachine:BlockMachine {
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	std::vector<uint32_t> originalInputs;
+#endif
 	struct PeerState {
 		std::array<uint32_t,16> descriptor={}; unsigned requested=0,finished=0,operation=0,polls=0;
 		bool launched=false;
@@ -34,6 +40,9 @@ struct DispatchMachine:BlockMachine {
 		operation=stop?2:1; descriptors=readbacks=doorbells=gathers=0;
 		const uint32_t header[]={0x314d3851,1,operation,stop?0:kind,stop?0:k,active,nonce,0,0,0,0,0,0,0,0,0};
 		for (unsigned i=0;i<16;i++) memory[0x74000+i*4]=header[i];
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		memory[0x7401c]=stop?0:1;
+#endif
 		const unsigned routes[]={18|(12<<6),18|(15<<6),18|(18<<6),17|(12<<6),17|(15<<6),17|(18<<6),17|(21<<6)};
 		for (unsigned b=0;b<8;b++) memory[0x74040+b*4]=b<7?routes[b]:0;
 		for (unsigned w=0;w<119;w++) {
@@ -44,6 +53,17 @@ struct DispatchMachine:BlockMachine {
 			peers[w].launched=false; peers[w].polls=0;
 		}
 		for (unsigned w=0;w<k/2;w++) memory[0xa0000+w*4]=0x40014001;
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		originalInputs.assign(k/2,0);
+		for (unsigned i=0;i<k;i++) {
+			unsigned state=(i*29+nonce*17)%257;
+			uint16_t value=state==256?uint16_t(0xc000):PioneerInt8Operand(int(state)-128);
+			originalInputs[i/2]|=uint32_t(value)<<((i%2)*16);
+		}
+		if (!stop) for (unsigned w=0;w<PioneerQ38PackedActivationWords(k);w++) {
+			uint32_t packed; assert(PioneerQ38PackActivationWord(originalInputs.data(),k,w,packed)); memory[0xa0000+w*4]=packed;
+		}
+#endif
 		unsigned blocks=k>>(kind==8?5:8),padded=(blocks+15)&~15U;
 		for (unsigned w=0;w<padded;w++) memory[0xab000+w*4]=w<blocks?0x3c800000:0;
 		pc=0x6000; regs[0]=0; // test-only fresh ROOT reset;peers persist
@@ -128,6 +148,9 @@ struct DispatchMachine:BlockMachine {
 		return BlockMachine::Load(a);
 	}
 	void Store(uint32_t a,uint32_t value) override {
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		if (Range(a,0xa0000,k*2)) { assert(!pending && !unknown && !doorbells && !descriptors); memory[a]=value; return; }
+#endif
 		if (Range(a,0xffb20000,40)) { assert(!pending && !unknown); unsigned w=(a-0xffb20000)/4; command[w]=value; seen[w]=false; return; }
 		if (a==0xffb20040) { assert(value==1 && !pending && !unknown); for (bool read:seen) assert(read); pending=true; packets++; return; }
 		if (Range(a,0x6e000,8192)) { minStack=std::min(minStack,unsigned(a)); memory[a]=value; return; }
@@ -149,6 +172,9 @@ struct DispatchMachine:BlockMachine {
 			unsigned groups=w<active?peers[w].descriptor[7]:0;
 			assert(memory.at(0x80000+w*1024+row*4)==(row<groups*16?ExpectedOutput(w,row):0));
 		}
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		if (operation==1) for (unsigned w=0;w<k/2;w++) assert(memory.at(0xa0000+w*4)==originalInputs[w]);
+#endif
 		return true;
 	}
 };
@@ -156,6 +182,27 @@ struct DispatchMachine:BlockMachine {
 int main(int argc,char** argv)
 {
 	assert(argc==2);
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	for (unsigned k:{5120U,6144U,17408U}) {
+		DispatchMachine valid(argv[1],2,8,k); assert(valid.RunRoot());
+		unsigned words=PioneerQ38PackedActivationWords(k);
+		for (unsigned where:{0U,words/2,words-1}) for (unsigned high=27;high<32;high++) {
+			DispatchMachine m(argv[1],2,8,k); m.memory[0xa0000+where*4]|=1U<<high;
+			assert(!m.RunRoot() && !m.packets && !m.doorbells && !m.descriptors);
+		}
+		for (unsigned raw:{255U,511U}) {
+			DispatchMachine m(argv[1],2,8,k); m.memory[0xa0000]=(m.memory[0xa0000]&~511U)|raw;
+			assert(!m.RunRoot() && !m.packets && !m.doorbells);
+		}
+		if (k!=6144) {
+			DispatchMachine m(argv[1],2,8,k); m.memory[0xa0000+(words-1)*4]|=1U<<18;
+			assert(!m.RunRoot() && !m.packets);
+		}
+		DispatchMachine old(argv[1],2,8,k); old.memory[0x7401c]=0;
+		assert(!old.RunRoot() && !old.packets);
+	}
+	puts("PASS compact ACTUAL RV32 expansion:all257 input states+signed zero,all3 input widths,backwards overlap,high-bit/tail/invalid-magnitude/legacy-header faults refuse BEFORE ANY NoC packet;unchanged8KiB bound");
+#endif
 	for (unsigned workers:{1U,2U,7U,119U}) for (unsigned type:{8U,12U,14U}) {
 		DispatchMachine m(argv[1],workers,type,type==12?17408:5120); assert(m.RunRoot());
 		m.Configure(2); assert(m.RunRoot());

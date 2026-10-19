@@ -7,6 +7,12 @@ typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ActivationPacking.h"
+#define Q38_ROOT_TABLE static
+#else
+#define Q38_ROOT_TABLE
+#endif
 static volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static void Fence() { asm volatile("fence" ::: "memory"); }
 // Diagnostic ONLY in the separately owned/saved runtime-status L1. Normal
@@ -19,14 +25,14 @@ static __attribute__((noinline)) void Checkpoint(unsigned stage,unsigned detail)
 extern "C" void block_fault_park() __attribute__((noreturn));
 static unsigned XY(unsigned worker)
 {
-	const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
+	Q38_ROOT_TABLE const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
 	unsigned row=worker,column=0; while (row>=10) { row-=10; column++; }
 	if (!worker || worker>=120 || column>=12) block_fault_park();
 	return columns[column]|((row+2)<<6);
 }
 static unsigned Offset(unsigned c)
 {
-	const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228}; return offsets[c];
+	Q38_ROOT_TABLE const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228}; return offsets[c];
 }
 static unsigned SourceOffset(unsigned w)
 {
@@ -92,6 +98,28 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 	block_fault_park(); // UNKNOWN:no later packet/reset/restore/retry
 }
 static bool WaitPc(unsigned pc) { return pc==0x7204c || pc==0x72050; }
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+// Fixed supported shapes avoid integer division/remainder in the hot RISC
+// loop. Two packed words expand to three original words,backwards in place.
+static __attribute__((noinline,optimize("Os"))) bool ExpandInputs(unsigned inputs)
+{
+	unsigned packed=PioneerQ38PackedActivationWords(inputs);
+	if (!packed) return false;
+	for (unsigned w=0;w<packed;w++) if (Words(0xa0000)[w]&0xf8000000U) return false;
+	unsigned groups=packed/2;
+	if (packed&1) {
+		uint32_t tail=Words(0xa0000)[packed-1]; if (tail>>18) return false;
+		Words(0xa0000)[inputs/2-1]=uint32_t(PioneerQ38ExpandActivation(tail))|(uint32_t(PioneerQ38ExpandActivation(tail>>9))<<16);
+	}
+	for (unsigned group=groups;group--;) {
+		uint32_t first=Words(0xa0000)[group*2],second=Words(0xa0000)[group*2+1];
+		Words(0xa0000)[group*3+2]=uint32_t(PioneerQ38ExpandActivation(second>>9))|(uint32_t(PioneerQ38ExpandActivation(second>>18))<<16);
+		Words(0xa0000)[group*3+1]=uint32_t(PioneerQ38ExpandActivation(first>>18))|(uint32_t(PioneerQ38ExpandActivation(second))<<16);
+		Words(0xa0000)[group*3]=uint32_t(PioneerQ38ExpandActivation(first))|(uint32_t(PioneerQ38ExpandActivation(first>>9))<<16);
+	}
+	Fence(); return true;
+}
+#endif
 static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 {
 	Transfer(false,worker,0x75000,0x74140,64); Words(0x7f800)[10]++;
@@ -146,7 +174,12 @@ extern "C" unsigned block_main()
 	if (header[0]!=0x314d3851 || header[1]!=1 || (operation!=1 && operation!=2) || !workers || workers>119
 		|| !nonce || nonce>=0x7fffffff || (operation==2 && (type || inputs || workers!=119))
 		|| (operation==1 && (!Tile(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)))) return 0;
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	if (header[7]!=(operation==1?1U:0U)) return 0;
+	for (unsigned i=8;i<16;i++) if (header[i]) return 0;
+#else
 	for (unsigned i=7;i<16;i++) if (header[i]) return 0;
+#endif
 	uint32_t parts[119][8],banks[8];
 	unsigned blocks=operation==1?inputs>>(type==8?5:8):0;
 	for (unsigned bank=0;bank<8;bank++) banks[bank]=Words(0x74040)[bank];
@@ -168,6 +201,12 @@ extern "C" unsigned block_main()
 			&& p[0]<parts[other][0]+parts[other][2]*blocks*Tile(type) && parts[other][0]<p[0]+bytes) return 0;
 	}
 	if (operation==1) {
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		// Expand BACKWARDS inside the exclusively owned original input
+		// region. Read BOTH source words before a destination store. Peers
+		// have not received descriptors/doorbells and cannot read this job.
+		if (!ExpandInputs(inputs)) return 0; // original validation+final host bit checks remain
+#endif
 		for (unsigned w=0;w<inputs/2;w++) if (!PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w]))
 			|| !PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w]>>16))) return 0;
 		unsigned padded=(blocks+15)&~15U;

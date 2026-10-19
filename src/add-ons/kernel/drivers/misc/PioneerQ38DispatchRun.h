@@ -3,9 +3,24 @@
 #define PIONEER_Q38_DISPATCH_RUN_H
 #include "PioneerQ38DispatchBootstrap.h"
 #include "PioneerPayloadBlock.h"
+#include "PioneerQ38DispatchProfile.h"
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+#include "PioneerQ38ActivationPacking.h"
+#endif
 // Experimental54 controller. OFFLINE tests are not native qualification.
+static inline bool PioneerQ38DispatchCompactStageRange(uint32_t a,unsigned words)
+{
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	return a==0xa0000 && (words==1707 || words==2048 || words==5803);
+#else
+	(void)a; (void)words; return false;
+#endif
+}
 static inline bool PioneerQ38DispatchStageRange(uint32_t a,unsigned words)
 {
+#ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
+	if (a==0x74080 && words==119*8) return true; // exactly the complete private task frame
+#endif
 	return (a==0x74000 && words==16) || (a>=0x74080 && a<0x74f60 && !((a-0x74080)&31) && words==8)
 		|| (a==0xa0000 && (words==2560 || words==3072 || words==8704))
 		|| (a==0xab000 && (words==32 || words==80 || words==160 || words==192 || words==544));
@@ -13,13 +28,16 @@ static inline bool PioneerQ38DispatchStageRange(uint32_t a,unsigned words)
 template<class IO> auto PioneerQ38DispatchStage(IO& io,uint32_t a,const uint32_t* input,unsigned words,int)
 	-> decltype(io.Q38PayloadData(a),bool())
 {
-	if (!input || !PioneerQ38DispatchStageRange(a,words) || !io.Q38PanelMappingStable()) return false;
+	if (!input || (!PioneerQ38DispatchStageRange(a,words) && !PioneerQ38DispatchCompactStageRange(a,words)) || !io.Q38PanelMappingStable()) return false;
 	auto data=io.Q38PayloadData(a); return PioneerPayloadStageBlock(data,words,words,input);
 }
 template<class IO> bool PioneerQ38DispatchStage(IO& io,uint32_t a,const uint32_t* input,unsigned words,long)
-{ return input && PioneerQ38DispatchStageRange(a,words) && io.Q38PanelMappingStable() && PioneerQ38PanelStage(io,a,input,words); }
+{ return input && (PioneerQ38DispatchStageRange(a,words) || PioneerQ38DispatchCompactStageRange(a,words)) && io.Q38PanelMappingStable() && PioneerQ38PanelStage(io,a,input,words); }
 static inline bool PioneerQ38DispatchReadRange(uint32_t a,unsigned words)
 {
+#ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
+	if (a==0x76000 && words>=64 && words<=119*64 && !(words&63)) return true; // complete active proof prefix
+#endif
 	return (a==0x7f800 && words==64) || (a>=0x76000 && a<0x7d700 && !((a-0x76000)&255) && words==64)
 		|| (a>=0x80000 && a<0x9dc00 && !((a-0x80000)&1023) && words && words<=256 && !(words&15))
 		|| PioneerQ38DispatchStageRange(a,words);
@@ -71,26 +89,55 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 {
 	if (lease.unsafe || !lease.booted || lease.closed || lease.rootRunning || !PioneerQ38DispatchValid(job)
 		|| lease.rootNonce>=0x7ffffffe) return false;
+	PioneerQ38DispatchProfile<IO> profile(io);
 	auto& a=lease.authority; auto& root=lease.worker[0]; auto& r=job.result;
 	// Complete ALL private initialized extents BEFORE any IO/nonce advance.
 	for (unsigned w=0;w<job.peers;w++) if (lease.peerNonce[w]>=0x7ffffffe
 		|| !PioneerQ38CohortAuthorizePart(banks,dram,initialized,initializedPages,job.type,job.inputs,job.part[w],w+1,a.extent[w])) return false;
 	a.nextRoot=lease.rootNonce+1;
 	for (unsigned w=0;w<job.peers;w++) a.nextPeer[w]=lease.peerNonce[w]+1;
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	unsigned packedWords=PioneerQ38PackedActivationWords(job.inputs);
+	for (unsigned w=0;w<packedWords;w++) if (!PioneerQ38PackActivationWord(job.activation,job.inputs,w,a.packedActivation[w])) return false;
+#endif
+	profile.Mark(); // private extent/nonce authority,BEFORE first device IO
 	r={}; r.version=1; r.state=TT_RUNTIME_CONFIG_FAILED;
 	for (auto& rows:job.output) for (auto& word:rows) word=0;
 	if (!io.SelectRuntimeCore(0) || !PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	unsigned padded=(job.inputs/PioneerQ38CohortBlockInputs(job.type)+15)&~15U;
-	if (!PioneerQ38DispatchStage(io,0xa0000,job.activation,job.inputs/2,0)
+	if (!PioneerQ38DispatchStage(io,0xa0000,
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		a.packedActivation,packedWords,
+#else
+		job.activation,job.inputs/2,
+#endif
+		0)
 		|| !PioneerQ38DispatchStage(io,0xab000,job.scales,padded,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	for (unsigned w=0;w<119;w++) {
+#ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
+		uint32_t* task=a.taskFrame+w*8;
+		for (unsigned i=0;i<8;i++) task[i]=0;
+#else
 		uint32_t task[8]={};
+#endif
 		if (w<job.peers) { task[0]=a.extent[w].address; task[1]=job.part[w].bank; task[2]=job.part[w].groups;
 			task[3]=a.nextPeer[w]; task[4]=a.extent[w].route; task[5]=a.source[w+1][0]; }
+#ifndef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
 		if (!PioneerQ38DispatchStage(io,0x74080+w*32,task,8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#endif
 	}
-	const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,1,job.type,job.inputs,job.peers,a.nextRoot,0,0,0,0,0,0,0,0,0};
+#ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
+	if (!PioneerQ38DispatchStage(io,0x74080,a.taskFrame,119*8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#endif
+	const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,1,job.type,job.inputs,job.peers,a.nextRoot,
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+		1,
+#else
+		0,
+#endif
+		0,0,0,0,0,0,0,0};
 	if (!PioneerQ38DispatchStage(io,0x74000,header,16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	profile.Mark(); // source proof+ALL input/task/header staging and readback
 	root.Store().l1_dirty=true; root.Store().l1_restored=false; // runtime status lives in separately saved17e000..180000
 	for (unsigned c=0;c<3;c++) io.RuntimeStatusWrite(c,0);
 	for (unsigned c=0;c<3;c++) if (io.RuntimeStatusRead(c)) return PioneerQ38DispatchRunFail(lease,banks,job);
@@ -101,6 +148,7 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	if (!PioneerQ38DispatchSources(io,dram,banks,root,0x87ffff)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	r.root_started=1;
 	io.RuntimeResetWrite(0x46800); if (io.ResetRead()!=0x46800) return PioneerQ38DispatchRunFail(lease,banks,job);
+	profile.Mark(); // status/counters/source proof+root arm/release
 	const uint64_t deadline=io.Q38CohortNow()+UINT64_C(30000000); bool complete=false;
 	while (io.Q38CohortNow()<deadline) {
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
@@ -119,20 +167,30 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 		io.Pause();
 	}
 	if (!complete || !PioneerQ38DispatchSources(io,dram,banks,root,0x46800)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	profile.Mark(); // execution/monitor/terminal PCs+live source proof
 	for (unsigned c=0;c<8;c++) { a.after[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c)); r.before[c]=a.before[c]; r.after[c]=a.after[c]; }
 	// Still PARKED/released. Never reset/hold root before ALL metadata and
 	// source proofs pass,even if an EARLIER peer already completed cleanly.
 	r.root_completed=r.root_sources_verified=1; r.peers=r.started=r.completed=r.waiting=job.peers;
 	r.nonce=a.nextRoot; r.state=TT_RUNTIME_PASSED;
 	if (!PioneerQ38DispatchRead(io,0x7f800,r.stats,64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
+	// Flat private heap scratch avoids pointer arithmetic beyond a peer's
+	// 64-element subarray. Copy ONLY active records after the complete read.
+	if (!PioneerQ38DispatchRead(io,0x76000,a.proofFrame,job.peers*64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	for (unsigned w=0;w<job.peers;w++) for (unsigned i=0;i<64;i++) r.peer[w][i]=a.proofFrame[w*64+i];
+#else
 	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x76000+w*256,r.peer[w],64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#endif
 	if (!PioneerQ38DispatchProof(job,a,false,false) || !PioneerQ38DispatchInputsMatch(io,job)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	const uint32_t command[]={0x83f00,0,PioneerWorkerX(job.peers)|(PioneerWorkerY(job.peers)<<6),0x75000,0,129,0,0,
 		256+job.part[job.peers-1].groups*64,0};
 	for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PioneerQ38DispatchRunFail(lease,banks,job);
+	profile.Mark(); // counters+ALL root/peer stats+input/command proofs
 	// ALL metadata proved BEFORE any host output read. ALL output stays in
 	// the kernel-private request until final hold/proof succeeds.
 	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x80000+w*1024,job.output[w],job.part[w].groups*16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	profile.Mark(); // output readback ONLY after every metadata proof
 	if (!PioneerQ38DispatchProof(job,a,false)) {
 		for (auto& rows:job.output) for (auto& word:rows) word=0;
 		return PioneerQ38DispatchRunFail(lease,banks,job);
@@ -149,7 +207,10 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	}
 	lease.rootRunning=root.image.running=false; r.root_held=1;
 	if (!PioneerQ38DispatchProof(job,a)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	profile.Mark(); // final proof+hold+source proof;still no caller publication
 	lease.rootNonce=a.nextRoot; for (unsigned w=0;w<job.peers;w++) lease.peerNonce[w]=a.nextPeer[w];
+	profile.Mark(); // private nonce commit
+	profile.Publish(job.type,job.inputs,job.peers); // CPU-only,successful jobs ONLY
 	return true;
 }
 #endif

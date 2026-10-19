@@ -13,6 +13,15 @@ struct PioneerQ38DispatchAuthority {
 	PioneerQ38CohortExtent extent[119];
 	uint32_t nextPeer[119]={},nextRoot=0;
 	uint32_t source[120][16]={},before[8]={},after[8]={};
+#ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+	uint32_t packedActivation[(17408+2)/3]={};
+#endif
+#ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
+	// Kernel-private HEAP storage,not 3808 extra bytes on the kernel stack.
+	// EVERY word regenerated per RUN,including every unused worker slot.
+	uint32_t taskFrame[119*8]={};
+	uint32_t proofFrame[119*64]={};
+#endif
 };
 // Controller MUST first call with finalHeld=false (root_held==0),while
 // root is physically PARKED but still released. Only AFTER every proof
