@@ -115,6 +115,7 @@ void Q38SpanMachine::Submit()
 	if (transfers==badCounter) counts[offset+3]++;
 	if (transfers==changeSourceAfter) seals[11]^=1;
 }
+#ifndef PIONEER_Q38_SPAN_MACHINE_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2);
@@ -162,3 +163,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual seven-bank span:bounds/source/packet/drop/corrupt/stale-echo faults,UNKNOWN inert park,no matrix arithmetic;kernel owner+CPU echo+native qualification STILL REQUIRED");
 }
+#endif

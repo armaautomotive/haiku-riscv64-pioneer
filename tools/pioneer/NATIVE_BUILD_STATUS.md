@@ -1,5 +1,37 @@
 # Native build status
 
+October18,21:52 Vancouver (October19,04:52 UTC) SPAN CONTROLLER OFFLINE PASS:
+Native55 full27B test remains ACTIVE,team476/wrapper475,stage-t log-v.
+By04:51:17 UTC layer21/calls168/pages1444602 ALL success;NO generated
+token/new rate/clean END yet. Leave power/card/driver/owners unchanged.
+Normal startup/rest policy unchanged:NO five-minute delay unless power-on
+actually fails. Haiku64/fullRAM;no SD/card/manual action required now.
+
+New PRIVATE PioneerQ38SpanController.h is NOT included by any driver.
+Root264KiB+entry and existing32KiB bulk scratch are saved/restored once;
+1MiB host owner is the existing distinct noncached third allocation.
+ALL fresh bank pages/source seals/physical maps/held cores/code/commands/
+counters/terminal PCs/frozen CPU-byte echoes are mandatory. Positive
+jobs never commit page authority themselves;future kernel handler must.
+Every uncertain BME/start/completion/late-proof/restore outcome performs
+metadata-only whole-owner quarantine,with NO later card IO/END/retry/
+rollback/restore/free;root/global-status/NIU leases remain owned until END.
+Clean image CLOSE is one-way and retains the underlying bank owner for
+a FUTURE matrix-cohort handoff;never overwrite active matrix code.
+
+ASan/UBSan tests execute BOTH controller AND sealed actual RV32 image:
+all7 banks,21 repeated4KiB/20KiB/1MiB edge jobs,48-bit high host edge and
+wrapped counters,full panel/bulk/entry restoration,all32 summary/all64
+descriptor/all10 command mutations,all16 sources,each of7 packet timeout/
+drop/corrupt cases,CPU catches stale initial host read,late host-map/cohort
+changes,BME/reset/lost staging/restore writes,caller metadata before IO,
+UNKNOWN retains ALL3 host areas and subsequent calls perform ZERO IO.
+Evidence pioneer-q38-span-controller.K1dPalRc;authority rerun Lj8gBAAC.
+NO native selection/ABI/installer/speed improvement is claimed. Native
+adapter/one-way preload->cohort gate/actual handler+retention tests and
+fresh-boot native qualification are STILL REQUIRED. Qualified55 runtime
+and current inference21e18126 remain unchanged;dirty llama untouched.
+
 October18,21:32 Vancouver (October19,04:32 UTC) LIVE55 + OFFLINE PRELOAD:
 Full27B team476/wrapper475 still ACTIVE in stage-t/public-four-vector-clear-v.log.
 Full same-FD model authenticated/loaded;recognized497 (reservation ONLY).
