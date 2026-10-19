@@ -203,6 +203,25 @@ int main(int argc,char** argv)
 	}
 	puts("PASS compact ACTUAL RV32 expansion:all257 input states+signed zero,all3 input widths,backwards overlap,high-bit/tail/invalid-magnitude/legacy-header faults refuse BEFORE ANY NoC packet;unchanged8KiB bound");
 #endif
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	for (unsigned k:{5120U,6144U,17408U}) for (unsigned type:{8U,12U,14U}) {
+		DispatchMachine m(argv[1],2,type,k); assert(m.RunRoot()); m.Configure(2);
+		m.memory[0x7401c]=2;
+		for (unsigned w=0;w<k/2;w++) m.memory[0xa0000+w*4]=m.originalInputs[w];
+		assert(m.RunRoot());
+		for (unsigned lane:{0U,16U}) {
+			DispatchMachine bad(argv[1],2,type,k); bad.memory[0x7401c]=2;
+			for (unsigned w=0;w<k/2;w++) bad.memory[0xa0000+w*4]=bad.originalInputs[w];
+			bad.memory[0xa0000]^=0x4000U<<lane;
+			assert(!bad.RunRoot() && !bad.packets && !bad.doorbells);
+		}
+		for (unsigned mode:{0U,3U,UINT32_MAX}) {
+			DispatchMachine bad(argv[1],2,type,k); bad.memory[0x7401c]=mode;
+			assert(!bad.RunRoot() && !bad.packets);
+		}
+	}
+	puts("PASS actual reuse root:all3 widths xQ8/Q4/Q6 retained original257-state inputs,second nonces,invalid operands in BOTH halfwords and unknown transport selectors refuse BEFORE NoC");
+#endif
 	for (unsigned workers:{1U,2U,7U,119U}) for (unsigned type:{8U,12U,14U}) {
 		DispatchMachine m(argv[1],workers,type,type==12?17408:5120); assert(m.RunRoot());
 		m.Configure(2); assert(m.RunRoot());

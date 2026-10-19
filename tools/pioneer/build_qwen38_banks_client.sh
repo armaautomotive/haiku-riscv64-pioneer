@@ -29,6 +29,12 @@ case "${PIONEER_Q38_VECTOR_CLIENT:-0}" in
  5) [ "$source" = pioneer_q38_dispatch_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_TRANSFER_DIAGNOSTIC -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_REUSE_CLIENT:-0}" in
+ 0) ;;
+ 1) [ "$source" = pioneer_q38_dispatch_probe ] && [ "${PIONEER_Q38_VECTOR_CLIENT:-0}" = 1 ] || exit 2
+    source=pioneer_q38_reuse_probe; extra="$extra -ffp-contract=off";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_FIXTURE_CLIENT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_AFFINE_CLIENT:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_PUBLIC_FIXTURES";;

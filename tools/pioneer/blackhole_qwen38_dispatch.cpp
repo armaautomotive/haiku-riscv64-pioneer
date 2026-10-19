@@ -13,6 +13,11 @@ typedef __UINT32_TYPE__ uint32_t;
 #else
 #define Q38_ROOT_TABLE
 #endif
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+#define Q38_ROOT_SMALL __attribute__((noinline,optimize("Os")))
+#else
+#define Q38_ROOT_SMALL
+#endif
 static volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
 static void Fence() { asm volatile("fence" ::: "memory"); }
 // Diagnostic ONLY in the separately owned/saved runtime-status L1. Normal
@@ -59,7 +64,12 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 		|| (remote==0x83f00 && bytes>=320 && bytes<=1280 && !(bytes&63));
 	if (!permitted || !worker || worker>=120 || local<0x75000 || local>0x75800-bytes
 		|| ((local^remote)&31) || !PacketIdle()) block_fault_park();
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	static const unsigned offsets[2][4]={{0x208,0x20c,0x210,0x214},{0x204,0x220,0x210,0x228}};
+	const unsigned* offset=offsets[write?1:0];
+#else
 	const unsigned offset[]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
+#endif
 	uint32_t expected[4]; for (unsigned c=0;c<4;c++) expected[c]=*Words(0xffb20000+offset[c])+(c==1?(bytes+63)/64:1);
 	uint32_t command[]={write?local:remote,0,write?129U:XY(worker),write?remote:local,0,write?XY(worker):129U,0,write?0x212U:0,bytes,0};
 	for (unsigned i=0;i<10;i++) Words(0xffb20000)[i]=command[i];
@@ -119,6 +129,21 @@ static __attribute__((noinline,optimize("Os"))) bool ExpandInputs(unsigned input
 	}
 	Fence(); return true;
 }
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+// Keep the transport selector out of the large dispatcher register live set.
+// Both paths retain exactly the original operand and padded-scale checks.
+static __attribute__((noinline,optimize("Os"))) bool PrepareInputs(unsigned mode,unsigned type,unsigned inputs)
+{
+	if (mode==1 && !ExpandInputs(inputs)) return false;
+	for (unsigned w=0;w<inputs;w++) if (!PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w/2]>>((w&1)*16)))) return false;
+	unsigned blocks=inputs>>(type==8?5:8),padded=(blocks+15)&~15U;
+	for (unsigned b=0;b<padded;b++) {
+		uint32_t bits=Words(0xab000)[b],magnitude=bits&0x7fffffff;
+		if (b>=blocks?bits!=0:magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return false;
+	}
+	return true;
+}
+#endif
 #endif
 static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 {
@@ -165,12 +190,48 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 	return stopped?PioneerQ38PeerTerminalPc(first) && PioneerQ38PeerTerminalPc(second):WaitPc(first) && WaitPc(second);
 }
 static unsigned Tile(unsigned type) { return type==8?576:type==12?2304:type==14?3392:0; }
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+static Q38_ROOT_SMALL bool HeaderValid(const uint32_t* header)
+{
+	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
+	if (header[0]!=0x314d3851 || header[1]!=1 || (operation!=1 && operation!=2) || !workers || workers>119
+		|| !nonce || nonce>=0x7fffffff || (operation==2 && (type || inputs || workers!=119))
+		|| (operation==1 && (!Tile(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)))) return false;
+	if (operation==2?header[7]:header[7]-1U>1U) return false;
+	for (unsigned i=8;i<16;i++) if (header[i]) return false;
+	return true;
+}
+static Q38_ROOT_SMALL bool PartsValid(const uint32_t parts[119][8],const uint32_t* banks,const uint32_t* header)
+{
+	unsigned operation=header[2],type=header[3],blocks=operation==1?header[4]>>(type==8?5:8):0;
+	for (unsigned bank=0;bank<7;bank++) {
+		if (!banks[bank] || banks[bank]>0xfff) return false;
+		for (unsigned other=0;other<bank;other++) if (banks[bank]==banks[other]) return false;
+	}
+	if (banks[7]) return false;
+	for (unsigned w=0;w<119;w++) {
+		const uint32_t* p=parts[w];
+		if (w>=header[5]) { for (unsigned value:parts[w]) if (value) return false; continue; }
+		if (!p[3] || p[3]>header[6] || !p[5] || p[5]!=Words(0x7d800)[w*16] || p[6] || p[7]) return false;
+		if (operation==2) { if (p[0] || p[1] || p[2] || p[4]) return false; continue; }
+		unsigned bytes=p[2]*blocks*Tile(type);
+		if (p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63) || !p[2] || p[2]>16 || p[1]>=7
+			|| bytes>0xc4000000-p[0] || p[4]!=banks[p[1]]) return false;
+		for (unsigned other=0;other<w;other++) if (p[1]==parts[other][1]
+			&& p[0]<parts[other][0]+parts[other][2]*blocks*Tile(type) && parts[other][0]<p[0]+bytes) return false;
+	}
+	return true;
+}
+#endif
 extern "C" unsigned block_main()
 {
 	Checkpoint(0x54000001,0);
 	volatile uint32_t* job=Words(0x74000); uint32_t header[16];
 	for (unsigned i=0;i<16;i++) header[i]=job[i];
 	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	if (!HeaderValid(header)) return 0;
+#else
 	if (header[0]!=0x314d3851 || header[1]!=1 || (operation!=1 && operation!=2) || !workers || workers>119
 		|| !nonce || nonce>=0x7fffffff || (operation==2 && (type || inputs || workers!=119))
 		|| (operation==1 && (!Tile(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)))) return 0;
@@ -180,9 +241,14 @@ extern "C" unsigned block_main()
 #else
 	for (unsigned i=7;i<16;i++) if (header[i]) return 0;
 #endif
+#endif
 	uint32_t parts[119][8],banks[8];
 	unsigned blocks=operation==1?inputs>>(type==8?5:8):0;
 	for (unsigned bank=0;bank<8;bank++) banks[bank]=Words(0x74040)[bank];
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) parts[w][i]=Words(0x74080)[w*8+i];
+	if (!PartsValid(parts,banks,header)) return 0;
+#else
 	for (unsigned bank=0;bank<7;bank++) {
 		if (!banks[bank] || banks[bank]>0xfff) return 0;
 		for (unsigned other=0;other<bank;other++) if (banks[bank]==banks[other]) return 0;
@@ -200,7 +266,11 @@ extern "C" unsigned block_main()
 		for (unsigned other=0;other<w;other++) if (p[1]==parts[other][1]
 			&& p[0]<parts[other][0]+parts[other][2]*blocks*Tile(type) && parts[other][0]<p[0]+bytes) return 0;
 	}
+#endif
 	if (operation==1) {
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		if (!PrepareInputs(header[7],type,inputs)) return 0;
+#else
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 		// Expand BACKWARDS inside the exclusively owned original input
 		// region. Read BOTH source words before a destination store. Peers
@@ -214,6 +284,7 @@ extern "C" unsigned block_main()
 			uint32_t bits=Words(0xab000)[b],magnitude=bits&0x7fffffff;
 			if (b>=blocks?bits!=0:magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return 0;
 		}
+#endif
 	}
 	Checkpoint(0x54000002,operation);
 	if (!Idle()) block_fault_park();

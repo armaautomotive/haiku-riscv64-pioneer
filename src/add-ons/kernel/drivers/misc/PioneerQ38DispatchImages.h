@@ -7,6 +7,9 @@
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "PioneerQ38CompactRootImage.h"
 #endif
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+#include "PioneerQ38ReuseRootImage.h"
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 #include "PioneerQ38ProgressImages.h"
 #endif
@@ -34,7 +37,11 @@ enum { TT_Q38_DISPATCH_BOOT=0x0006c06f,TT_Q38_DISPATCH_DONE=0x7200c,
 static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+ return PioneerQ38ReuseRootWord(word);
+#else
  return PioneerQ38CompactRootWord(word);
+#endif
 #else
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
  return PioneerQ38ProgressRootWord(word);

@@ -19,7 +19,7 @@ struct RunIO:BootstrapIO {
 	void Q38DispatchProfile(unsigned type,unsigned inputs,unsigned peers,bool valid,const uint64_t*) {
 		assert(type && inputs && peers && valid); profiles++;
 	}
-	const char* image; unsigned rootFault=0,rootArms=0,rootStops=0,rootHolds=0,outputReads=0;
+	const char* image; unsigned rootFault=0,rootArms=0,rootStops=0,rootHolds=0,outputReads=0,inputMode=0;
 	uint32_t peerDone[119]={}; bool rootExecuted=false;
 	bool peerStopped[119]={},stopExecuted=false;
 	unsigned stopSlowWorker=0;
@@ -48,6 +48,7 @@ struct RunIO:BootstrapIO {
 	virtual void Execute() {
 		auto& c=C(); const unsigned base=(0x74000-TT_Q38_PANEL_VIEW_BASE)/4;
 		unsigned type=c.view[base+3],k=c.view[base+4],n=c.view[base+5];
+		inputMode=c.view[base+7];
 		uint32_t source[16]; for (unsigned i=0;i<16;i++) source[i]=i?c.source[i]:c.config;
 		ControllerMachine m(image,n,type,k,source);
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
@@ -141,6 +142,50 @@ int main(int argc,char** argv)
 		RunFixture f(argv[1],1);
 		assert(!PioneerQ38DispatchInputCompare(f.io,0xa0000,f.job->activation,words,0));
 	}
+#endif
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	for (unsigned k:{5120U,6144U,17408U}) for (unsigned type:{8U,12U,14U}) {
+		RunFixture f(argv[1],1,type,k); auto& cache=f.lease->inputReuse;
+		assert(!cache.Matches(*f.job,0,1)); cache.Commit(*f.job,1,1);
+		assert(cache.Matches(*f.job,1,1));
+		for (unsigned other:{8U,12U,14U}) {
+			f.job->type=other;
+#ifdef PIONEER_Q38_REUSE_CROSS_QUANT
+			assert(cache.Matches(*f.job,1,1)==(PioneerQ38CohortBlockInputs(type)==PioneerQ38CohortBlockInputs(other)));
+#else
+			assert(cache.Matches(*f.job,1,1)==(type==other));
+#endif
+		}
+		f.job->type=type;
+		for (unsigned w=0;w<k/2;w++) for (unsigned bit=0;bit<32;bit++) {
+			f.job->activation[w]^=1U<<bit; assert(!cache.Matches(*f.job,1,1)); f.job->activation[w]^=1U<<bit;
+		}
+		unsigned padded=(k/PioneerQ38CohortBlockInputs(type)+15)&~15U;
+		for (unsigned w=0;w<padded;w++) for (unsigned bit=0;bit<32;bit++) {
+			f.job->scales[w]^=1U<<bit; assert(!cache.Matches(*f.job,1,1)); f.job->scales[w]^=1U<<bit;
+		}
+		assert(!cache.Matches(*f.job,2,1) && !cache.Matches(*f.job,1,2)
+			&& !cache.Matches(*f.job,1,0) && !cache.Matches(*f.job,1,UINT64_MAX));
+		cache.Commit(*f.job,1,UINT64_MAX); assert(!cache.valid);
+		assert(f.Run() && f.io.inputMode==1 && f.Run() && f.io.inputMode==2);
+		f.lease->inputEpoch++;
+		assert(f.Run() && f.io.inputMode==1 && f.Run() && f.io.inputMode==2);
+#ifdef PIONEER_Q38_REUSE_CROSS_QUANT
+		if (type!=8) {
+			f.job->type=type==12?14:12;
+			assert(f.Run() && f.io.inputMode==2);
+		}
+#endif
+	}
+	for (unsigned fault:{2U,3U,4U,5U,6U,7U,10U}) {
+		RunFixture f(argv[1],7); assert(f.Run()); f.io.rootFault=fault;
+		unsigned outputs=f.io.outputReads,stops=f.io.rootStops;
+		assert(!f.Run() && f.io.inputMode==2 && !f.lease->inputReuse.valid && f.lease->unsafe && f.banks.Quarantined());
+		if (fault!=6) assert(f.io.outputReads==outputs);
+		assert(f.io.rootStops==stops);
+		for (const auto& rows:f.job->output) for (unsigned value:rows) assert(!value);
+	}
+	puts("PASS reuse controller:ALL active input/scale bits miss on mutation,all3 widths xQ8/Q4/Q6,nonce/epoch/saturation,actual root hits/misses,7 hit-path late faults preserve full proofs and quarantine without output/reset");
 #endif
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
 	for (unsigned n:{1U,7U,119U}) for (unsigned type:{8U,12U,14U}) {

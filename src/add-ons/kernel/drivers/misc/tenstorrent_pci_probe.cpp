@@ -102,8 +102,18 @@ static device_manager_info* sDeviceManager;
 static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 
 // PIONEER_PROBE_LOCK_BEGIN
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+// Every OTHER successful lock invalidates resident-input hints, including
+// bulk/bank operations and support queries. Saturation permanently disables
+// reuse for this driver lifetime, never wraps an old hint back into use.
+static uint64_t sQ38InputEpoch=1;
+#endif
 static status_t
-AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false)
+AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	,bool preserveQ38Input=false
+#endif
+	)
 {
 	status_t status = acquire_sem(sLock);
 	if (status == B_OK && sColdRecoveryRequired) {
@@ -126,6 +136,9 @@ AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false)
 	}
 #else
 	(void)bankCommand;
+#endif
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	if (status==B_OK && !preserveQ38Input && sQ38InputEpoch!=UINT64_MAX) sQ38InputEpoch++;
 #endif
 	return status;
 }
@@ -2957,7 +2970,11 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 	auto* request=(tt_q38_dispatch_probe*)malloc(sizeof(tt_q38_dispatch_probe)); if (!request) return B_NO_MEMORY;
 	status=user_memcpy(request,data,sizeof(*request));
 	if (status!=B_OK || !PioneerQ38DispatchValid(*request)) { free(request); return status!=B_OK?status:B_BAD_VALUE; }
-	status=AcquireProbeLock(cookie,true); if (status!=B_OK) { free(request); return status; }
+	status=AcquireProbeLock(cookie,true
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		,true
+#endif
+	); if (status!=B_OK) { free(request); return status; }
 	auto* c=cookie->context;
 	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total
 		|| c->q38Cohort || c->panelProbe.saved || c->streamProbe.saved) status=B_NOT_ALLOWED;
@@ -2974,6 +2991,9 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 			request->result={}; request->result.version=1; request->result.state=TT_RUNTIME_CONFIG_FAILED;
 			for (auto& row:request->output) for (auto& value:row) value=0;
 			bool prepared=PrepareQ38Dispatch(*c);
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+			if (prepared) c->q38Dispatch->inputEpoch=sQ38InputEpoch;
+#endif
 			if (prepared) PioneerQ38DispatchRun(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);
 			bool unsafe=!prepared || c->Unsafe() || request->result.recovery_required;
 			if (!unsafe && !c->io.SelectRuntimeCore(0)) unsafe=true;

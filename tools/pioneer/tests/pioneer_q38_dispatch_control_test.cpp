@@ -101,6 +101,18 @@ int main(int argc,char** argv)
 		&& job->result.waiting==7 && !sColdRecoveryRequired && !cookie.context->Unsafe());
 	PioneerQ38DispatchHistory history; assert(history.Accept(*job) && !history.Accept(*job));
 	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK && job->result.nonce==2 && history.Accept(*job));
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	assert(cookie.context->io.inputMode==2);
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_SUPPORT,&support,sizeof(support))==B_OK);
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK && cookie.context->io.inputMode==1);
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK && cookie.context->io.inputMode==2);
+	assert(AcquireProbeLock(&cookie,true)==B_OK); release_sem(sLock);
+	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK && cookie.context->io.inputMode==1);
+	sQ38InputEpoch=UINT64_MAX;
+	for (unsigned repeat=0;repeat<2;repeat++) assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK
+		&& cookie.context->io.inputMode==1 && !cookie.context->q38Dispatch->inputReuse.valid);
+	sQ38InputEpoch=1;
+#endif
 	End(cookie,true);
 	Begin(cookie,argv[1]); job=Request(); failCopy=copyCalls+2;
 	assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==-99

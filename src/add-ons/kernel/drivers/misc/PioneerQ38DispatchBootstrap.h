@@ -4,6 +4,9 @@
 #include "PioneerQ38CohortProbe.h"
 #include "PioneerQ38DispatchImages.h"
 #include "PioneerQ38DispatchProof.h"
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+#include "PioneerQ38ActivationReuse.h"
+#endif
 // Experimental54 controller. Native qualification is separate from tests.
 // This large object and every request/authority MUST be heap-owned (kernel
 // stack16KiB). Persistent running peers are expected,NOT old cohort Unsafe.
@@ -11,6 +14,10 @@ struct PioneerQ38DispatchLease {
 	PioneerQ38CohortWorker worker[120];
 	PioneerQ38DispatchAuthority authority;
 	uint32_t bootCounter[120][8]={},peerNonce[119]={},rootNonce=0;
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	PioneerQ38ActivationReuse inputReuse;
+	uint64_t inputEpoch=1; // set under the driver's lock before every RUN
+#endif
 	unsigned prepared=0;
 	// Diagnostic bookkeeping ONLY. Never a completion/source authority and
 	// never an excuse for extra device reads/writes after uncertainty.
@@ -33,6 +40,9 @@ static inline bool PioneerQ38DispatchUnsafe(const PioneerQ38DispatchLease& lease
 static inline bool PioneerQ38DispatchQuarantine(PioneerQ38DispatchLease& lease,PioneerResidentBanks& banks)
 {
 	lease.unsafe=true; banks.Quarantine();
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	lease.inputReuse.valid=false;
+#endif
 	for (unsigned w=0;w<lease.prepared;w++) { lease.worker[w].image.unsafe=true; lease.worker[w].Store().recovery_required=true; }
 	return false; // caller must quarantine BOTH host owners too;NO later IO writes
 }

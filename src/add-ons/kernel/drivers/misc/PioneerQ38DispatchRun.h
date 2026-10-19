@@ -96,23 +96,29 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 		|| !PioneerQ38CohortAuthorizePart(banks,dram,initialized,initializedPages,job.type,job.inputs,job.part[w],w+1,a.extent[w])) return false;
 	a.nextRoot=lease.rootNonce+1;
 	for (unsigned w=0;w<job.peers;w++) a.nextPeer[w]=lease.peerNonce[w]+1;
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	bool reuse=lease.inputReuse.Matches(job,lease.rootNonce,lease.inputEpoch);
+	lease.inputReuse.valid=false; // no stale hint survives ANY attempted execution
+#else
+	const bool reuse=false;
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 	unsigned packedWords=PioneerQ38PackedActivationWords(job.inputs);
-	for (unsigned w=0;w<packedWords;w++) if (!PioneerQ38PackActivationWord(job.activation,job.inputs,w,a.packedActivation[w])) return false;
+	if (!reuse) for (unsigned w=0;w<packedWords;w++) if (!PioneerQ38PackActivationWord(job.activation,job.inputs,w,a.packedActivation[w])) return false;
 #endif
 	profile.Mark(); // private extent/nonce authority,BEFORE first device IO
 	r={}; r.version=1; r.state=TT_RUNTIME_CONFIG_FAILED;
 	for (auto& rows:job.output) for (auto& word:rows) word=0;
 	if (!io.SelectRuntimeCore(0) || !PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	unsigned padded=(job.inputs/PioneerQ38CohortBlockInputs(job.type)+15)&~15U;
-	if (!PioneerQ38DispatchStage(io,0xa0000,
+	if (!reuse && (!PioneerQ38DispatchStage(io,0xa0000,
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 		a.packedActivation,packedWords,
 #else
 		job.activation,job.inputs/2,
 #endif
 		0)
-		|| !PioneerQ38DispatchStage(io,0xab000,job.scales,padded,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+		|| !PioneerQ38DispatchStage(io,0xab000,job.scales,padded,0))) return PioneerQ38DispatchRunFail(lease,banks,job);
 	for (unsigned w=0;w<119;w++) {
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
 		uint32_t* task=a.taskFrame+w*8;
@@ -131,7 +137,7 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 #endif
 	const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,1,job.type,job.inputs,job.peers,a.nextRoot,
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
-		1,
+		reuse?2U:1U,
 #else
 		0,
 #endif
@@ -209,6 +215,9 @@ template<class IO> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_resul
 	if (!PioneerQ38DispatchProof(job,a)) return PioneerQ38DispatchRunFail(lease,banks,job);
 	profile.Mark(); // final proof+hold+source proof;still no caller publication
 	lease.rootNonce=a.nextRoot; for (unsigned w=0;w<job.peers;w++) lease.peerNonce[w]=a.nextPeer[w];
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	lease.inputReuse.Commit(job,lease.rootNonce,lease.inputEpoch);
+#endif
 	profile.Mark(); // private nonce commit
 	profile.Publish(job.type,job.inputs,job.peers); // CPU-only,successful jobs ONLY
 	return true;

@@ -119,13 +119,25 @@ int main(int argc,char** argv)
 		assert(m.RunRoot()); for (auto& p:m.actual) assert(p->CorrectRows());
 		for (auto& p:m.actual) p->NextPackets();
 		m.Configure(2); m.Bind(); assert(m.RunRoot());
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		for (auto& p:m.actual) p->NextPackets();
+		m.Configure(3); m.Bind(); m.memory[0x7401c]=2;
+		for (unsigned w=0;w<m.k/2;w++) m.memory[0xa0000+w*4]=m.originalInputs[w];
+		assert(m.RunRoot());
+#endif
 		for (auto& p:m.actual) {
 			assert(p->CorrectRows());
 			// The gamma_n FP64 observer NEVER relaxes exact FP32 parity.
 			uint32_t original=p->buffers[4096]; p->buffers[4096]^=1;
 			fputs("EXPECTED observer rejection of injected single-bit error:\n",stderr);
 			assert(!p->CorrectRows()); p->buffers[4096]=original;
-			assert(p->CorrectRows() && p->Job(3,2));
+			assert(p->CorrectRows() && p->Job(
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+				4,
+#else
+				3,
+#endif
+				2));
 		}
 		printf("OFFLINE BOTH actual root+%u persistent peers type%u:two full math/NoC jobs,bit-exact assembled results vs independent FP32+double,terminal peer STOP PASS\n",workers,type);
 	}

@@ -54,9 +54,19 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 #define close MockClose
 #define ioctl MockIoctl
 #define PIONEER_Q38_DISPATCH_CLIENT
+#ifdef PIONEER_Q38_REUSE_CLIENT_TEST
+#include "../PioneerQ38RowFixtures.h"
+static bool fixtureOkay=true;
+static bool MockFixtures(uint8_t* data,unsigned bytes) { assert(bytes==PIONEER_Q38_ROW_FIXTURE_BYTES); memset(data,0,bytes); return fixtureOkay; }
+#define PioneerQ38LoadRowFixtures MockFixtures
+#define PIONEER_Q38_REUSE_MAIN DispatchClientMain
+#include "../pioneer_q38_reuse_probe.cpp"
+#undef PioneerQ38LoadRowFixtures
+#else
 #define main DispatchClientMain
 #include "../pioneer_q38_cohort_probe.cpp"
 #undef main
+#endif
 #undef ioctl
 #undef close
 #undef open
@@ -64,7 +74,13 @@ int main()
 {
 	for (unsigned kind=0;kind<2;kind++) {
 		opens=closes=begins=runs=uploads=ends=0; failed=false; fault=kind;
-		char name[]="dispatch",arg[]="--synthetic"; char* argv[]={name,arg};
+		char name[]="dispatch";
+#ifdef PIONEER_Q38_REUSE_CLIENT_TEST
+		char arg[]="--public-mixed-inputs";
+#else
+		char arg[]="--synthetic";
+#endif
+		char* argv[]={name,arg};
 		assert(DispatchClientMain(2,argv)==1 && failed && opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
 	}
 	auto numeric=std::make_unique<Q38Probe>(); *numeric={}; numeric->peers=2;
@@ -84,6 +100,13 @@ int main()
 	numeric->peers=120; assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	numeric->peers=2; expected.pop_back(); assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	assert(opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
+#ifdef PIONEER_Q38_REUSE_CLIENT_TEST
+	fixtureOkay=false; opens=closes=begins=runs=uploads=ends=0; failed=false;
+	char name[]="mixed",arg[]="--public-mixed-inputs",bad[]="--unknown";
+	char* argv[]={name,arg}; assert(DispatchClientMain(2,argv)==1 && !opens && !begins && !uploads && !runs && !ends && !closes);
+	argv[1]=bad; assert(DispatchClientMain(2,argv)==2 && !opens);
+	puts("PASS mixed debug client:fixture authentication and fixed CLI rejected BEFORE accelerator open;ALL case uploads precede the first RUN,first RUN failure CLOSE ONLY");
+#endif
 	puts("PASS numeric failure details:32 mismatches counted,ONLY first8 public HOST-copy words logged,bad shape refused,NO syscall/card IO");
 	puts("PASS REAL dispatch debug client:failed ioctl/returned UNKNOWN diagnostics from HOST COPY ONLY;exactly one RUN,one CLOSE,NO subsequent ioctl/END/reset/retry;NO native/device IO");
 }

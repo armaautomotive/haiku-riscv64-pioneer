@@ -56,6 +56,18 @@ case "${PIONEER_Q38_COMPACT_ACTIVATIONS:-0}" in
     extra="$extra -DPIONEER_Q38_COMPACT_ACTIVATIONS";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_REUSE_ACTIVATIONS:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_COMPACT_ACTIVATIONS:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_REUSE_ACTIVATIONS";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_REUSE_CROSS_QUANT:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_REUSE_ACTIVATIONS:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_REUSE_CROSS_QUANT";;
+ *) exit 2;;
+esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \

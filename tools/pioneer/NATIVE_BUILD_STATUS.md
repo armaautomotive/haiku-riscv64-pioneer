@@ -1,5 +1,94 @@
 # Native build status
 
+October19,13:46 Vancouver (20:46 UTC) RESIDENT INPUT REUSE / NATIVE PASS:
+Current guarded55 f31c83854eef0f922c5e156394615853a30d0a3a73116a3cd763d66e36a321e1,
+tag2026101900030002,generation10. No reboot/power/SD action. Same resident
+guard11243/d1ce2aa4. Qualified compact30423874 -> strict reusecac152f0/gen9
+-> cross-format reusef31c8385/gen10 through the real quiesce/reload handshake.
+Final119-worker regression PASSED16 exact runs,EXIT0,known-clean END.
+Loaded image22885,quiesced0,cold0,no owner/no test process. Haiku64 CPUs/
+fullRAM137034936320B and ALL4 frozen-library hashes unchanged. Leave idle.
+
+New opt-in kernel-private heap hint retains EXACT original activation and
+padded-scale bits after a fully proved,held RUN. Hit requires same width,
+current root nonce and unchanged operation epoch;ALL bits match,not a hash.
+Every OTHER successful hardware-operation lock invalidates reuse,including
+bank uploads/support queries. Epoch saturation disables reuse permanently
+for that driver lifetime. UNKNOWN and END invalidate the hint. A hit skips
+ONLY redundant input/scales staging/expansion;ALL original root validation,
+peer/source/extent/counter/terminal proofs and final expanded-input ALL-bit
+comparison BEFORE output publication remain. Miss uses qualified packing.
+No output/intermediate-model cache,new NoC/DMA packet or CPU learned math.
+
+Private root header7=1 expands,2 consumes retained original inputs;STOP0.
+Public55 ABI,client61656a91 and frozen inference21e18126 are unchanged.
+Root377b6a60ec8eb054e8f28c59bccbc4380d62b78cf01c1663033a80e83fa116ae
+is7980B within ORIGINAL8192B;boot e678476d/peer bdc70e59 unchanged. Outlined
+equivalent validation and omitted RV32 frame pointers ONLY in this opt-in
+image;root main stack4672B,nested helpers <=128B,kernel handler400B. No
+bound widened/no guard dropped to fit. Default55/43/root remain EXACT
+9ecb313b/2df0e0f8/026229e2;compact-only30423874 also rebuilds EXACT.
+
+Build strict variant with PIONEER_Q38_COMPACT_ACTIVATIONS=1 and
+PIONEER_Q38_REUSE_ACTIVATIONS=1;tag2026101900030001 -> cac152f0b4560acb9e48f1f104870226114b419e7a1399b4ca2d0c34799aae25.
+Add PIONEER_Q38_REUSE_CROSS_QUANT=1 and tag2026101900030002 -> finalf31c8385.
+Both use build_p100a_hot_reload_driver.sh SDK NEW_OUTPUT TAG. Strict and
+cross variants rebuild EXACT from final source. Q4_K/Q6_K share the same
+256-input quantizer,so cross mode may reuse ONLY when every input/scale bit
+matches too. Q8_0's32-input scale layout NEVER aliases that cache geometry.
+
+Matched no-logging119-worker authentic-row repeats vs30423874 baseline:
+Q4/K5120 29.625 ->26.4415ms (10.75% less);Q4/K17408 49.895 ->39.378ms
+(21.08% less),TWO cache-hit samples each. Cache misses show no material
+change. Synthetic2-worker ALL9 type/width cases and authenticated119-worker
+8cases passed34 exact runs and TWO clean ENDs on strictcac152f0.
+
+FULL public FFN graph on strictcac152f0 FINISHED,EXIT0,clean_end1. Authentic
+contiguous blk.0.ffn_down Q4/K17408/N5120,12240 retained pages,2 executions.
+First45.134640s,warm0.054093s vs compact0.064414s (16.02% less,ONE warm
+sample,NOT full-model token throughput). Checked bulk17.935231s is ordinary
+variation;weight loading protocol unchanged. ALL5120 exported floats are
+byte-identical to prior qualified55/54/compact outputs;SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Log full-ffn-reuse-20261019-a.log SHAc06daa02020ce15dc075dbdc2aaa547463b1230a17084d3a47d1c3eca13ddcd0.
+No CPU learned reference/fallback in this graph;FULL same-FD19GB SHA before
+accelerator FD. This graph was on STRICT variant,not a full-model test of
+the later cross-format extension (which has the identical root/peer code).
+
+New fixed-public mixed debug client0e0ee0f03d65cb2cec39209f9ac422d53a6a42c4352abda4cb72455aa3098345
+preloads Q4/Q6/Q8 rows into disjoint banks BEFORE first RUN,then12 alternating
+jobs without an upload. BOTH strict and cross variants passed all12 exact
+outputs and clean ENDs. Six Q4<->Q6 transitions:mean12.648 ->9.597167ms,
+24.12% less. Q8 transitions remain misses;normal same-type hits unchanged.
+CPU references exist ONLY in this debug client,never model generation.
+Build PIONEER_Q38_REUSE_CLIENT=1 build_qwen38_vector_dispatch_client.sh;
+run --public-mixed-inputs. Failure is CLOSE ONLY,no END/retry/reset/card IO.
+Final crossf31c8385 also passed ALL16 authenticated119-worker runs with
+zero numeric errors and clean END;Q4/K5120 warm26.306ms,K17408 39.213ms
+(two each). New variants together:74 debug RUNs +2 full-FFN executions,
+SIX clean ENDs,ALL native wrappers EXIT0. Compact baseline is separate.
+
+ASan/UBSan strict/cross:ALL input/scale word bits mutated,all3 widths and
+Q8/Q4/Q6,nonce/epoch/saturation,ACTUAL RV32 root hits/misses and invalid
+halfwords/selectors,real root+peer FP32/independent FP64 math,7 cache-hit
+late faults quarantine/zero outputs without reset. Real extracted handler
+query/bank invalidation and owner-retention PASS. Rootl5W6xtc0,cooperative
+SnXqhy3c,strict RUNnpOhcxWh/handlerEyy2BnmB,cross RUNAFEfQnnT/handlerSOG4E8S3,
+mixed-client failurexkSpzAgZ,reloadSN2DWE6L.431 ACTUAL updater guard/failure
+cases PASS. Latest updater hot-swap-cross-reuse-8f10f9f8.sh SHA8f10f9f8826adad7eb69129afb5fe4a3602d48d9b0937e480e331145ec2e8e48;
+--restore-cross-reuse returns to strictcac152f0,then --restore-reuse to30423874,
+ONLY clean/idle. No automatic rollback after UNKNOWN.
+
+Evidence /private/tmp/pioneer-q38-reuse-native-20261019.lshvluta;native
+stage /boot/home/pioneer-qwen38-vector-clear-20261018-t;driver/updater
+backups /boot/home/pioneer-p100a-hot-reload-20261019-a. NO new full27B token
+rate or Assistant-ready claim. Last full-model0.039706501tok/s remains
+UNUSABLE. Next major work is checked bulk/DMA transport and fused resident
+execution;this change removes repeated input staging,not all round trips.
+Dirty llama implementation remains untouched/unbuilt/unstaged.
+Final metadata log SHA24a01ec5315d68c8bab819ec9c7f7eba484eb2ba643ab967b9b82f1f1b583dee;
+final119 log SHA3c7ef78ee74f53d7beb57f6dce4e5f2cf8e77935f50020ef3a323cca5939e6de;
+mixed cross log SHAe742c27c180cb5d29293a637ac6de6aa77659e8b7e90f384f6cc977bd783a53e.
+
 October19,10:33 Vancouver (17:33 UTC) LOSSLESS ACTIVATION PACKING + FULL FFN PASS:
 Installed guarded55 30423874c662e57ea29328b376edb03ca923af1a0e4073ee52a3138b45e71aa2,
 tag2026101900020004,generation8,image17574. SAME resident guard11243/d1ce2aa4,

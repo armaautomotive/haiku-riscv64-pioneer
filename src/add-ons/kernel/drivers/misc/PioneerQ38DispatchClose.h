@@ -70,6 +70,9 @@ template<class IO> bool PioneerQ38DispatchPeerLeaseEnd(IO& io,const tt_compute_n
 template<class IO> bool PioneerQ38DispatchClose(IO& io,const tt_dram_samples_result& dram,
 	PioneerResidentBanks& banks,PioneerQ38DispatchLease& lease,bool clean)
 {
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+	lease.inputReuse.valid=false;
+#endif
 	if (lease.unsafe) return false; // especially NO select/reset/restore/free
 	if (!clean || lease.rootRunning) return PioneerQ38DispatchQuarantine(lease,banks);
 	if (lease.closed) return true;
