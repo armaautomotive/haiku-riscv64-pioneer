@@ -1,6 +1,6 @@
 # Native build status
 
-October19,10:22 Vancouver (17:22 UTC) LOSSLESS ACTIVATION PACKING NATIVE PASS:
+October19,10:33 Vancouver (17:33 UTC) LOSSLESS ACTIVATION PACKING + FULL FFN PASS:
 Installed guarded55 30423874c662e57ea29328b376edb03ca923af1a0e4073ee52a3138b45e71aa2,
 tag2026101900020004,generation8,image17574. SAME resident guard11243/d1ce2aa4,
 kernel/uptime continuous,64 CPUs/fullRAM137034936320B. No reboot/power/SD
@@ -60,12 +60,23 @@ hot-swap-fast-0dbb5d04.sh SHA0dbb5d044aae143e349eb82fbe1ba662257572a6f57f53a90c4
 --restore-fast returns to qualified A ONLY when clean/idle. No forced unload
 or rollback after UNKNOWN. Earlier intermediate6ce2e69d is NOT selected.
 
-Complete PUBLIC FFN graph test STARTED17:21 UTC,session26241,unchanged frozen
-inference21e18126. It authenticates the FULL same-FD19GB model before opening
-the card,then runs blk.0.ffn_down twice and exports after clean END. Native
-log full-ffn-compact-fast-20261019-a.log/output full-ffn-output-compact-fast-20261019-a.bin.
-No result yet. Do NOT change drivers/power/start another card job while it
-runs. NO new full27B token rate/Assistant-ready claim. Last full-model rate
+Complete PUBLIC FFN graph FINISHED17:32 UTC,COMPACT_FFN_EXIT0,process gone.
+Same frozen inference21e18126 and ALL4 native library SHA pins unchanged.
+FULL same-FD19GB authentication preceded the card FD. Authentic contiguous
+blk.0.ffn_down Q4_K K17408/N5120,twice:12240 pages retained,calls2/projections2,
+first44.798126s,warm0.064414s,clean_end1. Previous qualified55 warm0.068152s:
+5.48% lower latency for THIS matrix/one warm repeat,not a model token rate.
+Cold bulk17.728090s versus previous17.904817s is ordinary run variation;
+the weight-loading protocol was NOT changed. No CPU learned reference or
+fallback in this graph test. BOTH repeated outputs matched;export is also
+byte-for-byte identical to the earlier55/54 output already independently
+checked against original GGUF FP64. ALL5120 values,not just sample rows.
+Output SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56;
+log full-ffn-compact-fast-20261019-a.log SHAa6078fea01f48d9a55d84631c6d245c1e1423a144e230a5b128e38ad2579589b;
+output full-ffn-output-compact-fast-20261019-a.bin. Local evidence as above.
+Final metadata generation8/image17574,cold0,quiesced0,no owner;Haiku64/fullRAM,
+same guard11243,NO reboot,all test processes gone. Leave installed and idle.
+NO new full27B token rate/Assistant-ready claim. Last full-model rate
 remains0.039706501tok/s and is STILL UNUSABLE. Next major performance work
 must reduce per-projection host transfers/retain intermediate tensors and
 port the remaining hybrid recurrent/attention graph;packing is incremental.

@@ -19,8 +19,12 @@ Four no-logging Q4 samples per width: K5120 30.703 -> 29.4725 ms;
 K17408 53.73325 -> 49.77175 ms. These 4.01%/7.37% reductions are row-mixture
 call latencies, not new model token rates. Batched PIO alone did not help
 and is disabled. Default 55/43/root remain byte-identical.
-See NATIVE_BUILD_STATUS for hashes, tests, guarded hot-swap/restore commands
-and the complete FFN graph test currently in progress.
+The complete authenticated FFN-down graph (K17408/N5120) also passed twice,
+retaining 12240 weight pages and ending cleanly. Its warm repeat improved
+68.152 -> 64.414 ms (5.48% lower latency). All 5120 exported values are
+byte-identical to the previous qualified55/54 result and its independent
+reference. This is one matrix/one warm repeat, not a full-model token rate.
+See NATIVE_BUILD_STATUS for hashes, tests and guarded hot-swap/restore steps.
 
 The larger target is a device-resident hybrid decoder: keep intermediate
 tensors and state on card and chain projections with normalization,
