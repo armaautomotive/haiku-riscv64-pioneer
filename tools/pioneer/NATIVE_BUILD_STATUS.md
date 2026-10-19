@@ -1,5 +1,30 @@
 # Native build status
 
+October18,20:28 Vancouver (October19,03:28 UTC) FAST55 FIRST NATIVE PASS:
+Restart restored Linux SSH;6.1.31/64 CPUs/NVMe ext4 root,unbound P100A
+COMMAND0000 and both pinned SD-free helper hashes verified. No new NVMe
+timeouts observed;FAT boot partition flagged unclean after forced shutdown,
+NOT repaired while mounted. Normal shutdown/kexec into stage-t succeeded;
+Haiku64/fullRAM137034936320B,driver initially unloaded/no compute owners.
+Four staged file hashes matched;guarded cold/unloaded55 switch9ecb313b
+completed and preserved43/52/54/qualified59 fallbacks. Support ABI accepted.
+ALL18 synthetic Q8/Q4/Q6 repeats passed exact_errors0;BANK_END state2,
+active0,pci_restored1,host_released1,cold0,accepted1,KNOWN_CLEAN_END1,
+TEST_EXIT0/processgone. Local evidence:
+/private/tmp/pioneer-q38-vector-clear-native-synthetic-20261018-t.log.
+Remaining real2/synthetic7/real7/synthetic119/real119 batch RUNNING;stops
+first failure. Fast55 not yet fully qualified;NO full27B/speed claim.
+
+October18,20:20 Vancouver (October19,03:20 UTC): IMG_1555 confirms
+repeated `nvme nvme0: I/O ... QID 1 timeout, completion polled`, about
+30 seconds apart,plus one QID0 timeout. Confirms Linux NVMe completion
+timeouts,NOT a proven dead SSD or P100A failure. User requested restart;
+bounded SSH clean shutdown could not execute. Channel1 off hold completed
+03:19:04 UTC;ONE .75s on pulse03:20:04 UTC produced fresh ZSBL output.
+IMPORTANT USER POWER POLICY: no five-minute delay for normal restarts;
+only wait/recover when power-on DOES NOT work. No repeated failed pulses.
+New boot not yet authenticated/preflighted. Fast55 remains uninstalled.
+
 October18,20:18 Vancouver (October19,03:18 UTC) UPDATE: user reports
 screen blank/not Linux and some NVMe I/O lines; EXACT wording/photo is
 still needed. Do not treat earlier Linux kernel entry as a usable desktop,
