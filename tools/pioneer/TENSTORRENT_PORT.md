@@ -2,6 +2,48 @@
 
 ## Status
 
+### October19:guarded software driver hot-reload implementation (offline only)
+
+Haiku already watches legacy driver files and reloads an idle updated image;
+`legacy_drivers.cpp` is the primary reference. Our previous installers refuse
+loaded images because a plain replacement can lose a driver-local failure
+latch. Software reload must never be treated as card cold recovery.
+
+The new opt-in implementation adds a root-only status/quiesce handshake,
+build tags and generations,open-cookie accounting,and a separate
+`generic/pioneer_p100a_reload_guard/v1` kernel module with `B_KEEP_LOADED`.
+An idle quiesce closes **all** hardware-operation gates atomically. Active
+owners,other opens,stale identities and cold-recovery states refuse it.
+The resident latch cannot be cleared by unloading/replacing the driver.
+The updater stages outside `drivers/bin`,preserves exact backups,renames a
+verified replacement into the watched directory,and checks the newly loaded
+tag/generation. It does not forcibly unload a module,reset PCIe,hot-plug a
+physical card,or silently recover a failed accelerator session.
+
+Offline build entry points:
+
+```sh
+sh tools/pioneer/build_p100a_hot_reload_driver.sh SDK_DIRECTORY NEW_OUTPUT_DIRECTORY 2026101900010001
+sh tools/pioneer/build_p100a_reload_client.sh SDK_DIRECTORY NEW_CLIENT_PATH
+sh tools/pioneer/tests/run_pioneer_p100a_reload_tests.sh
+python3 tools/pioneer/tests/pioneer_p100a_hot_swap_test.py
+```
+
+The build wrapper currently selects qualified55 compute code;the guarded
+build mechanism can also opt into the other persistent dispatcher variants.
+Original builds are unchanged when the feature is disabled. Both the guard
+and replacement driver must be installed;the guard itself is intentionally
+not hot-replaced once pinned. Candidate A/B hashes are explicit in
+`pioneer_p100a_hot_swap.sh`;a future driver change requires fresh builds,
+updated pins,and qualification,not an arbitrary path or unchecked override.
+
+Native qualification is still pending. The current legacy55 cannot perform
+the new handshake,so first migration needs a saved-work restart and the
+existing fresh/unloaded guard before `--bootstrap`. Only after that may the
+staged updater test `--apply-b`/`--apply-a` without reboot. Verify changed
+loaded images/tags/generations,busy-handle refusal,and native matrix runs
+with clean END. Do not claim hot reload from filesystem replacement alone.
+
 ### October18,20:15 UTC:separate lossless BF16 candidate passes offline lifecycle
 
 Native54/team848 still loading first27B position:layer49/calls388/

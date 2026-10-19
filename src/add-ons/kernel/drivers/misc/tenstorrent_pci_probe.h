@@ -3,6 +3,10 @@
 #define TENSTORRENT_PCI_PROBE_H
 
 #include <Drivers.h>
+#ifdef TT_PIONEER_DRIVER_RELOAD
+#include "PioneerDriverReloadProtocol.h"
+#include "PioneerDriverReloadGuard.h"
+#endif
 #include "BlackholeBar4Probe.h"
 #include "PioneerPciProfile.h"
 #include "BlackholePioneerMmioProbe.h"

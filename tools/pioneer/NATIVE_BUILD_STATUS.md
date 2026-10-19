@@ -1,5 +1,52 @@
 # Native build status
 
+October19,09:17 Vancouver (16:17 UTC) HOT-RELOAD SUPPORT OFFLINE:
+User requested safe no-reboot P100A driver updates. Implemented opt-in
+TT_PIONEER_DRIVER_RELOAD,root-only metadata status/quiesce,private build
+tag+monotonic generation and counted driver opens. QUIESCE requires NO
+runtime owner/context and exactly ONE open cookie;under sLock it closes
+EVERY existing hardware-operation gate. New opens may read metadata only;
+failed quiesce reply keeps the gate closed. No forced unload/reset/END.
+
+New generic/pioneer_p100a_reload_guard/v1 module is B_KEEP_LOADED:its sticky
+cold latch survives legacy-driver replacement;unknown/stale/unsafe detach
+refuses the next driver BEFORE any card probe. There is NO software
+clear/reset operation. ALL existing cold-latch assignments publish to this
+guard in opt-in builds. Native uninit cannot veto OS unload,so persistent
+guard prevents a later owner bypass while retained host areas/cookie stay
+allocated. Existing generic legacy cleanup is NOT relaxed.
+
+Actual module+extracted driver/lock tests PASS ASan/UBSan 1We8FiH0/6Tfj7VC7;
+75 ACTUAL shell updater filesystem/handshake/hash/symlink/failure cases
+PASS;old handler/retention2vbyx9Qc,RUN26vZTlzN,END6CrFIdkr PASS.
+Opt-in55 build A77d0f396/tag2026101900010001,B67f2b14b/tag...0002;
+same guardd1ce2aa4. Clientb0c851b3;hash-pinned hot-swap.sh8d69c59c.
+Default43 remains byte-identical2df0e0f8;non-reload55 remains9ecb313b.
+Final source rebuilt A/B/client09:17 local:ALL exact hashes unchanged.
+
+NOT installed/loaded/native-qualified. Existing55 driver9ecb313b still
+installed/loaded and Haiku remains up;no restart or power action performed.
+User was asked to save work/approve ONE initial restart because old55 has
+no atomic quiesce handshake. Awaiting reply. Future CLEAN/IDLE reloads are
+designed to use Haiku's watched-directory rename mechanism,no kernel patch
+or reboot. Active/UNKNOWN/failed sessions still require refusal/recovery.
+Stage /boot/home/pioneer-p100a-hot-reload-20261019-a COMPLETE16:20 UTC:
+ALL A/B/guard/client/updater hashes verified;installed9ecb313b unchanged.
+Transfers reset at higher rates;256kbit/s A and128kbit/s B succeeded.
+Use conservative sequential128kbit/s for further transfers. Native proof must
+show A->B->A build tags+new generations/kernel images,extra-FD/active-owner
+refusal,and native matrix/clean END before claiming usable hot reload.
+
+FULL27B55 result collected16:00 UTC:PASS four positions,497 projections
+EACH,119 workers,retained4558653 pages,tokens11/353/2688/264,clean_end1,
+PUBLIC_FOUR_EXIT0/processgone. Cold first6404.712329s;warm25.722713,
+24.978534,24.853132s:sample0.039706501tok/s (~1.827x54),STILL UNUSABLE.
+Checked matrix ioctl~23.1s/position,other GGML1.16..2.03s. This is a tiny
+PUBLIC smoke,NOT steady benchmark/general text quality/Assistant-ready.
+Local full log /private/tmp/pioneer-q38-vector-clear-full27b-20261019-v.log
+SHA860b524dff93f74e7a2055b495c04bffd47cb22c0f6be5b733b26cc783f2d013.
+Dirty llama implementation remains untouched.
+
 October18,21:52 Vancouver (October19,04:52 UTC) SPAN CONTROLLER OFFLINE PASS:
 Native55 full27B test remains ACTIVE,team476/wrapper475,stage-t log-v.
 By04:51:17 UTC layer21/calls168/pages1444602 ALL success;NO generated

@@ -32,6 +32,12 @@ case "${PIONEER_Q38_PANEL_DRIVER:-0}" in
   if [ "$PIONEER_Q38_PANEL_DRIVER" = 14 ]; then extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS"; variant=59; fi;;
  *) exit 2;;
 esac
+if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
+ case "$variant" in 54|55|56|57|58|59) ;; *) exit 2;; esac
+ case "${PIONEER_DRIVER_BUILD_TAG:-}" in ''|*[!0-9a-f]* ) exit 2;; esac
+ [ "${#PIONEER_DRIVER_BUILD_TAG}" = 16 ] && [ "$PIONEER_DRIVER_BUILD_TAG" != 0000000000000000 ] || exit 2
+ extra="$extra -DTT_PIONEER_DRIVER_RELOAD -DPIONEER_DRIVER_BUILD_TAG=0x${PIONEER_DRIVER_BUILD_TAG}ULL"
+fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \
@@ -60,6 +66,15 @@ libgcc=$("$cxx" -print-file-name=libgcc.a)
  "$output/tenstorrent_pci_probe.o" "$output/PioneerPciProfile.o" "$kernel" "$libgcc" "$end" \
  -o "$output/tenstorrent_pci_probe-driver$variant"
 shasum -a 256 "$output/tenstorrent_pci_probe-driver$variant"
+if [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ]; then
+ "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
+  -ffreestanding -fno-use-cxa-atexit -mcmodel=medany -fpic -D_KERNEL_MODE "$@" \
+  -c "$project/src/add-ons/kernel/drivers/misc/pioneer_p100a_reload_guard.cpp" -o "$output/reload_guard.o"
+ "$cxx" -shared -nostdlib -Wl,--no-undefined,-soname=pioneer_p100a_reload_guard \
+  "$begin" "$release/system/glue/haiku_version_glue.o" "$output/reload_guard.o" "$kernel" "$libgcc" "$end" \
+  -o "$output/pioneer_p100a_reload_guard"
+ shasum -a 256 "$output/pioneer_p100a_reload_guard"
+fi
 # Compile/link the default (feature disabled) branch too. This catches any
 # accidental new ABI dependency in the preserved ordinary driver build.
 "$cxx" -std=gnu++17 -O2 -Wall -Wextra -Werror -fno-exceptions -fno-rtti -fstack-usage \

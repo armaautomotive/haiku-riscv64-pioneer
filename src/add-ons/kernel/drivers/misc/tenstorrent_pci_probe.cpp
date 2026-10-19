@@ -71,9 +71,30 @@ struct PioneerProbeCookie {
 };
 static PioneerProbeCookie* sRuntimeOwner=NULL;
 static sem_id sLock = -1;
+#ifdef TT_PIONEER_DRIVER_RELOAD
+#if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_DRIVER_BUILD_TAG)
+#error Reload support requires the guarded persistent driver and an explicit build identity
+#endif
+static_assert(PIONEER_DRIVER_BUILD_TAG!=0,"reload build identity must be nonzero");
+// PIONEER_DRIVER_RELOAD_STATE_BEGIN
+static pioneer_driver_reload_guard_info* sReloadGuard=NULL;
+static uint64 sReloadGeneration=0;
+static uint32 sOpenCookies=0;
+static bool sReloadQuiesced=false;
+struct PioneerColdRecoveryLatch {
+	bool value=false;
+	operator bool() const { return value || !sReloadGuard || sReloadGuard->cold(); }
+	void operator=(bool failure) {
+		if (failure) { value=true; if (sReloadGuard) sReloadGuard->fault(sReloadGeneration); }
+	}
+};
+static PioneerColdRecoveryLatch sColdRecoveryRequired;
+// PIONEER_DRIVER_RELOAD_STATE_END
+#else
 // Protected by sLock. A module reload is NOT cold recovery; after this latch
 // is set, the board must be cold-recovered before changing/reloading drivers.
 static bool sColdRecoveryRequired = false;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 static bool sBankStorageOnly = false; // sLock; blocks EVERY legacy runtime operation
 #endif
@@ -89,6 +110,11 @@ AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false)
 		release_sem(sLock);
 		return B_DEV_NOT_READY;
 	}
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	if (status==B_OK && sReloadQuiesced) {
+		release_sem(sLock); return B_BUSY; // EVERY hardware operation is gated
+	}
+#endif
 	if (status==B_OK && sRuntimeOwner!=NULL && sRuntimeOwner!=runtimeOwner) {
 		release_sem(sLock);
 		return B_BUSY;
@@ -325,6 +351,16 @@ FindCard(pci_module_info* pci, pci_info& card)
 status_t
 init_hardware()
 {
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	// Even PCI enumeration must not be used as a recovery retry after an
+	// UNKNOWN event. This check is ordinary resident CPU metadata only.
+	pioneer_driver_reload_guard_info* guard=NULL;
+	status_t guarded=get_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE,(module_info**)&guard);
+	if (guarded!=B_OK) return guarded;
+	bool cold=guard->version!=1 || guard->cold();
+	put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE);
+	if (cold) return B_DEV_NOT_READY;
+#endif
 	dprintf("PIONEER-P100A: probe hardware PCI module begin\n");
 	pci_module_info* pci;
 	status_t status = get_module(B_PCI_MODULE_NAME, (module_info**)&pci);
@@ -341,14 +377,30 @@ init_hardware()
 status_t
 init_driver()
 {
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	status_t guarded=get_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE,(module_info**)&sReloadGuard);
+	if (guarded!=B_OK) return guarded;
+	if (sReloadGuard->version!=1) guarded=B_BAD_VALUE;
+	else guarded=sReloadGuard->attach(&sReloadGeneration);
+	if (guarded!=B_OK) {
+		put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE); sReloadGuard=NULL; return guarded;
+	}
+#endif
 	dprintf("PIONEER-P100A: probe driver init begin\n");
 	status_t status = get_module(B_PCI_MODULE_NAME, (module_info**)&sPCI);
 	dprintf("PIONEER-P100A: probe driver PCI module status %" B_PRId32 "\n", status);
-	if (status != B_OK)
+	if (status != B_OK) {
+#ifdef TT_PIONEER_DRIVER_RELOAD
+		sReloadGuard->detach(sReloadGeneration,true); put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE); sReloadGuard=NULL;
+#endif
 		return status;
+	}
 	if (!FindCard(sPCI, sCard)) {
 		put_module(B_PCI_MODULE_NAME);
 		sPCI = NULL;
+#ifdef TT_PIONEER_DRIVER_RELOAD
+		sReloadGuard->detach(sReloadGeneration,true); put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE); sReloadGuard=NULL;
+#endif
 		return B_ENTRY_NOT_FOUND;
 	}
 	dprintf("PIONEER-P100A: probe driver scan complete\n");
@@ -356,6 +408,9 @@ init_driver()
 	if (sLock < B_OK) {
 		put_module(B_PCI_MODULE_NAME);
 		sPCI = NULL;
+#ifdef TT_PIONEER_DRIVER_RELOAD
+		sReloadGuard->detach(sReloadGeneration,true); put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE); sReloadGuard=NULL;
+#endif
 		return sLock;
 	}
 	dprintf("PIONEER-P100A: probe driver init complete\n");
@@ -365,6 +420,15 @@ init_driver()
 void
 uninit_driver()
 {
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	// uninit_driver cannot veto an OS unload. Persist any unsafe state in
+	// the separate KEEP_LOADED guard BEFORE dropping this driver's image.
+	if (sReloadGuard) {
+		bool clean=!sColdRecoveryRequired && sRuntimeOwner==NULL && sOpenCookies==0;
+		sReloadGuard->detach(sReloadGeneration,clean);
+		put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE); sReloadGuard=NULL;
+	}
+#endif
 	if (sLock >= B_OK)
 		delete_sem(sLock);
 	if (sPCI != NULL)
@@ -396,13 +460,32 @@ ProbeOpen(const char* name, uint32 flags, void** cookie)
 	PioneerProbeCookie* instance=new(std::nothrow) PioneerProbeCookie;
 	if (instance==NULL) return B_NO_MEMORY;
 	instance->team=thread.team;
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	status_t locked=acquire_sem(sLock);
+	if (locked!=B_OK) { delete instance; return locked; }
+	if (sOpenCookies==UINT32_MAX) { release_sem(sLock); delete instance; return B_BUSY; }
+	sOpenCookies++;
+	release_sem(sLock);
+#endif
 	*cookie=instance;
 	dprintf("PIONEER-P100A: probe open ready\n");
 	return B_OK;
 }
 
 static status_t ProbeClose(void*) { return B_OK; }
-static status_t ProbeFree(void* cookie) { return ReleaseResidentCookie((PioneerProbeCookie*)cookie); }
+static status_t ProbeFree(void* cookie) {
+	status_t status=ReleaseResidentCookie((PioneerProbeCookie*)cookie);
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	if (status==B_OK) {
+		status_t locked=acquire_sem(sLock);
+		if (locked!=B_OK) { sColdRecoveryRequired=true; return locked; }
+		if (!sOpenCookies) sColdRecoveryRequired=true;
+		else sOpenCookies--;
+		release_sem(sLock);
+	}
+#endif
+	return status;
+}
 
 struct ConfigIO {
 	uint32 Read(uint16 offset, uint8 size)
@@ -3931,12 +4014,50 @@ AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length,boo
 	release_sem(sLock); free(request); return status;
 }
 
+#ifdef TT_PIONEER_DRIVER_RELOAD
+// PIONEER_DRIVER_RELOAD_CONTROL_BEGIN
+static status_t
+DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data || length!=sizeof(tt_pioneer_driver_reload)
+		|| (operation!=TT_PCI_PROBE_RELOAD_STATUS && operation!=TT_PCI_PROBE_RELOAD_QUIESCE)) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	tt_pioneer_driver_reload r={}; status=user_memcpy(&r,data,sizeof(r));
+	if (status!=B_OK || !PioneerDriverReloadRequest(r)) return status!=B_OK?status:B_BAD_VALUE;
+	status=acquire_sem(sLock); if (status!=B_OK) return status;
+	if (!sReloadGuard || sReloadGuard->version!=1 || !sReloadGeneration) status=B_DEV_NOT_READY;
+	else if ((r.expected_tag && r.expected_tag!=PIONEER_DRIVER_BUILD_TAG)
+		|| (r.expected_generation && r.expected_generation!=sReloadGeneration)) status=B_BAD_VALUE;
+	else if (operation==TT_PCI_PROBE_RELOAD_QUIESCE &&
+		(!r.expected_tag || !r.expected_generation || sColdRecoveryRequired || sRuntimeOwner
+			|| cookie->context || sOpenCookies!=1)) status=B_BUSY;
+	else {
+		if (operation==TT_PCI_PROBE_RELOAD_QUIESCE) sReloadQuiesced=true;
+		r={}; r.version=1; r.driver=TT_Q38_DISPATCH_DRIVER; r.build_tag=PIONEER_DRIVER_BUILD_TAG;
+		r.generation=sReloadGeneration; r.guard_version=sReloadGuard->version;
+		r.quiesced=sReloadQuiesced; r.cold=sColdRecoveryRequired; r.active_owner=sRuntimeOwner!=NULL;
+		r.open_count=sOpenCookies;
+		// Failed reply delivery leaves the hardware gate CLOSED. It never
+		// resumes computation or clears the resident cold latch.
+		status=user_memcpy(data,&r,sizeof(r));
+	}
+	release_sem(sLock); return status;
+}
+// PIONEER_DRIVER_RELOAD_CONTROL_END
+#endif
+
 static status_t
 ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 {
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 		return B_NOT_ALLOWED;
+#ifdef TT_PIONEER_DRIVER_RELOAD
+	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
+		return DriverReloadControl(instance,operation,data,length);
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
 		return Q38DispatchControl(instance,operation,data,length);
