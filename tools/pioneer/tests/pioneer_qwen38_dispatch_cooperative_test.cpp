@@ -148,6 +148,37 @@ int main(int argc,char** argv)
 		assert(model.Stable()); fclose(f);
 	}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
+	{
+		CooperativeDispatch m(argv[1],argv[2],2,8,5120);
+		auto& peer=*m.actual[0];
+		for (auto& valid:peer.defined) valid=true;
+		for (auto& valid:peer.valid) valid=true;
+		peer.Instruction(0x10080004); peer.Instruction(0x10080005);
+		for (unsigned row=0;row<1024;row++) assert(peer.defined[row]==!(row>=64 && row<96));
+		for (unsigned row=0;row<64;row++) assert(peer.valid[row]==!(row>=32 && row<48));
+		puts("PASS59 explicit physical ZEROACC pair clears EXACT64..95/both FP32 halves;raw0..31/decoded128..159/source-probe192..223 remain defined");
+	}
+	{
+		// Independent ACTUAL native client's synthetic bytes/activation
+		// formula. Model an ineffective per-panel clear,not normal math.
+		int cumulative[16]={}; unsigned firstBad=0; int badValue=0;
+		for (unsigned panel=0;panel<320 && !firstBad;panel++) for (unsigned row=0;row<16;row++) {
+			int dot=0; unsigned block=panel/2,within=panel%2;
+			for (unsigned lane=0;lane<16;lane++) {
+				unsigned byte=((2+within*16+lane)*37+row*59+block*13+23)&255;
+				if (!within && !lane) byte=128;
+				int weight=int(byte)-int((byte&128)*2);
+				int input=int(((block*32+within*16+lane)*29+17)%256)-128;
+				dot+=weight*input;
+			}
+			assert(dot>=-262144 && dot<=262144); cumulative[row]+=dot;
+			if (cumulative[row]<-262144 || cumulative[row]>262144) {
+				assert(block==45 && within==1 && !row); firstBad=panel+1; badValue=cumulative[row]; break;
+			}
+		}
+		assert(firstBad==92 && badValue==-272445);
+		puts("PASS59 native-signature regression:ineffective per-panel clear FIRST exceeds range at worker2 block45/panel1/row0 EXACT -272445;all individual dots legal");
+	}
 	for (unsigned code=0;code<256;code++) {
 		int value=int(code)-int((code&128)*2);
 		unsigned magnitude=unsigned(value<0?-value:value);

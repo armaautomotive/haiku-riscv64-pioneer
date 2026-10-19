@@ -164,7 +164,10 @@ static void Matrix()
 {
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
 #ifdef PIONEER_Q38_VECTOR_PANEL
-	Emit(0x10280002); Drain(); // ONLY FP32 rows32..47;preserve defined vector/metadata rows
+	// Isolated native A/B:explicit physical16-row clears cover BOTH halves
+	// of FP32 rows32..47 (physical64..95),without relying on UseDst32b.
+	// Preserve raw0..31,decoded128..159 and diagnostic192..223.
+	Emit(0x10080004); Emit(0x10080005); Drain();
 #else
 	Emit(0x10180000); Drain(); // original scalar path unchanged
 #endif

@@ -65,8 +65,20 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	}
 	void Instruction(uint32_t op) override {
 		if (omitDstInitialization && op==0x42000091) return;
-		if (allRowsClear && op==0x10280002) op=0x10180000;
+		if (allRowsClear && (op==0x10280002 || op==0x10080004)) op=0x10180000;
 		unsigned code=op>>24;
+		if (op==0x10080004 || op==0x10080005) {
+			assert(Base::sfpuSmoke>=16 && !rawPending && !pending);
+			// Independent ZEROACC encoding:UseDst32b=0,mode16_ROWS=1,
+			// physical row range Imm10*16..+15. Logical FP32 validity
+			// consults ONLY physical Adj32(row);decoded rows stay defined.
+			unsigned first=(op&1023)*16;
+			if (!Base::dropClear) {
+				for (unsigned row=first;row<first+16;row++) defined[row]=false;
+				for (unsigned row=0;row<64;row++) if (Adj(row)>=first && Adj(row)<first+16) Base::valid[row]=false;
+			}
+			drained=false; return;
+		}
 		if (op==0x10180000) for (auto& value:defined) value=false; // ALL1024 physical row-valid bits
 		if (op==0x10280002) for (unsigned row=32;row<48;row++) defined[Adj(row)]=false;
 		if (code==0x42 && !(op&0x800000)) {

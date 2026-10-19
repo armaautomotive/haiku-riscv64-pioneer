@@ -1,5 +1,41 @@
 # Native build status
 
+October19,00:37 UTC source-round-trip59 f8516b02 FAILED native first
+Q8/K5120/two-worker RUN:unchanged5a0b0200/0xfffbd7c3=-272445.
+NO reason13 decoded-Dst OR reason14 current SrcA mismatch occurred BEFORE
+worker2 dot guard. Both256-value checks precede EVERY Q8 matrix. This is
+not whole-model qualification;narrows observed fault beyond those values.
+Log /private/tmp/pioneer-q38-source-probe-native-failure-20261018-r.log
+SHA614696f2. Exit1/processgone,Haiku responsive64/fullRAM;clean shutdown
+and channel1 off completed before00:34:51 UTC. Rest until >=00:39:51 UTC.
+ALL card roles/banks/BOTH owners quarantined;NO retry/END/reset/restore/
+free/additional card read. Last installed f8516b02 until NEW cold boot.
+
+IMPORTANT exact numeric clue:independent ACTUAL native synthetic bytes
+and activation formula,with ineffective per-panel clear,first crosses
+range at worker2/block45/panel1/row0:EXACT -272445. ALL individual panel
+dots are legal. Matches four successive native variants after initial
+ALL-Dst invalidation. Strongly supports ineffective per-panel clearing;
+not proof of exact silicon/encoding cause or of a successful fix yet.
+
+Next isolated59 f51b2193/peera7e399138060B changes ONLY Matrix's clear:
+replace UseDst32b partial10280002 with physical16-row10080004+10080005,
+one unchanged full drain. Targets EXACT physical64..95 (BOTH halves of
+logical FP32 rows32..47);preserves raw0..31,decoded128..159,source-probe
+192..223. Retains BOTH on-card operand probes,ALL numeric/source/owner
+and output proof guards. Root46f054aa8152B/client7722dc5e unchanged;
+diagnostic-only/ABI59/inference0/original8192B bounds. Default43 control
+2df0e0f8;default54..58 sources/baked images untouched.
+
+Actual root+peer repeated real-model FP32+FP64/poisoned Dst/fault refusal
+PASS NMXWXSKC;final stronger observer assertions PASS fM7bXhJo.
+Independent physical range/alias checks and exact native missing-clear
+signature regression included. RUN4giGvUkz BOTH modes,END EjZoR7uu BOTH modes,
+handler/retention Ozk1yOFS,bootstrap tX0LbyTh PASS. Stage-s helper requires
+exact installedf8516b02/stage-r43/52/54 backups;keeps prior59 separately.
+446 actual installer guard/restore cases PASS;helper1f2dfb4f.
+Staging/native pending. NO new token-speed result.
+
 October19,00:25 UTC native decoded-probe59 f0778f22 FAILED first
 Q8/K5120 two-worker RUN with SAME phase5a0b0200/raw0xfffbd7c3=-272445.
 Importantly NO reason13 decoded-operand mismatch occurred BEFORE worker2
