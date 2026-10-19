@@ -1,5 +1,24 @@
 # Native build status
 
+October18,20:59 Vancouver (October19,03:59 UTC) NATIVE56 REFUSED:
+Normal restart worked without five-minute rest. Linux6.1.31/64/NVMe root,
+unbound COMMAND0000/exact helpers/no new storage errors verified;stage-u
+SD-free Haiku64/fullRAM. Unloaded guarded switch151c4e38 preserved ALL
+five fallbacks. First Q8/K5120/two-worker RUN returned waiting2/cold0,
+but CPU DEBUG comparison found exact_errors32 (all32 outputs). Client
+refused continuation,CLOSE_ONLY_NO_END_RETRY_RESET,TEST_EXIT1/processgone.
+This is a NUMERIC mismatch despite returned completion,NOT evidence of
+a whole-board freeze or proof of the precise BF16 failure mechanism.
+No follow-up accelerator operation requested;only ordinary log/ps/SCP.
+Local /private/tmp/pioneer-q38-bfloat-clear-native-failure-20261018-u.log
+SHA2004865b. DO NOT use56 for inference or retry it in this boot. Clean
+Haiku shutdown requested03:59:42 UTC;next fresh Linux/Haiku boot must
+restore qualified55 via stage-u `./switch-bfloat-clear.sh --restore55`
+ONLY while unloaded/no owners. Installed file remains151c4e38 until then.
+Need pinned session dispatch55-restore-20261018-v. No five-minute wait
+unless actual power-on fails. Preserve55's passed39/78+FFN1.81x milestone;
+full27B tokens/speed for55 still pending. No functionality/code lost.
+
 October18,20:49 Vancouver (October19,03:49 UTC) FAST55 FULL FFN PASS:
 Full GGML Q4_K FFN17408x5120 ran twice,retained12240 weight pages,
 repeat0.068152s vs54 0.123357s (~1.81x for THIS layer,NOT token rate).
