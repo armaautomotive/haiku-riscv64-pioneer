@@ -1,5 +1,27 @@
 # Native build status
 
+October19,01:07 UTC HANDOFF:after full off rest,ONE normal channel1 on
+pulse around00:59:29 produced fresh ZSBL/u-root then normal Linux6.1.31
+NVMe-root command-line output. Power is ON,Linux booted;no Haiku/accelerator
+test started in this boot. SSH at10.0.0.247 accepts TCP/OpenSSH9.0 banner
+but stalls after client KEXINIT,BEFORE authentication/remote commands.
+Three bounded checks and a compact modern curve25519/chacha20/IPQoS-none
+check timed out,with original strict pinned host key unchanged. Ping3/3
+replies;ARP00:e0:4c:68:00:ce matches boot-log eth1. Existing UART reader
+still attached;one newline yielded no login prompt (Linux console=tty1).
+Old unbounded read-only SSH exited/reset;no accelerator reads/programming,
+no further power pulses,no server/boot configuration changes. Cannot
+conclude whole-board freeze or diagnose entropy/MTU merely from this.
+Asked user whether Linux desktop/input respond;leave power/cards unchanged
+pending answer. Do NOT force another recovery while saved-state unknown.
+
+Current installed known-clean59 remains f51b2193 (39cases/78repeats/SIX
+clean ENDs). NO active card owner or inference. Fast55 9ecb313b is OFFLINE
+ONLY,NOT staged/installed/native-tested;stage-t has not been created.
+All four qualified backups remain stage-s;no work lost. Need restore Linux
+SSH or user-confirmed safe recovery,then fresh Linux preflight/pinned
+SD-free stage-t boot/unloaded install/OWN55 qualification before model test.
+
 October19,00:57 UTC NATIVE59 CLEAR FIX QUALIFIED:39 cases/78 repeats
 across synthetic and authenticated real first/last Q8/Q4/Q6 row groups,
 2/7/119 workers,ALL exact_errors0. SIX sessions ended with state2,
