@@ -22,6 +22,9 @@
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 #include "PioneerQ38SfpuAccumulator.h"
 #endif
+#if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
+#error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -417,10 +420,20 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 		for (unsigned row=0;row<16;row++) {
+#ifdef PIONEER_Q38_SFPU_INTEGER
+			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();
+#else
 			uint32_t raw=Words(0xffbd8800)[row]; float dot=Float(raw);
 			if ((raw&0x7f800000)==0x7f800000 || dot<-262144.0f || dot>262144.0f) block_fault_park();
+#endif
 		}
-		if (!PioneerQ38SfpuAccumulator(emitter,type,!block && !p,type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
+		if (!PioneerQ38SfpuAccumulator<VectorPanelEmitter,
+#ifdef PIONEER_Q38_SFPU_INTEGER
+			true
+#else
+			false
+#endif
+		>(emitter,type,!block && !p,type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_VECTOR_AFFINE
 		// Preserve the original ALL16 dot range checks before vector math.
@@ -459,12 +472,18 @@ extern "C" unsigned block_main()
 	// Bounded finite inputs imply |accumulator|<2^68,normal-or-zero
 	// intermediates and NO overflow/underflow. ALL dot checks remain per
 	// panel;publish only final finite results after the entire group.
+#ifdef PIONEER_Q38_SFPU_INTEGER
+	Config(3,0); // final FP32 accumulator export, NOT integer dot conversion
+#endif
 	for (unsigned row=0;row<16;row++) {
 		uint32_t value=Words(0xffbd9b00)[row];
 		if ((value&0x7f800000)==0x7f800000) block_fault_park();
 		Words(0x84000)[group*16+row]=value;
 	}
 	Fence();
+#ifdef PIONEER_Q38_SFPU_INTEGER
+	Config(3,0x10000); // next group's checked signed32 dot readback
+#endif
 #endif
 	}
 	return groups*blocks*panels;

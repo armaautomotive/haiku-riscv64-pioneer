@@ -17,6 +17,9 @@ struct CloseIO:RunIO {
 		return RunIO::RuntimePcRead();
 	}
 	uint32_t Q38PanelRead(uint32_t a) {
+#ifdef PIONEER_Q38_INT_SFPU
+		if (current==target && a==TT_Q38_INT_SFPU_AFFINE_BASE && closeFault==17 && stopExecuted) return RunIO::Q38PanelRead(a)^1;
+#endif
 		if (current==target && a==0x72000 && (closeFault==1 || (stopExecuted && closeFault==2))) return RunIO::Q38PanelRead(a)^1;
 		if (current==target && a==TT_Q38_PEER_STOP_FETCH && closeFault==15) return 0x000742b7; // OLD image fault-entry opcode,not a safe jump
 		if (!current && a==TT_Q38_DISPATCH_PARK_FETCH && closeFault==16) return 0x001802b7; // OLD root fault entry
@@ -115,6 +118,19 @@ int main(int argc,char** argv)
 		assert(!f.Close() && f.lease->closePhase==10 && !f.io.stopExecuted && !f.io.endHolds && !f.io.restored
 			&& f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==TT_Q38_DISPATCH_PARK_FETCH);
 	}
+#ifdef PIONEER_Q38_INT_SFPU
+	for (bool late:{false,true}) for (unsigned target:{1U,60U,119U}) {
+		CloseFixture f(argv[1]); f.io.closing=true;
+		if (late) { f.io.target=target; f.io.closeFault=17; }
+		else f.io.core[target]->view[(TT_Q38_INT_SFPU_AFFINE_BASE-TT_Q38_PANEL_VIEW_BASE)/4]^=1;
+		assert(!f.Close() && f.lease->unsafe && f.banks.Quarantined()
+			&& f.io.stopExecuted==late && !f.io.endHolds && !f.io.restored
+			&& f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==TT_Q38_INT_SFPU_AFFINE_BASE);
+		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
+		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
+	}
+	puts("PASS integer SFPU prefix corruption before/after STOP:first/middle/last helper fully audited BEFORE any reset/restore; ALL owners retained, ZERO later IO");
+#endif
 	for (bool boot:{false,true}) {
 		CloseFixture f(argv[1],boot); f.io.closing=true; assert(f.Close() && f.lease->closed && !f.lease->unsafe);
 		assert(!boot || (f.io.endHolds==120 && f.io.restored==120));

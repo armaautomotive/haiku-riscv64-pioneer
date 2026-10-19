@@ -44,6 +44,50 @@ feature-off driver EXACT6dcf1e71,43control EXACT2df0e0f8,guard unchanged.
 Updater b70174c6 pins new apply/restore route;971 actual guard cases PASS.
 Evidence:/private/tmp/pioneer-q38-work-fast-native-20261019.lQIaCFsg.
 
+OFFLINE NEXT CANDIDATE,NOT INSTALLED:1b677ddfcd4383a2c74edf2652b51dc498c9775801d7a87967eacd9f5b52c53e,
+tag2026101900060004,PIONEER_Q38_INT_SFPU. Exact INTEGER matrix (Q4 two
+phases,Q8/Q6 four),then vector-unit affine accumulation retained in owned
+Dst108..111 instead of16 scalar affine loops/output stores per panel.
+ALL16 signed-integer dot bounds still checked on-card each panel;all
+finite metadata/source/NoC/completion/STOP checks remain. Final group
+exports16 finite FP32 values. No BF16 matrix/cache or approximate math.
+Integer dot SFPLOAD mode4 gives SM32,explicit RNE cast then the SAME
+non-fused FP32 multiply/add rounding points. No CPU reference in Work.
+
+Main8072B SHA fde1b6e905a4071294f547cd09f5e7c6da3dde5ec68d7886eaa4215b7ad560be,
+helper812B SHA dbd791594765c2240ee004d2e13e2af57df97aec511603772a07e316211786a0.
+Helper ONLY70b00..70e2c,inside ALREADY saved/owned immutable prefix;never
+overlaps stack6e000..70000,live operands70700..70a20,main72000..74000 or
+descriptors. Main retains original8KiB bound,boot/WAIT/STOP addresses and
+rootba267009 unchanged. ALL helper words participate in private prepare
+readback and unconditional END audit BEFORE STOP/reset/restore. No new
+mapping,public address,descriptor field or capability. Failed BF16 artifact
+is NOT used. Two peer and driver rebuilds EXACT;feature-off driver EXACT
+aaded0f7,ordinary43 EXACT2df0e0f8,guard EXACTd1ce2aa4,old Q4 peer EXACT60a8a7b9.
+
+ASan/UBSan actual RV32+NoC+Tensix+SFPU full-K Q8/Q4/Q6 repeated and N256,
+changed inputs,ALL-zero negative-zero canonicalization,dot-range faults,
+real model head/tail rows,physical ownership,duplicate inert/STOP PASS
+(final peer AXst0OyZ). Actual root+new peers Work/repeated/checked PASS
+mQx3LJb0;extracted actual handler/retention nIiDhOOC PASS. Actual END
+I5jtB72E plus final nadbIHEl prove first/middle/last prefix corruption before
+or after STOP prevents ANY hold/restore,retains ALL and allows ZERO later IO.
+Before-STOP faults also prohibit STOP. Affine arithmetic072Dtcck
+passed1048576 exact independent FP32 comparisons. Protocol18 sequences
+Rw3w9bU0 PASS. Updater99d1bda6 pins apply/restore-work-int-sfpu;1031 actual
+filesystem/hash/handshake/owner/failure cases PASS. Staged only,DO NOT
+replace the active full-model benchmark. No native SFPU speed claim yet.
+
+Separate small host improvement:PioneerQ38CohortWave caches the immutable
+layout metadata reference within its bound build loop,avoiding repeated
+Parts()/fstat per worker. Before/after source/epoch checks remain;new Work
+inferencebda16c7c is offline-built,not yet native-tested. Current benchmark
+still uses2ecb16b4. This is NOT CPU learned-matrix validation/removal of
+source checks. Dirty llama.cpp remains unmodified and unbuilt.
+Host adapter UJ9TJOmN passed all498 matrices x1/7/120 workers,21234 waves,
+atomic refusal of40 corrupted replies/inputs/counters+10 stale/forged wave
+fields,source/epoch checks. Updated span/session/client d6h6tWUp PASS.
+
 October19,15:51 Vancouver (22:51 UTC) WORK STAGING / Q4 / PRELOAD NATIVE PASS:
 Current guarded55 e44c3e3c69a37a04639ae9e816bd80fa043be531752b88738632aef96d092929,
 tag2026101900060001,generation20. Idle after successful strict-span FFN

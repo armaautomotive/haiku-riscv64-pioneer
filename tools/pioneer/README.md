@@ -44,6 +44,18 @@ CXX='c++ -DPIONEER_Q38_SPAN_FAST' sh tools/pioneer/tests/run_pioneer_q38_span_se
 These remain fixed-public test programs, not installed 27B Assistant targets.
 20 tokens/sec and whole-GPU model execution have **not** been achieved.
 
+The next **offline-only** compute candidate is `PIONEER_Q38_INT_SFPU=1`:
+the matrix stays integer, while its repeated affine accumulation moves
+from scalar RISC loops into the card's vector unit and remains in Dst.
+It is not the failed BF16 path. Full-width repeated calculations and real
+model rows pass independent instruction-model tests, but native correctness
+and speed still need qualification. Build/test it without touching a card:
+
+```sh
+sh tools/pioneer/build_qwen38_int_sfpu_persistent_image.sh SDK_DIRECTORY /absolute/new-integer-peer-directory
+sh tools/pioneer/tests/run_pioneer_q38_int_sfpu_tests.sh INTEGER_PEER_DIRECTORY WORK_COHORT_ROOT_DIRECTORY PUBLIC_27B_GGUF
+```
+
 ## Experimental Qwen 27B execution modes (October 19)
 
 The experimental 27B engine now has **separate executables**, selected at

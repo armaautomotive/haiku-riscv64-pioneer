@@ -65,7 +65,13 @@ template<class IO> bool PioneerQ38DispatchCodeMatches(IO& io,unsigned worker,Pio
 		diagnostic->closeDetail[2]=entry; diagnostic->closeDetail[3]=TT_Q38_DISPATCH_BOOT;
 	}
 	for (uint32_t a=0x70000;a<0x74000;a+=4) if (!worker || PioneerQ38PanelImmutable(a)) {
-		uint32_t actual=io.Q38PanelRead(a),expected=a<0x72000?0:PioneerQ38DispatchRoleWord(worker,(a-0x72000)/4);
+		uint32_t actual=io.Q38PanelRead(a),expected=a<0x72000?
+#ifdef PIONEER_Q38_INT_SFPU
+			PioneerQ38DispatchPrefixWord(worker,a)
+#else
+			0
+#endif
+			:PioneerQ38DispatchRoleWord(worker,(a-0x72000)/4);
 		if (actual!=expected && diagnostic && !diagnostic->closeDetail[0]) {
 			diagnostic->closeDetail[0]=0x300; diagnostic->closeDetail[1]=a;
 			diagnostic->closeDetail[2]=actual; diagnostic->closeDetail[3]=expected;
@@ -91,7 +97,13 @@ template<class IO> bool PioneerQ38DispatchPrepareRole(IO& io,const tt_dram_sampl
 	image.saved=true;
 	if (!PioneerQ38DispatchSources(io,dram,banks,node,0x47800)) return PioneerQ38DispatchQuarantine(lease,banks);
 	image.dirty=true;
-	for (uint32_t a=0x70000;a<0x74000;a+=4) io.Q38PanelWrite(a,a<0x72000?0:PioneerQ38DispatchRoleWord(worker,(a-0x72000)/4));
+	for (uint32_t a=0x70000;a<0x74000;a+=4) io.Q38PanelWrite(a,a<0x72000?
+#ifdef PIONEER_Q38_INT_SFPU
+		PioneerQ38DispatchPrefixWord(worker,a)
+#else
+		0
+#endif
+		:PioneerQ38DispatchRoleWord(worker,(a-0x72000)/4));
 	io.RuntimeCodeWrite(0,TT_Q38_DISPATCH_BOOT);
 	if (!PioneerQ38DispatchCodeMatches(io,worker)) return PioneerQ38DispatchQuarantine(lease,banks);
 	image.ready=true;

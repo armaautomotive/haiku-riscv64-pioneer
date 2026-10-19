@@ -110,6 +110,12 @@ case "${PIONEER_Q38_SPAN_REUSE_CODE:-0}" in
     extra="$extra -DPIONEER_Q38_SPAN_REUSE_CODE";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_INT_SFPU:-0}" in
+ 0) ;;
+ 1) [ "$variant" = 55 ] && [ "${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_INT_SFPU";;
+ *) exit 2;;
+esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \

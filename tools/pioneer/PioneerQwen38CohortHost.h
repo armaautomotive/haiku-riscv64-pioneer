@@ -72,9 +72,12 @@ public:
 		stage.type=t.type; stage.inputs=unsigned(t.inputs); stage.outputs=unsigned(t.outputs); stage.tensor=schedule.Tensor(); stage.wave=number;
 		// Revalidate fragment identity against THIS layout,not merely an
 		// equally shaped second model or a user-supplied physical pointer.
+		// This is private immutable metadata: authenticate its owner before
+		// and after the loop, not twice (and multiple fstats) per worker.
+		const auto& parts=layout.Parts();
 		for (const auto& j:schedule.Jobs()) if (j.wave==number) {
-			if (j.worker!=stage.workers || j.worker>=120 || j.fragment>=layout.Parts().size()) return false;
-			const auto& p=layout.Parts()[j.fragment];
+			if (j.worker!=stage.workers || j.worker>=120 || j.fragment>=parts.size()) return false;
+			const auto& p=parts[j.fragment];
 			unsigned groupBytes=16*PioneerQ38TiledRowBytes(t.type,t.inputs);
 			if (p.kind!=PIONEER_Q38_WEIGHT || p.tensor!=stage.tensor || p.bank!=j.bank || !groupBytes || p.firstRow>j.firstRow
 				|| j.firstRow>stage.outputs || j.groups*16>stage.outputs-j.firstRow || j.firstRow-p.firstRow>p.rows

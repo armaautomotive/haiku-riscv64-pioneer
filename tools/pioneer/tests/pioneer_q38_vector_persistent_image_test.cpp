@@ -7,6 +7,8 @@
 #include "pioneer_q38_vector_rows_image_test.cpp"
 #ifdef PIONEER_Q38_TEST_ACCUMULATOR
 using VectorPersistent=VectorRows<PersistentRows,true,true,true>;
+#elif defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
+using VectorPersistent=VectorRows<PersistentRows,true,false,true>;
 #else
 #ifdef PIONEER_Q38_TEST_BFLOAT
 using VectorPersistent=VectorRows<PersistentRows,true,true>;
@@ -14,12 +16,14 @@ using VectorPersistent=VectorRows<PersistentRows,true,true>;
 using VectorPersistent=VectorRows<PersistentRows,true>;
 #endif
 #endif
-#ifdef PIONEER_Q38_TEST_BFLOAT
+#if defined(PIONEER_Q38_TEST_BFLOAT) || defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
 static void FreshInputs(VectorPersistent& m)
 {
 	// Poison ALL previous derived cache words and change the public input
 	// between completed jobs. Actual code must regenerate every word.
+#ifdef PIONEER_Q38_TEST_BFLOAT
 	for (unsigned w=0;w<m.inputs/2;w++) m.memory[0x95000+w*4]=0x7fc17fc1;
+#endif
 	for (unsigned k=0;k<m.inputs;k++) {
 		m.vector[k]=PioneerInt8Operand(int((k*37+19)%256)-128);
 		uint32_t& word=m.root[0xa0000+(k/2)*4]; unsigned shift=(k%2)*16;
@@ -33,7 +37,7 @@ int main(int argc,char** argv)
 	for (unsigned type:{8U,12U,14U}) for (unsigned k:{5120U,6144U,17408U}) {
 		VectorPersistent m(argv[1],type,k,k==17408?3:1); m.delay=3; assert(m.Boot());
 		assert(m.Job(1)); m.NextPackets();
-#ifdef PIONEER_Q38_TEST_BFLOAT
+#if defined(PIONEER_Q38_TEST_BFLOAT) || defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
 		FreshInputs(m);
 #endif
 		assert(m.Job(2));
@@ -53,12 +57,27 @@ int main(int argc,char** argv)
 	for (unsigned type:{8U,12U,14U}) {
 		VectorPersistent m(argv[1],type,5120,16); assert(m.Boot() && m.Job(1));
 		m.NextPackets();
-#ifdef PIONEER_Q38_TEST_BFLOAT
+#if defined(PIONEER_Q38_TEST_BFLOAT) || defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
 		FreshInputs(m);
 #endif
 		assert(m.Job(2) && m.Job(3,2));
 		printf("OFFLINE VECTOR persistent type%u MAXIMUM N256 repeated exact/STOP PASS\n",type);
 	}
+#ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
+	for (unsigned type:{8U,12U,14U}) {
+		VectorPersistent m(argv[1],type,5120,3); m.negativeDotZero=true;
+		unsigned zero=PioneerInt8Operand(0);
+		for (unsigned k=0;k<m.inputs;k++) m.vector[k]=uint16_t(zero);
+		for (unsigned w=0;w<m.inputs/2;w++) m.root[0xa0000+w*4]=zero|(zero<<16);
+		assert(m.Boot() && m.Job(1)); m.NextPackets(); FreshInputs(m);
+		assert(m.Job(2) && m.Job(3,2)); // no stale zero/accumulator state
+		VectorPersistent bad(argv[1],type,5120,1); bad.corruptDotRange=true;
+		assert(bad.Boot() && !bad.Job(1)); unsigned requests=bad.requests;
+		for (unsigned i=0;i<1000;i++) bad.StepBlock();
+		assert(bad.requests==requests); // checked integer bound still parks BEFORE further NoC work
+	}
+	puts("PASS integer SFPU actual image: ALL-zero SM32 negative-zero canonicalization, changed inputs/repeated groups, per-panel integer bound faults park without another packet");
+#endif
 	for (unsigned field=0;field<8;field++) {
 		VectorPersistent m(argv[1],8,5120,1); m.memory[0x74040+field*4]^=1;
 		assert(!m.Boot() && !m.requests && !m.matrixInstructions);

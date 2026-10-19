@@ -8,6 +8,9 @@
 #include <string>
 struct BlockMachine:RuntimeMachine {
 	std::vector<uint8_t> code,tile;
+#ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
+	std::vector<uint8_t> affineCode;
+#endif
 	std::map<uint32_t,uint32_t> memory;
 	uint32_t fp[32]={}; unsigned type,count,floatOps=0,minStack=0x70000;
 	float scale;
@@ -18,6 +21,15 @@ struct BlockMachine:RuntimeMachine {
 		assert(Word(boot,0)==TT_Q38_BLOCK_BOOT);
 		if (!stream) for (unsigned w=0;w<2048;w++) assert(PioneerQ38BlockWord(w)==(w<code.size()/4?Word(code,w*4):0));
 		l1[0]=Word(boot,0); for (unsigned w=0;w<code.size()/4;w++) l1[Index(0x72000+w*4)]=Word(code,w*4);
+#ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
+		// A cooperative test also constructs the UNCHANGED root, which has
+		// no affine helper. The integer peer constructor requires its pin.
+		if (FILE* f=fopen((path+"/affine.bin").c_str(),"rb")) {
+			fclose(f); affineCode=Read((path+"/affine.bin").c_str());
+			assert(!affineCode.empty() && affineCode.size()<=0x500 && !(affineCode.size()&3));
+			for (unsigned w=0;w<affineCode.size()/4;w++) l1[Index(0x70b00+w*4)]=Word(affineCode,w*4);
+		}
+#endif
 		tile.assign(PioneerQ38PanelTileBytes(type),0); unsigned bytes=PioneerQ38BlockBytes(type);
 		for (unsigned row=0;row<16;row++) {
 			for (unsigned b=0;b<bytes;b++) tile[b*16+row]=uint8_t(b*37+row*59+trial*13);
@@ -42,10 +54,17 @@ struct BlockMachine:RuntimeMachine {
 		assert(!(a&3)); if (Range(a,0x72000,8192)) return 2048+(a-0x72000)/4;
 		return RuntimeMachine::Index(a);
 	}
-	bool CodeAddress(uint32_t a) const override { return a==0x6000 || Range(a,0x72000,unsigned(code.size())); }
+	bool CodeAddress(uint32_t a) const override { return a==0x6000 || Range(a,0x72000,unsigned(code.size()))
+#ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
+		|| Range(a,0x70b00,unsigned(affineCode.size()))
+#endif
+		; }
 	unsigned StepLimit() const override { return 10000000; }
 	uint32_t Load(uint32_t a) override {
 		assert(!(a&3) && !Range(a,0xffb20000,0x4000)); // NO NoC/PCI/DMA access
+#ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
+		if (Range(a,0x70b00,unsigned(affineCode.size()))) return l1[Index(a)];
+#endif
 		if (Range(a,0x72000,unsigned(code.size()))) return l1[Index(a)];
 		if (Range(a,0x6e000,8192) || Range(a,0x74000,20) || Range(a,0x90000,unsigned(tile.size())) || Range(a,0x91000,640)) {
 			assert(memory.count(a)); return memory.at(a);

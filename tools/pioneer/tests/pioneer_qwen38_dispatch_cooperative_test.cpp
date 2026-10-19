@@ -12,6 +12,8 @@
 #include "pioneer_q38_vector_rows_image_test.cpp"
 #ifdef PIONEER_Q38_TEST_ACCUMULATOR
 using CooperativePeer=VectorRows<PersistentRows,true,true,true>;
+#elif defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
+using CooperativePeer=VectorRows<PersistentRows,true,false,true>;
 #else
 #ifdef PIONEER_Q38_TEST_BFLOAT
 using CooperativePeer=VectorRows<PersistentRows,true,true>;

@@ -4,6 +4,16 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_INT_SFPU
+#if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
+#error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
+#endif
+#include "PioneerQ38IntSfpuPeerImage.h"
+static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
+{
+ return worker>=120?UINT32_MAX:worker?PioneerQ38IntSfpuPrefixWord(address):0;
+}
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "PioneerQ38CompactRootImage.h"
 #endif
@@ -557,6 +567,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_INT_SFPU
+ return worker>=120?UINT32_MAX:worker?PioneerQ38IntSfpuPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
  return worker>=120?UINT32_MAX:worker?PioneerQ38ProgressPeerWord(word):PioneerQ38DispatchRootWord(word);
 #else

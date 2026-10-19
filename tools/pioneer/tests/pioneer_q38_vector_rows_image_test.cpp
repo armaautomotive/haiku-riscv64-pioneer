@@ -322,6 +322,8 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 };
 #ifdef PIONEER_Q38_TEST_ACCUMULATOR
 using VectorRowsMachine=VectorRows<RowsMachine,false,true,true>;
+#elif defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
+using VectorRowsMachine=VectorRows<RowsMachine,false,false,true>;
 #else
 #ifdef PIONEER_Q38_TEST_BFLOAT
 using VectorRowsMachine=VectorRows<RowsMachine,false,true>;

@@ -14,11 +14,13 @@ struct AccProgram {
 int main()
 {
 	unsigned sequences=0;
-	for (unsigned type:{8U,12U,14U}) for (unsigned mode=0;mode<3;mode++) {
+	for (bool integer:{false,true}) for (unsigned type:{8U,12U,14U}) for (unsigned mode=0;mode<3;mode++) {
 		bool first=mode==0,metadata=mode!=2; AccProgram p;
-		assert(PioneerQ38SfpuAccumulator(p,type,first,metadata,0x3f000000,-2048));
-		uint32_t c[128]={}; c[1]=0x203c8000; c[64]=0x10001e; c[65]=16; c[72]=14; c[84]=0x400040;
-		unsigned thread5=4,imports=0,zeros=0;
+		assert((integer?PioneerQ38SfpuAccumulator<AccProgram,true>(p,type,first,metadata,0x3f000000,-2048):
+			PioneerQ38SfpuAccumulator(p,type,first,metadata,0x3f000000,-2048)));
+		uint32_t rawFormat=integer?0xa03c8000:0x203c8000,metadataFormat=integer?0xa0200000:0x20200000;
+		uint32_t c[128]={}; c[1]=rawFormat; c[64]=0x10001e; c[65]=16; c[72]=14; c[84]=0x400040;
+		unsigned thread5=4,imports=0,zeros=0,dots=0;
 		for (auto e:p.events) {
 			if (e.kind==2) {
 				assert(e.index==1 || e.index==64 || e.index==65 || e.index==72 || e.index==84 || e.index==76);
@@ -28,19 +30,20 @@ int main()
 			unsigned code=e.value>>24;
 			if (e.value==0xb2050000 || e.value==0xb2050004) thread5=e.value&65535;
 			if (code==0x42) {
-				assert(e.value==0x42000081 && !thread5 && c[1]==0x20200000 && c[64]==0x100010 && c[65]==1 && !c[72]);
+				assert(e.value==0x42000081 && !thread5 && c[1]==metadataFormat && c[64]==0x100010 && c[65]==1 && !c[72]);
 				assert((c[76]+1)*16==0x91200+imports*64 && c[84]==0x400000+(100+imports*4)*16);
 				imports++;
 			}
 			if (code>=0x70 && code<=0x90) {
-				assert(thread5==4 && c[1]==0x203c8000 && c[64]==0x10001e && c[65]==16 && c[72]==14);
+				assert(thread5==4 && c[1]==rawFormat && c[64]==0x10001e && c[65]==16 && c[72]==14);
+				if (code==0x70 && !((e.value>>20)&15)) { assert(((e.value>>16)&15)==(integer?4U:3U)); dots++; }
 				if (code==0x72 && ((e.value>>20)&15)==7) {
 					unsigned row=(e.value&1023)&~3U; assert(first && (row==96 || row==100 || row==108)); zeros++;
 				}
 			}
 		}
 		assert(imports==(metadata?(type==14?1U:2U):0U) && zeros==(first?6U:0U));
-		assert(thread5==4 && c[1]==0x203c8000 && c[84]==0x400040 && p.events.back().kind==3); sequences++;
+		assert(dots==2 && thread5==4 && c[1]==rawFormat && c[84]==0x400040 && p.events.back().kind==3); sequences++;
 	}
 	for (unsigned type:{0U,99U}) { AccProgram p; assert(!PioneerQ38SfpuAccumulator(p,type,true,true,0x3f800000,0) && p.events.empty()); }
 	for (unsigned scale:{0x2f7fffffU,0x47800001U,0x7f800000U,0x7fc00000U}) { AccProgram p; assert(!PioneerQ38SfpuAccumulator(p,12,true,true,scale,0) && p.events.empty()); }

@@ -18,12 +18,13 @@ case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in
  6) source=blackhole_qwen38_bfloat_persistent.cpp;;
  7) source=blackhole_qwen38_sfpu_accumulator_persistent.cpp;;
  8) [ "${PIONEER_Q38_PEER_PROGRESS:-0}" = 1 ] || exit 2; source=blackhole_qwen38_progress_persistent.cpp;;
+ 9) source=blackhole_qwen38_int_sfpu_persistent.cpp;;
  *) exit 2;;
 esac
 case "$output" in /*) ;; *) exit 2;; esac
 case "${PIONEER_Q38_Q4_TWO_PHASE:-0}" in
  0) q4_phases=;;
- 1) [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 5 ] || exit 2
+ 1) case "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" in 5|9) ;; *) exit 2;; esac
     q4_phases=-DPIONEER_Q38_Q4_TWO_PHASE;;
  *) exit 2;;
 esac
@@ -35,10 +36,12 @@ umask 077; mkdir -m 700 "$output"
  -march=rv32imf -mabi=ilp32 -fstack-usage $dwarf $q4_phases -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_SCALE \
  -c "$directory/$source" -o "$output/program.o"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax $fault_as "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
-"$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_qwen38_block.ld" \
+linker=blackhole_qwen38_block.ld; sections='boot text'
+if [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 9 ]; then linker=blackhole_qwen38_int_sfpu.ld; sections='boot text affine'; fi
+"$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/$linker" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"
-for section in boot text; do "$cross-objcopy" -O binary -j ".$section" "$output/program.elf" "$output/$section.bin"; done
+for section in $sections; do "$cross-objcopy" -O binary -j ".$section" "$output/program.elf" "$output/$section.bin"; done
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
 "$cross-objdump" -d "$output/program.elf" > "$output/program.disassembly"
-shasum -a 256 "$output/boot.bin" "$output/text.bin"
+for section in $sections; do shasum -a 256 "$output/$section.bin"; done
 printf 'OFFLINE persistent peer only;NO driver selects it/NO native or graph qualification: %s\n' "$output"
