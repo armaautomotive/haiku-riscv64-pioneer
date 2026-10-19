@@ -1,5 +1,14 @@
 # Native build status
 
+October18,20:18 Vancouver (October19,03:18 UTC) UPDATE: user reports
+screen blank/not Linux and some NVMe I/O lines; EXACT wording/photo is
+still needed. Do not treat earlier Linux kernel entry as a usable desktop,
+or infer a P100A/whole-board failure. Fresh bounded SSH again timed out
+before any remote command; network ping still responds. UART log remains
+unchanged after early console switches to tty1. No storage/card reads,
+boot configuration changes or power pulses performed. Asked for screen
+photo/exact errors; leave power/cards/cables unchanged pending evidence.
+
 October19,01:07 UTC HANDOFF:after full off rest,ONE normal channel1 on
 pulse around00:59:29 produced fresh ZSBL/u-root then normal Linux6.1.31
 NVMe-root command-line output. Power is ON,Linux booted;no Haiku/accelerator
