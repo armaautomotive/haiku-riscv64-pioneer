@@ -24,7 +24,7 @@ def check(mode, fault=None):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
             return target
-        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'guardsha']}
+        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'guardsha']}
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
             '--apply-a': ('hashb', 'hasha', 'tagb'), '--apply-b': ('hasha', 'hashb', 'taga'),
@@ -41,6 +41,8 @@ def check(mode, fault=None):
             '--apply-work-q4': ('hashwc', 'hashw4', 'tagwc'), '--restore-work-q4': ('hashw4', 'hashwc', 'tagw4'),
             '--apply-work-q4-inline': ('hashw4', 'hashw4i', 'tagw4'), '--restore-work-q4-inline': ('hashw4i', 'hashw4', 'tagw4i'),
             '--apply-work-span': ('hashw4i', 'hashwsp', 'tagw4i'), '--restore-work-span': ('hashwsp', 'hashw4i', 'tagwsp'),
+            '--apply-work-fast-span': ('hashwsp', 'hashwspf', 'tagwsp'), '--restore-work-fast-span': ('hashwspf', 'hashwsp', 'tagwspf'),
+            '--apply-work-span-code-reuse': ('hashwspf', 'hashwspc', 'tagwspf'), '--restore-work-span-code-reuse': ('hashwspc', 'hashwspf', 'tagwspc'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -59,6 +61,8 @@ def check(mode, fault=None):
         put('candidatew4', payloads['hashw4'])
         put('candidatew4i', payloads['hashw4i'])
         put('candidatewsp', payloads['hashwsp'])
+        put('candidatewspf', payloads['hashwspf'])
+        put('candidatewspc', payloads['hashwspc'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -92,7 +96,7 @@ def check(mode, fault=None):
             ' *) exit 1;;\nesac\n').encode()
         client = put('client', client_body)
         client.chmod(0o700)
-        if fault in ['candidatea', 'candidateb', 'candidatep', 'candidateq', 'candidatec', 'candidatef', 'candidater', 'candidatex', 'candidatew', 'candidatewp', 'candidatews', 'candidatewc', 'candidatew4', 'candidatew4i', 'candidatewsp', 'guardsource', 'client', 'installed', 'guard']:
+        if fault in values and (fault.startswith('candidate') or fault in ['guardsource', 'client', 'installed', 'guard']):
             path(values[fault]).write_bytes(b'wrong')
         if fault in ['candidatea-link', 'client-link', 'guard-link', 'installed-link']:
             target = path(values[fault.removesuffix('-link')])
@@ -151,8 +155,12 @@ if __name__ == '__main__':
               'installed-link', 'device-link', 'stage-link', 'incoming', 'guardincoming', 'backup', 'platform']
     hot = ['guard', 'guard-link', 'cold', 'active', 'open', 'tag', 'generation', 'quiesced', 'guard-version',
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
-    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span']:
-        candidate = {'--apply-profile': ['candidatep'], '--apply-batch': ['candidateq'], '--apply-compact': ['candidatec'], '--apply-fast': ['candidatef'], '--apply-reuse': ['candidater'], '--restore-reuse': ['candidatef'], '--apply-cross-reuse': ['candidatex'], '--restore-cross-reuse': ['candidater'], '--apply-work': ['candidatew'], '--restore-work': ['candidatex'], '--apply-work-profile': ['candidatewp'], '--restore-work-profile': ['candidatew'], '--apply-work-posted': ['candidatews'], '--restore-work-posted': ['candidatew'], '--apply-work-cohort': ['candidatewc'], '--restore-work-cohort': ['candidatews'], '--apply-work-q4': ['candidatew4'], '--restore-work-q4': ['candidatewc'], '--apply-work-q4-inline': ['candidatew4i'], '--restore-work-q4-inline': ['candidatew4'], '--apply-work-span': ['candidatewsp'], '--restore-work-span': ['candidatew4i']}.get(mode, [])
+    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span', '--apply-work-fast-span', '--restore-work-fast-span', '--apply-work-span-code-reuse', '--restore-work-span-code-reuse']:
+        candidate = {'--apply-profile': ['candidatep'], '--apply-batch': ['candidateq'], '--apply-compact': ['candidatec'], '--apply-fast': ['candidatef'], '--apply-reuse': ['candidater'], '--restore-reuse': ['candidatef'], '--apply-cross-reuse': ['candidatex'], '--restore-cross-reuse': ['candidater'], '--apply-work': ['candidatew'], '--restore-work': ['candidatex'], '--apply-work-profile': ['candidatewp'], '--restore-work-profile': ['candidatew'], '--apply-work-posted': ['candidatews'], '--restore-work-posted': ['candidatew'], '--apply-work-cohort': ['candidatewc'], '--restore-work-cohort': ['candidatews'], '--apply-work-q4': ['candidatew4'], '--restore-work-q4': ['candidatewc'], '--apply-work-q4-inline': ['candidatew4i'], '--restore-work-q4-inline': ['candidatew4'], '--apply-work-span': ['candidatewsp'], '--restore-work-span': ['candidatew4i'], '--apply-work-fast-span': ['candidatewspf'], '--restore-work-fast-span': ['candidatewsp']}.get(mode, [])
+        if mode == '--apply-work-span-code-reuse':
+            candidate = ['candidatewspc']
+        elif mode == '--restore-work-span-code-reuse':
+            candidate = ['candidatewspf']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

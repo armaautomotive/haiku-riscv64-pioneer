@@ -145,15 +145,78 @@ int main(int argc,char** argv)
 		NativeSpanContext c(argv[1]); Bind(cookie,c);
 		for (unsigned bank=0;bank<7;bank++) {
 			auto request=Request(1048576,bank); unsigned loads=c.io.wideLoads;
+			unsigned codeLoads=c.io.codeLoads; bool prepared=c.q38Span!=nullptr;
 			assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
 			assert(request->result.state==TT_RUNTIME_PASSED && !request->result.host_exact && !request->result.matched_words
 				&& !request->result.recovery_required && request->result.pages==256 && loads==c.io.wideLoads);
 			assert(c.io.lastDeviceWords.size()==262144);
 			for (unsigned w=0;w<262144;w++) assert(c.io.lastDeviceWords[w]==request->data[w]);
+#ifdef PIONEER_Q38_SPAN_REUSE_CODE
+			if (prepared) assert(c.io.codeLoads==codeLoads); // not even ONE main-code read per Work job
+#else
+			if (prepared) assert(c.io.codeLoads==codeLoads+8192);
+#endif
 		}
 		tt_q38_span_end end={1,0,0,0}; assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK && end.closed);
 		Unbind();
 	}
+#ifdef PIONEER_Q38_SPAN_REUSE_CODE
+	for (unsigned fault=0;fault<15;fault++) {
+		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
+		if (!fault) c.io.noCompletion=true;
+		if (fault==1) c.io.corruptCounter=true;
+		if (fault==2) c.io.sourceFault=11;
+		if (fault==3) c.io.summaryFault=7;
+		if (fault==4) c.io.descriptorFault=4;
+		if (fault==5) c.io.commandFault=3;
+		if (fault==6) c.io.othersHeld=false;
+		if (fault==7) c.io.latePcFault=3;
+		if (fault==8) c.io.lateMapLoss=true;
+		if (fault==9) c.io.lateCohort=true;
+		if (fault==10) c.io.authorityChanged=true;
+		if (fault==11) c.io.packetFault=2;
+		if (fault==12) c.io.dropReset=1;
+		if (fault==13) c.io.dropPci=1;
+		if (fault==14) c.io.stageLost=true;
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
+			&& request->result.recovery_required && !c.uploadedPages && c.Unsafe()
+			&& c.dispatchOwnerRetained && sColdRecoveryRequired);
+		unsigned touches=c.io.touches; tt_q38_span_end end={1,0,0,0};
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_DEV_NOT_READY
+			&& c.io.touches==touches); Unbind();
+	}
+	{
+		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
+		// Simulate an out-of-contract bit flip in UNUSED code padding AFTER
+		// setup. Work reuses the immutable proof; strict MUST see it before
+		// its first launch. END MUST detect it before ANY restoration.
+		c.io.view[(0x73ffc-TT_Q38_SPAN_VIEW_BASE)/4]^=1;
+		request->offset=4096;
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK
+			&& request->result.state==TT_RUNTIME_PASSED && c.uploadedPages==2);
+		unsigned loads=c.io.codeLoads,writes=c.io.panelWrites,bulk=c.io.bulkWrites;
+		tt_q38_span_end end={1,0,0,0};
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_OK
+			&& !end.closed && end.recovery_required && c.Unsafe() && c.dispatchOwnerRetained
+			&& c.io.codeLoads>loads && c.io.panelWrites==writes && c.io.bulkWrites==bulk);
+		unsigned touches=c.io.touches;
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end))==B_DEV_NOT_READY
+			&& c.io.touches==touches); Unbind();
+	}
+	for (bool strict:{false,true}) {
+		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request();
+		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);
+		if (strict) c.io.view[(0x73ffc-TT_Q38_SPAN_VIEW_BASE)/4]^=1;
+		else c.io.entry^=1; // boot control remains live-checked EVEN in Work
+		request->offset=4096; unsigned starts=c.io.rootStarts;
+		assert(Q38SpanControl(&cookie,strict?TT_PCI_PROBE_Q38_SPAN_UPLOAD:TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,
+			request.get(),sizeof(*request))==B_OK && request->result.recovery_required
+			&& c.io.rootStarts==starts && c.Unsafe() && c.uploadedPages==1);
+		Unbind();
+	}
+	puts("PASS Work immutable code proof reuse: ZERO per-job main-code reads, live boot checked, strict code checks unchanged, END ALWAYS full-audits before restoration and retains ALL on corruption; NO DEVICE IO");
+#endif
 	{
 		NativeSpanContext c(argv[1]); Bind(cookie,c); auto request=Request(); c.io.deviceCorruptPacket=0;
 		assert(Q38SpanControl(&cookie,TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,request.get(),sizeof(*request))==B_OK);

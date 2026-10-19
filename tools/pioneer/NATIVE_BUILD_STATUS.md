@@ -1,5 +1,49 @@
 # Native build status
 
+October19,16:17 Vancouver (23:17 UTC) FAST LOADER / CODE-PROOF REUSE PASS:
+Current guarded55 aaded0f7924236a4a6995d58174587f92165520d829c2b33a811aa18476f4137,
+tag2026101900060003,generation22. A bounded full-model four-token Work test
+is now running:full-model-work-span-code-reuse-four-20261019-a.log. It must
+finish with clean END before any new card job/reload. NO new model token
+rate yet;20tok/s is NOT achieved. SAME guard d1ce2aa4;no reboot/power/SD or
+Assistant action. Dirty llama.cpp and unrelated tools/firefox stay untouched.
+
+Prior fast6dcf1e71/gen21 passed BOTH strict and Work transports:21 jobs each,
+7512064 original bytes. The separate Work debug client independently read
+and compared EVERY byte after loader-code restoration;production does not.
+Strict remains exact/7 packets per chunk;Work has2 and ZERO host writes.
+Full authenticated FFN with Work2ecb16b4 then PASS,clean_end1,process exited,
+output SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+50.135MB source repack0.395589s,upload3.271648s vs prior bulk17.691281s
+(5.41x less upload wall time),first graph30.639059s,warm0.026674s.
+This confirms the Parts()/fstat warm regression is fixed on hardware.
+FFN log SHA c5d341c443686c76035a9131e8fb40a03344e7c773c7276014f50409891c7288.
+
+NEW opt-in PIONEER_Q38_SPAN_REUSE_CODE requires SPAN_FAST. Work reuses ONLY
+the fully audited immutable main-code proof established by Prepare. The
+exclusive lease blocks all other writers/compute;the actual qualified
+RV32/NoC image writes disjoint stack/status/data/command ranges,NEVER code.
+Every job still physically proves other cores held and checks live boot,
+mapping/source/command/counter/ACK/idle/PC/BME/bounds/terminal state. Strict
+still audits ALL code before/after EVERY job. BOTH modes unconditionally
+audit ALL code at END BEFORE any restore. An out-of-contract code bit flip
+is deliberately detected at END,not on every Work job. No new address/code
+or user capability. All UNKNOWN conditions retain ALL owners,NO later IO.
+
+Gen22 Work transport:21 PASS,7512064 independently matched bytes,clean END,
+EXIT0. Repeated1MiB calls0.03044..0.03134s vs gen21~0.0538s;small4KiB calls
+~0.0237s. Mixed-size21-job upload0.935390s includes first preparation;
+NOT pure PCIe bandwidth or generation speed. Log SHA
+9cac590c619191297fec92c1acc799a7352d00f7d317c8cdd8be64615820a4b2.
+ASan/UBSan actual service/session/client TRbFUgzz,strict-controller
+AYKVnQ33 and actual Work-image nmT5qbXH PASS. Negative controls preserve
+strict per-job corruption rejection,Work live boot rejection,and full END
+audit refusing restoration with ALL owners retained;15 Work safety faults
+still terminate with NO next device operation. Two driver rebuilds EXACT;
+feature-off driver EXACT6dcf1e71,43control EXACT2df0e0f8,guard unchanged.
+Updater b70174c6 pins new apply/restore route;971 actual guard cases PASS.
+Evidence:/private/tmp/pioneer-q38-work-fast-native-20261019.lQIaCFsg.
+
 October19,15:51 Vancouver (22:51 UTC) WORK STAGING / Q4 / PRELOAD NATIVE PASS:
 Current guarded55 e44c3e3c69a37a04639ae9e816bd80fa043be531752b88738632aef96d092929,
 tag2026101900060001,generation20. Idle after successful strict-span FFN

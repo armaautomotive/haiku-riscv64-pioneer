@@ -14,7 +14,7 @@ struct SpanControlIO:PanelIO {
 	std::vector<uint32_t> wideWords=std::vector<uint32_t>(TT_WIDE_OUTPUT_WORDS,0xabcdef00);
 	uint64_t widePhysical=UINT64_C(0x140000000),clock=0;
 	unsigned touches=0,pciWrites=0,rootStarts=0,rootStops=0,rootHolds=0,pcSamples=0;
-	unsigned wideLoads=0;
+	unsigned wideLoads=0,codeLoads=0;
 	std::vector<uint32_t> lastDeviceWords;
 	unsigned packetFault=0,summaryFault=~0U,descriptorFault=~0U,commandFault=~0U;
 	unsigned dropPci=0,dropReset=0,dropEntry=0,entryWrites=0;
@@ -35,7 +35,7 @@ struct SpanControlIO:PanelIO {
 	bool SelectRuntimeCore(unsigned w) { Touch(); return w==0; }
 	bool Q38PanelMappingStable() { Touch(); return !coreMapLost && mapping; }
 	bool BulkMappingStable() { Touch(); return !bulkMapLost; }
-	uint32_t Q38PanelRead(uint32_t a) { Touch(); return PanelIO::Q38PanelRead(a); }
+	uint32_t Q38PanelRead(uint32_t a) { Touch(); codeLoads+=a>=0x70000 && a<0x74000; return PanelIO::Q38PanelRead(a); }
 	void Q38PanelWrite(uint32_t a,uint32_t v) { Touch(); PanelIO::Q38PanelWrite(a,v); }
 	uint32_t RuntimeCodeRead(unsigned w) { Touch(); return PanelIO::RuntimeCodeRead(w); }
 	void RuntimeCodeWrite(unsigned w,uint32_t v) { Touch(); if (++entryWrites!=dropEntry) PanelIO::RuntimeCodeWrite(w,v); }

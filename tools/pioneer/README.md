@@ -19,10 +19,19 @@ bank/offset/inline data, not physical addresses or code.
 The strict loader passed all-seven-bank hardware tests and an authenticated
 full FFN graph. Its 50.1 MB of weights loaded in 7.27 seconds versus 17.69
 seconds previously, with identical final output. This is a loading result,
-not tokens/sec. A separate Work loader (`PIONEER_Q38_SPAN_FAST=1`) is still
-under native qualification: it removes data comparisons/echo transfers but
-retains DMA completion and memory-safety proofs. Its independent debug
-client reads back every test byte; production Work does not. See
+not tokens/sec. The separate Work loader (`PIONEER_Q38_SPAN_FAST=1`) passed
+independent full-byte readback and the authenticated FFN test: the same
+weights uploaded in 3.27 seconds, with identical FFN output. It removes data
+comparisons/echo transfers but retains DMA completion and memory-safety
+proofs. Its independent debug client reads every test byte; Work does not.
+
+`PIONEER_Q38_SPAN_REUSE_CODE=1` additionally reuses the immutable loader-code
+proof within the exclusive pre-cohort lease. Work still checks live boot,
+all held cores and all transport safety state. Strict mode still audits
+every code word per job; **both** modes fully audit at setup and at END,
+before restoring code. Out-of-contract code mutation is detected at END,
+not on every Work upload. This passed independent byte-readback hardware
+testing, reducing 1 MiB calls from about 54 ms to 30 ms. See
 [native status](NATIVE_BUILD_STATUS.md) for exact build identities and limits.
 
 ```sh

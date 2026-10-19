@@ -6,11 +6,13 @@
 #include "PioneerRuntimeMatvec.h"
 #include "PioneerBulkUpload.h"
 #include "PioneerWideOutput.h"
-// OFFLINE research ONLY. NO driver/ABI includes/selects this controller.
 // Lease/result/descriptor/physical addresses are KERNEL-PRIVATE,not a wire
-// request. Future adapter MUST forbid any cohort/legacy compute while this
-// lease is open,and retain the entire context/cookie/ALL host owners after
+// request. The adapter forbids any cohort/legacy compute while this lease
+// is open,and retains the entire context/cookie/ALL host owners after
 // unsafe. Closing this image does NOT end the underlying bank/NIU owner.
+#if defined(PIONEER_Q38_SPAN_REUSE_CODE) && !defined(PIONEER_Q38_SPAN_FAST)
+#error Work code-proof reuse requires the separately qualified Work transport
+#endif
 enum { TT_Q38_SPAN_VIEW_BASE=0x6e000,TT_Q38_SPAN_VIEW_BYTES=0x42000,
 	TT_Q38_SPAN_VIEW_WORDS=TT_Q38_SPAN_VIEW_BYTES/4 };
 struct PioneerQ38SpanLease {
@@ -54,6 +56,21 @@ template<class IO> bool PioneerQ38SpanCodeMatches(IO& io)
 		if (io.Q38PanelRead(a)!=(a<0x72000?0:PioneerQ38SpanCodeWord((a-0x72000)/4))) return false;
 	return true;
 }
+template<class IO,bool Work> bool PioneerQ38SpanLiveCode(IO& io)
+{
+#ifdef PIONEER_Q38_SPAN_REUSE_CODE
+	// Work ONLY: Prepare proves ALL immutable code; Close proves it again
+	// BEFORE any restoration. The exclusive span lease blocks every other
+	// writer/compute path. Its qualified RV32/NoC image can write ONLY its
+	// disjoint stack/status/data/command extents, NEVER this code. Other
+	// cores are still physically proved held on EVERY upload. Keep the
+	// live boot/mapping check, not thousands of redundant PCIe code reads.
+	// This intentionally detects an out-of-contract code mutation at END,
+	// not on every Work job. Strict transport NEVER reuses this proof.
+	if constexpr (Work) return io.Q38PanelMappingStable() && io.RuntimeCodeRead(0)==TT_Q38_SPAN_BOOT;
+#endif
+	return PioneerQ38SpanCodeMatches(io);
+}
 template<class IO> bool PioneerQ38SpanPrepare(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& noc,
 	PioneerResidentBanks& banks,const tt_host_page_result& input,PioneerResidentLease& store,PioneerBulkUploadLease& bulk,
 	PioneerOutputBufferLease& transfer,PioneerWideOutputLease& wide,PioneerQ38SpanLease& lease)
@@ -95,7 +112,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 		return PioneerQ38SpanFail(io,banks,store,bulk,transfer,wide,lease);
 	};
 	if (!io.SpanOtherCoresHeld() || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x47800,0x402)
-		|| !PioneerQ38SpanCodeMatches(io)) return fail();
+		|| !PioneerQ38SpanLiveCode<IO,Work>(io)) return fail();
 	io.WideHostFence();
 	for (unsigned w=0;w<dataWords;w++) io.WideHostStore(w,data[w]);
 	io.WideHostFence();
@@ -138,7 +155,7 @@ template<class IO,bool Work=false> bool PioneerQ38SpanUpload(IO& io,const tt_dra
 		io.Pause();
 	}
 	if (!r.completed || !PioneerQ38SpanSources(io,dram,noc,banks,input,store,bulk,transfer,wide,lease,0x46800,0x406)
-		|| !PioneerQ38SpanCodeMatches(io)) return fail();
+		|| !PioneerQ38SpanLiveCode<IO,Work>(io)) return fail();
 	for (unsigned w=0;w<8;w++) r.after[w]=io.ResidentNocRead(PioneerQ38SpanCounter(w));
 	for (unsigned w=0;w<32;w++) r.summary[w]=io.BulkL1Read(3072+w);
 	if (!PioneerQ38SpanSummary(r.summary,d,r.before,r.after)) return fail();
