@@ -147,6 +147,23 @@ int main(int argc,char** argv)
 		}
 		assert(model.Stable()); fclose(f);
 	}
+#if defined(PIONEER_Q38_VECTOR_COOPERATIVE) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS)
+	for (unsigned type:{8U,12U,14U}) for (bool drop:{false,true}) {
+		CooperativeDispatch m(argv[1],argv[2],2,type,5120);
+		for (auto& peer:m.actual) {
+			for (unsigned row=0;row<64;row++) for (unsigned col=0;col<16;col++) {
+				peer->valid[row]=true; peer->dstInt[row][col]=0x3c6f3720; peer->dst[row][col]=123456.0f;
+			}
+			for (unsigned row=0;row<1024;row++) for (unsigned col=0;col<16;col++) {
+				peer->defined[row]=true; peer->physical[row][col]=uint16_t(row*1237+col*29+0x635a); peer->wrote[row][col]=true;
+			}
+			peer->dropClear=drop;
+		}
+		if (!drop) { assert(m.RunRoot()); for (auto& peer:m.actual) assert(peer->CorrectRows()); }
+		else assert(!m.RunRoot() && m.unknown && !m.gathers);
+	}
+	puts("PASS55 faster vector profile:ALL quant types with poisoned power-on Dst produce exact results;omitted clears refuse ALL output;NO native/speed claim");
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 	{
 		CooperativeDispatch m(argv[1],argv[2],2,8,5120);

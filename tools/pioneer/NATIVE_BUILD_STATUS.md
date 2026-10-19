@@ -1,5 +1,40 @@
 # Native build status
 
+October19,00:57 UTC NATIVE59 CLEAR FIX QUALIFIED:39 cases/78 repeats
+across synthetic and authenticated real first/last Q8/Q4/Q6 row groups,
+2/7/119 workers,ALL exact_errors0. SIX sessions ended with state2,
+active0,pci_restored1,host_released1,cold0,accepted1,KNOWN_CLEAN_END1;
+all processes gone. Both decoded/SrcA probes were enabled. Logs:
+/private/tmp/pioneer-q38-physical-clear-native-synthetic-20261018-s.log
+SHA4e30e556 (18 repeats/one END) and
+/private/tmp/pioneer-q38-physical-clear-native-qualification-20261018-s.log
+SHA89f6ef72 (60 repeats/five ENDs/QUALIFICATION_ALL_EXIT0).
+This qualifies the observed accumulator-clear correction,NOT full27B
+inference/speed/text quality. Haiku still64/fullRAM. Clean shutdown and
+channel1 off completed before00:54:22 UTC;rest until >=00:59:22 UTC.
+Last installed/known-clean diagnostic59 f51b2193 retained as fallback.
+
+OFFLINE fast55 promotion9ecb313b/peerbdc70e598048B ports ONLY physical
+64..95 clear and startup ALL-before-definition to production vector
+source;no decoded/SrcA probe reads. Existing automatic fidelity phases,
+fixed raw format/resident affine cache stay;ALL normal numeric/source/
+ownership/terminal/output/retention guards remain. Distinct55 namespace
+and its OWN native qualification required before model use. Root026229e2
+and scalar54 peercb799c3c/driver93f2c0db rebuilt BYTE-IDENTICAL;default43
+control2df0e0f8 unchanged. Original8192B bounds,peer stack368+main272.
+
+Fast55 actual root+peer repeated real rows/exact FP32+FP64 and ALL quant
+types poisoned-Dst/missing-clear negative controls PASS T0VDE5Zf.
+ASan/UBSan RUN YhsMtzac BOTH modes,END6TwwSWGh BOTH modes,
+handler/retention JGckxCz9,bootstrap a7I8cPFr PASS. Client61656a91;
+host inference21e18126 is EXACT frozen-ABI existing metadata-optimized
+build;clean c060ca97 HEADERS via git archive only/frozen four libraries,
+NO dirty llama implementation inspection/build/sync. No CPU learned
+reference/products/fallback in inference. Stage-t cold/unloaded helper
+helper654e5b0e requires qualified59 f51b2193/stage-s43/52/54 backups,
+keeps59 separately.472 actual installer guard/restore cases PASS;
+native still pending. No loaded-driver replacement.
+
 October19,00:46 UTC native physical-clear59 f51b2193 PASSED ALL18
 synthetic repeats (Q8/Q4/Q6 xK5120/6144/17408 x2) with exact_errors0.
 BOTH decoded/SrcA probes remained enabled. Then verified BANK_END state2,

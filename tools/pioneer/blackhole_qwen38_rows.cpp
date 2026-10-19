@@ -130,7 +130,10 @@ static void Matrix()
 {
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
 #ifdef PIONEER_Q38_VECTOR_PANEL
-	Emit(0x10280002); Drain(); // ONLY FP32 rows32..47;preserve defined vector/metadata rows
+	// Native59-qualified:clear BOTH physical halves of FP32 rows32..47.
+	// The former UseDst32b partial clear left the running dot uncleared on
+	// this card. Keep decoded/metadata rows live;never clear ALL here.
+	Emit(0x10080004); Emit(0x10080005); Drain();
 #else
 	Emit(0x10180000); Drain(); // original scalar path unchanged
 #endif
@@ -286,6 +289,8 @@ extern "C" unsigned block_main()
 	}
 	Setup();
 #ifdef PIONEER_Q38_VECTOR_PANEL
+	// Match native59's known startup state BEFORE defining vector rows.
+	Emit(0x10180000); Drain();
 	VectorPanelEmitter initEmitter; PioneerQ38VectorDstInit(initEmitter,
 #ifdef PIONEER_Q38_BFLOAT_PANEL
 		true
