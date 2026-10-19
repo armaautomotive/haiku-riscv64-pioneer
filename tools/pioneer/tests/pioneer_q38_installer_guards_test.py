@@ -42,6 +42,7 @@ def check(script, fault=None, restore=None, text_override=None):
         q52 = payloads[original.get('qualified52', original['old'])]
         q54 = payloads[original.get('qualified54', original['old'])]
         q55 = payloads[original.get('qualified55', original['old'])]
+        q59 = payloads[original.get('qualified59', original['old'])]
         path(original['stage']).mkdir(parents=True)
         installed = put(original['installed'], old)
         for key, pin in [('candidate', 'new'), ('client', 'clientsha'), ('inference', 'inferencesha')]:
@@ -58,6 +59,8 @@ def check(script, fault=None, restore=None, text_override=None):
                 put(original['prior'] + '/qualified54-frontend-backup', q54)
             if 'qualified55' in original:
                 put(original['prior'] + '/prior55-vector-backup', q55)
+            if 'qualified59' in original:
+                put(original['prior'] + '/qualified59-physical-clear-backup', q59)
         device = path(original['device'])
         device.parent.mkdir(parents=True)
         device.symlink_to('../../bin/tenstorrent_pci_probe')
@@ -75,6 +78,16 @@ def check(script, fault=None, restore=None, text_override=None):
             stage.symlink_to(other.name)
         elif fault == 'backup-exists':
             put(original['backup43'], b'preexisting user backup')
+        elif fault == 'backup59-exists':
+            put(original['backup59'], b'preexisting user backup')
+        elif fault in ['prior59', 'prior59-symlink']:
+            prior59 = path(original['prior'] + '/qualified59-physical-clear-backup')
+            if fault == 'prior59':
+                prior59.write_bytes(b'wrong prior59 backup')
+            else:
+                other = prior59.with_name(prior59.name + '.real')
+                prior59.rename(other)
+                prior59.symlink_to(other.name)
         elif fault == 'incoming-exists':
             put(original['incoming'], b'preexisting incoming')
         elif fault == 'device-link':
@@ -133,7 +146,7 @@ def check(script, fault=None, restore=None, text_override=None):
             assert result.returncode == 0 and installed.read_bytes() == new, (script.name, result.stdout, result.stderr)
             if restore:
                 result = subprocess.run(['/bin/sh', str(local), restore], capture_output=True, text=True, timeout=15)
-                expected = old if restore in ['--restore57', '--restore58', '--restore59'] else q55 if restore == '--restore55' else q54 if restore == '--restore54' else q43 if restore == '--restore43' else q52
+                expected = old if restore in ['--restore57', '--restore58'] else q59 if restore == '--restore59' else q55 if restore == '--restore55' else q54 if restore == '--restore54' else q43 if restore == '--restore43' else q52
                 assert result.returncode == 0 and installed.read_bytes() == expected, (script.name, restore, result.stdout, result.stderr)
 
 
@@ -141,7 +154,8 @@ if __name__ == '__main__':
     scripts = sorted(DIRECTORY.glob('pioneer_q38_dispatch*switch_unloaded.sh'))
     assert len(scripts) >= 5
     faults = ['candidate', 'client', 'inference', 'installed', 'candidate-symlink', 'stage-symlink',
-              'backup-exists', 'incoming-exists', 'device-link', 'loaded', 'owner', 'owner-truncated',
+              'backup-exists', 'backup59-exists', 'prior59', 'prior59-symlink',
+              'incoming-exists', 'device-link', 'loaded', 'owner', 'owner-truncated',
               'owner-relative-inference', 'owner-absolute-inference', 'platform',
               'loaded-late', 'owner-late', 'listimage-error', 'listimage-empty',
               'listimage-too-few', 'listimage-missing-kernel']
@@ -150,6 +164,10 @@ if __name__ == '__main__':
         for fault in faults:
             if fault == 'inference' and 'inference' not in assignments(script.read_text()):
                 continue  # diagnostic57 deliberately has NO model binary/capability
+            if fault == 'backup59-exists' and 'backup59' not in assignments(script.read_text()):
+                continue
+            if fault in ['prior59', 'prior59-symlink'] and 'qualified59' not in assignments(script.read_text()):
+                continue
             check(script, fault=fault)
             count += 1
         restores = [None, '--restore43', '--restore52']

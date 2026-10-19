@@ -1,5 +1,38 @@
 # Native build status
 
+October18,20:49 Vancouver (October19,03:49 UTC) FAST55 FULL FFN PASS:
+Full GGML Q4_K FFN17408x5120 ran twice,retained12240 weight pages,
+repeat0.068152s vs54 0.123357s (~1.81x for THIS layer,NOT token rate).
+First graph44.884780s,source/repack0.461420s,checked bulk17.904817s,
+first checked RUN26.291189s (includes cohort bootstrap). Clean END,
+export published,FFN_GRAPH_EXIT0/processgone. ALL5120 output floats
+BYTE-IDENTICAL54 and independent offline FP64 errors0,maxabs1.549954e-6,
+relativeL26.199882e-7,cosine1. Corrupt first/middle/last outputs REFUSED.
+Local /private/tmp/pioneer-q38-vector-clear-full-ffn-20261018-t.bin SHA
+05cda52a,and matching.log SHAfa28a6ad. Full-model/token speed still NOT
+tested for55;old54 four-position baseline remains0.021733585tok/s.
+Haiku64/fullRAM,installed55 9ecb313b KNOWN CLEAN,no active card owners.
+
+NEXT OFFLINE56 lossless BF16/physical-clear candidate151c4e38,peer
+58678e0f7896B,root026229e2. Same integer-valued operands/exact FP32
+affine order,only TWO Q8/ONE Q4+Q6 matrix phases. Physical clear pair and
+startup ALL ported from59/55;original8192B bounds/ALL guards preserved.
+Actual root+peer synthetic/real FP32+FP64,poisoned-Dst/omitted-clear and
+UNKNOWN refusal PASS bxxHfmRl. Strengthened float poison from legal123456
+to out-of-range1e8 so BF16 omitted-clear fault control is meaningful;
+55 rerun PASS9fCjdIHY. RUN3cjDepk8 BOTH,ENDve838nt9 BOTH,extracted
+handler/retention GIehEqUn,bootstrap WylUHBKe PASS ASan/UBSan.
+54/55 rebuilt BYTE-IDENTICAL93f2c0db/9ecb313b;default43 2df0e0f8 unchanged.
+Client9520d6b8;frozen-ABI metadata-optimized inference08e48e80 via clean
+c060ca97 archived HEADERS/frozen libs only;dirty llama untouched.
+New stage-u helper preserves43/52/54/55/59;510 ACTUAL installer/restore
+cases PASS incl wrong/symlink prior59,existing59 backup,loaded/late owners.
+NOT staged/installed/native qualified. Need controlled normal restart
+(NO five-minute wait unless startup fails),fresh Linux preflight,pinned
+SD-free session dispatch56-bfloat-clear-20261018-u,unloaded install and
+OWN56 qualification. Benchmark BF16 before choosing full-model test build;
+do NOT claim1.81x layer gain as27B token performance or enable Assistant.
+
 October18,20:34 Vancouver (October19,03:34 UTC) FAST55 MATRIX QUALIFIED:
 39cases/78repeats across synthetic and authenticated real first/last
 Q8/Q4/Q6 row groups,2/7/119 workers,ALL exact_errors0. SIX sessions
