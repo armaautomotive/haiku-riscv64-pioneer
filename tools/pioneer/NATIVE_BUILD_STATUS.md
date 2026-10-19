@@ -1,5 +1,18 @@
 # Native build status
 
+October19,00:46 UTC native physical-clear59 f51b2193 PASSED ALL18
+synthetic repeats (Q8/Q4/Q6 xK5120/6144/17408 x2) with exact_errors0.
+BOTH decoded/SrcA probes remained enabled. Then verified BANK_END state2,
+active0,pci_restored1,host_released1,cold0,accepted1;KNOWN_CLEAN_END1,
+exit0/processgone. Local /private/tmp/pioneer-q38-physical-clear-native-synthetic-20261018-s.log.
+The accumulator clear change fixes the observed synthetic failure;not
+yet whole-model/native performance qualification. Current running Haiku
+64/fullRAM,SD-free session dispatch59-physical-clear-20261018-s;installed
+f51b2193,stage-s. NO driver replacement/reload while loaded. Sequential
+real-row2,synthetic7,real-row7,synthetic119,real-row119 qualification now
+running;wrapper stops on FIRST nonzero and performs no next test after
+UNKNOWN. No model inference/Assistant capability enabled yet.
+
 October19,00:37 UTC source-round-trip59 f8516b02 FAILED native first
 Q8/K5120/two-worker RUN:unchanged5a0b0200/0xfffbd7c3=-272445.
 NO reason13 decoded-Dst OR reason14 current SrcA mismatch occurred BEFORE
