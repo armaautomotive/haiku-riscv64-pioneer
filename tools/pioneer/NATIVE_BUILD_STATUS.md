@@ -1,5 +1,13 @@
 # Native build status
 
+October19,00:16 UTC recovery resumed:human reported PSU off at23:52 UTC
+and powering on at00:15 UTC. Fresh SOPHGO ZSBL/DDR/firmware serial output
+confirmed physical startup;NO relay pulse sent this continuation. Linux
+6.1.31/64CPUs/NVMe root ready;P100A unbound/COMMAND0000;exact pinned
+SD-free boot helper0bfe2647/verifier32b924b7 verified. Previous startup
+lockout handoff is resolved. Proceeding with OFFLINE-qualified f0778f22
+decoded-operand diagnostic in NEW stage-q after unloaded-driver checks.
+
 October18,23:05 UTC HARDWARE HANDOFF:after clean shutdown and at least
 five-minute off rest,ONE channel1 on pulse completed around23:03 UTC.
 No fresh firmware/UART output or Linux SSH after more than two minutes.
