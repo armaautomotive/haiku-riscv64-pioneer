@@ -1,5 +1,39 @@
 # Native build status
 
+October18,21:32 Vancouver (October19,04:32 UTC) LIVE55 + OFFLINE PRELOAD:
+Full27B team476/wrapper475 still ACTIVE in stage-t/public-four-vector-clear-v.log.
+Full same-FD model authenticated/loaded;recognized497 (reservation ONLY).
+By04:27:26 UTC completed50 learned projections through layer6,all success,
+420458 pages. Cold first position uploading;NO new token/rate or clean END.
+NO other card test/read/reload/power change while this owner runs.
+
+Transfer review:existing16KiB bulk already USES DMA with six checked
+transfers,so "add DMA" alone is NOT a diagnosis. Existing contract11 span
+can move1MiB through an on-card loop,but is legacy bank0-only/2GiB and
+has legacy failure rollback. DO NOT widen/reuse it blindly for Q38.
+New isolated OFFLINE seven-bank PRELOAD research:standalone span image
+10cc6570,3248B inside ORIGINAL8192B code bound;main400B+packet128B frames.
+Fixed audited translated seven-bank routes/3GiB bounds,private aligned1MiB
+high host owner and16 sealed NoC sources;ALL initiators/IDs+exact command/
+counter checks EACH packet. Full GDDR comparison,complement/original host
+echo and frozen CPU-byte comparison still mandatory. UNKNOWN parks inert:
+no more packets/reset/restore/retry. NO matrix arithmetic/firmware writes.
+Actual compiled instructions PASS all7banks,4KiB..1MiB,both address edges,
+wrapped counters,32 summary mutations,stale/drop/corrupt/control/counter/
+source/mirror faults. Initial host-read corruption explicitly requires the
+FUTURE independent CPU echo check;GPU repeatability alone is insufficient.
+Evidence JoAgRT9L/ysLpCSSR;sealed full2048-word image identity WgOl8Ueb.
+Pure bound-owner/fresh-page authorization PASS r1cNwqMI,including every
+initialized page refusal;EXISTING bank.Range<=4 limit is UNCHANGED.
+Files PioneerQ38Span{Shape,Authority,Image}.h and blackhole_qwen38_span.cpp.
+Build /private/tmp/pioneer-q38-seven-bank-span-image-20261018-ag (same asaf1).
+NO driver/ABI/native selection or speed qualification. Kernel-owned root/
+host lifetime,ALL-held preparation/single-attempt restoration,whole-owner
+UNKNOWN retention and preload->cohort handoff/controller tests STILL NEEDED.
+Design intent is PRELOAD BEFORE any cohort bootstrap,then restore loader
+completely;NEVER replace code/roles in an active matrix cohort. Current
+native55 runtime/inference remain unchanged;dirty llama remains untouched.
+
 October18,21:07 Vancouver (October19,04:07 UTC) QUALIFIED55 RESTORED:
 Fresh normal startup worked (NO five-minute delay);Linux preflight and
 pinned SD-free session dispatch55-restore-20261018-v succeeded. Haiku64/
