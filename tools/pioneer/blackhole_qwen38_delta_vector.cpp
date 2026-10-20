@@ -4,6 +4,8 @@
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DeltaVector.h"
+#include "PioneerQ38DeltaVectorLayout.h"
+namespace L=PioneerQ38DeltaVectorLayout;
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 static volatile uint32_t* Words(uint32_t at) { return reinterpret_cast<volatile uint32_t*>(at); }
 static inline void Fence() { asm volatile("fence" ::: "memory"); }
@@ -42,23 +44,23 @@ static void Import(uint32_t address,unsigned row,unsigned words)
 struct DeltaEmitter {
 	void Op(uint32_t op) { Emit(op); }
 	void Drain() { ::Drain(); }
-	uint32_t KeyBits(unsigned i) { return Words(0xb0200)[i]; }
-	uint32_t QueryBits(unsigned i) { return Words(0xb0000)[i]; }
+	uint32_t KeyBits(unsigned i) { return Words(L::Key)[i]; }
+	uint32_t QueryBits(unsigned i) { return Words(L::Query)[i]; }
 };
 extern "C" unsigned scalar_main()
 {
-	const volatile uint32_t* header=Words(0x74000);
+	const volatile uint32_t* header=Words(L::Descriptor);
 	if (header[0]!=0x56383351 || header[1]!=128 || header[2]!=64 || header[3]) return 0;
-	uint32_t decay=*Words(0xb0500),beta=*Words(0xb0504);
+	uint32_t decay=*Words(L::Decay),beta=*Words(L::Beta);
 	if (!PioneerQ38DeltaVectorGate(decay) || !PioneerQ38DeltaVectorGate(beta)) return 0;
-	for (unsigned i=0;i<8192;i++) if (!InputNormalOrZero(Words(0x90000)[i])) return 0;
-	for (unsigned i=0;i<320;i++) if (!InputNormalOrZero(Words(0xb0000)[i])) return 0;
-	Setup(); Import(0xb0400,0,64);
+	for (unsigned i=0;i<8192;i++) if (!InputNormalOrZero(Words(L::Prior)[i])) return 0;
+	for (unsigned i=0;i<320;i++) if (!InputNormalOrZero(Words(L::Query)[i])) return 0;
+	Setup(); Import(L::Value,0,64);
 	Emit(0xb2050004); Drain(); Emit(0x8a000002);
 	Emit(0x70630000); Emit(0x70730002); Drain(); // preserve ALL64 V values in LRegs
 	// SETADCXX's X1 field is TEN bits. Eight1024-datum imports,not a
 	// wrapped2048-datum counter,define ALL512 logical FP32 rows.
-	for (unsigned chunk=0;chunk<8;chunk++) Import(0x90000+chunk*4096,chunk*64,1024);
+	for (unsigned chunk=0;chunk<8;chunk++) Import(L::Prior+chunk*4096,chunk*64,1024);
 	Emit(0xb2050004); Drain();
 	DeltaEmitter emitter;
 	if (!PioneerQ38DeltaVectorHalf(emitter,decay,beta)) scalar_fault_park();
@@ -66,11 +68,11 @@ extern "C" unsigned scalar_main()
 	// a future resident owner must not commit it until independent completion.
 	for (unsigned i=0;i<8192;i++) {
 		uint32_t bits=Words(0xffbd8000)[i]; if (!Finite(bits)) scalar_fault_park();
-		Words(0xa0000)[i]=bits;
+		Words(L::Next)[i]=bits;
 	}
 	Emit(0x72430000); Emit(0x72530002); Drain(); // state already exported,rows0..3 now output64
 	for (unsigned i=0;i<64;i++) {
-		uint32_t bits=Words(0xffbd8000)[i]; if (!Finite(bits)) scalar_fault_park(); Words(0xb0800)[i]=bits;
+		uint32_t bits=Words(0xffbd8000)[i]; if (!Finite(bits)) scalar_fault_park(); Words(L::Output)[i]=bits;
 	}
 	Fence(); return 64;
 }

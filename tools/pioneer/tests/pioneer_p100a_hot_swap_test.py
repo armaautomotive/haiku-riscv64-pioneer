@@ -25,7 +25,7 @@ def check(mode, fault=None):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
             return target
-        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'guardsha']}
+        payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'guardsha']}
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
             '--apply-a': ('hashb', 'hasha', 'tagb'), '--apply-b': ('hasha', 'hashb', 'taga'),
@@ -52,6 +52,7 @@ def check(mode, fault=None):
             '--apply-work-dot': ('hashwspu', 'hashwspd', 'tagwspu'), '--restore-work-dot': ('hashwspd', 'hashwspu', 'tagwspd'),
             '--apply-work-output-dma': ('hashwspd', 'hashwspo', 'tagwspd'), '--restore-work-output-dma': ('hashwspo', 'hashwspd', 'tagwspo'),
             '--apply-work-queued-entry': ('hashwspo', 'hashwspj', 'tagwspo'), '--restore-work-queued-entry': ('hashwspj', 'hashwspo', 'tagwspj'),
+            '--apply-local-delta': ('hashwspj', 'hashwspv', 'tagwspj'), '--restore-local-delta': ('hashwspv', 'hashwspj', 'tagwspv'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -80,6 +81,7 @@ def check(mode, fault=None):
         put('candidatewspd', payloads['hashwspd'])
         put('candidatewspo', payloads['hashwspo'])
         put('candidatewspj', payloads['hashwspj'])
+        put('candidatewspv', payloads['hashwspv'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -174,7 +176,7 @@ if __name__ == '__main__':
               'installed-link', 'device-link', 'stage-link', 'incoming', 'guardincoming', 'backup', 'platform']
     hot = ['guard', 'guard-link', 'cold', 'active', 'open', 'tag', 'generation', 'quiesced', 'guard-version',
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
-    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span', '--apply-work-fast-span', '--restore-work-fast-span', '--apply-work-span-code-reuse', '--restore-work-span-code-reuse', '--apply-work-int-sfpu', '--restore-work-int-sfpu', '--apply-work-pipelined', '--restore-work-pipelined', '--apply-work-static-vector', '--restore-work-static-vector', '--apply-work-cached-affine', '--restore-work-cached-affine', '--apply-work-replay-operand', '--restore-work-replay-operand', '--apply-work-dot', '--restore-work-dot', '--apply-work-output-dma', '--restore-work-output-dma', '--apply-work-queued-entry', '--restore-work-queued-entry']:
+    for mode in ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span', '--apply-work-fast-span', '--restore-work-fast-span', '--apply-work-span-code-reuse', '--restore-work-span-code-reuse', '--apply-work-int-sfpu', '--restore-work-int-sfpu', '--apply-work-pipelined', '--restore-work-pipelined', '--apply-work-static-vector', '--restore-work-static-vector', '--apply-work-cached-affine', '--restore-work-cached-affine', '--apply-work-replay-operand', '--restore-work-replay-operand', '--apply-work-dot', '--restore-work-dot', '--apply-work-output-dma', '--restore-work-output-dma', '--apply-work-queued-entry', '--restore-work-queued-entry', '--apply-local-delta', '--restore-local-delta']:
         if selected and mode not in selected:
             continue
         seen.add(mode)
@@ -211,6 +213,10 @@ if __name__ == '__main__':
             candidate = ['candidatewspo']
         elif mode == '--restore-work-output-dma':
             candidate = ['candidatewspd']
+        elif mode == '--apply-local-delta':
+            candidate = ['candidatewspv']
+        elif mode == '--restore-local-delta':
+            candidate = ['candidatewspj']
         elif mode == '--apply-work-queued-entry':
             candidate = ['candidatewspj']
         elif mode == '--restore-work-queued-entry':

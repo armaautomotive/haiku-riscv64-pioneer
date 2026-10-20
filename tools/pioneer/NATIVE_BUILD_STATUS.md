@@ -1,5 +1,46 @@
 # Native build status
 
+October19,20:19 Vancouver (October20,03:19 UTC) LOCAL VECTOR GDN NATIVE GATE:
+New PIONEER_Q38_LOCAL_DELTA_PROBE is a separately gated CPU-checked LOCAL
+qualification,NOT production GDN offload or a speed claim. Default OFF.
+Current installed/qualified driver remains a9889c0b/gen30,CPU-only status
+cold0/active_owner0;27B measured rate remains0.129277112tok/s,NOT20.
+
+Relocated2772B image f8c50f91f1388251980e37bf9c8b7b5e3211d2804af21fca621dfea87de12076
+and boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+repeat exactly. Code72000,stack6e000..70000,descriptor74000,Q/K/V/gates
+8e000..8e508,output8e800..8e900,prior90000..98000,nexta0000..a8000 ALL
+fit the existing saved Q38 L1 view. Original offline image remains EXACT
+05bef319/d0565e4e. Actual emitted-image suite rUcKO0rl passes,as do standalone
+54 trials+full checkpoint adapter ylNCewEP. No NoC/DRAM/DMA/BME in image.
+
+New root-only data-only RUN/ACCEPT ABI:kernel owns code/core/addresses and
+ALL host/PCI/saved-L1 leases. ALL code and input words sealed,output poisoned,
+completion/physical PC/count/marker/source/PCI and eight unchanged NoC
+counters independently proved,finite exports,then known-completed HOLD.
+ACCEPT is CPU metadata only,after debug caller compares ALL8192 next-state
+and64 output words. Missing ACCEPT,finite numeric mismatch,lost reply or
+UNKNOWN => CLOSE ONLY;retain context/cookie/PCI/ALL host owners,sticky cold
+guard,NO later card reads/reset/restore/retry. Even ACCEPT does NOT authorize
+implicit close;ONLY explicit clean BANK_END restores once. Same-cookie
+overlapping bank/dispatch/legacy commands rejected UNDER the global lock.
+
+Actual lease+RV32/SFPU+handler+native debug-client tests vkT4VR5L PASS:
+four full-domain fixtures/reuse/fresh ACCEPT,21 lease fault points,nine
+handler hardware faults,ten client metadata/numeric/transport faults. Actual
+image and independent scalar compare ALL8256 export bits. ASan/UBSan clean.
+These remain OFFLINE evidence,not silicon qualification. Q is pre-scaled,
+not fused GGML's post-dot scaling;resident state authority/transactional
+commit/GGML device-buffer routing still required. Production Work has NO
+new CPU numerical validation or fallback.
+
+Driver16777849886e7dfd6ada975f0a5c5db7966dbe580dd4e3d11eaaa90cbbe2914d,
+tag202610190006000c,two final e/f builds identical;feature-off EXACTa9889c0b,
+default43 EXACT2df0e0f8,guard EXACTd1ce2aa4 unchanged. Debug client3df1b474,
+updater7df799e8 staged separately using sequential128kbit/s SCP. Guarded
+apply/restore route passes60 focused cases;full updater suite pending.
+No native launch yet;no reboot,power,SD or Assistant action.
+
 October19,19:40 Vancouver (October20,02:40 UTC) WHOLE27B DMA+QUEUED PASS:
 Full-model-work-output-dma-queued-four-20261019-a.log FINISHED,clean_end1,
 EXIT0,session86037 gone. CPU-only reload status confirms gen30/tag...000b,

@@ -14,6 +14,7 @@ case "${PIONEER_Q38_PANEL_CLIENT:-0}" in
  3) source=pioneer_q38_cohort_probe;;
  4) source=pioneer_q38_dispatch_probe;;
  5) source=pioneer_q38_span_probe;;
+ 6) source=pioneer_q38_delta_probe;;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_AFFINE_CLIENT:-0}" in
@@ -53,6 +54,7 @@ case "${PIONEER_Q38_BLOCK_CLIENT:-0}" in
  *) exit 2;;
 esac
 if [ "$source" = pioneer_q38_stream_probe ] || [ "$source" = pioneer_q38_cohort_probe ] || [ "$source" = pioneer_q38_dispatch_probe ]; then extra="$extra -ffp-contract=off"; fi
+if [ "$source" = pioneer_q38_delta_probe ]; then extra="$extra -ffp-contract=off"; fi
 case "${PIONEER_Q38_COHORT_SEALED:-0}" in
  0) ;;
  1) [ "$source" = pioneer_q38_cohort_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED";;

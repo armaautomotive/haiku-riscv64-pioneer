@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_Q38_WORK_MODE))
+#error LOCAL vector delta probe requires the retained-owner reloadable vector Work driver
+#endif
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_BANKS)
 #error Q38 local panel probe requires the exclusive seven-bank owner
 #endif
@@ -102,6 +105,9 @@ static device_manager_info* sDeviceManager;
 static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 
 // PIONEER_PROBE_LOCK_BEGIN
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+static const void* sQ38LocalDeltaOwner=NULL; // sLock;cleared ONLY after clean END
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 // Every OTHER successful lock invalidates resident-input hints, including
 // bulk/bank operations and support queries. Saturation permanently disables
@@ -112,6 +118,9 @@ static status_t
 AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	,bool preserveQ38Input=false
+#endif
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	,bool localDeltaCommand=false
 #endif
 	)
 {
@@ -137,11 +146,26 @@ AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false
 #else
 	(void)bankCommand;
 #endif
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	if (status==B_OK && sQ38LocalDeltaOwner!=NULL && (!localDeltaCommand || sQ38LocalDeltaOwner!=runtimeOwner)) {
+		release_sem(sLock); return B_NOT_ALLOWED; // deny overlapping ownership UNDER the lock
+	}
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	if (status==B_OK && !preserveQ38Input && sQ38InputEpoch!=UINT64_MAX) sQ38InputEpoch++;
 #endif
 	return status;
 }
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+static status_t AcquireQ38DeltaLock(const void* cookie)
+{
+	return AcquireProbeLock(cookie,true
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		,false
+#endif
+		,true);
+}
+#endif
 // PIONEER_PROBE_LOCK_END
 
 static inline void
@@ -2076,6 +2100,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	PioneerQ38DeltaProbeLease q38Delta;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	PioneerQ38SpanLease* q38Span=NULL;
 #endif
@@ -2152,6 +2179,9 @@ struct PioneerStoreContext {
 	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+		if (q38Delta.unsafe || q38Delta.running) return true;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 		if (q38Span && (q38Span->unsafe || q38Span->running)) return true;
 #endif
@@ -2227,6 +2257,10 @@ static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
 	if (!c.bankStorageOnly) return true;
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	if (c.q38Delta.saved) clean=clean && PioneerQ38DeltaProbeClose(c.io,
+		c.baseline.baseline.baseline.baseline.dram,c.baseline.baseline.baseline.noc,c.lease,c.banks,c.q38Delta,true);
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	// SPAN_END is an explicit prerequisite, never an implicit cleanup path.
 	// A caller-only failure may be invisible to transport completion metadata.
@@ -2465,6 +2499,9 @@ q38_dispatch_owned_restored:
 #endif
 	sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
 	cookie->context=NULL; sRuntimeOwner=NULL;
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	sQ38LocalDeltaOwner=NULL;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 	sBankStorageOnly=false;
 #endif
@@ -2488,6 +2525,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		// to the kernel:close WITHOUT END must retain ALL owners with NO
 		// device IO/reset/STOP,even when the last RUN's metadata passed.
 		if (cookie->context->bankStorageOnly && ((cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+			|| cookie->context->q38Delta.saved
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 			|| cookie->context->q38Span
 #endif
@@ -2705,7 +2745,12 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		tt_q38_bank_session request={}; status=user_memcpy(&request,data,sizeof(request));
 		if (status!=B_OK || request.version!=TT_Q38_BANK_PROTOCOL || request.reserved)
 			return status!=B_OK?status:B_BAD_VALUE;
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+		status=(operation==TT_PCI_PROBE_Q38_BANK_END || operation==TT_PCI_PROBE_Q38_BANK_STATUS)?AcquireQ38DeltaLock(cookie):AcquireProbeLock(cookie,true);
+#else
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;
+#endif
+		if (status!=B_OK) return status;
 		bool began=false;
 		if (operation==TT_PCI_PROBE_Q38_BANK_BEGIN) {
 			bool empty=cookie->context==NULL;
@@ -2849,6 +2894,65 @@ Q38SpanControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 	release_sem(sLock); free(request); return status;
 }
 // PIONEER_Q38_SPAN_CONTROL_END
+#endif
+
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+// PIONEER_Q38_DELTA_CONTROL_BEGIN
+static status_t
+Q38DeltaControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!data) return B_BAD_VALUE;
+	thread_info thread={}; status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK) return status;
+	if (thread.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_DELTA_SUPPORT) {
+		if (length!=sizeof(tt_q38_delta_support)) return B_BAD_VALUE;
+		status=AcquireQ38DeltaLock(cookie); if (status!=B_OK) return status;
+		const tt_q38_delta_support support={1,55,1,128,64,8192,1};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation==TT_PCI_PROBE_Q38_DELTA_ACCEPT) {
+		if (length!=sizeof(tt_q38_delta_accept)) return B_BAD_VALUE;
+		tt_q38_delta_accept a={}; status=user_memcpy(&a,data,sizeof(a)); if (status!=B_OK) return status;
+		status=AcquireQ38DeltaLock(cookie); if (status!=B_OK) return status;
+		auto* c=cookie->context;
+		status=c && sRuntimeOwner==cookie && c->bankStorageOnly && PioneerQ38DeltaProbeAccept(c->q38Delta,a)?B_OK:B_NOT_ALLOWED;
+		release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_DELTA_RUN || length!=sizeof(tt_q38_delta_probe)) return B_BAD_VALUE;
+	auto* job=(tt_q38_delta_probe*)malloc(sizeof(tt_q38_delta_probe)); if (!job) return B_NO_MEMORY;
+	status=user_memcpy(job,data,sizeof(*job));
+	if (status!=B_OK || !PioneerQ38DeltaProbeValid(*job)) { free(job); return status!=B_OK?status:B_BAD_VALUE; }
+	status=AcquireQ38DeltaLock(cookie); if (status!=B_OK) { free(job); return status; }
+	auto* c=cookie->context;
+	if (!c || sRuntimeOwner!=cookie || !c->bankStorageOnly || c->q38Dispatch || c->q38Cohort
+		|| c->panelProbe.saved || c->streamProbe.saved || c->q38Delta.awaiting || c->q38Delta.unsafe || c->q38Delta.running
+		|| c->q38Delta.nonce==UINT32_MAX) status=B_NOT_ALLOWED;
+#ifdef PIONEER_Q38_SPAN_PRELOAD
+	else if (c->q38Span) status=B_NOT_ALLOWED;
+#endif
+	else {
+		sQ38LocalDeltaOwner=cookie; // exclusive intent BEFORE any prepare/mapping/reset
+		auto& dram=c->baseline.baseline.baseline.baseline.dram; auto& noc=c->baseline.baseline.baseline.noc;
+		job->result={}; job->result.version=1; job->result.state=TT_RUNTIME_CONFIG_FAILED;
+		for (auto& v:job->next) v=0;
+		for (auto& v:job->output) v=0;
+		bool ready=c->lease.ready;
+		if (!ready && !c->lease.saved) ready=PioneerResidentLeaseBegin(c->io,noc,c->lease);
+		ready=ready && c->io.SelectRuntimeCore(0) && c->io.MapQ38Panel()
+			&& PioneerQ38DeltaProbePrepare(c->io,dram,noc,c->lease,c->banks,c->q38Delta);
+		bool passed=ready && PioneerQ38DeltaProbeRun(c->io,dram,noc,c->lease,c->banks,c->q38Delta,*job);
+		if (!passed || c->Unsafe()) job->result.recovery_required=1;
+		status=user_memcpy(data,job,sizeof(*job));
+		if (!passed || status!=B_OK || c->Unsafe()) {
+			// MEMORY ONLY. On UNKNOWN or lost reply,retain ALL owners.
+			c->q38Delta.unsafe=true; c->banks.Quarantine(); c->lease.recovery_required=true;
+			c->io.QuarantineHostPage(); sColdRecoveryRequired=true;
+		}
+	}
+	release_sem(sLock); free(job); return status;
+}
+// PIONEER_Q38_DELTA_CONTROL_END
 #endif
 
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
@@ -4249,6 +4353,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	if (operation>=TT_PCI_PROBE_Q38_DELTA_SUPPORT && operation<=TT_PCI_PROBE_Q38_DELTA_ACCEPT)
+		return Q38DeltaControl(instance,operation,data,length);
 #endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	if (operation>=TT_PCI_PROBE_Q38_SPAN_SUPPORT && operation<=

@@ -57,6 +57,9 @@
 #include "PioneerQ38SpanService.h"
 #endif
 #include "PioneerQ38PanelProbe.h"
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+#include "PioneerQ38DeltaProbe.h"
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #include "PioneerQ38StreamProbe.h"
 #endif
