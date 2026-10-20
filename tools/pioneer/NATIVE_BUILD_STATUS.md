@@ -1,5 +1,19 @@
 # Native build status
 
+October20,13:38 Vancouver (20:38 UTC) ZERO-MINIMUM WHOLE27B PASS,NO SPEEDUP:
+Full-model-work-zero-minimum-four-20261020-a FINISHED clean_end1/CLI_EXIT0,
+SAME tokens11/353/2688/264/1988 projections/2020 calls/119 workers/4558653
+pages/18672242688B retained. Warm6.106531/6.120389/6.020524s ->0.164406588
+tok/s vs0.165393504 cache-only:tiny sample,NO meaningful improvement.
+Matrix ioctls4.594206/4.622402/4.592644s,otherGGML1.168729/1.155777/
+1.086320s. Priming717.806555/repack149.259253/upload567.891924s,first
+750.548566s. Log SHA27b3fefdc513b57c2c6070d5fb54ca77e04d612439b3747ca3735c1644db8d6c.
+Cached serial800/1350/800/restored1/uncertain0;CPU guardtag...0006/gen7/
+cold0/active_owner0. Evidence benchmarks/qwen38-zero-minimum-full-model-
+20261020.txt. Qualified native-operand93067b8f is now COPYING to staging,
+NOT installed/native-qualified yet. Deferred-affine prototype remains
+OFFLINE ONLY,driver builder rejects it. Goal ACTIVE;20tok/s far unmet.
+
 October20,13:20 Vancouver (20:20 UTC) ARITHMETIC QUALIFIED / NATIVE-PACK OFFLINE:
 16a06fee/tag...0006/gen7 passedALL18 Work synthetic+16 auth119+16 auth3groups
 +18 checked EXACT,FOUR clean ENDs/EXIT0. CPU-only guard afterward cold0/

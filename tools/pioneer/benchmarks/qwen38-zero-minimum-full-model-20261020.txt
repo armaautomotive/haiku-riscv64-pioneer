@@ -1,0 +1,28 @@
+Native frozen four-token PUBLIC Work smoke,October20 2026.
+Tiny three-warm-position sample,NOT steady-state/text-quality qualification.
+Same bda16c7c CLI/model/libs/32 CPU threads;NO CPU learned reference/fallback.
+Zero-minimum16a06fee/tag2026102000010006/gen7 vs cache6efd1dd7/gen6.
+Both use normal firmware800->1350->800MHz;no forced clock/voltage/reset.
+Both:tokens11/353/2688/264,497 learned projections/position,1988 total,
+2020 calls,119 workers,4558653pages/18672242688B retained between positions.
+
+Before:warm6.087508/6.038797/6.012255s,0.165393504tok/s.
+After:warm6.106531/6.120389/6.020524s,0.164406588tok/s.
+NO meaningful whole-model improvement;slightly lower rate in tiny sample.
+Before matrix ioctls4.598775/4.598243/4.597946s.
+After matrix ioctls4.594206/4.622402/4.592644s.
+After other GGML1.168729/1.155777/1.086320s.
+Priming717.806555s,repack149.259253s,upload567.891924s.
+First position750.548566s;NOT warm generation speed.
+All bounded native tests previously passed18 Work synthetic+16 auth119+
+16 auth-three-groups+18 checked EXACT,FOUR clean ENDs/exit0.
+Arithmetic is exact,but instruction savings are NOT a token-speed claim.
+Still FAR below20tok/s/usable27B target;goal remains ACTIVE.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated4 selected_token264 seconds768.827282 projections1988 uploaded_pages4558653 calls2020 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_FOUR_TOKEN generated4 first_position_seconds750.548566 subsequent_positions3 subsequent_seconds18.247444 sample_tokens_per_second0.164406588 retained_weights1;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag2026102000010006 generation7 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Host log:/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-zero-minimum-four-20261020-a.log
+SHA256:27b3fefdc513b57c2c6070d5fb54ca77e04d612439b3747ca3735c1644db8d6c
