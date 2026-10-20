@@ -67,7 +67,7 @@ int main(int argc,char** argv)
  (void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
  PioneerProbeCookie empty,foreign; tt_q38_delta_support support={};
  assert(Q38DeltaControl(&empty,TT_PCI_PROBE_Q38_DELTA_SUPPORT,&support,sizeof(support))==B_OK
-  && support.version==1 && support.driver==55 && support.local_only && support.keys==128 && support.values==64 && support.state_words==8192 && support.accept_required);
+  && support.version==TT_Q38_DELTA_PROBE_VERSION && support.driver==55 && support.local_only && support.keys==128 && support.values==64 && support.state_words==8192 && support.accept_required);
  auto request=std::make_unique<tt_q38_delta_probe>(); PioneerQ38DeltaDebugFixture(*request,1);
  assert(Q38DeltaControl(&empty,TT_PCI_PROBE_Q38_DELTA_RUN,request.get(),sizeof(*request))==B_NOT_ALLOWED);
  for (unsigned phase=0;phase<5;phase++) {
@@ -85,7 +85,7 @@ int main(int argc,char** argv)
   if (phase!=4) assert(!PioneerQ38DeltaDebugErrors(*request) && request->result.stopped && f.q38Delta.awaiting);
   if (phase!=4) assert(AcquireProbeLock(c,true)==B_NOT_ALLOWED); // bank/dispatch mutation blocked under actual lock
   reads=f.io.reads; writes=f.io.writes; unsigned resets=f.io.resetWrites;
-  tt_q38_delta_accept accept={1,request->result.nonce,{0,0}};
+  tt_q38_delta_accept accept={TT_Q38_DELTA_PROBE_VERSION,request->result.nonce,{0,0}};
   if (!phase) {
    assert(Q38DeltaControl(c,TT_PCI_PROBE_Q38_DELTA_ACCEPT,&accept,sizeof(accept))==B_OK);
    tt_resident_session_result r={}; EndResidentSession(c,r,true); assert(!c->context); assert(ReleaseResidentCookie(c)==B_OK); continue;

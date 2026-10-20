@@ -12,7 +12,12 @@ enum { Code=0x64000,Query=0xb0000,Key=0xb0200,Value=0xb0400,
        Decay=0xb0500,Beta=0xb0504,Output=0xb0800 };
 #endif
 enum { Descriptor=0x74000,Prior=0x90000,Next=0xa0000,
-       Done=Code+0xc,Park=Code+0x38,FaultPark=Code+0x58,
+       Done=Code+0xc,Park=Code+0x38,
+#ifdef PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
+       FaultPark=Code+0x7c,
+#else
+       FaultPark=Code+0x58,
+#endif
        Success=0x31564451,Fault=0x46564451,Magic=0x56383351 };
 }
 #endif

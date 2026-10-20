@@ -49,7 +49,7 @@ template<class IO> bool PioneerQ38DeltaProbeRun(IO& io,const tt_dram_samples_res
  const tt_compute_noc_result& noc,PioneerResidentLease& store,const PioneerResidentBanks& banks,
  PioneerQ38DeltaProbeLease& d,tt_q38_delta_probe& job)
 {
- auto& r=job.result; r={}; r.version=1; r.state=TT_RUNTIME_CONFIG_FAILED;
+ auto& r=job.result; r={}; r.version=TT_Q38_DELTA_PROBE_VERSION; r.state=TT_RUNTIME_CONFIG_FAILED;
  for (auto& v:job.next) v=0;
  for (auto& v:job.output) v=0;
  if (!PioneerQ38DeltaProbeValid(job) || !d.ready || d.unsafe || d.running || d.awaiting || d.nonce==UINT32_MAX) return false;
@@ -80,7 +80,7 @@ template<class IO> bool PioneerQ38DeltaProbeRun(IO& io,const tt_dram_samples_res
   if (r.marker==0x46564451) goto uncertain;
   if (r.phase==TT_Q38_DELTA_DONE && r.count==64 && r.marker==0x31564451) {
    io.Pause(); r.pc[0]=io.RuntimePcRead(); io.Pause(); r.pc[1]=io.RuntimePcRead();
-   if (r.pc[0]!=TT_Q38_DELTA_PARK || r.pc[1]!=r.pc[0]) goto uncertain;
+   if (!PioneerQ38DeltaProbeTerminal(r.pc[0]) || !PioneerQ38DeltaProbeTerminal(r.pc[1])) goto uncertain;
    r.completed=1; break;
   }
   io.Pause();
@@ -100,7 +100,7 @@ template<class IO> bool PioneerQ38DeltaProbeRun(IO& io,const tt_dram_samples_res
  }
  if (io.ResetRead()!=0x46800 || !PioneerQ38PanelSources(io,dram,noc,store,banks)
   || io.RuntimeStatusRead(0)!=TT_Q38_DELTA_DONE || io.RuntimeStatusRead(1)!=64 || io.RuntimeStatusRead(2)!=0x31564451
-  || io.RuntimePcRead()!=TT_Q38_DELTA_PARK || io.RuntimePcRead()!=TT_Q38_DELTA_PARK) goto uncertain;
+  || !PioneerQ38DeltaProbeTerminal(io.RuntimePcRead()) || !PioneerQ38DeltaProbeTerminal(io.RuntimePcRead())) goto uncertain;
  for (unsigned i=0;i<8;i++) if (io.ResidentNocRead(PioneerQ38PanelCounter(i))!=r.before[i]) goto uncertain;
  io.RuntimeResetWrite(0x87ffff); io.Pause();
  if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) goto uncertain;
@@ -115,7 +115,7 @@ uncertain:
 }
 static inline bool PioneerQ38DeltaProbeAccept(PioneerQ38DeltaProbeLease& d,const tt_q38_delta_accept& a)
 {
- if (a.version!=1 || a.reserved[0] || a.reserved[1] || !a.nonce || a.nonce!=d.nonce
+ if (a.version!=TT_Q38_DELTA_PROBE_VERSION || a.reserved[0] || a.reserved[1] || !a.nonce || a.nonce!=d.nonce
   || !d.awaiting || !d.ready || d.running || d.unsafe) return false;
  d.awaiting=false; return true; // CPU metadata only; no card reads
 }

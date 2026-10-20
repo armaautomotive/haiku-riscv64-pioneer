@@ -27,7 +27,7 @@ int main(int argc,char** argv)
  if (fd<0) { perror("open P100A"); return 1; }
  tt_q38_delta_support support={};
  bool okay=DeltaCall(fd,TT_PCI_PROBE_Q38_DELTA_SUPPORT,&support,sizeof(support))
-  && support.version==1 && support.driver==55 && support.local_only==1 && support.keys==128
+  && support.version==TT_Q38_DELTA_PROBE_VERSION && support.driver==55 && support.local_only==1 && support.keys==128
   && support.values==64 && support.state_words==8192 && support.accept_required==1;
  if (!okay || !strcmp(argv[1],"--support")) {
   if (okay) puts("LOCAL_DELTA_SUPPORT keys128 values64 state8192 ACCEPT_REQUIRED;NOT_MODEL_INFERENCE");
@@ -43,16 +43,17 @@ int main(int argc,char** argv)
   okay=DeltaCall(fd,TT_PCI_PROBE_Q38_DELTA_RUN,&deltaRequest,sizeof(deltaRequest));
   if (!okay) break;
   const auto& r=deltaRequest.result;
-  okay=r.version==1 && r.state==TT_RUNTIME_PASSED && r.prepared==1 && r.started==1 && r.completed==1 && r.stopped==1
+  okay=r.version==TT_Q38_DELTA_PROBE_VERSION && r.state==TT_RUNTIME_PASSED && r.prepared==1 && r.started==1 && r.completed==1 && r.stopped==1
    && !r.recovery_required && r.nonce==trial+1 && r.phase==0x7200c && r.count==64 && r.marker==0x31564451
-   && r.pc[0]==0x72038 && r.pc[1]==r.pc[0]
+   && PioneerQ38DeltaProbeTerminal(r.pc[0]) && PioneerQ38DeltaProbeTerminal(r.pc[1])
    && !memcmp(&deltaInputs,&deltaRequest,offsetof(tt_q38_delta_probe,result));
   for (unsigned i=0;i<8;i++) okay &= r.before[i]==r.after[i];
-  unsigned errors=PioneerQ38DeltaDebugErrors(deltaRequest); okay &= !errors;
-  printf("LOCAL_DELTA trial%u state%u start/complete/stop=%u/%u/%u cold%u pc=%x/%x exact_errors%u words8256\n",
-   trial,r.state,r.started,r.completed,r.stopped,r.recovery_required,r.pc[0],r.pc[1],errors);
+  bool numericChecked=okay;
+  unsigned errors=numericChecked?PioneerQ38DeltaDebugErrors(deltaRequest):UINT32_MAX; okay &= !errors;
+  printf("LOCAL_DELTA trial%u state%u start/complete/stop=%u/%u/%u cold%u pc=%x/%x phase=%x count%u marker=%x numeric_checked%u exact_errors%u words8256\n",
+   trial,r.state,r.started,r.completed,r.stopped,r.recovery_required,r.pc[0],r.pc[1],r.phase,r.count,r.marker,unsigned(numericChecked),errors);
   if (!okay) break; // NO ACCEPT/END/retry/reset after numeric or metadata failure
-  tt_q38_delta_accept accept={1,r.nonce,{0,0}};
+  tt_q38_delta_accept accept={TT_Q38_DELTA_PROBE_VERSION,r.nonce,{0,0}};
   okay=DeltaCall(fd,TT_PCI_PROBE_Q38_DELTA_ACCEPT,&accept,sizeof(accept)); if (okay) cases++;
  }
  if (!okay) {

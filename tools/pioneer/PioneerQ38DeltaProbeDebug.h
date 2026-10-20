@@ -10,7 +10,7 @@
 // rounding (which scales after the dot) or resident model-state routing.
 static inline void PioneerQ38DeltaDebugFixture(tt_q38_delta_probe& r,unsigned trial)
 {
- memset(&r,0,sizeof(r)); r.version=1;
+ memset(&r,0,sizeof(r)); r.version=TT_Q38_DELTA_PROBE_VERSION;
  r.decay=PioneerAttentionBits(trial==2?0:trial==3?1:.83f);
  r.beta=PioneerAttentionBits(trial==2?1:trial==3?0:.37f);
  for (unsigned i=0;i<8192;i++) r.prior[i]=PioneerAttentionBits(trial?float(sin(i*.031+trial*.17)*.003):0);

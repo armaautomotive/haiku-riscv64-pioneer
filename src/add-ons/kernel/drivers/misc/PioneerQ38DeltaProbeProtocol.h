@@ -6,6 +6,11 @@
 #define TT_PCI_PROBE_Q38_DELTA_SUPPORT (B_DEVICE_OP_CODES_END + 0x55d0)
 #define TT_PCI_PROBE_Q38_DELTA_RUN (B_DEVICE_OP_CODES_END + 0x55d1)
 #define TT_PCI_PROBE_Q38_DELTA_ACCEPT (B_DEVICE_OP_CODES_END + 0x55d2)
+enum { TT_Q38_DELTA_PROBE_VERSION=2 }; // NEW safe-terminal image only
+static inline bool PioneerQ38DeltaProbeTerminal(uint32_t pc)
+{
+ return pc==0x72038 || pc==0x7203c; // BOTH sealed instructions jump to PARK;fault60/7c NEVER accepted
+}
 struct tt_q38_delta_support { uint32_t version,driver,local_only,keys,values,state_words,accept_required; };
 struct tt_q38_delta_result {
  uint32_t version,state,prepared,started,completed,stopped,recovery_required;
@@ -28,7 +33,7 @@ static inline bool PioneerQ38DeltaProbeGate(uint32_t word)
 }
 static inline bool PioneerQ38DeltaProbeValid(const tt_q38_delta_probe& r)
 {
- if (r.version!=1 || r.reserved[0] || r.reserved[1] || r.reserved[2]
+ if (r.version!=TT_Q38_DELTA_PROBE_VERSION || r.reserved[0] || r.reserved[1] || r.reserved[2]
   || !PioneerQ38DeltaProbeGate(r.decay) || !PioneerQ38DeltaProbeGate(r.beta)) return false;
  for (auto v:r.prior) if (!PioneerQ38DeltaProbeNormal(v)) return false;
  for (auto v:r.query) if (!PioneerQ38DeltaProbeNormal(v)) return false;

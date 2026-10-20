@@ -12,7 +12,7 @@
 #include "../PioneerQ38DeltaProbeDebug.h"
 struct DeltaIO:PanelIO {
  const char* image;
- unsigned fault=0,reads=0,writes=0,resetWrites=0,exportReads=0;
+ unsigned fault=0,reads=0,writes=0,resetWrites=0,exportReads=0,pcMode=0,pcReads=0;
  bool restoring=false;
  explicit DeltaIO(const char* path):image(path) {}
  uint32_t Q38PanelRead(uint32_t a) {
@@ -28,7 +28,13 @@ struct DeltaIO:PanelIO {
  uint32_t ResetRead() { reads++; return PanelIO::ResetRead(); }
  uint32_t RuntimeStatusRead(unsigned w) { reads++; return PanelIO::RuntimeStatusRead(w); }
  void RuntimeStatusWrite(unsigned w,uint32_t v) { writes++; PanelIO::RuntimeStatusWrite(w,v); }
- uint32_t RuntimePcRead() { reads++; return fault==4 || (fault==17 && exportReads)?TT_Q38_DELTA_PARK+4:TT_Q38_DELTA_PARK; }
+ uint32_t RuntimePcRead() {
+  reads++; pcReads++;
+  if (fault==4 || (fault==17 && exportReads)) return TT_Q38_DELTA_PARK+8;
+  if (fault==22) return 0x72060;
+  if (fault==23) return 0x7207c;
+  return TT_Q38_DELTA_PARK+((pcMode==1 || (pcMode==2 && pcReads%2))?4:0);
+ }
  uint32_t ResidentNocRead(uint32_t a) { reads++; return PanelIO::ResidentNocRead(a); }
  void RuntimeResetWrite(uint32_t value) {
   resetWrites++; resets.push_back(value);
@@ -70,7 +76,7 @@ struct DeltaFixture {
  bool Prepare() { return PioneerQ38DeltaProbePrepare(io,own.dram,own.noc,own.store,own.banks,lease); }
  bool RunDelta() { return PioneerQ38DeltaProbeRun(io,own.dram,own.noc,own.store,own.banks,lease,*job); }
  bool CloseDelta(bool clean=true) { return PioneerQ38DeltaProbeClose(io,own.dram,own.noc,own.store,own.banks,lease,clean); }
- bool Accept() { tt_q38_delta_accept a={1,lease.nonce,{0,0}}; return PioneerQ38DeltaProbeAccept(lease,a); }
+ bool Accept() { tt_q38_delta_accept a={TT_Q38_DELTA_PROBE_VERSION,lease.nonce,{0,0}}; return PioneerQ38DeltaProbeAccept(lease,a); }
 };
 #ifndef PIONEER_Q38_DELTA_PROBE_MOCK_ONLY
 int main(int argc,char** argv)
@@ -80,21 +86,22 @@ int main(int argc,char** argv)
  DeltaVectorImage image(argv[1],1);
  assert(image.code.size()==TT_Q38_DELTA_CODE_BYTES && image.l1[0]==TT_Q38_DELTA_BOOT);
  for (unsigned w=0;w<image.code.size()/4;w++) assert(image.l1[1+w]==PioneerQ38DeltaProbeWord(w));
- for (unsigned trial=0;trial<4;trial++) {
+ for (unsigned mode=0;mode<3;mode++) for (unsigned trial=0;trial<4;trial++) {
   DeltaFixture f(argv[1],trial); auto original=f.io.view; uint32_t entry=f.io.entry;
+  f.io.pcMode=mode;
   assert(f.Prepare() && f.RunDelta() && f.lease.awaiting && f.lease.nonce==1 && !PioneerQ38DeltaDebugErrors(*f.job));
   unsigned reads=f.io.reads,writes=f.io.writes,resets=f.io.resetWrites;
   assert(!f.CloseDelta() && !f.RunDelta() && reads==f.io.reads && writes==f.io.writes && resets==f.io.resetWrites);
   for (unsigned kind=0;kind<5;kind++) {
-   tt_q38_delta_accept a={1,1,{0,0}};
-   if (!kind) a.version=2; if (kind==1) a.nonce=0; if (kind==2) a.nonce=2; if (kind==3) a.reserved[0]=1; if (kind==4) a.reserved[1]=1;
+   tt_q38_delta_accept a={TT_Q38_DELTA_PROBE_VERSION,1,{0,0}};
+   if (!kind) a.version=1; if (kind==1) a.nonce=0; if (kind==2) a.nonce=2; if (kind==3) a.reserved[0]=1; if (kind==4) a.reserved[1]=1;
    assert(!PioneerQ38DeltaProbeAccept(f.lease,a) && f.lease.awaiting);
   }
   assert(f.Accept() && !f.Accept() && f.Prepare() && f.RunDelta() && f.lease.nonce==2 && !PioneerQ38DeltaDebugErrors(*f.job) && f.Accept());
   assert(f.CloseDelta() && f.io.view==original && f.io.entry==entry && !f.io.requests);
   Finish(f.io,f.own);
  }
- for (unsigned fault=1;fault<=21;fault++) {
+ for (unsigned fault=1;fault<=23;fault++) {
   if (fault==20) continue;
   DeltaFixture f(argv[1]); assert(f.Prepare()); f.io.fault=fault;
   assert(!f.RunDelta() && f.lease.unsafe && f.own.store.recovery_required && f.job->result.recovery_required);
@@ -104,6 +111,11 @@ int main(int argc,char** argv)
   for (auto v:f.job->next) assert(!v); for (auto v:f.job->output) assert(!v);
  }
  {
+  DeltaFixture f(argv[1]); assert(f.Prepare());
+  f.io.view[(0x7203c-TT_Q38_PANEL_VIEW_BASE)/4]=0x001802b7; // old image fault entry is NEVER a safe terminal
+  assert(!f.RunDelta() && f.lease.unsafe && !f.io.resetWrites && !f.io.exportReads);
+ }
+ {
   DeltaFixture f(argv[1]); assert(f.Prepare() && f.RunDelta() && f.Accept());
   f.io.fault=20; f.io.restoring=true; assert(!f.CloseDelta());
   unsigned reads=f.io.reads,writes=f.io.writes,resets=f.io.resetWrites;
@@ -111,7 +123,7 @@ int main(int argc,char** argv)
  }
  for (unsigned bad=0;bad<10;bad++) {
   DeltaFixture f(argv[1]);
-  if (!bad) f.job->version=0; if (bad==1) f.job->reserved[2]=1;
+  if (!bad) f.job->version=1; if (bad==1) f.job->reserved[2]=1;
   if (bad==2) f.job->prior[8191]=1; if (bad==3) f.job->query[127]=0x7f800000;
   if (bad==4) f.job->key[0]=0x80000001; if (bad==5) f.job->value[63]=0x7fc00000;
   if (bad==6) f.job->beta=0x80000000; if (bad==7) f.job->decay=0x3f800001;
@@ -119,6 +131,6 @@ int main(int argc,char** argv)
   assert(!PioneerQ38DeltaProbeValid(*f.job) && !f.RunDelta() && !f.io.reads && !f.io.writes && !f.io.resetWrites);
   Finish(f.io,f.own);
  }
- puts("PASS OFFLINE real LOCAL vector lease+actual image:ALL8256 words,4 domains,reuse,ACCEPT freshness,21 fault points,invalid data inert,NO I/O after uncertainty/mismatch/unaccepted result;NOT native/resident/performance");
+ puts("PASS OFFLINE real LOCAL vector lease+actual image:ALL8256 words,4 domains x3 frontend modes,safe branch execution,old fault-entry image refused,23 fault points,invalid data inert,NO I/O after uncertainty/mismatch/unaccepted result;NOT native/resident/performance");
 }
 #endif

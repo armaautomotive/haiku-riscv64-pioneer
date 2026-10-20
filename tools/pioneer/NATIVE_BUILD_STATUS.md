@@ -1,5 +1,46 @@
 # Native build status
 
+October19,20:30 Vancouver (October20,03:30 UTC) LOCAL FRONTEND-PC FIX / COLD RECOVERY:
+First local image f8c50f91/driver16777849 hot-swapped cleanly to gen31,
+but native trial0 stopped BEFORE completion/export acceptance:physical PC
+7203c/7203c versus required72038. state5/start1/completed0/stopped0/cold1.
+NO ACCEPT/END/retry/reset/card read/hot rollback followed. CPU-only guard
+confirmed cold1/active_owner1;context/cookie/ALL owners retained. Public log
+local-vector-delta-20261019-a.log SHAa0f95d797cd16e19514d3d195d974215229c4a7d05aa7117cc6cf02d1508f6bd
+archived under pioneer-q38-work-fast-native-20261019.lQIaCFsg. Its printed
+zero arithmetic errors on the zero fixture is NOT numeric qualification:
+failed metadata meant exports were never accepted. New client reports
+numeric_checked0 explicitly for such failures.
+
+Vendor BabyRISCV README says PC snapshots are speculative frontend values,
+not retired PCs. This same distinction was previously qualified for the
+persistent root/peer. OLD local7203c is a FAULT ENTRY:NEVER whitelist that
+old image. NEW private probe has safe branch-to-PARK instructions at BOTH
+72038/7203c,disjoint fault60/7c. ONLY the new exact image may accept either
+of those two safe PCs;all status/source/code/input/counter/finite proofs
+still apply. ABI version2 rejects old image/client combinations before RUN.
+Reference:https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+
+NEW2808B image1c0766bedd173f0fcf383629dec7a333a17889ad25e8833b9a57002b6f6ae771,
+same e678476d boot,two builds identical. Actual instructions execute BOTH
+safe terminal branches to PARK;fault-entry/park and old aliased instruction
+negative controls refuse. Actual image9x2fy5Bs+original-image9nz51rzk PASS.
+Actual lease/handler/client6zoHREsq PASS:four domains xthree base/fetch/mixed
+PC modes,ALL8256 words,reuse,23 fault points,nine handler hardware failures,
+eleven client faults including old ABI;ZERO later I/O after uncertainty.
+Driver e903b8fcee619edf4e40457aed16e0387286a73c7606b4796e5b3961b275e498,
+tag202610190006000d,two builds identical;guard/default43 unchanged. Debug
+clientb0a6577b repeat-build identical. New updater327ac833 route focused60
+cases PASS;prior full1511 PASS,new full1571 suite running.
+
+Haiku sync/shutdown then one channel1 off/on cycle completed. Fresh default
+Linux6.1.31 verified all64CPUs,kexec0,accelerator unbound/enable0,endpoint+
+root COMMAND0000/0000. FIRST power-on succeeded:NO forced five-minute wait.
+Pinned network-serialized helper0bfe2647 prepared fresh SD-free session
+delta-vector-terminal-20261019-a,64 CPUs/fullRAM runtime6/noSD,then handoff
+requested. No SD/cable/default boot/kernel/model/Assistant change. No new
+native GDN pass or token-rate claim yet;27B remains0.129277112tok/s,NOT20.
+
 October19,20:19 Vancouver (October20,03:19 UTC) LOCAL VECTOR GDN NATIVE GATE:
 New PIONEER_Q38_LOCAL_DELTA_PROBE is a separately gated CPU-checked LOCAL
 qualification,NOT production GDN offload or a speed claim. Default OFF.

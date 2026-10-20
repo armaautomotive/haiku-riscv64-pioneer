@@ -2908,7 +2908,7 @@ Q38DeltaControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t le
 	if (operation==TT_PCI_PROBE_Q38_DELTA_SUPPORT) {
 		if (length!=sizeof(tt_q38_delta_support)) return B_BAD_VALUE;
 		status=AcquireQ38DeltaLock(cookie); if (status!=B_OK) return status;
-		const tt_q38_delta_support support={1,55,1,128,64,8192,1};
+		const tt_q38_delta_support support={TT_Q38_DELTA_PROBE_VERSION,55,1,128,64,8192,1};
 		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
 	}
 	if (operation==TT_PCI_PROBE_Q38_DELTA_ACCEPT) {
@@ -2934,7 +2934,7 @@ Q38DeltaControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t le
 	else {
 		sQ38LocalDeltaOwner=cookie; // exclusive intent BEFORE any prepare/mapping/reset
 		auto& dram=c->baseline.baseline.baseline.baseline.dram; auto& noc=c->baseline.baseline.baseline.noc;
-		job->result={}; job->result.version=1; job->result.state=TT_RUNTIME_CONFIG_FAILED;
+		job->result={}; job->result.version=TT_Q38_DELTA_PROBE_VERSION; job->result.state=TT_RUNTIME_CONFIG_FAILED;
 		for (auto& v:job->next) v=0;
 		for (auto& v:job->output) v=0;
 		bool ready=c->lease.ready;

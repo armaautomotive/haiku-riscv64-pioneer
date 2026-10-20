@@ -118,6 +118,12 @@ struct DeltaVectorImage:ScalarMachine {
 int main(int argc,char** argv)
 {
 	assert(argc==2);
+#ifdef PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
+	for (uint32_t at:{0x72038U,0x7203cU}) {
+		DeltaVectorImage m(argv[1],1); auto before=m.memory; m.pc=at; m.StepScalar();
+		assert(m.pc==0x72038 && m.memory==before); // actual BOTH branches,not a mocked whitelist
+	}
+#endif
 	for (unsigned trial=0;trial<4;trial++) {
 		DeltaVectorImage m(argv[1],trial); auto before=m.memory; assert(m.RunVector()); m.Verify();
 		for (const auto& word:before) if (DeltaVectorImage::Range(word.first,0x90000,32768) || DeltaVectorImage::Range(word.first,uint32_t(L::Query),1288)) assert(m.memory.at(word.first)==word.second);

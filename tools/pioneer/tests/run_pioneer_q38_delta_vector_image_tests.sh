@@ -7,7 +7,7 @@ boot_hash=d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
 if [ "$#" = 2 ]; then
  [ "$2" = --probe ] || exit 2
  flags=-DPIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
- code_hash=f8c50f91f1388251980e37bf9c8b7b5e3211d2804af21fca621dfea87de12076
+ code_hash=1c0766bedd173f0fcf383629dec7a333a17889ad25e8833b9a57002b6f6ae771
  boot_hash=e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
 fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
