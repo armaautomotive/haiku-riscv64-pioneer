@@ -7,6 +7,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
 #endif
 using status_t=int; using uint32=uint32_t;
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DeltaProbe.h"
+#endif
 constexpr status_t B_OK=0,B_DEV_NOT_READY=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_BAD_VALUE=-4,B_NO_MEMORY=-5,B_ENTRY_NOT_FOUND=-6;
 struct thread_info { int team; };
 static int team=17,threadStatus=0;
@@ -17,6 +20,9 @@ struct Ref2 { Ref1 baseline; tt_compute_noc_result noc; };
 struct Ref3 { Ref2 baseline; };
 struct Ref4 { Ref3 baseline; };
 struct BoundContext {
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+	PioneerQ38DeltaProbeLease q38Delta;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	PioneerQ38SpanLease* q38Span=nullptr;
 #endif
@@ -59,6 +65,9 @@ static int sLock=1,acquired=0,released=0,copyCalls=0,failCopy=0;
 static status_t acquire_sem(int lock) { assert(lock==1); acquired++; return B_OK; }
 static void release_sem(int lock) { assert(lock==1); released++; }
 #include "pioneer_lock.inc"
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+[[maybe_unused]] static const auto& DeltaLockQualification=AcquireQ38DeltaLock;
+#endif
 static status_t user_memcpy(void* to,const void* from,size_t bytes) {
 	if (++copyCalls==failCopy) return -99; memcpy(to,from,bytes); return B_OK;
 }

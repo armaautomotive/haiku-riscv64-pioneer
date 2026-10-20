@@ -1,5 +1,49 @@
 # Native build status
 
+October19,20:40 Vancouver (October20,03:40 UTC) NATIVE VECTOR GDN PASS / GEN2 IDLE:
+Corrected ABI-v2 LOCAL vector kernel qualified on the actual P100A:
+four fixtures,ALL8192 next-state+64 output words EACH exact against the
+independent non-fused CPU debug reference,numeric_checked1,exact_errors0,
+start/completed/stopped1/1/1,cold0,explicit ACCEPT and known-clean BANK_END,
+EXIT0/process gone. Native fixtures2/3 actually observed MIXED72038/7203c,
+both NEW sealed safe branch words. No whitelist expansion for old images.
+Log local-vector-delta-terminal-20261019-a.log SHA
+beed01ba05faa1cd0441312ebe8e86d7021a9b5cc940bdf4b9048a39577703eb.
+
+THEN existing Work debug18 synthetic,16 authenticated119-worker,and old
+checked18 synthetic calculations ALL exact with separate clean END/EXIT0.
+LongQ4 authenticated warm10.748/10.714ms,consistent with prior10.750/10.767ms;
+primitive timing,NOT a model token-rate improvement. Log SHAs:
+work-delta-terminal-synthetic-20261019-a.log
+53ce947f2a14cf7acadbbc34c8eb40513a88263455afc0cd29504297c3cd074d;
+work-delta-terminal-auth119-20261019-a.log
+b17818914854a70d33a8d842431079caf2fbfaeecb13709b8671861e7ccbd78f;
+checked-delta-terminal-synthetic-20261019-a.log
+fd31506afd1037225942353d12664b6e7ddb104ac5ffd644f9ca6782d9e49c1d.
+ALL four archived under pioneer-q38-work-fast-native-20261019.lQIaCFsg.
+
+Current installed e903b8fc/tag202610190006000d/generation2 is CLEAN/IDLE:
+CPU-only guard quiesced0/cold0/active_owner0. No active test/model. Haiku
+64 CPUs and137034936320B RAM verified after the one cold recovery;kernel,
+default Linux boot,SDs,Assistant,frozen llama and dirty user work unchanged.
+Full1571 actual updater cases PASS. Actual Work DMA/controller regression
+WITH the new feature enabled Lpd1r4pB PASS;production Work still NO numerical
+CPU validation/fallback. Final feature-off build EXACTa9889c0b;guardd1ce2aa4
+and default43control2df0e0f8 unchanged. No further reboot required now.
+
+NEXT: this is a native LOCAL arithmetic prerequisite,NOT resident/model
+offload. Preserve prior state until ALL next-state workers complete;add
+owned mutable state/transactional double-buffer commit,96 half-head workers,
+and GGML device-buffer/view/CPY routing WITHOUT3MiB/layer CPU round trips.
+Match pinned GGML_OP_GATED_DELTA_NET's post-dot query scale contract rather
+than silently reusing this primitive's pre-scaled-Q convention. Existing
+checkpoint adapter handles value-key layout and h%16 grouping only;it is
+NOT a per-token CPU transpose. Matrix pipeline/residency still dominates
+the measured6.33s/token;GDN alone cannot deliver the requested20tok/s.
+Latest WHOLE27B benchmark remains0.129277112tok/s from gen30;NO new full
+model rate or arbitrary-input/long-context quality claim. Performance goal
+NOT achieved;do not describe the current model as fast/usable.
+
 October19,20:30 Vancouver (October20,03:30 UTC) LOCAL FRONTEND-PC FIX / COLD RECOVERY:
 First local image f8c50f91/driver16777849 hot-swapped cleanly to gen31,
 but native trial0 stopped BEFORE completion/export acceptance:physical PC
