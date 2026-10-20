@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// UNSELECTED prototype: explicit independent image hashes in the runner.
+// OFFLINE execution: explicit independent image hashes in the runner.
 #define PIONEER_Q38_TEST_UNSELECTED_OUTPUT_ROOT
 #define PIONEER_Q38_VECTOR_COOPERATIVE
 #define PIONEER_Q38_COOPERATIVE_MOCK_ONLY
@@ -34,5 +34,5 @@ int main(int argc,char** argv)
 		OutputReturnMachine<DispatchMachine> m(argv[1],7); if (pc) m.badPcWorker=7; else m.nonfiniteWorker=7;
 		assert(!m.RunRoot() && m.unknown && !m.dmaPackets); m.VerifyFaultInert();
 	}
-	puts("PASS OFFLINE ACTUAL unselected root+real peers: all peer physical/source/counter/output proofs BEFORE bounded host DMA, repeated/checked mode isolation, delayed posted writes/full ordered bit comparison, every fault parks without later NoC IO;NO kernel/BME/host-owner/native integration");
+	puts("PASS OFFLINE ACTUAL bounded-output root+real peers: all peer physical/source/counter/output proofs BEFORE bounded host DMA, repeated/checked mode isolation, delayed posted writes/full ordered bit comparison, every fault parks without later NoC IO;NO native hardware IO");
 }

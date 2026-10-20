@@ -4,8 +4,8 @@
 #ifndef PIONEER_ATTENTION_FREESTANDING
 #include <stdint.h>
 #endif
-// OFFLINE prerequisite ONLY. No installed driver/root selects this helper.
-// Shape is NOT authority: a future kernel must FIRST own/prove the entire
+// Bounded transport primitive;only the separately gated private Work DMA
+// root may select it. Shape is NOT authority: the kernel must FIRST prove the entire
 // private1MiB host mapping, ALL120 roles, original source seals and BME.
 // All peers must be at proved WAIT before this final root-only transfer.
 // Physical words are KERNEL-PRIVATE, never an ioctl/public descriptor.

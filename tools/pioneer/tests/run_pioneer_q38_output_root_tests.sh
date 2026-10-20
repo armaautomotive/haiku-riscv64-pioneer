@@ -1,5 +1,5 @@
 #!/bin/sh
-# OFFLINE prototype ROOT;no installed selector or native launch permission.
+# OFFLINE root execution only;this runner grants no native launch permission.
 set -eu
 [ "$#" = 2 ] || exit 2
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)

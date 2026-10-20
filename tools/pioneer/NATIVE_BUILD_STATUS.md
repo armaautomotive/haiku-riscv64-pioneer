@@ -1,5 +1,49 @@
 # Native build status
 
+October19,19:31 Vancouver (October20,02:31 UTC) GEN30 QUALIFIED / WHOLE27B RUNNING:
+Gen30 a9889c0b/tag202610190006000b hot-swapped cleanly. Work18 synthetic,
+16 authenticated119-worker,and18 old-checked calculations ALL exact,clean
+END,EXIT0. LongQ4 warm10.750/10.767ms versus DMA-only10.896/11.002ms;
+small primitive gain,not token performance. Full FFN warm0.017718s versus
+DMA-only0.017985s (~1.5% less),and pre-DMA0.023240s (~23.8% less),same
+output SHA05cda52a4734da37,clean_end1,EXIT0. FFN log SHA
+e11c3eaeaf82a9c08328832ce359813c5b0d89b9702cfcc1867ab835a21fcb65.
+All1451 updater guard cases PASS. Full27B production Work test now running
+full-model-work-output-dma-queued-four-20261019-a.log,session86037.
+Same-FD authentication and model load completed;497 learned projections
+recognized,32-thread persistent CPU pool;weight priming in progress.
+NO another card job/hot-swap until clean END. NO newer whole-model rate
+than0.078554988tok/s;20tok/s NOT achieved. No power/reboot/SD/Assistant action.
+
+NEXT ARCHITECTURAL PREREQUISITE,OFFLINE ONLY: vector recurrent-state GDN.
+PioneerQ38DeltaVector.h processes128 keys x64 value columns using32 SFPU
+lanes/two parities;V stays in LRegs,working state in Dst,previous L1 state
+immutable. Same non-fused FP32 rounding in the normal-or-zero domain;
+denormal/overflow coverage is NOT an arbitrary-input GGML guarantee.
+Native SFPU flush behavior is explicit;prototype refuses subnormal inputs.
+No CPU learned products/result checks,host/NoC/DMA/PCI/reset API here.
+
+54 standalone cases compare ALL8192 next-state+64 output bits with an
+independent scalar reference. Undefined first/middle/last Dst rows and
+missing MAD latency/final drain are negative controls. Emitted local
+RV32/SFPU image2772B SHA05bef31999bb3a8fa0280744af52645fc92e31a441207fe6e842fe8b53464a52,
+bootd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6,
+two final builds identical. Actual image QcTkTsiZ passes all state/output
+bits,fixed L1/CSR whitelist,eight1024-datum imports (10-bit X1),ALL512
+defined FP32 rows,ALL descriptor bits,nonfinite/subnormal input refusals,
+first/middle/last failed imports and false math/output drains. NO native
+driver/image selection,NoC state ownership,GGML registration or speed claim.
+Earlier delta-vector image a used an over-wide counter and is OBSOLETE;
+b/c preceded explicit input-domain refusals;ONLY final d/e hashes above.
+
+CPU-only checkpoint/debug adapter XA3UFj09 passes ALL786432 state words,
+48 heads x2 halves,exact GGML[value][key] -> proposed[half][key][value]
+round trip,and correct keyHead=valueHead%16,NOT valueHead/3. Bad counts,
+aliases,nonfinite/subnormal data refuse BEFORE output. This is NOT a
+per-token CPU state-transpose path. Resident mutable-state ownership,
+transactional commit,and GGML device-only tensor routing remain required
+before this can replace the CPU GDN in production. Keep that distinction.
+
 October19,19:04 Vancouver (October20,02:04 UTC) DMA FFN PASS / QUEUED ENTRY NEXT:
 Gen29 full FFN completed clean_end1/EXIT0,identical output SHA05cda52a4734da37.
 Warm0.017985s versus gen28 0.023240s =22.61% less wall time (~1.29x).

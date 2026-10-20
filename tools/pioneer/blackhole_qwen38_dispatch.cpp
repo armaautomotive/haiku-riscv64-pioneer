@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-// OFFLINE root dispatcher prerequisite. NO kernel/ABI selects this image.
-// Future kernel MUST authenticate/own ALL initialized bank extents,private
+// Private root dispatcher source. Selection requires a pinned kernel image.
+// The kernel MUST authenticate/own ALL initialized bank extents,private
 // tasks/bank routes/source seals and all119 peer images/sequence histories.
 // No physical route,address or sequence here is a new userspace capability.
 typedef __UINT32_TYPE__ uint32_t;
@@ -32,8 +32,8 @@ static __attribute__((noinline)) void Checkpoint(unsigned stage,unsigned detail)
 }
 extern "C" void block_fault_park() __attribute__((noreturn));
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
-// OFFLINE ONLY. No kernel/driver selects this compatible-root prototype.
-// A future kernel must own/seal the complete high-physical host mapping,
+// Separately gated bounded-output variant. The kernel must own/seal the
+// complete high-physical host mapping,
 // keep it pending across BME, and quarantine ALL owners on uncertainty.
 struct RootOutputIO {
 	uint32_t ReadReg(unsigned at) { return *Words(0xffb20000+at); }
