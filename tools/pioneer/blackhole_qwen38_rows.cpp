@@ -37,6 +37,9 @@
 #if defined(PIONEER_Q38_CACHED_AFFINE) && !defined(PIONEER_Q38_STATIC_VECTOR)
 #error Cached affine candidate requires the separate static integer/SFPU variant
 #endif
+#if defined(PIONEER_Q38_REPLAY_OPERAND) && !defined(PIONEER_Q38_CACHED_AFFINE)
+#error Operand replay requires the separate cached-affine integer/SFPU variant
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"

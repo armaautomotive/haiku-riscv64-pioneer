@@ -1,5 +1,85 @@
 # Native build status
 
+October19,17:51 Vancouver (October20,00:51 UTC) REPLAY NATIVE PASS / FULL27B RUN:
+Guarded55 388e17ab9ab2701fb900c3a3c39b792bf5a65917a26b4520ddfa0d870f105709,
+tag2026101900060008,generation27. Update EXIT0;18 Work synthetic+16
+authenticated119-worker calculations ALL exact,clean END,EXIT0. Q4K17408
+warm11.396/11.414ms vs cached11.541/11.531ms:small change (~1%),not the
+9..16% instruction-count reduction as a silicon-speed claim.
+
+Full authenticated FFN/Workbda16c7c PASS,clean_end1,EXIT0,output05cda52a...
+unchanged. First graph29.276490s,warm0.023516s vs cached0.023980s (~1.9%
+less) or gen23 0.026746s (~12.1% less). Source repack0.397448s,span upload
+1.915676s. Log full-ffn-work-replay-operand-20261019-a.log SHA
+01cebbfc97e0a40c586172a9fd651a3eff5e1747d2d0c2f11c52cd487739040b.
+Cached FFN log SHA5294c395af431f80c137e7cab705159b47f2aa97debd52930a8b45aed5bab3a0.
+New whole-model smoke now running:full-model-work-replay-operand-four-20261019-a.log.
+Do NOT launch another card job/reload until clean END. Last COMPLETE whole
+model rate remains0.073382524tok/s;20tok/s remains unachieved.
+
+Separate OFFLINE output-DMA prerequisite,NOT SELECTED by any driver/root:
+PioneerQ38OutputTransfer freezes a kernel-private32-word descriptor and
+restricts every packet to the existing root output80000..9dc00,readback
+scratch75000..76000 and a private aligned1MiB high48-bit host owner. ONLY
+1..119 fixed1024B worker strides,<=4KiB packets. No new allocation/launch,
+BME/reset/END/restore/free capability. Host NoC ACK is NOT visibility:each
+write is followed by ordered host read AND ALL-bit on-card copy comparison.
+This is transport integrity,not CPU learned-matrix validation. Source,
+command readback,ALL completion counters/ACK/idle checks and frozen
+descriptor equality precede success. Nonce RANGE is checked;independent
+expected sequencing/lifetime remains future kernel authority. Any
+uncertainty is sticky and forbids ALL later IO.
+
+ASan/UBSan pure transport tests cover every60-packet timeout/counter/source/
+drop/corruption point,malformed shape ZERO IO,delayed posted writes,high
+address/width edges,wrapped counters and frozen/changed descriptor. Actual
+compiled RV32 independently confirms owned-window-only accesses,all raw
+bits,first/middle/last failures and fault-park ZERO later NoC IO. Two image
+builds identical:1872B d95cdf2d9d3d944d1d734db2130a3702329d93da2813335378d67ebe6a1e92e8.
+No installed inference uses this image;NO native DMA speed claim. Future
+integration still needs a fully proved host-owner/BME lifetime,an immutable
+compatible root image,completion/counter proof updates and independent
+native visibility qualification. Never swap this code into a live cohort.
+
+October19,17:37 Vancouver (October20,00:37 UTC) CACHED FFN PASS / REPLAY NEXT:
+Gen26 cached-affine full authenticated FFN completed with Workbda16c7c:
+PASS,clean_end1,EXIT0;output05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56
+unchanged. Warm0.023980s versus0.026746s gen23 (~10.3% less);this combines
+host wave-cache and the compute candidates,not an isolated cache speedup.
+Source repack0.401138s,span upload1.920048s,first graph29.145488s. Log
+full-ffn-work-cached-affine-20261019-a.log. No newer whole-model token rate.
+
+Next explicit opt-in PIONEER_Q38_REPLAY_OPERAND requires CACHED_AFFINE.
+Records AND executes the unchanged register-only SFPU operand decoder for
+the first32-lane chunk,then replays it for the remaining7 chunks. Every
+chunk still loads fresh raw lanes and stores to the same disjoint Dst.
+Only per-thread entries0..20;no address/config/NoC/store/drain/nested replay
+is recorded. Fixed count6..21 is independently checked against actual
+emitted instructions. The original full drain proves expansion/ALU work
+finished BEFORE matrix use/source reuse/publication/WAIT/STOP. No new
+mapped address or packet,public field,asynchronous owner or unchecked code.
+UNKNOWN retains ALL owners as before;no new cleanup/reset path.
+
+Replay main7748B SHAb509cb6b5477073a3b9c1fdc10600884144557d81357611561afe0e8f75d7198;
+prefix2196B SHA914735bf3914a16dcab8bba77ebc12627cf2924d4db409cf1b2e1d19b783f5c0.
+Same existing bounds/boot/WAIT/STOP/root. Two peer/driver builds identical;
+driver388e17ab9ab2701fb900c3a3c39b792bf5a65917a26b4520ddfa0d870f105709,
+tag2026101900060008. Feature-off peer EXACT1f2112f6/34ed4d37,driver EXACT
+5b7562af;ordinary43 EXACT2df0e0f8,guard unchanged. Updater90a4c58c passes
+1271 actual guard cases. Guarded hot swap is in progress;NO native replay
+arithmetic qualification or speed claim yet.
+
+Independent frontend rejects undefined/out-of-range/zero/reserved-field
+replays and any non-register instruction or non-stack IO during capture.
+Actual full-K/repeated/changed inputs match old outputs and EXACT expanded
+Tensix ops/drains/NoC,while RISC steps fall9..16% (not a cycle model).
+Final actual peer IzEIlYJQ includes N256,zero/sign-zero,real model head/tail,
+integer bound failures,duplicate inert/STOP/NoC-UNKNOWN;cooperative root
+MaYjHKkm and actual handler+retention eSnSa5mT PASS. END hBxKwCzC retains
+all owners with ZERO later IO on code/prefix/STOP/physical proof failures.
+Native evidence directory unchanged;no reboot,power,SD or Assistant action.
+GitHub checkpoint b2889c642b includes all prior native-qualified changes.
+
 October19,17:26 Vancouver (October20,00:26 UTC) COMPUTE OPTIMIZATION CHECKPOINT:
 Guarded55 5b7562af537609b34e5286bebb4bbd41ab6dc9e376072820ca2796b651928210,
 tag2026101900060007,generation26. Hot swap PASS,EXIT0;no reboot/power/SD or

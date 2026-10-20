@@ -26,6 +26,12 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	unsigned metadataWrites=0,instructionBufferStores=0;
+	// Independent frontend replay expander; poison/undefined entries must
+	// never be read. Only register-only arithmetic may enter this prototype.
+	struct ReplayAccessFault {};
+	uint32_t replay[32]={}; bool replayDefined[32]={};
+	unsigned recordNext=0,recordRemaining=0,replayRecords=0,replayExpansions=0;
+	bool recordExecute=false,dropReplayRecord=false;
 	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
@@ -84,6 +90,26 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		physical[lo][col]=uint16_t(value); wrote[hi][col]=wrote[lo][col]=true;
 	}
 	void Instruction(uint32_t op) override {
+		if (recordRemaining) {
+			unsigned code=op>>24;
+			if (code!=0x71 && code!=0x7c && code!=0x7a && code!=0x8d && code!=0x79 && code!=0x7e) throw ReplayAccessFault{};
+			assert(recordNext<32);
+			replay[recordNext]=op; replayDefined[recordNext++]=!dropReplayRecord;
+			recordRemaining--;
+			if (!recordExecute) return;
+		} else if ((op>>24)==4) {
+			unsigned index=(op>>14)&31,count=(op>>4)&63;
+			if ((op&~0x0407c3f3U) || !count || index+count>32) throw ReplayAccessFault{};
+			if (op&1) { recordNext=index; recordRemaining=count; recordExecute=bool(op&2); replayRecords++; }
+			else {
+				for (unsigned i=index;i<index+count;i++) {
+					if (!replayDefined[i]) throw ReplayAccessFault{};
+					Instruction(replay[i]);
+				}
+				replayExpansions++;
+			}
+			return;
+		}
 #ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
 		if (!executingPhases && ((op&~0x4000U)==0x26000020 || (op&~0x4000U)==0x26c00020)) {
 			if (phaseQueue.size()==4) throw PendingMatrixAccess{};
@@ -285,6 +311,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	}
 	void Store(uint32_t address,uint32_t value) override {
 		if (address==0xffe40000) instructionBufferStores++;
+		if (recordRemaining && !Range(address,0x6e000,8192) && address!=0xffe40000) throw ReplayAccessFault{};
 #ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
 		if (!phaseQueue.empty() && !Range(address,0x6e000,8192) && address!=0xffe000fc && address!=0xffe40000)
 			throw PendingMatrixAccess{};
@@ -319,6 +346,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
+		if (recordRemaining && !Range(address,0x6e000,8192)) throw ReplayAccessFault{};
 #ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
 		if (!phaseQueue.empty() && !Range(address,0x6e000,8192) && address!=0xffe000fc)
 			throw PendingMatrixAccess{};

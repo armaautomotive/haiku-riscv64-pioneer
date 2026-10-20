@@ -13,6 +13,9 @@
 #if defined(PIONEER_Q38_CACHED_AFFINE) && !defined(PIONEER_Q38_STATIC_VECTOR)
 #error Cached affine peer requires the static integer/SFPU variant
 #endif
+#if defined(PIONEER_Q38_REPLAY_OPERAND) && !defined(PIONEER_Q38_CACHED_AFFINE)
+#error Operand replay peer requires the cached-affine integer/SFPU variant
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
@@ -27,9 +30,14 @@
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #include "PioneerQ38CachedPeerImage.h"
 #endif
+#ifdef PIONEER_Q38_REPLAY_OPERAND
+#include "PioneerQ38ReplayPeerImage.h"
+#endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
-#ifdef PIONEER_Q38_CACHED_AFFINE
+#ifdef PIONEER_Q38_REPLAY_OPERAND
+ return worker>=120?UINT32_MAX:worker?PioneerQ38ReplayPrefixWord(address):0;
+#elif defined(PIONEER_Q38_CACHED_AFFINE)
  return worker>=120?UINT32_MAX:worker?PioneerQ38CachedPrefixWord(address):0;
 #else
  return worker>=120?UINT32_MAX:worker?PioneerQ38IntSfpuPrefixWord(address):0;
@@ -590,7 +598,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
 #ifdef PIONEER_Q38_INT_SFPU
-#ifdef PIONEER_Q38_CACHED_AFFINE
+#ifdef PIONEER_Q38_REPLAY_OPERAND
+ return worker>=120?UINT32_MAX:worker?PioneerQ38ReplayPeerWord(word):PioneerQ38DispatchRootWord(word);
+#elif defined(PIONEER_Q38_CACHED_AFFINE)
  return worker>=120?UINT32_MAX:worker?PioneerQ38CachedPeerWord(word):PioneerQ38DispatchRootWord(word);
 #elif defined(PIONEER_Q38_STATIC_VECTOR)
  return worker>=120?UINT32_MAX:worker?PioneerQ38StaticPeerWord(word):PioneerQ38DispatchRootWord(word);

@@ -66,9 +66,23 @@ Q4 scale-base conversions (`PIONEER_Q38_CACHED_AFFINE`). They form a dependency
 chain in that order after integer SFPU. The first two pass native tests but
 show only small/no clear timing gains. The cache reduces Q4 instruction-model
 RISC work by about 24% and the longest tested native projection by about 6%;
-its full FFN qualification is in progress. None establishes
+its full FFN passed with unchanged output and a roughly 10% reduction in
+warm FFN time (including the host-wave-cache change). None establishes
 a new whole-model generation rate. All ownership, DMA and failure-containment
 checks remain; CPU reference calculations run only in the debug client.
+
+The opt-in `PIONEER_Q38_REPLAY_OPERAND` uses the thread's bounded
+instruction replay buffer for repeated register-only operand decoding.
+Independent actual-instruction tests preserve every expanded operation and
+output bit, with 9–16% fewer RISC instructions. Native exact-output checks
+pass too, but warm FFN improved only about 2% over cached affine (about 12%
+over the earlier integer-SFPU build). It requires cached affine; defaults
+remain unchanged. A new whole-model timing run is in progress.
+
+An unselected output-DMA prerequisite also has pure and actual-RV32 offline
+tests, including delayed posted writes and sticky transfer failures. It
+does **not** yet replace PCIe output reads in inference: host ownership/BME
+lifetime and compatible-root integration still need qualification.
 
 ## Experimental Qwen 27B execution modes (October 19)
 
