@@ -49,33 +49,33 @@ public:
 	unsigned type=0,inputs=0,outputs=0,workers=0,tensor=851,wave=0;
 	tt_q38_cohort_part part[120]={}; unsigned firstRow[120]={};
 	bool Ready() const {
-		if (!source || !packed || !schedule || source->Epoch()!=epoch || !source->Stable() || !packed->Tiled()
-			|| !packed->MatchesSource(*source) || !schedule->MatchesSource(*source,*packed) || schedule->Tensor()!=boundTensor
+		if (!source || !packed || !schedule || source->Epoch()!=epoch || !source->Stable()
+			|| !schedule->MetadataMatches(*source,*packed) || schedule->selected!=boundTensor
 			|| tensor!=boundTensor || wave!=boundWave || boundTensor>=source->Tensors().size()) return false;
 		const auto& t=source->Tensors()[boundTensor];
 		if (type!=t.type || inputs!=t.inputs || outputs!=t.outputs) return false;
 		unsigned active=0;
-		for (const auto& j:schedule->Jobs()) if (j.wave==boundWave) {
+		for (const auto& j:schedule->jobs) if (j.wave==boundWave) {
 			if (j.worker!=active || active>=120 || part[active].bank!=j.bank || part[active].groups!=j.groups
 				|| part[active].offset!=j.proposedOffset || firstRow[active]!=j.firstRow) return false;
 			active++;
 		}
 		if (!active || workers!=active) return false;
 		for (unsigned w=active;w<120;w++) if (part[w].bank || part[w].groups || part[w].offset || firstRow[w]) return false;
-		return true;
+		return source->Stable(); // fresh AFTER no-IO traversal too;no lifetime file cache
 	}
 	bool Build(const PioneerQwen38Gguf& model,const PioneerQwen38PackedPlan& layout,const PioneerQwen38FleetPlan& schedule,unsigned number)
 	{
 		PioneerQ38CohortWave stage;
-		if (!schedule.MatchesSource(model,layout) || schedule.Tensor()>=model.Tensors().size()) return false;
-		const auto& t=model.Tensors()[schedule.Tensor()];
-		stage.type=t.type; stage.inputs=unsigned(t.inputs); stage.outputs=unsigned(t.outputs); stage.tensor=schedule.Tensor(); stage.wave=number;
+		if (!schedule.MatchesSource(model,layout) || schedule.selected>=model.Tensors().size()) return false;
+		const auto& t=model.Tensors()[schedule.selected];
+		stage.type=t.type; stage.inputs=unsigned(t.inputs); stage.outputs=unsigned(t.outputs); stage.tensor=schedule.selected; stage.wave=number;
 		// Revalidate fragment identity against THIS layout,not merely an
 		// equally shaped second model or a user-supplied physical pointer.
 		// This is private immutable metadata: authenticate its owner before
 		// and after the loop, not twice (and multiple fstats) per worker.
-		const auto& parts=layout.Parts();
-		for (const auto& j:schedule.Jobs()) if (j.wave==number) {
+		const auto& parts=layout.parts;
+		for (const auto& j:schedule.jobs) if (j.wave==number) {
 			if (j.worker!=stage.workers || j.worker>=120 || j.fragment>=parts.size()) return false;
 			const auto& p=parts[j.fragment];
 			unsigned groupBytes=16*PioneerQ38TiledRowBytes(t.type,t.inputs);
@@ -85,9 +85,9 @@ public:
 				|| j.proposedOffset!=uint64_t(p.proposedAddress)-layout.Base+uint64_t((j.firstRow-p.firstRow)/16)*groupBytes) return false;
 			stage.part[j.worker]={j.bank,j.groups,j.proposedOffset}; stage.firstRow[j.worker]=j.firstRow; stage.workers++;
 		}
-		if (!stage.workers || !schedule.Ready() || !model.Stable()) return false;
+		if (!stage.workers || !schedule.MatchesSource(model,layout)) return false;
 		stage.source=&model; stage.packed=&layout; stage.schedule=&schedule; stage.epoch=model.Epoch();
-		stage.boundTensor=schedule.Tensor(); stage.boundWave=number;
+		stage.boundTensor=schedule.selected; stage.boundWave=number;
 		*this=stage; return true;
 	}
 };

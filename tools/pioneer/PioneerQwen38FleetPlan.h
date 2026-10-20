@@ -12,20 +12,24 @@ struct PioneerQ38FleetPart {
 	uint64_t proposedOffset;
 };
 class PioneerQwen38FleetPlan {
+	friend class PioneerQ38CohortWave;
 	const PioneerQwen38Gguf* source=nullptr;
 	const PioneerQwen38PackedPlan* packed=nullptr;
 	uint64_t epoch=0;
 	unsigned selected=0,workerCount=0;
 	std::vector<PioneerQ38FleetPart> jobs,empty;
+	bool MetadataMatches(const PioneerQwen38Gguf& model,const PioneerQwen38PackedPlan& plan) const {
+		return source==&model && packed==&plan && epoch==model.Epoch() && plan.MetadataMatches(model) && plan.tiled;
+	}
 public:
-	bool Ready() const { return source && packed && source->Epoch()==epoch && source->Stable() && packed->Tiled() && packed->MatchesSource(*source); }
-	bool MatchesSource(const PioneerQwen38Gguf& model,const PioneerQwen38PackedPlan& layout) const { return Ready() && source==&model && packed==&layout; }
+	bool Ready() const { return source && packed && MetadataMatches(*source,*packed) && source->Stable(); }
+	bool MatchesSource(const PioneerQwen38Gguf& model,const PioneerQwen38PackedPlan& layout) const { return MetadataMatches(model,layout) && model.Stable(); }
 	const std::vector<PioneerQ38FleetPart>& Jobs() const { return Ready()?jobs:empty; }
 	unsigned Tensor() const { return Ready()?selected:851; }
 	unsigned Workers() const { return Ready()?workerCount:0; }
 	bool Build(const PioneerQwen38Gguf& model,const PioneerQwen38PackedPlan& plan,unsigned tensor,unsigned workers=120,unsigned maxGroups=16) {
 		source=nullptr; packed=nullptr; epoch=0; workerCount=0; jobs.clear();
-		if (!model.Stable() || !plan.Tiled() || !plan.MatchesSource(model) || tensor>=model.Tensors().size() || !workers || workers>120 || !maxGroups || maxGroups>16) return false;
+		if (!model.Stable() || !plan.MetadataMatches(model) || !plan.tiled || tensor>=model.Tensors().size() || !workers || workers>120 || !maxGroups || maxGroups>16) return false;
 		const auto& t=model.Tensors()[tensor];
 		unsigned rowBytes=PioneerQ38TiledRowBytes(t.type,t.inputs),groupBytes=rowBytes*16;
 		if (!t.type || !rowBytes || !t.outputs || (t.outputs&15) || (t.inputs!=5120 && t.inputs!=6144 && t.inputs!=17408) || (groupBytes&63)) return false;
@@ -34,7 +38,7 @@ public:
 		// Private immutable layout metadata,NOT learned bytes or a cached file
 		// identity. Keep the existing source/epoch checks before AND after this
 		// no-IO loop;do not repeat fstat twice for EVERY unrelated fragment.
-		const auto& parts=plan.Parts();
+		const auto& parts=plan.parts;
 		for (unsigned i=0;i<parts.size();i++) {
 			const auto& p=parts[i]; if (p.kind!=PIONEER_Q38_WEIGHT || p.tensor!=tensor) continue;
 			if (p.bank>=7 || banks[p.bank] || !p.rows || (p.firstRow&15) || (p.rows&15) || p.firstRow>t.outputs || p.rows>t.outputs-p.firstRow
@@ -75,7 +79,7 @@ public:
 			if (!progress) return false;
 		}
 		for (const auto& piece:pieces) if (piece.done!=piece.groups || piece.emitted!=piece.quota) return false;
-		if (!model.Stable() || !plan.Tiled() || !plan.MatchesSource(model)) return false;
+		if (!model.Stable() || !plan.MetadataMatches(model) || !plan.tiled) return false;
 		jobs.swap(stage); source=&model; packed=&plan; epoch=model.Epoch(); selected=tensor; workerCount=workers; return true;
 	}
 };

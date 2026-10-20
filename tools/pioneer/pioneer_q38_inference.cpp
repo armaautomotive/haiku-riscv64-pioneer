@@ -77,10 +77,16 @@ static int GraphSmoke(State& state,const char* output)
 		auto graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,y); y->flags|=GGML_TENSOR_FLAG_COMPUTE;
 		double start=Seconds(); okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
 		double repeat=Seconds(); uint64_t pages=state.session.pagesUploaded;
+		double matrixBefore=state.matrixWallSeconds;
+		uint64_t ioctlBefore=state.session.runNanos;
 		if (okay) { memcpy(first.data(),y->data,5120*4); memset(y->data,0,5120*4); okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS; }
+		double repeated=Seconds()-repeat;
 		printf("PUBLIC_FFN_GGML_GRAPH first_seconds%.6f repeat_seconds%.6f calls%llu projections%llu pages%llu;NOT_LLM_TOKEN_RATE\n",
-			repeat-start,Seconds()-repeat,(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,
+			repeat-start,repeated,(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,
 			(unsigned long long)state.session.pagesUploaded);
+		printf("PUBLIC_FFN_HOST_REPEAT graph_seconds%.6f multiply_seconds%.6f ioctl_seconds%.6f timing_valid%u;CPU_WALL_NOT_PURE_GPU_OR_LLM_TOKEN_RATE\n",
+			repeated,state.matrixWallSeconds-matrixBefore,double(state.session.runNanos-ioctlBefore)*1e-9,
+			unsigned(state.profileValid && repeat>=0 && repeated>=0 && state.session.runNanos>=ioctlBefore));
 		okay=okay && !memcmp(first.data(),y->data,5120*4) && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==2;
 	}
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)

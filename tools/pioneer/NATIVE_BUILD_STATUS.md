@@ -1,5 +1,29 @@
 # Native build status
 
+October20,15:02 Vancouver (22:02 UTC) HOST METADATA SNAPSHOT CANDIDATE OFFLINE:
+Private PackedPlan/FleetPlan friend-only metadata relations remove nested
+repeated fstats within the SAME no-IO traversal. No public cached Ready
+shortcut or new data/device authority. Fresh same-source identity checks
+bracket fleet/wave construction and wave validation;existing source checks
+before requests/after ioctls/before publication remain. Work still contains
+NO CPU learned reference/result validation;checked/CPU-debug stay separate.
+Instrumented same public-shaped sparse fixture measures old fleetBuild7/
+waveBuild23/waveReady12/request24/collect24 fstats vs2/2/2/4/4;78->12 for
+that metadata sequence,NOT native inference/time evidence. Every check's
+injected syscall failure refuses before publication;epoch invalidation and
+ALL assembled rows exact (new6xnJ6Gwe,archived50fb153 baselineuUERMPKF).
+All498 fleet schedules0rj40Z4u,21234 cohort waves/40reply+10forged/stale
+faultsVH32cS1D,cohort sessiona0AKvXGa,dispatchLfYIPOMl,Work+CPU-validated
+mode separation,fast-span session and pristine-c060 GGML bridge5 fault
+casesd4ophmCq PASS under ASan/UBSan. No dirty llama source was read/built.
+Inference42c803a5c83e11aac80d1af583ef619fea79939c3e9d2aa7138ededa616c2127
+cross a/b EXACT with ALL4 frozen runtime SHA checks. FFN-only output now
+also separates existing CPU multiply/ioctl wall diagnostics;NO new device
+queries. Candidate NOT staged/run/Assistant-installed;NO speedup claimed.
+Frozen389d3cf9 production32-token baseline remains ONLY native job,still
+loading retained weights. All hardware/source/SD/boot settings unchanged.
+Goal ACTIVE;latest tiny completed sample0.170694031tok/s,not20.
+
 October20,14:58 Vancouver (21:58 UTC) PROFILE CLEAN / LONG BASELINE RUNNING:
 Diagnostic-only f7d3d395/gen10 synthetic18+auth119x16 exact;real frozen
 bda16c7c singleFFN graph also repeatability PASS/clean_end1/CLI_EXIT0.

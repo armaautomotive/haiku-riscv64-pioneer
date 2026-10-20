@@ -21,6 +21,8 @@ struct PioneerQ38DeltaHalfProposal {
 	uint32_t proposedAddress,bytes;
 };
 class PioneerQwen38PackedPlan {
+	friend class PioneerQwen38FleetPlan;
+	friend class PioneerQ38CohortWave;
 	std::vector<PioneerQ38PackedPart> parts;
 	std::vector<PioneerQ38PackedPart> empty;
 	uint64_t used[7]={};
@@ -30,6 +32,12 @@ class PioneerQwen38PackedPlan {
 	mutable PioneerQwen38TiledReader tiledReader;
 	const PioneerQwen38Gguf* boundSource=NULL;
 	uint64_t epoch=0;
+	// Private immutable-metadata relation ONLY. Friends bracket their
+	// no-IO traversal with fresh Stable checks;this is never file/data or
+	// device authority and is deliberately NOT a public Ready shortcut.
+	bool MetadataMatches(const PioneerQwen38Gguf& model) const {
+		return ready && boundSource==&model && epoch==model.Epoch();
+	}
 	bool Stripe(unsigned kind,unsigned layer,unsigned role,unsigned tensor,unsigned rows,unsigned rowBytes,unsigned unit) {
 		if (!rows || !rowBytes || !unit) return false;
 		unsigned counts[7]={},chunks=rows/unit,tail=rows%unit,count=chunks<7?1:7;
