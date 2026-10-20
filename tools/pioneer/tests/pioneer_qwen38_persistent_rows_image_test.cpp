@@ -14,7 +14,7 @@ struct PersistentRows:SharedRowsMachine {
 	PersistentRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker=69):SharedRowsMachine(path,type,k,groups),logicalWorker(worker) {
 #ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
 		assert(!affineCode.empty());
-#ifdef PIONEER_Q38_INT_SFPU
+#if defined(PIONEER_Q38_INT_SFPU) && !defined(PIONEER_Q38_TEST_UNSELECTED_QUEUED_ENTRY)
 		for (uint32_t a=0x70000;a<0x72000;a+=4) {
 			uint32_t word=a>=0x70b00 && a-0x70b00<affineCode.size()?Word(affineCode,a-0x70b00):0;
 			assert(PioneerQ38DispatchPrefixWord(worker,a)==word);
@@ -24,7 +24,7 @@ struct PersistentRows:SharedRowsMachine {
 		}
 #endif
 #endif
-#if !defined(PIONEER_Q38_VECTOR_PERSISTENT_IMAGE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR)
+#if (!defined(PIONEER_Q38_VECTOR_PERSISTENT_IMAGE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR)) && !defined(PIONEER_Q38_TEST_UNSELECTED_QUEUED_ENTRY)
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(worker,word)==(word<code.size()/4?Word(code,word*4):0));
 #endif
 		assert(inputReads>=2 && packets[inputReads-1].address==0x94000);

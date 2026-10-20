@@ -58,6 +58,12 @@ case "${PIONEER_Q38_WORK_SKIP_DOT_CHECK:-0}" in
     q4_phases="$q4_phases -DPIONEER_Q38_WORK_SKIP_DOT_CHECK";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_QUEUED_MATRIX_ENTRY:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_SKIP_DOT_CHECK:-0}" = 1 ] && [ "${PIONEER_Q38_PIPELINED_MATRIX:-0}" = 1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_QUEUED_MATRIX_ENTRY";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \

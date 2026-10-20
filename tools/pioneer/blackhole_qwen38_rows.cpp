@@ -43,6 +43,12 @@
 #if defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) && (!defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_PERSISTENT_ROWS))
 #error Work dot-check isolation requires the replayed persistent integer/SFPU peer
 #endif
+#ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
+#if !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || !defined(PIONEER_Q38_PIPELINED_MATRIX)
+#error Queued matrix entry requires the latest fixed integer/SFPU Work peer
+#endif
+#include "PioneerQ38QueuedMatrixEntry.h"
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -160,6 +166,10 @@ static void Matrix(unsigned type)
 static void Matrix()
 #endif
 {
+#ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
+	VectorPanelEmitter entry;
+	PioneerQ38QueuedMatrixEntry(entry);
+#else
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
 #ifdef PIONEER_Q38_VECTOR_PANEL
 	// Native59-qualified:clear BOTH physical halves of FP32 rows32..47.
@@ -174,6 +184,7 @@ static void Matrix()
 	Emit(0x420000c1);
 #endif
 	Emit(0x428000c1); Drain();
+#endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 	VectorPanelEmitter e;
 #ifdef PIONEER_Q38_BFLOAT_PANEL

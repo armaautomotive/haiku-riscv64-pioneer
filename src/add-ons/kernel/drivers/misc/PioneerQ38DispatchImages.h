@@ -25,6 +25,12 @@
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 #include "PioneerQ38OutputRootImage.h"
 #endif
+#ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
+#if !defined(PIONEER_Q38_WORK_OUTPUT_DMA) || !defined(PIONEER_Q38_PIPELINED_MATRIX)
+#error Queued entry requires the fully qualified Work DMA integer peer
+#endif
+#include "PioneerQ38QueuedEntryPeerImage.h"
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
@@ -49,6 +55,9 @@ static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t add
 {
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
  if (!worker) return PioneerQ38OutputRootPrefixWord(address);
+#endif
+#ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
+ if (worker && worker<120) return PioneerQ38QueuedEntryPrefixWord(address);
 #endif
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
  return worker>=120?UINT32_MAX:worker?PioneerQ38WorkDotPrefixWord(address):0;
@@ -622,7 +631,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
 #ifdef PIONEER_Q38_INT_SFPU
-#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+#ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
+ return worker>=120?UINT32_MAX:worker?PioneerQ38QueuedEntryPeerWord(word):PioneerQ38DispatchRootWord(word);
+#elif defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK)
  return worker>=120?UINT32_MAX:worker?PioneerQ38WorkDotPeerWord(word):PioneerQ38DispatchRootWord(word);
 #elif defined(PIONEER_Q38_REPLAY_OPERAND)
  return worker>=120?UINT32_MAX:worker?PioneerQ38ReplayPeerWord(word):PioneerQ38DispatchRootWord(word);

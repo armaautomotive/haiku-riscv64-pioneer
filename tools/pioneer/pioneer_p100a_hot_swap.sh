@@ -4,7 +4,7 @@
 # command and NO automatic rollback after an unproven replacement.
 set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
-case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma) mode=$1;; *) exit 2;; esac
+case "$1" in --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma|--apply-work-queued-entry|--restore-work-queued-entry) mode=$1;; *) exit 2;; esac
 stage=/boot/home/pioneer-p100a-hot-reload-20261019-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
@@ -34,6 +34,7 @@ candidatewspa=$stage/tenstorrent_pci_probe-work-cached-affine-5b7562af
 candidatewspu=$stage/tenstorrent_pci_probe-work-replay-operand-388e17ab
 candidatewspd=$stage/tenstorrent_pci_probe-work-dot-bdbecc33
 candidatewspo=$stage/tenstorrent_pci_probe-work-output-dma-5f5f8cd8
+candidatewspj=$stage/tenstorrent_pci_probe-work-queued-entry-a9889c0b
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -62,6 +63,7 @@ hashwspa=5b7562af537609b34e5286bebb4bbd41ab6dc9e376072820ca2796b651928210
 hashwspu=388e17ab9ab2701fb900c3a3c39b792bf5a65917a26b4520ddfa0d870f105709
 hashwspd=bdbecc3318006a4a3e5ec99d141cb26eb5c2c722b3704ed6b7a01001ce97e352
 hashwspo=5f5f8cd82f71ea38842b1fa2c2d5321e53641e69d7090f9c2c25166f3da9de8d
+hashwspj=a9889c0b5c7ea0b1281adee641fef0390f3a0ff523080bb05733d335eaf4456b
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -88,6 +90,7 @@ tagwspa=2026101900060007
 tagwspu=2026101900060008
 tagwspd=2026101900060009
 tagwspo=202610190006000a
+tagwspj=202610190006000b
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -177,6 +180,8 @@ else
  elif [ "$mode" = --restore-work-dot ]; then source=$candidatewspu; expected=$hashwspd; result=$hashwspu; oldtag=$tagwspd; newtag=$tagwspu
  elif [ "$mode" = --apply-work-output-dma ]; then source=$candidatewspo; expected=$hashwspd; result=$hashwspo; oldtag=$tagwspd; newtag=$tagwspo
  elif [ "$mode" = --restore-work-output-dma ]; then source=$candidatewspd; expected=$hashwspo; result=$hashwspd; oldtag=$tagwspo; newtag=$tagwspd
+ elif [ "$mode" = --apply-work-queued-entry ]; then source=$candidatewspj; expected=$hashwspo; result=$hashwspj; oldtag=$tagwspo; newtag=$tagwspj
+ elif [ "$mode" = --restore-work-queued-entry ]; then source=$candidatewspo; expected=$hashwspj; result=$hashwspo; oldtag=$tagwspj; newtag=$tagwspo
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

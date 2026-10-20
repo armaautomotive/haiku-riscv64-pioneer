@@ -1,5 +1,37 @@
 # Native build status
 
+October19,19:04 Vancouver (October20,02:04 UTC) DMA FFN PASS / QUEUED ENTRY NEXT:
+Gen29 full FFN completed clean_end1/EXIT0,identical output SHA05cda52a4734da37.
+Warm0.017985s versus gen28 0.023240s =22.61% less wall time (~1.29x).
+First29.172873s,repack0.398183s,span upload1.872394s. This is a TWO-call
+feed-forward graph,NOT whole27B token rate. Latest full27B still0.078554988.
+Work18 synthetic,16 authenticated119-worker,and18 old-checked calculations
+all exact and clean. Logs archived in pioneer-q38-work-fast-native evidence:
+synthetic SHAbe8968e2a3842ac4,auth1191ca8d7a0968dbb42,checked49e07262994bed79.
+No reboot,power,SD or Assistant action. Current gen29 clean and idle.
+
+Separate PIONEER_Q38_QUEUED_MATRIX_ENTRY candidate remains NOT installed.
+Same physical BOTH-half ZEROACC/fixed SrcB unpack/source flips/final phase
+drain;queues entry with matrix phases instead of2 RISC acknowledgement waits
+per panel. No Config/NoC/CPU Dst accesses may interleave. SETRWC/ZEROACC/
+MVMUL share FPU;documented MVMUL Wait Gate requires BOTH SrcA/SrcB ownership.
+Metadata waits/final completion wait remain. Scalar/CPU validation unchanged.
+Main7660B8d0a4339c676509ff45c8802f00cb2a875dd4644537df158a9087464fc234a5a,
+prefix2196B521420fa2a52603dc4c77f95cfab3df78f36f59532de38d8a99d7e2244ef892d.
+Two builds identical;feature-off peer EXACT0527/701b. Drivera9889c0b5c7ea0b1281adee641fef0390f3a0ff523080bb05733d335eaf4456b,
+tag202610190006000b,two builds identical;feature-off driver EXACT5f5f8cd8,
+43control/guard unchanged. Staging only,not a native/speed qualification.
+
+Offline actual-image comparison C2hMhSoE passes all9 shapes x2 modes,
+repeated changed inputs,same matrix/SFPU/NoC/output bits,EXACTLY2 fewer
+drains/panel. Independent observer delays physical clears and SrcB
+publication until matrix source gate;missing publication refuses.
+Full persistent actual peer+authentic rows tsrMOz83,actual root+peers
+ouK5yUmv,actual controller XUwIjHKb,extracted owner/retention sYBhVPqk,
+and END SbqOpZKM all PASS. Final phase-drain false-ACK negative control
+still refuses before publication. New updater route passes all60 focused
+apply/restore guard cases;full1451-route suite running independently.
+
 October19,18:54 Vancouver (October20,01:54 UTC) GEN29 DMA SYNTHETIC PASS:
 Guarded hot-swap completed cleanly,tag202610190006000a,generation29,
 cold0,active_owner0. No reboot,power,SD or Assistant action. Then all18
