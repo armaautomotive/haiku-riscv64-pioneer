@@ -1,5 +1,25 @@
 # Native build status
 
+October20,15:26 Vancouver (22:26 UTC) NON-ROOT PHYSICAL AUDIT OFFLINE:
+New unselected helper proves ALL119 NON-root tiles held twice while leaving
+the intentionally running root unread/unreset/unheld. Exact fixed private
+read-only reset-window routes/source shape/physical mask are checked;only
+known-clean success restores the root VIEW. Every first TLB/source/reset
+mismatch returns immediately,NO later IO or view restore. Native context
+owner/view adapter is still absent;this helper alone does NOT quarantine
+the whole context or latch cold recovery. It is NOT wired into a driver.
+Final iIxhGMPb ASan/UBSan PASS:all360 TLB reads/238 reset samples/32 source
+reads individually faulted,all12 bad columns/all10 disabled rows,foreign/+bad ownership/mapping/version/routes/cold metadata refuse before IO.
+Kernel-only RV64 witness192B PASS and deliberately lacks root-reset/NoC/
+PCI/data-write APIs. No native trial or performance claim for this helper.
+
+All five staged artifacts SHA-verified;installed production7cbd2bf4/gen11
+remained exact/cold0/owner0 before next trial. Host42c803a5 single FFN is
+now ONLY native job,ffn-host-snapshot-20261020-a.log,full same-FD auth before
+any accelerator FD. NO SCP/probes/reloads/second job while active. Deferred
+and ordered drivers are staged but NOT installed/native-qualified. Latest
+whole27B baseline0.171971039tok/s;20tok/s unmet. Goal ACTIVE.
+
 October20,15:19 Vancouver (22:19 UTC) EXACT LOGICAL-BOUNDS FAST PATH OFFLINE:
 Opt-in ORDERED_EXTENT_FAST keeps EVERY bank/group/alignment/extent/active-
 tail guard. Seven private high-water marks prove a monotonically advancing
