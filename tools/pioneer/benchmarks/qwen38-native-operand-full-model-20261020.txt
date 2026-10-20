@@ -1,0 +1,28 @@
+Native frozen four-token PUBLIC Work smoke,October20 2026.
+Tiny three-warm-position sample,NOT steady-state/text-quality qualification.
+Same bda16c7c CLI/model/libs/32 CPU threads;NO CPU learned reference/fallback.
+Native-store93067b8f/tag2026102000010007/gen8 vs arithmetic16a06fee/gen7.
+Both use normal firmware800->1350->800MHz;no forced clock/voltage/reset.
+Both:tokens11/353/2688/264,497 learned projections/position,1988 total,
+2020 calls,119 workers,4558653pages/18672242688B retained between positions.
+
+Before:warm6.106531/6.120389/6.020524s,0.164406588tok/s.
+After:warm6.043952/6.004401/5.962641s,0.166564933tok/s (~1.31%more).
+Prior best cache-only tiny sample0.165393504;new rate only~0.71%higher.
+SMALL sample difference,NOT repeated/sustained speedup qualification.
+Before matrix ioctls4.594206/4.622402/4.592644s.
+After matrix ioctls4.540233/4.543967/4.542101s.
+After other GGML1.162039/1.119256/1.080096s.
+Priming700.285116s,repack148.192286s,upload551.427932s.
+First position732.744249s;NOT warm generation speed.
+All bounded tests passed18 Work synthetic+16 auth119+16 auth-three-groups+
+18 checked EXACT,FOUR clean ENDs/exit0 before the model run.
+Still FAR below20tok/s/usable27B target;goal remains ACTIVE.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated4 selected_token264 seconds750.786514 projections1988 uploaded_pages4558653 calls2020 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_FOUR_TOKEN generated4 first_position_seconds732.744249 subsequent_positions3 subsequent_seconds18.010994 sample_tokens_per_second0.166564933 retained_weights1;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag2026102000010007 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Host log:/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-native-operand-four-20261020-a.log
+SHA256:0035abfb69ef84f33fb3187f6f35cfe0ec6658435d6a469613111c5b4f2a8e1a

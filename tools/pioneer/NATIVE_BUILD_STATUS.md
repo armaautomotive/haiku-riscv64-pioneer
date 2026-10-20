@@ -1,5 +1,20 @@
 # Native build status
 
+October20,14:05 Vancouver (21:05 UTC) NATIVE-STORE WHOLE27B PASS,SMALL DIFFERENCE:
+Full-model-work-native-operand-four-20261020-a FINISHED clean_end1/EXIT0.
+Same tokens11/353/2688/264/1988 projections/2020 calls/119 workers/4558653
+pages/18672242688B retained. Warm6.043952/6.004401/5.962641s ->0.166564933
+tok/s vs arithmetic0.164406588 (~1.31%higher),prior bestcache0.165393504
+(~0.71%higher). Only3 warm samples,NOT repeated/sustained/quality evidence.
+Matrix ioctls4.540233/4.543967/4.542101s;otherGGML1.162039/1.119256/
+1.080096s. Priming700.285116/repack148.192286/upload551.427932s,first
+732.744249s. Log SHA0035abfb69ef84f33fb3187f6f35cfe0ec6658435d6a469613111c5b4f2a8e1a.
+Cached serial800/1350/800/restored1/uncertain0;CPU guardtag...0007/gen8/
+cold0/active_owner0. Evidence benchmarks/qwen38-native-operand-full-model-
+20261020.txt. Compact-output7cbd2bf4 is now COPYING to staging,NOT yet
+installed/native-qualified;staging transfers sequential128kbit/s only.
+Long-timing389d3cf9 remains unstaged. Goal ACTIVE;20tok/s FAR unmet.
+
 October20,14:04 Vancouver (21:04 UTC) LONGER PUBLIC TIMING CLIENT OFFLINE:
 Added fixed --public-32-tokens alongside unchanged one/four/FFN choices.
 All32 positions still require497 learned projections each,no new weights
