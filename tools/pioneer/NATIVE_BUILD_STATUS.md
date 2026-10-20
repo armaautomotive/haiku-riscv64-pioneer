@@ -1,5 +1,24 @@
 # Native build status
 
+October20,14:04 Vancouver (21:04 UTC) LONGER PUBLIC TIMING CLIENT OFFLINE:
+Added fixed --public-32-tokens alongside unchanged one/four/FFN choices.
+All32 positions still require497 learned projections each,no new weights
+after position0,no CPU learned reference/fallback and explicit clean END.
+Timing excludes cold0 plus warm-up1..4,then reports27-position throughput
+and min/median/nearest-rank95th/max latency. Missing/duplicate/nonfinite/
+overflow timing NEVER reports a rate;timing is NOT device completion or
+cleanup authority. One PUBLIC Hello sequence is NOT text quality or a
+repeated steady benchmark. Existing four-token bda16c7c remains frozen for
+driver A/B comparisons;new CLI has NOT run on hardware or been installed.
+
+ASan/UBSan timing/options4q2fitx6 PASS. Cross-built against ONLY pristine
+c060ca974c77 archived headers plus ALL4 SHA-pinned frozen runtime libraries,
+NO dirty llama source build. CLI389d3cf94cf90eb0e9917a0b9189717735d8500a0eb3222befed1b716de334a8,
+c/d repeatEXACT. Separate fresh artifact,not Assistant replacement. Current
+ONLY card job remains native-operand four-token model/gen8. Latest measured
+rate0.164406588,best0.165393504,NOT20tok/s;goal ACTIVE. Next compact-return
+candidate7cbd2bf4 remains unstaged pending this run's known-clean END.
+
 October20,14:02 Vancouver (21:02 UTC) COMPACT OUTPUT OFFLINE-QUALIFIED:
 Current ONLY native job remains decoder93067b8f/tag...0007/gen8 whole-
 model-work-native-operand-four-20261020-a.log. No card probe/transfer/swap

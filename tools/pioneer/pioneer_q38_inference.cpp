@@ -2,6 +2,7 @@
 // Separate PUBLIC prompt smoke only. Never installs/updates Assistant.
 #include "TenstorrentHaikuQwen38.h"
 #include "PioneerQ38GgmlBackend.h"
+#include "PioneerQ38PublicTiming.h"
 #include "llama.h"
 #include <time.h>
 static double Seconds() { timespec t={}; if (clock_gettime(CLOCK_MONOTONIC,&t)) return -1; return double(t.tv_sec)+double(t.tv_nsec)*1e-9; }
@@ -113,8 +114,9 @@ static int GraphSmoke(State& state,const char* output)
 int main(int argc,char** argv)
 {
 	bool graph=argc==3 && !strcmp(argv[1],"--public-ffn-graph-export");
-	bool four=argc==2 && !strcmp(argv[1],"--public-four-tokens");
-	if (!graph && !four && (argc!=2 || strcmp(argv[1],"--public-one-token"))) return 2;
+	unsigned limit=argc==2?PioneerQ38PublicTokenLimit(argv[1]):0;
+	bool four=limit==4,longTiming=limit==32;
+	if (!graph && !limit) return 2;
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #ifdef PIONEER_Q38_SPAN_FAST
@@ -171,7 +173,8 @@ int main(int argc,char** argv)
 	int count=llama_tokenize(vocab,"Hello",5,tokens,8,false,false);
 	okay=okay && count==1; // fixed PUBLIC one-position smoke,not private chat
 	double start=Seconds(),warmSeconds=0,firstSeconds=0;
-	unsigned generated=0,limit=four?4:1; uint64_t retainedPages=0;
+	unsigned generated=0; uint64_t retainedPages=0;
+	PioneerQ38PublicTiming timing;
 	llama_token token=tokens[0],best=-1;
 	for (unsigned position=0;okay && position<limit;position++) {
 		uint64_t before=PioneerQ38GgmlSnapshot().projections;
@@ -179,6 +182,7 @@ int main(int argc,char** argv)
 		uint64_t callbacksBefore=state.matrixCallbacks,runBefore=state.session.runNanos;
 		double began=Seconds(); auto batch=llama_batch_get_one(&token,1); okay=llama_decode(context,batch)==0;
 		double elapsed=Seconds()-began; auto current=PioneerQ38GgmlSnapshot();
+		if (longTiming) (void)timing.Observe(position,elapsed); // diagnostics ONLY
 		// Exactly497 learned projections per position. Refuse to call a
 		// silent CPU-only/partial-learned result a complete P100A smoke.
 		okay=okay && current.projections-before==497 && !current.failed && state.opened;
@@ -216,6 +220,10 @@ int main(int argc,char** argv)
 	if (four) printf("%s_PUBLIC27B_FOUR_TOKEN generated%u first_position_seconds%.6f subsequent_positions%u subsequent_seconds%.6f sample_tokens_per_second%.9f retained_weights%u;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY\n",
 		okay && clean && generated==4?"PASS":"FAIL",generated,firstSeconds,generated?generated-1:0,warmSeconds,
 		warmSeconds>0 && generated>1?double(generated-1)/warmSeconds:0,unsigned(retainedPages && retainedPages==state.session.pagesUploaded));
+	if (longTiming) printf("%s_PUBLIC27B_32_TOKEN_TIMING generated%u timing_valid%u skipped_cold_positions1 skipped_warmup_positions4 measured_positions%u measured_seconds%.6f sample_tokens_per_second%.9f minimum_seconds%.6f median_seconds%.6f p95_nearest_rank_seconds%.6f maximum_seconds%.6f retained_weights%u clean_end%u;SINGLE_PUBLIC_SEQUENCE_NOT_REPEATED_BENCHMARK_OR_TEXT_QUALITY\n",
+		okay && clean && generated==32 && timing.Complete()?"PASS":"FAIL",generated,unsigned(timing.Complete()),timing.Measured(),timing.Seconds(),timing.Rate(),
+		timing.Percentile(0),timing.Percentile(13),timing.Percentile(25),timing.Percentile(26),
+		unsigned(retainedPages && retainedPages==state.session.pagesUploaded),unsigned(clean));
 	if (context) { llama_synchronize(context); llama_detach_threadpool(context); llama_free(context); }
 	if (cpuPool) ggml_threadpool_free(cpuPool);
 	llama_model_free(model); llama_backend_free();
