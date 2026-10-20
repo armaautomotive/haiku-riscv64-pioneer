@@ -2,6 +2,7 @@
 #define PIONEER_Q38_FIXTURE_ONLY
 #include "pioneer_qwen38_gguf_test.cpp"
 #include "../PioneerQ38GgmlBackend.h"
+#include "../PioneerQ38GgmlGdnContract.h"
 #include "ggml-backend-impl.h"
 struct Fake {
 	PioneerQwen38Gguf model; bool valid=true,fail=false; unsigned calls=0,ends=0,aborts=0;
@@ -26,6 +27,27 @@ int main(int argc,char** argv)
 	assert(PioneerQ38GgmlConfigure(d) && !PioneerQ38GgmlConfigure(d));
 	auto backend=ggml_backend_dev_init(dev,nullptr); assert(backend && !ggml_backend_dev_init(dev,nullptr));
 	ggml_init_params params={1024*1024,nullptr,true}; auto ctx=ggml_init(params); assert(ctx);
+	// A correct GDN shape is NOT native resident capability. Until owned
+	// device storage/transport/CPY routing exists, the matrix-only backend
+	// must refuse the computation/state copy. Existing host-only views are
+	// metadata no-ops, NOT device buffer residency or execution support.
+	auto q=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,16,1,1);
+	auto k=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,16,1,1);
+	auto v=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,48,1,1);
+	auto g=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
+	auto beta=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,1,48,1,1);
+	auto state=ggml_new_tensor_4d(ctx,GGML_TYPE_F32,128,128,48,1);
+	auto gdn=ggml_gated_delta_net(ctx,q,k,v,g,beta,state,1);
+	auto attention=ggml_view_4d(ctx,gdn,128,48,1,1,512,24576,24576,0);
+	auto next=ggml_view_4d(ctx,gdn,128,128,48,1,512,65536,3145728,24576);
+	auto copy=ggml_cpy(ctx,next,state);
+	PioneerQ38GgmlGdnContract contract;
+	assert(PioneerQ38GgmlGdnContract::Describe(gdn,contract) && contract.AttentionView(attention)
+		&& contract.StateView(next) && contract.StateCopy(copy));
+	for (auto* node:{gdn,copy}) assert(!ggml_backend_dev_supports_op(dev,node));
+	for (auto* node:{attention,next}) assert(ggml_backend_dev_supports_op(dev,node));
+	assert(ggml_backend_buft_is_host(ggml_backend_dev_buffer_type(dev)));
+	assert(!fake.calls);
 	for (const char* name:{"blk.0.ssm_alpha.weight","blk.0.ffn_down.weight","blk.3.attn_output.weight"}) {
 		const auto* t=fake.model.Find(name); assert(t);
 		unsigned outputs=unsigned(t->outputs);
@@ -66,5 +88,5 @@ int main(int argc,char** argv)
 	assert(PioneerQ38GgmlFinish()==!fault && !ggml_backend_dev_init(dev,nullptr));
 	ggml_backend_free(backend); assert(fake.calls==calls && fake.ends==unsigned(!fault) && fake.aborts==unsigned(bool(fault)));
 	ggml_free(ctx);
-	printf("PASS OFFLINE ggml27B bridge fault%u:exact named Q8/Q4/Q6 matrices,host weights/batch/stride contracts,exclusive one-shot context,source/epoch binding,atomic session failure,no CPU products/fallback,repeated Finish/free;SYNTHETIC DISPATCH,NOT native model inference\n",fault);
+	printf("PASS OFFLINE ggml27B bridge fault%u:exact named Q8/Q4/Q6 matrices,host weights/batch/stride contracts,GDN/state-CPY refused and views remain host-only metadata,exclusive one-shot context,source/epoch binding,atomic session failure,no CPU products/fallback,repeated Finish/free;SYNTHETIC DISPATCH,NOT native model inference\n",fault);
 }

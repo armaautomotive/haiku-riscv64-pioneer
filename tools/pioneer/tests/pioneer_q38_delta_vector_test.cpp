@@ -66,7 +66,8 @@ struct DeltaVectorMachine {
 int main()
 {
 	unsigned trials=0;
-	for (unsigned sample=0;sample<6;sample++) for (float decay:{0.f,.83f,1.f}) for (float beta:{0.f,.37f,1.f}) {
+	assert(Bits(1.f/sqrtf(128.f))==0x3db504f3);
+	for (bool post:{false,true}) for (unsigned sample=0;sample<6;sample++) for (float decay:{0.f,.83f,1.f}) for (float beta:{0.f,.37f,1.f}) {
 		DeltaVectorMachine m; for (bool& row:m.defined) row=true;
 		std::array<float,8192> expected; float v[64],delta[64],out[64]={};
 		for (unsigned i=0;i<128;i++) {
@@ -86,15 +87,30 @@ int main()
 		}
 		for (unsigned i=0;i<128;i++) for (unsigned j=0;j<64;j++) expected[i*64+j]=expected[i*64+j]*decay+Float(m.k[i])*delta[j];
 		for (unsigned j=0;j<64;j++) for (unsigned i=0;i<128;i++) out[j]+=expected[i*64+j]*Float(m.q[i]);
-		assert(PioneerQ38DeltaVectorHalf(m,Bits(decay),Bits(beta)) && m.drained && m.drains==1 && !m.latency);
+		bool pass=post?PioneerQ38DeltaVectorHalf<true>(m,Bits(decay),Bits(beta)):PioneerQ38DeltaVectorHalf(m,Bits(decay),Bits(beta));
+		assert(pass && m.drained && m.drains==1 && !m.latency);
 		assert(m.keys==256 && m.queries==128 && m.loads==16384 && m.stores==8192);
 		for (unsigned at=0;at<8192;at++) assert(m.state[at]==Bits(expected[at]));
 		for (unsigned j=0;j<64;j++) {
 			unsigned row=j/16,col=j%16,parity=col&1,lane=row*8+col/2;
-			assert(m.lr[4+parity][lane]==Bits(out[j]));
+			assert(m.lr[4+parity][lane]==Bits(post?out[j]*(1.f/sqrtf(128.f)):out[j]));
 		}
 		trials++;
 	}
+	unsigned roundingDifferences=0;
+	for (unsigned sample=1;sample<7;sample++) {
+		DeltaVectorMachine raw;
+		for (bool& row:raw.defined) row=true;
+		for (unsigned i=0;i<8192;i++) raw.state[i]=Bits(float(sin(i*.031+sample*.17)*.003));
+		for (unsigned i=0;i<128;i++) { raw.q[i]=Bits(float(sin(i*.123+sample*.317)*.01)); raw.k[i]=Bits(float(cos(i*.153+sample*.217)*.03)); }
+		for (unsigned j=0;j<64;j++) raw.lr[6+(j&1)][(j/16)*8+(j%16)/2]=Bits(float(sin(j*.013+sample*.117)*2.1));
+		auto prescaled=raw;
+		for (auto& q:prescaled.q) q=Bits(Float(q)*(1.f/sqrtf(128.f)));
+		assert(PioneerQ38DeltaVectorHalf<true>(raw,Bits(.83f),Bits(.37f)) && PioneerQ38DeltaVectorHalf(prescaled,Bits(.83f),Bits(.37f)));
+		assert(raw.state==prescaled.state); // query scale must NEVER change the recurrent update
+		for (unsigned r=4;r<6;r++) for (unsigned lane=0;lane<32;lane++) roundingDifferences+=raw.lr[r][lane]!=prescaled.lr[r][lane];
+	}
+	assert(roundingDifferences>0); // negative control:pre-scaling is NOT interchangeable in F32
 	for (uint32_t bad:{1U,0x007fffffU,0x80000000U,0x3f800001U,0x7f800000U,0x7fc00001U,0xffffffffU}) for (bool beta:{false,true}) {
 		DeltaVectorMachine m; auto before=m.state;
 		assert(!PioneerQ38DeltaVectorHalf(m,beta?0x3f800000:bad,beta?bad:0x3f800000) && !m.ops && m.state==before);
@@ -113,6 +129,6 @@ int main()
 		DeltaVectorMachine m; for (bool& defined:m.defined) defined=true; m.dropFinalDrain=true;
 		assert(PioneerQ38DeltaVectorHalf(m,0x3f800000,0x3f800000) && !m.drained && !m.drains); // owner MUST refuse publication
 	}
-	printf("PASS OFFLINE vector GDN half-head:%u trials,ALL8192 next-state+64 output bits match independent non-fused scalar arithmetic,32 lanes/even+odd mapping,full-row ownership,explicit MAD latency/final drain,bad scalar gates ZERO issue;NO native image/state registry/NoC/GGML integration or speed claim\n",trials);
+	printf("PASS OFFLINE vector GDN half-head:%u pre/post-scale trials,ALL8192 next-state+64 output bits exact,pre/post-rounding negative control%u differences with identical state,32 lanes/parities,full-row ownership/latency/drain;NO residency/registered GGML/speed claim\n",trials,roundingDifferences);
 }
 #endif

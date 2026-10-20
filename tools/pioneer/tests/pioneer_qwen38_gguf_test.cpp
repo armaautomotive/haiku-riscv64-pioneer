@@ -194,9 +194,55 @@ static void BankPlan()
 	}
 	printf("PASS: canonical seven-bank packed blueprint,ALL851 rows/bytes/non-overlap/NIU reservation,contexts1+8K+32K,zeroed page padding/source binding;NO allocation/upload authority\n");
 }
+static void DoubleBufferedBankPlan()
+{
+	Fixture fixture; PioneerQwen38Gguf source; assert(source.Open(fixture.file));
+	PioneerQwen38PackedPlan legacy,plan;
+	PioneerQ38DeltaHalfProposal proposal={99,99,99,99};
+	assert(!plan.DeltaHalf(0,0,0,0,proposal) && proposal.proposedAddress==99 && !plan.DeltaSlots());
+	for (bool tiled:{false,true}) for (unsigned context:{1U,8192U,32768U}) {
+		assert(legacy.Build(source,context,tiled) && legacy.DeltaSlots()==1);
+		assert(!legacy.DeltaHalf(0,0,0,0,proposal)); // no accidental legacy opt-in
+		assert(plan.Build(source,context,tiled,true) && plan.DeltaSlots()==2);
+		uint64_t ends[7]={},deltaBytes[2]={}; unsigned weights=0;
+		for (const auto& part:plan.Parts()) {
+			assert(part.bank<7 && part.proposedAddress==PioneerQwen38PackedPlan::Base+ends[part.bank]);
+			assert(!(part.proposedAddress&4095) && !(part.allocated&4095) && part.bytes && part.bytes<=part.allocated);
+			ends[part.bank]+=part.allocated; assert(ends[part.bank]<=PioneerQwen38PackedPlan::Capacity);
+			if (part.kind==PIONEER_Q38_WEIGHT) {
+				const auto& old=legacy.Parts()[weights++];
+				assert(old.kind==part.kind && old.layer==part.layer && old.role==part.role && old.tensor==part.tensor
+					&& old.bank==part.bank && old.firstRow==part.firstRow && old.rows==part.rows && old.rowBytes==part.rowBytes
+					&& old.proposedAddress==part.proposedAddress && old.bytes==part.bytes && old.allocated==part.allocated);
+			}
+			if (part.kind==PIONEER_Q38_DELTA_STATE) { assert(part.role<2); deltaBytes[part.role]+=part.bytes; }
+		}
+		assert(deltaBytes[0]==150994944 && deltaBytes[1]==150994944);
+		for (unsigned bank=0;bank<7;bank++) assert(ends[bank]==plan.Used(bank));
+		for (unsigned layer=0;layer<64;layer++) for (unsigned slot=0;slot<2;slot++) for (unsigned head=0;head<48;head++) {
+			PioneerQ38DeltaHalfProposal a={},b={};
+			if (layer%4==3) { assert(!plan.DeltaHalf(layer,slot,head,0,a)); continue; }
+			assert(plan.DeltaHalf(layer,slot,head,0,a) && plan.DeltaHalf(layer,slot,head,1,b));
+			assert(a.fragment==b.fragment && a.bank==b.bank && a.bytes==32768 && b.bytes==32768
+				&& b.proposedAddress==a.proposedAddress+32768);
+			const auto& p=plan.Parts()[a.fragment];
+			assert(p.kind==PIONEER_Q38_DELTA_STATE && p.role==slot && p.layer==layer
+				&& a.proposedAddress==p.proposedAddress+(head-p.firstRow)*65536);
+			PioneerQ38DeltaHalfProposal opposite={}; assert(plan.DeltaHalf(layer,slot^1,head,0,opposite));
+			assert(opposite.bank!=a.bank || opposite.proposedAddress!=a.proposedAddress);
+		}
+		for (unsigned field=0;field<4;field++) {
+			proposal={99,99,99,99}; assert(!plan.DeltaHalf(field==0?64:0,field==1?2:0,field==2?48:0,field==3?2:0,proposal));
+			assert(proposal.fragment==99 && proposal.bank==99 && proposal.proposedAddress==99 && proposal.bytes==99);
+		}
+	}
+	assert(source.Open(fixture.file) && !plan.DeltaSlots() && !plan.DeltaHalf(0,0,0,0,proposal));
+	assert(!plan.Build(source,0,true,true) && !plan.DeltaSlots());
+	puts("PASS OFFLINE GDN two-slot placement:row/tile-major contexts1/8K/32K,ALL48 layers x2 slots x96 half-head ranges disjoint/in-bounds,288MiB state,ALL learned weight proposals unchanged,legacy/stale/invalid refuse;NO allocation/transport authority");
+}
 int main(int argc,char** argv)
 {
-	assert(argc==1 || argc==2); Fixtures(); BankPlan(); if (argc==2) RealModel(argv[1]);
+	assert(argc==1 || argc==2); Fixtures(); BankPlan(); DoubleBufferedBankPlan(); if (argc==2) RealModel(argv[1]);
 	puts("PASS: bounded Qwen3.8 packed tensor reader,ALL851 shape/format refusals,metadata/layout/range/change/NaN/Inf guards,no template execution or device access");
 }
 #endif

@@ -14,12 +14,19 @@ struct PioneerQ38PackedPart {
 	unsigned kind,layer,role,tensor,bank,firstRow,rows,rowBytes;
 	uint32_t proposedAddress,bytes,allocated;
 };
+// OFFLINE proposal ONLY; not an allocated buffer, NoC address capability,
+// or permission to access memory through the installed driver.
+struct PioneerQ38DeltaHalfProposal {
+	unsigned fragment,bank;
+	uint32_t proposedAddress,bytes;
+};
 class PioneerQwen38PackedPlan {
 	std::vector<PioneerQ38PackedPart> parts;
 	std::vector<PioneerQ38PackedPart> empty;
 	uint64_t used[7]={};
 	bool ready=false;
 	bool tiled=false;
+	bool doubleBufferedDelta=false;
 	mutable PioneerQwen38TiledReader tiledReader;
 	const PioneerQwen38Gguf* boundSource=NULL;
 	uint64_t epoch=0;
@@ -45,11 +52,12 @@ public:
 	static const uint32_t Base=0x04000000;
 	bool Ready() const { return ready && boundSource && boundSource->Epoch()==epoch && boundSource->Stable(); }
 	bool Tiled() const { return Ready() && tiled; }
+	unsigned DeltaSlots() const { return Ready()?(doubleBufferedDelta?2:1):0; }
 	bool MatchesSource(const PioneerQwen38Gguf& source) const { return Ready() && boundSource==&source && source.Epoch()==epoch; }
 	const std::vector<PioneerQ38PackedPart>& Parts() const { return Ready()?parts:empty; }
 	uint64_t Used(unsigned bank) const { return Ready() && bank<7?used[bank]:0; }
-	bool Build(const PioneerQwen38Gguf& source,unsigned context,bool tileMajor=false) {
-		ready=false; boundSource=NULL; epoch=0; tiled=false; tiledReader.Reset(); parts.clear(); for (auto& bytes:used) bytes=0;
+	bool Build(const PioneerQwen38Gguf& source,unsigned context,bool tileMajor=false,bool twoDeltaSlots=false) {
+		ready=false; boundSource=NULL; epoch=0; tiled=false; doubleBufferedDelta=false; tiledReader.Reset(); parts.clear(); for (auto& bytes:used) bytes=0;
 		if (!source.Stable() || !context || context>32768) return false;
 		// Three global tensors first,then each exact dense/recurrent layer.
 		for (unsigned ordinal=0;ordinal<=64;ordinal++) {
@@ -73,8 +81,11 @@ public:
 				// reference attention helper's token-major view needs an adapter.
 				if (!Stripe(PIONEER_Q38_KV_STATE,layer,0,851,8,context*256*2,1)) return false;
 			} else {
-				if (!Stripe(PIONEER_Q38_DELTA_STATE,layer,0,851,48,128*128*4,1)
-					|| !Stripe(PIONEER_Q38_CONV_STATE,layer,0,851,10240,3*4,64)) return false;
+				// Explicit opt-in: role is the ping-pong slot. Weight layout
+				// precedes state, so even opt-in never moves learned weights.
+				for (unsigned slot=0;slot<(twoDeltaSlots?2U:1U);slot++)
+					if (!Stripe(PIONEER_Q38_DELTA_STATE,layer,slot,851,48,128*128*4,1)) return false;
+				if (!Stripe(PIONEER_Q38_CONV_STATE,layer,0,851,10240,3*4,64)) return false;
 			}
 		}
 		for (unsigned bank=0;bank<7;bank++) {
@@ -83,7 +94,22 @@ public:
 			parts.push_back({PIONEER_Q38_WORKSPACE,64,0,851,bank,0,1,bytes,uint32_t(Base+used[bank]),bytes,bytes}); used[bank]+=bytes;
 		}
 		ready=source.Stable() && (!tileMajor || tiledReader.Bind(source));
-		if (ready) { boundSource=&source; epoch=source.Epoch(); tiled=tileMajor; } return ready;
+		if (ready) { boundSource=&source; epoch=source.Epoch(); tiled=tileMajor; doubleBufferedDelta=twoDeltaSlots; } return ready;
+	}
+	// Logical packed state order is [head][half][key128][value64]. This
+	// resolver does NOT transpose GGML buffers or allocate/initialize state.
+	// A native owner must separately authenticate/own every bank range.
+	bool DeltaHalf(unsigned layer,unsigned slot,unsigned head,unsigned half,PioneerQ38DeltaHalfProposal& output) const {
+		if (!Ready() || !doubleBufferedDelta || layer>=64 || layer%4==3 || slot>=2 || head>=48 || half>=2) return false;
+		for (unsigned i=0;i<parts.size();i++) {
+			const auto& p=parts[i];
+			if (p.kind!=PIONEER_Q38_DELTA_STATE || p.layer!=layer || p.role!=slot || head<p.firstRow || head-p.firstRow>=p.rows) continue;
+			uint64_t offset=uint64_t(head-p.firstRow)*p.rowBytes+half*32768;
+			if (p.rowBytes!=65536 || offset>p.bytes || 32768>p.bytes-offset
+				|| uint64_t(p.proposedAddress)+offset+32768>uint64_t(Base)+Capacity) return false;
+			output={i,p.bank,uint32_t(p.proposedAddress+offset),32768}; return true;
+		}
+		return false;
 	}
 	// Ordinary CPU buffer only. NEVER expose stale host bytes in last-page
 	// padding. Transport must independently OWN/copy any future DMA staging;

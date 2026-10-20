@@ -109,6 +109,9 @@ struct DeltaVectorImage:ScalarMachine {
 		}
 		for (unsigned j=0;j<64;j++) {
 			for (unsigned i=0;i<128;i++) out[j]+=next[i*64+j]*Float(memory.at(uint32_t(L::Query)+i*4));
+#ifdef PIONEER_Q38_DELTA_VECTOR_POST_SCALE
+			out[j]*=1.f/sqrtf(128.f);
+#endif
 			assert(memory.at(uint32_t(L::Output)+j*4)==Bits(out[j]));
 		}
 		assert(nextWrites==8192 && resultWrites==64 && imports==9 && csrReads==8192+64 && unit.drained);
@@ -129,6 +132,18 @@ int main(int argc,char** argv)
 		for (const auto& word:before) if (DeltaVectorImage::Range(word.first,0x90000,32768) || DeltaVectorImage::Range(word.first,uint32_t(L::Query),1288)) assert(m.memory.at(word.first)==word.second);
 		printf("PASS ACTUAL local vector GDN trial%u steps%u SFPUops%u ALL state/output bits exact;NO native speed claim\n",trial,m.steps,m.unit.ops);
 	}
+#ifdef PIONEER_Q38_DELTA_VECTOR_POST_SCALE
+	for (unsigned head=0;head<4;head++) {
+		std::array<uint32_t,8192> prior={};
+		for (unsigned token=0;token<16;token++) {
+			DeltaVectorImage m(argv[1],1+(token+head)%3);
+			for (unsigned i=0;i<prior.size();i++) m.memory[0x90000+i*4]=prior[i];
+			assert(m.RunVector()); m.Verify();
+			for (unsigned i=0;i<prior.size();i++) prior[i]=m.memory.at(0xa0000+i*4);
+		}
+	}
+	puts("PASS ACTUAL post-dot-scale vector:4 independent half-heads x16 successive state transitions,ALL8256 words/step exact;NOT native/full-model quality");
+#endif
 	for (unsigned field=0;field<4;field++) for (unsigned bit=0;bit<32;bit++) {
 		DeltaVectorImage m(argv[1],1); m.memory[0x74000+field*4]^=1U<<bit;
 		assert(!m.RunVector() && !m.configWrites && !m.unit.ops && !m.nextWrites && !m.resultWrites);

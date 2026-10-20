@@ -1,5 +1,63 @@
 # Native build status
 
+October19,21:04 Vancouver (October20,04:04 UTC) OFFLINE GDN STATE/GRAPH FOUNDATION:
+Separate post-dot-scaled LOCAL vector image0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe
+and boote678476d repeat byte-for-byte. Raw normalized Q is reduced FIRST,
+then output multiplied by pinned F32 scale3db504f3. Qualified pre-scaled
+native image remains EXACT1c0766be/e678476d;original64000 image remains
+EXACT05bef319/d0565e4e. NO driver selects the new image;NO native run,
+driver build/install,hot swap,reboot,power,SD or Assistant action this span.
+
+108 standalone pre/post-scale fixtures exact against independent non-fused
+FP32 arithmetic. Pre-scaling vs post-scaling gives320 different output bit
+patterns with IDENTICAL next state,so the conventions are NOT interchangeable.
+Actual post-dot RV32/SFPU image CU2z0y3n passes ALL8256 words/fixture,
+four independent half-heads x16 successive state updates,safe frontend
+branches,descriptor/input/import/drain fault controls. Original image
+UXCrv8QI and actual OLD native lease/handler/client roli7T4c regressions PASS.
+
+Pristine pinned GGML c060ca974c77 graph zSNnR5EC verifies128/16/48 shapes,
+packed-QKV V stride40960,combined6144x129 output,attention/state split and
+flattened nonzero-offset state CPY with complete type/stride/bounds refusals.
+The SAME suite extracts UNMODIFIED upstream GDN chunk/vector bodies and
+compares ALL48 heads x8 successive state transitions,including64 actual
+compiled RV32 half-head executions. Scalar GGML dot uses FP64 accumulation
+of F32 products,whereas the vector uses FP32:NOT bit-exact to GGML.
+Fixed test tolerance2e-6+2e-5*abs(ref) PASS;max state absolute difference
+4.47034836e-08,output2.60770321e-08. Different state/output bits2768816/37327.
+This is a short synthetic-domain math test,NOT long-context/model-quality,
+hardware throughput or native residency qualification. No runtime CPU
+validation/fallback was added to production Work.
+
+New noncopyable CPU-METADATA state policy Cg4qRnFh tests16 tokens x48
+recurrent layers x96 half-heads:fresh session/sequence/model/generation
+tickets,head%16 Q/K grouping,partial/stale/duplicate completion refusal,
+completed-layer views,ONE slot flip only after ALL layers complete,and
+sticky quarantine on first/middle/last missing worker. It owns NO buffers,
+initializes NOTHING and supplies NO native access/completion authority.
+Whole-model conv/KV/output commit remains an OUTER responsibility.
+
+Opt-in packed plan reserves TWO separate144MiB delta-state slots (288MiB
+total) with bounded32KiB half-head proposals. DNKnLzvz passes row/tile-major
+contexts1/8K/32K,ALL48 layers x2 slots x96 half-head ranges,all-bank capacity
+and non-overlap,source epoch/invalid/legacy refusal,and exact preservation
+of ALL learned-weight proposals. Default remains the original one-slot
+plan. These are proposals,NOT allocated/initialized/owned device memory.
+Existing matrix-only GGML backend KL5XmrBt passes ALL five fault profiles;
+GDN and state CPY stay UNSUPPORTED,views stay HOST-only metadata no-ops.
+Legacy tile naO2v0t8 and all498-tensor fleet XImVG13s regressions PASS.
+Actual local27B read-only ALL851 layouts/8162688 first+last-row values PASS;
+497-matrix/47101-job schedule fingerprint remains94ab20f5488d9f1a with
+6461 metadata calls (LylLMQWT). No native performance conclusion from this.
+
+Installed e903b8fc/tag202610190006000d/generation2 unchanged;last CPU-only
+status clean/idle/cold0/active_owner0. Dirty llama sources untouched;tests
+build only pristine archive. NEXT: actual owned mutable device buffers,
+96-worker resident transport/dispatch/completion,then real device-buffer
+view/state-CPY routing. DO NOT infer these from tested policy/shape/math.
+Matrix pipeline remains a separate dominant bottleneck. Latest whole27B
+measurement STILL0.129277112tok/s;NO new token-rate result,NOT20tok/s.
+
 October19,20:40 Vancouver (October20,03:40 UTC) NATIVE VECTOR GDN PASS / GEN2 IDLE:
 Corrected ABI-v2 LOCAL vector kernel qualified on the actual P100A:
 four fixtures,ALL8192 next-state+64 output words EACH exact against the

@@ -3,14 +3,18 @@
 #define PIONEER_Q38_DELTA_VECTOR_H
 #include "PioneerSfpuDivide.h"
 #include "PioneerQ38VectorAffine.h"
-// OFFLINE prerequisite ONLY. No native image,handler,device tensor or GDN
-// capability selects this sequence. It performs one head's64 value columns
+// LOCAL arithmetic prerequisite. The pre-scaled variant has native fixture
+// qualification;the post-dot-scaled variant needs its own qualification.
+// Neither variant is yet a resident GGML capability. One head's64 columns
 // using32 SFPU lanes and two parities,not scalar RISC learned products.
 //
 // Entry: ALL512 logical FP32 Dst rows are DEFINED by a completed full-row
 // import, with128 keys x64 values in key-major order. LRegs6/7 hold the64
 // corresponding V values in the standard even/odd SFPU lane mapping.
-// Q is already normalized AND scaled;K normalized;state immutable in L1.
+// Q is normalized;default mode additionally requires PRE-SCALED Q.
+// PostScale=true instead applies the pinned128-key GGML output scale AFTER
+// the completed query dot. Never silently interchange these conventions.
+// K normalized;state immutable in L1.
 // The caller owns/proves formats,predication,Dst/source banks,and fixed
 // local Q/K metadata. QueryBits/KeyBits return scalar DATA,not addresses.
 // Exit: Dst contains next state,4/5 contain64 outputs;real final drain.
@@ -25,7 +29,7 @@ static inline bool PioneerQ38DeltaVectorGate(uint32_t bits)
 {
 	return bits<=0x3f800000U && (!bits || (bits&0x7f800000));
 }
-template<class E> static bool PioneerQ38DeltaVectorHalf(E& e,uint32_t decay,uint32_t beta)
+template<bool PostScale=false,class E> static bool PioneerQ38DeltaVectorHalf(E& e,uint32_t decay,uint32_t beta)
 {
 	// Nonnegative IEEE encodings are monotonic. Refuse before ANY issue.
 	if (!PioneerQ38DeltaVectorGate(decay) || !PioneerQ38DeltaVectorGate(beta)) return false;
@@ -58,6 +62,13 @@ template<class E> static bool PioneerQ38DeltaVectorHalf(E& e,uint32_t decay,uint
 			PioneerQ38VectorAffineMul(e,0,1,0);
 			PioneerQ38VectorAffineAdd(e,parity?5:4,0,parity?5:4);
 		}
+	}
+	if (PostScale) {
+		// Exact F32 encoding of1.f/sqrtf(128.f) in the pinned GGML CPU op.
+		// It scales only the64 outputs,NEVER the next state or prior Q/K.
+		PioneerSfpuLoad32(e,1,0x3db504f3);
+		PioneerQ38VectorAffineMul(e,4,1,4);
+		PioneerQ38VectorAffineMul(e,5,1,5);
 	}
 	e.Drain(); return true;
 }

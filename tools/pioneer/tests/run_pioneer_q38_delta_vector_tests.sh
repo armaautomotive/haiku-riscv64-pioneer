@@ -8,4 +8,7 @@ ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -O1 -g -fsanitize=address,undefined
 ${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
  "$directory/pioneer_q38_delta_state_layout_test.cpp" -o "$temporary/layout"
 "$temporary/layout"
+${CXX:-c++} -std=c++17 -Wall -Wextra -Werror -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer \
+ "$directory/pioneer_q38_gdn_state_test.cpp" -o "$temporary/state"
+"$temporary/state"
 printf 'Offline vector GDN evidence retained at %s\n' "$temporary"
