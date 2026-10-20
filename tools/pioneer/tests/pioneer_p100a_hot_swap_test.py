@@ -27,7 +27,7 @@ def check(mode, fault=None):
             return target
         payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'hashwspg', 'guardsha']}
         payloads['hashcurrentprofile'] = ('test-' + values['hashcurrentprofile']).encode()
-        for key in ['hash_sparse_profile', 'hash_sparse_export']:
+        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
@@ -63,6 +63,8 @@ def check(mode, fault=None):
             '--restore-sparse-profile': ('hash_sparse_profile', 'hashcurrentprofile', 'tag_sparse_profile'),
             '--apply-sparse-export': ('hash_sparse_profile', 'hash_sparse_export', 'tag_sparse_profile'),
             '--restore-sparse-export': ('hash_sparse_export', 'hash_sparse_profile', 'tag_sparse_export'),
+            '--apply-normal-clock': ('hash_sparse_export', 'hash_normal_clock', 'tag_sparse_export'),
+            '--restore-normal-clock': ('hash_normal_clock', 'hash_sparse_export', 'tag_normal_clock'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -96,6 +98,7 @@ def check(mode, fault=None):
         put('candidatecurrentprofile', payloads['hashcurrentprofile'])
         put('candidate_sparse_profile', payloads['hash_sparse_profile'])
         put('candidate_sparse_export', payloads['hash_sparse_export'])
+        put('candidate_normal_clock', payloads['hash_normal_clock'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -192,6 +195,7 @@ if __name__ == '__main__':
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
     modes = ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span', '--apply-work-fast-span', '--restore-work-fast-span', '--apply-work-span-code-reuse', '--restore-work-span-code-reuse', '--apply-work-int-sfpu', '--restore-work-int-sfpu', '--apply-work-pipelined', '--restore-work-pipelined', '--apply-work-static-vector', '--restore-work-static-vector', '--apply-work-cached-affine', '--restore-work-cached-affine', '--apply-work-replay-operand', '--restore-work-replay-operand', '--apply-work-dot', '--restore-work-dot', '--apply-work-output-dma', '--restore-work-output-dma', '--apply-work-queued-entry', '--restore-work-queued-entry', '--apply-local-delta', '--restore-local-delta', '--apply-local-delta-terminal', '--restore-local-delta-terminal', '--apply-current-profile', '--restore-current-profile']
     modes += ['--apply-sparse-profile', '--restore-sparse-profile', '--apply-sparse-export', '--restore-sparse-export']
+    modes += ['--apply-normal-clock', '--restore-normal-clock']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -250,6 +254,10 @@ if __name__ == '__main__':
         elif mode == '--restore-sparse-profile':
             candidate = ['candidatecurrentprofile']
         elif mode == '--apply-sparse-export':
+            candidate = ['candidate_sparse_export']
+        elif mode == '--apply-normal-clock':
+            candidate = ['candidate_normal_clock']
+        elif mode == '--restore-normal-clock':
             candidate = ['candidate_sparse_export']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)

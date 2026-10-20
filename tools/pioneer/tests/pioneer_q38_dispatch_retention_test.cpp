@@ -9,6 +9,9 @@ static void EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_re
 {
 	auto& c=*cookie->context; bool clean=!sColdRecoveryRequired && !c.Unsafe();
 	if (!EndQ38DispatchOwnership(c,result,clean)) return;
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	if (!c.q38Clock.End(c.clockIO.Arc(),c.clockIO.Health(),clean)) { RetainQ38DispatchOwner(c,result); return; }
+#endif
 	genericCleanup++; delete cookie->context; cookie->context=nullptr;
 	sRuntimeOwner=nullptr; sBankStorageOnly=false;
 }
@@ -75,4 +78,21 @@ int main(int argc,char** argv)
 	puts("PASS REAL span lifetime handoff: premature BANK_END or implicit close retains cookie/context/PCI/BOTH host owners with ZERO device IO; completed SPAN_END plus explicit BANK_END permits normal cleanup");
 #endif
 	puts("PASS REAL extracted54 END gate+cookie release:preflight/run/terminal-STOP uncertainty retains cookie/context/PCI owner/BOTH host leases,no generic cleanup/unreserve/delete/reset/mapping restore or repeated IO;known clean STOP proceeds once;NO native hardware qualification");
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	for (unsigned fault=0;fault<3;fault++) {
+		cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto& c=*cookie->context;
+		assert(c.q38Clock.Begin(c.clockIO.Arc(),c.clockIO.Health()) && c.q38Clock.RequiresExplicitEnd());
+		if (fault==1) c.q38Clock.Quarantine(); // external compute UNKNOWN
+		else if (fault==2) { c.clockIO.timeout=true; assert(!c.q38Clock.End(c.clockIO.Arc(),c.clockIO.Health(),true)); }
+		const unsigned writes=c.io.Writes(),selects=c.io.selects,clockIO=c.clockIO.io,cleanups=genericCleanup;
+		assert(!c.q38Dispatch && !c.q38Span); // CLOCK ONLY must require explicit END too
+		assert(ReleaseResidentCookie(cookie)==B_OK && cookie->context==&c && cookie->magic==0x50313030 && sRuntimeOwner==cookie);
+		assert(c.dispatchOwnerRetained && c.q38Clock.Unsafe() && sColdRecoveryRequired && sBankStorageOnly
+			&& c.bulkHost.quarantined && (!c.wideHost.allocated || c.wideHost.quarantined));
+		assert(genericCleanup==cleanups && writes==c.io.Writes() && selects==c.io.selects && clockIO==c.clockIO.io && !c.clockIO.unmaps);
+		assert(ReleaseResidentCookie(cookie)==B_OK && clockIO==c.clockIO.io && writes==c.io.Writes() && genericCleanup==cleanups);
+		delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false; // TEST disposal ONLY
+	}
+	puts("PASS REAL clock-only cookie release: healthy lost caller/compute UNKNOWN/clock timeout retain ENTIRE context+cookie+PCI+ALL hosts+clock views,NO idle/unmap/STOP/reset/retry even before first span or matrix");
+#endif
 }

@@ -3,6 +3,10 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_NORMAL_CLOCK:-0}" in
+ 0|1) ;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_GDN_MUTABLE_STATE:-0}" in
  0) ;;
  *) printf '%s\n' 'Mutable GDN ownership/zero image has NO qualified native controller; refusing driver build.' >&2; exit 2;;
@@ -170,6 +174,12 @@ case "${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_OUTPUT_DMA:-0}" = 1 ] || exit 2
     extra="$extra -DPIONEER_Q38_WORK_SPARSE_EXPORT";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_NORMAL_CLOCK:-0}" in
+ 0) ;;
+ 1) [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}" = 55:1:1:1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_NORMAL_CLOCK";;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_LOCAL_DELTA_PROBE:-0}" in

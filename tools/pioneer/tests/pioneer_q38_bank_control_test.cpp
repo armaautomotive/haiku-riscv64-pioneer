@@ -4,6 +4,10 @@
 // mocked; transfers use the real lease/store/bank authority above.
 #define PIONEER_BANKS_MOCK_ONLY
 #include "pioneer_resident_banks_test.cpp"
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+#define PIONEER_Q38_CLOCK_LEASE_MODEL_ONLY
+#include "pioneer_q38_clock_lease_test.cpp"
+#endif
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #define B_DEVICE_OP_CODES_END 1000
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
@@ -21,6 +25,10 @@ struct Base2 { Base1 baseline; tt_compute_noc_result noc={}; };
 struct Base3 { Base2 baseline; };
 struct Base4 { Base3 baseline; };
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	ClockLeaseIO clockIO;
+	PioneerQ38ClockLease<ClockLeaseIO> q38Clock{clockIO};
+#endif
 	Base4 baseline;
 	BanksMock io;
 	PioneerResidentBanks banks;
@@ -42,7 +50,11 @@ struct PioneerStoreContext {
 		assert(PioneerPrepareHostPage(io,host));
 	}
 	~PioneerStoreContext() { free(initialized); free(hashes); }
-	bool Unsafe() { return banks.Quarantined() || lease.pending || lease.recovery_required
+	bool Unsafe() { return
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+		q38Clock.Unsafe() ||
+#endif
+		banks.Quarantined() || lease.pending || lease.recovery_required
 		|| bulk.unsafe || bulkHost.pending || bulkHost.quarantined; }
 	void Snapshot(tt_resident_session_result& r) {
 		r={}; r.version=1; r.state=TT_RESIDENT_SESSION_READY;
@@ -53,6 +65,17 @@ struct PioneerProbeCookie { int team=17; PioneerStoreContext* context=nullptr; }
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sBankStorageOnly=false,sColdRecoveryRequired=false;
 static int sLock=1,acquired=0,released=0,copyCalls=0,failCopy=0,beginCalls=0,endCalls=0;
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+static bool selectClockOnBegin=false;
+static unsigned clockIOAtBegin=0;
+// The real retained-context implementation is tested by the independent
+// actual-cookie suite. This plumbing stub MUST NOT perform any cleanup IO.
+static void RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& r) {
+	c.q38Clock.Quarantine(); c.banks.Quarantine(); c.lease.recovery_required=true;
+	c.io.QuarantineHostPage(); sColdRecoveryRequired=true;
+	r={}; r.active=1; r.cold=1; r.state=TT_RESIDENT_SESSION_CLEANUP_FAILED;
+}
+#endif
 static status_t acquire_sem(int lock) { assert(lock==1); acquired++; return B_OK; }
 static void release_sem(int lock) { assert(lock==1); released++; }
 #include "pioneer_lock.inc"
@@ -64,6 +87,12 @@ static status_t BeginResidentSession(PioneerProbeCookie* cookie,uint64 bytes,tt_
 	beginCalls++; assert(bytes==PioneerResidentBanks::Total && bankOnly);
 	if (cookie->context) return B_BUSY;
 	cookie->context=new PioneerStoreContext; sRuntimeOwner=cookie; sBankStorageOnly=true;
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	if (selectClockOnBegin) {
+		auto& c=*cookie->context;
+		assert(c.q38Clock.Begin(c.clockIO.Arc(),c.clockIO.Health())); clockIOAtBegin=c.clockIO.io;
+	}
+#endif
 	cookie->context->Snapshot(r); return B_OK;
 }
 static void EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& r,bool recheck) {
@@ -196,6 +225,18 @@ int main()
 	session={}; session.version=1; failCopy=copyCalls+2;
 	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))==-99);
 	assert(!cookie.context && !sRuntimeOwner && !sBankStorageOnly); failCopy=0;
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	selectClockOnBegin=true; session={}; session.version=1; failCopy=copyCalls+2;
+	const int endsBefore=endCalls;
+	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))==-99); failCopy=0;
+	assert(cookie.context && sRuntimeOwner==&cookie && sBankStorageOnly && sColdRecoveryRequired && endCalls==endsBefore);
+	auto& clockOwner=*cookie.context;
+	assert(clockOwner.q38Clock.Unsafe() && clockOwner.q38Clock.RequiresExplicitEnd() && clockOwner.io.HostReadMock::quarantined
+		&& clockOwner.banks.Quarantined() && clockOwner.clockIO.clock==1350 && !clockOwner.clockIO.unmaps && clockOwner.clockIO.io==clockIOAtBegin);
+	assert(Q38BankControl(&cookie,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session))==B_DEV_NOT_READY && clockOwner.clockIO.io==clockIOAtBegin);
+	delete cookie.context; cookie.context=nullptr; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=selectClockOnBegin=false; // TEST-only cold disposal
+	puts("PASS ACTUAL BANK_BEGIN lost copyout with normal clock:retained owner/cookie/PCI/host/clock views,NO implicit END/IDLE/unmap or later hardware operation");
+#endif
 	// A payload mismatch is not an UNKNOWN completion. Invalidate exactly
 	// that page,not a different bank,without claiming a successful read.
 	Begin(cookie); page={}; page.version=1;

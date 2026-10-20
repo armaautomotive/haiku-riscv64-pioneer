@@ -1,5 +1,85 @@
 # Native build status
 
+October20,12:15 Vancouver (19:15 UTC) CLOCK MATRIX QUALIFIED / WHOLE27B RUN:
+Normal-clockb13e72d3/tag...0004/gen5 passed additional18 checked-mode
+synthetic calculations EXACT,clean END/EXIT0. ALL four sessions (bounded
+clock-only,Work18,auth11916,checked18) proved800->1350->800/restored1/
+uncertain0. Final CPU-only guard cold0/active_owner0 before full-model run.
+Work synthetic log SHAbeae564321a3fb782d75a97adcb837d2a500568f170f0aba19bdaaa10a4cff59;
+auth119 SHA589fb563ac02a17d99c7d7fa06c3be269a3fd6471bed070679a1cca6c3979a7f;
+checked SHA8a7a24e563bb14f86168f245f6dbdd719ce545f0ab1ff1ba1dcb2805b2f5ecfd.
+SAME frozen full-model bda16c7c --public-four-tokens now running ONLY card
+job,log full-model-work-normal-clock-four-20261020-a.log. No driver exchange,
+second probe or other card IO during it. Native clock is1350MHz while
+the SAME bank owner lives;known-clean explicit END must return to800MHz.
+No new whole-model speed claim before it completes. Prior~0.13tok/s remains
+latest;20tok/s unmet. No boot/SD/Assistant/model/library changes. Goal ACTIVE.
+
+October20,12:13 Vancouver (19:13 UTC) NORMAL CLOCK BOUNDED NATIVE PASS:
+All1811 updater fault cases PASS. Guarded exchange b852/tag3/gen4 ->
+b13e72d3/tag2026102000010004/gen5 finished cleanly,guard unchanged.
+Pinned f0e5d227 no-compute/no-upload owner cycle PASS,clean END. Cached
+kernel log proves actual800->1350->800MHz,mode3,5 normal fixed firmware
+messages,restored1/uncertain0. Subsequent18 Work synthetic and16 authentic
+119-worker calculations ALL EXACT,two further clean ENDs,CLI_EXIT0.
+Both compute sessions also proved800->1350->800 on explicit END. Separate
+checked-mode18 synthetic regression now running;no overlapping card job.
+No whole-model normal-clock speed measured yet. Prior0.129974993tok/s is
+still the latest full-model rate,NOT20tok/s. Clock is firmware's normal
+arbiter only,NOT overclock/voltage/reset/flash. Goal remains ACTIVE.
+
+October20,12:06 Vancouver (19:06 UTC) WHOLE27B SPARSE PASS / CLOCK CANDIDATE:
+Full-model-work-sparse-export-four-20261020-a.log FINISHED,clean_end1,
+EXIT0/team701 gone;CPU-only driver status b852456b/tag...0003/gen4/cold0/
+active_owner0. SAME four tokens11/353/2688/264,497 learned projections per
+position/1988 total,2020 calls,119 workers,4558653 pages/18672242688B.
+Warm7.747166/7.680220/7.653977s ->0.129974993tok/s. This is still ~0.13,
+NOT a material generation improvement/20tok/s/usable27B performance.
+Matrix ioctls6.247052/6.247315/6.247112s vs prior~6.33s;other GGML
+1.161483/1.095791/1.070182s. Tiny3-warm-step sample,not steady performance.
+Priming716.221869s (repack148.997838/upload566.551017),first752.034747s.
+Host log SHA7bf75b1276d9ac8ef68748b1bd3ec3b49bc51e1a44b5ee9444d852f415f37f80.
+No CPU reference/fallback;ALL full-model learned weights resident between
+steps. Sparse implementation/evidence pushed as8ee6896ac2;goal ACTIVE.
+
+Current27B bank/dispatch path has NO normal ARC BUSY request. Existing
+qualified firmware supports800->1350->800 MHz via normal arbiter,NOT forced
+clock/voltage. New default-OFF PIONEER_Q38_NORMAL_CLOCK source binds that
+request to the SAME bank context. Fresh held120/quiet-DMA/health/bank owner
+BEFORE Begin;explicit span END/ALL peer STOP+physical hold/restore BEFORE
+IDLE;IDLE+800MHz proof BEFORE PCI disable or ANY host release. ARC views
+stay attached to the context. On ANY unknown ALL owners retained/cold,
+NO idle/reset/restore/unmap/retry/extra device IO. Lost BANK_BEGIN copyout
+also retains,even before first span/matrix;no hidden cleanup behind caller.
+
+The legacy diagnostic ARC queue can restore TLBs after faults,so it is NOT
+used for this lifetime. New strict private queue stops at first detection,
+normal-clock owner allows only fixed GET/BUSY/IDLE and thermal<=70C entry,
+and single-attempt lease cleanup is explicit only. Native view Unmap is
+virtual-only,never inherited diagnostic hardware rollback. Work still
+contains NO CPU learned-reference/result validation/fallback.
+
+Offline ASan/UBSan strict queue/clock/lease/bounded-client8MRDvNr0 PASS;
+ACTUAL native begin/finish/view helpers+call-site ordering8EWEjfl5 PASS;
+ACTUAL DMA/Work controllerKwAivfhe,actual handler/cookie lifetimeqzWwaWAa
+PASS with feature enabled,including CLOCK-ONLY lost caller/compute unknown/
+clock timeout. ACTUAL bank handler lost BEGIN copyout retention plus ALL21
+page/42 bulk unknowns PASS both flag states. Earlier test build sign/enum
+warnings and BSD-awk syntax errors repaired;they were NOT native failures.
+
+Final clock driverb13e72d3fd50b9dd94a13c344b337d9b12bb07d003e0f40a2f14f1ab6015dcca
+tag2026102000010004,repeat d/e EXACT;guardd1ce/default43control2df0 unchanged.
+Pre-copyout-fix def697cd builds b/c are SUPERSEDED,NOT staged/installed.
+Feature-OFF build remains EXACT qualifiedb852456b. RV64 strict queue frame
+256B,clock begin80B,native Begin192B/End240B;no large kernel-stack object.
+Bounded clock-cycle clientf0e5d227 checks exact idle tag+guard BEFORE BEGIN,
+then ONLY BEGIN/END,NO upload/core/image/matrix;all malformed/failed replies
+CLOSE ONLY. Actual clocks must come from kernel's cached qualification log.
+Clock candidate is being staged OUTSIDE driver dirs,NOT installed/native-
+qualified yet. Updater new60 focused cases/full1811 running. Next:bounded
+no-compute clock cycle,then normal matrix regressions and full-model timing.
+No further reboot/power/SD/Assistant changes. Continue until interrupted.
+
 October20,11:39 Vancouver (18:39 UTC) NONLOGGING QUALIFIED / WHOLE27B STARTED:
 Sparse productionb852456b/tag2026102000010003/gen4 passed18 Work synthetic
 AND18 separate checked-mode synthetic calculations EXACT,two clean ENDs,

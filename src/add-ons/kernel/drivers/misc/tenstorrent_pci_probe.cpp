@@ -16,6 +16,12 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+#if !defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
+#error Normal Q38 clocks require the retained-owner reloadable sparse Work driver
+#endif
+#include "PioneerQ38ClockLease.h"
+#endif
 #if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_Q38_WORK_MODE))
 #error LOCAL vector delta probe requires the retained-owner reloadable vector Work driver
 #endif
@@ -828,6 +834,29 @@ struct PioneerArcQueryIO : PioneerTelemetryIO {
 		return PioneerTelemetryIO::Unmap() && okay;
 	}
 };
+
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+// PIONEER_Q38_CLOCK_IO_BEGIN
+// Only private clock transport uses this adapter. Map creates VIRTUAL
+// views; Unmap deletes VIRTUAL views ONLY. Never inherit diagnostic ARC
+// rollback, which is forbidden after a Q38 ownership/completion fault.
+struct PioneerQ38ClockIO : PioneerArcQueryIO {
+	PioneerQ38ClockIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
+		tt_arc_telemetry_result& t,tt_arc_queue_result& unused)
+		:PioneerArcQueryIO(p,a,t,unused) {}
+	bool AfterNodeId(uint32)=delete;
+	bool Unmap() {
+		area_id* views[]={&queueWriteArea,&msiArea,&csmArea,&scratchArea,&tlbArea,&area};
+		for (auto* view:views) if (*view>=B_OK) {
+			if (delete_area(*view)!=B_OK) return false; // no second disposal attempt
+			*view=-1;
+		}
+		queueWrite=msi=NULL; csm=scratch=nodeID=NULL; tlb=NULL;
+		return true;
+	}
+};
+// PIONEER_Q38_CLOCK_IO_END
+#endif
 
 struct PioneerTensixIO : PioneerTelemetryIO {
 	tt_tensix_reset_result& tensix;
@@ -2156,12 +2185,22 @@ struct PioneerStoreContext {
 	uint32* hashes=NULL;
 	uint32 uploadedPages=0;
 	PioneerSessionIO io;
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	tt_arc_queue_result q38ClockMappingResult={}; // never used for protocol completion
+	PioneerQ38ClockIO q38ClockIO;
+	PioneerQ38ClockLease<PioneerQ38ClockIO> q38Clock;
+#endif
 	explicit PioneerStoreContext(uint64 capacity) : bytes(capacity),
 		io(profile,baseline.baseline.baseline.baseline.control.control.control.arc,
 			baseline.baseline.baseline.baseline.control.control.telemetry,
 			baseline.baseline.baseline.baseline.control.tensix,
 			baseline.baseline.baseline.baseline.dram,baseline.baseline.baseline.noc,
-			baseline.baseline.path,baseline.audit,unused) {
+			baseline.baseline.path,baseline.audit,unused)
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+		,q38ClockIO(profile,baseline.baseline.baseline.baseline.control.control.control.arc,
+			baseline.baseline.baseline.baseline.control.control.telemetry,q38ClockMappingResult),q38Clock(q38ClockIO)
+#endif
+		{
 		initialized=(uint8*)calloc(capacity/4096,1);
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
@@ -2179,6 +2218,9 @@ struct PioneerStoreContext {
 	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+		if (q38Clock.Unsafe()) return true;
+#endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 		if (q38Delta.unsafe || q38Delta.running) return true;
 #endif
@@ -2228,6 +2270,45 @@ struct PioneerStoreContext {
 	}
 };
 
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+// PIONEER_Q38_CLOCK_SERVICE_BEGIN
+static bool
+BeginQ38NormalClock(PioneerStoreContext& c)
+{
+	if (!c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || c.Unsafe()
+		|| c.q38Clock.RequiresExplicitEnd() || c.q38Dispatch || c.q38Cohort || c.q38Span
+		|| c.panelProbe.saved || c.streamProbe.saved || c.fleet || c.runtimeCoreMode!=-1) return false;
+	auto& dram=c.baseline.baseline.baseline.baseline.dram;
+	const auto& audit=c.baseline.audit;
+	// Fresh BEGIN's existing physical ALL120-held/quiet-DMA audit, under
+	// the SAME global lock/reservation/bank owner. No caller-supplied proof.
+	if (!c.banks.Matches(dram) || dram.cores_checked!=120 || audit.version!=1
+		|| audit.state!=TT_HOST_DMA_AUDIT_PASSED || audit.tlb_restored!=1 || audit.recovery_required) return false;
+	bool ready=c.q38Clock.Begin(c.baseline.baseline.baseline.baseline.control.control.control.arc,
+		c.baseline.baseline.baseline.baseline.control.control.telemetry);
+	const auto& r=c.q38Clock.Snapshot(); // CPU metadata ONLY,even after failure
+	dprintf("P100A_Q38_CLOCK begin%u state%u mhz%u/%u mode%u/%u messages%u uncertain%u;NORMAL_FIRMWARE_ONLY\n",
+		unsigned(ready),r.state,r.before_mhz,r.busy_mhz,r.before_mode,r.busy_mode,r.messages,unsigned(c.q38Clock.Unsafe()));
+	return ready;
+}
+static bool
+FinishQ38NormalClock(PioneerStoreContext& c,bool knownClean)
+{
+	// Native END calls this ONLY AFTER explicit span END, ALL peer STOPs,
+	// independent physical audits/holds and complete bulk/root restoration.
+	// It is BEFORE final PCI disable and before releasing ANY host owner.
+	knownClean=knownClean && !c.Unsafe() && (!c.q38Span || c.q38Span->closed)
+		&& (!c.q38Dispatch || c.q38Dispatch->closed);
+	bool ended=c.q38Clock.End(c.baseline.baseline.baseline.baseline.control.control.control.arc,
+		c.baseline.baseline.baseline.baseline.control.control.telemetry,knownClean);
+	const auto& r=c.q38Clock.Snapshot(); // CPU metadata ONLY;not another ARC query
+	dprintf("P100A_Q38_CLOCK end%u state%u mhz%u/%u/%u restored%u messages%u uncertain%u;NORMAL_FIRMWARE_ONLY\n",
+		unsigned(ended),r.state,r.before_mhz,r.busy_mhz,r.after_mhz,r.restored,r.messages,unsigned(c.q38Clock.Unsafe()));
+	return ended;
+}
+// PIONEER_Q38_CLOCK_SERVICE_END
+#endif
+
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 // PIONEER_Q38_DISPATCH_RETAIN_BEGIN
 // Memory bookkeeping ONLY. In particular,NO legacy PCI/TLB/SRAM rollback,
@@ -2237,6 +2318,9 @@ static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
 	c.dispatchOwnerRetained=true;
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	c.q38Clock.Quarantine(); // MEMORY ONLY; never issue IDLE after ANY unknown
+#endif
 	if (c.q38Dispatch) PioneerQ38DispatchQuarantine(*c.q38Dispatch,c.banks);
 	c.banks.Quarantine(); c.lease.recovery_required=true; c.io.QuarantineHostPage();
 	if (c.bulkHost.allocated && !c.bulkHost.released) { c.bulkHost.ready=false; c.bulkHost.quarantined=true; }
@@ -2454,6 +2538,11 @@ EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result
 q38_dispatch_owned_restored:
 	context->q38EndPhase=40;
 #endif
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	if (context->bankStorageOnly && !FinishQ38NormalClock(*context,clean)) {
+		RetainQ38DispatchOwner(*context,result); return;
+	}
+#endif
 	if (recheck && clean) {
 		clean=context->io.PioneerHostDmaAuditIO::AfterNodeId(context->Pci().node_id[0])
 			&& BlackholeHostReadPciQuiet(context->io,0x402)
@@ -2525,6 +2614,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		// to the kernel:close WITHOUT END must retain ALL owners with NO
 		// device IO/reset/STOP,even when the last RUN's metadata passed.
 		if (cookie->context->bankStorageOnly && ((cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+			|| cookie->context->q38Clock.RequiresExplicitEnd()
+#endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 			|| cookie->context->q38Delta.saved
 #endif
@@ -2566,6 +2658,9 @@ BeginResidentSession(PioneerProbeCookie* cookie,uint64 capacity,tt_resident_sess
 	context->bankStorageOnly=bankOnly;
 	sBankStorageOnly=bankOnly;
 	if (ready && bankOnly) ready=context->banks.Bind(context->baseline.baseline.baseline.baseline.dram);
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	if (ready && bankOnly) ready=BeginQ38NormalClock(*context);
+#endif
 #else
 	(void)bankOnly;
 #endif
@@ -2765,7 +2860,15 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		} else status=B_BAD_VALUE;
 		if (status==B_OK) status=user_memcpy(data,&request,sizeof(request));
 		if (status!=B_OK && began) {
-			tt_resident_session_result cleanup={}; EndResidentSession(cookie,cleanup,true);
+			tt_resident_session_result cleanup={};
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+			// A lost BEGIN reply must not remove a known busy request behind
+			// the caller:it sees only transport uncertainty and closes ONLY.
+			if (cookie->context && cookie->context->q38Clock.RequiresExplicitEnd())
+				RetainQ38DispatchOwner(*cookie->context,cleanup);
+			else
+#endif
+			EndResidentSession(cookie,cleanup,true);
 		}
 		release_sem(sLock); return status;
 	}

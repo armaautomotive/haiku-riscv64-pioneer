@@ -3,6 +3,10 @@
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #define PIONEER_Q38_DISPATCH_CLOSE_MOCK_ONLY
 #include "pioneer_q38_dispatch_close_test.cpp"
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+#define PIONEER_Q38_CLOCK_LEASE_MODEL_ONLY
+#include "pioneer_q38_clock_lease_test.cpp"
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
 #endif
@@ -20,6 +24,10 @@ struct Ref2 { Ref1 baseline; tt_compute_noc_result noc; };
 struct Ref3 { Ref2 baseline; };
 struct Ref4 { Ref3 baseline; };
 struct BoundContext {
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+	ClockLeaseIO clockIO;
+	PioneerQ38ClockLease<ClockLeaseIO> q38Clock{clockIO};
+#endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	PioneerQ38DeltaProbeLease q38Delta;
 #endif
@@ -46,6 +54,9 @@ struct BoundContext {
 #endif
 	}
 	bool Unsafe() { return
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+		q38Clock.Unsafe() ||
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 		(q38Span && (q38Span->unsafe || q38Span->running)) ||
 #endif

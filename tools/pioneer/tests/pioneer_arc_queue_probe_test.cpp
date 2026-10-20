@@ -65,6 +65,7 @@ struct MockQueue {
 		h.tags_address = 0x10002000; h.data_address = 0x10003000; h.entry_count = 63; return h;
 	}
 };
+#ifndef PIONEER_ARC_QUEUE_MODEL_ONLY
 int main()
 {
 	auto arc = MockQueue::Arc(); auto health = MockQueue::Health(); tt_arc_queue_result r;
@@ -144,3 +145,4 @@ int main()
 	io = {}; health.values[2] = 71*65536;
 	assert(!BlackholeArcClockEnter(io,arc,health,clock) && clock.restored && io.writes == 0);
 }
+#endif
