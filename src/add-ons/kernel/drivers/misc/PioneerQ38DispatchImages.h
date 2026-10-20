@@ -31,6 +31,12 @@
 #endif
 #include "PioneerQ38SparseExportRootImage.h"
 #endif
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+#ifndef PIONEER_Q38_WORK_SPARSE_EXPORT
+#error Compact output requires the exact sparse Work root
+#endif
+#include "PioneerQ38CompactOutputRootImage.h"
+#endif
 #ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
 #if !defined(PIONEER_Q38_WORK_OUTPUT_DMA) || !defined(PIONEER_Q38_PIPELINED_MATRIX)
 #error Queued entry requires the fully qualified Work DMA integer peer
@@ -83,6 +89,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+ if (!worker) return PioneerQ38CompactOutputRootPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_WORK_SPARSE_EXPORT
  if (!worker) return PioneerQ38SparseExportRootPrefixWord(address);
 #endif
@@ -153,6 +162,9 @@ enum { TT_Q38_DISPATCH_BOOT=0x0006c06f,TT_Q38_DISPATCH_DONE=0x7200c,
  TT_Q38_PEER_MARKER=0x32503851,TT_Q38_PEER_WAIT_LOAD=0x7204c,TT_Q38_PEER_WAIT_BRANCH=0x72050 };
 static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+ return PioneerQ38CompactOutputRootWord(word);
+#endif
 #ifdef PIONEER_Q38_WORK_SPARSE_EXPORT
  return PioneerQ38SparseExportRootWord(word);
 #endif

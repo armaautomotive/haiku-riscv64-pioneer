@@ -27,7 +27,7 @@ def check(mode, fault=None):
             return target
         payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'hashwspg', 'guardsha']}
         payloads['hashcurrentprofile'] = ('test-' + values['hashcurrentprofile']).encode()
-        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand']:
+        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
@@ -71,6 +71,8 @@ def check(mode, fault=None):
             '--restore-zero-minimum': ('hash_zero_minimum', 'hash_sum_cache', 'tag_zero_minimum'),
             '--apply-native-operand': ('hash_zero_minimum', 'hash_native_operand', 'tag_zero_minimum'),
             '--restore-native-operand': ('hash_native_operand', 'hash_zero_minimum', 'tag_native_operand'),
+            '--apply-compact-output': ('hash_native_operand', 'hash_compact_output', 'tag_native_operand'),
+            '--restore-compact-output': ('hash_compact_output', 'hash_native_operand', 'tag_compact_output'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -108,6 +110,7 @@ def check(mode, fault=None):
         put('candidate_sum_cache', payloads['hash_sum_cache'])
         put('candidate_zero_minimum', payloads['hash_zero_minimum'])
         put('candidate_native_operand', payloads['hash_native_operand'])
+        put('candidate_compact_output', payloads['hash_compact_output'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -208,6 +211,7 @@ if __name__ == '__main__':
     modes += ['--apply-input-sum-cache', '--restore-input-sum-cache']
     modes += ['--apply-zero-minimum', '--restore-zero-minimum']
     modes += ['--apply-native-operand', '--restore-native-operand']
+    modes += ['--apply-compact-output', '--restore-compact-output']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -283,6 +287,10 @@ if __name__ == '__main__':
             candidate = ['candidate_native_operand']
         elif mode == '--restore-native-operand':
             candidate = ['candidate_zero_minimum']
+        elif mode == '--apply-compact-output':
+            candidate = ['candidate_compact_output']
+        elif mode == '--restore-compact-output':
+            candidate = ['candidate_native_operand']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

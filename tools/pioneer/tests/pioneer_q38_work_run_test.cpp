@@ -15,6 +15,12 @@ int main(int argc,char** argv)
 	for (unsigned workers:{1U,7U,119U}) for (unsigned type:{8U,12U,14U}) {
 		RunFixture f(argv[1],workers,type,5120);
 		assert(Work(f) && f.io.inputMode==1 && f.lease->inputCacheWork);
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		// Heterogeneous groups distinguish packed offsets from the former
+		// fixed stride. Independent observer,NEVER production CPU validation.
+		for (unsigned w=0;w<workers;w++) for (unsigned row=0;row<256;row++)
+			assert(f.job->output[w][row]==(row<f.job->part[w].groups*16?Bits(float(w*256+row+1)):0));
+#endif
 		PioneerQ38WorkHistory history; assert(history.Accept(*f.job) && !history.Accept(*f.job));
 		for (const auto& peer:f.job->result.peer) for (auto word:peer) assert(!word);
 		assert(Work(f) && f.io.inputMode==2 && history.Accept(*f.job));

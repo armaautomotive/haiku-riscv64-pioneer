@@ -2,6 +2,26 @@
 
 ## Status
 
+### October20:normal firmware clocks and compact-return qualification
+
+The27B path is STILL hybrid,NOT card-only or practically fast. Normal
+firmware800->1350->800MHz raised the tiny three-warm-position sample from
+0.129974993 to0.162201932tok/s;per-job exact activation-sum reuse measured
+0.165393504. Zero-minimum arithmetic then measured0.164406588,NO meaningful
+additional gain. All runs kept the same four greedy token IDs and ended
+cleanly,but are NOT sustained/text-quality/CPU-comparison qualification.
+20tok/s remains unmet. See benchmarks and NATIVE_BUILD_STATUS for evidence.
+
+Native operand mode5 passed68 bounded calculations with four clean ENDs;
+its separate whole-model test is running. Next opt-in compact-return code
+is OFFLINE-qualified,not installed:it packs ALL active result rows and
+omits only unused per-worker padding. One modeled119-worker layout shrinks
+121856 to15168 return bytes without losing values or safety checks. That
+is NOT yet a native/token-rate speedup. Its strict source/owner/PC/counter/
+transport/failure tests and byte-identical feature-OFF rebuilds pass.
+Work still has NO CPU learned-reference validation;checked mode remains
+separate. No boot/SD/CPU/RAM/Assistant preference changes were made.
+
 ### October 19: measured generation overhead and lossless input packing
 
 The native 27B path still transfers projection data through Haiku; it is not

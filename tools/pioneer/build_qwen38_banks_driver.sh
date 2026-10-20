@@ -191,6 +191,12 @@ esac
 [ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" = 0 ] || {
  echo 'STOP deferred affine is OFFLINE ONLY;no qualified driver image selects it' >&2; exit 2;
 }
+case "${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}:${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}:${PIONEER_Q38_WORK_OUTPUT_DMA:-0}" = 1:1:1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_COMPACT_OUTPUT";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_OUTPUT_DMA:-0}" = 1 ] || exit 2

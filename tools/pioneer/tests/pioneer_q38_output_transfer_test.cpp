@@ -19,9 +19,10 @@ struct Fabric {
 		const unsigned offsets[]={0x100,0x118,0x11c,0x120,0x124,0x128,0x12c,0x130,0x134,0x138,0x13c,0x140,0x144,0x150,0x154,0x16c};
 		return offsets[i];
 	}
-	Fabric(unsigned peers,bool edge=false) {
+	Fabric(unsigned peers,bool edge=false,unsigned bytes=0) {
 		d[0]=PIONEER_Q38_OUTPUT_MAGIC; d[1]=1; d[2]=peers; d[3]=19;
 		d[4]=edge?0xfff00000:0x80000000; d[5]=edge?0xffff:1; d[6]=0x100000; d[7]=peers*1024;
+		if (bytes) d[7]=bytes;
 		hostLow=d[4]; hostHigh=d[5];
 		for (unsigned i=0;i<16;i++) d[16+i]=0xa5000000+i*0x13579;
 		for (auto& n:counters) n=0xfffffff8;
@@ -52,7 +53,13 @@ struct Fabric {
 		if (packets==fail) { pending=true; return; }
 		bool write=command[7]==0x212; unsigned remote=write?command[3]:command[0];
 		unsigned at=remote-hostLow,bytes=command[8],words=bytes/4;
-		assert(bytes && bytes<=4096 && !(at&4095) && !(bytes&1023) && at<d[7] && bytes<=d[7]-at);
+		assert(bytes && bytes<=4096 && !(at&4095) && !(bytes&
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+			63
+#else
+			1023
+#endif
+			) && at<d[7] && bytes<=d[7]-at);
 		assert(!command[6] && !command[9] && (write?command[1]:command[4])==0);
 		assert((write?command[4]:command[1])==hostHigh && command[2]==(write?129U:1555U) && command[5]==(write?1555U:129U));
 		if (write) {

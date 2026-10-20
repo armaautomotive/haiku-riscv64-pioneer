@@ -11,12 +11,23 @@
 // Physical words are KERNEL-PRIVATE, never an ioctl/public descriptor.
 // Source80000..9dc00 and readback75000..76000 are INSIDE the existing root
 // L1 owner, disjoint from code/stack/descriptors/finished proof records.
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CompactOutput.h"
+enum { PIONEER_Q38_OUTPUT_MAGIC=PIONEER_Q38_COMPACT_OUTPUT_MAGIC,PIONEER_Q38_OUTPUT_OWNER=0x100000 };
+#else
 enum { PIONEER_Q38_OUTPUT_MAGIC=0x314f3851,PIONEER_Q38_OUTPUT_OWNER=0x100000 };
+#endif
 static inline bool PioneerQ38OutputTransferShape(const uint32_t* d)
 {
 	if (!d || d[0]!=PIONEER_Q38_OUTPUT_MAGIC || d[1]!=1 || !d[2] || d[2]>119
 		|| !d[3] || d[3]>=0x7fffffff || (d[4]&0xfffff) || !d[5] || d[5]>0xffff
-		|| d[6]!=PIONEER_Q38_OUTPUT_OWNER || d[7]!=d[2]*1024) return false;
+		|| d[6]!=PIONEER_Q38_OUTPUT_OWNER
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		|| !d[7] || (d[7]&63) || PioneerQ38CompactOutputBytes(d[2],d[7]/4)!=d[7]
+#else
+		|| d[7]!=d[2]*1024
+#endif
+		) return false;
 	for (unsigned i=8;i<16;i++) if (d[i]) return false;
 	return true;
 }
@@ -41,7 +52,13 @@ template<class IO> class PioneerQ38OutputTransfer {
 		return true;
 	}
 	bool Packet(bool write,unsigned at,unsigned bytes,const uint32_t* d) {
-		if (!bytes || bytes>4096 || (bytes&1023) || (at&4095) || at>=d[7] || bytes>d[7]-at
+		if (!bytes || bytes>4096 || (bytes&
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+			63
+#else
+			1023
+#endif
+			) || (at&4095) || at>=d[7] || bytes>d[7]-at
 			|| !Sources(d) || !Idle()) return false;
 		const unsigned offsets[]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
 		uint32_t expected[4];

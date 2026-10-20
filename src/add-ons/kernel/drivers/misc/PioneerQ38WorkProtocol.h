@@ -2,6 +2,12 @@
 #ifndef PIONEER_Q38_WORK_PROTOCOL_H
 #define PIONEER_Q38_WORK_PROTOCOL_H
 #include "PioneerQ38DispatchProof.h"
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+#ifndef PIONEER_Q38_WORK_OUTPUT_DMA
+#error Compact output requires the owned Work DMA protocol
+#endif
+#include "PioneerQ38CompactOutput.h"
+#endif
 // Explicit WORK interface. Old drivers reject these operations;there is NO
 // silent fallback to the exhaustive checked path. Same logical request and
 // owned output ranges,NO user physical addresses/code/nonce authority.
@@ -35,7 +41,16 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 #endif
 		|| s[11]>s[10]
 		|| s[10]>2*65536*job.peers) return false;
-	unsigned groups=0; for (unsigned w=0;w<job.peers;w++) groups+=job.part[w].groups;
+	unsigned groups=0;
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+	uint32_t packedWords=0;
+#endif
+	for (unsigned w=0;w<job.peers;w++) {
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		if (!PioneerQ38CompactOutputAppend(job.part[w].groups,packedWords)) return false;
+#endif
+		groups+=job.part[w].groups;
+	}
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	uint32_t reads=s[10]+3*s[11]+job.peers,flits=s[10]+3*s[11]+4*job.peers+groups,writes=2*job.peers;
 #else
@@ -43,8 +58,14 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 #endif
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 	uint32_t writeFlits=writes;
-	uint32_t bytes=job.peers*1024,chunks=(bytes+4095)/4096;
-	if (s[49]!=0x314f3851 || s[50]!=bytes || s[51]!=a.nextRoot || s[52]!=chunks || s[53]!=chunks
+	uint32_t bytes=
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		PioneerQ38CompactOutputBytes(job.peers,packedWords),magic=PIONEER_Q38_COMPACT_OUTPUT_MAGIC,
+#else
+		job.peers*1024,magic=0x314f3851,
+#endif
+		chunks=(bytes+4095)/4096;
+	if (s[49]!=magic || s[50]!=bytes || s[51]!=a.nextRoot || s[52]!=chunks || s[53]!=chunks
 		|| s[54]!=bytes/64 || s[55]!=bytes/64 || s[56]!=1) return false;
 	reads+=chunks; flits+=bytes/64; writes+=chunks; writeFlits+=bytes/64;
 	if (s[6]!=reads || s[7]!=writes || s[8]!=flits || s[9]!=writeFlits) return false;

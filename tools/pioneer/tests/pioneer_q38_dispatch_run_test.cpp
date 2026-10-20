@@ -6,7 +6,11 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchRun.h"
 #include "../PioneerQ38DispatchHost.h"
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+#include "pioneer_q38_compact_output_fabric.h"
+#else
 #include "pioneer_q38_output_fabric.h"
+#endif
 #endif
 struct ControllerMachine:DispatchMachine {
 	uint32_t ownSource[16];
@@ -106,7 +110,11 @@ struct RunIO:BootstrapIO {
 		inputMode=c.view[base+7];
 		uint32_t source[16]; for (unsigned i=0;i<16;i++) source[i]=i?c.source[i]:c.config;
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		CompactReturnMachine<ControllerMachine> m(image,n,type,k,source);
+#else
 		OutputReturnMachine<ControllerMachine> m(image,n,type,k,source);
+#endif
 		m.failDma=failDma; m.dropDma=dropDma; m.corruptDma=corruptDma; m.changeSourceDma=changeSourceDma;
 #else
 		ControllerMachine m(image,n,type,k,source);

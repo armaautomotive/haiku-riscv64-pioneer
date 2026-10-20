@@ -129,9 +129,17 @@ template<class IO
 #endif
 	PioneerQ38DispatchProfile<IO> profile(io);
 	auto& a=lease.authority; auto& root=lease.worker[0]; auto& r=job.result;
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+	uint32_t compactWords=0;
+#endif
 	// Complete ALL private initialized extents BEFORE any IO/nonce advance.
-	for (unsigned w=0;w<job.peers;w++) if (lease.peerNonce[w]>=0x7ffffffe
-		|| !PioneerQ38CohortAuthorizePart(banks,dram,initialized,initializedPages,job.type,job.inputs,job.part[w],w+1,a.extent[w])) return false;
+	for (unsigned w=0;w<job.peers;w++) {
+		if (lease.peerNonce[w]>=0x7ffffffe
+			|| !PioneerQ38CohortAuthorizePart(banks,dram,initialized,initializedPages,job.type,job.inputs,job.part[w],w+1,a.extent[w])) return false;
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		if constexpr (Work) if (!PioneerQ38CompactOutputAppend(job.part[w].groups,compactWords)) return false;
+#endif
+	}
 	a.nextRoot=lease.rootNonce+1;
 	for (unsigned w=0;w<job.peers;w++) a.nextPeer[w]=lease.peerNonce[w]+1;
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
@@ -184,7 +192,13 @@ template<class IO
 #endif
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
-		Work?1U:0U,Work?0x314f3851U:0U,Work?uint32_t(outputWide->physical):0U,
+		Work?1U:0U,Work?
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		uint32_t(PIONEER_Q38_COMPACT_OUTPUT_MAGIC)
+#else
+		0x314f3851U
+#endif
+		:0U,Work?uint32_t(outputWide->physical):0U,
 		Work?uint32_t(outputWide->physical>>32):0U,Work?uint32_t(TT_WIDE_OUTPUT_BYTES):0U,0,0,0};
 #else
 		Work?1U:0U,0,0,0,0,0,0,0};
@@ -260,7 +274,13 @@ template<class IO
 #endif
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 	if constexpr (Work) {
-		unsigned bytes=job.peers*1024,last=(bytes-1)&~4095U;
+		unsigned bytes=
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+			PioneerQ38CompactOutputBytes(job.peers,compactWords),
+#else
+			job.peers*1024,
+#endif
+			last=(bytes-1)&~4095U;
 		const uint32_t command[]={uint32_t(outputWide->physical)+last,uint32_t(outputWide->physical>>32),1555,0x75000,0,129,0,0,bytes-last,0};
 		for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PIONEER_Q38_RUN_FAILURE;
 		if (!PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,true)
@@ -281,8 +301,16 @@ template<class IO
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 	if constexpr (Work) {
 		io.WideHostFence();
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		unsigned offset=0;
+		for (unsigned w=0;w<job.peers;w++) {
+			for (unsigned row=0;row<job.part[w].groups*16;row++) job.output[w][row]=io.WideHostLoad(offset+row);
+			offset+=job.part[w].groups*16;
+		}
+#else
 		for (unsigned w=0;w<job.peers;w++) for (unsigned row=0;row<job.part[w].groups*16;row++)
 			job.output[w][row]=io.WideHostLoad(w*256+row);
+#endif
 		io.WideHostFence();
 	} else
 #endif

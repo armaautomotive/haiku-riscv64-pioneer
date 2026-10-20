@@ -46,6 +46,13 @@ struct DispatchMachine:BlockMachine {
 #endif
 	}
 	unsigned DescriptorEchoes() const { return WorkCached()?0:active; }
+	virtual bool CompactOutputLayout() const {
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		return WorkCached();
+#else
+		return false;
+#endif
+	}
 	void Configure(unsigned nonce,bool stop=false) {
 		operation=stop?2:1; descriptors=readbacks=doorbells=gathers=0;
 		const uint32_t header[]={0x314d3851,1,operation,stop?0:kind,stop?0:k,active,nonce,0,0,0,0,0,0,0,0,0};
@@ -184,7 +191,12 @@ struct DispatchMachine:BlockMachine {
 		assert(l1[Index(0x17ffc8)]==0x314d3851);
 		if (l1[Index(0x17ffc4)]!=active) return false;
 		assert(!pending && descriptors==active && readbacks==DescriptorEchoes() && doorbells==active && gathers==(operation==1?active:0));
-		if (operation==1) for (unsigned w=0;w<119;w++) for (unsigned row=0;row<256;row++) {
+		if (operation==1 && CompactOutputLayout()) {
+			unsigned packed=0;
+			for (unsigned w=0;w<active;w++) for (unsigned row=0;row<peers[w].descriptor[7]*16;row++) {
+				assert(memory.at(0x80000+packed*4)==ExpectedOutput(w,row)); packed++;
+			}
+		} else if (operation==1) for (unsigned w=0;w<119;w++) for (unsigned row=0;row<256;row++) {
 			unsigned groups=w<active?peers[w].descriptor[7]:0;
 			assert(memory.at(0x80000+w*1024+row*4)==(row<groups*16?ExpectedOutput(w,row):0));
 		}

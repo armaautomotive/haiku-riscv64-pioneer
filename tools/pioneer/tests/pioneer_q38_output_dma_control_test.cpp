@@ -28,7 +28,13 @@ int main(int argc,char** argv)
 		for (const auto& rows:job->output) for (auto value:rows) assert(!value);
 		Retained(cookie); sColdRecoveryRequired=false;
 	}
-	for (unsigned packet:{1U,30U,60U}) for (unsigned fault=0;fault<4;fault++) {
+	for (unsigned packet:{1U,
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		2U,4U
+#else
+		30U,60U
+#endif
+		}) for (unsigned fault=0;fault<4;fault++) {
 		if ((fault==1 && !(packet&1)) || (fault==2 && (packet&1))) continue;
 		PioneerProbeCookie cookie; Begin(cookie,argv[1]); auto& c=*cookie.context; auto job=Request();
 		job->peers=119; for (unsigned w=0;w<119;w++) job->part[w]={w%7,1,64+uint64_t(w/7)*0x00800000};
@@ -50,16 +56,31 @@ int main(int argc,char** argv)
 	{
 		PioneerProbeCookie cookie; Begin(cookie,argv[1]); auto& c=*cookie.context; auto job=Request();
 		assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_OK && !c.Unsafe());
-		assert(c.io.pciWrites==4 && !c.wideHost.pending && !c.io.outputReads && c.io.dmaPackets==4);
+		constexpr unsigned expectedPackets=
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+			2;
+#else
+			4;
+#endif
+		assert(c.io.pciWrites==4 && !c.wideHost.pending && !c.io.outputReads && c.io.dmaPackets==expectedPackets);
 		assert(PioneerQ38WorkSafety(*job,c.q38Dispatch->authority));
 		for (unsigned word=49;word<64;word++) for (unsigned bit=0;bit<32;bit++) {
 			job->result.stats[word]^=1U<<bit;
 			assert(!PioneerQ38WorkSafety(*job,c.q38Dispatch->authority));
 			job->result.stats[word]^=1U<<bit;
 		}
-		for (unsigned w=0;w<7;w++) for (unsigned r=0;r<16;r++) assert(job->output[w][r]==c.io.dmaData[w*256+r]);
+		for (unsigned w=0;w<7;w++) for (unsigned r=0;r<256;r++) {
+			if (r>=16) assert(!job->output[w][r]);
+			else assert(job->output[w][r]==c.io.dmaData[w*
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+				16
+#else
+				256
+#endif
+				+r]);
+		}
 		assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_DISPATCH_RUN,job.get(),sizeof(*job))==B_OK && !c.Unsafe());
-		assert(c.io.pciWrites==4 && c.io.outputReads && c.io.dmaPackets==4); // CHECKED keeps PIO;no new BME/DMA
+		assert(c.io.pciWrites==4 && c.io.outputReads && c.io.dmaPackets==expectedPackets); // CHECKED keeps PIO;no new BME/DMA
 		failCopy=copyCalls+2;
 		assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==-99 && !c.Unsafe() && !c.wideHost.pending);
 		failCopy=0; End(cookie,true);

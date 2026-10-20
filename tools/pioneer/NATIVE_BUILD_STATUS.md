@@ -1,5 +1,45 @@
 # Native build status
 
+October20,14:02 Vancouver (21:02 UTC) COMPACT OUTPUT OFFLINE-QUALIFIED:
+Current ONLY native job remains decoder93067b8f/tag...0007/gen8 whole-
+model-work-native-operand-four-20261020-a.log. No card probe/transfer/swap
+until explicit clean END. Latest whole27B0.164406588tok/s,best tiny sample
+0.165393504;20tok/s still FAR unmet. Goal ACTIVE.
+
+PIONEER_Q38_WORK_COMPACT_OUTPUT returns EVERY active FP32 row tightly,
+not256-word padding per worker. Frozen kernel-private group counts derive
+all offsets/byte extents BEFORE IO;new PRIVATE marker0x324f3851 refuses
+the old padded Work contract. Public request/result/Work ABI unchanged.
+Only previously unused padding/inactive slots leave the transfer. ALL
+gathered proof fields,finite active values,physical/source/PC/counter gates,
+ALL256 owned host pages,BME/ordered host read/EVERY-bit on-card comparison
+and strict whole-owner UNKNOWN retention remain. Checked/STOP preserve
+their original padded layout/export/PIO. No CPU learned reference added.
+
+Pure layout/transport4K0RsW8U PASS:1904 heterogeneous layouts/3808 complete
+bit transfers/304 sticky packet faults,1..119 peers/1..16groups,64-byte
+tails/high48-bit owner/counter wrap/invalid extents ZERO IO. Legacy
+transportf6pH5Df4 PASS. Actual emitted root+real peers XMP9sZPM PASS,
+including all1/all16 group extremes,poisoned untouched tails,full outputs
+EXACT vs old padded root,all64 proof-field/PC/source/nonfinite/NoC/posted-
+write faults,old-marker refusal BEFORE IO. Example3792 rows:121856->15168
+bytes,60->8 DMA packets,root RV1769007->1359684;NOT silicon/token timings.
+Actual kernel DMA/Work c6dhaqOO PASS,heterogeneous packed host offsets and
+zero public padding independently checked;legacy vttALdVq PASS. Extracted
+handler/lock/whole-owner/clock-retention plSVvPZy PASS.
+
+Rootb0b67a77f5341604b0be5f759b4d9228aa934067a390e5805ab3b7c1de782194,
+prefix1385ab712bf8756704a5c99abc344683b58b664a4bfac06443c2c83f7ae10427,
+boote678 unchanged,a/b exact. Feature-OFF root EXACT73b7170e/fc7337cc,
+complete driver EXACT93067b8f,guardd1ce/default432df unchanged.
+New driver7cbd2bf43fa299e1296f01df7e08d41f810cb6d5bae6959d05d4de6f06fc1ec5,
+tag2026102000010008,b/c exact;one initial cross-build enum signedness
+warning fixed OFFLINE before candidate creation. New updater2051/full+
+60 focused cases PASS,SHA15b965e0d6b992a73102aface50c63043c74102dd9a22b5cd83447132c644403.
+Explicit opt-in build now available with full qualified native/sparse/DMA
+dependency chain;NOT staged/installed/native-qualified. Deferred-affine
+remains separately BLOCKED,not combined. Boot/SD/Assistant/model/libs intact.
+
 October20,13:47 Vancouver (20:47 UTC) NATIVE DECODER PASS / NEXT OFFLINE SCHEDULE:
 Guarded16a06fee/tag...0006/gen7 ->93067b8f/tag2026102000010007/gen8
 exchange VERIFIED without reboot/reset. ALL18 Work synthetic+16 auth119+

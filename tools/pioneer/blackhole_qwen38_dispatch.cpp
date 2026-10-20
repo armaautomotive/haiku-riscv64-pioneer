@@ -13,6 +13,9 @@ typedef __UINT32_TYPE__ uint32_t;
 #if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT)
 #error Sparse private exports require the Work bounded-output root
 #endif
+#if defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) && !defined(PIONEER_Q38_WORK_SPARSE_EXPORT)
+#error Compact output requires the exact sparse Work output root
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ActivationPacking.h"
 #define Q38_ROOT_TABLE static
@@ -51,11 +54,20 @@ static __attribute__((noinline,section(".q38_output"))) bool OutputHeaderValid(c
 	return header[9]==PIONEER_Q38_OUTPUT_MAGIC && !(header[10]&0xfffff)
 		&& header[11] && header[11]<=0xffff && header[12]==PIONEER_Q38_OUTPUT_OWNER;
 }
-static __attribute__((noinline,section(".q38_output"))) bool ReturnHostOutput(const uint32_t* header,const uint32_t* source)
+static __attribute__((noinline,section(".q38_output"))) bool ReturnHostOutput(const uint32_t* header,const uint32_t* source
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+	,unsigned words
+#endif
+)
 {
 	uint32_t d[32]; for (unsigned i=0;i<32;i++) d[i]=0;
 	d[0]=PIONEER_Q38_OUTPUT_MAGIC; d[1]=1; d[2]=header[5]; d[3]=header[6];
-	d[4]=header[10]; d[5]=header[11]; d[6]=header[12]; d[7]=header[5]*1024;
+	d[4]=header[10]; d[5]=header[11]; d[6]=header[12];
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+	d[7]=PioneerQ38CompactOutputBytes(header[5],words);
+#else
+	d[7]=header[5]*1024;
+#endif
 	for (unsigned i=0;i<16;i++) d[16+i]=source[i];
 	RootOutputIO io; PioneerQ38OutputTransfer<RootOutputIO> transfer(io);
 	if (!transfer.Run(d) || !transfer.Complete() || transfer.Unsafe()) return false;
@@ -411,7 +423,14 @@ extern "C" unsigned block_main()
 	// zero tail. Clear only inactive output slots; their bytes stay exactly
 	// the same as checked mode. STOP/checked retain the original full clear.
 	if (!work) for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+	// Work writes EVERY transported word below. Neither inactive workers
+	// nor fixed per-worker tails are part of its compact transfer extent.
+	if (!work) for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
+	uint32_t packedWords=0;
+#else
 	for (unsigned i=work?workers*256:0;i<119*256;i++) Words(0x80000)[i]=0;
+#endif
 #else
 	for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
@@ -434,6 +453,13 @@ extern "C" unsigned block_main()
 		if (!work)
 #endif
 		for (unsigned i=0;i<64;i++) Words(0x76000)[w*64+i]=proof[i];
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		if (work) {
+			unsigned begin=packedWords;
+			if (!PioneerQ38CompactOutputAppend(groups,packedWords)) block_fault_park();
+			for (unsigned row=0;row<groups*16;row++) Words(0x80000)[begin+row]=proof[64+row];
+		} else
+#endif
 		for (unsigned row=0;row<256;row++) Words(0x80000)[w*256+row]=row<groups*16?proof[64+row]:0;
 	}
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) if (parts[w][i]!=Words(0x74080)[w*8+i]) block_fault_park();
@@ -442,7 +468,11 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 	// EVERY peer's CURRENT terminal PC/source/counters and every gathered
 	// output have already passed. Never DMA while a peer may still write.
-	if (work && !ReturnHostOutput(header,source)) block_fault_park();
+	if (work && !ReturnHostOutput(header,source
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+		,packedWords
+#endif
+		)) block_fault_park();
 #endif
 	for (unsigned i=0;i<16;i++) if (header[i]!=job[i] || source[i]!=*Words(0xffb20000+SourceOffset(i))) block_fault_park();
 	Checkpoint(0x54000402,workers);
@@ -461,7 +491,13 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 	unsigned writes=workers*2,writeFlits=writes;
 	if (work) {
-		unsigned bytes=workers*1024,chunks=(bytes+4095)/4096;
+		unsigned bytes=
+#ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
+			PioneerQ38CompactOutputBytes(workers,packedWords),
+#else
+			workers*1024,
+#endif
+			chunks=(bytes+4095)/4096;
 		reads+=chunks; flits+=bytes/64; writes+=chunks; writeFlits+=bytes/64;
 	}
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=writes || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=writeFlits) block_fault_park();
