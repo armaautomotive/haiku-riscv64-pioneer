@@ -1,5 +1,35 @@
 # Native build status
 
+October20,12:39 Vancouver (19:39 UTC) CACHE INSTALLED / NATIVE TESTS:
+Guarded b13/tag...0004/gen5 ->6efd1dd7/tag2026102000010005/gen6 exchange
+verified,NO reboot/reset. Cache-only driver passed18 original synthetic
+calculations EXACT/clean END/CLI_EXIT0;authenticated119-worker test running.
+Original synthetic and119-row samples have ONE output group per peer,so
+they do NOT themselves exercise cache reuse. Before whole-model use,run
+existing --public-fixtures (2workers,3groups each) to exercise actual cache
+reuse at every width/format,then checked-mode regression. No new client is
+needed;the fixed existing authenticated option already has that coverage.
+Current latest whole-model rate0.162201932 from previousnormal-clock run;
+cache-only has NO whole-model speed measurement yet. SDs/boot/Assistant/
+model/runtime libs untouched;goal ACTIVE.
+
+October20,12:35 Vancouver (19:35 UTC) NORMAL CLOCK WHOLE27B PASS:
+Full-model-work-normal-clock-four-20261020-a FINISHED,clean_end1/CLI_EXIT0.
+Same four tokens11/353/2688/264,497 learned projections/position/1988 total,
+2020 calls,119 workers,4558653pages/18672242688B retained between steps.
+Warm6.211248/6.156328/6.127888s ->0.162201932tok/s vs sparse baseline
+0.129974993 (~24.8%more tokens/sec). Still FAR BELOW20tok/s;only3 warm
+positions,NOT steady-state/text-quality qualification. Matrix ioctls
+4.706517/4.706410/4.706578s vs~6.247s;other GGML1.162674/1.108448/1.079845s.
+Priming707.512366s,repack148.357831/upload558.490724,first740.210108s.
+Log SHA5143b4860307a15f7890ea37d597ddf02607f3bdcb37f56c41baec9300e01339.
+Cached serial END proves1350->800MHz/restored1/uncertain0. CPU-only final
+driver tag...0004/gen5/cold0/active_owner0. Evidence saved in benchmarks/
+qwen38-normal-clock-full-model-20261020.txt. Qualified cache6efd1dd7 now
+being copied to staging OUTSIDE watched driver dirs,NOT installed yet.
+Next cache-only native regression then whole model;do NOT mix newer
+zero-minimum arithmetic prototype into that A/B. Goal ACTIVE.
+
 October20,12:31 Vancouver (19:31 UTC) NEXT ARITHMETIC PREREQUISITE ONLY:
 Input-sum cache checkpoint77bfc13ba6 saved;normal-clock whole-model job
 still owns card,so cache remains NOT installed/native-qualified. New

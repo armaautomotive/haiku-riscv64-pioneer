@@ -1,0 +1,25 @@
+Native frozen four-token PUBLIC Work smoke,October20 2026.
+NOT steady-state/text-quality qualification;only three warm positions.
+Same bda16c7c CLI/model/libs/32 CPU threads;no CPU learned reference/fallback.
+Driverb13e72d3/tag2026102000010004/gen5;normal firmware800->1350->800MHz.
+No forced clock/voltage/reset/flash. Sparse-export baselineb852456b/gen4.
+Both runs:tokens11/353/2688/264,497 learned projections/position,
+1988 total,2020 calls,119 workers,4558653pages/18672242688B resident.
+
+Baseline warm positions:7.747166/7.680220/7.653977s,0.129974993tok/s.
+Normal-clock warm positions:6.211248/6.156328/6.127888s,0.162201932tok/s.
+Baseline matrix ioctls:6.247052/6.247315/6.247112s.
+Normal-clock matrix ioctls:4.706517/4.706410/4.706578s.
+Normal-clock other GGML:1.162674/1.108448/1.079845s.
+Normal-clock priming707.512366s,repack148.357831s,upload558.490724s.
+First position740.210108s (cold load/priming is NOT generation speed).
+Rate improves~24.8%,but still FAR below20tok/s/usable27B target.
+Do not extrapolate the tiny sample to long contexts or sustained rate.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated4 selected_token264 seconds758.736834 projections1988 uploaded_pages4558653 calls2020 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_FOUR_TOKEN generated4 first_position_seconds740.210108 subsequent_positions3 subsequent_seconds18.495464 sample_tokens_per_second0.162201932 retained_weights1;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag2026102000010004 generation5 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Host log: /boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-normal-clock-four-20261020-a.log
+SHA256:5143b4860307a15f7890ea37d597ddf02607f3bdcb37f56c41baec9300e01339
