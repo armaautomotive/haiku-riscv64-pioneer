@@ -40,6 +40,9 @@
 #if defined(PIONEER_Q38_REPLAY_OPERAND) && !defined(PIONEER_Q38_CACHED_AFFINE)
 #error Operand replay requires the separate cached-affine integer/SFPU variant
 #endif
+#if defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) && (!defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_PERSISTENT_ROWS))
+#error Work dot-check isolation requires the replayed persistent integer/SFPU peer
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -280,6 +283,9 @@ static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&b
 extern "C" unsigned block_main()
 {
 	const volatile uint32_t* job=Words(0x74000);
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+	const bool skipDotCheck=job[14]==1; // descriptor frozen/validated by persistent caller
+#endif
 	unsigned type=job[1],bytes=job[2],count=type==8?32:256;
 #ifdef PIONEER_Q38_STREAM
 	unsigned inputs=job[5],blocks=inputs/count,groups=job[7];
@@ -456,6 +462,14 @@ extern "C" unsigned block_main()
 		Matrix();
 #endif
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+		// Private descriptor14 comes ONLY from the immutable root's Work
+		// selector, never user DATA. Fixed decoded integer ranges prove the
+		// dot bound mathematically; no address, length or source proof uses
+		// its numeric value. Checked/debug jobs KEEP every on-card read.
+		// Work still has the real matrix drain and final finite output gate.
+		if (!skipDotCheck)
+#endif
 		for (unsigned row=0;row<16;row++) {
 #ifdef PIONEER_Q38_SFPU_INTEGER
 			int dot=int(Words(0xffbd8800)[row]); if (dot<-262144 || dot>262144) block_fault_park();

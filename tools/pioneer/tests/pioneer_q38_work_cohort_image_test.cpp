@@ -8,6 +8,9 @@ int main(int argc,char** argv)
 		DispatchMachine checked(argv[1],workers,type,k); assert(checked.RunRoot());
 		DispatchMachine work(argv[1],workers,type,k); work.memory[0x74020]=1;
 		assert(work.RunRoot() && !work.readbacks && work.memory.at(0x7f8c0)==1);
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+		for (unsigned w=0;w<workers;w++) assert(work.peers[w].descriptor[14]==1 && !checked.peers[w].descriptor[14]);
+#endif
 		assert(checked.packets-work.packets==5*workers); // ONLY redundant prior audit+descriptor echo
 		work.Configure(2); work.memory[0x74020]=1; assert(work.RunRoot());
 		work.Configure(3); assert(work.RunRoot() && work.memory.at(0x7f8c0)==0 && work.readbacks==workers);

@@ -16,6 +16,9 @@
 #if defined(PIONEER_Q38_REPLAY_OPERAND) && !defined(PIONEER_Q38_CACHED_AFFINE)
 #error Operand replay peer requires the cached-affine integer/SFPU variant
 #endif
+#if defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) && (!defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(TT_PIONEER_Q38_WORK_MODE))
+#error Work numeric isolation requires replay, the Work-aware root, and explicit Work support
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
@@ -33,9 +36,14 @@
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 #include "PioneerQ38ReplayPeerImage.h"
 #endif
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+#include "PioneerQ38WorkDotImages.h"
+#endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
-#ifdef PIONEER_Q38_REPLAY_OPERAND
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+ return worker>=120?UINT32_MAX:worker?PioneerQ38WorkDotPrefixWord(address):0;
+#elif defined(PIONEER_Q38_REPLAY_OPERAND)
  return worker>=120?UINT32_MAX:worker?PioneerQ38ReplayPrefixWord(address):0;
 #elif defined(PIONEER_Q38_CACHED_AFFINE)
  return worker>=120?UINT32_MAX:worker?PioneerQ38CachedPrefixWord(address):0;
@@ -85,7 +93,11 @@ static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+ return PioneerQ38WorkDotRootWord(word);
+#else
  return PioneerQ38WorkCohortRootWord(word);
+#endif
 #else
  return PioneerQ38ReuseRootWord(word);
 #endif
@@ -598,7 +610,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
 #ifdef PIONEER_Q38_INT_SFPU
-#ifdef PIONEER_Q38_REPLAY_OPERAND
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+ return worker>=120?UINT32_MAX:worker?PioneerQ38WorkDotPeerWord(word):PioneerQ38DispatchRootWord(word);
+#elif defined(PIONEER_Q38_REPLAY_OPERAND)
  return worker>=120?UINT32_MAX:worker?PioneerQ38ReplayPeerWord(word):PioneerQ38DispatchRootWord(word);
 #elif defined(PIONEER_Q38_CACHED_AFFINE)
  return worker>=120?UINT32_MAX:worker?PioneerQ38CachedPeerWord(word):PioneerQ38DispatchRootWord(word);

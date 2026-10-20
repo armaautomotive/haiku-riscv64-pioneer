@@ -7,6 +7,9 @@ typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
+#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+#include "PioneerQ38OutputTransfer.h"
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ActivationPacking.h"
 #define Q38_ROOT_TABLE static
@@ -28,6 +31,41 @@ static __attribute__((noinline)) void Checkpoint(unsigned stage,unsigned detail)
 	Words(0x17ffc0)[0]=stage; Words(0x17ffc0)[1]=detail; Fence();
 }
 extern "C" void block_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+// OFFLINE ONLY. No kernel/driver selects this compatible-root prototype.
+// A future kernel must own/seal the complete high-physical host mapping,
+// keep it pending across BME, and quarantine ALL owners on uncertainty.
+struct RootOutputIO {
+	uint32_t ReadReg(unsigned at) { return *Words(0xffb20000+at); }
+	void WriteReg(unsigned at,uint32_t value) { *Words(0xffb20000+at)=value; }
+	uint32_t ReadL1(unsigned at) { return *Words(at); }
+	void Fence() { ::Fence(); }
+};
+static __attribute__((noinline,section(".q38_output"))) bool OutputHeaderValid(const uint32_t* header)
+{
+	for (unsigned i=13;i<16;i++) if (header[i]) return false;
+	if (!header[8]) { for (unsigned i=9;i<13;i++) if (header[i]) return false; return true; }
+	return header[9]==PIONEER_Q38_OUTPUT_MAGIC && !(header[10]&0xfffff)
+		&& header[11] && header[11]<=0xffff && header[12]==PIONEER_Q38_OUTPUT_OWNER;
+}
+static __attribute__((noinline,section(".q38_output"))) bool ReturnHostOutput(const uint32_t* header,const uint32_t* source)
+{
+	uint32_t d[32]; for (unsigned i=0;i<32;i++) d[i]=0;
+	d[0]=PIONEER_Q38_OUTPUT_MAGIC; d[1]=1; d[2]=header[5]; d[3]=header[6];
+	d[4]=header[10]; d[5]=header[11]; d[6]=header[12]; d[7]=header[5]*1024;
+	for (unsigned i=0;i<16;i++) d[16+i]=source[i];
+	RootOutputIO io; PioneerQ38OutputTransfer<RootOutputIO> transfer(io);
+	if (!transfer.Run(d) || !transfer.Complete() || transfer.Unsafe()) return false;
+	unsigned chunks=(d[7]+4095)/4096,flits=d[7]/64;
+	Words(0x7f800)[6]+=chunks; Words(0x7f800)[7]+=chunks;
+	Words(0x7f800)[8]+=flits; Words(0x7f800)[9]+=flits;
+	Words(0x7f800)[49]=PIONEER_Q38_OUTPUT_MAGIC; Words(0x7f800)[50]=d[7]; Words(0x7f800)[51]=d[3];
+	Words(0x7f800)[52]=Words(0x7f800)[53]=chunks;
+	Words(0x7f800)[54]=Words(0x7f800)[55]=flits; Words(0x7f800)[56]=1;
+	// No host physical word is placed in the publicly returned statistics.
+	Fence(); return true;
+}
+#endif
 static unsigned XY(unsigned worker)
 {
 	Q38_ROOT_TABLE const unsigned columns[]={1,2,3,4,5,6,7,10,11,12,13,14};
@@ -200,7 +238,11 @@ static Q38_ROOT_SMALL bool HeaderValid(const uint32_t* header)
 	if (operation==2?header[7]:header[7]-1U>1U) return false;
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	if (operation==2?header[8]:header[8]>1) return false;
+#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+	if (!OutputHeaderValid(header)) return false;
+#else
 	for (unsigned i=9;i<16;i++) if (header[i]) return false;
+#endif
 #else
 	for (unsigned i=8;i<16;i++) if (header[i]) return false;
 #endif
@@ -325,6 +367,9 @@ extern "C" unsigned block_main()
 		descriptor[5]=operation==1?inputs:0; descriptor[6]=operation==1?p[0]:0; descriptor[7]=operation==1?p[2]:0;
 		descriptor[8]=operation==1?p[4]:0; descriptor[9]=operation==1?1:0;
 		descriptor[10]=0x32503851; descriptor[11]=worker; descriptor[12]=p[3]; descriptor[13]=operation;
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+		descriptor[14]=work?1U:0U; // PRIVATE numeric-only mode; STOP and checked remain0
+#endif
 		for (unsigned i=0;i<16;i++) Words(0x75000)[i]=descriptor[i];
 		Fence();
 		Transfer(true,worker,0x75000,0x74000,64);
@@ -378,6 +423,11 @@ extern "C" unsigned block_main()
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) if (parts[w][i]!=Words(0x74080)[w*8+i]) block_fault_park();
 	Checkpoint(0x54000401,workers);
 	for (unsigned bank=0;bank<8;bank++) if (banks[bank]!=Words(0x74040)[bank]) block_fault_park();
+#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+	// EVERY peer's CURRENT terminal PC/source/counters and every gathered
+	// output have already passed. Never DMA while a peer may still write.
+	if (work && !ReturnHostOutput(header,source)) block_fault_park();
+#endif
 	for (unsigned i=0;i<16;i++) if (header[i]!=job[i] || source[i]!=*Words(0xffb20000+SourceOffset(i))) block_fault_park();
 	Checkpoint(0x54000402,workers);
 	if (!Idle()) block_fault_park();
@@ -392,10 +442,23 @@ extern "C" unsigned block_main()
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
 #endif
 	Checkpoint(0x54000403,reads);
+#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+	unsigned writes=workers*2,writeFlits=writes;
+	if (work) {
+		unsigned bytes=workers*1024,chunks=(bytes+4095)/4096;
+		reads+=chunks; flits+=bytes/64; writes+=chunks; writeFlits+=bytes/64;
+	}
+	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=writes || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=writeFlits) block_fault_park();
+#else
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=workers*2 || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=workers*2) block_fault_park();
+#endif
 	for (unsigned c=0;c<8;c++) {
 		Checkpoint(0x54000410+c,reads);
+#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+writes:c==5?writeFlits:writes;
+#else
 		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+workers*2:workers*2;
+#endif
 		if (uint32_t(Words(0x7f800)[24+c]-Words(0x7f800)[16+c])!=expected) block_fault_park();
 	}
 	for (unsigned i=0;i<16;i++) Words(0x7f800)[32+i]=source[i];

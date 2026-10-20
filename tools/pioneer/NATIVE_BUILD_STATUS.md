@@ -1,5 +1,99 @@
 # Native build status
 
+October19,18:24 Vancouver (October20,01:24 UTC) WORK DOT PRIMITIVES PASS:
+Gen28 Work18 synthetic+16 authenticated119-worker calculations,then18
+old-checked synthetic calculations ALL exact,clean END,EXIT0. Work long
+Q4K17408/119 warm11.100/11.059ms versus gen27 11.396/11.414ms (~2.8% less),
+TWO samples only. No newer whole-model rate than0.078554988tok/s. Running
+full-ffn-work-dot-20261019-a.log using Workbda16c7c;NO another card job until
+clean END. No reboot,power,SD or Assistant action. Resident guard unchanged.
+
+Output-DMA prototype now also assembled as an UNSELECTED compatible root,
+not just a local transfer: main7500B
+8163fb311edbc4d86983a55bd3961b9e6932ee2b0c48ed4b421bcb21862596b5,
+helper2772B50c328edcdd289e56652e463bf414185a8f7d69be71e98374e0cd83a09587dce
+at70000..70ad4,INSIDE the already saved root immutable prefix. ROOT NEVER
+uses the peer's70700 operand region. Original8KiB main bound/boot/STOP/data
+windows remain. Fresh16-word private header requires host-owner shape ONLY
+for Work;checked/STOP require zeros. ALL peer CURRENT physical/source/
+counter/final-output proofs precede ANY host DMA. The helper performs the
+bounded write/ordered read/full on-card bit comparison. Only completion
+nonce/counts,NEVER host physical words,enter returned statistics.
+
+Actual unselected root+real emitted peers b7Pps0YJ passes full-K Q8/Q4/Q6,
+1/2/7/119-worker fabric,repeated->checked isolation,delayed posted writes,
+first/middle/last transfer/drop/corruption/source failures,malformed private
+header BEFORE NoC,and peer physical/nonfinite failures BEFORE host DMA.
+Every terminal fault is inert with ZERO later NoC IO. Runner independently
+pins BOTH image hashes;the production selector is deliberately absent.
+Output-root flag is explicitly REFUSED by the kernel-driver builder until
+host/BME lifetime and completion integration is qualified. Feature-off
+root rebuild EXACT348a26c5. No native/inference/DMA-speed claim for this code.
+
+Next integration must retain the complete context/cookie/ALL host owners
+on the first uncertain BME/DMA operation,never reset/disable/retry/restore
+after UNKNOWN,and prove BME-off/held/source safety BEFORE host publication
+or release. Do NOT reuse the older PioneerRuntimeOutputPage cleanup/retry
+path inside the persistent cohort. A CPU-driven bounded Work DMA return
+after the already-proved final root hold is a possible incremental route
+without live code replacement;the unselected on-card root can later remove
+that CPU command traffic. Neither route is implemented in inference yet.
+
+October19,18:10 Vancouver (October20,01:10 UTC) WHOLE27B REPLAY PASS / WORK DOT NEXT:
+Replay gen27 full27B smoke FINISHED,clean_end1,EXIT0. Same token IDs
+11/353/2688/264,497 learned projections per position/1988 total,2020 matrix
+calls,119 workers,4558653 pages/18672242688B retained during inference.
+Priming733.270102s,repack150.316380s,span upload582.272024s;first position
+773.967119s. Warm12.799124/12.691801/12.698884s =>0.078554988tok/s,
+7.05% over0.073382524 and1.98x the earlier0.039706501. This is still
+unusably slow for20tok/s (~255x short),not a steady-state/chat-quality
+benchmark. Warm matrix ioctl~11.23s;other GGML1.12..1.23s/position.
+Log full-model-work-replay-operand-four-20261019-a.log SHA
+9270c7a468d76a1a183c31ee5577db51d611bd31f5feed38ee23a9cd40dc7396.
+
+Guarded Work-only next candidate hot-loaded,NO REBOOT/POWER/SD action:
+bdbecc3318006a4a3e5ec99d141cb26eb5c2c722b3704ed6b7a01001ce97e352,
+tag2026101900060009,generation28. Hot swap verified EXIT0;then started
+work-dot-synthetic-20261019-a.log. No native arithmetic/speed claim yet.
+NO other card job/reload until its clean END. SAME guard d1ce2aa4.
+
+PIONEER_Q38_WORK_SKIP_DOT_CHECK requires replay+Work-aware root+explicit
+Work support. Root derives PRIVATE descriptor14 from its existing Work
+selector. Checked/STOP always0;values>1 and Work-on-STOP refuse BEFORE
+peer NoC/math. Immutable descriptor snapshot is checked again at completion.
+Work omits16 per-panel numeric dot readbacks,NOT a matrix drain or any
+address/length/source/counter/physical/completion/ownership/finite-output
+check. Fixed Q8/Q4/Q6 and signed8 inputs mathematically bound each16-term
+integer dot by262144;no numeric dot controls an address or extent. Checked
+and separate CPU-validated mode KEEP all original numeric reads. A finite
+out-of-contract Work numeric error is deliberately not validated;the
+independent debug/CPU observer rejects it,without substitution/fallback.
+
+Root8140B SHA348a26c59021fb21d896d585fee06d307ef1fbd34691c8cf06a2704c99f02e0e;
+peer7788B SHA0527f64a1efef48f82246280e70ff5fc5ee9c3bf9596a4be5c035b5b9f838aa8;
+prefix2196B SHA701bbeafc03242fe09624a8b62f476f2acf31267a24325854f6296b38b75655f.
+Same original code/stack/data windows,boot/WAIT/STOP. Two final peer/root/
+driver rebuilds identical. Feature-off peer EXACTb509cb6b/914735bf,driver
+EXACT388e17ab;43control EXACT2df0e0f8,guard unchanged. Updaterb3827bda
+passed1331 actual guard cases. Only staged/explicit guarded route,not a
+new installed27B Assistant target or a new whole-model speed result.
+
+Actual mode test qe187tNn proves all9 widths/types repeated with changed
+inputs:checked performs exactly groups*K dot reads/job,Work ZERO;identical
+matrix/SFPU/drains/NoC/output bits. Work->checked restores every read;
+checked numeric faults park,Work injected262145/INT32_MAX/-INT32_MAX
+remain finite but independent observer rejects wrong answers. RISC work
+falls~5..6%,not a cycle/native speed claim. Full actual peer gVfGdofu,
+root+peer FiAit4Qo and actual handler/retention1tW6RJHV PASS. END1jSSn1xO
+still rejects code/prefix/STOP/physical failures before reset/restore,
+retains ALL owners with ZERO later IO. Offlined output-DMA prototype below
+remains UNSELECTED and has no native/inference speed claim.
+
+Concurrent unrelated staged Firefox/build-image changes,including
+tools/pioneer/pioneer_build.sh and extract_bfs_image.py,belong to the user.
+Do NOT stage/commit/reset those,or the dirty llama.cpp. Use explicit own
+paths and git commit --only for subsequent checkpoints.
+
 October19,17:51 Vancouver (October20,00:51 UTC) REPLAY NATIVE PASS / FULL27B RUN:
 Guarded55 388e17ab9ab2701fb900c3a3c39b792bf5a65917a26b4520ddfa0d870f105709,
 tag2026101900060008,generation27. Update EXIT0;18 Work synthetic+16

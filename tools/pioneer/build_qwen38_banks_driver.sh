@@ -3,6 +3,10 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_OUTPUT_TRANSFER_ROOT:-0}" in
+ 0) ;;
+ *) printf '%s\n' 'Output-root prototype has NO qualified kernel/host-owner integration; refusing driver build.' >&2; exit 2;;
+esac
 [ "$#" = 2 ] || exit 2
 project=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 build=$(CDPATH= cd -- "$1" && pwd)
@@ -138,6 +142,12 @@ case "${PIONEER_Q38_REPLAY_OPERAND:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_CACHED_AFFINE:-0}" = 1 ] || exit 2
     extra="$extra -DPIONEER_Q38_REPLAY_OPERAND";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_WORK_SKIP_DOT_CHECK:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_REPLAY_OPERAND:-0}:${PIONEER_Q38_WORK_COHORT_CACHE:-0}:${PIONEER_Q38_WORK_MODE:-0}" = 1:1:1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_SKIP_DOT_CHECK";;
  *) exit 2;;
 esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \

@@ -42,8 +42,8 @@ CXX='c++ -DPIONEER_Q38_SPAN_FAST' sh tools/pioneer/tests/run_pioneer_q38_span_se
 ```
 
 These remain fixed-public test programs, not installed 27B Assistant targets.
-The completed four-position 27B Work smoke measured **0.0734 tokens/sec**
-over its three warm positions, versus 0.0397 previously. It ended cleanly
+The latest completed four-position 27B Work smoke measured **0.0786 tokens/sec**
+over its three warm positions, versus 0.0734 and 0.0397 previously. It ended cleanly
 with unchanged token IDs. This is still unusably slow for the requested
 20 tokens/sec; whole-GPU model execution has **not** been achieved.
 
@@ -77,7 +77,15 @@ Independent actual-instruction tests preserve every expanded operation and
 output bit, with 9–16% fewer RISC instructions. Native exact-output checks
 pass too, but warm FFN improved only about 2% over cached affine (about 12%
 over the earlier integer-SFPU build). It requires cached affine; defaults
-remain unchanged. A new whole-model timing run is in progress.
+remain unchanged. The latest whole-model timing above includes this variant.
+
+`PIONEER_Q38_WORK_SKIP_DOT_CHECK` additionally separates numeric dot checking
+inside the card: Work relies on the fixed integer-input bound instead of
+reading every dot back to its RISC core. Checked and CPU-validated execution
+keep those reads. The private root derives the selector; no address, DMA,
+ownership, physical completion or final finite-output guard is removed.
+Offline exact-output/mode-switch/failure tests pass; hardware testing is
+in progress, with no new generation-rate claim for this opt-in yet.
 
 An unselected output-DMA prerequisite also has pure and actual-RV32 offline
 tests, including delayed posted writes and sticky transfer failures. It

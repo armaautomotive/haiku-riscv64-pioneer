@@ -72,7 +72,12 @@ extern "C" void q38_persistent_main()
 		uint32_t snapshot[16]; for (unsigned i=0;i<16;i++) snapshot[i]=job[i];
 		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=0x32503851
 			|| snapshot[11]!=worker || snapshot[12]!=sequence || (snapshot[13]!=1 && snapshot[13]!=2)
-			|| snapshot[14] || snapshot[15] || !IdleAll() || *Words(0xffb20100)!=source
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+			|| snapshot[14]>1 || (snapshot[14] && snapshot[13]!=1)
+#else
+			|| snapshot[14]
+#endif
+			|| snapshot[15] || !IdleAll() || *Words(0xffb20100)!=source
 			|| !SourceMatches(sealedSource) || *Words(0xffb20014)!=self || *Words(0x74100)!=sequence) block_fault_park();
 		if (snapshot[13]==2) {
 			Words(0x74140)[0]=sequence; Words(0x74140)[1]=sequence; Words(0x74140)[4]=2;

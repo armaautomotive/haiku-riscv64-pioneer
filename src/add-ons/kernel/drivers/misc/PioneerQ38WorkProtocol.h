@@ -13,6 +13,9 @@
 // It does NOT read/validate peer proof records,expanded input or output
 // numbers. This deliberately cannot detect an otherwise well-formed wrong
 // numeric result;use the separate CPU-validated/debug mode for that.
+// Optional WORK_SKIP_DOT_CHECK also lets peers rely on the proven fixed
+// integer range instead of reading every numeric dot back to their RISC.
+// The root derives that private selector;checked/STOP always keep it off.
 static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 	const PioneerQ38DispatchAuthority& a,bool finalHeld=true)
 {

@@ -28,7 +28,9 @@ struct DispatchMachine:BlockMachine {
 	bool pending=false,unknown=false,badReadback=false,badCounter=false,mutateTasks=false,stuckResponseTag=false;
 	DispatchMachine(const char* path,unsigned workers,unsigned type=12,unsigned inputs=5120)
 		:BlockMachine(path,8,0,1,nullptr,true),active(workers),kind(type),k(inputs) {
+#ifndef PIONEER_Q38_TEST_UNSELECTED_OUTPUT_ROOT
 		for (unsigned word=0;word<2048;word++) assert(PioneerQ38DispatchRoleWord(0,word)==(word<code.size()/4?Word(code,word*4):0));
+#endif
 		assert(Word(code,0x38)==0x0000006f && Word(code,0x3c)==0xffdff06f);
 		for (unsigned c=0;c<8;c++) counts[c]=UINT32_MAX-15-c;
 		for (unsigned w=0;w<119;w++) for (unsigned c=0;c<16;c++) memory[0x7d800+w*64+c*4]=c?0x12340000+c:0x16005;
@@ -105,7 +107,13 @@ struct DispatchMachine:BlockMachine {
 				assert(bytes==64 && !doorbells); descriptors++;
 				for (unsigned i=0;i<16;i++) peer.descriptor[i]=memory.at(local+i*4);
 				const auto& d=peer.descriptor; const unsigned base=0x74080+(worker-1)*32;
-				assert(d[10]==0x32503851 && d[11]==worker && d[12]==memory.at(base+12) && d[13]==operation && !d[14] && !d[15]);
+				assert(d[10]==0x32503851 && d[11]==worker && d[12]==memory.at(base+12) && d[13]==operation
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+					&& d[14]==unsigned(WorkCached())
+#else
+					&& !d[14]
+#endif
+					&& !d[15]);
 				if (operation==1) assert(d[0]==0x31483851 && d[1]==kind && d[2]==Bytes(kind) && !d[3] && !d[4] && d[5]==k
 					&& d[6]==memory.at(base) && d[7]==memory.at(base+8) && d[8]==memory.at(base+16) && d[9]==1);
 			} else {

@@ -3,7 +3,9 @@
 #define PIONEER_Q38_SFPU_ACCUMULATOR_H
 #include "PioneerQ38VectorAffine.h"
 #include "PioneerSfpuDivide.h"
-// OFFLINE ONLY. AFTER every matrix drain+ALL16 finite/bounded dot checks.
+// AFTER every matrix drain. Checked jobs also read/check ALL16 dot bounds;
+// the separately gated Work selector may rely on the fixed integer-input
+// proof instead. No address/length/source proof depends on numeric dots.
 // The qualified vector unpack has ALREADY enabled ALL32 lanes;matrix/RISC checks do not
 // alter predication or issue new asynchronous work. Do NOT repeat those
 // two setup operations here;keep EVERY actual matrix/metadata/final wait.

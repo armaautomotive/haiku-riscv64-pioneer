@@ -26,6 +26,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	unsigned metadataWrites=0,instructionBufferStores=0;
+	unsigned dotProbeReads=0;
 	// Independent frontend replay expander; poison/undefined entries must
 	// never be read. Only register-only arithmetic may enter this prototype.
 	struct ReplayAccessFault {};
@@ -35,6 +36,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
+	int corruptDotValue=262145;
 	bool corruptDecodedProbe=false; unsigned decodedProbeReads=0;
 	unsigned sourceProbeRows=0,sourceProbeReads=0;
 	uint32_t badFloatDot=0;
@@ -286,7 +288,13 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 				assert(vc<8 && vd<8); auto& v=lr[vd][lane];
 				switch (code) {
 				case 0x90: { assert(!mod && ((BFloat && !affineEligible)?vc==0:affineEligible && (vc==4 || (!BFloat && vc==0)))); uint32_t sm=lr[vc][lane],mag=sm&0x7fffffff;
-					assert(mag<=((BFloat && !affineEligible)?128U:vc==0?262144U:2048U) && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
+					unsigned bound=(BFloat && !affineEligible)?128U:vc==0?262144U:2048U;
+#ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
+					// Full hardware SM32 cast for explicit Work numeric-fault
+					// controls. Healthy dots remain independently bounded.
+					if (Persistent && vc==0 && memory.at(0x74038)==1) bound=0x7fffffff;
+#endif
+					assert(mag<=bound && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
 				case 0x7c: assert(!mod); v=lr[vc][lane]; break;
 				case 0x7e: { unsigned vb=(op>>12)&15; assert(mod==1 && vb<8); v=lr[vb][lane]&lr[vc][lane]; break; }
 				case 0x8d: assert(!mod); v^=lr[vc][lane]; break;
@@ -304,7 +312,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		if (code==0x26) for (unsigned row=32;row<40;row++) defined[Adj(row)]=true;
 		if ((op&~0x4000U)==0x26c00020) {
 			sources[mathBank]=false; mathBank^=1; affineEligible=true; assert(unpackBank==mathBank);
-			if (corruptDotRange) { if (BFloat) Base::dst[32][0]=262145; else dstInt[32][0]=262145; }
+			if (corruptDotRange) { if (BFloat) Base::dst[32][0]=float(corruptDotValue); else dstInt[32][0]=corruptDotValue; }
 			if (BFloat && badFloatDot) Base::dst[32][0]=Float(badFloatDot);
 			if (BFloat && negativeDotZero && !Base::dst[32][0]) Base::dst[32][0]=-0.0f;
 		}
@@ -346,6 +354,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
+		if (Range(address,0xffbd8800,64)) dotProbeReads++;
 		if (recordRemaining && !Range(address,0x6e000,8192)) throw ReplayAccessFault{};
 #ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
 		if (!phaseQueue.empty() && !Range(address,0x6e000,8192) && address!=0xffe000fc)
