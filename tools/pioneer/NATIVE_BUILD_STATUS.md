@@ -1,5 +1,22 @@
 # Native build status
 
+October20,12:31 Vancouver (19:31 UTC) NEXT ARITHMETIC PREREQUISITE ONLY:
+Input-sum cache checkpoint77bfc13ba6 saved;normal-clock whole-model job
+still owns card,so cache remains NOT installed/native-qualified. New
+PioneerQ38ZeroMinimumAffine.h is OFFLINE ONLY,NO image/driver caller.
+Q8/Q6 minima are +0. Under the original finite normal-or-zero domain and
+an accumulator initialized to +0 (NOT arbitrary -0),removing that zero
+correction can preserve every final output bit and original non-fused
+coefficient/scale/dot/accumulator rounding. It emits7 vs14 arithmetic ops.
+ASan/UBSan A50bEpfS passed1048576 original-sequence/RISC/independent ISA
+comparisons,all32 lanes,signed coefficient/scale zeros,cancellation and
+unused min/sum registers poisoned. An explicit -0 accumulator case DOES
+differ;test retains this counterexample,so whole-group positive-zero
+initialization/induction MUST be proved before any future integration.
+Unmodified general-affine suitekwISpGsP also passed1048576 comparisons and
+3 dependent-latency faults. No image selection/native/performance claim;
+do NOT treat fewer arithmetic instructions as a measured token speedup.
+
 October20,12:27 Vancouver (19:27 UTC) WORK INPUT-SUM CACHE OFFLINE PASS:
 Current ONLY native job remains full-model-work-normal-clock-four-20261020-a,
 driverb13e72d3/tag...0004/gen5. Same-FD authentication/host load finished;

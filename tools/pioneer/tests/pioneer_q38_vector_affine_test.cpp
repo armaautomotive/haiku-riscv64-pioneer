@@ -38,6 +38,7 @@ struct AffineVector {
 	}
 };
 static uint32_t SM(int value) { return (value<0?0x80000000U:0)|unsigned(value<0?-value:value); }
+#ifndef PIONEER_Q38_VECTOR_AFFINE_TEST_MODEL_ONLY
 int main()
 {
 	AffineWords program;
@@ -89,3 +90,4 @@ int main()
 	assert(timingFaults>=3);
 	printf("PASS OFFLINE vector affine:%u exact scalar-RISC FP32 comparisons,ALL32 lanes,canonical integer bounds,half/factor metadata,activation scale limits,signed zeros,non-fused rounding;%zu instructions and%u dependent-latency faults rejected;NO Dst loading/image/driver/native/cycle-speed qualification\n",cases,program.words.size(),timingFaults);
 }
+#endif
