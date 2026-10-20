@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL compiled RV32 instructions; only NoC/device memory is simulated.
+#ifndef PIONEER_Q38_STATE_ZERO_HAS_BLOCK_MACHINE
 #define PIONEER_Q38_BLOCK_MACHINE_ONLY
 #include "pioneer_qwen38_block_image_test.cpp"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StateZeroShape.h"
 #include <array>
 struct StateZeroMachine:BlockMachine {
@@ -97,6 +99,7 @@ struct StateZeroMachine:BlockMachine {
   for (unsigned i=0;i<32;i++) { summary[i]^=1; assert(!PioneerQ38StateZeroSummary(summary,descriptor.data(),before,after)); summary[i]^=1; }
  }
 };
+#ifndef PIONEER_Q38_STATE_ZERO_MACHINE_ONLY
 int main(int argc,char** argv) {
  assert(argc==2);
  for (unsigned at:{0x72038U,0x7203cU}) {
@@ -133,3 +136,4 @@ int main(int argc,char** argv) {
  { StateZeroMachine m(argv[1],32768); m.changeDescriptorAfter=1; assert(!m.Run()); }
  puts("PASS ACTUAL OFFLINE RV32 state-zero:ALL7 banks/3GiB edges/4KiB..1MiB,full zero+poisoned readback,ALL8 wrapped counters,32 summary fields,both safe terminals,packet/data/source/descriptor/store faults inert after detection;NO host traffic/PCI/matrix/native driver selection or performance claim");
 }
+#endif

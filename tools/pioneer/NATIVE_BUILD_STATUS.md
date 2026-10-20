@@ -1,5 +1,54 @@
 # Native build status
 
+October20,14:30 Vancouver (21:30 UTC) PRIVATE STATE-ZERO CONTROLLER OFFLINE:
+New helper binds the existing39817b67 device-only zero/readback image to
+the SAME private mutable GDN bank/epoch owner. Region/page requests are
+resolved privately BEFORE IO;no caller address/route or initialized-weight
+bitmap commit. No GDN compute/read-ready API exists. All119 NON-root held
+roles plus root/source/mapping/PCI-quiet/ALL-ID/code checks precede start.
+Complete descriptor/32summary/all8counter/last-command/extent/terminal-PC
+proofs precede ANY post-execution hold. First bad terminal marker/phase/
+count stops without reading later status fields. Overflow/backwards/stalled
+CPU clocks refuse;polling also bounded independently. Explicit known-clean
+close restores root code/panel/bulk once;lost/uncertain caller retains all
+leases,NO END/hold/restore/retry/release after unsafe.
+
+This is NOT a native adapter/context lifecycle implementation. The future
+kernel MUST interlock ALL other operations,retain context/cookie/clock/ALL
+host owners and latch persistent cold recovery. Driver builder STILL
+REFUSES GDN_MUTABLE_STATE=1/-1/invalid before touching output/SDK. The new
+helper alone does NOT authorize enabling it. No native state initialization,
+GDN graph routing,whole-state readiness or token-speed claim is made.
+
+Final actual controller+RV32/fault/restore/metadata suite1kl1W5zy PASS:
+42 zero/readback jobs over all7 banks/3GiB-edge reservations/4KiB..1MiB,
+all32 summary/all64 descriptor/all10 command/all16 source faults,packet/
+data/reset loss,early+late PC,code/counter/map/owner/cohort changes,clock
+failures,inert bounds/foreign-epoch refusal,lost-owner retention and
+single-attempt restore. NO PCI writes or host-data reads after allocation;
+learned bitmap unchanged. Existing actual image3Mh1iNLy and complete
+9216-half-head/288MiB private-owner suiteyugR9dWK PASS. Kernel-only RV64
+no-exceptions/RTTI witness PASS:Prepare192B/Run752B/Close192B;largest emitted
+frame880B is existing bank Proof,all<1024. Witness intentionally lacks
+PCI/NoC-command-write/host-data/release APIs and is NOT linked into driver.
+An initial attempt to cross-build the entire host VM exposed harness/header
+portability issues,not hardware failures;replaced with the proper kernel-
+only witness and explicit header dependencies. Feature-OFF complete module
+EXACT7cbd2bf4,guardd1ce/default432df unchanged. New image header pins ALL
+2048 words to39817b67/boote678,not a native selection. Goal ACTIVE.
+
+October20,14:18 Vancouver (21:18 UTC) COMPACT OUTPUT NATIVE68 PASS / MODEL RUNNING:
+7cbd2bf4/tag2026102000010008/gen9 passed18 Work synthetic+16 auth119+
+16 auth3groups+18 checked EXACT,FOUR clean ENDs/EXIT0. Log SHAsf03ed9f8/
+7a58e44a/94058432/c48c9ad7 respectively. Normal clock lifetimes ALL
+800->1350->800/restored1/uncertain0;CPU guard cold0/active_owner0 before
+next model. New timing CLI389d3cf9 staged/SHAverified,invalid option exits2
+BEFORE any model/device operation;NO valid32-token run yet. The frozen
+bda16c7c --public-four-tokens is now ONLY card job,log
+full-model-work-compact-output-four-20261020-a.log. Do NOT probe/copy/swap
+or start another card job until its explicit clean END. Latest completed
+27B rate remains0.166564933,NOT20;no compact-return whole-model rate yet.
+
 October20,14:05 Vancouver (21:05 UTC) NATIVE-STORE WHOLE27B PASS,SMALL DIFFERENCE:
 Full-model-work-native-operand-four-20261020-a FINISHED clean_end1/EXIT0.
 Same tokens11/353/2688/264/1988 projections/2020 calls/119 workers/4558653
