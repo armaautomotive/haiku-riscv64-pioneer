@@ -31,9 +31,9 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do [ ! -d "$include" ] || 
  -DPIONEER_Q38_QUEUED_MATRIX_ENTRY -DPIONEER_Q38_LOCAL_DELTA_PROBE -DPIONEER_Q38_WORK_SPARSE_EXPORT \
  -DPIONEER_Q38_NORMAL_CLOCK -DPIONEER_Q38_WORK_INPUT_SUM_CACHE -DPIONEER_Q38_WORK_ZERO_MINIMUM \
  -DPIONEER_Q38_NATIVE_OPERAND_STORE -DPIONEER_Q38_WORK_COMPACT_OUTPUT "$@" \
- -c "$project/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp" -o "$temporary/native-private-lifecycle.o"
+ -c "$project/tools/pioneer/tests/pioneer_q38_gdn_native_adapter_compile.cpp" -o "$temporary/native-private-lifecycle.o"
 test -s "$temporary/native-private-lifecycle.o"
-awk -F '\t' '$1 ~ /AcquireProbeLock|AcquireQ38GdnSessionLock|Q38MutableScopeOwned|RetainQ38DispatchOwner|EndQ38DispatchOwnership|ReleaseResidentCookie/ {
+awk -F '\t' '$1 ~ /AcquireProbeLock|AcquireQ38GdnSessionLock|Q38MutableScopeOwned|RetainQ38DispatchOwner|EndQ38DispatchOwnership|ReleaseResidentCookie|StateZeroBeforeCohort|StateZeroOtherCoresHeld|NonRootHeld|MutableZero|PioneerQ38StateZero|pioneer_q38_gdn_native_adapter_compile/ {
  if($2+0>1024)bad=1;if($2+0>maximum)maximum=$2+0;seen=1
 } END {if(!seen||bad)exit 1;print "MAX_GATED_NATIVE_LIFECYCLE_FRAME_BYTES="maximum";OBJECT_ONLY_NO_MODULE"}' "$temporary/native-private-lifecycle.su"
-printf 'PASS complete native private-lifecycle translation unit compiled ONLY;NO linked/usable driver or qualification: %s\n' "$temporary"
+printf 'PASS complete actual native driver+private zero adapters/controllers instantiated ONLY in an OBJECT witness;NO linked/usable driver,public call seal or qualification: %s\n' "$temporary"

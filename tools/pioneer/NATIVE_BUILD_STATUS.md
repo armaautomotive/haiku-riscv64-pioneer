@@ -1,5 +1,61 @@
 # Native build status
 
+October20,16:58 Vancouver (23:58 UTC) LONG TEST GENERATING:
+Same current03876197/gen13/f414306f/PID2741/session62381 ONLY native job.
+4558653pages/18672242688B primed709.955032s (repack147.213214/upload
+562.115932s). First public position selected11;next353 at5.751368s.
+Early progress ONLY,NOT a completed rate/sequence/clean END. All3 sequences
+must finish first. No SCP/probes/reload/other native job until explicit END.
+Latest completed model benchmark stays previous-driver0.174060772tok/s.
+
+October20,16:57 Vancouver (23:57 UTC) INLINE FFN MATCH / PRIVATE ZERO ADAPTER:
+ALL5120 FFN output words BIT EXACT,cmpEXIT0/SHA05cda52a... . Same f414306f
+host/input/runtime,old deferred warm11.862ms vs new inline11.537ms (~2.74%
+less latency),ONE repeat each;NOT sustained/whole-model speed evidence.
+Both clean END/EXIT0/800->1350->800/CPU guardclear. Full evidence/caveats
+benchmarks/qwen38-inline-config-ffn-20261020.txt. Current ONLY native job
+is f414306f three32 full27B on03876197/gen13,session62381/PID2741,
+full-model-work-inline-config-three32-20261020-a.log. Host loaded12.941783s,
+all497 weights recognized;sequence0 is still priming. No SCP/reload/probe
+or second native job. Latest completed whole-model remains0.174060772tok/s
+on PREVIOUS deferred driver,NOT this candidate/20tok/s. Goal ACTIVE.
+
+PRIVATE ZERO ADAPTER IS OFFLINE ONLY:actual PioneerSessionIO now borrows
+the existing views under an exact native context/bank/proof/identity/
+generation/thread-seal/normal-clock gate. No operation creates owners/ID/
+call seal or invokes it;ordinary builder STILL REFUSES mutable!=0.
+No saved/mutable source shortcut:foreign owner with SAME ID values refuses
+because the exact bank and proof OBJECT must match. Partial identity fields
+and bad cookie magic refuse;only genuinely pristine zero identity allowed.
+Only this proved controlled root's running bit is exempted internally;
+ordinary Unsafe()/cleanup/lost caller remain conservative. Closed clean
+span may hand off;competing span/cohort/dispatch/fleet/delta/panel owners
+refuse. Actual119 NON-root read-only audit never reads/holds/resets running
+root. First physical mismatch immediately hands off to memory-only full
+retention;controller failures also retain before return.
+
+Actual extracted native scope td6EcPGl PASS64 CPU refusal gates plus
+foreign-ID-impostor/context checks,all119 audit and first/middle/last
+source/TLB/reset fault handoffs. Retention callback in this test is a
+memory-only stand-in;ACTUAL full retention/global lock separately passed
+O1xtuSSa. Complete ACTUAL native driver+three zero controllers+adapters
+instantiated with ACTUAL native IO in OBJECT-ONLY witness nhlWr6ps,max688B
+checked frame;NO linked/staged/usable module. Actual zero-image/controller
+RPHNIfeT PASS,bankownerQQD9Qwhg PASS,zero-ledgerAhJnnBUH PASS,full physical
+auditYHtMXy8V PASS(max192B). Feature-OFF installed03876197/guardd1ce/
+default2df0 EXACT;NO change to running module.
+
+CPU-ONLY FRESH PLAN v4m9zzeI PASS:heap-only16160B proposal,672 rotated
+6/7-head stripes;EACH layer/slot spans ALL7 banks when fresh. All48x2x48
+heads/9216 real-owner halves verified,7 individually-full-bank fallback
+cases,exactly672 separated free regions,corrupt bitmap/fragmentation/
+exhaustion/bounds/overlap and partial visibility refusals. Learned bitmap
+unchanged;actual bank Bind independently rechecks every page. Kernel
+compile witness96B frame. Initial96 whole-layer regions were replaced
+OFFLINE to avoid a future one-bank bottleneck. NO allocation/reservation/
+initialization/driver/model readiness;source thread/call guard and native
+owner creation/publication/hybrid compute/GGML routing still missing.
+
 October20,16:34 Vancouver (23:34 UTC) INLINE CONFIG NATIVE68 PASS:
 Driver03876197/tag202610200001000c/gen13 replaces deferred202389d0 by
 guarded hot swap,NO reboot/reset. EXACT ordered volatile CSR write/readback

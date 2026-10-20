@@ -1,0 +1,31 @@
+October20 2026:controlled real blk.0.ffn_down.weight K17408/N5120.
+SAME f414306f host,authenticated public model,input,frozen c060 libraries,
+119workers,normal1350MHz,unprofiled Work;NO CPU learned reference/fallback.
+Prime only12240pages/50135040B;NOT a whole-model/token/text-quality test.
+
+Deferred202389d0/tag...000a/gen12:ONE warm graph0.011862s.
+Inline-config03876197/tag...000c/gen13:ONE warm graph0.011537s.
+0.325ms/~2.74% lower latency (~2.82% higher operation rate). ONE repeat
+each,NOT robust sustained or whole-model speed evidence. New multiply
+0.011490s/ioctl0.010621s vs old0.011810s/0.010914s,HOST WALL diagnostics,
+NOT pure accelerator/CPU time. All5120 output words match exactly,cmpEXIT0,
+SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Both internal repeatability/explicit clean END/CLI_EXIT0,clocks800/1350/800
+restored,CPU guardcold0/active_owner0. No card reset/reboot/SD change.
+
+New driver passed ALL68 synthetic/auth119/auth3groups/checked numerical
+checks with FOUR clean ENDs. Same-host longer27B three32 benchmark now
+running separately;NO new whole-model rate yet. Latest completed model
+sample0.174060772tok/s belongs to PREVIOUS deferred driver,NOT this one.
+Target20tok/s remains FAR unmet;goal ACTIVE.
+
+Logs under /boot/home/pioneer-qwen38-vector-clear-20261018-t/:
+ffn-deferred-control-20261020-b.log
+ SHA1cc97600366936f07b3e0cff7e2ca880bf93a738302319327e2360cc8e3f12b8
+ffn-inline-config-20261020-a.log
+ SHA93bca4fcb107d15c683f5c2a8ca467df399b2770d8ff90a6d0a6c8d86fc6dabe
+Outputs:ffn-deferred-control-20261020-b.words/ffn-inline-config-20261020-a.words
+Long run:full-model-work-inline-config-three32-20261020-a.log/session62381
+PID2741 (scoped CPU process list). Startup log PID marker raced child
+redirection;future launch wrappers should CREATE log before fork and use
+APPEND in child. Actual benchmark/cleanup markers are unaffected.

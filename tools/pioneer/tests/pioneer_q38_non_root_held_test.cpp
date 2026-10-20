@@ -34,6 +34,7 @@ struct NonRootIO {
 		return 0x47800;
 	}
 };
+#ifndef PIONEER_Q38_NON_ROOT_HELD_MODEL_ONLY
 int main()
 {
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
@@ -71,3 +72,4 @@ int main()
 	}
 	puts("PASS OFFLINE physical non-root audit:ALL119 tiles/TWO held samples each,root never read/reset/held,complete source+read-only TLB proof,all360 TLB/238 reset/32 source faults stop BEFORE ANY later IO or root restore;NO native adapter/qualification");
 }
+#endif

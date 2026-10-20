@@ -86,6 +86,9 @@ public:
  // Initialization-only private extent. The new owner has NO compute/read
  // readiness API yet. Actual zeroing/completion must be independently
  // qualified before a future native coordinator can make it ready.
+ bool MatchesInitializationOwner(const PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id) const {
+  return banks==&owner && baseline==&proof && Matches(id); // CPU relation ONLY,no ready/address authority
+ }
  bool InitializeHalf(const PioneerQ38GdnIdentity& id,unsigned layer,unsigned slot,unsigned worker,PioneerQ38GdnBankExtent& output) const {
   if (!Matches(id) || Ordinal(layer)>=48 || slot>=2 || worker>=96) return false;
   unsigned head=worker/2,half=worker%2;

@@ -18,6 +18,10 @@
 #include <vm/vm.h>
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 #include "PioneerQ38StateZeroController.h"
+#include "PioneerQ38NonRootHeld.h"
+#if !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(PIONEER_Q38_SPAN_PRELOAD)
+#error Private mutable adapter requires the complete retained-owner normal-clock bank driver
+#endif
 #endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 #if !defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
@@ -1563,6 +1567,13 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	PioneerStoreContext* q38MutableContext=NULL;
+	bool StateZeroBeforeCohort();
+	bool StateZeroOtherCoresHeld();
+	bool NonRootHeldOwner();
+	bool NonRootHeldMappingStable();
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	bool q38SpanAllowed=true;
 	bool SpanBeforeCohort() { return q38SpanAllowed && !fleetEnabled; }
@@ -2169,6 +2180,11 @@ struct PioneerStoreContext {
 	// the build gate remains closed until all hardware interlocks exist.
 	PioneerQ38GdnBanks* q38GdnBanks=NULL;
 	PioneerQ38StateZeroLease* q38StateZero=NULL;
+	PioneerQ38GdnIdentity q38GdnIdentity={};
+	// NO operation currently sets this seal. A future private call guard
+	// must bind it ONLY under the acquired global lock,then clear it before
+	// releasing that lock. Identity/presence alone never authorizes IO.
+	thread_id q38GdnCallThread=-1;
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	PioneerQ38DeltaProbeLease q38Delta;
@@ -2242,6 +2258,9 @@ struct PioneerStoreContext {
 			baseline.baseline.baseline.baseline.control.control.telemetry,q38ClockMappingResult),q38Clock(q38ClockIO)
 #endif
 		{
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		io.q38MutableContext=this;
+#endif
 		initialized=(uint8*)calloc(capacity/4096,1);
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
@@ -2262,10 +2281,14 @@ struct PioneerStoreContext {
 		delete[] fleet; free(initialized); free(hashes);
 	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
-	bool Unsafe() {
+	bool Unsafe(
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		bool controlledZero=false
+#endif
+		) {
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		if ((q38GdnBanks && q38GdnBanks->Unsafe())
-			|| (q38StateZero && (q38StateZero->unsafe || q38StateZero->running))) return true;
+			|| (q38StateZero && (q38StateZero->unsafe || (!controlledZero && q38StateZero->running)))) return true;
 #endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 		if (q38Clock.Unsafe()) return true;
@@ -2427,6 +2450,98 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 	RetainQ38DispatchOwner(c,result); return false;
 }
 // PIONEER_Q38_DISPATCH_RETAIN_END
+#endif
+
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+// PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
+// OFFLINE native-adapter prerequisite ONLY. No ioctl allocates/binds an
+// owner/identity/call seal or invokes these operations. Ordinary builders
+// STILL REFUSE mutable!=0. Existing owned mappings are BORROWED,not copied
+// or allocated;no new reset address/host page/BME or public data capability.
+// PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
+bool PioneerSessionIO::StateZeroBeforeCohort()
+{
+	PioneerStoreContext* c=q38MutableContext;
+	if (!c || &c->io!=this || sColdRecoveryRequired || sReloadQuiesced || !sRuntimeOwner
+		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
+		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled
+		|| q38SpanAllowed || c->q38GdnCallThread<0 || c->q38GdnCallThread!=find_thread(NULL)
+		|| !c->q38GdnBanks || !c->q38StateZero || !c->q38GdnIdentity.Valid()
+		|| c->q38GdnIdentity.driverGeneration!=sReloadGeneration
+		|| c->q38Dispatch || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+		|| c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
+		|| c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready
+		|| c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready) return false;
+	if (c->q38Span && (!c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready
+		|| c->q38Span->running || c->q38Span->unsafe)) return false;
+	const auto& zero=*c->q38StateZero;
+	if (zero.identity.Valid()) { if (!(zero.identity==c->q38GdnIdentity)) return false; }
+	else if (zero.identity.session || zero.identity.sequence || zero.identity.modelEpoch || zero.identity.driverGeneration
+		|| zero.saved || zero.dirty || zero.ready || zero.running || zero.nonce) return false;
+	const auto& clock=c->q38Clock.Snapshot();
+	if (!c->q38Clock.RequiresExplicitEnd() || clock.state!=TT_ARC_CLOCK_BUSY_VERIFIED
+		|| !clock.busy_requested || !clock.busy_acknowledged || clock.restored) return false;
+	PioneerQ38GdnBankExtent probe;
+	// Exempt ONLY this controlled root's running bit after proving the
+	// exact context/identity/thread/clock and absence of competing owners.
+	// ALL other uncertainty remains fatal;ordinary Unsafe() still rejects
+	// this running bit for every cleanup/status/lost-caller path.
+	return !c->Unsafe(true) && c->q38GdnBanks->MatchesInitializationOwner(c->banks,dram,c->q38GdnIdentity)
+		&& c->q38GdnBanks->InitializeSpan(c->q38GdnIdentity,0,0,1,probe);
+}
+bool PioneerSessionIO::NonRootHeldOwner() { return StateZeroBeforeCohort(); }
+bool PioneerSessionIO::NonRootHeldMappingStable()
+{
+	return StateZeroBeforeCohort() && PioneerMmioIO::area>=B_OK && nodeID && tlbArea>=B_OK && tlb
+		&& resetArea>=B_OK && reset;
+}
+bool PioneerSessionIO::StateZeroOtherCoresHeld()
+{
+	if (!StateZeroBeforeCohort() || !NonRootHeldMappingStable()) return false; // CPU-only refusal
+	if (PioneerQ38NonRootHeld(*this,dram)) return true;
+	// First physical readback mismatch:full MEMORY-ONLY context quarantine,
+	// including clock/cookie/PCI/ALL host leases,BEFORE returning to caller.
+	tt_resident_session_result result={}; RetainQ38DispatchOwner(*q38MutableContext,result); return false;
+}
+// PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_END
+[[maybe_unused]] static bool PrepareQ38MutableZero(PioneerStoreContext& c)
+{
+	if (!c.io.StateZeroBeforeCohort()) {
+		if (c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+		return false;
+	}
+	bool okay=PioneerQ38StateZeroPrepare(c.io,c.baseline.baseline.baseline.baseline.dram,
+		c.baseline.baseline.baseline.noc,*c.q38GdnBanks,c.banks,c.q38GdnIdentity,c.host,
+		c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38StateZero);
+	if (!okay && c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+[[maybe_unused]] static bool RunQ38MutableZero(PioneerStoreContext& c,unsigned region,unsigned first,unsigned pages,
+	PioneerQ38StateZeroResult& result)
+{
+	if (!c.io.StateZeroBeforeCohort()) {
+		if (c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+		return false;
+	}
+	bool okay=PioneerQ38StateZeroRun(c.io,c.baseline.baseline.baseline.baseline.dram,
+		c.baseline.baseline.baseline.noc,*c.q38GdnBanks,c.banks,c.host,c.lease,c.bulk,
+		c.bulkHost,c.wideHost,*c.q38StateZero,c.q38GdnIdentity,region,first,pages,result);
+	if (!okay && c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+[[maybe_unused]] static bool CloseQ38MutableZero(PioneerStoreContext& c,bool knownClean)
+{
+	if (!c.io.StateZeroBeforeCohort()) {
+		if (c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+		return false;
+	}
+	bool okay=PioneerQ38StateZeroClose(c.io,c.baseline.baseline.baseline.baseline.dram,
+		c.baseline.baseline.baseline.noc,*c.q38GdnBanks,c.banks,c.host,c.lease,c.bulk,
+		c.bulkHost,c.wideHost,*c.q38StateZero,knownClean);
+	if (!okay && c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+// PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_END
 #endif
 
 // sLock held. On uncertainty only the established PCI/TLB rollback is used;
