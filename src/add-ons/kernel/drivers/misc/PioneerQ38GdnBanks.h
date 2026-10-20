@@ -6,11 +6,22 @@
 #endif
 #include "PioneerResidentBanks.h"
 #include "PioneerQ38GdnIdentity.h"
+#include "PioneerQ38GdnZeroProgress.h"
+struct PioneerResidentLease;
+struct PioneerBulkUploadLease;
+struct PioneerOutputBufferLease;
+struct PioneerWideOutputLease;
+struct PioneerQ38StateZeroLease;
+struct PioneerQ38StateZeroResult;
 // Kernel-private frozen logical placement. No caller-provided NoC route,
 // physical address, or GGML data pointer. It is NOT a public ioctl ABI.
 struct PioneerQ38GdnRegion { uint32_t layer,slot,firstHead,heads,bank,offset; };
 struct PioneerQ38GdnBankExtent { uint32_t bank,address,route,index,pages,bytes; };
 class PioneerQ38GdnBanks {
+ template<class IO> friend bool PioneerQ38StateZeroRun(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
+  PioneerQ38GdnBanks&,PioneerResidentBanks&,const tt_host_page_result&,PioneerResidentLease&,
+  PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38StateZeroLease&,
+  const PioneerQ38GdnIdentity&,unsigned,unsigned,unsigned,PioneerQ38StateZeroResult&);
  // Allocate this owner on the HEAP in a future native context: staging
  // arrays intentionally do not consume Haiku's small kernel stack.
  PioneerResidentBanks* banks=nullptr;
@@ -19,6 +30,8 @@ class PioneerQ38GdnBanks {
  PioneerQ38GdnRegion regions[672]={};
  PioneerResidentMutableRange claims[672]={};
  uint16_t regionForHead[48][2][48]={}; // heap-only O(1) half-head lookup
+ uint32_t regionFirstPage[672]={};
+ PioneerQ38GdnZeroProgress zeroProgress;
  unsigned count=0;
  bool unsafe=false;
  static unsigned Ordinal(unsigned layer) { return layer<64 && layer%4!=3?layer-layer/4:~0U; }
@@ -37,6 +50,11 @@ class PioneerQ38GdnBanks {
   output=e; return true;
  }
  bool Matches(const PioneerQ38GdnIdentity& id) const { return banks && !unsafe && id==identity && banks->Matches(*baseline); }
+ bool CommitInitialization(const PioneerQ38GdnIdentity& id,unsigned region,unsigned firstPage,unsigned pages) {
+  PioneerQ38GdnBankExtent extent;
+  return Matches(id) && Resolve(region,firstPage,pages,extent)
+   && zeroProgress.Record(id,regionFirstPage[region]+firstPage,pages);
+ }
 public:
  PioneerQ38GdnBanks()=default;
  PioneerQ38GdnBanks(const PioneerQ38GdnBanks&)=delete;
@@ -46,7 +64,7 @@ public:
  bool Bind(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id,
   const uint8_t* initialized,unsigned initializedPages,const PioneerQ38GdnRegion* input,unsigned n) {
   if (banks || unsafe || !id.Valid() || !input || n<96 || n>672 || !owner.Matches(proof)) return false;
-  uint64_t heads[48][2]={};
+  uint64_t heads[48][2]={}; unsigned totalPages=0;
   for (unsigned i=0;i<n;i++) {
    auto r=input[i]; unsigned ordinal=Ordinal(r.layer);
    if (ordinal>=48 || r.slot>=2 || r.firstHead>=48 || !r.heads || r.heads>48-r.firstHead || r.bank>=7
@@ -55,12 +73,15 @@ public:
    uint64_t mask=((UINT64_C(1)<<r.heads)-1)<<r.firstHead;
    if (heads[ordinal][r.slot]&mask) return false;
    heads[ordinal][r.slot]|=mask; regions[i]=r; claims[i]={r.bank,r.offset/4096,r.heads*16};
+   regionFirstPage[i]=totalPages; totalPages+=r.heads*16;
    for (unsigned h=r.firstHead;h<r.firstHead+r.heads;h++) regionForHead[ordinal][r.slot][h]=uint16_t(i);
   }
   for (unsigned layer=0;layer<48;layer++) for (unsigned slot=0;slot<2;slot++)
    if (heads[layer][slot]!=UINT64_C(0xffffffffffff)) return false;
-  if (!owner.ReserveMutable(proof,this,claims,n,initialized,initializedPages)) return false;
-  banks=&owner; baseline=&proof; identity=id; count=n; return true;
+  if (totalPages!=PioneerQ38GdnZeroProgress::Pages || !owner.ReserveMutable(proof,this,claims,n,initialized,initializedPages)) return false;
+  banks=&owner; baseline=&proof; identity=id; count=n;
+  if (!zeroProgress.Bind(id)) { Fault(); return false; }
+  return true;
  }
  // Initialization-only private extent. The new owner has NO compute/read
  // readiness API yet. Actual zeroing/completion must be independently
@@ -84,7 +105,10 @@ public:
  }
  // Memory ONLY. A future native controller must ALSO latch cold recovery
  // and retain its context/cookie/ALL host leases; this helper cannot do so.
- void Fault() { unsafe=true; if (banks) banks->Quarantine(); } // NO release/reset/I/O
+ bool InitializationProgress(const PioneerQ38GdnIdentity& id,unsigned& pages) const {
+  return Matches(id) && zeroProgress.Snapshot(id,pages); // CPU count ONLY,no compute/read-ready API
+ }
+ void Fault() { unsafe=true; zeroProgress.Fault(); if (banks) banks->Quarantine(); } // NO release/reset/I/O
  bool Unsafe() const { return unsafe || (banks && banks->Quarantined()); }
 };
 #endif

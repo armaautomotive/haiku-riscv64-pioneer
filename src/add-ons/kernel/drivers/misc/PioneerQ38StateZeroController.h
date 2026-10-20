@@ -147,6 +147,9 @@ template<class IO> bool PioneerQ38StateZeroRun(IO& io,const tt_dram_samples_resu
 	if (!PioneerQ38StateZeroSources(io,dram,noc,state,banks,input,store,bulk,transfer,wide,lease,0x87ffff)) return fail();
 	io.RuntimeResetWrite(0x47800); io.Pause();
 	if (!PioneerQ38StateZeroSources(io,dram,noc,state,banks,input,store,bulk,transfer,wide,lease,0x47800)) return fail();
+	// Private CPU progress ONLY,after EVERY physical completion/hold/source
+	// proof. Never mark learned-weight pages or publish model/GDN readiness.
+	if (!state.CommitInitialization(identity,region,firstPage,pages)) return fail();
 	lease.running=false; r.pages=extent.pages; r.held=1; r.state=TT_RUNTIME_PASSED;
 	return true; // NOT a whole-state/model-ready or initialized-weight commit
 }

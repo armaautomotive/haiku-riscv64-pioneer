@@ -9,6 +9,11 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38CohortProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StreamProtocol.h"
 #include <memory>
+#include <type_traits>
+template<class T,class=void> struct PublicZeroCommit:std::false_type {};
+template<class T> struct PublicZeroCommit<T,std::void_t<decltype(std::declval<T&>().CommitInitialization(
+ std::declval<const PioneerQ38GdnIdentity&>(),0U,0U,1U))>>:std::true_type {};
+static_assert(!PublicZeroCommit<PioneerQ38GdnBanks>::value,"Only the complete state-zero controller may commit bank-owner progress");
 static const PioneerQ38GdnIdentity Identity={1,2,3,4};
 struct GdnBankFixture {
  BanksMock io;

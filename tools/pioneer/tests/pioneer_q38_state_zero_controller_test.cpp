@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include <memory>
+#include <set>
 #define PIONEER_Q38_SPAN_SERVICE_MOCK_ONLY
 #include "pioneer_q38_span_controller_test.cpp"
 #define PIONEER_Q38_STATE_ZERO_HAS_BLOCK_MACHINE
@@ -98,6 +99,8 @@ struct ZeroControlFixture {
 		assert(lease.unsafe && state->Unsafe() && owner.banks.Quarantined() && owner.store.recovery_required && bulk.unsafe
 			&& transfer.quarantined && wide.quarantined && io.HostReadMock::quarantined && io.wideQuarantined
 			&& !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases && !io.pciWrites);
+		unsigned progress=UINT32_MAX;
+		assert(!state->InitializationProgress(identity,progress) && progress==UINT32_MAX);
 		unsigned count=io.touches;
 		assert(!Zero() && !PrepareZero() && !CloseZero() && !CloseZero(false));
 		assert(!PioneerReleaseWideOutput(io,wide,false) && !PioneerReleaseOutputBuffer(io,transfer,false));
@@ -123,6 +126,8 @@ int main(int argc,char** argv)
 	assert(PioneerQ38StateZeroCodeWord(2048)==UINT32_MAX);
 	{
 		ZeroControlFixture f(argv[1]); assert(f.PrepareZero()); unsigned loads=f.io.wideLoads;
+		std::set<std::pair<unsigned,unsigned>> provedPages;
+		unsigned progress=UINT32_MAX; assert(f.state->InitializationProgress(f.identity,progress) && !progress);
 		for (unsigned region:{0U,1U,2U,3U,4U,5U,6U,89U,90U,91U,92U,93U,94U,95U})
 		for (unsigned pages:{1U,5U,256U}) {
 			assert(f.Zero(region,768-pages,pages));
@@ -130,6 +135,8 @@ int main(int argc,char** argv)
 				&& f.result.started && f.result.completed && f.result.held && !f.result.recovery_required && !f.wide.pending);
 			for (auto word:f.io.lastDeviceWords) assert(!word);
 			assert(f.io.wideLoads==loads && !f.io.pciWrites);
+			for (unsigned page=768-pages;page<768;page++) provedPages.insert({region,page});
+			assert(f.state->InitializationProgress(f.identity,progress) && progress==provedPages.size());
 		}
 		for (auto byte:f.initialized) assert(!byte);
 		f.Finish();

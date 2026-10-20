@@ -1,5 +1,25 @@
 # Native build status
 
+October20,15:07 Vancouver (22:07 UTC) PRIVATE GDN ZERO PROGRESS OFFLINE:
+Heap-owned CPU ledger tracks ALL73728 mutable pages/288MiB,not learned
+initialized bits. Private bank-owner CommitInitialization is accessible
+ONLY to the exact state-zero controller,AFTER every descriptor/counter/
+source/terminal/held proof. Overlaps/duplicates do not double-count;all4
+identity handles,bounds and sticky faults refuse. Public access is a CPU
+page COUNT only,NOT memory initialization or model/GDN compute/read-ready.
+Ledger ufDQHL9o and complete bank-owner SubyjgbS ASan/UBSan PASS;actual
+zero-image/controller GF73JRmz PASS with independent per-region/page set,
+all existing42jobs/faults/close proofs and unchanged learned bitmap/NO host
+data/PCI writes. Kernel-only RV64 witness max880B PASS. Initial witness
+caught a missing lease forward declaration,corrected before final PASS;
+no hardware failure. Actual context/clock/owner retention2lIPWHO0 PASS.
+Feature-OFF whole module EXACT7cbd2bf4,guardd1ce/default432df unchanged.
+Native mutable-state builder remains BLOCKED:IO adapter/all-operation
+interlocks/initialization publication/96-worker GDN and GGML routing still
+missing. No native state initialization or speedup claimed. Current ONLY
+native job is the frozen production32-token baseline/gen11;no copies/card
+queries/reloads until clean END. Goal ACTIVE;latest tiny rate0.170694031.
+
 October20,15:02 Vancouver (22:02 UTC) HOST METADATA SNAPSHOT CANDIDATE OFFLINE:
 Private PackedPlan/FleetPlan friend-only metadata relations remove nested
 repeated fstats within the SAME no-IO traversal. No public cached Ready
