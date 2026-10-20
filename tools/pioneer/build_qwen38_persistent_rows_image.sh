@@ -64,6 +64,12 @@ case "${PIONEER_Q38_QUEUED_MATRIX_ENTRY:-0}" in
     q4_phases="$q4_phases -DPIONEER_Q38_QUEUED_MATRIX_ENTRY";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_INPUT_SUM_CACHE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}:${PIONEER_Q38_QUEUED_MATRIX_ENTRY:-0}" = 9:1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_WORK_INPUT_SUM_CACHE";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \

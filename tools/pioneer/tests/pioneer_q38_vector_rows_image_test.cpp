@@ -337,6 +337,14 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			config[index]=value; configWrites++; return;
 		}
 		assert(!Range(address,0x70710,512)); // NO decoded operand staging/copy
+#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+		if (Range(address,0x95000,4352)) {
+			assert(Persistent && !BFloat && Accumulate && groups>1 && memory.at(0x74038)==1
+				&& Range(address,0x95000,(inputs/16)*4) && !(address&3) && !pending && drained
+				&& int(value)>=-2048 && int(value)<=2048);
+			memory[address]=value; return;
+		}
+#endif
 		if (BFloat && Range(address,0x95000,34816)) {
 			assert(Range(address,0x95000,inputs*2) && !(address&3));
 			if (address==0x95000) { assert(!cacheNext || cacheNext==inputs*2); cacheNext=0; cacheJobs++; }
@@ -373,6 +381,13 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			if (corruptDecodedProbe && i==37) return 0x13572468;
 			uint32_t bits=FloatDst(64+i/16,i%16);
 			return bits&0x80000000?0U-(bits&0x7fffffff):bits;
+		}
+#endif
+#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+		if (Range(address,0x95000,4352)) {
+			assert(Persistent && !BFloat && Accumulate && groups>1 && memory.at(0x74038)==1
+				&& Range(address,0x95000,(inputs/16)*4) && !(address&3) && !pending && drained);
+			return memory.at(address);
 		}
 #endif
 		if (BFloat && Range(address,0x95000,34816)) { assert(cacheNext==inputs*2 && Range(address,0x95000,inputs*2)); return memory.at(address); }

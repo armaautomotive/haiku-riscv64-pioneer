@@ -49,6 +49,9 @@
 #endif
 #include "PioneerQ38QueuedMatrixEntry.h"
 #endif
+#if defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE) && (!defined(PIONEER_Q38_QUEUED_MATRIX_ENTRY) || !defined(PIONEER_Q38_SFPU_INTEGER))
+#error Work input sums require the separately qualified integer queued persistent peer
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -299,7 +302,24 @@ extern "C" unsigned block_main()
 #endif
 	unsigned type=job[1],bytes=job[2],count=type==8?32:256;
 #ifdef PIONEER_Q38_STREAM
+#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+	// Fixed supported quant blocks:keep division OUT of the RISC hot path.
+	unsigned inputs=job[5],blocks=inputs>>(type==8?5:8),groups=job[7];
+#else
 	unsigned inputs=job[5],blocks=inputs/count,groups=job[7];
+#endif
+#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+	// OFFLINE candidate ONLY. The SAME immutable input is reused by every
+	// output group. Group0 computes the ORIGINAL exact signed integer sums;
+	// later groups reuse them within THIS job only. NEVER persist a cache
+	// hit across jobs. Checked/single-group jobs retain the original path.
+	const bool cacheSums=skipDotCheck && groups>1;
+	// PRIVATE peer scratch95000..96100,inside the existing saved/owned
+	// 6e000..b0000 view. Disjoint from raw90000..90d40,metadata91000..91280,
+	// scales94000..94880,results84000..84400,inputa0000..a8800 and code/stack.
+	// Integer-only gate excludes the older BF16 cache in this same region.
+	static_assert(0x95000+(17408/16)*4==0x96100,"bounded private sum cache");
+#endif
 	uint32_t first=job[6];
 	if (job[0]!=
 #ifdef PIONEER_Q38_SHARED_ROWS
@@ -440,6 +460,12 @@ extern "C" unsigned block_main()
 		for (unsigned w=0;w<128;w++) Words(0x70710)[w]=local->operand[w];
 #endif
 		int sum=0;
+#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+		if (cacheSums && group) {
+			sum=int(Words(0x95000)[block*panels+p]);
+			for (unsigned w=0;w<8;w++) Words(0x70920)[w]=Words(inputBase)[block*(count/2)+p*8+w];
+		} else {
+#endif
 		for (unsigned w=0;w<8;w++) {
 			uint32_t word=Words(inputBase)[block*(count/2)+p*8+w];
 #ifdef PIONEER_Q38_BFLOAT_PANEL
@@ -451,6 +477,10 @@ extern "C" unsigned block_main()
 				uint16_t value=uint16_t(word>>(lane*16)); sum+=int(value&1023)*((value&0x8000)?-1:1);
 			}
 		}
+#ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+			if (cacheSums) Words(0x95000)[block*panels+p]=uint32_t(sum);
+		}
+#endif
 #ifndef PIONEER_Q38_VECTOR_PANEL
 		(void)Words(0x70710)[127];
 #endif
