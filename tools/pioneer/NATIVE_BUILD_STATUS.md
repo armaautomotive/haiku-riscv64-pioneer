@@ -1,5 +1,59 @@
 # Native build status
 
+October20,09:35 Vancouver (16:35 UTC) MUTABLE GDN BANK CORE / DEVICE-ZERO CANDIDATE:
+Implemented a separately gated KERNEL-PRIVATE mutable reservation owner,
+NOT a native driver capability/installed GDN path. It binds all48 recurrent
+layers x2 slots x48 heads,derives9216 bounded32KiB half-head extents from
+the existing SAME bank/source owner,and validates ALL73728 fresh pages
+BEFORE publishing ANY reservation. State pages stay out of the initialized
+learned-weight bitmap. Failed placements cannot leak partial reservations.
+No release/reset API:claims last until whole context death;fault quarantines
+ALL banks. Future controller MUST ALSO retain context/cookie/ALL host leases
+and latch cold recovery;the owner helper alone does not perform that work.
+
+The optional bank interlock blocks legacy upload/read and full learned
+matrix ranges that overlap mutable state,including a range whose FIRST
+page lies outside state and a malicious all-one initialized bitmap. Legacy
+<=4-page API remains bounded. Claims sorted ONCE;generic overlap lookup is
+binary-search,half-head resolution indexed O(1),not a672-range token scan.
+Private nonzero epoch identity is shared with the state-sequencing policy;
+these are epoch handles,NOT raw llama sequence indexes (zero may be valid).
+Only initialization extents are exposed;NO compute/read-ready API exists.
+
+YOREtX8Z ASan/UBSan owner suite PASS:ALL9216 extents/288MiB,all regions'
+bounded1MiB initialization chunks,15 placement/fresh-page faults,foreign/
+stale owner/identity/source refusals,10000-query independent range oracle,
+touching boundaries and sticky quarantine. Haiku/RV64 compile-only smoke
+PASS;Bind frame944B,largest individual frame944B;large metadata lives on
+HEAP,not the kernel stack. Existing bank/control suite passes BOTH flag
+states,including ALL21 page+42 bulk UNKNOWN stages;flag-enabled cohort
+dhrhpAUF,stream qqR9OgL6 and span SArHe07A authority regressions PASS.
+
+New DEVICE-ONLY zero+readback image39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b
+and boote678476d repeat exactly (builds b/c). It uses only reserved GDDR and
+fixed local L1:zero buffer,independently POISONED/proved readback for EVERY
+chunk,exact ALL8 wrapped packet counters,sealed source/descriptor and
+safe terminal branches72038/7203c. No host address/traffic,BME control or
+learned arithmetic. RV32 frame384B/packet192B. Actual emitted-instruction
+suite7IDtoT4U PASS:ALL7 banks/3GiB edges/4KiB..1MiB,ALL zero words and32
+summary fields,missing/corrupt packet/store/source/descriptor/counter
+faults;after detection inert fault park with ZERO later packets/NoC MMIO.
+This is EMULATION,NOT physical P100A qualification or native initialization.
+
+Driver builder explicitly REFUSES PIONEER_Q38_GDN_MUTABLE_STATE!=0 until
+a complete native controller exists. Feature-OFF rebuild c is EXACT the
+qualified e903b8fc driver,guardd1ce2aa4 and default43control2df0e0f8.
+Earlier diagnostic builds a/b used different profiling/batched-PIO flags
+and are NOT qualified substitutes;NONE was installed. Production Work has
+NO added CPU numerical validation/fallback. Fresh CPU-only status confirms
+tag202610190006000d/gen2,quiesced0/cold0/active_owner0;clean idle. No card
+jobs,driver install/hot swap,reboot/power,SD or Assistant change this span.
+Dirty llama unchanged;pristine graph/reference HnstPGio and standalone
+vector/state XW0kPsPO regressions PASS. NEXT: native zero-image lifecycle/
+completion ownership and initialization publication,then96-worker resident
+GDN transport/dispatch and actual GGML device-buffer/view/CPY routing.
+Latest WHOLE27B rate STILL0.129277112tok/s;NO new speed result,NOT20tok/s.
+
 October19,21:04 Vancouver (October20,04:04 UTC) OFFLINE GDN STATE/GRAPH FOUNDATION:
 Separate post-dot-scaled LOCAL vector image0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe
 and boote678476d repeat byte-for-byte. Raw normalized Q is reduced FIRST,

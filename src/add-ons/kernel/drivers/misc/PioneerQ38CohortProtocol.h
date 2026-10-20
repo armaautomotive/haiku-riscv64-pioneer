@@ -86,6 +86,9 @@ static inline bool PioneerQ38CohortAuthorizePart(const PioneerResidentBanks& ban
 	}
 	if (!banks.Page(dram,part.bank,part.offset-head,stage.address,stage.route,stage.index)
 		|| stage.index>=initializedPages || stage.pages>initializedPages-stage.index) return false;
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	if (!banks.ImmutableRange(dram,part.bank,part.offset,stage.bytes)) return false;
+#endif
 	stage.address+=head;
 	for (unsigned p=0;p<stage.pages;p++) if (initialized[stage.index+p]!=1) return false;
 	output=stage; return true;

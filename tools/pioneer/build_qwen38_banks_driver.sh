@@ -3,6 +3,10 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_GDN_MUTABLE_STATE:-0}" in
+ 0) ;;
+ *) printf '%s\n' 'Mutable GDN ownership/zero image has NO qualified native controller; refusing driver build.' >&2; exit 2;;
+esac
 case "${PIONEER_Q38_OUTPUT_TRANSFER_ROOT:-0}" in
  0) ;;
  *) printf '%s\n' 'Output-root prototype has NO qualified kernel/host-owner integration; refusing driver build.' >&2; exit 2;;

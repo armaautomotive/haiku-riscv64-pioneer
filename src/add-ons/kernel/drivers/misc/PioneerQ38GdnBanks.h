@@ -1,0 +1,90 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_GDN_BANKS_H
+#define PIONEER_Q38_GDN_BANKS_H
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
+#error GDN mutable banks require the separately gated reservation interlock
+#endif
+#include "PioneerResidentBanks.h"
+#include "PioneerQ38GdnIdentity.h"
+// Kernel-private frozen logical placement. No caller-provided NoC route,
+// physical address, or GGML data pointer. It is NOT a public ioctl ABI.
+struct PioneerQ38GdnRegion { uint32_t layer,slot,firstHead,heads,bank,offset; };
+struct PioneerQ38GdnBankExtent { uint32_t bank,address,route,index,pages,bytes; };
+class PioneerQ38GdnBanks {
+ // Allocate this owner on the HEAP in a future native context: staging
+ // arrays intentionally do not consume Haiku's small kernel stack.
+ PioneerResidentBanks* banks=nullptr;
+ const tt_dram_samples_result* baseline=nullptr;
+ PioneerQ38GdnIdentity identity={};
+ PioneerQ38GdnRegion regions[672]={};
+ PioneerResidentMutableRange claims[672]={};
+ uint16_t regionForHead[48][2][48]={}; // heap-only O(1) half-head lookup
+ unsigned count=0;
+ bool unsafe=false;
+ static unsigned Ordinal(unsigned layer) { return layer<64 && layer%4!=3?layer-layer/4:~0U; }
+ bool Resolve(unsigned region,unsigned firstPage,unsigned pages,PioneerQ38GdnBankExtent& output) const {
+  if (region>=count || !pages || pages>256) return false;
+  const auto& r=regions[region]; unsigned total=r.heads*16;
+  if (firstPage>=total || pages>total-firstPage) return false;
+  uint64_t offset=uint64_t(r.offset)+firstPage*4096;
+  PioneerQ38GdnBankExtent e={r.bank,0,0,0,pages,pages*4096};
+  for (unsigned p=0;p<pages;p++) {
+   uint32_t address=0,route=0,index=0;
+   if (!banks->MutablePage(*baseline,this,r.bank,offset+p*4096,address,route,index)) return false;
+   if (!p) { e.address=address; e.route=route; e.index=index; }
+   else if (address!=e.address+p*4096 || route!=e.route || index!=e.index+p) return false;
+  }
+  output=e; return true;
+ }
+ bool Matches(const PioneerQ38GdnIdentity& id) const { return banks && !unsafe && id==identity && banks->Matches(*baseline); }
+public:
+ PioneerQ38GdnBanks()=default;
+ PioneerQ38GdnBanks(const PioneerQ38GdnBanks&)=delete;
+ PioneerQ38GdnBanks& operator=(const PioneerQ38GdnBanks&)=delete;
+ // Exclusive global store lock is mandatory. Refusal before claim is
+ // inert; successful ownership survives Close/fault until context death.
+ bool Bind(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id,
+  const uint8_t* initialized,unsigned initializedPages,const PioneerQ38GdnRegion* input,unsigned n) {
+  if (banks || unsafe || !id.Valid() || !input || n<96 || n>672 || !owner.Matches(proof)) return false;
+  uint64_t heads[48][2]={};
+  for (unsigned i=0;i<n;i++) {
+   auto r=input[i]; unsigned ordinal=Ordinal(r.layer);
+   if (ordinal>=48 || r.slot>=2 || r.firstHead>=48 || !r.heads || r.heads>48-r.firstHead || r.bank>=7
+    || (r.offset&4095) || r.offset>=PioneerResidentBanks::Capacity
+    || uint64_t(r.heads)*65536>PioneerResidentBanks::Capacity-r.offset) return false;
+   uint64_t mask=((UINT64_C(1)<<r.heads)-1)<<r.firstHead;
+   if (heads[ordinal][r.slot]&mask) return false;
+   heads[ordinal][r.slot]|=mask; regions[i]=r; claims[i]={r.bank,r.offset/4096,r.heads*16};
+   for (unsigned h=r.firstHead;h<r.firstHead+r.heads;h++) regionForHead[ordinal][r.slot][h]=uint16_t(i);
+  }
+  for (unsigned layer=0;layer<48;layer++) for (unsigned slot=0;slot<2;slot++)
+   if (heads[layer][slot]!=UINT64_C(0xffffffffffff)) return false;
+  if (!owner.ReserveMutable(proof,this,claims,n,initialized,initializedPages)) return false;
+  banks=&owner; baseline=&proof; identity=id; count=n; return true;
+ }
+ // Initialization-only private extent. The new owner has NO compute/read
+ // readiness API yet. Actual zeroing/completion must be independently
+ // qualified before a future native coordinator can make it ready.
+ bool InitializeHalf(const PioneerQ38GdnIdentity& id,unsigned layer,unsigned slot,unsigned worker,PioneerQ38GdnBankExtent& output) const {
+  if (!Matches(id) || Ordinal(layer)>=48 || slot>=2 || worker>=96) return false;
+  unsigned head=worker/2,half=worker%2;
+  unsigned i=regionForHead[Ordinal(layer)][slot][head]; if (i>=count) return false;
+  const auto& r=regions[i];
+  if (r.layer!=layer || r.slot!=slot || head<r.firstHead || head-r.firstHead>=r.heads) return false;
+  return Resolve(i,(head-r.firstHead)*16+half*8,8,output);
+ }
+ // Larger initialization chunks avoid a launch per half-head. Still only
+ // the owner's exact private region, at most1MiB, with EVERY page proved.
+ bool InitializationPages(const PioneerQ38GdnIdentity& id,unsigned region,unsigned& pages) const {
+  if (!Matches(id) || region>=count) return false;
+  pages=regions[region].heads*16; return true;
+ }
+ bool InitializeSpan(const PioneerQ38GdnIdentity& id,unsigned region,unsigned firstPage,unsigned pages,PioneerQ38GdnBankExtent& output) const {
+  return Matches(id) && Resolve(region,firstPage,pages,output);
+ }
+ // Memory ONLY. A future native controller must ALSO latch cold recovery
+ // and retain its context/cookie/ALL host leases; this helper cannot do so.
+ void Fault() { unsafe=true; if (banks) banks->Quarantine(); } // NO release/reset/I/O
+ bool Unsafe() const { return unsafe || (banks && banks->Quarantined()); }
+};
+#endif

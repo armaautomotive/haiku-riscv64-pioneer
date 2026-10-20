@@ -70,6 +70,9 @@ static inline bool PioneerQ38StreamAuthorize(const PioneerResidentBanks& banks,c
 	stage.flits=stage.bytes/64;
 	if (!stage.bytes || (stage.bytes&63) || !banks.Page(dram,request.bank,request.offset,stage.address,stage.route,stage.index)
 		|| stage.index>=initializedPages || stage.pages>initializedPages-stage.index) return false;
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	if (!banks.ImmutableRange(dram,request.bank,request.offset,stage.bytes)) return false;
+#endif
 	for (unsigned page=0;page<stage.pages;page++) if (initialized[stage.index+page]!=1) return false;
 	result=stage; return true;
 }

@@ -2,17 +2,12 @@
 #ifndef PIONEER_Q38_GDN_STATE_H
 #define PIONEER_Q38_GDN_STATE_H
 #include <stdint.h>
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnIdentity.h"
 // CPU METADATA policy for ONE model/sequence/session. No allocation,address,
 // NoC/DMA,hardware proof,initialization,reset or model capability lives here.
 // A native coordinator must independently own/initialize BOTH state buffers
 // and call CompletedHalf ONLY after its full hardware completion proof.
 // Neither a ticket nor a slot reference is a device-access capability.
-struct PioneerQ38GdnIdentity {
- uint64_t session,sequence,modelEpoch,driverGeneration;
- bool operator==(const PioneerQ38GdnIdentity& b) const {
-  return session==b.session && sequence==b.sequence && modelEpoch==b.modelEpoch && driverGeneration==b.driverGeneration;
- }
-};
 struct PioneerQ38GdnTicket {
  PioneerQ38GdnIdentity owner;
  uint64_t position,nonce;
@@ -48,7 +43,7 @@ public:
  // Call ONLY after native zero-initialization/import has independently
  // completed. Binding metadata does NOT initialize any device memory.
  bool Bind(const PioneerQ38GdnIdentity& id) {
-  if (phase!=Empty || !id.session || !id.sequence || !id.modelEpoch || !id.driverGeneration) return false;
+  if (phase!=Empty || !id.Valid()) return false;
   identity=id; phase=Ready; return true;
  }
  bool BeginToken(const PioneerQ38GdnIdentity& id,uint64_t at) {
