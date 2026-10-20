@@ -1,0 +1,39 @@
+October20 2026:THREE identical PUBLIC Hello sequences,32 positions each.
+Driver202389d0/tag202610200001000a/gen12;CLI f414306f (ordered HOST logical
+extent checks;the separately staged ordered DRIVER is NOT installed).
+Frozen c060 runtime,32CPU threads for non-matrix graph work. Work mode has
+NO CPU learned reference/fallback. This explicit benchmark ONLY compares
+token identities between sequences;it is NOT the Assistant Work path.
+
+ALL96 positions completed,all497 learned projections per position,47712
+projections/48480calls/119workers. SAME4558653pages/18672242688B retained.
+Two CPU sequence-state resets took0.063593s/0.055460s;native page/call
+counts unchanged over each reset. Every token matched sequence0 exactly.
+Clean END/CLI_EXIT0;normal clock800->1350->800 restored,CPU guardclear.
+
+Exclude positions0..4 of EACH32-position sequence.81 measured positions:
+465.354710s =0.174060772tokens/sec.
+sequence0:27/155.821952s =0.173274687;median5.769271s,p95nearest5.812411s.
+sequence1:27/155.182064s =0.173989180;median5.759590s,p95nearest5.808639s.
+sequence2:27/154.350694s =0.174926327;median5.692667s,p95nearest5.813850s.
+Previous production SINGLE27-position sample0.171971039tokens/sec. The
+aggregate is about1.2% higher,but this is NOT an isolated controlled proof
+of either deferred-affine or ordered-host speedup. Small run-to-run CPU/
+cache/timing differences remain. Still FAR from20tokens/sec/usable27B.
+Repeated identical short sequences are NOT diverse prompts/text quality.
+
+Host model load13.102204s;card priming712.548718s,source repack147.941816s,
+span upload563.949047s. Whole smoke1292.216614s does NOT include separate
+full-source authentication. Cold loading is NOT warm generation latency.
+Later host wall diagnostics:matrix ioctls~4.36..4.42s/token,whole matrix
+callbacks~4.63..4.70s;other GGML~1.03..1.13s. NOT pure device/CPU timings.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated96 selected_token888 seconds1292.216614 projections47712 uploaded_pages4558653 calls48480 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_REPEATED_TIMING sequences3 generated96 timing_valid1 measured_positions81 measured_seconds465.354710 sample_tokens_per_second0.174060772 retained_weights1 clean_end1;THREE_IDENTICAL_PUBLIC_SEQUENCES_NOT_DIVERSE_PROMPTS_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag202610200001000a generation12 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Remote log:/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-deferred-ordered-three32-20261020-a.log
+SHA256fc3d90d3cfdac2e00262cbcd26cc74793e89c532fc9c98903054889181981452
+Verified local copy:/private/tmp/pioneer-q38-repeated-native-evidence.3StuJ7SD/full-model-work-deferred-ordered-three32-20261020-a.log
+Goal ACTIVE;further offline kernels/control benchmarks continue.

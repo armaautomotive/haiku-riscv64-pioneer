@@ -1,5 +1,26 @@
 # Native build status
 
+October20,16:19 Vancouver (23:19 UTC) NATIVE THREE32 REPEAT PASS:
+f414306f/current deferred202389d0/gen12 completed ALL96 positions and
+two CPU state resets with4558653pages/18672242688B retained. Every token
+matched across all3 public Hello sequences;497 learned projections per
+position,47712 total/48480calls/119workers. Explicit clean_end1/CLI_EXIT0,
+800/1350/800 restored,CPU reload guardcold0/active_owner0. Excluding first5
+positions EACH run:81/465.354710s=0.174060772tok/s. Per-run0.173274687/
+0.173989180/0.174926327. About1.2% above earlier single production sample,
+NOT isolated proof of candidate speedup or diverse-prompt/text quality.
+Still FAR below20tok/s. Full evidence/caveats in benchmarks/qwen38-deferred-
+ordered-three32-20261020.txt;remote/local log SHAfc3d90d3... matching.
+
+Current ONLY native job is public FFN control f414306f on SAME deferred
+driver,ffn-deferred-control-20261020-b.log/session50370. Earlier -a exited
+in the runtime loader (missing standard-library path),BEFORE auth/device;
+fixed path includes frozen runtime AND /boot/system/lib. No reset/retry
+of hardware,no SCP during the active control job. Assistant is NOT open.
+New inline-config image tests bA2jQHUD PASS54 success shapes/two jobs plus
+18 CSR readback faults;new prepared-Q4 FORMAT experiment remains OFFLINE.
+No new driver installed. Goal ACTIVE;continuing without SD/power changes.
+
 October20,15:59 Vancouver (22:59 UTC) PRIVATE MUTABLE-SCOPE INTERLOCK OFFLINE:
 The ACTUAL global hardware lock now checks typed native context presence,
 not a separate stale owner hint. Any GDN bank/zero owner blocks ordinary
