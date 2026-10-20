@@ -1,5 +1,34 @@
 # Native build status
 
+October20,13:06 Vancouver (20:06 UTC) ZERO-MINIMUM GEN7 NATIVE TEST:
+Guarded clean exchange6efd/tag...0005/gen6 ->16a06fee/tag2026102000010006/
+gen7 VERIFIED,NO reboot/reset. First bounded Work synthetic session now
+running,NOT qualified until exact results and explicit clean END. Native
+packing is a separate default-OFF prototype;driver builder rejects its
+nonzero flag. Its software-only raw-value suite rrnjwIVX passed1053184
+cases,including Q8 -128. New mode5 experiment writes only the existing
+initialized decoded Dst32 HIGH physical halves and must preserve ZERO LOW
+halves;MOV/CSR/format/NoC stay unchanged. Avoids unverified SFPCAST modes;
+uses already-qualified integer ops for TC->SM. Actual emitted full math/
+physical/drain/replay tests are still running;NO native packing use.
+Latest completed27B rate0.165393504tok/s,still far below20;goal ACTIVE.
+
+October20,13:05 Vancouver (20:05 UTC) CACHE WHOLE27B PASS / NEXT EXCHANGE:
+Cache-only full-model-work-input-sum-cache-four-20261020-a FINISHED,
+clean_end1/CLI_EXIT0,SAME4 token IDs11/353/2688/264,497 projections/position,
+1988 total/2020 calls/119 workers/4558653pages/18672242688B retained.
+Warm6.087508/6.038797/6.012255s ->0.165393504tok/s vs0.162201932 (~1.97%
+more,SMALL improvement). Matrix ioctls4.598775/4.598243/4.597946s vs~4.7065;
+other GGML1.150402/1.102763/1.076866s. Only3 warm samples,NOT sustained/
+text-quality qualification;still FAR below20tok/s. Priming695.748921s,
+repack149.200972/upload545.924647,first728.298811s. Log SHA
+b09985989843229632370e4fb5d936f0fc6f7dad302558bf9684077251101abe.
+Serial END800/1350/800/restored1/uncertain0;CPU-only guard tag...0005/gen6/
+cold0/active_owner0. Full evidence benchmarks/qwen38-input-sum-cache-full-
+model-20261020.txt. Zero-minimum16a06fee/updater1267463a staged+SHAverified;
+guarded exchange starting,NOT native-qualified yet. Native packing helper
+is separate OFFLINE research,NOT part of16a06fee. Goal remains ACTIVE.
+
 October20,12:57 Vancouver (19:57 UTC) ZERO-MINIMUM OFFLINE READY:
 Final full instruction/math/physical/cache/pin-boundary suiteYDn6tzBY PASS.
 Existing generic resident-accumulator suiteegjMZiet PASS (nonzero quantum
