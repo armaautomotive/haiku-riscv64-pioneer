@@ -25,11 +25,20 @@ struct BoundContext {
 	PioneerResidentLease& lease;
 	PioneerQ38DispatchLease* q38Dispatch=nullptr; PioneerQ38CohortLease* q38Cohort=nullptr;
 	bool q38DispatchRoutes=false,bankStorageOnly=true,dispatchOwnerRetained=false;
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	tt_host_page_result host; PioneerOutputBufferLease bulkHost; PioneerWideOutputLease wideHost;
+#else
 	struct HostLease { bool allocated=true,released=false,ready=true,quarantined=false; } bulkHost,wideHost;
+#endif
 	PioneerQ38PanelLease panelProbe,streamProbe;
 	std::vector<uint8_t> initializedVector; uint8_t* initialized; uint64_t bytes=PioneerResidentBanks::Total;
 	explicit BoundContext(const char* image):io(image),root(*io.core[0]),dram(root.dram),baseline{{{{dram},root.noc}}},
-		lease(root.store),initializedVector(PioneerResidentBanks::Pages,1),initialized(initializedVector.data()) { assert(banks.Bind(dram)); }
+		lease(root.store),initializedVector(PioneerResidentBanks::Pages,1),initialized(initializedVector.data()) {
+		assert(banks.Bind(dram));
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		host=io.dmaInput; bulkHost=io.dmaBulk; io.dmaPendingOwner=&wideHost;
+#endif
+	}
 	bool Unsafe() { return
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 		(q38Span && (q38Span->unsafe || q38Span->running)) ||
@@ -69,7 +78,7 @@ static void End(PioneerProbeCookie& cookie,bool clean) {
 		assert(c.Unsafe()); unsigned writes=c.io.Writes(),selects=c.io.selects;
 		tt_resident_session_result result={}; bool known=false;
 		assert(!EndQ38DispatchOwnership(c,result,known) && c.dispatchOwnerRetained && result.active==1 && result.cold==1 && !result.host_released
-			&& c.bulkHost.quarantined && c.wideHost.quarantined && sRuntimeOwner==&cookie && cookie.context==&c);
+			&& c.bulkHost.quarantined && (!c.wideHost.allocated || c.wideHost.quarantined) && sRuntimeOwner==&cookie && cookie.context==&c);
 		assert(writes==c.io.Writes() && selects==c.io.selects);
 	}
 	delete cookie.context; cookie.context=nullptr; sRuntimeOwner=nullptr; sBankStorageOnly=false;

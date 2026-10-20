@@ -17,7 +17,10 @@ struct PersistentRows:SharedRowsMachine {
 #ifdef PIONEER_Q38_INT_SFPU
 		for (uint32_t a=0x70000;a<0x72000;a+=4) {
 			uint32_t word=a>=0x70b00 && a-0x70b00<affineCode.size()?Word(affineCode,a-0x70b00):0;
-			assert(PioneerQ38DispatchPrefixWord(worker,a)==word && !PioneerQ38DispatchPrefixWord(0,a));
+			assert(PioneerQ38DispatchPrefixWord(worker,a)==word);
+#ifndef PIONEER_Q38_WORK_OUTPUT_DMA
+			assert(!PioneerQ38DispatchPrefixWord(0,a));
+#endif
 		}
 #endif
 #endif

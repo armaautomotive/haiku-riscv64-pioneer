@@ -41,16 +41,35 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 #else
 	uint32_t reads=s[10]+3*s[11]+2*job.peers,flits=s[10]+3*s[11]+5*job.peers+groups,writes=2*job.peers;
 #endif
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	uint32_t writeFlits=writes;
+	uint32_t bytes=job.peers*1024,chunks=(bytes+4095)/4096;
+	if (s[49]!=0x314f3851 || s[50]!=bytes || s[51]!=a.nextRoot || s[52]!=chunks || s[53]!=chunks
+		|| s[54]!=bytes/64 || s[55]!=bytes/64 || s[56]!=1) return false;
+	reads+=chunks; flits+=bytes/64; writes+=chunks; writeFlits+=bytes/64;
+	if (s[6]!=reads || s[7]!=writes || s[8]!=flits || s[9]!=writeFlits) return false;
+#else
 	if (s[6]!=reads || s[7]!=writes || s[8]!=flits || s[9]!=writes) return false;
+#endif
 	for (unsigned c=0;c<8;c++) {
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		uint32_t expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+writes:c==5?writeFlits:writes;
+#else
 		uint32_t expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+writes:writes;
+#endif
 		if (r.before[c]!=a.before[c] || r.after[c]!=a.after[c] || s[16+c]!=a.before[c] || s[24+c]!=a.after[c]
 			|| uint32_t(a.after[c]-a.before[c])!=expected) return false;
 	}
 	for (unsigned i=0;i<16;i++) if (s[32+i]!=a.source[0][i]) return false;
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	if (s[48]!=1) return false;
-	for (unsigned i=49;i<64;i++) if (s[i]) return false;
+	for (unsigned i=
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		57
+#else
+		49
+#endif
+		;i<64;i++) if (s[i]) return false;
 #else
 	for (unsigned i=48;i<64;i++) if (s[i]) return false;
 #endif

@@ -1,5 +1,53 @@
 # Native build status
 
+October19,18:54 Vancouver (October20,01:54 UTC) GEN29 DMA SYNTHETIC PASS:
+Guarded hot-swap completed cleanly,tag202610190006000a,generation29,
+cold0,active_owner0. No reboot,power,SD or Assistant action. Then all18
+synthetic Work calculations exact,clean BANK_END state2/active0/PCI+host
+restored,cold0,EXIT0. Log work-output-dma-synthetic-20261019-a.log.
+Running authenticated119-worker fixture test;NO other card job until
+clean END. Whole27B performance is still the prior0.078554988tok/s.
+Extra production-prefix-vs-independently-emitted helper comparison and
+all480 DMA-stat bit mutations PASS in final controllerY7PZr7Xn.
+
+October19,18:52 Vancouver (October20,01:52 UTC) WORK OUTPUT DMA STAGED:
+The current installed driver remains gen28/bdbecc33,clean and idle. Its
+full FFN completed clean_end1/EXIT0,identical output SHA05cda52a4734da37,
+warm0.023240s (NOT token rate),log SHA
+78f32863077c6d52503f164819c44b181fd358355166fc3573c83890a024425f.
+Latest whole27B rate is STILL0.078554988tok/s,NOT20tok/s or usable chat.
+
+New separately gated PIONEER_Q38_WORK_OUTPUT_DMA integrates the formerly
+unselected root below. Native driver candidate5f5f8cd82f71ea38842b1fa2c2d5321e53641e69d7090f9c2c25166f3da9de8d,
+tag202610190006000a,three identical builds;feature-off EXACTbdbecc33,
+default43 EXACT2df0e0f8,guard EXACTd1ce2aa4. Updater3499ac67 passed1391
+actual filesystem/handshake/ownership/failure cases. Both files staged
+and hash verified;no native DMA qualification or speed claim yet.
+
+Kernel derives host destination ONLY from private independent1MiB owner,
+proves input/bulk/all256 wide physical pages and owner state,marks pending
+BEFORE any BME write,and enables each PCIe command once. Root completes
+all current peer proofs BEFORE bounded writes,ordered reads,and full
+on-card transport bit comparison. CPU checks completion nonce/counts,
+sources/counters/final command/maps BEFORE BME-off;reads host RAM without
+per-word PCIe output reads,then clears pending ONLY after final held/source
+proof. Checked/debug keeps original PIO and numeric checks. No public
+physical addresses,no CPU learned-result validation or checked fallback.
+
+Offline actual controller RzPY2scf and extracted handler/retentionChyAJ2Cb
+PASS:all four BME write/read failures,first/middle/last DMA/drop/corruption/
+source failures,late mappings,Work->checked->Work,zero Work PIO output
+reads,copyout failure permits explicit clean END. ANY uncertainty retains
+whole context/cookie/ALL host owners with no disable/retry/reset/restore/
+free or later device IO. Actual root+real peers5ODqbNdr PASS. END
+BAL4sgRN audits first/middle/last ROOT helper code before/after STOP in
+addition to all original peer proofs and retention failures. Host Work
+and independent CPU-validation session tests both PASS separately.
+
+Next:guarded idle hot-swap,18 synthetic Work runs,16 authenticated119-worker
+runs,old checked18 runs,then FFN and whole27B measurements if clean.
+No reboot,power,SD or Assistant action is required for this hot-swap.
+
 October19,18:24 Vancouver (October20,01:24 UTC) WORK DOT PRIMITIVES PASS:
 Gen28 Work18 synthetic+16 authenticated119-worker calculations,then18
 old-checked synthetic calculations ALL exact,clean END,EXIT0. Work long

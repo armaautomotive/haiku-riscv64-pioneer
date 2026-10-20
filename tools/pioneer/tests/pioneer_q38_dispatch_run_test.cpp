@@ -5,6 +5,9 @@
 #include "pioneer_qwen38_dispatch_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchRun.h"
 #include "../PioneerQ38DispatchHost.h"
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+#include "pioneer_q38_output_fabric.h"
+#endif
 struct ControllerMachine:DispatchMachine {
 	uint32_t ownSource[16];
 	ControllerMachine(const char* path,unsigned n,unsigned type,unsigned k,const uint32_t* source):DispatchMachine(path,n,type,k)
@@ -15,6 +18,51 @@ struct ControllerMachine:DispatchMachine {
 	}
 };
 struct RunIO:BootstrapIO {
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	tt_host_page_result dmaInput={}; PioneerOutputBufferLease dmaBulk; PioneerWideOutputLease dmaWide;
+	PioneerWideOutputLease* dmaPendingOwner=&dmaWide;
+	std::vector<uint32_t> dmaData=std::vector<uint32_t>(TT_WIDE_OUTPUT_WORDS,0xdeadbeef);
+	unsigned pci[2]={0x402,0x402},pciWrites=0,pciReads=0,failPciWrite=0,failPciRead=0;
+	unsigned pciWriteReads=0,failPciWriteRead=0; bool pciWritePending=false;
+	unsigned dmaPackets=0,failDma=0,dropDma=0,corruptDma=0,changeSourceDma=0,wideLoads=0,wideMaps=0,lateMap=0;
+	int badDmaPage=-1;
+	bool wideQuarantined=false;
+	int HostPageMap(uint64_t& at,uint64_t& bytes) { at=UINT64_C(0x120000000); bytes=4096; return 0; }
+	int OutputBufferMap(uint64_t& at,uint64_t& bytes) { at=UINT64_C(0x100100000); bytes=16384; return 0; }
+	int OutputBufferPageMap(unsigned page,uint64_t& at,uint64_t& bytes) { at=UINT64_C(0x100100000)+page*4096; bytes=4096; return 0; }
+	int AllocateWideOutput() { return 0; }
+	int WideOutputMap(uint64_t& at,uint64_t& bytes) { at=UINT64_C(0x180000000)+(++wideMaps==lateMap?0x100000:0); bytes=TT_WIDE_OUTPUT_BYTES; return 0; }
+	int WideOutputPageMap(unsigned page,uint64_t& at,uint64_t& bytes) { at=UINT64_C(0x180000000)+page*4096+(int(page)==badDmaPage?4096:0); bytes=4096; return 0; }
+	int SetWideOutputNonCached() { return 0; }
+	void WideHostFence() {}
+	void WideHostStore(unsigned i,uint32_t value) { assert(!wideQuarantined && i<dmaData.size()); dmaData[i]=value; }
+	uint32_t WideHostLoad(unsigned i) { assert(!wideQuarantined && i<dmaData.size()); wideLoads++; return dmaData[i]; }
+	void QuarantineWideOutput() { wideQuarantined=true; }
+	uint32_t HostPciRead(unsigned p,uint16_t o,uint8_t s) {
+		if (o==4 && s==2) {
+			pciReads++; bool fault=pciReads==failPciRead;
+			if (pciWritePending) { pciWritePending=false; fault |= ++pciWriteReads==failPciWriteRead; }
+			return pci[p]^(fault?4:0);
+		}
+		return BootstrapIO::HostPciRead(p,o,s);
+	}
+	void HostPciWrite(unsigned p,uint16_t o,uint8_t s,uint32_t value) {
+		assert(p<2 && o==4 && s==2 && (value==0x402 || value==0x406));
+		assert(dmaPendingOwner && dmaPendingOwner->pending); pciWritePending=true;
+		if (++pciWrites!=failPciWrite) pci[p]=value;
+	}
+#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD
+	struct DmaPayloadView {
+		RunIO& io; uint32_t base;
+		void PayloadFence() { assert(!io.quarantined); }
+		uint32_t PayloadRead(unsigned w) { return io.Q38PanelRead(base+w*4); }
+		void PayloadWrite(unsigned w,uint32_t value) { io.Q38PanelWrite(base+w*4,value); }
+		uint64_t PayloadReadPair(unsigned w) { assert(!(w&1)); uint64_t low=PayloadRead(w); return low|(uint64_t(PayloadRead(w+1))<<32); }
+		void PayloadWritePair(unsigned w,uint32_t low,uint32_t high) { assert(!(w&1)); PayloadWrite(w,low); PayloadWrite(w+1,high); }
+	};
+	DmaPayloadView Q38PayloadData(uint32_t a) { return DmaPayloadView{*this,a}; }
+#endif
+#endif
 	unsigned profiles=0;
 	void Q38DispatchProfile(unsigned type,unsigned inputs,unsigned peers,bool valid,const uint64_t*) {
 		assert(type && inputs && peers && valid); profiles++;
@@ -25,7 +73,14 @@ struct RunIO:BootstrapIO {
 	unsigned stopSlowWorker=0;
 	unsigned stopSnapshotMode=0,pcSamples[120]={};
 	bool asynchronousFault=false,workOptionalChecks=false; std::vector<unsigned> statusOrder;
-	explicit RunIO(const char* path):image(path) {}
+	explicit RunIO(const char* path):image(path) {
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		dmaInput.version=1; dmaInput.state=TT_HOST_PAGE_READY; dmaInput.allocated=dmaInput.memory_type_set=dmaInput.map_stable=1;
+		dmaInput.physical=UINT64_C(0x120000000); dmaInput.bytes=4096;
+		dmaBulk.allocated=dmaBulk.ready=dmaBulk.memory_type_set=true; dmaBulk.physical=UINT64_C(0x100100000);
+		dmaWide.allocated=dmaWide.ready=dmaWide.memory_type_set=true; dmaWide.physical=UINT64_C(0x180000000);
+#endif
+	}
 	uint32_t RuntimeStatusRead(unsigned index) {
 		uint32_t value=BootstrapIO::RuntimeStatusRead(index);
 		if (!current && rootExecuted && asynchronousFault) {
@@ -50,7 +105,12 @@ struct RunIO:BootstrapIO {
 		unsigned type=c.view[base+3],k=c.view[base+4],n=c.view[base+5];
 		inputMode=c.view[base+7];
 		uint32_t source[16]; for (unsigned i=0;i<16;i++) source[i]=i?c.source[i]:c.config;
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		OutputReturnMachine<ControllerMachine> m(image,n,type,k,source);
+		m.failDma=failDma; m.dropDma=dropDma; m.corruptDma=corruptDma; m.changeSourceDma=changeSourceDma;
+#else
 		ControllerMachine m(image,n,type,k,source);
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 		// Controller fixtures intentionally use this original constant input;
 		// the direct/cooperative image tests separately vary all257 states.
@@ -62,7 +122,14 @@ struct RunIO:BootstrapIO {
 		for (unsigned word=0;word<c.view.size();word++) m.memory[TT_Q38_PANEL_VIEW_BASE+word*4]=c.view[word];
 		for (unsigned i=0;i<8;i++) m.counts[i]=c.ResidentNocRead(PioneerQ38PanelCounter(i));
 		for (unsigned w=0;w<119;w++) m.peers[w].requested=m.peers[w].finished=peerDone[w];
-		assert(m.RunRoot());
+		bool success=m.RunRoot();
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		dmaPackets+=m.dmaPackets;
+		if (m.dmaPackets) { assert(pci[0]==0x406 && pci[1]==0x406); std::copy(m.host.begin(),m.host.end(),dmaData.begin()); }
+		if (!success) { c.destination[2034]=TT_Q38_DISPATCH_FAULT; rootExecuted=true; return; }
+#else
+		assert(success);
+#endif
 		for (unsigned w=0;w<119;w++) {
 			peerDone[w]=m.peers[w].finished;
 			if (w<n) {

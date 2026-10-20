@@ -28,7 +28,7 @@ int main(int argc,char** argv)
 		unsigned writes=c.io.Writes(),selects=c.io.selects;
 		assert(ReleaseResidentCookie(cookie)==B_OK && cookie->magic==0x50313030 && cookie->context==&c && sRuntimeOwner==cookie
 			&& c.dispatchOwnerRetained && sColdRecoveryRequired && sBankStorageOnly && !genericCleanup);
-		assert(c.bulkHost.quarantined && c.wideHost.quarantined);
+		assert(c.bulkHost.quarantined && (!c.wideHost.allocated || c.wideHost.quarantined));
 		if (fault!=2) assert(c.io.Writes()==writes && c.io.selects==selects);
 		writes=c.io.Writes(); selects=c.io.selects; c.io.quarantined=true;
 		assert(ReleaseResidentCookie(cookie)==B_OK && c.io.Writes()==writes && c.io.selects==selects && !genericCleanup);
@@ -64,7 +64,7 @@ int main(int argc,char** argv)
 		else { tt_resident_session_result r={}; bool clean=true;
 			assert(!EndQ38DispatchOwnership(c,r,clean) && !clean); }
 		assert(c.dispatchOwnerRetained && c.q38Span && c.q38Span->closed==(state==2) && sColdRecoveryRequired && genericCleanup==1
-			&& writes==c.io.Writes() && selects==c.io.selects && c.bulkHost.quarantined && c.wideHost.quarantined);
+			&& writes==c.io.Writes() && selects==c.io.selects && c.bulkHost.quarantined && (!c.wideHost.allocated || c.wideHost.quarantined));
 		writes=c.io.Writes(); assert(ReleaseResidentCookie(cookie)==B_OK && c.io.Writes()==writes);
 		delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false;
 	}

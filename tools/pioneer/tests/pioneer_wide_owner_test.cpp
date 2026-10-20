@@ -22,6 +22,7 @@ struct WideOwnerIO {
 static PioneerOutputBufferLease Bulk() {
 	PioneerOutputBufferLease b; b.allocated=b.ready=b.memory_type_set=true; b.physical=UINT64_C(0x100100000); return b;
 }
+#ifndef PIONEER_WIDE_OWNER_MODEL_ONLY
 int main()
 {
 	{
@@ -62,3 +63,4 @@ int main()
 	assert(PioneerWideOutputAddress(UINT64_C(0xfffffff00000),0x100000));
 	puts("PASS OFFLINE independent1MiB wide owner,256 page mappings,48-bit/alignment/three-owner separation,all-word patterns,changed maps,retained quarantine; NO device/DMA/driver exposure");
 }
+#endif

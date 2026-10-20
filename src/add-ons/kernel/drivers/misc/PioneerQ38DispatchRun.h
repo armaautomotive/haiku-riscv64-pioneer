@@ -4,6 +4,9 @@
 #include "PioneerQ38DispatchBootstrap.h"
 #include "PioneerPayloadBlock.h"
 #include "PioneerQ38DispatchProfile.h"
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+#include "PioneerQ38OutputDmaOwner.h"
+#endif
 #ifdef TT_PIONEER_Q38_WORK_MODE
 #include "PioneerQ38WorkProtocol.h"
 #endif
@@ -101,10 +104,29 @@ template<class IO
 	,bool Work=false
 #endif
 	> bool PioneerQ38DispatchRun(IO& io,const tt_dram_samples_result& dram,PioneerResidentBanks& banks,
-	PioneerQ38DispatchLease& lease,const uint8_t* initialized,uint32_t initializedPages,tt_q38_dispatch_probe& job)
+	PioneerQ38DispatchLease& lease,const uint8_t* initialized,uint32_t initializedPages,tt_q38_dispatch_probe& job
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	,const tt_host_page_result* outputInput=nullptr,const PioneerOutputBufferLease* outputBulk=nullptr,PioneerWideOutputLease* outputWide=nullptr
+#endif
+)
 {
 	if (lease.unsafe || !lease.booted || lease.closed || lease.rootRunning || !PioneerQ38DispatchValid(job)
 		|| lease.rootNonce>=0x7ffffffe) return false;
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	(void)outputInput; (void)outputBulk; (void)outputWide;
+	if constexpr (Work) if (!outputInput || !outputBulk || !outputWide
+		|| !PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,false)) return false;
+	uint32_t livePci=0x402;
+	auto outputFail=[&]() {
+		if constexpr (Work) if (outputWide) PioneerQuarantineWideOutput(io,*outputWide);
+		return PioneerQ38DispatchRunFail(lease,banks,job);
+	};
+#define PIONEER_Q38_RUN_FAILURE outputFail()
+#define PIONEER_Q38_RUN_SOURCE(reset) PioneerQ38DispatchSources(io,dram,banks,root,reset,livePci)
+#else
+#define PIONEER_Q38_RUN_FAILURE PioneerQ38DispatchRunFail(lease,banks,job)
+#define PIONEER_Q38_RUN_SOURCE(reset) PioneerQ38DispatchSources(io,dram,banks,root,reset)
+#endif
 	PioneerQ38DispatchProfile<IO> profile(io);
 	auto& a=lease.authority; auto& root=lease.worker[0]; auto& r=job.result;
 	// Complete ALL private initialized extents BEFORE any IO/nonce advance.
@@ -128,7 +150,7 @@ template<class IO
 	profile.Mark(); // private extent/nonce authority,BEFORE first device IO
 	r={}; r.version=1; r.state=TT_RUNTIME_CONFIG_FAILED;
 	for (auto& rows:job.output) for (auto& word:rows) word=0;
-	if (!io.SelectRuntimeCore(0) || !PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!io.SelectRuntimeCore(0) || !PIONEER_Q38_RUN_SOURCE(0x47800)) return PIONEER_Q38_RUN_FAILURE;
 	unsigned padded=(job.inputs/PioneerQ38CohortBlockInputs(job.type)+15)&~15U;
 	if (!reuse && (!PIONEER_Q38_STAGE_CALL(io,0xa0000,
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
@@ -137,7 +159,7 @@ template<class IO
 		job.activation,job.inputs/2,
 #endif
 		0)
-		|| !PIONEER_Q38_STAGE_CALL(io,0xab000,job.scales,padded,0))) return PioneerQ38DispatchRunFail(lease,banks,job);
+		|| !PIONEER_Q38_STAGE_CALL(io,0xab000,job.scales,padded,0))) return PIONEER_Q38_RUN_FAILURE;
 	for (unsigned w=0;w<119;w++) {
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
 		uint32_t* task=a.taskFrame+w*8;
@@ -148,11 +170,11 @@ template<class IO
 		if (w<job.peers) { task[0]=a.extent[w].address; task[1]=job.part[w].bank; task[2]=job.part[w].groups;
 			task[3]=a.nextPeer[w]; task[4]=a.extent[w].route; task[5]=a.source[w+1][0]; }
 #ifndef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
-		if (!PIONEER_Q38_STAGE_CALL(io,0x74080+w*32,task,8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+		if (!PIONEER_Q38_STAGE_CALL(io,0x74080+w*32,task,8,0)) return PIONEER_Q38_RUN_FAILURE;
 #endif
 	}
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
-	if (!PIONEER_Q38_STAGE_CALL(io,0x74080,a.taskFrame,119*8,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PIONEER_Q38_STAGE_CALL(io,0x74080,a.taskFrame,119*8,0)) return PIONEER_Q38_RUN_FAILURE;
 #endif
 	const uint32_t header[]={TT_Q38_DISPATCH_MARKER,1,1,job.type,job.inputs,job.peers,a.nextRoot,
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
@@ -161,25 +183,38 @@ template<class IO
 		0,
 #endif
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+		Work?1U:0U,Work?0x314f3851U:0U,Work?uint32_t(outputWide->physical):0U,
+		Work?uint32_t(outputWide->physical>>32):0U,Work?uint32_t(TT_WIDE_OUTPUT_BYTES):0U,0,0,0};
+#else
 		Work?1U:0U,0,0,0,0,0,0,0};
+#endif
 #else
 		0,0,0,0,0,0,0,0};
 #endif
-	if (!PIONEER_Q38_STAGE_CALL(io,0x74000,header,16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PIONEER_Q38_STAGE_CALL(io,0x74000,header,16,0)) return PIONEER_Q38_RUN_FAILURE;
 #ifdef PIONEER_Q38_WORK_POSTED_STAGE
-	if constexpr (Work) if (!PioneerQ38WorkDrain(io,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if constexpr (Work) if (!PioneerQ38WorkDrain(io,0)) return PIONEER_Q38_RUN_FAILURE;
 #endif
 	profile.Mark(); // source proof+ALL input/task/header staging and readback
 	root.Store().l1_dirty=true; root.Store().l1_restored=false; // runtime status lives in separately saved17e000..180000
 	for (unsigned c=0;c<3;c++) io.RuntimeStatusWrite(c,0);
-	for (unsigned c=0;c<3;c++) if (io.RuntimeStatusRead(c)) return PioneerQ38DispatchRunFail(lease,banks,job);
-	if (!PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	for (unsigned c=0;c<3;c++) if (io.RuntimeStatusRead(c)) return PIONEER_Q38_RUN_FAILURE;
+	if (!PIONEER_Q38_RUN_SOURCE(0x47800)) return PIONEER_Q38_RUN_FAILURE;
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	if constexpr (Work) {
+		if (!PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,false)
+			|| !PioneerQ38OutputDmaEnable(io,*outputWide)) return PIONEER_Q38_RUN_FAILURE;
+		livePci=0x406;
+		if (!PIONEER_Q38_RUN_SOURCE(0x47800)) return PIONEER_Q38_RUN_FAILURE;
+	}
+#endif
 	for (unsigned c=0;c<8;c++) a.before[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c));
 	lease.rootRunning=root.image.running=true;
 	io.RuntimeResetWrite(0x87ffff); io.Pause();
-	if (!PioneerQ38DispatchSources(io,dram,banks,root,0x87ffff)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PIONEER_Q38_RUN_SOURCE(0x87ffff)) return PIONEER_Q38_RUN_FAILURE;
 	r.root_started=1;
-	io.RuntimeResetWrite(0x46800); if (io.ResetRead()!=0x46800) return PioneerQ38DispatchRunFail(lease,banks,job);
+	io.RuntimeResetWrite(0x46800); if (io.ResetRead()!=0x46800) return PIONEER_Q38_RUN_FAILURE;
 	profile.Mark(); // status/counters/source proof+root arm/release
 	const uint64_t deadline=io.Q38CohortNow()+UINT64_C(30000000); bool complete=false;
 	while (io.Q38CohortNow()<deadline) {
@@ -198,38 +233,60 @@ template<class IO
 		}
 		io.Pause();
 	}
-	if (!complete || !PioneerQ38DispatchSources(io,dram,banks,root,0x46800)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!complete || !PIONEER_Q38_RUN_SOURCE(0x46800)) return PIONEER_Q38_RUN_FAILURE;
 	profile.Mark(); // execution/monitor/terminal PCs+live source proof
 	for (unsigned c=0;c<8;c++) { a.after[c]=io.ResidentNocRead(PioneerQ38PanelCounter(c)); r.before[c]=a.before[c]; r.after[c]=a.after[c]; }
 	// Still PARKED/released. Never reset/hold root before ALL metadata and
 	// source proofs pass,even if an EARLIER peer already completed cleanly.
 	r.root_completed=r.root_sources_verified=1; r.peers=r.started=r.completed=r.waiting=job.peers;
 	r.nonce=a.nextRoot; r.state=TT_RUNTIME_PASSED;
-	if (!PioneerQ38DispatchRead(io,0x7f800,r.stats,64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PioneerQ38DispatchRead(io,0x7f800,r.stats,64,0)) return PIONEER_Q38_RUN_FAILURE;
 #ifdef TT_PIONEER_Q38_WORK_MODE
 	if constexpr (Work) {
-		if (!PioneerQ38WorkSafety(job,a,false)) return PioneerQ38DispatchRunFail(lease,banks,job);
+		if (!PioneerQ38WorkSafety(job,a,false)) return PIONEER_Q38_RUN_FAILURE;
 	} else {
 #endif
 #ifdef TT_PIONEER_Q38_DISPATCH_BATCHED_PIO
 	// Flat private heap scratch avoids pointer arithmetic beyond a peer's
 	// 64-element subarray. Copy ONLY active records after the complete read.
-	if (!PioneerQ38DispatchRead(io,0x76000,a.proofFrame,job.peers*64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PioneerQ38DispatchRead(io,0x76000,a.proofFrame,job.peers*64,0)) return PIONEER_Q38_RUN_FAILURE;
 	for (unsigned w=0;w<job.peers;w++) for (unsigned i=0;i<64;i++) r.peer[w][i]=a.proofFrame[w*64+i];
 #else
-	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x76000+w*256,r.peer[w],64,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x76000+w*256,r.peer[w],64,0)) return PIONEER_Q38_RUN_FAILURE;
 #endif
-	if (!PioneerQ38DispatchProof(job,a,false,false) || !PioneerQ38DispatchInputsMatch(io,job)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PioneerQ38DispatchProof(job,a,false,false) || !PioneerQ38DispatchInputsMatch(io,job)) return PIONEER_Q38_RUN_FAILURE;
 #ifdef TT_PIONEER_Q38_WORK_MODE
 	}
 #endif
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	if constexpr (Work) {
+		unsigned bytes=job.peers*1024,last=(bytes-1)&~4095U;
+		const uint32_t command[]={uint32_t(outputWide->physical)+last,uint32_t(outputWide->physical>>32),1555,0x75000,0,129,0,0,bytes-last,0};
+		for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PIONEER_Q38_RUN_FAILURE;
+		if (!PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,true)
+			|| !PioneerQ38OutputDmaDisableKnownComplete(io)) return PIONEER_Q38_RUN_FAILURE;
+		livePci=0x402;
+		if (!PIONEER_Q38_RUN_SOURCE(0x46800)) return PIONEER_Q38_RUN_FAILURE;
+	} else {
+#endif
 	const uint32_t command[]={0x83f00,0,PioneerWorkerX(job.peers)|(PioneerWorkerY(job.peers)<<6),0x75000,0,129,0,0,
 		256+job.part[job.peers-1].groups*64,0};
-	for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PioneerQ38DispatchRunFail(lease,banks,job);
+	for (unsigned i=0;i<10;i++) if (io.ResidentNocRead(i*4)!=command[i]) return PIONEER_Q38_RUN_FAILURE;
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	}
+#endif
 	profile.Mark(); // counters+ALL root/peer stats+input/command proofs
 	// ALL metadata proved BEFORE any host output read. ALL output stays in
 	// the kernel-private request until final hold/proof succeeds.
-	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x80000+w*1024,job.output[w],job.part[w].groups*16,0)) return PioneerQ38DispatchRunFail(lease,banks,job);
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	if constexpr (Work) {
+		io.WideHostFence();
+		for (unsigned w=0;w<job.peers;w++) for (unsigned row=0;row<job.part[w].groups*16;row++)
+			job.output[w][row]=io.WideHostLoad(w*256+row);
+		io.WideHostFence();
+	} else
+#endif
+	for (unsigned w=0;w<job.peers;w++) if (!PioneerQ38DispatchRead(io,0x80000+w*1024,job.output[w],job.part[w].groups*16,0)) return PIONEER_Q38_RUN_FAILURE;
 	profile.Mark(); // output readback ONLY after every metadata proof
 #ifdef TT_PIONEER_Q38_WORK_MODE
 	if (!(Work?PioneerQ38WorkSafety(job,a,false):PioneerQ38DispatchProof(job,a,false))) {
@@ -237,25 +294,31 @@ template<class IO
 	if (!PioneerQ38DispatchProof(job,a,false)) {
 #endif
 		for (auto& rows:job.output) for (auto& word:rows) word=0;
-		return PioneerQ38DispatchRunFail(lease,banks,job);
+		return PIONEER_Q38_RUN_FAILURE;
 	}
 	io.RuntimeResetWrite(0x87ffff); io.Pause();
 	if (io.ResetRead()!=0x87ffff || io.ResetRead()!=0x87ffff) {
 		for (auto& rows:job.output) for (auto& word:rows) word=0;
-		return PioneerQ38DispatchRunFail(lease,banks,job);
+		return PIONEER_Q38_RUN_FAILURE;
 	}
 	io.RuntimeResetWrite(0x47800); io.Pause();
-	if (!PioneerQ38DispatchSources(io,dram,banks,root,0x47800)) {
+	if (!PIONEER_Q38_RUN_SOURCE(0x47800)) {
 		for (auto& rows:job.output) for (auto& word:rows) word=0;
-		return PioneerQ38DispatchRunFail(lease,banks,job);
+		return PIONEER_Q38_RUN_FAILURE;
 	}
 	lease.rootRunning=root.image.running=false; r.root_held=1;
 #ifdef TT_PIONEER_Q38_WORK_MODE
-	if (!(Work?PioneerQ38WorkSafety(job,a):PioneerQ38DispatchProof(job,a))) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!(Work?PioneerQ38WorkSafety(job,a):PioneerQ38DispatchProof(job,a))) return PIONEER_Q38_RUN_FAILURE;
 #else
-	if (!PioneerQ38DispatchProof(job,a)) return PioneerQ38DispatchRunFail(lease,banks,job);
+	if (!PioneerQ38DispatchProof(job,a)) return PIONEER_Q38_RUN_FAILURE;
 #endif
 	profile.Mark(); // final proof+hold+source proof;still no caller publication
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	if constexpr (Work) {
+		if (!PioneerQ38OutputDmaOwner(io,*outputInput,*outputBulk,*outputWide,true)) return PIONEER_Q38_RUN_FAILURE;
+		outputWide->pending=false; // ONLY after completed DMA+BME-off+final held/source proof
+	}
+#endif
 	lease.rootNonce=a.nextRoot; for (unsigned w=0;w<job.peers;w++) lease.peerNonce[w]=a.nextPeer[w];
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	lease.inputReuse.Commit(job,lease.rootNonce,lease.inputEpoch);
@@ -268,4 +331,6 @@ template<class IO
 	return true;
 }
 #undef PIONEER_Q38_STAGE_CALL
+#undef PIONEER_Q38_RUN_SOURCE
+#undef PIONEER_Q38_RUN_FAILURE
 #endif

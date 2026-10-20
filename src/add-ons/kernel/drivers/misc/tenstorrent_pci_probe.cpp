@@ -3068,6 +3068,10 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 	if (!ready || !c.io.MapRuntime()) return false;
 	c.q38Dispatch=new(std::nothrow) PioneerQ38DispatchLease;
 	if (!c.q38Dispatch) return false;
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	if (!c.wideHost.ready && (c.wideHost.allocated || !PioneerPrepareWideOutput(c.io,c.host,c.bulkHost,c.wideHost))) return false;
+	if (!PioneerQ38OutputDmaOwner(c.io,c.host,c.bulkHost,c.wideHost,false)) return false;
+#endif
 	auto& lease=*c.q38Dispatch; c.io.fleetEnabled=true; lease.worker[0].master=&c.lease; lease.worker[0].noc=noc;
 	ready=BlackholeDramAllCoresHeld(c.io,dram);
 	for (unsigned w=1;w<120 && ready;w++) ready=PioneerWorkerNocProbe(c.io,dram,w,lease.worker[w].noc);
@@ -3144,7 +3148,11 @@ Q38DispatchControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t
 #endif
 			if (prepared) {
 #ifdef TT_PIONEER_Q38_WORK_MODE
-				if (operation==TT_PCI_PROBE_Q38_WORK_RUN) PioneerQ38DispatchRun<decltype(c->io),true>(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);
+				if (operation==TT_PCI_PROBE_Q38_WORK_RUN) PioneerQ38DispatchRun<decltype(c->io),true>(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+					,&c->host,&c->bulkHost,&c->wideHost
+#endif
+					);
 				else
 #endif
 				PioneerQ38DispatchRun(c->io,dram,c->banks,*c->q38Dispatch,c->initialized,uint32(c->bytes/4096),*request);

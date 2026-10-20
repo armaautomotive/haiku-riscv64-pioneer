@@ -122,6 +122,17 @@ int main(int argc,char** argv)
 			&& f.lease->closeDetail[0]==0x300 && f.lease->closeDetail[1]==TT_Q38_DISPATCH_PARK_FETCH);
 	}
 #ifdef PIONEER_Q38_INT_SFPU
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	for (unsigned address:{0x70000U,0x70568U,0x70ad0U}) for (bool late:{false,true}) {
+		CloseFixture f(argv[1]); f.io.closing=true; f.io.target=0;
+		if (late) { f.io.closeFault=17; f.io.helperFaultAddress=address; }
+		else f.io.core[0]->view[(address-TT_Q38_PANEL_VIEW_BASE)/4]^=1;
+		assert(!f.Close() && f.lease->unsafe && f.banks.Quarantined() && f.io.stopExecuted==late && !f.io.endHolds && !f.io.restored);
+		unsigned writes=f.io.Writes(),selects=f.io.selects; f.io.quarantined=true;
+		assert(!f.Close() && f.io.Writes()==writes && f.io.selects==selects);
+	}
+	puts("PASS output-root helper first/middle/last code corruption before/after STOP retains all owners with ZERO reset/restore/later IO");
+#endif
 	const unsigned helperAddresses[]={TT_Q38_INT_SFPU_AFFINE_BASE
 #ifdef PIONEER_Q38_CACHED_AFFINE
 		,0x71000,TT_Q38_CACHED_AFFINE_BASE+TT_Q38_CACHED_AFFINE_BYTES-4

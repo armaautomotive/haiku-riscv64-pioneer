@@ -50,11 +50,19 @@ static inline bool PioneerQ38DispatchQuarantine(PioneerQ38DispatchLease& lease,P
 	return false; // caller must quarantine BOTH host owners too;NO later IO writes
 }
 template<class IO> bool PioneerQ38DispatchSources(IO& io,const tt_dram_samples_result& dram,
-	const PioneerResidentBanks& banks,PioneerQ38CohortWorker& node,uint32_t reset)
+	const PioneerResidentBanks& banks,PioneerQ38CohortWorker& node,uint32_t reset
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+	,uint32_t pci=0x402
+#endif
+)
 {
 	return node.Store().ready && !node.Store().pending && !node.Store().recovery_required && !node.image.unsafe
 		&& banks.Matches(dram) && io.Q38PanelMappingStable() && io.ResetRead()==reset && io.ResetRead()==reset
-		&& PioneerRuntimeSources(io,dram,node.noc,node.Store()) && BlackholeResidentIdle(io);
+		&& PioneerRuntimeSources(io,dram,node.noc,node.Store()
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+			,pci
+#endif
+			) && BlackholeResidentIdle(io);
 }
 template<class IO> bool PioneerQ38DispatchCodeMatches(IO& io,unsigned worker,PioneerQ38DispatchLease* diagnostic=nullptr)
 {

@@ -19,6 +19,12 @@
 #if defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) && (!defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(TT_PIONEER_Q38_WORK_MODE))
 #error Work numeric isolation requires replay, the Work-aware root, and explicit Work support
 #endif
+#if defined(PIONEER_Q38_WORK_OUTPUT_DMA) && (!defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || !defined(PIONEER_Q38_SPAN_FAST))
+#error Output DMA requires the fully qualified Work peer and private wide-host transport owner
+#endif
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+#include "PioneerQ38OutputRootImage.h"
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
@@ -41,6 +47,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+ if (!worker) return PioneerQ38OutputRootPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
  return worker>=120?UINT32_MAX:worker?PioneerQ38WorkDotPrefixWord(address):0;
 #elif defined(PIONEER_Q38_REPLAY_OPERAND)
@@ -90,6 +99,9 @@ enum { TT_Q38_DISPATCH_BOOT=0x0006c06f,TT_Q38_DISPATCH_DONE=0x7200c,
  TT_Q38_PEER_MARKER=0x32503851,TT_Q38_PEER_WAIT_LOAD=0x7204c,TT_Q38_PEER_WAIT_BRANCH=0x72050 };
 static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
+#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+ return PioneerQ38OutputRootWord(word);
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
