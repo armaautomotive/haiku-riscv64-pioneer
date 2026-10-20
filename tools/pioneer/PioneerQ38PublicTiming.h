@@ -8,7 +8,10 @@ static inline unsigned PioneerQ38PublicTokenLimit(const char* argument)
 {
 	if (!argument) return 0;
 	return !strcmp(argument,"--public-one-token")?1:!strcmp(argument,"--public-four-tokens")?4:
-		!strcmp(argument,"--public-32-tokens")?32:0;
+		(!strcmp(argument,"--public-32-tokens") || !strcmp(argument,"--public-three-32-token-runs"))?32:0;
+}
+static inline unsigned PioneerQ38PublicSequenceCount(const char* argument) {
+	return !PioneerQ38PublicTokenLimit(argument)?0:!strcmp(argument,"--public-three-32-token-runs")?3:1;
 }
 // Diagnostics ONLY,NOT device completion/timeout/cleanup authority. Observe
 // all32 positions in order. Exclude cold0 plus warm-up1..4 from the rate.
@@ -38,5 +41,28 @@ public:
 		}
 		return sorted[rank];
 	}
+};
+// Diagnostics ONLY. Three identical public sequences,CPU state reset by
+// the caller between them;device weights stay resident. Exclude each
+// sequence's first5 positions,including the one cold-load position. No
+// partial/invalid timing may become a completed repeated throughput claim.
+class PioneerQ38PublicRepeatedTiming {
+	PioneerQ38PublicTiming run[3];
+	unsigned next=0;
+	bool valid=true;
+public:
+	bool Observe(unsigned sequence,unsigned position,double seconds) {
+		if (!valid || sequence>=3 || position>=32 || sequence*32+position!=next) { valid=false; return false; }
+		next++;
+		if (!run[sequence].Observe(position,seconds)) { valid=false; return false; }
+		return true;
+	}
+	const PioneerQ38PublicTiming* Sequence(unsigned index) const { return index<3?&run[index]:nullptr; }
+	bool Complete() const {
+		return valid && next==96 && run[0].Complete() && run[1].Complete() && run[2].Complete()
+			&& isfinite(run[0].Seconds()+run[1].Seconds()+run[2].Seconds());
+	}
+	double Seconds() const { return Complete()?run[0].Seconds()+run[1].Seconds()+run[2].Seconds():0; }
+	double Rate() const { return Complete()?81/Seconds():0; }
 };
 #endif

@@ -5,6 +5,11 @@
 #include "PioneerQ38PublicTiming.h"
 #include "llama.h"
 #include <time.h>
+#include <signal.h>
+// PIONEER_PUBLIC_STOP_BEGIN
+static volatile sig_atomic_t stopRequested=0;
+static void RequestStop(int) { stopRequested=1; } // NO IO/cleanup in a signal handler
+// PIONEER_PUBLIC_STOP_END
 static double Seconds() { timespec t={}; if (clock_gettime(CLOCK_MONOTONIC,&t)) return -1; return double(t.tv_sec)+double(t.tv_nsec)*1e-9; }
 static void Log(ggml_log_level level,const char* text,void*) { if (level>=GGML_LOG_LEVEL_WARN) fputs(text,stderr); }
 struct State {
@@ -121,8 +126,13 @@ int main(int argc,char** argv)
 {
 	bool graph=argc==3 && !strcmp(argv[1],"--public-ffn-graph-export");
 	unsigned limit=argc==2?PioneerQ38PublicTokenLimit(argv[1]):0;
-	bool four=limit==4,longTiming=limit==32;
+	unsigned sequences=argc==2?PioneerQ38PublicSequenceCount(argv[1]):0;
+	bool repeatedRun=sequences==3,four=limit==4,longTiming=limit==32 && !repeatedRun;
 	if (!graph && !limit) return 2;
+#if !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST)
+	if (repeatedRun) return 2; // explicit diagnostic for retained fast-span Work ONLY
+#endif
+	signal(SIGINT,RequestStop); signal(SIGTERM,RequestStop);
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #ifdef PIONEER_Q38_SPAN_FAST
@@ -135,12 +145,14 @@ int main(int argc,char** argv)
 	puts("PUBLIC27B_INFERENCE_AUTH_BEGIN;NO_ACCELERATOR_FD_YET;CPU_REFERENCE_ENABLED_NO_FALLBACK");
 #else
 #ifdef PIONEER_Q38_WORK_INFERENCE
-	puts("PUBLIC27B_MODE WORK;NO_CPU_REFERENCE_OR_RESULT_VALIDATION;MANDATORY_DRIVER_SAFETY_ONLY;NO_CHECKED_FALLBACK");
+	if (repeatedRun) puts("PUBLIC27B_MODE WORK_TRANSPORT_WITH_PUBLIC_REPEATABILITY_DIAGNOSTIC;TOKEN_IDENTITIES_CHECKED_BETWEEN_RUNS;NO_CPU_LEARNED_REFERENCE_OR_FALLBACK");
+	else puts("PUBLIC27B_MODE WORK;NO_CPU_REFERENCE_OR_RESULT_VALIDATION;MANDATORY_DRIVER_SAFETY_ONLY;NO_CHECKED_FALLBACK");
 #endif
 	puts("PUBLIC27B_INFERENCE_AUTH_BEGIN;NO_ACCELERATOR_FD_YET;NO_CPU_REFERENCE_OR_FALLBACK");
 #endif
 	State state; if (!state.source.Open()) return 1;
-	if (graph) return GraphSmoke(state,argv[2]);
+	if (stopRequested) return 130; // authentication completed,no accelerator FD exists
+	if (graph) { int result=GraphSmoke(state,argv[2]); return stopRequested && !result?130:result; }
 	FILE* file=state.source.BorrowForModelLoad(); if (!file) return 1;
 	llama_log_set(Log,nullptr); llama_backend_init();
 	llama_model_params mp=llama_model_default_params();
@@ -181,14 +193,34 @@ int main(int argc,char** argv)
 	double start=Seconds(),warmSeconds=0,firstSeconds=0;
 	unsigned generated=0; uint64_t retainedPages=0;
 	PioneerQ38PublicTiming timing;
+	PioneerQ38PublicRepeatedTiming repeated;
+	llama_token firstSequence[32]={}; unsigned completedSequences=0;
 	llama_token token=tokens[0],best=-1;
-	for (unsigned position=0;okay && position<limit;position++) {
+	if (repeatedRun) puts("PUBLIC27B_REPEATED_TIMING_DIAGNOSTIC fixed_sequences3 positions_per_sequence32 token_identity_repeatability_only;NO_CPU_LEARNED_REFERENCE;WEIGHTS_RETAINED_CPU_SEQUENCE_STATE_RESET");
+	// PIONEER_PUBLIC_REPEAT_LOOP_BEGIN
+	for (unsigned sequence=0;okay && !stopRequested && sequence<sequences;sequence++) {
+		if (sequence) {
+			// Current backend claims matrices ONLY;KV/recurrent buffers are
+			// CPU-owned. Reset them through the frozen runtime,NOT a driver
+			// reset/reload/new owner. The SAME weight pages/session remain.
+			llama_synchronize(context); auto memory=llama_get_memory(context);
+			uint64_t pages=state.session.pagesUploaded,calls=state.session.calls;
+			if (!memory || !state.source.Ready() || state.session.Failed()) { okay=false; break; }
+			double resetStart=Seconds(); llama_memory_clear(memory,true);
+			okay=state.source.Ready() && !state.session.Failed() && pages==state.session.pagesUploaded && calls==state.session.calls;
+			printf("PUBLIC27B_CPU_SEQUENCE_RESET sequence%u seconds%.6f pages%llu unchanged_native_calls%u success%u;NO_CARD_RESET_OR_RELOAD\n",
+				sequence,Seconds()-resetStart,(unsigned long long)pages,unsigned(calls==state.session.calls),unsigned(okay));
+		}
+		token=tokens[0]; unsigned sequenceGenerated=0;
+		if (repeatedRun) printf("PUBLIC27B_SEQUENCE_BEGIN %u;NOT_A_COMPLETED_BENCHMARK_YET\n",sequence);
+	for (unsigned position=0;okay && !stopRequested && position<limit;position++) {
 		uint64_t before=PioneerQ38GgmlSnapshot().projections;
 		double matrixBefore=state.matrixWallSeconds;
 		uint64_t callbacksBefore=state.matrixCallbacks,runBefore=state.session.runNanos;
 		double began=Seconds(); auto batch=llama_batch_get_one(&token,1); okay=llama_decode(context,batch)==0;
 		double elapsed=Seconds()-began; auto current=PioneerQ38GgmlSnapshot();
 		if (longTiming) (void)timing.Observe(position,elapsed); // diagnostics ONLY
+		if (repeatedRun) (void)repeated.Observe(sequence,position,elapsed);
 		// Exactly497 learned projections per position. Refuse to call a
 		// silent CPU-only/partial-learned result a complete P100A smoke.
 		okay=okay && current.projections-before==497 && !current.failed && state.opened;
@@ -200,7 +232,16 @@ int main(int argc,char** argv)
 				else if (best<0 || logits[i]>logits[best]) best=i;
 			}
 		}
-		if (!position) { retainedPages=state.session.pagesUploaded; firstSeconds=elapsed; }
+		// Explicit benchmark-only repeatability,not a CPU learned product
+		// or production Work result validator. Any mismatch is CLOSE ONLY.
+		if (okay && repeatedRun) {
+			if (!sequence) firstSequence[position]=best;
+			else if (best!=firstSequence[position]) {
+				printf("PUBLIC27B_REPEAT_TOKEN_MISMATCH sequence%u position%u expected%d actual%d;CLOSE_ONLY_NO_END_RETRY_OR_RESET\n",sequence,position,firstSequence[position],best);
+				okay=false;
+			}
+		}
+		if (!position && !sequence) { retainedPages=state.session.pagesUploaded; firstSeconds=elapsed; }
 		else { okay=okay && retainedPages==state.session.pagesUploaded; warmSeconds+=elapsed; }
 		printf("PUBLIC27B_POSITION %u selected_token%d seconds%.6f learned_projections%llu pages%llu success%u;"
 #ifdef PIONEER_Q38_CPU_VALIDATION
@@ -213,25 +254,48 @@ int main(int argc,char** argv)
 		printf("PUBLIC27B_WALL_PROFILE position%u valid%u matrix_callbacks%llu matrix_callback_seconds%.6f checked_matrix_ioctl_seconds%.6f other_ggml_seconds%.6f;HOST_WALL_DIAGNOSTICS_NOT_PURE_GPU_OR_CPU_TIMES\n",
 			position,unsigned(state.profileValid),(unsigned long long)(state.matrixCallbacks-callbacksBefore),matrixSeconds,
 			double(state.session.runNanos-runBefore)*1e-9,elapsed-matrixSeconds);
-		if (okay) { generated++; token=best; }
+		if (okay) { generated++; sequenceGenerated++; token=best; }
 	}
+		if (okay && sequenceGenerated==limit) completedSequences++;
+		if (repeatedRun) printf("PUBLIC27B_SEQUENCE_COMPUTED %u generated%u success%u;EXPLICIT_CLEAN_END_STILL_REQUIRED\n",sequence,sequenceGenerated,unsigned(okay));
+	}
+	bool stopped=stopRequested && okay;
 	double end=Seconds(); auto stats=PioneerQ38GgmlSnapshot();
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
 	if (!okay) State::Abort(&state); // never END after a user-only graph failure
 #endif
 	bool clean=PioneerQ38GgmlFinish();
+	// PIONEER_PUBLIC_REPEAT_LOOP_END
 	printf("%s_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated%u selected_token%d seconds%.6f projections%llu uploaded_pages%llu calls%llu workers%u clean_end%u;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY\n",
-		okay && clean?"PASS":"FAIL",generated,best,end-start,(unsigned long long)stats.projections,(unsigned long long)state.session.pagesUploaded,
+		stopped && clean?"STOP":okay && clean?"PASS":"FAIL",generated,best,end-start,(unsigned long long)stats.projections,(unsigned long long)state.session.pagesUploaded,
 		(unsigned long long)state.session.calls,state.session.peakWorkers,unsigned(clean));
-	if (four) printf("%s_PUBLIC27B_FOUR_TOKEN generated%u first_position_seconds%.6f subsequent_positions%u subsequent_seconds%.6f sample_tokens_per_second%.9f retained_weights%u;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY\n",
-		okay && clean && generated==4?"PASS":"FAIL",generated,firstSeconds,generated?generated-1:0,warmSeconds,
-		warmSeconds>0 && generated>1?double(generated-1)/warmSeconds:0,unsigned(retainedPages && retainedPages==state.session.pagesUploaded));
-	if (longTiming) printf("%s_PUBLIC27B_32_TOKEN_TIMING generated%u timing_valid%u skipped_cold_positions1 skipped_warmup_positions4 measured_positions%u measured_seconds%.6f sample_tokens_per_second%.9f minimum_seconds%.6f median_seconds%.6f p95_nearest_rank_seconds%.6f maximum_seconds%.6f retained_weights%u clean_end%u;SINGLE_PUBLIC_SEQUENCE_NOT_REPEATED_BENCHMARK_OR_TEXT_QUALITY\n",
-		okay && clean && generated==32 && timing.Complete()?"PASS":"FAIL",generated,unsigned(timing.Complete()),timing.Measured(),timing.Seconds(),timing.Rate(),
-		timing.Percentile(0),timing.Percentile(13),timing.Percentile(25),timing.Percentile(26),
-		unsigned(retainedPages && retainedPages==state.session.pagesUploaded),unsigned(clean));
+	if (four) {
+		bool complete=okay && clean && !stopped && generated==4 && warmSeconds>0;
+		printf("%s_PUBLIC27B_FOUR_TOKEN generated%u first_position_seconds%.6f subsequent_positions%u subsequent_seconds%.6f sample_tokens_per_second%.9f retained_weights%u;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY\n",
+			complete?"PASS":"FAIL",generated,firstSeconds,generated?generated-1:0,warmSeconds,
+			complete?3/warmSeconds:0,unsigned(retainedPages && retainedPages==state.session.pagesUploaded));
+	}
+	if (longTiming) {
+		bool complete=okay && clean && !stopped && generated==32 && timing.Complete();
+		printf("%s_PUBLIC27B_32_TOKEN_TIMING generated%u timing_valid%u skipped_cold_positions1 skipped_warmup_positions4 measured_positions%u measured_seconds%.6f sample_tokens_per_second%.9f minimum_seconds%.6f median_seconds%.6f p95_nearest_rank_seconds%.6f maximum_seconds%.6f retained_weights%u clean_end%u;SINGLE_PUBLIC_SEQUENCE_NOT_REPEATED_BENCHMARK_OR_TEXT_QUALITY\n",
+			complete?"PASS":"FAIL",generated,unsigned(complete),timing.Measured(),complete?timing.Seconds():0,complete?timing.Rate():0,
+			complete?timing.Percentile(0):0,complete?timing.Percentile(13):0,complete?timing.Percentile(25):0,complete?timing.Percentile(26):0,
+			unsigned(retainedPages && retainedPages==state.session.pagesUploaded),unsigned(clean));
+	}
+	if (repeatedRun) {
+		bool complete=okay && clean && !stopped && completedSequences==3 && generated==96 && repeated.Complete();
+		printf("%s_PUBLIC27B_REPEATED_TIMING sequences%u generated%u timing_valid%u measured_positions%u measured_seconds%.6f sample_tokens_per_second%.9f retained_weights%u clean_end%u;THREE_IDENTICAL_PUBLIC_SEQUENCES_NOT_DIVERSE_PROMPTS_OR_TEXT_QUALITY\n",
+			complete?"PASS":stopped && clean?"STOP":"FAIL",completedSequences,generated,unsigned(complete),complete?81U:0U,
+			complete?repeated.Seconds():0,complete?repeated.Rate():0,unsigned(retainedPages && retainedPages==state.session.pagesUploaded),unsigned(clean));
+		for (unsigned sequence=0;sequence<3;sequence++) {
+			const auto* sample=repeated.Sequence(sequence);
+			printf("PUBLIC27B_REPEAT_SAMPLE sequence%u timing_valid%u skipped_prefix_positions5 measured_positions%u seconds%.6f tokens_per_second%.9f median_seconds%.6f p95_nearest_rank_seconds%.6f;POST_CLEAN_END_ONLY\n",
+				sequence,unsigned(complete),complete?27U:0U,complete?sample->Seconds():0,complete?sample->Rate():0,
+				complete?sample->Percentile(13):0,complete?sample->Percentile(25):0);
+		}
+	}
 	if (context) { llama_synchronize(context); llama_detach_threadpool(context); llama_free(context); }
 	if (cpuPool) ggml_threadpool_free(cpuPool);
 	llama_model_free(model); llama_backend_free();
-	return okay && clean && end>=start?0:1;
+	return stopped && clean?130:okay && clean && end>=start?0:1;
 }

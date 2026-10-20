@@ -1,5 +1,39 @@
 # Native build status
 
+October20,15:43 Vancouver (22:43 UTC) FAIR HOST FFN / REPEATED TIMING READY OFFLINE:
+Frozen oldbda/unprofiled7cbd2bf4 FFN11.827ms vs host42c803a5/SAME driver
+11.784ms,ONE repeat each (~0.36% difference),NO meaningful gain proven.
+All5120 outputs match,cmpEXIT0;both repeatability/clean_end1/EXIT0,clocks
+restored and CPU guardclear. Earlier25.043ms included PROFILE CPU clock/
+serial logging overhead,NOT a valid optimization baseline. Own logSHA
+a7404f3c/0b6770ec and exact caveats in benchmarks/qwen38-host-snapshot-
+ffn-20261020.txt. Latest whole27B baseline remains0.171971039tok/s.
+
+Guarded productiongen11->deferred202389d0/tag...000a/gen12 verified without
+reboot/reset. Work synthetic18/auth119x16/auth3groupsx16 all EXACT and
+THREE clean ENDs/EXIT0;checked18 is now ONLY native job. No whole-model
+speedup claimed. Ordered66936bf6 remains staged,not installed/qualified.
+
+New fixed --public-three-32-token-runs diagnostic authenticates/loads ONCE,
+retains SAME device weights across3 public sequences,clears ONLY CPU-owned
+KV/recurrent buffers via frozen llama_memory_clear,requires unchanged
+native call/page counters across reset and all497 projections/position.
+Bench-only token-identity repeatability is explicit,NOT CPU learned math
+or an Assistant Work validator;any mismatch closes ONLY/no END/retry/reset.
+All96 positions must complete before reporting81 post-prefix positions/
+three rates,AFTER clean END. Timing failure never grants cleanup authority.
+SIGINT/TERM handlers set ONLY a flag;warm stop waits for completed position
+and clean END,not signal-handler IO;stopped/incomplete/unclean reports NO
+positive timing rate. Cold load/one decode already in progress must finish
+before a graceful boundary. Existing fixed1/4/32/FFN options remain.
+
+Actual extracted loop/real SIGINT Qakcn721 and timinggWFKGmu1 ASan/UBSan
+PASS,including CPU-reset/source/page/native-call changes,missing memory,
+token/logit/graph failure CLOSE ONLY,stop before/mid/reset and diagnostic
+clock failure. Generic a233bc7c a/b/c EXACT;ordered variantf414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c
+a/b EXACT. ALL4 runtime hashes/pristine archived headers only. NO native
+state-reset/96-position run yet,NOT staged/Assistant-installed. Goal ACTIVE.
+
 October20,15:26 Vancouver (22:26 UTC) NON-ROOT PHYSICAL AUDIT OFFLINE:
 New unselected helper proves ALL119 NON-root tiles held twice while leaving
 the intentionally running root unread/unreset/unheld. Exact fixed private
@@ -9,7 +43,8 @@ mismatch returns immediately,NO later IO or view restore. Native context
 owner/view adapter is still absent;this helper alone does NOT quarantine
 the whole context or latch cold recovery. It is NOT wired into a driver.
 Final iIxhGMPb ASan/UBSan PASS:all360 TLB reads/238 reset samples/32 source
-reads individually faulted,all12 bad columns/all10 disabled rows,foreign/+bad ownership/mapping/version/routes/cold metadata refuse before IO.
+reads individually faulted,all12 bad columns/all10 disabled rows;missing/
+bad ownership/mapping/version/routes/recovery metadata refuse before IO.
 Kernel-only RV64 witness192B PASS and deliberately lacks root-reset/NoC/
 PCI/data-write APIs. No native trial or performance claim for this helper.
 

@@ -1,0 +1,28 @@
+October20 2026:controlled real blk.0.ffn_down.weight K17408/N5120.
+Both on SAME UNPROFILED production7cbd2bf4/tag...0008/gen11/normal1350MHz,
+same frozen c060 libraries/authenticated source/input. Prime only12240pages/
+50135040B;NOT a whole-model/token/text-quality benchmark.
+
+Frozen old host bda16c7c:warm graph0.011827s.
+New private-metadata host42c803a5:warm graph0.011784s.
+Difference0.043ms/~0.36% in ONE repeat each:NOT a meaningful gain proven.
+All5120 public output words match exactly across runs,cmp EXIT0.
+Both internal repeatability/clean_end1/CLI_EXIT0;clock800/1350/800 restored
+and CPU guardclear. No CPU learned reference/fallback in either executable.
+
+Earlier OLD bda host on PROFILE driverf7d3d395 gave0.025043s. That is NOT
+the correct baseline for the new host:diagnostic CPU-clock capture/logging
+adds overhead. Do NOT claim the25ms->11.8ms difference as an optimization.
+The actual host syscall count reduction78->12 remains offline measured;
+it has NOT produced a convincing real-projection speed improvement here.
+
+New host diagnostics:graph0.011784s,multiply0.011738s,ioctl0.010840s.
+This is HOST WALL timing,NOT pure GPU/CPU execution time.
+Old cold graph27.723992s;new27.599370s,includes bootstrap/partial priming,
+NOT warm generation speed. Full27B longer baseline remains0.171971039tok/s.
+
+Own logs under /boot/home/pioneer-qwen38-vector-clear-20261018-t/:
+ffn-host-snapshot-20261020-a.log
+ SHA2560b6770ec249862fc75a789598d690121c0e0a458aad0f4505b973c56fabef3b5
+ffn-compact-production-baseline-20261020-a.log
+ SHA256a7404f3c3c8cd465accba85a1feb4f27aca8f5a4208dee40fa8808e3157ebbe5
