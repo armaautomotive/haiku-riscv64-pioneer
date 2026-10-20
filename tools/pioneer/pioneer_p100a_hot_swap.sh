@@ -5,7 +5,7 @@
 set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
 case "$1" in
- --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache|--apply-zero-minimum|--restore-zero-minimum|--apply-native-operand|--restore-native-operand|--apply-compact-output|--restore-compact-output) mode=$1;;
+ --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache|--apply-zero-minimum|--restore-zero-minimum|--apply-native-operand|--restore-native-operand|--apply-compact-output|--restore-compact-output|--apply-compact-profile|--restore-compact-profile|--apply-deferred-affine|--restore-deferred-affine) mode=$1;;
  --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma|--apply-work-queued-entry|--restore-work-queued-entry|--apply-local-delta|--restore-local-delta|--apply-local-delta-terminal|--restore-local-delta-terminal|--apply-current-profile|--restore-current-profile) mode=$1;;
  *) exit 2;;
 esac
@@ -49,6 +49,8 @@ candidate_sum_cache=$stage/tenstorrent_pci_probe-input-sum-cache-6efd1dd7
 candidate_zero_minimum=$stage/tenstorrent_pci_probe-zero-minimum-16a06fee
 candidate_native_operand=$stage/tenstorrent_pci_probe-native-operand-93067b8f
 candidate_compact_output=$stage/tenstorrent_pci_probe-compact-output-7cbd2bf4
+candidate_compact_profile=$stage/tenstorrent_pci_probe-compact-profile-f7d3d395
+candidate_deferred_affine=$stage/tenstorrent_pci_probe-deferred-affine-202389d0
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -88,6 +90,8 @@ hash_sum_cache=6efd1dd7ec1b9e4268c29565e767a331c542c8aedcc3f7f61b1fc3315fb84bc8
 hash_zero_minimum=16a06fee2117c8ad51086343aa3f05997b6ec9f66961e21704012ae2846ae77a
 hash_native_operand=93067b8f01c3c539838b0cea6c390fc904efd802ee1ab2fe7d25838cbb816447
 hash_compact_output=7cbd2bf43fa299e1296f01df7e08d41f810cb6d5bae6959d05d4de6f06fc1ec5
+hash_compact_profile=f7d3d3954696d4a633483e1d23e1acf565d05240c049f4369e820679e6a6c331
+hash_deferred_affine=202389d0a75f07b0ccf40930c94121a3f2094d71d2c17d7bf7017d7ab0433422
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -125,6 +129,8 @@ tag_sum_cache=2026102000010005
 tag_zero_minimum=2026102000010006
 tag_native_operand=2026102000010007
 tag_compact_output=2026102000010008
+tag_compact_profile=2026102000010009
+tag_deferred_affine=202610200001000a
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -236,6 +242,10 @@ else
  elif [ "$mode" = --restore-native-operand ]; then source=$candidate_zero_minimum; expected=$hash_native_operand; result=$hash_zero_minimum; oldtag=$tag_native_operand; newtag=$tag_zero_minimum
  elif [ "$mode" = --apply-compact-output ]; then source=$candidate_compact_output; expected=$hash_native_operand; result=$hash_compact_output; oldtag=$tag_native_operand; newtag=$tag_compact_output
  elif [ "$mode" = --restore-compact-output ]; then source=$candidate_native_operand; expected=$hash_compact_output; result=$hash_native_operand; oldtag=$tag_compact_output; newtag=$tag_native_operand
+ elif [ "$mode" = --apply-compact-profile ]; then source=$candidate_compact_profile; expected=$hash_compact_output; result=$hash_compact_profile; oldtag=$tag_compact_output; newtag=$tag_compact_profile
+ elif [ "$mode" = --restore-compact-profile ]; then source=$candidate_compact_output; expected=$hash_compact_profile; result=$hash_compact_output; oldtag=$tag_compact_profile; newtag=$tag_compact_output
+ elif [ "$mode" = --apply-deferred-affine ]; then source=$candidate_deferred_affine; expected=$hash_compact_output; result=$hash_deferred_affine; oldtag=$tag_compact_output; newtag=$tag_deferred_affine
+ elif [ "$mode" = --restore-deferred-affine ]; then source=$candidate_compact_output; expected=$hash_deferred_affine; result=$hash_compact_output; oldtag=$tag_deferred_affine; newtag=$tag_compact_output
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

@@ -1,5 +1,30 @@
 # Native build status
 
+October20,14:58 Vancouver (21:58 UTC) PROFILE CLEAN / LONG BASELINE RUNNING:
+Diagnostic-only f7d3d395/gen10 synthetic18+auth119x16 exact;real frozen
+bda16c7c singleFFN graph also repeatability PASS/clean_end1/CLI_EXIT0.
+Warm FFN25.043ms vs9.841ms inside captured kernel stages,including6.425ms
+execute/monitor/source proof. The remainder is OUTSIDE those stages,not a
+proven GPU cost. No diagnostic token-rate claim. Own logSHA and exact
+stage record in benchmarks/qwen38-compact-cpu-stage-profile-20261020.txt.
+ALL clocks restored800/1350/800/uncertain0;CPU guardclear. Guarded restore
+returned EXACT production7cbd2bf4/tag...0008/gen11. First fixed32-token
+389d3cf9 baseline is now ONLY native job,log full-model-work-compact-output-
+32-20261020-a.log;no probes/copies/exchanges while active. Long baseline
+excludes position0 plus4 warmups,measures27 later positions. No result yet.
+
+Next deferred-affine candidate202389d0/tag202610200001000a built a/b EXACT,
+same guardd1ce/default432df,unchanged root/ALL safety and original checked
+drains. Native builder now permits ONLY explicit full compact/non-profile/
+normal-clock Work chain;invalid flags/each missing prerequisite/profile
+mix refuse BEFORE SDK/output access (45n64jyF PASS). Combined actual compact
+root+deferred-store observer sDY2CL74 PASS;actual DMA/Work6TU0oLsV and
+extracted handler/owner/clock mVcI4McL PASS. Guarded updater now has exact
+profile/restore and candidate/restore pairs:120 focused/2171 full cases
+PASS,SHA94903b565beafedeae4ee8ce1defe361da2a0fc2364b1c92142726accd61a48a.
+Candidate NOT staged/installed/native-qualified;NO speedup claimed. Existing
+partial GDN path remains BLOCKED. Goal ACTIVE;20tok/s remains FAR unmet.
+
 October20,14:49 Vancouver (21:49 UTC) PRIVATE GDN LIFETIME HOOKS OFFLINE:
 The gated native context now has private HEAP owner/zero-lease pointers.
 Unsafe and memory-only retention quarantine both plus the existing whole

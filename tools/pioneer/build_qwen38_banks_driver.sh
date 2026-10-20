@@ -7,6 +7,13 @@ case "${PIONEER_Q38_NORMAL_CLOCK:-0}" in
  0|1) ;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_WORK_MODE:-0}:${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}:${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}:${PIONEER_Q38_NORMAL_CLOCK:-0}:${PIONEER_Q38_DISPATCH_PROFILE:-0}" = 10:1:1:1:1:1:0 ] || {
+     echo 'STOP deferred affine requires the complete non-profile compact Work candidate' >&2; exit 2;
+    };;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_GDN_MUTABLE_STATE:-0}" in
  0) ;;
  *) printf '%s\n' 'Mutable GDN ownership/zero image has NO qualified native controller; refusing driver build.' >&2; exit 2;;
@@ -188,9 +195,9 @@ case "${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}" in
     extra="$extra -DPIONEER_Q38_NATIVE_OPERAND_STORE";;
  *) exit 2;;
 esac
-[ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" = 0 ] || {
- echo 'STOP deferred affine is OFFLINE ONLY;no qualified driver image selects it' >&2; exit 2;
-}
+if [ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_WORK_DEFER_AFFINE"
+fi
 case "${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}:${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}:${PIONEER_Q38_WORK_OUTPUT_DMA:-0}" = 1:1:1 ] || exit 2

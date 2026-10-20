@@ -1,0 +1,27 @@
+Native compact-output diagnostic driver f7d3d395/tag2026102000010009/gen10.
+CPU-clock captures ONLY;SAME root/peer images as production7cbd2bf4.
+Diagnostic logging overhead is NOT a production speed measurement.
+Synthetic18 and authenticated119-worker16 calls passed EXACT/clean END.
+Frozen bda16c7c single real FFN-down graph ran twice,repeatability PASS,
+clean_end1/CLI_EXIT0. It authenticates the FULL same-FD model but primes
+only50135040B/12240pages;NOT whole-model/LLM/token/text-quality evidence.
+
+Warm authenticated Q4_K K17408/119workers/16rows per worker:
+P100A_Q38_PROFILE type12 K17408 peers119 valid1 us authority161 stage404 arm1037 execute3239 proof675 output235 hold248 commit292;CPU_WALL_NOT_PURE_GPU
+Warm REAL blk.0.ffn_down.weight K17408/N5120/119workers:
+P100A_Q38_PROFILE type12 K17408 peers119 valid1 us authority180 stage404 arm1045 execute6425 proof669 output583 hold248 commit287;CPU_WALL_NOT_PURE_GPU
+Sum9841us captured stages,versus graph repeat0.025043s. The remainder is
+OUTSIDE these stages,not a proven GPU cost. Investigate host planning,
+identity checks,ioctl boundary and GGML;do not infer a model speedup.
+First graph27.670912s includes2.495458s priming and startup,NOT warm speed.
+ALL sessions restored800->1350->800/restored1/uncertain0;CPU guardclear.
+Guarded profile restore returned EXACT production7cbd2bf4/tag...0008/gen11,
+cold0/active_owner0;first fixed32-token baseline now running WITHOUT profile.
+
+Own completed native logs under /boot/home/pioneer-qwen38-vector-clear-20261018-t/:
+work-synthetic-compact-profile-20261020-a.log
+ SHA2565936da990acc175cc4593e2ea2449747b68df7b8adc95c7e77433930329b250c
+work-auth119-compact-profile-20261020-a.log
+ SHA256c52857e046b694c02670053c6c57cc10c28ce2ffd8fc16c2f9d133620783e7ee
+ffn-compact-profile-20261020-a.log
+ SHA256ebbe229de780159069e721c46c1e769605968240925290b6e8cd70236d56449a
