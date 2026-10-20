@@ -1,5 +1,24 @@
 # Native build status
 
+October20,14:37 Vancouver (21:37 UTC) COMPACT WHOLE27B PASS,SMALL GAIN:
+Full-model-work-compact-output-four-20261020-a FINISHED clean_end1/CLI_EXIT0,
+SAME tokens11/353/2688/264/1988 projections/2020 calls/119 workers/4558653
+pages/18672242688B retained. Warm5.870381/5.863550/5.841376s ->0.170694031
+tok/s vs0.166564933 (~2.48%higher). Only3 warm samples,NOT repeated/sustained/
+quality qualification;20tok/s still FAR unmet. Matrix ioctls4.400210/
+4.393427/4.394428s;otherGGML1.116421/1.129887/1.106373s. Priming707.634281,
+repack149.145308/upload557.843006,first740.161110s. Log SHA
+1db53ce62525e56566e9e9ac2262d9a89cd09149ad606d2af2e937176c60d8d5.
+Cached serial800/1350/800/restored1/uncertain0;CPU guardtag...0008/gen9/
+cold0/active_owner0. Evidence benchmarks/qwen38-compact-output-full-model-
+20261020.txt. Diagnostic-only profile driverf7d3d395/tag...0009,a/b exact,
+is COPYING to staging,NOT installed. It adds ONLY CPU-clock stage capture/
+logging after successful proofs,NO extra card queries or new device images.
+Offline DMA/Work CSyYPwpv,handler/lifetimes SqXI5ZpW,profile kwHUBQmP and
+60 focused updater cases PASS;full updater suite still running. Next use
+bounded diagnostic sessions to locate remaining cost,then restore exact
+production7cbd2bf4 before longer389d3cf9 32-token timing. Goal ACTIVE.
+
 October20,14:30 Vancouver (21:30 UTC) PRIVATE STATE-ZERO CONTROLLER OFFLINE:
 New helper binds the existing39817b67 device-only zero/readback image to
 the SAME private mutable GDN bank/epoch owner. Region/page requests are

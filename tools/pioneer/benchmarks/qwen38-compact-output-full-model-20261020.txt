@@ -1,0 +1,28 @@
+Native frozen four-token PUBLIC Work smoke,October20 2026.
+Tiny three-warm-position sample,NOT steady-state/text-quality qualification.
+Same bda16c7c CLI/model/libs/32 CPU threads;NO CPU learned reference/fallback.
+Compact7cbd2bf4/tag2026102000010008/gen9 vs native-store93067b8f/gen8.
+Both use normal firmware800->1350->800MHz;no forced clock/voltage/reset.
+Both:tokens11/353/2688/264,497 learned projections/position,1988 total,
+2020 calls,119 workers,4558653pages/18672242688B retained between positions.
+
+Before:warm6.043952/6.004401/5.962641s,0.166564933tok/s.
+After:warm5.870381/5.863550/5.841376s,0.170694031tok/s (~2.48%more).
+SMALL improvement in3 warm samples,NOT repeated/sustained qualification.
+Before matrix ioctls4.540233/4.543967/4.542101s.
+After matrix ioctls4.400210/4.393427/4.394428s.
+After other GGML1.116421/1.129887/1.106373s.
+Priming707.634281s,repack149.145308s,upload557.843006s.
+First position740.161110s;NOT warm generation speed.
+All68 bounded tests previously passed EXACT with FOUR clean ENDs/exit0.
+Return path carries EVERY active row,omits only unused padding,retains
+ALL source/owner/PC/counter/ordered host read/full on-card transport checks.
+Still FAR below20tok/s/usable27B target;goal remains ACTIVE.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated4 selected_token264 seconds757.767570 projections1988 uploaded_pages4558653 calls2020 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_FOUR_TOKEN generated4 first_position_seconds740.161110 subsequent_positions3 subsequent_seconds17.575307 sample_tokens_per_second0.170694031 retained_weights1;TINY_PUBLIC_SMOKE_NOT_STEADY_BENCHMARK_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag2026102000010008 generation9 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Host log:/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-compact-output-four-20261020-a.log
+SHA256:1db53ce62525e56566e9e9ac2262d9a89cd09149ad606d2af2e937176c60d8d5
