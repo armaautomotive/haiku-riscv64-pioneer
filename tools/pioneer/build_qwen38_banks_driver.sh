@@ -3,6 +3,16 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_PREPARED_Q4_AFFINE:-0}" in
+ 0) ;;
+ *) echo 'STOP prepared-Q4 is a DIFFERENT OFFLINE layout;no native reader/registry/driver selects it' >&2; exit 2;;
+esac
+case "${PIONEER_Q38_INLINE_CONFIG:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}:${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" = 1:0 ] || {
+      echo 'STOP inline config requires the separate full deferred-affine chain;no mixed ordered candidate' >&2; exit 2; };;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_NORMAL_CLOCK:-0}" in
  0|1) ;;
  *) exit 2;;
@@ -204,6 +214,9 @@ case "${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}" in
 esac
 if [ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_WORK_DEFER_AFFINE"
+fi
+if [ "${PIONEER_Q38_INLINE_CONFIG:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_INLINE_CONFIG"
 fi
 if [ "${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_ORDERED_EXTENT_FAST"

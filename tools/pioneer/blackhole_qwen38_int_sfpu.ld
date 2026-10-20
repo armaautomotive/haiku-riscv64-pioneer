@@ -17,6 +17,8 @@ SECTIONS {
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb1EE*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1ELb1EE*)
 		*(.text._ZN22PioneerQ38CachedAffine*)
+		/* Unselected prepared-Q4 experiment,inside the SAME owned prefix. */
+		*(.text._ZN20PioneerQ38PreparedQ45Panel*)
 		. = ALIGN(4);
 	}
 	.text 0x72000 : {

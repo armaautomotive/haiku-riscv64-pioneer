@@ -84,7 +84,12 @@ extern "C" void q38_persistent_main()
 			Fence(); block_peer_stopped(); // final PC audit BEFORE any reset/restore
 		}
 		if (snapshot[0]!=0x31483851 || snapshot[3] || snapshot[4] || snapshot[9]!=1
-			|| !PioneerQ38PanelTileBytes(snapshot[1]) || snapshot[2]!=PioneerQ38PanelTileBytes(snapshot[1])
+			|| !PioneerQ38PanelTileBytes(snapshot[1]) || snapshot[2]!=
+#ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
+			(snapshot[1]==12?PioneerQ38PreparedQ4::Bytes:PioneerQ38PanelTileBytes(snapshot[1]))
+#else
+			PioneerQ38PanelTileBytes(snapshot[1])
+#endif
 			|| (snapshot[5]!=5120 && snapshot[5]!=6144 && snapshot[5]!=17408)
 			|| !snapshot[7] || snapshot[7]>16) block_fault_park();
 		uint32_t before[8]; for (unsigned c=0;c<8;c++) before[c]=Counter(c);

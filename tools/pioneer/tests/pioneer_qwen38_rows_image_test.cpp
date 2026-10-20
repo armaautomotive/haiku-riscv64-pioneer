@@ -33,7 +33,7 @@ struct RowsMachine:StreamMachine {
 		assert(l1[Index(0x17ffc0)]==0x7200c && l1[Index(0x17ffc8)]==0x31523851);
 		return l1[Index(0x17ffc4)]==groups*(inputs/16) && requests==tiles.size() && responses==requests && !pending;
 	}
-	bool CorrectRows() const {
+	virtual bool CorrectRows() const {
 		if (matrixInstructions!=MatrixPhasesPerPanel()*groups*(inputs/16)) {
 #ifdef PIONEER_Q38_REF_DIAGNOSTIC
 			fprintf(stderr,"ROW_DIAGNOSTIC matrix instructions%u expected%u type%u K%u\n",matrixInstructions,MatrixPhasesPerPanel()*groups*(inputs/16),type,inputs);

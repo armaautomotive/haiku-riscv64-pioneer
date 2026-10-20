@@ -88,6 +88,18 @@ case "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" in
     q4_phases="$q4_phases -DPIONEER_Q38_WORK_DEFER_AFFINE";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_INLINE_CONFIG:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" = 1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_INLINE_CONFIG";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_PREPARED_Q4_AFFINE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_INLINE_CONFIG:-0}" = 1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_PREPARED_Q4_AFFINE";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \

@@ -26,6 +26,11 @@ static inline bool PioneerQ38VectorPanel(unsigned type,unsigned panel,PioneerQ38
 		s.low=(half*64+(plane%2)*32+(panel%2)*16)*16;
 		s.high=(128+half*32+(panel%2)*16)*16; s.second=true;
 	}
+#ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
+	// Separate OFFLINE format:only Q4's original metadata prefix is
+	// replaced. ALL packed quant bytes and per-panel nibble order match.
+	if (type==12) s.low-=256;
+#endif
 	unsigned bytes=type==8?576:type==12?2304:3392;
 	if ((s.low&15) || s.low>bytes-256 || (s.second && ((s.high&15) || s.high>bytes-256))) return false;
 	result=s; return true;

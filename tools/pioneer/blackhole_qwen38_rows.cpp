@@ -61,6 +61,15 @@
 #if defined(PIONEER_Q38_WORK_DEFER_AFFINE) && !defined(PIONEER_Q38_NATIVE_OPERAND_STORE)
 #error Deferred affine requires the separate native operand integer peer
 #endif
+#if defined(PIONEER_Q38_INLINE_CONFIG) && !defined(PIONEER_Q38_WORK_DEFER_AFFINE)
+#error Inline config emission requires the separately qualified deferred-affine peer
+#endif
+#ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
+#ifndef PIONEER_Q38_INLINE_CONFIG
+#error Prepared-Q4 format requires the separate inline-config integer peer
+#endif
+#include "PioneerQ38PreparedQ4.h"
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -168,7 +177,16 @@ struct VectorPanelEmitter {
 	__attribute__((always_inline)) inline
 #endif
 	void Op(uint32_t value) { Emit(value); }
+#ifdef PIONEER_Q38_INLINE_CONFIG
+	// Emit the SAME ordered volatile write+readback in the hot caller.
+	// No register/value/readback/drain change,only RV call/address overhead.
+	__attribute__((always_inline)) inline void Config(unsigned index,uint32_t value) {
+		volatile uint32_t* target=Words(0xffef0000+index*4); *target=value;
+		if (*target!=value) block_fault_park();
+	}
+#else
 	void Config(unsigned index,uint32_t value) { ::Config(index,value); }
+#endif
 	void Drain() { ::Drain(); }
 };
 #endif
@@ -347,7 +365,12 @@ extern "C" unsigned block_main()
 		0x31523851
 #endif
 #endif
-		|| !PioneerQ38PanelTileBytes(type) || bytes!=PioneerQ38PanelTileBytes(type)
+		|| !PioneerQ38PanelTileBytes(type) || bytes!=
+#ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
+		(type==12?PioneerQ38PreparedQ4::Bytes:PioneerQ38PanelTileBytes(type))
+#else
+		PioneerQ38PanelTileBytes(type)
+#endif
 		|| job[3] || job[4] || !groups || groups>16 || (inputs!=5120 && inputs!=6144 && inputs!=17408) || inputs%count
 		|| first<0x04000000 || (first&31) || uint32_t(groups*blocks*bytes)>0xc4000000-first || first>=0xc4000000) return 0;
 #ifdef PIONEER_Q38_SHARED_ROWS
@@ -443,7 +466,9 @@ extern "C" unsigned block_main()
 	uint32_t affineBase[16];
 #else
 #ifdef PIONEER_Q38_CACHED_AFFINE
+#ifndef PIONEER_Q38_PREPARED_Q4_AFFINE
 	PioneerQ38CachedAffine affine;
+#endif
 	uint32_t affineBase[16]; // preserve the original Q6 path
 #else
 #ifdef PIONEER_Q38_AFFINE_RESIDENT
@@ -453,7 +478,9 @@ extern "C" unsigned block_main()
 #endif
 #endif
 #ifdef PIONEER_Q38_CACHED_AFFINE
+#ifndef PIONEER_Q38_PREPARED_Q4_AFFINE
 	if (type==12 && !affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
+#endif
 #else
 	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
 #endif
@@ -468,7 +495,13 @@ extern "C" unsigned block_main()
 		if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_CACHED_AFFINE
+#ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
+		if (type==12) {
+			if (!(p&1) && !PioneerQ38PreparedQ4::Panel(reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();
+		} else if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
+#else
 		if (!(type==12?affine.Panel(p,local):FixedAffine(type,bytes,p,affineBase))) block_fault_park();
+#endif
 #else
 		if (!affine.Panel(p,local)) block_fault_park();
 #endif

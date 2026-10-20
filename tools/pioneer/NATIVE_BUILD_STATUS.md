@@ -1,5 +1,49 @@
 # Native build status
 
+October20,16:34 Vancouver (23:34 UTC) INLINE CONFIG NATIVE68 PASS:
+Driver03876197/tag202610200001000c/gen13 replaces deferred202389d0 by
+guarded hot swap,NO reboot/reset. EXACT ordered volatile CSR write/readback
+is emitted in the hot RV caller;no register/value/math/drain/NoC change.
+Peer b86c3bc1/prefixfcfb6af6 reproducible a/b/c. Actual image tH0YEtky PASS
+ALL54 shapes/two changed-input jobs plus18 CSR faults,EVERY config trace
+identical;original checked integer-dot diagnostic reads remain. Earlier
+test-only assertion incorrectly counted these as output publication;fixed
+to require unchanged completion withholding and inert fault park.
+Offline RV reduction about3.6..7.2%,NOT native/token speed. Pinned header
+word/bounds checks PASS. Actual DMA/Work SPgQwQj9 and handler0Ik0HdbJ PASS,
+38 early build refusals and2291 full+60 focused updater cases PASS.
+Complete driver a/b03876197 EXACT;guardd1ce/default2df0 unchanged.
+Feature-OFF complete production7cbd2bf4 and peer9ca34637 EXACT.
+
+Native ALL68 numerical checks PASS:18 Worksynthetic,16auth119,16auth3groups,
+18checkedsynthetic. FOUR clean END/CLI_EXIT0,FOUR800/1350/800 restores;
+CPU guardcold0/active_owner0/gen13. Log SHA45cb0fc0/a8265a36/ac2c5005/
+98480161 respectively. Same-host f414306f real FFN control on deferred
+was11.862ms;all5120 public output words saved (SHA05cda52a...),clean END.
+Control log1cc97600... . ONLY native job now f414306f FFN on new driver,
+ffn-inline-config-20261020-a.log/session43473. No SCP/second job during it.
+No full27B rate for this driver yet;latest remains prior0.174060772tok/s.
+
+PREPARED-Q4 FORMAT EXPERIMENT STAYS OFFLINE: original2048 quant bytes plus
+768B exact canonical24-bit affine metadata replace2304B original tile with
+2816B. ALL8062976 finite HALF/small-factor/sign combinations exact vs
+independent integer scale;260096 nonfinite refusals,signed zeros,512panels,
+32bad HALF+256bad metadata atomic refusals PASS (55nNYWYc). Image61704c79/
+prefix1bd743a6 d/e EXACT. Initial8B code overflow caught by linker;helper
+moved ONLY into existing owned prefix. Old2304B persistent descriptor gate
+caught firstQ4 before ANY packet;separate flagged2816B gate repaired.
+Actual image u2E0gSiA PASS all54 shapes/two jobs vs ORIGINAL-format FP32+
+independent FP64,20 metadata+4 packet faults;max compute320B/panel144B
+frames. Q4 RV counts only~4.2% lower,Q8/Q6 slightly WORSE. No speedup claim
+or native adoption:ordinary builder REFUSES any nonzero prepared flag.
+
+Public SHAPES ONLY selected497 layout proposal20811337728B weights plus
+page-aligned double-GDN/conv/8192KV/workspace gives22126841856B,total under
+UNCHANGED7x3GiB ceiling;most-used bank3163983872B,57241600B spare. This is
+NOT allocation/authentication/ready state;old851-tensor layout CANNOT be
+silently reused. No reader/registry/native driver selects prepared tiles.
+Assistant/settings/boot/CPU/RAM/SD/cables unchanged. Goal ACTIVE;continuing.
+
 October20,16:19 Vancouver (23:19 UTC) NATIVE THREE32 REPEAT PASS:
 f414306f/current deferred202389d0/gen12 completed ALL96 positions and
 two CPU state resets with4558653pages/18672242688B retained. Every token
