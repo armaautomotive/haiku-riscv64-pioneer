@@ -1,5 +1,44 @@
 # Native build status
 
+October20,13:20 Vancouver (20:20 UTC) ARITHMETIC QUALIFIED / NATIVE-PACK OFFLINE:
+16a06fee/tag...0006/gen7 passedALL18 Work synthetic+16 auth119+16 auth3groups
++18 checked EXACT,FOUR clean ENDs/EXIT0. CPU-only guard afterward cold0/
+active_owner0;ALL clock lifetimes800->1350->800/restored1/uncertain0.
+Log SHAs67818253/d96e2f99/47c57d5a/71875114 respectively. SAME frozen
+bda16c7c --public-four-tokens now ONLY native job,log
+full-model-work-zero-minimum-four-20261020-a.log. Do NOT probe/exchange or
+start another card process during it. Latest completed full-model rate
+remains0.165393504,NOT20tok/s. No new arithmetic-only model rate yet.
+
+NEXT default-OFF PIONEER_Q38_NATIVE_OPERAND_STORE uses qualified integer
+ops to produce SM values,then Blackhole SFPSTORE mode5 encodes the SAME
+Integer8 overlay directly in the EXISTING decoded Dst32 HIGH physical
+halves128..135/144..151. LOW halves136..143/152..159 MUST remain initialized
+zero. Existing MOVD2A,format/config/CSR/source-bank/drain/matrix/NoC/STOP
+remain unchanged. No new physical window or experimental SFPCAST modifier.
+Decoder/replay loses4 register ops per32 weights,ALL3 quant formats/modes.
+No address/source/completion authority derived from numeric decoded values.
+
+Raw exhaustive1053184 cases rrnjwIVX PASS;actual emitted full peer plus
+independent math/physical mapping/replay/drains/pin boundaries0OZWh0xl PASS,
+including poisoned physical Dst,nonzero LOW-half and undefined replay
+negative controls. Root+real peers/DMA/ALL proof/PC/source/transport faults
+2gLisw8D PASS. Actual DMA/Work m9lLdNNK and handler/cookie/clock retention
+dIGFS1xy PASS. One rerun initially omitted required zero-minimum test macros;
+compile guard refused it OFFLINE,then fixed;NO native failure. Default-OFF
+driver EXACT16a06fee;peer/source actual image a/b/c repeatEXACT.
+Native peer8fd633343fc76240cb36fe12a1c58080875550cf1719139f07df55f9915f8c8b,
+prefixdeb5d7c79bb9bdeb6a17284e4100635545471d484e8e509e559b97dde0bc1983,
+boote678476d unchanged. New driver
+93067b8f01c3c539838b0cea6c390fc904efd802ee1ab2fe7d25838cbb816447,
+tag2026102000010007,a/b repeatEXACT,guardd1ce/default432df unchanged.
+NOT staged/installed/native-qualified. New updater60 focused/full1991
+PASS,SHA95b60dce2f1aadf87a5b4314cd67025b5d72798bf55a050456e9e24cc24536a5.
+Only after current model clean END:stage/hash/exchange/bounded tests/model.
+Q4/K17408/group16 vector ops4530656->3416544,about24.6%fewer;RISC steps
+21214786->20885054. These are NOT silicon cycles or native/token speedups.
+Goal ACTIVE;no power/SD/boot/Assistant/model/runtime-library changes.
+
 October20,13:06 Vancouver (20:06 UTC) ZERO-MINIMUM GEN7 NATIVE TEST:
 Guarded clean exchange6efd/tag...0005/gen6 ->16a06fee/tag2026102000010006/
 gen7 VERIFIED,NO reboot/reset. First bounded Work synthetic session now

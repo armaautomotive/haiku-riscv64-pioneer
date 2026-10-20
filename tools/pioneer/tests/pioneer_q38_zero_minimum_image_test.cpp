@@ -19,6 +19,7 @@ struct ZeroMinimumImage:InputSumCache {
 		}
 	}
 };
+#ifndef PIONEER_Q38_ZERO_MINIMUM_IMAGE_TEST_MODEL_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3); setvbuf(stdout,nullptr,_IOLBF,0);
@@ -70,3 +71,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual zero-minimum Work image:ALL3 formats/3 widths/1,3,16 groups/two modes/two changed-input jobs bit EXACT vs cached original+independent references;poisoned physical Dst initialized,per-group clear negative control,unchanged matrix/NoC/cache/STOP,checked/Q4 retain full arithmetic;NO native/performance qualification");
 }
+#endif

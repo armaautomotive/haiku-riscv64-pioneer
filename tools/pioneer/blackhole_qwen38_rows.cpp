@@ -55,6 +55,9 @@
 #if defined(PIONEER_Q38_WORK_ZERO_MINIMUM) && !defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE)
 #error Zero-minimum Work requires the separate input-sum-cache integer peer
 #endif
+#if defined(PIONEER_Q38_NATIVE_OPERAND_STORE) && !defined(PIONEER_Q38_WORK_ZERO_MINIMUM)
+#error Native operand store requires the complete separately tested zero-minimum integer peer
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"

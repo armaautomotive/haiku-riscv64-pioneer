@@ -27,6 +27,11 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	unsigned metadataWrites=0,instructionBufferStores=0;
 	unsigned dotProbeReads=0;
+#ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+	struct NativeStoreHazard {};
+	bool poisonNativeLow=false;
+	unsigned nativeStoreOps=0;
+#endif
 	// Independent frontend replay expander; poison/undefined entries must
 	// never be read. Only register-only arithmetic may enter this prototype.
 	struct ReplayAccessFault {};
@@ -236,6 +241,22 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 						if (Accumulate && !reg) { assert(affineEligible && row>=32 && row<36 && Base::valid[row]); lr[0][lane]=Bits(Base::dst[row][col]); }
 						else { assert(affineEligible && (reg==1 || reg==2 || reg==5) && row>=96 && row<(Accumulate?112U:108U)); lr[reg][lane]=FloatDst(row,col); }
 					}
+#ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+					else if (code==0x72 && mode==5) {
+						assert(!BFloat && ownerA && !reg && ((row>=128 && row<136) || (row>=144 && row<152)));
+						unsigned logical=64+row-128-(row>=144?8:0),hi=Adj(logical),lo=hi+8;
+						if (poisonNativeLow) physical[lo][col]=1;
+						if (hi!=row || !defined[hi] || !wrote[lo][col] || physical[lo][col]) throw NativeStoreHazard{};
+						assert(!decoded[logical-64][col]);
+						uint32_t sm=lr[0][lane],mag=sm&0x7fffffff;
+						assert(mag<=(type==8?128U:type==12?15U:32U) && sm!=0x80000000);
+						// Independent Blackhole mode5:DST16 FP16-format sign,
+						// ten magnitude bits,constant exponent16. Preserve the
+						// already defined ZERO low physical half;NO new mapping.
+						physical[row][col]=uint16_t(((sm>>16)&0x8000)|(mag<<5)|16);
+						wrote[row][col]=true; decoded[logical-64][col]=true;
+					}
+#endif
 					else if (code==0x72 && mode==3) {
 						assert(defined[Adj(row)] && "partial FP32 store to undefined Dst row");
 						if (BFloat && !affineEligible) assert(ownerA && !reg && row>=64 && row<80 && !(lr[reg][lane]&65535));
@@ -251,6 +272,9 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 						physical[hi][col]=uint16_t(lr[reg][lane]>>16); physical[lo][col]=uint16_t(lr[reg][lane]); wrote[hi][col]=wrote[lo][col]=true;
 					}
 				}
+#ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+				if (code==0x72 && mode==5) nativeStoreOps++;
+#endif
 				drained=false; return;
 			}
 			if (code==8) {

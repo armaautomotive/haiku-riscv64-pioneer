@@ -2,6 +2,12 @@
 #ifndef PIONEER_Q38_VECTOR_PANEL_H
 #define PIONEER_Q38_VECTOR_PANEL_H
 #include "PioneerQ38VectorOperand.h"
+#ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+#if !defined(PIONEER_Q38_STATIC_VECTOR) || !defined(PIONEER_Q38_REPLAY_OPERAND)
+#error Native operand store requires the fixed static replayed vector peer
+#endif
+#include "PioneerQ38NativeOperand.h"
+#endif
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 #include "PioneerQ38OperandReplay.h"
 #endif
@@ -42,12 +48,20 @@ bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 	if (Block==0 && Parity==0) {
 		e.Op(replay|3); // record AND execute, before exactly Count register ops
+#ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+		if (!PioneerQ38NativeOperand(e,type,panel)) return false;
+#else
 		if (!PioneerQ38VectorOperand(e,type,panel)) return false;
+#endif
 	} else e.Op(replay);
 #else
 	if (!PioneerQ38VectorOperand(e,type,panel)) return false;
 #endif
+#ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+	return PioneerQ38NativeOperandStore(e,Block,Parity);
+#else
 	e.Op(0x72070000|(64+Block)|Parity); return true;
+#endif
 }
 #endif
 template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsigned panel)
