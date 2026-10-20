@@ -1,0 +1,20 @@
+{
+  "status": "populated_and_readback_verified; boot test pending",
+  "base_bfs": "/Volumes/HaikuBuildLocal/generated.riscv64/haiku-pioneer-bfs-quiet-ahci.img",
+  "base_sha256": "05240d2f696c8eb0809f08a7fddc051cd4aa491d7fab218a8fd71f660db0fe49",
+  "efi_source": "/Volumes/HaikuBuildLocal/generated.riscv64/haiku-mmc.image",
+  "efi_source_sha256": "e4569031a388ca2949bd0e16b364558c98b68a76b8a1a1fdd34c566c7aa68363",
+  "image": "/Users/arma/Documents/ChatGPT/HaikuOS/generated.firefox/distro-image-20261020/haiku-pioneer-firefox.image",
+  "image_sha256": "da24fb8c06422d1bbeb66816d2f18da5f11e607c340ce6c754139850fb353028",
+  "size_bytes": 838862848,
+  "bfs_image": "/Users/arma/Documents/ChatGPT/HaikuOS/generated.firefox/distro-image-20261020/haiku-pioneer-firefox.bfs",
+  "bfs_sha256": "2cf052677c0a2ca688272bf160304cc16cd73c6bc133c5f30a02041914ff3316",
+  "bfs_partition_offset": 33556480,
+  "bfs_partition_size": 805306368,
+  "firefox_sha256": "ec110400c4493420b6a375d43c2146dfce7ba4ad960aa43325fc687692d85131",
+  "haiku_package_sha256": "6a40c785862ab19913a7cf0b9ef64c90fd5998cda2c22c6636edc8f3463b348a",
+  "clone_attributes_metadata_indices": "verified by clonefs",
+  "filesystem_check": "pass",
+  "firefox_package_readback": "pass",
+  "embedded_ssh_identity_and_access_settings": "removed from output"
+}

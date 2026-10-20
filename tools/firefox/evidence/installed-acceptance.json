@@ -1,0 +1,53 @@
+{
+  "checks": {
+    "page_fixture": "FIREFOX_PAGE_PROBE_PASS \u2014 Haiku RISC-V",
+    "webdriver_input": "PASS (synthetic input; native keyboard/clipboard separate)",
+    "https_certificate_validation": {
+      "title": "Example Domain",
+      "url": "https://example.com/"
+    },
+    "multiple_tabs": "PASS",
+    "download_service": {
+      "bytes": 577,
+      "title": "Example Domain"
+    }
+  },
+  "fixture_url": "http://127.0.0.1:40929/",
+  "https_url": "https://example.com/",
+  "capabilities": {
+    "acceptInsecureCerts": false,
+    "browserName": "firefox",
+    "browserVersion": "158.0",
+    "platformName": "haiku",
+    "setWindowRect": true,
+    "unhandledPromptBehavior": "dismiss and notify",
+    "userAgent": "Mozilla/5.0 (Haiku; Haiku riscv64; rv:158.0) Gecko/20100101 Firefox/158.0",
+    "moz:buildID": "20261019163755",
+    "moz:headless": false,
+    "moz:platformVersion": "R1~beta6+development",
+    "moz:processID": 4882,
+    "moz:profile": "/boot/home/develop/firefox-port-20261019/installed-test-1/profile",
+    "moz:shutdownTimeout": 60000,
+    "pageLoadStrategy": "normal",
+    "timeouts": {
+      "implicit": 0,
+      "pageLoad": 300000,
+      "script": 30000
+    },
+    "strictFileInteractability": false,
+    "moz:accessibilityChecks": false,
+    "moz:webdriverClick": true,
+    "moz:windowless": false,
+    "proxy": {}
+  },
+  "navigator": {
+    "platform": "Haiku riscv64",
+    "userAgent": "Mozilla/5.0 (Haiku; Haiku riscv64; rv:158.0) Gecko/20100101 Firefox/158.0"
+  },
+  "features": {
+    "webAssembly": false,
+    "webRTC": false,
+    "webGL": false
+  },
+  "status": "PASS"
+}

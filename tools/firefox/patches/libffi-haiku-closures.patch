@@ -1,0 +1,14 @@
+--- a/src/closures.c
++++ b/src/closures.c
+@@ -124,6 +124,11 @@
+ #else /* !NetBSD with PROT_MPROTECT */
+ 
+ #if !FFI_MMAP_EXEC_WRIT && !FFI_EXEC_TRAMPOLINE_TABLE
++# if defined(__HAIKU__)
++/* Haiku's malloc heap is not executable. Allocate trampoline pages with
++   mmap instead of returning executable entry points into the ordinary heap. */
++#  define FFI_MMAP_EXEC_WRIT 1
++# endif
+ # if __linux__ && !defined(__ANDROID__)
+ /* This macro indicates it may be forbidden to map anonymous memory
+    with both write and execute permission.  Code compiled when this

@@ -1,0 +1,110 @@
+{
+  "haikuports_revision": "cf125b5fd31c10bfa34497f9dc8e05b4be216388",
+  "assets": [
+    {
+      "name": "firefox-158.0.source.tar.xz",
+      "url": "https://ftp.mozilla.org/pub/firefox/releases/158.0/source/firefox-158.0.source.tar.xz",
+      "sha256": "fc77f7801d7580a600af683cc367e261eb1ec74647e84a91b4a1e3c1dd5aa2bb"
+    },
+    {
+      "name": "firefox-158.0.recipe",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/www-client/firefox/firefox-158.0.recipe",
+      "sha256": "2662ee83c801eff6ca6d65599a03f07aeddf7743bedb57af7ef58438b641f92f"
+    },
+    {
+      "name": "firefox-158.0.patchset",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/www-client/firefox/patches/firefox-158.0.patchset",
+      "sha256": "c620f841ffbd1f154e8083af0ad90b09f27a5ccad08011a7f4b13af11bec979b"
+    },
+    {
+      "name": "firefox_launcher-158.0.patchset",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/www-client/firefox/patches/firefox_launcher-158.0.patchset",
+      "sha256": "2019a650564d87b2c9b62ba74379da084fa4442a05a9aab20efa7de98e9ebc30"
+    },
+    {
+      "name": "mozconfig_native",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/www-client/firefox/additional-files/mozconfig_native",
+      "sha256": "0db9ff9ddcc03e955f827b12a9fe595b82ff3bbfe719991794df2091fa9a562d"
+    },
+    {
+      "name": "nspr-4.39.tar.gz",
+      "url": "https://ftp.mozilla.org/pub/mozilla.org/nspr/releases/v4.39/src/nspr-4.39.tar.gz",
+      "sha256": "bbd02ee87a55676063a63e5bc819e0227de2666b47307b2a0134414cdf42368e"
+    },
+    {
+      "name": "nspr-4.39.patchset",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/dev-libs/nspr/patches/nspr-4.39.patchset",
+      "sha256": "86869e0c60a90f6d0ce25d92c5cd2a794767ae971745ec72c4b7369512444fd8"
+    },
+    {
+      "name": "nss-3.130.tar.gz",
+      "url": "https://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_3_130_RTM/src/nss-3.130.tar.gz",
+      "sha256": "afab9f82c78bfa3e7e8b4a61ac31922675c58203f67ff385a2714df7fe9bd5c5"
+    },
+    {
+      "name": "nss-3.130.patchset",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/dev-libs/nss/patches/nss-3.130.patchset",
+      "sha256": "e7b77ea2a2b65f4cdf6b7c8714d7ec42ab6eed0ba88623243db09ae632c70ca1"
+    },
+    {
+      "name": "libffi-3.4.8.tar.gz",
+      "url": "https://github.com/libffi/libffi/releases/download/v3.4.8/libffi-3.4.8.tar.gz",
+      "sha256": "bc9842a18898bfacb0ed1252c4febcc7e78fa139fd27fdc7a3e30d9d9356119b"
+    },
+    {
+      "name": "freetype-2.14.3.tar.xz",
+      "url": "https://download.savannah.gnu.org/releases/freetype/freetype-2.14.3.tar.xz",
+      "sha256": "36bc4f1cc413335368ee656c42afca65c5a3987e8768cc28cf11ba775e785a5f"
+    },
+    {
+      "name": "fontconfig-2.18.2.tar.xz",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/890/packages/generic/fontconfig/2.18.2/fontconfig-2.18.2.tar.xz",
+      "sha256": "cf8e6576ef0484c15079bdaf77cd9c51c464df5365814ada4d3ee7331ea31eb5"
+    },
+    {
+      "name": "fontconfig-2.18.2.patchset",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/media-libs/fontconfig/patches/fontconfig-2.18.2.patchset",
+      "sha256": "c7b8431ae2d2f585395c444a8810bfebad2ed1c1a6ffc05ee6b3f3de2083da59"
+    },
+    {
+      "name": "expat-2.7.3.tar.xz",
+      "url": "https://github.com/libexpat/libexpat/releases/download/R_2_7_3/expat-2.7.3.tar.xz",
+      "sha256": "71df8f40706a7bb0a80a5367079ea75d91da4f8c65c58ec59bcdfbf7decdab9f"
+    },
+    {
+      "name": "pkgconf-2.3.0.tar.xz",
+      "url": "https://distfiles.ariadne.space/pkgconf/pkgconf-2.3.0.tar.xz",
+      "sha256": "3a9080ac51d03615e7c1910a0a2a8df08424892b5f13b0628a204d3fcce0ea8b"
+    },
+    {
+      "name": "m4-1.4.19.tar.xz",
+      "url": "https://ftp.gnu.org/gnu/m4/m4-1.4.19.tar.xz",
+      "sha256": "63aede5c6d33b6d9b13511cd0be2cac046f2e70fd0a07aa9573a04a82783af96"
+    },
+    {
+      "name": "autoconf-2.72.tar.xz",
+      "url": "https://ftp.gnu.org/gnu/autoconf/autoconf-2.72.tar.xz",
+      "sha256": "ba885c1319578d6c94d46e9b0dceb4014caafe2490e437a0dbca3f270a223f5a"
+    },
+    {
+      "name": "rustup-init-1.29.1",
+      "url": "https://static.rust-lang.org/rustup/archive/1.29.1/aarch64-apple-darwin/rustup-init",
+      "sha256": "ec1b9233e7f72990ecd8e62063fa7f6c3dfc2bec8e97f88bff165f9100ac696a"
+    },
+    {
+      "name": "libevent-2.1.13.recipe",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/dev-libs/libevent/libevent-2.1.13.recipe",
+      "sha256": "853644916f5ba29f824580b7c7776f5f15061d25842a88c71c7d57d52b7dc943"
+    },
+    {
+      "name": "libevent-2.1.13.patchset",
+      "url": "https://raw.githubusercontent.com/haikuports/haikuports/cf125b5fd31c10bfa34497f9dc8e05b4be216388/dev-libs/libevent/patches/libevent-2.1.13.patchset",
+      "sha256": "ac09c687c1ab76d251e649dbddeda7f5e4e77dcfd570c4d01294cf4a884192c5"
+    },
+    {
+      "name": "libevent-2.1.13-stable.tar.gz",
+      "url": "https://github.com/libevent/libevent/releases/download/release-2.1.13-stable/libevent-2.1.13-stable.tar.gz",
+      "sha256": "f7e9383b8c0baa81b687e5b5eecc01beefaf1b19b64151d95ed61647fe7a315c"
+    }
+  ]
+}

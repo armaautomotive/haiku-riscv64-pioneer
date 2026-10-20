@@ -1,0 +1,64 @@
+{
+  "status": "experimental",
+  "validated_at_utc": "2026-10-20 00:13:25 UTC",
+  "package": {
+    "name": "firefox_experimental",
+    "version": "158.0-1",
+    "architecture": "riscv64",
+    "filename": "firefox_experimental-158.0-1-riscv64.hpkg",
+    "size_bytes": 136839823,
+    "sha256": "ec110400c4493420b6a375d43c2146dfce7ba4ad960aa43325fc687692d85131",
+    "artifact": "generated.firefox/packages/firefox_experimental-158.0-1-riscv64.hpkg",
+    "compression": "zlib, level 1",
+    "repository_bundle": "tools/firefox/packages/bundle.json"
+  },
+  "browser": {
+    "version": "158.0",
+    "branding": "unbranded / Nightly",
+    "build_id": "20261019163755",
+    "source_stamp": "eb9a6e3a736802c8e080a76c44dc81f409d99d54",
+    "haikuports_revision": "cf125b5fd31c10bfa34497f9dc8e05b4be216388",
+    "tested_platform": "Haiku R1~beta6+development riscv64 on Pioneer"
+  },
+  "tests": {
+    "cross_build": "pass",
+    "native_dependency_probes": "pass",
+    "native_browser": "pass",
+    "extracted_package": "pass",
+    "native_window": "visually_verified",
+    "dom_css_javascript_canvas_storage_workers_fetch": "pass",
+    "synthetic_webdriver_input": "pass",
+    "multiple_tabs": "pass",
+    "https_with_certificate_validation": "pass",
+    "browser_download_service": "pass",
+    "native_quit_parent_and_children": "pass",
+    "installed_system_package": "pass",
+    "installed_default_profile": "pass",
+    "deskbar_command_links": "pass"
+  },
+  "features": {
+    "native_haiku_windows": true,
+    "software_rendering": true,
+    "jit": false,
+    "webassembly": false,
+    "webrtc": false,
+    "webgl": false,
+    "automatic_updater": false
+  },
+  "remaining_release_checks": [
+    "Physical keyboard and native clipboard",
+    "Download UI and file picker",
+    "Media playback and printing",
+    "Extended browsing and stability",
+    "Additional font coverage; Arabic glyphs were missing in the sample"
+  ],
+  "evidence": {
+    "package_acceptance": "generated.firefox/artifacts/package-acceptance-2.json",
+    "native_window": "generated.firefox/artifacts/package-native-window-2.png",
+    "native_quit_log": "generated.firefox/logs/package-native-window-and-quit-2.log",
+    "native_package_build_log": "generated.firefox/logs/native-package-build-2.log",
+    "installed_acceptance": "tools/firefox/evidence/installed-acceptance.json",
+    "installed_native_window": "tools/firefox/evidence/installed-native-window.png",
+    "image": "tools/firefox/evidence/image-receipt.json"
+  }
+}

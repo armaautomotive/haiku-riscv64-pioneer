@@ -21,7 +21,7 @@ Options:
   --no-sync            Do not synchronize the source checkout to the mirror.
   -h, --help           Show this help.
 
-The image mode extracts a 300 MiB fresh-install BFS filesystem payload.
+The image mode extracts a fresh-install BFS payload using the image's geometry.
 It does not preserve an installed card's settings or enlarged filesystem.
 Do not use it as a whole-filesystem update to an expanded persistent card;
 pioneer_sd_deploy.sh rejects filesystem shrinkage. It does not modify an SD card.
@@ -123,10 +123,9 @@ if [ -z "$PAYLOAD" ]; then
 	PAYLOAD=$BUILD_OUTPUT/haiku-pioneer-bfs.img
 fi
 
-# Partition 2 begins at sector 65540 in the generated image. The Haiku image
-# filesystem is 614400 sectors (300 MiB), even though the physical SD partition
-# is intentionally larger.
-dd if="$IMAGE" of="$PAYLOAD" bs=512 skip=65540 count=614400 status=none
+# Firefox increases the image size. Read both the MBR and BFS geometry rather
+# than truncating larger images to the former 300 MiB payload size.
+python3 "$SCRIPT_DIR/extract_bfs_image.py" "$IMAGE" "$PAYLOAD"
 
 IMAGE_HASH=$(shasum -a 256 "$IMAGE" | awk '{print $1}')
 PAYLOAD_HASH=$(shasum -a 256 "$PAYLOAD" | awk '{print $1}')

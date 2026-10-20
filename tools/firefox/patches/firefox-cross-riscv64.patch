@@ -1,0 +1,210 @@
+--- a/gfx/skia/skia/include/private/base/SkFeatures.h
++++ b/gfx/skia/skia/include/private/base/SkFeatures.h
+@@ -26,7 +26,7 @@
+     #elif defined(linux) || defined(__linux) || defined(__FreeBSD__) || \
+           defined(__OpenBSD__) || defined(__sun) || defined(__NetBSD__) || \
+           defined(__DragonFly__) || defined(__Fuchsia__) || \
+-          defined(__GLIBC__) || defined(__GNU__) || defined(__unix__)
++          defined(__GLIBC__) || defined(__GNU__) || defined(__unix__) || defined(__HAIKU__)
+         #define SK_BUILD_FOR_UNIX
+     #elif TARGET_OS_IPHONE || TARGET_IPHONE_SIMULATOR
+         #define SK_BUILD_FOR_IOS
+--- a/build/moz.configure/rust.configure
++++ b/build/moz.configure/rust.configure
+@@ -576,10 +576,13 @@
+     return rustc_target
+ 
+ 
+-@depends(rustc, target, rust_supported_targets, arm_target, when=rust_compiler)
++option("--with-rust-target", nargs=1, help="Use an explicit Rust target, including a custom target from RUST_TARGET_PATH", when=rust_compiler)
++
++
++@depends(rustc, target, rust_supported_targets, arm_target, "--with-rust-target", when=rust_compiler)
+ @checking("for rust target triplet")
+-def rust_target_triple(rustc, target, rust_supported_targets, arm_target):
+-    rustc_target = detect_rustc_target(target, arm_target, rust_supported_targets)
++def rust_target_triple(rustc, target, rust_supported_targets, arm_target, explicit_target):
++    rustc_target = explicit_target[0] if explicit_target else detect_rustc_target(target, arm_target, rust_supported_targets)
+     assert_rust_compile(target, rustc_target, rustc)
+     return rustc_target
+ 
+--- a/build/moz.configure/toolchain.configure
++++ b/build/moz.configure/toolchain.configure
+@@ -257,6 +257,7 @@
+     @depends(
+         "--with-macos-sdk",
+         host,
++        target,
+         bootstrap_path(
+             "MacOSX{}.sdk".format(mac_sdk_min_version()),
+             when=depends("--with-macos-sdk")(lambda x: not x),
+@@ -266,7 +267,7 @@
+     @imports(_from="__builtin__", _import="Exception")
+     @imports(_from="os.path", _import="isdir")
+     @imports(_from="os", _import="listdir")
+-    def macos_sdk(sdk, host, bootstrapped):
++    def macos_sdk(sdk, host, target, bootstrapped):
+         if bootstrapped:
+             sdk = [bootstrapped]
+         if sdk:
+@@ -308,7 +309,7 @@
+                 "tools are selected during the Xcode/Developer Tools installation."
+                 % sdk
+             )
+-        if version < Version(mac_sdk_min_version()):
++        if target.os == "OSX" and version < Version(mac_sdk_min_version()):
+             die(
+                 'SDK version "%s" is too old. Please upgrade to at least %s. Try '
+                 "updating your system Xcode." % (version, mac_sdk_min_version())
+--- a/config/system-headers.mozbuild
++++ b/config/system-headers.mozbuild
+@@ -315,6 +315,8 @@
+     "gmodule.h",
+     "gnome.h",
+     "gnu/libc-version.h",
++    "gnu/pthread.h",
++    "gnu/sched.h",
+     "grp.h",
+     "gssapi_generic.h",
+     "gssapi/gssapi_generic.h",
+--- a/dom/base/Navigator.cpp
++++ b/dom/base/Navigator.cpp
+@@ -2065,7 +2065,11 @@
+   // Always return "MacIntel", even on ARM64 macOS like Safari does.
+   aPlatform.AssignLiteral("MacIntel");
+ #elif defined(XP_HAIKU)
++#  if defined(__riscv) && __riscv_xlen == 64
++  aPlatform.AssignLiteral("Haiku riscv64");
++#  else
+   aPlatform.AssignLiteral("Haiku x86_64");
++#  endif
+ #elif defined(ANDROID)
+   aPlatform.AssignLiteral("Linux armv81");
+ #else
+--- a/gfx/gl/GLContextProvider.h
++++ b/gfx/gl/GLContextProvider.h
+@@ -80,9 +80,13 @@
+ #endif
+ 
+ #ifdef MOZ_GL_PROVIDER
+-#  define GL_CONTEXT_PROVIDER_NAME MOZ_GL_PROVIDER
+-#  include "GLContextProviderImpl.h"
+-#  undef GL_CONTEXT_PROVIDER_NAME
++// Haiku's BGL, Null, and EGL provider classes are already declared above.
++#  if !defined(MOZ_WIDGET_HAIKU)
++#    define GL_CONTEXT_PROVIDER_NAME MOZ_GL_PROVIDER
++#    include "GLContextProviderImpl.h"
++#    undef GL_CONTEXT_PROVIDER_NAME
++#  endif
++#  undef GL_CONTEXT_PROVIDER_DEFAULT
+ #  define GL_CONTEXT_PROVIDER_DEFAULT MOZ_GL_PROVIDER
+ #endif
+ 
+--- a/ipc/chromium/src/third_party/libeventcommon.mozbuild
++++ b/ipc/chromium/src/third_party/libeventcommon.mozbuild
+@@ -13,7 +13,10 @@
+ else:
+     libevent_include_suffix = 'linux'
+ 
+-if CONFIG["TARGET_KERNEL"] != "WINNT" and not CONFIG['MOZ_SYSTEM_LIBEVENT']:
++if CONFIG['MOZ_SYSTEM_LIBEVENT']:
++    CFLAGS += CONFIG['MOZ_LIBEVENT_CFLAGS']
++    CXXFLAGS += CONFIG['MOZ_LIBEVENT_CFLAGS']
++elif CONFIG["TARGET_KERNEL"] != "WINNT":
+     DEFINES['HAVE_CONFIG_H'] = True
+     LOCAL_INCLUDES += sorted([
+         'libevent',
+--- a/js/src/threading/posix/PosixThread.cpp
++++ b/js/src/threading/posix/PosixThread.cpp
+@@ -6,6 +6,12 @@
+ 
+ #include <chrono>
+ #include <thread>
++
++#ifdef XP_HAIKU
++// Thread naming is declared in Haiku's GNU compatibility headers.
++#  include <gnu/sched.h>
++#  include <gnu/pthread.h>
++#endif
+ 
+ #include "js/Utility.h"
+ #include "threading/posix/ThreadPlatformData.h"
+--- a/netwerk/protocol/http/nsHttpHandler.cpp
++++ b/netwerk/protocol/http/nsHttpHandler.cpp
+@@ -1225,7 +1225,11 @@
+ #elif defined(XP_IOS)
+   mOscpu.AssignLiteral("iPhone");
+ #elif defined(XP_HAIKU)
++#  if defined(__riscv) && __riscv_xlen == 64
++  mOscpu.AssignLiteral("Haiku riscv64");
++#  else
+   mOscpu.AssignLiteral("Haiku x86_64");
++#  endif
+ #else
+   mOscpu.AssignLiteral("Linux x86_64");
+ #endif
+--- a/third_party/msgpack/include/msgpack/predef/other/endian.h
++++ b/third_party/msgpack/include/msgpack/predef/other/endian.h
+@@ -54,7 +54,7 @@
+  */
+ #if !MSGPACK_ENDIAN_BIG_BYTE && !MSGPACK_ENDIAN_BIG_WORD && \
+     !MSGPACK_ENDIAN_LITTLE_BYTE && !MSGPACK_ENDIAN_LITTLE_WORD
+-#   if MSGPACK_LIB_C_GNU || MSGPACK_OS_ANDROID
++#   if MSGPACK_LIB_C_GNU || MSGPACK_OS_ANDROID || defined(__HAIKU__)
+ #       include <endian.h>
+ #   else
+ #       if MSGPACK_OS_MACOS
+--- a/third_party/rust/cc/src/lib.rs
++++ b/third_party/rust/cc/src/lib.rs
+@@ -2696,7 +2696,7 @@
+                     // get the 32i/32imac/32imc/64gc/64imac/... part
+                     let arch = &target.full_arch[5..];
+                     if arch.starts_with("64") {
+-                        if matches!(target.os, "linux" | "freebsd" | "netbsd" | "managarm") {
++                        if matches!(target.os, "linux" | "freebsd" | "netbsd" | "managarm" | "haiku") {
+                             cmd.args.push(("-march=rv64gc").into());
+                             cmd.args.push("-mabi=lp64d".into());
+                         } else {
+--- a/toolkit/library/moz.build
++++ b/toolkit/library/moz.build
+@@ -112,8 +112,9 @@
+     OS_LIBS += [
+         "be",
+         "game",
+-        "GL",
+-    ]
++    ]
++    if CONFIG["MOZ_GL_PROVIDER"] != "Null":
++        OS_LIBS += ["GL"]
+ 
+ # The real libxul definition is in ./build/moz.build, but we define a
+ # xul library here such that # FINAL_LIBRARY = 'xul' refers to here, which
+--- a/xpcom/base/nsSystemInfo.cpp
++++ b/xpcom/base/nsSystemInfo.cpp
+@@ -1368,6 +1368,7 @@
+       }
+     }
+ 
++#if defined(__i386__) || defined(__x86_64__)
+     cpuid_info baseInfo;
+     if (get_cpuid(&baseInfo, 0, 0) == B_OK) {
+       char vendor[13];
+@@ -1425,6 +1426,7 @@
+         }
+       }
+     }
++#endif
+   }
+ #else
+   info.cpuCount = PR_GetNumberOfProcessors();
+--- a/xpcom/reflect/xptcall/md/unix/moz.build
++++ b/xpcom/reflect/xptcall/md/unix/moz.build
+@@ -213,7 +213,7 @@
+                 "-fno-integrated-as",
+             ]
+ 
+-if CONFIG["OS_ARCH"] in ("Linux", "OpenBSD") and CONFIG["TARGET_CPU"] == "riscv64":
++if CONFIG["OS_ARCH"] in ("Linux", "OpenBSD", "Haiku") and CONFIG["TARGET_CPU"] == "riscv64":
+     SOURCES += [
+         "xptcinvoke_asm_riscv64.S",
+         "xptcinvoke_riscv64.cpp",

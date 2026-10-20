@@ -1,0 +1,104 @@
+--- a/launcher.cpp
++++ b/launcher.cpp
+@@ -3,6 +3,9 @@
+  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+ 
+ #include <cstdlib>
++#include <cstdio>
++#include <Directory.h>
++#include <FindDirectory.h>
+ #include <cstring>
+ #include <vector>
+ 
+@@ -18,8 +21,8 @@
+ #include <support/StringList.h>
+ #include <fs_attr.h>
+ 
+-static const char* const kLauncherSignature = "application/x-vnd.firefox-launcher";
+-static const char* const kTargetBinaryName  = "Firefox";
++static const char* const kLauncherSignature = "application/x-vnd.Haiku-FirefoxExperimental";
++static const char* const kTargetBinaryName  = "app/firefox";
+ 
+ class BrowserLauncherApp : public BApplication {
+  public:
+@@ -47,7 +50,8 @@
+ 
+   while (get_next_image_info(B_CURRENT_TEAM, &cookie, &info) == B_OK) {
+     if (info.type == B_APP_IMAGE) {
+-      binPath.SetTo(info.name);
++      BEntry executable(info.name, true);
++      if (executable.GetPath(&binPath) != B_OK) return BString();
+       binPath.GetParent(&binPath);
+       break;
+     }
+@@ -93,6 +97,13 @@
+ 
+ void BrowserLauncherApp::ArgvReceived(int32 argc, char** argv) {
+   for (int32 i = 1; i < argc; i++) {
++    // Profile paths and names are command-line values, not document URLs.
++    if (i > 1 && (strcmp(argv[i - 1], "--profile") == 0 ||
++                  strcmp(argv[i - 1], "-profile") == 0 ||
++                  strcmp(argv[i - 1], "-P") == 0 || strcmp(argv[i - 1], "-p") == 0)) {
++      AddArgument(argv[i]);
++      continue;
++    }
+     BEntry entry(argv[i], true);
+     BPath path;
+     if (entry.Exists() && entry.GetPath(&path) == B_OK) {
+@@ -120,6 +131,46 @@
+ 
+ void BrowserLauncherApp::ReadyToRun() {
+   BString binPath = GetBinPath();
++  if (binPath.IsEmpty()) std::exit(1);
++
++  BPath bundleRoot(binPath.String());
++  bundleRoot.GetParent(&bundleRoot);
++  bundleRoot.GetParent(&bundleRoot);
++  BString libraryPath;
++  libraryPath.SetToFormat("%s/app:%s/app/lib:%s/lib:/boot/system/lib",
++      bundleRoot.Path(), bundleRoot.Path(), bundleRoot.Path());
++  setenv("LIBRARY_PATH", libraryPath.String(), 1);
++  BPath fontConfig(bundleRoot);
++  fontConfig.Append("etc/fonts");
++  setenv("FONTCONFIG_PATH", fontConfig.Path(), 1);
++  fontConfig.Append("fonts.conf");
++  setenv("FONTCONFIG_FILE", fontConfig.Path(), 1);
++  if (!getenv("XDG_CACHE_HOME")) {
++    setenv("XDG_CACHE_HOME", "/boot/home/config/cache", 1);
++  }
++
++  // Keep this experimental build's default profile separate from other browsers.
++  BPath defaultProfile;
++  bool explicitProfile = false;
++  for (int32 i = 0; i < fArguments.CountStrings(); ++i) {
++    BString argument = fArguments.StringAt(i);
++    if (argument == "--profile" || argument == "-profile" ||
++        argument == "-P" || argument == "-p" ||
++        argument.ICompare("--ProfileManager") == 0 ||
++        argument.IFindFirst("--profile=") == 0) {
++      explicitProfile = true;
++    }
++  }
++  if (!explicitProfile &&
++      find_directory(B_USER_SETTINGS_DIRECTORY, &defaultProfile) == B_OK) {
++    defaultProfile.Append("FirefoxExperimental");
++    if (create_directory(defaultProfile.Path(), 0755) != B_OK) {
++      fprintf(stderr, "Cannot create the Firefox Experimental profile\n");
++      std::exit(1);
++    }
++    AddArgument("--profile");
++    AddArgument(defaultProfile.Path());
++  }
+ 
+   std::vector<const char*> args;
+   args.push_back(binPath.String());
+@@ -136,6 +187,9 @@
+ 
+   if (thread >= B_OK) {
+     resume_thread(thread);
++  } else {
++    fprintf(stderr, "Cannot launch Firefox Experimental: %s\n", strerror(thread));
++    std::exit(1);
+   }
+ 
+   Quit();

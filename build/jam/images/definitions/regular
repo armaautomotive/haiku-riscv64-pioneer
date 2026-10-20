@@ -3,6 +3,11 @@
 # import everything from the minimum image
 include [ FDirName $(HAIKU_BUILD_RULES_DIR) images definitions minimum ] ;
 
+# Include the distribution's verified native browser on RISC-V.
+if $(TARGET_ARCH) = riscv64 {
+	HAIKU_IMAGE_FIREFOX ?= 1 ;
+}
+
 SEARCH on [ FGristFiles userguide quicktour welcome ]
 	= [ FDirName $(HAIKU_TOP) data bin ] ;
 SYSTEM_BIN += userguide quicktour welcome ;

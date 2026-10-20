@@ -1,0 +1,22 @@
+{
+  "filename": "firefox_experimental-158.0-1-riscv64.hpkg",
+  "size_bytes": 136839823,
+  "sha256": "ec110400c4493420b6a375d43c2146dfce7ba4ad960aa43325fc687692d85131",
+  "parts": [
+    {
+      "filename": "firefox_experimental-158.0-1-riscv64.hpkg.part01",
+      "size_bytes": 50331648,
+      "sha256": "9add104b85d574f1726428f93af98ffccf52c8027efea21c611a7627033d6e67"
+    },
+    {
+      "filename": "firefox_experimental-158.0-1-riscv64.hpkg.part02",
+      "size_bytes": 50331648,
+      "sha256": "80f8d268e10bf774d2ba91449c9a4660ed52dd477d7516b6f3d17f0643645b9f"
+    },
+    {
+      "filename": "firefox_experimental-158.0-1-riscv64.hpkg.part03",
+      "size_bytes": 36176527,
+      "sha256": "fb7f4efa7681f1d87aa9c7fa444f9f6dc1e14070cd3c547b8c5b0f7e4455608b"
+    }
+  ]
+}

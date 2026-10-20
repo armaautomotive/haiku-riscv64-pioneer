@@ -1,0 +1,44 @@
+--- a/configure.in
++++ b/configure.in
+@@ -814,6 +814,7 @@
+         mingw*)       OS_ARCH=WINNT CPU_ARCH=x86 ;;
+         cygwin*)      OS_ARCH=WINNT ;;
+         darwin*)      OS_ARCH=Darwin ;;
++        haiku*)       OS_ARCH=Haiku ;;
+         riscos*)      OS_ARCH=RISCOS ;;
+     esac
+ else
+@@ -1406,7 +1407,10 @@
+     USE_PTHREADS=1
+     IMPL_STRATEGY=_PTH
+     MDCPUCFG_H=_haiku.cfg
+-    if test -n "$USE_64"; then
++    CPU_ARCH=$target_cpu
++    if test "$CPU_ARCH" = riscv64; then
++        PR_MD_ASFILES=
++    elif test -n "$USE_64"; then
+         PR_MD_ASFILES=os_Linux_x86_64.s
+     else
+         PR_MD_ASFILES=os_Linux_x86.s
+--- a/pr/include/md/_haiku.h
++++ b/pr/include/md/_haiku.h
+@@ -26,6 +26,8 @@
+ #define _PR_SI_ARCHITECTURE "powerpc"
+ #elif defined(__aarch64__)
+ #define _PR_SI_ARCHITECTURE "aarch64"
++#elif defined(__riscv) && __riscv_xlen == 64
++#define _PR_SI_ARCHITECTURE "riscv64"
+ #elif defined(__arm__)
+ #define _PR_SI_ARCHITECTURE "arm"
+ #elif defined(__mips64__)
+--- a/pr/include/md/_haiku.cfg
++++ b/pr/include/md/_haiku.cfg
+@@ -16,7 +16,7 @@
+ 
+ #define PR_AF_INET6 5  /* same as AF_INET6 */
+ 
+-#if defined(__x86_64__)
++#if defined(__x86_64__) || (defined(__riscv) && __riscv_xlen == 64)
+ 
+ #ifdef __ILP32__
+ 

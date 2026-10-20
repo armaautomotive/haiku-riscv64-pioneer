@@ -88,6 +88,10 @@ if $(HAIKU_IMAGE_HOST_NAME) {
 # Execute pre-image user config rules.
 UserBuildConfigRulePreImage	;
 
+if $(HAIKU_IMAGE_FIREFOX) = 1 {
+	include [ FDirName $(HAIKU_TOP) tools firefox ImageRules ] ;
+}
+
 # Set image name and directory defaults and locate the image.
 HAIKU_IMAGE_NAME ?= $(HAIKU_DEFAULT_IMAGE_NAME) ;
 HAIKU_IMAGE_DIR ?= $(HAIKU_DEFAULT_IMAGE_DIR) ;

@@ -1,0 +1,28 @@
+# Included after the image's UserBuildConfig hook when Firefox is requested.
+if $(TARGET_ARCH) != riscv64 {
+	Exit "The bundled experimental Firefox package requires riscv64." ;
+}
+
+local firefoxDirectory = [ FDirName $(HAIKU_TOP) tools firefox ] ;
+local firefoxPackage = [ FDirName $(HAIKU_TOP) generated.firefox packages
+	firefox_experimental-158.0-1-riscv64.hpkg ] ;
+local firefoxInputs = [ FDirName $(firefoxDirectory) bundled_package.py ]
+	[ FDirName $(firefoxDirectory) verified-build.json ]
+	[ FDirName $(firefoxDirectory) packages bundle.json ]
+	[ FDirName $(firefoxDirectory) packages firefox_experimental-158.0-1-riscv64.hpkg.part01 ]
+	[ FDirName $(firefoxDirectory) packages firefox_experimental-158.0-1-riscv64.hpkg.part02 ]
+	[ FDirName $(firefoxDirectory) packages firefox_experimental-158.0-1-riscv64.hpkg.part03 ] ;
+
+Depends $(firefoxPackage) : $(firefoxInputs) ;
+FIREFOX_PYTHON on $(firefoxPackage) = $(HOST_PYTHON) ;
+FIREFOX_ASSEMBLER on $(firefoxPackage) = $(firefoxInputs[1]) ;
+actions AssembleBundledFirefox
+{
+	"$(FIREFOX_PYTHON)" "$(FIREFOX_ASSEMBLER)" --output "$(1)"
+}
+
+AssembleBundledFirefox $(firefoxPackage) : $(firefoxInputs) ;
+
+AddFilesToHaikuImage system packages : $(firefoxPackage) ;
+# The former 300 MiB default is too small for the browser and fonts.
+HAIKU_IMAGE_SIZE ?= 768 ;

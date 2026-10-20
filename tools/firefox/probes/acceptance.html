@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Firefox RISC-V browser probe — running</title>
+<style>
+  body { margin: 0; padding: 40px; font: 18px/1.5 sans-serif; background: #edf1f4; color: #182b3a; }
+  main { max-width: 900px; margin: auto; background: white; padding: 32px; border-radius: 16px; }
+  h1 { margin-top: 0; } #checks { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .check { padding: 12px; background: #e8edf1; border-radius: 6px; }
+  .pass { background: #d8f5df; } .fail { background: #ffe0e0; }
+  input { font: inherit; padding: 8px; width: 90%; } canvas { display: block; margin: 24px 0; }
+  #result { font-weight: bold; padding: 16px; background: #e8edf1; }
+</style>
+<main>
+  <h1>Firefox on Haiku / RISC-V</h1>
+  <p>This page checks the running browser. Dependency probe results are separate.</p>
+  <div id="checks"></div>
+  <canvas id="canvas" width="320" height="80"></canvas>
+  <p><label>Manual keyboard and clipboard check<br><input placeholder="Type or paste here"></label></p>
+  <p id="result">Running browser checks…</p>
+  <small id="agent"></small>
+</main>
+<script>
+(async () => {
+  const checks = document.getElementById('checks');
+  const result = document.getElementById('result');
+  document.getElementById('agent').textContent = navigator.userAgent;
+  let stage = 'startup';
+  function assert(value) { if (!value) throw new Error(stage); }
+  function passed(label) {
+    const row = document.createElement('div'); row.className = 'check pass';
+    row.textContent = label + ': PASS'; checks.append(row);
+  }
+  try {
+    stage = 'DOM and CSS grid';
+    assert(getComputedStyle(checks).display === 'grid');
+    passed(stage);
+    stage = 'JavaScript and promises';
+    const values = await Promise.all([1, 2, 3].map(async value => value * value));
+    assert(values.join(',') === '1,4,9'); passed(stage);
+    stage = 'Canvas pixel readback';
+    const context = document.getElementById('canvas').getContext('2d');
+    context.fillStyle = 'rgb(31,99,200)'; context.fillRect(0, 0, 320, 80);
+    assert(Array.from(context.getImageData(10, 10, 1, 1).data).join(',') === '31,99,200,255');
+    passed(stage);
+    stage = 'Local storage';
+    localStorage.setItem('haiku-browser-probe', 'riscv64');
+    assert(localStorage.getItem('haiku-browser-probe') === 'riscv64');
+    localStorage.removeItem('haiku-browser-probe'); passed(stage);
+    stage = 'Web worker messaging';
+    const blob = URL.createObjectURL(new Blob(['onmessage = event => postMessage(event.data * 7)'], {type: 'text/javascript'}));
+    const worker = new Worker(blob);
+    const reply = await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error(stage)), 10000);
+      worker.onmessage = event => { clearTimeout(timer); resolve(event.data); };
+      worker.onerror = event => { clearTimeout(timer); reject(new Error(stage)); };
+      worker.postMessage(6);
+    });
+    worker.terminate(); URL.revokeObjectURL(blob);
+    assert(reply === 42); passed(stage);
+    stage = 'HTTP fetch';
+    assert(await (await fetch('/echo', {cache: 'no-store'})).text() === 'network-ok');
+    passed(stage);
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    result.textContent = 'FIREFOX_PAGE_PROBE_PASS'; result.className = 'pass';
+    document.title = 'FIREFOX_PAGE_PROBE_PASS — Haiku RISC-V';
+    await fetch('/report?status=pass', {cache: 'no-store'});
+  } catch (error) {
+    result.textContent = 'FAIL: ' + stage; result.className = 'fail';
+    document.title = 'FIREFOX_PAGE_PROBE_FAIL — ' + stage;
+    await fetch('/report?status=fail', {cache: 'no-store'}).catch(() => {});
+  }
+})();
+</script>
+</html>

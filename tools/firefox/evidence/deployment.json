@@ -1,0 +1,17 @@
+{
+  "installed_at_utc": "2026-10-20 00:55 UTC",
+  "system": "Haiku R1~beta6+development riscv64 on Pioneer",
+  "package": "/boot/system/packages/firefox_experimental-158.0-1-riscv64.hpkg",
+  "package_sha256": "ec110400c4493420b6a375d43c2146dfce7ba4ad960aa43325fc687692d85131",
+  "installation_method": "pkgman install -R -y (local verified HPKG)",
+  "system_install": "pass",
+  "normal_command": "/boot/system/bin/firefox-experimental",
+  "deskbar_entry": "Applications/Firefox Experimental",
+  "normal_profile": "/boot/home/config/settings/FirefoxExperimental",
+  "default_profile_launch": "Example Domain \u2014 Nightly (native window title verified)",
+  "native_installed_acceptance": "pass",
+  "normal_native_quit": "pass (test browser and children exited)",
+  "left_open_for_user": "normal browser at https://example.com/; automation disabled",
+  "image_receipt": "tools/firefox/evidence/image-receipt.json",
+  "image_boot_test": "pending"
+}
