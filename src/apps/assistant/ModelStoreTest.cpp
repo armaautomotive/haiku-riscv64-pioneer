@@ -63,7 +63,9 @@ int main(int argc, char** argv)
 	assert(AssistantModelIndex("/tmp/not-a-catalog-model.gguf") == -1);
 	assert(AssistantModelPath(kAssistantModelCount).IsEmpty());
 	assert(!AssistantModelPresent(kAssistantModelCount));
-	assert(InstallAssistantModel(3, cancelled, BMessenger(), error) == B_NOT_SUPPORTED);
+	// Catalog policy ONLY: never download the 19 GB model as a unit test.
+	assert(kAssistantModels[kAssistantQwen27Model].compatible);
+	assert(!strcmp(AssistantModelBackend(kAssistantQwen27Model), "p100a-qwen27-work"));
 	assert(InstallAssistantModel(kAssistantModelCount, cancelled, BMessenger(), error) == B_NOT_SUPPORTED);
 	assert(VerifyAssistantModel(kAssistantModelCount, "/tmp/missing", cancelled, error) == B_BAD_VALUE);
 	char fixture[] = "/tmp/assistant-model-test-XXXXXX";

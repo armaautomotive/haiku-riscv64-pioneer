@@ -1,5 +1,50 @@
 # Native build status
 
+October20,10:16 Vancouver (17:16 UTC) ASSISTANT27B WORK OPTION:
+Added separate p100a-qwen27-work hardware/model selection for the pinned
+Qwen3.8-27B Q4_K_M file. Isolated persistent HaikuAssistantQwen27 worker
+avoids the older0.6B backend's process-global lifecycle. Qualified Work
+projections only;CPU attention/recurrent state/norms remain. NO CPU learned
+reference/fallback and NO new GDN/mutable-state image selected. Short-v1
+limits256 UTF8 bytes/96 prompt tokens/1..32 output tokens/context128;
+no tools/history. Full-token Stop includes first weight upload. Warm weights
+persist between questions;explicit unload requires known-clean END+exit.
+
+Bounded/fragment-safe private socket framing;fixed executable/pinned model,
+no shell/listener/caller-supplied path. EOF/malformed/wrong ID/execution
+uncertainty closes ONLY,no kill/END/retry/reset/CPU result replacement.
+Per-span upload progress observer runs ONLY after existing full transfer
+proof;lost observer closes ONLY and cannot perform another device operation.
+
+ASan/UBSan worker/protocol suites e30Za8Iv/tTHivgSC PASS. Native Haiku fake
+worker suite PASS including actual socketpair/fork/exec,retained worker reuse,
+cancel,clean unload,rejection and fatal/protocol failures;NO device access.
+Native HardwareTest and ModelStoreTest PASS;catalog tests never download27B.
+Checked and Fast span-session ASan/UBSan PASS including lost observer.
+Work/CPU separate-mode Y1z0eioI,source owner7jVxnLVV,cohort sessionRV3mbrxy,
+GDN banksvSkp0LSu and pristine c060 ggml bridge3uIyj7IA PASS. Earlier Work
+runner invocations used a peer rather than root image/incomplete root build;
+those fixture assertions are NOT hardware failures. Correct reuse-root-k
+fixture passes. Dirty llama sources were not read/built/changed.
+
+Application-only deployment verified and backed up at
+/boot/home/pioneer-assistant-qwen27-20261020-a/before. User authorized saved
+chat restart;Assistant reopened. GUI0de9141e,control88b4ee3f,hardware997ffa12,
+workerab07e8c9. Service620065c0 removes a REDUNDANT parent19GB hash:worker
+still authenticates FULL c600de03 on the SAME open description passed to
+llama before any accelerator BEGIN. Previous parent-only pass was cancelled
+normally;service-before-single-hash retained. Build archives pristine pinned
+headers and verifies ALL4 frozen runtime library hashes;runtime unchanged.
+
+At this checkpoint the worker is still authenticating the full model;the
+new pair is NOT yet committed and NO native inference has run through this
+option. Driver/guarde903b8fc/d1ce2aa4/tag202610190006000d/gen2 remain exact;
+CPU-only status clean0/active_owner0 before deployment. No driver hot swap,
+reboot/power/SD/model-file change. Latest WHOLE27B measurement remains the
+older tiny0.129277112 tok/s sample,NOT20 tok/s or a speed improvement. Next:
+finish authentication/host load,one public short request,warm reuse and
+explicit known-clean unload. Do not run another card job concurrently.
+
 October20,09:35 Vancouver (16:35 UTC) MUTABLE GDN BANK CORE / DEVICE-ZERO CANDIDATE:
 Implemented a separately gated KERNEL-PRIVATE mutable reservation owner,
 NOT a native driver capability/installed GDN path. It binds all48 recurrent

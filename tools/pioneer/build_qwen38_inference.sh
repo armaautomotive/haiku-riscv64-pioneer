@@ -36,6 +36,12 @@ case "${PIONEER_Q38_SPAN_FAST:-0}" in
     extra="$extra -DPIONEER_Q38_SPAN_FAST";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_ASSISTANT_WORKER:-0}" in
+ 0) worker_libraries=;;
+ 1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}" = work:1:1:0 ] || exit 2
+    worker_libraries=-lnetwork;;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do
  case "$name" in
@@ -57,12 +63,14 @@ set -- -I"$sdk/headers" -idirafter "$sdk/headers/posix"
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do [ ! -d "$include" ] || set -- "$@" -isystem "$include"; done
 for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$library"; done
 case "${PIONEER_Q38_CPU_POOL_PROBE:-0}" in
- 0) set -- "$@" "$project/tools/pioneer/PioneerQ38GgmlBackend.cpp" "$project/tools/pioneer/pioneer_q38_inference.cpp";;
+ 0) program=$project/tools/pioneer/pioneer_q38_inference.cpp
+    [ "${PIONEER_Q38_ASSISTANT_WORKER:-0}" = 0 ] || program=$project/tools/pioneer/pioneer_assistant_qwen27.cpp
+    set -- "$@" "$project/tools/pioneer/PioneerQ38GgmlBackend.cpp" "$program";;
  1) set -- "$@" "$project/tools/pioneer/pioneer_q38_cpu_pool_probe.cpp";;
  *) exit 2;;
 esac
 "$cxx" -std=c++17 -O2 -ffp-contract=off -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
  -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED $extra "$@" -I"$temporary/include" -I"$temporary/ggml/include" -I"$temporary/ggml/src" \
- -B"$release/system/glue/" -L"$release/system/libroot" -L"$libraries" -Wl,-rpath-link,"$libraries" \
- -l:libllama.so.0.2.0 -l:libggml.so.0.21.0 -l:libggml-base.so.0.21.0 -l:libggml-cpu.so.0.21.0 -o "$output"
+ -B"$release/system/glue/" -L"$release/system/libroot" -L"$release/system/libnetwork" -L"$libraries" -Wl,-rpath-link,"$libraries" \
+ -l:libllama.so.0.2.0 -l:libggml.so.0.21.0 -l:libggml-base.so.0.21.0 -l:libggml-cpu.so.0.21.0 $worker_libraries -o "$output"
 shasum -a 256 "$output"

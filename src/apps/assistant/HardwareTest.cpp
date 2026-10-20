@@ -93,6 +93,18 @@ int main(int argc, char** argv)
 	assert(AssistantHardwareIsP100AQwen("p100a-qwen-throughput") && AssistantHardwareIsP100AAttention("p100a-qwen-throughput"));
 	assert(AssistantHardwareIsP100AThroughput("p100a-qwen-throughput") && !AssistantHardwareIsP100AThroughput(NULL) && !AssistantHardwareIsP100AThroughput("p100a-qwen-attention"));
 	assert(AssistantHardwareSkipsValidation("p100a-qwen-throughput"));
+	assert(AssistantHardwareIndex("p100a-qwen27-work")==6 && AssistantHardwareCanChat("p100a-qwen27-work"));
+	assert(AssistantHardwareIsP100AQwen27("p100a-qwen27-work"));
+	assert(!AssistantHardwareIsP100AQwen27(NULL) && !AssistantHardwareIsP100AQwen27("p100a-qwen-fast"));
+	assert(!AssistantHardwareIsP100AQwen("p100a-qwen27-work")); // separate process/lifecycle
+	assert(AssistantHardwareSkipsValidation("p100a-qwen27-work"));
+	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen27-work"),"qwen27-p100a-work"));
+	assert(kAssistantModels[kAssistantQwen27Model].compatible);
+	assert(AssistantModelSupportsBackend(kAssistantQwen27Model,"p100a-qwen27-work"));
+	assert(!strcmp(AssistantModelBackend(kAssistantQwen27Model),"p100a-qwen27-work"));
+	for (size_t i=0;i<kAssistantModelCount;i++)
+		assert(AssistantModelSupportsBackend(i,"p100a-qwen27-work")== (i==kAssistantQwen27Model));
+	assert(!AssistantModelSupportsBackend(kAssistantQwen27Model,"cpu"));
 	assert(!strcmp(AssistantHardwareQwenFormat("p100a-qwen-throughput"),"qwen-p100a-throughput"));
 	assert(AssistantHardwareIsP100AQwen("p100a-qwen-attention") && AssistantHardwareIsP100AAttention("p100a-qwen-attention"));
 	assert(!AssistantHardwareIsP100AAttention(NULL) && !AssistantHardwareIsP100AAttention("p100a-qwen-fast"));
@@ -125,6 +137,7 @@ int main(int argc, char** argv)
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-fast", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-attention", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen-throughput", 1) == B_OK);
+	assert(UpdateAssistantHardwareSettings(settings, "p100a-qwen27-work", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 1) == B_OK);
 	assert(UpdateAssistantHardwareSettings(settings, "unknown", 1) == B_BAD_VALUE);
 	assert(UpdateAssistantHardwareSettings(settings, "cpu", 0) == B_BAD_VALUE);

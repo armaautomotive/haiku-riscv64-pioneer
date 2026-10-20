@@ -52,7 +52,16 @@ static const AssistantHardware kAssistantHardware[] = {
 		"CPU reference validation OFF; ownership/completion/recovery checks stay.\n"
 		"Host mirrors KV for coherence and handles norms/RoPE. Hybrid decoder.\n"
 		"Experimental 0.6B Q8_0 only; no CPU fallback or speed guarantee.\n"
-		"Changing to/from this mode reloads device weights on first use."}
+		"Changing to/from this mode reloads device weights on first use."},
+	{"p100a-qwen27-work", "P100A Work — Qwen3.8 27B (experimental, slow)",
+		"Pinned Qwen3.8-27B Q4_K_M; learned projections use up to119 card workers.\n"
+		"CPU reference validation OFF; CPU attention/recurrent state/norms remain.\n"
+		"Latest tiny warm sample: about0.13 tokens/sec, NOT the20 tok/sec goal.\n"
+		"First reply uploads about17.4 GiB (roughly12 minutes); weights stay warm.\n"
+		"One short question:256 bytes /96 prompt tokens, up to32 output tokens.\n"
+		"No tools/history/CPU fallback. Stop waits for a COMPLETE token, including upload.\n"
+		"Separate worker; explicit clean unload before other card modes.\n"
+		"The new mutable-state/GDN candidates are NOT enabled by this option."}
 };
 static const size_t kAssistantHardwareCount = sizeof(kAssistantHardware) / sizeof(kAssistantHardware[0]);
 
@@ -73,6 +82,10 @@ static inline bool AssistantHardwareIsP100AFast(const char* id)
 {
 	return id != NULL && !strcmp(id,"p100a-qwen-fast");
 }
+static inline bool AssistantHardwareIsP100AQwen27(const char* id)
+{
+	return id != NULL && !strcmp(id,"p100a-qwen27-work");
+}
 
 static inline bool AssistantHardwareIsP100AAttention(const char* id)
 {
@@ -86,12 +99,13 @@ static inline bool AssistantHardwareIsP100AThroughput(const char* id)
 
 static inline bool AssistantHardwareSkipsValidation(const char* id)
 {
-	return AssistantHardwareIsP100AFast(id) || AssistantHardwareIsP100AAttention(id);
+	return AssistantHardwareIsP100AFast(id) || AssistantHardwareIsP100AAttention(id) || AssistantHardwareIsP100AQwen27(id);
 }
 
 static inline const char* AssistantHardwareQwenFormat(const char* id)
 {
-	return AssistantHardwareIsP100AThroughput(id)?"qwen-p100a-throughput"
+	return AssistantHardwareIsP100AQwen27(id)?"qwen27-p100a-work"
+		:AssistantHardwareIsP100AThroughput(id)?"qwen-p100a-throughput"
 		:AssistantHardwareIsP100AAttention(id)?"qwen-p100a-attention"
 		:AssistantHardwareIsP100AFast(id)?"qwen-p100a-fast"
 		:(id && !strcmp(id,"p100a-qwen")?"qwen-p100a":NULL);

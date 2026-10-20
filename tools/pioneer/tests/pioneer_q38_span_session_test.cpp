@@ -77,6 +77,17 @@ struct SpanIO:WorkSessionIO {
 		return WorkSessionIO::Call(fd,op,data,bytes);
 	}
 };
+struct SpanObserver {
+	SpanIO& io; unsigned calls=0; uint64_t last=0,total=0; bool lost=false;
+	explicit SpanObserver(SpanIO& transport):io(transport) {}
+	static bool Progress(void* owner,uint64_t bytes,uint64_t planned) {
+		auto& p=*static_cast<SpanObserver*>(owner);
+		assert(bytes>p.last && bytes<=planned && p.io.spans==p.calls+1 && !p.io.spanEnds && !p.io.runs);
+		if (p.total) assert(p.total==planned);
+		p.last=bytes; p.total=planned; p.calls++;
+		return !p.lost;
+	}
+};
 int main()
 {
 	(void)&Check; (void)&CohortHostTestMain;
@@ -85,10 +96,21 @@ int main()
 	std::vector<float> x(5120,.125f),y(1024,-99),before=y;
 	{
 		SpanIO io(source,tensor); PioneerQ38WorkSession<SpanIO,SpanSource> session(io,source);
+		SpanObserver observer(io); session.Observe(SpanObserver::Progress,&observer);
 		assert(session.Open() && session.PrimeSpan(tensor) && !io.runs && io.spans>1 && io.spanEnds==1 && !io.uploads);
+		assert(observer.calls==io.spans && observer.last==observer.total);
 		assert(session.Multiply(tensor,x.data(),5120,y.data(),1024,1)); unsigned spans=io.spans;
 		assert(session.Multiply(tensor,x.data(),5120,y.data(),1024,1) && io.spans==spans && !io.uploads);
 		assert(session.Finish() && io.ends==1 && io.closes==1);
+	}
+	{
+		SpanIO io(source,tensor); PioneerQ38WorkSession<SpanIO,SpanSource> session(io,source);
+		SpanObserver observer(io); observer.lost=true; session.Observe(SpanObserver::Progress,&observer);
+		assert(session.Open() && !session.PrimeSpan(tensor));
+		assert(observer.calls==1 && io.spans==1 && session.Failed() && io.closes==1 && !io.ends && !io.spanEnds && !io.runs);
+		unsigned reads=source.reads;
+		assert(!session.PrimeSpan(tensor) && !session.Multiply(tensor,x.data(),5120,y.data(),1024,1) && !session.Finish());
+		assert(io.spans==1 && source.reads==reads && !io.spanEnds && !io.ends && !io.runs);
 	}
 	for (unsigned fault=1;fault<=9;fault++) {
 		source.valid=true; SpanIO io(source,tensor); io.spanFault=fault;

@@ -1,6 +1,34 @@
 # Haiku Assistant
 
 Native local Qwen chat, backed by a separate resident llama.cpp service.
+**P100A Work — Qwen3.8 27B (experimental, slow)** is a separate option in
+Hardware and Models for the pinned Q4_K_M file already on the Pioneer.
+It uses the qualified Work matrix backend (up to 119 workers), with CPU
+reference validation OFF. CPU attention, recurrent state and norms remain;
+the unfinished resident-GDN/mutable-state candidates are NOT enabled.
+The latest standalone four-token warm sample was **0.129 tok/s**, not the
+20 tok/s goal or a real-world speed qualification.
+
+The 27B option runs in its own persistent `HaikuAssistantQwen27` process,
+with a private bounded socket protocol and no shell/network listener.
+Load authenticates the full SHA-256 on the SAME open file passed to llama,
+before any accelerator BEGIN; the parent does not redundantly hash 19 GB.
+The first reply uploads about 17.4 GiB (previously roughly 12 minutes), with
+measured progress in Models; later questions retain those weights. Explicit
+Unload requires a known-clean session END and worker exit. Channel/protocol
+or execution uncertainty closes only, disables the backend, and never
+retries, resets the card or substitutes CPU results. Other card modes cannot
+be committed until the previous card session has closed cleanly.
+
+This initial 27B integration accepts one question of at most 256 UTF-8 bytes
+and 96 prompt tokens, with 1–32 output tokens (GUI default 8), context 128.
+There is no chat history or tool execution in this mode. Stop waits for a
+COMPLETE token boundary, including the initial upload; it does not interrupt
+an in-flight matrix or graph. CPU thread controls remain in Hardware.
+Offline ASan/UBSan and native Haiku fake-worker tests cover fragmented and
+malformed messages, wrong IDs, EOF, rejection, warm reuse, cancellation,
+known-clean unload and fail-closed/no-retry behavior without device I/O.
+
 Hardware now also offers **P100A — Qwen3 0.6B (experimental, slow)**, using
 the exact, two-core resident Q8_0 runtime. It is currently slower than CPU,
 not a practical acceleration claim. The older TinyStories experiment remains

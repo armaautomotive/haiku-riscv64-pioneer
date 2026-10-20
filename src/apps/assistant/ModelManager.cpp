@@ -52,7 +52,7 @@ ModelManager::ModelManager()
 	fLoad->SetEnabled(false); fUnload->SetEnabled(false);
 	BLayoutBuilder::Group<>(this, B_VERTICAL)
 		.SetInsets(B_USE_WINDOW_INSETS)
-		.Add(new BStringView("backend", "Qwen3: CPU; Qwen3 0.6B also has a slow experimental P100A option in Hardware…"))
+		.Add(new BStringView("backend", "CPU Qwen3; experimental P100A targets for0.6B and27B in Hardware…"))
 		.Add(new BScrollView("model list", fList, 0, false, true))
 		.Add(details, 1)
 		.Add(fProgress)
@@ -114,6 +114,13 @@ ModelManager::Details()
 			"short ASCII stories; it is NOT a chat assistant or a Qwen accelerator.\n"
 			"All projections run on-card; attention/KV/norms and verification use CPU.\n"
 			"8 output tokens; roughly 15 seconds per prompt/output token. Stop is batch-safe.";
+	else if ((size_t)index == kAssistantQwen27Model)
+		text << "P100A Work only; CPU learned-reference validation OFF, mandatory device safety retained.\n"
+			"CPU attention/state still runs. About0.13 warm tok/sec in a tiny sample; NOT20 tok/sec.\n"
+			"First reply uploads about17.4 GiB, roughly12 minutes; subsequent questions retain weights.\n"
+			"256-byte /96-token question, up to32 output tokens; no tools/history/fallback.\n"
+			"Stop waits for the current COMPLETE token, including initial upload.\n"
+			"New on-card mutable-state/GDN candidates are NOT enabled. Full SHA-256 required.";
 	else if (model.compatible)
 		text << "Qwen3 / CPU backend. Larger models use more RAM and are slower;\n"
 			"0.6B has been tested for chat. Other sizes need on-device inference testing.\n"
@@ -126,7 +133,8 @@ ModelManager::Details()
 		"Validated and Fast (no CPU reference) targets are available; neither guarantees a CPU speedup.\n"
 		"First request uploads weights for several minutes; warm Qwen mode changes reuse them.";
 	fDetails->SetText(text.String());
-	fSelect->SetLabel((size_t)index == kAssistantTinyModel ? "Use on P100A (story mode)" : "Use on CPU (chat)");
+	fSelect->SetLabel((size_t)index == kAssistantTinyModel ? "Use on P100A (story mode)"
+		: (size_t)index == kAssistantQwen27Model ? "Use P100A Work (27B, slow)" : "Use on CPU (chat)");
 	bool present = AssistantModelPresent(index);
 	fInstall->SetEnabled(!fDownloading && model.compatible && !present);
 	fSelect->SetEnabled(!fDownloading && !fServiceBusy && model.compatible && present);

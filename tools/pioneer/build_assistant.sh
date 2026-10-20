@@ -63,24 +63,34 @@ shasum -a 256 "$assistant_output"
 	"$assistant_root/src/apps/assistant/HardwareTest.cpp" -lbe -o "${assistant_output}HardwareTest"
 
 if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
-	# Public/implementation ABI headers must match the pinned native runtime;
-	# unrelated user edits in the llama checkout are neither built nor changed.
-	[ "$(git -C "$assistant_root/src/libs/llama.cpp" rev-parse HEAD)" = c060ca974c773c7c3d17fd1b66dc9d312bc292c0 ]
-	git -C "$assistant_root/src/libs/llama.cpp" diff --quiet HEAD -- include ggml/include ggml/src/ggml-backend-impl.h
+	for assistant_name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do
+		case "$assistant_name" in
+			libllama.so.0.2.0) assistant_expected=0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af;;
+			libggml.so.0.21.0) assistant_expected=a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16;;
+			libggml-base.so.0.21.0) assistant_expected=9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389;;
+			libggml-cpu.so.0.21.0) assistant_expected=69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2;;
+		esac
+		assistant_actual=$(shasum -a 256 "$ASSISTANT_LLAMA_LIB_DIR/$assistant_name"); assistant_actual=${assistant_actual%% *}
+		[ "$assistant_actual" = "$assistant_expected" ] || exit 1
+	done
+	# Archive pristine ABI headers; never consume or modify dirty llama files.
+	assistant_headers=$(mktemp -d /private/tmp/assistant-pinned-headers.XXXXXXXX)
+	git -C "$assistant_root/src/libs/llama.cpp" archive c060ca974c773c7c3d17fd1b66dc9d312bc292c0 include/llama.h ggml/include ggml/src/ggml-backend-impl.h ggml/src/ggml-impl.h | tar -x -C "$assistant_headers"
 	"$assistant_cxx" -std=gnu++11 -O2 -Wall -Wextra -Werror -Wno-multichar -fno-exceptions -fno-rtti \
-		"$@" -I"$assistant_root/src/libs/llama.cpp/include" \
-		-I"$assistant_root/src/libs/llama.cpp/ggml/include" \
-		-I"$assistant_root/src/libs/llama.cpp/ggml/src" \
+		"$@" -I"$assistant_headers/include" \
+		-I"$assistant_headers/ggml/include" \
+		-I"$assistant_headers/ggml/src" \
 		-I"$assistant_root/headers/private/libroot" \
 		-B"$assistant_release/system/glue/" -L"$assistant_release/kits" \
-		-L"$assistant_release/system/libroot" -L"$ASSISTANT_LLAMA_LIB_DIR" \
+		-L"$assistant_release/system/libroot" -L"$assistant_release/system/libnetwork" -L"$ASSISTANT_LLAMA_LIB_DIR" \
 		-Wl,-rpath-link,"$ASSISTANT_LLAMA_LIB_DIR" \
 		"$assistant_root/src/apps/assistant/Service.cpp" \
 		"$assistant_root/src/apps/assistant/P100ABackend.cpp" \
 		"$assistant_root/src/apps/assistant/P100AQwen.cpp" \
+		"$assistant_root/src/apps/assistant/P100AQwen27.cpp" \
 		"$assistant_root/tools/pioneer/PioneerGgmlBackend.cpp" \
 		"$assistant_root/src/apps/assistant/ModelStore.cpp" \
-		-lbe -l:libllama.so.0.2.0 -l:libggml.so.0 -l:libggml-base.so.0 -l:libggml-cpu.so.0.21.0 \
+		-lbe -lnetwork -l:libllama.so.0.2.0 -l:libggml.so.0.21.0 -l:libggml-base.so.0.21.0 -l:libggml-cpu.so.0.21.0 \
 		-o "${assistant_output}Service"
 	"$assistant_host_tools/rc/rc" -o "$assistant_resources/Service.rsrc" \
 		"$assistant_root/src/apps/assistant/Service.rdef"

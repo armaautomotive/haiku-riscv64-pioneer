@@ -38,6 +38,8 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	std::vector<uint8_t> uploaded;
 	int fd=-1;
 	bool attempted=false,active=false,failed=false,finished=false,clean=false;
+	bool (*observe)(void*,uint64_t,uint64_t)=nullptr;
+	void* observer=nullptr;
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	bool spanPrimed=false,spanAttempted=false;
 #endif
@@ -106,6 +108,9 @@ public:
 	PioneerQ38CohortSession(const PioneerQ38CohortSession&)=delete;
 	PioneerQ38CohortSession& operator=(const PioneerQ38CohortSession&)=delete;
 	bool Failed() const { return failed; }
+	// Diagnostics only. False means LOST caller/channel: CLOSE ONLY, not
+	// a user cancellation or permission to skip any transport proof.
+	void Observe(bool (*callback)(void*,uint64_t,uint64_t),void* owner) { observe=callback; observer=owner; }
 	bool Abort() { return Stop(); } // CLOSE ONLY; never END/retry after a graph error
 	bool Open() {
 		if (attempted || failed || finished) return false;
@@ -146,6 +151,11 @@ public:
 			|| (tensor!=UINT32_MAX && tensor>=source.Model().Tensors().size())) return Stop();
 		spanAttempted=true; auto request=std::make_unique<tt_q38_span_upload>(); unsigned nonce=0,parts=0;
 		const auto& fragments=layout.Parts();
+		uint64_t plannedBytes=0;
+		for (const auto& p:fragments) if (p.kind==PIONEER_Q38_WEIGHT && (tensor==UINT32_MAX || p.tensor==tensor)) {
+			const auto& t=source.Model().Tensors()[p.tensor];
+			if (t.type && t.rank==2 && t.name!="token_embd.weight") plannedBytes+=p.allocated;
+		}
 		for (unsigned f=0;f<fragments.size();f++) {
 			const auto& p=fragments[f]; if (p.kind!=PIONEER_Q38_WEIGHT || (tensor!=UINT32_MAX && p.tensor!=tensor)) continue;
 			const auto& t=source.Model().Tensors()[p.tensor];
@@ -177,6 +187,7 @@ public:
 #endif
 					|| r.recovery_required || r.reserved) return Stop();
 				pagesUploaded+=pages; page+=pages;
+				if (observe && !observe(observer,pagesUploaded*4096,plannedBytes)) return Stop();
 			}
 			if (!source.Ready()) return Stop();
 			uploaded[f]=1; bytesRetained+=p.allocated; parts++;

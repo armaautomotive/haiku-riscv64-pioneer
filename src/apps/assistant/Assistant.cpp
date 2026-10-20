@@ -142,11 +142,12 @@ public:
 							fModelPath = path; fBackend=backend; fTurns.clear(); fTranscript->SetText("");
 						}
 						bool story = strcmp(backend, "p100a") == 0;
-						bool cardQwen=AssistantHardwareIsP100AQwen(backend);
+						bool qwen27=AssistantHardwareIsP100AQwen27(backend);
+						bool cardQwen=AssistantHardwareIsP100AQwen(backend) || qwen27;
 						bool fast=AssistantHardwareIsP100AFast(backend);
 						bool attention=AssistantHardwareIsP100AAttention(backend);
 						bool throughput=AssistantHardwareIsP100AThroughput(backend);
-						BString label(throughput?"P100A Throughput (multicore; validation OFF): ":attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
+						BString label(qwen27?"P100A27B Work (experimental, slow; validation OFF): ":throughput?"P100A Throughput (multicore; validation OFF): ":attention?"P100A Attention (experimental): ":fast?"P100A Fast (CPU validation OFF): ":cardQwen ? "P100A Qwen (experimental, slower than CPU): " : story ? "P100A + CPU (experimental story mode): "
 							: (AssistantHardwareCanChat(backend) ? "CPU: " : "Hardware unavailable: "));
 						label << (*path ? BPath(path).Leaf() : "no model selected");
 						if (!ready && !changing) label << " (unloaded)";
@@ -256,13 +257,17 @@ private:
 			+ " /no_think<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n";
 		fDisplay += "You: " + fPending + "\n\nQwen: ";
 		bool story = strcmp(backend, "p100a") == 0;
-		bool cardQwen=AssistantHardwareIsP100AQwen(backend);
+		bool qwen27=AssistantHardwareIsP100AQwen27(backend);
+		bool cardQwen=AssistantHardwareIsP100AQwen(backend) || qwen27;
 		bool fast=AssistantHardwareIsP100AFast(backend);
 		bool attention=AssistantHardwareIsP100AAttention(backend);
 		bool throughput=AssistantHardwareIsP100AThroughput(backend);
 		if (cardQwen) {
 			prompt=fPending;
-			fDisplay=throughput?"P100A Throughput Qwen3-0.6B — up to120 row workers; CPU validation OFF.\n"
+			fDisplay=qwen27?"P100A Qwen3.8-27B Work — experimental, currently about0.13 tok/sec.\n"
+				"CPU attention/state remain; CPU validation OFF. First upload roughly12 minutes.\n"
+				"Single short question; no history/tools. Stop waits for a complete token/upload.\n"
+				:throughput?"P100A Throughput Qwen3-0.6B — up to120 row workers; CPU validation OFF.\n"
 				"Whole projections + resident card KV/attention. Hybrid host norms; eight tokens, no tools/history.\n"
 				:attention?"P100A Attention Qwen3-0.6B — matrices and attention run on card; CPU validation OFF.\n"
 				"Experimental PIO-staged KV; may be slower than Fast. Eight tokens; no tools/history.\n"
