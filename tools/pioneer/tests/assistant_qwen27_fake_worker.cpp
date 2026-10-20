@@ -29,6 +29,13 @@ int main(int argc,char** argv) {
  if(!strcmp(mode,"badready")) { Emit(A::Ready,f.id,0,"wrong ready"); return 70; }
  Emit(A::Progress,f.id,500,"host metadata"); Emit(A::Ready,f.id,0,"QWEN27_WORK_HOST_READY_497");
  while(Next(r,f)) {
+  if(f.kind==A::Threads) {
+   Record("threads\n"); assert(f.text.empty());
+   if(!strcmp(mode,"threadfault")) { Emit(A::Ready,f.id,f.value+1,"QWEN27_WORK_THREADS_READY"); return 70; }
+   if(f.value==8) Emit(A::Error,f.id,A::Rejected,"pool allocation rejected");
+   else Emit(A::Ready,f.id,f.value,"QWEN27_WORK_THREADS_READY");
+   continue;
+  }
   if(f.kind==A::Unload) {
    Record("unload\n"); Emit(A::Closed,f.id,0,!strcmp(mode,"badclose")?"wrong close":"QWEN27_KNOWN_CLEAN_END"); return 0;
   }

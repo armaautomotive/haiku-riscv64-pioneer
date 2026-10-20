@@ -1,5 +1,59 @@
 # Native build status
 
+October20,10:48 Vancouver (17:48 UTC) MATCHED WARM-POOL UPDATE INSTALLED:
+After the real clean END above,Native Final protocol/parent suite87a3ba64
+and fake worker50f51abd PASS;actual frozen CPU pool testfa0a75e2 PASS with
+16 graph computes/45 idle pool changes/all128 synthetic outputs exact and
+final unbound-pool/backend teardown. Updated Hardware policy suitec53d2128
+PASS. These CPU-only tests ran ONLY after cold0/active_owner0 was confirmed;
+the earlier blocked busy hardware test was NOT retried or bypassed.
+
+Normally stopped the unloaded GUI/service. Matched worker d59413e5 was
+installed BEFORE service8e3dc4a4 (new worker accepts old protocol subset),
+with exact old/new hashes,regular-file checks,idle guard and preserved
+before-pool-update backups. Assistant reopened;new worker is authenticating
+the saved27B selection. No driver/library/model/boot/power/SD changes. New
+pool protocol still needs real Assistant thread-ACK/no-reload confirmation
+after that host load. Previous actual card results remain0.129tok/s;no new
+generation speedup is claimed by this CPU-pool lifecycle update.
+
+October20,10:43 Vancouver (17:43 UTC) ASSISTANT27B NATIVE INTEGRATION PASS:
+Initial service620065c0/workerab07e8c9 fully authenticated and selected27B.
+Public first request answered READY,success1,total885.8s including first
+upload;one warm step7.718s/0.130tok/s. Same worker/weights answered second
+public count request with8 bounded output tokens,total209.6s;7 warm steps
+54.123s/0.129tok/s. NO repeat upload or CPU reference/fallback. These are
+TINY diagnostics,NOT steady performance,CPU speedup or20tok/s qualification.
+Logs public-first-request.log/public-warm-request.log in the stage below.
+
+Sole public cancel-test then stopped at a COMPLETE token boundary,kept
+ready1/resident1/no model error and intentionally returned success0. Explicit
+Unload afterwards proved clean END+worker exit:ready0/resident0/busy0,
+driver tag...000d/gen2/cold0/active_owner0. No reset/reboot/SD/driver change.
+An OPTIONAL busy-memory hardware test was blocked by safety review while
+the live card job ran;it was NOT executed or bypassed. Existing common
+busy guard source was reviewed. Native lifecycle tests now run only idle.
+
+Follow-up code adds idle CPU-pool replacement WITHOUT context/model/hash/
+weight reload. CLI thread configuration also queues the real worker change,
+not just a saved/displayed count;loads count stays unchanged. Failed settings
+commit restores the previous acknowledged pool count. Actual pinned c060
+CPU backend retains/pauses its previous pool at next graph_compute:retain
+that bound pool until synchronized successful decode;repeated idle changes
+keep at most2 pools;free both only AFTER context destruction on error/exit.
+The premature-free development worker candidates c/d were NEVER installed.
+Pool owner/protocol ASan/UBSan i1Bz99Tt PASS,including100 idle replacements,
+failed-decode teardown,allocation rejection and wrong-count fail-closed.
+
+Matched new service8e3dc4a4/worker d59413e5 cross-build PASS. Worker also
+reports actual prompt/output token ordinal rather than a static phase.
+Native Final fake/parent/actual CPU-backend pool tests have been built;
+they are being staged after the clean END,NOT yet run/installed at this
+checkpoint. CPU test uses only synthetic128x128 floats and the three frozen
+ggml libraries;NO accelerator headers/register/open/ioctl or model/reference.
+It tests16 actual graph computes and intermediate idle pool replacements.
+Newest thread-lifecycle code is NOT yet a native-card performance claim.
+
 October20,10:16 Vancouver (17:16 UTC) ASSISTANT27B WORK OPTION:
 Added separate p100a-qwen27-work hardware/model selection for the pinned
 Qwen3.8-27B Q4_K_M file. Isolated persistent HaikuAssistantQwen27 worker

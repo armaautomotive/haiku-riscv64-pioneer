@@ -5,6 +5,7 @@
 #include "TenstorrentHaikuQwen38.h"
 #include "PioneerQ38GgmlBackend.h"
 #include "../../src/apps/assistant/Qwen27Protocol.h"
+#include "../../src/apps/assistant/Qwen27Pool.h"
 #include "llama.h"
 #include <poll.h>
 #include <memory>
@@ -15,7 +16,8 @@ struct Runtime {
  PioneerQ38PublicModelSource source;
  PioneerQ38NativeTransport io;
  PioneerQ38NativeSession session;
- llama_model* model=nullptr; llama_context* context=nullptr; ggml_threadpool_t pool=nullptr;
+ llama_model* model=nullptr; llama_context* context=nullptr;
+ A::PoolOwner<ggml_threadpool_t,ggml_threadpool_free> pools;
  A::Receiver receiver; uint32_t request=0; bool opened=false,cancelled=false,lost=false,configured=false;
  double lastProgress=0;
  explicit Runtime():session(io,source) {}
@@ -70,8 +72,8 @@ struct Runtime {
   auto cp=llama_context_default_params(); cp.n_ctx=128; cp.n_batch=cp.n_ubatch=1;
   cp.n_threads=cp.n_threads_batch=threads; cp.offload_kqv=false; cp.op_offload=true; cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED;
   context=llama_init_from_model(model,cp); if (!context) return false;
-  auto tp=ggml_threadpool_params_default(threads); tp.poll=0; pool=ggml_threadpool_new(&tp);
-  if (!pool) return false;
+  auto tp=ggml_threadpool_params_default(threads); tp.poll=0; auto pool=ggml_threadpool_new(&tp);
+  if (!pool || !pools.Replace(pool)) return false;
   llama_attach_threadpool(context,pool,pool);
   return source.Ready() && PioneerQ38GgmlSnapshot().recognizedWeights==497 && Emit(A::Ready,0,"QWEN27_WORK_HOST_READY_497");
  }
@@ -88,11 +90,16 @@ struct Runtime {
    if (cancelled) return Emit(A::Done,A::Cancelled,"Stopped at a complete token boundary; resident weights retained. No CPU fallback.");
    if (position<count) token=tokens[position];
    auto before=PioneerQ38GgmlSnapshot(); double start=Now();
-   if (!Emit(A::Progress,UINT32_MAX,position<count?"Evaluating short Qwen27B prompt on P100A (slow experimental Work mode).":"Generating Qwen27B on P100A; CPU attention/state; no CPU reference.")) return false;
+   char phase[192];
+   if (position<count) snprintf(phase,sizeof(phase),"Evaluating Qwen27B prompt token %d of %d on P100A (slow Work mode).",position+1,count);
+   else snprintf(phase,sizeof(phase),"Generating Qwen27B token %u of at most %u; CPU attention/state; no CPU reference.",generated+1,f.value);
+   if (!Emit(A::Progress,UINT32_MAX,phase)) return false;
    auto batch=llama_batch_get_one(&token,1);
    if (llama_decode(context,batch)) return false;
    auto after=PioneerQ38GgmlSnapshot();
    if (!source.Ready() || after.failed || after.projections-before.projections!=497 || !opened) return false;
+   if (pools.NeedsRetirement()) llama_synchronize(context);
+   pools.AfterSuccessfulDecode(); // CPU backend has safely rebound its pool
    if (position>=count) { warm+=Now()-start; warmSamples++; }
    if (!PollCancel()) return false;
    if (cancelled) return Emit(A::Done,A::Cancelled,"Stopped at a complete token boundary; resident weights retained. No CPU fallback.");
@@ -109,11 +116,24 @@ struct Runtime {
   char status[320]; snprintf(status,sizeof(status),"P100A Qwen27B Work:%u output tokens,%.1fs; warm generation%u samples/%.3fs (%.3f tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.",generated,Now()-began,warmSamples,warm,warm>0?warmSamples/warm:0);
   return Emit(A::Done,A::Complete,status);
  }
+ bool Threads(unsigned threads) {
+  if (!threads || threads>64) return Emit(A::Error,A::Rejected,"Invalid CPU thread count; previous pool retained.");
+  auto tp=ggml_threadpool_params_default(threads); tp.poll=0;
+  ggml_threadpool_t replacement=ggml_threadpool_new(&tp);
+  if (!replacement) return Emit(A::Error,A::Rejected,"CPU pool allocation failed; previous pool retained.");
+  // Main command loop ONLY: a complete graph/request has returned. No
+  // accelerator call, memory clear, BEGIN/END, source reopen or weight upload.
+  llama_synchronize(context); llama_detach_threadpool(context);
+  llama_set_n_threads(context,threads,threads);
+  llama_attach_threadpool(context,replacement,replacement);
+  if (!pools.Replace(replacement)) return false; // retains last backend-bound pool
+  return Emit(A::Ready,threads,"QWEN27_WORK_THREADS_READY");
+ }
  bool Close() {
   bool clean=!lost && !session.Failed() && (configured?PioneerQ38GgmlFinish():session.Finish());
   if (!clean) session.Abort();
   if (context) { llama_synchronize(context); llama_detach_threadpool(context); llama_free(context); context=nullptr; }
-  if (pool) { ggml_threadpool_free(pool); pool=nullptr; }
+  pools.AfterContextFree();
   if (model) { llama_model_free(model); model=nullptr; }
   return clean;
  }
@@ -135,6 +155,7 @@ int main(int argc,char** argv) {
    r.Close(); r.Emit(A::Error,A::Rejected,"Qwen27B authentication, Work driver capability or context load failed; no accelerator BEGIN or fallback."); return 1;
   }
   if (f.kind==A::Generate && r.context) { if (r.Generate(f)) continue; break; }
+  if (f.kind==A::Threads && r.context && f.text.empty()) { if (r.Threads(f.value)) continue; break; }
   if (f.kind==A::Unload && !f.value && f.text.empty()) {
    bool clean=r.Close(); if (clean && r.Emit(A::Closed,0,"QWEN27_KNOWN_CLEAN_END")) return 0; break;
   }

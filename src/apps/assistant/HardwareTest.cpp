@@ -56,8 +56,12 @@ static status_t Memory(BMessenger& service, uint32 action)
 
 static BMessage WaitIdle(BMessenger& service)
 {
-	for (int i = 0; i < 6000; i++) {
+	int limit=6000;
+	for (int i = 0; i < limit; i++) {
 		BMessage state = Query(service);
+		const char* selected=""; const char* pending="";
+		state.FindString("backend_id",&selected); state.FindString("loading_backend_id",&pending);
+		if (AssistantHardwareIsP100AQwen27(selected) || AssistantHardwareIsP100AQwen27(pending)) limit=18000;
 		bool loading = true, unloading = true;
 		assert(state.FindBool("loading", &loading) == B_OK);
 		assert(state.FindBool("unloading", &unloading) == B_OK);
@@ -199,8 +203,9 @@ int main(int argc, char** argv)
 		request.AddMessenger("target", BMessenger(receiver)); request.AddInt64("id", system_time());
 		request.AddString("backend_id", backend); request.AddString("model_path", model);
 		request.AddString("prompt", "This unloaded-model test must never execute.");
-		request.AddString("prompt_format", AssistantHardwareIsP100AQwen(backend.String())
+		request.AddString("prompt_format", (AssistantHardwareIsP100AQwen(backend.String()) || AssistantHardwareIsP100AQwen27(backend.String()))
 			? AssistantHardwareQwenFormat(backend.String()) : "story");
+		request.AddInt32("max_tokens",8);
 		assert(service.SendMessage(&request) == B_OK);
 		assert(acquire_sem_etc(receiver->done, 1, B_RELATIVE_TIMEOUT, 2000000) == B_OK && receiver->failed);
 		if (receiver->Lock()) receiver->Quit();

@@ -73,6 +73,17 @@ bool AssistantP100AQwen27::Load(const char* path,unsigned threads,std::string& e
  }
  fData->Lose(); fFaulted=true; error="Qwen27B load/channel failed; no retry or CPU fallback."; return false;
 }
+bool AssistantP100AQwen27::SetThreads(unsigned threads,std::string& error) {
+ if (!threads || threads>64 || !fData || fData->fd<0 || fFaulted) { error="Qwen27B thread change unavailable."; return false; }
+ if (fData->Send(Assistant27::Threads,threads)) {
+  Assistant27::Frame f;
+  if (fData->Next(f,Now()+120)) {
+   if (f.kind==Assistant27::Ready && f.value==threads && f.text=="QWEN27_WORK_THREADS_READY") return true;
+   if (f.kind==Assistant27::Error && f.value==Assistant27::Rejected) { error=f.text; return false; }
+  }
+ }
+ fData->Lose(); fFaulted=true; error="Qwen27B thread change/channel failed; backend disabled, no retry/reset/fallback."; return false;
+}
 bool AssistantP100AQwen27::Complete(const std::string& question,int tokens,std::string& answer,std::string& error,
  const std::function<bool()>& cancelled,const std::function<void(const std::string&,const char*)>& progress,
  const std::function<void(float,const char*)>& memoryProgress) {

@@ -25,6 +25,11 @@ and 96 prompt tokens, with 1–32 output tokens (GUI default 8), context 128.
 There is no chat history or tool execution in this mode. Stop waits for a
 COMPLETE token boundary, including the initial upload; it does not interrupt
 an in-flight matrix or graph. CPU thread controls remain in Hardware.
+Idle thread changes replace only the sleeping CPU pool: no model hash,
+context reset or P100A re-upload. The previous backend-bound pool is retained
+until a successful synchronized decode has rebound it; repeated idle changes
+keep at most two pools. Settings commit only after the worker acknowledges
+the actual count; a failed settings save restores the previous pool count.
 Offline ASan/UBSan and native Haiku fake-worker tests cover fragmented and
 malformed messages, wrong IDs, EOF, rejection, warm reuse, cancellation,
 known-clean unload and fail-closed/no-retry behavior without device I/O.

@@ -169,8 +169,14 @@ public:
 			status_t status = B_BAD_VALUE;
 			if (message->FindInt32("cpu_threads", &threads) == B_OK
 				&& threads >= 1 && threads <= AssistantMaxThreads()) {
-				status = fLoading || fUnloading ? B_BUSY : SaveAssistantThreads(threads);
-				if (status == B_OK) fThreads.store(threads);
+				if (AssistantHardwareIsP100AQwen27(fHardware.String()))
+					// The isolated worker owns its pool: never change only
+					// the saved/displayed count while leaving it at old threads.
+					status = QueueSelection(fModelPath, fHardware.String(), threads);
+				else {
+					status = fLoading || fUnloading ? B_BUSY : SaveAssistantThreads(threads);
+					if (status == B_OK) fThreads.store(threads);
+				}
 			}
 			BMessage reply(kConfigureThreads);
 			reply.AddInt32("status", status);
@@ -512,6 +518,8 @@ private:
 		const bool previousValidation=!AssistantHardwareSkipsValidation(fHardware.String());
 		const bool previousAttention=AssistantHardwareIsP100AAttention(fHardware.String());
 		const bool previousThroughput=AssistantHardwareIsP100AThroughput(fHardware.String());
+		const bool reuseQwen27=fQwen27 && fReady.load() && path==fModelPath && backend==fHardware;
+		const int32 previousThreads=fThreads.load();
 		status_t status = B_NOT_SUPPORTED;
 		if (index >= 0 && kAssistantModels[index].compatible
 			&& AssistantModelSupportsBackend(index,backend.String()))
@@ -529,6 +537,17 @@ private:
 		AssistantP100AQwen27* qwen27=NULL;
 		if (status==B_OK && AssistantHardwareIsP100AQwen27(backend.String())) {
 			if (!fP100AQwen27Supported.load()) error="Qwen27B worker unavailable or faulted; no CPU fallback.";
+			else if (reuseQwen27) {
+				Progress(-1,"Changing CPU pool; retaining Qwen27B context and warm P100A weights");
+				std::string reason;
+				if (fQwen27->SetThreads(threads,reason)) qwen27=fQwen27;
+				else {
+					error=reason.c_str();
+					if (fQwen27->Faulted()) {
+						fReady.store(false); fP100AQwen27Supported.store(false); fP100AQwenSupported.store(false); fP100ASupported.store(false);
+					}
+				}
+			}
 			else {
 				qwen27=new AssistantP100AQwen27; std::string reason;
 				if (!qwen27->Load(path.String(),threads,reason,[&](float value,const char* phase) { Progress(value,phase); })) {
@@ -592,7 +611,7 @@ private:
 		// sessions:explicit clean unload BEFORE committing the new pair.
 		bool previousReleased=false;
 		bool loaded = context != NULL || tiny != NULL || qwen != NULL || qwen27 != NULL;
-		if (loaded && error.IsEmpty() && ((qwen27 && fQwen) || fQwen27)) {
+		if (loaded && error.IsEmpty() && ((qwen27 && fQwen) || (fQwen27 && !reuseQwen27))) {
 			std::string reason; bool clean=true;
 			if (fQwen27) { clean=fQwen27->Unload(reason); delete fQwen27; fQwen27=NULL; previousReleased=true; }
 			if (qwen27 && fQwen) { bool oldClean=fQwen->Unload(reason); clean=clean && oldClean; delete fQwen; fQwen=NULL; previousReleased=true; }
@@ -618,10 +637,17 @@ private:
 				if (fContext != NULL) llama_free(fContext);
 				if (fModel != NULL) llama_model_free(fModel);
 				fContext = context; fModel = model; fStartupPath = path;
-			} else if (!reuseQwen) { delete fTiny; fTiny = tiny; fLoads.fetch_add(1); }
+			} else if (!reuseQwen && !reuseQwen27) { delete fTiny; fTiny = tiny; fLoads.fetch_add(1); }
 			fModelPath = path; fHardware = backend; fThreads.store(threads); fReady.store(true);
 		} else {
-			delete qwen27;
+			if (!reuseQwen27) delete qwen27;
+			else if (qwen27) {
+				std::string restoreError;
+				if (!fQwen27->SetThreads(previousThreads,restoreError)) {
+					fReady.store(false); fP100AQwen27Supported.store(false); fP100AQwenSupported.store(false); fP100ASupported.store(false);
+					error="Qwen27B thread restoration failed; backend disabled. "; error<<restoreError.c_str();
+				}
+			}
 			if (previousReleased) fReady.store(false); // previous selection saved,but resident card context was released
 			if (reuseQwen) {
 				std::string restoreError;

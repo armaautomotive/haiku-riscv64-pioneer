@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "../../../src/apps/assistant/Qwen27Protocol.h"
 #include "../../../src/apps/assistant/P100AQwen27.h"
+#include "../../../src/apps/assistant/Qwen27Pool.h"
 #include <assert.h>
 #include <unistd.h>
 #include <fcntl.h>
@@ -9,6 +10,31 @@
 #include <poll.h>
 namespace A=Assistant27;
 static const char* const Model="/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf";
+struct FakePool { bool live=true; };
+static void ReleasePool(FakePool* p) { assert(p && p->live); p->live=false; }
+static void Pools() {
+ FakePool initial,second,third,unused[100];
+ A::PoolOwner<FakePool*,ReleasePool> p;
+ assert(p.Replace(&initial) && !p.Replace(&initial) && !p.Replace(NULL));
+ p.AfterSuccessfulDecode(); // backend now refers to initial
+ assert(p.Replace(&second) && initial.live && second.live);
+ assert(p.Replace(&third) && initial.live && !second.live && third.live);
+ // Simulate the ACTUAL upstream set_threadpool: it pauses the previous
+ // bound pool before assigning its new pointer. That old pool MUST live.
+ assert(initial.live); p.AfterSuccessfulDecode(); assert(!initial.live && third.live);
+ for (unsigned i=0;i<100;i++) {
+  assert(p.Replace(&unused[i]) && third.live && unused[i].live);
+  if(i)assert(!unused[i-1].live);
+ }
+ // Failed decode: backend may STILL refer to third. Context must die
+ // before AfterContextFree; both possible pointers remain live meanwhile.
+ assert(third.live && unused[99].live); p.AfterContextFree();
+ assert(!third.live && !unused[99].live && !p.Current()); p.AfterContextFree();
+ FakePool beforeDecode,afterChange;
+ A::PoolOwner<FakePool*,ReleasePool> q;
+ assert(q.Replace(&beforeDecode) && q.Replace(&afterChange) && !beforeDecode.live);
+ q.AfterContextFree(); assert(!afterChange.live);
+}
 static void Protocol() {
  assert(!A::Question("") && A::Question(std::string(256,'x')) && !A::Question(std::string(257,'x')));
  assert(!A::Question(std::string("a\0b",3)));
@@ -36,8 +62,8 @@ static std::string Events(const char* path) {
  int fd=open(path,O_RDONLY); assert(fd>=0); char b[2048]; ssize_t n=read(fd,b,sizeof(b)); assert(n>=0 && n<ssize_t(sizeof(b))); close(fd); return std::string(b,n);
 }
 int main() {
- Protocol(); assert(AssistantP100AQwen27::Available());
- for(const char* mode:{"normal","cancel","reject","badready","eof","fatal","wrongid","malformed","badclose"}) {
+ Protocol(); Pools(); assert(AssistantP100AQwen27::Available());
+ for(const char* mode:{"normal","cancel","reject","badready","eof","fatal","wrongid","malformed","badclose","threadfault"}) {
   char log[]="/tmp/assistant27-test-XXXXXX"; int fd=mkstemp(log); assert(fd>=0); close(fd);
   assert(!setenv("ASSISTANT27_TEST_LOG",log,1) && !setenv("ASSISTANT27_TEST_MODE",mode,1));
   {
@@ -52,8 +78,16 @@ int main() {
    if(!strcmp(mode,"reject") || !strcmp(mode,"badready")) {
     assert(!ready && backend.Faulted()==(strcmp(mode,"reject")!=0));
     assert(!backend.Load(Model,4,error,load)); // never auto-retry this instance
+   } else if(!strcmp(mode,"threadfault")) {
+    assert(ready && !backend.SetThreads(16,error) && backend.Faulted());
+    assert(!backend.SetThreads(16,error) && !backend.Unload(error));
    } else {
     assert(ready && loads==1);
+    if(!strcmp(mode,"normal")) {
+     assert(!backend.SetThreads(0,error) && !backend.SetThreads(65,error));
+     assert(!backend.SetThreads(8,error) && !backend.Faulted() && error=="pool allocation rejected");
+     assert(backend.SetThreads(16,error) && !backend.Faulted());
+    }
     assert(!backend.Complete(std::string(257,'x'),1,answer,error,[] {return false;},progress,memoryProgress));
     assert(!backend.Complete("public",33,answer,error,[] {return false;},progress,memoryProgress)); error.clear();
     bool cancel=!strcmp(mode,"cancel");
@@ -73,7 +107,8 @@ int main() {
    }
   }
   std::string events=Events(log); assert(events.find("load\n")==0);
-  if(!strcmp(mode,"normal") || !strcmp(mode,"badclose"))assert(events=="load\ngenerate\ngenerate\nunload\n");
+  if(!strcmp(mode,"normal"))assert(events=="load\nthreads\nthreads\ngenerate\ngenerate\nunload\n");
+  else if(!strcmp(mode,"badclose"))assert(events=="load\ngenerate\ngenerate\nunload\n");
   else if(!strcmp(mode,"cancel"))assert(events=="load\ngenerate\ncancel\nunload\n");
   else assert(events.find("unload")==std::string::npos);
   unlink(log);

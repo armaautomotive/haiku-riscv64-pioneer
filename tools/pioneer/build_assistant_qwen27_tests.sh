@@ -20,3 +20,16 @@ for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$lib
  -L"$release/system/libroot" -L"$release/system/libnetwork" -DASSISTANT_QWEN27_WORKER="\"$peer\"" \
  "$project/tools/pioneer/tests/assistant_qwen27_test.cpp" "$project/src/apps/assistant/P100AQwen27.cpp" -lnetwork -o "${output}Test"
 shasum -a 256 "${output}FakeWorker" "${output}Test"
+if [ -n "${ASSISTANT_LLAMA_LIB_DIR:-}" ]; then
+ headers=$(mktemp -d /private/tmp/assistant27-pool-headers.XXXXXXXX)
+ git -C "$project/src/libs/llama.cpp" archive c060ca974c773c7c3d17fd1b66dc9d312bc292c0 ggml/include | tar -x -C "$headers"
+ # Same three ABI-pinned ggml libraries used by the installed worker.
+ for spec in libggml.so.0.21.0:a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16 libggml-base.so.0.21.0:9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389 libggml-cpu.so.0.21.0:69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2; do
+  actual=$(shasum -a 256 "$ASSISTANT_LLAMA_LIB_DIR/${spec%%:*}"); [ "${actual%% *}" = "${spec#*:}" ] || exit 1
+ done
+ "$cxx" -std=c++11 -O1 -Wall -Wextra -Werror "$@" -B"$release/system/glue/" \
+  -L"$release/system/libroot" -L"$ASSISTANT_LLAMA_LIB_DIR" -Wl,-rpath-link,"$ASSISTANT_LLAMA_LIB_DIR" -I"$headers/ggml/include" \
+  "$project/tools/pioneer/tests/assistant_qwen27_cpu_pool_test.cpp" \
+  -l:libggml.so.0.21.0 -l:libggml-base.so.0.21.0 -l:libggml-cpu.so.0.21.0 -o "${output}CpuPoolTest"
+ shasum -a 256 "${output}CpuPoolTest"
+fi

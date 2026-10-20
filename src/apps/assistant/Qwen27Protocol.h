@@ -7,7 +7,7 @@
 #include <sys/socket.h>
 #include <errno.h>
 namespace Assistant27 {
-enum { Load=1,Generate=2,Cancel=3,Unload=4,Progress=10,Ready=11,Text=12,Done=13,Error=14,Closed=15 };
+enum { Load=1,Generate=2,Cancel=3,Unload=4,Threads=5,Progress=10,Ready=11,Text=12,Done=13,Error=14,Closed=15 };
 enum { Complete=0,Cancelled=1,Rejected=2,Fatal=3,MaxQuestion=256,MaxPromptTokens=96,MaxTokens=32,MaxAnswer=8192 };
 struct Frame { uint32_t kind=0,id=0,value=0; std::string text; };
 static inline bool Question(const std::string& q) { return !q.empty() && q.size()<=MaxQuestion && q.find('\0')==std::string::npos; }
