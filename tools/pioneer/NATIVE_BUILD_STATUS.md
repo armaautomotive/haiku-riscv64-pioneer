@@ -1,5 +1,33 @@
 # Native build status
 
+October19,19:40 Vancouver (October20,02:40 UTC) WHOLE27B DMA+QUEUED PASS:
+Full-model-work-output-dma-queued-four-20261019-a.log FINISHED,clean_end1,
+EXIT0,session86037 gone. CPU-only reload status confirms gen30/tag...000b,
+cold0,active_owner0. SAME public token IDs11/353/2688/264,ALL497 learned
+projections per position/1988 total,2020 calls,119 workers,retained4558653
+pages/18672242688B. Warm7.763579/7.714519/7.727866s =>0.129277112tok/s,
+64.57% faster (39.24% less wall time) versus prior0.078554988. ~3.26x the
+older0.039706501 result. This is STILL unusably slow,~155x short of20tok/s,
+and a tiny public4-token sample,NOT steady-state/chat-quality validation.
+
+Warm matrix ioctl6.329030/6.335201/6.329397s;other GGML
+1.099073/1.044159/1.064542s per position. Both on-card matrix pipeline and
+CPU non-matrix/residency boundaries remain major work;the vector GDN
+prototype below is NOT yet production offload. Priming735.134441s,
+source repack149.521497s,span upload584.947724s;first position771.005029s.
+No CPU learned-reference/result validation or checked fallback in Work.
+Log SHA039c4916e52e9cc8bda6e3b8627ea3c767681bcc04db386f35f745a9b7134ef1,
+archived locally under pioneer-q38-work-fast-native-20261019.lQIaCFsg.
+Current drivera9889c0b is qualified and idle;guardd1ce2aa4 unchanged.
+No reboot,power,SD or Assistant action occurred. Performance goal NOT met.
+
+Terminology clarification:the historical "full FFN"/"FFN graph" smoke
+below is ONE complete blk.0.ffn_down.weight projection,17408 inputs x5120
+outputs,executed TWICE. The repeat timing is ONE warm invocation. It is
+NOT the complete gate/up/down/activation feed-forward block,decoder layer,
+or token. Source:GraphSmoke in pioneer_q38_inference.cpp. Only the separate
+four-token smoke measures full-model token generation.
+
 October19,19:31 Vancouver (October20,02:31 UTC) GEN30 QUALIFIED / WHOLE27B RUNNING:
 Gen30 a9889c0b/tag202610190006000b hot-swapped cleanly. Work18 synthetic,
 16 authenticated119-worker,and18 old-checked calculations ALL exact,clean
