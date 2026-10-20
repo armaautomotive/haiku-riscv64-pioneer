@@ -34,6 +34,9 @@ template<class E,bool Integer=false
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 	,bool ZeroMinimum=false
 #endif
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+	,bool Defer=false
+#endif
 > PIONEER_Q38_ACCUMULATOR_SIZE
 static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadata,uint32_t scale,int sum)
 {
@@ -93,7 +96,15 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 		if (Integer) PioneerQ38VectorAffine(e); else PioneerQ38VectorAffineFloatDot(e);
 		e.Op(0x72030000|108|parity);
 	}
-	e.Drain(); return true;
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+	// OFFLINE candidate:Work's next raw-unpack entry already drains BEFORE
+	// any CSR/config change. Only disjoint L1/NoC staging may overlap these
+	// accumulator stores. Caller MUST drain BEFORE final group Dst export.
+	if (!Defer) e.Drain();
+#else
+	e.Drain();
+#endif
+	return true;
 }
 #undef PIONEER_Q38_ACCUMULATOR_SIZE
 #endif

@@ -17,7 +17,7 @@ using VectorPersistent=VectorRows<PersistentRows,true>;
 #endif
 #endif
 #if defined(PIONEER_Q38_TEST_BFLOAT) || defined(PIONEER_Q38_TEST_INT_ACCUMULATOR)
-static void FreshInputs(VectorPersistent& m)
+[[maybe_unused]] static void FreshInputs(VectorPersistent& m)
 {
 	// Poison ALL previous derived cache words and change the public input
 	// between completed jobs. Actual code must regenerate every word.

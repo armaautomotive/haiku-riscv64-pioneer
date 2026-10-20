@@ -1,5 +1,38 @@
 # Native build status
 
+October20,13:47 Vancouver (20:47 UTC) NATIVE DECODER PASS / NEXT OFFLINE SCHEDULE:
+Guarded16a06fee/tag...0006/gen7 ->93067b8f/tag2026102000010007/gen8
+exchange VERIFIED without reboot/reset. ALL18 Work synthetic+16 auth119+
+16 auth3groups+18 checked EXACT,FOUR clean ENDs/CLI_EXIT0. All normal
+clock lifetimes800->1350->800/restored1/uncertain0;CPU guard cold0/owner0.
+Log SHAs1601085a/ee117343/b0752117/f466bb64 respectively. SAME frozen
+bda16c7c --public-four-tokens is now ONLY native job,log
+full-model-work-native-operand-four-20261020-a.log. Do NOT probe,transfer,
+swap or launch another card job until explicit clean END. No new whole27B
+rate yet;latest0.164406588,best tiny sample0.165393504;20tok/s unmet.
+
+New PIONEER_Q38_WORK_DEFER_AFFINE is OFFLINE ONLY;driver builder REFUSES
+flag1. Work retains ALL affine operations but omits its trailing per-panel
+drain;the next raw-unpack entry drains BEFORE config changes,and a NEW
+mandatory final group drain precedes config/Dst export. Only disjoint
+SrcB/sum-cache/NIU staging may overlap pending SFPU accumulator stores.
+Checked math/drains/STOP unchanged. Independent observer holds physical
+accumulator stores INVISIBLE until actual backend drain,refuses premature
+config/Dst consumers;false final-wait ACK rejects BEFORE ANY output read/
+finished publication. Exact emitted all-format/width/group/mode/repeated
+changed-input/poisoned physical Dst tests vDEAB7C0 PASS;earlier runner count
+expectation and missing disjoint sum-cache observer were fixed OFFLINE,
+NO native failure. Actual root+peers/ordered DMA/all proof/PC/source/fault
+suite w77HVFFu PASS;real DMA/Work FD1DWShl and extracted handler/whole-owner/
+clock retention C0iAO6jo PASS;helper1eRypOmO confirms ONLY last drain differs.
+Peer9ca34637bde4497ac08bac46b6611a97de972daba0af6cfb61ab71027b4ccc25,
+prefix0c3458da669f7eaa2488a94a23b7b3f7dd24a49d14de7c61270e167df6b4cbb0,
+boote678 unchanged,a/b exact. Feature-OFF complete driver EXACT93067b8f,
+guardd1ce/default432df unchanged. NO native scheduling qualification or
+token-speed claim. Next research:compact active output rows,not padded
+per-worker blocks,to reduce transport without omitting values/proofs.
+Goal ACTIVE;boot/SD/model/runtime libraries/Assistant settings untouched.
+
 October20,13:38 Vancouver (20:38 UTC) ZERO-MINIMUM WHOLE27B PASS,NO SPEEDUP:
 Full-model-work-zero-minimum-four-20261020-a FINISHED clean_end1/CLI_EXIT0,
 SAME tokens11/353/2688/264/1988 projections/2020 calls/119 workers/4558653

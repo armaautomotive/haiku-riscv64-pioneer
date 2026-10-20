@@ -188,6 +188,9 @@ case "${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}" in
     extra="$extra -DPIONEER_Q38_NATIVE_OPERAND_STORE";;
  *) exit 2;;
 esac
+[ "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" = 0 ] || {
+ echo 'STOP deferred affine is OFFLINE ONLY;no qualified driver image selects it' >&2; exit 2;
+}
 case "${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_OUTPUT_DMA:-0}" = 1 ] || exit 2

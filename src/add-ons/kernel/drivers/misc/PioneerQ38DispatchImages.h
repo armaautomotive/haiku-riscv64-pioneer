@@ -55,6 +55,12 @@
 #endif
 #include "PioneerQ38NativeOperandPeerImage.h"
 #endif
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+#ifndef PIONEER_Q38_NATIVE_OPERAND_STORE
+#error Deferred affine requires the exact native-operand Work peer
+#endif
+#include "PioneerQ38DeferredAffinePeerImage.h"
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
@@ -87,6 +93,9 @@ static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t add
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 #ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+ if (worker && worker<120) return PioneerQ38DeferredAffinePeerPrefixWord(address);
+#endif
  if (worker && worker<120) return PioneerQ38NativeOperandPeerPrefixWord(address);
 #endif
  if (worker && worker<120) return PioneerQ38ZeroMinimumPeerPrefixWord(address);
@@ -674,6 +683,9 @@ static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 #ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+ return worker>=120?UINT32_MAX:worker?PioneerQ38DeferredAffinePeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
  return worker>=120?UINT32_MAX:worker?PioneerQ38NativeOperandPeerWord(word):PioneerQ38DispatchRootWord(word);
 #endif
  return worker>=120?UINT32_MAX:worker?PioneerQ38ZeroMinimumPeerWord(word):PioneerQ38DispatchRootWord(word);

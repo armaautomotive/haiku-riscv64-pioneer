@@ -13,6 +13,9 @@ SECTIONS {
 		 * as a distinct constant specialization for Q4/ALL checked jobs. */
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0EE*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb0EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb1EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1ELb1EE*)
 		*(.text._ZN22PioneerQ38CachedAffine*)
 		. = ALIGN(4);
 	}

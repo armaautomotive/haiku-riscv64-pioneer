@@ -58,5 +58,26 @@ int main()
 	// rounded additions cannot create a finer quantum than2^-79,well above
 	// FP32 subnormal range. Thus all valid intermediates are normal/zero.
 	assert(std::ldexp(1.L,-79)>std::ldexp(1.L,-126));
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+	for (unsigned type:{8U,12U,14U}) for (unsigned mode=0;mode<3;mode++) {
+		bool first=mode==0,metadata=mode!=2; AccProgram original,deferred;
+		if (type==12) {
+			assert((PioneerQ38SfpuAccumulator<AccProgram,true,false,false>(original,type,first,metadata,0x3f000000,-2048)));
+			assert((PioneerQ38SfpuAccumulator<AccProgram,true,false,true>(deferred,type,first,metadata,0x3f000000,-2048)));
+		} else {
+			assert((PioneerQ38SfpuAccumulator<AccProgram,true,true,false>(original,type,first,metadata,0x3f000000,-2048)));
+			assert((PioneerQ38SfpuAccumulator<AccProgram,true,true,true>(deferred,type,first,metadata,0x3f000000,-2048)));
+		}
+		assert(original.events.size()==deferred.events.size()+1 && original.events.back().kind==3);
+		for (unsigned i=0;i<deferred.events.size();i++) {
+			const auto& a=original.events[i]; const auto& b=deferred.events[i];
+			assert(a.kind==b.kind && a.index==b.index && a.value==b.value);
+		}
+	}
+	for (unsigned type:{0U,99U}) { AccProgram p; assert((!PioneerQ38SfpuAccumulator<AccProgram,true,false,true>(p,type,true,true,0x3f800000,0)) && p.events.empty()); }
+	for (unsigned scale:{0x2f7fffffU,0x47800001U,0x7f800000U,0x7fc00000U}) { AccProgram p; assert((!PioneerQ38SfpuAccumulator<AccProgram,true,false,true>(p,12,true,true,scale,0)) && p.events.empty()); }
+	for (int sum:{-2049,2049}) { AccProgram p; assert((!PioneerQ38SfpuAccumulator<AccProgram,true,false,true>(p,12,true,true,0x3f800000,sum)) && p.events.empty()); }
+	puts("PASS OFFLINE deferred Work helper:ONLY trailing drain omitted,ALL metadata/config/math/source events EXACT,invalid inputs inert;caller still owes real completion BEFORE config/export");
+#endif
 	printf("PASS OFFLINE resident SFPU protocol:%u metadata/group sequences,ONLY fixed96/100 imports,no SrcA flip,all format/Thread5 restoration,group padding,final drains,invalid inputs inert;valid accumulator<2^68/nonzero quantum>=2^-79;NO native qualification\n",sequences);
 }

@@ -58,6 +58,9 @@
 #if defined(PIONEER_Q38_NATIVE_OPERAND_STORE) && !defined(PIONEER_Q38_WORK_ZERO_MINIMUM)
 #error Native operand store requires the complete separately tested zero-minimum integer peer
 #endif
+#if defined(PIONEER_Q38_WORK_DEFER_AFFINE) && !defined(PIONEER_Q38_NATIVE_OPERAND_STORE)
+#error Deferred affine requires the separate native operand integer peer
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -416,9 +419,16 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 	// Choose between TWO exact,immutable code targets ONCE per job. No
 	// caller address/function pointer or per-panel Work/type branch.
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+	auto accumulate=&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false,false>;
+	if (skipDotCheck) accumulate=type!=12
+		?&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,true,true>
+		:&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false,true>;
+#else
 	const auto accumulate=skipDotCheck && type!=12
 		?&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,true>
 		:&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false>;
+#endif
 #endif
 	for (unsigned group=0;group<groups;group++) {
 	for (unsigned block=0;block<blocks;block++) {
@@ -595,6 +605,11 @@ extern "C" unsigned block_main()
 	// Bounded finite inputs imply |accumulator|<2^68,normal-or-zero
 	// intermediates and NO overflow/underflow. ALL dot checks remain per
 	// panel;publish only final finite results after the entire group.
+#ifdef PIONEER_Q38_WORK_DEFER_AFFINE
+	// Complete ALL deferred stores BEFORE config changes or ANY CPU Dst
+	// export. Checked retains every original per-panel drain unchanged.
+	if (skipDotCheck) Drain();
+#endif
 #ifdef PIONEER_Q38_SFPU_INTEGER
 	Config(3,0); // final FP32 accumulator export, NOT integer dot conversion
 #endif

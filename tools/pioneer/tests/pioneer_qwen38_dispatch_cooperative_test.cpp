@@ -1,4 +1,9 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TEST_DEFER_AFFINE
+#define PIONEER_Q38_DEFER_AFFINE_IMAGE_TEST_MODEL_ONLY
+#include "pioneer_q38_defer_affine_image_test.cpp"
+using CooperativePeer=DeferredAffineImage;
+#else
 #ifdef PIONEER_Q38_VECTOR_COOPERATIVE
 #define PIONEER_Q38_VECTOR_PERSISTENT_IMAGE
 #endif
@@ -23,6 +28,7 @@ using CooperativePeer=VectorRows<PersistentRows,true>;
 #endif
 #else
 using CooperativePeer=PersistentRows;
+#endif
 #endif
 #define PIONEER_Q38_DISPATCH_BASE_ALREADY_INCLUDED
 #define PIONEER_Q38_DISPATCH_MACHINE_ONLY
