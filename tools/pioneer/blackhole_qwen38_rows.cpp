@@ -52,6 +52,9 @@
 #if defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE) && (!defined(PIONEER_Q38_QUEUED_MATRIX_ENTRY) || !defined(PIONEER_Q38_SFPU_INTEGER))
 #error Work input sums require the separately qualified integer queued persistent peer
 #endif
+#if defined(PIONEER_Q38_WORK_ZERO_MINIMUM) && !defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE)
+#error Zero-minimum Work requires the separate input-sum-cache integer peer
+#endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
 #include "PioneerQ38VectorDstInit.h"
@@ -313,7 +316,14 @@ extern "C" unsigned block_main()
 	// output group. Group0 computes the ORIGINAL exact signed integer sums;
 	// later groups reuse them within THIS job only. NEVER persist a cache
 	// hit across jobs. Checked/single-group jobs retain the original path.
-	const bool cacheSums=skipDotCheck && groups>1;
+	const bool cacheSums=skipDotCheck && groups>1
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+		&& type==12
+#endif
+		;
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+	const bool zeroMinimum=skipDotCheck && type!=12;
+#endif
 	// PRIVATE peer scratch95000..96100,inside the existing saved/owned
 	// 6e000..b0000 view. Disjoint from raw90000..90d40,metadata91000..91280,
 	// scales94000..94880,results84000..84400,inputa0000..a8800 and code/stack.
@@ -400,6 +410,13 @@ extern "C" unsigned block_main()
 #endif
 	for (unsigned row=0;row<groups*16;row++) Words(0x84000)[row]=0;
 	unsigned panels=count/16;
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+	// Choose between TWO exact,immutable code targets ONCE per job. No
+	// caller address/function pointer or per-panel Work/type branch.
+	const auto accumulate=skipDotCheck && type!=12
+		?&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,true>
+		:&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false>;
+#endif
 	for (unsigned group=0;group<groups;group++) {
 	for (unsigned block=0;block<blocks;block++) {
 #ifdef PIONEER_Q38_STREAM
@@ -460,6 +477,13 @@ extern "C" unsigned block_main()
 		for (unsigned w=0;w<128;w++) Words(0x70710)[w]=local->operand[w];
 #endif
 		int sum=0;
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+		if (zeroMinimum) {
+			// Exact +0 minimum means no correction term and no input sum.
+			// Preserve EVERY original SrcB operand and its ordering/fence.
+			for (unsigned w=0;w<8;w++) Words(0x70920)[w]=Words(inputBase)[block*(count/2)+p*8+w];
+		} else
+#endif
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
 		if (cacheSums && group) {
 			sum=int(Words(0x95000)[block*panels+p]);
@@ -519,6 +543,9 @@ extern "C" unsigned block_main()
 			if ((raw&0x7f800000)==0x7f800000 || dot<-262144.0f || dot>262144.0f) block_fault_park();
 #endif
 		}
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+		if (!accumulate(emitter,type,!block && !p,type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
+#else
 		if (!PioneerQ38SfpuAccumulator<VectorPanelEmitter,
 #ifdef PIONEER_Q38_SFPU_INTEGER
 			true
@@ -526,6 +553,7 @@ extern "C" unsigned block_main()
 			false
 #endif
 		>(emitter,type,!block && !p,type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
+#endif
 #else
 #ifdef PIONEER_Q38_VECTOR_AFFINE
 		// Preserve the original ALL16 dot range checks before vector math.

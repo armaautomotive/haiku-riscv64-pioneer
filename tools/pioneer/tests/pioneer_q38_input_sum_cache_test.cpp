@@ -42,6 +42,7 @@ struct InputSumCache:VectorPersistent {
 		return VectorPersistent::Load(at);
 	}
 };
+#ifndef PIONEER_Q38_INPUT_SUM_CACHE_TEST_MODEL_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==3);
@@ -92,3 +93,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual cache image:ALL formats/widths/1,3,16 groups/two modes/two changed-input jobs EXACT;full fresh group0 before reads;bounded disjoint scratch;unchanged matrix/SFPU/NoC/drains/STOP;NO native/performance qualification");
 }
+#endif

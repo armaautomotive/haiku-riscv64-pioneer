@@ -27,7 +27,7 @@ def check(mode, fault=None):
             return target
         payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'hashwspg', 'guardsha']}
         payloads['hashcurrentprofile'] = ('test-' + values['hashcurrentprofile']).encode()
-        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache']:
+        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
@@ -67,6 +67,8 @@ def check(mode, fault=None):
             '--restore-normal-clock': ('hash_normal_clock', 'hash_sparse_export', 'tag_normal_clock'),
             '--apply-input-sum-cache': ('hash_normal_clock', 'hash_sum_cache', 'tag_normal_clock'),
             '--restore-input-sum-cache': ('hash_sum_cache', 'hash_normal_clock', 'tag_sum_cache'),
+            '--apply-zero-minimum': ('hash_sum_cache', 'hash_zero_minimum', 'tag_sum_cache'),
+            '--restore-zero-minimum': ('hash_zero_minimum', 'hash_sum_cache', 'tag_zero_minimum'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -102,6 +104,7 @@ def check(mode, fault=None):
         put('candidate_sparse_export', payloads['hash_sparse_export'])
         put('candidate_normal_clock', payloads['hash_normal_clock'])
         put('candidate_sum_cache', payloads['hash_sum_cache'])
+        put('candidate_zero_minimum', payloads['hash_zero_minimum'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -200,6 +203,7 @@ if __name__ == '__main__':
     modes += ['--apply-sparse-profile', '--restore-sparse-profile', '--apply-sparse-export', '--restore-sparse-export']
     modes += ['--apply-normal-clock', '--restore-normal-clock']
     modes += ['--apply-input-sum-cache', '--restore-input-sum-cache']
+    modes += ['--apply-zero-minimum', '--restore-zero-minimum']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -267,6 +271,10 @@ if __name__ == '__main__':
             candidate = ['candidate_sum_cache']
         elif mode == '--restore-input-sum-cache':
             candidate = ['candidate_normal_clock']
+        elif mode == '--apply-zero-minimum':
+            candidate = ['candidate_zero_minimum']
+        elif mode == '--restore-zero-minimum':
+            candidate = ['candidate_sum_cache']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

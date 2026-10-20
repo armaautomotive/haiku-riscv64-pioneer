@@ -1,5 +1,61 @@
 # Native build status
 
+October20,12:57 Vancouver (19:57 UTC) ZERO-MINIMUM OFFLINE READY:
+Final full instruction/math/physical/cache/pin-boundary suiteYDn6tzBY PASS.
+Existing generic resident-accumulator suiteegjMZiet PASS (nonzero quantum
+>=2^-79,so the +0 induction does not hide underflow). New driver
+16a06fee2117c8ad51086343aa3f05997b6ec9f66961e21704012ae2846ae77a,
+tag2026102000010006,repeat a/b EXACT;feature-OFF EXACT installed6efd1dd7,
+guardd1ce/default432df unchanged. All1931 updater cases including new60
+apply/restore fault cases PASS. Updater SHA1267463ac4a4cd7efa45c658df8ad47a06649c38ce113f72b47171c9c753aef8.
+NOT staged/installed/native-qualified. Current ONLY card job remains
+cache-only full-model-work-input-sum-cache-four-20261020-a.log/gen6,
+authentication/host load completed and weight priming in progress. No
+new whole-model rate;latest remains0.162201932tok/s. Wait for its explicit
+clean END before staging/exchanging/testing the next driver. Future native
+packing research is separate and NOT present in this pinned candidate.
+Goal ACTIVE;20tok/s unmet,no additional power/boot/SD/Assistant changes.
+
+October20,12:49 Vancouver (19:49 UTC) CACHE NATIVE PASS / NEXT OFFLINE KERNEL:
+Cache6efd1dd7/tag...0005/gen6 passedALL18 Work synthetic+16 auth119+
+16 AUTH THREE-GROUP+18 checked calculations EXACT,FOUR clean ENDs/EXIT0.
+Three-group test (--public-fixtures) exercises real95000..96100 reuse,
+including K17408. All sessions proved800->1350->800/restored1/uncertain0.
+CPU-only guard afterward cold0/active_owner0. Log SHAs:synthetic57566e91,
+auth11936a04619,auth3groups0ec7c3eb,checked846d80a7. SAME frozen bda16c7c
+--public-four-tokens is now the ONLY native card job,log
+full-model-work-input-sum-cache-four-20261020-a.log. Current phase last
+observed authentication,NO extra card query/driver swap/probe during it.
+Latest completed whole-model rate remains0.162201932tok/s;20 unmet.
+
+Next ZERO_MINIMUM prototype is OFFLINE/UNSELECTED. Q8/Q6 Work omits the
+zero correction plus unused minimum/sum loads/scalar sums. Q4 and ALL
+checked jobs keep original arithmetic. Two constant function targets are
+chosen ONCE per job,not a caller function pointer/per-panel mode branch.
+ALL physical +0 accumulator initialization stays;normal-or-+0 induction
+required (arbitrary -0 counterexample remains in million-case test).
+No NoC/host/source/PC/STOP/completion proof changed. Q4 alone uses the
+existing bounded fresh input-sum cache;Q8/Q6 leave all cache words poisoned.
+
+Final peer9a3f8f13b3dc8d147bd07df92f8437bc0b681e7298a4fde36166bd1a2cde07a8,
+prefix9258c8b82bc0d419d4497f1ab816e5e0bc54e1fe6f34e67afa0c31a5088b0e3c,
+boote678476d unchanged,e/f repeatEXACT. Default-OFF still EXACT cache
+c2f5dbf1/f5b36fa2. Actual emitted full-suite19a1f93x PASS:all formats/
+widths/groups/modes/repeated changed inputs,independent FP32/FP64,poisoned
+physical Dst,missing per-group-clear negative control,Q4 sum bound,canaries,
+same matrix/NoC/checked/STOP. Real root+peers/DMA/ALL proof/PC/source/
+transport faults zoumk18k PASS. Final DMA/Work JkGfdInC and actual handler/
+cookie/clock retention FvEpCHuN rechecks PASS.
+Earlier prototypes a/e10315b0,c/eccafd0b are SUPERSEDED/unselected;the
+first runtime-bool version added Q4 RISC overhead,so replaced by constant
+specializations. Example K17408/group16 RV steps from cache peer:
+Q8 19383045->17107047;Q6 23393956->21496583;Q4 21179878->21214786 (~0.16%
+MORE RISC,unchanged vector math). NOT native/cycle/token rates. New driver
+build is now enabled ONLY as an explicit opt-in with the complete qualified
+cached Work dependency chain;new native candidate is being built OFFLINE.
+Do NOT stage/install this prototype before current full-model clean END.
+Goal ACTIVE;no boot/SD/Assistant/model/runtime-library changes.
+
 October20,12:39 Vancouver (19:39 UTC) CACHE INSTALLED / NATIVE TESTS:
 Guarded b13/tag...0004/gen5 ->6efd1dd7/tag2026102000010005/gen6 exchange
 verified,NO reboot/reset. Cache-only driver passed18 original synthetic

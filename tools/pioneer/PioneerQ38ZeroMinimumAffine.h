@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_ZERO_MINIMUM_AFFINE_H
 #define PIONEER_Q38_ZERO_MINIMUM_AFFINE_H
 #include "PioneerQ38VectorAffine.h"
-// OFFLINE arithmetic prerequisite ONLY;NO image/driver selects it.
+// OFFLINE arithmetic candidate ONLY;NO installed driver selects it.
 // Q8/Q6 metadata minimum is EXACT +0. With the original finite,normal-
 // or-zero domain,its correction can change ONLY the sign of a zero product.
 // An accumulator initialized to +0 stays normal or +0 under round-to-nearest

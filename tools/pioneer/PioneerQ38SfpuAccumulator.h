@@ -3,6 +3,9 @@
 #define PIONEER_Q38_SFPU_ACCUMULATOR_H
 #include "PioneerQ38VectorAffine.h"
 #include "PioneerSfpuDivide.h"
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+#include "PioneerQ38ZeroMinimumAffine.h"
+#endif
 // AFTER every matrix drain. Checked jobs also read/check ALL16 dot bounds;
 // the separately gated Work selector may rely on the fixed integer-input
 // proof instead. No address/length/source proof depends on numeric dots.
@@ -27,12 +30,25 @@
 #else
 #define PIONEER_Q38_ACCUMULATOR_SIZE
 #endif
-template<class E,bool Integer=false> PIONEER_Q38_ACCUMULATOR_SIZE
+template<class E,bool Integer=false
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+	,bool ZeroMinimum=false
+#endif
+> PIONEER_Q38_ACCUMULATOR_SIZE
 static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadata,uint32_t scale,int sum)
 {
 	unsigned mag=scale&0x7fffffff;
 	if ((type!=8 && type!=12 && type!=14) || sum<-2048 || sum>2048 || (first && !metadata)
 		|| (mag && (mag<0x2f800000 || mag>0x47800000))) return false;
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+	static_assert(!ZeroMinimum || Integer,"zero-minimum specialization is exact INTEGER Work only");
+	const bool zeroMinimum=ZeroMinimum;
+	if (ZeroMinimum && type==12) return false;
+	// ALL accumulator lanes are explicitly +0 at first group panel below.
+	// Q8/Q6 metadata minima are +0,ALL products remain finite normal/zero.
+	// RN addition from +0 or normal cannot produce -0. The required +0
+	// induction therefore holds across EVERY original panel of this group.
+#endif
 	e.Op(0x3700000f);
 	if (first) {
 		e.Op(0x71720000);
@@ -43,7 +59,11 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 	if (metadata) {
 		e.Op(0x5e203c00); e.Op(0x5120000a); e.Op(0x5420000f); e.Op(0xb2050000); e.Drain();
 		e.Config(1,Integer?0xa0200000:0x20200000); e.Config(64,0x100010); e.Config(65,1); e.Config(72,0);
-		for (unsigned kind=0;kind<(type==14?1U:2U);kind++) {
+		for (unsigned kind=0;kind<(
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+			zeroMinimum ||
+#endif
+			type==14?1U:2U);kind++) {
 			unsigned row=96+kind*4,address=0x91200+kind*64;
 			e.Config(84,0x00400000+(row+4)*16); e.Config(76,(address-16)/16);
 			e.Op(0x42000081); e.Drain(); // no bank publication or flip
@@ -53,12 +73,23 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 	}
 	for (unsigned parity=0;parity<4;parity+=2) {
 		e.Op((Integer?0x70040000:0x70030000)|32|parity); // canonical SM32 or exact FP32 integer dot
-		e.Op(0x70130000|96|parity); e.Op(0x70230000|100|parity); e.Op(0x70530000|108|parity);
+		e.Op(0x70130000|96|parity);
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+		if (!zeroMinimum)
+#endif
+		e.Op(0x70230000|100|parity);
+		e.Op(0x70530000|108|parity);
 		PioneerSfpuLoad32(e,3,scale);
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+		if (!zeroMinimum)
+#endif
 		PioneerSfpuLoad32(e,4,(sum<0?0x80000000U:0)|unsigned(sum<0?-sum:sum));
 		// Canonicalize ONLY signed zero (SM32 or IEEE);all nonzero bits stay.
 		PioneerSfpuLoad32(e,6,0x7fffffff); PioneerSfpuAnd(e,7,0,6);
 		PioneerSfpuAdd(e,7,6); PioneerSfpuShift(e,7,-31,true); PioneerSfpuAnd(e,0,0,7);
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+		if (zeroMinimum) PioneerQ38ZeroMinimumAffine(e); else
+#endif
 		if (Integer) PioneerQ38VectorAffine(e); else PioneerQ38VectorAffineFloatDot(e);
 		e.Op(0x72030000|108|parity);
 	}

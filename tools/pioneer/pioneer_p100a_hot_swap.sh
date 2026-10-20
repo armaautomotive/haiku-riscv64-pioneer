@@ -5,7 +5,7 @@
 set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
 case "$1" in
- --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache) mode=$1;;
+ --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache|--apply-zero-minimum|--restore-zero-minimum) mode=$1;;
  --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma|--apply-work-queued-entry|--restore-work-queued-entry|--apply-local-delta|--restore-local-delta|--apply-local-delta-terminal|--restore-local-delta-terminal|--apply-current-profile|--restore-current-profile) mode=$1;;
  *) exit 2;;
 esac
@@ -46,6 +46,7 @@ candidate_sparse_profile=$stage/tenstorrent_pci_probe-sparse-export-profile-8685
 candidate_sparse_export=$stage/tenstorrent_pci_probe-sparse-export-b852456b
 candidate_normal_clock=$stage/tenstorrent_pci_probe-normal-clock-b13e72d3
 candidate_sum_cache=$stage/tenstorrent_pci_probe-input-sum-cache-6efd1dd7
+candidate_zero_minimum=$stage/tenstorrent_pci_probe-zero-minimum-16a06fee
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -82,6 +83,7 @@ hash_sparse_profile=8685c9711be12b35948a7cf8c5b4533323f16869f6b10bf1cb1da9f75882
 hash_sparse_export=b852456b1bf116575153f99d6358df3b57c4d4c9b956e7882453c44006df855c
 hash_normal_clock=b13e72d3fd50b9dd94a13c344b337d9b12bb07d003e0f40a2f14f1ab6015dcca
 hash_sum_cache=6efd1dd7ec1b9e4268c29565e767a331c542c8aedcc3f7f61b1fc3315fb84bc8
+hash_zero_minimum=16a06fee2117c8ad51086343aa3f05997b6ec9f66961e21704012ae2846ae77a
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -116,6 +118,7 @@ tag_sparse_profile=2026102000010002
 tag_sparse_export=2026102000010003
 tag_normal_clock=2026102000010004
 tag_sum_cache=2026102000010005
+tag_zero_minimum=2026102000010006
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -221,6 +224,8 @@ else
  elif [ "$mode" = --restore-normal-clock ]; then source=$candidate_sparse_export; expected=$hash_normal_clock; result=$hash_sparse_export; oldtag=$tag_normal_clock; newtag=$tag_sparse_export
  elif [ "$mode" = --apply-input-sum-cache ]; then source=$candidate_sum_cache; expected=$hash_normal_clock; result=$hash_sum_cache; oldtag=$tag_normal_clock; newtag=$tag_sum_cache
  elif [ "$mode" = --restore-input-sum-cache ]; then source=$candidate_normal_clock; expected=$hash_sum_cache; result=$hash_normal_clock; oldtag=$tag_sum_cache; newtag=$tag_normal_clock
+ elif [ "$mode" = --apply-zero-minimum ]; then source=$candidate_zero_minimum; expected=$hash_sum_cache; result=$hash_zero_minimum; oldtag=$tag_sum_cache; newtag=$tag_zero_minimum
+ elif [ "$mode" = --restore-zero-minimum ]; then source=$candidate_sum_cache; expected=$hash_zero_minimum; result=$hash_sum_cache; oldtag=$tag_zero_minimum; newtag=$tag_sum_cache
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

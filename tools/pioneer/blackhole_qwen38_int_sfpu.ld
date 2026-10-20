@@ -9,6 +9,10 @@ SECTIONS {
 	 * constant-propagation clone suffix. A changed symbol fails nonempty. */
 	.affine 0x70b00 : {
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1EE*)
+		/* Separately gated zero-minimum variant: preserve original arithmetic
+		 * as a distinct constant specialization for Q4/ALL checked jobs. */
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1EE*)
 		*(.text._ZN22PioneerQ38CachedAffine*)
 		. = ALIGN(4);
 	}

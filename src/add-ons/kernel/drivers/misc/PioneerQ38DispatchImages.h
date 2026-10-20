@@ -43,6 +43,12 @@
 #endif
 #include "PioneerQ38InputSumCachePeerImage.h"
 #endif
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+#ifndef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+#error Zero-minimum arithmetic requires the exact input-sum-cache Work peer
+#endif
+#include "PioneerQ38ZeroMinimumPeerImage.h"
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
@@ -73,6 +79,9 @@ static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t add
 #endif
 #ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+ if (worker && worker<120) return PioneerQ38ZeroMinimumPeerPrefixWord(address);
+#endif
  if (worker && worker<120) return PioneerQ38InputSumCachePeerPrefixWord(address);
 #endif
  if (worker && worker<120) return PioneerQ38QueuedEntryPrefixWord(address);
@@ -654,6 +663,9 @@ static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 #ifdef PIONEER_Q38_INT_SFPU
 #ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
+#ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
+ return worker>=120?UINT32_MAX:worker?PioneerQ38ZeroMinimumPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
  return worker>=120?UINT32_MAX:worker?PioneerQ38InputSumCachePeerWord(word):PioneerQ38DispatchRootWord(word);
 #endif
  return worker>=120?UINT32_MAX:worker?PioneerQ38QueuedEntryPeerWord(word):PioneerQ38DispatchRootWord(word);

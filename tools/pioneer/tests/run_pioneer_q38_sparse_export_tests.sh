@@ -15,6 +15,9 @@ case "${PIONEER_Q38_TEST_INPUT_SUM_CACHE:-0}" in
  1) peer_cpp=-DPIONEER_Q38_WORK_INPUT_SUM_CACHE
     hash_is "$3/text.bin" c2f5dbf162261221c0cdfafe45e24f778aaae32b180dbaa01453f6c4881f87d0
     hash_is "$3/affine.bin" f5b36fa25338b9e63f8a10f0cf6bb60cc397e91261bfececcec603eab1b94250;;
+ 2) peer_cpp='-DPIONEER_Q38_WORK_INPUT_SUM_CACHE -DPIONEER_Q38_WORK_ZERO_MINIMUM'
+    hash_is "$3/text.bin" 9a3f8f13b3dc8d147bd07df92f8437bc0b681e7298a4fde36166bd1a2cde07a8
+    hash_is "$3/affine.bin" 9258c8b82bc0d419d4497f1ab816e5e0bc54e1fe6f34e67afa0c31a5088b0e3c;;
  *) exit 2;;
 esac
 hash_is "$3/boot.bin" e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
