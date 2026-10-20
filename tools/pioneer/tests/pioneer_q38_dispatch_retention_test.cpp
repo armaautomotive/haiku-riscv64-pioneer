@@ -95,4 +95,53 @@ int main(int argc,char** argv)
 	}
 	puts("PASS REAL clock-only cookie release: healthy lost caller/compute UNKNOWN/clock timeout retain ENTIRE context+cookie+PCI+ALL hosts+clock views,NO idle/unmap/STOP/reset/retry even before first span or matrix");
 #endif
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	for (unsigned variant=0;variant<9;variant++) for (unsigned explicitEnd=0;explicitEnd<2;explicitEnd++) {
+		if (!variant && explicitEnd) continue; // owner-only explicit END has no saved zero image
+		cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto& c=*cookie->context;
+		c.q38GdnBanks=new PioneerQ38GdnBanks;
+		if (variant) {
+			c.q38StateZero=new PioneerQ38StateZeroLease;
+			auto& zero=*c.q38StateZero;
+			zero.saved=variant>=2; zero.ready=variant>=2;
+			zero.running=variant==3 || variant==7;
+			zero.unsafe=variant==4 || variant==6;
+			zero.closed=variant>=5;
+		}
+		if (variant==8) c.q38GdnBanks->Fault();
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+		assert(c.q38Clock.Begin(c.clockIO.Arc(),c.clockIO.Health()));
+		const unsigned clockIO=c.clockIO.io;
+#endif
+		const unsigned writes=c.io.Writes(),selects=c.io.selects,cleanups=genericCleanup;
+		if (explicitEnd && variant==5) {
+			// Only known-clean zero CLOSE plus an explicit BANK_END may
+			// reach ordinary cleanup. No hardware adapter is installed.
+			tt_resident_session_result result={}; EndResidentSession(cookie,result,true);
+			assert(!cookie->context && genericCleanup==cleanups+1 && !sColdRecoveryRequired);
+			assert(ReleaseResidentCookie(cookie)==B_OK);
+			continue;
+		}
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+		// The early GDN gate must precede even a saved legacy-delta
+		// close. Such a close would otherwise perform device IO.
+		if (explicitEnd) c.q38Delta.saved=true;
+#endif
+		if (explicitEnd) {
+			tt_resident_session_result result={}; bool clean=true;
+			assert(!EndQ38DispatchOwnership(c,result,clean) && !clean && result.cold && result.active && !result.host_released);
+		} else assert(ReleaseResidentCookie(cookie)==B_OK);
+		assert(cookie->magic==0x50313030 && cookie->context==&c && sRuntimeOwner==cookie && sBankStorageOnly
+			&& c.dispatchOwnerRetained && sColdRecoveryRequired && c.q38GdnBanks->Unsafe()
+			&& (!c.q38StateZero || c.q38StateZero->unsafe) && c.bulkHost.quarantined
+			&& (!c.wideHost.allocated || c.wideHost.quarantined) && genericCleanup==cleanups
+			&& writes==c.io.Writes() && selects==c.io.selects);
+#ifdef PIONEER_Q38_NORMAL_CLOCK
+		assert(c.q38Clock.Unsafe() && clockIO==c.clockIO.io && !c.clockIO.unmaps);
+#endif
+		assert(ReleaseResidentCookie(cookie)==B_OK && writes==c.io.Writes() && selects==c.io.selects && genericCleanup==cleanups);
+		delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false; // TEST disposal ONLY
+	}
+	puts("PASS REAL gated GDN context retention: owner-only/lost caller/unprepared/ready/running/unsafe/closed-without-END retain cookie/context/PCI/ALL hosts/clock with ZERO IO; premature BANK_END refuses BEFORE delta close; only known zero CLOSE plus explicit END cleans once;NO native GDN adapter or qualification");
+#endif
 }

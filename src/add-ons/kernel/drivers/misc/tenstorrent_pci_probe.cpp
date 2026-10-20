@@ -16,6 +16,9 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+#include "PioneerQ38StateZeroController.h"
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 #if !defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Normal Q38 clocks require the retained-owner reloadable sparse Work driver
@@ -2129,6 +2132,12 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	// Private heap owners only. No native operation allocates these yet;
+	// the build gate remains closed until all hardware interlocks exist.
+	PioneerQ38GdnBanks* q38GdnBanks=NULL;
+	PioneerQ38StateZeroLease* q38StateZero=NULL;
+#endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	PioneerQ38DeltaProbeLease q38Delta;
 #endif
@@ -2205,6 +2214,10 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		delete q38StateZero;
+		delete q38GdnBanks;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 		delete q38Span;
 #endif
@@ -2218,6 +2231,10 @@ struct PioneerStoreContext {
 	}
 	tt_pioneer_mmio_result& Pci() { return baseline.baseline.baseline.baseline.control.control.control.pci; }
 	bool Unsafe() {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		if ((q38GdnBanks && q38GdnBanks->Unsafe())
+			|| (q38StateZero && (q38StateZero->unsafe || q38StateZero->running))) return true;
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 		if (q38Clock.Unsafe()) return true;
 #endif
@@ -2276,6 +2293,9 @@ static bool
 BeginQ38NormalClock(PioneerStoreContext& c)
 {
 	if (!c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || c.Unsafe()
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		|| c.q38GdnBanks || c.q38StateZero
+#endif
 		|| c.q38Clock.RequiresExplicitEnd() || c.q38Dispatch || c.q38Cohort || c.q38Span
 		|| c.panelProbe.saved || c.streamProbe.saved || c.fleet || c.runtimeCoreMode!=-1) return false;
 	auto& dram=c.baseline.baseline.baseline.baseline.dram;
@@ -2299,6 +2319,9 @@ FinishQ38NormalClock(PioneerStoreContext& c,bool knownClean)
 	// It is BEFORE final PCI disable and before releasing ANY host owner.
 	knownClean=knownClean && !c.Unsafe() && (!c.q38Span || c.q38Span->closed)
 		&& (!c.q38Dispatch || c.q38Dispatch->closed);
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	knownClean=knownClean && (!c.q38StateZero || c.q38StateZero->closed);
+#endif
 	bool ended=c.q38Clock.End(c.baseline.baseline.baseline.baseline.control.control.control.arc,
 		c.baseline.baseline.baseline.baseline.control.control.telemetry,knownClean);
 	const auto& r=c.q38Clock.Snapshot(); // CPU metadata ONLY;not another ARC query
@@ -2318,6 +2341,10 @@ static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
 	c.dispatchOwnerRetained=true;
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	if (c.q38StateZero) c.q38StateZero->unsafe=true;
+	if (c.q38GdnBanks) c.q38GdnBanks->Fault(); // MEMORY ONLY
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 	c.q38Clock.Quarantine(); // MEMORY ONLY; never issue IDLE after ANY unknown
 #endif
@@ -2341,6 +2368,14 @@ static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
 	if (!c.bankStorageOnly) return true;
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	// Explicit state-zero CLOSE must precede BANK_END. Refuse BEFORE
+	// delta/STOP/ARC/restore paths, even if the last device job passed.
+	if ((c.q38GdnBanks && c.q38GdnBanks->Unsafe())
+		|| (c.q38StateZero && (!c.q38StateZero->closed || c.q38StateZero->unsafe || c.q38StateZero->running))) {
+		clean=false; RetainQ38DispatchOwner(c,result); return false;
+	}
+#endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	if (c.q38Delta.saved) clean=clean && PioneerQ38DeltaProbeClose(c.io,
 		c.baseline.baseline.baseline.baseline.dram,c.baseline.baseline.baseline.noc,c.lease,c.banks,c.q38Delta,true);
@@ -2614,6 +2649,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		// to the kernel:close WITHOUT END must retain ALL owners with NO
 		// device IO/reset/STOP,even when the last RUN's metadata passed.
 		if (cookie->context->bankStorageOnly && ((cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+			|| cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 			|| cookie->context->q38Clock.RequiresExplicitEnd()
 #endif

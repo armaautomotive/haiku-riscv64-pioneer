@@ -1,5 +1,26 @@
 # Native build status
 
+October20,14:49 Vancouver (21:49 UTC) PRIVATE GDN LIFETIME HOOKS OFFLINE:
+The gated native context now has private HEAP owner/zero-lease pointers.
+Unsafe and memory-only retention quarantine both plus the existing whole
+context/cookie/PCI/ALL hosts/clock and persistent cold latch. An unclosed,
+running or unsafe zero lease refuses BANK_END BEFORE any legacy delta
+close/STOP/ARC/restore. Implicit FD close retains even healthy owner-only
+or already-zero-closed state;only explicit known-clean END may clean up.
+Normal-clock BEGIN refuses existing GDN owners;END requires zero CLOSE.
+Real extracted handler/lifetime ASan/UBSan5HCXGk9g and real clock helpers/
+view-adapter rezVWycp PASS,including lost callers before the first run,
+closed-without-END,unsafe/running closed leases,repeated-close ZERO IO and
+premature END before a saved delta. Feature-OFF module EXACT7cbd2bf4,
+guardd1ce/default432df unchanged. This is PARTIAL lifecycle integration,
+NOT a hardware IO adapter/all-operation interlock/ready-state tracker/GDN
+compute/GGML routing implementation. Native builder STILL refuses the
+mutable-state flag. No such owner is allocated by a native operation.
+Diagnostic compact-profile f7d3d395/gen10 is installed;synthetic18 and
+auth119x16 completed exact/clean. Real single-FFN profiling is now the ONLY
+native job;do not issue card queries/copies/exchanges until clean END.
+Latest production short sample remains0.170694031tok/s,NOT20. Goal ACTIVE.
+
 October20,14:37 Vancouver (21:37 UTC) COMPACT WHOLE27B PASS,SMALL GAIN:
 Full-model-work-compact-output-four-20261020-a FINISHED clean_end1/CLI_EXIT0,
 SAME tokens11/353/2688/264/1988 projections/2020 calls/119 workers/4558653

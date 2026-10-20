@@ -10,6 +10,9 @@
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanController.h"
 #endif
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StateZeroController.h"
+#endif
 using status_t=int; using uint32=uint32_t;
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DeltaProbe.h"
@@ -24,6 +27,10 @@ struct Ref2 { Ref1 baseline; tt_compute_noc_result noc; };
 struct Ref3 { Ref2 baseline; };
 struct Ref4 { Ref3 baseline; };
 struct BoundContext {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	PioneerQ38GdnBanks* q38GdnBanks=nullptr;
+	PioneerQ38StateZeroLease* q38StateZero=nullptr;
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 	ClockLeaseIO clockIO;
 	PioneerQ38ClockLease<ClockLeaseIO> q38Clock{clockIO};
@@ -54,6 +61,10 @@ struct BoundContext {
 #endif
 	}
 	bool Unsafe() { return
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		(q38GdnBanks && q38GdnBanks->Unsafe()) ||
+		(q38StateZero && (q38StateZero->unsafe || q38StateZero->running)) ||
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 		q38Clock.Unsafe() ||
 #endif
@@ -62,6 +73,10 @@ struct BoundContext {
 #endif
 		(q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) || banks.Quarantined() || lease.recovery_required || panelProbe.unsafe || streamProbe.unsafe; }
 	~BoundContext() {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		delete q38StateZero;
+		delete q38GdnBanks;
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 		delete q38Span;
 #endif

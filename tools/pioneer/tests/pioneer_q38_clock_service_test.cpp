@@ -13,7 +13,7 @@ struct ClockProof {
 	tt_arc_scratch_result arc=StrictQueue::Arc();
 	tt_arc_telemetry_result telemetry=StrictQueue::Health();
 };
-struct ClockClosed { bool closed=false,saved=false; };
+struct ClockClosed { bool closed=false,saved=false,unsafe=false,running=false; };
 struct PioneerStoreContext {
 	ClockProof baseline;
 	PioneerResidentBanks banks;
@@ -22,6 +22,10 @@ struct PioneerStoreContext {
 	ClockClosed* q38Dispatch=nullptr;
 	ClockClosed* q38Cohort=nullptr;
 	ClockClosed* q38Span=nullptr;
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	void* q38GdnBanks=nullptr;
+	ClockClosed* q38StateZero=nullptr;
+#endif
 	ClockClosed panelProbe,streamProbe;
 	void* fleet=nullptr;
 	int runtimeCoreMode=-1;
@@ -33,7 +37,11 @@ struct PioneerStoreContext {
 		if (foreign) { static tt_dram_samples_result other; other=baseline.dram; assert(banks.Bind(other)); }
 		else assert(banks.Bind(baseline.dram));
 	}
-	bool Unsafe() const { return otherUnsafe || q38Clock.Unsafe(); }
+	bool Unsafe() const { return otherUnsafe || q38Clock.Unsafe()
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		|| (q38StateZero && (q38StateZero->unsafe || q38StateZero->running))
+#endif
+		; }
 };
 static void dprintf(const char*,...) {} // native diagnostics are CPU metadata ONLY
 #include "pioneer_q38_clock_service.inc"
@@ -78,5 +86,20 @@ int main()
 		const unsigned before=c.io.io;
 		assert(!FinishQ38NormalClock(c,false) && !BeginQ38NormalClock(c) && c.io.io==before && !c.io.unmaps);
 	}
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	for (unsigned participant=0;participant<2;participant++) {
+		PioneerStoreContext c; ClockClosed active;
+		if (participant) c.q38StateZero=&active; else c.q38GdnBanks=&active;
+		assert(!BeginQ38NormalClock(c) && !c.io.io && !c.io.maps);
+	}
+	for (unsigned state=0;state<4;state++) {
+		PioneerStoreContext c; ClockClosed zero; assert(BeginQ38NormalClock(c));
+		c.q38StateZero=&zero; zero.closed=state!=0; zero.unsafe=state==2; zero.running=state==3;
+		const unsigned before=c.io.io;
+		if (state==1) assert(FinishQ38NormalClock(c,true) && c.io.clock==800 && c.io.unmaps==1);
+		else assert(!FinishQ38NormalClock(c,true) && c.q38Clock.Unsafe() && c.io.io==before && !c.io.unmaps);
+	}
+	puts("PASS ACTUAL gated GDN clock interlock: existing private owner/zero lease refuses BEGIN before IO; unclosed/unsafe/running zero refuses IDLE/unmap; known clean zero CLOSE allows explicit normal-clock END;OFFLINE ONLY");
+#endif
 	puts("PASS ACTUAL native clock begin/finish helpers: same bank identity/full120-held/quiet-DMA/pristine scope BEFORE any IO;open span/dispatch/unknown forbid IDLE/disposal;explicit proven-clean end only;OFFLINE NOT native authority");
 }
