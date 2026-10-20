@@ -114,6 +114,14 @@ static device_manager_info* sDeviceManager;
 static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 
 // PIONEER_PROBE_LOCK_BEGIN
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+// Instantiation sees the complete native context later in this TU. Keep
+// this a typed presence check,not a separately maintained global hint.
+template<class Cookie> static bool Q38MutableScopeOwned(const Cookie* cookie)
+{
+	return cookie && cookie->context && (cookie->context->q38GdnBanks || cookie->context->q38StateZero);
+}
+#endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 static const void* sQ38LocalDeltaOwner=NULL; // sLock;cleared ONLY after clean END
 #endif
@@ -130,6 +138,9 @@ AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	,bool localDeltaCommand=false
+#endif
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	,bool gdnSessionCommand=false
 #endif
 	)
 {
@@ -160,6 +171,14 @@ AcquireProbeLock(const void* runtimeOwner=NULL,bool bankCommand=false
 		release_sem(sLock); return B_NOT_ALLOWED; // deny overlapping ownership UNDER the lock
 	}
 #endif
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	// EVERY ordinary hardware command is denied once either private owner
+	// exists,even before first zero or after zero CLOSE. Only SAME-owner
+	// session STATUS/explicit END use the separate private call site below.
+	if (status==B_OK && Q38MutableScopeOwned(sRuntimeOwner) && (!gdnSessionCommand || sRuntimeOwner!=runtimeOwner)) {
+		release_sem(sLock); return B_NOT_ALLOWED;
+	}
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	if (status==B_OK && !preserveQ38Input && sQ38InputEpoch!=UINT64_MAX) sQ38InputEpoch++;
 #endif
@@ -171,6 +190,19 @@ static status_t AcquireQ38DeltaLock(const void* cookie)
 	return AcquireProbeLock(cookie,true
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 		,false
+#endif
+		,true);
+}
+#endif
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+[[maybe_unused]] static status_t AcquireQ38GdnSessionLock(const void* cookie)
+{
+	return AcquireProbeLock(cookie,true
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		,false
+#endif
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+		,true
 #endif
 		,true);
 }
@@ -2367,6 +2399,11 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	if (!c.bankStorageOnly && (c.q38GdnBanks || c.q38StateZero)) {
+		clean=false; RetainQ38DispatchOwner(c,result); return false; // misbound private scope:NEVER legacy rollback
+	}
+#endif
 	if (!c.bankStorageOnly) return true;
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	// Explicit state-zero CLOSE must precede BANK_END. Refuse BEFORE
@@ -2643,15 +2680,19 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		status_t status=acquire_sem(sLock);
 		if (status!=B_OK) return status; // retain ownership, never silently free a possibly live page
 		tt_resident_session_result result={};
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		// Scope presence alone requires explicit END,even if a future
+		// allocation bug misbound the context as a legacy/non-bank session.
+		if (cookie->context->q38GdnBanks || cookie->context->q38StateZero)
+			RetainQ38DispatchOwner(*cookie->context,result);
+		else
+#endif
 #ifdef TT_PIONEER_Q38_WORK_MODE
 		// After a persistent RUN,ONLY explicit BANK_END authorizes normal
 		// cleanup. A userspace CPU-reference/graph failure can be invisible
 		// to the kernel:close WITHOUT END must retain ALL owners with NO
 		// device IO/reset/STOP,even when the last RUN's metadata passed.
 		if (cookie->context->bankStorageOnly && ((cookie->context->q38Dispatch && !cookie->context->q38Dispatch->closed)
-#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
-			|| cookie->context->q38GdnBanks || cookie->context->q38StateZero
-#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 			|| cookie->context->q38Clock.RequiresExplicitEnd()
 #endif
@@ -2878,7 +2919,9 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		tt_q38_bank_session request={}; status=user_memcpy(&request,data,sizeof(request));
 		if (status!=B_OK || request.version!=TT_Q38_BANK_PROTOCOL || request.reserved)
 			return status!=B_OK?status:B_BAD_VALUE;
-#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+		status=(operation==TT_PCI_PROBE_Q38_BANK_END || operation==TT_PCI_PROBE_Q38_BANK_STATUS)?AcquireQ38GdnSessionLock(cookie):AcquireProbeLock(cookie,true);
+#elif defined(PIONEER_Q38_LOCAL_DELTA_PROBE)
 		status=(operation==TT_PCI_PROBE_Q38_BANK_END || operation==TT_PCI_PROBE_Q38_BANK_STATUS)?AcquireQ38DeltaLock(cookie):AcquireProbeLock(cookie,true);
 #else
 		status=AcquireProbeLock(cookie,true); if (status!=B_OK) return status;

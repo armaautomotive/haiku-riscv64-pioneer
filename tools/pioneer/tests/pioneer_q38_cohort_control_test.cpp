@@ -19,6 +19,10 @@ struct Ref2 { Ref1 baseline; tt_compute_noc_result noc; };
 struct Ref3 { Ref2 baseline; };
 struct Ref4 { Ref3 baseline; };
 struct BoundContext: CohortFixture {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	void* q38GdnBanks=nullptr;
+	void* q38StateZero=nullptr; // no GDN IO/controller in this legacy fixture
+#endif
 	Ref4 baseline;
 	PioneerQ38CohortLease* q38Cohort;
 	PioneerResidentLease& lease;

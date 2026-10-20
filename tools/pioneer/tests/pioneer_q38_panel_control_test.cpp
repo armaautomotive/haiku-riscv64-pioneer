@@ -26,6 +26,10 @@ struct Base2 { Base1 baseline; tt_compute_noc_result noc={}; };
 struct Base3 { Base2 baseline; };
 struct Base4 { Base3 baseline; };
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	void* q38GdnBanks=nullptr;
+	void* q38StateZero=nullptr; // no GDN IO/controller in this legacy fixture
+#endif
 	Base4 baseline;
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 	StreamIO io;

@@ -1,5 +1,38 @@
 # Native build status
 
+October20,15:59 Vancouver (22:59 UTC) PRIVATE MUTABLE-SCOPE INTERLOCK OFFLINE:
+The ACTUAL global hardware lock now checks typed native context presence,
+not a separate stale owner hint. Any GDN bank/zero owner blocks ordinary
+bank upload/read/bulk/span/matrix/delta/legacy commands before IO or reuse-
+epoch mutation,even before first zero and AFTER zero CLOSE. Only SAME-owner
+CPU STATUS/explicit END use the separate private call site;cold/foreign
+owners refuse. Legacy matrix paths intentionally cannot borrow this scope;
+a future qualified hybrid coordinator must own both compute families.
+Implicit close retains EVERY mutable scope even if misbound as non-bank;
+explicit misbound END refuses BEFORE ANY legacy rollback/delta close.
+
+Actual extracted lock/handler/lifetime tEpwPxWp PASS with owner-only/zero-
+only/both xbefore/ready/running/closed,foreign/cold/reuse epoch and full
+context/cookie/PCI/host/clock retention,including misbound non-bank scope.
+Existing flagged bank/21page+42bulk faults,cohort N04sPhAV,streamctec0VeF,
+paneltlhFNpxU,spanKgaToLvw,deltaG5quXitO and bank-ownerdMewmpTw regressions
+PASS. Unflagged handlerCeWLRhHu PASS. Complete ACTUAL native translation
+unit compiles with private flag as OBJECT ONLY (s7X47ZZY,max gated lifecycle
+frame80B);NO linked driver/module/staging/native capability. Initial unit
+counter signedness warning corrected before PASS. Ordinary driver builder
+STILL REFUSES mutable!=0 before SDK/output access. Missing IO adapter/
+initialization publication/hybrid GDN compute/GGML buffers remain blockers.
+Flag-OFF installed-candidate202389d0 and production7cbd2bf4 EXACT;guardd1ce/
+default432df unchanged. No update to the running native module.
+
+Deferred driver passed ALL68 exact checks/FOUR clean ENDs/EXIT0;logSHA
+f6d2973d/53a9aa68/34b83dcb/408234fc (synthetic/auth119/auth3/checked).
+Long f414306f three32 diagnostic is now ONLY native job,PID2334/session81740,
+full-model-work-deferred-ordered-three32-20261020-a.log. Host loaded13.102204s,
+all497 learned weights recognized;sequence0 is priming card weights. No
+SCP/probes/reloads/second job until clean END. Latest measured whole27B
+remains production0.171971039tok/s,NOT a new speed result/20tok/s. Goal ACTIVE.
+
 October20,15:43 Vancouver (22:43 UTC) FAIR HOST FFN / REPEATED TIMING READY OFFLINE:
 Frozen oldbda/unprofiled7cbd2bf4 FFN11.827ms vs host42c803a5/SAME driver
 11.784ms,ONE repeat each (~0.36% difference),NO meaningful gain proven.

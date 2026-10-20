@@ -96,7 +96,38 @@ int main(int argc,char** argv)
 	puts("PASS REAL clock-only cookie release: healthy lost caller/compute UNKNOWN/clock timeout retain ENTIRE context+cookie+PCI+ALL hosts+clock views,NO idle/unmap/STOP/reset/retry even before first span or matrix");
 #endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
-	for (unsigned variant=0;variant<9;variant++) for (unsigned explicitEnd=0;explicitEnd<2;explicitEnd++) {
+	for (unsigned owner=0;owner<3;owner++) for (unsigned phase=0;phase<4;phase++) {
+		cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto& c=*cookie->context;
+		if (owner!=1) c.q38GdnBanks=new PioneerQ38GdnBanks;
+		if (owner!=0) {
+			c.q38StateZero=new PioneerQ38StateZeroLease;
+			c.q38StateZero->ready=phase==1; c.q38StateZero->running=phase==2; c.q38StateZero->closed=phase==3;
+		}
+		const unsigned writes=c.io.Writes(),selects=c.io.selects; const int copyBefore=copyCalls;
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		const uint64_t epoch=sQ38InputEpoch;
+#endif
+		assert(Q38MutableScopeOwned(cookie) && AcquireProbeLock(cookie,true)==B_NOT_ALLOWED);
+		assert(AcquireProbeLock(cookie,false)==B_NOT_ALLOWED);
+		PioneerProbeCookie foreign;
+		assert(AcquireQ38GdnSessionLock(&foreign)==B_BUSY);
+#ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
+		assert(AcquireQ38DeltaLock(cookie)==B_NOT_ALLOWED); // same owner is NOT an escape for another compute family
+#endif
+		auto attempted=Request();
+		assert(Q38DispatchControl(cookie,TT_PCI_PROBE_Q38_WORK_RUN,attempted.get(),sizeof(*attempted))==B_NOT_ALLOWED);
+		assert(!c.q38Dispatch && !c.dispatchOwnerRetained && !sColdRecoveryRequired && copyCalls==copyBefore+1
+			&& writes==c.io.Writes() && selects==c.io.selects);
+#ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+		assert(epoch==sQ38InputEpoch); // rejected locks cannot mutate reuse authority
+#endif
+		assert(AcquireQ38GdnSessionLock(cookie)==B_OK); release_sem(sLock); // CPU STATUS/explicit END namespace only
+		sColdRecoveryRequired=true;
+		assert(AcquireQ38GdnSessionLock(cookie)==B_DEV_NOT_READY && writes==c.io.Writes() && selects==c.io.selects);
+		delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false; // TEST disposal ONLY
+	}
+	puts("PASS ACTUAL gated GDN global lock:bank-owner/zero-owner/both and before/ready/running/closed phases block ordinary bank/legacy/Work/delta commands BEFORE IO or input-epoch mutation;only SAME-owner CPU STATUS/explicit END namespace allowed,foreign/cold owner refused;NO native GDN capability");
+	for (unsigned variant=0;variant<10;variant++) for (unsigned explicitEnd=0;explicitEnd<2;explicitEnd++) {
 		if (!variant && explicitEnd) continue; // owner-only explicit END has no saved zero image
 		cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto& c=*cookie->context;
 		c.q38GdnBanks=new PioneerQ38GdnBanks;
@@ -109,6 +140,7 @@ int main(int argc,char** argv)
 			zero.closed=variant>=5;
 		}
 		if (variant==8) c.q38GdnBanks->Fault();
+		if (variant==9) c.bankStorageOnly=false; // misbound private owner MUST NOT enter generic legacy rollback
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 		assert(c.q38Clock.Begin(c.clockIO.Arc(),c.clockIO.Health()));
 		const unsigned clockIO=c.clockIO.io;

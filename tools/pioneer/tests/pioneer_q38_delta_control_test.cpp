@@ -3,6 +3,9 @@
 #define PIONEER_Q38_LOCAL_DELTA_PROBE
 #define PIONEER_Q38_DELTA_PROBE_MOCK_ONLY
 #include "pioneer_q38_delta_probe_test.cpp"
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StateZeroController.h"
+#endif
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #define TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 #define TT_PIONEER_Q38_WORK_MODE
@@ -18,6 +21,10 @@ struct Ref3 { Ref2 baseline; };
 struct Ref4 { Ref3 baseline; };
 struct DispatchStub { bool closed=false; };
 struct PioneerStoreContext:DeltaFixture {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+ PioneerQ38GdnBanks* q38GdnBanks=nullptr;
+ PioneerQ38StateZeroLease* q38StateZero=nullptr;
+#endif
  Ref4 baseline; PioneerResidentBanks& banks; PioneerResidentLease& lease; PioneerQ38DeltaProbeLease& q38Delta;
  DispatchStub* q38Dispatch=nullptr;
  void* q38Cohort=nullptr;

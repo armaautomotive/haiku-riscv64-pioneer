@@ -4,6 +4,9 @@
 #include "pioneer_q38_span_controller_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanService.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StateZeroController.h"
+#endif
 using status_t=int; using uint32=uint32_t;
 constexpr status_t B_OK=0,B_DEV_NOT_READY=-1,B_BUSY=-2,B_NOT_ALLOWED=-3,B_BAD_VALUE=-4,B_NO_MEMORY=-5,B_ENTRY_NOT_FOUND=-6;
 struct thread_info { int team; };
@@ -15,6 +18,10 @@ struct SpanRef2 { SpanRef1 baseline; tt_compute_noc_result& noc; };
 struct SpanRef3 { SpanRef2 baseline; };
 struct SpanRef4 { SpanRef3 baseline; };
 struct NativeSpanContext {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	PioneerQ38GdnBanks* q38GdnBanks=nullptr;
+	PioneerQ38StateZeroLease* q38StateZero=nullptr;
+#endif
 	SpanControlFixture fixture;
 	SpanControlIO& io;
 	PioneerResidentBanks& banks;

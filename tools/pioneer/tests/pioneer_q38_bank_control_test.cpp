@@ -25,6 +25,10 @@ struct Base2 { Base1 baseline; tt_compute_noc_result noc={}; };
 struct Base3 { Base2 baseline; };
 struct Base4 { Base3 baseline; };
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	void* q38GdnBanks=nullptr;
+	void* q38StateZero=nullptr; // presence ONLY in this unrelated bank-IO fixture
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 	ClockLeaseIO clockIO;
 	PioneerQ38ClockLease<ClockLeaseIO> q38Clock{clockIO};
