@@ -1,5 +1,30 @@
 # Native build status
 
+October20,15:19 Vancouver (22:19 UTC) EXACT LOGICAL-BOUNDS FAST PATH OFFLINE:
+Opt-in ORDERED_EXTENT_FAST keeps EVERY bank/group/alignment/extent/active-
+tail guard. Seven private high-water marks prove a monotonically advancing
+range cannot overlap earlier ones;unordered ranges retain the COMPLETE
+original pairwise check. Same accepted set,not reduced validation or new
+file/page/device authority. Normal119-worker schedule needs0 pair scans
+instead of7021. Independent31104 ordered/shuffled/invalid/all-bank/bounds/
+overflow/touching/earlier-overlap cases PASS2o4h6Zby,including full ABI shape;
+initial full-shape fixture used invalid raw-zero operand bits,corrected to
+the existing integer-zero encoding before PASS. Kernel witness112B PASS;
+initial unnecessary string include was removed from the standalone witness
+before final freestanding compile. Actual DMA/Work k74SAGFN and extracted
+handler/context/clock DlwRtpR1 PASS;host snapshot T49ZknHF,dispatch3W5JJbhI
+and Work/CPU-validation mode separation PASS. Driver66936bf6/tag...000b and
+host d9cf60e3 build a/b EXACT. Driver flag requires standalone full compact/
+normal-clock/non-profile/non-deferred Work chain;each missing/invalid flag
+refuses before SDK/output. Host flag requires explicit fast-span Work.
+Feature-OFF whole module remains EXACT7cbd2bf4,guardd1ce/default432df.
+Updater b60f6d28e4418d12a93dd0faeaadcd5eebbf1d376651751aa9d285e4dc32c5f0
+passed60 focused/2231 full cases. No native qualification or speedup yet.
+Both96KB host candidates and deferred driver copied sequentially;ordered
+driver copy is now ONLY transfer,updater still local. No native job;installed
+production7cbd2bf4/gen11 unchanged. Next hash ALL staged artifacts,then
+one host-only FFN trial at a time before independent driver A/B. Goal ACTIVE.
+
 October20,15:17 Vancouver (22:17 UTC) FIRST32-POSITION BASELINE CLEAN:
 Frozen389d3cf9/production7cbd2bf4/gen11 completed32positions/15904projections/
 16160calls/119workers,all4558653pages/18672242688B retained,clean_end1/

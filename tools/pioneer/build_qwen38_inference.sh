@@ -36,6 +36,12 @@ case "${PIONEER_Q38_SPAN_FAST:-0}" in
     extra="$extra -DPIONEER_Q38_SPAN_FAST";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}" = work:1:1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_ORDERED_EXTENT_FAST";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_ASSISTANT_WORKER:-0}" in
  0) worker_libraries=;;
  1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}" = work:1:1:0 ] || exit 2

@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_DISPATCH_PROTOCOL_H
 #define PIONEER_Q38_DISPATCH_PROTOCOL_H
 #include "PioneerQ38CohortProtocol.h"
+#ifdef PIONEER_Q38_ORDERED_EXTENT_FAST
+#include "PioneerQ38OrderedParts.h"
+#endif
 // Experimental54 ABI. Native launch requires separate lifecycle/card
 // qualification;the default and51..53 drivers do not handle these operations.
 // Persistent WAIT is NOT the old per-job stopped=1 proof. Caller supplies
@@ -62,6 +65,9 @@ static inline bool PioneerQ38DispatchValid(const tt_q38_dispatch_probe& r)
 	if (r.version!=1 || !r.peers || r.peers>119 || !PioneerQ38PanelProbeBytes(r.type)
 		|| (r.inputs!=5120 && r.inputs!=6144 && r.inputs!=17408)) return false;
 	for (unsigned value:r.reserved) if (value) return false;
+#ifdef PIONEER_Q38_ORDERED_EXTENT_FAST
+	if (!PioneerQ38OrderedParts(r.type,r.inputs,r.part,r.peers)) return false;
+#else
 	for (unsigned w=0;w<119;w++) {
 		const auto& p=r.part[w];
 		if (w>=r.peers) { if (p.bank || p.groups || p.offset) return false; continue; }
@@ -72,6 +78,7 @@ static inline bool PioneerQ38DispatchValid(const tt_q38_dispatch_probe& r)
 				&& q.offset<p.offset+PioneerQ38CohortBytes(r.type,r.inputs,p.groups)) return false;
 		}
 	}
+#endif
 	for (unsigned w=0;w<r.inputs/2;w++) if (!PioneerInt8OperandValid(uint16_t(r.activation[w]))
 		|| !PioneerInt8OperandValid(uint16_t(r.activation[w]>>16))) return false;
 	for (unsigned w=r.inputs/2;w<TT_Q38_COHORT_INPUT_WORDS;w++) if (r.activation[w]) return false;

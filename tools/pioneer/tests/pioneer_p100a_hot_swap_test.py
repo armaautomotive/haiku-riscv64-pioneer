@@ -27,7 +27,7 @@ def check(mode, fault=None):
             return target
         payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'hashwspg', 'guardsha']}
         payloads['hashcurrentprofile'] = ('test-' + values['hashcurrentprofile']).encode()
-        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine']:
+        for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
             '--bootstrap': ('original', 'hasha', 'taga'),
@@ -77,6 +77,8 @@ def check(mode, fault=None):
             '--restore-compact-profile': ('hash_compact_profile', 'hash_compact_output', 'tag_compact_profile'),
             '--apply-deferred-affine': ('hash_compact_output', 'hash_deferred_affine', 'tag_compact_output'),
             '--restore-deferred-affine': ('hash_deferred_affine', 'hash_compact_output', 'tag_deferred_affine'),
+            '--apply-ordered-extents': ('hash_compact_output', 'hash_ordered_extents', 'tag_compact_output'),
+            '--restore-ordered-extents': ('hash_ordered_extents', 'hash_compact_output', 'tag_ordered_extents'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -117,6 +119,7 @@ def check(mode, fault=None):
         put('candidate_compact_output', payloads['hash_compact_output'])
         put('candidate_compact_profile', payloads['hash_compact_profile'])
         put('candidate_deferred_affine', payloads['hash_deferred_affine'])
+        put('candidate_ordered_extents', payloads['hash_ordered_extents'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -220,6 +223,7 @@ if __name__ == '__main__':
     modes += ['--apply-compact-output', '--restore-compact-output']
     modes += ['--apply-compact-profile', '--restore-compact-profile']
     modes += ['--apply-deferred-affine', '--restore-deferred-affine']
+    modes += ['--apply-ordered-extents', '--restore-ordered-extents']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -306,6 +310,10 @@ if __name__ == '__main__':
         elif mode == '--apply-deferred-affine':
             candidate = ['candidate_deferred_affine']
         elif mode == '--restore-deferred-affine':
+            candidate = ['candidate_compact_output']
+        elif mode == '--apply-ordered-extents':
+            candidate = ['candidate_ordered_extents']
+        elif mode == '--restore-ordered-extents':
             candidate = ['candidate_compact_output']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
