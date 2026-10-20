@@ -1,5 +1,19 @@
 # Native build status
 
+October20,10:55 Vancouver (17:55 UTC) FINAL ASSISTANT HOST-READY CHECK:
+New matched pair authenticated and loaded successfully,service3043/worker
+3050/model_loads1/ready1/resident1. Real assistantctl threads16 then32 each
+received the exact worker ACK;worker3050 and model_loads1 stayed unchanged,
+no hash/context reload,settings returned to32 and no model error. CPU-only
+driver status remains tag...000d/gen2/cold0/active_owner0. Assistant GUI is
+open with27B Work selected and host model ready. Card weights were released
+by the prior explicit unload,so its NEXT reply still needs the documented
+first-use upload. No card job currently runs. Final pair's pool lifecycle
+was native-CPU/real-Assistant-ACK tested;actual card prompts/Stop/END above
+used the initial pair on the SAME unchanged qualified matrix/driver path.
+No new on-card GDN/state path or generation speedup is claimed.20tok/s is
+NOT achieved;next generation work remains device-resident state/dispatch.
+
 October20,10:48 Vancouver (17:48 UTC) MATCHED WARM-POOL UPDATE INSTALLED:
 After the real clean END above,Native Final protocol/parent suite87a3ba64
 and fake worker50f51abd PASS;actual frozen CPU pool testfa0a75e2 PASS with

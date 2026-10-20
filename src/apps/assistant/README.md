@@ -6,8 +6,9 @@ Hardware and Models for the pinned Q4_K_M file already on the Pioneer.
 It uses the qualified Work matrix backend (up to 119 workers), with CPU
 reference validation OFF. CPU attention, recurrent state and norms remain;
 the unfinished resident-GDN/mutable-state candidates are NOT enabled.
-The latest standalone four-token warm sample was **0.129 tok/s**, not the
-20 tok/s goal or a real-world speed qualification.
+The latest Assistant test measured **0.129 tok/s** across seven warm
+generation steps (eight output tokens total), not the 20 tok/s goal or a
+real-world speed qualification.
 
 The 27B option runs in its own persistent `HaikuAssistantQwen27` process,
 with a private bounded socket protocol and no shell/network listener.
@@ -30,6 +31,11 @@ context reset or P100A re-upload. The previous backend-bound pool is retained
 until a successful synchronized decode has rebound it; repeated idle changes
 keep at most two pools. Settings commit only after the worker acknowledges
 the actual count; a failed settings save restores the previous pool count.
+Native Pioneer checks passed public `READY` and eight-token counting replies,
+warm reuse, full-token Stop and explicit clean unload/worker exit. The final
+pool update passed actual frozen CPU-backend lifecycle tests and real
+Assistant 32→16→32 acknowledgements with the same worker/model-load count.
+The clean unload releases card weights; the next reply must upload them again.
 Offline ASan/UBSan and native Haiku fake-worker tests cover fragmented and
 malformed messages, wrong IDs, EOF, rejection, warm reuse, cancellation,
 known-clean unload and fail-closed/no-retry behavior without device I/O.
