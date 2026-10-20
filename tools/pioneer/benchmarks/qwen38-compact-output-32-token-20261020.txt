@@ -1,0 +1,26 @@
+October20 2026:fixed PUBLIC Hello sequence,32 positions,production Work.
+Driver7cbd2bf4/tag2026102000010008/gen11;CLI389d3cf9,frozen c060 runtime,
+32CPU threads for NON-matrix work,NO CPU learned reference/fallback.
+Same18672242688B/4558653 weight pages retained throughout all positions.
+15904 learned projections,16160 calls,119 workers;clean_end1/CLI_EXIT0.
+
+Exclude cold position0 and warmup positions1..4. Measure positions5..31:
+27 positions/157.003180seconds =0.171971039 tokens/sec.
+Minimum5.773736,median5.815305,p95(nearest rank)5.842314,max5.844399seconds.
+Single public sequence,NOT repeated steady-state/text-quality qualification.
+Still FAR below20tok/s/usable27B target. Goal remains ACTIVE.
+
+Priming711.691644s,repack148.915448/upload562.147072s.
+First position744.246047s;NOT warm token latency. Whole smoke924.608803s
+does NOT include the separate full same-FD authentication before model load.
+Matrix ioctls in later positions about4.40s,host matrix callback about4.73s,
+other GGML about1.04..1.10s;these are HOST WALL diagnostics,NOT pure device
+or pure CPU time. Do not interpret primitive/operation rates as token speed.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated32 selected_token888 seconds924.608803 projections15904 uploaded_pages4558653 calls16160 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_32_TOKEN_TIMING generated32 timing_valid1 skipped_cold_positions1 skipped_warmup_positions4 measured_positions27 measured_seconds157.003180 sample_tokens_per_second0.171971039 minimum_seconds5.773736 median_seconds5.815305 p95_nearest_rank_seconds5.842314 maximum_seconds5.844399 retained_weights1 clean_end1;SINGLE_PUBLIC_SEQUENCE_NOT_REPEATED_BENCHMARK_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag2026102000010008 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Log:/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-compact-output-32-20261020-a.log
+SHA2564e015dfdc1563175c8e7e3201c95c600832f3244dcc8ab6e89188313cb5473a1

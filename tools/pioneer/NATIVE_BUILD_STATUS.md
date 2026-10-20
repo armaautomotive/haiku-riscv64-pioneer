@@ -1,5 +1,17 @@
 # Native build status
 
+October20,15:17 Vancouver (22:17 UTC) FIRST32-POSITION BASELINE CLEAN:
+Frozen389d3cf9/production7cbd2bf4/gen11 completed32positions/15904projections/
+16160calls/119workers,all4558653pages/18672242688B retained,clean_end1/
+CLI_EXIT0. Excluding cold0 and warmup1..4:27positions/157.003180s gives
+0.171971039tok/s;min5.773736/median5.815305/p955.842314/max5.844399s.
+One public Hello sequence,NOT repeated steady/text-quality qualification;
+20tok/s remains FAR unmet. Priming711.691644s/repack148.915448/upload
+562.147072,first744.246047s,NOT warm speed. Exact record/logSHA4e015dfd
+in benchmarks/qwen38-compact-output-32-token-20261020.txt. Clock restored
+800/1350/800/uncertain0;CPU guardcold0/owner0. No native job now;sequential
+128kbit/s staging of qualified test artifacts ONLY,installed driver intact.
+
 October20,15:07 Vancouver (22:07 UTC) PRIVATE GDN ZERO PROGRESS OFFLINE:
 Heap-owned CPU ledger tracks ALL73728 mutable pages/288MiB,not learned
 initialized bits. Private bank-owner CommitInitialization is accessible
