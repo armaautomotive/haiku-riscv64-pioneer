@@ -21,7 +21,11 @@ template<class E> static inline void PioneerQ38VectorSignedOverlay(E& e)
 	PioneerSfpuXor(e,0,2); // disjoint sign/magnitude fields
 	PioneerSfpuLoad32(e,4,0x00100000); PioneerSfpuXor(e,0,4); // fixed raw exponent16
 }
-template<class E> static bool PioneerQ38VectorOperand(E& e,unsigned type,unsigned panel)
+template<class E>
+#if defined(PIONEER_Q38_STATIC_VECTOR) && defined(__GNUC__) && !defined(__clang__)
+__attribute__((noinline,optimize("O2")))
+#endif
+static bool PioneerQ38VectorOperand(E& e,unsigned type,unsigned panel)
 {
 	if ((type!=8 && type!=12 && type!=14) || panel>=(type==8?2U:16U)) return false;
 	if (type==8) {
@@ -34,7 +38,17 @@ template<class E> static bool PioneerQ38VectorOperand(E& e,unsigned type,unsigne
 	} else {
 		if (panel&4) PioneerSfpuShift(e,0,-4);
 		PioneerSfpuLoad32(e,4,15); PioneerSfpuAnd(e,0,0,4);
+#ifdef PIONEER_Q38_STATIC_VECTOR
+		// Keep the SAME shift, but a constant opcode on each branch can use
+		// direct Tensix issue rather than a dynamic instruction-buffer store.
+		switch (panel&6) {
+			case 2:PioneerSfpuShift(e,1,-2);break;
+			case 4:PioneerSfpuShift(e,1,-4);break;
+			case 6:PioneerSfpuShift(e,1,-6);break;
+		}
+#else
 		if (panel&6) PioneerSfpuShift(e,1,-int(panel&6));
+#endif
 		PioneerSfpuLoad32(e,4,3); PioneerSfpuAnd(e,1,1,4); PioneerSfpuShift(e,1,4);
 		PioneerSfpuXor(e,0,1); PioneerSfpuAddI(e,0,-32);
 		PioneerQ38VectorSignedOverlay(e);

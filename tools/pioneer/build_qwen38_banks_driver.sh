@@ -116,6 +116,24 @@ case "${PIONEER_Q38_INT_SFPU:-0}" in
     extra="$extra -DPIONEER_Q38_INT_SFPU";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_PIPELINED_MATRIX:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_INT_SFPU:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_PIPELINED_MATRIX";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_STATIC_VECTOR:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_PIPELINED_MATRIX:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_STATIC_VECTOR";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_CACHED_AFFINE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_STATIC_VECTOR:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_CACHED_AFFINE";;
+ *) exit 2;;
+esac
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \

@@ -25,7 +25,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	bool defined[1024]={},decoded[16][16]={};
 	unsigned unpackBank=0,mathBank=0,rawAddress=0,rawRow=0,adc0=0,adc1=255;
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
-	unsigned metadataWrites=0;
+	unsigned metadataWrites=0,instructionBufferStores=0;
 	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
@@ -35,6 +35,12 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	bool rawFloat=false,rawInitial=false,affineEligible=false;
 	// Negative controls for the independent pinned-ISA observer only.
 	bool omitDstInitialization=false,allRowsClear=false,wormholeRawByte=false;
+#ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
+	struct PendingMatrixAccess {};
+	std::vector<uint32_t> phaseQueue;
+	bool executingPhases=false,dropPhaseFence=false;
+	unsigned maximumPhaseBatch=0,queuedMatrices=0;
+#endif
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
@@ -78,6 +84,22 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		physical[lo][col]=uint16_t(value); wrote[hi][col]=wrote[lo][col]=true;
 	}
 	void Instruction(uint32_t op) override {
+#ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
+		if (!executingPhases && ((op&~0x4000U)==0x26000020 || (op&~0x4000U)==0x26c00020)) {
+			if (phaseQueue.size()==4) throw PendingMatrixAccess{};
+			phaseQueue.push_back(op); queuedMatrices++; drained=false;
+			maximumPhaseBatch=std::max(maximumPhaseBatch,unsigned(phaseQueue.size())); return;
+		}
+		if (!phaseQueue.empty()) {
+			if (op==0xa2101816) {
+				if (dropPhaseFence) { Base::gpr63=1; return; } // deliberately false completion negative control
+				auto batch=phaseQueue; phaseQueue.clear(); executingPhases=true;
+				for (auto command:batch) Instruction(command);
+				executingPhases=false;
+			} else if (dropPhaseFence && op==0x4500017e) { Base::gpr63=1; return; }
+			else throw PendingMatrixAccess{}; // source/RWC/SFPU change before real matrix completion
+		}
+#endif
 		if (omitDstInitialization && op==0x42000091) return;
 		if (allRowsClear && (op==0x10280002 || op==0x10080004)) op=0x10180000;
 		unsigned code=op>>24;
@@ -262,6 +284,11 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		}
 	}
 	void Store(uint32_t address,uint32_t value) override {
+		if (address==0xffe40000) instructionBufferStores++;
+#ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
+		if (!phaseQueue.empty() && !Range(address,0x6e000,8192) && address!=0xffe000fc && address!=0xffe40000)
+			throw PendingMatrixAccess{};
+#endif
 		if (Range(address,0xffef0000,224*4)) {
 			assert(!rawPending && drained); unsigned index=(address-0xffef0000)/4;
 			if (!index) { assert(setupConfiguration==25); setupConfiguration=0; }
@@ -292,6 +319,10 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		Base::Store(address,value);
 	}
 	uint32_t Load(uint32_t address) override {
+#ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
+		if (!phaseQueue.empty() && !Range(address,0x6e000,8192) && address!=0xffe000fc)
+			throw PendingMatrixAccess{};
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 		if (Range(address,0xffbd9800,1024)) {
 			assert(type==8 && config[3]==0x10000 && !rawPending && drained && sourceProbeRows==16);

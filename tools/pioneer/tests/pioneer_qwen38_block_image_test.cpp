@@ -26,7 +26,7 @@ struct BlockMachine:RuntimeMachine {
 		// no affine helper. The integer peer constructor requires its pin.
 		if (FILE* f=fopen((path+"/affine.bin").c_str(),"rb")) {
 			fclose(f); affineCode=Read((path+"/affine.bin").c_str());
-			assert(!affineCode.empty() && affineCode.size()<=0x500 && !(affineCode.size()&3));
+			assert(!affineCode.empty() && affineCode.size()<=0x1500 && !(affineCode.size()&3));
 			for (unsigned w=0;w<affineCode.size()/4;w++) l1[Index(0x70b00+w*4)]=Word(affineCode,w*4);
 		}
 #endif
@@ -52,6 +52,9 @@ struct BlockMachine:RuntimeMachine {
 	static bool Range(uint32_t a,uint32_t first,unsigned bytes) { return a>=first && a-first<bytes; }
 	unsigned Index(uint32_t a) override {
 		assert(!(a&3)); if (Range(a,0x72000,8192)) return 2048+(a-0x72000)/4;
+#ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
+		if (Range(a,0x71000,4096)) return 4096+(a-0x71000)/4; // disjoint from main/status/operand indices
+#endif
 		return RuntimeMachine::Index(a);
 	}
 	bool CodeAddress(uint32_t a) const override { return a==0x6000 || Range(a,0x72000,unsigned(code.size()))

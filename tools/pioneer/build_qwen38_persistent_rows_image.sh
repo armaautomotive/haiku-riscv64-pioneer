@@ -28,6 +28,24 @@ case "${PIONEER_Q38_Q4_TWO_PHASE:-0}" in
     q4_phases=-DPIONEER_Q38_Q4_TWO_PHASE;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_PIPELINED_MATRIX:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}:${PIONEER_Q38_Q4_TWO_PHASE:-0}" = 9:1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_PIPELINED_MATRIX";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_STATIC_VECTOR:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_PIPELINED_MATRIX:-0}" = 1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_STATIC_VECTOR";;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_CACHED_AFFINE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_STATIC_VECTOR:-0}" = 1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_CACHED_AFFINE";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \

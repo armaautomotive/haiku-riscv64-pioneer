@@ -9,6 +9,7 @@ SECTIONS {
 	 * constant-propagation clone suffix. A changed symbol fails nonempty. */
 	.affine 0x70b00 : {
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1EE*)
+		*(.text._ZN22PioneerQ38CachedAffine*)
 		. = ALIGN(4);
 	}
 	.text 0x72000 : {
@@ -19,7 +20,7 @@ SECTIONS {
 	/DISCARD/ : { *(.riscv.attributes) *(.comment) *(.eh_frame*) }
 	ASSERT(SIZEOF(.boot)==4,"one fixed boot jump")
 	ASSERT(block_entry==0x72000,"fixed entry")
-	ASSERT(SIZEOF(.affine)>0 && SIZEOF(.affine)<=0x500,"affine helper must fit70b00..71000")
+	ASSERT(SIZEOF(.affine)>0 && SIZEOF(.affine)<=0x1500,"affine helpers must fit already-owned70b00..72000")
 	ASSERT(SIZEOF(.text)<=0x2000,"main image overlaps descriptor")
 	ASSERT(SIZEOF(.forbidden)==0,"no writable globals/GOT")
 }

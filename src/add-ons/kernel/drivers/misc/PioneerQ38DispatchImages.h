@@ -4,14 +4,36 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#if defined(PIONEER_Q38_PIPELINED_MATRIX) && !defined(PIONEER_Q38_INT_SFPU)
+#error Queued phases require the exact integer/SFPU peer
+#endif
+#if defined(PIONEER_Q38_STATIC_VECTOR) && !defined(PIONEER_Q38_PIPELINED_MATRIX)
+#error Static vector peer requires the queued integer/SFPU variant
+#endif
+#if defined(PIONEER_Q38_CACHED_AFFINE) && !defined(PIONEER_Q38_STATIC_VECTOR)
+#error Cached affine peer requires the static integer/SFPU variant
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(PIONEER_Q38_Q4_TWO_PHASE) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_BFLOAT) || defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_FAULT_RETURN)
 #error Integer SFPU peer requires the fixed integer Q4 driver, NEVER BF16/fault variants
 #endif
 #include "PioneerQ38IntSfpuPeerImage.h"
+#ifdef PIONEER_Q38_PIPELINED_MATRIX
+#include "PioneerQ38PipelinedPeerImage.h"
+#endif
+#ifdef PIONEER_Q38_STATIC_VECTOR
+#include "PioneerQ38StaticPeerImage.h"
+#endif
+#ifdef PIONEER_Q38_CACHED_AFFINE
+#include "PioneerQ38CachedPeerImage.h"
+#endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_CACHED_AFFINE
+ return worker>=120?UINT32_MAX:worker?PioneerQ38CachedPrefixWord(address):0;
+#else
  return worker>=120?UINT32_MAX:worker?PioneerQ38IntSfpuPrefixWord(address):0;
+#endif
 }
 #endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
@@ -568,7 +590,17 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
 #ifdef PIONEER_Q38_INT_SFPU
+#ifdef PIONEER_Q38_CACHED_AFFINE
+ return worker>=120?UINT32_MAX:worker?PioneerQ38CachedPeerWord(word):PioneerQ38DispatchRootWord(word);
+#elif defined(PIONEER_Q38_STATIC_VECTOR)
+ return worker>=120?UINT32_MAX:worker?PioneerQ38StaticPeerWord(word):PioneerQ38DispatchRootWord(word);
+#else
+#ifdef PIONEER_Q38_PIPELINED_MATRIX
+ return worker>=120?UINT32_MAX:worker?PioneerQ38PipelinedPeerWord(word):PioneerQ38DispatchRootWord(word);
+#else
  return worker>=120?UINT32_MAX:worker?PioneerQ38IntSfpuPeerWord(word):PioneerQ38DispatchRootWord(word);
+#endif
+#endif
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
  return worker>=120?UINT32_MAX:worker?PioneerQ38ProgressPeerWord(word):PioneerQ38DispatchRootWord(word);

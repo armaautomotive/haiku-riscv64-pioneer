@@ -22,4 +22,15 @@ template<class E> static void PioneerQ38Q4Phases(E& e,unsigned type)
 	if (type!=12) { e.Op(0x26004020); e.Drain(); e.Op(0x26004020); e.Drain(); }
 	e.Op(0x26004020); e.Drain(); e.Op(0x26c04020); e.Drain();
 }
+template<class E> static void PioneerQ38QueuedPhases(E& e,unsigned type)
+{
+	// Separate OFFLINE candidate: SAME ordered MVMULs/AddrMod/final flip,
+	// but drain the SAME matrix unit ONCE after its complete phase batch.
+	// No source/config/NoC/Dst access may interleave with this batch. The
+	// final real drain still precedes ALL scalar/SFPU result consumption.
+	// Vendor Blackhole matmul MOP similarly queues adjacent MVMULs:
+	// https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/tt-llk/tt_llk_blackhole/llk_lib/llk_math_matmul.h
+	if (type!=12) { e.Op(0x26004020); e.Op(0x26004020); }
+	e.Op(0x26004020); e.Op(0x26c04020); e.Drain();
+}
 #endif

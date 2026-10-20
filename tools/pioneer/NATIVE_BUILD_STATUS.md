@@ -1,5 +1,79 @@
 # Native build status
 
+October19,17:26 Vancouver (October20,00:26 UTC) COMPUTE OPTIMIZATION CHECKPOINT:
+Guarded55 5b7562af537609b34e5286bebb4bbd41ab6dc9e376072820ca2796b651928210,
+tag2026101900060007,generation26. Hot swap PASS,EXIT0;no reboot/power/SD or
+Assistant action. Same resident guard d1ce2aa4. Cached-affine synthetic18
+calculations exact,clean END,EXIT0. Authenticated119-worker16 calculations
+also exact,clean END,EXIT0. Full authenticated FFN now running using the
+new host-wave-cache Workbda16c7c;NO further card job/reload until clean END.
+Dirty llama.cpp and unrelated
+tools/firefox remain untouched. Work has no CPU learned-matrix validation.
+
+The previous complete27B test FINISHED successfully on gen22/Work2ecb16b4:
+full-model-work-span-code-reuse-four-20261019-a.log SHA
+3f475398a14e73aef80b45bcd7bf755b9eb0191c88b7907753df3d53bb3bc466.
+All497 learned projections x4 positions;2020 matrix calls,119 workers,
+4558653 retained pages/18672242688B. Priming727.568017s,repack151.083999s,
+span upload575.829624s;first position769.201946s. Three warm positions
+13.673878/13.624843/13.582947s =>0.073382524tok/s,1.85x prior0.039706501.
+Token IDs11/353/2688/264 unchanged;PASS,clean_end1,EXIT0. Warm matrix
+callbacks~12.466s,matrix ioctl~11.986s,other GGML~1.1..1.2s/position.
+This tiny fixed-public smoke is NOT steady-state/chat quality or20tok/s.
+No newer whole-model rate yet;performance remains unusable for the goal.
+
+Gen23 integer-SFPU driver1b677ddf/tag...0004 passed18 Work synthetic,
+16 authenticated119-worker and18 old-checked synthetic calculations,ALL
+exact with clean END/EXIT0. Full authenticated FFN2ecb16b4 PASS,clean_end1,
+output SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Warm0.026746s versus prior0.026674s:essentially flat,NOT a speed win. Upload
+1.925663s;first graph29.191884s. Full FFN log SHA
+6fcc92ca59b6f2a99aab949dc102ea0851f9909c32f886f7af9eca8d1b1f863f.
+
+Gen24 queued matrix phases4ac8fa1d/tag...0005:PIONEER_Q38_PIPELINED_MATRIX
+queues the SAME ordered2/4 MVMUL phases and final source flip,with ONE real
+final drain. No source/config/Dst consumer between pending phases. Main
+7b39523a72e57258d6a1c4fbc47db3ee4c4a8d64f80ad8c41289063810e6700f,7888B.
+18 Work synthetic+16 authentic119 rows exact,clean END/EXIT0. Q4K17408
+warm~12.2ms:only a small change,not a whole-model performance claim.
+Delayed-FPU instruction model defers ALL matrix effects until actual drain;
+early source/config/Dst use and a fake missing-fence ACK are rejected.
+1375584 exhaustive integer products preserve the old phase result.
+
+Gen25 static vector0590eaa2/tag...0006:PIONEER_Q38_STATIC_VECTOR emits
+constant selectors directly,sharing the operand decoder. SAME Tensix ops,
+drains,NoC requests and output bits. Main
+c980e2e0681ea5b0b6e7a935c8f810c07112de7aef6e05acaa0cade6df8ee6d6,8124B.
+18 Work synthetic+16 authentic119+18 checked synthetic exact,clean END,
+EXIT0. Native Q4K17408 warm12.205/12.239ms:no clear large gain. Removing
+20..34 instruction-buffer writes/panel alone did NOT establish speedup.
+
+Gen26 PIONEER_Q38_CACHED_AFFINE caches HALF base conversion once per fetched
+Q4 block,then produces the SAME exact FP32 affine metadata. Q8/Q6 retain
+their old specialized paths. No weight format/prepack/NoC/public ABI change.
+16,252,928 finite-HALF*signed8 products,16,576 panels and996 real tiles PASS
+ASan/UBSan,including signed zero/subnormals. Independent actual instruction
+comparison cuts Q4K17408/N48 RISC steps7048010->5374598 (~23.7%),SAME output
+bits/Tensix ops/drains/NoC. Native Q4K17408/119 warm11.541/11.531ms versus
+gen25 12.205/12.239ms (~6% less);TWO samples,not a whole-model token rate.
+Main1f2112f65118251111a9c87bd7b16d1d72e346b1e92ae0fdbf3eacbe825f1c0a,
+7700B;prefix34ed4d370950a52ae87e0823ef59d7b1e16de07cf4368d51db98b9521103e7e7,
+2196B at70b00..71394,inside the ALREADY owned/saved immutable code prefix.
+Main8KiB bound,stack/operands/descriptors/boot/WAIT/STOP remain unchanged.
+All extra prefix words participate in prepare and unconditional END audits.
+First/middle/last worker prefix corruption at70b00,71000 and71390 before
+or after STOP refuses ALL restoration,retains owners and allows ZERO later
+device IO. Actual root+peers,handler/retention,full-K/N256/repeated/changed
+input/real-row/zero/sign-zero/bounds/NoC-UNKNOWN tests PASS. Two identical
+driver builds;cache-off EXACT0590eaa2/peer c980e2e0,ordinary43 EXACT2df0e0f8,
+guard unchanged. Updater0505b4cd:1211 actual guard cases PASS.
+
+Evidence:/private/tmp/pioneer-q38-work-fast-native-20261019.lQIaCFsg.
+These opt-ins remain bounded qualification programs,not installed27B
+Assistant targets. CPU non-matrix GDN/attention/etc. remain.20tok/s and a
+whole-card model graph are NOT achieved. The earlier dated entries below
+are historical checkpoints,not current installed state.
+
 October19,16:17 Vancouver (23:17 UTC) FAST LOADER / CODE-PROOF REUSE PASS:
 Current guarded55 aaded0f7924236a4a6995d58174587f92165520d829c2b33a811aa18476f4137,
 tag2026101900060003,generation22. A bounded full-model four-token Work test

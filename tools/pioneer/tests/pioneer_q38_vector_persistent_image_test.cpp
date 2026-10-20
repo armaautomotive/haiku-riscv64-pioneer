@@ -31,6 +31,7 @@ static void FreshInputs(VectorPersistent& m)
 	}
 }
 #endif
+#ifndef PIONEER_Q38_VECTOR_PERSISTENT_TEST_MODEL_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2 || argc==3);
@@ -41,6 +42,9 @@ int main(int argc,char** argv)
 		FreshInputs(m);
 #endif
 		assert(m.Job(2));
+#ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
+		assert(m.phaseQueue.empty() && m.queuedMatrices && m.maximumPhaseBatch==m.MatrixPhasesPerPanel());
+#endif
 		unsigned requests=m.requests,matrices=m.matrixInstructions;
 		for (unsigned i=0;i<1000;i++) m.StepBlock();
 		assert(m.requests==requests && m.matrixInstructions==matrices && !m.rawPending);
@@ -78,6 +82,15 @@ int main(int argc,char** argv)
 	}
 	puts("PASS integer SFPU actual image: ALL-zero SM32 negative-zero canonicalization, changed inputs/repeated groups, per-panel integer bound faults park without another packet");
 #endif
+#ifdef PIONEER_Q38_TEST_PIPELINED_MATRIX
+	for (unsigned type:{8U,12U,14U}) {
+		VectorPersistent m(argv[1],type,5120,1); m.dropPhaseFence=true;
+		assert(m.Boot()); bool refused=false;
+		try { (void)m.Job(1); } catch (const VectorPersistent::PendingMatrixAccess&) { refused=true; }
+		assert(refused && !m.phaseQueue.empty() && !m.outputReads && !m.memory.at(0x74144));
+	}
+	puts("PASS actual queued matrix image with DEFERRED FPU writes: exact ordered2/4-phase FIFO, no source/config/NoC/Dst consumer before final real drain; falsely acknowledged/missing fence rejects BEFORE publication");
+#endif
 	for (unsigned field=0;field<8;field++) {
 		VectorPersistent m(argv[1],8,5120,1); m.memory[0x74040+field*4]^=1;
 		assert(!m.Boot() && !m.requests && !m.matrixInstructions);
@@ -113,3 +126,4 @@ int main(int argc,char** argv)
 	puts("PASS OFFLINE ACTUAL vector persistent peer:repeated exact FP32+double,zero scalar operand writes,source-bank/Dst ownership,immutable root/descriptor/private nonce/proof,duplicate inert,UNKNOWN parks/STOP safe;NOT kernel/coordinator/native/cycle/model speed qualification");
 	return 0;
 }
+#endif

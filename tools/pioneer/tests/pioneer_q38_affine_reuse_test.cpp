@@ -1,13 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQ38AffineReuse.h"
 #include "../PioneerQ38AffineResident.h"
+#include "../PioneerQ38CachedAffine.h"
 #include "../PioneerQwen38Gguf.h"
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <vector>
 static unsigned panels=0;
-#ifdef PIONEER_Q38_TEST_AFFINE_RESIDENT
+#ifdef PIONEER_Q38_TEST_CACHED_AFFINE
+using AffineTest=PioneerQ38CachedAffine;
+#elif defined(PIONEER_Q38_TEST_AFFINE_RESIDENT)
 using AffineTest=PioneerQ38AffineResident;
 #else
 using AffineTest=PioneerQ38AffineReuse;
@@ -77,7 +80,9 @@ int main(int argc,char** argv)
 		assert(real==996 && model.Stable()); fclose(f);
 	}
 	printf("PASS OFFLINE affine %s:%u exact panels/%u real tiles,%u exhaustive HALF*signed8 FP32 products incl signed zeros/half subnormals,strict panel order/one block lifetime/operand canaries/no retry;NO image/native/speed qualification\n",
-#ifdef PIONEER_Q38_TEST_AFFINE_RESIDENT
+#ifdef PIONEER_Q38_TEST_CACHED_AFFINE
+		"cached Q8/Q4/Q6 HALF bases/exact FP32 products/fixed read-only destination",
+#elif defined(PIONEER_Q38_TEST_AFFINE_RESIDENT)
 		"resident fixed destination/read-only metadata/rebind refusal",
 #else
 		"reuse",

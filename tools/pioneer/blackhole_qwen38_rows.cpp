@@ -22,8 +22,20 @@
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 #include "PioneerQ38SfpuAccumulator.h"
 #endif
+#ifdef PIONEER_Q38_CACHED_AFFINE
+#include "PioneerQ38CachedAffine.h"
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
+#endif
+#if defined(PIONEER_Q38_PIPELINED_MATRIX) && (!defined(PIONEER_Q38_SFPU_INTEGER) || !defined(PIONEER_Q38_Q4_TWO_PHASE))
+#error Queued matrix phases require the separately qualified exact integer/SFPU candidate
+#endif
+#if defined(PIONEER_Q38_STATIC_VECTOR) && !defined(PIONEER_Q38_PIPELINED_MATRIX)
+#error Static vector emission requires the separate queued integer/SFPU candidate
+#endif
+#if defined(PIONEER_Q38_CACHED_AFFINE) && !defined(PIONEER_Q38_STATIC_VECTOR)
+#error Cached affine candidate requires the separate static integer/SFPU variant
 #endif
 #ifdef PIONEER_Q38_VECTOR_PANEL
 #include "PioneerQ38AffineOnly.h"
@@ -165,7 +177,11 @@ static void Matrix()
 	e.Op(0x26c04020); e.Drain();
 #else
 #ifdef PIONEER_Q38_Q4_TWO_PHASE
+#ifdef PIONEER_Q38_PIPELINED_MATRIX
+	PioneerQ38QueuedPhases(e,type);
+#else
 	PioneerQ38Q4Phases(e,type);
+#endif
 #else
 	PioneerQ38MatrixPhases(e);
 #endif
@@ -238,7 +254,12 @@ static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&b
 {
 	const uint8_t* raw=reinterpret_cast<const uint8_t*>(0x90000);
 	auto* out=reinterpret_cast<PioneerQ38Panel*>(0x91000);
+#ifdef PIONEER_Q38_CACHED_AFFINE
+	if (type==8) return (panel&1) || PioneerQ38AffineOnly(8,raw,bytes,panel,out);
+	if (type!=14) return false; // Q4 belongs ONLY to the prepared cached path
+#else
 	if (type!=14) return (panel&1) || PioneerQ38AffineOnly(type,raw,bytes,panel,out);
+#endif
 	if (!panel) for (unsigned row=0;row<16;row++) {
 		uint16_t half=uint16_t(PioneerQ38PanelByte(raw,208*16+row)|(PioneerQ38PanelByte(raw,209*16+row)<<8));
 		if (!PioneerQ38BinaryScale(half,1,base[row])) return false;
@@ -348,26 +369,39 @@ extern "C" unsigned block_main()
 	float scale=Float(scaleBits);
 #endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
-#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+#if defined(PIONEER_Q38_SFPU_ACCUMULATOR) && !defined(PIONEER_Q38_CACHED_AFFINE)
 	uint32_t affineBase[16];
+#else
+#ifdef PIONEER_Q38_CACHED_AFFINE
+	PioneerQ38CachedAffine affine;
+	uint32_t affineBase[16]; // preserve the original Q6 path
 #else
 #ifdef PIONEER_Q38_AFFINE_RESIDENT
 	PioneerQ38AffineResident affine;
 #else
 	PioneerQ38AffineReuse affine;
 #endif
+#endif
+#ifdef PIONEER_Q38_CACHED_AFFINE
+	if (type==12 && !affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
+#else
 	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
 #endif
 #endif
+#endif
 	for (unsigned p=0;p<panels;p++) {
-#ifndef PIONEER_Q38_SFPU_ACCUMULATOR
+#if !defined(PIONEER_Q38_SFPU_ACCUMULATOR) || defined(PIONEER_Q38_CACHED_AFFINE)
 		auto* local=reinterpret_cast<PioneerQ38Panel*>(0x91000);
 #endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
-#ifdef PIONEER_Q38_SFPU_ACCUMULATOR
+#if defined(PIONEER_Q38_SFPU_ACCUMULATOR) && !defined(PIONEER_Q38_CACHED_AFFINE)
 		if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
 #else
+#ifdef PIONEER_Q38_CACHED_AFFINE
+		if (!(type==12?affine.Panel(p,local):FixedAffine(type,bytes,p,affineBase))) block_fault_park();
+#else
 		if (!affine.Panel(p,local)) block_fault_park();
+#endif
 #endif
 #else
 		if (!

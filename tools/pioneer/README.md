@@ -42,19 +42,33 @@ CXX='c++ -DPIONEER_Q38_SPAN_FAST' sh tools/pioneer/tests/run_pioneer_q38_span_se
 ```
 
 These remain fixed-public test programs, not installed 27B Assistant targets.
-20 tokens/sec and whole-GPU model execution have **not** been achieved.
+The completed four-position 27B Work smoke measured **0.0734 tokens/sec**
+over its three warm positions, versus 0.0397 previously. It ended cleanly
+with unchanged token IDs. This is still unusably slow for the requested
+20 tokens/sec; whole-GPU model execution has **not** been achieved.
 
-The next **offline-only** compute candidate is `PIONEER_Q38_INT_SFPU=1`:
+`PIONEER_Q38_INT_SFPU=1` passed native exact-output qualification:
 the matrix stays integer, while its repeated affine accumulation moves
 from scalar RISC loops into the card's vector unit and remains in Dst.
 It is not the failed BF16 path. Full-width repeated calculations and real
-model rows pass independent instruction-model tests, but native correctness
-and speed still need qualification. Build/test it without touching a card:
+model rows pass independent instruction-model and hardware tests. Its warm
+FFN timing was essentially unchanged, so it is not a demonstrated speed win.
+Build/test its instruction images without touching a card:
 
 ```sh
 sh tools/pioneer/build_qwen38_int_sfpu_persistent_image.sh SDK_DIRECTORY /absolute/new-integer-peer-directory
 sh tools/pioneer/tests/run_pioneer_q38_int_sfpu_tests.sh INTEGER_PEER_DIRECTORY WORK_COHORT_ROOT_DIRECTORY PUBLIC_27B_GGUF
 ```
+
+Further opt-ins queue ordered matrix phases (`PIONEER_Q38_PIPELINED_MATRIX`),
+emit constant vector selectors (`PIONEER_Q38_STATIC_VECTOR`), and cache exact
+Q4 scale-base conversions (`PIONEER_Q38_CACHED_AFFINE`). They form a dependency
+chain in that order after integer SFPU. The first two pass native tests but
+show only small/no clear timing gains. The cache reduces Q4 instruction-model
+RISC work by about 24% and the longest tested native projection by about 6%;
+its full FFN qualification is in progress. None establishes
+a new whole-model generation rate. All ownership, DMA and failure-containment
+checks remain; CPU reference calculations run only in the debug client.
 
 ## Experimental Qwen 27B execution modes (October 19)
 
