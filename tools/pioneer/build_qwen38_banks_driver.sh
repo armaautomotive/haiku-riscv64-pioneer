@@ -166,6 +166,12 @@ case "${PIONEER_Q38_QUEUED_MATRIX_ENTRY:-0}" in
     extra="$extra -DPIONEER_Q38_QUEUED_MATRIX_ENTRY";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_WORK_SPARSE_EXPORT:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_OUTPUT_DMA:-0}" = 1 ] || exit 2
+    extra="$extra -DPIONEER_Q38_WORK_SPARSE_EXPORT";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_LOCAL_DELTA_PROBE:-0}" in
  0) ;;
  1) [ "$variant:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_WORK_MODE:-0}" = 55:1:1 ] || exit 2

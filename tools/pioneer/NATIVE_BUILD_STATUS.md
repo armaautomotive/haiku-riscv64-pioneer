@@ -1,5 +1,86 @@
 # Native build status
 
+October20,11:39 Vancouver (18:39 UTC) NONLOGGING QUALIFIED / WHOLE27B STARTED:
+Sparse productionb852456b/tag2026102000010003/gen4 passed18 Work synthetic
+AND18 separate checked-mode synthetic calculations EXACT,two clean ENDs,
+EXIT0;CPU-only status cold0/active_owner0. New checked debug65b2a01d uses
+original checked ABI1,not Work ABI2. No CPU reference added to production.
+Fixed public whole27B --public-four-tokens now runs via frozen Work/span
+clientbda16c7c against the same model/library pins,32CPU threads. FIRST
+authentication/host load then initial weight upload take many minutes.
+NO second card job/hot swap while this runs. Source implementation of the
+next strict ARC clock-queue prerequisite is OFFLINE/UNSELECTED only. No new
+whole-model speed yet;last measurement0.129277112tok/s,NOT20;goal active.
+
+October20,11:33 Vancouver (18:33 UTC) SPARSE EXPORT NATIVE A/B PASS:
+Profile8685c971/gen3 passed ALL18 synthetic+16 authenticated119-worker
+calculations EXACT,two clean ENDs/EXIT0;final CPU guardcold0/active_owner0.
+Matched longQ4 warm execute6384/6383 ->6173/6173us (~3.3% less execution
+phase);shortQ4 execute3725/3725 ->3524/3524us (~5.4% less). Other phases
+remain;client times include profiler serial printing. This is a SMALL
+primitive improvement,NOT full-model token speedup or20tok/s achievement.
+Raw34 samples saved benchmarks/qwen38-matrix-sparse-profile-20261020.txt.
+Host log SHAs2074db87 (synthetic),afd34001 (authenticated);both clean.
+
+Final sparse root/real-peer/generated-byte suiteaQZIuGKI PASS;old-root
+feature-OFF mxjK3NHw PASS. Earlier old-root invocations omitted matching
+integer-accumulator harness flags and failed emulator setup;correct pinned
+flags pass. These are NOT native failures. Actual controller2b22AZ1z and
+ALL1751 updater fault cases PASS. Nonloggingb852456b/tag...0003 exchanged
+cleanly to gen4;one bounded synthetic qualification now runs. No clock,
+firmware,Assistant,boot/SD/model mutation. Driver busy-clock integration
+is being inspected:current resident27B path contains NO normal ARC busy
+entry. A safe future clock owner MUST honor CLOSE-ONLY/retain-all on ANY
+uncertainty;do NOT simply reuse legacy ARC cleanup after failed completion.
+Latest full-model measurement remains0.129277112tok/s,not20;goal active.
+
+October20,11:26 Vancouver (18:26 UTC) 27B PERFORMANCE GOAL / CURRENT PROFILE:
+User requested continuous long-running inference optimization. Goal active;
+20tok/s NOT achieved. Initial SSH failure was a real USB keyboard-driver
+kernel panic,not a matrix failure:USB Keyboard6 watcher,usb_hid
+DeviceList::_FreePublishList,DEADBEEF-derived fault address. One relay OFF
+hold/normal ON recovered default Linux;NO failed power-on/five-minute wait.
+Pinned helper0bfe2647 first refused journal-control because BFS was CLEAN;
+fresh normal session q27-perf-profile-20261020-b then booted Haiku64 CPUs/
+137034936320B RAM. Default boot,SDs,model,Assistant and card code unchanged.
+
+Timing-only9f1ed2e0/tag2026102000010001 hot-swapped cleanly from e903b8fc
+gen1 to gen2. Only CPU clocks/reporting+build tag differ;root/peer math and
+all completion/ownership checks unchanged. Work debug ABI2 a5e2dd80 passed
+18 synthetic and16 authenticated119-worker calculations EXACT,two clean
+ENDs,EXIT0. An older f844 client refused ABI2 BEFORE BEGIN,accepted0;guard
+remained cold0/active_owner0. It did NOT execute a failed card operation.
+Final CPU-only status clean/gen2/active_owner0. No model currently loaded.
+
+Raw34 phase samples saved under benchmarks/qwen38-matrix-current-profile-
+20261020.txt. Warm authenticated Q4/K17408:execute6384/6383us,stage479us,
+arm1074/1072us,proof681/678us,output246us,hold256us,commit298/291us.
+These are HOST WALL stages,NOT pure GPU time. Logging occurs AFTER stages;
+client checked_call_s includes slow serial output and is NOT a production
+timing comparison. Latest full-model rate remains0.129277112tok/s.
+
+New OFFLINE sparse private-export root73b7170e/prefixfc7337cc (same boot)
+removes unused Work proof export stores and redundant active-output clears.
+EVERY CURRENT physical-PC/reset/source/counter/numeric/NoC/DMA proof stays;
+checked/STOP exports unchanged;inactive output slots remain exactly zero.
+Actual RV32/real-peer ASan/UBSan suite8Bccek3m/yM6hwnK0 PASS,all formats/
+widths/1,2,7,119 workers,poisoned retained exports,mode transitions,ALL64
+proof faults/physical/nonfinite/transport failures inert after detection.
+One large synthetic root fixture:1921565->1769007 RISC steps,76160->30464
+private stores. This is OFFLINE instruction evidence,NOT native speed.
+Actual kernel DMA/Work controller2b22AZ1z PASS with new flag,including ALL
+retention/fault/no-later-I/O gates. New default-off gate selects exact
+generated immutable bytes;feature-OFF root is EXACT8163fb31/50c328ed.
+
+Sparse comparison8685c971/tag...0002 and nonloggingb852456b/tag...0003 each
+repeat-build EXACT;guardd1ce2aa4/default43control2df0e0f8 unchanged. They
+are staged/builds ONLY at this checkpoint,NOT installed/native-qualified.
+Timing profiler testsNTzwCfTr PASS;updated route baseline1631 cases PASS;
+new sparse-route guard suite running. Next:bounded native A/B,then a real
+full-model token test if all layers qualify. Production Work has NO CPU
+learned-reference/result validation/fallback. Dirty llama/FlashNext work
+preserved untouched. Continue dominant dispatch/device-residency work.
+
 October20,10:55 Vancouver (17:55 UTC) FINAL ASSISTANT HOST-READY CHECK:
 New matched pair authenticated and loaded successfully,service3043/worker
 3050/model_loads1/ready1/resident1. Real assistantctl threads16 then32 each

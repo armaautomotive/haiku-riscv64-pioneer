@@ -13,7 +13,7 @@ template<class Base> struct OutputReturnMachine:Base {
 		assert(!helper.empty() && helper.size()<=8192 && !(helper.size()&3));
 		// Independently emitted helper MUST match every production saved/code
 		// word too;the test fabric must not hide a stale baked prefix.
-#ifdef PIONEER_Q38_WORK_OUTPUT_DMA
+#if defined(PIONEER_Q38_WORK_OUTPUT_DMA) && !defined(PIONEER_Q38_TEST_UNSELECTED_OUTPUT_PREFIX)
 		for (unsigned a=0x70000;a<0x72000;a+=4)
 			assert(PioneerQ38DispatchPrefixWord(0,a)==(a<0x70000+helper.size()?Word(helper,a-0x70000):0));
 #endif

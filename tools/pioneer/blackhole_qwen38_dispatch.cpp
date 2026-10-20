@@ -10,6 +10,9 @@ typedef __UINT32_TYPE__ uint32_t;
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 #include "PioneerQ38OutputTransfer.h"
 #endif
+#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT)
+#error Sparse private exports require the Work bounded-output root
+#endif
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ActivationPacking.h"
 #define Q38_ROOT_TABLE static
@@ -401,8 +404,18 @@ extern "C" unsigned block_main()
 		if (!terminal) block_fault_park();
 	}
 	// ALL readers finished BEFORE ANY proof/output gather or publication.
+#ifdef PIONEER_Q38_WORK_SPARSE_EXPORT
+	// WORK never returns the private peer-proof array to the host: EVERY
+	// actual gathered proof is still checked below, before ANY output DMA.
+	// Each active output slot is fully overwritten below, including its
+	// zero tail. Clear only inactive output slots; their bytes stay exactly
+	// the same as checked mode. STOP/checked retain the original full clear.
+	if (!work) for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
+	for (unsigned i=work?workers*256:0;i<119*256;i++) Words(0x80000)[i]=0;
+#else
 	for (unsigned i=0;i<119*64;i++) Words(0x76000)[i]=0;
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
+#endif
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
 		const uint32_t* p=parts[w]; unsigned groups=p[2],reads=groups*blocks+(inputs*2+16383)/16384+1;
 		unsigned flits=groups*blocks*Tile(type)/64+(inputs*2+((blocks*4+63)&~63U))/64;
@@ -417,6 +430,9 @@ extern "C" unsigned block_main()
 		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(0x7d800)[w*16+i]) block_fault_park();
 		for (unsigned i=48;i<64;i++) if (proof[i]) block_fault_park();
 		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
+#ifdef PIONEER_Q38_WORK_SPARSE_EXPORT
+		if (!work)
+#endif
 		for (unsigned i=0;i<64;i++) Words(0x76000)[w*64+i]=proof[i];
 		for (unsigned row=0;row<256;row++) Words(0x80000)[w*256+row]=row<groups*16?proof[64+row]:0;
 	}

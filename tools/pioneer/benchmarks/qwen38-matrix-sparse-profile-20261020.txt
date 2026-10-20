@@ -1,0 +1,45 @@
+Timing-only sparse driver 8685c9711be12b35948a7cf8c5b4533323f16869f6b10bf1cb1da9f75882d4cf
+tag2026102000010002 generation3; ONLY redundant private export stores removed.
+18 synthetic/16 authenticated119 debug calculations exact; two clean ENDs.
+CPU wall phases, NOT pure GPU time or full-model token throughput.
+Driver prints AFTER all phases; printed client elapsed includes serial logging.
+Matched prior baseline: qwen38-matrix-current-profile-20261020.txt.
+LongQ4 warm execute6384/6383us ->6173/6173us, about3.3% less execution phase.
+Other phases remain; do NOT call this a whole-model generation speedup.
+Synthetic log SHA2074db87c698d8e065ad6ae48f087481fe78a807c6ba8551e72bcafe00375140
+Authenticated log SHAafd34001fc6d516736d0b2038ad627aafac62d608b96b6d61e3ad099e9a638d4
+
+P100A_Q38_PROFILE type8 K5120 peers2 valid1 us authority48 stage817 arm1072 execute1669 proof681 output5 hold254 commit277;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K5120 peers2 valid1 us authority9 stage482 arm1068 execute1504 proof706 output5 hold254 commit284;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K6144 peers2 valid1 us authority55 stage879 arm1086 execute1910 proof678 output3 hold255 commit283;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K6144 peers2 valid1 us authority11 stage477 arm1072 execute1712 proof704 output5 hold253 commit278;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K17408 peers2 valid1 us authority148 stage1633 arm1058 execute4574 proof683 output4 hold254 commit294;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K17408 peers2 valid1 us authority22 stage481 arm1068 execute4013 proof679 output4 hold254 commit290;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K5120 peers2 valid1 us authority58 stage788 arm1059 execute1711 proof677 output4 hold265 commit274;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K5120 peers2 valid1 us authority9 stage475 arm1070 execute1550 proof705 output4 hold255 commit286;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K6144 peers2 valid1 us authority55 stage861 arm1062 execute1963 proof679 output4 hold254 commit290;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K6144 peers2 valid1 us authority10 stage480 arm1071 execute1764 proof698 output4 hold255 commit277;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K17408 peers2 valid1 us authority148 stage1536 arm1072 execute4712 proof677 output4 hold263 commit301;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K17408 peers2 valid1 us authority22 stage477 arm1066 execute4157 proof679 output5 hold253 commit287;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K5120 peers2 valid1 us authority46 stage789 arm1075 execute1793 proof677 output4 hold253 commit284;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K5120 peers2 valid1 us authority9 stage480 arm1067 execute1623 proof695 output4 hold254 commit275;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K6144 peers2 valid1 us authority55 stage850 arm1072 execute2048 proof678 output4 hold255 commit283;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K6144 peers2 valid1 us authority10 stage476 arm1070 execute1855 proof696 output3 hold254 commit275;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K17408 peers2 valid1 us authority148 stage1535 arm1062 execute4971 proof679 output5 hold254 commit293;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K17408 peers2 valid1 us authority22 stage476 arm1075 execute4400 proof689 output4 hold254 commit292;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K5120 peers119 valid1 us authority200 stage824 arm1085 execute3708 proof685 output256 hold259 commit286;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K5120 peers119 valid1 us authority156 stage486 arm1075 execute3528 proof682 output256 hold257 commit286;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K5120 peers119 valid1 us authority200 stage821 arm1077 execute3695 proof684 output256 hold257 commit282;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type8 K5120 peers119 valid1 us authority156 stage485 arm1077 execute3525 proof684 output255 hold257 commit289;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K5120 peers119 valid1 us authority188 stage808 arm1066 execute3704 proof682 output256 hold257 commit284;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K5120 peers119 valid1 us authority147 stage483 arm1075 execute3524 proof686 output255 hold257 commit288;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K5120 peers119 valid1 us authority188 stage793 arm1107 execute3697 proof697 output257 hold259 commit280;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K5120 peers119 valid1 us authority144 stage485 arm1078 execute3524 proof681 output255 hold257 commit285;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K5120 peers119 valid1 us authority191 stage793 arm1081 execute3855 proof683 output256 hold257 commit290;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K5120 peers119 valid1 us authority149 stage484 arm1072 execute3696 proof683 output256 hold257 commit286;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K5120 peers119 valid1 us authority192 stage792 arm1093 execute3858 proof692 output256 hold257 commit278;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type14 K5120 peers119 valid1 us authority151 stage483 arm1069 execute3695 proof682 output257 hold256 commit282;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K17408 peers119 valid1 us authority303 stage1540 arm1078 execute6739 proof692 output256 hold257 commit292;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K17408 peers119 valid1 us authority176 stage481 arm1078 execute6173 proof696 output256 hold256 commit299;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K17408 peers119 valid1 us authority315 stage1541 arm1080 execute6737 proof684 output257 hold257 commit288;CPU_WALL_NOT_PURE_GPU
+P100A_Q38_PROFILE type12 K17408 peers119 valid1 us authority169 stage481 arm1074 execute6173 proof693 output256 hold257 commit296;CPU_WALL_NOT_PURE_GPU
