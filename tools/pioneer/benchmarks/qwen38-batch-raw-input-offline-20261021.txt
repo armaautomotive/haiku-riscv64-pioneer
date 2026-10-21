@@ -114,3 +114,18 @@ SHA verified,THREE32 started11:30UTC,one job/no SCP overlap. Own log:
 Authentication passed/model loaded13.554481s/persistent32CPU pool/497
 recognized weights;first decode/pre-cohort upload RUNNING11:42UTC.
 No completed whole-model throughput result yet;best stays041 .181432516.
+
+Whole-model THREE32 completed11:57UTC:PASS/CLI_EXIT0,explicitcleanEND,
+119workers,47712learned projections/48480calls,4558653retained pages
+18672242688B. ALL96 token IDs repeat and match041 control EXACT.
+81warm positions/450.568014s =.179773081tok/s,BELOW best041 .181432516;
+NOT promoted. CPU pool32 unchanged,NO CPU learned reference/fallback.
+Mean81 host wall:matrix callback4.484132123s/ioctl4.213210284s/other
+1.078435951s per position;not pureGPU/CPU timings. Prime717.144618s,
+source repack147.973621s/upload568.535526s;not steady inference timing.
+Model smoke1278.826052s NOT used to compute token speed.
+Final logSHA86dc93e9e831ce93477c1d634748472e7c6764c2ca14e4c487f450850849aaae;
+local/private/tmp/pioneer-q38-batch-raw-native-evidence.JyUh1vJQ/full-model-work-batch-raw-three32-20261021-a.log.
+After native job exit,CPU-only reloadtag20/gen44/cold0/owner0/open1.
+No live-owner swap/transfer overlap. New frontend candidate staging ONLY
+began after this explicit known-clean completion. No card reset/reboot.
