@@ -4,8 +4,14 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_SIGNED_MAG2_QUALIFICATION
+#if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_COMMAND_REUSE_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
+#error Signed magnitude2 OFFLINE registry requires the original-layout sentinel/direct chain, not mixed qualifiers
+#endif
+#include "PioneerQ38SignedMagnitude2PeerImage.h"
+#endif
 #ifdef PIONEER_Q38_Q4_NIBBLE_QUALIFICATION
-#if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_COMMAND_REUSE_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
+#if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_SIGNED_MAG2_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_COMMAND_REUSE_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
 #error Q4 nibble OFFLINE registry requires the original-layout sentinel/direct chain, not mixed qualifiers
 #endif
 #include "PioneerQ38Q4NibblePeerImage.h"
@@ -192,6 +198,10 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_SIGNED_MAG2_QUALIFICATION
+ if(worker>=120)return UINT32_MAX;
+ if(worker)return PioneerQ38SignedMagnitude2PeerPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_Q4_NIBBLE_QUALIFICATION
  if(worker>=120)return UINT32_MAX;
  if(worker)return PioneerQ38Q4NibblePeerPrefixWord(address);
@@ -848,6 +858,10 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_SIGNED_MAG2_QUALIFICATION
+ if(worker>=120)return UINT32_MAX;
+ if(worker)return PioneerQ38SignedMagnitude2PeerWord(word);
+#endif
 #ifdef PIONEER_Q38_Q4_NIBBLE_QUALIFICATION
  if(worker>=120)return UINT32_MAX;
  if(worker)return PioneerQ38Q4NibblePeerWord(word);

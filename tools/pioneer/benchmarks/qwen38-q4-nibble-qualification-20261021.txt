@@ -81,3 +81,75 @@ Remote ownlog:
 ANY actual numeric mismatch/UNKNOWN:CLOSE ONLY,no END/retry/reset/further
 card reads/hot rollback;preserve ALL owners/PCI BME/DMA/maps/clock/cold.
 The prior failed rawcache22 was NOT retried;this is a distinct26 experiment.
+
+NATIVE primitive qualification COMPLETED:
+20synthetic Work+18authenticated119worker Work+16unchanged authenticated
+119worker checked+18unchanged checked widths=72. ALL exact_errors0/cold0,
+explicit BANK_END state2/active0/pci_restored1/host_released1/cold0/accepted1,
+KNOWN_CLEAN_END1/CLI0. Work ABI2,original checked ABI1 retained. Return
+to Q8 after Q4/Q6 in same live Work cohort passes. No model/Assistant
+promotion or throughput claim from these diagnostics. 65b2a01d checked
+client freshly rebuilds identical65b2a01d49eee3ab49aab53ccb42ccf8dba8ac82b12216bbabba2229e2fa618d.
+Final idle26/g7,cold0/owner0/opens1/guard1. Native sessions28071/34565/
+56544/25770 all closed0. NO overlapping native/SCP;no restart/SD changes.
+Archived only after ALL parents closed+idle,matching remote/local SHA:
+/private/tmp/pioneer-q38-q4-nibble-native-evidence.EUdTDh6X/
+q4-nibble-synthetic-20261021-a.log
+SHA27c4110db3c98df8cba441c534655892b8558683827bf7d3ba9d30846b0eaff0
+q4-nibble-auth119-20261021-a.log
+SHA466165b3f85870180dca1c0f8f829e12f308842b81a79734b2d859544eb10978
+q4-nibble-checked-regression-20261021-a.log
+SHAd326b734d585411ae06052c5409df7d9d0b800a93a11ec72dfbc3b14c60e13e0
+q4-nibble-checked-widths-20261021-a.log
+SHA09eec3b2c8534435f3afe004ca719c68012343f3c6696ea8df22f523e6ec8f71
+
+Separate fixed-FFN paired benchmark IN PROGRESS at next checkpoint:
+Dedicated17/26-only host36c6c86111951273b3612c137ce452c2d583bac00ba3d5219ad4d8225e5e1991
+builds twice identically,NO model/Assistant mode.549 preSDK role refusals,
+all9 benchmark policies/extracted Work support variants and17 actual
+parent/fork/wait/barrier/control failure tests pass. Full-model auth once,
+same open descriptor across fresh children;parent never owns accelerator.
+Normal prior command-host28b9ddab remains byte-identical. New failedtag22
+benchmark-host builds are additionally blocked;21 total failed-native
+installer/build refusal cases now pass (earlier17 still historical).
+Benchmark suite log /private/tmp/pioneer-q38-q4-nibble-benchmark-host-tests-20261021-a.log
+SHAdbfadb65dead8aabe2a631d17de858eb00bafd3cb743f2c80350883befd80f81.
+
+Parent session15232,/boot/home/pioneer-q38-benchmark.vFABDS;
+ownhostlog /boot/home/pioneer-p100a-hot-reload-20261019-a/q4-nibble-ffn-host-20261021-a.log.
+Round1 26/g7,round2 17/g8,round3 26/g9 completed known-clean with exact
+original outputSHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+All guarded transitions ONLY while parent IDLE+child_known_clean1 AND
+driver idle metadata. Round4 control17/g10 RUNNING at this checkpoint.
+NO SCP/other GPU work during entire parent,including authentication/IDLE.
+No paired-result or full-model speed claim until all4/end/close complete.
+
+PAIRED COMPLETION (same authenticated descriptor,26/17/26/17):
+Each child33 projections/32warm samples,all known_clean1/result0/clean_end1.
+round tag/gen mean_seconds median_seconds warm_wall_seconds
+1     26/7    .010507438   .010499000    .336492
+2     17/8    .010503500   .010495000    .336375
+3     26/9    .010535187   .010532000    .337399
+4     17/10   .010598156   .010592000    .339405
+All FOUR20480-byte outputs match SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Candidate pooled mean.0105213125/control.010550828 seconds,0.2797458% less
+wall/0.2805306% higher reciprocal rate. This is NOT a clear speedup:
+first pair slightly worse,second pair slightly better with control drift.
+NO full-model rate inferred,NO promotion/model/Assistant selection.
+Explicit quit:parent15232 HOST_CLI_EXIT0/closed. Then guarded known-clean
+17/g10->16/g11->12/g12 restores original best041fef18;final metadata
+quiesced0/cold0/active_owner0/open_count1/guard1. No reboot/card reset/SD.
+All evidence archived ONLY after parent closed and idle,serial128Kbit/s,
+remote/local hashes match in:
+/private/tmp/pioneer-q38-q4-nibble-paired-evidence.quD2gyqt/
+q4-nibble-ffn-host-20261021-a.log
+SHA5a51f784038bc96c9e6efc486c7b91a6739aebd3f8f1cf1535e90a0acc7ae8e3
+round0001.log SHA8d1fd8839b0484ecb22745a746a073979c5268f58b7ece70f97c67c41158b4fd
+round0002.log SHA50460bfbc202bf55f101728c4a20dcf05e97ac2a1318ff3447c5d276d8c772af
+round0003.log SHA90738f8a563d826811c0b518ef25c256944024a87570681e27758e6339eba463
+round0004.log SHAb6f92335048c9183f1bec98decfdd325ccd017f03cfaf28bde5d313ab8d4f552
+Four roundNNNN.words archived too,all share outputSHA above.
+Benchmark policy/support/actual parent failure suite rerun final CLI0,
+549 preSDK refusals and17 process/barrier/control cases;failedtag22 gates21
+still pass. Original best full-model sample remains0.207893161tok/s with
+four non-matrix CPU helpers,NOT20tok/s. See separate cold recovery record.

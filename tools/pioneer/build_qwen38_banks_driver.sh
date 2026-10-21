@@ -3,6 +3,8 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_SIGNED_MAG2_QUALIFICATION:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION:-0}" = 0 ] || exit 2
 if [ "${PIONEER_DRIVER_BUILD_TAG:-}" = 2026102100010026 ]; then
  [ "${PIONEER_Q38_Q4_NIBBLE_QUALIFICATION:-0}" = 1 ] || exit 2
 fi

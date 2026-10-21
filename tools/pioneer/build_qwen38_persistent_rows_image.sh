@@ -1,6 +1,8 @@
 #!/bin/sh
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_SIGNED_MAG2_QUALIFICATION:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_Q4_NIBBLE_QUALIFICATION:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_WORK_SIGNED_MAG2:-0}" in

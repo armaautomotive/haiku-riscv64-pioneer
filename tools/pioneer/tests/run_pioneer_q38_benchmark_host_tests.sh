@@ -2,7 +2,7 @@
 set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-benchmark-host-tests.XXXXXXXX")
-for variant in normal profile batch4 raw frontend raw-cache prefetch command;do
+for variant in normal profile batch4 raw frontend raw-cache prefetch command q4-nibble;do
 extra=;[ "$variant" != profile ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
 [ "$variant" != batch4 ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION
 [ "$variant" != raw ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION
@@ -10,6 +10,7 @@ extra=;[ "$variant" != profile ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_PROFILE_Q
 [ "$variant" != raw-cache ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION
 [ "$variant" != prefetch ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_PREFETCH_QUALIFICATION
 [ "$variant" != command ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_COMMAND_QUALIFICATION
+[ "$variant" != q4-nibble ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  $extra "$directory/pioneer_q38_benchmark_host_test.cpp" -o "$temporary/policy"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/policy"

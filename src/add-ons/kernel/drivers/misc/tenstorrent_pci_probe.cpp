@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_SIGNED_MAG2_QUALIFICATION
+#error Signed magnitude2 image selection is OFFLINE registry proof ONLY;NO native driver qualification yet
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102100010026ULL && !defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION)
 #error Reserved tag26 must identify ONLY the exact Q4 nibble image qualification
 #endif

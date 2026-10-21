@@ -6,7 +6,7 @@ base={k:v for k,v in os.environ.items() if not k.startswith('PIONEER_')}
 cases=[]
 for flag in ('PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION','PIONEER_Q38_WORK_RAW_UNPACK_CACHE'):
  for value in ('1','01','-1','invalid'):cases.append(('build_qwen38_banks_driver.sh',{flag:value}))
-for script,flag in [('build_qwen38_banks_client.sh','PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT'),('build_qwen38_inference.sh','PIONEER_Q38_MODEL_THREAD_RAW_CACHE')]:
+for script,flag in [('build_qwen38_banks_client.sh','PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT'),('build_qwen38_inference.sh','PIONEER_Q38_MODEL_THREAD_RAW_CACHE'),('build_qwen38_inference.sh','PIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION')]:
  for value in ('1','01','-1','invalid'):cases.append((script,{flag:value}))
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-raw-failed-gate-') as name:
  root=pathlib.Path(name);empty=root/'EMPTY_PATH';empty.mkdir()
