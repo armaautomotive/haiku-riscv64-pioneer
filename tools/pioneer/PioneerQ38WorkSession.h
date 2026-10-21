@@ -3,6 +3,9 @@
 #define PIONEER_Q38_WORK_SESSION_H
 #include "PioneerQ38DispatchSession.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkProtocol.h"
+#ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
+#include "PioneerQ38NativeQ8DebugTag.h"
+#endif
 // WORK has its own operation namespace,not a fallback or a relabelled
 // checked execution. Host checks transaction identity/ranges ONLY. No
 // peer/input/output numeric validation and no CPU learned products.
@@ -21,11 +24,17 @@ public:
 struct PioneerQ38WorkSessionMode {
 	static constexpr unsigned Workers=119,Operation=TT_PCI_PROBE_Q38_WORK_RUN;
 	PioneerQ38WorkHistory history;
+	// PIONEER_NATIVE_Q8_WORK_SUPPORT_BEGIN
 	template<class IO> bool Support(IO& io,int fd) {
+#ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
+		tt_pioneer_driver_reload metadata={}; metadata.version=1;
+		if (!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&metadata,sizeof(metadata)) || !PioneerQ38NativeQ8DebugTag(metadata)) return false;
+#endif
 		tt_q38_dispatch_support s={};
 		return io.Call(fd,TT_PCI_PROBE_Q38_WORK_SUPPORT,&s,sizeof(s)) && s.driver==TT_Q38_DISPATCH_DRIVER && s.version==TT_Q38_WORK_SUPPORT_VERSION
 			&& s.peers==119 && s.rows==256 && s.max_inputs==17408 && s.banks==7 && s.offset_alignment==64 && s.persistent==1 && !s.model_inference;
 	}
+	// PIONEER_NATIVE_Q8_WORK_SUPPORT_END
 	static auto Request(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input) { return PioneerQ38DispatchRequest(wave,input); }
 	bool Collect(const PioneerQ38CohortWave& wave,const PioneerQ38CohortInput& input,const tt_q38_dispatch_probe& reply,float* scratch,unsigned rows) {
 		if (!scratch || !wave.Ready() || wave.workers>119 || rows!=wave.outputs || input.type!=wave.type || input.inputs!=wave.inputs

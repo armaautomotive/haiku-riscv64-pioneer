@@ -1,0 +1,49 @@
+Direct native-SM7 Q8 worker qualification,October21 2026 05:24-05:35 UTC.
+Driver e546b6643009018386ff57fceee7c8d425d81a3d8211529e5fc393719ea053d4
+tag2026102100010014,generation23;guarded idle hot reload,NO reboot/SD/reset.
+Separate SM7 support/RUN operations6250/6251,ABI3;ordinary TC Work remains
+60f2/60f3,ABI2. Original checked path still accepts full-range TC Q8 -128.
+Exact tag14 checked BEFORE BANK_BEGIN. New independent debug client
+f32313c3aa12caaf3f7cedce3842532d48a799540cdd4c1e89a6313b532bb6ab
+compares accelerator results against original TC CPU FP32 arithmetic;
+ONLY private upload pages are converted to SM7. No CPU result substitution.
+
+52 actual hardware numeric jobs PASS,zero exact errors:
+18 synthetic Work (3 types x3 widths x2 changed-input runs),
+16 authenticated119-worker Work (8 fixed real-weight mixes x2 runs),
+18 original checked regression (client65b2a01d,full-range TC Q8 retained).
+ALL THREE explicit BANK_END state2/active0/pci_restored1/host_released1/
+cold0/accepted1,KNOWN_CLEAN_END1,CLI_EXIT0;serial clock800->1350->800,
+restored1/uncertain0. CPU-only metadata afterward:quiesced0/cold0/
+active_owner0/open_count1/guard1. No retry/reset/automatic rollback.
+
+Own logs in /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+native-q8-synthetic-native-20261021-a.log
+SHA b221eb7bd20a0996a3339bc037d0b5cb78f41e66e0930b9876e67817dd7e27de
+native-q8-auth119-native-20261021-a.log
+SHA 49101981d078dc6542f418e36c51dc3eb7711f622a986d17853fe1e2ac4ec971
+native-q8-checked-native-20261021-a.log
+SHA 0660426324d6f1870ee1cdce8944a6803099bc89b702e472d2c29ee33a086e39
+Serial first boundary64012367,three clean sessions complete by64033918.
+
+Full actual updater suite2771 cases PASS;no native reset/reload in test.
+Native-SM7 data codec rechecked:255 exact values,2113536 quants,all9
+page/tile phases,late invalid-domain/negative-zero/bounds/alias refusal
+before publication. Source-page extraction14 refusal cases+all4 types
+PASS. Independent tag93 refusal tests+namespace5 configurations PASS.
+
+Real graph benchmark added SEPARATELY;this primitive qualification is NOT
+graph/model/Assistant readiness or speed evidence. Ordinary whole-model
+f414306f and FFN32 f0566393 rebuild byte-for-byte after graph refactor.
+Isolated Q8 control0c104f39 and exact-idle-tagged native57e4bd14 each
+rebuild identically twice from pristinec060 headers/four frozen libraries.
+Only --public-q8-graph-export accepted;fixed blk.0.attn_qkv.weight
+K5120/N10240,typeQ8_0,first+32 warm graphs,output repeatability OUTSIDE
+timing,NO CPU learned reference. Clean END precedes unique O_EXCL export.
+89 producer/graph isolation refusals BEFORE SDK/libs/output,2 valid
+selectors reach SDK;12 existing full-model/Assistant SM7 refusals PASS.
+Actual extracted warm loop tested with5120 AND10240 outputs incl.final
+word corruption,graph/clock/stop failure. Exact-tag Work-support9 cases
+refuse metadata/owner/cold/open count/old TC ABI BEFORE BEGIN;all PASS.
+Whole-model SM7 production/Assistant remain DISABLED pending qualification.
+20tok/s UNMET;goal ACTIVE,not completed by a qualification checkpoint.

@@ -59,8 +59,18 @@ struct State {
 };
 static int GraphSmoke(State& state,const char* output)
 {
+#ifdef PIONEER_Q38_Q8_REPEAT_BENCH
+#define PIONEER_Q38_GRAPH_LABEL "Q8"
+	constexpr unsigned graphInputs=5120,graphOutputs=10240,packedType=8;
+	constexpr auto graphQuantType=GGML_TYPE_Q8_0;
+	const auto* t=state.source.Model().Find("blk.0.attn_qkv.weight");
+#else
+#define PIONEER_Q38_GRAPH_LABEL "FFN"
+	constexpr unsigned graphInputs=17408,graphOutputs=5120,packedType=12;
+	constexpr auto graphQuantType=GGML_TYPE_Q4_K;
 	const auto* t=state.source.Model().Find("blk.0.ffn_down.weight");
-	if (!t || t->type!=12 || t->inputs!=17408 || t->outputs!=5120) return 1;
+#endif
+	if (!t || t->type!=packedType || t->inputs!=graphInputs || t->outputs!=graphOutputs) return 1;
 	PioneerQ38GgmlDispatch d={&state,&state.source.Model(),State::Ready,State::Multiply,State::Finish,State::Abort};
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	state.singleFfnSpan=true;
@@ -69,19 +79,19 @@ static int GraphSmoke(State& state,const char* output)
 	auto dev=ggml_backend_reg_dev_get(PioneerQ38GgmlReg(),0); auto backend=ggml_backend_dev_init(dev,nullptr);
 	ggml_init_params p={1024*1024,nullptr,true}; auto ctx=ggml_init(p);
 	if (!backend || !ctx) { if (backend) ggml_backend_free(backend); if (ctx) ggml_free(ctx); return 1; }
-	auto w=ggml_new_tensor_2d(ctx,GGML_TYPE_Q4_K,17408,5120); ggml_set_name(w,t->name.c_str());
-	auto x=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,17408); auto y=ggml_mul_mat(ctx,w,x);
+	auto w=ggml_new_tensor_2d(ctx,graphQuantType,graphInputs,graphOutputs); ggml_set_name(w,t->name.c_str());
+	auto x=ggml_new_tensor_1d(ctx,GGML_TYPE_F32,graphInputs); auto y=ggml_mul_mat(ctx,w,x);
 	auto wb=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(w));
 	auto xb=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(x));
 	auto yb=ggml_backend_buft_alloc_buffer(ggml_backend_cpu_buffer_type(),ggml_nbytes(y));
 	bool okay=wb && xb && yb;
-	std::vector<float> first(5120);
+	std::vector<float> first(graphOutputs);
 	if (okay) {
 		// Metadata-only host weight mirror:GPU reads EXCLUSIVELY the original
 		// authenticated FILE pages,NOT this deliberately uninitialized buffer.
 		w->buffer=wb; w->data=ggml_backend_buffer_get_base(wb); ggml_backend_buffer_set_usage(wb,GGML_BACKEND_BUFFER_USAGE_WEIGHTS);
 		x->buffer=xb; x->data=ggml_backend_buffer_get_base(xb); y->buffer=yb; y->data=ggml_backend_buffer_get_base(yb);
-		for (unsigned k=0;k<17408;k++) static_cast<float*>(x->data)[k]=float(int((k*29+17)%255)-127)*.00390625f;
+		for (unsigned k=0;k<graphInputs;k++) static_cast<float*>(x->data)[k]=float(int((k*29+17)%255)-127)*.00390625f;
 		auto graph=ggml_new_graph(ctx); ggml_build_forward_expand(graph,y); y->flags|=GGML_TENSOR_FLAG_COMPUTE;
 		double start=Seconds(); okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
 		double repeat=Seconds(); uint64_t pages=state.session.pagesUploaded;
@@ -89,35 +99,35 @@ static int GraphSmoke(State& state,const char* output)
 		uint64_t ioctlBefore=state.session.runNanos;
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
 		PioneerQ38FfnSamples samples;
-		if (okay) memcpy(first.data(),y->data,5120*4);
+		if (okay) memcpy(first.data(),y->data,graphOutputs*4);
 		// PIONEER_FFN_REPEAT_LOOP_BEGIN
 		for (unsigned sample=0;okay && !stopRequested && sample<32;sample++) {
-			memset(y->data,0,5120*4); double began=Seconds();
+			memset(y->data,0,graphOutputs*4); double began=Seconds();
 			okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
 			double finished=Seconds(); samples.Add(began,finished); // timing NEVER controls device cleanup
-			if (okay) okay=!memcmp(first.data(),y->data,5120*4); // repeatability OUTSIDE timed graph;NO CPU learned reference
+			if (okay) okay=!memcmp(first.data(),y->data,graphOutputs*4); // repeatability OUTSIDE timed graph;NO CPU learned reference
 		}
 		// PIONEER_FFN_REPEAT_LOOP_END
 #else
-		if (okay) { memcpy(first.data(),y->data,5120*4); memset(y->data,0,5120*4); okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS; }
+		if (okay) { memcpy(first.data(),y->data,graphOutputs*4); memset(y->data,0,graphOutputs*4); okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS; }
 #endif
 		double repeated=Seconds()-repeat;
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
 		PioneerQ38FfnSamples::Summary summary; bool timing=samples.Finish(summary);
-		printf("PUBLIC_FFN_REPEAT32 samples%u timing_valid%u graph_success%u mean_seconds%.9f median_seconds%.9f min_seconds%.9f max_seconds%.9f first_seconds%.6f warm_wall_seconds%.6f;REPEATABILITY_OUTSIDE_TIMING_NO_CPU_LEARNED_REFERENCE_NOT_TOKEN_RATE\n",
+		printf("PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_REPEAT32 samples%u timing_valid%u graph_success%u mean_seconds%.9f median_seconds%.9f min_seconds%.9f max_seconds%.9f first_seconds%.6f warm_wall_seconds%.6f;REPEATABILITY_OUTSIDE_TIMING_NO_CPU_LEARNED_REFERENCE_NOT_TOKEN_RATE\n",
 			samples.Count(),unsigned(timing),unsigned(okay),summary.mean,summary.median,summary.minimum,summary.maximum,repeat-start,repeated);
-		printf("PUBLIC_FFN_HOST_REPEAT32 graph_wall_seconds%.6f multiply_seconds%.6f ioctl_seconds%.6f profile_valid%u calls%llu projections%llu pages%llu;CPU_WALL_NOT_PURE_GPU_OR_LLM_TOKEN_RATE\n",
+		printf("PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_HOST_REPEAT32 graph_wall_seconds%.6f multiply_seconds%.6f ioctl_seconds%.6f profile_valid%u calls%llu projections%llu pages%llu;CPU_WALL_NOT_PURE_GPU_OR_LLM_TOKEN_RATE\n",
 			repeated,state.matrixWallSeconds-matrixBefore,double(state.session.runNanos-ioctlBefore)*1e-9,unsigned(state.profileValid),
 			(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,(unsigned long long)state.session.pagesUploaded);
 		okay=okay && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==1+samples.Count();
 #else
-		printf("PUBLIC_FFN_GGML_GRAPH first_seconds%.6f repeat_seconds%.6f calls%llu projections%llu pages%llu;NOT_LLM_TOKEN_RATE\n",
+		printf("PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_GGML_GRAPH first_seconds%.6f repeat_seconds%.6f calls%llu projections%llu pages%llu;NOT_LLM_TOKEN_RATE\n",
 			repeat-start,repeated,(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,
 			(unsigned long long)state.session.pagesUploaded);
-		printf("PUBLIC_FFN_HOST_REPEAT graph_seconds%.6f multiply_seconds%.6f ioctl_seconds%.6f timing_valid%u;CPU_WALL_NOT_PURE_GPU_OR_LLM_TOKEN_RATE\n",
+		printf("PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_HOST_REPEAT graph_seconds%.6f multiply_seconds%.6f ioctl_seconds%.6f timing_valid%u;CPU_WALL_NOT_PURE_GPU_OR_LLM_TOKEN_RATE\n",
 			repeated,state.matrixWallSeconds-matrixBefore,double(state.session.runNanos-ioctlBefore)*1e-9,
 			unsigned(state.profileValid && repeat>=0 && repeated>=0 && state.session.runNanos>=ioctlBefore));
-		okay=okay && !memcmp(first.data(),y->data,5120*4) && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==2;
+		okay=okay && !memcmp(first.data(),y->data,graphOutputs*4) && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==2;
 #endif
 	}
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
@@ -130,7 +140,7 @@ static int GraphSmoke(State& state,const char* output)
 		if (fd<0) okay=false;
 		else {
 			const uint8_t* bytes=reinterpret_cast<const uint8_t*>(first.data()); unsigned done=0;
-			while (done<5120*4) { ssize_t n=write(fd,bytes+done,5120*4-done); if (n<0 && errno==EINTR) continue; if (n<=0) { okay=false; break; } done+=unsigned(n); }
+			while (done<graphOutputs*4) { ssize_t n=write(fd,bytes+done,graphOutputs*4-done); if (n<0 && errno==EINTR) continue; if (n<=0) { okay=false; break; } done+=unsigned(n); }
 			if (fsync(fd)) okay=false;
 			if (close(fd)) okay=false;
 		}
@@ -139,7 +149,7 @@ static int GraphSmoke(State& state,const char* output)
 	if (xb) ggml_backend_buffer_free(xb);
 	if (wb) ggml_backend_buffer_free(wb);
 	ggml_backend_free(backend); ggml_free(ctx);
-	printf("%s_PUBLIC_FFN_GGML_EXPORT clean_end%u;"
+	printf("%s_PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_GGML_EXPORT clean_end%u;"
 #ifdef PIONEER_Q38_CPU_VALIDATION
 		"CPU_REFERENCE_ALL_OUTPUTS_PLUS_REPEATABILITY_NOT_LLM_INFERENCE\n",
 #else
@@ -150,7 +160,11 @@ static int GraphSmoke(State& state,const char* output)
 }
 int main(int argc,char** argv)
 {
+#ifdef PIONEER_Q38_Q8_REPEAT_BENCH
+	bool graph=argc==3 && !strcmp(argv[1],"--public-q8-graph-export");
+#else
 	bool graph=argc==3 && !strcmp(argv[1],"--public-ffn-graph-export");
+#endif
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
 	if (!graph) return 2; // isolated diagnostic executable,NEVER normal model/Assistant mode
 #endif
@@ -164,7 +178,7 @@ int main(int argc,char** argv)
 	signal(SIGINT,RequestStop); signal(SIGTERM,RequestStop);
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
-	puts("FFN_REPEAT32_DIAGNOSTIC_ONLY;FIRST_PLUS32_WARM_GRAPHS;NO_CPU_LEARNED_REFERENCE;OUTPUT_REPEATABILITY_CHECK_OUTSIDE_TIMING");
+	puts(PIONEER_Q38_GRAPH_LABEL "_REPEAT32_DIAGNOSTIC_ONLY;FIRST_PLUS32_WARM_GRAPHS;NO_CPU_LEARNED_REFERENCE;OUTPUT_REPEATABILITY_CHECK_OUTSIDE_TIMING");
 #endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #ifdef PIONEER_Q38_SPAN_FAST
