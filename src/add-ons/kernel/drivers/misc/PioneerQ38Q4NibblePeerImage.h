@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_Q4_NIBBLE_PEER_IMAGE_H
 #define PIONEER_Q38_Q4_NIBBLE_PEER_IMAGE_H
 #include <stdint.h>
-// OFFLINE registry proof ONLY. No native driver/model/Assistant selector.
+// Pinned peer for separate exact-tag26 qualification;NO model/Assistant/speed promotion.
 // text SHA256 8fd12aab6195800e93a64719ce56fce294adc8d3ff67fedebc4d7ef31c45289a
 static inline uint32_t PioneerQ38Q4NibblePeerWord(unsigned word)
 {

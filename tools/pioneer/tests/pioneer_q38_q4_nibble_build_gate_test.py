@@ -29,4 +29,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-q4-nibble-gates-') as name:
   r=subprocess.run(['/bin/sh',str(directory/script),*args],env={**base,**flags,'PATH':str(empty)},capture_output=True,text=True)
   assert r.returncode==2 and 'not found' not in r.stderr,(script,flags,r.returncode,r.stderr)
   assert not sdk.exists() and not libs.exists() and not out.exists()
-print(f'PASS Q4 nibble {len(cases)} native/mixed/partial/invalid role refusals before ANY external command/SDK/output;NO native selector')
+print(f'PASS Q4 nibble {len(cases)} native/mixed/partial/invalid role refusals before ANY external command/SDK/output;NO ordinary model/Assistant selector;exact26 qualification has separate gates')

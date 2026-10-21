@@ -1,0 +1,83 @@
+Separate exact-tag26 Q4-nibble qualification, October21 2026.
+THIS CHECKPOINT IS LOCAL/OFFLINE ONLY; NO native test or speed result yet.
+Prior complete peer/registry/controller proof:qwen38-q4-nibble-offline-20261021.txt.
+Original full27B remains on041/tag12 after clean96token post-cold recovery.
+
+Only original-TC Work Q4 register decoding changes;Q8/Q6/checked unchanged.
+No raw-Dst caching, source handoff elision,format/weight/layout change,
+ABI change,extra NoC,ownership release or new native/default model option.
+Old TC ABI2 and SM7 ABI3 unchanged;private timing ABI4 is NOT selected.
+Coordinator/root counters/PC/reset/source/DMA/terminal proofs retained.
+
+Cross-builds a/b/c reproduce EXACT native qualifier driver
+0f7213d98b12575a6bd4335f4424508040129940e5ae4aebe38f49d016e167b5
+tag2026102100010026. Guardd1ce2aa4/default43 2df0e0f8 unchanged. Complete
+exact native role required BEFORE SDK:all existing normal-clock/reload/
+original-TC/affine/native-store/sentinel flags,all format/profile/other
+qualifiers forbidden. Source ALSO reserves tag26:it cannot label an old
+image when its selector is absent. No arbitrary code/source/address input.
+Firmware producer flag remains blocked in native/model builders;only the
+independently frozen registry can enter this separate qualification.
+Header currentSHAbac9ef2cd28213935741493bef94d61389f7758c24bfc16fa391bc3e8ed676cd;
+change from earlier2d1e8f10 is COMMENT ONLY;all array words identical.
+
+Debug builds a/b identical0044bf9664fd7d91ed87337e777cb4af4c304d8193b7b589a4fc0de29ecf7043.
+Exact idle tag26 CPU metadata checked BEFORE ABI2 query/BEGIN. Public
+fixed-fixture CPU numeric comparison is DEBUG ONLY,NOT Work inference.
+All existing failure handling stays CLOSE ONLY,NO END/retry/reset or
+additional device read after actual UNKNOWN/numeric failure.
+
+519 empty-PATH exact driver/debug/native/model/root/format/partial/mixed
+role refusals pass before ANY external command/SDK/output. Initial test
+incorrectly treated debug-selectorOFF as invalid;that is the preserved
+valid oldtag17 debug role. Fixed ONLY that test expectation,not guards.
+Driver selectorOFF with RESERVED26 is genuinely refused and remains tested.
+All10 exact debug tag variants pass93 bitmap/version/guard/generation/
+owner/open refusals each=930. Actual client failure mocks pass:one RUN,
+one CLOSE,NO more ioctl/END/reset/retry. Actual DMA/controller all3owner/
+BME/mapping/clock/cold retention tests pass. Defaults rebuild EXACT model
+f414306f/driver17 84ab80ac/debug25 b7cb0684/guardd1ce2aa4/control2df0e0f8.
+
+Updater new route17->26 and guarded KNOWN-CLEAN restore26->17. Targeted
+60 actual disposable-filesystem/hash/symlink/handshake/owner/failure cases
+pass. Full updater regression RUNNING at this checkpoint;NO staged native
+file or driver change until it passes. No automatic rollback/reset and
+failed raw-cache22 apply/build/debug/model blocks remain intact.
+Current source updater015e774d4e5b3cdec1279850c2890eddefdc352dbd671dd7b03d009030655926.
+
+Logs:
+/private/tmp/pioneer-q38-q4-nibble-native-gates-20261021-b.log
+SHAcff82523657a4da6556c32c8857d2c4e8601a589a5a370b1b37d41d8b05902c1
+/private/tmp/pioneer-q38-q4-nibble-debug-tags-20261021-a.log
+SHA70ee326f8e43b223fa43e7d3151c904eaa937ee23760b5273d403c5a35a136dd
+/private/tmp/pioneer-q38-q4-nibble-client-failure-20261021-a.log
+SHA849c8498244673e7b2939c3a896063aead4104ae938becfbf97503c84b2d7794
+/private/tmp/pioneer-q38-q4-nibble-native-controller-20261021-a.log
+SHAaa1f56e188c2f584109d85877da1e3c052d312efc5bac7cacc12e8292a0a895b
+/private/tmp/pioneer-q38-q4-nibble-updater-target-20261021-a.log
+SHA676e212d87f1087c0b4c914f3d47fcb006415cc05838a4fc26c178ab7266285d
+Full pending:/private/tmp/pioneer-q38-q4-nibble-updater-full-20261021-a.log.
+
+PRE-NATIVE completion/update22:08UTC:
+Full updater regression passed3,461 cases,CLI0.
+SHA909912f0c8d131a80e28a1f81eb1cfd91d3622a92fc599d1a2aea02c8dc3eafb.
+Staged all3 files serially at128Kbit/s while idle;each remote/local SHA
+matched. Staging was inert and OUTSIDE watched driver paths;the full
+historical suite finished BEFORE any driver replacement. Earlier note
+"no staged file until full pass" was relaxed ONLY for inert staging after
+targeted60 safety cases passed,not for installation or GPU execution.
+Rechecked original12/g4,cold0/owner0/opens1/guard1 immediately pre-staging.
+Then guarded12/g4->16/g5->17/g6->26/g7,ALL clean metadata/hash/quiesce/newgen
+handshakes passed. No reboot/reset/SD/firmware/Assistant change. Staged
+updater015e774d supports known-clean26->17 restore,NEVER after UNKNOWN.
+Exact26/ABI2 support gate passed,peers119/persistent1/inference0/accepted1,
+NO_BEGIN_YET. Header currentbac9ef2c (same array bytes as earlier2d1e8f10).
+
+Small --synthetic debug qualification STARTED,session28071,still RUNNING at
+this checkpoint. No other native job/SCP throughout its lifetime. Expected
+20 numeric checks;NO completed native qualification/speed claim yet.
+Remote ownlog:
+/boot/home/pioneer-p100a-hot-reload-20261019-a/q4-nibble-synthetic-20261021-a.log
+ANY actual numeric mismatch/UNKNOWN:CLOSE ONLY,no END/retry/reset/further
+card reads/hot rollback;preserve ALL owners/PCI BME/DMA/maps/clock/cold.
+The prior failed rawcache22 was NOT retried;this is a distinct26 experiment.

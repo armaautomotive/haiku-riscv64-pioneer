@@ -14,7 +14,7 @@ for section,pin in pins.items():
 assert len(data['affine'])<=0x1500 and struct.unpack('<I',data['boot'])[0]==0x0006c06f
 lines=['/* SPDX-License-Identifier: MIT */','#ifndef PIONEER_Q38_Q4_NIBBLE_PEER_IMAGE_H',
        '#define PIONEER_Q38_Q4_NIBBLE_PEER_IMAGE_H','#include <stdint.h>',
-       '// OFFLINE registry proof ONLY. No native driver/model/Assistant selector.']
+       '// Pinned peer for separate exact-tag26 qualification;NO model/Assistant/speed promotion.']
 for section,suffix in [('text','Word'),('affine','PrefixWord')]:
  b=data[section];arg='word' if section=='text' else 'address'
  lines+=['// '+section+' SHA256 '+pins[section],

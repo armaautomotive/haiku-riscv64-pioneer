@@ -5,6 +5,9 @@
 #error Exact sentinel tag17 (or separately gated CPU-profile18) is independent qualification ONLY
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT) && (defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT) || defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT) || defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH4_REFERENCE_CLIENT) || defined(PIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT))
+#error Q4 nibble qualifier has its own exact driver tag26
+#endif
 #if defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) && (defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT) || defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT) || defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH4_REFERENCE_CLIENT) || defined(PIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT))
 #error Private timing DATA qualifier has its own exact driver tag25
 #endif
@@ -29,7 +32,9 @@
 static inline bool PioneerQ38SentinelDebugTag(const tt_pioneer_driver_reload& r) {
 	return r.version==1 && r.driver==55 && r.guard_version==1
 		&& r.build_tag==
-#ifdef PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT
+		UINT64_C(0x2026102100010026)
+#elif defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT)
 		UINT64_C(0x2026102100010025)
 #elif defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT)
 		UINT64_C(0x2026102100010024)
