@@ -16,4 +16,14 @@ template<class E> static inline void PioneerQ38QueuedMatrixEntry(E& e)
 	e.Op(0x5160000a); e.Op(0x5460000f);
 	e.Op(0x428000c1);
 }
+#ifdef PIONEER_Q38_Q4_GROUP32
+// OFFLINE ONLY:the preceding drained Q4 panel's SM32 dot remains in
+// Dst32..47. Reset source/fidelity RWCs and publish FRESH SrcB as before,
+// but deliberately do NOT ZEROACC until the next32-input group starts.
+template<class E> static inline void PioneerQ38QueuedMatrixContinue(E& e)
+{
+	e.Op(0x3700000f);
+	e.Op(0x5160000a); e.Op(0x5460000f); e.Op(0x428000c1);
+}
+#endif
 #endif

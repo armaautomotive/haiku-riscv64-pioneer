@@ -3,6 +3,8 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_Q4_GROUP32:-0}" = 0 ] || {
+ echo 'STOP group32 changes rounding and is OFFLINE ONLY;no qualified native selector' >&2; exit 2; }
 case "${PIONEER_Q38_BLOCK_SCALE_REUSE:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_SCALE_REUSE_QUALIFICATION:-0}:${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}" = 1:1 ] || {

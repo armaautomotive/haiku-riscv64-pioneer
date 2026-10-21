@@ -1,5 +1,30 @@
 # Native build status
 
+October21,03:50 UTC OFFLINE GROUP32 ARITHMETIC/ACTUAL IMAGE PASS:
+Separate Work-Q4 experiment retains both exact16-input integer matrix
+panels in Dst32..47,then applies ONE FP32 affine update per shared32-input
+coefficient/minimum. ALL original matrix phases/drains/source flips/NoC
+and per-panel sum-cache proofs remain;checked/non-Q4/STOP unchanged.
+FP32 rounding intentionally CHANGES;NOT bit-exact to old Work,NOT native
+or model-quality/speed qualified. Native builder explicitly REFUSES it.
+
+Arithmetic1fQ6kQ2e:9216 outputs across all3 widths,zero/extreme/random
+activations,signed/subnormal/max HALF and scale exponent range.6842 outputs
+change bits;both old and pair obey independent FP64 expanded-affine bounds.
+Worst pair error/expanded7.30791e-7 vs old1.38130e-6,NOT output-relative
+error or model-quality evidence. Actual-image fullPWFULaA7 PASS allformats/
+widths/groups1,3,16/modes/two changed-input jobs,independent paired FP32+
+FP64,ALL live integer pair dots observed,missing-clear observer refusal
+BEFORE publication. Initial observer incorrectly assumed zero-padding rows
+were copies of active row;fixed to independently require ZERO padding.
+No corresponding hardware failure/change. Test log
+/private/tmp/pioneer-q38-group32-full-20261021-a.log
+SHA410311e87c82dd6c3a1d68dd62ad695d1a409132d5a2d4e305e45a7322c94c50.
+K17408/groups16 RV17,068,688->15,593,541,vector ops reduced;OFFLINE counts,
+NOT silicon timing.20 native-selector refusals BEFORE SDK/output PASS.
+Candidate a/b peer text6f0087f7/prefix2cb76522;scale flagOFF whole driver
+STILL EXACT041fef18/guardd1ce/default2df. Full-model scale run remains active.
+
 October20,20:43 Vancouver (October21,03:43 UTC) SCALE NATIVE+FFN32 PASS:
 041fef18/tag2026102100010012/gen19 passed52 exact physical matrix jobs:
 18 synthetic Work,16 authenticated119-worker Work,18 checked/debug.

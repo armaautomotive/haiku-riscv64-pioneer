@@ -34,6 +34,9 @@
 #if defined(PIONEER_Q38_BLOCK_SCALE_REUSE) && !defined(PIONEER_Q38_BLOCK_AFFINE_DST)
 #error Block scale reuse requires the separately qualified block metadata lifetime
 #endif
+#if defined(PIONEER_Q38_Q4_GROUP32) && (!defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK))
+#error OFFLINE group32 requires the complete separately qualified scale reuse Work chain
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
 #endif
@@ -204,13 +207,20 @@ struct VectorPanelEmitter {
 };
 #endif
 #if defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_Q4_TWO_PHASE)
-static void Matrix(unsigned type)
+static void Matrix(unsigned type
+#ifdef PIONEER_Q38_Q4_GROUP32
+	,bool continuation=false
+#endif
+)
 #else
 static void Matrix()
 #endif
 {
 #ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
 	VectorPanelEmitter entry;
+#ifdef PIONEER_Q38_Q4_GROUP32
+	if (continuation) PioneerQ38QueuedMatrixContinue(entry); else
+#endif
 	PioneerQ38QueuedMatrixEntry(entry);
 #else
 	Emit(0x3700000f); // reset all RWCs and fidelity to zero per panel
@@ -517,6 +527,10 @@ extern "C" unsigned block_main()
 #endif
 #endif
 #endif
+#ifdef PIONEER_Q38_Q4_GROUP32
+	int precedingSum=0;
+	const bool pairedQ4=skipDotCheck && type==12;
+#endif
 	for (unsigned p=0;p<panels;p++) {
 #if !defined(PIONEER_Q38_SFPU_ACCUMULATOR) || defined(PIONEER_Q38_CACHED_AFFINE)
 		auto* local=reinterpret_cast<PioneerQ38Panel*>(0x91000);
@@ -608,9 +622,23 @@ extern "C" unsigned block_main()
 #endif
 #endif
 #if defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_Q4_TWO_PHASE)
-		Matrix(type);
+		Matrix(type
+#ifdef PIONEER_Q38_Q4_GROUP32
+			,pairedQ4 && (p&1)
+#endif
+		);
 #else
 		Matrix();
+#endif
+#ifdef PIONEER_Q38_Q4_GROUP32
+		// Every raw panel,source publication,matrix phase and real matrix
+		// drain STILL executes. Only the affine update waits for BOTH exact
+		// integer panels sharing this Q4_K coefficient/minimum. This changes
+		// FP32 rounding intentionally;NEVER selected by a native driver yet.
+		if (pairedQ4) {
+			if (!(p&1)) { precedingSum=sum; continue; }
+			sum+=precedingSum;
+		}
 #endif
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
@@ -630,7 +658,13 @@ extern "C" unsigned block_main()
 #endif
 		}
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
-		if (!accumulate(emitter,type,!block && !p,type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
+		if (!accumulate(emitter,type,!block &&
+#ifdef PIONEER_Q38_Q4_GROUP32
+			(pairedQ4?p==1:!p),pairedQ4 ||
+#else
+			!p,
+#endif
+			type==14 || !(p&1),Bits(scale),sum)) block_fault_park();
 #else
 		if (!PioneerQ38SfpuAccumulator<VectorPanelEmitter,
 #ifdef PIONEER_Q38_SFPU_INTEGER

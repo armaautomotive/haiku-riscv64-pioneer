@@ -363,6 +363,9 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 				switch (code) {
 				case 0x90: { assert(!mod && ((BFloat && !affineEligible)?vc==0:affineEligible && (vc==4 || (!BFloat && vc==0)))); uint32_t sm=lr[vc][lane],mag=sm&0x7fffffff;
 					unsigned bound=(BFloat && !affineEligible)?128U:vc==0?262144U:2048U;
+#ifdef PIONEER_Q38_TEST_GROUP32
+					if (vc==4 && BlockAffineActive()) bound=4096;
+#endif
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 					// Full hardware SM32 cast for explicit Work numeric-fault
 					// controls. Healthy dots remain independently bounded.

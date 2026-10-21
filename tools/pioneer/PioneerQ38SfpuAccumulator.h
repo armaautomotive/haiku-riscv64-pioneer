@@ -60,7 +60,12 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 		if (type!=12 || metadataRow<128 || metadataRow>184 || (metadataRow&7)) return false;
 	}
 #endif
-	if ((type!=8 && type!=12 && type!=14) || sum<-2048 || sum>2048 || (first && !metadata)
+	const int sumBound=
+#ifdef PIONEER_Q38_Q4_GROUP32
+		BlockMetadata?4096:
+#endif
+		2048;
+	if ((type!=8 && type!=12 && type!=14) || sum<-sumBound || sum>sumBound || (first && !metadata)
 		|| (mag && (mag<0x2f800000 || mag>0x47800000))) return false;
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 	static_assert(!ZeroMinimum || Integer,"zero-minimum specialization is exact INTEGER Work only");
