@@ -123,3 +123,21 @@ SHAde3abb966087403b089baef4856f1ae696d03a88e06c05dc8986beb87fdc7510.
 Twofresh8/4/8 cross-builds IDENTICAL:
 01152a39c47d81fb2892be949c5759abb9d3068d1b1c32959e4232922a1febce.
 Ordinary model flagOFF still EXACTf414306f. NOT native-run/staged yet.
+
+Native01152a398/4/8 follow-up completed16:11UTC on originalbest041/
+tag12/g69;ALL96tokenIDs EXACTvsoriginal041 ANDacrossallthree sequences.
+47712learnedprojections/48480calls/119workers/4558653pagesretained;
+explicitclean_end1/CLI_EXIT0. PostrunCPUmetadata cold0/active_owner0/
+open_count1/guard1. Ownarchivedlog
+/private/tmp/pioneer-q38-thread-native-evidence.B3L9AAbn/model-thread-four-041-three32-20261021-a.log
+SHAe474ad811bd8d56c173ddb96565c94519d7de10f68ea6a1dda000ea55968b0dd.
+Persequence27warmpositions(first5skippedEACH):
+CPU8:132.076276s=.204427327tok/s,median4.889127,p954.919205;
+CPU4:130.742693s=.206512497tok/s,median4.842285,p954.867367;
+CPU8:131.870620s=.204746137tok/s,median4.884613,p954.902275.
+PooledCPU8=54/263.946896=.204586607tok/s;CPU4 is0.941357%MORErate/
+0.932578%LESSwalltime inthisonebracketedfixedpromptcomparison. Smallgain,
+NOTrobuststatistical/broadprompt/thermal/qualityqualification. Mixed
+aggregate.205224567combinesDIFFERENTcounts,NOTfixedconfigthroughput.
+All learnedmatrices STILLcard-only,noCPUlearnedreference/fallback. No
+Assistant/settings/boot/SD/powerchanges.20tok/stargetSTILLUNMET.
