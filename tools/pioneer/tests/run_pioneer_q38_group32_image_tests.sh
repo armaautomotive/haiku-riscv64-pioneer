@@ -2,6 +2,11 @@
 set -eu
 [ "$#" = 2 ] || { [ "$#" = 3 ] && [ "$3" = --q4-work-pilot ]; } || exit 2
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+hash_is(){ actual=$(shasum -a 256 "$1");[ "${actual%% *}" = "$2" ]; }
+hash_is "$1/text.bin" 9aa8f73b560311c4f19b0267bfa73247d49981d5f23395e50ab6347f0dbfba78
+hash_is "$1/affine.bin" e55c606956e5602cdc9818b87ff7aa8e72e97e368abe8c1b8a8cd5585903de4b
+hash_is "$2/text.bin" 6f0087f798dfb657eb137acad08e65541e121747403c2d04e42c2661fdd14948
+hash_is "$2/affine.bin" 2cb765229203947400a2cc3710443cfd6ce572d5129829e61fed08e4a8109097
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-group32-image.XXXXXXXX")
 ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DPIONEER_Q38_TEST_GROUP32 -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE \

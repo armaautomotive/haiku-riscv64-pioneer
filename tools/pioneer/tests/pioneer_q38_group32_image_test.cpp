@@ -1,10 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_Q38_DEFER_AFFINE_IMAGE_TEST_MODEL_ONLY
 #include "pioneer_q38_defer_affine_image_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Group32PeerImage.h"
 // Separate reference uses decoded input/tile DATA,not candidate instructions.
 struct Group32Image:DeferredAffineImage {
 	using DeferredAffineImage::DeferredAffineImage;
-	bool paired=false,omitClear=false;
+	bool paired=true,omitClear=false;
 	unsigned pairClears=0,pairLoads=0;
 	struct GroupHazard {};
 	bool Active() const {return paired && BlockAffineActive();}
@@ -57,13 +58,21 @@ struct Group32Image:DeferredAffineImage {
 		return true;
 	}
 };
+#ifndef PIONEER_Q38_GROUP32_IMAGE_MODEL_ONLY
 int main(int argc,char** argv) {
 	assert(argc==3 || (argc==4 && !strcmp(argv[3],"--q4-work-pilot")));setvbuf(stdout,nullptr,_IOLBF,0);
+	const auto code=Read((std::string(argv[2])+"/text.bin").c_str()),prefix=Read((std::string(argv[2])+"/affine.bin").c_str());
+	for(unsigned w=0;w<2048;w++) {
+		assert(PioneerQ38Group32PeerWord(w)==(w*4<code.size()?Word(code,w*4):0));unsigned at=0x70000+w*4;
+		assert(PioneerQ38Group32PeerPrefixWord(at)==(at>=0x70b00 && at-0x70b00<prefix.size()?Word(prefix,at-0x70b00):0));
+	}
+	assert(PioneerQ38Group32PeerWord(2048)==UINT32_MAX);
+	for(unsigned at:{0x6fffcU,0x72000U,0x70001U})assert(PioneerQ38Group32PeerPrefixWord(at)==UINT32_MAX);
 	for(unsigned type:{8U,12U,14U})for(unsigned k:{5120U,6144U,17408U})
 	for(unsigned groups:{1U,3U,16U})for(bool work:{false,true}) {
 		if(argc==4 && (type!=12 || k!=5120 || groups!=1 || !work))continue;
 		printf("GROUP32_CASE type%u K%u groups%u work%u\n",type,k,groups,unsigned(work));
-		Group32Image old(argv[1],type,k,groups),next(argv[2],type,k,groups);next.paired=true;
+		Group32Image old(argv[1],type,k,groups),next(argv[2],type,k,groups);old.paired=false;
 		assert(old.Boot() && next.Boot());old.memory[0x74038]=next.memory[0x74038]=unsigned(work);
 		for(unsigned job=1;job<=2;job++) {
 			if(job==2){old.NextPackets();next.NextPackets();FreshInputs(old);FreshInputs(next);next.pairClears=next.pairLoads=0;}
@@ -82,3 +91,4 @@ int main(int argc,char** argv) {
 	assert(caught && !bad.outputReads && !bad.memory.at(0x74144));
 	puts(argc==4?"PASS PARTIAL ONLY group32 actual-image pilot+missing-clear observer;FULL SUITE SKIPPED":"PASS OFFLINE ACTUAL group32:independent exact paired-FP32+FP64 references,all formats/widths/groups/modes/two changed inputs,unchanged NoC/matrix/source/proof/STOP,checked and non-Q4 exact to old,missing-clear observer before publication;NO_NATIVE_MODEL_QUALITY_OR_SPEED_QUALIFICATION");
 }
+#endif

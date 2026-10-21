@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#ifdef PIONEER_Q38_TEST_DEFER_AFFINE
+#if defined(PIONEER_Q38_TEST_GROUP32)
+#define PIONEER_Q38_GROUP32_IMAGE_MODEL_ONLY
+#include "pioneer_q38_group32_image_test.cpp"
+using CooperativePeer=Group32Image;
+#elif defined(PIONEER_Q38_TEST_DEFER_AFFINE)
 #define PIONEER_Q38_DEFER_AFFINE_IMAGE_TEST_MODEL_ONLY
 #include "pioneer_q38_defer_affine_image_test.cpp"
 using CooperativePeer=DeferredAffineImage;

@@ -1,5 +1,18 @@
 # Native build status
 
+October21,04:07 UTC GROUP32 PIN/ROOT follow-up PASS:
+Frozen all-word Group32PeerImage reproduces a/b text6f0087f7/prefix2cb76522.
+Full pinned actual-image runmukwHgpL PASS,log
+/private/tmp/pioneer-q38-group32-pinned-full-20261021-a.log
+SHA80487c92578fb976879d2debe05316048edce723fb1c0014500e622c35b8b35e.
+Actual root+real GROUP32 worker runOiIi3ac4 PASS including108 root shape/
+cohort cases,counter rollover/failure,ALL57 safety fields,64 proof faults,
+NoC uncertainty and real paired arithmetic. Log
+/private/tmp/pioneer-q38-group32-root-20261021-a.log
+SHAe801a033e5c24b343be87c8f19f5eb240e7753760694af8ee82da13b50744de9.
+These are OFFLINE instruction-model proofs,NOT native/model quality/speed.
+Native builder still refuses group32;running full-model driver remains041.
+
 October21,03:50 UTC OFFLINE GROUP32 ARITHMETIC/ACTUAL IMAGE PASS:
 Separate Work-Q4 experiment retains both exact16-input integer matrix
 panels in Dst32..47,then applies ONE FP32 affine update per shared32-input
