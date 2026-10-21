@@ -1,0 +1,38 @@
+Native ROOT0 phase cycle diagnostic, October21 2026 02:16-02:20 UTC.
+Driver52ea41c91681353f20d4ce67bc0a0e338a0750aa0ab3f46bcd89e74a558a0424,
+tag2026102100010010/gen17;guarded idle-only install from213ebf0a,NO reboot.
+Client e57c9ef25c9eacc92cc66416fb659bf3f9b0803b77691c721e8973a8a27bad39
+is EXPLICIT CPU-reference debug,NOT production Work inference.
+Root textaa27f4356c7cc6bfb14dabbf79473a6b8e519ff0386ca343b4e7eabd500de5f7,
+prefix15643b20c5aafa9090c00e6be0dd4985653cae7d621c707c3f69e27ddde9d03d.
+Read-only documented mcycle/h CSRRS;three64-bit HIGH/LOW/HIGH deltas.
+NO counter writes/resets/new MMIO register/NoC/DMA/owned extent. All
+original source/counter/nonce/physical-PC/hold/DMA proofs retained.
+
+Synthetic18 matrix jobs across Q8/Q4/Q6,K5120/6144/17408,2 peers PASS.
+Then16 authenticated public-row jobs across119 peers PASS. EVERY returned
+active/padded output word matched independent FP32 reference. BOTH explicit
+BANK_END/CLI_EXIT0,clock800->1350->800/restored1/uncertain0. CPU-only reload
+gen17/quiesced0/cold0/active_owner0/open_count1/guard1;board clean idle.
+Expanded actual updater2531 cases PASS. No power/SD/Assistant change.
+
+Warm representative authenticated Q4,K17408,119 peers,16 rows/peer:
+prepare727190 cycles,wait_and_audit2875124,gather_dma_proof297177;
+client checked_call_s0.007472. Repeated separate case:
+727191/2875125/297099 cycles,checked_call_s0.007420.
+At logged normal1350MHz these correspond approximately0.539/2.130/0.220ms,
+sum2.889ms. Wait includes worker compute+CURRENT physical audits/polling;
+gather includes proof/output/ordered DMA and final source/counter checks.
+Preparation includes validation,input expansion,descriptor/doorbell packets.
+They are NOT pure matrix/NoC/CPU timings. Client wall time includes its
+reporting/host path;the difference is NOT independently measured CPU cost.
+These are ONE-group primitives,NOT real FFN-N5120/full-model throughput.
+Latest completed whole27B remains earlier038/f414=0.175353237tok/s,NOT20.
+
+Logs under /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+root-cycle-synthetic-native-20261021-a.log
+ SHA2567e79625b65b973648884b01f25ef1ea95cbe0f0c55ca25c448feeb9f859a6b47
+root-cycle-auth119-native-20261021-a.log
+ SHA2567f873b0dab0416af5041cdd904425416291e9e6140320f55b508c990b5b7a8cf
+Matching local /private/tmp/pioneer-q38-root-cycle-native-evidence.r2s5pnLR/.
+Serial boundaries63804637/63809326 in existing recovery screenlog.

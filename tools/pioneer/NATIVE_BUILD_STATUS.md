@@ -1,5 +1,18 @@
 # Native build status
 
+October20,19:21 Vancouver (October21,02:21 UTC) NATIVE ROOT CYCLES PASS:
+52ea41c9/tag2026102100010010/gen17 hot swap verified,NO reboot. Synthetic18
+then authenticated119-worker16 jobs ALL exact independent debug reference,
+BOTH clean explicit END/CLI_EXIT0,800->1350->800/uncertain0,guardcold0/
+active_owner0. Expanded updater2531 PASS. Native documented read-only
+cycle counter works;warm long-Q4 root phases727190/2875124/297177 cycles
+(prepare/wait+audit/gather+DMA+proof),client7.472ms;repeat727191/2875125/
+297099,7.420ms. See benchmarks/qwen38-native-root-cycles-20261021.txt for
+hashes and limits:ONE-group primitives,NOT real FFN/full-model speed or
+pure arithmetic/CPU time. Latest whole27B remains earlier0.175353237tok/s.
+Board clean idle;goal ACTIVE. Next prototype targets exact block-level Q4
+metadata residency to remove repeated format/config traffic;NO speed claim.
+
 October20,19:15 Vancouver (October21,02:15 UTC) ROOT CYCLE DIAGNOSTIC PREPARED:
 Native driver52ea41c9/tag2026102100010010 builds a/b EXACT;debug client
 e57c9ef2 builds a/b EXACT. STAGED only,NO native run/install yet. Separate
