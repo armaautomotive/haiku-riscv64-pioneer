@@ -10,10 +10,10 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkProtocol.h"
 struct llama_context{};
 struct Pool{unsigned threads;};using ggml_threadpool_t=Pool*;
-static llama_context context;static Pool large{32},small{8};
+static llama_context context;static Pool large{PioneerQ38ModelWideThreads},small{PioneerQ38ModelNarrowThreads};
 static std::vector<unsigned> events;
 static void llama_synchronize(llama_context* c){assert(c==&context);events.push_back(1);}
-static void llama_set_n_threads(llama_context* c,unsigned a,unsigned b){assert(c==&context&&a==b&&(a==8||a==32)&&events.back()==1);events.push_back(a);}
+static void llama_set_n_threads(llama_context* c,unsigned a,unsigned b){assert(c==&context&&a==b&&(a==PioneerQ38ModelNarrowThreads||a==PioneerQ38ModelWideThreads)&&events.back()==1);events.push_back(a);}
 static void llama_attach_threadpool(llama_context* c,ggml_threadpool_t a,ggml_threadpool_t b){assert(c==&context&&a==b&&a->threads==events.back());events.push_back(2);}
 #include "model_thread_switch.inc"
 struct Mode{
@@ -44,13 +44,13 @@ static int Arguments(unsigned sequences,unsigned limit,bool graph){bool repeated
  return 0;
 }
 int main(){
- assert(PioneerQ38ModelSequenceThreads(0)==32&&PioneerQ38ModelSequenceThreads(1)==8&&PioneerQ38ModelSequenceThreads(2)==32);
+ assert(PioneerQ38ModelSequenceThreads(0)==PioneerQ38ModelWideThreads&&PioneerQ38ModelSequenceThreads(1)==PioneerQ38ModelNarrowThreads&&PioneerQ38ModelSequenceThreads(2)==PioneerQ38ModelWideThreads);
  for(unsigned i=0;i<3;i++)assert(SetModelThreadSequence(&context,&large,&small,i));
- assert((events==std::vector<unsigned>{1,32,2,1,8,2,1,32,2}));
+ assert((events==std::vector<unsigned>{1,PioneerQ38ModelWideThreads,2,1,PioneerQ38ModelNarrowThreads,2,1,PioneerQ38ModelWideThreads,2}));
  for(unsigned fault=0;fault<4;fault++){events.clear();assert(!SetModelThreadSequence(fault==0?nullptr:&context,fault==1?nullptr:&large,fault==2?nullptr:&small,fault==3?3:0));assert(events.empty());}
  for(unsigned fault=0;fault<20;fault++){IO io;io.fault=fault;Mode m;assert(m.Support(io,17)==!fault);assert(io.calls==(fault&&fault<=10?1U:2U));}
  unsigned tags=0;for(unsigned bit=0;bit<64;bit++){tt_pioneer_driver_reload r={};r.version=1;r.driver=55;r.build_tag=UINT64_C(0x2026102100010012)^(UINT64_C(1)<<bit);r.guard_version=1;r.generation=53;r.open_count=1;assert(!PioneerQ38ModelThreadSweepTag(r));tags++;}
  unsigned args=0;for(unsigned n=0;n<5;n++)for(unsigned limit:{0U,1U,4U,32U,33U})for(bool graph:{false,true}){assert((Arguments(n,limit,graph)==0)==(n==3&&limit==32&&!graph));args++;}
- puts("PASS ACTUAL synchronized32/8/32 pool switch;4 invalid calls NO effects;20 extracted Work support/owner/ABI failures;64 wrong-tag bits;50 extracted fixed-public argument guards;CPU mocks ONLY NO device/thread creation");
+ printf("PASS ACTUAL synchronized%u/%u/%u pool switch;4 invalid calls NO effects;20 extracted Work support/owner/ABI failures;64 wrong-tag bits;50 extracted fixed-public argument guards;CPU mocks ONLY NO device/thread creation\n",unsigned(PioneerQ38ModelWideThreads),unsigned(PioneerQ38ModelNarrowThreads),unsigned(PioneerQ38ModelWideThreads));
  assert(tags==64&&args==50);
 }

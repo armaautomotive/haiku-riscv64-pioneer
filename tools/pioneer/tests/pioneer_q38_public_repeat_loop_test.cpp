@@ -63,7 +63,7 @@ static void llama_synchronize(FakeContext* c) {
 #ifdef PIONEER_Q38_TEST_THREAD_SWEEP
 using llama_context=FakeContext;
 struct Pool{unsigned threads;};using ggml_threadpool_t=Pool*;
-static Pool pool32{32},pool8{8};
+static Pool pool32{PioneerQ38ModelWideThreads},pool8{PioneerQ38ModelNarrowThreads};
 static void llama_set_n_threads(FakeContext* c,unsigned a,unsigned b){assert(c->synchronized&&a==b&&a==PioneerQ38ModelSequenceThreads(c->resets));c->threads=a;}
 static void llama_attach_threadpool(FakeContext* c,Pool* a,Pool* b){assert(a==b&&a->threads==c->threads&&c->synchronized&&c->position==0);c->synchronized=false;c->switches++;}
 #include "model_thread_switch.inc"
@@ -122,7 +122,7 @@ static Result Run(Fault fault)
 #undef printf
 	(void)firstSeconds; (void)warmSeconds; (void)end;
 #ifdef PIONEER_Q38_TEST_THREAD_SWEEP
-	if(fault==Fault::None)assert(fake.switches==3&&fake.threads==32);
+	if(fault==Fault::None)assert(fake.switches==3&&fake.threads==PioneerQ38ModelWideThreads);
 #endif
 	return {okay,clean,stopped,repeated.Complete(),generated,completedSequences,fake.resets,fake.decodes,state.aborts,state.ends,state.finishes,stats.projections};
 }

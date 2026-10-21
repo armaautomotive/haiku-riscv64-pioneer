@@ -14,6 +14,10 @@ for key,correct in required.items():
  for wrong in ('0','1','01','-1','invalid','cpu-validated','checked'):
   if wrong==correct or (key=='PIONEER_Q38_MODEL_THREAD_SWEEP' and wrong=='0'):continue
   cases.append({**required,key:wrong})
+cases += [{**c,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'1'} for c in list(cases)]
+for wrong in ('01','-1','invalid'):
+ cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':wrong})
+cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'1','PIONEER_Q38_MODEL_THREAD_SWEEP':'0'})
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-thread-gate-') as name:
  root=pathlib.Path(name)
  for i,flags in enumerate(cases):

@@ -52,3 +52,23 @@ Original root-profile and public timing regressions also PASS ETZARwXq/
 guards,84preSDKrefusals;original complete27/81position timing rules.
 Log/private/tmp/pioneer-q38-model-thread-root-regression-20261021-a.log
 SHA8d89658bfd6aa1333fc1e5dc9b21789b413a585d65cc614d8221684b21a186c4.
+
+Additional OFFLINE narrow schedule8/1/8 prepared14:36UTC;requires BOTH
+MODEL_THREAD_SWEEP and MODEL_THREAD_SWEEP_NARROW,original exact12/tag/
+public-three32/Work/noCPUreference rules. Same96position/497projection
+loop and safety/stop/source/owner/failure rules,NO runtime arbitrarycount.
+Both pools still created BEFORE accelerator FD;now8/1. Both remainalive
+until context synchronized/detached/freed:context attachment does NOT
+immediately replace the CPU backend's last-bound pointer. No premature
+old-pool free or context/state/weights/device mutation at switches.
+Wide32/8/32 mode retains its schedule;new frozen buildSHA8300dba0...
+after source refactor,not substituted into the ALREADY running6245 trial.
+
+Both ACTUAL extracted switch functions+both exact96position publicloops
+pass with syntheticruntime,includingall stop/failure CLOSEONLY paths;
+196 mixed-role/preSDK refusals pass YdjRrKMv. Log
+/private/tmp/pioneer-q38-model-thread-narrow-tests-20261021-a.log
+SHA765108031ffe973c284a13677b53f534fd040b49eb13f6882fced7d183107ff3.
+Two fresh narrow cross-builds IDENTICAL:
+56e9524eec6ab8bcc41961ea0e4173f6991a329f40faf7e006eb6bc3cd52a59d.
+Ordinary model flagOFF still EXACTf414306f. NOT native-run/promoted yet.

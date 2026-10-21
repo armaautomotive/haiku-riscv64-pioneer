@@ -202,7 +202,7 @@ static bool SetModelThreadSequence(llama_context* context,ggml_threadpool_t pool
 	// All previous graph work has completed before replacing either pool.
 	// Both pools were allocated BEFORE any accelerator FD opened.
 	llama_synchronize(context);llama_set_n_threads(context,threads,threads);
-	llama_attach_threadpool(context,threads==8?pool8:pool32,threads==8?pool8:pool32);
+	llama_attach_threadpool(context,threads==PioneerQ38ModelNarrowThreads?pool8:pool32,threads==PioneerQ38ModelNarrowThreads?pool8:pool32);
 	return true;
 }
 // PIONEER_MODEL_THREAD_SWITCH_END
@@ -278,6 +278,9 @@ int main(int argc,char** argv)
 	ggml_backend_register(PioneerQ38GgmlReg());
 	llama_context_params cp=llama_context_default_params(); cp.n_ctx=128; cp.n_batch=cp.n_ubatch=1;
 	cp.n_threads=cp.n_threads_batch=32; cp.offload_kqv=false; cp.op_offload=true; cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED;
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+	cp.n_threads=cp.n_threads_batch=PioneerQ38ModelWideThreads;
+#endif
 #ifdef PIONEER_Q38_MODEL_NODE_PROFILE
 	static_assert(unsigned(GGML_OP_COUNT)<=unsigned(PioneerQ38ModelNodeProfile::Operators),"fixed bounded operator histogram");
 	PioneerQ38ModelNodeProfile nodeProfile;cp.cb_eval=NodeObserver;cp.cb_eval_user_data=&nodeProfile;
@@ -289,7 +292,13 @@ int main(int argc,char** argv)
 	// Attach one caller-owned sleeping pool BEFORE any accelerator FD opens.
 	ggml_threadpool_t cpuPool=nullptr;
 	if (context) {
-		auto poolParams=ggml_threadpool_params_default(32); poolParams.poll=0;
+		auto poolParams=ggml_threadpool_params_default(
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+			PioneerQ38ModelWideThreads
+#else
+			32
+#endif
+		); poolParams.poll=0;
 		cpuPool=ggml_threadpool_new(&poolParams);
 		if (cpuPool) llama_attach_threadpool(context,cpuPool,cpuPool);
 	}
@@ -297,9 +306,13 @@ int main(int argc,char** argv)
 	bool poolReady=cpuPool!=nullptr;
 #ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
 	ggml_threadpool_t cpuPool8=nullptr;
-	if(context && cpuPool){auto params8=ggml_threadpool_params_default(8);params8.poll=0;cpuPool8=ggml_threadpool_new(&params8);}
+	if(context && cpuPool){auto params8=ggml_threadpool_params_default(PioneerQ38ModelNarrowThreads);params8.poll=0;cpuPool8=ggml_threadpool_new(&params8);}
 	poolReady=poolReady && cpuPool8;
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW
+	puts("PUBLIC27B_CPU_THREAD_SWEEP schedule8_1_8;TWO_PREALLOCATED_SLEEPING_POOLS;UNCHANGED_MATRIX_WORK;NO_NODE_SPLIT_INSTRUMENTATION;NOT_ASSISTANT_OR_GENERAL_TUNING");
+#else
 	puts("PUBLIC27B_CPU_THREAD_SWEEP schedule32_8_32;TWO_PREALLOCATED_SLEEPING_POOLS;UNCHANGED_MATRIX_WORK;NO_NODE_SPLIT_INSTRUMENTATION;NOT_ASSISTANT_OR_GENERAL_TUNING");
+#endif
 #endif
 	printf("PUBLIC27B_CPU_POOL persistent%u threads%u poll0;NON_MATRIX_CPU_WORK_ONLY"
 #ifdef PIONEER_Q38_CPU_VALIDATION
@@ -307,7 +320,13 @@ int main(int argc,char** argv)
 #else
 		"_NO_CPU_REFERENCE\n"
 #endif
-		,unsigned(poolReady),poolReady?32:0);
+		,unsigned(poolReady),poolReady?
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+		unsigned(PioneerQ38ModelWideThreads)
+#else
+		32
+#endif
+		:0);
 	unsigned recognized=PioneerQ38GgmlSnapshot().recognizedWeights;
 	printf("PUBLIC27B_GRAPH_COVERAGE recognized_learned_weights%u expected497;RESERVATION_ONLY_NOT_EXECUTION\n",recognized);
 	bool okay=context && poolReady && state.source.Ready() && recognized==497;
