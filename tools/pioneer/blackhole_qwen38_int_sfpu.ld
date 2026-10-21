@@ -6,6 +6,11 @@ SECTIONS {
 	/* OFFLINE batch-fetch helper in already-saved immutable70000..70700,
 	 * NOT a larger view. Never overlap live operands70700..70a20. */
 	.fetch 0x70000 : {
+		/* Separate OFFLINE per-block local decoder,never a larger view. */
+		*(.text.pioneer_q38_local_q4_*)
+		*(.text._Z24PioneerQ38LocalQ4RestoreI18VectorPanelEmitterEvRT_*)
+		*(.text._Z23PioneerQ38LocalQ4UnpackI18VectorPanelEmitterEbRT_j*)
+		*(.text._Z22PioneerQ38LocalQ4SetupI18VectorPanelEmitterEvRT_*)
 		*(.text.pioneer_q38_batch4_stage) *(.text.pioneer_q38_peer_phase*)
 		/* OFFLINE signed decoder: ONLY the new bool-argument specialization,
 		 * including compiler-local clone suffix. Original signature excluded. */

@@ -1,6 +1,8 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_WORK_LOCAL_Q4:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION:-0}:${PIONEER_Q38_BENCHMARK_HOST:-0}" = 1:1 ] || exit 2;;

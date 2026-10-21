@@ -7,6 +7,12 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_WORK_LOCAL_Q4
+#if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_BLOCK_AFFINE_DST) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_Q4_NIBBLE) || defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) || defined(PIONEER_Q38_WORK_SIGNED_MAG2) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_NATIVE_Q8)
+#error Local Q4 is a separate OFFLINE original-layout block-affine Work peer ONLY
+#endif
+#include "PioneerQ38LocalQ4Unpack.h"
+#endif
 #if defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) && !defined(PIONEER_Q38_WORK_Q4_NIBBLE)
 #error Direct Q4 decoding is an OFFLINE-only specialization of the isolated nibble peer
 #endif
@@ -721,6 +727,12 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 	if (type==12 && skipDotCheck) {
 		VectorPanelEmitter blockEmitter; blockEmitter.Drain(); // prior deferred store completes BEFORE format change
+#ifdef PIONEER_Q38_WORK_LOCAL_Q4
+		static_assert(0x90000+PioneerQ38PredecodedQ4::OriginalBytes<=0x91000
+			&& 0x92000+PioneerQ38PredecodedQ4::Bytes<=0x94000,"disjoint original tile/panel/local scratch/scales inside saved view");
+		if(!PioneerQ38LocalQ4::Expand(Words(0x90000),PioneerQ38LocalQ4::SourceWords,
+			Words(0x92000),PioneerQ38LocalQ4::OutputWords))block_fault_park();
+#endif
 #ifdef PIONEER_Q38_PREDECODED_Q4_STICKY
 		PioneerQ38DirectQ4Restore(blockEmitter); // once per block BEFORE FP32 metadata loads
 #endif
@@ -741,6 +753,9 @@ extern "C" unsigned block_main()
 			,Bits(scale)
 #endif
 		)) block_fault_park();
+#ifdef PIONEER_Q38_WORK_LOCAL_Q4
+		PioneerQ38LocalQ4Setup(blockEmitter);
+#endif
 #ifdef PIONEER_Q38_PREDECODED_Q4_STICKY
 		PioneerQ38DirectQ4Setup(blockEmitter); // native SrcA remains selected for ALL16 panels
 #endif
@@ -853,6 +868,11 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38BFloatPanel(emitter,type,p)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+#ifdef PIONEER_Q38_WORK_LOCAL_Q4
+		if(skipDotCheck && type==12) {
+			if(!PioneerQ38LocalQ4Unpack(emitter,p))block_fault_park();
+		} else
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8
 		if(skipDotCheck && type==8) {
 			if(!PioneerQ38DirectNativeQ8(emitter,p))block_fault_park();
@@ -987,6 +1007,11 @@ extern "C" unsigned block_main()
 		if(skipDotCheck)(void)hotProfile.Executed(p,PeerPhaseClock(hotProfile));
 #endif
 	}
+#ifdef PIONEER_Q38_WORK_LOCAL_Q4
+	if(skipDotCheck && type==12) {
+		VectorPanelEmitter end;end.Drain();PioneerQ38LocalQ4Restore(end);
+	}
+#endif
 	}
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 	// Bounded finite inputs imply |accumulator|<2^68,normal-or-zero

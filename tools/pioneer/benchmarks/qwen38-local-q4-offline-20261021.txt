@@ -1,0 +1,101 @@
+Block-local Q4 expansion prototype,October21 2026. OFFLINE ONLY.
+NO native/model/Assistant/source-layout selector or speed qualification.
+Concurrent on-board work is the SEPARATE pinned27/17 paired FFN parent,
+not this prototype. No SCP/native overlap. No kernel/CPU/RAM/boot/SD change.
+
+Motivation:avoid each panel's raw-to-Dst/SFPU/MOV path without keeping an
+expanded second model in VRAM. Original2304B quantized tiles/NoC addresses/
+bank extents/authentication stay unchanged. ONE block expands with aligned
+32-bit mask/shift/store operations to4352B saved private L1 scratch at
+92000..93100. All256metadata bytes and4096 values0..15 match the prior
+bytewise predecoded-Q4 format exactly. No learned products/requantization,
+CPU fallback/reference or persistent cross-job cache is introduced.
+
+65536 exhaustive packed-pair patterns across ALL16panels match independent
+prior bytewise prepare+inverse,source/canaries unchanged.16 bad pointer/
+alignment/size/overlap/overflow cases refuse BEFORE any access/publication.
+Current-source original tile90000..90900,panel91000,scales94000,sums95000,
+affine97000,inputa0000 all disjoint. Original STREAM saved view remains
+6e000..b0000 (42000B),including scratch;NO bound or resource range enlarged.
+
+Only Work Q4 uses local expansion AFTER the existing block's full drain.
+Metadata continues from original tile;the existing fence orders both
+metadata and scratch before consumers. Same native SM7 SrcA conversion
+as prior predecoded/sticky Q4 study,ALL unsigned0..15 exact. Native config
+installed ONCE per block after metadata,each panel keeps explicit RWC/ADC/
+source-publication and begin/end drains. After16panels,drain last deferred
+affine store,restore/read back original format BEFORE next block/group
+export. Same matrix phases/FP32 rounding/affine replay/input-sum provenance/
+NoC packets/source seals/ALL64 proofs/STOP. Checked/Q8/Q6 remain original.
+The mandatory ownership and physical-completion audits are NOT removed.
+Failed raw-Dst cache22 is not used or retried.
+
+Producer WORK_LOCAL_Q4 requires separate original-layout direct-SrcB/
+affine/rawdot/block-scale/native-store/static/replay chain and excludes
+all other format/cache/batch/profile prototypes. All native/model/client/
+root builders reject it.135 producer/registry/partial/mixed/malformed
+preSDK refusals pass;LOCAL_Q4_QUALIFICATION registry-only flag separately
+blocked in all5builders and kernel CPP#error. No native tag exists yet.
+Old26/27 native mixing gates535/631 pass after adding this producer.
+
+Builds c/d reproduce exactly,read-only SDK/no dirty llama source:
+boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+main7996B 69d8d87eb0420c988c3c9a74f04ef8591a4ec41eca442a1a45dcc17f00d0a90e
+affine5152B f0a21f6565ab2f19ccfa86b4c8546e47278eb0687d2dfc53cfcac2558f186200
+helper960B afa2183a5858b092b8fdbf87aaa352505f136158e43b3de460c29698f630508c
+Original8192/5376/1792B limits,stack6e000 unchanged. Compute frame496B vs
+original480B;helper frames16B. Initial a/b correctly failed main overlap.
+Template section attributes did not relocate GCC clones;exact new helper
+symbols now match ONLY VectorPanelEmitter specializations. Original
+IdleAll/SourceMatches also moved to ALREADY owned helper prefix under
+this flag;ALL their source/counter checks retained,not shortened.
+
+Actual-image model uses original DirectSrcB/FP32+independent FP64 oracle
+and existing strict native-SM7 source/SFPU policy,not a relaxed opcode or
+general memory-range waiver. Exactly960B new immutable helper code range;
+each scratch write independently validates THIS immutable source word,
+all1088 fresh stores before any consumer,bounded panel address and aligned
+burst/source ownership. No changed source packets/descriptors/row fixtures.
+Initial test lacked TEST_PREDECODED_Q4 for the virtual source observer,
+then lacked the existing TEST_NATIVE_Q8 sticky-SM7 SFPU contract;both failed
+as intended. Enabled those existing explicit policies,not changed the
+qualified model's whitelist. Only this prototype's observer returns true
+for Work Q4;original full-TC Q8 fixtures including-128 remain unmodified.
+
+ALL54 shapes/two changed-input jobs+STOP pass final ASan/UBSan suite.
+Same original FP32 bits/independentFP64/ALL64proofs/NoC/source/matrix/
+affine/input/tail/copy counts.4NoC loss cases remain pending/inert.7 negative
+controls cover missing metadata/first/last scratch word,missing native
+unpack,false completion,missing ADC reset and lost format restore;NONE
+publishes output/completion. Last restore failure is detected by the
+actual compiled readback,not a successful fake cleanup.
+Exactly28 fewer full drains per Q4 block. Extra scalar work may OFFSET
+that saving;these emulator counts are NOT native throughput:
+Q4 K5120/N16 job2 RV403444->479305,drains1996->1436 (20blocks).
+Q4 K17408/N48 job2 RV3267312->4040902,drains20216->14504 (204blocks).
+
+Final full log /private/tmp/pioneer-q38-local-q4-full-offline-20261021-final.log
+SHA462506ed7f5d6e34971cd337d5f6e899c4352741b68cfa4c04e4b1d826342d57
+Evidence pioneer-q38-local-q4-image.qqfQ0ElJ.
+Earlier full6negative suite also passes SHA20f00c184815c9ae043c42fa983cd160b8f2eab0ac6efec24e457022e183c2a6.
+Data log /private/tmp/pioneer-q38-local-q4-data-20261021-final.log
+SHA3bbc8278d476db9d58dd3c57a2ca54b57822b53d1b313a28d7df2b7a2cd48e57
+7negative pilot /private/tmp/pioneer-q38-local-q4-pilot-20261021-final.log
+SHA7d9b696e71b6bd782b0dfb919568842d89fe91ad6a2444520d65bd8116e5ff28
+
+Frozen OFFLINE image registry header
+97c7647a90c79730de728995e93e32a41fdca5316388165edb197ef227e3590d.
+Independent hash-pinned generator prints apply_patch ONLY.491520 words/
+120roles compare original sentinel root65c790cf/prefixd358b793 with new
+peer/helper/affine;zero gaps/live operand holes and original bounds pass.
+One complete+12 incomplete/mixed namespace refusals. Actual extracted
+kernel DMA controller preserves ALL3owners/BME/maps/clock/cold on failures.
+Registry log SHAe9fcf1d36d7934a866335ab47db54142acb7965af48e3c0eba364a9403cc8436
+Namespace SHAcc1c078884043b9baa088b81c3f4ebd5c66b696d97ca4877b2174a7f3859e0cd
+Controller SHA0a1147a3957c3d836f64562e4f4cf416444c1da298b64efd390aeaa4441f6a58.
+Matching /private/tmp/pioneer-q38-local-q4-{registry,namespace,controller}-20261021-a.log.
+
+FlagOFF reproduces original209fc6b8/08333055 peer,27driver37b36f90,
+27peer407813c7/a321ee5d/f6e992bb,guardd1ce2aa4/default43 2df0e0f8.
+No P100A native deployment or speed claim for this prototype. Best actual
+whole-model fixed sample remains.207893161tok/s;20target UNMET.

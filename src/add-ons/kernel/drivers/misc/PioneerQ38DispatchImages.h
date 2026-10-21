@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_LOCAL_Q4_QUALIFICATION
+#if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION) || defined(PIONEER_Q38_Q4_DIRECT_QUALIFICATION) || defined(PIONEER_Q38_SIGNED_MAG2_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_COMMAND_REUSE_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
+#error Local Q4 OFFLINE registry requires the separate original-layout sentinel/direct chain
+#endif
+#include "PioneerQ38LocalQ4PeerImage.h"
+#endif
 #ifdef PIONEER_Q38_Q4_DIRECT_QUALIFICATION
 #if !defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_SIGNED_MAG2_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_COMMAND_REUSE_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
 #error Direct Q4 OFFLINE registry requires the separate original-layout nibble/sentinel/direct chain
@@ -204,6 +210,10 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_LOCAL_Q4_QUALIFICATION
+ if(worker>=120)return UINT32_MAX;
+ if(worker)return PioneerQ38LocalQ4PeerPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_Q4_DIRECT_QUALIFICATION
  if(worker>=120)return UINT32_MAX;
  if(worker)return PioneerQ38Q4DirectPeerPrefixWord(address);
@@ -868,6 +878,10 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_LOCAL_Q4_QUALIFICATION
+ if(worker>=120)return UINT32_MAX;
+ if(worker)return PioneerQ38LocalQ4PeerWord(word);
+#endif
 #ifdef PIONEER_Q38_Q4_DIRECT_QUALIFICATION
  if(worker>=120)return UINT32_MAX;
  if(worker)return PioneerQ38Q4DirectPeerWord(word);

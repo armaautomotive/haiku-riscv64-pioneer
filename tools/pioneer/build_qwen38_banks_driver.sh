@@ -3,6 +3,8 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_WORK_LOCAL_Q4:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_Q4_DIRECT_QUALIFICATION:-0}" in
  0) q4_nibble_build_tag=2026102100010026;;

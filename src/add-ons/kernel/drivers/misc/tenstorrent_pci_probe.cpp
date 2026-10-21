@@ -5,6 +5,12 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_LOCAL_Q4_QUALIFICATION
+#error Local Q4 image selection is OFFLINE registry proof ONLY;NO native qualification
+#endif
+#ifdef PIONEER_Q38_WORK_LOCAL_Q4
+#error Local Q4 is OFFLINE peer ONLY;NO native driver/source/layout qualification
+#endif
 #ifdef PIONEER_Q38_Q4_DIRECT_QUALIFICATION
 #if !defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010027ULL
 #error Direct Q4 requires separate exact-tag27 retained-owner qualification ONLY

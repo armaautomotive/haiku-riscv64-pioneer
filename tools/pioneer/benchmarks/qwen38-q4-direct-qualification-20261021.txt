@@ -90,3 +90,44 @@ until it passes. Driver only inert-staging transfer started,not native use.
 Safety unchanged:ANY actual numeric mismatch/UNKNOWN=>CLOSE ONLY,NO END/
 retry/reset/further card read/hot rollback;preserve ALL owners/PCI BME/DMA/
 maps/clock/cold. Failed rawcache22 remains hard-blocked,never retried.
+
+PRE-NATIVE final gate completion23:11UTC:
+Full historical updater3521 cases PASS,CLI0. All4 staged remote/local
+hashes match;inert copies completed serially BEFORE any GPU parent.
+Rechecked original12/g12,cold0/owner0/opens1/guard1. Starting guarded
+12->16->17->27 now,NO native computation yet. Final metadata/support
+handshakes still required. Prior26driver0f7213d9/debug0044bf96/host36c6c861
+rebuild identically after these changes;normal17driver84ab80ac and model
+f414306f remain exact too. Final ten benchmark policies test40 metadata
+tags each (including foreign27/28),618 role gates/17process cases pass.
+
+NATIVE qualification COMPLETED23:19UTC:
+12/g12->16/g13->17/g14->27/g15 all guarded clean/hash/newgen verified.
+Exact27/ABI2 peers119/persistent1/inference0/accepted1 support passed BEFORE
+BEGIN. Native20synthetic Work+18authenticated119 Work+16unchanged checked
+authenticated119+18unchanged checked widths=72;ALL exact_errors0/cold0,
+explicit BANK_END state2/active0/pci_restored1/host_released1/cold0/accepted1,
+KNOWN_CLEAN_END1/CLI0;all4 parents closed0. Work ABI2,checked original ABI1.
+Return-to-Q8 after other formats passes. No failure/reset/reboot/SD/Assistant
+change. This proves these numeric primitives,NOT whole-model speed/quality.
+Archived ONLY after all4 parents closed+idle27/g15,cold0/owner0/opens1/guard1,
+with serial128Kbit/s and matching remote/local SHA in:
+/private/tmp/pioneer-q38-q4-direct-native-evidence.xyCYaOza/
+q4-direct-synthetic-20261021-a.log
+SHA0df03d4b62d474a9bbc6bc09c28a386c2b8742e93fc6be86d43337790a2f5d4c
+q4-direct-auth119-20261021-a.log
+SHAd4f5106b9d405dd0467e2b0c07c7e1b61dff719ef934a38daa903175a02976f3
+q4-direct-checked-regression-20261021-a.log
+SHA04e6e90fa7b164f14927bf4ea94c3ecbdada4437297fd7d0ffb523020398f384
+q4-direct-checked-widths-20261021-a.log
+SHA5d4b03d51e45796f0e9a5cdfd5e0cf879228cfa7946d96f7b60764a8b24f55b0
+Programmatic parse confirms all72/cold0/errors0/exact END/CLI0.
+Full updater3521 log SHAee2857a67f80f14d58bd4bb5e22ae129d14cf2fbc5ba11a89873827f30640de3.
+
+Dedicated host33785 STARTED afterward,authenticating full public model once:
+/boot/home/pioneer-q38-benchmark.5JGVQ4
+stage ownlog q4-direct-ffn-host-20261021-a.log.
+Expected27/17/27/17 fresh children. No measurement sent yet at checkpoint.
+NO SCP/other GPU job for ENTIRE parent,including auth/IDLE. Only explicit
+known-clean child completion+parentIDLE AND driveridle may permit a swap.
+No speed claim or normal-model/Assistant promotion yet.
