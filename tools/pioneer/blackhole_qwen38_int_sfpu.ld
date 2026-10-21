@@ -3,6 +3,9 @@ OUTPUT_ARCH(riscv)
 ENTRY(_start)
 SECTIONS {
 	.boot 0x6000 : { KEEP(*(.boot)) }
+	/* OFFLINE batch-fetch helper in already-saved immutable70000..70700,
+	 * NOT a larger view. Never overlap live operands70700..70a20. */
+	.fetch 0x70000 : { *(.text.pioneer_q38_batch4_stage) . = ALIGN(4); }
 	/* Already-owned immutable prefix. NEVER overlap live operands70700..70a20,
 	 * stack6e000..70000, original main text72000..74000 or descriptor74000. */
 	/* Pin ONLY the integer specialization, including the compiler's local
@@ -46,6 +49,7 @@ SECTIONS {
 	/DISCARD/ : { *(.riscv.attributes) *(.comment) *(.eh_frame*) }
 	ASSERT(SIZEOF(.boot)==4,"one fixed boot jump")
 	ASSERT(block_entry==0x72000,"fixed entry")
+	ASSERT(SIZEOF(.fetch)<=0x700,"batch fetch helper overlaps existing operand window")
 	ASSERT(SIZEOF(.affine)>0 && SIZEOF(.affine)<=0x1500,"affine helpers must fit already-owned70b00..72000")
 	ASSERT(SIZEOF(.text)<=0x2000,"main image overlaps descriptor")
 	ASSERT(SIZEOF(.forbidden)==0,"no writable globals/GOT")

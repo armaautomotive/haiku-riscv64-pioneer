@@ -5,6 +5,9 @@
 // No physical route,address or sequence here is a new userspace capability.
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
+#if defined(PIONEER_Q38_WORK_BATCH4_FETCH) && (!defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT))
+#error Batch4 is a separate OFFLINE exact-counter Work coordinator experiment
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
 #ifdef PIONEER_Q38_WORK_SENTINEL_POLL
@@ -496,13 +499,22 @@ extern "C" unsigned block_main()
 	for (unsigned i=0;i<119*256;i++) Words(0x80000)[i]=0;
 #endif
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
+		if(work)weightReads>>=2; // ALL supported per-group block counts divisible4
+		unsigned reads=weightReads+(inputs*2+16383)/16384+1;
+#else
 		const uint32_t* p=parts[w]; unsigned groups=p[2],reads=groups*blocks+(inputs*2+16383)/16384+1;
+#endif
 		unsigned flits=groups*blocks*Tile(type)/64+(inputs*2+((blocks*4+63)&~63U))/64;
 		Transfer(false,w+1,0x75000,0x83f00,256+groups*64);
 		const volatile uint32_t* proof=Words(0x75000);
 		for (unsigned c=0;c<8;c++) if (uint32_t(proof[c+8]-proof[c])!=(c==1?flits:(c==0 || c==2 || c==3 || c==6)?reads:0)) block_fault_park();
 		volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;
 		command[0]=p[0]+(groups*blocks-1)*Tile(type); command[2]=p[4]; command[3]=0x90000; command[5]=XY(w+1); command[8]=Tile(type);
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+		if(work){command[0]-=3*Tile(type);command[3]=0x98000;command[8]*=4;}
+#endif
 		if (proof[16]!=groups*inputs/16 || proof[17]!=p[3] || proof[18]!=w+1 || proof[19]!=0x32503851
 			|| proof[30]!=p[5] || proof[31]!=XY(w+1)) block_fault_park();
 		for (unsigned i=0;i<10;i++) if (proof[20+i]!=command[i]) block_fault_park();

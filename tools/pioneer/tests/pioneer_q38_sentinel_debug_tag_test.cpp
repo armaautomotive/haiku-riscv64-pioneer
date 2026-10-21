@@ -6,7 +6,13 @@
 #include "../PioneerQ38SentinelDebugTag.h"
 int main() {
 	tt_pioneer_driver_reload good={};good.version=1;good.driver=55;good.guard_version=1;
-	good.build_tag=UINT64_C(0x2026102100010017);good.generation=31;good.open_count=1;
+	good.build_tag=
+#ifdef PIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT
+	UINT64_C(0x2026102100010018);
+#else
+	UINT64_C(0x2026102100010017);
+#endif
+	good.generation=31;good.open_count=1;
 	assert(PioneerQ38SentinelDebugTag(good));unsigned cases=0;
 	for(unsigned bit=0;bit<64;bit++){auto r=good;r.build_tag^=UINT64_C(1)<<bit;assert(!PioneerQ38SentinelDebugTag(r));cases++;}
 	for(unsigned field=0;field<7;field++)for(unsigned value:{0U,1U,2U,UINT32_MAX}) {

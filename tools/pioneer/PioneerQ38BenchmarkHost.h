@@ -9,8 +9,12 @@
 static inline bool PioneerQ38BenchmarkHostTag(const tt_pioneer_driver_reload& r) {
  return r.version==1 && r.driver==55 && r.guard_version==1 && r.generation
   && !r.quiesced && !r.cold && !r.active_owner && r.open_count==1
+#ifdef PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
+  && r.build_tag==UINT64_C(0x2026102100010018);
+#else
   && (r.build_tag==UINT64_C(0x2026102100010012) || r.build_tag==UINT64_C(0x2026102100010016)
    || r.build_tag==UINT64_C(0x2026102100010017));
+#endif
 }
 // Process-control metadata ONLY;not file/device access or completion proof.
 // Caller independently authenticates the SAME open file before any fork,

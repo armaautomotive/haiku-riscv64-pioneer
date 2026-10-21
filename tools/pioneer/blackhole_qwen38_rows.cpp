@@ -7,6 +7,12 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+#if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_Q4_GROUP32)
+#error Batch4 is a separate OFFLINE original-layout Work peer experiment
+#endif
+#include "PioneerQ38Batch4Fetch.h"
+#endif
 #if defined(PIONEER_Q38_WORK_DIRECT_SRCB) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_INLINE_CONFIG) || !defined(PIONEER_Q38_WORK_ZERO_MINIMUM) || !defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || !defined(PIONEER_Q38_SHARED_ROWS) || defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_Q4_GROUP32) || defined(PIONEER_Q38_PREPARED_Q4_BLOCK) || defined(PIONEER_Q38_PREPARED_Q4_AFFINE))
 #error Separate offline direct-SrcB requires original-TC fixed integer Work/shared-input/cache roles
 #endif
@@ -341,6 +347,20 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 	FetchBlock(0x94000);
 #endif
 }
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+// Cold prefix,original saved window. No asynchronous fetch/counter reset.
+// A failed command parks INSIDE FetchBlock;never copy/issue after UNKNOWN.
+static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage"))) void Batch4Stage(
+ unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route) {
+ PioneerQ38Batch4FetchPlan p;
+ if(!PioneerQ38Batch4Fetch(type,inputs,groups,group,block,first,p))block_fault_park();
+ if(p.issue){ReadCommand(p.source,route,p.destination,p.bytes);FetchBlock(p.source);}
+ // Consume one original tile in original order. Scratch bytes are from
+ // this SAME known-complete batch;no CPU/host conversion or new format.
+ for(unsigned w=0;w<p.copyWords;w++)Words(0x90000)[w]=Words(p.copySource)[w];
+ (void)Words(0x90000)[p.copyWords-1];Fence();
+}
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
@@ -535,6 +555,9 @@ extern "C" unsigned block_main()
 	for (unsigned group=0;group<groups;group++) {
 	for (unsigned block=0;block<blocks;block++) {
 #ifdef PIONEER_Q38_STREAM
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+	if(skipDotCheck)Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
+#endif
 	FetchBlock(first+(group*blocks+block)*bytes);
 	float scale=Float(Words(0x94000)[block]);
 #else

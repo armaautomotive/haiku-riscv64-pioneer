@@ -1,0 +1,60 @@
+Batch4 original-layout peer fetch,October21 2026. OFFLINE ONLY.
+NO private controller/source/native/model/Assistant qualification.
+Native/inference builders explicitly REFUSE flag;do NOT install. Separate
+OFFLINE coordinator builder requires the complete sentinel/root chain.
+Goal:coalesce FOUR adjacent original tiles into existing private98000..
+9b500 scratch,then copy one original tile to90000 and compute in EXACT
+original order. NO asynchronous overlap,new format,CPU learned product,
+precision change or skipped drain/proof. Original inputs/metadata/results/
+stack/NoC/reset/source/owner windows unchanged. All supported block counts
+divisible4. Each4-tile read<=13568B and fully within SAME authorized slice.
+Peer checks quarter weight-request count,SAME flits. Old coordinator
+expects old request shape and is NOT compatible/qualified with this peer.
+
+458400 metadata/source/scratch/overflow/atomic-refusal cases passXVFYWaBD
+(latest same suiteL7GTuEnQ). 27 pre-SDK peer-only/root/driver/model/Assistant
+role refusals pass. Same initialized extent bytes consumed ONCE/in order,
+75%fewer MODELED weight requests,NOT a measured speedup or tokens/sec.
+RISC copy/decoder work may offset any request benefit;native measurement
+requires complete new root/controller/source proof qualification first.
+
+Peer twice identicali/j:main8192/8192B,
+texte45cf8eb66316126f4db5650cc6057c408b9fc074f522e73c5918a53358299b8
+affine5152/5376B SHA8f518409de7c1f872cac64277fb800fe09f7c0964687784718ce3d9b73e38107
+fetchhelper384B in ORIGINAL immutable70000..70700,NOT enlarged view,
+SHA6cbe9a3026146d7bc338160cf590db0671831e94bf0f7d89003a74c6d4b95f79
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+FlagOFF reconstructs original209fc6b8/08333055 EXACT after linker change.
+Helper uses bounded32-bit arithmetic/shifts;NO RV32 divide/runtime helper.
+
+ACTUAL compiled full peer/NoC/SFPU/RV32:54type/K/group/mode shapes,two
+changed-input jobs each,then original STOP. Output bit-exact to old peer
+AND independent FP64 observer. Every staged scratch word fresh/bounded,
+each tile copied exactly once/in order,canaries preserved,SAME matrix/
+SFPU operations/drains/sum cache/rounding. Checked reads unchanged.
+First/input/middle/LAST55th NoC-failure cases park with pending ownership
+and NO later request/copy/retry. Full evidenceU4Bd9dTb,
+log/private/tmp/pioneer-q38-batch4-image-full-20261021-a.log
+SHAc097e48b93ad15ffb37a08db3075566c59984af31eacd7feed7622ab75682c78.
+This independent fake fabric changes ONLY read packet grouping and models
+bytes completing AFTER bounded doorbell delay;NOT physical proof/timing.
+Best whole27B remains041 .181432516tok/s;20tok/s target UNMET.
+
+Further OFFLINE coordinator qualification10:00 UTC:root twice identicalb/c
+main7908/8192B SHA0da9ccd181faf2f0dff50f35c22019912b4812246611171c4fd5f8192670e33c
+prefix3856/8192B SHA11df5f9bcc2b34fe0a4d7144c91272d88a15811bda2fa1833cd7323ab35a13fa.
+Work proves EXACT quarter peer weight-request count,unchanged total
+flits,final source address(first+(groups*blocks-4)*tile),destination98000
+and4*tile byte length. ALL source/nonce/physical PC/reset/output/terminal/
+NoC/DMA checks remain. Checked/STOP original wire unchanged. FlagOFF
+rebuilds65c790cf/d358b793 EXACT;no native image/driver selector added.
+108shape/worker/Work/checked/STOP cases pass,ALL57 safety fields/root
+packets/DMA output equivalent. BOTH mismatched old/new proof pairs refuse
+across9shapes(18crossed cases). ALL64 peer-proof corruptions,physical PC,
+NoC faults,FIRST/MIDDLE/LAST DMA failures refuse/inert;real coalesced
+Q8/Q4/Q6 peer arithmetic exact under the NEW coordinator. Fixture uses
+each worker's bound bank route,not the standalone fixture's47constant.
+Evidence skVoEH6Q,log/private/tmp/pioneer-q38-batch4-root-full-20261021-b.log
+SHA9d0f8a4ab792fe243d091898ea6ce366d140806b9653d10d117432fea7ab1357.
+Controller/initialized-extent/private image/selector/native qualification
+still REQUIRED. No silicon/tokens/sec claim from these tests.

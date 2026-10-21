@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_DIRECT_SRCB)
+#if defined(PIONEER_Q38_TEST_BATCH4_FETCH)
+#define PIONEER_Q38_BATCH4_IMAGE_MODEL_ONLY
+#include "pioneer_q38_batch4_image_test.cpp"
+using CooperativePeer=Batch4Image;
+#elif defined(PIONEER_Q38_TEST_DIRECT_SRCB)
 #define PIONEER_Q38_DIRECT_SRCB_IMAGE_MODEL_ONLY
 #include "pioneer_q38_direct_srcb_image_test.cpp"
 using CooperativePeer=DirectSrcBImage;
@@ -69,10 +73,16 @@ struct CooperativeDispatch:DispatchMachine {
 	void Bind() {
 		for (unsigned w=0;w<active;w++) {
 			auto& p=*actual[w]; p.base=memory.at(0x74080+w*32);
+#ifdef PIONEER_Q38_TEST_BATCH4_FETCH
+			p.packets=p.originalPackets;
+#endif
 			for (unsigned i=p.inputReads;i<p.packets.size();i++) {
 				p.packets[i].address=p.base+(i-p.inputReads)*unsigned(p.tile.size());
 				p.packets[i].route=memory.at(0x74080+w*32+16);
 			}
+#ifdef PIONEER_Q38_TEST_BATCH4_FETCH
+			p.originalPackets=p.packets;
+#endif
 			for (auto& v:p.root) v.second=memory.at(v.first);
 #ifdef PIONEER_Q38_TEST_DIRECT_SRCB
 			p.PoisonTail();
@@ -111,6 +121,9 @@ struct CooperativeDispatch:DispatchMachine {
 			assert(bytes==64 && !doorbells && p.pc==0x7204c); descriptors++;
 			for (unsigned i=0;i<16;i++) state.descriptor[i]=p.memory[remote+i*4]=memory.at(local+i*4);
 			assert(state.descriptor[11]==worker && state.descriptor[12]==state.finished+1 && state.descriptor[13]==1);
+#ifdef PIONEER_Q38_TEST_BATCH4_FETCH
+			p.Prepare(state.descriptor[14]!=0);
+#endif
 		} else if (write) {
 			assert(remote==0x74100 && bytes==4 && descriptors==active && readbacks==DescriptorEchoes() && !state.launched);
 			assert(memory.at(local)==state.descriptor[12]); p.memory[remote]=memory.at(local);

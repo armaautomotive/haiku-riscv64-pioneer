@@ -8,7 +8,13 @@
 #include "../PioneerQ38BenchmarkHost.h"
 int main() {
  unsigned tags=0;
- for(uint64_t tag: {UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010016),UINT64_C(0x2026102100010017)}) {
+ for(uint64_t tag: {
+#ifdef PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
+ UINT64_C(0x2026102100010018)
+#else
+ UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010016),UINT64_C(0x2026102100010017)
+#endif
+ }) {
   tt_pioneer_driver_reload good={};good.version=1;good.driver=55;good.guard_version=1;
   good.generation=33;good.open_count=1;good.build_tag=tag;
   assert(PioneerQ38BenchmarkHostTag(good));tags++;
@@ -21,6 +27,19 @@ int main() {
    }
    assert(!PioneerQ38BenchmarkHostTag(r));tags++;
   }
+ }
+ for(uint64_t tag:{UINT64_C(0x2026102100010014),UINT64_C(0x2026102100010015),UINT64_C(0x2026102100010019)}) {
+  tt_pioneer_driver_reload r={};r.version=1;r.driver=55;r.guard_version=1;r.generation=33;r.open_count=1;r.build_tag=tag;
+  assert(!PioneerQ38BenchmarkHostTag(r));tags++;
+ }
+ for(uint64_t tag:{UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010016),UINT64_C(0x2026102100010017),UINT64_C(0x2026102100010018)}) {
+  tt_pioneer_driver_reload r={};r.version=1;r.driver=55;r.guard_version=1;r.generation=33;r.open_count=1;r.build_tag=tag;
+#ifdef PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
+  assert(PioneerQ38BenchmarkHostTag(r)==(tag==UINT64_C(0x2026102100010018)));
+#else
+  assert(PioneerQ38BenchmarkHostTag(r)==(tag!=UINT64_C(0x2026102100010018)));
+#endif
+  tags++;
  }
  using P=PioneerQ38BenchmarkHostPolicy;
  assert(P::Command("measure\n")==1 && P::Command("quit\n")==2 && !P::Command(nullptr));

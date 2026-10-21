@@ -16,6 +16,12 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#ifdef PIONEER_Q38_HOST_PHASE_PROFILE
+#if !defined(TT_PIONEER_Q38_DISPATCH_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010018ULL
+#error Host phase diagnostic requires its separate exact-tag18 sentinel/root/normal-clock qualification
+#endif
+#include "PioneerQ38HostPhaseProfile.h"
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 #include "PioneerQ38StateZeroController.h"
 #include "PioneerQ38NonRootHeld.h"
@@ -1589,6 +1595,10 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_Q38_HOST_PHASE_PROFILE
+	PioneerQ38HostPhaseProfile q38HostPhaseProfile;
+	bool q38HostPhaseReportAllowed=false; // set ONLY by validated explicit BANK_END
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	PioneerStoreContext* q38MutableContext=NULL;
 	bool StateZeroBeforeCohort();
@@ -1718,14 +1728,36 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	uint32* Q38PanelSavedWords() { return runtimeCore<120?(runtimeCore?q38CohortSaved[runtimeCore]:q38PanelSaved):NULL; }
 	uint64 Q38CohortNow() { return uint64(system_time()); }
 #ifdef TT_PIONEER_Q38_DISPATCH_PROFILE
+	// PIONEER_Q38_HOST_PHASE_ADD_BEGIN
 	void Q38DispatchProfile(unsigned type,unsigned inputs,unsigned peers,bool valid,const uint64_t* t) {
+#ifdef PIONEER_Q38_HOST_PHASE_PROFILE
+		q38HostPhaseProfile.Add(type,inputs,peers,valid,t); // CPU memory ONLY,NO per-projection log/card IO
+#else
 		// The caller has already completed ALL proofs/hold/nonce commit.
 		// One diagnostic line,no card reads or additional operations.
 		dprintf("P100A_Q38_PROFILE type%u K%u peers%u valid%u us authority%llu stage%llu arm%llu execute%llu proof%llu output%llu hold%llu commit%llu;CPU_WALL_NOT_PURE_GPU\n",
 			type,inputs,peers,unsigned(valid),(unsigned long long)t[0],(unsigned long long)t[1],
 			(unsigned long long)t[2],(unsigned long long)t[3],(unsigned long long)t[4],
 			(unsigned long long)t[5],(unsigned long long)t[6],(unsigned long long)t[7]);
+#endif
 	}
+	// PIONEER_Q38_HOST_PHASE_ADD_END
+#ifdef PIONEER_Q38_HOST_PHASE_PROFILE
+	// PIONEER_Q38_HOST_PHASE_REPORT_BEGIN
+	void Q38HostPhaseReport() {
+		for(unsigned type=0;type<3;type++)for(unsigned k=0;k<3;k++) {
+			const auto& b=q38HostPhaseProfile.At(type,k);if(!b.count && b.valid)continue;
+			const auto* t=b.warm;
+			dprintf("P100A_Q38_HOST_PHASE type%u K%u peers119 valid%u total%llu warm%llu us authority%llu stage%llu arm%llu execute%llu proof%llu output%llu hold%llu commit%llu;CPU_WALL_SUMS_FIRST_OF_EACH_SHAPE_EXCLUDED_NOT_PURE_GPU_OR_TOKEN_RATE_NO_PER_PROJECTION_LOG\n",
+				type==0?8:type==1?12:14,k==0?5120:k==1?6144:17408,unsigned(b.valid),
+				(unsigned long long)b.count,(unsigned long long)(b.count?b.count-1:0),
+				(unsigned long long)t[0],(unsigned long long)t[1],(unsigned long long)t[2],(unsigned long long)t[3],
+				(unsigned long long)t[4],(unsigned long long)t[5],(unsigned long long)t[6],(unsigned long long)t[7]);
+		}
+		dprintf("P100A_Q38_HOST_PHASE_END ignored%llu;CPU_METADATA_ONLY_AFTER_EXPLICIT_CLEAN_END\n",(unsigned long long)q38HostPhaseProfile.Ignored());
+	}
+	// PIONEER_Q38_HOST_PHASE_REPORT_END
+#endif
 #endif
 #else
 	bool Q38PanelMappingStable() { return !runtimeCore && q38PanelArea>=B_OK && q38PanelView && q38PanelSaved; }
@@ -3122,6 +3154,11 @@ q38_dispatch_owned_restored:
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	if (context->bankStorageOnly && (!clean || !result.host_released)) { RetainQ38DispatchOwner(*context,result); return; }
 #endif
+#ifdef PIONEER_Q38_HOST_PHASE_PROFILE
+	// PIONEER_Q38_HOST_PHASE_PUBLICATION_BEGIN
+	if (context->io.q38HostPhaseReportAllowed && context->bankStorageOnly && clean && result.host_released && !result.cold) context->io.Q38HostPhaseReport();
+	// PIONEER_Q38_HOST_PHASE_PUBLICATION_END
+#endif
 	sPCI->unreserve_device(sCard.bus,sCard.device,sCard.function,TT_PCI_PROBE_DEVICE,&sCookie);
 	cookie->context=NULL; sRuntimeOwner=NULL;
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
@@ -3399,6 +3436,9 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 		} else if (!cookie->context || sRuntimeOwner!=cookie || !cookie->context->bankStorageOnly) {
 			status=B_NOT_ALLOWED;
 		} else if (operation==TT_PCI_PROBE_Q38_BANK_END) {
+#ifdef PIONEER_Q38_HOST_PHASE_PROFILE
+			cookie->context->io.q38HostPhaseReportAllowed=true; // CPU diagnostic permission ONLY,not cleanup authority
+#endif
 			EndResidentSession(cookie,request.result,true);
 		} else if (operation==TT_PCI_PROBE_Q38_BANK_STATUS) {
 			cookie->context->Snapshot(request.result);

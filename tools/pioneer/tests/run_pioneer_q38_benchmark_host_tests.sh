@@ -2,14 +2,17 @@
 set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-benchmark-host-tests.XXXXXXXX")
+for variant in normal profile;do
+extra=;[ "$variant" = normal ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
- "$directory/pioneer_q38_benchmark_host_test.cpp" -o "$temporary/policy"
+ $extra "$directory/pioneer_q38_benchmark_host_test.cpp" -o "$temporary/policy"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/policy"
 awk '/PIONEER_NATIVE_Q8_WORK_SUPPORT_BEGIN/ {copying=1;next} /PIONEER_NATIVE_Q8_WORK_SUPPORT_END/ {found=1;exit}
  copying {print} END {if(!found)exit 1}' "$directory/../PioneerQ38WorkSession.h" > "$temporary/benchmark_host_work_support.inc"
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
- -I"$temporary" "$directory/pioneer_q38_benchmark_host_work_support_test.cpp" -o "$temporary/support"
+ $extra -I"$temporary" "$directory/pioneer_q38_benchmark_host_work_support_test.cpp" -o "$temporary/support"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/support"
+done
 python3 "$directory/pioneer_q38_benchmark_host_build_gate_test.py"
 awk '/PIONEER_Q38_BENCHMARK_FORK_BARRIER_BEGIN/ {copying=1;next} /PIONEER_Q38_BENCHMARK_FORK_BARRIER_END/ {found=1;exit}
  copying {print} END {if(!found)exit 1}' "$directory/../PioneerQ38PublicModelSource.h" > "$temporary/benchmark_fork_barrier.inc"

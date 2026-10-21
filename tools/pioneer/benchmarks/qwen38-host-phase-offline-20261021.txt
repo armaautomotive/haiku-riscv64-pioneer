@@ -1,0 +1,86 @@
+CPU in-memory phase diagnostic,October21 2026. OFFLINE ONLY at checkpoint;
+NOT installed/native-run or a performance improvement. Existing candidate17
+whole27B THREE32 is running unchanged;NO transfer or job overlap.
+
+Separate tag18 driveracf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
+reproduced twice. SAME frozen sentinel root65c790cf/d358b793 and
+direct-SrcB peer209fc6b8/08333055;source layout/original-TC ABI2 unchanged.
+Normal driver84ab80ac,guardd1ce2aa4 and default432df0e0f8 rebuild EXACT.
+Separate HOST_PHASE_PROFILE requires full sentinel/root/normal-clock/
+retained-owner chain and exacttag18;old per-job-logging flag remainsOFF.
+
+Existing8 CPU-clock phase boundaries are unchanged. Data accumulate in
+private CPU memory,9 fixed type/K buckets for119workers. First measurement
+per bucket excluded from warm sums;ignored shapes counted separately.
+No per-job serial logging,extra device read,completion/cleanup decision,
+public protocol field,source-format or CPU learned-reference change.
+Invalid clocks/null data/overflow make metrics sticky-invalid ONLY.
+Report CPU sums ONLY at explicit clean bankEND AFTER host release,cold0;
+never on retained/failed/lost ownership or ordinary cookie CLOSE.
+No pure-GPU/token-rate claim from this instrumented executable.
+
+50 aggregate/ACTUAL extracted Add/report/publication cases pass,including
+1000warm64-bit samples in EACH9shapes,all8 atomic overflow positions,
+sticky invalid data and32 exact explicit-END publication guards. Evidence9vL6dbQb.
+36 driver/40 diagnostic-client pre-SDK wrong-role/tag/format refusals;
+186 actual exacttag17/18/version/guard/generation/owner/open checks pass.
+8-mark CPU timer disabled/enabled/backward/incomplete/extra regression
+passes,lNjKSZDp. Actual kernel DMA/controller+Work tests with profiling
+enabled pass77I9BX1Y:ALL mapping/BME/first-middle-last/delayed failures
+retain owners/clock/cold,NO disable/reset/retry;checked isolation retained.
+
+Exacttag18 CPU-reference diagnosticda3bc7da44359026bd0d85731e1a7ca5362bf7be0446bb94ca77742fb498f402
+twice identical,BEFORE BEGIN. Defaulttag17 diagnostic rebuild7fa411b7 EXACT.
+Exacttag18 benchmark-host6e6426661a685b558676ac474b1c996c7bb58d792acc50dfca8e2730c1d0cce7
+twice identical;normal hostf8830365 EXACT. Same full authenticated read-only
+file/fresh child/clean END policy.112 role/format/CPU/Assistant/SM7/profile
+refusals before SDK,58 tag cases,actual Work-support checks and17 actual
+fork/wait/control/barrier CPU-mock cases passN3BVLCTL. NO authentication
+bypass or inference/Assistant option;no native host run yet.
+
+Guarded updater pins complete hashes and ONLY known-clean84ab/tag17 <->
+acf3/tag18.60 actual
+filesystem/handshake/hash/symlink/owner/failure cases pass for these routes;
+NO auto rollback,forced reset or live owner transition. Full3011-case
+actual updater suite passes,log/private/tmp/pioneer-hot-swap-host-phase-full-20261021-a.log.
+That suite used prior unusedae4e tag18 hash,then the ONLY candidate hash
+was replaced byacf3 after explicit-END-only permission was added. Scoped
+60-case routes rerun after this change. Prior ae4e was NEVER installed.
+Best full27B remains041 .181432516tok/s;20tok/s target UNMET.
+
+Native update09:56 UTC:guarded applyacf3/tag18/gen34 from clean84ab/tag17/
+gen33 passed without reboot. Updater6f7b921b20ee69d08a64b4304aeada088fe3a2036f38020159db44995e638284.
+20synthetic+18authenticated119-worker+18unchanged checked jobs ALL pass,
+zero numerical mismatches,cleanEND/CLI_EXIT0 each;normal clock restored1,
+uncertain0. Independent CPU references ONLY in diagnostic,NOT Work mode.
+Own remote stage logs andSHA:
+host-phase-synthetic-20261021-a.log
+18488e6491343a86d29a0ad93587234ffab601f0d7119c57a526f0f134c4887f
+host-phase-auth119-20261021-a.log
+2eb1d55093fe248075a5e2b6a8767bb1f804b61e40d691c4ff2166015d6f1bba
+host-phase-checked-regression-20261021-a.log
+d9ae72f71e53f67c2f4429ef7c7486eed8aa7cd53db07acd537d5bfdd8f9f12e.
+Synthetic2-worker metrics ignored20 as designed. Authenticated buckets
+report ONLY after explicit clean END. Example Q4K17408/119workers:total4/
+warm3;raw CPU-us sums authority629/stage1837/arm3154/execute9024/proof2011/
+output767/hold744/commit859. These are SMALL16row/worker fixture jobs,
+NOT the real FFN graph or model/token speed. No causal bottleneck claim
+from these alone. New long-running host started09:56 UTC;full fixed-file
+SHA authentication ongoing at checkpoint,NO parent accelerator descriptor.
+
+Native host/FFN update10:04 UTC:full SHA passed,parent IDLE withNO GPUFD,
+fresh childround1 completed clean END/result0;parent accepts known-clean
+exit/unchanged source and returns IDLE. CPU reload confirmsowner0/cold0/
+open1/tag18/gen34. Public FFN output20,480B matches05cda52a EXACT.
+Directory/boot/home/pioneer-q38-benchmark.oQFnbH/,round0001.log
+SHA217d967ee74bc790d8d3ca544c029acb692110d84214098de7184fc8bf6d38ba.
+Real FFN119workers:33calls/projections,12240pages50135040B,no repeat upload,
+32valid warm graphs mean.010567156s,median.010564000,min.010519/max.010664.
+Graph warmwall.338430s,matrix.337085/ioctl.310568s;NOT pureGPU/token rate.
+After explicit clean END,the32warm CPU-us phase sums are:
+authority5664,stage12974,arm33816,execute169224,proof21526,output20211,
+hold7940,commit9142. Execute mean5288.25us;these boundaries do NOT include
+all ioctl entry/copy costs or isolate arithmetic from root NoC/monitoring.
+No per-projection serial logging. Instrumented timing is NOT substituted
+for uninstrumented production speed. Round2 fresh child started fromSAME
+authenticated parent WITHOUT another full-model SHA;pending at checkpoint.

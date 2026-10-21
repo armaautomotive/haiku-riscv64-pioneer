@@ -2,6 +2,11 @@
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
 [ "$#" = 2 ] || exit 2
+case "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" = 1:1:1 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_BLOCK_SCALE_REUSE:-0}:${PIONEER_Q38_BLOCK_AFFINE_DST:-0}:${PIONEER_Q38_INLINE_CONFIG:-0}:${PIONEER_Q38_WORK_DEFER_AFFINE:-0}:${PIONEER_Q38_WORK_ZERO_MINIMUM:-0}:${PIONEER_Q38_WORK_INPUT_SUM_CACHE:-0}:${PIONEER_Q38_WORK_SKIP_DOT_CHECK:-0}:${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}:${PIONEER_Q38_NATIVE_Q8:-0}:${PIONEER_Q38_PREDECODED_Q4:-0}:${PIONEER_Q38_Q4_GROUP32:-0}:${PIONEER_Q38_PREPARED_Q4_BLOCK:-0}:${PIONEER_Q38_PREPARED_Q4_AFFINE:-0}" = 1:1:1:1:1:1:1:9:0:0:0:0:0 ] || exit 2;;
@@ -131,6 +136,7 @@ case "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" in
  0) ;;
  1) q4_phases="$q4_phases -DPIONEER_Q38_WORK_DIRECT_SRCB";;
 esac
+if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_BATCH4_FETCH"; fi
 case "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" in
  0) ;;
  1) q4_phases="$q4_phases -DPIONEER_Q38_WORK_DOT_ZERO_ELISION";;
@@ -187,6 +193,7 @@ umask 077; mkdir -m 700 "$output"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax $fault_as "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 linker=blackhole_qwen38_block.ld; sections='boot text'
 if [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 9 ]; then linker=blackhole_qwen38_int_sfpu.ld; sections='boot text affine'; fi
+if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ]; then sections="$sections fetch"; fi
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/$linker" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"
 for section in $sections; do "$cross-objcopy" -O binary -j ".$section" "$output/program.elf" "$output/$section.bin"; done

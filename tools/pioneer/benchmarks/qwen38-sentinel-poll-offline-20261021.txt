@@ -84,3 +84,18 @@ No code/transfer/job overlap. Assistant remains closed;boot/SD/power intact.
 Unchangedf414 full27B THREE32 started09:17 UTC,ONGOING;NOT PROMOTED.
 Remote/boot/home/pioneer-qwen38-vector-clear-20261018-t/
 full-model-work-sentinel-three32-20261021-a.log.
+
+Completion09:45 UTC:cleanEND/CLI_EXIT0,clock800->1350->800/restored1/
+uncertain0,driveridlecold0/owner0/open1/guard1. ALL96 token IDs repeat
+identically and match041 control96 exactly.81warm positions/450.354930s=
+.179858140tok/s,0.867748%LOWER throughput than041 .181432516tok/s.
+ONE session each,not robust thermal/statistical evidence. No causal claim.
+NOT PROMOTED. Mean81 warm matrix callback4.474567765s/ioctl4.196787840s/
+otherGGML1.085369642s.497learned projections per position,47712 total/
+48480calls/119workers,4558653pages18672242688B retained. Prime725.109640s,
+repack148.500732/upload575.956415 outside warm token timing;1286.668586s
+cold smoke is NOT steady throughput,text-quality or Assistant qualification.
+LogSHAf437ae546d0191b1b11839c657049359a467a8b11a055ab2b4bb722baa1e1d13
+archived/private/tmp/pioneer-q38-sentinel-native-evidence.gHcc65su/.
+Serialstart64252869/end64265980. No reset/reboot/SD/power changes.
+Continuing separate CPU phase diagnostic and OFFLINE batch4 peer work.

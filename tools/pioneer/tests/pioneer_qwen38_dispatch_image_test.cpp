@@ -88,7 +88,7 @@ struct DispatchMachine:BlockMachine {
 	unsigned Worker(uint32_t route) const { for (unsigned w=1;w<=119;w++) if (Route(w)==route) return w; assert(false); return 0; }
 	bool AllFinished() const { for (unsigned w=0;w<active;w++) if (!peers[w].launched || peers[w].requested!=peers[w].finished) return false; return true; }
 	virtual uint32_t ExpectedOutput(unsigned w,unsigned row) const { return Bits(float(w*256+row+1)); }
-	std::array<uint32_t,64> Proof(unsigned worker) const {
+	virtual std::array<uint32_t,64> Proof(unsigned worker) const {
 		const auto& peer=peers[worker-1]; const auto& d=peer.descriptor;
 		unsigned blocks=d[5]>>(d[1]==8?5:8),reads=d[7]*blocks+(d[5]*2+16383)/16384+1;
 		unsigned flits=d[7]*blocks*d[2]/64+(d[5]*2+((blocks*4+63)&~63U))/64;

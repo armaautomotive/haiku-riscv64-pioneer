@@ -35,3 +35,11 @@ These mocks do NOT authenticate the real19GB file or qualify native GPU.
 EvidenceAs7IB8vw. Existing FFN/Q8 actual repeat-loop failure/stop/mismatch/
 clock tests,ordinary cohort session and SM7/profile support regressions pass.
 Best full27B remains041 .181432516tok/s;20tok/s target UNMET.
+
+Native follow-up10:04 UTC:separately gated exacttag18 host6e642666 (see
+qwen38-host-phase-offline-20261021.txt) fully authenticated fixed source,
+ran fresh childround1 through33graphs/clean END/result0,then returnedIDLE
+withNO parent accelerator descriptor and unchanged source. Output05cda52a
+EXACT. Startedround2 WITHOUT rehash from SAME already-authenticatedFILE.
+Normal hostf8830365 remains unchanged;this is benchmark infrastructure,
+NOT an inference-speed/Assistant change or authentication bypass.

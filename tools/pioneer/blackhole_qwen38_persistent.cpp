@@ -103,7 +103,13 @@ extern "C" void q38_persistent_main()
 		Words(0x74140)[0]=sequence; Words(0x74140)[4]=1; Fence();
 		unsigned panels=q38_compute_once();
 		unsigned blocks=snapshot[5]>>(snapshot[1]==8?5:8),count=snapshot[7]*snapshot[5]/16;
-		unsigned reads=snapshot[7]*blocks+(snapshot[5]*2+16383)/16384+1;
+		unsigned reads=snapshot[7]*
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+			(snapshot[14]?blocks/4:blocks)
+#else
+			blocks
+#endif
+			+(snapshot[5]*2+16383)/16384+1;
 		unsigned flits=snapshot[7]*blocks*snapshot[2]/64+(snapshot[5]*2+((blocks*4+63)&~63U))/64;
 		if (panels!=count || !IdleAll() || !SourceMatches(sealedSource) || *Words(0xffb20014)!=self) block_fault_park();
 		uint32_t after[8];

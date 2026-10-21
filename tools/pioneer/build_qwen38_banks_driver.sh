@@ -3,6 +3,13 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 0 ] || {
+ echo 'STOP batch4 fetch is OFFLINE ONLY;NO root/controller/native proof qualification' >&2;exit 2; }
+case "${PIONEER_Q38_HOST_PHASE_PROFILE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_DISPATCH_PROFILE:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 1:1:0:1:2026102100010018 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}" in
  0) [ "${PIONEER_Q38_WORK_SENTINEL_POLL:-0}" = 0 ] || {
   echo 'STOP sentinel polling needs its separate root/controller QUALIFICATION chain' >&2;exit 2; };;
@@ -171,6 +178,7 @@ case "${PIONEER_Q38_DISPATCH_PROFILE:-0}" in
     extra="$extra -DTT_PIONEER_Q38_DISPATCH_PROFILE";;
  *) exit 2;;
 esac
+if [ "${PIONEER_Q38_HOST_PHASE_PROFILE:-0}" = 1 ]; then extra="$extra -DTT_PIONEER_Q38_DISPATCH_PROFILE -DPIONEER_Q38_HOST_PHASE_PROFILE"; fi
 case "${PIONEER_Q38_DISPATCH_BATCHED_PIO:-0}" in
  0) ;;
  1) [ "$variant" = 55 ] && [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ] || exit 2

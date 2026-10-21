@@ -39,10 +39,16 @@ struct IO {
  }
 };
 int main() {
- for(uint64_t tag:{UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010016),UINT64_C(0x2026102100010017)})for(unsigned fault=0;fault<=8;fault++) {
+ for(uint64_t tag:{
+#ifdef PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
+ UINT64_C(0x2026102100010018)
+#else
+ UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010016),UINT64_C(0x2026102100010017)
+#endif
+ })for(unsigned fault=0;fault<=8;fault++) {
   IO io;io.fault=fault;io.tag=tag;Mode mode;
   assert(mode.Support(io,17)==!fault && io.metadataCalls==1);
   assert(io.supportCalls==(fault>=1 && fault<=5?0U:1U));
  }
- puts("PASS 27 ACTUAL extracted benchmark-host Work support cases:exact idle tag12/16/17 BEFORE original-TC ABI2;metadata/owner/cold/transport/SM7/model-capability failures refuse;NO BEGIN/card IO");
+ puts("PASS ACTUAL extracted benchmark-host Work support:exact idle diagnostic tag BEFORE original-TC ABI2;metadata/owner/cold/transport/SM7/model-capability failures refuse;NO BEGIN/card IO");
 }

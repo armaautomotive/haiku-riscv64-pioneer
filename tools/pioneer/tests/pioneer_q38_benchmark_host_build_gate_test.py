@@ -16,6 +16,10 @@ for key,correct in required.items():
    cases.append({**required,key:wrong})
 for wrong in ('cpu-validated','checked'):
  cases.append({**required,'PIONEER_Q38_EXECUTION_MODE':wrong})
+cases += [{**c,'PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION':'1'} for c in cases]
+for value in ('01','-1','invalid'):
+ cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION':value})
+cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION':'1','PIONEER_Q38_BENCHMARK_HOST':'0'})
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-benchmark-host-gate-') as name:
  root=pathlib.Path(name)
  for i,flags in enumerate(cases):
