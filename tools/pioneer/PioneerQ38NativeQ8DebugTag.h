@@ -1,8 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_NATIVE_Q8_DEBUG_TAG_H
 #define PIONEER_Q38_NATIVE_Q8_DEBUG_TAG_H
-#if !defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT) && !defined(PIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION)
-#error Tag binds ONLY independent native-SM7 Q8 primitive/graph qualification
+#if !defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT) && !defined(PIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION) && !defined(PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION)
+#error Tag binds ONLY independent native-SM7 Q8 primitive/graph/public-model qualification
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 static inline bool PioneerQ38NativeQ8DebugTag(const tt_pioneer_driver_reload& r) {

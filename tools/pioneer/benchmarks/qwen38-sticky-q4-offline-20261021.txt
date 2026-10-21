@@ -1,0 +1,44 @@
+OFFLINE ONLY sticky native-SM7 predecoded-Q4 study,October21 2026.
+NO native/source/layout/owner capability,driver selector or installation.
+Driver/inference builders REFUSE this flag BEFORE SDK/libs/output.
+Original2304B tile ->4352B alternate DATA encoding,lossless0..15 values;
+original metadata preserved. Larger layout requires a separate bounded
+owner/source/ABI design. No assumption that all expanded weights fit.
+
+Keep native SrcA format across16 original panels,not sixteen configure/
+restore pairs. Restore FP32 raw format BEFORE each exact block metadata
+stage;set native format AFTER. Same source publication,matrix phases,
+dual-half zero,drains,FP32 per16 affine arithmetic,NoC/output/STOP proofs.
+Only cold helpers have size-oriented compilation to fit SAME code limits.
+Main8072/8192B,prefix5296/5376B,boot4B;NO enlarged code/address authority.
+Two independent builds g/h plus gated i exact:
+text9bfee6cc9f80953a58443cb512eba1edf1d79de5924816eb529ad1c3a501bfa4
+prefix14e91e6dd17e7f9d2cb4a9dbaba1e4a7ade0b9cf4bcab8ab985deb83bf60ea02
+boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+
+FULL actual-instruction ASan/UBSan suite A3rCDVLL PASS:3 formats x3
+widths x3 group counts xchecked/Work x2 CHANGED input jobs,original packed
+FP32 AND independent FP64 exact;NoC faults1/5/40/208 park before output;
+missing UNPACK/noncanonical value/false completion/missing ADC reset
+refuse before publication. ALL25 startup config pairs independently
+required per job. Narrow benign first same-format write modeled ONLY
+when fully drained/no source or pending ownership;does not waive setup.
+
+16-group Work-Q4 actual instruction observations,old packed vs sticky:
+K5120 RV5025828/4900395,vector965984/546784,drains63452/44892
+K6144 RV6029380/5878859,vector1159136/656096,drains76124/53852
+K17408 RV17068688/16642199,vector3283808/1858528,drains215516/152412.
+About2.5% fewer emulated RV instructions,43.4% fewer vector ops,29.3%
+fewer modeled drains. NOT silicon latency,DRAM/NoC throughput,model
+tokens/sec or native qualification;expanded source packets cost more.
+Earlier predecoded study WITHOUT sticky format increased RV work;do
+not misattribute this observation to that earlier image.
+
+Full log /private/tmp/pioneer-q38-sticky-q4-full-20261021-a.log
+SHA a1359329abd312e9af4001d9b94afcb3b0c560c5563493e179a7d350640bfda7.
+Retained images /private/tmp/pioneer-q38-predecoded-q4-sticky-peer-20261021-{g,h,i}.
+69 image-chain/native/source/CPU isolation refusals PASS before SDK.
+Existing native-Q8 image02d36cf9/1b9cdc6d and original predecoded-Q4
+61daa5c8/a52870e1 recompile byte-for-byte unchanged with new flag OFF.
+Data codec1024 exact round trips+all panels+late invalid-domain/canary/
+alias/bounds tests PASS. This candidate remains OFFLINE ONLY.

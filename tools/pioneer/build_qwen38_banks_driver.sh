@@ -3,6 +3,8 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 0 ] || {
+ echo 'STOP sticky predecoded-Q4 has NO native layout/owner qualification;OFFLINE ONLY' >&2;exit 2; }
 case "${PIONEER_Q38_NATIVE_Q8:-0}" in
  0) [ "${PIONEER_Q38_NATIVE_Q8_QUALIFICATION:-0}" = 0 ] || exit 2;;
  1) [ "${PIONEER_Q38_NATIVE_Q8_QUALIFICATION:-0}:${PIONEER_Q38_SCALE_REUSE_QUALIFICATION:-0}:${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_Q4_GROUP32:-0}:${PIONEER_Q38_GROUP32_QUALIFICATION:-0}:${PIONEER_Q38_PREDECODED_Q4:-0}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1:1:1:1:0:0:0:0 ] || {

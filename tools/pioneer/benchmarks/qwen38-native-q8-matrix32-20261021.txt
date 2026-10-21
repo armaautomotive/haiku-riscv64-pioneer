@@ -1,0 +1,52 @@
+Physical paired real-model Q8 matrix,October21 2026 05:36-05:52 UTC.
+Fixed blk.0.attn_qkv.weight,K5120/N10240,Q8_0,original public input,
+first+32 warm GGML graph computations,119 workers,normal1350MHz.
+NOT a whole-model token rate or independent CPU learned-reference test.
+Source authenticated FULL18973870528B file on SAME borrowed description
+before accelerator FD. Native-SM7 encoding changes ONLY private Q8 load
+pages;original model/runtime files unchanged. Same58982400B/14400pages
+resident for all33 projections/calls;NO repeat upload or CPU fallback.
+
+                                   control041        nativee546
+Driver tag                         ...0012           ...0014
+Client SHA prefix                  0c104f39          57e4bd14
+Median warm graph seconds          .008772500        .008459000
+Mean seconds                       .008781719        .008481375
+Min/max seconds                    .008738/.008874   .008436/.008863
+Warm graph wall seconds            .281452           .271839
+Warm multiply wall seconds         .280029           .270383
+Warm ioctl wall seconds            .266279           .256552
+Prime seconds                      2.922798          3.398672
+Source repack seconds              .473873           1.018376
+Span upload seconds                2.204934          2.135792
+Native3.5736677% lower median latency,3.4201049% lower mean in ONE
+32-sample session per driver. Not robust thermal/statistical/broad-shape
+evidence or a3.57% full-model speed claim. Loading-time encode cost is
+measured separately above;it is NOT hidden inside warm graph timing.
+
+Both sessions:32/32 warm success and byte-repeatability checked OUTSIDE
+timing,clean_end1/CLI_EXIT0,clock800->1350->800/restored1/uncertain0,
+CPU guard cold0/active_owner0. Every40960B exported output is IDENTICAL
+between drivers,SHA b8707ccd7f01b7516c922929ba3f6ca9ae9ec1b7578edc1c50ab8a870f6d5d6e.
+No CPU learned product/reference or result substitution in either run.
+Native driver e546b6643009018386ff57fceee7c8d425d81a3d8211529e5fc393719ea053d4
+Control041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Native client57e4bd1458526e235662c355b8a1ee639a000b3cf4b1468e9aa343db8c34d8b6
+Control0c104f397b2e62e537b9ffe568b89e58fd577619d81afe65d36021e0e790c449.
+
+Own logs under /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+q8-repeat-native-20261021-a.log
+SHA474e14ff2b0838f7e1e11409ed88838f5b9992b12e98195a78fc5ef157c91f27
+q8-repeat-control-20261021-a.log
+SHAc07db85284faeb4ad2797926d396ca6e1fa6881fcf8f0b30261ace16d50b4895
+Export same names .words. Serial boundaries64033918/64049788,end64056747.
+Guarded known-clean restore to041/tag12/gen24 for control;then guarded
+reapply e546/tag14/gen25/26. No reboot/reset/SD/power change.
+
+Separately gated public THREE32 model qualifiera3943e1c rebuilds twice
+identically. ONLY --public-three-32-token-runs accepted;exact idle tag14
+and separate SM7 ABI3 BEFORE BEGIN.57 builder role/graph/CPU/Assistant
+refusals+24 actual extracted argument combinations/public argument-map
+tests PASS offline;normalf414306f remains byte-identical. Full-model
+job started05:54 UTC;result PENDING,NOT model/Assistant promotion.
+20tok/s UNMET. Best completed whole-model run remains041 .181432516tok/s.

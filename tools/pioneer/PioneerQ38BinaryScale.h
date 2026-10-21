@@ -5,6 +5,9 @@
 // Exact half*small-integer FP32 bits,like the qualified scalar helper,but
 // normalize with at most FIVE bounded steps instead of up to23 loop trips.
 // No float multiplication/rounding,subnormal flush,CLZ extension or libc.
+#if defined(PIONEER_Q38_PREDECODED_Q4_STICKY) && defined(__GNUC__) && !defined(__clang__)
+__attribute__((optimize("Os")))
+#endif
 static inline bool PioneerQ38BinaryScale(uint16_t half,int factor,uint32_t& output)
 {
 	unsigned exponent=(half>>10)&31;

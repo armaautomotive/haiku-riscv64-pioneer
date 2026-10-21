@@ -54,7 +54,7 @@ public:
 		}
 		tile=data; type=kind; bytes=count; ready=true; return true;
 	}
-#if defined(PIONEER_Q38_NATIVE_Q8) && defined(__GNUC__) && !defined(__clang__)
+#if (defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_PREDECODED_Q4_STICKY)) && defined(__GNUC__) && !defined(__clang__)
 	// Work-Q4 uses BlockQ4;this original per-panel path remains checked-
 	// only in this prototype. Keep it exact but compact inside SAME prefix.
 	__attribute__((noinline,optimize("Os")))
@@ -92,7 +92,12 @@ public:
 	// Separate OFFLINE candidate. ALL original per-panel FP32 values and
 	// rounding points are retained;only their DATA staging is moved earlier.
 	// Caller must independently bind the fixed scratch and Dst ownership.
-	__attribute__((noinline)) bool BlockQ4(PioneerQ38Panel* panel,volatile uint32_t* scratch,unsigned words) {
+#if defined(PIONEER_Q38_PREDECODED_Q4_STICKY) && defined(__GNUC__) && !defined(__clang__)
+	__attribute__((noinline,optimize("Os")))
+#else
+	__attribute__((noinline))
+#endif
+	bool BlockQ4(PioneerQ38Panel* panel,volatile uint32_t* scratch,unsigned words) {
 		if (!ready || failed || type!=12 || next || bound || !panel || !scratch || words!=256
 			|| (reinterpret_cast<uintptr_t>(panel)&3) || (reinterpret_cast<uintptr_t>(scratch)&3)
 			|| !Separate(reinterpret_cast<uintptr_t>(scratch),1024,reinterpret_cast<uintptr_t>(tile),bytes)

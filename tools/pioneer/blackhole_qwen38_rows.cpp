@@ -44,6 +44,9 @@
 #include "PioneerQ38PredecodedQ4.h"
 #include "PioneerQ38DirectQ4Unpack.h"
 #endif
+#if defined(PIONEER_Q38_PREDECODED_Q4_STICKY) && !defined(PIONEER_Q38_PREDECODED_Q4)
+#error Sticky direct-Q4 is ONLY the separate OFFLINE predecoded-layout study
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8
 #if !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || defined(PIONEER_Q38_Q4_GROUP32) || defined(PIONEER_Q38_PREDECODED_Q4)
 #error Native SM7 Q8 is a separate OFFLINE ordinary-rounding scale-cache variant
@@ -536,6 +539,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 	if (type==12 && skipDotCheck) {
 		VectorPanelEmitter blockEmitter; blockEmitter.Drain(); // prior deferred store completes BEFORE format change
+#ifdef PIONEER_Q38_PREDECODED_Q4_STICKY
+		PioneerQ38DirectQ4Restore(blockEmitter); // once per block BEFORE FP32 metadata loads
+#endif
 		if (!affine.BlockQ4(reinterpret_cast<PioneerQ38Panel*>(
 #ifdef PIONEER_Q38_PREDECODED_Q4
 			0x92000 // NEW tile90000..91100 must NOT alias original temporary91000
@@ -549,6 +555,9 @@ extern "C" unsigned block_main()
 			,Bits(scale)
 #endif
 		)) block_fault_park();
+#ifdef PIONEER_Q38_PREDECODED_Q4_STICKY
+		PioneerQ38DirectQ4Setup(blockEmitter); // native SrcA remains selected for ALL16 panels
+#endif
 	}
 #endif
 #endif
@@ -670,7 +679,7 @@ extern "C" unsigned block_main()
 #else
 		Matrix();
 #endif
-#ifdef PIONEER_Q38_PREDECODED_Q4
+#if defined(PIONEER_Q38_PREDECODED_Q4) && !defined(PIONEER_Q38_PREDECODED_Q4_STICKY)
 		if(skipDotCheck && type==12)PioneerQ38DirectQ4Restore(emitter);
 #endif
 #ifdef PIONEER_Q38_Q4_GROUP32

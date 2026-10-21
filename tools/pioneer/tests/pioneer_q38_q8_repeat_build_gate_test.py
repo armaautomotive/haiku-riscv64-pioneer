@@ -21,7 +21,8 @@ required = {
 cases = []
 for native in ('0', '1'):
     valid = {**required, 'PIONEER_Q38_NATIVE_Q8_LAYOUT': native,
-             'PIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION': native}
+             'PIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION': native,
+             'PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION': '0'}
     for key, correct in valid.items():
         for wrong in ('0', '1', '01', 'invalid', '-1'):
             if wrong == correct or (key == 'PIONEER_Q38_Q8_REPEAT_BENCH'

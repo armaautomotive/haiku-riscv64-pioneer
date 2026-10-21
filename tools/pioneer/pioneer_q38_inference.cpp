@@ -171,12 +171,20 @@ int main(int argc,char** argv)
 	unsigned limit=argc==2?PioneerQ38PublicTokenLimit(argv[1]):0;
 	unsigned sequences=argc==2?PioneerQ38PublicSequenceCount(argv[1]):0;
 	bool repeatedRun=sequences==3,four=limit==4,longTiming=limit==32 && !repeatedRun;
+	// PIONEER_NATIVE_Q8_MODEL_ARGUMENT_GUARD_BEGIN
+#ifdef PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION
+	if (!repeatedRun || limit!=32 || graph) return 2; // fixed PUBLIC THREE32 ONLY,not Assistant/interactive generation
+#endif
+	// PIONEER_NATIVE_Q8_MODEL_ARGUMENT_GUARD_END
 	if (!graph && !limit) return 2;
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST)
 	if (repeatedRun) return 2; // explicit diagnostic for retained fast-span Work ONLY
 #endif
 	signal(SIGINT,RequestStop); signal(SIGTERM,RequestStop);
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION
+	puts("NATIVE_Q8_PUBLIC_MODEL_QUALIFICATION;EXACT_IDLE_TAG14_ABI3;THREE32_PUBLIC_TOKEN_REPEATABILITY;NO_CPU_LEARNED_REFERENCE_OR_ASSISTANT_READY_CLAIM");
+#endif
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
 	puts(PIONEER_Q38_GRAPH_LABEL "_REPEAT32_DIAGNOSTIC_ONLY;FIRST_PLUS32_WARM_GRAPHS;NO_CPU_LEARNED_REFERENCE;OUTPUT_REPEATABILITY_CHECK_OUTSIDE_TIMING");
 #endif

@@ -10,7 +10,13 @@
 // and original coef/min/acc96..111. FULL padding initialization is required
 // BEFORE these partial writes. Same FP32 UNPACK/values/drains as old affine,
 // but configure the metadata format ONCE for ALL8 Q4 groups in the block.
-template<class E> static __attribute__((noinline)) bool PioneerQ38BlockAffineDst(E& e
+template<class E> static
+#if defined(PIONEER_Q38_PREDECODED_Q4_STICKY) && defined(__GNUC__) && !defined(__clang__)
+__attribute__((noinline,optimize("Os")))
+#else
+__attribute__((noinline))
+#endif
+bool PioneerQ38BlockAffineDst(E& e
 #ifdef PIONEER_Q38_BLOCK_SCALE_REUSE
 	,uint32_t scale
 #endif

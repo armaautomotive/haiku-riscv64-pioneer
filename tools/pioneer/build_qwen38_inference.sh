@@ -2,15 +2,19 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+[ "${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 0 ] || {
+ echo 'STOP sticky predecoded-Q4 has NO model source/layout qualification;OFFLINE ONLY' >&2;exit 2; }
 case "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_DISPATCH_INFERENCE:-0}:${PIONEER_Q38_VECTOR_INFERENCE:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_FFN_REPEAT_BENCH:-0}" = work:1:1:1:1:0:0:0 ] || exit 2;;
  *) exit 2;;
 esac
-case "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}:${PIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION:-0}" in
- 0:0) ;;
- 1:1) [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" = 1 ] || {
+case "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}:${PIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION:-0}:${PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION:-0}" in
+ 0:0:0) ;;
+ 1:1:0) [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" = 1 ] || {
   echo 'STOP SM7 source producer is isolated-Q8-graph qualification ONLY;NO full-model/Assistant' >&2;exit 2; };;
+ 1:0:1) [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}:${PIONEER_Q38_FFN_REPEAT_BENCH:-0}:${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_DISPATCH_INFERENCE:-0}:${PIONEER_Q38_VECTOR_INFERENCE:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}" = 0:0:work:1:1:1:1:1:0:0 ] || {
+  echo 'STOP SM7 model qualifier requires isolated retained-span public THREE32 Work;NO Assistant/validation' >&2;exit 2; };;
  *) echo 'STOP SM7 source producer needs separate native/graph/ABI qualification;OFFLINE ONLY' >&2;exit 2;;
 esac
 project=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
@@ -69,7 +73,12 @@ if [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_Q8_REPEAT_BENCH -DPIONEER_Q38_FFN_REPEAT_BENCH"
 fi
 if [ "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1 ]; then
- extra="$extra -DPIONEER_Q38_NATIVE_Q8_LAYOUT -DPIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION"
+ extra="$extra -DPIONEER_Q38_NATIVE_Q8_LAYOUT"
+ if [ "${PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION:-0}" = 1 ]; then
+  extra="$extra -DPIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION"
+ else
+  extra="$extra -DPIONEER_Q38_NATIVE_Q8_GRAPH_QUALIFICATION"
+ fi
 fi
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do
