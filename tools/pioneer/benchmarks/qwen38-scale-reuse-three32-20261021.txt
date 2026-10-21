@@ -1,0 +1,43 @@
+Physical full Qwen3.8-27B Q4_K_M retained-weight Work timing.
+October21 2026 03:43-04:11 UTC,normal1350MHz,Pioneer64CPU/full128GB.
+Driver041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen19. SAME pinned f414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c
+client/four frozen runtime libs/pristinec060 llama headers;NO dirty-source build.
+Public model SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+No CPU learned-reference/result validation or fallback. Mandatory bounds/
+live source/owner/NoC/DMA/completion/PC/clock proofs retained.32 CPU threads
+handle non-matrix graph work,including current attention implementation.
+
+Three identical public Hello sequences,32 positions EACH,retained weights.
+ALL96 token identities repeat exactly AND match earlier038 control's96.
+Discard positions0..4 PER sequence:81 positions /446.446986seconds =
+0.181432516 tokens/sec. Earlier SAME f414 on038:0.175353237 tokens/sec;
+sample throughput3.4669% higher. Still FAR below20tokens/sec target.
+ONE three-sequence session each,NOT broad thermal/statistical/quality evidence.
+
+Sequence0:27 measured positions/148.885464s=.181347455tokens/sec,
+median5.514469s,p95 nearest rank5.540929s.
+Sequence1:27/148.778680=.181477615,median5.507941,p955.541965.
+Sequence2:27/148.782842=.181472538,median5.509738,p955.544544.
+ALL81 warm profiles valid,497 matrix callbacks per token;mean
+matrix callback4.429262790s,Work-ioctl4.152662642s,otherGGML1.082428395s.
+HOST WALL measurements,NOT pure GPU/CPU/NoC timing. Field name retains
+historical checked_matrix_ioctl_seconds,but executable explicitly Work,
+NO CPU numeric reference. Microbenchmark gains are NOT substituted for this rate.
+
+Host model load remains outside warm timing. Cold prime4558653pages/
+18672242688B in701.804368s,repack147.460762s/upload553.694116s.
+ALL96 positions:47712 learned projections/48480calls;119 workers.
+Cold smoke1258.726854s is NOT steady token throughput. Public identical
+token-ID smoke is NOT diverse prompts,long context,semantic/chat quality,
+Assistant readiness or all-state-on-card qualification. Assistant GUI/service
+remains closed,files/settings intact. No power/SD/reboot required.
+
+Explicit clean_end1/CLI_EXIT0,800->1350->800/restored1/uncertain0.
+CPU metadata gen19/quiesced0/cold0/active_owner0/open_count1/guard1.
+Serial boundary63914137;completion63934468. No card/copy job overlap.
+Remote /boot/home/pioneer-qwen38-vector-clear-20261018-t/
+full-model-work-scale-reuse-three32-20261021-a.log
+SHAe6fd7967ddd61273c6127f3f09a21303c6e19d56fe043d9ebe65022cb04d031a.
+Matching local /private/tmp/pioneer-q38-scale-reuse-native-evidence.ws7ND2b9/.
+Goal ACTIVE,continuing qualified performance work;20tok/s UNMET.

@@ -1,5 +1,18 @@
 # Native build status
 
+October20,21:13 Vancouver (October21,04:13 UTC) REAL FULL27B SCALE RUN PASS:
+041fef18/tag2026102100010012/gen19 + SAME f414 client/frozen runtime:
+THREE32 identical public sequences,ALL96 token identities match each other
+AND earlier038 control. Exclude first5 positions EACH:81/446.446986s =
+0.181432516tok/s vs earlier0.175353237 (+3.4669% sample throughput).
+All81 warm profiles valid:mean matrix callback4.429262790s,Work ioctl
+4.152662642s,otherGGML1.082428395s. NOT pure GPU/CPU timing.497 learned
+projections/token,47712total/48480calls,119 workers,18.672GB retained.
+Explicit clean_end1/CLI_EXIT0,800->1350->800/restored1/uncertain0;CPU cold0/
+active_owner0/guard1. Evidence:benchmarks/qwen38-scale-reuse-three32-20261021.txt.
+This remains fixed public token-ID smoke,NOT diverse/chat/long-context quality
+or Assistant readiness.20tok/s target UNMET. Goal ACTIVE,board clean idle.
+
 October21,04:07 UTC GROUP32 PIN/ROOT follow-up PASS:
 Frozen all-word Group32PeerImage reproduces a/b text6f0087f7/prefix2cb76522.
 Full pinned actual-image runmukwHgpL PASS,log
