@@ -34,3 +34,21 @@ extern "C" bool pioneer_q38_gdn_qualify_compile(PioneerProbeCookie* cookie,Pione
 	PioneerQ38GdnCallScope scope(cookie); auto* context=scope.Context();
 	return context && QualifyQ38MutableState(*context,result);
 }
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+// Instantiate REAL native IO/controller functions in this OBJECT ONLY.
+// No allocation/native entry/linked module or selection is provided here.
+extern "C" bool pioneer_q38_rgdn_native_compile(PioneerProbeCookie* cookie,unsigned operation,tt_q38_rgdn_root_request& job)
+{
+	PioneerQ38GdnCallScope scope(cookie); auto* c=scope.Context();
+	if (!c || !c->q38ResidentGdnRoot || !c->q38GdnBanks || !c->q38StateZero) return false;
+	if (!operation) return PioneerQ38RgdnRootPrepare(c->io,c->baseline.baseline.baseline.baseline.dram,
+		c->baseline.baseline.baseline.noc,*c->q38GdnBanks,c->banks,c->q38GdnIdentity,c->host,c->lease,
+		c->bulk,c->bulkHost,c->wideHost,*c->q38ResidentGdnRoot);
+	if (operation==1) return PioneerQ38RgdnRootRun(c->io,c->baseline.baseline.baseline.baseline.dram,
+		c->baseline.baseline.baseline.noc,*c->q38GdnBanks,c->banks,c->host,c->lease,c->bulk,c->bulkHost,
+		c->wideHost,*c->q38ResidentGdnRoot,job);
+	return PioneerQ38RgdnRootClose(c->io,c->baseline.baseline.baseline.baseline.dram,
+		c->baseline.baseline.baseline.noc,*c->q38GdnBanks,c->banks,c->host,c->lease,c->bulk,c->bulkHost,
+		c->wideHost,*c->q38ResidentGdnRoot,operation==2);
+}
+#endif

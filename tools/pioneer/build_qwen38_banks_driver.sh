@@ -3,6 +3,10 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC:-0}" in
+ 0) ;;
+ *) echo 'STOP resident ROOT0 controller lacks qualified native integration;refusing linked driver' >&2; exit 2;;
+esac
 case "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_GDN_MUTABLE_STATE:-0}:${PIONEER_Q38_LOCAL_DELTA_GGML:-0}:${PIONEER_Q38_INLINE_CONFIG:-0}:${PIONEER_Q38_WORK_DEFER_AFFINE:-0}:${PIONEER_Q38_WORK_OUTPUT_DMA:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}" = 1:1:1:1:1:1:1 ] || {

@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_RESIDENT_BANKS_TEST_INCLUDED
+#define PIONEER_RESIDENT_BANKS_TEST_INCLUDED
 #define PIONEER_BULK_UPLOAD_MOCK_ONLY
 #include "pioneer_bulk_upload_test.cpp"
 #include <array>
@@ -134,4 +136,5 @@ int main()
 	baseline.source[1]^=1; assert(banks.Matches(baseline));
 	banks.Quarantine(); assert(!banks.Matches(baseline));
 }
+#endif
 #endif

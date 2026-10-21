@@ -31,6 +31,13 @@
 #endif
 #include "PioneerQ38GdnZeroProtocol.h"
 #endif
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+#if !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC)
+#error Resident ROOT0 qualification requires the complete fixed zero diagnostic owner
+#endif
+#define PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+#include "PioneerQ38ResidentGdnRootController.h"
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 #if !defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Normal Q38 clocks require the retained-owner reloadable sparse Work driver
@@ -134,7 +141,11 @@ static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 // this a typed presence check,not a separately maintained global hint.
 template<class Cookie> static bool Q38MutableScopeOwned(const Cookie* cookie)
 {
-	return cookie && cookie->context && (cookie->context->q38GdnBanks || cookie->context->q38StateZero);
+	return cookie && cookie->context && (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+		|| cookie->context->q38ResidentGdnRoot
+#endif
+		);
 }
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
@@ -1585,6 +1596,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool NonRootHeldOwner();
 	bool NonRootHeldMappingStable();
 #endif
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	bool ResidentGdnBeforeRoot();
+	bool ResidentGdnOtherCoresHeld();
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	bool q38SpanAllowed=true;
 	bool SpanBeforeCohort() { return q38SpanAllowed && !fleetEnabled; }
@@ -2187,15 +2202,16 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
-	// Private heap owners only. No native operation allocates these yet;
-	// the build gate remains closed until all hardware interlocks exist.
+	// Private heap owners:separate fixed-zero diagnostic ONLY,not model compute.
 	PioneerQ38GdnBanks* q38GdnBanks=NULL;
 	PioneerQ38StateZeroLease* q38StateZero=NULL;
 	PioneerQ38GdnIdentity q38GdnIdentity={};
-	// No public operation selects the private call guard yet. Only that
-	// guard may bind this seal under the acquired global lock,then clear it
+	// Only the private diagnostic guard may bind this seal under the global lock,then clear it
 	// before releasing the lock. Identity/presence alone never grants IO.
 	thread_id q38GdnCallThread=-1;
+#endif
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	PioneerQ38ResidentGdnRootLease* q38ResidentGdnRoot=NULL;
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	PioneerQ38DeltaProbeLease q38Delta;
@@ -2277,6 +2293,9 @@ struct PioneerStoreContext {
 	}
 	~PioneerStoreContext() {
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+		delete q38ResidentGdnRoot;
+#endif
 		delete q38StateZero;
 		delete q38GdnBanks;
 #endif
@@ -2300,6 +2319,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		if ((q38GdnBanks && q38GdnBanks->Unsafe())
 			|| (q38StateZero && (q38StateZero->unsafe || (!controlledZero && q38StateZero->running)))) return true;
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+		if (q38ResidentGdnRoot && (q38ResidentGdnRoot->unsafe || (!controlledZero && q38ResidentGdnRoot->running))) return true;
+#endif
 #endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 		if (q38Clock.Unsafe()) return true;
@@ -2410,6 +2432,9 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	if (c.q38StateZero) c.q38StateZero->unsafe=true;
 	if (c.q38GdnBanks) c.q38GdnBanks->Fault(); // MEMORY ONLY
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	if (c.q38ResidentGdnRoot) c.q38ResidentGdnRoot->unsafe=true; // MEMORY ONLY
+#endif
 #endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 	c.q38Clock.Quarantine(); // MEMORY ONLY; never issue IDLE after ANY unknown
@@ -2434,11 +2459,25 @@ static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
-	if (!c.bankStorageOnly && (c.q38GdnBanks || c.q38StateZero)) {
+	if (!c.bankStorageOnly && (c.q38GdnBanks || c.q38StateZero
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+		|| c.q38ResidentGdnRoot
+#endif
+		)) {
 		clean=false; RetainQ38DispatchOwner(c,result); return false; // misbound private scope:NEVER legacy rollback
 	}
 #endif
 	if (!c.bankStorageOnly) return true;
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	if (c.q38ResidentGdnRoot && (!c.q38ResidentGdnRoot->closed || c.q38ResidentGdnRoot->unsafe
+		|| c.q38ResidentGdnRoot->running || c.q38ResidentGdnRoot->awaiting || !c.q38ResidentGdnRoot->saved
+		|| c.q38ResidentGdnRoot->dirty || c.q38ResidentGdnRoot->ready || !c.q38GdnBanks || !c.q38StateZero
+		|| !c.q38StateZero->closed || !(c.q38StateZero->identity==c.q38GdnIdentity) || !c.q38GdnIdentity.Valid()
+		|| !(c.q38ResidentGdnRoot->identity==c.q38GdnIdentity) || c.q38ResidentGdnRoot->owner!=c.q38GdnBanks
+		|| c.q38ResidentGdnRoot->banks!=&c.banks || c.q38ResidentGdnRoot->proof!=&c.baseline.baseline.baseline.baseline.dram)) {
+		clean=false; RetainQ38DispatchOwner(c,result); return false; // NO implicit debug ACCEPT/CLOSE
+	}
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	// Explicit state-zero CLOSE must precede BANK_END. Refuse BEFORE
 	// delta/STOP/ARC/restore paths, even if the last device job passed.
@@ -2486,6 +2525,9 @@ bool PioneerSessionIO::StateZeroBeforeCohort()
 	if (c->q38Span && (!c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready
 		|| c->q38Span->running || c->q38Span->unsafe)) return false;
 	const auto& zero=*c->q38StateZero;
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	if (c->q38ResidentGdnRoot) return false; // mutually exclusive root role,even after its clean CLOSE
+#endif
 	if (zero.identity.Valid()) { if (!(zero.identity==c->q38GdnIdentity)) return false; }
 	else if (zero.identity.session || zero.identity.sequence || zero.identity.modelEpoch || zero.identity.driverGeneration
 		|| zero.saved || zero.dirty || zero.ready || zero.running || zero.nonce) return false;
@@ -2500,12 +2542,57 @@ bool PioneerSessionIO::StateZeroBeforeCohort()
 	return !c->Unsafe(true) && c->q38GdnBanks->MatchesInitializationOwner(c->banks,dram,c->q38GdnIdentity)
 		&& c->q38GdnBanks->InitializeSpan(c->q38GdnIdentity,0,0,1,probe);
 }
-bool PioneerSessionIO::NonRootHeldOwner() { return StateZeroBeforeCohort(); }
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+// PIONEER_Q38_RGDN_ROOT_NATIVE_SCOPE_BEGIN
+// CPU-only exact context/owner gate. Never a model/peer compute capability.
+bool PioneerSessionIO::ResidentGdnBeforeRoot()
+{
+	PioneerStoreContext* c=q38MutableContext;
+	if (!c || &c->io!=this || sColdRecoveryRequired || sReloadQuiesced || !sRuntimeOwner
+		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
+		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled || q38SpanAllowed
+		|| c->q38GdnCallThread<0 || c->q38GdnCallThread!=find_thread(NULL) || !c->q38GdnBanks || !c->q38StateZero
+		|| !c->q38ResidentGdnRoot || !c->q38GdnIdentity.Valid() || c->q38GdnIdentity.driverGeneration!=sReloadGeneration
+		|| c->q38Dispatch || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+		|| c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
+		|| c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready
+		|| c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready) return false;
+	if (c->q38Span && (!c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe)) return false;
+	const auto& zero=*c->q38StateZero;
+	if (!zero.closed || zero.running || zero.unsafe || zero.dirty || zero.ready || !(zero.identity==c->q38GdnIdentity)) return false;
+	const auto& root=*c->q38ResidentGdnRoot;
+	if (root.identity.Valid()) {
+		if (!(root.identity==c->q38GdnIdentity) || root.owner!=c->q38GdnBanks || root.banks!=&c->banks || root.proof!=&dram) return false;
+		if ((root.running && (!root.saved || !root.dirty || !root.ready || root.closed || root.awaiting))
+			|| (root.awaiting && (!root.saved || !root.dirty || !root.ready || root.closed || root.running))
+			|| (root.closed && (root.running || root.awaiting || root.dirty || root.ready))) return false;
+	} else if (root.identity.session || root.identity.sequence || root.identity.modelEpoch || root.identity.driverGeneration
+		|| root.saved || root.dirty || root.ready || root.running || root.unsafe || root.awaiting || root.closed || root.nonce
+		|| root.readSlot || root.position || root.owner || root.banks || root.proof) return false;
+	const auto& clock=c->q38Clock.Snapshot();
+	if (!c->q38Clock.RequiresExplicitEnd() || clock.state!=TT_ARC_CLOCK_BUSY_VERIFIED
+		|| !clock.busy_requested || !clock.busy_acknowledged || clock.restored) return false;
+	// Exempt ONLY this exact controlled root's running bit. Every other
+	// uncertainty is still fatal;ordinary Unsafe() blocks cleanup/END.
+	return !c->Unsafe(true) && c->q38GdnBanks->MatchesInitializationOwner(c->banks,dram,c->q38GdnIdentity)
+		&& c->q38GdnBanks->InitializationPublished(c->q38GdnIdentity);
+}
+// PIONEER_Q38_RGDN_ROOT_NATIVE_SCOPE_END
+#endif
+// PIONEER_Q38_NONROOT_NATIVE_OWNER_BEGIN
+bool PioneerSessionIO::NonRootHeldOwner() {
+	return StateZeroBeforeCohort()
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+		|| ResidentGdnBeforeRoot()
+#endif
+		;
+}
 bool PioneerSessionIO::NonRootHeldMappingStable()
 {
-	return StateZeroBeforeCohort() && PioneerMmioIO::area>=B_OK && nodeID && tlbArea>=B_OK && tlb
+	return NonRootHeldOwner() && PioneerMmioIO::area>=B_OK && nodeID && tlbArea>=B_OK && tlb
 		&& resetArea>=B_OK && reset;
 }
+// PIONEER_Q38_NONROOT_NATIVE_OWNER_END
 bool PioneerSessionIO::StateZeroOtherCoresHeld()
 {
 	if (!StateZeroBeforeCohort() || !NonRootHeldMappingStable()) return false; // CPU-only refusal
@@ -2514,6 +2601,16 @@ bool PioneerSessionIO::StateZeroOtherCoresHeld()
 	// including clock/cookie/PCI/ALL host leases,BEFORE returning to caller.
 	tt_resident_session_result result={}; RetainQ38DispatchOwner(*q38MutableContext,result); return false;
 }
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+// PIONEER_Q38_RGDN_ROOT_NATIVE_HELD_BEGIN
+bool PioneerSessionIO::ResidentGdnOtherCoresHeld()
+{
+	if (!ResidentGdnBeforeRoot() || !NonRootHeldMappingStable()) return false;
+	if (PioneerQ38NonRootHeld(*this,dram)) return true;
+	tt_resident_session_result result={}; RetainQ38DispatchOwner(*q38MutableContext,result); return false; // MEMORY ONLY
+}
+// PIONEER_Q38_RGDN_ROOT_NATIVE_HELD_END
+#endif
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_END
 // PIONEER_Q38_GDN_CALL_SCOPE_BEGIN
 // PRIVATE fixed zero diagnostic ONLY. Exactly ONE

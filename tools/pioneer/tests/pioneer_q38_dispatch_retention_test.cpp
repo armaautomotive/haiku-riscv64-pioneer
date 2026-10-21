@@ -176,4 +176,38 @@ int main(int argc,char** argv)
 	}
 	puts("PASS REAL gated GDN context retention: owner-only/lost caller/unprepared/ready/running/unsafe/closed-without-END retain cookie/context/PCI/ALL hosts/clock with ZERO IO; premature BANK_END refuses BEFORE delta close; only known zero CLOSE plus explicit END cleans once;NO native GDN adapter or qualification");
 #endif
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	for (unsigned variant=0;variant<13;variant++) for (unsigned explicitEnd=0;explicitEnd<2;explicitEnd++) {
+		cookie=new PioneerProbeCookie; Begin(*cookie,argv[1]); auto& c=*cookie->context;
+		c.q38GdnBanks=new PioneerQ38GdnBanks; c.q38StateZero=new PioneerQ38StateZeroLease;
+		c.q38GdnIdentity={1,2,3,4}; c.q38StateZero->closed=true; c.q38StateZero->identity=c.q38GdnIdentity;
+		c.q38ResidentGdnRoot=new PioneerQ38ResidentGdnRootLease; auto& root=*c.q38ResidentGdnRoot;
+		root.saved=true; root.closed=true; root.identity=c.q38GdnIdentity; root.owner=c.q38GdnBanks;
+		root.banks=&c.banks; root.proof=&c.dram;
+		if (variant==1) root.closed=false; if (variant==2) root.awaiting=true; if (variant==3) root.running=true;
+		if (variant==4) root.unsafe=true; if (variant==5) root.saved=false; if (variant==6) root.dirty=true;
+		if (variant==7) root.ready=true; if (variant==8) root.identity.sequence++; if (variant==9) root.owner=nullptr;
+		if (variant==10) { delete c.q38GdnBanks; c.q38GdnBanks=nullptr; }
+		if (variant==11) c.q38StateZero->identity.sequence++; if (variant==12) c.bankStorageOnly=false;
+		assert(Q38MutableScopeOwned(cookie) && AcquireProbeLock(cookie,true)==B_NOT_ALLOWED);
+		assert(c.q38Clock.Begin(c.clockIO.Arc(),c.clockIO.Health()));
+		const unsigned writes=c.io.Writes(),selects=c.io.selects,clockIO=c.clockIO.io,cleanups=genericCleanup;
+		if (!variant && explicitEnd) {
+			tt_resident_session_result result={}; EndResidentSession(cookie,result,true);
+			assert(!cookie->context && genericCleanup==cleanups+1 && !sColdRecoveryRequired);
+			assert(ReleaseResidentCookie(cookie)==B_OK); continue;
+		}
+		if (explicitEnd) {
+			c.q38Delta.saved=true; tt_resident_session_result result={}; bool clean=true;
+			assert(!EndQ38DispatchOwnership(c,result,clean) && !clean);
+		} else assert(ReleaseResidentCookie(cookie)==B_OK);
+		assert(c.q38ResidentGdnRoot->unsafe && c.dispatchOwnerRetained && sColdRecoveryRequired && sRuntimeOwner==cookie
+			&& cookie->context==&c && cookie->magic==0x50313030 && c.bulkHost.quarantined && (!c.wideHost.allocated || c.wideHost.quarantined)
+			&& c.q38Clock.Unsafe() && c.clockIO.io==clockIO && !c.clockIO.unmaps && genericCleanup==cleanups
+			&& c.io.Writes()==writes && c.io.selects==selects);
+		assert(ReleaseResidentCookie(cookie)==B_OK && c.io.Writes()==writes && c.io.selects==selects && c.clockIO.io==clockIO);
+		delete cookie->context; delete cookie; sRuntimeOwner=nullptr; sBankStorageOnly=sColdRecoveryRequired=false; // TEST disposal ONLY
+	}
+	puts("PASS ACTUAL resident-root lifetime gate/retention:13 root phases/owner-proof corruptions x implicit CLOSE or premature END block BEFORE delta/ARC/cleanup,retain context/cookie/PCI/ALL hosts/clock with ZERO later IO;ONLY exact known-clean root CLOSE plus explicit BANK_END cleans once;NO native adapter/selection");
+#endif
 }

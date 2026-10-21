@@ -1,5 +1,29 @@
 # Native build status
 
+October20,18:33 Vancouver (October21,01:33 UTC) NATIVE ROOT SCOPE PREREQUISITES:
+OFFLINE ONLY;resident-root linked builds STILL refused,no control entry
+selects this code. Complete ACTUAL native translation unit/controller
+OBJECT witness pb6hu5WR max976B,NO linked module. New IO gate requires
+exact initialized bank/proof/session/thread/generation,closed zero owner,
+normal clock and exclusively owned root role. Running exemption requires
+saved/dirty/ready root,NEVER ordinary Unsafe/cleanup. Zero/root roles
+mutually exclude each other. Existing read-only physical119 audit reused.
+
+Actual extracted scope L4A69sDL PASS45 CPU-only refusals,ALL119 physical
+held checks and first/middle/last faults triggering memory-only retention
+BEFORE later IO. Initial publication in that TEST is explicitly counter
+fabric,NOT native zero execution. Actual extracted global lock/END/cookie/
+retention ECv9HJBs PASS13 root phases/owner-proof corruptions x implicit
+CLOSE or premature END:retain context/cookie/PCI/ALL allocated hosts/clock
+with ZERO IO;only exact known-clean root CLOSE plus explicit BANK_END may
+clean up. Initial test assertion incorrectly required quarantine of a
+never-allocated wide buffer;fixture now checks ALL actually allocated
+owners,matching native Retain's existing policy. No driver policy weakened.
+Standalone bank/control regression PASS after adding a shared test include
+guard. Flag-OFF rebuild EXACT installed8ccb2a24/guardd1ce/default2df.
+No native card job/install/reload/power/SD/Assistant action. Goal ACTIVE;
+latest completed model speed remains earlier0.175353237tok/s,NOT20.
+
 October20,18:20 Vancouver (October21,01:20 UTC) OFFLINE RESIDENT GDN CONTROLLER:
 Separate ROOT0 readback image518fbdefed49df2afd89837e6fd2edb08d0bf0c33df5a55e47ccb3ccbc21951b,
 boote678476d,builds c/d exact. Default non-root Work candidate remains
