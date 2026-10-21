@@ -56,6 +56,11 @@ case "${PIONEER_Q38_BLOCK_CLIENT:-0}" in
 esac
 if [ "$source" = pioneer_q38_stream_probe ] || [ "$source" = pioneer_q38_cohort_probe ] || [ "$source" = pioneer_q38_dispatch_probe ]; then extra="$extra -ffp-contract=off"; fi
 if [ "$source" = pioneer_q38_delta_probe ]; then extra="$extra -ffp-contract=off"; fi
+case "${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" in
+ 0) ;;
+ 1) [ "$source" = pioneer_q38_delta_probe ] || exit 2; extra="$extra -DPIONEER_Q38_LOCAL_DELTA_GGML";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_COHORT_SEALED:-0}" in
  0) ;;
  1) [ "$source" = pioneer_q38_cohort_probe ] || exit 2; extra="$extra -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED";;

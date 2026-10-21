@@ -58,6 +58,7 @@ static int DeltaMockIoctl(int fd,unsigned long op,void* data,size_t bytes) {
  int status=Q38DeltaControl(clientCookie,uint32_t(op),data,bytes);
  if (op==TT_PCI_PROBE_Q38_DELTA_SUPPORT && clientFault==8) static_cast<tt_q38_delta_support*>(data)->accept_required=0;
  if (op==TT_PCI_PROBE_Q38_DELTA_SUPPORT && clientFault==11) static_cast<tt_q38_delta_support*>(data)->version=1;
+ if (op==TT_PCI_PROBE_Q38_DELTA_SUPPORT && clientFault==12) static_cast<tt_q38_delta_support*>(data)->version=TT_Q38_DELTA_PROBE_VERSION==3?2:3;
  if (op==TT_PCI_PROBE_Q38_DELTA_RUN && clientFault && clientFault<=7) {
   auto& r=*static_cast<tt_q38_delta_probe*>(data);
   if (clientFault==1) r.next[8191]^=1;
@@ -84,19 +85,19 @@ int main(int argc,char** argv)
  assert(argc==2); clientImage=argv[1]; (void)&Begin;
  (void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel;
  char name[]="delta",mode[]="--synthetic"; char* args[]={name,mode,nullptr};
- for (unsigned fault=0;fault<=11;fault++) {
+ for (unsigned fault=0;fault<=12;fault++) {
   clientFault=fault; clientOpens=clientCloses=clientRuns=clientAccepts=clientEnds=clientBegins=0; clientFailed=false;
   assert(DeltaClientMain(2,args)==(fault?1:0) && clientOpens==1 && clientCloses==1);
-  if (!fault) assert(!clientCookie && clientRuns==4 && clientAccepts==4 && clientEnds==1 && clientBegins==1);
-  else if (fault==8 || fault==11) assert(!clientCookie && !clientBegins && !clientRuns && !clientAccepts && !clientEnds);
+  if (!fault) assert(!clientCookie && clientRuns==PioneerQ38DeltaDebugTrials && clientAccepts==PioneerQ38DeltaDebugTrials && clientEnds==1 && clientBegins==1);
+  else if (fault==8 || fault==11 || fault==12) assert(!clientCookie && !clientBegins && !clientRuns && !clientAccepts && !clientEnds);
   else {
    assert(clientFailed && clientCookie && clientBegins==1);
    if (fault<=7) assert(clientRuns==1 && !clientAccepts && !clientEnds);
    if (fault==9) assert(clientRuns==1 && clientAccepts==1 && !clientEnds);
-   if (fault==10) assert(clientRuns==4 && clientAccepts==4 && clientEnds==1);
+   if (fault==10) assert(clientRuns==PioneerQ38DeltaDebugTrials && clientAccepts==PioneerQ38DeltaDebugTrials && clientEnds==1);
    DiscardRetained(clientCookie); clientCookie=nullptr;
   }
  }
  assert(acquired==released);
- puts("PASS OFFLINE REAL debug client+REAL ioctl+REAL RV32/SFPU:4 exact full exports,11 refusal/mismatch/transport faults including old ABI;NO ACCEPT/END/retry/further card I/O after failure;ALL owners retained");
+ printf("PASS OFFLINE REAL debug client+REAL ioctl+REAL RV32/SFPU:ABI%u %u exact full exports,12 refusal/mismatch/transport faults including opposite scaling ABI;NO ACCEPT/END/retry/further card I/O after failure;ALL owners retained\n",TT_Q38_DELTA_PROBE_VERSION,PioneerQ38DeltaDebugTrials);
 }

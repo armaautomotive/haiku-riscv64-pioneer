@@ -6,8 +6,9 @@
 #include "PioneerAttentionMath.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38DeltaProbeProtocol.h"
 // EXPLICIT CPU-reference debug fixture,never a production Work fallback.
-// Q is pre-scaled. This qualifies the vector primitive,not fused GGML GDN
-// rounding (which scales after the dot) or resident model-state routing.
+// ABI2 Q is pre-scaled;separate ABI3 accepts raw Q and scales after dot.
+// Neither qualifies GGML FP64 dot rounding,long-context quality or residency.
+enum { PioneerQ38DeltaDebugTrials=TT_Q38_DELTA_PROBE_VERSION==3?68:4 };
 static inline void PioneerQ38DeltaDebugFixture(tt_q38_delta_probe& r,unsigned trial)
 {
  memset(&r,0,sizeof(r)); r.version=TT_Q38_DELTA_PROBE_VERSION;
@@ -33,6 +34,9 @@ static inline unsigned PioneerQ38DeltaDebugErrors(const tt_q38_delta_probe& r)
    errors+=r.next[i*64+j]!=PioneerAttentionBits(next);
    output+=next*PioneerAttentionFloat(r.query[i]);
   }
+#ifdef PIONEER_Q38_LOCAL_DELTA_GGML
+  output*=PioneerAttentionFloat(0x3db504f3); // fixed F32 1/sqrt(128),AFTER dot
+#endif
   errors+=r.output[j]!=PioneerAttentionBits(output);
  }
  return errors;

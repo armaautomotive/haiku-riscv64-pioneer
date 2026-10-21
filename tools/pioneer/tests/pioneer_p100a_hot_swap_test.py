@@ -27,6 +27,7 @@ def check(mode, fault=None):
             return target
         payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'hashwspg', 'guardsha']}
         payloads['hashcurrentprofile'] = ('test-' + values['hashcurrentprofile']).encode()
+        payloads['hash_postscale_delta'] = ('test-' + values['hash_postscale_delta']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -81,6 +82,8 @@ def check(mode, fault=None):
             '--restore-ordered-extents': ('hash_ordered_extents', 'hash_compact_output', 'tag_ordered_extents'),
             '--apply-inline-config': ('hash_deferred_affine', 'hash_inline_config', 'tag_deferred_affine'),
             '--restore-inline-config': ('hash_inline_config', 'hash_deferred_affine', 'tag_inline_config'),
+            '--apply-postscale-delta': ('hash_inline_config', 'hash_postscale_delta', 'tag_inline_config'),
+            '--restore-postscale-delta': ('hash_postscale_delta', 'hash_inline_config', 'tag_postscale_delta'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -123,6 +126,7 @@ def check(mode, fault=None):
         put('candidate_deferred_affine', payloads['hash_deferred_affine'])
         put('candidate_ordered_extents', payloads['hash_ordered_extents'])
         put('candidate_inline_config', payloads['hash_inline_config'])
+        put('candidate_postscale_delta', payloads['hash_postscale_delta'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -228,6 +232,7 @@ if __name__ == '__main__':
     modes += ['--apply-deferred-affine', '--restore-deferred-affine']
     modes += ['--apply-ordered-extents', '--restore-ordered-extents']
     modes += ['--apply-inline-config', '--restore-inline-config']
+    modes += ['--apply-postscale-delta', '--restore-postscale-delta']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -323,6 +328,10 @@ if __name__ == '__main__':
             candidate = ['candidate_inline_config']
         elif mode == '--restore-inline-config':
             candidate = ['candidate_deferred_affine']
+        elif mode == '--apply-postscale-delta':
+            candidate = ['candidate_postscale_delta']
+        elif mode == '--restore-postscale-delta':
+            candidate = ['candidate_inline_config']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

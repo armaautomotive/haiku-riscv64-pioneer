@@ -2,6 +2,9 @@
 // REAL relocated RV32/SFPU image through the REAL kernel lease templates.
 // Fault-injected MMIO only; this is NOT native timing or driver authority.
 #define PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
+#ifdef PIONEER_Q38_LOCAL_DELTA_GGML
+#define PIONEER_Q38_DELTA_VECTOR_POST_SCALE
+#endif
 #define PIONEER_Q38_DELTA_VECTOR_IMAGE_MACHINE_ONLY
 #include "pioneer_q38_delta_vector_image_test.cpp"
 #define PIONEER_Q38_PANEL_POLICY_MOCK_ONLY
@@ -130,6 +133,11 @@ int main(int argc,char** argv)
   if (bad==8) f.job->decay=1; if (bad==9) f.job->beta=0x7f800000;
   assert(!PioneerQ38DeltaProbeValid(*f.job) && !f.RunDelta() && !f.io.reads && !f.io.writes && !f.io.resetWrites);
   Finish(f.io,f.own);
+ }
+ {
+  DeltaFixture f(argv[1]); f.job->version=TT_Q38_DELTA_PROBE_VERSION==3?2:3;
+  assert(!PioneerQ38DeltaProbeValid(*f.job) && !f.RunDelta() && !f.io.reads && !f.io.writes && !f.io.resetWrites);
+  Finish(f.io,f.own); // opposite scaling ABI MUST refuse BEFORE IO
  }
  puts("PASS OFFLINE real LOCAL vector lease+actual image:ALL8256 words,4 domains x3 frontend modes,safe branch execution,old fault-entry image refused,23 fault points,invalid data inert,NO I/O after uncertainty/mismatch/unaccepted result;NOT native/resident/performance");
 }

@@ -3,6 +3,16 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_RESIDENT_GDN:-0}" in
+ 0) ;;
+ *) echo 'STOP resident GDN image is OFFLINE ONLY;no qualified owner/coordinator/graph routing selects it' >&2; exit 2;;
+esac
+case "${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_LOCAL_DELTA_PROBE:-0}:${PIONEER_Q38_NORMAL_CLOCK:-0}:${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_WORK_MODE:-0}:${PIONEER_Q38_DISPATCH_PROFILE:-0}:${PIONEER_Q38_DISPATCH_BATCHED_PIO:-0}" = 1:1:10:1:1:0:0 ] || {
+     echo 'STOP post-dot LOCAL GDN requires its complete unprofiled normal-clock qualification driver' >&2; exit 2; };;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_PREPARED_Q4_AFFINE:-0}" in
  0) ;;
  *) echo 'STOP prepared-Q4 is a DIFFERENT OFFLINE layout;no native reader/registry/driver selects it' >&2; exit 2;;
@@ -245,6 +255,9 @@ case "${PIONEER_Q38_LOCAL_DELTA_PROBE:-0}" in
     extra="$extra -DPIONEER_Q38_LOCAL_DELTA_PROBE";;
  *) exit 2;;
 esac
+if [ "${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_LOCAL_DELTA_GGML"
+fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
  -isystem "$project/headers/private/drivers" -isystem "$project/headers/private/system" \

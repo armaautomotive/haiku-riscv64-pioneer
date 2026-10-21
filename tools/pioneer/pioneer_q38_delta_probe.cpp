@@ -30,7 +30,7 @@ int main(int argc,char** argv)
   && support.version==TT_Q38_DELTA_PROBE_VERSION && support.driver==55 && support.local_only==1 && support.keys==128
   && support.values==64 && support.state_words==8192 && support.accept_required==1;
  if (!okay || !strcmp(argv[1],"--support")) {
-  if (okay) puts("LOCAL_DELTA_SUPPORT keys128 values64 state8192 ACCEPT_REQUIRED;NOT_MODEL_INFERENCE");
+  if (okay) printf("LOCAL_DELTA_SUPPORT ABI%u keys128 values64 state8192 ACCEPT_REQUIRED;NOT_MODEL_INFERENCE\n",support.version);
   close(fd); return okay?0:1;
  }
  tt_q38_bank_session session={}; session.version=1;
@@ -38,8 +38,20 @@ int main(int argc,char** argv)
   && session.result.active && session.result.host_ready && !session.result.cold && !session.result.capabilities
   && session.result.bytes==PioneerResidentBanks::Total;
  unsigned cases=0;
- for (unsigned trial=0;trial<4 && okay;trial++) {
-  PioneerQ38DeltaDebugFixture(deltaRequest,trial); deltaInputs=deltaRequest;
+ for (unsigned trial=0;trial<PioneerQ38DeltaDebugTrials && okay;trial++) {
+#ifdef PIONEER_Q38_LOCAL_DELTA_GGML
+  // Four basic domains,then four independent half-heads x16 transitions.
+  // Carry only PREVIOUSLY verified next-state words,never unchecked output.
+  if (trial>=4) {
+   unsigned token=(trial-4)%16,head=(trial-4)/16;
+   if (token) memcpy(deltaInputs.prior,deltaRequest.next,sizeof(deltaInputs.prior));
+   PioneerQ38DeltaDebugFixture(deltaRequest,1+(token+head)%3);
+   if (token) memcpy(deltaRequest.prior,deltaInputs.prior,sizeof(deltaRequest.prior));
+   else memset(deltaRequest.prior,0,sizeof(deltaRequest.prior));
+  } else
+#endif
+   PioneerQ38DeltaDebugFixture(deltaRequest,trial);
+  deltaInputs=deltaRequest;
   okay=DeltaCall(fd,TT_PCI_PROBE_Q38_DELTA_RUN,&deltaRequest,sizeof(deltaRequest));
   if (!okay) break;
   const auto& r=deltaRequest.result;
@@ -63,6 +75,6 @@ int main(int argc,char** argv)
  okay=DeltaCall(fd,TT_PCI_PROBE_Q38_BANK_END,&session,sizeof(session)) && session.result.state==TT_RESIDENT_SESSION_CLOSED
   && !session.result.active && session.result.pci_restored && session.result.host_released && !session.result.cold;
  if (close(fd)) okay=false;
- printf("%s_LOCAL_VECTOR_DELTA cases%u KNOWN_CLEAN_END%u;NOT_RESIDENT_GGML_OR_MODEL_SPEED\n",okay?"PASS":"FAIL",cases,unsigned(okay));
+ printf("%s_LOCAL_VECTOR_DELTA ABI%u cases%u KNOWN_CLEAN_END%u;NOT_RESIDENT_GGML_OR_MODEL_SPEED\n",okay?"PASS":"FAIL",TT_Q38_DELTA_PROBE_VERSION,cases,unsigned(okay));
  return okay?0:1;
 }

@@ -3,7 +3,11 @@
 #define PIONEER_Q38_DELTA_PROBE_H
 #include "PioneerQ38PanelProbe.h"
 #include "PioneerQ38DeltaProbeProtocol.h"
+#ifdef PIONEER_Q38_LOCAL_DELTA_GGML
+#include "PioneerQ38PostscaleDeltaImage.h"
+#else
 #include "PioneerQ38DeltaProbeImage.h"
+#endif
 struct PioneerQ38DeltaProbeLease {
  bool saved=false,dirty=false,ready=false,running=false,unsafe=false,awaiting=false;
  uint32_t nonce=0;

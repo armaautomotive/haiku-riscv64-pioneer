@@ -1,0 +1,50 @@
+Pioneer P100A post-dot GDN primitive qualification,2026-10-21 UTC
+THIS IS CORRECTNESS EVIDENCE,NOT RESIDENT INFERENCE OR A SPEED RESULT.
+
+Driver dcc7786475170d1eb2912439c1989b5b0aa19d903a1bb8e97881b4e500043ef7
+tag202610210001000d,generation14;guardd1ce2aa4;normal1350MHz during jobs.
+Previous qualified03876197/gen13 retained,guarded swap without reboot.
+Separate LOCAL ABI3 accepts raw Q and scales AFTER dot by F32 3db504f3.
+ABI2 pre-scaled query convention remains separately pinned and unchanged.
+New image0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+Driver builds a/b byte-identical;flagOFF exact previous038/guard/default2df.
+
+Explicit CPU-reference debug CLI ONLY:
+fa34efe9a0f55719868adfeb44594481c58455b700f3fc4c897564d391d99228.
+ALL68 native runs passed,8256 state/output words each,zero exact errors.
+Four basic domains plus four independent half-head chains x16 transitions;
+chains include zero-decay/zero-beta domains,NOT a long-context quality test.
+Explicit ACCEPT after each verified result,known-clean BANK_END,CLI_EXIT0.
+Log /boot/home/pioneer-p100a-hot-reload-20261019-a/delta-postscale-native-20261021-a.log
+SHA aef6a9c22023262105e6762f1c5949eea25a339e83ae929206a7b4325c03c118
+Exact verified local copy retained under pioneer-q38-postscale-native-evidence.BC23SoJY.
+
+Existing Work/Checked matrix regression on SAME driver:
+18 synthetic Work,16 authenticated119-worker,16 authenticated three-group,
+18 Checked synthetic=68 actual matrix jobs,zero exact errors,FOUR clean
+ENDs and CLI_EXIT0. Work references live ONLY in the DEBUG qualifier,
+not in production Work. Actual production runtime still has NO CPU oracle.
+Log /boot/home/pioneer-qwen38-vector-clear-20261018-t/matrix-postscale-native-20261021-a.log
+SHA 2b91f9d8de3f7426d8b242b359f30f804ba335760d9470b3a115c4211788917c
+Exact verified local copy in same evidence directory.
+ALL FIVE native sessions independently restored800->1350->800MHz;
+final CPU metadata generation14/quiesced0/cold0/active_owner0/open_count1.
+No recovery,relay,reboot,SD or Assistant changes. Board idle after tests.
+
+Offline evidence:
+actual post-dot RV32/SFPU image yoBC3yck,actual lease+ioctl+debug client
+cpz21LBn (ABI3/68 exports/12 fault profiles),old ABI2 regression VanDFAHW,
+output-DMA/Work vfpXElyj,actual dispatch/owner/clock1AIesRQc PASS.
+Both scaling ABIs reject the other BEFORE card work;all UNKNOWN/mismatch
+paths retain ALL owners and permit CLOSE ONLY,never ACCEPT/END/retry/reset.
+Full actual updater2351 cases/focused60 PASS,no automatic rollback.
+Pristine GGML graph/reference VCl8g2RN PASS;scalar GGML FP64-dot differs
+from vector FP32. Fixed2e-6+2e-5*abs(ref) synthetic tolerance passes;
+NOT bit-exact GGML,full-model/long-context/native residency qualification.
+
+No tokens/sec measurement on this new driver. Latest completed whole-model
+benchmark remains03876197/f414306f:0.175353237tok/s,NOT20. Attention is
+NOT yet routed to this primitive in the model. Still needs native resident
+ownership/coordinator,hybrid persistent dispatch,GGML buffers/views/CPY,
+preprocessing and coherent token/sequence state commits. No speedup claim.

@@ -6,7 +6,11 @@
 #define TT_PCI_PROBE_Q38_DELTA_SUPPORT (B_DEVICE_OP_CODES_END + 0x55d0)
 #define TT_PCI_PROBE_Q38_DELTA_RUN (B_DEVICE_OP_CODES_END + 0x55d1)
 #define TT_PCI_PROBE_Q38_DELTA_ACCEPT (B_DEVICE_OP_CODES_END + 0x55d2)
-enum { TT_Q38_DELTA_PROBE_VERSION=2 }; // NEW safe-terminal image only
+#ifdef PIONEER_Q38_LOCAL_DELTA_GGML
+enum { TT_Q38_DELTA_PROBE_VERSION=3 }; // raw Q,post-dot scale;NEVER interchangeable with ABI2
+#else
+enum { TT_Q38_DELTA_PROBE_VERSION=2 }; // safe-terminal PRE-scaled Q image only
+#endif
 static inline bool PioneerQ38DeltaProbeTerminal(uint32_t pc)
 {
  return pc==0x72038 || pc==0x7203c; // BOTH sealed instructions jump to PARK;fault60/7c NEVER accepted

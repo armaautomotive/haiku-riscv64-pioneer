@@ -1,6 +1,17 @@
 # Native build status
 
-October20,17:34 Vancouver (October21,00:34 UTC) PRIVATE ZERO INITIALIZATION:
+October20,17:40 Vancouver (October21,00:40 UTC) NATIVE POST-DOT GDN PASS:
+Separate LOCAL ABI3 driverdcc77864/tag202610210001000d/gen14 installed
+through guarded idle-only exchange,NO reboot. ALL68 post-dot primitive
+trials/8256 words each exact,explicit clean END/CLI_EXIT0. SAME driver
+passes68 Work/Checked matrix regressions across four clean sessions.
+ALL5 sessions restored800->1350->800,guardcold0/active_owner0;board idle.
+No production CPU validation/fallback added. Full evidence/caveats in
+benchmarks/qwen38-postscale-local-qualification-20261021.txt. Attention is
+STILL NOT routed through this primitive in model inference;latest completed
+whole27B measurement stays previous-driver0.175353237tok/s,NOT20.
+
+October20,17:27 Vancouver (October21,00:27 UTC) PRIVATE ZERO INITIALIZATION:
 OFFLINE ONLY;ordinary builder STILL REFUSES mutable-state!=0. A private
 whole-owner transaction now preflights ALL region geometry before IO,
 initializes ALL73728 pages in bounded jobs,then publishes a private zero-init

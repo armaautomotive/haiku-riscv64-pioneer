@@ -34,6 +34,9 @@
 #if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_Q38_WORK_MODE))
 #error LOCAL vector delta probe requires the retained-owner reloadable vector Work driver
 #endif
+#if defined(PIONEER_Q38_LOCAL_DELTA_GGML) && (!defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(PIONEER_Q38_NORMAL_CLOCK))
+#error Post-dot LOCAL GDN candidate requires the complete normal-clock local probe driver
+#endif
 #if defined(TT_PIONEER_EXPERIMENTAL_Q38_PANEL) && !defined(TT_PIONEER_EXPERIMENTAL_Q38_BANKS)
 #error Q38 local panel probe requires the exclusive seven-bank owner
 #endif
