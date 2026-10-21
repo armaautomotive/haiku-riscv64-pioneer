@@ -2,6 +2,8 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+[ "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 0 ] || {
+ echo 'STOP SM7 source producer needs separate native/graph/ABI qualification;OFFLINE ONLY' >&2;exit 2; }
 project=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 build=$(CDPATH= cd -- "$1" && pwd)
 libraries=$(CDPATH= cd -- "$2" && pwd)

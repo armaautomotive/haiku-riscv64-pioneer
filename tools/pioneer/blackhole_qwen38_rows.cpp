@@ -44,6 +44,12 @@
 #include "PioneerQ38PredecodedQ4.h"
 #include "PioneerQ38DirectQ4Unpack.h"
 #endif
+#ifdef PIONEER_Q38_NATIVE_Q8
+#if !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || defined(PIONEER_Q38_Q4_GROUP32) || defined(PIONEER_Q38_PREDECODED_Q4)
+#error Native SM7 Q8 is a separate OFFLINE ordinary-rounding scale-cache variant
+#endif
+#include "PioneerQ38DirectNativeQ8.h"
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
 #endif
@@ -465,6 +471,9 @@ extern "C" unsigned block_main()
 		,skipDotCheck && type==12
 #endif
 	);
+#ifdef PIONEER_Q38_NATIVE_Q8
+	if(skipDotCheck && type==8)PioneerQ38DirectNativeQ8Setup(initEmitter);
+#endif
 #endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 	VectorPanelEmitter phasesEmitter;
@@ -636,6 +645,11 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38BFloatPanel(emitter,type,p)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+#ifdef PIONEER_Q38_NATIVE_Q8
+		if(skipDotCheck && type==8) {
+			if(!PioneerQ38DirectNativeQ8(emitter,p))block_fault_park();
+		} else
+#endif
 #ifdef PIONEER_Q38_PREDECODED_Q4
 		if(skipDotCheck && type==12) {
 			if(!PioneerQ38DirectQ4Unpack(emitter,p))block_fault_park();

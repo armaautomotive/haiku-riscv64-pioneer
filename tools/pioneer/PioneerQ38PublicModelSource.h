@@ -5,6 +5,12 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
+#ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
+#if !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_Q38_CPU_VALIDATION)
+#error New SM7 source requires its separate fast-span Work producer;NEVER CPU validation or legacy upload
+#endif
+#include "PioneerQ38NativeQ8Data.h"
+#endif
 // Fixed PUBLIC27B only. Authenticate the FULL already-open file description
 // BEFORE any accelerator FD/threaded model context exists. No chat template,
 // executable,network request,arbitrary path or caller-supplied digest.
@@ -92,11 +98,24 @@ public:
 			|| fstat(fileno(file),&after) || !Same(identity,after) || !model.Open(file)) return false;
 		verifiedEpoch=model.Epoch(); authenticated=true; return Ready();
 	}
+	// PIONEER_Q38_AUTHENTICATED_WEIGHT_PAGE_BEGIN
 	bool ReadWeightPage(const PioneerQwen38PackedPlan& plan,unsigned fragment,unsigned page,uint8_t* output,unsigned capacity) {
 		if (!Ready() || !output || capacity<4096 || !plan.MatchesSource(model)) return false;
 		uint8_t stage[4096];
 		if (!plan.ReadWeightPage(model,fragment,page,stage,sizeof(stage)) || !Ready()) return false;
+#ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
+		const auto& parts=plan.Parts();if(fragment>=parts.size())return false;
+		const auto part=parts[fragment];const auto& tensors=model.Tensors();
+		if(part.tensor>=tensors.size())return false;
+		if(tensors[part.tensor].type==8) {
+			uint64_t relative=uint64_t(page)*4096;if(relative>=part.bytes)return false;
+			unsigned valid=unsigned(part.bytes-relative<4096?part.bytes-relative:4096);uint8_t encoded[4096];
+			if(!PioneerQ38NativeQ8Data::PreparePage(stage,relative,valid,encoded,sizeof(encoded)) || !Ready())return false;
+			memcpy(output,encoded,sizeof(encoded));return true;
+		}
+#endif
 		memcpy(output,stage,sizeof(stage)); return true;
 	}
+	// PIONEER_Q38_AUTHENTICATED_WEIGHT_PAGE_END
 };
 #endif

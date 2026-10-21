@@ -24,7 +24,7 @@ public:
 	PioneerQ38CachedAffine()=default;
 	PioneerQ38CachedAffine(const PioneerQ38CachedAffine&)=delete;
 	PioneerQ38CachedAffine& operator=(const PioneerQ38CachedAffine&)=delete;
-#if defined(PIONEER_Q38_PREDECODED_Q4) && defined(__GNUC__) && !defined(__clang__)
+#if (defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_NATIVE_Q8)) && defined(__GNUC__) && !defined(__clang__)
 	__attribute__((noinline,optimize("Os")))
 #else
 	__attribute__((noinline))
@@ -54,7 +54,14 @@ public:
 		}
 		tile=data; type=kind; bytes=count; ready=true; return true;
 	}
-	__attribute__((noinline)) bool Panel(unsigned panel,PioneerQ38Panel* output) {
+#if defined(PIONEER_Q38_NATIVE_Q8) && defined(__GNUC__) && !defined(__clang__)
+	// Work-Q4 uses BlockQ4;this original per-panel path remains checked-
+	// only in this prototype. Keep it exact but compact inside SAME prefix.
+	__attribute__((noinline,optimize("Os")))
+#else
+	__attribute__((noinline))
+#endif
+	bool Panel(unsigned panel,PioneerQ38Panel* output) {
 		if (!ready || failed || !output || panel!=next || panel>=(type==8?2U:16U)
 			|| (reinterpret_cast<uintptr_t>(output)&3) || (bound && bound!=output)
 			|| !Separate(reinterpret_cast<uintptr_t>(output),sizeof(*output),reinterpret_cast<uintptr_t>(tile),bytes)

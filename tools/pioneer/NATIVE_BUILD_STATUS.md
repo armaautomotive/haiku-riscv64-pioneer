@@ -1,5 +1,68 @@
 # Native build status
 
+October21,05:21 UTC native-Q8 QUALIFIER prepared,NOT installed:
+e546b6643009018386ff57fceee7c8d425d81a3d8211529e5fc393719ea053d4,
+tag2026102100010014 builds a/b EXACT,guardd1ce/default2df unchanged.
+Frozen peer02d36cf9/1b9cdc6d,ordinary checked path retained. Separate
+Work ABI3/support6250/RUN6251 means ordinary TC Work2 operations are NOT
+handled by this role. Actual kernel Work-DMA/RUN Mk84SZIz PASS,including
+delayed writes/ownership/BME/map/copyout/partial-failure retention.95
+complete-chain/role/layout refusals before SDK/output PASS;93 exact-tag/
+guard/owner/open/generation diagnostic refusals PASS. Independent client
+f32313c3 builds b/c EXACT;requires idle tag14 BEFORE BEGIN,public Q8 fixture
+domain preflight BEFORE accelerator open,ORIGINAL TC CPU oracle and ONLY
+private wire-copy SM7 encoding. Synthetic Q8 explicitly generates[-127,127]
+instead of clipping data. Work production contains NO CPU learned reference.
+
+New updater6b131d8e binds041/tag12<->e546/tag14;focused60 actual filesystem/
+hash/handshake/owner/failure cases PASS,expanded suite RUNNING. No automatic
+rollback. Full-model/Assistant SM7 producer remains REFUSED (12 before-SDK/
+libs/output tests PASS),pending native/graph qualification. Actual source
+page unit14 and five actual protocol namespace builds PASS. Repeated full
+pinned peer icCzIzYp logSHAdc53649bd29390e79cbcb3b014fbdf9952f5135214c4177a6b466de74a8895aa.
+All-word/range check Zw7aAJ5D PASS. Root+real peer W7sXoaOt PASS,including
+coordinator-set inputs/scales and full source/NoC/DMA/counter failure proofs.
+Current hardware remains known-clean restored041/tag12/gen22. Best whole
+rate=.181432516tok/s,20tok/s UNMET. Goal ACTIVE.
+
+October20,22:13 Vancouver (October21,05:13 UTC) GROUP32 NOT PROMOTED:
+Full f414 THREE32 on2109 finished clean:81/450.492929s=.179803044tok/s,
+about0.90% below041=.181432516 despite2.6% lower isolated FFN latency.
+Each new sequence repeats exactly,but positions30/31 differ from earlier
+1010/888 to888/10288 (six token-ID differences total). Cross-driver token
+workloads therefore NOT strictly identical;single samples NOT robust
+statistical/semantic evidence. Restored measured faster041/tag12/gen22
+through KNOWN-CLEAN guarded swap;clock restored/uncertain0/CPU guardclear.
+No reset/reboot/SD/power/CPU/RAM/Assistant setting change.20tok/s UNMET.
+Full logSHAf27cb256796bb3461f3aaa48d48f614c787eeba050af0c5dc45fa80869327efa,
+evidence:benchmarks/qwen38-native-group32-20261021.txt. Goal ACTIVE.
+
+Native SM7 Q8 full ACTUAL image V1BGAbfE and repeated PINNED icCzIzYp PASS:
+all formats/widths/groups/modes/two changed inputs EXACT to original-TC
+FP32+FP64,checked full-TC -128 unchanged,sticky native SrcA format with
+metadata restoration/explicit all-lane enable,DEFERRED source publication,
+zero SFPU decode/MOV,unchanged packet footprint/matrix phases/STOP. Missing
+lane enable/unpack/ADC/native metadata restore/false completion and four
+NoC failure controls refuse before publication/inert park. First full log
+SHA3f38c8e0ed68a9ab78bf0d6eaa617507b98278d62a00afb34950c0ddfbecda13.
+Frozen02d36cf9/1b9cdc6d all words/range sentinels match d/e. Actual root+
+real native-Q8 workers W7sXoaOt PASS108 shape/worker cases+all root proof/
+rollover/uncertainty controls;logSHA1851e265aa8cea0f60c0ab83559b40855eef12fe6461b21f3b475dd5d039f645.
+OFFLINE K17408/groups16 RV15,731,984->14,226,264 (~9.6% fewer),vector ops
+4,839,648->1,323,234 (~72.7% fewer),drains226,388->156,758 (~30.8% fewer).
+These are instruction-model counts,NOT measured silicon/model speed.
+
+Future SM7 producer uses DISTINCT support/RUN6250/6251 and Work ABI3;
+ordinary TC Work60f2/60f3 ABI2 unchanged,span namespace unchanged. All five
+namespace configurations txtD7zMg PASS. Native/source builders still
+REFUSE the new format pending complete source/driver/graph qualification.
+Extracted ACTUAL authenticated source-page kE71HY7b PASS14 refusal cases+
+all4 quant types:SM7 only Q8,metadata/padding preserved,source fresh before/
+after conversion,bounds/read/source-change/domain failures BEFORE output.
+Current ordinary driver recompile d remains EXACT2109/guardd1ce/default2df.
+Predecoded-Q4 generic observer regression xcRsLd2p also PASS. No native
+SM7 selection/install/execution yet. Best completed whole27B=.181432516.
+
 October21,04:51 UTC GROUP32 physical52+real FFN32 PASS:
 210946ad/tag13/gen21 completed18 synthetic Work+16 auth119 Work+18 checked
 exact to respective separate references,THREE clean ENDs/clock restored/

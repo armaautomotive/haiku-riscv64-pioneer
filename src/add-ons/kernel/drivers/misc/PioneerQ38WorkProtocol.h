@@ -14,9 +14,21 @@
 // Explicit WORK interface. Old drivers reject these operations;there is NO
 // silent fallback to the exhaustive checked path. Same logical request and
 // owned output ranges,NO user physical addresses/code/nonce authority.
-#define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x60f2)
-#define TT_PCI_PROBE_Q38_WORK_RUN (B_DEVICE_OP_CODES_END + 0x60f3)
+#define TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x60f2)
+#define TT_PCI_PROBE_Q38_LEGACY_WORK_RUN (B_DEVICE_OP_CODES_END + 0x60f3)
+#if defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_NATIVE_Q8_QUALIFICATION) || defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT)
+// New lossless SM7 SOURCE encoding MUST NOT share ordinary TC Work ops.
+// Private-source producer/qualifier only;NOT a fallback or ABI relabelling.
+#define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x6250)
+#define TT_PCI_PROBE_Q38_WORK_RUN (B_DEVICE_OP_CODES_END + 0x6251)
+#define TT_Q38_WORK_SUPPORT_VERSION 3
+static_assert(TT_PCI_PROBE_Q38_WORK_SUPPORT!=TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT
+	&& TT_PCI_PROBE_Q38_WORK_RUN!=TT_PCI_PROBE_Q38_LEGACY_WORK_RUN,"source-format namespaces MUST remain distinct");
+#else
+#define TT_PCI_PROBE_Q38_WORK_SUPPORT TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT
+#define TT_PCI_PROBE_Q38_WORK_RUN TT_PCI_PROBE_Q38_LEGACY_WORK_RUN
 #define TT_Q38_WORK_SUPPORT_VERSION 2 // explicit END;close alone NEVER runs device cleanup
+#endif
 // Work trusts the immutable root's ON-CARD peer/input/numeric checks. CPU
 // keeps only root completion/source/counter/held-state SAFETY bookkeeping.
 // It does NOT read/validate peer proof records,expanded input or output

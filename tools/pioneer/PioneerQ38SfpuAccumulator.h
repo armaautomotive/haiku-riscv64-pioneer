@@ -70,6 +70,9 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 	static_assert(!ZeroMinimum || Integer,"zero-minimum specialization is exact INTEGER Work only");
 	const bool zeroMinimum=ZeroMinimum;
+#ifdef PIONEER_Q38_NATIVE_Q8
+	const bool directNativeQ8=ZeroMinimum && type==8;
+#endif
 	if (ZeroMinimum && type==12) return false;
 	// ALL accumulator lanes are explicitly +0 at first group panel below.
 	// Q8/Q6 metadata minima are +0,ALL products remain finite normal/zero.
@@ -89,6 +92,9 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 #endif
 	) {
 		e.Op(0x5e203c00); e.Op(0x5120000a); e.Op(0x5420000f); e.Op(0xb2050000); e.Drain();
+#ifdef PIONEER_Q38_NATIVE_Q8
+		if(directNativeQ8)e.Config(73,0x13); // FP32 metadata UNPACK-to-Dst,not SrcA publication
+#endif
 		e.Config(1,Integer?0xa0200000:0x20200000); e.Config(64,0x100010); e.Config(65,1); e.Config(72,0);
 		for (unsigned kind=0;kind<(
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
@@ -99,7 +105,14 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 			e.Config(84,0x00400000+(row+4)*16); e.Config(76,(address-16)/16);
 			e.Op(0x42000081); e.Drain(); // no bank publication or flip
 		}
-		e.Config(1,Integer?0xa03c8000:0x203c8000); e.Config(64,0x10001e); e.Config(65,16); e.Config(72,14); e.Config(84,0x00400040);
+		e.Config(1,
+#ifdef PIONEER_Q38_NATIVE_Q8
+			directNativeQ8?0xa03c0000:
+#endif
+			Integer?0xa03c8000:0x203c8000); e.Config(64,0x10001e); e.Config(65,16); e.Config(72,14); e.Config(84,0x00400040);
+#ifdef PIONEER_Q38_NATIVE_Q8
+		if(directNativeQ8)e.Config(73,3);
+#endif
 		e.Op(0xb2050004); e.Op(0x5e23fc00); e.Drain(); e.Op(0x3700000f);
 	}
 	for (unsigned parity=0;parity<4;parity+=2) {

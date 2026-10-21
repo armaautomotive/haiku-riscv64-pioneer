@@ -55,7 +55,18 @@ ffn32-group32-20261021-a.log
 Matching local /private/tmp/pioneer-q38-group32-native-evidence.FwMDnsRz/.
 Serial boundaries63951273/63956867/63962425/63967273;clean end63973888.
 
-At04:42 started exclusive full-model f414 THREE32 retained-weight run
-on2109. NO full-model group32 rate/result yet. Latest completed whole27B
-remains EARLIER041=.181432516tok/s.20tok/s UNMET. Assistant closed/files
-and settings intact,64CPU/full128GB/boot unchanged. Goal ACTIVE.
+Full-model f414 THREE32 run04:42-05:11 completed clean END/CLI_EXIT0,
+clock restored/uncertain0/CPU cold0/active_owner0.81 measured positions/
+450.492929s=.179803044tok/s vs041=.181432516:about0.90% lower sampled
+throughput. One session each,NOT robust statistical/thermal evidence.
+All96 tokens repeat within new run,but positions30/31 PER sequence changed
+from1010/888 to888/10288. Thus workloads are NOT strictly token-identical
+between drivers. Changed FP32 grouping is numerically observable;this is
+not independent semantic quality evidence. Despite FFN-only improvement,
+GROUP32 IS NOT PROMOTED. Restored measured faster041/tag12/gen22 through
+known-clean guarded swap,NO reset/reboot.20tok/s UNMET.
+Full log full-model-work-group32-three32-20261021-a.log
+SHAf27cb256796bb3461f3aaa48d48f614c787eeba050af0c5dc45fa80869327efa,
+same remote inference stage/local evidence folder. Serial boundary63973888,
+clean completion63993845. Assistant closed/files/settings intact,
+64CPU/full128GB/boot unchanged. Goal ACTIVE.

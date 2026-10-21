@@ -17,6 +17,13 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CohortProtocol.h"
 #include "PioneerQwen38Panel.h"
 #include "PioneerQ38RowFixtures.h"
+#ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
+#if !defined(PIONEER_Q38_ROOT_CYCLE_CLIENT) || defined(PIONEER_Q38_GROUP32_REFERENCE_CLIENT)
+#error Native Q8 reference requires its separate tagged Work diagnostic
+#endif
+#include "PioneerQ38NativeQ8Data.h"
+#include "PioneerQ38NativeQ8DebugTag.h"
+#endif
 #ifdef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
 #ifndef PIONEER_Q38_ROOT_CYCLE_CLIENT
 #error Group32 reference is only the separately tagged Work diagnostic
@@ -133,10 +140,29 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 			unsigned d=type==14?208:0; uint16_t half=row%3?uint16_t(0x3c00+row*13):uint16_t(1+row);
 			tile[d*16+row]=uint8_t(half); tile[(d+1)*16+row]=uint8_t(half>>8);
 			if (type==12) { tile[32+row]=0; tile[48+row]=0x38; }
-			if (type==8) tile[32+row]=128;
+			if (type==8) {
+#ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
+				// NEW diagnostic domain,not clipping any model/public fixture.
+				for(unsigned byte=2;byte<34;byte++)tile[byte*16+row]=uint8_t(int((byte*37+row*59+b*13+w*23)%255)-127);
+#else
+				tile[32+row]=128; // ordinary checked/TC path still tests -128
+#endif
+			}
 		}
 		if (!Reference(*r,packed,w,expected.data()+w*256)) return false;
 		memcpy(upload.data()+head,packed.data(),packed.size());
+#ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
+		if(type==8) {
+			// CPU oracle above uses ORIGINAL TC bytes. Transform ONLY the
+			// private not-yet-uploaded wire copy;never substitute a result.
+			for(uint64_t byte=0;byte<packed.size();byte+=4096) {
+				uint8_t input[4096]={},encoded[4096];unsigned count=unsigned(packed.size()-byte<4096?packed.size()-byte:4096);
+				memcpy(input,packed.data()+byte,count);
+				if(!PioneerQ38NativeQ8Data::PreparePage(input,byte,count,encoded,sizeof(encoded)))return false;
+				memcpy(upload.data()+head+byte,encoded,count);
+			}
+		}
+#endif
 		if (!Upload(fd,w%7,offset-head,upload)) return false;
 	}
 	double launched=Seconds(); if (launched<start) return false;
@@ -214,9 +240,25 @@ int main(int argc,char** argv)
 	if (real) {
 		publicRows.resize(PIONEER_Q38_ROW_FIXTURE_BYTES);
 		if (!PioneerQ38LoadRowFixtures(publicRows.data(),unsigned(publicRows.size()))) { fprintf(stderr,"STOP:PUBLIC_ROW_MEMORY_SHA_REQUIRED_BEFORE_OPEN\n"); return 1; }
+#ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
+		// First TWO fixtures are fixed K5120 Q8 tiles. Prove their source
+		// domain BEFORE accelerator open/BEGIN,not midway through uploads.
+		const unsigned q8Bytes=2*(5120/32)*576;
+		if(publicRows.size()<q8Bytes)return 1;
+		for(unsigned byte=0;byte<q8Bytes;byte++)if(byte%576>=32 && byte%576<544 && publicRows[byte]==128) {
+			puts("STOP_NATIVE_Q8_FIXTURE_MINUS128_BEFORE_OPEN;NO_ACCELERATOR_FD");return 1;
+		}
+#endif
 		puts("PUBLIC_ROW_MEMORY_SHA_PASS_725504_BYTES;INTERLEAVED_GROUPS_NOT_FULL_MODEL");
 	}
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
+#ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
+	tt_pioneer_driver_reload nativeTag={};nativeTag.version=1;
+	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&nativeTag,sizeof(nativeTag)) || !PioneerQ38NativeQ8DebugTag(nativeTag)) {
+		close(fd);puts("STOP_NATIVE_Q8_REQUIRES_EXACT_IDLE_TAG14;NO_BEGIN_OR_CARD_READ");return 1;
+	}
+	puts("NATIVE_Q8_DEBUG_EXACT_TAG14_BOUND;ORIGINAL_TC_CPU_REFERENCE_SEPARATE_FROM_SM7_WIRE;NOT_MODEL_OR_WORK_INFERENCE");
+#endif
 #ifdef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
 	tt_pioneer_driver_reload tag={};tag.version=1;
 	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&tag,sizeof(tag)) || !PioneerQ38Group32DebugTag(tag)) {

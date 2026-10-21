@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_GROUP32)
+#if defined(PIONEER_Q38_TEST_NATIVE_Q8)
+#define PIONEER_Q38_NATIVE_Q8_IMAGE_MODEL_ONLY
+#include "pioneer_q38_native_q8_image_test.cpp"
+using CooperativePeer=NativeQ8Image;
+#elif defined(PIONEER_Q38_TEST_GROUP32)
 #define PIONEER_Q38_GROUP32_IMAGE_MODEL_ONLY
 #include "pioneer_q38_group32_image_test.cpp"
 using CooperativePeer=Group32Image;

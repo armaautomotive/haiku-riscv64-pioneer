@@ -27,6 +27,8 @@ SECTIONS {
 		/* Separate OFFLINE direct-Q4 helper,SAME owned prefix/limits. */
 		*(.text.pioneer_q38_direct_q4)
 		*(.text._Z24PioneerQ38DirectQ4UnpackI18VectorPanelEmitterE*)
+		/* New SM7 Q8 job setup,SAME prefix/authority;absent by default. */
+		*(.text._Z29PioneerQ38DirectNativeQ8SetupI18VectorPanelEmitterE*)
 		/* Unselected prepared-Q4 experiment,inside the SAME owned prefix. */
 		*(.text._ZN20PioneerQ38PreparedQ45Panel*)
 		. = ALIGN(4);

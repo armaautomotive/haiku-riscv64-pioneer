@@ -67,6 +67,9 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	bool InlineTensix() const override { return true; }
 #ifdef PIONEER_Q38_TEST_PREDECODED_Q4
 	virtual bool DirectQ4Panel() const { return false; }
+#ifdef PIONEER_Q38_TEST_NATIVE_Q8
+	virtual bool DirectNativeQ8Sfpu() const { return false; }
+#endif
 #endif
 	bool Int8Arithmetic() const override { return BFloat?false:Base::Int8Arithmetic(); }
 	bool Int8ConvertedRead() const override { return BFloat?false:Base::Int8ConvertedRead(); }
@@ -257,13 +260,24 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		if (op==0x8f000000) { vectorOps++; drained=false; return; }
 		if ((code>=0x70 && code<=0x8d) || code==8 || code==0x90) {
 			bool registerOnly=false;
+#ifdef PIONEER_Q38_TEST_NATIVE_Q8
+			if(DirectNativeQ8Sfpu() && op==0x8a000002) {
+				for(unsigned row=96;row<112;row++)for(unsigned col=0;col<16;col++)
+					assert(defined[Adj(row)] && wrote[Adj(row)][col] && wrote[Adj(row)+8][col]);
+				registerOnly=true; // ONLY explicit lane enable,NOT Dst/source data consumption
+			}
+#endif
 #ifdef PIONEER_Q38_TEST_BLOCK_SCALE_REUSE
-			registerOnly=BlockAffineActive() && blockScratchWords==256 && blockImportMask==65535
-				&& (op==0x8a000002 || (code==0x71 && ((op>>20)&7)==3));
+			registerOnly=registerOnly || (BlockAffineActive() && blockScratchWords==256 && blockImportMask==65535
+				&& (op==0x8a000002 || (code==0x71 && ((op>>20)&7)==3)));
 #endif
 			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible || registerOnly) && thread[2]==1
 				&& (BFloat?PioneerQ38BFloatMatrixEquivalent(config[0],config[1],thread[2],thread[3]):
-					(config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])))
+					(config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])
+#ifdef PIONEER_Q38_TEST_NATIVE_Q8
+						|| (DirectNativeQ8Sfpu() && config[0]==0x423e && config[1]==0xa03c0000 && thread[2]==1 && thread[3]==1)
+#endif
+					))
 				&& config[220]==0 && thread[5]==4);
 			vectorOps++;
 			if (op==0x8a000002) { enabled=true; return; }

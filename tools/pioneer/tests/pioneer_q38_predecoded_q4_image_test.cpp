@@ -5,11 +5,11 @@
 // Original-format oracle is retained separately. ONLY wire bytes change.
 struct PredecodedQ4Image:DeferredAffineImage {
 	mutable DeferredAffineImage original;
-	bool direct=false,directPending=false,omitUnpack=false,omitCompletion=false,omitAdcReset=false;
+	bool direct=false,directPending=false,omitUnpack=false,omitCompletion=false,omitAdcReset=false,directConfigured=false;
 	unsigned directAddress=0,directUnpacks=0,directReads=0,directSetup=0;
 	struct DirectHazard {};
-	PredecodedQ4Image(const char* reference,const char* candidate,unsigned type,unsigned k,unsigned groups,bool work)
-		:DeferredAffineImage(candidate,type,k,groups),original(reference,type,k,groups) {
+	PredecodedQ4Image(const char* reference,const char* candidate,unsigned type,unsigned k,unsigned groups,bool work,unsigned worker=1)
+		:DeferredAffineImage(candidate,type,k,groups,worker),original(reference,type,k,groups,worker) {
 		direct=work && type==12;
 		if(!direct)return;
 		for(auto& bytes:tiles) {
@@ -22,8 +22,11 @@ struct PredecodedQ4Image:DeferredAffineImage {
 	}
 	bool DirectQ4Panel() const override {return direct;}
 	bool NativeInt8Unpack() const override {return direct;}
+	virtual unsigned DirectPanelBase() const {return 0x90100;}
+	virtual unsigned DirectPanels() const {return 16;}
+	virtual int DirectValue(unsigned value) const {if(value>15)throw DirectHazard{};return int(value);}
 	void Instruction(uint32_t op) override {
-		if(direct && config[0]==0x423e && !ownerA && !sources[mathBank] && !directPending) {
+		if(direct && directConfigured && config[0]==0x423e && !ownerA && !sources[mathBank] && !directPending) {
 			if(op==0x3700000f && !directSetup)directSetup=1;
 			else if(directSetup) {
 				const uint32_t expected[]={0,0x5e23fc00,0x5120000a,0x5420000f,0x420000c1};
@@ -38,9 +41,9 @@ struct PredecodedQ4Image:DeferredAffineImage {
 				&& !sources[unpackBank] && !ownerA && thread[5]==4 && adc1==255
 				&& config[0]==0x423e && config[1]==0xa03c0000 && config[49]==0
 				&& config[64]==0x10001e && config[65]==16 && config[72]==14 && config[73]==3 && config[84]==0x400040);
-			assert(directSetup==5);directSetup=0;
-			directAddress=(config[76]+1)*16;unsigned panel=matrixInstructions/MatrixPhasesPerPanel()%16;
-			assert(directAddress==0x90100+panel*256);directPending=true;drained=false;directUnpacks++;return;
+			assert(directSetup==5 && directConfigured);directSetup=0;directConfigured=false;
+			directAddress=(config[76]+1)*16;unsigned panel=matrixInstructions/MatrixPhasesPerPanel()%DirectPanels();
+			assert(directAddress==DirectPanelBase()+panel*256);directPending=true;drained=false;directUnpacks++;return;
 		}
 		if(directPending) {
 			if(op!=0xa2101816 && op!=0x4500017e)throw DirectHazard{};
@@ -48,8 +51,8 @@ struct PredecodedQ4Image:DeferredAffineImage {
 				if(omitCompletion){gpr63=1;return;} // deliberately FALSE acknowledgement,do not publish bank
 				for(unsigned i=0;i<256;i++) {
 					unsigned at=directAddress+i,value=(memory.at(at&~3U)>>(8*(at&3)))&255;
-					if(value>15 || omitUnpack)throw DirectHazard{};
-					a[i/16][i%16]=float(value);directReads++;
+					if(omitUnpack)throw DirectHazard{};
+					a[i/16][i%16]=float(DirectValue(value));directReads++;
 				}
 				sources[unpackBank]=true;unpackBank^=1;ownerA=sources[mathBank];directPending=false;panelMoves=0;
 			}
@@ -57,6 +60,10 @@ struct PredecodedQ4Image:DeferredAffineImage {
 		DeferredAffineImage::Instruction(op);
 	}
 	void Store(uint32_t at,uint32_t value) override {
+		if(direct && at==0xffef0130 && config[0]==0x423e) {
+			uint64_t address=(uint64_t(value)+1)*16;
+			if(address>=DirectPanelBase() && address<DirectPanelBase()+DirectPanels()*256)directConfigured=true;
+		}
 		if(direct && at==0xffef0000 && setupConfiguration==25 && config[0]
 			&& value!=config[0] && (value==0x4231 || value==0x423e)) {
 			assert(drained && !directPending && !rawPending && phaseQueue.empty() && pendingAccumulator.empty() && !ownerA && !ownerB);
@@ -66,10 +73,11 @@ struct PredecodedQ4Image:DeferredAffineImage {
 		DeferredAffineImage::Store(at,value);
 	}
 	bool CorrectRows() const override {
-		original.vector=vector;original.matrixInstructions=matrixInstructions;
+		original.vector=vector;original.scales=scales;original.matrixInstructions=matrixInstructions;
 		memcpy(original.buffers,buffers,sizeof(buffers));return original.CorrectRows();
 	}
 };
+#ifndef PIONEER_Q38_PREDECODED_Q4_IMAGE_MODEL_ONLY
 int main(int argc,char** argv) {
 	assert(argc==3 || (argc==4 && !strcmp(argv[3],"--q4-work-pilot")));setvbuf(stdout,nullptr,_IOLBF,0);
 	for(unsigned type:{8U,12U,14U})for(unsigned k:{5120U,6144U,17408U})
@@ -106,3 +114,4 @@ int main(int argc,char** argv) {
 	}
 	puts(argc==4?"PASS PARTIAL ONLY predecoded-Q4 actual image pilot+deferred unpack/value failure observers;FULL SUITE SKIPPED":"PASS OFFLINE ACTUAL predecoded-Q4:ORIGINAL format FP32+FP64 exact,all formats/widths/groups/modes/two changed inputs,DEFERRED native SM7 unpack,zero SFPU quant decode/MOV,unchanged matrix/source/STOP,checked/non-Q4 old layout,missing unpack/out-of-domain refuse before publication;NO_NATIVE_LAYOUT_OWNER_OR_SPEED_QUALIFICATION");
 }
+#endif

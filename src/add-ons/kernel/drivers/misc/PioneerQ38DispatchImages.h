@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_NATIVE_Q8_QUALIFICATION
+#if !defined(PIONEER_Q38_SCALE_REUSE_QUALIFICATION) || !defined(PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION) || defined(PIONEER_Q38_GROUP32_QUALIFICATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
+#error Native SM7 Q8 requires the separate scale/cache qualifier,not another layout/rounding/host role
+#endif
+#include "PioneerQ38NativeQ8PeerImage.h"
+#endif
 #ifdef PIONEER_Q38_GROUP32_QUALIFICATION
 #if !defined(PIONEER_Q38_SCALE_REUSE_QUALIFICATION) || !defined(PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION)
 #error Group32 qualification requires the complete separate scale/cache chain
@@ -119,6 +125,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_NATIVE_Q8_QUALIFICATION
+ if (worker && worker<120) return PioneerQ38NativeQ8PeerPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_GROUP32_QUALIFICATION
  if (worker && worker<120) return PioneerQ38Group32PeerPrefixWord(address);
 #endif
@@ -738,6 +747,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_NATIVE_Q8_QUALIFICATION
+ if (worker && worker<120) return PioneerQ38NativeQ8PeerWord(word);
+#endif
 #ifdef PIONEER_Q38_GROUP32_QUALIFICATION
  if (worker && worker<120) return PioneerQ38Group32PeerWord(word);
 #endif
