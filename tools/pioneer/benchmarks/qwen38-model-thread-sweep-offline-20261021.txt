@@ -93,3 +93,21 @@ OneCPU8sample only,NOT broad/thermal/statistical or textquality evidence.
 Completedtrial permits follow-up8/1/8;NOT yet Assistant/default promotion.
 20tok/s UNMET. Assistant already supports explicit CPUthread selection
 for non-matrix operations;this test did not change its files/settings.
+
+Native56e9524e8/1/8 follow-up completed15:11UTC,same041/tag12/g61,
+ALL96tokenIDs EXACT vsoriginal041 AND acrossall3sequences;47712learned
+projections/48480calls/119workers/4558653pagesretained,explicitclean_end1/
+CLI_EXIT0. PostrunCPUmetadata cold0/active_owner0/open_count1/guard1.
+Own archivedlog
+/private/tmp/pioneer-q38-thread-native-evidence.B3L9AAbn/model-thread-narrow-041-three32-20261021-a.log
+SHA4796b9a7a477b64146fcad97f73c4aafaa8e513c15710fa3799a9324bc7cb6b5.
+Persequence27warmpositions:
+CPU8:132.599270s=.203621030tok/s,median4.910514,p954.918532;
+CPU1:139.357491s=.193746312tok/s,median5.159677,p955.173607;
+CPU8:132.716580s=.203441047tok/s,median4.913573,p954.923231.
+Pooled CPU8=54/265.315850=.203530999tok/s;CPU1 has4.80747%LESSrate/
+5.05026%MOREwalltime. Eightthreads now hasTHREE completed32-token samples
+acrossTWO same-residency comparisons,ALL exact. Still small fixedpublic
+samples,NOT broad/thermal/quality evidence. Mixed .200161443tok/s combines
+differentthreadcounts,NOT a fixedconfig throughput. NoCPUlearnedreference,
+fallback,Assistant/settings/boot/SD/power change.20targetUNMET.
