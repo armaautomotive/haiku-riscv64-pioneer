@@ -1,5 +1,33 @@
 # Native build status
 
+October20,17:42 Vancouver (October21,00:42 UTC) OFFLINE RESIDENT GDN IMAGE:
+First one-shot half-head candidate c3d150b4818c6abd12de957c1840237b60f46d52c143a894b53efb7492ee5a48,
+boote678476d,builds c/d exact. Uses ONLY two reserved GDDR->fixed L1 reads,
+post-dot FP32 vector arithmetic and two fixed L1->DIFFERENT reserved GDDR
+next-slot writes. No host traffic,PCI control or CPU reference in image.
+Private64-word shape includes bank routes,non-root peer,layer/slot,nonce,
+four64-bit owner epochs,position and16 source seals. Shape is NOT ownership.
+Future native coordinator MUST independently bind/prove physical worker,
+both owned initialized extents,token epoch,completion and ALL-worker commit.
+Native builder explicitly refuses RESIDENT_GDN!=0;NO driver selects image.
+
+Actual emitted-instruction/fabric suite yMV05bQE PASS:ALL49 read/write bank
+pairs,3GiB edges,four domains,ALL8256 result words exact,ALL96 non-root
+peer-route metadata,four half-heads x16 NONRESETTING decayed updates with
+varied Q/K/V. ALL8 wrapped counters/32 summary fields verified. All4 packet
+timeout/counter/source/descriptor faults,10 command readback faults,16
+source seals,shape/overlap/epoch/route/nonfinite input/state controls stop
+with ZERO later packets/NoC MMIO/math. Fabric is simulated,not native data
+transport,GGML FP64-dot equivalence,long-context quality or performance.
+Initial offline prototype's command-word5 identity assumption was removed:
+it is a mutable packet destination,NOT physical tile identity. First VM
+attempt also exposed emitted DIV/REM;bounded qualified route arithmetic
+replaced them. Neither earlier image was staged/selected/native tested.
+Individual RV32 frames352B(main)/176B(packet),NO enlarged memory ownership.
+Next:qualified native initialization entry,hybrid persistent GDN/coordinator
+and actual GGML device buffers/views/CPY/preprocessing/token commits.
+Current native dcc77864/gen14 remains known-clean idle;NO speedup claim.
+
 October20,17:40 Vancouver (October21,00:40 UTC) NATIVE POST-DOT GDN PASS:
 Separate LOCAL ABI3 driverdcc77864/tag202610210001000d/gen14 installed
 through guarded idle-only exchange,NO reboot. ALL68 post-dot primitive

@@ -1,8 +1,8 @@
 #!/bin/sh
-# OFFLINE local arithmetic image ONLY; no driver build/install/device access.
+# OFFLINE arithmetic/device-state images ONLY; no native build/install/access.
 set -eu
 [ "$#" = 3 ] || exit 2
-case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|packed|activation|activation0) kind=$1;; *) exit 2;; esac
+case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|resident_gdn|packed|activation|activation0) kind=$1;; *) exit 2;; esac
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$2/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$3
@@ -17,6 +17,7 @@ mkdir -m 700 "$output"
 "$cross-as" -I"$directory" -march=rv32imf -mabi=ilp32 -mno-relax "$directory/blackhole_qwen38_${kind}_start.S" -o "$output/start.o"
 linker=$directory/blackhole_scalar.ld
 case "$kind" in delta_vector_probe|delta_vector_ggml) linker=$directory/blackhole_qwen38_delta_vector_probe.ld;; esac
+if [ "$kind" = resident_gdn ]; then linker=$directory/blackhole_qwen38_resident_gdn.ld; fi
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$linker" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"
 "$cross-objcopy" -O binary -j .text "$output/program.elf" "$output/code.bin"
