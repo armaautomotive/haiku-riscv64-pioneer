@@ -1,0 +1,98 @@
+OFFLINE original-layout coordinator command-write reuse,October21 2026.
+NOT staged/installed/native-run or timed. Current separate full27B32/8/32
+CPU-thread trial runs on BEST041/tag12/g61;NO SCP/native job overlap.
+Best completed uninstrumented whole27B .181432516tok/s;20targetUNMET.
+
+Hypothesis:avoid repeatedly WRITING NoC command fields that the ACTUAL
+register already holds. Read EVERY one of original10fields EVERYpacket;
+skip write ONLY when actualvalue equals requiredword. Otherwise SAME
+write+exactreadback;badreadbackparks before laterfields/doorbell. NO cache,
+maskedbits,retainedsoftwareguess,source/route/counter/PC/drain removal.
+Complete original PacketIdle proof still precedes command programming;
+all original doorbell/fence/ACK/error/counter/source/owner rules unchanged.
+Private validated command/route/extent authority stays with caller,NOT
+the programming helper. Checked/STOP retain original fullwrite sequence.
+No packet count/shape,format/math/rounding,weight/bank/L1 ownership change.
+
+Primary Blackhole NIU description inspected October21:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md
+Command fields retain software values;reserved NOC_CTRL bits may change
+on request initiation. Prototype compares the WHOLE actual word and
+rewrites it when unequal,NEVER masks reserved-bit differences. It still
+waits for actual NIU idle;no overlapping issuer or buffer reprogramming.
+This is a narrow programming inference,NOT silicon speed qualification.
+
+974848 exact register-difference patterns:119routes x read/write x4lengths
+x1024changedfieldmasks;everyfieldread,onlychangedfieldswrite/readback.
+Hardware-reserved control mutation repaired;10per-fieldreadback failures
+stop beforelaterwrites;idlefalse hasNOeffects.311 strictroot/driver/debug/
+peer/model/Assistant/mixed-role/preSDK refusals pass Z9fcnwwe.
+Log/private/tmp/pioneer-q38-root-command-plan-20261021-d.log
+SHA301303e37de7671e3effdc074754938ff34474cf011149f03b4c11a8e0a19c68.
+Initial offline test missed initializer_list include;fixedonlytestheader.
+
+Root a/b IDENTICAL,main7976/8192B,prefix3872/8192B:
+main56623f8942b7a9a018f557e7ce157624cb031e19f1780d32622760cd90327d62
+prefix06e40509f3570a28a9aedb08afade69cc0850084c37103f790f49a362214b165
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+Existing70000..72000/72000..74000 bounds/6e000stack remain unchanged.
+119direct-SrcB peers unchanged209fc6b8/08333055;no new peerhelper/format.
+FlagOFF EXACToriginal sentinelroot65c790cf/d358b793. Separate24requires
+originalsentinel/direct/affine/scale/normal-clock chain;refuses prefetch/
+raw-cache/frontend/batch/profile mixing. No model/Assistant selector.
+
+Actual RV32 coordinator x9type/K x4worker-counts1/2/7/119,twoWorkjobs+
+STOP;freshcommandfield read evidence CLEARED at EVERY request,not carried
+from priorpacket. Identicalpacketcommands/57safetyfields/output/source/
+twoPC/reset/NoC/DMA proof;fewercommandwrites,NOT a silicon timing claim.
+Reservedcontrolbits mutate after completedpeerpackets and arerepaired.
+Originalchecked9shapes hasSAME fullread/write sequence/all64safetyfields.
+Independent delayedworker readiness6cases still audits EVERY worker's2PC
+samples/reset,including lateNONsentinel. Nine actualcoordinator+REALpeer
+arithmeticshapes retain exactFP32/FP64 andNOdotProbe reads.132cases total.
+30first/middle/late per-fieldreadback faults,ALL64proof corruptions,
+badPC/firstmiddlelastNoC/DMA faults retain UNKNOWN/inert,NOretry/reset.
+Log/private/tmp/pioneer-q38-command-reuse-root-test-20261021-c.log
+SHAcc43e302182a24c4dec33a023d3f5909cb8f1278ed2d5e5aaf12427bca364908.
+Evidence x9wMJj6l. Initial runner selected old incomplete-a peerbuild;
+hash gate refused BEFORE execution;selected independently pinned-d.
+
+Actual kernel/controller all3privateowners/clock/cold/BME/maps retained
+on all BME/map/delayed/first-middle-last DMA failures;NOdisable/reset/
+retry,checkedisolation unchanged. ysj4wSCH log
+/private/tmp/pioneer-q38-command-reuse-controller-a-20261021.log
+SHAe7ea6ed756fb19f5d301566be96be89253cb12578b0feaf8f899b9c2ce38d11e.
+491520actualregistrywords/120roles/zero-gaps/liveoperandholes/bounds
+hrJDh2za log/private/tmp/pioneer-q38-command-reuse-registry-20261021-a.log
+SHAc91108e67488993e38c81c947c04da4c9cb14aceb03d1435b6369b5359bfc725.
+
+Exacttag24 driver a/b IDENTICAL:
+5640dd3dffb80fae0e6a3c9a6c2b91d83a1db86a0a5ab530d5932b3eb7b0cfc3
+Reloadguardd1ce2aa4/default43control2df0e0f8 unchanged. Separateexact24
+CPU-reference DEBUGclient a/b identical:
+d301563c91caa12d27382f2ff63ca8628d2e13e93b9b2c06f60cb74d30a6e51d.
+NoCPUlearned-reference fixedpublicFFNhost17/24 a/b identical:
+28b9ddab713d8b9953626eb28580d631ddc000b0da1cc1690d7d74526065f370.
+744exactdebugmetadatachecks(8x93)OyqTmvXx pass;taglogSHA
+ab1997347027214421160ad9763e27d60ed7a7969c1c5f31d0f1be78148cee4e.
+484hostrole preSDKrefusals+17actualfork/wait/barrier/childfailureCPUmocks
+Gh52vUDr pass. HostlogSHA
+ec48ff08103c0372eb8288b7b8e86763983fc468b182bad679453df3a42e0775.
+
+Guardedupdater ONLYexplicit known-clean17<->24,allsource/installed/guard/
+clienthashespinned,NOforce/reset/automaticrollback. ScriptSHA
+7b2c087b14dc2fcd8631d35ccb6aa0095b03675de3a97917b3d8cc140e2cd4da.
+60actual selected filesystem/handshake/hash/symlink/owner/failure CPUMOCK
+cases pass. Full3371regression in progress;no nativecommand24 issued.
+SelectedlogSHA676e212d87f1087c0b4c914f3d47fcb006415cc05838a4fc26c178ab7266285d.
+
+FULL3371 actual updater cases completed PASS by14:31UTC. Log
+/private/tmp/pioneer-hot-swap-command-reuse-full-20261021-a.log
+SHA9fa28e0a5f545fcd4424f1da1929025ee41a3650ecfbd9482794929eaa9a4ffa.
+No native reload/reset was issued by these disposable-filesystem mocks.
+FlagOFF cross-builds also reproduce EXACT original17 driver84ab80ac and
+fullmodel f414306f. Actual32/8/32 thread-switch/public-loop/failure guards
+and original repeat-loop regressions pass SXxflwpD/LZubjykj;log
+/private/tmp/pioneer-q38-command-reuse-thread-regression-20261021-a.log
+SHA444dddbf54799f89e8b5500f5817d7b34273556f522d0c8bde5015dfe803e6af.
+Still NOT staged/installed/native qualified;no native speed claim.

@@ -20,6 +20,7 @@ struct TimedPollFabric:DispatchMachine {
   if(!write && remote==0xffb121b0){resetReads[worker-1]++;if(worker==badResetWorker)memory[local]=0x46801;}
  }
 };
+#ifndef PIONEER_Q38_SENTINEL_ROOT_IMAGE_MODEL_ONLY
 int main(int argc,char** argv) {
  assert(argc==4);setvbuf(stdout,nullptr,_IOLBF,0);
  for(unsigned n:{1U,2U,7U,119U})for(unsigned type:{8U,12U,14U})for(unsigned k:{5120U,6144U,17408U}) {
@@ -78,3 +79,4 @@ int main(int argc,char** argv) {
  }
  puts("PASS OFFLINE actual sentinel root:108 shape/worker/Work/checked/STOP equivalence cases,ALL57 safety fields and exact packet/DMA output in original fixture,independent progress with NON-sentinel late workers still audits ALL,two physical PCs/reset each,ALL64 proof corruptions/PC/reset/NoC/counter uncertainty inert,actual peer arithmetic exact;NO NATIVE OR SPEED QUALIFICATION");
 }
+#endif

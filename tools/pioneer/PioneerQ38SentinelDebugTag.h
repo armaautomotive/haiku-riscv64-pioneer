@@ -5,6 +5,9 @@
 #error Exact sentinel tag17 (or separately gated CPU-profile18) is independent qualification ONLY
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT) && (defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT) || defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH4_REFERENCE_CLIENT) || defined(PIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT))
+#error Command reuse qualifier has its own exact driver tag24
+#endif
 #if defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT) && (defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH4_REFERENCE_CLIENT) || defined(PIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT))
 #error Tile prefetch qualifier has its own exact driver tag23
 #endif
@@ -23,7 +26,9 @@
 static inline bool PioneerQ38SentinelDebugTag(const tt_pioneer_driver_reload& r) {
 	return r.version==1 && r.driver==55 && r.guard_version==1
 		&& r.build_tag==
-#ifdef PIONEER_Q38_PREFETCH_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_COMMAND_REFERENCE_CLIENT
+		UINT64_C(0x2026102100010024)
+#elif defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT)
 		UINT64_C(0x2026102100010023)
 #elif defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT)
 		UINT64_C(0x2026102100010022)

@@ -5,6 +5,17 @@
 // No physical route,address or sequence here is a new userspace capability.
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
+#if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || defined(PIONEER_Q38_WORK_BATCH4_FETCH)
+#error Separate OFFLINE command reuse requires original-layout sentinel root,not batch fetch
+#endif
+#include "PioneerQ38RootCommandReuse.h"
+#define Q38_COMMAND_PARAMETER ,bool reuseCommand
+#define Q38_COMMAND_WITH(value) ,value
+#else
+#define Q38_COMMAND_PARAMETER
+#define Q38_COMMAND_WITH(value)
+#endif
 #if defined(PIONEER_Q38_WORK_BATCH4_FETCH) && (!defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT))
 #error Batch4 is a separate OFFLINE exact-counter Work coordinator experiment
 #endif
@@ -122,7 +133,13 @@ static bool Idle()
 	return okay;
 }
 static bool PacketIdle() { return !*Words(0xffb20040) && !(*Words(0xffb20240)&255); }
-static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,unsigned bytes)
+#ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
+struct RootCommandIO {
+	uint32_t Read(unsigned word){return Words(0xffb20000)[word];}
+	void Write(unsigned word,uint32_t value){Words(0xffb20000)[word]=value;}
+};
+#endif
+static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,unsigned bytes Q38_COMMAND_PARAMETER)
 {
 	// ONLY the exact fixed peer data/status/PC/reset windows below. Never
 	// code/boot writes,peer resets,host DMA or a caller-supplied coordinate.
@@ -140,9 +157,20 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 #endif
 	uint32_t expected[4]; for (unsigned c=0;c<4;c++) expected[c]=*Words(0xffb20000+offset[c])+(c==1?(bytes+63)/64:1);
 	uint32_t command[]={write?local:remote,0,write?129U:XY(worker),write?remote:local,0,write?XY(worker):129U,0,write?0x212U:0,bytes,0};
+#ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
+	if(reuseCommand){
+		// Exact PacketIdle proof above;only private local writes and counter
+		// reads intervened. NO other NIU command writer exists in this owner.
+		RootCommandIO io;if(!PioneerQ38ProgramRootCommand(io,command,true))block_fault_park();
+		Checkpoint(0x54000101,worker);
+	}else {
+#endif
 	for (unsigned i=0;i<10;i++) Words(0xffb20000)[i]=command[i];
 	Checkpoint(0x54000101,worker);
 	for (unsigned i=0;i<10;i++) if (Words(0xffb20000)[i]!=command[i]) block_fault_park();
+#ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
+	}
+#endif
 	Fence(); *Words(0xffb20040)=1; (void)*Words(0xffb20040); Fence();
 	Checkpoint(0x54000102,worker);
 #ifdef PIONEER_Q38_TRANSFER_DIAGNOSTIC
@@ -213,9 +241,9 @@ static __attribute__((noinline,optimize("Os"))) bool PrepareInputs(unsigned mode
 }
 #endif
 #endif
-static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
+static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q38_COMMAND_PARAMETER)
 {
-	Transfer(false,worker,0x75000,0x74140,64); Words(0x7f800)[10]++;
+	Transfer(false,worker,0x75000,0x74140,64 Q38_COMMAND_WITH(reuseCommand)); Words(0x7f800)[10]++;
 	const volatile uint32_t* status=Words(0x75000);
 #ifdef PIONEER_Q38_FAULT_RETURN
 	// ALREADY transferred local status;normal status remains unchanged.
@@ -250,9 +278,9 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 		if (status[0]!=sequence || status[1]!=sequence || status[4]!=(stopped?2U:0U)) return false;
 	}
 	Words(0x7f800)[11]++;
-	Transfer(false,worker,0x75000,0xffb13140,4); unsigned first=*Words(0x75000);
-	Transfer(false,worker,0x75000,0xffb13140,4); unsigned second=*Words(0x75000);
-	Transfer(false,worker,0x75010,0xffb121b0,4); unsigned reset=*Words(0x75010);
+	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); unsigned first=*Words(0x75000);
+	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); unsigned second=*Words(0x75000);
+	Transfer(false,worker,0x75010,0xffb121b0,4 Q38_COMMAND_WITH(reuseCommand)); unsigned reset=*Words(0x75010);
 	Checkpoint(0x54000204,(worker<<24)|(first&0xffffff));
 	if (reset!=0x46800 || first<0x72000 || first>=0x74000 || second<0x72000 || second>=0x74000 || ((first|second)&3)) block_fault_park();
 	return stopped?PioneerQ38PeerTerminalPc(first) && PioneerQ38PeerTerminalPc(second):WaitPc(first) && WaitPc(second);
@@ -273,7 +301,7 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 		unsigned sentinel=0;if(!PioneerQ38SelectPollSentinel(parts,workers,sentinel))return false;
 		for(unsigned attempt=0;attempt<65536 && polls<budget;attempt++) {
 			polls++;
-			if(Peer(sentinel+1,parts[sentinel][3],false,false)) {complete[sentinel]=1;finished=1;break;}
+			if(Peer(sentinel+1,parts[sentinel][3],false,false Q38_COMMAND_WITH(work))) {complete[sentinel]=1;finished=1;break;}
 			PeerPollBackoff(backoff);backoff=PioneerQ38PollBackoffNext(backoff);
 			if(!backoff)return false;
 		}
@@ -285,7 +313,7 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 		for(unsigned w=0;w<workers;w++)if(!complete[w]) {
 			if(polls==budget)return false;
 			polls++;
-			if(Peer(w+1,parts[w][3],stopped,false)){complete[w]=1;finished++;}
+			if(Peer(w+1,parts[w][3],stopped,false Q38_COMMAND_WITH(work))){complete[w]=1;finished++;}
 		}
 		if(work && finished<workers)PeerPollBackoff(backoff);
 	}
@@ -424,7 +452,7 @@ extern "C" unsigned block_main()
 		if (work) continue;
 #endif
 		bool ready=false;
-		for (unsigned attempt=0;attempt<65536 && !ready;attempt++) ready=Peer(w+1,parts[w][3]-1,false,true);
+		for (unsigned attempt=0;attempt<65536 && !ready;attempt++) ready=Peer(w+1,parts[w][3]-1,false,true Q38_COMMAND_WITH(false));
 		if (!ready) block_fault_park();
 	}
 	for (unsigned w=0;w<workers;w++) {
@@ -440,18 +468,18 @@ extern "C" unsigned block_main()
 #endif
 		for (unsigned i=0;i<16;i++) Words(0x75000)[i]=descriptor[i];
 		Fence();
-		Transfer(true,worker,0x75000,0x74000,64);
+		Transfer(true,worker,0x75000,0x74000,64 Q38_COMMAND_WITH(work));
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 		// Transfer returns only after exact ACK/counter completion. The peer
 		// independently validates its immutable descriptor and publishes it
 		// in the mandatory full final proof. No redundant descriptor echo.
 		if (work) continue;
 #endif
-		Transfer(false,worker,0x75040,0x74000,64);
+		Transfer(false,worker,0x75040,0x74000,64 Q38_COMMAND_WITH(false));
 		for (unsigned i=0;i<16;i++) if (Words(0x75040)[i]!=descriptor[i]) block_fault_park();
 	}
 	for (unsigned w=0;w<workers;w++) {
-		*Words(0x75000)=parts[w][3]; Fence(); Transfer(true,w+1,0x75000,0x74100,4);
+		*Words(0x75000)=parts[w][3]; Fence(); Transfer(true,w+1,0x75000,0x74100,4 Q38_COMMAND_WITH(work));
 	}
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(0); // validation/staging/descriptor+doorbell transfers
@@ -462,7 +490,7 @@ extern "C" unsigned block_main()
 	volatile uint32_t complete[119]; for (unsigned w=0;w<119;w++) complete[w]=0;
 	unsigned finished=0;
 	for (unsigned round=0;round<65536 && finished<workers;round++) for (unsigned w=0;w<workers;w++)
-		if (!complete[w] && Peer(w+1,parts[w][3],operation==2,false)) { complete[w]=1; finished++; }
+		if (!complete[w] && Peer(w+1,parts[w][3],operation==2,false Q38_COMMAND_WITH(false))) { complete[w]=1; finished++; }
 	if (finished!=workers) block_fault_park();
 #endif
 	Checkpoint(0x54000300,workers);
@@ -471,7 +499,7 @@ extern "C" unsigned block_main()
 	// makes the final NIU command deterministic for the kernel's existing
 	// exact proof;do not weaken that proof to accept an arbitrary command.
 	if (operation==2) {
-		bool terminal=Peer(workers,parts[workers-1][3],true,false);
+		bool terminal=Peer(workers,parts[workers-1][3],true,false Q38_COMMAND_WITH(false));
 		Checkpoint(0x54000301,workers);
 		if (!terminal) block_fault_park();
 	}
@@ -507,7 +535,7 @@ extern "C" unsigned block_main()
 		const uint32_t* p=parts[w]; unsigned groups=p[2],reads=groups*blocks+(inputs*2+16383)/16384+1;
 #endif
 		unsigned flits=groups*blocks*Tile(type)/64+(inputs*2+((blocks*4+63)&~63U))/64;
-		Transfer(false,w+1,0x75000,0x83f00,256+groups*64);
+		Transfer(false,w+1,0x75000,0x83f00,256+groups*64 Q38_COMMAND_WITH(work));
 		const volatile uint32_t* proof=Words(0x75000);
 		for (unsigned c=0;c<8;c++) if (uint32_t(proof[c+8]-proof[c])!=(c==1?flits:(c==0 || c==2 || c==3 || c==6)?reads:0)) block_fault_park();
 		volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;

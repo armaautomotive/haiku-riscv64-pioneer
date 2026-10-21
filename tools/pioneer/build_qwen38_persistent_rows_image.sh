@@ -1,6 +1,8 @@
 #!/bin/sh
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_WORK_ROOT_COMMAND_REUSE:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_COMMAND_REUSE_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "$#" = 2 ] || exit 2
 case "${PIONEER_Q38_WORK_TILE_PREFETCH:-0}" in
  0) ;;
