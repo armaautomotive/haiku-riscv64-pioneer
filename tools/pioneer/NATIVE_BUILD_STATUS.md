@@ -1,5 +1,42 @@
 # Native build status
 
+October21,04:51 UTC GROUP32 physical52+real FFN32 PASS:
+210946ad/tag13/gen21 completed18 synthetic Work+16 auth119 Work+18 checked
+exact to respective separate references,THREE clean ENDs/clock restored/
+uncertain0/guardclear. SAME real FFN32 f056 median10.5955->10.320ms
+(2.6002% lower),mean10.321ms,all32 warm graphs exact repeat/33calls.
+Clean_end1/CLI_EXIT0/clock restored. New grouped output27826d85 differs
+from old05cda52a as intended:4910/5120 words,max abs2.3841858e-6,relativeL2
+7.6383927e-7,NOT independent learned-reference or semantic quality evidence.
+Full evidence:benchmarks/qwen38-native-group32-20261021.txt.
+Started exclusive full27B f414 THREE32 run04:42,NO group32 model rate yet.
+Latest completed whole-model remains EARLIER041=.181432516tok/s,NOT20.
+
+Authenticated CPU-only domain inventory completed:ALL288 Q8 tensors,
+7,155,384,320 original bytes/6,734,479,360 quant values,min-127/max127,
+ZERO -128,zero nonfinite HALF scales. Full c600 source SHA+same FD/epoch
+before/after every bounded chunk. Log SHA74ae96ecbd5af43ee7307e1e98ad14b4e16d296f004a8daecd3d7ab65d8daa47,
+local group32-native-evidence.FwMDnsRz/q8-domain-native-20261021-a.log.
+This establishes ONLY source byte-domain eligibility,NOT native format/speed.
+New OFFLINE SM7 DATA helper rJBPSk1K PASS all255 exact TC8<->SM7 values,
+minus128/noncanonical-zero refusal,2,113,536 quant values/all9 page/tile
+phases/partial pages,metadata/padding/canaries exact,late invalid/alias/
+overflow refusals BEFORE publication. SAME byte footprint,NO clipping.
+
+Separate OFFLINE direct-Q8 prototype d/e EXACT text02d36cf9/prefix1b9cdc6d,
+SAME main8164/8192B,prefix5344/5376B windows. Explicit all-lane enable,
+sticky native SrcA format,metadata imports return to exact native format;
+existing matrix phases/drains/NoC/SourceB activation range unchanged.
+Original checked full-TC path including-128 retained. Cold checked metadata
+functions compacted without arithmetic/check changes to keep fixed bounds.
+Pilot7YAdS66L PASS exact original-TC FP32+FP64;DEFERRED source publication,
+missing unpack/ADC/lane enable/native metadata restore/false completion and
+noncanonical-zero observers+four NoC failures before output/inert parks.
+Full mixed-format/repeated-input ACTUAL suite RUNNING,NOT fully qualified.
+16 native layout/source/ABI refusal cases PASS before SDK/output;native
+builder REFUSES this format. A future source/ABI MUST distinguish it from
+ordinary TC Q8;NO native/source selector exists. Goal ACTIVE.
+
 October21,04:25 UTC GROUP32 isolated native qualification STARTED:
 Reproducible a/b driver210946ad9f329ea2341e16519421e899ae09d41d1ad56fb1f3789bc77af4554d,
 tag2026102100010013/gen20,installed by idle-only guarded hot swap from041.

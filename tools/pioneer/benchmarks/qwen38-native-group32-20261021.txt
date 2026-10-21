@@ -1,0 +1,61 @@
+Physical Work-Q4 group32 qualification and real FFN32 benchmark.
+October21 2026 04:24-04:42 UTC;idle guarded hot swap,NO reboot/SD/power.
+Driver210946ad9f329ea2341e16519421e899ae09d41d1ad56fb1f3789bc77af4554d,
+tag2026102100010013,generation20 at install/21 in subsequent metadata.
+GROUP32 peer text6f0087f798dfb657eb137acad08e65541e121747403c2d04e42c2661fdd14948,
+prefix2cb765229203947400a2cc3710443cfd6ce572d5129829e61fed08e4a8109097;
+rootaa27f435/15643b20 and all source/NoC/PC/DMA proofs unchanged.
+Independent debug clientb87e7da2 rejects wrong tag/owner before BANK_BEGIN.
+Q4 Work intentionally changes FP32 grouping;NOT bit-exact old Work.
+
+52 physical numeric jobs passed exact to their intended separate oracles:
+18 synthetic Work,16 authenticated119-worker Work,18 original checked.
+THREE explicit BANK_END/CLI_EXIT0/clock800->1350->800/restored1/uncertain0.
+Checked still original per16 arithmetic,including full-range Q8 -128.
+Guard metadata cold0/active_owner0/guard1. Expanded actual updater2711
+cases+90 selector refusal+93 debug tag refusal tests PASS offline.
+
+SAME fixed f0566393 diagnostic,real blk.0.ffn_down.weight K17408/N5120,
+normal1350MHz,first graph+32 warm repetitions,NO CPU learned reference,
+repeatability outside timing. Only12240pages/50135040B primed before RUN.
+                             scale041          group32 2109
+Warm samples                 32                32
+Median graph seconds         .010595500        .010320000
+Mean graph seconds           .010598844        .010321000
+Minimum seconds              .010554000        .010275000
+Maximum seconds              .010722000        .010428000
+Warm wall seconds            .339458           .330558
+Warm matrix wall seconds     .338181           .329115
+Warm ioctl wall seconds      .312210           .302613
+Calls/projections            33/33             33/33
+Median graph latency2.6002% lower,ONE32-sample session each,NOT robust
+thermal/broad-workload/whole-model throughput evidence. Both clean_end1/
+CLI_EXIT0,clock restored/uncertain0/CPU guardclear.
+
+All32 warm new outputs repeat exactly. Grouped output SHA
+27826d854059806ebb46ec05be0afa22e8427aa36797f4eacfe39cca306986b0,
+old scale/control05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Standalone comparison of ALREADY exported5120 finite words finds4910
+changed words,max absolute difference2.384185791015625e-6,relative L2
+7.638392724823773e-7 vs old output. This is EXPECTED changed rounding,
+NOT an independent CPU learned reference,semantic quality or a Work-loop
+validation path. No substituted output/fallback. Whole-model token-ID
+comparison and timing still required.
+
+Native logs stage /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+group32-synthetic-native-20261021-a.log
+ SHA19e803069355b4bbfb0435cad492a9d53a3f2307bebdd4ff639d02e7a567712a
+group32-auth119-native-20261021-a.log
+ SHAa77510e5cc745f347d86763d5ed502ae74cc884bbb8ba4b2f5d8a11d3519d7b1
+group32-checked-native-20261021-a.log
+ SHAfb47f2fa8689b36605b6597aae7b2c38044d2ae39538ef06db9eff7eb2f65f1f
+FFN log /boot/home/pioneer-qwen38-vector-clear-20261018-t/:
+ffn32-group32-20261021-a.log
+ SHAfcac84ba8d3439e3cbdf93f7cc79ba491d69ace2f146d3895af6d009c1b07c0f
+Matching local /private/tmp/pioneer-q38-group32-native-evidence.FwMDnsRz/.
+Serial boundaries63951273/63956867/63962425/63967273;clean end63973888.
+
+At04:42 started exclusive full-model f414 THREE32 retained-weight run
+on2109. NO full-model group32 rate/result yet. Latest completed whole27B
+remains EARLIER041=.181432516tok/s.20tok/s UNMET. Assistant closed/files
+and settings intact,64CPU/full128GB/boot unchanged. Goal ACTIVE.
