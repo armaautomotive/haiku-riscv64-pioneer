@@ -10,7 +10,8 @@ static inline bool PioneerQ38ModelRootProfileTag(const tt_pioneer_driver_reload&
  return r.version==1 && r.driver==55 && r.guard_version==1 && r.generation
   && !r.quiesced && !r.cold && !r.active_owner && r.open_count==1
   && (r.build_tag==UINT64_C(0x2026102100010012) || r.build_tag==UINT64_C(0x2026102100010017)
-   || r.build_tag==UINT64_C(0x2026102100010019) || r.build_tag==UINT64_C(0x2026102100010020));
+   || r.build_tag==UINT64_C(0x2026102100010019) || r.build_tag==UINT64_C(0x2026102100010020)
+   || r.build_tag==UINT64_C(0x2026102100010021));
 }
 // ALREADY returned CPU-memory counters ONLY. No IO,learned-reference,
 // timeout/completion/cleanup authority,or change to graph success exists.

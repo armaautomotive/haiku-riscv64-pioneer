@@ -51,11 +51,11 @@ int main(){
  }
  {PioneerQ38ModelRootProfile bad;bad.Add(8,5120,119,s);assert(!bad.PublishAllowed(true,true,false));refused++;}
  unsigned tags=0;
- for(uint64_t tag:{UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010017),UINT64_C(0x2026102100010019),UINT64_C(0x2026102100010020)}) {
+ for(uint64_t tag:{UINT64_C(0x2026102100010012),UINT64_C(0x2026102100010017),UINT64_C(0x2026102100010019),UINT64_C(0x2026102100010020),UINT64_C(0x2026102100010021)}) {
   tt_pioneer_driver_reload good={};good.version=1;good.driver=55;good.guard_version=1;good.generation=40;good.open_count=1;good.build_tag=tag;
   assert(PioneerQ38ModelRootProfileTag(good));
   for(unsigned bit=0;bit<64;bit++){auto r=good;r.build_tag^=UINT64_C(1)<<bit;
-   bool known=r.build_tag==UINT64_C(0x2026102100010012) || r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010019) || r.build_tag==UINT64_C(0x2026102100010020);
+   bool known=r.build_tag==UINT64_C(0x2026102100010012) || r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010019) || r.build_tag==UINT64_C(0x2026102100010020) || r.build_tag==UINT64_C(0x2026102100010021);
    assert(PioneerQ38ModelRootProfileTag(r)==known);tags++;
   }
   for(unsigned field=0;field<8;field++) {

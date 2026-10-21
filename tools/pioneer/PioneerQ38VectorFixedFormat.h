@@ -44,6 +44,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
 	,bool frontendWork=false
 #endif
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	,bool rawCacheWork=false
+#endif
 )
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
@@ -57,6 +60,11 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #endif
 	e.Op(0x3700000f); e.Op(0x5e23fc00); e.Op(0x5120000a); e.Op(0x5420000f);
 	e.Op(0xb2050000); e.Drain();
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	if(PioneerQ38RawCacheReuse(type,panel,rawCacheWork))PioneerQ38RawCachePublish(e);
+	else {
+	if(PioneerQ38RawCacheActive(type,rawCacheWork))e.Config(84,PioneerQ38RawCacheUpper(type,panel,rawCacheWork)?0x00400140:0x00400040);
+#endif
 	if (span.second) e.Config(84,0x00400040);
 	e.Config(76,(rawBase+span.low-16)/16);
 	e.Op(span.second?0x42000081:0x420000c1);
@@ -74,6 +82,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 		e.Drain();
 #endif
 	}
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	}
+#endif
 	e.Op(0xb2050004); // preserve ordinary SrcB unpack's supported setting
 #ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
 	PioneerQ38FrontendBarrier(e,frontendWork);
@@ -81,7 +92,11 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 	e.Drain();
 #endif
 	e.Op(0x3700000f); e.Op(0x8a000002);
-	if (!PioneerQ38VectorTransform(e,type,panel)) return false;
+	if (!PioneerQ38VectorTransform(e,type,panel
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+		,rawCacheWork
+#endif
+	)) return false;
 	e.Drain(); return true;
 }
 #endif

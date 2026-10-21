@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_VECTOR_PANEL_H
 #define PIONEER_Q38_VECTOR_PANEL_H
 #include "PioneerQ38VectorOperand.h"
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+#include "PioneerQ38RawUnpackCache.h"
+#endif
 #ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
 #if !defined(PIONEER_Q38_STATIC_VECTOR) || !defined(PIONEER_Q38_REPLAY_OPERAND)
 #error Native operand store requires the fixed static replayed vector peer
@@ -42,12 +45,18 @@ static inline bool PioneerQ38VectorPanel(unsigned type,unsigned panel,PioneerQ38
 #ifdef PIONEER_Q38_STATIC_VECTOR
 template<class E,unsigned Block,unsigned Parity> static __attribute__((always_inline)) inline
 bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	,bool rawUpper
+#endif
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 	,unsigned replay
 #endif
 )
 {
 	static_assert(Block<16 && !(Block&3) && (Parity==0 || Parity==2),"fixed owned row/column selectors");
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	if(rawUpper)e.Op(0x700d0010|Block|Parity);else
+#endif
 	e.Op(0x700d0000|Block|Parity);
 	if (second) e.Op(0x701d0000|(16+Block)|Parity);
 #ifdef PIONEER_Q38_REPLAY_OPERAND
@@ -69,10 +78,20 @@ bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
 #endif
 }
 #endif
-template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsigned panel)
+template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsigned panel
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	,bool rawCacheWork=false
+#endif
+)
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
 #ifdef PIONEER_Q38_STATIC_VECTOR
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+	const bool rawUpper=PioneerQ38RawCacheUpper(type,panel,rawCacheWork);
+#define PIONEER_Q38_RAW_CACHE_ARGUMENT ,rawUpper
+#else
+#define PIONEER_Q38_RAW_CACHE_ARGUMENT
+#endif
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 	unsigned count=PioneerQ38OperandReplayCount(type,panel); if (!count) return false;
 	unsigned replay=0x04000000|(count<<4);
@@ -82,11 +101,12 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 #endif
 	// SAME exact lane order and values; compile-time addresses eliminate
 	// dynamic instruction-buffer stores. No RWC/config/format changes.
-	if (!PioneerQ38VectorChunk<E,0,0>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,0,2>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT)
-		|| !PioneerQ38VectorChunk<E,4,0>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,4,2>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT)
-		|| !PioneerQ38VectorChunk<E,8,0>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,8,2>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT)
-		|| !PioneerQ38VectorChunk<E,12,0>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,12,2>(e,type,panel,span.second PIONEER_Q38_REPLAY_ARGUMENT)) return false;
+	if (!PioneerQ38VectorChunk<E,0,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,0,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
+		|| !PioneerQ38VectorChunk<E,4,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,4,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
+		|| !PioneerQ38VectorChunk<E,8,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,8,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
+		|| !PioneerQ38VectorChunk<E,12,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,12,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)) return false;
 #undef PIONEER_Q38_REPLAY_ARGUMENT
+#undef PIONEER_Q38_RAW_CACHE_ARGUMENT
 	e.Op(0x08002040); e.Op(0x08082044); e.Op(0x08102048); e.Op(0x0818204c);
 #else
 	for (unsigned block=0;block<16;block+=4) for (unsigned parity=0;parity<4;parity+=2) {

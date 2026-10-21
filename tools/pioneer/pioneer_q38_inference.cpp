@@ -6,6 +6,9 @@
 #include "llama.h"
 #include <time.h>
 #include <signal.h>
+#ifdef PIONEER_Q38_MODEL_NODE_PROFILE
+#include "PioneerQ38ModelNodeProfile.h"
+#endif
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
 #include "PioneerQ38FfnSamples.h"
 #endif
@@ -14,6 +17,24 @@ static volatile sig_atomic_t stopRequested=0;
 static void RequestStop(int) { stopRequested=1; } // NO IO/cleanup in a signal handler
 // PIONEER_PUBLIC_STOP_END
 static double Seconds() { timespec t={}; if (clock_gettime(CLOCK_MONOTONIC,&t)) return -1; return double(t.tv_sec)+double(t.tv_nsec)*1e-9; }
+#ifdef PIONEER_Q38_MODEL_NODE_PROFILE
+static uint64_t NodeNanos(){
+ timespec t={};if(clock_gettime(CLOCK_MONOTONIC,&t)||t.tv_sec<0||t.tv_nsec<0||t.tv_nsec>=1000000000
+  ||uint64_t(t.tv_sec)>(UINT64_MAX-uint64_t(t.tv_nsec))/1000000000)return UINT64_MAX;
+ return uint64_t(t.tv_sec)*1000000000+uint64_t(t.tv_nsec);
+}
+// PIONEER_MODEL_NODE_OBSERVER_BEGIN
+static bool NodeObserver(ggml_tensor* t,bool ask,void* opaque){
+ // ALWAYS true after execution:even malformed metrics CANNOT cancel a
+ // graph. Outside the measured run,ask=false preserves normal batching.
+ auto* profile=static_cast<PioneerQ38ModelNodeProfile*>(opaque);
+ if(!profile||!profile->Active())return !ask;
+ if(ask)profile->Ask(t,t?unsigned(t->op):UINT32_MAX,NodeNanos());
+ else profile->After(t,NodeNanos());
+ return true;
+}
+// PIONEER_MODEL_NODE_OBSERVER_END
+#endif
 static void Log(ggml_log_level level,const char* text,void*) { if (level>=GGML_LOG_LEVEL_WARN) fputs(text,stderr); }
 struct State {
 	PioneerQ38PublicModelSource source;
@@ -236,6 +257,11 @@ int main(int argc,char** argv)
 	ggml_backend_register(PioneerQ38GgmlReg());
 	llama_context_params cp=llama_context_default_params(); cp.n_ctx=128; cp.n_batch=cp.n_ubatch=1;
 	cp.n_threads=cp.n_threads_batch=32; cp.offload_kqv=false; cp.op_offload=true; cp.flash_attn_type=LLAMA_FLASH_ATTN_TYPE_DISABLED;
+#ifdef PIONEER_Q38_MODEL_NODE_PROFILE
+	static_assert(unsigned(GGML_OP_COUNT)<=unsigned(PioneerQ38ModelNodeProfile::Operators),"fixed bounded operator histogram");
+	PioneerQ38ModelNodeProfile nodeProfile;cp.cb_eval=NodeObserver;cp.cb_eval_user_data=&nodeProfile;
+	puts("PUBLIC27B_NODE_OBSERVER_ACTIVE;FORCES_PER_NODE_SCHEDULER_SPLIT_AND_SYNCHRONIZE;INSTRUMENTED_HOST_WALL_NOT_PRODUCTION_SPEED_OR_CPU_REFERENCE;NO_TENSOR_DATA_READS");
+#endif
 	auto context=llama_init_from_model(model,cp);
 	// The frozen CPU backend otherwise creates/frees a disposable worker
 	// pool for EVERY CPU graph fragment between accelerator projections.
@@ -288,6 +314,9 @@ int main(int argc,char** argv)
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 		state.session.modelRootProfile.Begin(sequence,position); // CPU metrics ONLY,not execution authority
 #endif
+#ifdef PIONEER_Q38_MODEL_NODE_PROFILE
+		nodeProfile.Begin(sequence,position);
+#endif
 		uint64_t before=PioneerQ38GgmlSnapshot().projections;
 		double matrixBefore=state.matrixWallSeconds;
 		uint64_t callbacksBefore=state.matrixCallbacks,runBefore=state.session.runNanos;
@@ -295,6 +324,9 @@ int main(int argc,char** argv)
 		double elapsed=Seconds()-began; auto current=PioneerQ38GgmlSnapshot();
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 		state.session.modelRootProfile.End(okay); // invalid metrics NEVER alter okay/END
+#endif
+#ifdef PIONEER_Q38_MODEL_NODE_PROFILE
+		nodeProfile.End(okay);
 #endif
 		if (longTiming) (void)timing.Observe(position,elapsed); // diagnostics ONLY
 		if (repeatedRun) (void)repeated.Observe(sequence,position,elapsed);
@@ -343,6 +375,14 @@ int main(int argc,char** argv)
 #endif
 	bool clean=PioneerQ38GgmlFinish();
 	// PIONEER_PUBLIC_REPEAT_LOOP_END
+#ifdef PIONEER_Q38_MODEL_NODE_PROFILE
+	bool publishNodes=nodeProfile.PublishAllowed(okay,clean,stopped);
+	printf("PUBLIC27B_NODE_WALL_PROFILE publication_valid%u;POST_EXPLICIT_CLEAN_END_ONLY;INCLUDES_DIAGNOSTIC_SPLIT_SYNC_OVERHEAD_NOT_PRODUCTION_SPEED_OR_PURE_CPU_TIME\n",unsigned(publishNodes));
+	if(publishNodes)for(unsigned op=0;op<unsigned(GGML_OP_COUNT);op++){
+		const auto& b=nodeProfile.bucket[op];if(!b.nodes)continue;
+		printf("PUBLIC27B_NODE_WALL_OP op%u name%s warm_positions81 nodes%llu nanos%llu;HOST_CLOCK_ONLY_NO_TENSOR_DATA_OR_ADDITIONAL_CARD_IO\n",op,ggml_op_name(ggml_op(op)),(unsigned long long)b.nodes,(unsigned long long)b.nanos);
+	}
+#endif
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 	const auto& rootProfile=state.session.modelRootProfile;
 	bool publishRoot= rootProfile.PublishAllowed(okay,clean,stopped);

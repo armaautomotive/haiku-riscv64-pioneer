@@ -1,6 +1,6 @@
-Original-layout frontend-barrier candidate,October21 2026. OFFLINE ONLY.
-No transfer/native installation/hardware timing/model/Assistant promotion.
-Current card still runs c38e/tag20/gen44 full public THREE32,not this code.
+Original-layout frontend-barrier candidate,October21 2026.
+Historical offline evidence below;native qualification appended12:30UTC.
+Current card runs f699/tag21/gen50 full public THREE32,not yet complete.
 Best completed whole27B stays041 .181432516tok/s;20targetUNMET.
 
 Hypothesis:replace TWO RISC ACK/poll round trips per raw panel with
@@ -103,3 +103,43 @@ controls,four delay schedules/type andNoC uncertainty retention.
 Log/private/tmp/pioneer-q38-frontend-barrier-full-20261021-c.log
 SHA898d041949e7bde42d772c8f6bb4da052aa944d9637e4234fc023fda0caf792c.
 Still NO transfer/native execution/tokens/sec claim for this candidate.
+
+Native56-job qualification completed12:12UTC,normal1350MHz/119workers:
+20 synthetic+18 authenticated public119-worker+18 unchanged checked,
+ALL exact_errors0;each explicit BANK_END state2/active0/pci_restored1/
+host_released1/cold0/accepted1,KNOWN_CLEAN_END1,CLI_EXIT0. CPU reference
+ONLY in debug. Guarded known-idle20/gen44->17/gen45->21/gen46,NO reboot.
+Own logs in/boot/home/pioneer-p100a-hot-reload-20261019-a/:
+frontend-synthetic-20261021-a.log
+SHA8d9a05d1c2d03481bef541967a9dc15b026110ddffbfda040ba07c8c977bcd2f
+frontend-auth119-20261021-a.log
+SHAe858b92b637bc2723ec03225bdf210293a137193d5b3adea7469775c811df755
+frontend-checked-regression-20261021-a.log
+SHAa1a6b6282225e2b9796ccb615654a8f10b71b202a74a21b61befca4c82ce37a5
+
+Paired FFN K17408/N5120,original unchanged TC/public input/FP32 rounding,
+82dd host authenticates same complete18973870528B public file ONCE,
+fresh child/session per sample,NO CPU learned-reference/fallback.
+Directory/boot/home/pioneer-q38-benchmark.bppfiQ,round0001..0004:
+21/gen46 mean.010406906 median.010381000 min.010344/max.010788s;
+17/gen47 mean.010538031 median.010525500 min.010501/max.010654s;
+21/gen48 mean.010337813 median.010335000 min.010289/max.010388s;
+17/gen49 mean.010541500 median.010524000 min.010490/max.010716s.
+Each32warm graphs AFTER first graph/load;33projections/calls,12240pages/
+50135040B retained;no repeat upload. Every output20480B SAME SHA
+05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Candidate pooled mean.0103723595 vs baseline.0105397655s=1.5883%LESS
+projection time. TWO small samples each,NOT a whole-model token rate or
+broad/thermal/statistical speed qualification. Allfour explicitcleanEND/
+child_known_clean1. Parent quit cleanly,exit0. Own roundlog SHAs:
+fa25ae134e0ce23ef83a4f3d609462fe6725405dad0f2fe517212a8232bee256
+c162cf5e83a91f146aba1fa8be7b1a0b7e147e80915ec0c352199e716e9c922f
+55f57f6a320e5e277f56a4b0a261c3b08369ebf0c9f29b193b6582fb594bc1c7
+3ad61c5b3479219fb0d338d32dcddcd2168cb65aaea4f95f2542c9b53b46b60a
+
+Guarded known-clean21/gen50;UNCHANGED f414306f full public THREE32 started
+12:25:58UTC,foreground SSH49000. Authentication/load/prime/96decode/
+explicitEND still RUNNING. No concurrent transfer/native job. Own log
+/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-frontend-three32-20261021-a.log.
+No whole-model inference gain/Assistant promotion claimed. Best COMPLETED
+whole27B still041 .181432516tok/s;20tok/s UNMET. No boot/SD/power changes.

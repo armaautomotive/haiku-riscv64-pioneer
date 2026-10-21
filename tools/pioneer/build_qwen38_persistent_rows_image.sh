@@ -2,6 +2,11 @@
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
 [ "$#" = 2 ] || exit 2
+case "${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_STATIC_VECTOR:-0}:${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}:${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}:${PIONEER_Q38_WORK_BATCH4_FETCH:-0}:${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" = 1:1:1:9:0:0:0 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_WORK_BATCH4_FETCH:-0}:${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}:${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 1:1:0:0:9 ] || exit 2;;
@@ -149,6 +154,7 @@ esac
 if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_BATCH4_FETCH"; fi
 if [ "${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_BATCH_RAW_INPUT"; fi
 if [ "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_FRONTEND_BARRIER"; fi
+if [ "${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_RAW_UNPACK_CACHE"; fi
 case "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" in
  0) ;;
  1) q4_phases="$q4_phases -DPIONEER_Q38_WORK_DOT_ZERO_ELISION";;
@@ -205,7 +211,7 @@ umask 077; mkdir -m 700 "$output"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax $fault_as "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 linker=blackhole_qwen38_block.ld; sections='boot text'
 if [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 9 ]; then linker=blackhole_qwen38_int_sfpu.ld; sections='boot text affine'; fi
-if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ] || [ "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" = 1 ]; then sections="$sections fetch"; fi
+if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ] || [ "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" = 1 ] || [ "${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}" = 1 ]; then sections="$sections fetch"; fi
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/$linker" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"
 for section in $sections; do "$cross-objcopy" -O binary -j ".$section" "$output/program.elf" "$output/$section.bin"; done

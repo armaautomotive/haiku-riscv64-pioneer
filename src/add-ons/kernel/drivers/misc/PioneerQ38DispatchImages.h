@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION
+#if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
+#error Raw-Dst cache requires its distinct original-layout sentinel/direct qualifier
+#endif
+#include "PioneerQ38RawUnpackCachePeerImage.h"
+#endif
 #ifdef PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION
 #if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
 #error Frontend barrier requires its separate original-layout sentinel/direct qualifier,not batch/profile modes
@@ -162,6 +168,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION
+ if(worker && worker<120)return PioneerQ38RawUnpackCachePeerPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION
  if(worker && worker<120)return PioneerQ38FrontendPeerPrefixWord(address);
 #endif
@@ -802,6 +811,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION
+ if(worker && worker<120)return PioneerQ38RawUnpackCachePeerWord(word);
+#endif
 #ifdef PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION
  if(worker && worker<120)return PioneerQ38FrontendPeerWord(word);
 #endif

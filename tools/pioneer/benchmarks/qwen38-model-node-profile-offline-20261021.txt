@@ -1,0 +1,49 @@
+OFFLINE fixed-public THREE32 operator/returned-root attribution diagnostic.
+October21 2026 12:35-12:41UTC. NOT native-run/transferred yet;NOT Work/
+Assistant speed mode. Current full f414/driver21 benchmark continues.
+Best completed whole27B041 .181432516tok/s;20tok/s UNMET.
+
+Separate MODEL_NODE_PROFILE requires MODEL_ROOT_PROFILE and ALL original
+Work/ordered-span/public THREE32 guards. No Assistant/CPUvalidation/SM7/
+graph/benchmark-host/interactive selector. Original FOUR pinned libraries
+and pristinec060ca974c77 headers used,NOT dirty llama source or SDK edits.
+Frozen library's cb_eval reads ONLY tensor OP metadata/pointer identity,
+NEVER tensor/model values. Each active ask returns true;EVERY completion
+callback returns true,including malformed metrics,so metrics CANNOT cancel
+graph computation. Unknown clock/identity/op/nesting/overflow/phase makes
+metrics sticky-invalid ONLY. Original source/driver/owner/failure/END rules
+unchanged. No new card operation/read or numerical reference is issued.
+
+The callback deliberately forces per-node scheduler splits AND backend
+synchronization. Times INCLUDE this overhead and matrix transport,NOT
+production token speed/pure CPU time. Fixed256 operator buckets sum host
+nanoseconds/counts for81warm positions:skip first5 in EACH32-token run.
+Print op-name/count/time ONLY after complete3x32 and explicit cleanEND,
+never early/on failure/stop. No tensor names/values or personal prompts.
+Use with already-returned root phase/packet counters to locate bottlenecks,
+not to compare timing against uninstrumented f414.
+
+Actual callback extracted directly from current inference source;CPU test
+5Zio2UVw proves96positions/7buckets/exact81warm and19atomic-overflow/
+clock/identity/transition failures,without graph-cancellation authority.
+Second test executes EXACT scheduler loop from pristinec060 git show,
+not a hand-rewritten callback model or dirty working-copy file. All96
+positions/7operators exact sums;inactive callback batches;invalid metrics/
+backward clock still execute EVERY node;genuine graph failure unchanged.
+90 preSDK role refusals pass. Log
+/private/tmp/pioneer-q38-model-node-tests-20261021-b.log
+SHA73c69d1ad940ebdd174c737940ae0c44a1b56fd1030300eed64e5aaac91880b3.
+
+Returned-root diagnostic additionally accepts native-qualified exact idle
+frontend21:original ABI2/root stats unchanged;does NOT accept unqualified
+raw-cache22.360 exact tag+owner/cold/version checks,ALL9type/K shapes x96
+positions,26atomic/failure cases,60 ACTUAL extracted support+publicargs
+and84originalrole preSDK refusals pass Q3eSP1Q5. Log
+/private/tmp/pioneer-q38-model-node-root-regression-20261021-a.log
+SHA78cefb91f841df8519497e4551c0d884891e85d61095fedfa4ee8089c73d5e2c.
+Initial cross-build warning compared distinct enum types;fixed by explicit
+unsigned comparison,no changed domain/bounds. New profiler build b/c
+SHA bbc0cc26371c20e2070ea3aa8cf2ca90c516cac691594c963035518973817a1d.
+Uninstrumented full-model flagOFF reproduces EXACT original
+f414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c.
+No native profiling/speed/Assistant claim from these offline checks.

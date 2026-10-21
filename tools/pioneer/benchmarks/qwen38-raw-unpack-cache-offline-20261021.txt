@@ -1,0 +1,91 @@
+OFFLINE raw-Dst Q4 unpack reuse,October21 2026 12:16-12:35UTC.
+NOT transferred/installed/native timed. NOT a model/Assistant promotion.
+Current Pioneer runs separate frontend21 full THREE32,foreground49000.
+Best completed whole27B041 .181432516tok/s;20tok/s UNMET.
+
+Within EVERY original Q4 block,panel0/2 raw bytes match,and1/3 match.
+Keep TWO completely unpacked planes in EXISTING physical Dst0..15/16..31;
+skip ONLY repeated raw UNPACK data moves. SAME original sequential panel
+order,packed GDDR/L1 source,NoC shape,quantizers,metadata,FP32 rounding,
+matrix/SFPU arithmetic,all source proofs and all real RISC acknowledgments.
+NO cache/state across blocks/jobs. Existing metadata96..111/128..191,
+matrix dots32..47 and decoded64..79 physical mappings remain disjoint.
+Checked/Q8/Q6 preserve original behavior. No capacity/layout/address change.
+
+Reuse still publishes SrcA using documented UNPACR_NOP/7,opcode43000007,
+AFTER all9-class C5 source-bank-owner gate A2ff8020,then SAME real ACK.
+Never unsupported SETDVALID/omitted handoff/CPU-facing frontend-only drain.
+Blackhole C5 differs from old Wormhole numbering;verified primary docs:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_NOP_SETDVALID.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/Diagrams/Out/Bits32_UNPACR_NOP_SETDVALID.svg
+Source-bank/format effects are independently modeled,NOT silicon proof.
+
+68 panel-plan sequences csYv3O2L pass;all producer/source-row identities,
+every reuse handoff/C5/final ACK,half Q4 raw loads,original checked/Q8/Q6.
+Two image builds IDENTICAL,main8188/8192B,affine5152/5376B,helper188/1792B:
+main e2248ffd0adb89ed37a8e2b081ca3f4bff5de3c23406bb8788cabb83c8960a5e
+affine c7cefc9ec3a8ad14bfb3f6b667ca41178bcfbbb2ae9df47abfbe9df8e4128145
+helper d193d3668bae85f6d4c6322f8f2aea076eebe67880b9b1d010f0254c980c0ad7
+boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+Immutable root17 unchanged65c790cf/d358b793. FlagOFF reproduces209fc6b8/
+08333055 original peer AND frontend21 4b267506/b8b71d99 byte-for-byte.
+
+Full ACTUAL RV32/FPU/NoC images sOlibeCb:54 type/K/groups/mode shapes,
+two CHANGED inputs+STOP,original exact FP32+independent FP64,ALL64proofs,
+SAME matrix/SFPU/NoC/ACK counts. Q4 raw UNPACKs/read bytes HALVED;all SrcA
+handoffs remain. Missing C5/publish/either producer rejects before output.
+First/middle/last208NoC failure retains pending ownership,parks inert.
+Log/private/tmp/pioneer-q38-raw-cache-full-20261021-a.log
+SHA2f9eaed550993716c744e0f4bea29bbca55e936205b8dab17e4932c362d72031.
+
+Actual unchanged sentinel coordinator+new peers pvyz6q5c:ALL9type/K twice,
+exact values/proof/PC/source/NoC/compactDMA observers,first/middle/LAST140
+peer failures UNKNOWN/inert. Initial harness expected ONE output group
+for every peer,but coordinator deliberately assigns1/2 groups;corrected
+exact expected count to trial*peer.groups*K/32,not relaxed value/proof.
+Log/private/tmp/pioneer-q38-raw-cache-root-20261021-b.log
+SHA97521e4c1c29de4b95295f7e6cf708edf236ebf2bc6c1bb8ab68a62b34599f11.
+
+Actual asynchronous finite-FIFO TG9WXXbC:all3types/depth1/2/8/16/twoinputs/
+STOP/exact values;delayed source-bank return BLOCKS NOP publication;
+depth2 backpressures RISC;no CSR/Dst access before realACK/staleACKclear.
+Missing source return leaves FIFO/owner pending,no output/retry/reset.
+Initial harness wrongly expected full depth8/16FIFO:retained ACK emits
+only THREE ops before RISC polls. Corrected wide-depth expectation to
+actual stalls/bounded occupancy;depth2 still REQUIRES backpressure.
+Log/private/tmp/pioneer-q38-raw-cache-queue-20261021-b.log
+SHA4e6ffa903deb8f98ed18e66177f1e31ad170b288c39ece0c85526a4afc2ce286.
+
+Separate exact-tag22 retained-owner driver a/b IDENTICAL:
+03001d15f4e6a8693a8565ddae1f495fff4399ef2d00c9ad05905aa45fd1791d
+Guard d1ce2aa4/default43 2df0e0f8 unchanged. Original-layout sentinel/
+direct/affine/scale/normal-clock chain mandatory;frontend/batch/profile/
+format mixing refused. Actual491520registrywords120roles doM7JVWe pass,
+including zero gaps/limits/private prefix. LogSHA
+6abafc9615e62d0ab21cf988404e070450761228c51719be51cb35f65a42d930.
+Actual kernel/controller6LbiAuzE BME/map/delayed-write/firstmiddlelastDMA
+failure tests retain ALL three owners/clock/cold,NO disable/reset/retry,
+checked isolation preserved. LogSHA
+b746c1bd928ed2caf051444d26951704b231188582682261bc281f0b340c51a7.
+
+Exact22 CPU-reference DEBUG client a/b IDENTICAL:
+74d336a64d60799ba7ae534083ee3c0e0cd4eddb79a0afa4afc5ca9aef8c9070.
+Separate no-CPU-reference fixed public FFN host17/22 a/b IDENTICAL:
+c85ac8855aaac0157e06f42f736dfa19d3750f2c4f2c8b2627355c62c1d748db.
+Six role variants/558 exact bit+idle metadata checks qxS3x3hq pass.
+214 peer/controller/client preSDK refusals;357 benchmark-role refusals+
+17 ACTUAL fork/wait/barrier/child-failure CPU mocks AOEjbpo2 pass.
+Host logSHA98d271087b300ef5aa75185866bb2b0cd50414a3b5c05e099d70eb42f8473409.
+
+Guarded updater allows ONLY explicitly known-clean17<->22,all source/
+guard/client/installed hashes pinned. ScriptSHA
+3116e1a5483bdd469cc0568a69f6a3f76c9967c2e126edaa91b1a2c0e91fbfea.
+60 actual selected updater cases pass;FULL suite running at12:35UTC.
+Selected logSHA676e212d87f1087c0b4c914f3d47fcb006415cc05838a4fc26c178ab7266285d.
+No native installation/test/speed claim for this candidate yet.
+
+FULL3251 updater cases completed successfully by12:40UTC. Log
+/private/tmp/pioneer-hot-swap-raw-cache-full-20261021-a.log
+SHA1e71b7be8f7e9785ae206b35426b054a5d8745e3cde037dac42bcebde711c608.
+No native operation was issued by these CPU-only filesystem mocks.

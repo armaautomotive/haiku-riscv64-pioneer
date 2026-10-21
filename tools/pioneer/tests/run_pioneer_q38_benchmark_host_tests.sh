@@ -2,11 +2,12 @@
 set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-benchmark-host-tests.XXXXXXXX")
-for variant in normal profile batch4 raw frontend;do
+for variant in normal profile batch4 raw frontend raw-cache;do
 extra=;[ "$variant" != profile ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
 [ "$variant" != batch4 ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION
 [ "$variant" != raw ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION
 [ "$variant" != frontend ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_FRONTEND_QUALIFICATION
+[ "$variant" != raw-cache ] || extra=-DPIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
  $extra "$directory/pioneer_q38_benchmark_host_test.cpp" -o "$temporary/policy"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/policy"

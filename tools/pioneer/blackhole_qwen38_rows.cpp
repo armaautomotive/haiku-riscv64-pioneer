@@ -782,6 +782,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
 			,skipDotCheck
 #endif
+#ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
+			,skipDotCheck
+#endif
 		)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();

@@ -16,6 +16,11 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#ifdef PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010022ULL
+#error Raw-Dst cache native qualifier requires separate exact-tag22 retained-owner build
+#endif
+#endif
 #ifdef PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION
 #if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010021ULL
 #error Frontend-barrier native qualifier requires separate exact-tag21 retained-owner build

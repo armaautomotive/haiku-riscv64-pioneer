@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+[ "$#" = 2 ] || exit 2
+directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+hash_is(){ actual=$(shasum -a 256 "$1");[ "${actual%% *}" = "$2" ]; }
+hash_is "$1/text.bin" 65c790cf68dc705a3af5458e2b89aafa28a5b316c0a7b9fad1c8bd51fd36ecd8
+hash_is "$1/output.bin" d358b793b2c83def15e58fa52b62197e2f2241dd85e9bc1a5fc9a1733cf46308
+hash_is "$2/text.bin" e2248ffd0adb89ed37a8e2b081ca3f4bff5de3c23406bb8788cabb83c8960a5e
+hash_is "$2/affine.bin" c7cefc9ec3a8ad14bfb3f6b667ca41178bcfbbb2ae9df47abfbe9df8e4128145
+hash_is "$2/fetch.bin" d193d3668bae85f6d4c6322f8f2aea076eebe67880b9b1d010f0254c980c0ad7
+temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-raw_unpack_cache-root.XXXXXXXX")
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE -DPIONEER_Q38_TEST_RAW_UNPACK_CACHE -DPIONEER_Q38_TEST_DIRECT_SRCB \
+ -DPIONEER_Q38_TEST_AFFINE_REPLAY -DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION -DPIONEER_Q38_TEST_DEFER_AFFINE \
+ -DPIONEER_Q38_WORK_DEFER_AFFINE -DPIONEER_Q38_COMPACT_ACTIVATIONS -DPIONEER_Q38_REUSE_ACTIVATIONS \
+ -DPIONEER_Q38_WORK_COHORT_CACHE -DPIONEER_Q38_WORK_SKIP_DOT_CHECK -DTT_PIONEER_Q38_WORK_MODE \
+ -DPIONEER_Q38_INT_SFPU -DPIONEER_Q38_PIPELINED_MATRIX -DPIONEER_Q38_STATIC_VECTOR \
+ -DPIONEER_Q38_CACHED_AFFINE -DPIONEER_Q38_REPLAY_OPERAND -DPIONEER_Q38_WORK_OUTPUT_DMA \
+ -DPIONEER_Q38_SPAN_FAST -DPIONEER_Q38_QUEUED_MATRIX_ENTRY -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR \
+ -DPIONEER_Q38_TEST_INT_ACCUMULATOR -DPIONEER_Q38_TEST_PIPELINED_MATRIX -DPIONEER_Q38_Q4_TWO_PHASE \
+ -DPIONEER_Q38_WORK_INPUT_SUM_CACHE -DPIONEER_Q38_WORK_ZERO_MINIMUM -DPIONEER_Q38_NATIVE_OPERAND_STORE \
+ -DPIONEER_Q38_WORK_SPARSE_EXPORT -DPIONEER_Q38_WORK_COMPACT_OUTPUT \
+ "$directory/pioneer_q38_raw_unpack_cache_root_test.cpp" -o "$temporary/test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$@"
+printf 'Offline original coordinator+raw_unpack_cache peers evidence retained at %s;NO native timing\n' "$temporary"
