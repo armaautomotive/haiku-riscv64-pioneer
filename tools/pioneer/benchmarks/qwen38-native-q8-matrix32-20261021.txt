@@ -48,5 +48,19 @@ identically. ONLY --public-three-32-token-runs accepted;exact idle tag14
 and separate SM7 ABI3 BEFORE BEGIN.57 builder role/graph/CPU/Assistant
 refusals+24 actual extracted argument combinations/public argument-map
 tests PASS offline;normalf414306f remains byte-identical. Full-model
-job started05:54 UTC;result PENDING,NOT model/Assistant promotion.
+job started05:54 UTC,completed06:23 UTC with clean END/CLI_EXIT0,
+clock restored/uncertain0/CPU cold0/active_owner0.96 generated token IDs
+compare IDENTICAL to041 control,all3 sequences repeat.81 measured
+positions/453.555472s=.178588960tok/s,versus041=.181432516tok/s:
+1.5673% LOWER sampled throughput,ONE session per driver,not robust
+thermal/statistical evidence. Despite3.57% Q8-matrix gain,THIS DRIVER IS
+NOT PROMOTED. Guarded known-clean restore041/tag12/gen27 complete.
+Native prime807.001123s,repack224.953674s,upload581.364749s;4558653pages,
+18672242688 retained bytes;47712 projections/48480calls/119 workers.
+Full own log in same stage full-model-native-q8-three32-20261021-a.log
+SHA b6103df5b3b8ac3940cf4198e514d7b8aecc6956f49d16d74ad85ae0815ba02f
+Local /private/tmp/pioneer-q38-native-q8-full-evidence.F6C7Sk6R/.
+Matrix-only benefit did NOT establish whole-model benefit. The source
+of the regression has not been isolated;do not assert a cause from this
+single sample. No production/Assistant change. Goal remains ACTIVE.
 20tok/s UNMET. Best completed whole-model run remains041 .181432516tok/s.
