@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_WORK_Q4_NIBBLE:-0}" = 0 ] || { echo 'STOP Q4 nibble decoding changes OFFLINE peers ONLY;NO root selector' >&2;exit 2; }
 [ "${PIONEER_Q38_PEER_PHASE_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}" = 0 ] || exit 2

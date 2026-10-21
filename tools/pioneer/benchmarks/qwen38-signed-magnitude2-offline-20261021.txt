@@ -1,0 +1,30 @@
+OFFLINE signed integer decoding prerequisite, October21 2026.
+NO image/driver/native selector or throughput qualification.
+
+PioneerQ38SignedMagnitude2.h replaces eight register-only TC->SM integer
+operations with two: SFPABS INT VC0->VD2, then SFPSETSGN VC2->VD0 REG.
+Crucial: SETSGN takes magnitude FROM VC2 and ORIGINAL sign FROM DEST0,
+not the reverse. Original0 must survive the ABS. Q8 -128..127 and Q6
+-32..31 are inside the domain; INT32_MIN is explicitly outside it.
+No FPU approximation,conditional-state change,Dst/store/source/NoC/CSR
+or ownership change. Not integrated into any compiled peer yet.
+
+Primary Tenstorrent documentation checked:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPABS.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSETSGN.md
+Both explicitly share behavior with the Wormhole functional models.
+Primary encoding diagrams (read successfully through direct curl;web
+extractor's diagram fetch failed):
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/Diagrams/Out/Bits32_SFPABS.svg
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/Diagrams/Out/Bits32_SFPSETSGN.svg
+ABS opcode7d,VC11:8,VD7:4,INTmod0. SETSGN opcode89,sameVC/VD,
+registermod0 and immediatebit12 leftZERO. Exact words7d000020/89000200.
+
+Separate independent interpreter extension ONLY for this unit test:
+qualified NativeF32Q8Machine opcode/modifier whitelist was NOT relaxed.
+ASan/UBSan262,144 exhaustive signed16/all32lane/disabled-even-odd-all
+enable-mask cases+8signed32edges match ORIGINAL eight ops exactly;
+original DEST sign,other live registers and lane flags preserved.
+This is an arithmetic proof, NOT physical pipeline/replay scheduling,
+native opcode qualification or a model-speed result. Future integration
+requires separate strict actual-image tests and distinct exact-tag trial.

@@ -1,0 +1,38 @@
+Confirmed PSU recovery, October21 2026.
+User reported "powerd off and on" after the failed tag22 Q4 experiment.
+This was treated as a NEW physical power epoch, NOT authority to clear the
+old quarantine in-place. No further command was issued in that old epoch.
+
+Pinned Linux SSH key matched the saved Linux known-host entry. Fresh Linux
+6.1.31/riscv64 reported two-minute uptime. The Haiku host-key mismatch was
+NOT bypassed: the established separate Linux known-host file was used.
+Read/verified native handoff helper
+/mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-1.sh
+SHA0bfe264777c2d75918b1d62a3eec35c7ecd94eb97035607df8491a877fd3b8f0
+and network-serialized journal verifier
+SHA32b924b77480f315f5cca6415f0c0b7fdc7d19ed774403e9404fc646ac6f231d.
+Prepared/booted fresh session q38cold22recover20261021a,64 CPUs,
+memory128-spin-idle6-nosd-control. All existing root/disk/SD/firmware/image/
+PCI-disabled/source identity guards passed. Clean-filesystem profile passed;
+NO journal recovery override, default boot edit or SD change was needed.
+
+Fresh Haiku reload metadata:tag2026102100010022,generation1,quiesced0,
+cold0,active_owner0,open_count1,guard1;CPU_METADATA_ONLY. No inference was
+started on tag22. First restore command was paused by safety review; read-
+only inspection proved the restore direction removes03001d15/tag22 and
+installs84ab80ac/tag17, not an apply/retry. After that evidence, the guarded
+removal passed. Then original restore chain17/gen2->16/gen3->12/gen4 passed.
+Every hop:quiesce/closed,exacthash,newgeneration/cold0/active_owner0/guard1,
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION. No automatic rollback/reset.
+Updater was the preserved staged07d82b8636fb6187efef782181263171f485535ff515a88694af34ef39408e12.
+The failed candidate remains disabled in current source/build/install gates.
+
+Installed best041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+and existing model-thread-four01152a39c47d81fb2892be949c5759abb9d3068d1b1c32959e4232922a1febce
+hashes verified before starting original public27B8->4->8,three32 positions.
+Remote ownlog:
+/boot/home/pioneer-p100a-hot-reload-20261019-a/model-thread-four-041-postcold-three32-20261021-a.log
+Session61342 is RUNNING at this checkpoint. No result/END/rate claim yet.
+NO SCP/driver change/other native job during its lifetime, including auth.
+Assistant GUI/service/settings unchanged. Old raw-cache failure log has NOT
+yet been transferred; defer until this native parent ends known-clean.

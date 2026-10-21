@@ -3,6 +3,7 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_WORK_Q4_NIBBLE:-0}" = 0 ] || { echo 'STOP Q4 nibble decoding is OFFLINE peer ONLY;NO native driver selector' >&2;exit 2; }
 [ "${PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION:-0}:${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}" = 0:0 ] || {
  echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;OFFLINE investigation only,NO build/install/retry' >&2;exit 2;
 }

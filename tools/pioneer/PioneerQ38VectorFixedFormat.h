@@ -50,6 +50,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 	,bool rawCacheWork=false
 #endif
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+	,bool q4NibbleWork=false
+#endif
 )
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
@@ -98,6 +101,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #endif
 	e.Op(0x3700000f); e.Op(0x8a000002);
 	if (!PioneerQ38VectorTransform(e,type,panel
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+		,q4NibbleWork
+#endif
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 		,rawCacheWork
 #endif

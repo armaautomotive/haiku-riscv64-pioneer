@@ -1,0 +1,48 @@
+OFFLINE Q4 register decoder prerequisite, October21 2026.
+NOT installed/native-qualified; NO model/Assistant selector or speed claim.
+
+Separate PIONEER_Q38_WORK_Q4_NIBBLE firmware-only role on original direct-
+SrcB/affine-replay/native-store peer. Work Q4 ONLY; Q8/Q6/checked unchanged.
+Each original unsigned UNPACK/SFPLOAD yields raw byte0..255. Low nibble
+loads mask15 ONCE per panel OUTSIDE replay, then AND per fresh chunk.
+High nibble only shifts right4; no redundant post-shift mask for this byte
+domain. ONE register op per decoder replay vs original2/3. Including setup,
+eight chunks low9vs16/high8vs24. No mask reuse across panels/jobs. NO raw
+Dst caching, source handoff elision, new format, Dst layout, CSR, NoC,
+ownership, reset, drain or cleanup change. Failed tag22 remains blocked.
+
+Actual arithmetic test ASan/UBSan:12,288 exhaustive rawbyte/panel/lane/
+changed-input cases;poisoned register4 refreshed PER low panel,other live
+regs preserved,invalid selectors zero emission. Existing native operand
+suite separately passes1,053,184 cases.67 role refusals cover driver,
+debug-client,root,model,partial/invalid/mixed firmware roles before ANY
+external command/SDK/output (EMPTY_PATH). Failedtag22's17 refusal cases
+and800 existing thread-sweep preSDK refusals also still pass.
+
+Fresh independent builds a/b reproduce:
+boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+text8,188B 8fd12aab6195800e93a64719ce56fce294adc8d3ff67fedebc4d7ef31c45289a
+affine5,152B c7cefc9ec3a8ad14bfb3f6b667ca41178bcfbbb2ae9df47abfbe9df8e4128145
+Original8,192/5,376B limits,stack6e000 unchanged. Compute static frame480B
+matches control. No fetch overlay. Exact flash-free ordinary control peer
+still209fc6b8/08333055. Model f414306f,driver17 84ab80ac,guardd1ce2aa4,
+default43 2df0e0f8 reproduce BYTE IDENTICALLY with experiment OFF.
+
+Full actual RV32+independent Tensix model ASan/UBSan:
+ALL54 type/K/group/Work-vs-checked shapes,TWO jobs with changed inputs,
+STOP,all64 proof words,exact original FP32 output+independent FP64 oracle.
+Unpack/read/drain/matrix/NoC/source counts unchanged;deferred writes and
+all source/ownership/config guards remain enforced by unchanged emulator.
+Only Q4 Work's register decoding shortened. Four NoC failures park inert.
+Expanded SFPU ops reduced, but RV instruction count INCREASES slightly:
+Q4/K5120/N16 job2 RV403,444->406,104;SFPU26,307->22,627.
+Q4/K17408/N48 job2 RV3,267,312->3,294,444;SFPU268,281->230,745.
+Do NOT translate those reductions to native throughput, or promote this
+without separate exact-tag/controller/client/native qualification.
+
+Full log /private/tmp/pioneer-q38-q4-nibble-full-offline-20261021-a.log
+SHA a3a526a09bd7805ddd67e4542eedc4eceb4d319fa30cf1d35e622cda5175a9aa
+Actual-test evidence .../pioneer-q38-q4-nibble-image.LiQcW0qI.
+Builds /private/tmp/pioneer-q38-q4-nibble-offline-20261021-{a,b}.
+Native restoration/full-model regression is separately recorded in
+qwen38-cold-recovery-20261021.txt; NO experimental image was used there.

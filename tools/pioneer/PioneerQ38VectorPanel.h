@@ -14,6 +14,12 @@
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 #include "PioneerQ38OperandReplay.h"
 #endif
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+#include "PioneerQ38Q4Nibble.h"
+#if !defined(PIONEER_Q38_NATIVE_OPERAND_STORE) || !defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_WORK_DIRECT_SRCB)
+#error Q4 nibble decoding requires the separate original-layout native-store replay Work peer
+#endif
+#endif
 // OFFLINE fixed-layout prerequisite. NO installed image/handler selects it.
 // The raw planes each contain sixteen consecutive16-byte row slices from
 // the original lossless tiled block. These are DATA OFFSETS,not addresses.
@@ -45,6 +51,9 @@ static inline bool PioneerQ38VectorPanel(unsigned type,unsigned panel,PioneerQ38
 #ifdef PIONEER_Q38_STATIC_VECTOR
 template<class E,unsigned Block,unsigned Parity> static __attribute__((always_inline)) inline
 bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+	,bool q4Nibble
+#endif
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 	,bool rawUpper
 #endif
@@ -63,6 +72,10 @@ bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
 	if (Block==0 && Parity==0) {
 		e.Op(replay|3); // record AND execute, before exactly Count register ops
 #ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+		if(q4Nibble) { if(!PioneerQ38Q4NibbleDecode(e,panel))return false; }
+		else
+#endif
 		if (!PioneerQ38NativeOperand(e,type,panel)) return false;
 #else
 		if (!PioneerQ38VectorOperand(e,type,panel)) return false;
@@ -79,6 +92,9 @@ bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
 }
 #endif
 template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsigned panel
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+	,bool q4NibbleWork=false
+#endif
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 	,bool rawCacheWork=false
 #endif
@@ -86,6 +102,13 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
 #ifdef PIONEER_Q38_STATIC_VECTOR
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+	const bool q4Nibble=q4NibbleWork && type==12;
+	if(q4Nibble && !PioneerQ38Q4NibbleSetup(e,panel))return false;
+#define PIONEER_Q38_NIBBLE_ARGUMENT ,q4Nibble
+#else
+#define PIONEER_Q38_NIBBLE_ARGUMENT
+#endif
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 	const bool rawUpper=PioneerQ38RawCacheUpper(type,panel,rawCacheWork);
 #define PIONEER_Q38_RAW_CACHE_ARGUMENT ,rawUpper
@@ -94,6 +117,9 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 #endif
 #ifdef PIONEER_Q38_REPLAY_OPERAND
 	unsigned count=PioneerQ38OperandReplayCount(type,panel); if (!count) return false;
+#ifdef PIONEER_Q38_WORK_Q4_NIBBLE
+	if(q4Nibble)count=1;
+#endif
 	unsigned replay=0x04000000|(count<<4);
 #define PIONEER_Q38_REPLAY_ARGUMENT ,replay
 #else
@@ -101,12 +127,13 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 #endif
 	// SAME exact lane order and values; compile-time addresses eliminate
 	// dynamic instruction-buffer stores. No RWC/config/format changes.
-	if (!PioneerQ38VectorChunk<E,0,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,0,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
-		|| !PioneerQ38VectorChunk<E,4,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,4,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
-		|| !PioneerQ38VectorChunk<E,8,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,8,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
-		|| !PioneerQ38VectorChunk<E,12,0>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,12,2>(e,type,panel,span.second PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)) return false;
+	if (!PioneerQ38VectorChunk<E,0,0>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,0,2>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
+		|| !PioneerQ38VectorChunk<E,4,0>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,4,2>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
+		|| !PioneerQ38VectorChunk<E,8,0>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,8,2>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
+		|| !PioneerQ38VectorChunk<E,12,0>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,12,2>(e,type,panel,span.second PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)) return false;
 #undef PIONEER_Q38_REPLAY_ARGUMENT
 #undef PIONEER_Q38_RAW_CACHE_ARGUMENT
+#undef PIONEER_Q38_NIBBLE_ARGUMENT
 	e.Op(0x08002040); e.Op(0x08082044); e.Op(0x08102048); e.Op(0x0818204c);
 #else
 	for (unsigned block=0;block<16;block+=4) for (unsigned parity=0;parity<4;parity+=2) {
