@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+[ "$#" = 3 ] || exit 2
+directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+hash_is(){ actual=$(shasum -a 256 "$1");[ "${actual%% *}" = "$2" ]; }
+hash_is "$1/text.bin" 65c790cf68dc705a3af5458e2b89aafa28a5b316c0a7b9fad1c8bd51fd36ecd8
+hash_is "$1/output.bin" d358b793b2c83def15e58fa52b62197e2f2241dd85e9bc1a5fc9a1733cf46308
+hash_is "$2/text.bin" a829dc676a6f38e1695c8956b6137e8aa3a69fd46c6efd0a3d2c056dccd8bfb2
+hash_is "$2/output.bin" 705df90348094d9ef94e1059470c1572bed3642fabda6853685f23ece9bd404a
+hash_is "$3/text.bin" 37af1da2262d48f1fe61d717769f8a4450e76788660ff9a1dfcd443257c5d813
+hash_is "$3/affine.bin" 68fa5e2164715f9030cb4dd2e05e2645d53e25ec0cdfa55bc4b8eef3b82fc4e1
+hash_is "$3/fetch.bin" 439d2dae42516799a4dcc08e60ad929b52f47e1bf2bc09da7f1c7eca987c3773
+temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-peer-phase-root.XXXXXXXX")
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_Q38_TEST_PEER_PHASE -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE \
+ -DPIONEER_Q38_TEST_AFFINE_REPLAY -DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION \
+ -DPIONEER_Q38_TEST_DEFER_AFFINE -DPIONEER_Q38_WORK_DEFER_AFFINE \
+ -DPIONEER_Q38_COMPACT_ACTIVATIONS -DPIONEER_Q38_REUSE_ACTIVATIONS -DPIONEER_Q38_WORK_COHORT_CACHE \
+ -DPIONEER_Q38_WORK_SKIP_DOT_CHECK -DTT_PIONEER_Q38_WORK_MODE -DPIONEER_Q38_INT_SFPU \
+ -DPIONEER_Q38_PIPELINED_MATRIX -DPIONEER_Q38_STATIC_VECTOR -DPIONEER_Q38_CACHED_AFFINE \
+ -DPIONEER_Q38_REPLAY_OPERAND -DPIONEER_Q38_WORK_OUTPUT_DMA -DPIONEER_Q38_SPAN_FAST \
+ -DPIONEER_Q38_QUEUED_MATRIX_ENTRY -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR \
+ -DPIONEER_Q38_TEST_INT_ACCUMULATOR -DPIONEER_Q38_TEST_PIPELINED_MATRIX -DPIONEER_Q38_Q4_TWO_PHASE \
+ -DPIONEER_Q38_WORK_INPUT_SUM_CACHE -DPIONEER_Q38_WORK_ZERO_MINIMUM -DPIONEER_Q38_NATIVE_OPERAND_STORE \
+ -DPIONEER_Q38_WORK_SPARSE_EXPORT -DPIONEER_Q38_WORK_COMPACT_OUTPUT \
+ "$directory/pioneer_q38_peer_phase_root_image_test.cpp" -o "$temporary/test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$@"
+printf 'Offline actual peer timing-return root evidence retained at %s;NO native timing\n' "$temporary"

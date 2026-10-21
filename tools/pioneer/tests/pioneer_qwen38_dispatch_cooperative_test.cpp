@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_TILE_PREFETCH)
+#if defined(PIONEER_Q38_TEST_PEER_PHASE)
+#define PIONEER_Q38_PEER_PHASE_IMAGE_MODEL_ONLY
+#include "pioneer_q38_peer_phase_image_test.cpp"
+using CooperativePeer=PeerPhaseImage;
+#elif defined(PIONEER_Q38_TEST_TILE_PREFETCH)
 #define PIONEER_Q38_TILE_PREFETCH_IMAGE_MODEL_ONLY
 #include "pioneer_q38_tile_prefetch_image_test.cpp"
 using CooperativePeer=TilePrefetchImage;
@@ -103,7 +107,7 @@ struct CooperativeDispatch:DispatchMachine {
 			p.delay=3;
 #endif
 			for (auto& v:p.root) v.second=memory.at(v.first);
-#ifdef PIONEER_Q38_TEST_DIRECT_SRCB
+#if defined(PIONEER_Q38_TEST_DIRECT_SRCB) || defined(PIONEER_Q38_TEST_PEER_PHASE)
 			p.PoisonTail();
 #endif
 			for (unsigned i=0;i<k;i++) p.vector[i]=uint16_t(

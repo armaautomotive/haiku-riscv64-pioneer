@@ -16,7 +16,20 @@
 // owned output ranges,NO user physical addresses/code/nonce authority.
 #define TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x60f2)
 #define TT_PCI_PROBE_Q38_LEGACY_WORK_RUN (B_DEVICE_OP_CODES_END + 0x60f3)
+#if defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT)
 #if defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_NATIVE_Q8_QUALIFICATION) || defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT)
+#error Private timing DATA ABI must never mix with SM7 SOURCE ABI
+#endif
+#include "PioneerQ38PeerPhaseData.h"
+#define PIONEER_Q38_PEER_PHASE_PROTOCOL
+// Separate private timing DATA transport. Old ordinary Work/model clients
+// cannot accidentally invoke this root or accept its changed counter shape.
+#define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x6260)
+#define TT_PCI_PROBE_Q38_WORK_RUN (B_DEVICE_OP_CODES_END + 0x6261)
+#define TT_Q38_WORK_SUPPORT_VERSION 4
+static_assert(TT_PCI_PROBE_Q38_WORK_SUPPORT!=TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT
+	&& TT_PCI_PROBE_Q38_WORK_RUN!=TT_PCI_PROBE_Q38_LEGACY_WORK_RUN,"timing DATA namespace stays distinct");
+#elif defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_NATIVE_Q8_QUALIFICATION) || defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT)
 // New lossless SM7 SOURCE encoding MUST NOT share ordinary TC Work ops.
 // Private-source producer/qualifier only;NOT a fallback or ABI relabelling.
 #define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x6250)
@@ -71,6 +84,10 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 #else
 	uint32_t reads=s[10]+3*s[11]+2*job.peers,flits=s[10]+3*s[11]+5*job.peers+groups,writes=2*job.peers;
 #endif
+#ifdef PIONEER_Q38_PEER_PHASE_PROTOCOL
+	// One completed fixed64B private DATA read AFTER every peer proof/output.
+	reads++;flits++;
+#endif
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 	uint32_t writeFlits=writes;
 	uint32_t bytes=
@@ -99,7 +116,9 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 	for (unsigned i=0;i<16;i++) if (s[32+i]!=a.source[0][i]) return false;
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	if (s[48]!=1) return false;
-#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+#ifdef PIONEER_Q38_PEER_PHASE_PROTOCOL
+	if (!PioneerQ38PeerPhaseEnvelopeValid(s)) return false;
+#elif defined(PIONEER_Q38_ROOT_CYCLE_PROFILE)
 	// Separate exact root image writes ONLY this previously zero padding.
 	// ALL source/counter/nonce/PC/DMA/held proofs above remain unchanged.
 	if (!PioneerQ38RootCycleDataValid(s)) return false;

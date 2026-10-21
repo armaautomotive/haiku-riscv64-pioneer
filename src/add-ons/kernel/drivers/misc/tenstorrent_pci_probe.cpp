@@ -16,6 +16,11 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010025ULL || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#error Private timing DATA requires separate exact-tag25 retained-owner qualification,not ordinary Work
+#endif
+#endif
 #ifdef PIONEER_Q38_COMMAND_REUSE_QUALIFICATION
 #if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010024ULL
 #error Command reuse requires separate exact-tag24 retained-owner qualifier

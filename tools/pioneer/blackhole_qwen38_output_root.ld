@@ -6,6 +6,7 @@ SECTIONS {
 	/* ROOT ONLY: already owned/saved immutable prefix; this role never uses
 	 * the peer's70700 operand window. No wider view or descriptor overlap. */
 	.output 0x70000 : {
+		*(.q38_peer_phase) /* isolated timing DATA transport,NO selector by default */
 		*(.q38_peer_poll) /* offline scheduling ONLY;SAME owned/saved prefix */
 		*(.q38_cycle_*) /* opt-in diagnostic only;SAME existing owned prefix */
 		*(.q38_output .text._ZN24PioneerQ38OutputTransfer* .text._ZN12RootOutputIO*)

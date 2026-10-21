@@ -79,7 +79,13 @@ int main(int argc,char** argv)
 		for (unsigned phase=0;phase<3;phase++) {
 			auto& lo=job->result.stats[58+phase*2]; auto& hi=job->result.stats[59+phase*2];
 			auto savedLo=lo,savedHi=hi; lo=hi=0;
-			assert(!PioneerQ38WorkSafety(*job,c.q38Dispatch->authority)); lo=savedLo; hi=savedHi;
+#ifdef PIONEER_Q38_PEER_PHASE_PROTOCOL
+			// Peer clocks are opaque DATA,not a nonzero execution proof.
+			assert(PioneerQ38WorkSafety(*job,c.q38Dispatch->authority));
+#else
+			assert(!PioneerQ38WorkSafety(*job,c.q38Dispatch->authority));
+#endif
+			lo=savedLo; hi=savedHi;
 			lo^=0x80000000; assert(PioneerQ38WorkSafety(*job,c.q38Dispatch->authority)); lo=savedLo;
 		}
 #endif

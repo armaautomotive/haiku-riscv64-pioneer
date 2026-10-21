@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+#if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_COMMAND_REUSE_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
+#error Private timing DATA requires its separate original-layout root/peer qualification
+#endif
+#include "PioneerQ38PeerPhaseImages.h"
+#endif
 #ifdef PIONEER_Q38_COMMAND_REUSE_QUALIFICATION
 #if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_TILE_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION) || defined(PIONEER_Q38_FRONTEND_BARRIER_QUALIFICATION) || defined(PIONEER_Q38_BATCH4_FETCH_QUALIFICATION) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
 #error Command reuse requires its separate unchanged-peer sentinel/root qualifier
@@ -180,6 +186,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+ return worker>=120?UINT32_MAX:worker?PioneerQ38PeerPhasePeerPrefixWord(address):PioneerQ38PeerPhaseRootPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_COMMAND_REUSE_QUALIFICATION
  if(!worker)return PioneerQ38CommandReuseRootPrefixWord(address);
 #endif
@@ -829,6 +838,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+ return worker>=120?UINT32_MAX:worker?PioneerQ38PeerPhasePeerWord(word):PioneerQ38PeerPhaseRootWord(word);
+#endif
 #ifdef PIONEER_Q38_COMMAND_REUSE_QUALIFICATION
  if(!worker)return PioneerQ38CommandReuseRootWord(word);
 #endif

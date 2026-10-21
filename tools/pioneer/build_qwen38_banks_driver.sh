@@ -3,6 +3,9 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_PEER_PHASE_QUALIFICATION:-0}" = 0 ] || { echo 'STOP private timing DATA native qualification is not yet complete' >&2;exit 2; }
+[ "${PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_PEER_PHASE_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}" = 0 ] || { echo 'STOP peer timing is OFFLINE firmware ONLY;NO native driver selector' >&2;exit 2; }
 case "${PIONEER_Q38_COMMAND_REUSE_QUALIFICATION:-0}:${PIONEER_Q38_WORK_ROOT_COMMAND_REUSE:-0}" in
  0:0) ;;

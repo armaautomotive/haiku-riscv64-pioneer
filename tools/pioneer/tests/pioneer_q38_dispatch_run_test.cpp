@@ -13,6 +13,21 @@
 #endif
 #endif
 struct ControllerMachine:DispatchMachine {
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+	// Private timing DATA endpoint only. Root instruction tests separately
+	// execute real peers and audit ALL physical completion proofs before this.
+	void Packet()override{
+		if(!command[7]&&command[0]==0x84500){
+			assert(AllFinished()&&gathers==active&&pending&&!unknown&&command[8]==64&&command[3]==0x75000
+				&&!command[1]&&!command[4]&&!command[6]&&!command[9]&&command[5]==129);
+			unsigned worker=Worker(command[2]),part=0x74080+(worker-1)*32;
+			uint32_t data[]={0x31545051,1,memory.at(part+12),worker,kind,k,memory.at(part+8),1,101,1,202,2,303,3,0,0};
+			for(unsigned w=0;w<16;w++)memory[0x75000+w*4]=data[w];
+			counts[0]++;counts[1]++;counts[2]++;counts[3]++;responses++;pending=false;return;
+		}
+		DispatchMachine::Packet();
+	}
+#endif
 #ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
 	std::array<uint32_t,64> Proof(unsigned worker) const override {
 		auto p=DispatchMachine::Proof(worker);const auto& d=peers.at(worker-1).descriptor;

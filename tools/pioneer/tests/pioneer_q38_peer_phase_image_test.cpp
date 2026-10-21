@@ -4,7 +4,7 @@
 struct PeerPhaseImage:DirectSrcBImage{
  std::vector<uint8_t> helper;std::vector<std::pair<unsigned,uint32_t>> clocks;
  uint64_t epoch=UINT64_C(1)<<40;unsigned metricWrites=0;bool rollover=false,unstable=false,backward=false;
- PeerPhaseImage(const char* path,unsigned t,unsigned k,unsigned g):DirectSrcBImage(path,t,k,g){
+ PeerPhaseImage(const char* path,unsigned t,unsigned k,unsigned g,unsigned worker=69):DirectSrcBImage(path,t,k,g,worker){
   helper=Read((std::string(path)+"/fetch.bin").c_str());assert(!helper.empty()&&helper.size()<=0x700&&!(helper.size()&3));
   for(unsigned w=0;w<helper.size()/4;w++)l1[Index(0x70000+w*4)]=Word(helper,w*4);
  }
@@ -49,6 +49,7 @@ struct PeerPhaseImage:DirectSrcBImage{
   assert(!memory.at(0x84538)&&!memory.at(0x8453c));
  }
 };
+#ifndef PIONEER_Q38_PEER_PHASE_IMAGE_MODEL_ONLY
 int main(int argc,char** argv){
  assert(argc==3||(argc==4&&!strcmp(argv[3],"--work-pilot")));setvbuf(stdout,nullptr,_IOLBF,0);unsigned cases=0;
  for(unsigned type:{8U,12U,14U})for(unsigned k:{5120U,6144U,17408U})for(unsigned groups:{1U,3U,16U})for(bool work:{false,true}){
@@ -81,3 +82,4 @@ int main(int argc,char** argv){
  }
  printf("PASS %sACTUAL peer timing:%ushapes/twochangedinputs+STOP,exactFP32/FP64/SAME64proofs/NoC/source/math/SFPU/drains;actualCSRstream exactlymatches telemetry;checked/STOP haveNOclock ormetricwrites;unstable/backward clocks invalidateDATAONLY and graphstillcompletes,realNoC faults remainpending/inert;NO native/timing qualification\n",argc==4?"PARTIAL ":"",cases);
 }
+#endif

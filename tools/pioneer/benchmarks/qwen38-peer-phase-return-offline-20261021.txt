@@ -1,0 +1,96 @@
+OFFLINE private peer-phase timing-return transport,October21 2026.
+COMPILED+instruction-tested ONLY;NO native/kernel/model/Assistantselector,
+NO speed claim. Existing ABI2 Work safety intentionally rejects new DATA
+marker/countershape;no installed image registry exists for this prototype.
+Peer instrumentation is documented separately in peer-phase-profile file.
+
+One fixed64B read from84500 AFTER ALL currentpeerstatus/2physicalPC/reset/
+source/counter/command/output proofs and immutabletasks have passed.
+Selected peer is original maximum-group,last-launched sentinel;private
+worker/peer-specific nonce/type/K/groups are bound atomically. Never trust
+root-globalnonce as peernonce. Endpoint is DATA,never code/useraddress.
+Exact extra+1read/+1flit are accounted in final8NoCcounter deltas. All
+original ownership/source/ACK/DMA/finiteoutput/PC checks remain required.
+Checked+STOP have NO telemetryread/CSR/marker. Original64peerproofs unchanged.
+
+Private16word envelope validates magic/version/ALLidentity/reservedwords.
+Validclocks remain opaque64bit DATA;badclocks require explicitinvalid+zero
+totals. Malformedidentity/partialinvalid refuses beforeDMA,not a newcleanup
+capability. Root statistics57..63 use DISTINCT valid31545051 or invalid
+30545051 plus3uint64totals,NOT old31435951 root-cycle semantics. Root's
+own original boundedCSR audit remains present but its DATAtrailer is replaced.
+
+Prototype root a/b byteIDENTICAL,originalbounds/6e000stack unchanged:
+main8140/8192B a829dc676a6f38e1695c8956b6137e8aa3a69fd46c6efd0a3d2c056dccd8bfb2
+prefix4388/8192B 705df90348094d9ef94e1059470c1572bed3642fabda6853685f23ece9bd404a
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+FlagOFF EXACT65c790cf/d358b793 originalsentinel. No enlargedL1/stack/view.
+130 strict role/mixedformat/preSDK refusals pass. No kernel/client/model/
+Assistant build can select timing-return flag. Both peer and root require
+their own separate explicitoffline builds;neither flag confersnativeauthority.
+
+17136privateidentity maps,320headerbit+9shape/null atomicrefusals,
+192validclockbitmutations remainDATA,192partialinvalidrefusals pass DitY3XJS.
+Log/private/tmp/pioneer-q38-peer-phase-return-data-20261021-b.log
+SHAdf41143e9934004cc7fc7b893aa71bd77e6f2f74a9fcaabb659a67683c7907b7.
+
+Actual emittedRV32 root:4workercounts1/2/7/119 x9type/K xWork/repeated/
+ALL119STOP=108cases;9originalchecked,6root+actual2peer mathcases,3actual
+badclockpeer cases=126. SAMEhostoutput/allremaining57safetyfields;extra
+ONEpacket/response and EXACTdocumentedcounterdeltas. Independentobserver
+requiresALLworkers2PC/reset/currentfinish/gathers beforemetricread and
+no hostDMA yet. ActualCSRstream-derivedpeerdata arrives bitEXACT atroot.
+Badclocks graphstillcompletes;malformed10headerfields/ALL64proofcorruptions/
+PC/first-middle-lateNoC/metricreadloss/DMAfaults UNKNOWN/inert,NOretry/reset.
+Log/private/tmp/pioneer-q38-peer-phase-root-20261021-d.log
+SHA73302135058397a49ad921fc0688b981e2c11284b9344ebd55fa5b2194795f03.
+Evidence9tpu04Ha. Initialobserver choseFIRSTtiedsentinel;actual documented
+policy isLASTtiedsentinel. Fixedobserver,notproduction,thenFULLrerunPASS.
+Initialrunner missingold-a root path refused athashgate beforeexecution;
+freshindependent originalcontrolbuild reproducesexact65c790cf/d358b793.
+
+Still required BEFORE native:separateoperationnamespace/ABI,exacttag/frozen
+registry/controller/ownerquarantine/guardedupdater andqualifieddebug client.
+OldABI2 must NOT silently accept this newdata/countershape. These tests
+NEVER establish cleanup/ownership authority or silicon performance.
+
+15:53UTC OFFLINE follow-up:separate ABI4 Workoperations+6260/+6261
+implemented for explicitly selected qualifier/referenceONLY;ordinaryABI2
+andSM7ABI3 constants unchanged. Exacttag25 sourceguard added. All native
+builders STILL REFUSE these flags;no driver/debug image compiled/staged/
+installed yet. Nine exacttagdebugvariants x93checks=837 PASS7Elw9t6B,
+log/private/tmp/pioneer-q38-peer-phase-tag-20261021-a.log
+SHA2dfbdbc65a7b342ba110ab21f3ea052dcd2e9a720a0d3b7068e33ea9a12dffeb.
+170preSDK refusals pass. Actual7namespace variants PASS0gxAlJYk;log
+/private/tmp/pioneer-q38-peer-phase-namespace-20261021-a.log
+SHA2c3569689736efd8688eb1c7f9838446e43b335e919485f1e20ba31529c603b7.
+
+Pinned root+peer image registry created with apply_patch generator;ALL
+491520actualwords/120roles/prefixfetch+affine/zerogaps/operandholes/bounds
+PASS31GZpMRO log/private/tmp/pioneer-q38-peer-phase-registry-20261021-a.log
+SHA039a882aded2a0a309af64c4e8564cfec230f97fef08e918168647f188f70265.
+Registry is DATAONLY until explicit complete nativebuild qualification.
+WorkSafety ABI4 adds EXACT+1read/+1flit and DISTINCTpeerDATA envelope;
+all57existing safetyfield/source/counter/nonce/PC/held/DMA rules remain.
+No ordinarymodel/client can accidentally invoke privateprofiling viaABI2.
+
+Actual source-extractedkernelcontroller/root execution+Workrun passes
+x0ITgMnt,ALL3privateowners/BME/maps/clock/cold retained on uncertainty,
+NOdisable/reset/retry,checkedisolation andpost-completioncopyout handling
+unchanged. Log/private/tmp/pioneer-q38-peer-phase-controller-20261021-c.log
+SHA01bf87cb3a39fbbbd5e17a3b80a77190ce43e25aace2f192610c0f90a04c3e53.
+Firstcontroller VM run omitted existing TEST_INT_ACCUMULATOR prefixhalf
+support;stopped at VMaddressassertion. Enabledalreadyexisting VM mapping,
+NOT a productionmemorylimit change. Originalrootclockzero-refusalobserver
+was inapplicable to opaquepeerDATA;newABI testexplicitly acceptszerovalues
+whileoldABI observer remains unchanged;FULLcontroller+WorkrerunPASS.
+
+Full54shape peer arithmetic regression after sharedVM constructor change
+PASS8YnSB7rC,log/private/tmp/pioneer-q38-peer-phase-peer-regression-20261021-b.log
+SHA9fdb63cadc659911d9241978c92b7723a3fc4919bfeddc4df52507666a7079a9.
+Firsttest defaultedworker1 instead of originalfixture69;fixedtestdefault
+only,NOT arithmetic/proofs,thenFULLrerun. Ordinaryproduction crossbuilds
+still EXACTf414306f model/84ab80ac driver17/d1ce2aa4guard/2df0e0f8control.
+Still required BEFORE native:complete preSDK buildselector qualification,
+exactdriver/debug builds,independent frozen-registry pins,allguardedupdater
+hash/owner/failure tests. NO speed/native claim from this checkpoint.

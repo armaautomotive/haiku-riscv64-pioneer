@@ -5,6 +5,12 @@
 // No physical route,address or sequence here is a new userspace capability.
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+#if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || defined(PIONEER_Q38_WORK_ROOT_COMMAND_REUSE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH)
+#error Separate OFFLINE peer timing root ONLY,not command-reuse/batch/mixed modes
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerPhaseData.h"
+#endif
 #ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
 #if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 #error Separate OFFLINE command reuse requires original-layout sentinel root,not batch fetch
@@ -146,6 +152,9 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 	bool permitted=write?(remote==0x74000 && bytes==64) || (remote==0x74100 && bytes==4)
 		:(remote==0x74000 && bytes==64) || (remote==0x74140 && bytes==64)
 		|| (remote==0xffb13140 && bytes==4) || (remote==0xffb121b0 && bytes==4)
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+		|| (remote==0x84500 && bytes==64) // one fixed private DATA endpoint,never user address
+#endif
 		|| (remote==0x83f00 && bytes>=320 && bytes<=1280 && !(bytes&63));
 	if (!permitted || !worker || worker>=120 || local<0x75000 || local>0x75800-bytes
 		|| ((local^remote)&31) || !PacketIdle()) block_fault_park();
@@ -321,6 +330,16 @@ static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const 
 }
 #endif
 static unsigned Tile(unsigned type) { return type==8?576:type==12?2304:type==14?3392:0; }
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+static __attribute__((noinline,section(".q38_peer_phase"))) bool CapturePeerPhase(const uint32_t (&parts)[119][8],unsigned workers,unsigned type,unsigned inputs,uint32_t (&out)[7]){
+	unsigned selected=0;if(!PioneerQ38SelectPollSentinel(parts,workers,selected))return false;
+	// Caller has ALREADY proved ALL current peer status/2physicalPC/reset/
+	// immutable source/counter/final commands and copied EVERY output.
+	Transfer(false,selected+1,0x75000,0x84500,64);
+	uint32_t data[16];for(unsigned w=0;w<16;w++)data[w]=Words(0x75000)[w];
+	return PioneerQ38PeerPhaseReadback(data,selected+1,parts[selected][3],type,inputs,parts[selected][2],out);
+}
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 static Q38_ROOT_SMALL bool HeaderValid(const uint32_t* header)
 {
@@ -371,6 +390,9 @@ extern "C" unsigned block_main()
 	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	const bool work=operation==1 && header[8]==1;
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+	uint32_t peerMetrics[7];
+#endif
 #endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	PioneerQ38RootCycleProfile cycles(work);
@@ -565,6 +587,9 @@ extern "C" unsigned block_main()
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) if (parts[w][i]!=Words(0x74080)[w*8+i]) block_fault_park();
 	Checkpoint(0x54000401,workers);
 	for (unsigned bank=0;bank<8;bank++) if (banks[bank]!=Words(0x74040)[bank]) block_fault_park();
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+	if(work&&!CapturePeerPhase(parts,workers,type,inputs,peerMetrics))block_fault_park();
+#endif
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 	// EVERY peer's CURRENT terminal PC/source/counters and every gathered
 	// output have already passed. Never DMA while a peer may still write.
@@ -588,6 +613,9 @@ extern "C" unsigned block_main()
 	unsigned flits=Words(0x7f800)[10]+3*Words(0x7f800)[11]+workers+(operation==1?4*workers+groups:0);
 #endif
 	Checkpoint(0x54000403,reads);
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+	if(work){reads++;flits++;} // exact additional64B read,response+oneflit;NEVER unaccounted
+#endif
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 	unsigned writes=workers*2,writeFlits=writes;
 	if (work) {
@@ -617,6 +645,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(2); // proof/output gather+DMA+final source/counter proof
 	cycles.Publish(); // bounded existing statistics padding,Work ONLY
+#endif
+#ifdef PIONEER_Q38_PEER_PHASE_ROOT
+	if(work)for(unsigned w=0;w<7;w++)Words(0x7f800)[57+w]=peerMetrics[w]; // DISTINCT DATA marker,not root-cycle semantics
 #endif
 	Fence(); return workers;
 }
