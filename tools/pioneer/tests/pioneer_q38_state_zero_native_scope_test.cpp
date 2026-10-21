@@ -33,6 +33,12 @@ struct FakeClock {
 struct PioneerStoreContext {
 	PioneerSessionIO io;
 	PioneerResidentBanks& banks;
+	uint8_t* initialized=nullptr;
+	struct DramReference { tt_dram_samples_result& dram; };
+	struct Baseline1 { DramReference baseline; };
+	struct Baseline2 { Baseline1 baseline; };
+	struct Baseline3 { Baseline2 baseline; };
+	Baseline3 baseline{{{{io.dram}}}};
 	PioneerQ38GdnBanks* q38GdnBanks=nullptr;
 	PioneerQ38StateZeroLease* q38StateZero=nullptr;
 	PioneerQ38GdnIdentity q38GdnIdentity={1,2,3,7};
@@ -50,7 +56,7 @@ struct PioneerStoreContext {
 			|| (q38StateZero && (q38StateZero->unsafe || (!controlledZero && q38StateZero->running)));
 	}
 };
-struct PioneerProbeCookie { PioneerStoreContext* context=nullptr; uint32_t magic=0x50313030; };
+struct PioneerProbeCookie { PioneerStoreContext* context=nullptr; uint32_t magic=0x50313030; int team=17; };
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64_t sReloadGeneration=7;
@@ -59,6 +65,7 @@ static void RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_re
 	c.retained=true; c.retainCalls++; sColdRecoveryRequired=true; c.q38Clock.quarantined=true;
 	if (c.q38StateZero) c.q38StateZero->unsafe=true;
 	if (c.q38GdnBanks) c.q38GdnBanks->Fault(); // MEMORY ONLY;no root view restoration
+	c.banks.Quarantine();
 }
 #include "native_scope.inc"
 struct Fixture {
@@ -66,10 +73,13 @@ struct Fixture {
 	tt_dram_samples_result proof=BankProof(proofModel);
 	PioneerResidentBanks banks;
 	std::unique_ptr<PioneerQ38GdnBanks> state=std::make_unique<PioneerQ38GdnBanks>();
+	std::vector<uint8_t> initialized=std::vector<uint8_t>(PioneerResidentBanks::Pages,0);
 	PioneerQ38StateZeroLease zero;
 	PioneerStoreContext c{banks};
 	PioneerProbeCookie cookie{&c};
-	Fixture() {
+	bool ownsAttached=false;
+	Fixture(bool bind=true) {
+		ownsAttached=!bind;
 		sRuntimeOwner=&cookie; sColdRecoveryRequired=sReloadQuiesced=false; sBankStorageOnly=true;
 		sReloadGeneration=7; sQ38LocalDeltaOwner=nullptr; currentThread=42;
 		c.io.dram=proof; assert(banks.Bind(c.io.dram));
@@ -77,13 +87,17 @@ struct Fixture {
 		for (unsigned layer=0;layer<64;layer++) if (layer%4!=3) for (unsigned slot=0;slot<2;slot++) {
 			unsigned index=unsigned(regions.size()); regions.push_back({layer,slot,0,48,index%7,0x04000000+(index/7)*48*65536});
 		}
-		std::vector<uint8_t> initialized(PioneerResidentBanks::Pages,0);
-		assert(state->Bind(banks,c.io.dram,c.q38GdnIdentity,initialized.data(),unsigned(initialized.size()),regions.data(),unsigned(regions.size())));
-		c.q38GdnBanks=state.get(); c.q38StateZero=&zero; c.io.q38MutableContext=&c;
+		c.initialized=initialized.data(); c.io.q38MutableContext=&c;
+		if (bind) {
+			assert(state->Bind(banks,c.io.dram,c.q38GdnIdentity,initialized.data(),unsigned(initialized.size()),regions.data(),unsigned(regions.size())));
+			c.q38GdnBanks=state.get(); c.q38StateZero=&zero;
+		} else { c.q38GdnIdentity={}; c.io.q38SpanAllowed=true; c.q38GdnCallThread=-1; }
 		for (unsigned w=0;w<16;w++) c.io.expected[w]=proof.source[w];
 	}
+	~Fixture() { if (ownsAttached) { delete c.q38GdnBanks; delete c.q38StateZero; } }
 	void Inert() { assert(!c.io.StateZeroBeforeCohort() && !c.io.StateZeroOtherCoresHeld() && !c.io.touches); }
 };
+#ifndef PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_MODEL_ONLY
 int main()
 {
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
@@ -159,3 +173,4 @@ int main()
 	}
 	printf("PASS OFFLINE ACTUAL native zero scope:real bank/identity binding,%zu CPU-only refusal gates,closed-span handoff,idempotent-close scope,ordinary Unsafe still rejects controlled-running root,ALL119 physical audit,first/middle/last source/TLB/reset faults hand off to MEMORY-ONLY retention BEFORE any later IO;NO native allocation/call-seal/driver/compute readiness\n",changes.size()+5+6);
 }
+#endif

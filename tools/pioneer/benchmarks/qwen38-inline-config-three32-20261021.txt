@@ -1,0 +1,37 @@
+October20 Vancouver/October21 UTC 2026:THREE identical PUBLIC Hello
+sequences,32 positions each. Driver03876197/tag202610200001000c/gen13;
+SAME f414306f host/frozen c060 runtime/32CPU threads/authenticated source.
+Work has NO CPU learned reference/fallback. This benchmark ONLY checks
+token identities between sequences;it is NOT the Assistant Work path.
+
+ALL96 positions/47712 learned projections/48480calls/119workers completed.
+SAME4558653pages/18672242688B retained. CPU state resets0.063461s and
+0.056997s;native page/call counts unchanged. Every token matched sequence0.
+Explicit clean END/CLI_EXIT0;clock800->1350->800 restored,CPU guardclear.
+
+Skip positions0..4 EACH sequence:81 measured positions/461.924750s =
+0.175353237tokens/sec.
+sequence0:27/154.001029s =0.175323504;median5.702473s,p95nearest5.726731s.
+sequence1:27/153.996174s =0.175329031;median5.702452s,p95nearest5.744792s.
+sequence2:27/153.927547s =0.175407200;median5.698145s,p95nearest5.731918s.
+Previous deferred-driver three32 sample0.174060772tokens/sec. New sample
+is~0.74% higher,only a SMALL improvement;no broad sustained/text-quality
+claim. Identical short sequences are not diverse workload qualification.
+Still about114x short of20tokens/sec,NOT usable requested27B performance.
+
+Host load12.941783s;card priming709.955032s (repack147.213214/upload
+562.115932s). First position742.138064s;whole smoke1285.299282s excludes
+separate full-source authentication. Cold upload is NOT warm token latency.
+Later host-wall diagnostics:matrix ioctls~4.34s/token,whole matrix callbacks
+~4.62s;other GGML~1.06..1.15s. NOT pure accelerator/CPU execution times.
+
+PASS_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated96 selected_token888 seconds1285.299282 projections47712 uploaded_pages4558653 calls48480 workers119 clean_end1;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY
+PASS_PUBLIC27B_REPEATED_TIMING sequences3 generated96 timing_valid1 measured_positions81 measured_seconds461.924750 sample_tokens_per_second0.175353237 retained_weights1 clean_end1;THREE_IDENTICAL_PUBLIC_SEQUENCES_NOT_DIVERSE_PROMPTS_OR_TEXT_QUALITY
+CLI_EXIT=0
+P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0;NORMAL_FIRMWARE_ONLY
+P100A_RELOAD driver55 tag202610200001000c generation13 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Remote:/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-inline-config-three32-20261020-a.log
+SHA2566f38f199841c0fbd43c480213b117ee63cd799a9fc4b23e343dd093657e6b87c
+Verified local:/private/tmp/pioneer-q38-repeated-native-evidence.3StuJ7SD/full-model-work-inline-config-three32-20261020-a.log
+No active native job after this run. Goal ACTIVE;offline resident-state
+integration continues,not a completed20tokens/sec objective.

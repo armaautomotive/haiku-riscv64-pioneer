@@ -1,5 +1,55 @@
 # Native build status
 
+October20,17:10 Vancouver (October21,00:10 UTC) INLINE LONG96 CLEAN:
+Current03876197/gen13/f414306f completed ALL96 public positions/three
+matching sequences,47712 learned projections/48480calls/119workers. SAME
+4558653pages/18672242688B retained,two CPU state resets with unchanged
+native counters.81 measured positions/461.924750s=0.175353237tok/s.
+Per-run0.175323504/0.175329031/0.175407200. Only~0.74% above previous
+deferred three32 sample0.174060772,NOT a substantial/20tok/s improvement.
+Explicit clean_end1/CLI_EXIT0,800->1350->800 restored,CPU guardcold0/
+active_owner0. Remote/local full-model-work-inline-config-three32-20261020-a
+log SHA6f38f199... identical. Evidence/caveats in benchmarks/qwen38-inline-
+config-three32-20261021.txt. NO active native job now;no power/SD changes.
+
+Follow-up private scope+bind tests jO2KxhI6/H0QgCnWD PASS;pre-existing
+unsafe context now requests memory-only retention BEFORE granting a seal.
+Actual native compile witnessmcQr92RD max688B,global lock/lifetime5EWhKiHN
+PASS,38 native build refusals PASS. Test fixture's borrowed-owner ASan
+failure fixed and native-scope gJoHWD52 regression PASS. Mutable path still
+has NO public control entry/native selection,initialization publication/
+hybrid compute/GGML buffers remain missing. Goal ACTIVE;continuing OFFLINE.
+
+October20,17:06 Vancouver (October21,00:06 UTC) PRIVATE CALL/BIND PREREQUISITES:
+OFFLINE ONLY;NO public ioctl constructs this scope or owner. Actual private
+call guard grants the thread seal ONLY under the actual acquired global
+lock,with exact FD/team/thread/context/complete bank owner. Destruction
+clears its CPU seal and releases the semaphore,NEVER END/STOP/ARC/reset/
+unmap/free;lost owner/identity/thread requests memory-only full retention.
+Actual extracted lock+guard+native scope tests jHpLtgpw/IhfBGJc9 PASS15
+early/locked refusals and5 destructor faults,balanced release,ZERO IO.
+
+Actual private CPU binding builds heap672-stripe proposal,then real fresh
+bank claims/zero lease under the seal. All owners attach BEFORE a claim
+could partially succeed;any post-attachment proof refusal retains them.
+Prepublication metadata/exhaustion/corrupt bitmap refusals do not publish
+owners or alter ordinary scope. No initialization/model/compute readiness.
+Real-owner tests H0QgCnWD/sucOfhVv verify ALL9216 halves,14 prepublication
+refusals and post-attachment source-proof failure retention,ZERO IO and
+unchanged initialized bitmap. Initial test fixture wrongly freed a borrowed
+foreign owner;ASan caught it OFFLINE. Fixture now tracks actual attachment
+ownership;native owner creation/lifetime policy unchanged. Follow-up full
+native-scope gJoHWD52 PASS. Complete actual native driver+call guard+bind+
+zero controllers instantiate in OBJECT-ONLY witness2qdmaVCz,max688B frame.
+No linked/staged/selected mutable driver;builder still refuses mutable!=0.
+Feature-OFF current03876197/guardd1ce/default2df0 remain EXACT after changes.
+
+Current ONLY native job remains long inline-config three32,PID2741/
+session62381,full-model-work-inline-config-three32-20261020-a.log. First
+two sequences completed/matched with no weight reload;third running. No
+completed candidate token rate or clean END yet. No SCP/probes/reload.
+Previous completed0.174060772tok/s remains latest,NOT20. Goal ACTIVE.
+
 October20,16:58 Vancouver (23:58 UTC) LONG TEST GENERATING:
 Same current03876197/gen13/f414306f/PID2741/session62381 ONLY native job.
 4558653pages/18672242688B primed709.955032s (repack147.213214/upload

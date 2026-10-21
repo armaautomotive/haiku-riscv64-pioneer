@@ -12,3 +12,15 @@ extern "C" bool pioneer_q38_gdn_native_adapter_compile(PioneerStoreContext& cont
 	if (operation==3) return CloseQ38MutableZero(context,false);
 	return false;
 }
+extern "C" bool pioneer_q38_gdn_call_scope_compile(PioneerProbeCookie* cookie,unsigned operation,
+	unsigned region,unsigned first,unsigned pages,PioneerQ38StateZeroResult& result)
+{
+	PioneerQ38GdnCallScope scope(cookie); auto* context=scope.Context();
+	if (!context) return false;
+	return pioneer_q38_gdn_native_adapter_compile(*context,operation,region,first,pages,result);
+}
+extern "C" bool pioneer_q38_gdn_bind_owner_compile(PioneerProbeCookie* cookie,const PioneerQ38GdnIdentity& identity)
+{
+	PioneerQ38GdnCallScope scope(cookie); auto* context=scope.Context();
+	return context && BindQ38MutableOwner(*context,identity);
+}

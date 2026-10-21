@@ -19,6 +19,7 @@
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 #include "PioneerQ38StateZeroController.h"
 #include "PioneerQ38NonRootHeld.h"
+#include "PioneerQ38GdnFreshPlan.h"
 #if !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Private mutable adapter requires the complete retained-owner normal-clock bank driver
 #endif
@@ -2181,9 +2182,9 @@ struct PioneerStoreContext {
 	PioneerQ38GdnBanks* q38GdnBanks=NULL;
 	PioneerQ38StateZeroLease* q38StateZero=NULL;
 	PioneerQ38GdnIdentity q38GdnIdentity={};
-	// NO operation currently sets this seal. A future private call guard
-	// must bind it ONLY under the acquired global lock,then clear it before
-	// releasing that lock. Identity/presence alone never authorizes IO.
+	// No public operation selects the private call guard yet. Only that
+	// guard may bind this seal under the acquired global lock,then clear it
+	// before releasing the lock. Identity/presence alone never grants IO.
 	thread_id q38GdnCallThread=-1;
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
@@ -2504,6 +2505,88 @@ bool PioneerSessionIO::StateZeroOtherCoresHeld()
 	tt_resident_session_result result={}; RetainQ38DispatchOwner(*q38MutableContext,result); return false;
 }
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_END
+// PIONEER_Q38_GDN_CALL_SCOPE_BEGIN
+// PRIVATE/OFFLINE ONLY. No ioctl constructs this scope yet. Exactly ONE
+// non-reentrant stack scope belongs at a future control entry,not inside
+// a controller/helper. FD lifetime keeps the cookie alive until return;
+// context is captured/rechecked ONLY after acquiring the global lock.
+// Destruction clears a CPU seal and releases that lock,NEVER END/STOP/
+// restore/reset/ARC/unmap/free. All owners survive for explicit protocol END.
+class PioneerQ38GdnCallScope {
+	PioneerProbeCookie* cookie=NULL;
+	PioneerStoreContext* context=NULL;
+	thread_id thread=-1;
+	status_t status=B_BAD_VALUE;
+	bool held=false;
+public:
+	explicit PioneerQ38GdnCallScope(PioneerProbeCookie* owner) {
+		if (!owner || owner->magic!=0x50313030) return;
+		thread_info info={}; thread=find_thread(NULL);
+		if (thread<0 || get_thread_info(thread,&info)!=B_OK || info.team!=owner->team) { status=B_NOT_ALLOWED; return; }
+		status=AcquireQ38GdnSessionLock(owner); if (status!=B_OK) return;
+		held=true; context=owner->context;
+		if (owner->magic!=0x50313030 || sRuntimeOwner!=owner || !context || !sBankStorageOnly
+			|| !context->bankStorageOnly || context->bytes!=PioneerResidentBanks::Total
+			|| context->io.q38MutableContext!=context || context->q38GdnCallThread!=-1) {
+			context=NULL; status=B_NOT_ALLOWED; held=false; release_sem(sLock); return;
+		}
+		if (context->Unsafe()) {
+			tt_resident_session_result result={}; RetainQ38DispatchOwner(*context,result);
+			context=NULL; status=B_DEV_NOT_READY; held=false; release_sem(sLock); return;
+		}
+		cookie=owner; context->q38GdnCallThread=thread;
+	}
+	PioneerQ38GdnCallScope(const PioneerQ38GdnCallScope&)=delete;
+	PioneerQ38GdnCallScope& operator=(const PioneerQ38GdnCallScope&)=delete;
+	~PioneerQ38GdnCallScope() {
+		if (!held) return;
+		if (!context || !cookie || cookie->context!=context || cookie->magic!=0x50313030
+			|| sRuntimeOwner!=cookie || context->q38GdnCallThread!=thread || find_thread(NULL)!=thread) {
+			if (context) { tt_resident_session_result result={}; RetainQ38DispatchOwner(*context,result); }
+		} else context->q38GdnCallThread=-1;
+		release_sem(sLock);
+	}
+	status_t Status() const { return status; }
+	PioneerStoreContext* Context() const { return held && status==B_OK?context:NULL; }
+};
+// PIONEER_Q38_GDN_CALL_SCOPE_END
+// PIONEER_Q38_GDN_BIND_OWNER_BEGIN
+// Private CPU-only transition,NO native operation selects it yet. Caller
+// holds the call-scope seal/global lock;no user coordinates or addresses.
+// Fresh placement is a proposal;real Bind independently validates/claims
+// every page. No initialization/model/compute readiness is published here.
+[[maybe_unused]] static bool BindQ38MutableOwner(PioneerStoreContext& c,const PioneerQ38GdnIdentity& identity)
+{
+	if (sColdRecoveryRequired || sReloadQuiesced || !sRuntimeOwner || sRuntimeOwner->magic!=0x50313030
+		|| sRuntimeOwner->context!=&c || !sBankStorageOnly || !c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total
+		|| c.io.q38MutableContext!=&c || c.q38GdnCallThread<0 || c.q38GdnCallThread!=find_thread(NULL)
+		|| c.runtimeCoreMode!=1 || c.io.runtimeCore || c.io.fleetEnabled || !c.initialized || c.Unsafe()
+		|| !identity.Valid() || identity.driverGeneration!=sReloadGeneration || c.q38GdnBanks || c.q38StateZero
+		|| c.q38GdnIdentity.session || c.q38GdnIdentity.sequence || c.q38GdnIdentity.modelEpoch || c.q38GdnIdentity.driverGeneration
+		|| c.q38Dispatch || c.q38Cohort || c.fleet || sQ38LocalDeltaOwner
+		|| c.q38Delta.saved || c.q38Delta.dirty || c.q38Delta.ready || c.q38Delta.running || c.q38Delta.awaiting
+		|| c.panelProbe.saved || c.panelProbe.dirty || c.panelProbe.ready || c.streamProbe.saved || c.streamProbe.dirty || c.streamProbe.ready) return false;
+	if (c.q38Span && (!c.q38Span->closed || c.q38Span->dirty || c.q38Span->ready || c.q38Span->running || c.q38Span->unsafe)) return false;
+	const auto& clock=c.q38Clock.Snapshot();
+	if (!c.q38Clock.RequiresExplicitEnd() || clock.state!=TT_ARC_CLOCK_BUSY_VERIFIED
+		|| !clock.busy_requested || !clock.busy_acknowledged || clock.restored) return false;
+	auto* plan=new(std::nothrow) PioneerQ38GdnFreshPlan;
+	if (!plan) return false;
+	if (!plan->Build(c.initialized,PioneerResidentBanks::Pages)) { delete plan; return false; }
+	auto* owner=new(std::nothrow) PioneerQ38GdnBanks;
+	auto* zero=new(std::nothrow) PioneerQ38StateZeroLease;
+	if (!owner || !zero) { delete owner; delete zero; delete plan; return false; } // no claim/IO yet
+	// Publish ALL heap owners before a claim can succeed. A failed/partial
+	// claim then retains the same context rather than freeing a referenced
+	// owner. Only temporary CPU proposal storage is disposable afterward.
+	c.q38GdnBanks=owner; c.q38StateZero=zero; c.q38GdnIdentity=identity; c.io.q38SpanAllowed=false;
+	bool okay=owner->Bind(c.banks,c.baseline.baseline.baseline.baseline.dram,identity,c.initialized,
+		PioneerResidentBanks::Pages,plan->Regions(),plan->Count());
+	delete plan;
+	if (!okay) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+// PIONEER_Q38_GDN_BIND_OWNER_END
 [[maybe_unused]] static bool PrepareQ38MutableZero(PioneerStoreContext& c)
 {
 	if (!c.io.StateZeroBeforeCohort()) {
