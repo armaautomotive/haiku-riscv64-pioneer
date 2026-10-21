@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_TENSIX_TEST_MACHINE_INCLUDED
+#define PIONEER_TENSIX_TEST_MACHINE_INCLUDED
 #include <cassert>
 #include <cstdint>
 #include <cstdio>
@@ -497,4 +499,5 @@ int main(int argc, char** argv)
 	}
 	printf("Offline fixed image: %u steps, %u manual drains, two nonzero matrix fixtures; no hardware timing modeled\n",m.steps,m.drains);
 }
+#endif
 #endif

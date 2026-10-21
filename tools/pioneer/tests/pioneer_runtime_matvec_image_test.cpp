@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_RUNTIME_TEST_MACHINE_INCLUDED
+#define PIONEER_RUNTIME_TEST_MACHINE_INCLUDED
 #define PIONEER_TENSIX_MACHINE_ONLY
 #include "pioneer_tensix_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeRuntimeMatvecImage.h"
@@ -155,4 +157,5 @@ int main(int argc,char** argv)
 	assert(PioneerMatvecWeightRange(2*1024*1024,4096,1024,32) && !PioneerMatvecWeightRange(4096,0,1024,16));
 	printf("PASS: independently assembled BF16/FP16 runtime images, retained weights, separate vector, K/N loops, phase-aware dot references, bounded NoC faults; NO hardware\n");
 }
+#endif
 #endif

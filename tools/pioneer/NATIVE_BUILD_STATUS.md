@@ -1,5 +1,38 @@
 # Native build status
 
+October20,18:20 Vancouver (October21,01:20 UTC) OFFLINE RESIDENT GDN CONTROLLER:
+Separate ROOT0 readback image518fbdefed49df2afd89837e6fd2edb08d0bf0c33df5a55e47ccb3ccbc21951b,
+boote678476d,builds c/d exact. Default non-root Work candidate remains
+EXACT c3d150b4,NO added readback/CPU validation there. Diagnostic reads
+the GDDR next slot back into a DISJOINT poisoned L1 buffer and compares
+ALL8192 words BEFORE completion. Root route is fixed0/half0 ONLY,not an
+extension of peer routing or a model capability. Native builder still has
+NO selector for resident compute;current installed8ccb/gen15 is unchanged.
+
+Actual emitted image ZcI0lrL0 PASS all49 bank pairs/3GiB edges/64 varied
+nonresetting transitions,ALL8256 bits,counters/summary and all6 packet
+faults,first/middle/last corrupt writes/readbacks/missing poison stores.
+New private controller4bXM9nXX runs the ACTUAL compiled RV32/SFPU against
+simulated NoC/GDDR:16 successive slot transitions,ALL8256 words exact to
+independent FP32 debug reference. Source/extent/code/input/descriptor/
+summary/last-command/counter/two safe PC proofs precede first hold,then
+exports GPU-verified GDDR state. Slot/position flip ONLY after explicit
+CPU-debug ACCEPT. Bad ACCEPT/duplicate/unaccepted Run/Close are inert;
+32 summary fields,all6 packet timeouts and late source/code/counter/
+descriptor/command/marker/phase/count/writeback/PC/export-counter faults
+retain ALL owners with ZERO later IO/cleanup. Invalid DATA/pristine owner/
+role/capacity and restoration faults covered. This test's INITIAL whole
+zero ledger is EXPLICIT counter fabric,NOT native zero-data qualification.
+
+Standalone Haiku/RV64 controller OBJECT witness uP7NRxFV max992B frame;
+NO actual native IO adapter/entry/module/selection for resident compute.
+Two shared VM model files gained include guards to compose the real images;
+standalone Tensix and BF16/FP16/INT8 runtime regressions PASS. Root Work
+regression VtF2AEtp PASS. Feature-OFF full rebuild is EXACT8ccb2a24/guard
+d1ce/default2df. No card job/install/reload/power/SD/Assistant change this
+span;native board stays clean idle. Whole27B speed STILL0.175353237tok/s
+on earlier038/f414,NOT20;NO speedup claim from offline correctness.
+
 October20,18:01 Vancouver (October21,01:01 UTC) NATIVE STATE INITIALIZATION PASS:
 Guarded8ccb2a24/tag202610210001000e/gen15 install succeeded,NO reboot.
 ONE physical owned-page pilot passed with NO full initialization seal.

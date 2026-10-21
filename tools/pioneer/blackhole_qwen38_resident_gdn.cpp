@@ -28,9 +28,19 @@ static bool Sealed(const uint32_t* d) {
  for (unsigned i=0;i<64;i++) same &= Words(TT_Q38_RGDN_DESCRIPTOR)[i]==d[i];
  return same;
 }
+#ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+static void Packet(unsigned operation,unsigned at,const uint32_t* d) {
+ const bool write=operation==1;
+ if (operation>2) scalar_fault_park();
+#else
 static void Packet(bool write,unsigned at,const uint32_t* d) {
+#endif
  if ((at!=0 && at!=16384) || !Sealed(d) || !Idle()) scalar_fault_park();
+#ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+ unsigned remote=d[operation?7:5]+at,local=(write?0xa0000:operation==2?0x98000:0x90000)+at,route=d[operation?13:12];
+#else
  unsigned remote=d[write?7:5]+at,local=(write?0xa0000:0x90000)+at,route=d[write?13:12];
+#endif
  const unsigned delta[]={write?0U:1U,write?0U:256U,1,write?0U:1U,write?1U:0U,write?256U:0U,1,write?1U:0U};
  uint32_t expected[8]; for (unsigned i=0;i<8;i++) expected[i]=*Words(0xffb20000+CounterOffset(i))+delta[i];
  const uint32_t command[]={write?local:remote,0,write?d[15]:route,write?remote:local,0,write?route:d[15],0,write?0x212U:0,16384,0};
@@ -57,14 +67,29 @@ extern "C" unsigned scalar_main() {
  if (!RGdn::Sealed(d) || !RGdn::Idle()) scalar_fault_park();
  volatile uint32_t* s=Words(TT_Q38_RGDN_SUMMARY); for (unsigned i=0;i<32;i++) s[i]=0;
  s[5]=32768; s[6]=d[8]; s[7]=TT_Q38_RGDN_MARKER; s[24]=d[9]; s[25]=d[10]; s[26]=d[11];
- s[27]=d[11]^1; s[28]=d[15]; s[29]=1; s[30]=d[5]; s[31]=d[7];
+ s[27]=d[11]^1; s[28]=d[15]; s[29]=
+#ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+ 2;
+#else
+ 1;
+#endif
+ s[30]=d[5]; s[31]=d[7];
  for (unsigned i=0;i<8;i++) s[8+i]=*Words(0xffb20000+RGdn::CounterOffset(i));
- RGdn::Packet(false,0,d); RGdn::Packet(false,16384,d);
+ RGdn::Packet(0,0,d); RGdn::Packet(0,16384,d);
  if (q38_local_recurrent_step()!=64 || !RGdn::Sealed(d) || !RGdn::Idle()) scalar_fault_park();
  // Only the private next slot is written,never the input/current state.
  // Completion is DATA ONLY;the coordinator must independently prove ALL
  // participants and its token/slot epoch BEFORE publishing a slot flip.
- RGdn::Packet(true,0,d); RGdn::Packet(true,16384,d);
+ RGdn::Packet(1,0,d); RGdn::Packet(1,16384,d);
+#ifdef PIONEER_Q38_RGDN_ROOT_QUALIFICATION
+ // Separate diagnostic ONLY. Independent GDDR readback into a DISJOINT
+ // local buffer;compare ALL next-state words BEFORE completion. This is
+ // transport validation,NOT CPU numerical fallback or the Work image.
+ for (unsigned i=0;i<8192;i++) Words(0x98000)[i]=0x7fc00000;
+ Fence(); for (unsigned i=0;i<8192;i++) if (Words(0x98000)[i]!=0x7fc00000) scalar_fault_park();
+ RGdn::Packet(2,0,d); RGdn::Packet(2,16384,d);
+ for (unsigned i=0;i<8192;i++) if (Words(0x98000)[i]!=Words(L::Next)[i]) scalar_fault_park();
+#endif
  if (!RGdn::Sealed(d) || !RGdn::Idle()) scalar_fault_park();
  for (unsigned i=0;i<8;i++) s[16+i]=*Words(0xffb20000+RGdn::CounterOffset(i));
  s[4]=64; Fence(); return 64;
