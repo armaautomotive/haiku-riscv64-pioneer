@@ -1,6 +1,7 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}" = 0 ] || { echo 'STOP peer timing is OFFLINE firmware ONLY;NO model/Assistant selector' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_ROOT_COMMAND_REUSE:-0}" = 0 ] || { echo 'STOP command-write reuse is OFFLINE root-image ONLY;NO model/Assistant selector' >&2;exit 2; }
 [ "${PIONEER_Q38_COMMAND_REUSE_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_TILE_PREFETCH:-0}" = 0 ] || { echo 'STOP one-tile prefetch is NOT a model/Assistant selector' >&2;exit 2; }

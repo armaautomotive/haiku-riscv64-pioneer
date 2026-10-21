@@ -1,6 +1,7 @@
 #!/bin/sh
 # Compile only,no install/device access.
 set -eu
+[ "${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_ROOT_COMMAND_REUSE:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_COMMAND_REUSE_QUALIFICATION:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_COMMAND_REFERENCE_CLIENT:-0}" in

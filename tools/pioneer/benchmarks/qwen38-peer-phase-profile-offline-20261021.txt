@@ -1,0 +1,73 @@
+OFFLINE peer hot-phase instrumentation,October21 2026 15:10UTC.
+NOT staged/installed/native-run. NO driver/root/model/Assistant selector.
+Current8/1/8 full27B trial uses UNCHANGED041/tag12/g61. No SCP/nativeoverlap.
+Best completed CPU8 sample .204339380tok/s;20target UNMET.
+
+Purpose:separate original peer hot-loop wall cycles into fetch+scale,
+metadata/raw-unpack,then matrix+affine issue/wait. Retains EVERY original
+actual drain,source/PC/NoC/counter proof,format,math,FP32 rounding. NO
+CPU learned-reference/fallback/extraNoC request or datareadback. Timings
+INCLUDE instrumentation,real waits and overlapping deferred affine work;
+NOT pure DRAM/FPU/SFPU execution or production token rate. Group setup/
+export/gaps outside BeginBlock are deliberately unmeasured.
+
+Only read-only CSRRS mcycleh/mcycle/mcycleh,x0;bounded4high/low consistency
+attempts. NEVER counter/control writes. Four failedsamples,backwardclock,
+invalidorder or overflow makes timing sticky-invalid ONLY,NEVER parks,
+cancels graph or grants any completion/END/retry/reset/cleanup authority.
+Primary architecture reference verified October21:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
+Hardware presence/behavior still needs separate native qualification.
+
+Each job's stack-only data policy binds worker/nonce/type/K/groups and
+ALL expected blocks/panels. Fully defines16wordDATA envelope,including
+invalidclock identity+zeroedcounters. Staged in original saved privateL1
+84500..84540,disjoint original max256float outputs84000..84400 andraw90000.
+Staging happens after original math/drains/finite output export,BEFORE
+persistent caller's final NoC/source/counter/physical proofs. A FUTURE root
+MUST independently prove all current participants complete BEFORE reading
+this DATA,bind exact fresh identity,own exactbounded endpoint,account ALL
+packets/counters and refuse unqualified/mixed roles. Current roots NEVER
+read this slot. Existing64peerproofwords remain BIT-IDENTICAL,not relaxed.
+Checked/STOP haveNOclock reads or metric-slot writes.
+
+DATA tests27 type/K/group schedules,exactphase sums/unmeasured-gap
+exclusion,14stickyclock/order/phase faults,12shape refusals;56preSDK role/
+format/driver/root/client/model/Assistant refusals QgW9o1wc PASS.
+Log/private/tmp/pioneer-q38-peer-phase-data-20261021-e.log
+SHA6126d912be05024f54fd06a8036558823a5a8b354846436dff097517887a1f3e.
+
+Cross-build d/e IDENTICAL,main8104/8192B,affine5152/5376B,helper1620/1792B:
+main37af1da2262d48f1fe61d717769f8a4450e76788660ff9a1dfcd443257c5d813
+affine68fa5e2164715f9030cb4dd2e05e2645d53e25ec0cdfa55bc4b8eef3b82fc4e1
+helper439d2dae42516799a4dcc08e60ad929b52f47e1bf2bc09da7f1c7eca987c3773
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+No writableglobals/GOT/libc/runtime helper or larger memory/code owner.
+FlagOFF reproduces EXACT original209fc6b8/08333055 peer. Frozen SDK read
+only;no dirty llama source read/build/edit. No native timing permissions.
+
+Actual RV32/FPU/NoC54shapes x2CHANGEDinputs+STOP,old peer vs instrumented
+peer q4Y8o4W8 PASS. Exact original FP32+independentFP64,ALL64proofwords,
+SAME requests/responses/matrix/SFPU/sums/dotreads/drains,alloldraw/source/
+terminal observers retained. Independently captured ACTUAL CSR instruction
+stream matches EVERY emitted64-bit phase total. Old clock stream is not
+replaced by invented phase durations. Checked/STOP preserve poisoned
+metric slot unchanged,NOCSR reads. Rolloverretry/unstable/backwardclock
+all3types still completeexact arithmetic;only badclockDATAinvalidzero.
+First/input/middle/LAST208NoC loss keeps ownerpending/inert,no metric
+publication/request retry/reset. Actual image log
+/private/tmp/pioneer-q38-peer-phase-full-20261021-a.log
+SHAceb883d00ec54499f8dd03da8e88cef9e648a69fd97a6c7ea9e0688e51f9445e.
+Earlier3pilot Uytpr9q3 logSHA
+48befb8f55f6d5d23678b0844ae7d3661c6bf198fb12c02c733cfc291d26cdcb.
+
+Offline repair history,NO hardware touched:initial compositepatch refused
+atomically on oldbuildscript context;fixed exactline. GCC rejected ambiguous
+one-line indentation and constructor COMDAT sectionalias,then mixed
+COMDAT/static same section. Used separate method sections,NOT warning
+suppression. Linker caught mainoverlap and implicitmemset. Moved onlycold
+timing/init/publication and original IdleAll/SourceMatches into ALREADY
+owned prefix;typedvolatile32/64 initialization avoids libc/byte stores,
+not unsafe aliasing or larger bounds. Initial test used wrong worker field
+name;corrected to actual immutable logicalWorker. AllFULL tests rerun on
+final d/e. Only these final images are eligible for future qualification.

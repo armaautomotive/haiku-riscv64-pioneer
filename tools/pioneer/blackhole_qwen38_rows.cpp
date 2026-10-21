@@ -7,6 +7,12 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+#if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
+#error Separate OFFLINE original-layout peer timing ONLY,not a scheduling/format mix
+#endif
+#include "PioneerQ38PeerPhaseProfile.h"
+#endif
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 #if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT)
 #error Tile prefetch is a separate OFFLINE original-layout Work scheduling experiment
@@ -179,6 +185,23 @@ static inline void Emit(uint32_t command) { *Words(0xffe40000)=command; }
 #endif
 static inline uint32_t Bits(float f) { uint32_t u; __builtin_memcpy(&u,&f,4); return u; }
 static inline float Float(uint32_t u) { float f; __builtin_memcpy(&f,&u,4); return f; }
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+static __attribute__((noinline,section(".text.pioneer_q38_peer_phase")))
+uint64_t PeerPhaseClock(PioneerQ38PeerPhaseProfile& profile){
+	for(unsigned attempt=0;attempt<4;attempt++){
+		uint32_t high,low,confirm;
+		asm volatile("csrrs %0,0xb80,x0\ncsrrs %1,0xb00,x0\ncsrrs %2,0xb80,x0" : "=r"(high),"=r"(low),"=r"(confirm) :: "memory");
+		if(high==confirm)return (uint64_t(high)<<32)|low;
+	}
+	profile.BadClock();return 0; // invalidate metric ONLY,never park/cancel/IO
+}
+static __attribute__((noinline,section(".text.pioneer_q38_peer_phase.publish")))
+void PublishPeerPhase(PioneerQ38PeerPhaseProfile& profile){
+	uint32_t data[16];(void)profile.Describe(data,true);
+	for(unsigned w=0;w<16;w++)Words(0x84500)[w]=data[w];
+	Fence();
+}
+#endif
 static void Drain()
 {
 	volatile uint32_t* ack=Words(0xffe000fc); *ack=0; (void)*ack; Fence();
@@ -622,11 +645,17 @@ extern "C" unsigned block_main()
 		:&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false>;
 #endif
 #endif
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+	PioneerQ38PeerPhaseProfile hotProfile(job[11],job[12],type,inputs,groups);
+#endif
 	for (unsigned group=0;group<groups;group++) {
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
 #endif
 	for (unsigned block=0;block<blocks;block++) {
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+	if(skipDotCheck)(void)hotProfile.BeginBlock(group,block,PeerPhaseClock(hotProfile));
+#endif
 #if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 	uint32_t rawBase=0x90000;
 #endif
@@ -643,6 +672,9 @@ extern "C" unsigned block_main()
 #endif
 	FetchBlock(first+(group*blocks+block)*bytes);
 	float scale=Float(Words(0x94000)[block]);
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+	if(skipDotCheck)(void)hotProfile.Fetched(PeerPhaseClock(hotProfile));
+#endif
 #else
 	float scale=Float(scaleBits);
 #endif
@@ -842,6 +874,9 @@ extern "C" unsigned block_main()
 		if(directSourceB)emitter.Config(124,(inputBase+block*count*2+p*32-16)/16);
 #endif
 #if defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_Q4_TWO_PHASE)
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+		if(skipDotCheck)(void)hotProfile.Decoded(p,PeerPhaseClock(hotProfile));
+#endif
 		Matrix(type
 #ifdef PIONEER_Q38_Q4_GROUP32
 			,pairedQ4 && (p&1)
@@ -929,6 +964,9 @@ extern "C" unsigned block_main()
 #endif
 		Fence();
 #endif
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+		if(skipDotCheck)(void)hotProfile.Executed(p,PeerPhaseClock(hotProfile));
+#endif
 	}
 	}
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
@@ -954,5 +992,13 @@ extern "C" unsigned block_main()
 #endif
 #endif
 	}
+#ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
+	if(skipDotCheck){
+		// DATA only:the persistent caller STILL owes every original source,
+		// NoC/counter/physical completion proof before root may consume it.
+		static_assert(0x84000+256*4<0x84500 && 0x84540<0x90000,"disjoint existing saved L1 metric slot");
+		PublishPeerPhase(hotProfile);
+	}
+#endif
 	return groups*blocks*panels;
 }
