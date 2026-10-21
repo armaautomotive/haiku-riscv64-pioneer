@@ -96,3 +96,43 @@ and original repeat-loop regressions pass SXxflwpD/LZubjykj;log
 /private/tmp/pioneer-q38-command-reuse-thread-regression-20261021-a.log
 SHA444dddbf54799f89e8b5500f5817d7b34273556f522d0c8bde5015dfe803e6af.
 Still NOT staged/installed/native qualified;no native speed claim.
+
+NATIVE UPDATE15:43UTC:the offline statements above are historical.
+Pinned24 installed through clean12/g61->16/g62->17/g63->24/g64.
+20synthetic+18authenticated public119worker+18unchangedchecked jobs:
+ALL exact_errors0,explicit BANK_END state2/active0/pci_restored1/
+host_released1/cold0/accepted1,KNOWN_CLEAN_END1 and CLI_EXIT0.
+Own native logs SHA256:
+command-reuse-synthetic-20261021-a.log
+b3a15676ab63c9a03fc4d16974828d7a6dbac6c2116e6dfb17457f46931d78d9
+command-reuse-auth119-20261021-a.log
+4ec5cd0a5cb108d26b3866c0aca80ccef5de182f758e88263f7604cc1ab444d9
+command-reuse-checked-regression-20261021-a.log
+eb7126cdec8fc84b475f31b322ed06ca14fabb67f8fce787b30ea1a9bd0b544a
+
+Same authenticated publicFD parent28b9ddab,FOUR separate clean children,
+fresh session each,NO CPUlearned-reference/fallback. Parent lifetime had
+NO SCP or othernative job. Exactly32warm FFN K17408/N5120samples/round:
+round1 candidate24/g64 mean.010481312 median.010473000sec
+round2 baseline17/g65 mean.010528375 median.010516000sec
+round3 candidate24/g66 mean.010503156 median.010498000sec
+round4 baseline17/g67 mean.010520469 median.010521000sec.
+Candidate pooledmean.010492234 vsbaseline.010524422sec:0.305841%LESS
+walltime in THIS MICROBENCHMARK ONLY,not statistical/general or27Bspeed
+qualification. First/cold27.7..27.9sec deliberatelyexcluded. All33calls/
+projections/12240pages/50135040bytes retained. ALL four outputfiles SHA
+05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Every child explicit PASS_PUBLIC_FFN clean_end1/result0/known_clean1;
+parent quit CLI_EXIT0. Finalmetadata17/g67,cold0/active_owner0/open_count1/
+guard1. NO reboot/reset/SD changes,Assistant/service/settings unchanged.
+Full27B has NOT run with24;NOT promoted. Best completed fixed8CPU27B
+samples ~.2035..2043tok/s,20targetUNMET;see thread-sweep benchmark.
+
+Archived own8logs afterparentclosed/metadataidle at
+/private/tmp/pioneer-q38-command-native-evidence.7BXJRcXV.
+round0001.log SHA775e51abaff63804d7f713e318f9af7ef2589be64ceb398e14e4aca2af5cf2bd
+round0002.log SHA9066c93a1bcd1e4310cca02be85a44fb0ef3bbbf3b4d967d956373635bf81494
+round0003.log SHAa40d374803d415c881e010a32d23c8ee1c6b50fd4761761bb9c61ab8d6bf603f
+round0004.log SHAaf78c8c01f1635637e952f31dd81532da4bade39218bb087deaa2919792e8490
+command-reuse-ffn-host-20261021-a.log
+SHA297a3ca0b10c60c4ac57c40044307d792226bf2b86191811007bac6a292559cb.
