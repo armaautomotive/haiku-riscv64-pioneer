@@ -41,3 +41,35 @@ Post-boot OS-only sysinfo confirmed64 CPUs and137,034,936,320 total usable
 RAM bytes. Native parent61342 passed full-file authentication/model load,
 recognized497 learned projections and entered first8-helper sequence.
 It is still loading/priming at this checkpoint; no new throughput result.
+
+COMPLETION:parent61342 closed CLI_EXIT0,clean_end1. POST-COMPLETION reload
+metadata confirms originaltag12/generation4,quiesced0/cold0/active_owner0/
+open_count1/guard1. No UNKNOWN,SD change,reset,driver swap,Assistant change
+or concurrent transfer during the native parent. ALL96 position/token pairs
+programmatically equal the original041 baseline exactly. Counts retained:
+47,712 learned projections,48,480calls,119workers,4,558,653uploaded pages.
+No CPU learned reference/fallback. Public Hello fixture only,not diverse
+prompts,text quality,statistical/thermal qualification or production rate.
+
+Warm positions5..31 of EACH fixed32 sequence (27positions/sample):
+8 helpers:130.905081s,.206256318tok/s,median4.850236s,p954.853760s.
+4 helpers:129.874402s,.207893161tok/s,median4.810149s,p954.822004s.
+8 helpers:131.515791s,.205298541tok/s,median4.869868s,p954.883784s.
+Pooled bracketing8helper rate .205776314926657;4helper rate .207893161271303.
+Four gives1.02871234% more rate/1.01823760% less time in THIS bracket.
+Small repeat confirmation,NOT a new GPU firmware gain. Mixed aggregate
+.206477124tok/s is NOT a fixed-config throughput result. Cold smoke
+1208.387363s includes priming and is NOT steady inference speed.
+Best completed public27B fixed-config sample now .207893161tok/s on the
+ORIGINAL041 driver.20tok/s target remains UNMET; no new mode promoted.
+
+Archived ONLY after parent completion and idle metadata above,with sequential
+128Kbit/s SCP,matching remote/local SHA256:
+/private/tmp/pioneer-q38-cold-recovery-native-evidence.p9MlJZ2n/
+model-thread-four-041-postcold-three32-20261021-a.log
+SHA7ffa8fb8ad434ca3420e93cbab1e4ee2197bb14f02cbf95da4cc3f5a7e24be45
+Also archived preserved OLD tag22 failure log raw-cache-synthetic-20261021-a.log
+SHA7699f5f0a831d2f9e19caff7721f95fbeb913230a3ecdd06561e488caf81a9ce.
+It confirms six Q8 exact returns then firstQ4 completion failure/cold1,
+CLOSE_ONLY_NO_END_RETRY_RESET/CLI1 as previously recorded. It was NOT rerun;
+the physical recovery and successful96token run are a NEW epoch.
