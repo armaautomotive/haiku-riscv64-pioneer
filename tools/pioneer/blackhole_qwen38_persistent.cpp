@@ -37,7 +37,7 @@ static unsigned SourceOffset(unsigned word)
 	if (word<=12) return 0x130+(word-7)*4;
 	return word==13?0x150:word==14?0x154:0x16c;
 }
-#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+#if defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER)
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
 static bool SourceMatches(const uint32_t (&source)[16])

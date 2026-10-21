@@ -115,6 +115,33 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		physical[hi][col]=uint16_t((h&0x8000)|((h&127)<<8)|((h>>7)&255));
 		physical[lo][col]=uint16_t(value); wrote[hi][col]=wrote[lo][col]=true;
 	}
+	// Independent raw-unpacker completion primitive. Original fixtures call
+	// it ONLY after their real acknowledged drain;the new wait-gate fixture
+	// may call it after its separately observed full-class hardware wait.
+	void CompleteRawUnpack() {
+		assert(rawPending && !pending);
+		if (rawFloat) {
+			for (unsigned i=0;i<(rawInitial?256U:16U);i++) {
+				uint32_t data=
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+					(!rawInitial && rawRow>=128 && rawRow<192)?memory.at(rawAddress+i*4):
+#endif
+					Base::Load(rawAddress+i*4);
+				if (rawInitial) { assert(PioneerInt8OperandValid(uint16_t(data)) && PioneerInt8OperandValid(uint16_t(data>>16))); data=0; }
+				StoreFloatDst(rawRow+i/16,i%16,data); rawReads+=4;
+			}
+			for (unsigned row=rawRow;row<rawRow+(rawInitial?16U:1U);row++) defined[Adj(row)]=true;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+			if (!rawInitial && rawRow>=128 && rawRow<192) { blockImports++; blockImportMask|=1U<<((rawRow-128)/4); }
+#endif
+		} else for (unsigned i=0;i<256;i++) {
+			unsigned address=rawAddress+i; uint32_t word=memory.at(address&~3U),byte=(word>>(8*(address&3)))&255;
+			physical[rawRow+i/16][i%16]=uint16_t((byte<<5)|(byte?16:0)); wrote[rawRow+i/16][i%16]=true; rawReads++;
+			if (i%16==15) defined[rawRow+i/16]=true;
+		}
+		if (publish) { sources[unpackBank]=true; unpackBank^=1; ownerA=sources[mathBank]; }
+		rawPending=false;
+	}
 	void Instruction(uint32_t op) override {
 		if (recordRemaining) {
 			unsigned code=op>>24;
@@ -233,28 +260,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		if (op==0x5120000a || op==0x5420000f) { assert(!rawPending); return; }
 		if (op==0x4500017e && rawPending) {
 			assert(backendWait && !pending);
-			if (rawFloat) {
-				for (unsigned i=0;i<(rawInitial?256U:16U);i++) {
-					uint32_t data=
-#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
-						(!rawInitial && rawRow>=128 && rawRow<192)?memory.at(rawAddress+i*4):
-#endif
-						Base::Load(rawAddress+i*4);
-					if (rawInitial) { assert(PioneerInt8OperandValid(uint16_t(data)) && PioneerInt8OperandValid(uint16_t(data>>16))); data=0; }
-					StoreFloatDst(rawRow+i/16,i%16,data); rawReads+=4;
-				}
-				for (unsigned row=rawRow;row<rawRow+(rawInitial?16U:1U);row++) defined[Adj(row)]=true;
-#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
-				if (!rawInitial && rawRow>=128 && rawRow<192) { blockImports++; blockImportMask|=1U<<((rawRow-128)/4); }
-#endif
-			}
-			else for (unsigned i=0;i<256;i++) {
-				unsigned address=rawAddress+i; uint32_t word=memory.at(address&~3U),byte=(word>>(8*(address&3)))&255;
-				physical[rawRow+i/16][i%16]=uint16_t((byte<<5)|(byte?16:0)); wrote[rawRow+i/16][i%16]=true; rawReads++;
-				if (i%16==15) defined[rawRow+i/16]=true;
-			}
-			if (publish) { sources[unpackBank]=true; unpackBank^=1; ownerA=sources[mathBank]; }
-			rawPending=false;
+			CompleteRawUnpack();
 		}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
 		if (code==0x12) {

@@ -90,3 +90,27 @@ New paired host794452a4 started11:07UTC directory
 /boot/home/pioneer-q38-benchmark.05ohsz;full public source SHA running,
 NO accelerator descriptor/other job/SCP overlap. Still NO physical
 raw-input performance/full-model/token-rate qualification at checkpoint.
+
+Paired native FFN17/20 completed with SAME794452a4 authenticated parent,
+fresh children,32warm graphs per child,NO CPU learned reference.
+directory/boot/home/pioneer-q38-benchmark.05ohsz:
+round1 tag20/gen40 mean.010688437s median.0106805 min.010646/max.010840
+logSHA139b859200f6ca7589afaff318abeada9f4ce33a128f73b72ba896129a45bac0;
+round2 tag17/gen41 mean.010629844s median.010596 min.010560/max.010980
+logSHA3d71cb1b2074ce2490f731210308598b033fa404341226a793b7c317a2415e2b;
+round3 tag20/gen42 mean.010674469s median.010668 min.010613/max.010748
+logSHA248f266ada6287285c53f9bd9307e9f51cd1e43a7896130101ef3d64dc02c87a;
+round4 tag17/gen43 mean.010493812s median.0104885 min.010432/max.010594
+logSHA5411d6add3a6edbee255422eb0ea1436e1b29c18c555d3e4810156215f3271ce.
+ALL output05cda52a EXACT,explicit cleanEND/normal0,parent quit/SSH0.
+Two-run mean20 .010681453s versus17 .010561828s:1.1326% MORE FFN time.
+NOT a proven speed improvement/NOT promoted/NO token-rate extrapolation.
+
+Because small Q8 diagnostic root cycles improved while real FFN did not,
+the whole workload is measured independently,not inferred from one shape.
+Explicit clean17/gen43->20/gen44 applied. SAME uninstrumented f414 runner
+SHA verified,THREE32 started11:30UTC,one job/no SCP overlap. Own log:
+/boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-batch-raw-three32-20261021-a.log.
+Authentication passed/model loaded13.554481s/persistent32CPU pool/497
+recognized weights;first decode/pre-cohort upload RUNNING11:42UTC.
+No completed whole-model throughput result yet;best stays041 .181432516.

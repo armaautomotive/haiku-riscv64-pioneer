@@ -7,6 +7,9 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#if defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) && (!defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT))
+#error Frontend barrier is a separate OFFLINE original-layout direct-SrcB peer,not a batch/format mix
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
 #ifndef PIONEER_Q38_WORK_BATCH4_FETCH
 #error Direct batch input requires the complete separate bounded-batch peer
@@ -776,6 +779,9 @@ extern "C" unsigned block_main()
 			,skipDotCheck && type==12
 #endif
 			PIONEER_Q38_RAW_ARGUMENT
+#ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
+			,skipDotCheck
+#endif
 		)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();

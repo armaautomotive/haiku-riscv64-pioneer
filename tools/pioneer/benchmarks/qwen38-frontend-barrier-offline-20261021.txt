@@ -1,0 +1,105 @@
+Original-layout frontend-barrier candidate,October21 2026. OFFLINE ONLY.
+No transfer/native installation/hardware timing/model/Assistant promotion.
+Current card still runs c38e/tag20/gen44 full public THREE32,not this code.
+Best completed whole27B stays041 .181432516tok/s;20targetUNMET.
+
+Hypothesis:replace TWO RISC ACK/poll round trips per raw panel with
+instruction-stream waits,retaining SAME unpack/FPU/SFPU/config idle mask.
+Only inside the all-Tensix sequence:MMIO/config-facing entry/Q6 plane
+change/final transformation acknowledgements remain. No RISC data/config/
+NoC/output consumer may use the short wait as a completed host-facing
+drain. Checked path unchanged. No format,precision,rounding,operand,NoC,
+source/nonce/PC/reset/owner/DMA/output proof change. NOT a speed claim.
+
+Vendor primary references inspected October21:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/Diagrams/Out/Bits32_STALLWAIT_BH.svg
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/README.md
+The diagram confirms opcodeA2/block[23:15]/condition[12:0]. Proposed
+A2ff9816 blocks ALL9 frontend classes with original condition1816;the
+old A2101816 blocks only Scalar/ACK. A new wait must not replace a pending
+one. This is a narrow scheduling inference from the docs,not silicon
+qualification. No copied vendor implementation or assumed fixed latency.
+
+Peer a/b twice identical:main8040B
+4b267506ea1590bcfe9f3d8c7e83d735f59ba0d79b82e5035d5887c62139788d
+affine5152B b8b71d998550ae43261f1f6a61439686363bb6d7f8cf32d9ccb9d9e8f0a4fff7
+cold SourceMatches helper188B in SAME70000..70700,not an expanded owner:
+d193d3668bae85f6d4c6322f8f2aea076eebe67880b9b1d010f0254c980c0ad7.
+Unchanged root65c790cf/d358b793. FlagOFF reproduces original209fc6b8/
+08333055 peer and84ab80ac driver/guardd1ce2aa4/default43 2df0e0f8.
+Old raw20 debugf9d4bfd7/paired host794452a4 also rebuild EXACT.
+
+34panel sequence tests,log/private/tmp/pioneer-q38-frontend-barrier-sequence-20261021-b.log:
+all arithmetic/config addresses and operations unchanged,exactly TWO
+full9-class gates replace TWO ACKs;EVERY RISC config still follows real
+drain,and final full drain remains. No shape/address/capability expansion.
+Full ACTUAL RV32/NoC/SFPU54type/K/group/Work+checked shapes,two changed
+inputs+STOP dNXKJ6lw. Exact old FP32+independent FP64;SAME math/SFPU/NoC/
+ALL64 proof words;only expected ACK count differs. Four raw/config delay
+schedules per type,up toUINT32_MAX;missing first/second gate,wrong B7,
+wrong C1/C12,missing producer and missing FINAL ACK reject before output.
+FIRST/input/middle/LAST208NoC faults remain pending/inert without retry.
+Log/private/tmp/pioneer-q38-frontend-barrier-full-20261021-b.log
+SHA68dbaf254bee1b8137937aee2cc5c3fb751b085f65635fa8dfdd41be79a0dc80.
+The independent delayed observer is NOT silicon timing/backpressure proof.
+
+Actual unchanged sentinel coordinator+actual peers9type/K shapes twice,
+all proof/PC/source/NoC/compactDMA observers and first/middle/LAST140peer
+failure retention pass tpWcoj3k. Log/private/tmp/pioneer-q38-frontend-root-20261021-a.log
+SHA091d3535d64e68f72b63bcf988e575d57b358fb6cd5657923de1d9dca9016e58.
+Actual private kernel/controller failures e6SFaZ6m retain all three host
+owners and clock/cold on BME/map/first-middle-last/late DMA failures;NO
+disable/reset/retry;checked isolation unchanged. LogSHA
+286dc323d64e3e16bd9650f2b712c5dd96874e2c262289285de273270e366792.
+491520 actual native registry words/120roles/zero gaps/bounds6k5IF6Fl,
+logSHA21690d489e614aa7aed25b7a986f5ccb18d63d3dceebf015af4b6092636f7ca5.
+
+Exact separate tag21 driver a/b twice identical:
+f6998083749dcd63316f6ba25c333b7f979dc7d71e4d2ad668fce660065fcda2.
+Requires entire sentinel/direct/affine/scale/normal-clock retained-owner
+chain,refuses batch/new-layout/profile mixing. Debug exact21 CPU-reference
+7b5a66c7bb9bd1f79e0d3cac7a73b2fa0aeda823b9af1398021e18a21907bd3f
+and no-CPU-reference fixed FFN host17/21
+82dd7dac256b583f50827b4e83f95ae7efa1bac8a0466a47fa3ce4856afbb8b2
+each twice identical.465 exact metadata tag checksQCcG2t2s,174native/client
+role refusals,295host role refusals+17actual fork/barrier/failure CPU mocks
+g9lkssci. Original full-model profiling/format/raw-input regressions pass.
+
+Updater ONLY known-clean17<->21;source/guard/client/installed hashes pinned.
+Local script87ba6264286730de511d55c27fb6a0735afd48d2d0db6d8b79f194dfee6bea05.
+60 selected actual filesystem/owner/handshake/failure cases pass. Full
+updater regression RUNNING. No new file transferred or native job issued.
+
+Full3191 actual updater cases completed successfully after finalf699 pin,
+log/private/tmp/pioneer-hot-swap-frontend-full-20261021-a.log
+SHA6fb8f594e323d7bc3ad7f91a6b52dd76823fe45c172de2d1f9045c5b3ed7cb2c.
+
+Additional independent asynchronous-FIFO observer11:50UTC fDO38jCu:
+actual RISC pushes bounded FIFO and RETURNS;backend retires separately
+between later RISC steps,full FIFO backpressures producer. ALL3types with
+depths1/2/8/16,two changed-input jobs+STOP each,delayed unpack/config units
+pass exact FP32+FP64. Checks NO RISC config/Dst access with unretired work
+and NO stale prior ACK clear. Missing HOT raw producer blocks with FIFO
+and owner pending,NO output. Earlier harness failure injected missing
+producer during the retained startup full drain instead of the HOT gate;
+corrected injection point,not a relaxed production/checking condition.
+Log/private/tmp/pioneer-q38-frontend-queue-20261021-b.log.
+Test-only StepBlock now virtual to let actual RISC and backend progress
+independently. New FULL54shape and actual-coordinator regression reruns
+are pending against this harness refactor. This model is still NOT a
+silicon timing proof. No native installation/speed qualification yet.
+
+Actual-coordinator rerun completed8jED294n after virtual-step refactor,
+same9type/K/repeated-input/proof/DMA/fault checks. Log
+/private/tmp/pioneer-q38-frontend-root-20261021-b.log
+SHA037514fbfdfb50d48d62ffe760532eb6a3f04aa30645526bfc5227ff91550ec0.
+Finite-queue logSHAd4c0e4dfb43ee71b386633145f54434b76a234d90a5aec1b9f90498ec63d20f5.
+Full54shape rerun still running at checkpoint11:54UTC.
+
+Final FULL54shape rerun completedCEwO2svY,exit0 after all current harness
+changes,including ALL64 proofs,seven negative gate/producer/final-ACK
+controls,four delay schedules/type andNoC uncertainty retention.
+Log/private/tmp/pioneer-q38-frontend-barrier-full-20261021-c.log
+SHA898d041949e7bde42d772c8f6bb4da052aa944d9637e4234fc023fda0caf792c.
+Still NO transfer/native execution/tokens/sec claim for this candidate.

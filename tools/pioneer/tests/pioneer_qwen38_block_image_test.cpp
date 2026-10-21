@@ -90,7 +90,7 @@ struct BlockMachine:RuntimeMachine {
 		RuntimeMachine::Store(a,value);
 	}
 	void Store16(uint32_t,uint16_t) override { assert(false && "unqualified half-store"); }
-	void StepBlock() {
+	virtual void StepBlock() {
 		uint32_t i=l1[Index(pc)],op=i&127;
 		if (op!=7 && op!=0x27 && op!=0x53) { Step(); return; }
 		assert(CodeAddress(pc) && ++steps<StepLimit()); floatOps++;

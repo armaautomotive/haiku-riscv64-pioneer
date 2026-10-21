@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_VECTOR_FIXED_FORMAT_H
 #define PIONEER_Q38_VECTOR_FIXED_FORMAT_H
 #include "PioneerQ38VectorPanel.h"
+#ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
+#include "PioneerQ38FrontendBarrier.h"
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
 #ifndef PIONEER_Q38_WORK_BATCH4_FETCH
 #error Direct batch input is a separate bounded-batch OFFLINE peer experiment
@@ -38,6 +41,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
 	,unsigned rawBase
 #endif
+#ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
+	,bool frontendWork=false
+#endif
 )
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
@@ -53,12 +59,27 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 	e.Op(0xb2050000); e.Drain();
 	if (span.second) e.Config(84,0x00400040);
 	e.Config(76,(rawBase+span.low-16)/16);
-	e.Op(span.second?0x42000081:0x420000c1); e.Drain();
+	e.Op(span.second?0x42000081:0x420000c1);
+#ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
+	if(span.second)e.Drain();else PioneerQ38FrontendBarrier(e,frontendWork);
+#else
+	e.Drain();
+#endif
 	if (span.second) {
 		e.Config(84,0x00400140); e.Config(76,(rawBase+span.high-16)/16);
-		e.Op(0x420000c1); e.Drain();
+		e.Op(0x420000c1);
+#ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
+		PioneerQ38FrontendBarrier(e,frontendWork);
+#else
+		e.Drain();
+#endif
 	}
-	e.Op(0xb2050004); e.Drain(); // preserve ordinary SrcB unpack's supported setting
+	e.Op(0xb2050004); // preserve ordinary SrcB unpack's supported setting
+#ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
+	PioneerQ38FrontendBarrier(e,frontendWork);
+#else
+	e.Drain();
+#endif
 	e.Op(0x3700000f); e.Op(0x8a000002);
 	if (!PioneerQ38VectorTransform(e,type,panel)) return false;
 	e.Drain(); return true;

@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_BATCH_RAW_INPUT)
+#if defined(PIONEER_Q38_TEST_FRONTEND_BARRIER)
+#define PIONEER_Q38_FRONTEND_BARRIER_IMAGE_MODEL_ONLY
+#include "pioneer_q38_frontend_barrier_image_test.cpp"
+using CooperativePeer=FrontendBarrierImage;
+#elif defined(PIONEER_Q38_TEST_BATCH_RAW_INPUT)
 #define PIONEER_Q38_BATCH_RAW_IMAGE_MODEL_ONLY
 #include "pioneer_q38_batch_raw_image_test.cpp"
 using CooperativePeer=BatchRawImage;

@@ -41,6 +41,7 @@ def check(mode, fault=None):
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
+        payloads['hash_frontend_qualification'] = ('test-' + values['hash_frontend_qualification']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -123,6 +124,8 @@ def check(mode, fault=None):
             '--restore-batch4-fetch-qualification': ('hash_batch4_fetch_qualification', 'hash_sentinel_poll_qualification', 'tag_batch4_fetch_qualification'),
             '--apply-batch-raw-qualification': ('hash_sentinel_poll_qualification', 'hash_batch_raw_qualification', 'tag_sentinel_poll_qualification'),
             '--restore-batch-raw-qualification': ('hash_batch_raw_qualification', 'hash_sentinel_poll_qualification', 'tag_batch_raw_qualification'),
+            '--apply-frontend-qualification': ('hash_sentinel_poll_qualification', 'hash_frontend_qualification', 'tag_sentinel_poll_qualification'),
+            '--restore-frontend-qualification': ('hash_frontend_qualification', 'hash_sentinel_poll_qualification', 'tag_frontend_qualification'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -179,6 +182,7 @@ def check(mode, fault=None):
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
+        put('candidate_frontend_qualification', payloads['hash_frontend_qualification'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -298,6 +302,7 @@ if __name__ == '__main__':
     modes += ['--apply-host-phase-diagnostic', '--restore-host-phase-diagnostic']
     modes += ['--apply-batch4-fetch-qualification', '--restore-batch4-fetch-qualification']
     modes += ['--apply-batch-raw-qualification', '--restore-batch-raw-qualification']
+    modes += ['--apply-frontend-qualification', '--restore-frontend-qualification']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -446,6 +451,10 @@ if __name__ == '__main__':
         elif mode == '--apply-batch-raw-qualification':
             candidate = ['candidate_batch_raw_qualification']
         elif mode == '--restore-batch-raw-qualification':
+            candidate = ['candidate_sentinel_poll_qualification']
+        elif mode == '--apply-frontend-qualification':
+            candidate = ['candidate_frontend_qualification']
+        elif mode == '--restore-frontend-qualification':
             candidate = ['candidate_sentinel_poll_qualification']
         elif mode == '--restore-sentinel-poll-qualification':
             candidate = ['candidate_direct_srcb_qualification']
