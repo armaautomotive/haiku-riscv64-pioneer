@@ -3,8 +3,12 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
-[ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" = 0 ] || {
- echo 'STOP direct SrcB has NO native image/extent/owner qualification;OFFLINE ONLY' >&2;exit 2; }
+case "${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}" in
+ 0) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" = 0 ] || {
+  echo 'STOP direct SrcB needs its separate original-TC native QUALIFICATION chain' >&2;exit 2; };;
+ 1) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION:-0}" = 1:1 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION:-0}" in
  0) [ "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}" = 0:0 ] || {
   echo 'STOP affine/raw-dot needs its separate complete QUALIFICATION chain;OFFLINE ONLY' >&2;exit 2; };;
@@ -305,6 +309,7 @@ if [ "${PIONEER_Q38_SCALE_REUSE_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DP
 if [ "${PIONEER_Q38_GROUP32_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_GROUP32_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_NATIVE_Q8_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_NATIVE_Q8_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION"; fi
+if [ "${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_DIRECT_SRCB_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_ORDERED_EXTENT_FAST"
 fi

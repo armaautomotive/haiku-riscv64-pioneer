@@ -4,6 +4,12 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_ROOT_STATS_BENCH
+#if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
+#error Root stats are isolated original-TC Work projection diagnostics ONLY
+#endif
+#include "PioneerQ38RootStatsProfile.h"
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #endif
@@ -103,6 +109,9 @@ public:
 	uint64_t pagesUploaded=0,bytesRetained=0,calls=0;
 	uint64_t sourceReadNanos=0,bulkUploadNanos=0,runNanos=0;
 	unsigned peakWorkers=0;
+#ifdef PIONEER_Q38_ROOT_STATS_BENCH
+	PioneerQ38RootStatsProfile rootStats;
+#endif
 	PioneerQ38CohortSession(IO& transport,Source& authenticatedSource):io(transport),source(authenticatedSource) {}
 	~PioneerQ38CohortSession() { Finish(); }
 	PioneerQ38CohortSession(const PioneerQ38CohortSession&)=delete;
@@ -220,6 +229,9 @@ public:
 			Elapsed(runStart,runNanos);
 			if (!executed) return Stop();
 			if (!source.Ready() || !mode.Collect(wave,quantized,*request,scratch.data(),outputs)) return Stop();
+#ifdef PIONEER_Q38_ROOT_STATS_BENCH
+			rootStats.Add(request->result.stats); // diagnostic data ONLY;NEVER controls Stop/END
+#endif
 			calls++; if (peakWorkers<wave.workers) peakWorkers=wave.workers;
 		}
 		if (!source.Ready()) return Stop();

@@ -2,6 +2,12 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+case "${PIONEER_Q38_ROOT_STATS_BENCH:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_DISPATCH_INFERENCE:-0}:${PIONEER_Q38_VECTOR_INFERENCE:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = work:1:1:1:1:0:0:0 ] || exit 2
+    case "${PIONEER_Q38_FFN_REPEAT_BENCH:-0}:${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" in 1:0|0:1) ;; *) exit 2;; esac;;
+ *) exit 2;;
+esac
 [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" = 0 ] || {
  echo 'STOP direct SrcB is an offline kernel experiment,not an inference selector' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" = 0 ] || {
@@ -80,6 +86,7 @@ esac
 if [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_Q8_REPEAT_BENCH -DPIONEER_Q38_FFN_REPEAT_BENCH"
 fi
+if [ "${PIONEER_Q38_ROOT_STATS_BENCH:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_ROOT_STATS_BENCH"; fi
 if [ "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_NATIVE_Q8_LAYOUT"
  if [ "${PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION:-0}" = 1 ]; then

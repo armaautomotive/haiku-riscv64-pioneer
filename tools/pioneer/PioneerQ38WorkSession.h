@@ -26,6 +26,10 @@ struct PioneerQ38WorkSessionMode {
 	PioneerQ38WorkHistory history;
 	// PIONEER_NATIVE_Q8_WORK_SUPPORT_BEGIN
 	template<class IO> bool Support(IO& io,int fd) {
+#ifdef PIONEER_Q38_ROOT_STATS_BENCH
+		tt_pioneer_driver_reload profileTag={};profileTag.version=1;
+		if(!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&profileTag,sizeof(profileTag)) || !PioneerQ38RootStatsDebugTag(profileTag))return false;
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
 		tt_pioneer_driver_reload metadata={}; metadata.version=1;
 		if (!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&metadata,sizeof(metadata)) || !PioneerQ38NativeQ8DebugTag(metadata)) return false;

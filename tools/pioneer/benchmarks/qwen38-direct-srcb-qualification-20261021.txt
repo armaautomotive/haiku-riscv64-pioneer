@@ -1,0 +1,75 @@
+Direct-SrcB native qualification,October21 2026 07:43-08:17 UTC.
+Prerequisite full offline image/root evidence is in
+qwen38-direct-srcb-offline-20261021.txt. NO source-format/weight/ABI change.
+Original-TC Work reads its already validated activation buffer directly,
+fresh224B padding remains inside original saved6e000..b0000 L1 extent.
+ALL original bounds/source/owner/NoC/DMA/terminal/PC/clock checks retained.
+Checked source copy unchanged. NO CPU learned reference in inference.
+
+Driver7056d20e09eee61c080c6c900f1cefde92026d000af53f2931d5e1d0ff9ebcb1,
+tag2026102100010016/gen30. Twice identical,unchanged guardd1ce2aa4 and
+default43 control2df0e0f8. Peer209fc6b8/prefix08333055;rootaa27f435/
+prefix15643b20 unchanged. Diagnostic9b4ea175d96882a9ddd785e95a16d0eb49221572028c7a86bd93b9f87e9676ff,
+twice identical,exact idle tag16 BEFORE BEGIN.172 complete builder/format/
+diagnostic/inference-role refusals,93 exact CPU tag/owner/generation/guard
+checks,2,891 actual updater filesystem/hash/symlink/handshake/failure cases
+pass. Existing affine debug068b138d remains byte-identical.
+Actual kernel DMA failure/controller tests pass,evidencebWvjcfEq;
+log/private/tmp/pioneer-q38-direct-srcb-controller-20261021-a.log
+SHAf5ba4c627e59ace64741fc0b4a560b27664b26e9fa5b7eaf77318427d31a5d49.
+
+Normal1350MHz,Haiku64CPU/full128GB.20synthetic+18authenticated119-worker+
+18unchanged checked jobs=56. ALL numerical mismatches0,cleanEND/CLI_EXIT0,
+cold0/active_owner0. Mixed-type return-to-Q8 in SAME live cohort passes.
+CPU reference ONLY in diagnostic,not Work inference. No native/transfer
+overlap,no reboot/reset/SD/power changes;Assistant closed/files intact.
+Own remote logs under/boot/home/pioneer-p100a-hot-reload-20261019-a/:
+direct-srcb-synthetic-20261021-a.log
+SHA7c72cb743dd709cd909d904678c4c008353a95c5591e8bebda455275fb29a7b1
+direct-srcb-auth119-20261021-a.log
+SHA4963b851e0604f2573c3491e803956b0370e08fa3188e9c5e8ef3e2b71186eaf
+direct-srcb-checked-regression-20261021-a.log
+SHA121168904ccd63a927598376e384244c03c4d40edadccb79edfcd6a2f40e5e55.
+Archived/private/tmp/pioneer-q38-direct-srcb-native-evidence.pbRtIDrE/.
+
+SAMEf0566393 real blk.0.ffn_down K17408/N5120 Work,32warm graphs,119workers,
+12,240pages/50,135,040B,33calls/projections,no repeat upload/no CPU reference:
+Fresh041/gen27 control median.010524500s,mean.010529437.
+Direct candidate median.010395000s,mean.010402187,min.010343/max.010553.
+1.23046% LOWER sampled median,ONE session each,NOT robust statistical or
+whole-model speed qualification. Different diagnostic profile below is
+NOT substituted for this uninstrumented measurement. Output20,480B identical
+SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+ffn32-direct-srcb-candidate-20261021-a.log
+SHA3b3590308c31a0d81ac9b360b195f4439c8764d02e35d7035b6cf9dffd600c3c.
+CleanEND/CLI_EXIT0,clock800->1350->800/restored1/uncertain0,guardidle.
+
+Separate returned-root-counter diagnostic8a7c41f83bfdf5be4607e4565c257cb53665c7a66f53b77b477045976718f13f
+twice identical,exact idle original-TC tag12 OR16 BEFORE ABI2 query/BEGIN.
+ALREADY returned HOST memory ONLY,no added accelerator reads;invalid or
+overflowed metrics disable profile,NEVER control success/END/cleanup.
+Isolated FFN/Q8 graph executable ONLY,NO Assistant/model option.46 builder
+role refusals,1,000 exact64-bit aggregation samples/12 sticky invalid or
+overflow cases/186 tag-idle checks,and ACTUAL extracted Work-support tests
+pass. Native-SM7 support and ordinary cohort session regressions also pass.
+Normal stats-OFF executable rebuilds EXACTf0566393. Repeat-loop first/mid/
+last failure,stop,final-word mismatch,and invalid-clock cleanup tests pass.
+32 valid warm samples on7056,ALL outputs same05cda52a,cleanEND/CLI_EXIT0.
+Sum raw counters:prepare23,273,728;wait+audit174,677,476;gather+DMA13,207,567.
+Read packets161,376;writes7,776;read flits193,120;write flits17,856;
+peer-status polls145,984;terminal audits3,808. Per projection4562 status
+polls and119 full terminal audits. Wait combines ARITHMETIC+POLLING+AUDIT;
+these data DO NOT isolate polling as the dominant cost or prove a speedup.
+Diagnostic graph median.0103335s is NOT the uninstrumented candidate rate.
+ffn32-root-stats-direct-srcb-20261021-a.log
+SHA21a574539c2c80f1942c0ad12a399ff55ff13c32fa3f0e7e33ac4af25493a219.
+Counters are CSR deltas,not instruction counts or pure matrix time:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
+
+Full27B SAMEf414306f Work THREE32 started08:17 UTC,ONGOING at checkpoint.
+No full-model throughput result yet;candidate NOT PROMOTED. Best completed
+whole27B remains041 .181432516tok/s;20tok/s target UNMET. Current driver7056
+stays installed ONLY for this isolated run,no concurrent card/transfer job.
+Remote/boot/home/pioneer-qwen38-vector-clear-20261018-t/
+full-model-work-direct-srcb-three32-20261021-a.log.
+Serial start64,190,709;all original model/four frozen runtime libs unchanged.

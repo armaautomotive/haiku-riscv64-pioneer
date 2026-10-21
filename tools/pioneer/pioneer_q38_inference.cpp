@@ -97,6 +97,9 @@ static int GraphSmoke(State& state,const char* output)
 		double repeat=Seconds(); uint64_t pages=state.session.pagesUploaded;
 		double matrixBefore=state.matrixWallSeconds;
 		uint64_t ioctlBefore=state.session.runNanos;
+#ifdef PIONEER_Q38_ROOT_STATS_BENCH
+		state.session.rootStats.Reset(); // host metrics ONLY;exclude first graph/priming
+#endif
 #ifdef PIONEER_Q38_FFN_REPEAT_BENCH
 		PioneerQ38FfnSamples samples;
 		if (okay) memcpy(first.data(),y->data,graphOutputs*4);
@@ -120,6 +123,15 @@ static int GraphSmoke(State& state,const char* output)
 			repeated,state.matrixWallSeconds-matrixBefore,double(state.session.runNanos-ioctlBefore)*1e-9,unsigned(state.profileValid),
 			(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,(unsigned long long)state.session.pagesUploaded);
 		okay=okay && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==1+samples.Count();
+#ifdef PIONEER_Q38_ROOT_STATS_BENCH
+		const auto& root=state.session.rootStats;
+		printf("PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_ROOT_HOST_COPY_PROFILE samples%llu data_valid%u prepare_cycles%llu wait_audit_cycles%llu gather_dma_cycles%llu read_packets%llu write_packets%llu read_flits%llu write_flits%llu peer_polls%llu terminal_audits%llu;ALREADY_RETURNED_CPU_MEMORY_RAW_COUNTERS_NOT_PURE_ARITHMETIC_OR_TOKEN_SPEED_NO_ADDITIONAL_CARD_IO\n",
+			(unsigned long long)root.samples,unsigned(root.valid),(unsigned long long)root.cycles[0],
+			(unsigned long long)root.cycles[1],(unsigned long long)root.cycles[2],
+			(unsigned long long)root.packets[0],(unsigned long long)root.packets[1],
+			(unsigned long long)root.packets[2],(unsigned long long)root.packets[3],
+			(unsigned long long)root.packets[4],(unsigned long long)root.packets[5]);
+#endif
 #else
 		printf("PUBLIC_" PIONEER_Q38_GRAPH_LABEL "_GGML_GRAPH first_seconds%.6f repeat_seconds%.6f calls%llu projections%llu pages%llu;NOT_LLM_TOKEN_RATE\n",
 			repeat-start,repeated,(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,
