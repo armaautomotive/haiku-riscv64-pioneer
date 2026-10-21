@@ -1,6 +1,6 @@
 Original-layout frontend-barrier candidate,October21 2026.
 Historical offline evidence below;native qualification appended12:30UTC.
-Current card runs f699/tag21/gen50 full public THREE32,not yet complete.
+Full f699/tag21/gen50 THREE32 completed12:54UTC,correct but NOT faster.
 Best completed whole27B stays041 .181432516tok/s;20targetUNMET.
 
 Hypothesis:replace TWO RISC ACK/poll round trips per raw panel with
@@ -143,3 +143,22 @@ explicitEND still RUNNING. No concurrent transfer/native job. Own log
 /boot/home/pioneer-qwen38-vector-clear-20261018-t/full-model-work-frontend-three32-20261021-a.log.
 No whole-model inference gain/Assistant promotion claimed. Best COMPLETED
 whole27B still041 .181432516tok/s;20tok/s UNMET. No boot/SD/power changes.
+
+FULL27B result completed12:54UTC,unchanged f414/32CPU pool/public source:
+81 measured positions/452.460315s=0.179021225tok/s,1.3290%LOWER sampled
+throughput than earlier041 .181432516. ONE full sample per driver,NOT
+robust thermal/statistical attribution. The small paired FFN benefit did
+NOT establish a whole-model inference speedup. Candidate NOT promoted.
+ALL96 token IDs compare EXACT to041's archived SHAe6fd7967 control;all
+three sequences repeat,47712 learned projections/48480calls/119workers,
+4558653pages/18672242688B remain resident across CPU-only sequence resets.
+Prime727.098950s(repack148.086590/upload578.330942);smoke1290.909191s
+includes cold loading,NOT token rate. Every token has497 learned matrices,
+NO CPU learned reference/fallback. Explicit clean_end1/CLI_EXIT0;postrun
+CPU-only metadata tag21/gen50/quiesced0/cold0/owner0/open1/guard1.
+Full logSHA1c339549c5951ba83497b4b765e65537f287339102a88714a925768467d03837
+exact verified local archive/private/tmp/pioneer-q38-frontend-native-evidence.c2HDEoN9/full-model-work-frontend-three32-20261021-a.log.
+Mean81 host-wall matrix callback4.480114914/ioctl4.198464975/other
+1.105814901seconds;NOT pure GPU or CPU arithmetic times.
+Continuing with separately qualified attribution/raw-Dst candidates;no
+card/boot/SD/power reset or Assistant/files change.
