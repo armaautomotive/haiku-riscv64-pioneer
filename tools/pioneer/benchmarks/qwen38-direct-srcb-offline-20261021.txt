@@ -1,0 +1,64 @@
+OFFLINE ONLY direct activation-buffer SrcB experiment,October21 2026.
+NO native route/driver/owner/speed qualification at this checkpoint.
+Build flag PIONEER_Q38_WORK_DIRECT_SRCB=1 requires the complete original-TC
+integer Work/shared-input/cache roles,refuses other layouts. Native and
+inference builders refuse the flag BEFORE SDK/output:64 role tests pass.
+Flag OFF combined replay image rebuilds identically a3af0d56/06dce3ac.
+
+Eliminate8-word per-panel SrcB CPU copy in Work ONLY. Reuse already validated
+inputa0000..a8800. UNPACK reads128datums:the first16 are EXACT original
+activation words;remaining rows are other validated inputs or a224B tail
+explicitly overwritten with raw+0 EVERY job before UNPACK. Tail ends no
+later thana88e0,inside ORIGINAL saved6e000..b0000 extent. No new host/NoC/
+GDDR/caller address. Checked retains original copy/base. Same input-sum
+computation/freshness,source encoding,matrix phases,raw decode,SFPU rounding,
+drains,NoC packet count/output/STOP. Config124 bounded base write+readback
+occurs ONLY after FixedUnpack's existing final drain committed deferred
+SFPU stores. No config change while pending;no extra hardware drain.
+
+Unused SrcB rows may have NONZERO integer dot products. Full actual-image
+tests verify ALL exported FP32 words are still identical,not assume the
+other rows remain zero.128unpacked lanes independently validated per panel,
+all input words match immutable root;tail padding fully initialized and
+zero before each read. Observer deliberately refuses missing tail stores
+before output. Existing raw0 padding accepted exactly as old Setup,while
+actual input words must retain strict integer-operand encoding.
+
+Twice identical image,b/c:
+main209fc6b8d40ed0ac7216c16ec9657ed0d83259e2ded53b35524c8cc6507bf0ef
+prefix083330550580cc8ba821456c95b256ff8ea1d9742bb12230b06af469392f856a
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+Original8KiB main/0x1500B prefix limits;readonly SDK,original root unchanged.
+Actual full RV32/Tensix 3types*3K*3groups*2modes*2CHANGED inputs:FP32 exact
+against combined replay and independent FP64 reference. NO hot copies in
+Work,original Setup zeroing retained. Missing padding negative controls
+for ALL3 types and NoC1/5/40/208 unknown cases park inert. Full evidence
+zZV9zXZV,log/private/tmp/pioneer-q38-direct-srcb-full-20261021-a.log
+SHA2e7fa85fcc2d2fb8ff4839d6e94c8fd47232d3cfbfbf923a4cf60c4f862c1429.
+
+Emulated RV instructions,16groups/second job,NOT silicon cycles or speed:
+                 combined replay     direct SrcB
+Q8 K5120          4463748             4256614
+Q8 K17408        15157616            14452818
+Q4 K5120          4780404             4602711
+Q4 K17408        16233440            15628739
+Q6 K5120          5682692             5477798
+Q6 K17408        19302256            18605074
+Vector/NoC/drain counts unchanged. DO NOT extrapolate these to tokens/sec.
+
+Actual root+actual candidate peer:108 shape/worker cases,64-bit CSR rollover/
+instability/backwards refusal,ALL57 safety/output/NoC/DMA fields unchanged,
+checked+STOP zero CSR reads,ALL64 peer-proof faults/NoC uncertainty inert,
+real peer arithmetic EXACT. EvidenceGU9PvEKP,log
+/private/tmp/pioneer-q38-direct-srcb-root-20261021-a.log
+SHA30c50c4625771007c36865704106fb9b6873b26325fd35f3d72526af55f15e96.
+Original generic fixed-image and retained BF16/FP16/int8 runtime regressions
+also pass after adding narrowly overridden test-only SourceB observer hooks.
+No change to installed best041,full model,Assistant,boot,SD,CPU or RAM.
+Best measured whole27B .181432516tok/s;20tok/s remains UNMET.
+
+Primary ISA references checked:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/MVMUL.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md

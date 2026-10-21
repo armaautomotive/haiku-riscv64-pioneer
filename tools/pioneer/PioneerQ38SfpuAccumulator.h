@@ -3,6 +3,15 @@
 #define PIONEER_Q38_SFPU_ACCUMULATOR_H
 #include "PioneerQ38VectorAffine.h"
 #include "PioneerSfpuDivide.h"
+#if defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) && (!defined(PIONEER_Q38_WORK_DEFER_AFFINE) || !defined(PIONEER_Q38_SFPU_INTEGER) || !defined(PIONEER_Q38_WORK_ZERO_MINIMUM) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE))
+#error Work dot-zero elision requires the separately proved exact integer Work accumulator chain
+#endif
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+#if !defined(PIONEER_Q38_BLOCK_AFFINE_DST) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_WORK_ZERO_MINIMUM) || !defined(PIONEER_Q38_WORK_DEFER_AFFINE) || !defined(PIONEER_Q38_NATIVE_OPERAND_STORE)
+#error Affine replay requires its separate exact scale-cache/native-operand Work chain
+#endif
+#include "PioneerQ38AffineReplay.h"
+#endif
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 #include "PioneerQ38ZeroMinimumAffine.h"
 #endif
@@ -115,6 +124,12 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 #endif
 		e.Op(0xb2050004); e.Op(0x5e23fc00); e.Drain(); e.Op(0x3700000f);
 	}
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+	const bool replayAffine=BlockMetadata || (ZeroMinimum && type==8);
+	// Disjoint scale register is stable through BOTH parity updates. Q4
+	// still uses its exact once/block scale;Q8 keeps original scale bits.
+	if(replayAffine && !BlockMetadata)PioneerSfpuLoad32(e,3,scale);
+#endif
 	for (unsigned parity=0;parity<4;parity+=2) {
 		e.Op((Integer?0x70040000:0x70030000)|32|parity); // canonical SM32 or exact FP32 integer dot
 		e.Op(0x70130000|metadataRow|parity);
@@ -124,20 +139,37 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 		e.Op(0x70230000|(metadataRow+4)|parity);
 		e.Op(0x70530000|108|parity);
 #ifdef PIONEER_Q38_BLOCK_SCALE_REUSE
-		if (!BlockMetadata)
+		if (!BlockMetadata
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+			&& !replayAffine
+#endif
+		)
 #endif
 		PioneerSfpuLoad32(e,3,scale);
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 		if (!zeroMinimum)
 #endif
 		PioneerSfpuLoad32(e,4,(sum<0?0x80000000U:0)|unsigned(sum<0?-sum:sum));
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+		if(replayAffine)PioneerQ38AffineReplay(e,zeroMinimum,first && !parity);
+		else {
+#endif
 		// Canonicalize ONLY signed zero (SM32 or IEEE);all nonzero bits stay.
+#ifdef PIONEER_Q38_WORK_DOT_ZERO_ELISION
+		if(!Defer) { // checked retains canonicalization;Work's +0 induction covers Q8/Q4/Q6
+#endif
 		PioneerSfpuLoad32(e,6,0x7fffffff); PioneerSfpuAnd(e,7,0,6);
 		PioneerSfpuAdd(e,7,6); PioneerSfpuShift(e,7,-31,true); PioneerSfpuAnd(e,0,0,7);
+#ifdef PIONEER_Q38_WORK_DOT_ZERO_ELISION
+		}
+#endif
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 		if (zeroMinimum) PioneerQ38ZeroMinimumAffine(e); else
 #endif
 		if (Integer) PioneerQ38VectorAffine(e); else PioneerQ38VectorAffineFloatDot(e);
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+		}
+#endif
 		e.Op(0x72030000|108|parity);
 	}
 #ifdef PIONEER_Q38_WORK_DEFER_AFFINE

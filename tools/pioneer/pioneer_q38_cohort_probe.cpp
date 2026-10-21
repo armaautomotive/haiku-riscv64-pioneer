@@ -17,6 +17,12 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CohortProtocol.h"
 #include "PioneerQwen38Panel.h"
 #include "PioneerQ38RowFixtures.h"
+#ifdef PIONEER_Q38_AFFINE_RAWDOT_REFERENCE_CLIENT
+#if !defined(PIONEER_Q38_ROOT_CYCLE_CLIENT) || defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT) || defined(PIONEER_Q38_GROUP32_REFERENCE_CLIENT)
+#error Affine/raw-dot reference requires separate exact-tag original-TC Work diagnostic
+#endif
+#include "PioneerQ38AffineRawDotDebugTag.h"
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
 #if !defined(PIONEER_Q38_ROOT_CYCLE_CLIENT) || defined(PIONEER_Q38_GROUP32_REFERENCE_CLIENT)
 #error Native Q8 reference requires its separate tagged Work diagnostic
@@ -252,6 +258,13 @@ int main(int argc,char** argv)
 		puts("PUBLIC_ROW_MEMORY_SHA_PASS_725504_BYTES;INTERLEAVED_GROUPS_NOT_FULL_MODEL");
 	}
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
+#ifdef PIONEER_Q38_AFFINE_RAWDOT_REFERENCE_CLIENT
+	tt_pioneer_driver_reload affineTag={};affineTag.version=1;
+	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&affineTag,sizeof(affineTag)) || !PioneerQ38AffineRawDotDebugTag(affineTag)) {
+		close(fd);puts("STOP_AFFINE_RAWDOT_REQUIRES_EXACT_IDLE_TAG15;NO_BEGIN_OR_CARD_READ");return 1;
+	}
+	puts("AFFINE_RAWDOT_DEBUG_EXACT_TAG15;ORIGINAL_TC_SOURCE_CPU_REFERENCE;EXTRA_RETURN_TO_Q8_AFTER_OTHER_TYPES;NOT_MODEL_OR_WORK_INFERENCE");
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT
 	tt_pioneer_driver_reload nativeTag={};nativeTag.version=1;
 	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&nativeTag,sizeof(nativeTag)) || !PioneerQ38NativeQ8DebugTag(nativeTag)) {
@@ -295,10 +308,18 @@ int main(int argc,char** argv)
 	unsigned rowOffsets[8]={},at=0,cases=0,limit=real?8:workers==2?9:3;
 	for (unsigned i=0;i<8;i++) { rowOffsets[i]=at; at+=(widths[i]/PioneerQ38CohortBlockInputs(kinds[i]))*PioneerQ38PanelTileBytes(kinds[i]); }
 	if (real && at!=publicRows.size()) okay=false;
+#ifdef PIONEER_Q38_AFFINE_RAWDOT_REFERENCE_CLIENT
+	const unsigned originalLimit=limit;limit++; // explicit mixed-type freshness regression in SAME live cohort
+#endif
 	for (unsigned ordinal=0;okay && ordinal<limit;ordinal++) {
-		unsigned type=real?kinds[ordinal]:workers==2?(ordinal/3==0?8:ordinal/3==1?12:14):(ordinal==0?8:ordinal==1?12:14);
-		unsigned inputs=real?widths[ordinal]:workers==2?(ordinal%3==0?5120:ordinal%3==1?6144:17408):(ordinal==1?17408:5120);
-		okay=Execute(fd,type,inputs,workers,real && workers==2?3:1,ordinal,publicRows,rowOffsets
+#ifdef PIONEER_Q38_AFFINE_RAWDOT_REFERENCE_CLIENT
+		unsigned fixture=ordinal==originalLimit?0:ordinal;
+#else
+		unsigned fixture=ordinal;
+#endif
+		unsigned type=real?kinds[fixture]:workers==2?(fixture/3==0?8:fixture/3==1?12:14):(fixture==0?8:fixture==1?12:14);
+		unsigned inputs=real?widths[fixture]:workers==2?(fixture%3==0?5120:fixture%3==1?6144:17408):(fixture==1?17408:5120);
+		okay=Execute(fd,type,inputs,workers,real && workers==2?3:1,fixture,publicRows,rowOffsets
 #ifdef PIONEER_Q38_DISPATCH_CLIENT
 			,history
 #endif

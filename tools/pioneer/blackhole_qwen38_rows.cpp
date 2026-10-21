@@ -7,6 +7,9 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#if defined(PIONEER_Q38_WORK_DIRECT_SRCB) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_INLINE_CONFIG) || !defined(PIONEER_Q38_WORK_ZERO_MINIMUM) || !defined(PIONEER_Q38_WORK_INPUT_SUM_CACHE) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || !defined(PIONEER_Q38_SHARED_ROWS) || defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_Q4_GROUP32) || defined(PIONEER_Q38_PREPARED_Q4_BLOCK) || defined(PIONEER_Q38_PREPARED_Q4_AFFINE))
+#error Separate offline direct-SrcB requires original-TC fixed integer Work/shared-input/cache roles
+#endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 #include "PioneerQ38MatrixPhases.h"
 #endif
@@ -168,6 +171,9 @@ static void Config(unsigned index,uint32_t value)
 // Keep the candidate inside the unchanged 8KiB view. Only this once/job
 // fixed startup sequence is compacted; the hot compute loop remains O2.
 __attribute__((noinline,optimize("Os")))
+#endif
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+__attribute__((section(".text.pioneer_q38_replay_job_setup")))
 #endif
 static void Setup()
 {
@@ -457,6 +463,18 @@ extern "C" unsigned block_main()
 		if (!PioneerInt8OperandValid(uint16_t(word)) || !PioneerInt8OperandValid(uint16_t(word>>16))) return 0;
 #endif
 	}
+#ifdef PIONEER_Q38_WORK_DIRECT_SRCB
+	// Separate OFFLINE Work experiment. UNPACK reads eight rows,although
+	// only its first row contributes to the exported projection. The
+	// following rows are validated inputs;zero EVERY possible tail byte
+	// EACH JOB before any read. Max end a88e0 remains in the ORIGINAL
+	// saved private6e000..b0000 extent. No new NoC/source/host address.
+	const bool directSourceB=skipDotCheck;
+	if(directSourceB) {
+		for(unsigned word=0;word<56;word++)Words(inputBase)[inputs/2+word]=0;
+		(void)Words(inputBase)[inputs/2+55];Fence();
+	}
+#endif
 	Setup();
 #ifdef PIONEER_Q38_VECTOR_PANEL
 	// Match native59's known startup state BEFORE defining vector rows.
@@ -634,12 +652,18 @@ extern "C" unsigned block_main()
 		if (zeroMinimum) {
 			// Exact +0 minimum means no correction term and no input sum.
 			// Preserve EVERY original SrcB operand and its ordering/fence.
+#ifdef PIONEER_Q38_WORK_DIRECT_SRCB
+			if(!directSourceB)
+#endif
 			for (unsigned w=0;w<8;w++) Words(0x70920)[w]=Words(inputBase)[block*(count/2)+p*8+w];
 		} else
 #endif
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
 		if (cacheSums && group) {
 			sum=int(Words(0x95000)[block*panels+p]);
+#ifdef PIONEER_Q38_WORK_DIRECT_SRCB
+			if(!directSourceB)
+#endif
 			for (unsigned w=0;w<8;w++) Words(0x70920)[w]=Words(inputBase)[block*(count/2)+p*8+w];
 		} else {
 #endif
@@ -648,6 +672,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_BFLOAT_PANEL
 			Words(0x70920)[w]=Words(0x95000)[block*(count/2)+p*8+w];
 #else
+#ifdef PIONEER_Q38_WORK_DIRECT_SRCB
+			if(!directSourceB)
+#endif
 			Words(0x70920)[w]=word;
 #endif
 			for (unsigned lane=0;lane<2;lane++) {
@@ -661,7 +688,11 @@ extern "C" unsigned block_main()
 #ifndef PIONEER_Q38_VECTOR_PANEL
 		(void)Words(0x70710)[127];
 #endif
-		(void)Words(0x70920)[7]; Fence();
+#ifdef PIONEER_Q38_WORK_DIRECT_SRCB
+		if(!directSourceB)
+#endif
+		(void)Words(0x70920)[7];
+		Fence();
 #ifdef PIONEER_Q38_VECTOR_PANEL
 		VectorPanelEmitter emitter;
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
@@ -690,6 +721,12 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
 #endif
 #endif
+#endif
+#ifdef PIONEER_Q38_WORK_DIRECT_SRCB
+		// FixedUnpack's existing FINAL drain has committed ALL deferred
+		// SFPU stores. Only now alter/read back the bounded SrcB base;
+		// never change config while a previous affine store is pending.
+		if(directSourceB)emitter.Config(124,(inputBase+block*count*2+p*32-16)/16);
 #endif
 #if defined(PIONEER_Q38_BFLOAT_PANEL) || defined(PIONEER_Q38_Q4_TWO_PHASE)
 		Matrix(type

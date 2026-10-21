@@ -1,0 +1,75 @@
+Exact affine replay/raw-dot Work qualification,October21 2026 06:40-07:39 UTC.
+NOT a demonstrated inference speedup;NOT promoted;20tokens/sec target UNMET.
+Original TC source encoding and Work ABI2/ops60f2+60f3 unchanged. Checked
+retains signed-zero canonicalization. Work elides ONLY its six integer
+canonicalization instructions under the separately proved +0-accumulator
+induction. ALL original FP32 rounding and explicit MAD latency retained.
+Replay slots12..31 contain register-only7/14 instruction affine programs;
+first parity of first panel records+executes EACH output group EACH job.
+Dynamic loads stay outside replay. Q6 never consumes these replay programs;
+return-to-Q8 after Q6 explicitly re-records. Q8 scale load reused across
+both parities;Q4 keeps its exact once/block scale. Cold helper placement
+changes only;original8KiB main/0x1500B prefix/address/owner limits retained.
+
+Peer main a3af0d566fa867d1a75b8612bc3c57799422f4e709c7826218befb52aafe107a
+Prefix 06dce3acf1db0a00b16a6fcf2230eded0e4aa4ab11933997af0004f519872db1
+Boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+Driver8b43f2c7145529fb0e5e6f0e3f4eac431b182db0ea16ddda63d713c7bb83cba0
+tag2026102100010015/gen28;THREE identical builds. Root aa27f435/prefix15643b20
+unchanged. Guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+Debug068b138d239454ecb8508f601f89dafcf3427d08b0a89c601f141649cfc0fb06
+twice identical,exact idle tag15 BEFORE BEGIN. Original checked65b2a01d and
+native-Q8 debugf32313c3 rebuild byte-identically with new flags OFF.
+
+Offline:1,048,576 exact recurrent lane comparisons,262,032 raw negative-zero
+dots,32 steps/sequence,bounded half/factor/scale signs,cancellation and +0
+induction;ARBITRARY -0 accumulator counterexample retained,not hidden.
+Actual full RV32/Tensix image:3 formats/3 widths/3 group counts/checked+Work/
+two CHANGED inputs,original FP32+independent FP64 references,20,646,166
+injected raw SM32 negative-zero lanes AFTER real SFPLOAD,sign-preserving
+independent SFPCAST. ALL final output words exact. NoC1/5/40/208 failures
+park inert;missing affine record rejects before output. Exact7/14 and13/20
+golden instruction/slot/latency tests pass. Full log077eb179ed5b5598ff9a6af70dade940b57fb16be58fcc2a2f56a95e838198ad
+at/private/tmp/pioneer-q38-affine-rawdot-full-20261021-b.log,evidenceXLFroi3n.
+Actual root+peer108 cases/64-bit counter faults/ALL57 safety fields and64
+peer-proof faults pass,evidence7QZjkb57. Actual kernel controller delayed
+DMA/mapping/BME/copyout failures retain ALL owners without reset/retry;
+checked isolation and clean END pass,evidenceOv3RgG0A.93 exact CPU tag
+refusals,109 build-role refusals,2,831 actual updater filesystem/handshake/
+hash/symlink/failure tests pass. No SDK edits/dirty llama build/FlashNext edits.
+
+Hardware normal1350MHz,119workers,CPU64/full128GB.20 synthetic+18 authentic
+119-worker+18 unchanged checked jobs=56,ALL exact_errors0/KNOWN_CLEAN_END1/
+CLI_EXIT0. Includes return-to-Q8 after Q6 with same live cohort. CPU numerical
+reference ONLY in diagnostic. No concurrent native job/transfer. Own log SHAs:
+synthetic dbf0db5f5158f4bbdeebf4d13208bda2f394b959ec1a2884a19752c5b6e1791e
+auth119 0625a0773f937fc2a9efe0c71d969ed235d7cb4a7dbce0983ade00c97509da7b
+checked 6a3e401368e3c64ad93133dbe96a9b7d16889fb63109f3d91d24ba90c849ea99
+
+Real-model projection Work benchmarks,NO CPU learned reference/fallback:
+FFN K17408/N5120,f0566393 client,32 warm graphs,12,240pages/50,135,040B.
+Fresh041/gen27 control median.010524500s/mean.010529437/min.010476/max.010596.
+Candidate median.010515500s/mean.010515031/min.010467/max.010641.
+Only.0855% lower sampled median,TOO SMALL to establish useful improvement.
+Same exported20,480B SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Candidate log78280e0b83cb5684b949aac0c7d3966177154d0eb8f60ab7c176dbf710ef9618.
+Q8 K5120/N10240,0c104f39 client,32warm graphs,14,400pages/58,982,400B.
+Earlier041 median.008772500/mean.008781719;candidate median.008743500/
+mean.008759594/min.008709/max.008893. Only.3306% lower sampled median,
+NOT robust thermal/statistical evidence or a whole-model speed claim.
+Same40,960B SHA b8707ccd7f01b7516c922929ba3f6ca9ae9ec1b7578edc1c50ab8a870f6d5d6e.
+Q8 log5814c5646a958f14f605f8912987dd26d17ff5686f0741c7754643fee7bd6f9a.
+Both33calls/33projections/no repeat upload,clean_end1/CLI_EXIT0,clock
+800->1350->800/restored1/uncertain0,CPU cold0/active_owner0. Authentication,
+load/repack outside warm timing. These are PROJECTION times,NOT token rates.
+
+No full-model run for this candidate:projection signal is inconclusive.
+Guarded known-clean restore041/tag12/gen29,quiesced0/cold0/active_owner0/
+open_count1/guard1. Best completed whole27B remains041 .181432516tok/s.
+Assistant remains closed/files intact;no reboot/SD/power/CPU/RAM change.
+Own artifacts /boot/home/pioneer-p100a-hot-reload-20261019-a/,names
+affine-rawdot-{synthetic,auth119,checked-regression}-20261021-a.log,
+ffn32-affine-rawdot-candidate-20261021-a.{log,words},
+q8-repeat-affine-rawdot-20261021-a.{log,words}.
+Archived /private/tmp/pioneer-q38-affine-rawdot-native-evidence.cnsD0z7L/.
+Continuing performance work;no inference-ready/Assistant promotion implied.

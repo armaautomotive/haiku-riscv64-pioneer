@@ -46,6 +46,9 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	uint32_t replay[32]={}; bool replayDefined[32]={};
 	unsigned recordNext=0,recordRemaining=0,replayRecords=0,replayExpansions=0;
 	bool recordExecute=false,dropReplayRecord=false;
+#ifdef PIONEER_Q38_TEST_AFFINE_REPLAY
+	bool affineRecord=false;
+#endif
 	unsigned cacheNext=0,cacheJobs=0;
 	unsigned setupConfiguration=25;
 	bool corruptMove=false,corruptDotRange=false,negativeDotZero=false;
@@ -113,7 +116,11 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	void Instruction(uint32_t op) override {
 		if (recordRemaining) {
 			unsigned code=op>>24;
-			if (code!=0x71 && code!=0x7c && code!=0x7a && code!=0x8d && code!=0x79 && code!=0x7e) throw ReplayAccessFault{};
+			if (code!=0x71 && code!=0x7c && code!=0x7a && code!=0x8d && code!=0x79 && code!=0x7e
+#ifdef PIONEER_Q38_TEST_AFFINE_REPLAY
+				&& !(affineRecord && (code==0x85 || code==0x86 || code==0x8f || code==0x90))
+#endif
+			) throw ReplayAccessFault{};
 			assert(recordNext<32);
 			replay[recordNext]=op; replayDefined[recordNext++]=!dropReplayRecord;
 			recordRemaining--;
@@ -122,6 +129,13 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			unsigned index=(op>>14)&31,count=(op>>4)&63;
 			if ((op&~0x0407c3f3U) || !count || index+count>32) throw ReplayAccessFault{};
 			if (op&1) { recordNext=index; recordRemaining=count; recordExecute=bool(op&2); replayRecords++; }
+#ifdef PIONEER_Q38_TEST_AFFINE_REPLAY
+			if(op&1)affineRecord=index==12 && (count==13 || count==20
+#ifdef PIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION
+				|| count==7 || count==14
+#endif
+			);
+#endif
 			else {
 				for (unsigned i=index;i<index+count;i++) {
 					if (!replayDefined[i]) throw ReplayAccessFault{};
@@ -388,7 +402,14 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 					// controls. Healthy dots remain independently bounded.
 					if (Persistent && vc==0 && memory.at(0x74038)==1) bound=0x7fffffff;
 #endif
-					assert(mag<=bound && (mag || !sm)); v=Bits(float(int(mag)*((sm>>31)?-1:1))); break; }
+					assert(mag<=bound);
+#ifdef PIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION
+					// Exact documented SFPCAST:retain sign EVEN for SM32 -0.
+					v=Bits(float(mag))|(sm&0x80000000U);
+#else
+					assert(mag || !sm);v=Bits(float(int(mag)*((sm>>31)?-1:1)));
+#endif
+					break; }
 				case 0x7c: assert(!mod); v=lr[vc][lane]; break;
 				case 0x7e: { unsigned vb=(op>>12)&15; assert(mod==1 && vb<8); v=lr[vb][lane]&lr[vc][lane]; break; }
 				case 0x8d: assert(!mod); v^=lr[vc][lane]; break;

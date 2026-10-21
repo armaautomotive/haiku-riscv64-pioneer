@@ -2,6 +2,12 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+[ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" = 0 ] || {
+ echo 'STOP direct SrcB is an offline kernel experiment,not an inference selector' >&2;exit 2; }
+[ "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" = 0 ] || {
+ echo 'STOP Work dot-zero elision is an offline kernel qualifier,not an inference selector' >&2;exit 2; }
+[ "${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}" = 0 ] || {
+ echo 'STOP register affine replay is a kernel-image qualifier,not an inference/Assistant selector' >&2;exit 2; }
 [ "${PIONEER_Q38_PREPARED_Q4_BLOCK:-0}" = 0 ] || {
  echo 'STOP prepared Q4 block cache has NO model source/layout qualification;OFFLINE ONLY' >&2;exit 2; }
 [ "${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 0 ] || {

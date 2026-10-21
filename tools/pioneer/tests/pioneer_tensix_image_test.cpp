@@ -59,6 +59,8 @@ struct Machine {
 	virtual uint32_t MatrixArithmeticConfig1() const { return config[1]; }
 	virtual bool FloatFidelityArithmetic() const { return sfpuSmoke==24; }
 	virtual uint32_t NativePayloadBase(unsigned half) const { return 0x706e0+half*256; }
+	virtual uint32_t SourceBPayloadBase() const { return 0x70920; }
+	virtual uint32_t SourceBOperandWord(uint32_t address) { return l1[Index(address)]; }
 	virtual float Operand16(uint16_t half) const { return Float(uint32_t(half)<<16); }
 	virtual unsigned Index(uint32_t address) {
 		for (unsigned i = 0; i < BlackholeTensixImageWords(sfpuSmoke); i++) if (BlackholeTensixImageAddress(i,sfpuSmoke) == address) return i;
@@ -101,12 +103,13 @@ struct Machine {
 			assert(srcA ? !ownerA : !ownerB);
 			assert(config[srcA ? 64 : 112] == (native?0x10001eU:Fp16Operands()?0x100011U:0x100015U) && config[srcA ? 65 : 113] == (srcA ? 16U : 8U));
 			assert(config[srcA ? 72 : 120] == (native?14U:Fp16Operands()?1U:5U) && config[srcA ? 73 : 121] == 3);
-			assert(native?((config[76]+1)*16==NativePayloadBase(0) || (config[76]+1)*16==NativePayloadBase(1)):config[srcA ? 76 : 124] == (srcA ? 0x7070U : 0x7091U));
+			assert(native?((config[76]+1)*16==NativePayloadBase(0) || (config[76]+1)*16==NativePayloadBase(1)):config[srcA ? 76 : 124] == (srcA ? 0x7070U : (SourceBPayloadBase()-16)/16));
 			if (native) assert(!(config[1]&0x8000) && config[49]==0 && (config[84]&65535)==64); // signed, row0 aligned for x8 bursts
-			unsigned base = native?(config[76]+1)*16:srcA ? 0x70710 : 0x70920, rows = srcA ? 16 : 8;
+			unsigned base = native?(config[76]+1)*16:srcA ? 0x70710 : SourceBPayloadBase(), rows = srcA ? 16 : 8;
 			for (unsigned row = 0; row < rows; row++) for (unsigned col = 0; col < 16; col++) {
 				unsigned element = row*16+col;
-				uint32_t word = l1[Index(base+(native?element/4:element/2)*4)];
+				unsigned address=base+(native?element/4:element/2)*4;
+				uint32_t word=srcA?l1[Index(address)]:SourceBOperandWord(address);
 				unsigned byte=native?((word>>(8*(element&3)))&255):0;
 				float value = native?float(byte&127)*((byte&128)?-1:1):Operand16(uint16_t(word >> (16*(element&1))));
 				if (!dropUnpack) (srcA ? a[row][col] : b[row][col]) = value;

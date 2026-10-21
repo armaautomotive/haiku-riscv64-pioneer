@@ -8,6 +8,11 @@
 // Source a0000..a0400 is an already validated part of the original input.
 // Each SM16 pair interpreted as FP32 is finite;AllDatumsAreZero(bit4)
 // overrides it to EXACT0. No uninitialized read/extra L1 zero buffer.
+#ifdef PIONEER_Q38_WORK_AFFINE_REPLAY
+// Distinct symbol keeps this cold helper in MAIN rather than the old
+// prefix selector. No operation/configuration/extent is changed.
+#define PioneerQ38VectorDstInit PioneerQ38ReplayDstInit
+#endif
 template<class E>
 #if defined(PIONEER_Q38_SFPU_ACCUMULATOR) && defined(__GNUC__) && !defined(__clang__)
 __attribute__((noinline,optimize("Os")))

@@ -3,6 +3,15 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" = 0 ] || {
+ echo 'STOP direct SrcB has NO native image/extent/owner qualification;OFFLINE ONLY' >&2;exit 2; }
+case "${PIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION:-0}" in
+ 0) [ "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}" = 0:0 ] || {
+  echo 'STOP affine/raw-dot needs its separate complete QUALIFICATION chain;OFFLINE ONLY' >&2;exit 2; };;
+ 1) [ "${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}:${PIONEER_Q38_BLOCK_SCALE_REUSE:-0}:${PIONEER_Q38_SCALE_REUSE_QUALIFICATION:-0}:${PIONEER_Q38_BLOCK_AFFINE_DST:-0}:${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_NATIVE_Q8:-0}:${PIONEER_Q38_NATIVE_Q8_QUALIFICATION:-0}:${PIONEER_Q38_GROUP32_QUALIFICATION:-0}:${PIONEER_Q38_Q4_GROUP32:-0}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}:${PIONEER_Q38_PREPARED_Q4_AFFINE:-0}:${PIONEER_Q38_PREDECODED_Q4:-0}:${PIONEER_Q38_PREPARED_Q4_BLOCK:-0}:${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0 ] || {
+  echo 'STOP affine/raw-dot qualifier requires original-TC exact scale/cache/timing roles;NO format/rounding mix' >&2;exit 2; };;
+ *) exit 2;;
+esac
 [ "${PIONEER_Q38_PREPARED_Q4_BLOCK:-0}" = 0 ] || {
  echo 'STOP prepared Q4 block cache has NO native layout/owner qualification;OFFLINE ONLY' >&2;exit 2; }
 [ "${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 0 ] || {
@@ -295,6 +304,7 @@ if [ "${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}" = 1 ]; then extra="$extra -D
 if [ "${PIONEER_Q38_SCALE_REUSE_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_SCALE_REUSE_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_GROUP32_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_GROUP32_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_NATIVE_Q8_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_NATIVE_Q8_QUALIFICATION"; fi
+if [ "${PIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_ORDERED_EXTENT_FAST"
 fi

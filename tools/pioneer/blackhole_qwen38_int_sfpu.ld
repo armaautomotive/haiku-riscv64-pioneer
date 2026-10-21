@@ -8,6 +8,8 @@ SECTIONS {
 	/* Pin ONLY the integer specialization, including the compiler's local
 	 * constant-propagation clone suffix. A changed symbol fails nonempty. */
 	.affine 0x70b00 : {
+		/* Swap ONLY cold once/job helpers for the offline replay variant. */
+		*(.text.pioneer_q38_replay_job_setup)
 		*(.text._Z24PioneerQ38BlockAffineDstI18VectorPanelEmitterE*)
 		*(.text._Z23PioneerQ38VectorDstInitI18VectorPanelEmitterEvRT_bbbb*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1EE*)

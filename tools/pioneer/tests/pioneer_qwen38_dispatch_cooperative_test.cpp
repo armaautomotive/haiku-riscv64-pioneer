@@ -1,5 +1,13 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_NATIVE_Q8)
+#if defined(PIONEER_Q38_TEST_DIRECT_SRCB)
+#define PIONEER_Q38_DIRECT_SRCB_IMAGE_MODEL_ONLY
+#include "pioneer_q38_direct_srcb_image_test.cpp"
+using CooperativePeer=DirectSrcBImage;
+#elif defined(PIONEER_Q38_TEST_AFFINE_RAWDOT)
+#define PIONEER_Q38_AFFINE_REPLAY_IMAGE_MODEL_ONLY
+#include "pioneer_q38_affine_replay_image_test.cpp"
+using CooperativePeer=ReplayImage;
+#elif defined(PIONEER_Q38_TEST_NATIVE_Q8)
 #define PIONEER_Q38_NATIVE_Q8_IMAGE_MODEL_ONLY
 #include "pioneer_q38_native_q8_image_test.cpp"
 using CooperativePeer=NativeQ8Image;
@@ -66,6 +74,9 @@ struct CooperativeDispatch:DispatchMachine {
 				p.packets[i].route=memory.at(0x74080+w*32+16);
 			}
 			for (auto& v:p.root) v.second=memory.at(v.first);
+#ifdef PIONEER_Q38_TEST_DIRECT_SRCB
+			p.PoisonTail();
+#endif
 			for (unsigned i=0;i<k;i++) p.vector[i]=uint16_t(
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 				originalInputs[i/2]
