@@ -180,6 +180,13 @@ template<class IO> bool PioneerQ38StateZeroClose(IO& io,const tt_dram_samples_re
 	io.RuntimeCodeWrite(0,saved[0]); if (io.RuntimeCodeRead(0)!=saved[0]) return fail();
 	if (!PioneerQ38StateZeroSources(io,dram,noc,state,banks,input,store,bulk,transfer,wide,lease,0x47800)) return fail();
 	lease.dirty=lease.ready=false; lease.closed=true; bulk.dirty=false;
+	unsigned initializedPages=0;
+	if (!state.InitializationProgress(lease.identity,initializedPages)) return fail();
+	// A full count is NOT publication. ONLY after every physical code/
+	// scratch/source/hold proof above and successful known-clean CLOSE may
+	// this private initialization seal be minted. Partial CLOSE is safe
+	// for END but does not publish. No compute/read/model-ready API here.
+	if (initializedPages==PioneerQ38GdnZeroProgress::Pages && !state.PublishInitialization(lease.identity)) return fail();
 	return true; // bank/mutable claims/global status/host owners STILL owned
 }
 #endif

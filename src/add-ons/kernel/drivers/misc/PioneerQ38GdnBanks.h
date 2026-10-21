@@ -22,6 +22,9 @@ class PioneerQ38GdnBanks {
   PioneerQ38GdnBanks&,PioneerResidentBanks&,const tt_host_page_result&,PioneerResidentLease&,
   PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38StateZeroLease&,
   const PioneerQ38GdnIdentity&,unsigned,unsigned,unsigned,PioneerQ38StateZeroResult&);
+ template<class IO> friend bool PioneerQ38StateZeroClose(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
+  PioneerQ38GdnBanks&,PioneerResidentBanks&,const tt_host_page_result&,PioneerResidentLease&,
+  PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38StateZeroLease&,bool);
  // Allocate this owner on the HEAP in a future native context: staging
  // arrays intentionally do not consume Haiku's small kernel stack.
  PioneerResidentBanks* banks=nullptr;
@@ -33,7 +36,7 @@ class PioneerQ38GdnBanks {
  uint32_t regionFirstPage[672]={};
  PioneerQ38GdnZeroProgress zeroProgress;
  unsigned count=0;
- bool unsafe=false;
+ bool unsafe=false,initializationPublished=false;
  static unsigned Ordinal(unsigned layer) { return layer<64 && layer%4!=3?layer-layer/4:~0U; }
  bool Resolve(unsigned region,unsigned firstPage,unsigned pages,PioneerQ38GdnBankExtent& output) const {
   if (region>=count || !pages || pages>256) return false;
@@ -54,6 +57,11 @@ class PioneerQ38GdnBanks {
   PioneerQ38GdnBankExtent extent;
   return Matches(id) && Resolve(region,firstPage,pages,extent)
    && zeroProgress.Record(id,regionFirstPage[region]+firstPage,pages);
+ }
+ bool PublishInitialization(const PioneerQ38GdnIdentity& id) {
+  unsigned pages=0;
+  if (!Matches(id) || !zeroProgress.Snapshot(id,pages) || pages!=PioneerQ38GdnZeroProgress::Pages) return false;
+  initializationPublished=true; return true; // called ONLY after complete known-clean zero CLOSE proofs
  }
 public:
  PioneerQ38GdnBanks()=default;
@@ -103,6 +111,10 @@ public:
   if (!Matches(id) || region>=count) return false;
   pages=regions[region].heads*16; return true;
  }
+ bool InitializationRegions(const PioneerQ38GdnIdentity& id,unsigned& regions) const {
+  if (!Matches(id) || count<96 || count>672) return false;
+  regions=count; return true; // private CPU geometry ONLY,no allocation/read/compute grant
+ }
  bool InitializeSpan(const PioneerQ38GdnIdentity& id,unsigned region,unsigned firstPage,unsigned pages,PioneerQ38GdnBankExtent& output) const {
   return Matches(id) && Resolve(region,firstPage,pages,output);
  }
@@ -111,7 +123,10 @@ public:
  bool InitializationProgress(const PioneerQ38GdnIdentity& id,unsigned& pages) const {
   return Matches(id) && zeroProgress.Snapshot(id,pages); // CPU count ONLY,no compute/read-ready API
  }
- void Fault() { unsafe=true; zeroProgress.Fault(); if (banks) banks->Quarantine(); } // NO release/reset/I/O
+ bool InitializationPublished(const PioneerQ38GdnIdentity& id) const {
+  return Matches(id) && initializationPublished; // zero-init/CLOSE seal ONLY,NOT compute/read/model authority
+ }
+ void Fault() { unsafe=true; initializationPublished=false; zeroProgress.Fault(); if (banks) banks->Quarantine(); } // NO release/reset/I/O
  bool Unsafe() const { return unsafe || (banks && banks->Quarantined()); }
 };
 #endif

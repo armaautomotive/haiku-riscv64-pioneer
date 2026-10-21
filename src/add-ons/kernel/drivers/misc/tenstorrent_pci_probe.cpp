@@ -20,6 +20,7 @@
 #include "PioneerQ38StateZeroController.h"
 #include "PioneerQ38NonRootHeld.h"
 #include "PioneerQ38GdnFreshPlan.h"
+#include "PioneerQ38InitializeOwnedState.h"
 #if !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Private mutable adapter requires the complete retained-owner normal-clock bank driver
 #endif
@@ -2587,6 +2588,18 @@ public:
 	return okay;
 }
 // PIONEER_Q38_GDN_BIND_OWNER_END
+[[maybe_unused]] static bool InitializeQ38MutableState(PioneerStoreContext& c,PioneerQ38InitializeOwnedResult& result)
+{
+	if (!c.io.StateZeroBeforeCohort()) {
+		if (c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+		return false;
+	}
+	bool okay=PioneerQ38InitializeOwnedState(c.io,c.baseline.baseline.baseline.baseline.dram,
+		c.baseline.baseline.baseline.noc,*c.q38GdnBanks,c.banks,c.q38GdnIdentity,c.host,
+		c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38StateZero,result);
+	if (!okay && c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
 [[maybe_unused]] static bool PrepareQ38MutableZero(PioneerStoreContext& c)
 {
 	if (!c.io.StateZeroBeforeCohort()) {

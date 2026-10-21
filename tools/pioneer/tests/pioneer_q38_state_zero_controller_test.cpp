@@ -11,6 +11,8 @@ struct ZeroControlIO:SpanControlIO {
 	using SpanControlIO::SpanControlIO;
 	bool competingSpan=false,lateCompetingSpan=false,lateOtherHeld=false,lateCoreMapLoss=false;
 	bool backwardsClock=false,frozenClock=false;
+	bool publicationCounterFabricOnly=false;
+	unsigned publicationFailJob=0;
 	uint64_t frozenTime=100000;
 	unsigned badMarker=0,badPhase=0,badCount=0;
 	PioneerQ38StateZeroLease* boundLease=nullptr;
@@ -23,6 +25,30 @@ struct ZeroControlIO:SpanControlIO {
 		return SpanControlIO::RuntimeStatusRead(word);
 	}
 	void ExecuteZero() {
+		if (publicationCounterFabricOnly) {
+			// Explicit lifecycle-only synthetic fabric. Does NOT execute RV32
+			// or simulate zero/readback DATA. Used only to exercise all73728
+			// private ledger pages/publication transitions without pretending
+			// to repeat the separate actual-image arithmetic qualification.
+			if (rootStarts==publicationFailJob) return; // lifecycle-only timeout injection,NO fabricated completion
+			uint32_t before[8],after[8];
+			for (unsigned word=0;word<8;word++) before[word]=PanelIO::ResidentNocRead(PioneerQ38SpanCounter(word));
+			unsigned bytes=l1[4],chunks=(bytes+16383)/16384,flits=bytes/64;
+			const unsigned delta[]={chunks,flits,chunks*2,chunks,chunks,flits,chunks*2,chunks};
+			for (unsigned word=0;word<8;word++) after[word]=before[word]+delta[word];
+			counters[0]=after[0]; counters[1]=after[1]; accepted=after[2]; counters[3]=after[3];
+			writeCounters[0]=after[4]; writeCounters[1]=after[5]; writeCounters[3]=after[7];
+			for (unsigned word=0;word<32;word++) l1[3072+word]=0;
+			const uint32_t first[]={chunks,flits,chunks,flits,bytes/4096,bytes,l1[6],TT_Q38_ZERO_MARKER};
+			for (unsigned word=0;word<8;word++) { l1[3072+word]=first[word]; l1[3080+word]=before[word]; l1[3088+word]=after[word]; }
+			const uint32_t tail[]={l1[7],l1[8],l1[5],0x84000,0x144000,1};
+			for (unsigned word=0;word<6;word++) l1[3096+word]=tail[word];
+			unsigned last=(bytes-1)&~16383U;
+			const uint32_t nextCommand[]={l1[5]+last,0,l1[8],0x144000,0,129,0,0,bytes-last,0};
+			for (unsigned word=0;word<10;word++) command[word]=nextCommand[word];
+			destination[2032]=0x7200c; destination[2033]=bytes/4096; destination[2034]=TT_Q38_ZERO_MARKER;
+			return;
+		}
 		StateZeroMachine m(image,l1[4],l1[7]); m.base=l1[5];
 		for (unsigned word=0;word<view.size();word++) {
 			uint32_t at=TT_Q38_SPAN_VIEW_BASE+word*4; m.memory[at]=view[word];
@@ -77,12 +103,22 @@ struct ZeroControlFixture {
 	std::vector<uint8_t> initialized=std::vector<uint8_t>(PioneerResidentBanks::Pages,0);
 	std::vector<PioneerQ38GdnRegion> regions;
 	unsigned preparedWideLoads=0;
-	explicit ZeroControlFixture(const char* image):io(image),owner(io) {
+	explicit ZeroControlFixture(const char* image,bool striped=false):io(image),owner(io) {
 		assert(PioneerPrepareOutputBuffer(io,owner.host,transfer));
 		assert(PioneerBulkUploadPrepare(io,owner.dram,owner.noc,owner.host,owner.store,transfer,bulk));
 		assert(PioneerPrepareWideOutput(io,owner.host,transfer,wide));
 		preparedWideLoads=io.wideLoads;
-		for (unsigned layer=0;layer<64;layer++) if (layer%4!=3) for (unsigned slot=0;slot<2;slot++) {
+		if (striped) {
+			unsigned used[7]={};
+			for (unsigned layer=0;layer<64;layer++) if (layer%4!=3) for (unsigned slot=0;slot<2;slot++) {
+				unsigned first=0;
+				for (unsigned stripe=0;stripe<7;stripe++) {
+					unsigned heads=6+unsigned(stripe<6),bank=(layer-layer/4+slot+stripe)%7;
+					regions.push_back({layer,slot,first,heads,bank,0x04000000+used[bank]});
+					used[bank]+=heads*65536; first+=heads;
+				}
+			}
+		} else for (unsigned layer=0;layer<64;layer++) if (layer%4!=3) for (unsigned slot=0;slot<2;slot++) {
 			unsigned index=unsigned(regions.size()),bank=index%7;
 			unsigned offset=index>=89?unsigned(PioneerResidentBanks::Capacity-48*65536):0x04000000+(index/7)*48*65536;
 			regions.push_back({layer,slot,0,48,bank,offset});
@@ -117,6 +153,7 @@ struct ZeroControlFixture {
 		assert(PioneerResidentLeaseEnd(io,owner.noc,owner.store) && !io.ReleaseHostPage()); io.Safe();
 	}
 };
+#ifndef PIONEER_Q38_STATE_ZERO_CONTROLLER_MODEL_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==2); setvbuf(stdout,nullptr,_IOLBF,0);
@@ -224,3 +261,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE state-zero controller+actual image:reserved owner/epoch only,ALL zero/readback/counter/source/descriptor/command/terminal proofs BEFORE hold,NO BME/host traffic/learned bitmap commit,UNKNOWN retains all leases and permits ZERO later IO;NO native/context-lifetime integration");
 }
+#endif

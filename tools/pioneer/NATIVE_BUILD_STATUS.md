@@ -1,5 +1,28 @@
 # Native build status
 
+October20,17:34 Vancouver (October21,00:34 UTC) PRIVATE ZERO INITIALIZATION:
+OFFLINE ONLY;ordinary builder STILL REFUSES mutable-state!=0. A private
+whole-owner transaction now preflights ALL region geometry before IO,
+initializes ALL73728 pages in bounded jobs,then publishes a private zero-init
+seal ONLY after known-clean CLOSE restores/proves code,scratch,sources and
+held cores. Full page count alone cannot publish;partial clean CLOSE permits
+END but not publication. Fault clears the seal. This is NOT compute/read/
+GGML/model readiness,and NO public control operation selects the path.
+
+Publication/whole-initializer EQbyCNZ2 passes96/672 regions,288/672 jobs,
+last-hole/partial CLOSE/four foreign epochs/unsafe CLOSE/source/sticky faults
+and first/middle/last job timeouts without CLOSE/publication/later IO.
+That suite EXPLICITLY uses a synthetic COUNTER fabric:NOT data zeroing,
+RV32 or native execution. Separate actual emitted zero-image/controller
+45P9Q5K8 regression PASS. Native scope23tPI0ed,private call/bind dTNmasEb,
+real mutable bank owner ctV0dXdc PASS. Complete actual driver+initializer
+OBJECT-ONLY witness v2Fygv6R max688B individual frame. No linked module.
+Feature-OFF publication build a is EXACT installed03876197/guardd1ce2aa4/
+default2df0e0f8;38 ordinary build refusals PASS. No card job/install/reload/
+power/SD/Assistant action this span. Latest completed whole-model rate
+remains0.175353237tok/s,NOT20. Continuing correct post-dot GDN qualification
+and resident dispatch/graph integration;zero initialization is only one gate.
+
 October20,17:10 Vancouver (October21,00:10 UTC) INLINE LONG96 CLEAN:
 Current03876197/gen13/f414306f completed ALL96 public positions/three
 matching sequences,47712 learned projections/48480calls/119workers. SAME
