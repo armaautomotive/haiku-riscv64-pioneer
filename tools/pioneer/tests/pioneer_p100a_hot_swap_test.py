@@ -28,6 +28,7 @@ def check(mode, fault=None):
         payloads = {key: ('test-' + values[key]).encode() for key in ['original', 'hasha', 'hashb', 'hashp', 'hashq', 'hashc', 'hashf', 'hashr', 'hashx', 'hashw', 'hashwp', 'hashws', 'hashwc', 'hashw4', 'hashw4i', 'hashwsp', 'hashwspf', 'hashwspc', 'hashwspi', 'hashwspq', 'hashwsps', 'hashwspa', 'hashwspu', 'hashwspd', 'hashwspo', 'hashwspj', 'hashwspv', 'hashwspg', 'guardsha']}
         payloads['hashcurrentprofile'] = ('test-' + values['hashcurrentprofile']).encode()
         payloads['hash_postscale_delta'] = ('test-' + values['hash_postscale_delta']).encode()
+        payloads['hash_gdn_zero_diagnostic'] = ('test-' + values['hash_gdn_zero_diagnostic']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -84,6 +85,8 @@ def check(mode, fault=None):
             '--restore-inline-config': ('hash_inline_config', 'hash_deferred_affine', 'tag_inline_config'),
             '--apply-postscale-delta': ('hash_inline_config', 'hash_postscale_delta', 'tag_inline_config'),
             '--restore-postscale-delta': ('hash_postscale_delta', 'hash_inline_config', 'tag_postscale_delta'),
+            '--apply-gdn-zero-diagnostic': ('hash_postscale_delta', 'hash_gdn_zero_diagnostic', 'tag_postscale_delta'),
+            '--restore-gdn-zero-diagnostic': ('hash_gdn_zero_diagnostic', 'hash_postscale_delta', 'tag_gdn_zero_diagnostic'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -127,6 +130,7 @@ def check(mode, fault=None):
         put('candidate_ordered_extents', payloads['hash_ordered_extents'])
         put('candidate_inline_config', payloads['hash_inline_config'])
         put('candidate_postscale_delta', payloads['hash_postscale_delta'])
+        put('candidate_gdn_zero_diagnostic', payloads['hash_gdn_zero_diagnostic'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -233,6 +237,7 @@ if __name__ == '__main__':
     modes += ['--apply-ordered-extents', '--restore-ordered-extents']
     modes += ['--apply-inline-config', '--restore-inline-config']
     modes += ['--apply-postscale-delta', '--restore-postscale-delta']
+    modes += ['--apply-gdn-zero-diagnostic', '--restore-gdn-zero-diagnostic']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -332,6 +337,10 @@ if __name__ == '__main__':
             candidate = ['candidate_postscale_delta']
         elif mode == '--restore-postscale-delta':
             candidate = ['candidate_inline_config']
+        elif mode == '--apply-gdn-zero-diagnostic':
+            candidate = ['candidate_gdn_zero_diagnostic']
+        elif mode == '--restore-gdn-zero-diagnostic':
+            candidate = ['candidate_postscale_delta']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

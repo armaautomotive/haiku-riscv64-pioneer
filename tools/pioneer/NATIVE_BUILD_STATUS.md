@@ -1,5 +1,37 @@
 # Native build status
 
+October20,17:57 Vancouver (October21,00:57 UTC) FIXED ZERO DIAGNOSTIC PREPARED:
+Separate qualification-only driver8ccb2a24/tag202610210001000e builds a/b
+EXACT;flag-OFF remains installeddcc77864/guardd1ce/default2df. Ordinary
+mutable or resident-compute builds STILL refused. Only the explicit full
+diagnostic dependency chain may link this fixed zero entry;55 dependency/
+invalid/ordinary-mutable refusals before SDK/output PASS. No native run yet.
+Actual native OBJECT witness81qyWD5y max688B;linked driver frames688B zero
+run/576B whole initializer/480B pilot/432B control,all large owners HEAP.
+
+Fixed client31de6508 repeats exactly b/c. It prepares one fixed4KiB public
+DATA page with existing span Work transfer,explicitly closes span,then
+selects fixed ONE-owned-page pilot or ALL73728-page initialization;NO caller
+address/route/code/slot/model pointer. Pilot NEVER publishes initialization.
+Actual entry mints private epochs and makes an explicit ONE-WAY mode-1
+handoff from closed span's mode-1(unselected) value:runtimeCoreMode==-1 to
+root-only1. SPAN_END itself does NOT select root mode. First post-handoff
+allocation/initializer/reply failure retains ALL owners/clock;NO later IO.
+
+Actual extracted entry/lock/seal/CPU claims JoAzzFxc PASS33 preflight gates,
+fixed pilot/full completion fields,duplicate refusal,8 initializer faults
+and lost reply. REAL client envelope BOTH modes/22 failure controls uses
+EXPLICITLY MOCKED span/END/initializers,NOT native/data qualification.
+Publication zNl6h2zQ additionally executes ACTUAL RV32 one-page zero+
+readback and clean partial CLOSE,without full-init seal. Whole-state ledger
+tests remain explicitly counter-fabric-only. Complete actual image/controller
+IOmWBDSF PASS,max880B compile-only witness. Earlier controller runner exited
+after its passing image tests because a refusal MESSAGE changed;test now
+checks refusal-before-SDK behavior rather than obsolete prose. No safety
+gate relaxed. Focused updater60 cases PASS,full expanded suite pending.
+Candidates staged/hash-verified only;installed native stilldcc/gen14 idle.
+Next native action is ONE-page pilot,not full state/model inference.
+
 October20,17:42 Vancouver (October21,00:42 UTC) OFFLINE RESIDENT GDN IMAGE:
 First one-shot half-head candidate c3d150b4818c6abd12de957c1840237b60f46d52c143a894b53efb7492ee5a48,
 boote678476d,builds c/d exact. Uses ONLY two reserved GDDR->fixed L1 reads,

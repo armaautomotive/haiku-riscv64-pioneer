@@ -6,10 +6,10 @@
 #include "PioneerQ38StateZeroImage.h"
 #include "PioneerQ38StateZeroShape.h"
 #include "PioneerQ38SpanController.h"
-// OFFLINE prerequisite ONLY. No ioctl/driver adapter selects this controller.
+// Private zero-only controller,separately gated fixed diagnostic ONLY.
 // Native integration MUST interlock EVERY other writer/compute path,retain
 // the whole context/cookie/clock/ALL host leases and latch cold recovery on
-// Unsafe. The driver builder still REFUSES GDN_MUTABLE_STATE!=0.
+// Unsafe. Ordinary mutable builds remain REFUSED;no model compute/read API.
 // IO's StateZeroBeforeCohort is metadata-only exclusive ownership proof;
 // StateZeroOtherCoresHeld independently proves ALL119 NON-root tiles held.
 // Root code/panel and bulk scratch use the EXISTING saved owners. No new

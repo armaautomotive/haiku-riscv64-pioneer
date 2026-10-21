@@ -25,6 +25,7 @@ for key, normal in required.items():
 cases = [case for case in cases if case['PIONEER_Q38_LOCAL_DELTA_GGML'] != '0']
 for invalid in ('1', '-1', 'invalid'):
     cases.append({'PIONEER_Q38_RESIDENT_GDN': invalid})
+    cases.append({'PIONEER_Q38_GDN_ZERO_DIAGNOSTIC': invalid})
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-postscale-build-gate-') as temporary:
     root = pathlib.Path(temporary)
     sdk = root / 'MUST_NOT_OPEN_MISSING_SDK'

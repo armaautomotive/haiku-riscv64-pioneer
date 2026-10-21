@@ -14,6 +14,7 @@ static void release_sem(int lock) { assert(lock==sLock); released++; }
 #include <new>
 #include "bind_owner.inc"
 static void Reset() { currentTeam=17; threadStatus=0; acquired=released=0; acquireStatus=B_OK; }
+#ifndef PIONEER_Q38_GDN_CALL_SCOPE_MODEL_ONLY
 int main()
 {
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close;
@@ -98,3 +99,4 @@ int main()
 	puts("PASS OFFLINE ACTUAL private GDN call scope+global lock:exact FD/team/thread/context/bank ownership,15 early/locked refusals,seal valid ONLY while lock held,5 destructor identity/owner/thread faults request MEMORY-ONLY full retention,balanced semaphore release,ZERO IO/END/STOP/ARC/reset/unmap/free;NO public/native capability");
 	puts("PASS OFFLINE ACTUAL private owner binding:heap672-stripe plan/real bank claims/ALL9216 half extents,14 prepublication refusals leave ordinary scope intact,post-attachment claim-proof failure retains ALL private owners before return,initialized bitmap untouched,ZERO IO and NO initialization/model/compute-ready grant;NO public/native selection");
 }
+#endif

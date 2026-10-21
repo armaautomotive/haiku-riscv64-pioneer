@@ -16,6 +16,7 @@ case "${PIONEER_Q38_PANEL_CLIENT:-0}" in
  5) source=pioneer_q38_span_probe;;
  6) source=pioneer_q38_delta_probe;;
  7) source=pioneer_q38_clock_cycle;;
+ 8) source=pioneer_q38_gdn_zero_debug;;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_AFFINE_CLIENT:-0}" in

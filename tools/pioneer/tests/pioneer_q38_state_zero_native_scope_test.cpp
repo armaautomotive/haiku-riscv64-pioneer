@@ -45,6 +45,10 @@ struct PioneerStoreContext {
 	PioneerQ38SpanLease* q38Span=nullptr;
 	void* q38Dispatch=nullptr; void* q38Cohort=nullptr; void* fleet=nullptr;
 	FakeLifecycle q38Delta,panelProbe,streamProbe;
+	PioneerResidentLease lease;
+	PioneerBulkUploadLease bulk;
+	PioneerOutputBufferLease bulkHost;
+	PioneerWideOutputLease wideHost;
 	FakeClock q38Clock;
 	int q38GdnCallThread=42,runtimeCoreMode=1;
 	bool bankStorageOnly=true,otherUnsafe=false,retained=false;

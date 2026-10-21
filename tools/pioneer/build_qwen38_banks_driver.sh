@@ -3,6 +3,12 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_GDN_MUTABLE_STATE:-0}:${PIONEER_Q38_LOCAL_DELTA_GGML:-0}:${PIONEER_Q38_INLINE_CONFIG:-0}:${PIONEER_Q38_WORK_DEFER_AFFINE:-0}:${PIONEER_Q38_WORK_OUTPUT_DMA:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}" = 1:1:1:1:1:1:1 ] || {
+     echo 'STOP fixed zero QUALIFICATION requires the separate complete mutable/post-dot/inline/fast-span diagnostic chain' >&2; exit 2; };;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_RESIDENT_GDN:-0}" in
  0) ;;
  *) echo 'STOP resident GDN image is OFFLINE ONLY;no qualified owner/coordinator/graph routing selects it' >&2; exit 2;;
@@ -43,7 +49,9 @@ case "${PIONEER_Q38_WORK_DEFER_AFFINE:-0}" in
 esac
 case "${PIONEER_Q38_GDN_MUTABLE_STATE:-0}" in
  0) ;;
- *) printf '%s\n' 'Mutable GDN ownership/zero image has NO qualified native controller; refusing driver build.' >&2; exit 2;;
+ 1) [ "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}" = 1 ] || {
+     printf '%s\n' 'Ordinary mutable GDN has NO qualified compute controller;only separate fixed zero QUALIFICATION may be built.' >&2; exit 2; };;
+ *) exit 2;;
 esac
 case "${PIONEER_Q38_OUTPUT_TRANSFER_ROOT:-0}" in
  0) ;;
@@ -257,6 +265,9 @@ case "${PIONEER_Q38_LOCAL_DELTA_PROBE:-0}" in
 esac
 if [ "${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_LOCAL_DELTA_GGML"
+fi
+if [ "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_GDN_MUTABLE_STATE -DPIONEER_Q38_GDN_ZERO_DIAGNOSTIC"
 fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \

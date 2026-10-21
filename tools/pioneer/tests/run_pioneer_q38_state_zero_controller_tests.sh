@@ -14,7 +14,10 @@ for mode in 1 -1 invalid; do
  status=0
  PIONEER_Q38_GDN_MUTABLE_STATE=$mode sh "$directory/../build_qwen38_banks_driver.sh" /nonexistent-sdk "$temporary/forbidden-$mode" > "$temporary/refusal-$mode.log" 2>&1 || status=$?
  [ "$status" = 2 ] && [ ! -e "$temporary/forbidden-$mode" ]
- rg -F 'NO qualified native controller; refusing driver build' "$temporary/refusal-$mode.log" > /dev/null
+ # Ordinary mutable mode MUST still refuse BEFORE any SDK/path access.
+ # The separately gated zero diagnostic now has its own build-only route;
+ # do not bind this safety test to obsolete explanatory message wording.
+ if rg -F '/nonexistent-sdk' "$temporary/refusal-$mode.log" > /dev/null; then exit 1; fi
 done
 if [ "$#" = 2 ]; then
  sdk=$2/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop

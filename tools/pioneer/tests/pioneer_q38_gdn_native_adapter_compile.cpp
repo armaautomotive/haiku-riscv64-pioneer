@@ -29,3 +29,8 @@ extern "C" bool pioneer_q38_gdn_initialize_compile(PioneerProbeCookie* cookie,Pi
 	PioneerQ38GdnCallScope scope(cookie); auto* context=scope.Context();
 	return context && InitializeQ38MutableState(*context,result);
 }
+extern "C" bool pioneer_q38_gdn_qualify_compile(PioneerProbeCookie* cookie,PioneerQ38InitializeOwnedResult& result)
+{
+	PioneerQ38GdnCallScope scope(cookie); auto* context=scope.Context();
+	return context && QualifyQ38MutableState(*context,result);
+}

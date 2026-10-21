@@ -18,7 +18,7 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do [ ! -d "$include" ] || 
 "$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++" -std=gnu++17 -O2 -Wall -Wextra -Werror \
  -fno-exceptions -fno-rtti -fstack-usage -ffreestanding -finline -fno-semantic-interposition \
  -fno-tree-vectorize -fno-use-cxa-atexit -fno-strict-aliasing -fno-delete-null-pointer-checks -mcmodel=medany -fpic \
- -D_KERNEL_MODE -DPIONEER_Q38_GDN_MUTABLE_STATE -DTT_PIONEER_DRIVER_RELOAD -DPIONEER_DRIVER_BUILD_TAG=0x2026102000ff0001ULL \
+ -D_KERNEL_MODE -DPIONEER_Q38_GDN_MUTABLE_STATE -DPIONEER_Q38_GDN_ZERO_DIAGNOSTIC -DTT_PIONEER_DRIVER_RELOAD -DPIONEER_DRIVER_BUILD_TAG=0x2026102000ff0001ULL \
  -DTT_PIONEER_EXPERIMENTAL_Q38_BANKS -DTT_PIONEER_EXPERIMENTAL_Q38_PANEL -DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE \
  -DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK -DTT_PIONEER_EXPERIMENTAL_Q38_STREAM -DTT_PIONEER_EXPERIMENTAL_Q38_ROWS \
  -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_PAYLOAD \
@@ -33,7 +33,7 @@ for include in "$sdk/headers/os" "$sdk"/headers/os/*; do [ ! -d "$include" ] || 
  -DPIONEER_Q38_NATIVE_OPERAND_STORE -DPIONEER_Q38_WORK_COMPACT_OUTPUT "$@" \
  -c "$project/tools/pioneer/tests/pioneer_q38_gdn_native_adapter_compile.cpp" -o "$temporary/native-private-lifecycle.o"
 test -s "$temporary/native-private-lifecycle.o"
-awk -F '\t' '$1 ~ /AcquireProbeLock|AcquireQ38GdnSessionLock|Q38MutableScopeOwned|RetainQ38DispatchOwner|EndQ38DispatchOwnership|ReleaseResidentCookie|StateZeroBeforeCohort|StateZeroOtherCoresHeld|NonRootHeld|MutableZero|BindQ38MutableOwner|InitializeQ38MutableState|InitializeOwnedState|PioneerQ38StateZero|PioneerQ38GdnCallScope|PioneerQ38GdnFreshPlan|pioneer_q38_gdn_.*_compile/ {
+awk -F '\t' '$1 ~ /AcquireProbeLock|AcquireQ38GdnSessionLock|Q38MutableScopeOwned|RetainQ38DispatchOwner|EndQ38DispatchOwnership|ReleaseResidentCookie|StateZeroBeforeCohort|StateZeroOtherCoresHeld|NonRootHeld|MutableZero|BindQ38MutableOwner|InitializeQ38MutableState|InitializeOwnedState|Q38GdnZeroControl|PioneerQ38StateZero|PioneerQ38GdnCallScope|PioneerQ38GdnFreshPlan|pioneer_q38_gdn_.*_compile/ {
  if($2+0>1024)bad=1;if($2+0>maximum)maximum=$2+0;seen=1
 } END {if(!seen||bad)exit 1;print "MAX_GATED_NATIVE_LIFECYCLE_FRAME_BYTES="maximum";OBJECT_ONLY_NO_MODULE"}' "$temporary/native-private-lifecycle.su"
 printf 'PASS complete actual native driver+private zero adapters/controllers instantiated ONLY in an OBJECT witness;NO linked/usable driver,public call seal or qualification: %s\n' "$temporary"

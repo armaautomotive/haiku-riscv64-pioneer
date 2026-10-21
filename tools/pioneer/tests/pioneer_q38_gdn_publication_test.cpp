@@ -28,6 +28,17 @@ int main(int argc,char** argv)
 	(void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
 	static_assert(!CanPublish<PioneerQ38GdnBanks>::value,"no public publication bypass");
 	{
+		ZeroControlFixture f(argv[1],true); PioneerQ38InitializeOwnedResult result;
+		assert(!f.io.publicationCounterFabricOnly && PioneerQ38QualifyOwnedState(f.io,f.owner.dram,f.owner.noc,*f.state,f.owner.banks,f.identity,
+			f.owner.host,f.owner.store,f.bulk,f.transfer,f.wide,f.lease,result));
+		assert(result.regions==1 && result.jobs==1 && result.pages==1 && result.closed && !result.published && !result.recovery_required
+			&& !f.state->InitializationPublished(f.identity) && f.io.rootStarts==1 && f.io.lastDeviceWords.size()==1024);
+		for (auto word:f.io.lastDeviceWords) assert(!word); // ACTUAL emitted RV32 zero/readback,ONE owned page ONLY
+		unsigned touches=f.io.touches;
+		assert(!PioneerQ38QualifyOwnedState(f.io,f.owner.dram,f.owner.noc,*f.state,f.owner.banks,f.identity,
+			f.owner.host,f.owner.store,f.bulk,f.transfer,f.wide,f.lease,result) && f.io.touches==touches);
+	}
+	{
 		ZeroControlFixture f(argv[1]); Fill(f,false); assert(f.CloseZero() && f.state->InitializationPublished(f.identity));
 		unsigned touches=f.io.touches; assert(f.CloseZero() && f.io.touches==touches && f.state->InitializationPublished(f.identity));
 		for (unsigned field=0;field<4;field++) { auto foreign=f.identity;
@@ -75,4 +86,5 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE ACTUAL private initialization publication:full73728-page count alone NEVER publishes,ONLY known-clean physical CLOSE contract does,last-hole/partial CLOSE/foreign epochs/unsafe CLOSE/source fault/sticky fault/repeated CLOSE verified;SYNTHETIC_COUNTER_FABRIC_ONLY_NO_DATA_ZERO_OR_RV32_NATIVE_CLAIM;NOT compute/read/model authority");
 	puts("PASS OFFLINE ACTUAL whole-owned-state initializer:96/672-region geometry,288/672 bounded jobs,ALL73728 pages before CLOSE/publication,repeated attempt inert,first/middle/last job timeouts stop WITHOUT CLOSE/publication/later IO,learned bitmap untouched;SYNTHETIC_COUNTER_FABRIC_ONLY_NOT_NATIVE_OR_COMPUTE_READY");
+	puts("PASS OFFLINE ACTUAL fixed1-page pilot:real emitted RV32 zero/readback,exact owned first page,clean partial CLOSE,repeated attempt inert,NEVER full initialization publication;NOT native/whole-state/compute readiness");
 }

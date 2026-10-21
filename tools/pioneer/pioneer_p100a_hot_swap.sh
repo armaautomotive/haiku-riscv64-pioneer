@@ -6,6 +6,7 @@ set -eu
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
 case "$1" in
  --apply-postscale-delta|--restore-postscale-delta) mode=$1;;
+ --apply-gdn-zero-diagnostic|--restore-gdn-zero-diagnostic) mode=$1;;
  --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache|--apply-zero-minimum|--restore-zero-minimum|--apply-native-operand|--restore-native-operand|--apply-compact-output|--restore-compact-output|--apply-compact-profile|--restore-compact-profile|--apply-deferred-affine|--restore-deferred-affine|--apply-ordered-extents|--restore-ordered-extents|--apply-inline-config|--restore-inline-config) mode=$1;;
  --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma|--apply-work-queued-entry|--restore-work-queued-entry|--apply-local-delta|--restore-local-delta|--apply-local-delta-terminal|--restore-local-delta-terminal|--apply-current-profile|--restore-current-profile) mode=$1;;
  *) exit 2;;
@@ -55,6 +56,7 @@ candidate_deferred_affine=$stage/tenstorrent_pci_probe-deferred-affine-202389d0
 candidate_ordered_extents=$stage/tenstorrent_pci_probe-ordered-extents-66936bf6
 candidate_inline_config=$stage/tenstorrent_pci_probe-inline-config-03876197
 candidate_postscale_delta=$stage/tenstorrent_pci_probe-postscale-delta-dcc77864
+candidate_gdn_zero_diagnostic=$stage/tenstorrent_pci_probe-gdn-zero-diagnostic-8ccb2a24
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -99,6 +101,7 @@ hash_deferred_affine=202389d0a75f07b0ccf40930c94121a3f2094d71d2c17d7bf7017d7ab04
 hash_ordered_extents=66936bf67f56bee3657bd90df16ed63a89c0be262264ecee2d8ed97a81f849d3
 hash_inline_config=038761972b9d53912ec24e38ac01a7f5185e291f0c73e555cdcef60d8bd9ce87
 hash_postscale_delta=dcc7786475170d1eb2912439c1989b5b0aa19d903a1bb8e97881b4e500043ef7
+hash_gdn_zero_diagnostic=8ccb2a24c7afeca60625c241a81cffa23722c8f5fce341fb5a3a6106fa69e962
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -141,6 +144,7 @@ tag_deferred_affine=202610200001000a
 tag_ordered_extents=202610200001000b
 tag_inline_config=202610200001000c
 tag_postscale_delta=202610210001000d
+tag_gdn_zero_diagnostic=202610210001000e
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -262,6 +266,8 @@ else
  elif [ "$mode" = --restore-inline-config ]; then source=$candidate_deferred_affine; expected=$hash_inline_config; result=$hash_deferred_affine; oldtag=$tag_inline_config; newtag=$tag_deferred_affine
  elif [ "$mode" = --apply-postscale-delta ]; then source=$candidate_postscale_delta; expected=$hash_inline_config; result=$hash_postscale_delta; oldtag=$tag_inline_config; newtag=$tag_postscale_delta
  elif [ "$mode" = --restore-postscale-delta ]; then source=$candidate_inline_config; expected=$hash_postscale_delta; result=$hash_inline_config; oldtag=$tag_postscale_delta; newtag=$tag_inline_config
+ elif [ "$mode" = --apply-gdn-zero-diagnostic ]; then source=$candidate_gdn_zero_diagnostic; expected=$hash_postscale_delta; result=$hash_gdn_zero_diagnostic; oldtag=$tag_postscale_delta; newtag=$tag_gdn_zero_diagnostic
+ elif [ "$mode" = --restore-gdn-zero-diagnostic ]; then source=$candidate_postscale_delta; expected=$hash_gdn_zero_diagnostic; result=$hash_postscale_delta; oldtag=$tag_gdn_zero_diagnostic; newtag=$tag_postscale_delta
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

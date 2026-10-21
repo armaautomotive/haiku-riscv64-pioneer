@@ -25,6 +25,12 @@
 #error Private mutable adapter requires the complete retained-owner normal-clock bank driver
 #endif
 #endif
+#ifdef PIONEER_Q38_GDN_ZERO_DIAGNOSTIC
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
+#error Fixed zero diagnostic requires the complete private mutable-state owner
+#endif
+#include "PioneerQ38GdnZeroProtocol.h"
+#endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
 #if !defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Normal Q38 clocks require the retained-owner reloadable sparse Work driver
@@ -2459,9 +2465,9 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
-// OFFLINE native-adapter prerequisite ONLY. No ioctl allocates/binds an
-// owner/identity/call seal or invokes these operations. Ordinary builders
-// STILL REFUSE mutable!=0. Existing owned mappings are BORROWED,not copied
+// Private native adapter,selected ONLY by the separate fixed zero diagnostic
+// flag. Ordinary mutable/model compute remains REFUSED. No production call
+// binds this owner/identity/seal. Existing owned mappings are BORROWED,not copied
 // or allocated;no new reset address/host page/BME or public data capability.
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
@@ -2510,8 +2516,8 @@ bool PioneerSessionIO::StateZeroOtherCoresHeld()
 }
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_END
 // PIONEER_Q38_GDN_CALL_SCOPE_BEGIN
-// PRIVATE/OFFLINE ONLY. No ioctl constructs this scope yet. Exactly ONE
-// non-reentrant stack scope belongs at a future control entry,not inside
+// PRIVATE fixed zero diagnostic ONLY. Exactly ONE
+// non-reentrant stack scope belongs at its control entry,not inside
 // a controller/helper. FD lifetime keeps the cookie alive until return;
 // context is captured/rechecked ONLY after acquiring the global lock.
 // Destruction clears a CPU seal and releases that lock,NEVER END/STOP/
@@ -2555,7 +2561,7 @@ public:
 };
 // PIONEER_Q38_GDN_CALL_SCOPE_END
 // PIONEER_Q38_GDN_BIND_OWNER_BEGIN
-// Private CPU-only transition,NO native operation selects it yet. Caller
+// Private CPU-only transition,fixed zero diagnostic ONLY. Caller
 // holds the call-scope seal/global lock;no user coordinates or addresses.
 // Fresh placement is a proposal;real Bind independently validates/claims
 // every page. No initialization/model/compute readiness is published here.
@@ -2603,6 +2609,73 @@ public:
 	if (!okay && c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
 	return okay;
 }
+#ifdef PIONEER_Q38_GDN_ZERO_DIAGNOSTIC
+static bool QualifyQ38MutableState(PioneerStoreContext& c,PioneerQ38InitializeOwnedResult& result)
+{
+	if (!c.io.StateZeroBeforeCohort()) {
+		if (c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+		return false;
+	}
+	bool okay=PioneerQ38QualifyOwnedState(c.io,c.baseline.baseline.baseline.baseline.dram,
+		c.baseline.baseline.baseline.noc,*c.q38GdnBanks,c.banks,c.q38GdnIdentity,c.host,
+		c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38StateZero,result);
+	if (!okay && c.Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+// PIONEER_Q38_GDN_ZERO_CONTROL_BEGIN
+// Separately GATED fixed zero QUALIFICATION,not ordinary mutable inference.
+// The exact closed-span handoff supplies the existing ready owners/views;
+// no generic setup/cleanup is attempted if a prerequisite is absent.
+static uint64_t sQ38GdnDiagnosticEpoch=0; // global lock;never wrap/reuse
+static status_t Q38GdnZeroControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info info={}; status_t status=get_thread_info(find_thread(NULL),&info);
+	if (status!=B_OK) return status;
+	if (info.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_GDN_ZERO_SUPPORT) {
+		if (length!=sizeof(tt_q38_gdn_zero_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie); if (status!=B_OK) return status;
+		const tt_q38_gdn_zero_support support={1,55,1,73728,672,1,0,1};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_GDN_ZERO_INITIALIZE || length!=sizeof(tt_q38_gdn_zero_request)) return B_BAD_VALUE;
+	tt_q38_gdn_zero_request request={}; status=user_memcpy(&request,data,sizeof(request));
+	if (status!=B_OK || request.version!=1 || (request.mode!=1 && request.mode!=2) || request.reserved[0] || request.reserved[1])
+		return status!=B_OK?status:B_BAD_VALUE;
+	PioneerQ38GdnCallScope scope(cookie); if (scope.Status()!=B_OK) return scope.Status();
+	auto* c=scope.Context();
+	if (!c || c->runtimeCoreMode!=-1 || c->q38GdnBanks || c->q38StateZero || !c->q38Span || !c->q38Span->closed
+		|| c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
+		|| !c->io.q38SpanAllowed || !c->lease.saved || !c->lease.ready || c->lease.pending || c->lease.recovery_required
+		|| !c->bulk.saved || !c->bulk.ready || c->bulk.dirty || c->bulk.unsafe
+		|| !c->bulkHost.allocated || !c->bulkHost.ready || c->bulkHost.pending || c->bulkHost.quarantined || c->bulkHost.released
+		|| !c->wideHost.ready || !c->wideHost.memory_type_set || c->wideHost.pending || c->wideHost.quarantined || c->wideHost.released
+		|| sQ38GdnDiagnosticEpoch==UINT64_MAX) return B_NOT_ALLOWED; // CPU-only,NO partial setup
+	// Private epochs are minted under the lock,not accepted from the user.
+	// This fixed diagnostic epoch is NEVER a real-model binding/capability.
+	PioneerQ38GdnIdentity identity={++sQ38GdnDiagnosticEpoch,1,UINT64_C(0x5147385a45524f31),sReloadGeneration};
+	// SPAN_END leaves mode==-1. This is the ONLY one-way CPU handoff to
+	// the private root-only mode1;do not assume SPAN_END selected it. After
+	// this point even a CPU allocation refusal retains the full owner/clock.
+	c->runtimeCoreMode=1; c->io.q38SpanAllowed=false;
+	if (!BindQ38MutableOwner(*c,identity)) { tt_resident_session_result r={}; RetainQ38DispatchOwner(*c,r); return B_DEV_NOT_READY; }
+	PioneerQ38InitializeOwnedResult result;
+	unsigned mode=request.mode;
+	bool okay=mode==1?QualifyQ38MutableState(*c,result):InitializeQ38MutableState(*c,result);
+	okay=okay && result.regions==(mode==1?1U:672U) && result.jobs==(mode==1?1U:672U) && result.pages==(mode==1?1U:73728U)
+		&& result.closed==1 && result.published==(mode==1?0U:1U) && !result.recovery_required && !c->Unsafe();
+	request={}; request.version=1; request.mode=mode; request.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+	request.regions=result.regions; request.jobs=result.jobs; request.pages=result.pages; request.closed=result.closed;
+	request.initialization_published=okay && result.published; request.recovery_required=!okay || c->Unsafe();
+	// Any failure AFTER binding,including failed reply delivery,retains ALL
+	// owners. Never implicit CLOSE/END/STOP/ARC/restore/reset/retry/free here.
+	status=user_memcpy(data,&request,sizeof(request));
+	if (!okay || status!=B_OK || c->Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(*c,r); }
+	return status;
+}
+// PIONEER_Q38_GDN_ZERO_CONTROL_END
+#endif
 [[maybe_unused]] static bool PrepareQ38MutableZero(PioneerStoreContext& c)
 {
 	if (!c.io.StateZeroBeforeCohort()) {
@@ -4751,6 +4824,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_GDN_ZERO_DIAGNOSTIC
+	if (operation==TT_PCI_PROBE_Q38_GDN_ZERO_SUPPORT || operation==TT_PCI_PROBE_Q38_GDN_ZERO_INITIALIZE)
+		return Q38GdnZeroControl(instance,operation,data,length);
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	if (operation>=TT_PCI_PROBE_Q38_DELTA_SUPPORT && operation<=TT_PCI_PROBE_Q38_DELTA_ACCEPT)
