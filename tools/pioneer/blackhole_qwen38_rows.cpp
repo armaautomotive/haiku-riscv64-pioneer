@@ -37,6 +37,13 @@
 #if defined(PIONEER_Q38_Q4_GROUP32) && (!defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK))
 #error OFFLINE group32 requires the complete separately qualified scale reuse Work chain
 #endif
+#ifdef PIONEER_Q38_PREDECODED_Q4
+#if !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || defined(PIONEER_Q38_Q4_GROUP32) || defined(PIONEER_Q38_PREPARED_Q4_AFFINE)
+#error Predecoded-Q4 is a separate OFFLINE ordinary-rounding scale-cache variant
+#endif
+#include "PioneerQ38PredecodedQ4.h"
+#include "PioneerQ38DirectQ4Unpack.h"
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
 #endif
@@ -392,7 +399,11 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
 		(type==12?PioneerQ38PreparedQ4::Bytes:PioneerQ38PanelTileBytes(type))
 #else
-		PioneerQ38PanelTileBytes(type)
+		(
+#ifdef PIONEER_Q38_PREDECODED_Q4
+			skipDotCheck && type==12?PioneerQ38PredecodedQ4::Bytes:
+#endif
+			PioneerQ38PanelTileBytes(type))
 #endif
 		|| job[3] || job[4] || !groups || groups>16 || (inputs!=5120 && inputs!=6144 && inputs!=17408) || inputs%count
 		|| first<0x04000000 || (first&31) || uint32_t(groups*blocks*bytes)>0xc4000000-first || first>=0xc4000000) return 0;
@@ -508,11 +519,21 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #ifndef PIONEER_Q38_PREPARED_Q4_AFFINE
-	if (type==12 && !affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
+	if (type==12 && !affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes
+#ifdef PIONEER_Q38_PREDECODED_Q4
+		,skipDotCheck
+#endif
+	)) block_fault_park();
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 	if (type==12 && skipDotCheck) {
 		VectorPanelEmitter blockEmitter; blockEmitter.Drain(); // prior deferred store completes BEFORE format change
-		if (!affine.BlockQ4(reinterpret_cast<PioneerQ38Panel*>(0x91000),reinterpret_cast<volatile uint32_t*>(0x97000),256)) block_fault_park();
+		if (!affine.BlockQ4(reinterpret_cast<PioneerQ38Panel*>(
+#ifdef PIONEER_Q38_PREDECODED_Q4
+			0x92000 // NEW tile90000..91100 must NOT alias original temporary91000
+#else
+			0x91000
+#endif
+		),reinterpret_cast<volatile uint32_t*>(0x97000),256)) block_fault_park();
 		Fence();
 		if (!PioneerQ38BlockAffineDst(blockEmitter
 #ifdef PIONEER_Q38_BLOCK_SCALE_REUSE
@@ -615,6 +636,11 @@ extern "C" unsigned block_main()
 		if (!PioneerQ38BFloatPanel(emitter,type,p)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_VECTOR_FIXED_FORMAT
+#ifdef PIONEER_Q38_PREDECODED_Q4
+		if(skipDotCheck && type==12) {
+			if(!PioneerQ38DirectQ4Unpack(emitter,p))block_fault_park();
+		} else
+#endif
 		if (!PioneerQ38VectorFixedUnpack(emitter,type,p)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
@@ -629,6 +655,9 @@ extern "C" unsigned block_main()
 		);
 #else
 		Matrix();
+#endif
+#ifdef PIONEER_Q38_PREDECODED_Q4
+		if(skipDotCheck && type==12)PioneerQ38DirectQ4Restore(emitter);
 #endif
 #ifdef PIONEER_Q38_Q4_GROUP32
 		// Every raw panel,source publication,matrix phase and real matrix

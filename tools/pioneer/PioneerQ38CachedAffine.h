@@ -24,10 +24,24 @@ public:
 	PioneerQ38CachedAffine()=default;
 	PioneerQ38CachedAffine(const PioneerQ38CachedAffine&)=delete;
 	PioneerQ38CachedAffine& operator=(const PioneerQ38CachedAffine&)=delete;
-	__attribute__((noinline)) bool Prepare(unsigned kind,const uint8_t* data,unsigned count) {
+#if defined(PIONEER_Q38_PREDECODED_Q4) && defined(__GNUC__) && !defined(__clang__)
+	__attribute__((noinline,optimize("Os")))
+#else
+	__attribute__((noinline))
+#endif
+	bool Prepare(unsigned kind,const uint8_t* data,unsigned count
+#ifdef PIONEER_Q38_PREDECODED_Q4
+		,bool predecoded=false
+#endif
+	) {
 		if (attempted || failed) return Refuse();
 		attempted=true;
-		if (!data || !PioneerQ38PanelTileBytes(kind) || count!=PioneerQ38PanelTileBytes(kind)
+		if (!data || !PioneerQ38PanelTileBytes(kind) || count!=
+#ifdef PIONEER_Q38_PREDECODED_Q4
+			(predecoded && kind==12?4352U:PioneerQ38PanelTileBytes(kind)) || (predecoded && kind!=12)
+#else
+			PioneerQ38PanelTileBytes(kind)
+#endif
 			|| !Separate(reinterpret_cast<uintptr_t>(data),count,reinterpret_cast<uintptr_t>(this),sizeof(*this))) return Refuse();
 		for (unsigned row=0;row<16;row++) {
 			unsigned at=(kind==14?208:0)*16+row;

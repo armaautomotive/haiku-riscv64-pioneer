@@ -5,6 +5,8 @@
 // ALL32 lanes enabled. LReg0=canonical SM32 dot |dot|<=262144,1=coefficient,
 // 2=minimum,3=activation scale,4=canonical SM32 input sum |sum|<=2048,
 // 5=old zero-or-normal FP32 accumulator,|old|<=2^68. Integer zero MUST
+// Separate Work-Q4 group32 qualification extends ONLY sum bound to4096;
+// its paired integer dot is still within262144,all casts exact/normal.
 // be positive zero. Metadata is
 // exact finite half*[-128,127];scale is zero or |scale| in[2^-32,2^16].
 // Future caller owes exact Dst/LReg loads,source-bank ownership,range/finite

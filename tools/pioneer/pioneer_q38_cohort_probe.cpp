@@ -17,6 +17,13 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CohortProtocol.h"
 #include "PioneerQwen38Panel.h"
 #include "PioneerQ38RowFixtures.h"
+#ifdef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
+#ifndef PIONEER_Q38_ROOT_CYCLE_CLIENT
+#error Group32 reference is only the separately tagged Work diagnostic
+#endif
+#include "PioneerQ38Group32Reference.h"
+#include "PioneerQ38Group32DebugTag.h"
+#endif
 #ifdef PIONEER_Q38_DISPATCH_CLIENT
 #include "PioneerQ38DispatchHost.h"
 using Q38Probe=tt_q38_dispatch_probe;
@@ -55,6 +62,9 @@ static bool Upload(int fd,unsigned bank,uint64_t offset,const std::vector<uint8_
 }
 static bool Reference(const Q38Probe& r,const std::vector<uint8_t>& packed,unsigned worker,float* output)
 {
+#ifdef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
+	if(r.type==12)return PioneerQ38Group32Reference(r,packed,worker,output);
+#endif
 	unsigned count=PioneerQ38CohortBlockInputs(r.type),blocks=r.inputs/count,tileBytes=PioneerQ38PanelTileBytes(r.type);
 	for (unsigned g=0;g<r.part[worker].groups;g++) for (unsigned b=0;b<blocks;b++) for (unsigned p=0;p<count/16;p++) {
 		PioneerQ38Panel panel; if (!PioneerQ38UnpackPanel(r.type,packed.data()+(g*blocks+b)*tileBytes,tileBytes,p,&panel)) return false;
@@ -207,6 +217,13 @@ int main(int argc,char** argv)
 		puts("PUBLIC_ROW_MEMORY_SHA_PASS_725504_BYTES;INTERLEAVED_GROUPS_NOT_FULL_MODEL");
 	}
 	int fd=open("/dev/" TT_PCI_PROBE_DEVICE,O_RDWR|O_CLOEXEC); if (fd<0) return 1;
+#ifdef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
+	tt_pioneer_driver_reload tag={};tag.version=1;
+	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&tag,sizeof(tag)) || !PioneerQ38Group32DebugTag(tag)) {
+		close(fd);puts("STOP GROUP32_DEBUG_REQUIRES_EXACT_IDLE_DRIVER_TAG;NO_BEGIN_OR_CARD_READ");return 1;
+	}
+	puts("GROUP32_DEBUG_EXACT_TAG_BOUND;CHANGED_FP32_ROUNDING_ORACLE_ONLY;NOT_MODEL_QUALITY_OR_WORK_INFERENCE");
+#endif
 #ifdef PIONEER_Q38_DISPATCH_CLIENT
 	tt_q38_dispatch_support support={};
 #ifndef PIONEER_Q38_DISPATCH_SUPPORT_VERSION

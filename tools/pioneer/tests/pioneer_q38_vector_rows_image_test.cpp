@@ -65,6 +65,9 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
+#ifdef PIONEER_Q38_TEST_PREDECODED_Q4
+	virtual bool DirectQ4Panel() const { return false; }
+#endif
 	bool Int8Arithmetic() const override { return BFloat?false:Base::Int8Arithmetic(); }
 	bool Int8ConvertedRead() const override { return BFloat?false:Base::Int8ConvertedRead(); }
 	bool Fp16Operands() const override { return BFloat?false:Base::Fp16Operands(); }
@@ -384,7 +387,13 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			}
 			drained=false; return;
 		}
-		if (code==0x26) assert(panelMoves==4 && sources[mathBank] && !rawPending);
+		if (code==0x26) assert(
+#ifdef PIONEER_Q38_TEST_PREDECODED_Q4
+			(DirectQ4Panel()?panelMoves==0:panelMoves==4)
+#else
+			panelMoves==4
+#endif
+			&& sources[mathBank] && !rawPending);
 		Base::Instruction(op);
 		if (code==0x26) for (unsigned row=32;row<40;row++) defined[Adj(row)]=true;
 		if ((op&~0x4000U)==0x26c00020) {

@@ -2,6 +2,15 @@
 #define PIONEER_Q38_DEFER_AFFINE_IMAGE_TEST_MODEL_ONLY
 #include "pioneer_q38_defer_affine_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Group32PeerImage.h"
+#ifndef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
+#define PIONEER_Q38_GROUP32_REFERENCE_CLIENT
+#define PIONEER_Q38_UNDEFINE_GROUP32_REFERENCE_CLIENT
+#endif
+#include "../PioneerQ38Group32Reference.h"
+#ifdef PIONEER_Q38_UNDEFINE_GROUP32_REFERENCE_CLIENT
+#undef PIONEER_Q38_GROUP32_REFERENCE_CLIENT
+#undef PIONEER_Q38_UNDEFINE_GROUP32_REFERENCE_CLIENT
+#endif
 // Separate reference uses decoded input/tile DATA,not candidate instructions.
 struct Group32Image:DeferredAffineImage {
 	using DeferredAffineImage::DeferredAffineImage;
@@ -55,6 +64,13 @@ struct Group32Image:DeferredAffineImage {
 			if(buffers[4096+group*16+row]!=Bits(expected) || fabs(double(expected)-reference)>bound)return false;
 		}
 		for(unsigned row=groups*16;row<4096;row++)if(buffers[4096+row]!=0x7fc00000)return false;
+		// Cross-check the ACTUAL native debug client's separate DATA oracle.
+		struct Request {unsigned type=12,peers=1,inputs;struct Part{unsigned groups;}part[1];std::vector<uint32_t> activation,scales;} request;
+		request.inputs=inputs;request.part[0].groups=groups;request.scales=scales;request.activation.resize(inputs/2);
+		for(unsigned k=0;k<inputs;k++)request.activation[k/2]|=uint32_t(vector[k])<<((k%2)*16);
+		std::vector<uint8_t> packed;for(const auto& tile:tiles)packed.insert(packed.end(),tile.begin(),tile.end());
+		float debug[256];if(!PioneerQ38Group32Reference(request,packed,0,debug))return false;
+		for(unsigned row=0;row<groups*16;row++)if(buffers[4096+row]!=Bits(debug[row]))return false;
 		return true;
 	}
 };

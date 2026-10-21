@@ -88,7 +88,11 @@ extern "C" void q38_persistent_main()
 #ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
 			(snapshot[1]==12?PioneerQ38PreparedQ4::Bytes:PioneerQ38PanelTileBytes(snapshot[1]))
 #else
-			PioneerQ38PanelTileBytes(snapshot[1])
+			(
+#ifdef PIONEER_Q38_PREDECODED_Q4
+				snapshot[14] && snapshot[1]==12?PioneerQ38PredecodedQ4::Bytes:
+#endif
+				PioneerQ38PanelTileBytes(snapshot[1]))
 #endif
 			|| (snapshot[5]!=5120 && snapshot[5]!=6144 && snapshot[5]!=17408)
 			|| !snapshot[7] || snapshot[7]>16) block_fault_park();

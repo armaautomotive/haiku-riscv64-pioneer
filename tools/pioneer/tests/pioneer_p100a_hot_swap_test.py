@@ -33,6 +33,7 @@ def check(mode, fault=None):
         payloads['hash_root_cycle_diagnostic'] = ('test-' + values['hash_root_cycle_diagnostic']).encode()
         payloads['hash_block_affine_qualification'] = ('test-' + values['hash_block_affine_qualification']).encode()
         payloads['hash_scale_reuse_qualification'] = ('test-' + values['hash_scale_reuse_qualification']).encode()
+        payloads['hash_group32_qualification'] = ('test-' + values['hash_group32_qualification']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -99,6 +100,8 @@ def check(mode, fault=None):
             '--restore-block-affine-qualification': ('hash_block_affine_qualification', 'hash_root_cycle_diagnostic', 'tag_block_affine_qualification'),
             '--apply-scale-reuse-qualification': ('hash_block_affine_qualification', 'hash_scale_reuse_qualification', 'tag_block_affine_qualification'),
             '--restore-scale-reuse-qualification': ('hash_scale_reuse_qualification', 'hash_block_affine_qualification', 'tag_scale_reuse_qualification'),
+            '--apply-group32-qualification': ('hash_scale_reuse_qualification', 'hash_group32_qualification', 'tag_scale_reuse_qualification'),
+            '--restore-group32-qualification': ('hash_group32_qualification', 'hash_scale_reuse_qualification', 'tag_group32_qualification'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -147,6 +150,7 @@ def check(mode, fault=None):
         put('candidate_root_cycle_diagnostic', payloads['hash_root_cycle_diagnostic'])
         put('candidate_block_affine_qualification', payloads['hash_block_affine_qualification'])
         put('candidate_scale_reuse_qualification', payloads['hash_scale_reuse_qualification'])
+        put('candidate_group32_qualification', payloads['hash_group32_qualification'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -258,6 +262,7 @@ if __name__ == '__main__':
     modes += ['--apply-root-cycle-diagnostic', '--restore-root-cycle-diagnostic']
     modes += ['--apply-block-affine-qualification', '--restore-block-affine-qualification']
     modes += ['--apply-scale-reuse-qualification', '--restore-scale-reuse-qualification']
+    modes += ['--apply-group32-qualification', '--restore-group32-qualification']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -377,6 +382,10 @@ if __name__ == '__main__':
             candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--restore-scale-reuse-qualification':
             candidate = ['candidate_block_affine_qualification']
+        elif mode == '--apply-group32-qualification':
+            candidate = ['candidate_group32_qualification']
+        elif mode == '--restore-group32-qualification':
+            candidate = ['candidate_scale_reuse_qualification']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

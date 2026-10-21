@@ -1,5 +1,58 @@
 # Native build status
 
+October21,04:25 UTC GROUP32 isolated native qualification STARTED:
+Reproducible a/b driver210946ad9f329ea2341e16519421e899ae09d41d1ad56fb1f3789bc77af4554d,
+tag2026102100010013/gen20,installed by idle-only guarded hot swap from041.
+NO reboot/reset/SD/power/Assistant change. At04:26 first18 synthetic jobs
+PASSED exact,explicit clean END/CLI_EXIT0/clock restored/uncertain0;CPU
+metadata tag13/generation21/cold0/active_owner0/guard1. Auth119 test RUNNING;
+NOT yet fully native qualified. Synthetic logSHA19e803069355b4bbfb0435cad492a9d53a3f2307bebdd4ff639d02e7a567712a.
+Independent DEBUG clientb87e7da236d1104eaa2eca2751c4e0811f6dbc21f081008452974460ab39b0d8
+uses the changed-rounding oracle ONLY for Q4;exact CPU metadata tag/guard/
+idle/generation/open proof BEFORE any BANK_BEGIN.93 tag refusals PASS.
+Full actual peer suite rj3PwhEZ cross-checks this native debug oracle against
+independent paired-FP32/FP64 AND actual emitted shader,ALL formats/widths/
+groups/modes/repeated inputs. LogSHA4fa40d88c932601b1aaa23b0c65d3e393d25fdff740d01a47a89da6f3bae1d24.
+90 native dependency/mixed-role/layout refusals PASS before SDK/output.
+Actual kernel Work-DMA/RUN kLwbXgQt PASS including retained failures.
+Focused actual updater60 + expanded2711 cases PASS;updater6e95a713 binds
+041/tag12<->2109/tag13,NO automatic rollback. Group32 is NOT a new speed
+or semantic quality result. Latest whole-model rate belongs to041=.181432516.
+
+OFFLINE direct PREDECODED Q4 prototype h/i builds EXACT text61daa5c8/
+prefixa52870e1,inside SAME main8172/8192B,prefix5352/5376B code windows.
+New4352B tile retains ALL256 metadata bytes and expands packed quant DATA
+to4096 original0..15 signed-INT8 values;NO requantization/learned product.
+Original temporary panel moved to92000 to avoid enlarged90000..91100 raw
+tile. Strict VM caught configuration-after-queued-RWC in initial g BEFORE
+native;h/i configure first. A..g remain UNSELECTED. No new memory authority.
+Full ACTUAL suite FRj4sVRc PASS all formats/widths/groups/modes/two changed
+inputs,ORIGINAL packed FP32+FP64 exact,DEFERRED native SM7 source import,
+zero SFPU quant decode/MOV,exact reset stream,missing data/false completion/
+invalid byte/ADC reset observers before publication+four NoC fault parks.
+Log/private/tmp/pioneer-q38-predecoded-q4-full-20261021-a.log
+SHAb94aee0ef3ffbf015216611295c5b84f629b97bd1c92e3e1b96610c1a8d0d8eb.
+Important tradeoff:K17408/groups16 RV17,068,688->17,882,538 (+4.8%),while
+vector ops3,283,808->1,856,352 and drains215,516->180,700. OFFLINE counts,
+NOT silicon speed. Per-panel format switching needs improvement before
+promotion. Native builder REFUSES this layout (16 pre-SDK cases PASS).
+Flag-OFF full native STILL EXACT041/guardd1ce/default2df (repeat e).
+
+Lossless DATA4yvslskW PASS1024 fixtures/all4096 values+original metadata
+round-trip/canaries/invalid byte/null/size/alias refusals. Shape/padding
+budget zdjteIKz reproduces measured18,672,242,688 learned bytes. Whole-Q4
+expansion would reserve29,119,913,984B and exceeds current3GiB/bank owner.
+Current context8192 layout fits44 ffn_down matrices with one delta slot,
+or40 with TWO slots. These are proposals,NOT allocated/native-address
+authority;nominal card memory is NOT silently substituted for proven owner.
+
+CPU-only Q8 byte inventory5c4ec8cd builds b/c EXACT;no ioctl symbol or
+accelerator FD. Fixed PUBLIC source FULL SHA+same borrowed file identity/
+epoch checked each bounded chunk.13 extracted ACTUAL reader bounds/type/
+source-change refusals PASS. Started04:24 CPU read-only authentication;
+no domain result yet. It will establish whether native SM7's -128 limitation
+applies to this model,NOT qualify an inference format or speedup.
+
 October20,21:13 Vancouver (October21,04:13 UTC) REAL FULL27B SCALE RUN PASS:
 041fef18/tag2026102100010012/gen19 + SAME f414 client/frozen runtime:
 THREE32 identical public sequences,ALL96 token identities match each other

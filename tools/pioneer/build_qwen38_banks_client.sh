@@ -2,6 +2,11 @@
 # Compile only,no install/device access.
 set -eu
 [ "$#" = 2 ] || exit 2
+case "${PIONEER_Q38_GROUP32_REFERENCE_CLIENT:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_PANEL_CLIENT:-0}:${PIONEER_Q38_VECTOR_CLIENT:-0}:${PIONEER_Q38_WORK_CLIENT:-0}:${PIONEER_Q38_ROOT_CYCLE_CLIENT:-0}" = 4:1:1:1 ] || exit 2;;
+ *) exit 2;;
+esac
 project=$(CDPATH= cd -- "$(dirname "$0")/../.." && pwd)
 build=$(CDPATH= cd -- "$1" && pwd)
 output=$2
@@ -18,6 +23,7 @@ case "${PIONEER_Q38_PANEL_CLIENT:-0}" in
  7) source=pioneer_q38_clock_cycle;;
  8) source=pioneer_q38_gdn_zero_debug;;
  9) source=pioneer_q38_rgdn_root_debug;;
+ 10) source=pioneer_q38_q8_domain;;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_AFFINE_CLIENT:-0}" in
@@ -52,6 +58,7 @@ case "${PIONEER_Q38_ROOT_CYCLE_CLIENT:-0}" in
     extra="$extra -DPIONEER_Q38_ROOT_CYCLE_CLIENT";;
  *) exit 2;;
 esac
+if [ "${PIONEER_Q38_GROUP32_REFERENCE_CLIENT:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_GROUP32_REFERENCE_CLIENT"; fi
 case "${PIONEER_Q38_FIXTURE_CLIENT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_AFFINE_CLIENT:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_PUBLIC_FIXTURES";;

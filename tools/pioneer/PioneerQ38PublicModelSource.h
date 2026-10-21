@@ -33,6 +33,21 @@ public:
 			&& !fstat(fileno(file),&current) && Same(identity,current);
 	}
 	const PioneerQwen38Gguf& Model() const { return model; }
+#ifdef PIONEER_Q38_Q8_DOMAIN_DIAGNOSTIC
+#ifdef PIONEER_Q38_WORK_INFERENCE
+#error Quant-byte inventory must NEVER enter Work inference
+#endif
+	// CPU-only read-only inventory of PUBLIC Q8 bytes,not learned products,
+	// an execution fallback or any accelerator/source-format capability.
+	// PIONEER_Q38_Q8_DOMAIN_READ_BEGIN
+	bool ReadQ8DomainChunk(unsigned tensor,uint64_t offset,unsigned bytes,uint8_t* output,unsigned capacity) {
+		if(!Ready() || tensor>=model.Tensors().size() || !output || !bytes || bytes>34*16384
+			|| capacity<bytes || offset%34 || bytes%34)return false;
+		const auto& t=model.Tensors()[tensor];
+		return t.type==8 && t.rank==2 && model.ReadPacked(tensor,offset,bytes,output,capacity) && Ready();
+	}
+	// PIONEER_Q38_Q8_DOMAIN_READ_END
+#endif
 #ifdef PIONEER_Q38_CPU_VALIDATION
 	// Diagnostic build ONLY. Same authenticated file description;never
 	// reopens a pathname or replaces accelerator results with CPU outputs.

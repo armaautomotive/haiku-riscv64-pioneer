@@ -24,6 +24,9 @@ SECTIONS {
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1ELb1ELb0EE*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb1ELb1EE*)
 		*(.text._ZN22PioneerQ38CachedAffine*)
+		/* Separate OFFLINE direct-Q4 helper,SAME owned prefix/limits. */
+		*(.text.pioneer_q38_direct_q4)
+		*(.text._Z24PioneerQ38DirectQ4UnpackI18VectorPanelEmitterE*)
 		/* Unselected prepared-Q4 experiment,inside the SAME owned prefix. */
 		*(.text._ZN20PioneerQ38PreparedQ45Panel*)
 		. = ALIGN(4);
