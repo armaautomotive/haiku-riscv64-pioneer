@@ -191,6 +191,22 @@ static int GraphSmoke(State& state,const char* output)
 		okay?"PASS":"FAIL",unsigned(clean));
 	return okay?0:1;
 }
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+#if !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_ORDERED_EXTENT_FAST) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_MODEL_NODE_PROFILE) || defined(PIONEER_Q38_MODEL_ROOT_PROFILE) || defined(PIONEER_Q38_BENCHMARK_HOST) || defined(PIONEER_Q38_FFN_REPEAT_BENCH) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
+#error Thread sweep is isolated original-TC public THREE32 Work ONLY
+#endif
+// PIONEER_MODEL_THREAD_SWITCH_BEGIN
+static bool SetModelThreadSequence(llama_context* context,ggml_threadpool_t pool32,ggml_threadpool_t pool8,unsigned sequence) {
+	unsigned threads=PioneerQ38ModelSequenceThreads(sequence);
+	if(!context || !pool32 || !pool8 || !threads)return false;
+	// All previous graph work has completed before replacing either pool.
+	// Both pools were allocated BEFORE any accelerator FD opened.
+	llama_synchronize(context);llama_set_n_threads(context,threads,threads);
+	llama_attach_threadpool(context,threads==8?pool8:pool32,threads==8?pool8:pool32);
+	return true;
+}
+// PIONEER_MODEL_THREAD_SWITCH_END
+#endif
 int main(int argc,char** argv)
 {
 #ifdef PIONEER_Q38_Q8_REPEAT_BENCH
@@ -204,6 +220,11 @@ int main(int argc,char** argv)
 	unsigned limit=argc==2?PioneerQ38PublicTokenLimit(argv[1]):0;
 	unsigned sequences=argc==2?PioneerQ38PublicSequenceCount(argv[1]):0;
 	bool repeatedRun=sequences==3,four=limit==4,longTiming=limit==32 && !repeatedRun;
+	// PIONEER_MODEL_THREAD_ARGUMENT_GUARD_BEGIN
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+	if (!repeatedRun || limit!=32 || graph) return 2; // before source/device/threadpool
+#endif
+	// PIONEER_MODEL_THREAD_ARGUMENT_GUARD_END
 	// PIONEER_MODEL_ROOT_ARGUMENT_GUARD_BEGIN
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 	if (!repeatedRun || limit!=32 || graph) return 2; // fixed PUBLIC THREE32 ONLY;BEFORE authentication/device/threadpool
@@ -274,6 +295,12 @@ int main(int argc,char** argv)
 	}
 	// Frozen library exports new/free,not the optional get_n_threads accessor.
 	bool poolReady=cpuPool!=nullptr;
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+	ggml_threadpool_t cpuPool8=nullptr;
+	if(context && cpuPool){auto params8=ggml_threadpool_params_default(8);params8.poll=0;cpuPool8=ggml_threadpool_new(&params8);}
+	poolReady=poolReady && cpuPool8;
+	puts("PUBLIC27B_CPU_THREAD_SWEEP schedule32_8_32;TWO_PREALLOCATED_SLEEPING_POOLS;UNCHANGED_MATRIX_WORK;NO_NODE_SPLIT_INSTRUMENTATION;NOT_ASSISTANT_OR_GENERAL_TUNING");
+#endif
 	printf("PUBLIC27B_CPU_POOL persistent%u threads%u poll0;NON_MATRIX_CPU_WORK_ONLY"
 #ifdef PIONEER_Q38_CPU_VALIDATION
 		"_SEPARATE_SERIAL_CPU_REFERENCE_ENABLED\n"
@@ -308,6 +335,10 @@ int main(int argc,char** argv)
 			printf("PUBLIC27B_CPU_SEQUENCE_RESET sequence%u seconds%.6f pages%llu unchanged_native_calls%u success%u;NO_CARD_RESET_OR_RELOAD\n",
 				sequence,Seconds()-resetStart,(unsigned long long)pages,unsigned(calls==state.session.calls),unsigned(okay));
 		}
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+		if(!SetModelThreadSequence(context,cpuPool,cpuPool8,sequence)){okay=false;break;}
+		printf("PUBLIC27B_CPU_THREAD_SEQUENCE sequence%u threads%u;SYNCHRONIZED_POOL_SWITCH_NO_CARD_RESET_RELOAD_OR_WEIGHT_UPLOAD\n",sequence,PioneerQ38ModelSequenceThreads(sequence));
+#endif
 		token=tokens[0]; unsigned sequenceGenerated=0;
 		if (repeatedRun) printf("PUBLIC27B_SEQUENCE_BEGIN %u;NOT_A_COMPLETED_BENCHMARK_YET\n",sequence);
 	for (unsigned position=0;okay && !stopRequested && position<limit;position++) {
@@ -426,6 +457,9 @@ int main(int argc,char** argv)
 	}
 	if (context) { llama_synchronize(context); llama_detach_threadpool(context); llama_free(context); }
 	if (cpuPool) ggml_threadpool_free(cpuPool);
+#ifdef PIONEER_Q38_MODEL_THREAD_SWEEP
+	if(cpuPool8)ggml_threadpool_free(cpuPool8);
+#endif
 	llama_model_free(model); llama_backend_free();
 	return stopped && clean?130:okay && clean && end>=start?0:1;
 }

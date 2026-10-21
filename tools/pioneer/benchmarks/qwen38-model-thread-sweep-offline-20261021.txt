@@ -1,0 +1,54 @@
+OFFLINE fixed-public CPU thread-count diagnostic,October21 2026 13:59UTC.
+NOT native-run/staged. Best whole27B041 .181432516tok/s;20targetUNMET.
+Current independent prefetch23/17 FFN pairing remains in progress.
+
+Hypothesis:32CPU workers synchronize too often for short non-matrix
+fragments. Compare THREE original public32-token sequences with32,8,32
+CPU threads,retaining SAME card weights/session/source/driver. All497
+learned projections STILL Work/card-only,NO CPU learned-reference/fallback.
+Per-sequence rates,not mixed pooled rate,must drive comparison. Two32
+samples bracket ONE8 sample;NOT robust broad/thermal/quality qualification.
+No per-node callback/split/sync profiling overhead in timed loop.
+
+Two caller-owned sleeping pools32/8,poll0,created BEFORE accelerator FD;
+failed allocation never starts inference. At EACH sequence boundary,
+after original CPU-memory reset,explicit llama_synchronize BEFORE
+llama_set_n_threads/llama_attach_threadpool. Context synchronized/detached/
+freed before either pool is freed. No card reset/reload/re-prime/cleanup
+authority at pool switches. Actual frozen c060ca974c77 context setter and
+ggml_graph_compute were inspected with git show,NOT dirty working source.
+Frozen graph planner permits requested active threads<=attached pool.
+
+Exact idle best041/tag12 required BEFORE original Work ABI2 support;
+wrong tag/owner/cold/version/guard/transport refuses before BANK_BEGIN.
+Separate MODEL_THREAD_SWEEP requires complete original ordered-span Work
+chain,forbids Assistant/CPUvalidation/SM7/profilers/graph/benchmark-host.
+Runtime permits ONLY --public-three-32-token-runs BEFORE authentication.
+Full original token equality/page/call/source/failure/stop/clean END rules
+remain unchanged. CPU-only schedule metadata has NO card/tensor authority.
+
+Actual source-extracted pool switch:32/8/32 exact synchronize/set/attach
+order;4 invalid/null calls NO effects;20 actual extracted Work support
+metadata/transport failures;64 wrongtag bits;50 actual extracted runtime
+argument guards pass.96 preSDK role refusal cases pass. Actual ORIGINAL
+96position/497projection loop with REAL switch function+syntheticruntime:
+all sequences retain pages;all CPU reset/stop/SIGINT/graph/logit/token/
+source/ownership failure cleanup unchanged,unknown CLOSEONLY/no END.
+Log/private/tmp/pioneer-q38-model-thread-tests-20261021-b.log
+SHA433b3e9a032e918c6a825a0526d1b90409dc5db70f20d34494ea508adb3de02e.
+Evidence yUQJif7V. CPU mocks do NOT prove native library or timing.
+
+Original flagOFF actual repeat loop and node-profiler/exact pristine
+scheduler/90 build-role refusal regression pass fZg3LJdm/JwvGvyrY:
+log/private/tmp/pioneer-q38-model-thread-repeat-regression-20261021-a.log
+SHA0b1e68b7677ee9835192a43c0a7f4239bfd3df847a83094bea237fc4283ee3c4.
+Two fresh cross-builds with pinned libraries/pristine headers IDENTICAL:
+6245833c7b2cac635451de10b18b07be2d320f56b82662125a8bfa77084236cb.
+FlagOFF reproduces EXACT original f414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c.
+No SDK/dirty llama edits. No native or Assistant-speed claim yet.
+
+Original root-profile and public timing regressions also PASS ETZARwXq/
+6vN6lIFA:360tag checks,26atomicmetric failures,60extractedsupport/argument
+guards,84preSDKrefusals;original complete27/81position timing rules.
+Log/private/tmp/pioneer-q38-model-thread-root-regression-20261021-a.log
+SHA8d89658bfd6aa1333fc1e5dc9b21789b413a585d65cc614d8221684b21a186c4.

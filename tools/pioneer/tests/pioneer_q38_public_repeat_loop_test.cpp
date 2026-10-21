@@ -7,6 +7,10 @@
 #include <signal.h>
 #include <cstdint>
 #include <initializer_list>
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+#define PIONEER_Q38_MODEL_THREAD_SWEEP
+#include "../PioneerQ38ModelThreadSweep.h"
+#endif
 enum class Fault { None,StopBefore,StopMid,StopReset,TokenMismatch,Decode,Time,NoMemory,ResetSource,ResetCalls,ResetPages,Pages,Logits };
 using llama_token=int;
 struct State {
@@ -27,6 +31,9 @@ struct FakeContext {
 	Snapshot stats;
 	Fault fault=Fault::None;
 	unsigned position=0,resets=0,decodes=0;
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+	unsigned switches=0,threads=0;bool synchronized=false;
+#endif
 	double clock=100;
 	bool badTime=false;
 	float logits[4]={};
@@ -46,7 +53,21 @@ static bool PioneerQ38GgmlFinish() {
 	if (s.opened) s.ends++;
 	return true;
 }
-static void llama_synchronize(FakeContext*) {}
+static void llama_synchronize(FakeContext* c) {
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+	c->synchronized=true;
+#else
+	(void)c;
+#endif
+}
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+using llama_context=FakeContext;
+struct Pool{unsigned threads;};using ggml_threadpool_t=Pool*;
+static Pool pool32{32},pool8{8};
+static void llama_set_n_threads(FakeContext* c,unsigned a,unsigned b){assert(c->synchronized&&a==b&&a==PioneerQ38ModelSequenceThreads(c->resets));c->threads=a;}
+static void llama_attach_threadpool(FakeContext* c,Pool* a,Pool* b){assert(a==b&&a->threads==c->threads&&c->synchronized&&c->position==0);c->synchronized=false;c->switches++;}
+#include "model_thread_switch.inc"
+#endif
 static FakeContext* llama_get_memory(FakeContext* c) { return c->fault==Fault::NoMemory && c->decodes==32?nullptr:c; }
 static void llama_memory_clear(FakeContext* c,bool data) {
 	assert(data && c->decodes==32*(c->resets+1)); c->resets++; c->position=0;
@@ -59,6 +80,9 @@ struct Batch { llama_token* token; int count; };
 static Batch llama_batch_get_one(llama_token* token,int n) { return {token,n}; }
 static int llama_decode(FakeContext* c,Batch batch) {
 	assert(batch.count==1 && batch.token && !c->state->session.failed);
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+	assert(c->threads==PioneerQ38ModelSequenceThreads(c->resets)&&c->switches==c->resets+1);
+#endif
 	auto& s=*c->state; s.opened=true; c->decodes++; c->position++;
 	s.session.calls+=505; s.session.pagesUploaded=4558653; s.session.runNanos+=100000000;
 	s.matrixCallbacks+=497; s.matrixWallSeconds+=.5; c->stats.projections+=497;
@@ -85,6 +109,9 @@ static Result Run(Fault fault)
 	bool okay=true,repeatedRun=true,longTiming=false;
 	unsigned sequences=3,limit=32,generated=0,completedSequences=0;
 	FakeContext* context=&fake; int vocab=0;
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+	auto cpuPool=&pool32,cpuPool8=&pool8;
+#endif
 	llama_token tokens[8]={7},token=7,best=-1,firstSequence[32]={};
 	uint64_t retainedPages=0; double firstSeconds=0,warmSeconds=0;
 	PioneerQ38PublicTiming timing; PioneerQ38PublicRepeatedTiming repeated;
@@ -94,6 +121,9 @@ static Result Run(Fault fault)
 #undef PIONEER_Q38_WORK_INFERENCE
 #undef printf
 	(void)firstSeconds; (void)warmSeconds; (void)end;
+#ifdef PIONEER_Q38_TEST_THREAD_SWEEP
+	if(fault==Fault::None)assert(fake.switches==3&&fake.threads==32);
+#endif
 	return {okay,clean,stopped,repeated.Complete(),generated,completedSequences,fake.resets,fake.decodes,state.aborts,state.ends,state.finishes,stats.projections};
 }
 int main()
