@@ -4,6 +4,12 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+#if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_ROOT_STATS_BENCH) || defined(PIONEER_Q38_BENCHMARK_HOST) || defined(PIONEER_Q38_FFN_REPEAT_BENCH)
+#error Model root profile is isolated fixed-public original-TC THREE32 Work ONLY
+#endif
+#include "PioneerQ38ModelRootProfile.h"
+#endif
 #ifdef PIONEER_Q38_ROOT_STATS_BENCH
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
 #error Root stats are isolated original-TC Work projection diagnostics ONLY
@@ -107,6 +113,9 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	}
 public:
 	uint64_t pagesUploaded=0,bytesRetained=0,calls=0;
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+	PioneerQ38ModelRootProfile modelRootProfile;
+#endif
 	uint64_t sourceReadNanos=0,bulkUploadNanos=0,runNanos=0;
 	unsigned peakWorkers=0;
 #ifdef PIONEER_Q38_ROOT_STATS_BENCH
@@ -229,6 +238,9 @@ public:
 			Elapsed(runStart,runNanos);
 			if (!executed) return Stop();
 			if (!source.Ready() || !mode.Collect(wave,quantized,*request,scratch.data(),outputs)) return Stop();
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+			modelRootProfile.Add(wave.type,wave.inputs,wave.workers,request->result.stats); // data ONLY,never gates Stop/END
+#endif
 #ifdef PIONEER_Q38_ROOT_STATS_BENCH
 			rootStats.Add(request->result.stats); // diagnostic data ONLY;NEVER controls Stop/END
 #endif

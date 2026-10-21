@@ -72,3 +72,21 @@ No physical raw-input correctness/speed result yet. Full updater pending.
 11:00UTC full actual updater suite completed exit0 after final hash pins;
 see/private/tmp/pioneer-hot-swap-batch-raw-full-20261021-a.log. No automatic
 rollback/reset/forced unload. Candidate remains uninstalled at checkpoint.
+
+Native qualification11:00-11:07UTC completed:guarded17/gen39->20/gen40
+without reboot.20synthetic+18authenticated public119-worker+18unchanged
+checked jobs ALL exact_errors0,each explicit BANK_END state2/active0/
+pci_restored1/host_released1/cold0/accepted1 andCLI_EXIT0. CPU metadata
+tag20/gen40/owner0/cold0/open1. No numerical/NoC failure on hardware.
+Own hot-reload stage logs/SHA:
+batch-raw-synthetic-20261021-a.log
+a62da2982480c3b934e5cff48df1d237ecf2b6a9a5c68752d72960c1de83997a
+batch-raw-auth119-20261021-a.log
+937ffb89659d5877a760e212ef18ea5d0f622bc58cef17c89e1811210a5be877
+batch-raw-checked-regression-20261021-a.log
+8507d9de4f46576c41e87fc8f4ea639319c0b9e7f6ac85df85bb80030c518b61.
+FULL3131 updater cases pass,logSHAea9a6d1ba72150e7198f5bcb2e4aaa0e44a6e6e3f762cb4e1e2e6b0c9c74f574.
+New paired host794452a4 started11:07UTC directory
+/boot/home/pioneer-q38-benchmark.05ohsz;full public source SHA running,
+NO accelerator descriptor/other job/SCP overlap. Still NO physical
+raw-input performance/full-model/token-rate qualification at checkpoint.

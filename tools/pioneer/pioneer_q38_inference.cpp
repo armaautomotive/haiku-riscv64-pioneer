@@ -183,6 +183,11 @@ int main(int argc,char** argv)
 	unsigned limit=argc==2?PioneerQ38PublicTokenLimit(argv[1]):0;
 	unsigned sequences=argc==2?PioneerQ38PublicSequenceCount(argv[1]):0;
 	bool repeatedRun=sequences==3,four=limit==4,longTiming=limit==32 && !repeatedRun;
+	// PIONEER_MODEL_ROOT_ARGUMENT_GUARD_BEGIN
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+	if (!repeatedRun || limit!=32 || graph) return 2; // fixed PUBLIC THREE32 ONLY;BEFORE authentication/device/threadpool
+#endif
+	// PIONEER_MODEL_ROOT_ARGUMENT_GUARD_END
 	// PIONEER_NATIVE_Q8_MODEL_ARGUMENT_GUARD_BEGIN
 #ifdef PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION
 	if (!repeatedRun || limit!=32 || graph) return 2; // fixed PUBLIC THREE32 ONLY,not Assistant/interactive generation
@@ -280,11 +285,17 @@ int main(int argc,char** argv)
 		token=tokens[0]; unsigned sequenceGenerated=0;
 		if (repeatedRun) printf("PUBLIC27B_SEQUENCE_BEGIN %u;NOT_A_COMPLETED_BENCHMARK_YET\n",sequence);
 	for (unsigned position=0;okay && !stopRequested && position<limit;position++) {
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+		state.session.modelRootProfile.Begin(sequence,position); // CPU metrics ONLY,not execution authority
+#endif
 		uint64_t before=PioneerQ38GgmlSnapshot().projections;
 		double matrixBefore=state.matrixWallSeconds;
 		uint64_t callbacksBefore=state.matrixCallbacks,runBefore=state.session.runNanos;
 		double began=Seconds(); auto batch=llama_batch_get_one(&token,1); okay=llama_decode(context,batch)==0;
 		double elapsed=Seconds()-began; auto current=PioneerQ38GgmlSnapshot();
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+		state.session.modelRootProfile.End(okay); // invalid metrics NEVER alter okay/END
+#endif
 		if (longTiming) (void)timing.Observe(position,elapsed); // diagnostics ONLY
 		if (repeatedRun) (void)repeated.Observe(sequence,position,elapsed);
 		// Exactly497 learned projections per position. Refuse to call a
@@ -332,6 +343,19 @@ int main(int argc,char** argv)
 #endif
 	bool clean=PioneerQ38GgmlFinish();
 	// PIONEER_PUBLIC_REPEAT_LOOP_END
+#ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
+	const auto& rootProfile=state.session.modelRootProfile;
+	bool publishRoot= rootProfile.PublishAllowed(okay,clean,stopped);
+	printf("PUBLIC27B_ROOT_COPY_PROFILE publication_valid%u;HOST_MEMORY_ONLY_NO_ADDITIONAL_CARD_IO_NOT_PURE_ARITHMETIC_OR_TOKEN_RATE\n",unsigned(publishRoot));
+	if(publishRoot)for(unsigned shape=0;shape<9;shape++) {
+		const auto& b=rootProfile.bucket[shape];unsigned types[]={8,12,14},widths[]={5120,6144,17408};
+		printf("PUBLIC27B_ROOT_COPY_SHAPE type%u K%u measured_positions81 samples%llu worker_sum%llu prepare_cycles%llu wait_audit_cycles%llu gather_dma_cycles%llu read_packets%llu write_packets%llu read_flits%llu write_flits%llu peer_polls%llu terminal_audits%llu;POST_EXPLICIT_CLEAN_END_ONLY\n",
+			types[shape/3],widths[shape%3],(unsigned long long)b.samples,(unsigned long long)b.workers,
+			(unsigned long long)b.cycles[0],(unsigned long long)b.cycles[1],(unsigned long long)b.cycles[2],
+			(unsigned long long)b.packets[0],(unsigned long long)b.packets[1],(unsigned long long)b.packets[2],
+			(unsigned long long)b.packets[3],(unsigned long long)b.packets[4],(unsigned long long)b.packets[5]);
+	}
+#endif
 	printf("%s_PUBLIC27B_MODEL_SMOKE public_prompt_Hello generated%u selected_token%d seconds%.6f projections%llu uploaded_pages%llu calls%llu workers%u clean_end%u;COLD_LOAD_SMOKE_NOT_STEADY_TOKEN_RATE_OR_TEXT_QUALITY\n",
 		stopped && clean?"STOP":okay && clean?"PASS":"FAIL",generated,best,end-start,(unsigned long long)stats.projections,(unsigned long long)state.session.pagesUploaded,
 		(unsigned long long)state.session.calls,state.session.peakWorkers,unsigned(clean));

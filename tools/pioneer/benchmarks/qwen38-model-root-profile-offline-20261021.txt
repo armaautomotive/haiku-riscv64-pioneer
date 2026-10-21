@@ -1,0 +1,37 @@
+Fixed public THREE32 root-counter profile,October21 2026. OFFLINE ONLY.
+CPU-memory diagnostic,NOT a faster kernel/Assistant/model capability.
+Best actual full27B still041 .181432516tok/s;20targetUNMET.
+
+Purpose:separate nine type/K workload shapes using counters ALREADY in
+the original successful Work ioctl reply. NO new device IO,MMIO,NoC,
+source/DMA/ownership field,learned reference,CPU fallback or graph change.
+Sequence/position bracket EACH actual decode;discard FIRST5positions in
+EACH3sequences,exactly81warm positions. Aggregate per-wave sample count,
+worker sum,3raw root-cycle phases and6packet/flit/poll/audit fields.
+Root phases include coordination/proof traffic,NOT pure arithmetic.
+No conversion of these counters to tokens/sec or pure GPU seconds.
+
+Bad clocks/data/shape/missing sample/overflow/order/partial execution make
+metrics sticky-invalid ONLY. ALL11 uint64 bucket additions checked before
+ANY commit. Metrics NEVER decide model success/Abort/Stop/END/cleanup.
+Detailed counters print ONLY after complete3x32/81warm+modelOkay+explicit
+cleanEND+notStopped. No mid-run per-projection logging. Exact idle tags
+12/17/19/20 metadata before original-TC ABI2/BEGIN. Profile18/SM7 refused.
+Separate compile/runtime role allows ONLY fixed public THREE32,never
+Assistant/interactive/single-smoke/FFN host/CPU validation/new SM7 source.
+
+Two identical binary builds:
+64816eee85c251d6efc8c14707726ad9e2c1f2de88eb2d8c4835896e2a5033f9.
+FlagOFF reconstructs uninstrumented f414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c EXACT.
+Uses ONLY pristine c060 headers/frozen LFG libs/read-only SDK,not dirty
+llama submodule. No deployment/native/profile run yet.
+
+ASAN/UBSAN unit+ACTUAL extracted support/argument tests l8rO8FS3:
+ALL9 shapes x96positions exact81warm sums per shape;
+26 atomic-overflow/sticky/transition refusals,288 exact-tag mutations;
+60actual metadata-before-originalABI2/THREE32 guards;
+84role/validation/Assistant/SM7/host refusals BEFORE SDK/libs/output.
+Original projection profile1000samples/12invalid/186tag casesJNUC5iZd,
+original actual Work supportLQ35cv46,and benchmark-host234role/17actual
+fork/barrier/failure mocksM1kuJNU8 pass unchanged. Native performance
+comparison must still use uninstrumented f414;this is attribution ONLY.
