@@ -5,6 +5,9 @@
 #error Exact sentinel tag17 (or separately gated CPU-profile18) is independent qualification ONLY
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) && (defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT) || defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT) || defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT) || defined(PIONEER_Q38_BATCH4_REFERENCE_CLIENT) || defined(PIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT))
+#error Local Q4 qualifier has its own exact original-TC driver tag28
+#endif
 #if defined(PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT) && !defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 #error Direct Q4 qualifier requires its separate complete exact-tag27 nibble-reference role
 #endif
@@ -35,7 +38,9 @@
 static inline bool PioneerQ38SentinelDebugTag(const tt_pioneer_driver_reload& r) {
 	return r.version==1 && r.driver==55 && r.guard_version==1
 		&& r.build_tag==
-#ifdef PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT
+		UINT64_C(0x2026102100010028)
+#elif defined(PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT)
 		UINT64_C(0x2026102100010027)
 #elif defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 		UINT64_C(0x2026102100010026)

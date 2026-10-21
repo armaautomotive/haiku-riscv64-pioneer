@@ -1,6 +1,8 @@
 #!/bin/sh
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_WORK_LOCAL_Q4:-0}" in
  0) local_q4_cpp=;;

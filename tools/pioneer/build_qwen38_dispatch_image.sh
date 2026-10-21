@@ -1,6 +1,8 @@
 #!/bin/sh
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_LOCAL_Q4:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION:-0}" = 0 ] || exit 2

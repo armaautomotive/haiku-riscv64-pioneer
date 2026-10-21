@@ -131,3 +131,28 @@ Expected27/17/27/17 fresh children. No measurement sent yet at checkpoint.
 NO SCP/other GPU job for ENTIRE parent,including auth/IDLE. Only explicit
 known-clean child completion+parentIDLE AND driveridle may permit a swap.
 No speed claim or normal-model/Assistant promotion yet.
+
+PAIRED COMPLETION23:37UTC,same authenticated FD/fresh children:
+round tag/gen mean_seconds median_seconds warm_wall_seconds
+1     27/15   .010506031   .010504500    .336455
+2     17/16   .010472094   .010474000    .335371
+3     27/17   .010495063   .010488500    .336094
+4     17/18   .010547375   .010538000    .337770
+All4 children33calls/projections/32warm samples,result0/known_clean1/
+clean_end1. ALL4 output20480B SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+Pooled candidate mean.010500547/control.0105097345 seconds:0.08741895%
+less wall/0.08749544% higher reciprocal rate. First pair worse,second pair
+better with control drift;NO clear speedup,NOT promoted,NO full-model
+rate extrapolation or Assistant change. Explicit quit:HOST_CLI_EXIT0,
+parent33785 closed0. Guarded17/g18->16/g19->12/g20 restores best041.
+Final metadata quiesced0/cold0/owner0/opens1/guard1. No reboot/reset/SD.
+Archived ONLY after parent closed+idle,both hashes match,serial128Kbit/s:
+/private/tmp/pioneer-q38-q4-direct-paired-evidence.pkIbgBV0/
+q4-direct-ffn-host-20261021-a.log
+SHAb3e5dd56f7ecc07ea9134d2f3b1a0b08989803dc2504a1da3c831a8f0d92d1f0
+round0001.log SHA6468f8dd84a7d713afe31b2f763c4eff12841a104f17ff2a01855355cf7dcdeb
+round0002.log SHA89e81ca2947f3104fc90f1da17080adda1da6faeb97d453db6091d29350cd729
+round0003.log SHA2d9f9970b3f36dde31a9df96faa88efce66498dd4a7593dce7613065d1a282c2
+round0004.log SHAdb151921243d368e73e58415d7f1b68cec8c8d594bf75209b4945440eb986502
+All4 roundNNNN.words archived too,sharing outputSHA above. Whole-model
+best still original041/four non-matrix CPU helpers.207893161tok/s,not20.

@@ -48,6 +48,7 @@ def check(mode, fault=None):
         payloads['hash_peer_phase_qualification'] = ('test-' + values['hash_peer_phase_qualification']).encode()
         payloads['hash_q4_nibble_qualification'] = ('test-' + values['hash_q4_nibble_qualification']).encode()
         payloads['hash_q4_direct_qualification'] = ('test-' + values['hash_q4_direct_qualification']).encode()
+        payloads['hash_local_q4_qualification'] = ('test-' + values['hash_local_q4_qualification']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -144,6 +145,8 @@ def check(mode, fault=None):
             '--restore-q4-nibble-qualification': ('hash_q4_nibble_qualification', 'hash_sentinel_poll_qualification', 'tag_q4_nibble_qualification'),
             '--apply-q4-direct-qualification': ('hash_sentinel_poll_qualification', 'hash_q4_direct_qualification', 'tag_sentinel_poll_qualification'),
             '--restore-q4-direct-qualification': ('hash_q4_direct_qualification', 'hash_sentinel_poll_qualification', 'tag_q4_direct_qualification'),
+            '--apply-local-q4-qualification': ('hash_sentinel_poll_qualification', 'hash_local_q4_qualification', 'tag_sentinel_poll_qualification'),
+            '--restore-local-q4-qualification': ('hash_local_q4_qualification', 'hash_sentinel_poll_qualification', 'tag_local_q4_qualification'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -207,6 +210,7 @@ def check(mode, fault=None):
         put('candidate_peer_phase_qualification', payloads['hash_peer_phase_qualification'])
         put('candidate_q4_nibble_qualification', payloads['hash_q4_nibble_qualification'])
         put('candidate_q4_direct_qualification', payloads['hash_q4_direct_qualification'])
+        put('candidate_local_q4_qualification', payloads['hash_local_q4_qualification'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -335,6 +339,7 @@ if __name__ == '__main__':
     modes += ['--apply-peer-phase-qualification', '--restore-peer-phase-qualification']
     modes += ['--apply-q4-nibble-qualification', '--restore-q4-nibble-qualification']
     modes += ['--apply-q4-direct-qualification', '--restore-q4-direct-qualification']
+    modes += ['--apply-local-q4-qualification', '--restore-local-q4-qualification']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -511,6 +516,10 @@ if __name__ == '__main__':
         elif mode == '--apply-q4-direct-qualification':
             candidate = ['candidate_q4_direct_qualification']
         elif mode == '--restore-q4-direct-qualification':
+            candidate = ['candidate_sentinel_poll_qualification']
+        elif mode == '--apply-local-q4-qualification':
+            candidate = ['candidate_local_q4_qualification']
+        elif mode == '--restore-local-q4-qualification':
             candidate = ['candidate_sentinel_poll_qualification']
         elif mode == '--restore-sentinel-poll-qualification':
             candidate = ['candidate_direct_srcb_qualification']

@@ -7,7 +7,9 @@
 int main() {
 	tt_pioneer_driver_reload good={};good.version=1;good.driver=55;good.guard_version=1;
 	good.build_tag=
-#ifdef PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT
+	UINT64_C(0x2026102100010028);
+#elif defined(PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT)
 	UINT64_C(0x2026102100010027);
 #elif defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 	UINT64_C(0x2026102100010026);

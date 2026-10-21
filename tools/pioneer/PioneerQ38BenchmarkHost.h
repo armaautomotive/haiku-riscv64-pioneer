@@ -6,6 +6,9 @@
 #endif
 #include <string.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION) && (defined(PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_COMMAND_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_PREFETCH_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_FRONTEND_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION))
+#error Local Q4 benchmark has its distinct fixed17/28 original-TC role
+#endif
 #if defined(PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION) && !defined(PIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION)
 #error Direct Q4 benchmark requires its complete separate fixed17/27 role
 #endif
@@ -33,7 +36,9 @@
 static inline bool PioneerQ38BenchmarkHostTag(const tt_pioneer_driver_reload& r) {
  return r.version==1 && r.driver==55 && r.guard_version==1 && r.generation
   && !r.quiesced && !r.cold && !r.active_owner && r.open_count==1
-#ifdef PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION
+#ifdef PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION
+  && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010028));
+#elif defined(PIONEER_Q38_BENCHMARK_HOST_Q4_DIRECT_QUALIFICATION)
   && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010027));
 #elif defined(PIONEER_Q38_BENCHMARK_HOST_Q4_NIBBLE_QUALIFICATION)
   && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010026));

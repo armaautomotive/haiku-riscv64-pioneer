@@ -29,6 +29,7 @@ case "$1" in
  --apply-peer-phase-qualification|--restore-peer-phase-qualification) mode=$1;;
  --apply-q4-nibble-qualification|--restore-q4-nibble-qualification) mode=$1;;
  --apply-q4-direct-qualification|--restore-q4-direct-qualification) mode=$1;;
+ --apply-local-q4-qualification|--restore-local-q4-qualification) mode=$1;;
  --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache|--apply-zero-minimum|--restore-zero-minimum|--apply-native-operand|--restore-native-operand|--apply-compact-output|--restore-compact-output|--apply-compact-profile|--restore-compact-profile|--apply-deferred-affine|--restore-deferred-affine|--apply-ordered-extents|--restore-ordered-extents|--apply-inline-config|--restore-inline-config) mode=$1;;
  --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma|--apply-work-queued-entry|--restore-work-queued-entry|--apply-local-delta|--restore-local-delta|--apply-local-delta-terminal|--restore-local-delta-terminal|--apply-current-profile|--restore-current-profile) mode=$1;;
  *) exit 2;;
@@ -98,6 +99,7 @@ candidate_command_reuse_qualification=$stage/tenstorrent_pci_probe-command-reuse
 candidate_peer_phase_qualification=$stage/tenstorrent_pci_probe-peer-phase-qualification-e2a98809
 candidate_q4_nibble_qualification=$stage/tenstorrent_pci_probe-q4-nibble-qualification-0f7213d9
 candidate_q4_direct_qualification=$stage/tenstorrent_pci_probe-q4-direct-qualification-37b36f90
+candidate_local_q4_qualification=$stage/tenstorrent_pci_probe-local-q4-qualification-d714a8b1
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -162,6 +164,7 @@ hash_command_reuse_qualification=5640dd3dffb80fae0e6a3c9a6c2b91d83a1db86a0a5ab53
 hash_peer_phase_qualification=e2a98809b9fc573c97e384920688b8bef53a7211493f8d2cb2933cfd13ed7f58
 hash_q4_nibble_qualification=0f7213d98b12575a6bd4335f4424508040129940e5ae4aebe38f49d016e167b5
 hash_q4_direct_qualification=37b36f9021fcef469eaae5db22f665845ceb429129c90659e3fb01fe3c5d7940
+hash_local_q4_qualification=d714a8b13327978d1522c416beb79f75c460d66825ac5f41a4c71f7b622d64e4
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -224,6 +227,7 @@ tag_command_reuse_qualification=2026102100010024
 tag_peer_phase_qualification=2026102100010025
 tag_q4_nibble_qualification=2026102100010026
 tag_q4_direct_qualification=2026102100010027
+tag_local_q4_qualification=2026102100010028
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -385,6 +389,8 @@ else
  elif [ "$mode" = --restore-q4-nibble-qualification ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_q4_nibble_qualification; result=$hash_sentinel_poll_qualification; oldtag=$tag_q4_nibble_qualification; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-q4-direct-qualification ]; then source=$candidate_q4_direct_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_q4_direct_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_q4_direct_qualification
  elif [ "$mode" = --restore-q4-direct-qualification ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_q4_direct_qualification; result=$hash_sentinel_poll_qualification; oldtag=$tag_q4_direct_qualification; newtag=$tag_sentinel_poll_qualification
+ elif [ "$mode" = --apply-local-q4-qualification ]; then source=$candidate_local_q4_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_local_q4_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_local_q4_qualification
+ elif [ "$mode" = --restore-local-q4-qualification ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_local_q4_qualification; result=$hash_sentinel_poll_qualification; oldtag=$tag_local_q4_qualification; newtag=$tag_sentinel_poll_qualification
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

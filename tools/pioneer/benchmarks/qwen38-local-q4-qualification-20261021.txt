@@ -1,0 +1,78 @@
+Block-local Q4 exact-tag28 qualification PREPARATION,October21 2026.
+NOT installed/run on P100A yet. All four inert artifacts are staged and
+remote SHA-256 verified. CPU-only idle metadata confirms best041/tag12/g20.
+Best041/tag12/g20 restored/idle after completed27/17 paired FFN;that trial
+hadNO clear speed gain and was NOT promoted. All64CPU/fullRAM/SD-free
+boot unchanged. No Assistant/service/chat/settings change.20tok/s UNMET.
+
+Prerequisite:separate qwen38-local-q4-offline-20261021.txt,full54shapes x
+twochangedinputs+STOP,independentFP64/exactoriginalFP32/ALL64proofs,
+7scratch/unpack/completion/ADC/restore negative cases+4NoC losses,
+65536data cases/16bounds refusals,registry491520words/120roles,12namespace
+refusals,actual kernel3owner/BME/maps/clock/cold retention ALL pass.
+Original2304B quantized wire/DRAM/layout remains unchanged. Only private
+saved L1 scratch92000..93100/known native-SM7 SrcA route differ. Scalar
+work is HIGHER;fewer drains is NOT itself a native speed claim.
+Frozen peer exact length7996B/5152affine/960helper;8192/5376/1792 caps
+and stack6e000 unchanged. Final frozen registry header97c7647a;exact image
+pins69d8d87e/f0a21f65/afa2183a in preceding offline record.
+
+New separate LOCAL_Q4_QUALIFICATION requires exact reservedtag28,complete
+normal-clock/rootcycle/sentinel/direct/affine/rawdot/block-scale/reload
+retained-owner chain,all other qualifiers and producer flags OFF. Native
+builder rejects WORK_LOCAL_Q4 (source flag) even in a complete native role;
+only independently frozen image selector allowed. Reserved28 cannot label
+old17/26/27 firmware.666 preSDK driver/debug/model/root/format/partial/mixed
+refusals passed initially. Ordinary model/Assistant builders reject the
+new qualifier/reference/producer flags;NO UI target or model promotion.
+Original-TC ABI2 is deliberately retained;compatible existing matrix
+runtimes are NOT a security sandbox against administrator-installed
+firmware. Qualification uses stopped clients,exact-tag launcher,exclusive
+owner/idle guards,and restores best driver before ordinary use.
+
+Driver a/b IDENTICAL:
+d714a8b13327978d1522c416beb79f75c460d66825ac5f41a4c71f7b622d64e4
+Reference client a/b IDENTICAL:
+d4261ef5ada184fe58767d8702c15f12541df613c8efd17f739151966190fb7c
+New reference role is LOCAL_Q4_REFERENCE_CLIENT+complete original-TC
+sentinel Work diagnostic;no nibble/direct/etc reference flags mixed.
+Exact idle28 before ABI2 query or BEGIN;host independent CPU math ONLY
+in diagnostic,never production Work. Original Q8/Q6 checked/source cases
+including-128 stay unchanged;explicit return-to-Q8 after other types.
+Twelve metadata roles*93checks=1116 pass. Actual extracted client failure
+mocks retain oneRUN/oneCLOSE/NO END/extraioctl/reset/retry. All diagnostic
+timing labels remain NOT_TOKEN_RATE.
+
+Planned native sequence AFTER all gates/idle hash verification:
+20small synthetic Work;18authenticated TWO-worker/THREE-group Work;
+18authenticated119worker Work;16unchanged checked119;18unchanged checked
+widths.90numeric checks total. Three-group mode is EXISTING supported
+--public-fixtures CLI,not a new interface or source-authentication bypass.
+Paired publicFFN timing only AFTER every numeric/END/closed result passes.
+
+Dedicated fixed-public-FFN parent allows ONLY exact idle17/28 before
+original-TC ABI2 query/BEGIN. It authenticates same full read-only model
+ONCE,forks fresh sessions,never owns an accelerator FD and requires clean
+child END before IDLE/nextchild.685preSDK role refusals,11 metadata/support
+policies and17actual process/fork/wait/barrier/failure cases pass.
+Benchmark host a/b IDENTICAL:
+ebe49fa146c39b96be9937a995c77baf03923ed95b63aaf00fdc474935d3e896.
+No learned CPU reference/fallback
+in benchmark;repeatability checks outside timing are not independent
+numeric/whole-model quality evidence. No SCP/other GPU job for ENTIRE
+benchmark parent,including auth/IDLE.
+
+Updater1e4b94a328833e7619ff93b2fe2466084eeda17b1ac95d5eb78abe777a39e6e6
+pins ONLY known-clean17<->28 transitions. Targeted60filesystem/hash/
+handshake/symlink/owner/failure cases PASS. Full historical updater suite
+3581 cases PASS/CLI0;log SHA-256:
+c64df7cea3ff5b5b62f9cb04fef3e36e2347e44e9ec23cc324d81ad5f9c610e7.
+Inert candidate copying outside
+watched drivers is NOT installation or native execution. All source/SDK
+builds read-only SDK/pristine c060 headers/frozen LFg libraries,never dirty
+llama submodule or unrelated FlashNext files.
+
+Actual failure remains CLOSE ONLY:ANY numeric mismatch/UNKNOWN means
+NO END/retry/reset/further card read/hot rollback;retain ALL owners/PCI
+BME/DMA/maps/clock/cold and require physical recovery. Failed rawcache22
+stays hard-blocked and is never retried.

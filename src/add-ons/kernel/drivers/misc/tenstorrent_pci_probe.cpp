@@ -6,7 +6,12 @@
  */
 #include "tenstorrent_pci_probe.h"
 #ifdef PIONEER_Q38_LOCAL_Q4_QUALIFICATION
-#error Local Q4 image selection is OFFLINE registry proof ONLY;NO native qualification
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010028ULL || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#error Local Q4 requires separate exact-tag28 retained-owner original-TC qualification ONLY
+#endif
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102100010028ULL && !defined(PIONEER_Q38_LOCAL_Q4_QUALIFICATION)
+#error Reserved tag28 must identify ONLY the exact block-local Q4 image qualification
 #endif
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 #error Local Q4 is OFFLINE peer ONLY;NO native driver/source/layout qualification

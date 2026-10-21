@@ -11,7 +11,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchProtocol.h"
-#if defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #endif
 #ifdef PIONEER_Q38_WORK_CLIENT_TEST
@@ -31,11 +31,13 @@ static int MockClose(int fd) { assert(fd==73); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
-#if defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 	if(op==TT_PCI_PROBE_RELOAD_STATUS){
 		assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
 		r={};r.version=1;r.driver=55;r.guard_version=1;
-#ifdef PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT
+		r.build_tag=UINT64_C(0x2026102100010028);
+#elif defined(PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102100010027);
 #elif defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102100010026);
