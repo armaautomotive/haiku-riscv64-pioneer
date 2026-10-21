@@ -16,6 +16,8 @@ for script in ('build_qwen38_inference.sh','build_qwen38_dispatch_image.sh','bui
   for wrong in ('1','01','-1','invalid'):cases.append((script,{flag:wrong}))
 # A foreign debug role cannot be smuggled into an otherwise complete driver.
 cases.append(('build_qwen38_banks_driver.sh',{**driver,'PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT':'1'}))
+for script,role in [('build_qwen38_banks_driver.sh',driver),('build_qwen38_banks_client.sh',client)]:
+ for value in ('1','01','-1','invalid'):cases.append((script,{**role,'PIONEER_Q38_WORK_Q4_DIRECT_DECODE':value}))
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-q4-native-gates-') as name:
  root=pathlib.Path(name);empty=root/'EMPTY_PATH';empty.mkdir()
  for script,flags in cases:

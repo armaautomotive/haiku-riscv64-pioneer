@@ -5,14 +5,25 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_Q4_DIRECT_QUALIFICATION
+#if !defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010027ULL
+#error Direct Q4 requires separate exact-tag27 retained-owner qualification ONLY
+#endif
+#endif
+#ifdef PIONEER_Q38_WORK_Q4_DIRECT_DECODE
+#error Direct Q4 decoder is OFFLINE peer ONLY;NO native driver qualification
+#endif
 #ifdef PIONEER_Q38_SIGNED_MAG2_QUALIFICATION
 #error Signed magnitude2 image selection is OFFLINE registry proof ONLY;NO native driver qualification yet
 #endif
-#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102100010026ULL && !defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION)
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102100010027ULL && !defined(PIONEER_Q38_Q4_DIRECT_QUALIFICATION)
+#error Reserved tag27 must identify ONLY the exact direct Q4 image qualification
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102100010026ULL && (!defined(PIONEER_Q38_Q4_NIBBLE_QUALIFICATION) || defined(PIONEER_Q38_Q4_DIRECT_QUALIFICATION))
 #error Reserved tag26 must identify ONLY the exact Q4 nibble image qualification
 #endif
 #ifdef PIONEER_Q38_Q4_NIBBLE_QUALIFICATION
-#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010026ULL || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || (!defined(PIONEER_Q38_Q4_DIRECT_QUALIFICATION) && PIONEER_DRIVER_BUILD_TAG != 0x2026102100010026ULL) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Q4 nibble requires separate exact-tag26 retained-owner qualification, not ordinary Work/model promotion
 #endif
 #endif

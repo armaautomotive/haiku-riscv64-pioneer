@@ -10,6 +10,8 @@ SECTIONS {
 		/* OFFLINE signed decoder: ONLY the new bool-argument specialization,
 		 * including compiler-local clone suffix. Original signature excluded. */
 		*(.text._Z23PioneerQ38NativeOperandI18VectorPanelEmitterEbRT_jjb*)
+		/* Separate OFFLINE direct Q4 helper,not the original decoder. */
+		*(.text._Z24PioneerQ38Q4DirectDecodeI18VectorPanelEmitterEbRT_j*)
 		. = ALIGN(4);
 	}
 	/* Already-owned immutable prefix. NEVER overlap live operands70700..70a20,

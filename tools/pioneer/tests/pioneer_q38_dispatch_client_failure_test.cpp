@@ -35,7 +35,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	if(op==TT_PCI_PROBE_RELOAD_STATUS){
 		assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
 		r={};r.version=1;r.driver=55;r.guard_version=1;
-#ifdef PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT
+		r.build_tag=UINT64_C(0x2026102100010027);
+#elif defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102100010026);
 #else
 		r.build_tag=UINT64_C(0x2026102100010025);

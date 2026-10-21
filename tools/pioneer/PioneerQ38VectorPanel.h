@@ -2,6 +2,12 @@
 #ifndef PIONEER_Q38_VECTOR_PANEL_H
 #define PIONEER_Q38_VECTOR_PANEL_H
 #include "PioneerQ38VectorOperand.h"
+#ifdef PIONEER_Q38_WORK_Q4_DIRECT_DECODE
+#if !defined(PIONEER_Q38_WORK_Q4_NIBBLE) || !defined(PIONEER_Q38_NATIVE_OPERAND_STORE) || !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_STATIC_VECTOR)
+#error Direct Q4 decoder is a separate OFFLINE nibble/native-store/static Work peer only
+#endif
+#include "PioneerQ38Q4DirectDecode.h"
+#endif
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 #include "PioneerQ38RawUnpackCache.h"
 #endif
@@ -124,7 +130,11 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 #ifdef PIONEER_Q38_WORK_Q4_NIBBLE
 	const bool q4Nibble=q4NibbleWork && type==12;
 	if(q4Nibble && !PioneerQ38Q4NibbleSetup(e,panel))return false;
+#ifdef PIONEER_Q38_WORK_Q4_DIRECT_DECODE
+#define PIONEER_Q38_NIBBLE_ARGUMENT ,false
+#else
 #define PIONEER_Q38_NIBBLE_ARGUMENT ,q4Nibble
+#endif
 #else
 #define PIONEER_Q38_NIBBLE_ARGUMENT
 #endif
@@ -149,6 +159,10 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 #endif
 	// SAME exact lane order and values; compile-time addresses eliminate
 	// dynamic instruction-buffer stores. No RWC/config/format changes.
+#ifdef PIONEER_Q38_WORK_Q4_DIRECT_DECODE
+	if(q4Nibble) { if(!PioneerQ38Q4DirectDecode(e,panel))return false; }
+	else
+#endif
 	if (!PioneerQ38VectorChunk<E,0,0>(e,type,panel,span.second PIONEER_Q38_SIGNED_ARGUMENT PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,0,2>(e,type,panel,span.second PIONEER_Q38_SIGNED_ARGUMENT PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
 		|| !PioneerQ38VectorChunk<E,4,0>(e,type,panel,span.second PIONEER_Q38_SIGNED_ARGUMENT PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,4,2>(e,type,panel,span.second PIONEER_Q38_SIGNED_ARGUMENT PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)
 		|| !PioneerQ38VectorChunk<E,8,0>(e,type,panel,span.second PIONEER_Q38_SIGNED_ARGUMENT PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT) || !PioneerQ38VectorChunk<E,8,2>(e,type,panel,span.second PIONEER_Q38_SIGNED_ARGUMENT PIONEER_Q38_NIBBLE_ARGUMENT PIONEER_Q38_RAW_CACHE_ARGUMENT PIONEER_Q38_REPLAY_ARGUMENT)

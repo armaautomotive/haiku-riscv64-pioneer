@@ -1,0 +1,92 @@
+Direct Q4 instruction emission follow-on,October21 2026.
+PRE-NATIVE checkpoint;NOT yet installed or executed on hardware.
+No model/Assistant mode/settings/chat/SD/default boot change.
+Prior Q4-nibble26 completed72 numeric checks but paired FFN showed only
+0.28% pooled reciprocal-rate difference with drift;NOT promoted. Restored
+best041/tag12/g12,quiesced0/cold0/owner0/opens1/guard1 before inert staging.
+Best completed whole-model fixed sample remains.207893161tok/s,not20.
+
+New separate OFFLINE producer WORK_Q4_DIRECT_DECODE requires nibble,
+original direct-SrcB/static/native-store/replay/affine chain. Checked/Q8/Q6
+remain original. In Q4 Work,each decoder is already ONE instruction.
+Issue that same constant AND/SHIFT directly between the same SFPLOAD and
+native SFPSTORE,instead of a one-instruction REPLAY. All8chunks/fourMOVs,
+raw UNPACKs,SrcA/B handoffs,config/readbacks/drains,matrix/FP32 order and
+NoC/source/ownership/STOP proofs remain unchanged. No replay memory,
+MOP/config/counter trick or raw-Dst cache22 used. Affine slots12..31 stay
+untouched. Each future Q8/Q6 panel still freshly records its decoder.
+Primary ISA:Blackhole VectorUnit tables show SFPLOAD/AND/SHIFT/STORE all
+one-cycle operations;native scheduling still separately qualified.
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/VectorUnit.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/REPLAY.md
+
+298 ASan/UBSan exact-expanded-stream cases compare existing actual emitter
+against direct emission across changed types/Work/checked/panels,repeated
+return to Q8,unused slots and invalid bounds. Only8 replay instructions
+removed per Q4 Work panel,expanded SFPU/load/store/MOV words identical26.
+First unit test incorrectly assumed Q6 never uses slots12..17;fixed test
+to preserve/compare affine slots only for Q4,not relax actual emitter.
+First link correctly rejected unchanged8KiB main limit. Exact new helper
+ONLY moved into ALREADY saved immutable70000..70700. Original decoder
+symbol excluded;original8192/5376/1792 bounds,stack6e000 unchanged.
+
+Fresh b/c reproduce identical images:
+boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+main8176B 407813c731c6c29330254204efd40237d88a3b96e806c8b7bb46cc962bd60178
+affine5152B a321ee5d50dea831042550950ea22cd201ea6670d8e29773cac9989ccc8afa5d
+helper256B f6e992bb653e4d1b0726629f2ed6aac1f4cd68181e98b3f9a45b317a0c7e419a
+Compute frame480B/original480;new helper16B,within same stack.
+Original qualified interpreter opcode/replay whitelist NOT changed.
+Separate actual-image model admits ONLY pinned256-byte immutable helper
+code range. Initial pilot correctly rejected newrange before that explicit
+extension;full final suite rerun,not a wildcard execution permission.
+
+ALL54 shapes x TWO changed-input jobs+STOP pass:original FP32 bits and
+independentFP64/all64proofs;SAME unpack/read/drain/matrix/NoC/source/sum/
+dot/tail/copy/affine replay counts. Q4 Work ONLY removes one operand record
+and seven expansions per panel. Four NoC faults remain pending/inert.
+Emulator counts,NOT native speed:
+Q4 K5120/N16 job2 RV403444->402902;SFPU26307->22627;replay commands-2560.
+Q4 K17408/N48 job2 RV3267312->3261802;SFPU268281->230745;replay-26112.
+Full log /private/tmp/pioneer-q38-q4-direct-full-offline-20261021-a.log
+SHA6bcd3119e7832b6add17d8e1bab4051415b7a9a1f5348406427f490a39b5a0b1
+Evidence pioneer-q38-q4-direct-image.sZFuiTCm.
+
+Frozen registry headerb72bb2031eebd1fa70f91c806cd2ee4f5b40f58bd11da99589cc30b91c637a00
+generated with independent pins/apply_patch ONLY.491520words/120roles:
+original sentinel roottext65c790cf/prefixd358b793,newpeer+helper+affine,
+zero gaps/live operand holes/unchanged bounds pass. Namespace1positive+
+11 incomplete/mixed refusals. Actual extracted kernel DMA controller
+all3owners/BME/maps/clock/cold quarantine retained. Controller log
+/private/tmp/pioneer-q38-q4-direct-controller-offline-20261021-a.log
+SHA2c0f38f0bb3090201ba043aa571330818ea7ca88395eded5f81eefbb43e1b611.
+
+Separate exact27 native qualification permission ONLY:
+Q4_DIRECT_QUALIFICATION+complete Q4_NIBBLE_QUALIFICATION chain,normalclock,
+rootcycle/reload/retained owners;producer flags blocked from nativebuilds.
+Reserved26 cannot select direct image;reserved27 cannot select old26/17.
+Debug requires Q4_DIRECT_REFERENCE_CLIENT+complete nibble/sentinel role,
+exact idle27 before ABI2 query/BEGIN,independent CPU math ONLY in debug.
+623 preSDK native/debug/model/root/format/mixed refusals,1023metadata cases
+(11roles*93),actual client failure/CLOSE-only mocks pass.
+Driver twice37b36f9021fcef469eaae5db22f665845ceb429129c90659e3fb01fe3c5d7940
+Debug twice1e8b6d18421f36af66121d72a489e1da4000f8a6485af198fbdd80cccdb69d60
+Guardd1ce2aa4/default43 2df0e0f8 unchanged. OFF reproduces original17driver
+84ab80ac/model f414306f/peer209fc6b8/08333055 and prior26 8fd12aab/c7cefc9e.
+
+Dedicated fixed-public-FFN host17/27 only,separate from model/Assistant:
+3ac3baeb49823d64409b673bb19b0c2c8f3a3c6c122a696d4e8105cab8b3406e.
+Ten metadata/support policies,618preSDK refusals,17actual fork/wait/barrier/
+failure cases pass;parent never owns accelerator;one authenticated model
+FD/fresh child sessions,known-clean IDLE before any exchange. No SCP or
+other native job through entire parent lifetime,including authentication.
+
+Updater15126b7e9e829bb5ddfe37efe43bd13e59327485dd882b9254d4e7b3bf57771c
+new guarded17->27/27->17 routes,targeted60 cases PASS. Initial fake-filesystem
+test missed the new fake payload entry;added it,not a production relaxation.
+Full historical updater suite RUNNING at this checkpoint;NO installation
+until it passes. Driver only inert-staging transfer started,not native use.
+
+Safety unchanged:ANY actual numeric mismatch/UNKNOWN=>CLOSE ONLY,NO END/
+retry/reset/further card read/hot rollback;preserve ALL owners/PCI BME/DMA/
+maps/clock/cold. Failed rawcache22 remains hard-blocked,never retried.
