@@ -1,6 +1,12 @@
 #!/bin/sh
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
+case "${PIONEER_Q38_WORK_SIGNED_MAG2:-0}" in
+ 0) signed_mag2_cpp=;;
+ 1) [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}:${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}:${PIONEER_Q38_STATIC_VECTOR:-0}:${PIONEER_Q38_REPLAY_OPERAND:-0}:${PIONEER_Q38_WORK_Q4_NIBBLE:-0}:${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}:${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}:${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}:${PIONEER_Q38_WORK_BATCH4_FETCH:-0}:${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}:${PIONEER_Q38_WORK_TILE_PREFETCH:-0}" = 9:1:1:1:1:1:0:0:0:0:0:0:0 ] || exit 2
+    signed_mag2_cpp=-DPIONEER_Q38_WORK_SIGNED_MAG2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_WORK_Q4_NIBBLE:-0}" in
  0) q4_nibble_cpp=;;
  1) [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}:${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_NATIVE_OPERAND_STORE:-0}:${PIONEER_Q38_STATIC_VECTOR:-0}:${PIONEER_Q38_REPLAY_OPERAND:-0}:${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}:${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}:${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}:${PIONEER_Q38_WORK_BATCH4_FETCH:-0}:${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}:${PIONEER_Q38_WORK_TILE_PREFETCH:-0}" = 9:1:1:1:1:1:0:0:0:0:0:0 ] || exit 2
@@ -229,13 +235,14 @@ umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \
  -fno-stack-protector -fno-pic -fno-pie -ffp-contract=off -ffunction-sections -fdata-sections \
  -fno-unwind-tables -fno-asynchronous-unwind-tables -msmall-data-limit=0 -mno-relax \
- -march=rv32imf -mabi=ilp32 -fstack-usage $dwarf $q4_phases $peer_phase_cpp $q4_nibble_cpp -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_SCALE \
+ -march=rv32imf -mabi=ilp32 -fstack-usage $dwarf $q4_phases $peer_phase_cpp $q4_nibble_cpp $signed_mag2_cpp -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_SCALE \
  -c "$directory/$source" -o "$output/program.o"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax $fault_as "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 linker=blackhole_qwen38_block.ld; sections='boot text'
 if [ "${PIONEER_Q38_VECTOR_PERSISTENT_IMAGE:-0}" = 9 ]; then linker=blackhole_qwen38_int_sfpu.ld; sections='boot text affine'; fi
 if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ] || [ "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" = 1 ] || [ "${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}" = 1 ] || [ "${PIONEER_Q38_WORK_TILE_PREFETCH:-0}" = 1 ]; then sections="$sections fetch"; fi
 if [ "${PIONEER_Q38_WORK_PEER_PHASE_PROFILE:-0}" = 1 ]; then sections="$sections fetch"; fi
+if [ "${PIONEER_Q38_WORK_SIGNED_MAG2:-0}" = 1 ]; then sections="$sections fetch"; fi
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/$linker" \
  "$output/start.o" "$output/program.o" -Map "$output/program.map" -o "$output/program.elf"
 for section in $sections; do "$cross-objcopy" -O binary -j ".$section" "$output/program.elf" "$output/$section.bin"; done

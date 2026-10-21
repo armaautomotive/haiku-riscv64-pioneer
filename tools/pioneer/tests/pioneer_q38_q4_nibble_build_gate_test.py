@@ -17,7 +17,7 @@ for key in role:
   if key!=flag or value!='0':cases.append((image,{**role,key:value}))
 for key in ('PIONEER_Q38_WORK_PEER_PHASE_PROFILE','PIONEER_Q38_WORK_FRONTEND_BARRIER',
             'PIONEER_Q38_WORK_RAW_UNPACK_CACHE','PIONEER_Q38_WORK_BATCH4_FETCH',
-            'PIONEER_Q38_WORK_BATCH_RAW_INPUT','PIONEER_Q38_WORK_TILE_PREFETCH'):
+            'PIONEER_Q38_WORK_BATCH_RAW_INPUT','PIONEER_Q38_WORK_TILE_PREFETCH','PIONEER_Q38_WORK_SIGNED_MAG2'):
  for value in ('1','01','-1','invalid'):cases.append((image,{**role,key:value}))
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-q4-nibble-gates-') as name:
  root=pathlib.Path(name);empty=root/'EMPTY_PATH';empty.mkdir()

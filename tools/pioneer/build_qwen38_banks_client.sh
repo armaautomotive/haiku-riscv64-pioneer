@@ -1,6 +1,7 @@
 #!/bin/sh
 # Compile only,no install/device access.
 set -eu
+[ "${PIONEER_Q38_WORK_SIGNED_MAG2:-0}" = 0 ] || { echo 'STOP signed magnitude2 is OFFLINE peer ONLY;NO native client selector' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_Q4_NIBBLE:-0}" = 0 ] || { echo 'STOP Q4 nibble decoding is OFFLINE peer ONLY;NO native client selector' >&2;exit 2; }
 [ "${PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT:-0}" = 0 ] || {
  echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;NO new native debug build' >&2;exit 2;

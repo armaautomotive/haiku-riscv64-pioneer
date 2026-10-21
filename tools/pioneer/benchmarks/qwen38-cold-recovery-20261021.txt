@@ -36,3 +36,8 @@ Session61342 is RUNNING at this checkpoint. No result/END/rate claim yet.
 NO SCP/driver change/other native job during its lifetime, including auth.
 Assistant GUI/service/settings unchanged. Old raw-cache failure log has NOT
 yet been transferred; defer until this native parent ends known-clean.
+
+Post-boot OS-only sysinfo confirmed64 CPUs and137,034,936,320 total usable
+RAM bytes. Native parent61342 passed full-file authentication/model load,
+recognized497 learned projections and entered first8-helper sequence.
+It is still loading/priming at this checkpoint; no new throughput result.

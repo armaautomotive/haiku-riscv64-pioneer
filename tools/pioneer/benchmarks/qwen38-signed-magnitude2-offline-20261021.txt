@@ -28,3 +28,56 @@ original DEST sign,other live registers and lane flags preserved.
 This is an arithmetic proof, NOT physical pipeline/replay scheduling,
 native opcode qualification or a model-speed result. Future integration
 requires separate strict actual-image tests and distinct exact-tag trial.
+
+Compiled-peer follow-on (OFFLINE ONLY, no native selector):
+PIONEER_Q38_WORK_SIGNED_MAG2 requires the complete original-layout
+direct-SrcB/affine/native-store/replay chain and excludes Q4-nibble/rawcache/
+prefetch/barrier/batch/timing combinations. Only Work Q8/Q6 use the new
+pair;checked and Q4 retain the original decoder. Original SFPSTORE mode5,
+Dst/source/config/ownership/drains and STOP sequence unchanged. Replay
+length subtracts EXACTLY6 for those decoders, never for Q4/checked work.
+
+Initial builds a/b correctly failed the UNCHANGED8KiB main limit. No bounds
+were enlarged. Existing reserved immutable fetch0x70000..70700 now holds
+ONLY the separate NativeOperand(VectorPanelEmitter,unsigned,unsigned,bool)
+specialization (including compiler-local clone suffix). Original signature
+is not matched. c/d rebuilds reproduce exact binaries:
+boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+main8,044B ec4db9c2c0c1c1297daa1fd6b25baabea17f7e1461b6b37a47811c7ee04dc573
+affine5,152B 7a3f7b2dea02e85129c84b837794642a4f6b85ce4b4fbfdd52f3043697d2b230
+fetch284B 5a8bd4a83693e947af8093e6607be8e4b678788334c384ce14748cf72074f298
+Original8192/5376/1792B bounds and stack6e000 unchanged. Compute static
+frame496B vs original480B, inside the original stack; no native claim.
+
+Qualified interpreter/replay whitelist remains UNCHANGED. A separate
+SignedMagnitudePeer model adds ONLY words7d000020/89000200 under explicit
+Work Q8/Q6,original source/queue/config/enable proofs and signed-byte bounds.
+ALL54 shapes/TWO changed-input jobs/STOP/all64proofs pass ASan/UBSan with
+original FP32 bits and independent FP64 math. Same unpack/read/drain/
+matrix/NoC/source counts;48 fewer expanded SFPU ops per Q8/Q6 panel.
+Eight NoC failure cases remain inert. No root/controller/native job used it.
+Measured emulator counts, NOT hardware time:
+Q8/K5120/N16 RV330634->341514;SFPU40007->24647.
+Q6/K5120/N16 RV405908->414468;SFPU59207->43847.
+The slightly HIGHER RV cost may offset SFPU reductions; benchmark before
+any promotion. Model/driver/native-client/root selectors explicitly BLOCK
+the firmware-only flag.71 empty-PATH role gates pass for this variant and
+71 for Q4 nibble (mutual isolation added). The failedtag22 gates still pass.
+
+Original peer209fc6b8/08333055,model f414306f,driver17 84ab80ac,guardd1ce2aa4,
+default43 2df0e0f8 remain byte-identical with experiment OFF. Q4 nibble's
+compiled8fd12aab/c7cefc9e also reproduces unchanged after integration.
+Original native-operand1,053,184 cases/thread-sweep800 guards still pass.
+Separate arithmetic test additionally rejects float-ABS mode,reversed
+SETSGN operands and destroying original DEST0 sign;drained state matches.
+
+Full actual-image log:
+/private/tmp/pioneer-q38-signed-mag2-full-offline-20261021-a.log
+SHA863db6e081ea63d1b43ed9acac99ec92ee91ccf8f2edad9fd5d49dffb176d997
+Evidence .../pioneer-q38-signed-mag2-image.OpBYoCej.
+Arithmetic log /private/tmp/pioneer-q38-signed-mag2-arithmetic-20261021-b.log
+SHA4a7d1b9e8bd598d8d17ae9addf6a32460cc54a0e2cedc70a5bd74a93ecdba00e
+Signed gates log /private/tmp/pioneer-q38-signed-mag2-gates-20261021-a.log
+SHAe65f2835d6cb80aec7e32c849e58fb3e09dd676df2faad59efadf82a84e0743a
+Q4 gates /private/tmp/pioneer-q38-q4-nibble-gates-20261021-b.log
+SHA39554c092facd5d8146c19288fc27f57299f4bd09548c18edd9549b6ac6c7973

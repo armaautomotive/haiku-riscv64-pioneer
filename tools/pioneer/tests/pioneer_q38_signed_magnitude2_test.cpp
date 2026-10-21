@@ -14,6 +14,7 @@ struct SignedMagnitudeMachine:NativeF32Q8Machine {
 			for(unsigned lane=0;lane<32;lane++)if(!conditional||flags[lane]) {
 				uint32_t x=lanes[vc][lane];lanes[vd][lane]=(x&0x80000000U)?0U-x:x;
 			}
+			drained=false;
 			return;
 		}
 		if(code==0x89) {
@@ -22,6 +23,7 @@ struct SignedMagnitudeMachine:NativeF32Q8Machine {
 				uint32_t magnitude=lanes[vc][lane]&0x7fffffffU,sign=lanes[vd][lane]&0x80000000U;
 				lanes[vd][lane]=sign|magnitude;
 			}
+			drained=false;
 			return;
 		}
 		NativeF32Q8Machine::Instruction(op);
@@ -40,7 +42,7 @@ int main()
 		}
 		next.conditional=old.conditional=true;
 		SignedEmitter<SignedMagnitudeMachine> a{next};SignedEmitter<NativeF32Q8Machine> b{old};
-		PioneerQ38SignedMagnitude2(a);PioneerQ38NativeSignMagnitude(b);assert(a.count==2&&b.count==8);
+		PioneerQ38SignedMagnitude2(a);PioneerQ38NativeSignMagnitude(b);assert(a.count==2&&b.count==8&&next.drained==old.drained);
 		for(unsigned lane=0;lane<32;lane++) {
 			int64_t v=int(first+lane)-32768;uint32_t expected=(mask>>lane)&1?
 				(v<0?0x80000000U:0U)|uint32_t(v<0?-v:v):uint32_t(v);
@@ -55,5 +57,13 @@ int main()
 	SignedEmitter<SignedMagnitudeMachine> e{edge};PioneerQ38SignedMagnitude2(e);
 	const uint32_t expected[]={0,1,127,128,0x7fffffff,0x80000001,0x80000080,0xffffffff};
 	for(unsigned lane=0;lane<8;lane++)assert(edge.lanes[0][lane]==expected[lane]);
+	for(unsigned wrong=0;wrong<3;wrong++) {
+		SignedMagnitudeMachine bad(1024,32,0);bad.lanes[0][0]=0xffffff80U;bad.lanes[2][0]=0x12345678;
+		// Wrong float ABS, reversed SETSGN operands, or destroying DEST0's
+		// original sign MUST NOT be mistaken for the qualified composition.
+		bad.Instruction(wrong==0?0x7d000021:wrong==2?0x7d000000:0x7d000020);
+		bad.Instruction(wrong==1?0x89000020:0x89000200);
+		assert(bad.lanes[0][0]!=0x80000080U);
+	}
 	printf("PASS OFFLINE signed magnitude:%u exhaustive signed16/32-lane/enable-mask cases+8signed32edges;exact original8ops vs2ops,original DEST sign retained,other live regs/flags untouched;NO image/driver/native/throughput qualification\n",cases);
 }

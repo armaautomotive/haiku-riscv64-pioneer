@@ -5,7 +5,13 @@ SECTIONS {
 	.boot 0x6000 : { KEEP(*(.boot)) }
 	/* OFFLINE batch-fetch helper in already-saved immutable70000..70700,
 	 * NOT a larger view. Never overlap live operands70700..70a20. */
-	.fetch 0x70000 : { *(.text.pioneer_q38_batch4_stage) *(.text.pioneer_q38_peer_phase*) . = ALIGN(4); }
+	.fetch 0x70000 : {
+		*(.text.pioneer_q38_batch4_stage) *(.text.pioneer_q38_peer_phase*)
+		/* OFFLINE signed decoder: ONLY the new bool-argument specialization,
+		 * including compiler-local clone suffix. Original signature excluded. */
+		*(.text._Z23PioneerQ38NativeOperandI18VectorPanelEmitterEbRT_jjb*)
+		. = ALIGN(4);
+	}
 	/* Already-owned immutable prefix. NEVER overlap live operands70700..70a20,
 	 * stack6e000..70000, original main text72000..74000 or descriptor74000. */
 	/* Pin ONLY the integer specialization, including the compiler's local

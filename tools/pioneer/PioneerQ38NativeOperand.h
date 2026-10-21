@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_NATIVE_OPERAND_H
 #define PIONEER_Q38_NATIVE_OPERAND_H
 #include "PioneerQ38VectorOperand.h"
+#ifdef PIONEER_Q38_WORK_SIGNED_MAG2
+#include "PioneerQ38SignedMagnitude2.h"
+#endif
 // OFFLINE prerequisite ONLY;NO image/driver selects this experiment.
 // Keep qualified integer ops for TC->SM;do NOT guess newer SFPCAST modes.
 // Blackhole SFPSTORE mode5 can encode that SM value directly as Integer8:
@@ -18,11 +21,22 @@ template<class E> static void PioneerQ38NativeSignMagnitude(E& e)
 	PioneerSfpuShift(e,3,-31); PioneerSfpuAdd(e,0,3);
 	PioneerSfpuShift(e,2,31); PioneerSfpuXor(e,0,2);
 }
-template<class E> static bool PioneerQ38NativeOperand(E& e,unsigned type,unsigned panel)
+template<class E>
+#ifdef PIONEER_Q38_WORK_SIGNED_MAG2
+__attribute__((noinline))
+#endif
+static bool PioneerQ38NativeOperand(E& e,unsigned type,unsigned panel
+#ifdef PIONEER_Q38_WORK_SIGNED_MAG2
+	,bool signedMagnitude2=false
+#endif
+)
 {
 	if ((type!=8 && type!=12 && type!=14) || panel>=(type==8?2U:16U)) return false;
 	if (type==8) {
 		PioneerSfpuShift(e,0,24); PioneerSfpuShift(e,0,-24,true);
+#ifdef PIONEER_Q38_WORK_SIGNED_MAG2
+		if(signedMagnitude2)PioneerQ38SignedMagnitude2(e);else
+#endif
 		PioneerQ38NativeSignMagnitude(e);
 	} else if (type==12) {
 		if (panel&2) PioneerSfpuShift(e,0,-4);
@@ -37,6 +51,9 @@ template<class E> static bool PioneerQ38NativeOperand(E& e,unsigned type,unsigne
 		}
 		PioneerSfpuLoad32(e,4,3); PioneerSfpuAnd(e,1,1,4); PioneerSfpuShift(e,1,4);
 		PioneerSfpuXor(e,0,1); PioneerSfpuAddI(e,0,-32);
+#ifdef PIONEER_Q38_WORK_SIGNED_MAG2
+		if(signedMagnitude2)PioneerQ38SignedMagnitude2(e);else
+#endif
 		PioneerQ38NativeSignMagnitude(e);
 	}
 	return true;
