@@ -20,6 +20,9 @@ static unsigned Counter(unsigned c)
 #endif
 	return *Words(0xffb20000+offset[c]);
 }
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+__attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
+#endif
 static bool IdleAll()
 {
 	bool okay=true;

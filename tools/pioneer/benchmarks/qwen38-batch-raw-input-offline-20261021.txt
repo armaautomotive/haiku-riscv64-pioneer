@@ -1,0 +1,74 @@
+Direct bounded-batch raw input,October21 2026,10:54UTC. OFFLINE ONLY.
+Separate exacttag20 qualifier,NOT installed/native/model/Assistant/speed
+qualified. Best actual full27B remains041 .181432516tok/s;20targetUNMET.
+
+Prior tag19 batches already original weight bytes into98000..99a80 then
+copies every tile to90000. New candidate consumes SAME known-complete
+tile directly for BOTH affine metadata and original vector UNPACK.
+Q8 four576B/Q4 two2304B/Q6 two3392B;ALL reads<=8KiB. No format/precision/
+arithmetic/rounding/order/drain/NoC/ownership/PC/reset/counter/proof change.
+No raw90000 Work writes. Checked raw90000 behavior unchanged. Selector
+is private fixed type/finite tile-base whitelist,NOT arbitrary L1 address
+or source/completion authority. ReadCommand+IdleAll+SourceMatches helpers
+fit SAME original immutable70000..70700;no expanded saved/code/stack view.
+
+Peer c/d twice identical:
+main8096B SHA6f7ceb71adf49d35330a3e02cc2a5678289272b27ddaab1e3dc160c8dc4dd498
+affine5152B SHA1568cfc02a808a218551d0683642429f203217f5a21254d857c4d846a1d82b35
+fetch820B SHA0986412151b4c104cf02483d6c6b5a88b2887167beda1e88bf1c31b0e1b5c86b.
+Unchanged root68da37b7/3280945a. FlagOFF EXACT tag19 peer8ea00560/7a3f7b2d/
+b6316e76 and driver2fcf0b27/guardd1ce2aa4/default43 2df0e0f8 reproduced.
+Drivera/b c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
+twice identical. Kernel selector must have whole batch4/direct/sentinel/
+affine/scale/normal-clock retained-owner chain PLUS exacttag20 raw role.
+
+72 original panel sequences differ ONLY cfg76 bounded source address;
+1572881 invalid local/type selectors emit NOTHING,ASAN/UBSAN1PITswQL.
+Original128mutated matrix fields and34panel sequence testsRdYkapr6 pass.
+Full ACTUAL RV32/NoC/SFPU peer54shapes,3types/3K/3groups/Work+checked,
+two changed inputs/STOP each passL4JFMC36. Exact old FP32+independent FP64,
+SAME NoC/matrix/SFPU/drains/rounding/sums;every tile current/completed/fresh;
+NO Work copy90000,canaries unchanged. FIRST/input/middle/LAST106NoC faults
+park with pending owner and NO later consumption/request/retry.
+Log/private/tmp/pioneer-q38-batch-raw-peer-full-20261021-a.log
+SHAdef7036e7ec69bfe53f85b6c200c8c76e055af149ec9dce3e9bcc892eaa64a1e.
+Second FULL54shape/two-job run with explicit equality ALL64 peer proof
+words passedFDJltZM0. Log/private/tmp/pioneer-q38-batch-raw-peer-full-proof64-20261021-a.log
+SHA27eeef0417572cc08d70a6d2fce141a2b10a8b03652feec09d4acc73ae253922.
+
+ACTUAL unchanged coordinator plus actual raw peers,all9type/K shapes
+twice,independent FP32+FP64+completeproof/PC/source/NoC/compactDMA
+observers pass;the exact log and hash follow.
+Log/private/tmp/pioneer-q38-batch-raw-root-20261021-b.log
+SHA5a6122fb2bce0f1c2cf22fa262eecec527cfac88b641bae42909cfad43482f6e.
+First/middle/LAST72peer failure is UNKNOWN/no output/inert. Test-only
+second-job DMA header/counters explicitly restaged,not weakened checks.
+Root actual code unchanged from tag19 full108shape/64fault suite.
+
+ACTUAL raw-selector kernel/controller WorkDMA failures pass:all private
+three-owner extents/delayed mapping/BME write+readback/first-middle-last
+DMA failures retain ALL owners/clock/cold;no disable/reset/retry,checked
+isolation. Log/private/tmp/pioneer-q38-batch-raw-controller-20261021-a.log.
+491520 exact registry main/prefix words across120roles passjjC9QtD7;
+all source/owner/code authority remains separately required.
+372 exact idle metadata tag checksYfzkPkPj;276 role refusals BEFORE SDK;
+234 benchmark-host role refusals+17actual fork/barrier/failure CPU mocks
+2yuXJnzg. These are NOT native hardware or speed results.
+
+Exacttag20 CPU-reference diagnosticf9d4bfd7 and fixed original-TC/noCPU
+FFN benchmark-host794452a4 twice identical. New host admits ONLY exact
+idle tags17/19/20 and same authenticated public source/fresh children;
+no model/Assistant/source-auth bypass. Updater ONLY clean17<->20,fully
+hash-pinned;60 selected actual filesystem/handshake/owner failures pass;
+full updater suite RUNNING. No transfer/native/auto rollback yet.
+
+10:59UTC staging update:ALL four inert remote files fully SHA-verified,
+no native job/authentication/SCP overlap. Installed control17/gen39 still
+unchanged,owner0/cold0/open1. Updater9b6ae47ee8d36cb1fbeac82de5aaffde6a2c5fdea3154b8464488c829cb04efd.
+Raw-controller logSHA32315c60e2300f2931792876af00ba292b64054b17f775ab7598468002ee9b9e;
+registry414a9fb7b9f38380e87a5266321e30fa7543078976b51b70e0fe31a717a8c45e.
+No physical raw-input correctness/speed result yet. Full updater pending.
+
+11:00UTC full actual updater suite completed exit0 after final hash pins;
+see/private/tmp/pioneer-hot-swap-batch-raw-full-20261021-a.log. No automatic
+rollback/reset/forced unload. Candidate remains uninstalled at checkpoint.

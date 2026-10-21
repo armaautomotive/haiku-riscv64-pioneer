@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_BATCH4_FETCH)
+#if defined(PIONEER_Q38_TEST_BATCH_RAW_INPUT)
+#define PIONEER_Q38_BATCH_RAW_IMAGE_MODEL_ONLY
+#include "pioneer_q38_batch_raw_image_test.cpp"
+using CooperativePeer=BatchRawImage;
+#elif defined(PIONEER_Q38_TEST_BATCH4_FETCH)
 #define PIONEER_Q38_BATCH4_IMAGE_MODEL_ONLY
 #include "pioneer_q38_batch4_image_test.cpp"
 using CooperativePeer=Batch4Image;

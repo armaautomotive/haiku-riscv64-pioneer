@@ -6,13 +6,19 @@
 #endif
 #include <string.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION) && (defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION))
+#error Direct batch input has a distinct fixed benchmark-host role
+#endif
 #if defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION) && defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION)
 #error Distinct original-TC benchmark-host diagnostic roles MUST NOT mix
 #endif
 static inline bool PioneerQ38BenchmarkHostTag(const tt_pioneer_driver_reload& r) {
  return r.version==1 && r.driver==55 && r.guard_version==1 && r.generation
   && !r.quiesced && !r.cold && !r.active_owner && r.open_count==1
-#ifdef PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION
+#ifdef PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION
+  && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010019)
+   || r.build_tag==UINT64_C(0x2026102100010020));
+#elif defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION)
   && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010019));
 #elif defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION)
   && r.build_tag==UINT64_C(0x2026102100010018);

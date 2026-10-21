@@ -26,6 +26,13 @@ for value in ('01','-1','invalid'):
  cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION':value})
 cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION':'1','PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION':'1'})
 cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION':'1','PIONEER_Q38_BENCHMARK_HOST':'0'})
+cases += [{**c,'PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION':'1'} for c in role_cases]
+for key in ('PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION','PIONEER_Q38_BENCHMARK_HOST'):
+ for wrong in ('0','01','-1','invalid'):
+  if key=='PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION' and wrong=='0':continue
+  cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION':'1',key:wrong})
+for key in ('PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION','PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION'):
+ cases.append({**required,'PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION':'1',key:'1'})
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-benchmark-host-gate-') as name:
  root=pathlib.Path(name)
  for i,flags in enumerate(cases):

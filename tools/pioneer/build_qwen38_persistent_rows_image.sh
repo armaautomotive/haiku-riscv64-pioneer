@@ -2,6 +2,11 @@
 # OFFLINE ONLY persistent mixed-quant peer;NO driver install/card operations.
 set -eu
 [ "$#" = 2 ] || exit 2
+case "${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}:${PIONEER_Q38_WORK_AFFINE_REPLAY:-0}:${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" = 1:1:1 ] || exit 2;;
@@ -137,6 +142,7 @@ case "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" in
  1) q4_phases="$q4_phases -DPIONEER_Q38_WORK_DIRECT_SRCB";;
 esac
 if [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_BATCH4_FETCH"; fi
+if [ "${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" = 1 ]; then q4_phases="$q4_phases -DPIONEER_Q38_WORK_BATCH_RAW_INPUT"; fi
 case "${PIONEER_Q38_WORK_DOT_ZERO_ELISION:-0}" in
  0) ;;
  1) q4_phases="$q4_phases -DPIONEER_Q38_WORK_DOT_ZERO_ELISION";;

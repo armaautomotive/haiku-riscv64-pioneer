@@ -17,8 +17,14 @@
 #include <new>
 #include <vm/vm.h>
 #ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
+#ifdef PIONEER_Q38_BATCH_RAW_QUALIFICATION
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010020ULL
+#error Direct batch input native qualifier requires its separate exact-tag20 retained-owner build
+#endif
+#else
 #if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010019ULL
 #error Batch4 native qualifier requires its separate exact-tag19 retained-owner build
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_HOST_PHASE_PROFILE

@@ -3,9 +3,16 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+batch_tag=2026102100010019
+case "${PIONEER_Q38_BATCH_RAW_QUALIFICATION:-0}:${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" in
+ 0:0) ;;
+ 1:1) [ "${PIONEER_Q38_BATCH4_FETCH_QUALIFICATION:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 1:2026102100010020 ] || exit 2
+      batch_tag=2026102100010020;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_BATCH4_FETCH_QUALIFICATION:-0}:${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" in
  0:0) ;;
- 1:1) [ "${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}:${PIONEER_Q38_HOST_PHASE_PROFILE:-0}:${PIONEER_Q38_DISPATCH_PROFILE:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 1:0:0:1:2026102100010019 ] || exit 2;;
+ 1:1) [ "${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}:${PIONEER_Q38_HOST_PHASE_PROFILE:-0}:${PIONEER_Q38_DISPATCH_PROFILE:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = "1:0:0:1:$batch_tag" ] || exit 2;;
  *) echo 'STOP batch4 fetch requires its separate original-layout tag19/controller qualification' >&2;exit 2;;
 esac
 case "${PIONEER_Q38_HOST_PHASE_PROFILE:-0}" in
@@ -183,6 +190,7 @@ case "${PIONEER_Q38_DISPATCH_PROFILE:-0}" in
 esac
 if [ "${PIONEER_Q38_HOST_PHASE_PROFILE:-0}" = 1 ]; then extra="$extra -DTT_PIONEER_Q38_DISPATCH_PROFILE -DPIONEER_Q38_HOST_PHASE_PROFILE"; fi
 if [ "${PIONEER_Q38_BATCH4_FETCH_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BATCH4_FETCH_QUALIFICATION"; fi
+if [ "${PIONEER_Q38_BATCH_RAW_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BATCH_RAW_QUALIFICATION"; fi
 case "${PIONEER_Q38_DISPATCH_BATCHED_PIO:-0}" in
  0) ;;
  1) [ "$variant" = 55 ] && [ "${PIONEER_DRIVER_RELOAD:-0}" = 1 ] || exit 2

@@ -47,6 +47,46 @@ Explicit guarded known-clean18/gen34->17/gen35->19/gen36 succeeded
 without reboot. First synthetic native test RUNNING at this checkpoint;
 NO native correctness/model/speed qualification claimed yet.
 
+Native56-job qualification completed10:39UTC:20synthetic+18authenticated
+public119-worker+18unchanged checked jobs ALL zero numerical errors;
+each explicit BANK_END state2/active0/pci_restored1/host_released1/cold0/
+accepted1 and CLI_EXIT0. CPU-only reload confirms tag19/gen36/owner0/cold0.
+Own remote logs under hot-reload stage:
+batch4-synthetic-20261021-a.log
+SHA4397addb731b8b7d74c24ab6c99c560bdb383e3fd9d50c15b57a67ce6df3ba71
+batch4-auth119-20261021-a.log
+SHA6f581c3d886205de0c5c3bca5ee60d678aa00fec45bd91caca6915b32d4d34e5
+batch4-checked-regression-20261021-a.log
+SHAe8a8e249226304373674e2b3253434ae34216ec766cbedbab2f13d6ca682bf70.
+NO whole model/token-rate qualification yet. Paired tag17/19 host started
+10:39UTC directory/boot/home/pioneer-q38-benchmark.ljxtze;full fixed-file
+SHA authentication running,NO accelerator descriptor or transfer overlap.
+Later raw-input OFFLINE candidate is separate,not installed here.
+
+Paired native FFN evidence SAME28cd host/SAME authenticated source/no CPU
+learned reference. NOT whole-model token speed. Parent uses fresh children
+and requires explicit clean END/normal0 before each explicit next measure.
+Round1 tag19/gen36:32warm mean.011129938s,median.011113,min.011069/max.011399;
+ioctl.328908s,matrix.355110s,warmwall.356416s.
+round0001.log SHAa88b27d2a5b94800d1bb7039751e1c382c774a4b8cd2fadeb42d04f5ed73ed2b.
+Round2 tag17/gen37:mean.010470406s,median.010464,min.010431/max.010588;
+ioctl.308265s,matrix.334099s,warmwall.335338s.
+round0002.log SHA3dce0ebcd6c40e920075cbf2c6fa5af0c48a493e6152b9878507532c3a1a9001.
+Round3 tag19/gen38:mean.011119563s,median.0110925,min.011045/max.011435;
+ioctl.328653s,matrix.354795s,warmwall.356115s.
+round0003.log SHAd8714566c5c0d1219cef679d8ff1f099e23a81e57be0ac4650e9cef073cb60be.
+ALL output05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56
+and known_clean1. Two tag19 means~6.2% MORE time than first paired17,
+NOT promoted. Local-copy overhead is a hypothesis,not isolated by this
+comparison alone. Round4 control17/gen39 RUNNING at checkpoint.
+
+Round4 finished clean:mean.010496312s,median.010486,min.010449/max.010576;
+ioctl.308484s,matrix.334830s,warmwall.336125s.
+round0004.log SHAa2aba0c398f83de82a56cc19cd36eac07cb31056cdc5c57ee1401a64fbe6c241.
+SAME output05cda52a;parent explicitly quit/SSH0,control17/gen39 idle cold0/
+owner0. Two-run means19=.0111247505s versus17=.010483359s:6.118% MORE
+time,NOT promoted/NO token-rate extrapolation. No whole-model tag19 run.
+
 HISTORICAL SUPERSEDED LARGE-READ OFFLINE PROTOTYPE (NEVER INSTALLED):
 Batch4 original-layout peer fetch,October21 2026. OFFLINE ONLY.
 NO private controller/source/native/model/Assistant qualification.

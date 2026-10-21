@@ -14,6 +14,15 @@ struct PioneerQ38Batch4FetchPlan {
  uint32_t source=0,destination=0,bytes=0,copySource=0,copyWords=0;
  bool issue=false;
 };
+// Private local-input selector ONLY,not source/NoC/completion authority.
+// The checked path retains90000;Work may select only one WHOLE original
+// tile inside its known-complete bounded batch. No arbitrary L1 address.
+static inline bool PioneerQ38Batch4RawInput(unsigned type,uint32_t base) {
+ unsigned tile=type==8?576:type==12?2304:type==14?3392:0;
+ if(!tile)return false;
+ return base==0x90000 || base==0x98000 || base==0x98000+tile
+  || (type==8 && (base==0x98000+2*tile || base==0x98000+3*tile));
+}
 static inline bool PioneerQ38Batch4Fetch(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,
  uint32_t first,PioneerQ38Batch4FetchPlan& output) {
  unsigned tile=type==8?576:type==12?2304:type==14?3392:0;

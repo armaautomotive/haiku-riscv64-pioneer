@@ -7,6 +7,16 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+#ifndef PIONEER_Q38_WORK_BATCH4_FETCH
+#error Direct batch input requires the complete separate bounded-batch peer
+#endif
+#define PIONEER_Q38_RAW_BASE rawBase
+#define PIONEER_Q38_RAW_ARGUMENT ,rawBase
+#else
+#define PIONEER_Q38_RAW_BASE 0x90000
+#define PIONEER_Q38_RAW_ARGUMENT
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 #if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_Q4_GROUP32)
 #error Batch4 is a separate OFFLINE original-layout Work peer experiment
@@ -318,6 +328,9 @@ static void FetchBlock(uint32_t address)
 // FUTURE PRIVATE kernel descriptor only. This image has NO native handler.
 // Retarget ONLY an idle,read-only command to fixed root L1,self destination
 // unchanged. Never touch upper address/control/doorbell fields after UNKNOWN.
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+__attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
+#endif
 static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,unsigned bytes)
 {
 	if (*Words(0xffb20040) || (*Words(0xffb20240)&255)) block_fault_park();
@@ -350,15 +363,27 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 // Cold prefix,original saved window. No asynchronous fetch/counter reset.
 // A failed command parks INSIDE FetchBlock;never copy/issue after UNKNOWN.
-static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage"))) void Batch4Stage(
+static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+uint32_t
+#else
+void
+#endif
+Batch4Stage(
  unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route) {
  PioneerQ38Batch4FetchPlan p;
  if(!PioneerQ38Batch4Fetch(type,inputs,groups,group,block,first,p))block_fault_park();
  if(p.issue){ReadCommand(p.source,route,p.destination,p.bytes);FetchBlock(p.source);}
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+ // Only this private selector follows SAME known-complete FetchBlock.
+ // Decoder/metadata and UNPACK use this same tile without a RISC copy.
+ return p.copySource;
+#else
  // Consume one original tile in original order. Scratch bytes are from
  // this SAME known-complete batch;no CPU/host conversion or new format.
  for(unsigned w=0;w<p.copyWords;w++)Words(0x90000)[w]=Words(p.copySource)[w];
  (void)Words(0x90000)[p.copyWords-1];Fence();
+#endif
 }
 #endif
 #endif
@@ -368,9 +393,13 @@ static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_
 // raw90000..90d40,metadata91000..91280,stack6e000..70000 are DISJOINT.
 // This avoids generic pointer/lifetime bookkeeping for these static facts.
 // ALL finite metadata checks and atomic16-row publication still apply.
-static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&base)[16])
+static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&base)[16]
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+ ,uint32_t rawBase
+#endif
+)
 {
-	const uint8_t* raw=reinterpret_cast<const uint8_t*>(0x90000);
+	const uint8_t* raw=reinterpret_cast<const uint8_t*>(PIONEER_Q38_RAW_BASE);
 	auto* out=reinterpret_cast<PioneerQ38Panel*>(0x91000);
 #ifdef PIONEER_Q38_CACHED_AFFINE
 	if (type==8) return (panel&1) || PioneerQ38AffineOnly(8,raw,bytes,panel,out);
@@ -554,9 +583,16 @@ extern "C" unsigned block_main()
 #endif
 	for (unsigned group=0;group<groups;group++) {
 	for (unsigned block=0;block<blocks;block++) {
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+	uint32_t rawBase=0x90000;
+#endif
 #ifdef PIONEER_Q38_STREAM
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
-	if(skipDotCheck)Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
+	if(skipDotCheck)
+#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+	rawBase=
+#endif
+	Batch4Stage(type,inputs,groups,group,block,first,job[8]);else
 #endif
 	FetchBlock(first+(group*blocks+block)*bytes);
 	float scale=Float(Words(0x94000)[block]);
@@ -585,7 +621,7 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
 		!skipDotCheck &&
 #endif
-		!affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes
+		!affine.Prepare(12,reinterpret_cast<const uint8_t*>(PIONEER_Q38_RAW_BASE),bytes
 #ifdef PIONEER_Q38_PREDECODED_Q4
 		,skipDotCheck
 #endif
@@ -634,13 +670,13 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_AFFINE_REUSE
 #if defined(PIONEER_Q38_SFPU_ACCUMULATOR) && !defined(PIONEER_Q38_CACHED_AFFINE)
-		if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
+		if (!FixedAffine(type,bytes,p,affineBase PIONEER_Q38_RAW_ARGUMENT)) block_fault_park();
 #else
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
 		if (type==12) {
 			if (!(p&1) && !PioneerQ38PreparedQ4::Panel(reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();
-		} else if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
+		} else if (!FixedAffine(type,bytes,p,affineBase PIONEER_Q38_RAW_ARGUMENT)) block_fault_park();
 #else
 		if (!(type==12?
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
@@ -648,7 +684,7 @@ extern "C" unsigned block_main()
 #else
 			affine.Panel(p,local)
 #endif
-			:FixedAffine(type,bytes,p,affineBase))) block_fault_park();
+			:FixedAffine(type,bytes,p,affineBase PIONEER_Q38_RAW_ARGUMENT))) block_fault_park();
 #endif
 #else
 		if (!affine.Panel(p,local)) block_fault_park();
@@ -739,6 +775,7 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
 			,skipDotCheck && type==12
 #endif
+			PIONEER_Q38_RAW_ARGUMENT
 		)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();

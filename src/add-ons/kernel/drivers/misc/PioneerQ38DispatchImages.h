@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_BATCH_RAW_QUALIFICATION
+#ifndef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
+#error Direct batch input requires its separate complete bounded-batch qualifier
+#endif
+#include "PioneerQ38BatchRawPeerImage.h"
+#endif
 #ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
 #if !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || defined(PIONEER_Q38_HOST_PHASE_PROFILE)
 #error Batch4 requires its separate original-layout sentinel/root/direct-SrcB qualification
@@ -150,6 +156,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_BATCH_RAW_QUALIFICATION
+ if(worker && worker<120)return PioneerQ38BatchRawPeerPrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
  if(!worker)return PioneerQ38Batch4RootPrefixWord(address);
  if(worker<120)return PioneerQ38Batch4PeerPrefixWord(address);
@@ -784,6 +793,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_BATCH_RAW_QUALIFICATION
+ if(worker && worker<120)return PioneerQ38BatchRawPeerWord(word);
+#endif
 #ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
  if(!worker)return PioneerQ38Batch4RootWord(word);
  if(worker<120)return PioneerQ38Batch4PeerWord(word);

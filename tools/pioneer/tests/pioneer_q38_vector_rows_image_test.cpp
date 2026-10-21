@@ -68,6 +68,8 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups):Base(path,type,k,groups) { if (!Persistent) memory[0x74000]=0x31563851; }
 	VectorRows(const char* path,unsigned type,unsigned k,unsigned groups,unsigned worker):Base(path,type,k,groups,worker) { static_assert(Persistent,"worker routing ONLY in the persistent model"); }
 	bool InlineTensix() const override { return true; }
+	// Independent current-tile observer;old fixtures retain original90000.
+	virtual uint32_t RawInputBase() const { return 0x90000; }
 #ifdef PIONEER_Q38_TEST_PREDECODED_Q4
 	virtual bool DirectQ4Panel() const { return false; }
 #ifdef PIONEER_Q38_TEST_NATIVE_Q8
@@ -216,7 +218,8 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 				assert(config[1]==(BFloat?0x203c8000U:0xa03c8000U) && config[64]==0x10001e && config[65]==16 && config[72]==14
 					&& adc1==255 && (op==0x42000081 || op==0x420000c1));
 				assert(rawRow==0 || rawRow==16);
-				assert(rawAddress>=0x90000 && rawAddress-0x90000+256<=tile.size());
+				uint32_t input=RawInputBase();
+				assert(rawAddress>=input && rawAddress-input+256<=tile.size());
 				if (!rawRow) {
 					memset(decoded,0,sizeof(decoded)); // generation tracking,NOT a hardware valid-bit reset
 					panelMoves=0; affineEligible=false;

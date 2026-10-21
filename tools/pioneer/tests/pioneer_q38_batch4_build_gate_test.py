@@ -4,6 +4,9 @@ import os,pathlib,subprocess,tempfile
 directory=pathlib.Path(__file__).resolve().parent.parent
 base={k:v for k,v in os.environ.items() if not k.startswith('PIONEER_')}
 cases=[]
+for script in ('build_qwen38_banks_driver.sh','build_qwen38_inference.sh','build_qwen38_dispatch_image.sh','build_qwen38_persistent_rows_image.sh'):
+ for value in ('1','01','-1','invalid'):
+  cases.append((script,{'PIONEER_Q38_WORK_BATCH_RAW_INPUT':value}))
 for script in ('build_qwen38_banks_driver.sh','build_qwen38_inference.sh','build_qwen38_dispatch_image.sh'):
  for value in ('1','01','-1','invalid'):
   cases.append((script,{'PIONEER_Q38_WORK_BATCH4_FETCH':value}))
@@ -21,7 +24,9 @@ client={'PIONEER_Q38_BATCH4_REFERENCE_CLIENT':'1','PIONEER_Q38_SENTINEL_REFERENC
  'PIONEER_Q38_VECTOR_CLIENT':'1','PIONEER_Q38_WORK_CLIENT':'1','PIONEER_Q38_ROOT_CYCLE_CLIENT':'1',
  'PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT':'0','PIONEER_Q38_GROUP32_REFERENCE_CLIENT':'0',
  'PIONEER_Q38_AFFINE_RAWDOT_REFERENCE_CLIENT':'0','PIONEER_Q38_DIRECT_SRCB_REFERENCE_CLIENT':'0'}
-for script,flags,primary in [('build_qwen38_banks_driver.sh',driver,'PIONEER_Q38_BATCH4_FETCH_QUALIFICATION'),('build_qwen38_banks_client.sh',client,'PIONEER_Q38_BATCH4_REFERENCE_CLIENT')]:
+rawdriver={**driver,'PIONEER_Q38_BATCH_RAW_QUALIFICATION':'1','PIONEER_Q38_WORK_BATCH_RAW_INPUT':'1','PIONEER_DRIVER_BUILD_TAG':'2026102100010020'}
+rawclient={**client,'PIONEER_Q38_BATCH4_REFERENCE_CLIENT':'0','PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT':'1'}
+for script,flags,primary in [('build_qwen38_banks_driver.sh',driver,'PIONEER_Q38_BATCH4_FETCH_QUALIFICATION'),('build_qwen38_banks_client.sh',client,'PIONEER_Q38_BATCH4_REFERENCE_CLIENT'),('build_qwen38_banks_driver.sh',rawdriver,'PIONEER_Q38_BATCH_RAW_QUALIFICATION'),('build_qwen38_banks_client.sh',rawclient,'PIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT')]:
  for key,correct in flags.items():
   for wrong in ('0','1','01','-1','invalid','2026102100010018','2026102100010020'):
    if wrong==correct or (key==primary and wrong=='0'):continue
