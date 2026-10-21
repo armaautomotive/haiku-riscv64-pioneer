@@ -1,6 +1,6 @@
 OFFLINE fixed-public THREE32 operator/returned-root attribution diagnostic.
-October21 2026 12:35-12:41UTC. NOT native-run/transferred yet;NOT Work/
-Assistant speed mode. Current full f414/driver21 benchmark continues.
+October21 2026. Historical offline evidence;native attribution appended
+13:43UTC. NOT a Work/Assistant speed mode or production timing result.
 Best completed whole27B041 .181432516tok/s;20tok/s UNMET.
 
 Separate MODEL_NODE_PROFILE requires MODEL_ROOT_PROFILE and ALL original
@@ -47,3 +47,32 @@ SHA bbc0cc26371c20e2070ea3aa8cf2ca90c516cac691594c963035518973817a1d.
 Uninstrumented full-model flagOFF reproduces EXACT original
 f414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c.
 No native profiling/speed/Assistant claim from these offline checks.
+
+Native combined diagnostic bbc0cc26 completed on best041/tag12/gen53:
+three32 sequences,ALL96 position/token IDs EXACT vs uninstrumented041;
+47712 learned projections/48480 calls/119 workers,4558653 uploaded pages
+retained. Explicit clean_end1,CLI_EXIT0;subsequent CPU metadata confirms
+quiesced0/cold0/active_owner0/open_count1/guard1. No reboot/SD/power action.
+Own archived log:
+/private/tmp/pioneer-q38-node-native-evidence.Xa2tOzZk/model-node-root-profile-041-three32-20261021-a.log
+SHA e9801684da4f2c301afe1a6376da003a842cf41765c43528607e068ae296e45a.
+
+Published valid node/root metrics ONLY after explicit clean END. Node
+sums over81 warm positions:matrix373.831856s,MUL91.294281s,VIEW88.892042s,
+RMS_NORM53.162900s,RESHAPE51.161588s,UNARY39.132439s,GET_ROWS36.084055s,
+ADD30.470629s,CPY29.383384s;GATED_DELTA_NET9.283020s. Counts and all21
+operator buckets preserved in log. MANY views/reshapes dominate despite
+doing no arithmetic:per-node synchronization is substantial overhead.
+DO NOT interpret these as pure CPU costs or subtract them from f414.
+Instrumented81 positions/887.395657s=.091278337tok/s is NOT production
+performance and does NOT replace best uninstrumented .181432516tok/s.
+
+Root returned-copy counters preserve original ABI2;for dominantQ4K
+K5120:10368 samples,1233792 worker-sum,prepare5677305713cycles,
+wait/audit52619381228cycles,gather/DMA8904417865cycles;48821851 read
+packets/2643840writes,43710427peer polls/1233792 terminal audits.
+K17408 Q4K:5184samples,616896workers,prepare6103810249,wait29785697498,
+gather2138528277cycles;27476795read/1259712write packets. These phases
+include coordination/polling,NOT pure math or calibrated nanoseconds.
+Root wait/audit dominates root aggregate;this motivates independent
+tile-read overlap qualification,not an unmeasured speed promise.

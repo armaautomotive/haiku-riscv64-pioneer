@@ -278,7 +278,9 @@ int main(int argc,char** argv)
 	tt_pioneer_driver_reload sentinelTag={};sentinelTag.version=1;
 	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&sentinelTag,sizeof(sentinelTag)) || !PioneerQ38SentinelDebugTag(sentinelTag)) {
 		close(fd);
-#ifdef PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_PREFETCH_REFERENCE_CLIENT
+		puts("STOP_PREFETCH_REQUIRES_EXACT_IDLE_TAG23;NO_BEGIN_OR_CARD_READ");
+#elif defined(PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT)
 		puts("STOP_RAW_CACHE_REQUIRES_EXACT_IDLE_TAG22;NO_BEGIN_OR_CARD_READ");
 #elif defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT)
 		puts("STOP_FRONTEND_REQUIRES_EXACT_IDLE_TAG21;NO_BEGIN_OR_CARD_READ");

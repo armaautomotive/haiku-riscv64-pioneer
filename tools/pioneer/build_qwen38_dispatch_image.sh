@@ -1,6 +1,8 @@
 #!/bin/sh
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_WORK_TILE_PREFETCH:-0}" = 0 ] || { echo 'STOP one-tile prefetch has NO coordinator/controller qualification' >&2;exit 2; }
+[ "${PIONEER_Q38_TILE_PREFETCH_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_RAW_UNPACK_CACHE:-0}" = 0 ] || { echo 'STOP raw-Dst reuse changes peers ONLY;no coordinator/controller qualification exists' >&2;exit 2; }
 [ "${PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" = 0 ] || exit 2

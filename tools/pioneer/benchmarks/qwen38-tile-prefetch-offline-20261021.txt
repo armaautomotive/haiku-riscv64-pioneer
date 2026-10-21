@@ -1,0 +1,79 @@
+OFFLINE original-layout one-tile prefetch,October21 2026 13:43UTC.
+NOT installed/native-run or timed. Best whole27B remains041 .181432516
+tok/s;20tok/s UNMET. Assistant/service CLOSED;no boot/SD/power change.
+
+Hypothesis:overlap ONE normal immutable weight read with computation
+from the previous completed tile. Alternate original private raw L1
+90000/98000 buffers,3392B maximum. SAME packet bytes/counts/original TC
+formats/quantizers/FP32 sequential math/all source+PC+counter proofs.
+No batching/rawcopy/format/capacity/cache across jobs. Original root17,
+saved6e000..b0000 view and21GiB bank limits unchanged. At last block,
+restore UNISSUED destination90000 to original final command;no doorbell.
+Current reply/error/NIUidle proof REQUIRED before consuming its rawbuffer.
+Next pending read can write ONLY opposite buffer. Missing/wrong reply
+parks inert before next packet/output;NEVER retry/reset/automatic rollback.
+Checked mode original. All actual Tensix drains remain,NOT frontend21.
+
+Peer builds b/c IDENTICAL,main7856/8192B,affine5152/5376B,fetch1104/1792B:
+main4e3730b2b8594add7c4b2f35d90e46baf7d324c047276f01b235fa5bd72906b4
+affine61bf0a29575a4de077c4f985e46655d84b299ed1b12d804b550187bfdf7816e2
+fetch6006161e446a9e7afd2c75bc529cf7c20f983f6f85110f8376bb9147a1327009
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+Root17 unchanged65c790cf/d358b793;prefix70000..70700 remains originally
+owned. FlagOFF reproduces frontend21 and raw-cache22 byte-for-byte.
+Initial-a compiler emitted unsupporteddivu;replace power2division with
+shifts,NOT emulator loosening. Initial-a NOT qualified for native use.
+
+44800 exact DATA-only plans,all type/K/groups/block/bounds,11atomicinvalid
+cases;236 preSDK role/mixed-tag refusals pass spXrVmZc. Actual RV32/FPU/
+NoC54shapes,twoCHANGEDinputs+STOP,exactoldFP32+independentFP64,ALL64proofs,
+SAME math/SFPU/ACK/NoC bytes/counts/finalcommand pass ZoMol2eP. First/input/
+middle/LAST208missingNoC responses remainpending/inert. Actual skipfirst/
+second/LASTwait+wrongreturnbuffer mutation controls rejectbeforeoutput.
+Async endpoint progresses between REAL RISC instructions,data invisible
+untilcompletion;latencies1024/4099/65537 and adversarial replybetween old
+matrixpanels pass all3types. Not a silicon timing model/speed proof.
+Full log/private/tmp/pioneer-q38-tile-prefetch-full-20261021-c.log
+SHA0ffd8824c1ec848114d3e8519d45d87c8db92ee00daa5ef04116f6df1033d8ca.
+
+Harness correction:old arithmetic observer demanded globalNIUidle. Only
+exactTensix/CSR/affine97000/sum95000 reads get disjoint-pending premise;
+realNIU Load/Store sees truepending/counters and rawaccess independently
+proves completed oppositebuffer. Everyoldvalue/bounds/drain check kept.
+Coordinator prepares fixture AFTER privatejobdescriptor arrives,not
+beforechoosing Work;preserves exactoriginal route/destination checks.
+Defaultdelay0 cannotexercise overlap;explicitdelay3 and fixed/adversarial
+schedules added. Cached independentfull-tilecheck once/tile/job for CPU
+tractability;response/destination checks EVERYread,noCPUrawbufferwrites.
+All findings OFFLINE only,no candidate23 hardwareoperation issued.
+
+Actual unchangedroot+newpeer all9type/K twice/proofs/PC/source/NoC/DMA,
+first/middle/LAST140peerfailure retention pass yH8BIvLl. Root log
+/private/tmp/pioneer-q38-tile-prefetch-root-20261021-d.log
+SHA7a9689c5bc2e86e8e8e15b1a9df248b9cbe0bd1e07ad19d0b6df25bc15e74ff7.
+Actualkernel/controller all3owners retained on BME/map/delayed/first/
+middle/lastDMA failures;NOdisable/reset/retry,checkedisolation sfgaziiH:
+logSHA9b603d4b946b2216238c723ed7f02bd77a9da06cc2b19e1c4eb2781c1a1b93e6.
+491520actualregistrywords/120roles/zerogaps/bounds0lnb8wHh:
+logSHA2ac2a7b17e46f38cfa8a8ae2fda9772d05949981c3a667950f4ad61e6a8ab245.
+
+Tag23 driver a/b IDENTICAL:
+d3445b26f4496e669d48a39068312096403bd6ac869ef7bd45d8d19575ab9990
+guardd1ce2aa4/default43 2df0e0f8 unchanged. Separateexacttag DEBUGclient
+3fbbda1346c7eb1823d11e95e3cc0025cee6b908500e678517f1c5c60f2333d2
+andNOCPU-reference fixedpublic FFNhost17/23
+7b3f450a0182c4f7c5256cea348760fba09bc8561bb78150287c44ae63de8c64
+each twiceIDENTICAL.651debugmetadatachecks;420host preSDKrefusals+
+17ACTUALfork/wait/barrier/childfailureCPUmocks passc4DfIt29. HostlogSHA
+d0697116547f3f58f12ded069da54020d03a3a79a55aef94cc2dcdf6ef37cae6.
+
+Updater ONLYexplicit known-clean17<->23,all source/installed/guard/client
+hashespinned. ScriptSHA
+136187911506116d1792abfef48a7d168d09371d433132eea4f3f34c4995af1b.
+FULL3311actual filesystem/handshake/hash/symlink/owner/failure CPUMOCKcases
+PASS;NO native reload/reset/automaticrollback. Log
+/private/tmp/pioneer-hot-swap-tile-prefetch-full-20261021-a.log
+SHAff4fcdc5dfe025212f5333f38414c9c627a71fa5ff7ef5881fef23e0e338831f.
+Next nativequalification must retain CLOSEONLY on ANYUNKNOWN/mismatch;
+no END/retry/reset/hotrollback on unknown. Only explicitcleanEND unlocks
+next job. No fullmodel speed/quality/Assistant promotion claimed yet.

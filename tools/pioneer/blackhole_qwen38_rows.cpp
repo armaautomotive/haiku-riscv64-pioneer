@@ -7,6 +7,12 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+#if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT)
+#error Tile prefetch is a separate OFFLINE original-layout Work scheduling experiment
+#endif
+#include "PioneerQ38TilePrefetchPlan.h"
+#endif
 #if defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) && (!defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT))
 #error Frontend barrier is a separate OFFLINE original-layout direct-SrcB peer,not a batch/format mix
 #endif
@@ -14,6 +20,8 @@
 #ifndef PIONEER_Q38_WORK_BATCH4_FETCH
 #error Direct batch input requires the complete separate bounded-batch peer
 #endif
+#endif
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 #define PIONEER_Q38_RAW_BASE rawBase
 #define PIONEER_Q38_RAW_ARGUMENT ,rawBase
 #else
@@ -331,7 +339,7 @@ static void FetchBlock(uint32_t address)
 // FUTURE PRIVATE kernel descriptor only. This image has NO native handler.
 // Retarget ONLY an idle,read-only command to fixed root L1,self destination
 // unchanged. Never touch upper address/control/doorbell fields after UNKNOWN.
-#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
 static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,unsigned bytes)
@@ -363,6 +371,36 @@ static void SharedInputs(unsigned inputs,unsigned blocks)
 	FetchBlock(0x94000);
 #endif
 }
+#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
+uint32_t TilePrefetchStart(uint32_t source,uint32_t route,uint32_t raw,unsigned bytes){
+ ReadCommand(source,route,raw,bytes);
+ uint32_t expected=*Words(0xffb20208)+1;
+ *Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();
+ return expected; // NOT completion:only OLD disjoint raw buffer may be read
+}
+static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
+void TilePrefetchWait(uint32_t expected){
+ for(unsigned attempt=0;attempt<65536;attempt++)
+  if(!*Words(0xffb20040)&&*Words(0xffb20208)==expected&&!(*Words(0xffb20240)&255)){Fence();return;}
+ block_fault_park(); // UNKNOWN:inert,NO next command/read/reset/retry
+}
+static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
+uint32_t TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
+ PioneerQ38TilePrefetchPlan p;
+ if(!PioneerQ38TilePrefetchPlan::Describe(type,inputs,groups,group,block,first,p))block_fault_park();
+ if(!block)TilePrefetchWait(TilePrefetchStart(p.currentSource,route,p.currentRaw,p.bytes));
+ else TilePrefetchWait(pending);
+ // Only AFTER real response/idle/error proof may current raw be consumed.
+ // Start NEXT original-size read into the OTHER disjoint buffer,never an
+ // extra/widened/coalesced packet. No raw copy or changed quant format.
+ if(p.next)pending=TilePrefetchStart(p.nextSource,route,p.nextRaw,p.bytes);
+ else ReadCommand(p.currentSource,route,0x90000,p.bytes);
+ // Last command is restored WITHOUT a doorbell to original90000 shape,
+ // preserving ALL original final coordinator/source/counter proofs.
+ return p.currentRaw;
+}
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 // Cold prefix,original saved window. No asynchronous fetch/counter reset.
 // A failed command parks INSIDE FetchBlock;never copy/issue after UNKNOWN.
@@ -397,7 +435,7 @@ Batch4Stage(
 // This avoids generic pointer/lifetime bookkeeping for these static facts.
 // ALL finite metadata checks and atomic16-row publication still apply.
 static bool FixedAffine(unsigned type,unsigned bytes,unsigned panel,uint32_t (&base)[16]
-#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
  ,uint32_t rawBase
 #endif
 )
@@ -585,11 +623,17 @@ extern "C" unsigned block_main()
 #endif
 #endif
 	for (unsigned group=0;group<groups;group++) {
+#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
+#endif
 	for (unsigned block=0;block<blocks;block++) {
-#ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
+#if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 	uint32_t rawBase=0x90000;
 #endif
 #ifdef PIONEER_Q38_STREAM
+#ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+	if(skipDotCheck)rawBase=TilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
+#endif
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 	if(skipDotCheck)
 #ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT

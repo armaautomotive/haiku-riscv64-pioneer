@@ -6,6 +6,9 @@
 #endif
 #include <string.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_BENCHMARK_HOST_PREFETCH_QUALIFICATION) && (defined(PIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_FRONTEND_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION))
+#error Prefetch benchmark has its distinct fixed driver-tag role
+#endif
 #if defined(PIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION) && (defined(PIONEER_Q38_BENCHMARK_HOST_FRONTEND_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION) || defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION))
 #error Raw-Dst cache benchmark has its distinct fixed driver-tag role
 #endif
@@ -21,7 +24,9 @@
 static inline bool PioneerQ38BenchmarkHostTag(const tt_pioneer_driver_reload& r) {
  return r.version==1 && r.driver==55 && r.guard_version==1 && r.generation
   && !r.quiesced && !r.cold && !r.active_owner && r.open_count==1
-#ifdef PIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION
+#ifdef PIONEER_Q38_BENCHMARK_HOST_PREFETCH_QUALIFICATION
+  && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010023));
+#elif defined(PIONEER_Q38_BENCHMARK_HOST_RAW_CACHE_QUALIFICATION)
   && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010022));
 #elif defined(PIONEER_Q38_BENCHMARK_HOST_FRONTEND_QUALIFICATION)
   && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010021));

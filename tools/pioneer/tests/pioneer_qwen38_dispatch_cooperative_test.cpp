@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_TEST_RAW_UNPACK_CACHE)
+#if defined(PIONEER_Q38_TEST_TILE_PREFETCH)
+#define PIONEER_Q38_TILE_PREFETCH_IMAGE_MODEL_ONLY
+#include "pioneer_q38_tile_prefetch_image_test.cpp"
+using CooperativePeer=TilePrefetchImage;
+#elif defined(PIONEER_Q38_TEST_RAW_UNPACK_CACHE)
 #define PIONEER_Q38_RAW_CACHE_IMAGE_MODEL_ONLY
 #include "pioneer_q38_raw_unpack_cache_image_test.cpp"
 using CooperativePeer=RawCacheImage;
@@ -85,15 +89,18 @@ struct CooperativeDispatch:DispatchMachine {
 	void Bind() {
 		for (unsigned w=0;w<active;w++) {
 			auto& p=*actual[w]; p.base=memory.at(0x74080+w*32);
-#ifdef PIONEER_Q38_TEST_BATCH4_FETCH
+#if defined(PIONEER_Q38_TEST_BATCH4_FETCH) || defined(PIONEER_Q38_TEST_TILE_PREFETCH)
 			p.packets=p.originalPackets;
 #endif
 			for (unsigned i=p.inputReads;i<p.packets.size();i++) {
 				p.packets[i].address=p.base+(i-p.inputReads)*unsigned(p.tile.size());
 				p.packets[i].route=memory.at(0x74080+w*32+16);
 			}
-#ifdef PIONEER_Q38_TEST_BATCH4_FETCH
+#if defined(PIONEER_Q38_TEST_BATCH4_FETCH) || defined(PIONEER_Q38_TEST_TILE_PREFETCH)
 			p.originalPackets=p.packets;
+#endif
+#ifdef PIONEER_Q38_TEST_TILE_PREFETCH
+			p.delay=3;
 #endif
 			for (auto& v:p.root) v.second=memory.at(v.first);
 #ifdef PIONEER_Q38_TEST_DIRECT_SRCB
@@ -133,7 +140,7 @@ struct CooperativeDispatch:DispatchMachine {
 			assert(bytes==64 && !doorbells && p.pc==0x7204c); descriptors++;
 			for (unsigned i=0;i<16;i++) state.descriptor[i]=p.memory[remote+i*4]=memory.at(local+i*4);
 			assert(state.descriptor[11]==worker && state.descriptor[12]==state.finished+1 && state.descriptor[13]==1);
-#ifdef PIONEER_Q38_TEST_BATCH4_FETCH
+#if defined(PIONEER_Q38_TEST_BATCH4_FETCH) || defined(PIONEER_Q38_TEST_TILE_PREFETCH)
 			p.Prepare(state.descriptor[14]!=0);
 #endif
 		} else if (write) {
