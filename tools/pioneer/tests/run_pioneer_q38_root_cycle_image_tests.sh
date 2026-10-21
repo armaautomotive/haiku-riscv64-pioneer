@@ -15,6 +15,9 @@ case "${PIONEER_Q38_TEST_BLOCK_AFFINE:-0}" in
  1) peer_cpp=-DPIONEER_Q38_BLOCK_AFFINE_DST
     hash_is "$3/text.bin" 366e25c3ac97ad75fa9dc1e2295a71cc239cbe8d0e12a8452d14574082745a9e
     hash_is "$3/affine.bin" 189a185d35afe0aa22f4129adc708debada7a601736a09ffb8c6433b381512d6;;
+ 2) peer_cpp='-DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE'
+    hash_is "$3/text.bin" 9aa8f73b560311c4f19b0267bfa73247d49981d5f23395e50ab6347f0dbfba78
+    hash_is "$3/affine.bin" e55c606956e5602cdc9818b87ff7aa8e72e97e368abe8c1b8a8cd5585903de4b;;
  *) exit 2;;
 esac
 for image in "$1" "$2" "$3"; do hash_is "$image/boot.bin" e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b; done

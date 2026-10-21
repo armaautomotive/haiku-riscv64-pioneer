@@ -106,6 +106,12 @@ case "${PIONEER_Q38_BLOCK_AFFINE_DST:-0}" in
     q4_phases="$q4_phases -DPIONEER_Q38_BLOCK_AFFINE_DST";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_BLOCK_SCALE_REUSE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_BLOCK_AFFINE_DST:-0}" = 1 ] || exit 2
+    q4_phases="$q4_phases -DPIONEER_Q38_BLOCK_SCALE_REUSE";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 umask 077; mkdir -m 700 "$output"
 "$cross-g++" -std=c++11 -O2 -Wall -Wextra -Werror -ffreestanding -fno-exceptions -fno-rtti \

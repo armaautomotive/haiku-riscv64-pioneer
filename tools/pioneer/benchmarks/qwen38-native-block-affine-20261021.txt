@@ -1,0 +1,59 @@
+Exact block-resident Q4 metadata, physical qualification and matched FFN32.
+October21 2026 03:05-03:23 UTC. SAME Pioneer/normal1350MHz/frozen runtime,
+public model SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Control52ea41c9/tag2026102100010010/gen17 vs cache
+c8cbbc992fd16862dc60b5f2f0dfdd5766fa588dca8b0499e75bdd6f92221f71,
+tag2026102100010011/gen18. Idle-only guarded hot swap,NO reboot/SD/power.
+Peer text366e25c3ac97ad75fa9dc1e2295a71cc239cbe8d0e12a8452d14574082745a9e,
+prefix189a185d35afe0aa22f4129adc708debada7a601736a09ffb8c6433b381512d6.
+
+New cache passed52 physical independent-reference matrix jobs:
+18 synthetic Work+16 authenticated119-worker Work+18 checked/debug.
+Three explicit clean END/CLI_EXIT0,ALL returned words exact. Checked mode
+keeps original per-panel arithmetic/checks;cache is Work-Q4 ONLY. ALL
+sessions restored800->1350->800/uncertain0;CPU cold0/active_owner0/guard1.
+
+Matched real blk.0.ffn_down.weight K17408/N5120,119 workers,ONE graph:
+SAME diagnostic f0566393bc4e68fe2d66ff176dee63a8fc94b490c93f7d7100a9c11b4b186f8e.
+First graph primes ONLY12240 pages/50135040B,then32 warm repetitions.
+Repeatability checks OUTSIDE timed graph;NO CPU learned product/reference
+or fallback in Work. This is NOT whole-model/text-quality/token throughput.
+
+                         control52          block-cache c8
+Warm samples             32                 32
+Median graph seconds     0.011453000        0.010797000
+Mean graph seconds       0.011456094        0.010803156
+Minimum seconds          0.011408000        0.010766000
+Maximum seconds          0.011597000        0.010867000
+Total warm wall seconds  0.366847           0.346004
+Total matrix wall        0.365584           0.344642
+Total ioctl wall         0.339868           0.318016
+Calls/projections        33/33              33/33
+
+Median latency5.7278% lower,operation rate6.0758% higher on THIS graph.
+One32-sample session per variant,NOT broad workload/thermal/text evidence.
+All5120 output bits match each other AND earlier qualified output,
+SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56,
+cmpEXIT0. Both explicit clean END/CLI_EXIT0/clock restored/guardclear.
+
+Warm authenticated one-group Q4 K17408/119 workers additionally measured
+wait+physical-audit phase2875124->2607218 cycles (~9.3% lower),repeat
+2875125->2607121. NOT pure matrix or full-model time. Root preparation/
+gather phases unchanged approximately727k/297k cycles. Work CPU retains
+mandatory transport/source/owner safety only;debug references are separate.
+Latest completed whole27B remains EARLIER038/f414=0.175353237tok/s,NOT20.
+
+Native logs stage /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+block-affine-synthetic-native-20261021-a.log
+ SHA16f395fef3349f85225b56987e0992d047172f89b43b0a20f14c7091609e1c2c
+block-affine-auth119-native-20261021-a.log
+ SHAa497b705029fda6830cf8a8c19e7aa9d7b4250a828c98df2225144636e0095d3
+block-affine-checked-native-20261021-a.log
+ SHA2e51242bb7cb72b8c81b27e3ffc01ab038ea4fb6e0519131feadefd45e0723e1
+FFN logs /boot/home/pioneer-qwen38-vector-clear-20261018-t/:
+ffn32-root-cycle-control-20261021-a.log
+ SHA29a41d17813900ad982d44907631f5695149e2a1e171c591fce3f4dbe086b885
+ffn32-block-affine-20261021-a.log
+ SHA8f011f3c9d8824de43f594786b82bbbc50163cda7543effc0866f29e4c2da462
+Matching local logs /private/tmp/pioneer-q38-block-affine-native-evidence.xJy8t7sE/.
+Serial boundaries63849204/63852871/63861465/63835804/63867834.

@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_SCALE_REUSE_QUALIFICATION
+#ifndef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
+#error Scale reuse qualification requires the exact separate block-affine qualifier
+#endif
+#include "PioneerQ38ScaleReusePeerImage.h"
+#endif
 #ifdef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
 #if !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_INLINE_CONFIG)
 #error Block-affine native QUALIFICATION requires its exact timing/inline Work chain
@@ -109,6 +115,9 @@ static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t add
 {
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
  if (!worker) return PioneerQ38RootCyclePrefixWord(address);
+#endif
+#ifdef PIONEER_Q38_SCALE_REUSE_QUALIFICATION
+ if (worker && worker<120) return PioneerQ38ScaleReusePeerPrefixWord(address);
 #endif
 #ifdef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
  if (worker && worker<120) return PioneerQ38BlockAffinePeerPrefixWord(address);
@@ -720,6 +729,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_SCALE_REUSE_QUALIFICATION
+ if (worker && worker<120) return PioneerQ38ScaleReusePeerWord(word);
+#endif
 #ifdef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
  if (worker && worker<120) return PioneerQ38BlockAffinePeerWord(word);
 #endif

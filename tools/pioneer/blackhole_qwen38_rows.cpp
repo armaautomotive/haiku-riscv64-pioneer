@@ -31,6 +31,9 @@
 #endif
 #include "PioneerQ38BlockAffineDst.h"
 #endif
+#if defined(PIONEER_Q38_BLOCK_SCALE_REUSE) && !defined(PIONEER_Q38_BLOCK_AFFINE_DST)
+#error Block scale reuse requires the separately qualified block metadata lifetime
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
 #endif
@@ -501,7 +504,11 @@ extern "C" unsigned block_main()
 		VectorPanelEmitter blockEmitter; blockEmitter.Drain(); // prior deferred store completes BEFORE format change
 		if (!affine.BlockQ4(reinterpret_cast<PioneerQ38Panel*>(0x91000),reinterpret_cast<volatile uint32_t*>(0x97000),256)) block_fault_park();
 		Fence();
-		if (!PioneerQ38BlockAffineDst(blockEmitter)) block_fault_park();
+		if (!PioneerQ38BlockAffineDst(blockEmitter
+#ifdef PIONEER_Q38_BLOCK_SCALE_REUSE
+			,Bits(scale)
+#endif
+		)) block_fault_park();
 	}
 #endif
 #endif

@@ -1,5 +1,38 @@
 # Native build status
 
+October20,20:25 Vancouver (October21,03:25 UTC) NATIVE CACHE+REAL FFN32 PASS:
+c8cbbc99/tag2026102100010011/gen18 passed52 physical exact numerical
+jobs:18 Work synthetic,16 auth119,18 checked;THREE explicit clean ENDs.
+Then SAME pinned f056 diagnostic real K17408/N5120 FFN32 matched control:
+median11.453->10.797ms (5.7278% lower),mean11.456094->10.803156ms,
+ALL5120 outputs exact to control/earlier05cda52a,32 repeats/33 calls each,
+BOTH clean END/CLI_EXIT0,800->1350->800/uncertain0/guardcold0/active_owner0.
+Warm Q4 primitive wait+CURRENT-audit2875124->2607218cycles (~9.3% lower).
+Full logs/hashes/limits in benchmarks/qwen38-native-block-affine-20261021.txt.
+This is ONE FFN graph,NOT whole27B tok/s/quality evidence. Whole-model
+rate remains earlier0.175353237tok/s,NOT20. Goal ACTIVE,board clean idle.
+
+OFFLINE subsequent Q4 SCALE REUSE passed full ACTUAL image iYllxCga,
+all formats/widths/groups/modes/two changed-input jobs EXACT,ALL32 LReg3
+lanes observed current-block before EACH use,poisoned register/missing
+load detected before output. Q4 decoder/replay/matrix/affine do NOT clobber
+LReg3. Load once/block after metadata format/Thread5 restored,ALL lanes
+explicitly enabled,final full drain BEFORE next CPU SrcB staging. Initial
+prototype's wrong placement was rejected BEFORE native use. b/c repeat
+text9aa8f73b/prefixe55c6069 EXACT,flag-OFF remains EXACT cache366e/189a.
+K17408/groups16 RV17,933,663->17,068,688 (~4.8% fewer);scale-load ops
+139264->4352. OFFLINE counts,NOT silicon/model speed. No numeric rounding,
+matrix,config,drain,NoC,source/epoch or checked/debug change.
+
+Separate SCALE native QUALIFIER041fef18/tag2026102100010012 builds a/b
+EXACT;NO native scale run/install yet. Full native flag-OFF EXACT installed
+c8cbbc99/guardd1ce/default2df.63 dependency/mixed-role/layout refusals before
+SDK/output PASS;actual root+real scale peer zhOS08PV and actual native
+handler/Work DMA+RUN8tDzSL1e PASS,including retained failure cleanup.
+All-word header+pilot vqNlsOvF PASS. Run/control frame464B. Focused updater60
+PASS;earlier expanded2591 PASS,new expanded run pending. Scale candidate
+is STAGING only while native cache remains idle. No automatic rollback.
+
 October20,19:56 Vancouver (October21,02:56 UTC) EXACT Q4 BLOCK CACHE PREPARED:
 Separate native QUALIFIER c8cbbc99/tag2026102100010011 builds a/b EXACT;
 STAGING only,NOT installed/native qualified. Candidate peer366e25c3/

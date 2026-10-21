@@ -10,6 +10,7 @@ case "$1" in
  --apply-resident-root-diagnostic|--restore-resident-root-diagnostic) mode=$1;;
  --apply-root-cycle-diagnostic|--restore-root-cycle-diagnostic) mode=$1;;
  --apply-block-affine-qualification|--restore-block-affine-qualification) mode=$1;;
+ --apply-scale-reuse-qualification|--restore-scale-reuse-qualification) mode=$1;;
  --apply-sparse-profile|--restore-sparse-profile|--apply-sparse-export|--restore-sparse-export|--apply-normal-clock|--restore-normal-clock|--apply-input-sum-cache|--restore-input-sum-cache|--apply-zero-minimum|--restore-zero-minimum|--apply-native-operand|--restore-native-operand|--apply-compact-output|--restore-compact-output|--apply-compact-profile|--restore-compact-profile|--apply-deferred-affine|--restore-deferred-affine|--apply-ordered-extents|--restore-ordered-extents|--apply-inline-config|--restore-inline-config) mode=$1;;
  --bootstrap|--apply-a|--apply-b|--apply-profile|--restore-profile|--apply-batch|--restore-batch|--apply-compact|--restore-compact|--apply-fast|--restore-fast|--apply-reuse|--restore-reuse|--apply-cross-reuse|--restore-cross-reuse|--apply-work|--restore-work|--apply-work-profile|--restore-work-profile|--apply-work-posted|--restore-work-posted|--apply-work-cohort|--restore-work-cohort|--apply-work-q4|--restore-work-q4|--apply-work-q4-inline|--restore-work-q4-inline|--apply-work-span|--restore-work-span|--apply-work-fast-span|--restore-work-fast-span|--apply-work-span-code-reuse|--restore-work-span-code-reuse|--apply-work-int-sfpu|--restore-work-int-sfpu|--apply-work-pipelined|--restore-work-pipelined|--apply-work-static-vector|--restore-work-static-vector|--apply-work-cached-affine|--restore-work-cached-affine|--apply-work-replay-operand|--restore-work-replay-operand|--apply-work-dot|--restore-work-dot|--apply-work-output-dma|--restore-work-output-dma|--apply-work-queued-entry|--restore-work-queued-entry|--apply-local-delta|--restore-local-delta|--apply-local-delta-terminal|--restore-local-delta-terminal|--apply-current-profile|--restore-current-profile) mode=$1;;
  *) exit 2;;
@@ -63,6 +64,7 @@ candidate_gdn_zero_diagnostic=$stage/tenstorrent_pci_probe-gdn-zero-diagnostic-8
 candidate_resident_root_diagnostic=$stage/tenstorrent_pci_probe-resident-root-diagnostic-213ebf0a
 candidate_root_cycle_diagnostic=$stage/tenstorrent_pci_probe-root-cycle-diagnostic-52ea41c9
 candidate_block_affine_qualification=$stage/tenstorrent_pci_probe-block-affine-qualification-c8cbbc99
+candidate_scale_reuse_qualification=$stage/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
 guardsource=$stage/pioneer_p100a_reload_guard
 incoming=$stage/driver.incoming
 guardincoming=$stage/guard.incoming
@@ -111,6 +113,7 @@ hash_gdn_zero_diagnostic=8ccb2a24c7afeca60625c241a81cffa23722c8f5fce341fb5a3a610
 hash_resident_root_diagnostic=213ebf0aadd6a78eac32a6cc35d9fe83cb4546dbd3cc54eb224d551557a92831
 hash_root_cycle_diagnostic=52ea41c91681353f20d4ce67bc0a0e338a0750aa0ab3f46bcd89e74a558a0424
 hash_block_affine_qualification=c8cbbc992fd16862dc60b5f2f0dfdd5766fa588dca8b0499e75bdd6f92221f71
+hash_scale_reuse_qualification=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
 guardsha=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 clientsha=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 taga=2026101900010001
@@ -157,6 +160,7 @@ tag_gdn_zero_diagnostic=202610210001000e
 tag_resident_root_diagnostic=202610210001000f
 tag_root_cycle_diagnostic=2026102100010010
 tag_block_affine_qualification=2026102100010011
+tag_scale_reuse_qualification=2026102100010012
 exact()
 {
  test -f "$1" && test ! -L "$1" || return 1
@@ -286,6 +290,8 @@ else
  elif [ "$mode" = --restore-root-cycle-diagnostic ]; then source=$candidate_resident_root_diagnostic; expected=$hash_root_cycle_diagnostic; result=$hash_resident_root_diagnostic; oldtag=$tag_root_cycle_diagnostic; newtag=$tag_resident_root_diagnostic
  elif [ "$mode" = --apply-block-affine-qualification ]; then source=$candidate_block_affine_qualification; expected=$hash_root_cycle_diagnostic; result=$hash_block_affine_qualification; oldtag=$tag_root_cycle_diagnostic; newtag=$tag_block_affine_qualification
  elif [ "$mode" = --restore-block-affine-qualification ]; then source=$candidate_root_cycle_diagnostic; expected=$hash_block_affine_qualification; result=$hash_root_cycle_diagnostic; oldtag=$tag_block_affine_qualification; newtag=$tag_root_cycle_diagnostic
+ elif [ "$mode" = --apply-scale-reuse-qualification ]; then source=$candidate_scale_reuse_qualification; expected=$hash_block_affine_qualification; result=$hash_scale_reuse_qualification; oldtag=$tag_block_affine_qualification; newtag=$tag_scale_reuse_qualification
+ elif [ "$mode" = --restore-scale-reuse-qualification ]; then source=$candidate_block_affine_qualification; expected=$hash_scale_reuse_qualification; result=$hash_block_affine_qualification; oldtag=$tag_scale_reuse_qualification; newtag=$tag_block_affine_qualification
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1

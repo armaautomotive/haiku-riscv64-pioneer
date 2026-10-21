@@ -105,6 +105,9 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 #endif
 		e.Op(0x70230000|(metadataRow+4)|parity);
 		e.Op(0x70530000|108|parity);
+#ifdef PIONEER_Q38_BLOCK_SCALE_REUSE
+		if (!BlockMetadata)
+#endif
 		PioneerSfpuLoad32(e,3,scale);
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 		if (!zeroMinimum)

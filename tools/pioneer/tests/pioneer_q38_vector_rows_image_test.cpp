@@ -253,7 +253,12 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 #endif
 		if (op==0x8f000000) { vectorOps++; drained=false; return; }
 		if ((code>=0x70 && code<=0x8d) || code==8 || code==0x90) {
-			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible) && thread[2]==1
+			bool registerOnly=false;
+#ifdef PIONEER_Q38_TEST_BLOCK_SCALE_REUSE
+			registerOnly=BlockAffineActive() && blockScratchWords==256 && blockImportMask==65535
+				&& (op==0x8a000002 || (code==0x71 && ((op>>20)&7)==3));
+#endif
+			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible || registerOnly) && thread[2]==1
 				&& (BFloat?PioneerQ38BFloatMatrixEquivalent(config[0],config[1],thread[2],thread[3]):
 					(config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])))
 				&& config[220]==0 && thread[5]==4);
