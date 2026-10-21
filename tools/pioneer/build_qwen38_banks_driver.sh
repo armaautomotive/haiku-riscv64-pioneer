@@ -3,6 +3,12 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}" in
+ 0) [ "${PIONEER_Q38_WORK_SENTINEL_POLL:-0}" = 0 ] || {
+  echo 'STOP sentinel polling needs its separate root/controller QUALIFICATION chain' >&2;exit 2; };;
+ 1) [ "${PIONEER_Q38_WORK_SENTINEL_POLL:-0}:${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}" = 1:1 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}" in
  0) [ "${PIONEER_Q38_WORK_DIRECT_SRCB:-0}" = 0 ] || {
   echo 'STOP direct SrcB needs its separate original-TC native QUALIFICATION chain' >&2;exit 2; };;
@@ -310,6 +316,7 @@ if [ "${PIONEER_Q38_GROUP32_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONE
 if [ "${PIONEER_Q38_NATIVE_Q8_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_NATIVE_Q8_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_AFFINE_RAWDOT_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_DIRECT_SRCB_QUALIFICATION"; fi
+if [ "${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_SENTINEL_POLL_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_ORDERED_EXTENT_FAST"
 fi

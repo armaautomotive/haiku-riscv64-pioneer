@@ -39,6 +39,16 @@ public:
 			&& !fstat(fileno(file),&current) && Same(identity,current);
 	}
 	const PioneerQwen38Gguf& Model() const { return model; }
+#ifdef PIONEER_Q38_BENCHMARK_HOST
+	// POSIX stdio active-handle barrier before a SINGLE-THREADED benchmark
+	// parent forks. SAME already fully authenticated open description only;
+	// never a pathname reopen,digest bypass,model load or GPU capability.
+	// PIONEER_Q38_BENCHMARK_FORK_BARRIER_BEGIN
+	bool PrepareBenchmarkFork() {
+		return !borrowed && Ready() && !fseeko(file,0,SEEK_SET) && Ready();
+	}
+	// PIONEER_Q38_BENCHMARK_FORK_BARRIER_END
+#endif
 #ifdef PIONEER_Q38_Q8_DOMAIN_DIAGNOSTIC
 #ifdef PIONEER_Q38_WORK_INFERENCE
 #error Quant-byte inventory must NEVER enter Work inference

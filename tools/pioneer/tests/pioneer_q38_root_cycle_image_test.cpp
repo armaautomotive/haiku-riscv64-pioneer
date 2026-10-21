@@ -43,7 +43,12 @@ template<class Base> struct CycleRoot:CompactReturnMachine<Base> {
 			if (large) assert(delta>UINT32_MAX);
 		}
 	}
+	bool RootDiagnosticTrailerValid() const override {
+		if(this->WorkCached()){CheckCycles();return true;}
+		return CompactReturnMachine<Base>::RootDiagnosticTrailerValid();
+	}
 };
+#ifndef PIONEER_Q38_ROOT_CYCLE_IMAGE_MODEL_ONLY
 int main(int argc,char** argv)
 {
 	assert(argc==4); setvbuf(stdout,nullptr,_IOLBF,0);
@@ -102,3 +107,4 @@ int main(int argc,char** argv)
 	}
 	puts("PASS OFFLINE actual ROOT cycle image:108 shape/worker cases,64-bit HIGH/LOW/HIGH and rollover/bounded instability/backward refusal,unchanged ALL57 safety fields/output/NoC/DMA,checked+STOP zero CSR reads,ALL64 peer-proof faults and NoC uncertainty inert;real peer arithmetic EXACT;FABRICATED COUNTER_NOT_NATIVE_TIME_OR_SPEED");
 }
+#endif

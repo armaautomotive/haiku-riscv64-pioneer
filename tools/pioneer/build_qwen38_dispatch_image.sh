@@ -2,6 +2,12 @@
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
 [ "$#" = 2 ] || exit 2
+case "${PIONEER_Q38_WORK_SENTINEL_POLL:-0}" in
+ 0) sentinel_cpp=;;
+ 1) [ "${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_WORK_COHORT_CACHE:-0}:${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}:${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}:${PIONEER_Q38_PEER_PROGRESS:-0}" = 1:1:1:0:0:0 ] || exit 2
+    sentinel_cpp=-DPIONEER_Q38_WORK_SENTINEL_POLL;;
+ *) exit 2;;
+esac
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
@@ -53,6 +59,7 @@ case "${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}" in
  *) exit 2;;
 esac
 if [ "${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}" = 1 ]; then fault_cpp="$fault_cpp -DPIONEER_Q38_ROOT_CYCLE_PROFILE"; fi
+fault_cpp="$fault_cpp $sentinel_cpp"
 case "${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}" = 1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_TRANSFER_DIAGNOSTIC";; *) exit 2;; esac
 case "${PIONEER_Q38_PEER_PROGRESS:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" = 1:1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_PEER_PROGRESS";; *) exit 2;; esac
 case "$output" in /*) ;; *) exit 2;; esac

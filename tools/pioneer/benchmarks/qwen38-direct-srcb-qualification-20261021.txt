@@ -73,3 +73,20 @@ stays installed ONLY for this isolated run,no concurrent card/transfer job.
 Remote/boot/home/pioneer-qwen38-vector-clear-20261018-t/
 full-model-work-direct-srcb-three32-20261021-a.log.
 Serial start64,190,709;all original model/four frozen runtime libs unchanged.
+
+Completion update08:47 UTC:full run ended cleanly,CLI_EXIT0,normal clock
+800->1350->800/restored1/uncertain0. ALL96 token IDs repeat identically AND
+match041 control96 exactly.81 warm positions/451.123024s=.179551909tok/s,
+versus041 .181432516:1.036533% LOWER sampled throughput. ONE session each,
+not robust thermal/statistical evidence. NO cause asserted from this pair.
+Projection improvement did NOT establish whole-model benefit;NOT PROMOTED.
+Mean81 valid host profiles:matrix callback4.457402284s,Work ioctl4.173985617s,
+otherGGML1.112017765s.497callbacks per measured position;47712 projections/
+48480calls/119workers total.18,672,242,688B/4,558,653pages retained.
+Prime724.982942s,repack148.637851/upload575.670179 outside warm timing.
+Cold smoke1287.458576s is NOT steady token speed or text-quality evidence.
+Full log SHA069f83c82613c613287a29450aa1b0528fdd1c281391ae582821a2012ce4e938,
+archived in same/private/tmp/pioneer-q38-direct-srcb-native-evidence.pbRtIDrE/.
+Serial end64,205,627. Guarded known-clean restore041/tag12/gen31 confirmed,
+quiesced0/cold0/active_owner0/open_count1/guard1. No reboot/reset/SD changes.
+Continuing separate coordinator-polling work;20tok/s remains UNMET.

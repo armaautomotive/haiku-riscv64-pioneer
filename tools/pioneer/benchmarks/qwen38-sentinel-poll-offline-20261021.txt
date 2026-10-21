@@ -1,0 +1,86 @@
+OFFLINE coordinator polling experiment,October21 2026.
+NO native execution or speed claim for this candidate at this checkpoint.
+Motivation:separate returned-counter diagnostic saw4562 status polls and
+119terminal audits per real FFN projection. Wait counter combines compute,
+polling and audit;this does NOT isolate polling as the main bottleneck.
+
+This candidate is ONLY scheduling/backoff,NOT asynchronous/batched NoC.
+All original Transfer/Peer/current nonce/status/source/TWO physical PC/reset
+and terminal proofs remain. Work first polls a max-group worker,ties choose
+LAST-launched.64..2048 bounded local NOP-loop backoff,NO extra clock/CSR/
+NoC access. That worker is ONLY a hint;EVERY other worker still must pass
+the full ORIGINAL audit. A non-sentinel can finish later and is NOT skipped.
+Original workers*65536 GLOBAL status-poll budget spans BOTH phases,with
+the same65536 per-sentinel limit. No extra poll after exhaustion/fault.
+Checked/STOP no sentinel or backoff;all their original packets/proofs remain.
+Cold helper inside ORIGINAL saved immutable prefix70000..72000;main
+7880/8192B,prefix3856/8192B,boot/control/descriptor/owner ranges unchanged.
+
+Twice identical candidate b/c:
+text65c790cf68dc705a3af5458e2b89aafa28a5b316c0a7b9fad1c8bd51fd36ecd8
+prefixd358b793b2c83def15e58fa52b62197e2f2241dd85e9bc1a5fc9a1733cf46308
+boote678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+FlagOFF reconstructs EXACT original rootaa27f435/prefix15643b20.
+Peer remains direct-SrcB209fc6b8/prefix08333055,original-TC ABI2 unchanged.
+
+15,232 metadata-selection/late-tie/atomic-refusal/bounded-backoff cases pass.
+ACTUAL extracted WaitPeers tests all119audited once,late non-sentinel,
+checked+STOP no backoff,sentinel65536 and global workers*65536 exact
+exhaustion/last-allowed completion;first/mid/last audit faults propagate
+without another call. Evidenceo0kKysrJ;no device or physical-proof emulation.
+ACTUAL full ROOT RV32 execution:108 shapes/workers;ALL57 safety fields,
+output/packets/DMA bit-identical in original poll-count peer fixture.
+Independent progress follows fabricated instruction steps,NOT poll count:
+late non-sentinel remains fully audited,two physical PCs/reset for ALL.
+Fewer simulated status polls in those fixtures are NOT silicon timing or
+throughput. All64peer-proof corruptions,PC/reset faults,NoC uncertainty,
+FIRST/MID/LAST DMA failures,64-bit counter rollover/large/unstable/backward
+cases refuse/inert;actual Q8/Q4/Q6 peer arithmetic stays exact.
+Final evidenceChw2YX9G,log/private/tmp/pioneer-q38-sentinel-root-full-20261021-c.log
+SHA87299520db03b907ff9e6ee720c1a3f57345f00bdcd430f9c58a56a86f66c02e.
+Parent-root/direct-peer regression also passes,evidenceZ2GQqk7M.
+
+Separately gated qualifier driver84ab80ac87ce3486c4194be6743b44c56492cd7282e934d966e4ee39d48af296,
+tag2026102100010017,twice identical;guardd1ce2aa4/default432df0e0f8 unchanged.
+Native selector requires complete direct-SrcB/affine/cache/root-cycle chain;
+ordinary inference builder refuses experimental source flag.155 build-role
+refusals,93 exact idle tag/owner/cold/guard/generation checks pass.
+Debug7fa411b7ecfc4511a139893a0ff5ce710eed53e0c4aec4d8872bbcac36f76249
+twice identical,CPU reference ONLY in this diagnostic;also prints already
+returned HOST-memory counters with NO additional card access. Original
+direct debug9b4ea175 remains byte-identical with new flagOFF.
+Actual kernel DMA/controller faults pass:delayed mapping/BME/first-middle-
+last transfer failures preserve ALL owners and clock/cold latch without
+disable/reset/retry;checked isolation and clean END retained. Evidence
+0tphTsuU,log/private/tmp/pioneer-q38-sentinel-controller-20261021-a.log
+SHA87dd304ecbf15e00d868b35d211587f67e1852dc5aa12ceef7b35e8a9bef559c.
+2,951 actual updater hash/symlink/idle/owner/handshake/failure cases pass.
+Apply/restore ONLY known-clean7056/tag16 <->84ab/tag17;no auto rollback.
+No card/transfer overlap;candidate has NOT run on hardware at checkpoint.
+Best measured27B remains041 .181432516tok/s;20tok/s target UNMET.
+
+Native update09:17 UTC:driver84ab/tag17/gen33,normal1350MHz,64CPU/full128GB.
+20synthetic+18authenticated119-worker+18unchanged checked jobs ALL pass,
+zero numerical mismatches,cleanEND/CLI_EXIT0 each. Mixed Q8/Q4/Q6 then
+return-to-Q8 SAME cohort succeeds. Own remote stage logs:
+sentinel-poll-synthetic-20261021-a.log
+SHA1919a82f96e3e5bdbd650ccbded6376fff70bed4a8183912263e078ed87f5c3c
+sentinel-poll-auth119-20261021-a.log
+SHAbea809843b358bb8053387d112b0bd6fc0352fee9e0d9a5146e6ac7a8f2c94cc
+sentinel-checked-regression-20261021-a.log
+SHA70c5c80e9be80dad4b3825628c2f381ba42d708cda7fbd1296c78c243c442ae1.
+
+Unchangedf056 FFN32 Work/no-CPU-reference:32valid samples,33projections/
+calls,12240pages50135040B,no repeat upload,output05cda52a identical.
+Median.010508500s,mean.010531063,min.010472/max.010845;warm.337241s,
+matrix callback.336040s,ioctl.310136s. Against fresh041 median.010524500
+this is only.152026%lower sampled median;against direct7056 .010395000
+it is1.091871%higher. ONE session each,NOT a meaningful/statistically
+qualified speedup and NOT a whole-model/token-rate result. CleanEND/
+CLI_EXIT0,CPU-only reload metadata confirmsowner0/cold0/open1/guard1.
+ffn32-sentinel-20261021-a.log
+SHAe4625421d16816d5f413230aa94a52f867efbf0c8bb2604c7ebff6b30cff5323.
+No code/transfer/job overlap. Assistant remains closed;boot/SD/power intact.
+Unchangedf414 full27B THREE32 started09:17 UTC,ONGOING;NOT PROMOTED.
+Remote/boot/home/pioneer-qwen38-vector-clear-20261018-t/
+full-model-work-sentinel-three32-20261021-a.log.

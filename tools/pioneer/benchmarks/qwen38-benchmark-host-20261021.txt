@@ -1,0 +1,37 @@
+Fixed-public-FFN benchmark command host,October21 2026.
+OFFLINE-qualified at this checkpoint,NOT yet run on Haiku/card.
+This is benchmark iteration infrastructure,NOT a token-speed improvement,
+model/Assistant mode,path selector,authentication bypass or CPU reference.
+Normal flag-OFF FFN binary rebuilds EXACT
+f0566393bc4e68fe2d66ff176dee63a8fc94b490c93f7d7100a9c11b4b186f8e.
+
+Dedicated command-host binary f8830365c7d849e7fdd02ba05a694d56725b271dc82b7f8c40c8b1a026a08c32
+twice identical. Pinned pristine c060ca974c77 headers and four already
+authenticated runtime libraries;dirty llama.cpp and FlashNext untouched.
+ONLY --public-ffn-command-host;fixed original public27B filename and full
+c600de03 SHA authentication before any accelerator FD or GGML threads.
+Parent holds SAME read-only authenticated open file;Ready/fstat identity
+checks remain. POSIX stdio seek barrier before each SINGLE-THREADED fork.
+Parent NEVER opens accelerator or initializes GGML. Explicit measure line
+forks a fresh child/COW globals,GGML and accelerator session. Child runs
+the SAME33-graph public FFN Work/no-CPU-reference/export test and must
+explicitly prove clean END before zero exit. Parent accepts ONLY a known
+zero normal child exit AND unchanged source. Failed/lost/interrupted child
+means STOP;NO further fork,END,reset,retry,card read or rollback by parent.
+No user-supplied output path:private0700 directory/O_EXCL0600 outputs/logs.
+Idle parent permits a separately guarded known-clean driver hot-swap;the
+host itself NEVER changes drivers. Exact idle tag12/16/17 BEFORE original
+TC ABI2 query/BEGIN. No SM7/native-Q8/profile/CPU/Assistant/full-model role.
+
+33 exact-tag metadata cases,27 ACTUAL extracted Work support cases and
+54 pre-SDK/libraries/output role/format refusals pass. Policy exercises
+1024 successful fresh rounds and sticky auth/transition/failure refusals.
+17 ACTUAL extracted main/fork/wait/log/control and same-FILE barrier tests
+pass with CPU-only source/session/graph mocks:6 fresh children twice,
+shared buffered-file offset changes,EOF/quit,bad/partial commands,graph or
+session/END failure,killed child,source change and SIGTERM prevent another
+child. ONLY test adaptation is private mkdtemp root instead of /boot/home.
+These mocks do NOT authenticate the real19GB file or qualify native GPU.
+EvidenceAs7IB8vw. Existing FFN/Q8 actual repeat-loop failure/stop/mismatch/
+clock tests,ordinary cohort session and SM7/profile support regressions pass.
+Best full27B remains041 .181432516tok/s;20tok/s target UNMET.

@@ -14,6 +14,10 @@ template<class Base> struct CompactReturnMachine:OutputReturnMachine<Base> {
 		}
 		assert(words>=this->active*16 && words<=this->active*256); return words*4;
 	}
+	virtual bool RootDiagnosticTrailerValid() const {
+		for(unsigned i=57;i<64;i++)if(this->memory.at(0x7f800+i*4))return false;
+		return true;
+	}
 	void Packet() override {
 		bool write=this->command[7]==0x212;
 		bool pci=(write?this->command[5]:this->command[2])==1555;
@@ -52,7 +56,7 @@ template<class Base> struct CompactReturnMachine:OutputReturnMachine<Base> {
 		for (unsigned i=words;i<this->host.size();i++) assert(this->host[i]==0xdeadbeef);
 		assert(this->memory.at(0x7f8c4)==0x324f3851 && this->memory.at(0x7f8c8)==words*4
 			&& this->memory.at(0x7f8cc)==this->memory.at(0x74018) && this->memory.at(0x7f8e0)==1);
-		for (unsigned i=57;i<64;i++) assert(!this->memory.at(0x7f800+i*4));
+		assert(RootDiagnosticTrailerValid());
 	}
 };
 #endif

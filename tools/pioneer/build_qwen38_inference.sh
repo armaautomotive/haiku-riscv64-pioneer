@@ -2,6 +2,13 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+case "${PIONEER_Q38_BENCHMARK_HOST:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_DISPATCH_INFERENCE:-0}:${PIONEER_Q38_VECTOR_INFERENCE:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}:${PIONEER_Q38_FFN_REPEAT_BENCH:-0}:${PIONEER_Q38_Q8_REPEAT_BENCH:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}:${PIONEER_Q38_ROOT_STATS_BENCH:-0}" = work:1:1:1:1:1:1:0:0:0:0:0 ] || exit 2;;
+ *) exit 2;;
+esac
+[ "${PIONEER_Q38_WORK_SENTINEL_POLL:-0}" = 0 ] || {
+ echo 'STOP sentinel polling is an offline kernel experiment,not an inference selector' >&2;exit 2; }
 case "${PIONEER_Q38_ROOT_STATS_BENCH:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_DISPATCH_INFERENCE:-0}:${PIONEER_Q38_VECTOR_INFERENCE:-0}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = work:1:1:1:1:0:0:0 ] || exit 2
@@ -87,6 +94,7 @@ if [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_Q8_REPEAT_BENCH -DPIONEER_Q38_FFN_REPEAT_BENCH"
 fi
 if [ "${PIONEER_Q38_ROOT_STATS_BENCH:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_ROOT_STATS_BENCH"; fi
+if [ "${PIONEER_Q38_BENCHMARK_HOST:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST"; fi
 if [ "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_NATIVE_Q8_LAYOUT"
  if [ "${PIONEER_Q38_NATIVE_Q8_MODEL_QUALIFICATION:-0}" = 1 ]; then
@@ -118,6 +126,7 @@ for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$lib
 case "${PIONEER_Q38_CPU_POOL_PROBE:-0}" in
  0) program=$project/tools/pioneer/pioneer_q38_inference.cpp
     [ "${PIONEER_Q38_ASSISTANT_WORKER:-0}" = 0 ] || program=$project/tools/pioneer/pioneer_assistant_qwen27.cpp
+    [ "${PIONEER_Q38_BENCHMARK_HOST:-0}" = 0 ] || program=$project/tools/pioneer/pioneer_q38_benchmark_host.cpp
     set -- "$@" "$project/tools/pioneer/PioneerQ38GgmlBackend.cpp" "$program";;
  1) set -- "$@" "$project/tools/pioneer/pioneer_q38_cpu_pool_probe.cpp";;
  *) exit 2;;

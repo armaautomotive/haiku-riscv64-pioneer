@@ -7,6 +7,12 @@ typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerInt8Operand.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
+#ifdef PIONEER_Q38_WORK_SENTINEL_POLL
+#if !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT)
+#error Separate offline sentinel polling requires the complete exact Work/root-counter chain
+#endif
+#include "PioneerQ38PollSentinel.h"
+#endif
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 #include "PioneerQ38OutputTransfer.h"
 #endif
@@ -248,6 +254,41 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous)
 	if (reset!=0x46800 || first<0x72000 || first>=0x74000 || second<0x72000 || second>=0x74000 || ((first|second)&3)) block_fault_park();
 	return stopped?PioneerQ38PeerTerminalPc(first) && PioneerQ38PeerTerminalPc(second):WaitPc(first) && WaitPc(second);
 }
+#ifdef PIONEER_Q38_WORK_SENTINEL_POLL
+static __attribute__((noinline,section(".q38_peer_poll"))) void PeerPollBackoff(unsigned count)
+{
+	// Bounded local instructions ONLY,no clock/counter/NoC writes or reads.
+	// Scheduling delay never substitutes for ANY completion/physical proof.
+	for(unsigned i=0;i<count;i++)asm volatile("nop" ::: "memory");
+}
+static __attribute__((noinline,section(".q38_peer_poll"))) bool WaitPeers(const uint32_t (*parts)[8],unsigned workers,bool work,bool stopped)
+{
+	volatile uint32_t complete[119];for(unsigned w=0;w<119;w++)complete[w]=0;
+	unsigned finished=0,polls=0,backoff=64;
+	const unsigned budget=workers*65536; // SAME maximum status polls as original
+	if(work) {
+		unsigned sentinel=0;if(!PioneerQ38SelectPollSentinel(parts,workers,sentinel))return false;
+		for(unsigned attempt=0;attempt<65536 && polls<budget;attempt++) {
+			polls++;
+			if(Peer(sentinel+1,parts[sentinel][3],false,false)) {complete[sentinel]=1;finished=1;break;}
+			PeerPollBackoff(backoff);backoff=PioneerQ38PollBackoffNext(backoff);
+			if(!backoff)return false;
+		}
+		if(!finished)return false;
+	}
+	// A sentinel can finish BEFORE others. Every remaining worker STILL
+	// passes its ORIGINAL current status,TWO physical PC samples,and reset.
+	for(unsigned round=0;round<65536 && finished<workers;round++) {
+		for(unsigned w=0;w<workers;w++)if(!complete[w]) {
+			if(polls==budget)return false;
+			polls++;
+			if(Peer(w+1,parts[w][3],stopped,false)){complete[w]=1;finished++;}
+		}
+		if(work && finished<workers)PeerPollBackoff(backoff);
+	}
+	return finished==workers;
+}
+#endif
 static unsigned Tile(unsigned type) { return type==8?576:type==12?2304:type==14?3392:0; }
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 static Q38_ROOT_SMALL bool HeaderValid(const uint32_t* header)
@@ -412,11 +453,15 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	cycles.Mark(0); // validation/staging/descriptor+doorbell transfers
 #endif
+#ifdef PIONEER_Q38_WORK_SENTINEL_POLL
+	if(!WaitPeers(parts,workers,work,operation==2))block_fault_park();
+#else
 	volatile uint32_t complete[119]; for (unsigned w=0;w<119;w++) complete[w]=0;
 	unsigned finished=0;
 	for (unsigned round=0;round<65536 && finished<workers;round++) for (unsigned w=0;w<workers;w++)
 		if (!complete[w] && Peer(w+1,parts[w][3],operation==2,false)) { complete[w]=1; finished++; }
 	if (finished!=workers) block_fault_park();
+#endif
 	Checkpoint(0x54000300,workers);
 	// Completion order is arbitrary. STOP has no ordered output gathers,
 	// so explicitly finish with worker119's terminal physical audit. This
