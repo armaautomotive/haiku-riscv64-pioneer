@@ -1,5 +1,33 @@
 # Native build status
 
+October20,19:15 Vancouver (October21,02:15 UTC) ROOT CYCLE DIAGNOSTIC PREPARED:
+Native driver52ea41c9/tag2026102100010010 builds a/b EXACT;debug client
+e57c9ef2 builds a/b EXACT. STAGED only,NO native run/install yet. Separate
+root textaa27f435/prefix15643b20 use documented READ-ONLY mcycle/h CSRRS
+(official tt-isa8a34e25e Blackhole BabyRISCV/CSRs.md),bounded HIGH/LOW/HIGH
+sampling and three64-bit deltas. Work-only existing stats57..63 padding;
+NO extra NoC/DMA/MMIO register/extent or peer arithmetic/config change.
+Phases:prepare+dispatch,worker wait+CURRENT terminal audits,gather+DMA+
+final proof. NOT pure matrix time/CPU time/tokens/sec. Checked/STOP make
+ZERO counter reads and retain zero padding. No counter resets/writes.
+
+Actual image YHujRjNE PASS108 shape/worker cases,all57 original safety
+words/output/NoC/DMA identical,64-bit rollover/large delta/bounded unstable/
+backward refusal,ALL64 peer-proof faults/NoC uncertainty inert,real-peer
+arithmetic exact. VM models FABRICATED counters,NOT silicon time. First
+prototype's byte-store was rejected by strict VM;fixed full-word state,
+superseded images NEVER staged/native. Fixed generator pins ALL image words.
+Actual native handler/Work DMA+RUN suite62ErhCBs PASS including explicit
+END and retained owner/BME/DMA/source/counter/PC/copyout failure paths.
+Real client Iiseq6He additionally rejects malformed diagnostic framing
+CLOSE ONLY,no later RUN/END/reset. Build gate45 timing-role/mixed-candidate
+refusals BEFORE SDK/output;existing inline38/resident60 regressions PASS.
+Standalone Tensix regression PASS. Timing flag-OFF full native rebuild
+EXACT earlier03876197/guardd1ce/default2df;NO production Work changes.
+Focused updater60 PASS;expanded suite pending. Installed213ebf0a/gen16
+remains clean idle,cold0/active_owner0. Whole27B speed still earlier
+0.175353237tok/s,NOT20. Goal ACTIVE;NO timing/speedup claim yet.
+
 October20,19:01 Vancouver (October21,02:01 UTC) NATIVE RESIDENT ROOT PASS:
 Guarded213ebf0a/tag202610210001000f/gen16 installed without reboot.
 ONE fixed-root/head pilot then separate16 NONRESETTING updates passed:

@@ -144,6 +144,12 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 			return false;
 		}
 		double finish=Seconds(); if (finish<previous) return false;
+#ifdef PIONEER_Q38_ROOT_CYCLE_CLIENT
+		if (!PioneerQ38RootCycleDataValid(r->result.stats)) return false;
+		printf("ROOT_DEVICE_CYCLES type%u K%u peers%u repeat%u prepare%llu wait_and_audit%llu gather_dma_proof%llu;ACTUAL_CARD_COUNTER_NOT_PURE_MATRIX_OR_TOKEN_RATE\n",
+			type,inputs,workers,repeat,(unsigned long long)PioneerQ38RootCyclePhase(r->result.stats,0),
+			(unsigned long long)PioneerQ38RootCyclePhase(r->result.stats,1),(unsigned long long)PioneerQ38RootCyclePhase(r->result.stats,2));
+#endif
 		unsigned errors=ReturnedNumericErrors(*r,expected,stderr);
 		printf("DISPATCH_DEBUG type%u K%u peers%u rows_per_peer%u repeat%u nonce%u waiting%u cold%u exact_errors%u checked_call_s%.6f;CPU_REFERENCE_DEBUG_ONLY_NOT_MODEL_OR_TOKEN_RATE\n",
 			type,inputs,workers,groups*16,repeat,r->result.nonce,r->result.waiting,r->result.recovery_required,errors,finish-previous);

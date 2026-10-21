@@ -30,6 +30,7 @@ def check(mode, fault=None):
         payloads['hash_postscale_delta'] = ('test-' + values['hash_postscale_delta']).encode()
         payloads['hash_gdn_zero_diagnostic'] = ('test-' + values['hash_gdn_zero_diagnostic']).encode()
         payloads['hash_resident_root_diagnostic'] = ('test-' + values['hash_resident_root_diagnostic']).encode()
+        payloads['hash_root_cycle_diagnostic'] = ('test-' + values['hash_root_cycle_diagnostic']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -90,6 +91,8 @@ def check(mode, fault=None):
             '--restore-gdn-zero-diagnostic': ('hash_gdn_zero_diagnostic', 'hash_postscale_delta', 'tag_gdn_zero_diagnostic'),
             '--apply-resident-root-diagnostic': ('hash_gdn_zero_diagnostic', 'hash_resident_root_diagnostic', 'tag_gdn_zero_diagnostic'),
             '--restore-resident-root-diagnostic': ('hash_resident_root_diagnostic', 'hash_gdn_zero_diagnostic', 'tag_resident_root_diagnostic'),
+            '--apply-root-cycle-diagnostic': ('hash_resident_root_diagnostic', 'hash_root_cycle_diagnostic', 'tag_resident_root_diagnostic'),
+            '--restore-root-cycle-diagnostic': ('hash_root_cycle_diagnostic', 'hash_resident_root_diagnostic', 'tag_root_cycle_diagnostic'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -135,6 +138,7 @@ def check(mode, fault=None):
         put('candidate_postscale_delta', payloads['hash_postscale_delta'])
         put('candidate_gdn_zero_diagnostic', payloads['hash_gdn_zero_diagnostic'])
         put('candidate_resident_root_diagnostic', payloads['hash_resident_root_diagnostic'])
+        put('candidate_root_cycle_diagnostic', payloads['hash_root_cycle_diagnostic'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -243,6 +247,7 @@ if __name__ == '__main__':
     modes += ['--apply-postscale-delta', '--restore-postscale-delta']
     modes += ['--apply-gdn-zero-diagnostic', '--restore-gdn-zero-diagnostic']
     modes += ['--apply-resident-root-diagnostic', '--restore-resident-root-diagnostic']
+    modes += ['--apply-root-cycle-diagnostic', '--restore-root-cycle-diagnostic']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -350,6 +355,10 @@ if __name__ == '__main__':
             candidate = ['candidate_resident_root_diagnostic']
         elif mode == '--restore-resident-root-diagnostic':
             candidate = ['candidate_gdn_zero_diagnostic']
+        elif mode == '--apply-root-cycle-diagnostic':
+            candidate = ['candidate_root_cycle_diagnostic']
+        elif mode == '--restore-root-cycle-diagnostic':
+            candidate = ['candidate_resident_root_diagnostic']
         for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1

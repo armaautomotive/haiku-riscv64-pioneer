@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_WORK_PROTOCOL_H
 #define PIONEER_Q38_WORK_PROTOCOL_H
 #include "PioneerQ38DispatchProof.h"
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+#include "PioneerQ38RootCycleData.h"
+#endif
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 #ifndef PIONEER_Q38_WORK_OUTPUT_DMA
 #error Compact output requires the owned Work DMA protocol
@@ -84,6 +87,11 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 	for (unsigned i=0;i<16;i++) if (s[32+i]!=a.source[0][i]) return false;
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	if (s[48]!=1) return false;
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+	// Separate exact root image writes ONLY this previously zero padding.
+	// ALL source/counter/nonce/PC/DMA/held proofs above remain unchanged.
+	if (!PioneerQ38RootCycleDataValid(s)) return false;
+#else
 	for (unsigned i=
 #ifdef PIONEER_Q38_WORK_OUTPUT_DMA
 		57
@@ -91,6 +99,7 @@ static inline bool PioneerQ38WorkSafety(const tt_q38_dispatch_probe& job,
 		49
 #endif
 		;i<64;i++) if (s[i]) return false;
+#endif
 #else
 	for (unsigned i=48;i<64;i++) if (s[i]) return false;
 #endif

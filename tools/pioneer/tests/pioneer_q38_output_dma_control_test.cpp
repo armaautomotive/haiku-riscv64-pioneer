@@ -64,11 +64,25 @@ int main(int argc,char** argv)
 #endif
 		assert(c.io.pciWrites==4 && !c.wideHost.pending && !c.io.outputReads && c.io.dmaPackets==expectedPackets);
 		assert(PioneerQ38WorkSafety(*job,c.q38Dispatch->authority));
-		for (unsigned word=49;word<64;word++) for (unsigned bit=0;bit<32;bit++) {
+		for (unsigned word=49;word<
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+			58 // marker is exact;cycle deltas are DATA,not bit-exact authority
+#else
+			64
+#endif
+			;word++) for (unsigned bit=0;bit<32;bit++) {
 			job->result.stats[word]^=1U<<bit;
 			assert(!PioneerQ38WorkSafety(*job,c.q38Dispatch->authority));
 			job->result.stats[word]^=1U<<bit;
 		}
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+		for (unsigned phase=0;phase<3;phase++) {
+			auto& lo=job->result.stats[58+phase*2]; auto& hi=job->result.stats[59+phase*2];
+			auto savedLo=lo,savedHi=hi; lo=hi=0;
+			assert(!PioneerQ38WorkSafety(*job,c.q38Dispatch->authority)); lo=savedLo; hi=savedHi;
+			lo^=0x80000000; assert(PioneerQ38WorkSafety(*job,c.q38Dispatch->authority)); lo=savedLo;
+		}
+#endif
 		for (unsigned w=0;w<7;w++) for (unsigned r=0;r<256;r++) {
 			if (r>=16) assert(!job->output[w][r]);
 			else assert(job->output[w][r]==c.io.dmaData[w*

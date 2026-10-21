@@ -60,6 +60,18 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	r.result={}; r.result.version=1; r.result.state=TT_RUNTIME_COMPLETION_FAILED;
 	r.result.recovery_required=1; r.result.root_started=1; r.result.root_phase=0x7200c;
 	r.result.root_count=1; r.result.root_marker=0x464d3851; failed=true;
+#ifdef PIONEER_Q38_ROOT_CYCLE_CLIENT
+	if (fault>=2) {
+		// Correct Work history envelope but malformed diagnostic framing.
+		// REAL client must CLOSE ONLY,without another RUN or END.
+		r.result.state=TT_RUNTIME_PASSED; r.result.recovery_required=0; r.result.nonce=1;
+		r.result.peers=r.peers; r.result.root_count=r.peers; r.result.root_completed=r.result.root_held=1;
+		r.result.root_marker=0x314d3851;
+		r.result.stats[57]=fault==2?0:0x31435951;
+		r.result.stats[60]=r.result.stats[62]=1; // phase0 deliberately zero
+		return 0;
+	}
+#endif
 	if (fault) { errno=EIO; return -1; }
 	return 0;
 }
@@ -88,7 +100,13 @@ static bool MockFixtures(uint8_t* data,unsigned bytes) { assert(bytes==PIONEER_Q
 #undef open
 int main()
 {
-	for (unsigned kind=0;kind<2;kind++) {
+	for (unsigned kind=0;kind<
+#ifdef PIONEER_Q38_ROOT_CYCLE_CLIENT
+		4
+#else
+		2
+#endif
+		;kind++) {
 		opens=closes=begins=runs=uploads=ends=0; failed=false; fault=kind;
 		char name[]="dispatch";
 #ifdef PIONEER_Q38_REUSE_CLIENT_TEST

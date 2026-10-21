@@ -46,6 +46,12 @@ case "${PIONEER_Q38_WORK_CLIENT:-0}" in
     source=pioneer_q38_work_probe; extra="$extra -ffp-contract=off";;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_ROOT_CYCLE_CLIENT:-0}" in
+ 0) ;;
+ 1) [ "$source" = pioneer_q38_work_probe ] || exit 2
+    extra="$extra -DPIONEER_Q38_ROOT_CYCLE_CLIENT";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_FIXTURE_CLIENT:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_AFFINE_CLIENT:-0}" = 1 ] || exit 2; extra="$extra -DPIONEER_Q38_PUBLIC_FIXTURES";;

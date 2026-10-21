@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+#ifndef PIONEER_Q38_INLINE_CONFIG
+#error Root cycle diagnostic requires the separate full inline-config Work chain
+#endif
+#include "PioneerQ38RootCycleImage.h"
+#endif
 #if defined(PIONEER_Q38_PIPELINED_MATRIX) && !defined(PIONEER_Q38_INT_SFPU)
 #error Queued phases require the exact integer/SFPU peer
 #endif
@@ -95,6 +101,9 @@
 #endif
 static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t address)
 {
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+ if (!worker) return PioneerQ38RootCyclePrefixWord(address);
+#endif
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
  if (!worker) return PioneerQ38CompactOutputRootPrefixWord(address);
 #endif
@@ -171,6 +180,9 @@ enum { TT_Q38_DISPATCH_BOOT=0x0006c06f,TT_Q38_DISPATCH_DONE=0x7200c,
  TT_Q38_PEER_MARKER=0x32503851,TT_Q38_PEER_WAIT_LOAD=0x7204c,TT_Q38_PEER_WAIT_BRANCH=0x72050 };
 static inline uint32_t PioneerQ38DispatchRootWord(unsigned word)
 {
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+ return PioneerQ38RootCycleWord(word);
+#endif
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
  return PioneerQ38CompactOutputRootWord(word);
 #endif

@@ -13,6 +13,13 @@
 #endif
 #endif
 struct ControllerMachine:DispatchMachine {
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+	uint32_t ReadCycleCsr(unsigned csr) override {
+		assert(csr==0xb00 || csr==0xb80);
+		uint64_t fabricated=(UINT64_C(1)<<40)+uint64_t(steps)*19;
+		return csr==0xb00?uint32_t(fabricated):uint32_t(fabricated>>32);
+	}
+#endif
 	uint32_t ownSource[16];
 	ControllerMachine(const char* path,unsigned n,unsigned type,unsigned k,const uint32_t* source):DispatchMachine(path,n,type,k)
 	{ for (unsigned i=0;i<16;i++) ownSource[i]=source[i]; }

@@ -274,6 +274,9 @@ struct Machine {
 		return false;
 	}
 	virtual unsigned StepLimit() const { return 20000; }
+	// Explicit diagnostic subclasses ONLY. Ordinary image models reject
+	// even read-only CSR access;never emulate arbitrary CSR writes.
+	virtual uint32_t ReadCycleCsr(unsigned csr) { (void)csr; assert(false && "unexpected cycle CSR"); return 0; }
 	virtual uint32_t ParkPc() const { return BlackholeTensixParkPc(sfpuSmoke); }
 	virtual uint32_t FinalPhase() const { return BlackholeTensixFinalPhase(sfpuSmoke); }
 	virtual uint32_t FinalMarker() const { return 0x4d415431; }
@@ -350,6 +353,10 @@ struct Machine {
 				imm = Sign(((instruction>>31)<<20) | ((instruction>>12 & 255)<<12) | ((instruction>>20 & 1)<<11) | ((instruction>>21 & 1023)<<1),21);
 				result = next; next = pc + imm; write = true;
 			} else if (op == 0x67) { assert(f3 == 0); result = next; next = (regs[rs1]+imm) & ~1U; write = true; }
+			else if (op==0x73) {
+				assert(f3==2 && rs1==0 && ((instruction>>20)==0xb00 || (instruction>>20)==0xb80));
+				result=ReadCycleCsr(instruction>>20); write=true;
+			}
 			else assert(instruction == 0x0ff0000f);
 			if (write && rd != 0) regs[rd] = result;
 			regs[0] = 0; pc = next;

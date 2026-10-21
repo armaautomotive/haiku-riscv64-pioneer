@@ -5,6 +5,11 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
+case "${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}:${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}:${PIONEER_Q38_PEER_PROGRESS:-0}" = 1:0:0:0 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_FAULT_RETURN:-0}" in 0) fault_cpp=;; 1) fault_cpp=-DPIONEER_Q38_FAULT_RETURN;; *) exit 2;; esac
 case "${PIONEER_Q38_COMPACT_ACTIVATIONS:-0}" in
  0) ;;
@@ -47,6 +52,7 @@ case "${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}" in
     fault_cpp="$fault_cpp -DPIONEER_Q38_WORK_COMPACT_OUTPUT";;
  *) exit 2;;
 esac
+if [ "${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}" = 1 ]; then fault_cpp="$fault_cpp -DPIONEER_Q38_ROOT_CYCLE_PROFILE"; fi
 case "${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}" = 1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_TRANSFER_DIAGNOSTIC";; *) exit 2;; esac
 case "${PIONEER_Q38_PEER_PROGRESS:-0}" in 0) ;; 1) [ "${PIONEER_Q38_FAULT_RETURN:-0}:${PIONEER_Q38_TRANSFER_DIAGNOSTIC:-0}" = 1:1 ] || exit 2; fault_cpp="$fault_cpp -DPIONEER_Q38_PEER_PROGRESS";; *) exit 2;; esac
 case "$output" in /*) ;; *) exit 2;; esac

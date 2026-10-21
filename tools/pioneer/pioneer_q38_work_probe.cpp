@@ -4,6 +4,9 @@
 // executable. Production Work never includes this file/reference code.
 #include <Drivers.h>
 #include "PioneerQ38WorkSession.h"
+#ifdef PIONEER_Q38_ROOT_CYCLE_CLIENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38RootCycleData.h"
+#endif
 #define PIONEER_Q38_DISPATCH_CLIENT
 #define PIONEER_Q38_DISPATCH_SUPPORT_VERSION TT_Q38_WORK_SUPPORT_VERSION
 #undef TT_PCI_PROBE_Q38_DISPATCH_SUPPORT

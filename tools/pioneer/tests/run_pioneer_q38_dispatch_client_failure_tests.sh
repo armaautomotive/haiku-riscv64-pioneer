@@ -10,4 +10,8 @@ ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize
  -DPIONEER_Q38_WORK_CLIENT_TEST -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR \
  -I"$directory/cli-stubs" "$directory/pioneer_q38_dispatch_client_failure_test.cpp" -o "$temporary/work"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/work"
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ -DPIONEER_Q38_WORK_CLIENT_TEST -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR -DPIONEER_Q38_ROOT_CYCLE_CLIENT \
+ -I"$directory/cli-stubs" "$directory/pioneer_q38_dispatch_client_failure_test.cpp" -o "$temporary/cycles"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/cycles"
 printf 'Offline real-client failure diagnostics evidence retained at %s\n' "$temporary"

@@ -37,6 +37,12 @@ static __attribute__((noinline)) void Checkpoint(unsigned stage,unsigned detail)
 	Words(0x17ffc0)[0]=stage; Words(0x17ffc0)[1]=detail; Fence();
 }
 extern "C" void block_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+#ifndef PIONEER_Q38_WORK_COMPACT_OUTPUT
+#error Root cycle diagnostic requires the separate complete compact-output root
+#endif
+#include "PioneerQ38RootCycleProfile.h"
+#endif
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 // Separately gated bounded-output variant. The kernel must own/seal the
 // complete high-physical host mapping,
@@ -294,6 +300,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	const bool work=operation==1 && header[8]==1;
 #endif
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+	PioneerQ38RootCycleProfile cycles(work);
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	if (!HeaderValid(header)) return 0;
 #else
@@ -400,6 +409,9 @@ extern "C" unsigned block_main()
 	for (unsigned w=0;w<workers;w++) {
 		*Words(0x75000)=parts[w][3]; Fence(); Transfer(true,w+1,0x75000,0x74100,4);
 	}
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+	cycles.Mark(0); // validation/staging/descriptor+doorbell transfers
+#endif
 	volatile uint32_t complete[119]; for (unsigned w=0;w<119;w++) complete[w]=0;
 	unsigned finished=0;
 	for (unsigned round=0;round<65536 && finished<workers;round++) for (unsigned w=0;w<workers;w++)
@@ -415,6 +427,9 @@ extern "C" unsigned block_main()
 		Checkpoint(0x54000301,workers);
 		if (!terminal) block_fault_park();
 	}
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+	cycles.Mark(1); // worker wait+CURRENT physical terminal audits,not pure arithmetic
+#endif
 	// ALL readers finished BEFORE ANY proof/output gather or publication.
 #ifdef PIONEER_Q38_WORK_SPARSE_EXPORT
 	// WORK never returns the private peer-proof array to the host: EVERY
@@ -514,5 +529,9 @@ extern "C" unsigned block_main()
 		if (uint32_t(Words(0x7f800)[24+c]-Words(0x7f800)[16+c])!=expected) block_fault_park();
 	}
 	for (unsigned i=0;i<16;i++) Words(0x7f800)[32+i]=source[i];
+#ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
+	cycles.Mark(2); // proof/output gather+DMA+final source/counter proof
+	cycles.Publish(); // bounded existing statistics padding,Work ONLY
+#endif
 	Fence(); return workers;
 }
