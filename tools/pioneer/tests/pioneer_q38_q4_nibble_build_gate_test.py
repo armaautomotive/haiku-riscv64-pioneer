@@ -9,6 +9,8 @@ role={flag:'1','PIONEER_Q38_VECTOR_PERSISTENT_IMAGE':'9',
       'PIONEER_Q38_NATIVE_OPERAND_STORE':'1','PIONEER_Q38_STATIC_VECTOR':'1',
       'PIONEER_Q38_REPLAY_OPERAND':'1'}
 cases=[]
+for script in ('build_qwen38_banks_driver.sh','build_qwen38_banks_client.sh','build_qwen38_inference.sh','build_qwen38_dispatch_image.sh','build_qwen38_persistent_rows_image.sh'):
+ for value in ('1','01','-1','invalid'):cases.append((script,{'PIONEER_Q38_Q4_NIBBLE_QUALIFICATION':value}))
 for script in ('build_qwen38_banks_driver.sh','build_qwen38_banks_client.sh','build_qwen38_inference.sh','build_qwen38_dispatch_image.sh'):
  for value in ('1','01','-1','invalid'):cases.append((script,{flag:value}))
 image='build_qwen38_persistent_rows_image.sh'

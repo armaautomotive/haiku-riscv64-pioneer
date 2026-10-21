@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_Q4_NIBBLE_QUALIFICATION:-0}" = 0 ] || { echo 'STOP Q4 nibble image selection is OFFLINE registry ONLY;NO root qualification yet' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_SIGNED_MAG2:-0}" = 0 ] || { echo 'STOP signed magnitude2 changes OFFLINE peers ONLY;NO root selector' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_Q4_NIBBLE:-0}" = 0 ] || { echo 'STOP Q4 nibble decoding changes OFFLINE peers ONLY;NO root selector' >&2;exit 2; }
 [ "${PIONEER_Q38_PEER_PHASE_QUALIFICATION:-0}" = 0 ] || exit 2

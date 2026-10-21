@@ -1,6 +1,7 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_Q4_NIBBLE_QUALIFICATION:-0}" = 0 ] || { echo 'STOP Q4 nibble image selection is OFFLINE registry ONLY;NO model/Assistant qualification yet' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_SIGNED_MAG2:-0}" = 0 ] || { echo 'STOP signed magnitude2 is OFFLINE peer ONLY;NO model/Assistant selector' >&2;exit 2; }
 [ "${PIONEER_Q38_WORK_Q4_NIBBLE:-0}" = 0 ] || { echo 'STOP Q4 nibble decoding is OFFLINE peer ONLY;NO model/Assistant selector' >&2;exit 2; }
 [ "${PIONEER_Q38_MODEL_THREAD_RAW_CACHE:-0}" = 0 ] || {

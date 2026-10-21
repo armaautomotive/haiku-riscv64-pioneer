@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_Q4_NIBBLE_QUALIFICATION
+#error Q4 nibble image selection is OFFLINE registry proof ONLY;NO native driver qualification yet
+#endif
 
 #include <KernelExport.h>
 #include <ByteOrder.h>

@@ -46,3 +46,38 @@ Actual-test evidence .../pioneer-q38-q4-nibble-image.LiQcW0qI.
 Builds /private/tmp/pioneer-q38-q4-nibble-offline-20261021-{a,b}.
 Native restoration/full-model regression is separately recorded in
 qwen38-cold-recovery-20261021.txt; NO experimental image was used there.
+
+Frozen image-registry proof follows separately (still NOT native-enabled):
+Generated ONLY through apply_patch from the independently pinned binaries;
+header PioneerQ38Q4NibblePeerImage.h
+SHA2d1e8f1004b7eab07780b69895e18c36eb5f6808c2fe3970ee97c86c9832e746.
+Actual registry selects ONLY original sentinel coordinator + new peer,
+under the isolated Q4_NIBBLE_QUALIFICATION test role. Kernel compilation
+explicitly ERRORS for that macro;all native-driver/debug/root/model and
+producer builders reject it before external commands/SDK/output. No install
+or driver selection was enabled.91 empty-PATH build gates now pass.
+491,520 actual registry words across120roles match independently rebuilt
+original root65c790cf68dc705a3af5458e2b89aafa28a5b316c0a7b9fad1c8bd51fd36ecd8
+prefixd358b793b2c83def15e58fa52b62197e2f2241dd85e9bc1a5fc9a1733cf46308
+and exact8fd12aab/c7cefc9e peer,including all zero gaps/live operand holes,
+out-of-role/address bounds and original8192/5376B limits.
+Actual namespace compiler accepts complete chain and refuses two missing
+prerequisites+seven foreign qualifier mixes. No new live ABI or upload.
+
+Actual kernel Work DMA/controller test also passes under this OFFLINE image
+registry:three-owner address authority,delayed writes,zero PIO output reads,
+checked isolation,all BME write/read and first/middle/last DMA failures,
+late-map faults retain ALL owners without disable/reset/retry;copyout
+failure AFTER completed transfer permits only the explicit original END.
+Default driver17 84ab80ac/guardd1ce2aa4/default43 2df0e0f8 again reproduce
+byte-identically AFTER registry integration;NO change installed on card.
+Logs:
+/private/tmp/pioneer-q38-q4-nibble-registry-20261021-a.log
+SHAca670649ec40250dd2dc1b55dbdae9d121b878d752ca4e737f1423b283aae9d8
+/private/tmp/pioneer-q38-q4-nibble-namespace-20261021-a.log
+SHA32fc7e1b7ec0df52a3db1d6b3ed3327503e3f280e861be169848d201ad671e3f
+/private/tmp/pioneer-q38-q4-nibble-registry-gates-20261021-a.log
+SHAb42a1c73245974c598169d000adce6e3cc18b5f942fba97e6c09fd023e9eb6e9
+Controller log /private/tmp/pioneer-q38-q4-nibble-controller-20261021-a.log.
+Evidence .../pioneer-q38-q4-nibble-registry.y9xK5C9R (repeat is independently
+logged above). Native qualification remains a SEPARATE future step.
