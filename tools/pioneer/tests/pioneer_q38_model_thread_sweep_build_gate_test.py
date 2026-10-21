@@ -18,6 +18,11 @@ cases += [{**c,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'1'} for c in list(cases)
 for wrong in ('01','-1','invalid'):
  cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':wrong})
 cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'1','PIONEER_Q38_MODEL_THREAD_SWEEP':'0'})
+cases += [{**c,'PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR':'1'} for c in list(cases)]
+for wrong in ('01','-1','invalid'):
+ cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'1','PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR':wrong})
+cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR':'1','PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'0'})
+cases.append({**required,'PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR':'1','PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW':'1','PIONEER_Q38_MODEL_THREAD_SWEEP':'0'})
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-thread-gate-') as name:
  root=pathlib.Path(name)
  for i,flags in enumerate(cases):

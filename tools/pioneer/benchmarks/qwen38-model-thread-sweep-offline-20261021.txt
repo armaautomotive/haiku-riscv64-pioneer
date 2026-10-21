@@ -111,3 +111,15 @@ acrossTWO same-residency comparisons,ALL exact. Still small fixedpublic
 samples,NOT broad/thermal/quality evidence. Mixed .200161443tok/s combines
 differentthreadcounts,NOT a fixedconfig throughput. NoCPUlearnedreference,
 fallback,Assistant/settings/boot/SD/power change.20targetUNMET.
+
+OFFLINE8/4/8 follow-up prepared15:19UTC. Additional FOUR flag requires
+both THREAD_SWEEP and NARROW;exactbest12tag/public-three32/originalTC/
+Work/noCPUreference restrictions remain. Three ACTUAL synchronizedpool
+and96positionloop variants32/8/32,8/1/8,8/4/8 pass,includingeveryoriginal
+source/page/token/logit/graph/reset/SIGINT/stop/failure cleanup rule.
+397 preSDK mixed-role guards pass oTuPK6Iy;log
+/private/tmp/pioneer-q38-model-thread-four-tests-20261021-a.log
+SHAde3abb966087403b089baef4856f1ae696d03a88e06c05dc8986beb87fdc7510.
+Twofresh8/4/8 cross-builds IDENTICAL:
+01152a39c47d81fb2892be949c5759abb9d3068d1b1c32959e4232922a1febce.
+Ordinary model flagOFF still EXACTf414306f. NOT native-run/staged yet.
