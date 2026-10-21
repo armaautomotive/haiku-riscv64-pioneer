@@ -2,6 +2,8 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+[ "${PIONEER_Q38_PREPARED_Q4_BLOCK:-0}" = 0 ] || {
+ echo 'STOP prepared Q4 block cache has NO model source/layout qualification;OFFLINE ONLY' >&2;exit 2; }
 [ "${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 0 ] || {
  echo 'STOP sticky predecoded-Q4 has NO model source/layout qualification;OFFLINE ONLY' >&2;exit 2; }
 case "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" in

@@ -33,6 +33,7 @@ SECTIONS {
 		*(.text._Z29PioneerQ38DirectNativeQ8SetupI18VectorPanelEmitterE*)
 		/* Unselected prepared-Q4 experiment,inside the SAME owned prefix. */
 		*(.text._ZN20PioneerQ38PreparedQ45Panel*)
+		*(.text._ZN20PioneerQ38PreparedQ45Block*)
 		. = ALIGN(4);
 	}
 	.text 0x72000 : {

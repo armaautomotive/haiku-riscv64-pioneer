@@ -54,6 +54,33 @@ struct PioneerQ38PreparedQ4 {
 		return true;
 	}
 	// Separate OFFLINE consumer. No installed/pinned image selects it.
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+	static uint32_t AlignedWord(const uint8_t* at) {
+#ifdef PIONEER_ATTENTION_FREESTANDING
+		uint32_t value;asm volatile("lw %0,0(%1)":"=r"(value):"r"(at):"memory");return value;
+#else
+		uint32_t value;__builtin_memcpy(&value,at,4);return value;
+#endif
+	}
+	// OFFLINE-only block consumer:decode each exact compact value ONCE,
+	// then atomically stage ALL8 original FP32 coefficient/minimum groups.
+	// No source/driver/layout authority or changed arithmetic is implied.
+	__attribute__((noinline)) static bool Block(const uint8_t* prepared,unsigned bytes,volatile uint32_t* scratch,unsigned words) {
+		if(!prepared || bytes!=Bytes || !scratch || words!=256 || (reinterpret_cast<uintptr_t>(scratch)&3) || (reinterpret_cast<uintptr_t>(prepared)&3)
+			|| !Separate(reinterpret_cast<uintptr_t>(prepared),bytes,reinterpret_cast<uintptr_t>(scratch),1024))return false;
+		uint32_t stage[256];
+		for(unsigned group=0;group<64;group++) {
+			const uint8_t* at=prepared+QuantBytes+group*12;
+			uint32_t a=AlignedWord(at),b=AlignedWord(at+4),c=AlignedWord(at+8);
+			const uint32_t packed[4]={a&0xffffff,((a>>24)|(b<<8))&0xffffff,((b>>16)|(c<<16))&0xffffff,c>>8};
+			for(unsigned word=0;word<4;word++)if(!Decode(packed[word],stage[group*4+word]))return false;
+		}
+		for(unsigned group=0;group<8;group++)for(unsigned row=0;row<16;row++) {
+			scratch[group*32+row]=stage[group*32+row];scratch[group*32+16+row]=stage[group*32+16+row];
+		}
+		return true;
+	}
+#endif
 	__attribute__((noinline)) static bool Panel(const uint8_t* prepared,unsigned bytes,unsigned panel,PioneerQ38Panel* output) {
 		if (!prepared || bytes!=Bytes || panel>=16 || !output || (reinterpret_cast<uintptr_t>(output)&3)
 			|| !Separate(reinterpret_cast<uintptr_t>(prepared),bytes,reinterpret_cast<uintptr_t>(output),sizeof(*output))) return false;

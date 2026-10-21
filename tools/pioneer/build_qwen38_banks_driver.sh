@@ -3,6 +3,8 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_PREPARED_Q4_BLOCK:-0}" = 0 ] || {
+ echo 'STOP prepared Q4 block cache has NO native layout/owner qualification;OFFLINE ONLY' >&2;exit 2; }
 [ "${PIONEER_Q38_PREDECODED_Q4_STICKY:-0}" = 0 ] || {
  echo 'STOP sticky predecoded-Q4 has NO native layout/owner qualification;OFFLINE ONLY' >&2;exit 2; }
 case "${PIONEER_Q38_NATIVE_Q8:-0}" in

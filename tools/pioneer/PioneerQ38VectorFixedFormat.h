@@ -25,9 +25,16 @@ template<class E> static void PioneerQ38VectorFixedSetup(E& e)
 	e.Config(72,14); e.Config(73,0x13);
 	e.Drain();
 }
-template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,unsigned panel)
+template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,unsigned panel
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+	,bool preparedQ4=false
+#endif
+)
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+	if(preparedQ4) { if(type!=12 || span.second || span.low<256)return false;span.low-=256; }
+#endif
 	e.Op(0x3700000f); e.Op(0x5e23fc00); e.Op(0x5120000a); e.Op(0x5420000f);
 	e.Op(0xb2050000); e.Drain();
 	if (span.second) e.Config(84,0x00400040);

@@ -53,6 +53,12 @@
 #endif
 #include "PioneerQ38DirectNativeQ8.h"
 #endif
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+#if !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || defined(PIONEER_Q38_Q4_GROUP32) || defined(PIONEER_Q38_PREPARED_Q4_AFFINE) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_NATIVE_Q8)
+#error Prepared block metadata is a separate OFFLINE original-rounding Work-only layout
+#endif
+#include "PioneerQ38PreparedQ4.h"
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
 #endif
@@ -409,6 +415,9 @@ extern "C" unsigned block_main()
 		(type==12?PioneerQ38PreparedQ4::Bytes:PioneerQ38PanelTileBytes(type))
 #else
 		(
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+			skipDotCheck && type==12?PioneerQ38PreparedQ4::Bytes:
+#endif
 #ifdef PIONEER_Q38_PREDECODED_Q4
 			skipDotCheck && type==12?PioneerQ38PredecodedQ4::Bytes:
 #endif
@@ -531,7 +540,11 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #ifndef PIONEER_Q38_PREPARED_Q4_AFFINE
-	if (type==12 && !affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes
+	if (type==12 &&
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+		!skipDotCheck &&
+#endif
+		!affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes
 #ifdef PIONEER_Q38_PREDECODED_Q4
 		,skipDotCheck
 #endif
@@ -542,6 +555,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_PREDECODED_Q4_STICKY
 		PioneerQ38DirectQ4Restore(blockEmitter); // once per block BEFORE FP32 metadata loads
 #endif
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+		if(!PioneerQ38PreparedQ4::Block(reinterpret_cast<const uint8_t*>(0x90000),bytes,reinterpret_cast<volatile uint32_t*>(0x97000),256))block_fault_park();
+#else
 		if (!affine.BlockQ4(reinterpret_cast<PioneerQ38Panel*>(
 #ifdef PIONEER_Q38_PREDECODED_Q4
 			0x92000 // NEW tile90000..91100 must NOT alias original temporary91000
@@ -549,6 +565,7 @@ extern "C" unsigned block_main()
 			0x91000
 #endif
 		),reinterpret_cast<volatile uint32_t*>(0x97000),256)) block_fault_park();
+#endif
 		Fence();
 		if (!PioneerQ38BlockAffineDst(blockEmitter
 #ifdef PIONEER_Q38_BLOCK_SCALE_REUSE
@@ -664,7 +681,11 @@ extern "C" unsigned block_main()
 			if(!PioneerQ38DirectQ4Unpack(emitter,p))block_fault_park();
 		} else
 #endif
-		if (!PioneerQ38VectorFixedUnpack(emitter,type,p)) block_fault_park();
+		if (!PioneerQ38VectorFixedUnpack(emitter,type,p
+#ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
+			,skipDotCheck && type==12
+#endif
+		)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
 #endif

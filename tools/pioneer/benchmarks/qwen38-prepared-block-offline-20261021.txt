@@ -1,0 +1,53 @@
+OFFLINE ONLY exact compact Q4 block-affine staging,October21 2026.
+Reuse EXISTING PioneerQ38PreparedQ4 exact24-bit DATA codec,not a new
+quantizer or FP16 approximation. ALL original2048 quant bytes retained;
+exact768B affine metadata replaces original256B. Tile2816 vs2304B,
+22.222% MORE weight-read bytes. No native/source/layout/owner capability.
+
+Existing codec proof rerun9kdKxSCG:8062976 finite HALF/factor/sign cases
+exact,260096 nonfinite refusals,512 panels,all original quant bytes,
+signed zeros,unused-code/atomic/canary guards PASS. Existing shape-only
+proposal SELECTS497 learned matrices,not old all851 tensor layout:
+20811337728B tiled weights+future state/workspace=22126841856B;
+max proposed bank3163983872B,57241600B headroom in tightest3GiB bank.
+This is NOT physical allocation or permission to reuse the old owner.
+
+New Work-only block consumer decodes ALL256 metadata words once to
+private stack,then stages original FP32 block scratch ONLY AFTER all
+values validate. Checked retains original bytes and decode path. Original
+matrix phases/rounding/vector ops/source waits/NoC count/STOP unchanged.
+Metadata source-format namespace/root/host reader/owner remain UNBUILT;
+driver and inference builders REFUSE flag before SDK/libs/output.
+72 image/native/source/CPU/Assistant role refusals PASS offline.
+
+Initial byte-load image main9957e653/prefix10698d60 passed full54
+shape/mode combinations x2 changed-input jobs,original FP32+FP64 exact,
+but INCREASED emulated RV work (~1.97% atK5120);not promoted.
+Aligned-load variant uses THREE aligned32-bit reads per FOUR packed24-bit
+values. Alignment required before access. Original codec unchanged.
+Final data testS86iNUxn:16384 exact metadata words,768 malformed metadata
+first/middle/last cases leave whole scratch unchanged,canary/null/size/
+alias/unaligned-source/destination refusal PASS. No learned products/IO.
+
+Aligned variant two independent builds c/d exact:
+main9957e653956ada67ab614b0821bb003238a2d5f3ba729d377c9432b3fe073f4f
+prefixd1fdd23008ebfa1978560d55171a5b4b309dc7a06c769a2e87fda51ae975212d
+Main7788/8192B,prefix5208/5376B;no changed code/address authority.
+Block stack1040B,compute496B,persistent272B;within saved8KiB stack.
+Full actual-instruction ASan/UBSan suiteZMGE7O15 PASS all3 formats x3
+widths x3 group counts xchecked/Work x2changed-input jobs;original packed
+FP32 AND independent FP64 exact.10 malformed metadata and NoC faults
+1/5/40/208 park before completion/no later commands. Checked ORIGINAL
+transport;unchanged vector/matrix/drain/raw reads/input sum cache/STOP.
+
+Old packed vs aligned prepared Work16-group RV observations:
+K5120 5025828/4984589;K6144 6029380/5979885;K17408 17068688/16928377.
+About0.82% fewer emulated RV instructions,NOT silicon latency/token rate.
+Extra DRAM/NoC bytes may outweigh the small RISC reduction;OFFLINE ONLY.
+Full word log /private/tmp/pioneer-q38-prepared-block-word-full-20261021-a.log
+SHA bcc756c9f029b54b7973bd3a2b9ccf9bc29c8c4e2c5016254d4cdb3bf78eeeab
+Initial /private/tmp/pioneer-q38-prepared-block-full-20261021-a.log
+SHA07cf80f3c861e7a54aad282bce2dd86fb241f739007e9cba391bb68e20ce8409.
+Retained images /private/tmp/pioneer-q38-prepared-block-word-peer-20261021-{c,d}.
+Existing native-Q8 02d36cf9/1b9cdc6d and scale-reuse9aa8f73b/e55c6069
+images recompile byte-for-byte unchanged when new flag OFF.
