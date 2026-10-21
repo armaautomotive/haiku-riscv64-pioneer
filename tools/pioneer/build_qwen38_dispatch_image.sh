@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_WORK_FRONTEND_BARRIER:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_BATCH_RAW_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "$#" = 2 ] || exit 2
