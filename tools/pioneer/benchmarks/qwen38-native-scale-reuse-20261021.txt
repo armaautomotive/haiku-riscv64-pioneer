@@ -1,0 +1,56 @@
+Exact Q4 block scale reuse, physical qualification and matched FFN32.
+October21 2026 03:30-03:43 UTC. Pioneer normal1350MHz,NO power/SD/reboot.
+Driver041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen19,guarded idle-only hot swap fromc8cbbc99/gen18.
+Peer text9aa8f73b560311c4f19b0267bfa73247d49981d5f23395e50ab6347f0dbfba78,
+prefixe55c606956e5602cdc9818b87ff7aa8e72e97e368abe8c1b8a8cd5585903de4b.
+Root remainsaa27f435/15643b20;clock/guard/runtime/weight layout unchanged.
+
+52 physical independent-reference jobs passed with ALL returned words exact:
+18 synthetic Work,16 authenticated119-worker Work,18 checked/debug.
+THREE explicit BANK_END/CLI_EXIT0,800->1350->800/restored1/uncertain0.
+CPU metadata generation19/quiesced0/cold0/active_owner0/open_count1/guard1.
+Checked retains original arithmetic;scale reuse applies ONLY Work Q4.
+Full expanded actual updater suite2651 cases additionally PASS.
+
+SAME pinned f0566393 diagnostic,actual blk.0.ffn_down.weight K17408/N5120:
+first graph primes12240pages/50135040B,then32 warm graphs,NO CPU learned
+reference/fallback. Repeatability checks OUTSIDE timed graph,not text/token
+throughput or independent numeric model validation.
+
+                           root-cycle52     metadata-cachec8     scale041
+Warm sample count          32               32                   32
+Median graph seconds       .011453000       .010797000           .010595500
+Mean graph seconds         .011456094       .010803156           .010598844
+Minimum graph seconds      .011408000       .010766000           .010554000
+Maximum graph seconds      .011597000       .010867000           .010722000
+Warm wall seconds          .366847          .346004              .339458
+Warm matrix wall seconds   .365584          .344642              .338181
+Warm ioctl wall seconds    .339868          .318016              .312210
+Calls/projections          33/33            33/33                33/33
+
+Scale median1.8663% lower than cache;7.4871% lower than original control.
+One32-sample session per driver,NOT broad workload/thermal/quality evidence.
+ALL5120 output words bit-exact to cache AND original control/earlier output:
+SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56,
+cmpEXIT0. Explicit clean_end1/CLI_EXIT0,clock restored/uncertain0/guardclear.
+Warm119-worker one-group Q4 K17408 wait+audit2473316 vs cache2607121cycles,
+~5.1% lower for that primitive phase,NOT pure matrix/whole-model latency.
+
+Logs under /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+scale-reuse-synthetic-native-20261021-a.log
+ SHAbceb972f2ab885b6e589976540f79eb055c446938577a410288b8939b480b9d4
+scale-reuse-auth119-native-20261021-a.log
+ SHA3723dabac475a7cfeb7b2e5cf9ec2a0fe43a814c7732ce464742ad3ce0c0186c
+scale-reuse-checked-native-20261021-a.log
+ SHA24258cda85b298462aeb5fc55a04ec7547259bbb0385e9b0b0c48b83d97306fb
+FFN log /boot/home/pioneer-qwen38-vector-clear-20261018-t/:
+ffn32-scale-reuse-20261021-a.log
+ SHA9d5d2b22c34e0f16899e01f7bd5240918a8f637f762b5d7e54e7a9da40aff7b4
+Matching local /private/tmp/pioneer-q38-scale-reuse-native-evidence.ws7ND2b9/.
+Serial boundaries63890555/63894222/63901216/63906541.
+
+At03:43 UTC STARTED exclusive retained-weight full-model f414 THREE32 run
+with this041 driver. NO result yet. Latest COMPLETED whole-model remains
+EARLIER038/f414=.175353237tokens/sec;20tok/s target UNMET. Assistant closed,
+settings/files intact. No native copies/second card jobs during long run.

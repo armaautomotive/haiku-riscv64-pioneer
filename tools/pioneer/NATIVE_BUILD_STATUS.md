@@ -1,5 +1,18 @@
 # Native build status
 
+October20,20:43 Vancouver (October21,03:43 UTC) SCALE NATIVE+FFN32 PASS:
+041fef18/tag2026102100010012/gen19 passed52 exact physical matrix jobs:
+18 synthetic Work,16 authenticated119-worker Work,18 checked/debug.
+AllTHREE explicit clean END/CLI_EXIT0/clock restored/uncertain0;CPU guard
+cold0/active_owner0. Actual expanded updater2651 cases PASS.
+SAME real FFN32 f056 median10.797->10.5955ms (1.8663% further reduction,
+7.4871% below original11.453ms control),mean10.598844ms. All5120 output
+words EXACT to both preceding drivers/05cda52a. FFN clean_end1/CLI_EXIT0.
+Evidence:benchmarks/qwen38-native-scale-reuse-20261021.txt.
+Started exclusive full27B f414 retained THREE32 run03:43 UTC;NO result yet.
+Latest COMPLETED whole-model remains EARLIER038=.175353237tok/s,NOT20.
+Goal ACTIVE,Assistant closed/files/settings intact;no card/copy overlap.
+
 October20,20:25 Vancouver (October21,03:25 UTC) NATIVE CACHE+REAL FFN32 PASS:
 c8cbbc99/tag2026102100010011/gen18 passed52 physical exact numerical
 jobs:18 Work synthetic,16 auth119,18 checked;THREE explicit clean ENDs.
