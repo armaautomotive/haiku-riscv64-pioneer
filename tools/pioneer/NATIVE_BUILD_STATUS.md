@@ -1,5 +1,20 @@
 # Native build status
 
+October20,19:01 Vancouver (October21,02:01 UTC) NATIVE RESIDENT ROOT PASS:
+Guarded213ebf0a/tag202610210001000f/gen16 installed without reboot.
+ONE fixed-root/head pilot then separate16 NONRESETTING updates passed:
+ALL8192 GDDR state+64 attention words exact to independent FP32 debug
+reference on ALL17 runs. Both sessions full-initialized73728 pages in
+the SAME owner;CPU NEVER uploaded prior state. GPU writes opposite slot,
+independently reads/compares ALL words before completion. Explicit debug
+ACK advances slot/position only after CPU validation. BOTH clean ROOT_END/
+BANK_END/CLI_EXIT0,800->1350->800/uncertain0,guardcold0/active_owner0.
+Expanded updater2471 PASS;staged/local logs exact. See
+benchmarks/qwen38-native-resident-root-20261021.txt for hashes/limits.
+NOT model integration/all-head/long-context/throughput qualification.
+No CPU-reference validation is added to production Work. Latest completed
+whole27B remains earlier038/f414=0.175353237tok/s,NOT20. Goal ACTIVE.
+
 October20,18:54 Vancouver (October21,01:54 UTC) RESIDENT ROOT QUALIFIER PREPARED:
 Separate diagnostic213ebf0a/tag202610210001000f builds a/b EXACT;root
 flag-OFF remains installed8ccb2a24/guardd1ce/default2df. Complete native

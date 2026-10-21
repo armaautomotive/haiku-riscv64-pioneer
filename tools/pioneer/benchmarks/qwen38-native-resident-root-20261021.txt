@@ -1,0 +1,36 @@
+Native resident-state GDN ROOT0 qualification, October21 2026 01:59-02:01 UTC.
+Diagnostic driver213ebf0aadd6a78eac32a6cc35d9fe83cb4546dbd3cc54eb224d551557a92831,
+tag202610210001000f/generation16;guarded idle-only hot swap from8ccb2a24,
+NO reboot/SD/power change. Expanded actual updater2471 cases PASS.
+Explicit CPU-reference debug client
+d4d7b7ef9244d9f51ff655a7d5e38a8847c1499de3d7b1f57e9f85c22c6b82ee.
+Root readback image518fbdefed49df2afd89837e6fd2edb08d0bf0c33df5a55e47ccb3ccbc21951b.
+
+ONE pilot then a separate16-update NONRESETTING synthetic chain PASS.
+Each session initialized/read-verified ALL73728 private pages/672 regions
+and retained the SAME initialization owner during compute. Prior state
+was NEVER uploaded by the CPU:root reads the private32768-byte GDDR slot,
+computes post-dot attention and writes the other slot. Disjoint poisoned
+GPU readback and all transport/code/source/PC proofs precede hold/export.
+ALL8192 state+64 attention words matched an independent CPU FP32 reference
+on EACH of17 actual runs. Explicit debug ACCEPT alone advanced position/
+slot;chain positions0..15 alternate0/1 then1/0. No mid-chain state reset.
+
+BOTH explicit ROOT_END+BANK_END/CLI_EXIT0,clock800->1350->800/restored1/
+uncertain0;CPU-only reload status generation16/quiesced0/cold0/active_owner0/
+open_count1/guard1. No retained/unknown/fault path was exercised on hardware.
+END releases diagnostic state ownership:these slots are NOT later model
+readiness. This proves ONLY fixed root0/head0 resident arithmetic and
+short synthetic transitions,NOT all heads/layers/GGML integration,real
+prompt quality,long-context stability,Work speed or inference tokens/sec.
+Production Work must NOT inherit this CPU-reference/readback/ACCEPT mode.
+Latest whole27B benchmark remains earlier038/f414=0.175353237tok/s,NOT20.
+
+Remote logs under /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+rgdn-root-pilot-native-20261021-a.log
+ SHA2565157d21a4e46046560534dc1097b11ef4294ea45019b254dd3dc4f741139a94c
+rgdn-root-chain16-native-20261021-a.log
+ SHA2567c1f7eaefa9835386ad249eea56c59d6cd7199ceae88f59e1ed4f2a7048593b3
+Matching local evidence /private/tmp/pioneer-q38-rgdn-root-native-evidence.QKh1eHkl/.
+Serial boundaries63780955/63786182 in
+/private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0.
