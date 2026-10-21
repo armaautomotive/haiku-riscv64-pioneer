@@ -48,6 +48,12 @@ case "${PIONEER_Q38_ASSISTANT_WORKER:-0}" in
     worker_libraries=-lnetwork;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_FFN_REPEAT_BENCH:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}" = work:1:1:0:0 ] || exit 2
+    extra="$extra -DPIONEER_Q38_FFN_REPEAT_BENCH";;
+ *) exit 2;;
+esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
 for name in libllama.so.0.2.0 libggml.so.0.21.0 libggml-base.so.0.21.0 libggml-cpu.so.0.21.0; do
  case "$name" in

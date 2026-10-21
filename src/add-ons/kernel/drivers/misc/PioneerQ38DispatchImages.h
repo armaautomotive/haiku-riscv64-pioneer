@@ -4,6 +4,12 @@
 #include <stdint.h>
 #include "PioneerQ38PeerTerminal.h"
 #include "PioneerQ38RootTerminal.h"
+#ifdef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
+#if !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_INLINE_CONFIG)
+#error Block-affine native QUALIFICATION requires its exact timing/inline Work chain
+#endif
+#include "PioneerQ38BlockAffinePeerImage.h"
+#endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 #ifndef PIONEER_Q38_INLINE_CONFIG
 #error Root cycle diagnostic requires the separate full inline-config Work chain
@@ -103,6 +109,9 @@ static inline uint32_t PioneerQ38DispatchPrefixWord(unsigned worker,uint32_t add
 {
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
  if (!worker) return PioneerQ38RootCyclePrefixWord(address);
+#endif
+#ifdef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
+ if (worker && worker<120) return PioneerQ38BlockAffinePeerPrefixWord(address);
 #endif
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
  if (!worker) return PioneerQ38CompactOutputRootPrefixWord(address);
@@ -711,6 +720,9 @@ static inline uint32_t PioneerQ38PersistentPeerWord(unsigned word)
 }
 static inline uint32_t PioneerQ38DispatchRoleWord(unsigned worker,unsigned word)
 {
+#ifdef PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION
+ if (worker && worker<120) return PioneerQ38BlockAffinePeerWord(word);
+#endif
 #ifdef PIONEER_Q38_INT_SFPU
 #ifdef PIONEER_Q38_QUEUED_MATRIX_ENTRY
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE

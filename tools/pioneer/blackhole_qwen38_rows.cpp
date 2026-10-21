@@ -25,6 +25,12 @@
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #include "PioneerQ38CachedAffine.h"
 #endif
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+#if !defined(PIONEER_Q38_INLINE_CONFIG) || defined(PIONEER_Q38_PREPARED_Q4_AFFINE)
+#error Block-affine cache requires the separate ordinary-layout inline Work peer
+#endif
+#include "PioneerQ38BlockAffineDst.h"
+#endif
 #if defined(PIONEER_Q38_SFPU_INTEGER) && (!defined(PIONEER_Q38_SFPU_ACCUMULATOR) || !defined(PIONEER_Q38_VECTOR_FIXED_FORMAT) || defined(PIONEER_Q38_BFLOAT_PANEL))
 #error Integer SFPU accumulator requires fixed integer operands, NEVER BF16
 #endif
@@ -173,6 +179,10 @@ static void Setup()
 }
 #ifdef PIONEER_Q38_VECTOR_PANEL
 struct VectorPanelEmitter {
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	unsigned blockAffineRow=0;
+	unsigned BlockAffineRow() const { return blockAffineRow; }
+#endif
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 	__attribute__((always_inline)) inline
 #endif
@@ -427,6 +437,9 @@ extern "C" unsigned block_main()
 #else
 		false
 #endif
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		,skipDotCheck && type==12
+#endif
 	);
 #endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
@@ -447,6 +460,9 @@ extern "C" unsigned block_main()
 	if (skipDotCheck) accumulate=type!=12
 		?&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,true,true>
 		:&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false,true>;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	if (skipDotCheck && type==12) accumulate=&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,false,true,true>;
+#endif
 #else
 	const auto accumulate=skipDotCheck && type!=12
 		?&PioneerQ38SfpuAccumulator<VectorPanelEmitter,true,true>
@@ -480,6 +496,14 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #ifndef PIONEER_Q38_PREPARED_Q4_AFFINE
 	if (type==12 && !affine.Prepare(12,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	if (type==12 && skipDotCheck) {
+		VectorPanelEmitter blockEmitter; blockEmitter.Drain(); // prior deferred store completes BEFORE format change
+		if (!affine.BlockQ4(reinterpret_cast<PioneerQ38Panel*>(0x91000),reinterpret_cast<volatile uint32_t*>(0x97000),256)) block_fault_park();
+		Fence();
+		if (!PioneerQ38BlockAffineDst(blockEmitter)) block_fault_park();
+	}
+#endif
 #endif
 #else
 	if (!affine.Prepare(type,reinterpret_cast<const uint8_t*>(0x90000),bytes)) block_fault_park();
@@ -500,7 +524,13 @@ extern "C" unsigned block_main()
 			if (!(p&1) && !PioneerQ38PreparedQ4::Panel(reinterpret_cast<const uint8_t*>(0x90000),bytes,p,local)) block_fault_park();
 		} else if (!FixedAffine(type,bytes,p,affineBase)) block_fault_park();
 #else
-		if (!(type==12?affine.Panel(p,local):FixedAffine(type,bytes,p,affineBase))) block_fault_park();
+		if (!(type==12?
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+			(skipDotCheck || affine.Panel(p,local))
+#else
+			affine.Panel(p,local)
+#endif
+			:FixedAffine(type,bytes,p,affineBase))) block_fault_park();
 #endif
 #else
 		if (!affine.Panel(p,local)) block_fault_park();
@@ -557,6 +587,9 @@ extern "C" unsigned block_main()
 		(void)Words(0x70920)[7]; Fence();
 #ifdef PIONEER_Q38_VECTOR_PANEL
 		VectorPanelEmitter emitter;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		emitter.blockAffineRow=128+(p/2)*8;
+#endif
 #ifdef PIONEER_Q38_BFLOAT_PANEL
 		if (!PioneerQ38BFloatPanel(emitter,type,p)) block_fault_park();
 #else

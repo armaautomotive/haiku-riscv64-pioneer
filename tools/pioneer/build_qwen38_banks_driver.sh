@@ -3,6 +3,17 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+case "${PIONEER_Q38_BLOCK_AFFINE_DST:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_PREPARED_Q4_AFFINE:-0}" = 1:1:0 ] || {
+     echo 'STOP block-affine native QUALIFICATION requires separate exact timing/ordinary-layout selector' >&2; exit 2; };;
+ *) exit 2;;
+esac
+case "${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_BLOCK_AFFINE_DST:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}" = 1:1 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_INLINE_CONFIG:-0}:${PIONEER_Q38_WORK_DEFER_AFFINE:-0}:${PIONEER_Q38_WORK_COMPACT_OUTPUT:-0}:${PIONEER_Q38_NORMAL_CLOCK:-0}:${PIONEER_Q38_DISPATCH_PROFILE:-0}:${PIONEER_Q38_DISPATCH_BATCHED_PIO:-0}:${PIONEER_Q38_GDN_MUTABLE_STATE:-0}:${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}:${PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC:-0}:${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" = 10:1:1:1:1:1:0:0:0:0:0:0 ] || {
@@ -249,6 +260,7 @@ if [ "${PIONEER_Q38_INLINE_CONFIG:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_INLINE_CONFIG"
 fi
 if [ "${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_ROOT_CYCLE_PROFILE"; fi
+if [ "${PIONEER_Q38_BLOCK_AFFINE_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BLOCK_AFFINE_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_ORDERED_EXTENT_FAST:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_ORDERED_EXTENT_FAST"
 fi

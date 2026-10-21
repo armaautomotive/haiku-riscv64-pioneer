@@ -27,6 +27,14 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	unsigned rawReads=0,vectorOps=0,panelMoves=0,rawUnpacks=0;
 	unsigned metadataWrites=0,instructionBufferStores=0;
 	unsigned dotProbeReads=0;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	struct BlockAffineHazard {};
+	unsigned blockScratchWords=0,blockImports=0,blockImportAttempts=0,blockInitializations=0;
+	uint32_t blockImportMask=0;
+	bool omitBlockInitialization=false;
+	unsigned dropBlockImport=0;
+	bool BlockAffineActive() const { return Persistent && !BFloat && Accumulate && type==12 && memory.at(0x74038)==1; }
+#endif
 #ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
 	struct NativeStoreHazard {};
 	bool poisonNativeLow=false;
@@ -134,6 +142,15 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		}
 #endif
 		if (omitDstInitialization && op==0x42000091) return;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		if (BlockAffineActive() && (op==0x42000091 || op==0x42000081) && config[72]==0) {
+			unsigned row=((config[84]&65535)/16)-4;
+			if (row>=128 && row<192) {
+				if (op==0x42000091) { if (omitBlockInitialization) return; blockInitializations++; }
+				else { blockImportAttempts++; if (dropBlockImport==blockImportAttempts) return; }
+			}
+		}
+#endif
 		if (allRowsClear && (op==0x10280002 || op==0x10080004)) op=0x10180000;
 		unsigned code=op>>24;
 		if (op==0x10080004 || op==0x10080005) {
@@ -159,8 +176,18 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			if (rawFloat) {
 				assert(config[1]==(BFloat?0x20200000U:0xa0200000U) && config[64]==0x100010);
 				if (rawInitial) {
-					assert(config[65]==16 && adc1==255 && rawAddress==0xa0000 && (rawRow==64 || rawRow==96));
+					assert(config[65]==16 && adc1==255 && rawAddress==0xa0000 && (rawRow==64 || rawRow==96
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+						|| (BlockAffineActive() && rawRow>=128 && rawRow<=176 && !(rawRow&15))
+#endif
+					));
 				} else {
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+					if (rawRow>=128 && rawRow<192) {
+						assert(BlockAffineActive() && blockScratchWords==256 && !(rawRow&3)
+							&& rawAddress==0x97000+(rawRow-128)*16 && config[65]==1 && adc1==15 && op==0x42000081);
+					} else
+#endif
 					assert(affineEligible && config[65]==1 && adc1==15 && op==0x42000081 && (rawRow==96 || rawRow==100 || rawRow==104));
 					assert(rawAddress==(rawRow==96?0x91200U:rawRow==100?0x91240U:rawAddress));
 					if (rawRow==104) assert(!(rawAddress&63) && Range(rawAddress,0x84000,groups*64));
@@ -185,11 +212,18 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			assert(backendWait && !pending);
 			if (rawFloat) {
 				for (unsigned i=0;i<(rawInitial?256U:16U);i++) {
-					uint32_t data=Base::Load(rawAddress+i*4);
+					uint32_t data=
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+						(!rawInitial && rawRow>=128 && rawRow<192)?memory.at(rawAddress+i*4):
+#endif
+						Base::Load(rawAddress+i*4);
 					if (rawInitial) { assert(PioneerInt8OperandValid(uint16_t(data)) && PioneerInt8OperandValid(uint16_t(data>>16))); data=0; }
 					StoreFloatDst(rawRow+i/16,i%16,data); rawReads+=4;
 				}
 				for (unsigned row=rawRow;row<rawRow+(rawInitial?16U:1U);row++) defined[Adj(row)]=true;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+				if (!rawInitial && rawRow>=128 && rawRow<192) { blockImports++; blockImportMask|=1U<<((rawRow-128)/4); }
+#endif
 			}
 			else for (unsigned i=0;i<256;i++) {
 				unsigned address=rawAddress+i; uint32_t word=memory.at(address&~3U),byte=(word>>(8*(address&3)))&255;
@@ -239,7 +273,18 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 					else if (code==0x70 && mode==4) { assert(affineEligible && !reg && row>=32 && row<36); int v=dstInt[row][col]; lr[0][lane]=(v<0 || (!v && negativeDotZero)?0x80000000U:0)|unsigned(v<0?-v:v); }
 					else if (code==0x70 && mode==3) {
 						if (Accumulate && !reg) { assert(affineEligible && row>=32 && row<36 && Base::valid[row]); lr[0][lane]=Bits(Base::dst[row][col]); }
-						else { assert(affineEligible && (reg==1 || reg==2 || reg==5) && row>=96 && row<(Accumulate?112U:108U)); lr[reg][lane]=FloatDst(row,col); }
+						else {
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+							if (row>=128 && row<192) {
+								unsigned panel=(Base::matrixInstructions/MatrixPhasesPerPanel()-1)%16;
+								unsigned first=128+(panel/2)*8+(reg==2?4:0);
+								assert(BlockAffineActive() && affineEligible && (reg==1 || reg==2) && row>=first && row<first+4);
+								if (blockImportMask!=65535 || !defined[Adj(row)] || !wrote[Adj(row)][col] || !wrote[Adj(row)+8][col]) throw BlockAffineHazard{};
+							} else
+#endif
+							assert(affineEligible && (reg==1 || reg==2 || reg==5) && row>=96 && row<(Accumulate?112U:108U));
+							lr[reg][lane]=FloatDst(row,col);
+						}
 					}
 #ifdef PIONEER_Q38_NATIVE_OPERAND_STORE
 					else if (code==0x72 && mode==5) {
@@ -361,6 +406,15 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			config[index]=value; configWrites++; return;
 		}
 		assert(!Range(address,0x70710,512)); // NO decoded operand staging/copy
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		if (Range(address,0x97000,1024)) {
+			assert(BlockAffineActive() && !(address&3) && !pending && !rawPending && drained && (value&0x7f800000)!=0x7f800000);
+			if (address==0x97000) { assert(!blockScratchWords || blockScratchWords==256); blockScratchWords=0; blockImportMask=0; blockImportAttempts=0; }
+			unsigned group=blockScratchWords/32,lane=(blockScratchWords%32)/2,kind=blockScratchWords%2;
+			assert(blockScratchWords<256 && address==0x97000+(group*32+kind*16+lane)*4);
+			memory[address]=value; blockScratchWords++; return;
+		}
+#endif
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
 		if (Range(address,0x95000,4352)) {
 			assert(Persistent && !BFloat && Accumulate && groups>1 && memory.at(0x74038)==1

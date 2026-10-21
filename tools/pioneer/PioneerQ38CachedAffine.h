@@ -67,5 +67,31 @@ public:
 		}
 		bound=output; next++; return true;
 	}
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	// Separate OFFLINE candidate. ALL original per-panel FP32 values and
+	// rounding points are retained;only their DATA staging is moved earlier.
+	// Caller must independently bind the fixed scratch and Dst ownership.
+	__attribute__((noinline)) bool BlockQ4(PioneerQ38Panel* panel,volatile uint32_t* scratch,unsigned words) {
+		if (!ready || failed || type!=12 || next || bound || !panel || !scratch || words!=256
+			|| (reinterpret_cast<uintptr_t>(panel)&3) || (reinterpret_cast<uintptr_t>(scratch)&3)
+			|| !Separate(reinterpret_cast<uintptr_t>(scratch),1024,reinterpret_cast<uintptr_t>(tile),bytes)
+			|| !Separate(reinterpret_cast<uintptr_t>(scratch),1024,reinterpret_cast<uintptr_t>(this),sizeof(*this))
+			|| !Separate(reinterpret_cast<uintptr_t>(scratch),1024,reinterpret_cast<uintptr_t>(panel),sizeof(*panel))) return Refuse();
+		for (unsigned group=0;group<8;group++) {
+			uint32_t coefficients[16],minima[16];
+			for (unsigned row=0;row<16;row++) {
+				unsigned factor,minimum;
+				if (group<4) { factor=PioneerQ38PanelByte(tile,(4+group)*16+row)&63; minimum=PioneerQ38PanelByte(tile,(8+group)*16+row)&63; }
+				else { factor=(PioneerQ38PanelByte(tile,(8+group)*16+row)&15)|((PioneerQ38PanelByte(tile,group*16+row)>>6)<<4);
+					minimum=(PioneerQ38PanelByte(tile,(8+group)*16+row)>>4)|((PioneerQ38PanelByte(tile,(4+group)*16+row)>>6)<<4); }
+				coefficients[row]=Bits(Float(base[row])*float(factor));
+				minima[row]=Bits(Float(minimumBase[row])*float(-int(minimum)));
+				if ((coefficients[row]&0x7f800000)==0x7f800000 || (minima[row]&0x7f800000)==0x7f800000) return Refuse();
+			}
+			for (unsigned row=0;row<16;row++) { scratch[group*32+row]=coefficients[row]; scratch[group*32+16+row]=minima[row]; }
+		}
+		bound=panel; next=16; return true;
+	}
+#endif
 };
 #endif

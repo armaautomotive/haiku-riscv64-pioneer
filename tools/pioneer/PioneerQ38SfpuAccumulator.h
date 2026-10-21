@@ -30,6 +30,14 @@
 #else
 #define PIONEER_Q38_ACCUMULATOR_SIZE
 #endif
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+template<bool Cached> struct PioneerQ38AffineRow {
+	template<class E> static unsigned Get(E&) { return 96; }
+};
+template<> struct PioneerQ38AffineRow<true> {
+	template<class E> static unsigned Get(E& e) { return e.BlockAffineRow(); }
+};
+#endif
 template<class E,bool Integer=false
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 	,bool ZeroMinimum=false
@@ -37,10 +45,21 @@ template<class E,bool Integer=false
 #ifdef PIONEER_Q38_WORK_DEFER_AFFINE
 	,bool Defer=false
 #endif
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	,bool BlockMetadata=false
+#endif
 > PIONEER_Q38_ACCUMULATOR_SIZE
 static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadata,uint32_t scale,int sum)
 {
 	unsigned mag=scale&0x7fffffff;
+	unsigned metadataRow=96;
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	if (BlockMetadata) {
+		static_assert(!BlockMetadata || (Integer && Defer && !ZeroMinimum),"exact Q4 Work cache only");
+		metadataRow=PioneerQ38AffineRow<BlockMetadata>::Get(e);
+		if (type!=12 || metadataRow<128 || metadataRow>184 || (metadataRow&7)) return false;
+	}
+#endif
 	if ((type!=8 && type!=12 && type!=14) || sum<-2048 || sum>2048 || (first && !metadata)
 		|| (mag && (mag<0x2f800000 || mag>0x47800000))) return false;
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
@@ -59,7 +78,11 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 			e.Op(0x72770000|(slot==2?108U:96U+slot*4)|parity);
 		e.Drain();
 	}
-	if (metadata) {
+	if (metadata
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		&& !BlockMetadata
+#endif
+	) {
 		e.Op(0x5e203c00); e.Op(0x5120000a); e.Op(0x5420000f); e.Op(0xb2050000); e.Drain();
 		e.Config(1,Integer?0xa0200000:0x20200000); e.Config(64,0x100010); e.Config(65,1); e.Config(72,0);
 		for (unsigned kind=0;kind<(
@@ -76,11 +99,11 @@ static bool PioneerQ38SfpuAccumulator(E& e,unsigned type,bool first,bool metadat
 	}
 	for (unsigned parity=0;parity<4;parity+=2) {
 		e.Op((Integer?0x70040000:0x70030000)|32|parity); // canonical SM32 or exact FP32 integer dot
-		e.Op(0x70130000|96|parity);
+		e.Op(0x70130000|metadataRow|parity);
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM
 		if (!zeroMinimum)
 #endif
-		e.Op(0x70230000|100|parity);
+		e.Op(0x70230000|(metadataRow+4)|parity);
 		e.Op(0x70530000|108|parity);
 		PioneerSfpuLoad32(e,3,scale);
 #ifdef PIONEER_Q38_WORK_ZERO_MINIMUM

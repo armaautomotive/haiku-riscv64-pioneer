@@ -6,6 +6,9 @@
 #include "llama.h"
 #include <time.h>
 #include <signal.h>
+#ifdef PIONEER_Q38_FFN_REPEAT_BENCH
+#include "PioneerQ38FfnSamples.h"
+#endif
 // PIONEER_PUBLIC_STOP_BEGIN
 static volatile sig_atomic_t stopRequested=0;
 static void RequestStop(int) { stopRequested=1; } // NO IO/cleanup in a signal handler
@@ -84,8 +87,30 @@ static int GraphSmoke(State& state,const char* output)
 		double repeat=Seconds(); uint64_t pages=state.session.pagesUploaded;
 		double matrixBefore=state.matrixWallSeconds;
 		uint64_t ioctlBefore=state.session.runNanos;
+#ifdef PIONEER_Q38_FFN_REPEAT_BENCH
+		PioneerQ38FfnSamples samples;
+		if (okay) memcpy(first.data(),y->data,5120*4);
+		// PIONEER_FFN_REPEAT_LOOP_BEGIN
+		for (unsigned sample=0;okay && !stopRequested && sample<32;sample++) {
+			memset(y->data,0,5120*4); double began=Seconds();
+			okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS;
+			double finished=Seconds(); samples.Add(began,finished); // timing NEVER controls device cleanup
+			if (okay) okay=!memcmp(first.data(),y->data,5120*4); // repeatability OUTSIDE timed graph;NO CPU learned reference
+		}
+		// PIONEER_FFN_REPEAT_LOOP_END
+#else
 		if (okay) { memcpy(first.data(),y->data,5120*4); memset(y->data,0,5120*4); okay=ggml_backend_graph_compute(backend,graph)==GGML_STATUS_SUCCESS; }
+#endif
 		double repeated=Seconds()-repeat;
+#ifdef PIONEER_Q38_FFN_REPEAT_BENCH
+		PioneerQ38FfnSamples::Summary summary; bool timing=samples.Finish(summary);
+		printf("PUBLIC_FFN_REPEAT32 samples%u timing_valid%u graph_success%u mean_seconds%.9f median_seconds%.9f min_seconds%.9f max_seconds%.9f first_seconds%.6f warm_wall_seconds%.6f;REPEATABILITY_OUTSIDE_TIMING_NO_CPU_LEARNED_REFERENCE_NOT_TOKEN_RATE\n",
+			samples.Count(),unsigned(timing),unsigned(okay),summary.mean,summary.median,summary.minimum,summary.maximum,repeat-start,repeated);
+		printf("PUBLIC_FFN_HOST_REPEAT32 graph_wall_seconds%.6f multiply_seconds%.6f ioctl_seconds%.6f profile_valid%u calls%llu projections%llu pages%llu;CPU_WALL_NOT_PURE_GPU_OR_LLM_TOKEN_RATE\n",
+			repeated,state.matrixWallSeconds-matrixBefore,double(state.session.runNanos-ioctlBefore)*1e-9,unsigned(state.profileValid),
+			(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,(unsigned long long)state.session.pagesUploaded);
+		okay=okay && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==1+samples.Count();
+#else
 		printf("PUBLIC_FFN_GGML_GRAPH first_seconds%.6f repeat_seconds%.6f calls%llu projections%llu pages%llu;NOT_LLM_TOKEN_RATE\n",
 			repeat-start,repeated,(unsigned long long)state.session.calls,(unsigned long long)PioneerQ38GgmlSnapshot().projections,
 			(unsigned long long)state.session.pagesUploaded);
@@ -93,6 +118,7 @@ static int GraphSmoke(State& state,const char* output)
 			repeated,state.matrixWallSeconds-matrixBefore,double(state.session.runNanos-ioctlBefore)*1e-9,
 			unsigned(state.profileValid && repeat>=0 && repeated>=0 && state.session.runNanos>=ioctlBefore));
 		okay=okay && !memcmp(first.data(),y->data,5120*4) && state.session.pagesUploaded==pages && PioneerQ38GgmlSnapshot().projections==2;
+#endif
 	}
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
 	if (!okay) State::Abort(&state); // graph/repeat mismatch is CLOSE ONLY too
@@ -125,6 +151,9 @@ static int GraphSmoke(State& state,const char* output)
 int main(int argc,char** argv)
 {
 	bool graph=argc==3 && !strcmp(argv[1],"--public-ffn-graph-export");
+#ifdef PIONEER_Q38_FFN_REPEAT_BENCH
+	if (!graph) return 2; // isolated diagnostic executable,NEVER normal model/Assistant mode
+#endif
 	unsigned limit=argc==2?PioneerQ38PublicTokenLimit(argv[1]):0;
 	unsigned sequences=argc==2?PioneerQ38PublicSequenceCount(argv[1]):0;
 	bool repeatedRun=sequences==3,four=limit==4,longTiming=limit==32 && !repeatedRun;
@@ -134,6 +163,9 @@ int main(int argc,char** argv)
 #endif
 	signal(SIGINT,RequestStop); signal(SIGTERM,RequestStop);
 	setvbuf(stdout,nullptr,_IOLBF,0); setvbuf(stderr,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_FFN_REPEAT_BENCH
+	puts("FFN_REPEAT32_DIAGNOSTIC_ONLY;FIRST_PLUS32_WARM_GRAPHS;NO_CPU_LEARNED_REFERENCE;OUTPUT_REPEATABILITY_CHECK_OUTSIDE_TIMING");
+#endif
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 #ifdef PIONEER_Q38_SPAN_FAST
 	puts("PUBLIC27B_WORK_TRANSPORT NO_CPU_DATA_VALIDATION;NO_DEVICE_ECHO_READBACK;OWNED_BOUNDS_SOURCE_ACK_COMPLETION_CHECKS_RETAINED");

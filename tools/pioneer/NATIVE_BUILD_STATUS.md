@@ -1,5 +1,52 @@
 # Native build status
 
+October20,19:56 Vancouver (October21,02:56 UTC) EXACT Q4 BLOCK CACHE PREPARED:
+Separate native QUALIFIER c8cbbc99/tag2026102100010011 builds a/b EXACT;
+STAGING only,NOT installed/native qualified. Candidate peer366e25c3/
+prefix189a185d builds g/h EXACT,inside unchanged8KiB main/0x1500 prefix.
+Fixed owned scratch97000..97400;FULL initialized Dst32 rows128..191
+(physical256..383,cfg220=0),disjoint from all existing raw/dot/decoded/
+metadata/accumulator rows. Work-Q4 ONLY precomputes original FP32 coefficient/
+minimum values,imports ALL8 groups under ONE metadata-format setup,then
+loads retained rows per panel. Original per-panel rounding/matrix/NoC/
+sum-cache/source/STOP remain;NO prepared weight format or CPU Work validation.
+
+DATA PcGJ4J2o PASS1024 fixtures and all original per-panel/scalar values,
+signed zero/subnormal/max HALF,alias/size/alignment/one-shot refusals.
+Original cached-affine Jsnem6Az regression PASS16,252,928 exhaustive HALF
+products. ACTUAL image pNCwiX4b full suite PASS all3 formats/3 widths/
+1,3,16 groups/both modes/two changed-input jobs plus missing1/8/16 imports/
+padding observer refusals. Strict VM caught a pending final RWC reset in
+initial prototype BEFORE native access;g/h move it before the final drain.
+ALL superseded images remain UNSELECTED. Header-all-word check+pilot
+NaDbpRSo PASS. Actual root+real cache peer82UXRjeV and actual native
+handler/Work DMA+RUN KRo8vH1p PASS,including retained owner/BME/DMA/source/
+counter/PC/copyout failures. Native role build gate57 PASS before SDK/output.
+Native run/control frame bound464B;card max individual frame480B.
+Cache flag-OFF peer EXACT b86c3bc1/fcfb6af6;full native default EXACT52ea41c9/
+guardd1ce/default2df. Focused updater60 PASS;expanded suite pending.
+
+OFFLINE Q4 K17408/groups16:RV19,921,285->17,933,663 (~10% fewer),config
+261264->124184 (~52% fewer),drains243796->215516 (~12% fewer). These are
+instruction-model counts,NOT silicon/cycle/token speed. Latest whole27B
+remains earlier0.175353237tok/s,NOT20. Goal ACTIVE.
+
+Current actual52ea41c9/gen17 control FFN completed clean END/CLI_EXIT0,
+800->1350->800/uncertain0/guardcold0/active_owner0. SAME pinned f414 client
+real K17408/N5120 graph:ONE warm0.011670s,multiply0.011622/ioctl0.010756s.
+ALL5120 output bits match earlier05cda52a/cmpEXIT0. Log SHA8d3dad4366150a26184fe58410301616b953f708ccc3cba5897a591948335fb0.
+This is NOT whole-model performance or robust repeated latency.
+
+Separate FFN32 diagnostic f0566393 builds b/c EXACT against ONLY pristine
+c060 headers+the four SHA-frozen runtime libs;normal flag-OFF host remains
+EXACT f414306f. Fixed graph ONLY,first+32 warm calls,repeatability checked
+OUTSIDE timed graph,NO CPU learned reference/fallback/Assistant mode.
+Reports separate timing validity/graph success,median/mean/min/max;bad or
+partial clock samples NEVER control device cleanup. DATA PmkuBpQH and
+ACTUAL extracted loop likfIs9s PASS,including first/mid/last errors/numeric
+mismatch/stop preventing later calls. Build gate16 PASS before SDK/library
+contents. NO native FFN32 run yet;staging waits for driver transfer.
+
 October20,19:21 Vancouver (October21,02:21 UTC) NATIVE ROOT CYCLES PASS:
 52ea41c9/tag2026102100010010/gen17 hot swap verified,NO reboot. Synthetic18
 then authenticated119-worker16 jobs ALL exact independent debug reference,

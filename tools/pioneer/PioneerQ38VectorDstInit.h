@@ -12,14 +12,26 @@ template<class E>
 #if defined(PIONEER_Q38_SFPU_ACCUMULATOR) && defined(__GNUC__) && !defined(__clang__)
 __attribute__((noinline,optimize("Os")))
 #endif
-static void PioneerQ38VectorDstInit(E& e,bool bfloat,bool metadata,bool fixed)
+static void PioneerQ38VectorDstInit(E& e,bool bfloat,bool metadata,bool fixed
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+	,bool blockAffine=false
+#endif
+)
 {
 	e.Op(0x3700000f); e.Op(0x5e23fc00); e.Op(0x5120000a); e.Op(0x5420000f);
 	e.Op(0xb2050000); e.Drain();
 	e.Config(1,bfloat?0x20200000:0xa0200000); e.Config(49,0);
 	e.Config(64,0x100010); e.Config(65,16); e.Config(72,0); e.Config(73,0x13); e.Config(76,0x9fff);
-	for (unsigned group=0;group<(metadata?2U:1U);group++) {
+	for (unsigned group=0;group<(metadata?2U:1U)
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		+(blockAffine?4U:0U)
+#endif
+		;group++) {
+#ifdef PIONEER_Q38_BLOCK_AFFINE_DST
+		e.Config(84,0x00400000+((group<2?(group?96:64):128+(group-2)*16)+4)*16);
+#else
 		e.Config(84,0x00400000+((group?96:64)+4)*16);
+#endif
 		e.Op(0x42000091); e.Drain(); // ALL256 datums zero,ALL16 columns each row,no flip
 	}
 	e.Config(1,bfloat?0x203c8000:fixed?0xa03c8000:0xa0220000); e.Config(64,(bfloat || fixed)?0x10001e:0x100011);

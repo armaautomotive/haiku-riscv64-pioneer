@@ -8,6 +8,8 @@ SECTIONS {
 	/* Pin ONLY the integer specialization, including the compiler's local
 	 * constant-propagation clone suffix. A changed symbol fails nonempty. */
 	.affine 0x70b00 : {
+		*(.text._Z24PioneerQ38BlockAffineDstI18VectorPanelEmitterE*)
+		*(.text._Z23PioneerQ38VectorDstInitI18VectorPanelEmitterEvRT_bbbb*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1EE*)
 		/* Separately gated zero-minimum variant: preserve original arithmetic
 		 * as a distinct constant specialization for Q4/ALL checked jobs. */
@@ -16,6 +18,11 @@ SECTIONS {
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb0EE*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb1EE*)
 		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1ELb1EE*)
+		/* Separate block-metadata specializations;SAME reserved prefix. */
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb0ELb0EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb1ELb0EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb1ELb1ELb0EE*)
+		*(.text._Z25PioneerQ38SfpuAccumulatorI18VectorPanelEmitterLb1ELb0ELb1ELb1EE*)
 		*(.text._ZN22PioneerQ38CachedAffine*)
 		/* Unselected prepared-Q4 experiment,inside the SAME owned prefix. */
 		*(.text._ZN20PioneerQ38PreparedQ45Panel*)
