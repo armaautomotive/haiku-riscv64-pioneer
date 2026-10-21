@@ -13,6 +13,17 @@
 #endif
 #endif
 struct ControllerMachine:DispatchMachine {
+#ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
+	std::array<uint32_t,64> Proof(unsigned worker) const override {
+		auto p=DispatchMachine::Proof(worker);const auto& d=peers.at(worker-1).descriptor;
+		if(d[14]) {
+			unsigned batch=d[1]==8?4:2,blocks=d[5]>>(d[1]==8?5:8),reads=d[7]*blocks/batch+(d[5]*2+16383)/16384+1;
+			assert(!(blocks%batch));for(unsigned c:{0U,2U,3U,6U})p[8+c]=p[c]+reads;
+			p[20]-=(batch-1)*d[2];p[23]=0x98000;p[28]*=batch;
+		}
+		return p;
+	}
+#endif
 #ifdef PIONEER_Q38_ROOT_CYCLE_PROFILE
 	uint32_t ReadCycleCsr(unsigned csr) override {
 		assert(csr==0xb00 || csr==0xb80);

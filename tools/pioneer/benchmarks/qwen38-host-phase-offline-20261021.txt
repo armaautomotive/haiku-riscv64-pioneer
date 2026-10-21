@@ -84,3 +84,12 @@ all ioctl entry/copy costs or isolate arithmetic from root NoC/monitoring.
 No per-projection serial logging. Instrumented timing is NOT substituted
 for uninstrumented production speed. Round2 fresh child started fromSAME
 authenticated parent WITHOUT another full-model SHA;pending at checkpoint.
+
+Round2 subsequently completed clean END/result0 with SAME05cda52a output.
+round0002.log SHA8c598722ddc8d197d1fd1783b8c56cb0ef410f228bc701519aa4bf77ac68b176.
+32warm graph mean.010517969s,median.0104825,min.010446/max.011171;
+warmwall.336849s,matrix.335502/ioctl.309506s. CPU-us sums authority5706/
+stage12921/arm33870/execute169171/proof21570/output19442/hold7939/commit9289.
+Again,NOT pureGPU/token rate. Parent explicitly quit10:22UTC,SSH exit0,
+NO accelerator FD or retained owner. Guarded restore18/gen34->17/gen35
+clean,then bounded batch-fetch19/gen36 applied for separate qualification.

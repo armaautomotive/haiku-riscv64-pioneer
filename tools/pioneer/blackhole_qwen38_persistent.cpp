@@ -34,6 +34,9 @@ static unsigned SourceOffset(unsigned word)
 	if (word<=12) return 0x130+(word-7)*4;
 	return word==13?0x150:word==14?0x154:0x16c;
 }
+#ifdef PIONEER_Q38_WORK_BATCH4_FETCH
+__attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
+#endif
 static bool SourceMatches(const uint32_t (&source)[16])
 {
 	bool okay=true;
@@ -105,7 +108,7 @@ extern "C" void q38_persistent_main()
 		unsigned blocks=snapshot[5]>>(snapshot[1]==8?5:8),count=snapshot[7]*snapshot[5]/16;
 		unsigned reads=snapshot[7]*
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
-			(snapshot[14]?blocks/4:blocks)
+			(snapshot[14]?blocks>>(snapshot[1]==8?2:1):blocks)
 #else
 			blocks
 #endif

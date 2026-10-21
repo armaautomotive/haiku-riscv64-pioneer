@@ -2,8 +2,9 @@
 set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-sentinel-tag.XXXXXXXX")
-for variant in sentinel host;do
-extra=;[ "$variant" = sentinel ] || extra=-DPIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT
+for variant in sentinel host batch4;do
+extra=;[ "$variant" != host ] || extra=-DPIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT
+[ "$variant" != batch4 ] || extra=-DPIONEER_Q38_BATCH4_REFERENCE_CLIENT
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined $extra \
  "$directory/pioneer_q38_sentinel_debug_tag_test.cpp" -o "$temporary/test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"

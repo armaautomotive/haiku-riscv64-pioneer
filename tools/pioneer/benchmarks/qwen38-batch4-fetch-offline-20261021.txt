@@ -1,3 +1,53 @@
+Batch4 original-layout peer fetch,October21 2026.
+LATEST REVISION10:33UTC:bounded8KiB qualification supersedes ALL old
+four-tile-for-every-type source/image/count data below. Historical
+large-read prototype was NEVER installed or native-run. No speed claim.
+
+Primary vendor report https://github.com/tenstorrent/tt-metal/issues/52270
+describes address/dtype-dependent14/16KiB read hangs. This is NOT proof of
+a universal8KiB limit or our hardware's behavior. Conservatively bound
+NEW reads toQ8 four576B tiles2304B,Q4 two2304B tiles4608B,Q6 two3392B
+tiles6784B. Saved peer window unchanged;stage98000..99a80;copy each old
+tile to90000 in original order. Q8 quarter/Q4+Q6 half weight requests,
+SAME total bytes/flits,not a speedup claim. Source/PC/reset/NoC/DMA/END
+and retained-owner proofs unchanged. Checked path still one-tile reads.
+
+Twice identical bounded rootd/e:
+text68da37b7e5dd672d07fc48a5c1e6f456a59d063cad7eb8613c668cc9fe7194d3
+prefix3280945ab6110de738b4e03525388c92f5e02d8d02e785dce3cc448d62741457.
+Twice identical bounded peerl/m:
+text8ea00560451af37e708f2f45f9660627834a2202b01f5f3ba03969c40e878beb
+affine7a3f7b2dea02e85129c84b837794642a4f6b85ce4b4fbfdd52f3043697d2b230
+fetchb6316e76b73f0e9db9bb240cbff5f5104d1b8faba959996428ac16ef56b49c33.
+Fetch+unchanged SourceMatches helper604B in SAME immutable70000..70700.
+Bounded frozen image registry selects ONLY exacttag19/complete chain.
+Driver2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
+twice identicalc/d. FlagOFF control84ab80ac and guardd1ce2aa4/default43
+2df0e0f8 reproduced after final source revision. Pristine pinnedSDK only.
+
+LATEST offline evidence,NO physical speed claim:
+458400 plan/overflow/atomic casesaV0lDIOB;
+full54shape/two changed inputs/STOP actual peerLJbiUUnJ,
+log/private/tmp/pioneer-q38-batch4-safe8k-peer-full-20261021-a.log
+SHA68bcaf204476cf75acc950bede5163f8e84d4e14b9d901ea77ced6a54dd0ea34;
+108root shapes/all64 proof corruptions/PC/NoC/DMA failures eZSgxgU3,
+log/private/tmp/pioneer-q38-batch4-safe8k-root-full-20261021-a.log
+SHA8ddb18fcf6c9c7dcb949ca0a6e30460b1950180410f1782159d1d4e1dd8500a7;
+actual kernel/controller private extent/BME/owner/late mapping failures
+94EWGZjt,log/private/tmp/pioneer-q38-batch4-safe8k-controller-20261021-a.log
+SHAded286ae83e2e62b862be8dc2a1867117bb25f1cbc1742c5b37e535d48dabf38;
+491520 registry image words exact VwxWp7Hn;279 exacttag role casesefY3CLFX;
+171host refusals+17 actual fork/barrier/failure casesYP9fno95;
+135native/client preSDK role refusals;120selected and3071FULL actual
+updater cases pass after final2fcf hash pin. No automatic rollback/reset.
+
+Exacttag19 debug1560d47b and paired tag17/19 host28cd881d twice identical.
+Remote hashes verified,all uploads completed BEFORE any GPU job.
+Explicit guarded known-clean18/gen34->17/gen35->19/gen36 succeeded
+without reboot. First synthetic native test RUNNING at this checkpoint;
+NO native correctness/model/speed qualification claimed yet.
+
+HISTORICAL SUPERSEDED LARGE-READ OFFLINE PROTOTYPE (NEVER INSTALLED):
 Batch4 original-layout peer fetch,October21 2026. OFFLINE ONLY.
 NO private controller/source/native/model/Assistant qualification.
 Native/inference builders explicitly REFUSE flag;do NOT install. Separate

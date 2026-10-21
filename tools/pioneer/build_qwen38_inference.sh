@@ -2,6 +2,11 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "$#" = 3 ] || exit 2
+case "${PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_BENCHMARK_HOST:-0}:${PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION:-0}" = 1:0 ] || exit 2;;
+ *) exit 2;;
+esac
 [ "${PIONEER_Q38_WORK_BATCH4_FETCH:-0}" = 0 ] || {
  echo 'STOP batch4 fetch is OFFLINE ONLY;NO model/Assistant selector' >&2;exit 2; }
 case "${PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION:-0}" in
@@ -102,6 +107,7 @@ if [ "${PIONEER_Q38_Q8_REPEAT_BENCH:-0}" = 1 ]; then
 fi
 if [ "${PIONEER_Q38_ROOT_STATS_BENCH:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_ROOT_STATS_BENCH"; fi
 if [ "${PIONEER_Q38_BENCHMARK_HOST:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST"; fi
+if [ "${PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_NATIVE_Q8_LAYOUT"

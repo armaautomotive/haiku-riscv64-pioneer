@@ -6,10 +6,15 @@
 #endif
 #include <string.h>
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#if defined(PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION) && defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION)
+#error Distinct original-TC benchmark-host diagnostic roles MUST NOT mix
+#endif
 static inline bool PioneerQ38BenchmarkHostTag(const tt_pioneer_driver_reload& r) {
  return r.version==1 && r.driver==55 && r.guard_version==1 && r.generation
   && !r.quiesced && !r.cold && !r.active_owner && r.open_count==1
-#ifdef PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION
+#ifdef PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION
+  && (r.build_tag==UINT64_C(0x2026102100010017) || r.build_tag==UINT64_C(0x2026102100010019));
+#elif defined(PIONEER_Q38_BENCHMARK_HOST_PROFILE_QUALIFICATION)
   && r.build_tag==UINT64_C(0x2026102100010018);
 #else
   && (r.build_tag==UINT64_C(0x2026102100010012) || r.build_tag==UINT64_C(0x2026102100010016)

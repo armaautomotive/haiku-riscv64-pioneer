@@ -15,14 +15,15 @@ struct Batch4Image:DirectSrcBImage {
   assert(!pending && pendingAccumulator.empty());memory[0x74038]=work;packets=originalPackets;
   if(work) {
    packets.resize(inputReads);
-   for(unsigned t=0;t<tiles.size();t+=4) {
+   unsigned batch=type==8?4:2;
+   for(unsigned t=0;t<tiles.size();t+=batch) {
     const auto& original=originalPackets.at(inputReads+t);
-    packets.push_back({original.address,original.route,0x98000,4*unsigned(tile.size()),int(t)});
+    packets.push_back({original.address,original.route,0x98000,batch*unsigned(tile.size()),int(t)});
    }
   }
   copyReads=copyWrites=0;
   for(unsigned at=0;at<0x3500;at+=4)memory[0x98000+at]=0x7fc1dead;
-  memory[0x97ffc]=memory[0x9b500]=0xdec0adfe;
+  memory[0x97ffc]=memory[0x99a80]=memory[0x9b500]=0xdec0adfe;
   Poison();PoisonTail();
  }
  uint32_t Load(uint32_t at)override {
@@ -30,7 +31,8 @@ struct Batch4Image:DirectSrcBImage {
   if(Range(at,0x98000,0x3500)) {
    assert(Active() && !pending && !rawPending && phaseQueue.empty() && memory.count(at));
    unsigned t=copyReads/(tile.size()/4),word=copyReads%(tile.size()/4);
-   assert(at==0x98000+(t%4)*tile.size()+word*4 && memory.at(at)==Word(tiles.at(t),word*4));copyReads++;return memory.at(at);
+   unsigned batch=type==8?4:2;
+   assert(at==0x98000+(t%batch)*tile.size()+word*4 && memory.at(at)==Word(tiles.at(t),word*4));copyReads++;return memory.at(at);
   }
   if(at==0xffb20040 && Active()) {
    doorbellRead=true;
@@ -75,18 +77,18 @@ int main(int argc,char** argv) {
    assert(old.Job(job) && next.Job(job));
    assert(old.matrixInstructions==next.matrixInstructions && old.sumWrites==next.sumWrites && old.sumReads==next.sumReads
     && old.vectorOps==next.vectorOps && old.drains==next.drains && old.pendingAccumulator.empty() && next.pendingAccumulator.empty());
-   assert(old.requests-old.inputReads==(next.requests-next.inputReads)*(work?4U:1U));
+   assert(old.requests-old.inputReads==(next.requests-next.inputReads)*(work?(type==8?4U:2U):1U));
    assert(next.copyReads==(work?groups*(k/(type==8?32:256))*next.tile.size()/4:0U) && next.copyWrites==next.copyReads);
-   assert(next.memory.at(0x97ffc)==0xdec0adfe && next.memory.at(0x9b500)==0xdec0adfe);
+   assert(next.memory.at(0x97ffc)==0xdec0adfe && next.memory.at(0x99a80)==0xdec0adfe && next.memory.at(0x9b500)==0xdec0adfe);
    for(unsigned row=0;row<groups*16;row++)assert(old.buffers[4096+row]==next.buffers[4096+row]);
   }
   old.memory[0x74038]=next.memory[0x74038]=0;assert(old.Job(3,2) && next.Job(3,2));
  }
- for(unsigned fault:{1U,4U,5U,30U,55U}) {
+ for(unsigned fault:{1U,4U,5U,55U,106U}) {
   Batch4Image bad(argv[2],12,17408,3);assert(bad.Boot());bad.Prepare(true);bad.faultAt=fault;
   assert(!bad.Job(1) && bad.pending && bad.requests==fault && bad.responses==fault-1 && !bad.memory.at(0x74144));
   unsigned requests=bad.requests,copies=bad.copyWrites;for(unsigned step=0;step<1000;step++)bad.StepBlock();assert(bad.requests==requests && bad.copyWrites==copies);
  }
- puts(argc==4?"PASS PARTIAL ONLY batch4 Work pilots+NoC faults;FULL SUITE SKIPPED":"PASS OFFLINE ACTUAL batch4 peer:all types/K/groups/modes/two changed inputs,exact original FP32+independent FP64,ALL scratch words fresh/in-order/bounded,unchanged Tensix operations/drains/rounding,quarter weight requests+same bytes,NoC uncertainty parks without later copy/retry;NO root/controller/native/speed qualification");
+ puts(argc==4?"PASS PARTIAL ONLY batch4 Work pilots+NoC faults;FULL SUITE SKIPPED":"PASS OFFLINE ACTUAL bounded batch peer:all types/K/groups/modes/two changed inputs,exact original FP32+independent FP64,ALL scratch words fresh/in-order/bounded,unchanged Tensix operations/drains/rounding,Q8 quarter and Q4/Q6 half weight requests+same bytes,NoC uncertainty parks without later copy/retry;NO root/controller/native/speed qualification");
 }
 #endif

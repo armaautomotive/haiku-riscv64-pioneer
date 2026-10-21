@@ -501,7 +501,7 @@ extern "C" unsigned block_main()
 	if (operation==1) for (unsigned w=0;w<workers;w++) {
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 		const uint32_t* p=parts[w]; unsigned groups=p[2],weightReads=groups*blocks;
-		if(work)weightReads>>=2; // ALL supported per-group block counts divisible4
+		if(work)weightReads>>=type==8?2:1; // bounded <=8KiB DRAM batches
 		unsigned reads=weightReads+(inputs*2+16383)/16384+1;
 #else
 		const uint32_t* p=parts[w]; unsigned groups=p[2],reads=groups*blocks+(inputs*2+16383)/16384+1;
@@ -513,7 +513,7 @@ extern "C" unsigned block_main()
 		volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;
 		command[0]=p[0]+(groups*blocks-1)*Tile(type); command[2]=p[4]; command[3]=0x90000; command[5]=XY(w+1); command[8]=Tile(type);
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
-		if(work){command[0]-=3*Tile(type);command[3]=0x98000;command[8]*=4;}
+		if(work){unsigned batch=type==8?4:2;command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
 #endif
 		if (proof[16]!=groups*inputs/16 || proof[17]!=p[3] || proof[18]!=w+1 || proof[19]!=0x32503851
 			|| proof[30]!=p[5] || proof[31]!=XY(w+1)) block_fault_park();

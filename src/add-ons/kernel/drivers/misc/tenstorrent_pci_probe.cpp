@@ -16,6 +16,11 @@
 #include <unistd.h>
 #include <new>
 #include <vm/vm.h>
+#ifdef PIONEER_Q38_BATCH4_FETCH_QUALIFICATION
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010019ULL
+#error Batch4 native qualifier requires its separate exact-tag19 retained-owner build
+#endif
+#endif
 #ifdef PIONEER_Q38_HOST_PHASE_PROFILE
 #if !defined(TT_PIONEER_Q38_DISPATCH_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010018ULL
 #error Host phase diagnostic requires its separate exact-tag18 sentinel/root/normal-clock qualification

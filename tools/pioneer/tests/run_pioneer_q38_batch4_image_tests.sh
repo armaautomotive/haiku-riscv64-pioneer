@@ -5,9 +5,9 @@ directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 hash_is(){ actual=$(shasum -a 256 "$1");[ "${actual%% *}" = "$2" ]; }
 hash_is "$1/text.bin" 209fc6b8d40ed0ac7216c16ec9657ed0d83259e2ded53b35524c8cc6507bf0ef
 hash_is "$1/affine.bin" 083330550580cc8ba821456c95b256ff8ea1d9742bb12230b06af469392f856a
-hash_is "$2/text.bin" e45cf8eb66316126f4db5650cc6057c408b9fc074f522e73c5918a53358299b8
-hash_is "$2/affine.bin" 8f518409de7c1f872cac64277fb800fe09f7c0964687784718ce3d9b73e38107
-hash_is "$2/fetch.bin" 6cbe9a3026146d7bc338160cf590db0671831e94bf0f7d89003a74c6d4b95f79
+hash_is "$2/text.bin" 8ea00560451af37e708f2f45f9660627834a2202b01f5f3ba03969c40e878beb
+hash_is "$2/affine.bin" 7a3f7b2dea02e85129c84b837794642a4f6b85ce4b4fbfdd52f3043697d2b230
+hash_is "$2/fetch.bin" b6316e76b73f0e9db9bb240cbff5f5104d1b8faba959996428ac16ef56b49c33
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-batch4-image.XXXXXXXX")
 ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
  -DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION -DPIONEER_Q38_TEST_AFFINE_REPLAY -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE \
