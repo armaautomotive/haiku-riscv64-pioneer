@@ -72,3 +72,24 @@ SHA765108031ffe973c284a13677b53f534fd040b49eb13f6882fced7d183107ff3.
 Two fresh narrow cross-builds IDENTICAL:
 56e9524eec6ab8bcc41961ea0e4173f6991a329f40faf7e006eb6bc3cd52a59d.
 Ordinary model flagOFF still EXACTf414306f. NOT native-run/promoted yet.
+
+Native ORIGINAL6245833c32/8/32 trial completed14:37UTC on unchanged best
+041/tag12/g61. ALL96tokens EXACT to original041 and betweenall3sequences;
+47712projections/48480calls/119workers,4558653pagesretained. Explicit
+clean_end1/CLI_EXIT0;CPUmetadata afterwardcold0/active_owner0/open_count1/
+guard1. NO reboot/SD/power/driver change. Own archived log
+/private/tmp/pioneer-q38-thread-native-evidence.B3L9AAbn/model-thread-sweep-041-three32-20261021-a.log
+SHAadd899339b5355a6abb6da59e0f43cec48719b9ba064fa398f302e2e596d05e7.
+
+Per-sequence27warm positions,first5skipped EACH:
+sequence0 CPU32:149.181635s=.180987425tok/s,median5.523268,p955.560615;
+sequence1 CPU8:132.133121s=.204339380tok/s,median4.891561,p954.918576;
+sequence2 CPU32:149.590610s=.180492612tok/s,median5.538380,p955.585178.
+CPU32pooled54/298.772245=.180739680tok/s. CPU8 is13.0573%MOREtokens/sec
+and11.5493%LESSwalltime in THIS bracketing test. ALL learnedmatrices still
+card-only;noCPUreference/fallback. The mixedaggregate .187976308tok/s
+combines DIFFERENT threadcounts and MUST NOTbeclaimed as fixedconfigrate.
+OneCPU8sample only,NOT broad/thermal/statistical or textquality evidence.
+Completedtrial permits follow-up8/1/8;NOT yet Assistant/default promotion.
+20tok/s UNMET. Assistant already supports explicit CPUthread selection
+for non-matrix operations;this test did not change its files/settings.
