@@ -1,5 +1,5 @@
-OFFLINE original-layout one-tile prefetch,October21 2026 13:43UTC.
-NOT installed/native-run or timed. Best whole27B remains041 .181432516
+Original-layout one-tile prefetch,October21 2026. Historical offline
+evidence;native qualification+slower pairing appended14:09UTC. Best041 .181432516
 tok/s;20tok/s UNMET. Assistant/service CLOSED;no boot/SD/power change.
 
 Hypothesis:overlap ONE normal immutable weight read with computation
@@ -77,3 +77,38 @@ SHAff4fcdc5dfe025212f5333f38414c9c627a71fa5ff7ef5881fef23e0e338831f.
 Next nativequalification must retain CLOSEONLY on ANYUNKNOWN/mismatch;
 no END/retry/reset/hotrollback on unknown. Only explicitcleanEND unlocks
 next job. No fullmodel speed/quality/Assistant promotion claimed yet.
+
+Native56jobs completed13:51UTC:20synthetic+18authenticated119-worker+
+18unchangedchecked,ALL exact_errors0,each explicitBANK_END state2/active0/
+pci_restored1/host_released1/cold0/accepted1,KNOWN_CLEAN_END1,CLI_EXIT0.
+Guarded12/g53->16/g54->17/g55->23/g56. Own remotehotreloadstage logs,
+archived in/private/tmp/pioneer-q38-prefetch-native-evidence.oqtWo8Fi:
+tile-prefetch-synthetic-20261021-a.log
+SHA6196cbc0bcb3cf8d717829c4cd23db583b15e3a069d76fb738bce1d3c50c4640
+tile-prefetch-auth119-20261021-a.log
+SHA1d649916aee770f8835ab7934362626594a4a670bbbc69ecce94816183302231
+tile-prefetch-checked-regression-20261021-a.log
+SHAbd6f6182eba41cfa9b8e4bea24f049735c99b2f3a008e677a03be7c15d5a8c77
+Debug client's historical SENTINEL_DEBUG_EXACT_TAG17 banner is generic;
+actualpreBEGIN predicate independently requires EXACT23(all651tests).
+
+Paired7b3f host authenticated SAME completepublicGGUF ONCE,then4fresh
+sessions,originalTC/noCPUlearned-reference. Directory
+/boot/home/pioneer-q38-benchmark.iZr3bl,round0001..0004:
+23/g56 mean.010631344 median.010627000 min.010583/max.010706s;
+17/g57 mean.010554969 median.010529000 min.010492/max.010992s;
+23/g58 mean.010592844 median.010591000 min.010548/max.010656s;
+17/g59 mean.010513563 median.010504000 min.010460/max.010635s.
+Each32warmgraphs/33projections,12240pages/50135040B retained,same output
+SHA05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56.
+All explicitcleanEND+child_known_clean1,parent quitCLI_EXIT0. Candidate
+pooledmean.010612094 vs baseline.010534266=0.738808%MOREtime,NOT faster.
+Two smallsamples each,NOT broad/thermal/statistical or wholemodel evidence.
+NO full27B run/promotion for this candidate. Guardedknownclean17/g59->
+16/g60->best12/g61,no reboot/reset/SD/power changes. Assistantclosed.
+Own round logSHAs:
+ce38c562288db3cd501005b8ae3543b117f23bafa3e1b1228cc8ffc6fe53a765
+b3e1f2858e5e7853eda3d6a2a2461f70aa178cb6ae94c86e3787ebdcf76160d7
+4a508be1f52f1d29cb9cfc1ee7552583bd606d6b40170ec4ecdc7adac6980e6e
+18c860132b1c425ea8fbf315205dcd6b9f575fedde02b0042d6014764a0b0d7e
+HostlogSHA4b3ee4f72845a981d4eebaf06b3d6c2f956e3ff145bd0b080d1e0f622575a1fc.
