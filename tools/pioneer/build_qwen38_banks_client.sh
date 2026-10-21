@@ -17,6 +17,7 @@ case "${PIONEER_Q38_PANEL_CLIENT:-0}" in
  6) source=pioneer_q38_delta_probe;;
  7) source=pioneer_q38_clock_cycle;;
  8) source=pioneer_q38_gdn_zero_debug;;
+ 9) source=pioneer_q38_rgdn_root_debug;;
  *) exit 2;;
 esac
 case "${PIONEER_Q38_AFFINE_CLIENT:-0}" in
@@ -57,6 +58,7 @@ case "${PIONEER_Q38_BLOCK_CLIENT:-0}" in
 esac
 if [ "$source" = pioneer_q38_stream_probe ] || [ "$source" = pioneer_q38_cohort_probe ] || [ "$source" = pioneer_q38_dispatch_probe ]; then extra="$extra -ffp-contract=off"; fi
 if [ "$source" = pioneer_q38_delta_probe ]; then extra="$extra -ffp-contract=off"; fi
+if [ "$source" = pioneer_q38_rgdn_root_debug ]; then extra="$extra -ffp-contract=off -DPIONEER_Q38_LOCAL_DELTA_GGML"; fi
 case "${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" in
  0) ;;
  1) [ "$source" = pioneer_q38_delta_probe ] || exit 2; extra="$extra -DPIONEER_Q38_LOCAL_DELTA_GGML";;

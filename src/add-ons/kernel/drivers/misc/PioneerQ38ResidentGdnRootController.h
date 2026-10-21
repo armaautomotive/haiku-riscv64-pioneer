@@ -8,10 +8,10 @@
 #include "PioneerQ38ResidentGdnShape.h"
 #include "PioneerQ38ResidentGdnRootImage.h"
 #include "PioneerQ38ResidentGdnRootProtocol.h"
-// OFFLINE controller prerequisite. NO actual native adapter/entry selects
-// this header yet. Future integration MUST retain context/cookie/PCI/ALL
-// hosts/clock on unsafe/lost reply or unaccepted CLOSE,interlock ALL other
-// card commands and require explicit known-clean END. No model capability.
+// Separate ROOT0 qualification controller,NEVER model/Work selection.
+// Its gated native entry must retain context/cookie/PCI/ALL hosts/clock on
+// unsafe/lost reply or unaccepted CLOSE,interlock ALL other card commands
+// and require explicit known-clean END. No model capability.
 struct PioneerQ38ResidentGdnRootLease {
  bool saved=false,dirty=false,ready=false,running=false,unsafe=false,awaiting=false,closed=false;
  uint32_t nonce=0,readSlot=0;

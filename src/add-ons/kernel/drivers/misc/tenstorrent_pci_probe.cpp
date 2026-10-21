@@ -2813,6 +2813,86 @@ static status_t Q38GdnZeroControl(PioneerProbeCookie* cookie,uint32 operation,vo
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_END
 #endif
 
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+// PIONEER_Q38_RGDN_ROOT_CONTROL_BEGIN
+// Separate ROOT0 QUALIFICATION control entry,not ordinary model/Work.
+// No arbitrary placement/state inputs. Same fully initialized owner only.
+static bool Q38RgdnRootParent(PioneerStoreContext& c)
+{
+	return c.q38GdnBanks && c.q38StateZero && c.q38StateZero->closed && !c.q38StateZero->unsafe
+		&& !c.q38StateZero->running && !c.q38StateZero->dirty && !c.q38StateZero->ready
+		&& c.q38GdnIdentity.Valid() && c.q38GdnIdentity.driverGeneration==sReloadGeneration
+		&& c.q38StateZero->identity==c.q38GdnIdentity && c.runtimeCoreMode==1 && c.io.q38MutableContext==&c
+		&& c.q38GdnBanks->MatchesInitializationOwner(c.banks,c.baseline.baseline.baseline.baseline.dram,c.q38GdnIdentity)
+		&& c.q38GdnBanks->InitializationPublished(c.q38GdnIdentity);
+}
+static status_t Q38RgdnRootControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info info={}; status_t status=get_thread_info(find_thread(NULL),&info);
+	if (status!=B_OK) return status;
+	if (info.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_RGDN_ROOT_SUPPORT) {
+		if (length!=sizeof(tt_q38_rgdn_root_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie); if (status!=B_OK) return status;
+		const tt_q38_rgdn_root_support support={1,55,0,0,128,64,1,2,1,0};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation==TT_PCI_PROBE_Q38_RGDN_ROOT_ACCEPT) {
+		if (length!=sizeof(tt_q38_rgdn_root_accept)) return B_BAD_VALUE;
+		tt_q38_rgdn_root_accept a={}; status=user_memcpy(&a,data,sizeof(a));
+		if (status!=B_OK || a.version!=1 || !a.nonce || a.reserved[0] || a.reserved[1]) return status!=B_OK?status:B_BAD_VALUE;
+		PioneerQ38GdnCallScope scope(cookie); if (scope.Status()!=B_OK) return scope.Status();
+		auto* c=scope.Context();
+		return c && Q38RgdnRootParent(*c) && c->q38ResidentGdnRoot && c->io.ResidentGdnBeforeRoot()
+			&& PioneerQ38RgdnRootAccept(*c->q38ResidentGdnRoot,a)?B_OK:B_NOT_ALLOWED; // CPU-only ACK
+	}
+	if (operation==TT_PCI_PROBE_Q38_RGDN_ROOT_END) {
+		if (length!=sizeof(tt_q38_rgdn_root_end)) return B_BAD_VALUE;
+		tt_q38_rgdn_root_end r={}; status=user_memcpy(&r,data,sizeof(r));
+		if (status!=B_OK || r.version!=1 || r.reserved) return status!=B_OK?status:B_BAD_VALUE;
+		PioneerQ38GdnCallScope scope(cookie); if (scope.Status()!=B_OK) return scope.Status();
+		auto* c=scope.Context(); if (!c || !Q38RgdnRootParent(*c)) return B_NOT_ALLOWED;
+		bool okay=!c->q38ResidentGdnRoot || (c->io.ResidentGdnBeforeRoot() && PioneerQ38RgdnRootClose(c->io,c->baseline.baseline.baseline.baseline.dram,
+			c->baseline.baseline.baseline.noc,*c->q38GdnBanks,c->banks,c->host,c->lease,c->bulk,c->bulkHost,c->wideHost,*c->q38ResidentGdnRoot,true));
+		r={1,0,unsigned(okay),unsigned(!okay || c->Unsafe())};
+		status=user_memcpy(data,&r,sizeof(r));
+		if (!okay || status!=B_OK || c->Unsafe()) { tt_resident_session_result retained={}; RetainQ38DispatchOwner(*c,retained); }
+		return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_RGDN_ROOT_RUN || length!=sizeof(tt_q38_rgdn_root_request)) return B_BAD_VALUE;
+	auto* job=(tt_q38_rgdn_root_request*)malloc(sizeof(tt_q38_rgdn_root_request)); if (!job) return B_NO_MEMORY;
+	status=user_memcpy(job,data,sizeof(*job));
+	if (status!=B_OK || !PioneerQ38RgdnRootValid(*job)) { free(job); return status!=B_OK?status:B_BAD_VALUE; }
+	{
+		PioneerQ38GdnCallScope scope(cookie); auto* c=scope.Context();
+		if (scope.Status()!=B_OK) status=scope.Status();
+		else if (!c || !Q38RgdnRootParent(*c) || (c->q38ResidentGdnRoot && (c->q38ResidentGdnRoot->closed
+			|| c->q38ResidentGdnRoot->running || c->q38ResidentGdnRoot->unsafe || c->q38ResidentGdnRoot->awaiting))) status=B_NOT_ALLOWED;
+		else {
+			if (!c->q38ResidentGdnRoot) c->q38ResidentGdnRoot=new(std::nothrow) PioneerQ38ResidentGdnRootLease;
+			if (!c->q38ResidentGdnRoot) status=B_NO_MEMORY; // no partial owner or physical work
+			else {
+				job->result={}; job->result.version=1; job->result.state=TT_RUNTIME_CONFIG_FAILED;
+				for (auto& w:job->next) w=0;
+				for (auto& w:job->output) w=0;
+				auto& root=*c->q38ResidentGdnRoot;
+				bool ready=root.ready;
+				if (!ready && !root.saved) ready=PioneerQ38RgdnRootPrepare(c->io,c->baseline.baseline.baseline.baseline.dram,
+					c->baseline.baseline.baseline.noc,*c->q38GdnBanks,c->banks,c->q38GdnIdentity,c->host,c->lease,c->bulk,c->bulkHost,c->wideHost,root);
+				bool passed=ready && PioneerQ38RgdnRootRun(c->io,c->baseline.baseline.baseline.baseline.dram,
+					c->baseline.baseline.baseline.noc,*c->q38GdnBanks,c->banks,c->host,c->lease,c->bulk,c->bulkHost,c->wideHost,root,*job);
+				if (!passed || c->Unsafe()) job->result.recovery_required=1;
+				status=user_memcpy(data,job,sizeof(*job));
+				if (!passed || status!=B_OK || c->Unsafe()) { tt_resident_session_result retained={}; RetainQ38DispatchOwner(*c,retained); }
+			}
+		}
+	} // clears ONLY thread seal/releases semaphore,NEVER END/cleanup
+	free(job); return status;
+}
+// PIONEER_Q38_RGDN_ROOT_CONTROL_END
+#endif
+
 // sLock held. On uncertainty only the established PCI/TLB rollback is used;
 // a wired system-team page is retained, never freed through a destructor.
 static bool
@@ -4925,6 +5005,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_Q38_GDN_ZERO_DIAGNOSTIC
 	if (operation==TT_PCI_PROBE_Q38_GDN_ZERO_SUPPORT || operation==TT_PCI_PROBE_Q38_GDN_ZERO_INITIALIZE)
 		return Q38GdnZeroControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
+	if (operation>=TT_PCI_PROBE_Q38_RGDN_ROOT_SUPPORT && operation<=TT_PCI_PROBE_Q38_RGDN_ROOT_END)
+		return Q38RgdnRootControl(instance,operation,data,length);
 #endif
 #ifdef PIONEER_Q38_LOCAL_DELTA_PROBE
 	if (operation>=TT_PCI_PROBE_Q38_DELTA_SUPPORT && operation<=TT_PCI_PROBE_Q38_DELTA_ACCEPT)

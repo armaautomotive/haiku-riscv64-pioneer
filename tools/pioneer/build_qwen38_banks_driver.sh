@@ -5,7 +5,9 @@
 set -eu
 case "${PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC:-0}" in
  0) ;;
- *) echo 'STOP resident ROOT0 controller lacks qualified native integration;refusing linked driver' >&2; exit 2;;
+ 1) [ "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}:${PIONEER_Q38_GDN_MUTABLE_STATE:-0}" = 1:1 ] || {
+     echo 'STOP resident ROOT0 QUALIFICATION requires the complete fixed-zero/private-owner diagnostic chain' >&2; exit 2; };;
+ *) exit 2;;
 esac
 case "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}" in
  0) ;;
@@ -272,6 +274,9 @@ if [ "${PIONEER_Q38_LOCAL_DELTA_GGML:-0}" = 1 ]; then
 fi
 if [ "${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_GDN_MUTABLE_STATE -DPIONEER_Q38_GDN_ZERO_DIAGNOSTIC"
+fi
+if [ "${PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC"
 fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \

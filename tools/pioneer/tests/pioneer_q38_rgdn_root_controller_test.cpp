@@ -14,6 +14,7 @@ struct RgdnControlIO:ZeroControlIO {
  using ZeroControlIO::ZeroControlIO;
  const char* residentImage=nullptr;
  bool residentMode=false,rootOwner=true,lateCounterAfterExport=false;
+ void* q38MutableContext=nullptr; // native-entry test CPU context relation only
  unsigned exportedWords=0,vmPackets=0,vmFaultPacket=0,vmSourceFault=0,vmBadCounter=0,vmCorruptWrite=UINT32_MAX;
  std::map<std::pair<unsigned,unsigned>,std::array<uint32_t,8192>> stateData;
  bool ResidentGdnBeforeRoot() { return residentMode && rootOwner && !activeCohort && !competingSpan; }
@@ -129,6 +130,7 @@ struct RgdnFixture {
   assert(!RunRoot() && !CloseRoot() && !CloseRoot(false) && !PrepareRoot() && !Accept() && io.touches==touches);
  }
 };
+#ifndef PIONEER_Q38_RGDN_ROOT_CONTROLLER_MODEL_ONLY
 int main(int argc,char** argv) {
  assert(argc==3); setvbuf(stdout,nullptr,_IOLBF,0); (void)&TestWorker;
  (void)&Input; (void)&Prepare; (void)&Upload; (void)&Close; (void)&PreparePanel; (void)&Run; (void)&Job; (void)&ClosePanel; (void)&Finish;
@@ -194,3 +196,4 @@ int main(int argc,char** argv) {
  }
  puts("PASS OFFLINE root GDN CPU gates:invalid DATA/pristine identity/role/capacity/ref-owner refusals are inert,five wrong ACCEPT fields never flip slots,code/restoration/entry/unclean CLOSE faults retain whole owner;NO native integration claim");
 }
+#endif

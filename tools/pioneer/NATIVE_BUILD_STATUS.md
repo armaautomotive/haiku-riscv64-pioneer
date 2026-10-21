@@ -1,5 +1,32 @@
 # Native build status
 
+October20,18:54 Vancouver (October21,01:54 UTC) RESIDENT ROOT QUALIFIER PREPARED:
+Separate diagnostic213ebf0a/tag202610210001000f builds a/b EXACT;root
+flag-OFF remains installed8ccb2a24/guardd1ce/default2df. Complete native
+OBJECT JDukQ7XW max976B;linked run/control frames976B/288B. ROOT qualifier
+requires the COMPLETE fixed-zero/private-owner chain;60 unsupported flag/
+ordinary-resident refusals before SDK/output PASS. No real-model selection.
+Driver is being STAGED only;NO native resident compute trial yet.
+
+Actual extracted Q38RgdnRootControl+global lock+private call seal+REAL
+controller/RV32/SFPU HnRXvz8H PASS8 state transitions,10 inert DATA/parent/
+team refusals,explicit ACCEPT/CLOSE and lost RUN/CLOSE replies/premature
+END retention without later IO. Same suite runs REAL debug client for1/16
+transitions,ALL8256 words exact to independent FP32 reference,14 support/
+input/output/nonce/slot/state/init/ACK/reply faults CLOSE ONLY,no END/retry.
+Setup/BANK_END are explicitly mocked and initial full zero ledger uses
+counter fabric:NOT native zero/hardware/throughput qualification. Native
+IO scope and whole-owner END retention separately covered L4A69sDL/ECv9HJBs.
+
+Explicit CPU-reference debug client d4d7b7ef repeats a/b. It prepares the
+existing fixed4KiB public span page,explicitly closes span,initializes ALL
+state in the SAME session,then fixed head0/root0 pilot or16 nonresetting
+updates. No prior state is uploaded from CPU;ALL GPU GDDR writeback words
+must validate BEFORE ACK. This is debug only,not production Work validation
+or a real-model performance result. Focused updater60 PASS,expanded suite
+pending. Prior-driver restore route remains pinned;no automatic rollback.
+Latest completed whole27B benchmark remains earlier0.175353237tok/s,NOT20.
+
 October20,18:33 Vancouver (October21,01:33 UTC) NATIVE ROOT SCOPE PREREQUISITES:
 OFFLINE ONLY;resident-root linked builds STILL refused,no control entry
 selects this code. Complete ACTUAL native translation unit/controller

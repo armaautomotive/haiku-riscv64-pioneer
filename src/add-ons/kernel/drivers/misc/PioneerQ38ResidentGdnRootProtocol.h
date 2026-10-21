@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_RESIDENT_GDN_ROOT_PROTOCOL_H
 #define PIONEER_Q38_RESIDENT_GDN_ROOT_PROTOCOL_H
-// OFFLINE protocol proposal,NO native driver selects it. Fixed head0/root0
+// Separate qualification-only protocol,NEVER ordinary model/Work. Fixed head0/root0
 // diagnostic,DATA ONLY:no code,address,bank,route,slot,layer or model selector.
 // CPU numerical reference belongs ONLY in a separate debug client.
 #define TT_PCI_PROBE_Q38_RGDN_ROOT_SUPPORT (B_DEVICE_OP_CODES_END + 0x55f0)
