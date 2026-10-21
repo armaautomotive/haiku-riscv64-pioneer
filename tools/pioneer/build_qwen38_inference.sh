@@ -1,6 +1,9 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_MODEL_THREAD_RAW_CACHE:-0}" = 0 ] || {
+ echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;NO model/Assistant/native trial' >&2;exit 2;
+}
 [ "${PIONEER_Q38_PEER_PHASE_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PEER_PHASE_ROOT:-0}" = 0 ] || exit 2
@@ -15,6 +18,11 @@ set -eu
 [ "${PIONEER_Q38_WORK_BATCH_RAW_INPUT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_BATCH_RAW_QUALIFICATION:-0}" = 0 ] || exit 2
 [ "$#" = 3 ] || exit 2
+case "${PIONEER_Q38_MODEL_THREAD_RAW_CACHE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_MODEL_THREAD_SWEEP:-0}:${PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW:-0}:${PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR:-0}" = 1:1:1 ] || exit 2;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_MODEL_THREAD_SWEEP:-0}:${PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW:-0}" = 1:1 ] || exit 2;;
@@ -174,6 +182,7 @@ if [ "${PIONEER_Q38_MODEL_NODE_PROFILE:-0}" = 1 ]; then extra="$extra -DPIONEER_
 if [ "${PIONEER_Q38_MODEL_THREAD_SWEEP:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_MODEL_THREAD_SWEEP"; fi
 if [ "${PIONEER_Q38_MODEL_THREAD_SWEEP_NARROW:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_MODEL_THREAD_SWEEP_NARROW"; fi
 if [ "${PIONEER_Q38_MODEL_THREAD_SWEEP_FOUR:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_MODEL_THREAD_SWEEP_FOUR"; fi
+if [ "${PIONEER_Q38_MODEL_THREAD_RAW_CACHE:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_MODEL_THREAD_RAW_CACHE"; fi
 if [ "${PIONEER_Q38_BENCHMARK_HOST:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST"; fi
 if [ "${PIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST_BATCH4_QUALIFICATION"; fi
 if [ "${PIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION:-0}" = 1 ]; then extra="$extra -DPIONEER_Q38_BENCHMARK_HOST_BATCH_RAW_QUALIFICATION"; fi

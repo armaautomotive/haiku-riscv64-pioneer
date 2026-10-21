@@ -89,3 +89,59 @@ FULL3251 updater cases completed successfully by12:40UTC. Log
 /private/tmp/pioneer-hot-swap-raw-cache-full-20261021-a.log
 SHA1e71b7be8f7e9785ae206b35426b054a5d8745e3cde037dac42bcebde711c608.
 No native operation was issued by these CPU-only filesystem mocks.
+
+NATIVE FAILURE16:32UTC:DO NOT INSTALL OR RUN tag22. The preceding
+offline proofs did NOT establish silicon completion. Knowncleanprofiler25
+hadpassed72jobs andrestored17/g73;raw-cache driver03001d15 exacthash/
+debug74d336a6/hostc85ac885/updater07d82b86 independentlyverifiedwhileidle.
+Guarded17g73->22g74 succeeded,exactidle22+ABI2 metadataaccepted. Debug
+--synthetic beganwithQ8 K5120/6144/17408,twoeach:allSIX exact_errors0.
+FirstQ4 K5120/twopeers/repeat0 thenfailed mandatorycompletion:
+STOP:DISPATCH_RETURNED type12 K5120 peers2 repeat0 ioctl1 state5 cold1 root_phase54000203 count2 marker464d3851 pc00000000/00000000 nonce0 started1 completed0 held0;HOST_COPY_ONLY_NO_ADDITIONAL_CARD_IO
+STOP:COHORT_PRIMITIVE_FAILURE;CLOSE_ONLY_NO_END_RETRY_RESET
+CLI_EXIT=1
+Remoteownlog/boot/home/pioneer-p100a-hot-reload-20261019-a/raw-cache-synthetic-20261021-a.log.
+FailureisALREADY_RETURNEDhostcopy,notfreshcardread. DriverisUNKNOWN/cold,
+ALLowners/PCI/BME/DMA/maps/clockretained;clientCLOSEONLY,NO END/retry/
+reset/cardreads/hotrollback/SCP/furthernativejobs. Nativebenchmarkhost/
+public119/checked/fullmodel NOT RUN. No speedclaim. Generic olddebug
+successbanner sayssentinel17,butactualpinnedtaghelperONLYaccepts22;this
+cosmeticoldmessage isNOTmetadatagate. Future sourcebannersnowcorrect.
+
+Capturedrootcheckpoint54000203isafterstructuralstatuschecks,BEFORE
+currentcompletion/physicalPCproof. WaitPeers requiresactualcompletion
+withinoriginalboundedpollbudget. LogdoesNOTidentifyexactpeerinstruction,
+numericmismatch,deadlock,bankhazardorrootcause. NO unsupportedinference
+thatRAM/CPU/OSbroke. ExistingmodelassumesSrcAbankreturn/UNPACR_NOP
+semantics;investigateagainstprimaryISA,NOTsilentlyweakenchecks/waits.
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_NOP_SETDVALID.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+
+Freshnative driver/debug/model builds andapply-raw-cache route NOW BLOCK
+beforeANYexternalcommand/SDK/output. Known-cleanrestoreONLY retained;
+itMUSTNOTbeusedinthisUNKNOWN/coldstate. Dedicated17gatecasesPASS.
+Updatedfullupdater3401case regressionRUNNINGoffline. Currentinstalled
+failedbinaryremainsquarantined;gatesnotpushedtohardwareafterfailure.
+Controlledfullpower-off recovery requestedfromuser;keepcardsunchanged.
+Noordinaryreboot/hotreset/unmap orautomaticrollback. Proven041+CPU4
+fullmodel .206512497tok/s andprofiler72jobcheckpoint preserved.
+
+Postfailureblockedpath17tests logfile
+/private/tmp/pioneer-q38-raw-cache-failed-gates-20261021-a.log
+SHAedc0f366dcceeecd5faea1c45eea882dda271fe099f951b07c2eab60ffe1ee8d.
+Fouractualpool/96positionpublicloopvariants+800preSDKguardsPASSwith
+nativeRAWselectorBLOCKED;log
+/private/tmp/pioneer-q38-raw-cache-model-blocked-tests-20261021-a.log
+SHA98b3189b2a4df383fb32c9766175860d8d78387028aefa2ebb08f9a946e4a463.
+Freshordinarycontrolcrossbuildsafterdisable EXACTf414306fmodel/84ab80ac
+driver17/d1ce2aa4guard/2df0e0f8control;noSDK ordirtyllama edits. Only
+offline/source/Gitworkafterfault;NOmorePioneercommandsaftercapturedlog.
+
+FULL3401remaining guardedupdater cases PASS16:46UTC afterdisablingraw
+install;dedicatedblockedinstall/16nativebuild cases areadditional. Log
+/private/tmp/pioneer-q38-raw-cache-blocked-updater-full-20261021-a.log
+SHA2a7606fc34813a25db588814c5ac78575228a6f47187d039b065240be6892527.
+NewsourceupdaterSHAb3eaf30c48d6991141a72d7068f86ac01e9b9603a0b61aece8b5a249ad2cfe27;
+NOTstaged/executedonquarantinedPioneer. Currentinstalledraw22/g74still
+UNSAFE,lastreturnedcold1. Controlledcoldpowerconfirmationstillrequired.

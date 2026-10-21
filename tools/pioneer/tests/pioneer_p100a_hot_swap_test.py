@@ -319,7 +319,9 @@ if __name__ == '__main__':
     modes += ['--apply-batch4-fetch-qualification', '--restore-batch4-fetch-qualification']
     modes += ['--apply-batch-raw-qualification', '--restore-batch-raw-qualification']
     modes += ['--apply-frontend-qualification', '--restore-frontend-qualification']
-    modes += ['--apply-raw-unpack-cache-qualification', '--restore-raw-unpack-cache-qualification']
+    # Failed native Q4 candidate is no longer installable. Known-clean
+    # restore remains guarded;current cold/UNKNOWN can NEVER use it.
+    modes += ['--restore-raw-unpack-cache-qualification']
     modes += ['--apply-tile-prefetch-qualification', '--restore-tile-prefetch-qualification']
     modes += ['--apply-command-reuse-qualification', '--restore-command-reuse-qualification']
     modes += ['--apply-peer-phase-qualification', '--restore-peer-phase-qualification']

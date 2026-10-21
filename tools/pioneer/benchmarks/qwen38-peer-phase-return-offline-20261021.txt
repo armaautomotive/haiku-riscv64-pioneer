@@ -142,3 +142,58 @@ SHA9ae9557b6881366c003c2c8fc7eeedb105274c20ac25be2683162320eb250705
 SHA74d5e44f5d5e3a55de7584bc23251ef620f26cfa333203c449c129f8ea2624e3.
 Ready for sequentialstaging ONLY aftercurrentfullmodel cleanEND/CLI0/
 idlemetadata;STILLnotstaged/installed/nativequalified atthischeckpoint.
+
+NATIVE UPDATE16:27UTC:previousnot-staged/native statementsarehistorical.
+Threeartifacts independentlystaged/hashverified,sequentialSCP onlyafter
+full27B8/4/8 cleanEND/CLI0/idle12g69. Guarded12g69->16g70->17g71->25g72,
+no reboot/reset/SD/power/Assistant/settingschanges. Exactmetadata gate25/
+ABI4 support acceptedbeforeBEGIN. AllfollowingnativeclientsCLI_EXIT0:
+20syntheticWorkjobs,18authenticatedpublic119workerWorkjobs,16unchanged
+checkedpublic119workerjobs,18unchangedchecked2worker/3widthjobs=72total.
+ALL exact_errors0;ALL38Worktimingrecords valid1;checkedNOpeertelemetry.
+Everyclient explicitBANK_ENDstate2/active0/pci_restored1/host_released1/
+cold0/accepted1,KNOWN_CLEAN_END1. Finalmetadata25g72,cold0/active_owner0/
+open_count1/guard1. NOactualUNKNOWN/numericmismatch/reset/retry occurred.
+
+Own4logsarchived AFTERallclientsclosed+metadataidle,hashesmatchremote:
+/private/tmp/pioneer-q38-peer-phase-native-evidence.yp2OmOTe/
+peer-phase-synthetic-20261021-a.log
+SHAbd78fce773a15610fcc574686e046114045f65b0b1e88361f32aca09a777f4a4
+peer-phase-auth119-20261021-a.log
+SHA0c7b91cb4a80764a0e29b3ba118b7fb740ccbda3d9ec90306d346d27e34c07f5
+peer-phase-checked-regression-20261021-a.log
+SHAb62d1b0e4c256028c612f3eb3a344aa94de48a31e45b305cd3286c76cb8ae512
+peer-phase-checked-widths-20261021-a.log
+SHA92ff1cf2b96d81678f9e2ba96b02cb3ce27744557345c1527468970979d046b9.
+Noteunchangedcheckedpublicclient has8casesx2=16,NOT18;theadditional
+originalsyntheticsweep has9x2=18 andcoversall3widths. Workdebugclient's
+explicitreturn-to-Q8 addsits9thpubliccase,therefore18. Countsfromlogs.
+
+Authenticated119worker selectedmaxgrouppeer,16rows/peer,opaquephysical
+cycle DATA averages ofinstrumentedBLOCKregions (NOTpureunits orfulljob):
+Q8/K5120 n6:fetch101428.5/unpack317808.17/matrix172315.33;
+regionfractions17.1462/53.7245/29.1294percent.
+Q4_K/K5120 n4:fetch14422.25/unpack492213.25/matrix135103.5;
+fractions2.2474/76.6999/21.0527percent.
+Q6_K/K5120 n4:fetch15383.5/unpack434781.75/matrix221606.25;
+fractions2.2900/64.7217/32.9883percent.
+Q4_K/K17408 n4:fetch48369.5/unpack1672517.25/matrix458979.75;
+fractions2.2189/76.7257/21.0554percent.
+Unpackregionincludes metadata/integerSFPU/rawUNPACK/formatandSrcBconfig,
+NOTonlyoneunit. Allregionsincludeinstrumentation/deferredoverlap and
+excludeotherjob/controllerwork. TheseareNOTuninstrumentedtokens/sec,
+fullmodel/thermal/statisticalproofs orpromises thatentireregioncanvanish.
+Theyjustifytestingrawunpackreuse,NOTclaimingitremoves77percentoftime.
+
+Knownclean25g72 restored17g73 withpinned07d82b86updater. Raw-cache22g74
+qualificationstarted16:30UTC,separateunprofiledABI2/originalTCbytes;
+profilerNOTpromotedtoWorkmodel/Assistant. Bestsmallfull27BCPU4sample
+.206512497tok/s,20targetUNMET. NoSCP/nativejoboverlap throughoutnative
+batch;all4logtransfersfinishedbeforethenextdriver/nativequalification.
+
+16:32UTC subsequentSEPARATEunprofiledraw-cache22 candidatefaileditsfirst
+Q4completionafter6exactQ8jobs. Tag22/currentg74 UNKNOWN/coldandALLowners
+retained;NOEND/retry/reset/cardreads/hotrollback. Nochange toprofiler's
+72cleanjobs orarchiveddataabove. See raw-unpack-cache nativeFAILURE note.
+CurrenthardwaretestingSTOPPEDpendingcontrolledcold-powerrecovery;best
+original041 fullmodel/CPU4result andallprofilercheckpoints preserved.

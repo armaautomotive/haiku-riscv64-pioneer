@@ -1,6 +1,9 @@
 #!/bin/sh
 # Compile only,no install/device access.
 set -eu
+[ "${PIONEER_Q38_RAW_CACHE_REFERENCE_CLIENT:-0}" = 0 ] || {
+ echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;NO new native debug build' >&2;exit 2;
+}
 [ "${PIONEER_Q38_PEER_PHASE_QUALIFICATION:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT:-0}" in
  0) ;;

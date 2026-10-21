@@ -3,6 +3,9 @@
 # Candidates pin their complete qualified/offline-tested code. No force/reset/unload
 # command and NO automatic rollback after an unproven replacement.
 set -eu
+if [ "$#" = 1 ] && [ "$1" = --apply-raw-unpack-cache-qualification ]; then
+ echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;NO install/retry/reset/automatic rollback' >&2;exit 2
+fi
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
 case "$1" in
  --apply-postscale-delta|--restore-postscale-delta) mode=$1;;
@@ -20,7 +23,7 @@ case "$1" in
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
  --apply-frontend-qualification|--restore-frontend-qualification) mode=$1;;
- --apply-raw-unpack-cache-qualification|--restore-raw-unpack-cache-qualification) mode=$1;;
+ --restore-raw-unpack-cache-qualification) mode=$1;;
  --apply-tile-prefetch-qualification|--restore-tile-prefetch-qualification) mode=$1;;
  --apply-command-reuse-qualification|--restore-command-reuse-qualification) mode=$1;;
  --apply-peer-phase-qualification|--restore-peer-phase-qualification) mode=$1;;

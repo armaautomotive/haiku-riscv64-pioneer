@@ -1,0 +1,37 @@
+OFFLINE isolated raw-cache22 full-model8/4/8 trial,October21 2026.
+DISABLED_AFTER_NATIVE_FAILURE:tag22 firstQ4 completionfault16:32UTC.
+Thisfullmodel binarywasNEVERstaged/run;freshnativebuildselector now
+refusesbeforeANYexternalcommand/SDK/libs/output. No model/Assistant
+promotion. Preserveofflinetests/sourceforinvestigationONLY.
+NOTnative-run/staged,pendingraw-cache22nativecorrectness+pairedFFN gain.
+Existingnative27B041CPU4 .206512497tok/s,20targetUNMET.
+
+Adds MODEL_THREAD_RAW_CACHE requiringALLthreeexistingTHREAD_SWEEP/
+NARROW/FOUR flags andtheircompleteoriginalTCordered-spanWorkchain.
+EXACTidle22tag ONLY;originalthreemodesremainEXACT12only. ABI2/119workers/
+497learnedprojections/4558653pages/source/CPUreset/stop/failure/explicitEND
+rules retained. NoCPUlearnedreference/fallback,Assistant,profilers/SM7/
+graph or arbitrarythreadcountmode. FixedpublicTHREE32 argbeforeauth/FD.
+Bothsleeping8/4poolsallocatedbeforeacceleratorFD;originalsynchronize/
+set/attach order,contextdetach/freebeforepoolsfree unchanged. SameCPU
+publicloop andlearnedproducts,notanewquantizer/source/layoutauthority.
+
+Actualsource-extractedswitch/support/argumentfunctions+ALL96position
+loops testedinFOURvariants32/8/32,8/1/8,8/4/8,boundedraw-cache8/4/8.
+22Work/metadata/owner/ABI2vs3/4/wrongdriver failures,64wrongtagbits+
+7knownroletags,4invalidpoolcalls,50runtimeargguards. AlloriginalSIGINT/
+stop/reset/token/logit/source/page/graph/failurecleanup rules unchanged.
+800preSDKvalidation/Assistant/profile/SM7/role refusals PASSblGMRndQ.
+Log/private/tmp/pioneer-q38-raw-cache-model-thread-tests-20261021-b.log
+SHAe9533024f150442e68ec34d8029c7927ad24d7060a432a81d38d737a1c2c6fdc.
+Twofresh crossbuildswithfrozenlibraries/pristineheadersbyteIDENTICAL:
+86dde2631b4e03b34199595eca3473bb99bf16c009e27b5bf4f778510f097293.
+FlagOFF fullmodel EXACTf414306f. NoSDK/dirtyllama edits.
+ThisONLYpreparesafuturecomparison,NOTnative/correctness/speedpromotion.
+
+Postfailure installer+16driver/debug/model rejectiontestsPASS,emptyPATH
+provesNOexternalcommands/devicecalls. Four actualpool/96positionloop
+variants+800preSDKguards stillpass withrawnativebuildBLOCKED AU6ZHUGf,
+log/private/tmp/pioneer-q38-raw-cache-model-blocked-tests-20261021-a.log.
+NO realcardaccess sincefirstQ4UNKNOWN;allresourcesquarantined. Current
+Pioneerrequirescontrolledcold-powerrecovery,NOT ordinaryhotrollback.
