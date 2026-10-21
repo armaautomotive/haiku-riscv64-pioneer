@@ -45,6 +45,7 @@ def check(mode, fault=None):
         payloads['hash_raw_unpack_cache_qualification'] = ('test-' + values['hash_raw_unpack_cache_qualification']).encode()
         payloads['hash_tile_prefetch_qualification'] = ('test-' + values['hash_tile_prefetch_qualification']).encode()
         payloads['hash_command_reuse_qualification'] = ('test-' + values['hash_command_reuse_qualification']).encode()
+        payloads['hash_peer_phase_qualification'] = ('test-' + values['hash_peer_phase_qualification']).encode()
         for key in ['hash_sparse_profile', 'hash_sparse_export', 'hash_normal_clock', 'hash_sum_cache', 'hash_zero_minimum', 'hash_native_operand', 'hash_compact_output', 'hash_compact_profile', 'hash_deferred_affine', 'hash_ordered_extents', 'hash_inline_config']:
             payloads[key] = ('test-' + values[key]).encode()
         routes = {
@@ -135,6 +136,8 @@ def check(mode, fault=None):
             '--restore-tile-prefetch-qualification': ('hash_tile_prefetch_qualification', 'hash_sentinel_poll_qualification', 'tag_tile_prefetch_qualification'),
             '--apply-command-reuse-qualification': ('hash_sentinel_poll_qualification', 'hash_command_reuse_qualification', 'tag_sentinel_poll_qualification'),
             '--restore-command-reuse-qualification': ('hash_command_reuse_qualification', 'hash_sentinel_poll_qualification', 'tag_command_reuse_qualification'),
+            '--apply-peer-phase-qualification': ('hash_sentinel_poll_qualification', 'hash_peer_phase_qualification', 'tag_sentinel_poll_qualification'),
+            '--restore-peer-phase-qualification': ('hash_peer_phase_qualification', 'hash_sentinel_poll_qualification', 'tag_peer_phase_qualification'),
         }
         starting, ending, oldtagkey = routes[mode]
         installed = put('installed', payloads[starting])
@@ -195,6 +198,7 @@ def check(mode, fault=None):
         put('candidate_raw_unpack_cache_qualification', payloads['hash_raw_unpack_cache_qualification'])
         put('candidate_tile_prefetch_qualification', payloads['hash_tile_prefetch_qualification'])
         put('candidate_command_reuse_qualification', payloads['hash_command_reuse_qualification'])
+        put('candidate_peer_phase_qualification', payloads['hash_peer_phase_qualification'])
         put('guardsource', payloads['guardsha'])
         if mode != '--bootstrap':
             put('guard', payloads['guardsha'])
@@ -318,6 +322,7 @@ if __name__ == '__main__':
     modes += ['--apply-raw-unpack-cache-qualification', '--restore-raw-unpack-cache-qualification']
     modes += ['--apply-tile-prefetch-qualification', '--restore-tile-prefetch-qualification']
     modes += ['--apply-command-reuse-qualification', '--restore-command-reuse-qualification']
+    modes += ['--apply-peer-phase-qualification', '--restore-peer-phase-qualification']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -482,6 +487,10 @@ if __name__ == '__main__':
         elif mode == '--apply-command-reuse-qualification':
             candidate = ['candidate_command_reuse_qualification']
         elif mode == '--restore-command-reuse-qualification':
+            candidate = ['candidate_sentinel_poll_qualification']
+        elif mode == '--apply-peer-phase-qualification':
+            candidate = ['candidate_peer_phase_qualification']
+        elif mode == '--restore-peer-phase-qualification':
             candidate = ['candidate_sentinel_poll_qualification']
         elif mode == '--restore-sentinel-poll-qualification':
             candidate = ['candidate_direct_srcb_qualification']

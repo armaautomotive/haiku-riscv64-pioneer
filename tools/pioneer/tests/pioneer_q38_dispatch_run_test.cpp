@@ -198,6 +198,9 @@ struct RunIO:BootstrapIO {
 		if (rootFault==6) c.view[(0x80000+(n-1)*1024-TT_Q38_PANEL_VIEW_BASE)/4]=0x7f800000;
 		if (rootFault==7) c.config^=1;
 		if (rootFault==10) c.command[2]^=1;
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+		if (rootFault==12) c.view[(0x7f800+57*4-TT_Q38_PANEL_VIEW_BASE)/4]^=1;
+#endif
 		if (rootFault==11) {
 			c.destination[2032]=0x54000102; c.destination[2033]=1; c.destination[2034]=0;
 			asynchronousFault=true;

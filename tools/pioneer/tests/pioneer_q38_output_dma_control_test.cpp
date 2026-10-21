@@ -55,6 +55,17 @@ int main(int argc,char** argv)
 	}
 	{
 		PioneerProbeCookie cookie; Begin(cookie,argv[1]); auto& c=*cookie.context; auto job=Request();
+#ifdef PIONEER_Q38_PEER_PHASE_PROTOCOL
+		// Actual kernel handler rejects ordinary ABI2 and SM7 ABI3 calls
+		// BEFORE any accelerator register/power/map side effects.
+		unsigned oldWrites=c.io.Writes(),oldSelects=c.io.selects,oldPci=c.io.pciReads+c.io.pciWrites;
+		tt_q38_dispatch_support metadata={};
+		for(uint32_t op:{uint32_t(TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT),uint32_t(B_DEVICE_OP_CODES_END+0x6250)})
+			assert(Q38DispatchControl(&cookie,op,&metadata,sizeof(metadata))==B_BAD_VALUE);
+		for(uint32_t op:{uint32_t(TT_PCI_PROBE_Q38_LEGACY_WORK_RUN),uint32_t(B_DEVICE_OP_CODES_END+0x6251)})
+			assert(Q38DispatchControl(&cookie,op,job.get(),sizeof(*job))==B_BAD_VALUE);
+		assert(oldWrites==c.io.Writes()&&oldSelects==c.io.selects&&oldPci==c.io.pciReads+c.io.pciWrites);
+#endif
 		assert(Q38DispatchControl(&cookie,TT_PCI_PROBE_Q38_WORK_RUN,job.get(),sizeof(*job))==B_OK && !c.Unsafe());
 		constexpr unsigned expectedPackets=
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT

@@ -94,3 +94,51 @@ still EXACTf414306f model/84ab80ac driver17/d1ce2aa4guard/2df0e0f8control.
 Still required BEFORE native:complete preSDK buildselector qualification,
 exactdriver/debug builds,independent frozen-registry pins,allguardedupdater
 hash/owner/failure tests. NO speed/native claim from this checkpoint.
+
+16:04UTC OFFLINE native-qualification builds now explicitly enabledONLY
+for separatetag25/fulloriginalchain andABI4 CPUreference DEBUG. Ordinary
+model/Assistant builders still rejectbothflags. 401fullchain/tag/mixedrole
+preSDK refusals PASS;log/private/tmp/pioneer-q38-peer-phase-native-gate-20261021-a.log
+SHAcc90a0803882836a4c1b4ca2b295dd72383cd6a8017a59a33602217b64463c25.
+Root170rolepreSDK guards also stillpass. Twofreshdriverbuilds IDENTICAL:
+e2a98809b9fc573c97e384920688b8bef53a7211493f8d2cb2933cfd13ed7f58.
+Guardd1ce2aa4/default43control2df0e0f8 unchanged. Twofreshdebugbuilds:
+b7cb0684419ed0284a72ffb6cf8fc266f0e8504224d9c9ee1da4290424861850.
+Debug outputlabels threeinstrumentedpeer regions,NOT rootcycles/pureunits
+orproductiontime. Invalidclocks remain acceptedzeroDATA and clearlyflagged.
+192singlebit64bitvalue-reader tests+maximums/null/invalidphases pass,
+log/private/tmp/pioneer-q38-peer-phase-data-value-20261021-a.log
+SHA3224c5ae4b9be4499331b5b0bb131c9fc0cdad68a6258cee0c4e9baba2cb365a.
+Root c still EXACTa829dc67/705df903;ordinarymodelcontrol b EXACTf414306f.
+
+Actual kernelhandler additionallyrejects ordinaryABI2 andSM7ABI3 support/
+RUN calls withZERO register/select/PCI effects. MalformedpeerDATA also
+causesoriginalmandatory UNKNOWN/quarantine/CLOSEONLY,NO reset/END/retry.
+Fullcontroller+Workrerun PASS0Heob9Nf,log
+/private/tmp/pioneer-q38-peer-phase-controller-20261021-d.log
+SHAd1cd8e1be3b2c442f7733c9db8793406c4f7ec82169a44bb96b7bdc2b76ee0a0.
+Actualdebugclientwithsyntheticsyscalls:exacttag25metadata/ABI4,failedioctl/
+UNKNOWN/malformedDATA eachONE RUN thenCLOSE,NOsubsequentioctl/END/reset/
+retry. Originalchecked/Work/rootclockvariantsalsopass. YAXWTtTD log
+/private/tmp/pioneer-q38-peer-phase-client-failures-20261021-a.log
+SHAecc59fc7ac38aa6e08e8902369983a368571db8e9d09eda697c9b8970a5526e6.
+
+Guardedupdater exactknown-clean17<->25 only,source/installed/guard/client
+hashespinned. Script07d82b8636fb6187efef782181263171f485535ff515a88694af34ef39408e12.
+60targeted filesystem/handshake/hash/symlink/owner/failurecasesPASS;log
+/private/tmp/pioneer-q38-peer-phase-hot-swap-selected-20261021-a.log
+SHA676e212d87f1087c0b4c914f3d47fcb006415cc05838a4fc26c178ab7266285d.
+FULLregression stillrunning;NOTstaged/installed/native-run. Separatefull27B
+8/4/8 trial usesoriginal041/tag12/g69,noaccelerator/transferoverlap.
+
+FULL3431 actualupdater cases PASS16:07UTC. Log
+/private/tmp/pioneer-q38-peer-phase-hot-swap-full-20261021-a.log
+SHA7fb2c2cef266c934bc69d4466a0719bca6c86fb22edb2b83732837063cd0b43e.
+No native reload/reset issued by disposablefilesystem tests. Additional
+7namespace/9tagvariant regressions alsoPASS;actualretained logs:
+/private/tmp/pioneer-q38-peer-phase-namespace-regression-20261021-b.log
+SHA9ae9557b6881366c003c2c8fc7eeedb105274c20ac25be2683162320eb250705
+/private/tmp/pioneer-q38-peer-phase-tag-regression-20261021-b.log
+SHA74d5e44f5d5e3a55de7584bc23251ef620f26cfa333203c449c129f8ea2624e3.
+Ready for sequentialstaging ONLY aftercurrentfullmodel cleanEND/CLI0/
+idlemetadata;STILLnotstaged/installed/nativequalified atthischeckpoint.

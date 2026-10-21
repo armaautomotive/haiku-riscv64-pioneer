@@ -199,10 +199,18 @@ static bool Execute(int fd,unsigned type,unsigned inputs,unsigned workers,unsign
 		}
 		double finish=Seconds(); if (finish<previous) return false;
 #ifdef PIONEER_Q38_ROOT_CYCLE_CLIENT
+#ifdef PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT
+		if (!PioneerQ38PeerPhaseEnvelopeValid(r->result.stats)) return false;
+		printf("PEER_DEVICE_PHASE_CYCLES type%u K%u peers%u repeat%u valid%u fetch_scale%llu unpack_metadata%llu matrix_affine%llu;SELECTED_MAX_GROUP_PEER_BLOCK_REGIONS_INCLUDE_INSTRUMENTATION_AND_OVERLAP_NOT_PURE_UNITS_OR_TOKEN_RATE\n",
+			type,inputs,workers,repeat,unsigned(r->result.stats[57]==PioneerQ38PeerPhaseValid),
+			(unsigned long long)PioneerQ38PeerPhaseValue(r->result.stats,0),(unsigned long long)PioneerQ38PeerPhaseValue(r->result.stats,1),
+			(unsigned long long)PioneerQ38PeerPhaseValue(r->result.stats,2));
+#else
 		if (!PioneerQ38RootCycleDataValid(r->result.stats)) return false;
 		printf("ROOT_DEVICE_CYCLES type%u K%u peers%u repeat%u prepare%llu wait_and_audit%llu gather_dma_proof%llu;ACTUAL_CARD_COUNTER_NOT_PURE_MATRIX_OR_TOKEN_RATE\n",
 			type,inputs,workers,repeat,(unsigned long long)PioneerQ38RootCyclePhase(r->result.stats,0),
 			(unsigned long long)PioneerQ38RootCyclePhase(r->result.stats,1),(unsigned long long)PioneerQ38RootCyclePhase(r->result.stats,2));
+#endif
 #ifdef PIONEER_Q38_SENTINEL_REFERENCE_CLIENT
 		printf("ROOT_RETURNED_COUNTS type%u K%u peers%u repeat%u read_packets%u write_packets%u read_flits%u write_flits%u peer_polls%u terminal_audits%u;ALREADY_RETURNED_HOST_COPY_ONLY_NO_ADDITIONAL_CARD_IO_NOT_SPEED\n",
 			type,inputs,workers,repeat,r->result.stats[6],r->result.stats[7],r->result.stats[8],r->result.stats[9],r->result.stats[10],r->result.stats[11]);
@@ -278,7 +286,9 @@ int main(int argc,char** argv)
 	tt_pioneer_driver_reload sentinelTag={};sentinelTag.version=1;
 	if(!Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&sentinelTag,sizeof(sentinelTag)) || !PioneerQ38SentinelDebugTag(sentinelTag)) {
 		close(fd);
-#ifdef PIONEER_Q38_COMMAND_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT
+		puts("STOP_PEER_PHASE_REQUIRES_EXACT_IDLE_TAG25_ABI4;NO_BEGIN_OR_CARD_READ");
+#elif defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT)
 		puts("STOP_COMMAND_REUSE_REQUIRES_EXACT_IDLE_TAG24;NO_BEGIN_OR_CARD_READ");
 #elif defined(PIONEER_Q38_PREFETCH_REFERENCE_CLIENT)
 		puts("STOP_PREFETCH_REQUIRES_EXACT_IDLE_TAG23;NO_BEGIN_OR_CARD_READ");
@@ -297,7 +307,9 @@ int main(int argc,char** argv)
 #endif
 		return 1;
 	}
-#ifdef PIONEER_Q38_COMMAND_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT
+	puts("PEER_PHASE_DEBUG_EXACT_TAG25_ABI4;OPAQUE_PRIVATE_TIMING_DATA;ORIGINAL_TC_SOURCE_CPU_REFERENCE;NOT_MODEL_OR_WORK_INFERENCE");
+#elif defined(PIONEER_Q38_COMMAND_REFERENCE_CLIENT)
 	puts("COMMAND_REUSE_DEBUG_EXACT_TAG24;ORIGINAL_TC_SOURCE_CPU_REFERENCE;EXTRA_RETURN_TO_Q8_AFTER_OTHER_TYPES;NOT_MODEL_OR_WORK_INFERENCE");
 #elif defined(PIONEER_Q38_FRONTEND_REFERENCE_CLIENT)
 	puts("FRONTEND_DEBUG_EXACT_TAG21;ORIGINAL_TC_SOURCE_CPU_REFERENCE;EXTRA_RETURN_TO_Q8_AFTER_OTHER_TYPES;NOT_MODEL_OR_WORK_INFERENCE");

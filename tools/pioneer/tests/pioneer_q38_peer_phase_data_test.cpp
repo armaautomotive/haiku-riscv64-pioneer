@@ -32,6 +32,15 @@ int main(){
  for(unsigned w=0;w<7;w++)stats[57+w]=out[w];assert(PioneerQ38PeerPhaseEnvelopeValid(stats));
  for(unsigned word=58;word<64;word++)for(unsigned bit=0;bit<32;bit++){stats[word]=1U<<bit;assert(!PioneerQ38PeerPhaseEnvelopeValid(stats));stats[word]=0;}
  stats[57]=PioneerQ38PeerPhaseValid;for(unsigned w=58;w<64;w++)stats[w]=UINT32_MAX;assert(PioneerQ38PeerPhaseEnvelopeValid(stats));
+ for(unsigned phase=0;phase<3;phase++)assert(PioneerQ38PeerPhaseValue(stats,phase)==UINT64_MAX);
+ for(unsigned phase=0;phase<3;phase++)for(unsigned bit=0;bit<64;bit++){
+  for(unsigned w=58;w<64;w++)stats[w]=0;
+  stats[58+phase*2+bit/32]=1U<<(bit%32);
+  for(unsigned p=0;p<3;p++)assert(PioneerQ38PeerPhaseValue(stats,p)==(p==phase?UINT64_C(1)<<bit:0));
+ }
+ assert(!PioneerQ38PeerPhaseValue(stats,3)&&!PioneerQ38PeerPhaseValue(stats,UINT32_MAX)&&!PioneerQ38PeerPhaseValue(nullptr,0));
+ stats[57]=PioneerQ38PeerPhaseInvalid;for(unsigned w=58;w<64;w++)stats[w]=0;
+ for(unsigned phase=0;phase<3;phase++)assert(!PioneerQ38PeerPhaseValue(stats,phase));
  stats[57]=0x31435951;assert(!PioneerQ38PeerPhaseEnvelopeValid(stats)&&!PioneerQ38PeerPhaseEnvelopeValid(nullptr));
  printf("PASS %u full privateidentity DATA mappings;320 header/reservedbit+9shape/null atomic refusals;192 validclockbit mutations remainDATAONLY;192 badclock partialpayload refusals;invalid-clock envelope accepted withzeroDATA,distinct from coordinatorclock marker;NO IO/source/ownership/cleanup/native authority\n",cases);
 }

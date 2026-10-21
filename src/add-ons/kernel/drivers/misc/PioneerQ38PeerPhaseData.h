@@ -29,4 +29,10 @@ static inline bool PioneerQ38PeerPhaseEnvelopeValid(const uint32_t* stats){
  for(unsigned word=58;word<64;word++)if(stats[word])return false;
  return true;
 }
+#ifndef PIONEER_ATTENTION_FREESTANDING
+static inline uint64_t PioneerQ38PeerPhaseValue(const uint32_t* stats,unsigned phase){
+ if(phase>=3||!PioneerQ38PeerPhaseEnvelopeValid(stats)||stats[57]!=PioneerQ38PeerPhaseValid)return 0;
+ return uint64_t(stats[58+2*phase])|(uint64_t(stats[59+2*phase])<<32);
+}
+#endif
 #endif

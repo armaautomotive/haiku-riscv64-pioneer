@@ -43,7 +43,11 @@ int main(int argc,char** argv)
 		}
 	}
 	// Root/source/counter/terminal/hold failures remain mandatory safety.
-	for (unsigned fault:{1U,2U,4U,7U,8U,9U,10U,11U}) {
+	for (unsigned fault:{1U,2U,4U,7U,8U,9U,10U,11U
+#ifdef PIONEER_Q38_PEER_PHASE_QUALIFICATION
+		,12U
+#endif
+	}) {
 		RunFixture f(argv[1],7); f.io.rootFault=fault;
 		assert(!Work(f) && f.lease->unsafe && f.banks.Quarantined());
 		for (const auto& rows:f.job->output) for (auto word:rows) assert(!word);

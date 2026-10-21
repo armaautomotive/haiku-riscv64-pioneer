@@ -11,6 +11,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchProtocol.h"
+#ifdef PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#endif
 #ifdef PIONEER_Q38_WORK_CLIENT_TEST
 #include "../PioneerQ38WorkSession.h"
 #undef TT_PCI_PROBE_Q38_DISPATCH_SUPPORT
@@ -28,6 +31,12 @@ static int MockClose(int fd) { assert(fd==73); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
+#ifdef PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT
+	if(op==TT_PCI_PROBE_RELOAD_STATUS){
+		assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
+		r={};r.version=1;r.driver=55;r.guard_version=1;r.build_tag=UINT64_C(0x2026102100010025);r.generation=31;r.open_count=1;return 0;
+	}
+#endif
 	if (op==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_dispatch_support));
 		*static_cast<tt_q38_dispatch_support*>(data)={TT_Q38_DISPATCH_DRIVER,
