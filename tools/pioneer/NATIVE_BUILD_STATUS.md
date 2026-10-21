@@ -1,5 +1,19 @@
 # Native build status
 
+October20,18:01 Vancouver (October21,01:01 UTC) NATIVE STATE INITIALIZATION PASS:
+Guarded8ccb2a24/tag202610210001000e/gen15 install succeeded,NO reboot.
+ONE physical owned-page pilot passed with NO full initialization seal.
+Then separate session initialized/read-verified ALL73728 pages/672 regions/
+672 bounded jobs,288MiB total(two144MiB slots),published private zero-init
+seal ONLY after known-clean CLOSE,explicit clean BANK_END/CLI_EXIT0.
+BOTH sessions restored800->1350->800;CPU guardcold0/active_owner0;board idle.
+Local/remote logs match SHA c080e479... pilot /43bbbd25... full. Full
+evidence/ownership limits in benchmarks/qwen38-native-state-zero-20261021.txt.
+Expanded updater2411 cases PASS. These diagnostic owners are released at
+END;future model sessions MUST initialize/retain their OWN slots and epoch.
+NOT recurrent compute/model readiness or speed. Latest completed whole27B
+rate still previous038/f414 three32=0.175353237tok/s,NOT20. Goal ACTIVE.
+
 October20,17:57 Vancouver (October21,00:57 UTC) FIXED ZERO DIAGNOSTIC PREPARED:
 Separate qualification-only driver8ccb2a24/tag202610210001000e builds a/b
 EXACT;flag-OFF remains installeddcc77864/guardd1ce/default2df. Ordinary
@@ -13,9 +27,9 @@ Fixed client31de6508 repeats exactly b/c. It prepares one fixed4KiB public
 DATA page with existing span Work transfer,explicitly closes span,then
 selects fixed ONE-owned-page pilot or ALL73728-page initialization;NO caller
 address/route/code/slot/model pointer. Pilot NEVER publishes initialization.
-Actual entry mints private epochs and makes an explicit ONE-WAY mode-1
-handoff from closed span's mode-1(unselected) value:runtimeCoreMode==-1 to
-root-only1. SPAN_END itself does NOT select root mode. First post-handoff
+Actual entry mints private epochs and makes an explicit ONE-WAY handoff
+from closed span's unselected runtimeCoreMode==-1 to root-only mode1.
+SPAN_END itself does NOT select root mode. First post-handoff
 allocation/initializer/reply failure retains ALL owners/clock;NO later IO.
 
 Actual extracted entry/lock/seal/CPU claims JoAzzFxc PASS33 preflight gates,

@@ -1,0 +1,51 @@
+Pioneer P100A private recurrent-state zero/readback qualification
+2026-10-21 00:58..01:01 UTC;NOT model inference or a speed benchmark.
+
+Driver8ccb2a24c7afeca60625c241a81cffa23722c8f5fce341fb5a3a6106fa69e962
+tag202610210001000e,generation15;A/B exact,flagOFF exact prior dcc77864.
+Client31de65080617968655c3f06d63ce951161b7fbfe28ce7d3b18ecaa102dc738f6,
+builds b/c exact. Updater52be5fde/focused60/full2411 fault cases PASS.
+Guardd1ce2aa4,current prior-driver restore candidate retained/hash pinned.
+Guarded idle-only hot swap succeeded,NO reboot/relay/SD/firmware action.
+
+First physical pilot:ONE newly reserved4096-byte page zeroed and read-
+verified by exact39817b67 RV32 image. Partial known-clean CLOSE,private
+initialization_published0,explicit clean BANK_END,CLI_EXIT0.
+Log /boot/home/pioneer-p100a-hot-reload-20261019-a/gdn-zero-pilot-native-20261021-a.log
+SHA c080e479e1a7fd1025576e3e95a2d11d779896e0470ceed28d9d736389abc6e6
+
+Then separate full native session:ALL73728 private pages/672 regions/
+672 bounded device jobs zeroed and independently read-verified. Total
+288MiB=TWO144MiB state slots,covering48 recurrent layers x48 heads.
+Only after complete physical/source/counter/descriptor/command/safe-PC/
+hold proofs and known-clean CLOSE was private initialization_published1
+returned. Explicit clean BANK_END and CLI_EXIT0. No uncertainty/recovery.
+Log /boot/home/pioneer-p100a-hot-reload-20261019-a/gdn-zero-full-native-20261021-a.log
+SHA 43bbbd25d3ab1e2f9f2d27788d5b96ac9626a89a251dc3a0169a2ff36e096c39
+Exact hash-verified local copies:
+/private/tmp/pioneer-q38-gdn-zero-native-evidence.XcFwDteX/
+
+BOTH independent sessions restored800->1350->800MHz. Final CPU metadata:
+driver55/tag202610210001000e/generation15/quiesced0/cold0/active_owner0/
+open_count1/guard1. Board idle. No other native job or SCP overlapped.
+
+The fixed public4096-byte DATA page used to prepare existing span/bulk/wide
+owners is excluded by real fresh-state bank claims. Zero runs NEVER modify
+the initialized-learned-weight bitmap or enable PCI bus mastering. They use
+only private reserved GDDR<->fixed device L1;NO host DMA/data transfer.
+ALL119 non-root tiles are physically held/audited around controlled root
+execution. First uncertainty retains entire context/cookie/PCI/ALL hosts/
+clock and permits CLOSE ONLY,never later IO/END/retry/reset/rollback.
+
+Important limits:these are DIAGNOSTIC sessions,NOT real model bindings.
+After BANK_END the private owner/claims are released,so this test result
+MUST NOT be reused as readiness for a later session/model/epoch. A future
+model runtime must initialize and retain BOTH slots in its SAME owner.
+No recurrent compute,GGML device buffers/views/CPY,token/sequence commit,
+Assistant integration or whole-model attention routing is enabled here.
+Resident GDN compute image c3d150b4 remains OFFLINE ONLY.
+
+Latest completed whole27B speed remains prior03876197/f414306f three32:
+0.175353237tok/s,NOT20. No model-speed measurement on8ccb2a24 and NO
+speedup claim from successful memory initialization. Continue resident
+compute/coordinator and persistent hybrid/graph integration.
