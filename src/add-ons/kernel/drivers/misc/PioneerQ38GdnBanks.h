@@ -19,6 +19,7 @@ struct PioneerQ38GdnRegion { uint32_t layer,slot,firstHead,heads,bank,offset; };
 struct PioneerQ38GdnBankExtent { uint32_t bank,address,route,index,pages,bytes; };
 class PioneerQ38GdnBanks {
  friend class PioneerQ38GraphMutableBanks;
+ friend class PioneerQ38ProjectionMutableBanks;
  template<class IO> friend bool PioneerQ38StateZeroRun(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38GdnBanks&,PioneerResidentBanks&,const tt_host_page_result&,PioneerResidentLease&,
   PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38StateZeroLease&,

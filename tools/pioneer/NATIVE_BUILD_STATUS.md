@@ -1,5 +1,34 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:NEW canonical projection joint
+workspace+private runtime zero ledger/controller implemented,NOT native
+selected. ONE atomic claim ALL73728GDN pages+FULL16384page64MiB canonical
+workspace envelope;future resident schedule metadata protected NOW because
+reservation cannot grow. ONLY first512runtime pages2MiB initialized;
+remaining62MiB metadata NOT initialized/exposed/ready. Actual frozen zero
+ROM max1MiB/run retained;TWO256page runs ONE lease then exact code/scratch/
+source restore BEFORE publication.8positives/all7banks/cumulative2MiB/56
+inert configuration+forged-lease refusals/54faults PASS using ACTUAL RV32
+instructions,not synthetic completion. Init never creates model input,
+learned-page readiness or GDN readiness. Partial clean close/resume works;
+UNKNOWN retains joint state/ALL host/source owners with ZERO following IO.
+New joint factory7banks/3584runtime pages/4704GDN regions/3669refusals,
+metadata+runtime last-page learned collisions/old74page owner cannot promote.
+Kernel maxframes928joint/880zero. All old zero proof bodies preserved with
+distinct callbacks/types+strict1MiB precondition;50new/50memory/173old38
+gates PASS. Old joint73728+74page/516639refusal regression PASS;actual full
+driver+memory SDK compile PASS,old23e/guardd1ce/default43control2df EXACT.
+ALL final tests TERMINAL0. No new native factory/selector/input producer or
+hardware boot/STOP-only qualifier. Fresh20:49UTC SSH original041/tag12/
+gen44/idle/cold0/owner0/open1/guard1,64CPUs/max137034936320B. ZERO Pioneer
+remote write/native job/install/reboot/power/SD/Assistant/network changes.
+NEXT actual on-card model-input producer(e.g.embedding)+opaque retained
+producer binding,actual full-projection RUN/STOP controller/private memory
+handoff and new native factory;old memory scope is HELD-ONLY/old source
+binding and MUST NOT simply be promoted. Full all-card decoder remains.
+Whole27B.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-workspace-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:NEW complete projection memory
 lifecycle and ACTUAL driver L1 mapping/scope/retention/Unsafe/END adapters
 implemented,NOT native selected. ALL120 complete8134072word snapshots,

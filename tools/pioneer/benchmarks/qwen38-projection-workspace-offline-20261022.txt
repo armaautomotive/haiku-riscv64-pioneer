@@ -1,0 +1,133 @@
+Complete projection workspace/runtime initialization:OFFLINE October22 2026.
+Predecessor5334a9af1f7cd8c77397fe407009ec721365c515 pushed/remote verified.
+Previous goal turn PROGRESS:complete retained L1 memory/native adapters.
+This turn PROGRESS:actual canonical joint64MiB reservation and private
+2MiB runtime zero initialization using the real frozen instruction machine.
+Last WHOLE27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+NEW private projection joint reservation,not old FFN promotion:
+-ONE atomic bank claim:ALL672recurrent regions73728pages plus complete
+ canonical64MiB workspace16384pages. Same exact baseline/banks/identity/
+ canonical plan/retained upload-ledger objects. No public raw-coordinate
+ Bind/Attach/Commit or caller shared-owner/address hint for the child.
+-Full envelope reserved NOW:sticky reservations CANNOT grow later and a
+ fully resident decoder needs schedule/metadata storage. Future metadata
+ tail is NOT silently left writable through ordinary bank uploads.
+-ONLY first512pages2097152B are runtime data today. Fixed1MiB projection
+ output offset+248320F32 vocabulary rows fits. Remaining62MiB is protected
+ but UNINITIALIZED;InitializeSpan does NOT expose it and runtime zero
+ publication does NOT mark schedule/metadata/model/input ready.
+-Complete canonical64MiB envelope disjoint from every recurrent region;
+ learned collision on ANY runtime OR reserved metadata page refuses the
+ WHOLE atomic claim. Failed proposals publish NO role handles or claims.
+-Recurrent and projection ledgers remain independent. No old FFN child.
+ Old74page source/state/owner cannot be extended,borrowed or promoted.
+ Fault in EITHER child poisons the shared owner/banks;NO release/rebind.
+-MatchInitializedProjection is necessary CPU geometry/upload/runtime-zero
+ preflight ONLY. It is NOT an input producer,source authentication,
+ current physical completion,code ownership or native execution grant.
+
+NEW separate projection zero controller:
+-EXACT frozen zero-only image SHA
+ 39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b
+ verified BEFORE compile/run. Old executable/model/image/ABI untouched.
+-Existing image maximum is1MiB/run,NOT2MiB. TWO256page runs in ONE retained
+ lease initialize the runtime2MiB. Larger requests fail INERT before IO;
+ no ROM limit widening or aliasing of old74page initialization authority.
+-Mechanically reuse ALL old qualified source/image/PC/descriptor/summary/
+ command/ALL8 counter/physical completion/hold/restore/publication proofs,
+ with distinct new state/lease/controller and native callback names.
+ Source comparison test checks the ENTIRE proof implementation body,
+ permitting ONLY nominal type/callback changes and strict1MiB precondition.
+-Private per-page512bit ledger records ONLY after all physical completion/
+ source/hold proofs. Count512 BEFORE CLOSE is NOT publication. Only exact
+ restored code/bulk scratch/held-source proof and known-clean CLOSE can
+ publish runtime initialization. Model-input producer still DOES NOT exist.
+-Unknown retains workspace+recurrent owner/bank context/source/ALL host
+ owners,NO later IO/hold/reset/END/restore/retry/release. Partial KNOWN-CLEAN
+ close may resume with another exact lease;unknown cannot retry.
+-New native ProjectionZeroBeforeCohort/OtherCoresHeld adapters and actual
+ source/clock/cookie/ALL-code exclusion/factory are STILL OWED. Old callbacks
+ are NOT accepted by this controller. NO new public native selector exists.
+
+Final TERMINAL0 evidence,not card performance:
+1.Actual canonical reservation7banks/3584runtime-page checks/4704recurrent
+ regions/3669refusals. Whole64MiB ordinary-upload exclusion,learned
+ collisions at0/73/74/255/256/511/512/8192/16383 and first/middle/last GDN
+ regions;atomic failed proposals leave first74pages unclaimed. Old74page
+ owner cannot bind new role;new owner also excludes old one. Independent
+ empty ledgers and sticky whole-owner fault. Kernel maxframe928B,HEAP only.
+2.ACTUAL frozen RV32 instruction machine+new controller:8positives across
+ ALL7logical banks and partial clean resume. TWO1MiB runs in ONE retained
+ lease,nonce1->2,continuous physical counters;each runtime page exactly
+ once. Actual resulting bytes copied into cumulative2MiB observer,untouched
+ second half remains poisoned after first run,ALL512pages zero after
+ second. No synthetic marker/summary/counter completion fabric permitted.
+ GDN zero progress remains0,learned bitmap unchanged,model/input NOT ready.
+56inert oversized/duplicate/overlap/forged-lease refusals;equal copied
+ epochs/owner/proof/ready fields cannot own an active operation lease.
+3.54faults:ALL32summary words,selected descriptor words,second-pass
+ FIRST/MIDDLE/LAST128-NoC-packet timeout,actual dropped writes/readback
+ corruption,source/identity/competing initiator/other-core/mapping changes,
+ final proof/command faults. No second-pass post-execution hold/commit
+ after unknown;first256pages cannot become a published/ready whole state.
+ Retain ALL owners and prove ZERO following IO/retry/release. Kernel
+ controller witness maxframe880B,NO PCI-write/NoC-command-write/host-data
+ load/store/release APIs provided by witness. Not a native adapter.
+4.50new before-SDK old-driver/client/Assistant/ALL-image role refusals,
+ exact zero-image pin and ENTIRE proof-body source-equivalence check.
+50prior memory gates/173old38gates PASS. Shell/Python/whitespace checks PASS.
+5.Old canonical joint73728GDN+74FFN regression7plans/516639refusals,
+ maxframe928B PASS. Actual full driver/context/memory-owner RISC-V SDK
+ compile again PASS,maxnew memory frame240B. New workspace controller
+ declarations compile separately;do not mistake memory compile for a
+ new workspace native source/factory adapter.
+
+Old native complete controls BYTE-IDENTICAL:
+ tag38driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+ guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ Build evidence:/private/tmp/pioneer-q38-projection-workspace-control.kYuszlUD/compile
+ NO new linked/installable driver. Source/read-only SDK only;dirty
+ llama.cpp and unrelated FlashNext untouched. All final jobs terminal.
+
+Earlier local failures were NOT hardware faults:strict GCC indentation
+ warning corrected;initial cumulative observer hid a NON-VIRTUAL base
+ ExecuteZero and was moved to the actual reset/execution return;data fault
+ injection takes DIRECTION0/1,not ordinal127. Failures caught by assertions,
+ final suites rerun PASS. No active runner/script/source edited in place.
+
+Logs/SHA256:
+ /private/tmp/pioneer-q38-projection-joint-20261022-d.log
+ ceb92e0a191071ac9089c78beee7987fcdb96476b89ec6544606c14c2717c12c
+ /private/tmp/pioneer-q38-projection-zero-20261022-e.log
+ 1aec28bd00ffa8f73b3d59982deb4b30ce86f0c66dce3e45dcc0a76ea4f862a6
+ /private/tmp/pioneer-q38-projection-zero-fault-20261022-e.log
+ efdebb35c35cca1eec4b353be407e1b1864d25fe0abf91ebe6248f1204094c12
+ /private/tmp/pioneer-q38-projection-workspace-gates-20261022-b.log
+ 8d7c72f857d765bdf7f62fb9f3a076d361f1dd47183f4883dc9548fa0259d4f6
+ /private/tmp/pioneer-q38-projection-joint-old-20261022-a.log
+ a175bce51476e505c09b1b86f1271b41ca04f16256dfcd70a1f4c30d5c3caaa0
+ /private/tmp/pioneer-q38-projection-workspace-full-kernel-20261022-a.log
+ 07a7c7092b84a21531ec8c2672ec36a23bf0b6b032277f6f6ad2df981d110147
+ /private/tmp/pioneer-q38-projection-workspace-old38-gates-20261022-a.log
+ c15d3dd2c16f75a794f619af85434e66130c23827925a9be42894d53ae1ad18b
+ /private/tmp/pioneer-q38-projection-workspace-memory-gates-20261022-a.log
+ 616481bceeddc19d27f53864b40bda1c656ec695d183faaf16696fb7f9a51624
+
+Fresh20:49UTC read-only SSH:INVENTORY_PROVEN/ALL_COMPUTE_PARENTS_ABSENT,
+original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/gen44,quiesced0/cold0/active_owner0/open1/
+guard1,64CPUs/max137034936320B. ZERO Pioneer remote write/native job/
+install/reload/reboot/power/SD/Assistant/boot/network/clock change.
+
+NEXT actual on-card MODEL INPUT producer(e.g.embedding) and opaque
+retained producer/epoch/span binding;zero initialization or a caller's
+nonzero QPR1 inputEpoch is NOT such a producer. Then actual full-projection
+RUN/STOP owner/private physical memory handoff and actual new source/
+workspace/native factory/session role. Existing memory Scope/Matches/Close
+are HELD-ONLY and old FFN source binding;do NOT flip launch/clean hints or
+reuse CloseHeldNoLaunch after compute(mutable peer scratch differs).
+Full all-card norm/residual/GDN/attention/KV/sampling/production decoder
+and real whole27B speed benchmarks still remain. No more boot/STOP-only
+hardware substitutes. 20tok/s NOT achieved;goal remains ACTIVE.
