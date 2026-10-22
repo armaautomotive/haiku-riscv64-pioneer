@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Native embedding remains PRIVATE;old builders fail BEFORE SDK/output."""
+"""Old builders cannot promote native embedding;fail BEFORE SDK/output."""
 import os
 import pathlib
 import shutil
@@ -48,4 +48,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-embedding-native-gates-') as te
             assert result.returncode != 0 and not result.stdout
             count += 1
         (image / name).write_bytes(original)
-print(f'PASS native embedding build/catalog gates{count};all old builders refuse BEFORE SDK,complete exact frozen QPE1 code+boot/header pin;NO native selector/install')
+print(f'PASS native embedding build/catalog gates{count};all old builders refuse BEFORE SDK,complete exact frozen QPE1 code+boot/header pin;NO old-role selector or native install')

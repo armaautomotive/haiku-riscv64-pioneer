@@ -1,5 +1,34 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:actual unclaimed-bank native
+factory runtime integration now PASSES. REAL owned source allocation ->
+canonical binding -> TWO actual zero-ROM runs -> actual native mapping/
+QPE1 execution -> private completion and new END gate.7source-bank to
+cross-bank workspace positives,7faults retainALL and subsequent calls are
+inert. Simulated hardware endpoints;NOT physical card qualification.
+New isolated driver55/tag2026102200010039/namespace10 qualification and
+source-bound host client LINK,NOT installed/registered in Assistant.
+Actual public control+call scope+global lock+routing execute actual RISC
+instructions in tests:7positives/31request-role refusals/5faults,including
+lost user-copy. Ordinary hardware locks denied once new source is bound;
+same-owner explicit END uses its own lock. Host session7positives/48faults/
+3refusals;12original packed pages from same authenticated FILE/epoch,
+zero CPU learned products/references or input/result vectors.236new build
+gates,76old catalog gates,73737word native mapping/45refusals PASS.
+Repeat linked driver SHA ad07794d73281a4ecd82f2adddd4dc83613781872555354612ce8d8464a7e002;
+actual qualification maxkernel frame1024B;old tag38/guard/default43 remain
+BYTE-IDENTICAL. ALL final handles TERMINAL0. Fresh22:12UTC read-only SSH:
+original041/tag12/gen44/idle/cold0/owner0/open1/guard1,64CPUs/full RAM.
+ZERO remote writes/native jobs/driver reload/reboot/power/SD/Assistant/
+network changes. No numerical-result CPU readback/validation API yet:
+metadata completion is NOT an independent numeric arithmetic proof.
+NEXT add separate debug numerical qualification BEFORE any card install,
+keeping Work without learned CPU validation;then actual arithmetic card
+test. Full resident projection/learned RMS/residual/GDN/attention/KV/
+sampling/decoder integration remains. Whole27B.207893161tok/s UNCHANGED;
+20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-embedding-native-qualification-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:actual QPE1 execution owner and
 separately gated native source/zero/mapping/retention/END adapters added,
 NOT linked/selected/installed. FULL73737word ROOT snapshot+SECOND original

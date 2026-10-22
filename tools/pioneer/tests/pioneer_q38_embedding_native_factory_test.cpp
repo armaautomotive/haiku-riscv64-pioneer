@@ -1,0 +1,227 @@
+/* SPDX-License-Identifier: MIT */
+// ACTUAL native factory/scope/mapping/retention/END + REAL owned state.
+// Both zero and embedding execute their ACTUAL emitted RISC instructions.
+// ONLY kernel/PCI/TLB/GDDR endpoints are simulated. No ready-state facade.
+#define PIONEER_Q38_PROJECTION_ZERO_FIXTURE_ONLY
+#include "pioneer_q38_projection_zero_controller_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingNativeState.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
+#include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
+#include "pioneer_q38_embedding_execution_bridge.h"
+#include <array>
+#include <new>
+using uint8=uint8_t;using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
+static constexpr int B_OK=0,B_ANY_KERNEL_ADDRESS=1,B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_UNCACHED_MEMORY=8;
+static constexpr uint64 Bar=UINT64_C(0x900000000);
+struct PioneerStoreContext;struct PioneerSessionIO;
+static PioneerSessionIO* activeIO=nullptr;
+static uint32 PioneerRead32(const volatile uint32*);
+static void PioneerWrite32(volatile uint32*,uint32);
+static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void**);
+struct PioneerHostPageIO{bool quarantined=false;};
+struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
+ PioneerStoreContext* q38MutableContext=nullptr;
+ unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
+ std::array<uint32,10240> prefix;
+ volatile uint32* runtimeEntry=&entry;volatile uint32* scratchData=destination;unsigned payloadBytes=8192;
+ struct{uint64 bar0_host_start=Bar;}profile;
+ area_id q38EmbeddingMemoryArea=-1;volatile uint32* q38EmbeddingMemoryView=nullptr;
+ bool q38EmbeddingMemoryMapAttempted=false;uint64 q38EmbeddingMemoryBar=0;
+ bool failMap=false,nullMap=false,retained=false;
+ unsigned mapCalls=0,nativeReads=0,nativeWrites=0,embeddingStarts=0,embeddingStops=0,embeddingPc=0;
+ unsigned embeddingPacketFault=0,zeroFailRun=0,embeddingSummaryFault=UINT32_MAX;
+ const char* embeddingImage;
+ struct DramAlias{const tt_dram_samples_result* target=nullptr;const tt_dram_samples_result* operator&()const{return target;}
+  operator const tt_dram_samples_result&()const{assert(target);return *target;}}dram;
+ struct NocAlias{const tt_compute_noc_result* target=nullptr;operator const tt_compute_noc_result&()const{assert(target);return *target;}}noc;
+ explicit PioneerSessionIO(const char* zero,const char* embedding):ProjectionZeroIO(zero),embeddingImage(embedding){
+  for(unsigned i=0;i<prefix.size();i++)prefix[i]=i%17?0x9e3779b9U*(i+1):UINT32_MAX;
+ }
+ bool EmbeddingSourceScope(bool);
+ bool ProjectionZeroBeforeCohort();bool ProjectionZeroOtherCoresHeld();
+ bool EmbeddingNativeScope(const PioneerQ38EmbeddingController&,const PioneerQ38ProjectionMutableBanks&,
+  const PioneerQ38CanonicalModelPlan&,const PioneerQ38ProjectionIdentity&,const uint8_t*,unsigned);
+ bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
+ bool EmbeddingMode()const;
+ bool NonRootHeldOwner(){return EmbeddingSourceScope(false);}
+ bool NonRootHeldMappingStable(){return !coreMapLost && NonRootHeldOwner();}
+ void DramTlbWrite(unsigned slot,unsigned word,uint32 value){Touch();StoreMock::DramTlbWrite(slot,word,value);}
+ uint32 DramTlbRead(unsigned slot,unsigned word){Touch();return StoreMock::DramTlbRead(slot,word);}
+ bool SelectRuntimeCore(unsigned core){
+  Touch();if(core)return false;
+  return BlackholeDramConfigure(*this,0,0,1,2,false) && BlackholeDramConfigure(*this,1,0xffa00000,1,2,false);
+ }
+ uint32 ResetRead(){
+  Touch();bool root=false;
+  for(bool readOnly:{false,true}){bool same=true;for(unsigned w=0;w<3;w++)same&=tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
+  return root?coreReset:0x47800;
+ }
+ uint32 SourceRead(unsigned word){Touch();return ProjectionZeroIO::SourceRead(word);}
+ uint32 ResidentL1Read(unsigned word){Touch();assert(word<2048);return destination[word];}
+ void ResidentL1Write(unsigned word,uint32 value){Touch();assert(word<2048);destination[word]=value;}
+ uint32 RuntimePcRead(){return EmbeddingMode()?(Touch(),embeddingPc):ProjectionZeroIO::RuntimePcRead();}
+ void RuntimeResetWrite(uint32 value);
+ void QuarantineHostPage(){PioneerHostPageIO::quarantined=true;ProjectionZeroIO::QuarantineHostPage();retained=true;}
+ uint32& RawSlot(uint32 a){
+  assert(PioneerQ38EmbeddingSnapshotContains(a));
+  if(a==0x6000)return entry;
+  if(a<0x6e000)return prefix[(a-0x64000)/4];
+  if(a<0xac000)return view[(a-TT_Q38_PANEL_VIEW_BASE)/4];
+  return destination[0x1fc0/4+(a-0x17ffc0)/4];
+ }
+#include "embedding_factory_mapping.inc"
+};
+static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;return *p;}
+static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;*p=value;}
+static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
+ assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
+ assert(physical==Bar+0x19064000 && bytes==40960 && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+ if(activeIO->failMap)return -1;*view=activeIO->nullMap?nullptr:activeIO->prefix.data();return 23;
+}
+struct FactoryFlags{bool saved=false,dirty=false,ready=false,running=false,unsafe=false,awaiting=false,closed=false;};
+struct FactoryClock{
+ tt_arc_clock_guard_result value={};bool required=true,quarantined=false;
+ FactoryClock(){value.state=TT_ARC_CLOCK_BUSY_VERIFIED;value.busy_requested=value.busy_acknowledged=1;}
+ const auto& Snapshot()const{return value;}bool RequiresExplicitEnd()const{return required;}
+ void Quarantine(){quarantined=true;}
+};
+struct PioneerStoreContext {
+ PioneerSessionIO& io;PioneerQ38EmbeddingNativeState* q38EmbeddingModel=nullptr;
+ PioneerResidentBanks& banks;PioneerResidentLease& lease;PioneerBulkUploadLease& bulk;
+ PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;tt_host_page_result& host;
+ struct D{tt_dram_samples_result& dram;};struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;};B3 baseline;
+ uint8* initialized;uint32 hash=0,*hashes=&hash;
+ void *q38FfnModelPlan=nullptr,*q38GraphMutable=nullptr,*q38FfnZero=nullptr,*q38FfnGraph=nullptr,*q38FfnCode=nullptr;
+ PioneerQ38GdnBanks* q38GdnBanks=nullptr;PioneerQ38StateZeroLease* q38StateZero=nullptr;
+ PioneerQ38DispatchLease* q38Dispatch=nullptr;void *q38Cohort=nullptr,*fleet=nullptr;
+ PioneerQ38ProjectionIdentity q38FfnModelIdentity={},q38GdnIdentity={};
+ FactoryFlags span,q38Delta,panelProbe,streamProbe;FactoryFlags* q38Span=&span;FactoryClock q38Clock;
+ int runtimeCoreMode=-1,q38GdnCallThread=42;uint64 bytes=PioneerResidentBanks::Total;
+ bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false;
+ PioneerStoreContext(PioneerSessionIO& native,PanelOwners& owner,PioneerBulkUploadLease& b,PioneerOutputBufferLease& output,
+  PioneerWideOutputLease& wide,uint8* bitmap):io(native),banks(owner.banks),lease(owner.store),bulk(b),bulkHost(output),wideHost(wide),host(owner.host),
+   baseline{{{{owner.dram},owner.noc}}},initialized(bitmap){
+  span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
+ }
+ ~PioneerStoreContext(){delete q38EmbeddingModel;} // SIMULATED context;real unknown contexts are retained,never destroyed
+ bool Unsafe(bool zero=false,bool graph=false,bool controlledEmbedding=false){
+  (void)zero;(void)graph;
+#include "embedding_factory_unsafe.inc"
+  return otherUnsafe || banks.Quarantined() || q38Clock.quarantined || bulk.unsafe || bulkHost.quarantined || wideHost.quarantined
+   || lease.recovery_required || (q38EmbeddingModel && !zero && q38EmbeddingModel->zero.running);
+ }
+};
+struct PioneerProbeCookie{PioneerStoreContext* context;uint32 magic=0x50313030;int team=7;};
+static PioneerProbeCookie* sRuntimeOwner=nullptr;
+static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
+static uint64 sReloadGeneration=4;static const void* sQ38LocalDeltaOwner=nullptr;
+static int currentThread=42;static int find_thread(void*){return currentThread;}
+// Use actual native MEMORY-ONLY retention body,not a simulated ready seal.
+#include "embedding_factory_retain.inc"
+#include "embedding_factory_scope.inc"
+#include "embedding_factory_factory.inc"
+static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
+#include "embedding_factory_end.inc"
+ return clean;
+}
+bool PioneerSessionIO::EmbeddingMode()const{
+ return q38MutableContext && q38MutableContext->q38EmbeddingModel
+  && q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Embedding;
+}
+void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+ if(!EmbeddingMode()){
+  auto* m=q38MutableContext?q38MutableContext->q38EmbeddingModel:nullptr;
+  if(m && value==0x46800){
+   workspaceBank=m->bank;workspaceBase=m->plan.Base+m->plan.Workspace(m->bank)->offset;projectionLease=&m->zero;
+   if(rootStarts+1==zeroFailRun)packetFault=1;
+  }
+  ProjectionZeroIO::RuntimeResetWrite(value);return;
+ }
+ Touch();resets.push_back(value);
+ if(value==0x87ffff){if(coreReset==0x46800)embeddingStops++;coreReset=value;return;}
+ if(value==0x47800){rootHolds++;coreReset=value;return;}
+ assert(value==0x46800 && coreReset==0x87ffff);coreReset=value;embeddingStarts++;
+ EmbeddingExecutionBridge t;t.l1.resize(73737);
+ // Emulator transport:clone EXACT installed bytes,not host arithmetic.
+ // Raw endpoint copies here are DEVICE traffic,not controller PCI reads.
+ for(unsigned i=0;i<73737;i++)t.l1[i]=RawSlot(PioneerQ38EmbeddingSnapshotAddress(i));
+ for(unsigned i=0;i<16;i++)t.source[i]=i?source[i]:config;
+ for(unsigned i=0;i<10;i++)t.command[i]=command[i];
+ for(unsigned i=0;i<8;i++)t.counts[i]=PanelIO::ResidentNocRead(PioneerQ38SpanCounter(i));
+ for(unsigned i=0;i<5120;i++)t.resident[i]=wholeWorkspace[i];
+ t.failPacket=embeddingPacketFault;ExecuteEmbeddingBridge(embeddingImage,t);embeddingPc=t.pc;
+ for(unsigned i=0;i<73737;i++)RawSlot(PioneerQ38EmbeddingSnapshotAddress(i))=t.l1[i];
+ for(unsigned i=0;i<10;i++)command[i]=t.command[i];
+ counters[0]=t.counts[0];counters[1]=t.counts[1];accepted=t.counts[2];counters[3]=t.counts[3];
+ writeCounters[0]=t.counts[4];writeCounters[1]=t.counts[5];writeCounters[3]=t.counts[7];
+ for(unsigned i=0;i<5120;i++)wholeWorkspace[i]=t.resident[i];
+ if(embeddingSummaryFault<32)RawSlot(TT_Q38_FFN_RESIDENT_SUMMARY+embeddingSummaryFault*4)^=1;
+}
+struct NativeFactoryFixture {
+ PioneerSessionIO io;PanelOwners owner;
+ PioneerOutputBufferLease transfer;PioneerBulkUploadLease bulk;PioneerWideOutputLease wide;
+ std::vector<uint8> learned=std::vector<uint8>(PioneerResidentBanks::Pages);
+ std::unique_ptr<PioneerStoreContext> c;
+ PioneerProbeCookie cookie{nullptr};PioneerQ38ProjectionZeroResult zero;PioneerQ38EmbeddingResult result;
+ unsigned token,bank;
+ NativeFactoryFixture(const char* zeroImage,const char* embedding,unsigned selectedToken=0,unsigned destination=0):io(zeroImage,embedding),owner(io),token(selectedToken),bank(destination){
+  assert(PioneerPrepareOutputBuffer(io,owner.host,transfer) && PioneerBulkUploadPrepare(io,owner.dram,owner.noc,owner.host,owner.store,transfer,bulk)
+   && PioneerPrepareWideOutput(io,owner.host,transfer,wide));
+  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
+  if(token<248320)for(unsigned s=0;s<7;s++){
+   const auto* p=plan->ProjectionStripe(64,0,s);if(token<p->firstRow || token-p->firstRow>=p->rows)continue;
+   unsigned offset=p->offset+(token-p->firstRow)/16*46080,first=p->bank*unsigned(plan->Capacity/4096)+offset/4096;
+   for(unsigned i=0;i<((offset%4096)+46080+4095)/4096;i++)learned[first+i]=1;
+  }
+  c.reset(new PioneerStoreContext(io,owner,bulk,transfer,wide,learned.data()));cookie.context=c.get();
+  activeIO=&io;sRuntimeOwner=&cookie;sColdRecoveryRequired=sReloadQuiesced=false;sBankStorageOnly=true;currentThread=42;
+ }
+ bool Bind(){return BindQ38EmbeddingModel(*c,token,8191,bank);}
+ bool Initialize(){return InitializeQ38EmbeddingModel(*c,zero);}
+ bool Run(){return RunQ38EmbeddingModel(*c,result);}
+ void Unknown(){
+  auto* m=c->q38EmbeddingModel;assert(m && m->Unsafe() && !m->Closed() && !m->embedding.Completed()
+   && owner.banks.Quarantined() && owner.store.recovery_required && io.HostReadMock::quarantined
+   && io.PioneerHostPageIO::quarantined && transfer.quarantined && wide.quarantined && c->q38Clock.quarantined && sColdRecoveryRequired);
+  unsigned n=io.touches;assert(!Bind() && !Initialize() && !Run() && !EndFactory(*c) && io.touches==n);
+ }
+};
+#ifndef PIONEER_Q38_EMBEDDING_FACTORY_FIXTURE_ONLY
+int main(int argc,char** argv){
+ assert(argc==3 || argc==4);setvbuf(stdout,nullptr,_IOLBF,0);
+ (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
+ unsigned positives=0,faults=0;
+ if(argc==3){
+  for(unsigned source=0;source<7;source++){
+   NativeFactoryFixture f(argv[1],argv[2],PioneerQ38EmbeddingFirst(source)+PioneerQ38EmbeddingRows(source)-1,(source+3)%7);
+   assert(!f.c->q38EmbeddingModel && !f.io.q38EmbeddingMemoryMapAttempted && !f.c->Unsafe());unsigned n=f.io.touches;
+   assert(f.Bind() && f.io.touches==n && f.c->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Bound);
+   auto* m=f.c->q38EmbeddingModel;assert(m->graph.CanonicalModel(m->identity)==&m->plan && !m->zero.closed && !m->embedding.Completed());
+   assert(f.Initialize() && m->zero.nonce==2 && m->zero.closed && f.io.rootStarts==2 && !m->embedding.Completed());
+   for(auto value:f.io.wholeWorkspace)assert(!value);
+   std::vector<uint32> saved(73737);for(unsigned i=0;i<73737;i++)saved[i]=f.io.RawSlot(PioneerQ38EmbeddingSnapshotAddress(i));
+   auto learned=f.learned;assert(f.Run() && m->Closed() && m->embedding.Completed() && m->phase==PioneerQ38EmbeddingNativeState::Complete
+    && f.io.embeddingStarts==1 && f.io.embeddingStops==1 && f.io.mapCalls==1 && !f.c->Unsafe() && EndFactory(*f.c));
+   for(unsigned i=0;i<73737;i++)assert(saved[i]==f.io.RawSlot(PioneerQ38EmbeddingSnapshotAddress(i)));
+   assert(f.learned==learned && !f.io.pciWrites && !f.io.HostReadMock::bmeWrites && !f.io.wideReleased);
+   bool nonzero=false;for(unsigned i=0;i<5120;i++)nonzero|=f.io.wholeWorkspace[i]!=0;assert(nonzero);
+   for(unsigned i=5120;i<f.io.wholeWorkspace.size();i++)assert(!f.io.wholeWorkspace[i]);
+   printf("PASS ACTUAL native factory sourcebank%u->workspace%u:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME\n",source,(source+3)%7);positives++;
+  }
+ }else{
+  for(unsigned fault=0;fault<7;fault++){
+   NativeFactoryFixture f(argv[1],argv[2]);assert(f.Bind());
+   if(fault<2){f.io.zeroFailRun=fault+1;assert(!f.Initialize() && !f.io.embeddingStarts);}
+   else{
+    assert(f.Initialize());if(fault==2)f.io.failMap=true;if(fault==3)f.io.nullMap=true;
+    if(fault==4)f.io.embeddingPacketFault=22;if(fault==5)f.io.embeddingSummaryFault=31;
+    if(fault==6)f.c->q38GdnCallThread=-1;
+    assert(!f.Run());if(fault==2 || fault==3 || fault==6)assert(!f.io.embeddingStarts);
+   }
+   f.Unknown();faults++;
+  }
+ }
+ printf("PASS ACTUAL native embedding FACTORY integration positives%u/faults%u;REAL native state/actual source+zero+scope+mapping+retention+END/all instructions,unclaimed banks,NO copied ready facade;SIMULATED_HARDWARE_NOT_CARD_OR_MODEL_SPEED\n",positives,faults);
+}
+#endif

@@ -1,0 +1,123 @@
+October22 2026 OFFLINE native embedding factory and isolated qualification
+Parent checkpoint276e5d2012. PROGRESS;unlimited goal ACTIVE.
+Whole27B last0.207893161tok/s UNCHANGED;20tok/s UNMET.
+No new native measurement,full-decoder/correctness/speed/Assistant claim.
+
+1. ACTUAL factory integration,not borrowed ready-state facade.
+New fixture allocates REAL PioneerQ38EmbeddingNativeState from completely
+unclaimed resident banks. Extracts actual native scope/Unsafe/mapping/
+factory/retention/new END-gate bodies. Both zero runs and embedding execute
+actual immutable emitted RISC instructions;only OS/PCI/TLB/GDDR endpoints
+simulated. Native maps alias the same REAL root prefix/panel/status memory.
+7positives:sourcebank0..6 lastrow/lane15 -> workspace(source+3)%7.
+Bind is CPU-only;actual zero2MiB closes nonce2;QPE1 physically modeled to
+completion/hold;ALL73737 root words restored,learned bitmap unchanged,
+rest of runtime workspace stays zero,NO BME changes.
+7faults:first/second zero packet,failed/null mapping,last embedding write,
+summary corruption,lost call thread. Actual MEMORY-ONLY retention body
+quarantines model/banks/clock/hosts;all subsequent factory/END calls inert.
+The new END gate is exercised,NOT the whole legacy BANK_END cleanup.
+
+2. Separate tag39 namespace10 qualification,not old FFN/Work promotion.
+New pointer-free protocol supports metadata query and logical token/context
+position only. ALL reply/ready/session/elapsed/reserved fields must be zero
+on request. Actual GdnCallScope owns one global-lock/thread/cookie lifetime
+through binding,zero and embedding. Success metadata reports private
+producer close;caller metadata is NEVER a completed-input capability.
+User-copy loss or compute failure retainsALL. Explicit BANK_END still
+mandatory;close alone retains source even after known-clean embedding.
+New routing rejects old FFN model/graph/Work/dispatch operations.
+New builder derives actual SDK compiler/linker argv from verified old
+controls,removes tag38 profile/sealed flags,adds exact new Native+Qual role.
+Both new builders refuse ANY inherited nonzero PIONEER_ feature BEFORE
+SDK/output access.10old builders refuse new Qual/Client roles before SDK.
+No updater registry,Assistant target,installation or hardware job.
+
+3. Actual public control path integration.
+Extract actual AcquireProbeLock/AcquireQ38GdnSessionLock/call scope/control/
+routing,not a mocked lock seal.7source banks execute real factory+zero+
+QPE1;31invalid request/length/token/position/team/lock/old-role refusals
+BEFORE device IO;5faults:first/second zero,map,last embedding packet,lost
+output user-copy. Ordinary lock denied after private source exists;
+same-owner END lock remains usable. SUPPORT works before BANK_BEGIN and
+context allocation. Failure returns CLOSE ONLY retention/no later IO.
+OS primitives/time/user copying simulated. No physical qualification.
+
+4. Real source-bound host session and standalone client.
+Default source FULL SHA-authenticates SAME already-open pinned public GGUF
+before GPU FD;source identity/epoch/plan rechecked before/after EVERY call
+and page read. Fixed packed layout;token selects exact16row group,uploads
+12original4KiB pages once using Work span;span CLOSE before native binding.
+New tag39/gen/namespace10/storage45/span55/12page proof strictly checked;
+produce logical token+position,then explicit clean BANK_END+PCI/host-release
+proof. On first uncertainty/source loss:CLOSE ONLY,no END/retry/fallback.
+No learned CPU dequantization/product/reference or numeric result payload.
+Fixed executable --produce-token0 only;initialization/execution/restore
+elapsed includes all control cost,NOT inference/token rate.
+7positives across all stripes;48faults:each9calls x transport/bad reply/
+source loss/epoch replacement plus each12page read failure;3CPU-only input/
+source refusals. Synthetic GGUF+transport;NO full SHA claim for fixture.
+Fixture Source intentionally has NO numeric/CPU-reference method.
+
+5. Build/test results,all final handles TERMINAL0.
+Factory actual image/source/state positives7/faults7,ASan+UBSan PASS.
+Control actual lock/scope/route positives7/refusals31/faults5 PASS.
+Host session positives7/faults48/refusals3 PASS,ASan+UBSan.
+New qualification gates236;old native catalog/generator gates76 PASS.
+Actual native mapping73737words/refusals45 PASS,ASan+UBSan.
+Repeated new linked driver BYTE-IDENTICAL a/b:
+ ad07794d73281a4ecd82f2adddd4dc83613781872555354612ce8d8464a7e002
+ /private/tmp/pioneer-q38-embedding-qual-20261022-b/tenstorrent_pci_probe-driver55-embedding-tag39
+Actual qualification maximum new kernel stackframe1024B,controller400B;
+prototype688B. Same SDK only,NO dirty llama/submodule read/build.
+Old tag38driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483,
+guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229,
+default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+all BYTE-IDENTICAL after driver/public role edits.
+Final Haiku riscv64 client:
+ 2568c45b9880fc28bc90696257ffd5ca050258daf7a6590979f585376eee97b8
+ /private/tmp/pioneer-q38-embedding-client-20261022-c
+
+Final logs SHA256:
+8916624c582dd6c73d16c82e2311c3008db4ab00d409b4b9b18ca55b9e44df27
+ /private/tmp/pioneer-q38-embedding-native-factory-20261022-c.log
+dbf3858f53d6d59973cc3306d1f7e6d8568acb4549b17733f7b24e8bea9e8a8a
+ /private/tmp/pioneer-q38-embedding-native-factory-faults-20261022-c.log
+272fffdc120a285ba1c731759e4d1c6e611a8f50e664c9d7287552439132e848
+ /private/tmp/pioneer-q38-embedding-native-control-20261022-d.log
+bc49ee2bf239878e2cc8a472897e4393c72a110cf06fb82626fbdeaf7b4c4abe
+ /private/tmp/pioneer-q38-embedding-session-20261022-b.log
+4a4519fdfc7dc3c724719af4334d294353d4cc4dbc2bf30f714d1059e4fc9408
+ /private/tmp/pioneer-q38-embedding-qualification-gates-20261022-b.log
+ca92faf9b73dea1bb0f3ec70821aa90272fa82728d7083fde53f25dc22dfc9af
+ /private/tmp/pioneer-q38-embedding-native-gates-20261022-c.log
+64a024a63320acc4d10d4d512a9b09908950836ed75464d5d1d5498d30e5be33
+ /private/tmp/pioneer-q38-embedding-native-mapping-20261022-b.log
+6c59961412ab120b8a56e55129f914e7c714f4291067d1975a72a8c3d19226e9
+ /private/tmp/pioneer-q38-embedding-qual-build-20261022-b.log
+98df7b0c3b638f5e94f1e7d859dd75cbf0c343ef12456b1f7c12e61d3eb1c2f3
+ /private/tmp/pioneer-q38-embedding-client-build-20261022-c.log
+
+Initial local failures ONLY:client indentation warning and wrong CLOSED
+enum fixed;control runner's zero image path corrected to /image,missing
+mock B_DEVICE_OP_CODES_END added. Subsequent exact tests/builds PASS.
+No source/script edited while a live runner could read/compile it.
+
+Fresh22:12UTC read-only SSH:inventory proven/ALL compute parents absent,
+original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/gen44/quiesced0/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. SSH key works again after user's desktop report.
+ZERO remote writes/native jobs/install/reload/reboot/power/SD/Assistant/
+network/clock changes. User's responsive desktop left unchanged. Dirty
+llama.cpp and unrelated FlashNext files never read/edited/staged.
+
+NEXT:independent DEBUG numerical qualification before actual card install.
+Current control returns metadata ONLY and never reads computed F32 to CPU;
+it does NOT independently establish learned numeric correctness on card.
+Add properly scoped fixed readback/debug-only reference mode,with source
+authentication+reference preparation BEFORE GPU FD,first mismatch CLOSE
+ONLY,and zero validation/readback in Work. Do NOT replace arithmetic with
+boot/STOP-only qualifier or treat public ready metadata as capability.
+Then actual card arithmetic,full resident projection lifetime/opaque input
+consumption,learned RMS/residual/GDN/attention/KV/sampling/full decoder.
+Raw-unpack-cache22 remains HARD BLOCKED. No projected speedup claim.

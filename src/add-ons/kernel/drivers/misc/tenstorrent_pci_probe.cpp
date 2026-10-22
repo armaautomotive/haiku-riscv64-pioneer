@@ -5,6 +5,18 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
+#if PIONEER_Q38_EMBEDDING_QUALIFICATION != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010039ULL || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
+#error Exact isolated tag39 embedding qualification role required,not old FFN/profile/model promotion
+#endif
+#define PIONEER_Q38_EMBEDDING_ROLE_TAG_OK 1
+#include "PioneerQ38EmbeddingProtocol.h"
+#else
+#define PIONEER_Q38_EMBEDDING_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010039ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK
+#error Reserved tag39 is ONLY the separately scoped embedding arithmetic qualification
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 #if PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(PIONEER_Q38_FFN_NATIVE_GRAPH) || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || defined(PIONEER_Q38_PROJECTION_GRAPH_MEMORY)
 #error Embedding native adapter needs exact retained context/complete panel,NOT old memory role;NO public execution selector
@@ -31,7 +43,7 @@
 #error Persistent full FFN owner is OFFLINE until its separate actual native model/input/clock/host adapter is qualified
 #endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
-#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 #error Persistent full FFN native execution requires its separate exact tag36 model-bound role
 #endif
 #include "PioneerQ38FfnPersistentGraphOwner.h"
@@ -47,7 +59,7 @@
 #error Reserved tag36 identifies ONLY the persistent full FFN native adapter
 #endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
-#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Canonical FFN model init requires its separate exact tag35 retained-owner role,not old GDN/code/Work promotion
 #endif
 #include "PioneerQ38GraphMutableBanks.h"
@@ -3388,6 +3400,41 @@ public:
 	PioneerStoreContext* Context() const { return held && status==B_OK?context:NULL; }
 };
 // PIONEER_Q38_GDN_CALL_SCOPE_END
+#ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
+// PIONEER_Q38_EMBEDDING_NATIVE_CONTROL_BEGIN
+static status_t Q38EmbeddingControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK || thread.team!=cookie->team) return status!=B_OK?status:B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT) {
+		if (length!=sizeof(tt_q38_embedding_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie);if (status!=B_OK) return status;
+		const tt_q38_embedding_support support={1,55,10,5120,248320,512,1,0};
+		status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE || length!=sizeof(tt_q38_embedding_produce)) return B_BAD_VALUE;
+	tt_q38_embedding_produce request={};status=user_memcpy(&request,data,sizeof(request));
+	if (status!=B_OK || !PioneerQ38EmbeddingRequest(request)) return status!=B_OK?status:B_BAD_VALUE;
+	PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+	if (!c || !BindQ38EmbeddingModel(*c,request.token,request.position,0)) return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+	PioneerQ38ProjectionZeroResult zero;PioneerQ38EmbeddingResult result;
+	uint64 began=uint64(system_time());
+	bool okay=InitializeQ38EmbeddingModel(*c,zero) && RunQ38EmbeddingModel(*c,result);
+	uint64 ended=uint64(system_time());auto* m=c->q38EmbeddingModel;
+	okay=okay && ended>=began && m && m->Closed() && m->embedding.Completed() && !c->Unsafe();
+	request.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+	request.closed=request.input_ready=okay?1:0;request.recovery_required=okay?0:1;
+	request.session=m?m->identity.session:0;request.driver_generation=m?m->identity.driverGeneration:0;
+	request.elapsed_us=okay?ended-began:0; // initialization+execution+restore,NOT model inference time
+	request.source_pages=okay?12:0;request.workspace_pages=okay?512:0;
+	request.saved_words=okay?result.savedWords:0;request.restored_words=okay?result.restoredWords:0;
+	status=user_memcpy(data,&request,sizeof(request));
+	if (!okay || status!=B_OK || c->Unsafe()) {tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+	return status; // explicit BANK_END still mandatory;close alone retains context
+}
+// PIONEER_Q38_EMBEDDING_NATIVE_CONTROL_END
+#endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
 // PIONEER_Q38_FFN_GRAPH_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::FfnGraphScope(const PioneerQ38FfnPersistentGraphOwner& owner,
@@ -6152,6 +6199,17 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
+	// PIONEER_Q38_EMBEDDING_NATIVE_ROUTING_BEGIN
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE)
+		return Q38EmbeddingControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE
+		|| operation==TT_PCI_PROBE_Q38_FFN_GRAPH_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_GRAPH_RUN
+		|| operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN
+		|| operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
+		return B_NOT_ALLOWED; // tag39 is NOT old FFN/Work code ownership or execution promotion
+	// PIONEER_Q38_EMBEDDING_NATIVE_ROUTING_END
 #endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 	if (operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE)
