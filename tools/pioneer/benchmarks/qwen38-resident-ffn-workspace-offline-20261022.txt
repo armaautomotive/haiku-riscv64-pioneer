@@ -1,0 +1,88 @@
+Resident FFN private workspace/initialization checkpoint.
+October21 2026 Vancouver (file/test timestamps October22 UTC).
+OFFLINE ONLY. No native driver/Assistant/model integration or speed claim.
+
+PioneerQ38FfnBanks reserves exactly the first74pages/303104B of ONE existing
+64MiB canonical FFN workspace. The resident producer/gather footprint is
+299712B. No second allocation,bank-capacity increase,learned bitmap tag or
+second mutable owner. Uses the EXISTING single-owner reservation interlock;
+FFN and GDN cannot independently claim the same bank context. Future full
+model integration needs one unified owner rather than bypassing this rule.
+
+Binding requires the exact seven-bank baseline owner,all four nonzero
+session/sequence/model/driver epochs,a page-aligned workspace fully inside
+one3GiB bank,and ALL74pages not already initialized as learned weights.
+Every initialization span re-proves each reserved page/route/index. Failed
+binds publish nothing. The owner is noncopyable and retained until the whole
+bank context dies. Its public extent derivation authorizes INITIALIZATION
+ONLY,not reading/computing with a model. Commit/publication remain private.
+
+PioneerQ38FfnZeroController reuses the EXACT previously frozen zero image.
+It does NOT replace or modify PioneerQ38StateZeroController/GdnBanks.
+One exact noncopyable initialization lease owns the saved image at a time;
+equal epochs/pointers in another lease do not grant that ownership. Foreign
+owner/bank/baseline objects,invalid spans,duplicate/overlap requests and
+already-published reinitialization refuse BEFORE I/O. A complete known-clean
+partial CLOSE may release the operation lease so a NEW lease can initialize
+remaining fresh pages;this never permits retry of an UNKNOWN operation.
+
+Actual zero/readback DATA,ALL8 wrapped counters,descriptor+32word summary+
+final NoC command,ALL16 sources,physical rootPCs,ALL119other-held and all
+existing mappings/host owners are re-proved BEFORE the FIRST postrun hold.
+The74page region requires19writes+19readbacks,including its short final
+chunk. Only after physical proofs+holds does the private ledger advance.
+A ledger count of74 is NOT readiness:the initialization seal is published
+only after a complete known-clean CLOSE restores/verifies the original
+root code/panel/bulk scratch/boot and re-proves sources. Partial CLOSE has
+no seal. Even a seal is NOT model/compute/FFN completion authority.
+
+UNKNOWN/fault marks the bank owner/lease/store/host mappings unsafe in MEMORY
+ONLY and retains the exact initialization lease. No postfailure hold,card
+read,END,restore,retry,release or rebind. Native context/cookie/PCI/DMA/clock/
+cold-latch integration is still required and is NOT enabled by these files.
+Ordinary mutable native builds still refuse before SDK access. The RV64
+compile witness intentionally declares NO PCI-write/NoC-command-write/
+host-payload-load/release APIs;maximum compiled frame880B,not a linked driver.
+
+ASan/UBSan evidence,all CLI0:
+- Owner:42canonical plans/all7banks/3contexts/1or2delta slots,311refusals;
+  atomic claim/no bitmap mutation/all pages/whole-span mutable exclusion,
+  malicious learned bitmap cannot authorize reserved matrix pages,
+  no-copy/private ledger+seal,sticky all-bank quarantine,NO hardware I/O.
+- Controller+ACTUAL frozen RV32 image:15positive scenarios,211injected
+  faults,28inert refusals. Full303104Bzero on all7banks/both3GiB capacity
+  edges,known-clean partial continuation,publication ONLYafterCLOSE,
+  all32summary/64descriptor/10command/16source corruptions,
+  EVERY38fullfootprint packet failures,missing/corrupt device DATA,
+  marker/phase/count/code/maps/cohort/other-held/4PC/reset/clock faults,
+  failed restore revokes publication,foreign/competing lease inert.
+  /private/tmp/pioneer-q38-ffn-zero-controller-tests-20261022-d.log
+  SHA5a91de51e40a88de68073357b27e0382f906e59147a16ec1e2490428302d7818
+- Unchanged GDN zero controller+actual image and RV64 witness880B passed.
+  /private/tmp/pioneer-q38-state-zero-regression-20261022-a.log
+  SHA076ce65b245ac7443eaa9856200c9bc6ceaf0fd9966fb0352d55c1611f6b86c2
+- Unchanged FFN scratch layout42plans/81refusals passed.
+  /private/tmp/pioneer-q38-ffn-scratch-regression-20261022-a.log
+  SHA3223722185eaef871af9df2c413a6328675d17e150cde59cb87f099376f58b4c
+- Unchanged GDN owner ALL9216half-head extents/288MiB passed.
+  /private/tmp/pioneer-q38-gdn-banks-regression-20261022-a.log
+  SHA6b2078e9ec3c7396b274cf315e25c59bb542433c0d56b6132238e5462676abab
+
+Exact frozen zero image rebuilt with read-only SDK:
+boot SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+text SHA39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b
+/private/tmp/pioneer-q38-ffn-zero-image.kGxwbsxZ/image
+
+Next:private resident projection sink,explicit expanded-input source,NEW
+composite image/L1 lifetime/participant/controller contracts,then one actual
+debug-qualified FFN and paired real full-model Work inference. Existing
+74200 resident descriptors overlap the legacy74080 matrix task staging;
+never substitute these stages into old live views/PC/cache contracts.
+Full attention/GDN/KV/norm/residual/embedding/sampling residency remains.
+
+No SSH/GPU job/driver exchange/Assistant/power/SD/CPU/RAM/boot/settings action
+in this checkpoint. Last known041/tag12/g28 left untouched;all prior native
+parents closed. Dirty llama.cpp and unrelated FlashNext work untouched.
+Pristine c060ca974c773c7c3d17fd1b66dc9d312bc292c0 remains the only build base.
+Raw-Dst cache22 stays hard-blocked. Whole-model residency/20tok/s UNMET;
+last real27B measurement remains0.207893161tok/s,not improved by offline work.
