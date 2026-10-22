@@ -1,0 +1,95 @@
+Native QFG2 ROOT+ALL119 QFP2 execution lifetime PASS,October22 2026.
+TWO independent real P100A sessions,then EXACT original driver restored.
+This is STOP-only ownership qualification,NOT fullFFN/model inference,
+model/input/GDDR permission or an inference-speed improvement.
+Last measured whole27B0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
+
+Source checkpoint0b4bdb8613c0d7ed9cd08e554722601b9f6330f7 pushed before launch.
+Pre-deployment implementation/tests/pins are recorded in
+qwen38-ffn-root-lifetime-native-offline-20261022.txt.
+Exact new driveraa6730ef/tag2026102200010034/namespace7+6290/+6291,
+clientc33b9c98 and updaterc3b09589 were staged ONLY after fresh ALL-parent
+inventory+CPU metadata;remote SHA256s matched. Native oldtag12 refusal
+proved BEFORE BEGIN/card reads. Guarded apply moved generation34->35,
+cold0/owner0/idle;no reboot or GPU execution occurred in the reload itself.
+
+Each REAL kernel lifetime pass reported:
+ root1 workers119 saved867448 installed867448 restored867448
+ frames11424/11424 meta12288/12288 stack2048/2048 ready119
+ root1/1 stopped119 held119 rootHeld1 read8806 write238
+ NEW_ROOT_AND_WORKERS_EXECUTED_STOP_ONLY_NOT_MODEL_OR_SPEED
+Root AND ALL119 workers executed the NEW frozen code,not the old root.
+ALL current root/worker physical terminals were proved BEFORE first hold,
+then complete program/control/root metadata/root stack were restored.
+Physical MASTER deltas/last command/original+shadow/ALL sequences/source
+were independently checked. Counters stayed advanced,NEVER restored.
+The second independent session also exercises NONZERO existing counters.
+
+After each new lifetime restored the original code,that SAME live session
+ran the original legacy math/debug client. Synthetic:4fixtures x2=8samples,
+ALL119 workers;Q8 K5120->Q4 K17408->Q6 K5120->returnQ8,all exact_errors0,
+waiting119/cold0. Authenticated:fixed725504B memory buffer verified SHA
+a0611645d36e05800a71b6b63dcf5dfeee9d9dcfe722d4dafea2873c7464e231
+BEFORE accelerator open;8 first/last public rowgroups+returnQ8 x2=18samples,
+ALL119 workers,Q8/Q4/Q6,K5120/17408,all exact_errors0/waiting119/cold0.
+These are authenticated row primitives,NOT contiguous full matrices,
+resident FFN/full graph or the complete27B output/quality/speed claim.
+
+Both explicit BANK_END results:
+ state2 active0 pci_restored1 host_released1 cold0 accepted1
+Both native clients exited CLI0. Both normal firmware clock leases:
+ begin1 state1 mhz800/1350 mode3/3 messages3 uncertain0
+ end1 state2 mhz800/1350/800 restored1 messages5 uncertain0
+No uncertainty,no resource quarantine or physical recovery. Actual native
+outer saved-L1 status restoration path succeeded with the dirty-obligation
+fix from the parent-close test;ALL hosts+clock released only on clean END.
+The first checked_call59.914005/59.472194seconds includes the complete
+save/install/boot/STOP/restore qualifier;NOT matrix or token timing.
+Subsequent per-sample~milliseconds also are NOT LLM token throughput.
+
+Terminal native logs/SHA256:
+ apply /private/tmp/pioneer-q38-root-native-apply-20261022-a.log
+ a7d30392442f24f692dfcb80504dab476dab99994931607614efdd723661068f
+ synthetic /private/tmp/pioneer-q38-root-native-synthetic-20261022-a.log
+ 88bd3d760cc0ed2bd52f95e3651766b40aac924fffc2e6fc602b56e531e73b4e
+ authenticated /private/tmp/pioneer-q38-root-native-authenticated-20261022-a.log
+ bfd1bef3de536edbfd6b11d1af6deedff5fbe7f4ff04ab9754485c3fb4a72722
+ restore /private/tmp/pioneer-q38-root-native-restore-20261022-a.log
+ 327faae17ac3ad02095525c1504c05b48d1f059b11fd9b1ab8a4140ac4cdc7f1
+The already-running passive serial log corroborated TWO root PASS records
+and TWO clean800->1350->800 clock leases. Serial was not reopened/consumed.
+NO SCP/upload/other native job/reload occurred during either native parent
+lifetime,including the authenticated buffer's CPU hash-child phase.
+
+The broad actual updater fake-filesystem regression also completed CLI0:
+6373 apply/restore/hash/symlink/handshake/parent/failure cases,NO native IO,
+NO automatic rollback;final pinned route focused100cases also CLI0.
+ /private/tmp/pioneer-q38-root-native-updater-full-20261022-a.log
+ SHA1ab9ce8d0bbd11f21561c9a53680b826d4aa5b2e0ed0cb56a9276a2fec6194d0
+All local/native jobs in this checkpoint are TERMINAL;no test remains live.
+
+ONLY AFTER both native known-clean END/CLI0 and fresh ALL-parent absence,
+guarded restore moved generation35->36 to the EXACT original binary:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012 generation36 quiesced0 cold0 active_owner0
+ open_count1 guard1;CPU_METADATA_ONLY
+Fresh independent process inventory:ALL inference parents absent.
+sysinfo64 CPUs/kernel_riscv64 Sep8/max137034936320B(full RAM),healthy SSH.
+No reboot,power/SD/Assistant/boot/CPU/RAM/network/settings changes. New
+staged diagnostic artifacts are retained;installed driver is the original.
+SDK read-only;dirty llama.cpp/unrelated FlashNext untouched.
+
+NEXT:use this now-proven REAL full-root lifetime for the ACTUAL authenticated
+canonical model/fullFFN context. Bind same native cookie/upload ledger/
+canonical plan/joint GDN+FFN owner/clock/ALL hosts+maps,actual initialized
+workspace and initial5120F32 L1 producer/readback receipt. Existing canonical
+geometry/bitmaps alone are NOT source or launch grants;borrowed children
+must NOT enter individually deleted old owner fields. Native34 STOP success
+does NOT authorize model weights,input producer or fullFFN. A separate exact
+role must make the genuine model path work,not just repeat diagnostics.
+After native fullFFN and actual inference,remaining all-card attention/GDN/
+KV/norm/residual/embedding/sampling and removal of unnecessary transfers/
+serialized work still required. Keep Work(no CPU reference) separate from
+validation/debug. No speedup claim without ACTUAL full-model measurements.
+Raw-Dst cache22 remains HARD BLOCKED;on ANY future UNKNOWN CLOSE ONLY,
+NO END/retry/reset/further card reads/hot rollback,retain all for recovery.

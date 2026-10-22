@@ -1,5 +1,9 @@
 Isolated native QFG2 ROOT+ALL119 STOP-only lifetime route,October22 2026.
-PRE-DEPLOYMENT checkpoint;NO native launch/qualification or speed claim yet.
+PRE-DEPLOYMENT checkpoint as originally recorded in0b4bdb8613.
+SUBSEQUENT UPDATE:native TWO-session ROOT+ALL119 STOP qualification and
+exact original-driver restore passed. See
+qwen38-ffn-root-lifetime-native-20261022.txt for authoritative final evidence.
+This file preserves the earlier pre-deployment implementation record.
 Last whole27B0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
 
 Exact separate tag2026102200010034,namespace7,ops+6290/+6291. New ROOT heap
@@ -54,9 +58,10 @@ CLI0 tests of FINAL source (ASan/UBSan where applicable):
   hash/symlink/owner/global parent/failure checks;NO automatic rollback.
   /private/tmp/pioneer-q38-root-native-updater-focused-20261022-b.log
   SHA16ecdfc5f4ed6ccb4aa1b7261ed43f72fa0ee38e735c20f7cf84ef26523753dc
-  BROAD ALL-ROUTES updater regression still running locally at this
-  pre-deployment checkpoint;handle32655,log
+  BROAD ALL-ROUTES updater regression was still running at that earlier
+  checkpoint. It has now completed CLI0 with6373cases;handle32655 TERMINAL:
   /private/tmp/pioneer-q38-root-native-updater-full-20261022-a.log.
+  SHA1ab9ce8d0bbd11f21561c9a53680b826d4aa5b2e0ed0cb56a9276a2fec6194d0
   It is simulated filesystem/shell work,not any Pioneer/GPU process.
 
 Independent final native builds byte-identical:
@@ -76,8 +81,9 @@ Fresh native ALL-parent inventory empty,CPU-only reload metadata
 max137034936320B. Only THREE new unused staging filenames copied;ALL remote
 hashes exact. Installed driver UNCHANGED. Actual new client invoked ONCE
 against oldtag12:CLI1 exact STOP_TAG34_NAMESPACE7_BEFORE_BEGIN,NO card read
-or GPU work. Native STOP execution,clean END and legacy math qualification
-still PENDING. NO reload/reboot/power/SD/Assistant/boot/CPU/RAM/network/
+or GPU work. At that earlier checkpoint native execution was still pending;
+it subsequently passed with guarded apply/restore but NO reboot/power/SD/
+Assistant/boot/CPU/RAM/network/
 settings changes. Read-only SDK;dirty llama.cpp/unrelated FlashNext untouched.
 
 NEXT:controlled native ROOT+ALL119 STOP qualification,then original legacy

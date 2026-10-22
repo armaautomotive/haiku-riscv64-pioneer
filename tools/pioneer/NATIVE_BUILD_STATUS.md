@@ -1,6 +1,26 @@
 # Native build status
 
-Latest PRE-DEPLOYMENT checkpoint October22 2026:isolated tag34/namespace7
+Latest NATIVE checkpoint October22 2026:NEW QFG2 ROOT+ALL119 QFP2
+boot/STOP/current-terminal/hold/restoration PASS in TWO actual P100A
+sessions. EACH saved/installed/restored867448program+11424peer-control+
+12288root-meta+2048root-stack words,119ready/stopped/held,rootStarted/
+completed/held1;physical root read8806/write238 deltas independently exact,
+counters NEVER restored. Original legacy math THEN passed8synthetic+
+18authenticated119-worker samples ALL exact. BOTH native CLI0/explicit
+known-clean END,ALL resources released,cold0;both clocks800->1350->800/
+restored1/uncertain0. Exactaa6730ef/tag34/namespace7 implementation source
+0b4bdb8613 pushed before launch;newrole never promotes Work/model/input.
+Broad updater6373cases and final focused100cases pass;ALL jobs TERMINAL.
+Guarded restore AFTER fresh idle/no-parent completed:EXACT041/tag12/gen36/
+quiesced0/cold0/owner0/open1/guard1,ALL inference parents absent,64CPUs/
+max137034936320B. No reboot/power/SD/Assistant/boot/CPU/RAM/network changes.
+NEXT genuine authenticated canonical model+joint mutable initialized owner/
+initialF32 producer/fullFFN native path,not repeated STOP diagnostics.
+All-card decoder and real speedup still owed. Whole27B.207893161tok/s
+unchanged;20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-root-lifetime-native-20261022.txt.
+
+Previous PRE-DEPLOYMENT checkpoint October22 2026:isolated tag34/namespace7
 native ROOT+ALL119 STOP-only hook,REAL retained cookie/context/clock/ALLhosts
 and explicit END gate implemented.41actual hook/Retain/END-gate cases pass;
 original parent CLOSE/resident END test caught/fixed NEW status writes not
