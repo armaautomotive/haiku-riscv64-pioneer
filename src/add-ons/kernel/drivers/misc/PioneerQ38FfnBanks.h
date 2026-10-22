@@ -13,7 +13,12 @@ using PioneerQ38FfnIdentity=PioneerQ38GdnIdentity;
 struct PioneerQ38FfnExtent {uint32_t bank,address,route,index,pages,bytes;};
 struct PioneerResidentLease;struct PioneerBulkUploadLease;struct PioneerOutputBufferLease;struct PioneerWideOutputLease;
 struct PioneerQ38FfnZeroLease;struct PioneerQ38FfnZeroResult;
+struct PioneerQ38DispatchLease;class PioneerQ38FfnMatrixLease;
 class PioneerQ38FfnBanks {
+ template<class IO> friend bool PioneerQ38FfnMatrixPrepare(IO&,const tt_dram_samples_result&,PioneerResidentBanks&,
+  PioneerQ38FfnBanks&,PioneerQ38DispatchLease&,const PioneerQ38FfnIdentity&,PioneerQ38FfnMatrixLease&);
+ template<class IO> friend bool PioneerQ38FfnMatrixClose(IO&,const tt_dram_samples_result&,PioneerResidentBanks&,
+  PioneerQ38FfnBanks&,PioneerQ38DispatchLease&,PioneerQ38FfnMatrixLease&,bool);
  template<class IO> friend bool PioneerQ38FfnZeroPrepare(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38FfnBanks&,PioneerResidentBanks&,const PioneerQ38FfnIdentity&,const tt_host_page_result&,
   PioneerResidentLease&,PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38FfnZeroLease&);
@@ -28,6 +33,7 @@ class PioneerQ38FfnBanks {
  const tt_dram_samples_result* baseline=nullptr;
  PioneerQ38FfnIdentity identity={};
  const PioneerQ38FfnZeroLease* initializationLease=nullptr;
+ const PioneerQ38FfnMatrixLease* matrixLease=nullptr;
  uint32_t bank=0,offset=0;
  uint64_t initialized[2]={};
  bool unsafe=false,published=false;
@@ -35,6 +41,14 @@ class PioneerQ38FfnBanks {
   return banks && baseline && !unsafe && id==identity && banks->Matches(*baseline);
  }
  bool Recorded(unsigned page) const {return (initialized[page/64]>>(page%64))&1;}
+ bool ClaimMatrix(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnMatrixLease* lease) {
+  if(!lease || matrixLease || initializationLease || !published || !Matches(id))return false;
+  matrixLease=lease;return true;
+ }
+ bool CloseMatrix(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnMatrixLease* lease) {
+  if(!lease || matrixLease!=lease || !published || !Matches(id))return false;
+  matrixLease=nullptr;return true; // ONLY after known-clean complete restoration
+ }
  bool ClaimInitialization(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnZeroLease* lease) {
   if(!lease || initializationLease || published || !Matches(id))return false;
   initializationLease=lease;return true;
@@ -100,6 +114,7 @@ public:
  }
  bool InitializationPublished(const PioneerQ38FfnIdentity& id) const {return Matches(id) && published;}
  bool OwnsInitializationLease(const PioneerQ38FfnZeroLease* lease) const {return lease && initializationLease==lease;}
+ bool OwnsMatrixLease(const PioneerQ38FfnMatrixLease* lease) const {return lease && matrixLease==lease;}
  void Fault(){unsafe=true;published=false;if(banks)banks->Quarantine();} // MEMORY ONLY,no release/reset/rebind
  bool Unsafe() const {return unsafe || (banks && banks->Quarantined());}
 };

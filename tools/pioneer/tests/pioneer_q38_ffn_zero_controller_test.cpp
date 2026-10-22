@@ -56,6 +56,7 @@ struct FfnZeroFixture {
   assert(PioneerResidentLeaseEnd(io,owner.noc,owner.store) && !io.ReleaseHostPage());io.Safe();
  }
 };
+#ifndef PIONEER_Q38_FFN_ZERO_CONTROLLER_MODEL_ONLY
 int main(int argc,char** argv) {
  assert(argc==2);setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -178,3 +179,4 @@ int main(int argc,char** argv) {
   unsigned before=f.io.touches;assert(!f.Zero() && before==f.io.touches);f.Unsafe();faults++;}
  printf("PASS OFFLINE FFN zero controller+EXACT RV32 image:positive%u/faults%u/inert-refusals%u;74page303104B fullfootprint/all7banks/2edges;fullledgerNOTready,sealONLYafterknowncleanCLOSE;ALLdata-summary-descriptor-command-source-counter-PCproofsBEFOREhold;UNKNOWNretainsALLowners/ZEROlaterIO;NO_NATIVE_INTEGRATION\n",positive,faults,refusals);
 }
+#endif

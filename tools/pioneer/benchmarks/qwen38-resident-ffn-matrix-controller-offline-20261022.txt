@@ -1,0 +1,117 @@
+Resident FFN private matrix-controller checkpoint.
+October21 2026 Vancouver;test/evidence timestamps October22 UTC.
+OFFLINE ONLY. No native access,installed image,Assistant option or speedup.
+
+New heap-only private controller borrows the EXACT existing qualified
+direct-SrcB/sentinel120-core cohort and the SAME FFN mutable workspace that
+the actual zero program fully initialized. It does not allocate another
+workspace,extend bank capacity,reset/rebootstrap peers,enable PCI/BME or
+introduce a numerical host path. One pointer claim in PioneerQ38FfnBanks
+excludes competing matrix leases and remains retained on UNKNOWN.
+
+Prepare audits ALL120 existing role images/sources and ALL119 current
+WAIT/status/physical-PC proofs before saving/writing the first root byte.
+Saves/restores complete prefix64000..68000/main72000..74000 plus the NEW
+QFM1 frame/row map. Installs the EXACT frozen prior-checkpoint program:
+ main SHA67ff940a48f37219114de10135c010e1e88bdcd90e608758b538a44e58b09dbe
+ prefix SHA492dfc44e80d85af1de9e74fee56b68d5215d386fd31d591557850759606b6d8
+Full6144word image/padded-tail readback is required,not an entry-word hint.
+The frozen arrays match the supplied independently built images exactly.
+No old-image substitution or production registry selection was added.
+
+Each job contains ONLY logical learned parts/row positions/type/role/token/
+layer. Kernel-private staging derives every learned extent from initialized
+page ownership,excludes ALL74 mutable pages,and derives the workspace from
+its exact initialized seal. No user address,host vector/scale/output,
+physical coordinate or boolean readiness grant is accepted by the job.
+Four owner epochs,full64bit token,layer and complete output cover are bound.
+Unused parts stay zero. Root/peer sequence headroom reserves a final STOP;
+late descriptor/sequence changes are rechecked before the first hold.
+
+Run stages METADATA ONLY. Device instructions fetch native input/scale
+from GDDR and store the complete projection back to the same workspace.
+The CPU reads no input/intermediate/output payload in these tests. Work
+has no CPU arithmetic reference or learned fallback. This does NOT mean
+the complete FFN or model is now card-resident:one projection is covered.
+
+Completion marker is observed FIRST. Bounded polls/clock checks,TWO
+terminal-PC observations,all sources/exact full image/all metadata,ALL8
+independently sampled wrapped counter deltas,ALL57 safety stats,exact
+10word final NoC command,learned authorization and exact current request/
+sequence proofs precede the FIRST postexecution root hold. A second pair
+of terminal-PC samples is required before that hold. Only known-clean
+completion advances private persistent-peer sequence numbers.
+
+Close audits ALL119 current WAIT/source/image/physical-PC proofs before
+single-attempt restoration. Any failed prefix/main/frame/map readback is
+terminal;there is no retry. Known-clean close releases only this overlay
+claim. It does NOT send STOP/END,release host/DMA/context owners or claim
+that the complete parent's native cleanup has been newly qualified.
+UNKNOWN quarantines ALL120 nodes/banks and host owners in MEMORY ONLY.
+Further Prepare/Run/Close attempts perform ZERO hardware I/O;all owners,
+maps,clock/cold state must remain retained until explicit physical recovery.
+
+IMPORTANT native integration contracts remain UNIMPLEMENTED:
+ IO.FfnMatrixScope must independently establish the SAME retained global
+ context/lock/cookie/thread/driver/model identity,ALL writer exclusions,
+ exact source baselines and ALL host owners,without hardware I/O.
+ IO.FfnMatrixInputReady must prove a completed exact input producer/source
+ lease for this owner/token/layer/role. Neither initialized zeros nor raw
+ tags,request fields/booleans or these test callbacks supply that authority.
+The test callbacks deliberately SIMULATE those two contracts. Ordinary
+native paths remain blocked. Kernel compile witness is NOT an adapter.
+
+ASan/UBSan and RV64 kernel compile evidence,ALL CLI0:
+ sh tools/pioneer/tests/run_pioneer_q38_ffn_matrix_controller_tests.sh \
+  /private/tmp/pioneer-q38-ffn-zero-image.kGxwbsxZ/image \
+  /private/tmp/pioneer-q38-ffn-matrix-image.cVpY7yrH/image \
+  /Volumes/HaikuBuildLocal/generated.riscv64
+  /private/tmp/pioneer-q38-ffn-matrix-controller-tests-20261022-h.log
+  SHA223dbdccbf9ca526a05ae6f4226044c293928dcae35fc6d4ba733453f7824b9a
+ -14 missing/mixed peer/root qualification compile refusals.
+ -Full frozen prefix/main and every padded tail/invalid index compared.
+ -4 positive cases:gate/down,4 successive gate/up/down/gate jobs with
+  different active cohorts and64bit token,and last safe nonce before STOP.
+ -92 fault injections:ALL57 safety stats/10 command words,scope/producer/
+  code/source/frame/counter/nonce/late-job mutations,ALL4 physical root-PC
+  samples,4 reset losses,timeout/backward/frozen clocks,late peer fault,
+  explicit unclean close,lost install/prefix/main restoration writes.
+ -20 inert malformed/uninitialized/competing/foreign owner refusals.
+ -Actual ZERO and QFM1 ROOT instructions executed;peer arithmetic/fabric,
+  global native scope and producer capability explicitly SIMULATED here.
+  Prior actual-root+ALLactual-peer full projection arithmetic evidence is
+  in qwen38-resident-ffn-matrix-offline-20261022.txt;not a new native result.
+ -RV64 freestanding kernel templates compile with maximum880B frame.
+  Large snapshots/authority are HEAP ONLY;SDK accessed READ ONLY.
+  Witness intentionally lacks PCI-write/NoC-command-write/host-numeric/
+  STOP/END/owner-release APIs. Proof header also compiled standalone first.
+
+Regressions after bank-owner and shared-fixture include-guard changes:
+ FFN owner42canonical/311refusals,actual zero15positive/211faults/28inert,
+ kernel maximum880B:
+  /private/tmp/pioneer-q38-ffn-matrix-owner-regression-20261022-b.log
+  SHA15c5365cf9488fccf35ef3052d977006559365470918de84dbaeb14f71b565a7
+ Existing local panel/block policies and REAL extracted kernel handlers,
+ drivers46/47/48,all pass:
+  /private/tmp/pioneer-q38-ffn-matrix-panel-regression-20261022-a.log
+  SHA210732ba0eae1bd6efbd5868d9d7e4f042f46772f5a49c856767c8f360d2b97b
+ Existing ALL119-peer bootstrap and24faults pass:
+  /private/tmp/pioneer-q38-ffn-matrix-bootstrap-regression-20261022-a.log
+  SHA034022af60b621fe2290fac1ee4214333c5e2d6f256b545d646590f42f035699
+
+Next architecture gap:current persistent peers accept ONLY matrix/STOP.
+Resetting them into isolated activation code would lose their private
+sequence history. Resident SiLU/quantization therefore needs a NEW private
+persistent operation/ABI/image and complete coordinator/producer proofs,
+not a per-phase reset or a new old-descriptor padding meaning. Initial5120
+input quantization also still needs a real producer. Initialized zero pages
+are NOT encoded native zero operands. Bounded SiLU/native-scale eligibility
+must be proven or extended for real27B data,never silently CPU-fallback.
+
+No SSH/upload/GPU job/hotswap/driver install/restart/Assistant/power/SD/boot/
+CPU/RAM/settings changes. Installed best remains SHA
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Raw-Dst cache22 remains HARD BLOCKED. No native parent is open.
+No hardware inference ran. Last real27B speed0.207893161tok/s is unchanged.
+20tok/s target UNMET;attention/GDN/KV/norm/residual/embedding/sampling and
+full FFN orchestration are not all card-resident. No timing estimate claimed.

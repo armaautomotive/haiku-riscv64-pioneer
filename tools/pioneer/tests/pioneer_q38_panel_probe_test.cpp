@@ -1,4 +1,6 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_PANEL_TEST_MODEL_INCLUDED
+#define PIONEER_Q38_PANEL_TEST_MODEL_INCLUDED
 // Launch/cleanup POLICY tests. The real arithmetic image is independently
 // executed by pioneer_qwen38_panel_image_test; this mock models MMIO faults.
 #define PIONEER_BANKS_MOCK_ONLY
@@ -183,4 +185,5 @@ int main()
 	}
 	printf("PASS: OFFLINE driver%u local panel/block launch policy/reuse/exact L1+entry restoration,zero NoC,bounds+finite+padding guards,lost writes and ALL12 start/completion/counter/source/result/stop/code/count/marker faults;NO reset/restore/free after UNKNOWN\n",unsigned(TT_Q38_PANEL_CURRENT_DRIVER));
 }
+#endif
 #endif
