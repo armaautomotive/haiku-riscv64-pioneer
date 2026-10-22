@@ -1,0 +1,144 @@
+Native FFN worker execution-lifetime qualification,October22 2026.
+Scope:NEW119 QFP2 workers boot,WAIT,STOP,prove physical terminals,hold,
+then restore all saved code/control data. ROOT NEVER starts. No FFN/model
+arithmetic,learned weights,input,GDDR,host DMA or NoC packets are exercised
+by this qualifier. Restored ORIGINAL legacy math runs afterward separately.
+This is NOT a whole-model benchmark or a performance/promotion claim.
+
+NEW isolated native role:
+ PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC=1 requires the complete parent
+ CODE/original-TC/direct/sentinel/Work chain. Tag2026102200010033,namespace6,
+ support/RUN+6280/6281. Old CODE32 namespace5/+6270/6271 stays unchanged.
+ Ordinary Work AND checked operations cannot invoke this new diagnostic.
+ Production inference rejects both new diagnostic/reference flags.
+ Ref client additionally requires the complete CODE_REFERENCE/sentinel/
+ root-counter/Work/vector/panel4 role. Metadata must be exact driver55/
+ tag33/guard1/nonzero generation/idle/cold0/owner0/open1 before support or
+ BEGIN. Old versions2 AND5 refuse before BEGIN,without namespace fallback.
+ CPU reference math is confined to this debug executable,not Work inference.
+
+REAL native binding:
+ The existing exclusive global call lock/cookie/context must match.
+ Native owner,generation,7x3GiB banks,cohort and initialized ledger,all host
+ pages and actual explicit-END BUSY_VERIFIED1350MHz clock are checked
+ before helper IO. BOTH heap owners are published in the retained context
+ before mapping/staging. The actual full RetainQ38DispatchOwner path handles
+ every failure immediately:clock/ALLhost/cold retention is memory-only;
+ no legacy fallback,END,restore,reset,retry or further card read follows.
+ The new lifetime owner borrows its separate3.32MiB code owner. Context
+ destruction deletes lifetime first,code second,only after known-clean END.
+ Native Qualify frame320B,retain lambda80B;large storage remains HEAP ONLY.
+
+The controller saves867448 program words and119x96=11424 control-frame
+words BEFORE first write. All119 workers are staged/armed before release;
+current physical WAIT receipts/code/source/counter/reset are independently
+checked. The only command is internally constructed STOP(seq1). ALL119
+current physical terminals are proved BEFORE FIRST hold,and the selected
+worker is re-proved before its hold. Root stays held throughout. Exact
+program/frame/command restoration and independent full original-code audit
+precede returning to the original legacy bootstrap. No caller-supplied
+completed/clean/job/address hint supplies any authority.
+
+Final driver independently built twice,all3 artifacts byte-identical:
+ /private/tmp/pioneer-q38-peer-native-final.FeExE2ke/driver
+ /private/tmp/pioneer-q38-peer-native-repeat.HSgBKL37/driver
+ tenstorrent_pci_probe-driver55
+ SHAb35c00fdbdd03f4870b419a1ed4548c12d164671a2209cbd228a4d873dd414ff
+ Guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ unchanged. READ-ONLY SDK;dirty llama.cpp and unrelated FlashNext untouched.
+
+Final client independently built twice,byte-identical:
+ /private/tmp/pioneer-q38-peer-native-client.MucEOCBX/pioneer-q38-peer-lifetime-debug
+ /private/tmp/pioneer-q38-peer-client-repeat.LQ42P7Lc/pioneer-q38-peer-lifetime-debug
+ SHA36222fe90ead14d712cf75d3526d329a17bbcdd6642533848cc8b9cfec01abef
+ Updater af15dae299ce70e1277dfc2214c5e96009a7c06a2f3ac39b618ac8843d6d7bde
+ adds explicit041/tag12<->b35/tag33 apply/restore ONLY for known-clean idle
+ state. All hash/guard/generation/open/owner/cold/symlink/backup and BOTH
+ all-parent inventories retained. No forced unload/reset/automatic rollback.
+
+Local tests CLI0:
+ -Actual native hook AND actual RetainQ38DispatchOwner extracted,33cases:
+  cookie/context/clock/host preflight,each allocation/map failure,phase
+  read/STOP failures,reentry,full context retention/no later IO/fallback.
+  These simulated endpoints are NOT native execution evidence.
+  /private/tmp/pioneer-q38-peer-native-owner-20261022-b.log
+  SHA7566c5dedbf6a6195b2a4ff9f476367d036707d79f59c9d05e7bd92d82324cee
+ -414 new before-SDK/output gate refusals;old driver311/client145 retained.
+  /private/tmp/pioneer-q38-peer-gates-20261022-a.log
+  SHA442d313a8b0eb23acc3d5633717548b241711e43fcfac8afbda6f8e0c1a17d08
+ -Actual kernel routing ordinary/code/peer,14operations each;18old+20new
+  malformed/mixed protocol compile refusals. Namespace11variants,tag15
+  variants x93cases. Actual client10 wrong metadata cases before support/
+  BEGIN,old versions2/5 refusal,failing RUN/UNKNOWN uses returned host data
+  only then CLOSE,no later ioctl/END/reset/retry. Old CODE owner/adapter pass.
+  /private/tmp/pioneer-q38-peer-client-failures-20261022-b.log
+ -Actual all119 worker instruction replay at3 interleavings1/17/64 passes:
+  162868 instructions per case,max276B worker stack. Root NEVER runs.
+  /private/tmp/pioneer-q38-peer-native-actual-regression-20261022-a.log
+ -Focused actual shell updater132cases and complete6147case suite pass,
+  including new apply/restore and full native client stage basename.
+  /private/tmp/pioneer-q38-peer-hot-swap-focused-20261022-b.log
+  SHA9d36f7d5acac3f17bc52d1fda9d49674e2238cb511482d8fd8cca95352b5d477
+  /private/tmp/pioneer-q38-peer-hot-swap-full-20261022-b.log
+  SHA0507cb95ec3edf4c1645a681aea8c7578d92500eb5a91bf979f27b6697735e3f
+  Earlier log-a5925cases predates the new routes in main and is NOT proof
+  for those routes. It is superseded by the completed6147case log-b above.
+
+Native sequence,serialized;ALL completed CLI0 except the intentional
+old-tag metadata refusal,which returned the expected CLI1 BEFORE BEGIN:
+ 1 Fresh041/tag12/gen32/cold0/owner0/open1/guard1,ALL native parents absent.
+   Staged exact final driver/client/updater under unused non-symlink names.
+   New client --support on OLD tag12 refused BEFORE support/BEGIN/cardIO.
+ 2 Guarded041/tag12/gen32 ->b35/tag33/gen33. Fresh no-parent inventory,
+   installed hash and exact clean metadata independently verified. New
+   private support accepted actual ABI6/peers119/persistent1/inference0,
+   NO BEGIN. No ordinary Work selector was used.
+ 3 --synthetic:NEW119-worker boot/WAIT/STOP/hold/full restoration PASS.
+   Then20 ORIGINAL legacy Q8/Q4/Q6 math samples K5120/6144/17408,explicit
+   return to Q8 in the same cohort,ALL exact_errors0/10cases/clean END/CLI0.
+ 4 Fresh no-parent/clean metadata BEFORE --public-fixtures-119.725504
+   source bytes authenticated BEFORE opening the card;NEW119-worker
+   lifetime PASS AGAIN. Then18 ORIGINAL legacy119-worker math samples,
+   9cases,ALL exact_errors0/clean END/CLI0. No CPU reference substituted
+   for actual returned device output. No transfers/second job overlapped
+   ANY native parent lifetime,including CPU authentication before BEGIN.
+ 5 Fresh no-parent/clean metadata;ONLY then guardedb35/tag33/gen33 ->
+   known-best041/tag12/gen34. Restore CLI0,no force/reset/reboot. Final
+   installed hash/metadata/ALL-parent inventory independently verified.
+   Evidence copied ONLY after all parents exited and restoration finished.
+
+EACH independent actual kernel witness:
+ P100A_FFN_PEER_LIFETIME_PASS workers119 saved867448 installed867448
+ restored867448 frames11424/11424 armed119 released119 ready119 stop119
+ stopped119 held119;NEW_WORKERS_EXECUTED_ROOT_NEVER_LAUNCHED_NOT_MODEL_OR_SPEED
+EACH actual clock witness800->1350->800/restored1/uncertain0,normal firmware.
+Scoped serial /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
+bytes66341593 through66371155 contain both lifetime/clock witnesses.
+
+Completed native logs,remote /boot/home/pioneer-p100a-hot-reload-20261019-a/,
+copied into /private/tmp/pioneer-q38-ffn-peer-native-evidence.0B2zVQOj/.
+Local and remote SHA independently match:
+ ffn-peer-lifetime-synthetic-20261022-a.log
+ SHA7c1999ae1030f2b6952f2929b560c15a86307f3e69a638f39459d6a8cbf01972
+ ffn-peer-lifetime-auth119-20261022-a.log
+ SHAb50c2737acdeafa46bd13d5a4660156616990eff3ef24d691d853d0379ab720d
+Staged names:
+ tenstorrent_pci_probe-ffn-peer-lifetime-diagnostic-b35c00fd
+ pioneer-q38-peer-lifetime-debug-36222fe9
+ hot-swap-ffn-peer-af15dae2.sh
+
+AFTER restore:fresh041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen34/quiesced0/cold0/owner0/open1/guard1;ALL native
+parents absent,64 CPUs/max137034936320B. No reboot,power/SD/boot/CPU/RAM/
+network/Assistant/settings changes. Raw-Dst cache22 remains HARD BLOCKED.
+
+NEXT:canonical authenticated learned/model ownership,actual initial F32
+producer and initialized-input receipt,unified GDN/FFN mutable reservation,
+and retained native root execution/current-terminal authority. This new
+worker qualification supplies NONE of those missing grants. Full FFN also
+is NOT all-card attention/GDN/KV/norm/residual/embedding/sampling. Code32
+and this diagnostic remain separate;do not relabel held-only32 as33 or
+silently broaden Work inference.
+No whole-model speed result in this checkpoint. Last actual27B speed
+0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.

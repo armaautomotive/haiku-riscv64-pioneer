@@ -1,6 +1,29 @@
 # Native build status
 
-Latest OFFLINE checkpoint October22 2026:new FFN worker execution-lifetime
+Latest NATIVE checkpoint October22 2026:NEW119 FFN workers boot/WAIT/STOP/
+physical-terminal/hold/full restoration PASS in TWO independent P100A
+sessions. Each saved/installed/restored867448program+11424control words,
+armed/released/ready/stopped/held119. ROOT NEVER runs;no FFN/model compute
+or speed claim. Restored ORIGINAL legacy math20synthetic+18authenticated
+119-worker samples ALL exact,clean END/CLI0;both clocks800->1350->800/
+restored1/uncertain0. REAL native cookie/context/host/clock binding retains
+BOTH heap owners and ALL resources immediately on failure. Isolated tag33/
+namespace6+6280/6281 driverb35c00fd and client36222fe9 build twice EXACT;
+old CODE32 namespace5 unchanged,ordinary Work/checked cannot invoke33.
+Wrong-tag12 refusal BEFORE BEGIN verified natively. New updateraf15dae2
+explicitly pins041/tag12<->b35/tag33;focused132+full6147 shell cases pass.
+Native hook/retention33cases,414before-SDK gates,actual routing,
+11namespaces,15tagvariants x93cases,actual-client CLOSE-ONLY failures pass.
+No transfers/second job during ANY native parent lifetime. Guarded restore
+completed:EXACT041/tag12/gen34/idle/cold0/owner0/open1/guard1,no native
+parents,64 CPUs/max137034936320B. No reboot,power/SD/Assistant/settings
+changes. NEXT canonical model/initialized initial-producer ownership,
+unified GDN/FFN mutable/native full-root execution/current-terminal scope.
+Worker lifetime is NOT those missing grants or an all-card decoder.
+Last actual27B0.207893161tok/s unchanged,20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-peer-lifetime-native-20261022.txt.
+
+Previous OFFLINE checkpoint October22 2026:new FFN worker execution-lifetime
 controller passes2positive/226faults and ALL119 ACTUAL QFP2 instruction
 workers at THREE observation interleavings1/17/64. ALL staged/armed before
 release,current WAIT and ALL119 terminal proofs BEFORE first hold,then

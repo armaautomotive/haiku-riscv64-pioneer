@@ -16,7 +16,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-ffn-native-routing-') as tempor
     include = base / 'actual-native-routing.inc'
     include.write_text(text.split(begin, 1)[1].split(end, 1)[0])
     cxx = os.environ.get('CXX', 'c++')
-    for mode, flags in [('ordinary', []), ('code', ['-DPIONEER_Q38_FFN_CODE_DIAGNOSTIC=1'])]:
+    for mode, flags in [('ordinary', []), ('code', ['-DPIONEER_Q38_FFN_CODE_DIAGNOSTIC=1']),
+                        ('peer', ['-DPIONEER_Q38_FFN_CODE_DIAGNOSTIC=1', '-DPIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC=1'])]:
         binary = base / mode
         subprocess.run([cxx, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined',
                         '-DPIONEER_FFN_NATIVE_ROUTING_INCLUDE="' + str(include) + '"', *flags,
@@ -35,3 +36,18 @@ with tempfile.TemporaryDirectory(prefix='pioneer-ffn-native-routing-') as tempor
             assert r.returncode != 0 and 'Held-only FFN code qualification has its own exact isolated protocol role' in r.stderr
             cases += 1
     print(f'PASS {cases} actual protocol malformed/mixed-role compile refusals;NO_NATIVE_ACCESS')
+    cases = 0
+    for suffix in ['DIAGNOSTIC', 'REFERENCE_CLIENT']:
+        role = 'PIONEER_Q38_FFN_PEER_LIFETIME_' + suffix
+        parent = 'PIONEER_Q38_FFN_CODE_' + suffix
+        other = 'PIONEER_Q38_FFN_PEER_LIFETIME_' + ('REFERENCE_CLIENT' if suffix == 'DIAGNOSTIC' else 'DIAGNOSTIC')
+        variants = [[f'-D{role}=1'], [f'-D{role}=1', f'-D{parent}=1', f'-D{other}=1']]
+        variants += [[f'-D{role}={bad}', f'-D{parent}=1'] for bad in ['0', '2', '-1']]
+        variants += [[f'-D{role}=1', f'-D{parent}=1', f'-D{mixed}=1'] for mixed in [
+            'PIONEER_Q38_PEER_PHASE_QUALIFICATION', 'PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT',
+            'PIONEER_Q38_NATIVE_Q8_LAYOUT', 'PIONEER_Q38_NATIVE_Q8_QUALIFICATION', 'PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT']]
+        for flags in variants:
+            r = subprocess.run([cxx, '-std=c++17', '-fsyntax-only', *flags, '-x', 'c++', '-'], input=source, capture_output=True, text=True)
+            assert r.returncode != 0
+            cases += 1
+    print(f'PASS {cases} new-worker missing/malformed/mixed protocol compile refusals;NO_NATIVE_ACCESS')

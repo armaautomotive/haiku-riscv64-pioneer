@@ -40,6 +40,7 @@ def check(mode, fault=None):
         payloads['hash_sentinel_poll_qualification'] = ('test-' + values['hash_sentinel_poll_qualification']).encode()
         payloads['hash_graph_csr_diagnostic'] = ('test-' + values['hash_graph_csr_diagnostic']).encode()
         payloads['hash_ffn_code_diagnostic'] = ('test-' + values['hash_ffn_code_diagnostic']).encode()
+        payloads['hash_ffn_peer_lifetime_diagnostic'] = ('test-' + values['hash_ffn_peer_lifetime_diagnostic']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -131,6 +132,8 @@ def check(mode, fault=None):
             '--restore-graph-csr-diagnostic': ('hash_graph_csr_diagnostic', 'hash_scale_reuse_qualification', 'tag_graph_csr_diagnostic'),
             '--apply-ffn-code-diagnostic': ('hash_scale_reuse_qualification', 'hash_ffn_code_diagnostic', 'tag_scale_reuse_qualification'),
             '--restore-ffn-code-diagnostic': ('hash_ffn_code_diagnostic', 'hash_scale_reuse_qualification', 'tag_ffn_code_diagnostic'),
+            '--apply-ffn-peer-lifetime-diagnostic': ('hash_scale_reuse_qualification', 'hash_ffn_peer_lifetime_diagnostic', 'tag_scale_reuse_qualification'),
+            '--restore-ffn-peer-lifetime-diagnostic': ('hash_ffn_peer_lifetime_diagnostic', 'hash_scale_reuse_qualification', 'tag_ffn_peer_lifetime_diagnostic'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -208,6 +211,7 @@ def check(mode, fault=None):
         put('candidate_sentinel_poll_qualification', payloads['hash_sentinel_poll_qualification'])
         put('candidate_graph_csr_diagnostic', payloads['hash_graph_csr_diagnostic'])
         put('candidate_ffn_code_diagnostic', payloads['hash_ffn_code_diagnostic'])
+        put('candidate_ffn_peer_lifetime_diagnostic', payloads['hash_ffn_peer_lifetime_diagnostic'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -289,6 +293,7 @@ def check(mode, fault=None):
             'owner-underscore': '/boot/home/pioneer_q38_client',
             'owner-csr': '/boot/home/pioneer-p100a-hot-reload-20261019-a/graph-csr-debug-b4eef9d3',
             'owner-ffn-code': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-ffn-code-debug-test',
+            'owner-ffn-peer-lifetime': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-peer-lifetime-debug-36222fe9',
         }
         if fault in owner_faults:
             teams.append('999 ' + owner_faults[fault])
@@ -352,7 +357,7 @@ if __name__ == '__main__':
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
     parents = ['owner', 'owner-assistant', 'owner-bare', 'owner-truncated', 'owner-qwen',
                'owner-llama', 'owner-tt', 'owner-underscore', 'owner-late', 'ps-error',
-               'ps-empty', 'ps-header-only', 'ps-no-header', 'ps-duplicate-header', 'ps-malformed', 'owner-csr', 'owner-ffn-code']
+               'ps-empty', 'ps-header-only', 'ps-no-header', 'ps-duplicate-header', 'ps-malformed', 'owner-csr', 'owner-ffn-code', 'owner-ffn-peer-lifetime']
     modes = ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span', '--apply-work-fast-span', '--restore-work-fast-span', '--apply-work-span-code-reuse', '--restore-work-span-code-reuse', '--apply-work-int-sfpu', '--restore-work-int-sfpu', '--apply-work-pipelined', '--restore-work-pipelined', '--apply-work-static-vector', '--restore-work-static-vector', '--apply-work-cached-affine', '--restore-work-cached-affine', '--apply-work-replay-operand', '--restore-work-replay-operand', '--apply-work-dot', '--restore-work-dot', '--apply-work-output-dma', '--restore-work-output-dma', '--apply-work-queued-entry', '--restore-work-queued-entry', '--apply-local-delta', '--restore-local-delta', '--apply-local-delta-terminal', '--restore-local-delta-terminal', '--apply-current-profile', '--restore-current-profile']
     modes += ['--apply-sparse-profile', '--restore-sparse-profile', '--apply-sparse-export', '--restore-sparse-export']
     modes += ['--apply-normal-clock', '--restore-normal-clock']
@@ -377,6 +382,7 @@ if __name__ == '__main__':
     modes += ['--apply-sentinel-poll-qualification', '--restore-sentinel-poll-qualification']
     modes += ['--apply-graph-csr-diagnostic', '--restore-graph-csr-diagnostic']
     modes += ['--apply-ffn-code-diagnostic', '--restore-ffn-code-diagnostic']
+    modes += ['--apply-ffn-peer-lifetime-diagnostic', '--restore-ffn-peer-lifetime-diagnostic']
     modes += ['--apply-host-phase-diagnostic', '--restore-host-phase-diagnostic']
     modes += ['--apply-batch4-fetch-qualification', '--restore-batch4-fetch-qualification']
     modes += ['--apply-batch-raw-qualification', '--restore-batch-raw-qualification']
@@ -534,6 +540,10 @@ if __name__ == '__main__':
         elif mode == '--apply-ffn-code-diagnostic':
             candidate = ['candidate_ffn_code_diagnostic']
         elif mode == '--restore-ffn-code-diagnostic':
+            candidate = ['candidate_scale_reuse_qualification']
+        elif mode == '--apply-ffn-peer-lifetime-diagnostic':
+            candidate = ['candidate_ffn_peer_lifetime_diagnostic']
+        elif mode == '--restore-ffn-peer-lifetime-diagnostic':
             candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--apply-host-phase-diagnostic':
             candidate = ['candidate_host_phase_diagnostic']

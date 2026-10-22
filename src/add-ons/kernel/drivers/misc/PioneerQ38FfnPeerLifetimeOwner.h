@@ -7,8 +7,8 @@
 // PRIVATE worker execution-lifetime qualifier,NOT full FFN/model compute.
 // The actual native cookie/global call lock must exclude EVERY other writer
 // throughout this ONE call. Retain BOTH heap owners and the whole native
-// context/map/host/clock/cold latch on any failure. No native route selects
-// this helper yet;IO test callbacks are NOT ownership or launch authority.
+// context/map/host/clock/cold latch on any failure. Only the separately gated
+// native diagnostic may select it;IO mocks are NOT launch/scope authority.
 // Root NEVER runs. No weights,input,GDDR,host DMA or NoC packet is touched.
 // ALL119 NEW workers boot,receive ONLY internally constructed STOP(seq1),
 // prove current physical terminals BEFORE ANY hold,then restore ALL saved
