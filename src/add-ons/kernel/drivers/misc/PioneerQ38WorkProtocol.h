@@ -16,6 +16,11 @@
 // owned output ranges,NO user physical addresses/code/nonce authority.
 #define TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x60f2)
 #define TT_PCI_PROBE_Q38_LEGACY_WORK_RUN (B_DEVICE_OP_CODES_END + 0x60f3)
+#if defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT)
+#if (defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) && (PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC))) || (defined(PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT) && (PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT != 1 || !defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT))) || (defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) && defined(PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT)) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
+#error ROOT lifetime qualification requires its exact isolated diagnostic OR reference role,never worker-only
+#endif
+#endif
 #if defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 #if (defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) && (PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC))) || (defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT) && (PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT != 1 || !defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT))) || (defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) && defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT))
 #error Worker lifetime qualification requires its exact isolated diagnostic OR reference role
@@ -27,7 +32,12 @@
 #endif
 // Ordinary Work/model/Assistant operations cannot accidentally invoke the
 // never-launched code-footprint diagnostic or treat it as a promoted target.
-#if defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT)
+// ROOT now executes NoC traffic;old namespace5/6 clients NEVER could.
+#define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x6290)
+#define TT_PCI_PROBE_Q38_WORK_RUN (B_DEVICE_OP_CODES_END + 0x6291)
+#define TT_Q38_WORK_SUPPORT_VERSION 7
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 // New workers EXECUTE boot+STOP;the older code-only contract NEVER did.
 // Do not relabel namespace5 or permit its old clients to invoke this role.
 #define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x6280)

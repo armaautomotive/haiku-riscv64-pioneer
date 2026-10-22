@@ -27,7 +27,7 @@ int main(){unsigned tested=0;
   tested++;
  }
  for(unsigned op:{0x7270U,0x7271U}){calls=0;int result=ActualRoute(op);
-#if defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) && !defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#if defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) && !defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) && !defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC)
   assert(result==42 && calls==1 && lastOperation==op && TT_Q38_WORK_SUPPORT_VERSION==5);
 #else
   assert(result==NotHandled && !calls);
@@ -37,6 +37,14 @@ int main(){unsigned tested=0;
  for(unsigned op:{0x7280U,0x7281U}){calls=0;int result=ActualRoute(op);
 #ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
   assert(result==42 && calls==1 && lastOperation==op && TT_Q38_WORK_SUPPORT_VERSION==6);
+#else
+  assert(result==NotHandled && !calls);
+#endif
+  tested++;
+ }
+ for(unsigned op:{0x7290U,0x7291U}){calls=0;int result=ActualRoute(op);
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+  assert(result==42 && calls==1 && lastOperation==op && TT_Q38_WORK_SUPPORT_VERSION==7);
 #else
   assert(result==NotHandled && !calls);
 #endif

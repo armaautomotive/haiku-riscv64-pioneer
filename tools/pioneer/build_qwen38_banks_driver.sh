@@ -3,7 +3,12 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
-[ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
+case "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" in
+ 0) [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] && [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010034 ] || exit 2;;
+ 1) [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}:${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}:${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" = 1:1:2026102200010034:0 ] || exit 2;;
+ *) exit 2;;
+esac
 [ "${PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" in
@@ -16,7 +21,8 @@ case "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}:${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-
  0:0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010031 ] && [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010032 ] || exit 2;;
  1:0) fixed_diagnostic_tag=2026102200010031;;
  0:1) fixed_diagnostic_tag=2026102200010032
-      [ "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" != 1 ] || fixed_diagnostic_tag=2026102200010033;;
+      [ "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" != 1 ] || fixed_diagnostic_tag=2026102200010033
+      [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" != 1 ] || fixed_diagnostic_tag=2026102200010034;;
  *) exit 2;;
 esac
 if [ -n "${fixed_diagnostic_tag:-}" ]; then
@@ -501,6 +507,9 @@ if [ "${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}" = 1 ]; then
 fi
 if [ "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC=1"
+fi
+if [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC=1 -DPIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1"
 fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \

@@ -29,7 +29,10 @@ static unsigned tagFault=0;
 #ifdef PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT
 static bool supportFault=false;
 static unsigned supportFaultVersion=2;
-#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT
+static_assert(TT_Q38_WORK_SUPPORT_VERSION==7 && TT_PCI_PROBE_Q38_WORK_SUPPORT==B_DEVICE_OP_CODES_END+0x6290
+ && TT_PCI_PROBE_Q38_WORK_RUN==B_DEVICE_OP_CODES_END+0x6291,"tag34 debug client ONLY uses private namespace7");
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 static_assert(TT_Q38_WORK_SUPPORT_VERSION==6 && TT_PCI_PROBE_Q38_WORK_SUPPORT==B_DEVICE_OP_CODES_END+0x6280
  && TT_PCI_PROBE_Q38_WORK_RUN==B_DEVICE_OP_CODES_END+0x6281,"tag33 debug client ONLY uses private namespace6");
 #else
@@ -49,7 +52,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 	if(op==TT_PCI_PROBE_RELOAD_STATUS){
 		assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
 		r={};r.version=1;r.driver=55;r.guard_version=1;
-#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT
+		r.build_tag=UINT64_C(0x2026102200010034);
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102200010033);
 #elif defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102200010032);
@@ -71,7 +76,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 			switch(tagFault){case 1:r.build_tag^=1;break;case 2:r.generation=0;break;
 			case 3:r.quiesced=1;break;case 4:r.cold=1;break;case 5:r.active_owner=1;break;
 			case 6:r.open_count=2;break;case 7:r.guard_version=2;break;case 8:r.version=2;break;
-			case 9:r.driver=54;break;case 10:errno=EIO;return -1;default:assert(false);}
+			case 9:r.driver=54;break;case 10:errno=EIO;return -1;
+			case 11:r.build_tag=UINT64_C(0x2026102200010032);break;
+			case 12:r.build_tag=UINT64_C(0x2026102200010033);break;default:assert(false);}
 		}
 #endif
 		return 0;
@@ -187,18 +194,28 @@ int main()
 	numeric->peers=2; expected.pop_back(); assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	assert(opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
 #if defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT)
-	for(tagFault=1;tagFault<=10;tagFault++){
+	const unsigned tagFailures=
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT
+	12;
+#else
+	10;
+#endif
+	for(tagFault=1;tagFault<=tagFailures;tagFault++){
 		opens=closes=begins=runs=uploads=ends=0;failed=false;
 		char name[]="csr",arg[]="--synthetic";char* argv[]={name,arg};
 		assert(DispatchClientMain(2,argv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);
 	}
 #ifdef PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT
-	puts("PASS actual isolated FFN client:10 metadata/query failures CLOSE ONLY before ANY support/BEGIN/upload/RUN/END/card IO");
+	printf("PASS actual isolated FFN client:%u metadata/query failures CLOSE ONLY before ANY support/BEGIN/upload/RUN/END/card IO\n",tagFailures);
 	tagFault=0;supportFault=true;opens=closes=begins=runs=uploads=ends=0;failed=false;
 	char nsName[]="code",nsArg[]="--synthetic";char* nsArgv[]={nsName,nsArg};
 	assert(DispatchClientMain(2,nsArgv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);
 	puts("PASS actual isolated FFN client:ordinary support version2 refused before BEGIN;NO namespace fallback or subsequent ioctl");
-#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT
+	for(unsigned oldVersion:{5U,6U}){supportFaultVersion=oldVersion;opens=closes=begins=runs=uploads=ends=0;failed=false;
+	 assert(DispatchClientMain(2,nsArgv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);}
+	puts("PASS actual tag34 client:OLD code-only version5 and worker-only version6 refused before BEGIN;NO fallback or subsequent ioctl");
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 	supportFaultVersion=5;opens=closes=begins=runs=uploads=ends=0;failed=false;
 	assert(DispatchClientMain(2,nsArgv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);
 	puts("PASS actual tag33 client:OLD code-only support version5 refused before BEGIN;NO fallback or subsequent ioctl");

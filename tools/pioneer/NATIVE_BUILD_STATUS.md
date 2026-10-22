@@ -1,6 +1,26 @@
 # Native build status
 
-Latest OFFLINE checkpoint October22 2026:separate HEAP QFG2 ROOT+ALL119
+Latest PRE-DEPLOYMENT checkpoint October22 2026:isolated tag34/namespace7
+native ROOT+ALL119 STOP-only hook,REAL retained cookie/context/clock/ALLhosts
+and explicit END gate implemented.41actual hook/Retain/END-gate cases pass;
+original parent CLOSE/resident END test caught/fixed NEW status writes not
+marking the outer root saved-L1 dirty. ALL120outer snapshots/root status now
+restore even with initially CLEAN resident-L1. Controller193faults+27inert
+refusals and actual ROOT+119 instruction3schedules/3counter-fault rerun pass.
+433before-SDK gates,actual routing4x16/compile refusals,13namespace modes,
+16tagsx93metadata checks,11actual client failure modes all pass. New updater
+exact routes100cases pass;BROAD all-route fake-filesystem regression still
+running handle32655,NOT a GPU/native job. Final driveraa6730ef/clientc33b9c98
+build twice EXACT,kernel max3136B/controller880B. Old33b35/guardd1ce/control2df
+UNCHANGED. THREE new staging artifacts copied+remote hashes exact;installed
+041/tag12/gen34 UNCHANGED. New native client safely rejected oldtag12 BEFORE
+BEGIN/card reads. Native ROOT execution/clean END/legacy math STILL PENDING.
+Fresh no native parents/idle/cold0/owner0/open1/guard1,64CPUs/full RAM.
+NO native GPU jobs/reload/reboot/power/SD/Assistant/boot/CPU/RAM/network changes.
+Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-root-lifetime-native-offline-20261022.txt.
+
+Previous OFFLINE checkpoint October22 2026:separate HEAP QFG2 ROOT+ALL119
 execution-lifetime controller passes2positive/193faults/27inert result-field
 refusals. SAME controller +actual INSTALLED ROOT+ALL119 instruction machines
 at THREE schedules4096/64,257/17,8192/17 ALL pass. Actual root+ALL119 current

@@ -5,6 +5,18 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+#if PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010034ULL || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
+#error New ROOT execution lifetime requires separate exact-tag34 native STOP-only diagnostic ONLY
+#endif
+#include "PioneerQ38FfnRootLifetimeOwner.h"
+#endif
+#if defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) && !defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC)
+#error QFG2 input-root code requires the isolated native ROOT lifetime diagnostic,not model/Work promotion
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010034ULL && !defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC)
+#error Reserved tag34 must identify ONLY the new ROOT execution-lifetime diagnostic
+#endif
 #ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
 #if PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010033ULL || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 #error New worker execution lifetime requires separate exact-tag33 native diagnostic ONLY
@@ -15,7 +27,7 @@
 #error Reserved tag33 must identify ONLY the new worker execution-lifetime diagnostic
 #endif
 #ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
-#if PIONEER_Q38_FFN_CODE_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010032ULL && !(defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010033ULL)) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(PIONEER_Q38_GDN_MUTABLE_STATE) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if PIONEER_Q38_FFN_CODE_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010032ULL && !(defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010033ULL) && !(defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010034ULL)) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(PIONEER_Q38_GDN_MUTABLE_STATE) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Held-only FFN code ownership requires separate exact-tag32 legacy direct/sentinel context ONLY
 #endif
 #include "PioneerQ38FfnGraphCodeOwner.h"
@@ -1884,7 +1896,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		q38FfnCodeMapAttempted=true;
 		void* view=NULL;
 		q38FfnCodeArea=map_physical_memory(
-#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+			"P100A owned ROOT and worker-lifetime prefix",
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 			"P100A owned FFN worker-lifetime prefix",
 #else
 			"P100A owned complete FFN prefix (never-launched diagnostic)",
@@ -2404,6 +2418,9 @@ struct PioneerStoreContext {
 	PioneerQ38DispatchLease* q38Dispatch=NULL;
 #ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
 	PioneerQ38FfnGraphCodeOwner* q38FfnCode=NULL;
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+	PioneerQ38FfnRootLifetimeOwner* q38FfnRootLifetime=NULL;
+#endif
 #ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
 	PioneerQ38FfnPeerLifetimeOwner* q38FfnPeerLifetime=NULL;
 #endif
@@ -2491,6 +2508,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+	#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+		delete q38FfnRootLifetime; // borrows code owner;NEVER owns/deletes it
+	#endif
 	#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
 		delete q38FfnPeerLifetime; // borrows code owner;NEVER owns/deletes it
 	#endif
@@ -2526,6 +2546,9 @@ struct PioneerStoreContext {
 		if (q38Span && (q38Span->unsafe || q38Span->running)) return true;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+		if (q38FfnRootLifetime && q38FfnRootLifetime->Unsafe()) return true;
+#endif
 #ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
 		if (q38FfnPeerLifetime && q38FfnPeerLifetime->Unsafe()) return true;
 #endif
@@ -2664,6 +2687,17 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 	}
 #endif
 	if (!c.bankStorageOnly) return true;
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+	// PIONEER_Q38_FFN_ROOT_LIFETIME_END_GATE_BEGIN
+	// A published ROOT heap can NEVER be implicitly accepted by BANK_END.
+	// Check CPU ownership BEFORE delta/STOP/ARC/restore/release paths.
+	if ((c.q38FfnRootLifetime || c.q38FfnCode) && (!c.q38FfnRootLifetime || !c.q38FfnCode
+		|| !c.q38FfnRootLifetime->Closed() || c.q38FfnRootLifetime->Unsafe()
+		|| !c.q38FfnCode->Closed() || c.q38FfnCode->Unsafe())) {
+		clean=false; RetainQ38DispatchOwner(c,result); return false;
+	}
+	// PIONEER_Q38_FFN_ROOT_LIFETIME_END_GATE_END
+#endif
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 	if (c.q38ResidentGdnRoot && (!c.q38ResidentGdnRoot->closed || c.q38ResidentGdnRoot->unsafe
 		|| c.q38ResidentGdnRoot->running || c.q38ResidentGdnRoot->awaiting || !c.q38ResidentGdnRoot->saved
@@ -4041,7 +4075,36 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 	}
 	if (!ready) return PioneerQ38DispatchQuarantine(lease,c.banks);
 #ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
-#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
+	// PIONEER_Q38_FFN_ROOT_LIFETIME_NATIVE_OWNER_BEGIN
+	// Actual retained native cookie/global-call-lock handoff. NOT model or
+	// initial-input permission. ALL120 are prepared/held;the parent owns the
+	// complete L1 snapshot,normal busy clock and ALL host/maps until END.
+	auto retainRoot=[&](){PioneerQ38DispatchQuarantine(lease,c.banks);tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);return false;};
+	const auto& rootClock=c.q38Clock.Snapshot(); // CPU snapshot ONLY
+	if (sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
+		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=&c || !sBankStorageOnly
+		|| !c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || c.q38Dispatch!=&lease || !c.initialized
+		|| c.Unsafe() || c.host.state!=TT_HOST_PAGE_READY || c.host.released
+		|| !c.bulkHost.allocated || !c.bulkHost.ready || c.bulkHost.pending || c.bulkHost.quarantined || c.bulkHost.released
+		|| !c.wideHost.allocated || !c.wideHost.ready || c.wideHost.pending || c.wideHost.quarantined || c.wideHost.released
+		|| !c.q38Clock.RequiresExplicitEnd() || rootClock.state!=TT_ARC_CLOCK_BUSY_VERIFIED
+		|| !rootClock.busy_requested || !rootClock.busy_acknowledged || rootClock.restored) return retainRoot();
+	if (c.q38FfnCode || c.q38FfnRootLifetime) return retainRoot();
+	// Publish BOTH heaps on the context BEFORE any adapter/device access.
+	c.q38FfnCode=new(std::nothrow) PioneerQ38FfnGraphCodeOwner;
+	c.q38FfnRootLifetime=new(std::nothrow) PioneerQ38FfnRootLifetimeOwner;
+	PioneerQ38FfnRootLifetimeResult rootResult;
+	bool rootReady=c.q38FfnCode && c.q38FfnRootLifetime && c.io.SelectRuntimeCore(0) && c.io.MapFfnGraphCodePrefix()
+		&& c.q38FfnRootLifetime->Qualify(c.io,dram,c.banks,lease,*c.q38FfnCode,rootResult);
+	if (!rootReady) {
+		retainRoot(); // MEMORY ONLY:clock+ALL hosts+cold latch NOW,NO rollback
+		dprintf("P100A_FFN_ROOT_LIFETIME_FAIL phase%u worker%u word%u saved%u installed%u restored%u frames%u/%u meta%u/%u stack%u/%u ready%u root%u/%u stopped%u held%u;CLOSE_ONLY_NO_RETRY_RESET_RESTORE\n",rootResult.phase,rootResult.worker,rootResult.word,rootResult.savedWords,rootResult.installedWords,rootResult.restoredWords,rootResult.savedFrameWords,rootResult.restoredFrameWords,rootResult.savedRootWords,rootResult.restoredRootWords,rootResult.savedStackWords,rootResult.restoredStackWords,rootResult.ready,rootResult.rootStarted,rootResult.rootCompleted,rootResult.stopped,rootResult.held);
+		return false;
+	}
+	dprintf("P100A_FFN_ROOT_LIFETIME_PASS root1 workers119 saved%u installed%u restored%u frames%u/%u meta%u/%u stack%u/%u ready%u root%u/%u stopped%u held%u rootHeld%u read%u write%u;NEW_ROOT_AND_WORKERS_EXECUTED_STOP_ONLY_NOT_MODEL_OR_SPEED\n",rootResult.savedWords,rootResult.installedWords,rootResult.restoredWords,rootResult.savedFrameWords,rootResult.restoredFrameWords,rootResult.savedRootWords,rootResult.restoredRootWords,rootResult.savedStackWords,rootResult.restoredStackWords,rootResult.ready,rootResult.rootStarted,rootResult.rootCompleted,rootResult.stopped,rootResult.held,rootResult.rootHeld,rootResult.rootReads,rootResult.rootWrites);
+	// PIONEER_Q38_FFN_ROOT_LIFETIME_NATIVE_OWNER_END
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 	// PIONEER_Q38_FFN_PEER_LIFETIME_NATIVE_OWNER_BEGIN
 	// Actual existing native cookie/global-call-lock handoff,not an IO
 	// boolean. ALL120 prepared/held,normal firmware busy clock owned,ALL

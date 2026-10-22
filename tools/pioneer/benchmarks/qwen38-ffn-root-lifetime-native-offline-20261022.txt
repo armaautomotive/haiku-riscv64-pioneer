@@ -1,0 +1,92 @@
+Isolated native QFG2 ROOT+ALL119 STOP-only lifetime route,October22 2026.
+PRE-DEPLOYMENT checkpoint;NO native launch/qualification or speed claim yet.
+Last whole27B0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
+
+Exact separate tag2026102200010034,namespace7,ops+6290/+6291. New ROOT heap
+borrows existing complete code heap;both publish on the REAL retained native
+context BEFORE ANY device/adapter access. Actual cookie/global-call-lock/
+bank owner/initialized ledger/normal-clock busy ack/ALL host owners gate the
+hook. Any allocation/map/controller failure immediately calls REAL memory-
+only retention:clock,ALL hosts/maps/cohort/banks/cold latch. NO later device
+read,STOP/hold/restore/END/reset/retry/rollback/free. Explicit END refuses
+either missing/open/unsafe published owner BEFORE any cleanup path.
+
+Actual parent-CLOSE test found and fixed a real missing obligation:NEW root
+status writes are in the OUTER resident-L1 snapshot. Mark root store dirty/
+not-restored BEFORE first status write,even if no earlier upload dirtied it.
+Actual new controller->original parent CLOSE->root resident lease END now
+proves ALL120 outer panel/boot snapshots AND original root status restored.
+Root counters remain advanced by observed traffic,NEVER blindly restored.
+The fixture endpoints are simulated;NOT native host/clock/MMIO-END evidence.
+
+CLI0 tests of FINAL source (ASan/UBSan where applicable):
+ -Actual kernel hook+actual Retain+actual END gate,41cases:real cookie,
+  normal clock+ALL host CPU gates,allocation/map/checked program reads in
+  phases1/2/5/6/7/8/9/10,missing/open/unsafe END owners;no later IO,all
+  resource owners retained;legacy bootstrap after exact restoration.
+  /private/tmp/pioneer-q38-root-native-owner-20261022-d.log
+  SHA72ee669888284f85d0104f6155ed56e2ba5c634d087a1071912286dfd41d8a5f
+ -Actual parent CLOSE/resident END,initial root resident-L1 CLEAN:
+  /private/tmp/pioneer-q38-root-native-parent-close-20261022-b.log
+  SHA5f98b8995429cbf1d82a1e509ead043d95953d3204396169ebb5c089409cf5ea
+ -Controller2positive/193faults/27inert result-field refusals,kernel880B:
+  /private/tmp/pioneer-q38-root-native-controller-20261022-a.log
+  SHAd622cab3223e1761b0a99d670e1eb1b29505883f17b5b96b55000c1a945c1932
+ -SAME controller+ACTUAL installed QFG2ROOT+ALL119 QFP2 instructions,
+  three schedules and3actual counter faults;all exact restoration/current
+  physical terminals BEFORE first hold;max device stack1440B. Simulated
+  endpoints only,NO model/GDDR/CPU-reference work or native timing claim.
+  /private/tmp/pioneer-q38-root-native-actual-20261022-a.log
+  SHAd6278fae7c4094732701fd196207bfa86540512b167594267a551f6f0d86e8b9
+ -433 BEFORE-SDK missing/malformed/mixed driver/client/production refusals,
+  two positive complete-role missing-SDK controls;old peer414/input58 pass.
+  /private/tmp/pioneer-q38-root-native-gates-20261022-a.log
+  SHA1ce74cc55363aae5b7e5d1aadef624dba46b0847c8172a69701494ff16d7ad66
+ -Actual routing4modes x16operations,18old/20peer/24ROOT compile refusals;
+  thirteen namespace modes,sixteen exact tags x93CPU metadata cases pass.
+ -Actual full client failure tests:tag34 rejects12metadata/query failures
+  BEFORE support/BEGIN/upload/RUN,including actual oldtag32/33;support
+  versions2/5/6 refuse BEFORE BEGIN;runtime failure HOST copy only then
+  CLOSE,NO further ioctl/END/retry/fallback. Other10client modes pass.
+  /private/tmp/pioneer-q38-root-native-client-failures-20261022-a.log
+  SHA2131f5fe8727654c44be4705178bca8a1352b8a0bc182986c835588d49f64fc6
+ -Actual updater apply/restore new exact route100cases CLI0,including
+  hash/symlink/owner/global parent/failure checks;NO automatic rollback.
+  /private/tmp/pioneer-q38-root-native-updater-focused-20261022-b.log
+  SHA16ecdfc5f4ed6ccb4aa1b7261ed43f72fa0ee38e735c20f7cf84ef26523753dc
+  BROAD ALL-ROUTES updater regression still running locally at this
+  pre-deployment checkpoint;handle32655,log
+  /private/tmp/pioneer-q38-root-native-updater-full-20261022-a.log.
+  It is simulated filesystem/shell work,not any Pioneer/GPU process.
+
+Independent final native builds byte-identical:
+ /private/tmp/pioneer-q38-root-native-build.9qONqWig/driver-parent-fix
+ /private/tmp/pioneer-q38-root-native-build.9qONqWig/driver-parent-repeat
+ driver aa6730ef8157e99e39912acbdef7dea6010eaa5d5d44763b3d88b9fee7e5b577
+ max native kernel frame3136B(ProbeControl),new controller witness880B.
+ Client+repeat exact c33b9c98317b7016a2200814c07eb567f3ee700b5669b55ebaa796219d6202fd.
+ Old tag33 control still b35c00fdbdd03f4870b419a1ed4548c12d164671a2209cbd228a4d873dd414ff.
+ Guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ and default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc unchanged.
+ New updater pins041/tag12<->aa6730ef/tag34 exactly:
+ c3b095899f7e35f6c5d879d2cfc7012e8acaef032755416a1b3b89f91dbe336d.
+
+Fresh native ALL-parent inventory empty,CPU-only reload metadata
+041/tag12/gen34/idle/quiesced0/cold0/owner0/open1/guard1,64CPUs/full
+max137034936320B. Only THREE new unused staging filenames copied;ALL remote
+hashes exact. Installed driver UNCHANGED. Actual new client invoked ONCE
+against oldtag12:CLI1 exact STOP_TAG34_NAMESPACE7_BEFORE_BEGIN,NO card read
+or GPU work. Native STOP execution,clean END and legacy math qualification
+still PENDING. NO reload/reboot/power/SD/Assistant/boot/CPU/RAM/network/
+settings changes. Read-only SDK;dirty llama.cpp/unrelated FlashNext untouched.
+
+NEXT:controlled native ROOT+ALL119 STOP qualification,then original legacy
+math/known-clean END in that same session. Only if known-clean may we run
+the authenticated-row qualification and restore041 via guarded handshake.
+On ANY UNKNOWN:CPU-retained/passive log evidence ONLY,no END/further card
+read/retry/reset/hot rollback;physical recovery required. Native STOP-only
+success is NOT model/input/fullFFN permission:bind actual authenticated
+source/canonical joint mutable owner/initialized ledger/initialF32 producer
+next,then native fullFFN/actual inference. Remaining all-card attention/GDN/
+KV/norm/residual/embedding/sampling still owed. Work and CPU-validation debug
+stay separate;raw-Dst cache22 HARD BLOCKED.

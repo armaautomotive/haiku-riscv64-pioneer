@@ -7,7 +7,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 int main() {
 	static_assert(TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT==0x70f2 && TT_PCI_PROBE_Q38_LEGACY_WORK_RUN==0x70f3,"legacy operations stable");
-#ifdef PIONEER_Q38_EXPECT_PEER_LIFETIME_NAMESPACE
+#ifdef PIONEER_Q38_EXPECT_ROOT_LIFETIME_NAMESPACE
+	static_assert(TT_Q38_WORK_SUPPORT_VERSION==7 && TT_PCI_PROBE_Q38_WORK_SUPPORT==0x7290 && TT_PCI_PROBE_Q38_WORK_RUN==0x7291,"new ROOT execution namespace bound");
+#elif defined(PIONEER_Q38_EXPECT_PEER_LIFETIME_NAMESPACE)
 	static_assert(TT_Q38_WORK_SUPPORT_VERSION==6 && TT_PCI_PROBE_Q38_WORK_SUPPORT==0x7280 && TT_PCI_PROBE_Q38_WORK_RUN==0x7281,"new worker execution namespace bound");
 #elif defined(PIONEER_Q38_EXPECT_CODE_NAMESPACE)
 	static_assert(TT_Q38_WORK_SUPPORT_VERSION==5 && TT_PCI_PROBE_Q38_WORK_SUPPORT==0x7270 && TT_PCI_PROBE_Q38_WORK_RUN==0x7271,"held-only code namespace bound");

@@ -15,7 +15,8 @@
 // Root executes real NoC traffic:its counters are NEVER blindly restored.
 // On ANY uncertainty retain BOTH heaps and the whole native context;NO
 // later read/STOP/hold/restore/END/reset/retry/release. This class is NOT
-// itself a native scope grant and no native route selects it yet.
+// itself a native scope grant. ONLY isolated tag34 native STOP-only
+// qualification may select it;NO model/initial-input/production launch.
 struct PioneerQ38FfnRootLifetimeResult {
  uint32_t version=1,started=0,passed=0,unsafe=0,phase=0,worker=0,word=0;
  uint32_t savedWords=0,installedWords=0,restoredWords=0,savedFrameWords=0,restoredFrameWords=0;
@@ -240,6 +241,10 @@ public:
   for(unsigned i=0;i<2048;i++)if(io.Q38PanelRead(0x6e000+i*4)!=stack[i])return Fail(io,r);
   if(!Stage(io,TT_Q38_FFN_GRAPH_MANIFEST,manifest,TT_Q38_FFN_GRAPH_WORDS))return Fail(io,r);
   for(unsigned w=1;w<120;w++)if(!Stage(io,0x7d800+(w-1)*64,cohort->authority.source[w],16))return Fail(io,r);
+  // Runtime status is in the OUTER resident-L1 snapshot,not the code or
+  // metadata snapshots owned here. Mark it dirty BEFORE its first write;
+  // clean native END must restore it even if no earlier upload dirtied L1.
+  cohort->worker[0].Store().l1_dirty=true;cohort->worker[0].Store().l1_restored=false;
   for(unsigned i=0;i<3;i++){io.RuntimeStatusWrite(i,0);if(io.RuntimeStatusRead(i))return Fail(io,r);}
   if(!RootFrame(io,false) || !Guard(io,0) || !Image(io,0))return Fail(io,r);
   r.phase=7;running[0]=cohort->worker[0].image.running=cohort->rootRunning=true;

@@ -5,6 +5,11 @@
 #error Exact sentinel tag17 (or separately gated CPU-profile18) is independent qualification ONLY
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT
+#if PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT != 1 || !defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#error ROOT lifetime reference requires separate exact tag34/namespace7 role
+#endif
+#endif
 #ifdef PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT
 #if PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT != 1 || !defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 #error Worker lifetime reference requires separate exact tag33/namespace6 role
@@ -53,7 +58,9 @@
 static inline bool PioneerQ38SentinelDebugTag(const tt_pioneer_driver_reload& r) {
 	return r.version==1 && r.driver==55 && r.guard_version==1
 		&& r.build_tag==
-#ifdef PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT
+		UINT64_C(0x2026102200010034)
+#elif defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 		UINT64_C(0x2026102200010033)
 #elif defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT)
 		UINT64_C(0x2026102200010032)

@@ -6,7 +6,8 @@
 #include "PioneerQ38FfnInputGraphRootPrefix.h"
 #include "PioneerQ38FfnInputGraphRootGraph.h"
 // Separate QFG2 CODE DATA ONLY. The unchanged QFP2 companions share the
-// exact old pinned bytes. NO registry/native selector accepts this header.
+// exact old pinned bytes. ONLY the private tag34 STOP-only lifetime uses
+// this catalog natively;NO model/initial-input/production selector exists.
 // Same complete40KiB root/12KiB peer prefix and boot/panel footprints.
 // In particular this catalog grants NO access to new staged-input80000..
 // 85000/readback88000..8c000 or mutable metadata. A REAL retained native
