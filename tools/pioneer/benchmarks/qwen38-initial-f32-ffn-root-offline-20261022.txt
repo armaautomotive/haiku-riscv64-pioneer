@@ -104,8 +104,14 @@ Actual root+ALL119 actual worker arithmetic replay COMPLETED,CLI0:
  rerun compiled/tested that final label with unchanged functional logic:
  /private/tmp/pioneer-q38-input-root-final-label-check-20261022-a.log CLI0
  SHAb31790da5e6b9ccf1e437eeb18c084fa37f5bccecff97fd3541cd73101ada4a9
- An ADDITIONAL allQ4/bank0/natural-row arithmetic replay is running;
- that supplemental result is NOT claimed in this completed mixed-type proof.
+ ADDITIONAL allQ4/bank0/natural-row arithmetic replay ALSO COMPLETED CLI0:
+ TWO changed input/token/layer FFNs/79872rows/176producers/ALL119STOP,
+ exactFP32+independentFP64/native-byte observers. rootVM187034003,
+ peerVM2004412866,TensixInstructions4177920,maxStack5832B. Still synthetic
+ bounded nonzero weights/instruction model,NOT actual model/native speed.
+ /private/tmp/pioneer-q38-input-root-actual-q4-20261022-a.log
+ SHAa5061910e4ed2e3ed80ad2071d4ed85ce6af51d190defa245ba61026113230d3
+ Evidence pioneer-q38-ffn-graph-cooperative.81B2PikC in the same temp root.
 
 Fresh CPU-only native metadata041/tag12/gen34/idle/cold0/owner0/open1/guard1,
 installed SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,

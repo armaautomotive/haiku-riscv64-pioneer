@@ -1,6 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 // Frozen DATA and footprint tests,NOT native mapping/ownership/launch.
+#ifdef PIONEER_Q38_TEST_INPUT_GRAPH_CATALOG
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnInputGraphImages.h"
+static uint32_t Qfg1Word(unsigned w,uint32_t a){return PioneerQ38FfnGraphProgramWord(w,a);}
+#define PioneerQ38FfnGraphProgramWord PioneerQ38FfnInputGraphProgramWord
+#define PioneerQ38FfnGraphExecutableAddress PioneerQ38FfnInputGraphExecutableAddress
+#else
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphImages.h"
+#endif
 #include <cassert>
 #include <cstdio>
 #include <cstring>
@@ -34,5 +41,12 @@ int main(int argc,char** argv){assert(argc==3);unsigned words=0,refusals=0;
  }
  for(unsigned w:{120U,121U,UINT32_MAX})for(uint32_t a:{0x6000U,0x64000U,0x68000U,0x70000U,0x72000U}){
   assert(!PioneerQ38FfnGraphPrefixBytes(w) && !PioneerQ38FfnGraphProgramAddress(w,a) && !PioneerQ38FfnGraphExecutableAddress(w,a) && !PioneerQ38FfnGraphProgramImmutable(w,a) && PioneerQ38FfnGraphProgramWord(w,a)==UINT32_MAX);refusals++;}
- printf("PASS frozen QFG1+QFP2 code DATA:ALL120roles/words%u/refusals%u/actual image bytes+zero padding/complete40KiB-root12KiB-peer prefixes/excluded stack+mutable scratch;NO_NATIVE_MAPPING_LIFETIME_SELECTOR_OR_SPEED_AUTHORITY\n",words,refusals);
+#ifdef PIONEER_Q38_TEST_INPUT_GRAPH_CATALOG
+ unsigned changed=0;for(unsigned a=0x64000;a<0x74000;a+=4)if(PioneerQ38FfnGraphProgramAddress(0,a) && Qfg1Word(0,a)!=PioneerQ38FfnGraphProgramWord(0,a))changed++;
+ assert(changed);printf("QFG2 distinct root words%u;QFG1 remains separate,ALL119 companions unchanged\n",changed);
+ const char* kind="QFG2";
+#else
+ const char* kind="QFG1";
+#endif
+ printf("PASS frozen %s+QFP2 code DATA:ALL120roles/words%u/refusals%u/actual image bytes+zero padding/complete40KiB-root12KiB-peer prefixes/excluded stack+mutable scratch;NO_NATIVE_MAPPING_LIFETIME_SELECTOR_OR_SPEED_AUTHORITY\n",kind,words,refusals);
 }

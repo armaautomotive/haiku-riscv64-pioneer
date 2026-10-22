@@ -1,0 +1,84 @@
+Separate frozen QFG2 code catalog and completed allQ4 instruction replay.
+October22 2026. CODE DATA ONLY;NOT a native selector/mapping/source/
+initial-producer/lifetime/clock/host or execution/speed grant.
+
+The input-producing QFG2 source checkpoint e3377df6bb now has THREE
+separate pinned root arrays,not replacements for any QFG1/native33 data:
+ PioneerQ38FfnInputGraphRootMain.h
+ PioneerQ38FfnInputGraphRootPrefix.h
+ PioneerQ38FfnInputGraphRootGraph.h
+Actual independent builds and mixed-type arithmetic/producer tests are in
+qwen38-initial-f32-ffn-root-offline-20261022.txt. Root section pins:
+ text6884B a363fb40ba949badda8ba8c863385484bee9cd7c52e1cf0a7ef587b029abcba9
+ prefix6172B 255ff2bb850e0e30a4a0e08dd501a245eb0d021d70302e58c0b5ae014dde8740
+ graph17688B a0b2fdf23c3e5eead311e79a80989ea113dbe9fcad7c0033a281381d23bdd998
+Shared boot remains e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+ALL119 QFP2 companions remain the exact previously qualified bytes.
+
+PioneerQ38FfnInputGraphImages exposes separate WORD/executable lookups,
+never a registry/native selector. Code-address/immutable policy retains
+the existing exact40KiB root/12KiB peer prefix+boot+panel footprints;
+root stack,peer gaps,metadata,initial input80000..85000 and readback88000..
+8c000 are NOT additional permissions supplied by this catalog. Padding
+inside the saved code footprint is exactly zero. Actual code-owner checked
+reads still must distinguish failed mappings from valid UINT32_MAX data.
+No native owner selects or launches this family yet.
+
+New generator verifies ALL6 root+companion sections and BOTH boots BEFORE
+emitting ANY patch;only three fixed NEW root filenames are legal outputs.
+It never writes/builds/opens a device,replaces QFG1 or duplicates/relabels
+peer data. Verification remains explicit under Python-O. Generated patches
+were installed with apply_patch,not shell/Python file-write workarounds.
+
+ASan/UBSan tests +read-only RISC-V kernel compile,ALL CLI0:
+ -ALL120roles/867328 non-boot words/3701951 refusals,each boot separately
+  exact;actual image bytes/zero padding/unaligned/out-of-footprint/invalid
+  worker/current executable bounds.4970 root words differ from QFG1,
+  proving these catalogs are NOT silently interchangeable. ALL119 peers
+  remain identical. Maximum catalog kernel frame16B,NOT a linked driver.
+  /private/tmp/pioneer-q38-input-catalog-20261022-b.log
+  SHA2a541f13b40e4b9dcf43c23cc8906ee63c5da11b45bae2a8f72b870c9f474c11
+ -Generator6exact regenerations/73refusals:ALL6 first/middle/last byte
+  changes,truncated/extended/missing sections,both bad boots,invalid and
+  peer destinations,including Python-O. All refusals have ZERO patch output.
+  /private/tmp/pioneer-q38-input-catalog-generator-20261022-a.log
+  SHA2b01bc2b60e347c4363c3f4d4bd148d688d305ce95e0f113ab8d929e8d187377
+ -Old QFG1 catalog regression unchanged:867328words/3701951refusals.
+  /private/tmp/pioneer-q38-input-old-catalog-regression-20261022-a.log
+  SHA72d3d2ea6cb40bcd0577d20acf5510e9e7407f42677ee0a31278fc44f87cf53d
+
+Supplementary ALLQ4/bank0/natural-row QFG2 arithmetic replay also finished
+CLI0. ACTUAL root+ALL119 worker instructions,TWO changed input/token/layer
+FFNs with initial destination GDDR POISONED,exact input-copy receipt and
+exactFP32+independentFP64/native-byte observers,79872nonzero matrix rows,
+176input/SiLU producers,ALL119STOP. rootVM187034003/peerVM2004412866/
+TensixInstructions4177920/maxStack5832B are MODEL counts,NOT native timing.
+ /private/tmp/pioneer-q38-input-root-actual-q4-20261022-a.log
+ SHAa5061910e4ed2e3ed80ad2071d4ed85ce6af51d190defa245ba61026113230d3
+AllQ4+mixed-type runs together prove source-code arithmetic/copy behavior
+against SYNTHETIC bounded nonzero weights,NOT public model quality or actual
+GPU execution. No test remains running in this checkpoint.
+
+Fresh CPU-only native evidence:041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen34/idle/quiesced0/cold0/owner0/open1/guard1,
+ALL native parents absent,64CPUs/max137034936320B. NO uploads/GPU jobs/
+hot reload/reboot/power/SD/Assistant/boot/CPU/RAM/network/settings changes.
+Read-only SDK;dirty llama.cpp and unrelated FlashNext untouched.
+
+NEXT:REAL native full-root lifetime. Current native33 qualified NEW119
+workers but NEVER ran a new root. Retain/prove the actual native cookie/
+global lock/clock/ALLhost/maps and exact new code/current terminals BEFORE
+any new hardware execution. A controlled ROOT+ALL119 STOP-only qualification
+may establish that missing lifetime without pretending to authorize model
+weights or initial input. Root metadata/current MASTER command+counter
+ownership must include the root's actual NoC traffic;do not reuse the old
+held-only counter invariants or blindly restore after any uncertainty.
+Existing native panel mapping already spans6e000..b0000 under the qualified
+INT_SFPU chain,including stack,root metadata and numeric buffers. It is a
+mapping/saved-parent fact,NOT a new input/writer/launch grant. New controller
+must bind/prove the relevant subranges and the SAME retained actual model/
+source/canonical joint owner/initial-F32/host/clock lifetime explicitly.
+Then actual model integration/native inference and remaining all-card
+attention/GDN/KV/norm/residual/embedding/sampling. Work/debug stay separate.
+Raw-Dst cache22 HARD BLOCKED. Last whole27B0.207893161tok/s unchanged;
+20tok/s UNMET. Goal ACTIVE.
