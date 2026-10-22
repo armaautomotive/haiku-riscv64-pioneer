@@ -11,7 +11,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchProtocol.h"
-#if defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT) || defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #endif
 #ifdef PIONEER_Q38_WORK_CLIENT_TEST
@@ -23,6 +23,9 @@
 #endif
 static unsigned opens=0,closes=0,begins=0,runs=0,uploads=0,ends=0,fault=0;
 static bool failed=false;
+#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+static unsigned tagFault=0;
+#endif
 static int MockOpen(const char* path,int flags)
 {
 	assert(!strcmp(path,"/dev/" TT_PCI_PROBE_DEVICE) && flags==(O_RDWR|O_CLOEXEC)); opens++; return 73;
@@ -31,11 +34,13 @@ static int MockClose(int fd) { assert(fd==73); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
-#if defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT) || defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 	if(op==TT_PCI_PROBE_RELOAD_STATUS){
 		assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
 		r={};r.version=1;r.driver=55;r.guard_version=1;
-#ifdef PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+		r.build_tag=UINT64_C(0x2026102200010031);
+#elif defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102100010028);
 #elif defined(PIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102100010027);
@@ -44,7 +49,17 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 #else
 		r.build_tag=UINT64_C(0x2026102100010025);
 #endif
-		r.generation=31;r.open_count=1;return 0;
+		r.generation=31;r.open_count=1;
+#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+		if(tagFault){
+			failed=true;
+			switch(tagFault){case 1:r.build_tag^=1;break;case 2:r.generation=0;break;
+			case 3:r.quiesced=1;break;case 4:r.cold=1;break;case 5:r.active_owner=1;break;
+			case 6:r.open_count=2;break;case 7:r.guard_version=2;break;case 8:r.version=2;break;
+			case 9:r.driver=54;break;case 10:errno=EIO;return -1;default:assert(false);}
+		}
+#endif
+		return 0;
 	}
 #endif
 	if (op==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
@@ -153,6 +168,14 @@ int main()
 	numeric->peers=120; assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	numeric->peers=2; expected.pop_back(); assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	assert(opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
+#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+	for(tagFault=1;tagFault<=10;tagFault++){
+		opens=closes=begins=runs=uploads=ends=0;failed=false;
+		char name[]="csr",arg[]="--synthetic";char* argv[]={name,arg};
+		assert(DispatchClientMain(2,argv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);
+	}
+	puts("PASS actual tag31 client:10 metadata/query failures CLOSE ONLY before ANY support/BEGIN/upload/RUN/END/card IO");
+#endif
 #ifdef PIONEER_Q38_REUSE_CLIENT_TEST
 	fixtureOkay=false; opens=closes=begins=runs=uploads=ends=0; failed=false;
 	char name[]="mixed",arg[]="--public-mixed-inputs",bad[]="--unknown";

@@ -38,6 +38,7 @@ def check(mode, fault=None):
         payloads['hash_affine_rawdot_qualification'] = ('test-' + values['hash_affine_rawdot_qualification']).encode()
         payloads['hash_direct_srcb_qualification'] = ('test-' + values['hash_direct_srcb_qualification']).encode()
         payloads['hash_sentinel_poll_qualification'] = ('test-' + values['hash_sentinel_poll_qualification']).encode()
+        payloads['hash_graph_csr_diagnostic'] = ('test-' + values['hash_graph_csr_diagnostic']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -125,6 +126,8 @@ def check(mode, fault=None):
             '--restore-direct-srcb-qualification': ('hash_direct_srcb_qualification', 'hash_scale_reuse_qualification', 'tag_direct_srcb_qualification'),
             '--apply-sentinel-poll-qualification': ('hash_direct_srcb_qualification', 'hash_sentinel_poll_qualification', 'tag_direct_srcb_qualification'),
             '--restore-sentinel-poll-qualification': ('hash_sentinel_poll_qualification', 'hash_direct_srcb_qualification', 'tag_sentinel_poll_qualification'),
+            '--apply-graph-csr-diagnostic': ('hash_scale_reuse_qualification', 'hash_graph_csr_diagnostic', 'tag_scale_reuse_qualification'),
+            '--restore-graph-csr-diagnostic': ('hash_graph_csr_diagnostic', 'hash_scale_reuse_qualification', 'tag_graph_csr_diagnostic'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -200,6 +203,7 @@ def check(mode, fault=None):
         put('candidate_affine_rawdot_qualification', payloads['hash_affine_rawdot_qualification'])
         put('candidate_direct_srcb_qualification', payloads['hash_direct_srcb_qualification'])
         put('candidate_sentinel_poll_qualification', payloads['hash_sentinel_poll_qualification'])
+        put('candidate_graph_csr_diagnostic', payloads['hash_graph_csr_diagnostic'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -246,7 +250,8 @@ def check(mode, fault=None):
         client.chmod(0o700)
         if fault in values and (fault.startswith('candidate') or fault in ['guardsource', 'client', 'installed', 'guard']):
             path(values[fault]).write_bytes(b'wrong')
-        if fault in ['candidatea-link', 'client-link', 'guard-link', 'installed-link']:
+        if fault and fault.endswith('-link') and fault.removesuffix('-link') in values and (
+                fault.startswith('candidate') or fault in ['client-link', 'guard-link', 'installed-link']):
             target = path(values[fault.removesuffix('-link')])
             real = target.with_name(target.name + '.real')
             target.rename(real)
@@ -268,11 +273,42 @@ def check(mode, fault=None):
         images = ['KERNEL TEAM:', '1 0x0 0x0 0 0 kernel_riscv64'] + [f'{i} 0x0 0x0 0 0 module{i}' for i in range(2, 52)]
         if fault == 'loaded':
             images.append('999 0x0 0x0 0 0 tenstorrent_pci_probe')
-        teams = ['Id Team'] + (['999 ./inference-vector-21e18126'] if fault == 'owner' else [])
+        teams = ['Id Team', '1 kernel_team', '42 /bin/registrar']
+        owner_faults = {
+            'owner': './inference-vector-21e18126',
+            'owner-assistant': '/boot/system/apps/Assistant',
+            'owner-bare': 'Assistant',
+            'owner-truncated': '/boot/home/pioneer-q',
+            'owner-qwen': './pioneer-qwen38-bench',
+            'owner-llama': './llama-cli',
+            'owner-tt': '/boot/home/tenstorrent_haiku_mmio_probe',
+            'owner-underscore': '/boot/home/pioneer_q38_client',
+            'owner-csr': '/boot/home/pioneer-p100a-hot-reload-20261019-a/graph-csr-debug-b4eef9d3',
+        }
+        if fault in owner_faults:
+            teams.append('999 ' + owner_faults[fault])
+        if fault == 'ps-empty':
+            teams = []
+        if fault == 'ps-header-only':
+            teams = ['Id Team']
+        if fault == 'ps-no-header':
+            teams = teams[1:]
+        if fault == 'ps-duplicate-header':
+            teams.append('Id Team')
+        if fault == 'ps-malformed':
+            teams.append('partial inventory error')
+        team_body = 'printf "%s\\n" ' + ' '.join(map(shlex.quote, teams)) + ';'
+        if fault == 'ps-error':
+            team_body = 'return 1;'
+        if fault == 'owner-late':
+            counter = shlex.quote(str(root / 'ps-count'))
+            team_body = ('n=0; if test -f ' + counter + '; then read -r n < ' + counter + '; fi; '
+                'n=$((n+1)); printf "%s\\n" "$n" > ' + counter + '; ' + team_body
+                + ' if test "$n" -ge 2; then printf "%s\\n" "999 ./inference-auth-parent"; fi;')
         mocks = '\n'.join([
             'uname() { printf "%s\\n" ' + ('Linux' if fault == 'platform' else 'Haiku') + '; }',
             'listimage() { printf "%s\\n" ' + ' '.join(map(shlex.quote, images)) + '; }',
-            'ps() { printf "%s\\n" ' + ' '.join(map(shlex.quote, teams)) + '; }',
+            'ps() { ' + team_body + ' }',
             'sha256sum() { ' + shlex.quote(shutil.which('shasum')) + ' -a 256 "$@"; }',
             'sync() { :; }',
         ])
@@ -285,6 +321,10 @@ def check(mode, fault=None):
         result = subprocess.run(['/bin/sh', str(local), mode], capture_output=True, text=True, timeout=15)
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
+            if fault in owner_faults or fault.startswith('ps-'):
+                assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_DURING_UNPROVEN_PARENT')
+            if fault == 'owner-late' and mode != '--bootstrap':
+                assert (root / 'calls').read_text().splitlines() == ['--status'], (mode, fault, 'QUIESCED_DURING_PARENT_LIFETIME')
             if fault != 'wait-error':
                 assert installed.read_bytes() == before, (mode, fault, 'REPLACED_DESPITE_GUARD_FAILURE')
             else:
@@ -305,6 +345,9 @@ if __name__ == '__main__':
               'installed-link', 'device-link', 'stage-link', 'incoming', 'guardincoming', 'backup', 'platform']
     hot = ['guard', 'guard-link', 'cold', 'active', 'open', 'tag', 'generation', 'quiesced', 'guard-version',
            'duplicate-status', 'empty-status', 'status-error', 'quiesce-error', 'wait-error']
+    parents = ['owner', 'owner-assistant', 'owner-bare', 'owner-truncated', 'owner-qwen',
+               'owner-llama', 'owner-tt', 'owner-underscore', 'owner-late', 'ps-error',
+               'ps-empty', 'ps-header-only', 'ps-no-header', 'ps-duplicate-header', 'ps-malformed', 'owner-csr']
     modes = ['--bootstrap', '--apply-a', '--apply-b', '--apply-profile', '--restore-profile', '--apply-batch', '--restore-batch', '--apply-compact', '--restore-compact', '--apply-fast', '--restore-fast', '--apply-reuse', '--restore-reuse', '--apply-cross-reuse', '--restore-cross-reuse', '--apply-work', '--restore-work', '--apply-work-profile', '--restore-work-profile', '--apply-work-posted', '--restore-work-posted', '--apply-work-cohort', '--restore-work-cohort', '--apply-work-q4', '--restore-work-q4', '--apply-work-q4-inline', '--restore-work-q4-inline'] + ['--apply-work-span', '--restore-work-span', '--apply-work-fast-span', '--restore-work-fast-span', '--apply-work-span-code-reuse', '--restore-work-span-code-reuse', '--apply-work-int-sfpu', '--restore-work-int-sfpu', '--apply-work-pipelined', '--restore-work-pipelined', '--apply-work-static-vector', '--restore-work-static-vector', '--apply-work-cached-affine', '--restore-work-cached-affine', '--apply-work-replay-operand', '--restore-work-replay-operand', '--apply-work-dot', '--restore-work-dot', '--apply-work-output-dma', '--restore-work-output-dma', '--apply-work-queued-entry', '--restore-work-queued-entry', '--apply-local-delta', '--restore-local-delta', '--apply-local-delta-terminal', '--restore-local-delta-terminal', '--apply-current-profile', '--restore-current-profile']
     modes += ['--apply-sparse-profile', '--restore-sparse-profile', '--apply-sparse-export', '--restore-sparse-export']
     modes += ['--apply-normal-clock', '--restore-normal-clock']
@@ -327,6 +370,7 @@ if __name__ == '__main__':
     modes += ['--apply-affine-rawdot-qualification', '--restore-affine-rawdot-qualification']
     modes += ['--apply-direct-srcb-qualification', '--restore-direct-srcb-qualification']
     modes += ['--apply-sentinel-poll-qualification', '--restore-sentinel-poll-qualification']
+    modes += ['--apply-graph-csr-diagnostic', '--restore-graph-csr-diagnostic']
     modes += ['--apply-host-phase-diagnostic', '--restore-host-phase-diagnostic']
     modes += ['--apply-batch4-fetch-qualification', '--restore-batch4-fetch-qualification']
     modes += ['--apply-batch-raw-qualification', '--restore-batch-raw-qualification']
@@ -477,6 +521,10 @@ if __name__ == '__main__':
             candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--apply-sentinel-poll-qualification':
             candidate = ['candidate_sentinel_poll_qualification']
+        elif mode == '--apply-graph-csr-diagnostic':
+            candidate = ['candidate_graph_csr_diagnostic']
+        elif mode == '--restore-graph-csr-diagnostic':
+            candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--apply-host-phase-diagnostic':
             candidate = ['candidate_host_phase_diagnostic']
         elif mode == '--restore-host-phase-diagnostic':
@@ -523,7 +571,8 @@ if __name__ == '__main__':
             candidate = ['candidate_sentinel_poll_qualification']
         elif mode == '--restore-sentinel-poll-qualification':
             candidate = ['candidate_direct_srcb_qualification']
-        for fault in [None] + common + candidate + (['loaded', 'owner'] if mode == '--bootstrap' else hot):
+        candidate_links = [key + '-link' for key in candidate]
+        for fault in [None] + common + candidate + candidate_links + parents + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1
     assert count and (not selected or seen == selected), 'Unknown or empty mode selection'

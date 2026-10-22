@@ -19,6 +19,7 @@ case "$1" in
  --apply-affine-rawdot-qualification|--restore-affine-rawdot-qualification) mode=$1;;
  --apply-direct-srcb-qualification|--restore-direct-srcb-qualification) mode=$1;;
  --apply-sentinel-poll-qualification|--restore-sentinel-poll-qualification) mode=$1;;
+ --apply-graph-csr-diagnostic|--restore-graph-csr-diagnostic) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -89,6 +90,7 @@ candidate_native_q8_qualification=$stage/tenstorrent_pci_probe-native-q8-qualifi
 candidate_affine_rawdot_qualification=$stage/tenstorrent_pci_probe-affine-rawdot-qualification-8b43f2c7
 candidate_direct_srcb_qualification=$stage/tenstorrent_pci_probe-direct-srcb-qualification-7056d20e
 candidate_sentinel_poll_qualification=$stage/tenstorrent_pci_probe-sentinel-poll-qualification-84ab80ac
+candidate_graph_csr_diagnostic=$stage/tenstorrent_pci_probe-graph-csr-diagnostic-3fce7a8a
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -154,6 +156,7 @@ hash_native_q8_qualification=e546b6643009018386ff57fceee7c8d425d81a3d8211529e5fc
 hash_affine_rawdot_qualification=8b43f2c7145529fb0e5e6f0e3f4eac431b182db0ea16ddda63d713c7bb83cba0
 hash_direct_srcb_qualification=7056d20e09eee61c080c6c900f1cefde92026d000af53f2931d5e1d0ff9ebcb1
 hash_sentinel_poll_qualification=84ab80ac87ce3486c4194be6743b44c56492cd7282e934d966e4ee39d48af296
+hash_graph_csr_diagnostic=3fce7a8ab03187433ec41a6c8d34f4f00be3d06843a67782ca1a2352a1e332a8
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -217,6 +220,7 @@ tag_native_q8_qualification=2026102100010014
 tag_affine_rawdot_qualification=2026102100010015
 tag_direct_srcb_qualification=2026102100010016
 tag_sentinel_poll_qualification=2026102100010017
+tag_graph_csr_diagnostic=2026102200010031
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -234,6 +238,20 @@ exact()
  reload_hash=$(sha256sum "$1"); reload_hash=${reload_hash%% *}
  test "$reload_hash" = "$2"
 }
+parents_idle()
+{
+ reload_teams=$(ps -o Id -o Team) || return 1
+ printf '%s\n' "$reload_teams" | awk '
+  $1=="Id" && $2=="Team" && NF==2 {headers++;next}
+  $1 ~ /^[0-9]+$/ && NF>=2 {teams++;next}
+  NF {invalid++}
+  END {if(headers!=1 || !teams || invalid) exit 1}
+ ' || { echo STOP_COMPUTE_PARENT_INVENTORY_UNPROVEN; return 1; }
+ printf '%s\n' "$reload_teams" | awk '
+  /(^|[\/[:space:]])(Assistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|graph-csr-debug)/ {owner++}
+  END {if(owner) exit 1}
+ ' || { echo STOP_POSSIBLE_COMPUTE_PARENT; return 1; }
+}
 unloaded()
 {
  reload_images=$(listimage 1) || return 1
@@ -242,11 +260,7 @@ unloaded()
   $1 ~ /^[0-9]+$/ {images++; if($6=="kernel_riscv64") kernel++; if($6 ~ /tenstorrent|P100A/) card++}
   END {if(headers!=1 || kernel!=1 || images<30 || images>200 || card) exit 1}
  ' || { echo STOP_BOOTSTRAP_REQUIRES_FRESH_UNLOADED_DRIVER; return 1; }
- reload_teams=$(ps -o Id -o Team) || return 1
- printf '%s\n' "$reload_teams" | awk '
-  /\/Assistant|\/llama-|\/tenstorrent_haiku|\/inference-|\/pioneer_q38|\/pioneer-q38|\/pioneer-qwen38/ {owner++}
-  END {if(owner) exit 1}
- ' || { echo STOP_BOOTSTRAP_POSSIBLE_COMPUTE_OWNER; return 1; }
+ parents_idle
 }
 backup()
 {
@@ -369,6 +383,10 @@ else
  elif [ "$mode" = --restore-direct-srcb-qualification ]; then source=$candidate_scale_reuse_qualification; expected=$hash_direct_srcb_qualification; result=$hash_scale_reuse_qualification; oldtag=$tag_direct_srcb_qualification; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-sentinel-poll-qualification ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_direct_srcb_qualification; result=$hash_sentinel_poll_qualification; oldtag=$tag_direct_srcb_qualification; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --restore-sentinel-poll-qualification ]; then source=$candidate_direct_srcb_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_direct_srcb_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_direct_srcb_qualification
+ # Isolated fixed-read CSR qualifier:transition directly from/to the measured
+ # best tag12. Restore is allowed ONLY with clean idle metadata,NEVER UNKNOWN.
+ elif [ "$mode" = --apply-graph-csr-diagnostic ]; then source=$candidate_graph_csr_diagnostic; expected=$hash_scale_reuse_qualification; result=$hash_graph_csr_diagnostic; oldtag=$tag_scale_reuse_qualification; newtag=$tag_graph_csr_diagnostic
+ elif [ "$mode" = --restore-graph-csr-diagnostic ]; then source=$candidate_scale_reuse_qualification; expected=$hash_graph_csr_diagnostic; result=$hash_scale_reuse_qualification; oldtag=$tag_graph_csr_diagnostic; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -394,6 +412,9 @@ else
  else source=$candidatea; expected=$hashb; result=$hasha; oldtag=$tagb; newtag=$taga; fi
  exact "$source" "$result" || exit 1
  exact "$installed" "$expected" || exit 1
+ # An idle driver is not enough:a live CPU-authentication/model parent may
+ # not have opened it yet. Do not replace code during ANY such lifetime.
+ parents_idle || exit 1
  metadata=$("$client" --status) || exit 1
  printf '%s\n' "$metadata"
  generation=$(printf '%s\n' "$metadata" | awk -v tag="tag$oldtag" '
@@ -407,7 +428,7 @@ fi
 cp -p "$source" "$incoming"; chmod 755 "$incoming"
 exact "$incoming" "$result" && exact "$installed" "$expected" && exact "$guard" "$guardsha" || exit 1
 if [ "$mode" = --bootstrap ]; then unloaded || exit 1
-else "$client" --quiesce "$oldtag" || exit 1; fi
+else parents_idle && "$client" --quiesce "$oldtag" || exit 1; fi
 exact "$incoming" "$result" && exact "$installed" "$expected" || exit 1
 # The staging file is OUTSIDE watched drivers/bin. A single rename INTO
 # that directory generates Haiku's normal legacy-driver update event.

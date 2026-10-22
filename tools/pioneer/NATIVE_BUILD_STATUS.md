@@ -1,5 +1,24 @@
 # Native build status
 
+Latest checkpoint October22 2026:fixed4-byte remote CSR transport PASSED
+on actual P100A,ALL119 peers both held and live-idle. Two independent
+legacy-cohort sessions each verified5474 packets/words. Synthetic20 and
+authenticated119-worker18 original-TC debug samples ALL exact,clean END,
+CLI0,clock800->1350->800/restored1/uncertain0. This qualifies the fixed
+register-read transport,NOT new FFN code/ownership/model integration/speed.
+New isolated tag31 debug clientb4eef9d3 builds twice EXACT;old sentinel
+debug7fa411b7 remains byte-identical. Production inference rejects CSR flags.
+Guarded temporary041/tag12/gen28->3fce/tag31/gen29->041/tag12/gen30;
+last restore verifiedidle/cold0/owner0/open1/guard1. All64 CPUs/full RAM
+137034936320B remain available. No reboot,power,SD,Assistant/settings change.
+5585 updater regressions passed before the last additional diagnostic-parent
+name;final apply/restore/bootstrap126 cases passed. Broader final rerun
+continues locally. Evidence:benchmarks/qwen38-graph-csr-native-20261022.txt.
+NEW FFN40KiB root/12KiB peer code owner/native factory still required;
+NO new FFN launch grant. Last real27B .207893161tok/s unchanged,20 UNMET.
+Goal ACTIVE. Haiku SSH account is baron,not user/root;use existing matching
+haiku_pioneer_ed25519 key and sd-recovery/known_hosts.haiku host pin.
+
 October21,05:21 UTC native-Q8 QUALIFIER prepared,NOT installed:
 e546b6643009018386ff57fceee7c8d425d81a3d8211529e5fc393719ea053d4,
 tag2026102100010014 builds a/b EXACT,guardd1ce/default2df unchanged.

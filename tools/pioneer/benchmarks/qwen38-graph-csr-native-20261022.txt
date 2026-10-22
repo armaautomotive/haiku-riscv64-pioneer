@@ -1,0 +1,126 @@
+Native fixed-register transport qualification,October22 2026.
+This is NOT a model benchmark,new FFN native selector,or production promotion.
+
+Fresh access corrected from scoped serial authentication diagnostics:
+Haiku account baron;existing /Users/arma/.ssh/haiku_pioneer_ed25519 client
+identity,generated.pioneer/sd-recovery/known_hosts.haiku server pin.
+The saved key was valid;user/root/old Linux haikuport were invalid accounts.
+No key/password/daemon configuration was changed. No private key displayed.
+
+Before any upload/job:Haiku64 CPUs,max137034936320B,ALL compute parents
+absent,CPU-only metadata041/tag2026102100010012/gen28/quiesced0/cold0/
+owner0/open1/guard1. Installed hash041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229,
+administrative clientb0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f.
+
+Separate tag31 qualification client,NOT production Work inference:
+build_qwen38_graph_csr_diagnostic_client.sh requires the complete original
+TC sentinel/Work/vector/root-counter role. The exact idle tag31 gate is
+checked via CPU metadata BEFORE any support/BEGIN/card IO. Every other
+experimental reference role refuses,as do production inference CSR flags.
+CPU reference arithmetic exists ONLY in this debug qualification program.
+First ioctl/returned UNKNOWN/numeric failure =>CLOSE ONLY,no END/reset/
+retry/further card reads. Real-client failure tests prove this unchanged.
+Independent RISC-V builds EXACT:
+ /private/tmp/pioneer-q38-graph-csr-client.bxrZUJNU/graph-csr-debug
+ /private/tmp/pioneer-q38-graph-csr-client-repeat.8jWkrbEB/graph-csr-debug
+ SHAb4eef9d38bcfea4232f8cfa142f1a05e71c62058d124b1ea018c7f4039636115.
+Old sentinel flagOFF control7fa411b7ecfc4511a139893a0ff5ce710eed53e0c4aec4d8872bbcac36f76249
+rebuilt EXACT;no changes to its previously qualified executable bytes.
+New client on actual installed tag12 refused with CLI1 before BEGIN/card IO;
+subsequent CPU metadata remained clean/idlegen28.
+
+Updater pins measured-best041/tag12<->fixed CSR3fce/tag31 directly. No
+intermediate driver install,forced reset,automatic rollback,cold recovery,
+or new FFN image selection. BOTH directions require exact hashes,saved
+guard/client,driver55/guard1,expected tag,nonzero generation,quiesced0,
+cold0,owner0,open1. Wait requires new tag+increased generation. Incoming
+files live OUTSIDE watched drivers/bin;single final rename triggers reload.
+
+Added independent compute-parent inventory BEFORE metadata and again before
+quiesce. An idle driver alone cannot exclude a live CPU-authentication
+parent that has not opened the card yet. Empty/header-only/failed/malformed
+or duplicate-header inventories refuse;full/bare/truncated Assistant,
+llama,inference,tenstorrent,pioneer-q/underscore and graph-csr-debug names
+refuse. Late parent refuses before quiesce,without replacing driver code.
+Initial updater SHAbeff154f53ba20dbd44c24f6497dda9f85ed86a42fbb33d00bc397f29482a820
+passed5585 complete actual shell filesystem/handshake/hash/symlink/parent/
+failure cases,CLI0. Afterwards one ADDITIONAL owner-name alternative for
+the newly named graph-csr-debug was added;it does not relax old checks.
+FINAL updater SHAd504c81a0a971a45cca012b4ff4e2243616109cbc11fab3746a699e4453017b8
+passed126 complete apply/restore/bootstrap cases,including its long native
+client path,before the clean restore. Full final regression rerun ongoing
+at this checkpoint,not claimed complete:
+ /private/tmp/pioneer-graph-csr-hot-swap-full-20261022-b.log
+Original full CLI0 log:
+ /private/tmp/pioneer-graph-csr-hot-swap-full-20261022-a.log
+ SHA7f979575b9a577b0be5121ec8aa10afcb082824df665d71dd3136a16e6a012df
+Final focused CLI0 log:
+ /private/tmp/pioneer-graph-csr-hot-swap-focused-20261022-b.log
+ SHA4ed2f3ebb6253c6bdb44376e7b885508ce8255d381979bd94b62f603e35c1a06
+
+Other OFFLINE tests ALL CLI0:
+ Fixed CSR policy4positive/61faults,287 driver build-gate refusals unchanged.
+ 137 new client/mixed-role/production refusals BEFORE SDK/output.
+ 13 actual debug-tag variants,93 state/tag/guard/owner refusals EACH.
+ Actual client syscalls:failed RUN/UNKNOWN CLOSE ONLY,no later ioctl/END;
+ tag31 additionally10 malformed metadata/query cases before support/BEGIN.
+ 155 previous sentinel scheduling/build-role refusals remain unchanged.
+ /private/tmp/pioneer-graph-csr-client-build-gates-20261022-a.log
+ SHA49e8e423a937b915ddf6393023515988153add5f1106939f1a8ceca01c5a72ab
+ /private/tmp/pioneer-graph-csr-client-tags-20261022-a.log
+ SHAa73086bc334e6f7fb704497072b53e70db9f961d4f15abdb2682ad50d91dda26
+ /private/tmp/pioneer-graph-csr-client-failure-20261022-b.log
+ SHA5af904f246b934a89956b18f8f54830fb3e0eb6e9f721c482326868b1f426bc7
+ SDK read-only;no dirty llama.cpp read/build/edit.
+
+NATIVE actions,serialized with NO upload or other card job during any
+native-parent lifetime (including CPU authentication):
+ 1 exact guarded041/tag12/gen28 ->3fce/tag2026102200010031/gen29.
+ 2 --synthetic:20 original-TC debug samples,Q8/Q4/Q6,K5120/6144/17408,
+   explicit return-to-Q8 in SAME cohort;ALL exact_errors0,10 cases,
+   KNOWN_CLEAN_END1,CLI_EXIT0. Both held/live-idle fixed-read passes onALL119.
+ 3 fresh absent-parent/CPU metadata clean proof before next job.
+   --public-fixtures-119 authenticates725504 source bytes BEFORE card open;
+   18 actual119-worker samples,9 cases,ALL exact_errors0,clean END,CLI_EXIT0.
+   Again both fixed-read passes onALL119. No CPU result substitutes output.
+ 4 fresh absent-parent/clean metadata proof BEFORE evidence transfer and
+   FINAL guarded3fce/tag31/gen29 ->041/tag12/gen30. No automatic rollback.
+
+Each session's driver serial witness:
+ P100A_GRAPH_CSR_PASS held1 live1 workers119 packets5474 words5474;
+ EXISTING_LEGACY_COHORT_FIXED_REGISTERS_ONLY_NOT_NEW_FFN_IMAGE_OR_SPEED
+Each uses23 single4-byte reads per worker per phase,NOT grouped MMIO bursts.
+Expected values are physical host baselines,not peer proof substitutions.
+All selected target MASTER counters remained unchanged by incoming reads.
+Source/current two-PC/reset/command/root counters/idle/PCIe/code audits
+passed as implemented;this native observation is scoped to these exact
+legacy-cohort held/live-idle states,not arbitrary running jobs or new code.
+Each clock witness800->1350->800,restored1/uncertain0;no reset/ARC shortcut.
+
+Scoped serial range /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
+from byte66182229 through66201942 contains both pass and clock witnesses.
+Completed evidence copied ONLY after native parents exited:
+ /private/tmp/pioneer-q38-graph-csr-native.Rzcvc2D4/graph-csr-synthetic-20261022-a.log
+ SHAf0cfe14f7dfe2776f09d48b2e24e133626c89df7ba5792b5843681bcfb6c5034
+ /private/tmp/pioneer-q38-graph-csr-native.Rzcvc2D4/graph-csr-auth119-20261022-a.log
+ SHAd837b2696f76a3ad70caf9ae5920ebb32e63cac2817296fe6014904b23d8ab38
+Remote same filenames:/boot/home/pioneer-p100a-hot-reload-20261019-a/.
+Driver3fce7a8ab03187433ec41a6c8d34f4f00be3d06843a67782ca1a2352a1e332a8
+is still ONLY an isolated diagnostic,not promoted as faster production.
+
+AFTER restore:fresh metadata041/tag12/gen30/quiesced0/cold0/owner0/open1/
+guard1,installed041 hash exact,ALL compute parents absent,64 CPUs and
+max137034936320B RAM unchanged. Assistant remains closed/unmodified.
+No reboot,power/SD/boot/CPU/RAM/network/Assistant settings changes.
+Raw-Dst cache22 remains HARD BLOCKED. No new FFN program installed.
+
+NEXT:NEW exclusive40KiB-root/12KiB-peer-helper code owner/native factory,
+all initialized learned/mutable/source/code/host/clock owners and canonical
+model authority,real initial F32 producer receipt,unified GDN/FFN mutable
+reservation,real-model numerical-domain qualification and actual inference
+integration. Also strengthen NEW root's before-counter alias parity before
+its future native selection. Existing legacy16KiB owner is NOT sufficient.
+Full FFN is NOT all-card attention/GDN/KV/norm/embedding/sampling. No test
+boolean/register pass supplies a new native execution grant.
+Last real27B .207893161tok/s unchanged;20tok/s target UNMET. Goal ACTIVE.
