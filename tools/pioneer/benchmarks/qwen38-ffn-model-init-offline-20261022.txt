@@ -1,5 +1,8 @@
 Real native canonical FFN context+workspace init bridge,October22 2026.
-PRE-DEPLOYMENT ONLY. No native model-init execution/LLM speed claim.
+Original PRE-DEPLOYMENT record. Subsequent actual native initialization
+PASSED CLI0 and original041 was restored at generation38;see companion
+qwen38-ffn-model-init-native-20261022.txt for the final authoritative state.
+This offline record itself is not native execution or an LLM speed claim.
 Last whole27B0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
 
 Separate exact tag2026102200010035,model namespace8:
