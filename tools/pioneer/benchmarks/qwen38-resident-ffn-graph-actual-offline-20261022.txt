@@ -1,0 +1,138 @@
+Retained actual whole-FFN instruction integration checkpoint.
+October21 2026 Vancouver;test/evidence timestamps October22 UTC.
+OFFLINE ONLY. No card/driver/native parent access or timing claim.
+
+New cooperative test executes the unchanged QFG1 coordinator and ALL119
+actual QFP2 RV32/FPU/Tensix worker interpreters against ONE shared GDDR
+workspace. Unlike the previous root-only synthetic fabric,this test never
+manufactures completion,proofs,quantized inputs or matrix products. NoC
+endpoints copy bytes only. Arithmetic/proofs/status/PC/counters come from
+actual emitted instructions and the existing strict independent observers.
+
+It exercises initial5120-lane quantization ->native/scale gather ->gate
+17408 rows ->up17408 rows ->68 actual SiLU/native quantizers ->gather ->
+down5120 rows. Root-written jobs are delivered unchanged. The test NEVER
+calls the old Matrix/StageInput/StageActivation unit-test helpers,which
+overwrite descriptors. ALL16 matrix-job words are additionally compared
+against the independent fixture manifest,not used to mint their own expected
+learned endpoints. Every actual input fetch reads the root's current gathered
+L1 bytes;every actual producer read/write uses the SAME GDDR workspace.
+
+The same workers persist across differing formats,widths,group counts and
+producer/matrix phases. Registers,private sequences,PC,Dst/Src state,NIU
+commands/counters and physical Tensix memories are not reset between jobs.
+At an independently observed clean WAIT only,the model rolls completed
+packet counts into its absolute wrapped-counter baseline and resets per-job
+observer bookkeeping. Derived sum/tail scratch and output canaries are
+poisoned,never physical arithmetic state or public input data. Actual code
+must initialize every consumed/output word. All pending-matrix,deferred
+affine,replay,input-sum,source-B padding and bounded-access observers remain
+enabled. Changing metadata does not grant arithmetic completion.
+Workers advance in bounded10000-instruction slices when their status is
+polled. Thus a sentinel can finish before other workers are allowed to
+progress;the coordinator must still wait for each remaining ACTUAL peer.
+This deliberately staggered simulation schedule is NOT silicon concurrency
+or a basis for deriving speed from root polls/VM instruction totals.
+
+Weights are bounded nonzero SYNTHETIC Q4_K/Q6_K blocks,varying by role,
+worker,row and block. Gate/up scales keep the input within the ALREADY
+qualified bounded SiLU domain. The fixture is deliberately NOT real GGUF
+weights or proof that the real model meets that domain. Every matrix row is
+checked bit-exact against the original FP32 operation order AND independently
+decoded FP64 weights with the existing explicit rounding-error bound. Every
+input/activation native byte,scale line and full64word proof is independently
+checked. Root's full outputs are compared against the collected ACTUAL
+worker buffers in exact manifest row order;none is substituted into execution.
+
+Positive cases run TWO complete FFNs with changed input/token/layer and
+retained per-peer histories,then a separate ALL119 STOP. Only the coordinator
+is relaunched between FFNs;no worker is reset/rebooted/reconstructed. Idle
+workers remain live and retain their private nonce even in the narrow plan.
+The second input is explicit TEST staging,NOT an authenticated native producer
+receipt. All-card decoder/attention/GDN/KV/norm/residual/sampling remain out
+of scope of this FFN integration test.
+
+Failure cases use the actual initial producer and corrupt transferred proof
+DATA,current physical counter/source responses,or inject a pending producer
+transfer/nonfinite input. The coordinator must park before another packet
+after the first observed bad response,with no matrix launch/STOP/reset/retry.
+Stalled/invalid producer cases must leave the actual worker fault park inert.
+These are simulated failures,not permissions to reset/retry a native fault.
+
+ASan/UBSan evidence (-ffp-contract=off,all independent observers enabled):
+ ALL119 matrix workers,bank1/high workspace edge,reversed rows,gate/down
+ Q6_K and up Q4_K:TWO changed input/token/layer FFNs+ALL119STOP,CLI0.
+ 79872 nonzero matrix rows,176 actual producers;all exact FP32/independent
+ FP64/native-byte/proof observers pass. RootVM170873136,peerVM2198994302,
+ TensixInstructions6963200,max observed device stack5832B (8KiB unchanged).
+ /private/tmp/pioneer-q38-ffn-graph-actual-20261022-b.log
+ SHA038d6092f357887c5d9ac77dbcc6f47810e9431ee1a5268abfc29bd613c40a09
+ Narrow68gate/up+20down matrix workers,bank6/low workspace edge,reversed
+ rows,gate/down Q4_K and up Q6_K:another TWO changed FFNs+ALL119STOP,CLI0.
+ Same79872 nonzero rows/176 producers,including fullK17408/groups16 and
+ idle workers retained throughout. RootVM187872026,peerVM2014882746,
+ TensixInstructions5570560,max observed stack5832B. ALL observers pass.
+ /private/tmp/pioneer-q38-ffn-graph-actual-20261022-c.log
+ SHAb6194b548dd13e019014c0ef465b49537726504d4312dcc6c6afcc2638ebc3ee
+ Across these two cases:4complete FFNs/159744 nonzero matrix rows/352 actual
+ producers/238 clean worker STOPs. VM counts are interpreter bookkeeping,
+ NOT clocks/speed;root count includes STOP,peer count is before final STOP.
+ Five ACTUAL-producer integration failures,ALL CLI0;proof/source/counter
+ corruption stops before another packet,pending read and NaN input leave
+ actual producer fault park inert. No matrix/STOP/retry after any failure.
+ /private/tmp/pioneer-q38-ffn-graph-actual-fault-20261022-c.log
+ SHA13cbd4aaa1e94191f8490df435a4bf91e63da3a182ad0d41d10a698f50648c83
+ Pending-transfer injection here covers the initial input READ,not pending
+ native/scaleline WRITES. Extend that failure fabric/coverage before using
+ this test model for those cases or for native lifetime qualification.
+ Existing ACTUAL-root/synthetic-peer protocol regression28positive/83faults,
+ ALL CLI0 (this separate suite does NOT supply actual worker arithmetic).
+ /private/tmp/pioneer-q38-ffn-graph-root-regression-20261022-a.log
+ SHA52988a642d6d3984208adb54e583414a78681b103dd56ab69ff02fa2b9a4491b
+ Manifest DATA451positive/3547refusals,ALL CLI0;NO native/canonical authority.
+ /private/tmp/pioneer-q38-ffn-graph-shape-actual-20261022-a.log
+ SHAe41d19f6aa164f0ef5a9d99a77d9e5384ab96695a8f0e8a84a3b4bec77b1fa15
+ Existing68 private/mixed/legacy/native build refusals BEFORE SDK/output,
+ ALL CLI0;experimental graph cannot enter ordinary native selectors.
+ /private/tmp/pioneer-q38-ffn-graph-build-gates-actual-20261022-a.log
+ SHA83cd070b25692d26d26d1349459b44f08d31d7d41b6a47295ffbab5e67591642
+
+Exact final test binary used for positive/failure cases:
+ /private/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-q38-ffn-graph-cooperative.xI6L4RYl/test
+ SHA8f80fc866da1ad34d6b2906889896a1e52f9365ce07625e899e792078d67366c
+ Cooperative source SHAbb7c9755e4735f98cf979a14d547c41bc4589722f29f145e422623d3a8241b0d
+ Runner SHA88e8e6928be3d5476d84cc78767535704ac928634d8dbaa3339327f5818f5b70
+
+Programs are byte-identical to the previous pushed checkpoint:
+ Root /private/tmp/pioneer-q38-ffn-graph-final.jFIjki04/image
+ boot SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main SHA2724bbca6e4c8078f082227202581b2ec47450deca4aa59ef8b6c636ada79b0e
+ prefix SHAb6cbbf8c02a0673a84001a870390bfe5f4b834306c80f27c820358f4e48bd3df
+ graph SHA0af934a943d6264d1c67d82cf9427b76e3fa46f9f1b9a805d6ad04d57b70ad89
+ Peer /private/tmp/pioneer-q38-ffn-graph-peer-control.NJzpNLRW/image
+ main SHAd2052fbbf43dcc022747ea2b228e7b1bc0f829f4984821ab4dfca20473e3a8ef
+ affine SHA96e92065722a477b08ba41abc2f623064d44970c5807b37c6d739e8dc3697570
+ helper SHAd7c6f3458d795f65635b80c3c035c93a7da5b325629f19e0b0fdecdc70fc629d
+The only change to the existing root test is a main-only include guard for
+reusing its machine;device sources/default images/registry are unchanged.
+
+No new native/global owner,initial-producer receipt,code selector,public
+ioctl or mutable reservation has been implemented by this test. The exact
+40KiB root prefix and complete QFP2 helper still need a genuinely exclusive
+native owner,canonical learned/model authentication and complete lifetime/
+save/restore/UNKNOWN retention. Remote CSR reads being passive with respect
+to peer issued-command counters remains an UNQUALIFIED hardware assumption.
+No simulated test field supplies these missing authorities. The old QFM1
+overlay/legacy cohort owner does NOT authorize these different peer images
+or the expanded root prefix. Do not wire them through an old ABI.
+
+Next:complete the unified exclusive native ownership/initial-producer and
+remote-CSR/lifetime qualification,reduce/distribute excessive control work,
+then controlled real-model/card measurement. Correctness does not imply
+useful performance. VM steps/poll order are NOT native cycles or tokens/sec.
+
+No SSH/upload/GPU job/driver install/hotswap/Assistant/power/SD/boot/CPU/RAM/
+settings changes. Last verified installed best SHA remains
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Raw-Dst cache22 remains HARD BLOCKED. No native parent opened in this work.
+Last real27B speed0.207893161tok/s unchanged;20tok/s target still UNMET.

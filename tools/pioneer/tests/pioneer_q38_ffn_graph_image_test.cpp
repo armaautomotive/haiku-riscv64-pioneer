@@ -160,6 +160,7 @@ struct GraphRootMachine:DispatchMachine {
  }
  void Inert(){unsigned old=packets,reads=nocReads;for(unsigned i=0;i<64;i++)StepBlock();assert(old==packets && reads==nocReads);}
 };
+#ifndef PIONEER_Q38_FFN_GRAPH_MACHINE_ONLY
 int main(int argc,char** argv){assert(argc==2);setvbuf(stdout,nullptr,_IOLBF,0);unsigned positives=0,faults=0,minStack=0x70000;
  for(bool wide:{true,false})for(unsigned bank=0;bank<7;bank++) {
   GraphRootMachine root(argv[1],wide,bank,(bank&1)!=0,(bank&2)!=0,bank);
@@ -181,3 +182,4 @@ int main(int argc,char** argv){assert(argc==2);setvbuf(stdout,nullptr,_IOLBF,0);
  }
  printf("PASS OFFLINE ACTUAL QFG1 root:positive%u/faults%u/maxDeviceStackBytes%u;complete7stage FFN+ALL119STOP/independent physical counters/ALLsourcewords/exact shadow/UNKNOWN inert;SYNTHETIC_PEER_PROTOCOL_VALUES_NO_NATIVE_ARITHMETIC_MODEL_OR_SPEED_AUTHORITY\n",positives,faults,0x70000-minStack);
 }
+#endif
