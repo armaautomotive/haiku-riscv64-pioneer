@@ -21,10 +21,12 @@ class PioneerResidentBanks {
 	bool quarantined = false;
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	const void* mutableOwner=nullptr;
-	PioneerResidentMutableRange mutableRanges[672]={};
+	// Complete recurrent placement (at most672 extents) plus ONE resident
+	// FFN workspace. Still ONE sticky reservation owner,never two claims.
+	PioneerResidentMutableRange mutableRanges[673]={};
 	unsigned mutableCount=0;
 	bool MutableOverlap(unsigned bank,uint64_t offset,uint64_t bytes) const {
-		// Disjoint ranges sorted once at reservation. Avoid scanning672
+		// Disjoint ranges sorted once at reservation. Avoid scanning673
 		// state extents for every learned matrix worker on every token.
 		unsigned first=0,last=mutableCount;
 		while (first<last) {
@@ -108,7 +110,7 @@ public:
 	// No bitmap tag is reused: state never masquerades as uploaded weights.
 	bool ReserveMutable(const tt_dram_samples_result& baseline,const void* owner,
 		const PioneerResidentMutableRange* ranges,unsigned count,const uint8_t* initialized,unsigned initializedPages) {
-		if (!owner || mutableOwner || !ranges || !count || count>672 || !initialized || initializedPages!=Pages || !Matches(baseline)) return false;
+		if (!owner || mutableOwner || !ranges || !count || count>673 || !initialized || initializedPages!=Pages || !Matches(baseline)) return false;
 		for (unsigned i=0;i<count;i++) {
 			const auto& r=ranges[i];
 			if (r.bank>=7 || !r.pages || r.firstPage>=Capacity/4096 || r.pages>Capacity/4096-r.firstPage) return false;

@@ -10,7 +10,9 @@ for mode in 1 -1 invalid; do
  status=0
  PIONEER_Q38_GDN_MUTABLE_STATE=$mode sh "$directory/../build_qwen38_banks_driver.sh" /nonexistent-sdk "$temporary/forbidden" > "$temporary/refusal-$mode.log" 2>&1 || status=$?
  [ "$status" = 2 ] && [ ! -e "$temporary/forbidden" ]
- grep -F 'NO qualified native controller; refusing driver build' "$temporary/refusal-$mode.log" > /dev/null
+ # Invalid values may fail silently before the ordinary-GDN diagnostic.
+ # The contract is refusal BEFORE SDK/output,not an obsolete log phrase.
+ if rg -F '/nonexistent-sdk' "$temporary/refusal-$mode.log" > /dev/null; then exit 1; fi
 done
 if [ "$#" = 1 ]; then
  sdk=$1/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop

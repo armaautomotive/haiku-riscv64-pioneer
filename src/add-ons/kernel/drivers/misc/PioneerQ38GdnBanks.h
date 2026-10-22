@@ -18,6 +18,7 @@ struct PioneerQ38StateZeroResult;
 struct PioneerQ38GdnRegion { uint32_t layer,slot,firstHead,heads,bank,offset; };
 struct PioneerQ38GdnBankExtent { uint32_t bank,address,route,index,pages,bytes; };
 class PioneerQ38GdnBanks {
+ friend class PioneerQ38GraphMutableBanks;
  template<class IO> friend bool PioneerQ38StateZeroRun(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38GdnBanks&,PioneerResidentBanks&,const tt_host_page_result&,PioneerResidentLease&,
   PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38StateZeroLease&,
@@ -29,6 +30,7 @@ class PioneerQ38GdnBanks {
  // arrays intentionally do not consume Haiku's small kernel stack.
  PioneerResidentBanks* banks=nullptr;
  const tt_dram_samples_result* baseline=nullptr;
+ const void* reservationOwner=nullptr; // this OR the exact retained joint owner
  PioneerQ38GdnIdentity identity={};
  PioneerQ38GdnRegion regions[672]={};
  PioneerResidentMutableRange claims[672]={};
@@ -46,7 +48,7 @@ class PioneerQ38GdnBanks {
   PioneerQ38GdnBankExtent e={r.bank,0,0,0,pages,pages*4096};
   for (unsigned p=0;p<pages;p++) {
    uint32_t address=0,route=0,index=0;
-   if (!banks->MutablePage(*baseline,this,r.bank,offset+p*4096,address,route,index)) return false;
+   if (!banks->MutablePage(*baseline,reservationOwner,r.bank,offset+p*4096,address,route,index)) return false;
    if (!p) { e.address=address; e.route=route; e.index=index; }
    else if (address!=e.address+p*4096 || route!=e.route || index!=e.index+p) return false;
   }
@@ -63,15 +65,10 @@ class PioneerQ38GdnBanks {
   if (!Matches(id) || !zeroProgress.Snapshot(id,pages) || pages!=PioneerQ38GdnZeroProgress::Pages) return false;
   initializationPublished=true; return true; // called ONLY after complete known-clean zero CLOSE proofs
  }
-public:
- PioneerQ38GdnBanks()=default;
- PioneerQ38GdnBanks(const PioneerQ38GdnBanks&)=delete;
- PioneerQ38GdnBanks& operator=(const PioneerQ38GdnBanks&)=delete;
- // Exclusive global store lock is mandatory. Refusal before claim is
- // inert; successful ownership survives Close/fault until context death.
- bool Bind(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id,
-  const uint8_t* initialized,unsigned initializedPages,const PioneerQ38GdnRegion* input,unsigned n) {
-  if (banks || unsafe || !id.Valid() || !input || n<96 || n>672 || !owner.Matches(proof)) return false;
+ // PRIVATE staging,not reservation/binding/readiness. The joint owner
+ // uses the SAME complete region validator BEFORE its one atomic claim.
+ bool StageRegions(const PioneerQ38GdnRegion* input,unsigned n) {
+  if (banks || unsafe || !input || n<96 || n>672) return false;
   uint64_t heads[48][2]={}; unsigned totalPages=0;
   for (unsigned i=0;i<n;i++) {
    auto r=input[i]; unsigned ordinal=Ordinal(r.layer);
@@ -86,10 +83,27 @@ public:
   }
   for (unsigned layer=0;layer<48;layer++) for (unsigned slot=0;slot<2;slot++)
    if (heads[layer][slot]!=UINT64_C(0xffffffffffff)) return false;
-  if (totalPages!=PioneerQ38GdnZeroProgress::Pages || !owner.ReserveMutable(proof,this,claims,n,initialized,initializedPages)) return false;
-  banks=&owner; baseline=&proof; identity=id; count=n;
+  return totalPages==PioneerQ38GdnZeroProgress::Pages;
+ }
+ // Called ONLY after the complete independently checked reservation.
+ // No caller-provided shared-owner/address hint is exposed publicly.
+ bool AttachReservation(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,
+  const PioneerQ38GdnIdentity& id,const void* reservation,unsigned n) {
+  banks=&owner; baseline=&proof; identity=id; count=n; reservationOwner=reservation;
   if (!zeroProgress.Bind(id)) { Fault(); return false; }
   return true;
+ }
+public:
+ PioneerQ38GdnBanks()=default;
+ PioneerQ38GdnBanks(const PioneerQ38GdnBanks&)=delete;
+ PioneerQ38GdnBanks& operator=(const PioneerQ38GdnBanks&)=delete;
+ // Exclusive global store lock is mandatory. Refusal before claim is
+ // inert; successful ownership survives Close/fault until context death.
+ bool Bind(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id,
+  const uint8_t* initialized,unsigned initializedPages,const PioneerQ38GdnRegion* input,unsigned n) {
+  if (banks || unsafe || !id.Valid() || !owner.Matches(proof) || !StageRegions(input,n)
+   || !owner.ReserveMutable(proof,this,claims,n,initialized,initializedPages)) return false;
+  return AttachReservation(owner,proof,id,this,n);
  }
  // Initialization-only private extent. The new owner has NO compute/read
  // readiness API yet. Actual zeroing/completion must be independently

@@ -1,5 +1,28 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:unified recurrent/FFN reservation
+implemented and tested. ONE sticky owner,673extents/73728GDN+74FFNpages,
+all7FFNbanks/516639refusals;existing7x3GiB limits unchanged. Typed borrowed
+roles retain independent EMPTY initialization ledgers;reservation is NOT
+readiness/producer/launch authority. Kernel frame928B,object HEAP ONLY.
+Actual frozen-zero/controller tests pass both serial role orders and
+UNKNOWN in either role:ALL simulated owners retained,no further IO,and
+even pristine/already-closed siblings refuse a clean-CLOSE hint afterward.
+Both original zero/controller/native-scope regressions pass. New FFN root
+initial+packet-before accepted-counter alias guards pass actual instruction
+28positive/98fault cases,max5832B stack. Rebuilt twice EXACT,refrozen with
+ALL6section verification. Actual root+ALL119 real worker instruction replay
+passes TWO changed-input FFNs/79872nonzero rows/176producers/ALL119STOP,
+exactFP32+independentFP64;simulated endpoints,NOT native timing/model speed.
+New root bytes are NOT native-qualified. Existing
+updater pins still identify the EARLIER6e963 held-only copier. No native
+writes/reloads/jobs/Assistant/boot/power/SD changes;fresh041/tag12/gen32/
+idle/cold0/owner0/open1/guard1,no native parents. Next REAL native FFN
+execution/model/initial-producer/current-terminal/host/clock owner and
+integration of the new shared reservation. Last actual27B0.207893161tok/s
+unchanged;20tok/s UNMET,goal ACTIVE.
+Evidence:benchmarks/qwen38-joint-mutable-root-alias-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:held-only FFN code memory ownership
 PASSED on actual P100A in TWO independent sessions,ALL120 roles. Each saved/
 installed/read back/restored867448 words,with exact command/MASTER/source/
@@ -14,7 +37,8 @@ tag12/gen32/idle/cold0/owner0/open1/guard1;all native parents absent,64 CPUs/
 max137034936320B. No reboot,power,SD,Assistant/settings changes. Qualification
 is memory mapping/copy/restore ONLY,NOT FFN execution/model/producer/speed.
 Next actual native FFN execution owner+model/input/unified mutable/terminal
-integration;root before-counter alias parity still required before launch.
+integration;latest OFFLINE checkpoint above supplies the alias guard and
+shared reservation class,NOT their missing native execution authority.
 Last real27B .207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
 Evidence:benchmarks/qwen38-ffn-code-native-20261022.txt.
 

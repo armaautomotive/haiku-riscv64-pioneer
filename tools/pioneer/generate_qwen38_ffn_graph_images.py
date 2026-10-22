@@ -10,9 +10,9 @@ import struct
 import sys
 
 PINS = {
-    'root-main': ('text', 6884, '6f93667f7f187337214f0d857f5ec4e3fe803ab64d9df2f7593af463aa903abd', 'RootMain'),
-    'root-prefix': ('prefix', 6148, 'ecc9b051ce7d9f21c4c4420d11354504f203dc2d24a2f6e9d75f8ad57d8b0b92', 'RootPrefix'),
-    'root-graph': ('graph', 16300, 'b486df9b79f66435cb537b8747ab5ec2f848145eeeb01fd1bfb24bc5d86ba738', 'RootGraph'),
+    'root-main': ('text', 6884, '19eba2d3fb8f0d4cee5debd4bd4960856153ba7592c4892ffecacdb250b23494', 'RootMain'),
+    'root-prefix': ('prefix', 6148, '3f7f3b0b42e0fbf6b002eb58cadbc954ed195a3108040d73770446af63dc19e1', 'RootPrefix'),
+    'root-graph': ('graph', 16464, '9dfca41e5dd72117a98cf79cc0c1dc2ad33b5bfebc3b3b3c70f1f70bd0a9000c', 'RootGraph'),
     'peer-main': ('text', 8180, 'd2052fbbf43dcc022747ea2b228e7b1bc0f829f4984821ab4dfca20473e3a8ef', 'PeerMain'),
     'peer-affine': ('affine', 5152, '96e92065722a477b08ba41abc2f623064d44970c5807b37c6d739e8dc3697570', 'PeerAffine'),
     'peer-helper': ('ffn', 11164, 'd7c6f3458d795f65635b80c3c035c93a7da5b325629f19e0b0fdecdc70fc629d', 'PeerHelper'),

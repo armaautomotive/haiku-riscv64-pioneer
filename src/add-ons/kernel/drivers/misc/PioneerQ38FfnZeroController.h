@@ -193,7 +193,9 @@ template<class IO> bool PioneerQ38FfnZeroClose(IO& io,const tt_dram_samples_resu
 	PioneerQ38FfnBanks& state,PioneerResidentBanks& banks,const tt_host_page_result& input,PioneerResidentLease& store,
 	PioneerBulkUploadLease& bulk,PioneerOutputBufferLease& transfer,PioneerWideOutputLease& wide,PioneerQ38FfnZeroLease& lease,bool knownClean)
 {
-	if (lease.unsafe) return false;
+	// A pristine/already-closed sibling is NOT a clean-context grant after
+	// another role quarantined the shared reservation. No further IO.
+	if (lease.unsafe || state.Unsafe() || banks.Quarantined()) return false;
 	if (PioneerQ38FfnZeroPristine(lease)) {
 		if (!knownClean) return false;
 		lease.closed=true; return true; // no owner was acquired or touched

@@ -15,6 +15,7 @@ struct PioneerResidentLease;struct PioneerBulkUploadLease;struct PioneerOutputBu
 struct PioneerQ38FfnZeroLease;struct PioneerQ38FfnZeroResult;
 struct PioneerQ38DispatchLease;class PioneerQ38FfnMatrixLease;
 class PioneerQ38FfnBanks {
+ friend class PioneerQ38GraphMutableBanks;
  template<class IO> friend bool PioneerQ38FfnMatrixPrepare(IO&,const tt_dram_samples_result&,PioneerResidentBanks&,
   PioneerQ38FfnBanks&,PioneerQ38DispatchLease&,const PioneerQ38FfnIdentity&,PioneerQ38FfnMatrixLease&);
  template<class IO> friend bool PioneerQ38FfnMatrixClose(IO&,const tt_dram_samples_result&,PioneerResidentBanks&,
@@ -31,6 +32,7 @@ class PioneerQ38FfnBanks {
   PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38FfnZeroLease&,bool);
  PioneerResidentBanks* banks=nullptr;
  const tt_dram_samples_result* baseline=nullptr;
+ const void* reservationOwner=nullptr; // never a caller-provided public bind hint
  PioneerQ38FfnIdentity identity={};
  const PioneerQ38FfnZeroLease* initializationLease=nullptr;
  const PioneerQ38FfnMatrixLease* matrixLease=nullptr;
@@ -67,6 +69,10 @@ class PioneerQ38FfnBanks {
   unsigned count=0;if(published || !InitializationProgress(id,count) || count!=Pages)return false;
   published=true;return true; // called ONLY after complete known-clean zero CLOSE
  }
+ void AttachReservation(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,
+  const PioneerQ38FfnIdentity& id,const void* reservation,unsigned logicalBank,uint64_t workspaceOffset) {
+  banks=&owner;baseline=&proof;identity=id;reservationOwner=reservation;bank=logicalBank;offset=uint32_t(workspaceOffset);
+ }
 public:
  static constexpr unsigned Pages=(TT_Q38_FFN_RESIDENT_BYTES+4095)/4096;
  static constexpr unsigned Bytes=Pages*4096;
@@ -85,7 +91,7 @@ public:
    || workspaceOffset>=owner.Capacity || UINT64_C(67108864)>owner.Capacity-workspaceOffset || !owner.Matches(proof))return false;
   const PioneerResidentMutableRange claim={logicalBank,uint32_t(workspaceOffset/4096),Pages};
   if(!owner.ReserveMutable(proof,this,&claim,1,learned,learnedPages))return false;
-  banks=&owner;baseline=&proof;identity=id;bank=logicalBank;offset=uint32_t(workspaceOffset);return true;
+  AttachReservation(owner,proof,id,this,logicalBank,workspaceOffset);return true;
  }
  bool MatchesInitializationOwner(const PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38FfnIdentity& id) const {
   return banks==&owner && baseline==&proof && Matches(id);
@@ -97,7 +103,7 @@ public:
   PioneerQ38FfnExtent e={bank,0,0,0,count,count*4096};
   for(unsigned p=0;p<count;p++) {
    uint32_t a=0,r=0,i=0;
-   if(!banks->MutablePage(*baseline,this,bank,uint64_t(offset)+uint64_t(first+p)*4096,a,r,i))return false;
+   if(!banks->MutablePage(*baseline,reservationOwner,bank,uint64_t(offset)+uint64_t(first+p)*4096,a,r,i))return false;
    if(!p){e.address=a;e.route=r;e.index=i;}
    else if(a!=e.address+p*4096 || r!=e.route || i!=e.index+p)return false;
   }

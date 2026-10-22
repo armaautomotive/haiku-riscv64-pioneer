@@ -157,7 +157,10 @@ template<class IO> bool PioneerQ38StateZeroClose(IO& io,const tt_dram_samples_re
 	PioneerQ38GdnBanks& state,PioneerResidentBanks& banks,const tt_host_page_result& input,PioneerResidentLease& store,
 	PioneerBulkUploadLease& bulk,PioneerOutputBufferLease& transfer,PioneerWideOutputLease& wide,PioneerQ38StateZeroLease& lease,bool knownClean)
 {
-	if (lease.unsafe) return false;
+	// A sibling using the SAME bank context may have faulted,including
+	// after this lease closed or before it acquired anything. Never mint
+	// a clean-CLOSE hint from that now-quarantined context. Memory ONLY.
+	if (lease.unsafe || state.Unsafe() || banks.Quarantined()) return false;
 	if (lease.closed) return true;
 	auto fail=[&]() { return PioneerQ38StateZeroFail(io,state,banks,store,bulk,transfer,wide,lease); };
 	if (!knownClean || lease.running) return fail();

@@ -34,7 +34,13 @@ static GRAPH_FN void Packet(bool write,unsigned w,unsigned local,unsigned remote
  if(!permit || !w || w>119 || local<0x75000 || local>0x75800-bytes || ((local^remote)&31) || !Idle())block_fault_park();
  const auto* d=Snapshot();for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+SourceOffset(i))!=d[16+i])block_fault_park();
  unsigned flits=(bytes+63)/64;uint32_t expected[8];
- for(unsigned i=0;i<8;i++)expected[i]=*Words(0xffb20000+Offset(i))+(i==2 || i==6?1U:i==0 || i==3?unsigned(!write):i==1?(!write?flits:0U):i==5?(write?flits:0U):unsigned(write));
+ for(unsigned i=0;i<8;i++) {
+  expected[i]=*Words(0xffb20000+Offset(i))+(i==2 || i==6?1U:i==0 || i==3?unsigned(!write):i==1?(!write?flits:0U):i==5?(write?flits:0U):unsigned(write));
+  // Both entries sample the SAME accepted-transaction counter with the
+  // SAME modulo32 delta. A change while idle invalidates this baseline;
+  // stop BEFORE even reading the next counter or writing a command word.
+  if(i==6 && expected[6]!=expected[2])block_fault_park();
+ }
  const uint32_t command[]={write?local:remote,0,write?129U:XY(w),write?remote:local,0,write?XY(w):129U,0,write?0x212U:0,bytes,0};
  for(unsigned i=0;i<10;i++)Words(0xffb20000)[i]=command[i];
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])block_fault_park();
@@ -179,7 +185,10 @@ extern "C" GRAPH_FN unsigned block_main() {
  if(!Sealed() || !Idle())block_fault_park();
  for(unsigned i=0;i<64;i++)Stats()[i]=0;
  Stats()[0]=TT_Q38_FFN_GRAPH_MARKER;Stats()[1]=1;Stats()[2]=d[5];Stats()[12]=d[13];
- for(unsigned i=0;i<8;i++)Stats()[16+i]=*Words(0xffb20000+Offset(i));
+ for(unsigned i=0;i<8;i++) {
+  Stats()[16+i]=*Words(0xffb20000+Offset(i));
+  if(i==6 && Stats()[22]!=Stats()[18])block_fault_park();
+ }
  for(unsigned w=0;w<119;w++)Seq()[w]=d[64+w];
  for(unsigned w=1;w<=119;w++){Wait(w,Seq()[w-1],1,true);SourceCurrent(w);}
  if(d[5]==2)Producer(2,119,d[13]);

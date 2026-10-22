@@ -16,6 +16,8 @@ struct GraphRootMachine:DispatchMachine {
  unsigned captures=0,startPackets=0,nocReads=0,stages[5]={},phaseWrites[3]={},nativeLoads=0,compactWrites=0;
  unsigned corruptNode=0,corruptWord=~0U,physicalSourceFault=0,physicalCounterFault=0;
  unsigned badStatusNode=0,badPcNode=0,badResetNode=0,mutateManifestPacket=0,mutateSourcePacket=0;
+ unsigned ownCounterScans=0,ownAcceptedReads=0,faultOwnAliasScan=0,ownReadsAfterFault=0,commandWritesAfterFault=0,faultPackets=0;
+ bool ownAliasFaultObserved=false;
  std::array<uint32_t,16> rootSource={};
  GraphRootMachine(const char* path,bool wide=true,unsigned bank=0,bool edge=false,bool reverse=false,unsigned types=0)
   :DispatchMachine(path,119),fixture(bank,edge,wide,reverse,types),prefix(Read((std::string(path)+"/prefix.bin").c_str())),graph(Read((std::string(path)+"/graph.bin").c_str())) {
@@ -41,13 +43,22 @@ struct GraphRootMachine:DispatchMachine {
  uint32_t Load(uint32_t a)override {
   if(Range(a,0x64000,unsigned(prefix.size())))return Word(prefix,a-0x64000);
   if(Range(a,0x68000,unsigned(graph.size())))return Word(graph,a-0x68000);
-  if(Range(a,0xffb20000,0x2000))nocReads++;
+  if(Range(a,0xffb20000,0x2000)) {
+   nocReads++;
+   if(ownAliasFaultObserved)ownReadsAfterFault++;
+   if(a==0xffb20208){ownCounterScans++;ownAcceptedReads=0;}
+   if(a==0xffb20210 && ++ownAcceptedReads==2 && ownCounterScans==faultOwnAliasScan) {
+    assert(!pending && !ownAliasFaultObserved);ownAliasFaultObserved=true;faultPackets=packets;
+    return DispatchMachine::Load(a)^1U;
+   }
+  }
   for(unsigned i=0;i<16;i++)if(a==0xffb20000+BlackholeDramSourceOffset(i))return rootSource[i];
   if(Range(a,TT_Q38_FFN_GRAPH_MANIFEST,0x8000) || Range(a,0x7f900,256) || Range(a,0x7fa00,119*4)
    || Range(a,0xa0000,34816) || Range(a,0xab000,320))return memory.at(a);
   return DispatchMachine::Load(a);
  }
  void Store(uint32_t a,uint32_t value)override {
+  if(ownAliasFaultObserved && Range(a,0xffb20000,0x2000))commandWritesAfterFault++;
   assert(!Range(a,TT_Q38_FFN_GRAPH_MANIFEST,TT_Q38_FFN_GRAPH_WORDS*4)); // original NEVER writable
   if(Range(a,TT_Q38_FFN_GRAPH_SHADOW,TT_Q38_FFN_GRAPH_WORDS*4)) {
    assert(packets==startPackets && captures<TT_Q38_FFN_GRAPH_WORDS && a==TT_Q38_FFN_GRAPH_SHADOW+captures*4);
@@ -180,6 +191,15 @@ int main(int argc,char** argv){assert(argc==2);setvbuf(stdout,nullptr,_IOLBF,0);
  for(unsigned fault=0;fault<4;fault++){GraphRootMachine root(argv[1]);
   if(!fault)root.badReadback=true;if(fault==1)root.faultAt=1;if(fault==2)root.mutateManifestPacket=1;if(fault==3)root.mutateSourcePacket=1;
   assert(!root.RunGraph() && root.unknown);root.Inert();faults++;
+ }
+ // Initial baseline and subsequent Packet BEFORE scans,including wrapped
+ // accepted counts. The FIRST alias mismatch must be the LAST MMIO read:
+ // no index7,command read/write,doorbell,packet,STOP or retry follows it.
+ for(unsigned scan:{1U,2U,4U,6U,202U})for(uint32_t accepted:{0U,UINT32_MAX,UINT32_MAX-100U}) {
+  GraphRootMachine root(argv[1]);root.counts[2]=accepted;root.faultOwnAliasScan=scan;
+  assert(!root.RunGraph() && root.unknown && root.ownAliasFaultObserved);
+  assert(!root.ownReadsAfterFault && !root.commandWritesAfterFault && root.packets==root.faultPackets);
+  root.Inert();assert(!root.ownReadsAfterFault && !root.commandWritesAfterFault);faults++;
  }
  printf("PASS OFFLINE ACTUAL QFG1 root:positive%u/faults%u/maxDeviceStackBytes%u;complete7stage FFN+ALL119STOP/independent physical counters/ALLsourcewords/exact shadow/UNKNOWN inert;SYNTHETIC_PEER_PROTOCOL_VALUES_NO_NATIVE_ARITHMETIC_MODEL_OR_SPEED_AUTHORITY\n",positives,faults,0x70000-minStack);
 }

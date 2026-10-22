@@ -1,0 +1,133 @@
+Resident FFN root alias guard and unified recurrent/FFN reservation.
+October22 2026. OFFLINE ONLY;NO new native execution or speed claim.
+
+The new whole-FFN root now rejects inconsistent repeated samples of the
+SAME selected MASTER accepted-counter BEFORE any packet command is written.
+Both expected aliases include the same modulo32 increment,so parity is
+valid even through UINT32_MAX wrap. Its initial whole-graph baseline has
+the same immediate guard. At the FIRST mismatch it parks before index7,
+another MMIO read,command write,doorbell,packet,STOP,reset or retry.
+
+Actual root instruction tests:28positive/98faults,max5832B device stack.
+15 new faults cover the initial baseline and four packet-before scans,
+each with zero/wrapped/near-wrap counters. Test instrumentation independently
+counts EVERY later MMIO read/write and packet,including after inert park.
+Root log /private/tmp/pioneer-q38-ffn-alias-root-20261022-a.log
+SHA57d97c82598ccb724c686b299e5c4ac15ef4457ef0f88bafcd812a9812977d04.
+
+Two independent read-only-SDK builds are byte-identical:
+ /private/tmp/pioneer-q38-alias-root.wvpntb69/image
+ /private/tmp/pioneer-q38-alias-repeat.hvK1x3di/image
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text6884B 19eba2d3fb8f0d4cee5debd4bd4960856153ba7592c4892ffecacdb250b23494
+ prefix6148B 3f7f3b0b42e0fbf6b002eb58cadbc954ed195a3108040d73770446af63dc19e1
+ graph16464B 9dfca41e5dd72117a98cf79cc0c1dc2ad33b5bfebc3b3b3c70f1f70bd0a9000c
+Peer unchanged /private/tmp/pioneer-q38-ffn-graph-peer-control.NJzpNLRW/image.
+ALL three affected frozen sections regenerated through apply_patch.
+Catalog:867328words/3701951refusals,ALL120roles/exact image+zero padding,
+stack/peer-gap excluded. Generator12exact+52refusals checks ALL6sections
+and both boots BEFORE any output,including Python-O.
+
+ACTUAL root+ALL119 real worker instruction replay also CLI0:two changed
+input/token/layer FFNs,79872nonzero matrix rows,176actual input/activation
+producers,all119STOP,exactFP32 and independentFP64 checks plus native-byte
+observers. Bank1/high capacity edge/reversed rows,gate+downQ6/upQ4(mask5).
+rootVM202101649/peerVM2198994302/TensixInstructions6963200/maxStack5832.
+These are INSTRUCTION-MODEL COUNTS,not native cycles/timing or tokens/sec.
+ /private/tmp/pioneer-q38-ffn-alias-actual-20261022-a.log
+ SHA89b6a49b260efef71d95000aab955eb74fe1bd0ec1cf06db22dabbe4a943146b
+ Replay executable:
+ /private/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-q38-ffn-graph-cooperative.XXihB2Qh/test
+All7 existing actual-producer/physical-source/counter/proof/pending-write/
+nonfinite faults replayed against the NEW root,CLI0:park,no next packet,
+matrix,STOP,reset or retry;simulated endpoints ONLY.
+ /private/tmp/pioneer-q38-ffn-alias-actual-faults-20261022-a.log
+ SHA86738c7169b7b1761391db948bbe04a4c196a538bc22d1870eeea99ad88f27f8
+
+PioneerQ38GraphMutableBanks is a NEW heap-only kernel-private factory.
+It atomically reserves complete73728-page GDN state and74-page/303104B FFN
+workspace using ONE sticky owner,not independently competing owners.
+Maximum673extents=672GDN+1FFN;seven3GiB bank limits remain unchanged.
+The entire existing64MiB FFN envelope must be disjoint from GDN,even
+though only its first74pages are currently reserved. EVERY claimed page
+must be fresh/unlearned. All checks finish before ANY reservation publishes.
+No bitmap tag or initialization/producer/launch/terminal/host/clock authority
+is fabricated. The proposal still needs an authenticated native model owner.
+
+Existing standalone GDN/FFN Bind contracts remain available. The joint
+factory privately reuses the SAME GDN coverage/placement validator and
+attaches both typed roles ONLY after one successful complete reservation.
+Public shared-owner/raw-address attachment hints remain inaccessible.
+Both roles retain independent private initialization ledgers and seals.
+Borrowed role handles MUST NOT be deleted separately or assigned into old
+native context fields that independently delete their owners. Native use
+must retain the complete joint heap object and serialize/exclude BOTH
+roles' code/operation controllers under ONE actual native context owner.
+This reservation class does not itself own those controllers or prove scope.
+
+ASan/UBSan+actual RISC-V kernel compile:7canonical joint plans,ALL7FFN banks,
+516639refusals. Every GDN/FFN reserved page excluded from legacy learned
+access;exact bank/source/identity binding,partial/duplicate/malformed/learned
+collisions refuse atomically,complete64MiB-envelope collision refuses even
+outside the first74pages. Either child fault quarantines ALL bank ownership.
+Maximum compiled kernel frame928B,large object HEAP ONLY,not a linked driver.
+ /private/tmp/pioneer-q38-joint-mutable-20261022-a.log
+ SHAac7bc8f059097c75eb64914f848f662ae394b575d9c36014355fcc15667a1224
+
+Combined actual frozen-zero instruction/controller tests:6positive/fault
+cases,both SERIAL role orders,full FFN74 and partial GDN16 pages. Each
+known-clean CLOSE restores exact code/panel/bulk/boot before the other
+role runs. FFN publishes ONLY its own74page seal;GDN16 remains partial.
+NO whole-GDN initialization claimed. Both ledgers start EMPTY at binding.
+UNKNOWN in EITHER role retains ALL simulated host/maps/store owners,
+and all subsequent controller calls are inert. Newly fixed BOTH zero-CLOSE
+helpers reject a quarantined sibling context BEFORE even a pristine or
+already-closed lease could return a clean-CLOSE hint. Those are MEMORY-ONLY
+checks;no postfault restore/hold/END/MMIO/STOP/reset/retry is allowed.
+Actual native clock/cookie/full-context retention is STILL required.
+ /private/tmp/pioneer-q38-joint-zero-20261022-c.log
+ SHA06157ad43b1bf9f5462f9ed19ae2f49bab4293632f8ad42fdf8792aa8e44116e
+Intermediate logs-a/-b fail old cleanup-test assumptions and are superseded;
+log-c passes the hardened pristine AND already-closed sibling cases.
+
+Regressions ALL CLI0:
+ Original FFN zero15positive/211faults/28inert refusals,max880B kernel frame.
+ /private/tmp/pioneer-q38-joint-ffn-zero-regression-20261022-b.log
+ SHA8328e447b99aa629648f1154032a9b7aab0a8f2c92c33011d8566785914a0aeb
+ Original GDN actual-zero controller,all data/counter/source/terminal proofs,
+ no postfault IO,max880B kernel frame.
+ /private/tmp/pioneer-q38-joint-gdn-zero-regression-20261022-b.log
+ SHAafe5d47abb240ecd2790a444bc293acc78b26a254e7ab91490bc3a788728f72c
+ GDN9216half-head extents/fresh672stripes+7bank fallback/max96B proposal.
+ Existing GDN test runner now checks refusal BEFORE SDK/output,including
+ invalid values,rather than an obsolete message that failed independently.
+ Actual native zero-scope64CPU gates,ALL119audit+first/middle/last faults;
+ actual fixed-zero control/lock/call-seal/client refusal/retention tests.
+ Original private FFN matrix controller:4positive/92faults/20inert refusals,
+ 14missing/mixed compile refusals,max880B kernel frame. Its producer/scope
+ callbacks remain SIMULATED,not native authority or a launch grant.
+ /private/tmp/pioneer-q38-joint-matrix-regression-20261022-a.log
+ SHA27ae86a9734c513e3d793459c5877efa500069971a8c94555a58cc478e822db6
+ Whole-FFN shape451positive/3547refusals.
+ Code owner BOTH legacy families:2roundtrips/118faults EACH,ALL867448words.
+ Actual native adapter methods867448words/15253874refusals,actual owner hook
+ allocation/map/write/reentry retention,BOTH12-op routing modes/18mixed
+ compile refusals,and68new-graph before-SDK build refusals.
+
+NO native writes/uploads/jobs/reloads/reboot/power/SD/Assistant changes in
+this checkpoint. Fresh read-only host evidence:ALL native parents absent,
+installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen32/quiesced0/cold0/owner0/open1/guard1.
+Previous64CPU/fullRAM configuration unchanged. Existing updater pins still
+identify the EARLIER native-qualified6e963 held-only copier,not a newly
+built driver containing these changed root bytes. Do not relabel/promote
+new builds under that old hash. Raw-Dst cache22 remains HARD BLOCKED.
+Dirty llama.cpp and unrelated FlashNext work remain untouched.
+
+NEXT:actual retained native full-FFN execution/code owner with canonical
+learned/source/model binding,real initialized input-producer receipt and
+current-terminal/host/clock ownership. Integrate the shared reservation
+into that real lifetime,not merely an IO-scope mock or boolean. No old
+checked clear/STOP ABI on the new manifest/shadow. Full FFN is still NOT
+all-card attention/GDN/KV/norm/residual/embedding/sampling.
+Last real whole27B rate0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
