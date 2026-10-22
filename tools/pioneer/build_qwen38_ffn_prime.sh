@@ -8,6 +8,7 @@ if [ "$#" = 3 ];then
  case "$3" in
   --model-init) role_flags=-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1;;
   --native-graph) role_flags='-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1 -DPIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT=1';;
+  --native-graph-host-profile) role_flags='-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1 -DPIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT=1 -DPIONEER_Q38_FFN_HOST_PROFILE_CLIENT=1';;
   *) exit 2;;
  esac
 fi

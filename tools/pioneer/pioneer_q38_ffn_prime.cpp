@@ -6,6 +6,11 @@
 #endif
 #include "TenstorrentHaikuQwen38.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
+#if PIONEER_Q38_FFN_HOST_PROFILE_CLIENT != 1 || !defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT) || defined(PIONEER_Q38_FFN_HOST_PROFILE)
+#error Host phase timing client requires its exact separate tag37 source role
+#endif
+#endif
 struct FfnPrimeNativeMode:PioneerQ38WorkSessionMode {
 #ifdef PIONEER_Q38_FFN_MODEL_INIT_CLIENT
  uint64_t generation=0;
@@ -15,7 +20,9 @@ struct FfnPrimeNativeMode:PioneerQ38WorkSessionMode {
   tt_pioneer_driver_reload r={};r.version=1;
   if(!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&r,sizeof(r)) || r.version!=1 || r.driver!=55 || r.guard_version!=1
    || r.build_tag!=
-#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
+    UINT64_C(0x2026102200010037)
+#elif defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT)
     UINT64_C(0x2026102200010036)
 #elif defined(PIONEER_Q38_FFN_MODEL_INIT_CLIENT)
     UINT64_C(0x2026102200010035)
@@ -57,7 +64,10 @@ struct FfnPrimeProgress {
 int main(int argc,char** argv) {
  if(argc!=2)return 2;
  unsigned layer;
-#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
+ if(!strcmp(argv[1],"--profile-layer0"))layer=0;
+ else return 2;
+#elif defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT)
  if(!strcmp(argv[1],"--graph-layer0"))layer=0;
  else return 2;
 #elif defined(PIONEER_Q38_FFN_MODEL_INIT_CLIENT)
@@ -95,6 +105,13 @@ int main(int argc,char** argv) {
   uint32_t hash=2166136261U;for(auto value:request.output[pass])hash=(hash^value)*16777619U;
   printf("NATIVE_FULL_FFN pass%u elapsed_us%llu output_words5120 fingerprint%08x;ONE119PEER_BOOT_INTERMEDIATES_ON_CARD_NOT_TOKEN_RATE\n",
    pass,(unsigned long long)request.elapsed_us[pass],hash);
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
+  // Profiling changes NO device arithmetic. Require the previous real
+  // tag36 fingerprints for these SAME fixed inputs/source BEFORE END.
+  // This is a GPU regression oracle,NOT a CPU learned-product reference.
+  const uint32_t expected[]={0xf0e218bfU,0xbb087a1fU};
+  if(hash!=expected[pass]){puts("STOP_PROFILE_GPU_FINGERPRINT_CHANGED_CLOSE_ONLY_NO_END_OR_RETRY");okay=false;break;}
+#endif
  }
 #endif
  if(!okay)session.Abort(); // CLOSE ONLY,no END/retry/fallback on source/transfer loss

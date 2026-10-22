@@ -19,6 +19,10 @@ int main(int argc,char** argv){
  assert(argc==4);GraphImage=argv[1];PeerImage=argv[2];setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&FreshInputs;
  unsigned refusal=0,faults=0,stopFaults=0;
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+ {PersistentFixture f(argv[3]);f.result.hostProfile.us[Q38_FFN_INPUT_STAGE]=1;unsigned before=f.io.touches;
+  assert(!f.Prepare() && f.io.touches==before && !f.graphOwner->Unsafe());refusal++;}
+#endif
  for(unsigned selected:{0U,1U,60U,119U})for(unsigned kind:{1U,3U,4U,5U,6U,7U}){
   if(!selected && kind==1)continue; // root boot is installed before the worker fault target
   PersistentFixture f(argv[3]);f.io.graphFault=kind;f.io.faultWorker=selected;

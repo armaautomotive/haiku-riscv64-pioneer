@@ -22,7 +22,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-persistent-graph-gates-') as te
             r = subprocess.run(args, env={**clean, 'PIONEER_Q38_FFN_PERSISTENT_GRAPH': value}, capture_output=True, text=True, timeout=5)
             assert r.returncode == 2 and not output.exists() and str(sdk) not in r.stdout+r.stderr, (name, value, r)
             cases += 1
-    role = dict(re.findall(r'\b(PIONEER_[A-Z0-9_]+)=([0-9]+)', (directory / 'build_qwen38_ffn_native_graph.sh').read_text()))
+    native_script = (directory / 'build_qwen38_ffn_native_graph.sh').read_text()
+    role = dict(re.findall(r'\b(PIONEER_[A-Z0-9_]+)=([0-9]+)', native_script))
+    assert 'ffn_task_tag=2026102200010036' in native_script
+    role['PIONEER_DRIVER_BUILD_TAG'] = '2026102200010036'
     assert role['PIONEER_DRIVER_BUILD_TAG'] == '2026102200010036' and role['PIONEER_Q38_FFN_NATIVE_GRAPH'] == '1'
 
     def refuse(name, overrides):

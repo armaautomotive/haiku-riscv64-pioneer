@@ -1,6 +1,7 @@
 #!/bin/sh
 # Compile only,no install/device access.
 set -eu
+[ "${PIONEER_Q38_FFN_HOST_PROFILE:-0}:${PIONEER_Q38_FFN_HOST_PROFILE_CLIENT:-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_FFN_NATIVE_GRAPH:-0}:${PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT:-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PERSISTENT_GRAPH:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PRIME:-0}" = 0 ] || exit 2

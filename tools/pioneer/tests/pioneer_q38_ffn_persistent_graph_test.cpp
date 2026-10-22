@@ -253,10 +253,21 @@ int main(int argc,char** argv){
   if(!pass){for(unsigned i=0;i<5120;i++)firstOutput[i]=f.output[i];}
   else assert(memcmp(firstOutput.data(),f.output,sizeof(f.output))!=0);
   assert(f.io.bootCount==119 && f.result.installedWords==installed && !f.result.restoredWords && f.result.runs==pass+1 && f.NativeMatches());
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  assert(f.result.hostProfile.Complete() && f.result.hostProfile.polls && !f.result.hostProfile.invalid);
+  printf("PASS CPU phase attribution pass%u synthetic_total%llu polls%u;FIXTURE_CLOCK_NOT_NATIVE_MICROSECONDS\n",pass,
+   (unsigned long long)f.result.hostProfile.Total(),f.result.hostProfile.polls);
+#endif
   printf("PASS ACTUAL persistent owner FFN pass%u rootR%u/W%u flits%u/%u,119 peers kept running;NOT_NATIVE_SPEED\n",pass,f.result.rootReads,f.result.rootWrites,f.result.rootReadFlits,f.result.rootWriteFlits);
  }
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+ auto profileBeforeStop=f.result.hostProfile;
+#endif
  assert(f.Close() && f.graphOwner->Closed() && f.code->Closed() && !f.result.unsafe && f.result.closed
   && f.io.bootCount==119 && f.io.rootCount==3 && f.result.restoredWords==867448 && f.result.stopped==119 && f.result.held==119);
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+ assert(memcmp(&profileBeforeStop,&f.result.hostProfile,sizeof(profileBeforeStop))==0);// STOP must not corrupt the last FFN attribution
+#endif
  PersistentOuterEnd(f);
  puts("PASS ACTUAL persistent owner+QFG2ROOT+ALL119QFP2 TWO fullFFNs:one867448word install/119boots,changed input/layer/token,176real producers/79872rows,intermediates stay GDDR,STOP+ALL physical terminals BEFORE FIRSThold,exact restoration only at CLOSE,original parentCLOSE+root residentEND restore ALL120outer snapshots;SYNTHETIC_WEIGHTS_AND_ENDPOINTS_NOT_NATIVE_AUTHORITY_OR_MODEL_SPEED");
 }

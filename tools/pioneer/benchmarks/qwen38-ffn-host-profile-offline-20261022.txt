@@ -1,0 +1,104 @@
+Isolated host-phase profiling of the real persistent FFN path,October22 2026.
+OFFLINE checkpoint;not yet native timing or a speed improvement.
+Whole27B last0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+The previous real tag36 qualifier completed TWO full FFNs at117225/117081us
+inclusive Run+CopyOutput wall time. Gate/up/SiLU/down and quantization
+intermediates stayed on card with ONE119-peer boot/code lifetime. Those
+numbers do not identify the device-only kernel time or whole-model speed.
+Measure the host boundary before deciding which round trips to remove.
+
+New isolated tag2026102200010037/namespace9 uses the EXACT unchanged
+QFG2 ROOT/QFP2 peers/public82000byte request/canonical source and physical
+completion policy. No firmware/device image/arithmetic change. The only
+driver addition is private CPU-monotonic phase DATA and serial reporting
+after successful Run+CopyOutput. Default/tag36 compile out the profiling.
+
+Eight phases:preflight,input guard,input stage,manifest stage+ARM,ROOT
+poll,ROOT proof,ROOT hold,final F32 output copy. ROOT poll INCLUDES host
+guards/observation latency;it is NOT isolated kernel time. No extra card
+reads are introduced by the timers. No post-failure RAII/timestamp IO.
+Private timing data never supplies launch/completion/source authority;
+invalid/backward/overflow timestamps invalidate diagnostics only. Prepare
+rejects nonpristine profile data before IO;STOP must leave the last FFN
+profile unchanged. Existing source/reset/PCI/NoC/physical-terminal proofs
+and all UNKNOWN retention rules remain intact.
+
+The profile client accepts ONLY --profile-layer0 and exact tag37. SAME
+full-open-file public GGUF SHA remains mandatory BEFORE accelerator Open.
+After a successful native reply,it additionally requires the two PRIOR
+REAL GPU fingerprints f0e218bf/bb087a1f for the SAME fixed inputs/source.
+Either changed fingerprint calls ACTUAL session Abort/CLOSE ONLY before
+Finish;NO BANK_END/retry/fallback/driver restore. This is a GPU regression
+oracle,NOT a CPU learned-product reference or CPU numeric equivalence.
+
+Local builds using ONLY read-only packaged SDK,not dirty llama.cpp:
+Driver eb6ba2741c8904dba8b4902ac260934ea2e169ffeb16ab8a3e96bd5e11966ba4
+ final profile37 and profile37-b EXACT,all handles TERMINAL0.
+Client fa841f2a13767c089ba8ebc47a663cfcbbf110800daa38bca7d5370c1e3b1373
+ final profile-client-c and profile-client-d EXACT,TERMINAL0.
+Guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+Default43control 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+Old native36 driver453ebdf12fa13bd39d31c3ec9f01c17e7048946e5cd575f663055b6e49c8f1e1
+Old native36 client35add96a69fbb7b5c0f49e0895743406197f424d21cf979565bb10f15373b7e6
+ remain byte-identical controls. Max new native control frame656B;
+ old ProbeControl3136B unchanged.
+
+Terminal passing local checks:
+-149 exact profile role/before-SDK/old-role/Assistant refusals and actual
+ namespace9/public82000byte ABI checks.
+-158 previous native36 exact role/namespace gates.
+-CPU profile helper incomplete/backward/overflow/zero-clock data tests.
+-29 pre-arithmetic+20 actual ROOT-STOP fault retentions/12 inert refusals
+ with actual persistent owner+frozen images,simulated endpoints.
+-TWO complete FFNs through actual frozen ROOT+ALL119 RV32/FPU/Tensix
+ instruction machines,changed input/layer/token,176producers/79872rows.
+ ONE867448word install/119boots,all intermediates GDDR,STOP+ALL physical
+ terminals BEFORE FIRSThold,exact program+ALL120outer snapshots restored.
+ Both eight-phase profiles complete,one call per phase,5460/5456polls;
+ synthetic totals5466/5462 are FIXTURE clock data,NOT native microseconds.
+ STOP left the last FFN profile byte-identical. Handle45268 TERMINAL0.
+-Actual client output/Abort/Finish extraction+ACTUAL source-bound session:
+ matching two synthetic fingerprints allows exactly one END;changed pass0,
+ changed pass1 or prior failure CLOSE ONLY,NO END/retry/extra native call.
+ Synthetic outputs/native receipts are NOT hardware numeric evidence.
+-Actual graph session2positive/21receipt faults/23before-launch refusals.
+-Focused guarded updater106fake-filesystem/handshake/hash/symlink/owner
+ cases;NO native reload/reset/automatic rollback.
+-BROAD all-route updater7075cases PASS,handle82459 TERMINAL0.
+-Shell syntax and git diff whitespace checks.
+
+Terminal evidence logs:
+ /private/tmp/pioneer-q38-ffn-host-profile-owner-20261022-a.log
+ SHA da859c45ee44705d22f8a108520cc725f77bae29f159d556575e9442f3ca6759
+ /private/tmp/pioneer-q38-ffn-host-profile-client-policy-20261022-a.log
+ SHA 96dda520782bdc1a9ecbd57c7fa1949fcf8c554c582907313c984a52571c88e8
+ /private/tmp/pioneer-q38-ffn-host-profile-graph-session-20261022-a.log
+ SHA 26e9a47066ea682eb27baedbda67a76c11be6bd1f22243c9d0d2fe69b87581b4
+Updater exact source SHA:
+ 2f927b424157b23d3e10942098eca8d67f098050ee75550733f160f4ec5bd888
+ONLY original041/tag12 <-> eb6/tag37,unique candidate path,unchanged
+parent/idle/hash/symlink/guard handshake. No force/reset/automatic rollback;
+failed raw-unpack tag22 route remains HARD BLOCKED.
+
+ALL local jobs TERMINAL0,including full arithmetic/STOP and broad updater;
+no live script was edited or restarted. Native profiling is still pending.
+
+Fresh pinned SSH read-only audit16:20UTC:ALL compute parents absent,
+EXACT original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag2026102100010012/generation40/quiesced0/cold0/active_owner0/open_count1/
+guard1,64CPUs/max137034936320B. No new profile files uploaded,driver
+installed or GPU job run. No Assistant/reboot/power/SD/boot/network changes.
+
+Next:source checkpoint/push,then fresh no-parent/
+idle proof and isolated profiling install/test. On ANY native uncertainty
+or numeric mismatch:CLOSE ONLY;NO END/reset/retry/read/hotswap/restore;
+retain all until explicit physical recovery. On known success ONLY,prove
+no parent/idle then guarded exact original restore. Use real phase results
+for performance work;do not repeat old init/STOP-only qualifications.
+
+This isolated1..2FFN API is NOT a production GGML fusion or resident full
+decoder. Same-family generic projections and all-card norms/residual/GDN/
+attention/KV/embedding/sampling still owed. Old matrix ioctls cannot run
+while this new graph owns all120roles. Do NOT rebootstrap119per GGML node
+or claim this is already an all-card model or end-to-end speedup.

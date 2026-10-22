@@ -9,6 +9,12 @@
 #include "PioneerQ38FfnInputGraphImages.h"
 #include "PioneerQ38FfnGraphShape.h"
 #include "PioneerQ38GraphMutableBanks.h"
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+#if PIONEER_Q38_FFN_HOST_PROFILE != 1
+#error Exact isolated host phase profiling role required
+#endif
+#include "PioneerQ38FfnHostPhaseProfile.h"
+#endif
 // PRIVATE HEAP ONLY. ACTUAL persistent full-FFN lifecycle,not the tag34
 // STOP-only qualifier. Save/install/boot119 ONCE;multiple complete QFG2
 // initial-input/gate/up/SiLU/down runs;STOP+ALL terminals before first hold
@@ -24,6 +30,9 @@ struct PioneerQ38FfnPersistentGraphResult {
  uint32_t savedMetadata=0,restoredMetadata=0,savedStack=0,restoredStack=0;
  uint32_t armed=0,released=0,ready=0,stopped=0,held=0,rootStarts=0,rootHolds=0;
  uint32_t rootReads=0,rootWrites=0,rootReadFlits=0,rootWriteFlits=0;
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+ PioneerQ38FfnHostPhaseProfile hostProfile;
+#endif
 };
 class PioneerQ38FfnPersistentGraphOwner {
  PioneerQ38FfnGraphCodeOwner* code=nullptr;
@@ -224,6 +233,9 @@ class PioneerQ38FfnPersistentGraphOwner {
   }
  }
  template<class IO> bool Execute(IO& io,PioneerQ38FfnPersistentGraphResult& r) {
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  const bool measure=manifest[5]==1;uint64_t stamp=measure?io.Q38CohortNow():0;
+#endif
   r.phase=6;r.worker=0;
   if(!Guard(io,0) || !Stage(io,TT_Q38_FFN_GRAPH_MANIFEST,manifest,TT_Q38_FFN_GRAPH_WORDS))return Fail(io,r);
   auto& store=cohort->worker[0].Store();store.l1_dirty=true;store.l1_restored=false;
@@ -232,13 +244,27 @@ class PioneerQ38FfnPersistentGraphOwner {
   r.phase=7;rootVerified=false;running[0]=cohort->worker[0].image.running=cohort->rootRunning=true;
   resets[0]=0x87ffff;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return Fail(io,r);
   uint64_t began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  if(measure){uint64_t now=io.Q38CohortNow();r.hostProfile.Add(Q38_FFN_MANIFEST,stamp,now);stamp=now;}
+#endif
   rootTraffic=true;resets[0]=0x46800;r.rootStarts++;io.RuntimeResetWrite(resets[0]);
   bool complete=false;
   for(unsigned attempt=0;attempt<65536;attempt++){
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+   if(measure)r.hostProfile.polls++;
+#endif
    if(!Guard(io,0))return Fail(io,r);
    uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return Fail(io,r);
    uint32_t marker=io.RuntimeStatusRead(2);if(marker && marker!=TT_Q38_FFN_GRAPH_MARKER)return Fail(io,r);
-   if(marker){if(!RootProof(io,r))return Fail(io,r);complete=true;break;}
+   if(marker){
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+    if(measure){uint64_t now=io.Q38CohortNow();r.hostProfile.Add(Q38_FFN_ROOT_POLL,stamp,now);stamp=now;}
+#endif
+    if(!RootProof(io,r))return Fail(io,r);
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+    if(measure){uint64_t now=io.Q38CohortNow();r.hostProfile.Add(Q38_FFN_ROOT_PROOF,stamp,now);stamp=now;}
+#endif
+    complete=true;break;}
    io.Pause();uint32_t pc=io.RuntimePcRead();if(!PioneerQ38FfnInputGraphExecutableAddress(0,pc) || (pc>=0x72060 && pc<0x72080))return Fail(io,r);
   }
   if(!complete)return Fail(io,r);
@@ -249,7 +275,11 @@ class PioneerQ38FfnPersistentGraphOwner {
   r.worker=0;if(!Guard(io,0) || !RootTerminal(io))return Fail(io,r);
   resets[0]=0x87ffff;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return Fail(io,r);
   resets[0]=0x47800;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return Fail(io,r);
-  running[0]=cohort->worker[0].image.running=cohort->rootRunning=false;r.rootHolds++;nonce=manifest[13];return true;
+  running[0]=cohort->worker[0].image.running=cohort->rootRunning=false;r.rootHolds++;nonce=manifest[13];
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  if(measure)r.hostProfile.Add(Q38_FFN_ROOT_HOLD,stamp,io.Q38CohortNow());
+#endif
+  return true;
  }
 public:
  PioneerQ38FfnPersistentGraphOwner()=default;
@@ -295,7 +325,11 @@ public:
    || r.phase || r.worker || r.word || r.unsafe || r.prepared || r.runs || r.closed || r.savedWords || r.installedWords
    || r.restoredWords || r.savedFrames || r.restoredFrames || r.savedMetadata || r.restoredMetadata || r.savedStack
    || r.restoredStack || r.armed || r.released || r.ready || r.stopped || r.held || r.rootStarts || r.rootHolds
-   || r.rootReads || r.rootWrites || r.rootReadFlits || r.rootWriteFlits)return false;
+   || r.rootReads || r.rootWrites || r.rootReadFlits || r.rootWriteFlits
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+   || !r.hostProfile.Pristine()
+#endif
+   )return false;
   auto* ffn=mutableOwner.Ffn(id);if(!ffn || !ffn->ClaimGraph(id,this))return false;
   started=true;code=&codeOwner;proof=&dram;banks=&owner;cohort=&participants;graph=&mutableOwner;plan=&canonical;
   state=ffn;identity=id;learned=initialized;learnedPages=pages;layer=selected;position=token;
@@ -347,15 +381,30 @@ public:
  template<class IO> bool Run(IO& io,const PioneerQ38FfnCanonicalJobs& jobs,unsigned selected,uint64_t token,
   const uint32_t (&values)[5120],PioneerQ38FfnPersistentGraphResult& r) {
   if(!Ready() || running[0] || !r.prepared || r.closed || r.unsafe)return false;
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  r.hostProfile.Clear();uint64_t stamp=io.Q38CohortNow();
+#endif
   if(!Scope(io))return Fail(io,r);
   if(!graph->MatchInitializedFfn(identity,jobs,selected,token,learned,learnedPages))return false; // configuration,NO IO
   for(unsigned i=0;i<5120;i++)if((values[i]&0x7f800000U)==0x7f800000U)return false;
   for(unsigned i=0;i<5120;i++)input[i]=values[i];
   if(!Manifest(jobs,selected,token))return false;
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  {uint64_t now=io.Q38CohortNow();r.hostProfile.Add(Q38_FFN_PREFLIGHT,stamp,now);stamp=now;}
+#endif
   outputReady=false;r.phase=6;r.worker=0;
   if(!Guard(io,0))return Fail(io,r);
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  {uint64_t now=io.Q38CohortNow();r.hostProfile.Add(Q38_FFN_INPUT_GUARD,stamp,now);stamp=now;}
+#endif
   cohort->worker[0].image.dirty=true; // outer saved panel ALSO owns the staged input/output scratch
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  if(!Stage(io,0x80000,input,5120))return Fail(io,r);
+  r.hostProfile.Add(Q38_FFN_INPUT_STAGE,stamp,io.Q38CohortNow());
+  if(!Execute(io,r))return Fail(io,r);
+#else
   if(!Stage(io,0x80000,input,5120) || !Execute(io,r))return Fail(io,r);
+#endif
   layer=selected;position=token;outputReady=true;r.runs++;return true;
  }
  // Complete final F32 result ONLY;gate/up/activation/quantization stay on
@@ -363,6 +412,9 @@ public:
  // is not a CPU learned-product reference or an arbitrary L1 read API.
  template<class IO> bool CopyOutput(IO& io,uint32_t (&destination)[5120],PioneerQ38FfnPersistentGraphResult& r) {
   if(!Ready() || !outputReady || running[0])return false;
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  uint64_t stamp=io.Q38CohortNow();
+#endif
   if(!Scope(io))return Fail(io,r);
   if(!Guard(io,0))return Fail(io,r);
   // Root L1 is compact WORKER order. GDDR was already scattered into
@@ -379,6 +431,9 @@ public:
   }
   if(!Guard(io,0))return Fail(io,r);
   for(unsigned i=0;i<5120;i++)destination[i]=output[i];
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+  r.hostProfile.Add(Q38_FFN_OUTPUT,stamp,io.Q38CohortNow());
+#endif
   return true;
  }
  template<class IO> bool Close(IO& io,PioneerQ38FfnPersistentGraphResult& r) {

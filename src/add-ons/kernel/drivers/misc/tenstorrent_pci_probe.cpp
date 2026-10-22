@@ -5,11 +5,19 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+#if PIONEER_Q38_FFN_HOST_PROFILE != 1 || !defined(PIONEER_Q38_FFN_NATIVE_GRAPH) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010037ULL || defined(PIONEER_Q38_FFN_HOST_PROFILE_CLIENT)
+#error Host-only full FFN phase profiling requires its exact isolated native tag37 role
+#endif
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL && !defined(PIONEER_Q38_FFN_HOST_PROFILE)
+#error Reserved tag37 identifies ONLY host-phase profiling of the qualified full FFN path
+#endif
 #if defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) && !defined(PIONEER_Q38_FFN_NATIVE_GRAPH)
 #error Persistent full FFN owner is OFFLINE until its separate actual native model/input/clock/host adapter is qualified
 #endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
-#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL)) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 #error Persistent full FFN native execution requires its separate exact tag36 model-bound role
 #endif
 #include "PioneerQ38FfnPersistentGraphOwner.h"
@@ -19,7 +27,7 @@
 #error Reserved tag36 identifies ONLY the persistent full FFN native adapter
 #endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
-#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL)) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL)))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Canonical FFN model init requires its separate exact tag35 retained-owner role,not old GDN/code/Work promotion
 #endif
 #include "PioneerQ38GraphMutableBanks.h"
@@ -3151,6 +3159,18 @@ static status_t Q38FfnGraphControl(PioneerProbeCookie* cookie,uint32 operation,v
 			&& c->q38FfnGraph->CopyOutput(c->io,request->output[pass],result);
 		// This clock is CPU monotonic,NOT a new card read after failure.
 		uint64_t ended=c->io.Q38CohortNow();if (okay && ended>=began) request->elapsed_us[pass]=ended-began;else okay=false;
+#ifdef PIONEER_Q38_FFN_HOST_PROFILE
+		if (okay) {
+			const auto& p=result.hostProfile;
+			dprintf("P100A_FFN_HOST_PROFILE layer%u pass%u valid%u wall_us%llu sum_us%llu preflight%llu input_guard%llu input_stage%llu manifest%llu root_poll%llu root_proof%llu root_hold%llu output%llu polls%u root_reads%u root_writes%u;CPU_MONOTONIC_ROOT_POLL_INCLUDES_HOST_GUARDS_NOT_KERNEL_ONLY\n",
+				request->layer,pass,unsigned(p.Complete()),(unsigned long long)request->elapsed_us[pass],(unsigned long long)p.Total(),
+				(unsigned long long)p.us[Q38_FFN_PREFLIGHT],(unsigned long long)p.us[Q38_FFN_INPUT_GUARD],
+				(unsigned long long)p.us[Q38_FFN_INPUT_STAGE],(unsigned long long)p.us[Q38_FFN_MANIFEST],
+				(unsigned long long)p.us[Q38_FFN_ROOT_POLL],(unsigned long long)p.us[Q38_FFN_ROOT_PROOF],
+				(unsigned long long)p.us[Q38_FFN_ROOT_HOLD],(unsigned long long)p.us[Q38_FFN_OUTPUT],
+				p.polls,result.rootReads,result.rootWrites);
+		}
+#endif
 	}
 	if (okay) okay=c->q38FfnGraph->Close(c->io,result) && !c->Unsafe() && c->io.SelectRuntimeCore(0);
 	request->state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;request->closed=okay?1:0;request->recovery_required=okay?0:1;

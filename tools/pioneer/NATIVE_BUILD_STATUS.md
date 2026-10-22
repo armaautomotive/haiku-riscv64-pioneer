@@ -1,5 +1,26 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:isolated tag37 CPU-monotonic
+phase profiling of the unchanged qualified full FFN path. EXACT same
+QFG2/QFP2 images,namespace9/public82000B request and physical/source/UNKNOWN
+policy;no device arithmetic changes. Eight private phases+serial data,
+ROOT poll includes host guards/observation,NOT device-only time. Actual
+owner+ROOT+ALL119 instruction TWO fullFFNs/STOP/ALL120outer restore PASS,
+both profiles complete/STOP unchanged;29setup+20STOPfaults/12refusals,
+149new+158oldrole gates,actual client Abort/Finish regression and source
+session2positive/21faults/23refusals PASS. New exact driver eb6ba274/client
+fa841f2a build TWICE EXACT;old36driver453e/client35add/guardd1ce/default43
+control2df BYTE-IDENTICAL. Profile client checks PRIOR real GPU fingerprints
+f0e218bf/bb087a1f BEFORE END;changed value CLOSE ONLY/NO END or retry,NOT a
+CPU learned reference. Focused updater106cases and BROAD7075cases PASS;
+ALL local jobs TERMINAL0,including full arithmetic/STOP and broad updater. No profile
+install/native test yet;fresh original041/tag12/gen40/idle/cold0/owner0/
+open1/guard1,64CPUs/full RAM. No Assistant/reboot/power/SD/boot/network change.
+Next push source,then isolated native phase
+measurement and known-success-only original restore. Whole27B.207893161
+tok/s unchanged;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-ffn-host-profile-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:REAL persistent full QFG2 FFN
 owner/actual native factory/source-bound execution PASS. Source43e06f41f6
 pushed/remote verified first. New exact453e/tag36/client35add/updaterdb1a
