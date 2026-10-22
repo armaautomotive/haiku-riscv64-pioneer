@@ -1,0 +1,101 @@
+REAL native persistent full FFN qualification,October22 2026.
+PASS actual source-bound full FFN execution/lifetime. NOT whole-model
+inference,numeric CPU-reference equivalence or a token-rate improvement.
+Whole27B last0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Source43e06f41f63b62561d1a4a45cc7d811c075b0f6a pushed and remote-verified
+BEFORE staging/install/execution. Offline arithmetic/lifetime and actual
+native-scope/source-session/namespace gates passed;104 focused and6837
+broad updater cases TERMINAL0. All local jobs terminal. See companion
+qwen38-ffn-persistent-graph-offline-20261022.txt for precise coverage.
+
+Fresh pinned SSH audit before staging:ALL compute parents absent,exact
+original041/tag12/gen38/idle/cold0/owner0/open1/guard1,64CPUs/full RAM.
+Stage directory and three NEW exact targets verified non-symlink/absent.
+Only new driver453e/client35add/updaterdb1a uploaded;remote SHAs EXACT.
+No prior file or installed driver overwritten during staging.
+
+Driver453ebdf12fa13bd39d31c3ec9f01c17e7048946e5cd575f663055b6e49c8f1e1
+Client35add96a69fbb7b5c0f49e0895743406197f424d21cf979565bb10f15373b7e6
+Updaterdb1ae282817a36e10d67fd289a2f8f1d1f559ae0b8ec900661cad9dc75de1bd8
+Remote stage /boot/home/pioneer-p100a-hot-reload-20261019-a:
+ tenstorrent_pci_probe-ffn-native-graph-453ebdf1
+ pioneer-q38-ffn-native-graph-35add96a
+ pioneer-p100a-hot-swap-db1ae282.sh
+
+Guarded apply88652 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-graph-native-apply-20261022-a.log
+ SHAd081b232204e298272f7ec57efdaa2b4c352e5b4921c291fe99c6979ddecb411
+ exact041/tag12/gen38 idle->quiesced->exact453e/tag36/gen39 idle,
+ HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION.
+Fresh post-apply parent/hash/metadata/CPU/RAM audit passed BEFORE test.
+
+SINGLE native --graph-layer0 job42800 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-graph-native-layer0-20261022-a.log
+ SHAa784dbbcf0be87af570b804a684aa7fae13d034ba00072c9c9fb8f650e4433e2
+ ACTUAL full18,973,870,528byte public GGUF SAME-open-file SHA passed
+ BEFORE accelerator Open. Actual layer0 gate/up/down36720pages/150405120B
+ source-bound upload/span END->real native canonical plan and actual
+ initialized bitmap->joint mutable owner->74page/303104B frozen-zero
+ initialization/CLOSE->actual persistent ROOT+ALL119 FFN code owner.
+ Actual native factory/physical routes/source guards were exercised,
+ not an offline mock or repeated STOP-only qualification.
+
+Actual stdout:
+ NATIVE_FULL_FFN pass0 elapsed_us117225 output_words5120 fingerprintf0e218bf;
+ ONE119PEER_BOOT_INTERMEDIATES_ON_CARD_NOT_TOKEN_RATE
+ NATIVE_FULL_FFN pass1 elapsed_us117081 output_words5120 fingerprintbb087a1f;
+ ONE119PEER_BOOT_INTERMEDIATES_ON_CARD_NOT_TOKEN_RATE
+ PASS_NATIVE_PERSISTENT_FULL_FFN layer0 runs2 clean_end1;
+ REAL_FFN_QUALIFICATION_NOT_WHOLE_MODEL_OR_TOKEN_RATE
+ PASS_AUTHENTIC_FFN_SOURCE_PRIME selection0 pages36720 bytes150405120
+ matrix_calls0 clean_end1;HOST_SHA_BOUND_UPLOAD_NOT_KERNEL_SOURCE_ATTESTATION
+
+Those117225/117081us are measured Run+CopyOutput wall time,including
+host input staging,guards/manifest/proofs,device execution and final F32
+copy. NOT isolated Tensix kernel time or model token/sec. The caller's
+matrix_calls0 counts old projection ioctls;the NEW complete-FFN controller
+did execute SIX on-card learned matrix stages plus quantizers/activation.
+Both final5120F32 vectors passed wire/finite/lifetime checks and have
+different fingerprints. Work contains ZERO CPU learned-product references;
+these fingerprints are not CPU-reference equivalence or generation quality.
+
+Actual reply required867448words installed/restored,119boots total and
+three ROOT starts(two FFNs+STOP). All119 peers remained alive across both
+FFNs. Gate/up/SiLU/down intermediates stayed on card. Explicit graph CLOSE
+proved ALL119 independent physical terminals BEFORE FIRST hold and exact
+restoration. Then explicit BANK_END restored outer snapshots/NoC/PCI and
+released ALL kernel/host/DMA/source owners. No retry/second job/reload/SCP
+during the entire parent,INCLUDING its full-SHA-before-device phase.
+
+Passive serial after byte66603303 independently reported:
+ P100A_Q38_CLOCK begin1 state1 mhz800/1350 mode3/3 messages3 uncertain0
+ P100A_Q38_CLOCK end1 state2 mhz800/1350/800 restored1 messages5 uncertain0
+Fresh post-terminal:ALL parents absent,exact453e/tag36/gen39 idle/cold0/
+owner0/open1/guard1,64CPUs/max137034936320B. ONLY THEN explicit guarded
+original restoration2425 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-graph-native-restore-20261022-a.log
+ SHA96aabbaa65cd569fdf826dbde7704dcf55b88ab5c1d50e21aa9ce34a3a08830d
+ exact041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012/generation40/quiesced0/cold0/owner0/open1/guard1.
+Fresh post-restore ALL parents absent,exact original hash/status/64CPUs/
+max137034936320B reconfirmed. No reboot,power,SD,Assistant,boot,CPU,RAM,
+network or settings changes. Dirty llama.cpp and unrelated work UNTOUCHED.
+This was restoration after known SUCCESS,not rollback after UNKNOWN.
+
+NEXT:performance work,NOT repeating completed priming/zero/boot-only tests.
+117ms per FFN is still far from the end-to-end20tok/s target. Measure host
+input/manifest/proof/final-copy overhead versus actual ROOT execution first;
+do not call this number a kernel-only time or assume that compute is the
+bottleneck. Work has no CPU learned reference,so removing that again is
+not an optimization. Current API is an isolated1..2FFN qualifier,not yet
+persistent across model ioctls or a registered GGML fused path.
+
+IMPORTANT integration constraint:the new graph owns ALL120 code roles and
+blocks old Work matrix ioctls. A lone GGML FFN hook cannot assume remaining
+attention/GDN projections can use the old peer family on this same context.
+Need source-authorized generic model projections in this SAME persistent
+family/full resident decoder;do not restore/rebootstrap119 at every node.
+All-card norms/residual/GDN/attention/KV/embedding/sampling remain owed.
+Keep validation separate and do not promote Assistant without correctness
+and actual whole-model token-rate evidence. Goal remains ACTIVE.

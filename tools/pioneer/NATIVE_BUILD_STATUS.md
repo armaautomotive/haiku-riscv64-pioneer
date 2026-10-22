@@ -1,5 +1,26 @@
 # Native build status
 
+Latest NATIVE checkpoint October22 2026:REAL persistent full QFG2 FFN
+owner/actual native factory/source-bound execution PASS. Source43e06f41f6
+pushed/remote verified first. New exact453e/tag36/client35add/updaterdb1a
+staged/hash verified;apply88652 CLI0 ->gen39. SINGLE --graph-layer0 native
+42800 TERMINAL0:FULL same-open-file19GB SHA before accelerator Open,
+actual layer0 THREE learned weights36720pages/150405120B,real zero and
+joint owner,ONE867448word install/119boots,TWO complete on-card FFNs,
+intermediates stay on card,final5120F32 each.117225/117081us Run+CopyOutput
+wall time,outputs f0e218bf/bb087a1f;NOT kernel-only time or token/sec.
+No CPU learned references;numeric CPU equivalence not claimed. Actual
+physical completion/source/counters/ALL119 STOP BEFORE FIRSThold/exact
+restoration and explicit BANK_END clean1. Clock800->1350->800/restored1/
+uncertain0. Fresh no-parent/idle then guarded restore2425 CLI0;fresh exact
+original041/tag12/gen40/idle/cold0/owner0/open1/guard1,64CPUs/full RAM.
+ALL jobs terminal;no reboot/power/SD/Assistant/boot/network changes.
+NEXT profile remaining host staging/proof overhead and same-family generic
+model projections/full resident decoder;do NOT repeat completed init/STOP
+qualifiers or assume old matrices can run while new graph owns the peers.
+Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-ffn-persistent-graph-native-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:persistent full QFG2 FFN owner
 and isolated actual native tag36/namespace9 adapter implemented. TWO full
 FFNs pass with ACTUAL frozen ROOT+ALL119 RV32/FPU/Tensix machines,changed
