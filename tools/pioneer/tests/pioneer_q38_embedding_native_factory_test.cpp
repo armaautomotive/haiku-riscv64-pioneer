@@ -9,6 +9,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 #include "pioneer_q38_embedding_execution_bridge.h"
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+#include "pioneer_q38_learned_rms_execution_bridge.h"
+#endif
 #include <array>
 #include <new>
 using uint8=uint8_t;using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
@@ -32,6 +35,16 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  unsigned mapCalls=0,nativeReads=0,nativeWrites=0,embeddingStarts=0,embeddingStops=0,embeddingPc=0;
  unsigned embeddingPacketFault=0,zeroFailRun=0,embeddingSummaryFault=UINT32_MAX;
  const char* embeddingImage;
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ const char* rmsImage=nullptr;
+ unsigned rmsStarts=0,rmsStops=0,rmsPc=0,rmsPacketFault=0,rmsBadCounter=0,rmsSourceFault=0,rmsDescriptorFault=0;
+ unsigned rmsSummaryFault=UINT32_MAX,rmsPostFault=0,rmsReadFault=0,rmsReads=0;
+ bool LearnedRmsSourceScope(bool);
+ bool LearnedRmsNativeScope(const PioneerQ38LearnedRmsController&,const PioneerQ38ProjectionMutableBanks&,
+  const PioneerQ38CanonicalModelPlan&,const PioneerQ38EmbeddingController&,const PioneerQ38ProjectionIdentity&,const uint8*,unsigned);
+ bool LearnedRmsOtherCoresHeld();bool RmsMode()const;
+ void RmsResetWrite(uint32);
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
  unsigned validationReads=0,validationFailRead=0,validationPoisonRead=0,validationBadCounter=0,validationSourceFault=0;
  bool validationPending=false;
@@ -53,7 +66,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
   const PioneerQ38CanonicalModelPlan&,const PioneerQ38ProjectionIdentity&,const uint8_t*,unsigned);
  bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
  bool EmbeddingMode()const;
- bool NonRootHeldOwner(){return EmbeddingSourceScope(false);}
+ bool NonRootHeldOwner(){return EmbeddingSourceScope(false)
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+  || LearnedRmsSourceScope(false)
+#endif
+  ;}
  bool NonRootHeldMappingStable(){return !coreMapLost && NonRootHeldOwner();}
  void DramTlbWrite(unsigned slot,unsigned word,uint32 value){Touch();StoreMock::DramTlbWrite(slot,word,value);}
  uint32 DramTlbRead(unsigned slot,unsigned word){Touch();return StoreMock::DramTlbRead(slot,word);}
@@ -69,7 +86,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  uint32 SourceRead(unsigned word){Touch();return ProjectionZeroIO::SourceRead(word);}
  uint32 ResidentL1Read(unsigned word){Touch();assert(word<2048);return destination[word];}
  void ResidentL1Write(unsigned word,uint32 value){Touch();assert(word<2048);destination[word]=value;}
- uint32 RuntimePcRead(){return EmbeddingMode()?(Touch(),embeddingPc):ProjectionZeroIO::RuntimePcRead();}
+ uint32 RuntimePcRead(){
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+  if(RmsMode()){Touch();return rmsPc;}
+#endif
+  return EmbeddingMode()?(Touch(),embeddingPc):ProjectionZeroIO::RuntimePcRead();}
  void RuntimeResetWrite(uint32 value);
  void QuarantineHostPage(){PioneerHostPageIO::quarantined=true;ProjectionZeroIO::QuarantineHostPage();retained=true;}
  uint32& RawSlot(uint32 a){
@@ -81,7 +102,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  }
 #include "embedding_factory_mapping.inc"
 };
-static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;return *p;}
+static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ if(activeIO->RmsMode() && ++activeIO->rmsReads==activeIO->rmsReadFault)return *p^1;
+#endif
+ return *p;}
 static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;*p=value;}
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
@@ -135,7 +160,13 @@ static int currentThread=42;static int find_thread(void*){return currentThread;}
 // Use actual native MEMORY-ONLY retention body,not a simulated ready seal.
 #include "embedding_factory_retain.inc"
 #include "embedding_factory_scope.inc"
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+#include "rms_factory_scope.inc"
+#endif
 #include "embedding_factory_factory.inc"
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+#include "rms_factory_factory.inc"
+#endif
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
 #include "embedding_factory_end.inc"
  return clean;
@@ -165,6 +196,9 @@ void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
 }
 #endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ if(RmsMode()){RmsResetWrite(value);return;}
+#endif
  if(!EmbeddingMode()){
   auto* m=q38MutableContext?q38MutableContext->q38EmbeddingModel:nullptr;
   if(m && value==0x46800){
@@ -178,6 +212,9 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  if(value==0x47800){rootHolds++;coreReset=value;return;}
  assert(value==0x46800 && coreReset==0x87ffff);coreReset=value;embeddingStarts++;
  EmbeddingExecutionBridge t;t.l1.resize(73737);
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ t.boundedEmbedding=true;
+#endif
  // Emulator transport:clone EXACT installed bytes,not host arithmetic.
  // Raw endpoint copies here are DEVICE traffic,not controller PCI reads.
  for(unsigned i=0;i<73737;i++)t.l1[i]=RawSlot(PioneerQ38EmbeddingSnapshotAddress(i));

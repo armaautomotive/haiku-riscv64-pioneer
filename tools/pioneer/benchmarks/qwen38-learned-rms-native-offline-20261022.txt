@@ -1,0 +1,133 @@
+October22 2026 private native learned RMS execution integration
+Parent dbf936be7459396c1cce03e12d56dbcbba5beb22. PROGRESS;goal ACTIVE.
+Last whole27B inference0.207893161tok/s UNCHANGED;20tok/s UNMET.
+NO full decoder/card RMS qualification/new inference speed/Assistant option.
+
+IMPLEMENTATION
+PioneerQ38LearnedRmsController consumes the SAME completed private
+embedding owner and exact canonical plan/joint workspace/actual learned
+ledger. The first implementation deliberately permits ONLY layer0/role0
+(attn_norm) after actual embedding. Other129norm DATA plans do NOT imply
+later-layer input/residual producer authority. Claim invalidates raw-input
+publication BEFORE any possible input mutation,while retaining embedding
+ownership. Normalized proof stays PRIVATE and is published ONLY after
+physical terminal validation/hold/full exact ROOT restoration. Future
+complete projection owner is the sole friend consumer;no public ready bit,
+inputEpoch/copied descriptor/zero-page ledger can grant execution.
+
+Exact immutable QRN1 ROM5052B SHA
+f13d8676f97920c182fa47d9f555453d7855dd5ac394919a577d58c83abe523a
+boot4B0005e06f. Generator pins BOTH sections BEFORE emitting ANY patch;
+frozen kernel array is byte-for-byte generator output,including zero
+padding through the complete40KiB ROOT code prefix. Math/ROM unchanged
+from dbf936be74 (see preceding learned-rms-offline evidence).
+Actual QRN1 reads20KiB raw GDDR input and20KiB original learned F32 norm,
+preserves raw residual at workspace98304,normalizes old input offset0.
+8NoC packets;4reads/4writes;640flits each direction;no host input/product
+vector,learned-output CPU readback/reference/substitution/fallback.
+
+Controller retains HEAP73737word complete ROOT snapshot and independently
+reads the original AGAIN before first write. Installs boot/code prefix and
+64word canonical descriptor,status. Independent source/ALL119held cores/
+physical mappings/reset/qualified PCI quiet/8counters/32summary/64descriptor/
+last command/code/terminal PC proof BEFORE first hold. Bounded65536polls/
+30s. Hold then restore73737 words with per-word readback AND a second full
+original pass (147474verified words),restore original command before private
+publication. Incomplete/failed preconditions,source/page/clock/cookie loss,
+arithmetic fault or uncertain restore retains ALL model,source,host pages,
+clock and maps. No later device IO/END/reset/retry/restore/hot swap.
+
+ACTUAL NATIVE INTEGRATION,NOT a copied ready facade
+Same heap PioneerQ38EmbeddingNativeState owns canonical plan,joint mutable
+banks,zero lease,embedding controller and RMS controller. Native factory
+preflights all5learned norm pages BEFORE model publish/bank claims/IO.
+New phase4/RMS runs after phase3/embedding completion;phase5/RMS completion
+and exact private owner binding REQUIRED by new END gate. Original embedding
+component lifetime remains retained after its raw publication is consumed.
+Real native source adapters check global cookie/context/thread/generation,
+same source ledger and plan,joint initialization/zero closed,the exact
+embedding and RMS objects,all host owners and explicit normal-clock lease.
+Legacy owner roles/writers denied;held scanner uses RMS source scope.
+No new public opcode,tag,selector,linked driver,client,updater,install or
+native execution. Old builders continue to reject inherited RMS flags.
+New private object wrapper exists ONLY for full SDK compilation.
+
+OFFLINE TESTS,FINAL HANDLES ALL TERMINAL0
+python3 tools/pioneer/tests/pioneer_q38_learned_rms_native_factory_test.py
+ /private/tmp/pioneer-q38-state-zero-20261020-c
+ /private/tmp/pioneer-q38-embedding-image-20261022-b
+ /private/tmp/pioneer-q38-learned-rms-image-20261022-c [--faults]
+REAL source allocations ->actual native canonical factory ->TWO actual
+zero-ROM runs ->actual native checked ROOT mapping ->actual QPE1 ->actual
+QRN1 ->private proof/restore/END. Emitted instructions execute in scalar
+VMs;ONLY hardware transport/GDDR/reset/TLB/clock/context endpoints simulated.
+7source-bank/cross-bank-workspace positives,616refusals,93faults PASS.
+Positive5120results bit-exact to independent double/sqrtf observer,original
+Q4_K embedding independently observed. TEST source weights bounded within
+qualified domain,not original public model;no arithmetic is substituted
+into device outputs. Raw residual5120bits preserved;outside runtime sinks,
+all original2MiB workspace words unchanged,learned bitmap unchanged,
+all73737 ROOT words restored,no PCI/BME/host-release writes.
+Refusals include missing5norm pages BEFORE bind,69actual source-scope
+mutations per bank,cloned plan/owner and wrong identity/token/position/bank,
+raw proof unusable after RMS,repeat/nonexecuting phase rejected.
+Faults include ALL8packets xtransport/counter/source/descriptor loss,
+ALL32summary words,command/code/mapping/held/source drift,missing learned
+pages,thread/clock/mapping loss,second original pass before writes,early
+END,nonpristine reply,changed model tuple,NaN/oversized/tiny input,and
+restore readback/independent final-original loss. ALL retained;subsequent
+bind/initialize/embedding/RMS/END make ZERO additional endpoint touches.
+
+Complete native driver compilation (not a linked/installable new role):
+python3 tools/pioneer/tests/pioneer_q38_embedding_native_full_compile.py
+ /Volumes/HaikuBuildLocal/generated.riscv64 NEW_ABSOLUTE_OUTPUT --rms
+Actual native factories/all callbacks/retention/Unsafe/END instantiate under
+real RISC-V Haiku SDK. Repeated B/C OBJECT BYTE-IDENTICAL SHA
+f15b3a867628197bd6c32455dbbadda1f3df7bf479cdd296834ee7750ab1aba5
+max new kernel frame784B/controller368B. Old tag38 driver/guard/default43
+control remain EXACT23e2e68a/d1ce2aa4/2df0e0f8,verified every full build.
+13immutable-image/actual native guard refusals PASS;210old/new before-SDK
+role/build refusals PASS. Existing embedding native Work control7positive/
+31refusals/5faults and DEBUG control7positive/9refusals/7faults PASS.
+
+Authoritative final logs and SHA256:
+/private/tmp/pioneer-q38-learned-rms-native-positive-20261022-c.log
+1b47693d952611849c23eafb8fc014742f77fa56bae239e5fd11102eb92e86d7
+/private/tmp/pioneer-q38-learned-rms-native-faults-20261022-c.log
+4567746428c5c5e2697e807d720436ab14fc007bd95363c6887f7f2a4a71b51e
+/private/tmp/pioneer-q38-learned-rms-native-compile-20261022-c.log
+7073abaf02b4519cb49fb0aa154e636584ed2825fc769394c52a67802efc9680
+/private/tmp/pioneer-q38-learned-rms-native-gates-20261022-a.log
+6f208ffd587465f70c0951400b1145956a82895898f5592ebd7d8eb52eb1416f
+/private/tmp/pioneer-q38-learned-rms-build-gates-20261022-native-a.log
+93b6e4fa15d779dc1cc7f26ce5c827ec4e532f3712d75cf86f2932ac76212280
+/private/tmp/pioneer-q38-embedding-work-regression-rms-20261022-a.log
+272fffdc120a285ba1c731759e4d1c6e611a8f50e664c9d7287552439132e848
+/private/tmp/pioneer-q38-embedding-validation-regression-rms-20261022-a.log
+881ff26d9ac03ec59bbb35c9f038a7df06cc6f52010bd0d4c88c1edbc14a506a
+Local build A rejected misleading indentation with Werror;fixed,not
+suppressed. Expanded test B rejected a fixture bool assigned to saved
+pointer;corrected to nullptr. Final build/test runs all TERMINAL0.
+NO native fault,quarantine or card recovery occurred in this turn.
+
+HARDWARE LEFT UNCHANGED
+SSH saved key accepted again;fresh23:28UTC read-only inventory proven,
+ALL compute parents absent,driver55 tag2026102100010012 generation46,
+quiesced0/cold0/active_owner0/open_count1/guard1. Installed driver SHA
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+64CPUs,max RAM137034936320B. Passive serial untouched. ZERO remote writes,
+native jobs,driver reload/install,reboot/power/SD/Assistant/network/clock
+changes. Dirty src/libs/llama.cpp and unrelated FlashNext work never
+read/edited/built/staged. No live runner remains at checkpoint.
+
+NEXT
+Actual complete-projection execution owner must consume normalized private
+proof and own physical RUN/STOP/full memory lifetime;old held-only memory
+helper must NOT close after compute. Separate numerical DEBUG RMS/card
+qualification is required BEFORE any card install. This conservative
+one-shot controller is an integration qualifier,not a per-layer high-speed
+decoder schedule. Future persistent decoder must keep kernels/state/weights
+resident and avoid repeated host snapshots/restores/intermediate vectors.
+Residual/later-state producers,GDN,attention/KV,sampling/full decoder and
+honest whole27B benchmark remain. Do not claim model entirely on P100A or
+20tok/s. Raw-unpack-cache22 remains HARD BLOCKED.

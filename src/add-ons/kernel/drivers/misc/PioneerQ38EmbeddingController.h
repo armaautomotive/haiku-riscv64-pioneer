@@ -20,6 +20,9 @@ struct PioneerQ38EmbeddingResult {
 };
 class PioneerQ38EmbeddingController {
  friend class PioneerQ38ProjectionGraphOwner;
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ friend class PioneerQ38LearnedRmsController;
+#endif
  const tt_dram_samples_result* proof=nullptr;
  const tt_compute_noc_result* noc=nullptr;
  PioneerResidentBanks* banks=nullptr;PioneerQ38ProjectionMutableBanks* graph=nullptr;

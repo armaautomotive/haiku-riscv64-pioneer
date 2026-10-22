@@ -1,5 +1,34 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:private native learned RMS
+execution owner/actual source scope/factory/retention/END integrated and
+tested,NOT linked as a new driver or installed. REAL unclaimed source ->
+canonical bind/actual zero2MiB -> actual QPE1 -> QRN1 consumes PRIVATE raw
+embedding proof BEFORE mutation -> exact ROOT restore -> PRIVATE normalized
+proof. First layer0/attn_norm ONLY;later hidden states still need actual
+residual producers. No caller ready bit/descriptor or zero ledger promotion.
+Actual emitted zero/QPE1/QRN1 native factory tests7cross-bank positives/
+616refusals/93faults PASS;all73737 ROOT words independently restored,
+original raw residual preserved at98304. Simulated transport/test weights,
+NOT physical RMS/card/full-model qualification. Work controller has NO
+learned-output CPU readback/reference/fallback. UNKNOWN retains ALL model/
+source/host/clock/map owners;subsequent calls/END inert. Actual native source
+global cookie/thread/generation/clock/ledger/119-held adapters exercised.
+Repeat complete-driver OBJECT f15b3a86 byte-identical,maxnew kernel frame
+784B/controller368B;old tag38/guard/default43 BYTE-IDENTICAL.13new immutable
+image/role gates +210old/new before-SDK gates PASS. Existing embedding Work
+7/31/5 and DEBUG7/9/7 regressions PASS. ALL final handles TERMINAL0.
+Fresh23:28UTC SSH key accepted;original041/tag12/gen46/idle/cold0/owner0/
+open1/guard1,ALL compute parents absent,64CPUs/max137034936320B. ZERO remote
+writes/native jobs/install/reload/reboot/power/SD/Assistant/network changes.
+NEXT actual persistent complete-projection execution owner consuming this
+normalized proof with full physical execution/memory lifetime;separate
+DEBUG numerical RMS/card qualification BEFORE any install. Old held-only
+memory helper MUST NOT close after launch. Full resident residual/GDN/
+attention/KV/sampling/decoder still owed. Whole27B.207893161tok/s UNCHANGED;
+20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-learned-rms-native-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:NEW fixed5120 learned RMS/residual
 backup implemented and composed with actual embedding/projection images.
 QRN1 pulls original GDDR input+canonical learned F32 norm,computes on emitted

@@ -10,9 +10,10 @@ import sys
 
 here = pathlib.Path(__file__).resolve().parent
 directory = here.parent
-if len(sys.argv) != 3:
-    raise SystemExit('expected read-only SDK and NEW ABSOLUTE output')
-sdk, output = map(pathlib.Path, sys.argv[1:])
+if len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--rms'):
+    raise SystemExit('expected read-only SDK and NEW ABSOLUTE output [--rms]')
+rms = len(sys.argv) == 4
+sdk, output = map(pathlib.Path, sys.argv[1:3])
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 output.mkdir(mode=0o700)
 role = dict(re.findall(r'\b(PIONEER_[A-Z0-9_]+)=([0-9]+)', (directory / 'build_qwen38_ffn_native_graph.sh').read_text()))
@@ -35,23 +36,26 @@ for line in trace.read_text().splitlines():
             commands.append(args)
 assert len(commands) == 1
 args = commands[0]
-args[args.index('-c') + 1] = str(here / 'pioneer_q38_embedding_native_full_compile.cpp')
-args[args.index('-o') + 1] = str(output / 'embedding-native-COMPILE-ONLY.o')
+prefix = 'learned-rms' if rms else 'embedding'
+args[args.index('-c') + 1] = str(here / ('pioneer_q38_' + prefix.replace('-', '_') + '_native_full_compile.cpp'))
+args[args.index('-o') + 1] = str(output / (prefix + '-native-COMPILE-ONLY.o'))
 subprocess.run(args, check=True, env=clean)
 frames = []
 controller_frames = []
-for line in (output / 'embedding-native-COMPILE-ONLY.su').read_text().splitlines():
+for line in (output / (prefix + '-native-COMPILE-ONLY.su')).read_text().splitlines():
     if len(line.split('\t')) != 3:
         continue
     frame = int(line.split('\t')[1])
-    if 'PioneerQ38EmbeddingController.h:' in line:
+    if ('PioneerQ38LearnedRmsController.h:' if rms else 'PioneerQ38EmbeddingController.h:') in line:
         controller_frames.append(frame)
     if any(name in line for name in ('PioneerQ38EmbeddingController.h:', 'PioneerQ38ProjectionZeroController.h:',
                                     'pioneer_embedding_native_kernel_', 'BindQ38EmbeddingModel', 'InitializeQ38EmbeddingModel',
-                                    'RunQ38EmbeddingModel', 'PioneerSessionIO::Embedding', 'PioneerSessionIO::ProjectionZero')):
+                                    'RunQ38EmbeddingModel', 'PioneerSessionIO::Embedding', 'PioneerSessionIO::ProjectionZero',
+                                    'PioneerQ38LearnedRmsController.h:', 'pioneer_rms_native_kernel_',
+                                    'RunQ38LearnedRmsModel', 'PioneerSessionIO::LearnedRms')):
         frames.append(frame)
 assert frames and max(frames) <= 2048
 assert controller_frames
-print('PASS ACTUAL full driver new canonical binding/zero2MiB/root memory/QPE1 execution/retention/END compile;maxNewKernelFrame='
+print('PASS ACTUAL full driver new canonical binding/zero2MiB/root memory/QPE1' + ('/QRN1' if rms else '') + ' execution/retention/END compile;maxNewKernelFrame='
       + str(max(frames)) + '/controller=' + str(max(controller_frames))
       + ';old driver/guard/default43 BYTE-IDENTICAL;NO_NEW_LINKED_DRIVER_NATIVE_SELECTOR_OR_INSTALL')

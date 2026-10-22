@@ -11,6 +11,7 @@ struct EmbeddingExecutionBridge {
  std::array<uint32_t,5120> resident;
  uint32_t command[10]={},counts[8]={},source[16]={};
  unsigned failPacket=0,steps=0,packets=0,pc=0;
+ bool boundedEmbedding=false; // TEST source weights,never a substituted output vector
 };
 void ExecuteEmbeddingBridge(const char* image,EmbeddingExecutionBridge& transfer);
 #endif

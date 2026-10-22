@@ -12,10 +12,16 @@ struct PioneerQ38ProjectionExtent {uint32_t bank,address,route,index,pages,bytes
 struct PioneerResidentLease;struct PioneerBulkUploadLease;struct PioneerOutputBufferLease;struct PioneerWideOutputLease;
 struct PioneerQ38ProjectionZeroLease;struct PioneerQ38ProjectionZeroResult;
 class PioneerQ38EmbeddingController;
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+class PioneerQ38LearnedRmsController;
+#endif
 class PioneerQ38ProjectionBanks {
  friend class PioneerQ38ProjectionMutableBanks;
  friend class PioneerQ38EmbeddingController;
  friend class PioneerQ38ProjectionGraphOwner;
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ friend class PioneerQ38LearnedRmsController;
+#endif
  template<class IO> friend bool PioneerQ38ProjectionZeroPrepare(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38ProjectionBanks&,PioneerResidentBanks&,const PioneerQ38ProjectionIdentity&,const tt_host_page_result&,
   PioneerResidentLease&,PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38ProjectionZeroLease&);
@@ -37,6 +43,23 @@ class PioneerQ38ProjectionBanks {
  const PioneerQ38EmbeddingController* embeddingOwner=nullptr;
  uint32_t embeddingToken=UINT32_MAX,embeddingPosition=UINT32_MAX;
  bool embeddingPublished=false;
+#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+ const PioneerQ38LearnedRmsController* rmsOwner=nullptr;
+ bool rmsPublished=false;
+ bool ClaimLearnedRms(const PioneerQ38ProjectionIdentity& id,const PioneerQ38LearnedRmsController* owner,
+  const PioneerQ38EmbeddingController* input,unsigned token,unsigned position){
+  if(!owner || rmsOwner || !embeddingPublished || !OwnsEmbedding(id,input) || token!=embeddingToken || position!=embeddingPosition)return false;
+  rmsOwner=owner;embeddingPublished=false;return true; // consume raw proof BEFORE any possible input mutation
+ }
+ bool OwnsLearnedRms(const PioneerQ38ProjectionIdentity& id,const PioneerQ38LearnedRmsController* owner,const PioneerQ38EmbeddingController* input)const{
+  return owner && rmsOwner==owner && !embeddingPublished && OwnsEmbedding(id,input);
+ }
+ bool PublishLearnedRms(const PioneerQ38ProjectionIdentity& id,const PioneerQ38LearnedRmsController* owner,
+  const PioneerQ38EmbeddingController* input,unsigned token,unsigned position){
+  if(rmsPublished || !OwnsLearnedRms(id,owner,input) || token!=embeddingToken || position!=embeddingPosition)return false;
+  rmsPublished=true;return true; // only exact RMS execution owner's verified physical restore CLOSE
+ }
+#endif
  bool Matches(const PioneerQ38ProjectionIdentity& id)const{
   return banks && baseline && reservationOwner && !unsafe && id==identity && banks->Matches(*baseline);
  }
