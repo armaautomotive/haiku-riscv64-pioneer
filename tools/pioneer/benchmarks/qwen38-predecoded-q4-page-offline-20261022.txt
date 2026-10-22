@@ -1,0 +1,53 @@
+OFFLINE CPU-memory page-encoding prerequisite,October22 2026 UTC.
+NO driver/source/ABI/layout/uploader/model/Assistant selector or speed claim.
+Separate block-localQ4 tag28 is undergoing an independent paired native
+trial;this page helper is NOT used by that trial or any installed binary.
+
+PioneerQ38PredecodedQ4Page maps a bounded fragment of original2304B tiles
+into independently tested4352B lossless unsigned0..15 tiles,then4096B
+pages. ALL256 metadata bytes per tile preserved. No learned products or
+requantization. Source supplies CPU-memory Ready/ReadTile callbacks ONLY;
+Ready is coherence,NOT authentication. No path/FD/IOCTL/NoC/DMA/address or
+allocation authority. A future caller must independently authenticate and
+own its source and buffers. Ordinary/freestanding/mixed header roles refuse.
+
+Everypage may cross TWO source tiles. StageALL4096bytes,zero last-page
+padding,and publish only after ALL tile reads and finalReady succeed.
+Late source/Ready failure leaves entire output unchanged;no retry/fallback.
+Refuse0tiles,>32bitfragment,invalid64bitpage/null/capacity BEFORE source
+callbacks. Maxfragment last-page arithmetic and bytes independently checked.
+
+ASan/UBSan CPU test:17664pages across1..128tiles and TWO changed byte
+patterns,ALL17alignments independently tracked,15360crossingpages,
+240partialpages,15bounds/read/Ready atomic refusals+3header role refusals.
+Expectedbytes come from an independent packedbyte/panel/nibble mapping,
+NOT Prepare/Recover. Existingcodec1024roundtrips/all16independentpanel
+oracle tests pass unchanged. Logs:
+/private/tmp/pioneer-q38-predecoded-q4-page-tests-20261022-c.log
+SHA fe26fef2d74e7c739bf6da081bbf6432077e1a57b16912b2e450561617e9914b
+/private/tmp/pioneer-q38-predecoded-q4-data-regression-20261022-a.log
+SHA d7472b8ef3251481c5e4f676d8ecd7fdb71abc7cdd7f63cd7e13b0515a780585
+
+READ-ONLY layout arithmetic,NOT a device-capacity or source-authentication
+proof:actual model metadata+existing canonical TILED plan/context8192/
+doubleDelta gives20714528768bytes including all weights,state,workspace.
+Expanding ONLY1344FFN fragments adds8556380160bytes,preliminary total
+29270908928 before any new layout/owner design. Current qualified store is
+7*3GiB=22548578304bytes. Everybank prospective byte count4181950464,
+4182740992,4181032960,4178354176,4186894336,4179296256,4180639744
+EXCEEDS its3221225472byte qualified cap. This does NOT authorize widening
+any range or promise fit on actual hardware. Includes originalunused
+embedding/state/layout allocations;future selective layout needs separate
+exact budget,source/format/owner proofs and native qualification.
+/private/tmp/pioneer-q38-predecoded-budget-20261022-a.log
+SHA852dcf3170b03cca071b9bcf1b590c42d8e9fa472a90716e98caba10a6443573
+Initialraw-packed JSON estimate28685115392 omitted existing Q8 tiled and
+doubleDelta overhead;the actual TILED figure above supersedes it.
+
+A fixed singleFFN diagnostic could test pre-expansion within EXISTING
+capacity first. It still needs explicit independent source/page/padding/
+format/ABI/frozenimage/controller/retainedowner/native numeric/pairedtime
+qualification. No production source,driver,storecap,SDK,dirty llama module,
+unrelated FlashNext files,Assistant/service/chat/settings were changed by
+this CPU-memory prerequisite. Best uninstrumented full model remains
+0.207893161tok/s at fixed4CPUhelpers;20tok/s target is UNMET.
