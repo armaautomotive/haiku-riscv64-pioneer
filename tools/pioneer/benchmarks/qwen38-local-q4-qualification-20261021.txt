@@ -76,3 +76,34 @@ Actual failure remains CLOSE ONLY:ANY numeric mismatch/UNKNOWN means
 NO END/retry/reset/further card read/hot rollback;retain ALL owners/PCI
 BME/DMA/maps/clock/cold and require physical recovery. Failed rawcache22
 stays hard-blocked and is never retried.
+
+Native installation/test continuation after preceding PRE-NATIVE checkpoint:
+12/g20->16/g21->17/g22->28/g23,each guarded transition CLI0 and verified
+idle/cold0/owner0/open1. Exact28/ABI2 support119/persistent1/inference0
+accepted1 before BEGIN. Synthetic session20numeric checks ALL exact0/
+cold0,explicit BANK_END state2 active0 pci_restored1 host_released1 cold0
+accepted1,KNOWN_CLEAN_END1/CLI0 and parent closed. No concurrent SCP/GPU
+job;other numeric sessions and native timing still pending here.
+After qualification-gate changes,default-off model and original17 driver
+rebuild byte-identically to f414306f343256142fa0b239960c063aec82ea1924f43b561e3b073829cc476c
+and84ab80ac87ce3486c4194be6743b44c56492cd7282e934d966e4ee39d48af296.
+
+All FIVE native numeric sessions subsequently completed cleanly:
+20syntheticWork+18auth2workers/3groups+18auth119Work+16checked119+
+18checkedwidths=90numeric checks,ALL cold0/exact_errors0. Each proves
+BANK_END state2 active0 pci_restored1 host_released1 cold0 accepted1,
+KNOWN_CLEAN_END1/CLI0;all five parents CLOSED before any transfer.
+CPU-only metadata again idle28/g23,cold0/owner0/open1/guard1.
+Sequential128Kbit SCP archives match remote SHA-256 in:
+/private/tmp/pioneer-q38-local-q4-native-evidence.2PINbUrB
+synthetic2bf4f8ef6f3b321401b7e426d8d0f049bad2d532751b7044b8ba08d2464a9080
+auth2g3 ea8e1909e9f58903050f83baafedf813946767f440f13ba738a7878b4afd65c9
+auth1190ac772b6ee128cd77e18d06ef1e64be15e569fea8bc7401cf8a7c38e2f2ab2a5
+checked1190535487f683a46826912f0d6457bf1d4e8e4a430b5b8e29d9511c9e4332ddd46
+checkedwidths c181309f0c678ec3b84288a8dc7afe895f7226af1634c739d6b7cf45cd91f254
+Independent archive parse confirms90checks/0bad/5END/5knownclean/5CLI0.
+These are numeric compatibility checks,NOT full-model quality/speed.
+
+Paired FFN parent started AFTER all archives/parents closed. It is now
+authenticating the full public file;no timing result/promotion claimed.
+No SCP/other GPU job for entire parent including authentication/IDLE.
