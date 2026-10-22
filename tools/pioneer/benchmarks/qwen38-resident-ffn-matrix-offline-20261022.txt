@@ -1,0 +1,134 @@
+Resident FFN actual matrix-root/source/sink checkpoint.
+October21 2026 Vancouver (file/test timestamps October22 UTC).
+OFFLINE ONLY. No native driver/Assistant/full model integration or speed claim.
+
+NEW QFM1 private matrix root connects card-resident native input to the
+EXISTING qualified learned-matrix peer arithmetic,then returns the complete
+projection to the SAME FFN workspace in GDDR. Unlike the previous isolated
+projection sink,this stage itself dispatches and proves ALL participants.
+Supports gate/up K5120->17408 and down K17408->5120,Q4_K/Q6_K. This is one
+projection,NOT a full gate/up/SiLU/down invocation or full-model inference.
+
+Distinct QFM1 completion/fault markers and explicit resident input selector3.
+Old header magic and host staging/reuse selectors0/1/2 REFUSED. New input
+fetch derives ONLY fixed workspace ranges:gate/up native10240B at20480 and
+128B padded scales at30720;down native34816B at239744 and320B scales at274560.
+Operands land directly at root L1 a0000 and scales at ab000 via2/4 NoC reads,
+then unchanged native operand/padded-scale validity checks run BEFORE any
+peer descriptor/doorbell. No CPU quantization/copy/product or cached-host
+input hint is used. Input flop/domain checks here are ON-CARD,not CPU refs.
+
+ALL CURRENT participant status/nonce/TWO physicalPCs/reset/source/counters/
+final command/gathered numeric finite words still checked. Complete immutable
+header/task/bank/source/frame/row-map proof precedes the FIRST resident sink
+write. Ordered row plans use5writes/69632B for gate/up or2writes/20480B for
+down (<=16KiB packets),not one write per worker. Shuffled plans preserve
+exact row placement using bounded per-worker scatter,never CPU reorder.
+No host physical address,PCI1555 endpoint,BME/host DMA,CPU validation or
+fallback is present in this program. Work peer dot-probe reads remain ZERO.
+
+One complete private64word frame plus119first-row words describe the SAME
+workspace and whole output cover. Four owner epochs/token/layer/nonce are
+DATA,not authentication or initialized/producer-ready grants. Legacy matrix
+tasks stay eight words with their original reserved6/7 zero. No padding
+repurposed. All immutable participant extents still require a trusted native
+bank owner;the device shape helper does NOT supply that authority.
+
+Every resident packet proves all16source words,frame+row map,exact10word
+command readback,idle queues and ALL8 wrapped counter deltas. Root totals
+include EXACT input reads/output writes/flits,not forged host-DMA counters.
+Stats49..56 carry the distinct resident trailer;57..63 remain cycle DATA.
+Stats56 alone is NEVER readiness/cleanup authority:completion marker,count,
+code/source/counter/command/physicalPC and every retained-owner proof must
+all pass in the future native controller. Any UNKNOWN is an inert fault
+park,NO later NoC read/packet/hold/reset/restore/retry. Explicit STOP still
+audits ALL119 peers,including both accepted terminal frontend PC samples.
+
+NEW L1 layout,not an old-image substitution:
+  main72000..73ae4 (6884B),private helper prefix64000..656e4 (5860B),
+  stack6e000..70000,old job/banks/tasks74000/74040/74080 unchanged,
+  transfer75000,proof76000,peer seals7d800,stats7f800 unchanged,
+  NEW frame7f900..7fa00,119row words7fa00..7fbdc,
+  packed result80000..91000/native inputa0000/scalesab000.
+Prefix must be saved/owned/restored by a NEW native controller. It overlaps
+the isolated local activation/gather code phases;those may NEVER execute
+concurrently. New frame/row map are disjoint from ALL old task/proof/seal/
+stats regions. Root main compiled frame4992B;packet160B/fetch32B/scatter48B.
+Observed maximum complete root stack5672B (lowest6e9d8),inside8KiB. These are
+device-RISC frames,NOT kernel frames. Link forbids writable static/GOT and
+caps main8KiB/helper16KiB before stack gap. SDK used read-only.
+
+ASan/UBSan evidence,all CLI0:
+-ACTUAL root with explicitly synthetic peer proof/value fabric:
+  252full projection cases=7banks x2capacity edges x3roles x3row orders x2
+  weight types,plus3whole119-peer STOP/frontend-snapshot cases=255positive.
+  428refusals/faults:legacy selectors/header,ALL119row words,shape/bounds/
+  epochs,ALL64peer proof words,physicalPCs,each input/output transport fault,
+  ALL130resident-command readbacks,input encoding/scale padding,ALL16source
+  seals,header/row mutations before sink. ALL faults terminal/no later IO.
+  /private/tmp/pioneer-q38-ffn-matrix-tests-20261022-c.log
+  SHA3dde7039363a6a111641cd678523ae1f74e729c095083f34eadf178f86320192
+-FULL projections with ACTUAL root AND EVERY ACTUAL qualified peer program.
+  GDDR native input -> actual unpack/tensor matrix/affine -> GDDR output.
+  ALL FP32 byte-exact and secondary independent FP64 observers passed;
+  no thresholds relaxed. Weights are synthetic tiles,NOT real27B weights.
+  Q4_K gate:ALL68peers/K5120/17408rows/313142108aggregate peer VM steps.
+    /private/tmp/pioneer-q38-ffn-matrix-cooperative-20261022-d.log
+    SHA797cf8fd52dbc1266fbea0a062b60b56d79067368378514a90db145e4f8149a6
+  Q6_K gate:ALL68peers/K5120/17408rows/372540652aggregate peer VM steps.
+    /private/tmp/pioneer-q38-ffn-matrix-cooperative-20261022-b.log
+    SHAe66d94f9f59f5113e2ef2998f92cb3c25da49e2279534160f447cac603733a4b
+  Q4_K down:ALL20peers/K17408/5120rows/312697696aggregate peer VM steps.
+    /private/tmp/pioneer-q38-ffn-matrix-cooperative-20261022-c.log
+    SHAb3cbd191adeab2b157215d7fec3165c572954fd939f420f705e1fede66e71112
+  Q6_K down:ALL20peers/K17408/5120rows/372116156aggregate peer VM steps.
+    /private/tmp/pioneer-q38-ffn-matrix-cooperative-20261022-e.log
+    SHA16c648fc5e2c3a4518231661c3143e16a19ddad8b1fd74245f2273ce4a685787
+  These4cases execute ALL176participants/45056output rows,NOT a subset
+  hidden behind synthetic completions. NoC/GDDR/reset/cycle endpoints ONLY
+  simulated. Numerical CPU observers live ONLY in OFFLINE tests,not Work.
+  VM steps/fabricated cycle samples are NOT silicon time or token speed.
+-44private/legacy/native/mixed selector build refusals BEFORE SDK/output.
+  /private/tmp/pioneer-q38-ffn-matrix-build-gates-20261022-a.log
+  SHA78cc2f7311c3525dd1e9b40852947080e07d802ae716ab58c3cebb249cc76780
+-Existing sentinel root suite passed:108shape/worker/Work/checked/STOP
+  cases,ALL57safety fields unchanged,all64proof corruptions,actual peer math.
+  /private/tmp/pioneer-q38-sentinel-ffn-regression-20261022-a.log
+  SHA7536cf28d36682f07cc1d71e4b3306ab2324c545a59926f95c92440cb19f36a6
+
+Final NEW image independently rebuilt and byte-compared:
+  boot SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+  main SHA67ff940a48f37219114de10135c010e1e88bdcd90e608758b538a44e58b09dbe
+  prefix SHA492dfc44e80d85af1de9e74fee56b68d5215d386fd31d591557850759606b6d8
+  /private/tmp/pioneer-q38-ffn-matrix-image.cVpY7yrH/image
+  /private/tmp/pioneer-q38-ffn-matrix-rebuild.fQVXceq3/image
+Qualified actual peers UNCHANGED:
+  main SHA209fc6b8d40ed0ac7216c16ec9657ed0d83259e2ded53b35524c8cc6507bf0ef
+  affine SHA083330550580cc8ba821456c95b256ff8ea1d9742bb12230b06af469392f856a
+Existing sentinel root rebuilt with new flag OFF and stayed BYTE IDENTICAL:
+  main SHA65c790cf68dc705a3af5458e2b89aafa28a5b316c0a7b9fad1c8bd51fd36ecd8
+  prefix SHAd358b793b2c83def15e58fa52b62197e2f2241dd85e9bc1a5fc9a1733cf46308
+  /private/tmp/pioneer-q38-sentinel-ffn-control-20261022-a
+No production registry imports this image/helper/shape. Old/native build
+routes explicitly refuse the NEW flag. No new inference/Assistant selector.
+
+Next:retained native FFN controller borrowing/proving the complete qualified
+cohort plus initialized PioneerQ38FfnBanks owner,explicit prefix/frame/source
+and participant lifetimes,all generic writer interlocks,CLOSE/END/cold rules.
+Then integrate gate/up -> all68activation producers -> gather -> down as ONE
+owned FFN,qualify actual numerical results in separate debug,and benchmark
+real27B Work without CPU refs. Initial5120input still needs a proved on-card
+producer (never read raw zero-initialized pages as native encoded operands).
+The earlier SiLU/native-scale domain is still bounded;real model eligibility
+must be established or safely extended,not assumed. Full attention/GDN/KV/
+norm/residual/embedding/sampling residency remains. One-owner mutable FFN/GDN
+interlock must remain intact;no second independent mutable claimant.
+
+No SSH/GPU job/driver exchange/Assistant/power/SD/CPU/RAM/boot/settings action.
+Last known041/tag12/g28 left untouched;all prior native parents closed.
+Dirty llama.cpp and unrelated FlashNext work untouched. Pristine
+c060ca974c773c7c3d17fd1b66dc9d312bc292c0 remains the only llama build base.
+Native numeric mismatch/UNKNOWN:CLOSE ONLY;NO END/retry/reset/further card
+read/hot rollback;retain ALL owners/PCI/maps/hosts/DMA/clock/cold for physical
+recovery. Raw-Dst cache22 remains hard-blocked. Whole-model residency and
+20tok/s UNMET. Last actual27B0.207893161tok/s unchanged;no new native timing.

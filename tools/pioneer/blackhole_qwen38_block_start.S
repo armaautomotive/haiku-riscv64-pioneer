@@ -15,7 +15,11 @@ block_done:
 	la t1,block_done
 	sw t1,0(t0)
 .ifdef TT_Q38_DISPATCH_ROOT
+.ifdef TT_Q38_FFN_MATRIX_ROOT
+	li t1,0x314d4651 /* QFM1:NEW private resident FFN root ONLY */
+.else
 	li t1,0x314d3851 /* Q8M1:OFFLINE persistent-dispatch root ONLY */
+.endif
 .else
 .ifdef TT_Q38_VECTOR_ROWS
 	li t1,0x31563851 /* Q8V1:OFFLINE vector-unpack rows ONLY */
@@ -48,7 +52,11 @@ block_park: j block_park
 block_fault_park:
 	li t0,0x17ffc8
 .ifdef TT_Q38_DISPATCH_ROOT
+.ifdef TT_Q38_FFN_MATRIX_ROOT
+	li t1,0x464d4651 /* QFMF:UNKNOWN,NO later card IO/cleanup */
+.else
 	li t1,0x464d3851 /* Q8MF:UNKNOWN,no later packet/reset/restore */
+.endif
 .else
 .ifdef TT_Q38_VECTOR_ROWS
 	li t1,0x46563851 /* Q8VF:UNKNOWN,NO further packet/reset/restore */

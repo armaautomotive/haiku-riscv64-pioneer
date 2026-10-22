@@ -5,6 +5,13 @@
 // No physical route,address or sequence here is a new userspace capability.
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+#if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_REUSE_ACTIVATIONS) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_WORK_ROOT_COMMAND_REUSE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_PEER_PHASE_ROOT)
+#error NEW OFFLINE resident FFN root requires its exact private chain,not host DMA/cache experiment selectors
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnMatrixShape.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CompactOutput.h"
+#endif
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
 #if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || defined(PIONEER_Q38_WORK_ROOT_COMMAND_REUSE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH)
 #error Separate OFFLINE peer timing root ONLY,not command-reuse/batch/mixed modes
@@ -36,7 +43,7 @@ typedef __UINT32_TYPE__ uint32_t;
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
 #include "PioneerQ38OutputTransfer.h"
 #endif
-#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT)
+#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) && !defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
 #error Sparse private exports require the Work bounded-output root
 #endif
 #if defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) && !defined(PIONEER_Q38_WORK_SPARSE_EXPORT)
@@ -214,6 +221,7 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 }
 static bool WaitPc(unsigned pc) { return pc==0x7204c || pc==0x72050; }
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
+#ifndef PIONEER_Q38_FFN_RESIDENT_MATRIX
 // Fixed supported shapes avoid integer division/remainder in the hot RISC
 // loop. Two packed words expand to three original words,backwards in place.
 static __attribute__((noinline,optimize("Os"))) bool ExpandInputs(unsigned inputs)
@@ -234,12 +242,17 @@ static __attribute__((noinline,optimize("Os"))) bool ExpandInputs(unsigned input
 	}
 	Fence(); return true;
 }
+#endif
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 // Keep the transport selector out of the large dispatcher register live set.
 // Both paths retain exactly the original operand and padded-scale checks.
 static __attribute__((noinline,optimize("Os"))) bool PrepareInputs(unsigned mode,unsigned type,unsigned inputs)
 {
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+	if (mode!=TT_Q38_FFN_MATRIX_RESIDENT_INPUT) return false;
+#else
 	if (mode==1 && !ExpandInputs(inputs)) return false;
+#endif
 	for (unsigned w=0;w<inputs;w++) if (!PioneerInt8OperandValid(uint16_t(Words(0xa0000)[w/2]>>((w&1)*16)))) return false;
 	unsigned blocks=inputs>>(type==8?5:8),padded=(blocks+15)&~15U;
 	for (unsigned b=0;b<padded;b++) {
@@ -344,10 +357,20 @@ static __attribute__((noinline,section(".q38_peer_phase"))) bool CapturePeerPhas
 static Q38_ROOT_SMALL bool HeaderValid(const uint32_t* header)
 {
 	unsigned operation=header[2],type=header[3],inputs=header[4],workers=header[5],nonce=header[6];
-	if (header[0]!=0x314d3851 || header[1]!=1 || (operation!=1 && operation!=2) || !workers || workers>119
+	if (header[0]!=
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+		TT_Q38_FFN_MATRIX_MARKER
+#else
+		0x314d3851
+#endif
+		|| header[1]!=1 || (operation!=1 && operation!=2) || !workers || workers>119
 		|| !nonce || nonce>=0x7fffffff || (operation==2 && (type || inputs || workers!=119))
 		|| (operation==1 && (!Tile(type) || (inputs!=5120 && inputs!=6144 && inputs!=17408)))) return false;
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+	if (operation==2?(header[7] || header[8]):(header[7]!=TT_Q38_FFN_MATRIX_RESIDENT_INPUT || header[8]!=1)) return false;
+#else
 	if (operation==2?header[7]:header[7]-1U>1U) return false;
+#endif
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	if (operation==2?header[8]:header[8]>1) return false;
 #ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
@@ -382,7 +405,13 @@ static Q38_ROOT_SMALL bool PartsValid(const uint32_t parts[119][8],const uint32_
 	return true;
 }
 #endif
-extern "C" unsigned block_main()
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+#include "PioneerQ38FfnMatrixRoot.h"
+#define Q38_MAIN_SECTION __attribute__((section(".q38_main")))
+#else
+#define Q38_MAIN_SECTION
+#endif
+extern "C" Q38_MAIN_SECTION unsigned block_main()
 {
 	Checkpoint(0x54000001,0);
 	volatile uint32_t* job=Words(0x74000); uint32_t header[16];
@@ -411,11 +440,21 @@ extern "C" unsigned block_main()
 #endif
 #endif
 	uint32_t parts[119][8],banks[8];
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+	uint32_t ffn[64],firstRows[119];
+#endif
 	unsigned blocks=operation==1?inputs>>(type==8?5:8):0;
 	for (unsigned bank=0;bank<8;bank++) banks[bank]=Words(0x74040)[bank];
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	for (unsigned w=0;w<119;w++) for (unsigned i=0;i<8;i++) parts[w][i]=Words(0x74080)[w*8+i];
 	if (!PartsValid(parts,banks,header)) return 0;
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+	if (operation==1) {
+		for(unsigned i=0;i<64;i++)ffn[i]=Words(TT_Q38_FFN_MATRIX_FRAME)[i];
+		for(unsigned i=0;i<119;i++)firstRows[i]=Words(TT_Q38_FFN_MATRIX_ROWS)[i];
+		if(!PioneerQ38FfnMatrixShape(ffn,header,banks,parts,firstRows))return 0;
+	}
+#endif
 #else
 	for (unsigned bank=0;bank<7;bank++) {
 		if (!banks[bank] || banks[bank]>0xfff) return 0;
@@ -437,7 +476,9 @@ extern "C" unsigned block_main()
 #endif
 	if (operation==1) {
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
+#ifndef PIONEER_Q38_FFN_RESIDENT_MATRIX
 		if (!PrepareInputs(header[7],type,inputs)) return 0;
+#endif
 #else
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 		// Expand BACKWARDS inside the exclusively owned original input
@@ -462,6 +503,12 @@ extern "C" unsigned block_main()
 	Words(0x7f800)[6]=0; // transfer counters,NOT header nonce (preserved at12)
 	Words(0x7f800)[12]=nonce;
 	for (unsigned c=0;c<8;c++) Words(0x7f800)[16+c]=*Words(0xffb20000+Offset(c));
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+	if(operation==1) {
+		FfnMatrix::Fetch(ffn,firstRows);
+		if(!PrepareInputs(TT_Q38_FFN_MATRIX_RESIDENT_INPUT,type,inputs))block_fault_park();
+	}
+#endif
 	// Verify ALL previous idle sequences/physical PCs/reset before staging
 	// ANY doorbell. No host MMIO per peer is needed in this future image.
 	for (unsigned w=0;w<workers;w++) {
@@ -599,6 +646,14 @@ extern "C" unsigned block_main()
 #endif
 		)) block_fault_park();
 #endif
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+	// All119/active participant proofs and every gathered result passed
+	// above. No resident output while ANY peer may still write.
+	if(work) {
+		for(unsigned i=0;i<16;i++)if(header[i]!=job[i] || source[i]!=*Words(0xffb20000+SourceOffset(i)))block_fault_park();
+		FfnMatrix::Scatter(ffn,firstRows,parts,packedWords);
+	}
+#endif
 	for (unsigned i=0;i<16;i++) if (header[i]!=job[i] || source[i]!=*Words(0xffb20000+SourceOffset(i))) block_fault_park();
 	Checkpoint(0x54000402,workers);
 	if (!Idle()) block_fault_park();
@@ -616,9 +671,16 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
 	if(work){reads++;flits++;} // exact additional64B read,response+oneflit;NEVER unaccounted
 #endif
-#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+#if defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
 	unsigned writes=workers*2,writeFlits=writes;
 	if (work) {
+#ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+		unsigned outputPackets=PioneerQ38FfnMatrixOrdered(parts,firstRows,workers)?(ffn[12]+16383)/16384:workers;
+		reads+=PioneerQ38FfnMatrixInputReads(ffn[5]);flits+=PioneerQ38FfnMatrixInputFlits(ffn[5]);
+		writes+=outputPackets;writeFlits+=ffn[12]/64;
+		if(Words(0x7f800)[50]!=PioneerQ38FfnMatrixInputReads(ffn[5]) || Words(0x7f800)[51]!=PioneerQ38FfnMatrixInputFlits(ffn[5])
+			|| Words(0x7f800)[52]!=outputPackets || Words(0x7f800)[53]!=ffn[12]/64)block_fault_park();
+#else
 		unsigned bytes=
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 			PioneerQ38CompactOutputBytes(workers,packedWords),
@@ -627,6 +689,7 @@ extern "C" unsigned block_main()
 #endif
 			chunks=(bytes+4095)/4096;
 		reads+=chunks; flits+=bytes/64; writes+=chunks; writeFlits+=bytes/64;
+#endif
 	}
 	if (Words(0x7f800)[6]!=reads || Words(0x7f800)[7]!=writes || Words(0x7f800)[8]!=flits || Words(0x7f800)[9]!=writeFlits) block_fault_park();
 #else
@@ -634,7 +697,7 @@ extern "C" unsigned block_main()
 #endif
 	for (unsigned c=0;c<8;c++) {
 		Checkpoint(0x54000410+c,reads);
-#ifdef PIONEER_Q38_OUTPUT_TRANSFER_ROOT
+#if defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_FFN_RESIDENT_MATRIX)
 		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+writes:c==5?writeFlits:writes;
 #else
 		unsigned expected=c==0 || c==3?reads:c==1?flits:c==2 || c==6?reads+workers*2:workers*2;

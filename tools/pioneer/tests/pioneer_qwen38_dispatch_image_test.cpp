@@ -7,7 +7,14 @@
 #ifdef PIONEER_Q38_COMPACT_ACTIVATIONS
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ActivationPacking.h"
 #endif
+#ifndef PIONEER_Q38_TEST_PRIVATE_FFN_ROOT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchImages.h"
+#else
+// Test-only NEW private root:do not masquerade as an old production image
+// selection or grant it host-DMA/legacy registry capabilities.
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RootTerminal.h"
+#endif
 // Actual ROOT RV32 instructions;synthetic private peer proof fabric,NOT
 // arithmetic/inference/native authority. Real peer math has separate tests.
 struct DispatchMachine:BlockMachine {
