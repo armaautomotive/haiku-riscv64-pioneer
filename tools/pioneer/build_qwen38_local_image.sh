@@ -2,7 +2,7 @@
 # OFFLINE arithmetic/device-state images ONLY; no native build/install/access.
 set -eu
 [ "$#" = 3 ] || exit 2
-case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|resident_gdn|resident_gdn_root|packed|activation|activation0) kind=$1;; *) exit 2;; esac
+case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|resident_gdn|resident_gdn_root|packed|activation|activation0|ffn_activation) kind=$1;; *) exit 2;; esac
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$2/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$3

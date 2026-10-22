@@ -1,0 +1,113 @@
+Qwen3.8-27B device-resident FFN prerequisites,October22 2026.
+OFFLINE ONLY. No full FFN execution,live backend integration,model quality,
+native performance or token-rate improvement claimed by this checkpoint.
+
+User direction:keep the complete inference computation on the P100A rather
+than returning intermediate tensors across PCIe. Current production Q38
+backend still accepts learned MUL_MAT only plus metadata views;it quantizes
+inputs and publishes matrix outputs on the host. The CPU nonmatrix work is
+real inference work,NOT optional learned-reference validation. Card-resident
+weights alone do not make the model device-resident. Target architecture:
+resident activations,normalization/nonlinearity/residuals,attention/GDN and
+KV/recurrent state;host UI/tokenization/token I/O. On-card kernel and command
+inefficiency also remains:eliminating transfers is NOT proof of20tok/s.
+
+First bounded target:5120F32 input -> gate/up Q4_K projections17408F32 ->
+SiLU(gate)*up -> Q4_K down projection5120F32. No host gate/up/GLU vectors.
+This checkpoint establishes three SEPARATE prerequisites,not that pipeline.
+
+1. PioneerQ38GgmlFfnContract:metadata-only recognition against pristine
+   pinned llama.cpp c060ca974c773c7c3d17fd1b66dc9d312bc292c0 GGML.
+   Exact layer/source/epoch,names,Q4_K shapes,strides,op params and common
+   input. Both gate/up traversal orders allowed;SWIGLU swapped flag refused.
+   GLOBAL use_counts retained by graph views reject outside-slice consumers
+   and explicit OUTPUT on any intermediate. Final down OUTPUT and later
+   CPU consumers remain valid and require normal final publication.
+   No tensor data read:all value pointers PROT_NONE in positive tests.
+   Descriptions are not executable capabilities;source/graph must remain
+   live/unchanged and future native owner must revalidate independently.
+   Existing backend GLU support remains FALSE. No normal backend changes.
+   ASan/UBSan:260 positives/all64layers/both orders/full+view graphs and
+   final-output cases;78 atomic refusals;all5 existing backend fault cases
+   passed. Source file position unchanged;reopen records fresh epoch.
+   /private/tmp/pioneer-q38-ffn-contract-tests-20261022-c.log
+   SHAfe30e6785dd830ea723e5571ce693575ce79eeb1b2f876f5fd7a7ffd67277e0a
+
+2. PioneerQ38FfnScratchLayout:295360B of RELATIVE DATA offsets inside ONE
+   existing64MiB workspace,not absolute addresses/handles or allocation.
+   Seven disjoint64B-aligned slices:
+     input F32                         20480B
+     quantized input operand+scales    10368B
+     gate F32                          69632B
+     up F32                            69632B
+     activated F32                     69632B
+     quantized activation+scales       35136B
+     output F32                        20480B
+   Quantized slices describe current sign-magnitude16-bit native operands
+   containing int8 values plus signedF32 scales,NOT signed int16 values or
+   packed GGML Q8_K. They do not authorize any native addressing or IO.
+   Existing bank/21GiB capacity unchanged. Source/epoch/tiled/canonical
+   workspace checks,atomic refusal,learned/state/otherworkspace separation.
+   ASan/UBSan:42 layouts/7banks/3contexts/1or2delta slots;81 refusals.
+   /private/tmp/pioneer-q38-ffn-scratch-layout-tests-20261022-c.log
+   SHAc6a0ce62f39afdd78770dcafbae2ebd806f9a1a851a6ed162cfc59b042af936e
+
+3. PioneerQ38FfnActivation:local256-lane SiLU(gate)*up + Q8_K candidate.
+   Real RV32IMF cross-compiled bytes executed in the strict instruction
+   emulator with BabyRISCV operand/result FTZ behavior. No supplied device
+   addresses,NoC/DRAM/PCI/DMA/driver/ownership/reset path. Fixed local input,
+   output,code,8KiB stack,descriptor and distinct result/fault markers only.
+   Inputs unchanged;all outputs staged before logical success publication.
+   Compile -ffp-contract=off. Fast SiLU polynomial is approximate,not pinned
+   CPU bit equality. Independent expf check <=3e-6 relative error;actual
+   Q8_K signedF32 scale/nearest-even/ALL292 bytes+sums match independent
+   IEEE-division/nearbyintf quantizer of the produced activation exactly.
+   Deliberately BOUNDED FIRST candidate:gate signed zero or abs[2^-40,32],
+   up signed zero or abs[2^-40,2^20]. This avoids unobserved FTZ changes in
+   any nonzero activation/quantizer intermediate. NOT proof that arbitrary
+   learned activations qualify. Out-of-box refused before output writes.
+   Output remains packed GGML Q8_K,NOT existing native operand wire. Future
+   conversion must enforce existing native matrix scale range[2^-32,2^16]
+   (or zero) independently;this broader arithmetic box does not relax it.
+   Scalar arithmetic is a correctness prerequisite,NOT optimized SFPU or
+   concurrent68-worker execution. No emulator steps interpreted as speed.
+   ASan/UBSan:544 blocks/eight COMPLETE17408-element vectors,zeros,signed
+   extrema,smallest admitted magnitudes,dynamic range and changed patterns.
+   All128 descriptor-bit mutations;every256 input position/both sources for
+   ten invalid/domain values=5248 descriptor+domain refusals;30 host count/
+   null/alignment/wrapping/pairwise overlap refusals;ALL refusal outputs
+   unchanged. Strict local memory,guard words and immutable inputs passed.
+   Max93942 emulator steps/block,min stack0006f91c (1764B below70000).
+   Code2472B,no writable static data,one4B boot jump,no unqualified opcode.
+   Image /private/tmp/pioneer-q38-ffn-activation-image.Mc0h7Dtc/image
+   code SHA b24e0a51d6c451162f139dd2f187cc71c82736a9d186be1279478deb57859957
+   boot SHA d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+   /private/tmp/pioneer-q38-ffn-activation-tests-20261022-b.log
+   SHA0c616a00e93b4fff205d98fd5ad651d8bf72402a4be9ebce48880e8cc71f2026
+
+Unchanged standalone Q8_K image rebuilt through extended OFFLINE builder:
+32 actual-instruction numeric trials/all292bytes,all descriptor bits and
+nonfinite/subnormal refusal regression passed,CLI0. Existing frozen image
+header matched the fresh code word-for-word. Code SHA
+4ee6a5cfc8ed85ad1bdc09285510699d347213a7f4f6482ade6c50e062746deb.
+/private/tmp/pioneer-q38-activation-regression.2g6ZCexr/test.log
+SHAff9e8a577a627d269ef39cfd025986ea8edbef802aded48a563acb548bce85d3
+
+No SSH or GPU job,upload,driver install,Assistant restart,power/reboot/SD,
+CPU/RAM/boot/settings change in this checkpoint. Last known installed best
+041/tag12/g28 remains untouched;all preceding native parents were CLOSED.
+SDK read-only;only pristine pinned GGML objects built. Dirty working llama
+implementation and unrelated FlashNext work untouched. This is not new
+same-FD public-model authentication or native-model numerical evidence.
+
+NEXT before native fused FFN:matching local native operand producer and
+explicit domain/refusal protocol;retained mutable-workspace owner with
+private bounded ranges/source auth/initialization;device output collection
+and gate/up->activation->down barriers;distinct frozen image/ABI and driver
+build gates,ALL extent/counter/completion/UNKNOWN/CLOSEONLY tests. Preserve
+old matrix Work and separate CPU validation. Test one FFN numerically in
+validation mode,then paired REAL inference with fixed tokens/context/warmup.
+No CPU learned-reference fallback in Work. Any actual numeric mismatch or
+UNKNOWN means CLOSE ONLY,no END/retry/reset/read/hot rollback;retain all
+owners/resources for explicit physical recovery. Raw-Dst cache22 remains
+hard-blocked. Full-model device residency and20tok/s are NOT achieved.
