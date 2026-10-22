@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE private persistent root only;NO driver install/card operations.
 set -eu
+[ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDENT_MATRIX:-0}" = 0 ] || { echo 'STOP resident FFN uses a separate OFFLINE private image/ABI,not this root' >&2;exit 2; }
 [ "${PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2

@@ -1,0 +1,152 @@
+Complete FFN root coordinator prototype checkpoint.
+October21 2026 Vancouver;test/evidence timestamps October22 UTC.
+OFFLINE ONLY. Actual ROOT instructions;peer values/proofs/CSR fabric in
+this checkpoint are SYNTHETIC,NOT actual peer arithmetic/native inference.
+
+NEW QFG1 root runs ONE seven-stage device FFN without host intermediates:
+ 20 persistent initial-input quantizers ->20-scale/native gather ->gate
+ matrix ->up matrix ->68 persistent SiLU/native quantizers ->68-scale/native
+ gather ->down matrix,ending with5120F32 outputs in the SAME GDDR workspace.
+Uses QFP2 peers and the QFS2 gather. Matrix subroutine is the previously
+tested resident source/sink coordinator with explicit QFP2 peer markers.
+The NEW root also has an explicit ALL119 STOP path;no reset/hold/ARC/END or
+owner release is issued by the program. No old private ABI accepts it.
+
+Matrix plans support ALL119 compute peers with full-K groups<=16,not just
+68gate/up or20down workers. All3 roles may independently be Q4_K/Q6_K.
+Exact complete row cover and shuffled placement remain mandatory. Input/
+activation workers are20/68 because each produces a fixed256-lane block.
+Per-peer private sequences remain distinct from coordinator phase nonce:
+root reserves5 phases per FFN;each peer advances only for its actual jobs.
+Inactive peers retain their histories. Both FFN and STOP reserve headroom;
+last safe RUN ends<=0x7ffffffd,leaving one final STOP<=0x7ffffffe.
+
+The complete3456word manifest includes a64word context frame,119baseline
+peer sequences+9zero words,and three1088word matrix-role records. Each role
+holds type/shape,ALL119 learned parts/row starts and inactive zero padding.
+Frame IDs/token/layer/workspace are DATA,NOT authentication. Shape verifies
+all learned bounds/routes/within-role overlaps,complete output cover and
+exclusion from the SAME64MiB workspace. A geometrically valid OTHER learned
+address/model epoch still passes shape:ONLY a future canonical model/private
+native owner may authenticate that. There is NO new public ioctl/selector.
+
+Original75800..78e00 captured EXACTLY into shadow78e00..7c400 before NoC.
+These intervals deliberately use the OLD CHECKED peer-proof area. ONLY the
+Work matrix path is legal;old checked clears/stores and old STOP dispatcher
+are forbidden. The test explicitly makes original data read-only and permits
+exact shadow writes ONLY during initial capture. Manifest equality and root
+source identity are rechecked at phase boundaries;all subsequent execution
+derives metadata from its private captured shadow,not mutable request data.
+Physical before counters119x8 live7c400..7d2e0,evolving sequences7d300..
+7d4dc,global stats7d500..7d600. None overlaps the original119x16 source
+table7d800..7f5c0,75000..75800 transfer scratch,or numeric buffers.
+
+Initial ALL119 current WAIT/status/TWO-PC/reset/source audits precede the
+first launch. Producer phases bracket actual job sequence with independent
+physical before/after counter snapshots and ALL16 physical source words,
+current completion/status/TWO-PC/reset proofs and complete64word proof DATA.
+Logical proof fields are first checked against independently captured before
+and computed EXPECTATIONS (NOT physical readiness). Physical after samples
+must then match every expected word before advancing ANY peer sequence.
+Matrix phases also have independent before/after physical counter brackets
+and all16 physical source checks,in addition to the original matrix root's
+current peer/PC/reset/proof/finite/output/NoC evidence.
+
+Physical NIU reads include ONLY already-known words,never a speculative
+contiguous read over unknown/reserved registers:
+ sources100/4B,118/24B,130/24B,150/8B,16c/4B;
+ counters204/20B,220/4B,228/4B,including the accepted-count alias at210.
+Each physical after subread is compared BEFORE another packet can issue.
+Every graph transport retains exact10word command readback,ALL8 wrapped
+counter deltas,all idle queues/tags and root-source checks. Observed PC/
+source/counter/status/command uncertainty parks inert immediately. Current
+two WAIT PCs or two STOP PCs remain mandatory;known transient producer exit
+PCs may wait boundedly but NEVER grant completion. Exact QFP2 companion
+helper64000..66b9c/main72000..73ff4 extents are part of this private image
+contract;future native factory MUST pin its complete actual code image.
+
+Important remaining hardware assumption:the simulation models remote reads
+of these known CSR words as passive with respect to the peer's own issued-
+command counters. This has NOT received new native qualification. A future
+controlled native test must validate that,actual remote endpoints and the
+complete lifecycle before this code may be selected. No shape/tag/stat field
+or this synthetic test fabric supplies native authority.
+
+NEW immutable code footprint,NOT the old root16KiB prefix lease:
+ prefix64000..65854 (6228B),graph68000..6c05c (16476B),
+ EXISTING stack6e000..70000 (8KiB),matrix body/frontend72000..73ae4 (6884B).
+A NEW native owner must save/prove the ENTIRE64000..6e00040KiB prefix plus
+main image. Old mapping/save/context permissions do NOT cover this image.
+Bank/workspace capacity and device stack window were NOT widened. Actual
+root VM maximum stack5832B;main frame160B,matrix4992B,WaitPeers560B,
+producer928B,graph packet112B. No writable globals/GOT/libc dependency.
+Proof command templates now use explicit volatile WORD stores,preventing
+the bare-metal compiler from emitting an unlinked memset. SDK READ ONLY.
+
+ASan/UBSan evidence,ALL CLI0:
+ -Manifest DATA451positive/3547refusals:all7banks x2workspace edges x2
+  workforce layouts x2row orders x8type mixes,plus last safe RUN/STOP and
+  explicit demonstration that shape is NOT canonical model ownership.
+  ALL119 parts/rows and source bases,reserved sequence padding,epochs and
+  fixed addresses/layout/bounds checked. No native access.
+  /private/tmp/pioneer-q38-ffn-graph-shape-tests-20261022-b.log
+  SHA5ef6874cc51c06b6a0b56c27382430c5bc86b0be968128e53697bbc89799644c
+ -ACTUAL root/synthetic peer fabric28positive=14complete7stage FFNs+
+  14subsequent ALL119 STOPs,covering all7banks,both workforce layouts,
+  both address edges across the suite,row orders and mixed weight types.
+  Actual root metadata/sequence/CSR/counter/source/gather/scatter instructions
+  execute;matrix descriptors are checked against each exact role plan.
+  83faults:ALL64 producer-proof corruptions,first/middle/last current physical
+  source/counter/status/PC/reset faults,lost command readback,stuck transfer,
+  original-manifest mutation and root-source mutation. Every fault inert.
+  NO actual worker arithmetic/model values/real hardware in this suite.
+  /private/tmp/pioneer-q38-ffn-graph-tests-20261022-d.log
+  SHAdbf331241f9fc124cb68f6090239d63cb6a3e8f4d203aead5715ea3580f27ee0
+ -68 private/mixed/legacy/native selector refusals BEFORE SDK/output.
+  /private/tmp/pioneer-q38-ffn-graph-gates-20261022-a.log
+  SHA3370c79406279a6939093e1478ffdc0b24aa243ccf2b07f6c39d6f57e69b17b1
+ -Existing ACTUAL QFP2 producer+matrix/activation instruction regression:
+  288positive/160faults;all5120 lanes/native wire,complete source/counter/
+  proof/native-scale bounds and UNKNOWN behavior unchanged. This separate
+  suite does NOT make the new root/actual-peer integration qualified.
+  /private/tmp/pioneer-q38-ffn-graph-input-regression-20261022-a.log
+  SHAaca7557d67e2a8f75c2424a992912c978f3a20d6050d68db3112e0420995b3f4
+
+NEW root independently rebuilt;all4 sections byte-compared:
+ /private/tmp/pioneer-q38-ffn-graph-image.yePtfcEj/image
+ /private/tmp/pioneer-q38-ffn-graph-rebuild.nk2BOD8Q/image
+ Final source rebuild (same bytes):
+ /private/tmp/pioneer-q38-ffn-graph-final.jFIjki04/image
+ boot SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main SHA2724bbca6e4c8078f082227202581b2ec47450deca4aa59ef8b6c636ada79b0e
+ prefix SHAb6cbbf8c02a0673a84001a870390bfe5f4b834306c80f27c820358f4e48bd3df
+ graph SHA0af934a943d6264d1c67d82cf9427b76e3fa46f9f1b9a805d6ad04d57b70ad89
+Feature-OFF QFM1 resident matrix root,qualified legacy sentinel root and
+QFP2 companion peer independently rebuilt and ALL sections byte-compared
+to their exact previous images. ALL THREE remain byte-identical:
+ /private/tmp/pioneer-q38-ffn-graph-qfm-control.QRBVAceX/image
+ /private/tmp/pioneer-q38-ffn-graph-sentinel-control.UdoXht9d/image
+ /private/tmp/pioneer-q38-ffn-graph-peer-control.NJzpNLRW/image
+
+Performance warning:correctness prototype,NOT a fast/native candidate yet.
+Centralized independent audits are expensive:one all119 natural-order case
+used13501430 root VM instructions/10520NoC packets;shuffled cases up to
+15139324/10865. Narrow layouts9415389..10086773/6701..6845. These are NOT
+silicon times/tokens/sec. They show control overhead that must be reduced
+or distributed after actual-worker integration,without inventing readiness
+from booleans or weakening retained-owner/source/UNKNOWN safety. Some input
+fetches are deliberately redundant until a real private ownership receipt
+can safely replace them;no arbitrary local-cache hint was introduced.
+
+NEXT:ACTUAL root+ALL ACTUAL persistent peer arithmetic together;then reduce
+control overhead,complete unified native mutable/global code/source/model/
+initial-producer provenance ownership,qualify remote CSR/lifetime behavior,
+and controlled native integration/measurement. Real-model SiLU/native-scale
+eligibility and all-card attention/GDN/KV/norm/residual/embedding/sampling
+remain. Complete FFN control is NOT a complete all-card decoder or20tok/s.
+
+No SSH/upload/GPU job/hotswap/driver install/restart/Assistant/power/SD/boot/
+CPU/RAM/settings changes. Last verified installed best SHA:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Raw-Dst cache22 remains HARD BLOCKED. These tests opened no native parent.
+Last real27B speed0.207893161tok/s unchanged;20tok/s target still UNMET.

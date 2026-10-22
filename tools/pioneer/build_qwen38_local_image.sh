@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE arithmetic/device-state images ONLY; no native build/install/access.
 set -eu
+[ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "$#" = 3 ] || exit 2
 case "$1" in delta|delta_vector|delta_vector_probe|delta_vector_ggml|resident_gdn|resident_gdn_root|packed|activation|activation0|ffn_activation|ffn_native_activation|ffn_resident_activation|ffn_resident_gather|ffn_resident_gather2|ffn_resident_output) kind=$1;; *) exit 2;; esac
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)

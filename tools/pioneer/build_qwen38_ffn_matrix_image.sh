@@ -1,6 +1,7 @@
 #!/bin/sh
 # Separate OFFLINE NEW ABI/image ONLY;NO driver/card/native selection.
 set -eu
+[ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDENT_MATRIX:-0}" = 1 ] || exit 2
 for key in PIONEER_Q38_OUTPUT_TRANSFER_ROOT PIONEER_Q38_WORK_ROOT_COMMAND_REUSE \

@@ -5,6 +5,12 @@
 // No physical route,address or sequence here is a new userspace capability.
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_FFN_GRAPH_ROOT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphShape.h"
+enum {Q38DispatchPeerMarker=TT_Q38_FFN_PERSISTENT_MARKER};
+#else
+enum {Q38DispatchPeerMarker=0x32503851};
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
 #if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_REUSE_ACTIVATIONS) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_WORK_ROOT_COMMAND_REUSE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_PEER_PHASE_ROOT)
 #error NEW OFFLINE resident FFN root requires its exact private chain,not host DMA/cache experiment selectors
@@ -277,7 +283,7 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
 #else
 	Checkpoint(0x54000201,worker);
 #endif
-	if (status[2] || status[3]!=0x32503851 || status[0]>sequence || status[1]>sequence || status[4]>2) block_fault_park();
+	if (status[2] || status[3]!=Q38DispatchPeerMarker || status[0]>sequence || status[1]>sequence || status[4]>2) block_fault_park();
 	for (unsigned i=
 #ifdef PIONEER_Q38_PEER_PROGRESS
 		6
@@ -531,7 +537,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		descriptor[0]=operation==1?0x31483851U:0; descriptor[1]=operation==1?type:0; descriptor[2]=operation==1?Tile(type):0;
 		descriptor[5]=operation==1?inputs:0; descriptor[6]=operation==1?p[0]:0; descriptor[7]=operation==1?p[2]:0;
 		descriptor[8]=operation==1?p[4]:0; descriptor[9]=operation==1?1:0;
-		descriptor[10]=0x32503851; descriptor[11]=worker; descriptor[12]=p[3]; descriptor[13]=operation;
+		descriptor[10]=Q38DispatchPeerMarker; descriptor[11]=worker; descriptor[12]=p[3]; descriptor[13]=operation;
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 		descriptor[14]=work?1U:0U; // PRIVATE numeric-only mode; STOP and checked remain0
 #endif
@@ -612,7 +618,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 		if(work){unsigned batch=type==8?4:2;command[0]-=(batch-1)*Tile(type);command[3]=0x98000;command[8]*=batch;}
 #endif
-		if (proof[16]!=groups*inputs/16 || proof[17]!=p[3] || proof[18]!=w+1 || proof[19]!=0x32503851
+		if (proof[16]!=groups*inputs/16 || proof[17]!=p[3] || proof[18]!=w+1 || proof[19]!=Q38DispatchPeerMarker
 			|| proof[30]!=p[5] || proof[31]!=XY(w+1)) block_fault_park();
 		for (unsigned i=0;i<10;i++) if (proof[20+i]!=command[i]) block_fault_park();
 		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(0x7d800)[w*16+i]) block_fault_park();

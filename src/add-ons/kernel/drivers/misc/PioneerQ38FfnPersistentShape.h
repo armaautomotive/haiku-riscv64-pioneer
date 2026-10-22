@@ -41,7 +41,9 @@ static inline bool PioneerQ38FfnPersistentActivationProof(const uint32_t* p,cons
  if(p[16]!=256 || p[17]!=j[12] || p[18]!=worker || p[19]!=TT_Q38_FFN_PERSISTENT_MARKER
   || p[30]!=source[0] || p[31]!=self || p[48]!=3 || p[49]!=d[6] || p[50]!=d[5] || p[51]!=d[42]
   || p[52]!=d[40] || p[53]!=d[41] || p[62]!=TT_Q38_FFN_RESIDENT_MARKER || p[63]!=1)return false;
- const uint32_t command[]={0x90e00,0,d[9],d[4]+d[13],0,d[8],0,0x212,64,0};
+ volatile uint32_t command[10]; // explicit WORD stores,never libc memset
+ command[0]=0x90e00;command[1]=0;command[2]=d[9];command[3]=d[4]+d[13];command[4]=0;
+ command[5]=d[8];command[6]=0;command[7]=0x212;command[8]=64;command[9]=0;
  for(unsigned i=0;i<10;i++)if(p[20+i]!=command[i])return false;
  for(unsigned i=0;i<16;i++)if(p[32+i]!=source[i])return false;
  for(unsigned i=0;i<8;i++)if(p[54+i]!=d[32+i])return false;
@@ -57,7 +59,9 @@ static inline bool PioneerQ38FfnPersistentInputProof(const uint32_t* p,const uin
  if(p[16]!=256 || p[17]!=j[12] || p[18]!=worker || p[19]!=TT_Q38_FFN_PERSISTENT_MARKER
   || p[30]!=source[0] || p[31]!=self || p[48]!=4 || p[49]!=d[6] || p[50]!=d[5] || p[51]!=d[42]
   || p[52]!=d[40] || p[53]!=d[41] || p[62]!=TT_Q38_FFN_INPUT_MARKER || p[63]!=1)return false;
- const uint32_t command[]={0x90e00,0,d[9],d[4]+d[13],0,d[8],0,0x212,64,0};
+ volatile uint32_t command[10]; // explicit WORD stores,never libc memset
+ command[0]=0x90e00;command[1]=0;command[2]=d[9];command[3]=d[4]+d[13];command[4]=0;
+ command[5]=d[8];command[6]=0;command[7]=0x212;command[8]=64;command[9]=0;
  for(unsigned i=0;i<10;i++)if(p[20+i]!=command[i])return false;
  for(unsigned i=0;i<16;i++)if(p[32+i]!=source[i])return false;
  for(unsigned i=0;i<8;i++)if(p[54+i]!=d[32+i])return false;

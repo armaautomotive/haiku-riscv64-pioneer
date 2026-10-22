@@ -15,10 +15,14 @@ block_done:
 	la t1,block_done
 	sw t1,0(t0)
 .ifdef TT_Q38_DISPATCH_ROOT
+.ifdef TT_Q38_FFN_GRAPH_ROOT
+	li t1,0x31474651 /* QFG1:NEW complete FFN root,not an old projection */
+.else
 .ifdef TT_Q38_FFN_MATRIX_ROOT
 	li t1,0x314d4651 /* QFM1:NEW private resident FFN root ONLY */
 .else
 	li t1,0x314d3851 /* Q8M1:OFFLINE persistent-dispatch root ONLY */
+.endif
 .endif
 .else
 .ifdef TT_Q38_VECTOR_ROWS
@@ -52,10 +56,14 @@ block_park: j block_park
 block_fault_park:
 	li t0,0x17ffc8
 .ifdef TT_Q38_DISPATCH_ROOT
+.ifdef TT_Q38_FFN_GRAPH_ROOT
+	li t1,0x46474651 /* QFGF:terminal UNKNOWN,NO cleanup authority */
+.else
 .ifdef TT_Q38_FFN_MATRIX_ROOT
 	li t1,0x464d4651 /* QFMF:UNKNOWN,NO later card IO/cleanup */
 .else
 	li t1,0x464d3851 /* Q8MF:UNKNOWN,no later packet/reset/restore */
+.endif
 .endif
 .else
 .ifdef TT_Q38_VECTOR_ROWS
