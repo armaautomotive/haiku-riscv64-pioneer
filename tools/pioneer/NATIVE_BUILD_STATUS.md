@@ -1,5 +1,30 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:complete separate QPR1/QFP3
+frozen DATA catalog+full L1 snapshot footprint implemented,NOT native
+selected. BOTH boots/ALL6sections pinned before ANY generator output;
+251corruption/refusal cases. ALL120 code989304words,NOT old867448;
+complete40KiB ROOT/16KiB peer,ALL120 stacks+trailers/runtime views and
+ROOT full new primary/shadow. Snapshot8134072words32536288B HEAP ONLY;
+exhaustive2970933refusals,read-only kernel compile maxframe16B. Actual
+ROOT10examples covers5760601CPU L1 stores/149458local NoC views/19410peer
+L1 views,including BOTH9wave globals;SYNTHETIC peers here. Separate actual
+arithmetic ROOT+ALL119 retained peers SIX mixed-width/type projections
+passes,5464314ROOT+41330357peer CPU stores inside snapshot DATA,ZERO
+immutable code stores,ALL119 STOP/one boot pool/no resets. Test weights/
+transport,NOT native model/timing/physical mappings or complete CSR/Tensix
+state ownership. No device source/builder/native driver/client changed.
+Default3-projection arithmetic regression/105role gates PASS. ALL tests
+terminal before checkpoint. Fresh19:53UTC SSH works,original041/
+tag12/gen44/idle/cold0/owner0/open1/guard1,64CPUs/max137034936320B. ZERO
+native job/install/remote write/power/reboot/SD/Assistant/network changes.
+NEXT actual full-footprint exclusive memory/lifetime native adapter plus
+source/upload ledger/NEW initialized generic workspace/completed producer
+retention. Old FFN74-page workspace NOT sufficient;need>=2MiB. Do not
+substitute another boot/STOP-only hardware qualifier. Full all-card decoder
+still incomplete. Whole27B.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-projection-catalog-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:NEW QPR1 complete resident-input
 projection parent implemented,NOT native selected. ONE ROOT call owns op5
 producers->QPG1 gather->ALL QPM1 waves;no host interstage learned work.

@@ -1,0 +1,100 @@
+Complete QPR1/QFP3 catalog and L1 footprint:OFFLINE October22 2026.
+Predecessor3a711c9542406bc389a76bbbf7aecc6d466538f6 pushed/remote verified.
+Last WHOLE27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+NEW separate frozen code DATA catalog,not native selected:
+-Pins BOTH four-byte boots and ALL SIX QPR1/QFP3 sections before ANY
+ generator patch output. Generated headers contain exact little-endian
+ artifact words. Never replace/include the old QFG1/QFG2/QFP2 catalog.
+-Complete40KiB ROOT prefix,complete16KiB PEER prefix,existing16KiB panels
+ and boot. ALL120 code snapshots989304words;old867448word code owner is
+ NOT sufficient. Padding ONLY inside exact bounded program footprints.
+-Immutable/executable/address policies are separate. Peer70000..70b00
+ scratch NEVER becomes immutable code. Actual section extents ONLY are
+ executable;stack,metadata,operands,manifest/shadow and trailers are not.
+-Catalog performs NO mapping/IO/write/reset/boot/native registration.
+ Shared old boot word is deliberately identical and grants NOTHING.
+
+NEW fixed complete L1 snapshot DATA plan:
+ALL120:boot,role-specific complete prefix,8KiB stack6e000..70000,
+16KiB panel70000..74000,conservative229376B work view74000..ac000 and
+32B completion trailer17ffc0..17ffe0. ROOT ALSO complete33536B manifest
+b0000..b8300 and shadowc0000..c8300. Peer68000..6e000 hole excluded.
+Total8134072words32536288bytes,HEAP ONLY. This is bounded local L1 ONLY,
+NOT MMIO/NoC/ARC/PCI/host DMA/GDDR or Tensix control/register ownership.
+These policies do NOT allocate a snapshot object or authenticate a map.
+The native adapter and actual save/install/run/STOP/restore owner are
+STILL OWED. ALL snapshots before FIRST write;UNKNOWN retains EVERYTHING,
+NO following read/reset/restore/retry. Known-clean STOP+ALL terminals/hold
+and current exclusive source/owner/clock/host proof BEFORE restoration.
+
+Qualified OFFLINE,not native performance:
+-Exact frozen catalog/full footprint:ALL120roles989304actual code words
+ checked against emitted artifacts and padding,8134072snapshot addresses
+ exhaustively enumerated,2970933refusals. Disjoint views,unaligned/overflow/
+ invalid roles/holes/MMIO/stack-as-code/foreign parent manifests refused.
+ All old peer12KiB grants explicitly exclude the new67000..68000 suffix.
+-Read-only RISC-V kernel compile,maxframe16B,no giant kernel stack object.
+-Generator251cases:six exact checked-in headers,BOTH boots/ALL six
+ sections first-byte/last-byte/truncated/extended/missing corruption must
+ refuse BEFORE ANY output for EVERY selected section;bad arguments inert.
+-Actual emitted QPR1 ROOT instructions:10examples,5760601CPU L1 stores,
+ 149458local NoC transfer views,19410remote peer L1 transfer views covered
+ by exact fixed footprint;NO code transfer endpoints. All widths/types,
+ small3/64+119workers,BOTH full9-wave vocabularies and STOP. Peer replies/
+ products/physical endpoints SYNTHETIC here,NOT native arithmetic or map
+ ownership. Independently proved prior six-projection actual arithmetic
+ remains the predecessor evidence,not inferred from this DATA catalog.
+-NEW expanded actual arithmetic cooperation WITH footprint observers:
+ SAME119 QFP3 boots ONCE,SIX mixed Q8/Q4/Q6 roles/input widths,28768real
+ output rows,172op5/427matrix jobs/1973760matrix instructions and checked
+ ALL119 STOP. Snapshot DATA covers5464314actual ROOT CPU L1 stores and
+ 41330357actual PEER CPU L1 stores;ZERO immutable code stores. No peer/
+ Dst/Src/CSR/private-sequence resets. Independent FP32/FP64 TEST observers
+ pass. Test weights/transport/reset endpoints SIMULATED,NOT native timing,
+ physical save/restore,complete Tensix/CSR ownership or full-model speed.
+-Default observer-disabled arithmetic runner regression:THREE changed
+ projections/1120rows/60producers/70matrix jobs/89600instructions,
+ SAME119boots/checked ALL119STOP PASS. New optional footprint flag does
+ NOT change device artifacts.105exact parent/old-role gates PASS again.
+ Shell syntax/whitespace and Python syntax pass;Python bytecode cache
+ redirected to private temporary directory,not the restricted user cache.
+ ALL jobs TERMINAL0 before commit. No script/source edited during its run.
+
+Artifacts UNCHANGED from predecessor:
+/private/tmp/pioneer-q38-projection-family.DGLYM4co/parent-d +peer-n
+ boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ root-main c623cad56856ac690a79e9b60566148afdba062646bafbb5bf32bcabaa7cb108 7812B
+ root-prefix cfb512c2b507d511b671bbb73101b724ec230f853a3486616336bacd66706357 6508B
+ root-graph13992bf95da5c695aab493db6d2760d74b139ed7384c04552df0751fa13ceaf9 16192B
+ peer-main783bd17e5f1114365bac3e7fa0589f205d70a225a2223a4de7089503ef90a615 8164B
+ peer-affine a55331eeab74b50a50012a62c0d476e9a247f653eefe2211a08d0a75b2da85ca 5248B
+ peer-helper f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9 16352B
+No device source/builder/linker/image/native driver/client changed here.
+
+Terminal evidence:
+ /private/tmp/pioneer-q38-projection-catalog-20261022-a.log
+ SHA256 e6ed6ee3293b5bf5167449327a25869a687d311e64636e38bdd2d7a3e727e793
+ /private/tmp/pioneer-q38-projection-generator-20261022-a.log
+ SHA256 b2a504ad52b02e0d0040f434fea0e338a162ef195ae82c7fea16d6535c762c6b
+ /private/tmp/pioneer-q38-projection-footprint-image-20261022-a.log
+ SHA256 67e1b37980b6dc1b803860fb267fe3d45ac9f857de72985bbbeb6e4eb4a8e48e
+ /private/tmp/pioneer-q38-projection-footprint-cooperative-20261022-a.log
+ SHA256 7a1e4fc21b041f8706b71fb313abe3fbe6cb570263855d790267ed6f6191f21d
+ /private/tmp/pioneer-q38-projection-catalog-default-cooperative-20261022-a.log
+ SHA256 e20de49d3614a22cb146acacc7569e3ec75ed2e034c3c2f2d58ba71c370647fd
+ /private/tmp/pioneer-q38-projection-catalog-gates-20261022-a.log
+ SHA256 c3f7261939dc643ea266dd1c6d0d79a3f25e0ce84001040021fde91261bc791e
+
+No native job/install/remote write/reboot/power/SD/Assistant/boot/network/
+clock change. Fresh19:53UTC read-only SSH:original041/tag12/gen44,
+quiesced0/cold0/active_owner0/open_count1/guard1,64CPUs/full RAM.
+Dirty llama.cpp and unrelated FlashNext never read/edited/staged/built.
+
+NEXT actual full-footprint exclusive native memory/lifetime adapter,
+canonical source/upload ledger and NEW initialized generic workspace/
+completed input-producer retention. Reserve at least2MiB for vocabulary
+output;old FFN74pages303104B is NOT enough. Never borrow oldtag38 owner,
+old matrix ioctl or public caller ready/epoch as authority. Do not run
+another hardware boot/STOP-only qualifier in place of actual arithmetic
+integration. Full all-card decoder and measured whole27B speed remain.

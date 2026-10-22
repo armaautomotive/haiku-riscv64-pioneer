@@ -4,7 +4,12 @@ set -eu
 [ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-projection-parent-coop.XXXXXXXX")
+footprint_flags=
+case "${PIONEER_Q38_TEST_PROJECTION_FOOTPRINT:-0}" in
+ 0) ;; 1) footprint_flags=-DPIONEER_Q38_TEST_PROJECTION_FOOTPRINT;; *) exit 2;;
+esac
 ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ $footprint_flags \
  -DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION -DPIONEER_Q38_TEST_AFFINE_REPLAY -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE \
  -DPIONEER_Q38_WORK_DEFER_AFFINE -DPIONEER_Q38_WORK_INPUT_SUM_CACHE -DPIONEER_Q38_WORK_ZERO_MINIMUM \
  -DPIONEER_Q38_NATIVE_OPERAND_STORE -DPIONEER_Q38_WORK_SKIP_DOT_CHECK -DPIONEER_Q38_REPLAY_OPERAND \

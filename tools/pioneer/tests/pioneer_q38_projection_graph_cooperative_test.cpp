@@ -3,6 +3,9 @@
 // copy bytes ONLY;peer status/proofs/products come from actual instructions.
 // Test weights/input/transport/reset endpoints are simulated,NOT native.
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#ifdef PIONEER_Q38_TEST_PROJECTION_FOOTPRINT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphFootprint.h"
+#endif
 #define PIONEER_Q38_PROJECTION_MACHINE_ONLY
 #include "pioneer_q38_projection_persistent_image_test.cpp"
 #define PIONEER_Q38_DISPATCH_BASE_ALREADY_INCLUDED
@@ -10,6 +13,16 @@
 #include "pioneer_q38_projection_graph_image_test.cpp"
 struct ParentArithmeticPeer:ProjectionPeer {
  std::vector<uint32_t>& fabric;
+#ifdef PIONEER_Q38_TEST_PROJECTION_FOOTPRINT
+ uint64_t observedL1Stores=0;
+ void Store(uint32_t a,uint32_t value)override{
+  if(a<0xff000000){
+   assert(PioneerQ38ProjectionGraphSnapshotContains(logicalWorker,a)
+    && !PioneerQ38ProjectionGraphProgramImmutable(logicalWorker,a));observedL1Stores++;
+  }
+  ProjectionPeer::Store(a,value);
+ }
+#endif
  ParentArithmeticPeer(const char* image,unsigned worker,std::vector<uint32_t>& data):ProjectionPeer(image,12,5120,worker),fabric(data){assert(BootNew());}
  void SubmitActivation()override{
   assert(projection);unsigned packet=activationPackets;
@@ -66,6 +79,16 @@ struct ParentArithmeticPeer:ProjectionPeer {
  }
 };
 struct ArithmeticParent:ProjectionParentMachine {
+#ifdef PIONEER_Q38_TEST_PROJECTION_FOOTPRINT
+ uint64_t observedL1Stores=0;
+ void Store(uint32_t a,uint32_t value)override{
+  if(a<0xff000000){
+   assert(PioneerQ38ProjectionGraphSnapshotContains(0,a)
+    && !PioneerQ38ProjectionGraphProgramImmutable(0,a));observedL1Stores++;
+  }
+  ProjectionParentMachine::Store(a,value);
+ }
+#endif
  std::array<std::unique_ptr<ParentArithmeticPeer>,119> actual;
  std::vector<uint32_t> expected;
  unsigned boots=0,runs=0,completedMatrices=0,completedProducers=0,completedStops=0;
@@ -165,5 +188,11 @@ int main(int argc,char** argv){
   printf("PASS ACTUAL parent+ALL119 retained peers projection%u layer%u role%u type%u K%u N%u ALL%u waves/FP32+FP64;NO host interstage calls/peer resets,NOT_NATIVE_TIME\n",i,root->fixture.layer,root->fixture.role,root->fixture.jobs->Type(),root->fixture.jobs->Inputs(),root->fixture.jobs->Outputs(),root->fixture.jobs->Waves());
  }
  root->Retarget(cases.back().first,cases.back().second,true);assert(root->Run());root->VerifyArithmetic();
+#ifdef PIONEER_Q38_TEST_PROJECTION_FOOTPRINT
+ uint64_t peerStores=0;for(const auto& p:root->actual){assert(p->observedL1Stores);peerStores+=p->observedL1Stores;}
+ assert(root->observedL1Stores);
+ printf("PASS fixed L1 snapshot DATA covers ACTUAL emitted CPU stores ROOT%llu/ALL119peers%llu;NO immutable code stores;NOT_NATIVE_MAPPING_OR_COMPLETE_CSR_TENSIX_STATE_OWNERSHIP\n",
+  (unsigned long long)root->observedL1Stores,(unsigned long long)peerStores);
+#endif
  printf("PASS OFFLINE actual full-projection parent ALL119boots ONCE/projections%zu/outputRows%u/producers%u/matrixJobs%u/instructions%llu/ALL119physicalSTOP;changed roles/inputs/widths/types%s,NO peer/Dst/Src/CSR/private-sequence reset;SYNTHETIC weights/transport_NOT_NATIVE_FULL_MODEL_OR_SPEED\n",cases.size(),rows,root->completedProducers,root->completedMatrices,(unsigned long long)root->matrixInstructions,argc==4?"8/12/14":"8ONLY");
 }
