@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE complete generic matrix-wave ROOT;no native selector/card IO.
 set -eu
+[ "${PIONEER_Q38_EMBEDDING_NATIVE-0}" = 0 ] || exit 2
 [ "$#" = 2 ] || exit 2
 for key in $(env | sed -n 's/^\(PIONEER_[A-Z0-9_]*\)=.*/\1/p');do
  [ "$(printenv "$key" || :)" = 0 ] || exit 2

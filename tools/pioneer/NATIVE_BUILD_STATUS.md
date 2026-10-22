@@ -1,5 +1,36 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:actual QPE1 execution owner and
+separately gated native source/zero/mapping/retention/END adapters added,
+NOT linked/selected/installed. FULL73737word ROOT snapshot+SECOND original
+pass BEFORE FIRST write;actual frozen QPE1 run,independent ALL16sources/
+8counters/32summary/64descriptor/command/PC/ALL119held proof BEFORE hold,
+then EXACT73737word restore BEFORE private opaque producer publication.
+No CPU learned output read/reference/fallback.7bank positives/51faults/
+3configuration+7copied-owner refusals PASS using ACTUAL zero+QPE1 RISC
+machines;simulated endpoints. Private noncopyable owner cannot be replaced
+by a caller epoch/descriptor/ready bit. UNKNOWN retainsALL,ZERO later IO.
+ACTUAL native scope/Unsafe/END bodies51metadata/phase refusals+actual
+controller run pass;context/retention endpoints simulated,borrowed REAL
+owners. Actual native mapping73737words/45refusals PASS. Actual full driver
+canonical factory/2x1MiB zero/new controller compiles,maxnewframe688B
+(controller400B/factory496B);old
+driver23e/guardd1ce/default43control2df BYTE-IDENTICAL. Native factory
+END-TO-END RUNTIME TEST STILL OWED;do not mistake compile+scope tests for
+that integration or hardware qualification.76new gates/50workspace gates,
+joint+actual zero regressions PASS. ALL final jobs TERMINAL0. Actual
+ProjectionZero callbacks now exist under the NEW private role,NOT old
+FFN promotion. No new ioctl/tag/selector/updater/client/card qualifier.
+Fresh21:36UTC read-only SSH original041/tag12/gen44/idle/cold0/owner0/
+open1/guard1,64CPUs/max137034936320B. ZERO remote write/native job/reload/
+reboot/power/SD/Assistant/network changes. NEXT actual unclaimed-source
+native factory runtime test,then new source-bound client/native selector
+and arithmetic card test;actual full-projection RUN/STOP/post-compute
+memory ownership+opaque input consumption and full resident decoder
+remain. Old held-only memory helper MUST NOT close after compute.
+Whole27B.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-embedding-controller-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:NEW actual QPE1 on-card embedding
 reader implemented,NOT native selected. Canonical vocabulary token->exact
 original Q4_K stripe/group/lane;20 bounded2304B NoC reads,ALL5120 F32

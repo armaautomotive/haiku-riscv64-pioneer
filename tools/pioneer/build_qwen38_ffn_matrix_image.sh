@@ -1,6 +1,7 @@
 #!/bin/sh
 # Separate OFFLINE NEW ABI/image ONLY;NO driver/card/native selection.
 set -eu
+[ "${PIONEER_Q38_EMBEDDING_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_WORKSPACE:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_GRAPH_MEMORY:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_GRAPH_ROOT:-0}" = 0 ] || exit 2

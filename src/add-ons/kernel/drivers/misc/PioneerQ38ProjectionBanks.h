@@ -11,8 +11,11 @@ using PioneerQ38ProjectionIdentity=PioneerQ38GdnIdentity;
 struct PioneerQ38ProjectionExtent {uint32_t bank,address,route,index,pages,bytes;};
 struct PioneerResidentLease;struct PioneerBulkUploadLease;struct PioneerOutputBufferLease;struct PioneerWideOutputLease;
 struct PioneerQ38ProjectionZeroLease;struct PioneerQ38ProjectionZeroResult;
+class PioneerQ38EmbeddingController;
 class PioneerQ38ProjectionBanks {
  friend class PioneerQ38ProjectionMutableBanks;
+ friend class PioneerQ38EmbeddingController;
+ friend class PioneerQ38ProjectionGraphOwner;
  template<class IO> friend bool PioneerQ38ProjectionZeroPrepare(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38ProjectionBanks&,PioneerResidentBanks&,const PioneerQ38ProjectionIdentity&,const tt_host_page_result&,
   PioneerResidentLease&,PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38ProjectionZeroLease&);
@@ -31,10 +34,24 @@ class PioneerQ38ProjectionBanks {
  uint32_t bank=7,offset=0;
  uint64_t initialized[8]={};
  bool unsafe=false,published=false;
+ const PioneerQ38EmbeddingController* embeddingOwner=nullptr;
+ uint32_t embeddingToken=UINT32_MAX,embeddingPosition=UINT32_MAX;
+ bool embeddingPublished=false;
  bool Matches(const PioneerQ38ProjectionIdentity& id)const{
   return banks && baseline && reservationOwner && !unsafe && id==identity && banks->Matches(*baseline);
  }
  bool Recorded(unsigned page)const{return (initialized[page/64]>>(page%64))&1;}
+ bool ClaimEmbedding(const PioneerQ38ProjectionIdentity& id,const PioneerQ38EmbeddingController* owner,unsigned token,unsigned position){
+  if(!owner || embeddingOwner || !InitializationPublished(id) || initializationLease || token>=248320 || position>=8192)return false;
+  embeddingOwner=owner;embeddingToken=token;embeddingPosition=position;return true;
+ }
+ bool OwnsEmbedding(const PioneerQ38ProjectionIdentity& id,const PioneerQ38EmbeddingController* owner)const{
+  return owner && embeddingOwner==owner && InitializationPublished(id) && !initializationLease;
+ }
+ bool PublishEmbedding(const PioneerQ38ProjectionIdentity& id,const PioneerQ38EmbeddingController* owner,unsigned token,unsigned position){
+  if(embeddingPublished || !OwnsEmbedding(id,owner) || embeddingToken!=token || embeddingPosition!=position)return false;
+  embeddingPublished=true;return true; // ONLY exact controller's known-clean physical restore close
+ }
  bool ClaimInitialization(const PioneerQ38ProjectionIdentity& id,const PioneerQ38ProjectionZeroLease* lease){
   if(!lease || initializationLease || published || !Matches(id))return false;
   initializationLease=lease;return true;

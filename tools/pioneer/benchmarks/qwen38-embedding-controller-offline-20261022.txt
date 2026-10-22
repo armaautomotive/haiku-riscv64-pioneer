@@ -1,0 +1,135 @@
+QPE1 actual execution owner/native adapter:OFFLINE October22 2026.
+Predecessor899328e8376181b99b2961691635ca54ae2fea94 pushed/remote verified.
+Previous goal turn PROGRESS:actual embedding instructions/composition.
+This turn PROGRESS:physical execution/restore/private input publication,
+real gated native context/factory/callback/mapping/retention/END code.
+NOT native linked/installed/card qualified. Whole27B.207893161tok/s
+UNCHANGED;20tok/s UNMET;full objective/goal remains ACTIVE.
+
+Actual execution owner,NOT held-only graph memory reuse:
+-Complete ROOT6span/73737word294948B heap snapshot:boot,40KiB prefix,
+ 8KiB stack,16KiB legacy panel,229376B work view,32B trailer. QPR1 b/c
+ manifests are NOT touched or mapped here. ALL119 other cores held.
+-ALL original words SECOND physical pass BEFORE FIRST write. Exact frozen
+3856B QPE1 SHA c754b24f767f33a00e61d2789cea3bda8ae656f6d58a2d20517311673a5aaaa1
+ boot0005e06f. Whole10241word prefix/boot installation+verification.
+-Actual ROOT run;ALL16physical root source words/global source/reset/
+ PCIe/NoC-idle/current counters/mapping/native owner checks. Whole32word
+ summary/64word descriptor/current ALL8 counters/final exact4096B command/
+ completion PC and code verified BEFORE FIRST post-execution hold.
+ Bounded30s monotonic-clock/65536poll limit,also bounded if clock freezes.
+-Hold0x87ffff->0x47800 only AFTER all completion proofs;exact ALL73737word
+ restore/readback then full independent original pass and exact original
+ NoC command restoration(no doorbell/counter reset). VerifiedWords147474.
+ Original outer-store dirty/restored flags restored ONLY after proof.
+-Only then private owner-pointer/token/position publication in the same
+ ProjectionBanks. No public publish/set-ready/clean hint/inputEpoch grant.
+ Controller is noncopyable;another controller with equal copied data cannot
+ acquire the already-owned input. Future graph consumer is a PRIVATE friend
+ and still owes its OWN actual native/source/physical/exclusive lifetime.
+-No CPU read of computed learned vector,quantization/product reference or
+ fallback. GDDR5120F32 input persists after ROOT scratch/code restored.
+ Every UNKNOWN retains whole joint/banks/source/ALL host owners/snapshots;
+ NO later read/reset/hold/END/restore/retry. No memory-only cleanup disguise.
+
+Gated ACTUAL native code(not a new public selector):
+-New separate canonical source heap object,not old FFN74page promotion.
+ Epoch nonwrap,actual context/cookie/global-call thread/normal-clock/real
+ initialized bitmap/hash ledger/ALL host leases;exclude ALL other owners.
+-Actual new ProjectionZeroBeforeCohort/OtherCoresHeld callbacks initialize
+512runtime pages with2x256page exact frozen zero runs,nonce1->2,known-clean
+ close;recurrent readiness NOT published. Source factory keeps64MiB joint
+ reservation/actual learned ledger. Input producer still absent at zero close.
+-One ROOT prefix40KiB native mapping plus existing full panel/status views.
+ Strict73737word whitelist,not arbitrary L1/MMIO/GDDR. ReadChecked failure
+ leaves output unchanged;UINT32_MAX is valid saved DATA. Failed/null map
+ sticky(no retry);changed BAR/core/fleet/host/panel/overflow refused.
+-Actual retained source Scope binds exact native heap objects/generation/
+ clock/cookie/thread and real root model identity. Zeroing alone may own
+ dirty bulk scratch;embedding requires it restored. Review caught this
+ phase distinction and a dedicated regression proves both sides.
+-Mutable-scope/legacy-lock and lost-FD-close presence interlocks include new
+ source;Unsafe blocks uncontrolled/live role;failure retains clock/ALL hosts
+ and cold latch MEMORY ONLY. END requires actual private embedding close
+ and exact zero/source ownership BEFORE old STOP/restore/ARC/release.
+-10old builders reject ANY inherited nonzero new role BEFORE SDK/output;
+ no new ioctl/protocol/tag/updater/Assistant role or linked driver produced.
+
+Final TERMINAL0 evidence:
+1.Controller7positives ALL7source banks/cross-bank destinations/last lane15:
+ ACTUAL frozen zero2MiB then ACTUAL frozen QPE1 instructions,all73737
+ original words/commands restored,5120F32 GDDR input,private publication.
+7forged-owner attempts after close refused INERT before ANY IO.
+2.51faults:ALL32summary words,descriptor/final command/counter/source/code/
+ marker/count/PC/clock/drop final packet/source scope/other-core failures,
+ first snapshot/second-original/install/restore/final-original failure.
+ No-completion and frozen-clock finite poll bound. No post-execution hold
+ or restore after uncertain execution;all retained,subsequent Run ZERO IO.
+3inert configuration checks:out-of-vocabulary token,missing selected learned
+ page,equal copied-but-not-retained ledger. Private publisher inaccessible
+ and controller noncopy/nonmove checked at compile time.
+3.ACTUAL extracted native Scope/Unsafe/END bodies:51inert metadata/phase
+ refusals,ACTUAL controller+zero/QPE1 run under same retained real-owner
+ references and nonroot physical-reset/TLB audit. Clean close passes END;
+ incomplete END MEMORY retainsALL with ZERO IO. Native context uses a
+ facade borrowing REAL owner objects,not real factory allocation. Retention
+ endpoint simulated;actual complete retention body compiles in driver.
+4.ACTUAL extracted native mapping methods ALL73737words/45refusals:
+ single exact40KiB map,full stack/work/trailer,arbitrary UINT32_MAX saved
+ data,failed outputs unchanged,wrong addresses/holes/MMIO/b/c excluded,
+ failed/null map sticky,changed BAR rejected. Kernel primitives simulated.
+5.ACTUAL full native driver/context/source factory/zero/controller/retention/
+ END against read-only SDK:OBJECT ONLY,maxnew kernel frame688B including
+ zero/controller/factory/native-scope paths(controller400B/factory496B).
+ Old tag38driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+ guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ BYTE-IDENTICAL. Evidence:/private/tmp/pioneer-q38-embedding-native-20261022-c
+6.76new build/catalog gates incl exact frozen code+boot BEFORE generator
+ output,complete generated header comparison.50old workspace gates/ENTIRE
+ frozen zero-controller body equivalence PASS. Canonical joint regression
+7banks/3584runtime pages/4704regions/3669refusals,maxframe928B. Actual zero
+ regression8positives/56inert refusals,maxframe880B. Shell/whitespace PASS.
+
+Logs/SHA256:
+ /private/tmp/pioneer-q38-embedding-controller-20261022-d.log
+167d507e681c0810d2c5c32f85f91af94348a59e7ee894e74c37684722c4a883
+ /private/tmp/pioneer-q38-embedding-controller-faults-20261022-b.log
+d2c53dc62f603af1088bdb5383701160d9f109d49e185bc02a769d353557a9c5
+ /private/tmp/pioneer-q38-embedding-native-full-20261022-c.log
+3c0171125801bf9b303aebf8ac219d0db1afa9421385e831a2d41f8d1dff62b2
+ /private/tmp/pioneer-q38-embedding-native-scope-20261022-b.log
+138619917ca56f79435f8d2cf57a05127d297be8e76091b553db3e0b7065ab3b
+ /private/tmp/pioneer-q38-embedding-native-mapping-20261022-a.log
+64a024a63320acc4d10d4d512a9b09908950836ed75464d5d1d5498d30e5be33
+ /private/tmp/pioneer-q38-embedding-native-gates-20261022-a.log
+a2ee792acb46958e248e2e1c75e692e9679e2c6c5480a1a587248616d684653a
+ /private/tmp/pioneer-q38-embedding-joint-regression-20261022-a.log
+30f5e1cca2143638bbbcf61b70a7fc7b7651d38fd7e2535b3b92ab5d24834d19
+ /private/tmp/pioneer-q38-embedding-zero-regression-20261022-a.log
+1c61eb4d59d9a6901403109de9953327ec10c6df0bb029b10e4868f6027823be
+ /private/tmp/pioneer-q38-embedding-workspace-gates-20261022-a.log
+8d7c72f857d765bdf7f62fb9f3a076d361f1dd47183f4883dc9548fa0259d4f6
+
+Initial local compile failure ONLY:command-line gate1 vs empty macro in
+existing scalar fixture;runner now uses identical empty gate. No hardware
+fault. No running source/fixture edited while its runner could read it.
+
+Fresh21:36UTC read-only SSH:inventory proven/ALL compute parents absent,
+original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/gen44/quiesced0/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. ZERO remote write/native job/install/reload/
+reboot/power/SD/Assistant/network/clock changes. Dirty llama.cpp and
+unrelated FlashNext never read/edited/staged. All final handles TERMINAL0.
+
+NEXT actual NATIVE FACTORY END-TO-END RUNTIME TEST from unclaimed banks:
+ real new source allocation/binding->actual zero through native callbacks->
+ actual mapping/embedding->private close->END/retention. Current full SDK
+ compile and borrowed-owner scope tests DO NOT prove this integration.
+ Then source-bound client/SAME-FILE provenance/private new native role and
+ actual arithmetic card qualification,NOT boot/STOP-only substitute.
+ Full-projection RUN/STOP owner+new native scope+opaque input consumption/
+ post-compute memory restoration still owed;old held-only memory helper
+ MUST NOT close after launch. Learned RMS/residual/GDN/attention/KV/
+ sampling/full resident decoder and real whole27B correctness/performance
+ remain. No full-model/on-card speed claim;20tok/s NOT achieved.

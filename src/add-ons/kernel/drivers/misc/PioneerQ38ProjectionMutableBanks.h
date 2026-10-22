@@ -4,6 +4,7 @@
 #include "PioneerQ38GdnBanks.h"
 #include "PioneerQ38ProjectionBanks.h"
 #include "PioneerQ38ProjectionJobs.h"
+#include "PioneerQ38EmbeddingPlan.h"
 // NEW private HEAP canonical joint owner,NOT an extension of the old
 // GDN+FFN74-page reservation. No FFN child/old source ownership promotion.
 // Reserve ALL recurrent regions+FULL64MiB canonical workspace envelope in
@@ -61,6 +62,11 @@ public:
   return learned==canonicalLedger && pages==ledgerPages && Matches(id) && projection.InitializationPublished(id)
    && jobs.Matches(*canonical,layer,role,token) && jobs.LearnedPagesPresent(learned,pages);
  }
+ bool MatchInitializedEmbedding(const PioneerQ38ProjectionIdentity& id,const PioneerQ38EmbeddingPlan& embedding,
+  unsigned token,unsigned position,unsigned bank,const uint32_t* source,unsigned phase,const uint8_t* learned,unsigned pages)const{
+  return learned==canonicalLedger && pages==ledgerPages && Matches(id) && projection.InitializationPublished(id)
+   && embedding.Matches(*canonical,token,position,bank,id,source,phase) && embedding.LearnedPagesPresent(learned,pages);
+ } // Necessary DATA-only binding,not a producer/execution grant.
  void Fault(){unsafe=true;recurrent.Fault();projection.Fault();if(banks)banks->Quarantine();} // MEMORY ONLY
  bool Unsafe()const{return unsafe || recurrent.Unsafe() || projection.Unsafe() || (banks && banks->Quarantined());}
 };

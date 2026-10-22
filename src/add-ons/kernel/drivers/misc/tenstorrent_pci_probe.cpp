@@ -5,6 +5,12 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+#if PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(PIONEER_Q38_FFN_NATIVE_GRAPH) || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || defined(PIONEER_Q38_PROJECTION_GRAPH_MEMORY)
+#error Embedding native adapter needs exact retained context/complete panel,NOT old memory role;NO public execution selector
+#endif
+#include "PioneerQ38EmbeddingNativeState.h"
+#endif
 #ifdef PIONEER_Q38_FFN_SEALED_PROOF
 #if PIONEER_Q38_FFN_SEALED_PROOF != 1 || !defined(PIONEER_Q38_FFN_HOST_PROFILE) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010038ULL || defined(PIONEER_Q38_FFN_SEALED_PROOF_CLIENT)
 #error Sealed manifest proof requires its exact isolated measured native tag38 role
@@ -302,6 +308,9 @@ static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 template<class Cookie> static bool Q38MutableScopeOwned(const Cookie* cookie)
 {
 	return cookie && cookie->context && (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		|| cookie->context->q38EmbeddingModel
+#endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 		|| cookie->context->q38FfnModelPlan || cookie->context->q38GraphMutable || cookie->context->q38FfnZero
 #endif
@@ -1752,6 +1761,15 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+	bool EmbeddingSourceScope(bool controller);
+	bool ProjectionZeroBeforeCohort();bool ProjectionZeroOtherCoresHeld();
+	bool EmbeddingNativeScope(const PioneerQ38EmbeddingController&,const PioneerQ38ProjectionMutableBanks&,
+		const PioneerQ38CanonicalModelPlan&,const PioneerQ38ProjectionIdentity&,const uint8_t*,unsigned);
+	bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
+	area_id q38EmbeddingMemoryArea=-1;volatile uint32* q38EmbeddingMemoryView=NULL;
+	bool q38EmbeddingMemoryMapAttempted=false;uint64 q38EmbeddingMemoryBar=0;
+#endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 	bool ProjectionGraphMemoryScope(const PioneerQ38ProjectionGraphMemory&,const PioneerQ38CanonicalModelPlan&,
 		const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
@@ -2002,6 +2020,42 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		return true;
 	}
 	// PIONEER_Q38_FFN_CODE_NATIVE_ADAPTER_END
+#endif
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+	// PIONEER_Q38_EMBEDDING_NATIVE_MAPPING_BEGIN
+	bool MapEmbeddingMemory() {
+		if (!EmbeddingSourceScope(false) || runtimeCore || fleetEnabled || !runtimeMapped || !Q38PanelMappingStable()
+			|| !runtimeEntry || !scratchData || payloadBytes!=8192 || TT_Q38_PANEL_VIEW_BASE!=0x6e000
+			|| TT_Q38_PANEL_VIEW_BYTES<0x3e000 || profile.bar0_host_start>UINT64_MAX-0x1906e000) return false;
+		if (q38EmbeddingMemoryMapAttempted) return EmbeddingMemoryMappingStable();
+		if (q38EmbeddingMemoryArea>=B_OK || q38EmbeddingMemoryView) return false;
+		q38EmbeddingMemoryMapAttempted=true;q38EmbeddingMemoryBar=profile.bar0_host_start;void* view=NULL;
+		q38EmbeddingMemoryArea=map_physical_memory("P100A retained embedding ROOT prefix",profile.bar0_host_start+0x19064000,
+			40960,B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (q38EmbeddingMemoryArea<B_OK || !view) return false; // retain failed/partial map,NO retry
+		q38EmbeddingMemoryView=(volatile uint32*)view;return EmbeddingMemoryMappingStable();
+	}
+	bool EmbeddingMemoryMappingStable() {
+		return !runtimeCore && !fleetEnabled && runtimeMapped && runtimeEntry && scratchData && payloadBytes==8192
+			&& Q38PanelMappingStable() && q38EmbeddingMemoryMapAttempted && q38EmbeddingMemoryArea>=B_OK && q38EmbeddingMemoryView
+			&& profile.bar0_host_start==q38EmbeddingMemoryBar && profile.bar0_host_start<=UINT64_MAX-0x1906e000
+			&& TT_Q38_PANEL_VIEW_BASE==0x6e000 && TT_Q38_PANEL_VIEW_BYTES>=0x3e000;
+	}
+	bool EmbeddingReadChecked(uint32 a,uint32& output) {
+		if (!PioneerQ38EmbeddingSnapshotContains(a) || !EmbeddingMemoryMappingStable()) return false;
+		uint32 value=a==0x6000?RuntimeCodeRead(0):a<0x6e000?PioneerRead32(q38EmbeddingMemoryView+(a-0x64000)/4)
+			:a<0xac000?Q38PanelRead(a):ResidentL1Read(0x1fc0/4+(a-0x17ffc0)/4);
+		output=value;return true; // UINT32_MAX saved DATA is valid;NO unowned padding
+	}
+	bool EmbeddingWrite(uint32 a,uint32 value) {
+		if (!PioneerQ38EmbeddingSnapshotContains(a) || !EmbeddingMemoryMappingStable()) return false;
+		if (a==0x6000) RuntimeCodeWrite(0,value);
+		else if (a<0x6e000) PioneerWrite32(q38EmbeddingMemoryView+(a-0x64000)/4,value);
+		else if (a<0xac000) Q38PanelWrite(a,value);
+		else ResidentL1Write(0x1fc0/4+(a-0x17ffc0)/4,value);
+		return true;
+	}
+	// PIONEER_Q38_EMBEDDING_NATIVE_MAPPING_END
 #endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 	// PIONEER_Q38_PROJECTION_MEMORY_NATIVE_ADAPTER_BEGIN
@@ -2312,6 +2366,12 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	void RuntimeStatusWrite(unsigned w,uint32 value) { if (w<3) ResidentL1Write((0x1fc0/4)+w,value); }
 	bool Unmap() {
 		bool okay=true;
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		if (q38EmbeddingMemoryArea>=B_OK) {
+			if (delete_area(q38EmbeddingMemoryArea)==B_OK) q38EmbeddingMemoryArea=-1;
+			else okay=false;
+		}
+#endif
 		if (attentionArea>=B_OK) {
 			if (delete_area(attentionArea)==B_OK) { attentionArea=-1; attentionView=NULL; } else okay=false;
 		}
@@ -2516,6 +2576,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+	PioneerQ38EmbeddingNativeState* q38EmbeddingModel=NULL; // exact retained heap model/workspace/producer owners
+#endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 	PioneerQ38ProjectionGraphMemory* q38ProjectionMemory=NULL; // retained complete HEAP owner,NO public opcode
 #endif
@@ -2633,6 +2696,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		delete q38EmbeddingModel; // ONLY known-clean explicit END may reach destruction
+#endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 		delete q38ProjectionMemory; // borrows actual model/source/cohort;destroy FIRST on known-clean close ONLY
 #endif
@@ -2683,7 +2749,17 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 		,bool controlledProjectionMemory=false
 #endif
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		,bool controlledEmbedding=false
+#endif
 		) {
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		// PIONEER_Q38_EMBEDDING_NATIVE_UNSAFE_BEGIN
+		if (q38EmbeddingModel) {
+			if (q38EmbeddingModel->Unsafe() || (!controlledEmbedding && !q38EmbeddingModel->Closed())) return true;
+		} else if (io.q38EmbeddingMemoryMapAttempted) return true;
+		// PIONEER_Q38_EMBEDDING_NATIVE_UNSAFE_END
+#endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 		// PIONEER_Q38_PROJECTION_MEMORY_UNSAFE_BEGIN
 		if (q38ProjectionMemory && !q38ProjectionMemory->Closed()) {
@@ -2776,6 +2852,9 @@ static bool
 BeginQ38NormalClock(PioneerStoreContext& c)
 {
 	if (!c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || c.Unsafe()
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		|| c.q38EmbeddingModel
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		|| c.q38GdnBanks || c.q38StateZero
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
@@ -2805,6 +2884,9 @@ FinishQ38NormalClock(PioneerStoreContext& c,bool knownClean)
 	// It is BEFORE final PCI disable and before releasing ANY host owner.
 	knownClean=knownClean && !c.Unsafe() && (!c.q38Span || c.q38Span->closed)
 		&& (!c.q38Dispatch || c.q38Dispatch->closed);
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+	knownClean=knownClean && (!c.q38EmbeddingModel || c.q38EmbeddingModel->Closed());
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	knownClean=knownClean && (!c.q38StateZero || c.q38StateZero->closed);
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
@@ -2830,6 +2912,9 @@ static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
 	c.dispatchOwnerRetained=true;
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+	if (c.q38EmbeddingModel) c.q38EmbeddingModel->Fault(); // MEMORY ONLY;ALL snapshots/leases/maps retained
+#endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 	if (c.q38ProjectionMemory) c.q38ProjectionMemory->Fault(); // MEMORY ONLY;retain full snapshot and ALL maps
 #endif
@@ -2866,6 +2951,23 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+	// PIONEER_Q38_EMBEDDING_NATIVE_END_BEGIN
+	if (c.q38EmbeddingModel || c.io.q38EmbeddingMemoryMapAttempted) {
+		auto* model=c.q38EmbeddingModel;
+		if (!model || !model->Closed() || !c.io.q38EmbeddingMemoryMapAttempted || model->ledger!=c.initialized
+			|| model->identity.driverGeneration!=sReloadGeneration || !c.bankStorageOnly
+			|| !model->graph.MatchesInitializationOwner(c.banks,c.baseline.baseline.baseline.baseline.dram,model->identity)
+			|| !model->embedding.MatchesNativeOwner(c.baseline.baseline.baseline.baseline.dram,c.baseline.baseline.baseline.noc,
+				c.banks,model->graph,model->plan,model->identity,c.initialized,PioneerResidentBanks::Pages)
+			|| model->zero.owner!=model->graph.Projection(model->identity) || model->zero.banks!=&c.banks
+			|| model->zero.proof!=&c.baseline.baseline.baseline.baseline.dram || !(model->zero.identity==model->identity)
+			|| model->zero.nonce!=2 || !model->zero.saved || model->zero.dirty || model->zero.ready || model->zero.running) {
+			clean=false;RetainQ38DispatchOwner(c,result);return false; // BEFORE old STOP/restore/ARC/host/map release
+		}
+	}
+	// PIONEER_Q38_EMBEDDING_NATIVE_END_END
+#endif
 #ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
 	// PIONEER_Q38_PROJECTION_MEMORY_END_GATE_BEGIN
 	if ((c.q38ProjectionMemory && (!c.q38ProjectionMemory->Closed() || c.q38ProjectionMemory->Unsafe()))
@@ -2968,6 +3070,136 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 // flag. Ordinary mutable/model compute remains REFUSED. No production call
 // binds this owner/identity/seal. Existing owned mappings are BORROWED,not copied
 // or allocated;no new reset address/host page/BME or public data capability.
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+// PIONEER_Q38_EMBEDDING_NATIVE_SCOPE_BEGIN
+bool PioneerSessionIO::EmbeddingSourceScope(bool controller)
+{
+	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
+	if (!c || &c->io!=this || !m || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
+		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
+		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled || !runtimeMapped || q38SpanAllowed
+		|| c->q38GdnCallThread<0 || c->q38GdnCallThread!=find_thread(NULL) || c->dispatchOwnerRetained
+		|| !m->identity.Valid() || m->identity.driverGeneration!=sReloadGeneration || !c->initialized || !c->hashes || m->ledger!=c->initialized
+		|| c->q38FfnModelPlan || c->q38GraphMutable || c->q38FfnZero || c->q38FfnGraph || c->q38FfnCode
+		|| c->q38FfnModelIdentity.session || c->q38FfnModelIdentity.sequence || c->q38FfnModelIdentity.modelEpoch || c->q38FfnModelIdentity.driverGeneration
+		|| c->q38GdnBanks || c->q38StateZero || c->q38GdnIdentity.session || c->q38GdnIdentity.sequence
+		|| c->q38GdnIdentity.modelEpoch || c->q38GdnIdentity.driverGeneration || c->q38Dispatch || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+		|| c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
+		|| c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready || c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready
+		|| !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
+		|| !c->lease.saved || !c->lease.ready || c->lease.pending || c->lease.recovery_required
+		|| !c->bulk.saved || !c->bulk.ready || (m->phase!=PioneerQ38EmbeddingNativeState::Zeroing && c->bulk.dirty) || c->bulk.unsafe
+		|| c->host.state!=TT_HOST_PAGE_READY || c->host.released || PioneerHostPageIO::quarantined
+		|| !c->bulkHost.allocated || !c->bulkHost.ready || c->bulkHost.pending || c->bulkHost.quarantined || c->bulkHost.released
+		|| !c->wideHost.allocated || !c->wideHost.ready || !c->wideHost.memory_type_set || c->wideHost.pending
+		|| c->wideHost.quarantined || c->wideHost.released || wideQuarantined || m->Unsafe()
+		|| m->graph.CanonicalModel(m->identity)!=&m->plan || !m->graph.MatchesInitializationOwner(c->banks,dram,m->identity)) return false;
+	auto* state=m->graph.Projection(m->identity);if (!state) return false;
+	const auto& z=m->zero;
+	if (z.identity.Valid()) {
+		if (!(z.identity==m->identity) || z.owner!=state || z.banks!=&c->banks || z.proof!=&dram) return false;
+	} else if (!PioneerQ38ProjectionZeroPristine(z) || z.closed) return false;
+	if (m->phase==PioneerQ38EmbeddingNativeState::Zeroing) {if (controller || m->embedding.Running()) return false;}
+	else if (m->phase==PioneerQ38EmbeddingNativeState::Embedding) {
+		if (!z.saved || !z.closed || z.nonce!=2 || z.ready || z.running || z.dirty || !state->InitializationPublished(m->identity)) return false;
+		if (controller && !m->embedding.MatchesNativeOwner(dram,noc,c->banks,m->graph,m->plan,m->identity,c->initialized,PioneerResidentBanks::Pages)) return false;
+	} else return false;
+	const auto& clock=c->q38Clock.Snapshot();
+	return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested
+		&& clock.busy_acknowledged && !clock.restored && !c->Unsafe(true,false,true);
+}
+bool PioneerSessionIO::ProjectionZeroBeforeCohort()
+{
+	return q38MutableContext && q38MutableContext->q38EmbeddingModel
+		&& q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Zeroing && EmbeddingSourceScope(false);
+}
+bool PioneerSessionIO::ProjectionZeroOtherCoresHeld()
+{
+	if (!ProjectionZeroBeforeCohort() || !NonRootHeldMappingStable()) return false;
+	if (PioneerQ38NonRootHeld(*this,dram)) return true;
+	tt_resident_session_result result={};RetainQ38DispatchOwner(*q38MutableContext,result);return false;
+}
+bool PioneerSessionIO::EmbeddingNativeScope(const PioneerQ38EmbeddingController& controller,const PioneerQ38ProjectionMutableBanks& graph,
+	const PioneerQ38CanonicalModelPlan& plan,const PioneerQ38ProjectionIdentity& id,const uint8_t* ledger,unsigned pages)
+{
+	auto* m=q38MutableContext?q38MutableContext->q38EmbeddingModel:NULL;
+	return m && &controller==&m->embedding && &graph==&m->graph && &plan==&m->plan && id==m->identity
+		&& ledger==m->ledger && pages==PioneerResidentBanks::Pages && EmbeddingSourceScope(true);
+}
+bool PioneerSessionIO::EmbeddingOtherCoresHeld()
+{
+	if (!EmbeddingSourceScope(true) || !NonRootHeldMappingStable()) return false;
+	if (PioneerQ38NonRootHeld(*this,dram)) return true;
+	tt_resident_session_result result={};RetainQ38DispatchOwner(*q38MutableContext,result);return false;
+}
+void PioneerSessionIO::EmbeddingRetainHostOwners()
+{
+	if (q38MutableContext) {tt_resident_session_result result={};RetainQ38DispatchOwner(*q38MutableContext,result);} // MEMORY ONLY
+}
+// PIONEER_Q38_EMBEDDING_NATIVE_SCOPE_END
+// PIONEER_Q38_EMBEDDING_NATIVE_FACTORY_BEGIN
+static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reuse
+[[maybe_unused]] static bool BindQ38EmbeddingModel(PioneerStoreContext& c,unsigned token,unsigned position,unsigned bank)
+{
+	if (sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner || sRuntimeOwner->context!=&c
+		|| sRuntimeOwner->magic!=0x50313030 || !sBankStorageOnly || !c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total
+		|| c.io.q38MutableContext!=&c || c.q38GdnCallThread<0 || c.q38GdnCallThread!=find_thread(NULL) || c.dispatchOwnerRetained
+		|| c.runtimeCoreMode!=-1 || c.io.runtimeCore || c.io.fleetEnabled || !c.io.runtimeMapped || !c.io.q38SpanAllowed || c.Unsafe()
+		|| c.q38EmbeddingModel || c.io.q38EmbeddingMemoryMapAttempted || !c.initialized || !c.hashes || sQ38EmbeddingModelEpoch==UINT64_MAX
+		|| token>=248320 || position>=8192 || bank>=7 || c.q38FfnModelPlan || c.q38GraphMutable || c.q38FfnZero
+		|| c.q38FfnGraph || c.q38FfnCode || c.q38GdnBanks || c.q38StateZero || c.q38Dispatch || c.q38Cohort || c.fleet || sQ38LocalDeltaOwner
+		|| c.q38Delta.saved || c.q38Delta.dirty || c.q38Delta.ready || c.q38Delta.running || c.q38Delta.awaiting
+		|| c.panelProbe.saved || c.panelProbe.dirty || c.panelProbe.ready || c.streamProbe.saved || c.streamProbe.dirty || c.streamProbe.ready
+		|| c.q38FfnModelIdentity.session || c.q38FfnModelIdentity.sequence || c.q38FfnModelIdentity.modelEpoch || c.q38FfnModelIdentity.driverGeneration
+		|| c.q38GdnIdentity.session || c.q38GdnIdentity.sequence || c.q38GdnIdentity.modelEpoch || c.q38GdnIdentity.driverGeneration
+		|| !c.q38Span || !c.q38Span->closed || c.q38Span->dirty || c.q38Span->ready || c.q38Span->running || c.q38Span->unsafe
+		|| !c.lease.saved || !c.lease.ready || c.lease.pending || c.lease.recovery_required || !c.bulk.saved || !c.bulk.ready || c.bulk.dirty || c.bulk.unsafe
+		|| c.host.state!=TT_HOST_PAGE_READY || c.host.released || c.io.PioneerHostPageIO::quarantined
+		|| !c.bulkHost.allocated || !c.bulkHost.ready || c.bulkHost.pending || c.bulkHost.quarantined || c.bulkHost.released
+		|| !c.wideHost.allocated || !c.wideHost.ready || !c.wideHost.memory_type_set || c.wideHost.pending || c.wideHost.quarantined
+		|| c.wideHost.released || c.io.wideQuarantined) return false;
+	const auto& clock=c.q38Clock.Snapshot();
+	if (!c.q38Clock.RequiresExplicitEnd() || clock.state!=TT_ARC_CLOCK_BUSY_VERIFIED || !clock.busy_requested || !clock.busy_acknowledged || clock.restored) return false;
+	auto* m=new(std::nothrow) PioneerQ38EmbeddingNativeState;if (!m) return false;
+	m->identity={sQ38EmbeddingModelEpoch+1,1,1,sReloadGeneration};m->ledger=c.initialized;m->token=token;m->position=position;m->bank=bank;
+	uint32 source[16];const auto& noc=c.baseline.baseline.baseline.noc;
+	for (unsigned i=0;i<16;i++) source[i]=i?noc.source[0][i]:c.lease.config|0x10000;
+	PioneerQ38EmbeddingPlan check;
+	if (!m->plan.Build() || !check.Build(m->plan,token,position,bank,m->identity,source,1)
+		|| !check.LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages)) {delete m;return false;} // NO claim/IO
+	// Host SAME-FILE model provenance remains mandatory;kernel epoch denotes
+	// this actual retained layout/source binding,not caller SHA authentication.
+	sQ38EmbeddingModelEpoch++;c.q38EmbeddingModel=m;c.runtimeCoreMode=1;c.io.q38SpanAllowed=false;
+	bool okay=m->graph.BindCanonical(c.banks,c.baseline.baseline.baseline.baseline.dram,m->identity,c.initialized,PioneerResidentBanks::Pages,m->plan,bank);
+	if (!okay) {tt_resident_session_result result={};RetainQ38DispatchOwner(c,result);}return okay;
+}
+[[maybe_unused]] static bool InitializeQ38EmbeddingModel(PioneerStoreContext& c,PioneerQ38ProjectionZeroResult& result)
+{
+	auto* m=c.q38EmbeddingModel;if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Bound || m->Unsafe()) return false;
+	m->phase=PioneerQ38EmbeddingNativeState::Zeroing;
+	auto* state=m->graph.Projection(m->identity);if (!state) {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);return false;}
+	auto& dram=c.baseline.baseline.baseline.baseline.dram;auto& noc=c.baseline.baseline.baseline.noc;
+	bool okay=PioneerQ38ProjectionZeroPrepare(c.io,dram,noc,*state,c.banks,m->identity,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->zero)
+		&& PioneerQ38ProjectionZeroRun(c.io,dram,noc,*state,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->zero,m->identity,0,0,256,result)
+		&& result.pages==256 && result.bytes==1048576 && result.nonce==1 && result.completed && result.held && !result.recovery_required
+		&& PioneerQ38ProjectionZeroRun(c.io,dram,noc,*state,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->zero,m->identity,0,256,256,result)
+		&& result.pages==256 && result.bytes==1048576 && result.nonce==2 && result.completed && result.held && !result.recovery_required
+		&& PioneerQ38ProjectionZeroClose(c.io,dram,noc,*state,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->zero,true)
+		&& state->InitializationPublished(m->identity);
+	if (okay) m->phase=PioneerQ38EmbeddingNativeState::Embedding;
+	else {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+}
+[[maybe_unused]] static bool RunQ38EmbeddingModel(PioneerStoreContext& c,PioneerQ38EmbeddingResult& result)
+{
+	auto* m=c.q38EmbeddingModel;if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Embedding || m->Unsafe()) return false;
+	bool okay=c.io.EmbeddingSourceScope(false) && c.io.MapEmbeddingMemory()
+		&& m->embedding.RunOnce(c.io,c.baseline.baseline.baseline.baseline.dram,c.baseline.baseline.baseline.noc,c.banks,m->graph,m->plan,
+			m->identity,c.initialized,PioneerResidentBanks::Pages,c.lease,m->token,m->position,m->bank,result);
+	if (okay) m->phase=PioneerQ38EmbeddingNativeState::Complete;
+	else {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+}
+// PIONEER_Q38_EMBEDDING_NATIVE_FACTORY_END
+#endif
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
 {
@@ -3078,6 +3310,9 @@ bool PioneerSessionIO::ResidentGdnBeforeRoot()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_BEGIN
 bool PioneerSessionIO::NonRootHeldOwner() {
 	return StateZeroBeforeCohort()
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+		|| EmbeddingSourceScope(false)
+#endif
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 		|| ResidentGdnBeforeRoot()
 #endif
@@ -3950,6 +4185,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		// Scope presence alone requires explicit END,even if a future
 		// allocation bug misbound the context as a legacy/non-bank session.
 		if (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_EMBEDDING_NATIVE
+			|| cookie->context->q38EmbeddingModel
+#endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 			|| cookie->context->q38FfnModelPlan || cookie->context->q38GraphMutable || cookie->context->q38FfnZero
 #endif
