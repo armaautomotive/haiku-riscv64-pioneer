@@ -60,6 +60,9 @@ struct CodeIO:BootstrapIO {
  uint32_t FfnGraphProgramRead(unsigned w,uint32_t a){Touch();reads++;uint32_t v=RawRead(w,a);
   if(dropped){dropped=false;observed=touches;return v;}
   return fault==1 && Word()?Bad(v):v;}
+ bool FfnGraphProgramReadChecked(unsigned w,uint32_t a,uint32_t& output){
+  if(fault==13 && At()){Touch();observed=touches;return false;}
+  output=FfnGraphProgramRead(w,a);return true;}
  bool FfnGraphProgramWrite(unsigned w,uint32_t a,uint32_t v){Touch();writes++;
   assert(state && state->savedWords==867448 && (state->phase==2 || state->phase==4));
   if(fault==2 && Word()){observed=touches;return false;}
@@ -138,6 +141,8 @@ int main(){
   CodeFixture f;f.io.fault=kind;f.io.phase=phase;f.io.worker=worker;assert(!f.Run());f.Unknown();faults++;
  }
  for(unsigned worker:{0U,60U,119U}){CodeFixture f;f.io.fault=11;f.io.phase=1;f.io.worker=worker;assert(!f.Run());f.Unknown();faults++;}
+ for(unsigned phase:{1U,2U,3U,4U,5U})for(unsigned worker:{0U,60U,119U}){CodeFixture f;
+  f.io.fault=13;f.io.phase=phase;f.io.worker=worker;assert(!f.Run());f.Unknown();faults++;}
  for(unsigned bad=0;bad<17;bad++){CodeFixture f;
   if(bad==0)f.cohort->booted=true;if(bad==1)f.cohort->bootAttempted=true;if(bad==2)f.cohort->unsafe=true;
   if(bad==3)f.cohort->rootRunning=true;if(bad==4)f.cohort->prepared=119;if(bad==5)f.cohort->closed=true;

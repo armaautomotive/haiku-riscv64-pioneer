@@ -29,7 +29,7 @@ struct NativeAdapter {
  void Q38PanelWrite(uint32 a,uint32 v){assert(!(a&3) && a>=0x70000 && a<0x74000);PioneerWrite32(panel.data()+(a-0x70000)/4,v);}
 #include PIONEER_FFN_NATIVE_ADAPTER_INCLUDE
 };
-int main(){unsigned refused=0,words=0;
+int main(){unsigned refused=0,words=0,checkedWords=0,checkedRefusals=0;
  {NativeAdapter h;for(unsigned w:{0U,119U,120U,UINT32_MAX}){
   assert(h.FfnGraphProgramRead(w,0x64000)==UINT32_MAX && !h.FfnGraphProgramWrite(w,0x64000,1));refused++;}
   assert(!maps && !reads && !writes);
@@ -57,6 +57,23 @@ int main(){unsigned refused=0,words=0;
    unsigned before=reads+writes;assert(h.FfnGraphProgramRead(w,a)==UINT32_MAX && !h.FfnGraphProgramWrite(w,a,0));assert(reads+writes==before);refused++;}
  }
  assert(words==867448 && reads==words && writes==words && maps==1);
+ // The NEW owners use only checked reads. UINT32_MAX is valid program/
+ // saved-prefix DATA;false must be distinct and leave output untouched.
+ auto checkedRefuse=[&](unsigned w,uint32 a){uint32 out=0x42424242;unsigned before=reads+writes;
+  assert(!h.FfnGraphProgramReadChecked(w,a,out) && out==0x42424242 && reads+writes==before);checkedRefusals++;};
+ for(unsigned w=0;w<120;w++){
+  h.runtimeCore=w;
+  for(uint32 a=0x6000;a<0x74004;a+=4){
+   bool valid=a==0x6000 || (a>=0x64000 && a<(w?0x67000U:0x6e000U)) || (a>=0x70000 && a<0x74000);
+   if(!valid){checkedRefuse(w,a);continue;}
+   uint32 out=0;unsigned before=reads+writes;
+   assert(h.FfnGraphProgramWrite(w,a,UINT32_MAX) && h.FfnGraphProgramReadChecked(w,a,out)
+    && out==UINT32_MAX && reads+writes==before+2);checkedWords++;
+   checkedRefuse(120,a);checkedRefuse((w+1)%120,a);
+   for(unsigned byte=1;byte<4;byte++)checkedRefuse(w,a+byte);
+  }
+ }
+ assert(checkedWords==867448 && reads==2*words && writes==2*words && maps==1);
  {NativeAdapter x;unsigned before=maps;nullMap=true;assert(!x.MapFfnGraphCodePrefix() && maps==before+1
   && x.q38FfnCodeArea==23 && x.q38FfnCodeMapAttempted && !x.q38FfnCodeView);nullMap=false;
   assert(!x.MapFfnGraphCodePrefix() && maps==before+1);refused++;
@@ -75,6 +92,7 @@ int main(){unsigned refused=0,words=0;
   if(bad==3)x.panelStable=false;if(bad==4)x.q38FfnCodeArea=-1;if(bad==5)x.q38FfnCodeView=nullptr;
   unsigned before=reads+writes;assert(!x.FfnGraphCodeMappingStable(0) && x.FfnGraphProgramRead(0,0x64000)==UINT32_MAX
    && !x.FfnGraphProgramWrite(0,0x64000,1) && reads+writes==before);refused++;
+  uint32 out=0x42424242;assert(!x.FfnGraphProgramReadChecked(0,0x64000,out) && out==0x42424242 && reads+writes==before);checkedRefusals++;
  }
- printf("PASS ACTUAL native FFN code mapping methods:words%u/refusals%u/ALL120 exact role footprints/map40KiB once/no stack/peer-gap/unaligned/wrong-owner IO/no retry after failed map;SIMULATED_KERNEL_NOT_NATIVE_SCOPE_OR_LAUNCH\n",words,refused);
+ printf("PASS ACTUAL native FFN code mapping methods:legacyWords%u/refusals%u/checkedWords%u/refusals%u/valid UINT32_MAX distinct from failed read with output UNCHANGED/ALL120 exact role footprints/map40KiB once/no stack/peer-gap/unaligned/wrong-owner IO/no retry after failed map;SIMULATED_KERNEL_NOT_NATIVE_SCOPE_OR_LAUNCH\n",words,refused,checkedWords,checkedRefusals);
 }

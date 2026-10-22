@@ -1,6 +1,28 @@
 # Native build status
 
-Latest OFFLINE checkpoint October22 2026:unified recurrent/FFN reservation
+Latest OFFLINE checkpoint October22 2026:new FFN worker execution-lifetime
+controller passes2positive/226faults and ALL119 ACTUAL QFP2 instruction
+workers at THREE observation interleavings1/17/64. ALL staged/armed before
+release,current WAIT and ALL119 terminal proofs BEFORE first hold,then
+exact867448program+11424control-frame word restoration. ROOT NEVER runs,
+NO NoC packets/GDDR/model arithmetic or speed claim. Actual replay caught
+and fixed the missing out-of-code control-frame snapshot and asynchronous
+STOP receipt read-order race. Kernel witness880B;BOTH owners HEAP retained.
+Actual native adapter now has BOOL checked reads:UINT32_MAX remains valid
+saved DATA,not an error sentinel. Both code owners use it. Native method
+extraction867448 checked words/16986718refusals;old code-owner families
+each2positive/133faults. Full held-only CODE32 candidate93cb881f builds
+twice EXACT,code-roundtrip frame256B,guardd1ce/default2df unchanged. NOT
+installed/native-qualified;updater still pins earlier6e963,NOT93cb881f.
+The NEW worker-lifetime controller has NO native route yet. Next REAL
+retained native context/clock/host binding and isolated tag/namespace/
+client/updater before hardware qualification,then canonical input/model
+and resident FFN root execution. No native writes/uploads/jobs/reloads,
+Assistant/boot/power/SD changes. Fresh041/tag12/gen32/idle/cold0/owner0/
+open1/guard1,no native parents. Last27B0.207893161tok/s unchanged,20UNMET.
+Goal ACTIVE. Evidence:benchmarks/qwen38-ffn-peer-lifetime-offline-20261022.txt.
+
+Previous OFFLINE checkpoint October22 2026:unified recurrent/FFN reservation
 implemented and tested. ONE sticky owner,673extents/73728GDN+74FFNpages,
 all7FFNbanks/516639refusals;existing7x3GiB limits unchanged. Typed borrowed
 roles retain independent EMPTY initialization ledgers;reservation is NOT

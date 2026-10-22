@@ -23,6 +23,7 @@ class PioneerQ38FfnGraphCodeOwner;
 template<class IO> bool PioneerQ38FfnGraphCodeRoundTrip(IO&,const tt_dram_samples_result&,
  PioneerResidentBanks&,PioneerQ38DispatchLease&,PioneerQ38FfnGraphCodeOwner&,PioneerQ38FfnGraphCodeResult&);
 class PioneerQ38FfnGraphCodeOwner {
+ friend class PioneerQ38FfnPeerLifetimeOwner;
  template<class IO> friend bool PioneerQ38FfnGraphCodeRoundTrip(IO&,const tt_dram_samples_result&,
   PioneerResidentBanks&,PioneerQ38DispatchLease&,PioneerQ38FfnGraphCodeOwner&,PioneerQ38FfnGraphCodeResult&);
  const tt_dram_samples_result* proof=nullptr;
@@ -81,7 +82,9 @@ template<class IO> bool PioneerQ38FfnGraphCodeRoundTrip(IO& io,const tt_dram_sam
   }
   owner.sampled=w+1;
   const unsigned base=PioneerQ38FfnGraphCodeBase(w),words=PioneerQ38FfnGraphCodeWords(w);
-  for(unsigned i=0;i<words;i++){r.word=i;owner.saved[base+i]=io.FfnGraphProgramRead(w,PioneerQ38FfnGraphCodeAddress(w,i));r.savedWords++;}
+  for(unsigned i=0;i<words;i++){r.word=i;uint32_t value;
+   if(!io.FfnGraphProgramReadChecked(w,PioneerQ38FfnGraphCodeAddress(w,i),value))return fail();
+   owner.saved[base+i]=value;r.savedWords++;}
   if(!guard(w))return fail();
  }
  if(r.savedWords!=owner.Words || owner.sampled!=120)return fail();
@@ -90,10 +93,10 @@ template<class IO> bool PioneerQ38FfnGraphCodeRoundTrip(IO& io,const tt_dram_sam
   r.worker=w;if(!guard(w))return fail();
   const unsigned base=PioneerQ38FfnGraphCodeBase(w),words=PioneerQ38FfnGraphCodeWords(w);
   // Catch a changed saved footprint BEFORE writing this participant.
-  for(unsigned i=0;i<words;i++){r.word=i;if(io.FfnGraphProgramRead(w,PioneerQ38FfnGraphCodeAddress(w,i))!=owner.saved[base+i])return fail();}
+  for(unsigned i=0;i<words;i++){r.word=i;uint32_t value;if(!io.FfnGraphProgramReadChecked(w,PioneerQ38FfnGraphCodeAddress(w,i),value) || value!=owner.saved[base+i])return fail();}
   for(unsigned i=0;i<words;i++){
    r.word=i;const uint32_t a=PioneerQ38FfnGraphCodeAddress(w,i),value=PioneerQ38FfnGraphProgramWord(w,a);
-   if(!io.FfnGraphProgramWrite(w,a,value) || io.FfnGraphProgramRead(w,a)!=value)return fail();
+   uint32_t actual;if(!io.FfnGraphProgramWrite(w,a,value) || !io.FfnGraphProgramReadChecked(w,a,actual) || actual!=value)return fail();
    r.installedWords++;
   }
   if(!guard(w))return fail();
@@ -104,14 +107,14 @@ template<class IO> bool PioneerQ38FfnGraphCodeRoundTrip(IO& io,const tt_dram_sam
  for(unsigned w=0;w<120;w++){
   r.worker=w;if(!guard(w))return fail();
   for(unsigned i=0;i<PioneerQ38FfnGraphCodeWords(w);i++){r.word=i;uint32_t a=PioneerQ38FfnGraphCodeAddress(w,i);
-   if(io.FfnGraphProgramRead(w,a)!=PioneerQ38FfnGraphProgramWord(w,a))return fail();}
+   uint32_t value;if(!io.FfnGraphProgramReadChecked(w,a,value) || value!=PioneerQ38FfnGraphProgramWord(w,a))return fail();}
  }
  r.phase=4;
  for(unsigned w=0;w<120;w++){
   r.worker=w;if(!guard(w))return fail();
   const unsigned base=PioneerQ38FfnGraphCodeBase(w),words=PioneerQ38FfnGraphCodeWords(w);
   for(unsigned i=0;i<words;i++){r.word=i;uint32_t a=PioneerQ38FfnGraphCodeAddress(w,i),value=owner.saved[base+i];
-   if(!io.FfnGraphProgramWrite(w,a,value) || io.FfnGraphProgramRead(w,a)!=value)return fail();
+   uint32_t actual;if(!io.FfnGraphProgramWrite(w,a,value) || !io.FfnGraphProgramReadChecked(w,a,actual) || actual!=value)return fail();
    r.restoredWords++;}
   if(!guard(w) || !PioneerQ38GraphCsrCode(io,w))return fail();
  }
@@ -119,7 +122,7 @@ template<class IO> bool PioneerQ38FfnGraphCodeRoundTrip(IO& io,const tt_dram_sam
  for(unsigned w=0;w<120;w++){
   r.worker=w;if(!guard(w))return fail();
   const unsigned base=PioneerQ38FfnGraphCodeBase(w),words=PioneerQ38FfnGraphCodeWords(w);
-  for(unsigned i=0;i<words;i++){r.word=i;if(io.FfnGraphProgramRead(w,PioneerQ38FfnGraphCodeAddress(w,i))!=owner.saved[base+i])return fail();}
+  for(unsigned i=0;i<words;i++){r.word=i;uint32_t value;if(!io.FfnGraphProgramReadChecked(w,PioneerQ38FfnGraphCodeAddress(w,i),value) || value!=owner.saved[base+i])return fail();}
  }
  if(r.installedWords!=owner.Words || r.restoredWords!=owner.Words || !guard(0))return fail();
  owner.closed=true;r.passed=1;return true;

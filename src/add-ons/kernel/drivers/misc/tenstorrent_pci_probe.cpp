@@ -1889,6 +1889,14 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (a==0x6000) return RuntimeCodeRead(0);
 		return a>=0x70000?Q38PanelRead(a):PioneerRead32(q38FfnCodeView+(a-0x64000)/4);
 	}
+	bool FfnGraphProgramReadChecked(unsigned w,uint32 a,uint32& output) {
+		// Arbitrary saved prefix bytes may legitimately be UINT32_MAX.
+		// Report mapping/address failure SEPARATELY,never as saved data.
+		// A false result leaves output untouched and authorizes NO retry.
+		if (!PioneerQ38FfnGraphProgramAddress(w,a) || !FfnGraphCodeMappingStable(w)) return false;
+		output=a==0x6000?RuntimeCodeRead(0):a>=0x70000?Q38PanelRead(a):PioneerRead32(q38FfnCodeView+(a-0x64000)/4);
+		return true;
+	}
 	bool FfnGraphProgramWrite(unsigned w,uint32 a,uint32 value) {
 		if (!FfnGraphCodeMappingStable(w) || !PioneerQ38FfnGraphProgramAddress(w,a)) return false;
 		if (a==0x6000) RuntimeCodeWrite(0,value);

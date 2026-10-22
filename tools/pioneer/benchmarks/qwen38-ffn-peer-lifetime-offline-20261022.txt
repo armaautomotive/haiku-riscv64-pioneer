@@ -1,0 +1,125 @@
+New resident FFN worker execution-lifetime controller,October22 2026.
+OFFLINE ONLY. No native route selects this controller yet. Not a native
+scope/clock/host grant,full FFN/model launch or inference-speed result.
+
+PioneerQ38FfnPeerLifetimeOwner::Qualify is ONE private attempt under a
+future actual native cookie/global-call lock excluding ALL other writers.
+It borrows the separately retained heap CodeOwner and exact prepared120
+participant/source/bank context. Refuses already uncertain/partial parents
+using CPU metadata BEFORE IO. Snapshots ALL867448 program words before
+first image write,installs/verifies the exact new root/peer images,then
+boots ALL119 new QFP2 persistent workers with the ROOT STILL HELD.
+ALL119 boot frames staged and ALL119 armed BEFORE first release.
+Independent current source/reset/PCIe/idle/command/MASTER-counter/code and
+physical WAIT receipts precede STOP. Only internally constructed seq1
+STOP jobs exist here;no caller job,address,sequence or executed/clean hint.
+No weights/input/GDDR/host DMA/NoC packet or model arithmetic is launched.
+
+After STOP,ALL119 actual CURRENT terminal receipts are proved BEFORE the
+FIRST hold,and again for each selected participant immediately before its
+hold. Cached ready/stopped counts NEVER grant this. Both terminal frontend
+PCs accepted only with exact code/source/status/counter/command proof;
+fault entry/park,misaligned/out-of-image PCs and invalid fields refuse.
+Only then hold workers and restore exact code,original NIU commands and
+control frames. Independent ALL-original proofs precede Closed/passed.
+The old legacy bootstrap may run only AFTER this clean return.
+
+Actual-instruction integration caught/fixed TWO issues before deployment:
+ - Peer control frames74000..74180 are OUTSIDE the code-only70000..74000
+   snapshot. A separate119x96word/45696B retained heap snapshot now captures
+   ALL frames before writes,rechecks before overwrite,restores/readbacks
+   and independently re-proves ALL11424 words,including arbitrary padding.
+ - STOP status changes between non-atomic PCIe reads. Sample finish BEFORE
+   start;forward progress cannot falsely appear as finished>started.
+   A physical PC can already reach STOP while an earlier status sample was
+   still pending. Re-sample the complete receipt;NEVER grant a hold until
+   status AND current physical PCs agree. Invalid fields still stop at
+   the FIRST observed error,not after collecting a diagnostic batch.
+
+UNKNOWN/first error quarantines code owner+whole cohort+bank+host in MEMORY
+ONLY. No subsequent select/MMIO/STOP/hold/reset/restore/retry/END/free.
+BOTH heap owners,ALL native host/maps/clock/cookie/cold state must remain
+retained by the future actual native caller. Generic IO callbacks are NOT
+that native authority. No new program runs on actual hardware this turn.
+
+ASan/UBSan controller endpoints:2positive/226faults,CLI0. ALL120 original
+program footprints and ALL119 control frames exactly restored. Zero and
+nonzero/wrapped MASTER baselines,both terminal PCs,arbitrary UINT32_MAX
+prefix data,one-way/reentry/dirty-result/partial-parent refusals;
+first/middle/last roles and install/audit/boot/STOP/hold/restore/final-proof
+faults;ALL status fields,source/PCI/reset/command/counter/mapping/clock/
+code/frame/read-transport faults. The first observed failure is the LAST
+IO in the trace;repeat calls/old bootstrap remain inert. No root reset,
+NoC doorbell,GDDR,PCI write or CPU learned-reference APIs used.
+RISC-V kernel compile witness880B maximum frame;both large owners HEAP
+ONLY. A compile witness is NOT a linked native factory/driver.
+ /private/tmp/pioneer-q38-ffn-peer-lifetime-20261022-h.log
+ SHAc490a4ce5f96c1b8f44e6bd6a257cd8e13876e83377b7275c7d9531efbad4737
+
+SAME controller + ALL119 ACTUAL frozen QFP2 instruction interpreters:
+three different interleavings1/17/64 instructions per host observation,
+ALL CLI0. Code/boot/job/doorbell bytes come from the controller's ACTUAL
+installed/staged image,not synthetic status. No BootNew/Job/Stop fixture
+staging helpers called. Actual instructions publish every WAIT/STOP.
+An independent ALL119 actual-terminal assertion precedes the FIRST hold.
+Each run workerVM162868 instructions,max276B device stack,NO NoC packets,
+responses,matrix instructions,activation packets or CPU products.
+These counts/synthetic clocks are NOT native cycles/time/tokens/sec.
+ /private/tmp/pioneer-q38-ffn-peer-lifetime-actual-20261022-f.log
+ SHA744a31525d2c34955c33ee5ef9ef198df23dc497f9b6e83085c98114226a49fe
+ Exact unchanged peer /private/tmp/pioneer-q38-ffn-graph-peer-control.NJzpNLRW/image
+ Failed intermediate logs are superseded;no native test was attempted.
+
+Separate actual-native adapter hardening:
+FfnGraphProgramReadChecked reports mapping/address failure as BOOL and
+leaves output untouched;legitimate UINT32_MAX saved bytes remain DATA.
+Both old held-only CodeOwner and NEW peer-lifetime owner now require this
+checked interface,including snapshot reads that cannot compare arbitrary
+original prefix contents against a known program. False read stops
+immediately instead of looking like saved data;there is NO retry/fallback.
+Native methods extracted from the ACTUAL driver:867448 valid legacy words/
+15253874refusals plus867448 checked words/16986718refusals. Every checked
+valid word tested with UINT32_MAX;wrong role/map/gap/stack/alignment fails
+without touching output or payload. ONE fixed40KiB existing-prefix map.
+ /private/tmp/pioneer-q38-ffn-code-checked-adapter-20261022-a.log
+ SHAc895156c59300ac17f39f54827ed619f85a1165d225e181a17c4b72b6ce2e7f4
+
+Existing held-only CodeOwner now2positive/133faults in EACH basic and exact
+qualified legacy family (15new failed-read cases);old native hook and
+allocation/map/write/reentry retention regressions pass,ALL CLI0.
+ /private/tmp/pioneer-q38-ffn-code-checked-read-20261022-a.log
+ SHA1791d4e9005466b352c3e1c23e9fb7e02420ed548cde5d19dcc28e7f78ef9822
+ /private/tmp/pioneer-q38-ffn-code-checked-native-owner-20261022-a.log
+ SHA329f39978d26402729b9d0de5b65e6aa7c5538783510dbdc49c2b947824e7b4d
+Existing311before-SDK build refusals,24legacy bootstrap first/middle/last
+faults,actual12-op ordinary/private routing and18mixed compile refusals,
+68new-graph before-SDK refusals also pass. No namespace/selector widened.
+
+Full CODE32 held-only native driver with checked-read hardening builds
+twice EXACT using READ-ONLY SDK. Not installed or native-qualified:
+ /private/tmp/pioneer-q38-code-checked-build.13GMl1kj/driver
+ /private/tmp/pioneer-q38-code-checked-repeat.F11amImV/driver
+ driver SHA93cb881fa4527fd9c74d279adf4b8d6bc72605fb32a93166207f42ca52d486cd
+ tag2026102200010032,maximum actual code-roundtrip kernel frame256B.
+ guard remains EXACTd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229;
+ default43 remains EXACT2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+All three artifacts byte-identical across builds. This driver STILL NEVER
+launches new code:the NEW worker-lifetime controller has NO native route.
+Do NOT relabel93cb as the previously native-qualified6e963 artifact.
+Updater pins remain unchanged and do NOT accept this unqualified build.
+
+Fresh read-only Pioneer evidence:no native parents,installed EXACT
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen32/quiesced0/cold0/owner0/open1/guard1.
+NO native uploads,drivers/jobs/reloads/clock changes,reboot,power,SD,
+Assistant/settings,CPU/RAM/boot/network changes. Raw-Dst22 HARD BLOCKED.
+Dirty llama.cpp and unrelated FlashNext files remain untouched.
+
+NEXT:bind the new worker lifetime to the REAL retained native context/
+cookie/clock/ALL host owners,isolated diagnostic tag/namespace/exact client
+and guarded updater BEFORE native qualification. Do NOT silently extend
+old CODE32's never-launched contract. Then real canonical learned/model/
+initialized-input producer + resident FFN root execution/current terminal
+owner,shared GDN/FFN lifetime integration and actual model inference timing.
+All-card attention/GDN/KV/norm/residual/embedding/sampling still owed.
+Last real whole27B0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
