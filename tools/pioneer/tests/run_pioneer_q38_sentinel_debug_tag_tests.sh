@@ -2,7 +2,7 @@
 set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-sentinel-tag.XXXXXXXX")
-for variant in sentinel host batch4 raw frontend raw-cache prefetch command peer-phase q4-nibble q4-direct local-q4 graph-csr;do
+for variant in sentinel host batch4 raw frontend raw-cache prefetch command peer-phase q4-nibble q4-direct local-q4 graph-csr ffn-code;do
 extra=;[ "$variant" != host ] || extra=-DPIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT
 [ "$variant" != batch4 ] || extra=-DPIONEER_Q38_BATCH4_REFERENCE_CLIENT
 [ "$variant" != raw ] || extra=-DPIONEER_Q38_BATCH_RAW_REFERENCE_CLIENT
@@ -15,6 +15,7 @@ extra=;[ "$variant" != host ] || extra=-DPIONEER_Q38_HOST_PHASE_REFERENCE_CLIENT
 [ "$variant" != q4-direct ] || extra='-DPIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT -DPIONEER_Q38_Q4_DIRECT_REFERENCE_CLIENT'
 [ "$variant" != local-q4 ] || extra=-DPIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT
 [ "$variant" != graph-csr ] || extra=-DPIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT=1
+[ "$variant" != ffn-code ] || extra=-DPIONEER_Q38_FFN_CODE_REFERENCE_CLIENT=1
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined $extra \
  "$directory/pioneer_q38_sentinel_debug_tag_test.cpp" -o "$temporary/test"
 ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"

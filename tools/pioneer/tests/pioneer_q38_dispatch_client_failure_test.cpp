@@ -11,7 +11,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchProtocol.h"
-#if defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT) || defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT) || defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #endif
 #ifdef PIONEER_Q38_WORK_CLIENT_TEST
@@ -23,8 +23,13 @@
 #endif
 static unsigned opens=0,closes=0,begins=0,runs=0,uploads=0,ends=0,fault=0;
 static bool failed=false;
-#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+#if defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT)
 static unsigned tagFault=0;
+#endif
+#ifdef PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT
+static bool supportFault=false;
+static_assert(TT_Q38_WORK_SUPPORT_VERSION==5 && TT_PCI_PROBE_Q38_WORK_SUPPORT==B_DEVICE_OP_CODES_END+0x6270
+ && TT_PCI_PROBE_Q38_WORK_RUN==B_DEVICE_OP_CODES_END+0x6271,"tag32 debug client ONLY uses private namespace5");
 #endif
 static int MockOpen(const char* path,int flags)
 {
@@ -34,11 +39,13 @@ static int MockClose(int fd) { assert(fd==73); closes++; return 0; }
 static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 {
 	assert(fd==73 && !failed);
-#if defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT) || defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT) || defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_Q4_NIBBLE_REFERENCE_CLIENT)
 	if(op==TT_PCI_PROBE_RELOAD_STATUS){
 		assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
 		r={};r.version=1;r.driver=55;r.guard_version=1;
-#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+#ifdef PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT
+		r.build_tag=UINT64_C(0x2026102200010032);
+#elif defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102200010031);
 #elif defined(PIONEER_Q38_LOCAL_Q4_REFERENCE_CLIENT)
 		r.build_tag=UINT64_C(0x2026102100010028);
@@ -50,7 +57,7 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 		r.build_tag=UINT64_C(0x2026102100010025);
 #endif
 		r.generation=31;r.open_count=1;
-#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+#if defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT)
 		if(tagFault){
 			failed=true;
 			switch(tagFault){case 1:r.build_tag^=1;break;case 2:r.generation=0;break;
@@ -64,6 +71,9 @@ static int MockIoctl(int fd,unsigned long op,void* data,size_t bytes)
 #endif
 	if (op==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT) {
 		assert(bytes==sizeof(tt_q38_dispatch_support));
+#ifdef PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT
+		if(supportFault){*static_cast<tt_q38_dispatch_support*>(data)={TT_Q38_DISPATCH_DRIVER,2,119,256,17408,7,64,1,0};failed=true;return 0;}
+#endif
 		*static_cast<tt_q38_dispatch_support*>(data)={TT_Q38_DISPATCH_DRIVER,
 #ifdef PIONEER_Q38_WORK_CLIENT_TEST
 			TT_Q38_WORK_SUPPORT_VERSION,
@@ -168,13 +178,21 @@ int main()
 	numeric->peers=120; assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	numeric->peers=2; expected.pop_back(); assert(ReturnedNumericErrors(*numeric,expected,nullptr)==~0U);
 	assert(opens==1 && closes==1 && begins==1 && uploads && runs==1 && !ends);
-#ifdef PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT
+#if defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT)
 	for(tagFault=1;tagFault<=10;tagFault++){
 		opens=closes=begins=runs=uploads=ends=0;failed=false;
 		char name[]="csr",arg[]="--synthetic";char* argv[]={name,arg};
 		assert(DispatchClientMain(2,argv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);
 	}
+#ifdef PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT
+	puts("PASS actual tag32 client:10 metadata/query failures CLOSE ONLY before ANY support/BEGIN/upload/RUN/END/card IO");
+	tagFault=0;supportFault=true;opens=closes=begins=runs=uploads=ends=0;failed=false;
+	char nsName[]="code",nsArg[]="--synthetic";char* nsArgv[]={nsName,nsArg};
+	assert(DispatchClientMain(2,nsArgv)==1 && failed && opens==1 && closes==1 && !begins && !uploads && !runs && !ends);
+	puts("PASS actual tag32 client:ordinary support version2 refused before BEGIN;NO namespace fallback or subsequent ioctl");
+#else
 	puts("PASS actual tag31 client:10 metadata/query failures CLOSE ONLY before ANY support/BEGIN/upload/RUN/END/card IO");
+#endif
 #endif
 #ifdef PIONEER_Q38_REUSE_CLIENT_TEST
 	fixtureOkay=false; opens=closes=begins=runs=uploads=ends=0; failed=false;

@@ -20,6 +20,7 @@ case "$1" in
  --apply-direct-srcb-qualification|--restore-direct-srcb-qualification) mode=$1;;
  --apply-sentinel-poll-qualification|--restore-sentinel-poll-qualification) mode=$1;;
  --apply-graph-csr-diagnostic|--restore-graph-csr-diagnostic) mode=$1;;
+ --apply-ffn-code-diagnostic|--restore-ffn-code-diagnostic) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -91,6 +92,7 @@ candidate_affine_rawdot_qualification=$stage/tenstorrent_pci_probe-affine-rawdot
 candidate_direct_srcb_qualification=$stage/tenstorrent_pci_probe-direct-srcb-qualification-7056d20e
 candidate_sentinel_poll_qualification=$stage/tenstorrent_pci_probe-sentinel-poll-qualification-84ab80ac
 candidate_graph_csr_diagnostic=$stage/tenstorrent_pci_probe-graph-csr-diagnostic-3fce7a8a
+candidate_ffn_code_diagnostic=$stage/tenstorrent_pci_probe-ffn-code-diagnostic-6e963d80
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -157,6 +159,7 @@ hash_affine_rawdot_qualification=8b43f2c7145529fb0e5e6f0e3f4eac431b182db0ea16ddd
 hash_direct_srcb_qualification=7056d20e09eee61c080c6c900f1cefde92026d000af53f2931d5e1d0ff9ebcb1
 hash_sentinel_poll_qualification=84ab80ac87ce3486c4194be6743b44c56492cd7282e934d966e4ee39d48af296
 hash_graph_csr_diagnostic=3fce7a8ab03187433ec41a6c8d34f4f00be3d06843a67782ca1a2352a1e332a8
+hash_ffn_code_diagnostic=6e963d80d55a79d36c67eb54f8fbe46debf239617c0d06cb9d3be68f1b1c8a76
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -221,6 +224,7 @@ tag_affine_rawdot_qualification=2026102100010015
 tag_direct_srcb_qualification=2026102100010016
 tag_sentinel_poll_qualification=2026102100010017
 tag_graph_csr_diagnostic=2026102200010031
+tag_ffn_code_diagnostic=2026102200010032
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -387,6 +391,8 @@ else
  # best tag12. Restore is allowed ONLY with clean idle metadata,NEVER UNKNOWN.
  elif [ "$mode" = --apply-graph-csr-diagnostic ]; then source=$candidate_graph_csr_diagnostic; expected=$hash_scale_reuse_qualification; result=$hash_graph_csr_diagnostic; oldtag=$tag_scale_reuse_qualification; newtag=$tag_graph_csr_diagnostic
  elif [ "$mode" = --restore-graph-csr-diagnostic ]; then source=$candidate_scale_reuse_qualification; expected=$hash_graph_csr_diagnostic; result=$hash_scale_reuse_qualification; oldtag=$tag_graph_csr_diagnostic; newtag=$tag_scale_reuse_qualification
+ elif [ "$mode" = --apply-ffn-code-diagnostic ]; then source=$candidate_ffn_code_diagnostic; expected=$hash_scale_reuse_qualification; result=$hash_ffn_code_diagnostic; oldtag=$tag_scale_reuse_qualification; newtag=$tag_ffn_code_diagnostic
+ elif [ "$mode" = --restore-ffn-code-diagnostic ]; then source=$candidate_scale_reuse_qualification; expected=$hash_ffn_code_diagnostic; result=$hash_scale_reuse_qualification; oldtag=$tag_ffn_code_diagnostic; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification

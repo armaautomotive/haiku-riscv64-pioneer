@@ -1,0 +1,119 @@
+Native never-launched FFN code-memory qualification,October22 2026.
+Scope:fixed mapping/snapshot/install/readback/restore,NOT new FFN execution,
+model integration,initial producer authority,inference speed or promotion.
+
+Candidate unchanged from independently built/qualified offline6e963d80:
+6e963d80d55a79d36c67eb54f8fbe46debf239617c0d06cb9d3be68f1b1c8a76,
+tag2026102200010032. Exact-code/heap/mapping/full-owner fault proofs and
+240B kernel frame are recorded in qwen38-ffn-code-owner-offline-20261022.txt.
+NO code-owner/driver/frozen-FFN-image changes in this native checkpoint.
+
+NEW exact-tag32 namespace5 DEBUG client:
+build_qwen38_ffn_code_diagnostic_client.sh enables ONLY complete original-TC
+sentinel/Work/vector/root-counter debug role. CPU references ONLY in this
+qualification executable,NEVER production Work inference. Metadata requires
+driver55/tag32/guard1/nonzero generation/quiesced0/cold0/owner0/open1 BEFORE
+any support/BEGIN/card access. Support/RUN use ONLY+6270/6271,version5;
+ordinary version2 reply refuses before BEGIN,without namespace fallback.
+The actual native tag32 driver REFUSES old ordinary Work AND checked ops.
+Every different/malformed/mixed reference role refuses BEFORE SDK/output.
+After an uncertain RUN/numeric error,client uses returned HOST memory only,
+CLOSE ONLY;NO later ioctl/END/reset/retry/extra card reads.
+
+Two RISC-V client builds byte-identical:
+ /private/tmp/pioneer-q38-ffn-code-client.EfDO4gd6/pioneer-q38-ffn-code-debug
+ /private/tmp/pioneer-q38-ffn-code-client-repeat.lolMFIl2/pioneer-q38-ffn-code-debug
+ SHA696689ff164fdb509808bba1e05f3ca560ad488125e7220df71525ab71340618
+Old CSR tag31 client remains EXACTb4eef9d38bcfea4232f8cfa142f1a05e71c62058d124b1ea018c7f4039636115;
+ordinary qualified roles are NOT relabelled or silently broadened.
+
+Final updater0464046ff3aaeb93023bf7a1d1b9170afdbdd55329ec82b64e1bb243ef131553
+adds explicit041/tag12<->6e963/tag32 routes,ONLY clean idle handshakes with
+all prior fixed hashes/guard/open/cold/owner/generation/symlink/backup checks.
+No forced reset/unload/cold recovery or automatic rollback. All native
+parents (even CPU authentication before opening card) must be absent before
+metadata and again before quiesce. Client basenamepioneer-q38-ffn-code-debug
+fits that inventory filter even with its actual long stage prefix. No
+upload/SCP/second card job overlaps ANY native parent lifetime.
+
+ALL local tests CLI0:
+ 5925 actual shell updater hash/symlink/filesystem/handshake/owner/failure
+ cases,including both new routes,wrong/late/truncated/bare parent and new
+ actual stage-name parent;129 apply/restore/bootstrap focused cases.
+ 14 actual tag variants x93 malformed tag/state/guard/owner refusals each.
+ Actual debug client failed ioctl/returned UNKNOWN/current history frames:
+ exactly one RUN then CLOSE,no subsequent ioctl/END/reset/retry.
+ Tag32 additionally10 metadata/query failures before ANY support/BEGIN;
+ ordinary support version2 rejected before BEGIN with NO fallback.
+ 145 new debug-client/mixed/production gate refusals BEFORE SDK/output;
+ previous CSR137/driver311/sentinel155 gate refusals remain passing.
+ /private/tmp/pioneer-ffn-code-hot-swap-full-20261022-a.log
+ SHAf9dc13a6f2d5134a00917b9f9d0c4f336259f5ee9e7b6bfd8871d66e99e9a844
+ /private/tmp/pioneer-ffn-code-hot-swap-focused-20261022-a.log
+ SHAc8e056f357bc70e368e5204b79a09b214c712a906dac4333efd95154827ed514
+ /private/tmp/pioneer-ffn-code-client-tags-20261022-a.log
+ SHA4b6ff5e5c7d7c177127fc4227aebd96bd1afe2a36665823d3cfe76474f46d89d
+ /private/tmp/pioneer-ffn-code-client-failures-20261022-a.log
+ SHA8ad9d79c55c069e3399ad087e07f77c89097a5cd7c485f581d03d0550d8ece68
+ /private/tmp/pioneer-ffn-code-client-gates-20261022-a.log
+ SHA9a5b1d3e2c720937bb86596c555454296082a3b289fbdc9c1d2425142848cffa
+
+NATIVE sequence,serialized:
+ 1 fresh Haiku041/tag12/gen30/cold0/owner0/open1/guard1 and ALL native
+   parents absent;64 CPUs/full RAM unchanged. Staged exact driver/client/
+   updater with unused non-symlink filenames and verified remote SHA pins.
+ 2 new client on old tag12 --support rejected with CLI1 before ANY BEGIN
+   or card read;metadata stayed clean/gen30. This was NOT card uncertainty.
+ 3 exact guarded reload041/tag12/gen30 ->6e963/tag32/gen31,CLI0.
+ 4 new client --support accepted actual private version5,NO BEGIN.
+   --synthetic:held-only code roundtrip ALL120 roles succeeded,then20
+   ORIGINAL legacy Q8/Q4/Q6 math samples K5120/6144/17408,explicit return
+   to Q8 in same cohort,all exact_errors0,10 cases,clean END,CLI_EXIT0.
+ 5 fresh no-parent/clean metadata before --public-fixtures-119:
+   725504 authenticated source bytes checked BEFORE card open;new complete
+   held-only code roundtrip ALL120 again succeeded. Then18 ORIGINAL
+  119-worker legacy math samples,9 cases,ALL exact_errors0,clean END,CLI0.
+   No CPU reference result was substituted for actual device outputs.
+ 6 after parent exited,fresh clean metadata/no-parent proof;guarded restore
+   ONLY then6e963/tag32/gen31 ->known-best041/tag12/gen32. No automatic
+   rollback/reset/reboot. Evidence copied ONLY after ALL parents exited.
+
+EACH independent kernel witness:
+ P100A_FFN_CODE_PASS workers120 saved867448 installed867448 restored867448;
+ NEVER_LAUNCHED_NEW_FFN_NOT_MODEL_OR_SPEED
+This verifies exact root40KiB/peer12KiB prefixes+ALL boots+16KiB panels,
+867448 words (3469792B) per snapshot/install/restore,ALL participants held,
+no device-stack/peer-gap writes. Private command+selected MASTER counter
+baselines/source/reset/idle/PCIe/code guards remained exact. The new image
+was NEVER started,not even briefly;ORIGINAL legacy code is restored before
+the existing bootstrap runs. The observation is scoped to this exact
+owned cohort/clock/PCIe state and code,NOT arbitrary writers or live code
+replacement. A passed code result is NOT a new execution/terminal grant.
+
+EACH clock witness800->1350->800/restored1/uncertain0,normal firmware only.
+Scoped serial /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
+bytes66259754 through66276084 contain both code/clock witnesses.
+Remote /boot/home/pioneer-p100a-hot-reload-20261019-a/:
+ pioneer-q38-ffn-code-debug-696689ff
+ tenstorrent_pci_probe-ffn-code-diagnostic-6e963d80
+ hot-swap-ffn-code-0464046f.sh
+Completed native logs copied and independently SHA matched:
+ /private/tmp/pioneer-q38-ffn-code-native-evidence.28tim1jF/ffn-code-synthetic-20261022-a.log
+ SHAea0c18a4ae8ca89d89e164dc4bf4cdcdc9cf33bdf35388fd8abcce82e90c137b
+ /private/tmp/pioneer-q38-ffn-code-native-evidence.28tim1jF/ffn-code-auth119-20261022-a.log
+ SHA221caa9acda79af36363e6e0e3b69352ef0646f9ddccacd1149fd8f4af4a3b63
+
+AFTER restore:fresh041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen32/quiesced0/cold0/owner0/open1/guard1,ALL native
+parents absent,64 CPUs/max137034936320B. No reboot,power/SD/boot/CPU/RAM/
+network/Assistant/settings changes. Raw-Dst cache22 HARD BLOCKED. Dirty
+llama.cpp and FlashNext work untouched.
+
+NEXT:actual FFN native execution owner/factory with canonical learned and
+initialized model/source ownership,real initial F32 producer receipt,
+unified GDN/FFN mutable allocation,host+clock and actual current-terminal
+authority. Strengthen NEW root's before-counter accepted-alias parity
+BEFORE any launch. Memory-copy success does NOT supply those missing
+grants. Full FFN is NOT all-card attention/GDN/KV/norm/embedding/sampling.
+No inference benchmark in this checkpoint. Last real27B .207893161tok/s
+unchanged;20tok/s UNMET. Goal remains ACTIVE.

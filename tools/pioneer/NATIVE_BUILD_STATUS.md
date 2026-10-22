@@ -1,6 +1,24 @@
 # Native build status
 
-Latest OFFLINE checkpoint October22 2026:complete FFN code owner and REAL
+Latest NATIVE checkpoint October22 2026:held-only FFN code memory ownership
+PASSED on actual P100A in TWO independent sessions,ALL120 roles. Each saved/
+installed/read back/restored867448 words,with exact command/MASTER/source/
+PCIe/held-state guards. New FFN code NEVER started. Restored legacy math:
+20 synthetic+18 authenticated119-worker samples ALL exact/clean END/CLI0.
+Both clocks800->1350->800/restored1/uncertain0. Isolated tag32 NS5 client
+696689ff builds twice EXACT;old CSR debugb4eef9d3 remains EXACT. Wrong-tag12
+refusal BEFORE BEGIN proved natively. New updater0464046f pins041/tag12<->
+6e963/tag32;5925 complete actual shell regression cases PASS. No transfers
+or other jobs during any native parent lifetime. Restored known-best041/
+tag12/gen32/idle/cold0/owner0/open1/guard1;all native parents absent,64 CPUs/
+max137034936320B. No reboot,power,SD,Assistant/settings changes. Qualification
+is memory mapping/copy/restore ONLY,NOT FFN execution/model/producer/speed.
+Next actual native FFN execution owner+model/input/unified mutable/terminal
+integration;root before-counter alias parity still required before launch.
+Last real27B .207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-code-native-20261022.txt.
+
+Previous OFFLINE checkpoint October22 2026:complete FFN code owner and REAL
 kernel adapter/call-site built,NOT installed or native-qualified. Separate
 tag2026102200010032 candidate6e963d80 builds twice EXACT;guardd1ce/default2df
 and previously native-qualified CSR3fce remain unchanged. Entire40KiB root/

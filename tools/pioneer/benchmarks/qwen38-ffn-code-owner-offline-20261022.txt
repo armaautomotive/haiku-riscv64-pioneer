@@ -124,3 +124,9 @@ unified GDN/FFN mutable reservation/host/clock/terminal authority. NEW root
 before-counter accepted-alias parity must also be strengthened before any
 execution. Full FFN alone is NOT all-card attention/GDN/KV/norm/sampling.
 Last real27B .207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
+
+FOLLOW-UP same date:the exact6e963d80 candidate now passed controlled
+held-only native code install/readback/restore twice,followed by all20+18
+legacy math samples/clean END. Known-best041 restored/gen32,64 CPUs/full
+RAM unchanged. See qwen38-ffn-code-native-20261022.txt. This does NOT
+upgrade the old offline tests into grants or qualify new FFN execution.
