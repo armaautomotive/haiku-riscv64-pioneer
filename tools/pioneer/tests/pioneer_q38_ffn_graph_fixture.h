@@ -9,7 +9,7 @@ struct FfnGraphFixture {
  std::array<uint32_t,TT_Q38_FFN_GRAPH_WORDS> manifest={};
  std::array<uint32_t,119*16> source={};
  FfnGraphFixture(unsigned bank=0,bool edge=false,bool wide=true,bool reversed=false,unsigned types=0) {
-  auto& d=manifest;d[0]=TT_Q38_FFN_GRAPH_MARKER;d[1]=1;d[2]=67108864;d[3]=bank;d[4]=edge?0xc0000000:0x04000000;
+  auto& d=manifest;d[0]=TT_Q38_FFN_GRAPH_MARKER;d[1]=TT_Q38_FFN_GRAPH_VERSION;d[2]=67108864;d[3]=bank;d[4]=edge?0xc0000000:0x04000000;
   d[5]=1;d[6]=0;d[7]=3;d[8]=PioneerQ38SpanRoute(bank);d[9]=129;d[10]=TT_Q38_FFN_GRAPH_MANIFEST+256;
   d[11]=4352;d[12]=TT_Q38_FFN_GRAPH_MANIFEST+768;d[13]=5;d[14]=1;
   for(unsigned i=0;i<16;i++)d[16+i]=i?0x12340000+i:0x16005;

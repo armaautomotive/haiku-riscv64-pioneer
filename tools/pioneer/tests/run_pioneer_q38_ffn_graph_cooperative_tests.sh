@@ -1,10 +1,16 @@
 #!/bin/sh
 # ACTUAL whole-FFN instructions,simulated fabric only. No hardware access.
 set -eu
+input_flags=
+case "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" in
+ 0) ;;
+ 1) input_flags=-DPIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1;;
+ *) exit 2;;
+esac
 [ "$#" = 6 ] || [ "$#" = 7 ] || exit 2
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-ffn-graph-cooperative.XXXXXXXX")
-${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined $input_flags \
  -DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION -DPIONEER_Q38_TEST_AFFINE_REPLAY -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE \
  -DPIONEER_Q38_WORK_DEFER_AFFINE -DPIONEER_Q38_WORK_INPUT_SUM_CACHE -DPIONEER_Q38_WORK_ZERO_MINIMUM \
  -DPIONEER_Q38_NATIVE_OPERAND_STORE -DPIONEER_Q38_WORK_SKIP_DOT_CHECK -DPIONEER_Q38_REPLAY_OPERAND \

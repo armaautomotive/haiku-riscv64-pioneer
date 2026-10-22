@@ -1,6 +1,7 @@
 #!/bin/sh
 # Compile only,no install/device access.
 set -eu
+[ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT:-0}" in

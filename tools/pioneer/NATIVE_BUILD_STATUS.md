@@ -1,6 +1,26 @@
 # Native build status
 
-Latest OFFLINE checkpoint October22 2026:fixed canonical kernel model map
+Latest OFFLINE checkpoint October22 2026:QFG2 complete FFN root now has an
+ACTUAL initial5120F32 copy/readback producer BEFORE peer computation.
+Two20480B changed input/token/layer FFNs start with POISONED GDDR,then
+ACTUALroot+ALL119worker arithmetic:79872nonzero rows/176producer jobs/
+ALL119STOP,exactFP32+independentFP64/native bytes;CLI0,max5832B stack.
+RootVM202605677/peerVM2198994302 are NOT native timing/token rates.
+Separate32474651/version2 outer ABI;inner QFP2/gather/matrix remain1.
+Receipt only after exact completion,STOP never copies.14positive/35fault
+root tests and7 actual-peer faults pass;58before-SDK mixed/native/legacy/
+production gates. New4sections repeat EXACT;OLD QFG1 four sections and
+native33b35/guardd1ce/default43control2df stay BYTE-IDENTICAL. Old root
+28positive/98fault regression passes. No new frozen/native selector or
+L1/model/context/host/clock/terminal authority is supplied by this image.
+Next REAL native retained full-root/input/source/joint ownership,then
+actual model inference. Additional allQ4 arithmetic replay in progress;
+not claimed yet. No native uploads/jobs/reloads/Assistant/power/SD/boot/
+CPU/RAM changes;fresh041/tag12/gen34/idle/cold0/owner0/open1/guard1,no native
+parents. Whole27B.207893161tok/s unchanged;20UNMET,goal ACTIVE.
+Evidence:benchmarks/qwen38-initial-f32-ffn-root-offline-20261022.txt.
+
+Previous OFFLINE checkpoint October22 2026:fixed canonical kernel model map
 and three complete119-worker FFN job proposals implemented.4678parts,
 ALL851tensors/672GDNregions/TWOslots/8192context/7x3GiB unchanged. Independent
 existing host loader comparison matches normal/reversed descriptors AND

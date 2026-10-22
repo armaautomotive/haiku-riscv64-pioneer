@@ -26,6 +26,9 @@ struct GraphRootMachine:DispatchMachine {
   for(unsigned i=0;i<TT_Q38_FFN_GRAPH_WORDS;i++)memory[TT_Q38_FFN_GRAPH_MANIFEST+i*4]=fixture.manifest[i];
   for(unsigned w=0;w<119;w++){for(unsigned i=0;i<16;i++)node[w].src[i]=fixture.source[w*16+i];node[w].counter.fill(0xfffffff8);}
   for(unsigned i=0;i<16;i++)rootSource[i]=fixture.manifest[16+i];
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+  for(unsigned i=0;i<5120;i++)memory[0x80000+i*4]=Bits(.5f+float((i*17+bank*11)%127)/256);
+#endif
  }
  unsigned Index(uint32_t a)override {
   if(Range(a,0x64000,16384))return 4096+(a-0x64000)/4;
@@ -41,6 +44,9 @@ struct GraphRootMachine:DispatchMachine {
  }
  uint32_t ReadCycleCsr(unsigned csr)override{assert(csr==0xb00 || csr==0xb80);uint64_t now=UINT64_C(0x10000000000)+uint64_t(steps)*19;return csr==0xb00?uint32_t(now):uint32_t(now>>32);}
  uint32_t Load(uint32_t a)override {
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+  if(Range(a,0x80000,20480) || Range(a,0x88000,16384))return memory.at(a);
+#endif
   if(Range(a,0x64000,unsigned(prefix.size())))return Word(prefix,a-0x64000);
   if(Range(a,0x68000,unsigned(graph.size())))return Word(graph,a-0x68000);
   if(Range(a,0xffb20000,0x2000)) {

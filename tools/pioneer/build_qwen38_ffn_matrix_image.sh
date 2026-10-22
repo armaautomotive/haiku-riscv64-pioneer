@@ -1,6 +1,7 @@
 #!/bin/sh
 # Separate OFFLINE NEW ABI/image ONLY;NO driver/card/native selection.
 set -eu
+[ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDENT_MATRIX:-0}" = 1 ] || exit 2

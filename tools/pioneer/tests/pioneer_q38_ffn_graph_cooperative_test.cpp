@@ -104,13 +104,29 @@ struct GraphArithmeticRoot:GraphRootMachine {
  std::array<std::vector<uint32_t>,3> expected;
  unsigned assembled[3]={},finishedMatrices=0,finishedProducers=0;
  unsigned fault=0,observedPacket=0;
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+ std::array<uint32_t,5120> stagedInput={};
+#endif
  GraphArithmeticRoot(const char* path,const char* peer,bool wide,unsigned bank,bool reverse,unsigned types,unsigned failure=0)
   :GraphRootMachine(path,wide,bank,(bank&1)!=0,reverse,types),fault(failure) {
-  for(unsigned i=0;i<5120;i++)gddr[i]=Bits(1.0f+float((i*17+bank*11)%127)/256);
+  for(unsigned i=0;i<5120;i++) {
+   uint32_t value=Bits(1.0f+float((i*17+bank*11)%127)/256);
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+   stagedInput[i]=memory[0x80000+i*4]=value;gddr[i]=0x7fc00001;
+#else
+   gddr[i]=value;
+#endif
+  }
   for(unsigned role=0;role<3;role++)expected[role].assign(role==2?5120:17408,0x7fc00000);
   for(unsigned w=1;w<=119;w++)actual.emplace_back(new GraphArithmeticPeer(peer,w,gddr));
   if(fault==4)actual[0]->failPacket=1;
-  if(fault==5)gddr[255]=0x7fc00001;
+  if(fault==5) {
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+   memory[0x80000+255*4]=0x7fc00001;
+#else
+   gddr[255]=0x7fc00001;
+#endif
+  }
   if(fault==6)actual[0]->failPacket=2;
   if(fault==7)actual[0]->failPacket=3;
  }
@@ -161,6 +177,11 @@ struct GraphArithmeticRoot:GraphRootMachine {
  }
  void VerifyActual() {
   assert(!pending && !unknown && finishedProducers==88 && compactWrites==2);
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+  for(unsigned i=0;i<5120;i++)assert(gddr[i]==stagedInput[i]);
+  const unsigned receipt[]={0x32494651,20480,2,2,fixture.manifest[13],fixture.manifest[40],fixture.manifest[41]};
+  for(unsigned i=0;i<7;i++)assert(memory.at(TT_Q38_FFN_GRAPH_STATS+(57+i)*4)==receipt[i]);
+#endif
   for(unsigned role=0;role<3;role++){
    assert(assembled[role]==expected[role].size());unsigned offset=role==0?30848:role==1?100480:274880;
    for(unsigned row=0;row<expected[role].size();row++)assert(gddr.at(offset/4+row)==expected[role][row] && isfinite(Float(expected[role][row])) && Float(expected[role][row])>0);
@@ -176,7 +197,14 @@ struct GraphArithmeticRoot:GraphRootMachine {
   assert(PioneerQ38FfnGraphManifest(d.data(),fixture.source.data()));
   // A second independently staged TEST input/token/layer,not a CPU FFN
   // result or native initial-producer receipt. Every private peer persists.
-  for(unsigned i=0;i<5120;i++)gddr[i]=Bits(.5f+float((i*31+17)%127)/512);
+  for(unsigned i=0;i<5120;i++) {
+   uint32_t value=Bits(.5f+float((i*31+17)%127)/512);
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+   stagedInput[i]=memory[0x80000+i*4]=value;gddr[i]=0x7fc00001;
+#else
+   gddr[i]=value;
+#endif
+  }
   for(unsigned role=0;role<3;role++){assembled[role]=0;std::fill(expected[role].begin(),expected[role].end(),0x7fc00000);}
   finishedMatrices=finishedProducers=compactWrites=0;RelaunchRoot();
  }
@@ -191,11 +219,22 @@ int main(int argc,char** argv) {
  unsigned bank=unsigned(strtoul(argv[4],nullptr,10)),types=unsigned(strtoul(argv[5],nullptr,10)),reverse=unsigned(strtoul(argv[6],nullptr,10));
  unsigned fault=argc==8?unsigned(strtoul(argv[7],nullptr,10)):0;
  assert(bank<7 && types<8 && reverse<2 && fault<=7);bool wide=!strcmp(argv[3],"all119");
- printf("START ACTUAL complete7stage FFN root+ALL119 retained peers workforce%s bank%u types%u reverse%u;SYNTHETIC_NONZERO_WEIGHTS/NO_NATIVE_SPEED_CLAIM\n",argv[3],bank,types,reverse);
+ printf("START ACTUAL complete%ustage FFN root+ALL119 retained peers workforce%s bank%u types%u reverse%u;SYNTHETIC_NONZERO_WEIGHTS/NO_NATIVE_SPEED_CLAIM\n",
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+  8U,
+#else
+  7U,
+#endif
+  argv[3],bank,types,reverse);
  GraphArithmeticRoot root(argv[1],argv[2],wide,bank,reverse!=0,types,fault);
  if(fault){assert(!root.RunGraph() && root.unknown && !root.finishedMatrices);
   if(fault<=3)assert(root.observedPacket && root.packets==root.observedPacket);
-  else{assert(root.actual[0]->pc==TT_Q38_PEER_FAULT_PARK);root.actual[0]->Inert();}
+  else{
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+   if(fault==5)assert(!root.finishedProducers && !root.stages[4]);
+   else
+#endif
+   {assert(root.actual[0]->pc==TT_Q38_PEER_FAULT_PARK);root.actual[0]->Inert();}}
   if(fault==6)for(unsigned i=0;i<128;i++)assert(!root.gddr.at(20480/4+i));
   if(fault==7){for(unsigned i=0;i<128;i++)assert(root.gddr.at(20480/4+i)==root.actual[0]->native[i]);
    for(unsigned i=0;i<16;i++)assert(!root.gddr.at(295360/4+i));}
@@ -206,5 +245,8 @@ int main(int argc,char** argv) {
  uint64_t steps=0,math=0;unsigned minStack=root.minStack;
  for(const auto& p:root.actual){steps+=p->steps;math+=p->arithmetic;minStack=std::min(minStack,p->minStack);}
  root.StageStop();assert(root.RunGraph());for(const auto& p:root.actual)assert(p->pc==TT_Q38_PEER_STOP && p->prepared==p->verified);
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+ puts("PASS ACTUAL QFG2 TWO initial5120F32 copy/readback producers from owned L1 into POISONED GDDR;changed token/layer/inputs,real peer arithmetic consumes produced bytes;STOP does not produce input;SIMULATED_ENDPOINTS_NOT_NATIVE_AUTHORITY_OR_SPEED");
+#endif
  printf("PASS OFFLINE ACTUAL ROOT+ALL119 retained peers TWOchangedInputTokenLayerFFNs 5120->17408->5120/79872nonzero matrix rows/176actual producers/ALL119STOP;EXACT_FP32+INDEPENDENT_FP64+NATIVE_BYTE_OBSERVERS/noCPUproducts_in_program/noPeerReset/rootVM%u peerVM%llu TensixInstructions%llu maxStack%u;NO_REAL_MODEL_NATIVE_OWNER_OR_SPEED_QUALIFICATION\n",root.steps,(unsigned long long)steps,(unsigned long long)math,0x70000-minStack);
 }

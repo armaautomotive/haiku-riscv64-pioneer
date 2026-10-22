@@ -8,7 +8,15 @@
 // initialization/fields/tags/copies here do not prove an input producer ran.
 // Work ONLY. These buffers overlap the OLD CHECKED peer-proof array;the
 // coordinator may NEVER execute that checked/clear path or use its owner.
-enum {TT_Q38_FFN_GRAPH_MARKER=0x31474651,TT_Q38_FFN_GRAPH_FAULT=0x46474651,
+#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+#if PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1
+#error Exact separate input-producing FFN image role required
+#endif
+enum {TT_Q38_FFN_GRAPH_MARKER=0x32474651,TT_Q38_FFN_GRAPH_VERSION=2};
+#else
+enum {TT_Q38_FFN_GRAPH_MARKER=0x31474651,TT_Q38_FFN_GRAPH_VERSION=1};
+#endif
+enum {TT_Q38_FFN_GRAPH_FAULT=0x46474651,
  TT_Q38_FFN_GRAPH_MANIFEST=0x75800,TT_Q38_FFN_GRAPH_SHADOW=0x78e00,
  TT_Q38_FFN_GRAPH_WORDS=3456,TT_Q38_FFN_GRAPH_ROLE_WORDS=1088,
  TT_Q38_FFN_GRAPH_COUNTERS=0x7c400,TT_Q38_FFN_GRAPH_SEQUENCE=0x7d300,
@@ -25,7 +33,7 @@ static_assert(TT_Q38_FFN_GRAPH_SEQUENCE+119*4<=TT_Q38_FFN_GRAPH_STATS,"private e
 static_assert(TT_Q38_FFN_GRAPH_PHASES+7*32<=0x7d800,"never overlap original peer sources");
 static inline bool PioneerQ38FfnGraphFrame(const uint32_t* d)
 {
- if(!d || d[0]!=TT_Q38_FFN_GRAPH_MARKER || d[1]!=1 || d[2]!=67108864 || d[3]>=7
+ if(!d || d[0]!=TT_Q38_FFN_GRAPH_MARKER || d[1]!=TT_Q38_FFN_GRAPH_VERSION || d[2]!=67108864 || d[3]>=7
   || (d[4]&4095) || d[4]<0x04000000 || d[4]>0xc0000000 || (d[5]!=1 && d[5]!=2)
   || d[6]>(d[5]==1?0x7ffffff8U:0x7ffffffdU) || d[7]!=3 || d[8]!=PioneerQ38SpanRoute(d[3]) || d[9]!=129
   || d[10]!=TT_Q38_FFN_GRAPH_MANIFEST+256 || d[11]!=TT_Q38_FFN_GRAPH_ROLE_WORDS*4

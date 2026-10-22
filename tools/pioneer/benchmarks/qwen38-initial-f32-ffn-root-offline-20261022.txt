@@ -1,0 +1,122 @@
+Initial5120F32 device producer integrated into complete FFN root.
+October22 2026. OFFLINE actual instructions/simulated endpoints ONLY.
+NOT native source/context/input/lifetime authority or model-speed evidence.
+
+NEW separately selected PIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1 creates QFG2,
+marker32474651/version2,NOT the frozen QFG1 ABI. Its first stage copies
+20480B from the future native owner's EXACT exclusively staged root L1
+80000..85000 into the SAME FFN GDDR workspace BEFORE any peer computation.
+Two bounded writes16384+4096 and two exact readbacks use disjoint88000..
+8c000 scratch. Complete finite precheck precedes FIRST input write;every
+readback word is bit-compared and rechecked finite. Exact root source,
+complete immutable manifest shadow,command echoes,all wrapped MASTER
+counter deltas/accepted-alias parity and idle queues remain mandatory.
+UNKNOWN parks inert:NOT a STOP/hold/reset/retry/restore or owner-release.
+
+Only after BOTH writes/readbacks actually complete,stats57..63 publish
+[32494651,20480,2,2,endPhase,tokenLo,tokenHi]. This is OBSERVED DATA,not a
+self-authenticating producer grant. The future real native caller STILL
+must prove/retain the exact staged source,canonical learned/mutable pages,
+same model/session/driver epochs,code/ALLparticipants/host/maps/clock and
+physical root/peer terminals. A frame flag,zero-filled page,digest or this
+receipt alone cannot supply those missing proofs. No native selector,
+root input mapping or full execution factory is added in this checkpoint.
+
+After initial copy,the original seven complete FFN stages remain on-card:
+20input quantizers/gather/gate/up/68SiLU+quantizers/gather/down. Root and
+ALL119 persistent peers retain sequences across calls. QFP2 producer,
+gather and matrix interfaces remain EXACT version1 via explicit internal
+conversion;only the outer complete-FFN root is QFG2/version2/eight stages.
+STOP skips input copy and clears its receipt. No CPU learned product,
+intermediate host return or upload-program swapping appears in this image.
+The supplied initial L1 source is a host-staged transition design,NOT an
+assertion that the entire decoder already runs on the card.
+
+READ-ONLY SDK builds,ALL4 sections repeat byte-identically:
+ /private/tmp/pioneer-q38-input-root-final.3Kxkgcmm/image
+ /private/tmp/pioneer-q38-input-root-repeat.HpIIVv1H/image
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text6884B a363fb40ba949badda8ba8c863385484bee9cd7c52e1cf0a7ef587b029abcba9
+ prefix6172B 255ff2bb850e0e30a4a0e08dd501a245eb0d021d70302e58c0b5ae014dde8740
+ graph17688B a0b2fdf23c3e5eead311e79a80989ea113dbe9fcad7c0033a281381d23bdd998
+Existing40KiB root-prefix/8KiB device stack limits unchanged. Linker still
+refuses writable globals/GOT/overlapping sections. InputPacket96B,
+InitialInput16B,block_main160B compiler frames;actual root VM max5832B.
+The intermediate imageDFXoTfEY predates the final re-finite check;NOT final.
+No new sections were frozen into the old native catalog.
+
+Preservation controls:
+ Rebuilt OLD QFG1 at /private/tmp/pioneer-q38-input-control.2uxKmaSZ/image;
+ ALL4 sections byte-identical to pinned alias-root.wvpntb69/image.
+ Full native tag33 driver rebuilt at
+ /private/tmp/pioneer-q38-input-native-control.uXUp1nXR/driver:
+ b35c00fdbdd03f4870b419a1ed4548c12d164671a2209cbd228a4d873dd414ff EXACT,
+ guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229,
+ default43-control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ unchanged. NOT uploaded. Existing frozen QFG1 generator refuses QFG2
+ before ANY patch output. Production/native/legacy builders refuse the
+ new role BEFORE SDK/output;no tag33/Work broadening or silent fallback.
+
+Completed ASan/UBSan tests,ALL CLI0:
+ -Actual QFG2 root instructions/synthetic peers14positive/35faults,
+  ALL7banks/high-edge/reversed rows/119peers. Destination GDDR initially
+  POISONED,not prepopulated. Full20480B source copy/readback exact;receipt
+  only after completion,STOP never copies. First/middle/short-tail NaN/Inf,
+  ALL4 pending/drop packets,both readback corruptions,source/manifest/late
+  input mutations,old ABI refuse before ANY peer computation. Before-input
+  accepted-counter alias faults at0/wrap/near-wrap cause ZERO later MMIO
+  reads/command writes/packets after the first invalid alias observation.
+  /private/tmp/pioneer-q38-input-root-tests-20261022-a.log
+  SHAba19cdecc574f5a7a2c7816ab453b90246c5bf89320437db1e9d5e5bf2b2d82c
+ -ALL7 existing actual-peer faults against QFG2:proof/source/counter,
+  pending input read,nonfinite initial source,missing native/scales writes.
+  All root/worker parks,no following packet/matrix/STOP/reset/retry.
+  Fault5 now fails in the real ROOT finite scan BEFORE any worker starts,
+  not a synthesized peer failure. Endpoints remain simulated.
+  /private/tmp/pioneer-q38-input-root-actual-faults-20261022-a.log
+  SHA60b29d999cf2aa7e2aafc74483a309014955e2c74a4c4f113e97dc9904e42190
+ -Old QFG1 root regression28positive/98faults,max5832B passes unchanged.
+  /private/tmp/pioneer-q38-input-root-old-regression-20261022-a.log
+  SHAf508a8db8f319c76caa91806eab983facbbe855dd6ef6e1faf3340364e563230
+ -58 mixed/malformed/legacy/native/production role refusals BEFORE SDK/
+  output;positive valid-role missing-SDK control proves harness ordering.
+  Old frozen QFG1 catalog refuses these new bytes before ANY patch output.
+  /private/tmp/pioneer-q38-input-root-gates-20261022-a.log
+  SHAe45d748368b488af0b35b4bf54b93f7c1dd6ba79b94767d6976496c7bdf455c4
+
+Actual root+ALL119 actual worker arithmetic replay COMPLETED,CLI0:
+ TWO changed input/token/layer FFNs,79872nonzero matrix rows,176actual
+ input/SiLU producers,ALL119 STOP. EACH initial5120F32 payload was copied
+ from root L1 into initially POISONED GDDR and bit-verified independently
+ of the actual peer arithmetic that consumed it. Exact FP32+independent
+ FP64+native-byte observers pass;no CPU product exists in the program.
+ High-capacity edge,bank1,reversed rows,mixed gate/downQ6 and upQ4.
+ rootVM202605677,peerVM2198994302,TensixInstructions6963200,maxStack5832B.
+ These are INSTRUCTION-MODEL counts,NOT native cycles/time/tokens/sec.
+ /private/tmp/pioneer-q38-input-root-actual-20261022-a.log
+ SHA4e84eff7cf728624431ef98e488c31465172455aeee97f56c9176adaad7ffbc7
+ Replay executable/evidence:
+ /private/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/
+ pioneer-q38-ffn-graph-cooperative.JvtDjORM
+ Its START line retains an old cosmetic7stage label;the compiled QFG2
+ flag/marker/version and TWO actual initial-copy/receipt checks are the
+ authoritative evidence. Source now correctly prints8stage. Short fault5
+ rerun compiled/tested that final label with unchanged functional logic:
+ /private/tmp/pioneer-q38-input-root-final-label-check-20261022-a.log CLI0
+ SHAb31790da5e6b9ccf1e437eeb18c084fa37f5bccecff97fd3541cd73101ada4a9
+ An ADDITIONAL allQ4/bank0/natural-row arithmetic replay is running;
+ that supplemental result is NOT claimed in this completed mixed-type proof.
+
+Fresh CPU-only native metadata041/tag12/gen34/idle/cold0/owner0/open1/guard1,
+installed SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+ALL native parents absent. NO uploads/GPU jobs/reloads/reboot/Assistant/
+power/SD/boot/CPU/RAM/network/settings changes. Dirty llama.cpp/FlashNext
+untouched. Raw-Dst cache22 HARD BLOCKED. Last whole27B0.207893161tok/s
+unchanged;20tok/s UNMET. Goal ACTIVE.
+
+NEXT:REAL retained native model/source/joint context and exact staged L1
+input ownership,full-root code/current-terminal/clock/ALLhost lifetimes.
+QFG2 has NOT run natively and has NO frozen/native selector yet. Qualify
+that real lifetime before full model integration and native measurement.
+Never replace QFG1 under its old tag/catalog or mistake this synthetic
+weight instruction test for actual authenticated model quality/inference.

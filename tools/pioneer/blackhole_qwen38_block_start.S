@@ -16,7 +16,11 @@ block_done:
 	sw t1,0(t0)
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_FFN_GRAPH_ROOT
+.ifdef TT_Q38_FFN_GRAPH_INPUT_ROOT
+	li t1,0x32474651 /* QFG2:owned initial F32 producer,NOT QFG1 */
+.else
 	li t1,0x31474651 /* QFG1:NEW complete FFN root,not an old projection */
+.endif
 .else
 .ifdef TT_Q38_FFN_MATRIX_ROOT
 	li t1,0x314d4651 /* QFM1:NEW private resident FFN root ONLY */
