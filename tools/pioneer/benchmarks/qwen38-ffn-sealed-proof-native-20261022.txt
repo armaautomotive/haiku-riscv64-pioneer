@@ -1,0 +1,107 @@
+REAL P100A FFN optimization comparison,October22 2026.
+PASS:duplicate CPU work-manifest post-reads eliminated,prior GPU outputs
+unchanged,full known-clean lifetime. Measured FFN mean116900.5->97854us,
+16.2929% LOWER FFN LATENCY. NOT a whole-model/token-rate improvement.
+Whole27B last0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Source15e4db24484bc2f28f4d03a9617ea7ed846ee8f0 pushed and remote branch
+verified BEFORE hardware use. ALL local tests/builds terminal0:actual
+owner+ROOT+ALL119 TWO fullFFNs,initial readbacks retained/work0duplicate
+post-reads/STOP6912reads/exact outer restore,49faults/12refusals,492FIRST-
+fault host-receipt checks BOTH baseline and optimized,actual unchanged ROOT
+final seal1positive/8late-corruption faults,173new+149old37+158old36gates,
+actual client Abort/Finish prior-GPU oracle,108focused+7317BROAD updater.
+See companion offline evidence for simulated/native boundaries.
+Broad updater log SHA26a107707737643293e64b5ad242cfab31c9e1538f6aae7d98a5432cecf8a4ca.
+
+The ONLY work execution change is omission of6912duplicate CPU reads of
+the original+shadow manifest AFTER ROOT completion. Initial3456canonical
+manifest word writes+readbacks BEFORE launch remain;initial5120F32 input
+readback remains. SAME frozen QFG2/QFP2 device math/namespace9/public82000B
+request. Exclusive actual native owner/full frozen code pin/source epoch,
+ROOT's repeated full Sealed() comparisons through final receipt,physical
+marker/count/PC/idle/ALLtyped stats/counters/sequences/guards retained.
+STOP/CLOSE still reads ALL6912manifest words and independently proves
+ALL119 physical terminal states BEFORE FIRSThold. No CPU learned reference.
+No new NoC/DMA/device packet or reset/clock operation from this optimization.
+
+Fresh pinned SSH before staging:ALL compute parents absent,EXACT original
+041/tag12/gen42/idle/cold0/owner0/open1/guard1,64CPUs/fullRAM. Three unique
+targets absent/non-symlink,then ONLY those new artifacts staged/hash-verified
+at /boot/home/pioneer-p100a-hot-reload-20261019-a:
+ tenstorrent_pci_probe-ffn-sealed-proof-23e2e68a
+ 23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+ pioneer-q38-ffn-sealed-proof-991155b6
+ 991155b6fea5c617b8e546e16fc2ebd22cbe2ff98f6c3bdabdc227fc76807eff
+ pioneer-p100a-hot-swap-afd52aad.sh
+ afd52aad3fc5128a1e70ab671e3cd7f3b25e49e66e44443f3da8184da2a3a7a2
+Fresh no-parent/idle/hash proof then guarded apply14987 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-sealed-proof-apply-20261022-a.log
+ SHAa0b0a6092ce82c8c817b705e8337f5c4b5cf979227eb517393ca700d9033c75c
+ exact original041/gen42->23e/tag38/gen43,HOT_RELOAD_VERIFIED.
+Fresh exact23e/tag38/gen43/idle/no-parent/64CPUs/fullRAM BEFORE test.
+
+SINGLE --sealed-layer0 native95483 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-sealed-proof-native-layer0-20261022-a.log
+ SHAd46dbd2df5594c77e00277ccf2ccb3da30a1202ba7ae65c870d20813d009858b
+ SAME open-file18,973,870,528B public GGUF full SHA BEFORE accelerator Open,
+ actual layer0 gate/up/down36720pages/150405120B upload/span END,actual
+ canonical joint owner+zero,CODE installed/restored867448words,ONE119peer
+ boot lifetime,TWO full FFNs/intermediates ON CARD,final5120F32 each.
+ No SCP/second native job/reload/other device query while parent alive,
+ INCLUDING CPU full-file SHA. Passive serial boundary66712173;no tty reopen.
+
+Actual final fingerprints f0e218bf/bb087a1f EXACTLY match prior real tag36
+AND tag37 outputs for SAME public source/fixed inputs. Prior-GPU regression
+oracle passed BEFORE END;NO numeric mismatch/uncertainty/retry/fallback.
+Not CPU-reference equivalence or generation-quality proof. Physical full
+graph CLOSE/exact restore then explicit BANK_END clean1. Clock800->1350
+->800/restored1/uncertain0 independently reported by passive serial.
+
+Measured CPU-monotonic MICROSECONDS:
+                            tag37 pass0 pass1    tag38 pass0 pass1
+ Run+CopyOutput wall             117022 116779          98017 97691
+ phase sum                      117022 116777          98015 97690
+ preflight                         989    978            982   975
+ input guard                       326    327            328   326
+ input stage                     16187  16177          16225 16227
+ manifest stage+ROOT ARM          11898  11754          11945 11788
+ ROOT poll                       51369  51299          51406 51254
+ ROOT proof                      20363  20366           1175  1172
+ ROOT hold                         991    989           1006  1005
+ output copy                     14899  14887          14948 14943
+ host polls                        290    290            289   288
+ actual ROOT NoC reads            21839  21838          21837 21837
+ actual ROOT NoC writes            1339   1339           1339  1339
+ All profiles valid1. New phase gaps2/1us,old gaps0/2us. ROOT poll INCLUDES
+ host guard/MMIO/observation latency,NOT isolated device arithmetic time.
+ Dynamic polling changes the observed NoC read count slightly;no device
+ code changed. No new timer card reads or device counters were introduced.
+
+Mean ROOT proof20364.5->1173.5us,94.2375% lower;mean FFN116900.5->97854us,
+19046.5us saved,16.2929% lower latency. Other phases essentially unchanged.
+This demonstrates the predicted host-readback bottleneck removal,NOT a
+GPU-math speedup. Do NOT convert FFNs/sec into model tokens/sec,extrapolate
+20tok/s,or claim Assistant now uses this isolated1..2FFN qualifier.
+
+Fresh after native terminal:ALL parents absent,23e/tag38/gen43 idle/cold0/
+owner0/open1/guard1,64CPUs/max137034936320B. ONLY THEN guarded original
+restore38939 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-sealed-proof-restore-20261022-a.log
+ SHA879db07efcae9a733004d3af0154d5630aa58a4cd65211608f94d9f618ff07ee
+Fresh audit EXACT original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag2026102100010012/generation44/quiesced0/cold0/active_owner0/open_count1/
+guard1,ALL compute parents absent,64CPUs/max137034936320B. ALL jobs terminal.
+No reboot,power,SD,Assistant,boot,CPU,RAM,network/settings changes. Dirty
+llama.cpp/unrelated work UNTOUCHED. Known-success restoration,NOT rollback
+after UNKNOWN. Failed raw-unpack tag22 remains HARD BLOCKED.
+
+NEXT actual model integration,NOT repeating completed priming/STOP-only
+qualifications. New family owns all120code roles;remaining attention/GDN
+projections cannot use old matrix ioctls on that same context. Add source-
+authorized generic projections in this SAME persistent family/full resident
+decoder;do NOT reinstall/rebootstrap119per GGML node. All-card norms,
+residual,GDN,attention,KV,embedding,sampling still owed. Remaining input/
+manifest/output host boundaries also remain measured costs,while ROOTpoll
+51.3ms must NOT be called pure arithmetic. Keep validation separate and
+measure actual whole-model generation before Assistant promotion. Goal ACTIVE.

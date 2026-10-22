@@ -1,5 +1,27 @@
 # Native build status
 
+Latest NATIVE checkpoint October22 2026:tag38 measured optimization PASS.
+Source15e4db2448 pushed/remote verified before hardware;ALL local tests
+terminal including TWO fullFFNs/STOP/outer restore and7317broad updater.
+Exact23e/991155/afd52 artifacts staged remoteSHA verified,guarded apply
+14987 CLI0->gen43. SINGLE native95483 CLI0:full SAME-file19GB SHA,actual
+layer0 THREE weights,ONE119boot/code lifetime,TWO complete on-card FFNs,
+priorGPU fingerprints f0e218bf/bb087a1f EXACT,physical graph CLOSE/restore/
+clean END1. Wall98017/97691us vs prior117022/116779:mean16.2929% LOWER
+FFN LATENCY,NOT whole-model/token-rate speedup. ROOT proof20363/20366->
+1175/1172us,94.24% reduction by omitting6912duplicate CPU work-manifest
+post-reads ONLY. Initial input+canonical manifest readbacks/ROOT final
+Sealed/source/physical/counters/STOP6912reads retained. Device images/math
+unchanged;ROOTpoll51.3ms includes host guards,NOT pure arithmetic. ZERO CPU
+learned references;GPU regression oracle,not CPU equivalence. Clock800->
+1350->800/restored1/uncertain0. Fresh no-parent/idle then guarded original
+restore38939 CLI0;fresh exact041/tag12/gen44/idle/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. ALL jobs terminal;no reboot/power/SD/Assistant/
+boot/network changes. NEXT same-family projections/full real model decoder
+integration,not more init/STOP-only repetition. Whole27B.207893161tok/s
+unchanged;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-ffn-sealed-proof-native-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:measured tag38 sealed-proof
 optimization implemented. SAME frozen QFG2/QFP2 arithmetic/namespace9/
 82000B request. Skip ONLY6912duplicate CPU work-manifest post-reads;initial
