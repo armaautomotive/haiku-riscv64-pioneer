@@ -1,5 +1,26 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:persistent full QFG2 FFN owner
+and isolated actual native tag36/namespace9 adapter implemented. TWO full
+FFNs pass with ACTUAL frozen ROOT+ALL119 RV32/FPU/Tensix machines,changed
+input/layer/token,one code install/119boots,intermediates stay on card,
+STOP+ALL terminals BEFORE FIRSThold,exact code and ALL120 outer snapshot
+restoration. New actual native callback/retention/END extraction passes45
+metadata refusals/zero IO and real unused119boot/ROOT STOP lifetime. Source
+session2positive/21receipt faults/23refusals;policy29pre-arithmetic+20STOP
+proof faults/11refusals;158namespace/role gates;old model/root regressions
+PASS. Endpoints/learned data/native context are simulated,NOT native model
+or speed evidence. Driver453ebdf1/client35add96a build TWICE EXACT;old35,
+old34,old clients,guard/default43control BYTE-IDENTICAL. Native new control
+frame544B. Guarded updater focused104 and BROAD6837cases PASS CLI0;
+ALL local tests/builds terminal,including final retained-zero fixtures.
+Native candidate NOT installed or run. Original041/tag12/gen38 verified
+idle/cold0/owner0/open1/guard1;64CPUs/full RAM and responsive desktop.
+No Assistant/reboot/power/SD/boot/network changes. NEXT actual native full
+FFN qualifier,then real GGML fusion/all-card decoder. Whole27B.207893161
+tok/s unchanged;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-ffn-persistent-graph-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:REAL native FFN model
 binding+74page workspace zero-CLOSE bridge implemented. Isolated tag35/
 namespace8;SAME actual retained cookie/global call lock/thread seal/clock/

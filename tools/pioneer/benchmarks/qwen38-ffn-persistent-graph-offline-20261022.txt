@@ -1,0 +1,128 @@
+Persistent full FFN owner + isolated native adapter,October22 2026.
+OFFLINE arithmetic/lifetime PASS. Native tag36 candidate BUILT,NOT RUN.
+NOT Assistant integration,whole-model inference or a measured speedup.
+Last actual whole27B0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+PioneerQ38FfnPersistentGraphOwner owns ONE867448word code installation and
+ONE119-peer boot across repeated complete QFG2 FFNs. Same real canonical
+plan/initialized bitmap/joint mutable-bank owner/zero-CLOSE publication,
+private exclusive typed FFN graph claim,heap-only snapshots and state.
+Initial5120F32 vector is staged once per FFN. Actual ROOT/119 peer code
+performs input quantization,gather,gate/up,SiLU+multiply,down quantization,
+down projection. Intermediate DATA remains on card. Only logical final
+5120F32 output crosses the host boundary. NO CPU learned-product reference.
+ROOT is held between FFNs,not all119 peers. Code/frames/meta/stack and
+original command words restore only at explicit graph CLOSE. ALL119
+independent physical STOP terminals precede the FIRST participant hold.
+Counters NEVER restored. Every rejected scope/map/source/reset/PCI/proof
+retains graph/cohort/banks/host/clock ownership;NO later card IO or retry.
+
+Full ASan/UBSan test10931 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-persistent-graph-20261022-i.log
+ SHAc44b9aa16d1641aad6362f5742c0c0bcfa19128c197e2073dd2faaa30915e5ce
+ ACTUAL installed frozen QFG2 ROOT + ALL119 QFP2 RV32/FPU/Tensix machines,
+ actual complete new owner,actual zero controller/instructions/publication,
+ two full FFNs with changed input/layer/token,176 producers/79872 matrix
+ rows. Physical MASTER counters/root manifest+shadow+receipt/119 peer
+ sequences and commands checked;independent semantic-row output observer.
+ First R119824/W1339,flits125538/4065;second R119776/W1339,125490/4065.
+ Same119 peers booted only ONCE;ROOT starts3 including final STOP.
+ Exact867448word restore,then actual original parent CLOSE + root resident
+ END restore ALL120 outer snapshots. SYNTHETIC learned bytes/endpoints;
+ this is NOT real model provenance,native factory/MMIO or timing evidence.
+ Earlier h/63086 also TERMINAL0,two fullFFNs+exact inner restore;its test
+ predated final outer-END and CPU-only native-owner-query assertions.
+ Fixtures subsequently retain the real zero lease for native-scope tests;
+ this does not change production arithmetic/controller logic.
+
+Bugs found with real instruction machines and FIXED before native use:
+ - Initial gather scale20+68 plus operand1+3 packets is92,not176 packets.
+   Source-derived full-FFN fixed ROOT read overhead17209/flit delta5714;
+   physical independent counters and exact writes1339/flits4065 agree.
+ - ROOT L180000 final vector is packed WORKER order,not semantic row order.
+   CopyOutput scatters ONLY by the same authorized down-role manifest,
+   then atomically publishes final F32 after finite and safety checks.
+
+Policy tests:29 pre-arithmetic +20 ACTUAL ROOT-STOP proof corruptions,
+11 inert refusals,including final fixture rerun98206 TERMINAL CLI0.
+ Log /private/tmp/pioneer-q38-ffn-persistent-graph-faults-20261022-c.log
+ SHAe95d89326ec6693d634b9c552bd081d9d19d54d7f544a1a49d0f692c71be313f.
+Unknown proof stops BEFORE FIRST hold/restore and
+does ZERO later IO/STOP/reset/retry;caller output unchanged. Unused READY
+session real119 boot/ROOT STOP/outer END also passes. These tests do NOT
+simulate post-arithmetic numeric corruption as native evidence.
+
+Actual native callback/retention/END sections extracted from driver:
+ /private/tmp/pioneer-q38-ffn-graph-native-scope-20261022-a.log
+ SHAcf0e161d7317693f83c9d27f4b59515c945777cab86e84bca6774c8e7b05b344
+ 45 metadata/pointer/real-call-seal/clock/ALL-host/old-writer refusals,
+ ZERO IO. Same private owner+actual zero publication+119 boot/ROOT STOP/
+ outer restoration. Unclosed END or lost call seal retains ALL immediately.
+ Native context/cookie/clock/mappings remain simulated;actual full native
+ factory positive path and real model outputs remain NOT yet qualified.
+
+Actual source-bound client session:2 positives/21 lost-or-invalid native
+or source receipts/23 pre-launch refusals. Same source/epoch/FD and actual
+initialization session/generation required;first uncertainty CLOSE ONLY,
+NO END/retry/legacy Multiply fallback. Receipts simulated,not arithmetic.
+ Log /private/tmp/pioneer-q38-ffn-graph-session-20261022-a.log
+ SHA26e9a47066ea682eb27baedbda67a76c11be6bd1f22243c9d0d2fe69b87581b4.
+158 exact-role/before-SDK/old-role/Assistant refusals and actual namespace9
+header checks PASS. Old model3positive/59inert/11retentions,source session
+3positive/21faults,namespace8 gates88,old ROOT native hook41 cases PASS.
+
+Tag36/namespace9 ACTUAL driver integration is implemented and linked:
+ - Same retained real cookie/global lock/thread seal/native initialized
+   bitmap/canonical plan+joint graph,closed source span/zero and normal
+   clock/ALL hosts+maps;old individually-owned GDN pointers remain NULL.
+ - CPU-only MatchesNativeOwner compares the SAME code/proof/owner and
+   every120 participant's actual evolving running/store state. NEVER fake
+   the old dispatch booted flag to excuse new live peers. Only the exact
+   controlled native graph scope can exempt the old running-peer refusal.
+ - Native prepare holds/snapshots ALL120 without legacy bootstrap,then
+   publishes both private code/graph heaps BEFORE any mapping/install.
+ - Isolated62b0/62b1 supports one logical call with1..2 full FFNs,then
+   explicit graph CLOSE before BANK_END. Public DATA has finite F32 only,
+   no code,addresses,geometry,nonce,source or ownership claims. All request
+   and output buffers are HEAP ONLY. Reply loss retains ALL in memory.
+ - Native source client --graph-layer0 requires full real SAME-open-file
+   SHA before any accelerator Open,real layer0 weights/source epoch/span
+   END/workspace zero-CLOSE,then TWO full FFNs. Reports per-FFN usec and
+   final-vector fingerprint,NOT token/sec or CPU-reference correctness.
+ - This API is a qualification bridge,NOT yet a production GGML fused path
+   or persistent across multiple ioctls. Attention/GDN/KV/norm/residual/
+   embedding/sampling and whole-decoder on-card integration remain owed.
+
+Native36 driver builds b+c EXACT:
+ 453ebdf12fa13bd39d31c3ec9f01c17e7048946e5cd575f663055b6e49c8f1e1
+Client36 builds b+c EXACT:
+ 35add96a69fbb7b5c0f49e0895743406197f424d21cf979565bb10f15373b7e6
+Buildroot /private/tmp/pioneer-q38-native-graph-build.3JpkKeLf
+Full native new control frame544B,new owner functions<=336B;isolated
+object-only full-owner compile<=880B. Existing ProbeControl3136B unchanged.
+Old35 driver5361c335/old34aa6730ef/old35clientf4fc646d/prime1ec347b5
+rebuild BYTE-IDENTICAL;guardd1ce2aa4/default43control2df0e0f8 unchanged.
+SDK read-only;dirty llama.cpp and unrelated FlashNext work UNTOUCHED.
+
+Guarded updater pins ONLY original041/tag12<->453e/tag36,not a force or
+automatic rollback. Focused104 filesystem/handshake/hash/symlink/parent/
+failure cases PASS CLI0. BROAD6837cases also PASS,76130 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-graph-updater-all-20261022-a.log.
+Final unused-session parent29756/e log also PASS,with
+final retained-zero fixture;ALL local test/build handles now terminal.
+Original raw-Dst cache22 remains HARD BLOCKED. Native UNKNOWN rules:
+CLOSE ONLY,NO END/retry/reset/further card reads/hotswap/restore;retain ALL
+until explicit physical recovery. On known SUCCESS only,fresh idle/parent
+absence/metadata/hash checks precede explicit guarded original restoration.
+
+Fresh read-only SSH preflight:ALL compute parents absent,installed exact
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/generation38/quiesced0/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. User independently confirms responsive desktop.
+No native candidate uploaded/installed/run at this checkpoint. No reboot,
+power,SD,Assistant,boot,CPU,RAM,network or settings changes.
+
+NEXT:push this source checkpoint,then guarded actual native full-FFN
+qualification with genuine layer0,
+not repeating already completed zero-only or boot/STOP-only diagnostics.
+Only real inference benchmarks can establish progress toward20tok/s.

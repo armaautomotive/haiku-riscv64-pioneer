@@ -5,8 +5,13 @@
 // source+bank FD that uploaded the canonical weights. No caller address,
 // claimed digest,ready flag,input,code or launch capability is accepted.
 // This initializes the FFN workspace ONLY,not recurrent state/model compute.
+#if defined(PIONEER_Q38_FFN_NATIVE_GRAPH) || defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT)
+#define TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT (B_DEVICE_OP_CODES_END + 0x62b6)
+#define TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE (B_DEVICE_OP_CODES_END + 0x62b7)
+#else
 #define TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT (B_DEVICE_OP_CODES_END + 0x62a0)
 #define TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE (B_DEVICE_OP_CODES_END + 0x62a1)
+#endif
 struct tt_q38_ffn_model_support {
  uint32_t version,driver,model_namespace,layers,ffn_pages,requires_closed_span,model_inference,reserved;
 };

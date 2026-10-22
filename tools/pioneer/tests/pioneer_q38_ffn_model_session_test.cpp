@@ -26,6 +26,7 @@ struct ModelIO:FfnPrimeIO {
  }
 };
 using ModelSession=PioneerQ38CohortSession<ModelIO,FfnPrimeSource,ModelMode>;
+#ifndef PIONEER_Q38_FFN_MODEL_SESSION_FIXTURE_ONLY
 int main(){
  (void)&Check;(void)&CohortHostTestMain;Fixture fixture;unsigned positive=0,faults=0;
  for(unsigned layer:{0U,31U,63U}){
@@ -51,3 +52,4 @@ int main(){
  }
  printf("PASS source-bound FFN model session %u positive/%u faults:SAME source/epoch/FD,one span-END before native init,exact generation/zero-CLOSE receipt,source checked AFTER native call,first loss CLOSE ONLY/no retry/END/legacy fallback;SIMULATED_NATIVE_RECEIPTS_NOT_COMPUTE_OR_SPEED\n",positive,faults);
 }
+#endif

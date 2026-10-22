@@ -15,6 +15,12 @@
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnModelProtocol.h"
 #endif
+#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT
+#if PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT_CLIENT) || defined(PIONEER_Q38_FFN_NATIVE_GRAPH)
+#error Persistent FFN native client requires its separate exact source-bound namespace9 role
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphProtocol.h"
+#endif
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_ROOT_STATS_BENCH) || defined(PIONEER_Q38_BENCHMARK_HOST) || defined(PIONEER_Q38_FFN_REPEAT_BENCH)
 #error Model root profile is isolated fixed-public original-TC THREE32 Work ONLY
@@ -75,6 +81,10 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	bool ffnSelected=false;
 #ifdef PIONEER_Q38_FFN_MODEL_INIT_CLIENT
 	bool ffnModelInitialized=false,ffnModelAttempted=false;
+#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT
+	uint64_t ffnNativeSession=0;
+	bool ffnGraphAttempted=false;
+#endif
 #endif
 	bool FfnSourceCurrent() const {
 		return ffnSelected && source.Ready() && ffnEpoch==source.Model().Epoch()
@@ -199,11 +209,34 @@ public:
 			|| r.version!=1 || r.layer!=layer || r.reserved[0] || r.reserved[1] || r.state!=TT_RUNTIME_PASSED
 			|| r.pages!=74 || r.closed!=1 || r.initialization_published!=1 || r.recovery_required || r.reserved_reply
 			|| !r.session || !r.driver_generation || r.driver_generation!=mode.FfnModelGeneration()) return Stop();
+#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT
+		ffnNativeSession=r.session;
+#endif
 		ffnModelInitialized=true;return true;
 	}
 	bool FfnWorkspaceComplete(unsigned layer)const {
 		return ffnModelInitialized && FfnPrimeComplete(layer);
 	}
+#ifdef PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT
+	// ONE actual full-FFN qualification call,not old projection Multiply.
+	// Same authenticated live source/epoch/FD and native initialization ID.
+	// ZERO learned CPU reference work or fallback in this Work role.
+	bool RunFfnGraph(unsigned layer,tt_q38_ffn_graph_run& r) {
+		if (ffnGraphAttempted || !FfnWorkspaceComplete(layer) || !ffnNativeSession || r.layer!=layer
+			|| !PioneerQ38FfnGraphRequest(r)) return Stop();
+		ffnGraphAttempted=true;const unsigned count=r.runs;
+		if (!FfnSourceCurrent() || !io.Call(fd,TT_PCI_PROBE_Q38_FFN_GRAPH_RUN,&r,sizeof(r)) || !FfnSourceCurrent()
+			|| r.version!=1 || r.layer!=layer || r.runs!=count || r.reserved || r.reserved_reply
+			|| r.state!=TT_RUNTIME_PASSED || r.closed!=1 || r.recovery_required || r.session!=ffnNativeSession
+			|| r.driver_generation!=mode.FfnModelGeneration() || r.installed_words!=867448 || r.restored_words!=867448
+			|| r.peer_boots!=119 || r.root_starts!=count+1) return Stop();
+		for (unsigned pass=0;pass<2;pass++) {
+			if (pass<count?!r.elapsed_us[pass]:r.elapsed_us[pass]!=0) return Stop();
+			for (unsigned i=0;i<5120;i++) if (pass<count?(r.output[pass][i]&0x7f800000U)==0x7f800000U:r.output[pass][i]!=0) return Stop();
+		}
+		return true;
+	}
+#endif
 #endif
 #endif
 	bool Open() {

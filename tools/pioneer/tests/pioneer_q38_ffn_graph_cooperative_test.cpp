@@ -13,8 +13,8 @@ struct GraphArithmeticPeer:FfnInputPeer {
  std::vector<uint32_t>& fabric;
  unsigned prepared=0,verified=0,operation=0,role=0,matrixJobs=0,producerJobs=0;
  uint64_t arithmetic=0;
- GraphArithmeticPeer(const char* path,unsigned worker,std::vector<uint32_t>& data)
-  :FfnInputPeer(path,12,5120,1,worker),fabric(data) {assert(BootNew());}
+ GraphArithmeticPeer(const char* path,unsigned worker,std::vector<uint32_t>& data,bool boot=true)
+  :FfnInputPeer(path,12,5120,1,worker),fabric(data) {if(boot)assert(BootNew());}
  // Observe a ROOT-WRITTEN job. NEVER call Matrix/StageInput/StageActivation:
  // those unit-test helpers overwrite descriptors and could hide root bugs.
  void Prepare(const std::map<uint32_t,uint32_t>& rootMemory,unsigned currentRole,const FfnGraphFixture& fixture) {
@@ -214,6 +214,7 @@ struct GraphArithmeticRoot:GraphRootMachine {
   RelaunchRoot();
  }
 };
+#ifndef PIONEER_Q38_FFN_GRAPH_COOPERATIVE_FIXTURE_ONLY
 int main(int argc,char** argv) {
  assert((argc==7 || argc==8) && (!strcmp(argv[3],"all119") || !strcmp(argv[3],"narrow")));setvbuf(stdout,nullptr,_IOLBF,0);
  unsigned bank=unsigned(strtoul(argv[4],nullptr,10)),types=unsigned(strtoul(argv[5],nullptr,10)),reverse=unsigned(strtoul(argv[6],nullptr,10));
@@ -250,3 +251,4 @@ int main(int argc,char** argv) {
 #endif
  printf("PASS OFFLINE ACTUAL ROOT+ALL119 retained peers TWOchangedInputTokenLayerFFNs 5120->17408->5120/79872nonzero matrix rows/176actual producers/ALL119STOP;EXACT_FP32+INDEPENDENT_FP64+NATIVE_BYTE_OBSERVERS/noCPUproducts_in_program/noPeerReset/rootVM%u peerVM%llu TensixInstructions%llu maxStack%u;NO_REAL_MODEL_NATIVE_OWNER_OR_SPEED_QUALIFICATION\n",root.steps,(unsigned long long)steps,(unsigned long long)math,0x70000-minStack);
 }
+#endif

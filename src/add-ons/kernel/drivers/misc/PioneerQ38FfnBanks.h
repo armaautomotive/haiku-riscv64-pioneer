@@ -16,6 +16,7 @@ struct PioneerQ38FfnZeroLease;struct PioneerQ38FfnZeroResult;
 struct PioneerQ38DispatchLease;class PioneerQ38FfnMatrixLease;
 class PioneerQ38FfnBanks {
  friend class PioneerQ38GraphMutableBanks;
+ friend class PioneerQ38FfnPersistentGraphOwner;
  template<class IO> friend bool PioneerQ38FfnMatrixPrepare(IO&,const tt_dram_samples_result&,PioneerResidentBanks&,
   PioneerQ38FfnBanks&,PioneerQ38DispatchLease&,const PioneerQ38FfnIdentity&,PioneerQ38FfnMatrixLease&);
  template<class IO> friend bool PioneerQ38FfnMatrixClose(IO&,const tt_dram_samples_result&,PioneerResidentBanks&,
@@ -36,6 +37,9 @@ class PioneerQ38FfnBanks {
  PioneerQ38FfnIdentity identity={};
  const PioneerQ38FfnZeroLease* initializationLease=nullptr;
  const PioneerQ38FfnMatrixLease* matrixLease=nullptr;
+#ifdef PIONEER_Q38_FFN_PERSISTENT_GRAPH
+ const class PioneerQ38FfnPersistentGraphOwner* graphLease=nullptr;
+#endif
  uint32_t bank=0,offset=0;
  uint64_t initialized[2]={};
  bool unsafe=false,published=false;
@@ -44,7 +48,11 @@ class PioneerQ38FfnBanks {
  }
  bool Recorded(unsigned page) const {return (initialized[page/64]>>(page%64))&1;}
  bool ClaimMatrix(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnMatrixLease* lease) {
-  if(!lease || matrixLease || initializationLease || !published || !Matches(id))return false;
+  if(!lease || matrixLease || initializationLease || !published || !Matches(id)
+#ifdef PIONEER_Q38_FFN_PERSISTENT_GRAPH
+   || graphLease
+#endif
+   )return false;
   matrixLease=lease;return true;
  }
  bool CloseMatrix(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnMatrixLease* lease) {
@@ -52,13 +60,27 @@ class PioneerQ38FfnBanks {
   matrixLease=nullptr;return true; // ONLY after known-clean complete restoration
  }
  bool ClaimInitialization(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnZeroLease* lease) {
-  if(!lease || initializationLease || published || !Matches(id))return false;
+  if(!lease || initializationLease || published || !Matches(id)
+#ifdef PIONEER_Q38_FFN_PERSISTENT_GRAPH
+   || matrixLease || graphLease
+#endif
+   )return false;
   initializationLease=lease;return true;
  }
  bool CloseInitialization(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnZeroLease* lease) {
   if(!lease || initializationLease!=lease || !Matches(id))return false;
   initializationLease=nullptr;return true; // ONLY complete known-clean CLOSE
  }
+#ifdef PIONEER_Q38_FFN_PERSISTENT_GRAPH
+ bool ClaimGraph(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnPersistentGraphOwner* lease) {
+  if(!lease || initializationLease || matrixLease || graphLease || !published || !Matches(id))return false;
+  graphLease=lease;return true;
+ }
+ bool CloseGraph(const PioneerQ38FfnIdentity& id,const PioneerQ38FfnPersistentGraphOwner* lease) {
+  if(!lease || graphLease!=lease || !published || !Matches(id))return false;
+  graphLease=nullptr;return true; // ONLY after actual STOP/ALL holds/exact restoration
+ }
+#endif
  bool CommitInitialization(const PioneerQ38FfnIdentity& id,unsigned region,unsigned first,unsigned count) {
   PioneerQ38FfnExtent e;
   if(!FreshInitializationSpan(id,region,first,count,e))return false;
@@ -120,6 +142,9 @@ public:
  }
  bool InitializationPublished(const PioneerQ38FfnIdentity& id) const {return Matches(id) && published;}
  bool OwnsInitializationLease(const PioneerQ38FfnZeroLease* lease) const {return lease && initializationLease==lease;}
+#ifdef PIONEER_Q38_FFN_PERSISTENT_GRAPH
+ bool OwnsGraphLease(const PioneerQ38FfnPersistentGraphOwner* lease)const{return lease && graphLease==lease;}
+#endif
  bool OwnsMatrixLease(const PioneerQ38FfnMatrixLease* lease) const {return lease && matrixLease==lease;}
  void Fault(){unsafe=true;published=false;if(banks)banks->Quarantine();} // MEMORY ONLY,no release/reset/rebind
  bool Unsafe() const {return unsafe || (banks && banks->Quarantined());}

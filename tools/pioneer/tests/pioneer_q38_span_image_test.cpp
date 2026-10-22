@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL compiled instructions;host/wire memory ONLY is simulated.
+#ifndef PIONEER_Q38_SPAN_HAS_BLOCK_MACHINE
 #define PIONEER_Q38_BLOCK_MACHINE_ONLY
 #include "pioneer_qwen38_block_image_test.cpp"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanImage.h"
 #include <array>

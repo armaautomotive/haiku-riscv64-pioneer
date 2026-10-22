@@ -5,8 +5,11 @@ set -eu
 [ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
 role_flags=
 if [ "$#" = 3 ];then
- [ "$3" = --model-init ] || exit 2
- role_flags=-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1
+ case "$3" in
+  --model-init) role_flags=-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1;;
+  --native-graph) role_flags='-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1 -DPIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT=1';;
+  *) exit 2;;
+ esac
 fi
 # No inherited experiment can silently change this source/transport role.
 for key in $(env | sed -n 's/^\(PIONEER_[A-Z0-9_]*\)=.*/\1/p');do
