@@ -1,0 +1,136 @@
+Resident FFN initial-input quantizer +20/68 scale-gather checkpoint.
+October21 2026 Vancouver;test/evidence timestamps October22 UTC.
+OFFLINE ONLY. No native coordinator/driver/Assistant/full model or speedup.
+
+NEW QFP2 peer generation adds operation4:one256-lane FP32 initial input
+block in GDDR -> exact Q8_K quantizer/native sign-magnitude16 packing ->
+native operands/private64B scale line in the SAME GDDR workspace -> return
+to the SAME persistent loop. ALL20 workers cover5120 inputs. Matrix and
+activation operations remain available without resets or sequence loss.
+QFP2 marker explicitly rejects old QFP1/Q8P2 frames;no mixed generation.
+Nothing is registered with a native driver. Future full code pins/lifetime
+and a NEW coordinator are still required;old controller/cohort cannot launch
+this generation by changing one selector or reusing old reserved fields.
+
+Input job/descriptor QFI1 binds block0..19 to physical worker1..20,exact
+bank/workspace/route,ALL16 captured source words,private per-peer sequence,
+separate coordinator phase nonce,layer,64bit token and four owner epochs.
+Input offset=block*1024,native=20480+block*512,private scale line=
+295360+block*64. Existing fixed workspace layout/capacity is unchanged.
+One1024B read +512B native write +64B scale write;all exact command readbacks,
+idle queues,full immutable frame/source checks,and ALL8 wrapped counters
+remain mandatory. Counter deltas1/16/3/1/2/9/3/2 include both GDDR writes.
+Any uncertainty is terminal fault park,NO later MMIO/packet/retry/cleanup.
+
+Uses the unchanged pinned quantizer and native packer,not a new rounding
+approximation. Signed scale/first signed maximum/ties-even/native wire
+match independent observers. Signed-zero blocks produce canonical scale0
+and encoded0x4000 operands,NOT raw zero pages. Subnormal/nonfinite input and
+native scale-domain violations refuse BEFORE any native output publication
+or GDDR write. No fallback. Both native scale endpoints2^-32 and2^16,
+with both signs,were executed exactly. Initialized zero-page seals are
+NEVER a completed input producer or permission to run a learned matrix.
+
+NEW QFS2 standalone ROOT0 gather supports EXACTLY20 initial producers or68
+activation producers. These are distinct from the old QFS1 ABI. ALL fresh
+private scale tags must pass BEFORE the FIRST native operand read or compact
+scale GDDR write. Initial mode fetches10240B native input into L1a0000 and
+writes128B compact scales incl12 zero padding words to offset30720;down mode
+fetches34816B and writes320B scales incl12 zero words to offset274560.
+Root native/scales also remain in existing posta0000/ab000 matrix windows.
+Initial gather21reads/180read flits/1write/2write flits;down gather71/612/1/5.
+ALL8 wrapped counters,command/frame/source/idle proofs are retained per
+packet. UNKNOWN parks inert. Freshness DATA is NOT hardware producer proof.
+Caller must independently validate its producer OR gather frame;the root's
+physical-source fields are not the identity of the producing worker.
+
+Native integration contracts remain UNIMPLEMENTED. An actual coordinator
+must prove every participating producer finished at the correct physical
+WAIT/PC/source/reset/counter/code state for the SAME retained private model/
+workspace/cookie/global context,with all writer exclusions and original
+host/DMA/clock/cold owners retained. It must reserve STOP sequence headroom.
+These descriptors/tags/proof DATA/initialization bitmaps provide NONE of that
+authority. Existing matrix controller is for OLD qualified peers ONLY.
+
+ACTUAL RV32/FPU/Tensix execution;NoC/GDDR endpoints SIMULATED,ASan/UBSan,
+ALL CLI0,synthetic data/weights (NOT real27B model values):
+ Input288positive/160faults:
+  -ALL20blocks/5120lanes x all7 banks x both workspace edges=280 producers.
+   Independent pinned-reference quantization/native-byte observer per block,
+   plus complete assembled old host-wire payload/scales/padding comparison.
+  -4 Q4_K/Q6_K worker1/20 input/matrix/activation/matrix/changed-input/STOP
+   cases,no reset. Matrix FP32 bit-exact+independent FP64 observers retained.
+  -4 signed native-scale endpoints. Zero/ties/signed-max/changed-value cases.
+  -ALL64 producer-proof corruptions,all16job words/all53 fixed/source/reserved
+   descriptor words,ALL16 source seals,bank/bounds/epoch/layer/frame refusals,
+   all3 transport positions x5 uncertainty causes,all30 command readbacks,
+   late job/boot/doorbell changes,wrong workers21/68/119,old markers,invalid
+   floats/scale domain,and old qualified peer rejecting new operation4.
+  /private/tmp/pioneer-q38-ffn-input-tests-20261022-b.log
+  SHAa16acdac6ce2927f39383a866ff39283852afb3378c225a54c0b5e312d164c20
+ Actual persistent producers -> GDDR -> ACTUAL QFS2 gather:
+  1232 producers/28 roots/1676faults;20or68 x7 banks x2edges. Full5120 and
+  17408 lane native payload and compact padded scales match independently
+  observed completed producer outputs. No CPU intermediate arithmetic in
+  the programs;test-only numerical observers remain outside Work.
+  ALL88 scale lines xALL16word faults refuse BEFORE any operand read/sink.
+  Transport/counter/foreigncounter/source/frame faults,command readbacks,
+  ALL16source seals,shape/bank/bounds/epochs/reserved/old marker refusals,
+  all4busy queues/tag boundaries;every fault checked inert.
+  /private/tmp/pioneer-q38-ffn-gather2-tests-20261022-b.log
+  SHAe2d4956abee8062ecb3bbb4ed23d87c4b8f261a21599b7faf60d6401f27ec624
+ QFP2 unchanged-operation regression74positive/161faults:
+  /private/tmp/pioneer-q38-ffn-input-activation-regression-20261022-b.log
+  SHA1d4a573a4d1e6a5b8497242a3543664d19b131f75b6465e5bafa7e530214247f
+ QFP2 wide8cases/16actual changed-input matrices,Q4_K/Q6_K x K5120/17408
+ x groups3/16,activation between matrices,independent exact FP32/FP64:
+  /private/tmp/pioneer-q38-ffn-input-wide-regression-20261022-a.log
+  SHAe14974788fc3acb23a1ec37e942d1c4771f3b4c6273315538af7d304bb710e37
+ Existing100 private/mixed/legacy/native build refusals BEFORE SDK/output:
+  /private/tmp/pioneer-q38-ffn-input-build-gates-20261022-a.log
+  SHA4f824e819de9f3828f85b8770cef12719e14a05813d2bb32385adcd804ddfe7f
+
+NEW peer main8180B,affine5152B,helper11164B. Same bounded main72000..74000,
+affine70b00..72000,NEW helper64000..68000,stack6e000..70000. NO bank/owner/
+mapping/capacity/stack-window widening. Worst observed complete DEVICE
+stack5248B inside8KiB (NOT a kernel compile/lifetime qualification). Main
+frame272B,combined producer wrapper1312B,InputPacket208B. New gather3320B
+at64000..64cf8,observed device stack612B,frame432B+packet176B. No writable
+globals/GOT. SDK READ ONLY. Native kernel adapter remains absent.
+
+NEW images independently rebuilt and every section byte-compared:
+ Peer /private/tmp/pioneer-q38-ffn-input-image.ZgM7UhRC/image
+      /private/tmp/pioneer-q38-ffn-input-rebuild.DTylg32l/image
+ boot SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main SHAd2052fbbf43dcc022747ea2b228e7b1bc0f829f4984821ab4dfca20473e3a8ef
+ affine SHA96e92065722a477b08ba41abc2f623064d44970c5807b37c6d739e8dc3697570
+ helper SHAd7c6f3458d795f65635b80c3c035c93a7da5b325629f19e0b0fdecdc70fc629d
+ Gather /private/tmp/pioneer-q38-ffn-gather2-image.vTSGXPvz/image
+        /private/tmp/pioneer-q38-ffn-gather2-rebuild.wr1sG1cg/image
+ code SHA008c92bed90bff09d938520fdb8169b95913147feeb26aa8cda25b81ea986f41
+Feature-OFF qualified old direct-SrcB peer and old QFS1 gather were freshly
+rebuilt and ALL boot/main/affine or boot/code bytes compared to their exact
+previously qualified images. BOTH legacy programs remain byte-identical.
+ /private/tmp/pioneer-q38-ffn-input-legacy-control.hyd3jRcN/image
+ /private/tmp/pioneer-q38-ffn-gather1-control.Cobpved4/image
+ Legacy build logs:
+ /private/tmp/pioneer-q38-ffn-input-legacy-build-20261022-a.log
+ SHA1fbd1e323245a71c6dc5ea811b50db56a6c84dd6659bd8d42cbcdcbc420c4345
+ /private/tmp/pioneer-q38-ffn-gather1-control-build-20261022-a.log
+ SHAb497fc7b17c6c6d394713ad5c6fa7ab3adff423549ef495c153648676ffbaee6
+
+Next:NEW root generation dispatching/proving these actual persistent ops,
+all learned gate/up/down matrices and gathers as ONE FFN;unified mutable
+native owner/global context/source-provenance adapter;real-model domain
+eligibility;then controlled native integration/measurement. Current tests
+are transport/arithmetic prerequisites,NOT a GPU root scheduler. Matrix
+checks are full-K peer jobs,not an entire model projection or whole decoder.
+Attention/GDN/KV/norm/residual/embedding/sampling still need an all-card path.
+Card residency ALONE does not prove20tok/s;decode/instruction/scheduling
+bottlenecks still require real measurement and optimization.
+
+No SSH/upload/GPU job/hotswap/driver install/restart/Assistant/power/SD/boot/
+CPU/RAM/settings changes. Last verified installed best SHA:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Raw-Dst cache22 remains HARD BLOCKED. These tests opened no native parent.
+Last real27B speed0.207893161tok/s unchanged;20tok/s target still UNMET.

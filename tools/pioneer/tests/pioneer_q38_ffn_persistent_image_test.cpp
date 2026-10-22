@@ -55,7 +55,7 @@ struct FfnPersistentPeer:DirectSrcBImage {
   }
   return DirectSrcBImage::Load(at);
  }
- void SubmitActivation() {
+ virtual void SubmitActivation() {
   ClearTensorState();assert(activationPackets<4);unsigned p=activationPackets++;bool write=p>=2;
   const unsigned local[]={0x90000,0x90400,0x90c00,0x90e00},bytes[]={1024,1024,512,64};
   unsigned remote=descriptor[4]+descriptor[10+p];
@@ -169,14 +169,15 @@ struct FfnPersistentPeer:DirectSrcBImage {
  void Inert(){unsigned reads=nocReads,packets=activationPackets,old=requests,math=matrixInstructions;
   for(unsigned i=0;i<64;i++)StepBlock();assert(reads==nocReads && packets==activationPackets && old==requests && math==matrixInstructions);}
 };
+#ifndef PIONEER_Q38_FFN_PERSISTENT_MACHINE_ONLY
 int main(int argc,char** argv){assert(argc==2 || argc==3 || (argc==4 && !strcmp(argv[3],"--wide")));setvbuf(stdout,nullptr,_IOLBF,0);unsigned positive=0,faults=0,minStack=0x70000;
  if(argc==4){
   for(unsigned type:{12U,14U})for(unsigned k:{5120U,17408U})for(unsigned groups:{3U,16U}) {
-   printf("START WIDE ACTUAL QFP1 type%u K%u groups%u;NOT_SILICON_TIME\n",type,k,groups);
+   printf("START WIDE ACTUAL QFP2 type%u K%u groups%u;NOT_SILICON_TIME\n",type,k,groups);
    FfnPersistentPeer m(argv[1],type,k,groups,68);assert(m.BootNew() && m.Matrix(1));
    m.StageActivation(2);assert(m.Finish(2));m.VerifyActivation();FreshInputs(m);
    assert(m.Matrix(3) && m.Stop(4));minStack=std::min(minStack,m.minStack);positive++;
-   printf("PASS WIDE ACTUAL QFP1 type%u K%u rows%u changed-input matrix/activation/matrix/STOP;EXACT FP32+independent FP64/native bytes/NO CPUref in program\n",type,k,groups*16);
+   printf("PASS WIDE ACTUAL QFP2 type%u K%u rows%u changed-input matrix/activation/matrix/STOP;EXACT FP32+independent FP64/native bytes/NO CPUref in program\n",type,k,groups*16);
   }
   printf("PASS OFFLINE WIDE actual persistent FFN cases%u/maxObservedDeviceStackBytes%u;NO_NATIVE_MODEL_OR_SPEED_QUALIFICATION\n",positive,0x70000-minStack);return 0;
  }
@@ -187,7 +188,7 @@ int main(int argc,char** argv){assert(argc==2 || argc==3 || (argc==4 && !strcmp(
   m.StageActivation(4,19);assert(m.Finish(4));m.VerifyActivation();m.Inert();assert(m.Stop(5));
   assert(m.normalizations==2 && !m.dotProbeReads);positive++;
   minStack=std::min(minStack,m.minStack);
-  printf("ACTUAL QFP1 type%u worker%u matrix/activation/matrix/activation/STOP;EXACT matrices+native bytes/NO resets PASS\n",type,worker);
+  printf("ACTUAL QFP2 type%u worker%u matrix/activation/matrix/activation/STOP;EXACT matrices+native bytes/NO resets PASS\n",type,worker);
  }
  for(unsigned worker=1;worker<=68;worker++) {
   FfnPersistentPeer m(argv[1],12,5120,1,worker);assert(m.BootNew());m.StageActivation(1,17,worker%7,(worker&1)!=0);
@@ -228,5 +229,6 @@ int main(int argc,char** argv){assert(argc==2 || argc==3 || (argc==4 && !strcmp(
  {FfnPersistentPeer m(argv[1]);assert(m.BootNew());m.StageActivation(1);assert(m.Finish(1));m.VerifyActivation();
   m.badReadback=true;assert(!m.Matrix(2) && !m.requests && !m.matrixInstructions && m.normalizations==1);m.Inert();faults++;}
  if(argc==3){DirectSrcBImage old(argv[2],12,5120,1,1);assert(old.Boot() && !old.Job(1,3) && !old.requests && !old.matrixInstructions);faults++;}
- printf("PASS OFFLINE ACTUAL persistent FFN peer:positive%u/faults%u/maxObservedDeviceStackBytes%u;QFP1 distinct ABI/Work noCPUref/native GDDR sink/sequence retained/UNKNOWN inert;NO_NATIVE_COORDINATOR_MODEL_OR_SPEED_QUALIFICATION\n",positive,faults,0x70000-minStack);
+ printf("PASS OFFLINE ACTUAL persistent FFN peer:positive%u/faults%u/maxObservedDeviceStackBytes%u;QFP2 distinct ABI/Work noCPUref/native GDDR sink/sequence retained/UNKNOWN inert;NO_NATIVE_COORDINATOR_MODEL_OR_SPEED_QUALIFICATION\n",positive,faults,0x70000-minStack);
 }
+#endif

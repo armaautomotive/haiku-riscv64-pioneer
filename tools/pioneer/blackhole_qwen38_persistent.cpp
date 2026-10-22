@@ -85,11 +85,12 @@ extern "C" void q38_persistent_main()
 		const volatile uint32_t* job=Words(0x74000);
 		uint32_t snapshot[16]; for (unsigned i=0;i<16;i++) snapshot[i]=job[i];
 		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=Q38PersistentMarker
-			|| snapshot[11]!=worker || snapshot[12]!=sequence || (snapshot[13]!=1 && snapshot[13]!=2
+			|| snapshot[11]!=worker || snapshot[12]!=sequence ||
 #ifdef PIONEER_Q38_FFN_PERSISTENT
-			&& snapshot[13]!=TT_Q38_FFN_PERSISTENT_ACTIVATION
+			(snapshot[13]-1>3)
+#else
+			(snapshot[13]!=1 && snapshot[13]!=2)
 #endif
-			)
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 			|| snapshot[14]>1 || (snapshot[14] && snapshot[13]!=1)
 #else
@@ -109,7 +110,7 @@ extern "C" void q38_persistent_main()
 			Fence(); block_peer_stopped(); // final PC audit BEFORE any reset/restore
 		}
 #ifdef PIONEER_Q38_FFN_PERSISTENT
-		if(snapshot[13]==TT_Q38_FFN_PERSISTENT_ACTIVATION) {
+		if(snapshot[13]>=TT_Q38_FFN_PERSISTENT_ACTIVATION) {
 			q38_ffn_persistent_activation(snapshot,sealedSource,worker,self);
 			previous=sequence;continue; // preserve sequence/Tensix state;NO reset
 		}

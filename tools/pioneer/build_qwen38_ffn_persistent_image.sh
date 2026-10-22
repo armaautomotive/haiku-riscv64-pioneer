@@ -40,4 +40,4 @@ for section in boot text affine ffn;do "$cross-objcopy" -O binary -j ".$section"
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
 "$cross-objdump" -d "$output/program.elf" > "$output/program.disassembly"
 for section in boot text affine ffn;do shasum -a 256 "$output/$section.bin";done
-printf 'OFFLINE NEW QFP1 peer ONLY;NO native/coordinator/model/speed qualification: %s\n' "$output"
+printf 'OFFLINE NEW QFP2 input/activation peer ONLY;NO native/coordinator/model/speed qualification: %s\n' "$output"
