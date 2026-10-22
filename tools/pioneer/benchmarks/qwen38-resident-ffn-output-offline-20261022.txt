@@ -1,0 +1,103 @@
+Resident FFN projection-output/transport-chain checkpoint.
+October21 2026 Vancouver (file/test timestamps October22 UTC).
+OFFLINE ONLY. No native driver/Assistant/model integration or speed claim.
+
+New emitted-RV32 ROOT0 stage scatters the current compact matrix-root output
+directly from L1 to one retained FFN workspace in GDDR. Fixed roles ONLY:
+gate17408F32/69632B at30848,up17408F32/69632B at100480,
+down5120F32/20480B at274880. No host physical destination,PCI/BME/DMA,
+CPU product/quantization/validation/fallback,or second workspace allocation.
+This is a destination stage,NOT the learned matrix producer or a complete
+FFN. Ordinary matrix dispatch/root/backend remains UNCHANGED and does not
+select this code. No new inference hardware mode was enabled.
+
+PioneerQ38FfnOutputShape defines a NEW private four-word per-worker row map:
+firstRow,rows,packedFirst,peerSequence. It is NOT repurposed padding in the
+old eight-word matrix task ABI. Validates ALL119 entries before NoC access:
+20-119 or68-119 active workers as shape permits,16-256rows/worker,
+16row alignment,exact compact-source prefixes,valid sequence/nonce,
+inactive entries zero,disjoint output intervals and total EXACT row count.
+This supports arbitrary canonical-plan worker row order rather than assuming
+compact output is already globally sorted or uses fixed1024B worker slots.
+Descriptor fixes all destinations/routes/root129/window lengths;four64-bit
+owner epochs+token/layer/nonce remain DATA,not source authentication.
+
+ALL numeric words must be finite BEFORE any output packet. Transport is
+bit-preserving,including signed zeros,subnormals and finite extremes;no
+floating arithmetic or BabyRISCV FTZ in the copy. Every packet re-proves
+ALL16 sources,entire descriptor and frozen row map,exact10word command
+readback,NoC idle and ALL8 wrapped counter deltas. Source is fixed L1
+80000 with<=69632B;each packet is exactly one worker's64-1024B. No numerical
+CPU oracle/readback in the program. Hardware NoC payload correctness still
+requires separate numerical qualification before Work use;transport ACKs/
+metadata alone do not prove a learned matrix computed the right values.
+
+Marker QFO1 reports projection DATA sink completion ONLY. On any observed
+timeout/counter/source/descriptor/map/command fault it parks inertly;tests
+execute16more terminal instructions and prove zero further NoC reads,
+packets,command writes or numeric work. Future native integration MUST first
+prove every matrix participant's actual CURRENT terminal PC/reset/source/
+command/counter/output and retain workspace/context/host/PCI/clock owners.
+
+ASan/UBSan ACTUAL emitted instruction tests (NoC/GDDR endpoints simulated):
+-126positive cases=7banks x2capacity edges x3FFNroles x3row orders.
+  Complete69632or20480B output byte-exact;ALL rows exactly once,
+  reverse/rotated/forward compact ordering,variable row counts and20-119
+  workers,unchanged input/map/descriptor,all32summary words mutation-tested.
+  607refusals include EVERY119x4map word,nonzero inactive entries,
+  descriptor/route/owner/bounds/shape/finite-value errors,ALL16source seals,
+  busy queues,first/middle/last packet failures/bad+foreign counters/source/
+  descriptor/map changes,ALL10command readbacks at those positions.
+  Max1577881emulator instructions;lowest stack write0006f648 (2488B used).
+  /private/tmp/pioneer-q38-ffn-resident-output-tests-20261022-b.log
+  SHA375366ac10271eb6cd9257c7ea1c179a6a14d1433d65fd5e7409b19bdf99eed3
+-THREE actual images connected through simulated GDDR:
+  28projection sinks ->952actual activation/native producers ->14actual
+  ROOT0 native/scales gathers. All7banks/both3GiBcapacity edges,17408lanes,
+  shuffled gate/up worker order. Only completed sink DATA feeds producers;
+  only completed producer DATA feeds root gather. Final34816B native
+  operands and320B scales equal unchanged host CohortQuantize BYTE FOR BYTE.
+  Gate/up matrix VALUES here are scoped fixtures,NOT executed learned
+  products or fabricated matrix hardware-completion proof. Host comparisons
+  exist ONLY in the OFFLINE tests,not new Work validation/fallback.
+  /private/tmp/pioneer-q38-ffn-transport-chain-tests-20261022-a.log
+  SHA39e8a758880fe1e9af4dba1f03ebc3311a3a4b2cd743716f7efa118562db801e
+-Original two-image gather suite also passed after adding test-only main/
+  shared-fixture guards:952producers,14gathers,1261refusals;no logic change.
+  /private/tmp/pioneer-q38-ffn-resident-gather-regression-20261022-e.log
+  SHA88c30fab1d4d037ee3ee95b542832ca3f9f8b9b35a558865f36fdd732822283f
+
+Exact image rebuilt independently and byte-compared:
+3168B code SHAc2fd52a6a67a6e187ba77c53f34e6892c46430989cb16500d5c285aa1cdc96f3
+4B boot SHAd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+/private/tmp/pioneer-q38-ffn-output-image.0aAa2b68/image
+/private/tmp/pioneer-q38-ffn-output-rebuild.rxbXlen4/image
+Freestanding RV32,strict32KiB code/8KiB stack,no writable static/GOT.
+scalar_main compiled frame2416B;actual observed stack2488B. These are not
+kernel frames/native timing. Prior peer/gather images unchanged:
+peer SHA0639f740142b8410a3f896d846fb5e2090ce4296c83be961591f14ec0f2020f8
+gather SHAcc42016896b6cf1627e619928f0bf0f60c19ac3e79573a0ac6288928a6a3d32c
+
+CAUTION:all new local stages enter64000,NOT legacy native72000. Resident
+descriptor74200 and new map74400 OVERLAP old matrix task staging74080.
+Packed output80000..91000 also overlaps later activation's scratch90000.
+They must NEVER run concurrently or be installed into old live contracts.
+Future composite controller MUST freeze/own a new L1 map and exclusive
+phase lifetimes,then use explicit resident-input/projection-output ABI.
+Do not forge old reuse-cache permission or legacy host-DMA proof counters.
+
+Next:connect actual learned gate/up/down dispatcher to private resident
+source/sink,NEW image/PC/participant/controller/native build gates and
+retained initialization owner,then qualify ONE actual FFN in debug before
+paired real full-model Work. This checkpoint does NOT eliminate all model
+CPU work. Attention/GDN/KV/norm/residual/embedding/sampling still remain.
+
+No SSH/GPU job/upload/driver exchange/Assistant/power/SD/CPU/RAM/boot/settings
+action. Last known041/tag12/g28 untouched;all prior native parents closed.
+SDK read-only;dirty llama.cpp and unrelated FlashNext work untouched.
+Pristine c060ca974c773c7c3d17fd1b66dc9d312bc292c0 remains the only build base.
+Any native numeric mismatch/UNKNOWN:CLOSE ONLY;NO END/retry/reset/further
+card read/hot rollback;retain ALL owners/PCI/maps/hosts/DMA/clock/cold for
+explicit physical recovery. Raw-Dst cache22 remains hard-blocked.
+Whole-model residency/20tok/s UNMET. Last real27B measurement remains
+0.207893161tok/s;offline image tests are NOT a new throughput result.

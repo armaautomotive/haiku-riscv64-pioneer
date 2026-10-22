@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Two ACTUAL emitted images;ONLY NoC/GDDR endpoints are simulated.
+#ifndef PIONEER_Q38_FFN_GATHER_RESIDENT_MACHINE_INCLUDED
 #define PIONEER_Q38_FFN_RESIDENT_ACTIVATION_MACHINE_ONLY
 #include "pioneer_q38_ffn_resident_activation_image_test.cpp"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGatherShape.h"
 struct GatherMachine:ResidentActivationMachine {
  std::array<uint32_t,8704> nativeOperands={};
@@ -75,6 +77,7 @@ struct GatherMachine:ResidentActivationMachine {
   for(unsigned i=0;i<32;i++){s[i]^=1;assert(!PioneerQ38FfnGatherSummary(s,descriptor.data(),before,after));s[i]^=1;}
  }
 };
+#ifndef PIONEER_Q38_FFN_GATHER_MACHINE_ONLY
 int main(int argc,char** argv)
 {
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);unsigned producers=0,gathers=0,negative=0,maxSteps=0,minStack=0x70000;
@@ -138,3 +141,4 @@ int main(int argc,char** argv)
  }
  printf("PASS OFFLINE TWO ACTUAL IMAGES producers%u ROOTgathers%u refusals%u rootmaxsteps%u rootminstack%08x;ALL7banks/both3GiBedges/ALL68fresh scale tags/ALL4owner epochs+token+layer+nonce/72sealed NoC packets+wrapped counters/old matrix-root L1 input byte-exact/no host PCI/no CPU products/inert fault/no operand fetch before ALLtags;NO_NATIVE_OWNER_SCHEDULER_FULL_FFN_OR_SPEED_AUTHORITY\n",producers,gathers,negative,maxSteps,minStack);
 }
+#endif
