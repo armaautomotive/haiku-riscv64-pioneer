@@ -3,9 +3,16 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
-case "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}" in
- 0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010031 ] || exit 2;;
- 1) [ "${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_Q38_NORMAL_CLOCK:-0}:${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}:${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_WORK_MODE:-0}" = 2026102200010031:1:10:1:1:1:1:1 ] || exit 2
+[ "${PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
+fixed_diagnostic_tag=
+case "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}:${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}" in
+ 0:0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010031 ] && [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010032 ] || exit 2;;
+ 1:0) fixed_diagnostic_tag=2026102200010031;;
+ 0:1) fixed_diagnostic_tag=2026102200010032;;
+ *) exit 2;;
+esac
+if [ -n "${fixed_diagnostic_tag:-}" ]; then
+ [ "${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_DRIVER_RELOAD:-0}:${PIONEER_Q38_PANEL_DRIVER:-0}:${PIONEER_Q38_NORMAL_CLOCK:-0}:${PIONEER_Q38_SENTINEL_POLL_QUALIFICATION:-0}:${PIONEER_Q38_DIRECT_SRCB_QUALIFICATION:-0}:${PIONEER_Q38_ROOT_CYCLE_PROFILE:-0}:${PIONEER_Q38_WORK_MODE:-0}" = "$fixed_diagnostic_tag:1:10:1:1:1:1:1" ] || exit 2
     for key in PIONEER_Q38_WORK_SPARSE_EXPORT PIONEER_Q38_WORK_COMPACT_OUTPUT PIONEER_Q38_QUEUED_MATRIX_ENTRY \
      PIONEER_Q38_WORK_OUTPUT_DMA PIONEER_Q38_SPAN_FAST PIONEER_Q38_SPAN_PRELOAD PIONEER_Q38_SPAN_REUSE_CODE \
      PIONEER_Q38_Q4_TWO_PHASE PIONEER_Q38_INT_SFPU PIONEER_Q38_PIPELINED_MATRIX PIONEER_Q38_STATIC_VECTOR \
@@ -25,9 +32,8 @@ case "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}" in
      PIONEER_Q38_BATCH4_FETCH_QUALIFICATION PIONEER_Q38_HOST_PHASE_PROFILE PIONEER_Q38_GDN_MUTABLE_STATE \
      PIONEER_Q38_RESIDENT_GDN PIONEER_Q38_LOCAL_DELTA_GGML PIONEER_Q38_DISPATCH_PROFILE;do
      value=$(printenv "$key" || :);[ "${value:-0}" = 0 ] || exit 2
-    done;;
- *) exit 2;;
-esac
+    done
+fi
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDENT_MATRIX:-0}" = 0 ] || { echo 'STOP resident FFN matrix has NO qualified native controller/driver' >&2;exit 2; }
@@ -481,6 +487,9 @@ if [ "${PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC:-0}" = 1 ]; then
 fi
 if [ "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_GRAPH_CSR_DIAGNOSTIC"
+fi
+if [ "${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_FFN_CODE_DIAGNOSTIC=1"
 fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \

@@ -1,6 +1,30 @@
 # Native build status
 
-Latest checkpoint October22 2026:fixed4-byte remote CSR transport PASSED
+Latest OFFLINE checkpoint October22 2026:complete FFN code owner and REAL
+kernel adapter/call-site built,NOT installed or native-qualified. Separate
+tag2026102200010032 candidate6e963d80 builds twice EXACT;guardd1ce/default2df
+and previously native-qualified CSR3fce remain unchanged. Entire40KiB root/
+12KiB-peer prefixes+ALL boots+16KiB panels:867448 program words saved BEFORE
+first write,installed/read back/restored exactly whileALL120 remain held.
+Private command+MASTER baselines never change;first mismatch quarantines
+the ENTIRE retained context,including the new heap owner/map,without more
+IO/restore/STOP/END/reset. NO new FFN code is started. Actual kernel frame
+240B;large saved storage is HEAP ONLY. Basic+qualified legacy image families
+each pass2 exact roundtrips/118 faults;actual kernel methods867448 words/
+15253874 refusals;actual native hook allocation/map/write/reentry faults;
+311 before-SDK build refusals;9 protocol namespace variants;actual ordinary/
+private kernel routing and18 mixed/malformed protocol refusals ALL pass.
+Isolated Work support/RUN+0x6270/6271,version5;ordinary Work AND checked
+ops cannot invoke tag32. Ordinary TC2/SM7/phase/span interfaces unchanged.
+No code-only client/updater/hardware install yet. Next qualify those and
+the never-launched code roundtrip,then implement actual FFN execution with
+canonical model/initial producer/unified mutable/full terminal authority.
+This is NOT a launch grant or speed result. Fresh board remains041/tag12/
+gen30/idle/cold0/owner0/open1/guard1,64 CPUs/max137034936320B. NO reboot/
+power/SD/Assistant/settings changes. Last real27B .207893161tok/s unchanged;
+20tok/s UNMET,goal ACTIVE. Evidence:benchmarks/qwen38-ffn-code-owner-offline-20261022.txt.
+
+Previous NATIVE checkpoint October22 2026:fixed4-byte remote CSR transport PASSED
 on actual P100A,ALL119 peers both held and live-idle. Two independent
 legacy-cohort sessions each verified5474 packets/words. Synthetic20 and
 authenticated119-worker18 original-TC debug samples ALL exact,clean END,
@@ -11,9 +35,8 @@ debug7fa411b7 remains byte-identical. Production inference rejects CSR flags.
 Guarded temporary041/tag12/gen28->3fce/tag31/gen29->041/tag12/gen30;
 last restore verifiedidle/cold0/owner0/open1/guard1. All64 CPUs/full RAM
 137034936320B remain available. No reboot,power,SD,Assistant/settings change.
-5585 updater regressions passed before the last additional diagnostic-parent
-name;final apply/restore/bootstrap126 cases passed. Broader final rerun
-continues locally. Evidence:benchmarks/qwen38-graph-csr-native-20261022.txt.
+Final5707 updater regressions now complete/CLI0;earlier focused126 passed
+before restore. Evidence:benchmarks/qwen38-graph-csr-native-20261022.txt.
 NEW FFN40KiB root/12KiB peer code owner/native factory still required;
 NO new FFN launch grant. Last real27B .207893161tok/s unchanged,20 UNMET.
 Goal ACTIVE. Haiku SSH account is baron,not user/root;use existing matching

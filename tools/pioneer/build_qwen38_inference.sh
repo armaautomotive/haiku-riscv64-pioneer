@@ -1,6 +1,8 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_GRAPH_CSR_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION:-0}" in

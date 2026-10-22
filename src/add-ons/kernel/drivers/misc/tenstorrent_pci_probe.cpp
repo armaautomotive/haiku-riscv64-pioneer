@@ -5,6 +5,15 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+#if PIONEER_Q38_FFN_CODE_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010032ULL || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(PIONEER_Q38_GDN_MUTABLE_STATE) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#error Held-only FFN code ownership requires separate exact-tag32 legacy direct/sentinel context ONLY
+#endif
+#include "PioneerQ38FfnGraphCodeOwner.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010032ULL && !defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC)
+#error Reserved tag32 must identify ONLY the never-launched FFN code ownership diagnostic
+#endif
 #ifdef PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC
 #if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010031ULL || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_LOCAL_Q4_QUALIFICATION) || defined(PIONEER_Q38_GDN_MUTABLE_STATE) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Fixed remote CSR qualification requires separate exact-tag31 legacy direct/sentinel context ONLY
@@ -1699,6 +1708,11 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	volatile uint32* q38PanelView=NULL;
 	uint32* q38PanelSaved=NULL;
 	bool q38PanelMapAttempted=false;
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+	area_id q38FfnCodeArea=-1;
+	volatile uint32* q38FfnCodeView=NULL;
+	bool q38FfnCodeMapAttempted=false;
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 	uint32* q38CohortSaved[TT_Q38_COHORT_WORKERS]={};
 #endif
@@ -1751,6 +1765,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		tt_compute_noc_result& n,tt_host_path_result& h,tt_host_dma_audit_result& auditResult,tt_host_write_result& r)
 		: PioneerHostWriteIO(p,a,t,c,d,n,h,auditResult,r,4096) {}
 	~PioneerSessionIO() {
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+		if (q38FfnCodeArea>=B_OK) delete_area(q38FfnCodeArea);
+#endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_PANEL
 		if (q38PanelArea>=B_OK) delete_area(q38PanelArea);
 		free(q38PanelSaved);
@@ -1849,6 +1866,38 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		if (q38PanelView && !(a&3) && a>=TT_Q38_PANEL_VIEW_BASE && a-TT_Q38_PANEL_VIEW_BASE<TT_Q38_PANEL_VIEW_BYTES)
 			PioneerWrite32(q38PanelView+(a-TT_Q38_PANEL_VIEW_BASE)/4,value);
 	}
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+	// PIONEER_Q38_FFN_CODE_NATIVE_ADAPTER_BEGIN
+	bool MapFfnGraphCodePrefix() {
+		if (runtimeCore || !fleetEnabled || !runtimeMapped || !Q38PanelMappingStable()) return false;
+		if (q38FfnCodeView) return FfnGraphCodeMappingStable(0);
+		if (q38FfnCodeMapAttempted) return false;
+		q38FfnCodeMapAttempted=true;
+		void* view=NULL;
+		q38FfnCodeArea=map_physical_memory("P100A owned complete FFN prefix (never-launched diagnostic)",
+			profile.bar0_host_start+0x19064000,40960,B_ANY_KERNEL_ADDRESS,
+			B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+		if (q38FfnCodeArea<B_OK || !view) return false;
+		q38FfnCodeView=(volatile uint32*)view;return true;
+	}
+	bool FfnGraphCodeMappingStable(unsigned w) {
+		return w<120 && runtimeCore==w && fleetEnabled && runtimeMapped && q38FfnCodeArea>=B_OK
+			&& q38FfnCodeView && Q38PanelMappingStable();
+	}
+	uint32 FfnGraphProgramRead(unsigned w,uint32 a) {
+		if (!FfnGraphCodeMappingStable(w) || !PioneerQ38FfnGraphProgramAddress(w,a)) return UINT32_MAX;
+		if (a==0x6000) return RuntimeCodeRead(0);
+		return a>=0x70000?Q38PanelRead(a):PioneerRead32(q38FfnCodeView+(a-0x64000)/4);
+	}
+	bool FfnGraphProgramWrite(unsigned w,uint32 a,uint32 value) {
+		if (!FfnGraphCodeMappingStable(w) || !PioneerQ38FfnGraphProgramAddress(w,a)) return false;
+		if (a==0x6000) RuntimeCodeWrite(0,value);
+		else if (a>=0x70000) Q38PanelWrite(a,value);
+		else PioneerWrite32(q38FfnCodeView+(a-0x64000)/4,value);
+		return true;
+	}
+	// PIONEER_Q38_FFN_CODE_NATIVE_ADAPTER_END
+#endif
 #endif
 	bool MapCoordinator() {
 		if (runtimeCore!=0) return false;
@@ -2331,6 +2380,9 @@ struct PioneerStoreContext {
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
 	PioneerQ38DispatchLease* q38Dispatch=NULL;
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+	PioneerQ38FfnGraphCodeOwner* q38FfnCode=NULL;
+#endif
 	bool q38DispatchRoutes=false,dispatchOwnerRetained=false;
 	unsigned q38EndPhase=0;
 #endif
@@ -2413,6 +2465,9 @@ struct PioneerStoreContext {
 		delete q38Span;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+		delete q38FfnCode;
+	#endif
 		delete q38Dispatch;
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
@@ -3954,6 +4009,27 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 		if (!ready) lease.prepared=w+1; // include any just-touched peer NIU
 	}
 	if (!ready) return PioneerQ38DispatchQuarantine(lease,c.banks);
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+	// PIONEER_Q38_FFN_CODE_NATIVE_OWNER_BEGIN
+	// Same native cookie/global-lock/exclusive context as the old prepare.
+	// Every participant is held;the new code is NEVER bootstrapped/started.
+	// Prefix mapping+complete saved owner live on this retained context,not
+	// a local destructor that could free resources after an unknown result.
+	if (c.q38FfnCode) {
+		PioneerQ38DispatchQuarantine(lease,c.banks);c.io.QuarantineHostPage();return false;
+	}
+	c.q38FfnCode=new(std::nothrow) PioneerQ38FfnGraphCodeOwner;
+	PioneerQ38FfnGraphCodeResult codeResult;
+	bool codeReady=c.q38FfnCode && c.io.SelectRuntimeCore(0) && c.io.MapFfnGraphCodePrefix()
+		&& PioneerQ38FfnGraphCodeRoundTrip(c.io,dram,c.banks,lease,*c.q38FfnCode,codeResult);
+	if (!codeReady) {
+		PioneerQ38DispatchQuarantine(lease,c.banks);c.io.QuarantineHostPage();
+		dprintf("P100A_FFN_CODE_FAIL phase%u worker%u word%u saved%u installed%u restored%u;CLOSE_ONLY_NO_START_RETRY\n",codeResult.phase,codeResult.worker,codeResult.word,codeResult.savedWords,codeResult.installedWords,codeResult.restoredWords);
+		return false;
+	}
+	dprintf("P100A_FFN_CODE_PASS workers120 saved%u installed%u restored%u;NEVER_LAUNCHED_NEW_FFN_NOT_MODEL_OR_SPEED\n",codeResult.savedWords,codeResult.installedWords,codeResult.restoredWords);
+	// PIONEER_Q38_FFN_CODE_NATIVE_OWNER_END
+#endif
 #ifdef PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC
 	// Native caller is the EXISTING cookie/global-lock/exclusive cohort
 	// handoff. No new FFN image is installed or accepted through this ABI.
@@ -5165,12 +5241,20 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 		return Q38SpanControl(instance,operation,data,length);
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH
+	// PIONEER_Q38_FFN_CODE_NATIVE_ROUTING_BEGIN
 #ifdef TT_PIONEER_Q38_WORK_MODE
 	if (operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN)
 		return Q38DispatchControl(instance,operation,data,length);
 #endif
+#ifdef PIONEER_Q38_FFN_CODE_DIAGNOSTIC
+	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN
+		|| operation==TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_LEGACY_WORK_RUN)
+		return B_NOT_ALLOWED;
+#else
 	if (operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
 		return Q38DispatchControl(instance,operation,data,length);
+#endif
+	// PIONEER_Q38_FFN_CODE_NATIVE_ROUTING_END
 	if (operation==TT_PCI_PROBE_Q38_COHORT_SUPPORT || operation==TT_PCI_PROBE_Q38_COHORT_RUN
 		|| operation==TT_PCI_PROBE_Q38_PANEL_RUN || operation==TT_PCI_PROBE_Q38_STREAM_RUN) return B_NOT_ALLOWED;
 #else

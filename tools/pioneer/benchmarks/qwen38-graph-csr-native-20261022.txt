@@ -49,9 +49,10 @@ failure cases,CLI0. Afterwards one ADDITIONAL owner-name alternative for
 the newly named graph-csr-debug was added;it does not relax old checks.
 FINAL updater SHAd504c81a0a971a45cca012b4ff4e2243616109cbc11fab3746a699e4453017b8
 passed126 complete apply/restore/bootstrap cases,including its long native
-client path,before the clean restore. Full final regression rerun ongoing
-at this checkpoint,not claimed complete:
+client path,before the clean restore. FOLLOW-UP:full final regression
+completed5707 actual updater cases,CLI0:
  /private/tmp/pioneer-graph-csr-hot-swap-full-20261022-b.log
+ SHAae296c12dbf62715ffbe5d0abf9575ea39740c81ece63f683148697fbd2e1f3e
 Original full CLI0 log:
  /private/tmp/pioneer-graph-csr-hot-swap-full-20261022-a.log
  SHA7f979575b9a577b0be5121ec8aa10afcb082824df665d71dd3136a16e6a012df

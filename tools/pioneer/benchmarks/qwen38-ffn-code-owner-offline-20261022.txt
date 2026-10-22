@@ -1,0 +1,126 @@
+Complete FFN program ownership checkpoint,October22 2026.
+OFFLINE builds/simulated endpoints ONLY. NO tag32 upload/install/card job.
+This is NOT new FFN execution/model integration/native qualification/speed.
+
+Implemented PioneerQ38FfnGraphCodeOwner,plus the REAL kernel mapping and
+existing locked PrepareQ38Dispatch call-site. The new code owner is attached
+to PioneerStoreContext,not a temporary/local destructor. Its separate prefix
+mapping is likewise retained on that context. Existing native cookie/global
+call lock/ALL writer exclusions/host/code/NIU/clock ownership remain required;
+test objects/booleans do NOT supply those native grants.
+
+Geometry is fixed from the frozen corrected QFG1/QFP2 catalog:
+ root prefix64000..6e000=40KiB,each peer64000..67000=12KiB;
+ ALL120 boot6000 words and complete70000..74000 panels also saved.
+ Total867448 program words=3469792B plus private owner/guard bookkeeping.
+ Entire large owner is HEAP ONLY. Device stack6e000..70000,peer gap67000..
+ 6e000,descriptors/proofs/NIU registers/output/user addresses are NEVER
+ accepted by the new program read/write policy. Peer scratch is included
+ in the saved footprint;it can be checked against frozen zeros here ONLY
+ because the diagnostic NEVER executes the new image.
+
+Every participant must be held in the EXISTING completely prepared legacy
+cohort,BEFORE bootstrap. Source/reset/idle/PCIe/code and exact owner-object
+bindings are checked. ALL participant footprints are saved BEFORE FIRST
+write. Arbitrary original prefix bytes are read/saved,NOT assumed zero.
+Private physical10word command+8 selected MASTER counter baselines are
+captured;accepted alias2/6 parity is checked BEFORE the next field. This
+owner emits NO NoC transaction,so every later guard requires all commands/
+selected counters unchanged. Source/current NIU/code checks remain intact.
+The vendor's initiator/receiver counter distinction supports that passive
+expectation;it is an INFERENCE,not native proof for the new prefix copies:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
+
+After complete snapshot,each old footprint is compared before writing its
+participant. Fixed new words are written/read back,ALL installed images
+independently checked,then saved bytes restored/read back and ALL complete
+original footprints checked again. Any first OBSERVED mismatch returns
+without further IO,packet/select/cleanup/restore/STOP/END/reset. Full context
+and new prefix mapping/heap object remain quarantined. A failed map or
+allocation also leaves existing owners retained;no automatic rollback.
+No API accepts caller start/executed/clean hints. This never-launched owner
+does NOT authorize future running-image cleanup;that needs a separate real
+initial-producer/execution/current-terminal owner and native factory.
+
+REAL native adapter maps exactly40960B at owned BAR0+19064000,following the
+existing owned PCIe TLB core selection. Program methods additionally bind
+the selected runtimeCore to the exact120-role address policy. Failed/null
+mapping never retries or unmaps;whole context retention owns it. No new
+NoC command,core reset/start,host-DMA/BME/ARC/firmware operation is added.
+The native call-site invokes the roundtrip ONLY before ORIGINAL bootstrap;
+success restores ORIGINAL legacy program bytes before any old peer starts.
+Failure logs already returned CPU data,quarantines and returns;no bootstrap.
+
+Private diagnostic gate:PIONEER_Q38_FFN_CODE_DIAGNOSTIC=1,
+exact tag2026102200010032,complete original-TC direct-SrcB/sentinel/Work
+chain,NO GDN/profile/other experimental image mixtures. Invalid/missing
+roles refuse BEFORE SDK/output. All new full-FFN launch selectors remain
+blocked. Separate Work support/RUN offsets6270/6271,version5;tag32 kernel
+REFUSES ordinary TC Work AND checked operations,so an older Assistant or
+runner cannot accidentally invoke the code copier. No fallback/promotion.
+TC Work2,SM7 Work3,timing-data Work4 and span namespaces remain unchanged.
+The future code-only reference-client flag is NOT yet enabled in builders.
+
+ALL final tests CLI0,ASan/UBSan where applicable:
+ Code owner in BOTH basic and qualified original-TC direct/sentinel image
+ families,EACH2 exact roundtrips (zero/nonzero/wrapped counter baselines)
+ +118 faults. ALL120 roles/867448 words exact,legacy bootstrap still passes
+ after known-clean restore. First/mid/last participants and code positions,
+ bad/drop writes,restore/current-code/source/reset/PCIe/map/master/command/
+ alias/stale-state failures retain ALL owners with NO subsequent IO/retry.
+ ACTUAL extracted kernel mapping methods:867448 valid word read/writes,
+ 15253874 invalid role/address/alignment/gap/stack/unmapped/stale-map
+ refusals,including null successful map/no repeat map after failure.
+ ACTUAL extracted native call-site in BOTH image families:allocation,
+ mapping,partial-write/reentry failures retain the complete context and
+ return without another IO;positive roundtrip permits original bootstrap.
+ ACTUAL extracted operation routing in ordinary and code-only builds:
+ 12 operations each;private namespace accepted,ordinary interfaces refused
+ ONLY in code qualifier;18 malformed/mixed protocol compile refusals.
+ 311 code-role/build/production refusals BEFORE SDK/output;all9 actual
+ protocol variants pass. Previous CSR287/client137/sentinel155 gates pass.
+ These endpoint tests are NOT physical mapping/current-state/launch grants.
+
+Final native RISC-V candidate built twice,ALL3 artifacts byte-compared EXACT:
+ /private/tmp/pioneer-q38-ffn-code-pinned.H5wU652w/driver
+ /private/tmp/pioneer-q38-ffn-code-pinned-repeat.HXuRaZJ5/driver
+ candidate SHA6e963d80d55a79d36c67eb54f8fbe46debf239617c0d06cb9d3be68f1b1c8a76
+ guard SHAd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43 SHA2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ Largest new owner/mapping kernel frame240B from actual .su witnesses;
+ no giant saved array on the16KiB kernel stack. SDK read-only.
+ Old native-qualified CSR tag31 rebuild remains EXACT3fce7a8ab03187433ec41a6c8d34f4f00be3d06843a67782ca1a2352a1e332a8,
+ controls unchanged,/private/tmp/pioneer-q38-csr-code-namespace-control.8wMfW6ve/driver.
+ Intermediate779905/beb63e/3a4a3e/fff0e1 builds are SUPERSEDED,DO NOT DEPLOY.
+
+Final evidence logs:
+ /private/tmp/pioneer-q38-ffn-code-owner-qualified-20261022.log
+ SHA098aff7feb82c280a7890457fb3a7c068e3f15537356936b0b4b4342e0bfdcd8
+ /private/tmp/pioneer-q38-ffn-code-native-owner-qualified-20261022.log
+ SHA329f39978d26402729b9d0de5b65e6aa7c5538783510dbdc49c2b947824e7b4d
+ /private/tmp/pioneer-q38-ffn-code-native-adapter-final-20261022.log
+ SHA32fa44c355faab159869761643d474b889030e5f2a64b70003ed26da12b3b87c
+ /private/tmp/pioneer-q38-ffn-code-native-routing-final-20261022.log
+ SHAea94187648334c52b8be88d19b1f9c6c995ce69ee5ac5f7a7d80850845aa3793
+ /private/tmp/pioneer-q38-ffn-code-build-gates-final-20261022.log
+ SHAe95f482282159ef2d2a39138b25b218c333a24f6bb1bf06fc6fdd728f556873d
+ /private/tmp/pioneer-q38-ffn-code-namespaces-final-20261022.log
+ SHA591ba53c1c58d7feb761e1f5e0bd739c54cd2fb7e1d7a2b1f152055fac91f086
+ Prior final updater5707 cases completed CLI0,previous evidence updated;
+ /private/tmp/pioneer-graph-csr-hot-swap-full-20261022-b.log
+ SHAae296c12dbf62715ffbe5d0abf9575ea39740c81ece63f683148697fbd2e1f3e.
+
+Fresh CPU-only board check:known-best041/tag12/generation30/quiesced0/
+cold0/owner0/open1/guard1,ALL compute parents absent,64 CPUs and max
+137034936320B RAM unchanged. No new tag32 upload/hotswap/job,reboot,power,
+SD/boot/Assistant/settings changes. Dirty llama.cpp/FlashNext untouched.
+Raw-Dst cache22 remains HARD BLOCKED;NO native actions on uncertain owners.
+
+NEXT:new exact-tag32 namespace5 debug client and pinned updater/lifetime
+qualification,then controlled never-launched prefix install/restore test.
+Only afterwards actual full FFN native execution with canonical learned/
+initialized model/source ownership,real initial F32 producer receipt,
+unified GDN/FFN mutable reservation/host/clock/terminal authority. NEW root
+before-counter accepted-alias parity must also be strengthened before any
+execution. Full FFN alone is NOT all-card attention/GDN/KV/norm/sampling.
+Last real27B .207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
