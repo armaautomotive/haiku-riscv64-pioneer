@@ -1,0 +1,97 @@
+Real session FFN source priming path,October22 2026.
+Host/source+native transfer prerequisite,NOT fullFFN/model computation,
+kernel cryptographic source attestation,workspace/input/launch permission
+or an inference-speed claim. Last whole27B0.207893161tok/s unchanged;
+20tok/s UNMET. Goal ACTIVE.
+
+PioneerQ38CohortSession has a separate PIONEER_Q38_FFN_PRIME=1 role.
+SelectFfnPrime(layer) runs BEFORE accelerator Open,derives the THREE exact
+gate/up/down semantic weights from the SAME live authenticated Source
+object+epoch,or all64 FFNs/192tensors with UINT32_MAX. No caller offsets,
+payload arrays,claimed digest or source-ready flag is accepted by selection.
+The real source is unchanged PioneerQ38PublicModelSource:FULL19GB c600de03
+SHA of the already-open FILE before any accelerator FD;every page read
+retains that FILE/model epoch/identity and its original-TC tiled reader.
+This is HOST provenance,not a claim that the kernel authenticates GGUF.
+
+The new role builds the full TWO-slot8192context canonical plan,not the
+old one-slot workspaces. Selected learned weight placement is unchanged.
+Only exact three-by-seven stripes per selected layer are staged. Actual
+existing qualified span calls use bounded1MiB requests,check each native
+receipt/source epoch before another transfer,then explicit SPAN_END before
+publication and BANK_END. Source mutation remains fatal even if a test
+source's generic Ready returns true after changing epoch. Lost observer/
+read/transport/receipt/source/END means CLOSE ONLY,no END/retry/fallback.
+Multiply is explicitly disabled in this load-only role:it cannot secretly
+run the old three-matrix path or CPU quantization and masquerade as FFN.
+FfnPrimeComplete is necessary HOST transfer metadata,NEVER a kernel compute
+grant. The actual native FFN context must bind the SAME real bank/upload
+ledger/owner and prove mutable initialization/input/code/current terminals.
+
+Standalone pioneer_q38_ffn_prime.cpp uses the REAL authenticated source,
+EXACT idle original driver tag12/namespace2 and the real session. It accepts
+only --prime-layer0 or --prime-all-ffn. No llama library/source build,
+Assistant mutation,model computation or arbitrary path. It explicitly
+prints HOST_SHA_BOUND_UPLOAD_NOT_KERNEL_SOURCE_ATTESTATION_OR_FULL_FFN_COMPUTE.
+Dedicated builder rejects nonzero inherited PIONEER experiments BEFORE
+SDK/output;driver/client/normal inference builders reject leaked prime flag.
+
+Completed CLI0 offline tests,ASan/UBSan:
+ -4positive/20faults:layer0/31/63 complete3x7 learned stripes,ALL64 semantic
+  selection ONLY (not a full9GB upload in this test),every payload byte/
+  canonical bank/offset,one SPAN_END before BANK_END,no matrices/CPU learned
+  products. Missing selection/invalid layer/stale epoch before FD;changed
+  source epoch with Ready still true after transfer;read/receipt/source/
+  span-END failures;lost progress;wrong single-tensor/repeated selection;
+  source invalidation before Finish;Multiply refusal. First failure CLOSE
+  ONLY,zero later IO/END/retry and caller output unchanged.
+  Source bytes/endpoints are SYNTHETIC,not real full-file authentication.
+  /private/tmp/pioneer-q38-ffn-prime-tests-20261022-d.log
+  SHA5abc7b47812c2ce67333fbf9b18ffd9529928d854bd1e8b38bc12e91fa343aad
+ -39 mixed/production/driver/Assistant-role refusals BEFORE SDK/output.
+  /private/tmp/pioneer-q38-ffn-prime-gates-20261022-a.log
+  SHA6eae392f03a3d5133f27fcd2728ad6e35be0ebf6d905e089251002100df4efa9
+ -Old cohort/dispatch/Work/fast-span session regressions ALL CLI0:
+  /private/tmp/pioneer-q38-ffn-prime-old-cohort-20261022-a.log
+  SHAa670982b2dbfe6803b6bc22a046dc5d23b9ec779fee22622ee712d738919e1e5
+  /private/tmp/pioneer-q38-ffn-prime-old-dispatch-20261022-a.log
+  SHAc972251bc727c0e489c005386086818641add99f15761342a45e0bde68e11df2
+  /private/tmp/pioneer-q38-ffn-prime-old-work-20261022-a.log
+  SHA11a7c177f3434a719402db534c53122e2924e53917b473a1047e503f0b86f0ad
+  /private/tmp/pioneer-q38-ffn-prime-old-span-20261022-a.log
+  SHAd2eb8ff9ad0fbbaca0e09dd9be2eaca1398604f29d6301af9cc50afe33e88519
+
+Read-only SDK independent native builds repeat BYTE-IDENTICAL:
+ /private/tmp/pioneer-q38-ffn-prime-build.QMdQLlJE/pioneer-q38-ffn-prime-final
+ /private/tmp/pioneer-q38-ffn-prime-build.QMdQLlJE/pioneer-q38-ffn-prime-repeat
+ SHA1ec347b53406171d08cef2e43b07340cd46246b6d208652be9f2bf38e4c2b98b.
+Only that new executable was copied to the Pioneer after fresh ALL-parent
+absence/CPU metadata;remote hash exact. Installed041/tag12/gen36 remained
+idle/quiesced0/cold0/owner0/open1/guard1,64CPUs/max137034936320B.
+
+NATIVE TEST COMPLETED CLI0:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-ffn-prime-1ec347b5 --prime-layer0
+ log /private/tmp/pioneer-q38-ffn-prime-native-layer0-20261022-a.log
+ authoritative exec session53697 completed CLI0,never restarted.
+ FULL_PUBLIC_GGUF_SHA_SAME_FILE_PASS_BEFORE_ACCELERATOR_OPEN
+ PASS_AUTHENTIC_FFN_SOURCE_PRIME selection0 pages36720 bytes150405120 matrix_calls0 clean_end1;
+ HOST_SHA_BOUND_UPLOAD_NOT_KERNEL_SOURCE_ATTESTATION_OR_FULL_FFN_COMPUTE
+ log SHA2155080dcb7d17481b7535d7d7ab4a77b95941444f4491843603415b21d4cdc2.
+No SCP/second native job/hot swap during its ENTIRE parent lifetime,
+including the hash child. Actual layer0 THREE FFN weights transferred and
+explicit clean END passed. This is not an LLM throughput test.
+Fresh after-terminal metadata041/tag12/gen36/idle/quiesced0/cold0/owner0/
+open1/guard1,ALL native parents absent,64CPUs/max137034936320B.
+No driver change/reload/reboot/power/SD/Assistant/boot/CPU/RAM/network/settings
+changes. Dirty llama.cpp and unrelated FlashNext untouched.
+
+NEXT:connect the SAME session's actual uploaded
+FFN pages+kernel canonical model/joint mutable owner/actual initialized74page
+workspace/initial5120F32 producer to persistent QFG2 fullFFN execution.
+Do NOT substitute a claimed SHA/ready flag or geometry for actual native
+context/ledger/clock/ALLhost/code/terminal scope. Do NOT repeat completed
+tag34 STOP-only qualification. Real two-session root119 lifetime is already
+qualified and original041 restored at generation36. All-card attention/GDN/
+KV/norm/residual/embedding/sampling and speed work still owed. Work remains
+separate from CPU-reference debug;raw-Dst cache22 HARD BLOCKED. On future
+UNKNOWN:CLOSE ONLY,NO END/retry/reset/further card reads/rollback;retain ALL.

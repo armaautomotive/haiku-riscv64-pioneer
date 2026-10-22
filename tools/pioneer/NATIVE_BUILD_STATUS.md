@@ -1,6 +1,26 @@
 # Native build status
 
-Latest NATIVE checkpoint October22 2026:NEW QFG2 ROOT+ALL119 QFP2
+Latest NATIVE checkpoint October22 2026:actual source-bound FFN
+priming session implemented. SAME full-SHA-authenticated open Source+epoch
+selects gate/up/down BEFORE accelerator FD;full TWO-slot canonical layout,
+exact3x7stripes per layer,or ALL64 semantic selection. Existing native span
+receipts/source epoch checked after every transfer,explicit SPAN_END before
+publication/BANK_END. Load-only role DISABLES Multiply/no old matrix fallback.
+NOT kernel source attestation or workspace/input/compute grant.4positive/
+20faults +39before-SDK gates +old cohort/dispatch/Work/span regressions pass.
+Standalone real-source/native executable builds twice EXACT1ec347b5;SDK
+read-only,no llama build. Staged after fresh no-parent041/tag12/gen36/idle/
+cold0/owner0/open1/guard1,64CPUs/full RAM. SINGLE native --prime-layer0 job
+TERMINAL CLI0,log /private/tmp/pioneer-q38-ffn-prime-native-layer0-20261022-a.log.
+FULL same-open-file SHA passed BEFORE accelerator Open;actual layer0 THREE
+FFN weights36720pages/150405120bytes staged,zero matrix calls,clean END1.
+Fresh post-test metadata041/tag12/gen36/idle/cold0/owner0/open1/guard1,
+ALL native parents absent,64CPUs/max137034936320B. No driver/reboot/power/SD/
+Assistant changes. Next REAL kernel fullFFN context/init/input/execute.
+Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-source-prime-offline-20261022.txt.
+
+Previous NATIVE checkpoint October22 2026:NEW QFG2 ROOT+ALL119 QFP2
 boot/STOP/current-terminal/hold/restoration PASS in TWO actual P100A
 sessions. EACH saved/installed/restored867448program+11424peer-control+
 12288root-meta+2048root-stack words,119ready/stopped/held,rootStarted/

@@ -4,6 +4,11 @@
 #include "PioneerQ38PublicModelSource.h"
 #include "PioneerQwen38CohortHost.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#ifdef PIONEER_Q38_FFN_PRIME
+#if PIONEER_Q38_FFN_PRIME != 1 || !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
+#error FFN source priming requires separate original-TC fast-span Work source,never CPU validation/new encoding
+#endif
+#endif
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_ROOT_STATS_BENCH) || defined(PIONEER_Q38_BENCHMARK_HOST) || defined(PIONEER_Q38_FFN_REPEAT_BENCH)
 #error Model root profile is isolated fixed-public original-TC THREE32 Work ONLY
@@ -54,6 +59,21 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	void* observer=nullptr;
 #ifdef PIONEER_Q38_SPAN_PRELOAD
 	bool spanPrimed=false,spanAttempted=false;
+#endif
+#ifdef PIONEER_Q38_FFN_PRIME
+	// Exact same authenticated Source object/epoch as the transport session.
+	// This host selection is NOT a kernel model/input/compute capability.
+	std::vector<uint8_t> ffnSelection;
+	uint64_t ffnEpoch=0;
+	unsigned ffnLayer=64,ffnTensors=0;
+	bool ffnSelected=false;
+	bool FfnSourceCurrent() const {
+		return ffnSelected && source.Ready() && ffnEpoch==source.Model().Epoch()
+			&& ffnSelection.size()==source.Model().Tensors().size();
+	}
+	bool FfnSelectedPart(const PioneerQ38PackedPart& p)const {
+		return p.kind==PIONEER_Q38_WEIGHT && p.tensor<ffnSelection.size() && ffnSelection[p.tensor];
+	}
 #endif
 	void Elapsed(uint64_t start,uint64_t& total) {
 		uint64_t end=PioneerQ38SessionNow(io,0);
@@ -130,10 +150,43 @@ public:
 	// a user cancellation or permission to skip any transport proof.
 	void Observe(bool (*callback)(void*,uint64_t,uint64_t),void* owner) { observe=callback; observer=owner; }
 	bool Abort() { return Stop(); } // CLOSE ONLY; never END/retry after a graph error
+#ifdef PIONEER_Q38_FFN_PRIME
+	// Select BEFORE accelerator Open. ALL three semantic weights are derived
+	// from the SAME live authenticated model,never caller offsets or buffers.
+	// UINT32_MAX selects all64 FFNs. A refusal is sticky/CLOSE-only;there is
+	// no implicit ordinary-tensor/CPU or source-format fallback.
+	bool SelectFfnPrime(unsigned layer) {
+		if (attempted || failed || finished || ffnSelected || !source.Ready()
+			|| (layer!=UINT32_MAX && layer>=64)) return Stop();
+		const auto& model=source.Model();const uint64_t epoch=model.Epoch();
+		if (!epoch || model.Tensors().size()!=851) return Stop();
+		std::vector<uint8_t> selected(851,0);unsigned count=0;
+		for (unsigned current=0;current<64;current++) if (layer==UINT32_MAX || layer==current) {
+			for (unsigned role=0;role<3;role++) {
+				PioneerQ38Tensor expected;if (!PioneerQ38Expected(current,role+2,expected)) return Stop();
+				const auto* t=model.Find(expected.name.c_str());
+				if (!t || t->type!=12 || t->rank!=2 || t->inputs!=(role==2?17408U:5120U)
+					|| t->outputs!=(role==2?5120U:17408U)) return Stop();
+				size_t index=size_t(t-model.Tensors().data());
+				if (index>=selected.size() || selected[index]) return Stop();
+				selected[index]=1;count++;
+			}
+		}
+		if (count!=(layer==UINT32_MAX?192U:3U) || !source.Ready() || model.Epoch()!=epoch) return Stop();
+		ffnSelection.swap(selected);ffnEpoch=epoch;ffnLayer=layer;ffnTensors=count;ffnSelected=true;return true;
+	}
+	bool FfnPrimeComplete(unsigned layer)const {
+		return active && !failed && !finished && spanPrimed && ffnLayer==layer && FfnSourceCurrent();
+	}
+#endif
 	bool Open() {
 		if (attempted || failed || finished) return false;
 		attempted=true;
+#ifdef PIONEER_Q38_FFN_PRIME
+		if (!FfnSourceCurrent() || !layout.Build(source.Model(),8192,true,true)) return Stop();
+#else
 		if (!source.Ready() || !layout.Build(source.Model(),8192,true)) return Stop(); // BEFORE accelerator FD
+#endif
 		uploaded.assign(layout.Parts().size(),0);
 		fd=io.Open(); if (fd<0) return Stop();
 		tt_q38_bank_support storage={};
@@ -153,6 +206,9 @@ public:
 		if (!io.Call(fd,TT_PCI_PROBE_Q38_BANK_SUPPORT,&storage,sizeof(storage)) || storage.driver!=45 || storage.version!=1 || storage.banks!=7
 			|| storage.page_bytes!=4096 || storage.max_pages!=4 || storage.storage_only!=1 || storage.bytes_per_bank!=PioneerResidentBanks::Capacity) return Stop();
 		tt_q38_bank_session session={}; session.version=1;
+#ifdef PIONEER_Q38_FFN_PRIME
+		if (!FfnSourceCurrent()) return Stop();
+#endif
 		if (!source.Ready() || !io.Call(fd,TT_PCI_PROBE_Q38_BANK_BEGIN,&session,sizeof(session))) return Stop();
 		const auto& r=session.result;
 		if (r.version!=1 || r.state!=TT_RESIDENT_SESSION_READY || r.active!=1 || r.host_ready!=1 || r.cold || r.capabilities
@@ -167,15 +223,25 @@ public:
 	bool PrimeSpan(unsigned tensor=UINT32_MAX) {
 		if (!active || failed || finished || spanAttempted || calls || !source.Ready()
 			|| (tensor!=UINT32_MAX && tensor>=source.Model().Tensors().size())) return Stop();
+#ifdef PIONEER_Q38_FFN_PRIME
+		if (tensor!=UINT32_MAX || !FfnSourceCurrent()) return Stop();
+#endif
 		spanAttempted=true; auto request=std::make_unique<tt_q38_span_upload>(); unsigned nonce=0,parts=0;
 		const auto& fragments=layout.Parts();
 		uint64_t plannedBytes=0;
 		for (const auto& p:fragments) if (p.kind==PIONEER_Q38_WEIGHT && (tensor==UINT32_MAX || p.tensor==tensor)) {
+#ifdef PIONEER_Q38_FFN_PRIME
+			if (!FfnSelectedPart(p)) continue;
+#endif
 			const auto& t=source.Model().Tensors()[p.tensor];
 			if (t.type && t.rank==2 && t.name!="token_embd.weight") plannedBytes+=p.allocated;
 		}
 		for (unsigned f=0;f<fragments.size();f++) {
 			const auto& p=fragments[f]; if (p.kind!=PIONEER_Q38_WEIGHT || (tensor!=UINT32_MAX && p.tensor!=tensor)) continue;
+#ifdef PIONEER_Q38_FFN_PRIME
+			if (!FfnSelectedPart(p)) continue;
+			if (!FfnSourceCurrent()) return Stop();
+#endif
 			const auto& t=source.Model().Tensors()[p.tensor];
 			if (!t.type || t.rank!=2 || t.name=="token_embd.weight") continue;
 			for (unsigned page=0;page<p.allocated/4096;) {
@@ -187,6 +253,9 @@ public:
 					reinterpret_cast<uint8_t*>(request->data+at*1024),4096)) return Stop();
 				Elapsed(start,sourceReadNanos);
 				if (!source.Ready()) return Stop();
+#ifdef PIONEER_Q38_FFN_PRIME
+				if (!FfnSourceCurrent()) return Stop();
+#endif
 				start=PioneerQ38SessionNow(io,0);
 				bool okay=io.Call(fd,
 #ifdef PIONEER_Q38_SPAN_FAST
@@ -204,20 +273,33 @@ public:
 					|| r.host_exact!=1 || r.matched_words!=pages*1024
 #endif
 					|| r.recovery_required || r.reserved) return Stop();
+#ifdef PIONEER_Q38_FFN_PRIME
+				if (!FfnSourceCurrent()) return Stop();
+#endif
 				pagesUploaded+=pages; page+=pages;
 				if (observe && !observe(observer,pagesUploaded*4096,plannedBytes)) return Stop();
 			}
 			if (!source.Ready()) return Stop();
 			uploaded[f]=1; bytesRetained+=p.allocated; parts++;
 		}
+#ifdef PIONEER_Q38_FFN_PRIME
+		if (!FfnSourceCurrent() || parts!=ffnTensors*7 || pagesUploaded*4096!=plannedBytes) return Stop();
+#endif
 		if (!parts || !source.Ready()) return Stop();
 		tt_q38_span_end end={1,0,0,0};
 		if (!io.Call(fd,TT_PCI_PROBE_Q38_SPAN_END,&end,sizeof(end)) || end.version!=1 || end.reserved
 			|| end.closed!=1 || end.recovery_required || !source.Ready()) return Stop();
+#ifdef PIONEER_Q38_FFN_PRIME
+		if (!FfnSourceCurrent()) return Stop();
+#endif
 		spanPrimed=true; return true;
 	}
 #endif
 	bool Multiply(unsigned tensor,const float* input,unsigned inputs,float* output,unsigned outputs,unsigned workers=Mode::Workers) {
+#ifdef PIONEER_Q38_FFN_PRIME
+		(void)tensor;(void)input;(void)inputs;(void)output;(void)outputs;(void)workers;
+		return Stop(); // This load-only role NEVER silently runs old matrix/CPU quantization.
+#else
 		if (!active || failed || finished) return false;
 		if (!source.Ready() || tensor>=source.Model().Tensors().size()) return Stop();
 		const auto& t=source.Model().Tensors()[tensor];
@@ -252,9 +334,13 @@ public:
 		if (!PioneerQ38CpuValidate(source,tensor,input,inputs,scratch.data(),outputs)) return Stop();
 #endif
 		memcpy(output,scratch.data(),outputs*4); return true;
+#endif
 	}
 	bool Finish() {
 		if (finished) return clean && !failed;
+#ifdef PIONEER_Q38_FFN_PRIME
+		if (fd>=0 && !FfnSourceCurrent()) return Stop();
+#endif
 		finished=true;
 		if (fd<0) { clean=!attempted && !failed; return clean; }
 		if (failed) return Stop();

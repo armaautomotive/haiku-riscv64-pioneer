@@ -3,6 +3,7 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_FFN_PRIME:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" in
  0) [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] && [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010034 ] || exit 2;;
