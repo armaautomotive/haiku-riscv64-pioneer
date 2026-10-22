@@ -6,7 +6,8 @@
 #include "PioneerQ38StateZeroImage.h"
 #include "PioneerQ38StateZeroShape.h"
 #include "PioneerQ38SpanController.h"
-// OFFLINE private FFN initialization controller;NO native driver selects it.
+// Private FFN initialization controller;the isolated tag35 native model
+// initializer selects it ONLY after its real context/ledger/joint binding.
 // Reuses the EXACT frozen,previously qualified zero-only image. It is NOT
 // a model/FFN compute capability or a replacement for legacy GDN ownership.
 // Native integration MUST interlock EVERY other writer/compute path,retain

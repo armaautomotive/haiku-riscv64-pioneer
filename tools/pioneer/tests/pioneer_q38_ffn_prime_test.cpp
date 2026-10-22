@@ -58,6 +58,7 @@ struct FfnPrimeIO:WorkSessionIO {
  static bool Progress(void* opaque,uint64_t bytes,uint64_t planned){auto& io=*static_cast<FfnPrimeIO*>(opaque);
   assert(bytes==io.uploadedBytes && bytes<=planned && !io.runs && !io.spanEnds);io.progress++;return io.failure!=10;}
 };
+#ifndef PIONEER_Q38_FFN_PRIME_FIXTURE_ONLY
 int main() {
  (void)&Check;(void)&CohortHostTestMain;Fixture fixture;unsigned positive=0,faults=0;
  for(unsigned layer:{0U,31U,63U}){FfnPrimeSource source(fixture.file);FfnPrimeIO io(source,layer);
@@ -100,3 +101,4 @@ int main() {
  }
  printf("PASS FFN source-bound real session:positive%u/faults%u,layer0/31/63 ALL3x7stripes+ALL64selection,original TC bytes/zero matrix and CPU learned products,full two-slot canonical layout,one spanCLOSE before BANK_END,first mismatch/source loss CLOSE ONLY no END/retry/fallback;SYNTHETIC_SOURCE_ENDPOINTS_NOT_NATIVE_AUTH_OR_FFN_COMPUTE\n",positive,faults);
 }
+#endif

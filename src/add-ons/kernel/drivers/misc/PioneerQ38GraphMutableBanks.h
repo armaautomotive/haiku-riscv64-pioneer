@@ -8,8 +8,9 @@
 // KERNEL-PRIVATE,HEAP ONLY. ONE sticky reservation for the complete GDN
 // state AND the resident FFN,not two independent mutable owners. Native
 // integration must derive these proposals from the authenticated retained
-// model and hold the same exclusive global store lock. No native operation
-// selects this factory yet. It grants NO initialization/producer/launch,
+// model and hold the same exclusive global store lock. The isolated tag35
+// native FFN initializer binds this SAME owner/ledger,not old GDN pointers.
+// This factory itself grants NO initialization/producer/launch,
 // terminal,clock or host-DMA authority. Each role keeps its private ledger.
 class PioneerQ38GraphMutableBanks {
  PioneerResidentBanks* banks=nullptr;

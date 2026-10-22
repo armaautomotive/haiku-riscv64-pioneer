@@ -1,5 +1,29 @@
 # Native build status
 
+Latest PRE-DEPLOYMENT checkpoint October22 2026:REAL native FFN model
+binding+74page workspace zero-CLOSE bridge implemented. Isolated tag35/
+namespace8;SAME actual retained cookie/global call lock/thread seal/clock/
+uploaded initialized bitmap and canonical plan+joint graph owner. OLD
+individually owned GDN pointers stay NULL;no borrowed-child deletion or
+GDN initialization publication. ALL competing writes blocked once bound;
+zero uses ACTUAL frozen RV32/controller and independent119-held audits.
+New END gate requires exact published zero/identity/owner/saved/nonce1
+BEFORE any cleanup;UNKNOWN/lost reply immediately retains ALL resources.
+3positive/59inert refusals/11fault-retentions actual extracted native
+code+frozen zero RV32 pass;source-bound session3positive/21faults,88SDK/
+namespace gates,old scope/root41/parent-close/prime regressions pass.
+Driver5361c335/clientf4fc646d build TWICE EXACT,704B max new native frame;
+old ROOTaa673/guardd1ce/default43control2df/prime1ec347 BYTE-IDENTICAL.
+New guarded updater2e8a861f pins041/tag12<->5361/tag35;focused102cases
+pass. BROAD prior-route updater regression still running handle88607.
+NO files uploaded or driver changed yet;original041/tag12/gen36 healthy
+after the prior real layer0 weight prime. No native job/Assistant/reboot/
+power/SD/boot/CPU/RAM/network changes. Next finish SAME local updater
+regression,then guarded native source->upload->workspace-init/clean-END.
+Persistent fullFFN/input/real decoder still missing;NOT a computation or
+speed improvement. Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-model-init-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:actual source-bound FFN
 priming session implemented. SAME full-SHA-authenticated open Source+epoch
 selects gate/up/down BEFORE accelerator FD;full TWO-slot canonical layout,

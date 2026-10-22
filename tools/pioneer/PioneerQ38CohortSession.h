@@ -9,6 +9,12 @@
 #error FFN source priming requires separate original-TC fast-span Work source,never CPU validation/new encoding
 #endif
 #endif
+#ifdef PIONEER_Q38_FFN_MODEL_INIT_CLIENT
+#if PIONEER_Q38_FFN_MODEL_INIT_CLIENT != 1 || !defined(PIONEER_Q38_FFN_PRIME) || defined(PIONEER_Q38_FFN_MODEL_INIT)
+#error FFN model initialization requires its separate source-bound prime client role
+#endif
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnModelProtocol.h"
+#endif
 #ifdef PIONEER_Q38_MODEL_ROOT_PROFILE
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_ROOT_STATS_BENCH) || defined(PIONEER_Q38_BENCHMARK_HOST) || defined(PIONEER_Q38_FFN_REPEAT_BENCH)
 #error Model root profile is isolated fixed-public original-TC THREE32 Work ONLY
@@ -67,6 +73,9 @@ template<class IO,class Source=PioneerQ38PublicModelSource,class Mode=PioneerQ38
 	uint64_t ffnEpoch=0;
 	unsigned ffnLayer=64,ffnTensors=0;
 	bool ffnSelected=false;
+#ifdef PIONEER_Q38_FFN_MODEL_INIT_CLIENT
+	bool ffnModelInitialized=false,ffnModelAttempted=false;
+#endif
 	bool FfnSourceCurrent() const {
 		return ffnSelected && source.Ready() && ffnEpoch==source.Model().Epoch()
 			&& ffnSelection.size()==source.Model().Tensors().size();
@@ -178,6 +187,24 @@ public:
 	bool FfnPrimeComplete(unsigned layer)const {
 		return active && !failed && !finished && spanPrimed && ffnLayer==layer && FfnSourceCurrent();
 	}
+#ifdef PIONEER_Q38_FFN_MODEL_INIT_CLIENT
+	// SAME live authenticated Source/FD/epoch/upload;no caller buffers,
+	// coordinates or ready claim. Native zero-CLOSE receipt is NOT FFN
+	// arithmetic/model inference. NEVER fall back to legacy Multiply.
+	bool InitializeFfnWorkspace(unsigned layer) {
+		if (ffnModelAttempted || ffnModelInitialized || layer>=64 || !FfnPrimeComplete(layer)) return Stop();
+		ffnModelAttempted=true;
+		tt_q38_ffn_model_initialize r={}; r.version=1; r.layer=layer;
+		if (!FfnSourceCurrent() || !io.Call(fd,TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE,&r,sizeof(r)) || !FfnSourceCurrent()
+			|| r.version!=1 || r.layer!=layer || r.reserved[0] || r.reserved[1] || r.state!=TT_RUNTIME_PASSED
+			|| r.pages!=74 || r.closed!=1 || r.initialization_published!=1 || r.recovery_required || r.reserved_reply
+			|| !r.session || !r.driver_generation || r.driver_generation!=mode.FfnModelGeneration()) return Stop();
+		ffnModelInitialized=true;return true;
+	}
+	bool FfnWorkspaceComplete(unsigned layer)const {
+		return ffnModelInitialized && FfnPrimeComplete(layer);
+	}
+#endif
 #endif
 	bool Open() {
 		if (attempted || failed || finished) return false;

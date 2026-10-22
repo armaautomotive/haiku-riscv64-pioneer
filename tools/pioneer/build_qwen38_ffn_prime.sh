@@ -2,7 +2,12 @@
 # Isolated SAME authenticated source -> exact semantic FFN spans. Uses
 # packaged SDK only;NO llama source/library build,install,driver or execution.
 set -eu
-[ "$#" = 2 ] || exit 2
+[ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
+role_flags=
+if [ "$#" = 3 ];then
+ [ "$3" = --model-init ] || exit 2
+ role_flags=-DPIONEER_Q38_FFN_MODEL_INIT_CLIENT=1
+fi
 # No inherited experiment can silently change this source/transport role.
 for key in $(env | sed -n 's/^\(PIONEER_[A-Z0-9_]*\)=.*/\1/p');do
  value=$(printenv "$key" || :);[ "$value" = 0 ] || exit 2
@@ -22,6 +27,6 @@ umask 077
 "$cxx" -std=c++17 -O2 -ffp-contract=off -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
  -DTT_PIONEER_EXPERIMENTAL_Q38_COHORT_SEALED -DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR \
  -DPIONEER_Q38_WORK_INFERENCE -DPIONEER_Q38_SPAN_PRELOAD -DPIONEER_Q38_SPAN_FAST -DPIONEER_Q38_FFN_PRIME=1 \
- "$@" -B"$release/system/glue/" -L"$release/system/libroot" \
+ $role_flags "$@" -B"$release/system/glue/" -L"$release/system/libroot" \
  "$project/tools/pioneer/pioneer_q38_ffn_prime.cpp" -o "$output"
 shasum -a 256 "$output"

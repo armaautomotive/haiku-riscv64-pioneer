@@ -26,7 +26,16 @@
 #error Worker lifetime qualification requires its exact isolated diagnostic OR reference role
 #endif
 #endif
-#if defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT)
+#if defined(PIONEER_Q38_FFN_MODEL_INIT) || defined(PIONEER_Q38_FFN_MODEL_INIT_CLIENT)
+#if (defined(PIONEER_Q38_FFN_MODEL_INIT) && PIONEER_Q38_FFN_MODEL_INIT != 1) || (defined(PIONEER_Q38_FFN_MODEL_INIT_CLIENT) && PIONEER_Q38_FFN_MODEL_INIT_CLIENT != 1) || (defined(PIONEER_Q38_FFN_MODEL_INIT) && defined(PIONEER_Q38_FFN_MODEL_INIT_CLIENT)) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_NATIVE_Q8_QUALIFICATION) || defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT)
+#error Canonical FFN model initialization has a separate exact role and namespace
+#endif
+// Model binding/zero use62a0/62a1;legacy projection probes stay in this
+// role's62a2/62a3. Ordinary Work/Assistant clients can NEVER invoke tag35.
+#define TT_PCI_PROBE_Q38_WORK_SUPPORT (B_DEVICE_OP_CODES_END + 0x62a2)
+#define TT_PCI_PROBE_Q38_WORK_RUN (B_DEVICE_OP_CODES_END + 0x62a3)
+#define TT_Q38_WORK_SUPPORT_VERSION 8
+#elif defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT)
 #if (defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) && PIONEER_Q38_FFN_CODE_DIAGNOSTIC != 1) || (defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT) && PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT != 1) || (defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) && defined(PIONEER_Q38_FFN_CODE_REFERENCE_CLIENT)) || defined(PIONEER_Q38_PEER_PHASE_QUALIFICATION) || defined(PIONEER_Q38_PEER_PHASE_REFERENCE_CLIENT) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_NATIVE_Q8_QUALIFICATION) || defined(PIONEER_Q38_NATIVE_Q8_REFERENCE_CLIENT)
 #error Held-only FFN code qualification has its own exact isolated protocol role
 #endif

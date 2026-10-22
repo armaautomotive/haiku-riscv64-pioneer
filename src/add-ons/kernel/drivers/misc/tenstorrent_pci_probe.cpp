@@ -5,6 +5,17 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#error Canonical FFN model init requires its separate exact tag35 retained-owner role,not old GDN/code/Work promotion
+#endif
+#include "PioneerQ38GraphMutableBanks.h"
+#include "PioneerQ38FfnZeroController.h"
+#include "PioneerQ38FfnModelProtocol.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010035ULL && !defined(PIONEER_Q38_FFN_MODEL_INIT)
+#error Reserved tag35 identifies ONLY canonical FFN model initialization
+#endif
 #ifdef PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC
 #if PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010034ULL || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_REFERENCE_CLIENT)
 #error New ROOT execution lifetime requires separate exact-tag34 native STOP-only diagnostic ONLY
@@ -256,6 +267,9 @@ static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 template<class Cookie> static bool Q38MutableScopeOwned(const Cookie* cookie)
 {
 	return cookie && cookie->context && (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+		|| cookie->context->q38FfnModelPlan || cookie->context->q38GraphMutable || cookie->context->q38FfnZero
+#endif
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 		|| cookie->context->q38ResidentGdnRoot
 #endif
@@ -2396,6 +2410,16 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+	// ONE retained joint reservation. Its typed children are BORROWED and
+	// NEVER enter the old individually deleted q38GdnBanks/q38StateZero.
+	PioneerQ38CanonicalModelPlan* q38FfnModelPlan=NULL;
+	PioneerQ38GraphMutableBanks* q38GraphMutable=NULL;
+	PioneerQ38FfnZeroLease* q38FfnZero=NULL;
+	PioneerQ38GdnIdentity q38FfnModelIdentity={};
+	const uint8* q38FfnModelLedger=NULL; // exact actual native initialized bitmap
+	unsigned q38FfnModelLayer=64;
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	// Private heap owners:separate fixed-zero diagnostic ONLY,not model compute.
 	PioneerQ38GdnBanks* q38GdnBanks=NULL;
@@ -2496,6 +2520,11 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+		delete q38FfnZero;
+		delete q38GraphMutable;
+		delete q38FfnModelPlan; // borrowed by the joint owner;destroy LAST
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 		delete q38ResidentGdnRoot;
@@ -2530,6 +2559,10 @@ struct PioneerStoreContext {
 #endif
 		) {
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
+	#ifdef PIONEER_Q38_FFN_MODEL_INIT
+		if ((q38GraphMutable && q38GraphMutable->Unsafe())
+			|| (q38FfnZero && (q38FfnZero->unsafe || (!controlledZero && q38FfnZero->running)))) return true;
+	#endif
 		if ((q38GdnBanks && q38GdnBanks->Unsafe())
 			|| (q38StateZero && (q38StateZero->unsafe || (!controlledZero && q38StateZero->running)))) return true;
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
@@ -2602,6 +2635,9 @@ BeginQ38NormalClock(PioneerStoreContext& c)
 	if (!c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || c.Unsafe()
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		|| c.q38GdnBanks || c.q38StateZero
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+		|| c.q38FfnModelPlan || c.q38GraphMutable || c.q38FfnZero
+#endif
 #endif
 		|| c.q38Clock.RequiresExplicitEnd() || c.q38Dispatch || c.q38Cohort || c.q38Span
 		|| c.panelProbe.saved || c.streamProbe.saved || c.fleet || c.runtimeCoreMode!=-1) return false;
@@ -2628,6 +2664,9 @@ FinishQ38NormalClock(PioneerStoreContext& c,bool knownClean)
 		&& (!c.q38Dispatch || c.q38Dispatch->closed);
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	knownClean=knownClean && (!c.q38StateZero || c.q38StateZero->closed);
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+	knownClean=knownClean && (!c.q38FfnZero || c.q38FfnZero->closed);
+#endif
 #endif
 	bool ended=c.q38Clock.End(c.baseline.baseline.baseline.baseline.control.control.control.arc,
 		c.baseline.baseline.baseline.baseline.control.control.telemetry,knownClean);
@@ -2648,6 +2687,10 @@ static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
 	c.dispatchOwnerRetained=true;
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+	if (c.q38FfnZero) c.q38FfnZero->unsafe=true;
+	if (c.q38GraphMutable) c.q38GraphMutable->Fault(); // MEMORY ONLY;retain ALL borrowed roles
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	if (c.q38StateZero) c.q38StateZero->unsafe=true;
 	if (c.q38GdnBanks) c.q38GdnBanks->Fault(); // MEMORY ONLY
@@ -2677,6 +2720,28 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+	// PIONEER_Q38_FFN_MODEL_END_GATE_BEGIN
+	// BEFORE ANY STOP/restore/clock/release. Neither page count nor a
+	// pristine lease proves that this exact joint owner completed zero CLOSE.
+	if (c.q38FfnModelPlan || c.q38GraphMutable || c.q38FfnZero) {
+		const auto* graph=c.q38GraphMutable;
+		auto* ffn=graph?c.q38GraphMutable->Ffn(c.q38FfnModelIdentity):NULL;
+		if (!c.bankStorageOnly || !c.q38FfnModelPlan || !graph || !ffn || !c.q38FfnZero
+			|| graph->Unsafe() || graph->CanonicalModel(c.q38FfnModelIdentity)!=c.q38FfnModelPlan
+			|| c.q38FfnModelLedger!=c.initialized || c.q38FfnModelLayer>=64
+			|| !graph->MatchesInitializationOwner(c.banks,c.baseline.baseline.baseline.baseline.dram,c.q38FfnModelIdentity)
+			|| c.q38FfnZero->owner!=ffn || c.q38FfnZero->banks!=&c.banks
+			|| c.q38FfnZero->proof!=&c.baseline.baseline.baseline.baseline.dram
+			|| !(c.q38FfnZero->identity==c.q38FfnModelIdentity) || !c.q38FfnZero->closed
+			|| !c.q38FfnZero->saved || c.q38FfnZero->nonce!=1
+			|| c.q38FfnZero->unsafe || c.q38FfnZero->running || c.q38FfnZero->dirty || c.q38FfnZero->ready
+			|| !ffn->InitializationPublished(c.q38FfnModelIdentity)) {
+			clean=false; RetainQ38DispatchOwner(c,result); return false;
+		}
+	}
+	// PIONEER_Q38_FFN_MODEL_END_GATE_END
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	if (!c.bankStorageOnly && (c.q38GdnBanks || c.q38StateZero
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
@@ -2741,6 +2806,41 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
 {
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+	// PIONEER_Q38_FFN_MODEL_NATIVE_SCOPE_BEGIN
+	// Same real FD/cookie/global-lock call seal,actual upload bitmap,joint
+	// owner and clock. A host SHA/geometry/ready Boolean cannot grant this.
+	PioneerStoreContext* c=q38MutableContext;
+	if (!c || &c->io!=this || sColdRecoveryRequired || sReloadQuiesced || !sRuntimeOwner
+		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
+		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled || q38SpanAllowed
+		|| c->q38GdnCallThread<0 || c->q38GdnCallThread!=find_thread(NULL)
+		|| c->q38GdnBanks || c->q38StateZero || !c->q38FfnModelPlan || !c->q38FfnModelPlan->Ready()
+		|| !c->q38GraphMutable || !c->q38FfnZero || !c->q38FfnModelIdentity.Valid()
+		|| c->q38FfnModelIdentity.driverGeneration!=sReloadGeneration || c->q38FfnModelLayer>=64
+		|| !c->initialized || c->q38FfnModelLedger!=c->initialized
+		|| c->q38Dispatch || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+		|| c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
+		|| c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready
+		|| c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready
+		|| !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready
+		|| c->q38Span->running || c->q38Span->unsafe) return false;
+	auto& graph=*c->q38GraphMutable;
+	auto* ffn=graph.Ffn(c->q38FfnModelIdentity);
+	if (!ffn || graph.CanonicalModel(c->q38FfnModelIdentity)!=c->q38FfnModelPlan
+		|| !graph.MatchesInitializationOwner(c->banks,dram,c->q38FfnModelIdentity)) return false;
+	const auto& zero=*c->q38FfnZero;
+	if (zero.identity.Valid()) {
+		if (!(zero.identity==c->q38FfnModelIdentity) || zero.owner!=ffn || zero.banks!=&c->banks || zero.proof!=&dram) return false;
+	} else if (!PioneerQ38FfnZeroPristine(zero) || zero.closed) return false;
+	const auto& clock=c->q38Clock.Snapshot();
+	PioneerQ38FfnExtent probe;
+	return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED
+		&& clock.busy_requested && clock.busy_acknowledged && !clock.restored && !c->Unsafe(true)
+		&& ffn->MatchesInitializationOwner(c->banks,dram,c->q38FfnModelIdentity)
+		&& ffn->InitializeSpan(c->q38FfnModelIdentity,0,0,1,probe);
+	// PIONEER_Q38_FFN_MODEL_NATIVE_SCOPE_END
+#else
 	PioneerStoreContext* c=q38MutableContext;
 	if (!c || &c->io!=this || sColdRecoveryRequired || sReloadQuiesced || !sRuntimeOwner
 		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
@@ -2771,6 +2871,7 @@ bool PioneerSessionIO::StateZeroBeforeCohort()
 	// this running bit for every cleanup/status/lost-caller path.
 	return !c->Unsafe(true) && c->q38GdnBanks->MatchesInitializationOwner(c->banks,dram,c->q38GdnIdentity)
 		&& c->q38GdnBanks->InitializeSpan(c->q38GdnIdentity,0,0,1,probe);
+#endif
 }
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 // PIONEER_Q38_RGDN_ROOT_NATIVE_SCOPE_BEGIN
@@ -2887,6 +2988,116 @@ public:
 	PioneerStoreContext* Context() const { return held && status==B_OK?context:NULL; }
 };
 // PIONEER_Q38_GDN_CALL_SCOPE_END
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+// PIONEER_Q38_FFN_MODEL_NATIVE_BIND_BEGIN
+// Exact native context,not a disconnected layout helper. Allocations are
+// HEAP ONLY. Publish the whole graph before its atomic mutable claim;
+// after publication every refusal retains ALL owners/clock/cookie.
+static uint64_t sQ38FfnModelEpoch=0; // global lock;never wrap/reuse
+static bool BindQ38FfnModel(PioneerStoreContext& c,unsigned layer)
+{
+	if (sColdRecoveryRequired || sReloadQuiesced || !sRuntimeOwner || sRuntimeOwner->magic!=0x50313030
+		|| sRuntimeOwner->context!=&c || !sBankStorageOnly || !c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total
+		|| c.io.q38MutableContext!=&c || c.q38GdnCallThread<0 || c.q38GdnCallThread!=find_thread(NULL)
+		|| c.runtimeCoreMode!=-1 || c.io.runtimeCore || c.io.fleetEnabled || !c.io.q38SpanAllowed || c.Unsafe()
+		|| !c.initialized || !c.hashes || layer>=64 || sQ38FfnModelEpoch==UINT64_MAX
+		|| c.q38FfnModelPlan || c.q38GraphMutable || c.q38FfnZero || c.q38FfnModelLedger
+		|| c.q38FfnModelIdentity.session || c.q38FfnModelIdentity.sequence || c.q38FfnModelIdentity.modelEpoch
+		|| c.q38FfnModelIdentity.driverGeneration || c.q38FfnModelLayer!=64
+		|| c.q38GdnBanks || c.q38StateZero || c.q38GdnIdentity.session || c.q38GdnIdentity.sequence
+		|| c.q38GdnIdentity.modelEpoch || c.q38GdnIdentity.driverGeneration
+		|| c.q38Dispatch || c.q38Cohort || c.fleet || sQ38LocalDeltaOwner
+		|| c.q38Delta.saved || c.q38Delta.dirty || c.q38Delta.ready || c.q38Delta.running || c.q38Delta.awaiting
+		|| c.panelProbe.saved || c.panelProbe.dirty || c.panelProbe.ready
+		|| c.streamProbe.saved || c.streamProbe.dirty || c.streamProbe.ready
+		|| !c.q38Span || !c.q38Span->closed || c.q38Span->dirty || c.q38Span->ready || c.q38Span->running || c.q38Span->unsafe
+		|| !c.lease.saved || !c.lease.ready || c.lease.pending || c.lease.recovery_required
+		|| !c.bulk.saved || !c.bulk.ready || c.bulk.dirty || c.bulk.unsafe
+		|| !c.bulkHost.allocated || !c.bulkHost.ready || c.bulkHost.pending || c.bulkHost.quarantined || c.bulkHost.released
+		|| !c.wideHost.allocated || !c.wideHost.ready || !c.wideHost.memory_type_set
+		|| c.wideHost.pending || c.wideHost.quarantined || c.wideHost.released) return false;
+	const auto& clock=c.q38Clock.Snapshot();
+	if (!c.q38Clock.RequiresExplicitEnd() || clock.state!=TT_ARC_CLOCK_BUSY_VERIFIED
+		|| !clock.busy_requested || !clock.busy_acknowledged || clock.restored) return false;
+	auto* plan=new(std::nothrow) PioneerQ38CanonicalModelPlan;
+	auto* graph=new(std::nothrow) PioneerQ38GraphMutableBanks;
+	auto* zero=new(std::nothrow) PioneerQ38FfnZeroLease;
+	if (!plan || !graph || !zero || !plan->Build() || !plan->FfnPagesPresent(layer,c.initialized,PioneerResidentBanks::Pages)) {
+		delete zero; delete graph; delete plan; return false; // no claim/device IO
+	}
+	// The model epoch denotes this fixed layout binding,NOT a caller's SHA
+	// or kernel authentication. Genuine host SAME-FILE provenance remains
+	// mandatory on BOTH sides of this ioctl in the source-bound client.
+	c.q38FfnModelIdentity={++sQ38FfnModelEpoch,1,1,sReloadGeneration};
+	c.q38FfnModelPlan=plan; c.q38GraphMutable=graph; c.q38FfnZero=zero;
+	c.q38FfnModelLedger=c.initialized; c.q38FfnModelLayer=layer;
+	c.runtimeCoreMode=1; c.io.q38SpanAllowed=false;
+	bool okay=graph->BindCanonical(c.banks,c.baseline.baseline.baseline.baseline.dram,c.q38FfnModelIdentity,
+		c.initialized,PioneerResidentBanks::Pages,*plan,0);
+	if (!okay) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+// PIONEER_Q38_FFN_MODEL_NATIVE_BIND_END
+// PIONEER_Q38_FFN_MODEL_NATIVE_INITIALIZE_BEGIN
+static bool InitializeQ38FfnModel(PioneerStoreContext& c,PioneerQ38FfnZeroResult& result)
+{
+	if (!c.io.StateZeroBeforeCohort()) return false;
+	auto* ffn=c.q38GraphMutable->Ffn(c.q38FfnModelIdentity);
+	if (!ffn) return false;
+	auto& dram=c.baseline.baseline.baseline.baseline.dram;
+	auto& noc=c.baseline.baseline.baseline.noc;
+	auto& zero=*c.q38FfnZero;
+	bool okay=PioneerQ38FfnZeroPrepare(c.io,dram,noc,*ffn,c.banks,c.q38FfnModelIdentity,c.host,
+		c.lease,c.bulk,c.bulkHost,c.wideHost,zero)
+		&& PioneerQ38FfnZeroRun(c.io,dram,noc,*ffn,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,
+			zero,c.q38FfnModelIdentity,0,0,PioneerQ38FfnBanks::Pages,result)
+		&& result.state==TT_RUNTIME_PASSED && result.pages==74 && result.bytes==303104
+		&& result.nonce==1 && result.started==1 && result.completed==1 && result.held==1 && !result.recovery_required
+		&& PioneerQ38FfnZeroClose(c.io,dram,noc,*ffn,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,zero,true);
+	// Actual jobs/learned bitmap and this SAME joint owner's known-clean
+	// zero publication are checked together,not synthesized from a count.
+	auto* jobs=okay?new(std::nothrow) PioneerQ38FfnCanonicalJobs:NULL;
+	okay=okay && jobs && jobs->Build(*c.q38FfnModelPlan,c.q38FfnModelLayer,0)
+		&& c.q38GraphMutable->MatchInitializedFfn(c.q38FfnModelIdentity,*jobs,c.q38FfnModelLayer,0,
+			c.initialized,PioneerResidentBanks::Pages) && !c.Unsafe();
+	delete jobs;
+	if (!okay) { tt_resident_session_result r={}; RetainQ38DispatchOwner(c,r); }
+	return okay;
+}
+// PIONEER_Q38_FFN_MODEL_NATIVE_INITIALIZE_END
+// PIONEER_Q38_FFN_MODEL_NATIVE_CONTROL_BEGIN
+static status_t Q38FfnModelControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info info={}; status_t status=get_thread_info(find_thread(NULL),&info);
+	if (status!=B_OK) return status;
+	if (info.team!=cookie->team) return B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT) {
+		if (length!=sizeof(tt_q38_ffn_model_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie); if (status!=B_OK) return status;
+		const tt_q38_ffn_model_support support={1,55,8,64,74,1,0,0};
+		status=user_memcpy(data,&support,sizeof(support)); release_sem(sLock); return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE || length!=sizeof(tt_q38_ffn_model_initialize)) return B_BAD_VALUE;
+	tt_q38_ffn_model_initialize request={}; status=user_memcpy(&request,data,sizeof(request));
+	if (status!=B_OK || request.version!=1 || request.layer>=64 || request.reserved[0] || request.reserved[1]
+		|| request.state || request.pages || request.closed || request.initialization_published || request.recovery_required
+		|| request.reserved_reply || request.session || request.driver_generation) return status!=B_OK?status:B_BAD_VALUE;
+	PioneerQ38GdnCallScope scope(cookie); if (scope.Status()!=B_OK) return scope.Status();
+	auto* c=scope.Context(); if (!c || !BindQ38FfnModel(*c,request.layer)) return B_NOT_ALLOWED;
+	PioneerQ38FfnZeroResult result;
+	bool okay=InitializeQ38FfnModel(*c,result);
+	request.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+	request.pages=okay?result.pages:0;
+	request.closed=okay?1:0; request.initialization_published=okay?1:0;
+	request.recovery_required=okay?0:1;
+	request.session=c->q38FfnModelIdentity.session; request.driver_generation=c->q38FfnModelIdentity.driverGeneration;
+	status=user_memcpy(data,&request,sizeof(request));
+	if (!okay || status!=B_OK || c->Unsafe()) { tt_resident_session_result r={}; RetainQ38DispatchOwner(*c,r); }
+	return status;
+}
+// PIONEER_Q38_FFN_MODEL_NATIVE_CONTROL_END
+#endif
 // PIONEER_Q38_GDN_BIND_OWNER_BEGIN
 // Private CPU-only transition,fixed zero diagnostic ONLY. Caller
 // holds the call-scope seal/global lock;no user coordinates or addresses.
@@ -3382,7 +3593,11 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 		// Scope presence alone requires explicit END,even if a future
 		// allocation bug misbound the context as a legacy/non-bank session.
-		if (cookie->context->q38GdnBanks || cookie->context->q38StateZero)
+		if (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+			|| cookie->context->q38FfnModelPlan || cookie->context->q38GraphMutable || cookie->context->q38FfnZero
+#endif
+			)
 			RetainQ38DispatchOwner(*cookie->context,result);
 		else
 #endif
@@ -5343,6 +5558,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_FFN_MODEL_INIT
+	if (operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE)
+		return Q38FfnModelControl(instance,operation,data,length);
 #endif
 #ifdef PIONEER_Q38_GDN_ZERO_DIAGNOSTIC
 	if (operation==TT_PCI_PROBE_Q38_GDN_ZERO_SUPPORT || operation==TT_PCI_PROBE_Q38_GDN_ZERO_INITIALIZE)

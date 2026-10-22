@@ -1,0 +1,108 @@
+Real native canonical FFN context+workspace init bridge,October22 2026.
+PRE-DEPLOYMENT ONLY. No native model-init execution/LLM speed claim.
+Last whole27B0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Separate exact tag2026102200010035,model namespace8:
+ support/initialize62a0/62a1;legacy projection support/run62a2/62a3 version8.
+Ordinary Work/Assistant/old diagnostic callers cannot invoke it. New
+dedicated builders isolate the role;old GDN diagnostic flags stay refused.
+The new role explicitly compiles the common mutable reservation interlock,
+NOT old GDN factory/control capability. Original typed owner pointers remain
+NULL;the joint graph's children are borrowed ONLY and never separately deleted.
+
+ACTUAL native BindQ38FfnModel/Q38FfnModelControl:
+ same FD/team/cookie/global lock/thread seal,closed actual span,normal BUSY
+ clock acknowledgment,ALL retained host pages,maps and real initialized
+ ledger. Full fixed two-slot canonical model on HEAP,selected THREE FFN
+ tensors present in actual ledger BEFORE publication/claim. Kernel-minted
+ session/generation identity;fixed model epoch1 is NOT source authentication.
+ No claimed SHA/ready flag/caller address/geometry can substitute for these
+ bindings. Genuine host full-file same-open-file SHA remains mandatory in
+ the SAME source-bound client before/after actual initialization ioctl.
+ Complete GDN+FFN atomic mutable claim;canonical plan and actual upload
+ ledger retained as EXACT borrowed pointers. Failed partial binding retains
+ graph/zero/plan/PCI/cookie/clock/ALL hosts,maps and cold recovery latch.
+
+Native StateZeroBeforeCohort derives the real graph/FFN typed role from
+that SAME native owner,not fabricated old GDN pointers. Physical119-held
+audit uses existing owned source/TLB/reset views. Frozen existing zero
+image stages/runs/readback-proves74pages/303104bytes and explicitly CLOSEs,
+restoring root code/panel/bulk before initialization publication. Joint
+MatchInitializedFfn checks ALL3canonical119worker jobs+actual learned pages
+and same zero publication TOGETHER. GDN state stays uninitialized. This
+does NOT authorize an FFN input/code/compute/decoder operation.
+
+EVERY ordinary writer/compute entry is interlocked once model owners
+exist. SAME-session explicit END requires correct joint graph/plan/ledger,
+exact zero owner/bank/proof/identity,saved/nonce1/closed/not running/dirty/
+ready/unsafe and real FFN publication BEFORE STOP/clock/restore/release.
+FD CLOSE without END retains ALL;lost userspace reply immediately retains
+ALL. No END/retry/reset/further device read/hotswap/rollback on UNKNOWN.
+Only explicit physical recovery clears that condition;raw-Dst cache22 is
+still HARD BLOCKED.
+
+Source-bound host initializer retains exact Source/model epoch through
+PrimeSpan/explicit SPAN_END/native initialization receipt/Finish. Exact
+reload generation from BEFORE BANK_BEGIN is checked in native receipt.
+Native call returning clean but source/epoch then changing still causes
+CLOSE ONLY without END. No old matrix or CPU learned-reference fallback.
+Standalone --initialize-layer0 is not a model/Assistant mode/throughput test.
+
+Completed CLI0 tests:
+ -Actual extracted lock/call scope/native bind/initializer/retain/END gate
+  plus EXACT frozen zero RV32 instruction machine:3positive(layer0/31/63),
+  59inert configuration/foreign-owner/map/heap-allocation refusals,
+  11fault-retentions:physical held mismatch,timeout/dropped device data/
+  changed counters/cohort/map/bad summary/lost reply,unclosed zero END and
+  actual mutable-claim collision. ALL74page device words zero,one root
+  start/STOP/hold,learned bitmap unchanged,no old GDN publication. Simulated
+  endpoints/cookie/clock,NOT native MMIO qualification. ASan/UBSan.
+  /private/tmp/pioneer-q38-ffn-model-native-tests-20261022-i.log
+  SHA31c95c857443c9401781c5d6fc44038bd07f2b3f4daf5ee5f359e4a1caed8d64
+ -Source-bound real session3positive/21faults:ALL3x7real transfers before
+  model init,stale generation/zero receipt/source epoch changes before and
+  AFTER call,lost reply/duplicate/wrong layer/before-prime CLOSE ONLY.
+  Synthetic source bytes+native receipts,not a full-file/native proof.
+  /private/tmp/pioneer-q38-ffn-model-session-tests-20261022-a.log
+  SHA9971a09c3fffeb6c4c3c286c9e7d4f82967669d1c33934f7c3fb4b6a3b23fa4f
+ -88before-SDK/output role/production/mixed gates and actual namespace8
+  header checks. No native IO.
+  /private/tmp/pioneer-q38-ffn-model-gates-20261022-b.log
+  SHA49553c38d081f85bae535fce5710cafd46843cbf810ce609727482a2fc8bd598
+ -Focused actual guarded /bin/sh updater102fake-filesystem/handshake/hash/
+  symlink/owner/failure cases,including real new parent name,all CLI0.
+  /private/tmp/pioneer-q38-ffn-model-updater-focused-20261022-c.log
+  SHAa34ac1a07fd33bad3a48b647c37cdd70fc0810514ea672691f74f7d2733a7cd6
+ -Old native call scope/ROOT41/outer parent-close/prime regressions ALL CLI0:
+  /private/tmp/pioneer-q38-ffn-model-old-scope-20261022-a.log
+  /private/tmp/pioneer-q38-ffn-model-old-root-owner-20261022-a.log
+  /private/tmp/pioneer-q38-ffn-model-old-parent-close-20261022-a.log
+  /private/tmp/pioneer-q38-ffn-model-old-prime-20261022-a.log
+
+Read-only SDK independent builds TWICE EXACT:
+ /private/tmp/pioneer-q38-ffn-model-init-build.WR93xEoF/driver-final/tenstorrent_pci_probe-driver55
+ /private/tmp/pioneer-q38-ffn-model-init-build.WR93xEoF/driver-final-repeat/tenstorrent_pci_probe-driver55
+ SHA5361c3351131ffff6b2aad399432a6cd53eda843c36c69db761961a6717b75bf
+ /private/tmp/pioneer-q38-ffn-model-init-build.WR93xEoF/client-final
+ /private/tmp/pioneer-q38-ffn-model-init-build.WR93xEoF/client-repeat
+ SHAf4fc646d23207be2aa6123c718df23a1572783cdaf0113f6b1c8bdb96bba597b
+ Max new native lifecycle frame704B;large plan/graph/jobs heap ONLY.
+ ORIGINAL ROOT diagnostic aa6730ef/guardd1ce2aa4/default43control2df0e0f8/
+ original load-only prime1ec347b5 rebuilt BYTE-IDENTICAL,not installed.
+ New updater SHA2e8a861f80620af2f97515830b7e9ad2bf20c6159a8ab8fc86755d3f7934fbe1
+ pins original041/tag12<->candidate5361/tag35 with no automatic rollback.
+
+PENDING:local broad prior-route updater regression handle88607
+ /private/tmp/pioneer-q38-ffn-model-updater-full-20261022-a.log
+Must observe SAME local handle terminal status before claiming it passed.
+No new native files uploaded/jobs started/driver reload/Assistant/boot/
+CPU/RAM/network/power/SD changes at this checkpoint. Original041/tag12/gen36
+was healthy after prior successful real FFN weight prime;no native job live.
+Dirty llama.cpp and unrelated FlashNext work remain untouched.
+
+NEXT:finish local regression,guarded stage/reload and real authenticated
+layer0 source->upload->workspace init/clean-END. Do not restart native jobs
+on observation timeout or transfer/start another native job while their
+parent lives,INCLUDING full19GB SHA child BEFORE accelerator Open. Then
+persistent full QFG2 code/input/FFN execution and actual GGML fusion. All-card
+attention/GDN/KV/norm/residual/embedding/sampling still owed;NOT done or fast.

@@ -2,6 +2,8 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "${PIONEER_Q38_FFN_PRIME:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_FFN_MODEL_INIT:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_FFN_MODEL_INIT_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2

@@ -4,6 +4,7 @@
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
 [ "${PIONEER_Q38_FFN_PRIME:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_FFN_MODEL_INIT_CLIENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_REFERENCE_CLIENT:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" in
  0) [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] && [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010034 ] || exit 2;;
@@ -18,6 +19,12 @@ case "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" in
  *) exit 2;;
 esac
 fixed_diagnostic_tag=
+case "${PIONEER_Q38_FFN_MODEL_INIT:-0}" in
+ 0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010035 ] || exit 2;;
+ 1) [ "${PIONEER_DRIVER_BUILD_TAG:-}:${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}:${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}:${PIONEER_Q38_GDN_ZERO_DIAGNOSTIC:-0}:${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}:${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" = 2026102200010035:0:0:0:0:0 ] || exit 2
+    fixed_diagnostic_tag=2026102200010035;;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC:-0}:${PIONEER_Q38_FFN_CODE_DIAGNOSTIC:-0}" in
  0:0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010031 ] && [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010032 ] || exit 2;;
  1:0) fixed_diagnostic_tag=2026102200010031;;
@@ -511,6 +518,11 @@ if [ "${PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC:-0}" = 1 ]; then
 fi
 if [ "${PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC=1 -DPIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1"
+fi
+if [ "${PIONEER_Q38_FFN_MODEL_INIT:-0}" = 1 ]; then
+ # Explicit NEW tag35 uses the common reservation interlock,not the old
+ # GDN diagnostic factory or its individually owned child pointers.
+ extra="$extra -DPIONEER_Q38_FFN_MODEL_INIT=1 -DPIONEER_Q38_GDN_MUTABLE_STATE"
 fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
