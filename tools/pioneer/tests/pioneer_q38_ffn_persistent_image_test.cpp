@@ -7,6 +7,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnPersistentShape.h"
 #include <array>
 struct FfnPersistentPeer:DirectSrcBImage {
+ const unsigned ownedPrefix;
  std::vector<uint8_t> activationCode;
  std::array<uint32_t,64> descriptor={};
  std::array<uint32_t,256> gate={},up={};
@@ -17,9 +18,9 @@ struct FfnPersistentPeer:DirectSrcBImage {
  unsigned nocReads=0,commandReads=0,badCommandRead=0,normalizationWords=0,normalizations=0;
  unsigned activatedWrites=0,nativeWrites=0,scaleWrites=0;
  bool lateJob=false,lateBoot=false,lateDoorbell=false;
- FfnPersistentPeer(const char* path,unsigned type=12,unsigned k=5120,unsigned groups=1,unsigned worker=1)
-  :DirectSrcBImage(path,type,k,groups,worker),activationCode(Read((std::string(path)+"/ffn.bin").c_str())) {
-  assert(!activationCode.empty() && activationCode.size()<=12288 && !(activationCode.size()&3));
+ FfnPersistentPeer(const char* path,unsigned type=12,unsigned k=5120,unsigned groups=1,unsigned worker=1,unsigned prefix=12288)
+  :DirectSrcBImage(path,type,k,groups,worker),ownedPrefix(prefix),activationCode(Read((std::string(path)+"/ffn.bin").c_str())) {
+  assert((ownedPrefix==12288 || ownedPrefix==16384) && !activationCode.empty() && activationCode.size()<=ownedPrefix && !(activationCode.size()&3));
   for(unsigned w=0;w<activationCode.size()/4;w++)l1[Index(0x64000+w*4)]=Word(activationCode,w*4);
   memory[0x74040]=TT_Q38_FFN_PERSISTENT_MARKER;
   for(unsigned i=0;i<16;i++){matrixJob[i]=memory[0x74000+i*4];source[i]=i?0x12340000+i:0x16005;}
@@ -28,6 +29,9 @@ struct FfnPersistentPeer:DirectSrcBImage {
   native.fill(0xa5a5a5a5);scale.fill(0xa5a5a5a5);
  }
  unsigned Index(uint32_t at)override {
+  // Explicit NEW-image fixture ONLY. Immutable ROM bytes use a fetch slot;
+  // this does NOT enlarge the native12KiB mapping/owner or old fixture.
+  if(ownedPrefix==16384 && Range(at,0x64000,unsigned(activationCode.size()))){assert(!(at&3));l1[8191]=Word(activationCode,at-0x64000);return 8191;}
   if(Range(at,0x64000,12288)){assert(!(at&3));return 5120+(at-0x64000)/4;}
   return DirectSrcBImage::Index(at);
  }

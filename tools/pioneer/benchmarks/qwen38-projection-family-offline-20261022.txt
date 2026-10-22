@@ -1,0 +1,149 @@
+Qwen3.8 SAME-family generic projections:OFFLINE development October22 2026.
+NO native install/launch this checkpoint;NOT a whole-model speed result.
+Last WHOLE27B0.207893161tok/s remains unchanged;20tok/s UNMET;goal ACTIVE.
+
+Problem being solved:QFG2 owns ALL120 code roles,so an isolated GGML FFN
+hook CANNOT leave attention/recurrent/vocabulary matrices using the old
+matrix ioctl family. All learned projections need the SAME retained peer
+lifetime and card-produced inputs,not CPU re-quantization/PCIe gathering.
+
+Implemented (not native-authorized):
+-Canonical immutable kernel geometry for ALL498 learned matrices,exact
+ semantic layer/role/token and original851-tensor/4678-part banked layout.
+ 48-row projections use3workers;248320-row vocabulary geometry973jobs/
+ 9waves,119workers per full wave. Includes embedding-shaped geometry,
+ NOT a runtime plan to multiply the entire embedding table for one token.
+ Actual initialized-page ledger must contain1 for EVERY allocated page,
+ including padding. Geometry/source digests/ready bits grant NO device IO.
+-Fixed-local256F32 quantizer,all native512B sign-magnitude operands+64B
+ padded scales. Q8_0 uses8 independent32-lane positive FP16 scales/ties-
+ away;Q4_K/Q6_K use ONE signedF32 Q8_K scale/ties-even. Preserve Q8_0's
+ nonzero integer lanes when its FP16 scale rounds ZERO. No learned products
+ or CPU fallback. Atomic publish only after the full256-lane chunk passes.
+-Separate complete QFP3 peer op5:one1024B GDDR F32 read,512B native write,
+ 128B scale/identity-line write. Fixed private geometry/ranges/routes;
+ whole source/descriptor/counter/command/sequence/boot checks. Source/idle
+ guards fail at FIRST mismatch. UNKNOWN parks with NO next packet/reset/
+ retry/restore. Per-chunk phase/token/layer/role/type/input width/source
+ receipt/four owner identity fields;these are DATA,not native authority.
+-Separate QPG1 ROOT gather for20/24/68 chunks:validate ALL128B lines BEFORE
+ any operand read or compact GDDR sink. Gather <=16KiB operand packets into
+ a0000,compact1/8scales per chunk into ab000;all scales/padding remain
+ exact existing matrix wire. Fixed workspace offsets131072native,
+ 196608identity lines,212992compact scales inside64MiB workspace. Whole
+ span source/counters/aliases rechecked;UNKNOWN inert. NO native selector.
+
+IMPORTANT NEW ownership work remains BEFORE hardware:
+QFP3 helper16352B at64000 needs COMPLETE16KiB snapshot/catalog/controller/
+PC bounds. The existing native QFP2 owner saves ONLY12KiB. The linker's
+16KiB maximum is NOT a native grant. Do NOT install QFP3 under tag38 or
+reuse the shared old QFP2 boot marker as authority. New cold constants use
+only existing immutable affine70b00..72000;NO code in mutable70000..70b00
+scratch. No linker ranges expanded. QPG1 also needs its own exact ROOT role
+and scale-window mapping/proof (up to768B,not old320B gather),producer proofs and
+canonical source/ledger/owner-bound coordinator. Current op5 descriptors
+do not make those native producers authorized by themselves.
+
+Artifacts root:/private/tmp/pioneer-q38-projection-family.DGLYM4co
+QFP3 peer-k AND peer-l reproducible EXACT:
+ boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text783bd17e5f1114365bac3e7fa0589f205d70a225a2223a4de7089503ef90a615
+ affine a55331eeab74b50a50012a62c0d476e9a247f653eefe2211a08d0a75b2da85ca
+ helper f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9
+ .ffn3fe0/.affine1480/.text1fe4 bytes;NO writable globals/unresolved libc.
+ Local-input input-c AND input-d:
+ code9538d7e293cde56af2a7d9a0bbb13503b3088c0b72ebb7f4a70481c26a37db56
+ boot d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ QPG1 gather-b AND gather-c:
+ code e4e811535e7a0c6f55f45238625d5f1bb2aada7b5a454ce0bc5f03b52fa17ee8
+ boot d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ Old QFP2 old-peer-final EXACT frozen NJzpNLRW/image:
+ textd2052fbbf43dcc022747ea2b228e7b1bc0f829f4984821ab4dfca20473e3a8ef
+ affine96e92065722a477b08ba41abc2f623064d44970c5807b37c6d739e8dc3697570
+ helperd7c6f3458d795f65635b80c3c035c93a7da5b325629f19e0b0fdecdc70fc629d
+ Same old boot is INTENTIONAL and NOT an op5 grant;actual old peer refuses5.
+ Old tag38 driver control23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+ guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ ALL unchanged. Source+read-only SDK ONLY;dirty llama.cpp UNTOUCHED.
+
+Terminal local checks already completed:
+-ACTUAL emitted RV32/FPU local quantizer2016chunks/54full-wire vectors,
+ 4314faults/45host ranges,independent host IEEE/_Float16/round wire PLUS
+ existing cohort quantizer. ALL3types x5120/6144/17408 x6trials. Strict
+ local memory/NO NoC;maxsteps30059/minstack6f7ac.
+-Projection jobs:1494matrix/144222part comparisons/34724refusals/1494
+ full learned-page checks against independent host scheduler,synthetic/
+ reversed and actual LOCAL public GGUF metadata. Actual model metadata
+ comparison is NOT full SHA/source authorization.6vocabulary/288small
+ recurrent cases. Final RISC-V kernel compile ALSO covers gather-line/
+ summary data checks,max frame416B;objects HEAP ONLY.
+-Original canonical layout regression:14034host-part comparisons/958464
+ exact FFN spans/68544jobparts/306437refusals/64page ledgers/7actual joint
+ reservations,EMPTY init ledgers. Kernel max frame928B. Layout unchanged.
+-ACTUAL QFP3 op5:203positive/162faults,ALL native bytes+128B lines+
+ 64word proofs,all3types/widths/7semantic examples,initial/late source/
+ idle/aliases/command readback/descriptor/UNKNOWN faults. No following CSR
+ reads after first rejected source/idle observation. Repeated op5/matrix/
+ changed-op5/STOP coexistence alone is NOT gathered numeric integration.
+ Explicit16KiB immutable ROM fixture does NOT widen native12KiB mapping.
+-Old QFP2 input regression288positive/159faults,maxdevice stack5248B.
+-ACTUAL compositional op5->GDDR->QPG1 ROOT->SAME live peer matrix:
+ 392producer jobs/14ROOT gathers/14matrices,TWO changed inputs for each of
+ seven semantic examples. ALL3wire types/5120,6144,17408 input widths,
+ all7banks and both workspace base edges. ALL gathered operands/scales/
+ padding byte EXACT to independent host quantizer,then those ACTUAL ROOT
+ bytes feed actual matrix instructions and independent FP32+FP64 checks.
+ SAME peer remains live through op5/matrix/changed op5/matrix/STOP;NO reset.
+ Matrix work covers16rows per example,NOT complete tensor output or ALL498
+ native matrices. Endpoint copies/test weights are simulated;root launch
+ orchestration/owner/native physical authority NOT implemented by this
+ test. ZERO CPU intermediate learned products in the device path.
+ 6807faults including EVERY chunk/EVERY32line word,late source/descriptor/
+ unknown/counter/foreign-counter/command-readback/initial idle+aliases,
+ malformed geometry and valid-new-but-stale phase/token/identity. ALL tags
+ before operands/compact sink;faults inert,NO next CSR after rejected
+ source/idle sample. Max observed ROOT stack1012B;all jobs TERMINAL0.
+-77before-SDK projection role refusals;complete four-section exact hashes,
+ repeat builds/PCs/no writable globals/immutable constants/old-image/new
+ input/new gather controls. No environment flag selects a native QFP3 role.
+-173old sealed-proof tag38 gates unchanged. Existing default driver/client/
+ Assistant reject inherited nonzero projection selector BEFORE SDK access.
+
+Evidence logs (terminal0):
+ /private/tmp/pioneer-q38-projection-input-test-20261022-b.log
+ SHAcd122e28554cdfac59c022b43520868d6fa0bdf1f2de2f3ae63e7ae4ccd148e7
+ /private/tmp/pioneer-q38-projection-jobs-20261022-e.log
+ SHAfc57abd7b626f786a9bae8d9962ac84c1623846d868949d90d8506c9cca5206e
+ /private/tmp/pioneer-q38-projection-canonical-regression-20261022-a.log
+ SHA18411d5a69e4649abd4994890afcbc9bc50eec567cc91b22b12b53df1270032e
+ /private/tmp/pioneer-q38-projection-peer-test-20261022-e.log
+ SHAecec93c07188ff0217e79c9cf9f08cc911b0b6f009bb3f305abeef43d7d8fae3
+ /private/tmp/pioneer-q38-projection-gather-test-20261022-c.log
+ SHAa33e99c1dcad6b66defba56e76640d56676303b345d95531843d360f21235b29
+ /private/tmp/pioneer-q38-projection-old-input-regression-20261022-a.log
+ SHA1429fb31628858bc6844018944b0344098f7e1d1ba44e7b1c8b928f2d71a6c59
+ /private/tmp/pioneer-q38-projection-old38-gates-20261022-a.log
+ SHAc15d3dd2c16f75a794f619af85434e66130c23827925a9be42894d53ae1ad18b
+ /private/tmp/pioneer-q38-projection-driver38-control-20261022-a.log
+ SHA15c396a1c6c0be832627ed865d7c5c0c8ec63c72904ec4d82b44db9e94c31e5c
+ /private/tmp/pioneer-q38-projection-gates-20261022-c.log
+ SHA6404a5fc4473ffb81e78813da23caa33387789e3776da6ba72ef78ef466eb66b
+
+Fresh read-only board audit18:09UTC:ALL_COMPUTE_PARENTS_ABSENT,original
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/generation44,quiesced0/cold0/active_owner0/
+open_count1/guard1,64CPUs/max137034936320B. No GPU job/remote writes/
+driver reload/reboot/power/SD/Assistant/boot/network changes this checkpoint.
+No fault/quarantine/recovery required. Failed raw-unpack-cache22 stays
+HARD BLOCKED. Unrelated work was neither changed nor staged.
+ALL local tests/builds TERMINAL0,including composition/fault suite. Shell
+syntax/whitespace checks PASS. Running scripts/fixtures were never edited;
+offline test failures were fixed only AFTER their exact handle terminated.
+No hardware UNKNOWN or numeric mismatch occurred this checkpoint.
+
+Next:complete native same-family projection ROOT/controller/catalog/full
+snapshot and source/ledger/owner binding,then qualify actual complete
+projection lifetimes. All-card norm/residual/GDN/attention/KV/embed/sampling
+and production decoder integration plus real whole-model benchmarking still
+remain. No Assistant promotion or new tok/s claim based on these tests.

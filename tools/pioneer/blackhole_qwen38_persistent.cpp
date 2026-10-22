@@ -14,6 +14,11 @@
 enum {Q38PersistentMarker=TT_Q38_FFN_PERSISTENT_MARKER};
 extern "C" void q38_ffn_persistent_activation(const uint32_t*,const uint32_t*,unsigned,unsigned);
 extern "C" void q38_ffn_persistent_matrix_begin(const uint32_t*,unsigned);
+#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+#if PIONEER_Q38_PROJECTION_PERSISTENT != 1
+#error Exact separate projection persistent image role required
+#endif
+#endif
 #else
 enum {Q38PersistentMarker=0x32503851};
 #endif
@@ -31,12 +36,21 @@ static unsigned Counter(unsigned c)
 #if defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE)
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
+#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+__attribute__((noinline,optimize("Os")))
+#endif
 static bool IdleAll()
 {
+#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+ for(unsigned c=0;c<4;c++)if(*Words(0xffb20040+c*0x800))return false;
+ for(unsigned c=0;c<32;c++)if(*Words(0xffb20240+c*4)&255)return false;
+ return true;
+#else
 	bool okay=true;
 	for (unsigned c=0;c<4;c++) okay &= !*Words(0xffb20040+c*0x800);
 	for (unsigned c=0;c<32;c++) okay &= !(*Words(0xffb20240+c*4)&255);
 	return okay;
+#endif
 }
 static unsigned SourceOffset(unsigned word)
 {
@@ -48,11 +62,19 @@ static unsigned SourceOffset(unsigned word)
 #if defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE)
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
+#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+__attribute__((noinline,optimize("Os")))
+#endif
 static bool SourceMatches(const uint32_t (&source)[16])
 {
+#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+ for(unsigned w=0;w<16;w++)if(*Words(0xffb20000+SourceOffset(w))!=source[w])return false;
+ return true;
+#else
 	bool okay=true;
 	for (unsigned w=0;w<16;w++) okay &= *Words(0xffb20000+SourceOffset(w))==source[w];
 	return okay;
+#endif
 }
 static unsigned Route(unsigned worker)
 {
@@ -87,7 +109,11 @@ extern "C" void q38_persistent_main()
 		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=Q38PersistentMarker
 			|| snapshot[11]!=worker || snapshot[12]!=sequence ||
 #ifdef PIONEER_Q38_FFN_PERSISTENT
+#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+            (snapshot[13]-1>4)
+#else
 			(snapshot[13]-1>3)
+#endif
 #else
 			(snapshot[13]!=1 && snapshot[13]!=2)
 #endif

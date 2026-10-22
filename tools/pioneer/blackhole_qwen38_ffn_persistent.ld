@@ -57,6 +57,9 @@ SECTIONS {
 		/* Unselected prepared-Q4 experiment,inside the SAME owned prefix. */
 		*(.text._ZN20PioneerQ38PreparedQ45Panel*)
 		*(.text._ZN20PioneerQ38PreparedQ45Block*)
+		/* NEW projection peer cold WORD constants,not writable state. Uses
+		 * only the existing immutable affine prefix;old images have NONE. */
+		*(.q38_projection_data)
 		. = ALIGN(4);
 	}
 	.text 0x72000 : {

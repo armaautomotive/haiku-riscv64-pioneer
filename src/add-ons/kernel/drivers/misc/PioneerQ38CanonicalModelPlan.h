@@ -104,6 +104,33 @@ public:
  const PioneerQ38GdnRegion* RecurrentRegions()const{return ready?recurrent:nullptr;}
  unsigned RecurrentCount()const{return ready?recurrentCount:0;}
  uint64_t Used(unsigned bank)const{return ready && bank<7?used[bank]:0;}
+ // General learned-matrix geometry for the SAME future persistent family,
+ // including small recurrent projections and multi-wave vocabulary rows.
+ // Never an input/source/initialized page or native execution grant.
+ bool ProjectionGeometry(unsigned selected,unsigned role,unsigned& type,unsigned& inputs,unsigned& outputs)const {
+  Shape s={};if(!ready || !Tensor(selected,role,s) || (s.type!=8 && s.type!=12 && s.type!=14))return false;
+  type=s.type;inputs=s.inputs;outputs=s.outputs;return true;
+ }
+ const PioneerQ38CanonicalPart* ProjectionStripe(unsigned selected,unsigned role,unsigned stripe)const {
+  unsigned type=0,inputs=0,outputs=0;
+  if(!ProjectionGeometry(selected,role,type,inputs,outputs) || stripe>=(outputs/64<7?1U:7U))return nullptr;
+  for(unsigned i=0;i<count;i++){
+   const auto& p=parts[i];if(p.kind!=WeightKind || p.layer!=selected || p.role!=role)continue;
+   if(!stripe)return &p;
+   stripe--;
+  }
+  return nullptr;
+ }
+ bool ProjectionPagesPresent(unsigned selected,unsigned role,const uint8_t* initialized,unsigned pages)const {
+  unsigned type=0,inputs=0,outputs=0;
+  if(!ProjectionGeometry(selected,role,type,inputs,outputs) || !initialized || pages!=PioneerResidentBanks::Pages)return false;
+  for(unsigned stripe=0;stripe<(outputs/64<7?1U:7U);stripe++){
+   const auto* p=ProjectionStripe(selected,role,stripe);if(!p)return false;
+   unsigned at=p->bank*unsigned(Capacity/4096)+p->offset/4096;
+   for(unsigned i=0;i<p->allocated/4096;i++)if(initialized[at+i]!=1)return false;
+  }
+  return true;
+ }
  // Exact canonical per-layer learned geometry,NOT a page/producer grant.
  // A same-shaped OTHER layer or a shifted learned range cannot pass.
  bool FfnSpan(unsigned layer,unsigned role,unsigned bank,uint64_t offset,unsigned first,unsigned rows)const {

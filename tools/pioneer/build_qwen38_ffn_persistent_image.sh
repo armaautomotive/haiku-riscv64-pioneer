@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE peer ABI ONLY;NO native registry,installation or card access.
 set -eu
+[ "${PIONEER_Q38_PROJECTION_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_PERSISTENT:-0}" = 1 ] || exit 2
@@ -13,7 +14,12 @@ for key in PIONEER_Q38_FFN_RESIDENT_MATRIX PIONEER_Q38_WORK_LOCAL_Q4 PIONEER_Q38
  value=$(printenv "$key" || :)
  [ "${value:-0}" = 0 ] || { printf 'STOP incompatible FFN persistent selector %s\n' "$key" >&2;exit 2; }
 done
-[ "$#" = 2 ] || exit 2
+[ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
+projection_flags=
+if [ "$#" = 3 ];then
+ [ "$3" = --projection-input ] || exit 2
+ projection_flags=-DPIONEER_Q38_PROJECTION_PERSISTENT=1
+fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 cross=$(CDPATH= cd -- "$1/cross-tools-riscv64/bin" && pwd)/riscv64-unknown-haiku
 output=$2
@@ -32,8 +38,8 @@ peer='-DPIONEER_Q38_FFN_PERSISTENT -DPIONEER_Q38_FAST_PANEL -DPIONEER_Q38_FAST_S
  -DPIONEER_Q38_NATIVE_OPERAND_STORE -DPIONEER_Q38_WORK_DEFER_AFFINE -DPIONEER_Q38_INLINE_CONFIG
  -DPIONEER_Q38_BLOCK_AFFINE_DST -DPIONEER_Q38_BLOCK_SCALE_REUSE -DPIONEER_Q38_WORK_AFFINE_REPLAY
  -DPIONEER_Q38_WORK_DIRECT_SRCB -DPIONEER_Q38_WORK_DOT_ZERO_ELISION'
-"$cross-g++" $flags $peer -c "$directory/blackhole_qwen38_int_sfpu_persistent.cpp" -o "$output/program.o"
-"$cross-g++" $flags -c "$directory/blackhole_qwen38_ffn_persistent_activation.cpp" -o "$output/activation.o"
+"$cross-g++" $flags $peer $projection_flags -c "$directory/blackhole_qwen38_int_sfpu_persistent.cpp" -o "$output/program.o"
+"$cross-g++" $flags $projection_flags -c "$directory/blackhole_qwen38_ffn_persistent_activation.cpp" -o "$output/activation.o"
 "$cross-as" -march=rv32imf -mabi=ilp32 -mno-relax --defsym TT_Q38_FFN_PERSISTENT_PEER=1 \
  "$directory/blackhole_qwen38_persistent_start.S" -o "$output/start.o"
 "$cross-ld" -m elf32lriscv --no-relax --gc-sections -T "$directory/blackhole_qwen38_ffn_persistent.ld" \
@@ -42,4 +48,8 @@ for section in boot text affine ffn;do "$cross-objcopy" -O binary -j ".$section"
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
 "$cross-objdump" -d "$output/program.elf" > "$output/program.disassembly"
 for section in boot text affine ffn;do shasum -a 256 "$output/$section.bin";done
-printf 'OFFLINE NEW QFP2 input/activation peer ONLY;NO native/coordinator/model/speed qualification: %s\n' "$output"
+if [ -n "$projection_flags" ];then
+ printf 'OFFLINE NEW QFP3 projection-input op5 peer ONLY;COMPLETE image hash pin still required,old boot marker is NOT an op5 grant;NO native/coordinator/model/speed qualification: %s\n' "$output"
+else
+ printf 'OFFLINE NEW QFP2 input/activation peer ONLY;NO native/coordinator/model/speed qualification: %s\n' "$output"
+fi

@@ -1,5 +1,29 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:SAME-family generic projection
+input/gather path implemented,NOT native selected. ALL498canonical learned
+matrix geometries/actual initialized-page checks;48rows->3workers and
+248320rows->973jobs/9waves. Q8_0 eightFP16scales vs K one signedF32scale,
+fixed256F32 quantizer;complete NEW QFP3 op5 peer+QPG1ROOT gather. Actual
+emitted instructions compose392producers->14ROOT gathers->14matrices,
+TWO changed inputs/seven semantic examples,all3wire types/3input widths/
+7banks/base edges,byte-exact gathered matrix inputs+independent FP32/FP64
+output checks. SAME peer lifetime/NO reset/STOP.16matrix rows per example,
+NOT full tensors/native ALL498 or real model.6807inert ROOT faults,
+203peer positives/162faults,2016local chunks/4314faults,1494geometry/
+144222part comparisons/34724refusals. Kernel maxframe416B;objects HEAP.
+77before-SDK role gates/173old38gates;new images reproduce EXACT;oldQFP2
+and tag38driver/guard/default43control BYTE-IDENTICAL. ALL local jobs
+TERMINAL0. New helper16352B requires new COMPLETE16KiB peer owner/catalog/
+controller/PC bounds;old native12KiB grant MUST NOT be reused. New ROOT
+also needs producer/source/ledger/owner-bound integration. No new native
+selector/install/job/reboot/power/SD/Assistant/boot/network changes. Fresh
+SSH18:09UTC original041/tag12/gen44/idle/cold0/owner0/open1/guard1,64CPUs/
+max137034936320B. Next real persistent projection ROOT/controller/catalog/
+full footprint+decoder integration,not another boot/STOP-only qualifier.
+Whole27B.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-family-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:tag38 measured optimization PASS.
 Source15e4db2448 pushed/remote verified before hardware;ALL local tests
 terminal including TWO fullFFNs/STOP/outer restore and7317broad updater.
