@@ -1,0 +1,131 @@
+Resident FFN persistent-worker operation checkpoint.
+October21 2026 Vancouver;test/evidence timestamps October22 UTC.
+OFFLINE ONLY. No native coordinator/driver/Assistant/full model or speedup.
+
+NEW QFP1 peer generation adds operation3:card-resident gate/up GDDR ->
+SiLU/quantization/native packing -> native operands and private scale line
+back to the SAME GDDR workspace -> RETURN to the persistent WAIT loop.
+No reset/reboot or private sequence-history loss between matrix/activation
+jobs. Matrix arithmetic remains the original direct-SrcB integer/SFPU Work
+path with no CPU reference or learned fallback. On-card validation of wire
+shape/source/counters/finiteness is retained;this is NOT CPU validation.
+
+QFP1 boot/descriptor/status/proof markers and QFPF terminal fault marker are
+distinct from the old Q8P2 generation. Operation3 uses a distinct QFA1 job
+shape plus the existing fixed QFR1 resident descriptor. Legacy job padding
+is NOT repurposed. Legacy peer/root/native/FFN-matrix builders REFUSE this
+flag BEFORE SDK/output access. No production registry selects this image.
+Old root/controller cannot be used to bootstrap or drive these new peers.
+A NEW retained native coordinator/complete code pins/lifecycle is required.
+
+The operation binds the persistent worker to exactly one of68 activation
+blocks,all16 originally captured source words,its own monotonic peer nonce,
+separate coordinator-phase nonce,workspace/bank/route,layer,64bit token and
+four owner epochs. Peer sequence and phase nonce are DISTINCT:some matrix
+phases skip workers,so a root nonce cannot replace per-worker history.
+The descriptor and boot/job/doorbell are rechecked before completion.
+Private scale lines retain the root phase identity for future on-card
+scale gathering;the line/tag/data predicate NEVER proves a producer ran.
+
+An important transition hazard is handled explicitly. The activation's
+last packet is a GDDR WRITE;matrix fetching expects a READ header. Only at
+the NEXT matrix operation,after idle/ALL source checks,does a bounded helper
+stage/verify the read header with ZERO submits and ZERO counter deltas.
+This leaves the completed activation's actual final sink command available
+for a future root's physical audit before starting the next operation.
+NIU command word5 is a MUTABLE destination,NOT independent self identity.
+New generation does not mistake the GDDR destination left by a completed
+write for a changed physical worker. Fixed worker routing,all16 source
+seals and future independent physical/controller proofs remain required.
+
+ALL4 data packets retain exact10word command readback,idle queues,ALL8
+wrapped counter deltas,and full immutable frame/source checks. UNKNOWN
+parks with a distinct fault marker and performs NO later MMIO/packet/reset/
+restore/retry. New64word producer-proof DATA covers independent before/
+after counters,exact final command,ALL source words,worker/private nonce,
+phase/block/layer/token/epochs. ALL64 corruptions are independently refused.
+It grants NO host cleanup,producer readiness or ownership permission.
+
+Reuses the independently tested bounded local activation implementation,
+not a changed approximation or widened domain. Gate zero or abs[2^-40,32],
+up zero or abs[2^-40,2^20],native scales zero or abs[2^-32,2^16]. Real27B
+eligibility still needs proof or an explicit domain extension;NO silent CPU
+fallback. Initial5120 input quantization is NOT implemented by operation3.
+Initialized zero pages are NOT native encoded zero operands.
+
+NEW disjoint L1 footprint:
+ immutable helper64000..662e4 (8932B),stack6e000..70000,
+ original affine70b00..71f20 (5152B),main72000..73fc8 (8136B),
+ old boot/descriptor/doorbell/status74040/74000/74100/74140,
+ activation descriptor74200..74300/summary74300..74380,
+ old matrix proof83f00..84000,activation scratch90000..90e40.
+Scratch deliberately reuses matrix tile space ONLY after the actual matrix
+program drains;strict independent tensor/SFPU/replay hazard observers remain
+enabled throughout matrix -> activation -> matrix. No writable static/GOT.
+Link caps main8KiB/affine0x1500/helper16KiB. Observed complete device stack
+maximum4612B within8KiB (NOT a kernel frame). Main persistent frame272B,
+activation wrapper448B,local producer3664B. SDK used READ ONLY.
+
+Actual RV32/FPU/Tensix execution + simulated NoC/GDDR,ASan/UBSan,ALL CLI0:
+ Standard suite74positive/161faults:
+  -Q4_K/Q6_K K5120 matrix/activation/changed-input matrix/changed activation/
+   STOP on workers1/35/68;exact FP32 + independent FP64 matrix observers,
+   independent expf activation and complete native wire-byte observer.
+  -ALL68 activation bindings,covering all7 banks and both workspace edges;
+   zero vectors,changed values,duplicate-doorbell inertness,clean STOP.
+  -ALL64 proof-word corruptions;all4packet failures/counter/foreigncounter/
+   source/frame faults,all40command readbacks,late job/boot/doorbell changes,
+   all16job words,all53 fixed/source/reserved descriptor words,all16 source
+   seals,skipped/wrapped sequence,worker69/119 refusal,old marker refusal,
+   out-of-domain/nonfinite/subnormal input,and failed next-read normalization.
+   Old qualified peer independently refuses new operation3 before packets.
+  /private/tmp/pioneer-q38-ffn-persistent-tests-20261022-c.log
+  SHA89782e93115708b52b89232d91eea8c20450c6b5cd8e619ba22e81f64ed6b423
+ Wide suite8additional cases,16actual changed-input matrices:
+  Q4_K/Q6_K x K5120/17408 x groups3/16 (48/256output rows),each with an
+  intervening actual activation and terminal STOP,no reset/CPU reference.
+  ALL exact FP32 + independent FP64/complete native-byte observers pass.
+  These are full-K peer jobs,NOT all rows of a full model projection.
+  /private/tmp/pioneer-q38-ffn-persistent-wide-tests-20261022-a.log
+  SHAeab17148d9e1c8387e45906fbae990d967359da225521a97da2aaf4f0e678215
+ Weights and activation inputs are synthetic,NOT real27B model values.
+ VM steps/fabricated counters are NOT silicon timing or tokens/sec.
+
+100 new private/mixed/legacy/native build refusals BEFORE SDK/output:
+ /private/tmp/pioneer-q38-ffn-persistent-build-gates-20261022-a.log
+ SHAfc332832402d6d82e70994952e433cae0d3d0d006c88cf003fdf29e2f8f78877
+Existing44 FFN matrix selector refusals remain passing:
+ /private/tmp/pioneer-q38-ffn-persistent-matrix-gate-regression-20261022-a.log
+ SHAf5cd6842661728320e24cab7a40be09f62c85d6bfa869bce350ca252ebed502e
+
+NEW image independently rebuilt and all4 sections byte-compared:
+ /private/tmp/pioneer-q38-ffn-persistent-image.uqG6SQXH/image
+ /private/tmp/pioneer-q38-ffn-persistent-rebuild.pbSyPNZK/image
+ boot SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main SHA48d05164a9ba8983480c786dbbcfbb41fd69458d35b13595d73658f7e0c71ecc
+ affine SHAfb5f9292eda0de2ba6d882af1d3d63ece2abb4f0703af85757341ec6a2d31494
+ helper SHAc30daff0fba05f460b16f68e93a83d1e0a975b383b923e16b274f50ae6eb6e31
+Feature-OFF legacy control rebuilt and boot/main/affine byte-compared to
+the exact previously qualified direct-SrcB peer. Existing ABI/arithmetic
+and ALL old image bytes unchanged:
+ /private/tmp/pioneer-q38-ffn-persistent-legacy-control.HCxLTwq9/image
+ main SHA209fc6b8d40ed0ac7216c16ec9657ed0d83259e2ded53b35524c8cc6507bf0ef
+ affine SHA083330550580cc8ba821456c95b256ff8ea1d9742bb12230b06af469392f856a
+ /private/tmp/pioneer-q38-ffn-persistent-legacy-build-20261022-a.log
+ SHA82a02b95a5b73a67a901b6dfa38a6e5c8c6738c690189d6748a47eca21f79a88
+
+Remaining:initial input producer/quantization,new generation root operation
+dispatch/ALL physical-peer proof/gather/full FFN orchestration,unified native
+mutable owner and global lock/cookie/lifetime/provenance adapter,real-model
+domain qualification,then controlled integration and honest measurement.
+Prior matrix controller supports the OLD qualified cohort ONLY;this new
+peer requires its own complete lifecycle,not a mixed-image shortcut.
+Attention/GDN/KV/norm/residual/embedding/sampling also remain outside a
+complete all-card decoder. Card residency ALONE does not prove20tok/s;
+weight decode/instruction and scheduling bottlenecks still need profiling.
+
+No SSH/upload/GPU job/hotswap/driver install/restart/Assistant/power/SD/boot/
+CPU/RAM/settings changes. Installed best SHA remains
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Raw-Dst cache22 remains HARD BLOCKED. No native parent is open.
+Last real27B speed0.207893161tok/s unchanged;20tok/s target still UNMET.

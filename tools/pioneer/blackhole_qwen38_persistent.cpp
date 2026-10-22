@@ -9,6 +9,14 @@
 #define block_main q38_compute_once
 #include "blackhole_qwen38_rows.cpp"
 #undef block_main
+#ifdef PIONEER_Q38_FFN_PERSISTENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnPersistentShape.h"
+enum {Q38PersistentMarker=TT_Q38_FFN_PERSISTENT_MARKER};
+extern "C" void q38_ffn_persistent_activation(const uint32_t*,const uint32_t*,unsigned,unsigned);
+extern "C" void q38_ffn_persistent_matrix_begin(const uint32_t*,unsigned);
+#else
+enum {Q38PersistentMarker=0x32503851};
+#endif
 extern "C" unsigned block_peer_wait(unsigned previous);
 extern "C" void block_peer_stopped() __attribute__((noreturn));
 static unsigned Counter(unsigned c)
@@ -62,7 +70,7 @@ extern "C" void q38_persistent_main()
 {
 	const volatile uint32_t* boot=Words(0x74040);
 	unsigned worker=boot[1],self=boot[2],source=boot[3];
-	if (boot[0]!=0x32503851 || !worker || worker>=120 || self!=Route(worker)
+	if (boot[0]!=Q38PersistentMarker || !worker || worker>=120 || self!=Route(worker)
 		|| !source || boot[4] || boot[5] || boot[6] || boot[7] || *Words(0x74100)
 		|| !IdleAll() || *Words(0xffb20100)!=source || *Words(0xffb20014)!=self) block_fault_park();
 	// Future kernel MUST prove all16 original words before this capture
@@ -70,25 +78,42 @@ extern "C" void q38_persistent_main()
 	uint32_t sealedSource[16]; for (unsigned w=0;w<16;w++) sealedSource[w]=*Words(0xffb20000+SourceOffset(w));
 	if (sealedSource[0]!=source || !SourceMatches(sealedSource)) block_fault_park();
 	for (unsigned i=0;i<16;i++) Words(0x74140)[i]=0;
-	Words(0x74140)[3]=0x32503851; Fence();
+	Words(0x74140)[3]=Q38PersistentMarker; Fence();
 	unsigned previous=0;
 	for (;;) {
 		unsigned sequence=block_peer_wait(previous);
 		const volatile uint32_t* job=Words(0x74000);
 		uint32_t snapshot[16]; for (unsigned i=0;i<16;i++) snapshot[i]=job[i];
-		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=0x32503851
-			|| snapshot[11]!=worker || snapshot[12]!=sequence || (snapshot[13]!=1 && snapshot[13]!=2)
+		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=Q38PersistentMarker
+			|| snapshot[11]!=worker || snapshot[12]!=sequence || (snapshot[13]!=1 && snapshot[13]!=2
+#ifdef PIONEER_Q38_FFN_PERSISTENT
+			&& snapshot[13]!=TT_Q38_FFN_PERSISTENT_ACTIVATION
+#endif
+			)
 #ifdef PIONEER_Q38_WORK_SKIP_DOT_CHECK
 			|| snapshot[14]>1 || (snapshot[14] && snapshot[13]!=1)
 #else
 			|| snapshot[14]
 #endif
 			|| snapshot[15] || !IdleAll() || *Words(0xffb20100)!=source
-			|| !SourceMatches(sealedSource) || *Words(0xffb20014)!=self || *Words(0x74100)!=sequence) block_fault_park();
+			|| !SourceMatches(sealedSource)
+#ifndef PIONEER_Q38_FFN_PERSISTENT
+			|| *Words(0xffb20014)!=self
+#endif
+			|| *Words(0x74100)!=sequence) block_fault_park();
 		if (snapshot[13]==2) {
+#ifdef PIONEER_Q38_FFN_PERSISTENT
+			for(unsigned i=0;i<10;i++)if(snapshot[i])block_fault_park();
+#endif
 			Words(0x74140)[0]=sequence; Words(0x74140)[1]=sequence; Words(0x74140)[4]=2;
 			Fence(); block_peer_stopped(); // final PC audit BEFORE any reset/restore
 		}
+#ifdef PIONEER_Q38_FFN_PERSISTENT
+		if(snapshot[13]==TT_Q38_FFN_PERSISTENT_ACTIVATION) {
+			q38_ffn_persistent_activation(snapshot,sealedSource,worker,self);
+			previous=sequence;continue; // preserve sequence/Tensix state;NO reset
+		}
+#endif
 		if (snapshot[0]!=0x31483851 || snapshot[3] || snapshot[4] || snapshot[9]!=1
 			|| !PioneerQ38PanelTileBytes(snapshot[1]) || snapshot[2]!=
 #ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
@@ -105,6 +130,9 @@ extern "C" void q38_persistent_main()
 #endif
 			|| (snapshot[5]!=5120 && snapshot[5]!=6144 && snapshot[5]!=17408)
 			|| !snapshot[7] || snapshot[7]>16) block_fault_park();
+#ifdef PIONEER_Q38_FFN_PERSISTENT
+		q38_ffn_persistent_matrix_begin(sealedSource,self);
+#endif
 		uint32_t before[8]; for (unsigned c=0;c<8;c++) before[c]=Counter(c);
 		Words(0x74140)[0]=sequence; Words(0x74140)[4]=1; Fence();
 		unsigned panels=q38_compute_once();
@@ -124,10 +152,10 @@ extern "C" void q38_persistent_main()
 			if (uint32_t(after[c]-before[c])!=(c==1?flits:(c==0 || c==2 || c==3 || c==6)?reads:0)) block_fault_park();
 		}
 		for (unsigned i=0;i<16;i++) if (snapshot[i]!=job[i]) block_fault_park();
-		for (unsigned i=0;i<8;i++) if (boot[i]!=(i==0?0x32503851:i==1?worker:i==2?self:i==3?source:0)) block_fault_park();
+		for (unsigned i=0;i<8;i++) if (boot[i]!=(i==0?unsigned(Q38PersistentMarker):i==1?worker:i==2?self:i==3?source:0)) block_fault_park();
 		for (unsigned i=0;i<16;i++) Words(0x83f00)[i]=i<8?before[i]:after[i-8];
 		Words(0x83f00)[16]=panels; Words(0x83f00)[17]=sequence; Words(0x83f00)[18]=worker;
-		Words(0x83f00)[19]=0x32503851;
+		Words(0x83f00)[19]=Q38PersistentMarker;
 		for (unsigned i=0;i<10;i++) Words(0x83f00)[20+i]=*Words(0xffb20000+i*4);
 		Words(0x83f00)[30]=source; Words(0x83f00)[31]=self;
 		for (unsigned i=32;i<48;i++) Words(0x83f00)[i]=sealedSource[i-32];

@@ -36,7 +36,11 @@ block_fault_park:
 	sw ra,4(t0)
 	fence
 .endif
+.ifdef TT_Q38_FFN_PERSISTENT_PEER
+	li t1,0x46504651 /* QFPF:NEW private resident-FFN generation ONLY */
+.else
 	li t1,0x46503851 /* Q8PF:distinct from native51..53 */
+.endif
 	sw t1,0(t0)
 	lw t1,0(t0)
 	fence

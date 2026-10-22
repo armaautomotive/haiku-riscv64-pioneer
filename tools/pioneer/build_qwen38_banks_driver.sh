@@ -3,6 +3,7 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_FFN_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDENT_MATRIX:-0}" = 0 ] || { echo 'STOP resident FFN matrix has NO qualified native controller/driver' >&2;exit 2; }
 [ "${PIONEER_Q38_BENCHMARK_HOST_LOCAL_Q4_QUALIFICATION:-0}" = 0 ] || exit 2
 case "${PIONEER_Q38_LOCAL_Q4_QUALIFICATION:-0}" in
