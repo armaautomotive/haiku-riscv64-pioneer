@@ -1,5 +1,36 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:NEW fixed5120 learned RMS/residual
+backup implemented and composed with actual embedding/projection images.
+QRN1 pulls original GDDR input+canonical learned F32 norm,computes on emitted
+RISC instructions,backs up raw input at98304 for residual,then normalizes
+the old input offset0. Existing op5 producers/gather/matrix format unchanged;
+no CPU input vector/product/reference or mid-pipeline host transfer.
+Software paired32-bit IEEE binary64 reduction/division-by5120 matches
+independent CPU double/sqrtf reference;NO hardware double/fdiv/fsqrt/runtime
+helpers.10,240,000additions/2000means/2000learned RMS rows bit-exact.
+Actual emitted QRN1:9positives/158faults PASS,8exact NoC packets,ALL math
+checks before FIRST GDDR write;raw residual preserved. Complete canonical
+DATA plan903cases(129hidden norms x7workspaces)/65016refusals;5learned pages,
+pointer/identity bound,NOT input/producer/native authority.
+Actual embedding6 ->learned RMS6 ->120unchanged op5 producers ->gather6 ->
+SAME persistent peer matrix6 ALL3wire types/TWO changed tokens PASS;all
+peers STOP. Simulated transport/weights,NOT full decoder/native lifetime.
+ROM5052B SHA f13d8676 repeated identical;maxpositive551234instruction steps,
+maxstack596B;actual footprint fits complete QPR1 snapshot;DATA kernel
+maxframe304B.210new/old-role before-SDK gates PASS. Old tag38/guard/
+default43 remain BYTE-IDENTICAL. ALL final handles TERMINAL0.
+No RMS native adapter/selector/install/card qualification yet. NEXT consume
+same private completed embedding/input proof through actual executing RMS
+and persistent projection owners,retaining canonical learned pages/source/
+ALL host/clock/code/memory owners until physical known-clean restore CLOSE;
+do not promote public metadata/copied descriptor or held-only memory helper.
+Fresh read-only SSH original041/tag12/gen46/idle/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. ZERO remote writes/native jobs/reload/reboot/
+power/SD/Assistant/network/clock changes this turn. Whole27B remains
+.207893161tok/s;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-learned-rms-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:NEW embedding DEBUG arithmetic
 passes on the physical Pioneer P100A. Pinned full public GGUF SHA verified
 on SAME FILE before accelerator open;independent original Q4_K row prepared

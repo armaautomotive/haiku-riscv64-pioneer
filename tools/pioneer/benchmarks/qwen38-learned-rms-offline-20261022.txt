@@ -1,0 +1,152 @@
+October22 2026 learned5120 RMS/residual composition,OFFLINE
+Parent36b014c52b pushed/verified. PROGRESS;goal ACTIVE.
+Whole27B last0.207893161tok/s UNCHANGED;20tok/s UNMET.
+No physical RMS test,new full-model correctness/token-rate or Assistant
+option. The prior native embedding result remains a separate checkpoint.
+Normalization/learned multiply and pre-norm residual preservation ordering
+cross-checked with upstream primary Qwen35 graph/build_norm source on
+October22,not adopted as a replacement for the pinned local model/code:
+https://github.com/ggml-org/llama.cpp/blob/master/src/models/qwen35.cpp
+https://github.com/ggml-org/llama.cpp/blob/master/src/llama-graph.cpp
+The local PioneerGgmlBackend.cpp observer also reconstructs RMS then MUL.
+Dirty src/libs/llama.cpp was NOT read or built.
+
+MATH:fixed hidden learned RMS,not a width-widening of the old128/1024 code.
+Independent reference:rounded F32 x*x,ordered binary64 sum,division5120
+rounded to binary64 then F32,epsilon1e-6 F32,sqrtf/reciprocal F32,and TWO
+rounded F32 multiplies (x*scale)*learnedWeight. No fused multiply-add.
+New PioneerQ38RmsSum represents53-bit significand as two32-bit words.
+Right-shift-jam+RNE after EVERY addition reproduces ordered CPU double
+without unsupported card double arithmetic. Exact bounded long division
+by5 plus exponent shift handles5120,including double-rounding before F32.
+Old power-of-two/two-float norm helper is unchanged. Exact existing integer
+sqrt/positive software float division reused,no hardware fdiv/fsqrt or
+integer64 division/runtime helper. Explicit normal/zero input and learned
+weight domain:abs<=65504 and abs==0 or abs>=2^-50;nonfinite rejected.
+This keeps square/normalized/learned output intermediates normal/zero under
+BRISC FTZ. Output is local scratch until ALL5120 math checks succeed.
+No host inference backend calls this;host execution is TEST ONLY.
+ASan/UBSan independent reference tests:10,240,000full-normal positive
+software binary64 additions,2000means,2000learned RMS rows,22refusals PASS.
+
+NEW QRN1 on-card arithmetic image,NO native selector or installation.
+Logical canonical layer+norm role/position/workspace;16source words,64-word
+descriptor,4identity pairs;no caller input vector/address authority.
+Canonical F32 norms are layer0..63 roles0(attn_norm)/1(post_attention_norm)
+and global64 role2(output_norm),ALL5120F32/20480B/exact5pages. Pointer-bound
+PioneerQ38LearnedRmsPlan reconstructs those exact parts from same fixed
+canonical layout. Actual authenticated model/ledger/input producer/zero/
+clock/host/code/physical owner binding remains OWED. Plan/summary DATA is
+NEVER an execution grant;learned bitmap presence alone is insufficient.
+ALL903plans(129hidden norms x7workspace banks)/65016stale pointer/page/descriptor/
+rebind refusals PASS. Actual RISC-V kernel DATA compile:maxframe304B.
+
+Resident dataflow avoids changing old projection wire format:
+1.Read20KiB raw input from workspace0 and20KiB original learned F32 norm.
+2.Compute5120 learned-normalized values locally,ALL finite/domain checks
+  finish BEFORE FIRST GDDR output packet.
+3.Backup original20KiB input to workspace98304 for later residual.
+4.Write learned-normalized20KiB vector back to old input offset0.
+Old op5 producers/gather/matrix consume normalized bytes unchanged.
+Max raw input17408*4=69632 ends BEFORE backup98304;backup end118784 is
+BEFORE native operand region131072. Future native owner MUST invalidate
+old raw-input producer proof when claiming this transformation,then issue
+its own opaque normalized-input proof only after clean physical close.
+No public ready field/inputEpoch/copy of geometry can replace it.
+
+Exactly8device-local NoC packets:4reads+4writes,640read/640write flits,
+accepted8. Source/descriptor immutable rechecks,ALL8counters including
+alias,4busy/32credit slots,10command words/readback,65536bounded polls.
+Packet failure parks inert with ZERO following command/retry/restore.
+Raw residual written before normalized input;late failure can leave partial
+bytes but never successful completion/capability. Future native must retain
+and quarantine the whole model/context,not reset or automatically restore.
+No BME/host DMA/PCI payload or CPU learned arithmetic/reference.
+Local input80000..85000,learned88000..8d000,normalized90000..95000,
+stack6e000..70000,descriptor74200/summary74300/trailer17ffc0.
+All fit the complete existing QPR1 memory footprint;this is DATA coverage,
+NOT safe post-compute memory-lifetime or restore authority.
+
+ACTUAL EMITTED RV32IMF INSTRUCTION TESTS,NOT completion fabric:
+9positives across7workspaces and varied canonical layers/norm roles,
+including max-half/min-domain/signedzero/large exponent spread. Every
+normalized output bit matches independent double/sqrtf learned reference,
+and EVERY residual backup bit equals original input. Maxpositive551234
+instruction steps/maxstack596B. Host emulator transport endpoints ONLY
+copy actual data;no independent reference populates device output.
+158faults:all8packets timeout/bad/foreign counters/source/descriptor,
+first/last input+learned domain/nonfinite,malformed frames,command readback,
+ALL4busy/32credit slots,ALL16initial source words,physical counter aliases.
+No sink on pre-write refusal;post-fault park emits no further I/O.
+Actual memory-footprint observer:3145241instruction views/133404loads/
+66402stores/61440NoC-local-word views PASS (3norm roles).
+
+ACTUAL COMPOSITION,not a full decoder:
+QPE1 embedding ->QRN1 learned RMS ->ALL20UNCHANGED op5 producers ->QPG1
+gather ->SAME live persistent peer ACTUAL learned matrix instructions.
+ALL3wire types Q8_0/Q4_K/Q6_K;TWO changed tokens/positions,6embeddings/
+6RMS/120producers/6gathers/6matrices. Raw residual backup unchanged;
+normalized vector differs from raw;changed-token learned matrix output
+differs. ALL peers STOP. Independent TEST references only observe outputs.
+Transport and learned weights simulated,not authenticated full-model/native
+source/lifetime or card throughput evidence. Attention/GDN/residual add/KV/
+sampling/full resident decoder still remain.
+
+REPRODUCIBLE BUILD/GATES
+New standalone builder rejects ANY inherited nonzero PIONEER_ flag BEFORE
+SDK/output.10old builders reject new RMS/native flags before SDK;old local
+image registry does NOT gain a learned_rms/rms selector.210gates PASS.
+Old tag38driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483,
+guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229,
+default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+BYTE-IDENTICAL after default-disabled old-builder gates. No dirty llama
+source/library read/build. RMS5052B code repeats BYTE-IDENTICAL b/c:
+f13d8676f97920c182fa47d9f555453d7855dd5ac394919a577d58c83abe523a
+ /private/tmp/pioneer-q38-learned-rms-image-20261022-c/code.bin
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ /private/tmp/pioneer-q38-learned-rms-image-20261022-c/boot.bin
+entry64000/done6400c/park64038/faultpark64058;no writable ELF data/GOT.
+No unqualified double/fdiv/fsqrt/div/rem/runtime helper in disassembly;
+actual scalar machine executes the new integer/FP code paths.
+
+FINAL LOG SHA256,ALL HANDLES TERMINAL0
+d49cf8f03a86342d45c21e4fd043215107999902d85e6acb5509cec78fea024f
+ /private/tmp/pioneer-q38-learned-rms-math-20261022-b.log
+0b60d034681279f65a15d459600dcdd62f8e7b3ea093ed47ba15769e501b57a3
+ /private/tmp/pioneer-q38-learned-rms-image-tests-20261022-b.log
+f1c4889164305969ef87f04f788f253d6ebfcbbccbfa1cc02960022c88786829
+ /private/tmp/pioneer-q38-learned-rms-image-faults-20261022-b.log
+34ccea138cfaae7f3d94310fe508a6a9e50f0bcbc8fa8a6266fbbe157c2a556d
+ /private/tmp/pioneer-q38-learned-rms-projection-20261022-b.log
+3ec64a804e7a7e3a5b534351b1acbe312b92c4450e3cae3af65e4a59386ff60b
+ /private/tmp/pioneer-q38-learned-rms-footprint-20261022-a.log
+c2b51c4a5202e1bd6159f3b2ffe05d7001c9abc59233c5dfa0167002b2c0bcac
+ /private/tmp/pioneer-q38-learned-rms-kernel-20261022-a.log
+93b6e4fa15d779dc1cc7f26ce5c827ec4e532f3712d75cf86f2932ac76212280
+ /private/tmp/pioneer-q38-learned-rms-gates-20261022-a.log
+3c0171125801bf9b303aebf8ac219d0db1afa9421385e831a2d41f8d1dff62b2
+ /private/tmp/pioneer-q38-learned-rms-old-controls-20261022-a.log
+c302955615f584777c910a6d0ab471eb19cadb3d10a56dba56ad97cad8102ee2
+ /private/tmp/pioneer-q38-learned-rms-build-20261022-c.log
+
+Local-only initial fixture random exponent range could exceed declared
+65504 bound;corrected generator,kept explicit max65504 test. Initial
+standalone compiler indentation warnings fixed. All final jobs pass;
+no source/fixture/script edited while a runner could read/compile it.
+
+Fresh read-only SSH:inventory proven/ALL compute parents absent,original
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+55/tag2026102100010012/gen46/quiesced0/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. ZERO remote write/native job/driver install/
+reload/reboot/power/SD/Assistant/network/clock change THIS turn.
+Dirty llama.cpp and unrelated FlashNext files untouched/unread/unstaged.
+
+NEXT actual private learned-RMS execution owner consumes SAME retained
+input producer/canonical source/5learned pages/initialized workspace under
+native cookie/global-lock/generation/clock/ALL hosts. Actual full save/
+run/physical completion+hold/restore CLOSE and opaque publication needed;
+NOT held-only GraphMemory close after launch or public summary promotion.
+Then native numeric validation and complete persistent projection lifetime,
+followed by remaining full resident decoder/real model benchmark. Retain
+separate debug CPU-validation mode;Work no CPU learned reference/fallback.
+Raw-unpack-cache22 remains HARD BLOCKED.20tok/s not achieved;goal ACTIVE.

@@ -2,6 +2,7 @@
 # NEW OFFLINE resident-input parent ROOT,not a native selector/card action.
 set -eu
 [ "${PIONEER_Q38_EMBEDDING_QUALIFICATION-0}:${PIONEER_Q38_EMBEDDING_CLIENT-0}" = 0:0 ] || exit 2
+[ "${PIONEER_Q38_LEARNED_RMS-0}:${PIONEER_Q38_LEARNED_RMS_NATIVE-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE-0}:${PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_EMBEDDING_NATIVE-0}" = 0 ] || exit 2
 [ "$#" = 2 ] || exit 2
