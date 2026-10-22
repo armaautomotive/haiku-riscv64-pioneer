@@ -1,0 +1,120 @@
+Resident FFN activation/native-input/gather checkpoint.
+October21 2026 Vancouver (test/file timestamps October22 UTC).
+OFFLINE ONLY. No native driver selection/full FFN/model quality/token rate.
+
+Implemented emitted-RV32 stages for the previously missing middle connection:
+  GDDR gate/up vectors -> local SiLU(gate)*up -> native matrix operands
+  -> GDDR operands+freshness-tagged scale lines -> ROOT0 on-card gather
+  -> exact POST-EXPANSION matrix-root L1 input,ready for FUTURE down dispatch.
+Gate/up learned projections,down dispatch and their device-only output sinks
+are NOT connected by this checkpoint. No native coordinator/driver/FFN
+backend capability was enabled. This is not full device-resident inference.
+
+PioneerQ38FfnNativeInput converts the exact Q8_K producer output to existing
+256 sign-magnitude16-bit operands plus ONE signedF32 scale. Local block is
+576B:512B operands +64B scale line with15 canonical zero padding words.
+Scale magnitude remains zero or[2^-32,2^16];negative-zero scale,nonfinite,
+out-of-range,Q8_K -128,bad group sums,zero-scale/nonzero bytes,aliasing,
+unaligned/wrapping/null buffers refused atomically. No relaxed matrix ABI.
+The fused local producer stages BOTH outputs before success publication.
+Original bounded SiLU box remains:gate zero or abs[2^-40,32],up zero or
+abs[2^-40,2^20]. No proof that arbitrary real model activations fit this box.
+Scalar correctness candidate,NOT optimized SFPU/concurrent native execution.
+
+Resident activation reads ONE256-lane gate/up block from one private
+workspace using two1024B NoC reads,then writes512B native operands and one
+64B PRIVATE scale line. No host/PCI endpoint or CPU learned product.
+The resident line tail is NOT matrix padding:it records marker,nonce,block,
+layer,64-bit token position,ALL four64-bit owner epochs,and reserved zero.
+Only scale word0 is later compacted. Operand write completes BEFORE the
+fresh line write. ALL16 source seals and frozen64-word descriptor checked
+around each packet;exact command readback,NoC idle and ALL8 wrapped counter
+deltas required. Timeout/source/counter/descriptor failure parks inertly,
+with ZERO subsequent NoC reads/packets/cleanup/math in terminal tests.
+
+ROOT0 gather reads ALL68 scale lines and checks every freshness field and
+scale BEFORE reading any operand chunk or writing compact scales to GDDR.
+It then fetches34816B native operands in16384/16384/2048B chunks into the
+existing root L1 a0000 window,compacts68 signedF32 scales plus12 zero words
+into320B at ab000,and writes that compact vector to the same workspace.
+71 reads/612flits +1 write/5flits,all sealed/counter-proven. Distinct QFS1
+completion means root input ready ONLY,NOT matrix/FFN/token completion.
+Freshness DATA is NOT proof that producers completed:future coordinator
+MUST independently prove ALL68 participants+owner before invoking gather.
+
+Existing295360B scratch layout unchanged. Auxiliary68x64B scale lines use
+4352B immediately after it,total299712B inside the SAME existing64MiB
+workspace. Future mutable ownership needs the complete first74 pages
+(303104B);NO bank/21GiB capacity increase. Canonical-plan offsets checked:
+gate30848,up100480,native239744,compact scales274560,scale lines295360.
+All intervals64B-aligned/disjoint;compact scales end exactly at final-output
+slice start274880. All7 banks and ALL68 non-root physical routes checked
+against independent literal route/host-division oracles,not just shared
+descriptor helpers. Both 3GiB bank-capacity edges tested with64MiB workspace.
+
+ASan/UBSan actual-instruction evidence (NoC/GDDR endpoints SIMULATED):
+- Local native producer544 blocks/eight complete17408-lane vectors,
+  full payload identical to unchanged host CohortQuantize and DispatchValid.
+  5252 descriptor/domain/scale refusals,7 pack positives,292 packing
+  refusals,30 fused pointer/count/overlap refusals. ALL576 bytes independent
+  wire oracle;unchanged expf relative tolerance3e-6 and exact nearest-even
+  Q8_K quantizer. Max117905 emulator steps,lowest stack write0006f2bc.
+  /private/tmp/pioneer-q38-ffn-native-activation-tests-20261022-b.log
+  SHA3deb008889b3b05a3e3c694efd43245248b41590a6c3d4c1d788b11bbfba663d
+- Resident activation952 blocks=7banks x2edges x68 blocks;132 faults,
+  including each of4 packets with timeout/bad/foreign counter/source or
+  descriptor fault,all40 command readbacks,16 seals,6 busy states,shape/
+  route/epoch/bounds/input/scale refusals. Full output+metadata exact,
+  all inputs unchanged,all32 summary words independently mutation-tested.
+  Max129724 steps,lowest stack write0006f0cc.
+  /private/tmp/pioneer-q38-ffn-resident-activation-tests-20261022-d.log
+  SHAb1237e1c3074c1203821efeb272eac79d556921354a8135c556bfe9c0c118393
+- Two actual images connected through simulated GDDR:952 actual producers
+  ->14 ROOT0 gathers/all7banks/both edges,byte-exact old post-expansion
+  matrix input+compact GDDR scales.1261 refusals include EVERY68 scale
+  line/EVERY16 line word,plus representative first/middle/last scale reads,
+  ALL3 operand chunks and final write with5 transport fault classes,70
+  command readback corruptions,16 seals,busy/shape/bounds/owner faults.
+  NO operand fetch/compact GDDR write before ALL fresh tags pass. Actual
+  concurrent scheduling,physical ownership and matrix compute NOT modeled.
+  Root max199209 steps,lowest stack write0006fdac.
+  /private/tmp/pioneer-q38-ffn-resident-gather-tests-20261022-c.log
+  SHA784ea30c2087c021eaef805918bb1f150c7a05f5300db513ac190bec1f570b30
+- Previous packed-Q8_K producer regression544 blocks/5248 descriptor+domain
+  and30 host range refusals passed unchanged.
+  /private/tmp/pioneer-q38-ffn-activation-regression-20261022-c.log
+  SHA2592b9f0c6c4bff30f0627df618df3e8e549a867c780ce3e75603da165a2f272
+
+Exact final image bytes rebuilt and compared word-for-word:
+  local native3680B SHA3b8937629bb57423956277ac1b7df5ba77fea2529df9a193762970875055c4c7
+  resident peer6744B SHA0639f740142b8410a3f896d846fb5e2090ce4296c83be961591f14ec0f2020f8
+  ROOT gather2956B SHAcc42016896b6cf1627e619928f0bf0f60c19ac3e79573a0ac6288928a6a3d32c
+  common4B boot SHAd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+All link with no writable static data/GOT,strict32KiB code/8KiB stack;
+actual emitted instruction paths refused unqualified FP/memory operations.
+These are local64000 images,NOT existing native72000 image substitutions.
+Do not install via old lifecycle/view/PC contracts. Their74200 descriptor
+also overlaps old matrix task staging:future combined memory map/controller
+must own/sequence or relocate it,not overwrite live task metadata.
+
+NEXT:retained mutable workspace+complete initialization/lifetime interlock;
+one private source/epoch/driver-generation identity;new frozen image/ABI/
+controller/build gates and exact participant/PC/source/counter completion;
+matrix root must scatter gate/up rows directly to GDDR and consume resident
+inputs explicitly,then dispatch down without host intermediate vectors.
+New gather output is ALREADY EXPANDED native data,not the compact host PIO
+payload. Do not masquerade as legacy input-cache/reuse permission or forge
+old proof counters. Existing one-mutable-owner reservation interlock must
+be respected,not bypassed by a second unrelated FFN/GDN claim. No current
+driver/backend imports these helpers/images or exposes a new hardware mode.
+
+No SSH/GPU job/upload/driver/hot-swap/power/SD/reboot/Assistant/CPU/RAM/boot
+or settings action in this checkpoint. Last known best041/tag12/g28 left
+untouched;all prior native parents closed. SDK read-only;dirty llama.cpp
+implementation and unrelated FlashNext work untouched. CPU oracles here
+are OFFLINE tests,not new Work validation/fallback. No native speed result.
+Before native use:controlled numerical qualification in separate debug,
+then paired actual full-model Work inference. Numeric mismatch/UNKNOWN:
+CLOSE ONLY;NO END/retry/reset/further card read/hot rollback;retain ALL
+owners/PCI/maps/hosts/DMA/clock/cold for explicit physical recovery.
+Raw-Dst cache22 remains hard-blocked. Whole-model residency/20tok/s UNMET.

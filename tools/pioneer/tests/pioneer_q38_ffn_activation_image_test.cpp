@@ -70,6 +70,7 @@ struct FfnActivationMachine:ScalarMachine {
  }
 };
 
+#ifndef PIONEER_Q38_FFN_ACTIVATION_MACHINE_ONLY
 static unsigned HostRefusals()
 {
  float gate[256],up[256],activated[256];PioneerQ38ActivationK q;
@@ -126,3 +127,4 @@ int main(int argc,char** argv)
  }
  printf("PASS OFFLINE ACTUAL RV32 FFN activation blocks%u descriptor/domain refusals%u host-range refusals%u maxsteps%u minstack%08x;independent expf tolerance3e-6relative/independent signed-F32scale nearest-even ALL Q8_K bytes+sums/FTZ-normal bounded box/strict local memory/immutable inputs/atomic refusal;NO_NATIVE_OR_BACKEND_OR_SPEED_AUTHORITY\n",positive,negative,hostRefusals,maxSteps,minStack);
 }
+#endif
