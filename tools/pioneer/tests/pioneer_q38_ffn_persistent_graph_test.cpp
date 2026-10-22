@@ -40,6 +40,7 @@ struct PersistentGraphIO:CodeIO {
  unsigned bootCount=0,rootCount=0,holdCount=0,matrixCount=0,producerCount=0,unknownAt=0;
  unsigned graphFault=0,faultWorker=1,faultWord=0,faultPhase=2,packetFault=0,packetCount=0;
  unsigned loggedPhase=0;
+ unsigned workManifestPostReads=0,stopManifestPostReads=0,inputStageReads=0,manifestStageReads=0;
  bool scope=true,retained=false,rootTerminal=false;
  bool FfnGraphScope(const PioneerQ38FfnPersistentGraphOwner&,const PioneerQ38GraphMutableBanks& g,
   const PioneerQ38CanonicalModelPlan& p,const PioneerQ38FfnIdentity& id,const uint8_t* ledger,unsigned pages) {
@@ -91,6 +92,16 @@ struct PersistentGraphIO:CodeIO {
  }
  uint32_t Q38PanelRead(uint32_t a){if(track && current && peer[current])AdvancePeer(current);
   Touch();uint32_t v=BootstrapIO::Q38PanelRead(a);
+  if(track && !current && result){
+   if(result->phase==6){
+    if(a>=0x80000 && a<0x85000)inputStageReads++;
+    if(a>=TT_Q38_FFN_GRAPH_MANIFEST && a<TT_Q38_FFN_GRAPH_SHADOW)manifestStageReads++;
+   }
+   if(result->phase==7 && rootTerminal && root && a>=TT_Q38_FFN_GRAPH_MANIFEST
+    && a<TT_Q38_FFN_GRAPH_COUNTERS){
+    if(root->fixture.manifest[5]==1)workManifestPostReads++;else stopManifestPostReads++;
+   }
+  }
   if(graphFault==2 && rootTerminal && !current && a==TT_Q38_FFN_GRAPH_STATS+faultWord*4){observed=touches;return v^0x80000000U;}
   return v;
  }
@@ -244,6 +255,7 @@ int main(int argc,char** argv){
    for(unsigned i=0;i<5120;i++)f.values[i]=Bits(.5f+float((i*31+17)%127)/512);
    for(unsigned role=0;role<3;role++)std::fill(f.io.numeric[role].begin(),f.io.numeric[role].end(),0x7fc00001);
   }
+  const unsigned inputReadsBefore=f.io.inputStageReads,manifestReadsBefore=f.io.manifestStageReads;
   bool okay=f.Run(pass,pass);if(!okay)fprintf(stderr,"PERSISTENT_GRAPH_FAIL pass%u phase%u worker%u word%u rootPC%08x marker%08x statsR%u/W%u polls%u/%u;NO_POSTFAULT_IO\n",
    pass,f.result.phase,f.result.worker,f.result.word,f.io.root?f.io.root->pc:0,f.io.core[0]->destination[2034],
    f.io.root?f.io.root->memory.at(TT_Q38_FFN_GRAPH_STATS+24):0,f.io.root?f.io.root->memory.at(TT_Q38_FFN_GRAPH_STATS+28):0,
@@ -253,6 +265,13 @@ int main(int argc,char** argv){
   if(!pass){for(unsigned i=0;i<5120;i++)firstOutput[i]=f.output[i];}
   else assert(memcmp(firstOutput.data(),f.output,sizeof(f.output))!=0);
   assert(f.io.bootCount==119 && f.result.installedWords==installed && !f.result.restoredWords && f.result.runs==pass+1 && f.NativeMatches());
+  assert(f.io.inputStageReads-inputReadsBefore==5120 && f.io.manifestStageReads-manifestReadsBefore==TT_Q38_FFN_GRAPH_WORDS);
+#ifdef PIONEER_Q38_FFN_SEALED_PROOF
+  assert(!f.io.workManifestPostReads);
+  printf("PASS sealed work proof pass%u:ZERO duplicate CPU manifest post-reads;initial5120input+3456manifest readbacks retained;NO_NATIVE_SPEED_CLAIM\n",pass);
+#else
+  assert(f.io.workManifestPostReads==(pass+1)*2*TT_Q38_FFN_GRAPH_WORDS);
+#endif
 #ifdef PIONEER_Q38_FFN_HOST_PROFILE
   assert(f.result.hostProfile.Complete() && f.result.hostProfile.polls && !f.result.hostProfile.invalid);
   printf("PASS CPU phase attribution pass%u synthetic_total%llu polls%u;FIXTURE_CLOCK_NOT_NATIVE_MICROSECONDS\n",pass,
@@ -265,6 +284,7 @@ int main(int argc,char** argv){
 #endif
  assert(f.Close() && f.graphOwner->Closed() && f.code->Closed() && !f.result.unsafe && f.result.closed
   && f.io.bootCount==119 && f.io.rootCount==3 && f.result.restoredWords==867448 && f.result.stopped==119 && f.result.held==119);
+ assert(f.io.stopManifestPostReads==2*TT_Q38_FFN_GRAPH_WORDS);// NEVER elide STOP/CLOSE proof
 #ifdef PIONEER_Q38_FFN_HOST_PROFILE
  assert(memcmp(&profileBeforeStop,&f.result.hostProfile,sizeof(profileBeforeStop))==0);// STOP must not corrupt the last FFN attribution
 #endif

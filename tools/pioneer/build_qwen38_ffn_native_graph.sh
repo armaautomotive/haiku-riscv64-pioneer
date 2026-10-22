@@ -2,17 +2,22 @@
 # Build ONLY:separate tag36/namespace9 actual persistent FFN adapter.
 # NO install,execution,Assistant promotion or token-rate claim.
 set -eu
+[ "${PIONEER_Q38_FFN_SEALED_PROOF:-0}:${PIONEER_Q38_FFN_SEALED_PROOF_CLIENT:-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_FFN_HOST_PROFILE:-0}:${PIONEER_Q38_FFN_HOST_PROFILE_CLIENT:-0}" = 0:0 ] || exit 2
 [ "$#" = 2 ] || [ "$#" = 3 ] || exit 2
 ffn_task_profile=0
+ffn_task_sealed=0
 ffn_task_tag=2026102200010036
 if [ "$#" = 3 ];then
- [ "$3" = --host-profile ] || exit 2
- ffn_task_profile=1;ffn_task_tag=2026102200010037
+ case "$3" in
+  --host-profile) ffn_task_profile=1;ffn_task_tag=2026102200010037;;
+  --sealed-proof) ffn_task_profile=1;ffn_task_sealed=1;ffn_task_tag=2026102200010038;;
+  *) exit 2;;
+ esac
  set -- "$1" "$2"
 fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
-env PIONEER_Q38_FFN_HOST_PROFILE=$ffn_task_profile PIONEER_Q38_FFN_NATIVE_GRAPH=1 PIONEER_Q38_FFN_PERSISTENT_GRAPH=1 PIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1 \
+env PIONEER_Q38_FFN_SEALED_PROOF=$ffn_task_sealed PIONEER_Q38_FFN_HOST_PROFILE=$ffn_task_profile PIONEER_Q38_FFN_NATIVE_GRAPH=1 PIONEER_Q38_FFN_PERSISTENT_GRAPH=1 PIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1 \
  PIONEER_Q38_FFN_MODEL_INIT=1 PIONEER_DRIVER_BUILD_TAG=$ffn_task_tag \
  PIONEER_DRIVER_RELOAD=1 PIONEER_Q38_PANEL_DRIVER=10 PIONEER_Q38_NORMAL_CLOCK=1 \
  PIONEER_Q38_WORK_MODE=1 PIONEER_Q38_WORK_SPARSE_EXPORT=1 PIONEER_Q38_WORK_COMPACT_OUTPUT=1 \

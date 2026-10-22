@@ -6,6 +6,11 @@
 #endif
 #include "TenstorrentHaikuQwen38.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#ifdef PIONEER_Q38_FFN_SEALED_PROOF_CLIENT
+#if PIONEER_Q38_FFN_SEALED_PROOF_CLIENT != 1 || !defined(PIONEER_Q38_FFN_HOST_PROFILE_CLIENT) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
+#error Sealed proof client requires its exact separate measured tag38 role
+#endif
+#endif
 #ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
 #if PIONEER_Q38_FFN_HOST_PROFILE_CLIENT != 1 || !defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT) || defined(PIONEER_Q38_FFN_HOST_PROFILE)
 #error Host phase timing client requires its exact separate tag37 source role
@@ -20,7 +25,9 @@ struct FfnPrimeNativeMode:PioneerQ38WorkSessionMode {
   tt_pioneer_driver_reload r={};r.version=1;
   if(!io.Call(fd,TT_PCI_PROBE_RELOAD_STATUS,&r,sizeof(r)) || r.version!=1 || r.driver!=55 || r.guard_version!=1
    || r.build_tag!=
-#ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
+#ifdef PIONEER_Q38_FFN_SEALED_PROOF_CLIENT
+    UINT64_C(0x2026102200010038)
+#elif defined(PIONEER_Q38_FFN_HOST_PROFILE_CLIENT)
     UINT64_C(0x2026102200010037)
 #elif defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT)
     UINT64_C(0x2026102200010036)
@@ -64,7 +71,10 @@ struct FfnPrimeProgress {
 int main(int argc,char** argv) {
  if(argc!=2)return 2;
  unsigned layer;
-#ifdef PIONEER_Q38_FFN_HOST_PROFILE_CLIENT
+#ifdef PIONEER_Q38_FFN_SEALED_PROOF_CLIENT
+ if(!strcmp(argv[1],"--sealed-layer0"))layer=0;
+ else return 2;
+#elif defined(PIONEER_Q38_FFN_HOST_PROFILE_CLIENT)
  if(!strcmp(argv[1],"--profile-layer0"))layer=0;
  else return 2;
 #elif defined(PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT)

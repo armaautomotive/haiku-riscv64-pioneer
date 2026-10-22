@@ -1,0 +1,106 @@
+Measured-bottleneck optimization:duplicate CPU work-manifest post-read.
+OFFLINE/source-only October22 2026;native speedup NOT YET measured.
+Whole27B0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Basis:real tag37 profile117022/116779us inclusive FFN wall,ROOT proof
+20363/20366us. Initial input16.2ms/manifest11.8ms/final output14.9ms also
+remain host overhead. See qwen38-ffn-host-profile-native-20261022.txt.
+Do not call ROOT poll pure GPU time or this isolated FFN a token interval.
+
+New measured tag38 ONLY,PIONEER_Q38_FFN_SEALED_PROOF=1. EXACT SAME frozen
+QFG2 ROOT/QFP2 peer arithmetic and namespace9/82000B public request. Only
+work-mode RootProof skips the6912 CPU reads of original+shadow manifest.
+STOP/CLOSE still checks ALL6912 words. No generic Work/Assistant promotion.
+
+Authority chain that permits this specific duplicate elimination:
+1.Actual joint owner binds SAME authenticated canonical plan+uploaded bitmap,
+ source/epoch/driver generation,ALL120fixed code roles,mappings,hosts and
+ mutable lease. Global native call lock and graph lease exclude competing
+ writers. Old matrix ioctls remain blocked while graph owns these roles.
+2.Initial Stage writes AND reads back ALL3456canonical manifest words BEFORE
+ ROOT release. Initial5120F32 input readback ALSO retained. This exact host
+ intent is NOT supplied by a digest,caller flag or device self-report.
+3.The frozen ROOT alone copies original into shadow at entry;never writes
+ original. Fixed peer transfers/output ranges cannot alias either span.
+ Actual ROOT Sealed() compares EVERY original/shadow word repeatedly,
+ including AFTER the final matrix/producer and BEFORE completion receipt.
+4.Host STILL requires retained Scope/Guard,exact reset/source/PCI/mapping,
+ current physical ROOT marker/count/PCs,idle NoC,ALL64typed receipt words,
+ exact counters/deltas/aliases,ALL119sequence values,last command and
+ final Guard. stats[56]=1 is checked as DATA ONLY within this full chain;
+ it does not replace code/source/physical/counter proof by itself.
+5.UNKNOWN or numeric mismatch still CLOSE ONLY/retain/NO END/read/reset/
+ retry/hotswap/restore until explicit physical recovery. STOP policy and
+ ALL119 physical terminal proofs BEFORE FIRSThold unchanged. No CPU learned
+ reference,intermediate readback or numerical fallback added/removed.
+
+Local final builds a+b TERMINAL0 and EXACT:
+ driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+ client991155b6fea5c617b8e546e16fc2ebd22cbe2ff98f6c3bdabdc227fc76807eff
+ profile37driver eb6ba2741c8904dba8b4902ac260934ea2e169ffeb16ab8a3e96bd5e11966ba4
+ profile37client fa841f2a13767c089ba8ebc47a663cfcbbf110800daa38bca7d5370c1e3b1373
+ unchanged controls. Guardd1ce/default43control2df unchanged. Ordinary36
+ driver453ebdf12fa13bd39d31c3ec9f01c17e7048946e5cd575f663055b6e49c8f1e1
+ and client35add96a69fbb7b5c0f49e0895743406197f424d21cf979565bb10f15373b7e6
+ controls TERMINAL0,also BYTE-IDENTICAL.
+ Client accepts ONLY --sealed-layer0 and exact tag38,full SAME-file19GB SHA
+ BEFORE accelerator Open,and prior real GPU fingerprints f0e218bf/bb087a1f
+ BEFORE END. Output mismatch aborts without END/retry/fallback. This is a
+ GPU regression oracle,NOT CPU numeric equivalence or generation quality.
+
+Terminal local checks:
+-173exact tag38/before-SDK/old-role/Assistant refusals.
+-149oldprofile37+158oldnative36 role/namespace gates unchanged.
+-ACTUAL extracted RootProof,compiled baseline AND optimized:2positive/
+ 492FIRST-fault inert cases EACH. ALL64receipt words,ALL119sequences,
+ last10command/8counter words,status/PC/guard/idle/STOP-manifest faults;
+ first rejected observation issues NO following IO. Mock scope/endpoints,
+ not an actual native owner qualification. Work0vs6912post-reads,STOP6912.
+-ACTUAL unchanged QFG2 frozen instructions:1positive and8LATE manifest/
+ shadow corruptions at first/token/layer/last words,AFTER357matrix jobs
+ issued. ROOT parks BEFORE receipt56 publication,NO following NoC read,
+ packet/STOP/retry. Peer/math/physical endpoints simulated. Original is
+ NEVER written and shadow ONLY copied at entry in actual instruction run.
+-Actual profile-client Abort/Finish regression remains passing.
+-Actual persistent owner+frozen ROOT+ALL119 instruction TWO complete FFNs,
+ changed input/layer/token,176producers/79872rows,ONE867448word install/
+ 119boots,all intermediates GDDR,physical STOP terminals BEFORE FIRSThold,
+ exact code and ALL120outer snapshot restoration PASS;65124 TERMINAL0.
+ BOTH runs ZERO duplicate CPU work-manifest post-reads,ALL5120input+
+ 3456manifest initial readbacks retained. STOP still reads ALL6912words.
+ Both eight-phase profiles complete;STOP leaves profile unchanged. Synthetic
+ clocks5466/5462 NOT native microseconds or a measured speedup.
+-108focused updater fake-filesystem/handshake/hash/symlink/owner cases.
+-7317BROAD all-route updater cases PASS;96096 TERMINAL0.
+-Shell syntax and whitespace checks.
+
+Evidence logs:
+ /private/tmp/pioneer-q38-ffn-sealed-proof-owner-20261022-a.log
+ SHAca27c2b9c6391607e2e765c1f9f4d9802f5ed89d6b9a848380cf829f4de5b3f2
+ /private/tmp/pioneer-q38-ffn-sealed-proof-receipt-20261022-b.log
+ SHA39dcd10bb9a8ab54aa0ad5b8fc4485b210e2b6930ef8c99616669de4e7e97fe0
+ /private/tmp/pioneer-q38-ffn-sealed-proof-final-seal-20261022-a.log
+ SHAfe63bc94973e687aa609bddd8ce37905a195aa30531d8b7dde5b36eab37df3e9
+ /private/tmp/pioneer-q38-ffn-sealed-proof-updater-focused-20261022-a.log
+ SHA8e71b66d1a39d69b6a40bfdda21ba343452502a50aeb56525b7d1e9ea8f850ac
+Updater afd52aad3fc5128a1e70ab671e3cd7f3b25e49e66e44443f3da8184da2a3a7a2
+ pins ONLY original041/tag12 <->23e/tag38. No force/reset/automatic rollback.
+ Failed raw-unpack-cache tag22 remains HARD BLOCKED.
+
+ALL local tests/builds TERMINAL0,including full arithmetic/STOP/outer
+restoration and BROAD updater. Live scripts were never edited or restarted.
+No new tag38 files staged/installed/run yet. Native comparison pending.
+
+Last verified board state from known-success profile restoration:
+ EXACT original041/tag12/generation42,quiesced0/cold0/active_owner0/open1/
+ guard1,ALL compute parents absent,64CPUs/max137034936320B. No new native
+ operations/reboot/power/SD/Assistant/boot/network changes since then.
+ Dirty llama.cpp/unrelated work UNTOUCHED.
+
+Next push source checkpoint,then fresh no-parent/
+ idle proof and guarded isolated tag38 test. Require BOTH prior GPU outputs
+ exact,clean END/clock restore,real phase improvement,then known-success-
+ only exact original restoration. Do not claim a speedup before measuring.
+ Even a successful20ms FFN-boundary saving would NOT satisfy20tok/s or
+ make the full model resident:generic same-family projections and all-card
+ norms/residual/GDN/attention/KV/embedding/sampling/integration remain owed.

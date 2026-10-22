@@ -1,5 +1,27 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:measured tag38 sealed-proof
+optimization implemented. SAME frozen QFG2/QFP2 arithmetic/namespace9/
+82000B request. Skip ONLY6912duplicate CPU work-manifest post-reads;initial
+5120input+3456canonical manifest readbacks retained,STOP/CLOSE6912reads
+unchanged. Frozen ROOT final Sealed()+exclusive native owner+physical
+terminal/ALL64typed receipt/source/counter/sequence proofs remain mandatory.
+Actual unchanged ROOT1positive/8late-manifest/shadow faults BEFORE receipt,
+NO following NoC read/packet/STOP. Actual extracted RootProof baseline AND
+optimized2positive/492FIRST-fault checks each PASS. Actual persistent owner+
+ROOT+ALL119 instruction TWO fullFFNs/read-count/STOP/ALL120outer restoration
+PASS;49setup+STOPfaults/12refusals.173new+149old37+158old36role gates,
+client Abort/Finish oracle,108focused+7317BROAD updater cases PASS. ALL
+local jobs TERMINAL0. Driver23e2e68a/client991155b6 build TWICE EXACT;
+old37eb6/fa841,old36453e/35add,guardd1ce/default43control2df BYTE-IDENTICAL.
+Source/SDK only;dirty llama.cpp UNTOUCHED. No tag38 upload/install/native
+test yet;last original041/tag12/gen42/idle/cold0/owner0/open1/guard1,64CPUs/
+full RAM. Native savings NOT YET measured;no token-rate improvement claim.
+NEXT source push then guarded actual comparison requiring same prior GPU
+fingerprints/clean END/clock restore and known-success-only original restore.
+Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-ffn-sealed-proof-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:real tag37 host-phase measurement
 PASS. Source47195895da pushed/remote verified before hardware. New eb6/
 fa841/2f927 artifacts staged remoteSHA EXACT,apply83791 CLI0->gen41.

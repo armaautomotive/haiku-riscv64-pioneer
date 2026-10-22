@@ -9,6 +9,11 @@
 #include "PioneerQ38FfnInputGraphImages.h"
 #include "PioneerQ38FfnGraphShape.h"
 #include "PioneerQ38GraphMutableBanks.h"
+#ifdef PIONEER_Q38_FFN_SEALED_PROOF
+#if PIONEER_Q38_FFN_SEALED_PROOF != 1 || !defined(PIONEER_Q38_FFN_HOST_PROFILE)
+#error Exact isolated measured sealed-proof role required
+#endif
+#endif
 #ifdef PIONEER_Q38_FFN_HOST_PROFILE
 #if PIONEER_Q38_FFN_HOST_PROFILE != 1
 #error Exact isolated host phase profiling role required
@@ -166,9 +171,19 @@ class PioneerQ38FfnPersistentGraphOwner {
  }
  template<class IO> bool RootProof(IO& io,PioneerQ38FfnPersistentGraphResult& r) {
   if(!Guard(io,0) || !RootTerminal(io) || !PioneerQ38GraphCsrIdle(io))return false;
-  // ROOT verifies original/shadow/full sources/ALL peer physical proofs
-  // itself. This first implementation additionally checks exact captured
-  // manifest bytes. It never reads peer numeric inputs/results on the CPU.
+  // Stage read back EVERY canonical manifest word before ROOT release.
+  // Scope retains the exclusive joint code/mutable/source owner and the
+  // frozen ROOT is the sole manifest/shadow writer. It compares ALL original
+  // and shadow words in Sealed(),including AFTER the last matrix/producer,
+  // BEFORE stats[56]=1 and the independently checked physical terminal.
+  // Exact typed stats+physical NoC deltas below remain REQUIRED. Tag38 may
+  // therefore omit ONLY this DUPLICATE CPU post-read for work mode. It does
+  // NOT omit initial Stage verification,ROOT sealing,any source/reset/PCI/
+  // NoC/physical completion proof,or STOP/CLOSE manifest readbacks. No peer
+  // numeric input/intermediate is read/validated on CPU in either mode.
+#ifdef PIONEER_Q38_FFN_SEALED_PROOF
+  if(manifest[5]!=1)
+#endif
   for(unsigned i=0;i<TT_Q38_FFN_GRAPH_WORDS;i++){
    if(io.Q38PanelRead(TT_Q38_FFN_GRAPH_MANIFEST+i*4)!=manifest[i]
     || io.Q38PanelRead(TT_Q38_FFN_GRAPH_SHADOW+i*4)!=manifest[i])return false;

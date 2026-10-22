@@ -3,12 +3,20 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_FFN_SEALED_PROOF_CLIENT:-0}" = 0 ] || exit 2
+ffn_profile_tag=2026102200010037
+case "${PIONEER_Q38_FFN_SEALED_PROOF:-0}" in
+ 0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010038 ] || exit 2;;
+ 1) [ "${PIONEER_Q38_FFN_HOST_PROFILE:-0}:${PIONEER_Q38_FFN_NATIVE_GRAPH:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 1:1:2026102200010038 ] || exit 2
+    ffn_profile_tag=2026102200010038;;
+ *) exit 2;;
+esac
 [ "${PIONEER_Q38_FFN_HOST_PROFILE_CLIENT:-0}" = 0 ] || exit 2
 ffn_native_tag=2026102200010036
 case "${PIONEER_Q38_FFN_HOST_PROFILE:-0}" in
  0) [ "${PIONEER_DRIVER_BUILD_TAG:-}" != 2026102200010037 ] || exit 2;;
- 1) [ "${PIONEER_Q38_FFN_NATIVE_GRAPH:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = 1:2026102200010037 ] || exit 2
-    ffn_native_tag=2026102200010037;;
+ 1) [ "${PIONEER_Q38_FFN_NATIVE_GRAPH:-0}:${PIONEER_DRIVER_BUILD_TAG:-}" = "1:$ffn_profile_tag" ] || exit 2
+    ffn_native_tag=$ffn_profile_tag;;
  *) exit 2;;
 esac
 [ "${PIONEER_Q38_FFN_NATIVE_GRAPH_CLIENT:-0}" = 0 ] || exit 2
@@ -545,6 +553,9 @@ if [ "${PIONEER_Q38_FFN_NATIVE_GRAPH:-0}" = 1 ]; then
 fi
 if [ "${PIONEER_Q38_FFN_HOST_PROFILE:-0}" = 1 ]; then
  extra="$extra -DPIONEER_Q38_FFN_HOST_PROFILE=1"
+fi
+if [ "${PIONEER_Q38_FFN_SEALED_PROOF:-0}" = 1 ]; then
+ extra="$extra -DPIONEER_Q38_FFN_SEALED_PROOF=1"
 fi
 set -- -isystem "$project/headers/private/kernel" -isystem "$project/headers/private/kernel/arch/riscv64" \
  -isystem "$project/headers/private/kernel/arch/generic" -isystem "$project/headers/private" \
