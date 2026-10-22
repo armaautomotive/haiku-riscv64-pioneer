@@ -1,0 +1,69 @@
+OFFLINE row-major GGUF -> lossless expanded-Q4 page DATA,October22 2026.
+No source/layout/ABI/uploader/model/driver/Assistant selector or speed claim.
+Best041/tag12/g28 left unchanged and idle throughout this CPU-only work.
+No SSH/GPU job/driver/power/reboot/SD/CPU/RAM/boot/settings changes.
+
+New PioneerQ38PredecodedQ4Reader consumes bounded original Q4_K rows via
+the model's existing ReadPacked interface. Exact source object+nonzeroepoch,
+Stable descriptor+type/rank/K/row bounds are required. Reads at most16
+original packed rows (156672B max) into a private nothrow cache. Cache key
+binds source/tensor/row/epoch;failed read or stale source poisons reader,
+clears cache,and forbids rebind/retry. No device reset/cleanup authority.
+Uses preceding page helper:ALL output staged/late failure atomic,ALL256
+metadata bytes per tile preserved,zero final-page padding. No learned
+products/requantization. Explicit PAGE_STUDY header guard remains required;
+freestanding/ordinary roles are refused. No production source includes it.
+
+ASan/UBSan mock-model tests54fragments/14298pages,ALL3K widths/twochanged
+patterns/first-row offsets/groups/allbytes,independent canonical row/panel/
+nibble oracle.24data/bounds/read/epoch/Stable atomic refusals,plus unbound/
+unstable/zeroepoch/rebind guards. A crossing page needs2different cached
+rowgroups;late failure of either read leaves output unchanged. Cache hits,
+tensor changes,stale populatedcache,wrongsource and32bitfragment overflow
+tested. /private/tmp/pioneer-q38-predecoded-q4-reader-tests-20261022-b.log
+SHA8424d7d518c8df0b9c4bcb76b26fd76bff122bb1091921535af652546ab5386e
+
+Actual original GGUF parser integration uses sparse synthetic fixture:
+10boundarytiles checked versus unchanged original tiled reader,all16panels
+independently decoded,metadata+losslessinverse exact;epoch/reopen/truncation
+reject before any output publication. Public model integration ALL1344FFN
+fragments,first/second/last tile each=4032tiles/64512panels. Encoded rows
+represent18182307840FFNbytes,NOT a complete read/encoding/installation of
+every byte. Independent original tiled reader+panel operand oracle match;
+last-page padding/canaries exact. No whole-model quality or timing claim.
+/private/tmp/pioneer-q38-predecoded-q4-source-tests-20261022-a.log
+SHA6f7bba945618a118b20208afddd324b6658c1c3923e6683160e616b8daa39db8
+
+Separate full local public GGUF SHA matched c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+This is provenance ONLY,not same-FD native source authentication/permission.
+Future production uploader must independently authenticate its OWN same
+read-only source description and private format/extent/owner contract.
+
+Preceding17664page/15atomic/3role tests and original884736byte Q8/Q4/Q6
+tiled reader/bothpageorders/layoutcontexts1/8192/32768 regression PASS.
+/private/tmp/pioneer-q38-predecoded-q4-page-regression-20261022-d.log
+SHA1b02ca6c3c87fde3992b554a6239de4fa713c9b9ba83f1dc72fc0c00dfddb47f
+/private/tmp/pioneer-q38-original-tiles-regression-20261022-a.log
+SHA0db15dda21e4349218cbf6038655addefa4863c8de5afc00d1a60f0ac746a5a7
+Only new offline headers/tests added;normal source/layout/bank capacities/
+SDK/pristine pinned libraries unchanged. Dirty llama and unrelatedFlashNext
+work untouched. No new native code/image was built or installed here.
+
+BEFORE any native expanded-Q4 experiment:distinct Work source namespace/
+ABI+exacttag/frozen peer+root images;larger bytes/flits/fullinitializedpage
+intervals independently authorized BEFORE prepare/boot/MMIO;checked ABI
+must keep original2304B layout,not a global tile-size replacement. Exact
+full controller ownership/UNKNOWN/quarantine/CLOSEONLY tests,strict build
+gates,guarded updater/numeric regressions and paired timing remain required.
+No store-capacity increase. Test one fixed FFN within existing21GiB first.
+
+User asked whether PCIe-crossing work can move entirely onto P100A:
+current Q38 backend accepts learned MUL_MAT only (plus metadata views),
+uses host buffers,CPU-quantizes activations per projection,and publishes
+matrix results to host between graph nodes. Nonmatrix/dynamic attention/
+GDN graph work remains CPU,NOT CPU learned-reference validation. Weights
+remain card-resident after upload. Resident intermediate activations/state
+and fused wholeFFN/layer execution are the larger architectural target;
+pre-expanded source changes decoding,NOT those graph round trips. Current
+kernel/coordination inefficiency also matters;removingPCIe roundtrips alone
+is NOT evidence for20tok/s. Best fixed4CPUhelper sample .207893161tok/s.
