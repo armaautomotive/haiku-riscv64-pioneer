@@ -1,0 +1,131 @@
+Generic same-family projection matrix ROOT:OFFLINE October22 2026.
+Predecessor01caf6230b pushed/remote verified;this continues that op5/gather
+path,not another initialization/boot/STOP-only qualification.
+Last WHOLE27B0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Implemented NEW QPM1 matrix-wave ROOT,not a native selector:
+-Reuse the actual dispatch arithmetic/proof core under a SEPARATE exact
+ PIONEER_Q38_PROJECTION_MATRIX_ROOT role. Exact complete QFP3 companion
+ marker/PC bounds,not the shared old boot jump or QFP2's12KiB grant.
+-Supports all fixed semantic Q8_0/Q4_K/Q6_K geometries,5120/6144/17408
+ input widths.48-row recurrent projections3workers;1024-row attention
+ matrices64workers;248320-row vocabulary973jobs/9waves,last21workers.
+-One wave is bounded to119*256rows/121856bytes,never staging an entire
+ vocabulary vector in the small ROOT output window. Scatter by GLOBAL row,
+ including later-wave row offsets,into fixed1MiB GDDR workspace output.
+ All wave outputs remain on card;no host PCI endpoint or CPU learned work.
+-Fetch exact native operands/compact scales from SAME64MiB workspace at
+ offsets131072/212992. Q8_0 has8scales per256lanes,K one;all padding and
+ operand safety remain mandatory. Q8_0 negative scale/negative zero refused;
+ ZERO FP16 scales do NOT imply zero integer lanes.
+-New fixed frame/row shadows at7fc00/7fd00,within the private metadata view,
+ copied AFTER shape validation and BEFORE FIRST packet. First-failure
+ source/frame/row checks BEFORE/AFTER EVERY peer transfer. ALL8 physical
+ NoC counters/deltas/aliases,not just selected direction's4. Peer proof
+ before/after aliases mandatory. UNKNOWN issues NO next packet/reset/
+ restore/retry. Full current physical peer WAIT/reset/proofs still required.
+
+CRITICAL incompleteness/authority boundaries:
+The wave shape proves bounded/disjoint rows for ONE wave;it does NOT prove
+canonical learned ownership/full multi-wave cover/source authentication
+from caller data. The future kernel owner MUST bind exact canonical Jobs,
+actual uploaded page ledger/retained source epoch,all wave histories and
+completed input producers. Ready bits/markers/digests grant NOTHING here.
+This is NOT a new native execution ioctl. Old driver/client/Assistant and
+old image builders refuse inherited nonzero new selector BEFORE SDK access.
+Current installed tag12 and measured FFN tag38 catalogs stay unchanged.
+
+Native install remains DISABLED. QFP3 still needs a COMPLETE16KiB peer
+snapshot/catalog/PC/owner (old owner saves12KiB ONLY). QPM1/shadows need
+their own exact root role/metadata mapping and same-family full-projection
+controller. Do NOT install this under tag38 or borrow an old matrix ioctl
+while another graph owns all120 roles. No hardware UNKNOWN occurred here.
+
+Final artifacts:/private/tmp/pioneer-q38-projection-family.DGLYM4co
+QPM1 matrix-g AND matrix-h build reproducibly EXACT:
+ boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main a28ec7d505a837c260939a9cbbbba9aa98ac4f13069045de8b73f84878221bad
+ prefix5236efe8942629ebf00e8e7bea83b332473a3c180a09990e71b73217fd631017
+ main7808B/prefix6412B,entry72000/park72038/fault72060. No writable
+ globals/GOT/unresolved libc or division/high-multiply device instructions.
+ Original linker limits NOT enlarged. Root max observed stack5704B/8192B.
+ QFP3 peer-m recompiled from current sources BYTE-IDENTICAL to peer-k/l:
+ main783bd17e5f1114365bac3e7fa0589f205d70a225a2223a4de7089503ef90a615
+ affine a55331eeab74b50a50012a62c0d476e9a247f653eefe2211a08d0a75b2da85ca
+ helper f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9
+ Same boot above;16352B helper REQUIRES new16KiB native owner.
+ QPG1 gather-b remains e4e811535e7a0c6f55f45238625d5f1bb2aada7b5a454ce0bc5f03b52fa17ee8.
+ ALL source/SDK only;dirty llama.cpp never read/edited/built.
+
+Terminal0 tests,not native time/model benchmarks:
+-ACTUAL QPM1 RV32 ROOT for ALL498 canonical matrix selections/514waves/
+ 4400640global output rows,including BOTH9-wave globals,small3/64worker
+ cases and all7banks/base edges. Complete global row cover exactly once.
+ Peer replies/arithmetic/physical endpoints are SYNTHETIC in THIS suite;
+ this is row-placement/transport/proof evidence,NOT all498 real arithmetic.
+ 151fault/transition cases:all64proof words,actual QFP3 PC bounds/fault/STOP
+ exclusions,valid transient helper PCs without granting completion,late
+ frame/source/row changes,nonfinite/negative Q8 scales,UNKNOWN/foreign
+ counters,initial/transfer counter aliases,readback/shape faults. First
+ rejected source/alias samples issue NO further CSR reads/packets.
+-ACTUAL arithmetic composition on TWO COMPLETE projections:48-row GDN
+ and1024-row attention key,each TWO changed inputs.80actual op5 jobs,
+ 4QPG1 gathers,4QPM1 matrix ROOT runs,ALL3/64 actual active QFP3 peers,
+ 2144actual output rows/171520matrix instructions.84boots TOTAL,each pool
+ installed/booted ONCE;no peer reset between producer/matrix/changed
+ producer/matrix/STOP. Source routes/bases/offsets checked to be the SAME
+ canonical workspace through producer->gather->matrix,not an unobserved
+ fixture address relocation. Worker/row/block-varying bounded synthetic
+ weight bytes;ALL FP32+FP64 independent observers pass. Fabric copies bytes,
+ never synthesizes PEER completion/proofs/products;transport ACK/counters/
+ reset endpoints ARE simulated. Test-only
+ CPU references do not enter the device/runtime path or Work mode.
+ This is NOT ALL119 native ownership or full real-model inference.
+-Read-only RISC-V kernel compile of canonical job and matrix-wave data
+ helpers,max frame144B;large plans remain HEAP ONLY.
+-96new before-SDK role refusals/complete artifact pins/exact companion
+ extents/no-global checks;173old38 and77oldprojection gates PASS.
+-Old QFM1 actual ROOT regression255positive/428refusals,maxstack5672B;
+ default original image main67ff940a/prefix492dfc44 BYTE-IDENTICAL.
+-Old QFG2 control a363fb40/255ff2bb/a0b2fdf2 EXACT frozen bytes.
+-Old tag38 driver23e2e68a/guardd1ce2aa4/default43control2df0e0f8 EXACT.
+ ALL scripts/fixtures were edited ONLY after their own runner terminated.
+ Shell syntax/whitespace PASS. No outstanding test/build/native job.
+
+Final evidence logs:
+ /private/tmp/pioneer-q38-projection-matrix-test-20261022-d.log
+ SHAc228fb9b1ae07f43a218acc66509e461ab3fd85fdefd013a9bd6fa0d642db1b8
+ /private/tmp/pioneer-q38-projection-matrix-cooperative-20261022-d.log
+ SHAbde6fda6a3faa4fd89582ad511fafcf53d01da4fbf0c5233aa853814d6a7ffc8
+ /private/tmp/pioneer-q38-projection-matrix-kernel-20261022-a.log
+ SHA3058d1616e99ff6a8fe9944eef1f382f08a838f7d0ac597789bb5d9fb86133d8
+ /private/tmp/pioneer-q38-projection-matrix-gates-20261022-a.log
+ SHAe99be35fd6fa6cb3de7114b401d9dabdae051902abebecb925981559d660472d
+ /private/tmp/pioneer-q38-projection-old-matrix-regression-20261022-a.log
+ SHA5573b9dc3495e47c28f90f9118f001dfd578ae8405ac8a627d51362932a065fa
+ /private/tmp/pioneer-q38-projection-matrix-driver38-control-20261022-a.log
+ SHAebb829a81bfea438f742d1a521d4638c8a316e95c1d9cd0fe3ec2b7d6aee269c
+ /private/tmp/pioneer-q38-projection-old-qfg2-control-20261022-a.log
+ SHA718974c2e32e841423bd98c8da2713b24e64911fb542314cb2102ccd06a33cfb
+ /private/tmp/pioneer-q38-projection-matrix-peer-control-20261022-a.log
+ SHAd82f2f02afe5e1fc767e86e92bcdb99fcc516f537a8a07d1ac17c7bcec3183b2
+ /private/tmp/pioneer-q38-projection-matrix-old38-gates-20261022-a.log
+ SHAc15d3dd2c16f75a794f619af85434e66130c23827925a9be42894d53ae1ad18b
+ /private/tmp/pioneer-q38-projection-matrix-old-projection-gates-20261022-a.log
+ SHA6404a5fc4473ffb81e78813da23caa33387789e3776da6ba72ef78ef466eb66b
+
+Fresh18:42UTC READ-ONLY SSH audit:ALL_COMPUTE_PARENTS_ABSENT,original
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/generation44,quiesced0/cold0/active_owner0/
+open_count1/guard1,64CPUs/max137034936320B. ZERO GPU job/remote writes/
+reload/reboot/power/SD/Assistant/boot/network/clock changes. No native
+quarantine/recovery. Failed raw-unpack-cache22 still HARD BLOCKED.
+Unrelated work untouched and excluded from checkpoint.
+
+NEXT actual full-projection parent ROOT:ONE retained119-peer lifetime,
+stage op5 producers/prove ALL physical completions,gather then ALL waves,
+actual current counters/sequence/source proofs and terminal STOP. Then
+complete QFP3/parent catalog/full snapshots+actual kernel source/ledger/
+cookie/owner integration BEFORE native selection. Do NOT repeat boot/
+STOP-only old qualifiers. Full all-card norm/residual/GDN/attention/KV/
+embed/sampling/production decoder and real whole27B measurements remain.

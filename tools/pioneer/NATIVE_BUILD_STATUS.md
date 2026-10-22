@@ -1,5 +1,29 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:NEW QPM1 generic projection-wave
+ROOT implemented,NOT native selected. Actual dispatch core supports ALL498
+semantic Q8_0/Q4_K/Q6_K shapes/514waves/4400640global rows,including3/64
+worker small matrices and BOTH973job/9wave globals;synthetic peer replies
+in this placement suite,151faults/transitions,maxROOTstack5704B. Separate
+ACTUAL arithmetic composition:80op5 jobs->4QPG1 gathers->4QPM1 ROOT runs+
+ALL3/64 active QFP3 peers,TWO changed inputs each for COMPLETE48-row GDN
+and1024-row attention key,2144output rows/independent FP32+FP64 observers.
+SAME exact canonical workspace through all stages,worker/row/block-varying
+weights,ONE boot/pool/NO resets/terminal STOP;test weights/endpoints,
+NOT native ALL119/real model. Every peer transfer now has full8counter/
+alias and FIRST source/frame/row-shadow checks;no host PCI/CPU learned work.
+96new+173old38+77oldprojection gates PASS,144B kernel frame. New images
+reproduce EXACT;old QFM1/QFG2/QFP3/tag38driver/guard/default43control BYTE-
+IDENTICAL;oldQFM255positive/428refusals. ALL local jobs TERMINAL0. No new
+native selector/install/job/reboot/power/SD/Assistant/boot/network changes.
+Fresh18:42UTC original041/tag12/gen44/idle/cold0/owner0/open1/guard1,64CPUs/
+max137034936320B. NEXT full-projection parent ROOT/op5/gather/ALL waves in
+ONE119-peer lifetime,then complete16KiB peer/catalog/snapshot and native
+source/ledger/cookie/owner integration BEFORE hardware. Old12KiB owner MUST
+NOT be reused. Full resident decoder still incomplete. Whole27B.207893161
+tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-matrix-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:SAME-family generic projection
 input/gather path implemented,NOT native selected. ALL498canonical learned
 matrix geometries/actual initialized-page checks;48rows->3workers and

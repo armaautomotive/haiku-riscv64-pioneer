@@ -8,6 +8,9 @@ typedef __UINT32_TYPE__ uint32_t;
 #ifdef PIONEER_Q38_FFN_GRAPH_ROOT
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphShape.h"
 enum {Q38DispatchPeerMarker=TT_Q38_FFN_PERSISTENT_MARKER};
+#elif defined(PIONEER_Q38_PROJECTION_MATRIX_ROOT)
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionMatrixShape.h"
+enum {Q38DispatchPeerMarker=TT_Q38_FFN_PERSISTENT_MARKER};
 #else
 enum {Q38DispatchPeerMarker=0x32503851};
 #endif
@@ -15,7 +18,18 @@ enum {Q38DispatchPeerMarker=0x32503851};
 #if !defined(PIONEER_Q38_WORK_SENTINEL_POLL) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_WORK_COHORT_CACHE) || !defined(PIONEER_Q38_REUSE_ACTIVATIONS) || !defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) || !defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || defined(PIONEER_Q38_OUTPUT_TRANSFER_ROOT) || defined(PIONEER_Q38_WORK_ROOT_COMMAND_REUSE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_PEER_PHASE_ROOT)
 #error NEW OFFLINE resident FFN root requires its exact private chain,not host DMA/cache experiment selectors
 #endif
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+#if PIONEER_Q38_PROJECTION_MATRIX_ROOT != 1
+#error Exact separate projection matrix role required
+#endif
+enum {TT_Q38_FFN_MATRIX_MARKER=TT_Q38_PROJECTION_MATRIX_MARKER,
+ TT_Q38_FFN_MATRIX_FRAME=TT_Q38_PROJECTION_MATRIX_FRAME,TT_Q38_FFN_MATRIX_ROWS=TT_Q38_PROJECTION_MATRIX_ROWS,
+ TT_Q38_FFN_MATRIX_RESIDENT_INPUT=TT_Q38_PROJECTION_MATRIX_INPUT};
+#define PioneerQ38FfnMatrixShape PioneerQ38ProjectionMatrixShape
+#define PioneerQ38FfnMatrixOrdered PioneerQ38ProjectionMatrixOrdered
+#else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnMatrixShape.h"
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CompactOutput.h"
 #endif
 #ifdef PIONEER_Q38_PEER_PHASE_ROOT
@@ -146,12 +160,29 @@ static unsigned SourceOffset(unsigned w)
 }
 static bool Idle()
 {
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+ for(unsigned c=0;c<4;c++)if(*Words(0xffb20040+c*0x800))return false;
+ for(unsigned c=0;c<32;c++)if(*Words(0xffb20240+c*4)&255)return false;
+ return true;
+#else
 	bool okay=true;
 	for (unsigned c=0;c<4;c++) okay &= !*Words(0xffb20040+c*0x800);
 	for (unsigned c=0;c<32;c++) okay &= !(*Words(0xffb20240+c*4)&255);
 	return okay;
+#endif
 }
 static bool PacketIdle() { return !*Words(0xffb20040) && !(*Words(0xffb20240)&255); }
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+// Only copied AFTER shape validation,BEFORE the FIRST packet. These fixed
+// private shadows have no command/response/output alias and are not changed
+// during this helper call. A new native owner MUST save/prove their view.
+static __attribute__((noinline)) bool ProjectionRootSealed(){
+ for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+SourceOffset(i))!=Words(TT_Q38_PROJECTION_MATRIX_SHADOW)[16+i])return false;
+ for(unsigned i=0;i<64;i++)if(Words(TT_Q38_PROJECTION_MATRIX_FRAME)[i]!=Words(TT_Q38_PROJECTION_MATRIX_SHADOW)[i])return false;
+ for(unsigned i=0;i<119;i++)if(Words(TT_Q38_PROJECTION_MATRIX_ROWS)[i]!=Words(TT_Q38_PROJECTION_ROWS_SHADOW)[i])return false;
+ return true;
+}
+#endif
 #ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
 struct RootCommandIO {
 	uint32_t Read(unsigned word){return Words(0xffb20000)[word];}
@@ -171,6 +202,14 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 		|| (remote==0x83f00 && bytes>=320 && bytes<=1280 && !(bytes&63));
 	if (!permitted || !worker || worker>=120 || local<0x75000 || local>0x75800-bytes
 		|| ((local^remote)&31) || !PacketIdle()) block_fault_park();
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+ if(!ProjectionRootSealed() || !Idle())block_fault_park();
+ uint32_t expected[8];for(unsigned c=0;c<8;c++){
+  unsigned delta=c==2 || c==6?1U:c==0 || c==3?unsigned(!write):c==1?(!write?(bytes+63)/64:0U):c==5?(write?(bytes+63)/64:0U):unsigned(write);
+  expected[c]=*Words(0xffb20000+Offset(c))+delta;
+  if(c==6 && expected[6]!=expected[2])block_fault_park();
+ }
+#else
 #ifdef PIONEER_Q38_REUSE_ACTIVATIONS
 	static const unsigned offsets[2][4]={{0x208,0x20c,0x210,0x214},{0x204,0x220,0x210,0x228}};
 	const unsigned* offset=offsets[write?1:0];
@@ -178,6 +217,7 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 	const unsigned offset[]={write?0x204U:0x208U,write?0x220U:0x20cU,0x210,write?0x228U:0x214U};
 #endif
 	uint32_t expected[4]; for (unsigned c=0;c<4;c++) expected[c]=*Words(0xffb20000+offset[c])+(c==1?(bytes+63)/64:1);
+#endif
 	uint32_t command[]={write?local:remote,0,write?129U:XY(worker),write?remote:local,0,write?XY(worker):129U,0,write?0x212U:0,bytes,0};
 #ifdef PIONEER_Q38_WORK_ROOT_COMMAND_REUSE
 	if(reuseCommand){
@@ -210,9 +250,22 @@ static void Transfer(bool write,unsigned worker,unsigned local,unsigned remote,u
 		bool complete=!pending;
 #else
 		bool complete=!*Words(0xffb20040);
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  for(unsigned c=0;c<8;c++)complete &= *Words(0xffb20000+Offset(c))==expected[c];
+#else
 		for (unsigned c=0;c<4;c++) complete &= *Words(0xffb20000+offset[c])==expected[c];
 #endif
-		if (complete && PacketIdle()) {
+#endif
+		if (complete &&
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+   Idle()
+#else
+   PacketIdle()
+#endif
+  ) {
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+   if(!ProjectionRootSealed())block_fault_park();
+#endif
 			Words(0x7f800)[write?7:6]++; Words(0x7f800)[write?9:8]+=(bytes+63)/64; Fence(); return;
 		}
 	}
@@ -264,6 +317,9 @@ static __attribute__((noinline,optimize("Os"))) bool PrepareInputs(unsigned mode
 	for (unsigned b=0;b<padded;b++) {
 		uint32_t bits=Words(0xab000)[b],magnitude=bits&0x7fffffff;
 		if (b>=blocks?bits!=0:magnitude && (magnitude<0x2f800000 || magnitude>0x47800000)) return false;
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  if(b<blocks && (bits==0x80000000U || (type==8 && (bits&0x80000000U))))return false;
+#endif
 	}
 	return true;
 }
@@ -310,7 +366,16 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
 	Transfer(false,worker,0x75000,0xffb13140,4 Q38_COMMAND_WITH(reuseCommand)); unsigned second=*Words(0x75000);
 	Transfer(false,worker,0x75010,0xffb121b0,4 Q38_COMMAND_WITH(reuseCommand)); unsigned reset=*Words(0x75010);
 	Checkpoint(0x54000204,(worker<<24)|(first&0xffffff));
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+ // Exact COMPLETE QFP3 image ranges,NOT a role grant from the shared boot
+ // marker. A separate owner/catalog MUST pin all four new sections.
+ const unsigned pc[]={first,second};
+ for(unsigned value:pc)if(reset!=0x46800 || (value&3) || value==TT_Q38_PEER_FAULT_ENTRY || value==TT_Q38_PEER_FAULT_PARK
+  || (!stopped && PioneerQ38PeerTerminalPc(value))
+  || (!((value>=0x64000 && value<0x67fe0) || (value>=0x70b00 && value<0x71f80) || (value>=0x72000 && value<0x73fe4))))block_fault_park();
+#else
 	if (reset!=0x46800 || first<0x72000 || first>=0x74000 || second<0x72000 || second>=0x74000 || ((first|second)&3)) block_fault_park();
+#endif
 	return stopped?PioneerQ38PeerTerminalPc(first) && PioneerQ38PeerTerminalPc(second):WaitPc(first) && WaitPc(second);
 }
 #ifdef PIONEER_Q38_WORK_SENTINEL_POLL
@@ -412,7 +477,11 @@ static Q38_ROOT_SMALL bool PartsValid(const uint32_t parts[119][8],const uint32_
 }
 #endif
 #ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+#include "PioneerQ38ProjectionMatrixRoot.h"
+#else
 #include "PioneerQ38FfnMatrixRoot.h"
+#endif
 #define Q38_MAIN_SECTION __attribute__((section(".q38_main")))
 #else
 #define Q38_MAIN_SECTION
@@ -459,6 +528,11 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for(unsigned i=0;i<64;i++)ffn[i]=Words(TT_Q38_FFN_MATRIX_FRAME)[i];
 		for(unsigned i=0;i<119;i++)firstRows[i]=Words(TT_Q38_FFN_MATRIX_ROWS)[i];
 		if(!PioneerQ38FfnMatrixShape(ffn,header,banks,parts,firstRows))return 0;
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  for(unsigned i=0;i<64;i++)Words(TT_Q38_PROJECTION_MATRIX_SHADOW)[i]=ffn[i];
+  for(unsigned i=0;i<119;i++)Words(TT_Q38_PROJECTION_ROWS_SHADOW)[i]=firstRows[i];
+  Fence();
+#endif
 	}
 #endif
 #else
@@ -508,7 +582,12 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned i=0;i<7;i++) Words(0x7f800)[i]=header[i];
 	Words(0x7f800)[6]=0; // transfer counters,NOT header nonce (preserved at12)
 	Words(0x7f800)[12]=nonce;
-	for (unsigned c=0;c<8;c++) Words(0x7f800)[16+c]=*Words(0xffb20000+Offset(c));
+	for (unsigned c=0;c<8;c++) {
+  Words(0x7f800)[16+c]=*Words(0xffb20000+Offset(c));
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  if(c==6 && Words(0x7f800)[18]!=Words(0x7f800)[22])block_fault_park();
+#endif
+ }
 #ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
 	if(operation==1) {
 		FfnMatrix::Fetch(ffn,firstRows);
@@ -612,6 +691,9 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		unsigned flits=groups*blocks*Tile(type)/64+(inputs*2+((blocks*4+63)&~63U))/64;
 		Transfer(false,w+1,0x75000,0x83f00,256+groups*64 Q38_COMMAND_WITH(work));
 		const volatile uint32_t* proof=Words(0x75000);
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  if(proof[2]!=proof[6] || proof[10]!=proof[14])block_fault_park();
+#endif
 		for (unsigned c=0;c<8;c++) if (uint32_t(proof[c+8]-proof[c])!=(c==1?flits:(c==0 || c==2 || c==3 || c==6)?reads:0)) block_fault_park();
 		volatile uint32_t command[10]; for (unsigned i=0;i<10;i++) command[i]=0;
 		command[0]=p[0]+(groups*blocks-1)*Tile(type); command[2]=p[4]; command[3]=0x90000; command[5]=XY(w+1); command[8]=Tile(type);
@@ -663,7 +745,12 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	for (unsigned i=0;i<16;i++) if (header[i]!=job[i] || source[i]!=*Words(0xffb20000+SourceOffset(i))) block_fault_park();
 	Checkpoint(0x54000402,workers);
 	if (!Idle()) block_fault_park();
-	for (unsigned c=0;c<8;c++) Words(0x7f800)[24+c]=*Words(0xffb20000+Offset(c));
+	for (unsigned c=0;c<8;c++) {
+  Words(0x7f800)[24+c]=*Words(0xffb20000+Offset(c));
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  if(c==6 && Words(0x7f800)[26]!=Words(0x7f800)[30])block_fault_park();
+#endif
+ }
 	unsigned groups=0; for (unsigned w=0;w<workers;w++) groups+=parts[w][2];
 #ifdef PIONEER_Q38_WORK_COHORT_CACHE
 	Words(0x7f800)[48]=work;
@@ -682,10 +769,18 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 	if (work) {
 #ifdef PIONEER_Q38_FFN_RESIDENT_MATRIX
 		unsigned outputPackets=PioneerQ38FfnMatrixOrdered(parts,firstRows,workers)?(ffn[12]+16383)/16384:workers;
+#ifdef PIONEER_Q38_PROJECTION_MATRIX_ROOT
+  unsigned inputReads=PioneerQ38ProjectionMatrixInputReads(ffn),inputFlits=PioneerQ38ProjectionMatrixInputFlits(ffn);
+  reads+=inputReads;flits+=inputFlits;
+  writes+=outputPackets;writeFlits+=ffn[12]/64;
+  if(Words(0x7f800)[50]!=inputReads || Words(0x7f800)[51]!=inputFlits
+   || Words(0x7f800)[52]!=outputPackets || Words(0x7f800)[53]!=ffn[12]/64)block_fault_park();
+#else
 		reads+=PioneerQ38FfnMatrixInputReads(ffn[5]);flits+=PioneerQ38FfnMatrixInputFlits(ffn[5]);
 		writes+=outputPackets;writeFlits+=ffn[12]/64;
 		if(Words(0x7f800)[50]!=PioneerQ38FfnMatrixInputReads(ffn[5]) || Words(0x7f800)[51]!=PioneerQ38FfnMatrixInputFlits(ffn[5])
 			|| Words(0x7f800)[52]!=outputPackets || Words(0x7f800)[53]!=ffn[12]/64)block_fault_park();
+#endif
 #else
 		unsigned bytes=
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT

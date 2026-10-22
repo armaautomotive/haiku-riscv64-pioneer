@@ -23,7 +23,11 @@ block_done:
 .endif
 .else
 .ifdef TT_Q38_FFN_MATRIX_ROOT
+.ifdef TT_Q38_PROJECTION_MATRIX_ROOT
+	li t1,0x314d5051 /* QPM1:NEW generic projection wave,not QFM1 */
+.else
 	li t1,0x314d4651 /* QFM1:NEW private resident FFN root ONLY */
+.endif
 .else
 	li t1,0x314d3851 /* Q8M1:OFFLINE persistent-dispatch root ONLY */
 .endif
@@ -64,7 +68,11 @@ block_fault_park:
 	li t1,0x46474651 /* QFGF:terminal UNKNOWN,NO cleanup authority */
 .else
 .ifdef TT_Q38_FFN_MATRIX_ROOT
+.ifdef TT_Q38_PROJECTION_MATRIX_ROOT
+	li t1,0x464d5051 /* QPMF:UNKNOWN,no later IO/cleanup */
+.else
 	li t1,0x464d4651 /* QFMF:UNKNOWN,NO later card IO/cleanup */
+.endif
 .else
 	li t1,0x464d3851 /* Q8MF:UNKNOWN,no later packet/reset/restore */
 .endif

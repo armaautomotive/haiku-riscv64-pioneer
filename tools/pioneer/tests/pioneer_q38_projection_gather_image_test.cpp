@@ -108,6 +108,7 @@ static void FeedMatrix(ProjectionPeer& p,const ProjectionGatherMachine& root){
  for(unsigned i=0;i<p.inputs;i++)p.vector[i]=uint16_t(p.root.at(0xa0000+(i/2)*4)>>((i%2)*16));
  for(unsigned i=0;i<p.scales.size();i++)p.scales[i]=p.root.at(0xab000+i*4);
 }
+#ifndef PIONEER_Q38_PROJECTION_GATHER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);unsigned producers=0,roots=0,matrices=0,faults=0,minStack=0x70000;
  const unsigned cases[][2]={{0,5},{0,13},{0,2},{0,4},{3,10},{64,1},{64,0}};
@@ -190,3 +191,4 @@ int main(int argc,char** argv){
  }
  printf("PASS OFFLINE compositional projection:ACTUAL producers%u/ROOTS%u/changed-input matrices%u/faults%u/maxRootStack%u;ALL3wire types/3widths/7banks/both base edges,all128B tags before operands/sink,inert UNKNOWN;NO_NATIVE_OWNER_CONTROLLER_ALL498MATRICES_OR_MODEL_SPEED_EVIDENCE\n",producers,roots,matrices,faults,0x70000-minStack);
 }
+#endif

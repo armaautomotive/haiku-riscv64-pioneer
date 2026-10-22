@@ -4,6 +4,7 @@
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
 [ "${PIONEER_Q38_PROJECTION_PERSISTENT:-0}" = 0 ] || exit 2
+[ "${PIONEER_Q38_PROJECTION_MATRIX_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_SEALED_PROOF_CLIENT:-0}" = 0 ] || exit 2
 ffn_profile_tag=2026102200010037
 case "${PIONEER_Q38_FFN_SEALED_PROOF:-0}" in
