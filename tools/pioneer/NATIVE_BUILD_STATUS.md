@@ -1,6 +1,6 @@
 # Native build status
 
-Latest PRE-DEPLOYMENT checkpoint October22 2026:REAL native FFN model
+Latest IN-PROGRESS checkpoint October22 2026:REAL native FFN model
 binding+74page workspace zero-CLOSE bridge implemented. Isolated tag35/
 namespace8;SAME actual retained cookie/global call lock/thread seal/clock/
 uploaded initialized bitmap and canonical plan+joint graph owner. OLD
@@ -15,14 +15,20 @@ namespace gates,old scope/root41/parent-close/prime regressions pass.
 Driver5361c335/clientf4fc646d build TWICE EXACT,704B max new native frame;
 old ROOTaa673/guardd1ce/default43control2df/prime1ec347 BYTE-IDENTICAL.
 New guarded updater2e8a861f pins041/tag12<->5361/tag35;focused102cases
-pass. BROAD prior-route updater regression still running handle88607.
-NO files uploaded or driver changed yet;original041/tag12/gen36 healthy
-after the prior real layer0 weight prime. No native job/Assistant/reboot/
-power/SD/boot/CPU/RAM/network changes. Next finish SAME local updater
-regression,then guarded native source->upload->workspace-init/clean-END.
+and BROAD6373prior-route cases PASS CLI0. New driver/client/updater staged
+and remote SHA exact;original041/tag12/gen36 confirmed idle/cold0/owner0/
+open1/guard1 BEFORE guarded apply. Apply48508 TERMINAL CLI0/exact5361/
+tag35/gen37/idle/cold0/owner0/open1/guard1. Fresh ALL native parents absent,
+64CPUs/max137034936320B. SINGLE --initialize-layer0 live handle81856,
+log /private/tmp/pioneer-q38-ffn-model-native-layer0-20261022-a.log.
+First full19GB SAME-FILE SHA BEFORE accelerator Open;DO NOT restart on
+observation timeout or SCP/start another native job/reload during this
+ENTIRE parent lifetime. No Assistant/reboot/power/SD/boot/CPU/RAM/network
+changes. Next SAME81856 result;native init/clean-END NOT proven yet.
 Persistent fullFFN/input/real decoder still missing;NOT a computation or
 speed improvement. Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE.
-Evidence:benchmarks/qwen38-ffn-model-init-offline-20261022.txt.
+Evidence:benchmarks/qwen38-ffn-model-init-offline-20261022.txt and
+benchmarks/qwen38-ffn-model-init-native-20261022.txt (IN PROGRESS).
 
 Latest NATIVE checkpoint October22 2026:actual source-bound FFN
 priming session implemented. SAME full-SHA-authenticated open Source+epoch

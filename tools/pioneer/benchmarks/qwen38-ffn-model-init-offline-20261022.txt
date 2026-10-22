@@ -92,15 +92,19 @@ Read-only SDK independent builds TWICE EXACT:
  New updater SHA2e8a861f80620af2f97515830b7e9ad2bf20c6159a8ab8fc86755d3f7934fbe1
  pins original041/tag12<->candidate5361/tag35 with no automatic rollback.
 
-PENDING:local broad prior-route updater regression handle88607
+COMPLETED CLI0:local broad6373prior-route updater cases,handle88607 terminal.
  /private/tmp/pioneer-q38-ffn-model-updater-full-20261022-a.log
-Must observe SAME local handle terminal status before claiming it passed.
-No new native files uploaded/jobs started/driver reload/Assistant/boot/
-CPU/RAM/network/power/SD changes at this checkpoint. Original041/tag12/gen36
-was healthy after prior successful real FFN weight prime;no native job live.
+ SHA1ab9ce8d0bbd11f21561c9a53680b826d4aa5b2e0ed0cb56a9276a2fec6194d0.
+Source implementation40d8b51175 pushed/remote verified BEFORE any driver
+mutation. All THREE staging files copied after fresh no-parent inventory,
+remote SHAs exact. Original041/tag12/gen36 still idle/cold0/owner0/open1/
+guard1 BEFORE guarded apply. Guarded apply now IN PROGRESS handle48508:
+ /private/tmp/pioneer-q38-ffn-model-native-apply-20261022-a.log.
+No native compute job started yet;new driver/native result not proven.
+No Assistant/boot/CPU/RAM/network/power/SD changes at this checkpoint.
 Dirty llama.cpp and unrelated FlashNext work remain untouched.
 
-NEXT:finish local regression,guarded stage/reload and real authenticated
+NEXT:finish SAME guarded apply,then real authenticated
 layer0 source->upload->workspace init/clean-END. Do not restart native jobs
 on observation timeout or transfer/start another native job while their
 parent lives,INCLUDING full19GB SHA child BEFORE accelerator Open. Then

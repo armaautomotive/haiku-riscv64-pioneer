@@ -1,0 +1,44 @@
+Native FFN model/context/workspace initialization,October22 2026.
+IN PROGRESS. NOT a full FFN/model inference/token-rate test.
+Whole27B0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Implementation40d8b51175d9867796e4dc4becc100e39e90728a pushed/remote
+verified BEFORE hardware changes. All offline evidence in the companion
+qwen38-ffn-model-init-offline-20261022.txt;including6373broad prior updater
+cases CLI0 plus102new-route cases CLI0. Old raw-Dst cache22 HARD BLOCKED.
+
+After fresh ALL native parent absence and idle original041/tag12/gen36,
+copied ONLY new driver5361c335/clientf4fc646d/updater2e8a861f to separate
+staging names. Remote SHAs EXACT. Installed041 remained unchanged until
+all local tests had terminal CLI0.
+
+Guarded apply EXEC SESSION48508 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-model-native-apply-20261022-a.log
+ Original041/tag12/gen36 idle->quiesced,then exact new5361/tag35/gen37
+ quiesced0/cold0/owner0/open1/guard1;HOT_RELOAD_VERIFIED;NO_GPU_EXECUTION.
+Fresh post-apply ALL native parents absent,installed exact
+5361c3351131ffff6b2aad399432a6cd53eda843c36c69db761961a6717b75bf,
+tag2026102200010035/generation37/idle/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. No reboot/power/SD/Assistant/boot/CPU/RAM/network
+or settings changes. Dirty llama.cpp and unrelated FlashNext untouched.
+
+SINGLE native test NOW LIVE:authoritative exec session81856
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-ffn-model-init-f4fc646d --initialize-layer0
+ stdout/stderr /private/tmp/pioneer-q38-ffn-model-native-layer0-20261022-a.log.
+Full18,973,870,528-byte public-model SAME open FILE SHA before ANY accelerator
+Open is the first phase. No native source/model/zero/END result claimed yet.
+Never restart due to an observation timeout. No SCP/second native job/
+driver reload during this ENTIRE parent lifetime,INCLUDING the hash child
+before device Open. Continue observing SAME81856 and passive existing
+serial log ONLY. On ANY native UNKNOWN:CLOSE ONLY;NO END/retry/reset/further
+card read/hotswap/restore. Retain ALL heaps/context/code/maps/host/DMA/clock
+and cold-recovery state until explicit physical recovery.
+
+If and ONLY if CLI0 and explicit native known-clean END pass:fresh ALL
+parent absence+CPU metadata,then guarded --restore-ffn-model-init back to
+the exact original041/tag12. Restoring is NOT automatic rollback on a
+failure. After known healthy restore,record actual native evidence and
+continue persistent full QFG2 initialF32+FFN execution. Root119 lifetime is
+already qualified;do NOT repeat STOP-only diagnostics as the next goal.
+All-card attention/GDN/KV/norm/residual/embedding/sampling and actual speed
+work remain owed. This checkpoint is not completion or an inference gain.
