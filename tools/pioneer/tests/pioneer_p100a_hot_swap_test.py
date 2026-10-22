@@ -46,6 +46,7 @@ def check(mode, fault=None):
         payloads['hash_ffn_native_graph'] = ('test-' + values['hash_ffn_native_graph']).encode()
         payloads['hash_ffn_host_profile'] = ('test-' + values['hash_ffn_host_profile']).encode()
         payloads['hash_ffn_sealed_proof'] = ('test-' + values['hash_ffn_sealed_proof']).encode()
+        payloads['hash_embedding_validation'] = ('test-' + values['hash_embedding_validation']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -149,6 +150,8 @@ def check(mode, fault=None):
             '--restore-ffn-host-profile': ('hash_ffn_host_profile', 'hash_scale_reuse_qualification', 'tag_ffn_host_profile'),
             '--apply-ffn-sealed-proof': ('hash_scale_reuse_qualification', 'hash_ffn_sealed_proof', 'tag_scale_reuse_qualification'),
             '--restore-ffn-sealed-proof': ('hash_ffn_sealed_proof', 'hash_scale_reuse_qualification', 'tag_ffn_sealed_proof'),
+            '--apply-embedding-validation': ('hash_scale_reuse_qualification', 'hash_embedding_validation', 'tag_scale_reuse_qualification'),
+            '--restore-embedding-validation': ('hash_embedding_validation', 'hash_scale_reuse_qualification', 'tag_embedding_validation'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -232,6 +235,7 @@ def check(mode, fault=None):
         put('candidate_ffn_native_graph', payloads['hash_ffn_native_graph'])
         put('candidate_ffn_host_profile', payloads['hash_ffn_host_profile'])
         put('candidate_ffn_sealed_proof', payloads['hash_ffn_sealed_proof'])
+        put('candidate_embedding_validation', payloads['hash_embedding_validation'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -319,6 +323,7 @@ def check(mode, fault=None):
             'owner-ffn-native-graph': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-ffn-native-graph-35add96a',
             'owner-ffn-host-profile': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-ffn-host-profile-2e2086db',
             'owner-ffn-sealed-proof': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-ffn-sealed-proof-991155b6',
+            'owner-embedding-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-embedding-validation-ed5742b2',
         }
         if fault in owner_faults:
             teams.append('999 ' + owner_faults[fault])
@@ -426,6 +431,8 @@ if __name__ == '__main__':
     modes += ['--apply-q4-nibble-qualification', '--restore-q4-nibble-qualification']
     modes += ['--apply-q4-direct-qualification', '--restore-q4-direct-qualification']
     modes += ['--apply-local-q4-qualification', '--restore-local-q4-qualification']
+    modes += ['--apply-embedding-validation', '--restore-embedding-validation']
+    parents += ['owner-embedding-validation']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -641,6 +648,10 @@ if __name__ == '__main__':
             candidate = ['candidate_sentinel_poll_qualification']
         elif mode == '--restore-sentinel-poll-qualification':
             candidate = ['candidate_direct_srcb_qualification']
+        if mode == '--apply-embedding-validation':
+            candidate = ['candidate_embedding_validation']
+        elif mode == '--restore-embedding-validation':
+            candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
         for fault in [None] + common + candidate + candidate_links + parents + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

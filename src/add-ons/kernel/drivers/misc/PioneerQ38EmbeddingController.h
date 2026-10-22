@@ -14,6 +14,9 @@ struct PioneerQ38EmbeddingResult {
  uint32_t version=1,started=0,phase=0,word=0,unsafe=0,closed=0,completed=0,held=0;
  uint32_t savedWords=0,verifiedWords=0,installedWords=0,restoredWords=0;
  uint32_t before[8]={},after[8]={},summary[32]={},pc[2]={};
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+ uint32_t validationPages=0,validationWords=0;
+#endif
 };
 class PioneerQ38EmbeddingController {
  friend class PioneerQ38ProjectionGraphOwner;
@@ -84,6 +87,47 @@ class PioneerQ38EmbeddingController {
  template<class IO> bool Pc(IO& io,PioneerQ38EmbeddingResult& r){
   for(unsigned i=0;i<2;i++){io.Pause();r.pc[i]=io.RuntimePcRead();if(r.pc[i]!=0x64038 && r.pc[i]!=0x6403c)return false;}return true;
  }
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+ // DEBUG ONLY. Read back the actual private GDDR input,not the old local
+ // computation buffer. All5 fixed pages,poisoned local destination first.
+ // Same exclusive source/controller/held-core lifetime as the producer.
+ // NO BME/host DMA/new executable/other mutable addresses/CPU arithmetic.
+ template<class IO> bool ValidationReadback(IO& io,PioneerResidentLease& store,uint32_t* output,PioneerQ38EmbeddingResult& r){
+  if(!output || !state || !state->OwnsEmbedding(identity,this) || running || r.validationPages || r.validationWords)return false;
+  const uint32_t* d=embedding.Descriptor();PioneerQ38ProjectionExtent e;
+  if(!state->InitializeSpan(identity,0,0,5,e) || e.bank!=bank || e.address!=d[4] || e.route!=d[8] || e.pages!=5 || e.bytes!=20480)return false;
+  for(unsigned page=0;page<5;page++){
+   if(!Guard(io,store,0x47800))return false;
+   for(unsigned w=0;w<1024;w++)if(!Write(io,0x80000+page*4096+w*4,0x7fc10000+page*1024+w))return false;
+   const uint32_t next[]={e.address+page*4096,0,e.route,0x80000+page*4096,0,129,0,0,4096,0};
+   for(unsigned i=0;i<10;i++){io.ResidentNocWrite(i*4,next[i]);if(io.ResidentNocRead(i*4)!=next[i])return false;command[i]=next[i];}
+   if(!Guard(io,store,0x47800))return false;
+   uint64_t began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return false;
+   uint32_t expected[8];const unsigned delta[]={1,64,1,1,0,0,1,0};
+   for(unsigned i=0;i<8;i++)expected[i]=counts[i]+delta[i];
+   traffic=true;io.ResidentNocWrite(0x40,1); // same private traffic lifetime as ROM packets,not legacy lease.pending
+   bool done=false;
+   for(unsigned poll=0;poll<65536;poll++){
+    if(!Guard(io,store,0x47800))return false;
+    uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return false;
+    bool exact=io.ResidentNocRead(0x40)==0;
+    for(unsigned i=0;i<8;i++)exact &= io.ResidentNocRead(Counter(i))==expected[i];
+    if(exact){done=true;break;}io.Pause();
+   }
+   if(!done)return false;
+   for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=next[i])return false;
+   for(unsigned i=0;i<8;i++)counts[i]=expected[i];
+   traffic=false;
+   if(!Guard(io,store,0x47800))return false;
+   for(unsigned w=0;w<1024;w++){
+    uint32_t bits;if(!io.EmbeddingReadChecked(0x80000+page*4096+w*4,bits) || (bits&0x7fffffff)>=0x7f800000)return false;
+    output[page*1024+w]=bits;r.validationWords++;
+   }
+   r.validationPages++;if(!Guard(io,store,0x47800))return false;
+  }
+  return r.validationPages==5 && r.validationWords==5120;
+ }
+#endif
  // Opaque retained object identity,not transferable descriptor/epoch DATA.
  // Only the future full projection owner can consume this private proof,
  // after its OWN current source/physical/exclusive lifetime checks.
@@ -112,7 +156,11 @@ public:
  template<class IO> bool RunOnce(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& root,
   PioneerResidentBanks& resident,PioneerQ38ProjectionMutableBanks& mutableOwner,const PioneerQ38CanonicalModelPlan& plan,
   const PioneerQ38ProjectionIdentity& id,const uint8_t* initialized,unsigned pages,PioneerResidentLease& store,
-  unsigned selectedToken,unsigned selectedPosition,unsigned selectedBank,PioneerQ38EmbeddingResult& r){
+  unsigned selectedToken,unsigned selectedPosition,unsigned selectedBank,PioneerQ38EmbeddingResult& r
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+  ,uint32_t* validation=nullptr
+#endif
+  ){
   if(attempted || started || unsafe || closed || r.version!=1 || r.started || r.phase || r.word || r.unsafe || r.closed || r.completed
    || r.held || r.savedWords || r.verifiedWords || r.installedWords || r.restoredWords || !id.Valid()
    || root.recovery_required || root.version!=1 || root.state!=TT_COMPUTE_NOC_PASSED || !root.tlb_restored
@@ -121,6 +169,9 @@ public:
   for(auto value:r.after)if(value)return false;
   for(auto value:r.summary)if(value)return false;
   for(auto value:r.pc)if(value)return false;
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+  if(r.validationPages || r.validationWords)return false;
+#endif
   attempted=true;
   for(unsigned i=0;i<16;i++)source[i]=i?root.source[0][i]:store.config|0x10000;
   if(!embedding.Build(plan,selectedToken,selectedPosition,selectedBank,id,source,1)
@@ -176,6 +227,9 @@ public:
   io.RuntimeResetWrite(0x87ffff);io.Pause();if(!Guard(io,store,0x87ffff))return fail();
   io.RuntimeResetWrite(0x47800);io.Pause();if(!Guard(io,store,0x47800))return fail();running=false;r.held=1;
   r.phase=6;if(!Image(io) || !Guard(io,store,0x47800))return fail();
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+  if(validation && !ValidationReadback(io,store,validation,r))return fail();
+#endif
   for(unsigned i=0;i<73737;i++){r.word=i;if(!Write(io,PioneerQ38EmbeddingSnapshotAddress(i),saved[i]))return fail();r.restoredWords++;}
   for(unsigned i=0;i<10;i++){io.ResidentNocWrite(i*4,originalCommand[i]);if(io.ResidentNocRead(i*4)!=originalCommand[i])return fail();command[i]=originalCommand[i];}
   r.phase=7;if(!Original(io,r) || !Guard(io,store,0x47800) || r.savedWords!=73737 || r.verifiedWords!=147474

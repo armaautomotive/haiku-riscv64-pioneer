@@ -1,0 +1,158 @@
+October22 2026 actual P100A embedding numerical validation
+Parent79b5636116. PROGRESS;unlimited goal ACTIVE.
+Whole27B last0.207893161tok/s UNCHANGED;20tok/s UNMET.
+No new whole-model token rate,full on-card decoder or Assistant option.
+
+PHYSICAL CARD RESULT
+Single fixed --validate-token0,pinned public Qwen3.8-27B-Q4_K_M.gguf.
+Source FULL SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+verified on SAME already-open FILE,source identity/epoch/plan checked before
+and after every device call/page read. Independent original2880B Q4_K row
+decoded BEFORE accelerator FD. No reference supplied to the device.
+12original packed pages uploaded,SPAN closed,actual native canonical bind,
+TWO zero-ROM runs2MiB,actual immutable QPE1 embedding token0/position0,
+private GDDR input. DEBUG reads5fixed4KiB GDDR pages into poisoned local
+destination;ALL5120 words bit-exact to independent GGUF reference.
+Explicit BANK_END/PCI restoration/host release PASS. Native SSH parent
+handle66887 TERMINAL0;no retry/recovery/reset/force cleanup.
+
+Authoritative captured client log:
+DEBUG_EMBEDDING_NUMERIC_VALIDATION;INDEPENDENT_CPU_REFERENCE_BEFORE_GPU_FD;NO_WORK_OR_INFERENCE_SPEED_CLAIM
+FULL_PUBLIC_GGUF_SHA_SAME_FILE_PASS_BEFORE_ACCELERATOR_OPEN
+DEBUG_GPU_OPEN_AFTER_SAME_FILE_REFERENCE_PREPARATION
+DEBUG_IOCTL_BEGIN op000088ef bytes72
+DEBUG_IOCTL_END op000088ef status0 errno0
+DEBUG_IOCTL_BEGIN op000089d1 bytes32
+DEBUG_IOCTL_END op000089d1 status0 errno0
+DEBUG_IOCTL_BEGIN op00007bf4 bytes32
+DEBUG_IOCTL_END op00007bf4 status0 errno0
+DEBUG_IOCTL_BEGIN op00008806 bytes32
+DEBUG_IOCTL_END op00008806 status0 errno0
+DEBUG_IOCTL_BEGIN op00007bf5 bytes64
+DEBUG_IOCTL_END op00007bf5 status0 errno0
+DEBUG_IOCTL_BEGIN op00008807 bytes1048648
+DEBUG_IOCTL_END op00008807 status0 errno0
+DEBUG_IOCTL_BEGIN op00008805 bytes16
+DEBUG_IOCTL_END op00008805 status0 errno0
+DEBUG_IOCTL_BEGIN op000089d2 bytes20552
+DEBUG_IOCTL_END op000089d2 status0 errno0
+DEBUG_IOCTL_BEGIN op00007bf6 bytes64
+DEBUG_IOCTL_END op00007bf6 status0 errno0
+PASS_DEBUG_NATIVE_EMBEDDING token0 values5120 actual_GDDR_readback_bitexact_to_independent_original_GGUF_reference clean_end1 initialization_execution_readback_restore_us1656268;NO_TOKEN_RATE
+
+1656268us includes BOTH zero runs,physical guards/snapshot/execution,
+DEBUG GDDR readback and complete embedding-owner memory restoration.
+It is NOT embedding-only time,full-model inference or tokens/sec.
+Physical coverage ONE token/stripe(bank0 -> workspace0),not ALL7stripes
+or a complete projection/decoder. Offline7bank/16lane coverage is separate.
+Full-file authentication took several minutes BEFORE any accelerator open;
+the same handle was preserved,never restarted on observation latency.
+Read-only process inventory confirmed sha256sum team10478 while waiting.
+
+NEW DEBUG IMPLEMENTATION
+Separate exact tag2026102200010040/namespace11 Native+Qualification+
+EmbeddingValidationNative gates. New support/validate opcodes only;
+tag40 denies tag39 producer/old Work/FFN/dispatch execution;tag39 rejects
+DEBUG endpoints. No numeric readback/reference path compiled into Work.
+No caller address/route/code/ready authority;logical token+position and
+all-zero fixed reply frame only.5120-word fixed reply20552B HEAP ONLY.
+Same actual source/global lock/cookie/thread/generation/clock/host owners.
+After actual QPE1 terminal proof and physical hold,derive exact private
+input extent from same reservation/plan/embedding owner. Each of5fixed
+pages first gets nonfinite poison in owned local L1,then one GDDR read.
+All8 physical NoC counters/command/source/ALL119 peers/ROOT reset/mappings/
+PCI quiet proved per packet;bounded65536 polls/30s;no BME/host DMA/new ROM.
+Only complete5120finite-word readback can precede exact73737-word embedding
+memory restoration/private producer publication. First mismatch/timeout
+retains ALL,NO subsequent device IO/hold/END/reset/restore. Failed output
+copy also retains. Partial/unrestored numeric replies are cleared.
+Captured kernel failure-phase diagnostics are CPU-only,not postfault reads.
+Host reference from ORIGINAL row,never tiled/card result. Every bit compared
+before explicit END;any finite/nonfinite mismatch/source/epoch/transport
+loss:CLOSE ONLY,never END/retry/reference substitution.
+Standalone --validate-token0 only;NO Assistant/whole decoder integration.
+
+OFFLINE TESTS,ALL FINAL HANDLES TERMINAL0
+Actual native debug controller/control/factory/scope/lock:7source-bank
+positives/9request-role refusals/7faults. Both zero and QPE1 execute actual
+RISC instructions;simulated GDDR endpoint really copies to poisoned L1,
+not fabricated compute status.5exact reads;all73737 embedding-entry words
+restored;no BME. Faults:first/last read timeout,last-word poison,foreign
+counter/source change,last QPE1 packet,lost output copy ->retainALL/inert.
+Host original-row independent reference:9positives across token0/15 and
+each stripe's last token,token-distinct seeded rows;51faults including first/last/plane/page-boundary
+finite/nonfinite bit corruption,all9calls x transport/reply/source/epoch
+loss,and reference refusal BEFORE FD. Synthetic GGUF/transport only.
+415exact-role/before-SDK/Work+DEBUG exclusion gates PASS.
+275actual updater filesystem/hash/symlink/owner/handshake/failure cases
+PASS,including DEBUG apply/restore,old sealed-proof and measured-best
+transitions;embedding SHA parent recognized and prevents exchange.
+Work regressions:host7positives/48faults/3refusals;actual public native
+control7positives/31refusals/5faults PASS. ASan/UBSan where applicable.
+Old tag38driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483,
+guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229,
+default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+remain BYTE-IDENTICAL. New actual DEBUG maxkernel frame960B.
+
+ARTIFACTS,IMMUTABLE DURING NATIVE PARENT INCLUDING SHA
+779a2c81080b5cd7ca891f3614ea5c02ef580d769023b90f40c3296db64ea514
+ /private/tmp/pioneer-q38-embedding-validation-driver-20261022-d/tenstorrent_pci_probe-driver55-embedding-tag40
+Repeat c/d BYTE-IDENTICAL. Earlier b80f6d77 build superseded by CPU-only
+failure diagnostics BEFORE any card install;never used on hardware.
+ed5742b2e72777d545435ce455d414e94573b484df114115fd45650aecc92488
+ /private/tmp/pioneer-q38-embedding-validation-client-20261022-c
+db3b527a11f87f0ba729f04556f4c6a40c928cc425e4ede92e02c8182af260ea
+ tools/pioneer/pioneer_p100a_hot_swap.sh
+Remote stage /boot/home/pioneer-p100a-hot-reload-20261019-a:
+ tenstorrent_pci_probe-embedding-validation-779a2c81
+ pioneer-q38-embedding-validation-ed5742b2
+ hotswap-embedding-validation-db3b527a.sh
+
+FINAL LOG SHA256
+5b315d0d1bfa62ede1afae34e7f52473e9927abc7db4b93192b85acb28c99f16
+ /private/tmp/pioneer-q38-embedding-native-card-20261022-a.log
+881ff26d9ac03ec59bbb35c9f038a7df06cc6f52010bd0d4c88c1edbc14a506a
+ /private/tmp/pioneer-q38-embedding-native-validation-20261022-c.log
+a712dd45f4c77d9f9559b00ea950faa62735b03773b041f1e75666c63cf5c6fa
+ /private/tmp/pioneer-q38-embedding-validation-session-20261022-d.log
+f88dfd1a6460376f5ced1995850a089ff19c7981a5f43aa1b2b8cadb8219a67c
+ /private/tmp/pioneer-q38-embedding-validation-gates-20261022-b.log
+825c50583358b4fab34139069e26989a62769905f53f625fa4806dab60391939
+ /private/tmp/pioneer-q38-embedding-validation-updater-20261022-b.log
+d6304db0f0ffdb74c5db835527fed94a31403f35b65a3832c5548931902a4698
+ /private/tmp/pioneer-q38-embedding-validation-driver-build-20261022-d.log
+f4293ac23c5d7e945d2664ba60aa20720c1b81efc06d75abc0496415e7e04013
+ /private/tmp/pioneer-q38-embedding-validation-client-build-20261022-c.log
+272fffdc120a285ba1c731759e4d1c6e611a8f50e664c9d7287552439132e848
+ /private/tmp/pioneer-q38-embedding-work-control-regression-20261022-b.log
+4c7b8b02813209658fd7d2e927095935463ca27956167ff5004a54d496b24159
+ /private/tmp/pioneer-q38-embedding-work-session-regression-20261022-b.log
+
+Initial LOCAL-only harness failures corrected:pre-zero snapshot comparison
+mistook the legacy resident status trailer for embedding-owned entry state;
+fixture now observes actual embedding-entry baseline AFTER zero CLOSE and
+before FIRST embedding write. All73737 entry words restored. Full legacy
+trailer remains owned until BANK_END;actual clean physical END now proven.
+Unused fake B_NO_MEMORY constant in nondebug compile changed to enum.
+No native arithmetic fault or unsafe card recovery occurred.
+
+PHYSICAL RESTORATION AND FINAL STATE
+Before:original041fef18/scale-reuse tag12/gen44,64CPUs/fullRAM,idle/cold0.
+Guarded hash-pinned admin exchange verified debug40/gen45 (handle70240=0).
+After single numeric test66887=0,independent inventory no compute parents,
+tag40/gen45/owner0/cold0/open1/guard1. ONLY THEN explicit guarded
+--restore-embedding-validation,handle41280 TERMINAL0. Original measured
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen46/quiesced0/cold0/owner0/open1/guard1 verified.
+Fresh22:33UTC ALL compute parents absent;64CPUs/max137034936320B.
+No reboot,power/SD/card changes,Assistant restart/install,network changes,
+firmware,dirty llama.cpp or unrelated FlashNext reads/edits/staging.
+
+NEXT learned on-card RMS feeding complete persistent projections through
+the opaque private embedding proof. Current private MatchesCompleted can
+only be consumed by future full ProjectionGraphOwner,NOT public metadata,
+an inputEpoch or copied descriptor. Actual compute-lifetime/restore owner
+required;old HELD-ONLY GraphMemory MUST NOT close after launch. Then full
+resident GDN/attention/KV/residual/sampling/decoder integration and honest
+whole27B correctness/performance. No boot/STOP-only substitute. Raw-unpack-
+cache22 HARD BLOCKED. Goal stays ACTIVE;20tok/s not achieved.

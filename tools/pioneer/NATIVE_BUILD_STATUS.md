@@ -1,5 +1,33 @@
 # Native build status
 
+Latest NATIVE checkpoint October22 2026:NEW embedding DEBUG arithmetic
+passes on the physical Pioneer P100A. Pinned full public GGUF SHA verified
+on SAME FILE before accelerator open;independent original Q4_K row prepared
+before FD;actual QPE1 computes token0/position0 from uploaded12packed pages.
+DEBUG tag40/namespace11 reads actual GDDR input into5poisoned local pages;
+ALL5120 F32 bits match independent original-GGUF reference. Explicit
+BANK_END/PCI-host release PASS;native parent TERMINAL0. Initialization+
+execution+debug readback+full memory restore1656268us,NOT inference/token
+rate or embedding-only timing. This is ONE physical token/stripe,not all
+source-bank/native decoder qualification. No new whole27B speed claim.
+Debug role is separate from no-reference tag39;Work compiles without new
+readback/CPU reference. Actual emitted zero+QPE1/native debug controller
+offline7positives/9refusals/7faults;host independent-reference9positives/
+51faults;415role/build gates;275actual guarded updater cases PASS. Work
+session/control regressions PASS. Repeat linked DEBUG driver779a2c81 is
+BYTE-IDENTICAL,maxnewkernel frame960B;old tag38/guard/default43 unchanged.
+Guarded physical switch12/gen44 ->40/gen45,actual clean arithmetic test,
+independent idle/cold0 verification THEN explicit guarded restore12/gen46.
+Final22:33UTC original041fef18,quiesced0/cold0/owner0/open1/guard1,
+ALL compute parents absent,64CPUs/max137034936320B. No reboot/power/SD/
+Assistant/network changes. ALL build/test/native/restore handles TERMINAL0.
+NEXT learned on-card RMS and complete persistent projection owner consuming
+the private embedding proof,then resident GDN/attention/KV/residual/
+sampling/full decoder integration. Held-only memory helper/public ready
+metadata MUST NOT replace actual execution ownership. Whole27B remains
+.207893161tok/s;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-embedding-native-validation-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:actual unclaimed-bank native
 factory runtime integration now PASSES. REAL owned source allocation ->
 canonical binding -> TWO actual zero-ROM runs -> actual native mapping/

@@ -32,6 +32,15 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  unsigned mapCalls=0,nativeReads=0,nativeWrites=0,embeddingStarts=0,embeddingStops=0,embeddingPc=0;
  unsigned embeddingPacketFault=0,zeroFailRun=0,embeddingSummaryFault=UINT32_MAX;
  const char* embeddingImage;
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+ unsigned validationReads=0,validationFailRead=0,validationPoisonRead=0,validationBadCounter=0,validationSourceFault=0;
+ bool validationPending=false;
+ std::array<uint32,5120> computedEmbedding={};
+ std::vector<uint32> embeddingOriginal=std::vector<uint32>(73737);
+ bool ValidationTrafficMode()const;
+ uint32 ResidentNocRead(uint32 offset){if(offset==0x40 && validationPending){Touch();return 1;}return ProjectionZeroIO::ResidentNocRead(offset);}
+ void ResidentNocWrite(uint32 offset,uint32 value);
+#endif
  struct DramAlias{const tt_dram_samples_result* target=nullptr;const tt_dram_samples_result* operator&()const{return target;}
   operator const tt_dram_samples_result&()const{assert(target);return *target;}}dram;
  struct NocAlias{const tt_compute_noc_result* target=nullptr;operator const tt_compute_noc_result&()const{assert(target);return *target;}}noc;
@@ -77,7 +86,13 @@ static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);act
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
  assert(physical==Bar+0x19064000 && bytes==40960 && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
- if(activeIO->failMap)return -1;*view=activeIO->nullMap?nullptr:activeIO->prefix.data();return 23;
+ if(activeIO->failMap)return -1;
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+ // Observe the embedding owner's entry baseline AFTER zero CLOSE. The
+ // legacy resident lease still owns its old status trailer until BANK_END.
+ for(unsigned i=0;i<73737;i++)activeIO->embeddingOriginal[i]=activeIO->RawSlot(PioneerQ38EmbeddingSnapshotAddress(i));
+#endif
+ *view=activeIO->nullMap?nullptr:activeIO->prefix.data();return 23;
 }
 struct FactoryFlags{bool saved=false,dirty=false,ready=false,running=false,unsafe=false,awaiting=false,closed=false;};
 struct FactoryClock{
@@ -129,6 +144,26 @@ bool PioneerSessionIO::EmbeddingMode()const{
  return q38MutableContext && q38MutableContext->q38EmbeddingModel
   && q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Embedding;
 }
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+bool PioneerSessionIO::ValidationTrafficMode()const{return EmbeddingMode() && embeddingStops && coreReset==0x47800;}
+void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
+ if(!ValidationTrafficMode()){ProjectionZeroIO::ResidentNocWrite(offset,value);return;}
+ Touch();
+ if(offset!=0x40){StoreMock::ResidentNocWrite(offset,value);return;}
+ assert(value==1 && !validationPending && validationReads<5 && pciCommand[0]==0x402 && pciCommand[1]==0x402);
+ unsigned page=validationReads++;const uint32 expected[]={workspaceBase+page*4096,0,PioneerQ38ProjectionRoute(workspaceBank),0x80000+page*4096,0,129,0,0,4096,0};
+ for(unsigned i=0;i<10;i++)assert(command[i]==expected[i]);
+ if(validationReads==validationFailRead){validationPending=true;return;}
+ for(unsigned w=0;w<1024;w++){
+  auto& local=RawSlot(0x80000+page*4096+w*4);
+  assert(local==0x7fc10000+page*1024+w); // destination genuinely poisoned BEFORE GDDR request
+  if(!(validationReads==validationPoisonRead && w==1023))local=wholeWorkspace[page*1024+w];
+ }
+ counters[0]++;counters[1]+=64;accepted++;counters[3]++;
+ if(validationReads==validationBadCounter)writeCounters[0]++;
+ if(validationReads==validationSourceFault)source[11]^=1;
+}
+#endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  if(!EmbeddingMode()){
   auto* m=q38MutableContext?q38MutableContext->q38EmbeddingModel:nullptr;
@@ -156,6 +191,9 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  counters[0]=t.counts[0];counters[1]=t.counts[1];accepted=t.counts[2];counters[3]=t.counts[3];
  writeCounters[0]=t.counts[4];writeCounters[1]=t.counts[5];writeCounters[3]=t.counts[7];
  for(unsigned i=0;i<5120;i++)wholeWorkspace[i]=t.resident[i];
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+ computedEmbedding=t.resident;
+#endif
  if(embeddingSummaryFault<32)RawSlot(TT_Q38_FFN_RESIDENT_SUMMARY+embeddingSummaryFault*4)^=1;
 }
 struct NativeFactoryFixture {

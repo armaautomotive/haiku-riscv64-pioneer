@@ -1,0 +1,24 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_EMBEDDING_VALIDATION_REFERENCE_H
+#define PIONEER_Q38_EMBEDDING_VALIDATION_REFERENCE_H
+#if !defined(PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT) || PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT != 1 || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1 || defined(PIONEER_Q38_EMBEDDING_CLIENT) || defined(PIONEER_Q38_WORK_INFERENCE)
+#error Independent embedding reference is DEBUG ONLY,never Work
+#endif
+#include "TenstorrentQ4K.h"
+#include <vector>
+// Same authenticated original GGUF row,BEFORE GPU FD. No tiled/card output
+// or receipt can seed/replace this independent numeric reference.
+template<class Source>bool PioneerQ38EmbeddingReference(Source& source,unsigned tensor,unsigned token,uint32_t* output){
+ if(!output || !source.Ready() || tensor>=source.Model().Tensors().size())return false;
+ const auto& t=source.Model().Tensors()[tensor];
+ if(t.name!="token_embd.weight" || t.type!=12 || t.inputs!=5120 || t.outputs!=248320 || token>=248320)return false;
+ std::vector<uint8_t> packed(2880);
+ if(!source.ReadReferencePacked(tensor,uint64_t(token)*2880,2880,packed.data(),2880) || !source.Ready())return false;
+ float decoded[256];
+ for(unsigned block=0;block<20;block++){
+  if(!PioneerDecodeQ4K(packed.data()+block*144,decoded))return false;
+  for(unsigned i=0;i<256;i++){uint32_t bits;memcpy(&bits,&decoded[i],4);if((bits&0x7fffffff)>=0x7f800000)return false;output[block*256+i]=bits;}
+ }
+ return source.Ready();
+}
+#endif

@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_EMBEDDING_SESSION_H
 #define PIONEER_Q38_EMBEDDING_SESSION_H
-#if !defined(PIONEER_Q38_EMBEDDING_CLIENT) || PIONEER_Q38_EMBEDDING_CLIENT != 1 || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_EMBEDDING_NATIVE)
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT
+#if PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT != 1 || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1 || defined(PIONEER_Q38_EMBEDDING_CLIENT) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_EMBEDDING_NATIVE)
+#error Separate DEBUG embedding validation client only;NO Work/native promotion
+#endif
+#elif !defined(PIONEER_Q38_EMBEDDING_CLIENT) || PIONEER_Q38_EMBEDDING_CLIENT != 1 || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_EMBEDDING_NATIVE)
 #error Separate source-bound embedding client only;NO old Work/CPU-reference/native role promotion
 #endif
 #include "PioneerQ38PublicModelSource.h"
@@ -9,6 +13,9 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include <memory>
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT
+#include "PioneerQ38EmbeddingValidationReference.h"
+#endif
 // One source-bound learned embedding;NO numeric result/CPU reference.
 // Same fully authenticated FILE/epoch before and after EVERY device call.
 // ALL pages uploaded BEFORE binding;close-only after any uncertain result.
@@ -41,14 +48,23 @@ public:
    }
   }
   if(fragment==UINT32_MAX || !Current())return Stop();
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT
+  std::vector<uint32_t> reference(5120);
+  if(!PioneerQ38EmbeddingReference(source,parts[fragment].tensor,token,reference.data()) || !Current())return Stop();
+  constexpr uint64_t expectedTag=UINT64_C(0x2026102200010040);
+  constexpr unsigned expectedNamespace=11,referenceFree=0,supportOperation=TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT;
+#else
+  constexpr uint64_t expectedTag=UINT64_C(0x2026102200010039);
+  constexpr unsigned expectedNamespace=10,referenceFree=1,supportOperation=TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT;
+#endif
   fd=io.Open();if(fd<0)return Stop();
   tt_pioneer_driver_reload reload={};reload.version=1;
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,reload) || reload.version!=1 || reload.driver!=55 || reload.guard_version!=1
-   || reload.build_tag!=UINT64_C(0x2026102200010039) || !reload.generation || reload.quiesced || reload.cold || reload.active_owner || reload.open_count!=1)return Stop();
+   || reload.build_tag!=expectedTag || !reload.generation || reload.quiesced || reload.cold || reload.active_owner || reload.open_count!=1)return Stop();
   generation=reload.generation;
   tt_q38_embedding_support support={};
-  if(!Call(TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT,support) || support.version!=1 || support.driver!=55 || support.model_namespace!=10
-   || support.inputs!=5120 || support.vocabulary!=248320 || support.runtime_pages!=512 || support.no_cpu_reference!=1 || support.model_inference)return Stop();
+  if(!Call(supportOperation,support) || support.version!=1 || support.driver!=55 || support.model_namespace!=expectedNamespace
+   || support.inputs!=5120 || support.vocabulary!=248320 || support.runtime_pages!=512 || support.no_cpu_reference!=referenceFree || support.model_inference)return Stop();
   tt_q38_bank_support storage={};tt_q38_span_support span={};
   if(!Call(TT_PCI_PROBE_Q38_BANK_SUPPORT,storage) || storage.driver!=45 || storage.version!=1 || storage.banks!=7 || storage.page_bytes!=4096
    || storage.max_pages!=4 || storage.storage_only!=1 || storage.bytes_per_bank!=PioneerResidentBanks::Capacity
@@ -66,10 +82,20 @@ public:
    || u.held!=1 || u.host_exact || u.matched_words || u.recovery_required || u.reserved)return Stop();
   tt_q38_span_end end={1,0,0,0};if(!Call(TT_PCI_PROBE_Q38_SPAN_END,end) || end.version!=1 || end.reserved || end.closed!=1 || end.recovery_required)return Stop();
   result.version=1;result.token=token;result.position=position;
-  if(!Call(TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE,result) || result.version!=1 || result.token!=token || result.position!=position || result.reserved
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT
+  auto validation=std::make_unique<tt_q38_embedding_validation>();validation->metadata=result;
+  if(!Call(TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE,*validation))return Stop();
+  result=validation->metadata;
+#else
+  if(!Call(TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE,result))return Stop();
+#endif
+  if(result.version!=1 || result.token!=token || result.position!=position || result.reserved
    || result.state!=TT_RUNTIME_PASSED || result.closed!=1 || result.input_ready!=1 || result.recovery_required || !result.session
    || result.driver_generation!=generation || !result.elapsed_us || result.source_pages!=12 || result.workspace_pages!=512
    || result.saved_words!=73737 || result.restored_words!=73737)return Stop();
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT
+  if(memcmp(validation->values,reference.data(),20480) || !Current())return Stop(); // first numeric mismatch CLOSE ONLY,no END/substitution
+#endif
   return true; // GDDR input private to SAME native context;not CPU vector or decoder output
  }
  bool Finish(){

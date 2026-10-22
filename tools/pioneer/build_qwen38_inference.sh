@@ -2,6 +2,7 @@
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
 [ "${PIONEER_Q38_EMBEDDING_QUALIFICATION-0}:${PIONEER_Q38_EMBEDDING_CLIENT-0}" = 0:0 ] || exit 2
+[ "${PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE-0}:${PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_EMBEDDING_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_WORKSPACE:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_GRAPH_MEMORY:-0}" = 0 ] || exit 2

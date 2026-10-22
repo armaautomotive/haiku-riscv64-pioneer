@@ -9,7 +9,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkProtocol.h"
 using status_t=int;using thread_id=int;
-static constexpr int B_BAD_VALUE=-10,B_NOT_ALLOWED=-11,B_DEV_NOT_READY=-12,B_BUSY=-13,sLock=91;
+enum{B_BAD_VALUE=-10,B_NOT_ALLOWED=-11,B_DEV_NOT_READY=-12,B_BUSY=-13,B_NO_MEMORY=-14,sLock=91};
 struct thread_info{int team;};
 static unsigned locks=0,releases=0,copies=0,copyFailure=0;
 static int callerTeam=7,lockStatus=B_OK;
@@ -28,6 +28,9 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #include "embedding_factory_probe_lock.inc"
 #include "embedding_factory_call_scope.inc"
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#define dprintf(...) ((void)0) // simulated OS kernel log,NOT device I/O
+#endif
 #include "embedding_factory_control.inc"
 static status_t Route(PioneerProbeCookie* instance,uint32 operation,void* data,size_t length){
 #include "embedding_factory_routing.inc"
@@ -37,6 +40,7 @@ static tt_q38_embedding_produce Request(unsigned token=0){tt_q38_embedding_produ
 static void ResetScope(NativeFactoryFixture& f){
  f.c->q38GdnCallThread=-1;callerTeam=7;lockStatus=B_OK;locks=releases=copies=copyFailure=0;locked=false;
 }
+#ifndef PIONEER_Q38_EMBEDDING_CONTROL_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -93,3 +97,4 @@ int main(int argc,char** argv){
  }
  printf("PASS ACTUAL native public embedding control/call-scope/routing:positive%u/refusals%u/faults%u;ALL7 source banks actual zero+QPE1 instructions,real factory ownership/END,request replies cannot become ready authority,failed user-copy CLOSE ONLY retained;SIMULATED_OS_HARDWARE_NOT_CARD_OR_MODEL_SPEED\n",positives,refusals,faults);
 }
+#endif

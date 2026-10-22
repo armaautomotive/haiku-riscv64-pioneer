@@ -5,14 +5,25 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#if PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || PIONEER_Q38_EMBEDDING_QUALIFICATION != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010040ULL
+#error GDDR embedding validation needs its exact isolated tag40 DEBUG role
+#endif
+#define PIONEER_Q38_EMBEDDING_EXPECTED_TAG 0x2026102200010040ULL
+#else
+#define PIONEER_Q38_EMBEDDING_EXPECTED_TAG 0x2026102200010039ULL
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
-#if PIONEER_Q38_EMBEDDING_QUALIFICATION != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010039ULL || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
+#if PIONEER_Q38_EMBEDDING_QUALIFICATION != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != PIONEER_Q38_EMBEDDING_EXPECTED_TAG || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
 #error Exact isolated tag39 embedding qualification role required,not old FFN/profile/model promotion
 #endif
 #define PIONEER_Q38_EMBEDDING_ROLE_TAG_OK 1
 #include "PioneerQ38EmbeddingProtocol.h"
 #else
 #define PIONEER_Q38_EMBEDDING_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010040ULL && (!defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK)
+#error Reserved tag40 is ONLY the separate fixed GDDR embedding numerical DEBUG qualification
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010039ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK
 #error Reserved tag39 is ONLY the separately scoped embedding arithmetic qualification
@@ -3201,12 +3212,20 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 	if (okay) m->phase=PioneerQ38EmbeddingNativeState::Embedding;
 	else {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
-[[maybe_unused]] static bool RunQ38EmbeddingModel(PioneerStoreContext& c,PioneerQ38EmbeddingResult& result)
+[[maybe_unused]] static bool RunQ38EmbeddingModel(PioneerStoreContext& c,PioneerQ38EmbeddingResult& result
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+	,uint32* validation=NULL
+#endif
+)
 {
 	auto* m=c.q38EmbeddingModel;if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Embedding || m->Unsafe()) return false;
 	bool okay=c.io.EmbeddingSourceScope(false) && c.io.MapEmbeddingMemory()
 		&& m->embedding.RunOnce(c.io,c.baseline.baseline.baseline.baseline.dram,c.baseline.baseline.baseline.noc,c.banks,m->graph,m->plan,
-			m->identity,c.initialized,PioneerResidentBanks::Pages,c.lease,m->token,m->position,m->bank,result);
+			m->identity,c.initialized,PioneerResidentBanks::Pages,c.lease,m->token,m->position,m->bank,result
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+			,validation
+#endif
+			);
 	if (okay) m->phase=PioneerQ38EmbeddingNativeState::Complete;
 	else {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
@@ -3402,6 +3421,51 @@ public:
 // PIONEER_Q38_GDN_CALL_SCOPE_END
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
 // PIONEER_Q38_EMBEDDING_NATIVE_CONTROL_BEGIN
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+static status_t Q38EmbeddingControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK || thread.team!=cookie->team) return status!=B_OK?status:B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT) {
+		if (length!=sizeof(tt_q38_embedding_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie);if (status!=B_OK) return status;
+		const tt_q38_embedding_support support={1,55,11,5120,248320,512,0,0};
+		status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE || length!=sizeof(tt_q38_embedding_validation)) return B_BAD_VALUE;
+	auto* reply=new(std::nothrow) tt_q38_embedding_validation;
+	if (!reply) return B_NO_MEMORY;
+	status=user_memcpy(reply,data,sizeof(*reply));
+	bool shape=status==B_OK && PioneerQ38EmbeddingRequest(reply->metadata);
+	if (shape) for (unsigned i=0;i<5120;i++) if (reply->values[i]) {shape=false;break;}
+	if (!shape) {delete reply;return status!=B_OK?status:B_BAD_VALUE;}
+	PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+	if (!c || !BindQ38EmbeddingModel(*c,reply->metadata.token,reply->metadata.position,0)) {
+		delete reply;return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+	}
+	PioneerQ38ProjectionZeroResult zero;PioneerQ38EmbeddingResult result;
+	uint64 began=uint64(system_time());
+	bool okay=InitializeQ38EmbeddingModel(*c,zero) && RunQ38EmbeddingModel(*c,result,reply->values);
+	uint64 ended=uint64(system_time());auto* m=c->q38EmbeddingModel;
+	okay=okay && ended>=began && m && m->Closed() && m->embedding.Completed() && !c->Unsafe()
+		&& result.validationPages==5 && result.validationWords==5120;
+	auto& r=reply->metadata;r.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+	r.closed=r.input_ready=okay?1:0;r.recovery_required=okay?0:1;
+	r.session=m?m->identity.session:0;r.driver_generation=m?m->identity.driverGeneration:0;
+	r.elapsed_us=okay?ended-began:0;r.source_pages=okay?12:0;r.workspace_pages=okay?512:0;
+	r.saved_words=okay?result.savedWords:0;r.restored_words=okay?result.restoredWords:0;
+	if (!okay) {
+		// CPU-side captured diagnostics ONLY;do not read/stop/restore a failed device.
+		dprintf("Q38-EMBEDDING-VALIDATION: FAIL zero_phase%u zero_state%u embedding_phase%u word%u readback_pages%u words%u saved%u restored%u\n",
+			zero.phase,zero.state,result.phase,result.word,result.validationPages,result.validationWords,result.savedWords,result.restoredWords);
+		memset(reply->values,0,sizeof(reply->values)); // never publish a partial/unrestored numeric result
+	}
+	status=user_memcpy(data,reply,sizeof(*reply));delete reply;
+	if (!okay || status!=B_OK || c->Unsafe()) {tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+	return status; // DEBUG client mismatch must CLOSE ONLY,not explicit END
+}
+#else
 static status_t Q38EmbeddingControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
@@ -3433,6 +3497,7 @@ static status_t Q38EmbeddingControl(PioneerProbeCookie* cookie,uint32 operation,
 	if (!okay || status!=B_OK || c->Unsafe()) {tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
 	return status; // explicit BANK_END still mandatory;close alone retains context
 }
+#endif
 // PIONEER_Q38_EMBEDDING_NATIVE_CONTROL_END
 #endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
@@ -6202,8 +6267,17 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #endif
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
 	// PIONEER_Q38_EMBEDDING_NATIVE_ROUTING_BEGIN
+#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE)
+		return Q38EmbeddingControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE)
+		return B_NOT_ALLOWED;
+#else
 	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE)
 		return Q38EmbeddingControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE)
+		return B_NOT_ALLOWED;
+#endif
 	if (operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE
 		|| operation==TT_PCI_PROBE_Q38_FFN_GRAPH_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_GRAPH_RUN
 		|| operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN

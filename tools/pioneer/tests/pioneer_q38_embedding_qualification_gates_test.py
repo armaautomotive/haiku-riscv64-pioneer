@@ -19,7 +19,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-embedding-qualification-gates-'
                  'build_qwen38_ffn_graph_image.sh', 'build_qwen38_ffn_matrix_image.sh', 'build_qwen38_ffn_persistent_image.sh',
                  'build_qwen38_local_image.sh', 'build_qwen38_projection_graph_image.sh',
                  'build_qwen38_projection_matrix_image.sh', 'build_qwen38_projection_persistent_image.sh'):
-        for flag in ('PIONEER_Q38_EMBEDDING_QUALIFICATION', 'PIONEER_Q38_EMBEDDING_CLIENT'):
+        for flag in ('PIONEER_Q38_EMBEDDING_QUALIFICATION', 'PIONEER_Q38_EMBEDDING_CLIENT',
+                     'PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE', 'PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT'):
             for value in ('1', '2', '01', '-1', '', '0=1', '0\n1'):
                 sdk, out = base / 'MUST_NOT_READ_SDK', base / 'MUST_NOT_CREATE_OUTPUT'
                 args = ['sh', str(here / name), str(sdk), str(out)]
@@ -28,7 +29,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-embedding-qualification-gates-'
                 count += 1
     for name in ('build_qwen38_embedding_native.py', 'build_qwen38_embedding_client.sh'):
         for flag in ('PIONEER_Q38_EMBEDDING_NATIVE', 'PIONEER_Q38_EMBEDDING_QUALIFICATION', 'PIONEER_Q38_EMBEDDING_CLIENT',
-                     'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_UNRECOGNIZED_ROLE'):
+                     'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_UNRECOGNIZED_ROLE',
+                     'PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE', 'PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT'):
             for value in ('1', '2', '01', '-1', '', '0=1', '0\n1'):
                 sdk, out = base / 'MUST_NOT_READ_SDK', base / 'MUST_NOT_CREATE_OUTPUT'
                 args = [sys.executable if name.endswith('.py') else 'sh', str(here / name), str(sdk), str(out)]
@@ -56,11 +58,32 @@ with tempfile.TemporaryDirectory(prefix='pioneer-embedding-qualification-gates-'
         result = subprocess.run(test, env=clean, capture_output=True, text=True, timeout=30)
         assert result.returncode != 0 and '#error' in result.stderr, (remove, add, result.stderr)
         count += 1
+    validation_role = '-DPIONEER_Q38_EMBEDDING_VALIDATION_NATIVE=1'
+    validation_tag = '-DPIONEER_DRIVER_BUILD_TAG=0x2026102200010040ULL'
+    debug = [arg for arg in exact if arg != tag] + [validation_tag, validation_role]
+    subprocess.run(debug, env=clean, check=True, capture_output=True, text=True)
+    for remove, add in ((validation_role, []), (role, []), (native, []),
+                        (validation_role, ['-DPIONEER_Q38_EMBEDDING_VALIDATION_NATIVE=2']),
+                        (validation_tag, [tag]), (None, ['-DPIONEER_Q38_FFN_SEALED_PROOF=1'])):
+        result = subprocess.run([arg for arg in debug if arg != remove] + add, env=clean,
+                                capture_output=True, text=True, timeout=30)
+        assert result.returncode != 0 and '#error' in result.stderr, (remove, add, result.stderr)
+        count += 1
     # No reference/old Work/native-role combination compiles the host header.
     for flag in ('PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_EMBEDDING_NATIVE'):
         result = subprocess.run(['c++', '-std=c++17', '-fsyntax-only', '-x', 'c++', '-DB_DEVICE_OP_CODES_END=1000',
                                  '-DPIONEER_Q38_EMBEDDING_CLIENT=1', '-D' + flag + '=1', '-I' + str(here), '-'],
                                 input='#include "PioneerQ38EmbeddingSession.h"\n', env=clean, capture_output=True, text=True)
         assert result.returncode != 0 and 'Separate source-bound embedding client only' in result.stderr
+        count += 1
+    for roles in (['-DPIONEER_Q38_EMBEDDING_VALIDATION_CLIENT=1'],
+                  ['-DPIONEER_Q38_EMBEDDING_VALIDATION_CLIENT=2', '-DPIONEER_Q38_CPU_VALIDATION=1'],
+                  ['-DPIONEER_Q38_EMBEDDING_VALIDATION_CLIENT=1', '-DPIONEER_Q38_CPU_VALIDATION=2'],
+                  ['-DPIONEER_Q38_EMBEDDING_VALIDATION_CLIENT=1', '-DPIONEER_Q38_CPU_VALIDATION=1', '-DPIONEER_Q38_EMBEDDING_CLIENT=1'],
+                  ['-DPIONEER_Q38_EMBEDDING_VALIDATION_CLIENT=1', '-DPIONEER_Q38_CPU_VALIDATION=1', '-DPIONEER_Q38_WORK_INFERENCE=1']):
+        result = subprocess.run(['c++', '-std=c++17', '-fsyntax-only', '-x', 'c++', '-DB_DEVICE_OP_CODES_END=1000',
+                                 *roles, '-I' + str(here), '-'], input='#include "PioneerQ38EmbeddingSession.h"\n',
+                                env=clean, capture_output=True, text=True)
+        assert result.returncode != 0 and 'Separate DEBUG embedding validation client only' in result.stderr
         count += 1
 print(f'PASS exact embedding qualification gates{count}:before-SDK old/new builders,actual SDK driver reserved tag/role rejection,host CPU-reference/oldWork/native exclusion;NO install/device IO')
