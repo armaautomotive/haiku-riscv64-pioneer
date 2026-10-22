@@ -24,6 +24,7 @@ template<class IO> bool PioneerQ38FfnGraphCodeRoundTrip(IO&,const tt_dram_sample
  PioneerResidentBanks&,PioneerQ38DispatchLease&,PioneerQ38FfnGraphCodeOwner&,PioneerQ38FfnGraphCodeResult&);
 class PioneerQ38FfnGraphCodeOwner {
  friend class PioneerQ38FfnPeerLifetimeOwner;
+ friend class PioneerQ38FfnRootLifetimeOwner;
  template<class IO> friend bool PioneerQ38FfnGraphCodeRoundTrip(IO&,const tt_dram_samples_result&,
   PioneerResidentBanks&,PioneerQ38DispatchLease&,PioneerQ38FfnGraphCodeOwner&,PioneerQ38FfnGraphCodeResult&);
  const tt_dram_samples_result* proof=nullptr;

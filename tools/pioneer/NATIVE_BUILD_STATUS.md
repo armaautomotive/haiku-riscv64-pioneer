@@ -1,6 +1,28 @@
 # Native build status
 
-Latest OFFLINE checkpoint October22 2026:QFG2 THREE root sections frozen in
+Latest OFFLINE checkpoint October22 2026:separate HEAP QFG2 ROOT+ALL119
+execution-lifetime controller passes2positive/193faults/27inert result-field
+refusals. SAME controller +actual INSTALLED ROOT+ALL119 instruction machines
+at THREE schedules4096/64,257/17,8192/17 ALL pass. Actual root+ALL119 current
+terminal proofs BEFORE FIRSThold,exact867448program+11424peer-control+
+12288root-meta+2048root-stack words restored. Root NoC reads9877/13447/13447,
+writes238;physical MASTER deltas/last command/accepted aliases/wrap verified,
+counters NEVER restored. THREE actual counter-fault runs at packet1/5000/
+9000 park,NO following packet/hold/restore/retry/END. Kernel frame880B.
+This is NOT a native factory/model/input grant or timing/speed claim.
+Old basic+qualified code-owner2x133faults and peer-only226faults regressions
+pass;58before-SDK QFG2 gates. Existing native33 driverb35/guardd1ce/control2df
+rebuilt BYTE-IDENTICAL,never uploaded. ALL tests CLI0/completed,no running
+jobs. Next bind this SAME controller to the actual isolated native cookie/
+context/clock/ALLhost/global-call-lock,qualify outer parent/END and bootstrap
+after root counter traffic,and exact new role/client/updater BEFORE hardware.
+Native33 still NEVER ran a new root. Fresh read-only041/tag12/gen34/idle/
+cold0/owner0/open1/guard1,no inference parents,64CPUs/max137034936320B.
+No native writes/jobs/reloads/Assistant/power/SD/boot/CPU/RAM/network changes.
+Whole27B.207893161tok/s unchanged;20UNMET;goal ACTIVE.
+Evidence:benchmarks/qwen38-ffn-root-lifetime-offline-20261022.txt.
+
+Previous OFFLINE checkpoint October22 2026:QFG2 THREE root sections frozen in
 a SEPARATE code catalog;no QFG1 replacement/native selector.867328words/
 3701951refusals,4970different root words,ALL119companions unchanged;
 kernel compile frame16B. New generator6exact/73refusals verifiesALL6sections

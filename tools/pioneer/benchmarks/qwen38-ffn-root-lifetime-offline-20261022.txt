@@ -1,0 +1,105 @@
+QFG2 ROOT+ALL119 QFP2 execution-lifetime controller,October22 2026.
+OFFLINE ONLY. Simulated hardware endpoints;NOT a native factory,model/
+source/input/GDDR/host-DMA grant or native execution/speed qualification.
+
+Separate heap PioneerQ38FfnRootLifetimeOwner selects only the NEW frozen
+QFG2 root plus unchanged QFP2 companions. No native route includes it.
+Before ANY write:save867448 program words,11424 peer-control words,
+12288 root metadata words74000..80000,and2048 root stack words6e000..70000.
+The3.32MiB code owner and~125KiB lifetime owner are HEAP ONLY. All119 peers
+stage/arm before release;current WAIT/code/source/command/counter checks
+precede fixed internally constructed STOP-only root metadata and launch.
+STOP has NO weights,input producer,matrix,GDDR or CPU-reference work.
+Dummy learned geometry in the private STOP manifest is NOT source authority.
+
+The root really issues NoC traffic. While its trusted code runs,the guard
+checks exclusive participant state,physical resets,source/map/PCI ownership,
+NOT impossible static-command/counter invariants. On actual terminal marker/
+phase/count and TWO current terminal PCs,independently verify original+
+shadow manifest,actual sources,ALL64 stats words,ALL119 sequences,the last
+physical root command and ALL8 physical MASTER counters/deltas. Read each
+observed stats word and validate it BEFORE any following read. Variable
+transition poll counts have bounded coupled read counts and exact physical
+counter deltas. Accepted-counter aliases and uint32 wrap remain checked.
+Counters are NEVER restored. The new observed root baseline is retained
+for subsequent checks;original command restoration occurs ONLY when held.
+
+ALL119 current STOP PCs/status/source/code/frame/counter checks AND actual
+root terminal proof precede the FIRST hold. Each participant is re-proved
+before its own hold. Exact program/metadata/stack/control restoration then
+has a final independent full readback. Any uncertainty quarantines code,
+ALL120 participant leases,banks and host in MEMORY ONLY. No further device
+read,STOP,hold,restore,END,reset,retry or release. A future REAL native caller
+must IMMEDIATELY retain BOTH heaps plus its actual global cookie/context/
+clock/ALL host/maps/cold latch;this template/test fabric supplies NONE of
+that actual native factory authority. CLOSED success does not delete any
+parent snapshot. The original native parent still owns outer L1/status/
+host/clock restoration and clean END,which must be explicitly qualified.
+
+Completed actual-instruction runs (ASan/UBSan,NOT device timing):
+ -Same controller driven by installed QFG2 root+ALL119 QFP2 instruction
+  machines. Constructor job/model/status defaults discarded;fetch ACTUAL
+  controller-installed code and exact staged metadata. Fabric copies bytes
+  only and NEVER manufactures WAIT/STOP/status/sequence/stats/proof outputs.
+ -THREE schedules root/peer batches4096/64,257/17,8192/17:
+  rootVM12794959/17281896/17281896;peerVM162868 each;max device stack1440B.
+  Root physical reads9877/13447/13447,writes238;different poll counts remain
+  valid. Wrapped independent MASTER baselines,exact saved range restoration,
+  root+ALL119 actual terminal proof BEFORE first hold;ALL120 known held.
+ -Actual unrelated root-counter traffic at packet1,5000,9000:device faults
+  and parks with NO following packet;controller notices actual status OR
+  actual fault PC,then memory-only quarantine/no hold/restore/END/retry.
+  ROOT fault range72060..72080 is not the PEER fault PC7209c (which is a
+  legitimate ROOT matrix prologue address);never conflate the two images.
+ Final actual-instruction rerun CLI0:
+ /private/tmp/pioneer-q38-root-lifetime-actual-20261022-e.log
+ SHA3b4dda0259b3a2d2e6acd4e60c5cd6a7aeff251035902d5a0aba9e154e75a4ea
+
+Completed synthetic-endpoint controller run:2positive/193faults/27refusals under
+ASan/UBSan,exact full snapshots/restoration,legacy bootstrap after restore,
+first observed mismatch ZERO later IO. Final rerun additionally checked
+every one of27 result fields is refused WITHOUT IO or result mutation;
+NO caller clean/completed/result flag can grant or skip any part of work.
+Kernel read-only RISC-V witness maximum frame880B,not a linked native route.
+Final controller rerun CLI0:
+ /private/tmp/pioneer-q38-root-lifetime-20261022-f.log
+ SHAb185d63474122aac38248c5a058b8cd1295a1c36765497976e9e6537ed2855e0
+All tests in this checkpoint completed;no test/job remains running.
+
+Regressions,CLI0:
+ -Old basic+qualified code owner each2positive/133faults,867448 words.
+  /private/tmp/pioneer-q38-root-lifetime-code-regression-20261022-a.log
+  SHAc96272dd704d723ccd37d2b386c58dfe08c49410a1022521b364168dae84b5cc
+ -Old peer-only lifetime2positive/226faults,kernel frame880B.
+  /private/tmp/pioneer-q38-root-lifetime-peer-regression-20261022-a.log
+  SHAe40a7bbe1a3bdbe6f74bbb83e781a95d552105eac035f981f0728aea7da48563
+ -58 QFG2 mixed/malformed/legacy/native/production gates BEFORE SDK/output.
+  /private/tmp/pioneer-q38-root-lifetime-gates-20261022-a.log
+  SHA821f6e9df5e77b95f6887716867ee35d3bc9534f6a3c4e5270d66b406ed27d2d
+ -Full native33 control build byte-for-byte unchanged,NEVER uploaded:
+  /private/tmp/pioneer-q38-root-lifetime-native33-control.b7j320Ye/driver
+  driverb35c00fdbdd03f4870b419a1ed4548c12d164671a2209cbd228a4d873dd414ff
+  guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+  default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+  /private/tmp/pioneer-q38-root-lifetime-native33-control-20261022-a.log
+  SHA2af40fa728c1c7eb6e88ca3ed8eb68a059c701be26f850bc0d7fc887c045aac5
+
+Fresh read-only native process inventory/CPU metadata:ALL inference parents
+absent,041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen34/quiesced0/cold0/owner0/open1/guard1,64CPUs/
+max137034936320B. No native uploads/GPU jobs/reload/reboot/power/SD/Assistant/
+boot/CPU/RAM/network/settings changes. SDK read-only;dirty llama.cpp and
+unrelated FlashNext untouched. Last whole27B0.207893161tok/s unchanged;
+20tok/s UNMET. Goal ACTIVE.
+
+NEXT:connect this SAME actual-instruction-tested controller to an isolated
+exact native role under REAL cookie/global call lock/retained native context,
+clock and ALL hosts/maps. Test extracted actual native hook/failure retention,
+outer saved-parent/END and post-traffic legacy bootstrap;separate tag/ABI/
+client/updater+gates before any hardware write. Native33 ran NEW119 peers
+but NEVER a new root. Native STOP-only qualification still would NOT grant
+model/initial input/full FFN execution. Then bind real authenticated source+
+canonical joint mutable owner+initialized ledger+actual initial L1 producer,
+native FFN and actual inference. Remaining all-card attention/GDN/KV/norm/
+residual/embedding/sampling still owed. Work/debug remain separate;
+raw-Dst cache22 HARD BLOCKED. No additional physical user action needed now.
