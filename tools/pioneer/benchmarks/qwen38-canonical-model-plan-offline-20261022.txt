@@ -1,0 +1,100 @@
+Canonical public27B kernel geometry and initialized FFN preflight.
+October22 2026. OFFLINE ONLY;NOT native model/source authentication,
+initial F32 producer authority,new FFN execution or inference speed.
+
+PioneerQ38CanonicalModelPlan reconstructs the FIXED original-TC tiled
+Qwen3.8-27B layout with8192context and TWO recurrent slots. It accepts NO
+GGUF descriptor order,caller offsets/rows/NoC routes/digest or host values.
+All851 tensors in semantic order (three globals,then layer/role order),
+all672 recurrent regions,convolution/KV state and seven64MiB workspaces
+are derived independently of the existing host loader implementation.
+Exact original tile padding:Q8=576B,Q4_K=2304B,Q6_K=3392B per16-row tile.
+Least-used bank ordering uses bank-index ties and one snapshot per stripe.
+All7x3GiB bounds remain unchanged.4678 parts,large object HEAP ONLY.
+There is NO page reservation or initialized/producer/launch grant in it.
+
+FfnSpan enforces the exact layer AND role,canonical bank+offset,16-row
+alignment and complete subspan bounds. A same-shaped different layer or
+shifted learned address cannot pass. FfnPagesPresent checks EVERY page of
+all21 layer weight stripes,including partial-page padding,and accepts ONLY
+the actual ledger value1 (neither absent0 nor malformed2/255). Presence
+is necessary,NOT source authentication or an initial-input receipt.
+
+PioneerQ38FfnCanonicalJobs derives THREE complete119-worker gate/up/down
+jobs from those exact stripes. No caller part array is accepted. Quota
+balancing,first-row tie ordering,bank round robin and exact full row cover
+match the existing host fleet scheduler independently. Jobs borrow the
+EXACT immutable heap plan. Equal-but-foreign geometry is not the same
+binding. Metadata holds layer/token but is NOT a native execution grant.
+
+The existing real atomic PioneerQ38GraphMutableBanks factory now has
+BindCanonical:both GDN and FFN reservation proposals come from that fixed
+plan,not separately supplied coordinates. It retains the exact borrowed
+plan AND the SAME upload-ledger pointer/length. MatchInitializedFfn is a
+necessary CPU-only preflight:exact identity/plan/layer/token/ledger,actual
+FFN74-page initialization published ONLY after known-clean zero CLOSE,and
+ALL canonical learned pages present. It does NOT claim source/input/code/
+clock/host/current-terminal ownership. GDN remains independently EMPTY or
+partial;FFN publication never publishes GDN. Either child fault invalidates
+the whole reservation/preflight without IO or release. Retain the complete
+native context,plan and ledger for the lifetime of the borrowed children.
+No driver operation selects this new factory yet;NO native/model launch.
+
+ASan/UBSan and read-only RISC-V kernel compile,ALL CLI0:
+ -Independent actual host-loader comparison,4678 parts each for normal
+  synthetic GGUF,reversed ACTUAL descriptor records,and actual local file
+  generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf.14034 exact part
+  comparisons,958464 exact FFN subspans,68544 exact119-worker job parts,
+  306437 refusals. ALL64 learned-page ledgers and7 real atomic reservations
+  with EMPTY initialization ledgers. Wrong context/one-slot/row-major plans
+  differ;unbuilt/out-of-range/reentry/foreign layer/role/range refuse.
+  The actual local file check is read-only METADATA comparison,NOT a new
+  full-file SHA authentication or inference measurement. No weight values
+  or learned CPU products are read/computed by this new code.
+  /private/tmp/pioneer-q38-canonical-model-plan-20261022-e.log
+  SHA2fea9788ffd96615ecbd3d7eb2a0f0657985aed3eaf4278d7b156cf266248f0e
+  Evidence /private/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/
+  pioneer-q38-canonical-model.XohKn4Vg
+  Kernel witness includes plan Build,three-job Build,page checks,actual
+  BindCanonical and MatchInitializedFfn. Maximum frame928B,objects HEAP.
+  This is a kernel compile witness,NOT a linked/deployed native factory.
+ -Existing joint zero controllers driven by the ACTUAL frozen RV32 zero
+  image (SHA39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b),
+  simulated IO only. Original6 serial-role/UNKNOWN cases retained. NEW7
+  canonical FFN workspaces exercised through actual zero/run/known-clean
+  CLOSE;preflight refuses even after all74 pages zero until CLOSE publishes.
+  Then ALL64layers x3roles x119workers:159936 actual existing bank learned-
+  range authorizations match exact canonical jobs.938 inert refusals:
+  wrong layer/token/epoch,identical FOREIGN plan,missing learned page,
+  equal-content copied ledger/wrong length,sibling quarantine. Checks add
+  ZERO IO,learned bitmap writes or GDN publication. Endpoint/host/native
+  scope is SIMULATED;no new source/initial F32 producer is fabricated.
+  /private/tmp/pioneer-q38-canonical-model-zero-20261022-b.log
+  SHA2e28546170b663b507c665367700d56aa9411c420fe5ca3c00b006d2ba46f727
+ -Existing joint reservation regression7plans/516639refusals,all7FFN banks,
+  every claimed page/whole envelope/fault/atomic-refusal checks unchanged.
+  RISC-V maximum frame928B,CLI0.
+  /private/tmp/pioneer-q38-canonical-model-joint-regression-20261022-b.log
+  SHA70bb9db2fbad84847ec568fa1e3846c4fb3de9dc3fc114ab5ab4e2ef56bdc49b
+Earlier plan log-a caught GCC misleading-indentation and is superseded.
+Log-b/c/d and zero-a predate the final exact-ledger/match compile checks;
+use final plan-e/zero-b/joint-b above. No failing build was deployed.
+
+Fresh CPU-only native status:041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen34/idle/quiesced0/cold0/owner0/open1/guard1,
+ALL native parents absent. No new uploads/GPU jobs/hot reload/reboot/power/
+SD/Assistant/boot/CPU/RAM/network/settings changes. Dirty llama.cpp and
+unrelated FlashNext untouched. Raw-Dst cache22 HARD BLOCKED.
+
+NEXT:retain this canonical plan+jobs+joint owner in the REAL native context,
+bind the SAME fully authenticated source/upload session,implement the real
+initial5120F32 input producer and completion receipt,and full new-root
+execution/terminal lifetime. No shape field,zero-fill,model epoch or this
+preflight supplies those missing grants. Prefer integrating the initial
+input producer into the owned root so per-FFN activation does not require
+swapping in an upload program under an already-live cohort. Qualify its
+actual instructions/scope/ownership/failure behavior before hardware use.
+Then full-FFN model integration and measured inference;all-card attention/
+GDN/KV/norm/residual/embedding/sampling are still required afterward.
+No new token-rate measurement. Last actual whole27B0.207893161tok/s
+unchanged;20tok/s UNMET. Goal ACTIVE.

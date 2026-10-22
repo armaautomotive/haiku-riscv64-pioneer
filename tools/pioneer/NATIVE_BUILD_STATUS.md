@@ -1,5 +1,25 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:fixed canonical kernel model map
+and three complete119-worker FFN job proposals implemented.4678parts,
+ALL851tensors/672GDNregions/TWOslots/8192context/7x3GiB unchanged. Independent
+existing host loader comparison matches normal/reversed descriptors AND
+actual local GGUF:14034parts/958464subspans/68544worker job parts,
+306437refusals. Exact layer/role/offset/range and ALL learned pages checked.
+Actual joint mutable factory now derives both roles from this geometry,
+retains EXACT plan+upload-ledger pointer,not equal caller copies. Actual
+frozen-zero instruction/controller test:7canonical FFN workspaces,NO
+preflight publication before known-clean zero CLOSE;159936 learned-range
+authorizations/938 inert refusals. Old6zero and7plans/516639reservation
+regressions pass. Kernel build/match/bind max928B,large objects HEAP ONLY.
+NOT source authentication,input producer,native full-root or speed grant;
+no new native selector/launch yet. Next REAL retained native source/context
+binding,initial F32 producer+receipt,and full-root execution/terminal scope.
+Fresh041/tag12/gen34/idle/cold0/owner0/open1/guard1,no native parents. No
+native writes/jobs/reloads/Assistant/power/SD/boot/CPU/RAM changes. Last
+whole27B0.207893161tok/s unchanged;20UNMET,goal ACTIVE.
+Evidence:benchmarks/qwen38-canonical-model-plan-offline-20261022.txt.
+
 Latest NATIVE checkpoint October22 2026:NEW119 FFN workers boot/WAIT/STOP/
 physical-terminal/hold/full restoration PASS in TWO independent P100A
 sessions. Each saved/installed/restored867448program+11424control words,

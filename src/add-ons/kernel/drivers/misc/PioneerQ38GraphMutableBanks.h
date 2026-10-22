@@ -3,6 +3,8 @@
 #define PIONEER_Q38_GRAPH_MUTABLE_BANKS_H
 #include "PioneerQ38GdnBanks.h"
 #include "PioneerQ38FfnBanks.h"
+#include "PioneerQ38CanonicalModelPlan.h"
+#include "PioneerQ38FfnCanonicalJobs.h"
 // KERNEL-PRIVATE,HEAP ONLY. ONE sticky reservation for the complete GDN
 // state AND the resident FFN,not two independent mutable owners. Native
 // integration must derive these proposals from the authenticated retained
@@ -13,6 +15,9 @@ class PioneerQ38GraphMutableBanks {
  PioneerResidentBanks* banks=nullptr;
  const tt_dram_samples_result* baseline=nullptr;
  PioneerQ38GdnIdentity identity={};
+ const PioneerQ38CanonicalModelPlan* canonical=nullptr; // exact borrowed geometry;native context retains it
+ const uint8_t* canonicalLedger=nullptr; // SAME retained upload bitmap,not an equal caller copy
+ unsigned canonicalLedgerPages=0;
  PioneerQ38GdnBanks recurrent;
  PioneerQ38FfnBanks ffn;
  PioneerResidentMutableRange claims[673]={};
@@ -25,6 +30,15 @@ public:
  PioneerQ38GraphMutableBanks()=default;
  PioneerQ38GraphMutableBanks(const PioneerQ38GraphMutableBanks&)=delete;
  PioneerQ38GraphMutableBanks& operator=(const PioneerQ38GraphMutableBanks&)=delete;
+ // Kernel-derived fixed model geometry,not public caller coordinates.
+ // Still only an atomic reservation:source authentication and every
+ // initialization/producer/execution proof remain the native caller's job.
+ bool BindCanonical(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id,
+  const uint8_t* learned,unsigned learnedPages,const PioneerQ38CanonicalModelPlan& plan,unsigned ffnBank) {
+  const auto* workspace=plan.Workspace(ffnBank);
+  if(!workspace || !Bind(owner,proof,id,learned,learnedPages,plan.RecurrentRegions(),plan.RecurrentCount(),ffnBank,workspace->offset))return false;
+  canonical=&plan;canonicalLedger=learned;canonicalLedgerPages=learnedPages;return true;
+ }
  bool Bind(PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38GdnIdentity& id,
   const uint8_t* learned,unsigned learnedPages,const PioneerQ38GdnRegion* regions,unsigned count,
   unsigned ffnBank,uint64_t workspaceOffset) {
@@ -56,6 +70,19 @@ public:
  // Every zero/compute controller still requires all its own proofs.
  PioneerQ38GdnBanks* Recurrent(const PioneerQ38GdnIdentity& id){return Matches(id)?&recurrent:nullptr;}
  PioneerQ38FfnBanks* Ffn(const PioneerQ38GdnIdentity& id){return Matches(id)?&ffn:nullptr;}
+ const PioneerQ38CanonicalModelPlan* CanonicalModel(const PioneerQ38GdnIdentity& id)const {
+  return Matches(id) && canonical && canonical->Ready()?canonical:nullptr;
+ }
+ // Necessary CPU-only preflight,NOT input/source authentication or any
+ // launch grant. The real native caller still owes the initial F32
+ // producer,exclusive code/operation/host/clock and current terminals.
+ // Zero-filled allocation or equal-but-foreign geometry cannot pass.
+ bool MatchInitializedFfn(const PioneerQ38GdnIdentity& id,const PioneerQ38FfnCanonicalJobs& jobs,
+  unsigned layer,uint64_t position,const uint8_t* learned,unsigned pages)const {
+  return learned==canonicalLedger && pages==canonicalLedgerPages && CanonicalModel(id)
+   && ffn.InitializationPublished(id) && jobs.Matches(*canonical,layer,position)
+   && jobs.LearnedPagesPresent(learned,pages);
+ }
  bool MatchesInitializationOwner(const PioneerResidentBanks& owner,const tt_dram_samples_result& proof,
   const PioneerQ38GdnIdentity& id)const{return banks==&owner && baseline==&proof && Matches(id);}
  void Fault(){unsafe=true;recurrent.Fault();ffn.Fault();if(banks)banks->Quarantine();} // memory ONLY,never release/rebind
