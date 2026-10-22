@@ -1,5 +1,29 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:NEW QPR1 complete resident-input
+projection parent implemented,NOT native selected. ONE ROOT call owns op5
+producers->QPG1 gather->ALL QPM1 waves;no host interstage learned work.
+Actual parent+ALL119 retained QFP3 instruction machines pass SIX changed
+projections across Q8_0/Q4_K/Q6_K/5120/6144/17408 inputs,28768output rows/
+172producers/427matrix jobs/1973760matrix instructions,119boots ONCE and
+ALL119 physical STOP;test weights/transport,NOT native model or speed.
+Separate actual parent/core placement suite proves BOTH complete9-wave
+248320-row globals using SYNTHETIC peer replies,10examples/70faults;
+43late/drop/readback/shape faults inert. Canonical HEAP plan binds ALL498
+RUN+STOP/96148records/6984refusals/3005mutations,maxkernel frame384B;
+DATA is NOT source/input-producer authority. New images repeat EXACT,
+maxobservedROOTstack5992B/8192B;105new+173old38+96QPM+77projection gates.
+QFP3/oldQPM/QFG2/tag38driver/guard/default43control BYTE-IDENTICAL.
+ALL local jobs terminal before checkpoint. NO native selector/install/job/
+remote write/reboot/power/SD/Assistant/boot/network change. Fresh19:37UTC
+SSH works,original041/tag12/gen44/idle/cold0/owner0/open1/guard1,64CPUs/
+max137034936320B. NEXT full16KiB peer/40KiB root catalog+complete snapshots/
+new manifest views,actual exclusive cookie/source/initialized-page/input-
+producer ownership;old12KiB peer/74-page FFN workspace NOT sufficient.
+Full resident decoder remains incomplete. Whole27B.207893161tok/s
+UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-parent-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:NEW QPM1 generic projection-wave
 ROOT implemented,NOT native selected. Actual dispatch core supports ALL498
 semantic Q8_0/Q4_K/Q6_K shapes/514waves/4400640global rows,including3/64

@@ -1,0 +1,121 @@
+Complete same-family projection parent:OFFLINE October22 2026.
+Predecessor6723eaaa5c pushed/remote verified. Real arithmetic integration,
+not another boot/STOP-only qualifier. No new native execution this turn.
+Last WHOLE27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+NEW QPR1 parent,not a native selector:
+-ONE ROOT invocation snapshots complete immutable canonical schedule,
+ checks ALL119 physical WAIT/reset/source states,issues op5 producers,
+ verifies ALL64 producer receipt words and independent current physical
+ counters/source,executes actual QPG1 gather,then EVERY QPM1 matrix wave.
+ Complete output remains GDDR resident;NO host interstage calls or CPU
+ learned products. Separate STOP sends op2 and proves ALL119 terminals.
+-Resident F32 input MUST have a real completed producer BEFORE entry.
+ This parent does NOT create initial input from caller memory. An epoch,
+ marker,shape or receipt is DATA,NOT producer/source/owner authority.
+-QPR1 manifest8384words atb0000 and shadowc0000,disjoint fixed views;
+ all1024records validated,including inactive zeros. Exact quotas/stripe
+ order/row cover and workspace exclusion,phase overflow/source sequences.
+ Phase-boundary full audits;per-packet FIRST source/idle/ALL8 counter/
+ alias/command-readback checks. UNKNOWN:park,NO following packet/reset/
+ restore/retry. No speculative contiguous CSR reads.
+-Private pointer-bound canonical HEAP plan matches exact canonical Jobs,
+ learned positions,all119x16 source words,owner identities/token/role/
+ phases/input producer epoch. A coherent foreign learned stripe can be
+ valid DATA shape but MUST fail actual canonical plan match.
+-New isolated builder owns selectors. Old driver/client/Assistant/image
+ wrappers refuse inherited nonzero parent selector BEFORE SDK access.
+ Input proof comparison remains word-for-word equivalent;explicit fields
+ avoid a compiler-generated forbidden libc memset in freestanding ROOT.
+
+ACTUAL instruction arithmetic cooperation,TERMINAL0:
+Parent ROOT+ALL119 QFP3 peers execute,not synthetic peer products/proofs.
+Fabric only copies bytes at actual root-written endpoints;transportACK/
+NoC counters/reset endpoints and learned weights/input ARE simulated.
+119boots ONCE;no peer/Dst/Src/CSR/private-sequence resets between runs.
+Changed layer/role/token/input/width/type on the SAME retained peer pool:
+ layer0 role10 Q8_0 K5120 N48
+ layer3 role6  Q8_0 K5120 N1024
+ layer0 role10 Q8_0 K5120 N48 changed input
+ layer0 role2  Q4_K K5120 N17408 ALL119 compute
+ layer3 role10 Q6_K K6144 N5120 ALL119 compute
+ layer0 role4  Q4_K K17408 N5120 ALL119 compute
+28768actual output rows,172actual op5 jobs,427matrix jobs,
+1973760matrix instructions,ALL119 actual physical terminal STOP.
+Worker/global-row/block-varying bounded weights,including nonzero Q4
+minimum and signed Q6 scales. Independent FP32+FP64 CPU observers TEST
+ONLY;zero runtime dot-reference reads. This is NOT real-model arithmetic,
+native timing,whole decoder inference or a token-rate measurement.
+
+Additional TERMINAL0 evidence:
+-Actual parent/core placement:10examples/70faults,ALL3types/3input widths,
+ 3/64/119 active peers,BOTH248320-row973job globals with ALL9waves in ONE
+ ROOT call. Peer arithmetic/status/proofs SYNTHETIC in THIS suite. Do not
+ conflate nine-wave placement with full-vocabulary numerical validation.
+-43late faults:primary OR shadow corruption AFTER complete48-row output
+ BEFORE passed receipt,NO following CSR/packet;dropped packet UNKNOWN,
+ command readback faults and malformed metadata inert. Output bytes alone
+ do NOT grant completion. All64 producer proof word corruptions rejected.
+-Canonical plan ALL498 RUN+STOP996selections/96148records,
+ 6984external refusals/3005mutations,ALL1904source words;kernel maxframe384B.
+-105new exact role/before-SDK/full-section/PC/no-global gates,
+ 173old38+96oldQPM+77oldprojection gates. Shell syntax/whitespace pass.
+-Recompiled QFP3 regression203positives/162faults,maxpeerstack2864B.
+ Initial regression invocation mistakenly supplied the local-input image
+ as its legacy-peer argument and stopped at file-open assertion;corrected
+ old-peer-final argument rerun TERMINAL0. No device access or code change.
+-Final root max observed stack5992B within existing8192B;NO writable
+ globals/GOT/libc/unresolved symbols/div/rem/high-multiply instructions.
+-QFP3/oldQPM1/QFG2 remain exact frozen bytes. Tag38 driver23e2e68a,
+ guardd1ce2aa4/default43control2df0e0f8 remain BYTE-IDENTICAL.
+ ALL scripts/fixtures edited only after their respective jobs terminated.
+
+Final artifacts:/private/tmp/pioneer-q38-projection-family.DGLYM4co
+parent-d AND parent-e reproducibly EXACT:
+ boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main c623cad56856ac690a79e9b60566148afdba062646bafbb5bf32bcabaa7cb108 7812B
+ prefix cfb512c2b507d511b671bbb73101b724ec230f853a3486616336bacd66706357 6508B
+ graph13992bf95da5c695aab493db6d2760d74b139ed7384c04552df0751fa13ceaf9 16192B
+ QFP3 peer-n exact prior peer-m:
+ main783bd17e5f1114365bac3e7fa0589f205d70a225a2223a4de7089503ef90a615
+ affine a55331eeab74b50a50012a62c0d476e9a247f653eefe2211a08d0a75b2da85ca
+ helper f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9
+ Helper16352B requires full16KiB owner,NOT old12KiB grant.
+
+Final logs and SHA256:
+ /private/tmp/pioneer-q38-projection-parent-plan-20261022-b.log
+ 1615640a0f38e97536bc0558f670638690b247c2ce55968b5f308b5ca74b59e1
+ /private/tmp/pioneer-q38-projection-parent-image-20261022-c.log
+ 2d7124326018824b44896fbedd3025ec59eb9df836ece677deb3cc3b38fdf31d
+ /private/tmp/pioneer-q38-projection-parent-cooperative-wide-20261022-a.log
+ d85e1db2dfc3bc9a67716dd8d6e77a9cb3f79346d768e7aa87b71f7a9c0bcdec
+ /private/tmp/pioneer-q38-projection-parent-fault-20261022-a.log
+ 6e83e09970256331c50fa56c4754b6ce7ce7e2626d9059cf094f319252d3ce46
+ /private/tmp/pioneer-q38-projection-parent-gates-20261022-a.log
+ c3f7261939dc643ea266dd1c6d0d79a3f25e0ce84001040021fde91261bc791e
+ /private/tmp/pioneer-q38-projection-parent-driver38-control-20261022-a.log
+ acb0313fefce9b1518516015a3ff8e86602d09299e00ab8b87b0b83db7fc87b0
+ /private/tmp/pioneer-q38-projection-parent-old38-gates-20261022-a.log
+ c15d3dd2c16f75a794f619af85434e66130c23827925a9be42894d53ae1ad18b
+ /private/tmp/pioneer-q38-projection-parent-old-matrix-gates-20261022-a.log
+ e99be35fd6fa6cb3de7114b401d9dabdae051902abebecb925981559d660472d
+ /private/tmp/pioneer-q38-projection-parent-old-projection-gates-20261022-a.log
+ 6404a5fc4473ffb81e78813da23caa33387789e3776da6ba72ef78ef466eb66b
+ /private/tmp/pioneer-q38-projection-parent-peer-regression-20261022-b.log
+ a9ee6055f2ef1b086a7a6269312621e67c5e27481a37ea03aa688e69a58117bb
+
+Fresh19:37UTC read-only SSH:INVENTORY_PROVEN/ALL_COMPUTE_PARENTS_ABSENT,
+original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/generation44,quiesced0/cold0/active_owner0/
+open_count1/guard1,64CPUs/max137034936320B. ZERO remote write/GPU job/
+reload/reboot/power/SD/Assistant/boot/network/clock changes. No quarantine.
+Read-only SDK only;dirty llama.cpp and unrelated FlashNext untouched.
+
+NEXT complete frozen QPR1/QFP3 catalog and ENTIRE code+stack+metadata/
+new primary/shadow snapshot/mapping policy,then actual retained source/
+canonical learned upload ledger/exclusive owner cookie/real input producer
+and generic initialized workspace integration BEFORE native selection.
+Old FFN74page303104B workspace is NOT enough:generic vocabulary output
+requires at least2MiB. Do NOT borrow old matrix ioctl or tag38 owner.
+Full all-card norm/residual/GDN/attention/KV/embed/sampling/production
+decoder and real WHOLE27B speed measurements remain to be implemented.

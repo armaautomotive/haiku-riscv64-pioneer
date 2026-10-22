@@ -15,6 +15,9 @@ block_done:
 	la t1,block_done
 	sw t1,0(t0)
 .ifdef TT_Q38_DISPATCH_ROOT
+.ifdef TT_Q38_PROJECTION_GRAPH_ROOT
+	li t1,0x31525051 /* QPR1:NEW complete resident-input projection */
+.else
 .ifdef TT_Q38_FFN_GRAPH_ROOT
 .ifdef TT_Q38_FFN_GRAPH_INPUT_ROOT
 	li t1,0x32474651 /* QFG2:owned initial F32 producer,NOT QFG1 */
@@ -30,6 +33,7 @@ block_done:
 .endif
 .else
 	li t1,0x314d3851 /* Q8M1:OFFLINE persistent-dispatch root ONLY */
+.endif
 .endif
 .endif
 .else
@@ -64,6 +68,9 @@ block_park: j block_park
 block_fault_park:
 	li t0,0x17ffc8
 .ifdef TT_Q38_DISPATCH_ROOT
+.ifdef TT_Q38_PROJECTION_GRAPH_ROOT
+	li t1,0x46525051 /* QPRF:UNKNOWN,no later IO/cleanup */
+.else
 .ifdef TT_Q38_FFN_GRAPH_ROOT
 	li t1,0x46474651 /* QFGF:terminal UNKNOWN,NO cleanup authority */
 .else
@@ -75,6 +82,7 @@ block_fault_park:
 .endif
 .else
 	li t1,0x464d3851 /* Q8MF:UNKNOWN,no later packet/reset/restore */
+.endif
 .endif
 .endif
 .else

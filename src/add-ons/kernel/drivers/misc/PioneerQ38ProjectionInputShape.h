@@ -78,8 +78,10 @@ static inline bool PioneerQ38ProjectionInputProof(const uint32_t* p,const uint32
  if(p[16]!=256 || p[17]!=j[12] || p[18]!=worker || p[19]!=TT_Q38_FFN_PERSISTENT_MARKER || p[30]!=source[0] || p[31]!=self
   || p[48]!=5 || p[49]!=d[6] || p[50]!=d[5] || p[51]!=(d[42]|(d[43]<<8)|(d[14]<<16)) || p[52]!=d[40] || p[53]!=d[41]
   || p[62]!=TT_Q38_PROJECTION_INPUT_MARKER || p[63]!=d[11])return false;
- const uint32_t command[]={0x90e00,0,d[9],d[4]+d[13],0,d[8],0,0x212,128,0};
- for(unsigned i=0;i<10;i++)if(p[20+i]!=command[i])return false;
+ // Explicit word comparisons also compile freestanding on the parent
+ // RISC:do not let a mostly-zero temporary acquire a libc memset call.
+ if(p[20]!=0x90e00 || p[21] || p[22]!=d[9] || p[23]!=d[4]+d[13] || p[24] || p[25]!=d[8]
+  || p[26] || p[27]!=0x212 || p[28]!=128 || p[29])return false;
  for(unsigned i=0;i<16;i++)if(p[32+i]!=source[i])return false;
  for(unsigned i=0;i<8;i++)if(p[54+i]!=d[32+i])return false;
  return true; // DATA only,not a physical/native producer completion grant

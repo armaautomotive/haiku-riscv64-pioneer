@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE peer ABI ONLY;NO native registry,installation or card access.
 set -eu
+[ "${PIONEER_Q38_PROJECTION_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_MATRIX_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_PERSISTENT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2
