@@ -76,6 +76,11 @@ struct GraphArithmeticPeer:FfnInputPeer {
   if(p==0)for(unsigned i=0;i<256;i++)gate[i]=fabric.at(descriptor[10]/4+i);
   if(!input && p==1)for(unsigned i=0;i<256;i++)up[i]=fabric.at(descriptor[11]/4+i);
   FfnInputPeer::SubmitActivation();
+  // A dropped/pending write has NO observed completed payload. Do not
+  // publish the mirror's poisoned/stale bytes as a successful GDDR write.
+  // Hardware UNKNOWN can still include partial writes;all owners remain
+  // retained and this graph may not consume/retry the uncertain output.
+  if(pending)return;
   if(p==(input?1U:2U))for(unsigned i=0;i<128;i++)fabric.at(descriptor[12]/4+i)=native[i];
   if(p==(input?2U:3U))for(unsigned i=0;i<16;i++)fabric.at(descriptor[13]/4+i)=scale[i];
  }
@@ -106,6 +111,8 @@ struct GraphArithmeticRoot:GraphRootMachine {
   for(unsigned w=1;w<=119;w++)actual.emplace_back(new GraphArithmeticPeer(peer,w,gddr));
   if(fault==4)actual[0]->failPacket=1;
   if(fault==5)gddr[255]=0x7fc00001;
+  if(fault==6)actual[0]->failPacket=2;
+  if(fault==7)actual[0]->failPacket=3;
  }
  bool AfterInput(const GraphArithmeticPeer& p)const{return p.logicalWorker==1 && p.operation==4 && p.verified==p.prepared && p.verified;}
  uint32_t PhysicalRegister(GraphArithmeticPeer& p,unsigned at) {
@@ -134,6 +141,7 @@ struct GraphArithmeticRoot:GraphRootMachine {
   assert(pending && !unknown && route!=1555 && !command[1] && !command[4] && !command[6] && !command[9]);
   assert((write?command[2]:command[5])==129 && (write || !command[7]));
   unsigned w=Worker(route)-1,local=write?command[0]:command[3],remote=write?command[3]:command[0],bytes=command[8];
+  if(remote>=0xffb00000)assert(bytes==4); // no grouped CSR MMIO reads
   assert(w<119 && local>=0x75000 && local+bytes<=0x75800 && !((local^remote)&31));auto& p=*actual[w];
   if(write){
    assert((remote==0x74000 && bytes==64) || (remote==0x74200 && bytes==256) || (remote==0x74100 && bytes==4));
@@ -182,12 +190,15 @@ int main(int argc,char** argv) {
  assert((argc==7 || argc==8) && (!strcmp(argv[3],"all119") || !strcmp(argv[3],"narrow")));setvbuf(stdout,nullptr,_IOLBF,0);
  unsigned bank=unsigned(strtoul(argv[4],nullptr,10)),types=unsigned(strtoul(argv[5],nullptr,10)),reverse=unsigned(strtoul(argv[6],nullptr,10));
  unsigned fault=argc==8?unsigned(strtoul(argv[7],nullptr,10)):0;
- assert(bank<7 && types<8 && reverse<2 && fault<=5);bool wide=!strcmp(argv[3],"all119");
+ assert(bank<7 && types<8 && reverse<2 && fault<=7);bool wide=!strcmp(argv[3],"all119");
  printf("START ACTUAL complete7stage FFN root+ALL119 retained peers workforce%s bank%u types%u reverse%u;SYNTHETIC_NONZERO_WEIGHTS/NO_NATIVE_SPEED_CLAIM\n",argv[3],bank,types,reverse);
  GraphArithmeticRoot root(argv[1],argv[2],wide,bank,reverse!=0,types,fault);
  if(fault){assert(!root.RunGraph() && root.unknown && !root.finishedMatrices);
   if(fault<=3)assert(root.observedPacket && root.packets==root.observedPacket);
   else{assert(root.actual[0]->pc==TT_Q38_PEER_FAULT_PARK);root.actual[0]->Inert();}
+  if(fault==6)for(unsigned i=0;i<128;i++)assert(!root.gddr.at(20480/4+i));
+  if(fault==7){for(unsigned i=0;i<128;i++)assert(root.gddr.at(20480/4+i)==root.actual[0]->native[i]);
+   for(unsigned i=0;i<16;i++)assert(!root.gddr.at(295360/4+i));}
   root.Inert();printf("PASS ACTUAL wholeFFN fault%u:root parks/no following packet/no matrix/no STOP/reset/retry;simulated endpoints ONLY\n",fault);return 0;
  }
  if(!root.RunGraph()){fprintf(stderr,"ACTUAL_GRAPH_FAILURE rootPC%08x stage%08x detail%u packets%u matrices%u producers%u\n",root.pc,root.l1[root.Index(0x17ffc0)],root.l1[root.Index(0x17ffc4)],root.packets,root.finishedMatrices,root.finishedProducers);return 1;}

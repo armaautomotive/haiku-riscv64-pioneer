@@ -1,0 +1,142 @@
+Word-only MMIO correction and isolated CSR qualification checkpoint.
+October22 2026. OFFLINE tests/builds ONLY;NO native launch or speed claim.
+
+IMPORTANT correction to the preceding QFG1 checkpoints:their grouped
+8/20/24-byte remote CSR reads were not legal Blackhole NoC MMIO transfers.
+The old abstract fabrics allowed them;those green tests did NOT establish
+hardware-valid transport. The images were never native-selected/deployed.
+The vendor specification requires4-byte transfers if either endpoint is
+MMIO. Both the coordinator and new diagnostic now read individual words.
+Official source:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#noc_at_len_be
+The official counter description distinguishes initiating/master counters
+from receiving/slave counters. This supports the passivity expectation for
+the selected MASTER counters,but does NOT replace a native measurement.
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md#read-requests
+
+New QFG1 root:ALL16 source words and7 unique counter registers use only
+4-byte NoC reads. Accepted-count alias is independently checked against
+the same sampled register. Exact endpoint whitelist excludes unknown CSR
+addresses and any multiword MMIO length. Status/proof/GDDR transfers retain
+their previous L1/DRAM sizes. Every after-counter response is matched before
+another packet. No weakening of source/current-PC/reset/command/counter/
+manifest/UNKNOWN checks. Work still contains NO CPU-reference arithmetic.
+Both root-only and actual-root/actual-worker fabrics now assert MMIO=4bytes;
+the superseded grouped-read binary is no longer accepted by these fabrics.
+
+The retained-worker fabric also no longer publishes poisoned/stale mirror
+bytes when a native/scaleline WRITE is still pending. Added failures at BOTH
+write positions alongside the initial read failure. This models a dropped
+packet without completion,NOT atomicity of unknown hardware writes. Native
+UNKNOWN can include partial writes;the complete context remains retained
+and uncertain outputs may never be consumed/retried.
+
+Corrected frozen code DATA catalog,NOT a native selector/owner/launch grant:
+ complete ROOT prefix64000..6e00040KiB,PEER helper64000..6700012KiB;
+ existing panel70000..74000 and boot6000;stack6e000..70000 excluded.
+ Peer scratch70000..70b00 is never mistaken for immutable executable code.
+ Exact section bytes plus zero padding,valid executable extents and invalid
+ role/address rejection are tested forALL120 roles. The6-section generator
+ verifies BOTH boots and ALL sections BEFORE emitting ANY apply_patch text,
+ including when a different section was requested. Python-O cannot bypass
+ its checks. No SDK writes or changes to the legacy image registry.
+
+Corrected ROOT /private/tmp/pioneer-q38-ffn-graph-word-mmio.xxnAxyZg/image:
+ Independently rebuilt,ALL4 sections byte-compared identical:
+ /private/tmp/pioneer-q38-word-mmio-repeat.lYld1NWT/image.
+ boot4B SHAe678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main6884B SHA6f93667f7f187337214f0d857f5ec4e3fe803ab64d9df2f7593af463aa903abd
+ prefix6148B SHAecc9b051ce7d9f21c4c4420d11354504f203dc2d24a2f6e9d75f8ad57d8b0b92
+ graph16300B SHAb486df9b79f66435cb537b8747ab5ec2f848145eeeb01fd1bfb24bc5d86ba738
+QFP2 peer remains byte-identical:
+ /private/tmp/pioneer-q38-ffn-graph-peer-control.NJzpNLRW/image
+ main8180B SHAd2052fbbf43dcc022747ea2b228e7b1bc0f829f4984821ab4dfca20473e3a8ef
+ affine5152B SHA96e92065722a477b08ba41abc2f623064d44970c5807b37c6d739e8dc3697570
+ helper11164B SHAd7c6f3458d795f65635b80c3c035c93a7da5b325629f19e0b0fdecdc70fc629d
+
+ASan/UBSan (-ffp-contract=off for arithmetic),ALL following CLI0:
+ ACTUAL corrected ROOT+ALL119 retained ACTUAL worker interpreters,bank1/
+ high workspace edge,reversed rows,Q6_K gate/down+Q4_K up:TWO changed
+ input/token/layer FFNs followed by ALL119 clean STOPs.79872 nonzero matrix
+ rows/176 actual producers match exact FP32 AND independent decoded FP64;
+ native bytes/proofs/source/counters all pass. RootVM202196862,
+ peerVM2198994302,TensixInstructions6963200,max device stack5832B (same8KiB).
+ VM/poll totals are NOT native cycles,tokens/sec or a speed prediction.
+ /private/tmp/pioneer-q38-ffn-graph-word-mmio-actual-20261022-a.log
+ SHA12ef9b1d285ea99760b96cf8f0842eca42dc6e72e2a061a25431fae139388307
+ Seven actual-producer integration failures,including pending native WRITE
+ and pending scale WRITE;no successful payload publication/no following
+ matrix/STOP/reset/retry. Proof/current-counter/source/NaN cases also pass.
+ /private/tmp/pioneer-q38-ffn-graph-word-mmio-faults-20261022-a.log
+ SHA3210ea9972bcf3fe31007165dff78885db8c271c3a246ebe866508fda92d4ccf
+ Actual-root/synthetic-worker protocol28positive/83faults,now with4B-only
+ MMIO assertion;max stack5832B. This suite is NOT worker arithmetic evidence.
+ /private/tmp/pioneer-q38-ffn-graph-word-mmio-root-20261022-a.log
+ SHA31af62d0a3ad87f0f6ba281ac3d674aa41e82cfa1bc356948d1b9549274ea233
+ Code catalog867328word checks/3701951refusals,ALL120roles;
+ generator12exact regenerations/52refusals including Python-O.
+ /private/tmp/pioneer-q38-ffn-graph-images-20261022-b.log
+ SHA1d4f165343d9db3ed3ce0888dfee8e38ca5cf8d768bb29263452d2c9cae006e9
+ /private/tmp/pioneer-q38-ffn-graph-images-generator-20261022-a.log
+ SHAc832005349ab9c85f0a8dcc233286a05c371f45c5f8c9344a091fca7605d351b
+ Manifest451positive/3547refusals;68 existing private/mixed/legacy/native
+ selector refusals BEFORE SDK/output;no new native FFN selector enabled.
+ /private/tmp/pioneer-q38-ffn-graph-word-mmio-shape-20261022-a.log
+ SHAc752f4d8cc1ed3d77e167d0834738a05555c6b6a2aa77acdc7ca2b9ee19898c4
+ /private/tmp/pioneer-q38-ffn-graph-word-mmio-build-gates-20261022-a.log
+ SHAc315a4a2e6ebe8d752e683de59b9d2c50de348d1b47d27bd763c34d49fbb8ed1
+
+NEW separate tag31 native diagnostic CODE (not yet run on hardware):
+ Uses the EXISTING locked/cookie-owned legacy direct-SrcB/sentinel cohort.
+ After complete held prepare,before bootstrap,reads ONLY the16 source and7
+ unique master-counter words ofALL119 workers,each as one4B packet,into the
+ already saved root75000 scratch. Physically host-sampled values,not peer
+ proof data,form expectations. Root checks exact10word command,ALL8 wrapped
+ counters/idle/source/PCIe/reset states;peer master counters must remain
+ unchanged. Repeat after the ORIGINAL bootstrap hasALL119 peers at their
+ current idle WAIT.2737packets/2737words each pass,5474 total each.
+ No new FFN image is installed or accepted through the legacy ABI. No user
+ coordinates/addresses,new ioctl,host DMA,PCI write/reset/STOP/END/ARC/release
+ API is added by this probe. The existing bootstrap is unchanged.
+ First bad observed field returns without another IO/packet/select;the
+ actual existing caller latches CLOSE ONLY/cold and retains ALL context/
+ host/code/NIU/clock/mapping owners. No diagnostic auto-reset or retry.
+ Separate compiler/build gates require EXACT tag2026102200010031 and full
+ original-layout Work chain;missing/invalid/mixed selectors refuse before
+ SDK/output. This diagnostic is NOT a production/performance promotion.
+
+ CSR policy4positive=held/live-idle x normal/wrapped root counters,61faults,
+ ALL23 response words,first/middle/last root/peer/command/pending/source/
+ reset failures,immediate root/target snapshot-alias mismatches and PCIe
+ command/capability/device-status failures pass.
+ Every observed failure proves no further IO;whole context quarantined.
+ ALL CLI0;SIMULATED endpoints,NOT actual passivity qualification.
+ /private/tmp/pioneer-q38-graph-csr-policy-20261022-f.log
+ SHA3d9b21381a1f198db19d164dd92207b8cabbbffc4de3059c8e92431c7d35a925
+ 287 build-role refusals BEFORE SDK/output,CLI0.
+ /private/tmp/pioneer-q38-graph-csr-build-gates-20261022-a.log
+ SHA5dddd3f19c7787f2df1ec49fb8c0611fe6861ce9f140826ea5c641c12476f4e7
+
+Independent RISC-V kernel builds byte-identical,ALL CLI0:
+ /private/tmp/pioneer-q38-graph-csr-alias-final.glg5Iq2O/driver
+ /private/tmp/pioneer-q38-graph-csr-alias-repeat.ZRychAfS/driver
+ tag31 candidate SHA3fce7a8ab03187433ec41a6c8d34f4f00be3d06843a67782ca1a2352a1e332a8
+ reload guard SHAd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43 control SHA2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ Guard/default control remain EXACT old control bytes. SDK read-only.
+ Largest new kernel witness frame480B,not a widened kernel stack.
+
+NEXT hardware step:revalidate actual board/driver/ALL native-parent status;
+qualify the tag31 updater/lifetime path and run controlled fixed-read tests.
+Do not install until updater/pinned hashes and whole-owner proofs are ready.
+No source/table/test boolean above supplies a native grant. After actual
+transport qualification,the NEW FFN cohort still needs exclusive40KiB-root/
+12KiB-helper save/restore/global/mutable/model/initial-producer ownership,
+real-model domain qualification,control optimization and real inference
+measurement. Full FFN is NOT all-card attention/GDN/KV/norm/sampling.
+
+No SSH/upload/card job/hotswap/driver install/Assistant/reboot/power/SD/
+CPU/RAM/settings changes in this checkpoint. Last verified installed best
+remains041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Raw-Dst cache22 remains HARD BLOCKED. Last real27B0.207893161tok/s unchanged;
+20tok/s target UNMET. Goal remains active,not complete/blocked.

@@ -25,11 +25,12 @@ static GRAPH_FN bool Sealed() {
 // EXACT already-known CSR words ONLY. No speculative contiguous read of
 // unclassified/reserved NIU registers. All endpoints are internal constants.
 static GRAPH_FN void Packet(bool write,unsigned w,unsigned local,unsigned remote,unsigned bytes) {
+ bool csr=remote==0xffb20100 || (remote>=0xffb20118 && remote<=0xffb20144 && !(remote&3))
+  || remote==0xffb20150 || remote==0xffb20154 || remote==0xffb2016c
+  || (remote>=0xffb20204 && remote<=0xffb20214 && !(remote&3)) || remote==0xffb20220 || remote==0xffb20228;
  bool permit=write?(remote==0x74000 && bytes==64) || (remote==0x74200 && bytes==256) || (remote==0x74100 && bytes==4)
   :(remote==0x74140 && bytes==64) || (remote==0x83f00 && bytes==256)
-  || ((remote==0xffb13140 || remote==0xffb121b0 || remote==0xffb20100 || remote==0xffb2016c || remote==0xffb20220 || remote==0xffb20228) && bytes==4)
-  || ((remote==0xffb20118 || remote==0xffb20130) && bytes==24) || (remote==0xffb20150 && bytes==8)
-  || (remote==0xffb20204 && bytes==20);
+  || ((remote==0xffb13140 || remote==0xffb121b0 || csr) && bytes==4);
  if(!permit || !w || w>119 || local<0x75000 || local>0x75800-bytes || ((local^remote)&31) || !Idle())block_fault_park();
  const auto* d=Snapshot();for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+SourceOffset(i))!=d[16+i])block_fault_park();
  unsigned flits=(bytes+63)/64;uint32_t expected[8];
@@ -46,21 +47,22 @@ static GRAPH_FN void Packet(bool write,unsigned w,unsigned local,unsigned remote
  block_fault_park(); // UNKNOWN:no later packet/reset/restore/retry
 }
 static GRAPH_FN void SourceCurrent(unsigned w) {
- const unsigned offset[]={0x100,0x118,0x130,0x150,0x16c},count[]={1,6,6,2,1},begin[]={0,1,7,13,15};
- for(unsigned group=0;group<5;group++) {
-  unsigned local=0x75000+(offset[group]&31);Packet(false,w,local,0xffb20000+offset[group],count[group]*4);
-  for(unsigned i=0;i<count[group];i++)if(Words(local)[i]!=Sources(w)[begin[group]+i])block_fault_park();
+ // Blackhole NoC MMIO transfers permit ONLY4bytes,even for adjacent CSRs.
+ // https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#noc_at_len_be
+ for(unsigned i=0;i<16;i++) {
+  unsigned offset=SourceOffset(i),local=0x75000+(offset&31);Packet(false,w,local,0xffb20000+offset,4);
+  if(Words(local)[0]!=Sources(w)[i])block_fault_park();
  }
 }
 // BEFORE samples are independently stored,never taken from a peer proof.
 // AFTER each physical subread must match its expected word BEFORE another
 // packet may issue. Observed mismatches therefore stop at the FIRST group.
 static GRAPH_FN void Counters(unsigned w,volatile uint32_t* out,const uint32_t* expected) {
- Packet(false,w,0x75004,0xffb20204,20);
- const unsigned index[]={1,2,3,4,0};for(unsigned i=0;i<5;i++){uint32_t v=Words(0x75004)[index[i]];if(expected && v!=expected[i])block_fault_park();out[i]=v;}
- out[6]=out[2];if(expected && out[6]!=expected[6])block_fault_park();
- Packet(false,w,0x75000,0xffb20220,4);out[5]=Words(0x75000)[0];if(expected && out[5]!=expected[5])block_fault_park();
- Packet(false,w,0x75008,0xffb20228,4);out[7]=Words(0x75008)[0];if(expected && out[7]!=expected[7])block_fault_park();
+ for(unsigned i=0;i<8;i++) {
+  if(i==6){out[i]=out[2];if(expected && out[i]!=expected[i])block_fault_park();continue;}
+  unsigned offset=Offset(i),local=0x75000+(offset&31);Packet(false,w,local,0xffb20000+offset,4);
+  uint32_t v=Words(local)[0];if(expected && v!=expected[i])block_fault_park();out[i]=v;
+ }
 }
 static GRAPH_FN bool Physical(unsigned w,bool stopped) {
  Packet(false,w,0x75000,0xffb13140,4);unsigned a=Words(0x75000)[0];

@@ -1,4 +1,11 @@
 Retained actual whole-FFN instruction integration checkpoint.
+SUPERSEDED TRANSPORT SAFETY NOTE:the ROOT here used grouped NoC MMIO reads
+which the old simulated fabric accepted but hardware permits ONLY4bytes.
+No native launch occurred. Arithmetic evidence below remains an abstract-
+fabric checkpoint,NOT transport/native qualification. Current word-only
+image,pending-WRITE fix and CSR diagnostic evidence are recorded in
+qwen38-word-mmio-csr-qualification-offline-20261022.txt;do not deploy the
+old ROOT hashes below.
 October21 2026 Vancouver;test/evidence timestamps October22 UTC.
 OFFLINE ONLY. No card/driver/native parent access or timing claim.
 

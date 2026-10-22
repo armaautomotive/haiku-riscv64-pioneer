@@ -115,6 +115,7 @@ struct GraphRootMachine:DispatchMachine {
    if(write){for(unsigned i=0;i<bytes/4;i++)gddr.at(at+i)=memory.at(local+i*4);if(remote==fixture.manifest[4]+30720 || remote==fixture.manifest[4]+274560)compactWrites++;}
    else{for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=gddr.at(at+i);if(local>=0xa0000 && local<0xa8800)nativeLoads++;}
   }else {
+   if(remote>=0xffb00000)assert(bytes==4); // Blackhole NoC MMIO is word-only
    unsigned w=Worker(route)-1;auto& p=node[w];assert(local>=0x75000 && local+bytes<=0x75800 && !((local^remote)&31));
    if(write && remote==0x74200){assert(bytes==256);for(unsigned i=0;i<64;i++)p.frame[i]=memory.at(local+i*4);}
    else if(write && remote==0x74000){assert(bytes==64);for(unsigned i=0;i<16;i++)p.job[i]=memory.at(local+i*4);assert(p.job[10]==TT_Q38_FFN_PERSISTENT_MARKER && p.job[11]==w+1);

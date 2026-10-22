@@ -5,6 +5,15 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010031ULL || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(PIONEER_Q38_LOCAL_Q4_QUALIFICATION) || defined(PIONEER_Q38_GDN_MUTABLE_STATE) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#error Fixed remote CSR qualification requires separate exact-tag31 legacy direct/sentinel context ONLY
+#endif
+#include "PioneerQ38GraphCsrProbe.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010031ULL && !defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC)
+#error Reserved tag31 must identify ONLY the fixed remote CSR diagnostic
+#endif
 #ifdef PIONEER_Q38_LOCAL_Q4_QUALIFICATION
 #if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102100010028ULL || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_ROOT_CYCLE_PROFILE) || !defined(PIONEER_Q38_SENTINEL_POLL_QUALIFICATION) || !defined(PIONEER_Q38_DIRECT_SRCB_QUALIFICATION) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Local Q4 requires separate exact-tag28 retained-owner original-TC qualification ONLY
@@ -3945,7 +3954,29 @@ PrepareQ38Dispatch(PioneerStoreContext& c)
 		if (!ready) lease.prepared=w+1; // include any just-touched peer NIU
 	}
 	if (!ready) return PioneerQ38DispatchQuarantine(lease,c.banks);
+#ifdef PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC
+	// Native caller is the EXISTING cookie/global-lock/exclusive cohort
+	// handoff. No new FFN image is installed or accepted through this ABI.
+	// Before bootstrap every saved participant is held;after bootstrap every
+	// peer is at its exact current idle WAIT. The helper never resets or
+	// releases anything. Failure returns into the existing CLOSE-ONLY/cold
+	// latch,retaining the entire context and ALL host/clock/mapping owners.
+	PioneerQ38GraphCsrResult heldCsr;
+	if (!PioneerQ38GraphCsrProbe(c.io,dram,c.banks,lease,heldCsr)) {
+		dprintf("P100A_GRAPH_CSR_FAIL live0 worker%u group%u packets%u words%u;CLOSE_ONLY_NO_RETRY\n",heldCsr.lastWorker,heldCsr.lastGroup,heldCsr.packets,heldCsr.words);
+		return false;
+	}
+	if (!PioneerQ38DispatchBootstrap(c.io,dram,c.banks,lease)) return false;
+	PioneerQ38GraphCsrResult liveCsr;
+	if (!PioneerQ38GraphCsrProbe(c.io,dram,c.banks,lease,liveCsr)) {
+		dprintf("P100A_GRAPH_CSR_FAIL live1 worker%u group%u packets%u words%u;CLOSE_ONLY_NO_RETRY\n",liveCsr.lastWorker,liveCsr.lastGroup,liveCsr.packets,liveCsr.words);
+		return false;
+	}
+	dprintf("P100A_GRAPH_CSR_PASS held%u live%u workers119 packets%u words%u;EXISTING_LEGACY_COHORT_FIXED_REGISTERS_ONLY_NOT_NEW_FFN_IMAGE_OR_SPEED\n",heldCsr.passed,liveCsr.passed,heldCsr.packets+liveCsr.packets,heldCsr.words+liveCsr.words);
+	return true;
+#else
 	return PioneerQ38DispatchBootstrap(c.io,dram,c.banks,lease);
+#endif
 }
 // PIONEER_Q38_DISPATCH_PREPARE_END
 // PIONEER_Q38_DISPATCH_CONTROL_BEGIN

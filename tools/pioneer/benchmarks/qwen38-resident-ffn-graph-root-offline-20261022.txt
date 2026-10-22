@@ -1,4 +1,10 @@
 Complete FFN root coordinator prototype checkpoint.
+SUPERSEDED TRANSPORT SAFETY NOTE:the grouped8/20/24-byte NoC MMIO reads
+described below violate the vendor's4-byte-only MMIO rule. This image was
+OFFLINE ONLY and was NEVER native-selected. Its old fabric did not enforce
+that hardware constraint. Do NOT qualify/deploy its old hashes. See the
+word-MMIO/register-diagnostic checkpoint for the corrected image and tests:
+qwen38-word-mmio-csr-qualification-offline-20261022.txt.
 October21 2026 Vancouver;test/evidence timestamps October22 UTC.
 OFFLINE ONLY. Actual ROOT instructions;peer values/proofs/CSR fabric in
 this checkpoint are SYNTHETIC,NOT actual peer arithmetic/native inference.
