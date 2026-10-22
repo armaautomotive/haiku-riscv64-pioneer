@@ -1,5 +1,25 @@
 # Native build status
 
+Latest NATIVE checkpoint October22 2026:real tag37 host-phase measurement
+PASS. Source47195895da pushed/remote verified before hardware. New eb6/
+fa841/2f927 artifacts staged remoteSHA EXACT,apply83791 CLI0->gen41.
+SINGLE native21826 CLI0:full SAME-file19GB SHA,actual layer0 THREE weights,
+ONE119boot/code lifetime,TWO complete FFNs,priorGPU fingerprints f0e218bf/
+bb087a1f EXACT,physical STOP/exact restore/clean END1. Wall117022/116779us;
+CPU phases input16187/16177,manifest11898/11754,ROOTpoll51369/51299,
+proof20363/20366,output14899/14887 plus preflight/guard/hold. valid1 both;
+ROOTpoll INCLUDES host guards/observation,NOT pure GPU kernel time. ~66ms
+OUTSIDE poll establishes host-boundary overhead,NOT a token-rate speedup.
+Work ZERO CPU learned references;not CPU numeric equivalence. Clock800->
+1350->800/restored1/uncertain0. Fresh no-parent/idle then guarded restore
+98369 CLI0;fresh EXACT original041/tag12/gen42/idle/cold0/owner0/open1/
+guard1,64CPUs/max137034936320B. ALL jobs terminal. No reboot/power/SD/
+Assistant/boot/network changes. NEXT safely eliminate measured duplicate
+proof/staging round trips and same-family generic projections/full resident
+decoder;do NOT repeat old priming/STOP qualifiers. Whole27B.207893161tok/s
+unchanged;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-ffn-host-profile-native-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:isolated tag37 CPU-monotonic
 phase profiling of the unchanged qualified full FFN path. EXACT same
 QFG2/QFP2 images,namespace9/public82000B request and physical/source/UNKNOWN

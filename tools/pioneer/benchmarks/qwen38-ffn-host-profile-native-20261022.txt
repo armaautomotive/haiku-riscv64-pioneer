@@ -1,0 +1,102 @@
+REAL native persistent full FFN CPU-host-phase profile,October22 2026.
+PASS unchanged device outputs/lifetime and measured phase attribution.
+NOT a whole-model benchmark or a speed improvement. Whole27B last
+0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Source47195895da6189f183b38783017fea5410c1f038 pushed and GitHub branch
+remote-verified BEFORE staging/install/native use. ALL local tests and
+builds TERMINAL0:full actual ROOT+ALL119 instruction TWO-FFN/profile/STOP/
+outer restoration,49fault-retentions/12refusals,149new+158oldrole gates,
+actual client Abort/Finish and source session regression,106focused and
+7075broad updater cases. Companion offline evidence describes boundaries.
+Broad updater log SHA932459ce338ccb1592215111df63901bbc290c17bafb78b9d82c69daa2c4eca2.
+
+Fresh pinned SSH audit:ALL compute parents absent,EXACT original041/tag12/
+gen40/idle/cold0/owner0/open1/guard1,64CPUs/max137034936320B. THREE unique
+remote targets absent/non-symlink before upload. ONLY new files staged at
+/boot/home/pioneer-p100a-hot-reload-20261019-a;all remote SHA EXACT:
+ tenstorrent_pci_probe-ffn-host-profile-eb6ba274
+ eb6ba2741c8904dba8b4902ac260934ea2e169ffeb16ab8a3e96bd5e11966ba4
+ pioneer-q38-ffn-host-profile-fa841f2a
+ fa841f2a13767c089ba8ebc47a663cfcbbf110800daa38bca7d5370c1e3b1373
+ pioneer-p100a-hot-swap-2f927b42.sh
+ 2f927b424157b23d3e10942098eca8d67f098050ee75550733f160f4ec5bd888
+
+Fresh no-parent/idle audit then guarded apply83791 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-host-profile-apply-20261022-a.log
+ SHA9c25c467ca2ecc1c38ad15f02dfc755a93fb161b63a82402929394fb937f86a2
+ original041/tag12/gen40->exact eb6/tag37/gen41,HOT_RELOAD_VERIFIED.
+Fresh no-parent/exact hash+idle/64CPU/fullRAM audit BEFORE SINGLE native
+--profile-layer0 job21826. Serial boundary66661072. No second native job,
+SCP,reload or other device query while parent alive,INCLUDING full SHA.
+
+Native21826 TERMINAL CLI0:
+ /private/tmp/pioneer-q38-ffn-host-profile-native-layer0-20261022-a.log
+ SHA1277982299c42deda84f5e641200a0a75f686c02d7321045374bd4dc145321f3
+ SAME open-file18,973,870,528B public GGUF SHA passed BEFORE accelerator
+ Open. Actual layer0 THREE FFN weights36720pages/150405120B uploaded,
+ explicit span END,actual zero/native canonical joint owner,ONE867448word
+ install/119boots,TWO full FFNs with intermediates ON CARD. Final5120F32
+ each. Physical ROOT+ALL119 STOP terminals BEFORE FIRSThold/exact restore,
+ then clean BANK_END1. No CPU learned-product references.
+
+Actual final fingerprints f0e218bf/bb087a1f EXACTLY match prior tag36 GPU
+outputs for SAME fixed inputs/source. Profile client oracle allowed END;
+NO mismatch/uncertainty/retry/fallback. This is numeric regression against
+prior GPU outputs,NOT CPU-reference equivalence or generation-quality proof.
+
+Measured CPU-monotonic phase intervals in MICROSECONDS:
+                            pass0      pass1
+ Run+CopyOutput wall        117022     116779
+ phase sum                 117022     116777
+ preflight                    989        978
+ input guard                  326        327
+ input stage                16187      16177
+ manifest stage+ROOT ARM     11898      11754
+ ROOT poll                  51369      51299
+ ROOT proof                 20363      20366
+ ROOT hold                    991        989
+ output copy                14899      14887
+ host poll count              290        290
+ actual ROOT NoC reads      21839      21838
+ actual ROOT NoC writes      1339       1339
+ Both profiles valid1. Phase gaps0/2us;these are CPU monotonic intervals.
+ ROOT poll INCLUDES host guard/MMIO/observation latency,NOT isolated kernel
+ time. No device timing instruction or extra profiling card reads added.
+ Actual NoC counts differ from offline VM scheduling counts;neither is a
+ throughput/clock metric. Do NOT call117ms a token interval or51ms pure
+ GPU math. No claimed speedup versus prior117225/117081us qualification.
+
+About65.6ms(56%) lies OUTSIDE ROOT poll:input16.2ms,manifest11.8ms,
+proof20.4ms,output14.9ms plus preflight/guard/hold. This establishes real
+host-boundary optimization opportunities. It does NOT prove the remaining
+51.3ms is all useful arithmetic or that removing these costs achieves20tok/s.
+The largest individual host phase is ROOT proof,which currently rereads
+both original+shadow manifest on CPU even though the frozen ROOT seals
+them itself. A separate proven same-code/exclusive-owner path could remove
+that duplicate post-read. Initial input Stage readback has DIFFERENT host
+intent/integrity authority;do NOT simply delete it. Full resident decoding
+can eventually remove per-FFN initial/final host boundaries,not fake their
+absence in this isolated qualifier.
+
+Passive serial independently reported clocks:
+ begin1 state1 mhz800/1350 mode3/3 messages3 uncertain0
+ end1 state2 mhz800/1350/800 restored1 messages5 uncertain0
+Fresh after terminal:ALL parents absent,eb6/tag37/gen41 idle/cold0/owner0/
+open1/guard1,64CPUs/fullRAM. ONLY THEN guarded original restore98369 CLI0:
+ /private/tmp/pioneer-q38-ffn-host-profile-restore-20261022-a.log
+ SHAab7420ae9e40e8ca55b3ef3f9986453307c3f1ae2444154a6be8ae34c269392d
+Fresh audit EXACT original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag2026102100010012/generation42/quiesced0/cold0/active_owner0/open_count1/
+guard1,ALL compute parents absent,64CPUs/max137034936320B. ALL jobs terminal.
+No reboot,power,SD,Assistant,boot,CPU,RAM,network or settings changes.
+Dirty llama.cpp/unrelated work UNTOUCHED. Restoration after KNOWN SUCCESS,
+NOT rollback after UNKNOWN. Failed raw-unpack tag22 remains HARD BLOCKED.
+
+Next:measured performance implementation,not repeating init/STOP-only
+qualification. Keep exact source/physical/counter/UNKNOWN proofs,validation
+separate,and require same GPU outputs plus honest real timing for changes.
+Same-family generic projections/full resident decoder still needed;old
+matrix ioctls cannot run while new graph owns all120code roles. All-card
+norms/residual/GDN/attention/KV/embedding/sampling and actual whole-model
+integration/throughput remain owed. Target20tok/s remains UNMET.
