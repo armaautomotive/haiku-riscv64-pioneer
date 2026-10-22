@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE complete FFN root ONLY;NO native access/selection/ownership.
 set -eu
+[ "${PIONEER_Q38_PROJECTION_GRAPH_MEMORY:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_MATRIX_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 1 ] || exit 2

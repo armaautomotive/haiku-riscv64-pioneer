@@ -31,6 +31,12 @@
 #include "PioneerQ38FfnPersistentGraphOwner.h"
 #include "PioneerQ38FfnGraphProtocol.h"
 #endif
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+#if PIONEER_Q38_PROJECTION_GRAPH_MEMORY != 1 || !defined(PIONEER_Q38_FFN_NATIVE_GRAPH) || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM)
+#error Private projection memory adapter requires the retained model-bound context and complete panel;NO native execution selector
+#endif
+#include "PioneerQ38ProjectionGraphMemory.h"
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL && !defined(PIONEER_Q38_FFN_NATIVE_GRAPH)
 #error Reserved tag36 identifies ONLY the persistent full FFN native adapter
 #endif
@@ -1746,6 +1752,15 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+	bool ProjectionGraphMemoryScope(const PioneerQ38ProjectionGraphMemory&,const PioneerQ38CanonicalModelPlan&,
+		const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+	void ProjectionGraphRetainHostOwners();
+	area_id q38ProjectionMemoryArea[3]={-1,-1,-1};
+	volatile uint32* q38ProjectionMemoryView[3]={NULL,NULL,NULL};
+	bool q38ProjectionMemoryMapAttempted=false;
+	uint64 q38ProjectionMemoryBar=0;
+#endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
 	bool FfnGraphScope(const PioneerQ38FfnPersistentGraphOwner&,const PioneerQ38GraphMutableBanks&,
 		const PioneerQ38CanonicalModelPlan&,const PioneerQ38FfnIdentity&,const uint8_t*,unsigned);
@@ -1834,6 +1849,10 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		tt_compute_noc_result& n,tt_host_path_result& h,tt_host_dma_audit_result& auditResult,tt_host_write_result& r)
 		: PioneerHostWriteIO(p,a,t,c,d,n,h,auditResult,r,4096) {}
 	~PioneerSessionIO() {
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+		// An uncertain projection context is retained before destruction.
+		for (auto area:q38ProjectionMemoryArea) if (area>=B_OK) delete_area(area);
+#endif
 #if defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_NATIVE_GRAPH)
 		if (q38FfnCodeArea>=B_OK) delete_area(q38FfnCodeArea);
 #endif
@@ -1983,6 +2002,57 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		return true;
 	}
 	// PIONEER_Q38_FFN_CODE_NATIVE_ADAPTER_END
+#endif
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+	// PIONEER_Q38_PROJECTION_MEMORY_NATIVE_ADAPTER_BEGIN
+	bool MapProjectionGraphMemory() {
+		if (runtimeCore || !fleetEnabled || !runtimeMapped || !Q38PanelMappingStable()
+			|| TT_Q38_PANEL_VIEW_BASE!=0x6e000 || TT_Q38_PANEL_VIEW_BYTES<0x3e000
+			|| !runtimeEntry || !scratchData || payloadBytes!=8192
+			|| profile.bar0_host_start>UINT64_MAX-0x190c9000) return false;
+		if (q38ProjectionMemoryMapAttempted) return ProjectionGraphMemoryMappingStable(0);
+		for (unsigned i=0;i<3;i++) if (q38ProjectionMemoryArea[i]>=B_OK || q38ProjectionMemoryView[i]) return false;
+		q38ProjectionMemoryMapAttempted=true;
+		q38ProjectionMemoryBar=profile.bar0_host_start;
+		const uint32 offset[]={0x19064000,0x190b0000,0x190c0000},bytes[]={40960,36864,36864};
+		for (unsigned i=0;i<3;i++) {
+			void* view=NULL;
+			q38ProjectionMemoryArea[i]=map_physical_memory("P100A complete retained projection L1",
+				profile.bar0_host_start+offset[i],bytes[i],B_ANY_KERNEL_ADDRESS,
+				B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY,&view);
+			if (q38ProjectionMemoryArea[i]<B_OK || !view) return false; // retain partial maps,NO retry
+			q38ProjectionMemoryView[i]=(volatile uint32*)view;
+		}
+		return ProjectionGraphMemoryMappingStable(0);
+	}
+	bool ProjectionGraphMemoryMappingStable(unsigned w) {
+		if (w>=120 || runtimeCore!=w || !fleetEnabled || !runtimeMapped || !runtimeEntry || !scratchData
+			|| payloadBytes!=8192 || !Q38PanelMappingStable() || !q38ProjectionMemoryMapAttempted
+			|| profile.bar0_host_start!=q38ProjectionMemoryBar || profile.bar0_host_start>UINT64_MAX-0x190c9000
+			|| TT_Q38_PANEL_VIEW_BASE!=0x6e000 || TT_Q38_PANEL_VIEW_BYTES<0x3e000) return false;
+		for (unsigned i=0;i<3;i++) if (q38ProjectionMemoryArea[i]<B_OK || !q38ProjectionMemoryView[i]) return false;
+		return true; // CPU mapping presence,NOT source/cookie/physical/launch authority
+	}
+	bool ProjectionGraphMemoryReadChecked(unsigned w,uint32 a,uint32& output) {
+		if (!PioneerQ38ProjectionGraphSnapshotContains(w,a) || !ProjectionGraphMemoryMappingStable(w)) return false;
+		uint32 value;
+		if (a==0x6000) value=RuntimeCodeRead(0);
+		else if (a<0x6e000) value=PioneerRead32(q38ProjectionMemoryView[0]+(a-0x64000)/4);
+		else if (a<0xac000) value=Q38PanelRead(a);
+		else if (a>=0x17ffc0) value=ResidentL1Read(0x1fc0/4+(a-0x17ffc0)/4);
+		else {unsigned i=a>=0xc0000?2:1;value=PioneerRead32(q38ProjectionMemoryView[i]+(a-(i==1?0xb0000:0xc0000))/4);}
+		output=value;return true; // UINT32_MAX is valid saved DATA,not a failure sentinel
+	}
+	bool ProjectionGraphMemoryWrite(unsigned w,uint32 a,uint32 value) {
+		if (!PioneerQ38ProjectionGraphSnapshotContains(w,a) || !ProjectionGraphMemoryMappingStable(w)) return false;
+		if (a==0x6000) RuntimeCodeWrite(0,value);
+		else if (a<0x6e000) PioneerWrite32(q38ProjectionMemoryView[0]+(a-0x64000)/4,value);
+		else if (a<0xac000) Q38PanelWrite(a,value);
+		else if (a>=0x17ffc0) ResidentL1Write(0x1fc0/4+(a-0x17ffc0)/4,value);
+		else {unsigned i=a>=0xc0000?2:1;PioneerWrite32(q38ProjectionMemoryView[i]+(a-(i==1?0xb0000:0xc0000))/4,value);}
+		return true;
+	}
+	// PIONEER_Q38_PROJECTION_MEMORY_NATIVE_ADAPTER_END
 #endif
 #endif
 	bool MapCoordinator() {
@@ -2446,6 +2516,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+	PioneerQ38ProjectionGraphMemory* q38ProjectionMemory=NULL; // retained complete HEAP owner,NO public opcode
+#endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 	// ONE retained joint reservation. Its typed children are BORROWED and
 	// NEVER enter the old individually deleted q38GdnBanks/q38StateZero.
@@ -2560,6 +2633,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+		delete q38ProjectionMemory; // borrows actual model/source/cohort;destroy FIRST on known-clean close ONLY
+#endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 		delete q38FfnZero;
 		delete q38GraphMutable;
@@ -2604,7 +2680,20 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
 		,bool controlledGraph=false
 #endif
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+		,bool controlledProjectionMemory=false
+#endif
 		) {
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+		// PIONEER_Q38_PROJECTION_MEMORY_UNSAFE_BEGIN
+		if (q38ProjectionMemory && !q38ProjectionMemory->Closed()) {
+			if (!controlledProjectionMemory || !q38Dispatch || !q38FfnModelPlan
+				|| !q38ProjectionMemory->MatchesNativeOwner(baseline.baseline.baseline.baseline.dram,banks,*q38Dispatch,
+					*q38FfnModelPlan,q38FfnModelIdentity,initialized,PioneerResidentBanks::Pages)) return true;
+		} else if ((q38ProjectionMemory && q38ProjectionMemory->Unsafe())
+			|| (io.q38ProjectionMemoryMapAttempted && !q38ProjectionMemory)) return true;
+		// PIONEER_Q38_PROJECTION_MEMORY_UNSAFE_END
+#endif
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 	#ifdef PIONEER_Q38_FFN_MODEL_INIT
 		if ((q38GraphMutable && q38GraphMutable->Unsafe())
@@ -2741,6 +2830,9 @@ static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
 	c.dispatchOwnerRetained=true;
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+	if (c.q38ProjectionMemory) c.q38ProjectionMemory->Fault(); // MEMORY ONLY;retain full snapshot and ALL maps
+#endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 	if (c.q38FfnZero) c.q38FfnZero->unsafe=true;
 	if (c.q38GraphMutable) c.q38GraphMutable->Fault(); // MEMORY ONLY;retain ALL borrowed roles
@@ -2774,6 +2866,14 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+	// PIONEER_Q38_PROJECTION_MEMORY_END_GATE_BEGIN
+	if ((c.q38ProjectionMemory && (!c.q38ProjectionMemory->Closed() || c.q38ProjectionMemory->Unsafe()))
+		|| (c.io.q38ProjectionMemoryMapAttempted && !c.q38ProjectionMemory)) {
+		clean=false; RetainQ38DispatchOwner(c,result); return false; // BEFORE any STOP/restore/ARC/release
+	}
+	// PIONEER_Q38_PROJECTION_MEMORY_END_GATE_END
+#endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
 	// PIONEER_Q38_FFN_MODEL_END_GATE_BEGIN
 	// BEFORE ANY STOP/restore/clock/release. Neither page count nor a
@@ -3095,6 +3195,49 @@ void PioneerSessionIO::FfnGraphRetainHostOwners()
 	if (q38MutableContext) { tt_resident_session_result retained={}; RetainQ38DispatchOwner(*q38MutableContext,retained); }
 }
 // PIONEER_Q38_FFN_GRAPH_NATIVE_SCOPE_END
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_MEMORY
+// PIONEER_Q38_PROJECTION_MEMORY_NATIVE_SCOPE_BEGIN
+bool PioneerSessionIO::ProjectionGraphMemoryScope(const PioneerQ38ProjectionGraphMemory& owner,
+	const PioneerQ38CanonicalModelPlan& plan,const PioneerQ38GdnIdentity& identity,const uint8_t* learned,unsigned pages)
+{
+	auto* c=q38MutableContext;
+	if (!c || &c->io!=this || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
+		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
+		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || !fleetEnabled || !runtimeMapped || q38SpanAllowed
+		|| c->q38GdnCallThread<0 || c->q38GdnCallThread!=find_thread(NULL) || c->dispatchOwnerRetained
+		|| c->q38ProjectionMemory!=&owner || c->q38FfnModelPlan!=&plan || !c->q38GraphMutable || !c->q38FfnZero
+		|| c->q38FfnGraph || c->q38FfnCode || !(identity==c->q38FfnModelIdentity) || identity.driverGeneration!=sReloadGeneration
+		|| !learned || learned!=c->initialized || learned!=c->q38FfnModelLedger || pages!=PioneerResidentBanks::Pages
+		|| !c->hashes || !c->q38Dispatch || !c->q38DispatchRoutes || c->q38GdnBanks || c->q38StateZero
+		|| c->q38GdnIdentity.Valid() || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+		|| c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
+		|| c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready
+		|| c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready
+		|| !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
+		|| !c->lease.saved || !c->lease.ready || c->lease.pending || c->lease.recovery_required
+		|| !c->bulk.saved || !c->bulk.ready || c->bulk.dirty || c->bulk.unsafe
+		|| c->host.state!=TT_HOST_PAGE_READY || c->host.released || PioneerHostPageIO::quarantined
+		|| !c->bulkHost.allocated || !c->bulkHost.ready || c->bulkHost.pending || c->bulkHost.quarantined || c->bulkHost.released
+		|| !c->wideHost.allocated || !c->wideHost.ready || !c->wideHost.memory_type_set
+		|| c->wideHost.pending || c->wideHost.quarantined || c->wideHost.released || wideQuarantined
+		|| !ProjectionGraphMemoryMappingStable(runtimeCore)) return false;
+	const auto& graph=*c->q38GraphMutable;const auto& zero=*c->q38FfnZero;auto* ffn=c->q38GraphMutable->Ffn(identity);
+	if (graph.CanonicalModel(identity)!=&plan || !graph.MatchesInitializationOwner(c->banks,dram,identity)
+		|| !ffn || !ffn->InitializationPublished(identity) || zero.owner!=ffn || zero.banks!=&c->banks || zero.proof!=&dram || !(zero.identity==identity)
+		|| !zero.saved || !zero.closed || zero.nonce!=1 || zero.ready || zero.running || zero.unsafe || zero.dirty
+		|| !owner.MatchesNativeOwner(dram,c->banks,*c->q38Dispatch,plan,identity,learned,pages)) return false;
+	const auto& clock=c->q38Clock.Snapshot();
+	// OLD FFN zero is a retained SOURCE/MODEL binding ONLY here. It does
+	// NOT initialize the NEW >=2MiB generic workspace or grant a producer.
+	return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED
+		&& clock.busy_requested && clock.busy_acknowledged && !clock.restored && !c->Unsafe(false,false,true);
+}
+void PioneerSessionIO::ProjectionGraphRetainHostOwners()
+{
+	if (q38MutableContext) { tt_resident_session_result retained={}; RetainQ38DispatchOwner(*q38MutableContext,retained); }
+}
+// PIONEER_Q38_PROJECTION_MEMORY_NATIVE_SCOPE_END
+#endif
 // PIONEER_Q38_FFN_GRAPH_NATIVE_PREPARE_BEGIN
 static bool PrepareQ38FfnGraphHeld(PioneerStoreContext& c)
 {

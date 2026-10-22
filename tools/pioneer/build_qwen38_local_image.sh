@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE arithmetic/device-state images ONLY; no native build/install/access.
 set -eu
+[ "${PIONEER_Q38_PROJECTION_GRAPH_MEMORY:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_ROOT:-0}" = 0 ] || exit 2
 [ "$#" = 3 ] || exit 2

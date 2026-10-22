@@ -1,0 +1,123 @@
+Complete projection retained memory/native adapters:OFFLINE October22 2026.
+Predecessoref00b229a1317d430140cd3f97e32f9a26a9ff76 pushed/remote verified.
+Previous goal turn PROGRESS:actual full-projection parent and complete
+frozen catalog/footprint. This turn PROGRESS:real retained memory lifecycle
+and ACTUAL native mapping/scope/retention/END integration compile/tests.
+No new device arithmetic/program/image changed. No native execution.
+Last WHOLE27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+NEW private HEAP memory component:
+-Retain EXACT baseline/banks/ALL120 original prepared-held cohort/
+ canonical model/identity/actual upload-ledger objects. Invalid CPU
+ preconditions inert;NO public caller ready/clean/producer hint.
+-Save ALL8134072words32536288B:complete40KiB ROOT/16KiB peer code,
+ ALL120 stacks/runtime/trailers and new ROOT primary/shadow manifests.
+ Arbitrary original words,including UINT32_MAX,not reconstructed padding.
+-SECOND full physical original pass across ALL120 BEFORE FIRST write.
+ Install and independently verify ALL989304 exact frozen code words ONCE.
+ Never-launched close verifies images then restores+independently checks
+ ALL8134072 originals. Final original-check count16268144words.
+-This component emits NO NoC packet/reset/start/boot/host DMA. Setup cost
+ is intended ONCE per retained lifetime,not per projection/token.
+-FIRST observed failure:quarantine/retain ALL snapshot/maps/source/clock/
+ host/cohort owners,MEMORY ONLY. NO later card read/write/reset/STOP/END/
+ restore/retry. Completed close/reentry also inert. Private future graph
+ friend must implement ACTUAL RUN/STOP/ALL terminals+holds handoff;there
+ is NO public restore-after-compute method or execution capability here.
+
+ACTUAL native driver implementation,not a mock substitute:
+-Three NEW fixed uncached maps:40KiB prefix at64000 and9page backing
+ each for b0000/c0000 manifests. Strict helpers expose ONLY8384words
+33536B per manifest;rounded page padding is NOT accessible. Complete
+ old backed panel supplies6e000..ac000,existing resident page supplies
+ ALL8 trailer words. Peer prefix gap/foreign manifests/MMIO excluded.
+-Checked reads return Boolean failure with destination UNCHANGED;
+ UINT32_MAX is valid saved data. Partial or null maps remain retained,
+ sticky no retry;physical BAR overflow/change refused before IO.
+-Native context owns full HEAP snapshot. Source scope binds actual
+ cookie/global call thread/reload generation/model/ledger pointers,
+ source joint reservation/closed real zero lease,clock and ALL host/maps/
+ competing-writer exclusions. Native Unsafe and END reject unclosed or
+ uncertain memory BEFORE old STOP/ARC/restore/unmap/release paths.
+-Old FFN74page initialization is a retained SOURCE/MODEL binding ONLY.
+ It DOES NOT initialize/authorize the NEW >=2MiB generic workspace or
+ supply a completed F32 producer. These necessary integration steps are
+ STILL OWED. No new public opcode/factory/native selector/updater entry.
+-Old/native/image builders reject inherited nonzero memory flag BEFORE
+ SDK access. Full driver compile fixture defines it ONLY in an isolated
+ compilation unit. NO new linked/installable native driver produced.
+
+Final TERMINAL0 offline tests:
+1.Actual memory lifecycle:ALL120/full snapshot+second preimage proof/
+ full code install+full exact restore,arbitrary nonzero+UINT32_MAX data.
+ ZERO resets/boots/NoC traffic.30FIRST-failure cases across snapshot/
+ second preimage/install/readback/final image proof/restoration/reproof,
+ map/scope/source/reset/PCI/NoC counter/alias/command mismatch,dropped
+ writes.29pristine result/identity/first+last-worker precondition refusals.
+ Every unsafe result retains everything and proves NO following IO/retry.
+2.ACTUAL extracted native mapping methods:ALL8134072words/6855refusals,
+ independent backing-slot checks,unaligned/wrong-role/gap/MMIO/page-padding/
+ partial/null maps/overflow/change refusal. Real read-only Haiku SDK
+ compile,max native adapter frame176B.
+3.ACTUAL entire driver/context/scope/Unsafe/retention/END PLUS all memory
+ Prepare+Close templates instantiated against the REAL PioneerSessionIO
+ in a read-only RISC-V kernel compile,maxnewframe240B. Not a different
+ fake IO class or new native binary. Reuses exact original compiler argv.
+4.ACTUAL extracted native scope/Unsafe/retention/END bodies with real
+ canonical joint reservation and ACTUAL frozen zero controller/machine
+ producing its74page initialization publication.52metadata refusals ZERO
+ IO and positive complete held memory install+restore. Lost call seal or
+ unclosed END retains full memory/clock/ALL hosts/source/cohort with ZERO
+ following card IO. Native context/PCI/L1 endpoints SIMULATED,not a native
+ authenticated model run,physical save/restore or generic producer proof.
+ Exact frozen zero-image SHA39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b
+ is checked BEFORE compilation. No Boolean fixture publishes zero readiness.
+5.50before-SDK new memory role refusals;173old38gates;actual old native
+ FFN adapter867448words/exact checked reads/old15M+16Mrefusals PASS.
+ Shell/whitespace/Python syntax checks pass. ALL final jobs terminated.
+
+Early local failures were NOT hardware faults:initial fixture referenced
+ a nonexistent reset counter;fault injection exposed stale per-word image
+ diagnostics (VerifyImage now updates current word);SDK include routes and
+ a bool/uint32 test-lambda mismatch corrected. Final suites rerun PASS.
+ No script/fixture/source edited while its own runner could read/compile it.
+
+Old complete native controls BYTE-IDENTICAL:
+ Build evidence:/private/tmp/pioneer-q38-projection-memory-native.LTDDtSWl/compile
+ tag38driver23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+ guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+ default43control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+ No dirty llama.cpp read/edit/build;unrelated FlashNext untouched.
+
+Evidence logs/SHA256:
+ /private/tmp/pioneer-q38-projection-memory-20261022-f.log
+ bdaae6bbc928de3a42f068558fcbb01593306e6313057ba9eae7c551fb3706c9
+ /private/tmp/pioneer-q38-projection-memory-fault-20261022-e.log
+ 6e831d30a16758ccb3f6ac442e25c978f265f9b90fa6ac92d117877c8da6771a
+ /private/tmp/pioneer-q38-projection-memory-adapter-20261022-b.log
+ ad6b2abd7afad7ade15c9223db25e8ff2f434f06508ee37fcb2f7f7e934952b3
+ /private/tmp/pioneer-q38-projection-memory-full-kernel-20261022-a.log
+ 07a7c7092b84a21531ec8c2672ec36a23bf0b6b032277f6f6ad2df981d110147
+ /private/tmp/pioneer-q38-projection-memory-native-scope-20261022-b.log
+ 46d02fd159ceed373a560a10680a8d10a5359d7a0fffcc1d70d12ce56e5e32e3
+ /private/tmp/pioneer-q38-projection-memory-gates-20261022-a.log
+ 616481bceeddc19d27f53864b40bda1c656ec695d183faaf16696fb7f9a51624
+ /private/tmp/pioneer-q38-projection-memory-old38-gates-20261022-a.log
+ c15d3dd2c16f75a794f619af85434e66130c23827925a9be42894d53ae1ad18b
+ /private/tmp/pioneer-q38-projection-memory-old-native-adapter-20261022-a.log
+ c895156c59300ac17f39f54827ed619f85a1165d225e181a17c4b72b6ce2e7f4
+
+Fresh20:14UTC READ-ONLY SSH:INVENTORY_PROVEN/ALL_COMPUTE_PARENTS_ABSENT,
+original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/gen44,quiesced0/cold0/active_owner0/open1/
+guard1,64CPUs/max137034936320B. ZERO native job/remote write/install/
+reload/reboot/power/SD/Assistant/boot/network/clock changes. No hardware
+UNKNOWN/quarantine or recovery. Failed raw-unpack-cache22 remains BLOCKED.
+
+NEXT actual >=2MiB GENERIC joint workspace reservation/zero ledger and
+completed input-producer retention,then actual full projection RUN/STOP
+owner/controller and native factory/session namespace. Never borrow the
+old74page/12KiB/tag38 grants. Do NOT stage/run another held-code or boot/
+STOP-only hardware qualifier in place of actual arithmetic integration.
+Full all-card norm/residual/GDN/attention/KV/embed/sampling/production
+decoder and measured WHOLE27B speed still remain. 20tok/s is NOT achieved.

@@ -1,5 +1,34 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:NEW complete projection memory
+lifecycle and ACTUAL driver L1 mapping/scope/retention/Unsafe/END adapters
+implemented,NOT native selected. ALL120 complete8134072word snapshots,
+SECOND full original pass BEFORE FIRST write,exact989304word QPR1/QFP3
+install+full8134072word restore PASS;arbitrary/UINT32_MAX original data.
+Never-launched memory component issues NO NoC/reset/boot/DMA.30faults+
+29precondition refusals retain everything with ZERO following IO/retry.
+Actual extracted native mapping methods cover ALL8134072words/6855
+refusals;partial/null-map sticky,changed BAR and unowned padding refused;
+real SDK maxframe176B. Actual full driver/context instantiation of new
+memory Prepare+Close compiles against read-only RISC-V SDK,maxnewframe240B;
+NO new linked/installable driver. Actual native scope/Unsafe/END/retention
+52metadata refusals ZERO IO,real canonical joint owner+ACTUAL frozen old
+74page zero publication,held memory install+restore;lost call/unclosed END
+retains clock/ALL host/source/cohort/snapshot/maps with NO later card IO.
+Old74page zero is SOURCE binding ONLY,NOT generic workspace/input authority.
+50new before-SDK gates/173old38gates/old native adapter regression PASS.
+Old tag38driver23e/guardd1ce/default43control2df BYTE-IDENTICAL. ALL final
+jobs TERMINAL0. New flag refused by old/image builders;NO new public
+opcode/factory/native execution selector or hardware boot/STOP qualifier.
+Fresh20:14UTC SSH original041/tag12/gen44/idle/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. ZERO native job/remote write/reload/reboot/power/
+SD/Assistant/boot/network/clock change. NEXT actual >=2MiB generic joint
+workspace reservation/zero ledger/completed input producer,then new full
+projection RUN/STOP lifetime/controller/native factory,not held-only
+hardware qualification. Full resident decoder still incomplete.
+Whole27B.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-memory-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:complete separate QPR1/QFP3
 frozen DATA catalog+full L1 snapshot footprint implemented,NOT native
 selected. BOTH boots/ALL6sections pinned before ANY generator output;
