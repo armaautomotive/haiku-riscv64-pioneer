@@ -1,0 +1,109 @@
+QPE1 on-card embedding arithmetic/composition:OFFLINE October22 2026.
+Predecessorb493d5eb0e07d9f4ac3d6539d89a8fec56d1d644 pushed/remote verified.
+This goal turn PROGRESS:actual emitted-RISC input computation,NOT a native
+producer grant,installed driver,full decoder or measured card speedup.
+Last WHOLE27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+NEW separate scalar QPE1 embedding program:
+-Token ID248320-bound independently from8192-bound context position.
+ Fixed canonical embeddingFIRST global tensor,seven554/555*64row stripes
+ at bank Base0x04000000. Exact stripe/group/selected lane,not caller coords.
+-Reads20 original2304B byte-major16-row Q4_K tiles(46080B selected group).
+ Selects ONE lane from unchanged packed bytes,dequantizes all5120 elements
+ on the emitted card RISC into L1. No host/PCI input payload,host embedding
+ expansion,learned product or Work-mode CPU fallback.
+-ALL blocks/scales/results finite checked BEFORE ANY resident sink packet.
+ Then exactly16384+4096B writes to canonical workspace offset0. Late write
+ UNKNOWN can leave partial bytes,but NEVER successful completion/producer
+ publication. The future native owner must quarantine them,not retry.
+-Complete16source words/64descriptor words,counter aliases/all8 counters,
+ all4busy/all32credit slots,10command words/readback,65536bounded polls.
+ Packet/phase failure parks inert:ZERO following packet/retry/restore.
+ Counter wrap tested. Real actual instruction execution,not fabricated
+ summary/counter completion. Host endpoints simulate copies ONLY.
+-Code3856B,SHA256
+ c754b24f767f33a00e61d2789cea3bda8ae656f6d58a2d20517311673a5aaaa1
+ Boot4B,SHA256
+ d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ Two separate cross builds BYTE-IDENTICAL;fixed scalar done/park/fault PCs.
+ Max observed positive157299instructions/644B stack within8192B.
+ Artifacts:/private/tmp/pioneer-q38-embedding-image-20261022-a and -b.
+
+NEW immutable canonical kernel DATA plan:
+-Same actual canonical object,exact identity/source/phase/token/position/
+ workspace comparisons. Attempt-once/noncopyable,NO public caller coords.
+-Selected group spans12 physical4KiB boundary pages. ALL required pages
+ must equal1 in upload ledger;other learned embedding pages need not be
+ loaded just to inspect this necessary data precondition. Ledger unchanged.
+-23930refusals:ALL7source/7workspace banks,first/last groups/boundaries,
+ EVERY needed page0/2/255,ALL64 descriptor mutations,other canonical object,
+ identity/source/position/token/phase mismatch and retry after bad Build.
+-DATA ONLY:caller-supplied copied source/ledger/identity cannot authorize
+ execution. No kernel owner may treat this plan or QPE1 receipt as opaque
+ completed native producer. Source authentication/retained objects/current
+ physical state/exclusive cookie/initialized workspace proofs remain owed.
+-Actual RISC-V kernel compile of Build/Matches/selected-page/Shape/Summary
+ against read-only SDK PASS,maxframe288B. Not linked native code.
+
+FINAL actual instruction suites(all TERMINAL0):
+1.112positives:ALL7source banks,ALL16distinct row lanes,first+last groups,
+ context0/8191 and cross-bank outputs. ALL5120 values bit-exact vs existing
+ independent TEST Q4_K decoder. Mixed six-bit scale/min high bits,nibble
+ planes,signed zero/subnormal/normal/max-finite FP16. Packed input unchanged.
+2.526faults:ALL22packets timeout/bad/foreign counters/source/descriptor;
+ ALL10command words for EVERY packet;ALL20blocks*d/dmin*Inf/-Inf/NaN;
+ ALL16initial source words,busy/credit,alias and malformed/boundary fields.
+ Final-block bad scales leave whole sink untouched. Late packet faults
+ cannot publish success;terminal loop emits ZERO subsequent IO/stores.
+3.Composition with frozen QFP3 peer and QPG1 gather:actual QPE1 output bytes
+ feed ALL20 actual op5 producers,actual gather then SAME persistent peer's
+ learned matrix. Q4_K/Q8_0/Q6_K,2changed tokens/positions each,6embeddings/
+120producers/6gathers/6matrices and ALL20 peer STOP for each wire type.
+ Independent matrix TEST references observe actual bytes,NEVER seed them.
+ RAW embedding composition ONLY:learned RMS/norm/production decoder owed.
+4.Actual QPE1 complete-QPR1-footprint observer4boundary tokens:
+1174016instruction views/58148L1 loads/36680stores/66560NoC-local words.
+ Code/stack/descriptor/summary/trailer/selected-tile/full-output covered by
+ complete existing footprint. No native mapping/post-launch restore grant.
+5.72standalone gates:ANY inherited PIONEER_ value other than exact0 fails
+ BEFORE SDK/output IO,including empty/newline/embedded equals;old local
+ registry refuses new embedding role. Shell syntax/whitespace checks PASS.
+
+No old native source/builder/registry/ABI/selector/control changed. No
+relink/install/native card test. No dirty llama.cpp/FlashNext read or edit.
+Initial local failures were fixture-only:canonical gate define missing,
+then duplicate unguarded scalar test includes during composition. Fixed
+using new fixture-local shared-machine include mode,no old fixture edit.
+All final suites rerun PASS,all runner handles terminal. No running source
+or fixture edited while its runner could read/compile it.
+
+Logs/SHA256:
+ /private/tmp/pioneer-q38-embedding-build-20261022-b.log
+ d5b34703f47e5b0a2a5da916b52ac13fc90aa51c84af18d7164279e210722848
+ /private/tmp/pioneer-q38-embedding-test-20261022-d.log
+ b30c6783735ba7b8b83f132575d6fb283ac13577d4afdc0ff886bc09d1ae71bc
+ /private/tmp/pioneer-q38-embedding-projection-20261022-c.log
+ 1000220b8ff1d042ca0be1ec0e469de5e482f1fcede2ad2ffd0932a7baf630cd
+ /private/tmp/pioneer-q38-embedding-footprint-20261022-a.log
+ 2f0093a69955adea39c9e3697985bb34449160366ecbd098ea9e866e1e6115d9
+ /private/tmp/pioneer-q38-embedding-kernel-20261022-b.log
+ 010c32e1fe87e232682e0354123a2bec0adc0c2140812d4ed7983dad3d721f0d
+ /private/tmp/pioneer-q38-embedding-gates-20261022-a.log
+ 6d6111374f17d94ed172397386bc5224dbad1dc828baae4141efdf67557c6063
+
+Fresh read-only SSH this turn:INVENTORY_PROVEN/ALL_COMPUTE_PARENTS_ABSENT,
+original041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/gen44,quiesced0/cold0/active_owner0/open1/
+guard1,64CPUs/max137034936320B. ZERO Pioneer remote write/native job/
+install/reload/reboot/power/SD/Assistant/boot/network/clock change.
+
+NEXT actual exclusive producer/native integration,not another DATA-only
+inputEpoch. Bind new full workspace/source/retained upload ledger/cookie;
+execute real QPE1 under complete memory ownership,prove ALL physical NoC
+completion/PC/descriptor/source/holds,privately publish retained token/
+position/span producer. Actual full projection RUN/STOP owner and memory
+handoff are still owed:held-only memory Close MUST NOT be reused after
+compute or bypassed with launched/clean hints. New ProjectionZero callback
+adapters/native factory also remain owed. Learned RMS/residual/GDN/
+attention/KV/sampling/full resident decoder and real whole27B benchmarks
+still remain. No boot/STOP-only hardware substitute. 20tok/s NOT achieved.

@@ -1,5 +1,32 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 2026:NEW actual QPE1 on-card embedding
+reader implemented,NOT native selected. Canonical vocabulary token->exact
+original Q4_K stripe/group/lane;20 bounded2304B NoC reads,ALL5120 F32
+values decoded+finite checked locally BEFORE either16384/4096B GDDR write.
+NO host input payload,CPU learned dequantization/product or vector fallback.
+112actual-RV32 positives/ALL7banks+16lanes/526faults PASS,bit-exact independent
+test reference;23930canonical-plan/page/identity/data refusals;known scalar
+FTZ/counter-wrap semantics. Actual embedding->ALL20 op5 producers->gather->
+SAME persistent learned matrix passes ALL3wire types/TWO changed tokens,
+6embeddings/120producers/6gathers/6matrices/ALL peers STOP. Transport/test
+weights simulated;RAW embedding composition,NOT decoder(RMS still owed).
+Actual L1 traffic fits complete QPR1 snapshot;source+code immutable.
+New3856B ROM repeats SHA c754b24f,actual maxstack644B;kernel DATA plan
+maxframe288B;72standalone/old-role build refusals. ALL final jobs TERMINAL0.
+New descriptor/receipt/plan are DATA ONLY,NOT a completed native producer
+binding or execution grant. Exact retained source/ledger/workspace/cookie/
+full memory ownership,actual physical completion/holds/controller and
+opaque publication STILL OWED;no caller inputEpoch/zero bit promotion.
+Old native code/builders/registry/source/control files UNCHANGED,not relinked
+or installed in this turn. Fresh read-only SSH original041/tag12/gen44/
+idle/cold0/owner0/open1/guard1,64CPUs/max137034936320B. ZERO Pioneer remote
+write/native job/reload/reboot/power/SD/Assistant/network changes. NEXT real
+exclusive producer/controller/native integration,learned RMS/full resident
+decoder;NO boot/STOP-only hardware qualifier. Whole27B.207893161tok/s
+UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-embedding-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:NEW canonical projection joint
 workspace+private runtime zero ledger/controller implemented,NOT native
 selected. ONE atomic claim ALL73728GDN pages+FULL16384page64MiB canonical
