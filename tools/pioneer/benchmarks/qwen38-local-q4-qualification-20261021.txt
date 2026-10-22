@@ -1,4 +1,7 @@
-Block-local Q4 exact-tag28 qualification PREPARATION,October21 2026.
+Block-local Q4 exact-tag28 qualification record,October21-22 2026 UTC.
+FINAL:90numeric checks passed;paired FFN8.509%MORE wall time,NOT promoted.
+Best041/tag12/g28 restored/idle. Initial PRE-NATIVE preparation follows;
+later native continuations supersede its not-installed/pending statements.
 NOT installed/run on P100A yet. All four inert artifacts are staged and
 remote SHA-256 verified. CPU-only idle metadata confirms best041/tag12/g20.
 Best041/tag12/g20 restored/idle after completed27/17 paired FFN;that trial
@@ -107,3 +110,48 @@ These are numeric compatibility checks,NOT full-model quality/speed.
 Paired FFN parent started AFTER all archives/parents closed. It is now
 authenticating the full public file;no timing result/promotion claimed.
 No SCP/other GPU job for entire parent including authentication/IDLE.
+
+FINAL paired native FFN,October22 00:15UTC:
+Same fully authenticated read-only public source ONCE,four fresh children,
+28/17/28/17,32warm fixed FFN operations per child. All source/ownership/
+completion proofs unchanged;no CPU learned reference/fallback. Everychild
+clean_end1/BENCHMARK_CHILD_END result0 known_clean1 before explicitIDLE;
+parent explicitquit/HOST_CLI_EXIT0 and CLOSED before any archive transfer.
+Round1 tag28/g23 mean.011407219s median.011398500 warmwall.365267;
+Round2 tag17/g24 mean.010492000s median.010485000 warmwall.336029;
+Round3 tag28/g25 mean.011345438s median.011344500 warmwall.363316;
+Round4 tag17/g26 mean.010476437s median.010472000 warmwall.335536.
+Pooled64samples each:28 .0113763285s,17 .0104842185s. Candidate
+8.509074854%MORE time/7.841809420%LOWER reciprocal fixed-FFN rate.
+Both pairs slower. Fewer modeled drains/vector instructions did NOT
+translate into faster native work. NOT promoted;NO full-model28 trial
+or model tokens/sec inference from this microbenchmark. Best fixed4CPU
+helper27B sample remains0.207893161tok/s;20tok/s UNMET.
+
+ALLfour20480B outputs SHA-256 identical to original17/prior trials:
+05cda52a4734da379383b241843bede37005412b5c13dcb72d91cb8d5e0eef56
+This is bit-repeatability/control evidence,not an independent whole-model
+quality oracle. After parentclosed0,guarded17/g26->16/g27->12/g28 EACH
+CLI0 verified. Installed SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+CPU-only finalmetadata idle12/g28,cold0/owner0/open1/guard1. NO native
+UNKNOWN/mismatch/reset/retry/physical recovery/reboot/SD change in batch.
+No Assistant/service/chat/settings/CPU/RAM/boot configuration change.
+
+Only AFTER allparentsclosed0 and restoredidle,small128Kbit sequentialSCP
+archived nine own logs/outputs;ALLlocalSHA matchremote:
+/private/tmp/pioneer-q38-local-q4-paired-evidence.7OPlgb2t
+host a825ce24c1351b7bb05e8d1e89cd190a623f52f9f2acc186c6125ee60cb02e8f
+round1 e3724bf0b83581fd97ad4f6baa36ce379e618ae2ed2ea40d9bf72a312c5b4259
+round2 857f82536b2b25afe11852dc1e3bcc0416f85b2cbc7a5fbe720754d3fb896c55
+round3 9bd33c80e67633ec6a8d7ce3066d2072ed0eca10213dd955d20768fd72466937
+round4 1c45f0132ca1218929b30e94ac7bcc24e33803b20f451bbed9e8ae7a4e98741b
+Independentarchive parse4valid32sample rounds/0bad/4END/4childzero.
+
+Next prerequisite built separately OFFLINE:lossless predecoded-Q4 page
+adapter,17664page cases/15atomic refusals/3role guards pass;see separate
+qwen38-predecoded-q4-page-offline-20261022.txt. SinglefixedFFN pre-expanded
+source could be qualified within currentcap before considering any larger
+layout. Actual TILED whole-plan FFN expansion exceeds qualified21GiB;
+NO capacity widening,source-layout/ABI/uploader/native authority granted.
+Failed rawcache22 remains blocked;never retried. ALL tested checkpoints
+preserve unrelated dirty llama and FlashNext work untouched.
