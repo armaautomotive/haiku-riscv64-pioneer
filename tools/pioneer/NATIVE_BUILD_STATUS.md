@@ -1,7 +1,8 @@
 # Native build status
 
-Latest October23 UTC2026:separate native projection DEBUG42 IMPLEMENTED/
-BUILT;NOT installed/physical-card qualification/full-model speedup.
+Latest October23 UTC2026:PHYSICAL P100A retained-projection DEBUG42 token0
+PASS;original normal041driver RESTORED/verified. Not whole-model inference
+or speedup. Implementation checkpointfa25fcd114 PUSHED/verified.
 Actual source/zero/QPE1/QRN1/ALL119QFP3/ROOTQPS1 owner executes ALL4roles,
 then fixed18page output readback AFTER ALL120holds BEFORE original ROOT
 restore. Fresh poison/strict source/counter/clock/private-produced proof;
@@ -25,13 +26,26 @@ all4stashes coexist;18fixed reads/full restore/nativeEND each. Hardware
 SIMULATED,not card. FULL updater53006 TERMINAL0/PASS8067actual cases;
 all local tests/builds terminal,no native test running.
 Exact041<->a2bctag42 updater edfd3a3b focused114PASS;rawcache22 still
-HARD BLOCKED. NEXT controlled native stage/apply/ONE numerical test;
-only actual PASS/cleanEND/terminal0 permits clean restore041. Read-only
-Haiku64CPUs/max137034936320B,installed+rollback041/tag12/gen3/cold0/
-owner0/open1/guard1,no compute parents. No reboot/relay/SD/Assistant/model/
+HARD BLOCKED. Three exact new stage files verified;guarded apply84581
+TERMINAL0:041/tag12/gen3 ->a2bc/tag42/gen4/cold0/owner0/open1/guard1,
+HOT_RELOAD_VERIFIED/no reboot/GPU execution during update. ONE native
+client92865 TERMINAL0:full SAME public GGUF SHA+independent embedding/RMS/
+ALL4projection references BEFORE FD,101original span uploads/SPAN_END/
+actual QPS1_VALIDATE/BANK_END allstatus0. ALL16480projection values and
+complete18432-word padded GDDR span BIT-EXACT;clean_end1.159777206us is
+initialization/execution/readback/restoration,NOT decoder time/token rate.
+ONLY after PASS/cleanEND/terminal0,guarded restore43812 TERMINAL0:
+a2bc/tag42/gen4 ->original041/tag12/gen5/cold0/owner0/open1/guard1.
+Fresh postflight installed+rollback041 SHA exact,64CPUs/max137034936320B,
+desktop services present,no compute parents. No native/local test jobs
+alive. No reboot/relay/SD/Assistant/model/
 NIC/boot changes;dirty llama/FlashNext untouched. Whole27B0.207893161tok/s
 UNCHANGED;20UNMET;goalACTIVE/turnPROGRESS. Evidence:
 benchmarks/qwen38-projection-debug-20261022.txt.
+NEXT real on-card convolution/gates/GDN state consumer from retained QPS1
+results,then gated norm/output/residual/FFN/full attention/KV/all64layers/
+sampling and persistent schedule removing host stage roundtrips. No public
+ready claim/CPU numeric substitute or Work validation fallback permitted.
 
 Latest October23 UTC2026:actual separate on-card projection result stashes
 IMPLEMENTED/locally qualified,NOT native GPU qualification or speedup.

@@ -1,7 +1,9 @@
 Separate retained-projection native DEBUG qualification
 October22 Pacific / October23 UTC2026
 
-IMPLEMENTED/BUILT;physical-card qualification NOT yet run.
+PHYSICAL P100A token0 qualification PASS;normal041driver RESTORED/verified.
+NOT whole-model inference or a token-rate measurement.
+Tested39-file checkpointfa25fcd114 PUSHED and remote tip verified.
 Last whole27B rate remains0.207893161tok/s;20tok/s UNMET;goal ACTIVE.
 
 REAL IMPLEMENTATION
@@ -96,7 +98,7 @@ Private non-DEBUG execution macro-OFF object EXACT:
 Compile-only stash object EXACT6121b065. Old tag38/guard/default43 controls
 remain BYTE-IDENTICAL23e2e68a/d1ce2aa4/2df0e0f8.
 
-GUARDED UPDATE PREPARATION (NOT STAGED/INSTALLED)
+GUARDED UPDATE PREPARATION (COMPLETED BEFORE NATIVE APPLY)
 Added exact --apply-projection-validation/--restore-projection-validation
 ONLY041tag12 <-> a2bctag42. All existing identity/hash/symlink/owner/idle/
 status/generation/quiesce/wait refusal gates unchanged. Raw-cache22 still
@@ -115,14 +117,52 @@ b182fa1a6c9cc9f03a91037ba15b353403;adminclientb0c851b3. No compute parents.
 CPU-only reload status tag2026102100010012/gen3/quiesced0/cold0/owner0/
 open_count1/guard1. No reboot/relay/SD/Assistant/model/NIC/boot changes.
 
-NEXT PHYSICAL QUALIFICATION
+CONTROLLED NATIVE APPLY / ONE PHYSICAL QUALIFICATION PASS / CLEAN RESTORE
 Actual original-model native instruction/readback regression4865 is now
 TERMINAL0/PASS ALL3tokens. FULL updater53006 TERMINAL0/PASS8067cases.
-All local tests/builds are now terminal;no native test is running.
-Then exact guarded native preflight/stage/apply,ONE original-source DEBUG
-client only. First unknown/numeric mismatch CLOSE ONLY/physical recovery,
-never automatic restore or retry. Only actual PASS/complete BANK_END/client
-terminal0 permits guarded restore041.
+All local tests/builds terminal0 before installation. Fresh native read-only
+preflight again proved64CPUs/max137034936320B/041installed+rollback/adminb0c/
+guardd1ce/device link/no compute parents. Exactly THREE new files staged
+outside watched drivers,ALL full hashes checked;client/updater mode700:
+ tenstorrent_pci_probe-projection-validation-a2bcfb34
+ pioneer-q38-projection-validation-93992ae6
+ pioneer_p100a_hot_swap-projection-validation-edfd3a3b.sh
+Guarded --apply-projection-validation parent84581 TERMINAL0:
+ old041/tag12/gen3/cold0/owner0 ->quiesced1 ->newa2bc/tag42/gen4,
+ quiesced0/cold0/active_owner0/open_count1/guard1. HOT_RELOAD_VERIFIED,
+ NO_REBOOT_NO_GPU_EXECUTION. New INSTALLED driver is a2bc DEBUG42,NOT041.
+
+ONE staged hash-verified client --validate-token0 parent92865 TERMINAL0.
+Log /private/tmp/pioneer-q38-projection-debug-native-card-20261022-a.log.
+It was observed through the full SAME public GGUF SHA and independent
+embedding/RMS/ALL4projection references BEFORE FD. Reload/support/storage/
+span support/BANK_BEGIN,101original uploads/SPAN_END/QPS1_VALIDATE/BANK_END
+ALL returnedstatus0. ALL16480actual projection values and complete18432-
+word padded span73728B BIT-EXACT to independent original GGUF references.
+No CPU numeric products populated the card. clean_end1/parentterminal0.
+Captured159777206us covers native initialization/execution/readback/restore;
+it is NOT whole-decoder time or token throughput. No speedup is claimed.
+No transfer/secondjob/status/END/reload/installed-dependency changes were
+issued while this parent lived. It was never restarted on an observation
+timeout. No unknown or numerical mismatch occurred;CLOSE ONLY/physical
+recovery rules remain unchanged for any future such failure.
+
+ONLY after proven numeric PASS/explicit BANK_END/terminal0,the exact
+guarded --restore-projection-validation parent43812 ran TERMINAL0:
+ a2bc/tag42/gen4/cold0/owner0 ->quiesced1 ->original041/tag12/gen5,
+ quiesced0/cold0/active_owner0/open_count1/guard1. HOT_RELOAD_VERIFIED.
+Fresh native postflight installed AND rollback SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+64CPUs/max137034936320B;app_server/Tracker/Deskbar/input_server present,
+all compute parents absent. No native or local test jobs remain alive.
+No reboot/PSU/relay/SD/Assistant/model/NIC/boot changes occurred.
+
+Native log SHA:
+ 15ad7c42de71b0e4a178780db9589473e3ef99a1572d73a1a32d939d647f7974
+Guarded apply log SHA:
+ fe3c648b44a3c154478e340447adf77d1cf3d6690835cd2589557b68c7a28e7c
+Guarded restore log SHA:
+ 4eb437e79b40f54cad82d89c7685068d25a69467c7505d3c75caaf6085939b6e
 
 Remaining whole-model objective unchanged:real resident convolution/
 gates/GDN state/gatednorm/output/residual,connect FFN,full attention/KV,
@@ -143,3 +183,7 @@ LOGS
  /private/tmp/pioneer-q38-projection-validation-client-build-20261022-b.log
  /private/tmp/pioneer-q38-projection-debug-updater-focused-20261022-a.log
  /private/tmp/pioneer-q38-projection-debug-updater-full-20261022-a.log [PASS8067/TERMINAL0]
+ /private/tmp/pioneer-q38-projection-debug-native-apply-20261022-a.log [VERIFIED/TERMINAL0]
+ /private/tmp/pioneer-q38-projection-debug-native-card-20261022-a.log [PHYSICALPASS/TERMINAL0]
+ /private/tmp/pioneer-q38-projection-debug-native-restore-20261022-a.log [VERIFIED/TERMINAL0]
+ /private/tmp/pioneer-q38-projection-debug-native-postflight-20261022-a.log [041/64CPU/fullRAM/no compute parents]
