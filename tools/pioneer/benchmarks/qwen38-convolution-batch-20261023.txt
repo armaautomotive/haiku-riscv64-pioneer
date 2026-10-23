@@ -1,0 +1,117 @@
+QCB1 autonomous card-local convolution batch prerequisite
+October22 Pacific / October23 UTC2026
+
+IMPLEMENTED/OFFLINE instruction-qualified,NOT native owner integration.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+No Pioneer transfer/card job/driver/boot/Assistant/model/NIC/power change.
+Original041/tag12/gen5/64CPUs/fullRAM remains last native postflight.
+Dirty llama.cpp and unrelated FlashNext files untouched.
+
+ACTUAL ON-CARD SCHEDULE
+Separate QCB1 image partitions640sixteen-channel groups over120worker
+coordinates:group=worker+j*120. Workers0..39 execute6groups,40..119execute5.
+Each worker runs its entire schedule in ONE card invocation. No host
+relaunch or numeric callback occurs between its jobs. This is one full
+convolution stage,NOT a persistent token/whole-decoder loop.
+
+Six fixed64word records at L1 0x74800..0x74e00. All384words cached,ALL
+active shapes/derived channels/owner epochs/layer/position/workspace/
+source/phase/worker agreement validated BEFORE ANY NoC I/O. Inactive sixth
+record MUST be allzero. Canonical data recipes independently fix learned
+F32/history stripes;cross-record immutable-read spans cannot alias.
+Descriptor shape,identity copies and recipes are DATA,not source/init/
+actual private QPS1 producer/native ownership or launch capabilities.
+
+Every packet seals ALL6records and16actual source words. Counter ledger
+starts from independently read entry counters and advances ONLY after
+exact completion/command readback/source/descriptor/data checks. A foreign
+counter increment between packets cannot become a fresh accepted baseline.
+Both aliased0x210counter reads must agree at entry. Fresh verified NaN
+poison precedes every read;bad/stale input faults before a following packet.
+All local Conv4+SiLU/next-state math completes before private GDDR writes.
+ALL5packets per group are card-local,not PCIe/host/DMA/neural CPU products.
+First known fault enters inert park,never another job/packet/retry.
+Native external clock/physical hold/quarantine/restore coordinator OWED.
+
+Complete worker receipt covers25or30packets and80or96output channels,
+with exact aggregate counters,private-next bytes,first/last assigned group,
+layer/token position and immutable table/source seal. Completion DATA is
+not a substitute for independent physical terminal/hold/owner proof.
+
+COMPLETED EVIDENCE (ALL LOCAL PARENTS TERMINAL0)
+ASan/UBSan/Werror/ffp-contract-off,ACTUAL emitted RV32 bytes:
+ - Canonical5760batch plans/ALL30720groups/48384refusals:all48recurrent
+   layers,all120workers,exact640group coverage ONCE per layer,5/6job split,
+   pointer/identity/source/phase agreement,ALL384record mutations and
+   missing/wrong learned tags. No IO/reservation/init/producer grant.
+ -120instruction positives exercise all worker coordinates and5/6job
+   paths. Max329272instructions per worker invocation,2052B observed stack
+   usage within independently whitelisted/saved8KiB CARD stack. Largest
+   individual static CARD frame1744B;new builder bound2048B. This does NOT
+   enlarge Haiku kernel stack or weaken old QCV1's1024B frame bound.
+ -12476instruction fault/refusal cases:every25/30packet position for
+   timeout/bad or foreign counter/source/current descriptor/future-or-
+   inactive record/command mutation,poison every read in every job,
+   between-packet counter interference incl final packet,entry/baseline
+   alias corruption,all384record bits violating batch shape. Each fault
+   terminal stepped32more instructions with no further device operation.
+   Writes before later faults affect PRIVATE next/result only,never
+   immutable current history. Native global quarantine remains owed.
+ - Actual public GGUF full SAME-file SHA c600de0300ae8a0eb3a6c0b8b5561b8b
+   96f16bd2c863c2a66c42de29d391a747/851tensors before simulated context.
+   Original F32 weights and independent original embedding/RMS/Q8 QKV
+   references;tokens0/15/248319/1 at positions0/1/2/3.480card invocations
+   execute2560jobs,ALL40960Conv4+SiLU results within3e-6*(1+abs(reference)),
+   ALL122880next-state words bit-exact to independent shift history.
+   Later previous-state reads use ACTUAL preceding emitted writes,not a
+   recomputed CPU state. ALL10240oldest-tap contributions explicitly
+   nonzero at fourth step. Coverage all640groups once per token.
+   These are SIMULATED physical endpoints,not real parallel GPU timing,
+   actual native QPS1 producer/owner handoff or registered Work fallback.
+ - New batch6088B code and1536B table proved inside EXISTING saved L1
+   footprint forALL120coordinates;no snapshot expansion. All accesses
+   remain under strict L1/NoC whitelist;no code/input/history/PCI/reset
+   write outside the declared program's own private scratch/commands.
+ -232actual batch build/isolation gates PASS;old QCV1475gates PASS.
+   Old builders refuse batch flags BEFORE SDK/output. Actual role guard,
+   unsupported-instruction and stack checks exercised. Host Work/kernel
+   numerical fallback still forbidden by unchanged shared math guard.
+
+FROZEN BUILD / NO OLD ROLE PROMOTION
+Separate wrapper/start/builder;not an old manifest/opcode/native selector.
+New exact QCB1 text B/C BYTE-IDENTICAL6088B:
+ a8df2da24fa98535c70172c6f9833228c996a540f487b66fa545660b93256350
+Boot4B d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+Old QCV1 text5360B remains BYTE-IDENTICAL:
+ d0c9519d0c7ea342a0bbcbede9f9d6355c1c611ea768b9c923f7f645c812d822
+Old123instruction positives and441480word/ALL120footprint check PASS.
+Full actual old-driver controls and tag42 rebuilt: a2bcfb34 EXACT,
+private2d127c1e/stash6121b065/tag38 23e2e68a/guardd1ce2aa4/default43
+2df0e0f8 EXACT. Only read-only SDK plus local driver/image sources used;
+no dirty library access/build and no native install or GPU job.
+
+NEXT REAL INTEGRATION (OWED)
+Reserve/initialize/retain real canonical ConvKind history. Existing
+ProjectionMutableBanks covers GDN672regions+ONEworkspace,NOT history.
+Existing ResidentBanks limit673cannot naively append all Conv/KV regions.
+Canonical construction puts all learned weights before per-bank runtime;
+deriving seven exact contiguous runtime reservations may avoid expansion,
+but this is a prospective design,NOT yet implemented/reserved/qualified.
+Actual private QPS1 produced proof must be consumed BEFORE projection
+Close revokes it. Replacing code while retaining the original full
+snapshot needs real ALL-participant STOP/hold/new-image/current-counter
+proof;old Image()/Close() cannot be weakened to accept a new image.
+Then card Q/K norm/gates/GDN/gatednorm/learned output/residual/FFN/full
+attention+KV/all64layers/sampling and persistent generation schedule.
+No whole-model speedup or20tok/s claim follows from these prerequisites.
+
+LOGS
+ /private/tmp/pioneer-q38-conv-batch-build-20261023-c.log
+ /private/tmp/pioneer-q38-conv-batch-instructions-20261023-a.log
+ /private/tmp/pioneer-q38-conv-batch-faults-20261023-a.log
+ /private/tmp/pioneer-q38-conv-batch-actual-model-20261023-b.log
+ /private/tmp/pioneer-q38-conv-batch-gates-20261023-a.log
+ /private/tmp/pioneer-q38-conv-batch-old-gates-20261023-a.log
+ /private/tmp/pioneer-q38-conv-batch-single-regression-20261023-a.log
+ /private/tmp/pioneer-q38-conv-batch-single-footprint-20261023-a.log
+ /private/tmp/pioneer-q38-conv-batch-native-controls-20261023-a.log

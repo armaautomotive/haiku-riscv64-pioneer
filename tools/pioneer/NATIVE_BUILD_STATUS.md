@@ -1,5 +1,34 @@
 # Native build status
 
+Latest October22 Pacific/23UTC2026:QCB1 card-local convolution batch
+IMPLEMENTED/OFFLINE instruction-qualified,NOT native owner or speedup.
+ONE invocation/worker runs5or6groups autonomously;all640groups partitioned
+over120coordinates. ALL6records incl inactive zeros checked before NoC;
+sealALL384words+sources every packet,tracked counters across jobs,command
+readback/fresh poison/all math before private writes,first fault inert.
+No CPU relaunch/numeric callback BETWEEN worker jobs;not full-token loop.
+
+ASan/UBSan actual RV32:120positive/12476faults PASS;5760canonical plans/
+30720groups/48384refusals. Actual full-SHA public GGUF4tokens0/15/248319/1,
+480invocations/2560jobs/40960outputs within3e-6*(1+abs(reference)),122880
+next-state words bit-exact;ALL10240oldest-tap terms nonzero at step3.
+Original F32 weights+independent QKV reference,ACTUAL emitted next writes
+feed later steps. Hardware endpoints SIMULATED,not native producer grant.
+6088B B/C EXACTa8df2da2;max1744B static CARD frame/2052B observed CARD stack
+within existing8KiB saved/whitelisted stack;all120L1 footprints unchanged.
+New232+old475gates PASS. Old5360B QCV1 d0c9519d EXACT+123positives/441480
+word footprint PASS. Rebuilt actualnativea2bc/private2d12/stash6121/tag38/
+guard/default43 all EXACT. ALL local test/build parents TERMINAL0.
+
+No Pioneer writes/native tests/install/reboot/power/SD/Assistant/model/
+NIC/boot changes;normal041/gen5/64CPU/fullRAM last postflight retained.
+NEXT actual joint runtime/Conv-history reservation+zero/private QPS1
+handoff/physical consumer qualification,then remaining QKnorm/gates/GDN/
+residual/FFN/fullattn/KV/all64layers/sampling/persistent token schedule.
+Dirty llama/FlashNext untouched. Whole27B0.207893161tok/s UNCHANGED;
+20UNMET;goalACTIVE/turnPROGRESS. Evidence:
+benchmarks/qwen38-convolution-batch-20261023.txt.
+
 Latest October23 UTC2026:QCV1 card-local Conv4+SiLU/private-next kernel
 IMPLEMENTED/OFFLINE instruction-qualified;NOT integrated/installed/native
 consumer or speedup.16channel group reads actual card QKV/original F32
