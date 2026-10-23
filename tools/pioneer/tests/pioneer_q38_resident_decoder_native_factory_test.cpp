@@ -8,7 +8,7 @@
 #include <unistd.h>
 struct DecoderNativeFixture:ProjectionNativeFixture {
  PioneerQ38ConvHistoryZeroResult historyResult;PioneerQ38ResidentDecoderResult decoderResult;
- DecoderNativeFixture(const char* zero,const char* embedding,const char* rms):ProjectionNativeFixture(zero,embedding,rms){
+ DecoderNativeFixture(const char* zero,const char* embedding,const char* rms,unsigned selectedToken=0,unsigned selectedBank=0):ProjectionNativeFixture(zero,embedding,rms,selectedToken,selectedBank){
   auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
   for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer || p->role!=12)continue;
    for(unsigned page=0;page<p->allocated/4096;page++)learned[p->bank*786432+p->offset/4096+page]=1;
@@ -26,7 +26,7 @@ struct DecoderNativeFixture:ProjectionNativeFixture {
   assert(!c->Unsafe() && !c->dispatchOwnerRetained && !sColdRecoveryRequired && sQ38EmbeddingModelEpoch==epoch);return refusals;
  }
  void ProduceNative(){
-  assert(BindQ38EmbeddingModel(*c,0,0,0));auto* same=c->q38EmbeddingModel;unsigned touched=io.touches;
+  assert(BindQ38EmbeddingModel(*c,token,0,bank));auto* same=c->q38EmbeddingModel;unsigned touched=io.touches;
   assert(!Initialize() && io.touches==touched && !same->historyZero.closed && !same->graph.ConvHistory(same->identity)->InitializationPublished(same->identity));
   assert(InitializeQ38ConvHistoryModel(*c,historyResult) && historyResult.nonce==336 && same->historyZero.closed
    && same->MatchesInitializedHistory(owner.banks,owner.dram));for(auto word:io.historyWords)assert(!word);

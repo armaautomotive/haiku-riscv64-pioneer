@@ -28,6 +28,13 @@ struct DecoderBatchMachine:ConvBatchMachine {
   if(!write){
    reads++;for(unsigned i=0;i<size[p]/4;i++)assert(memory.at(local[p]+i*4)==0x7fc50000+p*1024+i);
    if(!p)for(unsigned i=0;i<16;i++)g.input[i]=fabric.Gddr().at(d[45]/4+i);
+   if(p==1 && fabric.LearnedBytes()){
+    // ORIGINAL source bytes,not precomputed products. Once attached,this
+    // source is mandatory;NEVER retain synthetic coefficients on failure.
+    auto* learned=fabric.LearnedBytes();uint8_t bytes[256];
+    assert(learned->Ready() && learned->Read(d[13],d[12],bytes,256) && learned->Ready());
+    for(unsigned i=0;i<64;i++){const auto* b=bytes+i*4;g.weight[i]=uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24);}
+   }
    if(p==2)assert(producer.ReadHistory(d[14],d[15],g.previous.data(),48));
    for(unsigned i=0;i<size[p]/4;i++){memory[local[p]+i*4]=!p?g.input[i]:p==1?g.weight[i]:g.previous[i];dirtied.insert(local[p]+i*4);}
   }else{

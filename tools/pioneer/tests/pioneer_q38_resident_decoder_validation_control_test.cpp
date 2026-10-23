@@ -31,8 +31,8 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #undef geteuid
 struct DecoderControlFixture:DecoderNativeFixture {
  std::unique_ptr<PioneerQ38CanonicalModelPlan> plan;
- DecoderControlFixture(const char* root,const char* peer,const char* zero,const char* embedding,const char* rms,const char* conv)
-  :DecoderNativeFixture(zero,embedding,rms),plan(new PioneerQ38CanonicalModelPlan){
+ DecoderControlFixture(const char* root,const char* peer,const char* zero,const char* embedding,const char* rms,const char* conv,unsigned selectedToken=0)
+  :DecoderNativeFixture(zero,embedding,rms,selectedToken),plan(new PioneerQ38CanonicalModelPlan){
   assert(plan->Build());c->q38GdnCallThread=-1;currentTeam=7;callerUid=0;lockStatus=B_OK;locks=releases=copies=copyFailure=0;locked=false;
   transport.reset(new ProjectionNativeTransport(root,peer,io.wholeWorkspace));io.projectionTransport=transport.get();io.projectionSeedRequired=true;
   transport->DecoderSources(conv,*plan,0,io); // canonical DATA/byte endpoints only,NO owner or completion facade
@@ -41,6 +41,7 @@ struct DecoderControlFixture:DecoderNativeFixture {
 static std::unique_ptr<tt_q38_resident_decoder_validation> Request(){
  auto r=std::make_unique<tt_q38_resident_decoder_validation>();r->metadata.version=1;return r;
 }
+#ifndef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CONTROL_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==7 || argc==8);setvbuf(stdout,nullptr,_IOLBF,0);int fault=argc==8?atoi(argv[7]):-1;
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -112,3 +113,4 @@ int main(int argc,char** argv){
  assert(f.transport->ValidationReads()==40 && !f.io.pciWrites && !f.io.HostReadMock::bmeWrites && EndFactory(*f.c));
  printf("PASS actual tag44 root-only DEBUG control/routing/global scope/history336x5/4projections/QCB1ALL120/40fresh poisoned reads/ALL40960words/full restore/actual END/refusals%u;SIMULATED_NOT_ORIGINAL_GGUF_PHYSICAL_CARD_OR_SPEED\n",refused);
 }
+#endif

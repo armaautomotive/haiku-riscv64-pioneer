@@ -1,0 +1,102 @@
+ORIGINAL public GGUF through actual retained-convolution native control
+October23 UTC2026;OFFLINE original-byte/native-instruction qualification.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+Physical DEBUG44 trial NOT YET RUN at this checkpoint.
+
+Implemented TEST original-byte endpoint through existing mandatory learned
+source interface. Convolution now reads all64 F32 coefficient words from
+that source for every256B packet;once attached,missing/not-ready/wrong
+source bytes NEVER retain synthetic coefficients or numeric fallback.
+Old synthetic transport remains only when no original source is attached.
+NO production driver/client/image/ABI/arithmetic/Work changes this turn.
+
+New independent original-source observer is a SEPARATE compilation unit,
+hard-refusing native adapter/execution/Work/kernel flags. Uses canonical
+mutable-DATA geometry interlock ONLY,not an execution owner or IO grant.
+Authenticates full c600de03... SAME-FILE GGUF and all851 tensor shapes;
+matches ALL canonical parts to original packed-plan geometry;loads original
+embedding tile/F32 norm/16 Q8 projection stripes/7 F32 Conv4 stripes.
+Computes all1672 original embedding/RMS/ALL4projection/Conv4 reference
+reads BEFORE constructing any native context. One-shot observer seal
+prevents further reference reads/preparation;only raw ORIGINAL learned
+bytes can feed actual QPE1/QRN1/QPS1/QCB1 instruction endpoints. Numeric
+references remain private observer data,not driver input/ready authority.
+
+QUALIFICATION (ALL named parents TERMINAL0)
+1.46239 original-model native control tokens0/15/248319 PASS. Each owns
+  same actual cookie/global mutex/team/thread/model/joint reservation/
+  history336x5/workspace512/QPE1/QRN1/QPS1all4/QCB1all120/640jobs/private
+  outputs/40fresh poisoned reads/full8134072word original restore and
+  actual complete dispatch END. ALL raw embedding+RMS+16480 projections
+  bit-exact to independent BEFORE-context references. ALL10240 Conv4+SiLU
+  outputs within existing3e-6*(1+abs(reference));ALL30720 private-next words
+  bit-exact. ALL1672 reference reads remain BEFORE native context;actual
+  device endpoint consumes164800 ORIGINAL Q8 tiles plus640 ORIGINAL F32
+  tiles/token. No synthesized learned bytes or CPU numeric device inputs.
+  Only physical/OS endpoints simulated,NOT a physical-card speed result.
+2.95185 original new-public-control synthetic regression PASS,144 inert
+  root/team/copy/position/metadata/stats/output/old-namespace refusals and
+  full native chain/40pages/restore/END. Default token/bank behavior intact.
+3.62211 actual ReleaseResidentCookie on SAME successfully closed native
+  model PASS2:userspace failure invisible to kernel,or already cold. Both
+  FD CLOSE paths retain exact cookie/context/model/ALL snapshots+host/
+  bulk/clock/maps/cohort owners,release global mutex,and prove ZERO later
+  device/status/END/restore/free IO. Legacy implicit cleanup endpoint is
+  forbidden,not substituted by a fake success. Clean parent sibling still
+  succeeds through explicit actual END. Numeric mismatch must CLOSE ONLY.
+4.15070 actual shell updater apply/restore DEBUG44 plus old projection
+  validation pair PASS232 filesystem/handshake/hash/symlink/owner/failure
+  cases. Adds EXACT normal041/tag12 <->d96899a7/tag44 mapping. No force,
+  raw22 retry or automatic rollback added. New full-SHA-before-FD client
+  parent name is included in process exclusion tests.
+5.Actual resident reload guard/extracted control regression PASS:active/
+  extra FD/stale identity/quiesce/failed-copyout/cold survives reload.
+  Existing DEBUG44 role/reference/build guards200 PASS. Python AST and
+  shell syntax/whitespace checks PASS.
+
+PINS UNCHANGED FROM PREVIOUS SDK QUALIFICATION
+driver d96899a74c6949a22caec805dbd611cee80f2ff96c909758d772557d1a4a0c0a
+ /private/tmp/pioneer-q38-decoder-debug-build-20261023-c/
+ tenstorrent_pci_probe-driver55-decoder-debug-tag44 (C/D BYTE-IDENTICAL)
+client f3b54e8bb01a52cd1272804fc9491a9a832dc725708b19b0fde290ed547687a5
+ /private/tmp/pioneer-q38-decoder-debug-client-20261023-b (A/B identical)
+updated updater 3648a4277ff0ae472cf6ebfcba9fa0e5faf11412bac0f7c9d9d6c5f20b4735e6
+normal rollback041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+reloadadmin b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
+guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+
+Fresh read-only Pioneer SSH preflight:Haiku responsive,64CPUs,
+max137034936320B RAM,app_server/Tracker/Deskbar/input_server present,no
+Assistant or compute parents observed. Installed AND rollback normal041
+hash exact. Reload metadata tag12/gen5/quiesced0/cold0/active_owner0/
+open_count1/guard1. Public model18973870528B present at fixed path.
+No power/reboot/SD/NIC/Assistant/model changes. No driver replacement or
+physical GPU computation at this checkpoint. Dirty llama.cpp and unrelated
+FlashNext files untouched. Raw-unpack-cache22 remains HARD BLOCKED.
+
+Initial observer compile correctly refused missing canonical mutable-DATA
+interlock;enabled only its DATA macro,kept native/Work role refusal intact.
+Initial FD test duplicated existing TT_WORK_MODE=1 with an empty definition;
+made identical1,kept -Werror and all retention assertions. No native or
+numeric safety criterion/tolerance was relaxed.
+
+NEXT:stage/re-hash exact new driver/client/updater plus rollback;verify
+no live Pioneer compute/model-authentication parent;guardedly apply DEBUG44;
+run ONE original-model first-token/layer0 qualification. During native
+parent lifetime NO SCP/second job/status/END/reload or dependency edits.
+UNKNOWN/numeric mismatch =>CLOSE ONLY,NO further device work/restore/retry;
+physical recovery required. Only numeric PASS+explicit END+terminal0 may
+guardedly restore normal041 and verify CPU/RAM/desktop health.
+
+This is STILL first-token/layer0 convolution,private next uncommitted.
+Whole-model remaining:Q/Knorm/gates/Softplus/GDN/state commit/gatednorm/
+output/residual/FFN/full attention+KV/all64layers/sampling/persistent token
+schedule and real speed benchmark. NOT full-card inference or Assistant
+Work-mode completion;20tok/s target remains unmet.
+
+FINAL LOG SHA256
+original-native b00f02430243dfb15c8517b0eb36a4d16388645fbcae2ed86aa45aaed7e553ae
+close-only d0fdd4fc794188d4861ef08139f5e04bb88c85af47b7a9c757b1c431104b2cd2
+public regression cdbd288ffbb22fc73e51d518b1ae698f589c63d08ee62838377a3c423b384554
+updater 4f2252d8d54beee59008ca90ba9a45112ee0adcff2b422dd1caebb79fd0eb174
+reload 00a4c3ba3b171b5792604fb9f91feb5ae76b5edb8c830e2aa5a5cd1e5d88c810
