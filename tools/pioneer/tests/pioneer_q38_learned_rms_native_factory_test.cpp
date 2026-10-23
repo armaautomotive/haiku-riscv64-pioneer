@@ -12,6 +12,7 @@ void PioneerSessionIO::RmsResetWrite(uint32 value){
  if(value==0x47800){rootHolds++;coreReset=value;return;}
  assert(value==0x46800 && coreReset==0x87ffff && rmsImage);coreReset=value;rmsStarts++;
  LearnedRmsExecutionBridge t;t.l1.resize(73737);
+ t.originalLearnedWeights=originalRmsWeights;
  for(unsigned i=0;i<73737;i++)t.l1[i]=RawSlot(PioneerQ38EmbeddingSnapshotAddress(i));
  for(unsigned i=0;i<16;i++)t.source[i]=i?source[i]:config;
  for(unsigned i=0;i<10;i++)t.command[i]=command[i];

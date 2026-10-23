@@ -24,6 +24,9 @@ struct ParentArithmeticPeer:ProjectionPeer {
  }
 #endif
  ParentArithmeticPeer(const char* image,unsigned worker,std::vector<uint32_t>& data,bool boot=true):ProjectionPeer(image,12,5120,worker),fabric(data){if(boot)assert(BootNew());}
+ virtual ~ParentArithmeticPeer()=default;
+ virtual bool ExternalLearnedBytes()const{return false;}
+ virtual bool ReadLearnedBytes(unsigned,uint32_t,uint8_t*,unsigned){return false;}
  void SubmitActivation()override{
   assert(projection);unsigned packet=activationPackets;
   if(!packet)for(unsigned i=0;i<256;i++)gate[i]=fabric.at(descriptor[10]/4+i);
@@ -46,7 +49,9 @@ struct ParentArithmeticPeer:ProjectionPeer {
   assert((type==8 || type==12 || type==14) && (inputs==5120 || inputs==6144 || inputs==17408) && groups && groups<=16);
   count=type==8?32:256;vector.resize(inputs);scales.resize(inputs/count);tile.assign(PioneerQ38PanelTileBytes(type),0);
   tiles.assign(groups*(inputs/count),tile);unsigned first=rootMemory.at(TT_Q38_PROJECTION_MATRIX_ROWS+(logicalWorker-1)*4);
-  for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++){
+  if(ExternalLearnedBytes()){
+   for(unsigned t=0;t<tiles.size();t++)assert(ReadLearnedBytes(memory.at(0x74020),base+t*unsigned(tile.size()),tiles[t].data(),unsigned(tile.size())));
+  }else for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++){
    unsigned global=first+(t/(inputs/count))*16+row+((base>>6)%251)*16;std::vector<uint8_t> raw(PioneerQ38BlockBytes(type),0);
    uint16_t half=uint16_t(0x0800+(global%4)*0x80);
    if(type==8){raw[0]=uint8_t(half);raw[1]=uint8_t(half>>8);

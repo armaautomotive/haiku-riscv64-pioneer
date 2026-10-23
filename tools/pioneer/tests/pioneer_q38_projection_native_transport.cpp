@@ -8,6 +8,7 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  std::vector<uint32_t>& workspace;std::unique_ptr<ProjectionExecutionMachine> machine;
  unsigned boots=0,starts=0,stops=0,fault=0;bool damaged=false;
  const PioneerQ38ProjectionGraphResult* result=nullptr;
+ ProjectionExecutionLearnedBytes* learned=nullptr;
  Impl(const char* root,const char* peer,std::vector<uint32_t>& gddr):workspace(gddr){
   (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
   machine.reset(new ProjectionExecutionMachine(root,peer,*this));track=true;
@@ -27,6 +28,7 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  }
  uint32_t Reset(unsigned w)override{return core[w]->coreReset;}
  std::vector<uint32_t>& Gddr()override{return workspace;}
+ ProjectionExecutionLearnedBytes* LearnedBytes()override{return learned;}
  uint32_t LocalRead(uint32_t a){return PioneerQ38ProjectionGraphSnapshotContains(current,a)?FullRead(current,a):C().Q38PanelRead(a);}
  void LocalWrite(uint32_t a,uint32_t v){
   if(PioneerQ38ProjectionGraphSnapshotContains(current,a))FullWrite(current,a,v);else C().Q38PanelWrite(a,v);
@@ -131,3 +133,6 @@ void ProjectionNativeTransport::VerifyOutput(){implementation->machine->VerifyOu
 void ProjectionNativeTransport::Diagnostic()const{implementation->machine->Diagnostic();}
 void ProjectionNativeTransport::Fault(unsigned kind){implementation->fault=kind;}
 void ProjectionNativeTransport::Observe(const PioneerQ38ProjectionGraphResult& result){implementation->result=&result;}
+void ProjectionNativeTransport::LearnedSource(ProjectionExecutionLearnedBytes& source){
+ auto& p=*implementation;assert(!p.learned && !p.boots && !p.starts && source.Ready());p.learned=&source;
+}

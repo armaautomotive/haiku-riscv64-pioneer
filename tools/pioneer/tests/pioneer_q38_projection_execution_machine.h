@@ -3,6 +3,13 @@
 #define PIONEER_Q38_PROJECTION_EXECUTION_MACHINE_H
 #include <stdint.h>
 #include <vector>
+// TEST byte provider ONLY. No numeric vector/products/native scope/lease
+// capability is accepted. Presence never permits a synthetic fallback.
+struct ProjectionExecutionLearnedBytes {
+ virtual ~ProjectionExecutionLearnedBytes()=default;
+ virtual bool Ready()const=0;
+ virtual bool Read(unsigned route,uint32_t address,uint8_t* out,unsigned bytes)=0;
+};
 // TEST transport interface,not production/native device authority.
 struct ProjectionExecutionFabric {
  virtual ~ProjectionExecutionFabric()=default;
@@ -12,6 +19,7 @@ struct ProjectionExecutionFabric {
  virtual void SetControls(unsigned w,const uint32_t* command,const uint32_t* counts)=0;
  virtual uint32_t Reset(unsigned w)=0;
  virtual std::vector<uint32_t>& Gddr()=0;
+ virtual ProjectionExecutionLearnedBytes* LearnedBytes(){return nullptr;}
 };
 class ProjectionExecutionMachine {
  struct Impl;Impl* implementation;

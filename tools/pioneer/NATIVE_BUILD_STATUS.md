@@ -1,5 +1,40 @@
 # Native build status
 
+Latest October22 Pacific/October23 UTC2026:ACTUAL ORIGINAL-GGUF numerical
+instruction validation PASSES,not physical card inference. Production SAME
+full-SHA/file/epoch source authenticated c600de03/18973870528B/ALL851tensors
+BEFORE simulated native context. Actual original packed bytes -> genuine
+native zero/QPE1/QRN1/private normalized proof -> QPR1+ALL119QFP3. Input
+token IDs0/15/248319,workspace banks0/6,all5120normalized+raw residual words
+and four first-layer roles10/11/5/6 BIT-EXACT to independent ORIGINAL GGUF
+references. Totals12projections/732matrices/240producers/49440outputs;
+119boots ONCE per context/full restore/actual complete dispatch END.
+Only94949376original tiled weight bytes staged in simulated transport;
+no CPU products populate device vectors. New independent staged F32/RMS
+DEBUG reference9positive/34refusals+10actual header isolation gates PASS.
+Default native wide/20faults remain exact prior logs;RMS7/616,embedding
+DEBUG7/9/7,cooperative6projections/427matrices ALL3types8/12/14 PASS.
+Actual kernel object unchanged2d127c1e/max816/controller512;old tag38/
+guard/default43 BYTE-IDENTICAL.104+210+13existing role/image gates PASS.
+ALL numerical/build/regression handles TERMINAL0. ZERO newdriver install/
+native GPU jobs/remote writes/power/reboot/SD/Assistant/network changes.
+
+CURRENT HARDWARE NOT HEALTHY:read-only SSH shell startup at01:48UTC met
+Haiku kernel panic,not a new GPU workload. Passive serial confirms bash
+thread11600/CPU11/storePageFault/VMTranslationMap::Map+0x108 while mmap.
+Fault epcffffffc0001dc264/stvalffffffe012c0be10;critical saved s7 is
+NONCANONICAL00e1ffe012c0be10,s6userVA33263c2000. Do NOT infer a null physical
+pointer from canonical stval alone. Invalid/corrupted page-table walk is
+suspected,root cause UNPROVEN. Ping fails;local stalled read-only SSH
+client closed (255);no reboot/reload attempted. Last GOOD01:10UTC original
+041/tag12/gen46/cold0/owner0/64CPUs/max137034936320B,not fresh health proof.
+NEXT preserve/diagnose mapping fault and controlled SD-free recovery,
+retaining ALL CPUs/RAM;then isolated native RMS DEBUG readback/qualification
+before Work enablement. No speculative low-RAM/single-CPU workaround.
+All-card result stashes/residual/GDN/attention/KV/sampling/scheduler still
+owed.Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-original-model-numeric-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 Pacific/October23 UTC2026:ACTUAL private
 native complete-projection execution adapter/factories implemented and
 tested. SAME unclaimed native context/cookie/heap model/learned ledger from

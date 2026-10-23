@@ -1,0 +1,159 @@
+October22 Pacific/October23 UTC2026 original public-model numeric validation
+Parent983173ab20d8afdd5a6604ed228e00690efad9de. PROGRESS;goal ACTIVE.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET. No device inference,
+new token rate,public hardware mode,linked/installed driver or decoder.
+
+FULL ORIGINAL SOURCE,NOT SYNTHETIC WEIGHTS OR CPU-SUBSTITUTED PRODUCTS
+Actual production PioneerQ38PublicModelSource authenticates FULL same open
+18973870528-byte public GGUF SHA
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+ALL851 tensor shapes/names/extents/metadata,retained FILE/epoch/identity
+BEFORE constructing even a simulated native context. Only platform fopen
+and execv syscall endpoints are adapted for the local Mac path/shasum;
+NO hash,model identity or source-lifetime check is bypassed. File contents
+are read-only and never committed. Local ignored source:
+generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf.
+
+Actual canonical tiled page reader stages94949376 ORIGINAL packed bytes:
+16first-layer projection stripes+5learned norm pages. Embedding group is
+46080 original Q4_K tiled bytes. No F32/BF16 whole-model weight expansion,
+weight clipping/requantization/native-Q8 format substitution. Test-only
+bridge hooks provide WEIGHT BYTES ONLY to actual installed instruction
+machines. A present external provider cannot silently fall back to synthetic
+weights. The learned-byte provider has no native context,proof,scope,
+prepared lease,input/output numeric vector or execution authority.
+
+Actual native unclaimed context/cookie/heap model/source bitmap -> canonical
+bind -> genuine zero2MiB -> actual QPE1 -> actual QRN1 -> SAME private
+normalized producer -> actual ALL120 native cohort preparation/mappings/
+scopes/owner -> actual QPR1+ALL119 QFP3 machines. Neither independently
+decoded embedding nor normalized CPU reference is supplied as device input.
+Only original packed/F32 WEIGHTS enter transport hooks. Actual embedding
+and normalization are executed again on emitted RV32/FPU instructions.
+All32MiB L1 snapshot/STOP/restore/actual complete dispatch END still execute.
+
+INDEPENDENT DEBUG REFERENCES
+Original embedding reference reads original GGUF row bytes,not tiled source
+cache or GPU output. New PioneerQ38LearnedRmsValidationReference.h reads
+original F32 blk.0.attn_norm.weight and computes double-reduced mean of
+F32 squares +epsilon/sqrtf/ordered F32 multiplies from the INDEPENDENT
+original embedding reference. These references are prepared before the
+native context. No device output can supply or repair them.
+For every projection,existing independent CPU matrix validator reads
+ORIGINAL packed GGUF rows anew,not the tiled callback cache,and uses the
+independently normalized input. All outputs compared BIT EXACT;reference
+never replaces a device vector/product. A mismatch stops BEFORE further
+native I/O/END/restore. This offline test cannot grant a real unknown
+context permission to free retained resources on process destruction.
+
+New RMS reference explicitly rejects Work inference/native-Q8/kernel use,
+missing/wrong DEBUG flags,wrong tensor/shape,aliased input/output,invalid
+finite domain and source/read failures. Entire output staged until all
+checks pass. Unit9positive/34refusals,actual-header isolation10gates PASS
+under ASAN/UBSAN/Werror/-ffp-contract=off. No driver/device capability.
+
+REAL SOURCE NUMERIC RESULTS,NOT PHYSICAL CARD OR TEXT GENERATION
+python3 tools/pioneer/tests/pioneer_q38_projection_execution_native_factory_test.py
+ /private/tmp/pioneer-q38-projection-family.DGLYM4co/parent-e
+ /private/tmp/pioneer-q38-projection-family.DGLYM4co/peer-n
+ /private/tmp/pioneer-q38-state-zero-20261020-c
+ /private/tmp/pioneer-q38-embedding-image-20261022-b
+ /private/tmp/pioneer-q38-learned-rms-image-20261022-c
+ --actual-model-extremes
+
+Input token IDs0/15/248319 (two distinct row lanes +last source group),
+workspace banks0/6,context position8191. Full same-FILE SHA once before all
+three contexts,identity/epoch checks throughout. Each input:
+ ALL5120 normalized words AND raw residual backup words BIT EXACT;
+ roles10/11/5/6 ->244matrix jobs/80op5producers/16480original-row-reference
+ outputs BIT EXACT,ALL119 peers boot ONCE and persist across four roles;
+ 164800actual-original tile loads,source normalized input unchanged;
+ 8134072words restored/16268144original words independently verified,
+ ALL119STOP before first hold,actual complete dispatch END.
+Totals3input cases/12projections/732matrices/240producers/49440outputs.
+Pilot token0 separately passed. Hardware/clock/reset/PCI/NoC endpoints
+are SIMULATED;this is NOT native-card qualification/full-model decode.
+All immutable emitted image+boot SHA pins checked by runner.
+
+REGRESSIONS/BUILD
+Default synthetic native wide215refusals/all4roles and20fault cases PASS,
+logs BYTE-IDENTICAL to preceding checkpoint. Existing RMS7positive/
+616refusals,embedding DEBUG7positive/9refusals/7faults PASS. Actual retained
+parent/ALL119 peers6projections/28768rows/172producers/427matrixjobs,
+ALL3wire types8/12/14 includingK17408,ALL119STOP PASS.104execution role+
+210RMS builder+13immutable/native RMS gates PASS.
+Actual full SDK/native kernel OBJECT unchanged
+2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35,
+maxnewkernel frame816B/controller512B. Old tag38/guard/default43 BYTE
+controls unchanged. Production kernel and GPU source/images NOT modified.
+All numeric/build/regression handles TERMINAL0.
+
+Final logs/SHA256:
+/private/tmp/pioneer-q38-real-model-extremes-20261022-a.log
+fe40d87d73f2622c9cc223c2c2b4c56da61b891946947f3d6c7f88f53a5cc31b
+/private/tmp/pioneer-q38-real-model-actual-pilot-20261022-b.log
+33b01314420b87afb00c64d7660adf39f9f4661df8d22d1a93c40aec0894a96b
+/private/tmp/pioneer-q38-real-model-native-faults-20261022-a.log
+4b403e9a696fee371fe886a8da4b6e3030bbf2bacfb267aa53e000d7f33ce826
+/private/tmp/pioneer-q38-real-model-synthetic-20261022-a.log
+eb6317bb726bac7ee8b9e4732534a6bc1859a2d718c9e57c6b83932ce72b7ceb
+/private/tmp/pioneer-q38-real-model-reference-20261022-a.log
+0751b1a1945dd01c2ebd6dade1d6310a376e132ccbd89a37ee5586edf8271329
+/private/tmp/pioneer-q38-real-model-kernel-control-20261022-a.log
+ddf0634e5a1984db3d4d0a3abd68c409bc87241cf273ca83d6f119ce67bfd981
+/private/tmp/pioneer-q38-real-model-rms-regression-20261022-a.log
+1b47693d952611849c23eafb8fc014742f77fa56bae239e5fd11102eb92e86d7
+/private/tmp/pioneer-q38-real-model-embedding-debug-20261022-a.log
+881ff26d9ac03ec59bbb35c9f038a7df06cc6f52010bd0d4c88c1edbc14a506a
+/private/tmp/pioneer-q38-real-model-cooperative-wide-20261022-a.log
+f40aa2854f414dd54a7c65ff69bf77722547ec904f522d3eeb73c0a0f3d329fc
+/private/tmp/pioneer-q38-real-model-role-gates-20261022-a.log
+125a1c833e9f78fb720b06b75ab2882eb46e707d52bfe8aaae00aaa507409dcf
+/private/tmp/pioneer-q38-real-model-rms-build-gates-20261022-a.log
+93b6e4fa15d779dc1cc7f26ce5c827ec4e532f3712d75cf86f2932ac76212280
+/private/tmp/pioneer-q38-real-model-rms-native-gates-20261022-a.log
+6f208ffd587465f70c0951400b1145956a82895898f5592ebd7d8eb52eb1416f
+
+NEW LIVE OS FAILURE,NOT A NEW GPU QUALIFICATION FAILURE
+Oct23 01:48UTC read-only SSH status check stalled during shell startup,
+BEFORE any stdout/native status result. Passive serial screenlog.0 confirms
+kernel panic in bash thread11600 onCPU11,storePageFault while mmap:
+ epcffffffc0001dc264 /Map+0x108,stvalffffffe012c0be10;
+ satp8000000001fecd4c,MAE1,L2PTE7000000000f3d401,L1PTE0;
+ saved s6(target userVA)=33263c2000,s7=00e1ffe012c0be10 NONCANONICAL;
+ a2(new leaf)=7000000006c3f453,s1(new data PA)=1b0fd000.
+Last boot physMapBaseffffffe014e0b000,physMemBase2200000 ->
+gVirtFromPhysOffsetffffffe012c0b000. Do NOT infer null physical PA from
+canonical stval alone:actual saved s7 has different high bits and unsigned
+s7-offset=e2000000000e10. This suggests an invalid/corrupted page-table
+walk,NOT a proven root cause or merely a valid mapped dirty-bit retry.
+Current source LookupPte should be investigated with actual parent entries.
+page_num_t is phys_addr_t64;32-bit page-number truncation NOT established.
+
+Local SDK kernel3bdfd5ddc0690ebdbb46ddbe05dbf52d7de75ae81b1e1d80c7b6f32873c6ff04:
+Map link15c15c +108 ->sd a2,0(s7) at15c264,fence rw,w before it.
+Runtime symbols differ by loadbaseffffffc000080000. This comparison is
+consistent with the observed store,but exact installed-ELF hash was NOT
+available;do not treat local source matching as installed-file proof.
+No P100A frame/new GPU job/new driver appears in this event. This does NOT
+prove its ultimate memory-corruption cause or that any earlier CPU/RAM
+fix was lost. Keep all CPUs/RAM;no speculative low-memory/single-CPU mask.
+Passive serial preserved at/private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0;
+do NOT reopen its TTY (passive monitorPID72956). Ping1sent/0received.
+Exact local read-only SSH PID80391 was identified,TERM closed;session58934
+TERMINAL255,ping26271 TERMINAL2. No blind second SSH/native job/reset.
+Last GOOD01:10UTC original041/tag12/gen46/idle/cold0/owner0/open1/guard1,
+64CPUs/max137034936320B. CURRENT health NOT proven;Haiku is panicked.
+ZERO remote writes/native GPU jobs/install/reload/reboot/power/SD/Assistant/
+network/clock changes. Dirty llama.cpp/unrelated FlashNext untouched.
+
+NEXT preserve/diagnose page-table walk +controlled SD-free recovery before
+native qualification. Then isolated RMS DEBUG readback INSIDE its current
+execution owner after verified hold and BEFORE original L1 restore/private
+publication,so NoC counters remain owned/tracked. Separate gated protocol/
+tag/client,original-file CPU references before FD,actual poisoned GDDR
+readback and control/retention/END/kernel-link/update tests BEFORE controlled
+hardware use;do not install compile-only object or promote old selectors.
+Work keeps NO CPU numeric validation/readback/fallback. Then original-model
+projection hardware qualification,result stashes/real residual/GDN/
+attention/KV/sampling/full autonomous scheduler. Whole goal remains UNMET.

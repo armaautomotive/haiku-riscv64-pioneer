@@ -12,6 +12,7 @@ struct EmbeddingExecutionBridge {
  uint32_t command[10]={},counts[8]={},source[16]={};
  unsigned failPacket=0,steps=0,packets=0,pc=0;
  bool boundedEmbedding=false; // TEST source weights,never a substituted output vector
+ const uint8_t* originalTiledWeights=nullptr; // TEST transport source ONLY;46080 packed bytes,never products
 };
 void ExecuteEmbeddingBridge(const char* image,EmbeddingExecutionBridge& transfer);
 #endif

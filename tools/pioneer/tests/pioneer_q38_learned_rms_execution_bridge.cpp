@@ -8,6 +8,7 @@ void ExecuteLearnedRmsBridge(const char* image,LearnedRmsExecutionBridge& t){
  auto at=[](unsigned address){unsigned n=0;for(unsigned i=0;i<6;i++){auto s=PioneerQ38EmbeddingSnapshotSpan(i);
   if(address>=s.address && address-s.address<s.words*4)return n+(address-s.address)/4;n+=s.words;}assert(false);return 0U;};
  LearnedRmsMachine m(image,*plan,0,0,t.l1[at(TT_Q38_FFN_RESIDENT_DESCRIPTOR+12)]);
+ if(t.originalLearnedWeights)for(unsigned i=0;i<5120;i++)m.weight[i]=t.originalLearnedWeights[i];
  for(unsigned i=0;i<73737;i++){
   unsigned a=PioneerQ38EmbeddingSnapshotAddress(i);m.memory[a]=t.l1[i];if(m.CodeAddress(a))m.l1[m.Index(a)]=t.l1[i];
  }

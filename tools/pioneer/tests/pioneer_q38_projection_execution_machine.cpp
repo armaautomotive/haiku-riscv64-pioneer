@@ -5,6 +5,14 @@
 #include "pioneer_q38_projection_execution_machine.h"
 struct ProjectionExecutionMachine::Impl {
  struct Root;
+ struct Peer:ParentArithmeticPeer {
+  Impl& device;
+  Peer(const char* image,unsigned w,std::vector<uint32_t>& data,Impl& d):ParentArithmeticPeer(image,w,data,false),device(d){}
+  bool ExternalLearnedBytes()const override{return device.fabric.LearnedBytes()!=nullptr;}
+  bool ReadLearnedBytes(unsigned route,uint32_t address,uint8_t* out,unsigned bytes)override{
+   auto* source=device.fabric.LearnedBytes();return source && source->Ready() && source->Read(route,address,out,bytes) && source->Ready();
+  }
+ };
  const char* rootImage;const char* peerImage;ProjectionExecutionFabric& fabric;
  std::array<std::unique_ptr<ParentArithmeticPeer>,120> peer;
  std::unique_ptr<Root> root;
@@ -115,7 +123,7 @@ struct ProjectionExecutionMachine::Impl::Root:ProjectionParentMachine {
 };
 void ProjectionExecutionMachine::Impl::Start(unsigned w){
  if(!w){root.reset(new Root(*this));return;}
- assert(!peer[w]);auto p=std::make_unique<ParentArithmeticPeer>(peerImage,w,fabric.Gddr(),false);
+ assert(!peer[w]);auto p=std::make_unique<Peer>(peerImage,w,fabric.Gddr(),*this);
  p->memory.clear();for(unsigned i=0;i<PioneerQ38ProjectionGraphSnapshotWords(w);i++){
   unsigned a=PioneerQ38ProjectionGraphSnapshotAddress(w,i),v=fabric.ReadLocal(w,a);p->memory[a]=v;
   // The16KiB helper's VM fetch slot reloads from activationCode. Populate

@@ -11,8 +11,9 @@ import sys
 import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
-if len(sys.argv) not in (6, 7) or (len(sys.argv) == 7 and sys.argv[6] not in ('--wide', '--faults')):
-    raise SystemExit('expected QPR1 QFP3 ZERO QPE1 QRN1 [--wide|--faults]')
+if len(sys.argv) not in (6, 7) or (len(sys.argv) == 7 and sys.argv[6] not in ('--wide', '--faults', '--actual-model', '--actual-model-extremes')):
+    raise SystemExit('expected QPR1 QFP3 ZERO QPE1 QRN1 [--wide|--faults|--actual-model|--actual-model-extremes]')
+actual = sys.argv[-1] in ('--actual-model', '--actual-model-extremes')
 pins = runpy.run_path(str(here.parent / 'generate_qwen38_projection_graph_images.py'))['PINS']
 for name, (section, size, sha, _) in pins.items():
     directory = pathlib.Path(sys.argv[1 if name.startswith('root-') else 2])
@@ -56,11 +57,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-projection-native-factory-') as
                     '-fsanitize=address,undefined', *flags, '-DPIONEER_Q38_GDN_MUTABLE_STATE=', '-DPIONEER_Q38_NORMAL_CLOCK=1',
                     '-DPIONEER_Q38_EMBEDDING_NATIVE=1', '-DPIONEER_Q38_LEARNED_RMS_NATIVE=1', '-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1',
                     '-I' + str(base), *[str(here / (name + '.cpp')) for name in (
-                        'pioneer_q38_projection_execution_native_factory_test', 'pioneer_q38_projection_native_transport',
+                        'pioneer_q38_projection_actual_model_test' if actual else 'pioneer_q38_projection_execution_native_factory_test', 'pioneer_q38_projection_native_transport',
                         'pioneer_q38_projection_execution_machine', 'pioneer_q38_embedding_execution_bridge',
                         'pioneer_q38_learned_rms_execution_bridge')], '-o', str(binary)], check=True)
     cases = list(range(14)) + list(range(20, 26)) if sys.argv[-1] == '--faults' else [None]
     for case in cases:
         suffix = ['--wide'] if sys.argv[-1] == '--wide' else [] if case is None else [str(case)]
+        if actual:
+            suffix = [str(here.parents[2] / 'generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf')]
+            if sys.argv[-1] == '--actual-model-extremes':
+                suffix += ['--all-tokens']
         subprocess.run([str(binary), *sys.argv[1:6], *suffix], check=True,
                        env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})

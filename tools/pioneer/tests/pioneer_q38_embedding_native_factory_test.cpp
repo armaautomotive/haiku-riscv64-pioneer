@@ -75,8 +75,10 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  unsigned mapCalls=0,nativeReads=0,nativeWrites=0,embeddingStarts=0,embeddingStops=0,embeddingPc=0;
  unsigned embeddingPacketFault=0,zeroFailRun=0,embeddingSummaryFault=UINT32_MAX;
  const char* embeddingImage;
+ const uint8_t* originalEmbeddingWeights=nullptr; // TEST transport bytes ONLY
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  const char* rmsImage=nullptr;
+ const uint32_t* originalRmsWeights=nullptr; // TEST transport bytes ONLY
  unsigned rmsStarts=0,rmsStops=0,rmsPc=0,rmsPacketFault=0,rmsBadCounter=0,rmsSourceFault=0,rmsDescriptorFault=0;
  unsigned rmsSummaryFault=UINT32_MAX,rmsPostFault=0,rmsReadFault=0,rmsReads=0;
  bool LearnedRmsSourceScope(bool);
@@ -340,6 +342,7 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  if(value==0x47800){rootHolds++;coreReset=value;return;}
  assert(value==0x46800 && coreReset==0x87ffff);coreReset=value;embeddingStarts++;
  EmbeddingExecutionBridge t;t.l1.resize(73737);
+ t.originalTiledWeights=originalEmbeddingWeights;
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  t.boundedEmbedding=true;
 #endif

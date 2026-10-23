@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <vector>
 struct PioneerQ38ProjectionGraphResult;
+struct ProjectionExecutionLearnedBytes;
 // TEST PCI/L1/clock endpoints ONLY. No native context, capability, owner,
 // scope, page ledger, private proof, or prepared lease is fabricated here.
 // A separate TU avoids colliding with the original native source fixture.
@@ -29,5 +30,6 @@ public:
  void VerifyOutput();void Diagnostic()const;
  void Fault(unsigned kind); // simulated endpoint fault,never a production mode
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
+ void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
 };
 #endif

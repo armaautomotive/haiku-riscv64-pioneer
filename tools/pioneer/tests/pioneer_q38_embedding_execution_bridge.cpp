@@ -8,7 +8,8 @@ void ExecuteEmbeddingBridge(const char* image,EmbeddingExecutionBridge& t){
  auto at=[](unsigned address){unsigned n=0;for(unsigned i=0;i<6;i++){auto s=PioneerQ38EmbeddingSnapshotSpan(i);
   if(address>=s.address && address-s.address<s.words*4)return n+(address-s.address)/4;n+=s.words;}assert(false);return 0U;};
  EmbeddingMachine m(image,*plan,t.l1[at(TT_Q38_FFN_RESIDENT_DESCRIPTOR+20)],t.l1[at(TT_Q38_FFN_RESIDENT_DESCRIPTOR+160)],t.l1[at(TT_Q38_FFN_RESIDENT_DESCRIPTOR+12)]);
- if(t.boundedEmbedding)for(unsigned block=0;block<20;block++)for(unsigned lane=0;lane<16;lane++){
+ if(t.originalTiledWeights)memcpy(m.packed.data(),t.originalTiledWeights,m.packed.size());
+ else if(t.boundedEmbedding)for(unsigned block=0;block<20;block++)for(unsigned lane=0;lane<16;lane++){
   unsigned token=t.l1[at(TT_Q38_FFN_RESIDENT_DESCRIPTOR+20)];
   uint16_t d=uint16_t(0x1800+((block+lane+token%7)%7)*32),n=uint16_t(0x1000+((block*3+lane+token%5)%5)*64);
   m.Put(block,lane,0,uint8_t(d));m.Put(block,lane,1,uint8_t(d>>8));
@@ -25,7 +26,7 @@ void ExecuteEmbeddingBridge(const char* image,EmbeddingExecutionBridge& t){
  // Legacy local test guards may contain arbitrary original values here;
  // do not invoke its fixture-only Run guards. Execute the SAME real bytes.
  while(m.pc!=0x64038 && m.pc!=0x64058)m.StepScalar();
- if(t.boundedEmbedding && m.pc==0x64038)m.Verify(); // independent original-Q4_K TEST observer ONLY
+ if((t.boundedEmbedding || t.originalTiledWeights) && m.pc==0x64038)m.Verify(); // independent original-Q4_K TEST observer ONLY
  for(unsigned i=0;i<73737;i++){auto a=PioneerQ38EmbeddingSnapshotAddress(i);t.l1[i]=m.CodeAddress(a)?m.l1[m.Index(a)]:m.memory.at(a);}
  for(unsigned i=0;i<10;i++)t.command[i]=m.command[i];for(unsigned i=0;i<8;i++)t.counts[i]=m.counts[i];
  t.resident=m.resident;t.steps=m.steps;t.packets=m.packets;t.pc=m.pc;

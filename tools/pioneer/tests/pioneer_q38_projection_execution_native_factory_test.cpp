@@ -8,7 +8,7 @@
 struct ProjectionNativeFixture:NativeFactoryFixture {
  PioneerQ38LearnedRmsResult norm;PioneerQ38ProjectionGraphResult projection;
  std::unique_ptr<ProjectionNativeTransport> transport;
- ProjectionNativeFixture(const char* zero,const char* embedding,const char* rms):NativeFactoryFixture(zero,embedding){
+ ProjectionNativeFixture(const char* zero,const char* embedding,const char* rms,unsigned token=0,unsigned bank=0):NativeFactoryFixture(zero,embedding,token,bank){
   io.rmsImage=rms;auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
   for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);
    if(p->kind!=plan->WeightKind || p->layer || (p->role!=0 && p->role!=5 && p->role!=6 && p->role!=10 && p->role!=11))continue;
@@ -105,6 +105,7 @@ struct ProjectionNativeFixture:NativeFactoryFixture {
    && io.touches==n && transport->Touches()==d); // NO subsequent endpoint read/STOP/restore/retry
  }
 };
+#ifndef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_ONLY
 int main(int argc,char** argv){
  assert(argc==6 || argc==7);setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -151,3 +152,4 @@ int main(int argc,char** argv){
  printf("PASS SAME native context source->zero2MiB->QPE1->QRN1->actual ALL120 native preparation/maps/scope/factory->QPR1+ALL119QFP3:projections%u/matrices%u/producers%u/boots%u/full restore/actual complete dispatch END;Work controller NO CPU numeric input/reference/fallback;SIMULATED_HARDWARE_NOT_CARD_SPEED\n",
   wide?4U:2U,f.transport->Matrices(),f.transport->Producers(),f.transport->Boots());
 }
+#endif
