@@ -1,5 +1,41 @@
 # Native build status
 
+Latest October22 Pacific/October23 UTC2026:NATIVE RMS DEBUG qualification
+IMPLEMENTED/BUILT/STAGED,NOT yet a physical-card pass or inference speedup.
+Separate exacttag41/namespace12,actual same-source/global-cookie/thread/
+clock/zero2MiB/QPE1/QRN1 ownership.10fixed poisoned GDDR readbacks INSIDE
+active RMS owner AFTER verified physical hold BEFORE complete ROOT restore/
+private publication:normalized5120+raw residual5120. HEAP41032B pointer-free
+public reply,zero-only inputs,no caller numeric input/addresses/BME/newDMA.
+Work path retains NO numeric readback/CPU reference/fallback. New client
+BOTH independent ORIGINAL references BEFORE FD,only17 original weight
+pages upload,all10240returned words compare before explicit END. First
+unknown/mismatch CLOSE ONLY,no later I/O/END/restore/retry/hot swap.
+
+ASan/UBSan actual controller7/14/40 and public control7/45/10 PASS;client
+9/87 PASS. Production original c600 FULL SAME-FILE SHA/851tensors before
+simulated native context,token0/15/248319/workspace0/6,actual emitted
+zero/QPE1/QRN1+new readback ->ALL30720words BIT-EXACT to separate-TU
+original CPU oracle/full restore/END. Hardware SIMULATED,not card.219new
+role gates +old13/210 PASS;legacyRMS7/616+93faults and oldnative DEBUG
+embedding7/9/7 +oldclient9/51 PASS. All these test/build parents TERMINAL0.
+Linked driver A/B a32f462c (1141960B),maxframe1248/readback448/RMSRun272;
+client A/B/C20d93bef (58200B). Actual private full projection/RMS macro-OFF
+object stays2d127c1e EXACT;oldtag38/guard/default43 controls23e/d1ce/2df
+BYTE-IDENTICAL. No dirty llama.cpp or unrelated FlashNext work touched.
+
+Native64CPUs/fullRAM remains healthy;fresh original041/tag12/gen1/idle/
+cold0/owner0/open1/guard1,allcomputeparents absent. Three NEW stage files
+verified;installed041/Assistant/model/NIC/boot untouched;no newGPU job.
+New guarded updaterdf4db0ac adds exactclean041<->a32 DEBUG pair,raw-cache22
+still HARD BLOCKED. Focused112cases PASS. FULL updater suite STILL LIVE
+exec8272/Python83990;do NOT restart/modify its dependencies or claim full
+pass. NEXT full-suite terminal proof,fresh parent/status checks,controlled
+apply and ONE native client --validate-token0 (including FULLSHA),no other
+native job/SCP/reload while parent alive. UNKNOWN ->physical recovery,
+not cleanup/hot-swap. Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal
+ACTIVE/turn PROGRESS. Evidence:benchmarks/qwen38-learned-rms-debug-20261022.txt.
+
 Latest October22 Pacific/October23 UTC2026:VM TOP-PAGE clear/copy defect
 FIXED and separate native64CPU/full-RAM kernel PASSES bounded tests.
 Existing KDL metadata traced the bad nonleaf to physical1fed3f4000 mapped

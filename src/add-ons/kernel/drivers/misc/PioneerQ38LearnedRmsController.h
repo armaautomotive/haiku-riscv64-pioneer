@@ -4,6 +4,11 @@
 #if !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
 #error Private no-reference learned RMS execution owner ONLY,not old/embedding-validation promotion
 #endif
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+#if PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE != 1 || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE)
+#error Separate fixed learned RMS DEBUG readback ONLY;never Work/projection/CPU-reference kernel
+#endif
+#endif
 #include "PioneerQ38EmbeddingController.h"
 #include "PioneerQ38LearnedRmsPlan.h"
 #include "PioneerQ38LearnedRmsCode.h"
@@ -13,6 +18,9 @@ struct PioneerQ38LearnedRmsResult {
  uint32_t version=1,started=0,phase=0,word=0,unsafe=0,closed=0,completed=0,held=0;
  uint32_t savedWords=0,verifiedWords=0,installedWords=0,restoredWords=0;
  uint32_t before[8]={},after[8]={},summary[32]={},pc[2]={};
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+ uint32_t validationPages=0,validationWords=0;
+#endif
 };
 class PioneerQ38LearnedRmsController {
  friend class PioneerQ38ProjectionGraphOwner;
@@ -61,6 +69,52 @@ class PioneerQ38LearnedRmsController {
  template<class IO> bool Pc(IO& io,PioneerQ38LearnedRmsResult& r){
   for(unsigned i=0;i<2;i++){io.Pause();r.pc[i]=io.RuntimePcRead();if(r.pc[i]!=0x64038 && r.pc[i]!=0x6403c)return false;}return true;
  }
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+ // DEBUG ONLY,inside the SAME real owner after terminal+physical hold and
+ // BEFORE restoring original ROOT L1/private publication. Two FIXED GDDR
+ // spans: normalized5120 and preserved raw residual5120. No host inputs,
+ // arithmetic/reference/fallback,DMA,BME or caller-selected device addresses.
+ template<class IO> bool ValidationReadback(IO& io,PioneerResidentLease& store,uint32_t* normalized,uint32_t* residual,PioneerQ38LearnedRmsResult& r){
+  if(!normalized || !residual || running || !state || !state->OwnsLearnedRms(identity,this,producer)
+   || r.validationPages || r.validationWords)return false;
+  const uint32_t* d=rms.Descriptor();
+  for(unsigned plane=0;plane<2;plane++){
+   PioneerQ38ProjectionExtent e;unsigned first=plane?TT_Q38_RMS_BACKUP/4096:0;
+   if(!state->InitializeSpan(identity,0,first,5,e) || e.bank!=bank || e.address!=d[4]+first*4096
+    || e.route!=d[8] || e.pages!=5 || e.bytes!=20480)return false;
+   uint32_t* output=plane?residual:normalized;
+   for(unsigned page=0;page<5;page++){
+    if(!Guard(io,store,0x47800))return false;
+    for(unsigned w=0;w<1024;w++)if(!Write(io,0x80000+page*4096+w*4,0x7fc20000+plane*5120+page*1024+w))return false;
+    const uint32_t next[]={e.address+page*4096,0,e.route,0x80000+page*4096,0,129,0,0,4096,0};
+    for(unsigned i=0;i<10;i++){io.ResidentNocWrite(i*4,next[i]);if(io.ResidentNocRead(i*4)!=next[i])return false;command[i]=next[i];}
+    if(!Guard(io,store,0x47800))return false;
+    uint64_t began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return false;
+    uint32_t expected[8];const unsigned delta[]={1,64,1,1,0,0,1,0};
+    for(unsigned i=0;i<8;i++)expected[i]=counts[i]+delta[i];
+    traffic=true;io.ResidentNocWrite(0x40,1);
+    bool done=false;
+    for(unsigned poll=0;poll<65536;poll++){
+     if(!Guard(io,store,0x47800))return false;
+     uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return false;
+     bool exact=io.ResidentNocRead(0x40)==0;
+     for(unsigned i=0;i<8;i++)exact &= io.ResidentNocRead(Counter(i))==expected[i];
+     if(exact){done=true;break;}io.Pause();
+    }
+    if(!done)return false;
+    for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=next[i])return false;
+    for(unsigned i=0;i<8;i++)counts[i]=expected[i];
+    traffic=false;if(!Guard(io,store,0x47800))return false;
+    for(unsigned w=0;w<1024;w++){
+     uint32_t bits;if(!io.EmbeddingReadChecked(0x80000+page*4096+w*4,bits) || (bits&0x7fffffff)>=0x7f800000)return false;
+     output[page*1024+w]=bits;r.validationWords++;
+    }
+    r.validationPages++;if(!Guard(io,store,0x47800))return false;
+   }
+  }
+  return r.validationPages==10 && r.validationWords==10240;
+ }
+#endif
  bool MatchesCompleted(const PioneerQ38ProjectionMutableBanks& owner,const PioneerQ38CanonicalModelPlan& plan,
   const PioneerQ38ProjectionIdentity& id,unsigned selectedToken,unsigned selectedPosition,unsigned selectedBank)const{
   return Completed() && graph==&owner && canonical==&plan && identity==id && token==selectedToken && position==selectedPosition && bank==selectedBank
@@ -85,7 +139,11 @@ public:
  template<class IO> bool RunOnce(IO& io,const tt_dram_samples_result& dram,const tt_compute_noc_result& root,
   PioneerResidentBanks& resident,PioneerQ38ProjectionMutableBanks& mutableOwner,const PioneerQ38CanonicalModelPlan& plan,
   const PioneerQ38EmbeddingController& input,const PioneerQ38ProjectionIdentity& id,const uint8_t* initialized,unsigned pages,PioneerResidentLease& store,
-  unsigned selectedToken,unsigned selectedPosition,unsigned selectedBank,PioneerQ38LearnedRmsResult& r){
+  unsigned selectedToken,unsigned selectedPosition,unsigned selectedBank,PioneerQ38LearnedRmsResult& r
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+  ,uint32_t* normalized=nullptr,uint32_t* residual=nullptr
+#endif
+  ){
   if(attempted || started || unsafe || closed || r.version!=1 || r.started || r.phase || r.word || r.unsafe || r.closed || r.completed || r.held
    || r.savedWords || r.verifiedWords || r.installedWords || r.restoredWords || !id.Valid() || !resident.Matches(dram)
    || root.version!=1 || root.state!=TT_COMPUTE_NOC_PASSED || !root.tlb_restored || root.recovery_required
@@ -94,6 +152,11 @@ public:
   for(auto value:r.after)if(value)return false;
   for(auto value:r.summary)if(value)return false;
   for(auto value:r.pc)if(value)return false;
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+  using Address=__UINTPTR_TYPE__;Address a=reinterpret_cast<Address>(normalized),b=reinterpret_cast<Address>(residual);
+  if(!a || !b || ((a|b)&3) || a>~Address(0)-20480 || b>~Address(0)-20480
+   || (a<b+20480 && b<a+20480) || r.validationPages || r.validationWords)return false; // BEFORE claim/device I/O
+#endif
   attempted=true;for(unsigned i=0;i<16;i++)source[i]=i?root.source[0][i]:store.config|0x10000;
   if(!rms.Build(plan,0,0,selectedPosition,selectedBank,id,source,2) || !rms.LearnedPagesPresent(initialized,pages))return false;
   state=mutableOwner.Projection(id);
@@ -138,6 +201,9 @@ public:
   io.RuntimeResetWrite(0x87ffff);io.Pause();if(!Guard(io,store,0x87ffff))return fail();
   io.RuntimeResetWrite(0x47800);io.Pause();if(!Guard(io,store,0x47800))return fail();running=false;r.held=1;r.phase=6;
   if(!Image(io) || !Guard(io,store,0x47800))return fail();
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+  if(!ValidationReadback(io,store,normalized,residual,r))return fail();
+#endif
   for(unsigned i=0;i<73737;i++){r.word=i;if(!Write(io,PioneerQ38EmbeddingSnapshotAddress(i),saved[i]))return fail();r.restoredWords++;}
   for(unsigned i=0;i<10;i++){io.ResidentNocWrite(i*4,originalCommand[i]);if(io.ResidentNocRead(i*4)!=originalCommand[i])return fail();command[i]=originalCommand[i];}
   r.phase=7;if(!Original(io,r) || !Guard(io,store,0x47800) || r.savedWords!=73737 || r.verifiedWords!=147474 || r.installedWords!=10241

@@ -1,0 +1,120 @@
+Learned RMS native DEBUG qualification implementation
+October22 Pacific / October23 UTC2026
+
+NOT a full decoder,physical-card pass or inference-speed measurement.
+Last whole27B rate remains0.207893161tok/s;20tok/s UNMET;goal ACTIVE.
+
+REAL IMPLEMENTATION
+Exact new driver tag2026102200010041 / namespace12,root-only,not old
+embedding39/40,FFN,Work,projection or CPU-reference kernel promotion.
+Actual native model/global cookie/thread/call lock/learned-page ledger/
+zero2MiB/QPE1/QRN1/source/clock/physical-held lifetime,not a ready facade.
+DEBUG readback happens INSIDE the SAME real learned RMS owner,AFTER
+terminal+physical ROOT hold and BEFORE full original L1 restoration and
+private normalized-input publication. No outside read after owner close.
+
+Two FIXED GDDR spans only:5120normalized words and5120raw residual words
+at the canonical backup offset98304. All10 destinations poisoned with NaN
+before actual NoC reads. Source/route/command/counters/clock/host/119peer
+holds remain guarded. No caller-selected bank/address/code/numeric input,
+new DMA/BME,CPU math/reference/fallback in the kernel. Native Work
+macro-OFF path still has no DEBUG readback or numeric CPU reference.
+Public reply is a41032B HEAP-only fixed pointer-free structure; metadata
+and both arrays must be zero except logical version/token/position input.
+Only complete restored results publish. First failure retains ALL and
+zeroes partial public data;future APIs/END make no later device I/O.
+
+NEW SOURCE-BOUND CLIENT
+Production public GGUF source authenticates the full SAME opened file and
+ALL851 tensors before GPU FD. Original embedding and original F32 norm
+references are BOTH prepared BEFORE FD. Same source/epoch checked around
+every call. Upload only12 ORIGINAL tiled embedding pages+5 ORIGINAL F32
+norm pages,nonces1/2,then SPAN_END. No learned CPU products uploaded.
+Driver/tag/namespace/storage/span/reply fields are exact. ALL10240 returned
+words must match independent original references before explicit BANK_END.
+Unknown/numeric mismatch/source loss -> CLOSE ONLY;no subsequent I/O/END/
+reset/restore/retry/substitution/hot swap absent physical recovery.
+
+COMPLETED OFFLINE EVIDENCE (ALL TERMINAL0)
+ASan/UBSan/Werror,actual native factories/controllers/scopes/mapping/END:
+ - New private DEBUG readback:7positive/14inert refusals/40faults,ALL7
+   embedding source groups/workspace banks.10fixed poisoned pages;
+   saved/restored73737 and independently verified147474 original ROOT
+   words. Timeout/poison/counter/source faults at EACH of10 reads retainALL.
+ - New ACTUAL public control/routing/global lock:7positive/45refusals/
+   10faults. Old namespaces/Work refused before I/O;bad user copy retains.
+ - New client over synthetic GGUF/transport:9positive/87faults. Original
+   bytes verified on ALL17 uploads;both references before FD;corruption of
+   normalized OR residual,finite/NaN,source/epoch/transport/page/reference
+   failures cause CLOSE ONLY/no END/retry. Not an arithmetic/card test.
+ - New ORIGINAL public GGUF test:production full SHA c600de0300ae8a0eb3a6
+   c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747/18973870528B/ALL851
+   tensors BEFORE ANY simulated native context. Separate host oracle TU,
+   not CPU-reference code compiled into native controller. Tokens0/15/
+   248319,workspaces0/6:actual emitted zero/QPE1/QRN1 plus actual DEBUG
+   readback ->ALL30720 returned words BIT-EXACT to independent ORIGINAL
+   references,full restore/END. Device endpoints SIMULATED,not physical.
+ -219actual new driver/client/reference/before-SDK role gates PASS.
+ - Old immutable image/native gates13+before-SDK RMS gates210 PASS.
+ - Old native RMS7positive/616refusals and93faults PASS.
+ - Old native DEBUG embedding7positive/9refusals/7faults PASS.
+ - Old embedding DEBUG client9positive/51faults PASS.
+
+BUILD PINS / NO DIRTY LLAMA BUILD
+Read-only SDK,driver/local headers only;no llama.cpp read/build/edit.
+Actual full linked driver A/B BYTE-IDENTICAL:
+ a32f462cbfdbe8558aca780a526e44a59dea15b25489a0131a5c4803771c276a
+ 1141960B;max new kernel frame1248B;DEBUG readback448B;RMSRun272B.
+Client A/B/C BYTE-IDENTICAL:
+ 20d93bef2c1de0dad5c3643c070d387ee8bbfc06e489f9afc842e397043eeeac
+ 58200B. User upload staging explicitly zeroes its heap object,not a1MiB
+ temporary stack aggregate.
+Actual private complete projection/RMS macro-OFF object remains EXACT:
+ 2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35
+Old tag38 driver/reload guard/default43 controls remain EXACT23e2e68a/
+d1ce2aa4/2df0e0f8. Existing embedding39/40 namespaces are not new41 grants.
+
+CONTROLLED STAGING / INSTALLATION GATE
+Native Haiku's new VM-fix kernel remains up:64CPUs/max137034936320B.
+Fresh CPU-only reload metadata:original041fef18/tag2026102100010012,
+generation1,quiesced0/cold0/active_owner0/open_count1/guard1. No compute
+parents;rollback041/adminclientb0c/guardd1ce/device link verified.
+Added exact --apply-rms-validation / --restore-rms-validation pair to the
+existing guarded updater,ONLY known-clean041tag12 <-> a32tag41. Existing
+raw-cache22 remains HARD BLOCKED. Existing parent regex catches new client.
+Updater SHA:
+ df4db0ac1b5639088b256c45c0e5c259e45693f01d1ca6b71792db89f9fdaf45
+Focused112filesystem/hash/link/owner/status/quiesce/wait-failure cases PASS.
+FULL updater regression remains LIVE session8272/PythonPID83990;last
+verified child was actual-updater.sh --restore-native-operand. It has NOT
+failed or been restarted. Do not claim a full-suite pass until terminal.
+
+ONLY THREE NEW FILES staged and full hashes rechecked in:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/
+ tenstorrent_pci_probe-rms-validation-a32f462c
+ pioneer-q38-rms-validation-20d93bef
+ pioneer_p100a_hot_swap-rms-validation-df4db0ac.sh
+Unsupported SFTP failed before transfer;legacy SCP-O succeeded. Client and
+updater mode700. Installed041 driver unchanged. No new native GPU job,
+driver replacement,clock operation,reboot/relay/PSU/SD/Assistant/model change.
+
+NEXT
+Require full updater terminal PASS and fresh idle/status/parents before
+guarded apply. Then ONE client --validate-token0;FULL SHA phase is part of
+the SAME native parent. No SCP/second native job/reload while it is alive.
+First unknown/mismatch ->CLOSE ONLY;do not status/read/END/restore/reset/
+hot-swap a failed card. Known-clean restore only after proven PASS/complete
+explicit END/client terminal0. Keep existing fixed top-page7 SD-free boot.
+After native RMS qualification,complete projection/result stashes and real
+residual/GDN/attention/KV/sampling/whole-decoder state/scheduler remain owed.
+
+LOGS
+ /private/tmp/pioneer-q38-rms-readback-native-20261022-a.log
+ /private/tmp/pioneer-q38-rms-debug-control-20261022-b.log
+ /private/tmp/pioneer-q38-rms-debug-session-20261022-a.log
+ /private/tmp/pioneer-q38-rms-debug-original-model-20261022-a.log
+ /private/tmp/pioneer-q38-rms-debug-gates-20261022-a.log
+ /private/tmp/pioneer-q38-rms-debug-native-build-20261022-b.log
+ /private/tmp/pioneer-q38-rms-debug-private-projection-compile-20261022-a.log
+ /private/tmp/pioneer-q38-rms-debug-updater-focused-20261022-a.log
+ /private/tmp/pioneer-q38-rms-debug-updater-full-20261022-a.log [LIVE]

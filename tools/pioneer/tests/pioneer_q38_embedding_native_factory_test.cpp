@@ -87,7 +87,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  bool LearnedRmsOtherCoresHeld();bool RmsMode()const;
  void RmsResetWrite(uint32);
 #endif
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE)
  unsigned validationReads=0,validationFailRead=0,validationPoisonRead=0,validationBadCounter=0,validationSourceFault=0;
  bool validationPending=false;
  std::array<uint32,5120> computedEmbedding={};
@@ -216,7 +216,7 @@ static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,in
 #endif
  assert(physical==Bar+0x19064000 && bytes==40960 && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
  if(activeIO->failMap)return -1;
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE)
  // Observe the embedding owner's entry baseline AFTER zero CLOSE. The
  // legacy resident lease still owns its old status trailer until BANK_END.
  for(unsigned i=0;i<73737;i++)activeIO->embeddingOriginal[i]=activeIO->RawSlot(PioneerQ38EmbeddingSnapshotAddress(i));
@@ -302,20 +302,36 @@ bool PioneerSessionIO::EmbeddingMode()const{
  return q38MutableContext && q38MutableContext->q38EmbeddingModel
   && q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Embedding;
 }
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
-bool PioneerSessionIO::ValidationTrafficMode()const{return EmbeddingMode() && embeddingStops && coreReset==0x47800;}
+#if defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE)
+bool PioneerSessionIO::ValidationTrafficMode()const{
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+ return RmsMode() && rmsStops && coreReset==0x47800;
+#else
+ return EmbeddingMode() && embeddingStops && coreReset==0x47800;
+#endif
+}
 void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
  if(!ValidationTrafficMode()){ProjectionZeroIO::ResidentNocWrite(offset,value);return;}
  Touch();
  if(offset!=0x40){StoreMock::ResidentNocWrite(offset,value);return;}
- assert(value==1 && !validationPending && validationReads<5 && pciCommand[0]==0x402 && pciCommand[1]==0x402);
- unsigned page=validationReads++;const uint32 expected[]={workspaceBase+page*4096,0,PioneerQ38ProjectionRoute(workspaceBank),0x80000+page*4096,0,129,0,0,4096,0};
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+ const unsigned maxPages=10,poison=0x7fc20000;
+#else
+ const unsigned maxPages=5,poison=0x7fc10000;
+#endif
+ assert(value==1 && !validationPending && validationReads<maxPages && pciCommand[0]==0x402 && pciCommand[1]==0x402);
+ unsigned plane=validationReads/5,page=validationReads++%5;
+ unsigned sourceOffset=0;
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+ sourceOffset=plane?TT_Q38_RMS_BACKUP:0;
+#endif
+ const uint32 expected[]={workspaceBase+sourceOffset+page*4096,0,PioneerQ38ProjectionRoute(workspaceBank),0x80000+page*4096,0,129,0,0,4096,0};
  for(unsigned i=0;i<10;i++)assert(command[i]==expected[i]);
  if(validationReads==validationFailRead){validationPending=true;return;}
  for(unsigned w=0;w<1024;w++){
   auto& local=RawSlot(0x80000+page*4096+w*4);
-  assert(local==0x7fc10000+page*1024+w); // destination genuinely poisoned BEFORE GDDR request
-  if(!(validationReads==validationPoisonRead && w==1023))local=wholeWorkspace[page*1024+w];
+  assert(local==poison+plane*5120+page*1024+w); // destination genuinely poisoned BEFORE GDDR request
+  if(!(validationReads==validationPoisonRead && w==1023))local=wholeWorkspace[sourceOffset/4+page*1024+w];
  }
  counters[0]++;counters[1]+=64;accepted++;counters[3]++;
  if(validationReads==validationBadCounter)writeCounters[0]++;
@@ -359,7 +375,7 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  counters[0]=t.counts[0];counters[1]=t.counts[1];accepted=t.counts[2];counters[3]=t.counts[3];
  writeCounters[0]=t.counts[4];writeCounters[1]=t.counts[5];writeCounters[3]=t.counts[7];
  for(unsigned i=0;i<5120;i++)wholeWorkspace[i]=t.resident[i];
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE)
  computedEmbedding=t.resident;
 #endif
  if(embeddingSummaryFault<32)RawSlot(TT_Q38_FFN_RESIDENT_SUMMARY+embeddingSummaryFault*4)^=1;

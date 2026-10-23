@@ -28,6 +28,7 @@ case "$1" in
  --apply-ffn-host-profile|--restore-ffn-host-profile) mode=$1;;
  --apply-ffn-sealed-proof|--restore-ffn-sealed-proof) mode=$1;;
  --apply-embedding-validation|--restore-embedding-validation) mode=$1;;
+ --apply-rms-validation|--restore-rms-validation) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -107,6 +108,7 @@ candidate_ffn_native_graph=$stage/tenstorrent_pci_probe-ffn-native-graph-453ebdf
 candidate_ffn_host_profile=$stage/tenstorrent_pci_probe-ffn-host-profile-eb6ba274
 candidate_ffn_sealed_proof=$stage/tenstorrent_pci_probe-ffn-sealed-proof-23e2e68a
 candidate_embedding_validation=$stage/tenstorrent_pci_probe-embedding-validation-779a2c81
+candidate_rms_validation=$stage/tenstorrent_pci_probe-rms-validation-a32f462c
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -181,6 +183,7 @@ hash_ffn_native_graph=453ebdf12fa13bd39d31c3ec9f01c17e7048946e5cd575f663055b6e49
 hash_ffn_host_profile=eb6ba2741c8904dba8b4902ac260934ea2e169ffeb16ab8a3e96bd5e11966ba4
 hash_ffn_sealed_proof=23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
 hash_embedding_validation=779a2c81080b5cd7ca891f3614ea5c02ef580d769023b90f40c3296db64ea514
+hash_rms_validation=a32f462cbfdbe8558aca780a526e44a59dea15b25489a0131a5c4803771c276a
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -253,6 +256,7 @@ tag_ffn_native_graph=2026102200010036
 tag_ffn_host_profile=2026102200010037
 tag_ffn_sealed_proof=2026102200010038
 tag_embedding_validation=2026102200010040
+tag_rms_validation=2026102200010041
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -435,6 +439,8 @@ else
  elif [ "$mode" = --restore-ffn-sealed-proof ]; then source=$candidate_scale_reuse_qualification; expected=$hash_ffn_sealed_proof; result=$hash_scale_reuse_qualification; oldtag=$tag_ffn_sealed_proof; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-embedding-validation ]; then source=$candidate_embedding_validation; expected=$hash_scale_reuse_qualification; result=$hash_embedding_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_embedding_validation
  elif [ "$mode" = --restore-embedding-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_embedding_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_embedding_validation; newtag=$tag_scale_reuse_qualification
+ elif [ "$mode" = --apply-rms-validation ]; then source=$candidate_rms_validation; expected=$hash_scale_reuse_qualification; result=$hash_rms_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_rms_validation
+ elif [ "$mode" = --restore-rms-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_rms_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_rms_validation; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification

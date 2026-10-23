@@ -5,17 +5,24 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+#if PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || PIONEER_Q38_EMBEDDING_QUALIFICATION != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010041ULL || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE)
+#error Learned RMS GDDR DEBUG validation requires exact isolated tag41 native role,never Work/projection/CPU-reference kernel
+#endif
+#endif
 #ifdef PIONEER_Q38_PROJECTION_EXECUTION_OWNER
 #if PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || defined(PIONEER_Q38_PROJECTION_GRAPH_MEMORY) || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
 #error Private native projection EXECUTION requires exact RMS source;not old held-only/embedding qualification promotion
 #endif
 #endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
-#if PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
+#if PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || (defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) && !defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE)) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
 #error Private learned RMS adapter ONLY;no old embedding qualification/public selector promotion
 #endif
 #endif
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+#define PIONEER_Q38_EMBEDDING_EXPECTED_TAG 0x2026102200010041ULL
+#elif defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
 #if PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || PIONEER_Q38_EMBEDDING_QUALIFICATION != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010040ULL
 #error GDDR embedding validation needs its exact isolated tag40 DEBUG role
 #endif
@@ -29,8 +36,12 @@
 #endif
 #define PIONEER_Q38_EMBEDDING_ROLE_TAG_OK 1
 #include "PioneerQ38EmbeddingProtocol.h"
+#include "PioneerQ38LearnedRmsProtocol.h"
 #else
 #define PIONEER_Q38_EMBEDDING_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010041ULL && (!defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK)
+#error Reserved tag41 is ONLY separate fixed normalized/residual learned RMS DEBUG qualification
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010040ULL && (!defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK)
 #error Reserved tag40 is ONLY the separate fixed GDDR embedding numerical DEBUG qualification
@@ -3420,14 +3431,22 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 // PIONEER_Q38_EMBEDDING_NATIVE_FACTORY_END
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 // PIONEER_Q38_LEARNED_RMS_NATIVE_FACTORY_BEGIN
-[[maybe_unused]] static bool RunQ38LearnedRmsModel(PioneerStoreContext& c,PioneerQ38LearnedRmsResult& result)
+[[maybe_unused]] static bool RunQ38LearnedRmsModel(PioneerStoreContext& c,PioneerQ38LearnedRmsResult& result
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+	,uint32* normalized=NULL,uint32* residual=NULL
+#endif
+)
 {
 	auto* m=c.q38EmbeddingModel;
 	if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Complete || !m->Closed() || m->rms.Claimed() || m->Unsafe()) return false;
 	m->phase=PioneerQ38EmbeddingNativeState::Rms;
 	bool okay=c.io.LearnedRmsSourceScope(false) && c.io.EmbeddingMemoryMappingStable()
 		&& m->rms.RunOnce(c.io,c.baseline.baseline.baseline.baseline.dram,c.baseline.baseline.baseline.noc,c.banks,m->graph,m->plan,
-			m->embedding,m->identity,c.initialized,PioneerResidentBanks::Pages,c.lease,m->token,m->position,m->bank,result);
+			m->embedding,m->identity,c.initialized,PioneerResidentBanks::Pages,c.lease,m->token,m->position,m->bank,result
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+			,normalized,residual
+#endif
+			);
 	if (okay) m->phase=PioneerQ38EmbeddingNativeState::RmsComplete;
 	else {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
@@ -3673,7 +3692,51 @@ public:
 // PIONEER_Q38_GDN_CALL_SCOPE_END
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
 // PIONEER_Q38_EMBEDDING_NATIVE_CONTROL_BEGIN
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+static status_t Q38EmbeddingControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK || thread.team!=cookie->team) return status!=B_OK?status:B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_RMS_VALIDATION_SUPPORT) {
+		if (length!=sizeof(tt_q38_embedding_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie);if (status!=B_OK) return status;
+		const tt_q38_embedding_support support={1,55,12,5120,248320,512,0,0};
+		status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_RMS_VALIDATE || length!=sizeof(tt_q38_learned_rms_validation)) return B_BAD_VALUE;
+	auto* reply=new(std::nothrow) tt_q38_learned_rms_validation;
+	if (!reply) return B_NO_MEMORY;
+	status=user_memcpy(reply,data,sizeof(*reply));
+	bool shape=status==B_OK && PioneerQ38EmbeddingRequest(reply->metadata);
+	if (shape) for (unsigned i=0;i<5120;i++) if (reply->normalized[i] || reply->residual[i]) {shape=false;break;}
+	if (!shape) {delete reply;return status!=B_OK?status:B_BAD_VALUE;}
+	PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+	if (!c || !BindQ38EmbeddingModel(*c,reply->metadata.token,reply->metadata.position,0)) {
+		delete reply;return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+	}
+	PioneerQ38ProjectionZeroResult zero;PioneerQ38EmbeddingResult embedding;PioneerQ38LearnedRmsResult norm;
+	uint64 began=uint64(system_time());
+	bool okay=InitializeQ38EmbeddingModel(*c,zero) && RunQ38EmbeddingModel(*c,embedding)
+		&& RunQ38LearnedRmsModel(*c,norm,reply->normalized,reply->residual);
+	uint64 ended=uint64(system_time());auto* m=c->q38EmbeddingModel;
+	okay=okay && ended>=began && m && m->Closed() && m->embedding.Completed() && m->rms.Completed() && !c->Unsafe()
+		&& norm.validationPages==10 && norm.validationWords==10240;
+	auto& r=reply->metadata;r.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+	r.closed=r.input_ready=okay?1:0;r.recovery_required=okay?0:1;
+	r.session=m?m->identity.session:0;r.driver_generation=m?m->identity.driverGeneration:0;
+	r.elapsed_us=okay?ended-began:0;r.source_pages=okay?17:0;r.workspace_pages=okay?512:0;
+	r.saved_words=okay?embedding.savedWords+norm.savedWords:0;r.restored_words=okay?embedding.restoredWords+norm.restoredWords:0;
+	if (!okay) {
+		dprintf("Q38-RMS-VALIDATION: FAIL zero_phase%u embedding_phase%u norm_phase%u word%u readback_pages%u words%u saved%u restored%u\n",
+			zero.phase,embedding.phase,norm.phase,norm.word,norm.validationPages,norm.validationWords,norm.savedWords,norm.restoredWords);
+		memset(reply->normalized,0,sizeof(reply->normalized));memset(reply->residual,0,sizeof(reply->residual));
+	}
+	status=user_memcpy(data,reply,sizeof(*reply));delete reply;
+	if (!okay || status!=B_OK || c->Unsafe()) {tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+	return status; // CPU mismatch in separate DEBUG client must CLOSE ONLY,no later END/device I/O
+}
+#elif defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
 static status_t Q38EmbeddingControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
 {
 	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
@@ -6519,7 +6582,13 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #endif
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
 	// PIONEER_Q38_EMBEDDING_NATIVE_ROUTING_BEGIN
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+	if (operation==TT_PCI_PROBE_Q38_RMS_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_RMS_VALIDATE)
+		return Q38EmbeddingControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE
+		|| operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE)
+		return B_NOT_ALLOWED;
+#elif defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE)
 	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE)
 		return Q38EmbeddingControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE)
@@ -6528,6 +6597,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE)
 		return Q38EmbeddingControl(instance,operation,data,length);
 	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE)
+		return B_NOT_ALLOWED;
+#endif
+#ifndef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+	if (operation==TT_PCI_PROBE_Q38_RMS_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_RMS_VALIDATE)
 		return B_NOT_ALLOWED;
 #endif
 	if (operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE

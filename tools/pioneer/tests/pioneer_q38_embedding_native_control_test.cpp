@@ -3,8 +3,14 @@
 // No ready/controller callback forgery. OS endpoints alone are mocked.
 #define PIONEER_Q38_EMBEDDING_FACTORY_FIXTURE_ONLY
 #define B_DEVICE_OP_CODES_END 1000
+#ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
+#define PIONEER_Q38_RMS_FACTORY_FIXTURE_ONLY
+#include "pioneer_q38_learned_rms_native_factory_test.cpp"
+#else
 #include "pioneer_q38_embedding_native_factory_test.cpp"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38LearnedRmsProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnModelProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38WorkProtocol.h"
@@ -28,7 +34,7 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #define TT_PIONEER_EXPERIMENTAL_Q38_BANKS
 #include "embedding_factory_probe_lock.inc"
 #include "embedding_factory_call_scope.inc"
-#ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE)
 #define dprintf(...) ((void)0) // simulated OS kernel log,NOT device I/O
 #endif
 #include "embedding_factory_control.inc"
