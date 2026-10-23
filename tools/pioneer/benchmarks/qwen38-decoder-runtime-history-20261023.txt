@@ -1,0 +1,118 @@
+Canonical decoder runtime reservation + real convolution-history zero
+October23 UTC2026;OFFLINE private role,NOT installed/native-qualified.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+IMPLEMENTED
+PIONEER_Q38_DECODER_RUNTIME=1 selects the actual existing joint owner's
+BindCanonical branch,not an independent pretend allocation/ready object.
+It derives seven exact per-bank runtime suffixes from the SAME retained
+canonical model,then calls actual ResidentBanks.ReserveMutable ONCE with
+owner=this and the actual learned-upload ledger. ALL321168runtime pages
+(GDN73728+Conv1680+KV131072+seven workspaces114688) are protected from
+ordinary Page/Range/ImmutableRange/upload. No learned/unused page is
+claimed. Existing673range limit/public ioctl/normal driver remain intact.
+ALL learned parts must precede runtime;every part/bank offset is contiguous,
+aligned,nonoverflowing,with exact allocation and all expected runtime
+kind counts/KV coverage/recurrent geometry/workspace identities. Refusal
+leaves all seven output range sentinels and bank claims unchanged.
+
+The actual joint owner privately attaches canonical ConvHistoryBanks AFTER
+the real atomic claim,sharing the exact reservation pointer with GDN and
+projection. It retains336real ConvKind stripes,each5pages INCLUDING padding,
+and a separate EMPTY1680page bitmap. Exact retained canonical part fields
+are rechecked;initialization spans derive EVERY page through MutablePage
+with the exact baseline pointer/reservation owner,never caller NoC/address.
+There is NO public Bind/Attach/Commit/Publish/reset/release or current-state/
+compute/producer API. Shared fault quarantines the entire bank context.
+
+Actual ConvHistoryZeroController uses the existing EXACT frozen RV32 zero
+image. Each20KiB stripe is zeroed and freshly read back,including final4KiB
+chunk/padding. Source/clock/code/status/PC/descriptor/command/counter/ALL
+host leases/other-core holds are independently checked by the controller.
+Only completion PLUS post-execution physical holds commit private progress;
+only full1680page coverage PLUS known-clean original code/scratch/boot/
+source restore CLOSE publishes the initialization seal. That seal is NOT
+current-token history,projection completion,model/input or compute authority.
+UNKNOWN is memory-only quarantine,retains reservation/exact lease/ALL owners,
+and permits ZERO subsequent device IO/hold/END/restore/retry/release.
+
+QUALIFICATION (all listed parents TERMINAL0)
+1. ASan/UBSan real production joint reservation:9positive bindings,ALL321168
+   runtime pages checked,11760history-page spans across selected7workspaces,
+   23837refusals,32747geometry faults. All851learned tensors' upload pages
+   remain immutable/present;ALL separate state ledgers EMPTY. Nonzero tags
+   1/2/255 at first/middle/LAST runtime page in EVERY bank atomically refuse.
+   Second owner/copied baseline/invalid identity/no rebind/shared sticky fault.
+2. ASan/UBSan actual emitted RV32 zero code,6positive/9inert refusals:
+   ALL336canonical stripes/ALL7routes/1680pages,337actual executions due to
+   a split first stripe and partial known-clean CLOSE/resume. Full cumulative
+   GDDR observation is zero;EVERY allocated page touched exactly once.
+   Full count remains unpublished until CLOSE. Learned/GDN/projection
+   ledgers remain independently EMPTY. Additional1..5page ending spans PASS.
+3.171actual-image controller faults:ALL32summary/64descriptor/10command/
+   16source words,ALL4packet positions,write/read dropped/corrupt DATA,
+   source/epoch/code/counters/map/other-core/competing initiator/PC/status/
+   clock/reset/prepare/restore faults and canonical-history mutation.
+   ALL quarantine whole context/retainALL/exact lease/ZERO later IO.
+4. Actual projection512page zero+partial history zero/resume in ONE real
+   expanded joint reservation PASS;separate ledgers/physical restore/learned
+   unchanged. Separate ALL1680page actual history coverage then dropped
+   final boot restore MUST NOT publish:quarantine/retainALL/no later IO PASS.
+5. RV64 actual freestanding kernel compile+stack:runtime maximum928B,
+   history-zero maximum880B;both<2048B. Owners HEAP ONLY. No implementation
+   of a native factory is fabricated by declaration-only IO compile tests.
+6.197actual new gates PASS:ten old builders refuse the new role BEFORE SDK/
+   output;new image/native builders reject unknown role;exact header1only;
+   actual native driver HARD #error for ANY defined new role,including0.
+   Old QCV1475+QCB1232gates PASS. Old joint banks7/3584workspace pages/4704
+   GDNregions/3669refusals and old projection zero8positive/56refusals PASS.
+7. Rebuilt old actual tag38/guard/default43,private macro-OFF execution,
+   stash compile and physical-qualified tag42 BYTE-IDENTICAL to controls:
+   tag38 23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8dba77483
+   guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+   default43 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+   private 2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35
+   stash 6121b065785fb8732f3a00770e299903663fb600baf13e385c97ac78d543de72
+   tag42 a2bcfb34baeba0bdca4e029164901c874c27ee7c3494be62912711e7a0c164e9
+
+The initial fault-run-a harness selected Count-8 as a Conv part,which is
+actually the final dense KV stripe. It stopped on its assertion,not a
+controller failure. Replaced that assumption with an actual ConvKind scan;
+final fault-run-c171cases TERMINAL0. No test expectation weakened.
+
+NO Pioneer access/write/native test/install/reboot/PSU/SD/Assistant/model/
+NIC/boot change. Last physical postflight still normal041/gen5/64CPUs/
+max137034936320B. Dirty llama.cpp and unrelated FlashNext files untouched.
+This is real reservation+initialization implementation/local qualification,
+NOT a native consumer,full offload or measured inference speedup.
+
+NEXT
+Separate exact native decoder factory/tag/role/source/cookie/global-owner/
+clock/host leases must bind THIS real joint reservation/history controller.
+Then consume private QPS1 produced proof BEFORE projection Close revokes it:
+STOP119peers/proveALL120physical holds without prematurely restoring the
+original8134072word snapshot;install/qualify the new actual batch image and
+current counter scope,retain ALL owners to final known-clean restore.
+Do NOT weaken old Image()/Close(),use public result/ready hints as producer
+proof,or promote tag42/normal Work. Native qualification precedes Work use.
+Then card Q/Knorm/gates/GDN/gatednorm/output/residual/FFN/full attention+KV/
+all64layers/sampling/persistent token schedule,with real timing before any
+speed claim. Raw-unpack-cache22 stays HARD BLOCKED.
+
+AUTHORITATIVE LOGS (SHA256)
+/private/tmp/pioneer-q38-decoder-runtime-20261023-a.log
+ 1b0f640c682e1f285149b7eceba46015a3ee9d0d365398ad67956d4033e76f30
+/private/tmp/pioneer-q38-conv-history-zero-20261023-b.log
+ 4a0e3eb645405ebffef5a9aa49481dad1e0ca88cc7c5a041e289c311b648aec5
+/private/tmp/pioneer-q38-conv-history-zero-faults-20261023-c.log
+ c29d255748f7463b89db6691328f6959b397fd0c7d9c38ab9cd0167f8c1e355c
+/private/tmp/pioneer-q38-decoder-initialization-20261023-a.log
+ 90e551ee6ea6fcb633b4db9f572c5b0470e7137a8ceef28c2a6263b280a7034f
+/private/tmp/pioneer-q38-decoder-runtime-gates-20261023-a.log
+ c3daa3bbae4cd372c56739e83a3a29a0f64f38d6c9ff88cd86c671560084fedc
+/private/tmp/pioneer-q38-runtime-native-controls-20261023-a.log
+ 4ff21f7f4dd8e099406ab360f2c0942bfacef4660c7fd47bb8672bd27360b4a7
+/private/tmp/pioneer-q38-decoder-runtime-old-joint-20261023-a.log
+/private/tmp/pioneer-q38-decoder-runtime-old-projection-zero-20261023-a.log
+/private/tmp/pioneer-q38-decoder-runtime-old-conv-gates-20261023-a.log
+/private/tmp/pioneer-q38-decoder-runtime-old-batch-gates-20261023-a.log

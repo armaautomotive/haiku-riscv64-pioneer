@@ -4,9 +4,10 @@
 #include "PioneerQ38CanonicalModelPlan.h"
 #include "PioneerQ38ConvShape.h"
 // Canonical DATA recipe,NOT an owner or a current-state/producer grant.
-// Existing ProjectionMutableBanks DOES NOT reserve ConvKind. A future real
-// joint decoder owner MUST reserve/initialize/retain these actual canonical
-// previous-state regions and independently consume the private QPS1 proof.
+// Default ProjectionMutableBanks DOES NOT reserve ConvKind. Its separate
+// offline DECODER_RUNTIME role now reserves the actual canonical history;
+// zero-init still does NOT grant a current-state/producer capability. The
+// native consumer must retain it and consume the private QPS1 proof itself.
 class PioneerQ38ConvPlan {
  const PioneerQ38CanonicalModelPlan* plan=nullptr;uint32_t descriptor[64]={};bool attempted=false,ready=false;
  static bool Describe(const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned first,unsigned position,

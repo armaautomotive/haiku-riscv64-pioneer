@@ -1,5 +1,38 @@
 # Native build status
 
+Latest October23 UTC2026:real canonical decoder runtime ownership+history
+zero IMPLEMENTED/OFFLINE qualified,NOT native/full offload or speedup.
+Exact private DECODER_RUNTIME role changes the ACTUAL existing joint Bind:
+SEVEN canonical suffixes ->ONE actual ReserveMutable(owner=this) call,
+ALL321168runtime pages including Conv/KV/seven workspaces protected without
+growing673range ABI. Learned/unused pages untouched. Private history owner
+attaches336real5page ConvKind stripes AFTER claim,EMPTY1680page ledger,
+EVERY initialization page via real MutablePage/exact baseline/shared owner.
+Actual frozen zero RV32 controller independently proves writes+fresh readback/
+source/code/clock/counters/command/PC/holds,then private progress;full count
+alone NEVER publishes. Only known-clean physical restore CLOSE seals init.
+NO current-history/input/compute producer API or public ready shortcut.
+
+ASan/UBSan reservation9positives/321168pages/11760history spans/23837refusals/
+32747geometry faults PASS. Actual zero6positive/9refusals/ALL336stripes+
+1680pages(all touched once)/partial clean resume PASS;171actual faults PASS.
+Actual old512page projection initializer+history share ONE new reservation/
+independent ledgers PASS. ALL1680pages plus failed final boot restore:
+NO seal/quarantine/retainALL/ZERO later IO PASS. RV64 runtime928B/zero880B
+max frames<2048B;HEAP owners.197new+old475/232gates PASS. Old joint/zero
+regressions PASS;actual tag38/guard/default43/private2d12/stash6121/tag42a2bc
+rebuilt BYTE-IDENTICAL. ALL test/build parents TERMINAL0. Initial harness
+Count-8 assumed Conv but was KV;fixed actual ConvKind scan,final faults PASS.
+
+Actual native driver HARD REFUSES new role;ten old builders refuse BEFORE
+SDK/output. No Pioneer IO/install/reboot/power/SD/Assistant/model/NIC/boot
+change;last normal041/gen5/64CPU/fullRAM postflight retained. Dirty llama/
+FlashNext untouched. NEXT exact native factory/tag/ownership,real private
+QPS1 STOP/ALL120hold/retained-snapshot handoff into batch convolution,then
+remaining GDN/attention/KV/FFN/residual/all64layers/sampling/persistent loop.
+Whole27B0.207893161tok/s UNCHANGED;20UNMET;goalACTIVE/turnPROGRESS. Evidence:
+benchmarks/qwen38-decoder-runtime-history-20261023.txt.
+
 Latest October22 Pacific/23UTC2026:QCB1 card-local convolution batch
 IMPLEMENTED/OFFLINE instruction-qualified,NOT native owner or speedup.
 ONE invocation/worker runs5or6groups autonomously;all640groups partitioned
