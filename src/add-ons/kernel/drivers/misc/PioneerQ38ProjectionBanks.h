@@ -20,6 +20,9 @@ class PioneerQ38ProjectionBanks {
  friend class PioneerQ38ProjectionMutableBanks;
  friend class PioneerQ38EmbeddingController;
  friend class PioneerQ38ProjectionGraphOwner;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+ friend class PioneerQ38ResidentDecoderOwner;
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  friend class PioneerQ38LearnedRmsController;
 #endif

@@ -19,6 +19,9 @@ struct PioneerQ38ProjectionGraphMemoryResult {
 class PioneerQ38ProjectionGraphOwner;
 class PioneerQ38ProjectionGraphMemory {
  friend class PioneerQ38ProjectionGraphOwner;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+ friend class PioneerQ38ResidentDecoderOwner;
+#endif
  const tt_dram_samples_result* proof=nullptr;
  PioneerResidentBanks* banks=nullptr;
  PioneerQ38DispatchLease* cohort=nullptr;

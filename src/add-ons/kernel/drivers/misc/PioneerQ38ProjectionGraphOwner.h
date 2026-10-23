@@ -15,6 +15,9 @@
 #include "PioneerQ38ProjectionGraphPlan.h"
 #include "PioneerQ38ProjectionGraphProof.h"
 #include "PioneerQ38LearnedRmsController.h"
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+class PioneerQ38ResidentDecoderOwner;
+#endif
 // HEAP ONLY. Same workers/code/state across complete first-layer attention
 // projections. NO CPU numeric input/output/reference/fallback. This first
 // producer is layer0/attn_norm ONLY;later layers/FFN/vocabulary need their
@@ -30,6 +33,9 @@ struct PioneerQ38ProjectionGraphResult {
 };
 class PioneerQ38ProjectionGraphOwner {
  friend class PioneerQ38ResidentDecoderOwner;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+ const PioneerQ38ResidentDecoderOwner* decoderOwner=nullptr;
+#endif
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;
  PioneerQ38DispatchLease* cohort=nullptr;PioneerQ38ProjectionGraphMemory* memory=nullptr;
  PioneerQ38ProjectionMutableBanks* graph=nullptr;PioneerQ38ProjectionBanks* state=nullptr;
@@ -265,7 +271,11 @@ public:
  PioneerQ38ProjectionGraphOwner()=default;
  PioneerQ38ProjectionGraphOwner(const PioneerQ38ProjectionGraphOwner&)=delete;
  PioneerQ38ProjectionGraphOwner& operator=(const PioneerQ38ProjectionGraphOwner&)=delete;
- bool Ready()const{return ready && !unsafe && !closed;}bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
+ bool Ready()const{return ready && !unsafe && !closed
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+  && !decoderOwner
+#endif
+  ;}bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
  bool Claimed()const{return started;} // metadata ONLY,not an execution grant
  void Fault(){unsafe=true;ready=output=false;
 #ifdef PIONEER_Q38_PROJECTION_RESULT_STASH

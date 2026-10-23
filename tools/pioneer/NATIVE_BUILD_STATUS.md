@@ -1,5 +1,41 @@
 # Native build status
 
+Latest October23 UTC2026:real retained QPS1->QCB1 arithmetic OWNER now
+IMPLEMENTED/OFFLINE instruction-qualified,NOT actual native factory/card.
+Consume private all4projection proof+exact SAME history-zero owner BEFORE
+STOP/ALL119 terminals/ALL120physical holds;sticky successor pointers make
+old Run/Close inert. Keep original8134072word snapshot THROUGH replacement
+code/actual math. Install EXACT6088B QCB1+ALL384records on ALL120,SECOND
+pass+exact code/table/current ledger before arm/release;no host numeric
+vectors or relaunch between worker jobs. New120worker command/counter
+tracking;ALL120 independent receipts/terminals BEFORE first post-math hold.
+Separate known-clean final restore/readback ALL8134072original words.
+Old Image/Close NOT weakened. First failure quarantine/retainALL/no laterIO.
+
+27092 TERMINAL0 ASan/UBSan genuine zero/QPE1/QRN1+history1680/QPS1/QFP3->
+ALL120QCB1/640jobs PASS. ALL10240outputs tolerance3e-6*(1+abs(ref)),30720
+private next words exact;old stashes/padding/unrelated GDDR unchanged/full
+snapshot retained and finally restored. Learned bytes/endpoints SIMULATED,
+NOT original-GGUF/native qualification.83879 TERMINAL0 ALL24scope/code/
+table/source/counter/command/reset/map/PCI/summary/status/PC/restore faults
+PASS:retainALL/ZERO laterIO;completion faults120starts/ZERO early holds.
+Isolated TEST forks reuse genuine simulated producer,not fake private proof.
+67235 RV64 template max880B/HEAP owner;44822 gates176/compiled ROM ALL1523
+words exact/all120 old snapshots+8KiB stacks PASS.87211 actual old tag38/
+guard/default43/private2d12/stash6121/tag42a2bc rebuilt BYTE-IDENTICAL.
+19349 full runtime321168page regression PASS/max928B. ALLjobs TERMINAL0.
+
+Actual driver HARD REFUSES new role;old builders early refuse. No native
+selector/install/Pioneer IO/reboot/power/SD/Assistant/model/NIC/boot changes;
+last041/gen5/64CPU/fullRAM retained,not re-probed. Dirty llama/FlashNext
+untouched. NEXT actual native factory/context/tag/role/source/cookie/thread/
+clock/ALL host/UNKNOWN+END adapter,original-model qualification,then ONE
+physical test. Still first token/layer0 convolution ONLY;next history NOT
+committed/GDN not integrated/host stage scheduling remains. All remaining
+GDN/attention/KV/FFN/residual/64layers/sampling/persistent loop owed.
+Whole27B0.207893161tok/s UNCHANGED;20UNMET;goalACTIVE/turnPROGRESS. Evidence:
+benchmarks/qwen38-retained-convolution-owner-20261023.txt.
+
 Latest October23 UTC2026:real canonical decoder runtime ownership+history
 zero IMPLEMENTED/OFFLINE qualified,NOT native/full offload or speedup.
 Exact private DECODER_RUNTIME role changes the ACTUAL existing joint Bind:

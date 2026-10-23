@@ -3,7 +3,7 @@
 // No setters/claim shortcuts,device endpoints or public production API.
 #ifndef PIONEER_Q38_TEST_PROJECTION_STASH_OBSERVER_H
 #define PIONEER_Q38_TEST_PROJECTION_STASH_OBSERVER_H
-#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+#if defined(PIONEER_Q38_PROJECTION_RESULT_STASH) && !defined(PIONEER_Q38_RESIDENT_DECODER_OWNER)
 class PioneerQ38ResidentDecoderOwner {
 public:
  static bool Completed(const PioneerQ38ProjectionGraphOwner& owner,const PioneerQ38ProjectionMutableBanks& graph,

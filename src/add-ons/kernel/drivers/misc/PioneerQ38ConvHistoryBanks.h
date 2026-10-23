@@ -8,8 +8,15 @@
 struct PioneerResidentLease;struct PioneerBulkUploadLease;struct PioneerOutputBufferLease;struct PioneerWideOutputLease;
 struct PioneerQ38ConvHistoryZeroLease;struct PioneerQ38ConvHistoryZeroResult;
 struct PioneerQ38ConvHistoryExtent {uint32_t bank,address,route,index,pages,bytes;};
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+class PioneerQ38ResidentDecoderOwner;
+#endif
 class PioneerQ38ConvHistoryBanks {
  friend class PioneerQ38ProjectionMutableBanks;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+ friend class PioneerQ38ResidentDecoderOwner;
+ const PioneerQ38ResidentDecoderOwner* decoderOwner=nullptr;
+#endif
  template<class IO> friend bool PioneerQ38ConvHistoryZeroPrepare(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38ConvHistoryBanks&,PioneerResidentBanks&,const PioneerQ38GdnIdentity&,const tt_host_page_result&,
   PioneerResidentLease&,PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38ConvHistoryZeroLease&);

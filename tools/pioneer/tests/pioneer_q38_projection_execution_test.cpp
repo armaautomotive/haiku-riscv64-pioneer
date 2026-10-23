@@ -66,6 +66,7 @@ struct ExecutionIO:ProjectionMemoryIO,ProjectionExecutionFabric {
  uint32_t Reset(unsigned w)override{return core[w]->coreReset;}
  std::vector<uint32_t>& Gddr()override{return producer->DeviceWords();}
 };
+#ifndef PIONEER_Q38_PROJECTION_EXECUTION_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==6 || argc==7);setvbuf(stdout,nullptr,_IOLBF,0);bool wide=argc==7 && !strcmp(argv[6],"--wide");int fault=argc==7 && !wide?atoi(argv[6]):-1;
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -189,3 +190,4 @@ int main(int argc,char** argv){
  touched=io.touches;assert(!owner->Run(io,10,result) && !owner->Close(io,result) && io.touches==touched);
  printf("PASS actual zero/QPE1/QRN1 private producer->complete projection OWNER/QPR1/ALL119 QFP3,projections%zu/matrices%u/producers%u,SAME119boots,NO CPU vectors/reference/fallback,8134072-word snapshots restored ONLY after STOP/ALL physical terminals;SIMULATED HARDWARE/WEIGHTS_NOT_NATIVE_OR_MODEL_SPEED\n",roles.size(),io.machine->Matrices(),io.machine->Producers());
 }
+#endif

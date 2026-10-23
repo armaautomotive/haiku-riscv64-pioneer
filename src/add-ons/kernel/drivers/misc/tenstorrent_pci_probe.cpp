@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+#error Resident decoder arithmetic owner is OFFLINE until its actual separate native factory and role are qualified
+#endif
 #ifdef PIONEER_Q38_DECODER_RUNTIME
 #error Decoder runtime/history reservation is OFFLINE until its separate actual native factory and role are qualified
 #endif
