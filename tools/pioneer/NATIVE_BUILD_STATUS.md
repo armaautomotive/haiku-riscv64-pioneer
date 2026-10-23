@@ -1,5 +1,35 @@
 # Native build status
 
+Latest October23 UTC2026:QCV1 card-local Conv4+SiLU/private-next kernel
+IMPLEMENTED/OFFLINE instruction-qualified;NOT integrated/installed/native
+consumer or speedup.16channel group reads actual card QKV/original F32
+weights/immutable history,3reads+2private writes,all math before writes;
+source/descriptor/queue/counter/poison checks,first fault inert/no next IO.
+Workspace outputs0x120000+private-next0x130000 disjoint inside2MiB.
+Actual existing projection joint owner DOES NOT reserve ConvKind history;
+real reservation/zero/private QPS1 mask handoff is OWED,not a ready facade.
+
+ASan/UBSan actual emitted RV32:123positive/1280faults;all120coordinates;
+4step full10240channel chain2560jobs/40960outputs/122880next words PASS.
+Actual SAME full-SHA public GGUF tokens0/15/248319/original F32 weights+
+independent QKV reference ->1920jobs/30720outputs/92160next words PASS.
+SiLU tolerance3e-6*(1+abs(reference));state shift bit-exact,not arbitrary
+bit-exact whole-model math. Hardware SIMULATED/no native producer grant.
+Canonical30720plans/92236refusals,footprint441480words/ALL120cores,475new
+gates+old297/219 PASS.5360B images D/E/F EXACTd0c9519d/bootd0565e4e;
+724B observed stack/max448B frame. Unsupported DIVU/REMU avoided in actual
+code,not enabled in emulator. Old native a2bc/private2d12/stash6121/
+tag38+guard+default43 controls rebuilt BYTE-IDENTICAL. ALLjobs TERMINAL0.
+
+No new native job/Pioneer write/install/reboot/PSU/SD/Assistant/model/NIC/
+boot change;normal041/gen5/64CPUs/fullRAM last postflight retained;dirty
+llama/FlashNext untouched. NEXT actual on-card multi-job scheduling (this
+image is one-shot),joint runtime/history ownership+initialization/private
+producer handoff/native consumer,then remaining GDN/attention/KV/FFN/
+residual/all64layers/sampling/persistent token loop. Whole27B0.207893161
+tok/s UNCHANGED;20UNMET;goalACTIVE/turnPROGRESS. Evidence:
+benchmarks/qwen38-convolution-image-20261023.txt.
+
 Latest October23 UTC2026:PHYSICAL P100A retained-projection DEBUG42 token0
 PASS;original normal041driver RESTORED/verified. Not whole-model inference
 or speedup. Implementation checkpointfa25fcd114 PUSHED/verified.

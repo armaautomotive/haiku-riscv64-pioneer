@@ -1,0 +1,126 @@
+QCV1 resident Conv4+SiLU/private-next card image prerequisite
+October23 UTC2026
+
+IMPLEMENTED/OFFLINE INSTRUCTION-QUALIFIED,NOT native driver integration.
+Last whole27B rate0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+No Pioneer transfer/card job/driver/boot/Assistant/model/NIC/power change.
+Normal041/tag12/gen5/64CPUs/fullRAM from the preceding clean restoration
+remains the last native postflight. Dirty llama.cpp/FlashNext untouched.
+
+ACTUAL IMPLEMENTATION
+New QCV1 RV32 image consumes16 resident QPS1 QKV channels,64 ORIGINAL
+F32 convolution coefficients and48 immutable previous-state words,ALL
+through card-local NoC reads. Four sequential FP32 products/additions and
+qualified card SiLU;next history is [previous1,previous2,input]. All local
+math completes BEFORE any private next-state/result GDDR write. No host
+numeric callback/vector/fallback,FP16 conversion or supplied code pointer.
+
+Each job:3reads/8flits then2writes/4flits. Fixed command/source/descriptor/
+queue/counter checks,including0x210counter alias+wrap;65536bounded poll.
+Fresh NaN poison verified on EVERY read destination;invalid/stale data
+stops BEFORE any following packet. All arithmetic/domain failure happens
+before first private write. Timeout/stale/counter/source/descriptor fault
+enters inert fault terminal;no subsequent packet/retry. Mid-write fault
+may affect PRIVATE scratch only,never the immutable current history.
+Native lifetime/clock/all-physical-hold/quarantine coordinator still OWED.
+
+Fixed workspace output0x120000/40960B and next-history0x130000/122880B,
+disjoint from all QPS1 outputs and each other,inside existing zero2MiB
+prefix. No old output/weight/state address is reused as a new write target.
+Data recipes derive EXACT original learned and canonical history stripes
+for all48recurrent layers/640sixteen-channel groups/120worker coordinates.
+Typed plan/source/identity/position/nonce relation is DATA ONLY,never
+initialization/source authentication/a private QPS1 completion capability.
+
+IMPORTANT REAL OWNERSHIP DEPENDENCY
+Existing ProjectionMutableBanks reserves GDN672regions+ONE64MiB workspace,
+NOT canonical ConvKind history. It cannot be promoted by a ready boolean
+or a same-shaped descriptor. A future retained decoder owner must really
+reserve/initialize/retain convolution history plus these exact scratch
+outputs and consume the actual private QPS1 produced-mask BEFORE Close
+revokes it. Actual native adapter/source/zero/code/PC/clock/STOP/restore
+proofs remain required. No public ioctl/new driver tag/Work target added.
+
+This is a ONE-SHOT group kernel,not yet a persistent convolution schedule.
+Next on-card batch program must run all640jobs across workers without CPU
+relaunch between groups,then join the real private owner. Existing L1
+footprint covers a prospective6record/1536B table at0x74800..0x74e00 on ALL
+120cores;this is verified layout only,NOT implemented batching or authority
+to overwrite a live image. The original complete snapshot must survive
+the consumer through the final known-clean restore;old Image()/Close()
+cannot simply be told to accept a new kernel.
+
+QUALIFIED LOCAL EVIDENCE (ALL TERMINAL0)
+ASan/UBSan/Werror/ffp-contract-off,ACTUAL emitted RV32 instructions:
+ - Canonical geometry30720plans/92236refusals:all48layers/ALL640groups,
+   original learned/history stripe seams,exact source/identity/position/
+   bank/worker/phase,missing/wrong learned tags,all64descriptor changes,
+   invalid/duplicate factory calls. No reservation or IO performed.
+ -123instruction positives:all120worker coordinates+large/tiny/signed-zero
+   domains. max32128instructions,724B actual stack,448B max static frame.
+   Independent rounded-FP32 Conv4 then double exp oracle,SiLU tolerance
+   <=3e-6*(1+abs(reference)). Next history bit-exact. NOT a token rate.
+ -1280actual instruction fault/refusal cases:timeout/bad or foreign counter/
+   source/descriptor per EACH of5packets,poison EACH3reads,nonfinite/domain
+   first+last values,ALL descriptor bits that violate shape,36busy queues,
+   all16source words,command read mismatches. Strict memory/MMIO whitelist,
+   all inert terminals stepped32more instructions with no additional IO.
+ - Four-step complete state chain:ALL10240channels/2560jobs/40960outputs/
+   122880next-state words. Next input uses ACTUAL preceding emitted writes,
+   not a recomputed CPU state. Independent shift history verifies all bits.
+   All120coordinates exercised;execution endpoints SIMULATED,not parallel
+   physical-card timing or a persistent native owner.
+ - Actual public GGUF:production full SAME-file c600de0300ae8a0eb3a6c0b8
+   b5561b8b96f16bd2c863c2a66c42de29d391a747 SHA/851tensors BEFORE simulated
+   image. Original embedding+learned RMS+independent original Q8 QKV
+   reference and ORIGINAL F32 convolution weights. Tokens0/15/248319 at
+   positions0/1/2 ->1920actual image jobs,ALL30720outputs within above
+   tolerance and92160next-state words bit-exact. This DEBUG oracle does
+   NOT constitute an actual native QPS1 producer handoff or populate any
+   live card. Actual GDDR endpoint is SIMULATED,not a Work fallback.
+ - Footprint:ALL120cores/441480code+data+stack+trailer words covered by
+   existing snapshot,including all mutable buffers;prospective6job table
+   also covered. New5360B text fits existing ROOT/peer code spans. No
+   snapshot size expansion. Layout proof does NOT authorize code handoff.
+ -475actual isolation/build gates. All10old builders explicitly reject
+   convolution-native/client/image flags BEFORE SDK/output;actual extracted
+   guards tested,not just wrong builder argc. Helper refuses host Work/
+   kernel math. New builder rejects inherited nonzero PIONEER flags.
+   Actual disassembly/stack checks reject unsupported instructions/frames.
+ - Existing projection DEBUG297/RMS219gates PASS.
+
+BUILD / BYTE CONTROLS
+Initial compiler warning was fixed in source without weakening Werror.
+Initial RV32 test exposed compiler DIVU/REMU from worker/10 and worker%10;
+replaced with bounded subtraction,NOT broader emulator permissions.
+Builder now rejects DIV/REM/high MUL/fdiv/fsqrt/FMA/float-to-int opcodes and
+individual static frames>1024B. Actual instruction test additionally
+enforces its existing complete instruction whitelist and8KiB stack.
+Final images D/E/F BYTE-IDENTICAL:
+ code5360B d0c9519d0c7ea342a0bbcbede9f9d6355c1c611ea768b9c923f7f645c812d822
+ boot4B d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+SDK driver-only regression rebuilt old controls and ACTUAL native tag42:
+ a2bcfb34baeba0bdca4e029164901c874c27ee7c3494be62912711e7a0c164e9 EXACT.
+Private execution2d127c1e/stash6121b065/tag38 23e2e68a/guardd1ce2aa4/
+default43 2df0e0f8 EXACT. No dirty library read/build,SDK modification,
+Pioneer installation or execution occurred in this stage.
+
+NEXT / REMAINING FULL OBJECTIVE
+Implement on-card multi-job/persistent convolution scheduling,real joint
+runtime reservation/history-zero/private producer handoff and native
+consumer qualification. Then Q/K normalization,alpha/beta/decay gates,
+GDN/current-next state,gated normalization,learned output/residual,FFN,
+full attention/KV,all64layers and sampling/persistent token scheduling.
+No full-model speedup or20tok/s claim is supported by these prerequisites.
+
+LOGS
+ /private/tmp/pioneer-q38-conv-image-build-20261023-f.log
+ /private/tmp/pioneer-q38-conv-image-test-20261023-c.log
+ /private/tmp/pioneer-q38-conv-image-faults-20261023-b.log
+ /private/tmp/pioneer-q38-conv-sequence-20261023-a.log
+ /private/tmp/pioneer-q38-conv-actual-model-20261023-a.log
+ /private/tmp/pioneer-q38-conv-footprint-20261023-a.log
+ /private/tmp/pioneer-q38-conv-gates-20261023-a.log
+ /private/tmp/pioneer-q38-conv-old-native-controls-20261023-a.log
+ /private/tmp/pioneer-q38-conv-old-projection-gates-20261023-a.log
+ /private/tmp/pioneer-q38-conv-old-rms-gates-20261023-a.log
