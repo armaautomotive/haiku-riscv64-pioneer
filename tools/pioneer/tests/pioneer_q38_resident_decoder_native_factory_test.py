@@ -11,8 +11,11 @@ import sys
 import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
-if len(sys.argv) not in (7, 8) or (len(sys.argv) == 8 and sys.argv[7] not in ('--faults', '--history-faults')):
-    raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults]')
+mode = sys.argv[7] if len(sys.argv) == 8 else ''
+if len(sys.argv) not in (7, 8) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults'):
+    raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults|--validation[-faults|-control[-faults]]]')
+validation = mode.startswith('--validation')
+control = mode in ('--validation-control', '--validation-control-faults')
 pins = runpy.run_path(str(here.parent / 'generate_qwen38_projection_stash_images.py'))['PINS']
 for name, (section, size, sha, _) in pins.items():
     directory = pathlib.Path(sys.argv[1 if name.startswith('root-') else 2])
@@ -30,6 +33,8 @@ flags = sorted(set(re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here / 'run_pio
 flags.remove('-DPIONEER_Q38_TEST_PROJECTION_FOOTPRINT')
 flags += ['-DPIONEER_Q38_PROJECTION_RESULT_STASH=1', '-DPIONEER_Q38_DECODER_RUNTIME=1',
           '-DPIONEER_Q38_RESIDENT_DECODER_OWNER=1', '-DPIONEER_Q38_RESIDENT_DECODER_NATIVE=1']
+if validation:
+    flags.append('-DPIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE=1')
 with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as temporary:
     base = pathlib.Path(temporary)
     for prefix, family, names in [('embedding', 'EMBEDDING', ('scope', 'unsafe', 'mapping', 'factory', 'end')),
@@ -49,13 +54,30 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
     begin, end = 'static bool\nEndQ38DispatchOwnership(', '// PIONEER_Q38_DISPATCH_RETAIN_END'
     assert source.count(begin) == source.count(end) == 1
     (base / 'projection_factory_complete_end.inc').write_text(begin + source.split(begin, 1)[1].split(end, 1)[0])
+    if control:
+        for target, marker in [('decoder_validation_control.inc', 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_CONTROL'),
+                               ('decoder_validation_routing.inc', 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_ROUTING'),
+                               ('decoder_validation_probe_lock.inc', 'PIONEER_PROBE_LOCK'),
+                               ('decoder_validation_call_scope.inc', 'PIONEER_Q38_GDN_CALL_SCOPE')]:
+            begin, end = '// ' + marker + '_BEGIN', '// ' + marker + '_END'
+            assert source.count(begin) == source.count(end) == 1
+            (base / target).write_text(source.split(begin, 1)[1].split(end, 1)[0])
+        begin = 'static status_t\nProbeControl(void* cookie, uint32 operation, void* data, size_t length)\n{'
+        assert source.count(begin) == 1
+        prelude = begin + source.split(begin, 1)[1].split('#ifdef TT_PIONEER_DRIVER_RELOAD', 1)[0]
+        assert 'geteuid() != 0' in prelude and 'instance->magic!=0x50313030' in prelude
+        (base / 'decoder_validation_route_prelude.inc').write_text(prelude)
     binary = base / 'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *flags, '-DPIONEER_Q38_GDN_MUTABLE_STATE=', '-DPIONEER_Q38_NORMAL_CLOCK=1',
                     '-DPIONEER_Q38_EMBEDDING_NATIVE=1', '-DPIONEER_Q38_LEARNED_RMS_NATIVE=1', '-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1',
                     '-I' + str(base), *[str(here / (name + '.cpp')) for name in (
-                        'pioneer_q38_resident_decoder_native_factory_test', 'pioneer_q38_projection_native_transport',
+                        'pioneer_q38_resident_decoder_validation_control_test' if control else
+                        'pioneer_q38_resident_decoder_validation_native_test' if validation else 'pioneer_q38_resident_decoder_native_factory_test', 'pioneer_q38_projection_native_transport',
                         'pioneer_q38_projection_execution_machine', 'pioneer_q38_embedding_execution_bridge',
                         'pioneer_q38_learned_rms_execution_bridge', 'pioneer_q38_decoder_conv_bridge')], '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:]], check=True,
-                   env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})
+    cases = list(range(9)) if mode == '--validation-control-faults' else [None]
+    for case in cases:
+        suffix = [str(case)] if case is not None else ['--faults'] if mode == '--validation-faults' else [] if validation else sys.argv[7:]
+        subprocess.run([str(binary), *sys.argv[1:7], *suffix], check=True,
+                       env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})

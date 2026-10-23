@@ -24,6 +24,21 @@ def preprocess(flags, accepted):
     count += 1
 preprocess({}, True)
 preprocess(valid, True)
+debug = {**valid, 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE': '1', 'PIONEER_DRIVER_BUILD_TAG': '0x2026102300010044ULL'}
+preprocess(debug, True)
+for key in debug:
+    for value in (None, '0', '2', '-1'):
+        bad = dict(debug)
+        if value is None:
+            del bad[key]
+        else:
+            bad[key] = value
+        preprocess(bad, False)
+for value in ('0', '1', '2'):
+    preprocess({**valid, 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE': value}, False)
+preprocess({**debug, 'PIONEER_DRIVER_BUILD_TAG': valid['PIONEER_DRIVER_BUILD_TAG']}, False)
+preprocess({**valid, 'PIONEER_DRIVER_BUILD_TAG': debug['PIONEER_DRIVER_BUILD_TAG']}, False)
+preprocess({'TT_PIONEER_DRIVER_RELOAD': '1', 'PIONEER_DRIVER_BUILD_TAG': debug['PIONEER_DRIVER_BUILD_TAG']}, False)
 for key in valid:
     for value in (None, '0', '2', '-1'):
         bad = dict(valid)
@@ -40,6 +55,7 @@ for flag in ('PIONEER_Q38_PROJECTION_VALIDATION_NATIVE', 'PIONEER_Q38_EMBEDDING_
              'PIONEER_Q38_FFN_HOST_PROFILE', 'PIONEER_Q38_FFN_SEALED_PROOF'):
     for value in ('0', '1'):
         preprocess({**valid, flag: value}, False)
+        preprocess({**debug, flag: value}, False)
 for flag in ('PIONEER_Q38_RESIDENT_DECODER_OWNER', 'PIONEER_Q38_DECODER_RUNTIME'):
     for value in ('0', '1', '2', '-1'):
         preprocess({flag: value}, False)
@@ -62,11 +78,17 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-gates-') as temp
                 result = subprocess.run(command, env={**clean, 'PIONEER_Q38_RESIDENT_DECODER_NATIVE': value}, capture_output=True, text=True, timeout=5)
                 assert result.returncode == 2 and not result.stdout and not result.stderr and not output.exists()
                 count += 1
+        for value in ('1', '2', '-1', '01', '', 'false', '0\n1'):
+            result = subprocess.run(['sh', str(script), str(sdk), str(output)],
+                                    env={**clean, 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE': value}, capture_output=True, text=True, timeout=5)
+            assert result.returncode == 2 and not result.stdout and not result.stderr and not output.exists()
+            count += 1
     for script in ('build_qwen38_projection_validation_native.py', 'tests/pioneer_q38_resident_decoder_native_full_compile.py'):
         for value in ('1', '2', '-1', '', '00', 'false'):
             result = subprocess.run(['python3', str(directory / script), str(sdk), str(output)],
                                     env={**clean, 'PIONEER_Q38_RESIDENT_DECODER_NATIVE': value}, capture_output=True, text=True, timeout=5)
             assert result.returncode == 2 and not result.stdout and not result.stderr and not output.exists()
             count += 1
-assert 'PIONEER_Q38_RESIDENT_DECODER_NATIVE_CONTROL_BEGIN' not in source, 'new selector must be separately qualified'
-print(f'PASS actual native tag43 gates{count},only complete exact role accepted/reserved tag cannot alias/old tags and DEBUG-Work mixes denied/actual legacy builders refuse BEFORE SDK/output/full compile refuses environment promotion;NO new public selector/install/device access')
+assert 'PIONEER_Q38_RESIDENT_DECODER_NATIVE_CONTROL_BEGIN' not in source, 'bare tag43 must remain selector-free'
+assert '#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE\n// PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_CONTROL_BEGIN' in source
+print(f'PASS actual native tag43/separate fixed DEBUG44 gates{count},only complete exact roles accepted/reserved tags cannot alias/old tags and DEBUG-Work mixes denied/actual legacy builders refuse BEFORE SDK/output/full compile refuses environment promotion;NO install/device access')

@@ -62,7 +62,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  ProjectionNativeTransport* projectionTransport=nullptr;
-#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
  mutable bool projectionSeedRequired=false; // TEST delayed physical byte handoff after genuine QRN1
 #endif
  std::array<uint32,10240> projectionPrefix={};std::array<uint32,9216> projectionPrimary={},projectionShadow={};
@@ -330,8 +330,17 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 bool PioneerSessionIO::UseProjectionIO()const{
  bool active=projectionTransport && q38MutableContext && q38MutableContext->q38EmbeddingModel
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+  && (q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::ProjectionPreparing
+   || q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Projection
+   || q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::ProjectionComplete
+   || q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Decoder
+   || q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::DecoderHeld
+   || q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::DecoderComplete);
+#else
   && q38MutableContext->q38EmbeddingModel->phase>=PioneerQ38EmbeddingNativeState::ProjectionPreparing;
-#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+#endif
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
  if(active && projectionSeedRequired){
   projectionSeedRequired=false;auto& endpoint=*const_cast<PioneerSessionIO*>(this);
   std::vector<uint32> addresses(73737),values(73737);uint32 sources[16],commands[10],counts[8];

@@ -1,0 +1,136 @@
+Separate retained-convolution DEBUG44 native protocol/readback/client
+October23 UTC2026;OFFLINE qualification and linked SDK builds ONLY.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+NO new driver installed or physical-card inference measured.
+
+ACTUAL IMPLEMENTATION
+Exact PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE=1,requires native1/
+owner1/runtime1/stash1/execution1/RMS1/embedding1/reload1 and separate
+tag0x2026102300010044. Baretag43 remains selector-free and BYTE-IDENTICAL.
+DEBUG44 cannot alias43/42/old embedding/Work/CPU-reference kernel roles.
+Root/team-only op62c8/62c9,namespace14,163984B HEAP pointer-free reply.
+Only logical token/position0 input;ALL stats/40960 output words zero on
+input. No caller address,bank,program,vector,read capability or model-ready
+claim. Old public embedding/RMS/QPS1/FFN/Work/dispatch execution denied.
+
+One actual global-lock/cookie/team/thread-sealed call owns Bind ->336x5
+canonical history zero ->512workspace zero ->QPE1 ->QRN1 ->QPS1 all4
+roles ->actual retained QCB1 ALL120/640jobs ->40fixed DEBUG reads ->full
+original restore. Private next history remains UNCOMMITTED,not a GDN input.
+The same original8134072word snapshot remains held through replacement,
+compute and readback. NO original restore before complete known-clean
+transport. No split scope,public ready proof or cleanup-on-error added.
+
+Owner-private readback requires ALL120 physically held with exact private
+receipts/ownership/source/clock/PCI/host/map/code/384-word-table proofs.
+Fixed workspace10pages at0x120000 then30pages at0x130000,NO gap read.
+Reuse ONE original-snapshot-covered ROOT scratch page at0x80000. Distinct
+NaN poison and exact poison readback before EVERY4KiB request;finite data,
+exact command/counter deltas/timeout/source checked before advancing the
+private ledger. ROOT remains physically HELD,not falsely marked running
+during a DEBUG packet. ALL120 final holds/code/table proofs before restore.
+UNKNOWN retains ALL original snapshots/host/bulk/clock/maps/cohort/model
+owners,NO later status/device/END/reset/restore/retry. Failed reply delivery
+also retains. FD CLOSE without explicit BANK_END retains through existing
+ReleaseResidentCookie,not implicit device cleanup.
+
+Independent original-F32 Conv4 oracle and original embedding/RMS/QKV
+references are CPU DEBUG ONLY,prepared before accelerator FD. Session
+selects23235 ORIGINAL pages including all7Conv4 stripes,108 guarded spans;
+CPU products are NEVER uploaded. Exact tag/generation/namespace/storage/
+span handshake and all metadata checked. ALL10240 SiLU outputs use the
+existing3e-6*(1+abs(reference)) approximation bound;ALL30720 private-next
+words bit-exact. NaN/Inf/stale-page/numerical/source failure is CLOSE ONLY,
+no numeric substitution,automatic END or CPU fallback. Explicit BANK_END
+only after EVERY numeric/source/protocol check passes.
+
+QUALIFICATION (ALL named parents TERMINAL0)
+1.76953 actual native owner40fresh poisoned reads/ALL40960values/full
+  8134072word restore/actual complete dispatch END PASS;5 inert invalid
+  pointer/result refusals. Simulated OS/physical/learned endpoints ONLY.
+2.58021 public control/routing/global scope actual native chain PASS;
+  144 root/team/copy/position/metadata/stats/output/old-namespace refusals
+  cause ZERO endpoint IO,NO model claim. Same native context through actual
+  history/QPE1/QRN1/QPS1/QCB1/40pages/restore/END. No ready-state facade.
+3.66411 actual DEBUG native endpoint faults16 PASS:stuck packet/stale final
+  word/bad counters/lost source at pages1,10,11,40. ALL retain,NO subsequent
+  source/status/END/restore/retry/device IO;NO restoration after partial read.
+4.21551 actual public-control faults9 PASS:first history packet/first
+  workspace packet/embedding map/embedding packet/RMS packet/projection
+  mapping/last-word stale readback/reply copyout/lost new boot write.
+  Each retains ALL owners,clears CPU thread
+  seal/releases global mutex,and proves NO subsequent device/status/END/
+  restore/retry. Calculation failures zero the numeric reply;copyout failure
+  also retains after known-clean restore and is NOT a delivered reply grant.
+5.47274 independent original-F32 oracle synthetic-GGUF PASS:ALL40960values,
+  35 invalid size/alias/alignment/overflow/source/read/metadata/NaN inputs/
+  even unused-history learned taps/final original coefficient failures,
+  staged output never partially published.
+6.48552 source-bound production DEBUG session PASS:3tokens0/15/248319,
+  107 fail-call/source/epoch/original-read/reply/numeric failures.1282
+  original-reference reads BEFORE FD,23235 original pages/108spans,ALL40
+  returned pages checked;NO next ioctl/END after first failure.
+7.88545 actual public c600de03... full-SHA SAME-FILE851-tensor QCB1
+  instruction regression PASS:tokens0/15/248319/1,480worker invocations,
+  2560card-local jobs/40960outputs/122880next words,ALL10240oldest taps
+  nonzero on step3. NEW independent first-token Conv4 oracle agrees with
+  actual emitted QCB1 arithmetic. This is a separate byte/instruction test,
+  NOT original-model integration through the native context or physical card.
+8.43238/17590 actual COMPLETE linked DEBUG44 builds C/D PASS and identical:
+  d96899a74c6949a22caec805dbd611cee80f2ff96c909758d772557d1a4a0c0a
+  /private/tmp/pioneer-q38-decoder-debug-build-20261023-{c,d}/
+  tenstorrent_pci_probe-driver55-decoder-debug-tag44
+  Actual-source new maxframe1904B <=2048;the two existing oversized legacy
+  frames2560/3136 are PRESENT in byte-identical actual tag42 with NO growth.
+  Full wrapper compile new max1664B and identical DEBUG object971d0ca0...;
+  bare native tag43 object3445a61f... retained BYTE-IDENTICAL. All oldtag38/
+  reloadguard/defaultdriver43/private2d12/stash6121/tag42a2bc controls EXACT.
+9.28926/62275 isolated real RV64 Haiku client builds A/B PASS identical:
+  f3b54e8bb01a52cd1272804fc9491a9a832dc725708b19b0fde290ed547687a5
+  /private/tmp/pioneer-q38-decoder-debug-client-20261023-{a,b}
+10.Native43/DEBUG44 gates373,full native/reference/client guards200,
+  old projection DEBUG guards297,old owner176/runtime197 PASS.
+  Independent old projection reference4roles/36refusals regression PASS.
+
+Initial public fixture selected projection transport by numeric phase>=6,
+which accidentally included HistoryZeroing9. Changed TEST endpoint selection
+to exact projection/decoder phases;kept assertions and reran actual control.
+Initial fault0 injection targeted old workspace run1,not new history path;
+corrected TEST endpoint to fail its first actual history packet,kept assertion.
+Oracle test's direct product expected -0 while true zero-history accumulation
+adds to +0;corrected independent expected accumulation,retained bit equality.
+First linked build stack comparison used wrapper include-relative filenames;
+corrected to actual-source byte-identical tag42 baseline,NOT a relaxed limit.
+Both pre-existing2560/3136frames independently verified unchanged.
+
+No Pioneer/SSH/native physical job/SCP/install/reboot/power/SD/Assistant/
+model/NIC/boot changes. Last physical normal041/tag12/gen5/64CPUs/
+max137034936320B postflight retained,NOT re-probed. Dirty llama.cpp and
+unrelated FlashNext files untouched. Raw-unpack-cache22 remains HARD BLOCKED.
+
+NEXT BEFORE ANY NEW HARDWARE USE
+Qualify ORIGINAL GGUF byte endpoints through SAME actual native history/
+embedding/RMS/projection/convolution/readback/control lifetime,not merely
+separate convolution VM test or synthetic learned coefficients. Add/test
+exact guarded updater/rollback041 pair,copyout/FD-close retention safety,
+and revalidate physical source/driver/CPU/RAM/desktop health. Only then one
+physical DEBUG44 test. UNKNOWN/numeric mismatch CLOSE ONLY,physical recovery,
+NO subsequent status/END/reset/restore/reload;only PASS+END+terminal0 may
+guardedly restore normal041. No need for SD/card changes expected yet.
+
+Whole-model goal remains Q/Knorm/gates/Softplus/GDN/state commit/gatednorm/
+output/residual/FFN/full attention+KV/all64layers/sampling/persistent token
+schedule removing host numeric/stage handoffs and actual speed benchmarking.
+This first-token/layer0 DEBUG qualification is NOT full-card inference,
+Assistant Work mode support or a measured decoder speedup.
+
+LOG SHA256 (final logs only)
+native-positive 4e60d684c387330ec0a6549b64eb9fc8188101836d5aa4c7b199691d0b62c0b2
+public-positive cdbd288ffbb22fc73e51d518b1ae698f589c63d08ee62838377a3c423b384554
+native-faults 4a307fb20801fa35ae4211a7595dd450226ccd395f6115a81f1c248cd5e9fb0b
+public-faults 0e845d57cf60c26887a62ac808a7f7fbb44401a98a82a780e40272d49636f8bb
+reference e03f3af8d8b2a2c0399dc5458ce6b4308e0ccfd18459b7d2577411d48aa50527
+session 395918d22cd263d7dc5310371888dc62452cd3eef589cbdcf5dc6cb4024ca9fc
+original-model be41c5965c6728734945c4b19fd3b1751e33b33701b4a61bd67c299b36ce4c74
+linked-build-C 558e2c9b789485d600b880f670594c8f494c62b2685d4d8646bb152aef8929ab
+linked-build-D d8265aeda58e2722ab026d9bbf04067ec1709a5c2ea31710af4d9115480416f6

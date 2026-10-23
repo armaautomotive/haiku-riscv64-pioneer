@@ -4,7 +4,7 @@
 // genuine native QPS1 producer/initialization/ownership capability.
 #define PIONEER_Q38_CONV_BATCH_MACHINE_ONLY
 #include "pioneer_q38_conv_batch_image_test.cpp"
-#define PIONEER_Q38_PROJECTION_VALIDATION_CLIENT 1
+#define PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CLIENT 1
 #define PIONEER_Q38_CPU_VALIDATION 1
 #define PIONEER_Q38_LEARNED_RMS_VALIDATION_REFERENCE 1
 #include <unistd.h>
@@ -24,7 +24,7 @@ static int ActualBatchModelExecv(const char* path,char* const* argv){
 #undef execv
 #include "../PioneerQ38EmbeddingValidationReference.h"
 #include "../PioneerQ38LearnedRmsValidationReference.h"
-#include "../PioneerQ38ProjectionValidationReference.h"
+#include "../PioneerQ38ResidentDecoderValidationReference.h"
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);actualModelPath=argv[2];(void)&BatchPlans;(void)&Plans;(void)&Sequence;
  puts("DEBUG_OFFLINE_QCB1_FULL_SAME_PUBLIC_GGUF_SHA_BEFORE_SIMULATED_IMAGE;NO_DEVICE_OR_NATIVE_OWNER");
@@ -39,6 +39,8 @@ int main(int argc,char** argv){
  for(unsigned token:{0U,15U,248319U,1U}){
   assert(PioneerQ38EmbeddingReference(original,ei,token,raw.data()) && PioneerQ38LearnedRmsReference(original,ni,raw.data(),normalized.data())
    && PioneerQ38ProjectionReference(original,6,normalized.data(),5120,qkv.data(),10240));
+  std::vector<uint32_t> firstReference(40960);
+  if(!step)assert(PioneerQ38ResidentDecoderReference(original,qkv.data(),10240,firstReference.data(),40960));
   unsigned coverage[640]={};
   for(unsigned worker=0;worker<120;worker++){
    ConvBatchMachine m(argv[1],*canonical,0,0,worker,0,step);
@@ -59,7 +61,9 @@ int main(int argc,char** argv){
      sum+=PioneerAttentionFloat(qkv[channel])*PioneerAttentionFloat(g.weight[c*4+3]);
      double reference=double(sum)/(1+exp(-double(sum))),actual=PioneerAttentionFloat(g.output[c]);
      assert(fabs(actual-reference)<=3e-6*(1+fabs(reference)));
+     if(!step)assert(fabs(actual-PioneerAttentionFloat(firstReference[channel]))<=3e-6*(1+fabs(PioneerAttentionFloat(firstReference[channel]))));
      for(unsigned t=0;t<3;t++)next[channel*3+t]=g.next[c*3+t];
+     if(!step)for(unsigned t=0;t<3;t++)assert(g.next[c*3+t]==firstReference[10240+channel*3+t]);
      history[channel*3]=history[channel*3+1];history[channel*3+1]=history[channel*3+2];history[channel*3+2]=qkv[channel];
     }jobs++;
    }

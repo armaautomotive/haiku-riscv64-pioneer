@@ -56,6 +56,7 @@ struct DecoderNativeFixture:ProjectionNativeFixture {
    && !EndFactory(*c) && io.touches==touched && (!transport || transport->Touches()==device));
  }
 };
+#ifndef PIONEER_Q38_RESIDENT_DECODER_NATIVE_FACTORY_ONLY
 int main(int argc,char** argv){
  assert(argc==7 || (argc==8 && (!strcmp(argv[7],"--faults") || !strcmp(argv[7],"--history-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -124,3 +125,4 @@ int main(int argc,char** argv){
  assert(EndFactory(*f.c) && f.c->q38Dispatch->closed && same->Closed() && !f.c->dispatchOwnerRetained && !sColdRecoveryRequired);
  puts("PASS SAME ACTUAL native context/factories/source-cookie-team-thread-clock/ALLhosts/history336x5/zero512/QPE1/QRN1/QPS1ALL4->QCB1ALL120/640jobs/10240outputs+30720private next words/full8134072word restore/ACTUAL complete dispatch END;NO CPU-reference in controller;SIMULATED learned bytes/HARDWARE NOT CARD_OR_MODEL_SPEED");
 }
+#endif

@@ -7,6 +7,11 @@
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Resident decoder is OFFLINE arithmetic integration,not tag42 DEBUG/CPU-reference/Work promotion
 #endif
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#if PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1
+#error Fixed retained-convolution DEBUG readback requires its separate exact native role
+#endif
+#endif
 #include "PioneerQ38ProjectionGraphOwner.h"
 #include "PioneerQ38ConvBatchImage.h"
 #include "PioneerQ38ConvBatchPlan.h"
@@ -20,6 +25,9 @@ struct PioneerQ38ResidentDecoderResult {
  uint32_t version=1,phase=0,worker=0,word=0,unsafe=0,installed=0,armed=0,released=0,completed=0,held=0,closed=0;
  PioneerQ38ProjectionGraphResult stop;
  PioneerQ38ProjectionGraphMemoryResult memory;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ uint32_t validationPages=0,validationWords=0;
+#endif
 };
 class PioneerQ38ResidentDecoderOwner {
  PioneerQ38ProjectionGraphOwner* projection=nullptr;PioneerQ38ConvHistoryBanks* history=nullptr;
@@ -27,6 +35,9 @@ class PioneerQ38ResidentDecoderOwner {
  uint32_t command[120][10]={},counts[120][8]={},resets[120]={};
  bool verified[120]={};unsigned phase=0,operationPhase=0;
  bool started=false,unsafe=false,closed=false,consumed=false,complete=false;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ bool readbackTraffic=false,readbackDone=false;
+#endif
  template<class IO> bool Fail(IO& io,PioneerQ38ResidentDecoderResult& r){
   unsafe=true;complete=false;r.unsafe=1;
   if(history)history->Fault();
@@ -46,6 +57,11 @@ class PioneerQ38ResidentDecoderOwner {
   for(unsigned port=0;port<2;port++)if(!PioneerQ38GraphCsrPciQuiet(io,port))return false;
   // This NEW owner,not the old Image/Guard,tracks traffic on ALL120 cores.
   // Unknown in-flight controls are not accepted as a new baseline.
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+  // DEBUG transport does NOT pretend that a physically held ROOT runs.
+  // Only this owner's one pending fixed read may change its counters.
+  if(!w && readbackTraffic)return !p.running[0] && resets[0]==0x47800;
+#endif
   if(p.running[w] && !verified[w])return true;
   if(!PioneerQ38GraphCsrIdle(io))return false;
   for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=command[w][i])return false;
@@ -116,6 +132,59 @@ class PioneerQ38ResidentDecoderOwner {
   for(unsigned i=0;i<10;i++)command[w][i]=end[i];
   verified[w]=true;return Guard(io,w) && Terminal(io,w);
  }
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ // Private one-shot DEBUG transport,inside the SAME real owner and call.
+ // ALL120 physical holds/receipts BEFORE first read,BEFORE original restore.
+ template<class IO> bool ValidationReadback(IO& io,uint32_t* values,PioneerQ38ResidentDecoderResult& r){
+  auto& p=*projection;
+  if(readbackDone || readbackTraffic || r.validationPages || r.validationWords || !p.state
+   || !p.state->OwnsExecution(p.identity,&p,p.input) || !p.state->InitializationPublished(p.identity))return false;
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return false;
+  PioneerQ38ProjectionExtent span[2];const auto* d=jobs[0].Records();
+  const unsigned offsets[]={TT_Q38_CONV_OUTPUT,TT_Q38_CONV_NEXT},pages[]={10,30};
+  for(unsigned i=0;i<2;i++)if(!p.state->InitializeSpan(p.identity,0,offsets[i]/4096,pages[i],span[i])
+   || span[i].bank!=p.bank || span[i].address!=d[4]+offsets[i] || span[i].route!=d[8]
+   || span[i].pages!=pages[i] || span[i].bytes!=pages[i]*4096)return false;
+  for(unsigned page=0;page<40;page++){
+   r.worker=0;r.word=page;
+   if(!Guard(io,0) || !Current(io,0))return false;
+   // Reuse ONE original-snapshot-covered scratch page,with distinct NaN
+   // poison on EVERY read. Stale/partial/foreign data cannot pass finite.
+   for(unsigned word=0;word<1024;word++){
+    uint32_t actual,poison=0x7fc40000+page*1024+word;
+    if(!io.ProjectionGraphMemoryWrite(0,0x80000+word*4,poison)
+     || !io.ProjectionGraphMemoryReadChecked(0,0x80000+word*4,actual) || actual!=poison)return false;
+   }
+   const auto& e=span[page<10?0:1];unsigned within=page<10?page:page-10;
+   const uint32_t next[]={e.address+within*4096,0,e.route,0x80000,0,129,0,0,4096,0};
+   for(unsigned i=0;i<10;i++){io.ResidentNocWrite(i*4,next[i]);if(io.ResidentNocRead(i*4)!=next[i])return false;command[0][i]=next[i];}
+   if(!Guard(io,0))return false;
+   uint64_t began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return false;
+   uint32_t expected[8];const unsigned delta[]={1,64,1,1,0,0,1,0};
+   for(unsigned i=0;i<8;i++)expected[i]=counts[0][i]+delta[i];
+   readbackTraffic=true;io.ResidentNocWrite(0x40,1);bool done=false;
+   for(unsigned poll=0;poll<65536;poll++){
+    if(!Guard(io,0))return false;
+    uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return false;
+    bool exact=io.ResidentNocRead(0x40)==0;
+    for(unsigned i=0;i<8;i++)exact &= io.ResidentNocRead(PioneerQ38PanelCounter(i))==expected[i];
+    if(exact){done=true;break;}io.Pause();
+   }
+   if(!done)return false;
+   for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=next[i])return false;
+   for(unsigned i=0;i<8;i++)counts[0][i]=expected[i];
+   readbackTraffic=false;if(!Guard(io,0))return false;
+   for(unsigned word=0;word<1024;word++){
+    uint32_t value;if(!io.ProjectionGraphMemoryReadChecked(0,0x80000+word*4,value)
+     || (value&0x7fffffff)>=0x7f800000)return false;
+    values[page*1024+word]=value;r.validationWords++;
+   }
+   r.validationPages++;if(!Guard(io,0))return false;
+  }
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return false;
+  readbackDone=r.validationPages==40 && r.validationWords==40960;return readbackDone;
+ }
+#endif
 public:
  PioneerQ38ResidentDecoderOwner()=default;
  PioneerQ38ResidentDecoderOwner(const PioneerQ38ResidentDecoderOwner&)=delete;
@@ -163,6 +232,9 @@ public:
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(p.running[w] || p.resets[w]!=0x47800 || !Scope(io) || !p.Guard(io,w) || !p.Image(io,w))return Fail(io,r);
    resets[w]=0x47800;verified[w]=true;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+   if(w)r.stop.held++; // independent old-cohort physical hold proof above
+#endif
    for(unsigned i=0;i<10;i++)command[w][i]=p.command[w][i];
    for(unsigned i=0;i<8;i++)counts[w][i]=p.counts[w][i];
   }
@@ -212,8 +284,17 @@ public:
   for(unsigned w=0;w<120;w++)if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
   complete=true;phase=6;r.phase=6;return true; // private outputs stay ON CARD,NOT committed next history or GDN/full inference
  }
- template<class IO> bool Close(IO& io,PioneerQ38ResidentDecoderResult& r){
+ template<class IO> bool Close(IO& io,PioneerQ38ResidentDecoderResult& r
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+  ,uint32_t* values=nullptr
+#endif
+ ){
   if(!started || unsafe || closed || !complete || phase!=6 || !projection || !history)return false;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+  uintptr_t output=reinterpret_cast<uintptr_t>(values);
+  if(!values || (output&3) || output>UINTPTR_MAX-163840 || r.validationPages || r.validationWords || readbackDone)return false;
+  if(!ValidationReadback(io,values,r))return Fail(io,r);
+#endif
   auto& p=*projection;phase=7;r.phase=7;r.memory={};
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return Fail(io,r);
