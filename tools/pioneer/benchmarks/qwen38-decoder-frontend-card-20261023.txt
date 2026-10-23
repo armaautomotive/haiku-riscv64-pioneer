@@ -1,0 +1,106 @@
+Controlled relay recovery for the frontend-PC correction,October23 UTC2026.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card inference UNMET.
+Qualified source aade3d930ed6dba78615d992aa6afec9ddb95ea0 was pushed and
+remote-verified BEFORE hardware staging/testing. New DEBUG44 candidate6ce,
+new updaterf1c and unchanged independent validation clientf3b remain pinned
+by qwen38-decoder-frontend-pc-20261023.txt.
+
+POWER CONTROL CORRECTION
+User confirms work saved and delegates computer power control to the agent.
+User explicitly says mains switching is NOT needed. The relay is a POWER
+BUTTON,not a mains switch or a power-state sensor. Repeated OFF can start
+the board on this setup:OFF is NOT IDEMPOTENT. Use ONE off,then ONE on;
+no duplicate off commands or blind extra pulses while checking a boot.
+IMPORTANT:software shutdown may itself power off. Do NOT blindly follow
+it with relay-OFF:SSH closing alone does NOT prove the board is still ON.
+Before another OFF,require positive evidence the board remains powered.
+Do not interpret a relay ACK or an older user desktop reply as a fresh boot.
+No SD relay/card/cable/mains changes;no automatic five-minute rest.
+
+Initial on85982 TERMINAL0 did NOT reboot the old Haiku session. Existing
+serial stayed unchanged. Linux-key check correctly refused the saved Haiku
+key;local fingerprint comparison proved it was the expected alternate OS,
+NOT permission to bypass host checking or edit known_hosts. Pinned Haiku
+OS-only diagnostics:uptime1:01,64CPUs,max137034936320B. NO GPU access.
+User correctly requested OFF before ON. Normal /bin/shutdown (not -q/-r)
+after sync returned0;passive serial showed sshd terminating and SSH closed.
+Relay OFF65555 TERMINAL0 held7s,then ON83891 TERMINAL0 held0.75s.
+Although only ONE relay-OFF was sent,the preceding software shutdown may
+already have powered off;the precise physical transition was NOT sensed.
+User's warning corrects this procedural gap. Do not repeat this blind
+software-shutdown-plus-relay-OFF sequence on a future recovery.
+No subsequent relay commands. Fresh firmware serial starts after68508604:
+SOPHGO ZSBL/4x32GiB DDR/SPI boot,then normal recovery Linux and NVMe Linux.
+
+NEW LINUX EPOCH
+Fresh pinned Linux6.1.31/riscv64,uptime27.90s,
+boot_id00e560a6-5ed9-4985-b245-89da510340d3,
+all64CPUs online0-63,MemTotal131976904kB,taint0,kexec_loaded0,
+root/dev/nvme0n1p3. SAME saved milkv key,strict Linux host pin;sudo-n works.
+Pinned private helper SHA9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+matches the completely read local copy before execution:
+ /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh
+prepare43118 TERMINAL0,boot22125 TERMINAL0,unique session
+q38frontendpc20261023a,64,memory128-spin-idle7-top-page-nosd-control.
+All artifact/platform/root/disk/no-MMC/inactive-accelerator/COMMAND0000
+guards passed. Clean read-only BFS source check passed;NO journal override
+or repair. Bundle233a2d66/fixed untimed top-page7 kernel chain retained.
+Default NVMe boot/Samsung packages/SD remain unchanged. Normal Linux
+shutdown/kexec,NOT another relay pulse. All boot-input hash proofs PASS.
+
+NEW HAIKU EPOCH AND GUARDED RESTORE
+Initial pinned Haiku SSH91696 timed out,not evidence of a failed/stalled
+boot. SAME existing passive serial grew and shows secondary CPUs0..63
+enabled and MC secondary-CPU boot milestone. No repeated power action.
+Subsequent strict pinned Haiku SSH passes:uptime0:04 (not old1:01),64CPUs,
+max137034936320B,desktop/input services present;initial valid inventory23,
+then strict idle inventory21 and NO Assistant/model/compute parent.
+Immutableae05/current4db/normal041/adminb0c851b3/guardd1ce2aa4 hashes exact.
+CPU-only metadata tag44/generation1/quiesced0/cold0/owner0/open1/guard1.
+Recovery is proven by a NEW relay-controlled hardware/OS epoch and clean
+metadata,NOT by in-place failure-latch clearing or a claimed mains cycle.
+User explicitly authorizes this ordinary relay recovery without mains.
+restore20924 TERMINAL0 uses ONLY immutableae05/current4db mapping:
+tag44/gen1->quiesced1->normal041/tag12/gen2/cold0/owner0/open1/guard1,
+HOT_RELOAD_VERIFIED;NO_GPU_EXECUTION. Old tag-onlyd968 backup preserved;
+new full-SHA4db backup independently verified. No old3648/cdee/newf1c
+substitution for recovery. All future tests still fail closed on UNKNOWN.
+
+NEW TRIAL PREPARATION
+Strict inventory21/no compute parent/current041 hash/f3b client hash/public
+GGUF18973870528B pass. New6ce candidate,newf1c updater and own native log
+paths verified unused BEFORE copy. Serialized SCP72170(driver) and21208
+(updater) both TERMINAL0,128Kbit/s;NO concurrent model/native process.
+Remote6ce/f1c/f3/current041 complete hashes independently verified exact.
+apply37686 TERMINAL0 via guarded f1c updater:normal041/tag12/gen2->quiesced
+->new6ce/tag44/gen3/quiesced0/cold0/owner0/open1/guard1,
+HOT_RELOAD_VERIFIED;NO_GPU_EXECUTION during apply. Numeric tag44 alone is
+NOT binary identity;the new6ce hash was checked before/after staging.
+
+ONE NATIVE VALIDATION LIVE,NOT A RESULT
+19828 is the ONE live native validation parent,using unchanged f3b client
+--validate-token0. /bin/bash pipefail preserves client failure through tee.
+Strict inventory21/no compute parent/driver6ce/clientf3b exact before start.
+Initial output is full original-model authentication/reference preparation
+BEFORE the GPU FD;no original-file hash/numerical/card pass claimed yet.
+Same job must be polled through terminal,not restarted on observation timeout.
+Local own log:
+ /private/tmp/pioneer-q38-decoder-frontend-native-20261023-a.log
+Remote own log:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/decoder-frontend-native-20261023-a.log
+Existing passive serial after byte68931404:
+ /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
+No SCP/status/reload/END/reset/second GPU job/dependency mutation while this
+parent lives. Unknown/numeric failure remains CLOSE ONLY,no later device
+access or automatic restore/retry. No new power commands;respect the power
+policy above. No whole-model inference-speed claim from this layer0 test.
+
+TERMINAL RECOVERY LOG SHA256
+b94326e93b3166713d62f6b866b2f306f7b870d7f72eda5e2b47aad1d8d8d9d5
+ /private/tmp/pioneer-q38-frontend-recovery-prepare-20261023-a.log
+5f1f223ca7cf1d2101490d0f5dd73d9175a453549252d28c3d228a3bfbf12c20
+ /private/tmp/pioneer-q38-frontend-recovery-boot-20261023-a.log
+d14f97148042337866f25ef29db540303762be57294bdf7e31b1a1203613eba6
+ /private/tmp/pioneer-q38-frontend-recovery-restore-20261023-a.log
+ab6a0d4d9069b81100d4f63be80598aa1afa2dcea9d34e7325e9cdb8f38161f0
+ /private/tmp/pioneer-q38-decoder-frontend-apply-20261023-a.log
