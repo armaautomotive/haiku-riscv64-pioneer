@@ -1,0 +1,102 @@
+OFFLINE LOCAL QGP1 recurrent-input preparation,October23 UTC2026.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card inference UNMET.
+This is a required arithmetic prerequisite,NOT a native producer/backend,
+original-model proof,physical-card measurement or claimed inference speedup.
+
+CARD-SIDE MISSING MATH
+Raw query128/key128 -> FP32 sum of rounded squares+1e-6,L2 normalization;
+query additionally scales by1/sqrt128. No mistaken RMS mean division.
+Raw alpha/betaLogit/ORIGINAL negativeA/dtBias -> stable Softplus,Sigmoid,
+decay=exp(negativeA*Softplus(alpha+dtBias)). GGUF ssm_a is ALREADY negative
+-exp(A_log);never exponentiate it again. Existing supported integer32
+division/square-root and FP32 exp primitives;NO fdiv/fsqrt/FMA/double/libm
+in emitted code. The independent HOST oracle uses libm only to OBSERVE.
+Softplus uses sign-stable exp(-abs(x)) and ten-term atanh-series log1p,
+z<=1/3,truncation<1.1e-11 before FP32 rounding. For e<2^-22,log1p(e)=e
+within1.2e-7 relative error,avoiding a spurious subnormal e/2 intermediate.
+GDN does NOT inherit the old activation exp cutoff at-80:normal values
+exp(-80..-87) survive via exp(x/2)^2,and only actual subnormals FTZ. Small
+normal gates can multiply large state and MUST NOT silently become0.
+Scalars bounded to normal/
+zero,abs<=65504,negativeA strictly negative. Q/K normal/zero with finite
+sum proof and explicit FTZ for negligible squared terms vs1e-6. Refuse
+nonfinite/subnormal inputs/overflow/output-alias/bad-pointer/range cases,no fallback.
+
+SEPARATE IMAGE,NOT HOST-ROUNDTRIP INFERENCE
+New QGP1 image consumes fixed LOCAL raw data only,not CPU-prepared q/k or
+decay/beta. Produces existing RGDN local query/key/value/gates layout,
+including bit-exact64 V values and final local descriptor stamp. Numerical
+failure after a valid header leaves the local recurrent descriptor invalid.
+A malformed header returns count0 without altering older local data;the
+caller MUST prove a fresh QGP1/count64,NEVER trust a descriptor stamp alone.
+No code/input/NoC/
+GDDR/CSR/PCI/reset access outside the strict image-test whitelist.
+Half0..95 header is DATA,NOT physical worker/source/initialized-state or
+native-owner authority. Tests seed tiled key-head=h%16 raw vectors;the
+image does not yet implement/prove resident source selection for that map.
+No source capability or current-token GDN initialization/commit is granted.
+Future integration MUST source actual retained QCB1/QPS1/original A+dtBias
+on CARD and combine this math with resident recurrence in ONE worker image.
+Do NOT promote the standalone stop/inspect image into a host stop/reload
+Work path. No new flag,model target or fallback in Assistant/Work/driver.
+
+ACTUAL EMITTED-INSTRUCTION QUALIFICATION
+Read-only SDK /Volumes/HaikuBuildLocal/generated.riscv64.
+Fresh builds f,g TERMINAL0 via build_qwen38_gdn_prepare_image.sh:
+ /private/tmp/pioneer-q38-gdn-prepare-image-20261023-{f,g}
+Both code.bin4568B SHA
+ 6d4ca581e7c0ecdecbf61fea823d9926e3e1b5f66b4899134f3bd6bd682ebfc0
+Both boot.bin4B SHA
+ d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+Compile frames max112B;actual emulated stack148B,under512B builder gate;
+no forbidden instructions/static writable data/GOT/runtime helper.
+Prototype a was superseded;prototype b caught a C++ integer-type spelling
+in the new pointer-overflow guard. Prototypes c/d/e passed absolute bounds
+but review identified the inherited exp cutoff's lost small NORMAL gates.
+Added explicit range-preserving arithmetic plus STRICTER relative gate
+checks;f/g supersede all prototypes. Shared old GraphExp/old images remain
+unchanged. No numerical/domain/instruction guard was relaxed for a pass.
+
+47389 TERMINAL0,ASan/UBSan actual emitted RV32IMF instruction execution:
+122 positives:96 local half-head fixture cases plus26 zero/large/tiny/
+signed-zero/extreme scalar/negative-exponent80,81,84,87,88,100 cases.
+EVERY normal decay/beta must pass RELATIVE3e-6,not merely absolute error;
+only actual subnormal gates may become0. ALL322 output words checked:
+128Q+128K+64bitexactV+2gates. Read-only raw input preserved and surrounding
+canaries unchanged. Malformed descriptor/header fields and first/last raw
+Q/K/V/gate nonfinite/subnormal/overflow/nonnegative-A faults1078 refused;
+inert success/fault park checked after32more actual instructions. NO NoC/
+CSR/PCI/reset/GDDR operation permitted by the simulator's address whitelist.
+Maximum13962 emulated instructions is NOT hardware timing/token throughput.
+Host-only Softplus262017grid maxScaledError7.16200768e-8 (<1e-6),and11
+null/alias/misalignment/overflow pointer refusals. No observer product used
+as image input or compiled into card code;NO ORIGINAL_GGUF/card claim.
+Separate gates50 TERMINAL0:exact image role;reject Work/kernel/reference
+mixes even value0;ambient role/unknown flags refused BEFORE SDK/output;
+actual builder awk rejects unsupported ISA and stack513,accepts512.
+
+RUNNING HARDWARE TEST DEPENDENCIES PRESERVED
+Developed only isolated new files while SAME physical decoder19828 ran.
+No6ce/f3/QCB1/GGUF dependency changed,no Pioneer transfer/install/second GPU
+job. The physical convolution test ultimately passed and stable041 was
+restored;see qwen38-decoder-frontend-card-20261023.txt. QGP1 was NEVER
+transferred/installed/executed on Pioneer. Existing kernel/boot/Assistant/
+Work/native driver/default images unchanged;dirty llama/FlashNext untouched.
+
+REMAINING REAL INTEGRATION
+Actual resident NoC source/layout/learned-page bindings and same-owner
+handoff from private completed convolution;GDN current-state zero producer,
+96-half-head recurrent execution and all-participant canonical state commit;
+gated norm/output/residual/FFN/full attention+KV/all64layers/sampling and
+persistent whole-token scheduling;then honest end-to-end inference timing.
+The first convolution on-card PASS is not evidence those steps are done.
+
+TERMINAL LOG SHA256
+3e2e54c23934b761528ece04541aa528e0630197761da117851515b3fe8f2f4c
+ /private/tmp/pioneer-q38-gdn-prepare-build-20261023-f.log
+bcaaee7f4ff147d617345f6f11710c0131edc32d329ef1327fab663ed4d288c9
+ /private/tmp/pioneer-q38-gdn-prepare-build-20261023-g.log
+5170c60f1333f9554ed4b494ee24ba584538c69c113896d772cad4ce54599bcc
+ /private/tmp/pioneer-q38-gdn-prepare-instructions-20261023-d.log
+08551db199079ce78650f4ac1a60419378782ce438a1aa14dcb83dbd1d3405ae
+ /private/tmp/pioneer-q38-gdn-prepare-gates-20261023-c.log

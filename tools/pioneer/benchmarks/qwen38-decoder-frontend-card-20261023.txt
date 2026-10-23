@@ -77,23 +77,43 @@ apply37686 TERMINAL0 via guarded f1c updater:normal041/tag12/gen2->quiesced
 HOT_RELOAD_VERIFIED;NO_GPU_EXECUTION during apply. Numeric tag44 alone is
 NOT binary identity;the new6ce hash was checked before/after staging.
 
-ONE NATIVE VALIDATION LIVE,NOT A RESULT
-19828 is the ONE live native validation parent,using unchanged f3b client
+ONE NATIVE VALIDATION,TERMINAL PASS
+19828 was the ONE native validation parent,using unchanged f3b client
 --validate-token0. /bin/bash pipefail preserves client failure through tee.
 Strict inventory21/no compute parent/driver6ce/clientf3b exact before start.
-Initial output is full original-model authentication/reference preparation
-BEFORE the GPU FD;no original-file hash/numerical/card pass claimed yet.
-Same job must be polled through terminal,not restarted on observation timeout.
+Full original-model SHA and independent references completed BEFORE GPU FD.
+All108 SPAN_UPLOAD8807 calls and SPAN_END8805 returned0. The single163984B
+decoder ioctl89d8 returned0,then explicit END7bf6 returned0. SAME19828
+TERMINAL0. Client result PASS/clean_end1:all120workers/10240convolution
+values within UNCHANGED3e-6scaled bound/30720private-next words BIT EXACT
+against independent ORIGINAL-GGUF references. Original snapshot restoration
+and explicit clean END passed. No CPU numerical products entered the native
+controller. Initialization/execution/readback/restore184903805us is NOT
+whole-model inference time or a tokens/sec benchmark. This validates the
+first-token/layer0 retained convolution chain,NOT GDN/full-model offload.
+The successful run does not log/count6403c snapshots;do not invent that
+observation. The separate instruction tests explicitly cover those PCs.
 Local own log:
  /private/tmp/pioneer-q38-decoder-frontend-native-20261023-a.log
 Remote own log:
  /boot/home/pioneer-p100a-hot-reload-20261019-a/decoder-frontend-native-20261023-a.log
 Existing passive serial after byte68931404:
  /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
-No SCP/status/reload/END/reset/second GPU job/dependency mutation while this
-parent lives. Unknown/numeric failure remains CLOSE ONLY,no later device
-access or automatic restore/retry. No new power commands;respect the power
-policy above. No whole-model inference-speed claim from this layer0 test.
+No SCP/status/reload/second GPU job/dependency mutation ran alongside the
+native parent. New isolated LOCAL QGP1 arithmetic files/tests were developed
+without changing ANY6ce/f3/QCB1/model dependency or installing those files.
+Unknown/numeric failure still remains CLOSE ONLY,no automatic restore/retry.
+No new power commands;respect the power policy above.
+
+KNOWN-CLEAN STABLE RESTORE,NO REBOOT
+ONLY after terminal0/numerical PASS/cleanEND1,restore49959 TERMINAL0 via
+pinnedf1c rechecks strict idle/hash/guard/cold0 metadata:
+new6ce/tag44/gen3->quiesced1->normal041/tag12/gen4/cold0/owner0/open1/guard1,
+HOT_RELOAD_VERIFIED;NO_GPU_EXECUTION. Current stable041 hash unchanged.
+Subsequent OS-only checks:64CPUs/max137034936320B,app_server/Tracker/
+Deskbar/input_server present. No new physical input-response claim.
+All native/upload/model owners closed cleanly;no GPU job remains running.
+Whole-model last rate0.207893161tok/s UNCHANGED;20tok/s target unmet.
 
 TERMINAL RECOVERY LOG SHA256
 b94326e93b3166713d62f6b866b2f306f7b870d7f72eda5e2b47aad1d8d8d9d5
@@ -104,3 +124,7 @@ d14f97148042337866f25ef29db540303762be57294bdf7e31b1a1203613eba6
  /private/tmp/pioneer-q38-frontend-recovery-restore-20261023-a.log
 ab6a0d4d9069b81100d4f63be80598aa1afa2dcea9d34e7325e9cdb8f38161f0
  /private/tmp/pioneer-q38-decoder-frontend-apply-20261023-a.log
+e4644a6ef1454ec40d76ed3de7c17b4b8a0a61e32f4c8c7bebc295a4d5a506e4
+ /private/tmp/pioneer-q38-decoder-frontend-native-20261023-a.log
+9ccdf91f75e18562877db458a8b31dbca1e991bc33214643c06d902a9268ebbb
+ /private/tmp/pioneer-q38-decoder-frontend-clean-restore-20261023-a.log
