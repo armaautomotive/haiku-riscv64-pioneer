@@ -13,6 +13,13 @@ struct DecoderNativeFixture:ProjectionNativeFixture {
   for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer || p->role!=12)continue;
    for(unsigned page=0;page<p->allocated/4096;page++)learned[p->bank*786432+p->offset/4096+page]=1;
   }
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+  for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);
+   if(p->kind==plan->WeightKind && !p->layer && (p->role==7 || p->role==8)){
+    assert(p->allocated==4096);learned[p->bank*786432+p->offset/4096]=1;
+   }
+  }
+#endif
  }
  unsigned PreBindRefusals(){
   auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned refusals=0,touched=io.touches;uint64 epoch=sQ38EmbeddingModelEpoch;

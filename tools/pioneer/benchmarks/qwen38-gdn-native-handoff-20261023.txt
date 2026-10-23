@@ -1,0 +1,131 @@
+SAME-owner native QCB1->QGI1 preparation,October23 UTC2026.
+Last whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card target UNMET.
+This is an actual native lifetime/source/factory compile and simulated
+endpoint qualification,NOT physical QGI1 execution or model speedup.
+No Pioneer access,relay pulse,driver transfer/install/boot/Assistant change.
+
+REAL OWNERSHIP SEAM REMOVED IN CODE
+Behind exact private PIONEER_Q38_GDN_INPUT_OWNER=1/tag45 only,the EXISTING
+PioneerQ38ResidentDecoderOwner keeps its original8134072word snapshot,
+SAME actual native context/call-source/cookie/team/thread/model/driver/
+clock/ALL host owners and120-worker cohort across completed QCB1->QGI1.
+No Close/restore/new owner/reconstructed producer between the two stages.
+ROOT0 and workers97..119 stay physically held in QCB1;workers1..96 receive
+the exact frozen8404B QGI1 image and canonical per-half descriptors.
+Before any code mutation,ALL120 old image/table/source/command/counter/
+mapping/physical holds re-proved. Independent SECOND all120 pass BEFORE
+first new arm/release. Private per-worker image-stage flags,not caller
+reply counts,dispatch current-image/descriptor/receipt verification.
+QGI1 reads raw resident convolution/QPS1/original A/dt bytes and invokes
+QGP1 math INSIDE the worker. No host-precomputed q/k/decay/beta input.
+All96 fresh marker/phase/count/two-PC/code/descriptor/7READ24flit receipts
+must complete,then ALL120 current proofs (including untouched24) precede
+first post-compute hold. ALL120 held/current BEFORE full original restore.
+Partial install/unknown packet/foreign source/counter/status/PC/code/restore
+failure retains ALL owners/snapshot/maps and performs NO following IO.
+Reentry and caller-forged completed/held96 cannot manufacture a private
+completion or bypass the new stage at Close. No initialized-GDN grant.
+
+Actual native Bind now requires BOTH exact original learned A/dt pages
+BEFORE epoch/publication/claim/IO. Same canonical ledger pointer and
+identity retained through all96 descriptors. Two extra pages are checked
+in the actual kernel factory;TEST endpoints seed their byte/bitmap data.
+This is NOT evidence those2pages were physically uploaded to the card.
+Future public physical qualification client needs23237 rather than23235.
+
+ISOLATED,INERT NATIVE ROLE
+Exact tag45 rejects old tags43/44,old fixed DEBUG,CPU-validation/Work and
+incomplete/unknown role combinations. This checkpoint has NO public
+execution/upload/old-Work selector:root-checked ProbeControl rejects every
+non-reload request under the new role. Reload status/quiesce stay separate.
+Legacy builders reject ambient new-role promotion BEFORE SDK/output.
+No new linked driver or hardware/client deployment produced here.
+ROM DATA header generated ONLY after exact code8404B SHA
+ bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1
+and exact boot4B0005e06f verification;ROM alone is not authority.
+
+ORIGINAL-MODEL SAME-NATIVE-FACTORY POSITIVE
+18697 TERMINAL0,final owner source/token0:
+Full original-file/SAME851tensors and1672independent reference reads
+BEFORE native context,observer compiled separately WITHOUT native flags.
+Genuine actual history336x5/zero512/QPE1/QRN1/4QPS1/QCB1ALL120;then SAME
+actual native PrepareQ38ResidentGdnInputs/fixed ALL96 emitted QGI1 jobs.
+The byte emulator reads installed code/descriptors/NoC controls from SAME
+native fabric,not reconstructed completion/source capabilities. Actual
+old resident products and original64B learned reads only,never observer
+q/k/gates. All30912 output words against independent ORIGINAL references,
+normal gates RELATIVE3e-6,672residentREADS/192original A-dt reads.
+Same snapshot/cohort retained THROUGH both stages,full8134072word restore
+and actual complete dispatch END. No context or snapshot closed in between.
+Prototype77764 also passed,but predates extra untouched24 pre-hold proof.
+
+FAULT QUALIFICATION
+Corrected suite62776 TERMINAL0:ALL20 faults and parent positive PASS.
+20 child cases plus parent's full original-model positive path:
+partial code/descriptor install,summary/counter/source/command/marker/
+count/phase/PC/image/descriptor corruption,untouched ROOT counter and
+last peer table corruption BEFORE ANY post-compute hold,team/history/
+learned-page loss,partial restore/restore readback,unfinished END.
+Every injected endpoint fault must prove it was actually applied;ALL
+unsafe cases must retain native ownership and show ZERO subsequent IO.
+Initial suite28389 caught its descriptor injector using the CODE-mapping
+path instead of actual PANEL mapping:fixed the TEST injector,no controller
+guard weakened. This was a local simulator assertion,NOT a card fault.
+
+FULL ACTUAL RISC-V COMPILE AND REGRESSIONS
+32198 TERMINAL0,read-only SDK /Volumes/HaikuBuildLocal/generated.riscv64.
+Full actual driver source/factories/scope/old END compiled via forced
+COMPILE-ONLY exports. New family maxFrame304B;every frame<=2048B except
+pre-existing legacy oversized functions with NO growth. GCC outlined
+clones are aggregated using WORST frame per canonical actual path/function
+on BOTH sides,not last-entry overwrite. New2049 rejected,2048 accepted;
+legacy2560 accepts only <=same old2560,not2561. Threshold NOT increased.
+Two independently emitted FINAL objects c/d byte-identical SHA
+ c3e249dba9ab2a16a34f5a8641721d4d8f28bbb8c9978060178f813821cb5dbd
+ /private/tmp/pioneer-q38-gdn-input-native-full-20261023-d/gdn-input-NATIVE45-COMPILE-ONLY.o
+Prototype a caught GCC misleading indentation (Plan/owner statements),
+fixed only statement formatting. Prototype b exposed actual-vs-wrapper
+path spelling in frame comparison;canonicalized actual file paths.
+Prototype c compiled the final same object,but its audit rejected repeated
+GCC clone signatures;d's stricter MAX aggregation passes. c's SCRIPT did
+NOT pass. Actual tag43/oldtag38/guard/default43/private execution2d12/
+stash6121/tag42a2bc and actual DEBUG44 ALL byte controls remain exact.
+Actual old DEBUG44 still6ce7b4fecae927391119163022cb49f8775ca79776555d209e2eb4c3eacc564b.
+Old144-refusal/public tag44 control/instruction/readback/restore/END
+regression12181 TERMINAL0. Old native role gates373 TERMINAL0.
+New role/routing/ROM/frame gates176,80516 TERMINAL0. A new frame-unit
+fixture initially compared a /var path literally against canonical/private/
+var;fixed its EXPECTED path using resolve(),not the actual frame guard.
+Image/plan regression73243 TERMINAL0:4608DATA plans,96emitted positives,
+1261faults/max39106steps/788Bstack;image unchanged. Python/shell syntax and
+git diff --check clean. Dirty llama/unrelated FlashNext untouched.
+
+NEXT REAL WORK,NOT COMPLETED BY THIS CHECKPOINT
+Actual scoped public/global-call-lock hardware qualifier/client upload+readback and hotswap
+pinning BEFORE card trial. GDN initialized-current-state producer still
+missing in this new joint native lifetime;reserved extents are NOT init.
+Then combined on-card prep+recurrent image (no host stop/reload inference
+seam),all96 state/epoch/next-slot commits,gated norm/output/residual/FFN,
+fullattention+KV/all64layers/sampling/persistent scheduling and honest
+end-to-end timing. The old half-major state extent convention must be
+checked against actual recurrence layout before any state read/write.
+Work/no-CPU-reference vs validation separation remains unchanged.
+Stable041/gen4 driver and64CPU/full128GB kernel/boot remain last-known
+healthy and were not accessed or changed here. NO power action;OFF is
+non-idempotent,never repeat it blindly or after software shutdown.
+
+TERMINAL LOG SHA256
+8c2550178e337857ea00b8e203e07d9ff992435f6ff97c80304500b6463d00e9
+ /private/tmp/pioneer-q38-gdn-input-native-faults-20261023-b.log
+8ae1777b1ff9ad027ab8999800c73e41ac01f9b1c1e7634ea733741ffd55ca09
+ /private/tmp/pioneer-q38-gdn-input-native-full-20261023-d.log
+b6feef399080be82efa65f539634efbba048af50875ef732dfecf831cd30c3e4
+ /private/tmp/pioneer-q38-gdn-input-native-gates-20261023-d.log
+dfd069a6a087acae91742d4f83dc78fe9a23ad7daa0484c5dd6971d1bc6a05e0
+ /private/tmp/pioneer-q38-gdn-input-native-20261023-c.log
+afea1c527aafae822b57a437d1c602ca9419119ef2171723e71da6d221e4b23a
+ /private/tmp/pioneer-q38-gdn-input-old-native-gates-20261023-a.log
+cdbd288ffbb22fc73e51d518b1ae698f589c63d08ee62838377a3c423b384554
+ /private/tmp/pioneer-q38-gdn-input-old-control-20261023-a.log
+b18a80c9a041f14908ca78b17ccf2be3d13b40cf7b3f83a24d21a9305ee30b22
+ /private/tmp/pioneer-q38-gdn-input-native-image-regression-20261023-a.log

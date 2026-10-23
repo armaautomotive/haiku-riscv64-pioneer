@@ -40,6 +40,11 @@ public:
  unsigned DecoderStarts()const;
  void ObserveDecoder(const PioneerQ38ResidentDecoderResult&);
  void DecoderFault(unsigned); // TEST endpoint failure/snapshot only,never a production selector
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ void GdnInputSource(const char*); // TEST exact emitted-byte image,not a native capability
+ void GdnInputFault(unsigned);unsigned GdnInputStarts()const;
+ bool GdnInputFaultInjected()const;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  std::vector<uint32_t> DecoderCompletionReads()const; // TEST phase4 status/PC trace,NO device I/O
  unsigned DecoderFrontendSnapshots()const; // TEST observed speculative fallthroughs,NO device I/O

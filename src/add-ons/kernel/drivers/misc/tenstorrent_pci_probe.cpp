@@ -15,7 +15,12 @@
 #error Decoder runtime/history reservation is OFFLINE until its separate actual native factory and role are qualified
 #endif
 #endif
-#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+#if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Separate resident-input owner needs exact native role,never old convolution DEBUG
+#endif
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102300010045ULL
+#elif defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #if PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1
 #error Separate fixed retained-convolution DEBUG requires exact native decoder role
 #endif
@@ -25,7 +30,7 @@
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #if PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || PIONEER_Q38_RESIDENT_DECODER_OWNER != 1 || !defined(PIONEER_Q38_DECODER_RUNTIME) || PIONEER_Q38_DECODER_RUNTIME != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 || PIONEER_DRIVER_BUILD_TAG != PIONEER_Q38_DECODER_EXPECTED_TAG || defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
-#error Exact separate tag43 native decoder or tag44 fixed DEBUG role required,never old DEBUG/Work/CPU-reference promotion
+#error Exact separate tag43 decoder,tag44 fixed DEBUG or tag45 resident-input owner required,never old DEBUG/Work/CPU-reference promotion
 #endif
 #define PIONEER_Q38_DECODER_ROLE_TAG_OK 1
 #else
@@ -36,6 +41,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102300010044ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE))
 #error Reserved tag44 identifies ONLY the separate fixed retained-convolution DEBUG qualification
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102300010045ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_INPUT_OWNER))
+#error Reserved tag45 identifies ONLY the separate same-owner resident-input preparation,NO public selector
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -3534,6 +3542,11 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
   convStripes++;
  }
  if(convStripes!=7){delete m;return false;} // exact original learned Conv4 pages BEFORE epoch/claims/IO
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ PioneerQ38GdnInputPlan learnedGdn;
+ if(!learnedGdn.Build(m->plan,0,0,0,bank,m->identity,source,3)
+  || !learnedGdn.LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages)){delete m;return false;}
+#endif
 #endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 	PioneerQ38LearnedRmsPlan norm;
@@ -3705,6 +3718,16 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
  return okay;
 }
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+[[maybe_unused]] static bool PrepareQ38ResidentGdnInputs(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r)
+{
+ auto* m=c.q38EmbeddingModel;
+ if(!m || m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld || m->Unsafe() || m->decoder.GdnInputsClaimed())return false;
+ bool okay=c.io.ProjectionExecutionSourceScope(true) && m->decoder.PrepareGdnInputs(c.io,r);
+ if(!okay){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
+ return okay; // SAME native call/context/owner. NO public opcode or new producer grant.
+}
+#endif
 [[maybe_unused]] static bool CloseQ38ResidentDecoderModel(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  ,uint32* validation=NULL
@@ -6943,6 +6966,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ // PIONEER_Q38_GDN_INPUT_NATIVE_INERT_ROUTING_BEGIN
+ return B_NOT_ALLOWED; // COMPILE-ONLY tag45 has NO public execution/upload/old Work selector
+ // PIONEER_Q38_GDN_INPUT_NATIVE_INERT_ROUTING_END
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  // PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_ROUTING_BEGIN

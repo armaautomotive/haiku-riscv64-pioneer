@@ -42,14 +42,16 @@ public:
  PioneerQ38GdnInputPlan& operator=(const PioneerQ38GdnInputPlan&)=delete;
  bool Build(const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned half,unsigned position,unsigned bank,
   const PioneerQ38GdnIdentity& id,const uint32_t* source,unsigned phase){
-  if(attempted)return false;attempted=true;plan=&canonical;
+  if(attempted)return false;
+  attempted=true;plan=&canonical;
   ready=Describe(canonical,layer,half,position,bank,id,source,phase,descriptor);return ready;
  }
  bool Matches(const PioneerQ38CanonicalModelPlan& canonical,unsigned layer,unsigned half,unsigned position,unsigned bank,
   const PioneerQ38GdnIdentity& id,const uint32_t* source,unsigned phase)const{
   if(!ready || plan!=&canonical)return false;
   uint32_t current[64];if(!Describe(canonical,layer,half,position,bank,id,source,phase,current))return false;
-  for(unsigned i=0;i<64;i++)if(current[i]!=descriptor[i])return false;return true;
+  for(unsigned i=0;i<64;i++)if(current[i]!=descriptor[i])return false;
+  return true;
  }
  bool LearnedPagesPresent(const uint8_t* pages,unsigned count)const{
   if(!ready || !pages || count!=PioneerResidentBanks::Pages || !PioneerQ38GdnInputShape(descriptor))return false;

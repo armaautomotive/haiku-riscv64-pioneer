@@ -15,6 +15,13 @@
 #include "PioneerQ38ProjectionGraphOwner.h"
 #include "PioneerQ38ConvBatchImage.h"
 #include "PioneerQ38ConvBatchPlan.h"
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+#if PIONEER_Q38_GDN_INPUT_OWNER != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Exact separate resident-input owner role,not old fixed convolution DEBUG
+#endif
+#include "PioneerQ38GdnInputImage.h"
+#include "PioneerQ38GdnInputPlan.h"
+#endif
 // HEAP ONLY. Real first-token/layer0 retained QPS1 -> QCB1 arithmetic.
 // Private proof consumption,STOP/ALL119 terminals/ALL120holds precede
 // replacement code. The SAME full original snapshot survives both images.
@@ -25,6 +32,9 @@ struct PioneerQ38ResidentDecoderResult {
  uint32_t version=1,phase=0,worker=0,word=0,unsafe=0,installed=0,armed=0,released=0,completed=0,held=0,closed=0;
  PioneerQ38ProjectionGraphResult stop;
  PioneerQ38ProjectionGraphMemoryResult memory;
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ uint32_t gdnInstalled=0,gdnArmed=0,gdnReleased=0,gdnCompleted=0,gdnHeld=0;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  uint32_t validationPages=0,validationWords=0;
  uint32_t observedStatus[3]={},observedPc[2]={}; // captured EXISTING reads only,never post-failure diagnostics
@@ -37,6 +47,10 @@ class PioneerQ38ResidentDecoderOwner {
  uint32_t command[120][10]={},counts[120][8]={},resets[120]={};
  bool verified[120]={};unsigned phase=0,operationPhase=0;
  bool started=false,unsafe=false,closed=false,consumed=false,complete=false;
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ PioneerQ38GdnInputPlan gdnJobs[96];bool gdnImage[120]={};
+ bool gdnAttempted=false,gdnComplete=false;unsigned gdnPhase=0;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  bool readbackTraffic=false,readbackDone=false;
  uint32_t observedStatus[3]={},observedPc[2]={};
@@ -78,6 +92,14 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Image(IO& io,unsigned w){
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+  if(gdnImage[w]){
+   for(unsigned i=0;i<TT_Q38_GDN_INPUT_IMAGE_WORDS;i++){
+    uint32_t v;if(!io.ProjectionGraphMemoryReadChecked(w,PioneerQ38GdnInputImageAddress(i),v) || v!=PioneerQ38GdnInputImageWord(i))return false;
+   }
+   return true;
+  }
+#endif
   for(unsigned i=0;i<TT_Q38_CONV_BATCH_IMAGE_WORDS;i++){
    uint32_t v;if(!io.ProjectionGraphMemoryReadChecked(w,PioneerQ38ConvBatchImageAddress(i),v) || v!=PioneerQ38ConvBatchImageWord(i))return false;
   }
@@ -85,6 +107,16 @@ class PioneerQ38ResidentDecoderOwner {
  }
  template<class IO> bool Current(IO& io,unsigned w){
   auto& p=*projection;
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+  if(gdnImage[w]){
+   if(!w || w>96 || !gdnJobs[w-1].Matches(*p.canonical,0,w-1,0,p.bank,p.identity,p.cohort->authority.source[w],gdnPhase)
+    || !gdnJobs[w-1].LearnedPagesPresent(p.ledger,p.pages) || !Image(io,w))return false;
+   for(unsigned i=0;i<64;i++){uint32_t v;
+    if(!io.ProjectionGraphMemoryReadChecked(w,TT_Q38_GDN_INPUT_DESCRIPTOR+i*4,v) || v!=gdnJobs[w-1].Descriptor()[i])return false;
+   }
+   return true;
+  }
+#endif
   if(!jobs[w].Matches(*p.canonical,0,0,p.bank,w,p.identity,p.cohort->authority.source[w],operationPhase)
    || !jobs[w].LearnedPagesPresent(p.ledger,p.pages) || !Image(io,w))return false;
   const auto* table=jobs[w].Records();
@@ -157,6 +189,26 @@ class PioneerQ38ResidentDecoderOwner {
   for(unsigned i=0;i<10;i++)command[w][i]=end[i];
   verified[w]=true;return Guard(io,w) && Terminal(io,w);
  }
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ template<class IO> bool GdnTerminal(IO& io,unsigned w){
+  if(!w || w>96 || !gdnImage[w] || io.RuntimeStatusRead(2)!=TT_Q38_GDN_INPUT_MARKER
+   || io.RuntimeStatusRead(0)!=0x6400c || io.RuntimeStatusRead(1)!=64)return false;
+  for(unsigned i=0;i<2;i++){io.Pause();if(io.RuntimePcRead()!=0x64038)return false;}
+  return true;
+ }
+ template<class IO> bool GdnReceipt(IO& io,unsigned w){
+  if(!GdnTerminal(io,w) || !PioneerQ38GraphCsrIdle(io) || !Current(io,w))return false;
+  const auto* d=gdnJobs[w-1].Descriptor();uint32_t summary[32],after[8];
+  for(unsigned i=0;i<32;i++)summary[i]=io.Q38PanelRead(TT_Q38_GDN_INPUT_SUMMARY+i*4);
+  for(unsigned i=0;i<8;i++)after[i]=io.ResidentNocRead(PioneerQ38PanelCounter(i));
+  if(!PioneerQ38GdnInputSummary(summary,d,counts[w],after))return false;
+  const uint32_t last[]={d[15],0,d[41],0x808c0,0,d[9],0,0,64,0};
+  for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=last[i])return false;
+  for(unsigned i=0;i<8;i++)counts[w][i]=after[i];
+  for(unsigned i=0;i<10;i++)command[w][i]=last[i];
+  verified[w]=true;return Guard(io,w) && GdnTerminal(io,w);
+ }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  // Private one-shot DEBUG transport,inside the SAME real owner and call.
  // ALL120 physical holds/receipts BEFORE first read,BEFORE original restore.
@@ -217,6 +269,10 @@ public:
  bool Unsafe()const{return unsafe || (projection && projection->Unsafe()) || (history && history->Unsafe());}
  bool Closed()const{return closed && !Unsafe();}
  bool Claimed()const{return started;}
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ bool GdnInputsClaimed()const{return gdnAttempted;}
+ bool GdnInputsPrepared()const{return gdnComplete && !Unsafe() && !closed;}
+#endif
  bool MatchesClosedNativeOwner(const PioneerQ38ProjectionGraphOwner& p,const PioneerQ38ConvHistoryBanks& h)const{
   return started && consumed && closed && phase==9 && !unsafe && !complete && projection==&p && history==&h
    && p.decoderOwner==this && h.decoderOwner==this && p.proof && p.banks && p.cohort && p.memory && p.graph && p.canonical && p.input && p.ledger
@@ -334,12 +390,89 @@ public:
   for(unsigned w=0;w<120;w++)if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
   complete=true;phase=6;r.phase=6;return true; // private outputs stay ON CARD,NOT committed next history or GDN/full inference
  }
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+ // SAME authenticated owner/call/snapshot;ROOT and workers97..119 stay
+ // held in QCB1. No host q/k/gates/current-state input,NO second owner.
+ template<class IO> bool PrepareGdnInputs(IO& io,PioneerQ38ResidentDecoderResult& r){
+  if(!started || unsafe || closed || !complete || phase!=6 || gdnAttempted || !projection || !history)return false;
+  auto& p=*projection;gdnAttempted=true;gdnPhase=operationPhase+1;
+  if(r.gdnInstalled || r.gdnArmed || r.gdnReleased || r.gdnCompleted || r.gdnHeld)return Fail(io,r);
+  for(unsigned half=0;half<96;half++){
+   unsigned w=half+1;
+   if(!gdnJobs[half].Build(*p.canonical,0,half,0,p.bank,p.identity,p.cohort->authority.source[w],gdnPhase)
+    || !gdnJobs[half].LearnedPagesPresent(p.ledger,p.pages))return Fail(io,r);
+   for(unsigned i=0;i<TT_Q38_GDN_INPUT_IMAGE_WORDS;i++)
+    if(!PioneerQ38ProjectionGraphSnapshotContains(w,PioneerQ38GdnInputImageAddress(i)))return Fail(io,r);
+  }
+  phase=10;r.phase=10;
+  // ALL120 independent old image/table/counter/source/physical holds
+  // checked BEFORE first replacement byte,not inferred from reply counts.
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return Fail(io,r);
+  for(unsigned w=1;w<=96;w++){
+   r.worker=w;if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
+   for(unsigned i=0;i<TT_Q38_GDN_INPUT_IMAGE_WORDS;i++){
+    r.word=i;if(!Write(io,w,PioneerQ38GdnInputImageAddress(i),PioneerQ38GdnInputImageWord(i)))return Fail(io,r);
+   }
+   const auto* d=gdnJobs[w-1].Descriptor();
+   for(unsigned i=0;i<64;i++){r.word=i;if(!Write(io,w,TT_Q38_GDN_INPUT_DESCRIPTOR+i*4,d[i]))return Fail(io,r);}
+   for(unsigned i=0;i<32;i++)if(!Write(io,w,TT_Q38_GDN_INPUT_SUMMARY+i*4,0))return Fail(io,r);
+   for(unsigned i=0;i<3;i++){io.RuntimeStatusWrite(i,0);if(io.RuntimeStatusRead(i))return Fail(io,r);}
+   gdnImage[w]=true;
+   if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
+   r.gdnInstalled++;
+  }
+  // Complete second pass over ALL120 BEFORE any release. The untouched
+  //24 workers are still independently guarded,not discarded/forgotten.
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return Fail(io,r);
+  for(unsigned w=1;w<=96;w++){
+   r.worker=w;if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
+   resets[w]=0x87ffff;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);r.gdnArmed++;
+  }
+  for(unsigned w=1;w<=96;w++){
+   r.worker=w;if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
+   verified[w]=false;p.running[w]=p.cohort->worker[w].image.running=true;
+   resets[w]=0x46800;io.RuntimeResetWrite(resets[w]);if(!Guard(io,w))return Fail(io,r);r.gdnReleased++;
+  }
+  phase=11;r.phase=11;bool done[96]={};unsigned finished=0;uint64_t began=io.Q38CohortNow();
+  if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
+  for(unsigned attempt=0;attempt<65536 && finished<96;attempt++){
+   uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return Fail(io,r);
+   for(unsigned w=1;w<=96;w++)if(!done[w-1]){
+    r.worker=w;if(!Guard(io,w))return Fail(io,r);uint32_t marker=io.RuntimeStatusRead(2);
+    if(marker && marker!=TT_Q38_GDN_INPUT_MARKER)return Fail(io,r);
+    if(marker){if(!Guard(io,w) || !GdnReceipt(io,w))return Fail(io,r);done[w-1]=true;finished++;r.gdnCompleted++;}
+    else{io.Pause();uint32_t pc=io.RuntimePcRead();
+     if(pc<0x64000 || pc>=0x64000+TT_Q38_GDN_INPUT_TEXT_BYTES || (pc&3) || (pc>=0x6403c && pc<=0x64058))return Fail(io,r);
+    }
+   }
+   io.Pause();
+  }
+  if(finished!=96)return Fail(io,r);
+  // ALL120 current image/command/counter/source proofs,including the24
+  // untouched held workers,BEFORE first post-compute hold.
+  for(unsigned w=0;w<120;w++)if(!Guard(io,w) || !Current(io,w)
+   || ((!w || w>96) && (p.running[w] || resets[w]!=0x47800)))return Fail(io,r);
+  for(unsigned w=1;w<=96;w++)if(!Guard(io,w) || !GdnTerminal(io,w) || !Current(io,w))return Fail(io,r);
+  for(unsigned w=1;w<=96;w++){
+   r.worker=w;if(!Guard(io,w) || !GdnTerminal(io,w) || !Current(io,w))return Fail(io,r);
+   resets[w]=0x87ffff;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);
+   resets[w]=0x47800;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);
+   p.running[w]=p.cohort->worker[w].image.running=false;p.resets[w]=resets[w];r.gdnHeld++;
+  }
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return Fail(io,r);
+  gdnComplete=true;phase=12;r.phase=12;return true; // LOCAL preparation only,NOT GDN recurrence/state commit
+ }
+#endif
  template<class IO> bool Close(IO& io,PioneerQ38ResidentDecoderResult& r
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
   ,uint32_t* values=nullptr
 #endif
  ){
+#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+  if(!started || unsafe || closed || !complete || !projection || !history || !gdnComplete || phase!=12)return false;
+#else
   if(!started || unsafe || closed || !complete || phase!=6 || !projection || !history)return false;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
   uintptr_t output=reinterpret_cast<uintptr_t>(values);
   if(!values || (output&3) || output>UINTPTR_MAX-163840 || r.validationPages || r.validationWords || readbackDone)return false;

@@ -10,4 +10,8 @@ struct GdnInputEmulationResult {std::array<uint32_t,322> values={};unsigned pack
 // ORIGINAL bytes only,not precomputed references or execution authority.
 bool ExecuteGdnInputResidentBytes(const char*,const PioneerQ38CanonicalModelPlan&,unsigned half,unsigned bank,
  const std::vector<uint32_t>& workspace,ProjectionExecutionLearnedBytes&,GdnInputEmulationResult&);
+// Actual owner-installed bytes/control registers in SAME simulated native
+// fabric. No descriptor/ready/producer manufacture;NO numerical oracle.
+unsigned ExecuteGdnInputNativeBytes(const char*,const PioneerQ38CanonicalModelPlan&,unsigned worker,unsigned bank,
+ ProjectionExecutionFabric&);
 #endif
