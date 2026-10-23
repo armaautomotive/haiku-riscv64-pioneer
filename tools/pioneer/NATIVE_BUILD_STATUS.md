@@ -1,5 +1,36 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 Pacific/October23 UTC2026:ACTUAL private
+native complete-projection execution adapter/factories implemented and
+tested. SAME unclaimed native context/cookie/heap model/learned ledger from
+canonical binding -> zero2MiB -> QPE1 -> QRN1 -> actual ALL120 cohort
+preparation/119 NIU probes/peer leases/three native maps -> QPR1+ALL119QFP3
+-> STOP/complete restore -> ACTUAL complete EndQ38DispatchOwnership,
+including legacy role/NIU close. No borrowed ready-state facade or old
+held-only launch promotion. Runtime hardware/clock/weights are SIMULATED,
+not physical-card qualification. Four layer0 roles10/11/5/6:244matrix
+jobs/80producers/16480rows,SAME119boots once. Work controller has no CPU
+learned-vector input/readback/reference/fallback.215 configuration refusals
+(16missing stripe pages,71source,31result,93live owner,4wrong roles) make
+NO endpoint I/O/claim;20unknown/END/partial-map failures retain ALL and
+subsequent APIs/END make ZERO additional I/O. All8134072 original words
+restored/16268144 verified;119physical STOP terminals before first hold.
+Actual full-driver OBJECT repeated identical2d127c1e,maxnewframe816B/
+controller512B. Existing native RMS object f15b3a86 and old tag38driver/
+guard/default43 controls23e2e68a/d1ce2aa4/2df0e0f8 BYTE-IDENTICAL.
+Prior private-owner runtime,RMS7/616,DEBUG embedding7/9/7 regressions;
+104execution+210build+13immutable RMS gates PASS. ALL final handles
+TERMINAL0. SSH key works again;fresh October23 01:10UTC read-only status
+original041/tag12/gen46/idle/cold0/owner0/open1/guard1,ALL compute parents
+absent,64CPUs/max137034936320B. ZERO remote writes/native jobs/install/
+reload/reboot/power/SD/Assistant/network/clock changes. Still NO new public
+selector/linked driver or full decoder. NEXT separate numerical DEBUG
+RMS+projection/original-GGUF/card qualification BEFORE install;on-card
+result stashes and actual residual/GDN/attention/KV/sampling/whole-decoder
+schedule remain owed. Do not replay first-layer input at later layers.
+Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-native-execution-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 Pacific/October23 UTC 2026:NEW complete
 persistent projection EXECUTION owner implemented and tested,NOT a held-only
 memory promotion/native install. Actual native-factory zero/QPE1/QRN1

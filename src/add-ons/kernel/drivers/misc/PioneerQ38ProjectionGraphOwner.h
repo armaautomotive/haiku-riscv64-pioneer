@@ -195,6 +195,7 @@ public:
  PioneerQ38ProjectionGraphOwner(const PioneerQ38ProjectionGraphOwner&)=delete;
  PioneerQ38ProjectionGraphOwner& operator=(const PioneerQ38ProjectionGraphOwner&)=delete;
  bool Ready()const{return ready && !unsafe && !closed;}bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
+ bool Claimed()const{return started;} // metadata ONLY,not an execution grant
  void Fault(){unsafe=true;ready=output=false;} // MEMORY ONLY
  bool MatchesNativeOwner(const tt_dram_samples_result& dram,const PioneerResidentBanks& resident,const PioneerQ38DispatchLease& participants,
   const PioneerQ38ProjectionGraphMemory& code,const PioneerQ38ProjectionMutableBanks& mutableOwner,const PioneerQ38CanonicalModelPlan& plan,
@@ -209,6 +210,21 @@ public:
   for(unsigned w=0;w<120;w++){const auto& n=participants.worker[w];const auto& s=n.master?*n.master:n.store;
    if(!n.image.saved || !n.image.ready || n.image.unsafe || n.image.running!=running[w] || !s.ready || s.pending || s.recovery_required || n.noc.recovery_required)return false;}
   return true;
+ }
+ bool MatchesClosedNativeOwner(const tt_dram_samples_result& dram,const PioneerResidentBanks& resident,const PioneerQ38DispatchLease& participants,
+  const PioneerQ38ProjectionGraphMemory& code,const PioneerQ38ProjectionMutableBanks& mutableOwner,const PioneerQ38CanonicalModelPlan& plan,
+  const PioneerQ38LearnedRmsController& producer,const PioneerQ38ProjectionIdentity& id,const uint8_t* initialized,unsigned count)const{
+  if(!started || !closed || unsafe || proof!=&dram || banks!=&resident || cohort!=&participants || memory!=&code || graph!=&mutableOwner
+   || canonical!=&plan || input!=&producer || !(identity==id) || ledger!=initialized || pages!=count || !initialized || count!=PioneerResidentBanks::Pages
+   || !state || state->executionOwner!=this || !state->executionClosed || state->rmsOwner!=&producer
+   || !producer.MatchesCompleted(mutableOwner,plan,id,token,position,bank) || !resident.Matches(dram)
+   || mutableOwner.CanonicalModel(id)!=&plan || !mutableOwner.MatchesInitializationOwner(resident,dram,id)
+   || code.unsafe || !code.closed || code.proof!=&dram || code.banks!=&resident || code.cohort!=&participants || code.plan!=&plan
+   || !(code.identity==id) || code.ledger!=initialized || participants.unsafe || participants.closed || participants.prepared!=120
+   || participants.bootAttempted || participants.booted || participants.rootRunning || running[0])return false;
+  for(unsigned w=0;w<120;w++){const auto& n=participants.worker[w];const auto& s=n.master?*n.master:n.store;
+   if(running[w] || !n.image.saved || !n.image.ready || n.image.unsafe || n.image.running || !s.ready || s.pending || s.recovery_required || n.noc.recovery_required)return false;}
+  return true; // same closed objects BEFORE outer legacy snapshot/NIU release
  }
  template<class IO> bool Prepare(IO& io,const tt_dram_samples_result& dram,PioneerResidentBanks& resident,PioneerQ38DispatchLease& participants,
   PioneerQ38ProjectionGraphMemory& code,PioneerQ38ProjectionMutableBanks& mutableOwner,const PioneerQ38CanonicalModelPlan& plan,

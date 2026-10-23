@@ -27,4 +27,23 @@ with tempfile.TemporaryDirectory(prefix='pioneer-projection-execution-gates-') a
                                 capture_output=True, text=True, env=clean)
         assert result.returncode != 0 and 'Private complete projection execution owner' in result.stderr
         count += 1
+    source = (here.parents[1] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
+    start = '#ifdef PIONEER_Q38_PROJECTION_EXECUTION_OWNER\n'
+    guard = start + source.split(start, 1)[1].split('#endif\n#endif\n', 1)[0] + '#endif\n#endif\n'
+    valid = ['-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1', '-DPIONEER_Q38_LEARNED_RMS_NATIVE=1', '-DPIONEER_Q38_EMBEDDING_NATIVE=1']
+    invalid = [valid[1:] + ['-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=0'],
+               valid[1:] + ['-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=2'],
+               [valid[0]], [valid[0], valid[1]], [valid[0], valid[2]],
+               [valid[0], valid[2], '-DPIONEER_Q38_LEARNED_RMS_NATIVE=0'],
+               [valid[0], valid[1], '-DPIONEER_Q38_EMBEDDING_NATIVE=0']]
+    invalid += [valid + ['-D' + role + '=1'] for role in (
+        'PIONEER_Q38_PROJECTION_GRAPH_MEMORY', 'PIONEER_Q38_EMBEDDING_QUALIFICATION', 'PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE')]
+    for flags in invalid:
+        result = subprocess.run([os.environ.get('CXX', 'c++'), '-E', '-x', 'c++', *flags, '-'], input=guard,
+                                capture_output=True, text=True, env=clean)
+        assert result.returncode != 0 and 'Private native projection EXECUTION' in result.stderr
+        count += 1
+    result = subprocess.run([os.environ.get('CXX', 'c++'), '-E', '-x', 'c++', *valid, '-'], input=guard,
+                            capture_output=True, text=True, env=clean)
+    assert result.returncode == 0
 print(f'PASS projection execution gates{count};all old builders refuse BEFORE SDK/output;actual private role guard rejects missing/wrong producer;NO native selector/install')

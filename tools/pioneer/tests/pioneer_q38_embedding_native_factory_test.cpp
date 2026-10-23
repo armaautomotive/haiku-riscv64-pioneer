@@ -14,6 +14,10 @@
 #endif
 #include <array>
 #include <new>
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+#include "pioneer_q38_projection_native_transport.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
+#endif
 using uint8=uint8_t;using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
 static constexpr int B_OK=0,B_ANY_KERNEL_ADDRESS=1,B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_UNCACHED_MEMORY=8;
 static constexpr uint64 Bar=UINT64_C(0x900000000);
@@ -31,6 +35,42 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  struct{uint64 bar0_host_start=Bar;}profile;
  area_id q38EmbeddingMemoryArea=-1;volatile uint32* q38EmbeddingMemoryView=nullptr;
  bool q38EmbeddingMemoryMapAttempted=false;uint64 q38EmbeddingMemoryBar=0;
+#ifdef PIONEER_Q38_PROJECTION_EXECUTION_OWNER
+ area_id q38ProjectionMemoryArea[3]={-1,-1,-1};volatile uint32* q38ProjectionMemoryView[3]={nullptr,nullptr,nullptr};
+ bool q38ProjectionMemoryMapAttempted=false;uint64 q38ProjectionMemoryBar=0;
+#endif
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+ ProjectionNativeTransport* projectionTransport=nullptr;
+ std::array<uint32,10240> projectionPrefix={};std::array<uint32,9216> projectionPrimary={},projectionShadow={};
+ int projectionFailMap=-1,projectionNullMap=-1;
+ bool UseProjectionIO()const;
+ bool ProjectionExecutionSourceScope(bool);
+ bool ProjectionGraphMemoryScope(const PioneerQ38ProjectionGraphMemory&,const PioneerQ38CanonicalModelPlan&,
+  const PioneerQ38GdnIdentity&,const uint8*,unsigned);
+ bool ProjectionGraphExecutionScope(const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ProjectionGraphMemory&,
+  const PioneerQ38ProjectionMutableBanks&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38LearnedRmsController&,
+  const PioneerQ38ProjectionIdentity&,const uint8*,unsigned);
+ void ProjectionGraphRetainHostOwners();
+ bool MapRuntime(){return runtimeMapped;}
+ bool MapQ38Panel(){return UseProjectionIO()?projectionTransport->MapPanel():ProjectionZeroIO::MapQ38Panel();}
+ bool Q38PanelMappingStable(){return UseProjectionIO()?projectionTransport->PanelStable():ProjectionZeroIO::Q38PanelMappingStable();}
+ uint32* Q38PanelSavedWords(){return UseProjectionIO()?projectionTransport->PanelSaved():ProjectionZeroIO::Q38PanelSavedWords();}
+ uint32* HostReadBackup(unsigned n){return UseProjectionIO()?projectionTransport->Backup(n):ProjectionZeroIO::HostReadBackup(n);}
+ uint32 ComputeNocRead(uint32 a){assert(UseProjectionIO());return projectionTransport->Read32(ProjectionNativeTransport::ComputeNoc,a);}
+ uint32 HostPciRead(unsigned p,uint16_t a,uint8 n){if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Pci,p,a,n);return ProjectionZeroIO::HostPciRead(p,a,n);}
+ uint32 Q38PanelRead(uint32 a){if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Panel,a);return ProjectionZeroIO::Q38PanelRead(a);}
+ void Q38PanelWrite(uint32 a,uint32 v){if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetPanel,a,v);return;}ProjectionZeroIO::Q38PanelWrite(a,v);}
+ uint32 RuntimeCodeRead(unsigned i){if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Code,i);return ProjectionZeroIO::RuntimeCodeRead(i);}
+ void RuntimeCodeWrite(unsigned i,uint32 v){if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetCode,i,v);return;}ProjectionZeroIO::RuntimeCodeWrite(i,v);}
+ uint32 RuntimeControlRead(unsigned i){if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Control,i);return ProjectionZeroIO::RuntimeControlRead(i);}
+ uint32 RuntimeStatusRead(unsigned i){if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Status,i);return ProjectionZeroIO::RuntimeStatusRead(i);}
+ void RuntimeStatusWrite(unsigned i,uint32 v){if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetStatus,i,v);return;}ProjectionZeroIO::RuntimeStatusWrite(i,v);}
+ void Pause(){if(UseProjectionIO()){projectionTransport->Pause();return;}ProjectionZeroIO::Pause();}
+ uint64 Q38CohortNow(){return UseProjectionIO()?projectionTransport->Now():ProjectionZeroIO::Q38CohortNow();}
+ uint32 ResidentNocRead(uint32 a){if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Noc,a);return ProjectionZeroIO::ResidentNocRead(a);}
+ void ResidentNocWrite(uint32 a,uint32 v){if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetNoc,a,v);return;}ProjectionZeroIO::ResidentNocWrite(a,v);}
+#include "projection_factory_mapping.inc"
+#endif
  bool failMap=false,nullMap=false,retained=false;
  unsigned mapCalls=0,nativeReads=0,nativeWrites=0,embeddingStarts=0,embeddingStops=0,embeddingPc=0;
  unsigned embeddingPacketFault=0,zeroFailRun=0,embeddingSummaryFault=UINT32_MAX;
@@ -72,27 +112,60 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
 #endif
   ;}
  bool NonRootHeldMappingStable(){return !coreMapLost && NonRootHeldOwner();}
- void DramTlbWrite(unsigned slot,unsigned word,uint32 value){Touch();StoreMock::DramTlbWrite(slot,word,value);}
- uint32 DramTlbRead(unsigned slot,unsigned word){Touch();return StoreMock::DramTlbRead(slot,word);}
+ void DramTlbWrite(unsigned slot,unsigned word,uint32 value){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetTlb,slot,value,word);return;}
+#endif
+  Touch();StoreMock::DramTlbWrite(slot,word,value);}
+ uint32 DramTlbRead(unsigned slot,unsigned word){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Tlb,slot,word);
+#endif
+  Touch();return StoreMock::DramTlbRead(slot,word);}
  bool SelectRuntimeCore(unsigned core){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO()){if(core>=120 || (!fleetEnabled && core))return false;bool okay=projectionTransport->Select(core);if(okay)runtimeCore=core;return okay;}
+#endif
   Touch();if(core)return false;
   return BlackholeDramConfigure(*this,0,0,1,2,false) && BlackholeDramConfigure(*this,1,0xffa00000,1,2,false);
  }
  uint32 ResetRead(){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Reset);
+#endif
   Touch();bool root=false;
   for(bool readOnly:{false,true}){bool same=true;for(unsigned w=0;w<3;w++)same&=tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
   return root?coreReset:0x47800;
  }
- uint32 SourceRead(unsigned word){Touch();return ProjectionZeroIO::SourceRead(word);}
- uint32 ResidentL1Read(unsigned word){Touch();assert(word<2048);return destination[word];}
- void ResidentL1Write(unsigned word,uint32 value){Touch();assert(word<2048);destination[word]=value;}
+ uint32 SourceRead(unsigned word){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Source,word);
+#endif
+  Touch();return ProjectionZeroIO::SourceRead(word);}
+ uint32 ResidentL1Read(unsigned word){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Local,word);
+#endif
+  Touch();assert(word<2048);return destination[word];}
+ void ResidentL1Write(unsigned word,uint32 value){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetLocal,word,value);return;}
+#endif
+  Touch();assert(word<2048);destination[word]=value;}
  uint32 RuntimePcRead(){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Pc);
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
   if(RmsMode()){Touch();return rmsPc;}
 #endif
   return EmbeddingMode()?(Touch(),embeddingPc):ProjectionZeroIO::RuntimePcRead();}
  void RuntimeResetWrite(uint32 value);
- void QuarantineHostPage(){PioneerHostPageIO::quarantined=true;ProjectionZeroIO::QuarantineHostPage();retained=true;}
+ void QuarantineHostPage(){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+  if(projectionTransport)projectionTransport->Quarantine();
+#endif
+  PioneerHostPageIO::quarantined=true;ProjectionZeroIO::QuarantineHostPage();retained=true;}
  uint32& RawSlot(uint32 a){
   assert(PioneerQ38EmbeddingSnapshotContains(a));
   if(a==0x6000)return entry;
@@ -102,14 +175,43 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
  }
 #include "embedding_factory_mapping.inc"
 };
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+static bool ProjectionPointerAddress(const volatile uint32* p,uint32& address){
+ if(!activeIO || !activeIO->UseProjectionIO())return false;
+ const volatile uint32* base[]={activeIO->projectionPrefix.data(),activeIO->projectionPrimary.data(),activeIO->projectionShadow.data()};
+ const unsigned count[]={10240,9216,9216},offset[]={0x64000,0xb0000,0xc0000};
+ for(unsigned i=0;i<3;i++){
+  uintptr_t v=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(base[i]);
+  if(v>=first && v-first<count[i]*4 && !((v-first)&3)){address=offset[i]+uint32(v-first);return true;}
+ }
+ return false;
+}
+#endif
 static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+ uint32 address;if(ProjectionPointerAddress(p,address))return activeIO->projectionTransport->MappedRead(address);
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  if(activeIO->RmsMode() && ++activeIO->rmsReads==activeIO->rmsReadFault)return *p^1;
 #endif
  return *p;}
-static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;*p=value;}
+static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+ uint32 address;if(ProjectionPointerAddress(p,address)){activeIO->projectionTransport->MappedWrite(address,value);return;}
+#endif
+ *p=value;}
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseProjectionIO()){
+  const unsigned offsets[]={0x19064000,0x190b0000,0x190c0000},sizes[]={40960,36864,36864};
+  unsigned i=0;while(i<3 && physical!=Bar+offsets[i])i++;
+  assert(i<3 && bytes==sizes[i] && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+  if(int(i)==activeIO->projectionFailMap)return -1;
+  *view=int(i)==activeIO->projectionNullMap?nullptr:i==0?activeIO->projectionPrefix.data():i==1?activeIO->projectionPrimary.data():activeIO->projectionShadow.data();
+  return 24+i;
+ }
+#endif
  assert(physical==Bar+0x19064000 && bytes==40960 && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
  if(activeIO->failMap)return -1;
 #ifdef PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE
@@ -138,16 +240,20 @@ struct PioneerStoreContext {
  PioneerQ38ProjectionIdentity q38FfnModelIdentity={},q38GdnIdentity={};
  FactoryFlags span,q38Delta,panelProbe,streamProbe;FactoryFlags* q38Span=&span;FactoryClock q38Clock;
  int runtimeCoreMode=-1,q38GdnCallThread=42;uint64 bytes=PioneerResidentBanks::Total;
- bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false;
+ bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false,q38DispatchRoutes=false;
  PioneerStoreContext(PioneerSessionIO& native,PanelOwners& owner,PioneerBulkUploadLease& b,PioneerOutputBufferLease& output,
   PioneerWideOutputLease& wide,uint8* bitmap):io(native),banks(owner.banks),lease(owner.store),bulk(b),bulkHost(output),wideHost(wide),host(owner.host),
    baseline{{{{owner.dram},owner.noc}}},initialized(bitmap){
   span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
  }
- ~PioneerStoreContext(){delete q38EmbeddingModel;} // SIMULATED context;real unknown contexts are retained,never destroyed
+ ~PioneerStoreContext(){delete q38EmbeddingModel;delete q38Dispatch;} // SIMULATED context;real unknown contexts are retained,never destroyed
  bool Unsafe(bool zero=false,bool graph=false,bool controlledEmbedding=false){
   (void)zero;(void)graph;
 #include "embedding_factory_unsafe.inc"
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+#include "projection_factory_unsafe.inc"
+  if(q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch))return true;
+#endif
   return otherUnsafe || banks.Quarantined() || q38Clock.quarantined || bulk.unsafe || bulkHost.quarantined || wideHost.quarantined
    || lease.recovery_required || (q38EmbeddingModel && !zero && q38EmbeddingModel->zero.running);
  }
@@ -163,14 +269,33 @@ static int currentThread=42;static int find_thread(void*){return currentThread;}
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "rms_factory_scope.inc"
 #endif
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+#include "projection_factory_scope.inc"
+#endif
 #include "embedding_factory_factory.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "rms_factory_factory.inc"
 #endif
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+#include "projection_factory_factory.inc"
+#endif
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+#include "projection_factory_complete_end.inc"
+static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
+ return EndQ38DispatchOwnership(c,result,clean) && clean;
+}
+#else
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
 #include "embedding_factory_end.inc"
  return clean;
 }
+#endif
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+bool PioneerSessionIO::UseProjectionIO()const{
+ return projectionTransport && q38MutableContext && q38MutableContext->q38EmbeddingModel
+  && q38MutableContext->q38EmbeddingModel->phase>=PioneerQ38EmbeddingNativeState::ProjectionPreparing;
+}
+#endif
 bool PioneerSessionIO::EmbeddingMode()const{
  return q38MutableContext && q38MutableContext->q38EmbeddingModel
   && q38MutableContext->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::Embedding;
@@ -196,6 +321,9 @@ void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
 }
 #endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+ if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetReset,0,value);return;}
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  if(RmsMode()){RmsResetWrite(value);return;}
 #endif
