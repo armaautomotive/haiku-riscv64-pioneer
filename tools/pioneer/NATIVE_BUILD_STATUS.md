@@ -1,5 +1,41 @@
 # Native build status
 
+Latest October22 Pacific/October23 UTC2026:VM TOP-PAGE clear/copy defect
+FIXED and separate native64CPU/full-RAM kernel PASSES bounded tests.
+Existing KDL metadata traced the bad nonleaf to physical1fed3f4000 mapped
+atfffffffffffff000. Old validate_memory_range rejected4096B clear at that
+top VA; clear_page ignored failure. Reproduced actual production call chain
+OFFLINE. Fix checks last ACCESSED byte/empty ranges; failed clears now panic
+instead of supplying uncleared pages.24,599 actual64-bit range cases+
+real caller/mapper/copy/clear fault paths PASS ASan/UBSan. Prior memory,
+SMP/HSM,spin-idle,serial,full-memory and boot-profile tests PASS. No CPU/RAM
+reduction, retry-mask relaxation, live PTE repair or mapper relocation.
+
+KDL reboot recovered default Linux6.1.31/64CPUs/fullRAM/kexec0/taint0,
+P100A unbound/enable0/endpoint+rootCOMMAND0000. Samsung journal CLEAN;
+no repair. Only two VM sources synced to mirror. Fixed ordinary90d6a7f5;
+existing untimed64CPU spin-idle profile fixed92310628. Shared ordinary
+output restored BYTE-IDENTICAL90d6a7f5. Private package446abe7d/BFS233a2d66
+path-set/extracted-kernel+ECAM/checkfs/fullHPKG roundtrip PASS. No actual
+Samsung package/NIC/Assistant/model/P100A driver replacement.
+NEW separate SD-free helper network-serialized-top-page7.sh SHA9cfc6dc3:
+prepare|boot|cancel UNIQUE_SESSION 64 memory128-spin-idle7-top-page-nosd-control
+(full path/pins/journal counterpart in evidence). OLD helper0bfe2647 and
+default extlinux53c0da6d UNCHANGED; use new7 for future fixed-kernel boots.
+
+Native session vm-top-page7-20261022-a:64CPUs/max137034936320B;4096MiB
+two-pattern sample ALL64workers PASS;VM shootdown THREE126-worker runs,
+32remaps each/96total PASS;32fresh bash/runtime-loader executions PASS;
+all64CPU scheduler/affinity/wakeups/checksums PASS. All native test parents
+TERMINAL0,sequential,no GPU job/card open. Desktop services present;
+physical desktop/input confirmation requested,still pending. This is a
+bounded regression,NOT a whole-RAM audit/general stability certification.
+Does not prove every prior stall has the same cause. Evidence:
+benchmarks/haiku-vm-top-page-20261022.txt. NEXT isolated native RMS DEBUG
+qualification,then Work private projection path and remaining whole-card
+decoder state/schedule. Original-GGUF numerical checkpoint64918 preserved.
+Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE/turn PROGRESS.
+
 Latest October22 Pacific/October23 UTC2026:ACTUAL ORIGINAL-GGUF numerical
 instruction validation PASSES,not physical card inference. Production SAME
 full-SHA/file/epoch source authenticated c600de03/18973870528B/ALL851tensors

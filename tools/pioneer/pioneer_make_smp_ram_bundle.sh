@@ -63,7 +63,13 @@ case "${1:-current}" in
   candidate=$base/smp-kernel-memory-spin-idle-runtime-6/kernel_riscv64
   kernel_hash=91c3de0034de429e212db0bd804668843541438a81148a46929ec9db4851c1ad
   ;;
- *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control|active-map-control|memory-control|memory-map-order-control|memory-kdl-control|memory-kdl3-control|memory-kdl4-control|memory-kdl5-spin-idle-control|memory-spin-idle6-runtime-control]' >&2; exit 2;;
+ memory-spin-idle7-top-page-control)
+  # Same untimed 64-CPU/full-memory profile; VM top-page clear/copy fix only.
+  run=$base/smp-kernel-bundle-memory-spin-idle-top-page-7
+  candidate=$base/smp-kernel-memory-spin-idle-top-page-7/kernel_riscv64
+  kernel_hash=92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21
+  ;;
+ *) echo 'Usage: pioneer_make_smp_ram_bundle.sh [current|validated-control|capped-control|active-map-control|memory-control|memory-map-order-control|memory-kdl-control|memory-kdl3-control|memory-kdl4-control|memory-kdl5-spin-idle-control|memory-spin-idle6-runtime-control|memory-spin-idle7-top-page-control]' >&2; exit 2;;
 esac
 [ "$#" -le 1 ]
 source=$base/p100a-root-probe-2/samsung-private.hpkg

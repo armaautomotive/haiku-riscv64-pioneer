@@ -1,0 +1,128 @@
+Haiku VM top-page clearing diagnosis and isolated recovery
+October 22 Pacific / October 23 UTC 2026
+
+This is a kernel stability checkpoint, NOT an LLM performance result.
+Qwen3.8-27B's last whole-model measurement remains 0.207893161 tok/s;
+the 20 tok/s target and whole-card decoder remain unfinished.
+
+OBSERVED FAULT AND READ-ONLY DEBUGGER EVIDENCE
+The previous kernel panicked during read-only SSH shell startup, in bash
+thread 11600 / CPU 11, Map+0x108, while the runtime loader mapped memory.
+Saved target user VA: 0x33263c2000, Sv39 indexes 204/305/450.
+Saved s7 store pointer: 0x00e1ffe012c0be10 (NONCANONICAL).
+stval: 0xffffffe012c0be10; do not substitute stval for saved s7.
+satp: 0x8000000001fecd4c; actual map object's fPageTable: 0x1fecd4c000.
+Physical direct-map offset: 0xffffffe012c0b000.
+
+Existing serial session 72956.pioneer-haiku-recovery, one KDL read per reply:
+ expr *{8}0xffffffffff957660 -> 0x70000007fb4fd001
+    valid L2 nonleaf -> physical table 0x1fed3f4000
+    -> virtual table 0xfffffffffffff000, the LAST virtual page.
+ expr *{8}0xfffffffffffff988 -> 0xfff8800000000041
+    malformed L1 nonleaf; its decoded PPN reproduces saved invalid s7.
+ expr *{8}0xffffffc018e6fd38 -> 0x1fecd4c000
+ expr *{8}0xfffffffffffff000 -> 0xfff8800000000022
+ expr *{8}0xfffffffffffff008 -> 0xfff880000000002c
+These are actual acknowledged 8-byte reads, not the corrupted commands from
+an earlier overfull serial batch. No live memory/PTE edit was attempted.
+
+PROVEN SOURCE DEFECT / NARROW FIX
+clear_page -> vm_memset_physical -> actual RISC-V MemsetPhysical ->
+user_memset -> validate_memory_range. The old predicate checks exclusive
+address+size overflow, so fffffffffffff000 + 4096 is rejected. clear_page
+ignored that failure, allowing an uncleared page to be treated as cleared.
+This is a reproduced defect consistent with the malformed last-page table;
+it is not proof that every historic kernel/network stall has this cause.
+
+Validate the LAST ACCESSED BYTE instead, treating zero length as empty;
+true byte-range overflow and user/non-user endpoint crossing still fail.
+clear_page now panics with the physical page and status if clearing fails,
+rather than silently supplying uninitialized memory. No RAM/CPU reduction,
+mapper relocation, nonleaf permission relaxation or retry-mask workaround.
+RISC-V generic memset/memcpy are count-based; emitted memset's optimized
+aligned loop uses equality, not ordered comparison with a wrapped end.
+
+PRODUCTION-BODY OFFLINE REGRESSIONS
+run_pioneer_vm_memory_range_tests.sh extracts actual source functions and
+actual RISC-V USER_BASE/USER_TOP + kernel IS_USER_ADDRESS classification.
+The original predicate fails the exact 4096-byte top-page case.
+After range fix alone, injected clear failure exposes old missing panic.
+Both fixes: 24,599 native-64-bit range checks PASS under ASan/UBSan; actual
+clear_page/RISC-V mapper/user_memset chain clears the simulated poisoned
+page; user_memcpy works both directions. True overflow, upper/lower user
+boundary crossing and injected access faults fail; a failed clear panics.
+Only endpoints are simulated; no actual host top-VA dereference is made.
+No native 32-bit execution is claimed.
+Prior memory-parser/sparse-map/reservation, full-memory one-shot, SMP/HSM,
+spin-idle, serial and boot-helper tests PASS. New explicit clean/journal
+profile pin/64-CPU/no-SD gates PASS; old profile pins/default unchanged.
+
+BUILD AND PRIVATE ARTIFACT PINS (SHA-256)
+Only vm.cpp and vm_page.cpp synchronized to existing build mirror.
+Ordinary before:
+ 3bdfd5ddc0690ebdbb46ddbe05dbf52d7de75ae81b1e1d80c7b6f32873c6ff04
+Ordinary fixed:
+ 90d6a7f5ccb2a93f42bb0256b050dbd1363ed05bdb3169820676fa45b08e5de8
+Fixed existing 64-CPU untimed spin-idle profile (no timed debugger):
+ 92310628bed8e5a030789b7886a347571cd26c992423d13c085c4ea197362c21
+Both kernels 2,281,481 bytes. Native RISC-V full kernel links PASS.
+Shared output restored and BYTE-IDENTICAL to fixed ordinary artifact.
+This does not claim old/new ordinary cpu_idle machine-code byte identity:
+relocated string addresses differ; unchanged source and WFI behavior remain.
+Private HPKG:
+ 446abe7d0d7f5a1928ff591efb66741dc3deda70199c2483ef8b2b285e54dc22
+Private BFS RAM bundle:
+ 233a2d662c52e7ac6435da49a9202e53f66be2eb914f79bf140eaed2f04f2a67
+Preserved root-opt-in ECAM:
+ 23e65e2a9a3e886fc7d1429901db6534f2cc7a9077f121d3e334f4cf839cf11d
+Native builder 066c03cd: original package input rechecked; path set equal;
+extracted kernel/ECAM pins match; fresh BFS checkfs and HPKG roundtrip PASS.
+Only fresh private artifacts created; actual Samsung packages unchanged.
+
+CONTROLLED RECOVERY AND NEW BOOT
+Existing KDL reboot, without relay/PSU/SD/firmware change, returned default
+Linux 6.1.31: all 64 CPUs, MemTotal 131976904 kB, kexec initially 0, taint0,
+expected NVMe/build/Samsung identities, accelerator unbound/enable0,
+endpoint/root COMMAND 0000/0000. Samsung unmounted, original journal CLEAN
+(434c454e); source disk/partition RO policy 0/0. No repair was necessary.
+Default extlinux remains:
+ 53c0da6d26b93ac6e6a152c8146296325a9c25f54409ef7e6dcfc83e3b1fad9c
+Existing network-serialized helper remains unchanged:
+ 0bfe264777c2d75918b1d62a3eec35c7ecd94eb97035607df8491a877fd3b8f0
+
+NEW separate native helper (do not revert future boot to old unfixed6):
+ /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh
+ SHA 9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+ prepare|boot|cancel UNIQUE_SESSION 64 memory128-spin-idle7-top-page-nosd-control
+ Explicit journal counterpart: memory128-spin-idle7-top-page-nosd-journal-control
+Native helper preserves serialized NIC0b83ceed and verifier32b924b7 pins;
+diff from old helper ONLY adds new explicit profile and removes a blank line.
+Canonical tracked helper retains its original NIC profile unchanged.
+Private bundle path:
+ /mnt/ssd/pioneer-haiku-kexec-20261013/smp-kernel-bundle-memory-spin-idle-top-page-7/samsung-ram.bfs
+Session vm-top-page7-20261022-a passed input SHA checks and normal Linux
+shutdown/kexec. Pinned Haiku SSH returned all64CPUs and max137034936320B.
+uname's old cached build stamp is NOT proof of the loaded kernel hash;
+qualification relies on the pinned loader/bundle/package/extracted-kernel
+chain and authenticated handoff, not /boot's unchanged on-disk kernel file.
+
+NATIVE BOUNDED VALIDATION (NO GPU JOB)
+Hash-pinned memory smoke b1773fd1: 4096 MiB private allocation, two full
+patterns, all64 pinned workers, mask ffffffffffffffff PASS / terminal0.
+This is NOT a whole-RAM audit. Hash-pinned VM shootdown26ccd9ca PASSES
+THREE separate runs: all126 workers verify32 remaps/run,96 total rounds.
+Then32 sequential fresh bash/runtime-loader executions PASS. All tests are
+sequential, not overlapping GPU/other native jobs; every parent terminal0.
+Hash-pinned scheduler smoke cbabe84a PASSES all64 actualCPU/affinity/wait/
+checksum checks and maskffffffffffffffff, terminal0. Final sysinfo still
+reports64CPUs/max137034936320B; app_server/Tracker/Deskbar/input_server
+present. Physical desktop/input confirmation requested, not yet received.
+Bounded tests do not establish indefinite stability or that all earlier
+P340 mapped-store diagnostic traces have disappeared.
+
+Assistant files, models, NIC and P100A driver files unchanged. No native
+RMS/projection qualification, new driver install, full decoder or rate claim.
+Next: finish VM/process stability checks, then separately gated native RMS
+DEBUG qualification before enabling the private projection path in Work.
+All-card result stashes/residual/GDN/attention/KV/sampling/scheduler still owed.
+Goal ACTIVE. This turn is PROGRESS, not goal completion or a blocked turn.

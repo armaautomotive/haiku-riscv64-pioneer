@@ -1615,8 +1615,12 @@ set_page_state(vm_page *page, int pageState)
 static void
 clear_page(struct vm_page *page)
 {
-	vm_memset_physical(page->physical_page_number << PAGE_SHIFT, 0,
-		B_PAGE_SIZE);
+	phys_addr_t address = page->physical_page_number << PAGE_SHIFT;
+	status_t status = vm_memset_physical(address, 0, B_PAGE_SIZE);
+	if (status != B_OK) {
+		panic("clear_page(): failed to clear physical page %#" B_PRIxPHYSADDR
+			": %" B_PRId32, address, status);
+	}
 }
 
 

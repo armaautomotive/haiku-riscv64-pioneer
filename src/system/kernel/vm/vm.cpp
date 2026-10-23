@@ -5474,12 +5474,17 @@ validate_memory_range(const void* addr, size_t size)
 {
 	addr_t address = (addr_t)addr;
 
-	// Check for overflows on all addresses.
-	if ((address + size) < address)
+	if (size == 0)
+		return true;
+
+	// Check the last accessed byte, not the exclusive end. A range ending
+	// at the top of kernel space is valid even though address + size wraps.
+	addr_t lastAddress = address + (size - 1);
+	if (lastAddress < address)
 		return false;
 
 	// Validate that the address range does not cross the kernel/user boundary.
-	return IS_USER_ADDRESS(address) == IS_USER_ADDRESS(address + size - 1);
+	return IS_USER_ADDRESS(address) == IS_USER_ADDRESS(lastAddress);
 }
 
 

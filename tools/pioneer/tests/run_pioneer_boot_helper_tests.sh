@@ -12,7 +12,7 @@ sh -n "$journal_script"
 if sh "$journal_script" ../unsafe > /dev/null 2>&1; then exit 1; fi
 if sh "$journal_script" session extra > /dev/null 2>&1; then exit 1; fi
 if sh "$smp_script" prepare session 64 memory8-journal-recovery-control > /dev/null 2>&1; then exit 1; fi
-for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-control memory128-kdl4-nosd-journal-control memory128-kdl5-spin-idle-nosd-control memory128-kdl5-spin-idle-nosd-journal-control memory128-spin-idle6-nosd-control memory128-spin-idle6-nosd-journal-control; do
+for profile in memory128-kdl-control memory128-kdl-journal-control memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-control memory128-kdl4-nosd-journal-control memory128-kdl5-spin-idle-nosd-control memory128-kdl5-spin-idle-nosd-journal-control memory128-spin-idle6-nosd-control memory128-spin-idle6-nosd-journal-control memory128-spin-idle7-top-page-nosd-control memory128-spin-idle7-top-page-nosd-journal-control; do
  if sh "$smp_script" prepare session 2 "$profile" > /dev/null 2>&1; then exit 1; fi
 done
 awk '
@@ -21,15 +21,39 @@ awk '
  copying {print}
  END {if(!found) exit 1}
 ' "$smp_script" > "$temporary/private_flags.inc"
+awk '
+ /^base=\/mnt\/ssd\/pioneer-haiku-kexec-20261013$/ {copying=1}
+ copying && /^loader=/ {found=1; exit}
+ copying {print}
+ END {if(!found) exit 1}
+' "$smp_script" > "$temporary/private_artifacts.inc"
+(
+ session=offline-profile-pin-test
+ for profile in memory128-spin-idle7-top-page-nosd-control memory128-spin-idle7-top-page-nosd-journal-control; do
+  . "$temporary/private_artifacts.inc"
+  [ "$memory_gib" = 128 ]
+  [ "$bundle" = "$base/smp-kernel-bundle-memory-spin-idle-top-page-7/samsung-ram.bfs" ]
+  [ "$bundle_hash" = 233a2d662c52e7ac6435da49a9202e53f66be2eb914f79bf140eaed2f04f2a67 ]
+  [ "$image_hash" = b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98 ]
+ done
+ profile=memory128-spin-idle6-nosd-control
+ . "$temporary/private_artifacts.inc"
+ [ "$memory_gib" = 128 ]
+ [ "$bundle_hash" = f0dac3262f73e6e35ccb8eb2bdcda25875f5ab7841afcb0ec0522026a155cefa ]
+ profile=active-map-control
+ . "$temporary/private_artifacts.inc"
+ [ "$memory_gib" = 3 ]
+ [ "$bundle_hash" = 8a0110715013a322ace77f896a4ce00857c3b18ca4d7106edeac46a6fdfe5ced ]
+)
 for profile in active-map-control memory128-map-order-control memory128-kdl-control; do
  . "$temporary/private_flags.inc"
  [ "$private_nosd:$journal_view" = 0:0 ]
 done
-for profile in memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl4-nosd-control memory128-kdl5-spin-idle-nosd-control memory128-spin-idle6-nosd-control; do
+for profile in memory128-kdl-nosd-control memory128-kdl3-nosd-control memory128-kdl4-nosd-control memory128-kdl5-spin-idle-nosd-control memory128-spin-idle6-nosd-control memory128-spin-idle7-top-page-nosd-control; do
  . "$temporary/private_flags.inc"
  [ "$private_nosd:$journal_view" = 1:0 ]
 done
-for profile in memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-journal-control memory128-kdl5-spin-idle-nosd-journal-control memory128-spin-idle6-nosd-journal-control; do
+for profile in memory128-kdl3-nosd-journal-control memory128-kdl4-nosd-journal-control memory128-kdl5-spin-idle-nosd-journal-control memory128-spin-idle6-nosd-journal-control memory128-spin-idle7-top-page-nosd-journal-control; do
  . "$temporary/private_flags.inc"
  [ "$private_nosd:$journal_view" = 1:1 ]
 done
