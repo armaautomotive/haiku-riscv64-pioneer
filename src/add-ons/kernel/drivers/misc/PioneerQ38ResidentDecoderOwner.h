@@ -27,6 +27,8 @@ struct PioneerQ38ResidentDecoderResult {
  PioneerQ38ProjectionGraphMemoryResult memory;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  uint32_t validationPages=0,validationWords=0;
+ uint32_t observedStatus[3]={},observedPc[2]={}; // captured EXISTING reads only,never post-failure diagnostics
+ uint32_t observedWorker=UINT32_MAX;
 #endif
 };
 class PioneerQ38ResidentDecoderOwner {
@@ -37,9 +39,16 @@ class PioneerQ38ResidentDecoderOwner {
  bool started=false,unsafe=false,closed=false,consumed=false,complete=false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  bool readbackTraffic=false,readbackDone=false;
+ uint32_t observedStatus[3]={},observedPc[2]={};
+ uint32_t observedWorker=UINT32_MAX;
 #endif
  template<class IO> bool Fail(IO& io,PioneerQ38ResidentDecoderResult& r){
   unsafe=true;complete=false;r.unsafe=1;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+  for(unsigned i=0;i<3;i++)r.observedStatus[i]=observedStatus[i];
+  for(unsigned i=0;i<2;i++)r.observedPc[i]=observedPc[i];
+  r.observedWorker=observedWorker;
+#endif
   if(history)history->Fault();
   if(projection)projection->Fail(io,r.stop);
   return false; // MEMORY ONLY;ALL owners/snapshot/maps retained,NO later IO
@@ -111,9 +120,21 @@ class PioneerQ38ResidentDecoderOwner {
   return true; // DATA+real reserved initial-zero spans,not execution proof
  }
  template<class IO> bool Terminal(IO& io,unsigned w){
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+  // Preserve short-circuit order and EXACT original read count. A fault
+  // marker/phase/count never causes a new diagnostic device read.
+  observedWorker=w;
+  for(auto& value:observedStatus)value=0;
+  for(auto& value:observedPc)value=0;
+  observedStatus[2]=io.RuntimeStatusRead(2);if(observedStatus[2]!=TT_Q38_CONV_BATCH_MARKER)return false;
+  observedStatus[0]=io.RuntimeStatusRead(0);if(observedStatus[0]!=0x6400c)return false;
+  observedStatus[1]=io.RuntimeStatusRead(1);if(observedStatus[1]!=jobs[w].Count()*16)return false;
+  for(unsigned i=0;i<2;i++){io.Pause();observedPc[i]=io.RuntimePcRead();if(!PioneerQ38ConvBatchTerminalPc(observedPc[i]))return false;}
+#else
   if(io.RuntimeStatusRead(2)!=TT_Q38_CONV_BATCH_MARKER || io.RuntimeStatusRead(0)!=0x6400c
    || io.RuntimeStatusRead(1)!=jobs[w].Count()*16)return false;
   for(unsigned i=0;i<2;i++){io.Pause();if(!PioneerQ38ConvBatchTerminalPc(io.RuntimePcRead()))return false;}
+#endif
   return true;
  }
  template<class IO> bool Receipt(IO& io,unsigned w){
@@ -265,10 +286,35 @@ public:
   for(unsigned attempt=0;attempt<65536 && finished<120;attempt++){
    uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return Fail(io,r);
    for(unsigned w=0;w<120;w++)if(!done[w]){
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+    r.worker=w;
+    observedWorker=w;
+    for(auto& value:observedStatus)value=0;
+    for(auto& value:observedPc)value=0;
+    r.word=40000;
+    if(!Guard(io,w))return Fail(io,r);
+    r.word=40001;
+    uint32_t marker=io.RuntimeStatusRead(2);
+    observedStatus[2]=marker;
+    if(marker && marker!=TT_Q38_CONV_BATCH_MARKER)return Fail(io,r);
+    if(marker){
+     r.word=40002;
+     if(!Guard(io,w))return Fail(io,r);
+     r.word=40003;
+     if(!Receipt(io,w))return Fail(io,r);
+     done[w]=true;finished++;r.completed++;
+    }else{
+     r.word=40004;
+     io.Pause();uint32_t pc=io.RuntimePcRead();
+     observedPc[0]=pc;
+     if(pc<0x64000 || pc>=0x64000+TT_Q38_CONV_BATCH_TEXT_BYTES || (pc&3) || (pc>=0x6403c && pc<=0x64058))return Fail(io,r);
+    }
+#else
     r.worker=w;if(!Guard(io,w))return Fail(io,r);uint32_t marker=io.RuntimeStatusRead(2);
     if(marker && marker!=TT_Q38_CONV_BATCH_MARKER)return Fail(io,r);
     if(marker){if(!Guard(io,w) || !Receipt(io,w))return Fail(io,r);done[w]=true;finished++;r.completed++;}
     else{io.Pause();uint32_t pc=io.RuntimePcRead();if(pc<0x64000 || pc>=0x64000+TT_Q38_CONV_BATCH_TEXT_BYTES || (pc&3) || (pc>=0x6403c && pc<=0x64058))return Fail(io,r);}
+#endif
    }
    io.Pause();
   }

@@ -183,6 +183,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    if(v==0x46800 && p.FullRead(p.current,0x6000)==PioneerQ38ConvBatchImageWord(0)){
     assert(p.decoderImage && p.decoderPlan && p.decoderHistory && !p.decoderRunning[p.current]);p.decoderRunning[p.current]=true;p.decoderStarts++;
     p.decoderPc[p.current]=ExecuteDecoderConv(p.decoderImage,*p.decoderPlan,p.current,p.decoderBank,p,*p.decoderHistory);
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+    if(!p.decoderDamaged && !p.current && (p.decoderFault==7 || p.decoderFault==8)){
+     p.decoderDamaged=true;p.WriteLocal(0,p.decoderFault==7?0x17ffc8:0x17ffc4,p.decoderFault==7?TT_Q38_CONV_BATCH_FAULT:0);
+    }
+#endif
     if(!p.decoderDamaged && p.current==119 && p.decoderFault>=2 && p.decoderFault<=4){p.decoderDamaged=true;
      if(p.decoderFault==2)p.C().source[11]^=1;
      if(p.decoderFault==3)p.WriteLocal(119,TT_Q38_FFN_RESIDENT_SUMMARY,p.ReadLocal(119,TT_Q38_FFN_RESIDENT_SUMMARY)^1);
@@ -223,7 +228,13 @@ void ProjectionNativeTransport::DecoderSources(const char* image,const PioneerQ3
 }
 unsigned ProjectionNativeTransport::DecoderStarts()const{return implementation->decoderStarts;}
 void ProjectionNativeTransport::ObserveDecoder(const PioneerQ38ResidentDecoderResult& r){implementation->decoderResult=&r;}
-void ProjectionNativeTransport::DecoderFault(unsigned kind){assert(kind>=1 && kind<=6);implementation->decoderFault=kind;}
+void ProjectionNativeTransport::DecoderFault(unsigned kind){assert(kind>=1 && kind<=
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ 8
+#else
+ 6
+#endif
+ );implementation->decoderFault=kind;}
 #endif
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 void ProjectionNativeTransport::ValidationFault(unsigned kind,unsigned page){

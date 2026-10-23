@@ -1,0 +1,112 @@
+Physical DEBUG44 first-token/layer0 retained-convolution trial FAILED
+October23 UTC2026;whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET.
+Goal ACTIVE. No successful decoder speed measurement or full-card claim.
+
+Pretrial checkpoint6f89d641758242ab2e0d40bd400e8264e8759fda pushed and
+remote-verified after original-GGUF native-control3token qualification,
+FD-close retention2cases,updater232cases,and reload-guard regression.
+
+Fresh physical preflight:Haiku/64CPUs/max137034936320B RAM,desktop services
+present,no Assistant/model/GPU compute parents. Normal041 installed AND
+rollback hash exact;reloadadmin b0c851b3/guardd1ce2aa4 exact;model file
+18973870528B present. Reload metadata tag12/gen5/cold0/owner0/open1/guard1.
+
+New hash-named paths confirmed unused before staging. SCP37207 TERMINAL0;
+remote driver/client/updater hashes exactly match local tested artifacts:
+driver d96899a74c6949a22caec805dbd611cee80f2ff96c909758d772557d1a4a0c0a
+client f3b54e8bb01a52cd1272804fc9491a9a832dc725708b19b0fde290ed547687a5
+updater3648a4277ff0ae472cf6ebfcba9fa0e5faf11412bac0f7c9d9d6c5f20b4735e6
+Stage=/boot/home/pioneer-p100a-hot-reload-20261019-a
+driver=tenstorrent_pci_probe-decoder-validation-d96899a7
+client=pioneer-q38-resident-decoder-validation-f3b54e8b
+updater=pioneer_p100a_hot_swap-decoder-validation-3648a427.sh
+
+Guarded apply76683 TERMINAL0:
+ normal041/tag12/gen5/quiesced0/cold0/owner0 ->quiesced1 ->
+ d96899a7/tag44/gen6/quiesced0/cold0/owner0/open1/guard1.
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION at apply itself.
+
+ONE native client84109 TERMINAL1. Full public same-file SHA and independent
+embedding/RMS/QKV/Conv4 references completed before GPU FD. Reload/support/
+bank/span handshakes,108 original-source uploads,and SPAN_END all status0.
+The163984B native validation ioctl89d8 returned status0 but FAILURE metadata
+(elapsed0,clean_end0). Client performed CLOSE ONLY,NO BANK_END.
+No observation timeout caused restart/retry;the SAME live handle was polled
+until authoritative terminal1. No SCP/second native job/status/END/reload or
+dependency mutation occurred during its entire authentication/execution.
+
+Only existing passive serial capture was read after failure,no new tty.
+Captured driver data:
+ Q38-DECODER-VALIDATION: FAIL history466956 zero466956 embedding7 norm7
+ projection7 decoder4 worker0 word383 readback0/0 restored0
+ Repeated MEMORY-ONLY RETAIN:prepared120/booted0/closed0;
+ NO_LATER_CARD_IO. Legacy close status/detail fields remain zero.
+
+Actual source interpretation:history initialization,workspace initialization,
+embedding,RMS,and4projection operations completed. Decoder phase4 is after
+ALL120 new image installations/arms/release writes and readback guards.
+Failure occurred at worker0 polling/completion proof BEFORE any validation
+readback or original restoration. word383 is stale from the previous full
+descriptor-table check;it does NOT identify an arithmetic word or cause.
+Current evidence does not distinguish scope/marker/terminal/receipt/PC fault.
+Do NOT claim numerical mismatch,root cause,or a convolution performance rate.
+
+CURRENT HARDWARE STATE
+DEBUG d968 remains installed;ALL context/model/cohort/code snapshots/maps/
+host/bulk/clock ownership retained and card quarantined. Normal041 rollback
+is still staged. NO post-failure driver status/query/END/reset/restore/reload/
+retry/power/reboot/SD/NIC/Assistant/model writes performed. CPU/RAM/desktop
+health after failure deliberately NOT re-probed;last good preflight above.
+Raw-unpack-cache22 remains HARD BLOCKED. Dirty llama.cpp/FlashNext untouched.
+
+User asked via async question whether available for controlled full-PSU
+recovery after saving Haiku work. Await response;leave SD/cards unchanged.
+Recovery requires physical power-cycle before ANY more card work. Once
+recovered and known-clean,new kernel metadata/OS state must be revalidated
+before guarded restore via the EXISTING pinned3648 updater and normal041.
+Do not use hot restore to clear this quarantine. No automatic rollback.
+
+OFFLINE FOLLOW-UP
+Add DEBUG-only result capture of ALREADY-read status/PC and precise polling
+locations,without ANY post-failure device reads. Keep baretag43 byte exact,
+public protocol/client/CPU-reference separation and scalar image unchanged.
+Fault-marker and bad-terminal-count simulation tests must distinguish the
+branches and preserve CLOSE ONLY. SDK compile/stack/control regressions
+required before any next diagnostic candidate is staged or installed.
+This is diagnostics,NOT a proven fix for this failure.
+
+OFFLINE DIAGNOSTIC FOLLOW-UP QUALIFICATION
+31458 TERMINAL0:two actual native-controller injected fault branches PASS.
+Fault marker captures location40001/status2=46424351,NO phase/count/PC
+reads after it. Invalid count captures location40003/status6400c/0/
+31424351,NO PC read after it. BOTH retain ALL owners and prove no later
+device/status/END/restore/retry. Captured worker is explicit;observations
+are cleared between workers so an older receipt is not misattributed.
+59127/97538 TERMINAL0:complete actual RV64 SDK source compile C/D PASS,
+new maximum frame1696B <=2048,pre-existing oversized frames no growth.
+DEBUG object C/D identical:
+4c25f1e905cd56b06ae38941c1c04b29e55f438446f17e5fffdb6280e1258c76
+Baretag43 object3445a61f... and all oldtag38/guard/defaultdriver43/
+private2d12/stash6121/tag42a2bc rebuilt BYTE-IDENTICAL. Public protocol,
+client f3b54e8b,scalar QCB1 image and arithmetic unchanged. No new linked
+diagnostic driver built/staged/installed. Existing driver remains D968
+and quarantined;these diagnostics do NOT authorize a retry.
+Diagnostic native role gates373/reference-build gates200 PASS.
+92049 TERMINAL0:final actual public control/routing/global scope regression
+PASS,144 inert refusals/full history+QPE1+QRN1+QPS1+QCB1/40pages/restore/
+explicit END. Diagnostics do not change successful numeric execution.
+The RV64 compiler initially caught misleading indentation in the new
+diagnostic-only polling branch;separated statements,kept -Werror and all
+safety criteria,and reran. No numerical tolerance or guard weakened.
+
+LOG SHA256
+native b003c213579d140d11dc38b461569f668cd730b84acf23db3f0ce8bd27c26a70
+ /private/tmp/pioneer-q38-decoder-debug-native-card-20261023-a.log
+apply fce90cf31880b865850d80569fb4042b6321b64aae32349a4e621bf520dcc5d4
+ /private/tmp/pioneer-q38-decoder-debug-native-apply-20261023-a.log
+passive serial=/private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
+ (existing detached capture,never reopened)
+
+Whole-model remaining remains actual card Q/Knorm/gates/Softplus/GDN/state
+commit/gatednorm/out/residual/FFN/fullattention+KV/all64layers/sampling/
+persistent whole-token scheduling and honest real inference benchmark.

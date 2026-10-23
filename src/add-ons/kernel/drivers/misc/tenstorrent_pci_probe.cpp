@@ -3978,6 +3978,8 @@ static status_t Q38ResidentDecoderValidationControl(PioneerProbeCookie* cookie,u
   dprintf("Q38-DECODER-VALIDATION: FAIL history%u zero%u embedding%u norm%u projection%u decoder%u worker%u word%u readback%u/%u restored%u\n",
    history.phase,zero.phase,embedding.phase,norm.phase,projection.phase,decoder.phase,decoder.worker,decoder.word,
    decoder.validationPages,decoder.validationWords,decoder.memory.restoredWords);
+  dprintf("Q38-DECODER-VALIDATION: CAPTURED worker%u status%08x/%08x/%08x pc%08x/%08x;EXISTING_READS_ONLY_NO_POST_FAILURE_DEVICE_IO\n",
+   decoder.observedWorker,decoder.observedStatus[0],decoder.observedStatus[1],decoder.observedStatus[2],decoder.observedPc[0],decoder.observedPc[1]);
   memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
  }
  status=user_memcpy(data,reply,sizeof(*reply));delete reply;
