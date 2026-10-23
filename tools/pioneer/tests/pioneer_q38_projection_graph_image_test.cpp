@@ -3,6 +3,7 @@
 // status/physical endpoints are SYNTHETIC in this suite,NOT native/math.
 #define PIONEER_Q38_PROJECTION_GRAPH_PLAN_FIXTURE_ONLY
 #include "pioneer_q38_projection_graph_plan_test.cpp"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphProof.h"
 #define PIONEER_Q38_TEST_UNSELECTED_OUTPUT_ROOT
 #define PIONEER_Q38_TEST_PRIVATE_FFN_ROOT
 #define PIONEER_Q38_DISPATCH_MACHINE_ONLY
@@ -173,6 +174,11 @@ struct ProjectionParentMachine:DispatchMachine {
  }
  void Verify(){
   const auto* m=fixture.graph->Manifest();assert(!pending && !unknown);
+  uint32_t receipt[64],before[8],after[8];
+  for(unsigned i=0;i<64;i++)receipt[i]=memory.at(TT_Q38_PROJECTION_GRAPH_STATS+i*4);
+  for(unsigned i=0;i<8;i++){before[i]=receipt[16+i];after[i]=counts[i==6?2:i];}
+  assert(PioneerQ38ProjectionGraphReceipt(receipt,m,before,after));
+  for(unsigned i=0;i<64;i++){receipt[i]^=0x80000000U;assert(!PioneerQ38ProjectionGraphReceipt(receipt,m,before,after));receipt[i]^=0x80000000U;}
   for(unsigned w=0;w<119;w++)assert(node[w].sequence==PioneerQ38ProjectionGraphNextPeer(m,w)
    && memory.at(TT_Q38_PROJECTION_GRAPH_SEQUENCE+w*4)==node[w].sequence && node[w].stopped==fixture.stop);
   if(fixture.stop){assert(stopJobs==119 && !producerJobs && !matrixJobs && !lineReads && !outputWrites);}

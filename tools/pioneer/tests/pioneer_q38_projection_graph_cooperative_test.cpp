@@ -23,7 +23,7 @@ struct ParentArithmeticPeer:ProjectionPeer {
   ProjectionPeer::Store(a,value);
  }
 #endif
- ParentArithmeticPeer(const char* image,unsigned worker,std::vector<uint32_t>& data):ProjectionPeer(image,12,5120,worker),fabric(data){assert(BootNew());}
+ ParentArithmeticPeer(const char* image,unsigned worker,std::vector<uint32_t>& data,bool boot=true):ProjectionPeer(image,12,5120,worker),fabric(data){if(boot)assert(BootNew());}
  void SubmitActivation()override{
   assert(projection);unsigned packet=activationPackets;
   if(!packet)for(unsigned i=0;i<256;i++)gate[i]=fabric.at(descriptor[10]/4+i);
@@ -47,7 +47,7 @@ struct ParentArithmeticPeer:ProjectionPeer {
   count=type==8?32:256;vector.resize(inputs);scales.resize(inputs/count);tile.assign(PioneerQ38PanelTileBytes(type),0);
   tiles.assign(groups*(inputs/count),tile);unsigned first=rootMemory.at(TT_Q38_PROJECTION_MATRIX_ROWS+(logicalWorker-1)*4);
   for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++){
-   unsigned global=first+(t/(inputs/count))*16+row;std::vector<uint8_t> raw(PioneerQ38BlockBytes(type),0);
+   unsigned global=first+(t/(inputs/count))*16+row+((base>>6)%251)*16;std::vector<uint8_t> raw(PioneerQ38BlockBytes(type),0);
    uint16_t half=uint16_t(0x0800+(global%4)*0x80);
    if(type==8){raw[0]=uint8_t(half);raw[1]=uint8_t(half>>8);
     for(unsigned k=0;k<32;k++)raw[k+2]=uint8_t(int((t*17+global*19+k*37)%255)-127);
@@ -177,6 +177,7 @@ struct ArithmeticParent:ProjectionParentMachine {
   assert(memory.at(TT_Q38_PROJECTION_GRAPH_STATS+56*4)==1);runs++;
  }
 };
+#ifndef PIONEER_Q38_PROJECTION_COOPERATIVE_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && !strcmp(argv[3],"--wide")));(void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&BankProof;
  setvbuf(stdout,nullptr,_IOLBF,0);auto root=std::make_unique<ArithmeticParent>(argv[1],argv[2]);
@@ -196,3 +197,4 @@ int main(int argc,char** argv){
 #endif
  printf("PASS OFFLINE actual full-projection parent ALL119boots ONCE/projections%zu/outputRows%u/producers%u/matrixJobs%u/instructions%llu/ALL119physicalSTOP;changed roles/inputs/widths/types%s,NO peer/Dst/Src/CSR/private-sequence reset;SYNTHETIC weights/transport_NOT_NATIVE_FULL_MODEL_OR_SPEED\n",cases.size(),rows,root->completedProducers,root->completedMatrices,(unsigned long long)root->matrixInstructions,argc==4?"8/12/14":"8ONLY");
 }
+#endif

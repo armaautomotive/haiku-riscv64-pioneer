@@ -1,5 +1,37 @@
 # Native build status
 
+Latest OFFLINE checkpoint October22 Pacific/October23 UTC 2026:NEW complete
+persistent projection EXECUTION owner implemented and tested,NOT a held-only
+memory promotion/native install. Actual native-factory zero/QPE1/QRN1
+producer -> SAME private normalized proof/joint banks -> complete QPR1+
+ALL119 QFP3 machines -> FOUR layer0 roles10/11/5/6,244matrix jobs/80input
+producers/16480rows,ALL119boots ONCE. No host learned input/output vectors
+or CPU reference/fallback in the controller. Exact source/clock/host IO
+endpoints SIMULATED;new executing native driver adapter STILL OWED.
+All8134072 original L1 words saved/SECOND original pass before first write;
+989304 code words installed once.119STOP+ALL independent physical terminals
+BEFORE first hold;8134072 restored/16268144 independently verified before
+close. Public held-only CLOSE permanently denied BEFORE first reset.
+14inert private-input/model/epoch/tuple/role/source/page/frame refusals;
+13execution/receipt/source/reset/command/counter/code/map/restore/clock
+faults retain ALL and subsequent APIs make ZERO additional I/O. PASS.
+Exact QPR1 transport-receipt helper also passes10emitted parent cases,
+including9-wave vocabulary/STOP,all64word corruptions. Existing full
+arithmetic6projections/427matrices ALL3types8/12/14,prior native RMS7/616,
+94new role/before-SDK gates+210RMS gates PASS. Kernel TEMPLATE maxframe880B,
+NOT actual native context;old actual full-driver/RMS max784B and old
+tag38/guard/default43 remain BYTE-IDENTICAL. All final handles TERMINAL0.
+Fresh October23 00:22UTC read-only SSH original041/tag12/gen46/idle/cold0/
+owner0/open1/guard1,ALL compute parents absent,64CPUs/max137034936320B.
+ZERO remote writes/native jobs/install/reload/reboot/power/SD/Assistant/
+network/clock changes. NEXT actual private native execution/cohort/mapping/
+retention/END factory integration and separate numerical DEBUG RMS+
+projection/card qualification BEFORE install. Then on-card result stashes,
+later residual/GDN/attention/KV/sampling/full decoder schedule;do not replay
+first embedding as later input. Whole27B.207893161tok/s UNCHANGED;20UNMET;
+goal ACTIVE. Evidence:
+benchmarks/qwen38-projection-execution-offline-20261022.txt.
+
 Latest OFFLINE checkpoint October22 2026:private native learned RMS
 execution owner/actual source scope/factory/retention/END integrated and
 tested,NOT linked as a new driver or installed. REAL unclaimed source ->

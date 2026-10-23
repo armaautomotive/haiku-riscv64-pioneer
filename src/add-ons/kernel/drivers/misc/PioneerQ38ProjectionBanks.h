@@ -12,6 +12,7 @@ struct PioneerQ38ProjectionExtent {uint32_t bank,address,route,index,pages,bytes
 struct PioneerResidentLease;struct PioneerBulkUploadLease;struct PioneerOutputBufferLease;struct PioneerWideOutputLease;
 struct PioneerQ38ProjectionZeroLease;struct PioneerQ38ProjectionZeroResult;
 class PioneerQ38EmbeddingController;
+class PioneerQ38ProjectionGraphOwner;
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 class PioneerQ38LearnedRmsController;
 #endif
@@ -46,6 +47,21 @@ class PioneerQ38ProjectionBanks {
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  const PioneerQ38LearnedRmsController* rmsOwner=nullptr;
  bool rmsPublished=false;
+#ifdef PIONEER_Q38_PROJECTION_EXECUTION_OWNER
+ const PioneerQ38ProjectionGraphOwner* executionOwner=nullptr;
+ bool executionClosed=false;
+ bool ClaimExecution(const PioneerQ38ProjectionIdentity& id,const PioneerQ38ProjectionGraphOwner* owner,const PioneerQ38LearnedRmsController* input){
+  if(!owner || executionOwner || executionClosed || !rmsPublished || !OwnsLearnedRms(id,input,embeddingOwner))return false;
+  executionOwner=owner;return true;
+ }
+ bool OwnsExecution(const PioneerQ38ProjectionIdentity& id,const PioneerQ38ProjectionGraphOwner* owner,const PioneerQ38LearnedRmsController* input)const{
+  return owner && executionOwner==owner && !executionClosed && rmsPublished && OwnsLearnedRms(id,input,embeddingOwner);
+ }
+ bool CloseExecution(const PioneerQ38ProjectionIdentity& id,const PioneerQ38ProjectionGraphOwner* owner,const PioneerQ38LearnedRmsController* input){
+  if(!OwnsExecution(id,owner,input))return false;
+  executionClosed=true;return true; // retain exact owner identity;no second claimant or ready facade
+ }
+#endif
  bool ClaimLearnedRms(const PioneerQ38ProjectionIdentity& id,const PioneerQ38LearnedRmsController* owner,
   const PioneerQ38EmbeddingController* input,unsigned token,unsigned position){
   if(!owner || rmsOwner || !embeddingPublished || !OwnsEmbedding(id,input) || token!=embeddingToken || position!=embeddingPosition)return false;

@@ -1,0 +1,146 @@
+October22 Pacific/October23 UTC2026 complete projection execution owner
+Parent2e116f7db003312e2c8abebe14129a5fce558e9b. PROGRESS;goal ACTIVE.
+Last whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET.
+No new physical-card inference/decoder/Assistant mode/speed claim.
+
+NEW EXECUTION,NOT HELD-ONLY MEMORY PROMOTION
+PioneerQ38ProjectionGraphOwner consumes the ACTUAL completed private RMS
+object,exact canonical model,joint mutable owner,original retained learned
+ledger and token/position/workspace/identity. Same16physical ROOT source
+words must match the RMS producer handoff. A copied descriptor/inputEpoch/
+receipt/ready flag cannot grant execution. Private execution lease remains
+claimed until physical known-clean STOP/restore;closed identity is sticky,
+not transferable/reclaimable. Private output proof is accessible only to
+the future resident decoder. Further inputs/layers still need real producers.
+The current producer is ONLY layer0/attn_norm;allowed roles5/6/10/11 all
+consume its unchanged5120F32 vector. FFN,attention output and vocabulary
+roles are intentionally refused for this producer,not treated as aliases.
+
+ALL120 complete8134072word snapshot,independent SECOND full original pass
+BEFORE FIRST write.989304code words installed once. Same119 workers boot
+once and stay resident across complete projections;ROOT consumes original
+resident GDDR input,op5/gather/matrix waves stay on card. No host numeric
+input/output vector,learned CPU reference/validation or fallback in owner.
+Mark memory.launched BEFORE first reset;CloseHeldNoLaunch is permanently
+refused thereafter. Actual owner independently proves current code/source/
+physical PC/reset/8counters/manifest+shadow/sequence/last command/exclusive
+scope/hosts/clock before publication. On STOP,ALL119 physical terminals
+are checked BEFORE FIRST participant hold,then8134072words restored with
+readback and a full independent second original verification. Total16268144
+original words verified. Original commands restored;read-only NoC counters
+are NEVER repaired/reset. One conservative qualification lifetime,not yet
+an optimized whole-decoder scheduler or new native execution capability.
+First unknown retains ALL snapshots,maps,model/source/host/clock owners;
+no following read/STOP/END/reset/restore/retry/hot swap is allowed.
+
+TRANSPORT PROOF
+New PioneerQ38ProjectionGraphProof derives exact writes/write-flits/read
+flit overhead/minimum waits/fixed read counts from canonical jobs and actual
+scatter geometry. Bounded variable physical polls plus exact all64stats,
+before/after/aliased physical counters,identity/input/layer/role/position
+receipt are necessary,not sufficient,DATA checks. Executing owner ALSO
+checks current native scope,physical terminals,code and private producer.
+No runtime/device image or quantization format changed. All six immutable
+QPR1/QFP3 sections and both boot words pinned by runtime test runner.
+
+OFFLINE END-TO-END ACTUAL INSTRUCTIONS
+python3 tools/pioneer/tests/pioneer_q38_projection_execution_test.py
+ /private/tmp/pioneer-q38-projection-family.DGLYM4co/parent-e
+ /private/tmp/pioneer-q38-projection-family.DGLYM4co/peer-n
+ /private/tmp/pioneer-q38-state-zero-20261020-c
+ /private/tmp/pioneer-q38-embedding-image-20261022-b
+ /private/tmp/pioneer-q38-learned-rms-image-20261022-c [--wide|--faults]
+
+Producer bridge keeps REAL unclaimed source/native state/factory/zero/
+QPE1/QRN1 objects from prior tested native factory implementation,not a
+fake ready facade. Extracted actual driver scope/mapping/retention/factory
+bodies execute on simulated endpoints. Original ROOT sources/commands/
+physical counters carried into SAME logical device fabric after RMS.
+New projection execution scope/PCI/TLB/clock/hardware endpoints are TEST
+implementations,NOT an actual new native driver adapter/control/factory.
+All code,including16KiB helper ROM fetch slot,is cloned from installed
+bytes. ALL119 actual RISC/FPU/Tensix machines persist;NoC endpoint only
+copies bytes. Original test packed weights vary by canonical source address.
+Independent Q4_K embedding/double-sqrtf RMS/quantized matrix observers verify
+actual outputs,NEVER populate device vectors/products or stand in for math.
+
+Wide:actual zero2MiB ->QPE1 ->QRN1 ->private input handoff ->4projections
+roles10/11/5/6,244matrix jobs/80op5 producers/16480output rows/119boots once.
+All119 matrix workers used on full-width roles. Source input unchanged;
+changed source roles produce distinct outputs.119STOP/physical terminals
+then exact complete restore. All8134072words restored,learned unchanged;
+no held-only close after launch.14configuration refusals make no I/O/claim:
+wrong roles/token/position/bank/model identity,same-shape different plan,
+uncompleted producer,nonpristine result,supplied source mutation and missing
+learned page. Missing-page configuration does not poison the clean owner.
+13faults:scope lost,receipt seal/poll corruption,source/reset/last-command/
+counter/code/mapping drift,STOP receipt corruption,partial restore failure,
+30s timeout and backwards clock. ALL resources retained,subsequent Run/
+Close/held-only Close make ZERO additional reads/writes/touches.
+All final ASAN/UBSAN/Werror runs TERMINAL0.
+
+REGRESSIONS/COMPILATION
+Exact receipt helper:10emitted parent examples(9shapes including BOTH9-wave
+vocabulary types+STOP),64word receipt corruptions per case;existing70faults.
+Peer replies in this suite synthetic;NOT arithmetic/card proof by itself.
+Actual parent+ALL119 retained arithmetic regression:6projections/28768rows/
+172producers/427matrixjobs/ALL119STOP,ALL wire types8/12/14 PASS with source-
+dependent test weights. Prior native RMS factory7positive/616refusals PASS.
+94new private-role/old-builder before-SDK gates +210old/new RMS gates PASS.
+New controller kernel TEMPLATE COMPILES,maxframe880B. This is NOT actual
+new native context/factory integration. Actual existing full native driver/
+RMS build repeated BYTE-IDENTICAL f15b3a86 object,maxnewframe784B;
+old tag38driver23e2e68a/guardd1ce2aa4/default43control2df0e0f8 EXACT.
+
+Final log SHA256s:
+/private/tmp/pioneer-q38-projection-execution-wide-20261022-d.log
+515217370df11f2a35d68b45aa2cbfe54c965b5222b0bc2fac883ecc5ffaaf24
+/private/tmp/pioneer-q38-projection-execution-faults-20261022-e.log
+b36c82cc65aadf275ea30ee3190256ea3c931ba639ae7c5f11dc44c0c54c33ed
+/private/tmp/pioneer-q38-projection-execution-compile-20261022-e.log
+1671954a065d6d4660bc28b798a82ee7bab1c1d6f452e7e10e8de7af5dce03cf
+/private/tmp/pioneer-q38-projection-execution-gates-20261022-a.log
+0dc6e655e2877eaf2a300f7fb3ab2b6d6ca44d4958a6521d3db2430fb40eae99
+/private/tmp/pioneer-q38-projection-execution-control-20261022-b.log
+7073abaf02b4519cb49fb0aa154e636584ed2825fc769394c52a67802efc9680
+/private/tmp/pioneer-q38-rms-execution-regression-20261022-a.log
+1b47693d952611849c23eafb8fc014742f77fa56bae239e5fd11102eb92e86d7
+/private/tmp/pioneer-q38-projection-cooperative-execution-regression-20261022-a.log
+d4d51534e2dfd46d026421b4f9ef2506fb83bb228b7767e5a181a67010b5724d
+/private/tmp/pioneer-q38-projection-receipt-20261022-b.log
+2c5288b309184b99794a43559f9e9bfc02d338c4c1c2e0069da1c91810ecac39
+
+LOCAL HARNESS REPAIRS,NO NATIVE FAILURES
+Fixed generated include/flag wiring,unused test helpers and source-register
+endpoint binding. Existing outer panel footprint includes padding outside
+new inner runtime footprint;mock delegates only those old outer accesses.
+Device stores use same aliases without invoking held-only HOST write API.
+Only3actual status words are emulated;other5saved words remain ordinary
+original data. Terminal VM no longer rewrites a later injected physical
+fault when queried again. Legacy held-only fixture advanced synthetic
+clock10ms per instruction quantum and incorrectly timed out wide simulated
+math;execution fixture now uses explicit test clock,and still independently
+tests exact30s/backwards-clock refusal. No native timeout was relaxed.
+Actual controller timeout/poll/source/code/physical proof unchanged.
+
+HARDWARE UNCHANGED
+Fresh Oct23 00:22UTC SSH read-only inventory proven;ALL compute parents
+absent. Original driver SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55 tag2026102100010012 generation46,quiesced0/cold0/active_owner0/
+open_count1/guard1,64CPUs/max137034936320B. ZERO remote writes/native jobs/
+install/reload/reboot/power/SD/Assistant/network/clock changes. Dirty llama
+and unrelated FlashNext files never read/edited/built/staged. Serial intact.
+
+NEXT FULL GOAL STILL OWED
+Actual same native cookie/global lock/thread/source/all120 cohort/checked
+mapping/clock/host retention and END factory adapter,then isolated DEBUG
+original-model RMS+projection numerical card qualification BEFORE install.
+Do not reuse old held-only native scope to excuse executing workers.
+For whole decoder,consume each private projection result into on-card
+semantic stashes before another projection overwrites common output;
+initialize GDN/KV state before boot,retain later residual/input producers,
+integrate GDN/attention/KV/FFN/sampling in a persistent device schedule.
+Avoid per-layer host snapshots/code reloads/CPU vectors in final fast path.
+Current first-layer source is NOT authority for other layers/FFN/vocabulary.
+No full model/card inference acceleration has yet been measured here.
+Raw-unpack-cache22 remains HARD BLOCKED. Goal ACTIVE;20tok/s UNMET.

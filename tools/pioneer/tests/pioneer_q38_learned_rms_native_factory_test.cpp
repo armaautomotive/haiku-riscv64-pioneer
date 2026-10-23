@@ -34,6 +34,7 @@ void PioneerSessionIO::RmsResetWrite(uint32 value){
  if(rmsPostFault==6)counters[0]++;
 }
 // TEST ONLY friend observes private proof. Never creates or copies one.
+#ifndef PIONEER_Q38_RMS_FACTORY_FIXTURE_ONLY
 class PioneerQ38ProjectionGraphOwner {
 public:
  static bool Raw(const PioneerQ38EmbeddingNativeState& m){return m.embedding.MatchesCompleted(m.graph,m.plan,m.identity,m.token,m.position,m.bank);}
@@ -147,3 +148,4 @@ int main(int argc,char** argv){
  }
  printf("PASS ACTUAL native learned RMS FACTORY positives%u/refusals%u/faults%u;real source/state/scope/mapping/retention/END + emitted zero/QPE1/QRN1,simulated endpoints NOT CARD OR MODEL SPEED\n",positives,refusals,faults);
 }
+#endif
