@@ -125,7 +125,18 @@ int main(int argc,char** argv){
   for(unsigned role:{10U,11U,5U,6U})assert(weights.Validate(role,f.io.wholeWorkspace.data()+PioneerQ38ProjectionResultOffset(role)/4));
   puts("PASS ALL16480 ORIGINAL reference words STILL BIT-EXACT simultaneously AFTER four actual QPS1 projections;NO host numeric device writes");
 #endif
-  assert(weights.tileReads-before==164800 && CloseQ38ProjectionExecution(*f.c,f.projection) && EndFactory(*f.c)
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+  auto readback=std::make_unique<std::array<uint32,18432>>();
+  assert(CloseQ38ProjectionExecution(*f.c,f.projection,readback->data()) && f.projection.validationPages==18
+   && f.projection.validationWords==18432 && f.transport->ValidationReads()==18);
+  for(unsigned i=0;i<18432;i++)assert((*readback)[i]==f.io.wholeWorkspace[TT_Q38_PROJECTION_RESULT_BASE/4+i]);
+  for(unsigned role:{10U,11U,5U,6U})assert(weights.Validate(role,readback->data()+(PioneerQ38ProjectionResultOffset(role)-TT_Q38_PROJECTION_RESULT_BASE)/4));
+  puts("PASS ALL16480 ORIGINAL reference words read through ACTUAL fixed18page DEBUG NoC transfer AFTER ALL120holds BEFORE ROOT restore;NO host numeric device writes");
+  bool closed=true;
+#else
+  bool closed=CloseQ38ProjectionExecution(*f.c,f.projection);
+#endif
+  assert(weights.tileReads-before==164800 && closed && EndFactory(*f.c)
    && f.c->q38Dispatch->closed && !f.c->Unsafe() && original.Ready()
    && f.projection.memory.restoredWords==8134072 && f.projection.memory.verifiedOriginalWords==16268144);
   printf("PASS ACTUAL public GGUF token%u:QPE1+QRN1+ALL119QFP3/4projections/244matrices/80producers/16480original-row-reference outputs BIT-EXACT/119boots once/complete native END;SIMULATED_HARDWARE_NOT_CARD_OR_MODEL_SPEED\n",token);

@@ -1,0 +1,145 @@
+Separate retained-projection native DEBUG qualification
+October22 Pacific / October23 UTC2026
+
+IMPLEMENTED/BUILT;physical-card qualification NOT yet run.
+Last whole27B rate remains0.207893161tok/s;20tok/s UNMET;goal ACTIVE.
+
+REAL IMPLEMENTATION
+Separate exact tag2026102200010042 / namespace13,root-only. Not old
+embedding39/40,RMS41,FFN,Work or a CPU-reference kernel promotion.
+Uses actual native cookie/team/global call lock/source/learned-page ledger/
+zero2MiB/QPE1/QRN1/ALL119 QFP3/ROOT QPS1 execution and complete native END.
+All four first-layer projection results remain in fixed disjoint GDDR
+slots in the already-initialized2MiB prefix. No numeric CPU products are
+uploaded and no host/device weight expansion or new DMA/BME is introduced.
+
+DEBUG readback runs INSIDE the actual projection owner,AFTER STOP/ALL119
+independent terminals/ALL120 physical holds,BEFORE restoring ANY original
+ROOT word. Its private produced mask must prove ALL4actual projections;
+public ready/result fields cannot grant readback authority. Only the
+fixed18page/73728B output span is readable,using ONE already-saved ROOT
+scratch page. Fresh per-word NaN poison before every page,exact commands/
+NoC counts/source/route/clock/ownership checks,finite output checks.
+First failure quarantines ALL with no subsequent device operation or
+restoration. Complete original8134072-word footprint restores on success.
+Normal macro-OFF Work retains no numeric readback or CPU reference.
+
+Fixed HEAP73848B pointer-free public reply:logical version/token/position
+only inputs;ALL remaining metadata/stats/18432value words must be zero.
+Partial numeric/stat outputs are zeroed after native failure;lost user
+reply also retains the actual owner. Old embedding/RMS/FFN/Work/dispatch
+endpoints are explicitly refused by tag42,not silently reinterpreted.
+
+INDEPENDENT SOURCE-BOUND CLIENT
+Full SAME opened public GGUF SHA/851tensor parser/epoch before GPU FD.
+Independent original embedding,learned RMS and ALL4original Q8_0 matrix
+references calculated BEFORE Open. Exact first-layer roles10/11/5/6,
+16480results;complete18page span/padding compared before explicit BANK_END.
+Uploads ONLY23193original pages:12 selected tiled embedding,5F32norm and
+16canonical projection stripes,in checked <=256page spans/monotonic nonce.
+No independent CPU vector/reference/answer uploaded as device input.
+Unknown/mismatch/source/epoch/transport failure -> CLOSE ONLY;no later
+device I/O/END/restore/retry/hot swap until physical recovery.
+
+COMPLETED OFFLINE EVIDENCE (TERMINAL0)
+ASan/UBSan/ffp-contract-off/Werror:
+ - Actual private DEBUG native factory/scope/instructions/full END:
+   33public result+71scope+6internal output-pointer/private-mask refusals;
+   actual4roles/244matrices/80producers/119boots ONCE,18fresh poisoned
+   reads/18432words,8134072saved/restored+16268144verified original words.
+ - Eight actual readback faults:timeout,poison,counter,source on pages1/18.
+   ALL retain;no following I/O/END/restore/retry. No failure masking.
+ - Actual root-only public control/routing/global call lock:89inert
+   refusals/one complete success/eight retention faults,including lost
+   reply and failedzero/embedding/RMS/partial projection setup/readback.
+   Initial test-only lock counter counted a deliberately failed acquire;
+   corrected to count successful acquisitions,retaining the balance
+   assertion. Complete public success proves2acquires/2releases.
+ - Production client + sparse synthetic ORIGINAL GGUF transport:
+   tokens0/15/248319,1032actual independent packed reference reads BEFORE
+   FD,ALL23193uploaded original pages bytechecked,101spans/109calls.
+   123faults cover handshakes/first+last span/explicit END/source/epoch/
+   reference/page failures,ALL18readback-page boundaries/NaN/padding,
+   ALL28constrained public metadata/stat words,failed Open.
+   This endpoint test uses zero Q8 matrices;NOT device arithmetic.
+ - Independent projection reference:4nonzero positives/36refusals;
+   original Q8edge rows incl -128/+127,ALL16480outputs matched separately
+   qualified packed-row oracle. Finite/shape/alignment/overflow/alias/
+   failedsource/final invalidscale leave complete staged output untouched.
+ - Actual requested public GGUF:full c600de0300ae8a0eb3a6c0b8b5561b8b96f
+   16bd2c863c2a66c42de29d391a747/18973870528B/851tensors,independent NEW
+   client reference ALL12projections/49440words for tokens0/15/248319
+   BIT-EXACT to separately qualified original packed-row oracle.
+   No native context/FD/device/CPU numeric substitution or speed claim.
+ - Actual native-context original-model instruction/readback regression
+   parent4865 TERMINAL0:tokens0/15/248319/workspaces0/6,full SAME source
+   SHA BEFORE simulated native context;genuine zero/QPE1/QRN1/ALL119QFP3/
+   ROOTQPS1,ALL49440projection words+30720norm/raw checks BIT-EXACT.
+   ALL4stashes remain simultaneously valid after the final projection.
+   Actual18fixed DEBUG page transfers after ALL120holds before complete
+   original restore/nativeEND,for each token. Hardware SIMULATED;
+   NOT physical-card qualification or whole-model inference.
+ - New actual isolation gates297,old RMS219,private execution104,
+   stash138,native embedding76 PASS. Old RMS client9/87 and independent
+   RMS9/34+10guards,old embedding client9/51 PASS.
+
+BUILD PINS (NO DIRTY LLAMA/FLASHNEXT READ/BUILD/EDIT)
+Read-only RISC-V SDK;linked drivers B/C BYTE-IDENTICAL:
+ a2bcfb34baeba0bdca4e029164901c874c27ee7c3494be62912711e7a0c164e9
+New kernel frame max1440B;readback304B. Initial build A exposed kernel's
+missing initializer_list support;fixed with a local constant roles array,
+not weaker role/stack/ownership guards.
+Clients A/B BYTE-IDENTICAL:
+ 93992ae65e7bd512b81d9d9dad0d6e9d7807276279bb2fda771a05d66d3af5e4
+Private non-DEBUG execution macro-OFF object EXACT:
+ 2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35
+Compile-only stash object EXACT6121b065. Old tag38/guard/default43 controls
+remain BYTE-IDENTICAL23e2e68a/d1ce2aa4/2df0e0f8.
+
+GUARDED UPDATE PREPARATION (NOT STAGED/INSTALLED)
+Added exact --apply-projection-validation/--restore-projection-validation
+ONLY041tag12 <-> a2bctag42. All existing identity/hash/symlink/owner/idle/
+status/generation/quiesce/wait refusal gates unchanged. Raw-cache22 still
+HARD BLOCKED before platform/filesystem access;explicit call terminal2.
+Updater SHA:
+ edfd3a3b00ec42c69549dbce69e1077b3f1ee1497d0dcaad3e15cd1970c1dc25
+Focused114filesystem/handshake/hash/link/owner/failure cases PASS.
+FULL regression parent53006 TERMINAL0/PASS8067actual cases. The same
+process was observed through completion,never restarted on observation
+timeouts. Final result log SHA:
+ 877c2dd5c5ed86ba05c2d6fb66d7af1a5843f724e655098e9ea23d1b19c330e6
+
+Authoritative read-only Haiku preflight this turn:64CPUs/max137034936320B,
+original installed driver and rollback BOTH041fef189829c58791a7e4a86e2b15
+b182fa1a6c9cc9f03a91037ba15b353403;adminclientb0c851b3. No compute parents.
+CPU-only reload status tag2026102100010012/gen3/quiesced0/cold0/owner0/
+open_count1/guard1. No reboot/relay/SD/Assistant/model/NIC/boot changes.
+
+NEXT PHYSICAL QUALIFICATION
+Actual original-model native instruction/readback regression4865 is now
+TERMINAL0/PASS ALL3tokens. FULL updater53006 TERMINAL0/PASS8067cases.
+All local tests/builds are now terminal;no native test is running.
+Then exact guarded native preflight/stage/apply,ONE original-source DEBUG
+client only. First unknown/numeric mismatch CLOSE ONLY/physical recovery,
+never automatic restore or retry. Only actual PASS/complete BANK_END/client
+terminal0 permits guarded restore041.
+
+Remaining whole-model objective unchanged:real resident convolution/
+gates/GDN state/gatednorm/output/residual,connect FFN,full attention/KV,
+all64layers,sampling and persistent schedule removing CPU stage handoffs.
+This qualification is not full-card inference or a decoder speedup.
+
+LOGS
+ /private/tmp/pioneer-q38-projection-debug-native-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-native-faults-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-control-20261022-c.log
+ /private/tmp/pioneer-q38-projection-debug-control-faults-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-session-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-reference-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-actual-reference-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-actual-model-20261022-a.log [PASS/TERMINAL0]
+ /private/tmp/pioneer-q38-projection-debug-gates-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-native-build-20261022-c.log
+ /private/tmp/pioneer-q38-projection-validation-client-build-20261022-b.log
+ /private/tmp/pioneer-q38-projection-debug-updater-focused-20261022-a.log
+ /private/tmp/pioneer-q38-projection-debug-updater-full-20261022-a.log [PASS8067/TERMINAL0]

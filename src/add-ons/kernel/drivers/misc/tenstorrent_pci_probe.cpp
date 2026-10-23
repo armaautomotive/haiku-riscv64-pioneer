@@ -5,6 +5,18 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+#if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
+#error QPS1 DEBUG requires separate exact tag42 native execution/RMS role,never old/public/Work/CPU-reference promotion
+#endif
+#define PIONEER_Q38_PROJECTION_ROLE_TAG_OK 1
+#include "PioneerQ38ProjectionValidationProtocol.h"
+#else
+#define PIONEER_Q38_PROJECTION_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010042ULL && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK
+#error Reserved tag42 is ONLY separate fixed QPS1 retained-result DEBUG qualification
+#endif
 #ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
 #if PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Fixed QPS1 result stashes require exact private execution/RMS owner,never old/public/CPU-reference promotion
@@ -80,7 +92,7 @@
 #error Persistent full FFN owner is OFFLINE until its separate actual native model/input/clock/host adapter is qualified
 #endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
-#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 #error Persistent full FFN native execution requires its separate exact tag36 model-bound role
 #endif
 #include "PioneerQ38FfnPersistentGraphOwner.h"
@@ -96,7 +108,7 @@
 #error Reserved tag36 identifies ONLY the persistent full FFN native adapter
 #endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
-#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Canonical FFN model init requires its separate exact tag35 retained-owner role,not old GDN/code/Work promotion
 #endif
 #include "PioneerQ38GraphMutableBanks.h"
@@ -3468,6 +3480,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 		|| r.ready || r.stopped || r.held || r.rootStarts || r.rootHolds || r.rootReads || r.rootWrites || r.rootReadFlits || r.rootWriteFlits
 		|| r.memory.version!=1 || r.memory.started || r.memory.phase || r.memory.worker || r.memory.word || r.memory.unsafe || r.memory.installed
 		|| r.memory.closed || r.memory.savedWords || r.memory.verifiedOriginalWords || r.memory.installedWords || r.memory.restoredWords) return false;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+	if (r.validationPages || r.validationWords) return false;
+#endif
 	auto* participants=new(std::nothrow) PioneerQ38DispatchLease;if (!participants) return false; // NO new IO yet
 	c.q38Dispatch=participants;m->projectionCohort=participants;m->phase=PioneerQ38EmbeddingNativeState::ProjectionPreparing;
 	auto& dram=c.baseline.baseline.baseline.baseline.dram;auto& noc=c.baseline.baseline.baseline.noc;
@@ -3494,10 +3509,18 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 	bool okay=c.io.ProjectionExecutionSourceScope(true) && m->projection.Run(c.io,role,r);
 	if (!okay) {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
-[[maybe_unused]] static bool CloseQ38ProjectionExecution(PioneerStoreContext& c,PioneerQ38ProjectionGraphResult& r)
+[[maybe_unused]] static bool CloseQ38ProjectionExecution(PioneerStoreContext& c,PioneerQ38ProjectionGraphResult& r
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+	,uint32* validation=NULL
+#endif
+)
 {
 	auto* m=c.q38EmbeddingModel;if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Projection || m->Unsafe()) return false;
-	bool okay=c.io.ProjectionExecutionSourceScope(true) && m->projection.Close(c.io,r);
+	bool okay=c.io.ProjectionExecutionSourceScope(true) && m->projection.Close(c.io,r
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+		,validation
+#endif
+		);
 	if (okay) m->phase=PioneerQ38EmbeddingNativeState::ProjectionComplete;
 	else {tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
@@ -3695,6 +3718,72 @@ public:
 	PioneerStoreContext* Context() const { return held && status==B_OK?context:NULL; }
 };
 // PIONEER_Q38_GDN_CALL_SCOPE_END
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+// PIONEER_Q38_PROJECTION_VALIDATION_NATIVE_CONTROL_BEGIN
+static status_t Q38ProjectionValidationControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+	if (!cookie || cookie->magic!=0x50313030 || !data) return B_BAD_VALUE;
+	thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+	if (status!=B_OK || thread.team!=cookie->team) return status!=B_OK?status:B_NOT_ALLOWED;
+	if (operation==TT_PCI_PROBE_Q38_PROJECTION_VALIDATION_SUPPORT) {
+		if (length!=sizeof(tt_q38_embedding_support)) return B_BAD_VALUE;
+		status=AcquireQ38GdnSessionLock(cookie);if (status!=B_OK) return status;
+		const tt_q38_embedding_support support={1,55,13,16480,248320,512,0,0};
+		status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+	}
+	if (operation!=TT_PCI_PROBE_Q38_PROJECTION_VALIDATE || length!=sizeof(tt_q38_projection_validation)) return B_BAD_VALUE;
+	auto* reply=new(std::nothrow) tt_q38_projection_validation;
+	if (!reply) return B_NO_MEMORY;
+	status=user_memcpy(reply,data,sizeof(*reply));
+	bool shape=status==B_OK && PioneerQ38EmbeddingRequest(reply->metadata);
+	if (shape) {
+		const auto* bytes=reinterpret_cast<const uint8*>(reply);
+		for (unsigned i=sizeof(reply->metadata);i<sizeof(*reply);i++) if (bytes[i]) {shape=false;break;}
+	}
+	if (!shape) {delete reply;return status!=B_OK?status:B_BAD_VALUE;}
+	PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+	if (!c || !BindQ38EmbeddingModel(*c,reply->metadata.token,reply->metadata.position,0)) {
+		delete reply;return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+	}
+	PioneerQ38ProjectionZeroResult zero;PioneerQ38EmbeddingResult embedding;PioneerQ38LearnedRmsResult norm;
+	PioneerQ38ProjectionGraphResult projection;
+	uint64 began=uint64(system_time());
+	bool okay=InitializeQ38EmbeddingModel(*c,zero) && RunQ38EmbeddingModel(*c,embedding) && RunQ38LearnedRmsModel(*c,norm)
+		&& PrepareQ38ProjectionExecution(*c,projection);
+	const unsigned roles[]={10,11,5,6};
+	for (unsigned role:roles) if (okay) okay=RunQ38ProjectionExecution(*c,role,projection);
+	if (okay) okay=CloseQ38ProjectionExecution(*c,projection,reply->values);
+	uint64 ended=uint64(system_time());auto* m=c->q38EmbeddingModel;
+	okay=okay && ended>=began && m && m->Closed() && m->embedding.Completed() && m->rms.Completed() && !c->Unsafe()
+		&& projection.closed && !projection.unsafe && projection.runs==4 && projection.armed==119 && projection.released==119
+		&& projection.stopped==119 && projection.held==119 && projection.rootStarts==5 && projection.rootHolds==5
+		&& projection.memory.closed && projection.memory.savedWords==8134072 && projection.memory.verifiedOriginalWords==16268144
+		&& projection.memory.installedWords==989304 && projection.memory.restoredWords==8134072
+		&& projection.validationPages==18 && projection.validationWords==18432;
+	auto& r=reply->metadata;r.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+	r.closed=r.input_ready=okay?1:0;r.recovery_required=okay?0:1;
+	r.session=m?m->identity.session:0;r.driver_generation=m?m->identity.driverGeneration:0;
+	r.elapsed_us=okay?ended-began:0;r.source_pages=okay?23193:0;r.workspace_pages=okay?512:0;
+	r.saved_words=okay?embedding.savedWords+norm.savedWords+projection.memory.savedWords:0;
+	r.restored_words=okay?embedding.restoredWords+norm.restoredWords+projection.memory.restoredWords:0;
+	if (okay) {
+		reply->projections=projection.runs;reply->peer_boots=projection.released;reply->peer_stopped=projection.stopped;reply->peer_held=projection.held;
+		reply->root_starts=projection.rootStarts;reply->root_holds=projection.rootHolds;
+		reply->readback_pages=projection.validationPages;reply->readback_words=projection.validationWords;
+		reply->saved_words=projection.memory.savedWords;reply->verified_words=projection.memory.verifiedOriginalWords;
+		reply->installed_words=projection.memory.installedWords;reply->restored_words=projection.memory.restoredWords;
+	} else {
+		dprintf("Q38-PROJECTION-VALIDATION: FAIL zero%u embedding%u norm%u projection_phase%u worker%u word%u runs%u readback%u/%u saved%u restored%u\n",
+			zero.phase,embedding.phase,norm.phase,projection.phase,projection.worker,projection.word,projection.runs,
+			projection.validationPages,projection.validationWords,projection.memory.savedWords,projection.memory.restoredWords);
+		memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
+	}
+	status=user_memcpy(data,reply,sizeof(*reply));delete reply;
+	if (!okay || status!=B_OK || c->Unsafe()) {tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+	return status; // separate DEBUG client mismatch CLOSE ONLY;never a later END/device I/O
+}
+// PIONEER_Q38_PROJECTION_VALIDATION_NATIVE_CONTROL_END
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
 // PIONEER_Q38_EMBEDDING_NATIVE_CONTROL_BEGIN
 #ifdef PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE
@@ -6584,6 +6673,21 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+	// PIONEER_Q38_PROJECTION_VALIDATION_NATIVE_ROUTING_BEGIN
+	if (operation==TT_PCI_PROBE_Q38_PROJECTION_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_PROJECTION_VALIDATE)
+		return Q38ProjectionValidationControl(instance,operation,data,length);
+	if (operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE
+		|| operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE
+		|| operation==TT_PCI_PROBE_Q38_RMS_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_RMS_VALIDATE
+		|| operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE
+		|| operation==TT_PCI_PROBE_Q38_FFN_GRAPH_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_GRAPH_RUN
+		|| operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN
+		|| operation==TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_LEGACY_WORK_RUN
+		|| operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
+		return B_NOT_ALLOWED; // tag42/namespace13 is NO old public/Work execution grant
+	// PIONEER_Q38_PROJECTION_VALIDATION_NATIVE_ROUTING_END
 #endif
 #ifdef PIONEER_Q38_EMBEDDING_QUALIFICATION
 	// PIONEER_Q38_EMBEDDING_NATIVE_ROUTING_BEGIN

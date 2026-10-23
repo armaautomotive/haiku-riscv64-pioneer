@@ -41,6 +41,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  ProjectionNativeTransport* projectionTransport=nullptr;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+ mutable bool projectionSeedRequired=false; // TEST delayed physical byte handoff after genuine QRN1
+#endif
  std::array<uint32,10240> projectionPrefix={};std::array<uint32,9216> projectionPrimary={},projectionShadow={};
  int projectionFailMap=-1,projectionNullMap=-1;
  bool UseProjectionIO()const;
@@ -294,8 +297,20 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 bool PioneerSessionIO::UseProjectionIO()const{
- return projectionTransport && q38MutableContext && q38MutableContext->q38EmbeddingModel
+ bool active=projectionTransport && q38MutableContext && q38MutableContext->q38EmbeddingModel
   && q38MutableContext->q38EmbeddingModel->phase>=PioneerQ38EmbeddingNativeState::ProjectionPreparing;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+ if(active && projectionSeedRequired){
+  projectionSeedRequired=false;auto& endpoint=*const_cast<PioneerSessionIO*>(this);
+  std::vector<uint32> addresses(73737),values(73737);uint32 sources[16],commands[10],counts[8];
+  for(unsigned i=0;i<73737;i++){addresses[i]=PioneerQ38EmbeddingSnapshotAddress(i);values[i]=endpoint.RawSlot(addresses[i]);}
+  for(unsigned i=0;i<16;i++)sources[i]=i?source[i]:config;
+  for(unsigned i=0;i<10;i++)commands[i]=command[i];
+  for(unsigned i=0;i<8;i++)counts[i]=endpoint.PanelIO::ResidentNocRead(PioneerQ38SpanCounter(i));
+  projectionTransport->SeedRoot(addresses.data(),values.data(),unsigned(values.size()),sources,commands,counts);
+ }
+#endif
+ return active;
 }
 #endif
 bool PioneerSessionIO::EmbeddingMode()const{

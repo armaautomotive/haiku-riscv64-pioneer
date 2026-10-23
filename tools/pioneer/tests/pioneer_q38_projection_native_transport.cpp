@@ -9,6 +9,26 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  unsigned boots=0,starts=0,stops=0,fault=0;bool damaged=false;
  const PioneerQ38ProjectionGraphResult* result=nullptr;
  ProjectionExecutionLearnedBytes* learned=nullptr;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+ unsigned validationReads=0,validationFault=0,validationFaultPage=0;bool validationPending=false;
+ void ValidationRead(){
+  assert(!current && boots==119 && starts==5 && machine->Stops()==119 && validationReads<18 && !validationPending);
+  for(unsigned w=0;w<120;w++)assert(core[w]->coreReset==0x47800);
+  unsigned page=validationReads++;
+  uint32_t base=FullRead(0,TT_Q38_PROJECTION_GRAPH_MANIFEST+4*4),route=FullRead(0,TT_Q38_PROJECTION_GRAPH_MANIFEST+8*4);
+  assert(FullRead(0,TT_Q38_PROJECTION_GRAPH_MANIFEST+5*4)==2);
+  const uint32_t expected[]={base+TT_Q38_PROJECTION_RESULT_BASE+page*4096,0,route,0x80000,0,129,0,0,4096,0};
+  for(unsigned i=0;i<10;i++)assert(C().command[i]==expected[i]);
+  for(unsigned i=0;i<1024;i++)assert(FullRead(0,0x80000+i*4)==0x7fc30000+page*1024+i);
+  if(validationReads==validationFaultPage && validationFault==1){validationPending=true;return;}
+  for(unsigned i=0;i<1024;i++)if(!(validationReads==validationFaultPage && validationFault==2 && i==1023))
+   WriteLocal(0,0x80000+i*4,workspace.at(TT_Q38_PROJECTION_RESULT_BASE/4+page*1024+i));
+  // Pure endpoint bytes/counters ONLY,never independent reference results.
+  C().counters[0]++;C().counters[1]+=64;C().accepted++;C().counters[3]++;
+  if(validationReads==validationFaultPage && validationFault==3)C().accepted++;
+  if(validationReads==validationFaultPage && validationFault==4)C().source[11]^=1;
+ }
+#endif
  Impl(const char* root,const char* peer,std::vector<uint32_t>& gddr):workspace(gddr){
   (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
   machine.reset(new ProjectionExecutionMachine(root,peer,*this));track=true;
@@ -91,7 +111,11 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
     if(p.fault==7)p.data.at(p.Index(0,0x64000))^=1;if(p.fault==8)p.C().mapping=false;
    }
    return p.LocalRead(0x17ffc0+a*4);
-  case Noc:return p.C().ResidentNocRead(a);
+  case Noc:
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+   if(a==0x40 && p.validationPending)return 1;
+#endif
+   return p.C().ResidentNocRead(a);
   case Panel:{uint32_t v=p.LocalRead(a);if(p.starts && !p.current && ((p.fault==1 && a==TT_Q38_PROJECTION_GRAPH_STATS+56*4)
     || (p.fault==2 && a==TT_Q38_PROJECTION_GRAPH_STATS+6*4)))v^=0x80000000;return v;}
   case Pci:return p.C().HostPciRead(a,uint16_t(b),uint8_t(c));
@@ -107,7 +131,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    if(a>=2032 && a<2040)p.LocalWrite(0x17e000+a*4,v);else p.C().ResidentL1Write(a,v);return;
   case SetCode:assert(!a);p.C().RuntimeCodeWrite(0,v);return;
   case SetStatus:p.LocalWrite(0x17ffc0+a*4,v);return;
-  case SetNoc:p.C().ResidentNocWrite(a,v);return;
+  case SetNoc:
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+   if(a==0x40){assert(v==1);p.ValidationRead();return;}
+#endif
+   p.C().ResidentNocWrite(a,v);return;
   case SetPanel:p.LocalWrite(a,v);return;
   case SetReset:
    p.C().coreReset=v;p.C().resets.push_back(v);
@@ -136,3 +164,9 @@ void ProjectionNativeTransport::Observe(const PioneerQ38ProjectionGraphResult& r
 void ProjectionNativeTransport::LearnedSource(ProjectionExecutionLearnedBytes& source){
  auto& p=*implementation;assert(!p.learned && !p.boots && !p.starts && source.Ready());p.learned=&source;
 }
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+void ProjectionNativeTransport::ValidationFault(unsigned kind,unsigned page){
+ assert(kind>=1 && kind<=4 && page>=1 && page<=18);implementation->validationFault=kind;implementation->validationFaultPage=page;
+}
+unsigned ProjectionNativeTransport::ValidationReads()const{return implementation->validationReads;}
+#endif

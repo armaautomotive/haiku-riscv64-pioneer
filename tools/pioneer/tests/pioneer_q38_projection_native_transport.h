@@ -31,5 +31,9 @@ public:
  void Fault(unsigned kind); // simulated endpoint fault,never a production mode
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
  void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+ void ValidationFault(unsigned kind,unsigned page); // TEST endpoint fault,not production capability
+ unsigned ValidationReads()const;
+#endif
 };
 #endif

@@ -1,5 +1,38 @@
 # Native build status
 
+Latest October23 UTC2026:separate native projection DEBUG42 IMPLEMENTED/
+BUILT;NOT installed/physical-card qualification/full-model speedup.
+Actual source/zero/QPE1/QRN1/ALL119QFP3/ROOTQPS1 owner executes ALL4roles,
+then fixed18page output readback AFTER ALL120holds BEFORE original ROOT
+restore. Fresh poison/strict source/counter/clock/private-produced proof;
+heap73848B pointer-free reply;first fault retainsALL/no later I/O/END.
+Independent original embedding/RMS/ALL4projection references BEFORE FD;
+ONLY23193original weight pages uploaded;ALL18432words/padding compared.
+No CPU reference/readback/fallback added to normal Work path.
+
+ASan/UBSan actual private/public native instruction/factory/control tests
+PASS:33+71+6refusals/eight readback faults/public89refusals+eight faults.
+New source-bound client3positive/123faults;independent Q8reference4/36;
+actual full-SHA public GGUF NEW client reference12projections/49440words
+BIT-EXACT to separate original-row oracle. New gates297+old219/138/104/76,
+old embedding9/51,RMS9/87+reference9/34+10guards PASS. Driver B/C exact
+a2bcfb34/client A/B exact93992ae6;new kernel max1440/readback304. Old
+private macro-OFF2d127c1e/stash6121b065/tag38+guard+default43 EXACT.
+
+Actual full-SHA original-model native instruction/readback4865 TERMINAL0:
+ALL3tokens0/15/248319,49440projection words+30720norm/raw checks BIT-EXACT,
+all4stashes coexist;18fixed reads/full restore/nativeEND each. Hardware
+SIMULATED,not card. FULL updater53006 TERMINAL0/PASS8067actual cases;
+all local tests/builds terminal,no native test running.
+Exact041<->a2bctag42 updater edfd3a3b focused114PASS;rawcache22 still
+HARD BLOCKED. NEXT controlled native stage/apply/ONE numerical test;
+only actual PASS/cleanEND/terminal0 permits clean restore041. Read-only
+Haiku64CPUs/max137034936320B,installed+rollback041/tag12/gen3/cold0/
+owner0/open1/guard1,no compute parents. No reboot/relay/SD/Assistant/model/
+NIC/boot changes;dirty llama/FlashNext untouched. Whole27B0.207893161tok/s
+UNCHANGED;20UNMET;goalACTIVE/turnPROGRESS. Evidence:
+benchmarks/qwen38-projection-debug-20261022.txt.
+
 Latest October23 UTC2026:actual separate on-card projection result stashes
 IMPLEMENTED/locally qualified,NOT native GPU qualification or speedup.
 New QPS1 ROOT writes roles10/11/5/6 directly to four fixed disjoint GDDR

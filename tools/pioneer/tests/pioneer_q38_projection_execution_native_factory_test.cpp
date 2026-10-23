@@ -45,16 +45,22 @@ struct ProjectionNativeFixture:NativeFactoryFixture {
   io.projectionTransport=transport.get();
  }
  unsigned ResultRefusals(){
-  static_assert(sizeof(projection)==31*sizeof(uint32),"audit EVERY public result word");
-  uint32 words[31];memcpy(words,&projection,sizeof(words));unsigned n=io.touches,d=transport->Touches();
-  for(unsigned i=0;i<31;i++){
+  constexpr unsigned resultWords=
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+   33;
+#else
+   31;
+#endif
+  static_assert(sizeof(projection)==resultWords*sizeof(uint32),"audit EVERY public result word");
+  uint32 words[resultWords];memcpy(words,&projection,sizeof(words));unsigned n=io.touches,d=transport->Touches();
+  for(unsigned i=0;i<resultWords;i++){
    words[i]^=1;memcpy(&projection,words,sizeof(words));
    assert(!PrepareQ38ProjectionExecution(*c,projection) && !c->q38Dispatch && !c->q38EmbeddingModel->projectionCohort
     && !c->q38EmbeddingModel->projection.Claimed() && !c->q38EmbeddingModel->Unsafe()
     && c->q38EmbeddingModel->phase==PioneerQ38EmbeddingNativeState::RmsComplete && io.touches==n && transport->Touches()==d);
    words[i]^=1;
   }
-  memcpy(&projection,words,sizeof(words));return 31;
+  memcpy(&projection,words,sizeof(words));return resultWords;
  }
  unsigned ScopeRefusals(bool live=false){
   assert(io.ProjectionExecutionSourceScope(false) && io.ProjectionExecutionSourceScope(true)==live);

@@ -4,6 +4,11 @@
 #if !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1
 #error Private complete projection execution owner requires exact RMS producer role
 #endif
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+#if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE)
+#error Separate fixed QPS1 DEBUG readback ONLY,never public embedding/Work/CPU-reference promotion
+#endif
+#endif
 #include <new>
 #include <stddef.h>
 #include "PioneerQ38ProjectionGraphMemory.h"
@@ -19,6 +24,9 @@ struct PioneerQ38ProjectionGraphResult {
  uint32_t armed=0,released=0,ready=0,stopped=0,held=0,rootStarts=0,rootHolds=0;
  uint32_t rootReads=0,rootWrites=0,rootReadFlits=0,rootWriteFlits=0;
  PioneerQ38ProjectionGraphMemoryResult memory;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+ uint32_t validationPages=0,validationWords=0;
+#endif
 };
 class PioneerQ38ProjectionGraphOwner {
  friend class PioneerQ38ResidentDecoderOwner;
@@ -203,6 +211,56 @@ class PioneerQ38ProjectionGraphOwner {
   resets[0]=0x47800;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return Fail(io,r);
   running[0]=cohort->rootRunning=cohort->worker[0].image.running=false;traffic=false;r.rootHolds++;nonce=m[13];return true;
  }
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+ // Fixed DEBUG transport INSIDE the real owner:ALL120 physically held,
+ // after STOP/ALL119 terminals,BEFORE restoring ANY original ROOT word.
+ // No external ready/read facade,caller address/bank,DMA/BME or CPU math.
+ template<class IO> bool ValidationReadback(IO& io,uint32_t* values,PioneerQ38ProjectionGraphResult& r){
+  if(!values || r.validationPages || r.validationWords || r.stopped!=119 || r.held!=119
+   || !state || !state->OwnsExecution(identity,this,input) || !state->InitializationPublished(identity))return false;
+  for(unsigned w=0;w<120;w++)if(running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Image(io,w))return false;
+  PioneerQ38ProjectionExtent e;const auto* m=operation.Manifest();
+  if(!m || !state->InitializeSpan(identity,0,TT_Q38_PROJECTION_RESULT_BASE/4096,TT_Q38_PROJECTION_RESULT_BYTES/4096,e)
+   || e.bank!=bank || e.address!=m[4]+TT_Q38_PROJECTION_RESULT_BASE || e.route!=m[8]
+   || e.bytes!=TT_Q38_PROJECTION_RESULT_BYTES || e.pages!=18)return false;
+  for(unsigned page=0;page<18;page++){
+   r.worker=0;r.word=page;
+   if(!Guard(io,0))return false;
+   // Reuse ONE already-saved mutable4KiB scratch page. Fresh distinct
+   // poison on EVERY read prevents a stale earlier page from passing.
+   for(unsigned word=0;word<1024;word++){
+    uint32_t actual,poison=0x7fc30000+page*1024+word;
+    if(!io.ProjectionGraphMemoryWrite(0,0x80000+word*4,poison)
+     || !io.ProjectionGraphMemoryReadChecked(0,0x80000+word*4,actual) || actual!=poison)return false;
+   }
+   const uint32_t next[]={e.address+page*4096,0,e.route,0x80000,0,129,0,0,4096,0};
+   for(unsigned i=0;i<10;i++){io.ResidentNocWrite(i*4,next[i]);if(io.ResidentNocRead(i*4)!=next[i])return false;command[0][i]=next[i];}
+   if(!Guard(io,0))return false;
+   uint64_t began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return false;
+   uint32_t expected[8];const unsigned delta[]={1,64,1,1,0,0,1,0};
+   for(unsigned i=0;i<8;i++)expected[i]=counts[0][i]+delta[i];
+   verified=false;traffic=true;io.ResidentNocWrite(0x40,1);bool done=false;
+   for(unsigned poll=0;poll<65536;poll++){
+    if(!Guard(io,0))return false;
+    uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return false;
+    bool exact=io.ResidentNocRead(0x40)==0;
+    for(unsigned i=0;i<8;i++)exact &= io.ResidentNocRead(PioneerQ38PanelCounter(i))==expected[i];
+    if(exact){done=true;break;}io.Pause();
+   }
+   if(!done)return false;
+   for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=next[i])return false;
+   for(unsigned i=0;i<8;i++)counts[0][i]=expected[i];
+   traffic=false;verified=true;if(!Guard(io,0))return false;
+   for(unsigned word=0;word<1024;word++){
+    uint32_t value;if(!io.ProjectionGraphMemoryReadChecked(0,0x80000+word*4,value)
+     || (value&0x7fffffff)>=0x7f800000)return false;
+    values[page*1024+word]=value;r.validationWords++;
+   }
+   r.validationPages++;if(!Guard(io,0))return false;
+  }
+  return r.validationPages==18 && r.validationWords==18432;
+ }
+#endif
 public:
  PioneerQ38ProjectionGraphOwner()=default;
  PioneerQ38ProjectionGraphOwner(const PioneerQ38ProjectionGraphOwner&)=delete;
@@ -255,6 +313,9 @@ public:
    || r.armed || r.released || r.ready || r.stopped || r.held || r.rootStarts || r.rootHolds || r.rootReads || r.rootWrites || r.rootReadFlits || r.rootWriteFlits
    || r.memory.version!=1 || r.memory.started || r.memory.phase || r.memory.worker || r.memory.word || r.memory.unsafe || r.memory.installed
    || r.memory.closed || r.memory.savedWords || r.memory.verifiedOriginalWords || r.memory.installedWords || r.memory.restoredWords)return false;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+  if(r.validationPages || r.validationWords)return false;
+#endif
   for(unsigned i=0;i<16;i++)if(participants.authority.source[0][i]!=producer.source[i])return false; // same physical ROOT source across producer handoff
   if(!jobs.Build(plan,0,initialRole,selectedPosition) || !jobs.LearnedPagesPresent(initialized,count)
    || !mutableOwner.MatchInitializedProjection(id,jobs,0,initialRole,selectedPosition,initialized,count)){
@@ -295,8 +356,17 @@ public:
 #endif
   r.runs++;return true;
  }
- template<class IO> bool Close(IO& io,PioneerQ38ProjectionGraphResult& r){
+ template<class IO> bool Close(IO& io,PioneerQ38ProjectionGraphResult& r
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+  ,uint32_t* validation=nullptr
+#endif
+ ){
   if(!Ready() || running[0] || !r.prepared || r.closed || r.unsafe)return false;
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+  uintptr_t outputAddress=reinterpret_cast<uintptr_t>(validation);
+  if(!validation || (outputAddress&3) || outputAddress>UINTPTR_MAX-TT_Q38_PROJECTION_RESULT_BYTES
+   || produced!=15 || r.runs!=4 || r.validationPages || r.validationWords)return false; // inert BEFORE STOP/I/O
+#endif
   if(!Scope(io) || !Manifest(role,true))return Fail(io,r);
 #ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
   produced=0; // no consumable result once shutdown/restore starts
@@ -306,6 +376,9 @@ public:
    resets[w]=0x87ffff;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);
    resets[w]=0x47800;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);
    running[w]=cohort->worker[w].image.running=false;r.held++;}
+#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
+  r.phase=11;if(!ValidationReadback(io,validation,r))return Fail(io,r);
+#endif
   // Never call CloseHeldNoLaunch after compute. This owner independently
   // proved STOP/ALL physical terminals/holds and now restores the entire
   // original footprint with its OWN current post-compute counters/commands.
