@@ -1,0 +1,97 @@
+Controlled DEBUG44 recovery and failure-capture trial,October23 UTC2026.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card inference UNMET.
+Test source checkpoint b4075030cffd6ca8b2af634917cd73126f1e8f90
+was already tested,pushed and remote-verified BEFORE this hardware work.
+
+PHYSICAL RECOVERY,NEW EPOCH
+User confirmed Haiku work saved,then physical PSU fully OFF/fans+LEDs OFF,
+then PSU back ON with fans+LEDs still OFF. Explicit user power-on authority.
+ONE0.75s relay1 pulse via existing sh_ur04a.py,/dev/cu.usbserial-1:
+76109 TERMINAL0. NO SD relay,second pulse,five-minute wait,card/cable change.
+Existing detached serial72956.pioneer-haiku-recovery remained in use;
+no second console open. New boot data starts after byte67891170 in
+/private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0.
+
+Fresh default Linux6.1.31,uptime227s,all64CPUs/online0-63,
+MemTotal131976904kB,taint0,kexec0,/dev/nvme0n1p3. Linux SSH host pin
+matched;root keys were rejected. User confirmed Linux username milkv;
+the SAME haiku_pioneer_ed25519 key works with milkv and sudo-n. Default
+SSH identities were rejected;no trust/authentication settings changed.
+No password/private-key contents displayed. Keep separate Linux/Haiku
+known-host files;never bypass their expected OS-specific identity check.
+
+Pinned private helperSHA9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+ /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh
+read completely BEFORE execution. prepare72485 TERMINAL0,boot47689
+TERMINAL0,session q38debug44recover20261023b,64 CPUs,
+memory128-spin-idle7-top-page-nosd-control. All input/artifact/root/disk/
+no-MMC/inactive-accelerator/endpointCOMMAND0000 guards PASS. Clean BFS
+source check PASS;NO journal override or repair needed. Default boot,
+Samsung packages,SD/cards and fixed-kernel artifacts remain unchanged.
+Actual loaded bundle233a2d66 and preserved fixed kernel92310628 are the
+earlier qualified top-page7/untimed64CPU/full-memory chain,not old profile6.
+
+NEW HAIKU OS AND GUARDED RESTORE
+Pinned Haiku SSH and user fresh desktop/input confirmation PASS.
+sysinfo:64 CPUs,max137034936320B;app_server/Tracker/Deskbar/input_server
+present. Fresh strict inventory22teams,one valid header,no invalid lines,
+NO Assistant/model/compute parent. Initial ad-hoc MULTILINE SSH invocation
+made its own embedded argv newlines appear as malformed ps records;the
+strict guard stopped BEFORE driver access. Single-line invocation passes;
+NO inventory guard relaxation or OS/network code change.
+Installedd968,OLD updater3648,normal041 rollback,adminb0c851b3 and
+guardd1ce2aa4 hashes exactly match prior recovery pins. CPU-only metadata:
+tag44/generation1/quiesced0/cold0/active_owner0/open_count1/guard1.
+This is a NEW physical/kernel epoch,not an in-place quarantine reset.
+ONLY the OLD IMMUTABLE staged updater was used for d968 removal:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer_p100a_hot_swap-decoder-validation-3648a427.sh
+ --restore-decoder-validation
+9351 TERMINAL0:tag44/gen1->quiesced1->normal041/tag12/gen2/cold0/
+owner0/open1/guard1,HOT_RELOAD_VERIFIED,NO_GPU_EXECUTION. Normal installed
+SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+
+DIAGNOSTIC TRIAL PREPARATION
+New4db/cdee staging paths and own native-log path verified UNUSED before
+copy. Existing f3b DEBUG client hash exact;public GGUF18973870528B present.
+No native compute job started during recovery or staging preflight.
+New diagnostic driver4db copies at128Kbit/s;record completion and remote
+hash proof BEFORE applying it. No speed/compute/result claim at this point.
+
+ROLLBACK BACKUP COLLISION CAUGHT BEFORE APPLY
+28481(driver) and85985(cdee updater) both TERMINAL0. Remote4db/cdee/f3b
+and still-installed041 hashes match exactly. No diagnostic apply yet.
+Read-only staged-file proof finds existing
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/qualified-reload-2026102300010044
+contains d96899a7...,as expected from the previous known-clean restore.
+The new4db image shares numeric tag44. The tag-only backup would therefore
+make a future clean4db->041 restore refuse its conflicting old d968 backup.
+Do NOT delete,overwrite,rename or repurpose that previous recovery evidence.
+
+Fix only decoder apply/restore backup names:append the FULL expected INPUT
+SHA to the existing tag prefix. All other updater modes keep their exact
+tag-only paths. Existing qualified hash backups must pass the same regular-
+file/no-symlink/hash guard and are reused without replacement. Unknown
+metadata/parent/source/cold state still refuses BEFORE quiesce/install.
+No native driver/kernel/image/Assistant/boot/model/NIC code change.
+20006 TERMINAL0:240 actual /bin/sh fake-filesystem cases PASS,including
+both decoder directions with old tag-only backup preserved,new exact-hash
+backup creation AND reuse/inode preservation,new backup symlink refusal,
+previous same-tag candidate/installed-image refusal,all prior guards and
+unchanged projection apply/restore controls. No force or automatic rollback.
+New tested updater SHA:
+ ae05ef96b7981b7b2c0b081ccfdf726003dc59a3cd4b15192408751dcbde62f4
+Future staged basename:pioneer_p100a_hot_swap-decoder-validation-ae05ef96.sh
+Staged cdee remains untouched and MUST NOT be used for this new trial;the
+new hash-scoped updater must be separately staged and verified first.
+Current installed driver remains normal041/tag12/gen2/cold0/owner0.
+No native model parent or diagnostic execution has started at this checkpoint.
+
+TERMINAL LOG SHA256
+27804c4f37b192031d9ec89af30de1bf73835aa407cbd9d1b9b66a0ba4e8f803
+ /private/tmp/pioneer-q38-debug44-recovery-prepare-20261023-b.log
+e8be493dfa48185287c456913cdfb937bfc69ffec7fdd407d81555502a894d0c
+ /private/tmp/pioneer-q38-debug44-recovery-boot-20261023-b.log
+d14f97148042337866f25ef29db540303762be57294bdf7e31b1a1203613eba6
+ /private/tmp/pioneer-q38-debug44-recovery-restore-20261023-b.log
+d13e11c50eac6bca8a34aa33ce90bd6c4376377e3e67e7df609822e03211bf50
+ /private/tmp/pioneer-q38-decoder-capture-backup-updater-20261023-a.log

@@ -494,7 +494,13 @@ else
   END {if(good!=1)exit 1}
  ') || exit 1
  generationhex=$(printf '%016x' "$generation")
- backup "$stage/qualified-reload-$oldtag" "$expected"
+ reload_backup=$stage/qualified-reload-$oldtag
+ case "$mode" in
+  # DEBUG44 has two byte-distinct images. Preserve the previous tag-only
+  # backup; never overwrite it or confuse it with this exact input image.
+  --apply-decoder-validation|--restore-decoder-validation) reload_backup=$reload_backup-$expected;;
+ esac
+ backup "$reload_backup" "$expected"
 fi
 cp -p "$source" "$incoming"; chmod 755 "$incoming"
 exact "$incoming" "$result" && exact "$installed" "$expected" && exact "$guard" "$guardsha" || exit 1

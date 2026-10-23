@@ -12,7 +12,7 @@ from pioneer_q38_installer_guards_test import assignments
 SCRIPT = pathlib.Path(__file__).resolve().parent.parent / 'pioneer_p100a_hot_swap.sh'
 
 
-def check(mode, fault=None):
+def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
     text = SCRIPT.read_text()
     values = assignments(text)
     with tempfile.TemporaryDirectory(prefix='pioneer-hot-swap-') as name:
@@ -310,9 +310,28 @@ def check(mode, fault=None):
             stage.symlink_to(real.name)
         if fault in ['incoming', 'guardincoming']:
             put(fault, b'preexisting user file')
+        hash_backup = mode in ('--apply-decoder-validation', '--restore-decoder-validation')
+        backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
+        if hash_backup:
+            backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
+        backup_target = path(values['stage']) / backup_name
+        if legacy_backup or qualified_backup:
+            assert hash_backup
+        legacy_target = path(values['stage']) / ('qualified-reload-' + oldtag)
+        legacy_bytes = b'previous byte-distinct DEBUG44 backup;MUST remain untouched'
+        if legacy_backup:
+            legacy_target.write_bytes(legacy_bytes)
+        backup_inode = None
+        if qualified_backup:
+            backup_target.write_bytes(payloads[starting])
+            backup_inode = backup_target.stat().st_ino
         if fault == 'backup':
-            target = path(values['stage']) / ('qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag)
-            target.write_bytes(b'preexisting backup')
+            backup_target.write_bytes(b'preexisting backup')
+        if fault == 'backup-link':
+            assert hash_backup
+            real = backup_target.with_name(backup_target.name + '.real')
+            real.write_bytes(payloads[starting])
+            backup_target.symlink_to(real.name)
         if fault == 'previous-debug44':
             # Same numeric tag is NOT byte identity. A new updater must
             # reject both the previous candidate and its installed image,
@@ -384,10 +403,16 @@ def check(mode, fault=None):
         local = root / 'actual-updater.sh'
         local.write_text(mocks + '\n' + rewritten)
         result = subprocess.run(['/bin/sh', str(local), mode], capture_output=True, text=True, timeout=15)
+        if legacy_backup:
+            assert legacy_target.read_bytes() == legacy_bytes, (mode, fault, 'PREVIOUS_BACKUP_OVERWRITTEN')
+        if qualified_backup:
+            assert backup_target.stat().st_ino == backup_inode, (mode, fault, 'VALID_BACKUP_REPLACED')
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
             if fault == 'previous-debug44':
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_PREVIOUS_IMAGE')
+            if fault in ('backup', 'backup-link') and mode != '--bootstrap':
+                assert (root / 'calls').read_text().splitlines() == ['--status'], (mode, fault, 'QUIESCED_WITH_UNPROVEN_BACKUP')
             if fault in owner_faults or fault.startswith('ps-'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_DURING_UNPROVEN_PARENT')
             if fault == 'owner-late' and mode != '--bootstrap':
@@ -400,6 +425,8 @@ def check(mode, fault=None):
         else:
             assert result.returncode == 0, (mode, result.stdout, result.stderr)
             assert installed.read_bytes() == payloads[ending]
+            if hash_backup:
+                assert backup_target.read_bytes() == payloads[starting], (mode, 'MISSING_EXACT_HASH_BACKUP')
             if mode != '--bootstrap':
                 assert (root / 'calls').read_text().splitlines() == ['--status', '--quiesce', '--wait']
 
@@ -699,8 +726,13 @@ if __name__ == '__main__':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
         previous_image = ['previous-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
-        for fault in [None] + common + candidate + candidate_links + parents + previous_image + (['loaded'] if mode == '--bootstrap' else hot):
+        backup_links = ['backup-link'] if previous_image else []
+        for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1
+        if previous_image:
+            for existing_exact in (False, True):
+                check(mode, legacy_backup=True, qualified_backup=existing_exact)
+                count += 1
     assert count and (not selected or seen == selected), 'Unknown or empty mode selection'
     print(f'PASS {count} actual updater filesystem/handshake/hash/symlink/owner/failure cases;NO native reload/reset or automatic rollback')
