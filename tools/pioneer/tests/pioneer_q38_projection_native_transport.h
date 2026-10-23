@@ -5,6 +5,10 @@
 #include <vector>
 struct PioneerQ38ProjectionGraphResult;
 struct ProjectionExecutionLearnedBytes;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+class PioneerQ38CanonicalModelPlan;struct DecoderHistoryBytes;
+struct PioneerQ38ResidentDecoderResult;
+#endif
 // TEST PCI/L1/clock endpoints ONLY. No native context, capability, owner,
 // scope, page ledger, private proof, or prepared lease is fabricated here.
 // A separate TU avoids colliding with the original native source fixture.
@@ -31,6 +35,12 @@ public:
  void Fault(unsigned kind); // simulated endpoint fault,never a production mode
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
  void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+ void DecoderSources(const char*,const PioneerQ38CanonicalModelPlan&,unsigned bank,DecoderHistoryBytes&); // TEST byte endpoints only
+ unsigned DecoderStarts()const;
+ void ObserveDecoder(const PioneerQ38ResidentDecoderResult&);
+ void DecoderFault(unsigned); // TEST endpoint failure only,never a production selector
+#endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
  void ValidationFault(unsigned kind,unsigned page); // TEST endpoint fault,not production capability
  unsigned ValidationReads()const;

@@ -61,7 +61,7 @@ int main(){
                 assert result.returncode == 2 and not result.stdout and not result.stderr and not output.exists()
                 count += 1
     native = (headers / 'tenstorrent_pci_probe.cpp').read_text()
-    guard = re.findall(r'#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER\n#error [^\n]+\n#endif', native)
+    guard = re.findall(r'#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER\n#ifndef PIONEER_Q38_RESIDENT_DECODER_NATIVE\n#error [^\n]+\n#endif\n#endif', native)
     assert len(guard) == 1
     for value in ('0', '1', '2', '-1'):
         result = subprocess.run([os.environ.get('CXX', 'c++'), '-x', 'c++', '-E', '-DPIONEER_Q38_RESIDENT_DECODER_OWNER=' + value, '-'],
@@ -81,4 +81,4 @@ int main(){
                                     input='#include "' + str(headers / 'PioneerQ38ResidentDecoderOwner.h') + '"\n', env=clean, capture_output=True, text=True)
             assert result.returncode != 0
             count += 1
-print(f'PASS resident decoder gates{count},compiled QCB1 ROM ALL1523words EXACT/all120 existing snapshots/8KiB stacks/table bounds,actual builder earlyrefusals/native HARD refusal/exact header role/no DEBUG or Work promotion;NO native factory/install/device access')
+print(f'PASS resident decoder gates{count},compiled QCB1 ROM ALL1523words EXACT/all120 existing snapshots/8KiB stacks/table bounds,actual builder earlyrefusals/unqualified native HARD refusal/exact header role/no DEBUG or Work promotion;qualified native role tested separately/NO install/device access')

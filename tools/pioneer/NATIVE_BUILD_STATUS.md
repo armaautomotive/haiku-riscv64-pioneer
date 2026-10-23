@@ -1,5 +1,41 @@
 # Native build status
 
+Latest October23 UTC2026:ACTUAL native retained-convolution context/source/
+factory/retention/END adapter IMPLEMENTED+OFFLINE qualified,not installed.
+Separate exact native tag43 requires runtime/owner/stash/execution/RMS/
+embedding/reload1;old tags/DEBUG/CPU-validation/Work mixtures denied.
+SAME actual m.plan/graph/historyZero/decoder/projectionMemory/cohort;
+history336x5 zero+known-clean CLOSE precedes workspace512/QPE1/QRN1.
+Actual source/cookie/thread/OS team/clock/ALL hosts/maps remain sealed in
+both old STOP and new120-worker arithmetic scopes. Old projection Close
+REFUSED in new role;new exact decoder-closed/history/parent proofs gate
+actual legacy dispatch END. UNKNOWN retainsALL;new bulk.unsafe latch.
+
+28667 final ASan/UBSan ACTUAL native functions PASS:11prebind/194source
+refusals ZERO IO;real history1680+workspace512+QPE1/QRN1/QPS1ALL4->QCB1
+ALL120/640jobs/ALL10240outputs+30720private next/full8134072word restore/
+ACTUAL dispatch END.50863 all12native execution/source/restore/unfinished
+END faults PASS;13636 all3native history init faults PASS:retainALL/no later
+IO. Only kernel/hardware/learned BYTES simulated,no private ready fabricated.
+3951/97115 actual COMPLETE RV64 source/IO/context/scope/END compile B/C
+EXACT3445a61f/maxNewFrame704B/all oversized legacy frames no growth;old
+tag38/guard/default43/private2d12/stash6121/tag42a2bc BYTE-IDENTICAL.
+5821 native240+old176/197gates PASS;54741 native-OFF full owner regression
+PASS. All test/build parents TERMINAL0. First fault found bulk lease unsafe
+missing from inherited retainer;added new-role-only latch,kept assertions,
+reran. Gate caught reload0 presence;new native role explicitly requires1.
+
+No new public selector/client/linked driver/hardware qualification yet.
+No Pioneer IO/SSH/install/reboot/power/SD/Assistant/model/NIC/boot changes;
+last041/gen5/64CPU/fullRAM retained/not re-probed. Dirty llama/FlashNext
+untouched. NEXT separate original-model native control/client/fixed readback
+role+source-before-FD verification/actual call-lock/end/fault tests/repeat
+linked build/updater/rollback qualification before ONE physical test.
+Still first token/layer0 convolution ONLY;next not committed/GDN/attention/
+KV/FFN/residual/64layers/sampling/persistent schedule remain. Whole27B
+0.207893161tok/s UNCHANGED;20UNMET;goalACTIVE/turnPROGRESS. Evidence:
+benchmarks/qwen38-retained-convolution-native-adapter-20261023.txt.
+
 Latest October23 UTC2026:real retained QPS1->QCB1 arithmetic OWNER now
 IMPLEMENTED/OFFLINE instruction-qualified,NOT actual native factory/card.
 Consume private all4projection proof+exact SAME history-zero owner BEFORE

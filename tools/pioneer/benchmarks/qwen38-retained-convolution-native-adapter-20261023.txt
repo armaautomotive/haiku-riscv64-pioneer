@@ -1,0 +1,133 @@
+Actual retained-convolution native context/factories/scope/END adapter
+October23 UTC2026;OFFLINE qualification,NO new driver installed/linked.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET;goal ACTIVE.
+
+IMPLEMENTED ACTUAL DRIVER CODE
+Separate PIONEER_Q38_RESIDENT_DECODER_NATIVE=1,exact reserved tag
+0x2026102300010043,requires actual OWNER/RUNTIME/STASH/EXECUTION/RMS/
+embedding/reload1 role. All old DEBUG/CPU-validation/Work/profile mixes
+(even defined0) and old tag aliases refuse. Ten legacy builders refuse
+the new native role BEFORE SDK/output. No public selector/client added.
+
+PioneerQ38EmbeddingNativeState now retains the ACTUAL history-zero lease
+and arithmetic decoder under the SAME real model/canonical plan/joint
+reservation/projection/cohort. New HistoryZeroing/Decoder/DecoderHeld/
+DecoderComplete phases,Unsafe/Closed/Fault/ControlsProjectionCohort
+relations preserve exact ownership throughout STOP/replacement/arithmetic/
+original restoration. Old snapshot remains retained until real new Close.
+
+Actual Bind first validates position0 +all7 original layer0 Conv4 learned
+stripes' allocated pages before epoch/claims/IO. Actual history initializer
+does336x5page runs and complete known-clean zero CLOSE before old512page
+workspace initialization/QPE1/QRN1. Exact identity/proof/owner/bank pointers,
+nonce336,closed/saved/notdirty/notrunning/notready/private seal are mandatory.
+Initialization is NOT current-token GDN/history or model-ready authority.
+
+Actual ConvHistoryZeroBeforeCohort/OtherCoresHeld use the existing complete
+source/cookie/thread/clock/map/ALL-host/exclusion checks AND physical
+nonROOT holds. Actual DecoderCallScopeMatches rechecks get_thread_info
+team against the SAME FD cookie and sealed current call thread. Native
+ResidentDecoderScope requires exact &m.decoder/&m.projection/history and
+the SAME global actual context/source/clock/ALL hosts. Both old projection
+STOP scope and new120-worker scope stay sealed through the handoff.
+
+Actual Run factory consumes private projection proof through the real
+decoder;only an inert preclaim DATA refusal can return to Projection.
+Native source loss with active projection retains/quarantines whole context.
+The old projection Close is REFUSED in this new role,not an alternate
+restore/END path. Actual new Close sets DecoderComplete only after complete
+physical original restore. New exact MatchesClosedNativeOwner plus actual
+history seal and existing parent closed proofs gate legacy dispatch END.
+Unfinished/unknown/misbound contexts cannot release maps/hosts/clock/owners.
+Native memory-only Retain also explicitly marks shared bulk lease unsafe.
+
+QUALIFICATION (all named parents TERMINAL0)
+1.28667 final ASan/UBSan ACTUAL source-extracted native functions PASS:
+   11 prebind refusals (7missing Conv stripe end pages/3positions/team),
+   no epoch/claim/IO.71+93 existing native source refusals plus15+15 new
+   history/team/OS-info/pointer/copied-proof/identity/lease-state refusals:
+   ALL194 source refusals with ZERO endpoint IO. SAME actual context does
+   real336x5 history zero+512workspace zero+QPE1+QRN1+QPS1 all4 roles then
+   actual QCB1 ALL120/640jobs. ALL10240 outputs within3e-6*(1+abs(ref)),
+   ALL30720 next words bit-exact,old slots/padding/unrelated GDDR unchanged.
+   Full8134072word restoration and ACTUAL complete dispatch END PASS.
+2.50863 final12actual native factory faults PASS:partial replacement boot
+   write,late source/summary/counter,final original write/readback,team loss
+   before Run/Close,wrong cookie,history nonce/closed corruption,unfinished
+   END. ALL retain model/graph/banks/cohort/snapshots/ALL host+bulk+clock
+   owners and prove ZERO following source/status/END/restore/device IO.
+3.13636 actual native HISTORY initializer faults3 PASS:unknown first
+   packet/lost zero boot write/team loss,private seal NEVER published,
+   all exact snapshots/leases retained/no later IO or speculative cleanup.
+4.3951/97115 final B/C actual COMPLETE source/real IO/context/factories/
+   retention/END RV64 SDK compile PASS. Max new frame704B;all>2048B legacy
+   frames pre-exist and do not grow relative to byte-exact control. New
+   actual native object B/C BYTE-IDENTICAL:
+   3445a61f0473616a4aa2c352e730df39b6509fc34e78acbe3e2f2d72827bc3cb
+   ALL old actual tag38/guard/default43/private-execution/stash compile/
+   tag42 rebuilt BYTE-IDENTICAL. Tag42 remainsa2bcfb34,private2d127c1e,
+   stash6121b065,tag38 23e2e68a,guardd1ce2aa4,default43 2df0e0f8.
+   No declaration-only IO witness is substituted for this full compile.
+5.5821 native gates240 PASS:only complete exact tag43 role accepted,
+   missing/zero/wrong role bits/old tags/reserved alias/DEBUG-Work mixtures
+   denied;actual legacy builders refuse BEFORE SDK/output and full-compile
+   runner refuses environment-based promotion. No new public selector.
+   1740 old owner gates176 and48323 old runtime gates197 PASS;now explicitly
+   test unqualified-native refusal while qualified exact role is tested
+   separately. Old/default guarantees were NOT silently removed.
+6.54741 native-OFF retained owner regression PASS:actual initializer/
+   projections->convolution chain/all outputs+private next/full restore;
+   generalized TEST history BYTE provider does not mint native authority.
+
+ONLY kernel/hardware/learned byte endpoints simulated in native tests;
+the ACTUAL factories/cookie/source/model/lease/controller/END code runs.
+The TEST transport observes actual history-zero image output,not memset
+plus a made-up published bitmap. No CPU products supplied to controllers.
+This is NOT original-GGUF qualification or a physical-card speed result.
+
+First fault run exposed bulk.unsafe remaining clear under the inherited
+memory-only retainer (host buffers already quarantined). Added the explicit
+unsafe latch ONLY for new native role;kept the assertion and reran all12.
+Initial new-role gate caught defined reload0 being accepted as old-style
+presence flag. New role now requires reload1 explicitly;all240cases PASS.
+Initial standalone header smoke needed existing cstddef/NULL context;
+real complete native SDK compile and corrected smoke both PASS. No safety
+assertion,numerical tolerance,ISA whitelist or original-image pin weakened.
+
+NO Pioneer/SSH/native card job/SCP/install/reboot/power/SD/Assistant/model/
+NIC/boot changes. Last physical normal041/tag12/gen5/64CPUs/max137034936320B
+postflight retained,NOT re-probed. Dirty llama.cpp and unrelated FlashNext
+files untouched. Raw-unpack-cache22 remains HARD BLOCKED.
+
+NEXT BEFORE ANY NEW HARDWARE USE
+Separate public native original-model qualification protocol/control/client
+and exact role/tag/namespace for fixed convolution outputs/private next
+readback. Preserve no-reference/no-readback Work mode;do NOT reuse old
+tag42/QPS1 DEBUG identity or claim the first-layer path is full inference.
+Source-bound original GGUF full SHA/reference preparation BEFORE FD;
+required original Conv4 bytes/selected projection pages uploaded through
+existing guarded spans;actual native control/global lock/team/call scope
+tests,original-model instruction/fault/readback tests,repeat linked builds,
+client/updater controls and exact rollback041 before ONE physical test.
+Native UNKNOWN/numeric mismatch remains CLOSE ONLY/physical recovery,
+NO further status/END/reset/restore/reload;only PASS+END+terminal0 may
+guardedly restore normal041. Current code is first token/layer0 convolution
+ONLY,private next NOT committed/GDN not integrated. Q/Knorm/gates/Softplus/
+GDN/state commit/gatednorm/output/residual/FFN/full attention+KV/all64layers/
+sampling/persistent whole-token schedule and real speed benchmark remain.
+
+LOG SHA256
+/private/tmp/pioneer-q38-resident-decoder-native-factory-20261023-b.log
+ 610063ff245d19cb356fd2366b2df301c44c3079027c158a60d3fc08d21a2512
+/private/tmp/pioneer-q38-resident-decoder-native-faults-20261023-b.log
+ 31cd2d9065d6e76e1025d9dc7a86fce15653f62654495ea01a75f7c11c9bdad5
+/private/tmp/pioneer-q38-resident-decoder-native-history-faults-20261023-a.log
+ e296d7dc99cec54e8c9cedc9d3a8116abcdbd7f785b1502cb928390cdbd79690
+/private/tmp/pioneer-q38-resident-decoder-native-full-20261023-b.log
+ ce59967da30fa6882e32c8e741ee2857cd9ea55845104592a251f2a255b3677f
+/private/tmp/pioneer-q38-resident-decoder-native-full-20261023-c.log
+ f4a6cf8fd6c778d354754024ffec0bd805eb7850a90c5eeaea4e22ea9cd39473
+/private/tmp/pioneer-q38-resident-decoder-native-gates-20261023-b.log
+ 670a38434a54259e701690440b79335880654855548ceb10706dfbf8e9b11716
+/private/tmp/pioneer-q38-resident-decoder-native-off-regression-20261023-a.log
+ 7c3312e7f3aea22aa2b7e62862b3da26c70ce985dec845e2766608fa50cbc9a0

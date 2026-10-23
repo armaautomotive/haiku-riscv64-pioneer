@@ -9,6 +9,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 #include "pioneer_q38_embedding_execution_bridge.h"
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+#include "pioneer_q38_decoder_conv_bridge.h"
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "pioneer_q38_learned_rms_execution_bridge.h"
 #endif
@@ -27,7 +30,25 @@ static uint32 PioneerRead32(const volatile uint32*);
 static void PioneerWrite32(volatile uint32*,uint32);
 static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void**);
 struct PioneerHostPageIO{bool quarantined=false;};
-struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO {
+struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+ ,DecoderHistoryBytes
+#endif
+ {
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+ bool DecoderCallScopeMatches();bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ bool ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ConvHistoryBanks&);
+ std::vector<uint32> historyWords=std::vector<uint32>(1680*1024,0xa55aa55a);PioneerQ38ConvHistoryExtent historyExtents[336]={};
+ bool ReadHistory(unsigned bank,uint32_t address,uint32_t* out,unsigned words)override{
+  if(!out || !words || (address&3))return false;
+  for(unsigned i=0;i<336;i++){const auto& e=historyExtents[i];
+   if(e.bank==bank && address>=e.address && address-e.address<e.bytes && words<=(e.bytes-(address-e.address))/4){
+    for(unsigned w=0;w<words;w++)out[w]=historyWords[i*5120+(address-e.address)/4+w];return true;
+   }
+  }
+  return false;
+ }
+#endif
  PioneerStoreContext* q38MutableContext=nullptr;
  unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
  std::array<uint32,10240> prefix;
@@ -268,6 +289,11 @@ static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=4;static const void* sQ38LocalDeltaOwner=nullptr;
 static int currentThread=42;static int find_thread(void*){return currentThread;}
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+static int currentTeam=7;static bool failThreadInfo=false;
+struct thread_info{int team=-1;};
+static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || thread!=currentThread || !info)return -1;info->team=currentTeam;return B_OK;}
+#endif
 // Use actual native MEMORY-ONLY retention body,not a simulated ready seal.
 #include "embedding_factory_retain.inc"
 #include "embedding_factory_scope.inc"
@@ -277,12 +303,18 @@ static int currentThread=42;static int find_thread(void*){return currentThread;}
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 #include "projection_factory_scope.inc"
 #endif
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+#include "decoder_factory_scope.inc"
+#endif
 #include "embedding_factory_factory.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "rms_factory_factory.inc"
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 #include "projection_factory_factory.inc"
+#endif
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+#include "decoder_factory_factory.inc"
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 #include "projection_factory_complete_end.inc"
@@ -354,6 +386,17 @@ void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
 }
 #endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+ auto* decoderModel=q38MutableContext?q38MutableContext->q38EmbeddingModel:nullptr;
+ if(decoderModel && decoderModel->phase==PioneerQ38EmbeddingNativeState::HistoryZeroing){
+  unsigned region=decoderModel->historyZero.nonce-1;
+  if(value==0x46800){assert(region<336);auto* h=decoderModel->graph.ConvHistory(decoderModel->identity);
+   assert(h && h->InitializeSpan(decoderModel->identity,region,0,5,historyExtents[region]));}
+  ZeroControlIO::RuntimeResetWrite(value);
+  if(value==0x46800){assert(lastDeviceWords.size()==5120);for(unsigned i=0;i<5120;i++)historyWords[region*5120+i]=lastDeviceWords[i];}
+  return;
+ }
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetReset,0,value);return;}
 #endif

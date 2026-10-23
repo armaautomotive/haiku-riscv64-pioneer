@@ -123,6 +123,13 @@ public:
  bool Unsafe()const{return unsafe || (projection && projection->Unsafe()) || (history && history->Unsafe());}
  bool Closed()const{return closed && !Unsafe();}
  bool Claimed()const{return started;}
+ bool MatchesClosedNativeOwner(const PioneerQ38ProjectionGraphOwner& p,const PioneerQ38ConvHistoryBanks& h)const{
+  return started && consumed && closed && phase==9 && !unsafe && !complete && projection==&p && history==&h
+   && p.decoderOwner==this && h.decoderOwner==this && p.proof && p.banks && p.cohort && p.memory && p.graph && p.canonical && p.input && p.ledger
+   && h.banks==p.banks && h.baseline==p.proof && h.canonical==p.canonical && h.reservationOwner==p.graph
+   && h.identity==p.identity && h.published && !h.initializationLease && h.Matches(p.identity)
+   && p.MatchesClosedNativeOwner(*p.proof,*p.banks,*p.cohort,*p.memory,*p.graph,*p.canonical,*p.input,p.identity,p.ledger,p.pages);
+ } // exact CLOSED objects BEFORE legacy END,not a caller clean/ready hint
  bool MatchesNativeOwner(const PioneerQ38ProjectionGraphOwner& p,const PioneerQ38ConvHistoryBanks& h)const{
   return started && !unsafe && !closed && consumed && projection==&p && history==&h && p.decoderOwner==this && h.decoderOwner==this
    && p.proof && p.banks && p.cohort && p.memory && p.graph && p.canonical && p.input && p.ledger

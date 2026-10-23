@@ -77,6 +77,7 @@ public:
  PioneerQ38ProjectionBanks* Projection(const PioneerQ38ProjectionIdentity& id){return Matches(id)?&projection:nullptr;}
 #ifdef PIONEER_Q38_DECODER_RUNTIME
  PioneerQ38ConvHistoryBanks* ConvHistory(const PioneerQ38ProjectionIdentity& id){return Matches(id)?&history:nullptr;}
+ const PioneerQ38ConvHistoryBanks* ConvHistory(const PioneerQ38ProjectionIdentity& id)const{return Matches(id)?&history:nullptr;}
 #endif
  const PioneerQ38CanonicalModelPlan* CanonicalModel(const PioneerQ38ProjectionIdentity& id)const{return Matches(id)?canonical:nullptr;}
  bool MatchesInitializationOwner(const PioneerResidentBanks& owner,const tt_dram_samples_result& proof,const PioneerQ38ProjectionIdentity& id)const{

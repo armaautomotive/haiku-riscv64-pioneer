@@ -44,7 +44,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-runtime-gates-') as tem
     # The ACTUAL driver fails this private role unconditionally,including
     # explicitly defined0: it cannot silently inherit old tag42/Work/native.
     source = (headers / 'tenstorrent_pci_probe.cpp').read_text()
-    guard = re.findall(r'#ifdef PIONEER_Q38_DECODER_RUNTIME\n#error [^\n]+\n#endif', source)
+    guard = re.findall(r'#ifdef PIONEER_Q38_DECODER_RUNTIME\n#ifndef PIONEER_Q38_RESIDENT_DECODER_NATIVE\n#error [^\n]+\n#endif\n#endif', source)
     assert len(guard) == 1
     for value in ('0', '1', '2', '-1'):
         result = subprocess.run([os.environ.get('CXX', 'c++'), '-x', 'c++', '-E', '-DPIONEER_Q38_DECODER_RUNTIME=' + value, '-'],
@@ -59,4 +59,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-runtime-gates-') as tem
             result = subprocess.run([*args, '-'], input='#include "' + str(headers / header) + '"\n', env=clean, capture_output=True, text=True)
             assert (result.returncode == 0) == (value == '1' or value is None and header == 'PioneerQ38ProjectionMutableBanks.h')
             count += 1
-print(f'PASS decoder runtime gates{count},actual old/new builders refuse BEFORE SDK/output,exact private header role,actual driver HARD REFUSAL;NO native selector/Work promotion/install/device access')
+print(f'PASS decoder runtime gates{count},actual old/new builders refuse BEFORE SDK/output,exact private header role,actual driver HARD REFUSAL without qualified native role;NO native selector/Work promotion/install/device access')

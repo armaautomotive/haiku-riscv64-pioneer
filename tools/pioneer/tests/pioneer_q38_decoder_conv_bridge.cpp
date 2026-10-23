@@ -2,12 +2,11 @@
 #define PIONEER_Q38_CONV_BATCH_MACHINE_ONLY
 #include "pioneer_q38_conv_batch_image_test.cpp"
 #include "pioneer_q38_decoder_conv_bridge.h"
-#include "pioneer_q38_projection_execution_producer.h"
 #include <set>
 struct DecoderBatchMachine:ConvBatchMachine {
- ProjectionExecutionFabric& fabric;ProjectionExecutionProducer& producer;std::set<unsigned> dirtied;
+ ProjectionExecutionFabric& fabric;DecoderHistoryBytes& producer;std::set<unsigned> dirtied;
  DecoderBatchMachine(const char* image,const PioneerQ38CanonicalModelPlan& plan,unsigned worker,unsigned bank,
-  ProjectionExecutionFabric& f,ProjectionExecutionProducer& p):ConvBatchMachine(image,plan,0,bank,worker,1,0),fabric(f),producer(p){
+  ProjectionExecutionFabric& f,DecoderHistoryBytes& p):ConvBatchMachine(image,plan,0,bank,worker,1,0),fabric(f),producer(p){
   for(unsigned i=0;i<384;i++)table[i]=fabric.ReadLocal(worker,TT_Q38_CONV_BATCH_TABLE+i*4);
   count=PioneerQ38ConvBatchCount(worker);assert(PioneerQ38ConvBatchShape(table.data()));
   for(unsigned i=0;i<16;i++)source[i]=fabric.NoC(worker,SourceOffset(i));
@@ -51,7 +50,7 @@ struct DecoderBatchMachine:ConvBatchMachine {
  }
 };
 unsigned ExecuteDecoderConv(const char* image,const PioneerQ38CanonicalModelPlan& plan,unsigned worker,unsigned bank,
- ProjectionExecutionFabric& fabric,ProjectionExecutionProducer& producer){
+ ProjectionExecutionFabric& fabric,DecoderHistoryBytes& producer){
  (void)&BatchPlans;(void)&Plans;(void)&Sequence;
  DecoderBatchMachine machine(image,plan,worker,bank,fabric,producer);return machine.Execute();
 }
