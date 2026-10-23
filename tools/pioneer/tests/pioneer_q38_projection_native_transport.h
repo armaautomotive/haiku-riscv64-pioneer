@@ -40,6 +40,9 @@ public:
  unsigned DecoderStarts()const;
  void ObserveDecoder(const PioneerQ38ResidentDecoderResult&);
  void DecoderFault(unsigned); // TEST endpoint failure only,never a production selector
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ std::vector<uint32_t> DecoderCompletionReads()const; // TEST phase4 status/PC trace,NO device I/O
+#endif
 #endif
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
  void ValidationFault(unsigned kind,unsigned page); // TEST endpoint fault,not production capability

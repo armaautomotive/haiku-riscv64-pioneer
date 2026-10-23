@@ -313,6 +313,16 @@ def check(mode, fault=None):
         if fault == 'backup':
             target = path(values['stage']) / ('qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag)
             target.write_bytes(b'preexisting backup')
+        if fault == 'previous-debug44':
+            # Same numeric tag is NOT byte identity. A new updater must
+            # reject both the previous candidate and its installed image,
+            # before opening the admin device or modifying the guard.
+            assert mode in ('--apply-decoder-validation', '--restore-decoder-validation')
+            previous = b'test-d96899a74c6949a22caec805dbd611cee80f2ff96c909758d772557d1a4a0c0a'
+            if mode == '--apply-decoder-validation':
+                put('candidate_decoder_validation', previous)
+            else:
+                installed.write_bytes(previous)
         before = installed.read_bytes()
         images = ['KERNEL TEAM:', '1 0x0 0x0 0 0 kernel_riscv64'] + [f'{i} 0x0 0x0 0 0 module{i}' for i in range(2, 52)]
         if fault == 'loaded':
@@ -376,6 +386,8 @@ def check(mode, fault=None):
         result = subprocess.run(['/bin/sh', str(local), mode], capture_output=True, text=True, timeout=15)
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
+            if fault == 'previous-debug44':
+                assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_PREVIOUS_IMAGE')
             if fault in owner_faults or fault.startswith('ps-'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_DURING_UNPROVEN_PARENT')
             if fault == 'owner-late' and mode != '--bootstrap':
@@ -686,7 +698,8 @@ if __name__ == '__main__':
         elif mode == '--restore-decoder-validation':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
-        for fault in [None] + common + candidate + candidate_links + parents + (['loaded'] if mode == '--bootstrap' else hot):
+        previous_image = ['previous-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
+        for fault in [None] + common + candidate + candidate_links + parents + previous_image + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)
             count += 1
     assert count and (not selected or seen == selected), 'Unknown or empty mode selection'

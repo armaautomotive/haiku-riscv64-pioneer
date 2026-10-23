@@ -18,6 +18,9 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  const char* decoderImage=nullptr;const PioneerQ38CanonicalModelPlan* decoderPlan=nullptr;DecoderHistoryBytes* decoderHistory=nullptr;
  unsigned decoderBank=7,decoderStarts=0,decoderPc[120]={};bool decoderRunning[120]={};
  const PioneerQ38ResidentDecoderResult* decoderResult=nullptr;unsigned decoderFault=0;bool decoderDamaged=false;
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ std::vector<uint32_t> decoderCompletionReads;unsigned decoderPcReads[120]={};
+#endif
 #endif
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
  unsigned validationReads=0,validationFault=0,validationFaultPage=0;bool validationPending=false;
@@ -111,6 +114,10 @@ bool ProjectionNativeTransport::MapPanel(){auto& p=*implementation;p.Touch();ret
 bool ProjectionNativeTransport::PanelStable(){return implementation->C().mapping;}
 uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsigned c){
  auto& p=*implementation;p.Touch();
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ if(p.decoderResult && p.decoderResult->phase==4 && p.decoderRunning[p.current] && (kind==Status || kind==Pc))
+  p.decoderCompletionReads.push_back((p.current<<16)|(kind==Status?0x100+a:0x200));
+#endif
  switch(kind){
   case Source:return p.C().SourceRead(a);
   case Reset:return p.core[p.ResetTarget()]->coreReset;
@@ -130,7 +137,12 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
-   if(p.decoderRunning[p.current])return p.decoderPc[p.current];
+   if(p.decoderRunning[p.current]){
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+    if(p.decoderFault==14 && !p.current && ++p.decoderPcReads[0]==2)return 0x64058;
+#endif
+    return p.decoderPc[p.current];
+   }
 #endif
    if(p.C().coreReset==0x46800)p.machine->Advance(p.current);return p.machine->Pc(p.current);
   case Status:
@@ -184,8 +196,15 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
     assert(p.decoderImage && p.decoderPlan && p.decoderHistory && !p.decoderRunning[p.current]);p.decoderRunning[p.current]=true;p.decoderStarts++;
     p.decoderPc[p.current]=ExecuteDecoderConv(p.decoderImage,*p.decoderPlan,p.current,p.decoderBank,p,*p.decoderHistory);
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
-    if(!p.decoderDamaged && !p.current && (p.decoderFault==7 || p.decoderFault==8)){
-     p.decoderDamaged=true;p.WriteLocal(0,p.decoderFault==7?0x17ffc8:0x17ffc4,p.decoderFault==7?TT_Q38_CONV_BATCH_FAULT:0);
+    if(!p.decoderDamaged && p.decoderFault>=7 && p.decoderFault<=14 && p.current==(p.decoderFault==12?119U:0U)){
+     p.decoderDamaged=true;
+     if(p.decoderFault==7 || p.decoderFault==12)p.WriteLocal(p.current,0x17ffc8,TT_Q38_CONV_BATCH_FAULT);
+     if(p.decoderFault==8)p.WriteLocal(0,0x17ffc4,0);
+     if(p.decoderFault==9 || p.decoderFault==11){
+      p.WriteLocal(0,0x17ffc8,0);p.decoderPc[0]=p.decoderFault==9?0x6000:0x6403c;
+     }
+     if(p.decoderFault==10)p.decoderPc[0]=0x64058;
+     if(p.decoderFault==13)p.WriteLocal(0,0x17ffc0,0x64008);
     }
 #endif
     if(!p.decoderDamaged && p.current==119 && p.decoderFault>=2 && p.decoderFault<=4){p.decoderDamaged=true;
@@ -230,11 +249,14 @@ unsigned ProjectionNativeTransport::DecoderStarts()const{return implementation->
 void ProjectionNativeTransport::ObserveDecoder(const PioneerQ38ResidentDecoderResult& r){implementation->decoderResult=&r;}
 void ProjectionNativeTransport::DecoderFault(unsigned kind){assert(kind>=1 && kind<=
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
- 8
+ 14
 #else
  6
 #endif
  );implementation->decoderFault=kind;}
+#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+std::vector<uint32_t> ProjectionNativeTransport::DecoderCompletionReads()const{return implementation->decoderCompletionReads;}
+#endif
 #endif
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 void ProjectionNativeTransport::ValidationFault(unsigned kind,unsigned page){

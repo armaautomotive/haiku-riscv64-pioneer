@@ -1,0 +1,122 @@
+OFFLINE retained-convolution failure-capture driver qualification
+October23 UTC2026. Whole27B0.207893161tok/s UNCHANGED;20tok/s UNMET.
+No physical retry,convolution success,root-cause or speed claim.
+
+This record supersedes only the diagnostic ARTIFACT status in the earlier
+qwen38-retained-convolution-card-failure-20261023.txt. It does NOT supersede
+that record's hardware quarantine or the existing physical failure data.
+The previous status-only goal turn made no implementation progress;this
+turn links/qualifies the existing cf04 diagnostic source and strengthens
+its actual native-controller failure tests and hash-pinned installer.
+
+REPRODUCIBLE COMPLETE DRIVER
+97195 and7443 both TERMINAL0. Independently build the COMPLETE actual
+driver from read-only /Volumes/HaikuBuildLocal/generated.riscv64 using
+tools/pioneer/build_qwen38_resident_decoder_validation_native.py and fresh
+outputs /private/tmp/pioneer-q38-decoder-debug-capture-linked-20261023-{e,f}.
+Both linked tenstorrent_pci_probe-driver55-decoder-debug-tag44 files:
+ 4db734553910748e51c22a5d2017b01d2fa2c42ea1409aabf9b55839732d6edd
+Both complete builds reproduce baretag43 object3445a61f... and ALL prior
+tag38/guard/default43/private2d12/stash6121/tag42a2bc controls byte-exact.
+Actual linked-driver compilation maxNewFrame1936B <=2048B;legacy oversized
+frames do not grow. The separate full-source DEBUG compile witness stays
+4c25f1e905cd56b06ae38941c1c04b29e55f438446f17e5fffdb6280e1258c76,
+maxNewFrame1696B. No weakened compiler/stack/source/arithmetic guards.
+
+58481 TERMINAL0:separately rebuild the unchanged independent DEBUG client:
+ /private/tmp/pioneer-q38-decoder-debug-capture-client-20261023-a
+ f3b54e8bb01a52cd1272804fc9491a9a832dc725708b19b0fde290ed547687a5
+Public163984B protocol,original-QCB1 text/boot,arithmetic,tolerances and
+all no-CPU-reference native/Work boundaries remain unchanged.
+
+EXACT EXISTING-READ FAILURE COVERAGE
+50706 TERMINAL0:ASan/UBSan actual native context/factories/controllers,
+actual history/QPE1/QRN1/QPS1/QCB1 emitted instructions. Physical/learned
+byte endpoints remain SIMULATED,not a real-card or public-model result.
+Eight fork-isolated endpoint faults each retain ALL owners/snapshots and
+prove zero later device/status/PC/END/restore/retry calls:
+ 7 worker0  fault marker:location40001;exact phase4 status/PC reads1.
+ 8 worker0  invalid count:location40003;reads4;NO PC read.
+ 9 worker0  absent marker,boot PC6000:location40004;reads2.
+10 worker0  valid status,first PC64058:location40003;reads5.
+11 worker0  absent marker,fault-entry PC6403c:location40004;reads2.
+12 worker119 fault marker:location40001;1310 reads total,only1 for119.
+13 worker0  invalid phase64008:location40003;reads3;NO count/PC read.
+14 worker0  first PC64038 then64058:location40003;reads6.
+The TEST transport now records exact phase4 read order and worker IDs.
+The late-worker case first proves119 successful receipts,then verifies
+that earlier workers' status/PC values are NOT inherited by worker119.
+The entire read trace must remain identical after the actual failed-owner
+retry/close/END refusal checks. No production device reads were added.
+
+32723 TERMINAL0:exact DEBUG/native/reference/build guard200cases PASS.
+96973 TERMINAL0:actual native-role/build gates373cases PASS;no mixed
+DEBUG/Work/reference selection or reserved-tag/environment promotion.
+89727 TERMINAL0:fresh actual public root/team/control/routing/global
+scope regression PASS:144 inert refusals,actual history336x5/zero512/
+QPE1/QRN1/4QPS1projections/QCB1ALL120,40poisoned reads/40960words,
+full8134072word restoration and explicit END. Simulated byte endpoints,
+NOT original-model,physical-card or speed evidence. Positive execution
+still succeeds with the capture changes and extended TEST trace present.
+
+EXACT NEW INSTALLER PAIR,NOT RECOVERY
+50489 TERMINAL0:234 actual /bin/sh fake-filesystem cases PASS for new
+decoder apply/restore and unchanged projection apply/restore. In addition
+to cold/active/open/hash/tag/generation/guard/symlink/parent refusal cases,
+explicitly reject the previous d968 DEBUG44 candidate AND installed image
+before ANY admin open. Sharing numeric tag44 does NOT permit substitution.
+The updated source updater pins normal041/tag12 <->4db73455/tag44 ONLY:
+ updater SHA256 cdee13c6f2918f4f05ec974badee1a02ca50ab3091fdf16b660720b9db2d6932
+ future candidate basename tenstorrent_pci_probe-decoder-validation-4db73455
+No candidate/client/new-updater has been staged or installed on Pioneer.
+
+OFFLINE HANDOFF AUDIT,NO SPECULATIVE FIX
+Checked actual emitted text/startup/linker/host reset and PC mappings.
+Boot6000->64000,terminal6400c/park64038/fault6403c..64058,8KiB saved stack,
+384-word table and actual same-original snapshot remain internally
+consistent. The PC aperture maps T0 snapshot offset140,matching T0 reset
+bit12 release. No reset/cache/fence guard was removed or relaxed.
+Primary reference:
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md
+This documents frontend/speculative PC snapshots,so a future captured PC
+alone must not be presented as proof an instruction actually executed.
+Primary instruction reference:
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md
+Emitted scalar FP inventory has no fdiv.s/fsqrt.s/FMA;existing instruction
+tests model denormal flushing. This is NOT a proven cause or fix for the
+physical completion failure. Do not change hardware sequencing on a guess.
+
+HARDWARE HOLD IS UNCHANGED
+Pioneer remains quarantined with installed d968/tag44/gen6 and ALL owners
+retained. NO Pioneer SSH/SCP/status/END/reset/reload/restore/retry/power/
+boot/SD/NIC/Assistant/model actions in this qualification. No post-failure
+CPU/RAM/desktop health claim. Await genuine physical full-PSU recovery and
+fresh-kernel/OS verification BEFORE any card access. Leave SD/cards alone.
+After recovery and proof of known-clean idle state,restore previous d968
+ONLY through the ALREADY STAGED IMMUTABLE old updater,NOT the new source:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer_p100a_hot_swap-decoder-validation-3648a427.sh
+ old updater SHA3648a4277ff0ae472cf6ebfcba9fa0e5faf11412bac0f7c9d9d6c5f20b4735e6
+ --restore-decoder-validation
+Normal041 rollback remains041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+This is NEVER authorization to hot-restore the current quarantine.
+
+TERMINAL LOG SHA256
+6aae5e3fb4f3bdcc8ba89db795149134e5f92d9236925c621df775a6a0b4cfb0
+ /private/tmp/pioneer-q38-decoder-debug-capture-expanded-20261023-a.log
+b135aa7120753fcf2dde566ede0c4f7e223a8e8f7cf17bf226d4a80623e4f5f3
+ /private/tmp/pioneer-q38-decoder-debug-capture-updater-20261023-a.log
+e14609317f862f776f99471d983568a4c6c14721ea13b49003c9ccff3f19ccfd
+ /private/tmp/pioneer-q38-decoder-debug-capture-gates-20261023-a.log
+c5240d6e6e0059b2781b6b5751e18e7d62f9264535294c82570f68c6c1f785f0
+ /private/tmp/pioneer-q38-decoder-debug-capture-linked-20261023-f.log
+1eaf715e86b747ef05165ca9adb753274ab2bdbe5a2a1152f5a387dde81030d5
+ /private/tmp/pioneer-q38-decoder-debug-capture-client-20261023-a.log
+afea1c527aafae822b57a437d1c602ca9419119ef2171723e71da6d221e4b23a
+ /private/tmp/pioneer-q38-decoder-debug-capture-native-gates-20261023-a.log
+cdbd288ffbb22fc73e51d518b1ae698f589c63d08ee62838377a3c423b384554
+ /private/tmp/pioneer-q38-decoder-debug-capture-control-20261023-c.log
+
+Full offload is NOT complete:Q/K normalization,gates/Softplus,GDN and
+canonical state commit,gated norm/output/residual/FFN,full attention+KV,
+all64layers,sampling/persistent whole-token scheduling,and a genuine
+end-to-end inference benchmark still require integration/qualification.
