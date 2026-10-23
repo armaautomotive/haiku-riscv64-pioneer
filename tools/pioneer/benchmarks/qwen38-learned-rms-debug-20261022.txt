@@ -1,7 +1,7 @@
 Learned RMS native DEBUG qualification implementation
 October22 Pacific / October23 UTC2026
 
-NOT a full decoder,physical-card pass or inference-speed measurement.
+PHYSICAL-CARD learned RMS token0 PASS;NOT a full decoder or speed measurement.
 Last whole27B rate remains0.207893161tok/s;20tok/s UNMET;goal ACTIVE.
 
 REAL IMPLEMENTATION
@@ -98,7 +98,7 @@ ONLY THREE NEW FILES staged and full hashes rechecked in:
 Unsupported SFTP failed before transfer;legacy SCP-O succeeded. Client and
 updater mode700. Installed041 driver was unchanged at the staging check.
 
-GUARDED NATIVE APPLY / ONE QUALIFICATION PARENT NOW LIVE
+GUARDED NATIVE APPLY / PHYSICAL QUALIFICATION PASS / CLEAN RESTORE
 After7813-case PASS,exact updater --apply-rms-validation completed:
  old041/tag12/gen1/cold0/owner0 ->quiesced1 ->newa32/tag41/gen2,
  quiesced0/cold0/active_owner0/open_count1/guard1. HOT_RELOAD_VERIFIED;
@@ -106,26 +106,34 @@ After7813-case PASS,exact updater --apply-rms-validation completed:
  driver is nowa32 DEBUG41,NOT original041;do not leave this distinction
  implicit. Existing rollback041 remains preserved outside watched drivers.
 
-Then exactly ONE staged hash-verified client --validate-token0 launched,
-with installed a32/client20d SHA checks before exec. Native client is LIVE
-exec session34193;local log:
+Then exactly ONE staged hash-verified client --validate-token0 ran,
+with installed a32/client20d SHA checks before exec. Native client34193
+completed TERMINAL0;local log:
  /private/tmp/pioneer-q38-rms-debug-native-card-20261022-a.log
-At03:43:51UTC it remained at the initial full-model-authentication marker,
-before FULL_PUBLIC_GGUF_SHA_SAME_FILE_PASS and before GPU_OPEN. No new
-physical numerical pass or failure is claimed. Poll THIS SAME handle;
-do not restart on an observation timeout. No SCP/second native job/reload/
-installed-binary/model edit while this parent is live,including before FD.
-No relay/PSU/SD/Assistant/model/NIC/boot change occurred.
+It was observed continuously through the full authentication stage,without
+another native job/transfer/reload or restart. Native log proves full SAME
+public GGUF SHA before FD;reload/support/storage/span support/BANK_BEGIN,
+12+5original-page uploads/SPAN_END,new RMS_VALIDATE and BANK_END allreturn0.
+ALL5120 normalized words and ALL5120 raw residual words BIT-EXACT to the
+two independent original-GGUF references prepared BEFORE FD. clean_end1.
+Captured initialization+execution+readback+restoration time2859608us is
+NOT decoder time or a token rate. No partial-graph/model speedup is claimed.
+
+ONLY after PASS/cleanEND/client terminal0,the exact guarded restore ran:
+ a32/tag41/gen2/cold0/owner0 ->quiesced1 ->original041/tag12/gen3,
+ quiesced0/cold0/active_owner0/open_count1/guard1. TERMINAL0. Fresh installed
+ hash041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+64CPUs/max137034936320B;allcomputeparents absent. No relay/PSU/SD/Assistant/
+model/NIC/boot change or reboot occurred. No native job remains alive.
 
 NEXT
-Continue observing SAME native parent34193;FULL SHA phase is part of its
-lifetime,not an idle/reload window. No SCP/second native job/reload while
-it is alive.
-First unknown/mismatch ->CLOSE ONLY;do not status/read/END/restore/reset/
-hot-swap a failed card. Known-clean restore only after proven PASS/complete
-explicit END/client terminal0. Keep existing fixed top-page7 SD-free boot.
-After native RMS qualification,complete projection/result stashes and real
-residual/GDN/attention/KV/sampling/whole-decoder state/scheduler remain owed.
+Native RMS is now qualified for this bounded token0 case,not all possible
+inputs or whole-model execution. Next actual on-card projection result
+stashes:four current first-layer roles overwrite the same output slot;
+separate fixed GDDR results are required by the later real state consumer.
+Complete projection/native qualification,residual/GDN/attention/KV/sampling/
+whole-decoder state/scheduler remain owed. Keep fixed top-page7 SD-free boot.
+Unknown/mismatch still CLOSE ONLY;never cleanup/retry/reset/hot-swap it.
 
 LOGS
  /private/tmp/pioneer-q38-rms-readback-native-20261022-a.log
@@ -137,4 +145,4 @@ LOGS
  /private/tmp/pioneer-q38-rms-debug-private-projection-compile-20261022-a.log
  /private/tmp/pioneer-q38-rms-debug-updater-focused-20261022-a.log
  /private/tmp/pioneer-q38-rms-debug-updater-full-20261022-a.log [PASS7813]
- /private/tmp/pioneer-q38-rms-debug-native-card-20261022-a.log [LIVE34193]
+ /private/tmp/pioneer-q38-rms-debug-native-card-20261022-a.log [PHYSICALPASS/TERMINAL0]

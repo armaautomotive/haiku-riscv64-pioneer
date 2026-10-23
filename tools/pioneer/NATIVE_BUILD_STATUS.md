@@ -1,5 +1,23 @@
 # Native build status
 
+Latest October23 UTC2026:PHYSICAL P100A learned RMS token0 PASS.
+SAME full public GGUF SHA before FD;actual native zero/QPE1/QRN1+10fixed
+poisoned GDDR readbacks ->ALL5120normalized+5120raw residual words BIT-
+EXACT to independent ORIGINAL references. Explicit BANK_END clean_end1;
+parent34193 TERMINAL0.2859608us covers initialization/execution/readback/
+restore,NOT decoder throughput. Whole27B0.207893161tok/s UNCHANGED;20UNMET.
+ONLY after this clean numerical PASS/END/terminal0,guarded restore returned
+a32/tag41/gen2 ->original041/tag12/gen3/cold0/owner0/open1/guard1,TERMINAL0.
+Fresh installed041SHA verified,64CPUs/max137034936320B,allcomputeparents
+absent. No native/build/test jobs alive;no reboot/PSU/SD/Assistant/model/
+NIC/boot change. Prior full7813-case updater PASS and codebb00c5f41f/docs
+faa2530977 retained. Evidence:benchmarks/qwen38-learned-rms-debug-20261022.txt.
+NEXT fixed separate on-card first-layer projection result buffers (current
+four roles overwrite one common slot),then real resident state consumer
+and complete projection native qualification. Full residual/GDN/attention/
+KV/sampling/whole-decoder schedule still OWED;goal ACTIVE/turn PROGRESS.
+The older LIVE34193 statements below are historical,now TERMINAL0/PASS.
+
 Latest October22 Pacific/October23 UTC2026:NATIVE RMS DEBUG qualification
 IMPLEMENTED/BUILT/INSTALLED;ONE native test parent LIVE34193,NOT yet a
 physical-card pass or inference speedup. Checkpointbb00c5f41f pushed.
