@@ -85,9 +85,10 @@ raw-cache22 remains HARD BLOCKED. Existing parent regex catches new client.
 Updater SHA:
  df4db0ac1b5639088b256c45c0e5c259e45693f01d1ca6b71792db89f9fdaf45
 Focused112filesystem/hash/link/owner/status/quiesce/wait-failure cases PASS.
-FULL updater regression remains LIVE session8272/PythonPID83990;last
-verified child was actual-updater.sh --restore-native-operand. It has NOT
-failed or been restarted. Do not claim a full-suite pass until terminal.
+FULL updater regression finished PASS7813cases / session8272 TERMINAL0.
+Full result log SHA:
+ 94f62b570c8de3b600900d1876abea9f96de27540e5e069888a6fb77d42469f5
+It was observed live throughout,not restarted after observation timeouts.
 
 ONLY THREE NEW FILES staged and full hashes rechecked in:
  /boot/home/pioneer-p100a-hot-reload-20261019-a/
@@ -95,13 +96,31 @@ ONLY THREE NEW FILES staged and full hashes rechecked in:
  pioneer-q38-rms-validation-20d93bef
  pioneer_p100a_hot_swap-rms-validation-df4db0ac.sh
 Unsupported SFTP failed before transfer;legacy SCP-O succeeded. Client and
-updater mode700. Installed041 driver unchanged. No new native GPU job,
-driver replacement,clock operation,reboot/relay/PSU/SD/Assistant/model change.
+updater mode700. Installed041 driver was unchanged at the staging check.
+
+GUARDED NATIVE APPLY / ONE QUALIFICATION PARENT NOW LIVE
+After7813-case PASS,exact updater --apply-rms-validation completed:
+ old041/tag12/gen1/cold0/owner0 ->quiesced1 ->newa32/tag41/gen2,
+ quiesced0/cold0/active_owner0/open_count1/guard1. HOT_RELOAD_VERIFIED;
+ terminal0. No reboot or GPU execution during the update. New installed
+ driver is nowa32 DEBUG41,NOT original041;do not leave this distinction
+ implicit. Existing rollback041 remains preserved outside watched drivers.
+
+Then exactly ONE staged hash-verified client --validate-token0 launched,
+with installed a32/client20d SHA checks before exec. Native client is LIVE
+exec session34193;local log:
+ /private/tmp/pioneer-q38-rms-debug-native-card-20261022-a.log
+At03:43:51UTC it remained at the initial full-model-authentication marker,
+before FULL_PUBLIC_GGUF_SHA_SAME_FILE_PASS and before GPU_OPEN. No new
+physical numerical pass or failure is claimed. Poll THIS SAME handle;
+do not restart on an observation timeout. No SCP/second native job/reload/
+installed-binary/model edit while this parent is live,including before FD.
+No relay/PSU/SD/Assistant/model/NIC/boot change occurred.
 
 NEXT
-Require full updater terminal PASS and fresh idle/status/parents before
-guarded apply. Then ONE client --validate-token0;FULL SHA phase is part of
-the SAME native parent. No SCP/second native job/reload while it is alive.
+Continue observing SAME native parent34193;FULL SHA phase is part of its
+lifetime,not an idle/reload window. No SCP/second native job/reload while
+it is alive.
 First unknown/mismatch ->CLOSE ONLY;do not status/read/END/restore/reset/
 hot-swap a failed card. Known-clean restore only after proven PASS/complete
 explicit END/client terminal0. Keep existing fixed top-page7 SD-free boot.
@@ -117,4 +136,5 @@ LOGS
  /private/tmp/pioneer-q38-rms-debug-native-build-20261022-b.log
  /private/tmp/pioneer-q38-rms-debug-private-projection-compile-20261022-a.log
  /private/tmp/pioneer-q38-rms-debug-updater-focused-20261022-a.log
- /private/tmp/pioneer-q38-rms-debug-updater-full-20261022-a.log [LIVE]
+ /private/tmp/pioneer-q38-rms-debug-updater-full-20261022-a.log [PASS7813]
+ /private/tmp/pioneer-q38-rms-debug-native-card-20261022-a.log [LIVE34193]

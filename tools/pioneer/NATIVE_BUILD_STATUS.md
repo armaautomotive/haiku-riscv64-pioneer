@@ -1,7 +1,8 @@
 # Native build status
 
 Latest October22 Pacific/October23 UTC2026:NATIVE RMS DEBUG qualification
-IMPLEMENTED/BUILT/STAGED,NOT yet a physical-card pass or inference speedup.
+IMPLEMENTED/BUILT/INSTALLED;ONE native test parent LIVE34193,NOT yet a
+physical-card pass or inference speedup. Checkpointbb00c5f41f pushed.
 Separate exacttag41/namespace12,actual same-source/global-cookie/thread/
 clock/zero2MiB/QPE1/QRN1 ownership.10fixed poisoned GDDR readbacks INSIDE
 active RMS owner AFTER verified physical hold BEFORE complete ROOT restore/
@@ -24,16 +25,20 @@ client A/B/C20d93bef (58200B). Actual private full projection/RMS macro-OFF
 object stays2d127c1e EXACT;oldtag38/guard/default43 controls23e/d1ce/2df
 BYTE-IDENTICAL. No dirty llama.cpp or unrelated FlashNext work touched.
 
-Native64CPUs/fullRAM remains healthy;fresh original041/tag12/gen1/idle/
+Native64CPUs/fullRAM remains healthy;fresh preflight original041/tag12/gen1/
 cold0/owner0/open1/guard1,allcomputeparents absent. Three NEW stage files
-verified;installed041/Assistant/model/NIC/boot untouched;no newGPU job.
+verified;Assistant/model/NIC/boot untouched. Driver is now separatea32DEBUG41.
 New guarded updaterdf4db0ac adds exactclean041<->a32 DEBUG pair,raw-cache22
-still HARD BLOCKED. Focused112cases PASS. FULL updater suite STILL LIVE
-exec8272/Python83990;do NOT restart/modify its dependencies or claim full
-pass. NEXT full-suite terminal proof,fresh parent/status checks,controlled
-apply and ONE native client --validate-token0 (including FULLSHA),no other
-native job/SCP/reload while parent alive. UNKNOWN ->physical recovery,
-not cleanup/hot-swap. Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal
+still HARD BLOCKED. Focused112+FULL7813cases PASS/TERMINAL0. Guarded apply
+TERMINAL0:old041/tag12/gen1 quiesced clean ->a32/tag41/gen2/cold0/owner0/
+open1/guard1,HOT_RELOAD_VERIFIED/no reboot/GPU execution. Original rollback
+preserved. ONE client --validate-token0 now LIVE exec34193;03:43:51UTC
+still initial model-authentication stage BEFORE fullSHA_PASS/GPU_OPEN.
+NEXT poll SAME handle,not a new job. FULLSHA is part of this parent;
+NO SCP/secondnativejob/reload/installeddependencies edit while live. UNKNOWN
+->CLOSEONLY/physical recovery,no later status/device/END/restore/hot-swap.
+Only proven PASS/complete explicit END/client terminal0 may permit clean
+restore041. Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal
 ACTIVE/turn PROGRESS. Evidence:benchmarks/qwen38-learned-rms-debug-20261022.txt.
 
 Latest October22 Pacific/October23 UTC2026:VM TOP-PAGE clear/copy defect
