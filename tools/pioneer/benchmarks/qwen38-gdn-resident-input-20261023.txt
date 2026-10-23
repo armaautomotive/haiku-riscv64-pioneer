@@ -1,0 +1,105 @@
+OFFLINE QGI1 resident-input preparation,October23 UTC2026.
+Whole27B last measured0.207893161tok/s UNCHANGED;20tok/s/full-card UNMET.
+This checkpoint proves original-source transport/layout/arithmetic in
+simulation,NOT native ownership handoff,GDN initialization,card execution
+or a measured inference speedup. NO Pioneer access/power/driver/boot change.
+
+SEVEN RESIDENT READS,NO HOST-PRECOMPUTED NUMERIC INPUT
+New isolated QGI1 worker reads Q512B,K512B,V256B,alpha64B,beta64B,
+original negative-A64B and dtBias64B:7READS/24flits/1536B,NO NoC writes.
+It calls qualified QGP1 math IN THE SAME WORKER,not a host stop/reload.
+Outputs existing LOCAL RGDN layout:128Q+128K+64bitexactV+decay+beta.
+48valueheads/96halves map to key-head h%16 (tiled,NOT contiguous h/3).
+Original GGUF ssm_a is already negative-exp(A_log),never exponentiated again.
+Scalar blocks select h%16;A/dt each have192B logical data in one4096Bpage,
+not48rows. Canonical layer0..63 excluding layer%4==3,position0..8191.
+The descriptor carries fixed physical worker=half+1/route,workspace bank,
+original learned addresses,source16words and four nonzero64-bit epochs.
+This is DATA:neither the descriptor nor the learned-page bitmap grants
+authenticated source/current-token/initialized-state/native-owner authority.
+
+Bound source+descriptor rechecked around each packet;all4NoC engines and
+32busy registers quiet;exact command readback and before/after counters;
+fresh distinct NaN poison per received word;bounded65536poll;UNKNOWN or
+nonfinite/subnormal raw input parks inert without later packet/retry/reset.
+Source bytes preserved,exact read-only ranges,local buffer canaries intact.
+Local completion QGI1/count64 is NOT recurrent-state completion. No new
+driver selector,Work target,Assistant option,CPU reference or fallback.
+
+EMITTED IMAGE,UNCHANGED SAFETY LIMITS
+Read-only SDK /Volumes/HaikuBuildLocal/generated.riscv64.
+Fresh build directories /private/tmp/pioneer-q38-gdn-input-image-20261023-{b,c,d}.
+All code.bin8404B SHA
+ bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1
+All boot.bin4B SHA
+ d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+QGI1 marker31494751/fault46494751 do not collide with existing image roles.
+Prototype a tripped the512Bframe guard (704Bmain);packet function now
+noinline,main480B/packet304B. Frame limit remains512B;observed deep stack
+788B fits old8KiB snapshot. New code bound16384B matches existing PEER
+snapshot,not merely shared linker32768B. Buffers inside old work74000..ac000.
+No unsupported DIV/MULH/FMA/FDIV/FSQRT/conversion/runtime helper;no writable
+static data/GOT. Builder refuses ambient PIONEER roles BEFORE SDK/output.
+
+ASAN/UBSAN INSTRUCTION AND CANONICAL TESTS
+21461 and40279 TERMINAL0:same final byte image,4608canonical DATA plans
+(48layers*96halves across7banks),both exact A/dtpage bits required and
+64descriptor mutation comparisons. Actual RV32IMF96positive/1261fault
+cases,max39106instructions/max788Bstack. All7packets exercised stuck,
+wrong/foreigncounter,source mutation,descriptor mutation,stale final word.
+Malformed fields,busy36registers,source16words,command-readback faults;
+32moreinstructions after success/fault prove no later packet/local activity.
+EVERY raw received byte preserved,V64output bitexact,322outputs checked;
+strict RELATIVE3e-6 normal gates inherited from QGP1,only real subnormal FTZ.
+6977 TERMINAL0:QGI1gates48+unchangedQGP1gates50;unsupported ISA,512frame,
+16384peer-code limits,unknown/mixed ambient flags refused before SDK.
+40279 also reran oldQGP1:122positive/1078fault/262017Softplusgrid PASS.
+
+ORIGINAL GGUF BYTE-ENDPOINT INTEGRATION,NOT NATIVE HANDOFF
+14075 TERMINAL0,token0,15,248319 EACH:
+Full original-file/SAME851tensor source validation and1672independent
+reference reads BEFORE any simulated native context. Separate observer TU
+compiled WITHOUT native flags. Old actual public native control still runs
+history,QPE1/QRN1/4QPS1/QCB1all120/640jobs/40pages/full restore and END.
+THEN separate QGI1 simulator consumes actual numerical retained workspace
+products and original raw A/dt64B reads,not CPU-prepared q/k/gates. All96
+halves/672READS/192A-dtreads/30912outputs PASS per token,including strict
+relative gates. Maxinstructions39124/39100/39105,maxstack788B each.
+The old convolution owner is ALREADY CLOSED/RESTORED before this second
+simulation:explicitly NOT same-owner native handoff,not a card run.
+Original A/dt extra2pages are TEST byte endpoints,NOT actual kernel bank
+ledger uploads. Old kernel source_pages stays23235;new native needs23237.
+39963 TERMINAL0:old original-model token0 native regression separately
+passed unchanged1672reference/164800Q8/640conv reads and actual END.
+
+REMAINING REAL INTEGRATION
+Same native owner must retain original snapshot/mapping/ALL120workers
+across CBO->QGI1,bind real source/producer/clock/upload/driver identities,
+upload original A/dt pages into authenticated page ledger,prove exact
+per-worker image stage/counters and fail closed retaining all resources.
+GDN needs a real current-state zero producer,validated state layout and
+96half-head recurrence+all-participant next-state commit. Then gated norm/
+output/residual/FFN/fullattention+KV/all64layers/sampling/persistent token
+scheduler and honest real inference benchmark. No new whole-model timing.
+Stable041driver/gen4,64CPUs/full128GBkernel/boot/Assistant unchanged.
+Dirty llama and unrelated FlashNext files untouched.
+
+POWER POLICY RECONFIRMED
+Front-button OFF is NOT idempotent:repeat OFF may start the board.
+One effective OFF,verify actual state,then one ON. Software shutdown may
+already power off,so SSH closure does not justify another OFF. No blind
+relay retry/no extra power pulse while observing a boot;wait5minutes only
+if power-on actually fails. No power action was required or sent here.
+
+TERMINAL LOG SHA256
+36f2c799e23c26b5d88f7a34e1738f747f087d50ebe189e60da03eafac427c8a
+ /private/tmp/pioneer-q38-gdn-input-original-20261023-a.log
+b18a80c9a041f14908ca78b17ccf2be3d13b40cf7b3f83a24d21a9305ee30b22
+ /private/tmp/pioneer-q38-gdn-input-instructions-20261023-b.log
+ /private/tmp/pioneer-q38-gdn-input-instructions-20261023-c.log
+5170c60f1333f9554ed4b494ee24ba584538c69c113896d772cad4ce54599bcc
+ /private/tmp/pioneer-q38-gdn-input-old-prep-regression-20261023-a.log
+ed214c41849ce0a7336aecb3745c139c55e7fd32a48be630c1b4aee5d71dbcdb
+ /private/tmp/pioneer-q38-gdn-input-old-native-regression-20261023-a.log
+cbda392ad2456e4c4766864b98fdec6ff6d39f0b75cc14378fd1fc6c25534d35
+ /private/tmp/pioneer-q38-gdn-input-gates-20261023-a.log

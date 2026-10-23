@@ -2,10 +2,12 @@
 // Execute ACTUAL emitted QGP1 instructions. Host references only OBSERVE;
 // raw inputs,not precomputed q/k/gates,are supplied to the image.
 #define PIONEER_GRAPH_MATH_MACHINE_ONLY
-#define PIONEER_Q38_GDN_PREPARE_IMAGE 1
 #define PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
 #include "pioneer_graph_math_image_test.cpp"
+#ifndef PIONEER_Q38_GDN_PREPARE_MACHINE_ONLY
+#define PIONEER_Q38_GDN_PREPARE_IMAGE 1
 #include "../PioneerQ38GdnPrepare.h"
+#endif
 #include "../PioneerQ38DeltaVectorLayout.h"
 #include <array>
 namespace GL=PioneerQ38DeltaVectorLayout;
@@ -97,6 +99,7 @@ struct PrepareMachine:ScalarMachine {
  }
  void RefuseValue(unsigned i,uint32_t bits){input[i]=bits;memory[0x80000+i*4]=bits;assert(!Run() && !localWrites && memory.at(GL::Descriptor)==0);}
 };
+#ifndef PIONEER_Q38_GDN_PREPARE_MACHINE_ONLY
 static void HostMathAndPointers(){
  double maximum=0;
  for(int i=-131008;i<=131008;i++){
@@ -142,3 +145,4 @@ int main(int argc,char** argv){
  for(uint32_t bad:{0U,0x80000000U,0x3f800000U}){PrepareMachine m(argv[1],0);m.RefuseValue(322,bad);negatives++;}
  printf("PASS ACTUAL QGP1 RV32IMF local prep positives%u/refusals%u/maxSteps%u/maxStack%u;rawqk128/v64/alpha-beta-originalNEGATIVE_A-dtBias->QK/gates/existingRGDNlayout;noNoC/GDDR/PCI/CSR/reset/nativeownership/originalGGUF/card/speedclaim\n",positives,negatives,maxSteps,maxStack);
 }
+#endif
