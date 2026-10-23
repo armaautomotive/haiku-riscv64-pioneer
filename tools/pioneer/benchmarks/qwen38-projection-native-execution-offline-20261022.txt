@@ -132,8 +132,11 @@ fd90a8381194ef58d8708e3a863e22170c023ac20e0270d54d21ecc6f18b06a0
 ZERO remote writes/native jobs/install/reload/reboot/power/SD/Assistant/
 network/clock changes. Dirty llama.cpp/unrelated FlashNext remain untouched.
 
-NEXT:separate DEBUG numeric RMS+projection/actual original-GGUF and native
-card qualification BEFORE any install. Then on-card projection result
+NEXT:offline DEBUG numeric RMS+projection/actual original-GGUF validation,
+then a separately gated native qualification driver/client and controlled
+card tests BEFORE Work enablement. Do not install the current private
+compile-only object or promote it through an old held-only selector.
+Then on-card projection result
 stashes/genuine residual/GDN/attention/KV/sampling/whole-decoder scheduler,
 not a replayed first-layer embedding or CPU hidden-state fallback. Existing
 qualification still conservatively uses host control audits;do not call it

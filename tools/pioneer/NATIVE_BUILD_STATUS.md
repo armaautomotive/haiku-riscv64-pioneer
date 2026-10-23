@@ -24,8 +24,9 @@ TERMINAL0. SSH key works again;fresh October23 01:10UTC read-only status
 original041/tag12/gen46/idle/cold0/owner0/open1/guard1,ALL compute parents
 absent,64CPUs/max137034936320B. ZERO remote writes/native jobs/install/
 reload/reboot/power/SD/Assistant/network/clock changes. Still NO new public
-selector/linked driver or full decoder. NEXT separate numerical DEBUG
-RMS+projection/original-GGUF/card qualification BEFORE install;on-card
+selector/linked driver or full decoder. NEXT offline original-GGUF DEBUG
+numeric validation,then a separately gated native qualification driver/
+client and controlled card tests BEFORE Work enablement. On-card
 result stashes and actual residual/GDN/attention/KV/sampling/whole-decoder
 schedule remain owed. Do not replay first-layer input at later layers.
 Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE. Evidence:
