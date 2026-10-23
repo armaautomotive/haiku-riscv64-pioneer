@@ -10,9 +10,12 @@ import subprocess
 import sys
 import tempfile
 here = pathlib.Path(__file__).resolve().parent
+stashes = sys.argv[-1:] == ['--result-stashes']
+if stashes:
+    sys.argv.pop()
 if len(sys.argv) not in (6, 7) or (len(sys.argv) == 7 and sys.argv[6] not in ('--faults', '--wide')):
     raise SystemExit('expected QPR1 QFP3 ZERO QPE1 QRN1 [--faults|--wide]')
-pins = runpy.run_path(str(here.parent / 'generate_qwen38_projection_graph_images.py'))['PINS']
+pins = runpy.run_path(str(here.parent / ('generate_qwen38_projection_stash_images.py' if stashes else 'generate_qwen38_projection_graph_images.py')))['PINS']
 for name, (section, size, sha, _) in pins.items():
     root = pathlib.Path(sys.argv[1 if name.startswith('root-') else 2])
     data = (root / (section + '.bin')).read_bytes()
@@ -21,6 +24,8 @@ for name, (section, size, sha, _) in pins.items():
 source = (here / 'run_pioneer_q38_projection_graph_cooperative_tests.sh').read_text()
 flags = sorted(set(re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', source)))
 flags.remove('-DPIONEER_Q38_TEST_PROJECTION_FOOTPRINT')
+if stashes:
+    flags.append('-DPIONEER_Q38_PROJECTION_RESULT_STASH=1')
 with tempfile.TemporaryDirectory(prefix='pioneer-projection-execution-test-') as temporary:
     base = pathlib.Path(temporary)
     native = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()

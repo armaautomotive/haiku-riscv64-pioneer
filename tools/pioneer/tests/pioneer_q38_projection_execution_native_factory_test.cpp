@@ -134,11 +134,20 @@ int main(int argc,char** argv){
  if(fault>0 && fault!=9 && fault!=10)f.transport->Fault(unsigned(fault));
  if(fault==13){assert(!EndFactory(*f.c));f.Unknown();puts("PASS native projection unfinished END retains/inert");return 0;}
  auto originalInput=f.io.wholeWorkspace;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ std::vector<uint32> preserved(originalInput.begin()+TT_Q38_PROJECTION_RESULT_BASE/4,
+  originalInput.begin()+(TT_Q38_PROJECTION_RESULT_BASE+TT_Q38_PROJECTION_RESULT_BYTES)/4);
+#endif
  for(unsigned role:wide?std::vector<unsigned>{10,11,5,6}:std::vector<unsigned>{10,11}){
   printf("NATIVE_PROJECTION_ACTUAL_RUN_ROLE%u\n",role);bool okay=RunQ38ProjectionExecution(*f.c,role,f.projection);
   if(fault>=0 && fault<=12 && fault!=9 && fault!=10){assert(!okay);f.Unknown();printf("PASS native projection fault%d;ALL retained/no subsequent endpoint IO\n",fault);return 0;}
   if(!okay){fprintf(stderr,"NATIVE_RUN_FAILED phase%u worker%u word%u\n",f.projection.phase,f.projection.worker,f.projection.word);f.transport->Diagnostic();}
   assert(okay && f.transport->Boots()==119);f.transport->VerifyOutput();
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  unsigned at=(PioneerQ38ProjectionResultOffset(role)-TT_Q38_PROJECTION_RESULT_BASE)/4,rows=PioneerQ38ProjectionResultRows(role);
+  for(unsigned i=0;i<preserved.size();i++)if(i<at || i>=at+rows)assert(f.io.wholeWorkspace[TT_Q38_PROJECTION_RESULT_BASE/4+i]==preserved[i]);
+  for(unsigned i=0;i<rows;i++)preserved[at+i]=f.io.wholeWorkspace[TT_Q38_PROJECTION_RESULT_BASE/4+at+i];
+#endif
   for(unsigned i=0;i<5120;i++)assert(f.io.wholeWorkspace[i]==originalInput[i]);
  }
  if(fault==9)f.transport->Fault(1);if(fault==10)f.transport->Fault(10);
@@ -149,6 +158,10 @@ int main(int argc,char** argv){
   && f.projection.stopped==119 && f.projection.held==119 && f.projection.memory.restoredWords==8134072
   && f.projection.memory.verifiedOriginalWords==16268144 && !f.c->dispatchOwnerRetained && !sColdRecoveryRequired);
  assert(f.c->q38Dispatch->closed && sameModel->Closed() && !f.c->Unsafe());
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ for(unsigned i=0;i<preserved.size();i++)assert(f.io.wholeWorkspace[TT_Q38_PROJECTION_RESULT_BASE/4+i]==preserved[i]);
+ puts("PASS QPS1 native factories preserve ALL earlier results/future slots/padding across roles and actual native END;SIMULATED HARDWARE ONLY");
+#endif
  printf("PASS SAME native context source->zero2MiB->QPE1->QRN1->actual ALL120 native preparation/maps/scope/factory->QPR1+ALL119QFP3:projections%u/matrices%u/producers%u/boots%u/full restore/actual complete dispatch END;Work controller NO CPU numeric input/reference/fallback;SIMULATED_HARDWARE_NOT_CARD_SPEED\n",
   wide?4U:2U,f.transport->Matrices(),f.transport->Producers(),f.transport->Boots());
 }

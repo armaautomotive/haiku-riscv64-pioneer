@@ -16,7 +16,11 @@ block_done:
 	sw t1,0(t0)
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_PROJECTION_GRAPH_ROOT
+.ifdef TT_Q38_PROJECTION_RESULT_STASH
+	li t1,0x31535051 /* QPS1:separate fixed resident projection results */
+.else
 	li t1,0x31525051 /* QPR1:NEW complete resident-input projection */
+.endif
 .else
 .ifdef TT_Q38_FFN_GRAPH_ROOT
 .ifdef TT_Q38_FFN_GRAPH_INPUT_ROOT
@@ -69,7 +73,11 @@ block_fault_park:
 	li t0,0x17ffc8
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_PROJECTION_GRAPH_ROOT
+.ifdef TT_Q38_PROJECTION_RESULT_STASH
+	li t1,0x46535051 /* QPSF:UNKNOWN,NO later IO/cleanup */
+.else
 	li t1,0x46525051 /* QPRF:UNKNOWN,no later IO/cleanup */
+.endif
 .else
 .ifdef TT_Q38_FFN_GRAPH_ROOT
 	li t1,0x46474651 /* QFGF:terminal UNKNOWN,NO cleanup authority */

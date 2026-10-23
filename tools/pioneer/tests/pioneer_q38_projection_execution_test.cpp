@@ -6,6 +6,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphOwner.h"
 #include "pioneer_q38_projection_execution_producer.h"
 #include "pioneer_q38_projection_execution_machine.h"
+#include "pioneer_q38_projection_stash_observer.h"
 struct ExecutionIO:ProjectionMemoryIO,ProjectionExecutionFabric {
  ProjectionExecutionProducer* producer=nullptr;
  PioneerQ38ProjectionGraphOwner* expectedOwner=nullptr;PioneerQ38ProjectionGraphMemory* expectedMemory=nullptr;
@@ -102,15 +103,40 @@ int main(int argc,char** argv){
  const auto& part=*model.plan.ProjectionStripe(0,10,0);unsigned page=part.bank*unsigned(model.plan.Capacity/4096)+part.offset/4096;
  auto* ledger=const_cast<uint8_t*>(producer.Ledger());assert(ledger[page]==1);ledger[page]=0;pristineRefuse();ledger[page]=1;
  printf("PROJECTION_EXECUTION_PRECONDITION_REFUSALS%u no I/O/claims\n",refusals);
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ unsigned produced=0,proofChecks=0;
+ auto checkProof=[&](bool closed=false){
+  unsigned n=io.touches;
+  for(unsigned role:{10U,11U,5U,6U,0U,2U,4U,13U,UINT32_MAX}){
+   unsigned slot=PioneerQ38ProjectionResultSlot(role);
+   bool expected=!closed && slot<4 && bool(produced&(1U<<slot));
+   assert(PioneerQ38ResidentDecoderOwner::Completed(*owner,model.graph,model.plan,model.identity,model.token,model.position,model.bank,role)==expected);
+   assert(!PioneerQ38ResidentDecoderOwner::Completed(*owner,model.graph,*planCopy,model.identity,model.token,model.position,model.bank,role));
+   assert(!PioneerQ38ResidentDecoderOwner::Completed(*owner,model.graph,model.plan,otherId,model.token,model.position,model.bank,role));
+   assert(!PioneerQ38ResidentDecoderOwner::Completed(*owner,model.graph,model.plan,model.identity,model.token^1,model.position,model.bank,role));
+   assert(!PioneerQ38ResidentDecoderOwner::Completed(*owner,model.graph,model.plan,model.identity,model.token,model.position^1,model.bank,role));
+   assert(!PioneerQ38ResidentDecoderOwner::Completed(*owner,model.graph,model.plan,model.identity,model.token,model.position,(model.bank+1)%7,role));
+   proofChecks+=6;
+  }
+  assert(io.touches==n);
+ };
+ checkProof();
+#endif
  puts("PROJECTION_EXECUTION_PREPARE_ACTUAL_PRIVATE_RMS_PRODUCER");
  assert(owner->Prepare(io,producer.Proof(),producer.Banks(),*cohort,*memory,model.graph,model.plan,model.rms,model.identity,
   producer.Ledger(),PioneerResidentBanks::Pages,model.token,model.position,model.bank,10,result));
  assert(io.boots==119 && result.memory.savedWords==8134072 && result.memory.installedWords==989304 && !result.memory.restoredWords);
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ checkProof();
+#endif
  unsigned touched=io.touches;assert(!memory->CloseHeldNoLaunch(io,result.memory) && io.touches==touched); // no held-only promotion
  auto unknown=[&](){
   assert(owner->Unsafe() && !owner->Ready() && !owner->Closed() && memory->Unsafe() && !memory->Closed() && model.graph.Unsafe()
    && producer.Banks().Quarantined() && cohort->unsafe && io.quarantined && io.retainedExecution && !producer.Valid());
   unsigned n=io.touches,reads=io.reads,writes=io.writes;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  checkProof(true);
+#endif
   assert(!owner->Run(io,10,result) && !owner->Close(io,result) && !memory->CloseHeldNoLaunch(io,result.memory)
    && io.touches==n && io.reads==reads && io.writes==writes);
   printf("PASS projection execution fault%d ALL retained,NO subsequent I/O/STOP/END/restore\n",fault);
@@ -122,14 +148,29 @@ int main(int argc,char** argv){
   assert(!owner->Run(io,10,result) && !result.rootHolds && !result.memory.restoredWords);unknown();return 0;
  }
  auto input=producer.DeviceWords();std::array<uint32_t,48> first={};
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ (void)first;
+ std::vector<uint32_t> preserved(input.begin()+TT_Q38_PROJECTION_RESULT_BASE/4,
+  input.begin()+(TT_Q38_PROJECTION_RESULT_BASE+TT_Q38_PROJECTION_RESULT_BYTES)/4);
+#endif
  std::vector<unsigned> roles={10,11};if(wide){roles.push_back(5);roles.push_back(6);}
  for(unsigned role:roles){
   printf("PROJECTION_EXECUTION_RUN_ROLE%u\n",role);
   bool okay=owner->Run(io,role,result);
   if(!okay){fprintf(stderr,"PROJECTION_EXECUTION_FAIL phase%u worker%u word%u roots%u;captured CPU state only\n",result.phase,result.worker,result.word,result.rootStarts);io.machine->Diagnostic();}
   assert(okay && io.boots==119 && owner->Ready() && !result.memory.restoredWords);io.machine->VerifyOutput();
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  unsigned at=(PioneerQ38ProjectionResultOffset(role)-TT_Q38_PROJECTION_RESULT_BASE)/4,rows=PioneerQ38ProjectionResultRows(role);
+  // New slot alone may change. ALL prior/future slots and every padding
+  // word must survive actual emitted packets;never copy refs TO device.
+  for(unsigned i=0;i<preserved.size();i++)if(i<at || i>=at+rows)
+   assert(producer.DeviceWords()[TT_Q38_PROJECTION_RESULT_BASE/4+i]==preserved[i]);
+  for(unsigned i=0;i<rows;i++)preserved[at+i]=producer.DeviceWords()[TT_Q38_PROJECTION_RESULT_BASE/4+at+i];
+  produced|=1U<<PioneerQ38ProjectionResultSlot(role);checkProof();
+#else
   if(role==10)for(unsigned i=0;i<48;i++)first[i]=producer.DeviceWords()[TT_Q38_PROJECTION_OUTPUT_OFFSET/4+i];
   else if(role==11){bool changed=false;for(unsigned i=0;i<48;i++)changed|=first[i]!=producer.DeviceWords()[TT_Q38_PROJECTION_OUTPUT_OFFSET/4+i];assert(changed);}
+#endif
   for(unsigned i=0;i<5120;i++)assert(producer.DeviceWords()[i]==input[i]);
  }
  if(fault==9)io.receiptFault=56;
@@ -137,6 +178,11 @@ int main(int argc,char** argv){
  puts("PROJECTION_EXECUTION_STOP_RESTORE");bool closed=owner->Close(io,result);
  if(fault>=9){assert(!closed);unknown();return 0;}
  assert(closed && owner->Closed() && memory->Closed());
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ checkProof(true);
+ for(unsigned i=0;i<preserved.size();i++)assert(producer.DeviceWords()[TT_Q38_PROJECTION_RESULT_BASE/4+i]==preserved[i]);
+ printf("PASS QPS1 fixed distinct result stashes/ALL%u private identity-bound proof checks/no fabricated ready proof/18432words including untouched padding preserved after ALL later roles and complete restore;NOT_NATIVE_OR_SPEED\n",proofChecks);
+#endif
  assert(result.stopped==119 && result.held==119 && result.memory.restoredWords==8134072 && result.memory.verifiedOriginalWords==16268144
   && io.boots==119 && io.starts==roles.size()+1 && io.machine->Matrices()==(wide?244U:6U) && io.machine->Producers()==(wide?80U:40U)
   && io.machine->Stops()==119 && io.data==original);

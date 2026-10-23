@@ -114,13 +114,17 @@ int main(int argc,char** argv){
   for(unsigned role:{10U,11U,5U,6U}){
    printf("ACTUAL_MODEL_TOKEN%u_NATIVE_PROJECTION_ROLE%u\n",token,role);
    assert(RunQ38ProjectionExecution(*f.c,role,f.projection));f.transport->VerifyOutput();
-   const auto* output=f.io.wholeWorkspace.data()+TT_Q38_PROJECTION_OUTPUT_OFFSET/4;
+   const auto* output=f.io.wholeWorkspace.data()+PioneerQ38ProjectionOutputOffset(0,role)/4;
    // Independently reads ORIGINAL packed GGUF rows,not tiled callback data.
    bool matches=weights.Validate(role,output);
    if(!matches)fprintf(stderr,"STOP_ACTUAL_MODEL_NUMERIC_MISMATCH token%u role%u;NO subsequent native I/O/END/restore\n",token,role);
    assert(matches && weights.Ready());
    for(unsigned i=0;i<5120;i++)assert(f.io.wholeWorkspace[i]==weights.normalizedReference[i]);
   }
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  for(unsigned role:{10U,11U,5U,6U})assert(weights.Validate(role,f.io.wholeWorkspace.data()+PioneerQ38ProjectionResultOffset(role)/4));
+  puts("PASS ALL16480 ORIGINAL reference words STILL BIT-EXACT simultaneously AFTER four actual QPS1 projections;NO host numeric device writes");
+#endif
   assert(weights.tileReads-before==164800 && CloseQ38ProjectionExecution(*f.c,f.projection) && EndFactory(*f.c)
    && f.c->q38Dispatch->closed && !f.c->Unsafe() && original.Ready()
    && f.projection.memory.restoredWords==8134072 && f.projection.memory.verifiedOriginalWords==16268144);

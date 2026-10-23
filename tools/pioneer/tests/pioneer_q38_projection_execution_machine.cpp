@@ -153,7 +153,7 @@ unsigned ProjectionExecutionMachine::Stops()const{return implementation->stops;}
 void ProjectionExecutionMachine::VerifyOutput(){
  auto& d=*implementation;assert(d.root->pc==TT_Q38_DISPATCH_PARK);const auto* m=d.root->fixture.graph->Manifest();
  if(m[5]==2){for(unsigned w=1;w<120;w++)assert(d.peer[w]->pc==TT_Q38_PEER_STOP);return;}
- for(unsigned row=0;row<m[45];row++)assert(d.fabric.Gddr().at(TT_Q38_PROJECTION_OUTPUT_OFFSET/4+row)==d.root->expected[row]);
+ for(unsigned row=0;row<m[45];row++)assert(d.fabric.Gddr().at(PioneerQ38ProjectionOutputOffset(m[42],m[43])/4+row)==d.root->expected[row]);
 }
 void ProjectionExecutionMachine::Diagnostic()const{
  const auto& p=*implementation->root;

@@ -1,0 +1,148 @@
+Qwen3.8-27B fixed resident projection results
+October22 Pacific / October23 UTC2026
+
+PROGRESS,not full decoder/card qualification or token-rate evidence.
+Whole-model last measured0.207893161tok/s UNCHANGED;20tok/s UNMET.
+Physical native learned RMS token0 was qualified in the preceding
+qwen38-learned-rms-debug-20261022.txt checkpoint;regular041 restored.
+
+ACTUAL DEVICE PROGRAM CHANGE
+Separately opted-in QPS1/QPSF ROOT,not the old QPR1/QPRF path.
+ --result-stashes to build_qwen38_projection_graph_image.sh ONLY.
+ PIONEER_Q38_PROJECTION_RESULT_STASH=1 for the private execution owner.
+No native selector,installable new role,Work promotion or readback added.
+
+Old first-layer roles10/11/5/6 all overwrote offset1048576. New ROOT
+StageMatrix writes its actual d[10] destination directly per fixed role:
+ role10:offset1048576,48F32;role11:offset1052672,48F32;
+ role5:offset1056768,6144F32;role6:offset1081344,10240F32.
+All16480 values now coexist,without an additional vector copy,packet or
+CPU numeric input/reference/fallback. Four padded spans occupy73728B
+(18432words),inside the existing actually zero-initialized2MiB prefix.
+No larger GDDR/L1 mapping,code window or snapshot grant. This does NOT
+remove existing host orchestration between the four complete projections.
+
+Only layer0/four roles accepted:the actual private input producer is the
+first learned RMS of the embedding. Do not fake later-layer inputs with
+embedding vectors or promote a source/shape/input-epoch flag into proof.
+Canonical ALL-model geometry remains intact for all851 original tensors.
+
+Private produced-slot mask is set ONLY after actual full receipt,ALL119
+independent peer waits and physical ROOT hold. Exact original graph/plan/
+identity/token/position/bank/reservation are bound. No public setter or
+caller-ready hint. Proof disappears on failure/Fault/Close and is unusable
+while ROOT runs. This necessary producer proof is NOT by itself permission
+for I/O;future consumer still owes exclusive real native source/code/clock/
+host/cohort lifetime and initialized recurrent-state ownership.
+
+FROZEN BYTES / REPEAT BUILDS
+ROOT C/D independently rebuilt in read-only SDK,byte-identical:
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text7496B 7cc31b9383843f40e5521747120c1e43386f341cb6a19a6c82ce21100efcf82b
+ prefix6564B 650e195c24403bc1d816d1c3a180db65a683911f5a52671c20f575f09e92f0ae
+ graph15640B 650c27791b198807f3e020cae6d25546c794fceda35912a1db42f5730c4f895a
+ALL119 QFP3 peer sections unchanged. Complete six-section/BOTH-boot
+generator validates everything BEFORE any patch;three new frozen headers
+applied with apply_patch. No arbitrary image catalog or auto-registration.
+
+Macro-OFF old QPR1 independently rebuilt BYTE-IDENTICAL7812/6508/16192B
+and old frozen hashesc623cad5/cfb512c2/13992bf9. Actual complete native
+execution/RMS object remains EXACT2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35.
+Old tag38 driver/reloadguard/default43 controls remain23e2e68a/d1ce2aa4/
+2df0e0f8 EXACT. New compile-only object6121b065785fb8732f3a00770e299903663fb600baf13e385c97ac78d543de72.
+No new linked/installable driver from the full native compile fixture.
+
+COMPLETED LOCAL TESTS (ASan/UBSan/Werror,NO PHYSICAL CARD EXECUTION)
+ - Four real emitted projections/244matrices/80input producers/119boots
+   once,ALL18432span words/prior results/future slots/padding preserved
+   across later roles and full restore.378private proof checks;14inert
+   precondition refusals. ALL8134072 originals restored and16268144
+   independently verified ONLY after STOP/ALL119physical terminals.
+ -13actual owner fault paths PASS,retained/inert,no subsequent I/O/STOP/
+   END/restore/retry. Includes source/code/counter/clock/receipt/restore.
+ - SAME actual native context/factories/mapping/source/zero/QPE1/QRN1/
+   ALL120preparation/four QPS1 roles/complete actual native dispatch END
+   PASS:16missing-page/71initial-scope/93live-scope/31public-result
+   refusals,119boots once,4roles/244matrices/80producers;all slots survive.
+   ONLY hardware/clock/learned bytes simulated in this bounded test.
+ - Fixed layout56supported RUN+STOP bank shapes/7588wrong-layer/role/
+   marker refusals PASS. Full canonical geometry retained.
+ - Complete frozen generator251mutation/refusal cases PASS.
+ - Complete catalog989304code/8134072snapshot words/2970933refusals PASS,
+   actual saved bytes/zero padding/windows/stacks/manifest/shadow.
+   RISC-V catalog frame16B;owner template max880B.
+ - Actual full native driver/context/owner/source/END compile PASS;
+   max new projection-related frame688B,controller512B. Existing unrelated
+   legacy ioctl/DRAM-probe frames3136/2560B remain no larger than the
+   BYTE-IDENTICAL macro-OFF control;not reported as new small frames.
+ -138new before-SDK/driver-role isolation gates PASS;old execution104+
+   parent-image105+memory50+RMS DEBUG219gates PASS. Old builders reject
+   inherited stash flags;separate physical-qualified RMS role preserved.
+
+COMPLETED ORIGINAL MODEL / FAULT / LEGACY REGRESSIONS
+ Original model extremes:exec3998 TERMINAL0,log
+ /private/tmp/pioneer-q38-stash-original-model-20261022-a.log
+ Full SAME-file c600SHA/ALL851tensors PASS before simulated context.
+ Tokens0/15/248319,workspaces0/6:actual QPE1/QRN1/four QPS1 projections
+ ALL16480 simultaneous words per case BIT-EXACT to independent ORIGINAL
+ GGUF references,full restore/actual native END PASS. Totals12projections/
+ 732matrices/240input producers/49440projection outputs;30720normalized+
+ raw residual checks.119boots ONCE per context. Learned94949376B remain
+ original tiled bytes;no CPU products written to device vectors.
+ LogSHA1f61b567869cf37b225641c778112be405f3dffd1c43c061e35cf077ff6857c7.
+ New native-factory20fault suite:exec39432 TERMINAL0,ALL20PASS,
+ /private/tmp/pioneer-q38-stash-native-faults-20261022-a.log
+ LogSHA4b403e9a696fee371fe886a8da4b6e3030bbf2bacfb267aa53e000d7f33ce826.
+ Macro-OFF native-wide regression:exec63078 TERMINAL0,PASS4projections/
+ 244matrices/80producers/119boots once/complete native restore/END,
+ /private/tmp/pioneer-q38-stash-old-native-wide-20261022-a.log
+ LogSHAeb6317bb726bac7ee8b9e4732534a6bc1859a2d718c9e57c6b83932ce72b7ceb.
+ All native numerical hardware endpoints SIMULATED;not physical-card
+ qualification. All listed test/build parents now TERMINAL0,no live job.
+ No dependencies edited while any runner could still compile/read them.
+
+LIVE PIONEER
+Fresh read-only SSH succeeds:HaikuR1~beta6+development,64CPUs,
+max137034936320B/free133737271296B at health check. User confirms desktop
+responds. No new native GPU job,driver install,Assistant/model/NIC/boot
+change,reboot/relay/PSU/SD action. Previous native restore041/tag12/gen3/
+cold0/owner0 preserved;no new card throughput claim.
+
+NEXT
+Push exact scoped checkpoint,then separate real native complete-projection
+DEBUG qualification using
+original model/reference BEFORE FD,fixed result spans and actual retained
+owner AFTER STOP/ALL119 terminals+holds BEFORE restoring original ROOT.
+UNKNOWN/numeric mismatch -> CLOSE ONLY,physical recovery before any later
+I/O/END/reset/restore/retry/hot swap. No generic outside readback facade.
+Then real resident state consumer:convolution/gates/QK normalization,
+96half-head GDN state jobs,gated normalization/output projection/residual,
+FFN,full attention/KV,remaining layers,sampling and whole-decoder on-card
+schedule. These remain OWED,including host-orchestration removal.
+Keep64CPUs/fullRAM/Assistant and fixed top-page7 SD-free boot intact.
+
+LOGS
+ /private/tmp/pioneer-q38-projection-stash-image-build-20261022-c.log
+ /private/tmp/pioneer-q38-projection-stash-image-build-20261022-d.log
+ /private/tmp/pioneer-q38-projection-stash-control-build-20261022-a.log
+ /private/tmp/pioneer-q38-stash-owner-wide-20261022-a.log
+ /private/tmp/pioneer-q38-stash-owner-faults-20261022-a.log
+ /private/tmp/pioneer-q38-stash-native-wide-20261022-a.log
+ /private/tmp/pioneer-q38-result-layout-20261022-a.log
+ /private/tmp/pioneer-q38-stash-generator-20261022-a.log
+ /private/tmp/pioneer-q38-stash-catalog-20261022-a.log
+ /private/tmp/pioneer-q38-stash-old-catalog-20261022-a.log
+ /private/tmp/pioneer-q38-stash-template-compile-20261022-a.log
+ /private/tmp/pioneer-q38-stash-full-compile-20261022-b.log
+ /private/tmp/pioneer-q38-stash-old-execution-gates-20261022-a.log
+ /private/tmp/pioneer-q38-stash-old-image-gates-20261022-b.log
+ /private/tmp/pioneer-q38-stash-old-memory-gates-20261022-a.log
+ /private/tmp/pioneer-q38-stash-old-rms-debug-gates-20261022-a.log
+
+Preserved failed local diagnostics:initial image A/B compiler diagnostics
+were corrected before C/D freeze. FullcompileA audit initially applied a
+2KiB limit to unrelated existing legacy frames;B now checks EVERY oversized
+frame against exact control and enforces2KiB for all new frames. Initial
+oldimage-gatesA used historical old-matrix-control3 instead of current
+frozen matrix-h;correct pinned control B PASS. No device test was involved.
+Dirty llama.cpp and unrelated FlashNext work untouched/read/build excluded.

@@ -31,16 +31,29 @@ class PioneerQ38ProjectionGraphOwner {
  PioneerQ38ProjectionJobs jobs;PioneerQ38ProjectionGraphPlan operation;
  uint32_t command[120][10]={},counts[120][8]={},resets[120]={},sequence[119]={},sources[119][16]={};
  bool running[120]={},started=false,ready=false,unsafe=false,closed=false,traffic=false,verified=false,output=false;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ // Private device-produced slots ONLY. Set after the real receipt/ALL119
+ // physical waits/ROOT hold,never from public result words or a caller hint.
+ unsigned produced=0;
+#endif
  static unsigned Route(unsigned w){return PioneerWorkerX(w)|(PioneerWorkerY(w)<<6);}
  static bool Role(unsigned r){return r==5 || r==6 || r==10 || r==11;}
  bool MatchesCompleted(const PioneerQ38ProjectionMutableBanks& owner,const PioneerQ38CanonicalModelPlan& plan,
   const PioneerQ38ProjectionIdentity& id,unsigned selectedToken,unsigned selectedPosition,unsigned selectedBank,unsigned selectedRole)const{
   return Ready() && output && !running[0] && graph==&owner && canonical==&plan && identity==id
-   && token==selectedToken && position==selectedPosition && bank==selectedBank && role==selectedRole
+   && token==selectedToken && position==selectedPosition && bank==selectedBank
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+   && PioneerQ38ProjectionResultSlot(selectedRole)<4 && (produced&(1U<<PioneerQ38ProjectionResultSlot(selectedRole)))
+#else
+   && role==selectedRole
+#endif
    && state && state->OwnsExecution(id,this,input); // private resident-output proof,NOT CPU metadata authority
  }
  template<class IO> bool Fail(IO& io,PioneerQ38ProjectionGraphResult& r){
   unsafe=true;ready=output=false;r.unsafe=1;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  produced=0;
+#endif
   if(memory)memory->Fault();
   if(graph)graph->Fault();
   if(banks && cohort)PioneerQ38DispatchQuarantine(*cohort,*banks);
@@ -196,7 +209,11 @@ public:
  PioneerQ38ProjectionGraphOwner& operator=(const PioneerQ38ProjectionGraphOwner&)=delete;
  bool Ready()const{return ready && !unsafe && !closed;}bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
  bool Claimed()const{return started;} // metadata ONLY,not an execution grant
- void Fault(){unsafe=true;ready=output=false;} // MEMORY ONLY
+ void Fault(){unsafe=true;ready=output=false;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  produced=0;
+#endif
+ } // MEMORY ONLY
  bool MatchesNativeOwner(const tt_dram_samples_result& dram,const PioneerResidentBanks& resident,const PioneerQ38DispatchLease& participants,
   const PioneerQ38ProjectionGraphMemory& code,const PioneerQ38ProjectionMutableBanks& mutableOwner,const PioneerQ38CanonicalModelPlan& plan,
   const PioneerQ38LearnedRmsController& producer,const PioneerQ38ProjectionIdentity& id,const uint8_t* initialized,unsigned count)const{
@@ -272,11 +289,18 @@ public:
   if(!Scope(io))return Fail(io,r);
   if(!Manifest(selected,false))return false; // configuration refused before device IO
   output=false;if(!Execute(io,false,r))return false;
-  role=selected;output=true;r.runs++;return true;
+  role=selected;output=true;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  produced|=1U<<PioneerQ38ProjectionResultSlot(selected);
+#endif
+  r.runs++;return true;
  }
  template<class IO> bool Close(IO& io,PioneerQ38ProjectionGraphResult& r){
   if(!Ready() || running[0] || !r.prepared || r.closed || r.unsafe)return false;
   if(!Scope(io) || !Manifest(role,true))return Fail(io,r);
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+  produced=0; // no consumable result once shutdown/restore starts
+#endif
   output=false;if(!Execute(io,true,r))return false;r.phase=8;
   for(unsigned w=1;w<120;w++){r.worker=w;if(!Guard(io,w) || !Image(io,w) || !PeerFrame(io,w) || Peer(io,w,true)!=1)return Fail(io,r);
    resets[w]=0x87ffff;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);

@@ -8,7 +8,10 @@ import sys
 import tempfile
 
 directory = pathlib.Path(__file__).resolve().parent.parent
-generator = directory / 'generate_qwen38_projection_graph_images.py'
+stashes = sys.argv[-1:] == ['--result-stashes']
+if stashes:
+    sys.argv.pop()
+generator = directory / ('generate_qwen38_projection_stash_images.py' if stashes else 'generate_qwen38_projection_graph_images.py')
 spec = importlib.util.spec_from_file_location('qpr_generator', generator)
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)

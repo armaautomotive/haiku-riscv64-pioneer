@@ -177,7 +177,7 @@ struct ArithmeticParent:ProjectionParentMachine {
   if(fixture.stop)assert(stopJobs==119 && !producerJobs && !matrixJobs && !outputWrites);
   else{
    assert(producerJobs==m[44]/256 && matrixJobs==m[12] && lineReads==m[44]/256 && scaleWrites==1 && scaleReads==m[7]);
-   for(unsigned row=0;row<m[45];row++)assert(outputCover[row]==1 && gddr.at(TT_Q38_PROJECTION_OUTPUT_OFFSET/4+row)==expected[row]);
+   for(unsigned row=0;row<m[45];row++)assert(outputCover[row]==1 && gddr.at(PioneerQ38ProjectionOutputOffset(m[42],m[43])/4+row)==expected[row]);
   }
   assert(memory.at(TT_Q38_PROJECTION_GRAPH_STATS+56*4)==1);runs++;
  }

@@ -2,6 +2,12 @@
 #ifndef PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H
 #define PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H
 #include "PioneerQ38ProjectionGatherShape.h"
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+#if PIONEER_Q38_PROJECTION_RESULT_STASH != 1
+#error Exact separate on-card projection result layout required
+#endif
+#include "PioneerQ38ProjectionResultLayout.h"
+#endif
 // NEW per-wave ROOT DATA,not an execution capability. The full canonical
 // kernel Jobs owner MUST bind every learned part and ALL waves plus actual
 // producer/source/ledger/sequence/code owners BEFORE this helper may run.
@@ -11,6 +17,13 @@ enum {TT_Q38_PROJECTION_MATRIX_MARKER=0x314d5051,TT_Q38_PROJECTION_MATRIX_FAULT=
  TT_Q38_PROJECTION_MATRIX_FRAME=0x7f900,TT_Q38_PROJECTION_MATRIX_ROWS=0x7fa00,
  TT_Q38_PROJECTION_MATRIX_INPUT=4,TT_Q38_PROJECTION_OUTPUT_OFFSET=1048576,
  TT_Q38_PROJECTION_MATRIX_SHADOW=0x7fc00,TT_Q38_PROJECTION_ROWS_SHADOW=0x7fd00};
+static inline uint32_t PioneerQ38ProjectionOutputOffset(unsigned layer,unsigned role){
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ return layer?~uint32_t(0):PioneerQ38ProjectionResultOffset(role);
+#else
+ (void)layer;(void)role;return TT_Q38_PROJECTION_OUTPUT_OFFSET;
+#endif
+}
 static inline unsigned PioneerQ38ProjectionJobCount(unsigned rows){
  // Exact fixed public model shapes,independently checked against the
  // canonical heap scheduler. No generic division in device instructions.
@@ -20,13 +33,16 @@ static inline unsigned PioneerQ38ProjectionJobCount(unsigned rows){
 static inline bool PioneerQ38ProjectionMatrixShape(const uint32_t* d,const uint32_t* h,const uint32_t* banks,
  const uint32_t parts[119][8],const uint32_t* first){
  if(!d || !h || !banks || !parts || !first)return false;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ if(d[42] || !PioneerQ38ProjectionResultRows(d[43]))return false; // current actual RMS producer is layer0 ONLY
+#endif
  unsigned type=0,k=0,n=0;
  if(!PioneerQ38ProjectionGeometry(d[42],d[43],type,k,n))return false;
  unsigned jobs=PioneerQ38ProjectionJobCount(n),waves=jobs==973?9:1;
  if(d[0]!=TT_Q38_PROJECTION_MATRIX_MARKER || d[1]!=1 || d[2]!=67108864 || d[3]>=7
   || (d[4]&4095) || d[4]<0x04000000 || d[4]>0xc0000000 || d[5]>=waves
   || !d[6] || d[6]>=0x7fffffff || d[7]!=(jobs-d[5]*119<119?jobs-d[5]*119:119)
-  || d[8]!=PioneerQ38ProjectionRoute(d[3]) || d[9]!=129 || d[10]!=TT_Q38_PROJECTION_OUTPUT_OFFSET
+  || d[8]!=PioneerQ38ProjectionRoute(d[3]) || d[9]!=129 || d[10]!=PioneerQ38ProjectionOutputOffset(d[42],d[43])
   || d[11]!=n || !d[12] || d[12]>119*1024 || (d[12]&63) || d[13]!=TT_Q38_PROJECTION_MATRIX_ROWS
   || d[14]!=k || d[15]!=type || !d[16] || d[44]!=jobs || d[45]!=waves
   || h[0]!=TT_Q38_PROJECTION_MATRIX_MARKER || h[1]!=1 || h[2]!=1 || h[3]!=type || h[4]!=k

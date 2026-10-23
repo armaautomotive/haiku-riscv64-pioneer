@@ -156,7 +156,7 @@ static PARENT_FN unsigned StageMatrix(unsigned wave,unsigned phase){
   Words(TT_Q38_PROJECTION_MATRIX_ROWS)[w]=w<active?r[3]:0;if(w<active)bytes+=r[2]*64;
  }
  uint32_t d[64];Clear(d,64);d[0]=TT_Q38_PROJECTION_MATRIX_MARKER;d[1]=1;d[2]=67108864;d[3]=m[3];d[4]=m[4];d[5]=wave;d[6]=phase;
- d[7]=active;d[8]=m[8];d[9]=129;d[10]=TT_Q38_PROJECTION_OUTPUT_OFFSET;d[11]=m[45];d[12]=bytes;d[13]=TT_Q38_PROJECTION_MATRIX_ROWS;
+ d[7]=active;d[8]=m[8];d[9]=129;d[10]=PioneerQ38ProjectionOutputOffset(m[42],m[43]);d[11]=m[45];d[12]=bytes;d[13]=TT_Q38_PROJECTION_MATRIX_ROWS;
  d[14]=m[44];d[15]=m[48];for(unsigned i=16;i<44;i++)d[i]=m[i];d[44]=m[12];d[45]=m[7];
  for(unsigned i=0;i<64;i++)Words(TT_Q38_PROJECTION_MATRIX_FRAME)[i]=d[i];
  for(unsigned b=0;b<8;b++)Words(0x74040)[b]=b<7?PioneerQ38ProjectionRoute(b):0;

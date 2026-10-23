@@ -1,5 +1,40 @@
 # Native build status
 
+Latest October23 UTC2026:actual separate on-card projection result stashes
+IMPLEMENTED/locally qualified,NOT native GPU qualification or speedup.
+New QPS1 ROOT writes roles10/11/5/6 directly to four fixed disjoint GDDR
+slots;ALL16480 outputs survive later roles,inside existing initialized2MiB.
+No extra vector copy/packet/CPU numeric reference/fallback. Private produced
+mask set ONLY after actual receipt/ALL119 waits/ROOT hold;exact identity/
+token/position/bank/plan/reservation,cleared on fault/close. Layer0 ONLY;
+canonical ALL851-tensor geometry intact. Existing host orchestration still
+owed;no native selector/new installed driver/Work promotion added.
+
+ASan/UBSan actual native factory/scope/complete-END instruction tests:
+full SAME c600GGUF SHA before simulated context,original packed weights,
+tokens0/15/248319/workspaces0/6 ->ALL49440 projection outputs+30720 norm/
+raw checks BIT-EXACT;all four results remain simultaneously correct after
+last projection.12projections/732matrices/240producers;119boots ONCE per
+context/full8134072-word original restore/16268144 verified/actual END.
+Hardware SIMULATED. New owner4-role/privateproof378+13faults PASS;
+native factorywide71/93scope+31public+16missing-page refusals/20faults PASS.
+Layout56/7588,generator251,catalog2970933,newgates138+old104/105/50/219
+PASS. ALL listed test/build parents TERMINAL0;no native GPU job or local
+test still alive. Fresh SSH Haiku64CPUs/max137034936320B;regular041/
+tag12/gen3 from preceding clean restore retained. No reboot/relay/SD/
+Assistant/model/NIC/boot change,dirty llama/FlashNext untouched.
+
+New ROOT C/D frozen byte-identical7496/6564/15640B;all peer sections
+unchanged. Old QPR1 images EXACT,actual native macro-OFF2d127c1e object
+EXACT;oldtag38/guard/default43 controls EXACT23e/d1ce/2df. New full actual
+driver/context compile-only6121b065;projection maxframe688/controller512,
+all oversized unrelated legacy frames no larger than exact control.
+NEXT isolated native complete projection qualification,then real resident
+convolution/gates/GDN/state consumer,residual/full attention/KV/FFN/sampling/
+remaining-layer on-card schedule. Still OWED,including host-roundtrip
+removal. Whole27B0.207893161tok/s UNCHANGED;20UNMET;goal ACTIVE/turn
+PROGRESS. Evidence:benchmarks/qwen38-projection-result-stashes-20261022.txt.
+
 Latest October23 UTC2026:PHYSICAL P100A learned RMS token0 PASS.
 SAME full public GGUF SHA before FD;actual native zero/QPE1/QRN1+10fixed
 poisoned GDDR readbacks ->ALL5120normalized+5120raw residual words BIT-

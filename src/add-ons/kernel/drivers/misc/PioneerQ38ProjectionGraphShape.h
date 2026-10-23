@@ -6,7 +6,12 @@
 // learned/source/initialized/input-producer/code/sequence/owner authority.
 // Resident F32 input is ALREADY at workspace0 before entry. This marker,
 // input epoch or shape does NOT make a caller a valid GDDR producer.
-enum {TT_Q38_PROJECTION_GRAPH_MARKER=0x31525051,TT_Q38_PROJECTION_GRAPH_FAULT=0x46525051,
+enum {
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ TT_Q38_PROJECTION_GRAPH_MARKER=0x31535051,TT_Q38_PROJECTION_GRAPH_FAULT=0x46535051, // QPS1/QPSF,NOT old QPR1
+#else
+ TT_Q38_PROJECTION_GRAPH_MARKER=0x31525051,TT_Q38_PROJECTION_GRAPH_FAULT=0x46525051,
+#endif
  TT_Q38_PROJECTION_GRAPH_VERSION=1,TT_Q38_PROJECTION_GRAPH_MANIFEST=0xb0000,
  TT_Q38_PROJECTION_GRAPH_SHADOW=0xc0000,TT_Q38_PROJECTION_GRAPH_RECORD=192,
  TT_Q38_PROJECTION_GRAPH_MAX_JOBS=1024,TT_Q38_PROJECTION_GRAPH_WORDS=8384,
@@ -24,6 +29,9 @@ static inline unsigned PioneerQ38ProjectionGraphWorkers(const uint32_t* m,unsign
 }
 static inline bool PioneerQ38ProjectionGraphFrame(const uint32_t* d){
  if(!d)return false;
+#ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
+ if(d[42] || !PioneerQ38ProjectionResultRows(d[43]))return false;
+#endif
  unsigned type=0,k=0,n=0;
  if(!PioneerQ38ProjectionGeometry(d[42],d[43],type,k,n))return false;
  unsigned jobs=PioneerQ38ProjectionJobCount(n),waves=jobs==973?9:1;

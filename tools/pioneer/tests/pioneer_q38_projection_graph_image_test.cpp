@@ -153,8 +153,9 @@ struct ProjectionParentMachine:DispatchMachine {
   else if(!write && Range(local,0xa0000,m[44]*2)){assert(offset==TT_Q38_PROJECTION_NATIVE_OFFSET+local-0xa0000);operandReads++;}
   else if(local==0xab000){assert(offset==TT_Q38_PROJECTION_COMPACT_OFFSET);if(write)scaleWrites++;else scaleReads++;}
   else{
-   assert(write && local>=0x80000 && local+bytes<=0x80000+119*1024 && offset>=TT_Q38_PROJECTION_OUTPUT_OFFSET);
-   unsigned first=(offset-TT_Q38_PROJECTION_OUTPUT_OFFSET)/4;assert(first<outputCover.size() && bytes/4<=outputCover.size()-first);
+   unsigned destination=PioneerQ38ProjectionOutputOffset(m[42],m[43]);
+   assert(write && local>=0x80000 && local+bytes<=0x80000+119*1024 && offset>=destination);
+   unsigned first=(offset-destination)/4;assert(first<outputCover.size() && bytes/4<=outputCover.size()-first);
    for(unsigned i=0;i<bytes/4;i++)assert(!outputCover[first+i]++);outputWrites++;
   }
   for(unsigned i=0;i<bytes/4;i++)if(write)gddr.at(offset/4+i)=memory.at(local+i*4);else memory[local+i*4]=gddr.at(offset/4+i);
@@ -184,7 +185,7 @@ struct ProjectionParentMachine:DispatchMachine {
   if(fixture.stop){assert(stopJobs==119 && !producerJobs && !matrixJobs && !lineReads && !outputWrites);}
   else{
    assert(producerJobs==m[44]/256 && matrixJobs==m[12] && !stopJobs && lineReads==m[44]/256 && scaleWrites==1 && scaleReads==m[7]);
-   for(unsigned row=0;row<m[45];row++)assert(outputCover[row]==1 && gddr.at(TT_Q38_PROJECTION_OUTPUT_OFFSET/4+row)==Bits(float(row+1)));
+   for(unsigned row=0;row<m[45];row++)assert(outputCover[row]==1 && gddr.at(PioneerQ38ProjectionOutputOffset(m[42],m[43])/4+row)==Bits(float(row+1)));
   }
   assert(memory.at(TT_Q38_PROJECTION_GRAPH_STATS)==TT_Q38_PROJECTION_GRAPH_MARKER && memory.at(TT_Q38_PROJECTION_GRAPH_STATS+56*4)==1);
   for(unsigned i=0;i<TT_Q38_PROJECTION_GRAPH_WORDS;i++)assert(memory.at(TT_Q38_PROJECTION_GRAPH_MANIFEST+i*4)==m[i]

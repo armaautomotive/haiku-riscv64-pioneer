@@ -15,6 +15,9 @@ import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
 directory = here.parent
+stashes = sys.argv[-1:] == ['--result-stashes']
+if stashes:
+    sys.argv.pop()
 if len(sys.argv) != 3:
     raise SystemExit('expected read-only SDK and NEW ABSOLUTE output directory')
 sdk, output = map(pathlib.Path, sys.argv[1:])
@@ -50,3 +53,26 @@ frames = [int(line.split('\t')[1]) for line in usage if ('PioneerQ38ProjectionGr
 assert frames and max(frames) <= 2048
 print('PASS ACTUAL full driver/context/scope/retention/END/new memory Prepare+Close RISC-V kernel compile;maxNewFrame=' + str(max(frames))
       + ';old tag38/guard/default43 BYTE-IDENTICAL;NO_NEW_LINKED_DRIVER_NATIVE_SELECTOR_INSTALL_OR_EXECUTION')
+if stashes:
+    args[args.index('-c') + 1] = str(here / 'pioneer_q38_projection_execution_native_full_compile.cpp')
+    args[args.index('-o') + 1] = str(output / 'old-execution-CONTROL.o')
+    subprocess.run(args, check=True, env=clean)
+    assert hashlib.sha256((output / 'old-execution-CONTROL.o').read_bytes()).hexdigest() == '2d127c1e3a36ad93a61aeff66b85d4d8ce9185c7ae2255da7f48b3d0e6024c35'
+    args[args.index('-o') + 1] = str(output / 'new-stash-COMPILE-ONLY.o')
+    subprocess.run([*args, '-DPIONEER_Q38_PROJECTION_RESULT_STASH=1'], check=True, env=clean)
+    usage = (output / 'new-stash-COMPILE-ONLY.su').read_text().splitlines()
+    def frame_map(lines):
+        return {re.sub(r':\d+:\d+:', ':', line.split('\t')[0]): int(line.split('\t')[1])
+                for line in lines if len(line.split('\t')) == 3}
+    previous = frame_map((output / 'old-execution-CONTROL.su').read_text().splitlines())
+    current = frame_map(usage)
+    # Existing unrelated legacy ioctl/DRAM-probe frames are >2KiB in the
+    # BYTE-IDENTICAL control. Do not hide growth: EVERY oversized frame
+    # must already exist and not grow. ALL new projection frames <=2KiB.
+    assert current
+    for name, size in current.items():
+        assert size <= 2048 or name in previous and size <= previous[name], (name, size, previous.get(name))
+    frames = [size for name, size in current.items() if 'PioneerQ38Projection' in name or 'pioneer_projection_native_kernel_' in name]
+    assert frames and max(frames) <= 2048
+    print('PASS ACTUAL QPS1 native complete execution/RMS/source/restore/END compile maxFrame=' + str(max(frames))
+          + ';ALL oversized legacy frames <=BYTE-IDENTICAL control;macro-OFF execution object BYTE-IDENTICAL2d127c1e;NO_NEW_LINKED_DRIVER_SELECTOR_INSTALL_OR_CARD')
