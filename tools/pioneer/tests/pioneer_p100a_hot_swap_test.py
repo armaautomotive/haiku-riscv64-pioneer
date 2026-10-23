@@ -332,12 +332,13 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             real = backup_target.with_name(backup_target.name + '.real')
             real.write_bytes(payloads[starting])
             backup_target.symlink_to(real.name)
-        if fault == 'previous-debug44':
+        if fault in ('previous-debug44', 'previous-capture-debug44'):
             # Same numeric tag is NOT byte identity. A new updater must
             # reject both the previous candidate and its installed image,
             # before opening the admin device or modifying the guard.
             assert mode in ('--apply-decoder-validation', '--restore-decoder-validation')
-            previous = b'test-d96899a74c6949a22caec805dbd611cee80f2ff96c909758d772557d1a4a0c0a'
+            previous = (b'test-d96899a74c6949a22caec805dbd611cee80f2ff96c909758d772557d1a4a0c0a'
+                        if fault == 'previous-debug44' else b'test-4db734553910748e51c22a5d2017b01d2fa2c42ea1409aabf9b55839732d6edd')
             if mode == '--apply-decoder-validation':
                 put('candidate_decoder_validation', previous)
             else:
@@ -409,7 +410,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             assert backup_target.stat().st_ino == backup_inode, (mode, fault, 'VALID_BACKUP_REPLACED')
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
-            if fault == 'previous-debug44':
+            if fault in ('previous-debug44', 'previous-capture-debug44'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_PREVIOUS_IMAGE')
             if fault in ('backup', 'backup-link') and mode != '--bootstrap':
                 assert (root / 'calls').read_text().splitlines() == ['--status'], (mode, fault, 'QUIESCED_WITH_UNPROVEN_BACKUP')
@@ -725,7 +726,7 @@ if __name__ == '__main__':
         elif mode == '--restore-decoder-validation':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
-        previous_image = ['previous-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
+        previous_image = ['previous-debug44', 'previous-capture-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
         backup_links = ['backup-link'] if previous_image else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

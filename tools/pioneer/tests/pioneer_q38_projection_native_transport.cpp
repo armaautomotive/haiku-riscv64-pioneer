@@ -19,7 +19,7 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  unsigned decoderBank=7,decoderStarts=0,decoderPc[120]={};bool decoderRunning[120]={};
  const PioneerQ38ResidentDecoderResult* decoderResult=nullptr;unsigned decoderFault=0;bool decoderDamaged=false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
- std::vector<uint32_t> decoderCompletionReads;unsigned decoderPcReads[120]={};
+ std::vector<uint32_t> decoderCompletionReads;unsigned decoderPcReads[120]={},decoderFrontendSnapshots=0;
 #endif
 #endif
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
@@ -139,7 +139,20 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
    if(p.decoderRunning[p.current]){
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
-    if(p.decoderFault==14 && !p.current && ++p.decoderPcReads[0]==2)return 0x64058;
+    if((p.decoderFault==14 || p.decoderFault==18) && !p.current){
+     unsigned sample=++p.decoderPcReads[0];
+     if(sample==2)return 0x64058;
+     if(p.decoderFault==18 && sample==1)return 0x6403c;
+    }
+    // TEST endpoint snapshot only,AFTER actual emitted QCB1 instructions.
+    // No marker/result/counter/code/authority changes or arithmetic inputs.
+    if(p.decoderFault>=15 && p.decoderFault<=17){
+     assert(p.decoderPc[p.current]==0x64038);
+     unsigned sample=++p.decoderPcReads[p.current];
+     if(p.decoderFault==17 || (sample&1)==(p.decoderFault==15?1U:0U)){
+      p.decoderFrontendSnapshots++;return 0x6403c;
+     }
+    }
 #endif
     return p.decoderPc[p.current];
    }
@@ -249,13 +262,14 @@ unsigned ProjectionNativeTransport::DecoderStarts()const{return implementation->
 void ProjectionNativeTransport::ObserveDecoder(const PioneerQ38ResidentDecoderResult& r){implementation->decoderResult=&r;}
 void ProjectionNativeTransport::DecoderFault(unsigned kind){assert(kind>=1 && kind<=
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
- 14
+ 18
 #else
  6
 #endif
  );implementation->decoderFault=kind;}
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
 std::vector<uint32_t> ProjectionNativeTransport::DecoderCompletionReads()const{return implementation->decoderCompletionReads;}
+unsigned ProjectionNativeTransport::DecoderFrontendSnapshots()const{return implementation->decoderFrontendSnapshots;}
 #endif
 #endif
 #if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)

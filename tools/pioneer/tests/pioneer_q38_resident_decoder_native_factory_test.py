@@ -12,10 +12,10 @@ import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
 mode = sys.argv[7] if len(sys.argv) == 8 else ''
-if len(sys.argv) not in (7, 8) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes'):
+if len(sys.argv) not in (7, 8) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc'):
     raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults|--validation[-faults|-control[-faults]]]')
 validation = mode.startswith('--validation')
-actual = mode in ('--validation-actual-model', '--validation-actual-model-extremes')
+actual = mode in ('--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc')
 control = mode in ('--validation-control', '--validation-control-faults', '--validation-close-only') or actual
 pins = runpy.run_path(str(here.parent / 'generate_qwen38_projection_stash_images.py'))['PINS']
 for name, (section, size, sha, _) in pins.items():
@@ -91,5 +91,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
             suffix = [str(here.parents[2] / 'generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf')]
             if mode == '--validation-actual-model-extremes':
                 suffix.append('--all-tokens')
+            elif mode == '--validation-actual-model-frontend-pc':
+                suffix.append('--frontend-pc')
         subprocess.run([str(binary), *sys.argv[1:7], *suffix], check=True,
                        env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})

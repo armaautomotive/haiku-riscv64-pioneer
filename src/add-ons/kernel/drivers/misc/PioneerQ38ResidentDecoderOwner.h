@@ -129,7 +129,11 @@ class PioneerQ38ResidentDecoderOwner {
   observedStatus[2]=io.RuntimeStatusRead(2);if(observedStatus[2]!=TT_Q38_CONV_BATCH_MARKER)return false;
   observedStatus[0]=io.RuntimeStatusRead(0);if(observedStatus[0]!=0x6400c)return false;
   observedStatus[1]=io.RuntimeStatusRead(1);if(observedStatus[1]!=jobs[w].Count()*16)return false;
-  for(unsigned i=0;i<2;i++){io.Pause();observedPc[i]=io.RuntimePcRead();if(!PioneerQ38ConvBatchTerminalPc(observedPc[i]))return false;}
+  // Blackhole's PC snapshot is from the speculative frontend,not retire.
+  // A self-JAL at64038 can expose its unexecuted fallthrough6403c. Accept
+  // ONLY after the fresh success marker/phase/exact count above;the running
+  // path still rejects6403c,and ALL independent receipts/holds remain below.
+  for(unsigned i=0;i<2;i++){io.Pause();observedPc[i]=io.RuntimePcRead();if(!PioneerQ38ConvBatchTerminalPc(observedPc[i]) && observedPc[i]!=0x6403c)return false;}
 #else
   if(io.RuntimeStatusRead(2)!=TT_Q38_CONV_BATCH_MARKER || io.RuntimeStatusRead(0)!=0x6400c
    || io.RuntimeStatusRead(1)!=jobs[w].Count()*16)return false;

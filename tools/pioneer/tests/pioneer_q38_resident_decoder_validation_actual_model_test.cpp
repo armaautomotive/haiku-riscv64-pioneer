@@ -9,7 +9,8 @@
 #error CPU observers MUST NOT enter the actual native controller compilation unit
 #endif
 int main(int argc,char** argv){
- assert(argc==8 || (argc==9 && !strcmp(argv[8],"--all-tokens")));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==8 || (argc==9 && (!strcmp(argv[8],"--all-tokens") || !strcmp(argv[8],"--frontend-pc"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ const bool frontendPc=argc==9 && !strcmp(argv[8],"--frontend-pc");
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  unsigned tests=0;
  for(unsigned token:argc==9?std::vector<unsigned>{0,15,248319}:std::vector<unsigned>{0}){
@@ -19,6 +20,7 @@ int main(int argc,char** argv){
   printf("PASS ORIGINAL token%u SAME_FILE_SHA_c600de03_ALL851TENSORS/all1672independent_reference_reads BEFORE native context\n",token);
   DecoderControlFixture f(argv[1],argv[2],argv[3],argv[4],argv[5],argv[6],token);
   f.io.originalEmbeddingWeights=source->EmbeddingTile();f.io.originalRmsWeights=source->LearnedNorm();f.transport->LearnedSource(*source);
+  if(frontendPc)f.transport->DecoderFault(15); // TEST endpoint snapshots ONLY,not numeric/authority inputs
   auto reply=Request();reply->metadata.token=token;
   puts("ORIGINAL_ACTUAL_SINGLE_PUBLIC_CALL_HISTORY336X5_ZERO512_QPE1_QRN1_QPS1_QCB1_READBACK_RESTORE");
   int status=ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_DECODER_VALIDATE,reply.get(),sizeof(*reply));
@@ -39,6 +41,8 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<40960;i++)assert(reply->values[i]==f.io.wholeWorkspace[(i<10240?TT_Q38_CONV_OUTPUT:TT_Q38_CONV_NEXT)/4+(i<10240?i:i-10240)]);
   assert(f.transport->DecoderStarts()==120 && f.transport->ValidationReads()==40 && !f.io.pciWrites && !f.io.HostReadMock::bmeWrites
    && EndFactory(*f.c) && f.c->q38Dispatch->closed && same->Closed() && !f.c->Unsafe() && !sColdRecoveryRequired && source->Ready());
+  assert(f.transport->DecoderFrontendSnapshots()==(frontendPc?360U:0U));
+  if(frontendPc)puts("PASS ORIGINAL all120 actual QCB1 workers with360speculative6403c snapshots;allindependent numerics/receipts/holds/readback/restore/END unchanged");
   printf("PASS ORIGINAL token%u actual native SAME context/control/leases/history/QPE1/QRN1/QPS1all4/QCB1all120/640jobs/40poisoned_pages/10240SiLU+30720exact_next/full8134072word_restore/actual_END;1672BEFORE-context_reference_reads/164800ORIGINAL_Q8_tiles/640ORIGINAL_F32_tiles;SIMULATED_NOT_CARD_OR_MODEL_SPEED\n",token);tests++;
  }
  printf("PASS ORIGINAL native decoder integration tokens%u;NO synthetic learned bytes/numeric device inputs/reference compilation in native controller;NO_INSTALL_PHYSICAL_CARD_OR_SPEED_CLAIM\n",tests);

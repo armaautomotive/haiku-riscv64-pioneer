@@ -1,0 +1,148 @@
+Retained-convolution completion-PC correction,October23 UTC2026.
+Whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card inference UNMET.
+First-token/layer0 DEBUG validation ONLY,not a Work-mode speed result.
+
+PHYSICAL OBSERVATION,NOT NUMERICAL PROOF
+This continues the physical trial documented in
+qwen38-decoder-capture-card-20261023.txt. After checkpoint8321839ed6 was
+pushed/verified,ae05 updater staging90553 and apply48905 TERMINAL0.
+Normal041/tag12/gen2 -> diagnostic4db/tag44/gen3/cold0/owner0/open1/guard1;
+HOT_RELOAD_VERIFIED,NO_GPU_EXECUTION during the guarded update itself.
+ONE native client31344 then ran to TERMINAL1,not a detached/restarted job.
+Full-file authentication/independent references preceded the GPU FD;all108
+upload spans and SPAN_END returned0. Same f3b independent DEBUG client.
+
+The original passive serial capture after byte68487626 reports:
+ history466956 zero466956 embedding7 norm7 projection7 decoder4
+ worker0 word40003 readback0/0 restored0
+ observedWorker0 status0006400c/00000060/31424351
+ pc0006403c/00000000 EXISTING_READS_ONLY_NO_POST_FAILURE_DEVICE_IO
+ PIONEER-P100A:54 RETAIN prepared120 booted0 closed0;NO_LATER_CARD_IO
+The marker,phase and count96 passed;the FIRST existing terminal-PC read
+6403c failed. The second PC was NOT read;zero is unobserved,not hardware0.
+No independent convolution receipts,numerical readback or original restore
+completed. This identifies an exact rejection,NOT a numeric/physical fault.
+ALL owners,mappings,snapshots and leases remain quarantined. CLOSE ONLY;
+no END/post-failure status/reset/restore/reload/retry/transfer/power action.
+
+PRIMARY ARCHITECTURAL EVIDENCE
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md
+The T0 PC snapshot at0xffb13140 observes the frontend,not retirement;
+speculative instructions may subsequently be squashed without executing.
+Actual frozen QCB1 disassembly:64038 is JAL to itself;6403c is the adjacent
+fault-entry instruction. Therefore a6403c snapshot after the success marker
+can be speculative fallthrough,not proof that fault code executed. Existing
+qualified QPE1 and QRN1 controllers already accept64038/6403c after their
+success marker/phase/count. This is a supported interpretation,not proof
+that all current card arithmetic or subsequent receipts will pass.
+
+NARROW DEBUG44-ONLY CORRECTION
+Only the DEBUG44 retained owner accepts6403c alongside64038 in BOTH
+existing terminal-PC samples,AFTER success marker31424351,phase6400c and
+the exact5or6jobs*16 count. Same short-circuit status/PC order/read count.
+The no-marker running-PC path STILL rejects6403c..64058. Fault marker,
+bad phase/count,first/second64058 and unknown PCs still fail closed with
+no later device diagnostics. Independent code/table/source/command/counter
+receipts,all120 holds,40poisoned pages and8134072word restore are unchanged.
+No QCB1/image/arithmetic/reset/fence/timeout/protocol/client/tolerance/
+Work/Assistant/boot/NIC changes. Baretag43/macro-OFF controls must stay exact.
+
+OFFLINE INSTRUCTION/ORIGINAL-MODEL QUALIFICATION
+New TEST-only endpoint scenarios15/16/17 expose6403c in first/second/both
+PC samples AFTER actual emitted QCB1 computation,without changing any
+marker,numeric byte,counter,code,capability or owner. Existing8 negative
+captures and exact read-order assertions remain unchanged. Positive cases
+require all120workers/640jobs/exact1320phase4reads/fullreadback/restore/END.
+Separate ORIGINAL-GGUF public-control case uses the same byte endpoints,
+independent numerical references compiled separately and computed BEFORE
+native context,and tokens0/15/248319. Neither is physical/speed evidence.
+Initial capture32734 TERMINAL0:all8 unchanged failures and all3 positive
+snapshot cases PASS. Expanded capture47743 TERMINAL0 additionally tests6403c followed
+by64058:accepting the first speculative snapshot MUST NOT skip the second
+read or accept a genuine fault loop. All9 negatives/3 positives PASS;
+360/360/720 observed speculative PCs,each success1320phase4reads unchanged.
+Original-model8541 TERMINAL0:all3 tokens0/15/248319 PASS with360speculative
+snapshots per token. SAME original GGUF fullSHA/all851tensors;1672independent
+reference reads computed BEFORE each native context in a SEPARATE reference
+compilation unit. Actual native public control/history336x5/zero512/QPE1/
+QRN1/QPS1all4/QCB1all120/640jobs;164800originalQ8tiles/640originalF32tiles;
+all10240SiLU values within UNCHANGED tolerance and30720next words bit-exact;
+40poisoned pages/40960words/all8134072original snapshot words restored and
+verified,actual explicit END. No numerical products supplied to controllers.
+These are emitted-instruction integration tests with simulated OS/device
+endpoints,NOT physical-card execution or full-model throughput results.
+
+REPRODUCIBLE COMPLETE DRIVER,NOT DEPLOYED
+88856 and71099 both TERMINAL0:two fresh complete actual-source builds via
+build_qwen38_resident_decoder_validation_native.py,read-only SDK
+/Volumes/HaikuBuildLocal/generated.riscv64,outputs
+ /private/tmp/pioneer-q38-decoder-frontend-linked-20261023-{a,b}
+Both linked drivers SHA
+ 6ce7b4fecae927391119163022cb49f8775ca79776555d209e2eb4c3eacc564b
+Actual linked-source maxNewFrame1936B<=2048;compile witness1696B,
+SHA d3b1386e289432d94df85ac4c876ccad07ec1aaa4dcad94259a09df7b096d36b.
+Baretag43 object3445a61f... and all prior tag38/guard/default43/private2d12/
+stash6121/tag42a2bc controls reproduce byte-exact;oversized legacy frames
+do not grow. No client code change;existing f3b client/protocol unchanged.
+59355 TERMINAL0:DEBUG/native/reference guards200 and native-role/build
+gates373 PASS. No mixed DEBUG/Work/reference or environment promotion.
+
+NEW INSTALLER PAIR,NOT CURRENT4db RECOVERY
+54185 and34062 TERMINAL0:242 actual /bin/sh fake-filesystem cases PASS for decoder
+apply/restore plus unchanged projection apply/restore. Both previousd968
+AND previous4db same-tag candidate/installed images reject BEFORE admin
+open. All cold/active/open/guard/hash/symlink/parent/failure checks and
+hash-scoped backup creation/reuse/old tag-only backup preservation PASS.
+New SOURCE updater maps normal041<->new6ce ONLY:
+ SHAf1c103796222dbbb0780ecc9f5eb1d5afcfdcf82e13e480d0171b1d13d897de6
+ future basename pioneer_p100a_hot_swap-decoder-validation-f1c10379.sh
+ future candidate tenstorrent_pci_probe-decoder-validation-6ce7b4fe
+No candidate or new updater staged/applied. Do NOT use this new source to
+restore current4db;the immutable ae05 recovery rule below is unchanged.
+
+CURRENT HARDWARE HOLD
+The user confirms Haiku desktop/input respond. That does NOT independently
+prove a full PSU recovery after native31344. Await explicit recovery-epoch
+confirmation;do not query/reset/restore current quarantine. After actual
+full PSU off/on and fresh fixed-kernel/OS/idle/hash proof,restore current4db
+ONLY through the ALREADY STAGED IMMUTABLE ae05 updater:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer_p100a_hot_swap-decoder-validation-ae05ef96.sh
+ SHAae05ef96b7981b7b2c0b081ccfdf726003dc59a3cd4b15192408751dcbde62f4
+ --restore-decoder-validation
+Old3648 maps d968 only;cdee lacks the hash-scoped-backup fix. Neither is
+the current4db recovery updater. Preserve the old tag-only d968 backup.
+
+PHYSICAL TERMINAL LOG SHA256
+b003c213579d140d11dc38b461569f668cd730b84acf23db3f0ce8bd27c26a70
+ /private/tmp/pioneer-q38-decoder-capture-native-20261023-b.log
+ab6a0d4d9069b81100d4f63be80598aa1afa2dcea9d34e7325e9cdb8f38161f0
+ /private/tmp/pioneer-q38-decoder-capture-apply-20261023-b.log
+
+OFFLINE TERMINAL LOG SHA256
+8e833957326030268cdb3167428b731977245751611af2498c32787a450d9e02
+ /private/tmp/pioneer-q38-decoder-frontend-capture-20261023-a.log
+73193ab0549e0562b8d35d8fc9baac10b4e81b9373b36d2f57deb798e7bc39db
+ /private/tmp/pioneer-q38-decoder-frontend-linked-20261023-a.log
+f2dc4396e99b740f276abe79bf955fee6f8b0c5e60c76bdf8f84c159b20af851
+ /private/tmp/pioneer-q38-decoder-frontend-linked-20261023-b.log
+e14609317f862f776f99471d983568a4c6c14721ea13b49003c9ccff3f19ccfd
+ /private/tmp/pioneer-q38-decoder-frontend-debug-gates-20261023-a.log
+afea1c527aafae822b57a437d1c602ca9419119ef2171723e71da6d221e4b23a
+ /private/tmp/pioneer-q38-decoder-frontend-native-gates-20261023-a.log
+0e6e8a85090849bdac9ffee19bedd801403e6370a2eabd54263f062c60501eee
+ /private/tmp/pioneer-q38-decoder-frontend-updater-20261023-a.log
+6be1e1373f02024723fbaaa3b99c1bd3bd781bb2e134767e3d97e38a07cef4f5
+ /private/tmp/pioneer-q38-decoder-frontend-capture-20261023-b.log
+0e6e8a85090849bdac9ffee19bedd801403e6370a2eabd54263f062c60501eee
+ /private/tmp/pioneer-q38-decoder-frontend-updater-20261023-b.log
+a9a1c0d4dfc2c05da6e4f6ddb4e25f7a7e8062ba3175d1f1ce8c2b2c035ecee6
+ /private/tmp/pioneer-q38-decoder-frontend-original-20261023-a.log
+
+This goal turn made implementation progress:an exact physical completion
+rejection now has a narrow evidence-backed correction,actual emitted-
+instruction/ORIGINAL-model numeric qualification,reproducible full driver,
+and hash-pinned guarded updater. No hardware operations were performed.
+Full offload remains incomplete:GDN preparation/math/current-state init and
+canonical state commit,gated norm/output/residual/FFN,full attention+KV,
+all64layers,sampling/persistent whole-token scheduling and a genuine new
+end-to-end inference benchmark still require integration/qualification.

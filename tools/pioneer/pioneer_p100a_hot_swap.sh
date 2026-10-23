@@ -112,10 +112,11 @@ candidate_ffn_sealed_proof=$stage/tenstorrent_pci_probe-ffn-sealed-proof-23e2e68
 candidate_embedding_validation=$stage/tenstorrent_pci_probe-embedding-validation-779a2c81
 candidate_rms_validation=$stage/tenstorrent_pci_probe-rms-validation-a32f462c
 candidate_projection_validation=$stage/tenstorrent_pci_probe-projection-validation-a2bcfb34
-# New diagnostic build ONLY. The immutable3648a427 updater is retained
-# separately for the previous d968 image AFTER physical cold recovery;
-# this new mapping cannot recover/quiesce the currently quarantined card.
-candidate_decoder_validation=$stage/tenstorrent_pci_probe-decoder-validation-4db73455
+# New diagnostic build ONLY. Immutable ae05ef96 restores previous4db
+# AFTER physical cold recovery;older3648a427 maps d968 ONLY. Both staged
+# files stay untouched. This new mapping cannot recover/quiesce the
+# currently quarantined card or restore either previous same-tag image.
+candidate_decoder_validation=$stage/tenstorrent_pci_probe-decoder-validation-6ce7b4fe
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -192,7 +193,7 @@ hash_ffn_sealed_proof=23e2e68a33c16f990552bb9bf146252a0ce9d23a4a3c3ec9f7f751c8db
 hash_embedding_validation=779a2c81080b5cd7ca891f3614ea5c02ef580d769023b90f40c3296db64ea514
 hash_rms_validation=a32f462cbfdbe8558aca780a526e44a59dea15b25489a0131a5c4803771c276a
 hash_projection_validation=a2bcfb34baeba0bdca4e029164901c874c27ee7c3494be62912711e7a0c164e9
-hash_decoder_validation=4db734553910748e51c22a5d2017b01d2fa2c42ea1409aabf9b55839732d6edd
+hash_decoder_validation=6ce7b4fecae927391119163022cb49f8775ca79776555d209e2eb4c3eacc564b
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
