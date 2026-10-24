@@ -1,19 +1,32 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+#define PIONEER_Q38_GDN_RENDEZVOUS_MACHINE_ONLY
+#include "pioneer_q38_gdn_rendezvous_image_test.cpp"
+using GatedNativeBase=RendezvousMachine;
+#else
 #define PIONEER_Q38_GDN_GATED_RESIDENT_MACHINE_ONLY
 #include "pioneer_q38_gdn_gated_resident_image_test.cpp"
+using GatedNativeBase=GatedResidentMachine;
+#endif
 #include "pioneer_q38_gdn_gated_native_bridge.h"
-struct NativeGatedMachine:GatedResidentMachine {
+struct NativeGatedMachine:GatedNativeBase {
  ProjectionExecutionFabric& fabric;DecoderHistoryBytes& state;unsigned worker;
  std::array<uint32_t,16> learnedBlock[2];bool learnedRead[2]={},normRead=false;
  NativeGatedMachine(const char* image,const PioneerQ38CanonicalModelPlan& p,unsigned w,unsigned bank,ProjectionExecutionFabric& f,DecoderHistoryBytes& s)
-  :GatedResidentMachine(image,p,0,w-1,bank),fabric(f),state(s),worker(w){
+  :GatedNativeBase(image,p,0,w-1,bank),fabric(f),state(s),worker(w){
   assert(w && w<=96 && fabric.LearnedBytes() && fabric.LearnedBytes()->Ready() && fabric.Reset(w)==0x46800);
   for(unsigned i=0;i<64;i++){
    inputDescriptor[i]=fabric.ReadLocal(w,TT_Q38_GDN_INPUT_DESCRIPTOR+i*4);
    descriptor[i]=fabric.ReadLocal(w,TT_Q38_RGDN_DESCRIPTOR+i*4);
    gatedDescriptor[i]=fabric.ReadLocal(w,TT_Q38_GDN_GATED_DESCRIPTOR+i*4);
   }
-  assert(PioneerQ38GdnGatedShape(gatedDescriptor.data(),inputDescriptor.data(),descriptor.data()) && descriptor[9]==w-1);
+  assert(
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   PioneerQ38GdnRendezvousShape
+#else
+   PioneerQ38GdnGatedShape
+#endif
+   (gatedDescriptor.data(),inputDescriptor.data(),descriptor.data()) && descriptor[9]==w-1);
   SetDescriptors();SetGatedDescriptor();
   assert(fabric.ReadLocal(w,0x6000)==0x0005e06f);
   for(unsigned i=0;i<code.size()/4;i++){
@@ -27,6 +40,9 @@ struct NativeGatedMachine:GatedResidentMachine {
   copy(0x6e000,8192);copy(0x80000,1536);copy(0x80800,256);copy(0x8e000,1288);copy(0x8e800,256);copy(0x8ea00,256);
   copy(0x90000,32768);copy(0xa0000,32768);copy(0x74000,16);copy(0x74600,128);copy(0x17ffc0,12);
   copy(TT_Q38_GDN_INPUT_SUMMARY,128);copy(TT_Q38_RGDN_SUMMARY,128);copy(TT_Q38_GDN_GATED_SUMMARY,128);copy(TT_Q38_GDN_GATED_READY,128);
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+  copy(TT_Q38_GDN_RENDEZVOUS_CLOCK,64);
+#endif
  }
  uint32_t Load(uint32_t at)override{
   if(Range(at,0xffb20000,0x2000)){
@@ -35,7 +51,7 @@ struct NativeGatedMachine:GatedResidentMachine {
    const unsigned offsets[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};
    for(unsigned o:offsets)if(off==o)return fabric.NoC(worker,off);
   }
-  return GatedResidentMachine::Load(at);
+  return GatedNativeBase::Load(at);
  }
  uint32_t RawPayload(unsigned p,unsigned i)override{
   if(p<5){unsigned offset=inputDescriptor[p==0?42:p==1?43:p==2?44:p==3?45:46];return fabric.Gddr().at(offset/4+i);}
@@ -74,7 +90,7 @@ struct NativeGatedMachine:GatedResidentMachine {
   return norm[i];
  }
  void Store(uint32_t at,uint32_t value)override{
-  unsigned before=packets,oldPhase=phase;GatedResidentMachine::Store(at,value);
+  unsigned before=packets,oldPhase=phase;GatedNativeBase::Store(at,value);
   if(at<0x180000)fabric.WriteLocal(worker,at,value);
   if(at>=0xffb20000 && at<0xffb20028)fabric.SetControls(worker,command,counts);
   if(at==0xffb20040){

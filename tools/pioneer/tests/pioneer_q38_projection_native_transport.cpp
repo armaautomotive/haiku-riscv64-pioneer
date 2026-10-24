@@ -31,6 +31,7 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  const char* gdnImage=nullptr;unsigned gdnStarts=0,gdnFault=0;bool gdnRunning[120]={},gdnDamaged=false;
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
  std::unique_ptr<GatedNativeCohort> gated;
+ unsigned gatedDelayWorker=0,gatedDelayQuanta=0;uint64_t gatedDelayHost=0;bool gatedDelayed=false;
 #endif
 #if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
  unsigned gdnReadbackWords=0,gdnReadbackFault=UINT32_MAX;
@@ -159,7 +160,11 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
-   if(p.gdnRunning[p.current]){assert(p.gated && p.C().coreReset==0x46800);return p.gated->Pc(p.current);}
+   if(p.gdnRunning[p.current]){
+    assert(p.gated && p.C().coreReset==0x46800);
+    if(p.current==96 && p.gdnDamaged && p.gdnFault==10)return 0x64058;
+    return p.gated->Pc(p.current);
+   }
 #endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
    if(p.gdnStarts==96 && p.gdnReadbackWords<TT_Q38_GDN_RECURRENT_VALIDATION_WORDS){
@@ -190,6 +195,25 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #endif
    if(p.C().coreReset==0x46800)p.machine->Advance(p.current);return p.machine->Pc(p.current);
   case Status:
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+   // TEST mutation only AFTER the actual worker96 reaches its terminal.
+   // No completion/readiness/producer bit is fabricated to accelerate it.
+   if(!p.gdnDamaged && p.gated && p.gdnStarts==96 && p.current==96
+    && p.gated->Pc(96)==0x64038 && p.gdnFault>=3 && p.gdnFault<=14){
+    p.gdnDamaged=true;
+    if(p.gdnFault==3)p.WriteLocal(96,TT_Q38_GDN_GATED_SUMMARY,p.ReadLocal(96,TT_Q38_GDN_GATED_SUMMARY)^1);
+    if(p.gdnFault==4)p.C().counters[0]++;
+    if(p.gdnFault==5)p.C().source[11]^=1;
+    if(p.gdnFault==6)p.C().command[9]^=1;
+    if(p.gdnFault==7)p.WriteLocal(96,0x17ffc8,0xdeadbeef);
+    if(p.gdnFault==8)p.WriteLocal(96,0x17ffc4,0);
+    if(p.gdnFault==9)p.WriteLocal(96,0x17ffc0,0);
+    if(p.gdnFault==11)p.WriteLocal(96,0x64000,p.ReadLocal(96,0x64000)^1);
+    if(p.gdnFault==12)p.WriteLocal(96,TT_Q38_GDN_GATED_DESCRIPTOR+63*4,p.ReadLocal(96,TT_Q38_GDN_GATED_DESCRIPTOR+63*4)^1);
+    if(p.gdnFault==13)p.core[0]->counters[0]++;
+    if(p.gdnFault==14)p.WriteLocal(119,TT_Q38_CONV_BATCH_TABLE+383*4,p.ReadLocal(119,TT_Q38_CONV_BATCH_TABLE+383*4)^1);
+   }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
    if(p.decoderRunning[p.current])return p.LocalRead(0x17ffc0+a*4);
 #endif
@@ -269,10 +293,23 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #endif
    p.LocalWrite(a,v);return;
   case SetReset:
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+   if(v==0x46800 && p.gated && p.current==p.gatedDelayWorker && !p.gatedDelayed){
+    assert(!p.gdnRunning[p.current] && p.C().coreReset==0x87ffff);p.gatedDelayed=true;
+    for(unsigned i=0;i<p.gatedDelayQuanta;i++)p.gated->Advance(); // actually execute already-released streams while this peer remains HELD
+    p.now+=p.gatedDelayHost;
+   }
+#endif
    p.C().coreReset=v;p.C().resets.push_back(v);
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
-   if(v==0x46800 && p.FullRead(p.current,0x64024)==PioneerQ38GdnGatedImageWord(10)){
+   if(v==0x46800 && p.FullRead(p.current,0x64024)==
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+    PioneerQ38GdnRendezvousImageWord(10)
+#else
+    PioneerQ38GdnGatedImageWord(10)
+#endif
+    ){
     assert(p.current && p.current<=96 && p.gdnImage && p.decoderHistory && p.decoderPlan && p.decoderStarts==120 && !p.gdnRunning[p.current]);
     if(!p.gated)p.gated.reset(new GatedNativeCohort(p.gdnImage,*p.decoderPlan,p.decoderBank,p,*p.decoderHistory));
     p.gdnRunning[p.current]=true;p.gdnStarts++;p.gated->Start(p.current);return;
@@ -352,7 +389,9 @@ void ProjectionNativeTransport::MappedWrite(uint32_t a,uint32_t v){auto& p=*impl
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  if(!p.gdnDamaged && p.decoderStarts==120 && !p.gdnStarts && p.current==96
   && p.gdnFault==1 && a==0x64024 && v==
-#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+  PioneerQ38GdnRendezvousImageWord(10)
+#elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
   PioneerQ38GdnGatedImageWord(10)
 #elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
   PioneerQ38GdnRecurrentImageWord(10)
@@ -395,6 +434,13 @@ void ProjectionNativeTransport::GdnInputSource(const char* image){auto& p=*imple
 void ProjectionNativeTransport::GdnInputFault(unsigned kind){assert(kind>=1 && kind<=14);implementation->gdnFault=kind;}
 unsigned ProjectionNativeTransport::GdnInputStarts()const{return implementation->gdnStarts;}
 bool ProjectionNativeTransport::GdnInputFaultInjected()const{return implementation->gdnDamaged;}
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+void ProjectionNativeTransport::GatedLaunchDelay(unsigned w,unsigned quanta,uint64_t hostMicroseconds){
+ auto& p=*implementation;assert(!p.gdnStarts && !p.gatedDelayWorker && w>=2 && w<=96 && quanta<=65536 && hostMicroseconds<=30000100);
+ p.gatedDelayWorker=w;p.gatedDelayQuanta=quanta;p.gatedDelayHost=hostMicroseconds;
+}
+bool ProjectionNativeTransport::GatedLaunchDelayInjected()const{return implementation->gatedDelayed;}
+#endif
 #if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
 void ProjectionNativeTransport::GdnReadbackFault(unsigned word){assert(word<
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE

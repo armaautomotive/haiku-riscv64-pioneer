@@ -1,5 +1,33 @@
 # Native build status
 
+October24 UTC2026:new COMPILE-ONLY51 timed QGT1 peer rendezvous IMPLEMENTED/
+OFFLINE qualified,NOT linked/installed/physical. Fixed84Gcycle horizon uses
+only read CSRRS mcycleh/mcycle/mcycleh,x0;unstable/backward/stalled/expired
+clock refuses. Host30s bound covers ENTIRE release+compute. Actual timing
+still needs physical qualification;synthetic clock/scheduling is NOT proof
+of real PCIe latency or silicon time. Separate exact51 role/tag,all native
+parents retained;NO public compute/upload/Work/CPU-reference selector.
+23792B image3a99ac89 exactC/D/E,896B main frame/UNCHANGED1024gate.102image
+positives/2033faults PASS,including512/2048poll delayed-peer successes and
+old256poll negative. SAME native-owner delayed test ALL829632ORIGINAL values/
+96real receipts/ALL120holds/private NEXT+gated publication/full8330680word
+restore+verification/actualEND PASS. Native18controller faults+4semantically
+valid timestamp mutations PASS:ALL snapshots/owners retained,no following
+IO after failure;unmodified parent full restore/END. Clock DATA privately
+immutable after acceptance,not an arithmetic/source/cleanup grant. Memory
+44faults/29refusals PASS,ALL5949ROM words+clock footprint exact.287gates+
+131072inert routes PASS;old image2096faults/old memory/old50gates pass.
+Full RISC-V D/E exactdbb550a3/maxnewframe1008;all inherited old controls
+tag38/default43/DEBUG44/native45/47/48/50 BYTE-IDENTICAL,old50exact8de95a58.
+ALL jobs terminal;ZERO PioneerIO/power/boot/SD/Assistant/CPU/RAM changes;
+last stable041/gen8 NOT re-probed,no restore pending. NEXT distinct fixed
+authenticated original-norm DEBUG client/updater/lifecycle then physical
+component qualification;ssm_out/residual/FFN/full attentionKV/all64layers/
+sampling/persistent tokenloop STILL OWED. Whole27B0.207893161tok/s unchanged,
+20UNMET/full offload INCOMPLETE/goalACTIVE. Power OFF NON-IDEMPOTENT:ONE OFF,
+verify actually off,ONE ON;never repeat OFF on uncertain boot/SSH state.
+Evidence:benchmarks/qwen38-gdn-rendezvous-native-20261024.txt.
+
 October24 UTC2026:new COMPILE-ONLY50 SAME native owner QGH1 integration
 IMPLEMENTED/OFFLINE qualified,not linked/installed/physical.80262terminal0:
 actual native init73728/history1680/QPE1/QRN1/4QPS1/QCB1ALL120->COOPERATIVE

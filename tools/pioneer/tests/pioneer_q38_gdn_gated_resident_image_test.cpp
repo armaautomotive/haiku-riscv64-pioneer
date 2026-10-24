@@ -30,6 +30,13 @@ struct GatedResidentMachine:GdnRecurrentMachine {
  void SetGatedDescriptor(){for(unsigned i=0;i<64;i++)memory[TT_Q38_GDN_GATED_DESCRIPTOR+i*4]=gatedDescriptor[i];}
  bool Terminal()const{return pc==0x64038 || pc==0x64058;}
  bool Passed()const{return pc==0x64038 && memory.at(0x17ffc4)==64;}
+ virtual uint32_t StageMarker()const{return TT_Q38_GDN_GATED_MARKER;}
+ virtual uint32_t StageFault()const{return TT_Q38_GDN_GATED_FAULT;}
+ virtual unsigned MaxReadyPolls()const{return TT_Q38_GDN_GATED_POLLS;}
+ virtual uint32_t ReadyWord(unsigned i)const{return PioneerQ38GdnGatedReadyWord(gatedDescriptor.data(),i,false);}
+ virtual bool CheckSummary(const uint32_t* s,const uint32_t* before,const uint32_t* after)const{
+  return PioneerQ38GdnGatedSummary(s,gatedDescriptor.data(),inputDescriptor.data(),descriptor.data(),before,after);
+ }
  uint32_t Load(uint32_t at)override{
   if(boundarySourceFault && !boundaryInjected && at==0xffb20208 && packets==11 && !readyWrites
    && memory.at(TT_Q38_RGDN_SUMMARY+4*4)==64){
@@ -46,9 +53,9 @@ struct GatedResidentMachine:GdnRecurrentMachine {
  virtual uint32_t GatedPayload(unsigned p,unsigned i){
   if(!p){
    assert(peer);uint32_t value=neverReady?0:peer->memory.at(TT_Q38_GDN_GATED_READY+i*4);
-   if(i==peerStampFault && peer->memory.at(TT_Q38_GDN_GATED_READY)==TT_Q38_GDN_GATED_MARKER)value^=1;return value;
+   if(i==peerStampFault && peer->memory.at(TT_Q38_GDN_GATED_READY)==peer->StageMarker())value^=1;return value;
   }
-  if(p==1){assert(peer && peer->memory.at(TT_Q38_GDN_GATED_READY)==TT_Q38_GDN_GATED_MARKER);peerTerminalAtRawRead|=peer->Passed();
+  if(p==1){assert(peer && peer->memory.at(TT_Q38_GDN_GATED_READY)==peer->StageMarker());peerTerminalAtRawRead|=peer->Passed();
    return i==peerRawFault?0x7fc00000:peer->memory.at(0x8e800+i*4);}
   return p==2?norm[i]:z[i];
  }
@@ -61,7 +68,7 @@ struct GatedResidentMachine:GdnRecurrentMachine {
   unsigned route[]={d[15],d[15],d[13],d[8],d[8]};
   const unsigned expected[]={write?local[p]:remote[p],0,write?d[9]:route[p],write?remote[p]:local[p],0,write?route[p]:d[9],0,write?0x212U:0,size[p],0};
   for(unsigned i=0;i<10;i++)assert(command[i]==expected[i]);
-  for(unsigned i=0;i<16;i++)assert(memory.at(TT_Q38_GDN_GATED_READY+i*4)==PioneerQ38GdnGatedReadyWord(d.data(),i,false));
+  for(unsigned i=0;i<16;i++)assert(memory.at(TT_Q38_GDN_GATED_READY+i*4)==ReadyWord(i));
   if(!write)for(unsigned i=0;i<size[p]/4;i++)assert(memory.at(local[p]+i*4)==0x7fc70000+p*1024+i);
   else assert(gatedWrites==64);
   packets++;gatedPackets++;
@@ -85,7 +92,7 @@ struct GatedResidentMachine:GdnRecurrentMachine {
    || Range(at,0x80000,1536) || Range(at,0x8ea00,256)){
    if(Range(at,TT_Q38_GDN_GATED_READY,64)){
     assert(packets==11 && nextWrites==8192 && resultWrites==64);
-    readyWrites++;if(at==TT_Q38_GDN_GATED_READY)assert(readyWrites==16 && value==TT_Q38_GDN_GATED_MARKER);
+    readyWrites++;if(at==TT_Q38_GDN_GATED_READY)assert(readyWrites==16 && value==StageMarker());
    }
    if(Range(at,0x8ea00,256)){assert(phase==4 && packets>=15 && !pending);gatedWrites++;}
    memory[at]=value;return;
@@ -93,16 +100,16 @@ struct GatedResidentMachine:GdnRecurrentMachine {
   GdnRecurrentMachine::Store(at,value);
  }
  void VerifyGated(){
-  assert(Passed() && packets==11+readyPolls+4 && phase==5 && readyPolls && readyPolls<=256 && gatedWrites==64 && readyWrites==16);
-  assert(memory.at(0x17ffc8)==TT_Q38_GDN_GATED_MARKER && returnWrites==3);
+  assert(Passed() && packets==11+readyPolls+4 && phase==5 && readyPolls && readyPolls<=MaxReadyPolls() && gatedWrites==64 && readyWrites==16);
+  assert(memory.at(0x17ffc8)==StageMarker() && returnWrites==3);
   DeltaVectorImage::Verify(); // ALL actual state/raw bits independently observed AFTER terminal
   for(unsigned i=0;i<8192;i++)assert(prior[i]==memory.at(0x90000+i*4) && next[i]==memory.at(0xa0000+i*4));
   uint32_t prep[32],step[32],gated[32];
   for(unsigned i=0;i<32;i++){prep[i]=memory.at(TT_Q38_GDN_INPUT_SUMMARY+i*4);step[i]=memory.at(TT_Q38_RGDN_SUMMARY+i*4);gated[i]=memory.at(TT_Q38_GDN_GATED_SUMMARY+i*4);}
   assert(PioneerQ38GdnInputSummary(prep,inputDescriptor.data(),initialCounts,step+8)
    && PioneerQ38ResidentGdnSummary(step,descriptor.data(),step+8,step+16)
-   && PioneerQ38GdnGatedSummary(gated,gatedDescriptor.data(),inputDescriptor.data(),descriptor.data(),step+16,counts));
-  for(unsigned i=0;i<32;i++){gated[i]^=1;assert(!PioneerQ38GdnGatedSummary(gated,gatedDescriptor.data(),inputDescriptor.data(),descriptor.data(),step+16,counts));gated[i]^=1;}
+   && CheckSummary(gated,step+16,counts));
+  for(unsigned i=0;i<32;i++){gated[i]^=1;assert(!CheckSummary(gated,step+16,counts));gated[i]^=1;}
   float raw[128],sum=0;
   for(unsigned i=0;i<128;i++){
    auto* m=i/64==(descriptor[9]&1)?this:peer;raw[i]=Float(m->memory.at(0x8e800+(i%64)*4));sum+=raw[i]*raw[i];
@@ -136,7 +143,7 @@ static void RunGatedPair(GatedResidentMachine& a,GatedResidentMachine& b,unsigne
   unsigned packets=one->packets,reads=one->nocReads,writes=one->commandWrites,ops=one->unit.ops;
   for(unsigned i=0;i<32;i++)one->StepCombined();
   assert(one->packets==packets && one->nocReads==reads && one->commandWrites==writes && one->unit.ops==ops);
-  assert(one->memory.at(0x17ffc8)==(one->pc==0x64058?TT_Q38_GDN_GATED_FAULT:TT_Q38_GDN_GATED_MARKER));
+  assert(one->memory.at(0x17ffc8)==(one->pc==0x64058?one->StageFault():one->StageMarker()));
  }
 }
 #ifndef PIONEER_Q38_GDN_GATED_RESIDENT_MACHINE_ONLY

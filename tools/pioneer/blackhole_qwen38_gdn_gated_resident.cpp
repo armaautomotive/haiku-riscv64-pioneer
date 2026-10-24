@@ -11,6 +11,20 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnGatedShape.h"
 extern "C" unsigned q38_resident_gdn_recurrent_stage();
 extern "C" void scalar_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRendezvousShape.h"
+#include "PioneerQ38GdnRendezvousClock.h"
+extern "C" __attribute__((noinline)) bool q38_gdn_rendezvous_shape(const uint32_t* d,const uint32_t* input,const uint32_t* state){return PioneerQ38GdnRendezvousShape(d,input,state);}
+#define Q38_GATED_SHAPE q38_gdn_rendezvous_shape
+#define Q38_GATED_READY_WORD PioneerQ38GdnRendezvousReadyWord
+#define Q38_GATED_STAGE_MARKER TT_Q38_GDN_RENDEZVOUS_MARKER
+#define Q38_GATED_MAX_POLLS TT_Q38_GDN_RENDEZVOUS_POLLS
+#else
+#define Q38_GATED_SHAPE PioneerQ38GdnGatedShape
+#define Q38_GATED_READY_WORD PioneerQ38GdnGatedReadyWord
+#define Q38_GATED_STAGE_MARKER TT_Q38_GDN_GATED_MARKER
+#define Q38_GATED_MAX_POLLS TT_Q38_GDN_GATED_POLLS
+#endif
 extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
  volatile unsigned char* out=static_cast<volatile unsigned char*>(target);
  for(__SIZE_TYPE__ i=0;i<bytes;i++)out[i]=static_cast<unsigned char>(value);
@@ -37,7 +51,7 @@ static bool Seal(const uint32_t* d){
  if(!Bound(d))return false;
  // Peer may advance to gated output,but MUST retain this separate raw
  // readiness seal and raw LOCAL output until the future owner holds ALL.
- for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_READY)[i]!=PioneerQ38GdnGatedReadyWord(d,i,false))return false;
+ for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_READY)[i]!=Q38_GATED_READY_WORD(d,i,false))return false;
  return true;
 }
 static __attribute__((noinline)) void Packet(unsigned p,const uint32_t* d,uint32_t* tracked){
@@ -78,10 +92,15 @@ extern "C" unsigned scalar_main(){
  for(unsigned i=0;i<64;i++){
   d[i]=Words(TT_Q38_GDN_GATED_DESCRIPTOR)[i];input[i]=Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i];state[i]=Words(TT_Q38_RGDN_DESCRIPTOR)[i];
  }
- if(!PioneerQ38GdnGatedShape(d,input,state))return 0; // NO MMIO before ALL paired DATA checks
+ if(!Q38_GATED_SHAPE(d,input,state))return 0; // NO MMIO before ALL paired DATA checks
  // Future owner must clear ALL peers' cells BEFORE releasing ANY. A stale
  // cell is a refusal,not permission to clear it and hide a reused epoch.
  for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_READY)[i])return 0;
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE
+ if(!Bound(d) || !Quiet())scalar_fault_park();
+ for(unsigned i=0;i<16;i++)Words(TT_Q38_GDN_RENDEZVOUS_CLOCK)[i]=0;
+ PioneerQ38RendezvousCycles began=PioneerQ38GdnRendezvousClockRead(),previous=began;
+#endif
  if(q38_resident_gdn_recurrent_stage()!=64)scalar_fault_park();
  for(unsigned i=0;i<64;i++)if(Words(TT_Q38_GDN_GATED_DESCRIPTOR)[i]!=d[i]
   || Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i]!=input[i] || Words(TT_Q38_RGDN_DESCRIPTOR)[i]!=state[i])scalar_fault_park();
@@ -91,19 +110,24 @@ extern "C" unsigned scalar_main(){
  if(tracked[2]!=tracked[6] || !Bound(d) || !Quiet())scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_READY)[i])scalar_fault_park();
  volatile uint32_t* s=Words(TT_Q38_GDN_GATED_SUMMARY);for(unsigned i=0;i<32;i++)s[i]=0;
- s[6]=d[6];s[7]=TT_Q38_GDN_GATED_MARKER;
+ s[6]=d[6];s[7]=Q38_GATED_STAGE_MARKER;
  const unsigned tail[]={d[7],d[5],d[40],d[15],d[4]+d[43],d[3],d[11],d[12]};
  for(unsigned i=0;i<8;i++){s[8+i]=tracked[i];s[24+i]=tail[i];}
  // Publish ONLY after both actual NEXT writes and their command/counter
  // receipts. Raw output and this seal stay immutable through final hold.
- for(unsigned i=1;i<16;i++)Words(TT_Q38_GDN_GATED_READY)[i]=PioneerQ38GdnGatedReadyWord(d,i,false);
- Fence();Words(TT_Q38_GDN_GATED_READY)[0]=TT_Q38_GDN_GATED_MARKER;Fence();
+ for(unsigned i=1;i<16;i++)Words(TT_Q38_GDN_GATED_READY)[i]=Q38_GATED_READY_WORD(d,i,false);
+ Fence();Words(TT_Q38_GDN_GATED_READY)[0]=Q38_GATED_STAGE_MARKER;Fence();
  if(!Seal(d))scalar_fault_park();
  bool ready=false;
- for(unsigned poll=0;poll<TT_Q38_GDN_GATED_POLLS;poll++){
+ for(unsigned poll=0;poll<Q38_GATED_MAX_POLLS;poll++){
   Packet(0,d,tracked);s[5]++;
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE
+  PioneerQ38RendezvousCycles now=PioneerQ38GdnRendezvousClockRead();
+  if(!PioneerQ38GdnRendezvousClockValue(began,previous,now))scalar_fault_park();
+  previous=now;
+#endif
   if(!Words(TT_Q38_GDN_GATED_PEER_READY)[0])continue;
-  for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_PEER_READY)[i]!=PioneerQ38GdnGatedReadyWord(d,i,true))scalar_fault_park();
+  for(unsigned i=0;i<16;i++)if(Words(TT_Q38_GDN_GATED_PEER_READY)[i]!=Q38_GATED_READY_WORD(d,i,true))scalar_fault_park();
   ready=true;break;
  }
  if(!ready)scalar_fault_park(); // bounded known-complete polls;no host wait or fallback
@@ -112,8 +136,18 @@ extern "C" unsigned scalar_main(){
  if(!PioneerQ38GdnGatedNormHalf(reinterpret_cast<const float*>(0x80000),reinterpret_cast<const float*>(0x80200),
   reinterpret_cast<const float*>(0x80400),d[7]&1,reinterpret_cast<float*>(0x8ea00)))scalar_fault_park();
  for(unsigned i=0;i<64;i++)if(Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i]!=input[i] || Words(TT_Q38_RGDN_DESCRIPTOR)[i]!=state[i])scalar_fault_park();
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE
+ PioneerQ38RendezvousCycles ended=PioneerQ38GdnRendezvousClockRead();
+ if(!PioneerQ38GdnRendezvousClockValue(began,previous,ended))scalar_fault_park();
+#endif
  Packet(4,d,tracked);
  for(unsigned i=0;i<8;i++)s[16+i]=tracked[i];
  if(!Seal(d) || !Quiet())scalar_fault_park();
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_IMAGE
+ volatile uint32_t* c=Words(TT_Q38_GDN_RENDEZVOUS_CLOCK);
+ c[1]=uint32_t(began);c[2]=uint32_t(began>>32);c[3]=uint32_t(ended);c[4]=uint32_t(ended>>32);
+ c[5]=s[5];c[6]=d[6];c[7]=d[7];for(unsigned i=8;i<16;i++)c[i]=d[24+i];
+ Fence();c[0]=TT_Q38_GDN_RENDEZVOUS_MARKER;Fence();
+#endif
  Fence();s[4]=64;Fence();return 64; // private output DATA;NOT current-slot/token publication
 }

@@ -41,6 +41,13 @@
 #include "PioneerQ38GdnGatedImage.h"
 #include "PioneerQ38GdnGatedPlan.h"
 #endif
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+#if PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1 || !defined(PIONEER_Q38_GDN_GATED_NATIVE) || PIONEER_Q38_GDN_GATED_NATIVE != 1
+#error Exact separate timed rendezvous requires SAME native gated owner
+#endif
+#include "PioneerQ38GdnRendezvousImage.h"
+#include "PioneerQ38GdnRendezvousPlan.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RECURRENT_NATIVE) || PIONEER_Q38_GDN_RECURRENT_NATIVE != 1 || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
 #error Separate exact recurrent DEBUG requires SAME initialized-state owner,never old input DEBUG
@@ -86,7 +93,9 @@ class PioneerQ38ResidentDecoderOwner {
  uint32_t command[120][10]={},counts[120][8]={},resets[120]={};
  bool verified[120]={};unsigned phase=0,operationPhase=0;
  bool started=false,unsafe=false,closed=false,consumed=false,complete=false;
-#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+ PioneerQ38GdnRendezvousPlan gatedJobs[96];bool gatedReceipted[120]={},gatedPublished=false;uint32_t gatedPolls[120]={},gatedClock[120][4]={};
+#elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
  PioneerQ38GdnGatedPlan gatedJobs[96];bool gatedReceipted[120]={},gatedPublished=false;
 #endif
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
@@ -155,7 +164,11 @@ class PioneerQ38ResidentDecoderOwner {
  template<class IO> bool Image(IO& io,unsigned w){
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
   if(gdnImage[w]){
-#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   for(unsigned i=0;i<TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS;i++){
+    uint32_t v;if(!io.ProjectionGraphMemoryReadChecked(w,PioneerQ38GdnRendezvousImageAddress(i),v) || v!=PioneerQ38GdnRendezvousImageWord(i))return false;
+   }
+#elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
    for(unsigned i=0;i<TT_Q38_GDN_GATED_IMAGE_WORDS;i++){
     uint32_t v;if(!io.ProjectionGraphMemoryReadChecked(w,PioneerQ38GdnGatedImageAddress(i),v) || v!=PioneerQ38GdnGatedImageWord(i))return false;
    }
@@ -201,9 +214,25 @@ class PioneerQ38ResidentDecoderOwner {
    const auto* gd=gatedJobs[w-1].Descriptor();
    for(unsigned i=0;i<64;i++){uint32_t v;if(!io.ProjectionGraphMemoryReadChecked(w,TT_Q38_GDN_GATED_DESCRIPTOR+i*4,v) || v!=gd[i])return false;}
    if(gatedReceipted[w] || !p.running[w])for(unsigned i=0;i<16;i++){
-    uint32_t v,expected=gatedReceipted[w]?PioneerQ38GdnGatedReadyWord(gd,i,false):0;
+    uint32_t v,expected=gatedReceipted[w]?
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+     PioneerQ38GdnRendezvousReadyWord(gd,i,false)
+#else
+     PioneerQ38GdnGatedReadyWord(gd,i,false)
+#endif
+     :0;
     if(!io.ProjectionGraphMemoryReadChecked(w,TT_Q38_GDN_GATED_READY+i*4,v) || v!=expected)return false;
    } // ALL96 exact zero cells checked BEFORE ANY release;immutable exact stamps after receipt
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   if(gatedReceipted[w] || !p.running[w]){
+    uint32_t clock[16];for(unsigned i=0;i<16;i++)if(!io.ProjectionGraphMemoryReadChecked(w,TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4,clock[i]))return false;
+    if(gatedReceipted[w]){
+     if(!PioneerQ38GdnRendezvousClockReceipt(clock,gd,gatedPolls[w]))return false;
+     for(unsigned i=0;i<4;i++)if(clock[1+i]!=gatedClock[w][i])return false;
+    }
+    else for(unsigned i=0;i<16;i++)if(clock[i])return false;
+   }
+#endif
 #endif
    return true;
   }
@@ -286,7 +315,11 @@ class PioneerQ38ResidentDecoderOwner {
  }
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  template<class IO> bool GdnTerminal(IO& io,unsigned w){
-#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+  if(!w || w>96 || !gdnImage[w] || io.RuntimeStatusRead(2)!=TT_Q38_GDN_RENDEZVOUS_MARKER
+   || io.RuntimeStatusRead(0)!=0x6400c || io.RuntimeStatusRead(1)!=64)return false;
+  for(unsigned i=0;i<2;i++){io.Pause();uint32_t pc=io.RuntimePcRead();if(pc!=0x64038 && pc!=0x6403c)return false;}
+#elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
   if(!w || w>96 || !gdnImage[w] || io.RuntimeStatusRead(2)!=TT_Q38_GDN_GATED_MARKER
    || io.RuntimeStatusRead(0)!=0x6400c || io.RuntimeStatusRead(1)!=64)return false;
   for(unsigned i=0;i<2;i++){io.Pause();uint32_t pc=io.RuntimePcRead();if(pc!=0x64038 && pc!=0x6403c)return false;}
@@ -324,9 +357,25 @@ class PioneerQ38ResidentDecoderOwner {
   const auto* state=gdnJobs[w-1].StateDescriptor();const auto* gd=gatedJobs[w-1].Descriptor();
   if(!PioneerQ38GdnInputSummary(summary,d,counts[w],summary+16)
    || !PioneerQ38ResidentGdnSummary(stateSummary,state,stateSummary+8,stateSummary+16)
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   || !PioneerQ38GdnRendezvousSummary(gatedSummary,gd,d,state,gatedSummary+8,after))return false;
+#else
    || !PioneerQ38GdnGatedSummary(gatedSummary,gd,d,state,gatedSummary+8,after))return false;
+#endif
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+  uint32_t clock[16];for(unsigned i=0;i<16;i++)clock[i]=io.Q38PanelRead(TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4);
+  if(!PioneerQ38GdnRendezvousClockReceipt(clock,gd,gatedSummary[5]))return false;
+  gatedPolls[w]=gatedSummary[5];
+  for(unsigned i=0;i<4;i++)gatedClock[w][i]=clock[1+i]; // private immutable receipt,not a caller checksum
+#endif
   for(unsigned i=0;i<8;i++)if(summary[16+i]!=stateSummary[8+i] || stateSummary[16+i]!=gatedSummary[8+i])return false;
-  for(unsigned i=0;i<16;i++)if(io.Q38PanelRead(TT_Q38_GDN_GATED_READY+i*4)!=PioneerQ38GdnGatedReadyWord(gd,i,false))return false;
+  for(unsigned i=0;i<16;i++)if(io.Q38PanelRead(TT_Q38_GDN_GATED_READY+i*4)!=
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   PioneerQ38GdnRendezvousReadyWord(gd,i,false)
+#else
+   PioneerQ38GdnGatedReadyWord(gd,i,false)
+#endif
+   )return false;
   const uint32_t last[]={0x8ea00,0,gd[9],gd[4]+gd[43],0,gd[8],0,0x212,256,0};
   gatedReceipted[w]=true; // private real receipt,never caller metadata
 #elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
@@ -636,8 +685,13 @@ public:
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
    if(!gatedJobs[half].Build(*p.canonical,gdnJobs[half].Descriptor(),gdnJobs[half].StateDescriptor())
     || !gatedJobs[half].LearnedPagePresent(p.ledger,p.pages))return Fail(io,r);
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   for(unsigned i=0;i<TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS;i++)
+    if(!PioneerQ38ProjectionGraphSnapshotContains(w,PioneerQ38GdnRendezvousImageAddress(i)))return Fail(io,r);
+#else
    for(unsigned i=0;i<TT_Q38_GDN_GATED_IMAGE_WORDS;i++)
     if(!PioneerQ38ProjectionGraphSnapshotContains(w,PioneerQ38GdnGatedImageAddress(i)))return Fail(io,r);
+#endif
 #elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
    for(unsigned i=0;i<TT_Q38_GDN_RECURRENT_IMAGE_WORDS;i++)
     if(!PioneerQ38ProjectionGraphSnapshotContains(w,PioneerQ38GdnRecurrentImageAddress(i)))return Fail(io,r);
@@ -653,9 +707,16 @@ public:
   for(unsigned w=1;w<=96;w++){
    r.worker=w;if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   for(unsigned i=0;i<TT_Q38_GDN_RENDEZVOUS_IMAGE_WORDS;i++){
+    r.word=i;if(!Write(io,w,PioneerQ38GdnRendezvousImageAddress(i),PioneerQ38GdnRendezvousImageWord(i)))return Fail(io,r);
+   }
+   for(unsigned i=0;i<16;i++)if(!Write(io,w,TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4,0))return Fail(io,r);
+#else
    for(unsigned i=0;i<TT_Q38_GDN_GATED_IMAGE_WORDS;i++){
     r.word=i;if(!Write(io,w,PioneerQ38GdnGatedImageAddress(i),PioneerQ38GdnGatedImageWord(i)))return Fail(io,r);
    }
+#endif
    for(unsigned i=0;i<64;i++)if(!Write(io,w,TT_Q38_RGDN_DESCRIPTOR+i*4,gdnJobs[w-1].StateDescriptor()[i])
     || !Write(io,w,TT_Q38_GDN_GATED_DESCRIPTOR+i*4,gatedJobs[w-1].Descriptor()[i]))return Fail(io,r);
    for(unsigned i=0;i<32;i++)if(!Write(io,w,TT_Q38_RGDN_SUMMARY+i*4,0) || !Write(io,w,TT_Q38_GDN_GATED_SUMMARY+i*4,0))return Fail(io,r);
@@ -686,12 +747,33 @@ public:
    r.worker=w;if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
    resets[w]=0x87ffff;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return Fail(io,r);r.gdnArmed++;
   }
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+  uint64_t releaseBegan=io.Q38CohortNow();
+  if(releaseBegan>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
+#endif
   for(unsigned w=1;w<=96;w++){
-   r.worker=w;if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
+   r.worker=w;
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   uint64_t before=io.Q38CohortNow();if(before<releaseBegan || before-releaseBegan>=UINT64_C(30000000))return Fail(io,r);
+#endif
+   if(!Guard(io,w) || !Current(io,w))return Fail(io,r);
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   uint64_t after=io.Q38CohortNow();if(after<before || after-releaseBegan>=UINT64_C(30000000))return Fail(io,r);
+#endif
    verified[w]=false;p.running[w]=p.cohort->worker[w].image.running=true;
-   resets[w]=0x46800;io.RuntimeResetWrite(resets[w]);if(!Guard(io,w))return Fail(io,r);r.gdnReleased++;
+   resets[w]=0x46800;io.RuntimeResetWrite(resets[w]);
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+   uint64_t issued=io.Q38CohortNow();if(issued<after || issued-releaseBegan>=UINT64_C(30000000))return Fail(io,r);
+#endif
+   if(!Guard(io,w))return Fail(io,r);
+   r.gdnReleased++;
   }
-  phase=11;r.phase=11;bool done[96]={};unsigned finished=0;uint64_t began=io.Q38CohortNow();
+  phase=11;r.phase=11;bool done[96]={};unsigned finished=0;
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+  uint64_t began=releaseBegan;
+#else
+  uint64_t began=io.Q38CohortNow();
+#endif
   if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
   for(unsigned attempt=0;attempt<65536 && finished<96;attempt++){
    uint64_t now=io.Q38CohortNow();if(now<began || now-began>=UINT64_C(30000000))return Fail(io,r);
@@ -707,7 +789,9 @@ public:
 #ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
     observedStatus[2]=marker;
 #endif
-#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+    if(marker && marker!=TT_Q38_GDN_RENDEZVOUS_MARKER)return Fail(io,r);
+#elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
     if(marker && marker!=TT_Q38_GDN_GATED_MARKER)return Fail(io,r);
 #elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
     if(marker && marker!=TT_Q38_GDN_RECURRENT_MARKER)return Fail(io,r);
@@ -719,7 +803,9 @@ public:
 #ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
      observedPc[0]=pc;
 #endif
-#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
+     if(pc<0x64000 || pc>=0x64000+TT_Q38_GDN_RENDEZVOUS_TEXT_BYTES || (pc&3) || (pc>=0x6403c && pc<=0x64058))return Fail(io,r);
+#elif defined(PIONEER_Q38_GDN_GATED_NATIVE)
      if(pc<0x64000 || pc>=0x64000+TT_Q38_GDN_GATED_TEXT_BYTES || (pc&3) || (pc>=0x6403c && pc<=0x64058))return Fail(io,r);
 #elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
      if(pc<0x64000 || pc>=0x64000+TT_Q38_GDN_RECURRENT_TEXT_BYTES || (pc&3) || (pc>=0x6403c && pc<=0x64058))return Fail(io,r);

@@ -1,0 +1,187 @@
+Qwen3.8-27B timed peer rendezvous QGT1 / COMPILE-ONLY native51
+2026-10-24 UTC. OFFLINE qualification;NOT a new linked/installed driver.
+Source base a65e73eaff7bfc632144bde83591a1cade383fc0.
+Last whole-model0.207893161tok/s UNCHANGED;20tok/s UNMET/full offload INCOMPLETE.
+
+Implemented:
+  Separate exact PIONEER_Q38_GDN_RENDEZVOUS_NATIVE=1/tag2026102400010051,
+  requiring SAME native50/recurrent/state-init/input/decoder/projection/RMS/
+  embedding parents. No public compute/upload/Work/CPU-reference selector.
+  Separate QGT1 image preserves actual raw->recurrent->peer-ready/read->
+  gated RMS/learned norm/SiLU->private GDDR arithmetic and source guards.
+  No host numeric input,GO message,arithmetic seam,or intervening reset.
+  Replaces the old256 completed-ready-poll deadline with fixed84G cycles,
+  using ONLY read CSRRS mcycleh/mcycle/mcycleh,x0 and four consistency
+  attempts. No timer/inhibit/CSR/config/counter writes. Unstable,backward,
+  stalled or expired clock refuses;additional hard0x7fffffff poll cap.
+  At the existing SAME owner's verified <=1400MHz normal clock,84G cycles
+  are at least60seconds. This is CONDITIONAL on that native clock guard,
+  NOT a new independent frequency guarantee or measured silicon duration.
+  Host30second deadline starts BEFORE first release,not after96 serial
+  launches;checked before/after full preflight and after actual release.
+  Clock receipt64B at74d00 binds phase/half/identity epochs and poll count.
+  Timestamp words are constrained DATA,not a checksum/source/terminal or
+  cleanup capability. Once genuinely accepted,all4 exact words are retained
+  privately and subsequent changes are refused even if semantically valid.
+  ALL96 zero ready/clock cells checked BEFORE ANY release. ALL real receipts/
+  ALL120holds precede private NEXT/gated publication;no current-slot flip.
+
+Frozen emitted image and boundaries:
+  Independently rebuilt C/D/E23792B exact SHA256
+  3a99ac89d98236b7e3dac5e1cf433223961fdb1b7f0f6f80dd81d541a47b0284.
+  Boot4B SHA256d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
+  ALL5949 frozen ROM words independently compared to actual code/boot.
+  Main compiler frame896B,shape wrapper432B;existing1024B frame gate NOT
+  raised. Actual image test max observed stack2228B,within existing8KiB.
+  Fits existing native50 24KiB saves;NO snapshot expansion or smaller backup.
+  Old QGH1 rebuild exact23020B/22e3001215d67c9b9f8861098db5e5fda76fb241076c0ece8adb3ba224dfe297.
+
+78802 image test TERMINAL0,ASan/UBSan:
+  Actual emitted scalar/SFPU/NoC/CSR instructions;clock samples explicitly
+  FABRICATED,not calibrated native/silicon time or throughput evidence.
+  102positive/2033negative cases,all96half/layer/bank/slot metadata,strict
+  normal arithmetic/guard checks unchanged. OldQGH1 faults at256polls while
+  peer has NOT started;newQGT1 completes after512and2048 actual peer reads.
+  CSR rollover retry,unstable high/backward/stalled/final-clock faults,
+  card deadline,all malformed descriptor bits BEFORE MMIO or CSR. Actual
+  CSR samples independently equal received timestamps;maxSteps436350.
+  /private/tmp/pioneer-q38-gdn-rendezvous-tests-20261024-c.log
+  SHA256fa39800a979bf55c1ccd411b869c5ac2b61ea21403fd5a0da94f295de81a64b4.
+
+Native SAME-owner scheduling tests (device byte endpoints simulated ONLY):
+  7158 old50 delayed peer NEGATIVE TERMINAL0;actual worker2 release delayed
+  while worker1 instructions run. Refuses,NO NEXT/gated publication,ALL
+  owners/snapshots retained,no following IO/reset/restore/retry.
+  Log native-oldlate-20261024-a SHA256
+  f9d08a4d7677891ce643806b3f6a1541122005822eac1d6d81887fb5e0516199.
+  72842 host ENTIRE release deadline NEGATIVE TERMINAL0;advances actual
+  released stream then simulated host time30000001us during worker2 reset.
+  Refuses immediately after release,retains owners/snapshots,no following
+  IO/reset/restore/retry. Log native-host-deadline-20261024-a SHA256
+  52c3f7575cb255ae9386c54fbff677b1289777d2a3f46b2651a30da26933c647.
+  6838 delayed QGT1 positive TERMINAL0:full original model digest/independent
+  refs BEFORE context;genuine same native73728page init/history1680/QPE1/
+  QRN1/4QPS1/CBOALL120 -> actual cooperativeQGT1ALL96. Worker2 held for20000
+  actual advance quanta,NO fake ready/counter/completion or wait-all shortcut.
+  ALL829632 original prepared/NEXT/raw/gated values match,immutable CURRENT+
+  unrelated state,ALL96receipts/ALL120holds/private NEXT+gated publication,
+  complete8330680word restore+verification/actualEND/cold0.
+  /private/tmp/pioneer-q38-gdn-rendezvous-native-delayed-20261024-b.log
+  Delayed-positive log SHA256
+  2611fdbc87409134a8e9d571d516a5a178f5710e37aa371402509a73aee3bd9e.
+  14253 controller-faults B TERMINAL0:18 genuine SAME-owner failures,
+  dropped code/descriptor;late summary/counter/source/command/status/count/
+  entry/PC/code/descriptor/ROOT-counter/foreign119descriptor;team/initialized
+  state epoch;restore write/readback failures. Faults3..14 injected ONLY
+  AFTER actual worker96 terminal,never by fabricating completion. No private
+  NEXT/gated publication on Run failure. All failures retain actual model/
+  history/state/snapshots/maps/ALL host owners,NO subsequent IO/reset/restore/
+  retry. Parent then independently matches ALL829632 original values/full
+  8330680word restore+verification/actualEND/cold0.
+  /private/tmp/pioneer-q38-gdn-rendezvous-native-controller-faults-20261024-b.log
+  SHA256f2d17dba1f66b766012673dad71ca3d3ff364302c38d36a3105bb9f93f44f8c6.
+  36018 timestamp-faults B TERMINAL0:after genuine ALL96 receipts/ALL120holds,
+  fork4 cases from SAME accepted native owner and change each timestamp word
+  while its DATA remains semantically valid. All4 rejected by private exact
+  retained-word check. ROOT90505words may already be restored BEFORE worker1
+  discovers corruption;ALL snapshots/owners retained,NO following IO/reset/
+  restore/retry AFTER failure. Unmodified parent completes full829632value
+  check/8330680word restore+verification/actualEND/cold0.
+  /private/tmp/pioneer-q38-gdn-rendezvous-native-clock-fault-20261024-b.log
+  SHA2568a6320f3270dbcd84ab5aaee8c27200a326ecaef0e1b44edda23e6ca1c41fa93.
+
+33115 actual memory owner+catalog ASan/UBSan TERMINAL0:
+  ALL120 code1185912/snapshot8330680/arbitrary+UINT32_MAX words/full stacks/
+  runtime/primary+shadow/trailers. Second full original pass BEFORE first
+  write,all8330680words restored and16661360 original verifications.
+  3560757catalog refusals/5949actual ROM words+ALL96 clock64B footprint.
+  44first-failure cases/29precondition refusals retain snapshots/ALL host
+  owners;NO IO/reset/read/restore/retry AFTER failure. Partial earlier
+  restoration is possible before a later worker fails,NOT rolled back.
+  /private/tmp/pioneer-q38-gdn-rendezvous-memory-20261024-b.log
+  SHA2566e667cdd62863a914be261c52f3a84386f79f77f53b8d4fde276ef68ba927a3a.
+
+23334 D and28879 E ACTUAL full RISC-V native kernel compile TERMINAL0:
+  gdn-rendezvous-NATIVE51-COMPILE-ONLY.o exact in both directories:
+  dbb550a34baeb76b1f68c2216d74bd2e2a42e7ba7633154c6e82c295f5f1de53.
+  Max new kernel frame1008B,within unchanged2048B gate;oversized unrelated
+  legacy frames do not grow. No linked/loadable driver or updater entry.
+  All inherited old controls(tag38/default43/DEBUG44/native45/47/48/50)
+  BYTE-IDENTICAL,including old50
+  8de95a581d3b3e3ad06d9ccf4a91ffe10c9149e4e49d8640f51275cca1385acd.
+  Logs /private/tmp/pioneer-q38-gdn-rendezvous-native-full-20261024-{d,e}.log
+  D SHA256e81a59b124144b3f591550f21b2c8c2cef379e8bd3eced6d03d986cd68397ee4
+  E SHA2566b1a8426506d8159534432e4a0549de19a9073e7cd2a5980099c8c7c7a54ef9c.
+
+76695 gates TERMINAL0:287 exact native/image/parent/tag/mixed-role/CPU
+  reference/old+new early-builder/unchanged1024frame/actualCSR opcode mutation
+  cases;131072 ACTUAL inert dispatch probes. All6 independent CPU reference
+  headers reject newnative51 even0. CSRwrites/nonzero source/other CSR/zero
+  destination/extra SYSTEM refused based on actual bits,not mnemonics.
+  SHA256d10a5c89fe799c0ff52eff4a9dbb0d34d9c47aebaaee414c95850542012305bd.
+  Old50 gates176+131072inert PASS/exact old log4003e581. OldQGH1 emitted
+  suite96main/2late/26edge/64nonresetting/2096faults PASS/exact f00a9af6.
+  Old full memory44faults/29refusals PASS/exact4f4855d9. No gate relaxed.
+
+OFFLINE problems caught,not hidden:
+  First card builds lacked freestanding uint64 type and inlined shape copy
+  exceeded old1024frame gate. Use explicit compiler uint64 type and separate
+  noinline shape wrapper;frame gate unchanged.
+  Kernel compile caught misleading indentation;format corrected. Splitting
+  old summary condition changed native50 bytes;restored exact old expression,
+  old pin recovered,NOT updated to accept regression.
+  Time words are DATA,so arbitrary bit flips need not make them semantically
+  invalid. Test now compares actual sampled CSR values and separately checks
+  private accepted-byte immutability. A restore test incorrectly expected
+  zero earlier restored words even though Close restores per worker;retain
+  original per-worker contract and require no following IO AFTER failure.
+  Memory A accidentally used the OLD50 catalog on a NEW51 image and correctly
+  refused23792B. Separate timed catalog/runner added;old23020B rule unchanged.
+  Controller A explicitly terminated as superseded BEFORE fault loop when
+  malformed-marker test changed0->0xdeadbeef;not an observation-timeout retry.
+
+Remaining BEFORE hardware/new public DEBUG:
+  Distinct fixed validation role/client with authenticated ORIGINAL norm upload,scoped
+  updater and lifecycle/failure tests. Actual firmware clock/read and NoC
+  launch timing still require physical component qualification. Synthetic
+  instruction scheduling/clock is NOT that qualification or a speed claim.
+  Then connect ssm_out/residual/post-attn norm/FFN/full attention+KV/all64
+  layers/sampling/persistent token loop. Native51 is NOT Assistant/Work/full
+  card offload completion. No numeric validation in Work has been added.
+  Inspected next boundary:generic ProjectionInputShape already describes
+  hybrid ssm_out as semantic role13/Q8_0/6144inputs/5120outputs,whereas the
+  actual RunQ38ProjectionExecution factory accepts ONLY5/6/10/11 and its
+  current input owner is learned-RMS5120. Merely widening that allowlist is
+  NOT an integration:the6144 gated GDDR bytes need a genuine SAME-owner
+  producer/input lease and complete new image/source/ledger/epoch lifetime,
+  not a caller flag or a host-copied intermediate vector.
+
+ZERO Pioneer SSH/card/reload/power/boot/SD/Assistant/network/kernel actions.
+Last physical verification03:07:48UTC stable041/gen8/cold0/idle/64CPUs/
+RAM137034936320B NOT freshly re-probed. No restore/recovery pending.
+OFF is NON-IDEMPOTENT:ONE effective OFF,verify actual off,ONE ON. Do not
+repeat OFF on SSH loss/boot silence;wait5min ONLY if actual ON fails.
+ALL qualification jobs now terminal. Full unlimited original goal ACTIVE;
+NO new performance result.
+
+Reproduce card build and emitted-image test (fresh absolute output):
+  sh tools/pioneer/build_qwen38_gdn_rendezvous_image.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/FRESH-QGT1-IMAGE
+  sh tools/pioneer/tests/run_pioneer_q38_gdn_rendezvous_image_tests.sh \
+    /private/tmp/FRESH-QGT1-IMAGE /private/tmp/pioneer-q38-gdn-gated-resident-20261024-e
+Reproduce actual native owner tests;substitute MODE with
+  --gdn-rendezvous-native-delayed
+  --gdn-rendezvous-native-host-deadline
+  --gdn-rendezvous-native-controller-faults
+  --gdn-rendezvous-native-clock-receipt-fault
+  python3 tools/pioneer/tests/pioneer_q38_resident_decoder_native_factory_test.py \
+    /private/tmp/pioneer-q38-projection-stash-image-20261022-c \
+    /private/tmp/pioneer-q38-projection-family.DGLYM4co/peer-n \
+    /private/tmp/pioneer-q38-state-zero-20261020-c \
+    /private/tmp/pioneer-q38-embedding-image-20261022-b \
+    /private/tmp/pioneer-q38-learned-rms-image-20261022-c \
+    /private/tmp/pioneer-q38-conv-batch-image-20261023-c \
+    MODE /private/tmp/FRESH-QGT1-IMAGE
+Reproduce native kernel compile (fresh absolute output):
+  python3 tools/pioneer/build_qwen38_gdn_rendezvous_native.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/FRESH-NATIVE51
