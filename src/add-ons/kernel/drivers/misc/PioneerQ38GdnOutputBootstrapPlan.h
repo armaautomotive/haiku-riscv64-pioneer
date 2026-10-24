@@ -10,6 +10,7 @@
 // image transition,initial boot,Scope/Close/END before using this manifest.
 // No caller address/token/phase/source/sequence/epoch/activation hints.
 class PioneerQ38GdnOutputBootstrapPlan {
+ friend class PioneerQ38ResidentDecoderOwner;
  const PioneerQ38GdnOutputProjectionPlan* input=nullptr;
  const PioneerQ38DispatchLease* cohort=nullptr;
  uint32_t manifest[TT_Q38_PROJECTION_GRAPH_WORDS]={},sources[119*16]={};

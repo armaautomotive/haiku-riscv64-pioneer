@@ -5,6 +5,11 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#if PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE) || PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE != 1
+#error Separate exact native54 requires SAME actual gated producer/native parents
+#endif
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
 #if PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1 || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate exact native53 gated-output producer requires SAME timed native owner,never DEBUG or Work
@@ -59,7 +64,9 @@
 #if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate resident-input owner needs exact native role,never old convolution DEBUG
 #endif
-#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010054ULL
+#elif defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010053ULL
 #elif defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010052ULL
@@ -126,6 +133,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010053ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE))
 #error Reserved tag53 identifies ONLY SAME-owner gated-output producer,NO public selector
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010054ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE))
+#error Reserved tag54 identifies ONLY SAME-owner gated-output execution,NO public selector
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -3947,6 +3957,16 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  if(!okay){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
  return okay; // SAME native call/context/owner. NO public opcode or new producer grant.
 #endif
+}
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+[[maybe_unused]] static bool RunQ38ResidentGdnOutput(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r)
+{
+ auto* m=c.q38EmbeddingModel;
+ if(!m || m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld || m->Unsafe() || !m->decoder.GatedOutput())return false;
+ bool okay=c.io.ProjectionExecutionSourceScope(true) && m->decoder.RunGdnOutput(c.io,r);
+ if(!okay && m->Unsafe()){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
+ return okay; // SAME actual source/call/thread/clock/hosts,NO public selector
 }
 #endif
 [[maybe_unused]] static bool CloseQ38ResidentDecoderModel(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r

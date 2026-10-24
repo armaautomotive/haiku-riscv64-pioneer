@@ -1,0 +1,108 @@
+Qwen3.8-27B SAME native decoder -> complete ssm_out execution
+2026-10-24 UTC. Base d56f39fd215204169fd7cfe50f6963587901f034.
+IMPLEMENTED/OFFLINE qualified;final fault+restore C TERMINAL0.
+No linked/installed driver,physical test,Assistant selection or throughput
+claim. Whole-model0.207893161tok/s unchanged;20tok/s UNMET;full goal ACTIVE.
+
+IMPLEMENTED
+Separate native54 role PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE=1 requires
+SAME actual native53 producer/timed51/gated50/recurrent/state-init/input/
+decoder/QPS1/RMS/embedding/call/team/thread/clock/ALL host owners. Reserved
+tag2026102400010054;all public controls remain inert. No CPU numerical
+reference,activation vector,numeric fallback,old RMS epoch or copied ready
+flag is accepted by the native controller. No old RMS role widening.
+
+SAME PioneerQ38ResidentDecoderOwner claims before first IO/mutation at
+phase13;old held-only producer/plan/bootstrap Current queries expire NOW.
+Separate private HEAP state captures canonical119jobs/actual1904peer NIUs,
+not a second owner. Own live lineage ties SAME retained GDN receipts,
+privateNEXT,canonical/ledger/identity/token/position/bank/phase/workspace/
+ROOT source/cohort/snapshot and real native Scope. Full old120held image/
+NIU/control/counter proofs before first code write. Unknown quarantines
+SAME owners/snapshot/model/hosts with NO following IO/reset/restore/retry.
+
+Install+verify complete separately pinned QOP1/op6 images in EXISTING full
+code footprint;fresh private119boot sequence0 ONLY after owned reset and
+real WAIT/boot/source/counter/image checks. ONE ROOT call runs24op6 chunks,
+QOG1 gather,ALL119matrix jobs and full5120row GDDR scatter. Host checks
+real exact receipt/manifest+shadow/full119source+shadow/QOG1source+shadow/
+private sequences/NIU counters/physical WAITs. ROOT deadline starts BEFORE
+release. Then separate STOP ROOT call proves ALL119 independent physical
+STOP terminals BEFORE first peer hold;ALL120held/live image proofs before
+publication. Full original8330680word snapshot restore and real END follow.
+No original snapshot/stack/mapping/code limits relaxed. New state retained
+on UNKNOWN;normal Close frees it only after full verified original restore.
+
+JOINED ORIGINAL MODEL
+New independent observer is compiled WITHOUT native flags. Full GGUF
+hash/canonical/original references AND all7ssm_out stripes(8640pages) cached
+BEFORE native context. Byte endpoints serve ORIGINAL576B tiles;no synthetic
+weights or CPU products enter the controller or new peer. Actual GDN
+829632original values/privateNEXT+CURRENT checked BEFORE L1 image switch.
+Actual SAME native claim/install/fresh119boot/QOP1RUN+STOP reads ALL61440
+original ssm_out tiles and computes ALL5120rows with independent FP32+FP64
+matrix/original-wire input checks. Unrelated workspace/gated input unchanged.
+All120native holdings/full8330680restore/verification/actualEND PASS in
+initial A (71103 terminal0). Physical/kernel/GDDR endpoints simulated;
+this is NOT physical timing,whole27B inference or hardware qualification.
+
+Final strengthened-lineage/failure suite C TERMINAL0(61346):
+Six actual native endpoint faults:ignored first new boot write,corrupt last
+peer boot source field,NIU source drift after release,bad completed ROOT
+receipt,late last-peer physical STOP PC,and last original restore word.
+Each proves real fault injection,quarantine+ALL owners retained,ZERO
+following IO/retry/reset/restore/END. Also wrong real team and forged output
+flags refused without IO or claims. Parent then normal joined RUN/STOP/
+restore/END PASS. Failed final restore stopped at8330679words and retained
+all resources,never END/retry. No synthetic controller/ready facade.
+ /private/tmp/pioneer-q38-gdn-output-execution-original-20261024-c.log
+ SHA2567f2aeef9ffc3f268c9be0e6c5c4ea09b3e79f27849b32aee3e54a222729c3c53
+ Initial joined A log SHA25694e760c0659329f70d4aaaaf054ac4d8c9ec198e326dbe738f7919186c7ae51d
+
+KERNEL ABI
+Final D/E TERMINAL0(42737/11348),exact forced native54 full implementation:
+ c8930f61076877f20fbc647d8967285ffc144fd24201f4e828e7073002804e2e
+ /private/tmp/pioneer-q38-gdn-output-execution-20261024.6MqBpk59/native-{d,e}/
+ gdn-output-execution-NATIVE54-COMPILE-ONLY.o
+ New maxframe1600B/unchanged2048B gate;ALL oversized legacy frames
+ nongrowing. ALL inherited native53/bootstrapede51345/gather821c5a4a/
+ inputdc90888e/producer53c30cd922/native51dbb550a3+old controls EXACT.
+ D log SHA256c7b52503819328158cc59de042ab96d0597865a91379bd265d06c2897594d939
+ E log SHA2569034629b4848ddf55b7a237f19de3787e7e54647deab4e4afe94ba5fa3a1f831
+
+PINNED CODE / GATES
+Six frozen headers compare EXACT against independently built root/peer
+sections;all-six/both-boots validated BEFORE any generator patch output.
+Catalog ASan/UBSan TERMINAL0(55207):ALL120/1185912code words/8330680saved
+words/3560757bad address refusals;actual code+padding in SAME snapshot.
+25generator cases TERMINAL0. 242new exact native54 parent/tag/reference/
+before-SDK builder gates+131072actual inert routes TERMINAL0(50767).
+All7reference observers reject execution role even0;ten old builders reject
+ambient execution BEFORE SDK/output. No native image automatically mapped.
+ Catalog SHA2568c82a04f8341e6a5d517e59fa462382911fbdcab1bc04f48028fd04f302c2615
+ Generator SHA256968f48bfb448a6e9aed82b411f8e5aa2e1bfaada4b473c4654a71887d3ed723b
+ Gates SHA2567ba21cfe3ef85ac0c6d538c3f51f639a926cef0411063673afc3e99f3af4e386
+Old53 original-model regression TERMINAL0(60711),exact previous full log
+ SHA2561dee55fe6065c0da2f2488e36a41455770ae279ca1729b613e0a4d2c966d99c8.
+
+Development catches,not gate relaxations:initial A native compile failed
+two misleading-indentation warnings,fixed;B/C compile+initial original A
+passed. Review strengthened full live GDN lineage;D/E code supersedes B/C.
+Initial native fault suite B passed fault1 then fault2 was not targeted at
+the actual panel-write path (only mapped writes);added matching panel
+endpoint mutation and explicit captured ran/injected/phase diagnostics.
+No driver guard weakened. Final C ALL faults+normal parent TERMINAL0.
+ALL qualification jobs terminal;no restart on an observation timeout.
+
+ZERO Pioneer SSH/device/reload/boot/power/SD/Assistant/network/CPU/RAM
+changes. Last physical DEBUG52 client rejection/quarantine/cold1/owner1/
+stable041restore PENDING remains historical,not freshly probed. Recovery
+still requires saved-work confirmation. ONE effective OFF,verify actual
+OFF,ONE ON;OFF twice can START board. No mains/SD change required.
+
+NEXT physical DEBUG52 diagnosis/recovery before any new physical promotion;
+native54 qualification readback/client/linked driver still OWED. This is
+first-token/layer0 GDN through ssm_out,NOT full decoder offload. Actual
+residual/post-attention RMS/FFN/full attentionKV/all64layers/sampling/
+persistent whole-token schedule/host orchestration removal/real model
+performance and20tok/s target all remain OWED. Full goal ACTIVE.

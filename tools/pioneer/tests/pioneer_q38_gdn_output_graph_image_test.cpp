@@ -29,7 +29,8 @@ struct GdnGraphMachine:ArithmeticParent {
  std::vector<uint32_t> manifest,original;
  unsigned sourceShadowWrites=0,gatherShadowWrites=0,token=0,sourceMutatePacket=0,sourceMutateWord=0;
  uint64_t rootStores=0;
- GdnGraphMachine(const char* root,const char* peer,unsigned bank=0):ArithmeticParent(root,peer,false){
+ GdnGraphMachine(const char* root,const char* peer,unsigned bank=0,bool initialize=true):ArithmeticParent(root,peer,false){
+  if(!initialize)return; // TEST external native byte fabric owns all boot/releases
   for(unsigned w=0;w<119;w++){
    actual[w]=std::make_unique<GdnGraphPeer>(peer,w+1,gddr);auto& p=*actual[w];
    for(unsigned i=0;i<16;i++)p.source[i]=i?0x12340000+w*0x100+i:0x16005+w*0x100;

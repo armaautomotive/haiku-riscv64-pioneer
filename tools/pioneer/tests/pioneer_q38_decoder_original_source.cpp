@@ -34,8 +34,9 @@ namespace {
 class OriginalSource final:public DecoderOriginalSource {
  struct Stripe {unsigned role,route;uint32_t address,bytes;std::vector<uint8_t> data;};
  PioneerQ38PublicModelSource original;PioneerQwen38PackedPlan plan;
- std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false,gdnNative=false;
+ std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false,gdnNative=false,gdnOutput=false;
  uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0,gdnNormReads=0;
+ uint64_t outputReads=0;
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
  std::array<uint32_t,128> gdnLearnedNorm={};std::vector<uint32_t> gdnNormReferences;
@@ -51,14 +52,14 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  bool Prepare(unsigned token)override{
   if(attempted || sealed || token>=248320 || !original.Ready())return false;
   attempted=true;if(!plan.Build(original.Model(),8192,true,true))return false;
   auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!canonical->Build() || canonical->Count()!=plan.Parts().size())return false;
-  unsigned projectionsCount=0,convCount=0,convRows=0,embeddingCount=0,normTensor=UINT32_MAX,embeddingTensor=UINT32_MAX,pages=0,gdnParts=0,gdnNormTensor=UINT32_MAX;
+  unsigned projectionsCount=0,convCount=0,convRows=0,embeddingCount=0,normTensor=UINT32_MAX,embeddingTensor=UINT32_MAX,pages=0,gdnParts=0,gdnNormTensor=UINT32_MAX,outputStripes=0,outputRows=0;
   const auto& parts=plan.Parts();const auto& tensors=original.Model().Tensors();
   for(unsigned i=0;i<parts.size();i++){
    const auto& p=parts[i];const auto& c=*canonical->Part(i);
@@ -72,7 +73,7 @@ public:
     memcpy(embedding.data(),data.data()+within,46080);embeddingCount++;embeddingTensor=p.tensor;
    }
    if(p.layer || (p.role!=0 && p.role!=5 && p.role!=6 && p.role!=10 && p.role!=11 && p.role!=12
-    && (!gdnInputs || (p.role!=7 && p.role!=8)) && (!gdnNorm || p.role!=9)))continue;
+    && (!gdnInputs || (p.role!=7 && p.role!=8)) && (!gdnNorm || p.role!=9) && (!gdnOutput || p.role!=13)))continue;
    Stripe s={p.role,PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,p.bytes,std::vector<uint8_t>(p.allocated)};
    for(unsigned page=0;page<p.allocated/4096;page++)if(!original.ReadWeightPage(plan,i,page,s.data.data()+page*4096,4096))return false;
    pages+=p.allocated/4096;
@@ -80,7 +81,10 @@ public:
     if(normTensor!=UINT32_MAX || c.type || p.rowBytes!=20480 || p.bytes!=20480 || p.allocated!=20480)return false;
     normTensor=p.tensor;for(unsigned j=0;j<5120;j++){const auto* b=s.data.data()+j*4;norm[j]=uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24);}
    }else{
-    if(p.role==9){
+    if(p.role==13){
+     if(!gdnOutput || c.type!=8 || p.rowBytes!=6912 || tensors[p.tensor].name!="blk.0.ssm_out.weight")return false;
+     outputStripes++;outputRows+=p.rows;
+    }else if(p.role==9){
      if(!gdnNorm || gdnNormTensor!=UINT32_MAX || c.type || p.firstRow || p.rows!=1 || p.rowBytes!=512 || p.bytes!=512 || p.allocated!=4096
       || tensors[p.tensor].name!="blk.0.ssm_norm.weight")return false;
      gdnNormTensor=p.tensor;
@@ -99,7 +103,8 @@ public:
    }
   }
   if(embeddingCount!=1 || normTensor==UINT32_MAX || projectionsCount!=16 || convCount!=7 || convRows!=10240
-   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U) || gdnParts!=(gdnInputs?2U:0U)
+   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U)+(gdnOutput?8640U:0U) || gdnParts!=(gdnInputs?2U:0U)
+   || outputStripes!=(gdnOutput?7U:0U) || outputRows!=(gdnOutput?5120U:0U)
    || gdnNorm!=(gdnNormTensor!=UINT32_MAX))return false;
   Reference reference{*this};
   if(!PioneerQ38EmbeddingReference(reference,embeddingTensor,token,raw.data())
@@ -191,7 +196,7 @@ public:
    if(s.role==9 && !gdnNative)return false;
    if(bytes!=tile || relative%tile || bytes>s.bytes-relative)return false;
    memcpy(out,s.data.data()+relative,bytes);if(s.role==12)convolutionReads++;
-   else if(s.role==7 || s.role==8)gdnInputReads++;else if(s.role==9)gdnNormReads++;else projectionReads++;
+   else if(s.role==7 || s.role==8)gdnInputReads++;else if(s.role==9)gdnNormReads++;else if(s.role==13)outputReads++;else projectionReads++;
    return Ready();
   }
   return false; // No synthetic/partial/padding/foreign-address/numeric fallback
@@ -217,6 +222,8 @@ public:
  uint64_t ConvolutionReads()const override{return convolutionReads;}
  uint64_t GdnInputReads()const override{return gdnInputReads;}
  uint64_t GdnNormReads()const override{return gdnNormReads;}
+ bool GdnOutputWeightsReady()const override{return gdnOutput && sealed && Ready();}
+ uint64_t GdnOutputReads()const override{return outputReads;}
  bool CheckGdnInput(unsigned half,const uint32_t* values)const override{
   if(!gdnInputs || !gdnReferencesReady || !sealed || !Ready() || half>=96 || !values)return false;
   const auto* reference=gdnReferences.data()+half*322;
@@ -264,5 +271,9 @@ std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNormOriginalSource(const char
 }
 std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNativeOriginalSource(const char* path){
  if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true);
+ if(!source->Open())return nullptr;return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenGdnOutputOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true,true);
  if(!source->Open())return nullptr;return source;
 }

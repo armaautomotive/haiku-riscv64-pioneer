@@ -26,10 +26,13 @@ struct DecoderOriginalSource:ProjectionExecutionLearnedBytes {
  virtual const uint32_t* GdnLearnedNorm()const{return nullptr;} // ORIGINAL learned bytes only,not numeric reference products
  virtual bool CheckGdnGatedNorm(unsigned,const uint32_t*)const{return false;}
  virtual uint64_t GdnNormReads()const{return 0;}
+ virtual bool GdnOutputWeightsReady()const{return false;} // TEST learned byte endpoints only
+ virtual uint64_t GdnOutputReads()const{return 0;}
 };
 std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnRecurrentOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNormOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNativeOriginalSource(const char* path);
+std::unique_ptr<DecoderOriginalSource> OpenGdnOutputOriginalSource(const char* path);
 #endif

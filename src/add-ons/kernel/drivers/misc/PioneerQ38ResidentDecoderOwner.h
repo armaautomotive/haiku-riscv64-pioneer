@@ -51,6 +51,12 @@
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
 #include "PioneerQ38GdnOutputProducer.h"
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#if PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE) || PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE != 1
+#error Exact separate native54 SAME-owner output execution required
+#endif
+#include "PioneerQ38GdnOutputExecutionState.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -81,6 +87,9 @@ struct PioneerQ38ResidentDecoderResult {
 #endif
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
  uint32_t gdnGatedPublished=0; // result DATA ONLY,never a producer capability
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+ uint32_t outputInstalled=0,outputBooted=0,outputRootRuns=0,outputStopped=0,outputPublished=0;
 #endif
 #if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
@@ -173,6 +182,9 @@ class PioneerQ38ResidentDecoderOwner {
  }
  template<class IO> bool Scope(IO& io)const{
   return projection && history && MatchesNativeOwner(*projection,*history)
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+   && (!output || OutputData())
+#endif
    && projection->Scope(io) && io.ResidentDecoderScope(*this,*projection,*history)
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
    && (!gdnAttempted || (recurrent && io.ResidentGdnRecurrentScope(*this,*projection,*recurrent)))
@@ -200,6 +212,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Image(IO& io,unsigned w){
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+  if(output && output->image[w])return OutputImage(io,w);
+#endif
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
   if(gdnImage[w]){
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_NATIVE
@@ -228,6 +243,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Current(IO& io,unsigned w){
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+  if(output && output->image[w])return OutputCurrent(io,w);
+#endif
   auto& p=*projection;
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
   if(gdnImage[w]){
@@ -582,6 +600,9 @@ class PioneerQ38ResidentDecoderOwner {
   return gdnTimedReadbackDone && GdnGatedCompleted() && GdnLayerCompleted();
  }
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#include "PioneerQ38GdnOutputExecutionOwner.h"
+#endif
 public:
  PioneerQ38ResidentDecoderOwner()=default;
  PioneerQ38ResidentDecoderOwner(const PioneerQ38ResidentDecoderOwner&)=delete;
@@ -930,7 +951,13 @@ public:
 #endif
  ){
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
-  if(!started || unsafe || closed || !complete || !projection || !history || !gdnComplete || phase!=12)return false;
+  if(!started || unsafe || closed || !complete || !projection || !history || !gdnComplete
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+   || (output?(phase!=16 || !output->done || !output->stopped):phase!=12)
+#else
+   || phase!=12
+#endif
+   )return false;
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
   if(!GdnLayerCompleted())return false;
 #endif
@@ -972,7 +999,11 @@ public:
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !p.memory->VerifyOriginal(io,w,r.memory) || !Guard(io,w))return Fail(io,r);}
   if(r.memory.restoredWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || r.memory.verifiedOriginalWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || !Guard(io,0)
    || !p.state->CloseExecution(p.identity,&p,p.input))return Fail(io,r);
-  p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;return true;
+  p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+  delete output;output=nullptr;
+#endif
+  return true;
  }
 };
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE

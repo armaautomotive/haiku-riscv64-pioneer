@@ -1,7 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_GDN_OUTPUT_PROJECTION_PLAN_H
 #define PIONEER_Q38_GDN_OUTPUT_PROJECTION_PLAN_H
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#include "PioneerQ38ProjectionJobs.h"
+#include "PioneerQ38DispatchBootstrap.h"
+#else
 #include "PioneerQ38ResidentDecoderOwner.h"
+#endif
 #include "PioneerQ38GdnOutputProducer.h"
 #include "PioneerQ38GdnOutputInputShape.h"
 #include "PioneerQ38GdnOutputGatherShape.h"
@@ -13,6 +18,7 @@
 // root/peer/gather/output image. The old RMS graph cannot consume this.
 class PioneerQ38GdnOutputProjectionPlan {
  friend class PioneerQ38GdnOutputBootstrapPlan;
+ friend class PioneerQ38ResidentDecoderOwner;
  const PioneerQ38GdnOutputProducer* producer=nullptr;
  PioneerQ38ProjectionJobs jobs;
  bool attempted=false,ready=false;

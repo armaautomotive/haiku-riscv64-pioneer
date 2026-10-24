@@ -35,6 +35,10 @@ public:
  void Fault(unsigned kind); // simulated endpoint fault,never a production mode
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
  void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
+#ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+ void OutputSources(const char* root,const char* peer);void VerifyGdnOutput();
+ void OutputFault(unsigned);bool OutputFaultInjected()const; // TEST endpoint failures only
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  void DecoderSources(const char*,const PioneerQ38CanonicalModelPlan&,unsigned bank,DecoderHistoryBytes&); // TEST byte endpoints only
  unsigned DecoderStarts()const;
