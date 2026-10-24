@@ -1,0 +1,139 @@
+DEBUG46 public SAME-owner QCB1->QGI1 qualifier,Oct23-24 UTC2026.
+Last whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card inference UNMET.
+This checkpoint qualifies the actual public native call/source/ownership/
+fixed local readback and a separate original-model DEBUG client. All
+execution below is SIMULATED,not physical QGI1 or an inference speedup.
+Only read-only Pioneer OS/hash/CPU metadata queries were sent;no install,
+power command,SD/boot/kernel/Assistant/model change or physical GPU job.
+
+ACTUAL NEW PUBLIC PATH,NOT A COMPLETION FACADE
+Exact tag2026102300010046/namespace15;compile-only tag45 remains inert.
+Support/validate opcodes62ca/62cb above B_DEVICE_OP_CODES_END. Fixed
+123816B pointer-free HEAP reply:72B metadata+24countwords+30912F32values.
+Input is logical token only,position MUST be0,and ALL output/count/address-
+free fields are zero. Root/team/length/user-copy checks BEFORE claims/IO.
+Actual PioneerQ38GdnCallScope acquires/releases global semaphore and seals
+same actual native FD/cookie/team/thread/source/model/driver/clock/ALLhosts.
+Genuine history336x5/QPE1/QRN1/4QPS1/QCB1ALL120->QGI1ALL96 under ONE
+owner/original8134072word snapshot,not Close/restore then a fake handoff.
+After ALL120 independent holds/current proofs,read exactly322 LOCAL words
+from each worker1..96 (q128,k128,v64,decay,beta),then reprove current
+source/code/descriptor/counters/holds and restore the complete original.
+No new NoC packet/GDDR-state read/DMA/CPU math/fallback in readback. Partial
+or nonfinite read/copy/transport failure zeroes ALL reply fields after
+metadata,retains ALL owners and allows NO following device diagnostics/
+cleanup/retry. Failed reply delivery is also unsafe. Explicit END is owed.
+Old namespace14/13/embedding/RMS/FFN/Work/dispatch selectors denied here.
+The endpoint grants NO initialized-GDN/current-state/model-inference mode.
+
+FRESH SUCCESS/PC CHECKS
+New DEBUG inherits the qualified CBO terminal's captured EXISTING read
+order. QGI likewise checks fresh marker,phase6400c,count64 BEFORE its two
+PC snapshots. Only post-success64038/self-JAL speculative fallthrough6403c
+accepted. Running-path6403c and fault64058 still rejected. A DATA-only test
+compiles the ACTUAL GdnTerminal method body:all4valid-PC combinations,
+3status faults requiring ZERO PC reads,8first/second PC faults and4bad
+worker/image cases with ZERO endpoint reads. This classifier probe does
+NOT manufacture a native owner/producer/initialization capability.
+
+FULL ACTUAL RISC-V DRIVER,CANDIDATE BUILT ONLY
+37092 and26908 TERMINAL0,read-only SDK /Volumes/HaikuBuildLocal/generated.riscv64.
+Independent builds /private/tmp/pioneer-q38-gdn-input-debug-native-20261023-{a,b}
+Both tenstorrent_pci_probe-driver55-gdn-input-debug-tag46 SHA
+ 32a661c4d01cf1aebaed1edd5399bd0748bb37f5188d84a07cf8a7476cb3e47c
+New maximum native frame1968B<=2048;old oversized legacy functions have
+NO growth. Full old byte controls remain EXACT:oldtag38/guard/default43/
+execution2d12/stash6121/tag42a2bc/bare43/actualDEBUG44sixce/compileONLY45c3e.
+No dirty llama or external libraries built. No candidate transferred yet.
+
+ACTUAL PUBLIC ORIGINAL-MODEL TEST
+27876 TERMINAL0,/private/tmp/pioneer-q38-gdn-input-debug-control-20261023-b.log.
+Full original-file/SAME851tensor source and1672independent reference reads
+BEFORE any native context;observer separate TU WITHOUT native flags.
+264malformed root/team/token/position/length/copy/output-field/namespace
+refusals prove ZERO endpoint IO before claims. Actual public semaphore/
+call scope/native factories/SAME120-worker cohort run all stages and
+fixed30912 LOCAL reads;all96half-head outputs vs ORIGINAL independent
+references,normal gates RELATIVE3e-6. Full original restore/actual END.
+Original reads164800Q8/640conv/192A-dt (no host q/k/gate input). The TEST
+ledger is seeded with canonical A/dt pages;physical upload remains owed.
+Nine isolated ACTUAL public-call faults:partial GDN code,bad receipt,
+untouched ROOT/last peer change,bad first/last local output,failed user
+reply copy,workspace-zero failure,partial projection mapping. ALL retain
+ownership,zero reply on failed computation,release semaphore/thread seal,
+and prove ZERO later IO/END/restore. Parent then completes ORIGINAL positive.
+Prototype a caught a TEST delayed-QRN1 byte-seed field guarded only for
+older DEBUG;extended TEST endpoint guard,no production authority weakened.
+
+SEPARATE ORIGINAL-REFERENCE CLIENT
+Exact DEBUG46 client only,never Assistant/Work/native code. Full fixed
+PUBLIC GGUF SHA before GPU FD;source epoch/file stable through test.
+1290references BEFORE FD:embedding1,RMS1,QKV640,conv640,alpha3,beta3,A1,dt1.
+Unlike native observer1672,the client does not compute unused Z references.
+Independent libm Q/K/gates uses ORIGINAL negative-A/dt,not card primitives.
+Q/K uses tiled key h%16,not h/3. Raw ORIGINAL tiled weights only uploaded:
+27selected parts/23237pages/110spans,including two extra A/dt pages. No
+reference vector/q/k/gate ever sent to the endpoint. Driver tag46/namespace15/
+source/memory/count/generation and ALL30912values checked BEFORE explicit
+END. Normal gates require RELATIVE3e-6;only actual subnormal FTZ permits0.
+Any failure CLOSE ONLY,no automatic END/rollback/reset/fallback/retry.
+Source failure at final numeric check irreversibly stops the session.
+New independent oracle54refusals/ALL96 nonzero synthetic mappings/atomic
+publish PASS. Production client session4positives(token0,15,248319 plus
+tiny NORMAL decay),180faults/source loss/epoch change/all96output halves/
+metadata/first-last uploads/reference failures/normal-gate-zero rejection
+PASS with ASan/UBSan. Prototype's mathematical2^-120 fixture differed from
+FP32 rounded Softplus/product by3.576e-6:corrected literal0380001e,NOT the
+strict3e-6 tolerance. These are SYNTHETIC transport tests,not card arithmetic.
+Final independent client builds c/d identical SHA
+ d9da68255b7b6e3417e240652a011c2126b0f5baf4ef5f4b867d5ec3c80f2e0f
+Old DEBUG44 client rebuilt byte-identicalf3b54e8bb01a52cd1272804fc9491a9a832dc725708b19b0fde290ed547687a5.
+Role/builder/classifier gates326+old45gates176 PASS;legacy builders refuse
+new ambient role BEFORE SDK/output. No CPU references in kernel/Work.
+
+CONTROLLED EXCHANGE READY,NOT EXECUTED
+Updater adds ONLY --apply/restore-gdn-input-validation:stable041/tag12
+<->exact32a/tag46. FullSHA-scoped backups preserve older same-tag files;
+strict idle/cold0/active_owner0/open_count1/generation/guard/parent/hash/
+symlink checks unchanged. No automatic rollback after unknown.256actual
+disposable-fake-filesystem exchange/handshake/failure cases PASS across
+new46 and old44 directions,including current validation CPU-auth parents.
+New updater SHA
+ f53613fa751a6095fb10bc0edd2de7bbb71bba40c3f1123b150ec9a9a1881eb0
+Keep old staged f1c10379/ae05/3648 scripts and backups untouched;they do
+NOT restore46. Use the new updater for46 ONLY after known-clean explicit
+END and idle metadata. Never restore/retry after an unknown GPU failure.
+
+READ-ONLY PHYSICAL PREFLIGHT,NOT QGI1 EXECUTION
+2026-10-24 00:17:58 UTC:Haiku R1~beta6+development,installed041/tag12/gen4,
+quiesced0/cold0/active_owner0/open_count1/guard1. Reload-client SHA exactb0c851b3.
+00:21:22 UTC:64CPUs,max memory137034936320B (used4054732800B),kernel_riscv64
+built Sep8 2026 15:18:31/versiona01. Process filter showed only its own
+awk command,no actual compute parent;the updater MUST re-snapshot properly
+before exchange. No kernel/boot changes. No power pulse required or sent.
+OFF is non-idempotent:one effective OFF,verify actual state,then one ON;
+never repeat OFF blindly or after software shutdown/just SSH closure.
+
+NEXT/NOT COMPLETE
+Push this qualified source,stage immutable exact artifacts without
+overwriting older ones,refresh baseline and run ONE controlled physical
+qualifier;use SAME session handle to terminal. No inference speed claim.
+Then real GDN current-state initialization/combined prep+recurrence/all96
+next-slot commit,remaining norm/output/residual/FFN/fullattention/KV/all64
+layers/sampling/persistent whole-token scheduling and real throughput.
+
+TERMINAL LOG SHA256
+d5d841e1c559eeeffe43cca588ab42f951eb6c057cfe396d27f6a5dc049826c1
+ /private/tmp/pioneer-q38-gdn-input-debug-control-20261023-b.log
+db37108024a8748923bd8291c7d9b29c0798600653ee21b135540105ba75f7be
+ /private/tmp/pioneer-q38-gdn-input-debug-native-20261023-a.log
+2f8e0ea31c1016223920672220aaf251ebb691b86954ee37bcbc94caf87de5f4
+ /private/tmp/pioneer-q38-gdn-input-debug-native-20261023-b.log
+36b69722522803efbc22267633fb9fd995f0bb1b9509d2f06b37364757fbbe34
+ /private/tmp/pioneer-q38-gdn-input-debug-gates-20261023-b.log
+1c2eb0a84479911a828cefd33dd6feb63f6fc81c49247dcbe1a330c5f18d3815
+ /private/tmp/pioneer-q38-gdn-input-debug-reference-20261023-b.log
+0a68cbdf327494245ee6244726ac841e612f84c9075817e90951fea7351e0dbb
+ /private/tmp/pioneer-q38-gdn-input-debug-session-20261023-b.log
+719535d235ea4e1914542cc2cb492342b8bc1f00dd5201a8e65475e2e031aec4
+ /private/tmp/pioneer-q38-gdn-input-debug-hotswap-20261023-a.log

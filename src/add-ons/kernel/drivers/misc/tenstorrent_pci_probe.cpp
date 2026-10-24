@@ -15,11 +15,20 @@
 #error Decoder runtime/history reservation is OFFLINE until its separate actual native factory and role are qualified
 #endif
 #endif
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#if PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_INPUT_OWNER) || PIONEER_Q38_GDN_INPUT_OWNER != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Exact separate tag46 GDN-input DEBUG requires SAME-owner role,never old convolution DEBUG
+#endif
+#endif
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
 #if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate resident-input owner needs exact native role,never old convolution DEBUG
 #endif
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102300010046ULL
+#else
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102300010045ULL
+#endif
 #elif defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #if PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1
 #error Separate fixed retained-convolution DEBUG requires exact native decoder role
@@ -44,6 +53,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102300010045ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_INPUT_OWNER))
 #error Reserved tag45 identifies ONLY the separate same-owner resident-input preparation,NO public selector
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102300010046ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE))
+#error Reserved tag46 identifies ONLY the separate fixed GDN-input DEBUG qualifier
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -113,6 +125,11 @@
 #include "PioneerQ38EmbeddingNativeState.h"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#include "PioneerQ38ResidentDecoderValidationProtocol.h"
+#include "PioneerQ38ProjectionValidationProtocol.h"
+#endif
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#include "PioneerQ38GdnInputValidationProtocol.h"
 #include "PioneerQ38ResidentDecoderValidationProtocol.h"
 #include "PioneerQ38ProjectionValidationProtocol.h"
 #endif
@@ -3729,7 +3746,7 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 }
 #endif
 [[maybe_unused]] static bool CloseQ38ResidentDecoderModel(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r
-#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
  ,uint32* validation=NULL
 #endif
 )
@@ -3737,7 +3754,7 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  auto* m=c.q38EmbeddingModel;
  if(!m || m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld || m->Unsafe())return false;
  bool okay=c.io.ProjectionExecutionSourceScope(true) && m->decoder.Close(c.io,r
-#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
   ,validation
 #endif
  );
@@ -3939,6 +3956,81 @@ public:
 	PioneerStoreContext* Context() const { return held && status==B_OK?context:NULL; }
 };
 // PIONEER_Q38_GDN_CALL_SCOPE_END
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+// PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE_CONTROL_BEGIN
+static status_t Q38GdnInputValidationControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
+{
+ if(!cookie || cookie->magic!=0x50313030 || !data)return B_BAD_VALUE;
+ thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+ if(status!=B_OK || thread.team!=cookie->team)return status!=B_OK?status:B_NOT_ALLOWED;
+ if(operation==TT_PCI_PROBE_Q38_GDN_INPUT_VALIDATION_SUPPORT){
+  if(length!=sizeof(tt_q38_embedding_support))return B_BAD_VALUE;
+  status=AcquireQ38GdnSessionLock(cookie);if(status!=B_OK)return status;
+  const tt_q38_embedding_support support={1,55,15,30912,248320,512,0,0};
+  status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+ }
+ if(operation!=TT_PCI_PROBE_Q38_GDN_INPUT_VALIDATE || length!=sizeof(tt_q38_gdn_input_validation))return B_BAD_VALUE;
+ auto* reply=new(std::nothrow) tt_q38_gdn_input_validation;if(!reply)return B_NO_MEMORY;
+ status=user_memcpy(reply,data,sizeof(*reply));
+ bool shape=status==B_OK && PioneerQ38EmbeddingRequest(reply->metadata) && !reply->metadata.position;
+ if(shape){const auto* bytes=reinterpret_cast<const uint8*>(reply);
+  for(unsigned i=sizeof(reply->metadata);i<sizeof(*reply);i++)if(bytes[i]){shape=false;break;}
+ }
+ if(!shape){delete reply;return status!=B_OK?status:B_BAD_VALUE;}
+ PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+ if(!c || !BindQ38EmbeddingModel(*c,reply->metadata.token,0,0)){
+  delete reply;return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+ }
+ PioneerQ38ConvHistoryZeroResult history;PioneerQ38ProjectionZeroResult zero;
+ PioneerQ38EmbeddingResult embedding;PioneerQ38LearnedRmsResult norm;
+ PioneerQ38ProjectionGraphResult projection;PioneerQ38ResidentDecoderResult decoder;
+ uint64 began=uint64(system_time());
+ bool okay=InitializeQ38ConvHistoryModel(*c,history) && InitializeQ38EmbeddingModel(*c,zero)
+  && RunQ38EmbeddingModel(*c,embedding) && RunQ38LearnedRmsModel(*c,norm) && PrepareQ38ProjectionExecution(*c,projection);
+ const unsigned roles[]={10,11,5,6};for(unsigned role:roles)if(okay)okay=RunQ38ProjectionExecution(*c,role,projection);
+ if(okay)okay=RunQ38ResidentDecoderModel(*c,decoder) && PrepareQ38ResidentGdnInputs(*c,decoder)
+  && CloseQ38ResidentDecoderModel(*c,decoder,reply->values);
+ uint64 ended=uint64(system_time());auto* m=c->q38EmbeddingModel;
+ okay=okay && ended>=began && m && m->Closed() && m->embedding.Completed() && m->rms.Completed() && !c->Unsafe()
+  && m->historyZero.closed && m->historyZero.nonce==336 && history.nonce==336 && history.pages==5
+  && projection.runs==4 && projection.armed==119 && projection.released==119 && projection.rootStarts==4 && projection.rootHolds==4
+  && projection.memory.savedWords==8134072 && projection.memory.verifiedOriginalWords==8134072 && projection.memory.installedWords==989304
+  && decoder.closed && !decoder.unsafe && decoder.installed==120 && decoder.armed==120 && decoder.released==120
+  && decoder.completed==120 && decoder.held==120 && decoder.stop.stopped==119 && decoder.stop.held==119
+  && decoder.stop.rootStarts==1 && decoder.stop.rootHolds==1 && decoder.gdnInstalled==96 && decoder.gdnArmed==96
+  && decoder.gdnReleased==96 && decoder.gdnCompleted==96 && decoder.gdnHeld==96
+  && decoder.gdnReadbackWorkers==96 && decoder.gdnReadbackWords==30912
+  && decoder.memory.restoredWords==8134072 && decoder.memory.verifiedOriginalWords==8134072;
+ auto& r=reply->metadata;r.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+ r.closed=r.input_ready=okay?1:0;r.recovery_required=okay?0:1;
+ r.session=m?m->identity.session:0;r.driver_generation=m?m->identity.driverGeneration:0;
+ r.elapsed_us=okay?ended-began:0;r.source_pages=okay?23237:0;r.workspace_pages=okay?512:0;
+ r.saved_words=okay?embedding.savedWords+norm.savedWords+projection.memory.savedWords:0;
+ r.restored_words=okay?embedding.restoredWords+norm.restoredWords+decoder.memory.restoredWords:0;
+ if(okay){
+  reply->history_runs=history.nonce;reply->history_pages=1680;
+  reply->projections=projection.runs;reply->peer_boots=projection.released;reply->peer_stopped=decoder.stop.stopped;reply->peer_held=decoder.stop.held;
+  reply->root_starts=projection.rootStarts+decoder.stop.rootStarts;reply->root_holds=projection.rootHolds+decoder.stop.rootHolds;
+  reply->convolution_workers=decoder.completed;reply->convolution_jobs=640;reply->convolution_channels=10240;reply->convolution_held=decoder.held;
+  reply->input_workers=96;reply->input_installed=decoder.gdnInstalled;reply->input_armed=decoder.gdnArmed;
+  reply->input_released=decoder.gdnReleased;reply->input_completed=decoder.gdnCompleted;reply->input_held=decoder.gdnHeld;
+  reply->readback_workers=decoder.gdnReadbackWorkers;reply->readback_words=decoder.gdnReadbackWords;
+  reply->saved_words=projection.memory.savedWords;reply->verified_words=projection.memory.verifiedOriginalWords+decoder.memory.verifiedOriginalWords;
+  reply->installed_words=projection.memory.installedWords;reply->restored_words=decoder.memory.restoredWords;
+ }else{
+  dprintf("Q38-GDN-INPUT-DEBUG: FAIL history%u zero%u embedding%u norm%u projection%u decoder%u worker%u word%u readback%u/%u restored%u\n",
+   history.phase,zero.phase,embedding.phase,norm.phase,projection.phase,decoder.phase,decoder.worker,decoder.word,
+   decoder.gdnReadbackWorkers,decoder.gdnReadbackWords,decoder.memory.restoredWords);
+  dprintf("Q38-GDN-INPUT-DEBUG: CAPTURED worker%u status%08x/%08x/%08x pc%08x/%08x;EXISTING_READS_ONLY_NO_POST_FAILURE_DEVICE_IO\n",
+   decoder.observedWorker,decoder.observedStatus[0],decoder.observedStatus[1],decoder.observedStatus[2],decoder.observedPc[0],decoder.observedPc[1]);
+  memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
+ }
+ status=user_memcpy(data,reply,sizeof(*reply));delete reply;
+ if(!okay || status!=B_OK || c->Unsafe()){tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+ return status; // separate DEBUG observer compares ALL values BEFORE explicit END
+}
+// PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE_CONTROL_END
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
 // PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_CONTROL_BEGIN
 static status_t Q38ResidentDecoderValidationControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length)
@@ -6967,10 +7059,27 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
 #endif
-#ifdef PIONEER_Q38_GDN_INPUT_OWNER
+#if defined(PIONEER_Q38_GDN_INPUT_OWNER) && !defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
  // PIONEER_Q38_GDN_INPUT_NATIVE_INERT_ROUTING_BEGIN
  return B_NOT_ALLOWED; // COMPILE-ONLY tag45 has NO public execution/upload/old Work selector
  // PIONEER_Q38_GDN_INPUT_NATIVE_INERT_ROUTING_END
+#endif
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+ // PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE_ROUTING_BEGIN
+ if(operation==TT_PCI_PROBE_Q38_GDN_INPUT_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_GDN_INPUT_VALIDATE)
+  return Q38GdnInputValidationControl(instance,operation,data,length);
+ if(operation==TT_PCI_PROBE_Q38_DECODER_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_DECODER_VALIDATE
+  || operation==TT_PCI_PROBE_Q38_PROJECTION_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_PROJECTION_VALIDATE
+  || operation==TT_PCI_PROBE_Q38_EMBEDDING_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_PRODUCE
+  || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_EMBEDDING_VALIDATE
+  || operation==TT_PCI_PROBE_Q38_RMS_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_RMS_VALIDATE
+  || operation==TT_PCI_PROBE_Q38_FFN_MODEL_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_MODEL_INITIALIZE
+  || operation==TT_PCI_PROBE_Q38_FFN_GRAPH_SUPPORT || operation==TT_PCI_PROBE_Q38_FFN_GRAPH_RUN
+  || operation==TT_PCI_PROBE_Q38_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_WORK_RUN
+  || operation==TT_PCI_PROBE_Q38_LEGACY_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_LEGACY_WORK_RUN
+  || operation==TT_PCI_PROBE_Q38_DISPATCH_SUPPORT || operation==TT_PCI_PROBE_Q38_DISPATCH_RUN)
+  return B_NOT_ALLOWED; // namespace15 fixed qualifier is NOT old DEBUG/Work authority
+ // PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE_ROUTING_END
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  // PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_ROUTING_BEGIN

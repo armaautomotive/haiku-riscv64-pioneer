@@ -5,6 +5,9 @@
 #define B_DEVICE_OP_CODES_END 1000
 #include "pioneer_q38_resident_decoder_native_factory_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentDecoderValidationProtocol.h"
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputValidationProtocol.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionValidationProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnModelProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphProtocol.h"
@@ -22,10 +25,18 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #include "decoder_validation_probe_lock.inc"
 #include "decoder_validation_call_scope.inc"
 #define dprintf(...) fprintf(stderr,__VA_ARGS__)
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#include "gdn_input_validation_control.inc"
+#else
 #include "decoder_validation_control.inc"
+#endif
 #define geteuid() callerUid
 #include "decoder_validation_route_prelude.inc"
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#include "gdn_input_validation_routing.inc"
+#else
 #include "decoder_validation_routing.inc"
+#endif
  return B_BAD_VALUE;
 }
 #undef geteuid

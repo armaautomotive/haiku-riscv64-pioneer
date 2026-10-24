@@ -23,6 +23,9 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  const PioneerQ38ResidentDecoderResult* decoderResult=nullptr;unsigned decoderFault=0;bool decoderDamaged=false;
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  const char* gdnImage=nullptr;unsigned gdnStarts=0,gdnFault=0;bool gdnRunning[120]={},gdnDamaged=false;
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+ unsigned gdnReadbackWords=0,gdnReadbackFault=UINT32_MAX;
+#endif
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  std::vector<uint32_t> decoderCompletionReads;unsigned decoderPcReads[120]={},decoderFrontendSnapshots=0;
@@ -180,7 +183,15 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
    if(a==0x40 && p.validationPending)return 1;
 #endif
    return p.C().ResidentNocRead(a);
-  case Panel:{uint32_t v=p.LocalRead(a);if(p.starts && !p.current && ((p.fault==1 && a==TT_Q38_PROJECTION_GRAPH_STATS+56*4)
+  case Panel:{uint32_t v=p.LocalRead(a);
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+   if(p.gdnStarts==96 && p.current && p.current<=96 && p.C().coreReset==0x47800
+    && a>=0x8e000 && a<0x8e508 && p.gdnReadbackWords<30912){
+    unsigned word=(p.current-1)*322+(a-0x8e000)/4;assert(word==p.gdnReadbackWords);
+    if(p.gdnReadbackWords++==p.gdnReadbackFault)v=0x7fc00000;
+   }
+#endif
+   if(p.starts && !p.current && ((p.fault==1 && a==TT_Q38_PROJECTION_GRAPH_STATS+56*4)
     || (p.fault==2 && a==TT_Q38_PROJECTION_GRAPH_STATS+6*4)))v^=0x80000000;return v;}
   case Pci:return p.C().HostPciRead(a,uint16_t(b),uint8_t(c));
  }
@@ -209,8 +220,8 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    p.C().ResidentNocWrite(a,v);return;
   case SetPanel:
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
-   if(!p.gdnDamaged && p.decoderResult && p.decoderResult->phase==10 && p.current==96
-    && p.gdnFault==2 && a==TT_Q38_GDN_INPUT_DESCRIPTOR){p.gdnDamaged=true;return;}
+   if(!p.gdnDamaged && p.decoderStarts==120 && !p.gdnStarts && p.current==96
+    && p.gdnFault==2 && a==TT_Q38_GDN_INPUT_DESCRIPTOR && v==TT_Q38_GDN_INPUT_MARKER){p.gdnDamaged=true;return;}
 #endif
    p.LocalWrite(a,v);return;
   case SetReset:
@@ -269,8 +280,8 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 uint32_t ProjectionNativeTransport::MappedRead(uint32_t a){auto& p=*implementation;p.Touch();return p.FullRead(p.current,a);}
 void ProjectionNativeTransport::MappedWrite(uint32_t a,uint32_t v){auto& p=*implementation;p.Touch();
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
- if(!p.gdnDamaged && p.decoderResult && p.decoderResult->phase==10 && p.current==96
-  && p.gdnFault==1 && a==0x64024){p.gdnDamaged=true;return;}
+ if(!p.gdnDamaged && p.decoderStarts==120 && !p.gdnStarts && p.current==96
+  && p.gdnFault==1 && a==0x64024 && v==PioneerQ38GdnInputImageWord(10)){p.gdnDamaged=true;return;}
 #endif
  p.FullWrite(p.current,a,v);}
 uint32_t* ProjectionNativeTransport::PanelSaved(){auto& p=*implementation;p.Touch();return p.C().Q38PanelSavedWords();}
@@ -302,6 +313,10 @@ void ProjectionNativeTransport::GdnInputSource(const char* image){auto& p=*imple
 void ProjectionNativeTransport::GdnInputFault(unsigned kind){assert(kind>=1 && kind<=14);implementation->gdnFault=kind;}
 unsigned ProjectionNativeTransport::GdnInputStarts()const{return implementation->gdnStarts;}
 bool ProjectionNativeTransport::GdnInputFaultInjected()const{return implementation->gdnDamaged;}
+#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+void ProjectionNativeTransport::GdnReadbackFault(unsigned word){assert(word<30912);implementation->gdnReadbackFault=word;}
+unsigned ProjectionNativeTransport::GdnValidationReads()const{return implementation->gdnReadbackWords;}
+#endif
 #endif
 void ProjectionNativeTransport::ObserveDecoder(const PioneerQ38ResidentDecoderResult& r){implementation->decoderResult=&r;}
 void ProjectionNativeTransport::DecoderFault(unsigned kind){assert(kind>=1 && kind<=

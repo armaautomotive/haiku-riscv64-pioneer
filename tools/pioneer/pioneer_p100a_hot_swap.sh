@@ -31,6 +31,7 @@ case "$1" in
  --apply-rms-validation|--restore-rms-validation) mode=$1;;
  --apply-projection-validation|--restore-projection-validation) mode=$1;;
  --apply-decoder-validation|--restore-decoder-validation) mode=$1;;
+ --apply-gdn-input-validation|--restore-gdn-input-validation) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -117,6 +118,7 @@ candidate_projection_validation=$stage/tenstorrent_pci_probe-projection-validati
 # files stay untouched. This new mapping cannot recover/quiesce the
 # currently quarantined card or restore either previous same-tag image.
 candidate_decoder_validation=$stage/tenstorrent_pci_probe-decoder-validation-6ce7b4fe
+candidate_gdn_input_validation=$stage/tenstorrent_pci_probe-gdn-input-validation-32a661c4
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -194,6 +196,7 @@ hash_embedding_validation=779a2c81080b5cd7ca891f3614ea5c02ef580d769023b90f40c329
 hash_rms_validation=a32f462cbfdbe8558aca780a526e44a59dea15b25489a0131a5c4803771c276a
 hash_projection_validation=a2bcfb34baeba0bdca4e029164901c874c27ee7c3494be62912711e7a0c164e9
 hash_decoder_validation=6ce7b4fecae927391119163022cb49f8775ca79776555d209e2eb4c3eacc564b
+hash_gdn_input_validation=32a661c4d01cf1aebaed1edd5399bd0748bb37f5188d84a07cf8a7476cb3e47c
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -269,6 +272,7 @@ tag_embedding_validation=2026102200010040
 tag_rms_validation=2026102200010041
 tag_projection_validation=2026102200010042
 tag_decoder_validation=2026102300010044
+tag_gdn_input_validation=2026102300010046
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -459,6 +463,10 @@ else
  # explicit restore requires known-clean idle metadata,NEVER UNKNOWN.
  elif [ "$mode" = --apply-decoder-validation ]; then source=$candidate_decoder_validation; expected=$hash_scale_reuse_qualification; result=$hash_decoder_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_decoder_validation
  elif [ "$mode" = --restore-decoder-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_decoder_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_decoder_validation; newtag=$tag_scale_reuse_qualification
+ # Separate fixed DEBUG46;ONLY stable041 <-> exact qualified32a. Never
+ # apply/restore through an unknown owner,cold latch or arbitrary same tag.
+ elif [ "$mode" = --apply-gdn-input-validation ]; then source=$candidate_gdn_input_validation; expected=$hash_scale_reuse_qualification; result=$hash_gdn_input_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_gdn_input_validation
+ elif [ "$mode" = --restore-gdn-input-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_gdn_input_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_gdn_input_validation; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -499,7 +507,7 @@ else
  case "$mode" in
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only
   # backup; never overwrite it or confuse it with this exact input image.
-  --apply-decoder-validation|--restore-decoder-validation) reload_backup=$reload_backup-$expected;;
+  --apply-decoder-validation|--restore-decoder-validation|--apply-gdn-input-validation|--restore-gdn-input-validation) reload_backup=$reload_backup-$expected;;
  esac
  backup "$reload_backup" "$expected"
 fi
