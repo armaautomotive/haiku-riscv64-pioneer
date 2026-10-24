@@ -1,0 +1,106 @@
+Pioneer Qwen27B QRJ1 SINGLE resident GDN worker -- OFFLINE ONLY
+2026-10-24 UTC. Goal ACTIVE/turn PROGRESS. NO new inference timing.
+
+ACTUAL IMPLEMENTATION
+ONE emitted RV32IMF image,not two separately launched programs:
+ seven resident raw Q/K/V/alpha/beta/A/dt reads -> SAME-worker QK/gates
+ ->two32KiB-current-state packets ->SFPU recurrence ->two private next
+ writes ->single final QRJ1 marker/count64. NO intermediate terminal,
+ host stop/reload,CPU numeric input/reference,PCI/DMA or native selection.
+Only NoC/GDDR endpoints are simulated in this qualification. Inputs are
+synthetic raw values in the real canonical/original learned-scalar layout,
+NOT an authenticated original-model hardware run of this new image.
+
+BOTH complete descriptors validated BEFORE any NoC MMIO,then bound to
+same half/physical worker/layer/phase/position/source/ALL4owner epochs.
+Both state spans are disjoint from each other,full64MiB workspace,A/dt.
+Both stages independently revalidate complete shapes via shared functions.
+Descriptor snapshots survive BOTH calls. BEFORE first state read,actual
+eight counters must match preparation's completed receipt. Final receipt
+counter continuity is also required. No per-layer/token/next-slot commit.
+
+IMPORTANT SCALE FIX
+Old standalone QGI1 produces pre-scaled Q. Old resident SFPU program is
+POST-DOT-scaled;naively composing them scales every output twice. Only the
+separate EXACT combined-stage role now prepares unscaled normalized Q;
+the SFPU applies pinned FP32 1/sqrt128 AFTER the complete query dot.
+Default standalone images remain byte-identical. No tolerance loosening.
+An ACTUAL emitted superseded prototype with double scaling is retained as
+a NEGATIVE:independent normalization observer rejects>120/128Qvalues.
+That prototype was NEVER installed or treated as correct inference.
+
+REPRODUCIBLE BUILDS
+SDK /Volumes/HaikuBuildLocal/generated.riscv64 READ ONLY.
+QRJ1 builds j/k BOTH terminal0,EXACT14836B code SHA256:
+96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410
+boot4B/d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ /private/tmp/pioneer-q38-gdn-recurrent-20261024-{j,k}/
+Both numerical stages remain O2. Geometry-only wrapper is Os;shared exact
+shape functions avoid duplicate code within the EXISTING16KiB peer saved
+prefix. No snapshot expansion. Fixed freestanding memcpy copies descriptor
+route tables ONLY;actual SB/LBU are executed under stack/code whitelists.
+Every function frame<=1024B (actualmax560B),observed nested stack1332B
+within the existing saved8KiB. Unsupported DIV/REM/FPdiv/sqrt/FMA absent.
+
+Old standalone source rebuild controls EXACT:
+ QGI1 bcc15ddc0e76c0a432a63502201f9c2451366b02615e3cddc9cf64bb147757c1
+ RGDN c3d150b4818c6abd12de957c1840237b60f46d52c143a894b53efb7492ee5a48
+ ROOT-readback 518fbdefed49df2afd89837e6fd2edb08d0bf0c33df5a55e47ccb3ccbc21951b
+No driver ROM/tag/public protocol/client or native owner changed.
+
+FINAL QUALIFICATION
+56647 terminal0,ASan/UBSan/source-current ACTUAL emitted instructions:
+160positive runs:ALL96halves/7banks/bothslots/four half-head16-step chains
+carrying actual preceding next-state bytes (not resetting state each time).
+Independent libm QK/gate observer,strict relative3e-6 normal gates.
+ALL8192next+64outputs bit-exact to independent scalar FP32 after real
+post-dot scaling. Additional TRANSPOSED checkpoint observer independently
+checks [head][value][key] vs [head][half][key][value64] across all halves;
+reference/checkpoint bytes are NEVER inputs to the image. Prior immutable.
+11exact packets:9reads/536readflits,2writes/512writeflits;ALL8wrapped counts,
+both32word summaries,all descriptor bytes and disjoint guard words checked.
+Maximum emitted steps210429;NO speed/real clock claim from this count.
+
+4170fault/refusal cases:all11 packet timeouts/counter/foreign-counter/
+source/descriptor failures;7missing raw readback poison replacements;
+ALL paired-descriptor invalid bit flips;110corrupted command readbacks;
+8boundary-counter faults stop BEFORE state read/SFPU;before/after state
+summary corruption;first/last nonfinite current state. Inert fault park
+proves ZERO later NoC/MMIO/SFPU/next/output writes. No rollback/reset/retry.
+Failures AFTER private next writes do not publish any slot or token.
+
+PROTOTYPES NOT PROMOTED
+Initial compile missing freestanding integer type;fixed. Straight combined
+code exceeded16KiB;builder REFUSED,shared exact shapes reduced it to14836B.
+Test model needed relocated code-vs-local-descriptor dispatch;fixed only
+the simulator whitelist,not device addresses. An omitted idempotent command
+write cannot always be observed,so inject actual corrupted readback instead.
+Summary fault at raw packet7 was overwritten by the worker's own final
+receipt;move injection AFTER its8actual final counter reads. Assertions
+retained;source-current full final suite rerun terminal0. All earlier
+prototype tests terminal;none selected on card or used as speed evidence.
+
+UNCHANGED HARDWARE / NEXT
+ZERO Pioneer SSH/GPU/reload/power/reset/reboot/SD/PSU/Assistant/model/NIC/
+boot/kernel changes during this OFFLINE step. Last verified stable041,
+generation6,idle/cold0,no active owner;64CPUs/full137034936320B maxRAM.
+Prior physical GDN-input pass+clean restore is a SEPARATE milestone in
+qwen38-gdn-input-card-20261024.txt. User power policy documented in README:
+OFF is NOT idempotent. One effectiveOFF,verify board state,then oneON.
+
+NEXT real SAME native joint owner must initialize BOTH GDN slots via actual
+zero+known-clean Close (73728pages),retain exact initialized-current-state
+producer,freeze/own this combined image/paired canonical descriptors,run
+ALL96half receipts and atomically gate private next-slot publication.
+Reserved offsets/ordinary metadata tickets are NOT initialization proof.
+Then gated norm/output/residual/FFN,fullattention+KV/all64layers/sampling/
+persistent token scheduler and honest end-to-end benchmark remain owed.
+Work/no-CPU-reference stays separate from DEBUG. Whole27B last measured
+0.207893161tok/s UNCHANGED;20tok/s unmet. No card-only/full inference claim.
+
+FINAL LOG
+c11f1b3149fc9f2c2308fe9a9a1c1c290d680f47d399b704e9f52cab5f790a2d
+ /private/tmp/pioneer-q38-gdn-recurrent-image-20261024-e.log
+Double-scale NEGATIVE (current observer rerun89976 terminal0):
+bd75adfef09303503c37b0b9496ed8d278156b8f886c66f0a96221440ab53465
+ /private/tmp/pioneer-q38-gdn-recurrent-scaling-negative-20261024-b.log

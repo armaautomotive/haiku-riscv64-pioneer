@@ -51,10 +51,23 @@ static __attribute__((noinline)) void Read(unsigned p,const uint32_t* d,uint32_t
  scalar_fault_park(); // UNKNOWN,NO later packet/reset/restore/retry
 }
 }
+#ifdef PIONEER_Q38_GDN_INPUT_COMBINED_STAGE
+#if PIONEER_Q38_GDN_INPUT_COMBINED_STAGE != 1
+#error Exact offline combined-input stage role required
+#endif
+extern "C" bool q38_resident_gdn_input_shape(const uint32_t*);
+extern "C" unsigned q38_resident_gdn_input_stage(){
+#else
 extern "C" unsigned scalar_main(){
+#endif
  using namespace GdnInput;uint32_t d[64],tracked[8];
  for(unsigned i=0;i<64;i++)d[i]=Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i];
- if(!PioneerQ38GdnInputShape(d))return 0; // malformed DATA:NO NoC I/O
+#ifdef PIONEER_Q38_GDN_INPUT_COMBINED_STAGE
+ if(!q38_resident_gdn_input_shape(d))return 0;
+#else
+ if(!PioneerQ38GdnInputShape(d))return 0;
+#endif
+ // malformed DATA:NO NoC I/O
  if(!Seal(d) || !Quiet())scalar_fault_park();
  volatile uint32_t* s=Words(TT_Q38_GDN_INPUT_SUMMARY);for(unsigned i=0;i<32;i++)s[i]=0;
  s[5]=1536;s[6]=d[6];s[7]=TT_Q38_GDN_INPUT_MARKER;

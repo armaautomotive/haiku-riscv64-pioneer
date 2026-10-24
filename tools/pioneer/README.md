@@ -168,6 +168,13 @@ tools/pioneer/pioneer_power.sh status
 `on` holds the physical power button for 0.75 seconds. `off` and `restart` hold
 it for seven seconds and release it, providing the long press used for forced
 shutdown or recovery.
+These commands press a button; they do not set an absolute board-power state.
+In particular, `off` is NOT idempotent: calling it twice can start the board
+again. Send at most one effective OFF, verify the actual board is off, then
+send one ON. Do not add a relay OFF after software shutdown has already
+powered the board off, or infer board power from the relay's own `status`.
+Do not send extra pulses while observing a boot. The five-minute rest is
+only needed after a power-on attempt actually fails, not before every start.
 Override the hold time with `--duration`, or select another serial port with
 `--device`:
 

@@ -1,5 +1,33 @@
 # Native build status
 
+Latest October24 UTC2026:ONE emitted QRJ1 worker now chains resident RAW
+QKV/alpha/beta/A/dt->LOCAL QK/gates->CURRENT state->SFPU->private NEXT,
+without host stop/reload or intermediate terminal. OFFLINE ONLY,not wired
+into native owner/driver/Work. Exact shared descriptor checks keep code
+14836B within existing16KiB saved prefix. Builds j/k exact96881b6501e4;
+old QGI1/RGDN/ROOT-readback images BYTE-IDENTICAL. New combined mode uses
+UNSCALED Q for post-dot recurrence;double-scale emitted prototype rejected
+by independent observer,never installed. 56647 terminal0 ASan/UBSan:
+160positive/all96halves/bothslots/7banks/four16step state chains/ALL8256bits
+exact+transposed-checkpoint observer;4170faults/all11packets/8boundary
+counter failures BEFORE state read;inert failure/no laterIO. No tolerance
+loosening. New-image numerical stages O2,maxframe560B/nestedstack1332B.
+Native initialized-GDN producer/BOTH-slot zero+Close/ALL96next publication,
+gated norm/output/residual/FFN/attentionKV/all64layers/sampling/persistent
+loop still owed. No hardware/power/Assistant/boot/CPU/RAM changes in this
+offline step;last stable041/gen6. Whole27B0.207893161tok/s UNCHANGED;20UNMET;
+goalACTIVE. Evidence:benchmarks/qwen38-gdn-recurrent-image-20261024.txt.
+
+Latest October24 UTC2026:PHYSICAL GDN-input DEBUG46 PASS,all96halves/
+30912values from authenticated original GGUF,explicit clean END;stable041
+RESTORED at generation6,idle/cold0/no active owner. Last read-only Haiku
+check64CPUs/maxRAM137034936320B/core desktop services present. No power,
+restart,SD,Assistant,model,NIC,boot or kernel changes in this step. Evidence:
+benchmarks/qwen38-gdn-input-card-20261024.txt (pushed d47a07ae47).
+This proves real SAME-owner QPS1/QCB1->QGI1 input preparation,NOT initialized
+GDN state,recurrence,next-slot publication or full inference. Last whole27B
+0.207893161tok/s unchanged;20UNMET;goalACTIVE.
+
 Latest October23 UTC2026:ACTUAL native retained-convolution context/source/
 factory/retention/END adapter IMPLEMENTED+OFFLINE qualified,not installed.
 Separate exact native tag43 requires runtime/owner/stash/execution/RMS/

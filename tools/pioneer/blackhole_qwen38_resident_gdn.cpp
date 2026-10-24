@@ -58,9 +58,22 @@ static void Packet(bool write,unsigned at,const uint32_t* d) {
  scalar_fault_park(); // UNKNOWN:inert fault terminal,NO later packet/retry
 }
 }
+#ifdef PIONEER_Q38_RGDN_COMBINED_STAGE
+#if PIONEER_Q38_RGDN_COMBINED_STAGE != 1 || defined(PIONEER_Q38_RGDN_ROOT_QUALIFICATION)
+#error Exact offline combined-state stage role,not root readback validation
+#endif
+extern "C" bool q38_resident_gdn_state_shape(const uint32_t*);
+extern "C" unsigned q38_resident_gdn_state_stage() {
+#else
 extern "C" unsigned scalar_main() {
+#endif
  uint32_t d[64]; for (unsigned i=0;i<64;i++) d[i]=Words(TT_Q38_RGDN_DESCRIPTOR)[i];
- if (!PioneerQ38ResidentGdnShape(d)) return 0; // malformed shape:NO MMIO/packets/SFPU
+#ifdef PIONEER_Q38_RGDN_COMBINED_STAGE
+ if (!q38_resident_gdn_state_shape(d)) return 0;
+#else
+ if (!PioneerQ38ResidentGdnShape(d)) return 0;
+#endif
+ // malformed shape:NO MMIO/packets/SFPU
  if (Words(L::Descriptor)[0]!=L::Magic || Words(L::Descriptor)[1]!=128 || Words(L::Descriptor)[2]!=64 || Words(L::Descriptor)[3]) return 0;
  if (!PioneerQ38DeltaVectorGate(*Words(L::Decay)) || !PioneerQ38DeltaVectorGate(*Words(L::Beta))) return 0;
  for (unsigned i=0;i<320;i++) if (!InputNormalOrZero(Words(L::Query)[i])) return 0;

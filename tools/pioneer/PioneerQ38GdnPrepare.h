@@ -78,7 +78,17 @@ static __attribute__((noinline)) bool PioneerQ38PrepareHead(const float* query,c
   float a=PioneerQ38PrepareFlush(query[i]*query[i]),b=PioneerQ38PrepareFlush(key[i]*key[i]);
   qs+=a;ks+=b;if(!PioneerQ38PrepareNormal(qs) || !PioneerQ38PrepareNormal(ks))return false;
  }
- float qi=PioneerGraphDividePositive(1.0f,PioneerGraphSqrtPositive(qs+1e-6f))*0.0883883461356163f;
+ float qi=PioneerGraphDividePositive(1.0f,PioneerGraphSqrtPositive(qs+1e-6f))
+#ifdef PIONEER_Q38_GDN_INPUT_COMBINED_STAGE
+#if PIONEER_Q38_GDN_INPUT_COMBINED_STAGE != 1
+#error Exact combined stage required for unscaled query/post-dot recurrence
+#endif
+ // The combined worker calls the post-dot-scaled SFPU recurrence. NEVER
+ // pre-scale Q here as well:that would silently scale every output twice.
+ ;
+#else
+ *0.0883883461356163f;
+#endif
  float ki=PioneerGraphDividePositive(1.0f,PioneerGraphSqrtPositive(ks+1e-6f));
  float g[2];if(!(qi>0) || !(ki>0) || !PioneerQ38PrepareNormal(qi) || !PioneerQ38PrepareNormal(ki)
   || !PioneerQ38PrepareGates(alpha,betaLogit,negativeA,dtBias,g))return false;
