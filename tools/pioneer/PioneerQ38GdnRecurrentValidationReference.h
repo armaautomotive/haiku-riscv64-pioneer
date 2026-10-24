@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_GDN_RECURRENT_VALIDATION_REFERENCE_H
 #define PIONEER_Q38_GDN_RECURRENT_VALIDATION_REFERENCE_H
+#ifdef PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE
+#error Offline gated input image never compiles CPU references
+#endif
 #if defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_GATED_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE)
 #error Native fused QGH1 never compiles CPU references
 #endif

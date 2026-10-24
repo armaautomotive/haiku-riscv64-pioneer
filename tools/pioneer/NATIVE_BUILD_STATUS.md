@@ -1,5 +1,27 @@
 # Native build status
 
+October24 UTC2026:distinct QOI1/op6 fixed gated6144GDDR input preparation
+IMPLEMENTED/OFFLINE qualified,NOT native-selected/installed/fullprojection.
+Actual persistent new peer reads only gated offsets,card-only Q8_0 native
+operands+8scales/128B ancestry lines perchunk,SAME lifetime/matrix/STOP.
+Old op3-5 rejected,newop6 rejected byold peer. Actual instruction ASan/UBSan
+338positives/157first-fault cases/ALL24chunks/7banks/bothedges/nativewire/
+64wordproof mutations/UNKNOWN inert PASS. E/G/H all4sections exact,new
+textb5460d35/affinee2fe73ec/helperb0af8b84,limitsUNCHANGED/main60Bheadroom.
+Typed native owner+EXACT retained cohort emits ALL24fresh descriptors,
+foreign/out-of-range atomic refusal;actual original-native lifecycle/all
+829632values/NEXT+CURRENT/full8330680restore/actualEND PASS. New native
+DATA A/B exactdc90888e/frame320;old53c30cd922/inherited controls andold
+diagnosticff38e5f3 EXACT.223new gates/old53 237+131072inert routes PASS.
+C/D exact same object/ALL legacy-frame nongrowth gates PASS. ALLjobs
+terminal. ROOT gather/complete119job
+ssm_out output/native consumer still OWED;not a speedup/fulloffload claim.
+ZERO acceleratorIO/power/boot/Assistant changes. Read-only sysinfo07:51UTC
+still64CPUs/RAMmax137034936320B. Card still quarantined at last
+observation,restore pending/saved-work confirmation required. Whole27B
+0.207893161tok/s unchanged/20UNMET/fullgoalACTIVE. Evidence:
+benchmarks/qwen38-gdn-output-input-20261024.txt.
+
 October24 UTC2026:COMPILE-ONLY53 SAME-owner gated6144GDDR producer and
 canonical ssm_out6144->5120 DATA handoff IMPLEMENTED;no consumer arithmetic,
 linked driver/install/physical promotion. Genuine typed object lives inside

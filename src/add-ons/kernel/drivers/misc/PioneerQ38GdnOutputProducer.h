@@ -8,6 +8,7 @@
 class PioneerQ38ResidentDecoderOwner;
 class PioneerQ38GdnOutputProjectionPlan;
 class PioneerQ38CanonicalModelPlan;
+struct PioneerQ38DispatchLease;
 // This object lives INSIDE the real decoder. Only that exact owner can
 // construct/bind it,after ALL96 real receipts and ALL120 physical holds.
 // Returned by const reference only;no caller ready flag,input epoch,vector
@@ -28,5 +29,6 @@ public:
  PioneerQ38GdnOutputProducer(const PioneerQ38GdnOutputProducer&)=delete;
  PioneerQ38GdnOutputProducer& operator=(const PioneerQ38GdnOutputProducer&)=delete;
  bool Current()const;
+ bool MatchesCohort(const PioneerQ38DispatchLease&)const; // CPU object relation ONLY
 };
 #endif

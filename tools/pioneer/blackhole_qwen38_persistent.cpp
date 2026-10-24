@@ -4,6 +4,14 @@
 // Root must freeze inputs+descriptor until ALL participants finish,then
 // verify physical PC/reset/source/command/counters through qualified NoC
 // reads. This image alone is NOT a coordinator,graph or launch permission.
+#ifdef PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE
+#if PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT) || PIONEER_Q38_FFN_PERSISTENT != 1 || !defined(PIONEER_Q38_PROJECTION_PERSISTENT) || PIONEER_Q38_PROJECTION_PERSISTENT != 1 || defined(_KERNEL_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_NATIVE)
+#error Exact distinct OFFLINE gated input image role,never native/CPU/Work
+#endif
+#if defined(PIONEER_Q38_GDN_GATED_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_NATIVE) || defined(PIONEER_Q38_GDN_STATE_INIT_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_OWNER) || defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#error Offline QOI1 peer never shares native owner/DEBUG roles
+#endif
+#endif
 #define PIONEER_Q38_SHARED_ROWS
 #define PIONEER_Q38_PERSISTENT_ROWS
 #define block_main q38_compute_once
@@ -109,7 +117,9 @@ extern "C" void q38_persistent_main()
 		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=Q38PersistentMarker
 			|| snapshot[11]!=worker || snapshot[12]!=sequence ||
 #ifdef PIONEER_Q38_FFN_PERSISTENT
-#ifdef PIONEER_Q38_PROJECTION_PERSISTENT
+#ifdef PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE
+            (snapshot[13]!=1 && snapshot[13]!=2 && snapshot[13]!=6)
+#elif defined(PIONEER_Q38_PROJECTION_PERSISTENT)
             (snapshot[13]-1>4)
 #else
 			(snapshot[13]-1>3)
@@ -142,6 +152,9 @@ extern "C" void q38_persistent_main()
 		}
 #endif
 		if (snapshot[0]!=0x31483851 || snapshot[3] || snapshot[4] || snapshot[9]!=1
+#ifdef PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE
+            || snapshot[1]!=8 || snapshot[5]!=6144
+#endif
 			|| !PioneerQ38PanelTileBytes(snapshot[1]) || snapshot[2]!=
 #ifdef PIONEER_Q38_PREPARED_Q4_AFFINE
 			(snapshot[1]==12?PioneerQ38PreparedQ4::Bytes:PioneerQ38PanelTileBytes(snapshot[1]))

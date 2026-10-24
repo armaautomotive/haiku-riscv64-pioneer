@@ -977,6 +977,9 @@ public:
 };
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
 inline bool PioneerQ38GdnOutputProducer::Current()const{return owner && owner->MatchesGatedOutput(*this);}
+inline bool PioneerQ38GdnOutputProducer::MatchesCohort(const PioneerQ38DispatchLease& cohort)const{
+ return Current() && owner->projection && owner->projection->cohort==&cohort;
+}
 #endif
 static_assert(sizeof(PioneerQ38ResidentDecoderOwner)>327680 && sizeof(PioneerQ38ResidentDecoderOwner)<524288,"actual decoder plans/lifetime HEAP ONLY");
 #endif

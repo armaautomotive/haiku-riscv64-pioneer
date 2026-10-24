@@ -1,0 +1,122 @@
+Qwen3.8-27B distinct persistent gated-GDDR input preparation (QOI1/op6)
+2026-10-24 UTC. Baseb4ca25b85dcac1bd94282df83678c977683de796.
+IMPLEMENTED/OFFLINE instruction+owner qualification. No linked/installed
+driver,native image selection,ROOT gather/full output projection or new
+inference speed result. Last whole-model0.207893161tok/s unchanged;
+20tok/s UNMET/full offload incomplete/full original goal ACTIVE.
+
+Distinct fixed QOI1 DATA/input family,not old QPI1/op5/RMS proof:
+  Exactly24chunks of256F32 from existing gated6144GDDR at workspace0x150000.
+  Type8/Q8_0/layer0/ssm_out role13/position0 ONLY. Source offsets are fixed,
+  not caller addresses. Derive consumer phase as actual GDN producer phase+1,
+  bind actual token/GDN marker/model identity/all16original peer source words.
+  Per chunk:one1024B GDDR read,card-only Q8_0 quantization,two writes of
+  512Bnative operands+128Bfresh identity/8scales. No host activation upload,
+  readback/CPU validation/fallback or per-chunk host stage boundary.
+  ALL source/descriptor/quiet/command/counter seals bracket each packet.
+  First unknown retains fault park;no next packet/reset/restore/retry.
+  Line/64word receipt check phase/chunk/geometry/identity/GDN ancestry/token
+  plus actual source/counter/write-command metadata. DATA not a native grant.
+
+Actual distinct persistent peer image:
+  Explicit --gdn-output-input builder option;new helper replaces old op3-5
+  helper,not an alias. SAME matrix lifetime/sequence/Tensix state preserved.
+  Entry accepts ONLY matrix1/STOP2/newinput6. Matrix type8/K6144 ONLY.
+  Old op3/4/5 refused;old QFP3 image refuses new op6 despite shared boot
+  marker. COMPLETE new byte pin/retained owner/native scope still required.
+  No code selected by driver or public registry/new ioctl/updater mapping.
+
+Fresh E/G/H complete image sets BYTE-IDENTICAL:
+  /private/tmp/pioneer-q38-gdn-output-input-builds-20261024.dUtKjqn4/{e,g,h}/
+  boot.bin 4B SHA256
+  e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+  text.bin8132B SHA256
+  b5460d35a05aa727273768e3926a48405dccedfda3bb918156ad1869e1f52348
+  affine.bin5248B SHA256
+  e2fe73ecbe7b78e4aca9b069ee70ead09d0d7f61575fdab83ce2e76a1879a785
+  ffn.bin6156B SHA256
+  b0af8b847886d04b25a5d0509b89f4db27c77619be12aefe4152660108ae7074
+  Existing linker limits unchanged:main<=8192,affine<=5376,helper<=16384,
+  no writable globals/GOT. Main has ONLY60B headroom;do NOT relax limits.
+  New helper max individual frame736B/explicit2048B gate. Actual emulated
+  maximum whole call stack1476B inside existing8192B owned stack.
+  Original op5 peer rebuilt EXACT in all4sections against prior pins:
+  text783bd17e/affinea55331ee/ffnf17def10/boot e678476d.
+
+ASan/UBSan actual emitted instruction test B TERMINAL0 (58503):
+  338positives:ALL24chunks x7banks x2workspace-edge positions,6144lanes/
+  12288native bytes/192scales equal independent original-wire observer.
+  Zero/signed zero/tiny scales that round to zero/nonzero/changed inputs.
+  Actual op6->matrix->changed op6->STOP SAME lifetime/NO reset. This is
+  coexistence,NOT a completed ROOT-gather-to-matrix data pipeline yet.
+  157first-failure cases:packet/counter/foreign traffic/source/descriptor/
+  command/busy/NaN/infinity/late job+boot+doorbell/job/header/legacy ops.
+  Every successful64word receipt/24word line ancestry field mutated and
+  rejected by actual parser. Failure after late arithmetic publishes NO
+  partial native/line words;after unknown ZERO following IO in fault park.
+  Both old operations in new image and new operation in old image refused.
+  /private/tmp/pioneer-q38-gdn-output-input-image-tests-20261024-b.log
+  SHA2562fa8ca6c5cc5f645eaea479e41aac74afebb30a7f1a42612a54332b0bea42803
+
+SAME genuine native owner -> descriptors,not fabricated CPU ready proof:
+  Added CPU-only MatchesCohort exact-pointer relation;no member-layout change.
+  InputDescriptor accepts only actual typed producer+EXACT retained cohort,
+  chunk0..23 and64word CPU output. Derives source/coordinates/epochs from
+  actual objects;no caller source/activation/phase hints. Atomic refusal
+  for foreign cohort/out-of-range/expired owner. No IO/launch/cleanup grant.
+  Full original-model ASan/UBSan TERMINAL0 (34933):actual joint73728page
+  init/history1680/QPE1/QRN1/4QPS1/CBOALL120/QGT1ALL96 -> ALL24descriptors/
+  actual per-peer sources+gated offsets;foreign cohort/out-of-range atomic
+  refusal. Existing52handoff refusals/all829632original values/privateNEXT/
+  immutableCURRENT+unrelatedstate/full8330680restore+verification/actualEND
+  PASS. Descriptor and typed producer expire on Close. No new input image
+  launched by this native test;instruction input test above is separate.
+  /private/tmp/pioneer-q38-gdn-output-input-original-20261024-a.log
+  SHA256402f504c4b255d3124e0cb46cc9c39157cf466fec44c5f073cd8f5d8d5708b26
+
+Kernel ABI descriptor compile A/B TERMINAL0 (1603/26574),exact
+  dc90888e95cd7e722df3b400220d74fdc5e810e8eb460118753f584ba5f349c3,
+  max NEW frame320B. No linked image selector/driver. Parent native53
+  c30cd92274945b4664fd71a379ac74d3f034330b530b0948d1d366852485fafb
+  and inherited control chain through native51 remain EXACT.
+  Fresh C/D reruns TERMINAL0 (80150/12419),same exactdc90888e. ALL current
+  frames<=2048B or unchanged/nongrowing qualified oversized legacy frames.
+  /private/tmp/pioneer-q38-gdn-output-input-native-20261024-{c,d}.log
+  C SHA256127142ecdc59e787e621413f9cc53787f9aa4cd5b312729e5a7155af2598eff7
+  D SHA25690a176f791f84cd588cd53bb41251c5bf0707aca5a9e54b46387592ca675d3c4
+  Old diagnostic client rebuilt EXACTff38e5f3e474b5f68961d77eb507e29c4442cd9e565fbc897112d8ec03b8982b.
+
+223actual preprocessing/reference/early-builder/frame gates TERMINAL0
+(70335). New image+helper roles exact;native/CPU/Work mix refuses even0.
+All7independent reference headers reject new image role even0. Ten old
+builders refuse ambient new image role BEFORE SDK/output. New image/data
+builders refuse unknown/native/Work/CPU flags before output. Actual new
+2048B-frame gate exercised with0/512/2048/2049/8192 fixtures. Log:
+  /private/tmp/pioneer-q38-gdn-output-input-gates-20261024-a.log
+  SHA2563c7e1d12e9af4e4a4c4b8e488194c07855954fa11c6c6e1c11557b7d2329ebab
+Old53 237role gates+131072actual inert routes PASS after common changes.
+ALL offline qualification jobs terminal;new images NOT installed/registered.
+
+Offline issues caught/repaired,not safety-gate relaxations:
+  A/B stopped on misleading indentation;split declaration from guard.
+  C/D link refused compiler-generated memcpy for local constant delta.
+  Use immutable word constants/explicit word stores,not a libc dependency.
+  First test omitted existing Tensix queue fixture flags;reuse exact old
+  runner's flags. Fresh B actual instructions then passed. No device runs.
+
+One read-only SSH /bin/sysinfo at07:51UTC confirms64CPUs/RAMmax137034936320B,
+free132689571840B;no fresh human desktop/input confirmation. ZERO accelerator
+IO/install/reload/reboot/power/SD/Assistant/network/CPU/RAM changes.
+Prior DEBUG52 card still quarantined cold1/active_owner1 at
+last observation;stable041 restore PENDING. Saved-work confirmation still
+required for controlled recovery. OFF is non-idempotent:ONE effective OFF,
+verify actual board OFF,ONE ON. Never blindly repeat OFF;no mains change.
+
+NEXT complete guarded ROOT gather using each actual peer source (not an
+assumed uniform ROOT source),then actual canonical119job complete ssm_out
+matrix/output consumer with SAME typed owner/source/clock/maps/snapshots/
+retention lifecycle. Current input instruction and native descriptor tests
+are NOT a native full projection. Physical DEBUG52 failure diagnosis still
+owed before promotion;no card compute while quarantined. Residual/post-attn
+RMS/FFN/full attentionKV/all64layers/sampling/persistent token loop remain
+OWED. No throughput estimate substitutes for a full-model measurement.

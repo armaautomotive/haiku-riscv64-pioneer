@@ -97,6 +97,21 @@ int main(int argc,char** argv){
   && outputPlan->OutputAddress()==outputPlan->InputAddress()+6144*4 && outputPlan->Phase());
  unsigned rows=0;for(unsigned i=0;i<119;i++){const auto* p=outputPlan->Part(i);assert(p && p->groups);rows+=p->groups*16;}
  assert(rows==5120 && !outputPlan->Part(119));
+ uint32_t inputDescriptor[64];for(auto& word:inputDescriptor)word=0xdeadbeef;
+ const auto descriptorPoison=std::vector<uint32_t>(inputDescriptor,inputDescriptor+64);
+ auto foreignCohort=std::make_unique<PioneerQ38DispatchLease>();
+ assert(!producer->MatchesCohort(*foreignCohort) && !outputPlan->InputDescriptor(0,*foreignCohort,inputDescriptor)
+  && !memcmp(inputDescriptor,descriptorPoison.data(),sizeof(inputDescriptor)));
+ for(unsigned chunk:{24U,UINT32_MAX})assert(!outputPlan->InputDescriptor(chunk,*cohort,inputDescriptor)
+  && !memcmp(inputDescriptor,descriptorPoison.data(),sizeof(inputDescriptor)));
+ for(unsigned chunk=0;chunk<24;chunk++){
+  assert(producer->MatchesCohort(*cohort) && outputPlan->InputDescriptor(chunk,*cohort,inputDescriptor)
+   && PioneerQ38GdnOutputInputShape(inputDescriptor) && !PioneerQ38ProjectionInputShape(inputDescriptor)
+   && inputDescriptor[4]+inputDescriptor[10]==outputPlan->InputAddress()+chunk*1024
+   && inputDescriptor[6]==outputPlan->Phase() && inputDescriptor[7]==chunk+1 && inputDescriptor[45]==m->token);
+  for(unsigned word=0;word<16;word++)assert(inputDescriptor[16+word]==cohort->authority.source[chunk+1][word]);
+ }
+ printf("PASS genuine owner/EXACT retained cohort ALL24 QOI1 descriptors/gated input offsets/all peer sources;foreign cohort/out-of-range atomic refusal/NO IO\n");
  const auto* rootSource=m->projectionCohort->authority.source[0];
  assert(outputPlan->MatchesSource(m->plan,m->identity,f.learned.data(),PioneerResidentBanks::Pages,rootSource));
  auto other=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(other->Build());auto wrongId=m->identity;wrongId.modelEpoch++;
@@ -186,6 +201,7 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
  assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Producer()
   && !outputPlan->Part(0) && !outputPlan->Count() && !outputPlan->InputAddress() && !outputPlan->OutputAddress());
+ assert(!outputPlan->InputDescriptor(0,*cohort,inputDescriptor));
  puts("PASS genuine gated producer expires on SAME owner's physical restore Close;NO stale input for later projection");
 #endif
  assert(EndFactory(*f.c) && !sColdRecoveryRequired);

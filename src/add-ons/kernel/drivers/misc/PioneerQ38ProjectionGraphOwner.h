@@ -33,6 +33,9 @@ struct PioneerQ38ProjectionGraphResult {
 };
 class PioneerQ38ProjectionGraphOwner {
  friend class PioneerQ38ResidentDecoderOwner;
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+ friend class PioneerQ38GdnOutputProducer;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
  const PioneerQ38ResidentDecoderOwner* decoderOwner=nullptr;
 #endif
