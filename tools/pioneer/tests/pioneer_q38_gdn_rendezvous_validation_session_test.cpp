@@ -20,6 +20,7 @@ struct GdnValidationIO {
  unsigned failCall=0,sourceDrop=0,epochDrop=0,corruptWord=UINT32_MAX,badReply=UINT32_MAX;
  uint32_t decay=0x3f000000,corruptBits=0x3f800000;bool stopped=false,closeFail=false;
  uint32_t returnedHeader[48]={};
+ unsigned contextHead=UINT32_MAX;
  GdnValidationIO(ProjectionValidationSource& s,unsigned id):source(s),token(id){
   assert(plan.Build(source.Model(),8192,true,true));
   for(unsigned i=0;i<plan.Parts().size();i++){
@@ -74,6 +75,7 @@ struct GdnValidationIO {
     // Never zero despite tiny absolute magnitude. Literal expected bytes,
     // NOT a call to any oracle or CPU products uploaded to a fake device.
     for(unsigned half=0;half<96;half++){reply.values[half*8642+320]=decay;reply.values[half*8642+321]=0x3f000000;}
+    if(contextHead<48)for(unsigned j=0;j<128;j++)reply.values[(contextHead*2+j/64)*8642+8514+j%64]=0x33800000+j;
     if(corruptWord<829632){reply.values[corruptWord]=corruptBits;stopped=true;}
     if(badReply<48){uint32_t value;auto* field=reinterpret_cast<uint8_t*>(&reply)+badReply*4;memcpy(&value,field,4);
      if(badReply==8 || badReply==12)value=0;else value^=1;memcpy(field,&value,4);stopped=true;}
@@ -98,6 +100,7 @@ int main(){
   assert(!session.Validate(token,1) && !io.opens && session.Validate(token) && source.referenceReads==1675 && source.reads==23238
    && session.Finish() && io.ends==1 && io.closes==1 && io.calls==119 && io.spans==111);positives++;
   assert(session.diagnostics.reason==Failure::None && session.diagnostics.reply_captured);
+  assert(!session.diagnostics.gated_context_captured);
   printf("PASS QGT DEBUG session token%u/reference1675/source23238/spans111/calls119\n",token);
  }
  SeedProjectionValidationEmbedding(fixture,0);
@@ -125,6 +128,11 @@ int main(){
    assert(d.reason==(kind==5?Failure::AbsoluteTolerance:kind==6?Failure::NonFinite:kind==8?Failure::RelativeTolerance:Failure::SubnormalFlush));
    assert(d.word==at && d.actual==io.corruptBits && d.expected==(at%8642==320?io.decay:at%8642==321?0x3f000000:0));
    assert(d.op==TT_PCI_PROBE_Q38_GDN_RENDEZVOUS_VALIDATE && d.reply_captured && d.reply_header[0]==1 && d.reply_header[46]==8642);
+   assert(d.gated_context_captured==(at%8642>=8578));
+   if(d.gated_context_captured){
+    assert(d.gated_head==at/8642/2 && d.gated_lane==(at/8642%2)*64+at%8642-8578);
+    for(unsigned j=0;j<128;j++)assert(!d.paired_raw_expected[j] && !d.paired_raw_actual[j] && !d.original_z[j]);
+   }
   }
   if(kind==7){
    assert(d.reason==Failure::ReplyMetadata && d.word==UINT32_MAX && d.reply_captured);
@@ -132,6 +140,9 @@ int main(){
   auto before=d;session.Abort();assert(d.reason==before.reason && d.op==before.op && d.word==before.word
    && d.expected==before.expected && d.actual==before.actual && !memcmp(d.reply_header,before.reply_header,sizeof(d.reply_header))
    && d.reply_captured==before.reply_captured); // first failure survives Abort;no second close or IO
+  assert(d.gated_context_captured==before.gated_context_captured && d.gated_head==before.gated_head && d.gated_lane==before.gated_lane
+   && !memcmp(d.paired_raw_expected,before.paired_raw_expected,sizeof(d.paired_raw_expected))
+   && !memcmp(d.paired_raw_actual,before.paired_raw_actual,sizeof(d.paired_raw_actual)) && !memcmp(d.original_z,before.original_z,sizeof(d.original_z)));
  };
  for(unsigned kind=0;kind<3;kind++)for(unsigned at:{1U,5U,6U,116U,117U,118U,119U})check(kind,at);
  for(unsigned at:{1U,12U,23237U,23238U})check(3,at);
@@ -148,5 +159,13 @@ int main(){
   PioneerQ38GdnRendezvousValidationSession<GdnValidationIO,ProjectionValidationSource> session(io,source);
   assert(session.Validate(0) && session.Finish());positives++;}
  for(unsigned at:{320U,95U*8642+320})check(8,at); // a zero NORMAL decay must fail,not pass absolute3e-6
+ {
+  SeedGdnLearned(fixture);ProjectionValidationSource source(fixture.file);GdnValidationIO io(source,0);
+  io.contextHead=47;io.corruptWord=820975;Session session(io,source);assert(!session.Validate(0));
+  const auto& d=session.diagnostics;assert(d.gated_context_captured && d.gated_head==47 && d.gated_lane==49
+   && d.word==820975 && d.reason==Failure::AbsoluteTolerance && io.calls==118 && io.closes==1 && !io.ends && source.referenceReads==1675);
+  for(unsigned j=0;j<128;j++)assert(!d.paired_raw_expected[j] && d.paired_raw_actual[j]==0x33800000+j && !d.original_z[j]);
+  auto before=d;session.Abort();assert(!memcmp(d.paired_raw_actual,before.paired_raw_actual,sizeof(d.paired_raw_actual)) && io.closes==1 && io.calls==118);faults++;
+ }
  printf("PASS source-bound QGT DEBUG session positives%u/faults%u/tag52/namespace17/ALL96halves/strict-relative-gates/1675references BEFORE FD/23238ORIGINALpages/CLOSE ONLY after first fault/CPU-only-first-failure-and-fixed-header-snapshot;SYNTHETIC_NOT_CARD_OR_SPEED\n",positives,faults);
 }

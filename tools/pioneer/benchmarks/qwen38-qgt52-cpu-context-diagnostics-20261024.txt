@@ -1,0 +1,46 @@
+QGT52 first-failure paired-raw CPU context capture, 2026-10-24 UTC.
+CPU-only diagnostic client update,NOT installed or physically rerun.
+No kernel/protocol/driver/updater/Work/Assistant change or numerical fix.
+
+Motivation:physical gated lane49/head47 failed3ppm by3.183289ppm. The
+separate original-source LOCAL instruction probe is accurate within0.201ppm
+on original head47 inputs,so upstream input drift is a plausible cause,
+NOT yet proven. Existing old client discarded the full CPU reply on failure.
+
+On FIRST gated numeric failure only,capture from ALREADY present CPU memory:
+  Head/lane,128expected paired raw values from the prepared reference,
+  128actual paired raw values from the SINGLE already-returned reply,
+  128original Z values prepared BEFORE FD. Print exact binary32 bits.
+  No new source read,accelerator query,END/reset/retry/restore or fallback.
+  Raw values in the later partner half have not necessarily passed numeric
+  checks;they are diagnostic bytes,NOT a validated producer or model input.
+  Metadata/non-gated/transport failure does not fabricate this context.
+  Existing first reason/index/expected+actual/header snapshot survives Abort.
+  All absolute/relative3e-6/true-subnormal FTZ/source/metadata checks unchanged.
+  Session remains1675reference reads BEFORE FD,23238original uploaded pages,
+  111spans,119calls on clean success;118calls/CLOSE ONLY on numeric failure.
+
+ASan/UBSan session/reference test A50084 TERMINAL0:
+  Independent one-hot/dense/large-weight-z-100 references3positives/15atomic
+  refusals;actual client session4positives/197faults. Existing bounded
+  failures all retained;new distinct BOTH-half raw sentinels at head47 verify
+  128correct offsets,head47/lane49,exact first reason,1675reads,118calls,
+  noEND,oneCLOSE and immutable context/no newIO across repeated Abort.
+  /private/tmp/pioneer-qgt52-context-client-tests-20261024-a.log
+  SHA2a47098671a898c0330f0f0cb76eaab32cc16c21612ce5fa075a302e2631eca8.
+
+Two independent read-only-SDK RISC-V builds13330/8534 TERMINAL0,identical:
+  /private/tmp/pioneer-q38-gdn-context-build-20261024.TJizIdbA/client-{a,b}
+  SHA3878341e132997894dbbc16eba0307f9613f970343e808c94038bda1fd131cb7.
+  Separate exact-role/routing regression47813 TERMINAL0:234gates and
+  131072actual closed-allowlist probes,only2fixedDEBUG+6storage routes.
+  /private/tmp/pioneer-qgt52-context-gates-20261024-a.log
+  SHA35952c23ec948cd91f29fc466b8b156d63d360785e80b909d56f3f6a302bf0ca.
+
+No Pioneer files/power/SD/network/Assistant/CPU/RAM/driver changes in this
+update. Current hardware remains DEBUG52/gen3/cold1/owner1 QUARANTINED;
+new saved-work recovery confirmation is pending. No hot restore or further
+physical experiment until a verified new epoch and useful diagnostic plan.
+Native59 full fault suite D75416 remains live;its distinct dependencies
+were not edited by this CPU-only client change. Last whole-model speed
+0.207893161tok/s unchanged;20tok/s/full resident model remains UNMET.

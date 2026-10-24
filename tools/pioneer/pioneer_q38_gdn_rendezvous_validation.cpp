@@ -34,6 +34,16 @@ int main(int argc,char** argv){
    for(unsigned i=0;i<8;i++)printf(" %08x",unsigned(d.reply_header[row*8+i]));
    putchar('\n');
   }
+  if(d.gated_context_captured){
+   printf("DEBUG_CPU_GATED_CONTEXT head%u lane%u;PAIRED_RAW_FROM_EXISTING_REPLY_ORIGINAL_Z_FROM_PREPARED_REFERENCE_NO_ADDITIONAL_DEVICE_IO\n",d.gated_head,d.gated_lane);
+   const uint32_t* values[]={d.paired_raw_expected,d.paired_raw_actual,d.original_z};
+   const char* names[]={"EXPECTED_RAW","ACTUAL_RAW","ORIGINAL_Z"};
+   for(unsigned kind=0;kind<3;kind++)for(unsigned row=0;row<16;row++){
+    printf("DEBUG_CPU_%s word%03u",names[kind],row*8);
+    for(unsigned i=0;i<8;i++)printf(" %08x",unsigned(values[kind][row*8+i]));
+    putchar('\n');
+   }
+  }
  }
  printf("%s_DEBUG_NATIVE_QGT1 token0 layer0 all96_halves all829632_values independent_original_GGUF_references within3e-6_scaled_bound STRICT_relative_normal_gates clean_end%u initialization_execution_readback_restore_us%llu;NO_TOKEN_RATE\n",
   okay && clean?"PASS":"FAIL",unsigned(clean),(unsigned long long)session.result.elapsed_us);

@@ -18,6 +18,9 @@ public:
   unsigned op=0,word=UINT32_MAX;
   uint32_t expected=0,actual=0,reply_header[48]={};
   bool reply_captured=false;
+  unsigned gated_head=UINT32_MAX,gated_lane=UINT32_MAX;
+  uint32_t paired_raw_expected[128]={},paired_raw_actual[128]={},original_z[128]={};
+  bool gated_context_captured=false;
  } diagnostics;
  static const char* FailureName(Failure reason){
   switch(reason){
@@ -167,13 +170,27 @@ public:
    || reply->input_workers!=96 || reply->input_installed!=96 || reply->input_armed!=96 || reply->input_released!=96
    || reply->input_completed!=96 || reply->input_held!=96 || reply->readback_workers!=96 || reply->readback_words!=829632
    || reply->saved_words!=8330680 || reply->verified_words!=16661360 || reply->installed_words!=1185912 || reply->restored_words!=8330680)return Stop(Failure::ReplyMetadata);
+  auto numericStop=[&](Failure reason,unsigned i){
+   // CPU memory ONLY,after the single existing reply. Capture the paired
+   // raw input and original Z for arithmetic diagnosis,never query the card
+   // or replace any result/reference. Source reads/calls/bounds unchanged.
+   if(i%8642>=8578 && !diagnostics.gated_context_captured){
+    unsigned head=i/8642/2;diagnostics.gated_head=head;diagnostics.gated_lane=(i/8642%2)*64+i%8642-8578;
+    for(unsigned j=0;j<128;j++){
+     unsigned at=(head*2+j/64)*8642+8514+j%64;
+     diagnostics.paired_raw_expected[j]=reference[at];diagnostics.paired_raw_actual[j]=reply->values[at];diagnostics.original_z[j]=z[head*128+j];
+    }
+    diagnostics.gated_context_captured=true;
+   }
+   return Stop(reason,i,reference[i],reply->values[i]);
+  };
   for(unsigned i=0;i<829632;i++){
    double actual=PioneerAttentionFloat(reply->values[i]),expected=PioneerAttentionFloat(reference[i]);
-   if(!isfinite(actual))return Stop(Failure::NonFinite,i,reference[i],reply->values[i]);
-   if(fabs(actual-expected)>3e-6*(1+fabs(expected)))return Stop(Failure::AbsoluteTolerance,i,reference[i],reply->values[i]);
+   if(!isfinite(actual))return numericStop(Failure::NonFinite,i);
+   if(fabs(actual-expected)>3e-6*(1+fabs(expected)))return numericStop(Failure::AbsoluteTolerance,i);
    if((i%8642>=320 && i%8642<322) || i%8642>=8578){
-    if(fabs(expected)>=double(PioneerAttentionFloat(0x00800000))){if((i%8642<322 && actual<=0) || fabs(actual-expected)>3e-6*fabs(expected))return Stop(Failure::RelativeTolerance,i,reference[i],reply->values[i]);}
-    else if(actual!=0)return Stop(Failure::SubnormalFlush,i,reference[i],reply->values[i]); // actual-subnormal FTZ only;NORMAL gated values require relative accuracy too
+    if(fabs(expected)>=double(PioneerAttentionFloat(0x00800000))){if((i%8642<322 && actual<=0) || fabs(actual-expected)>3e-6*fabs(expected))return numericStop(Failure::RelativeTolerance,i);}
+    else if(actual!=0)return numericStop(Failure::SubnormalFlush,i); // actual-subnormal FTZ only;NORMAL gated values require relative accuracy too
    }
   }
   if(!Current())return Stop(Failure::SourceChanged);
