@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE
+#error QRR2 image DATA never enters a native driver or public selector
+#endif
 #ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
 #if PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE != 1 || !defined(PIONEER_Q38_NEXT_GDN_NATIVE) || PIONEER_Q38_NEXT_GDN_NATIVE != 1 || defined(PIONEER_Q38_NEXT_GDN_OUTPUT_GRAPH_ROOT) || defined(PIONEER_Q38_NEXT_GDN_OUTPUT_INPUT_IMAGE) || defined(PIONEER_Q38_NEXT_GDN_OUTPUT_GATHER_IMAGE)
 #error Exact native62 requires SAME genuine native61 producer,never image aliases

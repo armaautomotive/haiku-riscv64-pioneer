@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE-0}" = 0 ] || exit 2
 # Offline driver45 candidate and default43 control. NEVER syncs,installs,
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.

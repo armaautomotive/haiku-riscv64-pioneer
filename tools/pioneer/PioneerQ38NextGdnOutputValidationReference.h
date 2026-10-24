@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE
+#error QRR2 device image never contains a CPU reference observer
+#endif
 #if !defined(PIONEER_Q38_NEXT_GDN_OUTPUT_VALIDATION_REFERENCE) || PIONEER_Q38_NEXT_GDN_OUTPUT_VALIDATION_REFERENCE != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CLIENT) || PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CLIENT != 1 || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1
 #error Exact separate original layer1 output CPU observer required
 #endif

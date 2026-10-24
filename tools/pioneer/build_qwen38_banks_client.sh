@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE-0}" = 0 ] || exit 2
 # Compile only,no install/device access.
 set -eu
 [ "${PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE-0}" = 0 ] || exit 2

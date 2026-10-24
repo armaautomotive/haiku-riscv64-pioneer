@@ -1,0 +1,115 @@
+QRR2 next-layer residual+learned RMS image/DATA,2026-10-24.
+QUALIFIED OFFLINE IMAGE COMPONENT,NOT a native consumer/installed driver.
+Native63 integration from genuine native62 producer still OWED.
+No physical/model inference/TPS result;last whole-model0.207893161tok/s
+unchanged. Full20tok/s/persistent card-only model remains UNMET.
+
+Distinct QRR2 marker32525251/fault46525252. Nonzero recurrent layers
+1..62 excluding layer%4==3 (47layers),positions0..8191,tokens0..248319.
+Canonical F32 post-attention norm from selected layer/role1,EXACT5pages.
+Descriptor5=layer,40=position,41=logical token,50=originating role13,
+52=QOP2 marker,53=previous epoch. Summary27=layer,30=position.
+Other fixed counts/offsets/routes/identity/source/phase/extent checks stay
+bounded. Old QRR1 remains layer0/position0/old QOP1;NOT widened or aliased.
+Pure pointer-bound canonical DATA cannot mint a completed producer,source,
+initialized ledger,reset/execution/restore grant or fresh native epoch.
+
+Card program reads5120QOP2 result values and5120preserved raw residual,
+then ORIGINAL5120learned norm values;does the full roundedF32 sum and
+learned RMS locally. ALL arithmetic/domain/norm checks precede FIRST GDDR
+write. Resulting residual remains at old0x18000 backup;normalized vector
+at workspace0. Inputs are read-only;all10NoC packets command/source/
+descriptor/counter/alias/idle checked. No host interstage activation or
+CPU numerical product enters this program. Same OLD ROOT snapshot/8KiB
+stack/40KiB code-prefix lease,not a new mapping or promotion to Work.
+
+Exact OFFLINE PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE=1 only;defined-zero/
+native/CPU/client/old image mixtures rejected. Driver prefix rejects this
+image role at ANY defined value,10CPU reference headers reject before
+include guards/reinclusion,10old ambient builders reject nonzero image.
+No new native/public selector or Assistant/hot-swap mapping added.
+
+Two independent read-only-SDK image builds A/B ACTUAL TERMINAL0,
+5512B code/1378words BYTE-IDENTICAL by cmp:
+ /private/tmp/pioneer-q38-next-residual-rms-image-20261024.JH2V9R3f/{a,b}/
+ codeSHAf2fdcb0becf99281ba6910dbb64551d32584c0cc054bc452f030217ea5e81636.
+ Shared4B bootSHA d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ =0005e06f,NOT whole-image authority. Function max400B/static frames,
+no unresolved symbols/unsupported division,sqrt,double,FMA or runtime
+library helpers. Pinned generator emits apply_patch only AFTER complete
+code/boot hash+length checks;all1378words,sharedboot and exact old-padding
+ProgramWord0..10240 validated;10241 out of range. Header DATA only.
+
+Actual emitted-instruction ASan/UBSan positives A23850/B63815 ACTUAL
+TERMINAL0:57positive5120-element residual+normalized cases. Includes10
+domain/cancellation/zero/max/varied-weight vectors AND ALL47actual layer
+executions/7banks/token+position edges. EVERY value compared BIT-EXACT
+against independent F32 add+CPU double square-reduction/sqrtf observation.
+All10packets and input/descriptor immutability checked;max699677steps,
+actual608B whole call stack,all stores inside OLD saved snapshot.
+Both runs also validate2632canonical DATA plans covering47layers*7banks*
+2tokens*2positions*2phases,202675refusals across pointer identity/ALL64
+descriptor mutations/ALL5missing-corrupt pages/rebuild/argument guards.
+These are TEST bytes/observations,not a genuine initialized native chain.
+ A /private/tmp/pioneer-q38-next-residual-rms-positive-20261024-a.log
+ SHA849187480df594e33af4fb6c46e8f04fbfc677c6405a6d4387a87d7c6fc0238b.
+ B /private/tmp/pioneer-q38-next-residual-rms-positive-20261024-b.log
+ SHAaa5903b5d6b5bb9a41a3fc8d018a96e7ca90af3c754a333b6b2ab24730f74699.
+
+Actual emitted-instruction ASan/UBSan faults A34421/B8207 ACTUAL TERMINAL0:
+194faults/dropped or partial packets,bad same/foreign counters,source,
+descriptor/command corruption,busyCSR,all source words/counter aliases,
+malformed frames,NaN/Inf/subnormal/out-of-domain inputs,overflow and
+cancellation below qualified bound. ALL cases stop at an inert terminal
+with no later NoC/command/numeric writes. Faults before GDDR-write stage
+prove zero sinks;partial transfers never fabricate completion/rollback.
+ A /private/tmp/pioneer-q38-next-residual-rms-faults-20261024-a.log
+ SHA321ea398f70c25ec6fb3b02f213ef00ee3c044e8e49f58fa6b5e34fc445cfca0.
+ B /private/tmp/pioneer-q38-next-residual-rms-faults-20261024-b.log
+ SHA680b4a027074e631ee190570103402cdb1e6dcb85cd6b0c32e94cc9370767305.
+
+Role/word/generator/stack/builder gates A72157 ACTUAL TERMINAL1 on a TEST
+assumption:all10legacy builders were incorrectly expected to share one
+argument count/missing-SDK exit1. AFTER terminal,changed ONLY TEST to require
+each neutral image=0 call exactly matches that builder's existing baseline;
+nonzero role still refuses before SDK/output. No device/math/driver fix.
+Revised B26212/C59085 ACTUAL TERMINAL0:211checks including native/10CPU
+headers+reinclusion,10old builders,exactcode+boot+fullpadding,generator
+atomic corruption refusals and unsupported instructions/frame audits.
+ /private/tmp/pioneer-q38-next-residual-rms-gates-20261024-{b,c}.log
+ Both SHAc14e345e6f88d7b6d7ba3848f561250b616f88a357ca108590d400d6db183d4a.
+
+Old QRR1 recompiled unchanged at93976e38dfc9f310a7415ce83bc6cabc2ebf5c15ac10c1745fee79d1f2c61989.
+Old actual self-positive85610/fault46016 ACTUAL TERMINAL0:10positives/
+195faults/28DATA plans2023refusals,old608B whole stack and bitexact5120
+results unchanged. Cross-control33967 ACTUAL TERMINAL0:BOTH actual images
+reject the other's grammar in28cases acrossALL7banks/token/layer/position
+edges BEFORE ANY NoC-command-numeric writes;inputs/sinks unchanged.
+ Cross /private/tmp/pioneer-q38-next-residual-rms-cross-controls-20261024-a.log
+ SHA0f832ac90a1becc789ce3c34d5ddb654a8f0823761340ec0f5db268391278e79.
+ Old positiveSHA4d644479df6778977d5acd3c2acc5e21331bb0787e558fadc0ac4ce92c0f0877.
+ Old faultSHA5ac5c34a6190d709dc2327ef2133c401811e0d20a380dd7a4a636718c9b837cd.
+
+FULL current native62 SDK regression16713 ACTUAL TERMINAL0,all controls
+through native61/60/older/default EXACT despite new exclusion guards:
+ /private/tmp/pioneer-q38-next-residual-rms-image-20261024.JH2V9R3f/native62-control/
+ native62 object STILL5e9dd01f158aeec67faf8639d5601da0458d7d6e13b96449b9882e2504ccc5bf,
+ maxNewFrame496B. This is old native62 COMPILE-ONLY proof,not native63.
+ /private/tmp/pioneer-q38-next-residual-old62-sdk-20261024-a.log
+ SHAd1674e0f20bfaa5e406567c22ded33095d6aaafdf7ec495d5efda99135637f5a.
+Old native62 gates96656 ACTUAL TERMINAL0:526+131072closed compute routes,
+unchanged3f66b18931106cdb5d6c048e220c67c68250d97b0b8e3b0101e9da617a5f2fa7.
+No code dependencies changed during live build/test parents;only terminal
+results qualify. Observation timeouts were not treated as termination.
+
+Next required:actual SAME native63 claims genuine native62 private result
+AND its retained raw residual before IO,requires ORIGINAL layer1 postnorm
+pages before Bind,uses this pinned image under complete source/host/map/
+clock/snapshot leases,proves completion/hold before typed next-FFN producer,
+retains all resources without later IO on failure,and restores+verifies
+the original complete snapshot before END. Then continue next-layer FFN/
+later layers/full attentionKV/logits/sampling/persistent on-card token loop.
+
+Pioneer hardware unchanged this work:ONE OFF58955 was completed in prior
+turn;actual fans/LED-off confirmation remains pending before any ON.
+No further pulse/SD/mains/Assistant/network/CPU/RAM/driver install action.

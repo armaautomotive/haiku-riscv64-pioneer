@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE-0}" = 0 ] || exit 2
 # NEW OFFLINE resident-input parent ROOT,not a native selector/card action.
 set -eu
 [ "${PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE-0}" = 0 ] || exit 2

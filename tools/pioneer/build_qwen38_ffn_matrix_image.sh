@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE-0}" = 0 ] || exit 2
 # Separate OFFLINE NEW ABI/image ONLY;NO driver/card/native selection.
 set -eu
 [ "${PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE-0}" = 0 ] || exit 2
