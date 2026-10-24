@@ -1,0 +1,121 @@
+Pioneer Qwen3.8-27B gated-output CPU validation reference
+2026-10-24 UTC
+
+Scope
+-----
+Separate CPU-only source observer for the next native54 qualification client.
+This is NOT a new driver,control,readback implementation,installed client,
+Assistant target,card result,full GDN-chain qualification or inference rate.
+No Pioneer SSH,accelerator FD,relay,power,SD,boot or Assistant operations.
+Last observed card quarantine/restore-pending state was not rechecked here.
+Whole-model last measured 0.207893161 tok/s;20 tok/s target still unmet.
+The original long-running full-offload/performance goal remains active.
+
+Why references use validated ACTUAL gated values
+----------------------------------------------
+The future DEBUG client must independently validate the original GDN values
+FIRST,then extract its6144 actual gated values and run this observer. A valid
+small GDN difference can cross a Q8 rounding boundary;quantizing the original
+GDN CPU prediction alone must not cause a false projection rejection.
+These post-return CPU products are ONLY validation observations. They are
+never uploaded,substituted for card outputs,or compiled into Work/native.
+This header does not itself authenticate a GDN result or grant execution.
+
+Implementation
+--------------
+PioneerQ38GdnOutputValidationReference.h requires exact separate
+PIONEER_Q38_GDN_OUTPUT_VALIDATION_CLIENT=1 and CPU_VALIDATION=1.
+Rejects kernel,freestanding,Work,fast-math,old client and native/image roles,
+including defined-zero mixed flags and a later forbidden reinclude.
+No card arithmetic,quantizer,panel,transport or owner header is included.
+
+Independently uses IEEE division,round-away,libm half rounding/decode and
+ORIGINAL packed Q8_0 rows for exact blk.0.ssm_out6144->5120 only.
+Returns3072 native operand words,192 FP32 scales and5120 FP32 rows as
+33536B CPU DATA. No FD,coordinates,source address,ready/owner/input upload,
+model fallback or execution grant. Bounded staged publication is atomic
+across input,source,metadata,FP environment and late packed-scale failures.
+FP contraction disabled;FE_TONEAREST checked before/after every source span.
+Preserves -128 original learned bytes,positive/negative half scales and
+signed-zero/half-subnormal learned scales. Q8 input zero-scale/nonzero-lane
+behavior and ties-AWAY retained;no clipping or changed tolerance.
+
+Terminal qualification
+----------------------
+sh tools/pioneer/tests/run_pioneer_q38_gdn_output_validation_reference_tests.sh
+  generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+
+Initial full run terminal0:
+ /private/tmp/pioneer-q38-gdn-output-reference.Ug4578WE
+Full SAME open source authenticated against SHA-256
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+and all851 metadata/tensors before references. Four input domains:
+zero,dense signed,FP16-scale-underflow/nonzero integer operands,ties-AWAY.
+ALL20480 original learned output rows BIT-EXACT to separately qualified
+legacy row/panel CPU oracle;ALL3072 operands+192scales per domain exact.
+These inputs are explicit fixtures,NOT actual card GDN outputs.
+Actual-model host ASan/UBSan executable SHA:
+ 6ebab241422f59e3739d732a0d50387f48dc60eb0ba1463e51c55d2b11a7a152
+
+Final strengthened unit/gates run terminal0:
+ /private/tmp/pioneer-q38-gdn-output-reference.HPILQgO6
+190460 half decode/round boundaries,including all finite signed halves;
+96 full6144 input domains vs old qualified native operand quantizer;
+4 complete5120-row synthetic ORIGINAL-wire projections BIT-EXACT to the
+separate FP32 oracle plus independent FP64 original-weight accumulation.
+49 atomic refusals:nullptr/shape/unaligned/overflow/overlap/nonfinite/source
+subnormal/scale overflow/initial or late source/metadata/last packed scale/
+FP environment;caller result and input untouched. 85 compile-role gates.
+Host ASan/UBSan unit executable SHA:
+ 81dd2da550d63c7b229fe2328116a22570fd5e325688b6fe863c1cdb1f76aa19
+
+Actual Haiku RISC-V SDK ABI fixture,compiled twice independently with O2,
+ffp-contract=off,Werror,noexceptions,nortti. Both objects byte-identical:
+ /private/tmp/pioneer-q38-output-reference-abi.za0NDbiE/reference-{a,b}.o
+ 032ce735b1341fb9800a68645d524871377b3dac8358fd3fc5c1c6f898a6d8f6
+Both separately linked CPU-only test fixtures byte-identical:
+ /private/tmp/pioneer-q38-output-reference-link.HSMx5CCX/reference-{a,b}
+ f83f35a970633a9fe4ef01a53aa26d5b3ea3b13aea253ca96aa696bad68eb5d9
+SDK /Volumes/HaikuBuildLocal/generated.riscv64 was read-only.
+The linked fixture contains host-test path bridges,NOT a deployment client.
+No target execution/install or new physical arithmetic claim.
+
+Existing native54 gate regression terminal0:
+242 exact role/parent/tag/mixed/reference/builder gates and131072 actual
+inert public routes PASS. Kernel/native source,images,driver,old references,
+old validation client and power scripts remain unmodified.
+
+Existing DEBUG52 client regression terminal0:
+sh tools/pioneer/tests/run_pioneer_q38_gdn_rendezvous_validation_client_tests.sh
+Independent original GDN reference3positives/15atomic refusals PASS;
+source-bound session4positives/196faults PASS under ASan/UBSan. Old tag52/
+namespace17/ALL96halves/strict-relative numeric gates/1675references BEFORE
+FD/23238original pages/CLOSE ONLY/first-failure+fixed-header diagnostics
+unchanged. Synthetic endpoints,NOT card arithmetic or model throughput.
+ALL qualification jobs in this checkpoint terminal;no running tests.
+
+Source hashes
+-------------
+Reference header:
+ 7382948c3c73bafdfecfff3ae1874f27d606e5b3187b6c86caad24844d8c05d0
+Final unit:
+ 14bb1712f73bce478c864a3cac26c39d020b2a333145a6465eb1521ffe59972b
+Actual-model fixture:
+ a517e86c83ed550758da931634b8b657b4652cce5e7ca35394f53f11c6ba4b07
+Role gates:
+ f5d067cf0a3059a19d3956dfe0ba21f2c6bebe41ae8cbfba463fba8388acf0f7
+Runner:
+ c45b24997d953bacff56a27ea2fa2e5ba7b1ac2701c4352953f1f7f889b700c1
+
+Remaining
+---------
+Fixed pointer-free separate DEBUG interface/native retained-owner readback
+and close/restore/END/client diagnostics still required. Do not repurpose
+old DEBUG52,relax its tolerances,expose Work CPU validation,or upload numeric
+references. Resolve physical52 first-failure evidence after saved-work
+confirmation and one controlled recovery. OFF is non-idempotent:only one
+effective OFF when actually ON,verify actual board OFF,then one ON;never a
+second OFF after software shutdown/SSH loss. Relay status is not board state.
+No SD or mains switch needed;five-minute rest only after actual ON failure.
+Full residual/postRMS/FFN/attention+KV/all64layers/sampling/token schedule and
+honest whole-model performance remain owed;no speedup claimed here.

@@ -1,5 +1,22 @@
 # Native build status
 
+October24 UTC2026:separate CPU-only gated-output reference qualified for
+future native54 DEBUG client;NOT driver/control/readback/install/Work.
+Actual authenticated c600de03 original ssm_out6144->5120/four input domains/
+ALL20480 rows BIT-EXACT second oracle;3072 operands+192scales/domain exact.
+190460half boundaries/96quantization domains/4synthetic full projections/
+FP64/49atomic refusals/85role gates PASS under ASan/UBSan. SAME target SDK
+objects032ce735 and linked CPU test fixturesf83f35a9 each twice byte-exact.
+Future client must validate original GDN FIRST,then independently quantize
+validated ACTUAL gated values:valid GDN error may cross Q8 boundaries.
+References NEVER uploaded/substituted/compiled into Work/native. Native54
+242gates+131072inert routes PASS;no old kernel/image/client/power changes.
+Old52reference3+15/session4+196regressions PASS;ALL jobs terminal.
+ZERO PioneerIO/power/SD/Assistant operations;no fresh quarantine state claim.
+Whole27B0.207893161tok/s/20UNMET/fullgoalACTIVE. NEXT fixed separate native
+readback/client plus saved-work-gated physical52 recovery/diagnosis.
+Evidence:benchmarks/qwen38-gdn-output-reference-20261024.txt.
+
 October24 UTC2026:SAME native54 GDN->ssm_out EXECUTION IMPLEMENTED/OFFLINE
 qualified,NOT linked/installed/physical/Assistant selection. Genuine held
 producer claimed BEFORE IO/image switch;old Current expires;SAME decoder's
