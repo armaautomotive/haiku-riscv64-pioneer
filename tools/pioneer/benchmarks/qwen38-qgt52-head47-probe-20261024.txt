@@ -1,0 +1,57 @@
+Original-source head47 numerical probe after QGT52 physical first failure.
+2026-10-24 UTC. CPU/emitted-LOCAL diagnostic ONLY,not physical inference,
+native capability,Work fallback,a component pass or a speed measurement.
+
+Physical evidence is in qwen38-qgt52-first-numeric-failure-20261024.txt:
+relative3.183289ppm vs3ppm at half94/lane49;actual3a86373a vs expected3a86371e.
+The card remains quarantined;no new card read/reset/END/retry was used.
+
+New probe authenticates SAME open original public19GB GGUF with FULL c600
+SHA/source epoch and canonical plan BEFORE numerical observation. Computes
+original token0 embedding/norm/QKV/conv/alpha/beta/Z/recurrent/gated references
+in the separate CPU DEBUG TU. Requires independently reproduced failing
+reference bits3a86371e,not a fabricated execution result. Original norm
+bytes are read from blk.0.ssm_norm.weight. No native context/FD is created.
+
+Separate bridge executes the actual pinned QGN1 LOCAL RV32IMF instructions
+on head47's128 ORIGINAL raw/norm/Z inputs,BOTH halves94/95. Code hash
+7ec76ef20a0a453ae24adbda74623b5f95a400ff0f5b15e17e3788f079beb2b8,
+boot0x0005e06f. Emulator enforces original input immutability,LOCAL output
+and seal writes,stack/terminal/no NoC/PCI/reset accesses. Host references
+never compile into that bridge or enter an inference/native controller.
+
+ASan/UBSan full probe A54762 and B42188 both TERMINAL0:
+  Original raw lane49 b69a7f68,norm3f4d0000,Zbfae48fc.
+  Expected gated3a86371e,emitted LOCAL gated3a86371f (ONE binary32ULP),
+  relative1.1368889307264016e-7 vs the original reference.
+  ALL128observed outputs:max relative2.0025466385602569e-7,worst lane72,
+  ZERO values above3e-6. Original source epoch remains current at completion.
+  A log/private/tmp/pioneer-qgt52-numeric-probe-20261024-a.log
+  SHA1e59f59ed1421f46bc1bb40ead71f679b43d4a8803cb98b27f5d8cd815719c49.
+  B log/private/tmp/pioneer-qgt52-numeric-probe-20261024-b.log
+  SHA3d6564ae6031822bccb3aea7019e3363a691631348f6499d04b068c4d2a2d950.
+  B corrects only the printed threshold label to failures_over_3ppm=0.
+
+Interpretation LIMIT:the LOCAL arithmetic is accurate for these ORIGINAL
+inputs. Upstream physical raw/Z drift may explain the physical28ULP error,
+but this is an INFERENCE,not proof of physical inputs or the exact fused
+QGT1 path's error source. No physical raw/Z context was preserved by the
+old diagnostic. Do not silently widen numerical bounds or claim a fix.
+
+Separate CPU-only client enhancement is under test,NOT installed:retain
+paired128expected raw,128already-returned actual raw and128already-prepared
+original Z bits on the FIRST gated failure. No new source/device calls or
+numeric upload/CPU fallback;use existing reply only,then CLOSE ONLY. This
+can distinguish upstream raw drift without a post-failure device query.
+Its test/build evidence will be recorded separately after actual completion.
+
+Reproduce OFFLINE on Mac:
+python3 tools/pioneer/tests/run_pioneer_q38_gdn_gated_numeric_probe.py \
+ generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf \
+ /private/tmp/pioneer-q38-gdn-gated-norm-20261024-b
+
+No Pioneer power/SD/network/Assistant/CPU/RAM/driver mutation in this probe.
+Recovery still awaits fresh saved-work confirmation. Stable041 restore is
+unsafe in the current retained quarantine epoch. Full20tok/s goal ACTIVE;
+last whole-model0.207893161tok/s unchanged. Native59 fault suite D75416
+still live independently;its source dependencies remain frozen.
