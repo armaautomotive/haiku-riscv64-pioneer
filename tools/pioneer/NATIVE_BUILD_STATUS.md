@@ -1,5 +1,25 @@
 # Native build status
 
+Latest October24 UTC2026:REAL SAME initialized-GDN native QRJ1 owner
+IMPLEMENTED/OFFLINE qualified (exact COMPILE-ONLY48,no public selector/
+install). Original-model references sealed BEFORE context;controllers get
+raw bytes only. Actual init73728/history1680/workspace512/QPE1/QRN1/4QPS1/
+QCB1ALL120->ONE QRJ1ALL96.70781 PASS ALL30912prepared+786432next+6144output
+values/independent original oracle/current+unrelated state immutable/SAME
+8134072word snapshot restored+verified/actualEND. No host PREP-to-recurrence
+boundary. Private layer0NEXT publication only AFTER ALL96receipts+ALL120
+physical holds;no current-slot/token flip. Close revokes output proof;
+old prep-only entry inert.17145 PASS18native faults+parent original positive,
+retainALL/no laterIO.15666/7651 RV64 full source C/D EXACTfcaf3445/max688B;
+all old bytes INCLUDING init47 EXACT.74255 old DEBUG46 EXACT32a661c4.
+84721 gates182/ROM pin/131072inert routes,39082 old47gates176,95187 emitted
+QRJ1 160positive/4170fault regression PASS. ALLjobs terminal. ZERO Pioneer
+IO/reload/power/boot/Assistant/CPU/RAM changes;last stable041/gen6 retained.
+NEXT separate fixed DEBUG client/public lifecycle/updater/restore qualifier
+before ONE physical test;then remaining full decoder/persistent loop.
+Whole27B0.207893161tok/s unchanged;20UNMET/goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-recurrent-native-20261024.txt.
+
 Latest October24 UTC2026:REAL SAME native joint-owner GDN BOTH-slot zero
 producer IMPLEMENTED/OFFLINE qualified (separate exact COMPILE-ONLY47,
 no public selector/install). Own gdnZero INSIDE actual embedding model;

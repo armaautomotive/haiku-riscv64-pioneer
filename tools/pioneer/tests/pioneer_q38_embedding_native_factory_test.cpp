@@ -40,6 +40,21 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  bool ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ConvHistoryBanks&);
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
  bool RecurrentZeroSourceScope();bool StateZeroBeforeCohort();bool StateZeroOtherCoresHeld();
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+ bool ResidentGdnRecurrentScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38GdnBanks&);
+ PioneerQ38GdnBankExtent recurrentExtents[672]={};unsigned recurrentFirst[672]={};
+ bool GdnBytes(unsigned bank,uint32 at,uint32* out,const uint32* input,unsigned words){
+  if(!words || (at&3) || (!out && !input))return false;
+  for(unsigned region=0;region<672;region++){const auto& e=recurrentExtents[region];
+   if(e.bank!=bank || !e.pages || at<e.address || at-e.address>=e.bytes || words>(e.bytes-(at-e.address))/4)continue;
+   unsigned first=recurrentFirst[region]*1024+(at-e.address)/4;
+   for(unsigned i=0;i<words;i++){if(out)out[i]=recurrentWords[first+i];else recurrentWords[first+i]=input[i];}return true;
+  }
+  return false;
+ }
+ bool ReadGdnState(unsigned bank,uint32 at,uint32* out,unsigned words)override{return GdnBytes(bank,at,out,nullptr,words);}
+ bool WriteGdnState(unsigned bank,uint32 at,const uint32* input,unsigned words)override{return GdnBytes(bank,at,nullptr,input,words);}
+#endif
  std::vector<uint32> recurrentWords=std::vector<uint32>(73728*1024,0xa55aa55a);
  std::array<unsigned,73728> recurrentTouched={};unsigned recurrentPages=0,recurrentRuns=0,recurrentFailRun=0;
  bool recurrentCloseFault=false;
@@ -314,6 +329,9 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #include "decoder_factory_scope.inc"
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+#include "gdn_recurrent_scope.inc"
+#endif
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
 #include "gdn_state_zero_gate.inc"
 #endif
@@ -418,6 +436,9 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
    assert(g && region<672 && g->InitializationPages(decoderModel->identity,region,pages)
     && g->InitializeSpan(decoderModel->identity,region,0,pages,extent)
     && extent.address==l1[5] && extent.bank==l1[7] && extent.bytes==l1[4] && extent.route==l1[8]);
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+   recurrentExtents[region]=extent;recurrentFirst[region]=first;
+#endif
    words=pages*1024;assert(first+pages<=73728);recurrentRuns++;
    if(recurrentRuns==recurrentFailRun)packetFault=1;
   }

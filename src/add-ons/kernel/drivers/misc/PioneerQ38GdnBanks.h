@@ -20,6 +20,9 @@ struct PioneerQ38GdnBankExtent { uint32_t bank,address,route,index,pages,bytes; 
 class PioneerQ38GdnBanks {
  friend class PioneerQ38GraphMutableBanks;
  friend class PioneerQ38ProjectionMutableBanks;
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+ friend class PioneerQ38ResidentDecoderOwner;
+#endif
  template<class IO> friend bool PioneerQ38StateZeroRun(IO&,const tt_dram_samples_result&,const tt_compute_noc_result&,
   PioneerQ38GdnBanks&,PioneerResidentBanks&,const tt_host_page_result&,PioneerResidentLease&,
   PioneerBulkUploadLease&,PioneerOutputBufferLease&,PioneerWideOutputLease&,PioneerQ38StateZeroLease&,
@@ -40,6 +43,20 @@ class PioneerQ38GdnBanks {
  PioneerQ38GdnZeroProgress zeroProgress;
  unsigned count=0;
  bool unsafe=false,initializationPublished=false;
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+ const void* layerOwner=nullptr;unsigned layerPhase=0;bool layerNextPublished=false;
+ bool ClaimFirstLayer(const void* owner,const PioneerQ38GdnIdentity& id,unsigned phase){
+  if(!owner || layerOwner || !phase || phase>=0x7fffffff || !InitializationPublished(id))return false;
+  layerOwner=owner;layerPhase=phase;return true;
+ }
+ bool OwnsFirstLayer(const void* owner,const PioneerQ38GdnIdentity& id,unsigned phase)const{
+  return owner && layerOwner==owner && layerPhase==phase && InitializationPublished(id);
+ }
+ bool PublishFirstLayer(const void* owner,const PioneerQ38GdnIdentity& id,unsigned phase){
+  if(layerNextPublished || !OwnsFirstLayer(owner,id,phase))return false;
+  layerNextPublished=true;return true; // private layer0/position0/slot1 ONLY;NEVER current-slot/token flip
+ }
+#endif
  static unsigned Ordinal(unsigned layer) { return layer<64 && layer%4!=3?layer-layer/4:~0U; }
  bool Resolve(unsigned region,unsigned firstPage,unsigned pages,PioneerQ38GdnBankExtent& output) const {
   if (region>=count || !pages || pages>256) return false;

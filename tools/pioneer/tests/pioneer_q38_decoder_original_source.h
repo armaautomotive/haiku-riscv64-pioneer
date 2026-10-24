@@ -22,7 +22,9 @@ struct DecoderOriginalSource:ProjectionExecutionLearnedBytes {
  // Optional separate GDN-input observer. References never enter controllers.
  virtual bool CheckGdnInput(unsigned,const uint32_t*)const{return false;}
  virtual uint64_t GdnInputReads()const{return 0;}
+ virtual bool CheckGdnRecurrent(unsigned,const uint32_t*,const uint32_t*,const uint32_t*)const{return false;}
 };
 std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* path);
+std::unique_ptr<DecoderOriginalSource> OpenGdnRecurrentOriginalSource(const char* path);
 #endif

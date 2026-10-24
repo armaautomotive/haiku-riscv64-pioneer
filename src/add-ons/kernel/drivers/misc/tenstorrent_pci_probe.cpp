@@ -15,6 +15,11 @@
 #error Decoder runtime/history reservation is OFFLINE until its separate actual native factory and role are qualified
 #endif
 #endif
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+#if PIONEER_Q38_GDN_RECURRENT_NATIVE != 1 || !defined(PIONEER_Q38_GDN_STATE_INIT_NATIVE) || PIONEER_Q38_GDN_STATE_INIT_NATIVE != 1 || !defined(PIONEER_Q38_GDN_INPUT_OWNER) || PIONEER_Q38_GDN_INPUT_OWNER != 1 || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Separate exact tag48 SAME initialized-GDN owner,not old DEBUG/Work promotion
+#endif
+#endif
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
 #if PIONEER_Q38_GDN_STATE_INIT_NATIVE != 1 || !defined(PIONEER_Q38_GDN_INPUT_OWNER) || PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate exact tag47 SAME-owner GDN initialization,not old input/convolution DEBUG
@@ -29,7 +34,9 @@
 #if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate resident-input owner needs exact native role,never old convolution DEBUG
 #endif
-#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010048ULL
+#elif defined(PIONEER_Q38_GDN_STATE_INIT_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010047ULL
 #elif defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102300010046ULL
@@ -66,6 +73,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010047ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_STATE_INIT_NATIVE))
 #error Reserved tag47 identifies ONLY same native joint-owner GDN zero+Close,NO public selector
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010048ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_RECURRENT_NATIVE))
+#error Reserved tag48 identifies ONLY SAME native initialized-GDN recurrent worker,NO public selector
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -1898,6 +1908,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
  bool RecurrentZeroSourceScope();
 #endif
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+ bool ResidentGdnRecurrentScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38GdnBanks&);
+#endif
  bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
  bool ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ConvHistoryBanks&);
 #endif
@@ -3579,6 +3592,18 @@ bool PioneerSessionIO::ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner
   && ProjectionExecutionSourceScope(true); // SAME global context/clock/ALL hosts/current source,not a second owner
 }
 // PIONEER_Q38_RESIDENT_DECODER_NATIVE_SCOPE_END
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+// PIONEER_Q38_GDN_RECURRENT_NATIVE_SCOPE_BEGIN
+bool PioneerSessionIO::ResidentGdnRecurrentScope(const PioneerQ38ResidentDecoderOwner& owner,
+ const PioneerQ38ProjectionGraphOwner& projection,const PioneerQ38GdnBanks& state)
+{
+ auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
+ return m && &owner==&m->decoder && &projection==&m->projection && m->phase==PioneerQ38EmbeddingNativeState::DecoderHeld
+  && &state==m->graph.Recurrent(m->identity) && m->MatchesInitializedGdn(c->banks,dram)
+  && owner.MatchesRecurrentNativeOwner(state) && ProjectionExecutionSourceScope(true);
+} // SAME real initialized producer/call/context/clock/ALLhosts,not metadata-only zero publication
+// PIONEER_Q38_GDN_RECURRENT_NATIVE_SCOPE_END
+#endif
 #endif
 // PIONEER_Q38_EMBEDDING_NATIVE_FACTORY_BEGIN
 static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reuse
@@ -3833,13 +3858,31 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  return okay;
 }
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+// PIONEER_Q38_GDN_RECURRENT_NATIVE_FACTORY_BEGIN
+[[maybe_unused]] static bool RunQ38ResidentGdnRecurrent(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r)
+{
+ auto* m=c.q38EmbeddingModel;
+ if(!m || m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld || m->Unsafe() || m->decoder.GdnInputsClaimed())return false;
+ auto* g=m->graph.Recurrent(m->identity);
+ bool okay=g && m->MatchesInitializedGdn(c.banks,c.baseline.baseline.baseline.baseline.dram)
+  && c.io.ProjectionExecutionSourceScope(true) && m->decoder.RunGdnRecurrent(c.io,*g,r);
+ if(!okay){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
+ return okay;
+}
+// PIONEER_Q38_GDN_RECURRENT_NATIVE_FACTORY_END
+#endif
 [[maybe_unused]] static bool PrepareQ38ResidentGdnInputs(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r)
 {
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+ (void)c;(void)r;return false; // old prep-only entry is INERT in combined mode,not a retention fault
+#else
  auto* m=c.q38EmbeddingModel;
  if(!m || m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld || m->Unsafe() || m->decoder.GdnInputsClaimed())return false;
  bool okay=c.io.ProjectionExecutionSourceScope(true) && m->decoder.PrepareGdnInputs(c.io,r);
  if(!okay){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
  return okay; // SAME native call/context/owner. NO public opcode or new producer grant.
+#endif
 }
 #endif
 [[maybe_unused]] static bool CloseQ38ResidentDecoderModel(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r
@@ -7157,6 +7200,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+ // PIONEER_Q38_GDN_RECURRENT_NATIVE_INERT_ROUTING_BEGIN
+ return B_NOT_ALLOWED; // COMPILE-ONLY tag48 has NO public compute/upload/old Work selector
+ // PIONEER_Q38_GDN_RECURRENT_NATIVE_INERT_ROUTING_END
 #endif
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
  // PIONEER_Q38_GDN_STATE_INIT_NATIVE_INERT_ROUTING_BEGIN

@@ -10,6 +10,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentDecoderOwner.h"
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
 #include "pioneer_q38_gdn_input_bridge.h"
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+#include "pioneer_q38_gdn_recurrent_bridge.h"
+#endif
 #endif
 #endif
 struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFabric {
@@ -227,6 +230,25 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
   case SetReset:
    p.C().coreReset=v;p.C().resets.push_back(v);
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+   if(v==0x46800 && p.FullRead(p.current,0x64024)==PioneerQ38GdnRecurrentImageWord(10)){
+    assert(p.current && p.current<=96 && p.gdnImage && p.decoderHistory && p.decoderPlan && p.decoderStarts==120 && !p.gdnRunning[p.current]);
+    assert(p.core[0]->coreReset==0x47800);for(unsigned w=97;w<120;w++)assert(p.core[w]->coreReset==0x47800);
+    p.gdnRunning[p.current]=true;p.gdnStarts++;
+    p.decoderPc[p.current]=ExecuteGdnRecurrentNativeBytes(p.gdnImage,*p.decoderPlan,p.current,p.decoderBank,p,*p.decoderHistory);
+    if(!p.gdnDamaged && p.current==96 && p.gdnFault>=3 && p.gdnFault<=14){p.gdnDamaged=true;
+     if(p.gdnFault==3)p.WriteLocal(96,TT_Q38_RGDN_SUMMARY,p.ReadLocal(96,TT_Q38_RGDN_SUMMARY)^1);
+     if(p.gdnFault==4)p.C().counters[0]++;if(p.gdnFault==5)p.C().source[11]^=1;if(p.gdnFault==6)p.C().command[9]^=1;
+     if(p.gdnFault==7)p.WriteLocal(96,0x17ffc8,TT_Q38_GDN_RECURRENT_FAULT);
+     if(p.gdnFault==8)p.WriteLocal(96,0x17ffc4,0);if(p.gdnFault==9)p.WriteLocal(96,0x17ffc0,0);
+     if(p.gdnFault==10)p.decoderPc[96]=0x64058;if(p.gdnFault==11)p.WriteLocal(96,0x64000,p.ReadLocal(96,0x64000)^1);
+     if(p.gdnFault==12)p.WriteLocal(96,TT_Q38_RGDN_DESCRIPTOR+63*4,1);
+     if(p.gdnFault==13)p.core[0]->counters[0]++;
+     if(p.gdnFault==14)p.WriteLocal(119,TT_Q38_CONV_BATCH_TABLE+383*4,p.ReadLocal(119,TT_Q38_CONV_BATCH_TABLE+383*4)^1);
+    }
+    return;
+   }
+#endif
    if(v==0x46800 && p.FullRead(p.current,0x64024)==PioneerQ38GdnInputImageWord(10)){
     assert(p.current && p.current<=96 && p.gdnImage && p.decoderImage && p.decoderPlan && p.decoderHistory
      && p.decoderStarts==120 && p.decoderRunning[p.current] && !p.gdnRunning[p.current]);
@@ -281,7 +303,13 @@ uint32_t ProjectionNativeTransport::MappedRead(uint32_t a){auto& p=*implementati
 void ProjectionNativeTransport::MappedWrite(uint32_t a,uint32_t v){auto& p=*implementation;p.Touch();
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  if(!p.gdnDamaged && p.decoderStarts==120 && !p.gdnStarts && p.current==96
-  && p.gdnFault==1 && a==0x64024 && v==PioneerQ38GdnInputImageWord(10)){p.gdnDamaged=true;return;}
+  && p.gdnFault==1 && a==0x64024 && v==
+#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+  PioneerQ38GdnRecurrentImageWord(10)
+#else
+  PioneerQ38GdnInputImageWord(10)
+#endif
+  ){p.gdnDamaged=true;return;}
 #endif
  p.FullWrite(p.current,a,v);}
 uint32_t* ProjectionNativeTransport::PanelSaved(){auto& p=*implementation;p.Touch();return p.C().Q38PanelSavedWords();}

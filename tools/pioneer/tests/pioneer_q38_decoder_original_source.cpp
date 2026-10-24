@@ -34,9 +34,10 @@ namespace {
 class OriginalSource final:public DecoderOriginalSource {
  struct Stripe {unsigned role,route;uint32_t address,bytes;std::vector<uint8_t> data;};
  PioneerQ38PublicModelSource original;PioneerQwen38PackedPlan plan;
- std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false;
+ std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false;
  uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0;
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
+ std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
  std::array<uint8_t,46080> embedding={};std::array<uint32_t,5120> norm={},raw={},normalized={};
  std::vector<uint32_t> projections=std::vector<uint32_t>(18432,0),convolution=std::vector<uint32_t>(40960,0);
  struct Reference {
@@ -49,7 +50,7 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false):gdnInputs(gdn){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false):gdnInputs(gdn),gdnRecurrent(recurrent){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  bool Prepare(unsigned token)override{
@@ -103,12 +104,13 @@ public:
   if(gdnInputs){
    // Independent BEFORE-context oracle,not the card math policy. Actual
    // emitted QCB1 outputs will later be read through separate NoC endpoints.
-   std::array<float,2048> q={},k={};
+   std::array<float,2048> q={},k={},unscaled={};
    for(unsigned h=0;h<16;h++){
     float qs=0,ks=0;
     for(unsigned i=0;i<128;i++){float a=PioneerAttentionFloat(convolution[h*128+i]),b=PioneerAttentionFloat(convolution[2048+h*128+i]);qs+=a*a;ks+=b*b;}
-    float qi=(1.0f/sqrtf(qs+1e-6f))*0.0883883461356163f,ki=1.0f/sqrtf(ks+1e-6f);
+    float inverse=1.0f/sqrtf(qs+1e-6f),qi=inverse*0.0883883461356163f,ki=1.0f/sqrtf(ks+1e-6f);
     for(unsigned i=0;i<128;i++){q[h*128+i]=PioneerAttentionFloat(convolution[h*128+i])*qi;k[h*128+i]=PioneerAttentionFloat(convolution[2048+h*128+i])*ki;}
+    if(gdnRecurrent)for(unsigned i=0;i<128;i++)unscaled[h*128+i]=PioneerAttentionFloat(convolution[h*128+i])*inverse;
    }
    gdnReferences.resize(96*322);
    for(unsigned half=0;half<96;half++){
@@ -123,6 +125,23 @@ public:
     for(unsigned i=0;i<322;i++)if((out[i]&0x7f800000)==0x7f800000)return false;
    }
    gdnReferencesReady=true;
+   if(gdnRecurrent){
+    recurrentReferences.resize(96*(322+8192+64));
+    for(unsigned half=0;half<96;half++){
+     auto* expected=recurrentReferences.data()+half*(322+8192+64);const auto* prep=gdnReferences.data()+half*322;
+     for(unsigned i=0;i<322;i++)expected[i]=i<128?PioneerAttentionBits(unscaled[(half/2%16)*128+i]):prep[i];
+     float beta=PioneerAttentionFloat(expected[321]);
+     for(unsigned value=0;value<64;value++){
+      float delta=PioneerAttentionFloat(expected[256+value])*beta,output=0;
+      for(unsigned key=0;key<128;key++){
+       float updated=PioneerAttentionFloat(expected[128+key])*delta;
+       expected[322+key*64+value]=PioneerAttentionBits(updated);
+       output+=updated*PioneerAttentionFloat(expected[key]);
+      }
+      expected[322+8192+value]=PioneerAttentionBits(output*0.0883883461356163f);
+     }
+    }
+   }
   }
   prepared=true;return Ready();
  }
@@ -174,6 +193,20 @@ public:
   }
   return true;
  }
+ bool CheckGdnRecurrent(unsigned half,const uint32_t* prepared,const uint32_t* next,const uint32_t* output)const override{
+  if(!gdnRecurrent || !sealed || !Ready() || half>=96 || !prepared || !next || !output || recurrentReferences.size()!=96*(322+8192+64))return false;
+  const auto* expected=recurrentReferences.data()+half*(322+8192+64);
+  const uint32_t* inputs[]={prepared,next,output};const unsigned words[]={322,8192,64},offsets[]={0,322,322+8192};
+  for(unsigned group=0;group<3;group++)for(unsigned i=0;i<words[group];i++){
+   double value=PioneerAttentionFloat(inputs[group][i]),reference=PioneerAttentionFloat(expected[offsets[group]+i]);
+   if(!isfinite(value) || fabs(value-reference)>3e-6*(1+fabs(reference)))return false;
+   if(!group && i>=320){
+    if(reference>=double(PioneerAttentionFloat(0x00800000))){if(value<=0 || fabs(value-reference)>3e-6*reference)return false;}
+    else if(value!=0)return false;
+   }
+  }
+  return true; // independent libm/zero-state oracle,ALL prepared BEFORE native context
+ }
 };
 }
 std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* path){
@@ -182,5 +215,9 @@ std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* pat
 }
 std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* path){
  if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true);
+ if(!source->Open())return nullptr;return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenGdnRecurrentOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true);
  if(!source->Open())return nullptr;return source;
 }

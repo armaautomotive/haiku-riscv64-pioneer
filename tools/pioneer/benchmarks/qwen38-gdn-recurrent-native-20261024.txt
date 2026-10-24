@@ -1,0 +1,138 @@
+Pioneer Qwen27B SAME native initialized-state -> ONE QRJ1 worker
+2026-10-24 UTC. OFFLINE only,goal ACTIVE/turn PROGRESS. NO new token timing.
+
+ACTUAL IMPLEMENTATION
+Separate exact PIONEER_Q38_GDN_RECURRENT_NATIVE=1/tag2026102400010048.
+Requires SAME native state-init/runtime/stash/execution/RMS/embedding/input
+owner. Neither DEBUG46 nor old Work/CPU-reference mixtures are promoted.
+COMPILE ONLY:all public compute/upload/old Work routes inert;reload metadata
+separate. No new linked driver/client/installation or Pioneer execution.
+
+Frozen14836B QRJ1 ROM EXACT96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410
+boot4B/d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+Generator prints apply_patch only after exact code/boot pins. All3710ROM
+words (boot+code) fit existing peer16KiB prefix/original full L1 snapshot.
+No snapshot expansion. Numerical image unchanged from its160/4170case
+instruction qualification;Q is UNSCALED for post-dot SFPU scale only once.
+
+New immutable paired plan binds actual initialized GDN child,canonical
+layer0/position0/current-slot0/private-next-slot1 extents,half,physical
+worker,phase/source/ALL4owner epochs and original learned A/dt pages.
+Both32KiB halves are proved via existing real reserved pages,not addresses
+from userspace. Plans are DATA,not initialized-state/execution authority.
+Actual SAME native scope separately requires model/graph/recurrent object,
+genuine zero+CLOSE producer/cookie/team/thread/clock/ALLhosts/projections.
+
+The real retained decoder owner privately claims that exact GDN child.
+After real QPS1->QCB1 ALL120 held,install ONE QRJ1 image+both descriptors
+on physical workers1..96,complete second ALL120 image/source/command/
+counter/hold pass,then arm/release96. ROOT and97..119 remain CBO-held.
+Each worker reads raw resident products/original A-dt,prepares local QK/
+gates,reads CURRENT state,executes SFPU recurrence and writes ONLY NEXT.
+There is NO host boundary/terminal/reload between preparation and state
+math. Native owner verifies BOTH32word summaries,their counter continuity,
+ALL8exact total deltas and final16KiB NEXT-write command. Only after ALL96
+receipts+ALL120 current/source/physical holds may private layer completion
+publish. A public result bit/count can never mint that private proof.
+
+Only layer0 NEXT is published. NO current-slot/whole-token flip,history
+commit or full decoder/sampling claim. Close requires private publication,
+restores/verifies ALL8134072 original L1 words and original NoC controls,
+then revokes active completed-output proof. Exact closed-owner publication
+still gates actual legacy END. UNKNOWN faults/retains ALL,never rollback/
+retry/restore after first uncertainty. Old prep-only entry is INERT in48.
+
+ORIGINAL-MODEL ACTUAL NATIVE FACTORY/INSTRUCTION TEST
+70781 terminal0,ASan/UBSan/source-current. Original GGUF full SHA/source and
+ALL independent numerical references prepared/sealed BEFORE native context.
+Reference module is separately compiled WITHOUT native/Work flags;native
+controllers receive only raw learned-byte interface,never references.
+Actual672-region/73728-page zero RV32 output backs actual state NoC reads
+and writes (not host-precomputed state). SAME history1680/workspace512/
+QPE1/QRN1/ALL4QPS1/QCB1ALL120 then QRJ1ALL96. No fake private producer.
+
+ALL30912 prepared values +786432 next-state words +6144 output values
+match independent original-token0 oracle,3e-6scaled and strict relative
+3e-6 normal gate checks;true subnormals may FTZ only. References use correct
+unscaled normalized Q with POST-dot scale. All next GDDR bytes bit-identical
+to actual emitted local NEXT;ALL CURRENT words remain zero/immutable and
+ALL unrelated layers/slots unchanged. Original source referenceReads1672,
+original A/dt NoC byte reads192. CPU reference code never enters controller.
+SAME full original snapshot survives CBO AND QRJ1;all8134072words restored
+and independently verified;actual clean dispatch END. After Close the
+active output-ready getter is false. Duplicate run and forged96half/
+published-result counts are inert. Only endpoints/OS are simulated.
+
+17145 terminal0:18isolated native faults,then parent's full original-model
+positive path completes (genuine producer retained,not recreated):partial
+code/descriptor write,summary/counter/source/command,marker/count/phase/PC,
+changed code/state descriptor,untouched ROOT/last peer,team/init-producer
+nonce loss,and first/last original-restore failures. All18 retain SAME
+model/snapshot/ALLhost owners,no later run/restore/END endpoint IO. Bad
+untouched tiles detected BEFORE first post-compute hold. No fake slot flip.
+
+ACTUAL RV64 KERNEL TYPE/SOURCE COMPILE
+15666/7651 final C/D terminal0,EXACT object SHA256:
+fcaf34450815bd4c01a8f6a0dbbc2240b987bfd5b88d342c90a377808179d722
+ /private/tmp/pioneer-q38-gdn-recurrent-native-full-20261024-{c,d}/gdn-recurrent-NATIVE48-COMPILE-ONLY.o
+Includes actual driver/IO/context/native scopes/factories/full owner/paired
+plans/ROM/zero/retention/END,forced initializer and recurrence instantiation.
+Max new frame688B<=2048;all oversized legacy frames no growth. Old tag38/
+guard/default43/private2d12/stash6121/tag42a2bc/bare43/actualDEBUG44/
+compile45 AND native-init47 EXACT (47 remains7ee1d6f1).
+74255 terminal0 actual linked old DEBUG46 EXACT32a661c4;not installed.
+
+GATES/REGRESSIONS
+84721 terminal0:182 exact48role/tag/mixed-mode/legacy-builder refusal
+checks,ROM SHA pin,and131072 actual inert public-route probes.
+39082 terminal0 old47gates176 unchanged. Ten old builders reject ambient
+recurrent role BEFORE SDK/output. 95187 terminal0 actual unchanged QRJ1
+instructions:160positive/all96halves/7banks/bothslots/four16step chains,
+ALL8256bits exact+transposed-checkpoint observer;4170faults,all11NoCpackets/
+poison/source/counter/paired-descriptor/command/boundary/state controls;
+inert failure. Numerical image and original output tolerances unchanged.
+
+PROTOTYPES,NOT PROMOTED
+First host bridge compile caught redundant mutable-state macro definition;
+added test-only ifndef. Gate prototype caught Python starred-conditional
+tuple syntax;fixed,182final cases pass. Prototype original-model B then
+CAUGHT REAL integration bug:old prep-only helper returned false but its
+native wrapper still quarantined combined-mode context. New48 wrapper now
+returns false with NO scope call/mutation/retention;all no-IO/no-unsafe
+assertions kept. Source-current original positive/faults rerun PASS. Close
+also explicitly requires private published layer and revokes active output
+proof. Earlier objects50460eff/3a9c3d3c superseded;only final fcaf3445 is
+authoritative. No prototype selected/installed/executed on Pioneer.
+
+UNCHANGED PHYSICAL SYSTEM / NEXT
+ZERO Pioneer SSH/card/reload/power/reboot/PSU/SD/Assistant/model/NIC/boot/
+kernel changes this turn. Last verified stable041/gen6/64CPUs/fullRAM
+137034936320B retained,not re-probed. No recovery needed. OFF remains NOT
+idempotent:one effectiveOFF,verify board off,then oneON. No extra pulses.
+Dirty llama and unrelated FlashNext untouched. All local jobs terminal.
+
+NEXT separate fixed original-model DEBUG protocol/client/readback and full
+public-call/failure/hotswap/restore qualification,then ONE bounded physical
+QRJ1 test. Work/no-CPU-reference remains separate. Then card-side gated
+norm/output/residual/FFN/fullattentionKV/all64layers/sampling/persistent
+token scheduler and honest whole-model timing. Native host stage dispatch
+still exists before/after QRJ1;do NOT call this a full card-only decoder.
+Whole27B last0.207893161tok/s unchanged;20tok/s unmet;goal ACTIVE.
+
+TERMINAL LOG SHA256
+7fbd14d097607713408283333a33e7a6a4b5352b2595c51c51f9f15e050fe6fb
+ /private/tmp/pioneer-q38-gdn-recurrent-native-20261024-c.log
+3a45d679674cd983734247cc8f6896199756e7bd3e50eb9b83f46c1521e53b04
+ /private/tmp/pioneer-q38-gdn-recurrent-native-faults-20261024-a.log
+d59a7f2c81a5bb9c3163c9ae94d573243ba5c90c163ea616bad32fefcdc275bb
+ /private/tmp/pioneer-q38-gdn-recurrent-native-gates-20261024-c.log
+c11f1b3149fc9f2c2308fe9a9a1c1c290d680f47d399b704e9f52cab5f790a2d
+ /private/tmp/pioneer-q38-gdn-recurrent-native-image-regression-20261024-a.log
+32ec540dd9dd401b13824b55a00bf479c711eba0df019619d6417ef2a8948cda
+ /private/tmp/pioneer-q38-gdn-recurrent-native-full-20261024-c.log
+4a851477fafb68b708871861be471b5c14ce55313a662f32d29ad97c31b72751
+ /private/tmp/pioneer-q38-gdn-recurrent-native-full-20261024-d.log
+5c9630c7db400de4d0e940ad80945f4867178c6ed1724349ab2d77179fbfd542
+ /private/tmp/pioneer-q38-gdn-recurrent-native-old46-20261024-a.log
+38334d8794cdd78b2d6927d72e10400c121f667343813efdfee04569a2c71491
+ /private/tmp/pioneer-q38-gdn-recurrent-native-old47-gates-20261024-a.log

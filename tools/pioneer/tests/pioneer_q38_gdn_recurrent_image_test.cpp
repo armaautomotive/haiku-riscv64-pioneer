@@ -3,7 +3,9 @@
 // AFTER execution;no normalized q/k/gates or recurrent products enter image.
 #define PIONEER_Q38_RESIDENT_GDN_IMAGE_MODEL_ONLY
 #include "pioneer_q38_resident_gdn_image_test.cpp"
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputPlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRecurrentShape.h"
 #include "../PioneerQ38DeltaStateLayout.h"
@@ -75,6 +77,13 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   }
   return ResidentGdnImage::Load(at);
  }
+ virtual uint32_t RawPayload(unsigned p,unsigned i){return p<3?raw[(p==0?0:p==1?128:256)+i]:blocks[p-3][i];}
+ virtual bool StateTransfer(bool write,unsigned piece,unsigned local){
+  for(unsigned i=0;i<4096;i++){
+   if(write)next[piece*4096+i]=memory.at(local+i*4);else memory[local+i*4]=prior[piece*4096+i];
+  }
+  return true;
+ }
  void SubmitCombined(){
   unsigned p=packets++;assert(p<11);
   if(p<7){
@@ -88,7 +97,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    assert(!unit.ops && !nextWrites && !resultWrites && !returnWrites);
    if(packets==failPacket){pending=true;return;}
    for(unsigned i=0;i<size[p]/4;i++)if(packets!=poisonFault || i!=size[p]/4-1)
-    memory[local[p]+i*4]=p<3?raw[(p==0?0:p==1?128:256)+i]:blocks[p-3][i];
+    memory[local[p]+i*4]=RawPayload(p,i);
    counts[0]++;counts[1]+=size[p]/64;counts[2]++;counts[3]++;counts[6]++;
   }else{
    assert(prepareWrites==322 && prepareDescriptorWrites==5 && prepareHeaderWrites==32 && !returnWrites);
@@ -100,9 +109,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
    if(write)assert(nextWrites==8192 && resultWrites==64 && unit.drained);
    else assert(!unit.ops && !nextWrites && !resultWrites);
    if(packets==failPacket){pending=true;return;}
-   for(unsigned i=0;i<4096;i++){
-    if(write)next[piece*4096+i]=memory.at(local+i*4);else memory[local+i*4]=prior[piece*4096+i];
-   }
+   if(!StateTransfer(write,piece,local)){pending=true;return;}
    unsigned base=write?4:0;counts[base]++;counts[base+1]+=256;counts[2]++;counts[6]=counts[2];counts[base+3]++;
   }
   if(packets==badCounter)counts[p<9?3:7]++;
@@ -191,6 +198,7 @@ struct GdnRecurrentMachine:ResidentGdnImage {
   for(unsigned i=0;i<64;i++)assert(memory.at(TT_Q38_GDN_INPUT_DESCRIPTOR+i*4)==inputDescriptor[i] && memory.at(TT_Q38_RGDN_DESCRIPTOR+i*4)==descriptor[i]);
  }
 };
+#ifndef PIONEER_Q38_GDN_RECURRENT_MACHINE_ONLY
 int main(int argc,char** argv){
  (void)&TestWorker;assert(argc==2 || (argc==3 && !strcmp(argv[2],"--double-scale-negative")));setvbuf(stdout,nullptr,_IOLBF,0);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
@@ -247,3 +255,4 @@ int main(int argc,char** argv){
  }
  printf("PASS ACTUAL OFFLINE QRJ1 faults%u:all11timeouts/counters/sources/descriptors,7rawpoison,ALLpaired-descriptorbits,110command-readback-corruptions,8boundary-counter-faultsBEFOREstateread,seam-summary+nonfinite-state;inertfaultNO laterNoC/SFPU/publication;NO initialized/native/current-stateauthority\n",negative);
 }
+#endif
