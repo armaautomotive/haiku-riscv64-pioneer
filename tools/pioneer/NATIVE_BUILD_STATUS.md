@@ -1,5 +1,23 @@
 # Native build status
 
+October24 UTC2026 PHYSICAL SAME initialized-state->ONE QRJ1 PASS.
+94837 TERMINAL0:FULL original GGUF/references BEFORE GPU FD;all110learned
+uploads;actual native both-slot73728page zero+Close/history1680/workspace512/
+QPE1/QRN1/ALL4QPS1/QCB1ALL120->QRJ1ALL96;ALL823488LOCAL prepared/NEXT/output
+values independently checked,strict normal gates,explicit cleanEND1. No
+host PREP-to-recurrence boundary. Component lifetime237759727us includes
+initialization/guards/readback/full restore,NOT token rate or pure GPU math.
+Only layer0/position0/privateNEXT,not whole-token slot flip/full decoder.
+Exact b43/tag49/gen7;after terminalPASS+fresh idle/cold0 metadata,36469
+TERMINAL0 guarded stable041 restore.03:07:48UTC independent read-only check:
+tag12/gen8/quiesced0/cold0/active_owner0/open1/guard1,64CPUs/RAM137034936320B,
+core desktop services present(no fresh human input confirmation). No power,
+reboot,SD,Assistant/model/NIC/boot/kernel changes or recovery. All jobs
+terminal. NEXT card-side gated RMS/SiLU +ssm_out/residual/FFN,then remaining
+attentionKV/all64layers/sampling/persistent token schedule;no DEBUG49 Work
+promotion. Whole27B0.207893161tok/s unchanged;20UNMET/goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-recurrent-card-20261024.txt.
+
 October24 UTC2026:separate fixed recurrent DEBUG49/namespace16
 implemented/OFFLINE qualified,NOT deployed or physically qualified. SAME actual initialized
 GDN/retained QRJ1 owner reads823488fixed LOCAL prepared/NEXT/output words

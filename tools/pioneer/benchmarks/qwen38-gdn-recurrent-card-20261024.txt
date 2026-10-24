@@ -1,0 +1,125 @@
+PHYSICAL SAME initialized-GDN -> ONE QRJ1 PASS,Oct24 UTC2026.
+Goal ACTIVE/turn PROGRESS. Whole27B last0.207893161tok/s UNCHANGED;
+20tok/s/full-card inference remains UNMET. No new token-rate measurement.
+
+QUALIFIED IMMUTABLE INPUTS
+Source7a09dcc2a53ab8a822b5fbfbcdaf0b480899b9cd pushed BEFORE transfer.
+Exact DEBUG49/namespace16 native driver
+ b43a6cc70dc8b5d1f5d69d1b9207fbf577a9671881963da45854b0cd68a7f89e
+Independent original-reference client
+ 50f30dee64f40b6987a5a8bcb90ea251ac2d681956bf677fad1c60efaa455af4
+Guarded updater/known-clean stable041 restore
+ 120afffa406db8642dcc04e7f7647f6da38419a86ab665ae394930009a83b297
+Underlying frozen14836B QRJ1 image
+ 96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410
+See qwen38-gdn-recurrent-debug-public-20261024.txt for15native faults,
+original-model ALL823488word/actualEND qualification,212gates/184client
+faults/260updater cases/repeated identical linked kernel+client builds.
+
+LIVE PREFLIGHT / NON-DESTRUCTIVE STAGING
+Haiku SSH responsive;64CPUs/maxRAM137034936320B. Stable041/tag12/gen6,
+quiesced0/cold0/active_owner0/open_count1/guard1. Installed and immutable
+stable restore driver hashes EXACT041. Reload client EXACTb0c851b3.
+Strict process inventory:core desktop/input services and existing Firefox;
+NO Assistant/model/compute parent. Nothing closed/restarted. No fresh
+human input confirmation. Exact public GGUF18973870528B already present.
+
+New private stage /boot/home/pioneer-q38-gdn-recurrent-debug-20261024-a.
+First SCP rejected SSH-only -n BEFORE connection;no artifacts transferred.
+Removed only SSH -n/-T from SCP options,kept trusted identity/host options.
+97198 TERMINAL0:three artifacts copied at prior safe128kbit/s rate. Full
+remote SHA checks BEFORE adoption,then NEW hash-qualified immutable names
+under existing private /boot/home/pioneer-p100a-hot-reload-20261019-a:
+ tenstorrent_pci_probe-gdn-recurrent-validation-b43a6cc7
+ pioneer-q38-gdn-recurrent-validation-50f30dee
+ pioneer_p100a_hot_swap-gdn-recurrent-validation-120afffa.sh
+All adopted hashes rechecked. Prior updaters/candidates/backups untouched.
+No installed driver changed during staging;no model file writes/downloads.
+
+CONTROLLED EXCHANGE,NO REBOOT/POWER
+8675 TERMINAL0:new120a updater --apply-gdn-recurrent-validation.
+Exact installed041 source/hash and strict parent/idle/guard checks,
+fullSHA-scoped backup,normal watched-directory rename/guarded reload.
+Fresh DEBUG49/tag2026102400010049/gen7:quiesced0/cold0/active_owner0/
+open_count1/guard1. Installed fullSHA EXACTb43;client fullSHA EXACT50f.
+No force unload/CSR reset/cold-latch bypass/firmware/boot/SD/PSU operation.
+
+ONE ACTUAL HARDWARE CLIENT
+94837 TERMINAL0. Remote PID1516,started2026-10-24 02:56:29UTC.
+ /private/tmp/pioneer-q38-gdn-recurrent-native-card-20261024-a.log
+FULL original PUBLIC GGUF SAME-FILE SHA and independent embedding/RMS/
+QKV/conv/alpha/beta/GDN/next/output references BEFORE GPU FD. Existing
+PID observed alive during slow preparation;NO restart/second client or
+accelerator-admin FD during its source/native lifetime. OS-only process
+checks did not open the device. No reference products uploaded.
+All110 ORIGINAL learned upload spans8807 status0 (23237pages),SPAN_END8805
+status0. SINGLE actual fixed DEBUG49 ioctl89dc/3294136B returned0. Client
+compared ALL96halves/823488LOCAL words:30912prepared+786432NEXT+6144output,
+against independent original references;3e-6scaled bound plus STRICT
+relative3e-6 NORMAL gates. Only actual subnormal gate FTZ accepted.
+Actual explicit END7bf6 returned0. Final client line:
+ PASS_DEBUG_NATIVE_QRJ1 token0 layer0 all96_halves all823488_values
+ independent_original_GGUF_references within3e-6_scaled_bound
+ STRICT_relative_normal_gates clean_end1
+ initialization_execution_readback_restore_us237759727;NO_TOKEN_RATE
+
+Actual SAME native model/source/clock/ALLhost/context chain physically
+exercised BOTH-slot672region/73728page/301989888B zero+known-clean Close,
+history336x5/workspace512/QPE1/QRN1/4QPS1/QCB1ALL120 then ONE QRJ1 on96
+half-head workers. QRJ1 reads actual resident q/k/v/alpha/beta/original
+A/dt,prepares unscaled Q/K/gates,reads CURRENT state,executes SFPU recurrence
+and writes private NEXT,inside SAME card program. No host stop/reload or
+CPU numeric vectors between preparation and recurrence. ALL96 independent
+receipts/ALL120 physical holds precede private layer0NEXT publication and
+fixed LOCAL readback;SAME original8134072word L1 snapshot retained and
+fully restored+verified before exact closed-owner proof/explicit END.
+
+Scope:LOCAL computed NEXT/output/prepared bytes were numerically checked;
+actual NoC next-write commands/counter receipts were proved. This trial
+did NOT independently read back every NEXT GDDR byte (the offline test
+did). Do not turn that offline byte-equality claim into a physical readback
+claim. No current-slot/whole-token flip,subsequent-token/full64layer,
+sampling,full card-only decoder,or actual PC6403c-observation claim.
+237.759727seconds includes one-time state initialization,host program/
+source guards,all LOCAL readback and original restore. NOT pure GPU math,
+full inference latency,or model tokens/sec. Work remains distinct from
+this deliberate CPU-reference DEBUG client.
+
+KNOWN-CLEAN STABLE RESTORE COMPLETE
+Only AFTER terminal0+PASS+cleanEND1:fresh DEBUG49/gen7 idle/quiesced0/
+cold0/active_owner0/open1/guard1,installedb43 and updater120a fullSHA pins.
+36469 TERMINAL0:same120a --restore-gdn-recurrent-validation,hash-scoped
+b43 backup and guarded reload ->stable041/tag12/gen8. No automatic restore
+or retry after UNKNOWN;none occurred. Independent03:07:48UTC read-only:
+ installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0
+ active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+ CPUs64,maxRAM137034936320B,used4138377216B.
+ app_server178,Tracker188,Deskbar190,input_server209 still present.
+Existing Firefox/processes retained. Service presence is NOT a fresh
+human mouse/keyboard confirmation. No Assistant chat loss/restart,
+reboot/power/SD/cable/PSU/NIC/model/boot/kernel changes. ZERO power commands.
+OFF remains NOT idempotent:one effectiveOFF,verify board off,then oneON;
+never duplicate OFF or extra pulses during boot observation. No recovery
+needed. ALL jobs terminal;stable restore NOT pending. Dirty llama and
+unrelated FlashNext left untouched.
+
+REMAINING REAL INTEGRATION
+Next card-side per-head128 RMS/learned ssm_norm/SiLU(Z) gated output,
+6144->5120 ssm_out projection and residual/post-attention norm/FFN,then
+full attention/KV/all64layers/sampling/persistent token schedule. The
+canonical source contract is PioneerQwen38Hybrid.h/PioneerQ38DeltaLayer:
+FP32 raw-output square sum/128+1e-6,then((raw*inverse)*norm)*SiLU(Z).
+Actual existing role5 Z6144 stays on card;role9 norm128F32 must be included
+in the new genuine learned-source proof. No host input/output copies or
+DEBUG49->Work promotion. Keep original snapshots/current-state epochs/
+private next publication alive through successor stages. Honest full-model
+timing after integration;20tok/s and full goal remain unproven/unmet.
+
+TERMINAL LOG SHA256
+60a9ede2f1a49628545125a78510ab8f0b24a55f4dd84e1bf53d82180da7b9e2
+ /private/tmp/pioneer-q38-gdn-recurrent-native-card-20261024-a.log
+b4b5089d468cfd652e6136184c33c236b323f76e04b73e1574a60f48f96a4900
+ /private/tmp/pioneer-q38-gdn-recurrent-apply-20261024-a.log
+bb534fbc5f3b817433e2378a405456cf983860ad0c13ca3d40792ea27e1bdf3e
+ /private/tmp/pioneer-q38-gdn-recurrent-clean-restore-20261024-a.log
