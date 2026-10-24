@@ -1,0 +1,125 @@
+Qwen3.8-27B genuine next-layer QPS2 native59, 2026-10-24 UTC.
+Base5079a2308be104cdd5f34a97900683991f04f32a (QPS2 image).
+COMPILE/OFFLINE ONLY;NO linked driver/install/public operation/Assistant
+route or Work promotion. Full-model20tok/s remains UNMET;goal ACTIVE.
+Last physical whole-model0.207893161tok/s remains unchanged.
+
+Exact isolated PIONEER_Q38_NEXT_PROJECTION_NATIVE=1/tag2026102400010059:
+  SAME genuine native58 NextLayerInput claimed BEFORE endpoint IO. No
+  parallel initial-RMS/old projection-owner facade or host numeric products.
+  Private heap state:four canonical layer1 roles10/11/5/6 Q8_0 jobs,
+  119original source records/independent sequences/counters/receipts and
+  one replaceable private graph plan. No duplicate saved snapshot.
+  All16 original learned stripes/23176pages required BEFORE initialBind,
+  again before the genuine claim and before EACH actual launch.
+  Same original8330680-word snapshot and ALL120/source/host/map/clock leases.
+  Distinct QPS2 ROOT,unchanged complete QFP3 peers;new root's unused old
+  GDN prefix tail zeroed ONLY within the saved code lease. Fresh119peer boot
+  only AFTER the actual native57 final STOP and native58/ALL120 holds.
+  Four actual RUNs+one STOP;all16480outputs in existing disjoint slots.
+  Raw residual backup is preserved. All119independent actual STOP receipts
+  checked BEFORE first peer hold;ALL120held BEFORE private publication.
+  Old next-input producer expires at claim;new borrowed ALL4 producer only
+  matches exact canonical model/token/position/layer1/source/cohort/epoch.
+  No public execution,CPU reference,model loop,current-state flip or END
+  shortcut. Failure must retain ALL owners and prevent following device IO.
+
+Actual full RISC-V SDK compile B/C TERMINAL0,byte-identical object:
+  /private/tmp/pioneer-q38-next-projection-native-20261024.H0omesb0/
+    {b,c}/next-projection-NATIVE59-COMPILE-ONLY.o
+  SHA1a48a4da28df59590b3a491c40014d5a8b0b37f568562e366886d9f863210ce6.
+  Max new frame560B;ALL new frames<=2048B;unrelated oversized legacy
+  frames nongrowing. ALL inherited control/native58/57/56/54 objects exact.
+  Old native58 remains
+  6cba04d17c82659caef53a77b7190fe9dbc5260e364cbcf6fa1c0ffb4d175c79.
+  B log2f971f8d470d821b11c69beb9ebee83f65e7c966314f201bc89f7d8207d2aaec
+  C log8912e6a09dd28e7fdc41e9524a6bfc497c3797d9f16c3392417e6483968e7b1d.
+
+Independent original-source test B TERMINAL0 (62046):full c600 GGUF SHA,
+  ALL851 tensor schema,16 original layer1 stripes/23176pages,32first+last
+  genuine tiled reads,320atomic no-output refusals/no other learned reads.
+  /private/tmp/pioneer-q38-next-projection-original-source-20261024-b.log
+  SHA64d3236cd6a6f30ba49a78ad082a8a045ad508d51f291c8fb1faa04302ccdf0b.
+  Old next-norm and FFN original-source regressions also TERMINAL0.
+  Separate CPU-only original packed-row observer rejects native59 even0;
+  observer outputs never enter the native controller or learned byte source.
+
+Exact-role gates B/D TERMINAL0 (54188/55400),344preprocessor/build/private
+  producer checks+131072 ACTUAL inert public routing probes. All9reference
+  headers refuse native59 even0/reinclude;all10 old builders reject nonzero
+  ambient new role BEFORE SDK/output. Old code/roles remain distinct.
+  Both logs2e67e1eb6481f0aaf7c2251ed9e45053e640f9e9e776aba144300e3dcab7f587.
+
+Genuine original-model full chain B TERMINAL0 (86924):
+  Original GGUF/references sealed BEFORE context;actual same native both-slot
+  init73728/history1680/QPE1/QRN1/4QPS1/QCB1ALL120/QGT1ALL96/829632original
+  values -> QOP119+61440tiles -> original residual/norm -> FFN357matrices+
+  65280tiles/actual119STOP -> original layer1QRN1/fresh raw -> new QPS2.
+  Native59 installed120/booted119/runs5/stopped119/published1/unsafe0.
+  Actual emitted4QPS2+80input producers+244matrix jobs/164800ORIGINAL tile
+  reads. ALL16480 output rows BITEXACT against independent original packed
+  GGUF row references from the real native58 normalized vector. Norm/raw
+  input unchanged,typed borrowed producer/cohort/expiry/refusal checks pass.
+  Actual Close restores/verifiesALL8330680originalwords;actualEND/cold0.
+  /private/tmp/pioneer-q38-next-projection-native-original-20261024-b.log
+  SHA7907c17c94b3b45d2928db14abef1cb283b4a9e38441adb6237e5480369215d0.
+  Synthetic endpoint clock/CPU emitted-instruction execution is NOT card
+  timing or a whole-model/physical throughput or production qualification.
+
+Offline defects caught/repaired BEFORE successful B,not gate relaxations:
+  Initial SDK compile caught indentation diagnostics,a missing private
+  cohort comparison helper and a kernel initializer-list dependency. Fixed
+  statements/helper/plain role array;no proof/frame/source bound weakened.
+  Original-model A reached genuine native58 but new root test fixture
+  construction refused. Distinct QPS2 test grammar had weak inline/vtable
+  class identities shared with QPS1 in another TU. Renamed all four QPS2
+  test fixture classes and added a real linked layer1/QPS2 grammar selfcheck
+  BEFORE costly model/context setup. No kernel/parser/math/bounds change.
+  Initial source fixture omitted its input-shape include;fixed test only.
+  Initial gate fixture selected old producer trait;fixed new trait only.
+
+Failure suite C (87962) TERMINAL1,not qualified:
+  Actual code-corruption case1 passed. Descriptor case2 did not inject:
+  the test hook covered panel writes,but this manifest uses the real mapped
+  window. Added corruption to the actual MappedWrite endpoint;production
+  staging/readback checks unchanged. Added pre-assert fault observations.
+  No successful fault-qualification claim from C. Fresh full suite D
+  (75416) TERMINAL0 after the corrected actual endpoint hook.
+  Eight endpoint-fault cases added AFTER positive B:boot write,manifest
+  write,source drift after release,completed summary,actual119STOP-PC,
+  original final restore word,host deadline and completed source table.
+  Early children fork genuine completed native58. Late STOP/restore children
+  fork the ACTUAL live last-QPS2-RUN stack before acceptance,not a fabricated
+  producer/completion flag. Parent must still pass full original positive,
+  stronger exact writable-range workspace preservation,fullrestore/END.
+  ALL8actual faults injected and passed. Each retains exact snapshots/model/
+  history/state/ALLhost/map/clock ownership;subsequent launch/Close/END calls
+  perform ZERO endpoint IO. In case5 actual119th STOP-PC fails before the
+  first peer hold (stopped118). Case6 first completes/publishes the genuine
+  producer,then fails the original last restore word and expires it.
+  SAME parent subsequently passes full original16480row bitexact output,
+  exact writable-range preservation across the2MiB workspace (including raw,
+  convolution scratch,old FFN and untouched result padding),all119STOP+
+  ALL120holds/full8330680original-word restore+verification/actualEND/cold0.
+  /private/tmp/pioneer-q38-next-projection-native-faults-20261024-d.log
+  SHAbb1b63f490b51e85bd9fbc7e933790999b06b18e56c04c3dce2860e3f9bee191.
+  All native59 qualification jobs now terminal;no dependency edit/restart
+  occurred during either actual full test lifetime. An observer comment
+  was corrected BEFORE D:reference runs after the genuine next input,not
+  before GPU FD. No code/math/source/receipt bound changed by that comment.
+
+Physical recovery evidence is separate:qwen38-qgt52-script-recovery-20261024.txt.
+  Native59 was NOT deployed. Separate DEBUG52 diagnostic-client77527 exited1
+  after identifying a3.183289ppm gated relative error vs the unchanged3ppm
+  bound. Its metadata is consistent,but card resources are QUARANTINED;
+  no END/reset/retry/hotrestore. See the separate physical-failure evidence.
+  No inference speedup is claimed from either experiment.
+
+NEXT:commit/push this qualified component checkpoint,then continue the SAME
+private on-card producer through layer1 convolution/GDN and the remaining
+linear/full-attention/FFN layers,output sampling and persistent token loop.
+Current native59 is only token0/layer1 projections,NOT full-model offload.
+Do not merely expose it as a public/Work mode or substitute a host vector.
+Physical GDN arithmetic investigation/recovery is a separate pending path;
+new CPU-context client and read-only analyzer are tested but not installed.
+No native59 hardware deploy/hot-swap mapping was created by this work.

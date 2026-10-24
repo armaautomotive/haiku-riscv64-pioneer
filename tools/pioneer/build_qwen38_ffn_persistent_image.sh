@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE peer ABI ONLY;NO native registry,installation or card access.
 set -eu
+[ "${PIONEER_Q38_NEXT_PROJECTION_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_NEXT_ROOT+x}" != x ] || exit 2
 [ "${PIONEER_Q38_NEXT_RMS_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDUAL_NATIVE-0}" = 0 ] || exit 2

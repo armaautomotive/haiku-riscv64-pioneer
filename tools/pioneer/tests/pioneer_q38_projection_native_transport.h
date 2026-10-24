@@ -49,6 +49,11 @@ public:
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
  void NextRmsSource(const char*);void NextRmsFault(unsigned);bool NextRmsFaultInjected()const;void VerifyNextRms();
 #endif
+#ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
+ void NextProjectionSources(const char*,const char*);void VerifyNextProjections();
+ void NextProjectionFault(unsigned);bool NextProjectionFaultInjected()const;
+ void NextProjectionRunTerminalCheckpoint(void (*callback)(void*),void* context); // TEST fork actual last RUN,not a ready/producer setter
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

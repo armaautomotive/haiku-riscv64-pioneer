@@ -14,7 +14,11 @@
    || ffnHidden.position!=projection->position || ffnHidden.bank!=projection->bank || ffnHidden.phase!=ffn->epoch+5
    || ffnHidden.nextLayer!=1 || nextRms->layer!=ffnHidden.nextLayer || ffnHidden.hiddenAddress!=ffn->manifest[4]
    || ffn->manifest[13]>=0x7ffffffe || nextRms->epoch!=ffn->manifest[13]+1
-   || (phase!=25 && phase!=26 && phase!=7 && phase!=8)
+   || (phase!=25 && phase!=26 && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
+    && !(nextProjection && phase>=27 && phase<=31)
+#endif
+    )
    || !nextRms->plan.Matches(*projection->canonical,nextRms->layer,0,projection->position,projection->bank,
     projection->identity,projection->cohort->authority.source[0],nextRms->epoch)
    || !nextRms->plan.LearnedPagesPresent(projection->ledger,projection->pages))return false;
