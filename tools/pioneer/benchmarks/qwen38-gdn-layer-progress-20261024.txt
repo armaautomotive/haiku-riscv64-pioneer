@@ -1,0 +1,61 @@
+GDN per-layer private-NEXT bookkeeping helper,2026-10-24 UTC.
+CPU METADATA ONLY;not integrated into a native context/driver or Work path.
+This does NOT qualify next-layer GDN execution/full offload or any speedup.
+20tok/s remains UNMET;last physical whole-model0.207893161tok/s unchanged.
+
+Motivation:the existing native first-layer claim/publication must remain
+bound to layer0 and its real proof. Retagging ClaimFirstLayer for layer1
+would let historical checks confuse different layers. The next attention
+owner needs a SEPARATE private per-layer claim/publication ledger.
+
+New PioneerQ38GdnLayerProgress stores only owner/identity,48phase words,
+published bits,pending phase,next recurrent layer,and sticky unsafe state.
+No numeric tensors,second snapshots,addresses,IO,public selector or reset.
+Requires strictly ordered48recurrent layers0/1/2/4/.../62,strictly increasing
+bounded phases,same owner+all4identity fields,one pending claim and exact
+publication. Duplicate/gap/stale/foreign publication cannot advance it.
+Snapshot outputs remain untouched on refusal. Noncopyable/nonmovable.
+
+BindAfterFirstLayer records ONLY metadata supplied by its caller. It cannot
+mint/replace native OwnsFirstLayer,initialized-state,producer,read or compute
+authority. FUTURE integration MUST embed this ledger privately,first prove
+the SAME actual first-layer publication and initialization,then require the
+actual layer1 convolution producer/learned bytes/receipts/ALLcore holds for
+each new transition. It deliberately does NOT prove intervening full-
+attention layers3/7/...ran,or commit token/current slots. No Reset/rebind.
+
+Standalone ASan+UBSan C TERMINAL0:
+  sh tools/pioneer/tests/run_pioneer_q38_gdn_layer_progress_tests.sh
+  48ordered publications plus1932refusals:foreign owners/all identity fields,
+  skipped/repeated/pending layers,stale/wrong/overflow phases,publication
+  without claim,atomic query outputs,sticky faults before Bind/after Bind/
+  with a pending claim,noncopyability. NO native owner/readiness fabricated.
+  /private/tmp/pioneer-q38-gdn-layer-progress-20261024-c.log
+  SHAc268377cecbeba4688e8df676048fac7f2fb63c6d000f5ed6537ca6aa477b885.
+  Earlier A TERMINAL1:missing <initializer_list> in test only;fixed include.
+  Earlier B TERMINAL0:1273refusals,then tests strengthened to current C.
+
+Actual read-only Haiku RISC-V SDK A/B compile TERMINAL0,all7 wrappers
+instantiated with real SDK posix/config headers,kernel/freestanding flags,
+O2,Wall/Wextra/Werror,no exceptions/RTTI. No link/driver/hardware.
+  /private/tmp/pioneer-q38-gdn-layer-progress-sdk-20261024.BlNUGmfx/{a,b}.o
+  Both SHA d33e756ae6dff8aac14ea0ff7adc2d904658d2aeff8f545587edb09858982b54.
+  Byte-identical;ALL7 actual frame-usage entries16B.
+  Initial direct compiler invocation failed before code generation because
+  this SDK does not search stdint.h automatically;adding its existing
+  read-only exported posix/config include paths fixed the build setup.
+
+Built independently while native60 fault parent94981 remained live;none of
+that parent's kernel/observer/bridge/transport/factory dependencies changed.
+No hardware/power/network/SD/mains/Assistant/CPU/RAM change.
+
+Required next integration,NOT yet implemented:
+  Keep first-layer ownership immutable;privately embed separate ledger.
+  Require SAME genuine native60 layer1 convolution handoff BEFORE IO.
+  Require ORIGINAL layer1 A/dt/norm pages before epoch/claim,not layer0 aliases.
+  Derive layer1 current0/privateNEXT1 extents from SAME real initialized owner.
+  Run actual pinned GDN instructions with those descriptors,all96 new fresh
+  readiness cells,all source/code/command/counter/clock receipts and120holds.
+  Publish new layer1 output only after those proofs;retain ALL on failure.
+  Repeat remaining model layers/full attention/KV/final logits/sampling and
+  persistent on-card token program;measure actual whole-model card inference.
