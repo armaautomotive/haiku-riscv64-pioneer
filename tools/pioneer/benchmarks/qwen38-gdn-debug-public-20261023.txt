@@ -5,6 +5,8 @@ fixed local readback and a separate original-model DEBUG client. All
 execution below is SIMULATED,not physical QGI1 or an inference speedup.
 Only read-only Pioneer OS/hash/CPU metadata queries were sent;no install,
 power command,SD/boot/kernel/Assistant/model change or physical GPU job.
+Subsequent PHYSICAL PASS and known-clean stable restore are recorded in
+qwen38-gdn-input-card-20261024.txt;the checkpoint below predates that trial.
 
 ACTUAL NEW PUBLIC PATH,NOT A COMPLETION FACADE
 Exact tag2026102300010046/namespace15;compile-only tag45 remains inert.

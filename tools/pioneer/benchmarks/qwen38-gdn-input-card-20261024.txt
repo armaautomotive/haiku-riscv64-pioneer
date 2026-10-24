@@ -1,0 +1,89 @@
+PHYSICAL QCB1->QGI1 SAME-owner PASS,Oct24 UTC2026.
+Last whole27B0.207893161tok/s UNCHANGED;20tok/s/full-card inference UNMET.
+This first-token/layer0 milestone proves actual card-resident raw reads+
+Q/K/gate preparation,NOT initialized-GDN recurrence,full model or speedup.
+
+QUALIFIED IMMUTABLE INPUTS
+Source commit1afb1b5a4c224e492cfed5511339d437aa0997ed pushed BEFORE transfer.
+DEBUG46/namespace15 native driver
+ 32a661c4d01cf1aebaed1edd5399bd0748bb37f5188d84a07cf8a7476cb3e47c
+Separate original-reference client
+ d9da68255b7b6e3417e240652a011c2126b0f5baf4ef5f4b867d5ec3c80f2e0f
+Guarded updater
+ f53613fa751a6095fb10bc0edd2de7bbb71bba40c3f1123b150ec9a9a1881eb0
+See qwen38-gdn-debug-public-20261023.txt for full native public/source/
+semaphore/fault/byte-control/client/ISA/frame/exchange qualification.
+Transfer64600 TERMINAL0 into NEW isolated directory only,then independently
+verified complete remote hashes before moving to NEW immutable stage names.
+Old staged f1c/ae05/3648 updaters/candidates/backups left untouched.
+
+CONTROLLED EXCHANGE,NO REBOOT/POWER
+Initial Haiku stable041/tag2026102100010012/gen4,cold0/active_owner0/open1.
+Apply28074 TERMINAL0:new f536 updater --apply-gdn-input-validation,
+same installed-source hash,strict parent/idle/guard checks,fullSHA backup,
+normal watched-directory rename/guarded reload ->32a/tag46/gen5.
+Result quiesced0/cold0/active_owner0/open_count1/guard1. No force unload,
+CSR/reset/recovery command,firmware/boot/kernel/SD/cable/PSU operation.
+
+ONE HARDWARE CLIENT SESSION
+79227 TERMINAL0,/private/tmp/pioneer-q38-gdn-input-native-card-20261024-a.log.
+Started00:32 UTC;full original PUBLIC GGUF SAME-FILE SHA and independent
+embedding/RMS/QKV/conv/alpha/beta/negativeA/dt/GDN references BEFORE GPU FD.
+The checksum stage was slow but confirmed live as same session/remote
+sha256sum PID1204;NO restart/second client or accelerator-admin FD during
+its active source/native lifetime. No input reference products uploaded.
+All110 ORIGINAL upload spans status0,including original A/dt extra2pages;
+SPAN_END8805 status0. SINGLE actual native DEBUG ioctl89da/123816B returned0.
+Client checked full metadata,ALL96halves/30912values against independent
+original references,3e-6scaled Q/K/V and STRICT RELATIVE3e-6 normal gates.
+Only true subnormal gate FTZ accepted. Explicit END7bf6 returned0.
+Final client line:
+ PASS_DEBUG_NATIVE_QGI1 token0 layer0 all96_halves all30912_values
+ independent_original_GGUF_references within3e-6_scaled_bound
+ STRICT_relative_normal_gates clean_end1
+ initialization_execution_readback_restore_us193339752;NO_TOKEN_RATE
+
+This physically exercises actual global-call source/clock/ALLhost/native
+owner chain:history336x5/zero512/QPE1/QRN1/4QPS1/QCB1ALL120->QGI1ALL96,
+SAME original8134072word snapshot retained through BOTH card stages,
+fixed LOCAL readback only after ALL120held,current proofs/full restore,
+then known-clean explicit legacy END. QGI1 reads actual retained q/k/v/
+alpha/beta plus original A/dt via7NoCreads per half and computes Q/K/gates
+INSIDE the same worker,not CPU precomputed inputs or a CPU fallback.
+The193.339752seconds includes initialization,host validation/installation,
+code/source guards,readback and full restore;NOT model tokens/sec. No new
+throughput sample,whole-layer GDN state update or full inference claim.
+Successful run does NOT log/count speculative PC6403c;do not claim it did.
+
+KNOWN-CLEAN RESTORE COMPLETE
+After PASS+actual terminal0 only,fresh metadata46/gen5 quiesced0/cold0/
+active_owner0/open_count1/guard1;new f536 --restore-gdn-input-validation
+55432 TERMINAL0. FullSHA-scoped32a backup and guarded reload ->stable041/
+tag12/gen6. No automatic restore/retry after UNKNOWN;none occurred.
+00:43:40 UTC independent posttest read-only check:
+ installedSHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0
+ active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+ CPU64,max RAM137034936320B,used4061659136B.
+ app_server178,Tracker188,Deskbar190,input_server209 present.
+No fresh human mouse/keyboard confirmation;do NOT equate service presence
+with such confirmation. No Assistant restart/chat loss,boot/kernel/model
+file write or dirty llama/unrelated FlashNext change. ALL jobs terminal;
+NO quarantine or recovery required. ZERO power commands. OFF remains
+non-idempotent:never call twice or blindly after software shutdown.
+
+REMAINING REAL INTEGRATION
+This makes the resident-input/source/math seam real on the card. The
+new native joint owner still has NO initialized-GDN current-state producer
+or96-half recurrence/next-slot commit. Reserved offsets are NOT init proof.
+Verify actual state word order/half-major layout,add genuine zero+Close
+producer,and combine preparation+recurrence in ONE on-card worker image
+(not a host stop/reload Work path). Then gated norm/output/residual/FFN,
+full attention+KV/all64layers/sampling/persistent token scheduling and
+honest full inference timing. Work/no-CPU-reference vs DEBUG stays distinct.
+
+TERMINAL LOG SHA256
+e14ff536a36121cbb6ae05470513d2e01ee694c527fb18cd2d5e5dd6ac1cd8db
+ /private/tmp/pioneer-q38-gdn-input-native-card-20261024-a.log
+067a534d3f5f16daf717ab34edec49ad53add8084b30c2ba510c021a896f25ee
+ /private/tmp/pioneer-q38-gdn-input-clean-restore-20261024-a.log
