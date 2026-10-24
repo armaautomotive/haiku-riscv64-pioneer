@@ -63,6 +63,9 @@
 #endif
 #include "PioneerQ38GdnOutputValidationProtocol.h"
 #endif
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+#include "PioneerQ38ResidualRmsState.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -96,6 +99,9 @@ struct PioneerQ38ResidentDecoderResult {
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
  uint32_t outputInstalled=0,outputBooted=0,outputRootRuns=0,outputStopped=0,outputPublished=0;
+#endif
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+ uint32_t residualInstalled=0,residualRuns=0,residualHeld=0,residualPublished=0;
 #endif
 #if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
@@ -194,6 +200,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
    && (!output || OutputData())
 #endif
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+   && (!residual || ResidualData())
+#endif
    && projection->Scope(io) && io.ResidentDecoderScope(*this,*projection,*history)
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
    && (!gdnAttempted || (recurrent && io.ResidentGdnRecurrentScope(*this,*projection,*recurrent)))
@@ -224,6 +233,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Image(IO& io,unsigned w){
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+  if(!w && residual && residual->image)return ResidualImage(io);
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
   if(output && output->image[w])return OutputImage(io,w);
 #endif
@@ -255,6 +267,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Current(IO& io,unsigned w){
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+  if(!w && residual && residual->image)return ResidualCurrent(io);
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
   if(output && output->image[w])return OutputCurrent(io,w);
 #endif
@@ -617,6 +632,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
 #include "PioneerQ38GdnOutputExecutionOwner.h"
 #endif
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+#include "PioneerQ38ResidualRmsOwner.h"
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38GdnOutputValidationOwner.h"
 #endif
@@ -970,7 +988,11 @@ public:
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
   if(!started || unsafe || closed || !complete || !projection || !history || !gdnComplete
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+   || (residual?(phase!=18 || !residual->done || !postAttention.Current()):(output?(phase!=16 || !output->done || !output->stopped):phase!=12))
+#else
    || (output?(phase!=16 || !output->done || !output->stopped):phase!=12)
+#endif
 #else
    || phase!=12
 #endif
@@ -1024,6 +1046,9 @@ public:
    || !p.state->CloseExecution(p.identity,&p,p.input))return Fail(io,r);
   p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+  delete residual;residual=nullptr;
+#endif
   delete output;output=nullptr;
 #endif
   return true;
@@ -1035,7 +1060,17 @@ inline bool PioneerQ38GdnOutputProducer::MatchesCohort(const PioneerQ38DispatchL
  return Current() && owner->projection && owner->projection->cohort==&cohort;
 }
 #endif
-#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+inline bool PioneerQ38PostAttentionProducer::Current()const{return owner && owner->MatchesPostAttention(*this);}
+inline bool PioneerQ38PostAttentionProducer::MatchesCohort(const PioneerQ38DispatchLease& cohort)const{
+ return owner && owner->MatchesPostAttentionCohort(*this,cohort);
+}
+static __attribute__((noinline)) bool PioneerQ38ResidualRmsLearned(const PioneerQ38CanonicalModelPlan& plan,const uint8_t* ledger,unsigned pages,
+ unsigned token,unsigned bank,const PioneerQ38GdnIdentity& id,const uint32_t* source){
+ PioneerQ38ResidualRmsPlan norm;return norm.Build(plan,token,bank,id,source,2) && norm.LearnedPagesPresent(ledger,pages);
+}
+#endif
+#if defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDUAL_RMS_NATIVE)
 // Required ORIGINAL upload DATA before native Bind publishes an epoch or
 // changes any hardware. This is not the live producer/execution check.
 static __attribute__((noinline)) bool PioneerQ38GdnOutputValidationLearned(const PioneerQ38CanonicalModelPlan& plan,const uint8_t* ledger,unsigned pages){

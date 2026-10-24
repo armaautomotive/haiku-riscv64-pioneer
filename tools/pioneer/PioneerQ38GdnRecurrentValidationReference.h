@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+#error Native residual RMS never compiles CPU reference observers
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
 #error Native output DEBUG never compiles CPU reference observers
 #endif

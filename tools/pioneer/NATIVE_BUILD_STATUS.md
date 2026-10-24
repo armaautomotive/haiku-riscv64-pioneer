@@ -1,5 +1,33 @@
 # Native build status
 
+October24 UTC2026:SAME actual decoder native56 QRR1 integration IMPLEMENTED/
+OFFLINE qualified,NOT linked/installed/Assistant/Work-selected. Claims genuine
+completed QOP1 plus original RMS residual lineage BEFORE IO;old output query
+expires. SAME call/team/thread/source/clock/PCI/ALL120host+snapshot ownership
+retained. Original role1 FIVE pages AND seven ssm_out stripes mandatory BEFORE
+Bind epoch/IO. Existing ROOT40KiB prefix only replaced;old main stays exact.
+Actual QRR1 original5120weights/10packets/exact counters/physical ROOT hold+
+119STOP -> private nonconstructible next-FFN producer;ONLY after receipt.
+Full ORIGINAL c600de03 chain/829632GDNvalues/61440outputtiles/5120FP32+FP64/
+ALL5120residual+norm BIT-EXACT/full8330680restore+verify/actualEND PASS.
+Nine real code/descriptor/source/summary/PC/deadline/oldmain/math/finalrestore
+faults PASS:ALL resources retained/ZERO later IO/reset-restore-retry;handles
+expire on fault/Close/foreign cohort. No caller ready/address/vector grant.
+RISC-V B/C objects EXACTb9400c71/newmax640B/all inheritedlarge-frame nongrowth;
+old54c8930f61+ALL controls EXACT.275gates/131072inert compute routes PASS.
+Old54 ORIGINAL sixfault regression log EXACT7f2aeef9;old55 rebuilt linked
+driver EXACTdede6498/client EXACTac2e90ca;old54/55gates242/221 logs EXACT.
+Old55session5+210/old52reference3+15+session4+196/outputreference85gates+
+190460halves+96domains+4projections+49refusals PASS. ALL jobs terminal.
+Byte endpoints/kernel OS are simulated,NOT physical/timing/full64layer proof.
+ZERO PioneerIO/power/SD/Assistant changes;historical quarantine/restorepending
+NOT freshly rechecked. Saved-work confirmation required for physical52
+diagnosis/recovery;ONE OFF if actuallyON,verifyOFF,ONEON;never repeat OFF.
+Whole27B0.207893161tok/s/20UNMET/goalACTIVE. NEXT actual FFN consumer of new
+typed producer,FFN/residual/later-layer producers/fullattentionKV/all64layers/
+sampling/persistent whole-token schedule,then honest hardware throughput.
+Evidence:benchmarks/qwen38-residual-rms-native-20261024.txt.
+
 October24 UTC2026:distinct card QRR1 residual-add+post-attention learned
 RMS IMPLEMENTED/OFFLINE instruction-qualified,NOT native-selected/installed.
 Actual QPE1->QRN1 preserved raw5120 plus QOP1 ALL119matrix/5120output/

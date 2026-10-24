@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE complete generic matrix-wave ROOT;no native selector/card IO.
 set -eu
+[ "${PIONEER_Q38_RESIDUAL_RMS_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_CONV_NATIVE-0}:${PIONEER_Q38_CONV_CLIENT-0}:${PIONEER_Q38_CONV_IMAGE-0}:${PIONEER_Q38_CONV_BATCH_IMAGE-0}" = 0:0:0:0 ] || exit 2
 [ "${PIONEER_Q38_DECODER_RUNTIME-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_DECODER_OWNER-0}" = 0 ] || exit 2

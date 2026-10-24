@@ -1,0 +1,178 @@
+Pioneer Qwen3.8-27B SAME native56 residual/post-attention RMS integration
+2026-10-24 UTC
+
+Scope / actual goal
+-------------------
+Actual production decoder/factory/Scope/claims/Close/END code uses the QRR1
+card image from640631b048. Separate exact native56/tag0x2026102400010056.
+Compiled and qualified OFFLINE using actual emitted instructions and full
+original public model bytes. Kernel OS/PCI/NoC/GDDR endpoints simulated.
+NOT a linked new driver,installed/physical qualifier,Assistant/Work selector,
+full64layer model or tokens/sec measurement. ZERO Pioneer SSH/accelerator FD/
+power/SD/boot/Assistant operations. Historical physical DEBUG52 quarantine/
+restore-pending status NOT freshly rechecked. Whole-model last measured
+0.207893161tok/s;20tok/s unmet;full performance/offload goal remains ACTIVE.
+
+SAME native ownership,not a parallel facade
+-----------------------------------------
+PioneerQ38ResidualRmsOwner.h is included INSIDE actual resident decoder.
+Private heap state binds actual output execution object AND actual original
+RMS controller. Base MatchesNativeOwner still requires genuine completed
+initial RMS and consumed exclusive projection execution ownership. No old
+RMS-only role whitelist/epoch/input grant widened or forged from DATA.
+
+Before Bind can publish epoch/claim/change hardware:exact7original ssm_out
+stripes/8640pages and5original post_attention_norm pages required. Source
+ledger/plan/identity/rootNIUs/canonical role1/F32 layout rechecked throughout.
+New noinline learned-page helper keeps inherited stack frames nongrowing.
+
+RunResidualRms accepts SAME actual completed native54 output,not public
+result words. Private phase16->17 claim occurs BEFORE first IO and expires
+old GdnOutputCompleted query. ALL120physical holds/ALL119terminal output
+peers/NIUs/commands/counters/images re-proved. Only existing ROOT40KiB prefix
+and boot replaced by10241fixed words;old ROOT main remains byte-exact.
+Runtime buffers/code/stack are wholly inside unchanged original snapshot.
+
+Fixed descriptor+summary;actual ORIGINAL F32 weights read in16384+4096B
+packets,actual prior GDDR ssm_out+preserved raw consumed by QRR1. No host
+numeric input/reference/fallback,caller address/vector/ready/sequence grant.
+Outer30s monotonic deadline starts BEFORE release,including a slow release.
+Exact new terminal/status/count/PC/code/descriptor/summary/command/counter
+proof:delta{6,960,10,6,4,640,10,4};both aliases/ALL command ports/queues/PCI
+quiet/source/current mappings remain guarded. Accepted summary is private,
+not a caller checksum. Only after real receipt/ROOT physical hold and ALL120
+checks does private phase18 publish a nonconstructible next-FFN input.
+
+PioneerQ38PostAttentionProducer lives inside SAME decoder,never a copied
+result. Binds canonical/model/source/ledger/driver identity,actual original
+RMS object,actual QRR1 state,token/position/bank/epoch/normalized+residual
+addresses and actual cohort/rootNIUs. Current is a CPU object relation,NOT
+a mapping/launch/restore capability. Foreign cohort/public flags rejected.
+Current expires on claim progression,source/owner/cohort fault or Close.
+Future actual FFN consumer still owes real native Scope and physical proofs.
+
+Normal Close admits completed new phase18,retains SAME source/clock/ALL120
+snapshots/host ownership,restores+verifies ALL8330680 ORIGINAL words,then
+actual legacy END. Private heap state released only after clean Close.
+First unknown:memory-only Fail/quarantine of ALL related resources;ZERO
+following IO/hold/reset/restore/retry/END. No partial producer publication.
+Existing old paths are conditional-byte-exact when new role is absent.
+
+Native target builds,terminal0
+-----------------------------
+python3 tools/pioneer/build_qwen38_residual_rms_native.py
+ /Volumes/HaikuBuildLocal/generated.riscv64 NEW_ABSOLUTE_OUTPUT
+Read-only SDK. Full independent B/C chains:
+ /private/tmp/pioneer-q38-residual-rms-native-20261024-b
+ /private/tmp/pioneer-q38-residual-rms-native-20261024-c
+Object:residual-rms-NATIVE56-COMPILE-ONLY.o
+Both EXACT SHA
+ b9400c713c7f4385ec531c13ccc65496a9b49b277d7266c5d9029b74c1a97d9f
+New maxframe640B,2048B gate;ALL inherited larger frames nongrowing.
+Old native54 object EXACTc8930f61076877f20fbc647d8967285ffc144fd24201f4e828e7073002804e2e,
+all inherited bootstrap/gather/input/native53/51/50/etc controls exact.
+No linked new driver or public compute route;no install/hardware operation.
+
+Complete original-model native run B,terminal0
+---------------------------------------------
+Runner:tools/pioneer/tests/pioneer_q38_resident_decoder_native_factory_test.py
+ --residual-rms
+Log:/private/tmp/pioneer-q38-residual-rms-native-original-20261024-b.log
+SHAbc71c4f98039d0489928bef0e08397e5574dd39ee985bcf7fbb72e88b99b0b90
+Actual driver source/factories/Scope/Close/END extracted,not fabricated owners.
+Full SAME already-open public GGUF SHA
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+and schema authenticated;all required original learned stripes cached BEFORE context.
+CPU observers compile in a SEPARATE non-native TU;no numeric reference
+products enter native controllers or simulated device instruction inputs.
+New role1 provider permits ONLY original16384+4096B weight spans.
+
+Actual73728page GDN+1680page history init,QPE1,QRN1,4QPS1,QCB1ALL120,
+cooperative QGT1ALL96/ALL829632 original numerical values/private NEXT+
+unchanged CURRENT,actual QOP1ALL119/61440 original tile reads/5120independent
+FP32+FP64 output rows/ALL119STOP+ALL120holds. Then SAME actual native56
+QRR1 claim/image/release/10packets/ORIGINAL postnorm/ALL5120 residual and
+normalized values BIT-EXACT independent F32-add/double-reduction/sqrtf.
+Observer uses accepted ACTUAL prior card outputs,not predicted GDN values.
+Source/epoch stable;only original weight bytes supplied;two original norm
+reads;unrelated GDDR preserved. Published actual typed next-FFN handle,
+not a ready hint. Full8330680restore+8330680verify/actualEND PASS.
+
+ALL5 postnorm pages missing/corrupt refused BEFORE epoch/claims/IO. Again
+after genuine output completion,all5pages missing/corrupt plus wrong team/
+forged residualPublished words refused BEFORE new claim/IO. Private producer
+not default/copy/move constructible;foreign cohort rejected;graph/recurrent/
+cohort fault expires it using CPU memory only. Normal Close expires it too.
+No complete64layer pipeline or physical timing proved by this offline run.
+
+Actual failure continuations C,terminal0
+--------------------------------------
+Same runner with --residual-rms-faults
+Log:/private/tmp/pioneer-q38-residual-rms-native-original-20261024-c.log
+SHA6edee851652b43328e9c8d7e3410262634c60a21d62e55481d615bb0e2370a27
+Nine forks from SAME genuine live native54 completion:
+ 1 lost actual QRR1 boot-word write/readback;
+ 2 actual token descriptor write/readback corruption;
+ 3 actual root source-NIU drift after release;
+ 4 actual completed summary count corruption;
+ 5 actual observed bad terminal PC;
+ 6 final ORIGINAL restore-word failure after8330679 restored,NO END;
+ 7 actual host clock advances30000001us DURING release,deadline includes it;
+ 8 old ROOT main-code corruption (must stay exact alongside new prefix);
+ 9 actual transferred NaN original-weight endpoint corruption -> QRR1
+   arithmetic fault marker,NO resident output publication/CPU fallback.
+Every injection asserted as performed,run/Close outcome and ALL retained
+owners/clock/snapshots/host state verified. Repeat new/old compute,Close and
+END have ZERO following endpoint IO/reset/restore/retry. Parent remains
+clean and completes exact original arithmetic/typed publication/fullrestore/
+verification/actualEND. Endpoint fault flags denote performed mutations;
+not claimed as a new physical-card failure diagnosis or first-word telemetry.
+
+Isolation gates,terminal0
+------------------------
+275 exact role/tag56/parents/reserved+wrongtags/mixed+defined-zero/ALL8 CPU
+reference reinclude/private producer/builder gates PASS. Actual native
+compute-routing block rejects ALL131072operations;no public vector/address/
+compute selection added. Ordinary reload metadata stays existing behavior.
+All10 legacy builders reject new native mode before SDK/output with proper
+argv;default/explicit-zero Work controls still reach SDK lookup. Generic
+new/old native builders reject ambient nonzero/malformed PIONEER_ flags.
+No Work math or CPU attention/reference path changed.
+Log:/private/tmp/pioneer-q38-residual-rms-native-gates-20261024-a.log
+SHA0fe4c73f495b34cebf181a2406967acfdda0e6be0aa3f9aa22a36ea1230ce433
+
+Legacy regressions,all terminal0
+--------------------------------
+Old native54 FULL original arithmetic/lifecycle/six actual faults/fullrestore/
+END log EXACT prior
+ 7f2aeef9ffc3f268c9be0e6c5c4ea09b3e79f27849b32aee3e54a222729c3c53
+Log:/private/tmp/pioneer-q38-residual-rms-native-old54-original-20261024-a.log
+Old54 gates242/131072inert routes log EXACT7ba21cfe3ef85ac0c6d538c3f51f639a926cef0411063673afc3e99f3af4e386.
+Old55 gates221/131072closed compute routes log EXACT15b7d8c6dce14f841541eaf4eff287ef73c9031cd6dff208b1aa1cfb7b8f43d8.
+Old55 full linked driver rebuilt EXACT
+ dede6498686d961a5680b314a51c36527dfe1ba82aa72ab838cff02bf3319d96
+ /private/tmp/pioneer-q38-residual-rms-native-old55-20261024-a/tenstorrent_pci_probe-gdn-output-debug-tag55
+Old55 RISC-V client rebuilt EXACT
+ ac2e90ca86716af5b79e08bdd99e59a6eb04a08484b7b3c4799d1b1e349de7e1
+Old55 CPU session5positives/210faults including actual-vs-predicted rounding
+boundaries PASS ASan/UBSan. Old52 references3positives/15atomic refusals+
+session4positives/196faults PASS,log EXACT30fc184161fd218745437d94126b9aabc657c2c09435002d9bb76ff935d6abb8.
+Output CPU observer85gates/190460half boundaries/96quantization domains/
+4complete projections/49atomic refusals PASS ASan/UBSan. Bounds unchanged.
+ALL jobs confirmed terminal;no live process restarted on observation expiry.
+No unrelated llama.cpp or FlashNext changes included.
+
+Next / physical safety
+----------------------
+Actual FFN consumer must claim new typed producer BEFORE IO and preserve
+SAME genuine ownership;old RMS-only projection permission is NOT usable.
+Then FFN activation/down/residual/later layers/fullattention+KV/all64layers/
+sampling and persistent whole-token schedule. Need honest full-model native
+card throughput and tested Work/Assistant integration before claiming success.
+Saved-work confirmation remains outstanding for controlled physical52
+first-failure diagnosis/recovery. No new driver installation or hot-swap
+allowlist expansion while historical quarantine is unresolved. OFF is
+non-idempotent:ONE only if actuallyON,verify actualOFF,thenONEON. Never
+repeat OFF after software shutdown/SSH loss;relay contacts are not board
+power. No extra pulses/no mains or SD change;five-minute rest only after
+actual ON fails. Goal remains active;20tok/s is NOT achieved.

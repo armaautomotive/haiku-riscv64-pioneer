@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+#error Native residual RMS never compiles CPU reference observers
+#endif
 // These gates intentionally precede the include guard: a later mixed-role
 // include must not turn this CPU observer into native/Work code.
 #if !defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_CLIENT) || PIONEER_Q38_GDN_OUTPUT_VALIDATION_CLIENT != 1 || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1

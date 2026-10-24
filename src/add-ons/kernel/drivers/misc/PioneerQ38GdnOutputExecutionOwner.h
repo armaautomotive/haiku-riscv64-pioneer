@@ -176,7 +176,12 @@
   p.running[0]=p.cohort->rootRunning=p.cohort->worker[0].image.running=false;return true;
  }
 public:
- ~PioneerQ38ResidentDecoderOwner(){delete output;} // UNKNOWN retains owner;normal Close already clears block
+ ~PioneerQ38ResidentDecoderOwner(){
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+  delete residual;
+#endif
+  delete output;
+ } // UNKNOWN retains owner;normal Close already clears blocks
  bool GdnOutputCompleted()const{return output && output->done && output->stopped && complete && phase==16 && !Unsafe() && !closed;}
  template<class IO> bool RunGdnOutput(IO& io,PioneerQ38ResidentDecoderResult& r){
   if(output || !gatedOutput.Current() || gatedOutput.phase>=0x7ffffffb || phase!=12 || !complete || !projection || !history || r.outputInstalled

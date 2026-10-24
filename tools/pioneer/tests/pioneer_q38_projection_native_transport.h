@@ -39,6 +39,9 @@ public:
  void OutputSources(const char* root,const char* peer);void VerifyGdnOutput();
  void OutputFault(unsigned);bool OutputFaultInjected()const; // TEST endpoint failures only
 #endif
+#ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
+ void ResidualRmsSource(const char*);void ResidualRmsFault(unsigned);bool ResidualRmsFaultInjected()const;
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);
  void OutputReadbackFault(unsigned kind,unsigned word=0);bool OutputReadbackFaultInjected()const;
