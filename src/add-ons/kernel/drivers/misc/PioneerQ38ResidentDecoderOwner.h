@@ -48,6 +48,12 @@
 #include "PioneerQ38GdnRendezvousImage.h"
 #include "PioneerQ38GdnRendezvousPlan.h"
 #endif
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
+#error Exact separate timed-rendezvous DEBUG52 requires SAME native51
+#endif
+#include "PioneerQ38GdnRendezvousValidationProtocol.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RECURRENT_NATIVE) || PIONEER_Q38_GDN_RECURRENT_NATIVE != 1 || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
 #error Separate exact recurrent DEBUG requires SAME initialized-state owner,never old input DEBUG
@@ -73,7 +79,7 @@ struct PioneerQ38ResidentDecoderResult {
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
  uint32_t gdnGatedPublished=0; // result DATA ONLY,never a producer capability
 #endif
-#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
@@ -114,6 +120,9 @@ class PioneerQ38ResidentDecoderOwner {
 #endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
  bool gdnRecurrentReadbackDone=false;
+#endif
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+ bool gdnTimedReadbackDone=false;
 #endif
 #if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
  uint32_t observedStatus[3]={},observedPc[2]={};
@@ -511,6 +520,39 @@ class PioneerQ38ResidentDecoderOwner {
   return gdnRecurrentReadbackDone && GdnLayerCompleted();
  }
 #endif
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+ // Fixed LOCAL observer ONLY. SAME accepted image/clock/ready/source
+ // receipts and ALL120 held BEFORE numeric reads. No live-PC sampling
+ // after reset,NoC commands,current-state reads,CPU arithmetic or grants.
+ template<class IO> bool GdnTimedValidationMarker(IO& io,unsigned w){
+  return w && w<=96 && verified[w] && gdnImage[w] && gatedReceipted[w]
+   && io.RuntimeStatusRead(2)==TT_Q38_GDN_RENDEZVOUS_MARKER
+   && io.RuntimeStatusRead(0)==0x6400c && io.RuntimeStatusRead(1)==64;
+ }
+ template<class IO> bool GdnTimedValidationReadback(IO& io,uint32_t* values,PioneerQ38ResidentDecoderResult& r){
+  auto& p=*projection;
+  if(!GdnGatedCompleted() || !GdnLayerCompleted() || gdnTimedReadbackDone || r.gdnValidationWorkers || r.gdnValidationWords
+   || !p.state || !p.state->OwnsExecution(p.identity,&p,p.input) || !p.state->InitializationPublished(p.identity))return false;
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return false;
+  phase=13;r.phase=13;
+  const unsigned starts[]={0x8e000,0xa0000,0x8e800,0x8ea00},words[]={322,8192,64,64};
+  for(unsigned w=1;w<=96;w++){
+   r.worker=w;
+   if(p.running[w] || resets[w]!=0x47800 || !verified[w] || !gdnImage[w] || !Guard(io,w) || !Current(io,w) || !GdnTimedValidationMarker(io,w))return false;
+   unsigned at=(w-1)*TT_Q38_GDN_RENDEZVOUS_VALIDATION_HALF_WORDS;
+   for(unsigned block=0;block<4;block++)for(unsigned i=0;i<words[block];i++){
+    r.word=at;uint32_t value;
+    if(!io.ProjectionGraphMemoryReadChecked(w,starts[block]+i*4,value) || (value&0x7fffffff)>=0x7f800000)return false;
+    values[at++]=value;r.gdnValidationWords++;
+   }
+   if(!Guard(io,w) || !Current(io,w) || !GdnTimedValidationMarker(io,w))return false;
+   r.gdnValidationWorkers++;
+  }
+  for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return false;
+  gdnTimedReadbackDone=r.gdnValidationWorkers==96 && r.gdnValidationWords==TT_Q38_GDN_RENDEZVOUS_VALIDATION_WORDS;
+  return gdnTimedReadbackDone && GdnGatedCompleted() && GdnLayerCompleted();
+ }
+#endif
 public:
  PioneerQ38ResidentDecoderOwner()=default;
  PioneerQ38ResidentDecoderOwner(const PioneerQ38ResidentDecoderOwner&)=delete;
@@ -580,7 +622,7 @@ public:
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(p.running[w] || p.resets[w]!=0x47800 || !Scope(io) || !p.Guard(io,w) || !p.Image(io,w))return Fail(io,r);
    resets[w]=0x47800;verified[w]=true;
-#if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
    if(w)r.stop.held++; // independent old-cohort physical hold proof above
 #endif
    for(unsigned i=0;i<10;i++)command[w][i]=p.command[w][i];
@@ -847,7 +889,7 @@ public:
   ,uint32_t* values=nullptr
 #elif defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
   ,uint32_t* values=nullptr
-#elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
+#elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
   ,uint32_t* values=nullptr
 #endif
  ){
@@ -859,7 +901,12 @@ public:
 #else
   if(!started || unsafe || closed || !complete || phase!=6 || !projection || !history)return false;
 #endif
-#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+  uintptr_t output=reinterpret_cast<uintptr_t>(values);
+  if(!values || (output&3) || output>UINTPTR_MAX-TT_Q38_GDN_RENDEZVOUS_VALIDATION_WORDS*4
+   || r.gdnValidationWorkers || r.gdnValidationWords || gdnTimedReadbackDone)return false;
+  if(!GdnTimedValidationReadback(io,values,r))return Fail(io,r);
+#elif defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
   uintptr_t output=reinterpret_cast<uintptr_t>(values);
   if(!values || (output&3) || output>UINTPTR_MAX-163840 || r.validationPages || r.validationWords || readbackDone)return false;
   if(!ValidationReadback(io,values,r))return Fail(io,r);

@@ -1,0 +1,147 @@
+Qwen3.8-27B fixed original-model QGT1 DEBUG52 public qualification
+2026-10-24 UTC. Source base b917c7d3c8594b46e9ff047c56c07b689c1f6327.
+IMPLEMENTED/OFFLINE qualified;NOT installed or physically executed.
+No full decoder/token loop/Work promotion or new inference speed result.
+Last whole-model0.207893161tok/s unchanged;20tok/s UNMET;goal ACTIVE.
+
+Separate exact DEBUG52/native51/namespace17,not an old-mode alias:
+  PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE=1 requires SAME timed native51
+  and ALL gated/recurrent/state-init/input/decoder/projection/RMS/embedding
+  parents. Exact build tag2026102400010052. Old DEBUG/CPU-reference/Work
+  mixtures refused,even0. Default/native51/old role paths remain unchanged.
+  Fixed pointer-free3318720B HEAP reply:192B explicit metadata followed by
+  829632words,96halves of322prepared+8192NEXT+64raw+64gated. Input permits
+  ONLY logical token/position0/layer0,ALL other bytes zero BEFORE context.
+  No user addresses,numeric inputs,current-state/read/producer grants.
+  Actual root/team/thread/copy/global call-lock/context/source/history/state/
+  clock/ALL host-owner scope. Whole SAME native51 math chain and receipts,
+  ALL120 held before fixed LOCAL numeric reads;NO live-PC sampling on held
+  cores,NoC readback commands,CPU math/reference or current-state read.
+  Exact image/ready/accepted-clock/descriptor/source/command/counter checks
+  bracket every half;full originals restored/verified BEFORE reply/END.
+  Failure zeros entire output body and latches actual retention;no later
+  IO/reset/read/restore/retry. User reply-copy failure also retains owners.
+  Public allowlist admits ONLY2new DEBUG+6existing storage calls after the
+  unchanged reload handshake. Old DEBUG/compute/Work/address routes refused.
+
+Independent original-model client,NOT a numeric upload or Work fallback:
+  Exact distinct PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_CLIENT=1 + CPU DEBUG.
+  Full public GGUF SHA/source epoch and canonical tiled plan before FD.
+  All1675 original reference reads BEFORE accelerator open. Embedding/RMS/
+  QKV/Conv/alpha/beta/Z/recurrent+128learnednorm/gated reference uses original
+  FP32/libm arithmetic,never card math helpers or observed device products.
+  Stable FP64 weighted-SiLU product retains tiny-but-NORMAL final results.
+  Exactly23238 ORIGINAL tiled pages/111bounded spans/119calls in complete
+  synthetic lifecycle;one extra4096B learned-norm page vs old DEBUG49.
+  No CPU-computed activation/state/gated vectors uploaded. All829632returned
+  values checked BEFORE explicit END. NORMAL decay/beta AND gated values
+  require relative3e-6 accuracy;true subnormals only may flush to zero.
+  Close-only after first failure;no implicit END/reset/retry/rollback.
+
+Final actual RISC-V kernel builds D/E TERMINAL0:
+  /private/tmp/pioneer-q38-gdn-rendezvous-debug-native-20261024-{d,e}/
+    tenstorrent_pci_probe-driver55-gdn-rendezvous-debug-tag52
+  Both exact SHA256
+  cdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759.
+  Max new frame1568B,unchanged2048B gate;unrelated oversized legacy frames
+  do not grow. Results/reply/owners/snapshots allocated on HEAP,not stack.
+  ALL inherited old byte controls/native51 exact,including native51
+  dbb550a34baeb76b1f68c2216d74bd2e2a42e7ba7633154c6e82c295f5f1de53,
+  native50 8de95a58/native48 fcaf3445/47/45/actualDEBUG44/default43/tag38.
+  D log SHA256085d5c397af9ea187b4c7ab2d8bb7ca404571cadfe646f34341bd4d3148563ac
+  E log SHA256af54833f7cc9365ecd83ed4f03cb896c4878b2e0801d9352ed6bc14a9e57e7ed.
+  New client builds A/B TERMINAL0 exact
+  83a8caff79ce471d1c26754d05a836696b9a4ffc82ca2978df2e0446cc56a157.
+  Old49 client byte-identical50f30dee64f40b6987a5a8bcb90ea251ac2d681956bf677fad1c60efaa455af4.
+
+Original-model actual public controller C TERMINAL0 (21639):
+  Independent original GGUF digest/references sealed BEFORE context;NO
+  reference helpers compile into native controller. Only OS/PCI/L1/GDDR/
+  NoC/clock byte endpoints simulated,not native owners/completion or math.
+  837 actual malformed/header/body/size/token/position/root/team/thread/copy/
+  lock/old-namespace refusals BEFORE endpoint IO. SAME genuine native73728
+  page both-slot zero/history1680/workspace512/QPE1/QRN1/4QPS1/CBOALL120 ->
+  actual cooperative QGT1ALL96. All829632 original outputs checked;private
+  NEXT GDDR equals emitted LOCAL state,CURRENT remains zero. ALL96 receipts/
+  ALL120holds,readback96/829632,gated/privateNEXT publication,complete8330680
+  original-word restore+verification;full8478154 embedding/RMS/decoder saved
+  words,actualEND/cold0. Synthetic clock is NOT physical timing evidence.
+  /private/tmp/pioneer-q38-gdn-rendezvous-debug-original-20261024-c.log
+  SHA256e5f36b62e7f94d84e510a99427df37678758d24d50c4cc901e156bf4bcd2a1af.
+
+Actual public failure suite B TERMINAL0 (23792):
+  15 failures after genuine initialized SAME-owner state;13 forks at first
+  numeric read AFTER ALL120 actual holds,not fabricated ready/producer bits.
+  Fixed read boundaries/last word,reply copy,ROOT counter,restore-last-word,
+  post-read status triplet plus state-init and mapping failures. All retain
+  snapshots/model/history/state/ALL host owners;output body zero on failure,
+  following calls/END do ZERO endpoint IO. Parent then completes all829632
+  original values/full8330680word restore/actualEND/cold0.
+  /private/tmp/pioneer-q38-gdn-rendezvous-debug-faults-20261024-b.log
+  SHA256bf92a74639ca91506cc81b14743bb60fa1df6b15e7a491cefe42a7f995ad9f1e.
+
+Client ASan/UBSan B TERMINAL0 (75739):
+  Independent one-hot/dense/large-norm+z=-100 closed-form FP64 observers,
+  all829632values/3positives/15atomic reference refusals. Actual session
+  4positives/193failures/source epoch/weight/reference reads/upload/calls/
+  output/header/NaN/normal-decay corruption;FD opens only after all refs.
+  /private/tmp/pioneer-q38-gdn-rendezvous-debug-client-tests-20261024-b.log
+  SHA256cfd03034c389dca6852b80862a1fd4124c61b0d072e2b035bec66d738aa5d440.
+  Old client 4positives/184faults plus2referencepositives/13refusals PASS,
+  SHA25644771a7895074deed7b02f95920609a39e66fdaa243f7e78a726359e94c653a7.
+  Old49 actual original-model controller TERMINAL0 (42964),823488original
+  values/fullrestore/actualEND,after common test endpoint refactor:
+  SHA2563661eb7d576b1ad7a7a1e7a5a7af6818e31e12998a0aee22092ec1a3823a1f81.
+
+Role/routing/builders B TERMINAL0 (66707):
+  234 exact/missing/zero/wrong-value/parent/tag/mixed/client/reference/early
+  builder refusals;131072 ACTUAL closed-allowlist fragment probes. All6
+  independent reference headers reject new native role even0. Both actual
+  new builders and10old builders refuse ambient new roles BEFORE SDK/output.
+  SHA25635952c23ec948cd91f29fc466b8b156d63d360785e80b909d56f3f6a302bf0ca.
+  Old49 212gates+131072routes and old51 287gates+131072inert routes PASS.
+
+Updater (NO actual device/reload/board action):
+  New exact --apply-gdn-rendezvous-validation/--restore-gdn-rendezvous-validation
+  ONLY stable041/tag12 <-> final cdacaa3a/tag52. Old mappings untouched.
+  Byte-qualified backup names,root/file/hash/symlink/parent-inventory/idle/
+  cold0/owner0/open1/guard1/generation checks unchanged. One rename then
+  independently verified handshake;NO automatic rollback/reset on unknown.
+  New client is detected by existing parent guard even BEFORE it opens FD.
+  134 actual /bin/sh disposable-filesystem safety cases TERMINAL0 (70322):
+  /private/tmp/pioneer-q38-gdn-rendezvous-debug-updater-20261024-a.log
+  SHA256e45947c00df5975e6cb90765512d698f122c5e7e1fdb03f68aa994f2f366e0b3.
+  311 old49/stable041/bootstrap regression cases TERMINAL0 (20566),same
+  actual shell/disposable filesystems;new client parent names refused even
+  before FD open. NO real native reload/board action or automatic rollback.
+  /private/tmp/pioneer-q38-gdn-rendezvous-debug-updater-regression-20261024-a.log
+  SHA256f974bcd2a57dcce1c20cdce67baa2f44e87a146c9444bb33e5115dd78e4ea375.
+
+OFFLINE issues caught/repaired,not gate relaxations:
+  Initial new-role compile omitted conditional readback result fields;
+  added exact DEBUG52 fields,not fields in old/native51 modes.
+  Initial gate fixture retained one old opcode symbol;corrected fixture,
+  actual new closed allowlist unchanged. Exact new client role is independent,
+  not a macro alias pretending to be old DEBUG49.
+  First public run completed all numeric reads/fullrestore but refused
+  because old-cohort held count was compiled only for older DEBUG roles.
+  New role now increments it AFTER each actual independently verified hold;
+  never hardcodes119 or skips physical checks. Fresh C/B then fully PASS.
+  Clarification:phase466956 IS the valid completion marker0x7200c,NOT
+  uninitialized memory. Earlier commentary inference was wrong and corrected.
+  Explicit results() value initialization retained as ordinary defensive
+  initialization,not evidence of a proven uninitialized-result defect.
+
+No Pioneer SSH/install/reload/boot/power/SD/Assistant/network/CPU/RAM changes.
+Last physical observation remains03:07:48UTC stable041/gen8/idle/cold0/
+64CPUs/RAM137034936320B,NOT freshly checked. No restore/recovery pending.
+ONE effective OFF,verify actual off,ONE ON;OFF twice can start the board.
+
+ALL qualification jobs now terminal. NEXT:commit/push tested checkpoint,then fresh live
+read-only source/driver/idle/CPU/RAM/parent checks BEFORE any controlled
+physical DEBUG52 test. First physical clock/launch timing still UNQUALIFIED.
+After clean physical component qualification:connect genuine gated6144
+GDDR producer lease to ssm_out role13/Q8_0/6144->5120,residual/post-attn RMS/
+FFN/full attention+KV/all64layers/sampling/persistent token scheduler.
+Do not merely widen the old projection allowlist or upload a host vector.
+Full unlimited original objective ACTIVE;20tok/s UNMET;no speedup measured.

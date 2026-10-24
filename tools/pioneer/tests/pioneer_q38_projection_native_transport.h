@@ -48,10 +48,10 @@ public:
  void GatedLaunchDelay(unsigned worker,unsigned quanta,uint64_t hostMicroseconds=0); // TEST scheduling only,not readiness/producer authority
  bool GatedLaunchDelayInjected()const;
 #endif
-#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
  void GdnReadbackFault(unsigned word);unsigned GdnValidationReads()const;
 #endif
-#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
  void GdnValidationCheckpoint(void (*callback)(void*),void* context); // TEST fork ONLY after genuine initialized/held producer
  void GdnValidationRootFault(); // TEST endpoint mutation,not a readiness/owner setter
  void GdnValidationStatusFault(unsigned field);void GdnValidationRestoreFault();bool GdnValidationRestoreInjected()const;

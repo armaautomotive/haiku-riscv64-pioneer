@@ -1,5 +1,34 @@
 # Native build status
 
+October24 UTC2026:separate fixed DEBUG52/native51/namespace17 QGT1 public
+qualification IMPLEMENTED/OFFLINE qualified,NOT installed/physical/Work.
+Input only logicaltoken/position0/layer0;fixed pointer-free3318720B HEAP
+reply/829632LOCAL words. ALL120holds before numeric reads,accepted image/
+clock/source/command/counter checks around every half;no caller addresses,
+numeric vectors,current-state reads,live held-core PC or NoC readback.
+Full SAME native init/QPE1/QRN1/4QPS1/CBO/QGT1/restore/END;no host arithmetic
+seam. Independent source-bound client1675references BEFORE FD,23238original
+pages/111spans;all values checked before explicitEND,NORMAL decay/beta+
+gated outputs require relative3e-6. Client3closed-form positives/15atomic
+refusals+4session positives/193faults PASS;client A/B exact83a8caff.
+Actual public original C ALL829632values/full8330680word restore+verification/
+actualEND PASS. Public B15failures/837inert request refusals retain all
+owners/snapshots,zero output body/no laterIO;unmodified parent cleanEND.
+New234gates+131072actual closed-allowlist probes PASS;old49actual original
+823488values/fullrestore/END and old49client50f30dee unchanged,old49/51gates
+PASS. Full RISC-V D/E exactcdacaa3a/maxnewframe1568(existing2048gate);ALL
+inherited old byte controls/native51 dbb550a3 EXACT. Hash-pinned updater
+ONLY041/tag12<->cdacaa3a/tag52,new134/old311actual shell filesystem cases
+PASS;no force/reset/unknown rollback,CPU-reference parent interlock intact.
+ALL jobs terminal;ZERO PioneerSSH/install/reload/power/boot/SD/Assistant/
+CPU/RAM changes. Latest stable041/gen8 NOT freshly checked. NEXT fresh
+read-only live-source/driver/idle/parent/CPU/RAM checks before controlled
+physical component qualification. Physical clock/launch timing UNPROVEN;
+ssm_out producer lease/residual/FFN/full attentionKV/all64layers/sampling/
+persistent tokenloop STILL OWED.Whole27B0.207893161tok/s unchanged,20UNMET/
+full offloadINCOMPLETE/full goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-rendezvous-debug-public-20261024.txt.
+
 October24 UTC2026:new COMPILE-ONLY51 timed QGT1 peer rendezvous IMPLEMENTED/
 OFFLINE qualified,NOT linked/installed/physical. Fixed84Gcycle horizon uses
 only read CSRRS mcycleh/mcycle/mcycleh,x0;unstable/backward/stalled/expired
