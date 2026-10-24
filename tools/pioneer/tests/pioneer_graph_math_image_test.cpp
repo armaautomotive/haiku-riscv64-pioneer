@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_GRAPH_MATH_BASE_ALREADY_INCLUDED
 #define PIONEER_COORDINATED_MACHINE_ONLY
 #include "pioneer_coordinated_worker_test.cpp"
+#endif
 #include "../PioneerGraphNorm.h"
 #include "../PioneerGraphRope.h"
 #include <map>

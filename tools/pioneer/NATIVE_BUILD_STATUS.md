@@ -1,5 +1,30 @@
 # Native build status
 
+October24 UTC2026:distinct card QRR1 residual-add+post-attention learned
+RMS IMPLEMENTED/OFFLINE instruction-qualified,NOT native-selected/installed.
+Actual QPE1->QRN1 preserved raw5120 plus QOP1 ALL119matrix/5120output/
+119STOP -> QRR1 SAME shared-GDDR residual5120+normalized5120 PASS for
+token0/bank0 and248319/bank6. Actual NIU/counter histories retained;no CPU
+interstage arithmetic;unrelated GDDR unchanged. ORIGINAL public c600de03
+full-SHA/all851tensor auth + original post_attention_norm5120weights/
+7input domains/35840residual+35840norm words BIT-EXACT PASS. GDN inputs,
+weights in joined test/transport still synthetic,NOT full-model/native proof.
+10standalone positives/195first-fault cases/28canonical DATA plans+2023
+refusals/53image+builder+frozenword gates PASS ASan/UBSan. D/E5468B code
+EXACT93976e38;400Bmaxframe/608B actual SP depth inside old8KiB stack.
+All runtime stores inside old L1 snapshot;all arithmetic/domain checks
+BEFORE first GDDR write;old QRN1grammar/code EXACTf13d8676,9+158regression
+PASS. Old55client161gates/log EXACT268f1444. ALL jobs terminal. No CPU
+reference/Work arithmetic or existing driver/image selection changed.
+ZERO PioneerIO/power/SD/Assistant changes;historical quarantine/restore
+pending NOT rechecked. Saved-work confirmation required before recovery;
+ONE OFF only if actuallyON,verifyOFF,ONEON;never repeat OFF on SSH loss.
+Whole27B0.207893161tok/s/20UNMET/goalACTIVE. NEXT genuine SAME-owner
+completed-output+raw-residual claim,original role1ledger before Bind,
+QRR1image/Scope/clock/Close/restore/END and next FFN producer;then actual
+FFN/fullattentionKV/all64layers/sampling/persistent whole-token schedule.
+Evidence:benchmarks/qwen38-residual-rms-image-20261024.txt.
+
 October24 UTC2026:separate CPU DEBUG55/namespace18 session and executable
 IMPLEMENTED/OFFLINE qualified,NOT installed/physical/Assistant/Work inference.
 Original GDN1675references BEFORE FD;ALL829632returned GDN values pass

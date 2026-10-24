@@ -1,0 +1,168 @@
+Pioneer Qwen3.8-27B card-side residual plus post-attention learned RMS
+2026-10-24 UTC
+
+Scope and real goal
+-------------------
+Distinct QRR1 scalar image performs all5120 residual additions and original
+post-attention learned normalization on the card. Implemented and qualified
+using ACTUAL emitted RV32 instructions;not selected by a native driver or
+Assistant/Work,not installed/physically tested,not complete64layer inference.
+No Pioneer SSH/accelerator FD/power/SD/boot/Assistant operations this turn.
+Historical physical DEBUG52 quarantine/restorepending NOT freshly rechecked.
+Whole-model last measured0.207893161tok/s;20tok/s remains unmet;goal ACTIVE.
+
+Device implementation
+---------------------
+tools/pioneer/PioneerQ38ResidualRms.h
+tools/pioneer/blackhole_qwen38_residual_rms.cpp
+tools/pioneer/blackhole_qwen38_residual_rms_start.S
+src/add-ons/kernel/drivers/misc/PioneerQ38ResidualRms{Shape,Plan,Code}.h
+
+Fixed layer0 post_attention_norm role1/F32/5120 original learned weights.
+Reads actual QOP1 ssm_out at workspace0x156000,raw hidden backup at0x18000
+and original20480B learned weights. Six exact read packets:16KiB+4KiB for
+each source. Local scratch at0x80000/0x88000/0x90000,local residual0x98000,
+normalized0xa0000;all inside unchanged old ROOT snapshot through0xac000.
+One rounded F32 raw+ssm_out per element;unchanged existing paired-integer
+software binary64 sum/divide5120/IEEE sqrt/divide/rounded learned multiplies.
+No CPU reference/fallback/host activation or new numeric-input route.
+
+Input/sum/weight domains remain explicitly bounded;no tolerance relaxed,
+clipping or silent denormal substitution. Partial LOCAL scratch is not a
+publication. ALL5120 add+normalization/domain checks complete BEFORE first
+GDDR write. Four exact write packets store updated raw residual at0x18000
+and normalized5120 values at existing op5 input offset0. Original ssm_out
+and every other GDDR byte stay unchanged. Existing QRN1 grammar not widened.
+
+Descriptor DATA seals actual16 ROOT NIUs/all64words before/after each
+packet. Fixed token/position0/layer0,canonical bank/address/role1,identity/
+parent QOP1 phase/RMS provenance geometry;none of these DATA words are
+source/producer/ready/launch authority. Shape/plan are not native owners.
+Exact command echo,ALL4 command ports/32queues quiet,both counter aliases,
+exact bounded cumulative deltas{6,960,10,6,4,640,10,4}. First unknown parks
+inert;no following NoC/packet retry. Completion marker only after all10
+packets and seals. A future real native owner must retain SAME snapshots,
+source/ledger/clock/host/PCI/lifetime through physical restore+END and use
+an outer monotonic deadline starting BEFORE release. No such owner claimed
+by this checkpoint;no new flags/control/grant select it in production.
+
+Reproducible target images
+-------------------------
+sh tools/pioneer/build_qwen38_residual_rms_image.sh
+ /Volumes/HaikuBuildLocal/generated.riscv64 NEW_ABSOLUTE_OUTPUT
+Read-only SDK. Exact separate PIONEER_Q38_RESIDUAL_RMS_IMAGE=1 only.
+Work/CPU validation/kernel/native mixed or defined-zero flags refused.
+Builder rejects ambient nonzero/empty/malformed PIONEER_ before SDK/output.
+Independent D/E builds terminal0:
+ /private/tmp/pioneer-q38-residual-rms-image-20261024-d
+ /private/tmp/pioneer-q38-residual-rms-image-20261024-e
+Both5468B code SHA
+ 93976e38dfc9f310a7415ce83bc6cabc2ebf5c15ac10c1745fee79d1f2c61989
+Both4B boot SHA
+ d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+No undefined libc/soft-float/integer division helpers,hardware double,
+fdiv/fsqrt/FMA/div/rem instructions or writable static/GOT section.
+Compiler maxframe400B;actual executed minimum SP gives608B depth within
+unchanged old8192B stack. This measures SP itself,not just lowest store.
+Frozen generator verifies full SHA/length/boot before emitting apply_patch;
+1367code words+boot+old40KiB zero padding checked. No new code/map limits.
+
+Standalone actual instruction tests,terminal0
+--------------------------------------------
+Runner:tools/pioneer/tests/run_pioneer_q38_residual_rms_image_tests.sh
+Positive log:/private/tmp/pioneer-q38-residual-rms-positive-20261024-e.log
+SHA16c96ae8c6450855a3dfab1b2391c757879f8778ef7e18d6bf32939fea63da7e
+Fault log:/private/tmp/pioneer-q38-residual-rms-faults-20261024-e.log
+SHAbb1b2a09595b0de49e817970ddbf9119076bb2e365c377ef003f55e750f8eb73
+
+ASan/UBSan,actual emitted instructions;NoC/GDDR endpoints copy bytes ONLY.
+Independent float add/double reduction/sqrtf/learned-multiply observer never
+fills a device result.10positive domains:changed tokens/7banks,large/minimum
+normal/signed-zero/high-dynamic-range inputs,large learned values,complete
+cancellation and near-cancellation. ALL5120 residual+normalized words exact.
+28canonical DATA plans/2023refusals:pointer binding,token/phase edges,ALL64
+descriptor-word mutations,exact5learned pages. No producer/launch authority.
+
+195failure cases:stuck/partial packet,counter overrun,foreign counter,source
+or descriptor drift after EVERY packet;first/last invalid input/learned
+values;sum out of domain and valid-input cancellation below qualified
+bound;malformed shape,command echo,ALL36 busy ports/queues,ALL16sources,
+both counter-alias observations. Before-write failures preserve both sinks.
+Late unknown can leave partial GDDR and is NOT repaired/retried;test proves
+no following IO. Terminal parks remain inert for32more executed steps.
+Every runtime L1 store checked inside OLD snapshot;inputs/descriptor are
+read-only;all surrounding guards unchanged. No mapping/window increase.
+Initial randomized positive fixture accidentally supplied y<2^-50;actual
+code correctly refused BEFORE GDDR writes. Fixture corrected,production
+domain unchanged. Added explicit valid-input/tiny-cancellation refusals.
+
+Actual joined QOP1 -> QRR1,terminal0
+----------------------------------
+Runner:tools/pioneer/tests/run_pioneer_q38_gdn_output_residual_rms_image_tests.sh
+Arguments:QOP1_ROOT QOP1_PEER QRR1 QPE1 QRN1 directories.
+Final log:/private/tmp/pioneer-q38-gdn-output-residual-rms-20261024-d.log
+SHA71142a764cc529fd9d2d2e7f7ce4098a643f16a7b94f35e8865b103d6259540f
+Actual QPE1 embedding -> QRN1 preserved raw bytes,actual QOP1 ALL119matrix
+jobs ->5120ssm_out GDDR -> ALL119 independent STOP -> actual QRR1 residual
+and postRMS. SAME shared GDDR supplies actual new read packets;CPU arrays
+are observer snapshots ONLY,never interstage arithmetic/substitution.
+Actual previous ROOT NIUs/counter/command history retained,not reset to a
+fabricated initial state. Cases token0/bank0 and248319/bank6:10240complete
+projection/residual/normalization outputs. ALL5120 per case BIT-EXACT to
+independent reference;unrelated GDDR including ssm_out remains unchanged.
+Earlier C already passed both cases;final D additionally measures actual SP.
+Weights/GDN inputs/physical endpoints are synthetic;not full public model,
+genuine native retained owner,physical timing or throughput evidence.
+
+Original public learned weights,terminal0
+----------------------------------------
+Runner:tools/pioneer/tests/run_pioneer_q38_residual_rms_actual_model_tests.sh
+Arguments:QRR1_IMAGE ORIGINAL_GGUF_PATH
+Log:/private/tmp/pioneer-q38-residual-rms-original-20261024-a.log
+SHA1243d84de2aebd08b2079b6777d7bc9aa4b62e11e7579f72694d044f09711b11
+Full SAME already-open GGUF SHA
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+and ALL851tensor schema authenticated BEFORE any instruction execution.
+Read original blk.0.post_attention_norm.weight,F32/rank1/5120/20480B.
+Actual QRR1 instructions,7fixture input domains,35840residual+35840norm
+words BIT-EXACT independent F32-add/double-reduction/sqrtf. Original weight
+bytes only supplied;no CPU numeric result feeds device. Source stability
+checked before/after runs. NOT original actual GDN chain or card timing.
+
+Gates and regressions,all terminal0
+----------------------------------
+53image/source/role/mixed/defined-zero/builder/generator/codeword gates PASS.
+Log:/private/tmp/pioneer-q38-residual-rms-gates-20261024-b.log
+SHA6ee47afce713e5f5eae6805f88251f4c3f5966c2bcd545ce6f3ddc25d5651ed8
+Work inference/banks reject new offline-image flag with valid argv before
+SDK lookup;default/explicit-zero controls still reach SDK lookup. No Work
+arithmetic change. Old55client161gates PASS,log EXACT268f144420ccd335969c31946f8e6f0d8f9a4439ba71f2c195ecd02027fe1160.
+
+Old QRN1 rebuilt from unchanged source,terminal0,EXACT5052B SHA
+ f13d8676f97920c182fa47d9f555453d7855dd5ac394919a577d58c83abe523a
+Old scalar fixture default includes unchanged;only optional base-already-
+included guard permits composition without re-defining the instruction VM.
+Old QRN1 instruction9positives+158faults and903plans/65016refusals PASS.
+Logs:/private/tmp/pioneer-q38-residual-rms-old-qrn-{positive,faults}-20261024-a.log
+SHA4472a767f19b1c5988935d76ff58c67f2f95104971c32f35bc48da0bb390fa4e
+SHAbb2252952572cc5d758d207a78e6fe83fb6ad106f981823bd6a10066e9887e2f
+ALL qualification/build jobs terminal. No live process restarted on an
+observation timeout. No unrelated llama.cpp or FlashNext work included.
+
+Next required work / hardware policy
+-----------------------------------
+Bind a genuine completed ssm_out producer AND genuine preserved residual
+from SAME real native decoder,not DATA/caller-ready flags. Before Bind:
+original role1 five learned pages must be present in SAME source ledger.
+Claim/expire old producers before IO;retain all ownership/clock/snapshot/
+source/PCI/NIU/host proofs through QRR1 image switch,release,exact receipt,
+physical hold,Close/restore/verification/actual END. Publish next FFN input
+only after complete new arithmetic proof;no reuse of old RMS epoch grant.
+Then full FFN/fullattentionKV/all64layers/sampling/persistent token schedule
+and honest whole-model throughput remain owed. No faster-mode promotion yet.
+Saved-work confirmation still required for physical52 diagnosis/recovery.
+ONE OFF only if actuallyON,verify actualOFF,thenONEON;secondOFF can START
+the board. No OFF after software shutdown/SSH loss,relay status is not board
+power,no extra boot pulses. Rest five minutes only after actualON fails.
+No mains/SD change required. Do not install/compute/reset/restore a new
+driver while unresolved historical quarantine remains.
