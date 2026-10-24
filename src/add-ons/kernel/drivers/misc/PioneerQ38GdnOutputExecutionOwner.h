@@ -181,6 +181,9 @@ public:
  template<class IO> bool RunGdnOutput(IO& io,PioneerQ38ResidentDecoderResult& r){
   if(output || !gatedOutput.Current() || gatedOutput.phase>=0x7ffffffb || phase!=12 || !complete || !projection || !history || r.outputInstalled
    || r.outputBooted || r.outputRootRuns || r.outputStopped || r.outputPublished)return false;
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  if(!gdnTimedReadbackDone || r.gdnValidationWorkers!=96 || r.gdnValidationWords!=829632)return false;
+#endif
   auto* state=new(std::nothrow) PioneerQ38GdnOutputExecutionState;
   if(!state)return false;
   if(!state->jobs.Build(gatedOutput) || !state->bootstrap.Build(state->jobs,*projection->cohort)){delete state;return false;}

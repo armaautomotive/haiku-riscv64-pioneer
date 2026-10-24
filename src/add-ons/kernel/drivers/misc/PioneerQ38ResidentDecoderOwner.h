@@ -57,6 +57,12 @@
 #endif
 #include "PioneerQ38GdnOutputExecutionState.h"
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#if PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE) || PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE != 1 || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Exact separate DEBUG55 requires SAME output execution,never another DEBUG role
+#endif
+#include "PioneerQ38GdnOutputValidationProtocol.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -91,8 +97,11 @@ struct PioneerQ38ResidentDecoderResult {
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
  uint32_t outputInstalled=0,outputBooted=0,outputRootRuns=0,outputStopped=0,outputPublished=0;
 #endif
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+ uint32_t outputReadbackPages=0,outputReadbackWords=0,outputOperandWords=0,outputScaleWords=0;
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  uint32_t validationPages=0,validationWords=0;
@@ -159,7 +168,7 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
  bool gdnRecurrentReadbackDone=false;
 #endif
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  bool gdnTimedReadbackDone=false;
 #endif
 #if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
@@ -204,6 +213,9 @@ class PioneerQ38ResidentDecoderOwner {
   // DEBUG transport does NOT pretend that a physically held ROOT runs.
   // Only this owner's one pending fixed read may change its counters.
   if(!w && readbackTraffic)return !p.running[0] && resets[0]==0x47800;
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  if(!w && outputValidationTraffic)return OutputValidationTransferGuard(io);
 #endif
   if(p.running[w] && !verified[w])return true;
   if(!PioneerQ38GraphCsrIdle(io))return false;
@@ -567,7 +579,7 @@ class PioneerQ38ResidentDecoderOwner {
   return gdnRecurrentReadbackDone && GdnLayerCompleted();
  }
 #endif
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  // Fixed LOCAL observer ONLY. SAME accepted image/clock/ready/source
  // receipts and ALL120 held BEFORE numeric reads. No live-PC sampling
  // after reset,NoC commands,current-state reads,CPU arithmetic or grants.
@@ -581,7 +593,9 @@ class PioneerQ38ResidentDecoderOwner {
   if(!GdnGatedCompleted() || !GdnLayerCompleted() || gdnTimedReadbackDone || r.gdnValidationWorkers || r.gdnValidationWords
    || !p.state || !p.state->OwnsExecution(p.identity,&p,p.input) || !p.state->InitializationPublished(p.identity))return false;
   for(unsigned w=0;w<120;w++)if(p.running[w] || resets[w]!=0x47800 || !Guard(io,w) || !Current(io,w))return false;
+#ifndef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
   phase=13;r.phase=13;
+#endif
   const unsigned starts[]={0x8e000,0xa0000,0x8e800,0x8ea00},words[]={322,8192,64,64};
   for(unsigned w=1;w<=96;w++){
    r.worker=w;
@@ -602,6 +616,9 @@ class PioneerQ38ResidentDecoderOwner {
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
 #include "PioneerQ38GdnOutputExecutionOwner.h"
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#include "PioneerQ38GdnOutputValidationOwner.h"
 #endif
 public:
  PioneerQ38ResidentDecoderOwner()=default;
@@ -675,7 +692,7 @@ public:
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(p.running[w] || p.resets[w]!=0x47800 || !Scope(io) || !p.Guard(io,w) || !p.Image(io,w))return Fail(io,r);
    resets[w]=0x47800;verified[w]=true;
-#if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
    if(w)r.stop.held++; // independent old-cohort physical hold proof above
 #endif
    for(unsigned i=0;i<10;i++)command[w][i]=p.command[w][i];
@@ -946,7 +963,7 @@ public:
   ,uint32_t* values=nullptr
 #elif defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
   ,uint32_t* values=nullptr
-#elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
   ,uint32_t* values=nullptr
 #endif
  ){
@@ -964,7 +981,13 @@ public:
 #else
   if(!started || unsafe || closed || !complete || phase!=6 || !projection || !history)return false;
 #endif
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  uintptr_t destination=reinterpret_cast<uintptr_t>(values);
+  if(!values || (destination&3) || destination>UINTPTR_MAX-TT_Q38_GDN_OUTPUT_VALIDATION_WORDS*4
+   || !gdnTimedReadbackDone || r.gdnValidationWorkers!=96 || r.gdnValidationWords!=829632
+   || outputReadbackDone || r.outputReadbackPages || r.outputReadbackWords || r.outputOperandWords || r.outputScaleWords)return false;
+  if(!OutputValidationReadback(io,values,r))return Fail(io,r);
+#elif defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
   uintptr_t output=reinterpret_cast<uintptr_t>(values);
   if(!values || (output&3) || output>UINTPTR_MAX-TT_Q38_GDN_RENDEZVOUS_VALIDATION_WORDS*4
    || r.gdnValidationWorkers || r.gdnValidationWords || gdnTimedReadbackDone)return false;
@@ -1010,6 +1033,25 @@ public:
 inline bool PioneerQ38GdnOutputProducer::Current()const{return owner && owner->MatchesGatedOutput(*this);}
 inline bool PioneerQ38GdnOutputProducer::MatchesCohort(const PioneerQ38DispatchLease& cohort)const{
  return Current() && owner->projection && owner->projection->cohort==&cohort;
+}
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+// Required ORIGINAL upload DATA before native Bind publishes an epoch or
+// changes any hardware. This is not the live producer/execution check.
+static __attribute__((noinline)) bool PioneerQ38GdnOutputValidationLearned(const PioneerQ38CanonicalModelPlan& plan,const uint8_t* ledger,unsigned pages){
+ if(!ledger || pages!=PioneerResidentBanks::Pages)return false;
+ unsigned stripes=0,rows=0,mask=0,total=0;
+ for(unsigned i=0;i<plan.Count();i++){
+  const auto* p=plan.Part(i);if(p->kind!=plan.WeightKind || p->layer || p->role!=13)continue;
+  if(p->type!=8 || p->rowBytes!=6912 || p->bank>=7 || !p->rows || p->rows%16
+   || p->bytes!=p->rows*6912 || !p->allocated || p->allocated%4096 || p->offset%4096
+   || p->offset>=plan.Capacity || p->allocated>plan.Capacity-p->offset || (mask&(1U<<p->bank)))return false;
+  unsigned first=p->bank*unsigned(plan.Capacity/4096)+p->offset/4096,count=p->allocated/4096;
+  if(first>pages || count>pages-first)return false;
+  for(unsigned page=0;page<count;page++)if(ledger[first+page]!=1)return false;
+  stripes++;rows+=p->rows;total+=count;mask|=1U<<p->bank;
+ }
+ return stripes==7 && rows==5120 && total==8640 && mask==127;
 }
 #endif
 static_assert(sizeof(PioneerQ38ResidentDecoderOwner)>327680 && sizeof(PioneerQ38ResidentDecoderOwner)<524288,"actual decoder plans/lifetime HEAP ONLY");

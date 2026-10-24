@@ -21,7 +21,7 @@
 #endif
 #endif
 #endif
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
 static constexpr unsigned kGdnValidationWords=TT_Q38_GDN_RENDEZVOUS_VALIDATION_WORDS,kGdnValidationHalfWords=TT_Q38_GDN_RENDEZVOUS_VALIDATION_HALF_WORDS;
 #elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
 static constexpr unsigned kGdnValidationWords=TT_Q38_GDN_RECURRENT_VALIDATION_WORDS,kGdnValidationHalfWords=TT_Q38_GDN_RECURRENT_VALIDATION_HALF_WORDS;
@@ -34,6 +34,24 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
  std::unique_ptr<GdnOutputExecutionMachine> output;bool outputStarted[120]={};unsigned outputFault=0;bool outputFaulted=false;
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+ void (*outputCheckpoint)(void*)=nullptr;void* outputContext=nullptr;bool outputCheckpointDone=false;
+ unsigned outputNumericReads=0,outputReadbackFault=0,outputReadbackWord=0;bool outputReadbackFaulted=false;
+ bool validationFaulted=false,outputCopyReady=false;
+ bool OutputReadbackLive()const{
+  if(!output || !outputStarted[0] || output->Stops()!=119)return false;
+  for(unsigned w=0;w<120;w++)if(core[w]->coreReset!=0x47800)return false;
+  return true;
+ }
+ bool OutputInstalled(){
+  if(!output || FullRead(current,0x6000)!=0x0006c06f)return false;
+  for(unsigned i=0;i<PioneerQ38ProjectionGraphCodeWords(current);i++){
+   unsigned address=PioneerQ38ProjectionGraphCodeAddress(current,i);
+   if(FullRead(current,address)!=PioneerQ38GdnOutputProgramWord(current,address))return false;
+  }
+  return true; // TEST actual installed bytes,not a result-phase/ready facade
+ }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  const char* decoderImage=nullptr;const PioneerQ38CanonicalModelPlan* decoderPlan=nullptr;DecoderHistoryBytes* decoderHistory=nullptr;
  unsigned decoderBank=7,decoderStarts=0,decoderPc[120]={};bool decoderRunning[120]={};
@@ -44,10 +62,10 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  std::unique_ptr<GatedNativeCohort> gated;
  unsigned gatedDelayWorker=0,gatedDelayQuanta=0;uint64_t gatedDelayHost=0;bool gatedDelayed=false;
 #endif
-#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  unsigned gdnReadbackWords=0,gdnReadbackFault=UINT32_MAX;
 #endif
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  void (*validationCheckpoint)(void*)=nullptr;void* validationContext=nullptr;bool validationCheckpointDone=false;
  bool gdnRestoreFault=false,gdnRestoreFaulted=false;
 #endif
@@ -56,10 +74,23 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  std::vector<uint32_t> decoderCompletionReads;unsigned decoderPcReads[120]={},decoderFrontendSnapshots=0;
 #endif
 #endif
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  unsigned validationReads=0,validationFault=0,validationFaultPage=0;bool validationPending=false;
  void ValidationRead(){
-#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  assert(!current && OutputReadbackLive() && outputCheckpointDone && outputNumericReads>=3264 && validationReads<5 && !validationPending);
+  unsigned page=validationReads++;
+  uint32_t base=FullRead(0,TT_Q38_PROJECTION_GRAPH_MANIFEST+4*4),route=FullRead(0,TT_Q38_PROJECTION_GRAPH_MANIFEST+8*4);
+  assert(FullRead(0,TT_Q38_PROJECTION_GRAPH_MANIFEST+5*4)==2);
+  unsigned offset=TT_Q38_GDN_OUTPUT_RESULT+page*4096;
+  const uint32_t expected[]={base+offset,0,route,0x80000,0,129,0,0,4096,0};
+  for(unsigned i=0;i<10;i++)assert(C().command[i]==expected[i]);
+  for(unsigned i=0;i<1024;i++)assert(FullRead(0,0x80000+i*4)==0x7fc50000+page*1024+i);
+  if(validationReads==validationFaultPage){
+   if(validationFault<=6 || validationFault==9)validationFaulted=true; // mutation is performed by THIS transfer
+   if(validationFault==6)now+=30000001;
+  }
+#elif defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
   assert(!current && boots==119 && starts==5 && machine->Stops()==119 && decoderStarts==120 && validationReads<40 && !validationPending);
   for(unsigned w=0;w<120;w++)assert(core[w]->coreReset==0x47800 && decoderRunning[w]);
   unsigned page=validationReads++;
@@ -86,10 +117,18 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
   C().counters[0]++;C().counters[1]+=64;C().accepted++;C().counters[3]++;
   if(validationReads==validationFaultPage && validationFault==3)C().accepted++;
   if(validationReads==validationFaultPage && validationFault==4)C().source[11]^=1;
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  outputCopyReady=true;
+  if(validationReads==validationFaultPage && validationFault==5)C().command[9]^=1;
+  if(validationReads==validationFaultPage && validationFault==9)C().writeCounters[0]++;
+#endif
  }
 #endif
  Impl(const char* root,const char* peer,std::vector<uint32_t>& gddr):workspace(gddr){
   (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  (void)&PioneerQ38GdnOutputValidationLearned;
+#endif
   machine.reset(new ProjectionExecutionMachine(root,peer,*this));track=true;
  }
  uint32_t ReadLocal(unsigned w,uint32_t a)override{unsigned old=current;current=w;uint32_t v=FullRead(w,a);current=old;return v;}
@@ -184,7 +223,7 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
     return p.gated->Pc(p.current);
    }
 #endif
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
    if(p.gdnStarts==96 && p.gdnReadbackWords<kGdnValidationWords){
     bool held=true;for(unsigned w=0;w<120;w++)held=held && p.core[w]->coreReset==0x47800;
     assert(!held && "post-reset/hold readback must NOT sample a live-terminal PC");
@@ -253,19 +292,45 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
    }
    return p.LocalRead(0x17ffc0+a*4);
   case Noc:
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
    if(a==0x40 && p.validationPending)return 1;
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   if(p.validationReads==p.validationFaultPage && ((p.validationFault==7 && a==0x840) || (p.validationFault==8 && a==0x240))){
+    p.validationFaulted=true;return 1; // actual bad CSR observation,not an armed intent
+   }
+#endif
    return p.C().ResidentNocRead(a);
-  case Panel:{uint32_t v=p.LocalRead(a);
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+  case Panel:{
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   bool outputNumeric=!p.current && p.outputNumericReads<8384 && p.OutputReadbackLive()
+    && ((a>=0xa0000 && a<0xa3000) || (a>=0xab000 && a<0xab300) || (p.outputCopyReady && a>=0x80000 && a<0x81000));
+   if(outputNumeric && !p.outputNumericReads && !p.outputCheckpointDone){
+    assert(a==0xa0000);p.outputCheckpointDone=true;if(p.outputCheckpoint)p.outputCheckpoint(p.outputContext);
+   }
+#endif
+   uint32_t v=p.LocalRead(a);
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   if(outputNumeric){
+    unsigned word=a>=0xab000?3072+(a-0xab000)/4:a>=0xa0000?(a-0xa0000)/4:3264+(p.validationReads-1)*1024+(a-0x80000)/4;
+    if(word!=p.outputNumericReads || p.gdnReadbackWords!=829632)
+     fprintf(stderr,"DEBUG55_TEST_NUMERIC_ORDER address%08x word%u expected%u gdn%u packets%u\n",a,word,p.outputNumericReads,p.gdnReadbackWords,p.validationReads);
+    assert(word==p.outputNumericReads++ && p.gdnReadbackWords==829632);
+    if((p.outputReadbackFault==1 && word==p.outputReadbackWord)
+     || (p.outputReadbackFault==2 && word==3072+p.outputReadbackWord)
+     || (p.outputReadbackFault==3 && word==3264+p.outputReadbackWord)){
+     p.outputReadbackFaulted=true;v=0x7fc00000;
+    }
+   }
+#endif
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
    if(p.gdnStarts==96 && p.current && p.current<=96 && p.C().coreReset==0x47800
     && p.gdnReadbackWords<kGdnValidationWords){
     unsigned word=UINT32_MAX;
     if(a>=0x8e000 && a<0x8e508)word=(a-0x8e000)/4;
     if(a>=0xa0000 && a<0xa8000)word=322+(a-0xa0000)/4;
     if(a>=0x8e800 && a<0x8e900)word=8514+(a-0x8e800)/4;
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
     if(a>=0x8ea00 && a<0x8eb00)word=8578+(a-0x8ea00)/4;
 #endif
     if(word!=UINT32_MAX){
@@ -288,7 +353,13 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #endif
    if(p.starts && !p.current && ((p.fault==1 && a==TT_Q38_PROJECTION_GRAPH_STATS+56*4)
     || (p.fault==2 && a==TT_Q38_PROJECTION_GRAPH_STATS+6*4)))v^=0x80000000;return v;}
-  case Pci:return p.C().HostPciRead(a,uint16_t(b),uint8_t(c));
+  case Pci:{auto v=p.C().HostPciRead(a,uint16_t(b),uint8_t(c));
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   if(p.validationFault==10 && p.validationReads==p.validationFaultPage && !a && b==4){
+    p.validationFaulted=true;return v|4; // actual bad PCI observation
+   }
+#endif
+   return v;}
  }
  assert(false);return 0;
 }
@@ -297,12 +368,17 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  switch(kind){
   case SetTlb:p.C().DramTlbWrite(a,b,v);return;
   case SetLocal:
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   if(p.outputReadbackFault==4 && !p.outputReadbackFaulted && p.outputNumericReads==8384 && p.current==119 && a==2039){
+    p.outputReadbackFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
    if(p.outputFault==6 && !p.outputFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
     p.outputFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
    }
 #endif
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
    if(p.gdnRestoreFault && !p.gdnRestoreFaulted && p.gdnReadbackWords==kGdnValidationWords
     && p.current==119 && a==2039){p.gdnRestoreFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;}
 #endif
@@ -321,11 +397,14 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    p.C().RuntimeCodeWrite(0,v);return;
   case SetStatus:p.LocalWrite(0x17ffc0+a*4,v);return;
   case SetNoc:
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
    if(a==0x40){assert(v==1);p.ValidationRead();return;}
 #endif
    p.C().ResidentNocWrite(a,v);return;
   case SetPanel:
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   if(!p.current && a==0x80000 && (v&0xffffe000)==0x7fc50000)p.outputCopyReady=false;
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
    if(p.outputFault==2 && !p.outputFaulted && p.decoderResult && p.decoderResult->phase==13 && p.current==119 && a==0x7404c){
     p.outputFaulted=true;p.LocalWrite(a,v^1);return;
@@ -346,7 +425,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #endif
    p.C().coreReset=v;p.C().resets.push_back(v);
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+   if(v==0x46800 && p.OutputInstalled()){
+#else
    if(v==0x46800 && p.output && p.decoderResult && p.decoderResult->phase>=13){
+#endif
     assert(p.FullRead(p.current,0x6000)==0x0006c06f);
     for(unsigned i=0;i<PioneerQ38ProjectionGraphCodeWords(p.current);i++){
      unsigned address=PioneerQ38ProjectionGraphCodeAddress(p.current,i);
@@ -520,9 +603,9 @@ void ProjectionNativeTransport::GatedLaunchDelay(unsigned w,unsigned quanta,uint
 }
 bool ProjectionNativeTransport::GatedLaunchDelayInjected()const{return implementation->gatedDelayed;}
 #endif
-#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
 void ProjectionNativeTransport::GdnReadbackFault(unsigned word){assert(word<
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  kGdnValidationWords
 #else
  30912
@@ -530,7 +613,7 @@ void ProjectionNativeTransport::GdnReadbackFault(unsigned word){assert(word<
  );implementation->gdnReadbackFault=word;}
 unsigned ProjectionNativeTransport::GdnValidationReads()const{return implementation->gdnReadbackWords;}
 #endif
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
 void ProjectionNativeTransport::GdnValidationCheckpoint(void (*callback)(void*),void* context){
  auto& p=*implementation;assert(callback && context && !p.gdnStarts && !p.validationCheckpoint);p.validationCheckpoint=callback;p.validationContext=context;
 }
@@ -560,10 +643,30 @@ std::vector<uint32_t> ProjectionNativeTransport::DecoderCompletionReads()const{r
 unsigned ProjectionNativeTransport::DecoderFrontendSnapshots()const{return implementation->decoderFrontendSnapshots;}
 #endif
 #endif
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+void ProjectionNativeTransport::OutputValidationCheckpoint(void (*callback)(void*),void* context){
+ auto& p=*implementation;assert(callback && context && !p.outputCheckpoint && !p.gdnStarts);p.outputCheckpoint=callback;p.outputContext=context;
+}
+void ProjectionNativeTransport::OutputReadbackFault(unsigned kind,unsigned word){
+ auto& p=*implementation;assert(kind>=1 && kind<=4 && !p.outputReadbackFault && p.outputCheckpointDone && !p.outputNumericReads);
+ assert(word<(kind==1?3072U:kind==2?192U:kind==3?5120U:1U));p.outputReadbackFault=kind;p.outputReadbackWord=word;
+}
+bool ProjectionNativeTransport::OutputReadbackFaultInjected()const{return implementation->outputReadbackFaulted;}
+unsigned ProjectionNativeTransport::OutputNumericReads()const{return implementation->outputNumericReads;}
+bool ProjectionNativeTransport::ValidationFaultInjected()const{return implementation->validationFaulted;}
+#endif
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
 void ProjectionNativeTransport::ValidationFault(unsigned kind,unsigned page){
- assert(kind>=1 && kind<=4 && page>=1 && page<=
-#ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
+ assert(kind>=1 && kind<=
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+ 10
+#else
+ 4
+#endif
+ && page>=1 && page<=
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+  5
+#elif defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
   40
 #else
   18

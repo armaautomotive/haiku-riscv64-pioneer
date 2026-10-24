@@ -1,5 +1,27 @@
 # Native build status
 
+October24 UTC2026:separate DEBUG55/namespace18 fixed output qualification
+driver BUILT/OFFLINE qualified,NOT installed/physical/Assistant/Work client.
+SAME actual native54 owner;GDN829632LOCAL values BEFORE image switch while
+genuine phase12producer stays live;after real119STOP/ALL120holds read3072
+native operands+192scales+5poisoned fixed output pages. ROOT stays HELD;
+exact commands/bounded counters/source/PCI/quiet/deadline BEFORE trigger;
+no caller address/vector/ready grants or CPU references. Before-Bind ALL7
+original ssm_out8640pages mandatory. Actual ORIGINAL full public C/D suites
+888inert refusals/ALL61440tiles+5120FP32/FP64rows/19real faults/full8330680
+restore+verification/actualEND PASS;logs EXACT78a7649e. New1440Bframe/old
+nongrowth;RISC-V B/C object54a7f314+driverdede6498 each twice EXACT. Old54
+c8930f61/old52drivercdacaa3a+clientff38e5f3/all controls EXACT;old54 full
+ORIGINAL regression EXACT7f2aeef9;old52reference3+15/session4+196 PASS.
+221new gates+131072closed routes/242old gates/CPU reference85gates+190460
+half boundaries+96domains+4projections+49refusals PASS. ALL jobs terminal.
+ZERO PioneerIO/power/SD/Assistant changes;historical quarantine/restore
+pending NOT freshly rechecked. Whole27B0.207893161tok/s/20UNMET/goalACTIVE.
+NEXT separate CPU DEBUG55 session/client and saved-work-gated physical52
+recovery/diagnosis;residual/postRMS/FFN/fullattentionKV/all64layers/sampling/
+persistent whole-token schedule still OWED. No inference speedup claim.
+Evidence:benchmarks/qwen38-gdn-output-validation-20261024.txt.
+
 October24 UTC2026:separate CPU-only gated-output reference qualified for
 future native54 DEBUG client;NOT driver/control/readback/install/Work.
 Actual authenticated c600de03 original ssm_out6144->5120/four input domains/

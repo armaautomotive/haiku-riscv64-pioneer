@@ -39,6 +39,11 @@ public:
  void OutputSources(const char* root,const char* peer);void VerifyGdnOutput();
  void OutputFault(unsigned);bool OutputFaultInjected()const; // TEST endpoint failures only
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+ void OutputValidationCheckpoint(void (*callback)(void*),void* context);
+ void OutputReadbackFault(unsigned kind,unsigned word=0);bool OutputReadbackFaultInjected()const;
+ unsigned OutputNumericReads()const;bool ValidationFaultInjected()const;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  void DecoderSources(const char*,const PioneerQ38CanonicalModelPlan&,unsigned bank,DecoderHistoryBytes&); // TEST byte endpoints only
  unsigned DecoderStarts()const;
@@ -52,10 +57,10 @@ public:
  void GatedLaunchDelay(unsigned worker,unsigned quanta,uint64_t hostMicroseconds=0); // TEST scheduling only,not readiness/producer authority
  bool GatedLaunchDelayInjected()const;
 #endif
-#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  void GdnReadbackFault(unsigned word);unsigned GdnValidationReads()const;
 #endif
-#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  void GdnValidationCheckpoint(void (*callback)(void*),void* context); // TEST fork ONLY after genuine initialized/held producer
  void GdnValidationRootFault(); // TEST endpoint mutation,not a readiness/owner setter
  void GdnValidationStatusFault(unsigned field);void GdnValidationRestoreFault();bool GdnValidationRestoreInjected()const;
@@ -66,7 +71,7 @@ public:
  unsigned DecoderFrontendSnapshots()const; // TEST observed speculative fallthroughs,NO device I/O
 #endif
 #endif
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  void ValidationFault(unsigned kind,unsigned page); // TEST endpoint fault,not production capability
  unsigned ValidationReads()const;
 #endif

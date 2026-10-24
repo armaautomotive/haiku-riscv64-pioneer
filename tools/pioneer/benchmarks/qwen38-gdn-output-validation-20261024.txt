@@ -1,0 +1,164 @@
+Pioneer Qwen3.8-27B SAME-owner gated-output DEBUG55 qualification
+2026-10-24 UTC
+
+Scope
+-----
+Separate diagnostic kernel driver,build tag0x2026102400010055/namespace18.
+NOT installed,physical-card qualified,an Assistant selector,Work inference,
+all64layers,or a token-rate measurement. No Pioneer SSH,accelerator FD,
+power,SD,boot,Assistant or hardware operations in this checkpoint.
+Last observed physical52 quarantine/restore-pending state not rechecked.
+Whole-model last measured0.207893161tok/s;20tok/s target remains unmet.
+The original full-offload/performance goal remains ACTIVE.
+
+Fixed protocol and native owner
+------------------------------
+Two root-only diagnostic endpoints,support+validate,with closed bank/span
+upload/explicit-END allowlist. Old DEBUG/Work/address/numeric-input routes
+inert. Logical token/position0/layer0 only;ALL output/header-reserved fields
+must be zero on request. No caller address,program,activation,sequence,
+ready/producer/restore capability or CPU reference enters kernel compute.
+
+Reply3352320B,header256B+838016words:
+ 829632 original GDN values:96*(322prepared+8192NEXT+64raw+64gated)
+ 3072 packed native operand words
+ 192 FP32 scales
+ 5120 FP32 ssm_out values
+Existing earlier root/peer counters retain their pre-output-stage meaning;
+separate output counters report120installed/119booted/2ROOT runs/119STOP.
+Aggregate elapsed_us includes init,compute,readback andrestore,NOT tokens.
+
+Exact source/cookie/global-call/team/thread/context/clock/ALLhost/NIU/PCI/
+current-image ownership retained by SAME actual decoder throughout.
+Seven ORIGINAL ssm_out stripes/8640pages checked BEFORE Bind publishes an
+epoch or changes hardware. No old RMS-only role13 whitelist widened.
+Fixed GDN LOCAL reads occur at genuine phase12 BEFORE native54 overwrites
+those local buffers;readback preserves genuine held-only producer/epoch.
+Native54 alone claims/expires that producer and executes its actual new
+images/fresh119boot/QOP1RUN+STOP/ALL119 independent terminals/ALL120holds.
+
+Only AFTER complete native54/STOP/ALL120 physical held/current proofs:
+read actual ROOT-local3072operands+192scales,then five fixed4096B NoC READs
+from SAME canonical output prefix into original-snapshot-covered0x80000.
+Distinct NaN poison on every page before transfer. ROOT remains physically
+HELD;pending traffic is NEVER disguised as running. Exact command echo,
+bounded ONLY-owned counter deltas{1,64,1,1,0,0,1,0},both reset observations,
+sources/PCI/other command ports,aliases/quiet completion and30s deadline
+starting BEFORE trigger are mandatory. No arbitrary new mapping or host DMA.
+
+Private once-only completion seal,not caller result flags. Normal Close
+restores/verifies SAME8330680 original words before actual explicit END.
+First unknown:memory-only failure/quarantine of ALL source,snapshot,host,
+clock and cohort resources;ZERO following device IO/reset/restore/retry/END.
+Failure clears numeric reply using CPU memory only;serial diagnostics use
+already-captured phase/worker/word/counters only,not post-failure reads.
+
+No new device image/code/stack/mapping limit. No CPU reference/tolerance/
+Work math change. Existing native54 compile-only mode stays no-readback.
+The CPU-only observer from99aec02fd1 is separate;production DEBUG55 client
+and its complete source/first-failure/numeric/END session are still owed.
+
+Actual RISC-V kernel builds,terminal0
+-----------------------------------
+python3 tools/pioneer/build_qwen38_gdn_output_validation_native.py
+ /Volumes/HaikuBuildLocal/generated.riscv64 NEW_ABSOLUTE_OUTPUT
+
+Read-only SDK. Independent full B/C chains:
+ /private/tmp/pioneer-q38-gdn-output-debug-native-20261024-{b,c}
+New maximum stack frame1440B;2048B gate;all inherited larger frames
+nongrowing. Both new objects byte-identical:
+ 54a7f3148683c28fe289ed7cf39228a0be12b03b572ab8642b9d737289985518
+Both linked drivers byte-identical:
+ dede6498686d961a5680b314a51c36527dfe1ba82aa72ab838cff02bf3319d96
+Candidate name:tenstorrent_pci_probe-gdn-output-debug-tag55
+Old native54c8930f61/bootstrapede51345/all inherited controls EXACT.
+B log SHA101709047a3632d70f9bbc1e8c1194387c0a19350ee7f2d63e67d47bc7a17c39
+C log SHA2ea4f7919c610fc4c459f9a40ab07a61ab2ec2fa61505150c7e558fb1f7b3054
+
+Original-model public-control run C,terminal0
+--------------------------------------------
+Runner:tools/pioneer/tests/pioneer_q38_resident_decoder_native_factory_test.py
+ --gdn-output-debug-faults
+Log:/private/tmp/pioneer-q38-gdn-output-debug-20261024-c.log
+Actual production control/routing/factories/Scope/Close/END,not a synthetic
+owner/ready/controller facade. Kernel/physical byte endpoints simulated.
+Full SAME original GGUF authenticated through public source SHA
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Embedding/RMS/projection/convolution/GDN references and ALL required ORIGINAL
+learned stripes cached BEFORE context. Output projection observers use the
+actual native operand stream;the native controller receives original weight
+bytes only,never CPU products.
+
+888 actual public inert refusals withZERO endpoint IO/epoch:root/team/copy/
+request shapes/ALL fixed output sections/old namespaces/missing or corrupt
+first+last original ssm_out pages across ALL7stripes.
+Genuine73728page GDN+1680page history init,QPE1,QRN1,4QPS1,QCB1ALL120,
+cooperative QGT1ALL96,ALL829632LOCAL values retained before image switch.
+SAME native54/fresh119boot/QOP1RUN+STOP/ALL61440original ssm_out tile reads/
+ALL5120 independently checked FP32+FP64 output rows/ALL120physically held.
+Actual3072 ROOT operands+192scales+five poisoned output read pages match
+actual card-workspace bytes. Full8330680restore+verification/actual END PASS.
+This is actual instruction arithmetic over ORIGINAL model bytes with
+SIMULATED endpoints,NOT physical arithmetic/timing or whole-model inference.
+
+19 actual failure continuations from genuine live checkpoints:
+ one final GDN-local word BEFORE output-image switch;
+ first+last native operand,scale,and final output words;
+ final ORIGINAL restore word (8330679 earlier restored,NO END);
+ stuck read,partial last page,counter overrun,NIU source drift,command drift,
+ deadline starting BEFORE trigger,other command busy,queue busy,write-counter
+ drift,PCI BME observation,and failed user reply copy.
+ALL retained owners/clock/host snapshots asserted,not just top-level flags;
+repeat control/compute/Close/END hasZERO following endpoint IO. No guard,
+tolerance or authority relaxed. Test observer expires after8384 numeric words
+so later original-memory restoration verification is not miscounted as data.
+
+Final test-observation hardening,terminal0
+-----------------------------------------
+After C passed,tests strengthened so busy-CSR/queue/PCI fault markers are
+set at the ACTUAL bad observation,not just armed intent. Exact first/last
+packet and stopped numeric-read counts also asserted. Production driver
+unchanged. Final original D terminal0;FULL log byte-identical to C:
+ 78a7649e4265b396fdb8c1528b5b632e5d95ac503cb7c9fcfb8e1e9e895e021c
+Log:/private/tmp/pioneer-q38-gdn-output-debug-20261024-d.log
+ALL19 real injections asserted,including actual bad CSR/PCI observations
+and exact stopped numeric/packet counts. ALL qualification jobs terminal.
+
+Other terminal regressions
+--------------------------
+221 DEBUG55 role/tag/parent/mixed/native-CPU/header/builder gates PASS;
+3352320B ABI and131072 ACTUAL closed routes:2controls+6bank/span only.
+Log:/private/tmp/pioneer-q38-gdn-output-debug-gates-20261024-b.log
+SHA15b7d8c6dce14f841541eaf4eff287ef73c9031cd6dff208b1aa1cfb7b8f43d8
+
+Old native54:242gates/131072inert routes PASS,EXACT prior log
+7ba21cfe3ef85ac0c6d538c3f51f639a926cef0411063673afc3e99f3af4e386.
+Full old54 ORIGINAL lifecycle/ALL829632values/61440original tiles/5120FP32+
+FP64 rows/6native faults/complete8330680restore+END PASS;EXACT prior log
+7f2aeef9ffc3f268c9be0e6c5c4ea09b3e79f27849b32aee3e54a222729c3c53.
+Log:/private/tmp/pioneer-q38-gdn-output-debug-old54-original-20261024-a.log
+Output CPU reference:85gates/190460half boundaries/96domains/4complete
+projections/49atomic refusals PASS ASan/UBSan;no native/Work inclusion.
+Old DEBUG52 full driver rebuilt EXACT
+cdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759.
+Old first-failure diagnostic client rebuilt EXACT
+ff38e5f3e474b5f68961d77eb507e29c4442cd9e565fbc897112d8ec03b8982b.
+Old52 CPU reference3positives/15atomic refusals and session4positives/196
+faults PASS ASan/UBSan. Strict relative gates,first-failure/header snapshot,
+namespace17/23238originalpages/111spans/CLOSE ONLY policy unchanged.
+Log:/private/tmp/pioneer-q38-gdn-output-debug-old52-client-tests-20261024-a.log
+SHA30fc184161fd218745437d94126b9aabc657c2c09435002d9bb76ff935d6abb8
+
+Next
+----
+Implement separate DEBUG55 CPU session/executable using original GDN validation FIRST,
+then independently quantize validated ACTUAL gated values to avoid false
+Q8 rounding-boundary failures;compare real operands/scales/ssm_out values.
+Never upload/substitute CPU results or promote this diagnostic into Work.
+Resolve physical52 first-failure after saved-work confirmation and controlled
+recovery. No new driver INSTALL/hotswap promotion/physical retry while quarantined.
+OFF is non-idempotent:ONE only if actuallyON,verifyOFF,thenONEON;never repeat
+OFF after software shutdown/SSH loss. Relay contacts are not board state.
+No mains/SD change;five-minute rest only after actual ON attempt fails.
+Residual/postRMS/FFN/fullattention+KV/all64layers/sampling/persistent whole-
+token schedule and honest whole-model performance remain required.

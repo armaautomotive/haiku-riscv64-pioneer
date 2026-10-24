@@ -5,11 +5,14 @@
 #define B_DEVICE_OP_CODES_END 1000
 #include "pioneer_q38_resident_decoder_native_factory_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentDecoderValidationProtocol.h"
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRendezvousValidationProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRecurrentValidationProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputValidationProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
+#endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputValidationProtocol.h"
 #endif
 #ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputValidationProtocol.h"
@@ -36,7 +39,9 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #include "decoder_validation_probe_lock.inc"
 #include "decoder_validation_call_scope.inc"
 #define dprintf(...) fprintf(stderr,__VA_ARGS__)
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputValidationControl.h"
+#elif defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
 #include "gdn_rendezvous_validation_control.inc"
 #elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
 #include "gdn_recurrent_validation_control.inc"
@@ -47,7 +52,9 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #endif
 #define geteuid() callerUid
 #include "decoder_validation_route_prelude.inc"
-#ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#include "gdn_output_validation_routing.inc"
+#elif defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
 #include "gdn_rendezvous_validation_routing.inc"
 #elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
 #include "gdn_recurrent_validation_routing.inc"

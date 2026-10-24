@@ -17,7 +17,8 @@ gdn_gated_local = mode == '--gdn-gated-norm-local'
 gdn_gated_resident = mode == '--gdn-gated-resident'
 gdn_gated = gdn_gated_local or gdn_gated_resident
 gdn_rendezvous_debug = mode in ('--gdn-rendezvous-debug', '--gdn-rendezvous-debug-faults')
-gdn_output_execution = mode in ('--gdn-output-execution', '--gdn-output-execution-faults')
+gdn_output_debug = mode in ('--gdn-output-debug', '--gdn-output-debug-faults')
+gdn_output_execution = gdn_output_debug or mode in ('--gdn-output-execution', '--gdn-output-execution-faults')
 gdn_output_producer = gdn_output_execution or mode == '--gdn-output-producer'
 gdn_rendezvous = gdn_output_producer or gdn_rendezvous_debug or mode in ('--gdn-rendezvous-native', '--gdn-rendezvous-native-delayed', '--gdn-rendezvous-native-host-deadline', '--gdn-rendezvous-native-clock-receipt-fault', '--gdn-rendezvous-native-controller-faults')
 gdn_gated_native = gdn_rendezvous or mode in ('--gdn-gated-native', '--gdn-gated-native-late-negative')
@@ -26,7 +27,7 @@ gdn_recurrent = gdn_gated_native or gdn_gated or gdn_recurrent_debug or mode in 
 gdn_debug = mode in ('--gdn-debug', '--gdn-debug-faults')
 gdn_native = gdn_debug or mode in ('--gdn-native', '--gdn-native-faults')
 gdn = gdn_native or gdn_recurrent or mode in ('--validation-gdn-input', '--validation-gdn-input-extremes')
-if (len(sys.argv) != (11 if gdn_output_execution else 10 if gdn_gated else 9) if gdn else len(sys.argv) not in (7, 8)) or mode not in ('--gdn-output-execution-faults', '--gdn-output-execution', '--gdn-output-producer', '--gdn-rendezvous-debug', '--gdn-rendezvous-debug-faults', '', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults', '--gdn-recurrent', '--gdn-recurrent-faults', '--gdn-recurrent-debug', '--gdn-recurrent-debug-faults', '--gdn-gated-norm-local', '--gdn-gated-resident', '--gdn-gated-native', '--gdn-gated-native-late-negative', '--gdn-rendezvous-native', '--gdn-rendezvous-native-delayed', '--gdn-rendezvous-native-host-deadline', '--gdn-rendezvous-native-clock-receipt-fault', '--gdn-rendezvous-native-controller-faults'):
+if (len(sys.argv) != (11 if gdn_output_execution else 10 if gdn_gated else 9) if gdn else len(sys.argv) not in (7, 8)) or mode not in ('--gdn-output-debug', '--gdn-output-debug-faults', '--gdn-output-execution-faults', '--gdn-output-execution', '--gdn-output-producer', '--gdn-rendezvous-debug', '--gdn-rendezvous-debug-faults', '', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults', '--gdn-recurrent', '--gdn-recurrent-faults', '--gdn-recurrent-debug', '--gdn-recurrent-debug-faults', '--gdn-gated-norm-local', '--gdn-gated-resident', '--gdn-gated-native', '--gdn-gated-native-late-negative', '--gdn-rendezvous-native', '--gdn-rendezvous-native-delayed', '--gdn-rendezvous-native-host-deadline', '--gdn-rendezvous-native-clock-receipt-fault', '--gdn-rendezvous-native-controller-faults'):
     raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults|--validation[-faults|-control[-faults]]]')
 validation = mode.startswith('--validation')
 actual = gdn or mode in ('--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc')
@@ -65,6 +66,8 @@ if gdn_gated_native:
     flags.append('-DPIONEER_Q38_GDN_GATED_NATIVE=1')
 if gdn_rendezvous_debug:
     flags.append('-DPIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE=1')
+if gdn_output_debug:
+    flags.append('-DPIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE=1')
 if gdn_rendezvous:
     flags.append('-DPIONEER_Q38_GDN_RENDEZVOUS_NATIVE=1')
 if gdn_output_producer:
@@ -143,6 +146,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                 begin, end = '// ' + marker + '_BEGIN', '// ' + marker + '_END'
                 assert source.count(begin) == source.count(end) == 1
                 (base / ('gdn_rendezvous_validation_' + name + '.inc')).write_text(source.split(begin, 1)[1].split(end, 1)[0])
+        if gdn_output_debug:
+            begin, end = '// PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE_ROUTING_BEGIN', '// PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE_ROUTING_END'
+            assert source.count(begin) == source.count(end) == 1
+            (base/'gdn_output_validation_routing.inc').write_text(source.split(begin, 1)[1].split(end, 1)[0])
+            assert source.count('#include "PioneerQ38GdnOutputValidationControl.h"') == 1
         begin = 'static status_t\nProbeControl(void* cookie, uint32 operation, void* data, size_t length)\n{'
         assert source.count(begin) == 1
         prelude = begin + source.split(begin, 1)[1].split('#ifdef TT_PIONEER_DRIVER_RELOAD', 1)[0]
@@ -159,7 +167,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                     '-fsanitize=address,undefined', *flags, '-DPIONEER_Q38_GDN_MUTABLE_STATE=', '-DPIONEER_Q38_NORMAL_CLOCK=1',
                     '-DPIONEER_Q38_EMBEDDING_NATIVE=1', '-DPIONEER_Q38_LEARNED_RMS_NATIVE=1', '-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1',
                     '-I' + str(base), *[str(here / (name + '.cpp')) for name in (
-                        'pioneer_q38_gdn_rendezvous_validation_control_test' if gdn_rendezvous_debug else 'pioneer_q38_gdn_gated_native_factory_test' if gdn_gated_native else 'pioneer_q38_gdn_recurrent_validation_control_test' if gdn_recurrent_debug else 'pioneer_q38_gdn_recurrent_native_factory_test' if gdn_recurrent else 'pioneer_q38_gdn_state_init_native_factory_test' if gdn_state else 'pioneer_q38_gdn_input_validation_control_test' if gdn_debug else 'pioneer_q38_gdn_input_native_factory_test' if gdn_native else 'pioneer_q38_gdn_input_original_model_test' if gdn else 'pioneer_q38_resident_decoder_validation_actual_model_test' if actual else 'pioneer_q38_resident_decoder_validation_close_test' if mode == '--validation-close-only' else 'pioneer_q38_resident_decoder_validation_control_test' if control else
+                        'pioneer_q38_gdn_output_validation_control_test' if gdn_output_debug else 'pioneer_q38_gdn_rendezvous_validation_control_test' if gdn_rendezvous_debug else 'pioneer_q38_gdn_gated_native_factory_test' if gdn_gated_native else 'pioneer_q38_gdn_recurrent_validation_control_test' if gdn_recurrent_debug else 'pioneer_q38_gdn_recurrent_native_factory_test' if gdn_recurrent else 'pioneer_q38_gdn_state_init_native_factory_test' if gdn_state else 'pioneer_q38_gdn_input_validation_control_test' if gdn_debug else 'pioneer_q38_gdn_input_native_factory_test' if gdn_native else 'pioneer_q38_gdn_input_original_model_test' if gdn else 'pioneer_q38_resident_decoder_validation_actual_model_test' if actual else 'pioneer_q38_resident_decoder_validation_close_test' if mode == '--validation-close-only' else 'pioneer_q38_resident_decoder_validation_control_test' if control else
                         'pioneer_q38_resident_decoder_validation_capture_test' if mode == '--validation-capture' else 'pioneer_q38_resident_decoder_validation_native_test' if validation else 'pioneer_q38_resident_decoder_native_factory_test', 'pioneer_q38_projection_native_transport',
                         'pioneer_q38_projection_execution_machine', 'pioneer_q38_embedding_execution_bridge',
                         'pioneer_q38_learned_rms_execution_bridge', 'pioneer_q38_decoder_conv_bridge')],
@@ -180,6 +188,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                     suffix.extend(sys.argv[9:11])
                     if mode=='--gdn-output-execution-faults':
                         suffix.append('--output-faults')
+                    if mode=='--gdn-output-debug-faults':
+                        suffix.append('--faults')
                 if gdn_gated:
                     suffix.append(sys.argv[9])
                 if mode == '--validation-gdn-input-extremes':

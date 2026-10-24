@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
+#error Native output DEBUG never compiles CPU reference observers
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
 #error Native output execution never compiles CPU reference observers
 #endif
