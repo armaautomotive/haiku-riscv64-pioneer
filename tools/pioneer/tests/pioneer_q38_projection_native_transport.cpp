@@ -26,8 +26,12 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  const PioneerQ38ResidentDecoderResult* decoderResult=nullptr;unsigned decoderFault=0;bool decoderDamaged=false;
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  const char* gdnImage=nullptr;unsigned gdnStarts=0,gdnFault=0;bool gdnRunning[120]={},gdnDamaged=false;
-#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
  unsigned gdnReadbackWords=0,gdnReadbackFault=UINT32_MAX;
+#endif
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+ void (*validationCheckpoint)(void*)=nullptr;void* validationContext=nullptr;bool validationCheckpointDone=false;
+ bool gdnRestoreFault=false,gdnRestoreFaulted=false;
 #endif
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
@@ -148,6 +152,12 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Code:assert(!a);return p.C().entry;
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+   if(p.gdnStarts==96 && p.gdnReadbackWords<TT_Q38_GDN_RECURRENT_VALIDATION_WORDS){
+    bool held=true;for(unsigned w=0;w<120;w++)held=held && p.core[w]->coreReset==0x47800;
+    assert(!held && "post-reset/hold readback must NOT sample a live-terminal PC");
+   }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
    if(p.decoderRunning[p.current]){
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
@@ -187,6 +197,24 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #endif
    return p.C().ResidentNocRead(a);
   case Panel:{uint32_t v=p.LocalRead(a);
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+   if(p.gdnStarts==96 && p.current && p.current<=96 && p.C().coreReset==0x47800
+    && p.gdnReadbackWords<TT_Q38_GDN_RECURRENT_VALIDATION_WORDS){
+    unsigned word=UINT32_MAX;
+    if(a>=0x8e000 && a<0x8e508)word=(a-0x8e000)/4;
+    if(a>=0xa0000 && a<0xa8000)word=322+(a-0xa0000)/4;
+    if(a>=0x8e800 && a<0x8e900)word=8514+(a-0x8e800)/4;
+    if(word!=UINT32_MAX){
+     word+=(p.current-1)*TT_Q38_GDN_RECURRENT_VALIDATION_HALF_WORDS;assert(word==p.gdnReadbackWords);
+     for(unsigned w=0;w<120;w++)assert(p.core[w]->coreReset==0x47800); // BEFORE first numeric read,not just per-peer
+     if(!word && !p.validationCheckpointDone){
+      p.validationCheckpointDone=true;
+      if(p.validationCheckpoint)p.validationCheckpoint(p.validationContext);
+     } // fork actual SAME live source/cookie/call/initialized state/ALL120 holds;NO producer minted
+     if(p.gdnReadbackWords++==p.gdnReadbackFault)v=0x7fc00000;
+    }
+   }
+#endif
 #ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
    if(p.gdnStarts==96 && p.current && p.current<=96 && p.C().coreReset==0x47800
     && a>=0x8e000 && a<0x8e508 && p.gdnReadbackWords<30912){
@@ -205,6 +233,10 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  switch(kind){
   case SetTlb:p.C().DramTlbWrite(a,b,v);return;
   case SetLocal:
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+   if(p.gdnRestoreFault && !p.gdnRestoreFaulted && p.gdnReadbackWords==TT_Q38_GDN_RECURRENT_VALIDATION_WORDS
+    && p.current==119 && a==2039){p.gdnRestoreFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;}
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
    if(!p.decoderDamaged && p.decoderResult && p.decoderResult->phase==7 && p.decoderFault==5 && p.current==119 && a==2039){p.decoderDamaged=true;p.LocalWrite(0x17e000+a*4,v^1);return;}
 #endif
@@ -341,9 +373,31 @@ void ProjectionNativeTransport::GdnInputSource(const char* image){auto& p=*imple
 void ProjectionNativeTransport::GdnInputFault(unsigned kind){assert(kind>=1 && kind<=14);implementation->gdnFault=kind;}
 unsigned ProjectionNativeTransport::GdnInputStarts()const{return implementation->gdnStarts;}
 bool ProjectionNativeTransport::GdnInputFaultInjected()const{return implementation->gdnDamaged;}
-#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
-void ProjectionNativeTransport::GdnReadbackFault(unsigned word){assert(word<30912);implementation->gdnReadbackFault=word;}
+#if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
+void ProjectionNativeTransport::GdnReadbackFault(unsigned word){assert(word<
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+ TT_Q38_GDN_RECURRENT_VALIDATION_WORDS
+#else
+ 30912
+#endif
+ );implementation->gdnReadbackFault=word;}
 unsigned ProjectionNativeTransport::GdnValidationReads()const{return implementation->gdnReadbackWords;}
+#endif
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+void ProjectionNativeTransport::GdnValidationCheckpoint(void (*callback)(void*),void* context){
+ auto& p=*implementation;assert(callback && context && !p.gdnStarts && !p.validationCheckpoint);p.validationCheckpoint=callback;p.validationContext=context;
+}
+void ProjectionNativeTransport::GdnValidationRootFault(){
+ auto& p=*implementation;assert(p.gdnStarts==96 && p.validationCheckpointDone && !p.gdnReadbackWords);p.core[0]->counters[0]++;
+}
+void ProjectionNativeTransport::GdnValidationStatusFault(unsigned field){
+ auto& p=*implementation;assert(field<3 && p.gdnStarts==96 && p.validationCheckpointDone && !p.gdnReadbackWords);
+ unsigned address=0x17ffc0+field*4;p.WriteLocal(1,address,p.ReadLocal(1,address)^1);
+}
+void ProjectionNativeTransport::GdnValidationRestoreFault(){
+ auto& p=*implementation;assert(p.gdnStarts==96 && p.validationCheckpointDone && !p.gdnReadbackWords);p.gdnRestoreFault=true;
+}
+bool ProjectionNativeTransport::GdnValidationRestoreInjected()const{return implementation->gdnRestoreFaulted;}
 #endif
 #endif
 void ProjectionNativeTransport::ObserveDecoder(const PioneerQ38ResidentDecoderResult& r){implementation->decoderResult=&r;}

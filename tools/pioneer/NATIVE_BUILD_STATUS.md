@@ -1,5 +1,34 @@
 # Native build status
 
+October24 UTC2026:separate fixed recurrent DEBUG49/namespace16
+implemented/OFFLINE qualified,NOT deployed or physically qualified. SAME actual initialized
+GDN/retained QRJ1 owner reads823488fixed LOCAL prepared/NEXT/output words
+while ALL120 held,before full original restore. Separate source-bound
+client computes all independent references BEFORE FD;only original learned
+bytes uploaded. Client cross-builds B/C EXACT50f30dee;2nonzero independent
+FP64 tests/13atomic refusals and4session positives/184faults PASS.212role/
+tag/client/ambient gates+131072actual closed-allowlist probes PASS;260actual
+mocked-updater apply/restore/owner/hash/symlink/failure cases PASS. RV64
+buildsC/D EXACTb43a6cc7/maxNewFrame1568B/all old46/47/48bytes EXACT.
+6078 source-current15fault+original-model full control/Close/END PASS:
+643inert public refusals,ALL823488values/independent original oracle,
+NEXT_GDDR_exact/CURRENT_immutable/full8134072word restore/actual cleanEND.
+Early positive prototype reached
+ALLreadback/fullrestore but correctly refused success:DEBUG49 omitted the
+DEBUG-only stop.held119 reporting count. Now captures actual existing holds,
+not a fabricated proof;no guard/assertion weakened. Results moved to heap
+after2256Bframe gate refusal. Post-reset readback uses fresh fixed marker/
+phase/count;live terminal PC remains proved BEFORE reset,never re-sampled
+after ALLheld. Optimized faults fork SAME genuine completed producer;no
+fabricated readiness. Actual last original restore BYTE fault and late
+phase/count/marker faults included. Older prototypes NOT qualifications.
+ALLjobs terminal;old46client rebuilt EXACTd9da6825. ZERO
+Pioneer IO/power/boot/Assistant/RAM/CPU changes;last stable041/gen6 retained,
+not re-probed. NEXT ONE bounded physical original-model DEBUG49 trial then
+known-clean stable041 restore;NO Work promotion. Remaining full decoder/
+token loop still owed. Last whole27B0.207893161tok/s unchanged;20UNMET/
+goalACTIVE. Evidence:benchmarks/qwen38-gdn-recurrent-debug-public-20261024.txt.
+
 Latest October24 UTC2026:REAL SAME initialized-GDN native QRJ1 owner
 IMPLEMENTED/OFFLINE qualified (exact COMPILE-ONLY48,no public selector/
 install). Original-model references sealed BEFORE context;controllers get

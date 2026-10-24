@@ -1,0 +1,136 @@
+Pioneer Qwen27B SAME initialized-state ONE QRJ1 public DEBUG
+2026-10-24 UTC. OFFLINE qualified;goalACTIVE/turnPROGRESS.
+NO physical selection or new inference/token timing.
+
+IMPLEMENTED
+Exact separate PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE=1,
+tag2026102400010049,driver55/namespace16. Requires SAME native initialized
+GDN/runtime/retained decoder/projection/RMS/source/ALLhost owners. Work/
+CPU-reference kernel/old DEBUG mixtures refused. Public allowlist has ONLY
+two fixed DEBUG operations and six existing owned-storage setup/END calls,
+apart from the earlier root-only reload metadata route. No programs,
+vectors,addresses,state/current-slot/producer grants or arbitrary reads.
+
+Pointer-free fixed3294136B HEAP reply:metadata,explicit zero reserved ABI
+alignment word,ALL96 halves each322prepared+8192NEXT+64output words.
+Root/team/cookie/thread/global semaphore/call scope,full input-copy and
+allzero output validation BEFORE bind. Actual both-slot73728page GDN zero+
+Close/history1680/workspace512/QPE1/QRN1/ALL4QPS1/QCB1ALL120->ONE QRJ1ALL96.
+Only after private layer0NEXT publication/ALL120 physical holds may fixed
+LOCAL readback run under SAME actual source/context. No readback NoC
+commands or CPU arithmetic/reference/fallback. Finite values and fresh
+marker/phase/count checked. Live terminal PCs are already proved BEFORE
+reset/hold;no unsupported post-reset PC reinterpretation. Full original
+8134072word restore+verification and exact closed owner precede explicit
+legacy END. First uncertainty retainsALL/erases numeric reply/no laterIO.
+Failed output copy ALSO quarantines even if restoration had completed.
+
+Separate exact CPU DEBUG client authenticates FULL original public GGUF
+and computes independent embedding/RMS/QKV/conv/alpha/beta/GDN/next/output
+references BEFORE GPU FD. Independent unscaled-Q normalization and libm
+gates;one output scale AFTER reduction. No current-state/card outputs can
+seed references. Upload ONLY23237original learned pages/110spans,never
+numeric references. Same FILE/epoch checked around every call. ALL823488
+values compared before explicit END;3e-6scaled plus strict relative normal
+gates;only actual subnormal gate FTZ allowed. First fault CLOSE ONLY,no
+implicit END/retry/reset/numeric fallback. CLI only --validate-token0;
+not Assistant Work or a full-model/token-rate benchmark.
+
+SOURCE-CURRENT ACTUAL NATIVE/PUBLIC/INSTRUCTION QUALIFICATION
+6078 TERMINAL0,ASan/UBSan. Original-model FULL SHA and ALL independent
+references prepared/sealed BEFORE actual context. Separate non-native
+observer compilation;controller sees original raw-byte interface only.
+643 actual malformed metadata/count/padding/ALL-half boundaries/old-route/
+UID/team/cookie/thread/lock/copy refusals:ZERO endpoint IO/no model bound.
+Actual initialized bytes back emitted QRJ1 state reads/writes,not a fake
+ready ledger or host-computed state. ALL30912prepared+786432NEXT+6144output
+values match independent original oracle. All NEXT GDDR bytes exactly
+match actual LOCAL next-state output;CURRENT remains zero/immutable.
+Full original L1 restored+independently verified,clean actual dispatchEND.
+After Close active output-ready proof revoked;duplicate public run inert.
+
+ALL15 isolated faults PASS:actual first zero packet/projection mapping;
+seven first/last prepared/NEXT/output readback boundaries;failed reply
+copy;changed untouched ROOT counter;last ORIGINAL restore byte;late phase/
+count/success-marker corruption. All retain SAME actual owners/call/global
+scope/snapshot;erased data on failed reply;no subsequent endpoint IO/END.
+Test-only fork occurs at first numeric read AFTER genuine private initialized
+state/completed QRJ1/ALL120holds. Parent resumes original positive path,
+not a recreated producer/ready flag. Actual last-restore fault explicitly
+asserts byte corruption injected. Test endpoints prohibit PC sampling after
+all cores reset/held throughout readback. No tolerance/guard/assertion relaxed.
+
+SDK/BINARY/CLIENT/GATES/UPDATER
+93981/42685 C/D TERMINAL0:ACTUAL linked full RV64 kernel driver EXACT:
+b43a6cc70dc8b5d1f5d69d1b9207fbf577a9671881963da45854b0cd68a7f89e
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-build-20261024-{c,d}/tenstorrent_pci_probe-driver55-gdn-recurrent-debug-tag49
+Max new kernel frame1568B<=2048;all oversized legacy frames no growth.
+ALL old kernel controls INCLUDING actual DEBUG46/compile47/compile48
+EXACT32a661c4/7ee1d6f1/fcaf3445. Not installed.
+25956/55324 client B/C TERMINAL0 EXACT:
+50f30dee64f40b6987a5a8bcb90ea251ac2d681956bf677fad1c60efaa455af4
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-client-20261024-{b,c}
+60638 old46client rebuilt EXACTd9da68255b7b6e3417e240652a011c2126b0f5baf4ef5f4b867d5ec3c80f2e0f.
+70858 TERMINAL0:independent nonzero ONE_HOT+DENSE/ALL823488values vs FP64
+closed-form oracle catches double-Q scale;13atomic refusals. Actual source-
+bound session4positives(token0/15/248319+tinyNORMALgate)/184faults,original
+references1290 BEFORE FD/original pages23237/exact spans/nonces/calls;
+wrong normal gate zero rejected,all96halves+NEXT/output corruptions refused.
+25392 TERMINAL0:212 exact role/tag/mixed/client/native-reference/ambient
+builder refusals plus131072 ACTUAL closed-allowlist probes. Old48gates182
+also PASS14644. New native/client builders refuse ambient roles BEFORE SDK/
+output. Old ten legacy builders refuse new role early. 1233 TERMINAL0:
+260 ACTUAL /bin/sh updater filesystem/handshake/hash/symlink/owner/failure
+cases in disposable fake Haiku roots. Exact stable041<->b43 ONLY;hash-keyed
+immutable backups,old same-tag prototypes not accepted;no force/reset or
+automatic rollback after unproven replacement. New client parent names
+blocked in BOTH old46 and new49 update/restore modes. No native exchange.
+
+PROTOTYPES/FAILURES,NOT PROMOTED
+18851 first compile caught ABI tail padding;made explicit reserved word.
+34346 caught missing new-role delayed endpoint mock/protocol include;fixed.
+61582 frame gate refused2256B BEFORE link. All combined result records now
+allocated on heap BEFORE native scope/bind;did not raise2048B limit.
+48247/44959 full original prototypes reached ALLreadback/fullrestore but
+final success predicate correctly refused:stop.held was0 because DEBUG49
+omitted existing DEBUG-only accounting. Capture actual119 physical proofs
+already verified in owner;no fabricated holds/relaxed check. Diagnostic
+output reads captured/private memory only,never post-failure device IO.
+Initial client compile caught old reply type name;corrected separate ABI.
+Old redundant fault78514 stopped explicitly143 after identifying/killing
+ONLY its exact three LOCAL test processes;no Pioneer process touched.
+Optimized prototype91237 passed early+readback/copy/root faults but failed9:
+old observer-pointer restore fault did NOT inject inside public control.
+Replaced with actual endpoint byte corruption/asserted injection,not a
+false quarantine/success bypass. Source-current6078 all15+parent PASS.
+Earlier7f024c4c candidate superseded;only repeated b43a6cc7 authoritative.
+
+PHYSICAL STATE / NEXT
+ZERO Pioneer SSH/device/reload/reboot/power/PSU/SD/Assistant/model/NIC/boot/
+kernel changes. Last physical stable041/gen6/64CPUs/fullRAM137034936320B
+retained,not freshly re-probed. All local jobs TERMINAL. Dirty llama and
+unrelated FlashNext untouched. OFF is NOT idempotent:one effectiveOFF,
+verify actual board off,then oneON;never extra OFF or boot-observation
+pulses. No recovery/restore/power command needed in this offline turn.
+
+NEXT read-only live preflight,then ONE bounded original-model DEBUG49
+trial if actual idle/unquarantined system permits;explicit clean END and
+exact stable041 restore only after known-clean success. No Work promotion.
+Still layer0/position0/privateNEXT ONLY,no current-slot/token flip or full
+card-only decoder. Card-side gated norm/output/residual/FFN/attentionKV/
+all64layers/sampling/persistent token schedule remain. Whole27B last
+0.207893161tok/s UNCHANGED;20tok/s unmet;goalACTIVE.
+
+TERMINAL LOG SHA256
+fc588096d982d4e24526e43b9319a2917e9270744c934e98f89c3aa7479fe449
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-faults-20261024-c.log
+440395d61df8a4b34b2fa58d2303afcf27fa4802f372b99d3b494dcdf35512d7
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-build-20261024-c.log
+973e31d111ffd9b70271565528b06f2a4ca7962f455acdcb9d04f49bcbf0c6c5
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-build-20261024-d.log
+44771a7895074deed7b02f95920609a39e66fdaa243f7e78a726359e94c653a7
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-client-tests-20261024-a.log
+23bcce6d693f2246107b45f3983c4ed6d2b4a403e4483989a784409822c7b2b8
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-gates-20261024-d.log
+e2e35fdb14174fff4413fdc150f77e4d8989857d84f33ab05d1cd8a5abe2d5f1
+ /private/tmp/pioneer-q38-gdn-recurrent-debug-updater-20261024-a.log

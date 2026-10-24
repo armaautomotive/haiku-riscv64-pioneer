@@ -8,6 +8,11 @@
 #ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputValidationProtocol.h"
 #endif
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRecurrentValidationProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputValidationProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionValidationProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnModelProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnGraphProtocol.h"
@@ -25,14 +30,18 @@ static uint64 system_time(){static uint64 time=100;return ++time;}
 #include "decoder_validation_probe_lock.inc"
 #include "decoder_validation_call_scope.inc"
 #define dprintf(...) fprintf(stderr,__VA_ARGS__)
-#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+#include "gdn_recurrent_validation_control.inc"
+#elif defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
 #include "gdn_input_validation_control.inc"
 #else
 #include "decoder_validation_control.inc"
 #endif
 #define geteuid() callerUid
 #include "decoder_validation_route_prelude.inc"
-#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+#include "gdn_recurrent_validation_routing.inc"
+#elif defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
 #include "gdn_input_validation_routing.inc"
 #else
 #include "decoder_validation_routing.inc"
