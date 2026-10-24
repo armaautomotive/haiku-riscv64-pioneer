@@ -1,6 +1,7 @@
 #!/bin/sh
 # Separate OFFLINE NEW ABI/image ONLY;NO driver/card/native selection.
 set -eu
+[ "${PIONEER_Q38_NEXT_GDN_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_CONV_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_PROJECTION_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_PROJECTION_NEXT_ROOT+x}" != x ] || exit 2

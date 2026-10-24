@@ -123,6 +123,22 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
   return true;
  }
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+ std::unique_ptr<GatedNativeCohort> nextGated;bool nextGdnStarted[120]={};unsigned nextGdnStarts=0,nextGdnFault=0;bool nextGdnFaulted=false;
+ bool NextGdnInstalled(){
+  if(!current || current>96 || !gdnImage || !decoderPlan || !decoderHistory || nextConvStarts!=120
+   || FullRead(current,TT_Q38_GDN_INPUT_DESCRIPTOR+5*4)!=1)return false;
+  for(unsigned w=0;w<120;w++)if(!nextConvRunning[w] || nextConvPc[w]!=0x64038)return false;
+  for(unsigned i=0;i<PioneerQ38ProjectionGraphCodeWords(current);i++){
+   uint32_t a=PioneerQ38ProjectionGraphCodeAddress(current,i),expected=a==0x6000?PioneerQ38GdnRendezvousImageWord(0):
+    a>=0x64000 && a-0x64000<TT_Q38_GDN_RENDEZVOUS_TEXT_BYTES?PioneerQ38GdnRendezvousImageWord(1+(a-0x64000)/4):
+    a>=0x64000 && a-0x64000<TT_Q38_CONV_BATCH_TEXT_BYTES?PioneerQ38ConvBatchCodeWord((a-0x64000)/4):
+    PioneerQ38NextProjectionGraphProgramAddress(current,a)?PioneerQ38NextProjectionGraphProgramWord(current,a):0;
+   if(PioneerQ38ProjectionGraphProgramImmutable(current,a) && FullRead(current,a)!=expected)return false;
+  }
+  return true; // actual prior120 CBO executions+actual installed next-layer image/descriptor,not result phase
+ }
+#endif
 #if defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDUAL_RMS_NATIVE)
  bool OutputInstalled(){
   if(!output || FullRead(current,0x6000)!=0x0006c06f)return false;
@@ -302,6 +318,13 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Code:assert(!a);return p.C().entry;
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(p.nextGdnStarted[p.current]){
+    assert(p.C().coreReset==0x46800); // catch ANY held-PC sampling by the actual owner
+    if(p.nextGdnFault==5 && !p.nextGdnFaulted && p.current==96 && p.LocalRead(0x17ffc8)==TT_Q38_GDN_RENDEZVOUS_MARKER){p.nextGdnFaulted=true;return 0x64058;}
+    return p.nextGated->Pc(p.current);
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    if(p.nextConvRunning[p.current]){
     assert(p.C().coreReset==0x46800);
@@ -378,6 +401,22 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #endif
    if(p.C().coreReset==0x46800)p.machine->Advance(p.current);return p.machine->Pc(p.current);
   case Status:
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(p.nextGdnStarted[p.current]){
+    if(!p.nextGdnFaulted && p.current==96 && a==2 && p.decoderResult->phase==39
+     && p.LocalRead(0x17ffc8)==TT_Q38_GDN_RENDEZVOUS_MARKER && (p.nextGdnFault==11 || p.nextGdnFault==12)){
+     p.nextGdnFaulted=true;
+     if(p.nextGdnFault==11)p.now+=30000001;else{assert(p.now);p.now--;}
+    } // actual completed worker96 marker returned with late/rollback CPU clock;NO forged ready/receipt
+    if(!p.nextGdnFaulted && p.current==96 && p.LocalRead(0x17ffc8)==TT_Q38_GDN_RENDEZVOUS_MARKER
+     && (p.nextGdnFault==4 || p.nextGdnFault==8 || p.nextGdnFault==9 || p.nextGdnFault==10)){
+     p.nextGdnFaulted=true;unsigned address=p.nextGdnFault==4?TT_Q38_RGDN_SUMMARY+4*4:p.nextGdnFault==8?0x72000:
+      p.nextGdnFault==9?TT_Q38_GDN_GATED_PEER_READY+2*4:TT_Q38_GDN_RENDEZVOUS_CLOCK+7*4;
+     p.WriteLocal(96,address,p.ReadLocal(96,address)^1);
+    }
+    return p.LocalRead(0x17ffc0+a*4);
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    if(p.nextConvRunning[p.current]){
     if(!p.nextConvFaulted && p.current==119 && p.decoderResult->phase==34
@@ -546,6 +585,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  switch(kind){
   case SetTlb:p.C().DramTlbWrite(a,b,v);return;
   case SetLocal:
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(p.nextGdnFault==6 && !p.nextGdnFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
+    p.nextGdnFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    if(p.nextConvFault==6 && !p.nextConvFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
     p.nextConvFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
@@ -591,6 +635,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    if(p.fault==10 && p.result && p.result->phase==9 && p.current==119 && a==2039)v^=1;
    if(a>=2032 && a<2040)p.LocalWrite(0x17e000+a*4,v);else p.C().ResidentL1Write(a,v);return;
   case SetCode:assert(!a);
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(p.nextGdnFault==1 && !p.nextGdnFaulted && p.decoderResult && p.decoderResult->phase==37 && p.current==1 && v==PioneerQ38GdnRendezvousImageWord(0)){
+    p.nextGdnFaulted=true;p.C().RuntimeCodeWrite(0,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    if(p.nextConvFault==1 && !p.nextConvFaulted && p.decoderResult && p.decoderResult->phase==32 && !p.current && v==PioneerQ38ConvBatchImageWord(0)){
     p.nextConvFaulted=true;p.C().RuntimeCodeWrite(0,v^1);return;
@@ -628,6 +677,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #endif
    p.C().ResidentNocWrite(a,v);return;
   case SetPanel:
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(p.nextGdnFault==2 && !p.nextGdnFaulted && p.decoderResult && p.decoderResult->phase==37 && p.current==1 && a==TT_Q38_GDN_INPUT_DESCRIPTOR+5*4){
+    p.nextGdnFaulted=true;p.LocalWrite(a,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    if(p.nextConvFault==2 && !p.nextConvFaulted && p.decoderResult && p.decoderResult->phase==32
     && !p.current && a==TT_Q38_CONV_BATCH_TABLE+5*4){
@@ -677,6 +731,24 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    }
 #endif
    p.C().coreReset=v;p.C().resets.push_back(v);
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(p.nextGdnFault==13 && !p.nextGdnFaulted && p.current==96 && p.nextGdnStarted[96]
+    && p.decoderResult->phase==40 && v==0x87ffff){
+    p.nextGdnFaulted=true;p.now+=30000001; // actual final worker's first hold reset BEFORE observing expiry
+   }
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   if(v==0x46800 && p.NextGdnInstalled()){
+    assert(!p.nextGdnStarted[p.current] && p.learned && p.learned->Ready());
+    if(!p.nextGated)p.nextGated.reset(new GatedNativeCohort(p.gdnImage,*p.decoderPlan,p.decoderBank,p,*p.decoderHistory));
+    p.nextGated->Start(p.current);p.nextGdnStarted[p.current]=true;p.nextGdnStarts++;
+    if(p.current==1 && !p.nextGdnFaulted && (p.nextGdnFault==3 || p.nextGdnFault==7)){
+     if(p.nextGdnFault==3)p.C().source[11]^=1;else p.now+=30000001;
+     p.nextGdnFaulted=true; // AFTER actual first stream release,BEFORE its emitted instructions
+    }
+    return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    if(v==0x46800 && p.NextConvInstalled()){
     assert(!p.nextConvRunning[p.current] && p.decoderImage && p.decoderPlan && p.decoderHistory && p.learned && p.learned->Ready());
@@ -870,6 +942,9 @@ uint32_t* ProjectionNativeTransport::PanelSaved(){auto& p=*implementation;p.Touc
 uint32_t* ProjectionNativeTransport::Backup(unsigned words){auto& p=*implementation;p.Touch();return p.C().HostReadBackup(words);}
 void ProjectionNativeTransport::Quarantine(){implementation->quarantined=true;} // MEMORY ONLY
 void ProjectionNativeTransport::Pause(){implementation->now++;
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+ if(implementation->nextGated){implementation->nextGated->Advance();return;}
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
  for(unsigned w=0;w<120;w++)if(implementation->nextConvRunning[w])return;
 #endif
@@ -960,6 +1035,16 @@ bool ProjectionNativeTransport::NextConvFaultInjected()const{return implementati
 unsigned ProjectionNativeTransport::NextConvStarts()const{return implementation->nextConvStarts;}
 void ProjectionNativeTransport::VerifyNextConv(){auto& p=*implementation;assert(p.nextConvStarts==120);
  for(unsigned w=0;w<120;w++)assert(p.nextConvRunning[w] && p.nextConvPc[w]==0x64038 && p.core[w]->coreReset==0x47800);
+}
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+void ProjectionNativeTransport::NextGdnFault(unsigned kind){auto& p=*implementation;
+ assert(kind>=1 && kind<=13 && !p.nextGdnFault && !p.nextGdnStarts && p.nextConvStarts==120);p.nextGdnFault=kind;
+}
+bool ProjectionNativeTransport::NextGdnFaultInjected()const{return implementation->nextGdnFaulted;}
+unsigned ProjectionNativeTransport::NextGdnStarts()const{return implementation->nextGdnStarts;}
+void ProjectionNativeTransport::VerifyNextGdn(){auto& p=*implementation;assert(p.nextGated && p.nextGdnStarts==96);
+ for(unsigned w=0;w<120;w++)assert(p.core[w]->coreReset==0x47800 && (w && w<=96?p.nextGdnStarted[w] && p.nextGated->Pc(w)==0x64038:!p.nextGdnStarted[w]));
 }
 #endif
 void ProjectionNativeTransport::FfnFault(unsigned kind){

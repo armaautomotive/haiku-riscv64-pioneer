@@ -1,6 +1,7 @@
 Fixed monotonic CPU deadline helper,2026-10-24.
-Standalone DATA component ONLY;not yet integrated into native61 and not
-a new driver,source/ready capability,card execution or speed result.
+CPU clock DATA component,now privately integrated into the qualified
+OFFLINE native61 component. NOT a linked/installed driver,source/ready
+capability,physical card execution or speed result.
 Full27B/20tok/s/persistent on-card token-loop objective remains UNMET.
 
 PioneerQ38HostDeadline records one fixed30,000,000us interval. Begin is
@@ -12,13 +13,16 @@ owner must still obtain CPU clock observations before/after bounded card
 operations and quarantine without further card IO on refusal. The helper
 itself never reads time,changes a device or grants cleanup authority.
 
-Purpose:close the new next-layer GDN polling gap. Its current unqualified
-prototype checks the outer attempt deadline but can spend too long inside
-one worker/receipt sweep. This helper is intended for per-worker and
-post-status/receipt checks AFTER the running prototype test actually
-terminates;no live test dependency has been changed to include it.
-The genuine full-prefix native61 late-worker deadline endpoint test and
-new native61 SDK builds remain REQUIRED before integration qualification.
+Purpose:close the next-layer GDN polling gap. The earlier prototype
+checked the outer attempt but could spend too long inside one worker/
+receipt sweep. ONLY after prototype test96894 actually terminated,added
+per-worker and post-status/receipt/release/hold/final-proof observations.
+No live test dependency was changed. Current native61 SDK D/E both passed,
+byte-identical4ad49c.../maxNewFrame736B. Full genuine-prefix/13endpoint-
+faults/829632numerical-values/8330680restore+verify/actualEND B56065 then
+actually terminated0. Late-status expiry,clock rollback and expiry during
+the final hold each stopped with all owners retained/ZERO following IO.
+See qwen38-next-gdn-native-20261024.txt for complete integration evidence.
 
 Standalone ASan/UBSan test B:actual terminal0,20542 checks across zero,
 ordinary and maximum valid start values;strict expiry equality;4096
@@ -39,11 +43,11 @@ object hashes and cmp confirm byte-identical A/B:
   /private/tmp/pioneer-q38-host-deadline-sdk-20261024-a.log
   sh tools/pioneer/tests/run_pioneer_q38_host_deadline_kernel_compile.sh \
     /Volumes/HaikuBuildLocal/generated.riscv64
-These standalone units do NOT compile/link/install a new driver or prove
-the future native61 integration. Built while full native61 test96894 was
+These standalone units do NOT compile/link/install a new driver or alone
+prove the native61 integration. Built while full native61 test96894 was
 confirmed LIVE;none of that test's dependencies were changed.
 
 Prototype test A terminated1 at compilation because the test omitted
 <initializer_list>. Added that explicit TEST include before starting B.
 No driver,reference,numerical tolerance,Work/Assistant mode or card state
-was changed by that repair. Complete native61 integration is still pending.
+was changed by that repair. Full-model/physical qualification remains open.

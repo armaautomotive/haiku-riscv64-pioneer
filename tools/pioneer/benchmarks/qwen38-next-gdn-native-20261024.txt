@@ -1,0 +1,142 @@
+SAME native61 next-layer GDN,2026-10-24.
+QUALIFIED OFFLINE COMPONENT:revised SDK/full numerical execution/13faults/
+restore/END PASSED. NOT a linked/installed driver or Work mode.
+Full20tok/s/persistent all-layer token-loop objective remains UNMET.
+Last physical whole-model0.207893161tok/s remains unchanged.
+
+Exact PIONEER_Q38_NEXT_GDN_NATIVE=1/tag2026102400010061,requires actual
+native60 and ALL its native parents. SAME decoder claims its genuine
+private layer1 convolution output BEFORE endpoint IO. A distinct private
+layer1 recurrent plan derives current0/privateNEXT1 extents from the SAME
+real initialized owner. Original layer0 ClaimFirstLayer/publication stays
+immutable;separate private LayerProgress is bound only after that genuine
+first-layer proof. NO current-state/token flip or fabricated initial ready.
+
+Requires all3 ORIGINAL layer1 F32 A/dt/norm pages BEFORE Bind,again before
+claim and per-worker launch. SAME original8330680-word saved snapshot,
+120-core source/host/map/clock leases and genuine retained Z/raw residual
+survive. Heap recipes/receipts only,not CPU products or duplicate snapshots.
+Pinned QGT1 overlays1..96;all remaining mixed immutable program words and
+untouched0/97..119 CBO workers remain tracked. Fresh32-word self+peer ready
+cells and clocks precede release. Independent input/state/gated summaries,
+self+peer stamps,clock receipts,source/code/tables/commands/counters and
+ALL120 holds precede private layer1 NEXT/gated-output publication.
+Held workers are never sampled for a live PC. Failure retains everything
+without later card IO/reset/restore/retry/END. Close must restore AND verify
+the original full snapshot before real END.
+
+Current revised version privately uses the separately tested fixed30s
+PioneerQ38HostDeadline. Begin precedes first release;monotonic/strict-
+expiry observations bracket each release,Guard,per-worker status,receipt,
+PC/Pause,hold and final publication proof. Any observed uncertainty or
+expiry stops before further card IO. Revised SDK proof passed below;
+full revised runtime proof also passed below. Standalone helper checks
+alone do not prove integration;the genuine full-prefix test does.
+
+Earlier native61 compile A58252 TERMINAL0/maxNewFrame736B:
+  object972d8325b198038f91d71c459e50a5bd24553e1507932445e2e54e91a268647c.
+Then added retained claim-epoch proof to actual CLOSED owner/END.
+SDK B35115/C70691 TERMINAL0,independent hashes/cmp BYTE-IDENTICAL:
+  /private/tmp/pioneer-q38-next-gdn-native-20261024.xuYQFizJ/{b,c}/
+    next-gdn-NATIVE61-COMPILE-ONLY.o
+  SHAb2acab2f0560f683e9e49c8c5c89eb1bbac5e889404c5ec358b742827ecc794c.
+  maxNewFrame736B,all new<=2048B;old oversized frames nongrowing.
+  ALL inherited native60/59/older/default controls EXACT;native60 still
+  de4f20f243e4796fd9945d0c5acd2ff245d282db2733c0e60a48e844fb431ab9.
+  B log3a2619347feca3db5a27147c54337251421838b4a40ba6202027492a52f62f02.
+  C logce20e115dc3a79f72bf27ea4d882b31ab515349a3083debab720db7d8483d2be.
+These prototype objects PRECEDE the new per-worker deadline integration.
+
+CURRENT revised SDK D59133/E5884 ACTUAL TERMINAL0,independent hashes and
+cmp BYTE-IDENTICAL after per-worker deadline integration:
+  /private/tmp/pioneer-q38-next-gdn-native-20261024.xuYQFizJ/{d,e}/
+    next-gdn-NATIVE61-COMPILE-ONLY.o
+  SHA4ad49c47be29efba7ac78bf61bddbd9b0a97ec6923306acee374c518dedbf21d.
+  maxNewFrame736B,all new<=2048B;old oversized frames nongrowing.
+  ALL native60/59/older/default controls STILL EXACT,including de4f20...
+  D logb613d097fe0756cb9560861f5ec023d8b8b23947a6c91b1d7ef3bd9d127c0738.
+  E log014d9224bcb44bd8da033d3ab1fddaf3c9baff02c79f59f939cc2c09f276182a.
+These are COMPILE-ONLY objects,not positive native61 execution evidence.
+
+Source cache ASan/UBSan A91345 TERMINAL0:full original c600 SHA/851schema,
+all3 layer1 pages before context,7exact semantic reads+77atomic refusals,
+zero other learned-byte endpoint reads. Separate independent libm observer
+for prepared/state/raw/gated values compiles WITHOUT native flags and is
+never supplied to controllers as an input or readiness grant.
+  /private/tmp/pioneer-q38-next-gdn-source-20261024-a.log
+  SHA36079aee10f05688f2b0e199eac900f2208234a1ed40ab0e0871169067042a2b.
+Exact-role/isolation gates A84974,revised B67058 and final C63446 TERMINAL0:
+  370checks+131072ACTUAL inert public routes;parent/tag/defined-zero/
+  CPU-reference/Work/image mixtures,9reference headers+reinclusion and10old
+  ambient builders refused. Producer cannot default/copy/move construct.
+  SHA42a2efd4475ab13449e87d2d138a82266b6fa2a9350e41fd9cbc4fcc5189b08d.
+Old native60 regression gates D40156 and final E67617 TERMINAL0:349+131072,unchanged hash
+  3df9be273239ad6c70b08ad0e5f7e0dbf34557289abd3aa3757012923dd2551e.
+Old native60 source B48751 TERMINAL0:14exact reads+140atomic refusals.
+  SHAe6c7a79001d5f2ac6fbc4d4261a7e6e1fafccf458b0bdf53e66237940fb5e490.
+
+Prototype full original-model+10faults A96894 TERMINAL1:
+  /private/tmp/pioneer-q38-next-gdn-native-faults-20261024-a.log
+  SHA5117d02a021d024ac9ce5f10f4dab9e708dd703e30e3ea5f629571f94b6f59ca.
+Genuine full prefix through native60 PASSED,including all original weights,
+actual initialized GDN/history,first GDN/output/residual/FFN,next RMS,
+4next projections and640next convolution tiles. New pre-Bind/pre-claim
+missing/corrupt learned-page guards passed. Endpoint faults1/2(boot/table)
+had0starts;3(source after actual first release)had1start/0learned reads,
+and ALL owners retained/ZERO following IO passed for those children.
+Fault4 actually corrupted worker96's completed state summary;the driver
+correctly refused at phase39/worker96 with96actual starts/288learned reads,
+79accepted receipts/0holds/0publication. TEST incorrectly assumed95other
+receipts must have been accepted before worker96 finishes. Cooperative
+streams finish OUT OF ORDER. That assertion aborted child and parent;
+the Python runner then actually terminated1. This was NOT a numerical
+failure,timeout,card failure or evidence of a full positive native61 pass.
+
+ONLY AFTER confirmed termination,corrected the TEST to require actual
+phase39/worker96,partial completion<96 and0holds;no forced execution order,
+fake readiness,numerical tolerance or arithmetic change. Added monotonic
+deadline integration and endpoint faults11late-status clock,12rollback,
+13expiry after final worker's first actual hold reset. Fresh SDK D/E passed
+above. ONLY after BOTH actual terminal0 and revised gatesB0,started full
+genuine-prefix/13faults/parent-positive/restore/END B56065:ACTUAL TERMINAL0.
+  /private/tmp/pioneer-q38-next-gdn-native-faults-20261024-b.log
+  SHA883360bcbda0bd537372d4a185b1798c3dabcb0fe9f88fa8ea31b8faeb764159.
+No dependency was edited while it remained live;observation timeouts
+were not treated as termination or a reason to restart it.
+
+Current full positive execution:phase41/worker96,installed96/armed96/
+released96/completed96/held96/published1/unsafe0. ALL120 cores held,including
+untouched0/97..119. Actual96pinnedQGT1 streams consumed288ORIGINAL layer1
+A/dt/norm reads. Independent original-weight/libm observer checked ALL
+829632prepared+state+raw+gated values with unchanged3e-6scaled bound and
+explicit positive lambda/beta/FTZ checks. Both self and cached peer stamps,
+clock receipts and all3summaries proved. Typed new producer bound to SAME
+owner/cohort and expired after restore;old convolution producer expired
+at claim. Canonical CURRENT,all unrelated state regions,history and all
+unrelated2MiB workspace words remained unchanged. First-layer proof stays
+historical0,never retagged to layer1. Actual Close restored8330680original
+words AND independently verified8330680,phase9/unsafe0;actual END passed.
+This is emitted-instruction simulation with original bytes,NOT physical
+card execution/time or whole64-layer inference qualification.
+
+ALL13 actual endpoint failures injected and refused,with ALL owners,
+snapshots,host/map/clock leases retained and ZERO following card IO/reset/
+restore/retry/END after failure:
+  1boot/2table:0starts,0learned reads.
+  3source/7first-release expiry:1actual stream,0learned reads,0accepted
+    release/completion/hold/publication counts;phase38/worker1.
+  4summary/5terminalPC/8immutabletail/9peer-ready/10clock-receipt/
+    11late-status expiry/12clockrollback:96actual starts,288learned reads,
+    phase39/worker96,79accepted receipts,0holds/0publication. Cooperative
+    out-of-order completion preserved;no false requirement of95receipts.
+  6original-restore corruption:genuine96receipt+hold/publication first,
+    then phase7/worker119/word67592 failure;ALL resources retained.
+  13latehold expiry:96completed,95held,0publication at phase40/worker96;
+    no second hold/reset/cleanup attempt after detecting the deadline.
+
+No new61 hardware/relay/SD/mains/Assistant/CPU/RAM action. Physical DEBUG52
+numerical-context issue remains unresolved;recovery is separately waiting
+for actual fans/LEDs OFF confirmation after one authorized OFF hold.
+Remaining full offload includes later projections/residual/FFN/layers,
+full attention/KV,final normalization/logits/sampling and persistent on-card
+token execution. Actual whole-model inference must be benchmarked afterward.

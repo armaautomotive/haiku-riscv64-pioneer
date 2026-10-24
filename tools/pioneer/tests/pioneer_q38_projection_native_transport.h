@@ -58,6 +58,10 @@ public:
  void VerifyNextConv();
  void NextConvFault(unsigned);bool NextConvFaultInjected()const;unsigned NextConvStarts()const;
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+ void VerifyNextGdn();
+ void NextGdnFault(unsigned);bool NextGdnFaultInjected()const;unsigned NextGdnStarts()const;
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

@@ -18,6 +18,9 @@
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
     && !(nextConv && phase>=32 && phase<=36)
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+    && !(nextGdn && phase>=37 && phase<=41)
+#endif
     )
    || nextProjection->slot>=4 || !nextProjection->graph)return false;
   const auto* m=nextProjection->graph->Manifest();

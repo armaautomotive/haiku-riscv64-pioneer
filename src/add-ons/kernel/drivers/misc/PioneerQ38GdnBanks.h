@@ -7,6 +7,9 @@
 #include "PioneerResidentBanks.h"
 #include "PioneerQ38GdnIdentity.h"
 #include "PioneerQ38GdnZeroProgress.h"
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+#include "PioneerQ38GdnLayerProgress.h"
+#endif
 struct PioneerResidentLease;
 struct PioneerBulkUploadLease;
 struct PioneerOutputBufferLease;
@@ -56,6 +59,27 @@ class PioneerQ38GdnBanks {
   if(layerNextPublished || !OwnsFirstLayer(owner,id,phase))return false;
   layerNextPublished=true;return true; // private layer0/position0/slot1 ONLY;NEVER current-slot/token flip
  }
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+ PioneerQ38GdnLayerProgress nextLayers;bool nextLayersBound=false;
+ bool ClaimNextLayer(const void* who,const PioneerQ38GdnIdentity& id,unsigned layer,unsigned phase){
+  if(layer!=1 || phase<=layerPhase || phase>=0x7fffffff || !layerNextPublished || !OwnsFirstLayer(who,id,layerPhase))return false;
+  if(!nextLayersBound){
+   if(!nextLayers.BindAfterFirstLayer(who,id,layerPhase))return false;
+   nextLayersBound=true;
+  }
+  return nextLayers.ClaimNext(who,id,layer,phase);
+ }
+ bool OwnsNextLayer(const void* who,const PioneerQ38GdnIdentity& id,unsigned layer,unsigned phase)const{
+  return layer==1 && nextLayersBound && layerNextPublished && OwnsFirstLayer(who,id,layerPhase)
+   && (nextLayers.OwnsPending(who,id,layer,phase) || nextLayers.Published(who,id,layer,phase));
+ }
+ bool PublishNextLayer(const void* who,const PioneerQ38GdnIdentity& id,unsigned layer,unsigned phase){
+  return OwnsNextLayer(who,id,layer,phase) && nextLayers.PublishNext(who,id,layer,phase);
+ }
+ bool NextLayerPublished(const void* who,const PioneerQ38GdnIdentity& id,unsigned layer,unsigned phase)const{
+  return OwnsNextLayer(who,id,layer,phase) && nextLayers.Published(who,id,layer,phase);
+ }
+#endif
 #endif
  static unsigned Ordinal(unsigned layer) { return layer<64 && layer%4!=3?layer-layer/4:~0U; }
  bool Resolve(unsigned region,unsigned firstPage,unsigned pages,PioneerQ38GdnBankExtent& output) const {
@@ -158,7 +182,12 @@ public:
  bool InitializationPublished(const PioneerQ38GdnIdentity& id) const {
   return Matches(id) && initializationPublished; // zero-init/CLOSE seal ONLY,NOT compute/read/model authority
  }
- void Fault() { unsafe=true; initializationPublished=false; zeroProgress.Fault(); if (banks) banks->Quarantine(); } // NO release/reset/I/O
+ void Fault() {
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+  nextLayers.Fault();
+#endif
+  unsafe=true; initializationPublished=false; zeroProgress.Fault(); if (banks) banks->Quarantine();
+ } // NO release/reset/I/O
  bool Unsafe() const { return unsafe || (banks && banks->Quarantined()); }
 };
 #endif

@@ -14,7 +14,11 @@
    || !(nextProjections.identity==projection->identity) || nextProjections.token!=projection->token || nextProjections.position!=projection->position
    || nextProjections.bank!=projection->bank || nextProjections.layer!=1 || nextConv->layer!=1
    || nextProjections.phase!=nextProjection->graph->Manifest()[13] || nextConv->epoch!=nextProjections.phase+1
-   || ((phase<32 || phase>36) && phase!=7 && phase!=8)
+   || ((phase<32 || phase>36) && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+    && !(nextGdn && phase>=37 && phase<=41)
+#endif
+    )
    || nextProjections.resultAddress!=nextInput.normalizedAddress+TT_Q38_PROJECTION_RESULT_BASE || nextProjections.residualAddress!=nextInput.residualAddress)return false;
   for(unsigned i=0;i<16;i++)if(nextProjections.source[i]!=projection->cohort->authority.source[0][i])return false;
   return true; // immutable private recipe storage checked per worker before launch

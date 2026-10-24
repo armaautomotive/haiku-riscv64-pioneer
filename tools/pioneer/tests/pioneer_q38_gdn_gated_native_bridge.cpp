@@ -13,7 +13,7 @@ struct NativeGatedMachine:GatedNativeBase {
  ProjectionExecutionFabric& fabric;DecoderHistoryBytes& state;unsigned worker;
  std::array<uint32_t,16> learnedBlock[2];bool learnedRead[2]={},normRead=false;
  NativeGatedMachine(const char* image,const PioneerQ38CanonicalModelPlan& p,unsigned w,unsigned bank,ProjectionExecutionFabric& f,DecoderHistoryBytes& s)
-  :GatedNativeBase(image,p,0,w-1,bank),fabric(f),state(s),worker(w){
+  :GatedNativeBase(image,p,f.ReadLocal(w,TT_Q38_GDN_INPUT_DESCRIPTOR+5*4),w-1,bank),fabric(f),state(s),worker(w){
   assert(w && w<=96 && fabric.LearnedBytes() && fabric.LearnedBytes()->Ready() && fabric.Reset(w)==0x46800);
   for(unsigned i=0;i<64;i++){
    inputDescriptor[i]=fabric.ReadLocal(w,TT_Q38_GDN_INPUT_DESCRIPTOR+i*4);

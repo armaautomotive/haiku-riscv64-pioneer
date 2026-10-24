@@ -85,6 +85,10 @@
 #include "PioneerQ38NextConvState.h"
 static __attribute__((noinline)) bool PioneerQ38NextConvLearned(const PioneerQ38CanonicalModelPlan&,const uint8_t*,unsigned);
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+#include "PioneerQ38NextGdnState.h"
+static __attribute__((noinline)) bool PioneerQ38NextGdnLearned(const PioneerQ38CanonicalModelPlan&,const uint8_t*,unsigned);
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -133,6 +137,9 @@ struct PioneerQ38ResidentDecoderResult {
 #endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
  uint32_t nextConvInstalled=0,nextConvArmed=0,nextConvReleased=0,nextConvCompleted=0,nextConvHeld=0,nextConvPublished=0;
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+ uint32_t nextGdnInstalled=0,nextGdnArmed=0,nextGdnReleased=0,nextGdnCompleted=0,nextGdnHeld=0,nextGdnPublished=0;
 #endif
 #if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
@@ -246,6 +253,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
    && (!nextConv || NextConvData())
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   && (!nextGdn || NextGdnData())
+#endif
    && projection->Scope(io) && io.ResidentDecoderScope(*this,*projection,*history)
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
    && (!gdnAttempted || (recurrent && io.ResidentGdnRecurrentScope(*this,*projection,*recurrent)))
@@ -276,6 +286,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Image(IO& io,unsigned w){
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+  if(nextGdn && nextGdn->image[w])return NextGdnImage(io,w);
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
   if(nextConv && nextConv->image[w])return NextConvImage(io,w);
 #endif
@@ -322,6 +335,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Current(IO& io,unsigned w){
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+  if(nextGdn && nextGdn->image[w])return NextGdnCurrent(io,w);
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
   if(nextConv && nextConv->image[w])return NextConvCurrent(io,w);
 #endif
@@ -714,6 +730,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
 #include "PioneerQ38NextConvOwner.h"
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+#include "PioneerQ38NextGdnOwner.h"
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38GdnOutputValidationOwner.h"
 #endif
@@ -753,6 +772,9 @@ public:
 #endif
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
    && gatedPublished
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   && !nextGdn && (!nextGdnClaimEpoch || recurrent->NextLayerPublished(this,p.identity,1,nextGdnClaimEpoch))
 #endif
    && p.MatchesClosedNativeOwner(*p.proof,*p.banks,*p.cohort,*p.memory,*p.graph,*p.canonical,*p.input,p.identity,p.ledger,p.pages);
  } // exact CLOSED objects BEFORE legacy END,not a caller clean/ready hint
@@ -1071,7 +1093,14 @@ public:
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
-#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+   || (nextGdn?(phase!=41 || !nextAttention.Current()):
+    (nextConv?(phase!=36 || !nextConvolution.Current()):
+     (nextProjection?(phase!=31 || !nextProjections.Current()):
+      (nextRms?(phase!=26 || !nextRms->done || !nextInput.Current()):
+       (ffn?(phase!=24 || !ffn->done || !ffn->stopped || !ffnHidden.Current()):
+        (residual?(phase!=18 || !residual->done || !postAttention.Current()):(output?(phase!=16 || !output->done || !output->stopped):phase!=12)))))))
+#elif defined(PIONEER_Q38_NEXT_CONV_NATIVE)
    || (nextConv?(phase!=36 || !nextConvolution.Current()):
     (nextProjection?(phase!=31 || !nextProjections.Current()):
      (nextRms?(phase!=26 || !nextRms->done || !nextInput.Current()):
@@ -1150,6 +1179,9 @@ public:
   if(r.memory.restoredWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || r.memory.verifiedOriginalWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || !Guard(io,0)
    || !p.state->CloseExecution(p.identity,&p,p.input))return Fail(io,r);
   p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+  delete nextGdn;nextGdn=nullptr;
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
   delete nextConv;nextConv=nullptr;
 #endif
@@ -1231,6 +1263,24 @@ static __attribute__((noinline)) bool PioneerQ38NextConvLearned(const PioneerQ38
   stripes++;rows+=p->rows;
  }
  return stripes==7 && rows==10240;
+}
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+inline bool PioneerQ38NextGdnProducer::Current()const{return owner && owner->MatchesNextAttention(*this);}
+inline bool PioneerQ38NextGdnProducer::MatchesCohort(const PioneerQ38DispatchLease& cohort)const{return owner && owner->MatchesNextAttentionCohort(*this,cohort);}
+static __attribute__((noinline)) bool PioneerQ38NextGdnLearned(const PioneerQ38CanonicalModelPlan& plan,const uint8_t* ledger,unsigned pages){
+ if(!plan.Ready() || !ledger || pages!=PioneerResidentBanks::Pages)return false;
+ unsigned mask=0;
+ for(unsigned i=0;i<plan.Count();i++){
+  const auto* p=plan.Part(i);if(p->kind!=plan.WeightKind || p->layer!=1 || p->role<7 || p->role>9)continue;
+  unsigned bit=1U<<(p->role-7),bytes=p->role==9?512:192;
+  if((mask&bit) || p->type || p->bank>=7 || p->firstRow || p->rows!=1 || p->bytes!=bytes || p->rowBytes!=bytes
+   || p->allocated!=4096 || (p->offset&4095) || p->offset>=plan.Capacity || p->allocated>plan.Capacity-p->offset)return false;
+  unsigned at=p->bank*unsigned(plan.Capacity/4096)+p->offset/4096;
+  if(at>=pages || ledger[at]!=1)return false;
+  mask|=bit;
+ }
+ return mask==7;
 }
 #endif
 #if defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDUAL_RMS_NATIVE)

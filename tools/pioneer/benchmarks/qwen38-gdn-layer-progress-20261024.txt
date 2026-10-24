@@ -1,6 +1,7 @@
 GDN per-layer private-NEXT bookkeeping helper,2026-10-24 UTC.
-CPU METADATA ONLY;not integrated into a native context/driver or Work path.
-This does NOT qualify next-layer GDN execution/full offload or any speedup.
+CPU METADATA ONLY;now privately integrated into the qualified OFFLINE
+native61 next-layer GDN component,NOT a linked/installed driver or Work path.
+Standalone bookkeeping alone does NOT qualify native execution or speed.
 20tok/s remains UNMET;last physical whole-model0.207893161tok/s unchanged.
 
 Motivation:the existing native first-layer claim/publication must remain
@@ -18,10 +19,10 @@ Snapshot outputs remain untouched on refusal. Noncopyable/nonmovable.
 
 BindAfterFirstLayer records ONLY metadata supplied by its caller. It cannot
 mint/replace native OwnsFirstLayer,initialized-state,producer,read or compute
-authority. FUTURE integration MUST embed this ledger privately,first prove
+authority. Native61 embeds this ledger privately,first proves
 the SAME actual first-layer publication and initialization,then require the
 actual layer1 convolution producer/learned bytes/receipts/ALLcore holds for
-each new transition. It deliberately does NOT prove intervening full-
+the new transition. It deliberately does NOT prove intervening full-
 attention layers3/7/...ran,or commit token/current slots. No Reset/rebind.
 
 Standalone ASan+UBSan C TERMINAL0:
@@ -49,7 +50,7 @@ Built independently while native60 fault parent94981 remained live;none of
 that parent's kernel/observer/bridge/transport/factory dependencies changed.
 No hardware/power/network/SD/mains/Assistant/CPU/RAM change.
 
-Required next integration,NOT yet implemented:
+Native61 integration requirements now IMPLEMENTED and qualified OFFLINE:
   Keep first-layer ownership immutable;privately embed separate ledger.
   Require SAME genuine native60 layer1 convolution handoff BEFORE IO.
   Require ORIGINAL layer1 A/dt/norm pages before epoch/claim,not layer0 aliases.
@@ -57,5 +58,8 @@ Required next integration,NOT yet implemented:
   Run actual pinned GDN instructions with those descriptors,all96 new fresh
   readiness cells,all source/code/command/counter/clock receipts and120holds.
   Publish new layer1 output only after those proofs;retain ALL on failure.
-  Repeat remaining model layers/full attention/KV/final logits/sampling and
-  persistent on-card token program;measure actual whole-model card inference.
+  Full genuine-prefix/13faults/829632values/8330680restore+verify/actualEND
+  B56065 TERMINAL0;SDKD/E byte-identical4ad49c.../maxNewFrame736B.
+  See qwen38-next-gdn-native-20261024.txt for complete evidence and limits.
+Still REQUIRED:remaining layers/full attention/KV/final logits/sampling,
+persistent on-card token program and actual whole-model card benchmarks.
