@@ -1,5 +1,29 @@
 # Native build status
 
+October24 UTC2026:separate CPU DEBUG55/namespace18 session and executable
+IMPLEMENTED/OFFLINE qualified,NOT installed/physical/Assistant/Work inference.
+Original GDN1675references BEFORE FD;ALL829632returned GDN values pass
+UNCHANGED strict bounds FIRST;then320original ssm_out reads derive reference
+from validated ACTUAL gated6144 values. ALL3072operands+192scales+5120rows
+BIT-EXACT;no CPU products uploaded/substituted.31878originalpages/149spans/
+157calls/explicit validated-only END;first unknown CLOSE ONLY,no later IO.
+64word first-failure snapshot;two SAME-model tiny accepted GDN perturbations
+straddle Q8 rounding boundary and both validate DIFFERENT actual outputs.
+ASan/UBSan5positives/210faults+actual-main6invalid CLI shapes PASS;161role/
+reinclude/builder gates with correct argv and default/zero controls PASS.
+RISC-V C/D clients EXACTac2e90ca;old52client EXACTff38e5f3/3+15reference/
+4+196session regression PASS/log EXACT30fc1841. Native55/54gates unchanged
+221/242+131072routes each;output reference85gates/190460halves/96domains/
+4projections/49refusals PASS. ALL jobs terminal. ZERO PioneerIO/power/SD/
+Assistant changes;historical quarantine/restorepending NOT freshly rechecked.
+Power OFF NON-IDEMPOTENT:ONE only if actuallyON,verifyOFF,thenONEON;never
+repeat OFF after software shutdown/SSH loss. Saved-work confirmation still
+required before recovery. Whole27B0.207893161tok/s/20UNMET/goalACTIVE.
+NEXT physical52 recovery/first-failure diagnosis and controlled qualification;
+residual/postRMS/FFN/fullattentionKV/all64layers/sampling/persistent whole-
+token schedule remain OWED. No inference speedup claim. Evidence:
+benchmarks/qwen38-gdn-output-client-20261024.txt.
+
 October24 UTC2026:separate DEBUG55/namespace18 fixed output qualification
 driver BUILT/OFFLINE qualified,NOT installed/physical/Assistant/Work client.
 SAME actual native54 owner;GDN829632LOCAL values BEFORE image switch while

@@ -1,0 +1,144 @@
+Pioneer Qwen3.8-27B separate CPU DEBUG55 gated-output qualification client
+2026-10-24 UTC
+
+Scope
+-----
+Implements the user-side source/transport/numerical/END session for the
+separate driver qualified at ca8a45947f. Build tag0x2026102400010055,
+namespace18,token0/layer0 executable only. NOT installed or physically
+qualified,NOT a Work/Assistant selector or full-model inference benchmark.
+ZERO Pioneer SSH/accelerator IO/power/boot/SD/Assistant operations here.
+Historical DEBUG52 quarantine/restore-pending state NOT freshly rechecked.
+Whole-model last measured0.207893161tok/s;20tok/s remains unmet;goal ACTIVE.
+
+Production client
+-----------------
+tools/pioneer/PioneerQ38GdnOutputValidationSession.h
+tools/pioneer/pioneer_q38_gdn_output_validation.cpp
+tools/pioneer/build_qwen38_gdn_output_validation_client.sh
+
+Only --validate-token0 accepted. Full original public GGUF/SAME opened file
+SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+required before accelerator Open. No arbitrary paths/digest/download/model
+sampling or fallback.1675 independent original embedding/RMS/projection/
+convolution/GDN reference spans BEFORE accelerator FD;source/epoch/plan
+rechecked around IO and every original-data read. Exact driver55/tag/guard/
+clean ownership/generation/support checked before BANK_BEGIN.
+
+Upload ONLY original tiled bytes,35parts/31878pages,149bounded spans:
+111 earlier spans+38 actual ssm_out spans. Original seven output stripes
+are NOT equal-size:three768row stripes each6spans,four704row stripes each
+5spans. An initial offline count146 failed safely before SPAN_END;corrected
+to149 without changing transfer sizes,limits or numerical checks.
+Successful session157calls including149uploads/SPAN_END/validate/BANK_END.
+
+Snapshot ALL64 returned header words using CPU memory only,even if call/
+source check failed. Exact metadata/reserved checks;actual session and
+aggregate elapsed nonzero rather than caller-predicted. ALL829632returned
+GDN values must pass unchanged original absolute/relative/FTZ bounds FIRST.
+No output reference invoked for rejected header or GDN value.
+
+Only after GDN/source pass:gather actual6144 gated values,read320 ORIGINAL
+ssm_out packed row spans and independently quantize/project those ACTUAL
+values. ALL3072 packed native operands,192finite scales and5120finite
+ssm_out output rows must match BIT-EXACT. Total1995 reference spans.
+Small permitted GDN errors may cross Q8 rounding boundaries;the predicted
+GDN reference is deliberately NOT substituted for accepted actual values.
+No CPU reference/result is ever uploaded or replaces any returned value.
+
+First reason/op/word/expected+actual bits/64word header retained;no diagnostic
+card reads. First unknown:once-only CLOSE and no END/reset/retry/status IO.
+Finish requires completed numerical validation;early/reentrant Finish is
+inert. Normal explicit BANK_END requires exact clean result then one CLOSE.
+Destructor CLOSE ONLY,never implicit END. No native-driver source/image/
+stack/map/ownership or numerical tolerance change.
+
+Five original-reference role guards accept exact separate client55 in
+addition to their existing clients;exact count1/value1 and defined-zero
+native/Work/mixed-client rejection retained. Old scaled-Q input reference
+does NOT accept this new client. Output-reference guard outside include
+guard;session also rechecks exact RMS reference on reinclude.
+Work inference/banks builders reject new client/native55 nonzero,empty or
+malformed environment flags BEFORE SDK lookup with valid argument counts.
+Default/explicit-zero controls still reach SDK lookup;no Work math changed.
+
+Target builds,terminal0
+----------------------
+Read-only SDK:/Volumes/HaikuBuildLocal/generated.riscv64
+Independent final C/D builds,exact same binary:
+ /private/tmp/pioneer-q38-gdn-output-debug-client-20261024-c
+ /private/tmp/pioneer-q38-gdn-output-debug-client-20261024-d
+SHA ac2e90ca86716af5b79e08bdd99e59a6eb04a08484b7b3c4799d1b1e349de7e1
+O2/ffp-contract=off/Werror,no exceptions/RTTI,no llama library or native flag.
+Old DEBUG52 diagnostic client rebuilt terminal0,byte-identical:
+ ff38e5f3e474b5f68961d77eb507e29c4442cd9e565fbc897112d8ec03b8982b
+ /private/tmp/pioneer-q38-gdn-output-client-old52-20261024-b
+Initial A/B client builds had the wrong count146 and are NOT final targets.
+
+Session tests,terminal0
+----------------------
+sh tools/pioneer/tests/run_pioneer_q38_gdn_output_validation_client_tests.sh
+Log:/private/tmp/pioneer-q38-gdn-output-client-tests-20261024-d.log
+SHA21bd3976c4c4073e8b8e64ddba6352e7025ec0cd112808d263d19d2851ae1228
+ASan/UBSan actual production session over synthetic original GGUF bytes and
+literal OS replies;NOT physical-card or original-public-GGUF arithmetic.
+Transport NEVER calls the production numeric references or receives CPU
+products. Every uploaded page and zero unused tail checked byte-exact to
+the original plan/source. Every unexpected/after-first-fault IO asserts.
+
+5positives:tokens0/15/248319 zero fixtures plus two dense SAME-original-
+model cases. Onehot Q=K=1,V127,beta.5/raw63.5/sqrt128;original -128/+127
+output weights preserved. Actual small gated bits3efffffe vs3f000001 both
+within strict GDN bounds but yield DIFFERENT Q8 operands/ssm_out output.
+Both bit-exact downstream validations PASS;at least one fails if predicted
+GDN is substituted. No mock reference callback or CPU-result upload.
+
+210faults:transport/source/epoch at all boundaries,original upload and
+pre/post-reference read failures,all64checked reply fields except two
+unpredictable high words,first/last/middle numeric regions,NaN,bit corruption,
+all checked reload/support/bank/span/upload/END metadata,Open/Close failures,
+invalid logical requests and destructor CLOSE-only. Pre/post reference
+counts prove no projection reference before accepted GDN/header. First
+diagnostic survives Abort/repeated Validate/Finish. Early Finish while BEGIN
+or VALIDATE is active sends no IO;END after valid numeric checks ONLY.
+
+Actual-main test,terminal0
+-------------------------
+sh tools/pioneer/tests/run_pioneer_q38_gdn_output_validation_cli_tests.sh
+Log:/private/tmp/pioneer-q38-gdn-output-client-cli-tests-20261024-a.log
+SHA032c25e7dd648b2cc8d806dd5018c8de69e2b4cd6243c7f1b04721c67405911a
+ASan/UBSan real executable source over forbidden-device/missing-model hooks.
+6invalid argument shapes return2 before any model/device access. Accepted
+token0 uses fixed original-model path;missing model returns1 before Open/
+ioctl/Close. No actual file/device access or numerical/TPS claim.
+
+Role and regression tests,all terminal0
+--------------------------------------
+161new CPU-client/reference/mixed/defined-zero/reinclude/builder gates PASS.
+Log:/private/tmp/pioneer-q38-gdn-output-client-gates-20261024-c.log
+SHA268f144420ccd335969c31946f8e6f0d8f9a4439ba71f2c195ecd02027fe1160
+221native55 gates+131072actual closed public routes PASS,EXACT prior log
+15b7d8c6dce14f841541eaf4eff287ef73c9031cd6dff208b1aa1cfb7b8f43d8.
+242old54 gates+131072actual inert routes PASS,EXACT prior log
+7ba21cfe3ef85ac0c6d538c3f51f639a926cef0411063673afc3e99f3af4e386.
+Old52 reference3positives/15atomic refusals+session4positives/196faults PASS;
+complete log EXACT30fc184161fd218745437d94126b9aabc657c2c09435002d9bb76ff935d6abb8.
+Output reference85gates/190460half boundaries/96quantization domains/
+4complete projections/49atomic refusals PASS ASan/UBSan. Reference math
+unchanged. ALL qualification/build jobs terminal;no observation expiry used
+to restart a live job. No unrelated llama.cpp/FlashNext changes included.
+
+Next / power policy
+-------------------
+Saved-work confirmation still required before physical52 recovery/diagnosis.
+OFF is NON-IDEMPOTENT:a second OFF can start the board. ONE OFF only if
+actually ON,verify actual OFF,then ONE ON. Never send OFF after software
+shutdown or infer power from SSH loss or relay contact status. No extra boot
+pulses. Five-minute rest only if an actual ON attempt fails. User cannot
+operate the physical button;no mains/SD change required.
+Do not install new55/compute/reset/restore while historical quarantine is
+unresolved. First capture old52 diagnostic cause with the already-built
+first-failure client after controlled clean recovery;no unsupported old
+hot-swap allowlist promotion. Then controlled new55 qualification.
+Residual/postRMS/FFN/fullattention+KV/all64layers/sampling/persistent whole-
+token scheduling and honest whole-model performance still required.
