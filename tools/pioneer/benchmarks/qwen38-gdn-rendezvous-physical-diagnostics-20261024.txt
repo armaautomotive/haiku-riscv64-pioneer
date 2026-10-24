@@ -1,0 +1,79 @@
+Qwen3.8-27B QGT1 DEBUG52 first physical result and CPU-only diagnostics
+2026-10-24 UTC. Base05fee68fe83999afbf2342a0f185c6a61de0a3a0.
+NOT a successful component qualification or a new inference benchmark.
+Whole-model last0.207893161tok/s unchanged;20tok/s UNMET;full goal ACTIVE.
+
+One physical original-model test,TERMINAL exit1,no retry:
+  Qualified driver cdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759
+  installed by one guarded stable041/tag12/gen8 -> DEBUG52/tag52/gen9
+  exchange. Independently verified installed hash/idle/cold0 before test.
+  Client83a8caff79ce471d1c26754d05a836696b9a4ffc82ca2978df2e0446cc56a157.
+  Full public GGUF digest and all original references completed before FD.
+  All111 ORIGINAL-weight uploads and spanEND returned status0. Fixed
+  3318720B validation ioctl0x89de returned status0/errno0;client then FAIL:
+    clean_end0 initialization_execution_readback_restore_us257011598
+  This257.011598s is the reported aggregate init/execution/readback/restore
+  duration,NOT token time or a measured kernel-only compute time.
+  Nonzero elapsed is set only after the kernel's success conjunction.
+  The old client emitted no failed field/index/header. Metadata,numeric,
+  source-epoch causes therefore remain unresolved;do NOT assert numeric
+  mismatch or promote the hardware component based on ioctl status alone.
+  No model output/speedup or full resident decoder demonstrated.
+
+Preserved exact on-board log:
+  /boot/home/pioneer-p100a-hot-reload-20261019-a/qgt52-original-card-20261024-a.log
+  SHA256893cd30f6211cf9242e5b89863b4a310f328154cd276dabc0d9925aa1fa72cf5
+  Local identical copy:
+  /private/tmp/pioneer-qgt52-physical-evidence-20261024.VjxOLeLE/qgt52-original-card.log
+
+After failed validation:CLOSE only,no END/reset/rollback/retry/new compute.
+  CPU-only reload metadata:driver55/tag2026102400010052/gen9/quiesced0/
+  cold1/active_owner1/open_count1/guard1. Card resources QUARANTINED.
+  Stable041 restore is PENDING;not safe to hot-restore retained resources.
+  No post-failure card register/live-PC/numeric peeks. Scoped existing
+  syslog tail had no matching QGT fail line;absence does not prove success.
+  Haiku remains SSH-responsive,64CPUs/RAMmax137034936320B;fresh read-only
+  sysinfo at~06:55UTC free132698066944B. No claim of fresh human input test.
+  No power/reboot/SD/mains/Assistant/network changes were made in this run.
+  Recovery waits for saved-user-work confirmation;do not pulse speculatively.
+
+CPU-only diagnostic client update,NOT installed or physically rerun:
+  Preserve FIRST failure reason across Abort/destruction. Distinguish
+  transport/source/reply metadata/nonfinite/absolute bound/relative bound/
+  true-subnormal FTZ/END metadata/close failure. Capture192B/48headerwords
+  from the ALREADY returned CPU buffer,even on a failed ioctl/source check.
+  Numeric faults report first word/half/offset/expected+actual FP32 bits.
+  Print reason/op and the header snapshot only from CPU memory;no diagnostic
+  accelerator queries,END/reset/retry/cleanup grants or automatic rollback.
+  All original numerical bounds/finite/source/ownership/explicit-END checks
+  unchanged. This is DEBUG only;no CPU references added to Work mode.
+  Both fresh RISC-V builds TERMINAL0 and byte-identical:
+  ff38e5f3e474b5f68961d77eb507e29c4442cd9e565fbc897112d8ec03b8982b
+  /private/tmp/pioneer-q38-gdn-diagnostics-client-build-20261024-a.jAIvMy6O/client
+  /private/tmp/pioneer-q38-gdn-diagnostics-client-build-20261024-b.QexDjyP1/client
+  Exact-role/build/routing regression TERMINAL0:234gates/131072actual
+  allowlist probes. Log SHA256
+  35952c23ec948cd91f29fc466b8b156d63d360785e80b909d56f3f6a302bf0ca
+  ASan/UBSan TERMINAL0 (55620):independent reference3positives/15atomic
+  refusals,actual session4positives/196faults. First reason/index/exact bits
+  and all48returned headerwords asserted;source/epoch/transport errors also
+  preserve the buffer snapshot when returned. Repeated Abort preserves the
+  first report and performs no second close/device call. Tiny nonzero gated
+  corruption catches the FTZ contract;close failure has its own report.
+  /private/tmp/pioneer-q38-gdn-diagnostics-client-tests-20261024-b.log
+  SHA25630fc184161fd218745437d94126b9aabc657c2c09435002d9bb76ff935d6abb8.
+  No kernel/protocol/Work/driver/updater edits or relaxed validation gates.
+
+Power is a FRONT BUTTON,not an absolute state setter. OFF is NON-IDEMPOTENT:
+  ONE effective OFF,verify the board is actually OFF,then ONE ON.
+  A second OFF can start the board. Do not infer board state from relay
+  status/SSH loss,or send OFF after software shutdown already powered off.
+  No extra pulses during boot. Five-minute rest ONLY after an actual ON
+  attempt fails. User cannot press the physical button;scripts handle it.
+
+Next:push qualified diagnostics checkpoint,controlled recovery only
+after work saved,verify clean driver/card state,restore stable041 safely.
+Do not repeat the physical experiment before an explicit clean-state
+preflight and a useful diagnostic plan. Full ssm_out producer lease,
+residual/FFN/full attentionKV/all64layers/sampling/persistent token loop
+remain outstanding. No promised20tok/s or claim of full card offload.

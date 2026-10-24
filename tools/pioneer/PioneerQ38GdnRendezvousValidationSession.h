@@ -11,12 +11,48 @@
 // Exact source-bound DEBUG52 session. ALL references BEFORE FD,original
 // tiled weight bytes ONLY on upload. Not inference or a Work fallback.
 template<class IO,class Source=PioneerQ38PublicModelSource>class PioneerQ38GdnRendezvousValidationSession {
+public:
+ enum class Failure {None,SessionContract,SourceChanged,Transport,ReplyMetadata,NonFinite,AbsoluteTolerance,RelativeTolerance,SubnormalFlush,EndMetadata,Close};
+ struct Diagnostics {
+  Failure reason=Failure::None;
+  unsigned op=0,word=UINT32_MAX;
+  uint32_t expected=0,actual=0,reply_header[48]={};
+  bool reply_captured=false;
+ } diagnostics;
+ static const char* FailureName(Failure reason){
+  switch(reason){
+   case Failure::None:return "none";
+   case Failure::SessionContract:return "session_contract";
+   case Failure::SourceChanged:return "source_changed";
+   case Failure::Transport:return "transport";
+   case Failure::ReplyMetadata:return "reply_metadata";
+   case Failure::NonFinite:return "nonfinite_value";
+   case Failure::AbsoluteTolerance:return "absolute_tolerance";
+   case Failure::RelativeTolerance:return "relative_tolerance";
+   case Failure::SubnormalFlush:return "subnormal_flush";
+   case Failure::EndMetadata:return "end_metadata";
+   case Failure::Close:return "close";
+  }
+  return "unknown";
+ }
+private:
  IO& io;Source& source;PioneerQwen38PackedPlan plan;
  int fd=-1;bool attempted=false,failed=false,active=false,finished=false;
  uint64_t epoch=0,generation=0;
  bool Current()const{return source.Ready() && source.Model().Epoch()==epoch && plan.MatchesSource(source.Model());}
- bool Stop(){failed=true;active=false;finished=true;if(fd>=0){io.Close(fd);fd=-1;}return false;}
- template<class T>bool Call(unsigned op,T& value){return Current() && io.Call(fd,op,&value,sizeof(value)) && Current();}
+ bool Record(Failure reason,unsigned word=UINT32_MAX,uint32_t expected=0,uint32_t actual=0){
+  if(diagnostics.reason==Failure::None){diagnostics.reason=reason;diagnostics.word=word;diagnostics.expected=expected;diagnostics.actual=actual;}
+  return false;
+ }
+ bool Stop(Failure reason=Failure::SessionContract,unsigned word=UINT32_MAX,uint32_t expected=0,uint32_t actual=0){
+  Record(reason,word,expected,actual);failed=true;active=false;finished=true;if(fd>=0){io.Close(fd);fd=-1;}return false;
+ }
+ template<class T>bool Call(unsigned op,T& value){
+  diagnostics.op=op;
+  if(!Current())return Record(Failure::SourceChanged);
+  if(!io.Call(fd,op,&value,sizeof(value)))return Record(Failure::Transport);
+  return Current() || Record(Failure::SourceChanged);
+ }
 public:
  tt_q38_embedding_produce result={};
  PioneerQ38GdnRendezvousValidationSession(IO& transport,Source& model):io(transport),source(model){}
@@ -113,7 +149,12 @@ public:
   tt_q38_span_end end={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,end) || end.version!=1 || end.reserved || end.closed!=1 || end.recovery_required)return Stop();
   auto reply=std::make_unique<tt_q38_gdn_rendezvous_validation>();reply->metadata.version=1;reply->metadata.token=token;
-  if(!Call(TT_PCI_PROBE_Q38_GDN_RENDEZVOUS_VALIDATE,*reply))return Stop();
+  bool called=Call(TT_PCI_PROBE_Q38_GDN_RENDEZVOUS_VALIDATE,*reply);
+  // Snapshot only the already-returned CPU buffer,even if the call/source
+  // check failed. Never read the card or send END to diagnose a failed run.
+  static_assert(offsetof(tt_q38_gdn_rendezvous_validation,values)==sizeof(diagnostics.reply_header),"complete fixed header snapshot");
+  memcpy(diagnostics.reply_header,reply.get(),sizeof(diagnostics.reply_header));diagnostics.reply_captured=true;
+  if(!called)return Stop();
   result=reply->metadata;
   if(result.version!=1 || result.token!=token || result.position || result.reserved
    || result.state!=TT_RUNTIME_PASSED || result.closed!=1 || result.input_ready!=1 || result.recovery_required
@@ -125,16 +166,17 @@ public:
    || reply->convolution_workers!=120 || reply->convolution_jobs!=640 || reply->convolution_channels!=10240 || reply->convolution_held!=120
    || reply->input_workers!=96 || reply->input_installed!=96 || reply->input_armed!=96 || reply->input_released!=96
    || reply->input_completed!=96 || reply->input_held!=96 || reply->readback_workers!=96 || reply->readback_words!=829632
-   || reply->saved_words!=8330680 || reply->verified_words!=16661360 || reply->installed_words!=1185912 || reply->restored_words!=8330680)return Stop();
+   || reply->saved_words!=8330680 || reply->verified_words!=16661360 || reply->installed_words!=1185912 || reply->restored_words!=8330680)return Stop(Failure::ReplyMetadata);
   for(unsigned i=0;i<829632;i++){
    double actual=PioneerAttentionFloat(reply->values[i]),expected=PioneerAttentionFloat(reference[i]);
-   if(!isfinite(actual) || fabs(actual-expected)>3e-6*(1+fabs(expected)))return Stop();
+   if(!isfinite(actual))return Stop(Failure::NonFinite,i,reference[i],reply->values[i]);
+   if(fabs(actual-expected)>3e-6*(1+fabs(expected)))return Stop(Failure::AbsoluteTolerance,i,reference[i],reply->values[i]);
    if((i%8642>=320 && i%8642<322) || i%8642>=8578){
-    if(fabs(expected)>=double(PioneerAttentionFloat(0x00800000))){if((i%8642<322 && actual<=0) || fabs(actual-expected)>3e-6*fabs(expected))return Stop();}
-    else if(actual!=0)return Stop(); // actual-subnormal FTZ only;NORMAL gated values require relative accuracy too
+    if(fabs(expected)>=double(PioneerAttentionFloat(0x00800000))){if((i%8642<322 && actual<=0) || fabs(actual-expected)>3e-6*fabs(expected))return Stop(Failure::RelativeTolerance,i,reference[i],reply->values[i]);}
+    else if(actual!=0)return Stop(Failure::SubnormalFlush,i,reference[i],reply->values[i]); // actual-subnormal FTZ only;NORMAL gated values require relative accuracy too
    }
   }
-  if(!Current())return Stop();
+  if(!Current())return Stop(Failure::SourceChanged);
   return true; // ALL output checks BEFORE explicit END,NO sampling or numeric fallback
  }
  bool Finish(){
@@ -142,8 +184,8 @@ public:
   tt_q38_bank_session end={};end.version=1;
   if(!Call(TT_PCI_PROBE_Q38_BANK_END,end) || end.result.version!=1 || end.result.state!=TT_RESIDENT_SESSION_CLOSED
    || end.result.active || end.result.cold || end.result.pci_restored!=1 || end.result.host_released!=1
-   || end.result.capabilities || end.result.bytes!=PioneerResidentBanks::Total)return Stop();
-  active=false;finished=true;int owned=fd;fd=-1;return io.Close(owned)==0;
+   || end.result.capabilities || end.result.bytes!=PioneerResidentBanks::Total)return Stop(Failure::EndMetadata);
+  active=false;finished=true;int owned=fd;fd=-1;return io.Close(owned)==0 || Record(Failure::Close);
  }
  void Abort(){Stop();}
 };

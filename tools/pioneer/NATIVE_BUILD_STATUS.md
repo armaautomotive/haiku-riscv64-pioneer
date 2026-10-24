@@ -1,5 +1,22 @@
 # Native build status
 
+October24 UTC2026:first physical DEBUG52/QGT1 test TERMINAL exit1. Exact
+cdacaa3a driver/tag52/gen9 and83a8caff client;111original weight spans/END
+and fixed validation ioctl returned status0,but user-side validation FAIL.
+Reported257011598us includes init/execution/readback/restore,NOT token time.
+Old client did not preserve failed field/index;cause unresolved,not proven
+numeric/controller failure. CLOSE-only left cold1/active_owner1 QUARANTINED;
+NO retry/reset/rollback/new compute. Stable041 restore PENDING,not restored.
+Haiku still SSH-responsive64CPUs/RAMmax137034936320B. No power/SD/Assistant
+changes. New CPU-only first-failure/192B-header diagnostics built twice
+byte-identicalff38e5f3,234role gates+131072routes PASS;ASan/UBSan independent
+reference3positives/15refusals+session4positives/196faults PASS. NOT installed.
+Numerical bounds and no-CPU-reference Work unchanged.
+Recovery requires saved-work confirmation;ONE OFF,verify OFF,ONE ON.
+OFF twice can START board;never repeat blindly. Whole-model0.207893161tok/s
+unchanged/20UNMET/full offload INCOMPLETE/goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-rendezvous-physical-diagnostics-20261024.txt.
+
 October24 UTC2026:separate fixed DEBUG52/native51/namespace17 QGT1 public
 qualification IMPLEMENTED/OFFLINE qualified,NOT installed/physical/Work.
 Input only logicaltoken/position0/layer0;fixed pointer-free3318720B HEAP

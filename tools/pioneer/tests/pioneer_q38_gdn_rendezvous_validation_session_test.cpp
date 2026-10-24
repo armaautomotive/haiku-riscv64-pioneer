@@ -18,7 +18,8 @@ struct GdnValidationIO {
  struct Part{unsigned index,first,pages;};std::vector<Part> selected;
  unsigned opens=0,closes=0,calls=0,begins=0,spans=0,spanEnds=0,runs=0,ends=0,uploaded=0;
  unsigned failCall=0,sourceDrop=0,epochDrop=0,corruptWord=UINT32_MAX,badReply=UINT32_MAX;
- uint32_t decay=0x3f000000,corruptBits=0x3f800000;bool stopped=false;
+ uint32_t decay=0x3f000000,corruptBits=0x3f800000;bool stopped=false,closeFail=false;
+ uint32_t returnedHeader[48]={};
  GdnValidationIO(ProjectionValidationSource& s,unsigned id):source(s),token(id){
   assert(plan.Build(source.Model(),8192,true,true));
   for(unsigned i=0;i<plan.Parts().size();i++){
@@ -31,7 +32,7 @@ struct GdnValidationIO {
   }assert(selected.size()==28);
  }
  int Open(){assert(source.Ready() && source.referenceReads==1675 && !source.gpuOpen && !stopped);opens++;source.gpuOpen=true;return 73;}
- int Close(int fd){assert(fd==73 && !closes);closes++;return 0;}
+ int Close(int fd){assert(fd==73 && !closes);closes++;return closeFail?-1:0;}
  bool Call(int fd,unsigned op,void* data,size_t bytes){
   assert(fd==73 && !closes && !stopped && source.referenceReads==1675);calls++;
   switch(op){
@@ -76,6 +77,7 @@ struct GdnValidationIO {
     if(corruptWord<829632){reply.values[corruptWord]=corruptBits;stopped=true;}
     if(badReply<48){uint32_t value;auto* field=reinterpret_cast<uint8_t*>(&reply)+badReply*4;memcpy(&value,field,4);
      if(badReply==8 || badReply==12)value=0;else value^=1;memcpy(field,&value,4);stopped=true;}
+    memcpy(returnedHeader,&reply,sizeof(returnedHeader));
     break;}
    case TT_PCI_PROBE_Q38_BANK_END:{ends++;assert(runs==1);auto& r=static_cast<tt_q38_bank_session*>(data)->result;
     r.version=1;r.state=TT_RESIDENT_SESSION_CLOSED;r.host_released=r.pci_restored=1;r.bytes=PioneerResidentBanks::Total;break;}
@@ -88,11 +90,14 @@ struct GdnValidationIO {
 };
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;SeedGdnLearned(fixture);unsigned positives=0,faults=0;
+ using Session=PioneerQ38GdnRendezvousValidationSession<GdnValidationIO,ProjectionValidationSource>;
+ using Failure=Session::Failure;
  for(unsigned token:{0U,15U,248319U}){
   SeedProjectionValidationEmbedding(fixture,token);ProjectionValidationSource source(fixture.file);GdnValidationIO io(source,token);
   PioneerQ38GdnRendezvousValidationSession<GdnValidationIO,ProjectionValidationSource> session(io,source);
   assert(!session.Validate(token,1) && !io.opens && session.Validate(token) && source.referenceReads==1675 && source.reads==23238
    && session.Finish() && io.ends==1 && io.closes==1 && io.calls==119 && io.spans==111);positives++;
+  assert(session.diagnostics.reason==Failure::None && session.diagnostics.reply_captured);
   printf("PASS QGT DEBUG session token%u/reference1675/source23238/spans111/calls119\n",token);
  }
  SeedProjectionValidationEmbedding(fixture,0);
@@ -102,6 +107,7 @@ int main(){
   if(kind==4)source.failReference=at;if(kind==5)io.corruptWord=at;
   if(kind==6){io.corruptWord=at;io.corruptBits=0x7fc00000;}if(kind==7)io.badReply=at;
   if(kind==8){io.corruptWord=at;io.corruptBits=0;io.decay=0x0380001e;}
+  if(kind==9){io.corruptWord=at;io.corruptBits=0x33800000;}
   PioneerQ38GdnRendezvousValidationSession<GdnValidationIO,ProjectionValidationSource> session(io,source);
   bool valid=session.Validate(0);assert(valid==(kind<3 && at==119));assert(!session.Finish() && !session.Validate(0));
   if(kind<3)assert(io.calls==at && io.ends==unsigned(at==119));
@@ -109,6 +115,23 @@ int main(){
   else if(kind==4)assert(source.referenceReads==at && !io.opens && !io.calls);
   else assert(io.runs==1 && io.calls==118 && !io.ends);
   assert(io.closes==unsigned(source.gpuOpen));faults++;
+  const auto& d=session.diagnostics;
+  assert(d.reason!=Failure::None);
+  assert(d.reply_captured==bool(io.runs));
+  if(io.runs)assert(!memcmp(d.reply_header,io.returnedHeader,sizeof(d.reply_header)));
+  if(kind==0)assert(d.reason==Failure::Transport);
+  if(kind==1 || kind==2)assert(d.reason==Failure::SourceChanged);
+  if(kind==5 || kind==6 || kind==8 || kind==9){
+   assert(d.reason==(kind==5?Failure::AbsoluteTolerance:kind==6?Failure::NonFinite:kind==8?Failure::RelativeTolerance:Failure::SubnormalFlush));
+   assert(d.word==at && d.actual==io.corruptBits && d.expected==(at%8642==320?io.decay:at%8642==321?0x3f000000:0));
+   assert(d.op==TT_PCI_PROBE_Q38_GDN_RENDEZVOUS_VALIDATE && d.reply_captured && d.reply_header[0]==1 && d.reply_header[46]==8642);
+  }
+  if(kind==7){
+   assert(d.reason==Failure::ReplyMetadata && d.word==UINT32_MAX && d.reply_captured);
+  }
+  auto before=d;session.Abort();assert(d.reason==before.reason && d.op==before.op && d.word==before.word
+   && d.expected==before.expected && d.actual==before.actual && !memcmp(d.reply_header,before.reply_header,sizeof(d.reply_header))
+   && d.reply_captured==before.reply_captured); // first failure survives Abort;no second close or IO
  };
  for(unsigned kind=0;kind<3;kind++)for(unsigned at:{1U,5U,6U,116U,117U,118U,119U})check(kind,at);
  for(unsigned at:{1U,12U,23237U,23238U})check(3,at);
@@ -116,10 +139,14 @@ int main(){
  for(unsigned half=0;half<96;half++)check(5,half*8642+(half%5==0?127:half%5==1?255:half%5==2?319:half%5==3?8513:8641));
  for(unsigned at:{0U,127U,128U,255U,256U,319U,320U,321U,8514U,8577U,8578U,8641U,829631U})check(6,at);
  for(unsigned at=0;at<48;at++)if(at!=9 && at!=13)check(7,at);
+ for(unsigned at:{8578U,829631U})check(9,at); // tiny nonzero output for zero reference:FTZ contract,not absolute tolerance
+ {ProjectionValidationSource source(fixture.file);GdnValidationIO io(source,0);io.closeFail=true;Session session(io,source);
+  assert(session.Validate(0) && !session.Finish() && session.diagnostics.reason==Failure::Close && io.ends==1 && io.closes==1 && io.calls==119);
+  assert(!session.Finish());faults++;}
  SeedGdnLearned(fixture,-120);
  {ProjectionValidationSource source(fixture.file);GdnValidationIO io(source,0);io.decay=0x0380001e;
   PioneerQ38GdnRendezvousValidationSession<GdnValidationIO,ProjectionValidationSource> session(io,source);
   assert(session.Validate(0) && session.Finish());positives++;}
  for(unsigned at:{320U,95U*8642+320})check(8,at); // a zero NORMAL decay must fail,not pass absolute3e-6
- printf("PASS source-bound QGT DEBUG session positives%u/faults%u/tag52/namespace17/ALL96halves/strict-relative-gates/1675references BEFORE FD/23238ORIGINALpages/CLOSE ONLY after first fault;SYNTHETIC_NOT_CARD_OR_SPEED\n",positives,faults);
+ printf("PASS source-bound QGT DEBUG session positives%u/faults%u/tag52/namespace17/ALL96halves/strict-relative-gates/1675references BEFORE FD/23238ORIGINALpages/CLOSE ONLY after first fault/CPU-only-first-failure-and-fixed-header-snapshot;SYNTHETIC_NOT_CARD_OR_SPEED\n",positives,faults);
 }
