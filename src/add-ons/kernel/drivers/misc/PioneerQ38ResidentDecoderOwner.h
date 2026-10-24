@@ -48,6 +48,9 @@
 #include "PioneerQ38GdnRendezvousImage.h"
 #include "PioneerQ38GdnRendezvousPlan.h"
 #endif
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+#include "PioneerQ38GdnOutputProducer.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -94,6 +97,32 @@ struct PioneerQ38ResidentDecoderResult {
 #endif
 };
 class PioneerQ38ResidentDecoderOwner {
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+ friend class PioneerQ38GdnOutputProducer;
+ PioneerQ38GdnOutputProducer gatedOutput;
+ bool MatchesGatedOutput(const PioneerQ38GdnOutputProducer& value)const{
+  if(&value!=&gatedOutput || value.owner!=this || !GdnGatedCompleted() || !complete || phase!=12 || !projection || !history
+   || !MatchesNativeOwner(*projection,*history) || value.canonical!=projection->canonical || value.ledger!=projection->ledger
+   || value.pages!=projection->pages || !(value.identity==projection->identity) || value.token!=projection->token
+   || value.position!=projection->position || value.bank!=projection->bank || value.phase!=gdnPhase)return false;
+  const auto* workspace=value.canonical->Workspace(value.bank);
+  if(!workspace || workspace->bytes!=67108864 || workspace->allocated!=67108864
+   || value.inputAddress!=value.canonical->Base+workspace->offset+TT_Q38_GDN_GATED_OUTPUT)return false;
+  for(unsigned i=0;i<16;i++)if(value.source[i]!=projection->cohort->authority.source[0][i])return false;
+  for(unsigned w=0;w<120;w++)if(projection->running[w] || projection->cohort->worker[w].image.running || resets[w]!=0x47800
+   || (w>0 && w<=96 && (!gdnImage[w] || !gatedReceipted[w] || !verified[w])))return false;
+  return true;
+ }
+ bool PublishGatedOutput(){
+  if(gatedOutput.owner || !projection || !GdnGatedCompleted() || !complete || phase!=12)return false;
+  auto& p=*projection;const auto* workspace=p.canonical->Workspace(p.bank);if(!workspace)return false;
+  gatedOutput.owner=this;gatedOutput.canonical=p.canonical;gatedOutput.ledger=p.ledger;gatedOutput.pages=p.pages;
+  gatedOutput.identity=p.identity;gatedOutput.token=p.token;gatedOutput.position=p.position;gatedOutput.bank=p.bank;gatedOutput.phase=gdnPhase;
+  gatedOutput.inputAddress=p.canonical->Base+workspace->offset+TT_Q38_GDN_GATED_OUTPUT;
+  for(unsigned i=0;i<16;i++)gatedOutput.source[i]=p.cohort->authority.source[0][i];
+  return MatchesGatedOutput(gatedOutput);
+ }
+#endif
  PioneerQ38ProjectionGraphOwner* projection=nullptr;PioneerQ38ConvHistoryBanks* history=nullptr;
  PioneerQ38ConvBatchPlan jobs[120];
  uint32_t command[120][10]={},counts[120][8]={},resets[120]={};
@@ -560,6 +589,9 @@ public:
  bool Unsafe()const{return unsafe || (projection && projection->Unsafe()) || (history && history->Unsafe());}
  bool Closed()const{return closed && !Unsafe();}
  bool Claimed()const{return started;}
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+ const PioneerQ38GdnOutputProducer* GatedOutput()const{return gatedOutput.Current()?&gatedOutput:nullptr;}
+#endif
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  bool GdnInputsClaimed()const{return gdnAttempted;}
  bool GdnInputsPrepared()const{return gdnComplete && !Unsafe() && !closed;}
@@ -881,7 +913,11 @@ public:
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
   gatedPublished=true;r.gdnGatedPublished=1; // private owner-bound scratch only,NOT current slot/token
 #endif
-  gdnComplete=true;phase=12;r.phase=12;return true; // new role:private layer0 NEXT,never whole-token/current-slot flip
+  gdnComplete=true;phase=12;r.phase=12;
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+  if(!PublishGatedOutput())return Fail(io,r); // SAME real96receipts/ALL120holds,not result flags
+#endif
+  return true; // new role:private layer0 NEXT,never whole-token/current-slot flip
  }
 #endif
  template<class IO> bool Close(IO& io,PioneerQ38ResidentDecoderResult& r
@@ -939,5 +975,8 @@ public:
   p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;return true;
  }
 };
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+inline bool PioneerQ38GdnOutputProducer::Current()const{return owner && owner->MatchesGatedOutput(*this);}
+#endif
 static_assert(sizeof(PioneerQ38ResidentDecoderOwner)>327680 && sizeof(PioneerQ38ResidentDecoderOwner)<524288,"actual decoder plans/lifetime HEAP ONLY");
 #endif

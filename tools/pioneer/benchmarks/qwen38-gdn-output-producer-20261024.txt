@@ -1,0 +1,108 @@
+Qwen3.8-27B SAME native gated producer -> ssm_out DATA handoff
+2026-10-24 UTC. Base532be74cebf2649d1c697b4382abaaef821d4c38.
+IMPLEMENTED/OFFLINE qualified. NO new linked/installed
+driver,physical test,ssm_out numeric execution,full offload or speed result.
+Last whole-model0.207893161tok/s unchanged;20tok/s UNMET;full goal ACTIVE.
+
+New exact COMPILE-ONLY53 role PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE=1,
+tag2026102400010053,requires SAME timed51/gated50/recurrent/state-init/
+input/decoder/projection/RMS/embedding parents. DEBUG52/old DEBUG/CPU
+reference/Work/host-profile/sealed-proof mixing refuses,even0. Reserved
+tag53 alone refuses. Old QPS1 Roles/Input/Manifest/parser unchanged.
+No public opcode/native selector or updater/install mapping added.
+
+PioneerQ38GdnOutputProducer lives INSIDE actual resident decoder owner.
+  Constructor private to that owner;noncopyable/nonmovable. No caller
+  ready flag,epoch,token,position,layer,address or numeric input is accepted.
+  Bound only after actual QGT1 ALL96 receipts/ALL120 physical held/current
+  guards/private NEXT+gated publication. Exact object/owner/retained parent/
+  canonical/source/identity/ledger/token/position/bank/GDN phase relationship
+  rechecked. All120 CPU held/image state plus96actual accepted receipts
+  retained,not public result counters. Fault/close invalidates Current().
+  Current() is CPU object relation ONLY;not a physical scope/read/launch/
+  reset/restore/cleanup grant. Future consumer MUST recheck native call/
+  context/team/thread/source/clock/maps/ALL host owners/physical state.
+
+PioneerQ38GdnOutputProjectionPlan is private HEAP DATA,not an executor.
+  Build accepts ONLY genuine typed producer,not old RMS/public results or
+  host activation arrays. Derives SAME canonical role13/Q8_0/6144->5120,
+  all119complete jobs,source/ledger/GDN phase from actual producer. Checks
+  all ssm_out learned pages and rejects missing/corrupt upload records.
+  Input address is fixed existing gated6144GDDR extent at0x150000;reserved
+  separate5120F32 output immediately follows at0x156000,both inside existing
+  initialized2MiB workspace prefix. No input/output copy or card IO occurs.
+  Descriptor/job/address queries expire on owner fault/Close or stale ledger.
+  Role13 is STILL rejected by old RMS execution endpoint;no whitelist hack.
+  New root/peer input/gather/output images and actual consumer remain OWED.
+
+Actual full RISC-V builds C/D TERMINAL0,byte-identical:
+  c30cd92274945b4664fd71a379ac74d3f034330b530b0948d1d366852485fafb
+  /private/tmp/pioneer-q38-gdn-output-producer-build-20261024-a.yuCLTEuw/result-c/
+  /private/tmp/pioneer-q38-gdn-output-producer-build-20261024-b.jeSefz7M/result-d/
+  gdn-output-producer-NATIVE53-COMPILE-ONLY.o
+  Max NEW frame96B,unchanged2048B gate;oversized legacy frames do not grow.
+  ALL old controls through native51 exact,including old timed51
+  dbb550a34baeb76b1f68c2216d74bd2e2a42e7ba7633154c6e82c295f5f1de53.
+  New role is absent from all old byte layouts/objects.
+  C log SHA256bb129c6d5fbcdf6d6adc35b3dbffd1daab3b74bbccaf8754f3dd744919093c5e
+  D log SHA2561f843aebfdc7036eda93fe7f24fbe0eec616810f84fa23dec605dfb4157f9b3e
+
+Offline role/reference/builder/routing suite B TERMINAL0 (73183):
+  237missing/zero/wrong/exact-parent/tag/mixed/reference/early-builder gates
+  and131072ACTUAL inert-routing fragment probes. All7independent numeric
+  reference headers reject new native role even0. Ten old shell builders
+  reject ambient new roles BEFORE SDK/output;new builder strips ambient
+  roles and refuses unknown/Work/CPU roles before output.
+  /private/tmp/pioneer-q38-gdn-output-producer-gates-20261024-b.log
+  SHA256929a62e38da802e9261794f20a148891ecd8b0d6450f76bd131ad2d75e2a6c78
+  Old51 287gates+131072routes and old52 234gates+131072routes PASS.
+  Old diagnostic client remains EXACTff38e5f3e474b5f68961d77eb507e29c4442cd9e565fbc897112d8ec03b8982b.
+
+Original-model actual-native ASan/UBSan suite TERMINAL0 (27716):
+  Full GGUF hash/original numeric references BEFORE context;actual native
+  joint init73728pages/history1680/QPE1/QRN1/4QPS1/QCB1ALL120->QGT1ALL96.
+  Genuine typed producer absent despite forged public result flags BEFORE
+  compute;present ONLY after96receipts/ALL120holds. Complete canonical
+  output plan119jobs/5120rows/input6144GDDR,NO endpoint IO or numeric copy.
+  Initial missing output weights refused. Synthetic learned-ledger BYTE
+  endpoint then permits DATA geometry only,NOT ssm_out numeric execution.
+  52refusals:foreign equal canonical object/identity/ledger/pages,all16root
+  source-word changes,missing/corrupt first/last pages ALL7output stripes,
+  old role13 execution route,and graph/recurrent/held-node invalidation.
+  Constructor/copy/move are compile-time inaccessible. Normal query
+  refusals do not mutate device state;no cleanup/retry/ready facade.
+  Existing independent original observer checks ALL829632actual arithmetic
+  values/privateNEXT/CURRENT+unrelatedstate invariants. Complete8330680word
+  restore/verification and actualEND PASS. Typed producer/plan expire on
+  SAME owner physical restore Close BEFORE outer model release.
+  Only physical/kernel byte endpoints simulated;owners/native math are
+  actual. Synthetic clocks/emulator wall time are NOT physical speed proof.
+  /private/tmp/pioneer-q38-gdn-output-producer-original-20261024-a.log
+  SHA2563bb9fb23a66881a46f4806d3a1d5cdab475772fc2f891e4bfb931fe4acec6f8d
+Old DEBUG52 full-kernel byte control TERMINAL0 (44055),EXACT
+  cdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759,
+  unchanged1568B frame. Old CPU diagnostic client control TERMINAL0
+  (11715),EXACTff38e5f3 above. Neither artifact installed/rerun.
+  /private/tmp/pioneer-q38-gdn-output-producer-old52-compile-20261024-a.log
+  SHA2568e2fa74422944a3d6cd941282a4c304e7e628807636bf923a7258c1951ac834d
+
+Offline issues caught,not gate relaxations:
+  First A/B compile used != for identity whose exact existing API only
+  provides ==;changed to !(==). No equality semantics changed.
+  First isolation suite caught old shell builders lacking the newly named
+  role interlock. Added early rejection to those ten builders;fresh B PASS.
+
+ZERO Pioneer SSH/device IO/install/reload/boot/power/SD/Assistant/network/
+CPU/RAM changes this development turn. Prior physical DEBUG52 test failed
+client-side;driver remains quarantined cold1/active_owner1/tag52/gen9 at
+last observation,stable041 restore PENDING. Physical cause unresolved.
+Recovery waits for saved-work confirmation. OFF is NON-IDEMPOTENT:ONE OFF
+only if board actually on,verify actual OFF,ONE ON. Never blindly repeat
+OFF after software shutdown/SSH loss. No mains/SD change required.
+
+ALL qualification processes terminal. NEXT commit/push tested checkpoint,
+then implement distinct source/input/quantization/gather/output consumer
+images and actual same-owner projection lifecycle. NOT enough to widen old
+RMS role allowlist. Physical validation/diagnosis remains required before
+card promotion. Residual/post-attnRMS/FFN/full attentionKV/all64layers/
+sampling/persistent token scheduler still OWED. No full-model speedup.

@@ -1,5 +1,25 @@
 # Native build status
 
+October24 UTC2026:COMPILE-ONLY53 SAME-owner gated6144GDDR producer and
+canonical ssm_out6144->5120 DATA handoff IMPLEMENTED;no consumer arithmetic,
+linked driver/install/physical promotion. Genuine typed object lives inside
+decoder,bound AFTER96real receipts/ALL120holds;fault/Close expires it.
+New plan takes ONLY typed producer,not caller activation/epoch/address or
+old RMS proof;119canonical jobs/alllearned pages/fixed disjoint input-output
+prefix. Old RMS role13 refusal/input parser unchanged. C/D RISC-V exact
+c30cd922/maxNEWframe96,allold byte controls through native51 exact.237new
+role/reference/builder gates+131072inert routes and old51/52gates PASS;
+old diagnostic clientff38e5f3 and full old52kernelcdacaa3a EXACT. Original-
+model actual native ASan/UBSan PASS:genuine typed handoff/52inert refusals/
+all829632original values/NEXT+CURRENT invariants/full8330680restore/actual
+END/producer expires on Close. Learned output ledger tests are DATA-only,
+NOT ssm_out math. ALL qualification jobs terminal. ZERO PioneerIO/
+power/install/Assistant changes. Prior card still quarantined/restore
+PENDING at last observation;saved-work confirmation required for recovery.
+New consumer images/native projection,full64layers/tokenloop still OWED.
+Whole27B0.207893161tok/s unchanged/20UNMET/full goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-output-producer-20261024.txt.
+
 October24 UTC2026:first physical DEBUG52/QGT1 test TERMINAL exit1. Exact
 cdacaa3a driver/tag52/gen9 and83a8caff client;111original weight spans/END
 and fixed validation ioctl returned status0,but user-side validation FAIL.

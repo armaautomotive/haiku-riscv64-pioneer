@@ -4,6 +4,13 @@
 #define PIONEER_Q38_RESIDENT_DECODER_NATIVE_FACTORY_ONLY
 #include "pioneer_q38_resident_decoder_native_factory_test.cpp"
 #include "pioneer_q38_decoder_original_source.h"
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputProjectionPlan.h"
+#include <type_traits>
+static_assert(!std::is_default_constructible<PioneerQ38GdnOutputProducer>::value
+ && !std::is_copy_constructible<PioneerQ38GdnOutputProducer>::value
+ && !std::is_move_constructible<PioneerQ38GdnOutputProducer>::value,"only genuine owner can construct/bind producer");
+#endif
 int main(int argc,char** argv){
  assert(argc==9 || (argc==10 && (!strcmp(argv[9],"--delayed") || !strcmp(argv[9],"--late-negative") || !strcmp(argv[9],"--host-deadline") || !strcmp(argv[9],"--clock-receipt-fault") || !strcmp(argv[9],"--controller-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -32,6 +39,9 @@ int main(int argc,char** argv){
  assert(f.projection.memory.savedWords==8330680 && f.projection.memory.installedWords==1185912);
  unsigned n=f.io.touches,d=f.transport->Touches();PioneerQ38ResidentDecoderResult forged;
  forged.gdnLayerPublished=forged.gdnGatedPublished=1;forged.gdnHeld=forged.gdnCompleted=96;
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+ assert(!m->decoder.GatedOutput()); // public result flags do not mint a typed producer
+#endif
  assert(!m->decoder.GdnGatedCompleted() && !m->decoder.GdnLayerCompleted() && !m->decoder.Close(f.io,forged)
   && !PrepareQ38ResidentGdnInputs(*f.c,forged) && f.io.touches==n && f.transport->Touches()==d && !m->Unsafe());
  puts("NATIVE_QGH_REAL_CBO_ALL120_HELD;SAME_INITIALIZED_GDN;forged publications inert;starting ACTUAL cooperative96 streams");
@@ -68,6 +78,59 @@ int main(int argc,char** argv){
  assert(RunQ38ResidentGdnRecurrent(*f.c,f.decoderResult) && f.transport->GdnInputStarts()==96
   && m->decoder.GdnGatedCompleted() && m->decoder.GdnLayerCompleted() && f.decoderResult.gdnGatedPublished==1
   && f.decoderResult.gdnLayerPublished==1 && f.decoderResult.gdnHeld==96 && m->projectionCohort==cohort && &m->projectionMemory==snapshot);
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+ const auto* producer=m->decoder.GatedOutput();assert(producer && producer->Current());
+ auto outputPlan=std::make_unique<PioneerQ38GdnOutputProjectionPlan>();n=f.io.touches;d=f.transport->Touches();
+ assert(!outputPlan->Build(*producer) && !outputPlan->Current() && !outputPlan->Build(*producer)); // ssm_out weights not uploaded in this fixture yet
+ // Test learned-upload ledger BYTE endpoint ONLY. No output matrix code,
+ // weights read,device writes or ssm_out numeric computation occur here.
+ unsigned stripes=0,refused=0;
+ for(unsigned i=0;i<m->plan.Count();i++){
+  const auto* p=m->plan.Part(i);if(p->kind!=m->plan.WeightKind || p->layer || p->role!=13)continue;
+  for(unsigned page=0;page<p->allocated/4096;page++)f.learned[p->bank*786432+p->offset/4096+page]=1;
+  stripes++;
+ }
+ assert(stripes==7);outputPlan=std::make_unique<PioneerQ38GdnOutputProjectionPlan>();
+ assert(outputPlan->Build(*producer) && outputPlan->Producer()==producer && outputPlan->Current() && outputPlan->Count()==119);
+ const auto* workspace=m->plan.Workspace(m->bank);assert(workspace);
+ assert(outputPlan->Bank()==m->bank && outputPlan->InputAddress()==m->plan.Base+workspace->offset+TT_Q38_GDN_GATED_OUTPUT
+  && outputPlan->OutputAddress()==outputPlan->InputAddress()+6144*4 && outputPlan->Phase());
+ unsigned rows=0;for(unsigned i=0;i<119;i++){const auto* p=outputPlan->Part(i);assert(p && p->groups);rows+=p->groups*16;}
+ assert(rows==5120 && !outputPlan->Part(119));
+ const auto* rootSource=m->projectionCohort->authority.source[0];
+ assert(outputPlan->MatchesSource(m->plan,m->identity,f.learned.data(),PioneerResidentBanks::Pages,rootSource));
+ auto other=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(other->Build());auto wrongId=m->identity;wrongId.modelEpoch++;
+ assert(!outputPlan->MatchesSource(*other,m->identity,f.learned.data(),PioneerResidentBanks::Pages,rootSource)
+  && !outputPlan->MatchesSource(m->plan,wrongId,f.learned.data(),PioneerResidentBanks::Pages,rootSource)
+  && !outputPlan->MatchesSource(m->plan,m->identity,nullptr,PioneerResidentBanks::Pages,rootSource)
+  && !outputPlan->MatchesSource(m->plan,m->identity,f.learned.data(),PioneerResidentBanks::Pages-1,rootSource));refused+=4;
+ for(unsigned word=0;word<16;word++){
+  uint32_t changed[16];memcpy(changed,rootSource,sizeof(changed));changed[word]^=1;
+  assert(!outputPlan->MatchesSource(m->plan,m->identity,f.learned.data(),PioneerResidentBanks::Pages,changed));refused++;
+ }
+ for(unsigned i=0;i<m->plan.Count();i++){
+  const auto* p=m->plan.Part(i);if(p->kind!=m->plan.WeightKind || p->layer || p->role!=13)continue;
+  for(unsigned page:{0U,p->allocated/4096-1}){
+   unsigned at=p->bank*786432+p->offset/4096+page;
+   for(unsigned value:{0U,2U}){
+    f.learned[at]=value;auto denied=std::make_unique<PioneerQ38GdnOutputProjectionPlan>();
+    assert(!denied->Build(*producer) && !outputPlan->Current() && !outputPlan->Count() && !outputPlan->Part(0));f.learned[at]=1;refused++;
+   }
+  }
+ }
+ assert(outputPlan->Current() && producer->Current() && !RunQ38ProjectionExecution(*f.c,13,f.projection)
+  && f.io.touches==n && f.transport->Touches()==d && !m->Unsafe());refused++;
+ for(unsigned fault=0;fault<3;fault++){
+  pid_t child=fork();assert(child>=0);
+  if(!child){
+   if(fault==0)m->graph.Fault();if(fault==1)m->graph.Recurrent(m->identity)->Fault();if(fault==2)m->projectionCohort->worker[119].image.running=true;
+   assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Count()
+    && !outputPlan->InputAddress() && !outputPlan->OutputAddress() && f.io.touches==n && f.transport->Touches()==d);_exit(0);
+  }
+  int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));refused++;
+ }
+ printf("PASS SAME genuine gated producer/6144GDDR->canonical119jobs/5120ssm_out_DATA_ONLY/refusals%u/no host activation or epoch hints/no endpointIO/NO ssm_out execution\n",refused);
+#endif
  for(unsigned half=0;half<96;half++){
   unsigned w=half+1;assert(f.io.SelectRuntimeCore(w));uint32_t prepared[322],next[8192],raw[64],gated[64];
   for(unsigned i=0;i<322;i++)assert(f.io.ProjectionGraphMemoryReadChecked(w,0x8e000+i*4,prepared[i]));
@@ -120,6 +183,11 @@ int main(int argc,char** argv){
   f.decoderResult.memory.restoredWords,f.decoderResult.memory.verifiedOriginalWords,f.decoderResult.unsafe);
  assert(closed && !m->decoder.GdnGatedCompleted() && m->Closed()
   && f.decoderResult.memory.restoredWords==8330680 && f.decoderResult.memory.verifiedOriginalWords==8330680);
+#ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
+ assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Producer()
+  && !outputPlan->Part(0) && !outputPlan->Count() && !outputPlan->InputAddress() && !outputPlan->OutputAddress());
+ puts("PASS genuine gated producer expires on SAME owner's physical restore Close;NO stale input for later projection");
+#endif
  assert(EndFactory(*f.c) && !sColdRecoveryRequired);
  puts("PASS ORIGINAL token0 SAME ACTUAL native init73728/history1680/QPE1/QRN1/4QPS1/QCB1ALL120->COOPERATIVE_QGH1_ALL96/829632original values/real NoC peer stamps+raw+originalnorm+retainedZ/private gatedGDDR;ALL96receipts/ALL120holds/immutableCURRENT+unrelatedstate/private layer0NEXT+gated publication/complete8330680word restore/actualEND;NO CPU numeric inputs/host stage boundary/Work promotion/current-slot-flip/nativeCARD_OR_SPEED_CLAIM");
 }
