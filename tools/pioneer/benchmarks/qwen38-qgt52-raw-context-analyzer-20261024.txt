@@ -1,0 +1,44 @@
+Read-only QGT52 paired-raw error estimate, 2026-10-24 UTC.
+CPU log-analysis utility ONLY;NO native/device IO,Work fallback or model
+qualification. No physical context log has yet been collected with the new
+client. This is preparation for that diagnostic,not a measured card fix.
+
+analyze_qgt52_raw_context.py reads at most1MiB+1bytes from ONE supplied log,
+strictly parses the new client's first numeric failure and384contextwords,
+and emits JSON. Requires exactly one consistent word/half/head/lane record,
+all48unique8word rows,finite NORMAL-or-zero/bounded raw+Z. Refuses partial,
+concatenated,duplicate,out-of-range,malformed/nonfinite/subnormal data.
+Record number lengths and total input are bounded. Log remains unchanged.
+No log text is executed and no accelerator/network action is available.
+
+Calculates documented FP32 square/reduction/RMS order on expected and
+already-returned paired raw values. Estimates the gated value by the raw
+ratio and inverse-RMS ratio,ASSUMING physical Z/learned norm unchanged.
+Reports the observed error and residual vs the estimate,with explicit
+assumptions and log_authenticated=false. Zero original raw prevents ratio
+attribution. This is NOT a full fused-arithmetic reconstruction,proof of
+unchanged physical Z/norm,source authentication,a native producer or grounds
+to relax the unchanged3ppm validation bound. Later partner raw values may
+not have passed validation when the client stopped on the first failure.
+
+Synthetic tests C TERMINAL0:6unit methods,14positive subcases and130refusals,
+including boundary heads/lanes,uniform scaling/sign/RMS cancellation,zero
+raw,all missing/duplicate rows,oversized numeric fields,NaN/Inf/subnormal/
+domain failures. Actual CLI verifies JSON,read-only input,empty-output error
+code2 for incomplete/badUTF8/>1MiB data. No hardware or real-model claim.
+  PYTHONPYCACHEPREFIX=/private/tmp/pioneer-q38-next59-pycache python3 \
+   tools/pioneer/tests/pioneer_qgt52_raw_context_analysis_test.py
+  /private/tmp/pioneer-qgt52-raw-analysis-tests-20261024-c.log
+  SHA929636b37b79b2b515a0e731a3a95931e151dd70a99459bbd34d53f9261c9fa1.
+
+After a FUTURE controlled diagnostic has completed and its own log is
+preserved,run OFFLINE:
+  python3 tools/pioneer/analyze_qgt52_raw_context.py /absolute/path/to/log
+The old ff38 physical log has no raw context and MUST be refused,not
+silently completed with zero/reference values or new device reads.
+
+Pioneer remains quarantined from the completed physical DEBUG52 failure.
+Recovery needs fresh saved-work confirmation,ONE effectiveOFF/actualOFF
+verification/ONEON. No power/SD/Assistant/network/driver change in this work.
+Native59 full fault suite D75416 remains live independently. Last measured
+whole-model0.207893161tok/s unchanged;20tok/s/full offload goal ACTIVE.
