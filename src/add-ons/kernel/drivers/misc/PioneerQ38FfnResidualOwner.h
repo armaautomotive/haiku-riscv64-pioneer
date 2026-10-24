@@ -13,7 +13,11 @@
    || postAttention.canonical!=projection->canonical || postAttention.ledger!=projection->ledger || postAttention.pages!=projection->pages
    || !(postAttention.identity==projection->identity) || postAttention.token!=projection->token || postAttention.position!=projection->position
    || postAttention.bank!=projection->bank || postAttention.phase!=residual->epoch || ffn->epoch!=residual->epoch+1
-   || (phase!=19 && phase!=20 && phase!=21 && phase!=22 && phase!=24 && phase!=7 && phase!=8))return false;
+   || (phase!=19 && phase!=20 && phase!=21 && phase!=22 && phase!=24 && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+    && !(nextRms && (phase==25 || phase==26))
+#endif
+    ))return false;
   const auto* m=ffn->manifest;
   if(!PioneerQ38FfnResidualGraphFrame(m) || m[6]!=ffn->epoch+(ffn->stopping?5U:0U)
    || m[4]!=postAttention.normalizedAddress || m[4]+0x18000!=postAttention.residualAddress || m[3]!=projection->bank

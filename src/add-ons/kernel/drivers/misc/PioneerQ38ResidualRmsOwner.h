@@ -12,7 +12,11 @@
    || !projection->input || !projection->input->Completed() || projection->position
    || (phase!=17 && phase!=18 && phase!=7 && phase!=8
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
-    && !(ffn && (phase==19 || phase==20 || phase==21 || phase==22 || phase==24))
+    && !(ffn && (phase==19 || phase==20 || phase==21 || phase==22 || phase==24
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+     || (nextRms && (phase==25 || phase==26))
+#endif
+     ))
 #endif
     ) || residual->epoch!=output->bootstrap.manifest[6]+1
    || !residual->plan.Matches(*projection->canonical,projection->token,projection->bank,projection->identity,

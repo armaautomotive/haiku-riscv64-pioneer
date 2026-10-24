@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
+#if defined(PIONEER_Q38_NEXT_RMS_NATIVE) || defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
 #error Original-model independent observer MUST be a separate non-native DEBUG compilation unit
 #endif
 #define PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CLIENT 1
@@ -33,13 +33,14 @@ static int DecoderOriginalExecv(const char* path,char* const* argv){
 #include <array>
 namespace {
 class OriginalSource final:public DecoderOriginalSource {
- struct Stripe {unsigned role,route;uint32_t address,bytes;std::vector<uint8_t> data;};
+ struct Stripe {unsigned role,layer,route;uint32_t address,bytes;std::vector<uint8_t> data;};
  PioneerQ38PublicModelSource original;PioneerQwen38PackedPlan plan;
- std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false,gdnNative=false,gdnOutput=false,residualRms=false,ffn=false;
+ std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false,gdnNative=false,gdnOutput=false,residualRms=false,ffn=false,nextRms=false;
  uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0,gdnNormReads=0;
  uint64_t outputReads=0;
  uint64_t residualReads=0;std::array<uint32_t,5120> postNorm={};
  uint64_t ffnReads=0;
+ uint64_t nextRmsReads=0;std::array<uint32_t,5120> nextNorm={};
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
  std::array<uint32_t,128> gdnLearnedNorm={};std::vector<uint32_t> gdnNormReferences;
@@ -55,7 +56,7 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false,bool residual=false,bool selectedFfn=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output),residualRms(residual),ffn(selectedFfn){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false,bool residual=false,bool selectedFfn=false,bool next=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output),residualRms(residual),ffn(selectedFfn),nextRms(next){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  bool Prepare(unsigned token)override{
@@ -63,7 +64,7 @@ public:
   attempted=true;if(!plan.Build(original.Model(),8192,true,true))return false;
   auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!canonical->Build() || canonical->Count()!=plan.Parts().size())return false;
   unsigned projectionsCount=0,convCount=0,convRows=0,embeddingCount=0,normTensor=UINT32_MAX,embeddingTensor=UINT32_MAX,pages=0,gdnParts=0,gdnNormTensor=UINT32_MAX,outputStripes=0,outputRows=0,postNorms=0;
-  unsigned ffnStripes[3]={},ffnRows[3]={};
+  unsigned ffnStripes[3]={},ffnRows[3]={},nextNorms=0;
   const auto& parts=plan.Parts();const auto& tensors=original.Model().Tensors();
   for(unsigned i=0;i<parts.size();i++){
    const auto& p=parts[i];const auto& c=*canonical->Part(i);
@@ -76,10 +77,17 @@ public:
     for(unsigned page=0;page<data.size()/4096;page++)if(!original.ReadWeightPage(plan,i,first+page,data.data()+page*4096,4096))return false;
     memcpy(embedding.data(),data.data()+within,46080);embeddingCount++;embeddingTensor=p.tensor;
    }
+   if(nextRms && p.layer==1 && !p.role){
+    if(c.type || p.firstRow || p.rows!=1 || p.rowBytes!=20480 || p.bytes!=20480 || p.allocated!=20480 || tensors[p.tensor].name!="blk.1.attn_norm.weight")return false;
+    Stripe s={p.role,p.layer,PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,p.bytes,std::vector<uint8_t>(p.allocated)};
+    for(unsigned page=0;page<5;page++)if(!original.ReadWeightPage(plan,i,page,s.data.data()+page*4096,4096))return false;
+    for(unsigned j=0;j<5120;j++){const auto* b=s.data.data()+j*4;nextNorm[j]=uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24);}
+    pages+=5;nextNorms++;stripes.push_back(std::move(s));continue;
+   }
    if(p.layer || (p.role!=0 && p.role!=5 && p.role!=6 && p.role!=10 && p.role!=11 && p.role!=12
     && (!gdnInputs || (p.role!=7 && p.role!=8)) && (!gdnNorm || p.role!=9) && (!gdnOutput || p.role!=13) && (!residualRms || p.role!=1)
     && (!ffn || p.role<2 || p.role>4)))continue;
-   Stripe s={p.role,PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,p.bytes,std::vector<uint8_t>(p.allocated)};
+   Stripe s={p.role,p.layer,PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,p.bytes,std::vector<uint8_t>(p.allocated)};
    for(unsigned page=0;page<p.allocated/4096;page++)if(!original.ReadWeightPage(plan,i,page,s.data.data()+page*4096,4096))return false;
    pages+=p.allocated/4096;
    if(!p.role){
@@ -116,9 +124,9 @@ public:
    }
   }
   if(embeddingCount!=1 || normTensor==UINT32_MAX || projectionsCount!=16 || convCount!=7 || convRows!=10240
-   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U)+(gdnOutput?8640U:0U)+(residualRms?5U:0U)+(ffn?36720U:0U) || gdnParts!=(gdnInputs?2U:0U)
+   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U)+(gdnOutput?8640U:0U)+(residualRms?5U:0U)+(ffn?36720U:0U)+(nextRms?5U:0U) || gdnParts!=(gdnInputs?2U:0U)
    || outputStripes!=(gdnOutput?7U:0U) || outputRows!=(gdnOutput?5120U:0U) || postNorms!=(residualRms?1U:0U)
-   || gdnNorm!=(gdnNormTensor!=UINT32_MAX))return false;
+   || gdnNorm!=(gdnNormTensor!=UINT32_MAX) || nextNorms!=(nextRms?1U:0U))return false;
   for(unsigned role=0;role<3;role++)if(ffnStripes[role]!=(ffn?7U:0U) || ffnRows[role]!=(ffn?(role==2?5120U:17408U):0U))return false;
   Reference reference{*this};
   if(!PioneerQ38EmbeddingReference(reference,embeddingTensor,token,raw.data())
@@ -207,6 +215,10 @@ public:
   if(!sealed || !Ready() || !out || (bytes!=256 && bytes!=576 && (!gdnInputs || bytes!=64) && (!gdnNative || bytes!=512)
    && (!residualRms || (bytes!=16384 && bytes!=4096)) && (!ffn || bytes!=2304)) || (address&63))return false;
   for(const auto& s:stripes)if(s.route==route && address>=s.address && address-s.address<s.bytes){
+   if(s.layer==1){
+    unsigned at=address-s.address;if(!nextRms || s.role || s.bytes!=20480 || (at==0?bytes!=16384:at!=16384 || bytes!=4096))return false;
+    memcpy(out,s.data.data()+at,bytes);nextRmsReads++;return Ready();
+   }
    if(s.role==1){
     unsigned at=address-s.address;if(!residualRms || s.bytes!=20480 || (at==0?bytes!=16384:at!=16384 || bytes!=4096))return false;
     memcpy(out,s.data.data()+at,bytes);residualReads++;return Ready();
@@ -250,6 +262,16 @@ public:
  uint64_t ResidualRmsReads()const override{return residualReads;}
  bool FfnWeightsReady()const override{return ffn && residualRms && sealed && Ready();}
  uint64_t FfnReads()const override{return ffnReads;}
+ bool NextRmsWeightsReady()const override{return nextRms && ffn && sealed && Ready();}
+ uint64_t NextRmsReads()const override{return nextRmsReads;}
+ bool CheckNextRms(const std::vector<uint32_t>& before,const std::vector<uint32_t>& after)const override{
+  if(!NextRmsWeightsReady() || nextRmsReads!=2 || before.size()!=524288 || after.size()!=524288)return false;
+  double sum=0;for(unsigned i=0;i<5120;i++){float x=PioneerAttentionFloat(before[i]);if(!isfinite(x))return false;sum+=double(x*x);}
+  float scale=1.f/sqrtf(float(sum/5120)+1e-6f);
+  for(unsigned i=0;i<5120;i++)if(after[TT_Q38_RMS_BACKUP/4+i]!=before[i]
+   || after[i]!=PioneerAttentionBits((PioneerAttentionFloat(before[i])*scale)*PioneerAttentionFloat(nextNorm[i])))return false;
+  return Ready(); // independent TEST observer,never a native input/result
+ }
  bool CheckFfnResidual(const std::vector<uint32_t>& before,const std::vector<uint32_t>& after)const override{
   if(!FfnWeightsReady() || ffnReads!=65280 || before.size()!=524288 || after.size()!=524288)return false;
   for(unsigned i=0;i<5120;i++){
@@ -333,5 +355,9 @@ std::unique_ptr<DecoderOriginalSource> OpenResidualRmsOriginalSource(const char*
 }
 std::unique_ptr<DecoderOriginalSource> OpenFfnResidualOriginalSource(const char* path){
  if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true,true,true,true);
+ if(!source->Open())return nullptr;return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenNextRmsOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true,true,true,true,true);
  if(!source->Open())return nullptr;return source;
 }

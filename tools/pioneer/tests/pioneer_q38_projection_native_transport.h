@@ -46,6 +46,9 @@ public:
  void FfnFault(unsigned);bool FfnFaultInjected()const;
  void FfnRunTerminalCheckpoint(void (*callback)(void*),void* context); // fork actual in-flight stack AFTER emitted RUN terminal
 #endif
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+ void NextRmsSource(const char*);void NextRmsFault(unsigned);bool NextRmsFaultInjected()const;void VerifyNextRms();
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

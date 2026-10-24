@@ -177,6 +177,9 @@
  }
 public:
  ~PioneerQ38ResidentDecoderOwner(){
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+  delete nextRms;
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
   delete ffn;
 #endif

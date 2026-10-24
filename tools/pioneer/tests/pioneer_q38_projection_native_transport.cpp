@@ -12,6 +12,9 @@
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
 #include "pioneer_q38_ffn_residual_execution_machine.h"
 #endif
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+#include "pioneer_q38_next_rms_execution_machine.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphOwner.h"
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #include "pioneer_q38_decoder_conv_bridge.h"
@@ -64,6 +67,21 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
    if(FullRead(current,a)!=expected)return false;
   }
   return true; // ACTUAL installed image+actual parent terminal,NOT result phase
+ }
+#endif
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+ std::unique_ptr<NextRmsExecutionMachine> nextRms;const char* nextRmsImage=nullptr;
+ bool nextRmsStarted=false,nextRmsFaulted=false;unsigned nextRmsFault=0;
+ bool NextRmsInstalled(){
+  if(current || !nextRmsImage || nextRmsStarted || !ffn || ffn->Stops()!=119)return false;
+  for(unsigned w=1;w<120;w++)if(core[w]->coreReset!=0x47800)return false;
+  for(unsigned i=0;i<PioneerQ38ProjectionGraphCodeWords(0);i++){
+   unsigned a=PioneerQ38ProjectionGraphCodeAddress(0,i);
+   uint32_t expected=i<=10240?PioneerQ38LearnedRmsProgramWord(i):
+    PioneerQ38FfnGraphProgramAddress(0,a)?PioneerQ38FfnResidualProgramWord(0,a):0;
+   if(FullRead(0,a)!=expected)return false;
+  }
+  return true; // actual installed bytes+actual119 STOP+physical holds,not result phase
  }
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
@@ -169,6 +187,9 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
   (void)&PioneerQ38FfnResidualLearned;
 #endif
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+  (void)&PioneerQ38NextRmsLearned;
+#endif
   machine.reset(new ProjectionExecutionMachine(root,peer,*this));track=true;
  }
  uint32_t ReadLocal(unsigned w,uint32_t a)override{unsigned old=current;current=w;uint32_t v=FullRead(w,a);current=old;return v;}
@@ -249,6 +270,13 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Code:assert(!a);return p.C().entry;
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+   if(!p.current && p.nextRmsStarted){
+    if(p.C().coreReset==0x46800)p.nextRms->Advance();
+    if(p.nextRmsFault==5 && !p.nextRmsFaulted && p.nextRms->Pc()==0x64038){p.nextRmsFaulted=true;return 0x64058;}
+    return p.nextRms->Pc();
+   }
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
    if(p.ffnStarted[p.current]){
     if(p.C().coreReset==0x46800)p.ffn->Advance(p.current);
@@ -302,6 +330,16 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #endif
    if(p.C().coreReset==0x46800)p.machine->Advance(p.current);return p.machine->Pc(p.current);
   case Status:
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+   if(!p.current && p.nextRmsStarted){
+    if(p.C().coreReset==0x46800)p.nextRms->Advance();
+    if(!p.nextRmsFaulted && p.nextRms->Pc()==0x64038 && (p.nextRmsFault==4 || p.nextRmsFault==8)){
+     p.nextRmsFaulted=true;unsigned address=p.nextRmsFault==4?TT_Q38_FFN_RESIDENT_SUMMARY+4*4:0x72000;
+     p.WriteLocal(0,address,p.ReadLocal(0,address)^1);
+    }
+    return p.LocalRead(0x17ffc0+a*4);
+   }
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
    if(p.ffnStarted[p.current]){
     if(!p.current && p.C().coreReset==0x46800)p.ffn->Advance(0);
@@ -434,6 +472,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  switch(kind){
   case SetTlb:p.C().DramTlbWrite(a,b,v);return;
   case SetLocal:
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+   if(p.nextRmsFault==6 && !p.nextRmsFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
+    p.nextRmsFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
    if(p.ffnFault==6 && !p.ffnFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
     p.ffnFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
@@ -464,6 +507,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    if(p.fault==10 && p.result && p.result->phase==9 && p.current==119 && a==2039)v^=1;
    if(a>=2032 && a<2040)p.LocalWrite(0x17e000+a*4,v);else p.C().ResidentL1Write(a,v);return;
   case SetCode:assert(!a);
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+   if(p.nextRmsFault==1 && !p.nextRmsFaulted && p.decoderResult && p.decoderResult->phase==25 && !p.current && v==0x0005e06f){
+    p.nextRmsFaulted=true;p.C().RuntimeCodeWrite(0,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
    if(p.ffnFault==1 && !p.ffnFaulted && p.decoderResult && p.decoderResult->phase==19 && !p.current && v==0x0006c06f){
     p.ffnFaulted=true;p.C().RuntimeCodeWrite(0,v^1);return;
@@ -486,6 +534,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #endif
    p.C().ResidentNocWrite(a,v);return;
   case SetPanel:
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+   if(p.nextRmsFault==2 && !p.nextRmsFaulted && p.decoderResult && p.decoderResult->phase==25 && !p.current && a==TT_Q38_FFN_RESIDENT_DESCRIPTOR+40*4){
+    p.nextRmsFaulted=true;p.LocalWrite(a,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
    if(p.ffnFault==2 && !p.ffnFaulted && p.decoderResult && p.decoderResult->phase==20 && !p.current && a==TT_Q38_FFN_RESIDUAL_GRAPH_MANIFEST+41*4){
     p.ffnFaulted=true;p.LocalWrite(a,v^1);return;
@@ -518,6 +571,16 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    }
 #endif
    p.C().coreReset=v;p.C().resets.push_back(v);
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+   if(v==0x46800 && p.NextRmsInstalled()){
+    assert(p.decoderPlan && !p.nextRms);p.nextRms.reset(new NextRmsExecutionMachine(p.nextRmsImage,*p.decoderPlan,p,p.nextRmsFault==9));p.nextRmsStarted=true;
+    if(p.nextRmsFault==3 || p.nextRmsFault==7){
+     if(p.nextRmsFault==3)p.C().source[11]^=1;else p.now+=30000001;
+     p.nextRmsFaulted=true; // AFTER actual release/BEFORE first emitted instruction
+    }
+    return;
+   }
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
    if(v==0x46800 && p.FfnInstalled()){
     assert(!p.current || !p.ffnStarted[p.current]);
@@ -673,6 +736,9 @@ uint32_t* ProjectionNativeTransport::PanelSaved(){auto& p=*implementation;p.Touc
 uint32_t* ProjectionNativeTransport::Backup(unsigned words){auto& p=*implementation;p.Touch();return p.C().HostReadBackup(words);}
 void ProjectionNativeTransport::Quarantine(){implementation->quarantined=true;} // MEMORY ONLY
 void ProjectionNativeTransport::Pause(){implementation->now++;
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+ if(implementation->nextRmsStarted){if(implementation->core[0]->coreReset==0x46800)implementation->nextRms->Advance();return;}
+#endif
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
  auto& f=*implementation;
  if(f.ffn){
@@ -724,6 +790,12 @@ void ProjectionNativeTransport::FfnSources(const char* root,const char* peer){
  auto& p=*implementation;assert(root && peer && !p.ffn);p.ffn.reset(new FfnResidualExecutionMachine(root,peer,p));
 }
 void ProjectionNativeTransport::VerifyFfn(){assert(implementation->ffn);implementation->ffn->VerifyOutput();}
+#ifdef PIONEER_Q38_NEXT_RMS_NATIVE
+void ProjectionNativeTransport::NextRmsSource(const char* image){auto& p=*implementation;assert(image && !p.nextRmsImage && !p.nextRmsStarted);p.nextRmsImage=image;}
+void ProjectionNativeTransport::NextRmsFault(unsigned kind){auto& p=*implementation;assert(kind>=1 && kind<=9 && !p.nextRmsFault && !p.nextRmsStarted);p.nextRmsFault=kind;}
+bool ProjectionNativeTransport::NextRmsFaultInjected()const{const auto& p=*implementation;return p.nextRmsFaulted || (p.nextRms && p.nextRms->FaultInjected());}
+void ProjectionNativeTransport::VerifyNextRms(){auto& p=*implementation;assert(p.nextRms && p.nextRms->Packets()==8);p.nextRms->Verify();}
+#endif
 void ProjectionNativeTransport::FfnFault(unsigned kind){
  auto& p=*implementation;assert(kind>=1 && kind<=9 && p.ffn && !p.ffnFault);p.ffnFault=kind;
  if(kind==9)p.ffn->FaultLearnedTile();

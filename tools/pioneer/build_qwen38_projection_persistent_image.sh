@@ -1,6 +1,7 @@
 #!/bin/sh
 # OFFLINE complete new peer image;no native registry/coordinator access.
 set -eu
+[ "${PIONEER_Q38_NEXT_RMS_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDUAL_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_RESIDUAL_RMS_NATIVE-0}" = 0 ] || exit 2

@@ -18,7 +18,8 @@ gdn_gated_resident = mode == '--gdn-gated-resident'
 gdn_gated = gdn_gated_local or gdn_gated_resident
 gdn_rendezvous_debug = mode in ('--gdn-rendezvous-debug', '--gdn-rendezvous-debug-faults')
 gdn_output_debug = mode in ('--gdn-output-debug', '--gdn-output-debug-faults')
-ffn_residual = mode in ('--ffn-residual', '--ffn-residual-faults')
+next_rms = mode in ('--next-rms', '--next-rms-faults')
+ffn_residual = next_rms or mode in ('--ffn-residual', '--ffn-residual-faults')
 residual_rms = ffn_residual or mode in ('--residual-rms', '--residual-rms-faults')
 gdn_output_execution = residual_rms or gdn_output_debug or mode in ('--gdn-output-execution', '--gdn-output-execution-faults')
 gdn_output_producer = gdn_output_execution or mode == '--gdn-output-producer'
@@ -29,7 +30,7 @@ gdn_recurrent = gdn_gated_native or gdn_gated or gdn_recurrent_debug or mode in 
 gdn_debug = mode in ('--gdn-debug', '--gdn-debug-faults')
 gdn_native = gdn_debug or mode in ('--gdn-native', '--gdn-native-faults')
 gdn = gdn_native or gdn_recurrent or mode in ('--validation-gdn-input', '--validation-gdn-input-extremes')
-if (len(sys.argv) != (14 if ffn_residual else 12 if residual_rms else 11 if gdn_output_execution else 10 if gdn_gated else 9) if gdn else len(sys.argv) not in (7, 8)) or mode not in ('--ffn-residual', '--ffn-residual-faults', '--residual-rms', '--residual-rms-faults', '--gdn-output-debug', '--gdn-output-debug-faults', '--gdn-output-execution-faults', '--gdn-output-execution', '--gdn-output-producer', '--gdn-rendezvous-debug', '--gdn-rendezvous-debug-faults', '', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults', '--gdn-recurrent', '--gdn-recurrent-faults', '--gdn-recurrent-debug', '--gdn-recurrent-debug-faults', '--gdn-gated-norm-local', '--gdn-gated-resident', '--gdn-gated-native', '--gdn-gated-native-late-negative', '--gdn-rendezvous-native', '--gdn-rendezvous-native-delayed', '--gdn-rendezvous-native-host-deadline', '--gdn-rendezvous-native-clock-receipt-fault', '--gdn-rendezvous-native-controller-faults'):
+if (len(sys.argv) != (14 if ffn_residual else 12 if residual_rms else 11 if gdn_output_execution else 10 if gdn_gated else 9) if gdn else len(sys.argv) not in (7, 8)) or mode not in ('--next-rms', '--next-rms-faults', '--ffn-residual', '--ffn-residual-faults', '--residual-rms', '--residual-rms-faults', '--gdn-output-debug', '--gdn-output-debug-faults', '--gdn-output-execution-faults', '--gdn-output-execution', '--gdn-output-producer', '--gdn-rendezvous-debug', '--gdn-rendezvous-debug-faults', '', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults', '--gdn-recurrent', '--gdn-recurrent-faults', '--gdn-recurrent-debug', '--gdn-recurrent-debug-faults', '--gdn-gated-norm-local', '--gdn-gated-resident', '--gdn-gated-native', '--gdn-gated-native-late-negative', '--gdn-rendezvous-native', '--gdn-rendezvous-native-delayed', '--gdn-rendezvous-native-host-deadline', '--gdn-rendezvous-native-clock-receipt-fault', '--gdn-rendezvous-native-controller-faults'):
     raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults|--validation[-faults|-control[-faults]]]')
 validation = mode.startswith('--validation')
 actual = gdn or mode in ('--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc')
@@ -85,6 +86,8 @@ if ffn_residual:
         assert len(data) == size and hashlib.sha256(data).hexdigest() == pin
     for path in sys.argv[12:14]:
         assert (pathlib.Path(path)/'boot.bin').read_bytes() == struct.pack('<I', 0x0006c06f)
+if next_rms:
+    flags.append('-DPIONEER_Q38_NEXT_RMS_NATIVE=1')
 if gdn_rendezvous:
     flags.append('-DPIONEER_Q38_GDN_RENDEZVOUS_NATIVE=1')
 if gdn_output_producer:
@@ -195,7 +198,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                     *([str(here / 'pioneer_q38_gdn_gated_native_bridge.cpp')] if gdn_gated_native else []),
                     *([str(here / 'pioneer_q38_gdn_output_execution_machine.cpp')] if gdn_output_execution else []),
                     *([str(here / 'pioneer_q38_residual_rms_execution_bridge.cpp')] if residual_rms else []),
-                    *([str(here / 'pioneer_q38_ffn_residual_execution_machine.cpp')] if ffn_residual else []), *objects, '-o', str(binary)], check=True)
+                    *([str(here / 'pioneer_q38_ffn_residual_execution_machine.cpp')] if ffn_residual else []),
+                    *([str(here / 'pioneer_q38_next_rms_execution_machine.cpp')] if next_rms else []), *objects, '-o', str(binary)], check=True)
     cases = list(range(9)) if mode == '--validation-control-faults' else [None]
     for case in cases:
         suffix = [str(case)] if case is not None else ['--faults'] if mode == '--validation-faults' else [] if validation else sys.argv[7:]
@@ -213,6 +217,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                         suffix.extend(sys.argv[12:14])
                         if mode == '--ffn-residual-faults':
                             suffix.append('--ffn-faults')
+                        if mode == '--next-rms-faults':
+                            suffix.append('--next-rms-faults')
                     if mode=='--gdn-output-execution-faults':
                         suffix.append('--output-faults')
                     if mode=='--gdn-output-debug-faults':

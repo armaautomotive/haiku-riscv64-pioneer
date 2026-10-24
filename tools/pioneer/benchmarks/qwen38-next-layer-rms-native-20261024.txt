@@ -1,0 +1,164 @@
+SAME resident decoder: genuine FFN hidden -> next-layer learned RMS
+October24 2026. OFFLINE source-carved native factory/instruction evidence.
+No new linked/installed driver,public selector,Assistant or Work promotion.
+Last measured whole-model27B speed0.207893161tok/s;20tok/s still UNMET.
+
+Actual native58 ownership
+-------------------------
+Exact PIONEER_Q38_NEXT_RMS_NATIVE=1/tag0x2026102400010058 requires the SAME
+native57 FFN owner and all its native56/54/53/51 parents. The native58 state
+lives INSIDE the actual retained resident decoder. It is <1KiB private heap
+metadata,not a parallel LearnedRmsController,new snapshot,clock or host owner.
+The original8330680-word ALL120 snapshot and original mappings/clock/hosts/
+source/learned/model/team/thread/call ownership remain live throughout.
+
+RunNextRms accepts only the genuine nonconstructible FFN-hidden producer.
+No caller layer,address,vector,epoch,ready flag or CPU numeric result is an
+input. Claim occurs BEFORE first IO,expires the old FFN completion query,
+and binds the historical FFN+residual+GDN lineage privately. This is NOT an
+initial-embedding RMS facade or a current-slot flip into a foreign owner.
+The new epoch derives from the actual final FFN STOP manifest[13]+1,not
+the FFN hidden producer's earlier completed-math phase. Layer1/role0 and
+its ALL5 original learned F32 pages are required before native Bind may
+publish an epoch or perform IO,and again before this actual private claim.
+The missing-page pre-Bind tests run only AFTER all earlier-stage pages
+are present,so an unrelated missing FFN/postnorm page cannot mask the gate.
+
+No new device program or old ABI re-tagging is needed. The frozen QRN1
+already supports this canonical norm shape. Its boot and40KiB prefix replace
+only10241 words inside the original ROOT lease. The retained FFN ROOT main
+must stay exact and is independently checked as part of the full image.
+ALL119 independent FFN STOPs and ALL120 physical holds precede replacement.
+Only ROOT is released;the119 workers remain held with their original source,
+command,counter,code/private-sequence/STOP proofs. Original QRN1 code SHA:
+f13d8676f97920c182fa47d9f555453d7855dd5ac394919a577d58c83abe523a
+5052bytes;boot0x0005e06f. No snapshot,mapping or stack enlargement.
+
+Eight emitted device-local packets read hidden5120 from workspace0 and
+original layer1 norm5120,compute learned RMS,write FRESH raw residual to
+workspace+0x18000,then normalized5120 to workspace0. The old backup is FFN
+scratch and is deliberately NOT accepted as this layer's raw input. ALL
+math/domain checks finish before the first GDDR write. Exact independent
+before/after NoC counters/aliases,command,descriptor,summary,source,code,
+terminal PC and physical ROOT hold precede publication. Only then can the
+SAME owner publish a nonconstructible/noncopyable next-layer normalized+raw
+producer. Close,fault,foreign cohort or physical-running mutation expires it.
+First UNKNOWN retains ALL owners/maps/snapshots/clock/hosts,with ZERO later
+IO/reset/restore/retry/END. Known-clean Close restores AND verifies the
+complete original8330680 words before actual END is allowed.
+
+Full ORIGINAL native factory/instruction run PASS
+-------------------------------------------------
+ASan/UBSan,-ffp-contract=off. Actual carved kernel Scope/factory/ownership/
+claim/retention/Close/END plus actual pinned emitted RV32/FPU/Tensix programs.
+ONLY OS/PCI/L1/NoC endpoints are simulated. This is NOT physical execution.
+Full public GGUF SHA authenticated before context:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+ALL851 tensor schemas/canonical geometry checked. Exact original layer1
+blk.1.attn_norm.weight5120F32/20480bytes/ALL5pages cached before context.
+Strict16384+4096-byte endpoints,no partial/foreign/padding/synthetic fallback.
+The independent original CPU observer is a separate non-native TU;its
+numeric reference products NEVER enter the kernel/native programs.
+
+One run executes the complete original token0/layer0 chain from native
+init73728/history1680/QPE1/QRN1/4QPS1/QCB1ALL120/QGT1ALL96+829632 original
+values/QOP1ALL119+61440 original tiles/QRR1 originalpostnorm5120/full FFN357
+actualmatrices+88producers+119STOP+65280 original Q4 tiles/final5120 residual,
+then NEW layer1 RMS. No synthetic capability or shortened fake earlier chain.
+The earlier FP32/independent FP64/native-byte/protocol observers all pass.
+
+New stage installed10241/runs1/held1/published1/unsafe0. ALL5120 normalized
+outputs AND fresh raw residual are BIT-EXACT against independent host-double
+reduction/original-F32 weights. Test explicitly proves the stale old backup
+differs from the real incoming FFN hidden. No unrelated GDDR word changes.
+Private current/cohort binding/foreign rejection/old hidden expiry/repeated
+call refusal/graph+recurrent+foreign-running invalidation all pass without IO.
+Close restored8330680/verified8330680/unsafe0;actual END succeeds and every
+borrowed producer expires. Layer1's subsequent projections/GDN are NOT run.
+
+Nine real endpoint failures from the genuine held FFN producer ALSO PASS:
+1 corrupted actual new boot byte before install readback;
+2 corrupted staged descriptor after image install,before release;
+3 changed actual ROOT source AFTER release,BEFORE first emitted instruction;
+4 corrupted actual completed summary before native receipt acceptance;
+5 bad terminal PC observation after actual emitted math;
+6 final original-word restore corruption after successful norm publication;
+7 host deadline expires during release,BEFORE first emitted instruction;
+8 retained old main corruption AFTER math,before full image proof;
+9 NaN first learned F32 packet AFTER authenticated source/cache read,before
+  math;actual program fault parks after4reads and changes NO GDDR word.
+Each failure asserts actual injection,expired old/new producer queries,
+UNKNOWN ownership retention and ZERO following IO/reset/restore/retry/END.
+Fault6 published1 refers to the successful stage BEFORE the subsequent Close
+failure;the private producer is expired and every resource remains retained.
+No child supplies a ready/proof/producer/result hint. Virtual test clock is
+explicitly NOT physical time or a native execution deadline measurement.
+
+Main original run (--next-rms-faults) terminal0:
+/private/tmp/pioneer-q38-next-rms-native-original-20261024-a.log
+SHA2769c535b9cd99e7ef8b5d31c8d444f691a79a10524cd4fdc2d3f25ae7650de1
+Runner:tools/pioneer/tests/pioneer_q38_resident_decoder_native_factory_test.py
+Same pinned image argument layout as native57;replace --ffn-residual with
+--next-rms or --next-rms-faults. The existing QRN1 image argument is reused.
+
+Independent gates/regressions PASS
+-----------------------------------
+314 exact native58 role/tag/ALL parent/mixed+defined-zero/private producer/
+CPU-reference+reinclude/builder-before-SDK gates.131072 actual inert compute
+routes:ordinary selectors and Work mode cannot enter this private new role.
+Eight reference headers reject the new macro even when0/after reinclude;
+ten legacy builders reject it before SDK/output. All related jobs terminal0.
+/private/tmp/pioneer-q38-next-rms-native-gates-20261024-a.log
+SHA6fb7f5938c142dfd82e3b4c2deb454987b5c4ea4f7111428969dd3a3622c3959
+
+Original layer1 byte-cache test fullSHA/ALL851schema/5pages/2exact chunks+
+20refusals/no other learned reads/no native grant PASS:
+/private/tmp/pioneer-q38-next-rms-original-source-20261024-a.log
+SHA7d08b14169ef353286efdad192e91222ad83bb44b303c188eb134d79818ade1b
+The old false-mode original FFN cache still passes21stripes/36720pages/
+42first-last tile reads/126refusals with no next-layer reads:
+/private/tmp/pioneer-q38-next-rms-old-ffn-source-20261024-a.log
+SHAad973cbd15bc969b9c141982dffc75ca529aed848197c633d39b930c5390417d
+
+TEST-only QRN byte transport hook defaults to the original fixture behavior.
+New bridge overlays actual installed full ROOT bytes/descriptor/source/
+command/counter histories,uses actual GDDR and original learned-byte reads,
+advances only emitted instructions,then checks outputs independently. No
+constructor boot/completion/owner authority or CPU product injection. Live
+device source reads use the actual fabric,not a silently frozen source copy.
+Old QRN default regression903canonical plans/65016refusals/ALL129norms x7
+workspaces plus9actual arithmetic positives and158actual failures PASS.
+/private/tmp/pioneer-q38-next-rms-old-qrn-positive-20261024-a.log
+SHA888374ef1c0caf4662a027d8d4432a54be4babdc979d1370bd7031211c71eae4
+/private/tmp/pioneer-q38-next-rms-old-qrn-faults-20261024-a.log
+SHA5aecb41a30ced3e1bd777fb0cecce91af745dd681191caddc77a70a5f0da608f
+
+Actual RISC-V SDK native58 compile A/B BYTE-IDENTICAL:
+6cba04d17c82659caef53a77b7190fe9dbc5260e364cbcf6fa1c0ffb4d175c79
+New max kernel frame368B;all inherited oversized frames nongrowing.
+Native57 remains EXACT af52be9e3c5116bd937204d2420d4e5d520e65a396272c3d4eecef74a50bb278;
+native56 b9400c71 and all inherited controls also remain exact. No math-library
+or CPU-reference imports in the new object;this is supplemental to actual
+separate-TU/gate/data-flow tests,not by itself a no-CPU-product proof.
+/private/tmp/pioneer-q38-next-rms-native-20261024-a.log
+SHA656d2c2a7d010e64b5c5d98b647e64028ee43986b777654d41c1ceb7690a0d20
+/private/tmp/pioneer-q38-next-rms-native-20261024-b.log
+SHA1b3907ed5e4636002ae0b28b1f8aa291934c2933bf548650434e3924c197c87e
+
+Remaining requested end state
+------------------------------
+Genuine next-layer projection/GDN or attention+KV handoff,all64layers,
+sampling and persistent whole-token scheduling with reduced control traffic
+remain. No linked native58 driver/client/hot-swap compatibility/public Work
+route or Assistant integration is supplied. Physical arithmetic/source/CSR
+qualification and whole-model hardware benchmarks remain mandatory. Offline
+VM steps,host test duration or this passed handoff are NOT tokens/sec.
+
+No SSH/GPU/power/SD/cards/driver/Assistant/boot/CPU/RAM changes in this work.
+Historical DEBUG52 quarantine/stable041 recovery pending was NOT rechecked.
+Saved-work recovery question remains pending;power corrections are not its
+answer. ONE OFF only if actually ON,verify actual OFF,then ONE ON. A second
+OFF can START the board. Never repeat OFF after software shutdown/SSH loss;
+relay contact state is not actual board power. No extra pulses or mains/SD
+changes. All native58 checkpoint jobs are now terminal,with no dependency
+edited while a job using it was live. Unrelated llama.cpp/FlashNext untouched.

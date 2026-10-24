@@ -66,6 +66,12 @@ struct LearnedRmsMachine:ScalarMachine {
   if(Range(a,0x90000,20480))outputWrites++;
   memory[a]=value;
  }
+ virtual void CopyPacket(bool write,bool learned,bool normalized,unsigned offset,unsigned local,unsigned bytes){
+  for(unsigned i=0;i<bytes/4;i++){
+   if(!write)memory[local+i*4]=(learned?weight:input)[offset/4+i];
+   else (normalized?resident:backup)[offset/4+i]=memory.at(local+i*4);
+  }
+ }
  void Submit(){
   assert(packets<8);unsigned p=packets++;bool write=p>=4,learned=p>=2 && p<4,normalized=p>=6;
   unsigned offset=(p&1)*16384,bytes=p&1?4096:16384;
@@ -76,10 +82,7 @@ struct LearnedRmsMachine:ScalarMachine {
   for(unsigned i=0;i<10;i++)assert(command[i]==expected[i]);
   if(write){assert(readPackets==4 && outputWrites==5120);writePackets++;}else readPackets++;
   if(packets==failPacket){pending=true;return;}
-  for(unsigned i=0;i<bytes/4;i++){
-   if(!write)memory[local+i*4]=(learned?weight:input)[offset/4+i];
-   else (normalized?resident:backup)[offset/4+i]=memory.at(local+i*4);
-  }
+  CopyPacket(write,learned,normalized,offset,local,bytes);
   unsigned at=write?4:0;counts[at]++;counts[at+1]+=bytes/64;counts[at+3]++;counts[2]++;counts[6]++;
   if(packets==badCounter)counts[at+3]++;
   if(packets==foreignCounter)counts[write?0:4]++;

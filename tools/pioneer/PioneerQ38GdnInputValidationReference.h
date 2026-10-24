@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_NEXT_RMS_NATIVE)
+#error SAME native next-layer RMS never includes independent CPU reference code
+#endif
 #if defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE)
 #error SAME native FFN execution must NEVER include independent CPU reference code
 #endif
