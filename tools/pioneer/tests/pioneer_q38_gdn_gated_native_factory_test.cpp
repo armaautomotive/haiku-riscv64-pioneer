@@ -6,10 +6,13 @@
 #include "pioneer_q38_decoder_original_source.h"
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputProjectionPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputBootstrapPlan.h"
 #include <type_traits>
 static_assert(!std::is_default_constructible<PioneerQ38GdnOutputProducer>::value
  && !std::is_copy_constructible<PioneerQ38GdnOutputProducer>::value
  && !std::is_move_constructible<PioneerQ38GdnOutputProducer>::value,"only genuine owner can construct/bind producer");
+static_assert(!std::is_copy_constructible<PioneerQ38GdnOutputBootstrapPlan>::value
+ && !std::is_move_constructible<PioneerQ38GdnOutputBootstrapPlan>::value,"same borrowed producer/cohort heap relation cannot be copied");
 #endif
 int main(int argc,char** argv){
  assert(argc==9 || (argc==10 && (!strcmp(argv[9],"--delayed") || !strcmp(argv[9],"--late-negative") || !strcmp(argv[9],"--host-deadline") || !strcmp(argv[9],"--clock-receipt-fault") || !strcmp(argv[9],"--controller-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
@@ -92,6 +95,42 @@ int main(int argc,char** argv){
  }
  assert(stripes==7);outputPlan=std::make_unique<PioneerQ38GdnOutputProjectionPlan>();
  assert(outputPlan->Build(*producer) && outputPlan->Producer()==producer && outputPlan->Current() && outputPlan->Count()==119);
+ auto bootstrap=std::make_unique<PioneerQ38GdnOutputBootstrapPlan>();
+ auto deniedBootstrap=std::make_unique<PioneerQ38GdnOutputBootstrapPlan>();
+ auto wrongBootstrapCohort=std::make_unique<PioneerQ38DispatchLease>();
+ assert(!deniedBootstrap->Build(*outputPlan,*wrongBootstrapCohort) && !deniedBootstrap->Current()
+  && !deniedBootstrap->Manifest() && !deniedBootstrap->Sources() && !deniedBootstrap->Build(*outputPlan,*cohort));
+ assert(bootstrap->Build(*outputPlan,*cohort) && bootstrap->Current() && bootstrap->Matches(*outputPlan,*cohort)
+  && !bootstrap->Build(*outputPlan,*cohort) && !bootstrap->Matches(*outputPlan,*wrongBootstrapCohort));
+ auto* nativeManifest=const_cast<uint32_t*>(bootstrap->Manifest());auto* nativeSources=const_cast<uint32_t*>(bootstrap->Sources());
+ assert(nativeManifest && nativeSources && PioneerQ38GdnOutputGraphManifest(nativeManifest,nativeSources)
+  && nativeManifest[46]==TT_Q38_GDN_RENDEZVOUS_MARKER && nativeManifest[47]==m->token);
+ unsigned bootstrapMutations=0;
+ for(unsigned i=64;i<192;i++)assert(!nativeManifest[i]); // fresh new image boot REQUIRED;not stale peer history
+ for(unsigned i=0;i<64;i++){
+  nativeManifest[i]^=1;assert(!bootstrap->Current() && !bootstrap->Manifest() && !bootstrap->Sources());nativeManifest[i]^=1;bootstrapMutations++;
+ }
+ for(unsigned j=0;j<119;j++){
+  const auto& p=*outputPlan->Part(j);const auto* record=nativeManifest+192+j*8;
+  assert(record[0]==m->plan.Base+p.offset && record[1]==p.bank && record[2]==p.groups && record[3]==p.firstRow);
+  for(unsigned i=0;i<8;i++){nativeManifest[192+j*8+i]^=1;assert(!bootstrap->Current());nativeManifest[192+j*8+i]^=1;bootstrapMutations++;}
+ }
+ for(unsigned i=0;i<119*16;i++){
+  assert(nativeSources[i]==cohort->authority.source[1+i/16][i%16]);
+  nativeSources[i]^=1;assert(!bootstrap->Current());nativeSources[i]^=1;bootstrapMutations++;
+  assert(PioneerQ38ProjectionGraphSnapshotContains(0,TT_Q38_GDN_OUTPUT_GRAPH_SOURCES+i*4)
+   && PioneerQ38ProjectionGraphSnapshotContains(0,TT_Q38_GDN_OUTPUT_GRAPH_SOURCE_SHADOW+i*4));
+ }
+ for(unsigned i:{64U,182U,183U,191U,192U+119*8,unsigned(TT_Q38_PROJECTION_GRAPH_WORDS-1)}){
+  nativeManifest[i]^=1;assert(!bootstrap->Current());nativeManifest[i]^=1;bootstrapMutations++;
+ }
+ for(unsigned w:{1U,24U,119U})for(unsigned i:{0U,15U}){
+  cohort->authority.source[w][i]^=1;assert(!bootstrap->Current());cohort->authority.source[w][i]^=1;bootstrapMutations++;
+ }
+ {uint32_t old[64];memcpy(old,nativeManifest,sizeof(old));old[0]=TT_Q38_PROJECTION_GRAPH_MARKER;
+  assert(!PioneerQ38ProjectionGraphFrame(old));} // old RMS-only parser stays strict
+ assert(bootstrap->Current() && f.io.touches==n && f.transport->Touches()==d);
+ printf("PASS SAME native held producer canonical QOP1 bootstrap/ALL119jobs+1904actual source words/mutations%u/fresh-boot sequences/old RMS role13 refused/ALL bytes inside original snapshot;DATA_ONLY_NO boot or IO grant\n",bootstrapMutations);
  const auto* workspace=m->plan.Workspace(m->bank);assert(workspace);
  assert(outputPlan->Bank()==m->bank && outputPlan->InputAddress()==m->plan.Base+workspace->offset+TT_Q38_GDN_GATED_OUTPUT
   && outputPlan->OutputAddress()==outputPlan->InputAddress()+6144*4 && outputPlan->Phase());
@@ -143,7 +182,7 @@ int main(int argc,char** argv){
    unsigned at=p->bank*786432+p->offset/4096+page;
    for(unsigned value:{0U,2U}){
     f.learned[at]=value;auto denied=std::make_unique<PioneerQ38GdnOutputProjectionPlan>();
-    assert(!denied->Build(*producer) && !outputPlan->Current() && !outputPlan->Count() && !outputPlan->Part(0));f.learned[at]=1;refused++;
+    assert(!denied->Build(*producer) && !outputPlan->Current() && !outputPlan->Count() && !outputPlan->Part(0) && !bootstrap->Current());f.learned[at]=1;refused++;
    }
   }
  }
@@ -153,7 +192,7 @@ int main(int argc,char** argv){
   pid_t child=fork();assert(child>=0);
   if(!child){
    if(fault==0)m->graph.Fault();if(fault==1)m->graph.Recurrent(m->identity)->Fault();if(fault==2)m->projectionCohort->worker[119].image.running=true;
-   assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Count()
+   assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Count() && !bootstrap->Current()
     && !outputPlan->InputAddress() && !outputPlan->OutputAddress() && f.io.touches==n && f.transport->Touches()==d);_exit(0);
   }
   int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));refused++;
@@ -217,6 +256,7 @@ int main(int argc,char** argv){
   && !outputPlan->Part(0) && !outputPlan->Count() && !outputPlan->InputAddress() && !outputPlan->OutputAddress());
  assert(!outputPlan->InputDescriptor(0,*cohort,inputDescriptor));
  assert(!outputPlan->GatherDescriptor(*cohort,gatherDescriptor) && !outputPlan->GatherSources(*cohort,gatherSources));
+ assert(!bootstrap->Current() && !bootstrap->Manifest() && !bootstrap->Sources());
  puts("PASS genuine gated producer expires on SAME owner's physical restore Close;NO stale input for later projection");
 #endif
  assert(EndFactory(*f.c) && !sColdRecoveryRequired);

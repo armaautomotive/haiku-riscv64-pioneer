@@ -18,6 +18,7 @@ struct PioneerQ38DispatchLease;
 class PioneerQ38GdnOutputProducer {
  friend class PioneerQ38ResidentDecoderOwner;
  friend class PioneerQ38GdnOutputProjectionPlan;
+ friend class PioneerQ38GdnOutputBootstrapPlan;
  const PioneerQ38ResidentDecoderOwner* owner=nullptr;
  const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const uint8_t* ledger=nullptr;

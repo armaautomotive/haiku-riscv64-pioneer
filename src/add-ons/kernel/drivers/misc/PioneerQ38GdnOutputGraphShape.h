@@ -17,11 +17,16 @@ static inline uint32_t PioneerQ38GdnOutputResultOffset(unsigned layer,unsigned r
  return !layer && role==13?uint32_t(TT_Q38_GDN_OUTPUT_RESULT):~uint32_t(0);
 }
 static inline bool PioneerQ38GdnOutputGraphFrame(const uint32_t* d){
- if(!d || d[0]!=TT_Q38_GDN_OUTPUT_GRAPH_MARKER || !d[6] || d[6]>=0x7ffffffd || d[40] || d[41]!=d[6]
+ if(!d || d[0]!=TT_Q38_GDN_OUTPUT_GRAPH_MARKER || d[1]!=1 || d[2]!=67108864 || d[3]>=7
+  || (d[4]&4095) || d[4]<0x04000000 || d[4]>0xc0000000 || (d[5]!=1 && d[5]!=2)
+  || !d[6] || d[6]>=0x7ffffffd || d[7]!=1 || d[8]!=PioneerQ38ProjectionRoute(d[3]) || d[9]!=129
+  || d[10]!=TT_Q38_PROJECTION_GRAPH_MANIFEST+192*4 || d[11]!=8 || d[12]!=119
+  || d[13]!=d[6]+(d[5]==1?2U:1U) || d[14]!=(d[5]==1?1U:0U) || d[15] || !d[16] || d[40] || d[41]!=d[6]
   || d[42] || d[43]!=13 || d[44]!=6144 || d[45]!=5120 || d[48]!=8
-  || (d[5]==1 && (d[46]!=TT_Q38_GDN_RENDEZVOUS_MARKER || d[47]>=248320)))return false;
- uint32_t old[64];for(unsigned i=0;i<64;i++)old[i]=d[i];old[0]=TT_Q38_PROJECTION_GRAPH_MARKER;
- return PioneerQ38ProjectionGraphFrame(old);
+  || (d[5]==1?(d[46]!=TT_Q38_GDN_RENDEZVOUS_MARKER || d[47]>=248320):(d[46]|d[47])!=0))return false;
+ for(unsigned i=32;i<40;i+=2)if(!(d[i]|d[i+1]))return false;
+ for(unsigned i=49;i<64;i++)if(d[i])return false;
+ return true; // independent of old RMS/result-stash grammar
 }
 static inline bool PioneerQ38GdnOutputGraphManifest(const uint32_t* m,const uint32_t* sources){
  if(!sources || !PioneerQ38GdnOutputGraphFrame(m))return false;
@@ -82,15 +87,34 @@ static inline bool PioneerQ38GdnOutputGraphManifest(const uint32_t* m,const uint
 #endif
 static Q38_GDN_OUTPUT_MATRIX_FN bool PioneerQ38GdnOutputMatrixShape(const uint32_t* d,const uint32_t* h,const uint32_t* banks,
  const uint32_t parts[119][8],const uint32_t* first){
- if(!d || !h || d[0]!=TT_Q38_GDN_OUTPUT_MATRIX_MARKER || h[0]!=TT_Q38_GDN_OUTPUT_MATRIX_MARKER
+ if(!d || !h || !banks || !parts || !first || d[0]!=TT_Q38_GDN_OUTPUT_MATRIX_MARKER
+  || d[1]!=1 || d[2]!=67108864 || d[3]>=7 || (d[4]&4095) || d[4]<0x04000000 || d[4]>0xc0000000
+  || d[5] || d[7]!=119 || d[8]!=PioneerQ38ProjectionRoute(d[3]) || d[9]!=129
+  || d[11]!=5120 || d[12]!=20480 || d[13]!=TT_Q38_PROJECTION_MATRIX_ROWS || !d[16] || d[44]!=119 || d[45]!=1
+  || h[0]!=TT_Q38_GDN_OUTPUT_MATRIX_MARKER || h[1]!=1 || h[2]!=1 || h[3]!=8 || h[4]!=6144
+  || h[5]!=119 || h[6]!=d[6] || h[7]!=TT_Q38_PROJECTION_MATRIX_INPUT || h[8]!=1
   || d[40] || !d[41] || d[41]>=0x7ffffffd || d[6]!=d[41]+2 || d[42] || d[43]!=13
   || d[14]!=6144 || d[15]!=8 || d[10]!=TT_Q38_GDN_OUTPUT_RESULT
   || d[46]!=TT_Q38_GDN_RENDEZVOUS_MARKER || d[47]>=248320)return false;
- uint32_t frame[64],header[16];
- for(unsigned i=0;i<64;i++)frame[i]=d[i];
- for(unsigned i=0;i<16;i++)header[i]=h[i];
- frame[0]=header[0]=TT_Q38_PROJECTION_MATRIX_MARKER;frame[10]=TT_Q38_PROJECTION_OUTPUT_OFFSET;frame[46]=frame[47]=0;
- return PioneerQ38ProjectionMatrixShape(frame,header,banks,parts,first);
+ for(unsigned i=9;i<16;i++)if(h[i])return false;
+ for(unsigned i=32;i<40;i+=2)if(!(d[i]|d[i+1]))return false;
+ for(unsigned i=48;i<64;i++)if(d[i])return false;
+ for(unsigned b=0;b<7;b++)if(banks[b]!=PioneerQ38ProjectionRoute(b))return false;
+ if(banks[7])return false;
+ unsigned rows=0;
+ for(unsigned w=0;w<119;w++){
+  const auto* p=parts[w];unsigned bytes=p[2]*192*576;
+  if(!p[2] || p[2]>16 || !p[3] || p[3]>d[6] || !p[5] || p[6] || p[7] || p[1]>=7
+   || p[4]!=banks[p[1]] || p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63)
+   || bytes>0xc4000000-p[0] || (first[w]&15) || first[w]>=5120 || p[2]*16>5120-first[w])return false;
+  for(unsigned previous=0;previous<w;previous++){
+   if(first[w]<first[previous]+parts[previous][2]*16 && first[previous]<first[w]+p[2]*16)return false;
+   if(p[1]==parts[previous][1] && p[0]<parts[previous][0]+parts[previous][2]*192*576
+    && parts[previous][0]<p[0]+bytes)return false;
+  }
+  rows+=p[2]*16;
+ }
+ return rows==5120; // complete fixed result,not a partial generic wave
 }
 #undef Q38_GDN_OUTPUT_MATRIX_FN
 #endif

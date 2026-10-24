@@ -38,10 +38,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-gdn-output-graph-gates-') as te
     for key in (role, 'PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE', 'PIONEER_Q38_PROJECTION_RESULT_STASH',
                 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_UNKNOWN_ROLE'):
         for value in ('1', '2', '-1', '', 'false', '00'):
-            result = subprocess.run(['sh', str(here / 'build_qwen38_gdn_output_graph_image.sh'), str(root / 'NO_SDK'), str(root / 'NO_OUTPUT')],
-                                    capture_output=True, text=True, env={**clean, key: value}, timeout=5)
-            assert result.returncode == 2 and not result.stdout and not result.stderr and not (root / 'NO_OUTPUT').exists()
-            cases += 1
+            for builder, runner in (('build_qwen38_gdn_output_graph_image.sh', 'sh'), ('build_qwen38_gdn_output_bootstrap_native.py', sys.executable)):
+                result = subprocess.run([runner, str(here / builder), str(root / 'NO_SDK'), str(root / 'NO_OUTPUT')],
+                                        capture_output=True, text=True, env={**clean, key: value}, timeout=5)
+                assert result.returncode == 2 and not result.stdout and not result.stderr and not (root / 'NO_OUTPUT').exists()
+                cases += 1
     commands = [s for s in (here / 'build_qwen38_gdn_output_graph_image.sh').read_text().splitlines() if s.startswith('awk ')]
     assert len(commands) == 1
     for legacy, new, valid in ((4976, 2048, True), (4977, 2048, False), (4975, 2048, False), (4976, 2049, False)):
@@ -54,9 +55,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-gdn-output-graph-gates-') as te
 
 assert len(sys.argv) == 4, 'usage: gates.py NEW REPEAT OLD'
 pins = {'boot': 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b',
-        'text': '30d8e015ed000d66e59f04959a38f13d1a29c71f04ef39c606379abf519529fc',
-        'prefix': 'b661878084f2cb5a830006361c693fefc07d57bdf4e3d1c620d466a5b5329b18',
-        'graph': '92969bcd077dacc58dc4019cc3ab907308111e621525eaca27b54351f3737ad3'}
+        'text': '2cca19748a0771f2ff6e5e08ea5c704ae43cdcb83771d0df94e104734c8e84b1',
+        'prefix': '5332aeac39d34773812477bfa243402c1d3fbf4b372a73f0d8a16b2718009961',
+        'graph': 'dc89a3f1e25ec58a5bf2e58d3dd84aa85e19546993f5cdda2ac3a7e4ce4592d2'}
 old_pins = {'boot': pins['boot'], 'text': 'c623cad56856ac690a79e9b60566148afdba062646bafbb5bf32bcabaa7cb108',
             'prefix': 'cfb512c2b507d511b671bbb73101b724ec230f853a3486616336bacd66706357',
             'graph': '13992bf95da5c695aab493db6d2760d74b139ed7384c04552df0751fa13ceaf9'}

@@ -12,6 +12,7 @@
 // recheck its real IO scope/physical state,and use a separately pinned
 // root/peer/gather/output image. The old RMS graph cannot consume this.
 class PioneerQ38GdnOutputProjectionPlan {
+ friend class PioneerQ38GdnOutputBootstrapPlan;
  const PioneerQ38GdnOutputProducer* producer=nullptr;
  PioneerQ38ProjectionJobs jobs;
  bool attempted=false,ready=false;
