@@ -98,9 +98,11 @@ struct ArithmeticParent:ProjectionParentMachine {
  std::vector<uint32_t> expected;
  unsigned boots=0,runs=0,completedMatrices=0,completedProducers=0,completedStops=0;
  uint64_t matrixInstructions=0;
- ArithmeticParent(const char* image,const char* peer):ProjectionParentMachine(image,0,10){
-  for(unsigned w=0;w<119;w++){actual[w]=std::make_unique<ParentArithmeticPeer>(peer,w+1,gddr);boots++;}
-  Retarget(0,10,false);
+ ArithmeticParent(const char* image,const char* peer,bool initialize=true):ProjectionParentMachine(image,0,10){
+  if(initialize){
+   for(unsigned w=0;w<119;w++){actual[w]=std::make_unique<ParentArithmeticPeer>(peer,w+1,gddr);boots++;}
+   Retarget(0,10,false);
+  }
  }
  void Retarget(unsigned layer,unsigned role,bool stop){
   // Known clean held/terminal ROOT ONLY;peers/Dst/Src/CSR/private sequence
@@ -123,6 +125,7 @@ struct ArithmeticParent:ProjectionParentMachine {
   producerJobs=matrixJobs=stopJobs=lineReads=operandReads=scaleWrites=scaleReads=outputWrites=0;
   pc=0x6000;regs[0]=0; // ROOT frontend re-entry ONLY;no peer/hardware reset
  }
+ virtual void InputFinished(ParentArithmeticPeer& p){p.Verify();}
  void Advance(unsigned w)override{
   auto& p=*actual[w];auto& n=node[w];if(n.verified)return;
   for(unsigned i=0;i<10000;i++){
@@ -136,7 +139,7 @@ struct ArithmeticParent:ProjectionParentMachine {
   if(n.op==1){
    assert(p.CorrectRows() && !p.dotProbeReads && p.requests==p.packets.size());completedMatrices++;matrixJobs++;matrixInstructions+=p.matrixInstructions;
    unsigned first=memory.at(TT_Q38_PROJECTION_MATRIX_ROWS+w*4);for(unsigned row=0;row<p.groups*16;row++)expected.at(first+row)=p.buffers[4096+row];
-  }else if(n.op==5){p.Verify();completedProducers++;producerJobs++;}else{assert(n.op==2 && n.stopped);completedStops++;stopJobs++;}
+  }else if(n.op==5 || n.op==6){InputFinished(p);completedProducers++;producerJobs++;}else{assert(n.op==2 && n.stopped);completedStops++;stopJobs++;}
  }
  uint32_t PhysicalRegister(unsigned w,unsigned a)override{
   auto& p=*actual[w];if(a==0xffb13140)return p.pc;if(a==0xffb121b0)return 0x46800;

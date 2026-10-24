@@ -1,5 +1,25 @@
 # Native build status
 
+October24 UTC2026:distinct QOP1 COMPLETE gated-output projection image
+IMPLEMENTED/OFFLINE qualified,NOT native-selected/installed. SAME ROOT
+call:24actual op6 producers->QOG1->ALL119actual matrix jobs->ALL5120rows
+GDDR0x156000. Twice changed input/bank0+6/token0+248319/SAME119live peers,
+thenALL119STOP;48producers/238matrixjobs/10240rows/983040matrix instructions/
+FP32+FP64/original-wire inputs+scales/all unrelated GDDR unchanged PASS.
+Every ROOT store inside old snapshot;no code/stack/mapping limit increase.
+ALL119source0x78000/shadow0x7a000 disjoint from QOG1source/shadow;matrix
+dispatcher uses SAME full shadow,not old fixed cache. Max ROOT stack5752B.
+F/G exact new images:main30d8e015/prefixb6618780/graph92969bcd. ALL64
+receipt mutations/109transport faults/78source+builder+frame gates PASS.
+Old QPR1/QPS1 byte-exact;old119worker arithmetic regression PASS. ALL jobs
+terminal. NO Pioneer IO/power/Assistant changes. Last hardware observation
+quarantined/restorepending;no fresh state claim. NEXT genuine producer
+claim/canonical manifest/native retained Scope/Close/restore/END;standalone
+new parser must coexist with old RMS-only native grammar without widening.
+Real model/lifecycle/timing NOT proved by synthetic weights/transport.
+Whole27B0.207893161tok/s unchanged/20UNMET/fullgoalACTIVE. Evidence:
+benchmarks/qwen38-gdn-output-graph-20261024.txt.
+
 October24 UTC2026:distinct QOG1 ROOT gather IMPLEMENTED/OFFLINE qualified,
 NOT native-selected/installed/full5120row projection. ALL24 QOI1 lines
 checked against actual per-peer NIUs/GDN phase/token/identity BEFORE operand

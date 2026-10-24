@@ -81,6 +81,11 @@ enum {TT_Q38_FFN_MATRIX_MARKER=TT_Q38_PROJECTION_MATRIX_MARKER,
 #define Q38_ROOT_SMALL
 #endif
 static volatile uint32_t* Words(uint32_t a) { return reinterpret_cast<volatile uint32_t*>(a); }
+#ifdef PIONEER_Q38_GDN_OUTPUT_GRAPH_ROOT
+enum {Q38DispatchSourceCache=TT_Q38_GDN_OUTPUT_GRAPH_SOURCE_SHADOW};
+#else
+enum {Q38DispatchSourceCache=0x7d800};
+#endif
 static void Fence() { asm volatile("fence" ::: "memory"); }
 // Diagnostic ONLY in the separately owned/saved runtime-status L1. Normal
 // completion overwrites BOTH words with the exact fixed DONE/count proof.
@@ -465,7 +470,7 @@ static Q38_ROOT_SMALL bool PartsValid(const uint32_t parts[119][8],const uint32_
 	for (unsigned w=0;w<119;w++) {
 		const uint32_t* p=parts[w];
 		if (w>=header[5]) { for (unsigned value:parts[w]) if (value) return false; continue; }
-		if (!p[3] || p[3]>header[6] || !p[5] || p[5]!=Words(0x7d800)[w*16] || p[6] || p[7]) return false;
+		if (!p[3] || p[3]>header[6] || !p[5] || p[5]!=Words(Q38DispatchSourceCache)[w*16] || p[6] || p[7]) return false;
 		if (operation==2) { if (p[0] || p[1] || p[2] || p[4]) return false; continue; }
 		unsigned bytes=p[2]*blocks*Tile(type);
 		if (p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63) || !p[2] || p[2]>16 || p[1]>=7
@@ -545,7 +550,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for (unsigned i=0;i<8;i++) parts[w][i]=Words(0x74080)[w*8+i];
 		const uint32_t* p=parts[w];
 		if (w>=workers) { for (unsigned value:parts[w]) if (value) return 0; continue; }
-		if (!p[3] || p[3]>nonce || !p[5] || p[5]!=Words(0x7d800)[w*16] || p[6] || p[7]) return 0;
+		if (!p[3] || p[3]>nonce || !p[5] || p[5]!=Words(Q38DispatchSourceCache)[w*16] || p[6] || p[7]) return 0;
 		if (operation==2) { if (p[0] || p[1] || p[2] || p[4]) return 0; continue; }
 		unsigned bytes=p[2]*blocks*Tile(type);
 		if (p[0]<0x04000000 || p[0]>=0xc4000000 || (p[0]&63) || !p[2] || p[2]>16 || p[1]>=7
@@ -703,7 +708,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		if (proof[16]!=groups*inputs/16 || proof[17]!=p[3] || proof[18]!=w+1 || proof[19]!=Q38DispatchPeerMarker
 			|| proof[30]!=p[5] || proof[31]!=XY(w+1)) block_fault_park();
 		for (unsigned i=0;i<10;i++) if (proof[20+i]!=command[i]) block_fault_park();
-		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(0x7d800)[w*16+i]) block_fault_park();
+		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(Q38DispatchSourceCache)[w*16+i]) block_fault_park();
 		for (unsigned i=48;i<64;i++) if (proof[i]) block_fault_park();
 		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
 #ifdef PIONEER_Q38_WORK_SPARSE_EXPORT

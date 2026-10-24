@@ -1,0 +1,114 @@
+Qwen3.8-27B distinct complete gated-output projection image QOP1
+2026-10-24 UTC. Base c384ec430142f41a6a27c1a8d973bfd0a7c519ad.
+OFFLINE emitted-image work only;NO native selector,installation,hardware
+test or new model-rate measurement. Last whole-model0.207893161tok/s
+unchanged;20tok/s UNMET;original full goal ACTIVE.
+
+IMPLEMENTATION
+New distinct QOP1 parent/QOM1 matrix descriptor namespaces. Fixed layer0
+role13/type8/6144inputs/5120outputs/119canonical jobs ONLY. RUN binds GDN
+phase/token/identity,not a fabricated inputEpoch or an RMS producer. Same
+ROOT call launches24op6 producers,verifies their actual64word receipts and
+physical sources/counters/WAIT PCs,invokes QOG1 inside the same parent,
+executes ALL119matrix jobs,scatters all5120rows into GDDR at0x156000,
+then validates final source/sequence/counter/manifest/completion DATA.
+Input at0x150000 remains intact. Separate STOP terminates ALL119peers.
+No CPU vector/product/scale or per-stage host call in this emitted chain.
+
+ALL119x16 source cache at0x78000,immutable shadow at0x7a000;both disjoint
+from QOG1's0x7d800source+0x7e800shadow and existing counters/sequence/stats.
+Source table and manifest compared at phase boundaries;per-packet ROOT
+source/idle/command/counters remain strict. Exclusive native owner still
+OWED to exclude external writers,not manufactured by these comparisons.
+New matrix dispatcher uses that SAME full shadow for all source checks
+and receipts,not the old hardcoded0x7d800table overwritten by QOG1.
+All stores fit the EXISTING complete original ROOT snapshot;NO larger
+linker/stack/runtime mapping or native grant. Failure parks inert,NO next
+packet/CSR/scratch writes/reset/restore/retry after first observed UNKNOWN.
+
+BUILDS
+Independent F/G exact read-only SDK builds:
+ /private/tmp/pioneer-q38-gdn-output-graph-20261024.kutOL7ml/{f,g}
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text6196B 30d8e015ed000d66e59f04959a38f13d1a29c71f04ef39c606379abf519529fc
+ prefix8668B b661878084f2cb5a830006361c693fefc07d57bdf4e3d1c620d466a5b5329b18
+ graph15580B 92969bcd077dacc58dc4019cc3ab907308111e621525eaca27b54351f3737ad3
+ Existing8192/16384/24576B code limits retained. New matrix parser placed
+ in already-owned helper section;no limit relaxation. New maxframe880B
+ (384B matrix parser,496B manifest parser);inherited matrix4976B EXACT,
+ new-functions2048B gate retained;actual whole ROOT stack5752B/8192B.
+ No writable globals/GOT/libc/unresolved symbols/div/rem/mulh dependency.
+ Old QPR1 rebuilt exact old-fixed2:mainc623cad5/prefixcfb512c2/graph13992bf9.
+ Old QPS1 rebuilt exact old-stash:main7cc31b93/prefix650e195c/graph650c2779.
+ Shared implementation compiles op6/new source addresses ONLY in distinct
+ new translation unit. Old graph/matrix grammar and RMS owner NOT widened.
+
+QUALIFICATION
+Final arithmetic + ALL64receipt-mutation qualification F TERMINAL0 (74927):
+ /private/tmp/pioneer-q38-gdn-output-graph-image-20261024-f.log
+ SHA256d46f7925af131d7376f03466cd51697496bd0b385b4ed964fa1d28ba31a9f84c
+Earlier D arithmetic run TERMINAL0,ALL119 ACTUAL RV32/FPU/Tensix peers
+booted ONCE;48actual input producers+238actual matrix jobs/10240output
+rows/983040matrix instructions;bank0/token0 then changed input bank6/
+token248319;SAME live119workers,thenALL119STOP. Independent original-wire
+input/scales and FP32+FP64 matrix references;all output rows exactly once,
+ALL unrelated GDDR unchanged,all ROOT stores within original snapshot.
+Transport/learned weights simulated TEST endpoints,NOT original GGUF/
+native ownership/full model/physical timing or throughput. Do NOT conflate
+this actual arithmetic suite with synthetic transport faults below.
+
+Transport failure suite ASan/UBSan TERMINAL0 (6105):109failures including
+ALL64op6 receipt corruptions BEFORE gather,source+shadow edge mutations,
+24strict bad frame/header refusals BEFORE any snapshot/source write or IO,
+PC/source/counter faults,ALL119th matrix peer bad receipt,first/last dropped
+packet,command echo faults,and a late manifest fault AFTER complete output.
+Actual ROOT code/8607packet complete baseline,peer statuses/products/proofs
+SYNTHETIC ONLY in THIS suite. Late output bytes never grant completion.
+ /private/tmp/pioneer-q38-gdn-output-graph-faults-20261024-a.log
+ SHA256a6386a10b13c299611be2dda305f674c110152bef1748b95f0b32c528eaa5f29
+
+78actual source-role/early-builder/frame gates TERMINAL0 (26138),all new
+sections repeated exact,old QPR1 exact/PC/symbols/no division constraints.
+Defined-zero native/reference/Work/result-stash roles refused too. Frame
+gate rejects both growth/shrinkage of inherited4976B and new>2048B frames.
+ /private/tmp/pioneer-q38-gdn-output-graph-gates-20261024-a.log
+ SHA2561facec70b9aa8b2988fdd26d281eb90dbf5f9e1c28726d1dc18fe6ea6b070eb5
+
+Old cooperative arithmetic regression TERMINAL0 (90636):3projections/
+1120rows/60producers/70matrix jobs/89600matrix instructions/119boots once/
+ALL119STOP/FP32+FP64/NO reset/NO native timing. Defaults preserved.
+ /private/tmp/pioneer-q38-gdn-output-graph-old-regression-20261024-a.log
+ SHA256769582d53a9a5f625e4e5fb11365c2c23594da4237782112bda469003152d4d1
+
+Development failures were local ONLY:initial -Werror formatting failure;
+initial new inline parser exceeded matrix code limit28B (moved parser to
+existing helper,NO limit increase);host Mach-O section attribute guarded;
+test caught matrix's old source-table address and it was corrected. Old
+QPR1 initially changed bytes after shared parser refactoring;that refactor
+was removed and independent old-image exactness restored. Run E's numeric
+and receipt checks all passed,but modifying its shell runner during the
+running test caused shell terminal2 afterward;NOT accepted as qualification.
+Runner syntax checked;final F rerun on frozen runner TERMINAL0 as above.
+All current qualification jobs terminal;no session restarted on timeout.
+
+NO Pioneer IO/SSH/device/reload/power/SD/Assistant/network/CPU/RAM changes.
+Latest hardware state remains historical DEBUG52 quarantine/cold1/owner1,
+stable041 restore PENDING;no fresh hardware-state assertion. Saved-work
+confirmation still needed before controlled recovery. ONE effective OFF,
+verify actual OFF,ONE ON. OFF twice can START board;no mains/SD change.
+
+NEXT genuine retained typed producer -> complete canonical manifest ->
+native consumer. Atomically claim/capture producer/cohort/old sequence and
+parents BEFORE mutation;old Current() is held-only,NOT a live execution
+grant once images/cores change. Preserve SAME full8330680word snapshot,
+canonical learned/initialized page ledger/GDDR CURRENT+privateNEXT and
+actual call/team/thread/clock/source/maps;qualify Scope/Close/restore/END.
+New on-card image is NOT yet invoked by that lifecycle.
+New host parser must coexist with old QPS1 native compilation WITHOUT
+widening its RMS-only result grammar:these standalone image parsers currently
+reuse generic projection shape helpers and intentionally reject old stash
+mode at source/build gates. Do not alias native RMS mode into this image.
+DEBUG52 physical failure diagnosis/recovery still required before promotion.
+Residual,
+post-attention RMS/FFN/full attention+KV/all64layers/sampling/persistent
+token loop and real whole27B performance all remain OWED.
