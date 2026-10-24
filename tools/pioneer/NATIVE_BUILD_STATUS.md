@@ -1,5 +1,30 @@
 # Native build status
 
+October24 UTC2026:card-resident QFG3 FULL FFN+residual image IMPLEMENTED/
+OFFLINE qualified,NOT integrated into native decoder/linked/installed/Work.
+Found real alias:old gate/up GDDR output overwrites QRR1 raw residual98304.
+New ROOT saves ALL5120 raw words in existing disjoint L194000..99000 BEFORE
+FFN;actual20input producers/ALL119gate17408+up17408/68SiLU/ALL119down5120;
+device adds saved residual and publishes5120 next hidden at workspace+0.
+No CPU interstage arithmetic/staged input/GDDR spill or widened snapshot.
+Actual QRR1->SAME GDDR->QFG3+ALL119 RV32/FPU/Tensix chain PASS BOTH token0/
+bank0 and248319/bank6/reversedrows:2088960 Tensix instructions each/final5120
+F32 residual BIT-EXACT/ALL119STOP. Weights/initial inputs synthetic;NOT full
+original model/native lifetime/physical execution/TPS.14root positives+
+57faults/115gates/ALL867448 frozenwords within original snapshot PASS.
+E/F images EXACT492a94d2/28d8513c/361fa896;new96Bmaxframe/inherited4992B
+matrix frame unchanged/actualROOTstack5832B within old8KiB. Old QFG1/QFG2
+sections EXACT;oldQFG1 28+98 regression/68build refusals/451+3547 DATA tests
+PASS. Actual native56 object EXACTb9400c71/ALL inherited controls unchanged.
+ALL jobs terminal. ZERO PioneerIO/power/SD/Assistant changes;historical52
+quarantine/restorepending NOT rechecked. Saved-work confirmation still owed
+before recovery;ONE OFF only if actuallyON,verifyOFF,ONEON;never repeat OFF.
+Whole27B0.207893161tok/s/20UNMET/goalACTIVE. NEXT SAME actual native FFN
+consumer of private PostAttentionInput,original learned pages/factory/Scope/
+receipts/STOP+hold/full8330680restore+END;then ORIGINAL FFN/full64layers/
+attentionKV/sampling/persistent token schedule/honest hardware throughput.
+Evidence:benchmarks/qwen38-ffn-residual-image-20261024.txt.
+
 October24 UTC2026:SAME actual decoder native56 QRR1 integration IMPLEMENTED/
 OFFLINE qualified,NOT linked/installed/Assistant/Work-selected. Claims genuine
 completed QOP1 plus original RMS residual lineage BEFORE IO;old output query

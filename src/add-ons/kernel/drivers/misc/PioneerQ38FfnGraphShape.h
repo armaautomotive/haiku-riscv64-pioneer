@@ -8,7 +8,12 @@
 // initialization/fields/tags/copies here do not prove an input producer ran.
 // Work ONLY. These buffers overlap the OLD CHECKED peer-proof array;the
 // coordinator may NEVER execute that checked/clear path or use its owner.
-#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+#ifdef PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT
+#if PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT != 1 || defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT)
+#error Separate exact card-resident residual FFN role,never host-staged QFG2
+#endif
+enum {TT_Q38_FFN_GRAPH_MARKER=0x33474651,TT_Q38_FFN_GRAPH_VERSION=3};
+#elif defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT)
 #if PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1
 #error Exact separate input-producing FFN image role required
 #endif

@@ -5,6 +5,14 @@
 // QFG2 needs exact staged L1 input ownership BEFORE launch;its actual copy/
 // readback below produces GDDR input BEFORE any peer computation. Neither
 // image supplies the missing native scope/host/terminal authority itself.
+// QFG3 consumes SAME completed GDDR normalized+residual producers. Preserve
+// raw residual in disjoint L1 BEFORE old FFN gate/up scratch overwrites it;
+// publish the final hidden state only AFTER complete device-side addition.
+#ifdef PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT
+#if PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT != 1 || !defined(PIONEER_Q38_FFN_GRAPH_ROOT) || PIONEER_Q38_FFN_GRAPH_ROOT != 1 || defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || defined(_KERNEL_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDUAL_RMS_NATIVE) || defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH)
+#error Exact separate OFFLINE QFG3 image,not staged input/native/CPU validation/Work
+#endif
+#endif
 #ifndef PIONEER_Q38_FFN_GRAPH_ROOT
 #error Separate complete FFN root flag required
 #endif
@@ -106,6 +114,56 @@ static GRAPH_FN void InitialInput() {
  Stats()[61]=Snapshot()[13];Stats()[62]=Snapshot()[40];Stats()[63]=Snapshot()[41];Fence();
 }
 #endif
+#ifdef PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT
+// PRIVATE constant endpoints ONLY;not a generic device-copy capability.
+// Existing complete ROOT snapshot74000..ac000 already covers both buffers.
+// No GDDR spill or CPU vector is needed across the seven FFN stages.
+enum {ResidualLocal=0x94000,DownLocal=0x99000,ResidualGddr=0x18000,DownGddr=274880};
+static_assert(0x80000+17408*4<=ResidualLocal,"disjoint from complete matrix result gather");
+static_assert(0x90e00+64<=ResidualLocal && ResidualLocal+20480==DownLocal && DownLocal+20480<=0xa0000,
+ "preserved residual/down never overlap gather scale line or native operands");
+static bool ResidualDomain(uint32_t bits){
+ unsigned magnitude=bits&0x7fffffff;
+ return magnitude<=0x477fe000 && (!magnitude || magnitude>=0x26800000); // SAME existing RMS domain,NO clipping
+}
+static GRAPH_FN void ResidualPacket(unsigned index) {
+ if(index>=6 || !Sealed() || !Idle())block_fault_park();
+ const auto* d=Snapshot();bool write=index>=4;unsigned offset=(index&1)*16384,bytes=(index&1)?4096U:16384U;
+ unsigned local=(index<2?ResidualLocal:DownLocal)+offset;
+ unsigned remote=d[4]+(index<2?unsigned(ResidualGddr):index<4?unsigned(DownGddr):0U)+offset,flits=bytes/64;
+ uint32_t expected[8];
+ for(unsigned i=0;i<8;i++){
+  expected[i]=*Words(0xffb20000+Offset(i))+(i==2 || i==6?1U:i==0 || i==3?unsigned(!write):i==1?(!write?flits:0U):i==5?(write?flits:0U):unsigned(write));
+  if(i==6 && expected[6]!=expected[2])block_fault_park();
+ }
+ const uint32_t command[]={write?local:remote,0,write?129U:d[8],write?remote:local,0,write?d[8]:129U,0,write?0x212U:0,bytes,0};
+ for(unsigned i=0;i<10;i++)Words(0xffb20000)[i]=command[i];
+ for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])block_fault_park();
+ Fence();*Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();
+ for(unsigned attempt=0;attempt<65536;attempt++){
+  bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Offset(i))==expected[i];
+  if(done){if(!Sealed() || !Idle())block_fault_park();Stats()[write?7:6]++;Stats()[write?9:8]+=flits;Fence();return;}
+ }
+ block_fault_park(); // UNKNOWN:no next packet/peer work/output/STOP/retry
+}
+static GRAPH_FN void PreserveResidual(){
+ ResidualPacket(0);ResidualPacket(1);
+ for(unsigned i=0;i<5120;i++)if(!ResidualDomain(Words(ResidualLocal)[i]))block_fault_park();
+}
+static GRAPH_FN void FinishResidual(){
+ ResidualPacket(2);ResidualPacket(3);
+ // Validate the COMPLETE down/residual/sum before FIRST hidden-state write.
+ // RV32 F32 addition ONLY;no CPU learned products or validation round trip.
+ for(unsigned i=0;i<5120;i++){
+  union {uint32_t u;float f;} raw,down,sum;raw.u=Words(ResidualLocal)[i];down.u=Words(DownLocal)[i];
+  if(!ResidualDomain(raw.u) || !ResidualDomain(down.u))block_fault_park();
+  sum.f=raw.f+down.f;if(!ResidualDomain(sum.u))block_fault_park();Words(DownLocal)[i]=sum.u;
+ }
+ ResidualPacket(4);ResidualPacket(5);
+ Stats()[57]=0x33524651;Stats()[58]=20480;Stats()[59]=4;Stats()[60]=2;
+ Stats()[61]=Snapshot()[13];Stats()[62]=Snapshot()[40];Stats()[63]=Snapshot()[41];Fence();
+}
+#endif
 // BEFORE samples are independently stored,never taken from a peer proof.
 // AFTER each physical subread must match its expected word BEFORE another
 // packet may issue. Observed mismatches therefore stop at the FIRST group.
@@ -150,7 +208,7 @@ static GRAPH_FN void StageProducer(unsigned w,unsigned operation,unsigned phase)
  Clear(job,16); // explicit word stores,NO libc memset/byte-store dependency
  if(operation!=2) {
   frame[0]=operation==4?unsigned(TT_Q38_FFN_INPUT_MARKER):unsigned(TT_Q38_FFN_RESIDENT_MARKER);frame[5]=w-1;frame[6]=phase;frame[7]=w;frame[9]=XY(w);
-#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+#if defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || defined(PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT)
   frame[1]=1; // QFP2 producer interface stays EXACT version1
 #endif
   frame[10]=operation==4?(w-1)*1024:30848+(w-1)*1024;frame[11]=operation==4?0:100480+(w-1)*1024;
@@ -178,7 +236,7 @@ static GRAPH_FN void Producer(unsigned operation,unsigned count,unsigned phase) 
   if(operation!=2) {
    Packet(false,w,0x75000,0x83f00,256);uint32_t proof[64],frame[64],job[16];for(unsigned i=0;i<64;i++){proof[i]=Words(0x75000)[i];frame[i]=Snapshot()[i];}
    frame[0]=operation==4?unsigned(TT_Q38_FFN_INPUT_MARKER):unsigned(TT_Q38_FFN_RESIDENT_MARKER);frame[5]=w-1;frame[6]=phase;frame[7]=w;frame[9]=XY(w);
-#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+#if defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || defined(PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT)
    frame[1]=1;
 #endif
    frame[10]=operation==4?(w-1)*1024:30848+(w-1)*1024;frame[11]=operation==4?0:100480+(w-1)*1024;
@@ -198,7 +256,7 @@ static GRAPH_FN void Producer(unsigned operation,unsigned count,unsigned phase) 
 }
 static GRAPH_FN void GatherInput(unsigned count,unsigned phase) {
  uint32_t d[64];for(unsigned i=0;i<64;i++)d[i]=Snapshot()[i];
-#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+#if defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || defined(PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT)
  d[1]=1; // unchanged existing gather interface
 #endif
  d[0]=TT_Q38_FFN_GATHER2_MARKER;d[5]=count;d[6]=phase;d[7]=0;d[10]=count==20?20480:239744;d[11]=295360;
@@ -213,7 +271,7 @@ static GRAPH_FN unsigned StageMatrix(unsigned role,unsigned phase) {
  for(unsigned w=1;w<=n;w++)Counters(w,Words(TT_Q38_FFN_GRAPH_COUNTERS+(w-1)*32),nullptr);
  for(unsigned w=0;w<119;w++){for(unsigned i=0;i<8;i++)Words(0x74080)[w*8+i]=m[16+w*8+i];if(w<n)Words(0x74080)[w*8+3]=Seq()[w]+1;Words(TT_Q38_FFN_MATRIX_ROWS)[w]=m[16+119*8+w];}
  uint32_t frame[64];for(unsigned i=0;i<64;i++)frame[i]=d[i];frame[0]=TT_Q38_FFN_MATRIX_MARKER;frame[5]=role;frame[6]=phase;frame[7]=n;
-#ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
+#if defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || defined(PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT)
  frame[1]=1; // unchanged existing resident matrix interface
 #endif
  frame[10]=role==0?30848:role==1?100480:274880;frame[11]=m[4];frame[12]=m[4]*4;frame[13]=TT_Q38_FFN_MATRIX_ROWS;frame[14]=m[3];frame[15]=m[1];
@@ -254,12 +312,18 @@ extern "C" GRAPH_FN unsigned block_main() {
 #ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
   InitialInput(); // actual producer BEFORE any peer reads the initial GDDR
 #endif
+#ifdef PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT
+  PreserveResidual(); // gate/up output will overwrite the old GDDR backup
+#endif
   Producer(4,20,d[6]+1);GatherInput(20,d[6]+1);
   if(!Sealed())block_fault_park();
   unsigned n=StageMatrix(0,d[6]+2);if(q38_ffn_graph_matrix_once()!=n)block_fault_park();MatrixFinished(0);
   n=StageMatrix(1,d[6]+3);if(q38_ffn_graph_matrix_once()!=n)block_fault_park();MatrixFinished(1);
   Producer(3,68,d[6]+4);GatherInput(68,d[6]+4);
   n=StageMatrix(2,d[6]+5);if(q38_ffn_graph_matrix_once()!=n)block_fault_park();MatrixFinished(2);
+#ifdef PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT
+  FinishResidual(); // publishes next hidden state;old input producer expires
+#endif
  }
  if(!Sealed() || !Idle())block_fault_park();
  for(unsigned w=0;w<119;w++)if(Seq()[w]!=PioneerQ38FfnGraphNextPeer(d,w))block_fault_park();
@@ -271,6 +335,9 @@ extern "C" GRAPH_FN unsigned block_main() {
  Stats()[48]=d[14];Stats()[49]=d[5]==1?7:1;Stats()[50]=d[5]==1?3:0;
 #ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
  Stats()[49]=d[5]==1?8:1;
+#endif
+#ifdef PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT
+ Stats()[49]=d[5]==1?9:1;
 #endif
  Stats()[51]=d[5]==1?20:0;Stats()[52]=d[5]==1?68:0;Stats()[53]=d[5]==1?20480:0;Stats()[54]=d[13];Stats()[55]=d[42];Stats()[56]=1;Fence();
  return d[5]==1?5120:119; // complete device FFN/STOP only,NOT model/native authority

@@ -2,6 +2,21 @@
 
 ## Status
 
+### October24:card-resident full FFN and residual instruction path
+
+The new offline QFG3 root preserves the post-attention residual before the
+old gate/up scratch layout overwrites it,then runs full gate/up/SiLU/down
+and adds the residual on card. Actual QRR1->shared GDDR->QFG3 plus all119
+compute-worker instruction programs passed for two bank/row-order cases,
+with no CPU arithmetic between stages. Fault/build/lease tests pass;old
+native56 and old FFN images remain byte-identical. This is simulated-fabric
+instruction evidence with synthetic learned weights,NOT native integration,
+physical-card inference or a speed measurement. No hardware/power/Assistant
+change was made. Last measured whole27B0.207893161tok/s;20tok/s still unmet.
+Next integrate the genuine completed producer into the SAME native decoder
+and qualify original model weights,then complete all64layers/token schedule.
+See benchmarks/qwen38-ffn-residual-image-20261024.txt for exact scope/evidence.
+
 ### October20:normal firmware clocks and compact-return qualification
 
 The27B path is STILL hybrid,NOT card-only or practically fast. Normal

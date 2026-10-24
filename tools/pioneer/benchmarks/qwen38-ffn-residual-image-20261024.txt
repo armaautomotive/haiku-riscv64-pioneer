@@ -1,0 +1,140 @@
+Pioneer Qwen3.8-27B card-resident FFN+residual image checkpoint
+2026-10-24 UTC
+
+Scope / actual goal
+-------------------
+New OFFLINE QFG3 root consumes completed GDDR post-attention normalized5120
+and residual5120. Actual gate/up/SiLU/down and residual addition stay on card.
+Actual emitted RV32/FPU/Tensix instructions execute against byte-only mocked
+NoC/GDDR endpoints. This is NOT a new native owner/linked driver/installed
+image/Assistant target,original full-model result,physical card test or TPS
+measurement. Whole-model last measured0.207893161tok/s;20tok/s remains unmet.
+Full card-offload/performance goal ACTIVE. ZERO Pioneer SSH/GPU/power/SD/
+boot/Assistant operations this checkpoint. Historical DEBUG52 quarantine/
+stable041 restore pending NOT freshly rechecked;no recovery attempted.
+
+Why an unchanged QFG1 image was insufficient
+------------------------------------------
+QRR1 leaves normalized input at workspace+0 and raw residual at+0x18000
+(98304),20KiB each. Old FFN gate30848..100480 and up100480..170112 overwrite
+the raw residual BEFORE the down projection completes. Retaining a typed
+producer alone cannot prevent this physical alias. The new path preserves
+ALL5120 raw words in disjoint ROOT L1 BEFORE starting any FFN producer.
+
+Actual new device path
+----------------------
+Distinct QFG3 marker0x33474651/version3. Old QFG1/QFG2 reject in the new
+grammar. No caller addresses,copy endpoints,host-staged vector or CPU
+reference/product/fallback added. SAME existing QFP2 peer images unchanged.
+
+1. Two actual16KiB+4KiB reads save raw residual into ROOT94000..99000.
+2. Actual20 peers quantize normalized GDDR5120 -> native/scales;root gathers.
+3. ALL119 original arithmetic programs perform complete5120->17408 gate.
+4. SAME119 peers perform complete5120->17408 up.
+5. Actual68 peers perform SiLU/gating/quantization;root gathers17408 values.
+6. SAME119 peers perform complete17408->5120 down into GDDR+274880.
+7. Two reads consume that actual down result into99000..9e000. ROOT performs
+   one rounded F32 add per lane against preserved residual. COMPLETE5120
+   raw/down/sum domain checks BEFORE FIRST hidden-state write. Two writes
+   publish next hidden5120 at workspace+0. Old normalized input expires.
+
+Raw is kept in L1,not spilled through PCIe or extra GDDR. ROOT largest matrix
+gather80000..91000 and gather-scale scratch90e00 remain disjoint;new buffers
+finish before native operands a0000. ALL new runtime words/code inside SAME
+original decoder snapshot;no mapping/code/stack limit expansion. The previous
+GDDR raw backup is deliberately allowed to be overwritten:next RMS must
+consume completed new hidden+0 and create its own fresh residual lineage.
+
+Fixed six new NoC packets:four reads640flits,two writes320flits. Exact command
+readback/source seals/all port/queue quiet/accepted aliases/completion checks
+remain. First UNKNOWN parks;no later packet/STOP/reset/restore/retry. STOP
+never reads/adds/publishes residual and preserves ALL GDDR. Summary57..63 is
+DATA only:{0x33524651,20480,4,2,finalPhase,positionLow,positionHigh};not a native
+completed-producer grant. Stats49=9 complete stages,old peer interfaces stay
+EXACTversion1. Future SAME native owner must independently prove all receipts.
+Math domain unchanged from existing RMS:zero/signedzero or abs2^-50..65504;
+no clipping/subnormal substitution/relaxed bounds/CPU validation in image.
+
+Image authentication / reproducibility
+--------------------------------------
+Two final independent E/F builds byte-identical to actual C tested image:
+/private/tmp/pioneer-q38-ffn-residual-image-20261024-{e,f}
+boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+main6884B 492a94d2435a4794c759c2eb3b9b50de29d40c1ad53cf9819ce1e68f73ab5ac5
+prefix6172B 28d8513c2bcdd5f7a0eb2b4ff4870715429611dacf319aef5952167f7a5dc9ce
+graph17824B 361fa896b9874c99686de9de577d9990fd0e7cd97692591ec36b71a242358de1
+ROOT40KiB prefix/16KiB main/old8KiB stack unchanged. New residual maxframe96B;
+inherited matrix4992B frame does NOT grow. Actual full ROOT stack5832B.
+Generator authenticates ALL3 ROOT and ALL3 unchanged QFP2 sections plus both
+boots BEFORE ANY patch output. Frozen DATA accessors grant no native route.
+
+Qualified evidence
+------------------
+Actual ROOT instructions/synthetic peers:14 positives/57 faults PASS ASan/
+UBSan. ALL7banks/high-edge/mixed Q4_K-Q6_K/reversedrows,5120 raw retention
+despite actual old-GDDR overwrite,correct addition/hidden output and119STOP.
+Invalid raw at four boundary lanes refused BEFORE ANY peer computation.
+Drops at each of6 new packets,source/manifest/counter changes after EACH,
+bad down data/finite out-of-domain sum/oldABIs:UNKNOWN inert/no later packet.
+No hidden writes on math refusal;partial transport publication retained on
+UNKNOWN rather than fake atomicity or retry. Log:
+/private/tmp/pioneer-q38-ffn-residual-root-tests-20261024-c.log
+SHA c4cf98fe3283125ce63075608dc76701adadfd4a96f9c17c1ff4cd34cee9621f
+
+Actual QRR1 -> SAME shared GDDR -> QFG3+ALL119 RV32/FPU/Tensix programs:
+token0/bank0 full gate17408+up17408+68SiLU+down5120+residual5120 BIT-EXACT,
+119 independent STOPs,2088960 Tensix instructions. Actual QRR1 overwrites
+poisoned GDDR inputs BEFORE FFN consumes them. Physical ROOT source/counter/
+command histories retained;no CPU interstage arithmetic or product injection.
+Synthetic learned weights and initial raw/projected inputs,NOT the original
+public GDN chain/native factory/physical timing/model-output qualification.
+Log:/private/tmp/pioneer-q38-rms-ffn-cooperative-20261024-b.log
+SHA 89f9304a7c9414ed20447329e3aa48d09d42bd41d13091d94396e79fd09c97bb
+Opposite bank6/token248319/reversed-row case ALSO PASS with2088960 actual
+Tensix instructions/119STOP/final5120 residual BIT-EXACT/no host products.
+Log:/private/tmp/pioneer-q38-rms-ffn-cooperative-20261024-c.log
+SHA 911721911bad4fbc89e96faa5842ed61cea7dd680079c9a2bae4c8806038c2ed
+Both complete arithmetic runs terminal0;ALL checkpoint jobs now terminal.
+
+115 gates PASS:two exact images/ALL867448 frozen codewords verified inside
+original decoder snapshot/448bank-layer DATA shapes/oldABIs refuse/ALL root+
+peer first/last-byte mutations refuse before patch/legacy builders refuse new
+selector BEFORE SDK/defined-zero mixed-source roles rejected. New frames<=
+2048B;inherited larger frames nongrowing. NO native/Work/public selector.
+Log:/private/tmp/pioneer-q38-ffn-residual-gates-20261024-b.log
+SHA a8c091c8e659010ad09be7a0e6e6547428d76b792acea02432de9fdf7a81ab95
+
+Legacy regressions
+-------------------
+Old QFG1 ROOT sections byte-identical19eba2d3/3f7f3b0b/9dfca41e.
+Old QFG2 ROOT sections byte-identicala363fb40/255ff2bb/a0b2fdf2.
+Old QFG1 actual ROOT28positive/98fault regression PASS,maxStack5832B.
+Log:/private/tmp/pioneer-q38-ffn-residual-old1-tests-20261024-a.log
+SHA d66e952897669313941fb14beee96f2517e1526fd406fa3e50afe628928b6f7c
+Old FFN68 builder refusals/451 DATA positives+3547 refusals PASS.
+Actual native56 compile b9400c713c7f4385ec531c13ccc65496a9b49b277d7266c5d9029b74c1a97d9f
+EXACT prior checkpoint,newmax640B/all inherited frame nongrowth. ALL inherited
+controls through native54 c8930f61 unchanged. No new linked/installed driver.
+Log:/private/tmp/pioneer-q38-ffn-residual-old56-20261024-a.log
+SHA 5343a8b6a409e9d70280de1cc9bccd07bc34eb7d85fb0ca6fe87ef3f2ba2b158
+
+Next genuine end-state work
+---------------------------
+SAME real resident decoder must claim nonconstructible PostAttentionInput
+BEFORE IO,expire old completion queries,prove ALL120 holds/119 STOPs and
+original learned FFN ledger,install actual QFG3+QFP2 inside original retained
+snapshot,run/independently verify complete root/peer receipts,STOP+hold,then
+publish next hidden producer. No fake old RMS-only or FfnMutableBanks owner.
+Qualify ORIGINAL full public GGUF weights through full FFN/real native
+factory/Scope/Close/8330680-word restore+verify/END with failure retention.
+Then subsequent-layer norm/GDN or attention+KV/all64layers/sampling/card-only
+persistent token schedule,real hardware benchmarks and Assistant Work mode.
+No claimed practical27B speedup until whole-model timing actually proves it.
+
+Power unchanged
+----------------
+Saved-work recovery question still pending;do not treat power corrections as
+confirmation. ONE effective OFF only if board actually ON;verify actual OFF;
+ONE ON. Never a second OFF after software shutdown or SSH loss. Relay status
+is button contacts,not board power. No extra boot pulses;mains/SD unchanged.
+Five-minute rest only after an actual ON fails.

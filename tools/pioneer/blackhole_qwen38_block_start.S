@@ -27,10 +27,14 @@ block_done:
 .endif
 .else
 .ifdef TT_Q38_FFN_GRAPH_ROOT
+.ifdef TT_Q38_FFN_GRAPH_RESIDUAL_ROOT
+	li t1,0x33474651 /* QFG3:card-resident input+preserved residual,not QFG1/2 */
+.else
 .ifdef TT_Q38_FFN_GRAPH_INPUT_ROOT
 	li t1,0x32474651 /* QFG2:owned initial F32 producer,NOT QFG1 */
 .else
 	li t1,0x31474651 /* QFG1:NEW complete FFN root,not an old projection */
+.endif
 .endif
 .else
 .ifdef TT_Q38_FFN_MATRIX_ROOT

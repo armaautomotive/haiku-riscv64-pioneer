@@ -38,6 +38,13 @@ case "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" in
  1) input_flags=-DPIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1;input_assembly='--defsym TT_Q38_FFN_GRAPH_INPUT_ROOT=1';;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" = 0 ] || exit 2
+    python3 -c 'import os,sys; allowed={"PIONEER_Q38_FFN_GRAPH_ROOT","PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT"}; sys.exit(0 if all(not k.startswith("PIONEER_") or v==("1" if k in allowed else "0") for k,v in os.environ.items()) else 2)' || exit 2
+    input_flags=-DPIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT=1;input_assembly='--defsym TT_Q38_FFN_GRAPH_RESIDUAL_ROOT=1';;
+ *) exit 2;;
+esac
 for key in PIONEER_Q38_FFN_RESIDENT_MATRIX PIONEER_Q38_FFN_PERSISTENT PIONEER_Q38_OUTPUT_TRANSFER_ROOT \
  PIONEER_Q38_WORK_ROOT_COMMAND_REUSE PIONEER_Q38_WORK_BATCH4_FETCH PIONEER_Q38_PEER_PHASE_ROOT \
  PIONEER_Q38_WORK_RAW_UNPACK_CACHE PIONEER_Q38_RAW_UNPACK_CACHE_QUALIFICATION PIONEER_Q38_WORK_LOCAL_Q4 PIONEER_Q38_LOCAL_Q4_QUALIFICATION;do
@@ -71,4 +78,8 @@ for section in boot text prefix graph;do "$cross-objcopy" -O binary -j ".$sectio
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
 "$cross-objdump" -d "$output/program.elf" > "$output/program.disassembly"
 for section in boot text prefix graph;do shasum -a 256 "$output/$section.bin";done
-printf 'OFFLINE complete FFN root INPUT_ROLE=%s;NOT native/controller/model/speed qualified: %s\n' "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" "$output"
+if [ "${PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT:-0}" = 1 ];then
+ printf 'OFFLINE QFG3 card-resident FULL FFN+residual;NOT native/controller/model/speed qualified: %s\n' "$output"
+else
+ printf 'OFFLINE complete FFN root INPUT_ROLE=%s;NOT native/controller/model/speed qualified: %s\n' "${PIONEER_Q38_FFN_GRAPH_INPUT_ROOT:-0}" "$output"
+fi
