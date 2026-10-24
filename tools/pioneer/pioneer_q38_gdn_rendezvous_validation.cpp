@@ -43,6 +43,21 @@ int main(int argc,char** argv){
     for(unsigned i=0;i<8;i++)printf(" %08x",unsigned(values[kind][row*8+i]));
     putchar('\n');
    }
+   puts("DEBUG_CPU_PREPARED_STATE_CONTEXT_FROM_EXISTING_REPLY_ONLY_PARTNER_MAY_BE_UNCHECKED;NO_DEVICE_IO_OR_NATIVE_GRANT");
+   const uint32_t* prepared[]={d.paired_prepared_expected[0],d.paired_prepared_expected[1],d.paired_prepared_actual[0],d.paired_prepared_actual[1]};
+   const char* preparedNames[]={"EXPECTED_PREPARED_0","EXPECTED_PREPARED_1","ACTUAL_PREPARED_0","ACTUAL_PREPARED_1"};
+   for(unsigned kind=0;kind<4;kind++)for(unsigned at=0;at<322;at+=8){
+    printf("DEBUG_CPU_%s word%03u",preparedNames[kind],at);
+    for(unsigned j=0;j<8 && at+j<322;j++)printf(" %08x",unsigned(prepared[kind][at+j]));
+    putchar('\n');
+   }
+   const uint32_t* rows[]={d.failing_next_row_expected,d.failing_next_row_actual};
+   const char* rowNames[]={"EXPECTED_NEXT_ROW","ACTUAL_NEXT_ROW"};
+   for(unsigned kind=0;kind<2;kind++)for(unsigned at=0;at<128;at+=8){
+    printf("DEBUG_CPU_%s word%03u",rowNames[kind],at);
+    for(unsigned j=0;j<8;j++)printf(" %08x",unsigned(rows[kind][at+j]));
+    putchar('\n');
+   }
   }
  }
  printf("%s_DEBUG_NATIVE_QGT1 token0 layer0 all96_halves all829632_values independent_original_GGUF_references within3e-6_scaled_bound STRICT_relative_normal_gates clean_end%u initialization_execution_readback_restore_us%llu;NO_TOKEN_RATE\n",

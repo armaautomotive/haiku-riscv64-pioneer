@@ -20,6 +20,8 @@ public:
   bool reply_captured=false;
   unsigned gated_head=UINT32_MAX,gated_lane=UINT32_MAX;
   uint32_t paired_raw_expected[128]={},paired_raw_actual[128]={},original_z[128]={};
+  uint32_t paired_prepared_expected[2][322]={},paired_prepared_actual[2][322]={};
+  uint32_t failing_next_row_expected[128]={},failing_next_row_actual[128]={};
   bool gated_context_captured=false;
  } diagnostics;
  static const char* FailureName(Failure reason){
@@ -180,6 +182,14 @@ public:
      unsigned at=(head*2+j/64)*8642+8514+j%64;
      diagnostics.paired_raw_expected[j]=reference[at];diagnostics.paired_raw_actual[j]=reply->values[at];diagnostics.original_z[j]=z[head*128+j];
     }
+    for(unsigned half=0;half<2;half++)for(unsigned j=0;j<322;j++){
+     unsigned at=(head*2+half)*8642+j;
+     diagnostics.paired_prepared_expected[half][j]=reference[at];diagnostics.paired_prepared_actual[half][j]=reply->values[at];
+    }
+    for(unsigned key=0;key<128;key++){
+     unsigned at=(head*2+diagnostics.gated_lane/64)*8642+322+key*64+diagnostics.gated_lane%64;
+     diagnostics.failing_next_row_expected[key]=reference[at];diagnostics.failing_next_row_actual[key]=reply->values[at];
+    } // diagnostic partner half may be unchecked;NONE of these bytes is a native producer grant
     diagnostics.gated_context_captured=true;
    }
    return Stop(reason,i,reference[i],reply->values[i]);

@@ -75,7 +75,12 @@ struct GdnValidationIO {
     // Never zero despite tiny absolute magnitude. Literal expected bytes,
     // NOT a call to any oracle or CPU products uploaded to a fake device.
     for(unsigned half=0;half<96;half++){reply.values[half*8642+320]=decay;reply.values[half*8642+321]=0x3f000000;}
-    if(contextHead<48)for(unsigned j=0;j<128;j++)reply.values[(contextHead*2+j/64)*8642+8514+j%64]=0x33800000+j;
+    if(contextHead<48){
+     for(unsigned j=0;j<128;j++)reply.values[(contextHead*2+j/64)*8642+8514+j%64]=0x33800000+j;
+     for(unsigned half=0;half<2;half++)for(unsigned j=0;j<320;j++)reply.values[(contextHead*2+half)*8642+j]=0x33800000+half*0x100+j;
+     unsigned half=corruptWord/8642,lane=(corruptWord%8642-8578)%64;
+     for(unsigned key=0;key<128;key++)reply.values[half*8642+322+key*64+lane]=0x33800000+key;
+    } // distinct already-returned diagnostic byte sentinels;NO reference/arithmetic callback
     if(corruptWord<829632){reply.values[corruptWord]=corruptBits;stopped=true;}
     if(badReply<48){uint32_t value;auto* field=reinterpret_cast<uint8_t*>(&reply)+badReply*4;memcpy(&value,field,4);
      if(badReply==8 || badReply==12)value=0;else value^=1;memcpy(field,&value,4);stopped=true;}
@@ -143,6 +148,10 @@ int main(){
   assert(d.gated_context_captured==before.gated_context_captured && d.gated_head==before.gated_head && d.gated_lane==before.gated_lane
    && !memcmp(d.paired_raw_expected,before.paired_raw_expected,sizeof(d.paired_raw_expected))
    && !memcmp(d.paired_raw_actual,before.paired_raw_actual,sizeof(d.paired_raw_actual)) && !memcmp(d.original_z,before.original_z,sizeof(d.original_z)));
+  assert(!memcmp(d.paired_prepared_expected,before.paired_prepared_expected,sizeof(d.paired_prepared_expected))
+   && !memcmp(d.paired_prepared_actual,before.paired_prepared_actual,sizeof(d.paired_prepared_actual))
+   && !memcmp(d.failing_next_row_expected,before.failing_next_row_expected,sizeof(d.failing_next_row_expected))
+   && !memcmp(d.failing_next_row_actual,before.failing_next_row_actual,sizeof(d.failing_next_row_actual)));
  };
  for(unsigned kind=0;kind<3;kind++)for(unsigned at:{1U,5U,6U,116U,117U,118U,119U})check(kind,at);
  for(unsigned at:{1U,12U,23237U,23238U})check(3,at);
@@ -165,7 +174,14 @@ int main(){
   const auto& d=session.diagnostics;assert(d.gated_context_captured && d.gated_head==47 && d.gated_lane==49
    && d.word==820975 && d.reason==Failure::AbsoluteTolerance && io.calls==118 && io.closes==1 && !io.ends && source.referenceReads==1675);
   for(unsigned j=0;j<128;j++)assert(!d.paired_raw_expected[j] && d.paired_raw_actual[j]==0x33800000+j && !d.original_z[j]);
-  auto before=d;session.Abort();assert(!memcmp(d.paired_raw_actual,before.paired_raw_actual,sizeof(d.paired_raw_actual)) && io.closes==1 && io.calls==118);faults++;
+  for(unsigned half=0;half<2;half++)for(unsigned j=0;j<322;j++){
+   unsigned expected=j<320?0:0x3f000000;
+   assert(d.paired_prepared_expected[half][j]==expected && d.paired_prepared_actual[half][j]==(j<320?0x33800000+half*0x100+j:expected));
+  }
+  for(unsigned key=0;key<128;key++)assert(!d.failing_next_row_expected[key] && d.failing_next_row_actual[key]==0x33800000+key);
+  auto before=d;session.Abort();assert(!memcmp(d.paired_raw_actual,before.paired_raw_actual,sizeof(d.paired_raw_actual))
+   && !memcmp(d.paired_prepared_actual,before.paired_prepared_actual,sizeof(d.paired_prepared_actual))
+   && !memcmp(d.failing_next_row_actual,before.failing_next_row_actual,sizeof(d.failing_next_row_actual)) && io.closes==1 && io.calls==118);faults++;
  }
  printf("PASS source-bound QGT DEBUG session positives%u/faults%u/tag52/namespace17/ALL96halves/strict-relative-gates/1675references BEFORE FD/23238ORIGINALpages/CLOSE ONLY after first fault/CPU-only-first-failure-and-fixed-header-snapshot;SYNTHETIC_NOT_CARD_OR_SPEED\n",positives,faults);
 }

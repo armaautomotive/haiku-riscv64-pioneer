@@ -1,0 +1,103 @@
+QGT52 returned-raw physical diagnosis and prepared-context client,2026-10-24.
+TESTED CPU diagnostic checkpoint,NOT a numerical driver fix/component pass.
+Last whole-model0.207893161tok/s unchanged;20tok/s/full offload UNMET.
+
+Controlled recovery consumed the prior human fans/LED-off confirmation:
+ONE ON50412 TERMINAL0. Linux CPU SSH verified fresh boot_id
+b600762a-c93b-4caf-b229-1f2b1ee39a16. Hash-pinned SD-free helper9cfc6d...
+prepare11641/boot26442 TERMINAL0 restored64CPU top-page Haiku profile.
+Fresh Haiku CPU SSH/reload metadata:tag52/gen1/cold0/owner0. Exact guarded
+a0d50797 --restore-gdn-rendezvous-validation78674 TERMINAL0 restored tested
+stable041/tag12/gen2 without GPU execution. No extra power pulse/SD/mains.
+
+Qualified existing CPU-only context client3878341e staged at unused path:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-gdn-context-3878341e-r62a
+Local A/B/remote SHA3878341e132997894dbbc16eba0307f9613f970343e808c94038bda1fd131cb7.
+ONE guarded --apply-gdn-rendezvous-validation19391 TERMINAL0 selected exact
+cdacaa3a/tag52/gen3,clean idle metadata. ONE physical diagnostic70980
+ACTUAL TERMINAL1;full original GGUF authentication/references BEFORE FD,
+111original span uploads+SPAN_END returned0;single3318720B ioctl89de returned0.
+FIRST CPU validation failure reproduced EXACTLY:
+ relative_tolerance/word820975/half94/offset8627/head47/lane49,
+ expected3a86371e,actual3a86373a,28ULPs/3.183289006e-6 relative>UNCHANGED3e-6.
+Later values NOT all validated. Aggregate257149147us includes initialization,
+execution/readback/restore;NOT kernel-only compute/token time/throughput.
+Client kept128original raw/128already-returned raw/128original Z words
+from CPU memory ONLY. NO post-failure card peek/END/reset/retry/rollback.
+Returned raw lane49:originalb69a7f68,physicalb69a7f89 (~3.259208ppm drift).
+Post-terminal CPU reload metadata:cold1/active_owner1,resources QUARANTINED.
+
+Original ownlog,archived AFTER terminal and matching SHA:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/qgt52-context-card-20261024-r62a.log
+ /private/tmp/pioneer-qgt52-context-evidence-20261024.JWPKkCDS/qgt52-context-card.log
+ SHA6cd0cef893d80cb2a09a6b76ff80a7ba44f44c82a6270fffea162795b2e9c6b4.
+Trimmed exact50diagnostic records,no uploads/personal/credential data:
+ tools/pioneer/tests/data/qgt52-head47-raw-context-20261024.log
+ SHA7582dbe511bf9fd245b2ffed11c34d7c6fcfabda6106db7e32219ce4d1cf855a.
+
+Read-only raw analyzer:expected and returned inverseRMS both999.926940918.
+Raw/RMS ratio estimates gated3a86373b,ONE ULP from physical3a86373a,
+ASSUMING physical Z/norm unchanged. This is evidence of upstream raw drift,
+not proof of unchanged unobserved physical operands or exact causal stage.
+
+New optional --raw-context LOG for original-source LOCAL numeric probe:
+strict bounded parser/finite NORMAL-or-zero domain/fixed head47 signature
+BEFORE compiling;typed392-word CPU-only payload,never log text execution.
+Fresh full c600 original-file authentication and all original references
+recomputed. ALL128 logged original raw and128original Z matched that source.
+Actual pinned QGN1 LOCAL instructions with ORIGINAL inputs reproduce the
+old result3a86371f,oneULP from original3a86371e;max128-lane relative0.200255ppm.
+Replacing ONLY diagnostic raw input with the ALREADY-returned physical raw
+and retaining original norm/Z yields3a86373a:EXACT physical gated bits,
+residual0. This is a local arithmetic diagnostic,not the fused physical
+path or a native/model pass. Physical Z/norm remain unobserved assumptions.
+ASan/UBSan89338 ACTUAL TERMINAL0:
+ /private/tmp/pioneer-qgt52-returned-raw-local-probe-20261024-a.log
+ SHAac123ab5bb9cb387c886b31a8e40ac896968b44cbd5420c4c15076a347ed4608.
+Reproduce without hardware:
+ python3 tools/pioneer/tests/run_pioneer_q38_gdn_gated_numeric_probe.py \
+  generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf \
+  /private/tmp/pioneer-q38-gdn-gated-norm-20261024-b --raw-context \
+  tools/pioneer/tests/data/qgt52-head47-raw-context-20261024.log
+
+Further CPU-only client update,NOT installed/rerun:at FIRST gated failure
+also retain both322-word prepared halves expected/actual and128-word
+failing value's NEXT-state row expected/actual. SAME already-returned CPU
+reply and prepared reference;NO new source read,call,FD,endpoint or numeric
+input. Partner half may be unchecked;all bytes are diagnostics,not grants.
+Print bounded named rows. All accuracy/ownership/metadata/END gates unchanged.
+Source/session counts STILL1675refs BEFORE FD/23238pages/111spans/119calls
+on clean success;118calls/oneCLOSE/noEND on first numeric failure.
+
+ASan/UBSan27698 ACTUAL TERMINAL0:independent reference3positives/15refusals;
+session4positives/197faults. Strengthened BOTH-half prepared and selected-row
+sentinels assert exact indexing and immutable diagnostics/no new IO after
+Abort;all old failures preserved. Log
+ /private/tmp/pioneer-qgt52-prepared-context-client-tests-20261024-a.log
+ SHA2a47098671a898c0330f0f0cb76eaab32cc16c21612ce5fa075a302e2631eca8.
+Exact-role/routing17661 TERMINAL0:234checks/131072actual allowlist probes.
+ SHA35952c23ec948cd91f29fc466b8b156d63d360785e80b909d56f3f6a302bf0ca.
+SDK prototypesA48760/B45119 ACTUAL TERMINAL1 on CLI-only misleading-
+indentation warnings. AFTER both ended,fixed only CLI formatting;no live
+session-test/native62 dependency changed. Revised SDK C89127/D23778 ACTUAL
+TERMINAL0,cmp BYTE-IDENTICAL:
+ /private/tmp/pioneer-qgt52-prepared-context-build-20261024.wz4LWEew/client-{c,d}
+ SHAcbe472f5dd1676ec51ed97e11cc332543e15f937ba82fc8d98b062672ac7dbc4.
+
+New read-only prepared/NEXT-row analyzer:strict bounded names/counts/offsets/
+complete unique rows/finite NORMAL domain. SequentialFP32 first-token-zero
+state reconstruction distinguishes preparation vs returned-row drift and
+reports shared-QK discrepancies;explicit nonauthentication/assumptions.
+Never manufactures absent prepared data from old raw-only logs. Synthetic
+tests B TERMINAL0:6methods,10boundary positives,394missing/duplicate records,
+7malformed,30domain+8gate refusals,closed-form/state-drift observations,
+read-only CLI/badUTF8/>1MiB/oldlog refusals;actual captured raw regression.
+ /private/tmp/pioneer-qgt52-prepared-context-analysis-tests-20261024-b.log
+No physical prepared/NEXT context yet;NO model/native qualification.
+
+Before this recovery,CPU-only sysinfo STILL64CPUs/max137034936320B,
+free133693702144B. Log synced;ONE authorized OFF58955 ACTUAL TERMINAL0.
+Actual fans/LED-off confirmation PENDING before ON;DO NOT repeat OFF or
+reuse the already-consumed prior confirmation. No SD/mains/Assistant change.
+Native62 full positive15677 PASSED separately,16-fault suite83476 remains
+LIVE with its distinct dependencies frozen. Do NOT promote WIP driver.

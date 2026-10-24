@@ -26,7 +26,7 @@ static int ProbeExecv(const char* path,char* const* argv){
 #include "../PioneerQ38GdnRendezvousValidationReference.h"
 #include "pioneer_q38_gdn_gated_norm_bridge.h"
 int main(int argc,char** argv){
- assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);originalPath=argv[1];
+ assert(argc==3 || argc==4);setvbuf(stdout,nullptr,_IOLBF,0);originalPath=argv[1];
  PioneerQ38PublicModelSource source;assert(source.Open() && source.Ready());
  puts("PROBE_FULL_ORIGINAL_GGUF_SHA_BEFORE_REFERENCES;NO_DEVICE_OR_NATIVE_CONTEXT");
  auto index=[&](const char* name){const auto* t=source.Model().Find(name);assert(t);return unsigned(t-source.Model().Tensors().data());};
@@ -59,4 +59,22 @@ int main(int argc,char** argv){
  }
  assert(source.Ready());
  printf("PROBE_EXECUTION_COMPLETE head47_original_inputs128_emitted_outputs max_relative%.17g worst_lane%u failures_over_3ppm=%u;DIAGNOSTIC_ONLY_NOT_PHYSICAL_OR_MODEL_QUALIFICATION\n",maximum,worst,failures);
+ if(argc==4){
+  uint32_t context[392];FILE* captured=fopen(argv[3],"rb");assert(captured);
+  assert(fread(context,1,sizeof(context),captured)==sizeof(context) && fgetc(captured)==EOF && !fclose(captured));
+  assert(context[0]==0x31504351 && context[1]==1 && context[2]==47 && context[3]==49 && context[4]==820975 && !context[5]
+   && context[6]==reference[820975]);
+  for(unsigned i=0;i<128;i++){
+   assert(context[8+i]==raw[i] && context[264+i]==z[47*128+i]); // exact original-file correlation,NOT trusted log identity
+   for(unsigned at:{8U,136U,264U}){uint32_t magnitude=context[at+i]&0x7fffffff;
+    assert(magnitude<=0x477fe000 && (!magnitude || magnitude>=0x00800000));
+   }
+  }
+  uint32_t emitted[128];
+  for(unsigned half=94;half<96;half++)ExecuteGdnGatedNormLocal(argv[2],half,context+136,norm,context+264,emitted+(half-94)*64);
+  double a=PioneerAttentionFloat(emitted[49]),physical=PioneerAttentionFloat(context[7]);
+  assert(isfinite(physical) && source.Ready());
+  printf("PROBE_RETURNED_RAW_CONTEXT head47 lane49 original_raw%08x returned_raw%08x original_norm%08x original_z%08x original_gated%08x emitted_with_returned_raw%08x physical_returned_gated%08x bit_equal%u residual_relative%.17g;ASSUMES_UNOBSERVED_PHYSICAL_Z_NORM_UNCHANGED_LOCAL_NOT_FUSED_PATH_NO_NATIVE_VALIDATION_OR_WORK_GRANT\n",
+   raw[49],context[136+49],norm[49],z[47*128+49],context[6],emitted[49],context[7],unsigned(emitted[49]==context[7]),physical?fabs(a-physical)/fabs(physical):a==0?0:INFINITY);
+ }
 }
