@@ -34,8 +34,8 @@ namespace {
 class OriginalSource final:public DecoderOriginalSource {
  struct Stripe {unsigned role,route;uint32_t address,bytes;std::vector<uint8_t> data;};
  PioneerQ38PublicModelSource original;PioneerQwen38PackedPlan plan;
- std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false;
- uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0;
+ std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false,gdnNative=false;
+ uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0,gdnNormReads=0;
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
  std::array<uint32_t,128> gdnLearnedNorm={};std::vector<uint32_t> gdnNormReferences;
@@ -51,7 +51,7 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  bool Prepare(unsigned token)override{
@@ -185,12 +185,13 @@ public:
   return true;
  }
  bool Read(unsigned route,uint32_t address,uint8_t* out,unsigned bytes)override{
-  if(!sealed || !Ready() || !out || (bytes!=256 && bytes!=576 && (!gdnInputs || bytes!=64)) || (address&63))return false;
+  if(!sealed || !Ready() || !out || (bytes!=256 && bytes!=576 && (!gdnInputs || bytes!=64) && (!gdnNative || bytes!=512)) || (address&63))return false;
   for(const auto& s:stripes)if(s.route==route && address>=s.address && address-s.address<s.bytes){
-   unsigned relative=address-s.address,tile=s.role==12?256:(s.role==7 || s.role==8)?64:576;
+   unsigned relative=address-s.address,tile=s.role==12?256:(s.role==7 || s.role==8)?64:s.role==9?512:576;
+   if(s.role==9 && !gdnNative)return false;
    if(bytes!=tile || relative%tile || bytes>s.bytes-relative)return false;
    memcpy(out,s.data.data()+relative,bytes);if(s.role==12)convolutionReads++;
-   else if(s.role==7 || s.role==8)gdnInputReads++;else projectionReads++;
+   else if(s.role==7 || s.role==8)gdnInputReads++;else if(s.role==9)gdnNormReads++;else projectionReads++;
    return Ready();
   }
   return false; // No synthetic/partial/padding/foreign-address/numeric fallback
@@ -215,6 +216,7 @@ public:
  uint64_t ProjectionReads()const override{return projectionReads;}
  uint64_t ConvolutionReads()const override{return convolutionReads;}
  uint64_t GdnInputReads()const override{return gdnInputReads;}
+ uint64_t GdnNormReads()const override{return gdnNormReads;}
  bool CheckGdnInput(unsigned half,const uint32_t* values)const override{
   if(!gdnInputs || !gdnReferencesReady || !sealed || !Ready() || half>=96 || !values)return false;
   const auto* reference=gdnReferences.data()+half*322;
@@ -258,5 +260,9 @@ std::unique_ptr<DecoderOriginalSource> OpenGdnRecurrentOriginalSource(const char
 }
 std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNormOriginalSource(const char* path){
  if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true);
+ if(!source->Open())return nullptr;return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNativeOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true);
  if(!source->Open())return nullptr;return source;
 }

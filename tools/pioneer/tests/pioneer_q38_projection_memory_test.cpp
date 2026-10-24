@@ -9,7 +9,7 @@ struct ProjectionMemoryIO:CodeIO {
  const PioneerQ38ProjectionGraphMemoryResult* memoryState=nullptr;
  bool scopeAllowed=true,retained=false,dropPending=false;
  unsigned badKind=0,badPhase=0,badWorker=0,badOrdinal=0;
- std::vector<uint32_t> data=std::vector<uint32_t>(8134072);
+ std::vector<uint32_t> data=std::vector<uint32_t>(TT_Q38_PROJECTION_GRAPH_SAVED_WORDS);
  ProjectionMemoryIO(){for(unsigned i=0;i<data.size();i++)data[i]=i%17?0x9e3779b9U*(i+1)^0xa56b4e37U:UINT32_MAX;}
  static unsigned Index(unsigned w,uint32_t a){
   unsigned i=0;for(unsigned n=0;n<PioneerQ38ProjectionGraphSpanCount(w);n++){
@@ -49,7 +49,7 @@ struct ProjectionMemoryIO:CodeIO {
   if(badKind==2 && AtWord()){output^=1;observed=touches;}return true;
  }
  bool ProjectionGraphMemoryWrite(unsigned w,uint32_t a,uint32_t value){
-  Touch();writes++;assert(memoryState && memoryState->savedWords==8134072 && memoryState->verifiedOriginalWords>=8134072);
+  Touch();writes++;assert(memoryState && memoryState->savedWords==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS && memoryState->verifiedOriginalWords>=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS);
   assert(memoryState->phase==3?PioneerQ38ProjectionGraphProgramAddress(w,a):memoryState->phase==6 && PioneerQ38ProjectionGraphSnapshotContains(w,a));
   if(badKind==3 && AtWord()){observed=touches;return false;}
   if(badKind==5 && AtWord()){assert(FullRead(w,a)!=value);dropPending=true;return true;}
@@ -90,8 +90,8 @@ int main(int argc,char** argv){
   f.io.track=false;for(unsigned w=0;w<120;w++){assert(f.io.SelectRuntimeCore(w));panels.push_back(f.io.BootstrapIO::RuntimeCodeRead(0));
    for(unsigned i=0;i<4096;i++)panels.push_back(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4));}
   f.io.track=true;assert(f.PrepareMemory() && f.memory->Installed() && !f.memory->Unsafe());
-  assert(f.result.savedWords==8134072 && f.result.verifiedOriginalWords==8134072 && f.result.installedWords==989304 && !f.io.armed && !f.io.released);
-  assert(f.CloseMemory() && f.memory->Closed() && f.io.data==data && f.result.restoredWords==8134072 && f.result.verifiedOriginalWords==2*8134072);
+  assert(f.result.savedWords==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS && f.result.verifiedOriginalWords==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS && f.result.installedWords==TT_Q38_PROJECTION_GRAPH_CODE_WORDS && !f.io.armed && !f.io.released);
+  assert(f.CloseMemory() && f.memory->Closed() && f.io.data==data && f.result.restoredWords==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS && f.result.verifiedOriginalWords==2*TT_Q38_PROJECTION_GRAPH_SAVED_WORDS);
   {unsigned touches=f.io.touches;assert(!f.PrepareMemory() && !f.CloseMemory() && f.io.touches==touches);}
   f.io.track=false;unsigned at=0;for(unsigned w=0;w<120;w++){assert(f.io.SelectRuntimeCore(w));assert(f.io.BootstrapIO::RuntimeCodeRead(0)==panels[at++]);
    for(unsigned i=0;i<4096;i++)assert(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4)==panels[at++]);}
@@ -100,6 +100,14 @@ int main(int argc,char** argv){
   return 0;
  }
  unsigned faults=0,refusals=0;
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ for(unsigned worker:{1U,96U})for(unsigned phase:{1U,2U,3U,4U,5U,6U,7U}){
+  ProjectionMemoryFixture f;f.io.badKind=phase==3 || phase==6?3:1;f.io.badPhase=phase;f.io.badWorker=worker;
+  f.io.badOrdinal=6144; // exact0x69ffc:LAST word of NEW24KiB code prefix
+  if(phase<=4)assert(!f.PrepareMemory());else{assert(f.PrepareMemory());assert(!f.CloseMemory());}
+  f.Unknown();faults++;
+ }
+#endif
  for(unsigned phase:{1U,2U,3U,4U,5U,6U,7U})for(unsigned worker:{0U,119U}){
   ProjectionMemoryFixture f;f.io.badKind=phase==3 || phase==6?3:1;f.io.badPhase=phase;f.io.badWorker=worker;
   f.io.badOrdinal=phase==1 || phase==2 || phase==6 || phase==7?PioneerQ38ProjectionGraphSnapshotWords(worker)-1:PioneerQ38ProjectionGraphCodeWords(worker)-1;

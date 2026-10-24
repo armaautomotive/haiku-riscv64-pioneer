@@ -52,8 +52,9 @@ struct GatedResidentMachine:GdnRecurrentMachine {
    return i==peerRawFault?0x7fc00000:peer->memory.at(0x8e800+i*4);}
   return p==2?norm[i]:z[i];
  }
+ virtual bool HasPeerBytes()const{return peer!=nullptr;} // byte endpoint availability,NOT readiness
  void SubmitGated(){
-  assert(peer && packets>=11 && nextWrites==8192 && resultWrites==64 && unit.drained);
+  assert(HasPeerBytes() && packets>=11 && nextWrites==8192 && resultWrites==64 && unit.drained);
   const auto& d=gatedDescriptor;unsigned p=phase,size[]={64,256,512,512,256};bool write=p==4;
   unsigned remote[]={d[44],d[45],d[12],d[4]+d[42],d[4]+d[43]};
   unsigned local[]={TT_Q38_GDN_GATED_PEER_READY,0x80000+((d[7]^1)&1)*256,0x80200,0x80400,0x8ea00};

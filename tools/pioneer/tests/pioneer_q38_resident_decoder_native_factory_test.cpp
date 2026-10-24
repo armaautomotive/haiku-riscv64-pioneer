@@ -15,7 +15,11 @@ struct DecoderNativeFixture:ProjectionNativeFixture {
   }
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
   for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);
-   if(p->kind==plan->WeightKind && !p->layer && (p->role==7 || p->role==8)){
+   if(p->kind==plan->WeightKind && !p->layer && (p->role==7 || p->role==8
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+    || p->role==9
+#endif
+    )){
     assert(p->allocated==4096);learned[p->bank*786432+p->offset/4096]=1;
    }
   }

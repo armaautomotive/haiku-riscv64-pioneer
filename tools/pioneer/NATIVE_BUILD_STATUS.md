@@ -1,5 +1,27 @@
 # Native build status
 
+October24 UTC2026:new COMPILE-ONLY50 SAME native owner QGH1 integration
+IMPLEMENTED/OFFLINE qualified,not linked/installed/physical.80262terminal0:
+actual native init73728/history1680/QPE1/QRN1/4QPS1/QCB1ALL120->COOPERATIVE
+actual QGH1ALL96/829632ORIGINAL values/NoC peer stamps+raw+original norm+
+retainedZ/private gated GDDR;independent refs BEFORE context,all96receipts/
+ALL120holds/immutableCURRENT+unrelatedstate/private publications/complete
+8330680word restore/actualEND. New norm page preflight before epoch/claims/
+IO;old source providers remain512B-inert. Onlynew workers1..96get24KiB
+code saves;other workers/all old modes unchanged. Memory44faults/29refusals
+PASS,including14newprefix0x69ffc boundary cases;all failures retain objects
+and no laterIO. Native A/B exact8de95a58/maxnewframe768;ALL old byte controls
+through native48 EXACT.176new role/reference/builder gates+131072inert
+dispatch probes PASS;old212DEBUG49gates/3original modes/2096image faults
+PASS. No public selector or new linked driver. NEXT native fault/launch-
+skew qualification:128insn/Pause simulation is NOT physical PCIe latency;
+256peerpolls may expire under delayed serial release. Require robust start
+proof BEFORE physical/fixed public DEBUG client,then ssm_out/residual/FFN/
+full attentionKV/all64layers/sampling/persistent loop. ZERO PioneerIO/power/
+boot/Assistant changes;last stable041/gen8 not re-probed. ALL jobs terminal.
+Whole27B0.207893161tok/s unchanged;20UNMET/goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-gated-native-20261024.txt.
+
 October24 UTC2026:QGH1 fused QRJ1->paired raw-ready/NoC->gated RMS/learned
 norm/SiLU->private GDDR output IMPLEMENTED/OFFLINE qualified,NOT native/card
 selected. Actual paired instruction streams,no host intermediate/stop/

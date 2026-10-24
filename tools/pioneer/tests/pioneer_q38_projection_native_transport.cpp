@@ -12,6 +12,9 @@
 #include "pioneer_q38_gdn_input_bridge.h"
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
 #include "pioneer_q38_gdn_recurrent_bridge.h"
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#include "pioneer_q38_gdn_gated_native_bridge.h"
+#endif
 #endif
 #endif
 #endif
@@ -26,6 +29,9 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
  const PioneerQ38ResidentDecoderResult* decoderResult=nullptr;unsigned decoderFault=0;bool decoderDamaged=false;
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  const char* gdnImage=nullptr;unsigned gdnStarts=0,gdnFault=0;bool gdnRunning[120]={},gdnDamaged=false;
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ std::unique_ptr<GatedNativeCohort> gated;
+#endif
 #if defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
  unsigned gdnReadbackWords=0,gdnReadbackFault=UINT32_MAX;
 #endif
@@ -152,6 +158,9 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Code:assert(!a);return p.C().entry;
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+   if(p.gdnRunning[p.current]){assert(p.gated && p.C().coreReset==0x46800);return p.gated->Pc(p.current);}
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
    if(p.gdnStarts==96 && p.gdnReadbackWords<TT_Q38_GDN_RECURRENT_VALIDATION_WORDS){
     bool held=true;for(unsigned w=0;w<120;w++)held=held && p.core[w]->coreReset==0x47800;
@@ -262,6 +271,13 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
   case SetReset:
    p.C().coreReset=v;p.C().resets.push_back(v);
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+   if(v==0x46800 && p.FullRead(p.current,0x64024)==PioneerQ38GdnGatedImageWord(10)){
+    assert(p.current && p.current<=96 && p.gdnImage && p.decoderHistory && p.decoderPlan && p.decoderStarts==120 && !p.gdnRunning[p.current]);
+    if(!p.gated)p.gated.reset(new GatedNativeCohort(p.gdnImage,*p.decoderPlan,p.decoderBank,p,*p.decoderHistory));
+    p.gdnRunning[p.current]=true;p.gdnStarts++;p.gated->Start(p.current);return;
+   }
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
    if(v==0x46800 && p.FullRead(p.current,0x64024)==PioneerQ38GdnRecurrentImageWord(10)){
     assert(p.current && p.current<=96 && p.gdnImage && p.decoderHistory && p.decoderPlan && p.decoderStarts==120 && !p.gdnRunning[p.current]);
@@ -336,7 +352,9 @@ void ProjectionNativeTransport::MappedWrite(uint32_t a,uint32_t v){auto& p=*impl
 #ifdef PIONEER_Q38_GDN_INPUT_OWNER
  if(!p.gdnDamaged && p.decoderStarts==120 && !p.gdnStarts && p.current==96
   && p.gdnFault==1 && a==0x64024 && v==
-#ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+  PioneerQ38GdnGatedImageWord(10)
+#elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
   PioneerQ38GdnRecurrentImageWord(10)
 #else
   PioneerQ38GdnInputImageWord(10)
@@ -347,7 +365,11 @@ void ProjectionNativeTransport::MappedWrite(uint32_t a,uint32_t v){auto& p=*impl
 uint32_t* ProjectionNativeTransport::PanelSaved(){auto& p=*implementation;p.Touch();return p.C().Q38PanelSavedWords();}
 uint32_t* ProjectionNativeTransport::Backup(unsigned words){auto& p=*implementation;p.Touch();return p.C().HostReadBackup(words);}
 void ProjectionNativeTransport::Quarantine(){implementation->quarantined=true;} // MEMORY ONLY
-void ProjectionNativeTransport::Pause(){implementation->now++;}
+void ProjectionNativeTransport::Pause(){implementation->now++;
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ if(implementation->gated)implementation->gated->Advance(); // already-released streams only;NO wait-for-all shortcut
+#endif
+}
 uint64_t ProjectionNativeTransport::Now()const{const auto& p=*implementation;return p.starts && p.fault==11?p.now+30000001:p.starts && p.fault==12?0:p.now;}
 unsigned ProjectionNativeTransport::Boots()const{return implementation->boots;}
 unsigned ProjectionNativeTransport::Starts()const{return implementation->starts;}

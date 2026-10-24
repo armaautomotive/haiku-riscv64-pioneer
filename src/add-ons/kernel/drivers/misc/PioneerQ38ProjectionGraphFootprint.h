@@ -12,6 +12,11 @@
 // physical STOP+ALL terminals/hold and known-clean exclusive owner proof.
 // UNKNOWN retains every snapshot/mapping,NO reset/read/restore/retry.
 struct PioneerQ38ProjectionGraphSpan {uint32_t address,words;};
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+enum {TT_Q38_PROJECTION_GRAPH_SAVED_WORDS=8330680};
+#else
+enum {TT_Q38_PROJECTION_GRAPH_SAVED_WORDS=8134072};
+#endif
 static inline unsigned PioneerQ38ProjectionGraphSpanCount(unsigned w){return w>=120?0:w?6:8;}
 static inline PioneerQ38ProjectionGraphSpan PioneerQ38ProjectionGraphSnapshotSpan(unsigned w,unsigned span){
  if(w>=120 || span>=PioneerQ38ProjectionGraphSpanCount(w))return {UINT32_MAX,0};
@@ -26,8 +31,20 @@ static inline PioneerQ38ProjectionGraphSpan PioneerQ38ProjectionGraphSnapshotSpa
   default:return {TT_Q38_PROJECTION_GRAPH_SHADOW,TT_Q38_PROJECTION_GRAPH_WORDS};
  }
 }
-static inline unsigned PioneerQ38ProjectionGraphSnapshotWords(unsigned w){return w>=120?0:w?67593:90505;}
-static inline unsigned PioneerQ38ProjectionGraphSnapshotBase(unsigned w){return w>=120?UINT32_MAX:w?90505+(w-1)*67593:0;}
+static inline unsigned PioneerQ38ProjectionGraphSnapshotWords(unsigned w){
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ return w>=120?0:w?63497+PioneerQ38ProjectionGraphPrefixBytes(w)/4:90505;
+#else
+ return w>=120?0:w?67593:90505;
+#endif
+}
+static inline unsigned PioneerQ38ProjectionGraphSnapshotBase(unsigned w){
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ return w>=120?UINT32_MAX:w?90505+(w-1)*67593+(w<=97?w-1:96)*2048:0;
+#else
+ return w>=120?UINT32_MAX:w?90505+(w-1)*67593:0;
+#endif
+}
 static inline uint32_t PioneerQ38ProjectionGraphSnapshotAddress(unsigned w,unsigned ordinal){
  if(w>=120 || ordinal>=PioneerQ38ProjectionGraphSnapshotWords(w))return UINT32_MAX;
  for(unsigned i=0;i<PioneerQ38ProjectionGraphSpanCount(w);i++){

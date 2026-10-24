@@ -403,7 +403,7 @@ public:
   }
   r.phase=10;
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !memory->VerifyOriginal(io,w,r.memory) || !Guard(io,w))return Fail(io,r);}
-  if(r.held!=119 || r.stopped!=119 || r.memory.restoredWords!=8134072 || r.memory.verifiedOriginalWords!=2*8134072
+  if(r.held!=119 || r.stopped!=119 || r.memory.restoredWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || r.memory.verifiedOriginalWords!=2*TT_Q38_PROJECTION_GRAPH_SAVED_WORDS
    || !Guard(io,0) || !state->CloseExecution(identity,this,input))return Fail(io,r);
   closed=memory->closed=true;memory->installed=false;ready=false;r.closed=r.memory.closed=1;return true;
  }

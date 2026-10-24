@@ -5,6 +5,11 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#if PIONEER_Q38_GDN_GATED_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RECURRENT_NATIVE) || PIONEER_Q38_GDN_RECURRENT_NATIVE != 1 || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Separate exact tag50 SAME-owner fused GDN/gated mode,not old DEBUG or Work
+#endif
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
 #ifndef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #error Resident decoder arithmetic owner is OFFLINE until its actual separate native factory and role are qualified
@@ -39,7 +44,9 @@
 #if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate resident-input owner needs exact native role,never old convolution DEBUG
 #endif
-#ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010050ULL
+#elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010049ULL
 #elif defined(PIONEER_Q38_GDN_RECURRENT_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010048ULL
@@ -86,6 +93,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010049ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE))
 #error Reserved tag49 identifies ONLY separate fixed recurrent DEBUG
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010050ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_GATED_NATIVE))
+#error Reserved tag50 identifies ONLY SAME-owner fused QGH1,NO public selector
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -3668,6 +3678,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  PioneerQ38GdnInputPlan learnedGdn;
  if(!learnedGdn.Build(m->plan,0,0,0,bank,m->identity,source,3)
   || !learnedGdn.LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages)){delete m;return false;}
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ if(!PioneerQ38GdnGatedPlan::LearnedPagePresentBeforeState(m->plan,0,c.initialized,PioneerResidentBanks::Pages)){delete m;return false;}
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE

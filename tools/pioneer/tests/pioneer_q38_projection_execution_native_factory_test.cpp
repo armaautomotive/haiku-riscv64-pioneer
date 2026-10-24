@@ -130,7 +130,7 @@ int main(int argc,char** argv){
   f.projection.memory.phase,f.projection.memory.worker,f.projection.memory.word,f.c->q38Dispatch?f.c->q38Dispatch->prepared:0);
  assert(prepared && f.c->q38EmbeddingModel==sameModel && f.c->q38Dispatch==sameModel->projectionCohort
   && f.c->q38Dispatch->worker[0].master==&f.c->lease && f.c->q38DispatchRoutes && f.transport->Boots()==119
-  && f.projection.memory.savedWords==8134072 && f.projection.memory.installedWords==989304);
+  && f.projection.memory.savedWords==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS && f.projection.memory.installedWords==TT_Q38_PROJECTION_GRAPH_CODE_WORDS);
  assert(f.c->Unsafe() && !f.c->Unsafe(true,false,true) && f.io.ProjectionExecutionSourceScope(true));
  printf("NATIVE_PROJECTION_LIVE_SCOPE_REFUSALS%u NO endpoint IO\n",f.ScopeRefusals(true));
  unsigned n=f.io.touches,d=f.transport->Touches();
@@ -161,7 +161,7 @@ int main(int argc,char** argv){
  if(fault==9 || fault==10){assert(!closed);f.Unknown();printf("PASS native projection close fault%d;ALL retained/no subsequent endpoint IO\n",fault);return 0;}
  assert(closed);
  assert(f.c->q38EmbeddingModel==sameModel && sameModel->Closed() && !f.c->Unsafe() && EndFactory(*f.c)
-  && f.projection.stopped==119 && f.projection.held==119 && f.projection.memory.restoredWords==8134072
+  && f.projection.stopped==119 && f.projection.held==119 && f.projection.memory.restoredWords==TT_Q38_PROJECTION_GRAPH_SAVED_WORDS
   && f.projection.memory.verifiedOriginalWords==16268144 && !f.c->dispatchOwnerRetained && !sColdRecoveryRequired);
  assert(f.c->q38Dispatch->closed && sameModel->Closed() && !f.c->Unsafe());
 #ifdef PIONEER_Q38_PROJECTION_RESULT_STASH

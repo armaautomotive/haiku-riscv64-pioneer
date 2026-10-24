@@ -1,0 +1,141 @@
+Qwen3.8-27B SAME native owner/cooperative QGH1 integration
+2026-10-24 UTC. OFFLINE only;COMPILE-ONLY50,no public selector/linked driver.
+Source base834012ac3c19f6e64aee4b1c37938c27a706b59f.
+All qualification jobs terminal. ZERO Pioneer hardware/power/boot actions.
+
+Implemented,not merely planned:
+  Separate exact PIONEER_Q38_GDN_GATED_NATIVE=1/tag2026102400010050,
+  requiring SAME recurrent/state-init/input/decoder/projection/RMS/embedding
+  native parents. Mixed old DEBUG/Work/CPU-reference roles refused,even0.
+  Fixed original role9 norm128F32/page4096 CPU ledger preflight BEFORE
+  model epoch/claims/IO;immutable canonical norm plan retained at launch.
+  Existing4QPS1/Z,actual CBO owner,initialized CURRENT/privateNEXT,SAME
+  context/cookie/team/thread/model/clock/ALL host owners survive through
+  ONE fused QGH1 image,not a host-copy/reload arithmetic seam.
+  ALL96 own/peer ready cells zeroed+independently verified BEFORE ANY
+  release;fresh epoch stamps immutable after genuine receipts. Three real
+  summary/counter chains input->recurrent->gated and exact final256B write
+  command checked;ALL96 receipts/ALL120 holds precede private layer0NEXT+
+  gated-output publication. Result metadata cannot mint either capability.
+  Norm512B source read exists ONLY in the new explicit TEST original-byte
+  provider;old providers still refuse that route. No numeric products or
+  independent reference arrays enter the native owner or device streams.
+
+Complete new footprint,not truncated old snapshots:
+  ONLY new-mode workers1..96:24KiB code prefix at64000..6a000.
+  ROOT40KiB and97..11916KiB unchanged;all old modes remain exact16KiB peers.
+  All runtime/descriptor/stamp/new scratch addresses already covered by
+  74000..ac000. Additional196608words;total8330680 arbitrary original L1
+  words retained,not reconstructed padding. Initial code install1185912
+  words. Same metadata-size allowance/8KiB card stack/kernel frame limits.
+  Frozen actual QGH1 ROM23020B SHA256
+  22e3001215d67c9b9f8861098db5e5fda76fb241076c0ece8adb3ba224dfe297.
+  Generator refuses any other code/boot;ROM words independently matched.
+
+80262 C TERMINAL0 ORIGINAL-model actual native factory qualification:
+  Full original model digest/ALL independent references BEFORE context;
+  same actual native both-slot73728page zero+CLOSE/history1680/workspace512/
+  QPE1/QRN1/4QPS1/QCB1ALL120 -> concurrently executed QGH1 ALL96.
+  Streams start ONLY when each real native reset/release occurs. Existing
+  synchronous execute-one-core-to-completion replaced ONLY in this mode;
+  no wait-until-all-started shortcut,precomputed peer raw or fake ready bit.
+  Actual emitted scalar/SFPU instructions;only kernel/PCI/L1/GDDR/NoC byte
+  endpoints simulated. Peer reads observe actual other worker's L1 stamp
+  and raw output,including initially zero cells before peer execution.
+  823488 prepared/NEXT/raw+6144 gated=829632 ORIGINAL values match separate
+  references sealed BEFORE context;current+unrelated state immutable and
+  NEXT/gated GDDR bytes independently compared to emitted LOCAL outputs.
+  Missing/corrupt norm ledger refused BEFORE epoch/claims/IO. Exactly1673
+  reference reads/192original A-dt reads/96original norm reads.
+  SAME original snapshot/cohort retained,ALL96 actual receipts+ALL120holds,
+  private layer0NEXT+gated publication,complete8330680word restore and full
+  verification,actual END,cold0. No whole-token/current-slot flip.
+  /private/tmp/pioneer-q38-gdn-gated-native-original-20261024-c.log
+  SHA256 25b19b904defb9d5ccb6da91765b92911bace563ebb6c25b36732148db74e4a5
+
+12884 B TERMINAL0 actual memory owner+catalog ASan/UBSan:
+  ALL120/code1185912/snapshot8330680/arbitrary+UINT32_MAX words/complete
+  stacks+runtime/primary+shadow/trailers. Second full original pass BEFORE
+  first write;all8330680words restored and16661360 original verifications.
+  3560757 catalog refusals;all5756 exact frozen ROM words+96new prefixes.
+  44 first-failure cases/29 CPU precondition refusals. Includes14 new
+  prefix boundary failures at0x69ffc on workers1/96 across ALL7 save/verify/
+  install/restore phases. Every failure retains snapshots/ALL host owners;
+  no subsequent IO/reset/read/restore/retry. No actual device involved.
+  /private/tmp/pioneer-q38-gdn-gated-native-memory-20261024-b.log
+  SHA256 4f4855d997211151459de78e2784f9f173ec9cce7b859a62abca569320e6325a
+
+84265 A and12914 B full ACTUAL RISC-V native kernel compilations TERMINAL0:
+  /private/tmp/pioneer-q38-gdn-gated-native-full-20261024-{a,b}/
+    gdn-gated-NATIVE50-COMPILE-ONLY.o
+  Both exact SHA256
+  8de95a581d3b3e3ad06d9ccf4a91ffe10c9149e4e49d8640f51275cca1385acd
+  Max new kernel frame768B;all new frames<=existing2048B limit,oversized
+  unrelated legacy frames do not grow. Heap snapshots never on kernel stack.
+  ALL old byte controls:tag38/default43/reload guard/actual DEBUG44/native45/
+  native47/native48 exact,not merely semantically compatible. Old48 remains
+  fcaf34450815bd4c01a8f6a0dbbc2240b987bfd5b88d342c90a377808179d722.
+  No new linked/loadable driver,manifest/updater entry or installation.
+  Logs A SHA256 8df052b15aeed097b8120e8358e6c819c5a51b5013168b711933c6f5fc162480
+       B SHA256 9c742b3cdaf5fd0b86126a72fc565da7c9d3084d9bb2573a81df69e1b0690a30
+
+79212 E role/source isolation gates TERMINAL0:
+  176 exact/missing/zero/wrong-parent/tag/mixed-role/old-new-builder gates;
+  native50 rejected by all6 independent CPU reference headers,even0.
+  131072 ACTUAL inert-dispatch probes:ZERO public compute/upload/Work/CPU
+  selectors. Builders refuse ambient new roles BEFORE SDK/output access.
+  /private/tmp/pioneer-q38-gdn-gated-native-gates-20261024-e.log
+  SHA256 4003e581a100e4cedab2729ff890f497ee4ff119329cf2fdc40d361567cd91e9
+39176 old DEBUG49:212gates+131072actual closed-allowlist probes TERMINAL0,
+  SHA256 23bcce6d693f2246107b45f3983c4ed6d2b4a403e4483989a784409822c7b2b8.
+66370 old original observers:3modes/1672refs/sealonce/no norm-oracle or512B
+  route TERMINAL0,SHA25633412719d918d4e37ca18de0223104e236ecf23fb55b2fffce683aa7d0926ab3.
+96979 actual fused image regression TERMINAL0:96main+2late-peer+26edge+
+  64nonresetting half streams/2096faults;strict normal/guards unchanged.
+  SHA256 f00a9af662f51b2314c25c6751a55cae6ebfbce104977294ba51df5fd1baeeed.
+
+Failures caught/repaired OFFLINE,not hidden or loosened:
+  A compile:old fixed heap sizeof bound;now same63712B metadata allowance
+  above each exact role's saved-data size. Old limits unchanged.
+  Equivalent generic snapshot-word arithmetic changed old object bytes;
+  restored old literal branch,exact old2d127c1e control recovered. No pin
+  changed to accept the regression;all old full controls subsequently PASS.
+  Old builders lacked the new ambient-flag refusal;added early check to10
+  legacy builders,then all gates pass BEFORE SDK access.
+  Native B passed all829632values/ALL holds but final Close compared the
+  restored8330680words to old8134072. Corrected exact per-role total,then
+  fresh C full run verifies clean restore/END. No hardware was quarantined.
+
+CRITICAL remaining qualification BEFORE ANY physical/new public driver:
+  Actual native host/controller fault retention and launch-skew tests.
+  Cooperative simulator advances128 instructions per Pause;it is NOT a
+  calibrated model of PCIe read latency or physical launch timing. Current
+  serial release repeats image/source guards. The fixed256 completed peer
+  readiness polls could expire if a peer is released late on real hardware.
+  Do NOT infer physical timing safety from this positive offline schedule.
+  Qualify robust launch/rendezvous and refusal behavior before deployment;
+  then a distinct fixed original-model validation client/public DEBUG role
+  with authenticated norm upload,scoped updater and whole lifecycle tests.
+  After physical component qualification:connect ssm_out/residual/post-attn
+  norm/FFN/full attention+KV/all64layers/sampling/persistent token scheduler.
+  Compile50 is NOT Assistant/Work promotion or full card offload completion.
+
+No Pioneer SSH/card/reload/power/boot/SD/Assistant/network/kernel actions.
+Last physical verification remains03:07:48UTC stable041/gen8,cold0,idle,
+64CPUs/RAM137034936320B;not re-probed,no fresh human input confirmation.
+No restore/recovery pending. OFF is NON-IDEMPOTENT:ONE OFF,verify,ONE ON.
+Last whole-model0.207893161tok/s unchanged;20tok/sUNMET/full offload
+INCOMPLETE/unlimited original goal ACTIVE. NO new speed/physical claim.
+
+Reproduce native original-model qualifier:
+  python3 tools/pioneer/tests/pioneer_q38_resident_decoder_native_factory_test.py \
+    /private/tmp/pioneer-q38-projection-stash-image-20261022-c \
+    /private/tmp/pioneer-q38-projection-family.DGLYM4co/peer-n \
+    /private/tmp/pioneer-q38-state-zero-20261020-c \
+    /private/tmp/pioneer-q38-embedding-image-20261022-b \
+    /private/tmp/pioneer-q38-learned-rms-image-20261022-c \
+    /private/tmp/pioneer-q38-conv-batch-image-20261023-c \
+    --gdn-gated-native /private/tmp/pioneer-q38-gdn-gated-resident-20261024-e
+Reproduce full kernel compile:
+  python3 tools/pioneer/build_qwen38_gdn_gated_native.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/FRESH-NATIVE50-DIR

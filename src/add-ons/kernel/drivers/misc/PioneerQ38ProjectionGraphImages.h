@@ -29,7 +29,18 @@
 // and ALL120 roles,and keep EVERY snapshot/mapping on UNKNOWN.
 enum {TT_Q38_PROJECTION_GRAPH_BOOT=0x0006c06f,
  TT_Q38_PROJECTION_GRAPH_ROOT_PREFIX_BYTES=40960,TT_Q38_PROJECTION_GRAPH_PEER_PREFIX_BYTES=16384};
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+#if PIONEER_Q38_GDN_GATED_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RECURRENT_NATIVE) || PIONEER_Q38_GDN_RECURRENT_NATIVE != 1
+#error Larger QGH1 footprint requires its exact separate native role
+#endif
+enum {TT_Q38_PROJECTION_GRAPH_CODE_WORDS=1185912};
+#else
+enum {TT_Q38_PROJECTION_GRAPH_CODE_WORDS=989304};
+#endif
 static inline unsigned PioneerQ38ProjectionGraphPrefixBytes(unsigned w){
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ if(w && w<=96)return 24576; // ONLY new role;save complete QGH1 before ANY write
+#endif
  return w>=120?0:w?TT_Q38_PROJECTION_GRAPH_PEER_PREFIX_BYTES:TT_Q38_PROJECTION_GRAPH_ROOT_PREFIX_BYTES;
 }
 static inline bool PioneerQ38ProjectionGraphProgramAddress(unsigned w,uint32_t a){
@@ -67,7 +78,11 @@ static inline unsigned PioneerQ38ProjectionGraphCodeWords(unsigned w){
  return w<120?1+PioneerQ38ProjectionGraphPrefixBytes(w)/4+4096:0;
 }
 static inline unsigned PioneerQ38ProjectionGraphCodeBase(unsigned w){
+#ifdef PIONEER_Q38_GDN_GATED_NATIVE
+ return w<120?(w?14337+(w-1)*8193+(w<=97?w-1:96)*2048:0):UINT32_MAX;
+#else
  return w<120?(w?14337+(w-1)*8193:0):UINT32_MAX;
+#endif
 }
 static inline uint32_t PioneerQ38ProjectionGraphCodeAddress(unsigned w,unsigned i){
  if(w>=120 || i>=PioneerQ38ProjectionGraphCodeWords(w))return UINT32_MAX;

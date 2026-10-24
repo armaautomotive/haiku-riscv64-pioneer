@@ -29,7 +29,7 @@ class PioneerQ38ProjectionGraphMemory {
  const uint8_t* ledger=nullptr;
  PioneerQ38GdnIdentity identity={};
  uint32_t command[120][10]={},counters[120][8]={};
- uint32_t saved[8134072]; // HEAP ONLY;arbitrary original words,NOT reconstructed padding
+ uint32_t saved[TT_Q38_PROJECTION_GRAPH_SAVED_WORDS]; // HEAP ONLY;arbitrary original words,NOT reconstructed padding
  unsigned sampled=0;
  bool started=false,installed=false,closed=false,unsafe=false,launched=false;
  template<class IO> bool Fail(IO& io,PioneerQ38ProjectionGraphMemoryResult& r){
@@ -126,12 +126,12 @@ public:
    }
    if(!Guard(io,w))return Fail(io,r);
   }
-  if(r.savedWords!=8134072 || sampled!=120)return Fail(io,r);
+  if(r.savedWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || sampled!=120)return Fail(io,r);
   // Complete SECOND physical pass before FIRST write,not only a digest
   // or per-participant precheck after earlier participants were changed.
   r.phase=2;
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !VerifyOriginal(io,w,r) || !Guard(io,w))return Fail(io,r);}
-  if(r.verifiedOriginalWords!=8134072)return Fail(io,r);
+  if(r.verifiedOriginalWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS)return Fail(io,r);
   r.phase=3;
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(!Guard(io,w))return Fail(io,r);
@@ -144,7 +144,7 @@ public:
   }
   r.phase=4;
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !VerifyImage(io,w,r) || !Guard(io,w))return Fail(io,r);}
-  if(r.installedWords!=989304 || !Guard(io,0))return Fail(io,r);
+  if(r.installedWords!=TT_Q38_PROJECTION_GRAPH_CODE_WORDS || !Guard(io,0))return Fail(io,r);
   installed=true;r.installed=1;return true;
  }
  // ONLY for a never-launched held session. The future actual graph owner
@@ -170,9 +170,10 @@ public:
   }
   r.phase=7;
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !VerifyOriginal(io,w,r) || !Guard(io,w))return Fail(io,r);}
-  if(r.restoredWords!=8134072 || r.verifiedOriginalWords!=2*8134072 || !Guard(io,0))return Fail(io,r);
+  if(r.restoredWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || r.verifiedOriginalWords!=2*TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || !Guard(io,0))return Fail(io,r);
   closed=true;installed=false;r.closed=1;return true;
  }
 };
-static_assert(sizeof(PioneerQ38ProjectionGraphMemory)>32536288 && sizeof(PioneerQ38ProjectionGraphMemory)<32600000,"complete retained graph memory is HEAP ONLY");
+static_assert(sizeof(PioneerQ38ProjectionGraphMemory)>TT_Q38_PROJECTION_GRAPH_SAVED_WORDS*4
+ && sizeof(PioneerQ38ProjectionGraphMemory)<TT_Q38_PROJECTION_GRAPH_SAVED_WORDS*4+63712,"complete retained graph memory is HEAP ONLY;same metadata allowance in every role");
 #endif
