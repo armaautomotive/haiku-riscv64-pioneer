@@ -1,5 +1,26 @@
 # Native build status
 
+October24 UTC2026:QGN1 gated RMS/learned norm/SiLU arithmetic IMPLEMENTED/
+OFFLINE emitted-instruction+original-model qualified,NOT native NoC/card
+integration. BOTH raw64 halves supply FP32 RMS128;shared learned norm128
+and retained role5 Z feed64 outputs/half. Tiny NORMAL weighted-gate outputs
+preserved,no old-80 SiLU cutoff. Separate math-only role,NO Work/CPU fallback.
+Two image builds EXACT3060B/7ec76ef2,compiler frame64B/emulated stack100B.
+43649 ASan/UBSan128positive/1089refusals/45100weightedSiLU grid+strictnormal
+edges/12signedzero+5badweighted+11pointer checks PASS.60role/builder/ISA/
+stack gates PASS.94307 ORIGINAL token0 ACTUAL emitted QRJ1 raw pairs+QPS1
+residentZ+originalnormbytes->LOCAL QGN1 ALL6144outputs match independent
+ORIGINAL references sealed BEFORE context;old native48fullsnapshot restore/
+actualEND/current+unrelated state checks PASS. This is a TEST byte bridge,
+not a host-roundtrip Work path or new native producer.53369 all3prior
+observer modes/1672refs/sealonce/no new norm capability PASS. Alljobs
+terminal. ZERO Pioneer IO/reload/power/boot/Assistant/CPU/RAM changes;
+last verified stable041/gen8 retained,not re-probed. NEXT genuine same-owner
+role9 source proof/peer-ready epoch+NoC gather/fused QRJ successor/private
+gated output,then ssm_out+residual/FFN/full decoder/persistent loop. Whole27B
+0.207893161tok/s unchanged;20UNMET/goalACTIVE. Evidence:
+benchmarks/qwen38-gdn-gated-norm-local-20261024.txt.
+
 October24 UTC2026 PHYSICAL SAME initialized-state->ONE QRJ1 PASS.
 94837 TERMINAL0:FULL original GGUF/references BEFORE GPU FD;all110learned
 uploads;actual native both-slot73728page zero+Close/history1680/workspace512/

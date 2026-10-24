@@ -1,0 +1,114 @@
+Qwen27B QGN1 gated normalization:LOCAL emitted math/original-model PASS
+2026-10-24 UTC. Goal ACTIVE/turn PROGRESS. NO new token-rate measurement.
+
+IMPLEMENTED
+Separate PIONEER_Q38_GDN_GATED_NORM_IMAGE=1,explicit qualified card-math
+component PIONEER_Q38_GDN_PREPARE_IMAGE=1. Work/CPU-reference/kernel mixes
+refused. No native driver selector,model/NoC source/ownership/producer grant.
+Pinned delta-layer contract from PioneerQwen38Hybrid.h:FP32 square SUM
+over BOTH64raw halves/128+1e-6 (NOT double-like GraphRmsNorm),inverse sqrt,
+learned128F32 ssm_norm,SiLU(retained role5 Z),64output values/half.
+
+Fused weighted SiLU reorders multiplication to retain NORMAL final values
+otherwise lost to a tiny exp/sigmoid intermediate. Negative gates use
+exp(z/2) twice;no old-80 cutoff. Weighted input bounded normal/zero <=2^20,
+z bounded normal/zero <=65504,so cutoff at-128 cannot discard a NORMAL
+weighted result. Explicit card FTZ at FP32 arithmetic boundaries remains.
+This is a numerically qualified fused operation,NOT a bit-exact CPU
+expression/denormal-preservation claim. Original canonical output bound
+remains3e-6scaled;strict relative NORMAL fused-final checks added,not a
+tolerance relaxation. Uses qualified integer divide/RNE sqrt and two-float
+exp;NO fdiv/fsqrt/double/FMA/runtime arithmetic fallback.
+
+Fixed LOCAL image consumes raw128/norm128/Z128 at80000/80200/80400,
+32word QGN1 data descriptor at74600 (ordinal0..95/data ONLY),and produces
+64words at8ea00 plus fresh QGN1 seal/count. Full input/pointer/domain
+validation;stale output seal invalidated BEFORE arithmetic. No input,
+code,NoC/GDDR/CSR/PCI/reset writes. Image is an offline numerical qualifier,
+not a proposed host stop/reload/CPU-copy Work implementation. Native
+consumer still owes real pair/source/epoch/receipt proofs before exposure.
+
+EMITTED IMAGE/ISA/STACK/GATES
+Two source-current SDK builds A/B EXACT:
+ code3060B SHA7ec76ef20a0a453ae24adbda74623b5f95a400ff0f5b15e17e3788f079beb2b8
+ boot4B SHAd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ /private/tmp/pioneer-q38-gdn-gated-norm-20261024-{a,b}
+Actual RV32IMF image contains no forbidden DIV/REM/MULH/FMA/fdiv/fsqrt/
+float-to-int instructions. Compiler maximum frame64B;emulated total stack
+100B;existing512B compiler limit not raised. No new linked kernel driver.
+
+43649 TERMINAL0,ASan/UBSan actual emitted instructions:
+128positives (ALL96half ordinals+both ends of16boundary cases),1089refusals
+(all1024descriptor bits minus7valid ordinal changes+72bad-domain values).
+ALL64outputs checked vs independent canonical FP32/libm3e-6scaled AND
+strict3e-6 relative NORMAL fused-final reference. Cases include zeros,
+signed zeros,large raw/learned/gate values,minimum normal inputs,one-hot
+RMS,negative80/81/84/87/88/90/100/104/106/128/65504 and positive65504.
+No zero result can hide a NORMAL final output in these edge fixtures.
+Inputs/surrounding poison guards immutable,no writes after terminal park.
+Max steps63801,not hardware cycles/performance. Host helper45100weighted
+SiLU grid,weighted exponents-126..20,strict NORMAL relative max1.85097167e-7,
+12signed-zero/5invalid-weighted/11pointer-domain refusals PASS. Source-A
+synthetic suite5933 also passed;B expands endpoint/pointer/zero checks.
+60role/component/mixed/builder-ambient/ISA/stack gates PASS. Builders
+refuse ambient roles BEFORE SDK/output;artificial forbidden ISA and513B
+frame cases rejected,allowed mul/fadd/fmul and<=512B frames preserved.
+
+ORIGINAL MODEL / ACTUAL PREDECESSOR BYTE BRIDGE
+94307 TERMINAL0,ASan/UBSan,source-current. FULL original GGUF SHA/source
+verified and ALL independent references computed/sealed BEFORE actual
+native context. Separate non-native original observer now has optional
+learned norm128 bytes+independent gated output observer (1673original
+reference reads);no native controller can see numeric oracle products.
+Actual model source/factories/73728page zero/history1680/workspace512/
+QPE1/QRN1/ALL4QPS1/QCB1ALL120->QRJ1ALL96 run through existing native48
+qualification. Actual emitted QRJ1 LOCAL outputs from BOTH real half slots,
+actual emitted QPS1 role5 resident Z and ORIGINAL learned norm bytes are
+copied through TEST byte endpoints into actual QGN1 instruction machine.
+No host-precomputed raw recurrent or gate-projection product feeds it.
+ALL96halves/6144gated outputs match independent original-model canonical
+reference at unchanged3e-6scaled. Existing ALL30912prepared/786432NEXT/
+6144raw original checks,exact NEXT GDDR/immutable CURRENT+unrelated state,
+private publication/full8134072word original restore/actual END also PASS.
+
+This explicitly tests numerical DATA,not a new native normalization NoC
+source/owner/producer. Norm page has NOT been granted native learned-source
+authority and QGN output has NO native private ready/publication capability.
+The TEST-only byte bridge must NEVER become a host-roundtrip Work route.
+53369 TERMINAL0:ALL3prior original observer modes (conv/input/recurrent)
+still1672reference reads/sealonce;new norm getter/oracle unavailable and
+512byte raw route remains denied. Optional norm mode does NOT widen old
+controller byte-read routes. Old production driver/image sources untouched.
+
+PHYSICAL STATE / NEXT
+ZERO Pioneer SSH/device/reload/power/reboot/SD/PSU/Assistant/model/NIC/boot/
+kernel changes this turn. Last verified stable041/gen8/64CPUs/fullRAM
+137034936320B retained,not re-probed. No restore or recovery pending.
+All local jobs TERMINAL. Dirty llama and unrelated FlashNext untouched.
+OFF remains NOT idempotent:one effectiveOFF,verify actual off,then oneON;
+never extra OFF/boot-observation pulses. No power command needed here.
+
+NEXT real same-owner role9 uploaded-page/source binding;on-card fresh
+paired raw-ready epoch/barrier+bounded peer read,retainedZ/learnedGamma
+reads,fused successor arithmetic/gated output NoC write and complete
+source/command/counter/receipt/ALL120held/private-publication qualification.
+Retain original snapshot/current/NEXT ownership through successor stages.
+Check real combined image size/snapshot coverage,not an assumed16KiB
+prefix. NO host numerical vectors or prep/recurrent stop/reload Work path.
+Then6144->5120 ssm_out/residual/postattention norm/FFN,fullattentionKV/
+all64layers/sampling/persistent token schedule and honest whole-model
+timing. Whole27B last0.207893161tok/s UNCHANGED;20tok/s/full goal UNMET.
+
+TERMINAL LOG SHA256
+150618a7d2371e46f52f86e96798859f863cb0760559ca513901de24a3aa645f
+ /private/tmp/pioneer-q38-gdn-gated-norm-tests-20261024-b.log
+99ce5c6afd3a718261461aa204812794629c841181842f3a40dca0b3a59c6188
+ /private/tmp/pioneer-q38-gdn-gated-norm-original-20261024-a.log
+33412719d918d4e37ca18de0223104e236ecf23fb55b2fffce683aa7d0926ab3
+ /private/tmp/pioneer-q38-gdn-gated-norm-old-observers-20261024-a.log
+b9a7f2cc1a1d532f27a1b5ab450a82618d7f89e43eda97c6e958fe21c93dd55e
+ /private/tmp/pioneer-q38-gdn-gated-norm-gates-20261024-b.log
+0ac3ef82745a6838fdb513ab42b4a21c4abb6607421434c39d74d43041ac77f7
+ /private/tmp/pioneer-q38-gdn-gated-norm-build-20261024-a.log
+635d8ecf02cdcc2707f8a50a5953bf245fa54fe7afe7f7987b54571881a36c74
+ /private/tmp/pioneer-q38-gdn-gated-norm-build-20261024-b.log

@@ -4,11 +4,25 @@
 #define PIONEER_Q38_RESIDENT_DECODER_NATIVE_FACTORY_ONLY
 #include "pioneer_q38_resident_decoder_native_factory_test.cpp"
 #include "pioneer_q38_decoder_original_source.h"
+#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+#include "pioneer_q38_gdn_gated_norm_bridge.h"
+#endif
 int main(int argc,char** argv){
- assert(argc==9 || (argc==10 && !strcmp(argv[9],"--faults")));setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+ assert(argc==10);
+#else
+ assert(argc==9 || (argc==10 && !strcmp(argv[9],"--faults")));
+#endif
+ setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  puts("NATIVE_QRJ_ALL_ORIGINAL_REFERENCES_BEFORE_CONTEXT;NO_DEVICE_ACCESS");
- auto source=OpenGdnRecurrentOriginalSource(argv[7]);assert(source && source->Prepare(0) && source->SealBeforeNativeContext());
+ auto source=
+#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+  OpenGdnGatedNormOriginalSource(argv[7]);
+#else
+  OpenGdnRecurrentOriginalSource(argv[7]);
+#endif
+ assert(source && source->Prepare(0) && source->SealBeforeNativeContext());
  DecoderNativeFixture f(argv[3],argv[4],argv[5]);f.io.originalEmbeddingWeights=source->EmbeddingTile();f.io.originalRmsWeights=source->LearnedNorm();
  assert(BindQ38EmbeddingModel(*f.c,0,0,0));auto* m=f.c->q38EmbeddingModel;PioneerQ38StateZeroResult zero;
  assert(InitializeQ38GdnStateModel(*f.c,zero) && m->MatchesInitializedGdn(f.owner.banks,f.owner.dram));
@@ -22,6 +36,7 @@ int main(int argc,char** argv){
  assert(!m->decoder.GdnLayerCompleted() && !m->decoder.Close(f.io,forged) && !PrepareQ38ResidentGdnInputs(*f.c,forged)
   && f.io.touches==n && f.transport->Touches()==d && !m->Unsafe());
  puts("NATIVE_QRJ_REAL_CBO_ALL120_HELD;SAME_INITIALIZED_GDN;FORGED_COMPLETION_INERT");
+#ifndef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
  if(argc==10){
   for(unsigned fault=1;fault<=18;fault++){
    pid_t child=fork();assert(child>=0);
@@ -40,6 +55,7 @@ int main(int argc,char** argv){
    int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
   }
  }
+#endif
  assert(RunQ38ResidentGdnRecurrent(*f.c,f.decoderResult) && f.transport->GdnInputStarts()==96 && m->decoder.GdnLayerCompleted()
   && f.decoderResult.gdnLayerPublished==1 && f.decoderResult.gdnHeld==96 && m->projectionCohort==cohort && &m->projectionMemory==snapshot);
  for(unsigned half=0;half<96;half++){
@@ -58,7 +74,24 @@ int main(int argc,char** argv){
   unsigned first=f.io.recurrentFirst[region]*1024,words=f.io.recurrentExtents[region].bytes/4;
   for(unsigned i=0;i<words;i++)assert(!f.io.recurrentWords[first+i]);
  }
+#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+ // Byte bridge ONLY:actual emitted QRJ1 LOCAL results and actual emitted
+ // QPS1 resident Z,plus original learned norm bytes. No oracle products.
+ for(unsigned half=0;half<96;half++){
+  uint32_t raw[128],z[128],values[64];unsigned head=half/2;
+  for(unsigned i=0;i<128;i++){
+   unsigned worker=head*2+i/64+1;assert(f.io.SelectRuntimeCore(worker)
+    && f.io.ProjectionGraphMemoryReadChecked(worker,0x8e800+(i%64)*4,raw[i]));
+   z[i]=f.io.wholeWorkspace[PioneerQ38ProjectionResultOffset(5)/4+head*128+i];
+  }
+  assert(source->GdnLearnedNorm());ExecuteGdnGatedNormLocal(argv[9],half,raw,source->GdnLearnedNorm(),z,values);
+  assert(source->CheckGdnGatedNorm(half,values));
+ }
+ assert(source->ReferenceReads()==1673 && source->GdnInputReads()==192);
+ puts("PASS ORIGINAL token0 ACTUAL emitted QRJ1 raw128+QPS1 residentZ+originalnorm128->LOCAL QGN1 all96halves/6144outputs/independent ORIGINAL references BEFORE context;BYTE_BRIDGE_ONLY_NOT_NATIVE_NOC_OWNER_OR_CARD");
+#else
  assert(source->ReferenceReads()==1672 && source->GdnInputReads()==192);
+#endif
  n=f.io.touches;d=f.transport->Touches();assert(!RunQ38ResidentGdnRecurrent(*f.c,forged) && f.io.touches==n && f.transport->Touches()==d);
  assert(CloseQ38ResidentDecoderModel(*f.c,f.decoderResult) && !m->decoder.GdnLayerCompleted() && m->Closed() && EndFactory(*f.c) && !sColdRecoveryRequired
   && f.decoderResult.memory.restoredWords==8134072 && f.decoderResult.memory.verifiedOriginalWords==8134072);

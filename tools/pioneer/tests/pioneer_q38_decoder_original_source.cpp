@@ -34,10 +34,11 @@ namespace {
 class OriginalSource final:public DecoderOriginalSource {
  struct Stripe {unsigned role,route;uint32_t address,bytes;std::vector<uint8_t> data;};
  PioneerQ38PublicModelSource original;PioneerQwen38PackedPlan plan;
- std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false;
+ std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false;
  uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0;
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
+ std::array<uint32_t,128> gdnLearnedNorm={};std::vector<uint32_t> gdnNormReferences;
  std::array<uint8_t,46080> embedding={};std::array<uint32_t,5120> norm={},raw={},normalized={};
  std::vector<uint32_t> projections=std::vector<uint32_t>(18432,0),convolution=std::vector<uint32_t>(40960,0);
  struct Reference {
@@ -50,14 +51,14 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false,bool recurrent=false):gdnInputs(gdn),gdnRecurrent(recurrent){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  bool Prepare(unsigned token)override{
   if(attempted || sealed || token>=248320 || !original.Ready())return false;
   attempted=true;if(!plan.Build(original.Model(),8192,true,true))return false;
   auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!canonical->Build() || canonical->Count()!=plan.Parts().size())return false;
-  unsigned projectionsCount=0,convCount=0,convRows=0,embeddingCount=0,normTensor=UINT32_MAX,embeddingTensor=UINT32_MAX,pages=0,gdnParts=0;
+  unsigned projectionsCount=0,convCount=0,convRows=0,embeddingCount=0,normTensor=UINT32_MAX,embeddingTensor=UINT32_MAX,pages=0,gdnParts=0,gdnNormTensor=UINT32_MAX;
   const auto& parts=plan.Parts();const auto& tensors=original.Model().Tensors();
   for(unsigned i=0;i<parts.size();i++){
    const auto& p=parts[i];const auto& c=*canonical->Part(i);
@@ -71,7 +72,7 @@ public:
     memcpy(embedding.data(),data.data()+within,46080);embeddingCount++;embeddingTensor=p.tensor;
    }
    if(p.layer || (p.role!=0 && p.role!=5 && p.role!=6 && p.role!=10 && p.role!=11 && p.role!=12
-    && (!gdnInputs || (p.role!=7 && p.role!=8))))continue;
+    && (!gdnInputs || (p.role!=7 && p.role!=8)) && (!gdnNorm || p.role!=9)))continue;
    Stripe s={p.role,PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,p.bytes,std::vector<uint8_t>(p.allocated)};
    for(unsigned page=0;page<p.allocated/4096;page++)if(!original.ReadWeightPage(plan,i,page,s.data.data()+page*4096,4096))return false;
    pages+=p.allocated/4096;
@@ -79,7 +80,12 @@ public:
     if(normTensor!=UINT32_MAX || c.type || p.rowBytes!=20480 || p.bytes!=20480 || p.allocated!=20480)return false;
     normTensor=p.tensor;for(unsigned j=0;j<5120;j++){const auto* b=s.data.data()+j*4;norm[j]=uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24);}
    }else{
-    if(p.role==7 || p.role==8){
+    if(p.role==9){
+     if(!gdnNorm || gdnNormTensor!=UINT32_MAX || c.type || p.firstRow || p.rows!=1 || p.rowBytes!=512 || p.bytes!=512 || p.allocated!=4096
+      || tensors[p.tensor].name!="blk.0.ssm_norm.weight")return false;
+     gdnNormTensor=p.tensor;
+     for(unsigned j=0;j<128;j++){const auto* b=s.data.data()+j*4;gdnLearnedNorm[j]=uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24);}
+    }else if(p.role==7 || p.role==8){
      if(!gdnInputs || c.type || p.firstRow || p.rows!=1 || p.rowBytes!=192 || p.bytes!=192 || p.allocated!=4096
       || tensors[p.tensor].name!=(p.role==7?"blk.0.ssm_a":"blk.0.ssm_dt.bias"))return false;
      auto& values=p.role==7?negativeA:dtBias;
@@ -93,7 +99,8 @@ public:
    }
   }
   if(embeddingCount!=1 || normTensor==UINT32_MAX || projectionsCount!=16 || convCount!=7 || convRows!=10240
-   || pages!=(gdnInputs?23225U:23223U) || gdnParts!=(gdnInputs?2U:0U))return false;
+   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U) || gdnParts!=(gdnInputs?2U:0U)
+   || gdnNorm!=(gdnNormTensor!=UINT32_MAX))return false;
   Reference reference{*this};
   if(!PioneerQ38EmbeddingReference(reference,embeddingTensor,token,raw.data())
    || !PioneerQ38LearnedRmsReference(reference,normTensor,raw.data(),normalized.data()))return false;
@@ -143,12 +150,40 @@ public:
     }
    }
   }
+  if(gdnNorm){
+   if(!gdnRecurrent || recurrentReferences.size()!=96*8578)return false;
+   uint8_t originalNorm[512];
+   if(!reference.ReadReferencePacked(gdnNormTensor,0,512,originalNorm,512) || referenceReads!=1673
+    || memcmp(originalNorm,gdnLearnedNorm.data(),512))return false;
+   gdnNormReferences.resize(6144);
+   for(unsigned head=0;head<48;head++){
+    float raw[128],sum=0;
+    for(unsigned i=0;i<128;i++){raw[i]=PioneerAttentionFloat(recurrentReferences[(head*2+i/64)*8578+8514+i%64]);sum+=raw[i]*raw[i];}
+    float inverse=1.f/sqrtf(sum*.0078125f+1e-6f);
+    for(unsigned i=0;i<128;i++){
+     float weighted=(raw[i]*inverse)*PioneerAttentionFloat(gdnLearnedNorm[i]);
+     double z=PioneerAttentionFloat(projections[(PioneerQ38ProjectionResultOffset(5)-TT_Q38_PROJECTION_RESULT_BASE)/4+head*128+i]);
+     double e=exp(-fabs(z));float silu=float(z*(z>=0?1/(1+e):e/(1+e)));
+     float value=weighted*silu;if(!isfinite(value))return false;
+     gdnNormReferences[head*128+i]=PioneerAttentionBits(value);
+    }
+   }
+  }
   prepared=true;return Ready();
  }
- bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=1672 || projectionReads || convolutionReads || gdnInputReads
-  || (gdnInputs && !gdnReferencesReady))return false;sealed=true;return true;}
+ bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=(gdnNorm?1673U:1672U) || projectionReads || convolutionReads || gdnInputReads
+  || (gdnInputs && !gdnReferencesReady) || (gdnNorm && gdnNormReferences.size()!=6144))return false;sealed=true;return true;}
  const uint8_t* EmbeddingTile()const override{return Ready()?embedding.data():nullptr;}
  const uint32_t* LearnedNorm()const override{return Ready()?norm.data():nullptr;}
+ const uint32_t* GdnLearnedNorm()const override{return gdnNorm && Ready()?gdnLearnedNorm.data():nullptr;}
+ bool CheckGdnGatedNorm(unsigned half,const uint32_t* values)const override{
+  if(!gdnNorm || !sealed || !Ready() || half>=96 || !values || gdnNormReferences.size()!=6144)return false;
+  for(unsigned i=0;i<64;i++){
+   double value=PioneerAttentionFloat(values[i]),expected=PioneerAttentionFloat(gdnNormReferences[half*64+i]);
+   if(!isfinite(value) || fabs(value-expected)>3e-6*(1+fabs(expected)))return false;
+  }
+  return true;
+ }
  bool Read(unsigned route,uint32_t address,uint8_t* out,unsigned bytes)override{
   if(!sealed || !Ready() || !out || (bytes!=256 && bytes!=576 && (!gdnInputs || bytes!=64)) || (address&63))return false;
   for(const auto& s:stripes)if(s.route==route && address>=s.address && address-s.address<s.bytes){
@@ -219,5 +254,9 @@ std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* pa
 }
 std::unique_ptr<DecoderOriginalSource> OpenGdnRecurrentOriginalSource(const char* path){
  if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true);
+ if(!source->Open())return nullptr;return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenGdnGatedNormOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true);
  if(!source->Open())return nullptr;return source;
 }
