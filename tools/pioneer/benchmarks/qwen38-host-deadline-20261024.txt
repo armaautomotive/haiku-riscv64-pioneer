@@ -1,0 +1,35 @@
+Fixed monotonic CPU deadline helper,2026-10-24.
+Standalone DATA component ONLY;not yet integrated into native61 and not
+a new driver,source/ready capability,card execution or speed result.
+Full27B/20tok/s/persistent on-card token-loop objective remains UNMET.
+
+PioneerQ38HostDeadline records one fixed30,000,000us interval. Begin is
+one-shot and rejects a start whose complete interval would overflow.
+Observe permits equal timestamps but rejects backward movement,expiry
+including exact equality,and observation before Begin. Any failure is
+sticky;no reset/rebind/copy/move can extend an interval. The real native
+owner must still obtain CPU clock observations before/after bounded card
+operations and quarantine without further card IO on refusal. The helper
+itself never reads time,changes a device or grants cleanup authority.
+
+Purpose:close the new next-layer GDN polling gap. Its current unqualified
+prototype checks the outer attempt deadline but can spend too long inside
+one worker/receipt sweep. This helper is intended for per-worker and
+post-status/receipt checks AFTER the running prototype test actually
+terminates;no live test dependency has been changed to include it.
+The genuine full-prefix native61 late-worker deadline endpoint test and
+new native61 SDK builds remain REQUIRED before integration qualification.
+
+Standalone ASan/UBSan test B:actual terminal0,20542 checks across zero,
+ordinary and maximum valid start values;strict expiry equality;4096
+different within-interval clock rollbacks;overflow;unstarted observation;
+rebind and sticky failure. NO device access or native flags.
+  sh tools/pioneer/tests/run_pioneer_q38_host_deadline_tests.sh
+  /private/tmp/pioneer-q38-host-deadline-20261024-b.log
+  SHA feb249de203be605c05ee8a31cea80b37c5134d4df1c42d7c632bab9efd826bf
+  test output:/private/tmp/pioneer-q38-host-deadline.GIeLlvbh
+
+Prototype test A terminated1 at compilation because the test omitted
+<initializer_list>. Added that explicit TEST include before starting B.
+No driver,reference,numerical tolerance,Work/Assistant mode or card state
+was changed by that repair. Target-SDK integration is still pending.
