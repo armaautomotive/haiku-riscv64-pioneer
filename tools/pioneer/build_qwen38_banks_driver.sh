@@ -3,6 +3,7 @@
 # reloads or touches a card. The control is NOT the qualified native binary.
 # Uses ONLY driver sources/local headers plus existing packaged SDK/kernel.
 set -eu
+[ "${PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_GDN_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_CONV_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_PROJECTION_NATIVE-0}" = 0 ] || exit 2

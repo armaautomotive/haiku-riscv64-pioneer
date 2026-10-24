@@ -62,6 +62,11 @@ public:
  void VerifyNextGdn();
  void NextGdnFault(unsigned);bool NextGdnFaultInjected()const;unsigned NextGdnStarts()const;
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+ void NextOutputSources(const char*,const char*);void VerifyNextOutput();
+ unsigned NextOutputStarts()const;
+ void NextOutputFault(unsigned);bool NextOutputFaultInjected()const;
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

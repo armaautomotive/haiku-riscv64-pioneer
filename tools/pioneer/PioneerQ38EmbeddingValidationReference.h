@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE)
+#error SAME native62 next-layer output never includes CPU reference code
+#endif
 #if defined(PIONEER_Q38_NEXT_GDN_NATIVE)
 #error SAME native next-layer GDN never includes CPU reference code
 #endif

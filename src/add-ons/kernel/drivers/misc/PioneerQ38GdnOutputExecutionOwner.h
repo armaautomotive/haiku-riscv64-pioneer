@@ -177,6 +177,9 @@
  }
 public:
  ~PioneerQ38ResidentDecoderOwner(){
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+  delete nextOutput;delete nextGdn;
+#endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
   delete nextConv;
 #endif

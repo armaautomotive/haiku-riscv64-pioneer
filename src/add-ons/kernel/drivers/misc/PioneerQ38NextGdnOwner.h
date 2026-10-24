@@ -13,7 +13,11 @@
    || nextConvolution.pages!=projection->pages || !(nextConvolution.identity==projection->identity) || nextConvolution.token!=projection->token
    || nextConvolution.position || projection->position || nextConvolution.bank!=projection->bank || nextConvolution.layer!=1 || nextGdn->layer!=1
    || nextConvolution.phase!=nextConv->epoch || nextGdn->epoch!=nextConv->epoch+1 || nextGdnClaimEpoch!=nextGdn->epoch
-   || ((phase<37 || phase>41) && phase!=7 && phase!=8)
+   || ((phase<37 || phase>41) && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+    && !(nextOutput && phase>=42 && phase<=46)
+#endif
+    )
    || !recurrent->OwnsNextLayer(this,projection->identity,1,nextGdn->epoch)
    || nextConvolution.outputAddress!=nextInput.normalizedAddress+TT_Q38_CONV_OUTPUT
    || nextConvolution.residualAddress!=nextInput.residualAddress)return false;

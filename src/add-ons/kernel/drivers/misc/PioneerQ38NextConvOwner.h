@@ -18,6 +18,9 @@
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
     && !(nextGdn && phase>=37 && phase<=41)
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+    && !(nextOutput && phase>=42 && phase<=46)
+#endif
     )
    || nextProjections.resultAddress!=nextInput.normalizedAddress+TT_Q38_PROJECTION_RESULT_BASE || nextProjections.residualAddress!=nextInput.residualAddress)return false;
   for(unsigned i=0;i<16;i++)if(nextProjections.source[i]!=projection->cohort->authority.source[0][i])return false;

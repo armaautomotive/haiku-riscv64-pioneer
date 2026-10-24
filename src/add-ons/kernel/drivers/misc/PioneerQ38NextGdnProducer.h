@@ -11,6 +11,10 @@ class PioneerQ38NextConvProducer;class PioneerQ38CanonicalModelPlan;struct Pione
 // canonical current history/state nor token position has been committed.
 class PioneerQ38NextGdnProducer {
  friend class PioneerQ38ResidentDecoderOwner;
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+ friend class PioneerQ38NextGdnOutputProjectionPlan;
+ friend class PioneerQ38NextGdnOutputBootstrapPlan;
+#endif
  const PioneerQ38ResidentDecoderOwner* owner=nullptr;const PioneerQ38NextGdnState* state=nullptr;
  const PioneerQ38NextConvProducer* parent=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const uint8_t* ledger=nullptr;PioneerQ38GdnIdentity identity={};

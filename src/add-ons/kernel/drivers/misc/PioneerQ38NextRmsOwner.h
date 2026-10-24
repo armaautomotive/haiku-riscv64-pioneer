@@ -24,6 +24,9 @@
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
     && !(nextGdn && phase>=37 && phase<=41)
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+    && !(nextOutput && phase>=42 && phase<=46)
+#endif
     )
    || !nextRms->plan.Matches(*projection->canonical,nextRms->layer,0,projection->position,projection->bank,
     projection->identity,projection->cohort->authority.source[0],nextRms->epoch)

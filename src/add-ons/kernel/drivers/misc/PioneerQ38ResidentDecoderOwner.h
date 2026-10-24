@@ -89,6 +89,9 @@ static __attribute__((noinline)) bool PioneerQ38NextConvLearned(const PioneerQ38
 #include "PioneerQ38NextGdnState.h"
 static __attribute__((noinline)) bool PioneerQ38NextGdnLearned(const PioneerQ38CanonicalModelPlan&,const uint8_t*,unsigned);
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+#include "PioneerQ38NextGdnOutputState.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -140,6 +143,9 @@ struct PioneerQ38ResidentDecoderResult {
 #endif
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
  uint32_t nextGdnInstalled=0,nextGdnArmed=0,nextGdnReleased=0,nextGdnCompleted=0,nextGdnHeld=0,nextGdnPublished=0;
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+ uint32_t nextOutputInstalled=0,nextOutputBooted=0,nextOutputRootRuns=0,nextOutputStopped=0,nextOutputHeld=0,nextOutputPublished=0;
 #endif
 #if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
@@ -256,6 +262,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
    && (!nextGdn || NextGdnData())
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+   && (!nextOutput || NextOutputData())
+#endif
    && projection->Scope(io) && io.ResidentDecoderScope(*this,*projection,*history)
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
    && (!gdnAttempted || (recurrent && io.ResidentGdnRecurrentScope(*this,*projection,*recurrent)))
@@ -286,6 +295,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Image(IO& io,unsigned w){
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+  if(nextOutput && nextOutput->image[w])return NextOutputImage(io,w);
+#endif
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
   if(nextGdn && nextGdn->image[w])return NextGdnImage(io,w);
 #endif
@@ -335,6 +347,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Current(IO& io,unsigned w){
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+  if(nextOutput && nextOutput->image[w])return NextOutputCurrent(io,w);
+#endif
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
   if(nextGdn && nextGdn->image[w])return NextGdnCurrent(io,w);
 #endif
@@ -733,6 +748,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
 #include "PioneerQ38NextGdnOwner.h"
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+#include "PioneerQ38NextGdnOutputOwner.h"
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38GdnOutputValidationOwner.h"
 #endif
@@ -775,6 +793,9 @@ public:
 #endif
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
    && !nextGdn && (!nextGdnClaimEpoch || recurrent->NextLayerPublished(this,p.identity,1,nextGdnClaimEpoch))
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+   && !nextOutput && (!nextOutputClaimed || (nextOutputPublishedEpoch && nextOutputPublishedEpoch==nextGdnClaimEpoch+3))
 #endif
    && p.MatchesClosedNativeOwner(*p.proof,*p.banks,*p.cohort,*p.memory,*p.graph,*p.canonical,*p.input,p.identity,p.ledger,p.pages);
  } // exact CLOSED objects BEFORE legacy END,not a caller clean/ready hint
@@ -1093,7 +1114,15 @@ public:
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
-#ifdef PIONEER_Q38_NEXT_GDN_NATIVE
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+   || (nextOutput?(phase!=46 || !nextAttentionResult.Current()):
+    (nextGdn?(phase!=41 || !nextAttention.Current()):
+    (nextConv?(phase!=36 || !nextConvolution.Current()):
+     (nextProjection?(phase!=31 || !nextProjections.Current()):
+      (nextRms?(phase!=26 || !nextRms->done || !nextInput.Current()):
+       (ffn?(phase!=24 || !ffn->done || !ffn->stopped || !ffnHidden.Current()):
+        (residual?(phase!=18 || !residual->done || !postAttention.Current()):(output?(phase!=16 || !output->done || !output->stopped):phase!=12))))))))
+#elif defined(PIONEER_Q38_NEXT_GDN_NATIVE)
    || (nextGdn?(phase!=41 || !nextAttention.Current()):
     (nextConv?(phase!=36 || !nextConvolution.Current()):
      (nextProjection?(phase!=31 || !nextProjections.Current()):
@@ -1181,6 +1210,9 @@ public:
   p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
   delete nextGdn;nextGdn=nullptr;
+#endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+  delete nextOutput;nextOutput=nullptr;
 #endif
 #ifdef PIONEER_Q38_NEXT_CONV_NATIVE
   delete nextConv;nextConv=nullptr;
@@ -1283,6 +1315,11 @@ static __attribute__((noinline)) bool PioneerQ38NextGdnLearned(const PioneerQ38C
  return mask==7;
 }
 #endif
+#ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
+inline bool PioneerQ38NextGdnOutputProducer::Current()const{return owner && owner->MatchesNextOutput(*this);}
+inline bool PioneerQ38NextGdnOutputProducer::MatchesCohort(const PioneerQ38DispatchLease& c)const{return owner && owner->MatchesNextOutputCohort(*this,c);}
+#endif
+
 #if defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDUAL_RMS_NATIVE)
 // Required ORIGINAL upload DATA before native Bind publishes an epoch or
 // changes any hardware. This is not the live producer/execution check.

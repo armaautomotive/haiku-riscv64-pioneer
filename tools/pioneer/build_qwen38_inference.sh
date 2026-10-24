@@ -1,6 +1,7 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_GDN_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_CONV_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_NEXT_PROJECTION_NATIVE-0}" = 0 ] || exit 2
