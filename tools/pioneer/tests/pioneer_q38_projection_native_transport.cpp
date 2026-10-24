@@ -99,6 +99,20 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
   }return true; // actual complete installed image and actual prior terminal,not result flags
  }
 #endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ bool nextConvRunning[120]={};unsigned nextConvPc[120]={},nextConvStarts=0;
+ unsigned nextConvFault=0;bool nextConvFaulted=false;
+ bool NextConvInstalled(){
+  if(!nextProjection || !nextProjectionStarted[0] || nextProjection->Stops()!=119)return false;
+  for(unsigned i=0;i<PioneerQ38ProjectionGraphCodeWords(current);i++){
+   uint32_t a=PioneerQ38ProjectionGraphCodeAddress(current,i),expected=a==0x6000?PioneerQ38ConvBatchImageWord(0):
+    a>=0x64000 && a-0x64000<TT_Q38_CONV_BATCH_TEXT_BYTES?PioneerQ38ConvBatchCodeWord((a-0x64000)/4):
+    PioneerQ38NextProjectionGraphProgramAddress(current,a)?PioneerQ38NextProjectionGraphProgramWord(current,a):0;
+   if(FullRead(current,a)!=expected)return false;
+  }
+  return true; // actual full installed image+actual119 prior STOP,not result flags
+ }
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void (*outputCheckpoint)(void*)=nullptr;void* outputContext=nullptr;bool outputCheckpointDone=false;
  unsigned outputNumericReads=0,outputReadbackFault=0,outputReadbackWord=0;bool outputReadbackFaulted=false;
@@ -288,6 +302,14 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   case Code:assert(!a);return p.C().entry;
   case Control:return p.C().RuntimeControlRead(a);
   case Pc:
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+   if(p.nextConvRunning[p.current]){
+    assert(p.C().coreReset==0x46800);
+    if(p.nextConvFault==5 && !p.nextConvFaulted && p.current==119 && p.decoderResult->phase==34
+     && p.LocalRead(0x17ffc8)==TT_Q38_CONV_BATCH_MARKER){p.nextConvFaulted=true;return 0x64058;}
+    return p.nextConvPc[p.current];
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
    if(p.nextProjectionStarted[p.current]){
     if(p.C().coreReset==0x46800)p.nextProjection->Advance(p.current);
@@ -356,6 +378,16 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
 #endif
    if(p.C().coreReset==0x46800)p.machine->Advance(p.current);return p.machine->Pc(p.current);
   case Status:
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+   if(p.nextConvRunning[p.current]){
+    if(!p.nextConvFaulted && p.current==119 && p.decoderResult->phase==34
+     && p.LocalRead(0x17ffc8)==TT_Q38_CONV_BATCH_MARKER && (p.nextConvFault==4 || p.nextConvFault==8)){
+     p.nextConvFaulted=true;unsigned address=p.nextConvFault==4?TT_Q38_FFN_RESIDENT_SUMMARY+4*4:0x72000;
+     p.WriteLocal(119,address,p.ReadLocal(119,address)^1);
+    } // AFTER actual emitted completion,BEFORE the kernel accepts the receipt
+    return p.LocalRead(0x17ffc0+a*4);
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
    if(p.nextProjectionStarted[p.current]){
     if(p.C().coreReset==0x46800)p.nextProjection->Advance(p.current);
@@ -514,6 +546,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  switch(kind){
   case SetTlb:p.C().DramTlbWrite(a,b,v);return;
   case SetLocal:
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+   if(p.nextConvFault==6 && !p.nextConvFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
+    p.nextConvFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
    if(p.nextProjectionFault==6 && !p.nextProjectionFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
     p.nextProjectionFaulted=true;p.LocalWrite(0x17e000+a*4,v^1);return;
@@ -554,6 +591,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    if(p.fault==10 && p.result && p.result->phase==9 && p.current==119 && a==2039)v^=1;
    if(a>=2032 && a<2040)p.LocalWrite(0x17e000+a*4,v);else p.C().ResidentL1Write(a,v);return;
   case SetCode:assert(!a);
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+   if(p.nextConvFault==1 && !p.nextConvFaulted && p.decoderResult && p.decoderResult->phase==32 && !p.current && v==PioneerQ38ConvBatchImageWord(0)){
+    p.nextConvFaulted=true;p.C().RuntimeCodeWrite(0,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
    if(p.nextProjectionFault==1 && !p.nextProjectionFaulted && p.decoderResult && p.decoderResult->phase==27 && !p.current && v==0x0006c06f){
     p.nextProjectionFaulted=true;p.C().RuntimeCodeWrite(0,v^1);return;
@@ -586,6 +628,12 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #endif
    p.C().ResidentNocWrite(a,v);return;
   case SetPanel:
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+   if(p.nextConvFault==2 && !p.nextConvFaulted && p.decoderResult && p.decoderResult->phase==32
+    && !p.current && a==TT_Q38_CONV_BATCH_TABLE+5*4){
+    p.nextConvFaulted=true;p.LocalWrite(a,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
    if(p.nextProjectionFault==2 && !p.nextProjectionFaulted && p.decoderResult && p.decoderResult->phase==28
     && !p.current && a==TT_Q38_NEXT_PROJECTION_GRAPH_MANIFEST+40*4){
@@ -629,6 +677,18 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    }
 #endif
    p.C().coreReset=v;p.C().resets.push_back(v);
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+   if(v==0x46800 && p.NextConvInstalled()){
+    assert(!p.nextConvRunning[p.current] && p.decoderImage && p.decoderPlan && p.decoderHistory && p.learned && p.learned->Ready());
+    p.nextConvPc[p.current]=ExecuteDecoderConv(p.decoderImage,*p.decoderPlan,p.current,p.decoderBank,p,*p.decoderHistory);
+    p.nextConvRunning[p.current]=true;p.nextConvStarts++;
+    if(!p.current && !p.nextConvFaulted && (p.nextConvFault==3 || p.nextConvFault==7)){
+     if(p.nextConvFault==3)p.C().source[11]^=1;else p.now+=30000001;
+     p.nextConvFaulted=true; // synchronous bridge:AFTER actual first CBO execution,BEFORE its kernel proof
+    }
+    return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
    if(v==0x46800 && p.NextProjectionInstalled()){
     assert(!p.current || !p.nextProjectionStarted[p.current]);p.nextProjection->Start(p.current);p.nextProjectionStarted[p.current]=true;
@@ -810,6 +870,9 @@ uint32_t* ProjectionNativeTransport::PanelSaved(){auto& p=*implementation;p.Touc
 uint32_t* ProjectionNativeTransport::Backup(unsigned words){auto& p=*implementation;p.Touch();return p.C().HostReadBackup(words);}
 void ProjectionNativeTransport::Quarantine(){implementation->quarantined=true;} // MEMORY ONLY
 void ProjectionNativeTransport::Pause(){implementation->now++;
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ for(unsigned w=0;w<120;w++)if(implementation->nextConvRunning[w])return;
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
  auto& next=*implementation;
  if(next.nextProjection){
@@ -886,6 +949,17 @@ bool ProjectionNativeTransport::NextProjectionFaultInjected()const{return implem
 void ProjectionNativeTransport::NextProjectionRunTerminalCheckpoint(void (*callback)(void*),void* context){
  auto& p=*implementation;assert(callback && context && p.nextProjection && !p.nextProjectionStarted[0] && !p.nextProjectionCheckpoint);
  p.nextProjectionCheckpoint=callback;p.nextProjectionCheckpointContext=context;
+}
+#endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+void ProjectionNativeTransport::NextConvFault(unsigned kind){auto& p=*implementation;
+ assert(kind>=1 && kind<=8 && !p.nextConvFault && !p.nextConvStarts && p.nextProjection && p.nextProjection->Stops()==119);
+ p.nextConvFault=kind; // endpoint fault scheduling only,NOT producer/state publication
+}
+bool ProjectionNativeTransport::NextConvFaultInjected()const{return implementation->nextConvFaulted;}
+unsigned ProjectionNativeTransport::NextConvStarts()const{return implementation->nextConvStarts;}
+void ProjectionNativeTransport::VerifyNextConv(){auto& p=*implementation;assert(p.nextConvStarts==120);
+ for(unsigned w=0;w<120;w++)assert(p.nextConvRunning[w] && p.nextConvPc[w]==0x64038 && p.core[w]->coreReset==0x47800);
 }
 #endif
 void ProjectionNativeTransport::FfnFault(unsigned kind){

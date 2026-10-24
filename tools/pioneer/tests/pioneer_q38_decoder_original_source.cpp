@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_NEXT_PROJECTION_NATIVE) || defined(PIONEER_Q38_NEXT_RMS_NATIVE) || defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
+#if defined(PIONEER_Q38_NEXT_CONV_NATIVE) || defined(PIONEER_Q38_NEXT_PROJECTION_NATIVE) || defined(PIONEER_Q38_NEXT_RMS_NATIVE) || defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
 #error Original-model independent observer MUST be a separate non-native DEBUG compilation unit
 #endif
 #define PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CLIENT 1
@@ -29,6 +29,7 @@ static int DecoderOriginalExecv(const char* path,char* const* argv){
 #include "../PioneerQ38ResidentDecoderValidationReference.h"
 #include "../PioneerQ38NextProjectionValidationReference.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38LearnedRmsShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputGraphShape.h"
 #include <array>
@@ -43,6 +44,7 @@ class OriginalSource final:public DecoderOriginalSource {
  uint64_t ffnReads=0;
  uint64_t nextRmsReads=0;std::array<uint32_t,5120> nextNorm={};
  bool nextProjection=false;uint64_t nextProjectionReads=0;
+ bool nextConv=false;uint64_t nextConvReads=0;
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
  std::array<uint32_t,128> gdnLearnedNorm={};std::vector<uint32_t> gdnNormReferences;
@@ -58,7 +60,7 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false,bool residual=false,bool selectedFfn=false,bool next=false,bool projectionsNext=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output),residualRms(residual),ffn(selectedFfn),nextRms(next),nextProjection(projectionsNext){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false,bool residual=false,bool selectedFfn=false,bool next=false,bool projectionsNext=false,bool convolutionNext=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output),residualRms(residual),ffn(selectedFfn),nextRms(next),nextProjection(projectionsNext),nextConv(convolutionNext){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  bool Prepare(unsigned token)override{
@@ -68,6 +70,7 @@ public:
   unsigned projectionsCount=0,convCount=0,convRows=0,embeddingCount=0,normTensor=UINT32_MAX,embeddingTensor=UINT32_MAX,pages=0,gdnParts=0,gdnNormTensor=UINT32_MAX,outputStripes=0,outputRows=0,postNorms=0;
   unsigned ffnStripes[3]={},ffnRows[3]={},nextNorms=0;
   unsigned nextStripes[4]={},nextRows[4]={};
+  unsigned nextConvStripes=0,nextConvRows=0;
   const auto& parts=plan.Parts();const auto& tensors=original.Model().Tensors();
   for(unsigned i=0;i<parts.size();i++){
    const auto& p=parts[i];const auto& c=*canonical->Part(i);
@@ -79,6 +82,13 @@ public:
     std::vector<uint8_t> data(((within+46080+4095)/4096)*4096);
     for(unsigned page=0;page<data.size()/4096;page++)if(!original.ReadWeightPage(plan,i,first+page,data.data()+page*4096,4096))return false;
     memcpy(embedding.data(),data.data()+within,46080);embeddingCount++;embeddingTensor=p.tensor;
+   }
+   if(nextConv && p.layer==1 && p.role==12){
+    if(c.type || p.rowBytes!=16 || p.allocated!=24576 || p.firstRow!=nextConvRows || !p.rows || p.bytes!=p.rows*16
+     || tensors[p.tensor].name!="blk.1.ssm_conv1d.weight")return false;
+    Stripe s={p.role,p.layer,PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,p.bytes,std::vector<uint8_t>(p.allocated)};
+    for(unsigned page=0;page<6;page++)if(!original.ReadWeightPage(plan,i,page,s.data.data()+page*4096,4096))return false;
+    pages+=6;nextConvStripes++;nextConvRows+=p.rows;stripes.push_back(std::move(s));continue;
    }
    if(nextProjection && p.layer==1 && PioneerQ38ProjectionResultRows(p.role)){
     unsigned slot=PioneerQ38ProjectionResultSlot(p.role);PioneerQ38Tensor expected;
@@ -134,9 +144,10 @@ public:
    }
   }
   if(embeddingCount!=1 || normTensor==UINT32_MAX || projectionsCount!=16 || convCount!=7 || convRows!=10240
-   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U)+(gdnOutput?8640U:0U)+(residualRms?5U:0U)+(ffn?36720U:0U)+(nextRms?5U:0U)+(nextProjection?23176U:0U) || gdnParts!=(gdnInputs?2U:0U)
+   || pages!=(gdnInputs?23225U:23223U)+(gdnNorm?1U:0U)+(gdnOutput?8640U:0U)+(residualRms?5U:0U)+(ffn?36720U:0U)+(nextRms?5U:0U)+(nextProjection?23176U:0U)+(nextConv?42U:0U) || gdnParts!=(gdnInputs?2U:0U)
    || outputStripes!=(gdnOutput?7U:0U) || outputRows!=(gdnOutput?5120U:0U) || postNorms!=(residualRms?1U:0U)
-   || gdnNorm!=(gdnNormTensor!=UINT32_MAX) || nextNorms!=(nextRms?1U:0U))return false;
+   || gdnNorm!=(gdnNormTensor!=UINT32_MAX) || nextNorms!=(nextRms?1U:0U)
+   || nextConvStripes!=(nextConv?7U:0U) || nextConvRows!=(nextConv?10240U:0U))return false;
   for(unsigned role=0;role<3;role++)if(ffnStripes[role]!=(ffn?7U:0U) || ffnRows[role]!=(ffn?(role==2?5120U:17408U):0U))return false;
   for(unsigned slot=0;slot<4;slot++)if(nextStripes[slot]!=(nextProjection?(slot<2?1U:7U):0U)
    || nextRows[slot]!=(nextProjection?(slot<2?48U:slot==2?6144U:10240U):0U))return false;
@@ -228,6 +239,10 @@ public:
    && (!residualRms || (bytes!=16384 && bytes!=4096)) && (!ffn || bytes!=2304)) || (address&63))return false;
   for(const auto& s:stripes)if(s.route==route && address>=s.address && address-s.address<s.bytes){
    if(s.layer==1){
+    if(s.role==12){
+     unsigned at=address-s.address;if(!nextConv || bytes!=256 || at%256 || bytes>s.bytes-at)return false;
+     memcpy(out,s.data.data()+at,bytes);nextConvReads++;return Ready();
+    }
     if(s.role){unsigned at=address-s.address;if(!nextProjection || !PioneerQ38ProjectionResultRows(s.role) || bytes!=576 || at%576 || bytes>s.bytes-at)return false;
      memcpy(out,s.data.data()+at,bytes);nextProjectionReads++;return Ready();}
     unsigned at=address-s.address;if(!nextRms || s.role || s.bytes!=20480 || (at==0?bytes!=16384:at!=16384 || bytes!=4096))return false;
@@ -280,6 +295,28 @@ public:
  uint64_t NextRmsReads()const override{return nextRmsReads;}
  bool NextProjectionWeightsReady()const override{return nextProjection && nextRms && sealed && Ready();}
  uint64_t NextProjectionReads()const override{return nextProjectionReads;}
+ bool NextConvWeightsReady()const override{return nextConv && nextProjection && sealed && Ready();}
+ uint64_t NextConvReads()const override{return nextConvReads;}
+ bool CheckNextConv(const std::vector<uint32_t>& before,const std::vector<uint32_t>& after)override{
+  if(!NextConvWeightsReady() || nextConvReads!=640 || before.size()!=524288 || after.size()!=524288)return false;
+  const auto* tensor=original.Model().Find("blk.1.ssm_conv1d.weight");
+  if(!tensor || tensor->type || tensor->rank!=2 || tensor->inputs!=4 || tensor->outputs!=10240 || tensor->bytes!=163840)return false;
+  unsigned index=unsigned(tensor-original.Model().Tensors().data());std::vector<uint8_t> weights(163840);
+  if(!original.ReadReferencePacked(index,0,unsigned(weights.size()),weights.data(),unsigned(weights.size())) || !Ready())return false;
+  for(unsigned c=0;c<10240;c++){
+   float weight[4];for(unsigned j=0;j<4;j++){
+    const auto* b=weights.data()+c*16+j*4;weight[j]=PioneerAttentionFloat(uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24));
+   }
+   uint32_t input=before[PioneerQ38ProjectionResultOffset(6)/4+c];float sum=0;
+   for(unsigned j=0;j<3;j++)sum+=0.f*weight[j];
+   sum+=PioneerAttentionFloat(input)*weight[3];
+   double x=sum,e=exp(-fabs(x)),expected=x*(x>=0?1/(1+e):e/(1+e));
+   double actual=PioneerAttentionFloat(after[TT_Q38_CONV_OUTPUT/4+c]);
+   if(!isfinite(expected) || !isfinite(actual) || fabs(actual-expected)>3e-6*(1+fabs(expected)))return false;
+   for(unsigned j=0;j<3;j++)if(after[TT_Q38_CONV_NEXT/4+c*3+j]!=(j==2?input:0U))return false;
+  }
+  return Ready(); // independent ORIGINAL-weight observer only,never native inputs
+ }
  bool CheckNextProjections(const std::vector<uint32_t>& before,const std::vector<uint32_t>& after)override{
   if(!NextProjectionWeightsReady() || nextProjectionReads!=164800 || before.size()!=524288 || after.size()!=524288)return false;
   if(memcmp(before.data(),after.data(),20480) || memcmp(before.data()+0x18000/4,after.data()+0x18000/4,20480))return false;
@@ -397,5 +434,9 @@ std::unique_ptr<DecoderOriginalSource> OpenNextRmsOriginalSource(const char* pat
 }
 std::unique_ptr<DecoderOriginalSource> OpenNextProjectionOriginalSource(const char* path){
  if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true,true,true,true,true,true);
+ if(!source->Open())return nullptr;return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenNextConvOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true,true,true,true,true,true,true);
  if(!source->Open())return nullptr;return source;
 }

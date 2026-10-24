@@ -24,8 +24,13 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ assert(argc==15 || (argc==16 && !strcmp(argv[15],"--next-conv-faults")));setvbuf(stdout,nullptr,_IOLBF,0);
+ const bool nextProjectionFaults=false,nextConvFaults=argc==16;
+#else
  assert(argc==15 || (argc==16 && !strcmp(argv[15],"--next-projection-faults")));setvbuf(stdout,nullptr,_IOLBF,0);
  const bool nextProjectionFaults=argc==16;
+#endif
  const bool nextRmsFaults=false;
 #else
  assert(argc==14 || (argc==15 && !strcmp(argv[14],"--next-rms-faults")));setvbuf(stdout,nullptr,_IOLBF,0);
@@ -46,7 +51,11 @@ int main(int argc,char** argv){
  puts("NATIVE_QGH_ALL_ORIGINAL_REFERENCES_BEFORE_CONTEXT;NO_DEVICE_ACCESS");
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ auto source=OpenNextConvOriginalSource(argv[7]);
+#else
  auto source=OpenNextProjectionOriginalSource(argv[7]);
+#endif
 #else
  auto source=OpenNextRmsOriginalSource(argv[7]);
 #endif
@@ -67,6 +76,13 @@ int main(int argc,char** argv){
 #endif
  assert(source && source->Prepare(0) && source->SealBeforeNativeContext());
  DecoderNativeFixture f(argv[3],argv[4],argv[5]);f.io.originalEmbeddingWeights=source->EmbeddingTile();f.io.originalRmsWeights=source->LearnedNorm();
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ assert(source->NextConvWeightsReady() && !source->NextConvReads());
+ {auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned stripes=0,pages=0;
+  for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer!=1 || p->role!=12)continue;
+   unsigned first=p->bank*786432+p->offset/4096;for(unsigned page=0;page<6;page++)f.learned[first+page]=1;stripes++;pages+=6;
+  }assert(stripes==7 && pages==42);}
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
  assert(source->NextProjectionWeightsReady() && !source->NextProjectionReads());
  {auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned stripes=0,pages=0;
@@ -139,6 +155,16 @@ int main(int argc,char** argv){
     assert(!BindQ38EmbeddingModel(*f.c,0,0,0) && !f.c->q38EmbeddingModel && f.io.touches==touches && sQ38EmbeddingModelEpoch==epoch);f.learned[first+page]=1;
    }found++;
   }assert(found==1);puts("PASS NATIVE58 ALL5 ORIGINAL layer1 pre-attention norm pages missing/corrupt refuse BEFORE epoch/claim/IO");}
+#endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ {auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned refused=0;
+  for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer!=1 || p->role!=12)continue;
+   unsigned first=p->bank*786432+p->offset/4096;
+   for(unsigned page=0;page<6;page++)for(unsigned value:{0U,2U}){auto epoch=sQ38EmbeddingModelEpoch;unsigned touches=f.io.touches;
+    f.learned[first+page]=value;assert(!BindQ38EmbeddingModel(*f.c,0,0,0) && !f.c->q38EmbeddingModel && f.io.touches==touches && sQ38EmbeddingModelEpoch==epoch);
+    f.learned[first+page]=1;refused++;
+   }
+  }assert(refused==84);puts("PASS native60 ALL42 original layer1 F32conv pages missing/corrupt refused BEFORE epoch/claim/IO");}
 #endif
  {auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned found=0;
   for(unsigned i=0;i<plan->Count();i++){
@@ -642,6 +668,68 @@ int main(int argc,char** argv){
   }int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));}
  puts("PASS SAME ACTUAL native59 claims genuine native58 input/ALL16ORIGINAL layer1 stripes/4QPS2+80producers+244matrices/164800original tile reads/ALL16480independent original packed-row references bitexact/119STOP+120holds/expiredoldinput/private next projections+unchangedraw;NO initial RMS facade/CPUproducts/Work/publicselector/CARDspeed claim");
 #endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ static_assert(!std::is_default_constructible<PioneerQ38NextConvProducer>::value && !std::is_copy_constructible<PioneerQ38NextConvProducer>::value
+  && !std::is_move_constructible<PioneerQ38NextConvProducer>::value,"only SAME actual decoder publishes next convolution");
+ n=f.io.touches;d=f.transport->Touches();currentTeam=8;
+ assert(!RunQ38NextConv(*f.c,forged) && nextProjection->Current() && f.io.touches==n && f.transport->Touches()==d);currentTeam=7;
+ forged.nextConvPublished=1;assert(!RunQ38NextConv(*f.c,forged) && nextProjection->Current() && !m->decoder.NextConvolutionInput()
+  && f.io.touches==n && f.transport->Touches()==d);forged.nextConvPublished=0;
+ for(unsigned i=0;i<m->plan.Count();i++){const auto* p=m->plan.Part(i);if(p->kind!=m->plan.WeightKind || p->layer!=1 || p->role!=12)continue;
+  unsigned first=p->bank*786432+p->offset/4096;
+  for(unsigned page=0;page<6;page++)for(unsigned value:{0U,2U}){f.learned[first+page]=value;
+   assert(!RunQ38NextConv(*f.c,forged) && nextProjection->Current() && !m->decoder.NextConvolutionInput() && !m->Unsafe()
+    && f.io.touches==n && f.transport->Touches()==d);f.learned[first+page]=1;
+  }
+ }
+ const auto beforeNextConv=f.io.wholeWorkspace;
+ if(nextConvFaults)for(unsigned fault=1;fault<=8;fault++){
+  pid_t child=fork();assert(child>=0);if(!child){
+   // Fork the SAME genuinely completed native59 stack;no fabricated old
+   // producer,completion flag,initialization grant,or shortened prefix.
+   f.transport->NextConvFault(fault);bool ran=RunQ38NextConv(*f.c,f.decoderResult);
+   bool closed=fault==6 && ran?CloseQ38ResidentDecoderModel(*f.c,f.decoderResult):false;
+   printf("NATIVE60_FAULT_OBS kind%u ran%u injected%u phase%u worker%u word%u installed%u armed%u released%u completed%u held%u published%u actualStarts%u\n",
+    fault,unsigned(ran),unsigned(f.transport->NextConvFaultInjected()),f.decoderResult.phase,f.decoderResult.worker,f.decoderResult.word,
+    f.decoderResult.nextConvInstalled,f.decoderResult.nextConvArmed,f.decoderResult.nextConvReleased,f.decoderResult.nextConvCompleted,
+    f.decoderResult.nextConvHeld,f.decoderResult.nextConvPublished,f.transport->NextConvStarts());
+   if(fault==6)assert(ran && !closed && f.decoderResult.nextConvPublished==1);
+   else assert(!ran && !f.decoderResult.nextConvPublished);
+   assert(f.transport->NextConvFaultInjected() && !nextProjection->Current() && !m->decoder.NextProjectionInput()
+    && !m->decoder.NextConvolutionInput() && !m->decoder.NextConvCompleted());
+   if(fault<=2)assert(!f.transport->NextConvStarts() && f.io.wholeWorkspace==beforeNextConv);
+   if(fault==3 || fault==7)assert(f.transport->NextConvStarts()==1 && source->NextConvReads()==6
+    && !f.decoderResult.nextConvReleased && !f.decoderResult.nextConvCompleted && !f.decoderResult.nextConvHeld);
+   if(fault>=4 && fault!=7)assert(f.transport->NextConvStarts()==120);
+   if(fault==4 || fault==5 || fault==8)assert(f.decoderResult.nextConvCompleted==119 && !f.decoderResult.nextConvHeld);
+   if(fault==7)assert(f.decoderResult.phase==33 && !f.decoderResult.worker && f.decoderResult.nextConvInstalled==120 && f.decoderResult.nextConvArmed==120);
+   f.UnknownNative();unsigned host=f.io.touches,device=f.transport->Touches();
+   assert(!RunQ38NextConv(*f.c,forged) && !RunQ38NextProjections(*f.c,forged) && !RunQ38NextRms(*f.c,forged)
+    && !RunQ38ResidentFfn(*f.c,forged) && !RunQ38ResidentResidualRms(*f.c,forged) && !RunQ38ResidentGdnOutput(*f.c,forged)
+    && !CloseQ38ResidentDecoderModel(*f.c,forged) && !EndFactory(*f.c) && f.io.touches==host && f.transport->Touches()==device);
+   printf("PASS SAME ACTUAL native60 fault%u real code/table/source/summary/terminal-PC/restore/deadline/retained-tail endpoint;ALL owners+snapshots+hosts retained/ZERO following IO-reset-restore-retry-END\n",fault);
+   _exit(0);
+  }int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
+ }
+ bool ranNextConv=RunQ38NextConv(*f.c,f.decoderResult);
+ printf("NATIVE60_RUN ran%u phase%u worker%u word%u installed%u armed%u released%u completed%u held%u published%u unsafe%u\n",unsigned(ranNextConv),f.decoderResult.phase,f.decoderResult.worker,f.decoderResult.word,
+  f.decoderResult.nextConvInstalled,f.decoderResult.nextConvArmed,f.decoderResult.nextConvReleased,f.decoderResult.nextConvCompleted,f.decoderResult.nextConvHeld,f.decoderResult.nextConvPublished,f.decoderResult.unsafe);
+ assert(ranNextConv && m->decoder.NextConvCompleted() && !nextProjection->Current() && !m->decoder.NextProjectionInput()
+  && f.decoderResult.nextConvInstalled==120 && f.decoderResult.nextConvArmed==120 && f.decoderResult.nextConvReleased==120
+  && f.decoderResult.nextConvCompleted==120 && f.decoderResult.nextConvHeld==120 && f.decoderResult.nextConvPublished==1);
+ const auto* nextConvolution=m->decoder.NextConvolutionInput();assert(nextConvolution && nextConvolution->Current()
+  && nextConvolution->MatchesCohort(*cohort) && !nextConvolution->MatchesCohort(*foreignCohort));
+ f.transport->VerifyNextConv();assert(source->NextConvReads()==640 && source->CheckNextConv(beforeNextConv,f.io.wholeWorkspace));
+ for(unsigned i=0;i<beforeNextConv.size();i++)if(!(i>=TT_Q38_CONV_OUTPUT/4 && i<(TT_Q38_CONV_OUTPUT+40960)/4)
+  && !(i>=TT_Q38_CONV_NEXT/4 && i<(TT_Q38_CONV_NEXT+122880)/4))assert(f.io.wholeWorkspace[i]==beforeNextConv[i]);
+ for(auto word:f.io.historyWords)assert(!word);
+ n=f.io.touches;d=f.transport->Touches();assert(!RunQ38NextConv(*f.c,forged) && !RunQ38NextProjections(*f.c,forged) && f.io.touches==n && f.transport->Touches()==d);
+ for(unsigned fault=0;fault<3;fault++){pid_t child=fork();assert(child>=0);if(!child){
+   if(!fault)m->graph.Fault();if(fault==1)m->graph.Recurrent(m->identity)->Fault();if(fault==2)cohort->worker[119].image.running=true;
+   assert(!nextConvolution->Current() && !m->decoder.NextConvolutionInput() && f.io.touches==n && f.transport->Touches()==d);_exit(0);
+  }int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));}
+ puts("PASS SAME ACTUAL native60 claims genuine native59 input BEFORE IO/ORIGINAL layer1 F32conv640tiles/120workers640jobs/ALL10240convolution values independent original-weight bound+30720NEXTexact/ALL120receiptsBEFOREholds/private nextconv+expiry/history+unrelatedGDDR unchanged;NO host products/current-history-flip/Work/publicselector/CARDspeed claim");
+#endif
  bool closed=CloseQ38ResidentDecoderModel(*f.c,f.decoderResult);
  printf("NATIVE_QGH_CLOSE closed%u phase%u worker%u word%u restored%u verified%u unsafe%u\n",unsigned(closed),f.decoderResult.phase,f.decoderResult.worker,f.decoderResult.word,
   f.decoderResult.memory.restoredWords,f.decoderResult.memory.verifiedOriginalWords,f.decoderResult.unsafe);
@@ -658,6 +746,9 @@ int main(int argc,char** argv){
 #endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
  assert(!nextProjection->Current() && !m->decoder.NextProjectionInput() && !m->decoder.NextProjectionsCompleted());
+#endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ assert(!nextConvolution->Current() && !m->decoder.NextConvolutionInput() && !m->decoder.NextConvCompleted());
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
  assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Producer()

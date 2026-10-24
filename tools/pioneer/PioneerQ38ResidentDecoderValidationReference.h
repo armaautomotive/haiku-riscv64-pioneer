@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_NEXT_CONV_NATIVE)
+#error SAME native next convolution never includes CPU reference code
+#endif
 #if defined(PIONEER_Q38_NEXT_PROJECTION_NATIVE)
 #error SAME native next-layer projections never include CPU reference code
 #endif

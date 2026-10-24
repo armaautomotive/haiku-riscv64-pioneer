@@ -20,6 +20,9 @@
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
     && !(nextProjection && phase>=27 && phase<=31)
 #endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+    && !(nextConv && phase>=32 && phase<=36)
+#endif
     ))return false;
   const auto* m=ffn->manifest;
   if(!PioneerQ38FfnResidualGraphFrame(m) || m[6]!=ffn->epoch+(ffn->stopping?5U:0U)

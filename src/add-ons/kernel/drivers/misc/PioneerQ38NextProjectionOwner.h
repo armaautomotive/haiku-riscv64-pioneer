@@ -14,7 +14,11 @@
    || nextInput.pages!=projection->pages || !(nextInput.identity==projection->identity) || nextInput.token!=projection->token
    || nextInput.position!=projection->position || nextInput.bank!=projection->bank || nextInput.layer!=1 || nextProjection->layer!=1
    || nextInput.phase!=nextRms->epoch || nextProjection->epoch!=nextInput.phase+1
-   || (phase!=27 && phase!=28 && phase!=29 && phase!=30 && phase!=31 && phase!=7 && phase!=8)
+   || (phase!=27 && phase!=28 && phase!=29 && phase!=30 && phase!=31 && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+    && !(nextConv && phase>=32 && phase<=36)
+#endif
+    )
    || nextProjection->slot>=4 || !nextProjection->graph)return false;
   const auto* m=nextProjection->graph->Manifest();
   if(!m || !PioneerQ38NextProjectionGraphFrame(m) || m[42]!=1 || m[43]!=NextProjectionRole(nextProjection->slot)

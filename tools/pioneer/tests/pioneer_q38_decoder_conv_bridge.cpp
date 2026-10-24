@@ -6,7 +6,7 @@
 struct DecoderBatchMachine:ConvBatchMachine {
  ProjectionExecutionFabric& fabric;DecoderHistoryBytes& producer;std::set<unsigned> dirtied;
  DecoderBatchMachine(const char* image,const PioneerQ38CanonicalModelPlan& plan,unsigned worker,unsigned bank,
-  ProjectionExecutionFabric& f,DecoderHistoryBytes& p):ConvBatchMachine(image,plan,0,bank,worker,1,0),fabric(f),producer(p){
+  ProjectionExecutionFabric& f,DecoderHistoryBytes& p):ConvBatchMachine(image,plan,f.ReadLocal(worker,TT_Q38_CONV_BATCH_TABLE+5*4),bank,worker,1,0),fabric(f),producer(p){
   for(unsigned i=0;i<384;i++)table[i]=fabric.ReadLocal(worker,TT_Q38_CONV_BATCH_TABLE+i*4);
   count=PioneerQ38ConvBatchCount(worker);assert(PioneerQ38ConvBatchShape(table.data()));
   for(unsigned i=0;i<16;i++)source[i]=fabric.NoC(worker,SourceOffset(i));

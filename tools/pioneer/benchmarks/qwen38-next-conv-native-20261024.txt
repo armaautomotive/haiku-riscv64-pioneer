@@ -1,0 +1,173 @@
+SAME native60 next-layer convolution,2026-10-24 UTC.
+Base82ccd332f27c25d882d6871cd01f653d69e9c5d7 (qualified native59).
+CURRENT strengthened-release deadline version:SDK builds,full original-
+model positive execution and ALL8 endpoint failures PASSED.
+No linked driver,
+public operation,Assistant/Work route,install,physical test or speed result.
+Full20tok/s/all-layer on-card token loop remains UNMET;goal ACTIVE.
+
+Exact PIONEER_Q38_NEXT_CONV_NATIVE=1/tag2026102400010060,requires ALL real
+parents including native59. Consumes SAME owner's genuine private completed
+layer1 QPS2 producer BEFORE endpoint IO,not an old projection/RMS facade.
+Retains SAME original8330680-word snapshot and ALL120/source/host/map/clock
+leases. New ~400KiB HEAP state holds120canonical QCB1 recipes+private
+receipts,not a second saved snapshot or host numeric products.
+
+Implemented design (offline positive/faults below;NOT physical qualification):
+  All7ORIGINAL F32conv stripes/42pages required before model Bind,again
+  before claim and each worker's launch. Actual initialized canonical layer1
+  history spans,never retagged ClaimFirstLayer/GDN/current-state authority.
+  Reuse unchanged qualified QCB1 image:a8df2da24fa98535c70172c6f9833228c996a540f487b66fa545660b93256350.
+  Replaces its6088B prefix+boot in ALL120 cores. Every remaining original
+  QPS2/QFP3 immutable codeword is retained/checked,not left untracked.
+  ALL120 complete image/table rechecks before first arm;arm all,release all,
+  independent640job/120worker success/phase/count/source/code/table/command/
+  counter receipts before first physical hold. Host deadline starts BEFORE
+  releases;current code also rechecks monotonic time BEFORE each Guard,
+  AFTER its full image/table proof and IMMEDIATELY after each release.
+  Detected expiration stops before further card IO or additional releases.
+  Accept6403c speculative PC only after fresh exact success triplet.
+  After hold,no live-PC terminal sampling:verify held reset,retained status,
+  accepted receipt/code/table/source/counters. New producer published only
+  after ALL120held;old projection producer expires at claim. Private
+  convolution+NEXT-history workspace only,NO canonical history/token flip.
+  Failure is memory-only retention;Close must restore/verify original full
+  snapshot before actual END. Current endpoint fault results below.
+
+Prototype read-only RISC-V SDK builds B76027/C68518 TERMINAL0,byte-identical
+(before the later per-release deadline tightening,NOT the current object):
+  /private/tmp/pioneer-q38-next-conv-native-20261024.uvnHrRHB/{b,c}/
+    next-conv-NATIVE60-COMPILE-ONLY.o
+  SHA fbaa0d67275c2ebc4089af4cd8a1ee9cf030d3b7c835833e4aa3ae796ad36510.
+  Max new frame496B,all new frames<=2048B;unrelated oversized legacy frames
+  nongrowing. All inherited native59/58/57/56/54/old/default controls EXACT.
+  Native59 still1a48a4da28df59590b3a491c40014d5a8b0b37f568562e366886d9f863210ce6.
+  B log a5bd8b9adf528c694f653ae37303cecfd7a2306eabb7b02bf02ed71ade0593e6
+  C log11261a943e2b6874aa7b8a94da366aba92090da48ab8dd2979cd367e36229982.
+  Prototype A28956 also compiled0/max480B,but predates held-PC avoidance
+  and the complete42page launch guard;its fb76daec object is NOT current.
+
+Original-source ASan/UBSan test A80441 TERMINAL0:full c600 SHA/ALL851schema,
+  7ORIGINAL layer1 F32conv stripes/42pages/10240channels cached BEFORE any
+  context,14first/last256B semantic tile reads+140atomic no-output refusals,
+  zero other learned reads. New observer can independently reread original
+  layer1 FP32 weights AFTER genuine execution and compare10240convolution
+  outputs within unchanged3e-6scaled bound and30720NEXT words exactly.
+  That numerical observer is NOT a native input or initial producer facade.
+  /private/tmp/pioneer-q38-next-conv-original-source-20261024-a.log
+  SHA22fa040894ad3ad242385f0c9a0f1e7dd58b97c52415560d4cf4c20f3ddf9fa5.
+
+Exact-role/isolation gates A42091 TERMINAL0:349checks+131072ACTUAL inert
+  public routing probes. Missing/wrong/defined-zero parent/tag/CPU reference/
+  Work/image mixtures refused;all9reference headers reject native60 even0
+  and after reinclude.10old builders refuse nonzero ambient native60 BEFORE
+  SDK/output. Private producer cannot default/copy/move construct.
+  SHA3df9be273239ad6c70b08ad0e5f7e0dbf34557289abd3aa3757012923dd2551e.
+
+Prototype full original-model native execution test A12045 TERMINAL0:
+  /private/tmp/pioneer-q38-next-conv-native-original-20261024-a.log
+  SHA25fd908765e7cdd3836e7313dcd2995a89072e5f8d7a8c17b6fe685aa428d9df.
+  Genuine entire original prefix through native59,then native60 required;
+  no synthetic producer/ready publication or shorter prefix. Pre-Bind and
+  pre-claim ALL42 missing/corrupt page guards passed with ZERO IO and the
+  old producer preserved. Genuine next projections expired at claim.
+  New stage:phase36,worker119,installed120/armed120/released120/completed120/
+  held120/published1/unsafe0. SAME actual QCB1 instructions/640jobs consumed
+  640ORIGINAL layer1 FP32 weight tiles. Independent ORIGINAL-weight observer
+  checked ALL10240 convolution values at unchanged3e-6scaled bound and
+  ALL30720 private NEXT-history words exactly. Canonical current histories
+  and unrelated2MiB workspace bytes unchanged. Cohort/expiry/repeat-call
+  refusals passed;held workers never sampled a live terminal PC.
+  SAME original8330680words restored AND independently verified,phase9,
+  then actual END. These are simulated byte endpoints/emitted instructions,
+  NOT physical card execution/timing or a whole-model inference pass.
+
+Old native59 controls repeated against the shared-source changes:
+  Source B51559 TERMINAL0:original c600/851schema/32exactQ8tiles+320refusals.
+  SHA92e9205e3ee6646b2bf999577ed9ac018c9e26676c0562ac7fdf8bdaa2ec7ef2.
+  Gates B75210 TERMINAL0:344role checks/131072ACTUAL inert public routes.
+  SHA2e67e1eb6481f0aaf7c2251ed9e45053e640f9e9e776aba144300e3dcab7f587.
+  Earlier A logs also contain PASS,but their consumed terminal exits were
+  unavailable after a truncated observation;B supplies explicit terminal0.
+
+Only AFTER positive12045 actually terminated,added8 TEST endpoint faults:
+  1 actual root boot write corruption during phase32;
+  2 actual root QCB1 table field write corruption via SetPanel;
+  3 source11 drift AFTER first actual synchronous CBO execution,BEFORE its
+    kernel proof (NOT before its first instruction);
+  4 worker119 actual completed summary corruption before receipt acceptance;
+  5 worker119 bad terminal PC after fresh success triplet;
+  6 original last saved word corrupted during restore AFTER publication;
+  7 host deadline advances30000001us after first actual CBO execution;
+  8 worker119 retained immutable old tail0x72000 changed before receipt.
+  Each child forks SAME genuine native59 state,never fabricates a producer
+  or a shortened prefix. Requires ALL owners/snapshots/maps/clock/hostleases
+  retained and ZERO following Run/Close/END/reset/restore/retry IO. Parent
+  must still run full positive native60,original restore/verify and END.
+  Prototype --next-conv-faults test A94981 TERMINAL0,ALL8 faults+parent full
+  positive native60/independent original observer/restore8330680verified/
+  actualEND passed. SHA63f7651d98ed6ae5ad0cafbc75db5b820ab14a433b7921a6284d1641860c840e.
+  /private/tmp/pioneer-q38-next-conv-native-faults-20261024-a.log
+  Actual observations:1/2no execution,3one actual first-worker CBO then
+  source failure,4/5/8all120started/119receipts/ZERO postcompute holds,
+  6genuine publication then corrupt original last restore word detected.
+  ALL8 retained ALL owners/snapshots/host/clock/maps and ZERO following
+  Run/Close/END/reset/restore/retry IO. Prototype7 failed only after all120
+  starts;that passed the old end-of-release check but is NOT the new bound.
+
+Only AFTER A94981 actual terminal0,tightened the production release loop's
+monotonic CPU-time checks. No numerical/reference/image/Work/route change.
+Current fault7 MUST fail at phase33/worker0,120installed+armed but onlyONE
+actual CBO start/SIXactual original tile reads,0accepted release receipts/
+0completed/0held/0published. No extra GPU queries on deadline expiration.
+Fault3 separately requires the same actual six-tile first computation.
+Original-model+8faults B71827 TERMINAL1,DELIBERATELY interrupted after the
+confirmed SDK compilation failure below,NOT a timeout or numerical failure:
+  /private/tmp/pioneer-q38-next-conv-native-faults-20261024-b.log
+  Exact task-owned local CPU child76697/parent75784/UID501/executable and
+  --next-conv-faults argv verified before SIGTERM;runner actual terminal1
+  verified BEFORE any dependency edit. No Pioneer process/power/card action.
+SDK D93713/E63289 both TERMINAL1:GCC -Werror=misleading-indentation at
+NextConvOwner.h132,not a numerical/device failure. Split the Guard refusal
+and following accepted-release counter increment onto separate lines;NO
+operator/control-flow/number/bound change. New SDK F91918/G58467 TERMINAL0,
+outputs {f,g} in the same uvnHrRHB root. Both current objects independently
+hashed and cmp-verified byte-identical:
+  de4f20f243e4796fd9945d0c5acd2ff245d282db2733c0e60a48e844fb431ab9.
+  Max new frame496B. ALL inherited59/older controls EXACT;native59 remains
+  1a48a4da28df59590b3a491c40014d5a8b0b37f568562e366886d9f863210ce6.
+  F log6610f91a680b4be655710d001e527ba643a560423ec935e77c84464e4f83f2f8.
+  G log29e1426fd2110e3265afa123ff72d224ed43ae06ea5cc627ce2bbecad0ed46f7.
+ONLY after BOTH SDK parents actual terminal0,ran fresh full original-
+model/8faults/parent-positive/restore/END C26190 TERMINAL0:
+  /private/tmp/pioneer-q38-next-conv-native-faults-20261024-c.log
+  SHA39a40158fb6aaf4198408eac1313857397ae8152bcb2e954063da207fcf3d4bc.
+  ALL8 actual endpoint failures injected and refused;ALL owners/snapshots/
+  maps/host/clock leases retained;ZERO following Run/Close/END/reset/restore/
+  retry IO. Fault1/2:0actual starts. Fault3 AND new deadline7:ONE actual
+  start/SIXactual ORIGINAL tile reads,phase33/worker0,ALL120installed+armed,
+  0accepted release receipts/completions/holds/publication. Thus expiration
+  no longer launches the remaining119 workers. Fault4/5/8:ALL120starts,
+  119receipts,ZERO postcompute holds. Fault6:genuine publication then
+  original final restore-word corruption caught;no later END/IO permitted.
+  Parent then independently passed unchanged ORIGINAL10240convolution
+  bounds/30720NEXT exact/source640tiles/private producer/cohort/expiry/
+  unchanged-current-history+unrelated-workspace checks. Phase36 with
+  installed120/armed120/released120/completed120/held120/published1/unsafe0.
+  SAME original8330680words restored AND verified,phase9,actual END passed.
+  NO CPU numeric products or readiness facades supplied to native execution.
+Fresh role gates C24694 TERMINAL0;earlier B15506 also0,349checks/131072routes,
+same SHA3df9be273239ad6c70b08ad0e5f7e0dbf34557289abd3aa3757012923dd2551e.
+All these parents actually terminated;dependency freeze released ONLY then.
+Current component qualified OFFLINE ONLY. No native60 linked driver/public
+selector/Work or Assistant promotion/device install or speed result.
+
+Pioneer physical state unchanged:Haiku ON,DEBUG52/gen3/cold1/active_owner1
+quarantined after the separate3.183289ppm first numerical mismatch. No
+post-failure card reads/END/reset/retry/hotrestore. Saved-work confirmation
+for controlled script recovery is still pending;OFF once/verifyOFF/ON once.
+New CPU diagnostic3878341e and offline analyzer are tested/pushed but NOT
+installed. No SD,mains,network,Assistant,CPU/RAM or driver change here.
+Last measured whole-model0.207893161tok/s unchanged. Native60 is only the
+next convolution handoff,not GDN1/full attention/all64layers/sampling or a
+persistent on-card token program;those remain part of the original goal.

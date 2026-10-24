@@ -40,6 +40,9 @@ struct DecoderOriginalSource:ProjectionExecutionLearnedBytes {
  virtual bool NextProjectionWeightsReady()const{return false;}
  virtual uint64_t NextProjectionReads()const{return 0;}
  virtual bool CheckNextProjections(const std::vector<uint32_t>&,const std::vector<uint32_t>&){return false;}
+ virtual bool NextConvWeightsReady()const{return false;}
+ virtual uint64_t NextConvReads()const{return 0;}
+ virtual bool CheckNextConv(const std::vector<uint32_t>&,const std::vector<uint32_t>&){return false;}
 };
 std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* path);
@@ -51,4 +54,5 @@ std::unique_ptr<DecoderOriginalSource> OpenResidualRmsOriginalSource(const char*
 std::unique_ptr<DecoderOriginalSource> OpenFfnResidualOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenNextRmsOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenNextProjectionOriginalSource(const char* path);
+std::unique_ptr<DecoderOriginalSource> OpenNextConvOriginalSource(const char* path);
 #endif

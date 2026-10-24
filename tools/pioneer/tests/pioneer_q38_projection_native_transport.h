@@ -54,6 +54,10 @@ public:
  void NextProjectionFault(unsigned);bool NextProjectionFaultInjected()const;
  void NextProjectionRunTerminalCheckpoint(void (*callback)(void*),void* context); // TEST fork actual last RUN,not a ready/producer setter
 #endif
+#ifdef PIONEER_Q38_NEXT_CONV_NATIVE
+ void VerifyNextConv();
+ void NextConvFault(unsigned);bool NextConvFaultInjected()const;unsigned NextConvStarts()const;
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);
