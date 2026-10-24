@@ -38,6 +38,12 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  bool DecoderCallScopeMatches();bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
  bool ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ConvHistoryBanks&);
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ bool RecurrentZeroSourceScope();bool StateZeroBeforeCohort();bool StateZeroOtherCoresHeld();
+ std::vector<uint32> recurrentWords=std::vector<uint32>(73728*1024,0xa55aa55a);
+ std::array<unsigned,73728> recurrentTouched={};unsigned recurrentPages=0,recurrentRuns=0,recurrentFailRun=0;
+ bool recurrentCloseFault=false;
+#endif
  std::vector<uint32> historyWords=std::vector<uint32>(1680*1024,0xa55aa55a);PioneerQ38ConvHistoryExtent historyExtents[336]={};
  bool ReadHistory(unsigned bank,uint32_t address,uint32_t* out,unsigned words)override{
   if(!out || !words || (address&3))return false;
@@ -133,6 +139,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
  bool EmbeddingMode()const;
  bool NonRootHeldOwner(){return EmbeddingSourceScope(false)
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+  || RecurrentZeroSourceScope()
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
   || LearnedRmsSourceScope(false)
 #endif
@@ -305,6 +314,9 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #include "decoder_factory_scope.inc"
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+#include "gdn_state_zero_gate.inc"
+#endif
 #endif
 #include "embedding_factory_factory.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
@@ -397,6 +409,30 @@ void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  auto* decoderModel=q38MutableContext?q38MutableContext->q38EmbeddingModel:nullptr;
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ if(decoderModel && decoderModel->phase==PioneerQ38EmbeddingNativeState::GdnZeroing){
+  unsigned first=recurrentPages,words=0;
+  if(value==0x46800){
+   unsigned region=decoderModel->gdnZero.nonce-1,pages=0;auto* g=decoderModel->graph.Recurrent(decoderModel->identity);
+   PioneerQ38GdnBankExtent extent;
+   assert(g && region<672 && g->InitializationPages(decoderModel->identity,region,pages)
+    && g->InitializeSpan(decoderModel->identity,region,0,pages,extent)
+    && extent.address==l1[5] && extent.bank==l1[7] && extent.bytes==l1[4] && extent.route==l1[8]);
+   words=pages*1024;assert(first+pages<=73728);recurrentRuns++;
+   if(recurrentRuns==recurrentFailRun)packetFault=1;
+  }
+  ZeroControlIO::RuntimeResetWrite(value); // ACTUAL frozen RV32,NEVER publicationCounterFabricOnly
+  if(value==0x47800 && recurrentRuns==672 && recurrentCloseFault)view[(0x72000-TT_Q38_SPAN_VIEW_BASE)/4]^=1;
+  if(value==0x46800){
+   assert(!publicationCounterFabricOnly && lastDeviceWords.size()==words);
+   for(unsigned i=0;i<words;i++)recurrentWords[first*1024+i]=lastDeviceWords[i];
+   for(unsigned page=first;page<first+words/1024;page++)recurrentTouched[page]++;
+   recurrentPages+=words/1024;
+   if(recurrentRuns%96==0)printf("NATIVE_GDN_ACTUAL_ZERO runs%u/pages%u;NO ready publication before CLOSE\n",recurrentRuns,recurrentPages);
+  }
+  return;
+ }
+#endif
  if(decoderModel && decoderModel->phase==PioneerQ38EmbeddingNativeState::HistoryZeroing){
   unsigned region=decoderModel->historyZero.nonce-1;
   if(value==0x46800){assert(region<336);auto* h=decoderModel->graph.ConvHistory(decoderModel->identity);

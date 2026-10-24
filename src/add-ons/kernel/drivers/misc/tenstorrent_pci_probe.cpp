@@ -15,6 +15,11 @@
 #error Decoder runtime/history reservation is OFFLINE until its separate actual native factory and role are qualified
 #endif
 #endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+#if PIONEER_Q38_GDN_STATE_INIT_NATIVE != 1 || !defined(PIONEER_Q38_GDN_INPUT_OWNER) || PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Separate exact tag47 SAME-owner GDN initialization,not old input/convolution DEBUG
+#endif
+#endif
 #ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_INPUT_OWNER) || PIONEER_Q38_GDN_INPUT_OWNER != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Exact separate tag46 GDN-input DEBUG requires SAME-owner role,never old convolution DEBUG
@@ -24,7 +29,9 @@
 #if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate resident-input owner needs exact native role,never old convolution DEBUG
 #endif
-#ifdef PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010047ULL
+#elif defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102300010046ULL
 #else
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102300010045ULL
@@ -56,6 +63,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102300010046ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE))
 #error Reserved tag46 identifies ONLY the separate fixed GDN-input DEBUG qualifier
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010047ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_GDN_STATE_INIT_NATIVE))
+#error Reserved tag47 identifies ONLY same native joint-owner GDN zero+Close,NO public selector
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -1885,6 +1895,9 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  bool DecoderCallScopeMatches();
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ bool RecurrentZeroSourceScope();
+#endif
  bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
  bool ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ConvHistoryBanks&);
 #endif
@@ -3129,6 +3142,9 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
     PioneerQ38EmbeddingNativeState::DecoderComplete)
    || !model->MatchesInitializedHistory(c.banks,c.baseline.baseline.baseline.baseline.dram)
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+   || !model->MatchesInitializedGdn(c.banks,c.baseline.baseline.baseline.baseline.dram)
+#endif
 #else
     PioneerQ38EmbeddingNativeState::ProjectionComplete)
 #endif
@@ -3301,6 +3317,9 @@ bool PioneerSessionIO::EmbeddingSourceScope(bool controller)
 	auto* state=m->graph.Projection(m->identity);if (!state) return false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  if(!DecoderCallScopeMatches() || m->decoder.Claimed())return false;
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ if(!m->MatchesInitializedGdn(c->banks,dram))return false;
+#endif
  if(m->phase==PioneerQ38EmbeddingNativeState::HistoryZeroing){
   auto* h=m->graph.ConvHistory(m->identity);const auto& z=m->historyZero;
   if(controller || !h || h->InitializationPublished(m->identity) || !PioneerQ38ProjectionZeroPristine(m->zero) || m->zero.closed
@@ -3385,6 +3404,9 @@ bool PioneerSessionIO::LearnedRmsSourceScope(bool controller)
 		|| m->graph.CanonicalModel(m->identity)!=&m->plan || !m->graph.MatchesInitializationOwner(c->banks,dram,m->identity)) return false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  if(!DecoderCallScopeMatches() || !m->MatchesInitializedHistory(c->banks,dram) || m->decoder.Claimed())return false;
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ if(!m->MatchesInitializedGdn(c->banks,dram))return false;
+#endif
 #endif
 	auto* state=m->graph.Projection(m->identity);const auto& z=m->zero;
 	if (!state || !z.saved || !z.closed || z.nonce!=2 || z.ready || z.running || z.dirty
@@ -3437,6 +3459,9 @@ bool PioneerSessionIO::ProjectionExecutionSourceScope(bool controller)
 		|| m->graph.CanonicalModel(m->identity)!=&m->plan || !m->graph.MatchesInitializationOwner(c->banks,dram,m->identity)) return false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  if(!DecoderCallScopeMatches() || !m->MatchesInitializedHistory(c->banks,dram))return false;
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ if(!m->MatchesInitializedGdn(c->banks,dram))return false;
+#endif
  if(m->phase!=PioneerQ38EmbeddingNativeState::Decoder && m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld && m->decoder.Claimed())return false;
 #endif
 	auto* state=m->graph.Projection(m->identity);const auto& z=m->zero;
@@ -3494,6 +3519,45 @@ bool PioneerSessionIO::DecoderCallScopeMatches()
  thread_info info={};
  return get_thread_info(c->q38GdnCallThread,&info)==B_OK && info.team==sRuntimeOwner->team;
 } // actual FD/team/thread seal;the complete surrounding source/clock/host checks remain mandatory
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+// PIONEER_Q38_GDN_STATE_INIT_NATIVE_SCOPE_BEGIN
+bool PioneerSessionIO::RecurrentZeroSourceScope()
+{
+ auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
+ if(!c || &c->io!=this || !m || m->phase!=PioneerQ38EmbeddingNativeState::GdnZeroing
+  || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !DecoderCallScopeMatches()
+  || !sBankStorageOnly || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total
+  || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled || !runtimeMapped || q38SpanAllowed || c->dispatchOwnerRetained
+  || !m->identity.Valid() || m->identity.driverGeneration!=sReloadGeneration || !c->initialized || !c->hashes || m->ledger!=c->initialized
+  || m->position || m->token>=248320 || m->bank>=7 || m->Unsafe() || m->plan.RecurrentCount()!=672
+  || c->q38FfnModelPlan || c->q38GraphMutable || c->q38FfnZero || c->q38FfnGraph || c->q38FfnCode
+  || c->q38FfnModelIdentity.session || c->q38FfnModelIdentity.sequence || c->q38FfnModelIdentity.modelEpoch || c->q38FfnModelIdentity.driverGeneration
+  || c->q38GdnBanks || c->q38StateZero || c->q38GdnIdentity.session || c->q38GdnIdentity.sequence
+  || c->q38GdnIdentity.modelEpoch || c->q38GdnIdentity.driverGeneration || c->q38Dispatch || c->q38DispatchRoutes || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+  || c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
+  || c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready || c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready
+  || !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
+  || !c->lease.saved || !c->lease.ready || c->lease.pending || c->lease.recovery_required
+  || !c->bulk.saved || !c->bulk.ready || c->bulk.unsafe
+  || c->host.state!=TT_HOST_PAGE_READY || c->host.released || PioneerHostPageIO::quarantined
+  || !c->bulkHost.allocated || !c->bulkHost.ready || c->bulkHost.pending || c->bulkHost.quarantined || c->bulkHost.released
+  || !c->wideHost.allocated || !c->wideHost.ready || !c->wideHost.memory_type_set || c->wideHost.pending
+  || c->wideHost.quarantined || c->wideHost.released || wideQuarantined
+  || !PioneerQ38ProjectionZeroPristine(m->zero) || m->zero.closed
+  || !PioneerQ38ConvHistoryZeroPristine(m->historyZero) || m->historyZero.closed
+  || m->embedding.Completed() || m->embedding.Running() || m->rms.Claimed() || m->projection.Claimed() || m->projectionCohort || m->decoder.Claimed()
+  || m->graph.CanonicalModel(m->identity)!=&m->plan || !m->graph.MatchesInitializationOwner(c->banks,dram,m->identity))return false;
+ auto* g=m->graph.Recurrent(m->identity);const auto& z=m->gdnZero;
+ if(!g || !g->MatchesInitializationOwner(c->banks,dram,m->identity) || g->InitializationPublished(m->identity) || z.closed)return false;
+ if(z.identity.Valid()){if(!(z.identity==m->identity))return false;}
+ else if(z.identity.session || z.identity.sequence || z.identity.modelEpoch || z.identity.driverGeneration
+  || z.saved || z.dirty || z.ready || z.running || z.nonce)return false;
+ const auto& clock=c->q38Clock.Snapshot();
+ return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested
+  && clock.busy_acknowledged && !clock.restored && !c->Unsafe(true,false,true);
+} // CPU scope ONLY;actual ALL119 physical holds/code/NoC/data/CLOSE proofs stay mandatory
+// PIONEER_Q38_GDN_STATE_INIT_NATIVE_SCOPE_END
+#endif
 bool PioneerSessionIO::ConvHistoryZeroBeforeCohort()
 {
  auto* m=q38MutableContext?q38MutableContext->q38EmbeddingModel:NULL;
@@ -3703,11 +3767,44 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 // PIONEER_Q38_RESIDENT_DECODER_NATIVE_FACTORY_BEGIN
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+// PIONEER_Q38_GDN_STATE_INIT_NATIVE_FACTORY_BEGIN
+[[maybe_unused]] static bool InitializeQ38GdnStateModel(PioneerStoreContext& c,PioneerQ38StateZeroResult& r)
+{
+ auto* m=c.q38EmbeddingModel;
+ if(!m || m->phase!=PioneerQ38EmbeddingNativeState::Bound || m->Unsafe() || m->position || m->decoder.Claimed()
+  || m->gdnZero.saved || m->gdnZero.dirty || m->gdnZero.ready || m->gdnZero.running || m->gdnZero.closed
+  || m->gdnZero.nonce || m->gdnZero.identity.session || m->gdnZero.identity.sequence
+  || m->gdnZero.identity.modelEpoch || m->gdnZero.identity.driverGeneration)return false;
+ auto* g=m->graph.Recurrent(m->identity);unsigned regions=0,pages=0;
+ if(!g || !g->InitializationRegions(m->identity,regions) || regions!=672
+  || !g->InitializationProgress(m->identity,pages) || pages || g->InitializationPublished(m->identity))return false;
+ m->phase=PioneerQ38EmbeddingNativeState::GdnZeroing;
+ auto& dram=c.baseline.baseline.baseline.baseline.dram;auto& noc=c.baseline.baseline.baseline.noc;
+ bool okay=PioneerQ38StateZeroPrepare(c.io,dram,noc,*g,c.banks,m->identity,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->gdnZero);
+ for(unsigned region=0;region<regions && okay;region++){
+  unsigned count=0;
+  okay=g->InitializationPages(m->identity,region,count) && (count==96 || count==112)
+   && PioneerQ38StateZeroRun(c.io,dram,noc,*g,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->gdnZero,m->identity,region,0,count,r)
+   && r.state==TT_RUNTIME_PASSED && r.pages==count && r.bytes==count*4096 && r.nonce==region+1
+   && r.started && r.completed && r.held && !r.recovery_required;
+ }
+ okay=okay && PioneerQ38StateZeroClose(c.io,dram,noc,*g,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,m->gdnZero,true)
+  && m->MatchesInitializedGdn(c.banks,dram);
+ if(okay)m->phase=PioneerQ38EmbeddingNativeState::Bound;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
+ return okay; // BOTH slots actually zero+CLOSE,not a recurrent read/worker/token capability
+}
+// PIONEER_Q38_GDN_STATE_INIT_NATIVE_FACTORY_END
+#endif
 [[maybe_unused]] static bool InitializeQ38ConvHistoryModel(PioneerStoreContext& c,PioneerQ38ConvHistoryZeroResult& r)
 {
  auto* m=c.q38EmbeddingModel;
  if(!m || m->phase!=PioneerQ38EmbeddingNativeState::Bound || m->Unsafe() || m->position || m->decoder.Claimed()
   || !PioneerQ38ConvHistoryZeroPristine(m->historyZero) || m->historyZero.closed)return false;
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ if(!m->MatchesInitializedGdn(c.banks,c.baseline.baseline.baseline.baseline.dram))return false;
+#endif
  auto* h=m->graph.ConvHistory(m->identity);if(!h)return false;
  m->phase=PioneerQ38EmbeddingNativeState::HistoryZeroing;
  auto& dram=c.baseline.baseline.baseline.baseline.dram;auto& noc=c.baseline.baseline.baseline.noc;
@@ -3768,7 +3865,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
 {
-#ifdef PIONEER_Q38_FFN_MODEL_INIT
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ return RecurrentZeroSourceScope();
+#elif defined(PIONEER_Q38_FFN_MODEL_INIT)
 	// PIONEER_Q38_FFN_MODEL_NATIVE_SCOPE_BEGIN
 	// Same real FD/cookie/global-lock call seal,actual upload bitmap,joint
 	// owner and clock. A host SHA/geometry/ready Boolean cannot grant this.
@@ -7058,6 +7157,11 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ // PIONEER_Q38_GDN_STATE_INIT_NATIVE_INERT_ROUTING_BEGIN
+ return B_NOT_ALLOWED; // COMPILE-ONLY tag47 has NO public zero/compute/upload/old Work selector
+ // PIONEER_Q38_GDN_STATE_INIT_NATIVE_INERT_ROUTING_END
 #endif
 #if defined(PIONEER_Q38_GDN_INPUT_OWNER) && !defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE)
  // PIONEER_Q38_GDN_INPUT_NATIVE_INERT_ROUTING_BEGIN

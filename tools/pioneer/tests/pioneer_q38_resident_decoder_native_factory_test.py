@@ -12,10 +12,11 @@ import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
 mode = sys.argv[7] if len(sys.argv) >= 8 else ''
+gdn_state = mode in ('--gdn-state-init', '--gdn-state-init-faults')
 gdn_debug = mode in ('--gdn-debug', '--gdn-debug-faults')
 gdn_native = gdn_debug or mode in ('--gdn-native', '--gdn-native-faults')
 gdn = gdn_native or mode in ('--validation-gdn-input', '--validation-gdn-input-extremes')
-if (len(sys.argv) != 9 if gdn else len(sys.argv) not in (7, 8)) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults'):
+if (len(sys.argv) != 9 if gdn else len(sys.argv) not in (7, 8)) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults'):
     raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults|--validation[-faults|-control[-faults]]]')
 validation = mode.startswith('--validation')
 actual = gdn or mode in ('--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc')
@@ -46,6 +47,8 @@ if gdn_native:
     flags.append('-DPIONEER_Q38_GDN_INPUT_OWNER=1')
 if gdn_debug:
     flags.append('-DPIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE=1')
+if gdn_state:
+    flags += ['-DPIONEER_Q38_GDN_INPUT_OWNER=1', '-DPIONEER_Q38_GDN_STATE_INIT_NATIVE=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as temporary:
     base = pathlib.Path(temporary)
     for prefix, family, names in [('embedding', 'EMBEDDING', ('scope', 'unsafe', 'mapping', 'factory', 'end')),
@@ -65,6 +68,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
     begin, end = 'static bool\nEndQ38DispatchOwnership(', '// PIONEER_Q38_DISPATCH_RETAIN_END'
     assert source.count(begin) == source.count(end) == 1
     (base / 'projection_factory_complete_end.inc').write_text(begin + source.split(begin, 1)[1].split(end, 1)[0])
+    if gdn_state:
+        gate = ''
+        for signature in ('bool PioneerSessionIO::StateZeroBeforeCohort()\n{', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()\n{'):
+            assert source.count(signature) == 1
+            gate += signature + source.split(signature, 1)[1].split('\n}', 1)[0] + '\n}\n'
+        (base / 'gdn_state_zero_gate.inc').write_text(gate)
     if control:
         for target, marker in [('decoder_validation_control.inc', 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_CONTROL'),
                                ('decoder_validation_routing.inc', 'PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE_ROUTING'),
@@ -96,11 +105,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                     '-fsanitize=address,undefined', *flags, '-DPIONEER_Q38_GDN_MUTABLE_STATE=', '-DPIONEER_Q38_NORMAL_CLOCK=1',
                     '-DPIONEER_Q38_EMBEDDING_NATIVE=1', '-DPIONEER_Q38_LEARNED_RMS_NATIVE=1', '-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1',
                     '-I' + str(base), *[str(here / (name + '.cpp')) for name in (
-                        'pioneer_q38_gdn_input_validation_control_test' if gdn_debug else 'pioneer_q38_gdn_input_native_factory_test' if gdn_native else 'pioneer_q38_gdn_input_original_model_test' if gdn else 'pioneer_q38_resident_decoder_validation_actual_model_test' if actual else 'pioneer_q38_resident_decoder_validation_close_test' if mode == '--validation-close-only' else 'pioneer_q38_resident_decoder_validation_control_test' if control else
+                        'pioneer_q38_gdn_state_init_native_factory_test' if gdn_state else 'pioneer_q38_gdn_input_validation_control_test' if gdn_debug else 'pioneer_q38_gdn_input_native_factory_test' if gdn_native else 'pioneer_q38_gdn_input_original_model_test' if gdn else 'pioneer_q38_resident_decoder_validation_actual_model_test' if actual else 'pioneer_q38_resident_decoder_validation_close_test' if mode == '--validation-close-only' else 'pioneer_q38_resident_decoder_validation_control_test' if control else
                         'pioneer_q38_resident_decoder_validation_capture_test' if mode == '--validation-capture' else 'pioneer_q38_resident_decoder_validation_native_test' if validation else 'pioneer_q38_resident_decoder_native_factory_test', 'pioneer_q38_projection_native_transport',
                         'pioneer_q38_projection_execution_machine', 'pioneer_q38_embedding_execution_bridge',
                         'pioneer_q38_learned_rms_execution_bridge', 'pioneer_q38_decoder_conv_bridge')],
-                    *([str(here / 'pioneer_q38_gdn_input_bridge.cpp')] if gdn else []), *objects, '-o', str(binary)], check=True)
+                    *([str(here / 'pioneer_q38_gdn_input_bridge.cpp')] if gdn or gdn_state else []), *objects, '-o', str(binary)], check=True)
     cases = list(range(9)) if mode == '--validation-control-faults' else [None]
     for case in cases:
         suffix = [str(case)] if case is not None else ['--faults'] if mode == '--validation-faults' else [] if validation else sys.argv[7:]

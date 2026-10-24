@@ -13,6 +13,12 @@
 #include "PioneerQ38ResidentDecoderOwner.h"
 #include "PioneerQ38ConvHistoryZeroController.h"
 #endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+#if PIONEER_Q38_GDN_STATE_INIT_NATIVE != 1 || !defined(PIONEER_Q38_GDN_INPUT_OWNER) || PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
+#error Exact separate native joint-owner GDN initialization,not old input/convolution DEBUG
+#endif
+#include "PioneerQ38StateZeroController.h"
+#endif
 // Same native context owns these ACTUAL objects,never copied descriptors.
 // No public opcode/selector exists. Only the separately gated native
 // factory may publish this heap object under the real global call lock.
@@ -27,6 +33,9 @@ public:
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  ,HistoryZeroing=9,Decoder=10,DecoderHeld=11,DecoderComplete=12
+#endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ ,GdnZeroing=13
 #endif
  };
  PioneerQ38CanonicalModelPlan plan;
@@ -52,6 +61,16 @@ public:
    && !h->OwnsInitializationLease(&historyZero);
  } // necessary CPU binding/zero-CLOSE seal ONLY,not native current-state/input permission
 #endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+ PioneerQ38StateZeroLease gdnZero; // SAME heap owner,never old separately-deleted c.q38StateZero
+ bool MatchesInitializedGdn(const PioneerResidentBanks& banks,const tt_dram_samples_result& proof)const{
+  const auto* g=graph.Recurrent(identity);
+  return g && plan.RecurrentCount()==672 && gdnZero.saved && gdnZero.closed && gdnZero.nonce==672
+   && !gdnZero.unsafe && !gdnZero.running && !gdnZero.dirty && !gdnZero.ready && gdnZero.identity==identity
+   && graph.MatchesInitializationOwner(banks,proof,identity) && g->MatchesInitializationOwner(banks,proof,identity)
+   && g->InitializationPublished(identity);
+ } // full zero+CLOSE seal ONLY;native current-state/worker scope remains mandatory
+#endif
  PioneerQ38ProjectionIdentity identity={};
  const uint8_t* ledger=nullptr;
  unsigned token=UINT32_MAX,position=UINT32_MAX,bank=7;
@@ -64,10 +83,17 @@ public:
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
   || historyZero.unsafe || decoder.Unsafe()
 #endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+  || gdnZero.unsafe
+#endif
   || (projectionCohort && projectionCohort->unsafe);}
  bool Closed()const{return !Unsafe() && zero.closed && embedding.Completed()
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
   && historyZero.closed && historyZero.saved && !historyZero.ready && !historyZero.running && !historyZero.dirty
+#endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+  && gdnZero.closed && gdnZero.saved && gdnZero.nonce==672 && !gdnZero.ready && !gdnZero.running && !gdnZero.dirty
+  && gdnZero.identity==identity && graph.Recurrent(identity) && graph.Recurrent(identity)->InitializationPublished(identity)
 #endif
   && ((phase==Complete && !rms.Claimed() && !projectionCohort && !projection.Claimed())
    || (phase==RmsComplete && rms.Completed() && !projectionCohort && !projection.Claimed())
@@ -82,6 +108,9 @@ public:
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
   historyZero.unsafe=true;
 #endif
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+  gdnZero.unsafe=true;
+#endif
  } // MEMORY ONLY
  bool ControlsProjectionCohort(const tt_dram_samples_result& dram,const PioneerResidentBanks& banks,const PioneerQ38DispatchLease* cohort,
   const uint8_t* initialized,unsigned count)const{
@@ -94,6 +123,9 @@ public:
    || cohort->bootAttempted || cohort->booted)return false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
   if(!MatchesInitializedHistory(banks,dram))return false;
+#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+  if(!MatchesInitializedGdn(banks,dram))return false;
+#endif
   if(phase==Decoder || phase==DecoderHeld){
    const auto* h=graph.ConvHistory(identity);
    return h && decoder.MatchesNativeOwner(projection,*h)

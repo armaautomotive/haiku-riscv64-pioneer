@@ -1,0 +1,128 @@
+Pioneer Qwen27B SAME native joint-owner GDN initialization -- OFFLINE ONLY
+2026-10-24 UTC. Goal ACTIVE/turn PROGRESS. No inference-rate measurement.
+
+REAL IMPLEMENTATION,NOT A READY BOOL
+Separate exact PIONEER_Q38_GDN_STATE_INIT_NATIVE=1/tag2026102400010047.
+Requires SAME decoder runtime/native/stash/execution/RMS/embedding/input
+owner and reload role. Old input/convolution DEBUG,CPU-reference and Work
+mixtures refuse. Tag47 is COMPILE ONLY:all public execution/upload/zero/
+old Work routes are inert;reload/admin metadata remains separate.
+
+The ACTUAL retained PioneerQ38EmbeddingNativeState owns gdnZero and the
+ACTUAL graph.Recurrent(identity) child under the SAME atomic reservation.
+No old c.q38GdnBanks/c.q38StateZero allocation/alias/separate lifetime.
+New GdnZeroing phase precedes history/workspace/embedding/RMS/projections.
+Native InitializeQ38GdnStateModel runs actual Prepare -> ALL672 canonical
+regions (96 or112pages) -> known-clean Close -> Bound. BOTH slots across
+ALL48 recurrent layers:73728pages/301989888bytes. No partial clean resume,
+retry,rollback or publication on failure. Data/page count alone is NOT
+publication:private full ledger AND physically verified clean CLOSE owed.
+
+RecurrentZeroSourceScope binds actual context/FD-cookie/OS-team/current
+thread/global-call seal/generation/clock/banks/proof/plan/bitmap/ALL host
+leases,disallows competing models/cohorts/maps/routes and later producers.
+The existing actual ALL119 NON-root physical held audit remains mandatory
+before root mutation/release and at each source proof. Reuse qualified
+zero-only RV32 ROM,not host memset,learned-weight writes,BME or host DMA.
+GDN zero running remains controlled only inside that exact source scope;
+ordinary context Unsafe/END rejects unfinished model state. First unknown
+retains full model/snapshots/cookie/clock/bulk+ALL host leases and forbids
+subsequent IO. Actual native retainer faults the new gdnZero too.
+
+MatchesInitializedGdn requires SAME bank object and SAME baseline proof
+address,actual child/identity/private publication,saved/closed672-job lease
+and no running/dirty/ready/unsafe flag. History,embedding,RMS,projection,
+cohort control and END all require that seal in the new role. Counts/flags
+cannot mint it. This is ZERO+CLOSE only,NOT recurrent read/worker/token
+authority. Current-state epoch and native worker consumer remain owed.
+
+ACTUAL NATIVE FACTORY/INSTRUCTION QUALIFICATION (SIMULATED ENDPOINTS)
+74166 terminal0,ASan/UBSan,source-current actual extracted factories/source/
+retention/END plus ACTUAL emitted frozen zero instructions for EVERY byte.
+No publicationCounterFabricOnly shortcut used. All672 regions/73728pages
+run;EVERY resulting word zero and EVERY page covered EXACTLY ONCE. No
+learned bitmap promotion. Public forged672-job saved/closed/identity flags
+remain insufficient.101source refusals are CPU-only/no endpoint IO.
+After genuine GDN clean Close,the SAME context continues history336x5,
+workspace512,QPE1,QRN1 and actual clean dispatch END. Copied baseline proof
+bytes with a different address are rejected. Repeat initializer is inert.
+
+22745 terminal0,ASan/UBSan source-current actual factory faults,isolated
+forks preserving the parent's genuine native context/reservation:
+ 0 unknown first zero packet
+ 1 missing boot write/readback
+ 2 lost actual OS-team seal
+ 3 unknown packet in middle region336
+ 4 unknown packet in final region672
+ 5 ALL73728pages completed,but code proof corrupted at final hold so
+   known-clean CLOSE fails and NO initialization publication occurs.
+All6 retain exact model/banks/ALL host owners;no later initializer/history/
+embedding/END can perform ANY endpoint IO. No fake private completion seal.
+
+FULL RV64 KERNEL TYPE/SOURCE COMPILE
+67668/21646 builds b/c BOTH terminal0. Actual complete driver/IO/model/
+scope/factory/zero controller/retention/END plus forced private initializer
+instantiation,not a metadata-only fixture. EXACT object SHA256:
+7ee1d6f1a90885ee6ce129aefe6950b2267b85f3db527990e5fb18481887bfc6
+ /private/tmp/pioneer-q38-gdn-state-init-full-20261024-{b,c}/gdn-state-init-NATIVE47-COMPILE-ONLY.o
+Max new frame672B<=2048B;all oversized legacy frames show no growth.
+ALL inherited old tag38/guard/default43/private2d12/stash6121/tag42a2bc/
+bare-native43/actualDEBUG44/compile45 controls remain BYTE-IDENTICAL.
+41995 terminal0 ALSO rebuilt actual linked old DEBUG46 EXACT32a661c4
+(full32a661c4d01cf1aebaed1edd5399bd0748bb37f5188d84a07cf8a7476cb3e47c).
+New tag47 is NOT linked,installed,staged or executed on the Pioneer.
+
+ISOLATION/REGRESSION
+41031 terminal0:176tag47 preprocessor/ambient-old-builder gates;131072
+actual inert public-route probes. Missing/0/2/-1roles,reserved old tags,
+mixed DEBUG/CPU-reference/Work reject. Ten legacy builders refuse ambient
+new-role promotion BEFORE reading SDK/creating output. Strict frame checks
+retain worst cloned function size and forbid new oversized frames.
+32006 terminal0:old45 gates176/old inert routing/ROM/frame checks PASS.
+60355 terminal0:actual old zero native scope64CPU refusals+ALL119 physical
+audit and first/middle/last source/TLB/reset failure handoff PASS.
+
+PROTOTYPES
+Initial factory fixture link omitted the existing GDN input transport
+bridge now needed by the common projection transport under the input-owner
+role. Fixed test linkage only. No runtime readiness/proof relaxed.
+Compile a892aa931 preceded removing duplicate new-role NonRoot scope call
+and adding explicit inert47 routing. Final b/c7ee1d6f1 are authoritative.
+Initial positive b passed20source refusals;expanded final c passes101 and
+reruns ALL actual zero instructions/data/CLOSE/downstream producers/END.
+All local jobs terminal. No new native selector/hardware speed claim.
+
+HARDWARE UNCHANGED / NEXT
+ZERO Pioneer SSH/card commands/reload/reboot/power/PSU/SD/Assistant/model/
+NIC/boot/kernel changes this turn. Last verified stable041/gen6/idlecold0,
+64CPUs/maxRAM137034936320B. Dirty llama and unrelated FlashNext untouched.
+Power policy remains one effectiveOFF,verify actual board off,then oneON;
+OFF is NOT idempotent. No recovery is needed or requested by these tests.
+
+NEXT consume this ACTUAL initialized-state producer in SAME native owner
+with QRJ1 combined raw-preparation+recurrence image96881b6501e4 (14836B,
+qualified in qwen38-gdn-recurrent-image-20261024.txt). Need exact canonical
+paired current/next extents+epochs/source,ALL96half receipts and bounded
+private next-layer publication,not a host QGI-stop/reload-RGDN Work path.
+Then gated norm/output/residual/FFN/fullattentionKV/all64layers/sampling/
+persistent token loop and honest full-model benchmarks. No whole-token
+slot flip after only layer0. Work remains no-CPU-reference,separate DEBUG.
+Last whole27B0.207893161tok/s unchanged;20tok/s unmet. Goal stays ACTIVE.
+
+TERMINAL LOG SHA256
+6630ded1136d8512f85f65593839cffa09fc5d243504cdf606957b695a13fe8d
+ /private/tmp/pioneer-q38-gdn-state-init-native-20261024-c.log
+f0987c2982b4bd8416f771652b962b8e2d902cf9818642dafa013799fd559016
+ /private/tmp/pioneer-q38-gdn-state-init-faults-20261024-a.log
+91ea8c00731d95b8bbc4a17b39db50fe56d70b995bd3d5b7bd113fe4fb499b6f
+ /private/tmp/pioneer-q38-gdn-state-init-full-20261024-b.log
+615e67fccd1fab18fe072abf05a9f1fd114b235da4d016ba9278f4ee5c48e54d
+ /private/tmp/pioneer-q38-gdn-state-init-full-20261024-c.log
+38334d8794cdd78b2d6927d72e10400c121f667343813efdfee04569a2c71491
+ /private/tmp/pioneer-q38-gdn-state-init-gates-20261024-a.log
+b6feef399080be82efa65f539634efbba048af50875ef732dfecf831cd30c3e4
+ /private/tmp/pioneer-q38-gdn-state-init-old45-gates-20261024-a.log
+8e46ce1b007ccc281c0535ac74725f991604fb4d1b8bfa4c76cfda1280ab4e7a
+ /private/tmp/pioneer-q38-gdn-state-init-old-zero-scope-20261024-a.log
+ef6d91c17103f1837c5e2f0eacb0d1e9c00c089fbe643a90abca0852ddedf861
+ /private/tmp/pioneer-q38-gdn-state-init-old46-control-20261024-a.log
