@@ -17,7 +17,11 @@ block_done:
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_PROJECTION_GRAPH_ROOT
 .ifdef TT_Q38_GDN_OUTPUT_GRAPH_ROOT
+.ifdef TT_Q38_NEXT_GDN_OUTPUT_GRAPH_ROOT
+	li t1,0x32504f51 /* QOP2:nonzero recurrent-layer ssm_out */
+.else
 	li t1,0x31504f51 /* QOP1:distinct gated-input complete ssm_out */
+.endif
 .else
 .ifdef TT_Q38_PROJECTION_NEXT_ROOT
 	li t1,0x32535051 /* QPS2:nonzero linear layer,distinct from QPS1 */
@@ -86,7 +90,11 @@ block_fault_park:
 .ifdef TT_Q38_DISPATCH_ROOT
 .ifdef TT_Q38_PROJECTION_GRAPH_ROOT
 .ifdef TT_Q38_GDN_OUTPUT_GRAPH_ROOT
+.ifdef TT_Q38_NEXT_GDN_OUTPUT_GRAPH_ROOT
+	li t1,0x46504f52 /* QOP2 UNKNOWN:no following IO or cleanup */
+.else
 	li t1,0x46504f51 /* QOPF:unknown, no later IO or cleanup */
+.endif
 .else
 .ifdef TT_Q38_PROJECTION_NEXT_ROOT
 	li t1,0x46535032 /* separate QPS2 UNKNOWN,NO later IO/cleanup */

@@ -1,0 +1,159 @@
+Qwen3.8-27B QOP2/QOI2/QOG2 nonzero recurrent-layer ssm_out,2026-10-24.
+Base0c54836f3271835810315eacd70efeb5ffbb095a.
+OFFLINE COMPONENT ONLY. Native62 SAME-owner consumer/real learned-layer1
+qualification is NOT implemented by this image checkpoint. No driver is
+linked/installed, no public/Assistant Work target or physical speed claim.
+Last actual whole-model0.207893161tok/s is unchanged;20tok/s/full64-layer
+persistent card-only inference remains UNMET. Goal stays ACTIVE.
+
+PURPOSE AND CONTRACT
+Native61 now retains genuine layer1 QGT1 gated attention and raw residual.
+Old QOP1/QOI1/QOG1/QOM1 explicitly require layer0/position0. This new image
+family can consume nonzero recurrent-layer descriptors without retagging
+an old first-layer producer or weakening any old parser. Geometry DATA
+supports47 nonzero recurrent layers1..62 excluding layer%4==3,positions
+0..8191,6144F32 gated values to Q8_0 input then5120F32 ssm_out outputs.
+The future actual native62 consumer MUST accept only the SAME genuine
+native61 private layer1/position0 producer,not arbitrary well-formed DATA.
+No initialized-state/token flip/producer ready flag follows from shape.
+
+QOI2 marker32494f51/op6,QOG2 marker32474f51/fault46474f52,
+QOP2 marker32504f51/fault46504f52,QOM2 marker324d4f51.
+QGT1 source marker and QFP3 shared boot remain unchanged:neither is a
+grant that a new complete image is installed. Actual QOI2 helper validates
+new marker/layer/position,propagates both fields through scale lines and
+64-word receipts,and refuses old op3/4/5 or old-family descriptors.
+ROOT ->24actual quantizing peers ->QOG2 ->119actual matrix peers ->GDDR,
+then119STOP in SAME119boot lifetime. No host interstage invocation/reset
+in this IMAGE simulation. Native coordination/persistent full-model loop
+is still separate required work. No CPU numerical-reference code enters
+these device images;independent references live only in offline tests.
+
+REPRODUCIBLE READ-ONLY SDK BUILDS
+/Volumes/HaikuBuildLocal/generated.riscv64 remains unmodified.
+ /private/tmp/pioneer-q38-next-gdn-output-images-20261024.0GBBZG4t/
+ root-{a,b,c},peer-{a,b,c}:all ACTUAL terminal0 and byte-identical.
+Both boot4B:e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ROOT text6196B:7d93e46d85c1077a7509d81df26484988e129b7588a50b7b232b2152dcda64ea
+ROOT prefix8284B:e6961eec79ed035b55b985271a4631a314b32eba91f4a36708843d9d9d004e91
+ROOT graph15128B:064a9c89da0e2b5e9c2a55fceafee48c862834008ea526ec28e02b1880a5d718
+PEER text8132B:b5460d35a05aa727273768e3926a48405dccedfda3bb918156ad1869e1f52348
+PEER affine5248B:e2fe73ecbe7b78e4aca9b069ee70ead09d0d7f61575fdab83ce2e76a1879a785
+PEER helper6200B:6892cd5d863708127b9badacf38f6d3ea4135493c85da090eabbc8ccf1803184
+All6 full-section hashes plus BOTH boots authenticated BEFORE any generator
+patch output. All6 committed headers reproduce exactly. Generator41cases:
+all8 files first/last corruption,truncation,append;unselected-section damage
+also refuses ALL output. No partial image or shared-boot admission.
+
+STACK AND SNAPSHOT
+Every new device frame<=2048B;peer max compile frame736B. The preexisting
+matrix function remains exactly4976B,not a newly accepted oversized frame.
+Measured full device stacks:ROOT5752B,peer1476B,inside existing8KiB.
+Full catalogue test checks1185912code words/8330680original snapshot words
+acrossALL120,plus3560757refusals. Emitted bytes AND zero padding match;
+ALL120stacks/trailers/source+shadow/primary manifests stay in original
+snapshot;MMIO/holes/unaligned/non-code data never become executable grants.
+NO native snapshot restoration/END is claimed by this DATA catalogue.
+
+QUALIFICATION,LISTED INDIVIDUAL JOBS ACTUAL TERMINAL0
+Input emitted RV32/FPU/Tensix code:432positives/165faults,ALL24chunks and
+ALL7banks/sign/zero/scale edges,ALL47nonzero recurrent layers at0+8191,
+op6->Q8_0/6144 matrix->changed layer62/8191 op6->STOP SAME lifetime.
+ALL64proof and scale-line ancestry mutations,source/descriptor/command/
+counter/busy/NaN/Inf/late-state faults,old QOI1 AND generic QFP3 rejection.
+ /private/tmp/pioneer-q38-next-gdn-output-input-20261024-a.log
+ SHAc3e0c9933d8972de1e78603d673918fb1adbb51059f9204876be066a96658ee3.
+DATA1316canonical RUN+STOP frames,156604actual canonical job records,
+15792input lines,74648refusals;ALL47layers/2positions/7banks. Coherent
+foreign addresses/source metadata may have valid DATA shape,explicitly
+not producer/native ownership. Original learned extents still need owner.
+ /private/tmp/pioneer-q38-next-gdn-output-shape-20261024-a.log
+ SHA9b9068dcbeacbf6dfb1dce3613426f70c730abc7faf1251050535e5daa3bf8a7.
+Actual ROOT+ALL119 arithmetic peers:2full projections,10240output rows,
+48quantizing producer jobs/238matrix jobs/983040matrix instructions,
+119boots ONCE/ALL119STOP. Layers1/0 and62/8191,bank0->6,token0->248319.
+Original emitted FP32+independent FP64 comparisons,all unrelated GDDR
+unchanged. Weights/input/transport are TEST fixtures,NOT original-model
+native producer execution,physical timing or real token throughput.
+ /private/tmp/pioneer-q38-next-gdn-output-graph-20261024-a.log
+ SHA75b0bff5e98c5a9fdc21718cdaa6b67cd03fdd7e2180f219f3086bb933c8d160.
+Emitted ROOT transport-only suite:110faults,ALL64producer proofs,source/
+shadow/frame/PC/counter/last-worker/missing-packet/late full-output faults;
+first UNKNOWN has ZERO later packet/CSR/scratch stores. This subset uses
+SYNTHETIC peers deliberately and is NOT the arithmetic test above.
+ /private/tmp/pioneer-q38-next-gdn-output-graph-faults-20261024-b.log
+ SHA419328c3573d3cc9ad9d65e26b1baec117501da1965849bd182833995630475f.
+Catalogue ASan/UBSan:
+ /private/tmp/pioneer-q38-next-gdn-output-catalog-20261024-a.log
+ SHA20be4c0e67e62b2772d81ae35b9a70e19e244f4cdf8724620c07a26d1b659859.
+Final role gates428:exact selectors/mutual image/defined-zero/native/
+CPU-reference/Work combinations and late mixed-role reinclusion rejected;
+ambient PIONEER_* nonzero builder flags refuse BEFORE SDK/output access.
+ /private/tmp/pioneer-q38-next-gdn-output-image-gates-20261024-c.log
+ SHA8ae3c27423746c600cdbb22eebbac5cfc9496e46aac5541afd83232a30fa0ea8.
+Independent real RISC-V kernel DATA parsers/proofs/catalogue A/B identical:
+ /private/tmp/pioneer-q38-next-gdn-output-kernel.Z8iL39po/{a,b}.o
+ SHAddcd0cbb4de44da90733590cfc46671d9badaf3975cd9d081e60881c5541659c,
+ max frame352B. No actual native62 owner/public route/driver.
+ /private/tmp/pioneer-q38-next-gdn-output-kernel-20261024-a.log
+ SHA61c64f15b866ddf8ca9e1c01c4e832392940c7223995d1197d35e6124915ca50.
+
+TEST FIXTURE CORRECTIONS,NOT NUMERICAL RELAXATIONS
+Fault suite A70734 ACTUAL terminal134:generic op5 synthetic scale-line
+endpoint orders position/layer differently;both were0 in old QOI1 tests,
+masking it. Corrected ONLY new synthetic endpoint's words13/15;new actual
+arithmetic image had already passed,ALL image bytes unchanged. B63369
+then ACTUAL terminal0. A log8e0cb2fbdeda289e86dc7be6dbe7d7c3b5fb75a83ec7858cc5dc8a613c656864.
+Gate suite A26789 ACTUAL terminal1 incorrectly treated _KERNEL_MODE shell
+environment as a PIONEER_* builder selector. It is a compiler definition,
+not consumed from shell environment. Corrected TEST distinction;compiler
+defined-zero/one kernel rejection is still covered. B75801 passed366.
+Then moved common role rejection before its include guard;C23825 passed
+428including reinclusion. Build C31956 remained byte-identical to A/B.
+No output tolerance,actual image parser or acceptance rule was relaxed.
+
+LEGACY REGRESSIONS,ACTUAL TERMINAL0
+Fresh old QOP1 root pins2cca1974/5332aeac/dc89a3f1 unchanged,old peer
+b5460d35/e2fe73ec/b0af8b84 unchanged. Generic QFP3 control also rebuilt.
+Fresh native61 full SDK chain69912:
+ exact4ad49c47be29efba7ac78bf61bddbd9b0a97ec6923306acee374c518dedbf21d,
+ maxNewFrame736B. All inherited60/59/58/57/older controls EXACT.
+ /private/tmp/pioneer-q38-next-gdn-output-native61-regression-20261024-a.log
+ SHA86ffa293970cd6cb656e23502913a33f77e1846346073299c803cdd20b7d3cfe.
+Native61 gates52840:370checks+131072 ACTUAL inert public compute routes.
+ /private/tmp/pioneer-q38-next-gdn-output-native61-gates-20261024-a.log
+ SHA42a2efd4475ab13449e87d2d138a82266b6fa2a9350e41fd9cbc4fcc5189b08d.
+
+COMPOSED REPEAT,ACTUAL TERMINAL0
+Final C images passed composed suite96135:428role gates/41generator
+cases/full catalogue/DATA1316frames/input432positive+165faults/actual
+2projections+119STOP/110ROOTtransport faults/real kernel A+B compile.
+All counts and kernel objectddcd0cbb remain exact. This is OFFLINE
+COMPONENT qualification,not actual native62/original-model/hardware TPS.
+ /private/tmp/pioneer-q38-next-gdn-output-composed-20261024-a.log
+ SHA3d004dffa489966c376638123dfdf2b0cb90d7b5f4d437546f0567f145d08909.
+No offline task remains live. No dependency was edited while its process
+was live;test observation timeouts were polled on the SAME session.
+
+HARDWARE AND NEXT REQUIRED WORK
+P100A remains quarantined after physical DEBUG52 numerical mismatch.
+ONE OFF50871 completed,actual fans/LED-off confirmation pending;NO ON,
+second OFF,retry/reset/hotrestore/post-failure GPU read was sent here.
+Standing user saved-work/restart authorization is recorded in AGENTS.md;
+it removes permission questions,not the need to verify actual power state.
+No SD/mains/Assistant/default boot/network/CPU/RAM changes by this work.
+Next:exact native62/tag2026102400010062 requires ALL61 parents,claims the
+genuine NextAttentionInput before IO,retains SAME original snapshot and
+ALL120 sources/leases/clock,original layer1 role13 pages before Bind and
+per launch,fixed strict deadline/UNKNOWN retention,ALL119STOP/120holds,
+new private output+retained raw residual producer,original-model numerical
+observer,full8330680-word restore AND verify before actual END. Old layer0
+GatedOutput must NOT be retagged/reused. No public/Work promotion yet.
+Then residual/FFN/layer2,all64layers/full-attention KV/final norm/logits/
+sampling/persistent token loop plus physical correctness and actual TPS
+benchmark remain required for the user's requested card-only performance.
+
+REPRODUCE,OFFLINE ONLY
+ sh tools/pioneer/build_qwen38_next_gdn_output_graph_image.sh READ_ONLY_SDK NEW_ABSOLUTE_ROOT
+ sh tools/pioneer/build_qwen38_next_gdn_output_input_image.sh READ_ONLY_SDK NEW_ABSOLUTE_PEER
+ sh tools/pioneer/tests/run_pioneer_q38_next_gdn_output_tests.sh ROOT PEER OLD_QOI1_PEER GENERIC_QFP3_PEER READ_ONLY_SDK
