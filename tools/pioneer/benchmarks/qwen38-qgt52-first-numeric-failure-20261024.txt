@@ -1,0 +1,63 @@
+QGT1 DEBUG52 improved diagnostic: first physical numerical mismatch identified.
+2026-10-24 UTC, after the independently verified script-recovery epoch.
+Not a component pass or inference speed result.20tok/s remains UNMET.
+
+From known-clean stable041/tag12/gen2,strict hash/process/model/path preflight
+passed. New unused client path staged sequentially at128Kbit/s,copy43822
+TERMINAL0. Local A/B and remote client SHA verified identical:
+ff38e5f3e474b5f68961d77eb507e29c4442cd9e565fbc897112d8ec03b8982b.
+/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-gdn-rendezvous-diagnostics-ff38e5f3
+Client is the already-qualified CPU-only first-failure reporting update,
+not a changed numeric bound,public protocol,driver or Work path.
+
+ONE guarded a0d50797 --apply-gdn-rendezvous-validation,39807 TERMINAL0:
+stable041/gen2 -> exactcdacaa3a/tag2026102400010052/gen3,cold0/owner0/
+open_count1/guard1,HOT_RELOAD_VERIFIED,NO_GPU_EXECUTION during apply.
+Immediately before start:exact driver/client hashes,strict no-compute-parent
+inventory,unused ownlog,and exact fixed GGUF size18,973,870,528B.
+No Assistant,SD,default-boot,CPU/RAM or network-setting change.
+
+ONE original-model diagnostic parent77527 TERMINAL1:
+  Full public c600 GGUF SHA and all original references passed BEFORE FD.
+  Read-only process check during authentication showed /bin/sha256sum;
+  no timeout was treated as terminal and no parallel native work/transfer
+  or driver/file modification occurred during this physical parent.
+  All111original span uploads returned0;SPAN_END returned0.
+  The single3318720B ioctl0x89de returnedstatus0/errno0.
+  Client reported FIRST failure:relative_tolerance,word820975 (zero-based),
+  half94,offset8627 = gated lane49 of head47's first64-value half.
+  Expected bits3a86371e =0.001023981487378478.
+  Actual bits3a86373a =0.0010239847470074892.
+  Difference28binary32ULPs;relative error3.1832890060339243e-6,
+  above the UNCHANGED3e-6 relative bound. Earlier820975numeric words passed;
+  later values were NOT checked after first failure. Do not claim all values
+  passed or infer that this small error is the only remaining discrepancy.
+  All48already-returned CPU headerwords were programmatically decoded and
+  checked against protocol/source/session1/gen3/count/restore expectations:
+  ZERO mismatches. Thus this result identifies a numerical failure,not a
+  guessed kernel initialization/metadata failure. Exact arithmetic cause
+  (upstream raw/Z drift vs normalization/gating) is still UNRESOLVED.
+  Aggregate initialization/execution/readback/restore257203415us is NOT
+  token time,isolated card-compute time or a tokens/sec benchmark.
+
+Original ownlog:
+/boot/home/pioneer-p100a-hot-reload-20261019-a/qgt52-diagnostics-card-20261024-b.log
+SHA9875153deea5646ff7fe919e7ab18061f743c58a21fffa8ccd89524af6b8e9b6.
+Archived only AFTER terminal1,rate-limited SCP TERMINAL0,matching localSHA:
+/private/tmp/pioneer-qgt52-diagnostic-evidence-20261024.5LFQmiXV/qgt52-diagnostics-card.log
+
+Failure followed CLOSE ONLY;clean_end0. NO END/reset/retry/automatic rollback
+or new GPU register/numeric/PC peeks. CPU-only post-terminal reload metadata:
+tag52/gen3/quiesced0/cold1/active_owner1/open_count1/guard1.
+Resources QUARANTINED. Haiku SSH remains responsive (~26minute uptime).
+Stable041 restore is PENDING and unsafe in this retained old epoch.
+Fresh saved-work confirmation requested BEFORE another controlled recovery.
+ONE effective OFF,actual fans/LED-off verification,ONE ON;OFF is not
+idempotent. No mains/SD change or speculative extra pulse.
+
+Next:preserve bounds,evaluate original source and card arithmetic offline;
+capture needed context from ALREADY returned CPU memory in a future client
+if necessary,never use post-failure card queries. No new physical trial
+before a useful diagnostic/fix plan and a verified clean recovery epoch.
+Native59 local fault suite87962 remains live;its dependencies stay frozen.
+Last physical whole-model0.207893161tok/s unchanged;full goal ACTIVE.
