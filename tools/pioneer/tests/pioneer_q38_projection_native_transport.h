@@ -41,6 +41,11 @@ public:
 #endif
 #ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
  void ResidualRmsSource(const char*);void ResidualRmsFault(unsigned);bool ResidualRmsFaultInjected()const;
+#ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
+ void FfnSources(const char*,const char*);void VerifyFfn();
+ void FfnFault(unsigned);bool FfnFaultInjected()const;
+ void FfnRunTerminalCheckpoint(void (*callback)(void*),void* context); // fork actual in-flight stack AFTER emitted RUN terminal
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

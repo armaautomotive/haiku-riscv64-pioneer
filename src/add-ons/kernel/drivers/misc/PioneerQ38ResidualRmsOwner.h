@@ -10,10 +10,17 @@
   if(!residual || !output || !projection || !history || !OutputData() || !output->done || !output->stopped
    || !output->bootPrepared || !output->rootProof || residual->parent!=output || residual->raw!=projection->input
    || !projection->input || !projection->input->Completed() || projection->position
-   || (phase!=17 && phase!=18 && phase!=7 && phase!=8) || residual->epoch!=output->bootstrap.manifest[6]+1
+   || (phase!=17 && phase!=18 && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
+    && !(ffn && (phase==19 || phase==20 || phase==21 || phase==22 || phase==24))
+#endif
+    ) || residual->epoch!=output->bootstrap.manifest[6]+1
    || !residual->plan.Matches(*projection->canonical,projection->token,projection->bank,projection->identity,
     projection->cohort->authority.source[0],residual->epoch)
    || !residual->plan.LearnedPagesPresent(projection->ledger,projection->pages))return false;
+#ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
+  if(!ffn) // claimed successor owns physical images/lifetimes,not old held-only receipt
+#endif
   for(unsigned w=1;w<120;w++)if(projection->running[w] || projection->cohort->worker[w].image.running
    || resets[w]!=0x47800 || !output->image[w] || !verified[w])return false;
   return true; // raw lineage also bound by MatchesNativeOwner -> actual completed initial RMS

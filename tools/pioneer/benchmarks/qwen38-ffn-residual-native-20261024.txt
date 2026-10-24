@@ -1,0 +1,166 @@
+SAME resident decoder: original-weight FFN+residual execution checkpoint
+October24 2026. OFFLINE native-factory/instruction qualification ONLY.
+No linked/installed driver,public opcode,Assistant promotion or card timing.
+Last real27B speed remains0.207893161tok/s;20tok/s target UNMET.
+
+Native57 and actual lineage
+---------------------------
+Exact PIONEER_Q38_FFN_RESIDUAL_NATIVE=1/tag0x2026102400010057.
+Claims the genuine nonconstructible native56 PostAttentionInput inside the
+SAME resident decoder BEFORE first IO. No alternate FfnMutableBanks,clock,
+host owner,raw vector,caller address,ready/epoch hint or CPU numeric input.
+Old input completion expires immediately on the private claim. Original
+global call/team/thread/source/clock/ALL120 hosts and8330680-word snapshot
+remain owned through execution/STOP/hold/Close/END or UNKNOWN retention.
+
+ALL21 original layer0 FFN stripes/36720 pages are required before native
+Bind can publish an epoch or perform IO,and again before claim/each launch.
+New QFG3 residual grammar has an independent namespace in the actual owner;
+old QFG2 data/ABI still coexists and is NEVER re-tagged as a new producer.
+The exact prior QFG3 ROOT and unchanged QFP2 PEER programs from
+qwen38-ffn-residual-image-20261024.txt execute inside their original saved
+leases. Larger old GDN prefix tails are zeroed only inside those leases.
+ALL119 old independent STOPs/ALL120 holds precede replacement. The actual
+emitted new boot must reach WAIT/private sequence0 before a RUN is allowed.
+
+ROOT preserves actual raw residual in its owned L1,coordinates initial
+5120-lane quantization,gate17408/up17408/68SiLU/down5120,then adds the actual
+down result to actual raw residual and writes new hidden5120 to workspace0.
+RUN+STOP receipts include exact independent before/after NoC counters,
+commands,source words,manifest/shadow/job data,sequences and immutable code.
+ALL119 independent STOPs precede first peer hold. Only then can this SAME
+owner publish a nonconstructible/noncopyable next-layer hidden producer.
+Foreign cohort,fault,Close or phase progress expires the borrowed producer.
+The private hidden phase denotes completed math,not a new nonce grant:
+future launches must derive a fresh nonce from the actual final STOP frame.
+
+First UNKNOWN is memory-only failure:retain every native owner,snapshot,
+mapping,host and clock;NO subsequent read,reset,restore,retry or END.
+Known-clean Close restores AND verifies every original8330680 words before
+closing actual execution ownership and allowing actual END.
+
+Complete original-weight factory PASS
+-------------------------------------
+One ASan/UBSan -ffp-contract=off run executes actual source-carved kernel
+factory/Scope/claim/retention/Close/END functions and actual pinned emitted
+RV32/FPU/Tensix instructions. ONLY OS/PCI/L1/NoC endpoints are simulated.
+The complete public GGUF SHA is authenticated BEFORE context creation:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+ALL851 tensors and canonical packed geometry are checked. Exact original
+Q4_K gate/up/down bytes are cached before context;strict2304-byte aligned
+tile endpoints have no fallback,padding or foreign-route read acceptance.
+The independent original observer is a separate TU WITHOUT native/Work
+flags. Its CPU reference results are NEVER execution inputs or authority.
+
+SAME actual native init73728/history1680/QPE1/QRN1/4QPS1/QCB1ALL120/
+QGT1ALL96 with829632 original reference values/QOP1ALL119 with61440original
+ssm_out tile reads/QRR1 original postnorm5120 then NEW full FFN succeeds.
+New FFN performs65280 original tile reads,357 actual matrices and88 actual
+input/activation producers. Every row passes exact FP32 AND independent FP64
+observers;native-byte/scale/proof checks also pass. Final5120 residual is
+BIT-EXACT from actual before-FFN raw backup plus actual down output.
+Installed120,booted119,ROOT runs2,stopped119,published1,unsafe0.
+Private hidden current/cohort binding/foreign rejection/old input expiry
+and graph/recurrent/foreign-running invalidations pass without device IO.
+Close restored8330680/verified8330680/unsafe0;actual END succeeds and expires
+all old producers. This is token0/layer0,NOT complete64-layer inference.
+
+Nine genuine native lifetime failures ALSO PASS in the same run:
+1 corrupted actual boot code byte before install readback;
+2 corrupted actual staged manifest readback after119 emitted boots;
+3 changed actual ROOT source word after release,before its first instruction;
+7 host clock exceeds deadline during release,proving deadline began BEFORE it;
+9 NaN first Q4 tile packet AFTER authenticated source/cache read,before emitted
+  worker math;actual worker faults/ROOT refuses,no learned cache mutation;
+4 corrupted actual completed RUN summary before native receipt acceptance;
+5 bad worker119 PC AFTER119 actual STOPs,before first physical peer hold;
+6 final original-word restore corruption after otherwise successful FFN;
+8 corrupted immutable ROOT code AFTER full actual math,before image proof.
+Cases4/5/6/8 fork ONLY the actual in-flight call stack at its independently
+observed first complete emitted ROOT RUN terminal,BEFORE receipt acceptance.
+No host result/producer/ready field or proof is manufactured. Virtual test
+time is explicitly not physical elapsed time. Every child asserts UNKNOWN
+retention and ZERO following IO/reset/restore/retry/END. Case6 diagnostic
+prints injected0 before Close;its following PASS requires the actual restore
+mutation to have fired and Close to have failed with all owners retained.
+
+Main/fault run terminal0:
+/private/tmp/pioneer-q38-ffn-native-original-20261024-c.log
+SHA623c33f8a33e1ae1b59a47ff4515b17afd3efa35daaa9babfa1afd0058c5e9a8
+
+Harness regressions and independent gates
+-----------------------------------------
+The new byte-execution bridge overlays actual native saved/code/runtime/
+source/command/counter bytes and runs actual boot instructions. Constructors
+do not grant boot/completion. Test-only asynchronous scheduling advances
+released workers during native marker polls. Idle WAIT executes no instruction
+and performs no endpoint writes;it cannot overwrite an externally injected
+fault from a stale VM copy. No kernel/device-image change was made for this.
+Earlier local runs A/B were stopped ONLY after diagnosed harness bugs:
+A omitted asynchronous boot progress,B redundantly recopied ALL119 entire
+mutable snapshots on every idle poll. Neither was a physical board stall,
+and neither is passing end-to-end evidence. Corrected C is terminal0 above.
+
+Actual3 fresh QFP2 boots/poison markers until emitted instructions/96 idle
+polls ZERO writes/unchanged counters+GDDR/no learned bytes:terminal0.
+/private/tmp/pioneer-q38-ffn-execution-boot-20261024-d.log
+SHAee8423249fa2d20a907e0cf94991fdf269118db881f6c577de2571ee6a2e99b5
+
+297 exact native role/tag/parent/mixed+defined-zero/reference-reinclude/
+private-producer/builder gates and131072 ACTUAL inert compute routes PASS.
+No ordinary native selector or Work mode can enter this new private role.
+/private/tmp/pioneer-q38-ffn-residual-native-gates-20261024-b.log
+SHAb612b6fc465313cc65b877ffa64f2f539e218c8dc9fd8dfbac435bffde317679
+
+Actual independent QFG3 receipts28 positives/2072 mutations/ALL7banks/
+full119+narrow/mixedQ4-Q6/row orders/wrapped counters/residual+STOP PASS.
+/private/tmp/pioneer-q38-ffn-residual-receipts-20261024-c.log
+SHA0becb78abf8469b2c972f3b7e3ef92828852a51b270eebb543ff0d3605015ca9
+Old QFG2/new QFG3 SAME TU1792positive/1792cross-refusals/896shapes PASS.
+/private/tmp/pioneer-q38-ffn-shape-coexist-20261024-a.log
+SHA3b9f32730bd4d4afdbb3c0bc3b006a1297aa93fc638afef597ec92f67619ce17
+The committed receipt runner now also builds/runs this coexist regression.
+Combined receipt+coexist rerun terminal0:
+/private/tmp/pioneer-q38-ffn-residual-receipts-20261024-d.log
+SHA1846b7f5618ced9c3d5d29a487a97b4612ebed37517ec802aae5382fc1c9aaa1
+
+Original FFN byte cache42first/last tiles/126refusals/ALL851auth+21stripes
+and36720pages PASS;old3 original-source modes/1672references regress PASS.
+/private/tmp/pioneer-q38-ffn-original-source-20261024-a.log
+SHAa3b1810a454b6c5d9451f1f2ca999092ccbf964d88331ea7ba4884ffb895fb5b
+/private/tmp/pioneer-q38-ffn-original-old-modes-20261024-a.log
+SHA33412719d918d4e37ca18de0223104e236ecf23fb55b2fffce683aa7d0926ab3
+
+Shared old-default arithmetic helpers also regress through TWO complete
+changed input/token/layer QFG1 FFNs,79872 nonzero matrix rows/176 actual
+producers/119 STOPs/FP32+FP64+native-byte checks. Synthetic bounded weights,
+NOT original/native/physical timing evidence. Terminal0.
+/private/tmp/pioneer-q38-ffn-native57-old-cooperative-20261024-a.log
+SHAb3bd073a3645cbcdae58b0ccd2873e09ad239a574bd7270ab530c43b52ef345d
+
+Read-only SDK actual native57 compile repeated B/C BYTE-IDENTICAL:
+af52be9e3c5116bd937204d2420d4e5d520e65a396272c3d4eecef74a50bb278
+New max frame464B;inherited larger frames nongrowing. ROOT device8KiB stack
+unchanged;no snapshot/mapping/stack relaxations. Actual old native56 remains
+b9400c713c7f4385ec531c13ccc65496a9b49b277d7266c5d9029b74c1a97d9f.
+All inherited controls through native54 remain exact. Actual native57 object
+undefined symbols are ordinary kernel allocation/mapping/scope/memory/time
+calls,not math-library or CPU-reference imports. This alone is not a complete
+no-CPU-product proof;actual separate-TU/gate/data-flow tests above supply it.
+
+Not achieved / next work
+-------------------------
+Subsequent-layer norm and genuine handoff into next GDN or attention+KV,
+all64 layers,persistent whole-token scheduling/sampling,physical source/CSR/
+arithmetic qualification and honest whole-model hardware timing remain.
+Device protocol overhead also needs optimization;VM counts are NOT silicon
+cycles or tokens/sec. No practical speedup or20tok/s claim from this test.
+No native57 link/install/new hot-swap compatibility or Assistant change.
+
+Power/boot/64CPUs/full RAM/SD/cards/installed driver unchanged in this work.
+Historical DEBUG52 quarantine/stable041 restore pending was NOT rechecked.
+Saved-work recovery question still pending;power corrections are not a reply.
+ONE OFF only if actually ON,verify actual OFF,then ONE ON. A second OFF can
+START the board;never repeat OFF after software shutdown or SSH loss. Relay
+contact state is NOT actual board power. No mains/SD changes or extra pulses.
+All checkpoint test jobs are now terminal;no live dependency was edited.

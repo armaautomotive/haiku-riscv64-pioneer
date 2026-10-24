@@ -15,6 +15,8 @@ struct GraphArithmeticPeer:FfnInputPeer {
  uint64_t arithmetic=0;
  GraphArithmeticPeer(const char* path,unsigned worker,std::vector<uint32_t>& data,bool boot=true)
   :FfnInputPeer(path,12,5120,1,worker),fabric(data) {if(boot)assert(BootNew());}
+ virtual bool ExternalLearnedBytes()const{return false;}
+ virtual bool ReadLearnedBytes(unsigned,uint32_t,uint8_t*,unsigned){return false;}
  // Observe a ROOT-WRITTEN job. NEVER call Matrix/StageInput/StageActivation:
  // those unit-test helpers overwrite descriptors and could hide root bugs.
  void Prepare(const std::map<uint32_t,uint32_t>& rootMemory,unsigned currentRole,const FfnGraphFixture& fixture) {
@@ -40,7 +42,9 @@ struct GraphArithmeticPeer:FfnInputPeer {
   // Different rows/blocks/workers/roles prevent a uniform output from hiding
   // stale jobs or bad row placement. All gates stay within the SiLU domain.
   tiles.assign(groups*(inputs/256),tile);
-  for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++) {
+  if(ExternalLearnedBytes()){
+   for(unsigned t=0;t<tiles.size();t++)assert(ReadLearnedBytes(memory.at(0x74020),base+t*unsigned(tile.size()),tiles[t].data(),unsigned(tile.size())));
+  }else for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++) {
    unsigned q=1+(t+row+logicalWorker+role)%3;
    uint16_t d=uint16_t(role==2?0x0100:role==0?0x0800:0x0c00); // exact FP16 powers:2^-16,-13,-12
    std::vector<uint8_t> raw(PioneerQ38BlockBytes(type),0);
@@ -107,8 +111,9 @@ struct GraphArithmeticRoot:GraphRootMachine {
 #ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT
  std::array<uint32_t,5120> stagedInput={};
 #endif
- GraphArithmeticRoot(const char* path,const char* peer,bool wide,unsigned bank,bool reverse,unsigned types,unsigned failure=0)
+ GraphArithmeticRoot(const char* path,const char* peer,bool wide,unsigned bank,bool reverse,unsigned types,unsigned failure=0,bool initialize=true)
   :GraphRootMachine(path,wide,bank,(bank&1)!=0,reverse,types),fault(failure) {
+  if(!initialize)return; // external actual native byte fabric owns boot/input/history
   for(unsigned i=0;i<5120;i++) {
    uint32_t value=Bits(1.0f+float((i*17+bank*11)%127)/256);
 #ifdef PIONEER_Q38_FFN_GRAPH_INPUT_ROOT

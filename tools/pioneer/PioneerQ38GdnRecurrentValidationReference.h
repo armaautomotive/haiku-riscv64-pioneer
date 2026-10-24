@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE)
+#error SAME native FFN execution must NEVER include independent CPU reference code
+#endif
 #ifdef PIONEER_Q38_RESIDUAL_RMS_NATIVE
 #error Native residual RMS never compiles CPU reference observers
 #endif

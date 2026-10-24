@@ -1,6 +1,7 @@
 #!/bin/sh
 # NEW OFFLINE complete FFN root ONLY;NO native access/selection/ownership.
 set -eu
+[ "${PIONEER_Q38_FFN_RESIDUAL_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_RESIDUAL_RMS_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_CONV_NATIVE-0}:${PIONEER_Q38_CONV_CLIENT-0}:${PIONEER_Q38_CONV_IMAGE-0}:${PIONEER_Q38_CONV_BATCH_IMAGE-0}" = 0:0:0:0 ] || exit 2
 [ "${PIONEER_Q38_DECODER_RUNTIME-0}" = 0 ] || exit 2
