@@ -29,7 +29,21 @@ rebind and sticky failure. NO device access or native flags.
   SHA feb249de203be605c05ee8a31cea80b37c5134d4df1c42d7c632bab9efd826bf
   test output:/private/tmp/pioneer-q38-host-deadline.GIeLlvbh
 
+Standalone actual read-only Haiku RISC-V SDK compile A:terminal0. All3
+Begin/Observe/composed-call wrappers instantiated with kernel/freestanding
+O2/Wall/Wextra/Werror/no-exceptions/no-RTTI flags and existing SDK exported
+headers. ALL3 actual frame-usage entries16B in EACH build. Independent
+object hashes and cmp confirm byte-identical A/B:
+  /private/tmp/pioneer-q38-host-deadline-sdk.Sx90YtVy/{a,b}.o
+  SHA6dbc13a3ed39f82a0ca2894292d9e3d65f0d887581b667ea5ff2ed636ff5e404
+  /private/tmp/pioneer-q38-host-deadline-sdk-20261024-a.log
+  sh tools/pioneer/tests/run_pioneer_q38_host_deadline_kernel_compile.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64
+These standalone units do NOT compile/link/install a new driver or prove
+the future native61 integration. Built while full native61 test96894 was
+confirmed LIVE;none of that test's dependencies were changed.
+
 Prototype test A terminated1 at compilation because the test omitted
 <initializer_list>. Added that explicit TEST include before starting B.
 No driver,reference,numerical tolerance,Work/Assistant mode or card state
-was changed by that repair. Target-SDK integration is still pending.
+was changed by that repair. Complete native61 integration is still pending.
