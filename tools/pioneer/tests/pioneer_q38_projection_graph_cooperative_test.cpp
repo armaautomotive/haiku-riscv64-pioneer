@@ -98,10 +98,10 @@ struct ArithmeticParent:ProjectionParentMachine {
  std::vector<uint32_t> expected;
  unsigned boots=0,runs=0,completedMatrices=0,completedProducers=0,completedStops=0;
  uint64_t matrixInstructions=0;
- ArithmeticParent(const char* image,const char* peer,bool initialize=true):ProjectionParentMachine(image,0,10){
+ ArithmeticParent(const char* image,const char* peer,bool initialize=true,unsigned initialLayer=0,unsigned initialBank=0):ProjectionParentMachine(image,initialLayer,10,initialBank){
   if(initialize){
    for(unsigned w=0;w<119;w++){actual[w]=std::make_unique<ParentArithmeticPeer>(peer,w+1,gddr);boots++;}
-   Retarget(0,10,false);
+   Retarget(initialLayer,10,false);
   }
  }
  void Retarget(unsigned layer,unsigned role,bool stop){

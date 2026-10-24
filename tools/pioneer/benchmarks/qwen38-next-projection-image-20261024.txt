@@ -1,0 +1,132 @@
+Qwen3.8-27B QPS2 nonzero linear-layer projection image,2026-10-24 UTC.
+Base e85faac5cdefcb1a7a361fa6dbe0c69c80b3f583.
+OFFLINE COMPONENT ONLY. Last real whole-model0.207893161tok/s unchanged;
+20tok/s/full-card all64layer inference remain UNMET;goal stays ACTIVE.
+
+WHY A SEPARATE IMAGE
+Actual native58 now retains a genuine layer1 normalized input and fresh
+raw residual. QPS1 is deliberately first-layer-only:retagging it would
+invalidate its source/producer contract. This adds independent QPS2
+matrix/graph/heap-plan/traffic-receipt namespaces and an immutable ROOT
+catalogue. An IMAGE/EMULATOR-ONLY adapter reuses the emitted coordinator,
+gather and matrix core;actual native code must include the new names
+explicitly alongside unchanged QPS1. It MUST consume the real private
+NextLayerInput inside the SAME decoder,not construct an initial-RMS facade.
+THAT NEXT NATIVE OWNER/ORIGINAL-LAYER1 SOURCE BINDING IS NOT IMPLEMENTED
+BY THIS CHECKPOINT. No native59 tag/public route/driver/Assistant promotion.
+
+QPS2 marker32535051/version2/distinct fault46535032. Only47 nonzero linear
+layers1..62,roles10/11/5/6,Q8 K5120 and exact48/48/6144/10240 output rows.
+Layer0,attention layers%4==3,vocabulary and all other roles REJECTED.
+Four disjoint existing GDDR slots survive;fresh raw residual at18000 is
+not input scratch. Inner generic QPM1/QFP3 DATA remains version1;its whole
+code/source/sequence/owner grant is still REQUIRED,not conveyed by QPS2.
+No enlarged stack/program window/mapping/lease or old-role reinterpretation.
+ALL119 peers must independently STOP/hold before native replacement.
+
+REPRODUCIBLE EMITTED CODE
+Read-only SDK /Volumes/HaikuBuildLocal/generated.riscv64;two NEW builds A/B
+terminal0 and byte-identical in
+ /private/tmp/pioneer-q38-next-projection-image-20261024.OxNbkvnE/{a,b}
+ boot4B/e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ main7692B/d6b9ae3355f11fca212835ad2084c84a791091ee439354aaa2804e5894b163c6
+ prefix6564B/a38f05255608edc828287776654c8e1e94072c2170c1c3d0eaabf989cc8d86b7
+ graph16052B/15f6cc742173ec93247cb6002f01d40957b0bea929a61dcccd3f1de0e6c039f2
+Unchanged QFP3 peer main8164B783bd17e,affine5248Ba55331ee,helper16352Bf17def10
+ALL complete digests pinned by the generator;BOTH boots+ALL6 sections are
+authenticated BEFORE any patch output. New ROOT headers reproduce exactly.
+Generator3positive/21atomic no-output refusals,all8files corrupted/truncated.
+Independent catalogue compares7578 ROOT words and885479 ALL119 peer words
+to emitted files;entire old peer program windows match;stack/unowned/unaligned
+addresses rejected. No catalogue operation opens a device or creates a lease.
+
+QUALIFICATION RESULTS,ALL LISTED JOBS TERMINAL0
+1.Independent host DATA+emitted ROOT+actual retained QFP3 arithmetic A:
+ /private/tmp/pioneer-q38-next-projection-suite-20261024-a.log
+ SHA149ebeade834ba9ec075505197fd3ba070e46908572fea7dbef1a57ad5e4d2f8
+ DATA2632=47layers*4roles*7banks*RUN+STOP,726refusals,55272actual canonical
+ binding mutations. Old QPR1/new QPS2 coexist without aliases/retagging.
+ Actual ROOT/gather/matrix instructions27positives/70faults;max scalar stack
+5992B inside existing8KiB. All64proof words/PC/source/counter/CSR-alias faults
+have ZERO followingIO after UNKNOWN. Peer replies synthetic in THIS subset.
+ Actual ROOT+ALL119 unchanged QFP3 arithmetic:8projections at layers1/62,
+32960output rows,160producer jobs,488matrix jobs,2636800matrix instructions;
+119boots ONCE and independent119STOP. Original emitted FP32 operations plus
+independent FP64 comparisons;all previous result slots/raw residual survive.
+TEST WEIGHTS/INPUT STAGING/TRANSPORT ARE SYNTHETIC. No native producer,
+original next-layer learned-byte qualification,physical throughput or model
+output follows from this component test. No CPU reference enters native code.
+
+2.Actual entry parser21 foreign-marker/version/layer0/attention/vocabulary/
+geometry/epoch/source/padding refusals BEFORE first NoC access:
+ /private/tmp/pioneer-q38-next-projection-refusals-20261024-a.log
+ SHA6cef7cd4ec0064ef67cfe2810840541ec82d57606c7b225fae83547453d16bbf
+3.Image-only/native+Work reject/all8reference+reinclude/mixed+defined-zero/
+10before-SDK legacy-builder gates146 in A/B,final strengthened alias reinclude
+gates148 in C (all terminal0):
+ /private/tmp/pioneer-q38-next-projection-gates-20261024-a.log
+ SHA435a1c1d0407a13859bf5dd3592d3c8cdec145a854009355b45181f75e143ef1
+ Final148-gate log /private/tmp/pioneer-q38-next-projection-gates-20261024-c.log
+ SHA124fb3e7a5bc4f583c66f50743a4203fb593a356a1675d675bb8a071bea53f7b
+4.Actual RISC-V kernel DATA factories/match/receipt/catalogue A/B byte-identical:
+ objectSHA7e33cdd560239ed45316624f21af4f973908ab635729e4a0bef5f865e9ecb16e
+ maxFrame384B;heap-only full plan;NO actual driver/route/native owner.
+ /private/tmp/pioneer-q38-next-projection-kernel-20261024-a.log
+ SHA402f3356e0e93718c0a2fe179f9ad01602a7729ba06bb7bd097388a87162d993
+
+LEGACY REGRESSIONS
+Fresh old QPS1 sections EXACT7cc31b93/650e195c/650c2779. Fresh QPR1 repeat
+EXACTc623cad5/cfb512c2/13992bf9;fresh QPM1 and QFG2 whole-image pins retained.
+Old QPR1 actual ROOT10positive/70fault passes. Old canonical plan ALL498
+RUN+STOP996positive/96148records/6984external refusals/3005mutations passes;
+real old plan kernel maxFrame384B.
+Fresh native58 actual full-driver SDK chain terminal0:EXACT
+6cba04d17c82659caef53a77b7190fe9dbc5260e364cbcf6fa1c0ffb4d175c79,
+maxNewFrame368B;all57/56/54 and inherited controls EXACT. Native58 gates314
+plus131072 ACTUAL inert public routing probes pass. No new public route.
+ /private/tmp/pioneer-q38-next-projection-old-native58-20261024-a.log
+ SHA89e35cb82205625caeb08109b1808d407c0c20c7fb2bfd651621d0b4dfad9d71
+Old retained ROOT+119peers default ctor/changed layers/widths/inputs and
+119STOP terminal0,3projections/1120rows/60producers/70matrices;no reset:
+ /private/tmp/pioneer-q38-next-projection-old-cooperative-20261024-a.log
+ SHA90468729534db3679b0846f06c39d0240aaee5a8926f96c3b89d14509fb92ea2
+Initial catalogue TEST incorrectly required one particular instruction word
+to differ;that word legitimately matches both versions. Corrected test
+compares ALL emitted ROOT/peer words and independently requires ROOT changes;
+no program/parser/numeric acceptance was relaxed. Two old test invocations
+initially omitted required arguments and stopped before their positive run;
+corrected invocations passed. No device was touched by any offline failure.
+
+HARDWARE RECOVERY SEPARATE FROM OFFLINE QUALIFICATION
+Human saved-work/recovery authorization call7686fa97fae845418c60cb170b67b5e3
+received. Fresh pinned Haiku uname/uptime and sync succeeded. ONE relay OFF
+7s completed terminal0 (83160);NO ON or second OFF. Actual fans/LED-off
+confirmation remains pending;relay ACK/SSH loss is NOT actual power sensing.
+No SD/mains/cable/default-boot/Assistant/NIC/CPU/RAM change. Historical
+physical DEBUG52 failed user-side check/quarantine and stable041 restore
+remain UNRESOLVED,not cleared by an offline test or an unconfirmed power hold.
+
+COMPLETION
+The complete composed runner B1604 is TERMINAL0,not a timeout. It repeats
+all generator/catalogue/DATA/27positive/70fault/21entry-refusal/8actual
+retained projections+119STOP/kernel A+B checks above against independent
+image B. It confirms the same384B kernel frame and object7e33cdd5.
+ /private/tmp/pioneer-q38-next-projection-suite-20261024-b.log
+ SHAf9ef983b7062b6408d5777b4b58e6dfba9489969c55a0d3afdd65b102fefd64d
+After terminal B ONLY,corrected two comments and moved the exact-image alias
+role gate before its include guard;two late mixed-role include cases added.
+Fresh image C is byte-identical to A/B;no parser/arithmetic behavior changed.
+Old complete graph gates105/fresh current QPR1repeat/QPM1/QFG2 pins pass:
+ /private/tmp/pioneer-q38-next-projection-old-graph-gates-20261024-b.log
+ SHAc3f7261939dc643ea266dd1c6d0d79a3f25e0ce84001040021fde91261bc791e
+All native58 inert route gates remain exact:
+ /private/tmp/pioneer-q38-next-projection-old-native58-gates-20261024-a.log
+ SHA6fb7f5938c142dfd82e3b4c2deb454987b5c4ea4f7111428969dd3a3622c3959
+No offline job remains live;no further hardware/power command was issued.
+Next:actual SAME native successor/original layer1 byte+numeric qualification;
+never substitute DATA tickets or this synthetic arithmetic for a producer.
+Physical boot/restore still awaits actual fans/LED-off confirmation.
+
+REPRODUCE (OFFLINE ONLY;NEW_ABSOLUTE_ROOT must not exist)
+ sh tools/pioneer/build_qwen38_projection_graph_image.sh READ_ONLY_SDK NEW_ABSOLUTE_ROOT --next-layer-stashes
+ sh tools/pioneer/tests/run_pioneer_q38_next_projection_tests.sh ROOT QFP3_PEER READ_ONLY_SDK

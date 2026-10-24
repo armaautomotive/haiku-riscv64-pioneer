@@ -1,6 +1,7 @@
 #!/bin/sh
 # Cross-link frozen ABI-matching runtime,NOT a build of dirty llama.cpp.
 set -eu
+[ "${PIONEER_Q38_PROJECTION_NEXT_ROOT+x}" != x ] || exit 2
 [ "${PIONEER_Q38_NEXT_RMS_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_RESIDUAL_NATIVE-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_FFN_GRAPH_RESIDUAL_ROOT-0}" = 0 ] || exit 2

@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H
 #define PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H
+#ifdef PIONEER_Q38_PROJECTION_NEXT_ROOT
+#include "PioneerQ38NextProjectionMatrixShape.h"
+#include "PioneerQ38NextProjectionImageAliases.h"
+#else
 #include "PioneerQ38ProjectionGatherShape.h"
 #ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
 #if PIONEER_Q38_PROJECTION_RESULT_STASH != 1
@@ -76,4 +80,5 @@ static inline unsigned PioneerQ38ProjectionMatrixInputReads(const uint32_t* d){r
 static inline unsigned PioneerQ38ProjectionMatrixInputFlits(const uint32_t* d){
  unsigned blocks=d[14]>>(d[15]==8?5:8);return (d[14]*2+((blocks*4+63)&~63U))/64;
 }
+#endif // separate QPS2 image grammar; default definitions remain unchanged
 #endif

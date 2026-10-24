@@ -224,7 +224,7 @@ extern "C" PARENT_FN unsigned block_main(){
  const auto* d=Snapshot();if(!PioneerQ38ProjectionGraphManifest(d,Sources(1)))return 0;
  if(!Audit() || !Idle())block_fault_park();
  for(unsigned i=0;i<64;i++)Stats()[i]=0;
- Stats()[0]=TT_Q38_PROJECTION_GRAPH_MARKER;Stats()[1]=1;Stats()[2]=d[5];Stats()[12]=d[13];
+ Stats()[0]=TT_Q38_PROJECTION_GRAPH_MARKER;Stats()[1]=TT_Q38_PROJECTION_GRAPH_VERSION;Stats()[2]=d[5];Stats()[12]=d[13];
  for(unsigned i=0;i<8;i++){Stats()[16+i]=*Words(0xffb20000+Offset(i));if(i==6 && Stats()[22]!=Stats()[18])block_fault_park();}
  for(unsigned w=0;w<119;w++)Seq()[w]=d[64+w];
  for(unsigned w=1;w<=119;w++){Wait(w,Seq()[w-1],1,true);SourceCurrent(w);}

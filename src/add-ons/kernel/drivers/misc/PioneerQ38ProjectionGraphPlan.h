@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_PROJECTION_GRAPH_PLAN_H
 #define PIONEER_Q38_PROJECTION_GRAPH_PLAN_H
+#ifdef PIONEER_Q38_PROJECTION_NEXT_ROOT
+#include "PioneerQ38NextProjectionGraphPlan.h"
+#include "PioneerQ38NextProjectionImageAliases.h"
+#else
 #include "PioneerQ38ProjectionJobs.h"
 #include "PioneerQ38ProjectionGraphShape.h"
 #include "PioneerQ38GdnIdentity.h"
@@ -72,4 +76,5 @@ public:
  const uint32_t* Sources()const{return ready?sources[0]:nullptr;}
 };
 static_assert(sizeof(PioneerQ38ProjectionGraphPlan)>40960 && sizeof(PioneerQ38ProjectionGraphPlan)<45056,"complete projection graph DATA is HEAP ONLY");
+#endif // separate QPS2 image grammar; default definitions remain unchanged
 #endif

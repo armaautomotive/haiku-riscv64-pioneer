@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_PROJECTION_GRAPH_SHAPE_H
 #define PIONEER_Q38_PROJECTION_GRAPH_SHAPE_H
+#ifdef PIONEER_Q38_PROJECTION_NEXT_ROOT
+#include "PioneerQ38NextProjectionGraphShape.h"
+#include "PioneerQ38NextProjectionImageAliases.h"
+#else
 #include "PioneerQ38ProjectionMatrixShape.h"
 // NEW complete-projection parent DATA. Requires independent canonical
 // learned/source/initialized/input-producer/code/sequence/owner authority.
@@ -118,4 +122,5 @@ static inline unsigned PioneerQ38ProjectionGraphNextPeer(const uint32_t* m,unsig
  for(unsigned wave=0;wave<m[7];wave++)next+=unsigned(w<PioneerQ38ProjectionGraphWorkers(m,wave));
  return next;
 }
+#endif // separate QPS2 image grammar; default definitions remain unchanged
 #endif

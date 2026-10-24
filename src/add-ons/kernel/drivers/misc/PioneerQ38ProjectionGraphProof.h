@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_PROJECTION_GRAPH_PROOF_H
 #define PIONEER_Q38_PROJECTION_GRAPH_PROOF_H
+#ifdef PIONEER_Q38_PROJECTION_NEXT_ROOT
+#include "PioneerQ38NextProjectionGraphProof.h"
+#include "PioneerQ38NextProjectionImageAliases.h"
+#else
 #include "PioneerQ38ProjectionGraphShape.h"
 // Exact complete QPR1 transport receipt DATA. The executing owner must
 // ALSO prove canonical learned pages/private input/source/current physical
@@ -72,4 +76,5 @@ static inline bool PioneerQ38ProjectionGraphReceipt(const uint32_t* s,const uint
  }
  return true;
 }
+#endif // separate QPS2 image grammar; default definitions remain unchanged
 #endif

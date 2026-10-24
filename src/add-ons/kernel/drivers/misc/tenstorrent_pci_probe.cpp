@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_PROJECTION_NEXT_ROOT
+#error QPS2 is an image-only grammar,not a native/Work/DEBUG driver selector
+#endif
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
 #if PIONEER_Q38_NEXT_RMS_NATIVE != 1 || !defined(PIONEER_Q38_FFN_RESIDUAL_NATIVE) || PIONEER_Q38_FFN_RESIDUAL_NATIVE != 1
 #error Exact native58 requires SAME actual native57 FFN hidden,never caller inputs

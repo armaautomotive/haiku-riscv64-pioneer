@@ -28,12 +28,17 @@ set -eu
 [ "${PIONEER_Q38_PROJECTION_EXECUTION_OWNER-0}" = 0 ] || exit 2
 [ "${PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE-0}:${PIONEER_Q38_EMBEDDING_VALIDATION_CLIENT-0}" = 0:0 ] || exit 2
 [ "${PIONEER_Q38_EMBEDDING_NATIVE-0}" = 0 ] || exit 2
-[ "$#" = 2 ] || { [ "$#" = 3 ] && [ "$3" = --result-stashes ]; } || exit 2
+[ "${PIONEER_Q38_PROJECTION_NEXT_ROOT+x}" != x ] || exit 2
+[ "$#" = 2 ] || { [ "$#" = 3 ] && { [ "$3" = --result-stashes ] || [ "$3" = --next-layer-stashes ]; }; } || exit 2
 stash_flags=
 stash_assembler=
 if [ "${3-}" = --result-stashes ];then
  stash_flags=-DPIONEER_Q38_PROJECTION_RESULT_STASH=1
  stash_assembler='--defsym TT_Q38_PROJECTION_RESULT_STASH=1'
+fi
+if [ "${3-}" = --next-layer-stashes ];then
+ stash_flags=-DPIONEER_Q38_PROJECTION_NEXT_ROOT=1
+ stash_assembler='--defsym TT_Q38_PROJECTION_NEXT_ROOT=1'
 fi
 for key in $(env | sed -n 's/^\(PIONEER_[A-Z0-9_]*\)=.*/\1/p');do
  [ "$(printenv "$key" || :)" = 0 ] || exit 2
@@ -64,7 +69,9 @@ for section in boot text prefix graph;do "$cross-objcopy" -O binary -j ".$sectio
 "$cross-nm" -n "$output/program.elf" > "$output/program.symbols"
 "$cross-objdump" -d "$output/program.elf" > "$output/program.disassembly"
 for section in boot text prefix graph;do shasum -a 256 "$output/$section.bin";done
-if [ -n "$stash_flags" ];then
+if [ "${3-}" = --next-layer-stashes ];then
+ printf 'OFFLINE NEW QPS2 nonzero LINEAR-layer resident-result parent ONLY;NO native/source/input-producer/model-speed grant:%s\n' "$output"
+elif [ -n "$stash_flags" ];then
  printf 'OFFLINE NEW QPS1 fixed resident-result parent ONLY;NO native/source/input-producer/model-speed grant:%s\n' "$output"
 else
  printf 'OFFLINE NEW QPR1 resident-input full-projection parent ONLY;NO native/source/input-producer/model-speed grant:%s\n' "$output"

@@ -19,10 +19,14 @@ block_done:
 .ifdef TT_Q38_GDN_OUTPUT_GRAPH_ROOT
 	li t1,0x31504f51 /* QOP1:distinct gated-input complete ssm_out */
 .else
+.ifdef TT_Q38_PROJECTION_NEXT_ROOT
+	li t1,0x32535051 /* QPS2:nonzero linear layer,distinct from QPS1 */
+.else
 .ifdef TT_Q38_PROJECTION_RESULT_STASH
 	li t1,0x31535051 /* QPS1:separate fixed resident projection results */
 .else
 	li t1,0x31525051 /* QPR1:NEW complete resident-input projection */
+.endif
 .endif
 .endif
 .else
@@ -84,10 +88,14 @@ block_fault_park:
 .ifdef TT_Q38_GDN_OUTPUT_GRAPH_ROOT
 	li t1,0x46504f51 /* QOPF:unknown, no later IO or cleanup */
 .else
+.ifdef TT_Q38_PROJECTION_NEXT_ROOT
+	li t1,0x46535032 /* separate QPS2 UNKNOWN,NO later IO/cleanup */
+.else
 .ifdef TT_Q38_PROJECTION_RESULT_STASH
 	li t1,0x46535051 /* QPSF:UNKNOWN,NO later IO/cleanup */
 .else
 	li t1,0x46525051 /* QPRF:UNKNOWN,no later IO/cleanup */
+.endif
 .endif
 .endif
 .else
