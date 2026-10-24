@@ -14,12 +14,14 @@ here = pathlib.Path(__file__).resolve().parent
 mode = sys.argv[7] if len(sys.argv) >= 8 else ''
 gdn_state = mode in ('--gdn-state-init', '--gdn-state-init-faults')
 gdn_gated_local = mode == '--gdn-gated-norm-local'
+gdn_gated_resident = mode == '--gdn-gated-resident'
+gdn_gated = gdn_gated_local or gdn_gated_resident
 gdn_recurrent_debug = mode in ('--gdn-recurrent-debug', '--gdn-recurrent-debug-faults')
-gdn_recurrent = gdn_gated_local or gdn_recurrent_debug or mode in ('--gdn-recurrent', '--gdn-recurrent-faults')
+gdn_recurrent = gdn_gated or gdn_recurrent_debug or mode in ('--gdn-recurrent', '--gdn-recurrent-faults')
 gdn_debug = mode in ('--gdn-debug', '--gdn-debug-faults')
 gdn_native = gdn_debug or mode in ('--gdn-native', '--gdn-native-faults')
 gdn = gdn_native or gdn_recurrent or mode in ('--validation-gdn-input', '--validation-gdn-input-extremes')
-if (len(sys.argv) != (10 if gdn_gated_local else 9) if gdn else len(sys.argv) not in (7, 8)) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults', '--gdn-recurrent', '--gdn-recurrent-faults', '--gdn-recurrent-debug', '--gdn-recurrent-debug-faults', '--gdn-gated-norm-local'):
+if (len(sys.argv) != (10 if gdn_gated else 9) if gdn else len(sys.argv) not in (7, 8)) or mode not in ('', '--faults', '--history-faults', '--validation', '--validation-faults', '--validation-control', '--validation-control-faults', '--validation-close-only', '--validation-capture', '--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc', '--validation-gdn-input', '--validation-gdn-input-extremes', '--gdn-native', '--gdn-native-faults', '--gdn-debug', '--gdn-debug-faults', '--gdn-state-init', '--gdn-state-init-faults', '--gdn-recurrent', '--gdn-recurrent-faults', '--gdn-recurrent-debug', '--gdn-recurrent-debug-faults', '--gdn-gated-norm-local', '--gdn-gated-resident'):
     raise SystemExit('expected QPS1 QFP3 ZERO QPE1 QRN1 QCB1 [--faults|--history-faults|--validation[-faults|-control[-faults]]]')
 validation = mode.startswith('--validation')
 actual = gdn or mode in ('--validation-actual-model', '--validation-actual-model-extremes', '--validation-actual-model-frontend-pc')
@@ -57,6 +59,10 @@ if gdn_recurrent:
 if gdn_gated_local:
     flags.append('-DPIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL=1')
     assert hashlib.sha256((pathlib.Path(sys.argv[9]) / 'code.bin').read_bytes()).hexdigest() == '7ec76ef20a0a453ae24adbda74623b5f95a400ff0f5b15e17e3788f079beb2b8'
+    assert (pathlib.Path(sys.argv[9]) / 'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
+if gdn_gated_resident:
+    flags.append('-DPIONEER_Q38_TEST_GDN_GATED_RESIDENT=1')
+    assert hashlib.sha256((pathlib.Path(sys.argv[9]) / 'code.bin').read_bytes()).hexdigest() == '22e3001215d67c9b9f8861098db5e5fda76fb241076c0ece8adb3ba224dfe297'
     assert (pathlib.Path(sys.argv[9]) / 'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
 if gdn_recurrent_debug:
     flags.append('-DPIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE=1')
@@ -132,7 +138,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                         'pioneer_q38_learned_rms_execution_bridge', 'pioneer_q38_decoder_conv_bridge')],
                     *([str(here / 'pioneer_q38_gdn_input_bridge.cpp')] if gdn or gdn_state else []),
                     *([str(here / 'pioneer_q38_gdn_recurrent_bridge.cpp')] if gdn_recurrent else []),
-                    *([str(here / 'pioneer_q38_gdn_gated_norm_bridge.cpp')] if gdn_gated_local else []), *objects, '-o', str(binary)], check=True)
+                    *([str(here / 'pioneer_q38_gdn_gated_norm_bridge.cpp')] if gdn_gated_local else []),
+                    *([str(here / 'pioneer_q38_gdn_gated_resident_bridge.cpp')] if gdn_gated_resident else []), *objects, '-o', str(binary)], check=True)
     cases = list(range(9)) if mode == '--validation-control-faults' else [None]
     for case in cases:
         suffix = [str(case)] if case is not None else ['--faults'] if mode == '--validation-faults' else [] if validation else sys.argv[7:]
@@ -140,7 +147,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
             suffix = [str(here.parents[2] / 'generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf')]
             if gdn:
                 suffix.append(sys.argv[8])
-                if gdn_gated_local:
+                if gdn_gated:
                     suffix.append(sys.argv[9])
                 if mode == '--validation-gdn-input-extremes':
                     suffix.append('--all-tokens')

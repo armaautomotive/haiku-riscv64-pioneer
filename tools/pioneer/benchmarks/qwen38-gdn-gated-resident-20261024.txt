@@ -1,0 +1,151 @@
+Qwen3.8-27B QGH1 fused recurrent -> paired gated normalization
+2026-10-24 UTC. OFFLINE emitted-instruction qualification ONLY.
+Source base:505389361fa1234eedde7b5129dbb8762c30abac.
+Final strict original-model/current-test-source job30713 TERMINAL0.
+All qualification jobs terminal;NO hardware action or recovery pending.
+
+Implemented real card instructions,not a host intermediate Work path:
+  genuine resident QKV/A/dt -> existing preparation -> actual SFPU current
+  state recurrence -> both private NEXT writes -> separate fresh raw-ready
+  epoch stamp -> bounded NoC read of the paired worker's stamp/raw64 ->
+  original learned norm128 F32 and retained role5 Z128 NoC reads -> FP32
+  RMS128/learned scale/SiLU -> gated64 NoC write into private workspace.
+  BOTH halves run the actual fused instruction image. Peer raw values and
+  readiness are produced by the other actual stream,not a numeric oracle.
+  No intermediate terminal,host numeric vectors,CPU-reference fallback,
+  stage stop/reload,PCI/DMA/reset/ARC or native/Work/public selector added.
+
+New DATA-only shape/plan:
+  Descriptor0x74a00,summary0x74b00,raw-ready0x74c00,peer-stamp0x74c40.
+  Exact original role9 norm512B/page4096,canonical peer coordinates and
+  role5 Z offsets,layer/position/slot/phase/all four64-bit identity epochs.
+  Gated output0x150000+half*256 inside existing2MiB workspace prefix,
+  disjoint from projection/conv/private-history inputs. Raw LOCAL0x8e800
+  and separate raw-ready stamp remain immutable even after peer terminal.
+  Shape/addresses/bitmap presence are DATA,NOT source/native/ready grants.
+  ALL peers' zero stamps BEFORE ANY release is a future owner's obligation.
+  Stale own stamp is refused,not cleared by the image to hide epoch reuse.
+  Source/descriptor/freshness rechecked BEFORE raw-ready publication;
+  predecessor descriptors checked again BEFORE gated-output NoC write.
+  Up to256 KNOWN-COMPLETE peer-ready polls;unknown packet never retried.
+  Each packet checks source seals,quiet queues,exact commands/readback and
+  all8 wrapped counters. Poll-dependent complete receipt chains are checked.
+
+Final image builds D/E byte-identical:
+  /private/tmp/pioneer-q38-gdn-gated-resident-20261024-{d,e}
+  code23020B SHA256
+  22e3001215d67c9b9f8861098db5e5fda76fb241076c0ece8adb3ba224dfe297
+  boot4B SHA256
+  d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+  Max compiler frame976B;existing1024B gate UNCHANGED.
+  Emulated observed nested stack2308B inside existing8KiB stack.
+  Main positive max489494 instructions/28ready polls. Extra gate-edge
+  max383221 instructions. These are NOT cycles,time,throughput or speed.
+  Unsupported DIV/REM/MULH/FMA/fdiv/fsqrt/float-to-int still rejected.
+  Old QRJ1 rebuild M remains exact14836B/96881b6501e4febea5ed869c1e30e26a8bb432ce45001b7cd1fe93234e50a410.
+
+2503 TERMINAL0 FINAL ASan/UBSan emitted pair suite J:
+  96 main half streams/all48heads,all48 GDN-layer metadata cases,7banks,
+  both state slots;ALL actual state/raw bits and6144gated values checked.
+  Independent libm observer AFTER execution;scaled3e-6 PLUS strict NORMAL
+  relative3e-6 checks,NO tolerance increase. Input/current bytes immutable.
+  2 lagging-peer streams:raw read AFTER paired worker's final terminal.
+  26 edge streams:zero,-80/-81/-84/-87/-88/-90/-100/-104/-106/-128/
+  -65504/+65504 gates,max signed learned weights;strict normal final gate.
+  2heads x16 NONRESETTING state+NoC-counter chains/64half streams,monotonic
+  phase+position,bothslots,fresh per-run seals. COMPONENT test only,NOT a
+  persistent native/whole-model scheduler or long-context quality result.
+  2096 refusals:ALL bad descriptor bits,16stale own-ready words,16wrong
+  peer stamp fields,256poll exhaustion,all5packet phase timeout/counter/
+  foreign/source/descriptor faults,4poisoned reads,peer NaN endpoints,
+  late source/own-ready mutation BEFORE publish and both predecessor
+  descriptor mutations BEFORE gated write. Fault parks emit no later IO.
+  Exact canonical plan/missing-corrupt learned-page bitmap/owner/epoch
+  refusals checked separately. All local output/scratch guards unchanged.
+  /private/tmp/pioneer-q38-gdn-gated-resident-tests-20261024-j.log
+  SHA256 f00a9af662f51b2314c25c6751a55cae6ebfbce104977294ba51df5fd1baeeed
+
+57 exact-role/builder/ISA/stack gates TERMINAL0:
+  /private/tmp/pioneer-q38-gdn-gated-resident-gates-20261024-b.log
+  SHA256 910c2e1e9c609aa62ba3fba0487a8dfb6a44ce6522bb2a0cad953fbb72252acf
+  No mixed host Work/CPU-validation/kernel role,even defined0;ambient
+  PIONEER roles refused BEFORE SDK/output access;1025B frame refused.
+15096 old DEBUG49 regression TERMINAL0:
+  212role/tag/old-builder gates and131072 actual closed-allowlist probes.
+  /private/tmp/pioneer-q38-gdn-gated-resident-old-debug49-gates-20261024-a.log
+  SHA256 23bcce6d693f2246107b45f3983c4ed6d2b4a403e4483989a784409822c7b2b8
+52569 old --gdn-recurrent and --gdn-gated-norm-local branch COMPILE-ONLY
+  regression TERMINAL0 with their original exact image pins. Both actual
+  C++/ASan/UBSan binaries compiled;their runtime was explicitly skipped.
+  Do NOT present this extra compile check as a fresh old-mode runtime test.
+
+25467 ORIGINAL final D/E image qualification E TERMINAL0:
+  Full original GGUF digest and ALL independent model references BEFORE
+  context. Existing genuine native init73728/history1680/QPE1/QRN1/
+  4QPS1/QCB1ALL120/QRJ1ALL96 first executes and retains immutable CURRENT,
+  genuine resident workspace/learned bytes. Separate TEST NoC fabric then
+  runs fused actual QGH1 on all96 from those original inputs,not raw-output
+  reference vectors:823488prepared/NEXT/raw+6144gated values match the
+  independent ORIGINAL references.1673reference reads/384original A-dt
+  byte reads. Norm is original512B learned bytes,not a prepared product.
+  Existing native prefix full8134072word restore/actual END passes.
+  IMPORTANT:this is a separate TEST fabric,NOT new SAME-owner native QGH1
+  integration. Old native restore does NOT qualify the new code footprint.
+  /private/tmp/pioneer-q38-gdn-gated-resident-original-20261024-e.log
+30713 FINAL original-model/current-test-source F TERMINAL0:
+  Same exact D/E image,latest strict NORMAL relative/local guard observers
+  also PASS on all96 original-model streams. Independent references still
+  sealed BEFORE context;old native full restore/actual END also PASS.
+  /private/tmp/pioneer-q38-gdn-gated-resident-original-20261024-f.log
+  E/F logs identical SHA256
+  8938123c90510692f1263ac74a2011126003902bf28d5cfc7d1751a5672b0ec0
+
+Qualification caught/repaired before ANY hardware use:
+  Initial link required a fixed freestanding volatile-byte memset;added.
+  Early test model lacked the new raw-output readback load range;fault
+  injector initially skipped zero-valued peer metadata. Both fixed.
+  First image's size-optimized constant-counter lookup copied a table on
+  each wait iteration,exceeding the100M instruction fault-test limit.
+  Replaced with constant selection;100M limit was NOT increased.
+  Added pre-publication source/freshness and pre-write predecessor checks.
+
+Next REQUIRED genuine native integration (NOT IMPLEMENTED):
+  Distinct new compile-only role;old Work/CPU/DEBUG49 remain unchanged.
+  Current16KiB peer code snapshot cannot contain23020B. Expand only the
+  new role's workers1..96 to24KiB;root/97..119 old spans unchanged. Extra
+  196608words ->8330680 total L1 saved words. Prove complete arbitrary
+  original snapshot/restore,fault retention and source/clock/host owners.
+  Add authenticated original role9 upload/ledger binding,retained role5
+  producer,all96 fresh stamps BEFORE ANY release,all96 gated summaries/
+  ALL120 terminal+hold proofs before private output/state publication.
+  Actual cooperative native simulator is required:old synchronous per-core
+  execute-on-reset cannot model a worker waiting for a not-yet-released
+  peer. Qualify sequential release/skew and epochs;256polls is NOT a
+  physical timing guarantee. No physical test until these gates pass.
+  Then ssm_out role13 projection/residual/post-attn norm/FFN,full attention
+  +KV/all64layers/sampling/persistent token scheduler are STILL REQUIRED.
+
+NO Pioneer SSH/card/reload/power/boot/SD/Assistant/network/kernel actions.
+Last independently verified hardware03:07:48UTC:stable041/gen8,cold0,
+idle/no active owner,64CPUs/RAM137034936320B;not re-probed this turn.
+No fresh human desktop-input confirmation. No recovery/restore pending.
+Power OFF is NON-IDEMPOTENT:ONE OFF,verify off,ONE ON,never double OFF.
+Whole-model last measured0.207893161tok/s unchanged. NO speedup claim.
+20tok/s UNMET;full offload INCOMPLETE;unlimited original goal stays ACTIVE.
+
+Reproduce image:
+  sh tools/pioneer/build_qwen38_gdn_gated_resident_image.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/FRESH-QGH1-DIR
+Reproduce emitted pair suite:
+  sh tools/pioneer/tests/run_pioneer_q38_gdn_gated_resident_image_tests.sh \
+    /private/tmp/FRESH-QGH1-DIR
+Reproduce original-model bridge:
+  python3 tools/pioneer/tests/pioneer_q38_resident_decoder_native_factory_test.py \
+    /private/tmp/pioneer-q38-projection-stash-image-20261022-c \
+    /private/tmp/pioneer-q38-projection-family.DGLYM4co/peer-n \
+    /private/tmp/pioneer-q38-state-zero-20261020-c \
+    /private/tmp/pioneer-q38-embedding-image-20261022-b \
+    /private/tmp/pioneer-q38-learned-rms-image-20261022-c \
+    /private/tmp/pioneer-q38-conv-batch-image-20261023-c \
+    --gdn-gated-resident /private/tmp/pioneer-q38-gdn-recurrent-20261024-k \
+    /private/tmp/FRESH-QGH1-DIR

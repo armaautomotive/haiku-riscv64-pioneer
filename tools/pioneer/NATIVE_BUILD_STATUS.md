@@ -1,5 +1,27 @@
 # Native build status
 
+October24 UTC2026:QGH1 fused QRJ1->paired raw-ready/NoC->gated RMS/learned
+norm/SiLU->private GDDR output IMPLEMENTED/OFFLINE qualified,NOT native/card
+selected. Actual paired instruction streams,no host intermediate/stop/
+reload. Fresh phase/layer/position/slot/all identity epochs;separate raw
+seal survives peer final terminal. Exact role9 norm DATA plan/upload-page
+checks;genuine native source binding STILL REQUIRED. D/E23020B/22e30012
+identical;frame976(existing1024gate)/stack2308.2503terminal0:96main halves+
+2late-peer+26extreme-gate+64NONRESETTING state/counter streams;strict NORMAL
+relative3e-6,2096faults,inert terminals.57new role/ISA/stack gates PASS;
+212old DEBUG49 gates/131072allowlist probes PASS;2old branches compile-only.
+30713terminal0 FINAL original-model run:823488prepared/NEXT/raw+6144gated
+values match independent ORIGINAL refs sealed BEFORE context;old native
+prefix8134072word restore/actual END PASS. New fused execution uses separate
+TEST fabric,NOT new native-owner/snapshot qualification. Existing16KiB peer
+code save cannot cover23020B:next distinct native role needs24KiB saves,
+authenticated original norm upload,cooperative96-worker release/epoch/skew
+proofs+all96receipts/ALL120holds before publication. Then ssm_out/residual/
+FFN/full attentionKV/all64layers/sampling/persistent loop STILL OWED. ZERO
+Pioneer IO/reload/power/boot/Assistant/CPU/RAM changes;last physical stable041/
+gen8 not re-probed. ALL jobs terminal.Whole27B0.207893161tok/s unchanged;
+20UNMET/goalACTIVE. Evidence:benchmarks/qwen38-gdn-gated-resident-20261024.txt.
+
 October24 UTC2026:QGN1 gated RMS/learned norm/SiLU arithmetic IMPLEMENTED/
 OFFLINE emitted-instruction+original-model qualified,NOT native NoC/card
 integration. BOTH raw64 halves supply FP32 RMS128;shared learned norm128

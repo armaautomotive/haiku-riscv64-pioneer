@@ -7,8 +7,11 @@
 #ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
 #include "pioneer_q38_gdn_gated_norm_bridge.h"
 #endif
+#ifdef PIONEER_Q38_TEST_GDN_GATED_RESIDENT
+#include "pioneer_q38_gdn_gated_resident_bridge.h"
+#endif
 int main(int argc,char** argv){
-#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+#if defined(PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL) || defined(PIONEER_Q38_TEST_GDN_GATED_RESIDENT)
  assert(argc==10);
 #else
  assert(argc==9 || (argc==10 && !strcmp(argv[9],"--faults")));
@@ -17,7 +20,7 @@ int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  puts("NATIVE_QRJ_ALL_ORIGINAL_REFERENCES_BEFORE_CONTEXT;NO_DEVICE_ACCESS");
  auto source=
-#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+#if defined(PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL) || defined(PIONEER_Q38_TEST_GDN_GATED_RESIDENT)
   OpenGdnGatedNormOriginalSource(argv[7]);
 #else
   OpenGdnRecurrentOriginalSource(argv[7]);
@@ -36,7 +39,7 @@ int main(int argc,char** argv){
  assert(!m->decoder.GdnLayerCompleted() && !m->decoder.Close(f.io,forged) && !PrepareQ38ResidentGdnInputs(*f.c,forged)
   && f.io.touches==n && f.transport->Touches()==d && !m->Unsafe());
  puts("NATIVE_QRJ_REAL_CBO_ALL120_HELD;SAME_INITIALIZED_GDN;FORGED_COMPLETION_INERT");
-#ifndef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+#if !defined(PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL) && !defined(PIONEER_Q38_TEST_GDN_GATED_RESIDENT)
  if(argc==10){
   for(unsigned fault=1;fault<=18;fault++){
    pid_t child=fork();assert(child>=0);
@@ -74,7 +77,24 @@ int main(int argc,char** argv){
   unsigned first=f.io.recurrentFirst[region]*1024,words=f.io.recurrentExtents[region].bytes/4;
   for(unsigned i=0;i<words;i++)assert(!f.io.recurrentWords[first+i]);
  }
-#ifdef PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL
+#ifdef PIONEER_Q38_TEST_GDN_GATED_RESIDENT
+ // Separate fused TEST execution from genuine immutable CURRENT/workspace
+ // and original learned BYTES. NOT a new native producer or Work selector.
+ for(unsigned head=0;head<48;head++){
+  uint32_t input[2][64],state[2][64];GatedResidentObserved values;
+  for(unsigned side=0;side<2;side++){
+   unsigned worker=head*2+side+1;assert(f.io.SelectRuntimeCore(worker));
+   for(unsigned i=0;i<64;i++)assert(f.io.ProjectionGraphMemoryReadChecked(worker,TT_Q38_GDN_INPUT_DESCRIPTOR+i*4,input[side][i])
+    && f.io.ProjectionGraphMemoryReadChecked(worker,TT_Q38_RGDN_DESCRIPTOR+i*4,state[side][i]));
+  }
+  assert(source->GdnLearnedNorm());
+  ExecuteGdnGatedResidentOriginalBytes(argv[9],m->plan,m->bank,input,state,source->GdnLearnedNorm(),f.io.wholeWorkspace,*source,f.io,values);
+  for(unsigned side=0;side<2;side++)assert(source->CheckGdnRecurrent(head*2+side,values.prepared[side],values.next[side],values.raw[side])
+   && source->CheckGdnGatedNorm(head*2+side,values.gated[side]));
+ }
+ assert(source->ReferenceReads()==1673 && source->GdnInputReads()==384);
+ puts("PASS ORIGINAL token0 ACTUAL fused QGH1 all96workers/823488prepared-next-raw+6144gated values;fresh peer NoC stamp+paired ACTUAL QRJ raw+retainedQPS1Z+originalnorm;independent ORIGINAL references BEFORE context;separate TEST fabric NOT_NATIVE_NOC_OWNER_OR_CARD");
+#elif defined(PIONEER_Q38_TEST_GDN_GATED_NORM_LOCAL)
  // Byte bridge ONLY:actual emitted QRJ1 LOCAL results and actual emitted
  // QPS1 resident Z,plus original learned norm bytes. No oracle products.
  for(unsigned half=0;half<96;half++){
