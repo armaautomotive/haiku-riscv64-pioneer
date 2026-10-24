@@ -1,0 +1,54 @@
+QGT52 recovery through one OFF / verified OFF / one ON, 2026-10-24.
+Historical failed DEBUG52 test remains failed; this is a NEW power epoch,
+not an in-place quarantine clear or a successful inference qualification.
+
+Human saved-work authorization: call_7686fa97fae845418c60cb170b67b5e3.
+ONE7second OFF command completed0 in the preceding recovery step. No second
+OFF and no software-shutdown-plus-extra-OFF were sent. Human then confirmed
+actual fans/LEDs OFF in call_898b2df3d4014f1a898afcc2d1379719. ONE0.75second
+ON command, parent28851, completed0. Fresh serial firmware/Linux output
+followed. No five-minute rest, extra pulse, mains or SD change was needed.
+Relay contact status was NOT used as proof of actual board power state.
+
+Strict separately pinned Linux SSH as milkv: Linux6.1.31/riscv64, boot_id
+1f384ec0-6e7d-4eaa-a8b8-d5a5349f6a7c, two-minute uptime, online0-63,
+MemTotal131976904kB. RootNVMe0n1p3, bootNVMe0n1p2, buildSSD/sdb2,
+kexec_loaded0. Root-owned helper independently hashed through sudo:
+/mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh
+SHA9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e.
+No host-key exception or known-host modification.
+
+Prepare22674 TERMINAL0, boot26398 TERMINAL0; unique session
+qgt52-recover-20261024-next59a,64CPUs,
+memory128-spin-idle7-top-page-nosd-control. All pinned helper guards and
+clean read-only BFS source check passed. NO journal override. Actual normal
+Linux shutdown/kexec; default NVMe/extlinux and SD cards unchanged. Kernel
+bundle233a2d662c52e7ac6435da49a9202e53f66be2eb914f79bf140eaed2f04f2a67.
+Initial SSH timeouts during startup caused NO restart/power pulse.
+
+Fresh Haiku SSH: R1~beta6+development/riscv64, five-minute uptime,
+64CPUs, RAMmax137034936320B/free133824671744B. app_server, Tracker,
+Deskbar and input_server present; no compute parent/Assistant in strict
+ps inventory. This is OS/process evidence, NOT a human desktop/input test.
+Installed DEBUG52cdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759.
+Verified adminb0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
+returned CPU_METADATA_ONLY tag2026102400010052/generation1/quiesced0/
+cold0/active_owner0/open_count1/guard1 BEFORE any driver replacement.
+An initial shell-quoting check failed BEFORE metadata execution; fixed
+quoting and the subsequent exact-binary check/metadata call completed0.
+
+Verified staged updatera0d507974052260af49d0e1d27cf820085a3fcbc5a7893301d7280a96550e59d,
+read restore direction, then ONE --restore-gdn-rendezvous-validation.
+Parent85072 TERMINAL0: DEBUG52/gen1 quiesced/closed -> stable041/tag12/gen2,
+HOT_RELOAD_VERIFIED;P100A_HOT_SWAP_COMPLETE_NO_REBOOT;NO_GPU_EXECUTION.
+Separate post-restore SSH verified installed hash
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/generation2/quiesced0/cold0/active_owner0/open_count1/
+guard1. No reset, inference, new experimental install or Assistant change.
+
+Native59 next-layer projection work remains LOCAL COMPILE/OFFLINE ONLY;
+the genuine original-model test86924 is still live at this checkpoint.
+Its source dependencies remain frozen until terminal completion. No native59
+linked driver/public selector/Work mode/Assistant route was installed.
+No new physical speed measurement: last whole-model0.207893161tok/s;
+20tok/s/full resident model target remains unmet and goal stays ACTIVE.
