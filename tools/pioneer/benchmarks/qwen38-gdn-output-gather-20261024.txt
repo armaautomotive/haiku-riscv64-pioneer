@@ -1,0 +1,105 @@
+Qwen3.8-27B distinct QOG1 ROOT gather / actual op6-to-matrix data pipeline
+2026-10-24 UTC. Basec1298031d07b5474c328f031c32aa18fcb781142.
+IMPLEMENTED/OFFLINE qualified;NOT installed/native-selected/full5120row
+projection or new model-speed result. Last whole-model0.207893161tok/s
+unchanged;20tok/s UNMET;full original goal ACTIVE.
+
+Distinct QOG1 ROOT image consumes existing QOI1/op6 outputs:
+  Fixed24identity lines,6144inputs/type8/role13/layer0/position0 ONLY.
+  Each line checked against its ACTUAL peer's original NIU source words,
+  not an assumption that all source0 words equal ROOT's source0.
+  Same producer phase+1/token/model identity/GDN ancestry,all8scales and
+  fixed native/gather extents. ALL24lines before FIRST operand read or
+  GDDR compact sink. Only25reads(24x128B+12288B) +one768B scale write.
+  Accepted source table24x16words at0x7d800 copied to disjoint0x7e800shadow.
+  ALL384words compared around every packet;changed source/shadow unknown
+  faults with NO following packet/reset/restore/retry. ROOT source/descriptor/
+  quiet/command/counter proofs unchanged in strictness. Initial bad ROOT
+  source or zero peer source0 refuses BEFORE even source-shadow mutation.
+  Table+shadow addresses inside existing complete ROOT runtime snapshot,
+  not larger mappings or a caller address/read/ready/cleanup capability.
+
+Four fresh actual RISC-V scalar image builds A/B/C/D EXACT:
+  /private/tmp/pioneer-q38-gdn-output-gather-20261024.6rOhz2a1/{a,b,c,d}/
+  code.bin4260B SHA256
+  f546dbc8be9bc5af180a19c1e0034ca908e684e3e76d622bccf21c61d2651a69
+  boot.bin4B SHA256
+  d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+  Max individual frame880B/2048B gate,actual whole call stack1076B inside
+  unchanged8KiB stack. Existing32KiB scalar-code/no writable globals/GOT
+  linker constraints retained. Old QPG1 scalar gather rebuilt EXACT against
+  prior gather-c/code.bin:
+  e4e811535e7a0c6f55f45238625d5f1bb2aada7b5a454ce0bc5f03b52fa17ee8.
+
+Actual emitted pipeline ASan/UBSan B TERMINAL0 (85177):
+  ALL24 ACTUAL op6 persistent peers -> simulated GDDR byte endpoints ->
+  ACTUAL QOG1 ROOT -> SAME live peer's ACTUAL Q8_0 matrix instructions.
+  No observer computes or injects native operands/scales;ROOT-emitted bytes
+  feed the matrix. Changed inputs/7banks/both workspace edges/token0+248319/
+  heterogeneous peer NIUs;336actual producers/14ROOTs/14matrix cases.
+  Full12288native operand bytes+192scales match independent original-wire
+  observer;matrix output checked with existing independent FP32+FP64 bounds.
+  SAME peer lifetime/input->matrix->changed input->matrix->STOP;NO reset or
+  dot-probe reads. This tests16-row fixture matrices,NOT all5120tensor rows,
+  model weights/native lifecycle or physical timing/throughput.
+  1708failures:ALL24x32line mutations,packet/counter/foreign traffic/root
+  source/descriptor/command failures,ALL384source AND384shadow word changes,
+  late first/last operand/sink mutations,zero peer source0,header corruption/
+  empty identity/token mismatch. Bad lines cause NO operand read/compact
+  sink. First unknown parks inert with NO further NoC/control/scratch writes.
+  Actual old QPG1 image returns zero/noIO for a new QOG1 descriptor;shared
+  boot jump is NOT a native grant. Every32word summary field mutated/refused.
+  /private/tmp/pioneer-q38-gdn-output-gather-image-tests-20261024-b.log
+  SHA25635a10042e46f61cee2ba3f2a8718df131e426dfe566a734bf80ea0eab6a7bdac
+
+Genuine same-owner metadata,NOT caller source/epoch/vector hints:
+  GatherDescriptor/GatherSources take actual typed producer+EXACT retained
+  cohort,derive ROOT frame/ALL384peer-source words. CPU staging only,
+  foreign cohort atomic refusal;no IO or publication grant. Expire on same
+  decoder Close. No producer/member layout change or old RMS role widening.
+  Full original-model native ASan/UBSan B TERMINAL0 (52244):actual joint
+  73728page state/history1680/QPE1/QRN1/4QPS1/CBOALL120/QGT1ALL96,all829632
+  original values/privateNEXT/CURRENT+unrelatedstate/full8330680word restore+
+  verification/actualEND PASS. ALL table+shadow words checked against actual
+  original ROOT snapshot coverage. Old52handoff refusals and24actual input
+  descriptors still pass. This native test DOES NOT launch new gather image;
+  instruction pipeline test above is separate,not native promotion.
+  /private/tmp/pioneer-q38-gdn-output-gather-original-20261024-b.log
+  SHA2560859c2d25b1d03fd5ad1bf8e1da73158efe7c4137633427801653edb51d79e7f
+
+Kernel ABI metadata-only builds A/B TERMINAL0 (92495/48215),exact
+  821c5a4a5865f0360ba0047ed1e931a5ad4558b2a04b177f2f6d6817948c0209.
+  New frame1600B;2048B gate/ALL qualified legacy frames nongrowing.
+  Old native input DATA dc90888e/producer53c30cd922/inherited native51+
+  older control chain EXACT. No linked driver/ROOT selector/install map.
+  A log SHA2562afabc48651ea1ef27bb3e6d44531fbdfc05d30e79338a08b63b786a43bb04e9
+  B log SHA2563dc5a785ced4c688c7f8cc289226a524800bbb7947791715d99d3f566e19853f
+  Input instruction regression TERMINAL0 (81115):338positives/157faults,
+  unchanged log SHA2562fa8ca6c5cc5f645eaea479e41aac74afebb30a7f1a42612a54332b0bea42803.
+  96new actual source-role/builder/frame gates TERMINAL0 (76862),native/
+  kernel/CPU-reference/Work mixing refused even0. New strict builders stop
+  before SDK/output for ambient/unknown roles. Actual2048frame gate exercised.
+  SHA2565377335241a458f84bf9be16fe87caa03efc4d63d3e6322d7b4f76ca20cbcc08.
+  All qualification jobs terminal. No actual Pioneer IO of any kind this turn.
+
+No device/reload/boot/power/SD/Assistant/network/CPU/RAM modifications.
+Latest read-only OS observation remains07:51UTC64CPUs/RAMmax137034936320B;
+not freshly checked this turn. Prior physical DEBUG52 failure/card quarantine
+and stable041 restore PENDING at last observation. Saved-work confirmation
+required before controlled recovery. ONE effective OFF,verify actual OFF,
+ONE ON;OFF twice can START the board. No speculative pulse/mains switch.
+
+NEXT complete canonical119job/5120row ssm_out matrix+GDDR output publication,
+then genuine retained-owner native lifecycle/Scope/Close/END. ROOT gather
+must be called inside that same ROOT scheduler,not a host activation seam.
+Old producer.Current()/plan.Current() are held-only pre-claim proofs:the new
+native consumer must consume/capture them BEFORE mutation,and own its live
+scope after cores run;never fabricate an input epoch or reuse old RMS proof.
+Full119peer source cache MUST NOT overlap gather's source/shadow at7d800/
+7e800 (the old generic graph source table overlaps that shadow). Use a new
+disjoint already-saved cache or immutable manifest;for example78000..79dc0
+fits existing runtime footprint,but that full scheduler is NOT implemented.
+Current peer code only60B main/128B affine headroom;do NOT relax limits.
+Physical DEBUG52 failure diagnosis still required before any promotion;
+residual/post-attnRMS/FFN/full attentionKV/all64layers/sampling/persistent
+token loop still OWED. No component observation substitutes for model TPS.

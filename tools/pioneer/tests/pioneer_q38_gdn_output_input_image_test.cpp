@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // Actual distinct op6 instructions;ONLY device/Tensix byte endpoints mocked.
 // No native producer/coordinator or full projection/inference speed claim.
+#ifndef PIONEER_Q38_GDN_OUTPUT_REUSE_PROJECTION_PEER
 #define PIONEER_Q38_PROJECTION_MACHINE_ONLY
 #include "pioneer_q38_projection_persistent_image_test.cpp"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputInputShape.h"
 struct GdnOutputInputPeer:ProjectionPeer {
  GdnOutputInputPeer(const char* path,unsigned worker):ProjectionPeer(path,8,6144,worker){}
@@ -29,6 +31,7 @@ struct GdnOutputInputPeer:ProjectionPeer {
   for(unsigned i=8;i<32;i++){line[i]^=1;assert(!PioneerQ38GdnOutputInputLine(line.data(),descriptor.data()));line[i]^=1;}
  }
 };
+#ifndef PIONEER_Q38_GDN_OUTPUT_INPUT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);unsigned positives=0,faults=0,minStack=0x70000;
  for(unsigned bank=0;bank<7;bank++)for(bool edge:{false,true}){
@@ -96,3 +99,4 @@ int main(int argc,char** argv){
  {GdnOutputInputPeer old(argv[2],1);assert(old.BootNew());old.StageGdn(1);assert(!old.Finish(1) && !old.activationPackets);old.Inert();faults++;}
  printf("PASS ACTUAL distinct QOI1/op6 positives%u/faults%u/maxDeviceStack%u/ALL24gated offsets/native wire/identity+64proof mutations/fail-first UNKNOWN inert/old3-5 andoldpeer6 refused;NO native grant/ROOT gather/full projection/speed claim\n",positives,faults,0x70000-minStack);
 }
+#endif

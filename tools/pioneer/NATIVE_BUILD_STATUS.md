@@ -1,5 +1,24 @@
 # Native build status
 
+October24 UTC2026:distinct QOG1 ROOT gather IMPLEMENTED/OFFLINE qualified,
+NOT native-selected/installed/full5120row projection. ALL24 QOI1 lines
+checked against actual per-peer NIUs/GDN phase/token/identity BEFORE operand
+read+compact sink.384word source/shadow seals inside SAME original snapshot;
+unknown parks inert. Four4260B images EXACTf546dbc8/maxframe880/actualstack
+1076;old QPG1 scalar e4e81153 EXACT. Actual op6->GDDR->QOG1->SAME live Q8_0
+matrix pipeline336producers/14ROOTs/14matrix cases/1708faults PASS,NOreset/
+dotprobe. Matrix fixture16rows,NOT whole5120row tensor/model TPS. Genuine
+native descriptor+ALL384source words/foreign-cohort atomic refusal/full
+829632original values/privateNEXT+CURRENT/full8330680restore/actualEND PASS.
+Native DATA A/B exact821c5a4a/frame1600/legacy nongrowth;old inputdc90888e/
+producer53c30cd922/inherited controls EXACT. Input338/157regression+96new
+gates PASS;ALL jobs terminal. ZERO PioneerIO/power/install/Assistant changes.
+Card quarantine/restore pending at last observation;no fresh hardware probe.
+NEXT119job/5120row matrix+output/native retained scope;do not alias full119
+source cache with gather shadow,or use held-only producer as live grant.
+Whole27B0.207893161tok/s unchanged/20UNMET/fullgoalACTIVE. Evidence:
+benchmarks/qwen38-gdn-output-gather-20261024.txt.
+
 October24 UTC2026:distinct QOI1/op6 fixed gated6144GDDR input preparation
 IMPLEMENTED/OFFLINE qualified,NOT native-selected/installed/fullprojection.
 Actual persistent new peer reads only gated offsets,card-only Q8_0 native

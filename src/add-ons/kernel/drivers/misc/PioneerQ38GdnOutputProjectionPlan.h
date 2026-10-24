@@ -4,6 +4,7 @@
 #include "PioneerQ38ResidentDecoderOwner.h"
 #include "PioneerQ38GdnOutputProducer.h"
 #include "PioneerQ38GdnOutputInputShape.h"
+#include "PioneerQ38GdnOutputGatherShape.h"
 // PRIVATE HEAP DATA for the NEXT distinct ssm_out input/image family.
 // Does not widen old QPS1/RMS input authority or execute a projection.
 // No caller token/layer/addresses/epoch/activation or publication hints.
@@ -63,6 +64,27 @@ public:
   if(!Current() || &canonical!=producer->canonical || !(id==producer->identity) || ledger!=producer->ledger || pages!=producer->pages || !rootSource)return false;
   for(unsigned i=0;i<16;i++)if(rootSource[i]!=producer->source[i])return false;
   return true;
+ }
+ bool GatherDescriptor(const PioneerQ38DispatchLease& cohort,uint32_t (&out)[64])const{
+  uint32_t d[64];if(!InputDescriptor(0,cohort,d))return false;
+  d[0]=TT_Q38_GDN_OUTPUT_GATHER_MARKER;d[5]=24;d[7]=0;d[9]=129;
+  d[10]=TT_Q38_PROJECTION_NATIVE_OFFSET;d[11]=TT_Q38_PROJECTION_LINES_OFFSET;d[12]=TT_Q38_PROJECTION_COMPACT_OFFSET;
+  d[13]=12288;d[14]=768;d[15]=8;d[46]=TT_Q38_GDN_OUTPUT_GATHER_SOURCES;d[47]=24;
+  for(unsigned i=0;i<16;i++)d[16+i]=cohort.authority.source[0][i];
+  if(!PioneerQ38GdnOutputGatherShape(d) || !Current() || !producer->MatchesCohort(cohort))return false;
+  for(unsigned i=0;i<64;i++)out[i]=d[i];
+  return true; // CPU metadata only;does not authorize ROOT entry or NoC
+ }
+ bool GatherSources(const PioneerQ38DispatchLease& cohort,uint32_t (&out)[24][16])const{
+  if(!Current() || !producer->MatchesCohort(cohort))return false;
+  uint32_t staged[24][16];
+  for(unsigned w=0;w<24;w++){
+   if(!cohort.authority.source[w+1][0])return false;
+   for(unsigned i=0;i<16;i++)staged[w][i]=cohort.authority.source[w+1][i];
+  }
+  if(!Current() || !producer->MatchesCohort(cohort))return false;
+  for(unsigned w=0;w<24;w++)for(unsigned i=0;i<16;i++)out[w][i]=staged[w][i];
+  return true; // NO caller source hints/addresses or activation copy
  }
 };
 static_assert(PioneerQ38GdnOutputProjectionPlan::OutputOffset+PioneerQ38GdnOutputProjectionPlan::OutputWords*4<=2097152,"gated input and ssm_out output disjoint inside retained initialized prefix");

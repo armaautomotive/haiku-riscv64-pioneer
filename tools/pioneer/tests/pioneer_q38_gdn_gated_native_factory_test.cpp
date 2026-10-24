@@ -112,6 +112,20 @@ int main(int argc,char** argv){
   for(unsigned word=0;word<16;word++)assert(inputDescriptor[16+word]==cohort->authority.source[chunk+1][word]);
  }
  printf("PASS genuine owner/EXACT retained cohort ALL24 QOI1 descriptors/gated input offsets/all peer sources;foreign cohort/out-of-range atomic refusal/NO IO\n");
+ uint32_t gatherDescriptor[64],gatherSources[24][16];
+ for(auto& word:gatherDescriptor)word=0xdeadbeef;for(auto& peer:gatherSources)for(auto& word:peer)word=0xdeadbeef;
+ const auto gatherPoison=std::vector<uint32_t>(gatherDescriptor,gatherDescriptor+64);
+ const auto sourcesPoison=std::vector<uint32_t>(384,0xdeadbeef);
+ assert(!outputPlan->GatherDescriptor(*foreignCohort,gatherDescriptor) && !outputPlan->GatherSources(*foreignCohort,gatherSources)
+  && !memcmp(gatherDescriptor,gatherPoison.data(),sizeof(gatherDescriptor)) && !memcmp(gatherSources,sourcesPoison.data(),sizeof(gatherSources)));
+ assert(outputPlan->GatherDescriptor(*cohort,gatherDescriptor) && outputPlan->GatherSources(*cohort,gatherSources)
+  && PioneerQ38GdnOutputGatherShape(gatherDescriptor) && !PioneerQ38ProjectionGatherShape(gatherDescriptor)
+  && gatherDescriptor[4]+TT_Q38_GDN_GATED_OUTPUT==outputPlan->InputAddress() && gatherDescriptor[6]==outputPlan->Phase());
+ for(unsigned word=0;word<16;word++)assert(gatherDescriptor[16+word]==cohort->authority.source[0][word]);
+ for(unsigned w=0;w<24;w++)for(unsigned word=0;word<16;word++)assert(gatherSources[w][word]==cohort->authority.source[w+1][word]);
+ for(unsigned word=0;word<384;word++)assert(PioneerQ38ProjectionGraphSnapshotContains(0,TT_Q38_GDN_OUTPUT_GATHER_SOURCES+word*4)
+  && PioneerQ38ProjectionGraphSnapshotContains(0,TT_Q38_GDN_OUTPUT_GATHER_SHADOW+word*4));
+ puts("PASS genuine typed QOG1 descriptor/ALL384actual peer source words/foreign-cohort atomic refusal/ALL table+shadow bytes in SAME original ROOT snapshot;NO IO");
  const auto* rootSource=m->projectionCohort->authority.source[0];
  assert(outputPlan->MatchesSource(m->plan,m->identity,f.learned.data(),PioneerResidentBanks::Pages,rootSource));
  auto other=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(other->Build());auto wrongId=m->identity;wrongId.modelEpoch++;
@@ -202,6 +216,7 @@ int main(int argc,char** argv){
  assert(!producer->Current() && !m->decoder.GatedOutput() && !outputPlan->Current() && !outputPlan->Producer()
   && !outputPlan->Part(0) && !outputPlan->Count() && !outputPlan->InputAddress() && !outputPlan->OutputAddress());
  assert(!outputPlan->InputDescriptor(0,*cohort,inputDescriptor));
+ assert(!outputPlan->GatherDescriptor(*cohort,gatherDescriptor) && !outputPlan->GatherSources(*cohort,gatherSources));
  puts("PASS genuine gated producer expires on SAME owner's physical restore Close;NO stale input for later projection");
 #endif
  assert(EndFactory(*f.c) && !sColdRecoveryRequired);
