@@ -1,0 +1,118 @@
+Original complete FIRST recurrent-layer CPU reference — 2026-10-25
+=================================================================
+
+STATUS: independent CPU-reference preparation and source isolation passed,
+including the authenticated ORIGINAL GGUF, a clean repeat and actual Haiku
+SDK compilation/linking. NOT original-model GPU comparison or a new driver.
+Full64-layer/token-loop/Work integration and20 tokens/sec remain UNMET.
+No inference speed change measured; last actual whole-model0.207893161 t/s.
+
+This checkpoint also records successful completion of the preceding NEW
+native readback main44040 (positive+16 faults) and clean62126 (positive).
+See qwen38-resident-layer-native-readback-20261025.txt/.log for those actual
+controllers/programs/STOP/holds/1592transfers/44MBrestore/secondproof/END
+results. They use simulated OS/byte endpoints, not original learned weights.
+
+New independent reference
+-------------------------
+PioneerQ38ResidentLayerValidationReference.h is CPU-only, separately gated
+before its include guard. It never enters native/kernel/device-image/Work
+roles. No source/route/address/ready/owner/upload/launch capability is minted.
+
+Starting with independent ORIGINAL CPU embedding and GDN references, it
+reads ORIGINAL row-major GGUF bytes and computes layer0/position0 output
+projection, residual, learned normalization, gate/up, ideal libm-SiLU,
+down and final hidden vector. All5120/17408 rows are computed, not sampled.
+The new post-GDN portion requires2817 reads, including all3 Q4_K matrices.
+Together with prior embedding/RMS/projections/Conv/GDN references the new
+preparation requires4490 original-reference reads BEFORE any accelerator FD.
+
+Q4_K uses independent original-byte metadata/nibble decoding and32-lane
+affine accumulation, not the tiled/native panel decoder. Input quantization
+uses host IEEE division and nearbyint under FE_TONEAREST, including signed
+maximum selection and ties-even. Q8 output uses independent IEEE binary16
+conversion and ties-away input. No card results seed this calculation.
+
+All311296 bytes of numeric products are private HEAP data. Publication is
+atomic after complete source/shape/rounding/finite checks. They are never
+returned to native controllers or supplied to learned-byte endpoints.
+OriginalSource gains a distinct complete-layer preparation factory, with
+one-shot seal and necessary CPU-only readiness/fingerprint metadata. The new
+virtual metadata methods are APPENDED, preserving every old observer slot.
+The fingerprint is an FNV DATA receipt, not a model/source authentication hash,
+numerical product, source authority or device initialization permission.
+
+IMPORTANT numerical boundary
+-----------------------------
+This oracle intentionally uses independent libm SiLU. It does NOT claim
+bit identity with the bounded polynomial in device code. Quantization can
+amplify a small difference at a rounding threshold. An actual emitted-code
+comparison, diagnosis of any rounding differences and separately justified
+acceptance policy are still required. No tolerance has been fitted to card
+results and no CPU-generated intermediate is uploaded to bypass that work.
+There is not yet a complete-layer readback comparison/client, ORIGINAL
+full-layer byte import, installed prototype, GPU-model correctness claim,
+full-model inference or performance benchmark in this checkpoint.
+
+Completed evidence
+------------------
+Host sanitizer unit15749 initially passed19 atomic refusals, then59769
+passed29 including pointer/alignment/overflow/overlap/source refusals.
+Final quantization-domain/ties update10882 EXIT0; independent clean86927
+EXIT0 on the final header. Both cover32 full input domains, all3 full Q4_K
+matrix dimensions, independent FP64 selected-row error bounds,2817-read
+complete post-GDN pipeline, last-read/source mutation/failure/rounding
+atomic containment, and signed-zero/first-largest/ties-even input policy.
+
+Actual ORIGINAL model76614 EXIT0 and independent clean23396 EXIT0:
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+ Full same-file SHA256:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+ All851 tensor schema and exact learned cache geometry checked.4490 reads,
+ original prefix+GDN+output+norm+FFN+final hidden computed BEFORE context.
+ Both reproduce product fingerprint3ff61f7a1342ae7e. Zero endpoint projection,
+ convolution, output and FFN reads occurred; references never entered a
+ native endpoint. Readiness/fingerprint unavailable until one-shot seal.
+ Final appended-interface repeats60185 and29571 both EXIT0 and reproduce
+ the same4490 reads and3ff61f7a1342ae7e fingerprint on exact final source.
+
+Reference68 role gates63912 EXIT0 and clean52142 EXIT0; expanded actual
+original-source TU86 gates62342 EXIT0 include defined-zero new native/owner/
+image roles. Earlier FFN source regression21976 EXIT0 retains reference1673,
+all21 stripes/36720pages/42 first-last reads/126 inert refusals. Prior3 source
+modes76359 EXIT0 retain reference1672 and one-shot seal behavior unchanged.
+
+Actual read-only Haiku SDK final build11916 EXIT0 and clean11307 EXIT0:
+ Existing separate DEBUG68 client binary, NOT a driver or Work executable:
+ d87f1dbfd361ec4f1800319e2a4cd7f58cad241cf7b5ac83bb3783631066a03e
+ Client.o BYTE-IDENTICAL to the prior e4e00fdf diagnostic client:
+ e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4
+ New separately compiled CPU original.o:
+ 57669c649241b16f2e7c33b64b1e305f0022ffac3d415609a2495f134f61176c
+ The first49618 SDK build found5 misleading-indentation warnings treated as
+ errors; formatting was fixed, then the actual builds above passed without
+ weakening warnings, roles, arithmetic or checks. No SDK/build-mirror write.
+ Intermediate68027/27672 builds were superseded before checkpoint by the
+ appended metadata layout; the final builds above restore byte-identical
+ existing client code while retaining the new separate CPU implementation.
+
+Clean source:
+ /private/tmp/pioneer-layer-reference-clean.OQyTkQOJ
+ An archive of6f682bdcae plus9 explicit task source files, all byte-compared
+ to the final main source. Dirty llama.cpp and unrelated FlashNext excluded,
+ unread, unmodified and not staged. No subagents or additional chats used.
+
+Hardware and next action
+-------------------------
+No card/PCI writes, driver installation, Assistant restart, power action,
+SD/mains/cable change or network configuration occurred this goal turn.
+Working Haiku/boot/CPU/RAM/installed041fef18 driver are unchanged.
+
+Next connect a strict new QLV1 ORIGINAL full-layer comparison and complete
+original learned-byte imports to the actual emitted instruction test/native
+client. Never pair an original prefix with synthetic norm/FFN, reuse old
+partial-prefix payloads/scopes, manufacture ready state or feed these CPU
+products to the accelerator. Only after complete original/native checks
+consider a separately gated physical prototype and real timing.64-layer
+scheduling, attention/KV/vocabulary/sampling, device state commits, persistent
+token loop, FAST no-CPU-reference Work integration and measured20t/s are owed.

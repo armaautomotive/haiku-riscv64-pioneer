@@ -67,6 +67,10 @@ struct DecoderOriginalSource:ProjectionExecutionLearnedBytes {
  virtual bool NextFfnWeightsReady()const{return false;}
  virtual uint64_t NextFfnReads()const{return 0;}
  virtual bool CheckNextFfnResidual(const std::vector<uint32_t>&,const std::vector<uint32_t>&)const{return false;}
+ // Append new metadata methods: preserve every existing observer vtable
+ // slot. Private CPU products never become native inputs or Work fallback.
+ virtual bool ResidentLayerReferenceReady()const{return false;}
+ virtual uint64_t ResidentLayerReferenceFingerprint()const{return 0;}
 };
 std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* path);
@@ -85,4 +89,6 @@ std::unique_ptr<DecoderOriginalSource> OpenNextResidualRmsOriginalSource(const c
 std::unique_ptr<DecoderOriginalSource> OpenNextFfnResidualOriginalSource(const char* path);
 // Fixed PUBLIC model only;caller prepares+seals BEFORE any accelerator FD.
 std::unique_ptr<DecoderOriginalSource> OpenResidentOutputOriginalSource();
+std::unique_ptr<DecoderOriginalSource> OpenResidentLayerOriginalSource(const char* path);
+std::unique_ptr<DecoderOriginalSource> OpenResidentLayerOriginalSource();
 #endif

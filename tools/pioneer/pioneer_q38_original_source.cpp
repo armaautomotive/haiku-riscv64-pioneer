@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT)
+#if defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT) || defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_OWNER)
 #error Complete resident layer IMAGE never contains CPU reference observers
 #endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
@@ -60,6 +60,8 @@ static int DecoderOriginalExecv(const char* path,char* const* argv){
 #include "PioneerQ38NextProjectionValidationReference.h"
 #define PIONEER_Q38_NEXT_GDN_OUTPUT_VALIDATION_REFERENCE 1
 #include "PioneerQ38NextGdnOutputValidationReference.h"
+#define PIONEER_Q38_RESIDENT_LAYER_VALIDATION_REFERENCE 1
+#include "PioneerQ38ResidentLayerValidationReference.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvShape.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38LearnedRmsShape.h"
@@ -83,6 +85,7 @@ class OriginalSource final:public DecoderOriginalSource {
  bool nextOutput=false;uint64_t nextOutputReads=0;
  bool nextResidualRms=false;uint64_t nextResidualReads=0;std::array<uint32_t,5120> nextPostNorm={};
  bool nextFfn=false;uint64_t nextFfnReads=0;
+ bool residentLayer=false;std::unique_ptr<PioneerQ38ResidentLayerReferenceProducts> layerReference;
  std::array<uint32_t,48> nextNegativeA={},nextDtBias={};std::array<uint32_t,128> nextGdnNorm={};
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
@@ -100,7 +103,7 @@ class OriginalSource final:public DecoderOriginalSource {
   }
  };
 public:
- explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false,bool residual=false,bool selectedFfn=false,bool next=false,bool projectionsNext=false,bool convolutionNext=false,bool gdnNext=false,bool outputNext=false,bool residualNext=false,bool ffnNext=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output),residualRms(residual),ffn(selectedFfn),nextRms(next),nextProjection(projectionsNext),nextConv(convolutionNext),nextGdn(gdnNext),nextOutput(outputNext),nextResidualRms(residualNext),nextFfn(ffnNext){}
+ explicit OriginalSource(bool gdn=false,bool recurrent=false,bool gated=false,bool native=false,bool output=false,bool residual=false,bool selectedFfn=false,bool next=false,bool projectionsNext=false,bool convolutionNext=false,bool gdnNext=false,bool outputNext=false,bool residualNext=false,bool ffnNext=false,bool completeLayer=false):gdnInputs(gdn),gdnRecurrent(recurrent),gdnNorm(gated),gdnNative(native),gdnOutput(output),residualRms(residual),ffn(selectedFfn),nextRms(next),nextProjection(projectionsNext),nextConv(convolutionNext),nextGdn(gdnNext),nextOutput(outputNext),nextResidualRms(residualNext),nextFfn(ffnNext),residentLayer(completeLayer){}
  bool Open(){return original.Open() && original.Ready();}
  bool Ready()const override{return prepared && original.Ready() && plan.MatchesSource(original.Model());}
  const PioneerQwen38Gguf* SealedModel()const override{return sealed && Ready()?&original.Model():nullptr;}
@@ -301,11 +304,24 @@ public:
     }
    }
   }
+  if(residentLayer){
+   if(!ffn || !residualRms || !gdnOutput || !gdnNorm || gdnNormReferences.size()!=6144)return false;
+   layerReference=std::make_unique<PioneerQ38ResidentLayerReferenceProducts>();
+   if(!PioneerQ38ResidentLayerOriginalReference(reference,raw.data(),gdnNormReferences.data(),layerReference.get())
+    || referenceReads!=4490)return false;
+  }
   preparedToken=token;prepared=true;return Ready();
  }
- bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=(gdnNorm?1673U:1672U) || projectionReads || convolutionReads || gdnInputReads
+ bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=(residentLayer?4490U:gdnNorm?1673U:1672U) || projectionReads || convolutionReads || gdnInputReads
   || (gdnInputs && !gdnReferencesReady) || (gdnNorm && gdnNormReferences.size()!=6144))return false;
   sealed=true;return true;}
+ bool ResidentLayerReferenceReady()const override{return residentLayer && layerReference && sealed && Ready() && referenceReads==4490;}
+ uint64_t ResidentLayerReferenceFingerprint()const override{
+  if(!ResidentLayerReferenceReady())return 0;
+  uint64_t hash=UINT64_C(14695981039346656037);
+  const auto* bytes=reinterpret_cast<const uint8_t*>(layerReference.get());
+  for(unsigned i=0;i<sizeof(*layerReference);i++){hash^=bytes[i];hash*=UINT64_C(1099511628211);}return hash;
+ } // deterministic DATA receipt only,not a source hash, numeric product or device grant
  const uint8_t* EmbeddingTile()const override{return Ready()?embedding.data():nullptr;}
  const uint32_t* LearnedNorm()const override{return Ready()?norm.data():nullptr;}
  const uint32_t* GdnLearnedNorm()const override{return gdnNorm && Ready()?gdnLearnedNorm.data():nullptr;}
@@ -767,4 +783,13 @@ std::unique_ptr<DecoderOriginalSource> OpenNextFfnResidualOriginalSource(const c
 }
 std::unique_ptr<DecoderOriginalSource> OpenResidentOutputOriginalSource(){
  return OpenFfnResidualOriginalSource("/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf");
+}
+std::unique_ptr<DecoderOriginalSource> OpenResidentLayerOriginalSource(const char* path){
+ if(!path || !*path)return nullptr;
+ originalPath=path;auto source=std::make_unique<OriginalSource>(true,true,true,true,true,true,true,false,false,false,false,false,false,false,true);
+ if(!source->Open())return nullptr;
+ return source;
+}
+std::unique_ptr<DecoderOriginalSource> OpenResidentLayerOriginalSource(){
+ return OpenResidentLayerOriginalSource("/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf");
 }

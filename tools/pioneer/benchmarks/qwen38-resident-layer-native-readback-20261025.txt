@@ -1,8 +1,8 @@
 Complete recurrent-layer guarded native readback — 2026-10-25
 ============================================================
 
-STATUS: implementation and actual SDK compile complete; full execution
-qualification IN PROGRESS. Non-loadable NODRV context ONLY. No new driver
+STATUS: implementation, actual SDK compile and full offline execution
+qualification PASSED. Non-loadable NODRV context ONLY. No new driver
 installed, public opcode, hardware selector, Assistant change or Work mode.
 Complete original-GGUF comparison and physical qualification remain owed.
 Full64-layer/token-loop inference and 20 tokens/sec remain UNMET. No speed
@@ -63,23 +63,27 @@ Owner121 role refusals84592 EXIT0; context468 role refusals96417 EXIT0.
 Native binding121 regression92326 EXIT0; all rejected entries stay inert,
 and premature END retains the genuine private lifetime without device IO.
 
-Execution qualification currently running (not a PASS claim)
+Completed execution qualification (simulated endpoints ONLY)
 ------------------------------------------------------------
-Main44040 and independent clean62126 run actual new native controllers
+Main44040 and independent clean62126 both finished EXIT0. They ran actual new native controllers
 and frozen emitted initialization/prefix/complete-layer programs against
 simulated OS/byte endpoints. Original synthetic learned bytes ONLY; not
 silicon, original-model arithmetic, full-model inference or token timing.
 Every child inherits genuine computation, then owes actual STOP/holds,
 readback, full restoration, second proof and private native END itself.
 
-Main suite selects13 inert entry refusals and16 counter/command/NIU/NaN/
+Main suite passed13 inert entry refusals and16 counter/command/NIU/NaN/
 finite-nonzero-CURRENT/negative-zero-CURRENT/infinity/stale-poison cases,
 including all region boundaries and the final word. Each failed read must
 retain all resources with ZERO following IO/restore/retry/END.
 The success case compares ALL1630208 returned words against actual emitted
 VM workspace/state bytes and independently checks every fixed transfer's
 address/route/order and exact total counter deltas, then genuine native END.
-Clean suite independently repeats the full positive lifecycle.
+Clean suite independently passed the full positive lifecycle.
+ALL1630208 words matched actual emitted VM workspace/state bytes. ALL1592
+addresses/routes/orders and exact counter deltas were checked, followed by
+the complete original snapshot, second proof, genuine CLOSED lineage and END.
+This does NOT claim authenticated original-model GPU arithmetic or silicon.
 
 Clean source: /private/tmp/pioneer-layer-readback-clean.djmCIqIm
 An archive of d716d35118 plus11 explicit task source files; dirty llama.cpp
@@ -97,10 +101,12 @@ Assistant restart were performed. The working installed driver is unchanged.
 
 Next
 ----
-Finish SAME running execution jobs and record terminal results, fix any
-observed failure before physical access, then independently compare the
+The guarded readback prerequisite is complete offline. Independently compare the
 complete layer against authenticated ORIGINAL GGUF arithmetic. A partial
 original prefix plus synthetic FFN is NOT complete-model qualification.
 Only after those checks consider a separately gated physical prototype.
+Independent ORIGINAL first-layer CPU-reference preparation has since passed
+with4490 reads and a clean repeat; see qwen38-resident-layer-original-reference-20261025.txt.
+This does not replace the still-owed actual ORIGINAL GPU/readback comparison.
 Full64-layer scheduling, attention/KV/vocabulary/sampling, device-resident
 state commits/token loop, FAST Work integration and measured20t/s are owed.

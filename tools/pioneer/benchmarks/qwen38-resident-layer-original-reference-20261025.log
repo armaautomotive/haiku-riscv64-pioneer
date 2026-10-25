@@ -1,0 +1,75 @@
+COMPLETE FIRST-LAYER ORIGINAL CPU REFERENCE PREPARATION — 2026-10-25
+All listed runtime/build/gate handles terminal EXIT0. NO original-model GPU comparison, silicon or rate claim.
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-20261025-c.log
+28fad41ffb272c8a76c9e0148cb90e4980cc3c58ef976e0dc279b9d6a9dcb495  /private/tmp/pioneer-q38-layer-reference-20261025-c.log
+PASS separate ORIGINAL row-major complete-layer CPU reference:quantizationDomains32/ALL3fullQ4matrices/FP64selectedrowbounds/2817completepostGDNreads/atomicRefusals29;libmSiLU reference only,NO device/controller/ready/upload/Work/fallback or speed claim
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-20261025-clean-a.log
+28fad41ffb272c8a76c9e0148cb90e4980cc3c58ef976e0dc279b9d6a9dcb495  /private/tmp/pioneer-q38-layer-reference-20261025-clean-a.log
+PASS separate ORIGINAL row-major complete-layer CPU reference:quantizationDomains32/ALL3fullQ4matrices/FP64selectedrowbounds/2817completepostGDNreads/atomicRefusals29;libmSiLU reference only,NO device/controller/ready/upload/Work/fallback or speed claim
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-original-reference-20261025-a.log
+ed744a6dbf4f4073ffc469e6e291dc4f38b97afcfa01fa133331e873ead98d2b  /private/tmp/pioneer-q38-layer-original-reference-20261025-a.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALLfirstlayer learned cache/independent CPU embedding+RMS+4projections+Conv+GDN+output+residualNorm+3FFNmatrices+libmSiLU+finalHidden BEFOREcontext:4490referenceReads fingerprint3ff61f7a1342ae7e;private numeric products NEVER exposed as native input,NO device/originalGPUcomparison/Work/fullmodel/TPS qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-original-reference-20261025-clean-a.log
+ed744a6dbf4f4073ffc469e6e291dc4f38b97afcfa01fa133331e873ead98d2b  /private/tmp/pioneer-q38-layer-original-reference-20261025-clean-a.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALLfirstlayer learned cache/independent CPU embedding+RMS+4projections+Conv+GDN+output+residualNorm+3FFNmatrices+libmSiLU+finalHidden BEFOREcontext:4490referenceReads fingerprint3ff61f7a1342ae7e;private numeric products NEVER exposed as native input,NO device/originalGPUcomparison/Work/fullmodel/TPS qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-original-reference-20261025-b.log
+ed744a6dbf4f4073ffc469e6e291dc4f38b97afcfa01fa133331e873ead98d2b  /private/tmp/pioneer-q38-layer-original-reference-20261025-b.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALLfirstlayer learned cache/independent CPU embedding+RMS+4projections+Conv+GDN+output+residualNorm+3FFNmatrices+libmSiLU+finalHidden BEFOREcontext:4490referenceReads fingerprint3ff61f7a1342ae7e;private numeric products NEVER exposed as native input,NO device/originalGPUcomparison/Work/fullmodel/TPS qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-original-reference-20261025-clean-b.log
+ed744a6dbf4f4073ffc469e6e291dc4f38b97afcfa01fa133331e873ead98d2b  /private/tmp/pioneer-q38-layer-original-reference-20261025-clean-b.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALLfirstlayer learned cache/independent CPU embedding+RMS+4projections+Conv+GDN+output+residualNorm+3FFNmatrices+libmSiLU+finalHidden BEFOREcontext:4490referenceReads fingerprint3ff61f7a1342ae7e;private numeric products NEVER exposed as native input,NO device/originalGPUcomparison/Work/fullmodel/TPS qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-gates-20261025-a.log
+917c8f6ff2a24d83448df1f1fe0e5da00046478d6197e9f6200c6bb95f371e2b  /private/tmp/pioneer-q38-layer-reference-gates-20261025-a.log
+PASS complete-layer original CPU observer gates68:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-gates-20261025-clean-a.log
+917c8f6ff2a24d83448df1f1fe0e5da00046478d6197e9f6200c6bb95f371e2b  /private/tmp/pioneer-q38-layer-reference-gates-20261025-clean-a.log
+PASS complete-layer original CPU observer gates68:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-source-gates-20261025-a.log
+c9c6961c2073030405cc6958c1e53660c216b9ec9b0e9125a88785d047c74af9  /private/tmp/pioneer-q38-layer-reference-source-gates-20261025-a.log
+PASS ACTUAL original-source CPU TU gates86/defined-zero native68+owner+image+Work+kernel+fast-math refusal;preprocessing ONLY
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-old-ffn-20261025-a.log
+a1420099e5c746d49045d655f333c3c58e4c8f6eacae3d204105741bf95eba03  /private/tmp/pioneer-q38-layer-reference-old-ffn-20261025-a.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALL21FFNstripes+36720pages cached BEFORE context/42first-last2304B reads/126refusals/no reference-product input or synthetic fallback;NO native/device/speed claim
+Original FFN-byte cache evidence:/private/tmp/pioneer-q38-ffn-original-source.asuSUObd;NO device access
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-old-modes-20261025-a.log
+33412719d918d4e37ca18de0223104e236ecf23fb55b2fffce683aa7d0926ab3  /private/tmp/pioneer-q38-layer-reference-old-modes-20261025-a.log
+PASS OLD original observer mode0/reference1672/sealonce/NO new norm data-oracle or512byte route
+PASS OLD original observer mode1/reference1672/sealonce/NO new norm data-oracle or512byte route
+PASS OLD original observer mode2/reference1672/sealonce/NO new norm data-oracle or512byte route
+PASS3 original-model prior observer modes unchanged;NO native context/device/Work
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-sdk-20261025-c.log
+e4027f89c4e09422545aa94c55f0ccc096f2d811f3dc76e5d677f0cf7b5b16e4  /private/tmp/pioneer-q38-layer-reference-sdk-20261025-c.log
+d87f1dbfd361ec4f1800319e2a4cd7f58cad241cf7b5ac83bb3783631066a03e  /private/tmp/pioneer-q38-output-client-layer-reference-20261025-c
+e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4  /private/tmp/pioneer-q38-output-debug68-client.ueFHnKJI/client.o
+57669c649241b16f2e7c33b64b1e305f0022ffac3d415609a2495f134f61176c  /private/tmp/pioneer-q38-output-debug68-client.ueFHnKJI/original.o
+DEBUG68 client built only;objects retained at /private/tmp/pioneer-q38-output-debug68-client.ueFHnKJI;NO installation or device access
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-reference-sdk-20261025-clean-b.log
+40b03ce763dfe5b6557207a74f3de714300b5e6ac54ed1f72e3265da02563d8a  /private/tmp/pioneer-q38-layer-reference-sdk-20261025-clean-b.log
+d87f1dbfd361ec4f1800319e2a4cd7f58cad241cf7b5ac83bb3783631066a03e  /private/tmp/pioneer-q38-output-client-layer-reference-20261025-clean-b
+e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4  /private/tmp/pioneer-q38-output-debug68-client.4F1LxdQB/client.o
+57669c649241b16f2e7c33b64b1e305f0022ffac3d415609a2495f134f61176c  /private/tmp/pioneer-q38-output-debug68-client.4F1LxdQB/original.o
+DEBUG68 client built only;objects retained at /private/tmp/pioneer-q38-output-debug68-client.4F1LxdQB;NO installation or device access
+
+EXACT TASK SOURCE SHA256
+8abcad46d3040367dc09470e3d1bfff29fb501f267572de855f77df0034bc4e5  tools/pioneer/PioneerQ38ResidentLayerValidationReference.h
+bc9ddfde7a973304740ff7ed7618cffe5a34e569c53a9b81b88b04b674d1fa0e  tools/pioneer/PioneerQ38OriginalSource.h
+9b7fad5308f5bec4d192185853395a8851631933024860b84985e10187197ad4  tools/pioneer/pioneer_q38_original_source.cpp
+24c34916b3e020e7946467fe868a6b98ab0b8d1d4192fa31626f5ff59b1c3c7a  tools/pioneer/tests/pioneer_q38_resident_layer_reference_test.cpp
+cb7fed9c833b4bcae12255b5b5b34542e00b76a595faab6d244857f86e360ae9  tools/pioneer/tests/run_pioneer_q38_resident_layer_reference_tests.sh
+c7a5da0b7aed5c03535d24c6509687596fd80dcca5d02e858b07353be75ef0eb  tools/pioneer/tests/pioneer_q38_resident_layer_original_source_test.cpp
+ae905302d2f261232e8672e83e34b89df59cb32c1885424d659802b66f3ed9a8  tools/pioneer/tests/run_pioneer_q38_resident_layer_original_source_tests.sh
+c1406d3dda131fb910064c28545518705c310aec63eb72272e60bb498ecbe3ed  tools/pioneer/tests/pioneer_q38_resident_output_original_source_gates_test.py
+9a2181ec2dcd77ffe84369404777f2ffdafe06407b3ef978245503622b0a01d8  tools/pioneer/tests/pioneer_q38_resident_layer_reference_gates_test.py

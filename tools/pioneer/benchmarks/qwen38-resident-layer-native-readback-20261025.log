@@ -52,3 +52,67 @@ f3f02b7d0fa1c55c30e445a87df55fcbb47e1562e0091ac0632cf87ca4325ac9  tools/pioneer/
 7f3db4ff7ee4ebb4be67509f1079c46a46facb40ce3c21ab3e82e9b2cc2c2b5b  tools/pioneer/tests/run_pioneer_q38_resident_layer_native_context_compile.py
 de02ad7d5201b7eae2d84a7d4ed7075014ecac0df81f9c30e892463a3d96e69c  tools/pioneer/tests/pioneer_q38_resident_layer_native_readback_test.cpp
 f89ae46d687652310dff58caa18e2ff74cfe25e762b2b54e940a0638a1c6ce92  tools/pioneer/tests/run_pioneer_q38_resident_layer_native_readback_tests.py
+
+
+TERMINAL FULL EXECUTION QUALIFICATION: main44040 EXIT0 and clean62126 EXIT0
+Actual controllers/programs; simulated OS/byte endpoints ONLY. NO original-model GPU/silicon/rate claim.
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-native-readback-20261025-a.log
+c50933e449976e7494e97d0ca8994eeb7d4d72cea0137fccdbc8e5a4ec585dd0  /private/tmp/pioneer-q38-layer-native-readback-20261025-a.log
+NEW_NATIVE_GDN_ACTUAL_ZERO runs96/pages10544;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs192/pages21072;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs288/pages31600;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs384/pages42144;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs480/pages52672;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs576/pages63200;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs672/pages73728;NO publication before clean CLOSE
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+ACTUAL_NEW_NATIVE_COMPLETE_LAYER_COMPUTATION_PROOFS_ROOTHELD;BEGIN_SAME_OWNER_QLV1
+PASS NEW_NATIVE_QLV1 fault1/page0/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault2/page0/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault3/page0/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page0/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page5/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page15/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page45/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page51/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page56/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page824/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page1591/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault4/page1591/word1023;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault5/page56/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault6/page56/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault7/page0/word1023;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS NEW_NATIVE_QLV1 fault8/page0/word0;ALL119 actual STOP/ALL120holds precede reads,ZERO restore/following IO/retry/END,ALL owners retained
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-native-readback-20261025-clean-b.log
+57caf844f75f096339c413b2383e530bd7f7e5652ad77f4c7dc68e98fc6d49c4  /private/tmp/pioneer-q38-layer-native-readback-20261025-clean-b.log
+NEW_NATIVE_GDN_ACTUAL_ZERO runs96/pages10544;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs192/pages21072;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs288/pages31600;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs384/pages42144;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs480/pages52672;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs576/pages63200;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs672/pages73728;NO publication before clean CLOSE
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+ACTUAL_NEW_NATIVE_COMPLETE_LAYER_COMPUTATION_PROOFS_ROOTHELD;BEGIN_SAME_OWNER_QLV1
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
