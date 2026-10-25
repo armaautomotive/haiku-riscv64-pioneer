@@ -40,6 +40,31 @@ def fixture(head=47, lane=49):
 
 
 class PreparedContextTests(unittest.TestCase):
+    def test_physical_prepared_capture_narrows_drift_before_state_update(self):
+        captured = path.parent/'tests/data/qgt52-head47-prepared-context-20261024.log'
+        text = captured.read_text()
+        self.assertEqual(len(text.splitlines()), 247)
+        context = probe['parse'](text)
+        result = probe['analyze'](context)
+        self.assertEqual((context['head'], context['lane'], context['word']), (47, 49, 820975))
+        self.assertEqual((context['expected_bits'], context['actual_bits']), (0x3a86371e, 0x3a86373a))
+        self.assertFalse(result['log_authenticated'])
+        for side, word in (('expected', 'b69a7f68'), ('actual', 'b69a7f89')):
+            self.assertEqual(result[side]['raw_from_prepared_bits'], word)
+            self.assertEqual(result[side]['raw_from_next_row_bits'], word)
+            self.assertEqual(result[side]['reported_raw_bits'], word)
+            self.assertEqual(result[side]['next_row_different_from_prepared_words'], 0)
+            self.assertEqual(result[side]['shared_qk_differences_between_halves'], 0)
+        self.assertEqual(result['prepared_bit_differences'], dict(q=120, k=38, v=22, decay=0, beta=0))
+        for name, ulp in (('q', 3), ('k', 2), ('v', 2), ('decay', 0), ('beta', 0)):
+            self.assertEqual(result['prepared_drift'][name]['max_ulp'], ulp)
+        self.assertEqual(result['raw_drift']['max_ulp'], 33)
+        self.assertEqual(result['raw_drift']['worst_ulp_index'], 49)
+        self.assertEqual(result['next_row_drift']['max_ulp'], 4)
+        self.assertEqual(result['prepared_counterfactual_raw_bits']['all_actual'], 'b69a7f89')
+        self.assertEqual(result['prepared_counterfactual_raw_bits']['beta_only'], 'b69a7f68')
+        self.assertGreater(result['qk_cancellation_condition_double_observer']['expected'], 1.)
+
     def test_real_raw_capture_stays_diagnostic_and_cannot_invent_prepared_data(self):
         captured = path.parent/'tests/data/qgt52-head47-raw-context-20261024.log'
         text = captured.read_text()
@@ -73,6 +98,11 @@ class PreparedContextTests(unittest.TestCase):
                     self.assertIsNone(result['prepared_drift'][name]['worst_ulp_index'])
                 for side in ('expected', 'actual'):
                     self.assertEqual(result[side]['next_row_vs_prepared_reconstruction']['max_ulp'], 0)
+                    self.assertEqual(result['qk_cancellation_condition_double_observer'][side], 1.)
+                for part in ('q_only', 'k_only', 'v_only'):
+                    self.assertEqual(result['prepared_counterfactual_raw_bits'][part], result['expected']['reported_raw_bits'])
+                for part in ('beta_only', 'all_actual'):
+                    self.assertEqual(result['prepared_counterfactual_raw_bits'][part], result['actual']['reported_raw_bits'])
 
     def test_distinguishes_returned_state_and_preparation(self):
         context = probe['parse'](fixture())
@@ -99,6 +129,19 @@ class PreparedContextTests(unittest.TestCase):
         for left, right in (([], []), ([0], []), ([0x7f800000], [0]), ([0], [0x7fc00000])):
             with self.assertRaises(ValueError):
                 probe['drift'](left, right)
+
+    def test_zero_qk_condition_is_not_infinity_or_an_authentication_grant(self):
+        context = probe['parse'](fixture())
+        for side in ('EXPECTED', 'ACTUAL'):
+            for half in (0, 1):
+                context[side+'_PREPARED_'+str(half)][:256] = [0]*256
+        result = probe['analyze'](context)
+        self.assertEqual(result['qk_cancellation_condition_double_observer'], dict(expected=None, actual=None))
+        self.assertEqual(result['prepared_counterfactual_raw_bits']['all_actual'], '00000000')
+        self.assertFalse(result['log_authenticated'])
+        # This intentionally inconsistent CPU fixture is reported,not accepted
+        # as a source/model/producer proof by the read-only analyzer.
+        self.assertNotEqual(result['expected']['raw_from_prepared_bits'], result['expected']['reported_raw_bits'])
 
     def test_all_missing_duplicate_truncated_and_malformed_rows(self):
         text = fixture()

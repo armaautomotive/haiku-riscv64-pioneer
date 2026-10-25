@@ -1,0 +1,77 @@
+QGT52 physical prepared-state evidence,2026-10-24. Diagnostic NOT a fix.
+Last whole-model0.207893161tok/s unchanged;20tok/s/full offload UNMET.
+
+Recovery epoch r63a is recorded in the QRR2 original-source checkpoint.
+NEW human OFF confirmation consumed by ONE ON58395 TERMINAL0. Linux fresh
+boot17288df1-421c-47a6-8eb6-6d374670ce83;prepare57810/boot72465 TERMINAL0,
+pinned9cfc6dc3 SD-free helper/64CPU/full-RAM top-page Haiku. CPU metadata
+tag52/gen1/cold0/owner0. Guarded stable041 restore50255 TERMINAL0 ->gen2.
+sysinfo64CPUs/max137034936320B. Twice-built cbe472f5 diagnostic staged at
+unused path58495 TERMINAL0;remote SHA matched. Guarded exact DEBUG52 apply
+34082 TERMINAL0 ->tag52/gen3/cold0/owner0. No SD/mains/Assistant change.
+
+ONE diagnostic23715 ACTUAL TERMINAL1. Original full-file authentication and
+all CPU references BEFORE GPU FD;111original uploads+SPAN_END returned0.
+Single3318720B ioctl89de returned0. Same FIRST numerical failure:
+ relative_tolerance/word820975/half94/offset8627/head47/lane49,
+ expected3a86371e,actual3a86373a,28ULPs/3.183289006ppm > UNCHANGED3ppm.
+ Later partner data may be unchecked. Aggregate255189407us includes
+ initialization/execution/readback/restore;NOT token time or throughput.
+ Already-returned CPU reply retained paired128raw+both322prepared halves+
+ 128failing NEXT-row values;original references/Z already existed BEFORE FD.
+ No following GPU peek/END/reset/retry/rollback. CPU-only metadata confirms
+ tag52/gen3/cold1/active_owner1,QUARANTINED.
+
+Completed ownlog archived15470 TERMINAL0 after terminal,parent/client closed:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/qgt52-prepared-card-20261024-r63a.log
+ /private/tmp/pioneer-qgt52-prepared-evidence-20261024.E7gt38W2/card.log
+ BOTH SHA70e49b2b2c0d9320ae314668ed0cff6b259c070005636f1170e46004ddef7989.
+ Trimmed EXACT247diagnostic records only,not source/model/native grants:
+ tools/pioneer/tests/data/qgt52-head47-prepared-context-20261024.log
+ SHA4c05de741579796d105d7126736055d725a5d96e834fe1407335d07e25bc90cf.
+
+Read-only sequential binary32 first-token-zero reconstruction:
+ ORIGINAL prepared ->128expected NEXT-row words ALL BIT-EXACT and rawb69a7f68.
+ RETURNED prepared ->128returned NEXT-row words ALL BIT-EXACT and rawb69a7f89.
+ BOTH raw values match their captured replies EXACTLY. Shared Q/K bits match
+ between paired halves. This narrows the first observed drift upstream of
+ this row's recurrence arithmetic;it does NOT authenticate unobserved inputs
+ or qualify every row/the fused path/full model.
+ Prepared Q120different words/max3ULP/0.316237ppm;K38/max2ULP/0.177815ppm;
+ V22/max2ULP/0.130006ppm. Decay and beta EXACT. NEXT row120different/max4ULP;
+ paired raw126different/max33ULP at lane49/3.259208ppm.
+
+CPU-only input-sensitivity counterfactual raw bits:
+ actualQ only +otherORIGINAL:b69a7f7c;
+ actualK only:b69a7f6e;actualV only:b69a7f73;
+ actualBeta only:b69a7f68 (UNCHANGED);ALLactual:b69a7f89 (EXACT physical).
+ Double-observer Q.K cancellation condition18.36415575(original),
+ 18.36413511(returned). INFERENCE:small upstream Q/K/V/normalization/activation
+ rounding is amplified by cancellation here. Exact pre-normalization Q/K/V
+ convolution sources were NOT captured;do NOT claim a particular root
+ function fixed or a different operation validated. Earlier LOCAL gated
+ probe with returned raw+originalnorm/Z matched physical gated3a86373a;
+ physical Z/norm remain unobserved assumptions. No tolerance widening.
+
+Analysis artifact:
+ /private/tmp/pioneer-qgt52-prepared-evidence-20261024.E7gt38W2/analysis-with-drift.json
+ SHA79d448b086f159ed067604e91dec38426320d1f18e70f7f4e3e3f235c5acb03f.
+ Synthetic+captured regression C/D ACTUAL TERMINAL0:9methods. Exact physical
+ fixture bits/all128NEXT reconstruct/zero shared-QK drift/raw proof,closed-
+ form counterfactuals/cancellation1/zero-denominator null/no auth grant,
+ 10head+lane boundaries/394missing-duplicate/7malformed/30domain+8gate/
+ signed-zero/negative ordering/zero-reference/finite checks/read-only bounded
+ CLI+badUTF8+oldraw-only refusal all PASS. Not a native numerical pass.
+ C:/private/tmp/pioneer-qgt52-physical-prepared-context-tests-20261024-c.log
+ SHA0b00a0c20b9f641d3925c2ab9cb0677e4ac1c2112d401c6aea0c76020673b6f7.
+ D:/private/tmp/pioneer-qgt52-physical-prepared-context-tests-20261024-d.log
+ SHAe8683c9d56b55b661992dbcd1606c254ae2e152e185d06ad271f3b5fe6bbd36f.
+
+Log synced before ONE authorized OFF68897 ACTUAL TERMINAL0/7second hold.
+NEW actual fans/LED-off confirmation PENDING before ON. Do NOT repeat OFF,
+reuse the consumed prior confirmation or infer board power from relay state.
+Old62 full genuine-prefix regression26933 remains LIVE separately;all its
+source/image/driver/observer dependencies frozen. No native63 promotion.
+Next:precision investigation of upstream CARD preparation/activation inputs,
+separate native63 SAME-producer integration/full restore+END,then full-layer
+attentionKV/sampling/persistent token schedule/honest hardware benchmarking.

@@ -1,5 +1,20 @@
 # Native build status
 
+October24 UTC2026:ONE physical DEBUG52 prepared capture23715 TERMINAL1
+reproduced same28ULP gated mismatch. Actual prepared inputs reconstruct
+returned128word NEXT row and rawb69a7f89 BIT-EXACT;originals reconstruct
+b69a7f68. Q/K/V differ max3/2/2ULPs;decay/beta EXACT. CPU counterfactuals
+and Q.K cancellation~18.36 narrow drift upstream of this state row,NOT a
+fix or all-row/model pass. Full ownlog archived/matching70e49b2b;247record
+fixture+9method read-only regression PASS. No bounds widened or post-failure
+GPU peek/END/reset/retry/rollback. CPU metadata cold1/owner1 QUARANTINED.
+After log sync ONE OFF68897 TERMINAL0;NEW actual fans/LED-off confirmation
+PENDING before ONE ON. Never repeat OFF/reuse previous confirmation. No
+SD/mains/Assistant change;prior sysinfo64CPU/fullRAM. Old62 genuine-prefix
+regression26933 LIVE/dependencies frozen. Native63 owner WIP/not selected.
+Last whole27B0.207893161tok/s/20UNMET/goalACTIVE. Evidence:
+benchmarks/qwen38-qgt52-physical-prepared-context-20261024.txt.
+
 October24 UTC2026:QRR2 ORIGINAL layer1 post-attention norm byte source and
 independent CPU observer OFFLINE qualified. Full c600/all851schema checks;
 5original cached pages BEFORE context,2exact norm packet reads,55atomic

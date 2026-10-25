@@ -115,6 +115,26 @@ def analyze(context):
         for name, start, end in (('q', 0, 128), ('k', 128, 256), ('v', 256, 320), ('decay', 320, 321), ('beta', 321, 322))}
     result['next_row_drift'] = drift(context['EXPECTED_NEXT_ROW'], context['ACTUAL_NEXT_ROW'])
     result['raw_drift'] = drift(context['EXPECTED_RAW'], context['ACTUAL_RAW'])
+    original, returned = (values[side+'_PREPARED_'+str(half)] for side in ('EXPECTED', 'ACTUAL'))
+    # CPU-only counterfactuals isolate input sensitivity. These are neither
+    # GPU measurements nor products offered to a native controller.
+    def from_inputs(q, k, v, beta):
+        total, delta = 0.0, f32(v*beta)
+        for key in range(128):
+            total = f32(total+f32(f32(k[key]*delta)*q[key]))
+        return f'{bits(f32(total*scale)):08x}'
+    result['prepared_counterfactual_raw_bits'] = {
+        'q_only': from_inputs(returned[:128], original[128:256], original[256+lane], original[321]),
+        'k_only': from_inputs(original[:128], returned[128:256], original[256+lane], original[321]),
+        'v_only': from_inputs(original[:128], original[128:256], returned[256+lane], original[321]),
+        'beta_only': from_inputs(original[:128], original[128:256], original[256+lane], returned[321]),
+        'all_actual': from_inputs(returned[:128], returned[128:256], returned[256+lane], returned[321]),
+    }
+    result['qk_cancellation_condition_double_observer'] = {}
+    for side, prepared in (('expected', original), ('actual', returned)):
+        products = [prepared[key]*prepared[128+key] for key in range(128)]
+        denominator = abs(math.fsum(products))
+        result['qk_cancellation_condition_double_observer'][side] = math.fsum(map(abs, products))/denominator if denominator else None
     return result
 
 
