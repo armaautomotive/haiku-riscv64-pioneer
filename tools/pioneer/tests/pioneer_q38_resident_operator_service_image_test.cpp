@@ -16,8 +16,8 @@ struct ResidentOperatorPeer:FfnPersistentPeer {
  bool convActive=false,jobLate=false,bootLate=false,doorbellLate=false;
  unsigned convPackets=0,convWrites=0,convFailPacket=0,convSourcePacket=0,convCounterPacket=0;
  unsigned convTablePacket=0,convTableWord=0;
- ResidentOperatorPeer(const char* path,unsigned worker=1,unsigned type=12)
-  :FfnPersistentPeer(path,type,5120,1,worker,16384),service(Read((std::string(path)+"/service.bin").c_str())),
+ ResidentOperatorPeer(const char* path,unsigned worker=1,unsigned type=12,unsigned k=5120,unsigned panels=1)
+  :FfnPersistentPeer(path,type,k,panels,worker,16384),service(Read((std::string(path)+"/service.bin").c_str())),
    canonical(new PioneerQ38CanonicalModelPlan){
   assert(!service.empty() && !(service.size()&3) && service.size()<=0x6000 && canonical->Build());
  }

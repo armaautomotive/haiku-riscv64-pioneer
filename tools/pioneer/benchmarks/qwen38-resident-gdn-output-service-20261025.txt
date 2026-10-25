@@ -1,0 +1,153 @@
+Qwen3.8-27B: returning all-layer gated-output preparation (QOL1)
+2026-10-25 UTC. OFFLINE emitted-program evidence, NOT physical throughput.
+
+Outcome and scope
+-----------------
+The persistent peer now has a separate, compile-time-exact op6 that reads
+one 256-F32 gated-output chunk from its fixed GDDR workspace, performs the
+existing Q8_0 quantization on the card's RV32 softcore, and writes 512 native
+operand bytes plus a fresh 128-byte scale/ancestry line. It returns to the
+same persistent matrix/Conv/GDN loop without reset or a host callback.
+
+All 24 chunks cover the 6144 gated-output lanes. The new QOL1 grammar binds
+all 48 recurrent layers, positions 0..8191, producer phase, token ID, bank,
+workspace, worker route, source seal and eight identity words. The older
+QOI1 grammar is deliberately unchanged and NOT accepted as QOL1. In
+particular, the old layer0/position0-only descriptor was not silently
+broadened. These fields are DATA checks, not proof of an initialized model,
+current producer, native ownership or token/state-slot commit.
+
+Every packet verifies the same job, boot record, source, descriptor, four
+empty queues and 32 empty tags. Actual counters must match the preceding
+receipt BEFORE the next command; foreign movement is never accepted as a
+new baseline. Ten command words are checked before submission, after
+completion, before replacement by the next packet, and while forming the
+final proof. Counter aliases, unsigned wrap, and all eight counter deltas
+are checked. Raw input is poisoned and read back before the actual read;
+the quantizer publishes no partial result on invalid input. UNKNOWN parks
+without another packet, reset, restoration or retry. The 65536-poll limit
+is an iteration bound, not a measured physical watchdog deadline.
+
+This is a necessary persistent-worker component, NOT complete on-card
+27B inference. The current installed driver was NOT changed. No model
+tokens or silicon timings were measured here. Last genuine whole-model
+rate remains 0.207893161 tokens/sec; 20 tokens/sec is still UNMET.
+
+Immutable image
+---------------
+Exact roles: PIONEER_Q38_RESIDENT_OPERATOR_IMAGE=1,
+PIONEER_Q38_FFN_PERSISTENT=1, PIONEER_Q38_PROJECTION_PERSISTENT=1,
+PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE=1, and the NEW
+PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE=1.
+
+Section  Bytes  SHA-256
+boot         4 e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+text      7940 d726337fe94d7d94812aaf5e67f3d4e328a21873cb27aa982dc5315bb6294b07
+affine    5360 fcdf8ec5b607550db93fda5a86830951e2518d5580b11f4538fb6eead0eb3b7b
+ffn      16352 f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9
+service  10300 d00147de57e51e096760da0e6d25476692646807bcb0dc52d5a02b1263657254
+gdn      35396 36458af185c3500d1cd1b1170672c2138910aff836bd8a6a407b07c68a80b93d
+
+The builder first recompiles/authenticates ALL SIX previous worker
+sections, including its exact matrix/Conv/QFP3 and standalone-QGT1
+ancestors. The new helper is explicitly exported inside the proposed
+b8000..c8000 peer ROM. There is no writable global or undefined symbol;
+ALL allocated sections must be among the six exported sections. Existing
+code/stack limits were not widened. Maximum new function frame is 720B.
+The native snapshot/restore owner does not yet cover this proposed image.
+
+Verification
+------------
+Builds c, d and an independent clean source tree reproduce all six pins.
+The clean tree contains HEAD's tracked source plus exactly 35 scoped source
+changes; all 35 source SHA-256 values match the working tree. It excludes
+the unrelated dirty llama.cpp checkout and untracked FlashNext work.
+SDK /Volumes/HaikuBuildLocal/generated.riscv64 was read-only.
+
+Actual compiled RV32/FPU/Tensix instructions run under ASan+UBSan. Only
+byte endpoints and clock are synthetic; no precomputed numeric success
+result is injected into the program. The full run passed:
+
+  QOL1: 2307 positive scenarios, 247 fault scenarios, max stack 3972B.
+    Every recurrent layer x24 chunks x positions0/8191, changed operands,
+    all banks/base edges and independent native Q8_0/scale packing.
+    ALL64 proof mutations and ALL64 late descriptor mutations refused.
+    ALL90 command read corruptions; packet loss; counter/source changes;
+    foreign counter/command movement between completed packets; busy
+    queues/tags; job/source corruption; late job/boot/doorbell changes;
+    invalid inputs; attention layers/position8192; old op6 marker/peer
+    rejection; faulted and completed wait loops remain inert.
+
+  SAME physical-state handoff at layers0,30,62:
+    Four actual GDN halves produce all 256 values consumed by op6.
+    The observer checks cfg/thread/LRegs/physicalDst/integerDst remain
+    bit-exact across op6, then runs a K6144 Q8 matrix in the SAME worker.
+    The first chunk is the actual prepared wire; remaining matrix chunks
+    and weights are explicitly synthetic. This is NOT a complete 5120-row
+    output projection or a fully coordinated 6144-lane producer pipeline.
+
+  Existing matrix/Conv/GDN suite on the NEW relocated image:
+    176 positive scenarios, 261 fault scenarios, max stack 4260B.
+    ALL96 halves/48 layers, repeated NEXT carry, canonical shared tensor
+    arrays, both state slots, strict original numerical observers, old
+    service rejection, matrix-rearm-loss and UNKNOWN terminal controls.
+
+  New isolation gates: 400 checks on two exact new images.
+    Kernel prefix, ten CPU references, validation session, original-model
+    observer, and ten old builders refuse the new role (including defined0
+    and late aliases). All required parent roles/invalid values rejected.
+  Old returning-GDN gates: 445 checks, ALL SIX old pins exact.
+  Old cohort ROOT gates: 468 checks, ALL FOUR old ROOT pins exact.
+
+Initial failures were retained and fixed only after their parent process
+was terminal: an extern preceding the uint32_t declaration; a test receipt
+read-count omission; and a missing explicit test endpoint for the existing
+Conv mailbox when a job bit mutation changes op6 to op7. The latter now
+models exactly the pre-poisoned fixed 74800..74e00 table, NOT arbitrary L1
+reads. No production check was removed to pass a negative control.
+
+Evidence (all listed processes returned exit0)
+--------------------------------------------
+Full run session72357:
+ /private/tmp/pioneer-q38-resident-gdn-output-full-20261025-b.log
+ SHA256 08452b242e25ed37e43967501735fdd583217581931ade8cd48ffa2a21db844e
+New gates session8739:
+ /private/tmp/pioneer-q38-resident-gdn-output-gates-20261025-a.log
+ SHA256 2f0554297079e60a2620ca9334643fd2332f4f54f8a0324351adc4cba97ff78f
+Clean build13437, smoke86652, gates63387:
+ /private/tmp/pioneer-q38-gdn-output-clean-20261025.w2BHyuyL
+ smoke SHA256 03d8ad5520e0aa951f0acb89e7267040a386aeef37b2bbdcd706344e02a82810
+ gates SHA256 2f0554297079e60a2620ca9334643fd2332f4f54f8a0324351adc4cba97ff78f
+Old worker gates88669:
+ /private/tmp/pioneer-q38-resident-gdn-output-parent-gates-20261025-a.log
+ SHA256 871e2f567f80fc7af3a3b3b810da18d0099a302de4f0e6f51e0aac95eb260851
+Old ROOT build23713 / gates11496:
+ /private/tmp/pioneer-q38-resident-gdn-output-cohort-gates-20261025-a.log
+ SHA256 4b0d9b5ad10b7a5fcfea1ada2c5db347f895d3038b090f006ec72b88601484a4
+
+Reproduce (use fresh absolute output directories)
+-----------------------------------------------
+python3 tools/pioneer/build_qwen38_resident_gdn_output_operator_service_image.py /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW-QOL1-IMAGE
+python3 tools/pioneer/tests/run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py /private/tmp/NEW-QOL1-IMAGE /private/tmp/NEW-QOL1-IMAGE/unchanged-worker
+python3 tools/pioneer/tests/pioneer_q38_resident_gdn_output_operator_service_gates_test.py /private/tmp/NEW-QOL1-IMAGE /private/tmp/SECOND-INDEPENDENT-QOL1-IMAGE
+
+Working-system preservation / next work
+---------------------------------------
+Pinned SSH still reports Haiku, 64 CPUs, max RAM137034936320B. Installed
+driver hash remains041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+No GPU FD, native candidate load, driver/Assistant installation, network
+configuration, relay, SD, disk, mains or hardware action occurred during
+this component implementation/test checkpoint.
+
+Next: extend the actual card-side ROOT to launch all24 QOL1 operations
+after ALL96 real GDN halves complete, validate their fresh ancestry and
+physical receipts, gather 12288 native bytes+192 scales, then dispatch the
+complete K6144->N5120 output matrix across the persistent 119 peers.
+Existing QOI1/QOG1 first-layer consumers must NOT silently accept QOL1.
+Qualify the combined Conv/GDN/output/matrix instruction pipeline before
+adding its genuine complete pinned joint native code/model/source/init/
+clock/ALL120/STOP+hold+restore+END owner. The known held-PC audit hazard
+must not be inherited. Then continue residual/RMS/FFN, all-layer state and
+token-loop integration and measure real end-to-end inference; keep debug
+CPU validation separate from Work. Current-slot/token commit and fast
+whole-model inference remain outstanding, not successful sub-goals.

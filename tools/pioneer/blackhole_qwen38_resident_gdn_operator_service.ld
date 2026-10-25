@@ -21,6 +21,7 @@ SECTIONS {
 	 * Disjoint from all current peer code/stack/runtime views;future joint
 	 * owner must qualify this fixed extent BEFORE ANY write. */
 	.gdn 0xb8000 : {
+		*gdn_output.o(.text .text.* .rodata .rodata.* .srodata .srodata.* .q38_projection_data)
 		*gdn_service.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		*gdn_input.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)
 		*gdn_state.o(.text .text.* .rodata .rodata.* .srodata .srodata.*)

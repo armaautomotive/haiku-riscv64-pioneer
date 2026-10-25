@@ -22,8 +22,8 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
  bool dropMatrixConfig1=false;unsigned droppedMatrixConfig1=0;
  bool gdnLateJob=false,gdnLateBoot=false,gdnLateDoorbell=false,gdnNeverPeer=false;
  unsigned clockReads=0,clockFault=0;uint64_t clockEpoch=UINT64_C(1)<<40,clockTime=0,clockGap=1000000;
- ResidentGdnOperatorPeer(const char* path,unsigned worker=1,unsigned type=12)
-  :ResidentOperatorPeer(path,worker,type),gdnCode(Read((std::string(path)+"/gdn.bin").c_str())){
+ ResidentGdnOperatorPeer(const char* path,unsigned worker=1,unsigned type=12,unsigned k=5120,unsigned panels=1)
+  :ResidentOperatorPeer(path,worker,type,k,panels),gdnCode(Read((std::string(path)+"/gdn.bin").c_str())){
   assert(!gdnCode.empty() && !(gdnCode.size()&3) && gdnCode.size()<=0x10000);
  }
  unsigned Index(uint32_t at)override{

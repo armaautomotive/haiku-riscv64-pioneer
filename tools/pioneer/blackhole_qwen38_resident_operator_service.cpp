@@ -7,6 +7,9 @@
 #error Persistent peer program is never a cohort ROOT
 #endif
 #include "PioneerQ38ResidentOperatorImageRole.h"
+#ifdef PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE
+#include "PioneerQ38ResidentGdnOutputImageRole.h"
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE
 #include "PioneerQ38ResidentGdnOperatorImageRole.h"
@@ -14,6 +17,9 @@
 extern "C" void q38_resident_persistent_gdn(const uint32_t*,const uint32_t*,unsigned,unsigned);
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentConvServiceShape.h"
+#ifdef PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE
+extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_t*,unsigned,unsigned);
+#endif
 extern "C" void q38_resident_persistent_conv(const uint32_t*,const uint32_t*,unsigned,unsigned);
 #define PIONEER_Q38_SFPU_ACCUMULATOR
 #define PIONEER_Q38_SFPU_INTEGER
@@ -147,7 +153,11 @@ extern "C" void q38_persistent_main()
 			|| snapshot[11]!=worker || snapshot[12]!=sequence ||
 #ifdef PIONEER_Q38_FFN_PERSISTENT
 #ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE
-            (snapshot[13]-1>4 && snapshot[13]!=TT_Q38_RESIDENT_CONV_SERVICE_OPERATION && snapshot[13]!=TT_Q38_RESIDENT_GDN_SERVICE_OPERATION)
+            (snapshot[13]-1>4 && snapshot[13]!=TT_Q38_RESIDENT_CONV_SERVICE_OPERATION && snapshot[13]!=TT_Q38_RESIDENT_GDN_SERVICE_OPERATION
+#ifdef PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE
+             && snapshot[13]!=6
+#endif
+            )
 #elif defined(PIONEER_Q38_RESIDENT_OPERATOR_IMAGE)
             (snapshot[13]-1>4 && snapshot[13]!=TT_Q38_RESIDENT_CONV_SERVICE_OPERATION)
 #elif defined(PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE)
@@ -180,6 +190,10 @@ extern "C" void q38_persistent_main()
 		}
 #ifdef PIONEER_Q38_FFN_PERSISTENT
 		if(snapshot[13]>=TT_Q38_FFN_PERSISTENT_ACTIVATION) {
+#ifdef PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE
+			if(snapshot[13]==6)q38_resident_persistent_gdn_output(snapshot,sealedSource,worker,self);
+			else
+#endif
 #ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE
 			if(snapshot[13]==TT_Q38_RESIDENT_GDN_SERVICE_OPERATION)q38_resident_persistent_gdn(snapshot,sealedSource,worker,self);
 			else
