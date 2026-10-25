@@ -6,7 +6,8 @@ if(c.q38ResidentOutputNative){
  auto* state=c.q38ResidentOutputNative;auto* model=c.q38EmbeddingModel;
  if(!model || !sRuntimeOwner || sRuntimeOwner->context!=&c || sRuntimeOwner->magic!=0x50313030
   || !state->MatchesBinding(c,*model,sRuntimeOwner,c.hashes,sRuntimeOwner->team,c.initialized,sReloadGeneration)
-  || !state->Closed(c.banks,c.baseline.baseline.baseline.baseline.dram)){
+  || !state->Closed(c.banks,c.baseline.baseline.baseline.baseline.dram) || !state->ClosedOutputBinding()
+  || !c.io.ResidentOutputMemoryMappingStable(0)){
   clean=false;RetainQ38DispatchOwner(c,result);return false;
  }
 }

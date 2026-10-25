@@ -38,8 +38,8 @@ class PioneerQ38ResidentOutputOwner {
  bool running[120]={},accepted[120]={},stopped[119]={};
  uint32_t token=UINT32_MAX,position=UINT32_MAX,bank=7,phase=0;
  uint64_t began=0;bool started=false,ready=false,unsafe=false,closed=false,ran=false,traffic=false,rootVerified=false;
- bool Bound()const{
-  if(!started || unsafe || closed || !projection || !input || !memory || memory->unsafe || memory->closed
+ bool Bound(bool closedState=false)const{
+  if(!started || unsafe || closed!=closedState || !projection || !input || !memory || memory->unsafe || memory->closed!=closedState
    || !previousMemory || previousMemory->Unsafe() || !previousMemory->Closed() || !history || !recurrent || !proof || !banks || !cohort
    || !graph || !canonical || !ledger || !identity.Valid() || !canonical->Ready() || !banks->Matches(*proof)
    || projection->Unsafe() || !projection->Closed() || input!=&projection->closedResidentInput || input->owner!=projection || input->consumer!=this
@@ -57,6 +57,7 @@ class PioneerQ38ResidentOutputOwner {
    || history->residentOutputNextPublished!=ran || recurrent->residentOutputNextPublished!=ran
    || cohort->unsafe || cohort->closed || cohort->prepared!=120 || cohort->bootAttempted || cohort->booted || cohort->rootRunning!=running[0]
    || (ready && (!memory->started || !memory->installed || !memory->launched)))return false;
+  if(closedState && (!ran || !rootVerified || ready || traffic || !memory->started || !memory->launched || memory->installed))return false;
   if(memory->started && (memory->proof!=proof || memory->banks!=banks || memory->cohort!=cohort || memory->plan!=canonical
    || !(memory->identity==identity) || memory->ledger!=ledger))return false;
   const auto* workspace=canonical->Workspace(bank);if(!workspace)return false;const uint32_t base=canonical->Base+workspace->offset;
@@ -66,6 +67,7 @@ class PioneerQ38ResidentOutputOwner {
   for(unsigned w=0;w<120;w++){
    const auto& n=cohort->worker[w];const auto& s=n.master?*n.master:n.store;
    if(!n.image.saved || !n.image.ready || n.image.unsafe || n.image.running!=running[w] || !s.ready || s.pending || s.recovery_required || n.noc.recovery_required)return false;
+   if(closedState && (running[w] || resets[w]!=0x47800 || (w && (!accepted[w] || !stopped[w-1]))))return false;
    for(unsigned i=0;i<16;i++)if(cohort->authority.source[w][i]!=sources[w][i])return false;
   }
   // Deliberately NOT input->Current()/old MatchesClosedNativeOwner: the
@@ -199,9 +201,13 @@ public:
  PioneerQ38ResidentOutputOwner(const PioneerQ38ResidentOutputOwner&)=delete;
  PioneerQ38ResidentOutputOwner& operator=(const PioneerQ38ResidentOutputOwner&)=delete;
  bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
+ bool Claimed()const{return started;} // CPU metadata ONLY,never an IO grant
  bool Completed()const{return ready && ran && !unsafe && !closed;} // private lineage still REQUIRED by every consumer
  bool MatchesNativeOwner(const PioneerQ38ProjectionGraphOwner& producer,const PioneerQ38ResidentOutputMemory& code)const{
   return projection==&producer && memory==&code && Bound(); // CPU binding ONLY,not native scope/IO authority
+ }
+ bool MatchesClosedNativeOwner(const PioneerQ38ProjectionGraphOwner& producer,const PioneerQ38ResidentOutputMemory& code)const{
+  return projection==&producer && memory==&code && Bound(true); // private NEW complete lineage,not old input Current
  }
  template<class IO> bool Prepare(IO& io,PioneerQ38ProjectionGraphOwner& producer,PioneerQ38ResidentOutputMemory& code,PioneerQ38ResidentOutputResult& r){
   if(started || unsafe || closed || code.started || code.unsafe || code.closed || code.launched || code.installed

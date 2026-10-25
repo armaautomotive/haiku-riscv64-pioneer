@@ -120,6 +120,7 @@ static void ExecuteOutput(ResidentExecutionIO& io,ProjectionExecutionProducer& p
  io.outputMachine.reset(new ResidentOutputExecutionMachine(root,peer,static_cast<ResidentOutputExecutionFabric&>(io)));
  auto unknown=[&](){
   assert(fault && io.injected && controller->Unsafe() && !controller->Closed() && !controller->Completed() && memory->Unsafe() && !memory->Closed()
+   && !controller->MatchesClosedNativeOwner(projection,*memory)
    && producer.Banks().Quarantined() && io.retainedOutput && io.retainedExecution && !producer.Valid() && !input->Current());
   if(io.fence)assert(io.touches==io.fence);
   unsigned n=io.touches,reads=io.reads,writes=io.writes;
@@ -141,10 +142,12 @@ static void ExecuteOutput(ResidentExecutionIO& io,ProjectionExecutionProducer& p
  if((fault>=4 && fault<=7) || (fault>=13 && fault<=16) || fault==20){assert(!ran && !result.rootHolds && !result.memory.restoredWords);unknown();return;}
  if(!ran){fprintf(stderr,"OUTPUT_RUN_FAIL phase%u worker%u word%u completed%u rootHolds%u\n",result.phase,result.worker,result.word,result.completed,result.rootHolds);io.outputMachine->Diagnostic();}
  assert(ran && controller->Completed() && !controller->Unsafe() && result.completed==119 && result.rootStarts==1 && result.rootHolds==1);
+ assert(!controller->MatchesClosedNativeOwner(projection,*memory));
  io.outputMachine->VerifyOutput();puts("OUTPUT_NEW_CONTROLLER_FULL_ACTUAL_ARITHMETIC_COMPLETE;BEGIN_STOP_AND_RESTORE");
  bool closed=controller->Close(io,result);
  if(fault){assert(!closed);if(fault==8 || fault==9)assert(!result.held);if(fault==17)assert(result.held==118);unknown();return;}
  assert(closed && controller->Closed() && memory->Closed() && !controller->Unsafe() && !memory->Unsafe()
+  && controller->MatchesClosedNativeOwner(projection,*memory) && !controller->MatchesNativeOwner(projection,*memory)
   && io.newBoots==119 && io.newStarts==1 && io.outputMachine->Boots()==119 && io.outputMachine->Stops()==119
   && result.stopped==119 && result.held==119 && result.memory.restoredWords==TT_Q38_RESIDENT_OUTPUT_SAVED_WORDS
   && result.memory.verifiedOriginalWords==2*TT_Q38_RESIDENT_OUTPUT_SAVED_WORDS);

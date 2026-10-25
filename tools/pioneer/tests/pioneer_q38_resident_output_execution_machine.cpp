@@ -78,6 +78,12 @@ struct ResidentOutputExecutionMachine::Impl {
    const auto* d=PioneerQ38CohortGdn(f.manifest.data(),w)+64;uint32_t bytes[8192];
    for(unsigned i=0;i<8192;i++)bytes[i]=f.Gddr(d[13],d[7]+i*4);assert(endpoint.WriteState(d[6],d[7],bytes,8192));
   }
+  for(unsigned w=0;w<120;w++){
+   const auto* table=PioneerQ38CohortConv(f.manifest.data(),w);
+   for(unsigned j=0;j<PioneerQ38ConvBatchCount(w);j++){const auto* d=table+j*64;uint32_t bytes[48];
+    for(unsigned i=0;i<48;i++)bytes[i]=f.Gddr(d[41],d[15]+i*4);assert(endpoint.WriteState(d[14],d[15],bytes,48));
+   }
+  } // observe actual emitted convolution history stores too;NEVER reconstruct them from host math
   exported=true;
  }
  void Start(unsigned w){

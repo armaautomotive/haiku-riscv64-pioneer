@@ -2127,6 +2127,13 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
  bool ResidentOutputInitializationOtherCoresHeld(bool);
  bool ResidentOutputPrefixInitializationScope();
  bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ bool ResidentOutputSourceScope(bool);bool ResidentOutputMappingSourceScope();
+ bool ResidentOutputMemoryScope(const PioneerQ38ResidentOutputMemory&,const PioneerQ38CanonicalModelPlan&,
+  const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+ bool ResidentOutputExecutionScope(const PioneerQ38ResidentOutputOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ResidentOutputMemory&,
+  const PioneerQ38ProjectionMutableBanks&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+ void ResidentOutputRetainHostOwners();
+#include "PioneerQ38ResidentOutputNativeMapping.inc"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  bool DecoderCallScopeMatches();
@@ -2256,6 +2263,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		tt_compute_noc_result& n,tt_host_path_result& h,tt_host_dma_audit_result& auditResult,tt_host_write_result& r)
 		: PioneerHostWriteIO(p,a,t,c,d,n,h,auditResult,r,4096) {}
 	~PioneerSessionIO() {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  for(auto area:q38ResidentOutputMemoryArea)if(area>=B_OK)delete_area(area); // known-clean context destruction ONLY
+#endif
 #if defined(PIONEER_Q38_PROJECTION_GRAPH_MEMORY) || defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER)
 		// An uncertain projection context is retained before destruction.
 		for (auto area:q38ProjectionMemoryArea) if (area>=B_OK) delete_area(area);
@@ -3211,6 +3221,12 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_Q38_PROJECTION_EXECUTION_OWNER
 		// PIONEER_Q38_PROJECTION_EXECUTION_NATIVE_UNSAFE_BEGIN
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  if(q38ResidentOutputNative && q38ResidentOutputNative->ControlsOutputCohort(banks,baseline.baseline.baseline.baseline.dram,
+   q38Dispatch,initialized,PioneerResidentBanks::Pages)){
+   if(!controlledEmbedding)return true;
+  }else
+#endif
 		if (q38Dispatch && q38EmbeddingModel && q38EmbeddingModel->projectionCohort && !q38EmbeddingModel->projection.Closed()) {
 			if (!controlledEmbedding || !q38EmbeddingModel->ControlsProjectionCohort(baseline.baseline.baseline.baseline.dram,
 				banks,q38Dispatch,initialized,PioneerResidentBanks::Pages)) return true;
@@ -3777,6 +3793,7 @@ void PioneerSessionIO::ProjectionGraphRetainHostOwners()
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "PioneerQ38ResidentOutputNativeBind.inc"
 #include "PioneerQ38ResidentOutputNativeInitialize.inc"
+#include "PioneerQ38ResidentOutputNativeExecution.inc"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 // PIONEER_Q38_RESIDENT_DECODER_NATIVE_SCOPE_BEGIN

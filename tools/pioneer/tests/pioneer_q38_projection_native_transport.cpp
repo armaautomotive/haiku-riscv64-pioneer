@@ -3,6 +3,11 @@
 #include "pioneer_q38_projection_memory_test.cpp"
 #include "pioneer_q38_projection_execution_machine.h"
 #include "pioneer_q38_projection_native_transport.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "pioneer_q38_resident_output_execution_machine.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputImages.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputOwner.h"
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
 #include "pioneer_q38_gdn_output_execution_machine.h"
 #endif
@@ -44,11 +49,59 @@ static constexpr unsigned kGdnValidationWords=TT_Q38_GDN_RENDEZVOUS_VALIDATION_W
 #elif defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE)
 static constexpr unsigned kGdnValidationWords=TT_Q38_GDN_RECURRENT_VALIDATION_WORDS,kGdnValidationHalfWords=TT_Q38_GDN_RECURRENT_VALIDATION_HALF_WORDS;
 #endif
-struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFabric {
+struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ ResidentOutputExecutionFabric
+#else
+ ProjectionExecutionFabric
+#endif
+ {
  std::vector<uint32_t>& workspace;std::unique_ptr<ProjectionExecutionMachine> machine;
  unsigned boots=0,starts=0,stops=0,fault=0;bool damaged=false;
  const PioneerQ38ProjectionGraphResult* result=nullptr;
  ProjectionExecutionLearnedBytes* learned=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ std::unique_ptr<ResidentOutputExecutionMachine> resident;
+ ResidentOutputNativeStateBytes* residentBytes=nullptr;bool residentStarted[120]={};
+ const PioneerQ38ResidentOutputResult* residentResult=nullptr;
+ unsigned residentFault=0,residentFence=0;bool residentInjected=false;
+ bool ResidentAt(unsigned phase,unsigned worker)const{return residentResult && residentResult->phase==phase && current==worker;}
+ std::vector<uint32_t> residentExtra;
+ uint32_t ResidentRead(unsigned w,uint32_t a){
+  assert(w==current);
+  if(PioneerQ38ProjectionGraphSnapshotContains(w,a))return FullRead(w,a);
+  unsigned offset=0;
+  for(unsigned i=0;i<PioneerQ38ResidentOutputSpanCount(w);i++){auto span=PioneerQ38ResidentOutputSnapshotSpan(w,i);
+   if(a>=span.address && a-span.address<span.words*4)return residentExtra.at(PioneerQ38ResidentOutputSnapshotBase(w)+offset+(a-span.address)/4);
+   offset+=span.words;
+  }
+  // The pre-existing outer dispatch END audits/restores its FULL legacy
+  // 0x42000-byte panel. These untouched bytes are NOT part of the new
+  // snapshot or a new mapping grant; preserve their original endpoint.
+  if(!(a&3) && a>=0xac000 && a<TT_Q38_PANEL_VIEW_BASE+TT_Q38_PANEL_VIEW_BYTES)return C().Q38PanelRead(a);
+  fprintf(stderr,"NATIVE_OUTPUT_READ_UNMAPPED worker%u address%08x reset%08x\n",w,a,C().coreReset);assert(false);return 0;
+ }
+ void ResidentWrite(unsigned w,uint32_t a,uint32_t value){
+  assert(w==current);
+  if(PioneerQ38ProjectionGraphSnapshotContains(w,a)){FullWrite(w,a,value);return;}
+  unsigned offset=0;
+  for(unsigned i=0;i<PioneerQ38ResidentOutputSpanCount(w);i++){auto span=PioneerQ38ResidentOutputSnapshotSpan(w,i);
+   if(a>=span.address && a-span.address<span.words*4){residentExtra.at(PioneerQ38ResidentOutputSnapshotBase(w)+offset+(a-span.address)/4)=value;return;}
+   offset+=span.words;
+  }
+  if(!(a&3) && a>=0xac000 && a<TT_Q38_PANEL_VIEW_BASE+TT_Q38_PANEL_VIEW_BYTES){C().Q38PanelWrite(a,value);return;}
+  assert(false);
+ }
+ bool ResidentInstalled(){
+  if(!resident || !residentBytes)return false;
+  for(unsigned i=0;i<PioneerQ38ResidentOutputCodeWords(current);i++){
+   uint32_t a=PioneerQ38ResidentOutputCodeAddress(current,i),expected;
+   if(!PioneerQ38ResidentOutputProgramWord(current,a,expected) || ResidentRead(current,a)!=expected)return false;
+  }return true; // actual complete installed bytes,NEVER result/phase/ready fields
+ }
+ bool ReadState(unsigned b,uint32_t a,uint32_t* out,unsigned n)override{return residentBytes && residentBytes->ReadState(b,a,out,n);}
+ bool WriteState(unsigned b,uint32_t a,const uint32_t* in,unsigned n)override{return residentBytes && residentBytes->WriteState(b,a,in,n);}
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
  std::unique_ptr<GdnOutputExecutionMachine> output;bool outputStarted[120]={};unsigned outputFault=0;bool outputFaulted=false;
 #endif
@@ -288,8 +341,18 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
 #endif
   machine.reset(new ProjectionExecutionMachine(root,peer,*this));track=true;
  }
- uint32_t ReadLocal(unsigned w,uint32_t a)override{unsigned old=current;current=w;uint32_t v=FullRead(w,a);current=old;return v;}
+ uint32_t ReadLocal(unsigned w,uint32_t a)override{unsigned old=current;current=w;
+  uint32_t v=
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+   resident?ResidentRead(w,a):
+#endif
+   FullRead(w,a);current=old;return v;}
  void WriteLocal(unsigned w,uint32_t a,uint32_t v)override{
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  if(resident && !PioneerQ38ProjectionGraphSnapshotContains(w,a)){
+   unsigned old=current;current=w;ResidentWrite(w,a,v);current=old;return;
+  }
+#endif
   assert(PioneerQ38ProjectionGraphSnapshotContains(w,a));
   if(a==0x6000)core[w]->entry=v;
   else if(a>=0x70000 && a<0x74000)core[w]->view[(a-TT_Q38_PANEL_VIEW_BASE)/4]=v;
@@ -323,6 +386,29 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,ProjectionExecutionFab
 };
 ProjectionNativeTransport::ProjectionNativeTransport(const char* root,const char* peer,std::vector<uint32_t>& workspace):implementation(new Impl(root,peer,workspace)){}
 ProjectionNativeTransport::~ProjectionNativeTransport(){delete implementation;}
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+void ProjectionNativeTransport::ResidentOutputSources(const char* root,const char* peer,ResidentOutputNativeStateBytes& bytes){
+ auto& p=*implementation;assert(!p.resident && p.machine->Stops()==119);
+ for(unsigned w=0;w<120;w++)assert(p.core[w]->coreReset==0x47800);
+ p.residentExtra.resize(TT_Q38_RESIDENT_OUTPUT_SAVED_WORDS);
+ for(unsigned i=0;i<p.residentExtra.size();i++)p.residentExtra[i]=0x3c5a7091U^(i*0x9e3779b9U);
+ p.residentBytes=&bytes;p.resident.reset(new ResidentOutputExecutionMachine(root,peer,p));
+} // TEST endpoints only:actual STOP/holds are prerequisites,NO native owner or completion is fabricated
+uint32_t ProjectionNativeTransport::ResidentOutputRead(uint32_t a){auto& p=*implementation;p.Touch();assert(p.resident);
+ auto value=p.ResidentRead(p.current,a);
+ if(p.residentFault==8 && !p.residentInjected && p.ResidentAt(5,0) && a==TT_Q38_OUTPUT_COHORT_SHADOW+(TT_Q38_OUTPUT_COHORT_WORDS-1)*4){
+  p.residentInjected=true;p.residentFence=p.touches;return value^1;
+ }return value;}
+void ProjectionNativeTransport::ResidentOutputWrite(uint32_t a,uint32_t v){auto& p=*implementation;p.Touch();assert(p.resident);p.ResidentWrite(p.current,a,v);}
+unsigned ProjectionNativeTransport::ResidentOutputBoots()const{return implementation->resident?implementation->resident->Boots():0;}
+unsigned ProjectionNativeTransport::ResidentOutputStops()const{return implementation->resident?implementation->resident->Stops():0;}
+void ProjectionNativeTransport::VerifyResidentOutput(){assert(implementation->resident);implementation->resident->VerifyOutput();}
+void ProjectionNativeTransport::ResidentOutputFault(unsigned kind,const PioneerQ38ResidentOutputResult& result){auto& p=*implementation;
+ assert(p.resident && !p.residentInjected);p.residentFault=kind;p.residentResult=&result;
+}
+bool ProjectionNativeTransport::ResidentOutputFaultInjected()const{return implementation->residentInjected;}
+unsigned ProjectionNativeTransport::ResidentOutputFaultFence()const{return implementation->residentFence;}
+#endif
 void ProjectionNativeTransport::SeedRoot(const uint32_t* addresses,const uint32_t* values,unsigned count,
  const uint32_t* source,const uint32_t* command,const uint32_t* counters){
  auto& p=*implementation;assert(!p.boots && !p.starts && !p.current);
@@ -344,6 +430,25 @@ bool ProjectionNativeTransport::MapPanel(){auto& p=*implementation;p.Touch();ret
 bool ProjectionNativeTransport::PanelStable(){return implementation->C().mapping;}
 uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsigned c){
  auto& p=*implementation;p.Touch();
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(p.resident && p.residentFault==12 && !p.residentInjected && p.ResidentAt(6,119) && kind==Noc && a==BlackholeDramSourceOffset(11)){
+  p.residentInjected=true;p.residentFence=p.touches;return p.C().ResidentNocRead(a)^1;
+ }
+ if(p.resident && kind==Pc){assert(p.residentStarted[p.current] && p.C().coreReset==0x46800);p.resident->Advance(p.current);return p.resident->Pc(p.current);}
+ if(p.resident && (kind==Status || kind==Panel || (kind==Local && a>=2032 && a<2040))){
+  // Status/PC polls advance real instructions. Immutable-code verification
+  // reads must NOT copy a whole emulated L1 after EVERY instruction word.
+  bool poll=kind==Status || kind==Local || (kind==Panel && a==0x74140);
+  if(poll && p.residentStarted[p.current] && p.C().coreReset==0x46800)p.resident->Advance(p.current);
+  uint32_t address=kind==Status?0x17ffc0+a*4:kind==Panel?a:0x17e000+a*4;
+  auto value=p.ResidentRead(p.current,address);
+  if(!p.residentInjected && ((p.residentFault==9 && p.ResidentAt(8,119) && address==0x7417c && p.resident->Stops())
+   || (p.residentFault==13 && p.ResidentAt(11,119) && address==0x17ffdc))){
+   p.residentInjected=true;p.residentFence=p.touches;return value^1;
+  }
+  return value;
+ }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
  if(p.decoderResult && p.decoderResult->phase==4 && p.decoderRunning[p.current] && (kind==Status || kind==Pc))
   p.decoderCompletionReads.push_back((p.current<<16)|(kind==Status?0x100+a:0x200));
@@ -711,6 +816,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  switch(kind){
   case SetTlb:p.C().DramTlbWrite(a,b,v);return;
   case SetLocal:
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+   if(p.resident && p.residentFault==11 && !p.residentInjected && p.ResidentAt(10,119) && a==2039){
+    p.residentInjected=true;p.LocalWrite(0x17e000+a*4,v^1);return;
+   }
+#endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
    if(p.nextFfnFault==6 && !p.nextFfnFaulted && p.decoderResult && p.decoderResult->phase==7 && p.current==119 && a==2039){
     p.NextFfnInject();p.LocalWrite(0x17e000+a*4,v^1);return;
@@ -897,6 +1007,14 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #endif
    p.LocalWrite(a,v);return;
   case SetReset:
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+   if(p.resident){
+    if(p.residentFault==10 && !p.residentInjected && p.ResidentAt(9,119) && v==0x87ffff){p.residentInjected=true;return;}
+    p.C().coreReset=v;p.C().resets.push_back(v);
+    if(v==0x46800){assert(!p.residentStarted[p.current] && p.ResidentInstalled());p.residentStarted[p.current]=true;p.resident->Start(p.current);}
+    return;
+   }
+#endif
 #ifdef PIONEER_Q38_GDN_GATED_NATIVE
    if(v==0x46800 && p.gated && p.current==p.gatedDelayWorker && !p.gatedDelayed){
     assert(!p.gdnRunning[p.current] && p.C().coreReset==0x87ffff);p.gatedDelayed=true;
@@ -1128,6 +1246,9 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
  assert(false);
 }
 uint32_t ProjectionNativeTransport::MappedRead(uint32_t a){auto& p=*implementation;p.Touch();
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(p.resident)return p.ResidentRead(p.current,a);
+#endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
  if(p.nextFfnFault==13 && !p.nextFfnFaulted && p.current==119 && p.nextFfnStarts==121 && p.C().coreReset==0x47800 && a==0x64000){p.NextFfnInject();p.now+=30000001;}
 #endif
@@ -1139,6 +1260,9 @@ uint32_t ProjectionNativeTransport::MappedRead(uint32_t a){auto& p=*implementati
 #endif
  return p.FullRead(p.current,a);}
 void ProjectionNativeTransport::MappedWrite(uint32_t a,uint32_t v){auto& p=*implementation;p.Touch();
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(p.resident){p.ResidentWrite(p.current,a,v);return;}
+#endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
  if(p.nextFfnFault==2 && !p.nextFfnFaulted && p.decoderResult && p.decoderResult->phase==51 && !p.current && a==TT_Q38_FFN_RESIDUAL_GRAPH_MANIFEST+41*4){
   p.NextFfnInject();p.FullWrite(p.current,a,v^1);return;

@@ -12,6 +12,9 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 #include "pioneer_q38_embedding_execution_bridge.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "pioneer_q38_projection_native_transport.h"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #include "pioneer_q38_decoder_conv_bridge.h"
 #endif
@@ -34,6 +37,9 @@ static void PioneerWrite32(volatile uint32*,uint32);
 static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void**);
 struct PioneerHostPageIO{bool quarantined=false;};
 struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ ,ResidentOutputNativeStateBytes
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  ,DecoderHistoryBytes
 #endif
@@ -79,6 +85,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  bool ResidentOutputInitializationBaseScope();bool ResidentOutputInitializationSourceScope(bool,bool);
  bool ResidentOutputInitializationOtherCoresHeld(bool);
  bool ResidentOutputPrefixInitializationScope();
+ bool ResidentOutputSourceScope(bool);bool ResidentOutputMappingSourceScope();void ResidentOutputRetainHostOwners();
+ bool ResidentOutputMemoryScope(const PioneerQ38ResidentOutputMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+ bool ResidentOutputExecutionScope(const PioneerQ38ResidentOutputOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ResidentOutputMemory&,
+  const PioneerQ38ProjectionMutableBanks&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeMapping.inc"
  bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
  bool StateZeroBeforeCohort(){return ResidentOutputInitializationSourceScope(false,false);}
  bool StateZeroOtherCoresHeld(){return ResidentOutputInitializationOtherCoresHeld(false);}
@@ -89,6 +100,10 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  unsigned outputGdnFailRun=0,outputHistoryFailRun=0;
  bool outputGdnCloseFault=false,outputHistoryCloseFault=false;
  bool outputNonrootFault=false;unsigned outputLoseTeamRun=0;
+ bool ReadState(unsigned,uint32_t,uint32_t*,unsigned)override;
+ bool WriteState(unsigned,uint32_t,const uint32_t*,unsigned)override;
+ std::array<uint32,10240> outputPrefixAlias={};std::vector<uint32_t> outputSuffixAlias;
+ int outputFailMap=-1,outputNullMap=-1;
  unsigned outputBackwardsAfterStarts=UINT32_MAX;
 #ifndef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  void RuntimeCodeWrite(unsigned,uint32);
@@ -270,6 +285,14 @@ static bool ProjectionPointerAddress(const volatile uint32* p,uint32& address){
 }
 #endif
 static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+ if(activeIO->projectionTransport && activeIO->q38ResidentOutputMemoryMapAttempted){
+  const volatile uint32* base[]={activeIO->outputPrefixAlias.data(),activeIO->outputSuffixAlias.data()};
+  const unsigned bytes[]={40960,614400},offset[]={0x64000,0xb8000};
+  for(unsigned i=0;i<2;i++){uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(base[i]);
+   if(at>=first && at-first<bytes[i] && !((at-first)&3))return activeIO->projectionTransport->ResidentOutputRead(offset[i]+unsigned(at-first));}
+ }
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  uint32 address;if(ProjectionPointerAddress(p,address))return activeIO->projectionTransport->MappedRead(address);
 #endif
@@ -278,12 +301,31 @@ static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO-
 #endif
  return *p;}
 static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+ if(activeIO->projectionTransport && activeIO->q38ResidentOutputMemoryMapAttempted){
+  const volatile uint32* base[]={activeIO->outputPrefixAlias.data(),activeIO->outputSuffixAlias.data()};
+  const unsigned bytes[]={40960,614400},offset[]={0x64000,0xb8000};
+  for(unsigned i=0;i<2;i++){uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(base[i]);
+   if(at>=first && at-first<bytes[i] && !((at-first)&3)){
+    activeIO->projectionTransport->ResidentOutputWrite(offset[i]+unsigned(at-first),value);return;}}
+ }
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  uint32 address;if(ProjectionPointerAddress(p,address)){activeIO->projectionTransport->MappedWrite(address,value);return;}
 #endif
  *p=value;}
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+ if(activeIO->projectionTransport && activeIO->q38ResidentOutputMemoryMapAttempted){
+  assert(placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+  unsigned i=physical==Bar+0x19064000?0:1;
+  assert(physical==Bar+(i?0x190b8000:0x19064000) && bytes==(i?614400U:40960U));
+  if(int(i)==activeIO->outputFailMap)return -1;
+  if(i)activeIO->outputSuffixAlias.resize(614400/4);
+  *view=int(i)==activeIO->outputNullMap?nullptr:i?activeIO->outputSuffixAlias.data():activeIO->outputPrefixAlias.data();return 30+i;
+ }
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  if(activeIO->UseProjectionIO()){
   const unsigned offsets[]={0x19064000,0x190b0000,0x190c0000},sizes[]={40960,36864,36864};
@@ -366,6 +408,7 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeBind.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeInitialize.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeExecution.inc"
 #endif
 #include "embedding_factory_scope.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
@@ -480,6 +523,30 @@ void PioneerSessionIO::RuntimeCodeWrite(unsigned i,uint32 value){
  if(state && ((outputGdnCloseFault && state->phase==PioneerQ38ResidentOutputNativeState::RecurrentClosing)
   || (outputHistoryCloseFault && state->phase==PioneerQ38ResidentOutputNativeState::HistoryClosing))){Touch();return;}
  ProjectionZeroIO::RuntimeCodeWrite(i,value);
+}
+#endif
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+bool PioneerSessionIO::ReadState(unsigned bank,uint32_t address,uint32_t* out,unsigned words){
+ if(!out || !words || (address&3))return false;
+ for(unsigned i=0;i<672;i++){const auto& e=outputGdnExtents[i];
+  if(e.bank==bank && address>=e.address && address-e.address<e.bytes && words<=(e.bytes-(address-e.address))/4){
+   unsigned at=outputGdnFirst[i]*1024+(address-e.address)/4;
+   for(unsigned w=0;w<words;w++)out[w]=outputGdnWords.at(at+w);return true;}}
+ for(unsigned i=0;i<336;i++){const auto& e=outputHistoryExtents[i];
+  if(e.bank==bank && address>=e.address && address-e.address<e.bytes && words<=(e.bytes-(address-e.address))/4){
+   for(unsigned w=0;w<words;w++)out[w]=outputHistoryWords.at(i*5120+(address-e.address)/4+w);return true;}}
+ return false;
+}
+bool PioneerSessionIO::WriteState(unsigned bank,uint32_t address,const uint32_t* input,unsigned words){
+ if(!input || !words || (address&3))return false;
+ for(unsigned i=0;i<672;i++){const auto& e=outputGdnExtents[i];
+  if(e.bank==bank && address>=e.address && address-e.address<e.bytes && words<=(e.bytes-(address-e.address))/4){
+   unsigned at=outputGdnFirst[i]*1024+(address-e.address)/4;
+   for(unsigned w=0;w<words;w++)outputGdnWords.at(at+w)=input[w];return true;}}
+ for(unsigned i=0;i<336;i++){const auto& e=outputHistoryExtents[i];
+  if(e.bank==bank && address>=e.address && address-e.address<e.bytes && words<=(e.bytes-(address-e.address))/4){
+   for(unsigned w=0;w<words;w++)outputHistoryWords.at(i*5120+(address-e.address)/4+w)=input[w];return true;}}
+ return false;
 }
 #endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){

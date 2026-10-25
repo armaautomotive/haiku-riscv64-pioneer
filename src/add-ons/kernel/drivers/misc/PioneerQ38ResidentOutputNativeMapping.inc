@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Class-body fragment for a DISTINCT genuine PioneerSessionIO native role.
-// NOT included by the existing driver. The complete new native source
-// scope/factory/lifetime remains REQUIRED before inclusion or card use.
+// Included ONLY by the distinct OFFLINE resident-output role. Complete
+// native factory/execution and physical qualification remain REQUIRED.
 // Call Map ONLY after actual QPS1 STOP/restore, ALL120 held and exact
 // initialized model/clock/cookie/thread/host/fleet lifetime is retained.
 // No old projection map/ready flag can authorize this larger fixed view.

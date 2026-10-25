@@ -1,0 +1,173 @@
+Qwen3.8-27B native resident-output execution integration, October25,2026
+
+OFFLINE CHECKPOINT / GOAL ACTIVE / NOT A SPEED OR SILICON RESULT
+Last actual whole-model0.207893161tok/s unchanged;20tok/s/full64-layer
+on-card autoregressive inference remain UNMET. New driver role remains
+OFFLINE at the actual driver's top-level #error. No public compute/Work/
+CPU selector,new linked module,installation,accelerator FD,power/relay,
+SD,disk/network-configuration or mains write. Read-only pinned SSH found
+Haiku already running;the delayed OFF confirmation did not cause another
+ON/OFF pulse. Unrelated llama.cpp/FlashNext untouched.
+
+IMPLEMENTED,COMPLETE ORIGINAL POSITIVE AND CLEAN NATIVE FAULT SUITE PASSED
+The private native state now owns Prepare/Run/Close phases and its retained
+heap43.8MB snapshot. Source scopes bind actual FD/team/thread/generation,
+model/ledger/hash storage,all host owners,normal firmware clock0<mhz<=1400,
+exact initialized GDN/history and the genuine CLOSED four-role QPS1 input.
+Before a claim,only its actual private Current input is accepted. After a
+claim,only the NEW controller's exact private running binding is accepted;
+no consumed old Current/old closed helper can grant running new workers.
+The real native context's controlled-Unsafe branch recognizes exactly this
+private new cohort;other owners and generic Unsafe checks remain intact.
+Distinct actual mapping aliases are included ONLY under the OFFLINE new
+role. Partial map failures retain the context;old aliases do not authorize
+the larger footprint.28 public result words and current first-layer learned
+pages are checked before new maps/claims/IO. The actual controller rechecks
+its complete private recipes before first IO and current uploads before RUN.
+
+New closed-binding proof checks actual private completion,STOP/holds,
+consumed lineage,journal and participants. It is not the old prefix CLOSED
+bit. END requires that proof plus the distinct new maps before any legacy
+cleanup. Known-clean context destruction releases those maps;unknown
+contexts retain snapshots/maps/clock/hosts. No held PC is read for proof.
+
+TEST BRIDGE,NOT NATIVE AUTHORITY OR SYNTHETIC SUCCESS
+The native byte transport can execute the actual installed complete new
+coordinator and same119 peer machines,using actual prior QPS1 workspace
+and observed native-initialized recurrent/history bytes. It imports all
+installed code/control bytes and exports actual emitted next-state/history
+stores,not CPU arithmetic. The old private native context/factories/scopes
+remain the actual producers;only OS/PCI/L1/NoC/learned byte/time endpoints
+are synthetic. The original native success now includes full arithmetic,
+STOP/full43.8MB restoration/second original proof and actual END. This is
+not a complete actual PioneerSessionIO type/link/silicon qualification.
+
+COMPLETED CONTROLS
+SDK shape/type/factory+controller instantiation parent11690 EXIT0:
+/private/tmp/pioneer-output-native-execution-sdk-20261025-b.log
+Maximum static frame1488bytes,2048 limit unchanged. Object SHA256:
+fc0bc7d52b122a77bee8a886b8ab2332896c1ad230d568ff71e091e16d6df74c
+Actual KernelExport/map ABI and real0x42000 STREAM view definitions are
+used. Context-shaped unresolved endpoints mean this is NOT a complete
+actual PioneerSessionIO driver/context/link or execution qualification.
+Initial SDK compile refused a duplicate panel enum. Removed that fake
+duplicate and selected the actual AFFINE/BLOCK/STREAM header roles;did not
+relax the map's required view size or substitute kernel types.
+
+Earlier frozen control tree:
+/private/tmp/pioneer-output-native-control-clean.aubHEdfg
+Parent87615 EXIT0,complete controller success+all20 containment faults,
+including new private closed-binding assertions. Complete log byte-identical
+to previous qualified execution,SHA256:
+10dfc336aef5b90e37aa4f4dd6c0f623843d75c8dc97776471c5b3d81eaafb6b
+This is the controller/control snapshot,NOT all later native bridge work.
+Binding107-refusal control57753 EXIT0 in the same frozen tree.
+Actual old full native65/native66 SDK control60771 EXIT0,unchanged:
+65:61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+66:97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437
+SDK read-only. These build controls do NOT prove new native execution.
+
+DIAGNOSTIC ORIGINAL FLOW TERMINAL,THEN COMPLETE POSITIVE PASSED
+Diagnostic parent61649 EXIT1:
+/private/tmp/pioneer-output-native-execution-20261025-d.log
+It completed new arithmetic,ALL119 STOP/holds,full restoration and the
+private CLOSED binding. Only the legacy outer END failed at worker119
+address000ac000,reset00047800:the TEST byte transport omitted the legacy
+panel's untouched ac000..b0000 gap. Corrected ONLY that exact legacy byte
+endpoint (original panel remains0x42000 bytes). New snapshot/logical mapping
+still REFUSES ac000..b0000;no new native permission was widened.
+Corrected original parent53246 EXIT0:
+/private/tmp/pioneer-output-native-execution-20261025-e.log
+Complete positive through actual END,ASan+UBSan. Full log SHA256:
+760f2546cad9d386925d2c89d91cb3177c7840a396bfae6c432652ad57208813
+All28 public result mutations plus0/1401MHz preconditions were inert.
+Current standalone actual mapping regression EXIT0:497316 logical words,
+84 inert refusals,including ac000 and every other excluded gap/padding.
+Real mapping SDK max static frame128bytes,object SHA256:
+845d98ad256e4356a75ffc1e8a7ffeccf2eedb60c470168a85db9447918f6359
+New binding-state role95 gates also EXIT0. SDK/shared fixtures read-only.
+
+Initial native flow87903 EXIT1:extracted complete-END include required the
+real kernel source include directory. Added that search path ONLY to the
+new native_projection compilation option;default helper remains unchanged.
+Next63490 was intentionally interrupted(EXIT130) after a one-second stack
+sample proved massive TEST-only whole-emulated-L1 copying on EACH code
+verification read. Exact CPU-only PGID43107 was verified before INT;not an
+observation timeout,board recovery or test pass. Log and sample preserved:
+/private/tmp/pioneer-output-native-execution-20261025-b.log
+/private/tmp/pioneer-output-native-execution-20261025-b.sample.txt
+Corrected only the test transport to advance actual instructions on status/
+PC polls,not immutable-code reads. No emitted instruction,success status,
+arithmetic observer,production safety guard or tolerance changed. The
+corrected18439 run started from the original genuine native prefix again.
+The preceding sample's CPU time/copy cost is NOT physical card performance.
+Parent18439 reached genuine new prepare/maps/private input claim/ALL119
+boots and passed the complete actual Conv/GDN/QOL1/ALL5120 arithmetic. It
+then terminated EXIT1 on a TEST byte-transport ResidentRead bounds assertion
+during Close or END. No complete native lifecycle PASS is claimed. Added
+only read-address/selected-worker diagnostics and a post-close stage marker;
+61649 identified the exact legacy END read as documented above. Both failed
+logs remain retained;neither is a complete PASS.
+
+COMPLETE INDEPENDENT CLEAN NATIVE FAILURE-CONTAINMENT SUITE PASSED
+Archive025fca57 plus only owned overlays:
+/private/tmp/pioneer-output-native-execution-clean.pKAFBLKC
+Parent41481 EXIT0,log:/private/tmp/pioneer-output-native-execution-20261025-f.log
+Complete aggregate log SHA256:
+5807208a4499fbf80c4d23adc85ac6718aebcd41f2f25597786025964b1c4aeb
+New tests exercise actual native factories/scopes/maps,not arbitrary fake
+MemoryScope booleans. They include50 inert entry refusals and13 failures:
+failed/null first/second physical map;late team/learned-page loss before
+RUN;lost new map before END;corrupt actual ROOT shadow;invalid STOP status;
+dropped last hold;corrupt last restore;peer119 physical source corruption;
+last second-original-proof corruption. Forks inherit actual initialized
+private prefix and genuine claimed119-worker boot,not fabricated owners
+or success. All clean dependencies remained frozen through authoritative
+EXIT0. Every case asserts unsafe native/context/graph/clock/host retention
+and inert duplicate Prepare/Run/Close/END/END,including retained partial
+physical mappings. Immediate known-bad shadow/status/source/proof reads
+also check the exact last-IO fence. Dropped final hold observes118 prior
+holds and ZERO restoration;bad STOP observes ZERO peer holds;last restore
+observes savedWords-1;last second proof observes2*savedWords-1. No following
+STOP/reset/restore/free/retry is used to repair an unknown. This aggregate
+positive+all13 result is from ONE final parent,not a union of partial runs.
+Original53246 is the earlier complete positive without the extra test
+fault hooks;it is NOT a second run of all13 faults. All production source
+files are byte-identical between these two runs and the earlier frozen SDK
+65/66 controls. Additional fault hooks change TEST endpoints ONLY.
+
+Additional current original controls:107 native binding refusals parent37979
+EXIT0,95 state gates10702 EXIT0,304 existing input/CPU/DEBUG/Work gates8278
+EXIT0 and424 emitted ROOT/companion isolation gates31416 EXIT0. First424
+invocation omitted its two required image arguments and stopped at argc;
+corrected invocation uses frozen-c/frozen-d,without editing either image.
+Current SDK shape/controller instantiation57771 EXIT0 repeats the exact
+1488-byte frame and fc0bc7d5 object above. NOT a full actual context type.
+
+Standalone current old-controller positive87111 EXIT0:
+/private/tmp/pioneer-output-native-execution-controller-current-20261025-c.log
+Full log SHA256:
+12d27a3a99589440f7342513dfd38a719af9bcf1095435553cebf1cb959b745b
+Original production/base-factory/common/machine dependencies remained frozen
+through its authoritative terminal. It checks actual newly exported Conv
+history bytes with the original producer;the older21-case controller
+control used the preceding byte bridge. It is NOT native-scope validation.
+After BOTH parents terminated0,the five qualified clean test files were
+merged with apply_patch and compare byte-identically to the clean sources.
+No native-execution/controller qualification parent remains live. Original
+positive+clean whole13-case suite are two independent compilations/runs,
+not two identical13-case repeats. No full actual driver was built or enabled.
+Post-merge original native-binding regression55490 EXIT0 repeats all107
+inert refusals with the final test-source layout. No qualifier remains live.
+
+NEXT / FULL OBJECTIVE UNCHANGED
+Push the scoped tested checkpoint. New complete native lifecycle and13 real-scope
+containment cases now pass;tests through arbitrary fake scopes are not a
+substitute for that new genuine context. Compile complete actual
+PioneerSessionIO/context types using a narrowly refusing offline witness
+if necessary;do not merely remove the top-level guard or promote Work.
+ROOT park72038 versus fault7203c needs safe frontend separation with fresh
+image pins/full arithmetic/fault tests before silicon. Original-GGUF and
+physical qualification remain required,then residual/RMS/FFN,attention,
+all64layers/current-slot/token loop,real27B benchmark/optimization toward
+20tok/s and qualified no-CPU-reference Work integration in Assistant.

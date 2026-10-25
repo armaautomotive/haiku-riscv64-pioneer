@@ -5,6 +5,14 @@
 #include <vector>
 struct PioneerQ38ProjectionGraphResult;
 struct ProjectionExecutionLearnedBytes;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+struct ResidentOutputNativeStateBytes {
+ virtual ~ResidentOutputNativeStateBytes()=default;
+ virtual bool ReadState(unsigned,uint32_t,uint32_t*,unsigned)=0;
+ virtual bool WriteState(unsigned,uint32_t,const uint32_t*,unsigned)=0;
+}; // TEST byte endpoints ONLY,not an initializer/producer/native capability
+struct PioneerQ38ResidentOutputResult;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 class PioneerQ38CanonicalModelPlan;struct DecoderHistoryBytes;
 struct PioneerQ38ResidentDecoderResult;
@@ -34,6 +42,13 @@ public:
  void VerifyOutput();void Diagnostic()const;
  void Fault(unsigned kind); // simulated endpoint fault,never a production mode
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ void ResidentOutputSources(const char*,const char*,ResidentOutputNativeStateBytes&);
+ uint32_t ResidentOutputRead(uint32_t);void ResidentOutputWrite(uint32_t,uint32_t);
+ unsigned ResidentOutputBoots()const;unsigned ResidentOutputStops()const;void VerifyResidentOutput();
+ void ResidentOutputFault(unsigned,const PioneerQ38ResidentOutputResult&); // TEST fault timing,NEVER a grant
+ bool ResidentOutputFaultInjected()const;unsigned ResidentOutputFaultFence()const;
+#endif
  void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
  void OutputSources(const char* root,const char* peer);void VerifyGdnOutput();
