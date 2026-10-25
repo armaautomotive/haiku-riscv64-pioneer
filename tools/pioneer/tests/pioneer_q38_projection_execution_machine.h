@@ -1,15 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_PROJECTION_EXECUTION_MACHINE_H
 #define PIONEER_Q38_PROJECTION_EXECUTION_MACHINE_H
-#include <stdint.h>
+#include "../PioneerQ38OriginalWeightBytes.h"
 #include <vector>
-// TEST byte provider ONLY. No numeric vector/products/native scope/lease
-// capability is accepted. Presence never permits a synthetic fallback.
-struct ProjectionExecutionLearnedBytes {
- virtual ~ProjectionExecutionLearnedBytes()=default;
- virtual bool Ready()const=0;
- virtual bool Read(unsigned route,uint32_t address,uint8_t* out,unsigned bytes)=0;
-};
 // TEST transport interface,not production/native device authority.
 struct ProjectionExecutionFabric {
  virtual ~ProjectionExecutionFabric()=default;

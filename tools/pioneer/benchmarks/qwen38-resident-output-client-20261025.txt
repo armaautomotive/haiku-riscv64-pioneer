@@ -1,0 +1,91 @@
+Combined-output DEBUG68 physical-client checkpoint,2026-10-25.
+Goal ACTIVE;full64-layer/token-loop/Work integration and20tok/s UNMET.
+Last whole-model rate remains0.207893161tok/s. No speedup is claimed here.
+
+The tested independent CPU observer was promoted from the test directory
+to tools/pioneer/pioneer_q38_original_source.cpp. Existing test paths are
+compatibility wrappers compiling the SAME implementation. Native Haiku
+uses the fixed PUBLIC model path and /bin/sha256sum unchanged;Mac-only
+host-test adaptations are NOT in the Haiku object. The CPU TU is compiled
+separately with NO native/device-image/Work/client flags. No math bounds,
+native code,driver footprint or ownership/source/cleanup guard changed.
+
+The sealed source exposes read-only model metadata and raw upload pages
+from the SAME authenticated file description used for original references.
+No numeric-reference products or accelerator authority are exposed. The
+client prepares+seals BEFORE accelerator Open,uploads all56layer0 parts
+plus12embedding pages=68603pages in300spans,ends upload code,then submits
+one allzero fixed6516736-byte request for token0/position0/layer0. It
+requires exact build tag2026102500010068/namespace19/1629120words. The
+inherited reload/support ABI driver field remains55,NOT68;this was caught
+and corrected before any device test,without changing the driver.
+
+After the complete64-word header is accepted,the separate original
+observer checks the actual Conv/history/current+next state/gated/native
+operands/scales/raw-GGUF output rows. ONLY a successful observer permits
+explicit BANK_END. Any transport/source/header/numeric/END uncertainty
+closes the FD ONLY,never sends another command,END,read,reset or retry.
+The existing production driver contains no CPU observer. This is a
+diagnostic client,NOT Assistant/Work/full-model or token-rate support.
+
+SDK main29988 TERMINAL0 and independent clean63844 TERMINAL0:
+ /private/tmp/pioneer-q38-output-debug68-client-build-20261025-d.log
+ /private/tmp/pioneer-q38-output-debug68-client-build-20261025-clean-a.log
+Client binaries BYTE-IDENTICAL SHA256:
+ 0e38765f2004b1c7469f60642009bd3f3cbdda2c4f5e39f2d15a88ad55f32de4
+Client object e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4
+CPU object8b4d13d23e130ad734e926c52f30286c191acc2cca89541d240c3946ae95db74
+Initial SDK a/b attempts stopped on misleading-indentation warnings in
+the promoted/new CPU code;formatting was repaired,NO warnings suppressed.
+Earlier successful c3dda1 client expected the WRONG reload.driver68;
+it is superseded by0e38765f and MUST NOT be installed or used.
+
+Actual client ASan/UBSan main73956 and clean63844 TERMINAL0:
+ /private/tmp/pioneer-q38-output-debug68-client-session-20261025-b.log
+ /private/tmp/pioneer-q38-output-debug68-client-session-20261025-clean-a.log
+One full positive and402failure cases:ALL308call failures,source/epoch
+changes,missing raw pages,62header corruptions,observer refusal,open/close,
+preparation/seal failures. Early END is inert;Abort/destruction never
+perform implicit cleanup/retry. TEST source/OS replies are explicitly
+synthetic,NOT an independent arithmetic or silicon qualification.
+
+Actual original-source upload main27935 and clean60406 TERMINAL0:
+ /private/tmp/pioneer-q38-output-debug68-original-upload-20261025-b.log
+ /private/tmp/pioneer-q38-output-debug68-original-upload-20261025-clean-a.log
+Both authenticate the FULL same GGUF,prepare/seal,check all56first-layer
+start/tail pages+12embedding pages against cached ORIGINAL bytes/norms,
+all23680padding bytes zero,and4invalid reads with untouched destinations.
+An initial test-only include typo stopped compilation and was corrected
+to the actual ProjectionMatrixShape header before execution.
+
+110client role gates(main97956,clean60406) and58actual+compatibility CPU
+source gates(main50436,clean60406) pass;defined0/late mixed-role inclusion
+is refused. The first client-gate regex omitted underscore-leading names;
+the test was corrected to cover kernel and fast-math explicitly.
+Production driver58064ed contains NONE of the CPU/test-import symbols.
+
+Promoted complete ORIGINAL execution main59904 TERMINAL0;its full log is
+BYTE-IDENTICAL to the prior dd29b1e737 qualified original execution:
+ /private/tmp/pioneer-q38-output-debug68-promoted-control-20261025-a.log
+ SHA49c3fd6096955a3c08b12af5db1b5be12b690b08b5c415f83d610171a552f959
+Independent clean45793 TERMINAL0 with BYTE-IDENTICAL full log/SHA:
+ /private/tmp/pioneer-q38-output-debug68-promoted-control-20261025-clean-a.log
+All1592reads/1629120words/full43.8MB restore+secondproof,final-copy failure
+retention and19numeric corruption refusals remain qualified unchanged.
+Old observer modes35782 TERMINAL0:all3prior factories keep1672references
+and seal-once behavior. Existing native65/native63 gates each pass20cases.
+
+The guarded updater now permits ONLY byte-pinned known-clean041<->58064ed
+DEBUG68,with exact guard/admin helper,full parent inventory,exclusive
+idle metadata,hash-qualified backup,quiesce+close,single watched rename
+and new tag/generation proof. NO automatic rollback or cold-latch bypass.
+290main cases(new68+old64 bothdirections) and144clean68 cases pass.
+Script SHA5f5cbdf591a7595e6fe9e6e26d07a33ee8702b1eac83f487e834b4ab1e070e79
+
+Read-only Pioneer checks:Haiku64CPU/~128GiB,working041 driver,guardd1ce2a,
+admin helperb0c851,tag12/generation1/cold0/owner0/open1. The exact new
+driver,client and uniquely named updater were COPIED ONLY to previously
+absent staging paths. No installation,compute,power/SD/mains,Assistant or
+network-setting change has occurred at this checkpoint's preparation.
+All3remote staging hashes also match exactly. Physical qualification is
+the next step;this checkpoint does NOT claim card execution or a speedup.

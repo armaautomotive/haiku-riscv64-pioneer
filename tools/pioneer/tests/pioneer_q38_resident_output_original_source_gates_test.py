@@ -9,17 +9,18 @@ import sys
 if len(sys.argv) not in (1,2):
     raise SystemExit(2)
 here=pathlib.Path(__file__).resolve().parent
-source=here/'pioneer_q38_decoder_original_source.cpp'
+sources=(here/'pioneer_q38_decoder_original_source.cpp',here.parent/'pioneer_q38_original_source.cpp')
 clean={k:v for k,v in os.environ.items() if not k.startswith('PIONEER_')}
 count=0
 def check(flags,expected,diagnostic=None):
     global count
-    result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-E',*flags,str(source)],
-                          stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,env=clean,timeout=30)
-    assert (result.returncode==0)==expected,(flags,result.stderr)
-    if diagnostic:
-        assert diagnostic in result.stderr,(flags,result.stderr)
-    count+=1
+    for source in sources:
+        result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-E',*flags,str(source)],
+                              stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,env=clean,timeout=30)
+        assert (result.returncode==0)==expected,(source,flags,result.stderr)
+        if diagnostic:
+            assert diagnostic in result.stderr,(source,flags,result.stderr)
+        count+=1
 check([],True)
 for name in ('PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE','PIONEER_Q38_RESIDENT_OUTPUT_OWNER',
              'PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE','PIONEER_Q38_RESIDENT_OPERATOR_IMAGE',
