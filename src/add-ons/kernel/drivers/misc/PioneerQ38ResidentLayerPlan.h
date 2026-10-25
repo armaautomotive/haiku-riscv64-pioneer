@@ -70,6 +70,19 @@ public:
   return true;
  }
  const uint32_t* Manifest()const{return ready?output.Manifest():nullptr;}
+ bool LearnedPagesPresent(const uint8_t* pages,unsigned count)const{
+  if(!ready || !canonical || !norm || !pages || count!=PioneerResidentBanks::Pages
+   || !output.LearnedPagesPresent(pages,count) || !ffn.LearnedPagesPresent(pages,count))return false;
+  const auto* m=output.Manifest();
+  const PioneerQ38GdnIdentity id={uint64_t(m[32])|(uint64_t(m[33])<<32),uint64_t(m[34])|(uint64_t(m[35])<<32),
+   uint64_t(m[36])|(uint64_t(m[37])<<32),uint64_t(m[38])|(uint64_t(m[39])<<32)};
+  if(!Matches(*canonical,m[3],m[4],m[7],m[14],layer[11],m[5],id,
+    m+TT_Q38_COHORT_SOURCE_WORD,m+TT_Q38_COHORT_SEQUENCE_WORD))return false;
+  unsigned first=norm->bank*unsigned(canonical->Capacity/4096)+norm->offset/4096,n=norm->allocated/4096;
+  if(first>=count || n>count-first)return false;
+  for(unsigned i=0;i<n;i++)if(pages[first+i]!=1)return false;
+  return true; // DATA presence only,not original-source authentication/initialization
+ }
  const uint32_t* PostManifest()const{return ready?output.PostManifest():nullptr;}
  const uint32_t* LayerManifest()const{return ready?layer:nullptr;}
 };

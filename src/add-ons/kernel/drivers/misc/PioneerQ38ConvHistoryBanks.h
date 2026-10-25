@@ -13,6 +13,11 @@ class PioneerQ38ResidentDecoderOwner;
 #endif
 class PioneerQ38ConvHistoryBanks {
  friend class PioneerQ38ProjectionMutableBanks;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+ friend class PioneerQ38ResidentLayerOwner;
+ const class PioneerQ38ResidentLayerOwner* residentLayerOwner=nullptr;
+ unsigned residentLayerPhase=0;bool residentLayerNextPublished=false;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  friend class PioneerQ38ResidentOutputOwner;
  const class PioneerQ38ResidentOutputOwner* residentOutputOwner=nullptr;

@@ -127,6 +127,11 @@ struct ProjectionExecutionProducer::Impl:NativeFactoryFixture {
 #ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_EXECUTION
    if(p->kind==plan->WeightKind && !p->layer && p->role>=7 && p->role<=13)selected=true;
 #endif
+#ifdef PIONEER_Q38_TEST_RESIDENT_LAYER_EXECUTION
+   // Original SYNTHETIC norm+FFN learned endpoints for the NEW full-layer
+   // test only. No completed vector/producer/owner is supplied by the host.
+   if(p->kind==plan->WeightKind && !p->layer && p->role>=1 && p->role<=4)selected=true;
+#endif
    if(selected){unsigned first=p->bank*unsigned(plan->Capacity/4096)+p->offset/4096;
     for(unsigned n=0;n<p->allocated/4096;n++)learned[first+n]=1;}
   }

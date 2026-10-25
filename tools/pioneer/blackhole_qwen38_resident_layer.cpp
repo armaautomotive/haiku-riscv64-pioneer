@@ -12,6 +12,7 @@ extern "C" unsigned q38_resident_layer_ffn_once();
 namespace Layer {
 using namespace Cohort;
 static const uint32_t* Snapshot(){return reinterpret_cast<const uint32_t*>(TT_Q38_RESIDENT_LAYER_SHADOW);}
+static volatile uint32_t* Receipt(){return Words(TT_Q38_RESIDENT_LAYER_RECEIPT);}
 static bool Sealed(){
  for(unsigned i=0;i<TT_Q38_RESIDENT_LAYER_WORDS;i++)if(Words(TT_Q38_RESIDENT_LAYER_MANIFEST)[i]!=Words(TT_Q38_RESIDENT_LAYER_SHADOW)[i])return false;
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+SourceOffset(i))!=Snapshot()[16+i])return false;
@@ -21,8 +22,28 @@ static void Capture(){
  for(unsigned i=0;i<TT_Q38_RESIDENT_LAYER_WORDS;i++)Words(TT_Q38_RESIDENT_LAYER_SHADOW)[i]=Words(TT_Q38_RESIDENT_LAYER_MANIFEST)[i];
  if(!PioneerQ38ResidentLayerShape(Snapshot(),reinterpret_cast<const uint32_t*>(TT_Q38_COHORT_MANIFEST),
   reinterpret_cast<const uint32_t*>(TT_Q38_OUTPUT_COHORT_MANIFEST)) || !Sealed())cohort_fault_park();
+ for(unsigned i=0;i<TT_Q38_RESIDENT_LAYER_RECEIPT_WORDS;i++)Receipt()[i]=0;
+ for(unsigned i=0;i<TT_Q38_RESIDENT_LAYER_GDN_SAVED_WORDS;i++)Words(TT_Q38_RESIDENT_LAYER_GDN_SAVED)[i]=0;
+ for(unsigned i=0;i<8;i++){
+  Receipt()[232+i]=*Words(0xffb20000+Counter(i));
+  if(i==6 && Receipt()[238]!=Receipt()[234])cohort_fault_park();
+ }
 }
 static void Audit(){if(!Sealed() || !Cohort::Audit() || !OutputAudit())cohort_fault_park();}
+static void SavePrefix(){
+ Audit();if(Words(TT_Q38_COHORT_STATS)[9]!=5120)cohort_fault_park();
+ // Preserve ACTUAL independent-prefix receipts before FFN reuses7f800.
+ // No zero reconstruction,synthetic completion or host callback occurs.
+ for(unsigned i=0;i<64;i++){
+  Receipt()[32+i]=Words(TT_Q38_COHORT_STATS)[i];Receipt()[96+i]=Words(0x7f800)[i];
+ }
+ for(unsigned i=0;i<8;i++){
+  Receipt()[160+i]=*Words(0xffb20000+Counter(i));
+  if(i==6 && Receipt()[166]!=Receipt()[162])cohort_fault_park();
+ }
+ for(unsigned i=0;i<10;i++)Receipt()[168+i]=Words(0xffb20000)[i];
+ Receipt()[178]=68;Receipt()[179]=32;Receipt()[180]=TT_Q38_RESIDENT_LAYER_GDN_SAVED;
+}
 static void Normalize(){
  Audit();if(Words(TT_Q38_COHORT_STATS)[9]!=5120)cohort_fault_park();
  uint32_t d[64],before[8];PioneerQ38ResidentLayerNormDescriptor(Snapshot(),d);
@@ -37,6 +58,7 @@ static void Normalize(){
   || uint32_t(s[16+i]-before[i])!=delta[i])cohort_fault_park();
  const uint32_t receipt[]={d[40],d[4],d[41],d[50],d[10],d[11],d[53],98304};
  for(unsigned i=0;i<8;i++)if(s[24+i]!=receipt[i])cohort_fault_park();
+ for(unsigned i=0;i<32;i++)Receipt()[192+i]=s[i];
  Words(TT_Q38_COHORT_STATS)[10]=5120;Words(TT_Q38_COHORT_STATS)[11]=10;
 }
 static void Ffn(){
@@ -62,10 +84,19 @@ static void Ffn(){
  Words(TT_Q38_COHORT_STATS)[14]=68;Words(TT_Q38_COHORT_STATS)[15]=20;Words(TT_Q38_COHORT_STATS)[16]=9;
  Words(TT_Q38_COHORT_STATS)[17]=TT_Q38_RESIDENT_LAYER_MARKER;
 }
+static void PublishReceipt(){
+ Audit();const auto* l=Snapshot();
+ const uint32_t header[]={0,2,TT_Q38_RESIDENT_LAYER_RECEIPT_WORDS,l[3],l[4],l[11],l[5],l[6],l[7],l[8],l[9],l[10],TT_Q38_RESIDENT_LAYER_MARKER,5120,3,1};
+ for(unsigned i=0;i<16;i++)Receipt()[i]=header[i];
+ for(unsigned i=0;i<16;i++)Receipt()[16+i]=l[16+i];
+ for(unsigned i=0;i<8;i++)Receipt()[224+i]=l[32+i];
+ Fence();Receipt()[0]=TT_Q38_RESIDENT_LAYER_RECEIPT_MARKER;Fence();
+ // This is completion DATA ONLY,not model-token/current-slot/native authority.
+}
 }
 extern "C" unsigned q38_resident_cohort_main(){
  Layer::Capture();
  if(q38_resident_layer_prefix_once()!=5120)cohort_fault_park();
- Layer::Normalize();Layer::Ffn();Layer::Audit();
+ Layer::SavePrefix();Layer::Normalize();Layer::Ffn();Layer::PublishReceipt();
  return 5120; // final hidden ONLY;current-slot/model-token commit remains the native owner's responsibility
 }

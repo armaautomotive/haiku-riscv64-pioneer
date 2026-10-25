@@ -1,0 +1,142 @@
+QLP2 saved stage receipts and NEW full-layer controller — 2026-10-25
+=================================================================
+
+STATUS: OFFLINE development checkpoint, NOT a new installed driver.
+The complete native state/factory/source/clock/host/mapping binding and
+original-model readback observer are still required. Full 64-layer/token
+loop/Work integration and 20 tokens/sec remain UNMET. No new inference
+rate was measured; last actual whole-model result remains 0.207893161 t/s.
+
+Device-side completion DATA
+---------------------------
+The new QLR1 coordinator now retains actual earlier stage receipts before
+the FFN reuses their old addresses. QLP2 is 256 words at 0x155800; actual
+68 recurrent summaries occupy 0x155c00..0x157e00. Both fit inside the
+existing full-layer 44,003,552-byte ROOT/119-peer snapshot and mappings.
+The remaining 28 recurrent summaries remain in their original peer L1.
+No old CLOSED owner is retagged, and no host numerical product, CPU
+reference, fitted counter baseline or reconstructed receipt is supplied.
+
+QLP2 publishes LAST, after true Conv/GDN/output, residual+RMS, all three
+FFN matrices, SiLU and the final residual. Its root proof links actual
+independently captured pre-launch counters to saved prefix/norm data and
+the final FFN counters/command. Each of all 119 peer proofs independently
+links its original pre-launch counters through the complete pipeline.
+These DATA predicates alone authorize NO native operation or cleanup.
+
+Actual instruction test 41075 EXIT0:
+ /private/tmp/pioneer-q38-layer-receipt-full-20261025-b.log
+ - Conv640/GDN96/QOL24/119 output matrices and all 5120 output rows;
+ - bit-exact residual/RMS, 357 FFN matrix jobs, 88 producers and final
+   5120 residual values; same 119 persistent interpreters, no resets;
+ - 249 non-timing QLP2 corruptions and 7616 final peer-proof corruptions
+   refused; original independent physical counter baselines mandatory;
+ - ROOT 109532090 modeled instructions, 50607 ROOT packets, 2088960 FFN
+   Tensix instructions, maximum observed device stack 6360 bytes.
+These are synthetic-input/learned-byte endpoint tests, NOT original GGUF,
+silicon timing, native ownership, complete model or token-rate evidence.
+
+Runtime failures 44776/63770/31769 all EXIT0:
+ /private/tmp/pioneer-q38-layer-owner-runtime1-20261025-a.log
+ /private/tmp/pioneer-q38-layer-owner-runtime2-20261025-a.log
+ /private/tmp/pioneer-q38-layer-owner-runtime3-20261025-a.log
+Late raw NaN, first norm-write UNKNOWN and first FFN producer-write UNKNOWN
+all preserve failure/inertness after genuine prefix execution. No complete
+QLP2 is published, FFN matrices/final residual do not begin, and no STOP,
+reset, retry or cleanup is invented after uncertainty.
+
+NEW private controller (first full execution passed; broader qualification running)
+----------------------------------------------------
+PioneerQ38ResidentLayerOwner consumes the genuine four-QPS1 private input,
+separately claims initialized history/recurrent state, and excludes the
+old output owner. It retains the exact full-layer journal and immutable
+manifests; requires independent unheld ROOT and all 119 peer completion
+proofs; obtains all 119 fresh STOP terminals before the FIRST peer hold;
+and restores/verifies all 11,000,888 arbitrary original words twice.
+Every first detected physical uncertainty quarantines and retains all
+owners, with no following device IO/reset/STOP/restore/retry.
+
+This is a TEMPLATE controller with distinct NEW typed IO callbacks, not
+an actual native adapter/factory, boot-only smoke test or a public ABI.
+Default drivers continue to reject the NativeComponent role. Original
+model qualification and current-slot/token publication remain owed.
+
+Genuine complete lifetime positive 14330 EXIT0:
+ /private/tmp/pioneer-q38-layer-owner-execution-20261025-c.log
+Actual zero controllers/CLOSE, embedding, RMS and all four QPS1 programs
+produce the private input. NEW controller then executes every joined-layer
+stage, independently accepts ROOT+ALL119 final proofs, observes all 119
+fresh unheld STOP terminals, holds all participants and restores every
+11,000,888 original word with the second full proof. No held-PC sample,
+CPU intermediate product or injected completion is used. This positive
+uses the same production owner/plan/proof headers but predates the final
+fixture-only assertion that an OLD owner is inert after the NEW claim.
+That assertion is included in the already-passed clean pre-start cases
+and the still-running final clean complete-lifetime suite.
+
+Additional completed checks
+---------------------------
+ - Genuine four-QPS1 input with missing state initialization: 16 inert
+   refusals, zero device IO/claim/consumption/quarantine (69872 EXIT0).
+ - Canonical plan: all 192 layer/bank/slot/boundary recipes, 3520 single
+   word mutations, plus 156 missing/foreign learned-page refusals. A
+   shape-valid foreign norm address fails even with all pages present.
+ - NEW owner roles/private access/old IO: 121 admission gates; existing
+   NativeComponent closed-world regression: all 258 gates.
+ - ROOT/ALL119 WAIT and fresh STOP grammar: 11679 source/boot/status/reset/
+   PC/doorbell/old-sequence refusals. Held PCs cannot pass the data check.
+ - Full held journal: 50 injected failures and 29 inert preconditions;
+   every original stack/code/manifest/runtime/trailer word retained.
+ - All 13 exact code sections and 120 worker mappings verified; generator
+   authenticates every section/boot before emitting any of 7 ROOT arrays.
+ - Real Haiku SDK controller template: maximum frame 1456 bytes, object
+   SHA256 d670ff6ccbbd577461497c9b9e9e0cfbab570241c9d5a6c828f4b4668065967b.
+ - Old native65 object stays byte-exact 61faa093c5f247f8f120a6712a24c7e5e
+   f6989c6dc8aeb7466241dca6d52a821. Old refusing context67 stays byte-exact
+   59ecbf0a81d74d2c5a0752a4e5a862f167e4b44181a722f1795b1852cf36135f.
+
+Clean repeat
+------------
+Clean source: /private/tmp/pioneer-resident-layer-owner-clean.dvNwMdvI
+Clean image: /private/tmp/pioneer-q38-layer-owner-clean-image-20261025-a
+The clean build independently reproduces all 7 new ROOT pins and authenticates
+the unchanged ancestors/default FFN/6 peer sections. All 36 task-owned source
+files were copied explicitly; dirty llama.cpp and unrelated FlashNext were
+excluded. Clean SDK controller object and image DATA tests have passed.
+Clean five pre-start controller faults 7575 EXIT0: physical scope, second
+snapshot proof, last image write, lost scope before RUN and a missing FFN
+page after PREPARE all retain owners with ZERO following IO/retry. These
+cases use genuinely initialized state and the real four-QPS1 input;
+NONE starts ROOT. They do not qualify failures during/after full execution.
+
+RUNNING, NOT YET PASS CLAIMS:
+ - Final clean controller complete positive plus 20 fault cases 80515.
+ - Final clean whole instruction repeat 5229.
+Logs use /private/tmp/pioneer-q38-layer-owner-*-20261025-*.log.
+Selected completed outputs and their source-log SHA256 values are retained
+in the sibling qwen38-resident-layer-owner-20261025.log evidence file.
+Continue polling these SAME handles; an observation timeout is not a
+terminal outcome or a reason for power/reset/restarting the test.
+
+Fixture development findings
+----------------------------
+The initial full-layer fixture inherited only prefix learned-page presence.
+The NEW controller correctly refused before any physical IO or claim.
+The dedicated synthetic full-layer fixture now includes norm+FFN pages;
+no manufactured producer/vector/readiness shortcut was introduced.
+The new execution machine intentionally refuses original learned-byte
+imports: an original prefix plus synthetic FFN would not qualify the
+original complete layer. A separate complete original-model observer is
+still required before any physical expanded-driver test.
+
+Hardware and remaining work
+----------------------------
+Only read-only SSH was used this turn: Haiku/link at 10.0.0.247 responded,
+1000BASE-T, zero link errors. No power pulse, card/SD/mains change, driver
+installation, Assistant restart or network configuration was performed.
+The known working 041fef18... driver remains the last restored baseline.
+Next: finish genuine owner failure/lifetime tests, implement the distinct
+native context/factory and complete original-layer observer, then guarded
+physical qualification/profiling. All 48 recurrent + 16 dense-attention
+layers, KV, vocabulary, sampling and persistent token loop/Work integration
+remain necessary. Full-card placement alone is not a 20-token/sec result.

@@ -7,10 +7,10 @@ import sys
 
 PINS = {
     'root-boot': ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b', 'RootBoot'),
-    'root-main': ('text', 128, '2c4e959f3eae94ef40192f132c6abeca812b7419792a89e1be91060cac2c42ad', 'RootMain'),
-    'root-conv': ('conv', 6472, '39db869e6b422f7c7881214a6ec4eb114ed99d407ecf40a4b2561e73bfd1e61b', 'RootConv'),
+    'root-main': ('text', 128, '98a89f90feb6fdd4bf6a072db9ef38064a6089d99d63b09d38d6af1c4ae495d3', 'RootMain'),
+    'root-conv': ('conv', 6472, '479cb028a09ff252c8df32b279facfbf295d1b7cd72a13d2966272406398da51', 'RootConv'),
     'root-matrix': ('matrix', 14136, '1d2e2e7e4c8f806ff2983e5d9a2ccbd1a4d177940c7e23d73b6de33bae7e7559', 'RootMatrix'),
-    'root-cohort': ('cohort', 57932, '84b0afc3ab94a834160f709122d7243474b77bf1146220d97da8f679c79add00', 'RootCohort'),
+    'root-cohort': ('cohort', 59288, 'fca3da36bc93a1976c2f4609b423c8023a51661f58cc8267848f2e7bbe55c0a7', 'RootCohort'),
     'root-norm': ('norm', 5404, '60f44ff5f83914fedcaee02d70dd0c1a821edfc4a150e4406430d82d30dbeef1', 'RootNorm'),
     'root-ffn': ('ffn', 30496, 'e0c5de18d44c1ecce93b9e3282e853de1943da2a4ffae7c6ef482d0493ad9f3f', 'RootFfn'),
     'peer-boot': ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b', 'PeerBoot'),

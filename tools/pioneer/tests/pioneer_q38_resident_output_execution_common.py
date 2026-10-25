@@ -10,7 +10,7 @@ import subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 
 
-def compile_test(directory, sources, fixtures, *, producer=True, native_projection=False, extra_flags=(), extra_objects=()):
+def compile_test(directory, sources, fixtures, *, producer=True, native_projection=False, resident_states=True, extra_flags=(), extra_objects=()):
     assert len(fixtures) == 5
     for name, (section, size, digest, _) in runpy.run_path(str(HERE.parent/'generate_qwen38_projection_stash_images.py'))['PINS'].items():
         data = (pathlib.Path(fixtures[0 if name.startswith('root-') else 1])/(section+'.bin')).read_bytes()
@@ -27,7 +27,7 @@ def compile_test(directory, sources, fixtures, *, producer=True, native_projecti
     flags += ['-DPIONEER_Q38_RESIDENT_OUTPUT_OWNER=1','-DPIONEER_Q38_PROJECTION_RESULT_STASH=1','-DPIONEER_Q38_TEST_CLOSED_INPUT_POSITION_ZERO=1',
               '-DPIONEER_Q38_EMBEDDING_NATIVE=1','-DPIONEER_Q38_LEARNED_RMS_NATIVE=1','-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1',
               '-DPIONEER_Q38_NORMAL_CLOCK=1','-DPIONEER_Q38_GDN_MUTABLE_STATE=','-DPIONEER_Q38_DECODER_RUNTIME=1',
-              '-DPIONEER_Q38_TEST_RESIDENT_OUTPUT_EXECUTION=1']
+              *(['-DPIONEER_Q38_TEST_RESIDENT_OUTPUT_EXECUTION=1'] if resident_states else [])]
     for flag in extra_flags:
         assert re.fullmatch(r'-D[A-Z][A-Z0-9_]*(?:=[A-Za-z0-9_]+)?',flag),flag
         key=flag.split('=',1)[0]

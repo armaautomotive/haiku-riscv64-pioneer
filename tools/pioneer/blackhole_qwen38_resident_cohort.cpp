@@ -10,6 +10,9 @@
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentCohortShape.h"
+#ifdef PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerShape.h"
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
 extern "C" unsigned q38_cohort_conv_once();
 extern "C" void cohort_fault_park() __attribute__((noreturn));
@@ -191,6 +194,11 @@ static void StageGdn(){
   const auto* in=PioneerQ38CohortGdn(Manifest(),w);PioneerQ38CohortJob(Manifest(),w,8,j);
   const auto* baseline=reinterpret_cast<const uint32_t*>(TT_Q38_COHORT_COUNTERS+(w-1)*32);
   if(!PioneerQ38ResidentGdnServiceProof(p,j,in+128,in,in+64,Source(w),w,PioneerQ38ConvPeer(w),baseline,p+8,first,recurrent,gated,clock))cohort_fault_park();
+#ifdef PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE
+  // Only these68 peers later run FFN SiLU,which reuses74300. Preserve
+  // their ACTUAL verified recurrent summaries,not reconstructed counters.
+  if(w<=68)for(unsigned i=0;i<32;i++)Words(TT_Q38_RESIDENT_LAYER_GDN_SAVED+(w-1)*128)[i]=recurrent[i];
+#endif
   Sources(w);Counters(w,actual,p+8);Words(TT_Q38_COHORT_SEQUENCE)[w-1]=seq;Words(TT_Q38_COHORT_STATS)[6]++;
  }
  if(!Audit())cohort_fault_park();

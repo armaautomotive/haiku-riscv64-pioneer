@@ -52,6 +52,9 @@ class PioneerQ38ProjectionGraphOwner {
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  friend class PioneerQ38ResidentProjectionInput;
  friend class PioneerQ38ResidentOutputOwner;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+ friend class PioneerQ38ResidentLayerOwner;
+#endif
  PioneerQ38ResidentProjectionInput closedResidentInput;
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
@@ -293,6 +296,9 @@ class PioneerQ38ProjectionGraphOwner {
 #endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  bool MatchesResidentInput(const PioneerQ38ResidentProjectionInput& v,const PioneerQ38ResidentOutputOwner* consumer=nullptr)const{
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+  if(v.layerConsumer)return false; // NEW consumer excludes every OLD claim/current-input path
+#endif
   if(&v!=&closedResidentInput || v.owner!=this || v.consumer!=consumer || !closed || unsafe || ready || output || produced
    || !proof || !banks || !cohort || !memory || !graph || !canonical || !input || !ledger || position || token>=248320
    || !MatchesClosedNativeOwner(*proof,*banks,*cohort,*memory,*graph,*canonical,*input,identity,ledger,pages)

@@ -7,6 +7,7 @@
 #define PIONEER_Q38_RESIDENT_OUTPUT_COHORT_MACHINE_ONLY
 #include "pioneer_q38_resident_output_cohort_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerPlan.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerProof.h"
 struct LayerFabric;
 struct LayerPeer:CohortPeer {
  LayerFabric* layerFabric=nullptr;
@@ -25,6 +26,8 @@ struct LayerFabric:OutputCohortFabric {
  std::array<std::vector<uint8_t>,2> extra;
  std::unique_ptr<PioneerQ38ResidentLayerPlan> plan=std::make_unique<PioneerQ38ResidentLayerPlan>();
  std::array<uint32_t,5120> rawBefore={},projected={},normalized={},residual={},down={};
+ std::array<uint32_t,8> initialNoc={};
+ std::array<std::array<uint32_t,8>,119> initialPeerNoc={};
  std::array<std::vector<uint32_t>,3> expected;
  unsigned layerCaptures=0,normPackets=0,ffnCaptures=0,ffnMatrices=0,ffnProducers=0;
  unsigned assembled[3]={},normSumStores=0,normStores=0,residualPackets=0,finalSumStores=0;
@@ -34,6 +37,7 @@ struct LayerFabric:OutputCohortFabric {
  LayerFabric(const char* image,const char* worker,const OutputParts& geometry,unsigned failure=0)
   :OutputCohortFabric(image,worker,geometry),runtimeFault(failure){
   assert(runtimeFault<=3);
+  for(unsigned i=0;i<8;i++)initialNoc[i]=counts[i];
   extra[0]=Read((std::string(image)+"/norm.bin").c_str());extra[1]=Read((std::string(image)+"/ffn.bin").c_str());
   assert(extra[0].size()==5404 && extra[1].size()==30496);
   ffnEntry=Symbol(image,"q38_resident_layer_ffn_once");
@@ -57,6 +61,7 @@ struct LayerFabric:OutputCohortFabric {
   // NoC endpoint object links follow the moved interpreters;their actual
   // tensors/registers/source bytes/private sequences are unchanged.
   for(unsigned w=0;w<96;w++)peers[w]->peer=peers[w^1].get();
+  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<8;i++)initialPeerNoc[w][i]=peers[w]->Count(i);
   for(unsigned role=0;role<3;role++)expected[role].assign(role==2?5120:17408,0x7fc00000);
  }
  LayerPeer& Peer(unsigned w){return static_cast<LayerPeer&>(*peers.at(w));}
@@ -67,6 +72,8 @@ struct LayerFabric:OutputCohortFabric {
  bool RangeData(unsigned at)const override{return OutputCohortFabric::RangeData(at)
   || Range(at,TT_Q38_RESIDENT_LAYER_MANIFEST,TT_Q38_RESIDENT_LAYER_WORDS*4)
   || Range(at,TT_Q38_RESIDENT_LAYER_SHADOW,TT_Q38_RESIDENT_LAYER_WORDS*4)
+  || Range(at,TT_Q38_RESIDENT_LAYER_RECEIPT,TT_Q38_RESIDENT_LAYER_RECEIPT_WORDS*4)
+  || Range(at,TT_Q38_RESIDENT_LAYER_GDN_SAVED,TT_Q38_RESIDENT_LAYER_GDN_SAVED_WORDS*4)
   || Range(at,0x74000,0x38000);}
  uint32_t Load(uint32_t at)override{return ExtraSection(at)<2?ExtraWord(at):OutputCohortFabric::Load(at);}
  void VerifyPrefix(){
@@ -209,11 +216,48 @@ struct LayerFabric:OutputCohortFabric {
    && Mem(0x94000+i*4)==residual[i]);
   std::array<uint32_t,3456> active;
   for(unsigned i=0;i<3456;i++)active[i]=Mem(TT_Q38_FFN_RESIDUAL_GRAPH_MANIFEST+i*4);
+  std::array<uint32_t,256> handoff;std::array<uint32_t,64> liveStats,ffnStats;
+  for(unsigned i=0;i<256;i++)handoff[i]=Mem(TT_Q38_RESIDENT_LAYER_RECEIPT+i*4);
+  for(unsigned i=0;i<64;i++){liveStats[i]=Mem(TT_Q38_COHORT_STATS+i*4);ffnStats[i]=Mem(TT_Q38_FFN_RESIDUAL_GRAPH_STATS+i*4);}
+  assert(PioneerQ38ResidentLayerRootReceipt(plan->LayerManifest(),manifest.data(),post.data(),handoff.data(),liveStats.data(),active.data(),ffnStats.data(),initialNoc.data(),counts,command));
+  unsigned corruptions=0;
+  for(unsigned i=0;i<256;i++){
+   if(i>=153 && i<160)continue; // opaque read-only cycle DATA,NOT admission/cleanup authority
+   handoff[i]^=1;
+   assert(!PioneerQ38ResidentLayerRootReceipt(plan->LayerManifest(),manifest.data(),post.data(),handoff.data(),liveStats.data(),active.data(),ffnStats.data(),initialNoc.data(),counts,command));
+   handoff[i]^=1;corruptions++;
+  }
+  assert(corruptions==249);
+  puts("PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission");
   for(unsigned w=0;w<119;w++){
    auto& p=Peer(w);unsigned want=PioneerQ38FfnResidualGraphNextPeer(active.data(),w);
    assert(p.ffn && !p.active && !p.pending && p.pc==TT_Q38_PEER_WAIT_LOAD && p.ffnPrepared==want && p.ffnVerified==want
     && Mem(TT_Q38_COHORT_SEQUENCE+w*4)==want && p.matrixJobs==3 && !p.dotProbeReads);p.ClearTensorState();
+   std::array<uint32_t,64> proof;std::array<uint32_t,32> first={},state={},gated={};std::array<uint32_t,16> clock={};
+   std::array<uint32_t,8> outBefore,downBefore,after,boot;std::array<uint32_t,16> status;
+   for(unsigned i=0;i<64;i++)proof[i]=p.memory.at(0x83f00+i*4);
+   for(unsigned i=0;i<8;i++){outBefore[i]=Mem(TT_Q38_COHORT_COUNTERS+w*32+i*4);downBefore[i]=Mem(TT_Q38_FFN_RESIDUAL_GRAPH_COUNTERS+w*32+i*4);
+    after[i]=p.Count(i);boot[i]=p.memory.at(0x74040+i*4);}
+   for(unsigned i=0;i<16;i++)status[i]=p.memory.at(0x74140+i*4);
+   if(w<96){
+    for(unsigned i=0;i<32;i++){
+     first[i]=p.memory.at(TT_Q38_GDN_INPUT_SUMMARY+i*4);
+     state[i]=w<68?Mem(TT_Q38_RESIDENT_LAYER_GDN_SAVED+w*128+i*4):p.memory.at(TT_Q38_RGDN_SUMMARY+i*4);
+     gated[i]=p.memory.at(TT_Q38_GDN_GATED_SUMMARY+i*4);
+    }
+    for(unsigned i=0;i<16;i++)clock[i]=p.memory.at(TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4);
+   }
+   const uint32_t pc[2]={p.pc,p.pc};
+   assert(PioneerQ38ResidentLayerPeerPhysical(manifest.data(),w+1,p.source,boot.data(),status.data(),p.memory.at(0x74100),pc,0x46800,false));
+   assert(PioneerQ38ResidentLayerPeerReceipt(plan->LayerManifest(),manifest.data(),post.data(),w+1,initialPeerNoc[w].data(),after.data(),p.command,
+    proof.data(),outBefore.data(),downBefore.data(),first.data(),state.data(),gated.data(),clock.data()));
+   for(unsigned i=0;i<64;i++){
+    proof[i]^=1;
+    assert(!PioneerQ38ResidentLayerPeerReceipt(plan->LayerManifest(),manifest.data(),post.data(),w+1,initialPeerNoc[w].data(),after.data(),p.command,
+     proof.data(),outBefore.data(),downBefore.data(),first.data(),state.data(),gated.data(),clock.data()));proof[i]^=1;
+   }
   }
+  puts("PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority");
   assert(Mem(TT_Q38_COHORT_STATS+10*4)==5120 && Mem(TT_Q38_COHORT_STATS+12*4)==5120
    && Mem(TT_Q38_COHORT_STATS+17*4)==TT_Q38_RESIDENT_LAYER_MARKER);
  }
@@ -290,6 +334,7 @@ void LayerPeer::StepBlock(){
  else {if(inputFfn)VerifyInputFfn();else VerifyActivation();producerJobs++;}
  ffnVerified=ffnPrepared;active=false;layerFabric->RecordFfn(*this);
 }
+#ifndef PIONEER_Q38_RESIDENT_LAYER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || argc==4);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  if(argc==4 && !strcmp(argv[3],"--preflight-faults")){
@@ -310,6 +355,7 @@ int main(int argc,char** argv){
   assert(kind);printf("BEGIN ACTUAL NEW joined ROOT runtime fault%u AFTER real prefix;SYNTHETIC endpoint fault,NOT hardware/native recovery evidence\n",kind);
   OutputParts geometry(0,0);LayerFabric f(argv[1],argv[2],geometry,kind);
   assert(!f.RunLayer() && f.unknown && f.prefixDone && !f.ffnMatrices && !f.finalSumStores);
+  assert(f.Mem(TT_Q38_RESIDENT_LAYER_RECEIPT)==0); // never publish complete handoff after a runtime fault
   if(kind==1)assert(!f.normDone && f.normPackets==6 && f.packets==f.prefixPackets+6 && f.normSumStores==5119 && !f.normStores && !f.ffnCaptures && !f.pending);
   if(kind==2)assert(!f.normDone && f.normPackets==7 && f.packets==f.injectedRootPacket && f.pending && f.pendingStackStores && !f.ffnCaptures);
   if(kind==3){auto& p=f.Peer(0);assert(f.normDone && f.ffnStarted && f.normPackets==10 && f.residualPackets==2
@@ -325,3 +371,4 @@ int main(int argc,char** argv){
  uint64_t math=0;for(unsigned w=0;w<119;w++)math+=f.Peer(w).ffnArithmetic;
  printf("PASS ACTUAL NEW complete recurrent-layer ROOT Conv640/GDN96/output24+119matrices/ALL5120 residual+RMS/FFN357matrixjobs+88producers/final5120residual BITEXACT/ALL119actual private WAIT sequences preserved/one ROOT launch/no peer reset/no host intermediate math/ROOTsteps%u packets%u FFNTensix%llu maxStack%u;SYNTHETIC_ENDPOINTS_NOT_NATIVE_OR_ORIGINAL_MODEL_OR_TOKEN_RATE\n",f.steps,f.packets,(unsigned long long)math,0x70000-f.minStack);
 }
+#endif

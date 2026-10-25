@@ -65,7 +65,7 @@ static inline bool PioneerQ38ResidentLayerProgramWord(unsigned w,uint32_t a,uint
 }
 static_assert(sizeof(PioneerQ38ResidentLayerRootBoot)==4 && sizeof(PioneerQ38ResidentLayerRootConv)==6472
  && sizeof(PioneerQ38ResidentLayerRootMatrix)==14136 && sizeof(PioneerQ38ResidentLayerRootMain)==128
- && sizeof(PioneerQ38ResidentLayerRootCohort)==57932 && sizeof(PioneerQ38ResidentLayerRootNorm)==5404
+ && sizeof(PioneerQ38ResidentLayerRootCohort)==59288 && sizeof(PioneerQ38ResidentLayerRootNorm)==5404
  && sizeof(PioneerQ38ResidentLayerRootFfn)==30496,"ALL7 exact NEW ROOT sections,not old68 code or ownership");
 static_assert(sizeof(PioneerQ38ResidentOutputPeerBoot)==4 && sizeof(PioneerQ38ResidentOutputPeerFfn)==16352
  && sizeof(PioneerQ38ResidentOutputPeerService)==10300 && sizeof(PioneerQ38ResidentOutputPeerAffine)==5360

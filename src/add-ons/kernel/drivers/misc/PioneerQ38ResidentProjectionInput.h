@@ -18,8 +18,14 @@ class PioneerQ38LearnedRmsController;
 class PioneerQ38ResidentProjectionInput {
  friend class PioneerQ38ProjectionGraphOwner;
  friend class PioneerQ38ResidentOutputOwner;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+ friend class PioneerQ38ResidentLayerOwner;
+#endif
  const PioneerQ38ProjectionGraphOwner* owner=nullptr;
  const PioneerQ38ResidentOutputOwner* consumer=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+ const class PioneerQ38ResidentLayerOwner* layerConsumer=nullptr;
+#endif
  const PioneerQ38ProjectionMutableBanks* graph=nullptr;
  const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const PioneerQ38LearnedRmsController* rms=nullptr;

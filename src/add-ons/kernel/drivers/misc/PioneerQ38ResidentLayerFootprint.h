@@ -11,7 +11,7 @@ enum {TT_Q38_RESIDENT_LAYER_PEER_SAVED_WORDS=90121,
  TT_Q38_RESIDENT_LAYER_ROOT_EXTRA_WORDS=(TT_Q38_RESIDENT_LAYER_ROM_END-0xc8000)/4,
  TT_Q38_RESIDENT_LAYER_ROOT_SAVED_WORDS=TT_Q38_RESIDENT_LAYER_PEER_SAVED_WORDS+TT_Q38_RESIDENT_LAYER_ROOT_EXTRA_WORDS,
  TT_Q38_RESIDENT_LAYER_SAVED_WORDS=TT_Q38_RESIDENT_LAYER_ROOT_SAVED_WORDS+119*TT_Q38_RESIDENT_LAYER_PEER_SAVED_WORDS,
- TT_Q38_RESIDENT_LAYER_ROOT_CODE_WORDS=28643,TT_Q38_RESIDENT_LAYER_PEER_CODE_WORDS=18838,
+ TT_Q38_RESIDENT_LAYER_ROOT_CODE_WORDS=28982,TT_Q38_RESIDENT_LAYER_PEER_CODE_WORDS=18838,
  TT_Q38_RESIDENT_LAYER_CODE_WORDS=TT_Q38_RESIDENT_LAYER_ROOT_CODE_WORDS+119*TT_Q38_RESIDENT_LAYER_PEER_CODE_WORDS};
 static inline unsigned PioneerQ38ResidentLayerSpanCount(unsigned w){return w>=120?0:w?7:8;}
 static inline PioneerQ38ResidentLayerSpan PioneerQ38ResidentLayerSnapshotSpan(unsigned w,unsigned span){
@@ -57,7 +57,7 @@ static inline PioneerQ38ResidentLayerSpan PioneerQ38ResidentLayerCodeSpan(unsign
    case 1:return {0x64000,1618};
    case 2:return {0x68000,3534};
    case 3:return {0x72000,32};
-   case 4:return {0xb8000,14483};
+   case 4:return {0xb8000,14822};
    case 5:return {TT_Q38_RESIDENT_LAYER_NORM_ROM,1351};
    default:return {TT_Q38_RESIDENT_LAYER_FFN_ROM,7624};
   }
@@ -82,6 +82,6 @@ static inline bool PioneerQ38ResidentLayerProgramImmutable(unsigned w,uint32_t a
 }
 static_assert(TT_Q38_RESIDENT_LAYER_PEER_SAVED_WORDS==1+10240+2048+4096+57344+16384+8,"all arbitrary originals,not rebuilt zeros");
 static_assert(TT_Q38_RESIDENT_LAYER_SAVED_WORDS==11000888 && TT_Q38_RESIDENT_LAYER_SAVED_WORDS*4==44003552,"NEW ALL120 snapshot HEAP ONLY;NEVER old68 grant");
-static_assert(TT_Q38_RESIDENT_LAYER_CODE_WORDS==2270365,"ALL7 exact ROOT/ALL6 exact peer extents,not padded code permission");
+static_assert(TT_Q38_RESIDENT_LAYER_CODE_WORDS==2270704,"ALL7 exact ROOT/ALL6 exact peer extents,not padded code permission");
 static_assert(0xb8000+16384*4==0xc8000 && TT_Q38_RESIDENT_LAYER_ROM_END<0x17ffc0,"all complete nonoverlapping root originals through new ROMs");
 #endif

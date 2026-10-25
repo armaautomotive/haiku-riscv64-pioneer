@@ -36,7 +36,7 @@ int main(int argc,char** argv){
   }
   for(unsigned n=0;n<PioneerQ38ResidentOutputSnapshotWords(w);n++)assert(PioneerQ38ResidentLayerSnapshotContains(w,PioneerQ38ResidentOutputSnapshotAddress(w,n)));
  }
- assert(saved==11000888 && code==2270365);
+ assert(saved==11000888 && code==2270704);
  for(unsigned a:{0x14e000U,0x152000U,0x158000U,0x15c000U,0x17dffcU})assert(PioneerQ38ResidentLayerSnapshotContains(0,a) && !PioneerQ38ResidentOutputSnapshotContains(0,a));
  for(unsigned a:{0x14e000U,0x152000U,0x157ffcU,0x15951cU,0x17dffcU,0x17e000U,0x17ffc0U})assert(!PioneerQ38ResidentLayerProgramImmutable(0,a));
  for(unsigned w:{120U,121U,~0U}){
@@ -45,5 +45,5 @@ int main(int argc,char** argv){
    && PioneerQ38ResidentLayerSnapshotAddress(w,0)==UINT32_MAX && !PioneerQ38ResidentLayerSnapshotContains(w,0x6000)
    && !PioneerQ38ResidentLayerProgramImmutable(w,0x6000));
  }
- puts("PASS NEW layer snapshot DATA:ALL120/11000888arbitrary original words/44003552B/2270365exact codewords/ALL7ROOT+ALL6peer emitted extents/exhaustive L1 coverage+no overlap/boundaries+invalid workers/old68 geometry unchanged;NO allocation,mapping,write,restore,source,initialized,owner or launch grant");
+ puts("PASS NEW layer snapshot DATA:ALL120/11000888arbitrary original words/44003552B/2270704exact codewords/ALL7ROOT+ALL6peer emitted extents/exhaustive L1 coverage+no overlap/boundaries+invalid workers/old68 geometry unchanged;NO allocation,mapping,write,restore,source,initialized,owner or launch grant");
 }

@@ -50,6 +50,9 @@ class PioneerQ38ResidentOutputOwner {
  uint32_t token=UINT32_MAX,position=UINT32_MAX,bank=7,phase=0;
  uint64_t began=0;bool started=false,ready=false,unsafe=false,closed=false,ran=false,traffic=false,rootVerified=false;
  bool Bound(bool closedState=false)const{
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+  if((history && history->residentLayerOwner) || (recurrent && recurrent->residentLayerOwner))return false;
+#endif
   if(!started || unsafe || closed!=closedState || !projection || !input || !memory || memory->unsafe || memory->closed!=closedState
    || !previousMemory || previousMemory->Unsafe() || !previousMemory->Closed() || !history || !recurrent || !proof || !banks || !cohort
    || !graph || !canonical || !ledger || !identity.Valid() || !canonical->Ready() || !banks->Matches(*proof)
@@ -231,6 +234,9 @@ public:
   auto& v=producer.closedResidentInput;auto* h=producer.graph->ConvHistory(v.identity);auto* g=producer.graph->Recurrent(v.identity);
   if(!h || !g || !h->InitializationPublished(v.identity) || !g->InitializationPublished(v.identity)
    || h->residentOutputOwner || g->residentOutputOwner || v.phase>=0x7ffffff8)return false;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT
+  if(h->residentLayerOwner || g->residentLayerOwner || v.layerConsumer)return false;
+#endif
   unsigned sequences[119]={};
   if(!operation.Build(*v.canonical,0,v.position,v.bank,0,v.token,v.phase+1,v.identity,&producer.cohort->authority.source[0][0],sequences)
    || !operation.LearnedPagesPresent(v.ledger,v.pages))return false; // inert before claims or physical IO

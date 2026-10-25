@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstdio>
 #include <memory>
+#include <vector>
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
@@ -13,7 +14,7 @@ int main(){
  for(unsigned w=0;w<120;w++)for(unsigned i=0;i<16;i++)sources[w*16+i]=i?0x12340000+w*32+i:0x16005+w*256;
  for(unsigned w=0;w<119;w++)sequences[w]=w%17;
  PioneerQ38GdnIdentity id={UINT64_C(1)<<40,UINT64_C(2)<<40,UINT64_C(3)<<40,UINT64_C(4)<<40};
- unsigned cases=0,mutations=0;
+ unsigned cases=0,mutations=0,pageRefusals=0;
  for(unsigned layer=0;layer<64;layer++){
   if(layer%4==3)continue;
   for(unsigned bank:{0U,6U})for(unsigned slot:{0U,1U}){
@@ -44,6 +45,21 @@ int main(){
     && !plan->Matches(*canonical,layer,position,bank,slot,token,phase,id,sources.data(),sequences.data()));
    changed[13]-=4096;
    assert(plan->Matches(*canonical,layer,position,bank,slot,token,phase,id,sources.data(),sequences.data()));
+   std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,1);
+   assert(plan->LearnedPagesPresent(ledger.data(),unsigned(ledger.size()))
+    && !plan->LearnedPagesPresent(nullptr,unsigned(ledger.size()))
+    && !plan->LearnedPagesPresent(ledger.data(),unsigned(ledger.size()-1)));
+   changed[13]+=4096;assert(!plan->LearnedPagesPresent(ledger.data(),unsigned(ledger.size())));changed[13]-=4096;
+   for(unsigned i=0;i<canonical->Count();i++){
+    const auto* p=canonical->Part(i);
+    if(p->kind!=canonical->WeightKind || p->layer || p->role==0 || p->role==5 || p->role==6 || p->role==10 || p->role==11)continue;
+    unsigned first=p->bank*unsigned(canonical->Capacity/4096)+p->offset/4096,n=p->allocated/4096;
+    for(unsigned at:{first,first+n-1}){
+     for(unsigned bad:{0U,2U}){ledger[at]=uint8_t(bad);assert(!plan->LearnedPagesPresent(ledger.data(),unsigned(ledger.size())));pageRefusals++;}
+     ledger[at]=1;
+    }
+   }
+   assert(plan->LearnedPagesPresent(ledger.data(),unsigned(ledger.size())));
    for(unsigned word=0;word<64;word++){
     auto original=d[word];d[word]^=1;
     // Some logical/source/epoch fields may change to another DATA-valid
@@ -70,4 +86,5 @@ int main(){
  }
  printf("PASS NEW complete recurrent-layer canonical DATA:192layer/bank/slot/position/token recipes,3520single-word corruptions,shape-valid foreign norm address rejected,14one-shot invalid builds;ALL3x119FFN jobs exact,actual-sequence placeholders zero;NO IO/native/initialized/Work grant\n");
  assert(refusals==14);
+ assert(pageRefusals);printf("PASS complete-layer page presence:%u first/last canonical learned-page missing/foreign-marker refusals,including added norm+FFN;shape-valid foreign norm address refused despite all pages present;DATA only\n",pageRefusals);
 }

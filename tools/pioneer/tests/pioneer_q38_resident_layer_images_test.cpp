@@ -45,11 +45,11 @@ int main(int argc,char** argv){
    uint32_t value=0x5a6bc7d8;assert(!PioneerQ38ResidentLayerProgramWord(w,a,value) && value==0x5a6bc7d8);
   }
  }
- assert(total==2270365);
+ assert(total==2270704);
  for(unsigned w:{120U,121U,UINT32_MAX}){
   const auto s=PioneerQ38ResidentLayerImage(w,0);uint32_t value=0x5a6bc7d8;
   assert(!s.data && !s.words && s.address==UINT32_MAX && PioneerQ38ResidentLayerCodeBase(w)==UINT32_MAX
    && PioneerQ38ResidentLayerCodeAddress(w,0)==UINT32_MAX && !PioneerQ38ResidentLayerProgramWord(w,0x6000,value) && value==0x5a6bc7d8);
  }
- puts("PASS NEW layer ALL13 exact emitted-code sections/ALL120 mappings/2270365codewords/9081460B;exhaustive L1/padding/stack/runtime/manifest/trailer/bad-worker/unaligned refusal WITHOUT output mutation;old68 data unchanged,SAME119peer code constants DATA ONLY;NO mapping,source,initialized,native/Work owner or launch grant");
+ puts("PASS NEW layer ALL13 exact emitted-code sections/ALL120 mappings/2270704codewords/9082816B;exhaustive L1/padding/stack/runtime/manifest/trailer/bad-worker/unaligned refusal WITHOUT output mutation;old68 data unchanged,SAME119peer code constants DATA ONLY;NO mapping,source,initialized,native/Work owner or launch grant");
 }
