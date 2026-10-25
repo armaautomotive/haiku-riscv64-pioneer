@@ -1,0 +1,136 @@
+Qwen3.8-27B NEW complete recurrent-layer coordinator: OFFLINE checkpoint
+2026-10-25 UTC. NOT a native install,Work mode or token-rate benchmark.
+
+Scope and actual implementation
+-------------------------------
+The NEW QLR1 ROOT calls the genuine Conv/GDN/QOL1/output-matrix prefix,
+then NEW post-attention residual/RMS,then complete QFG3 gate/up/SiLU/down
+and final residual,without a ROOT relaunch,worker reset or host numeric
+intermediate. The norm consumes the ACTUAL output at workspace+1048576,
+NOT the older standalone QOP1 result location. The original raw residual
+is preserved on card before FFN gate/up workspace reuse clobbers it.
+
+PioneerQ38ResidentLayerPlan derives all3x119 FFN parts and the unique
+learned norm part from the SAME canonical model. The immutable extension
+has3520words at14e000 and a complete shadow at152000. Its119 zero FFN
+sequence placeholders are DATA ONLY. The actual ROOT replaces them with
+the completed prefix's real private peer sequences,then carries actual
+FFN final sequences back to the cohort state. No current-slot/model-token
+commit,initialized/source/owner authority is fabricated by these plans.
+
+The NEW norm ROM begins158000 and FFN ROM15c000,with reserved end17e000.
+The combined image has a DISTINCT QLR1/QLRF terminal,not old QCO1/QCOF.
+The only shared device-source change gives FFN an exactly gated private
+component entry. OLD default QFG3 remains byte-identical. No frozen kernel
+image header,public registry,native selector or Work launch was changed.
+
+Actual instruction execution
+-----------------------------
+Component32438 EXIT0:
+ /private/tmp/pioneer-q38-resident-layer-ffn-20261025-f.log
+Actual NEW linked FFN entry AND shared routines from ALL7 NEW ROM sections,
+with ALL119 exact current resident worker instruction programs:
+357 matrix jobs,20 input+68 SiLU producers,17408 gate+17408 up+5120 down,
+final5120 residual BITEXACT,private monotonic sequences/WAIT retained.
+Tensix matrix instructions2088960;max observed ROOT stack5832bytes.
+Original inputs/weights are explicitly SYNTHETIC. No CPU numeric result,
+success receipt,physical counter or readiness flag is fed into execution.
+
+Whole joined ROOT99460 EXIT0:
+ /private/tmp/pioneer-q38-resident-layer-full-20261025-b.log
+ONE actual NEW complete ROOT launch,ALL119 SAME retained interpreter
+tensors/config/registers/PC/private sequences across the genuine prefix,
+normalization and FFN. ALL640 Conv groups,96 GDN halves,24 output producers,
+119 output-matrix jobs/5120 rows,5120 residual+RMS,357 FFN matrix jobs,
+88 FFN producers and final5120 residual addition completed. Complete
+residual+normalized vectors and FFN outputs match independent observers;
+the observers NEVER write their numeric products back to the device model.
+ROOT VMsteps109078007,ROOT packets50606,FFN Tensix2088960,max stack6312.
+These are instruction/endpoint counts,NOT physical clocks or tokens/sec.
+
+Clean repeat and refusal evidence
+----------------------------------
+Clean source:git archive abcae4612a72845f8596fdaa708f77ce695c9172 plus
+ONLY45 selected project files,excluding dirty llama.cpp/untracked FlashNext:
+ /private/tmp/pioneer-resident-layer-clean.60IZFPvD
+Read-only SDK:/Volumes/HaikuBuildLocal/generated.riscv64
+First clean build8326 EXIT0:
+ /private/tmp/pioneer-q38-resident-layer-clean-build-20261025-a.log
+ /private/tmp/pioneer-q38-resident-layer-clean-image-20261025-a
+ALL7 new ROOT sections,ALL6 current worker sections,ALL old ancestor pins
+and OLD default QFG3 bytes reproduced exactly. No undefined symbols,
+writable globals,unexported allocated section,forbidden divide/FMA/CSR
+write. Exactly TWO read-only mcycleh/mcycle/mcycleh triplets,one per matrix
+component. All new noninherited frames<=2048;old matrix frames unchanged.
+
+Clean DATA88173 EXIT0:192 canonical layer/bank/slot/position/token recipes,
+3520 single-word corruptions rejected,14 invalid one-shot builds refused,
+shape-valid foreign learned norm address rejected by canonical matching.
+Clean norm32794 EXIT0:actual norm.bin at158000,6 numeric positives/ALL5120
+residual+normalized BITEXACT,81 failures including40 packet/counter/source/
+descriptor uncertainties,late invalid math BEFORE ANY GDDR write,and
+invalid descriptors before any packet;max observed norm stack596bytes.
+
+Clean outer preflight86208 EXIT0:11 actual emitted-ROOT bad metadata/source
+cases,complete immutable snapshot then fault park BEFORE ANY ROOT packet,
+Conv/GDN/norm/FFN job;ALL119 boot WAIT/private sequences retained;fault
+park inert,NO STOP/reset/retry. This is NOT complete runtime/native failure
+containment qualification.
+
+Independent clean whole-root repeat33112 EXIT0:
+ /private/tmp/pioneer-q38-resident-layer-clean-full-20261025-a.log
+ALL stages/results/private lifetimes and all reported instruction/packet/
+stack counts IDENTICAL to the first joined run. This used the independently
+built clean image and the clean TEST source,including preflight refusal
+mode (not the failed test-harness versions).
+Final role-hardening clean rebuild41807 EXIT0:
+ /private/tmp/pioneer-q38-resident-layer-clean-build-20261025-b.log
+ /private/tmp/pioneer-q38-resident-layer-clean-image-20261025-b
+ALL same7 ROOT/same6 worker/old QFG3 bytes AGAIN unchanged. Added norm
+compile67/client-role refusals affect preprocessing ONLY,not instructions.
+Final clean gates83520 EXIT0:591 role/environment/late CPU-reference/
+native/Work/legacy-entry/actual ROM/opcode/independent-build checks.
+Old output-root gates97497 EXIT0:424 checks unchanged.
+Old native-context SDK compile69803 EXIT0:OLD65 object remains EXACT
+61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821;
+whole old context/ABI still instantiated,refusing compile-only entries
+remain machine-code-identical inert constants,max new frame1488bytes.
+
+NEW snapshot GEOMETRY added after the initial45-file clean overlay:
+PioneerQ38ResidentLayerFootprint.h plus its two TEST files were overlaid
+into the same clean checkout and independently tested there. ALL120:
+11000888 arbitrary original words/44003552B;2270365 exact codewords;
+all7 actual ROOT/all6 actual worker extents;exhaustive complete L1 coverage,
+no overlapping spans,bounds/invalid workers,old68 geometry unchanged.
+Clean footprint90303 EXIT0 and SAME DATA _KERNEL_MODE compile pass. This
+enumerates what a future owner must preserve;NO mapping/write/restore/
+initialized/native ownership or launch capability has been implemented.
+
+Test-harness defects found and fixed BEFORE any card use:
+- Old12KiB worker-prefix assumption rejected actual NEW16KiB prefix.
+- FFN shared functions relocated into other linked sections;old harness
+  incorrectly served OLD control bytes at those addresses. Corrected to
+  immutable bytes from ALL7 actual NEW sections;old control only initializes
+  the TEST object and is NEVER executed as a substitute.
+- Moving complete retained TEST interpreter state required rewiring its
+  NoC peer-object links. Sanitizers exposed the stale endpoint pointers;
+  all original machine state remains retained,not recreated/reset.
+Failed logs a..e for FFN and whole-root a are preserved in /private/tmp.
+They are TEST failures,not physical card tests or performance regressions.
+
+Preserved hardware and honest limits
+-------------------------------------
+Read-only SSH during this checkpoint confirms Haiku R1~beta6+development,
+64CPUs,max137034936320B RAM,free133790498816B,uptime2h53. NO card writes,
+driver install,power/SD/mains/cable/Assistant/network changes this checkpoint.
+Known-working041/tag12/generation3 was restored and verified in the PRIOR
+physical checkpoint. That prior original-GGUF DEBUG68 prefix validation is
+separate evidence;it does NOT qualify this expanded layer as native.
+
+The NEW full-root footprint binding/source/learned+mutable initialization/
+model/clock/ALL120 ownership and failure-contained native adapter are still
+REQUIRED before hardware. Original GGUF whole-layer numerical validation,
+all64 layers,dense attention/KV,persistent decoder/token loop,current-slot
+commit,Assistant Work integration and20tokens/sec remain UNMET.
+Last measured real whole-model rate remains0.207893161tokens/sec;NO new
+rate or speedup is claimed from these synthetic instruction tests.

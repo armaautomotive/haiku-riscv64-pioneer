@@ -12,7 +12,10 @@ struct ScalarMachine:Machine {
 	std::map<uint32_t,uint32_t> memory;
 	uint32_t fp[32]={};
 	unsigned n,mode,minStack=0x70000,outputWrites=0,operandWrites=0,scaleWrites=0;
-	ScalarMachine(const char* root,unsigned count,unsigned kind):n(count),mode(kind) {
+	// TEST instruction harness may supply a different exact ROM map. This
+	// constructor grants no result,device,producer or native capability.
+	ScalarMachine(unsigned count,unsigned kind):n(count),mode(kind) {}
+	ScalarMachine(const char* root,unsigned count,unsigned kind):ScalarMachine(count,kind) {
 		std::string directory(root); code=Read((directory+"/code.bin").c_str()); auto boot=Read((directory+"/boot.bin").c_str());
 		assert(boot.size()==4 && code.size()<32764 && !(code.size()&3)); l1[0]=Word(boot,0);
 		for (unsigned i=0;i<code.size()/4;i++) l1[1+i]=Word(code,i*4);

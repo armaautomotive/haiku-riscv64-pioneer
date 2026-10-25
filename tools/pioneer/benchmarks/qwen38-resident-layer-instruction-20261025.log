@@ -1,0 +1,10 @@
+BEGIN ACTUAL NEW complete QLR1 ROOT+ALL119 SAME retained peers;SYNTHETIC original input/weights only;NO host intermediate products or fake producer
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+PASS ACTUAL NEW complete recurrent-layer ROOT Conv640/GDN96/output24+119matrices/ALL5120 residual+RMS/FFN357matrixjobs+88producers/final5120residual BITEXACT/ALL119actual private WAIT sequences preserved/one ROOT launch/no peer reset/no host intermediate math/ROOTsteps109078007 packets50606 FFNTensix2088960 maxStack6312;SYNTHETIC_ENDPOINTS_NOT_NATIVE_OR_ORIGINAL_MODEL_OR_TOKEN_RATE

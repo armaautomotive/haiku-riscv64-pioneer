@@ -13,8 +13,8 @@ struct GraphArithmeticPeer:FfnInputPeer {
  std::vector<uint32_t>& fabric;
  unsigned prepared=0,verified=0,operation=0,role=0,matrixJobs=0,producerJobs=0;
  uint64_t arithmetic=0;
- GraphArithmeticPeer(const char* path,unsigned worker,std::vector<uint32_t>& data,bool boot=true)
-  :FfnInputPeer(path,12,5120,1,worker),fabric(data) {if(boot)assert(BootNew());}
+ GraphArithmeticPeer(const char* path,unsigned worker,std::vector<uint32_t>& data,bool boot=true,unsigned prefix=12288)
+  :FfnInputPeer(path,12,5120,1,worker,prefix),fabric(data) {if(boot)assert(BootNew());}
  virtual bool ExternalLearnedBytes()const{return false;}
  virtual bool ReadLearnedBytes(unsigned,uint32_t,uint8_t*,unsigned){return false;}
  // Observe a ROOT-WRITTEN job. NEVER call Matrix/StageInput/StageActivation:

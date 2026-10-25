@@ -16,6 +16,15 @@
 #ifndef PIONEER_Q38_FFN_GRAPH_ROOT
 #error Separate complete FFN root flag required
 #endif
+#ifdef PIONEER_Q38_FFN_GRAPH_ENTRY
+#error FFN entry aliases are private to the exact component role
+#endif
+#ifdef PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE
+#include "PioneerQ38ResidentLayerFfnImageRole.h"
+#define PIONEER_Q38_FFN_GRAPH_ENTRY q38_resident_layer_ffn_once
+#else
+#define PIONEER_Q38_FFN_GRAPH_ENTRY block_main
+#endif
 #define block_main q38_ffn_graph_matrix_once
 #include "blackhole_qwen38_dispatch.cpp"
 #undef block_main
@@ -293,7 +302,7 @@ static GRAPH_FN void MatrixFinished(unsigned role) {
  if(!Sealed())block_fault_park();
 }
 }
-extern "C" GRAPH_FN unsigned block_main() {
+extern "C" GRAPH_FN unsigned PIONEER_Q38_FFN_GRAPH_ENTRY() {
  using namespace Graph;
  for(unsigned i=0;i<TT_Q38_FFN_GRAPH_WORDS;i++)Words(TT_Q38_FFN_GRAPH_SHADOW)[i]=Words(TT_Q38_FFN_GRAPH_MANIFEST)[i];
  Fence();

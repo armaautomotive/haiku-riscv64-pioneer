@@ -1,4 +1,7 @@
 #!/bin/sh
+[ "${PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE+x}" != x ] || exit 2
+[ "${PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE+x}" != x ] || exit 2
+[ "${PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_OUTPUT_OWNER+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE-0}" = 0 ] || exit 2

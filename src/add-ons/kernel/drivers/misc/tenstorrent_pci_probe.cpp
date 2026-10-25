@@ -4,6 +4,9 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#if defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE)
+#error OFFLINE complete layer IMAGE has no existing native or Work driver role
+#endif
 #include "tenstorrent_pci_probe.h"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_PHYSICAL_ROLE_TAG_OK
 #error Internal combined-output physical-role witness cannot be supplied by the caller

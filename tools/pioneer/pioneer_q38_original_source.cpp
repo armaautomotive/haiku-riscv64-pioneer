@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE)
+#error Complete resident layer IMAGE never contains CPU reference observers
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
 #error Original-model CPU observer never compiles into DEBUG68
 #endif
