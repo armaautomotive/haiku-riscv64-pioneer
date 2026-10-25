@@ -36,8 +36,18 @@ bool PioneerSessionIO::ResidentOutputInitializationOtherCoresHeld(bool history)
  if(PioneerQ38NonRootHeld(*this,dram))return true;
  tt_resident_session_result retained={};RetainQ38DispatchOwner(*q38MutableContext,retained);return false;
 } // first physical mismatch retains ALL;no root-view restoration after uncertainty
-bool PioneerSessionIO::ConvHistoryZeroBeforeCohort(){return ResidentOutputInitializationSourceScope(true,false);}
-bool PioneerSessionIO::ConvHistoryZeroOtherCoresHeld(){return ResidentOutputInitializationOtherCoresHeld(true);}
+bool PioneerSessionIO::ConvHistoryZeroBeforeCohort(){
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ if(q38MutableContext && q38MutableContext->q38ResidentLayerNative)return ResidentLayerInitializationSourceScope(true,false);
+#endif
+ return ResidentOutputInitializationSourceScope(true,false);
+}
+bool PioneerSessionIO::ConvHistoryZeroOtherCoresHeld(){
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ if(q38MutableContext && q38MutableContext->q38ResidentLayerNative)return ResidentLayerInitializationOtherCoresHeld(true);
+#endif
+ return ResidentOutputInitializationOtherCoresHeld(true);
+}
 bool PioneerSessionIO::ResidentOutputPrefixInitializationScope()
 {
  auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;auto* state=c?c->q38ResidentOutputNative:NULL;

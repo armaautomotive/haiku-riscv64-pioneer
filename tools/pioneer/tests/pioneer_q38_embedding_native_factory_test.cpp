@@ -8,6 +8,9 @@
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeState.h"
 #endif
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeState.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
@@ -45,7 +48,9 @@ static void PioneerWrite32(volatile uint32*,uint32);
 static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void**);
 struct PioneerHostPageIO{bool quarantined=false;};
 struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
-#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ ,ResidentLayerNativeStateBytes
+#elif defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
  ,ResidentOutputNativeStateBytes
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
@@ -88,6 +93,18 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  }
 #endif
  PioneerStoreContext* q38MutableContext=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ bool ResidentLayerCallScopeMatches();bool ResidentLayerBindSourceScope();
+ bool ResidentLayerInitializationBaseScope();bool ResidentLayerInitializationSourceScope(bool,bool);
+ bool ResidentLayerInitializationOtherCoresHeld(bool);bool ResidentLayerPrefixInitializationScope();
+ bool ResidentLayerSourceScope(bool);bool ResidentLayerMappingSourceScope();void ResidentLayerRetainHostOwners();
+ bool ResidentLayerMemoryScope(const PioneerQ38ResidentLayerMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+ bool ResidentLayerExecutionScope(const PioneerQ38ResidentLayerOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ResidentLayerMemory&,
+  const PioneerQ38ProjectionMutableBanks&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeMapping.inc"
+ std::array<uint32,10240> layerPrefixAlias={};std::vector<uint32_t> layerSuffixAlias;
+ int layerFailMap=-1,layerNullMap=-1;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  bool ResidentOutputCallScopeMatches();bool ResidentOutputBindSourceScope();
  bool ResidentOutputInitializationBaseScope();bool ResidentOutputInitializationSourceScope(bool,bool);
@@ -99,8 +116,18 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   const PioneerQ38ProjectionMutableBanks&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeMapping.inc"
  bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
- bool StateZeroBeforeCohort(){return ResidentOutputInitializationSourceScope(false,false);}
- bool StateZeroOtherCoresHeld(){return ResidentOutputInitializationOtherCoresHeld(false);}
+ bool StateZeroBeforeCohort(){
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  if(q38MutableContext && ResidentLayerInitializationSourceScope(false,false))return true;
+#endif
+  return ResidentOutputInitializationSourceScope(false,false);
+ }
+ bool StateZeroOtherCoresHeld(){
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  if(ResidentLayerInitializationSourceScope(false,false))return ResidentLayerInitializationOtherCoresHeld(false);
+#endif
+  return ResidentOutputInitializationOtherCoresHeld(false);
+ }
  std::vector<uint32_t> outputGdnWords,outputHistoryWords;
  std::vector<unsigned> outputGdnTouched,outputHistoryTouched;
  PioneerQ38GdnBankExtent outputGdnExtents[672]={};PioneerQ38ConvHistoryExtent outputHistoryExtents[336]={};
@@ -203,6 +230,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
  bool EmbeddingMode()const;
  bool NonRootHeldOwner(){return EmbeddingSourceScope(false)
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  || ResidentLayerInitializationSourceScope(false,false) || ResidentLayerInitializationSourceScope(true,false)
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
   || ResidentOutputInitializationSourceScope(false,false) || ResidentOutputInitializationSourceScope(true,false)
 #endif
@@ -293,7 +323,14 @@ static bool ProjectionPointerAddress(const volatile uint32* p,uint32& address){
 }
 #endif
 static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+#if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+ if(activeIO->projectionTransport && activeIO->q38ResidentLayerMemoryMapAttempted){
+  const volatile uint32* base[]={activeIO->layerPrefixAlias.data(),activeIO->layerSuffixAlias.data()};
+  const unsigned bytes[]={40960,811008},offset[]={0x64000,0xb8000};
+  for(unsigned i=0;i<2;i++){uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(base[i]);
+   if(at>=first && at-first<bytes[i] && !((at-first)&3))return activeIO->projectionTransport->ResidentLayerRead(offset[i]+unsigned(at-first));}
+ }
+#elif defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
  if(activeIO->projectionTransport && activeIO->q38ResidentOutputMemoryMapAttempted){
   const volatile uint32* base[]={activeIO->outputPrefixAlias.data(),activeIO->outputSuffixAlias.data()};
   const unsigned bytes[]={40960,614400},offset[]={0x64000,0xb8000};
@@ -309,7 +346,15 @@ static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO-
 #endif
  return *p;}
 static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+#if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+ if(activeIO->projectionTransport && activeIO->q38ResidentLayerMemoryMapAttempted){
+  const volatile uint32* base[]={activeIO->layerPrefixAlias.data(),activeIO->layerSuffixAlias.data()};
+  const unsigned bytes[]={40960,811008},offset[]={0x64000,0xb8000};
+  for(unsigned i=0;i<2;i++){uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(base[i]);
+   if(at>=first && at-first<bytes[i] && !((at-first)&3)){
+    activeIO->projectionTransport->ResidentLayerWrite(offset[i]+unsigned(at-first),value);return;}}
+ }
+#elif defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
  if(activeIO->projectionTransport && activeIO->q38ResidentOutputMemoryMapAttempted){
   const volatile uint32* base[]={activeIO->outputPrefixAlias.data(),activeIO->outputSuffixAlias.data()};
   const unsigned bytes[]={40960,614400},offset[]={0x64000,0xb8000};
@@ -324,7 +369,16 @@ static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);act
  *p=value;}
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+#if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+ if(activeIO->projectionTransport && activeIO->q38ResidentLayerMemoryMapAttempted){
+  assert(placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+  unsigned i=physical==Bar+0x19064000?0:1;
+  assert(physical==Bar+(i?0x190b8000:0x19064000) && bytes==(i?811008U:40960U));
+  if(int(i)==activeIO->layerFailMap)return -1;
+  if(i)activeIO->layerSuffixAlias.resize(811008/4);
+  *view=int(i)==activeIO->layerNullMap?nullptr:i?activeIO->layerSuffixAlias.data():activeIO->layerPrefixAlias.data();return 40+i;
+ }
+#elif defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
  if(activeIO->projectionTransport && activeIO->q38ResidentOutputMemoryMapAttempted){
   assert(placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
   unsigned i=physical==Bar+0x19064000?0:1;
@@ -362,6 +416,9 @@ struct FactoryClock{
 };
 struct PioneerStoreContext {
  PioneerSessionIO& io;PioneerQ38EmbeddingNativeState* q38EmbeddingModel=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ PioneerQ38ResidentLayerNativeState* q38ResidentLayerNative=nullptr;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  PioneerQ38ResidentOutputNativeState* q38ResidentOutputNative=nullptr;
 #endif
@@ -395,6 +452,9 @@ struct PioneerStoreContext {
   span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
  }
  ~PioneerStoreContext(){
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  delete q38ResidentLayerNative;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
   delete q38ResidentOutputNative;
 #endif
@@ -402,6 +462,9 @@ struct PioneerStoreContext {
  } // SIMULATED context;real unknown contexts are retained,never destroyed
  bool Unsafe(bool zero=false,bool graph=false,bool controlledEmbedding=false){
   (void)zero;(void)graph;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeUnsafe.inc"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeUnsafe.inc"
 #endif
@@ -430,6 +493,11 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeBind.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeInitialize.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeExecution.inc"
+#endif
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeBind.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeInitialize.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeExecution.inc"
 #endif
 #include "embedding_factory_scope.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
@@ -464,6 +532,9 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 }
 #else
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeEnd.inc"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeEnd.inc"
 #endif
@@ -540,6 +611,11 @@ void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
 #endif
 #if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && !defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
 void PioneerSessionIO::RuntimeCodeWrite(unsigned i,uint32 value){
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ auto* layerState=q38MutableContext?q38MutableContext->q38ResidentLayerNative:nullptr;
+ if(layerState && ((outputGdnCloseFault && layerState->phase==PioneerQ38ResidentLayerNativeState::RecurrentClosing)
+  || (outputHistoryCloseFault && layerState->phase==PioneerQ38ResidentLayerNativeState::HistoryClosing))){Touch();return;}
+#endif
  auto* state=q38MutableContext?q38MutableContext->q38ResidentOutputNative:nullptr;
  if(state && ((outputGdnCloseFault && state->phase==PioneerQ38ResidentOutputNativeState::RecurrentClosing)
   || (outputHistoryCloseFault && state->phase==PioneerQ38ResidentOutputNativeState::HistoryClosing))){Touch();return;}
@@ -573,17 +649,34 @@ bool PioneerSessionIO::WriteState(unsigned bank,uint32_t address,const uint32_t*
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  auto* outputState=q38MutableContext?q38MutableContext->q38ResidentOutputNative:nullptr;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ auto* layerState=q38MutableContext?q38MutableContext->q38ResidentLayerNative:nullptr;
+ if(outputState || layerState){
+#else
  if(outputState){
+#endif
   // TEST transport observes the actual native lease/descriptor only. It
   // NEVER publishes progress, writes a ready bit or synthesizes success.
-  bool gdn=outputState->phase==PioneerQ38ResidentOutputNativeState::RecurrentZeroing;
-  bool history=outputState->phase==PioneerQ38ResidentOutputNativeState::HistoryZeroing;
-  bool closing=outputState->phase==PioneerQ38ResidentOutputNativeState::RecurrentClosing
-   || outputState->phase==PioneerQ38ResidentOutputNativeState::HistoryClosing;
+  bool gdn=outputState && outputState->phase==PioneerQ38ResidentOutputNativeState::RecurrentZeroing;
+  bool history=outputState && outputState->phase==PioneerQ38ResidentOutputNativeState::HistoryZeroing;
+  bool closing=outputState && (outputState->phase==PioneerQ38ResidentOutputNativeState::RecurrentClosing
+   || outputState->phase==PioneerQ38ResidentOutputNativeState::HistoryClosing);
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  if(layerState){assert(!outputState);gdn=layerState->phase==PioneerQ38ResidentLayerNativeState::RecurrentZeroing;
+   history=layerState->phase==PioneerQ38ResidentLayerNativeState::HistoryZeroing;
+   closing=layerState->phase==PioneerQ38ResidentLayerNativeState::RecurrentClosing
+    || layerState->phase==PioneerQ38ResidentLayerNativeState::HistoryClosing;
+  } // TEST observes the actual NEW private lease;never creates a seal.
+#endif
   if(gdn || history || closing){
    auto* model=q38MutableContext->q38EmbeddingModel;unsigned region=0,first=0,words=0;
    if(value==0x46800){
-    assert(!closing && !publicationCounterFabricOnly);region=(gdn?outputState->recurrentZero.nonce:outputState->historyZero.nonce)-1;
+    assert(!closing && !publicationCounterFabricOnly);
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+    if(layerState)region=(gdn?layerState->recurrentZero.nonce:layerState->historyZero.nonce)-1;
+    else
+#endif
+    region=(gdn?outputState->recurrentZero.nonce:outputState->historyZero.nonce)-1;
     if(gdn){
      if(outputGdnWords.empty()){outputGdnWords.assign(73728*1024,0xa55aa55a);outputGdnTouched.assign(73728,0);}
      auto* g=model->graph.Recurrent(model->identity);unsigned pages=0;

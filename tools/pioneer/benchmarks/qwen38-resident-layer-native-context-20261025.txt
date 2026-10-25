@@ -1,0 +1,153 @@
+NEW complete recurrent-layer NATIVE context — 2026-10-25
+========================================================
+
+STATUS: actual new native source/factory/IO/lifetime code connected into
+the real driver/context, tested OFFLINE. NOT installed or a loadable driver.
+Complete ORIGINAL-model observation and physical qualification remain owed.
+Full 64-layer/token-loop/Work integration and 20 tokens/sec are UNMET.
+No inference-rate change was measured; last actual whole-model 0.207893161 t/s.
+
+Native connection implemented
+-----------------------------
+PioneerQ38ResidentLayerNativeState is a separate privately constructed,
+noncopyable lifetime, with the real context, retained prefix, FD cookie,
+team/thread call seal, model epoch, driver generation, upload/hash pointers,
+token/bank, its OWN actual state/history zero leases, NEW full-layer owner,
+and a retained 44,003,552-byte journal. No old native68 state or closed old
+prefix can grant this new memory/compute/cleanup permission.
+
+New native functions independently bind/authenticate that context, execute
+the actual initialization controllers, then prepare/run/close the complete
+QLR1 layer through NEW typed IO scopes and the real full-size map adapter.
+ALL56 first-layer learned parts, including added norm and FFN, must still
+be present before binding/preparing. DATA presence is not original-GGUF
+authentication; the separate complete original observer is still required.
+
+The genuine prefix factories admit only this exact initialized binding.
+Old and new native lifetimes exclude each other. Real Unsafe(), retention,
+owned-scope presence, public close, normal-clock entry and explicit END
+now track the distinct new lifetime. Premature END retains every owner/map/
+clock/host buffer without a following card operation; closed old prefix
+state alone never permits destruction or clock restoration.
+
+Before any new state/compute, actual source checks include real retained
+FD/cookie/team/current thread/global context; all active/foreign owners;
+exact private model/identity/ledger/hash pointers; normal acknowledged
+non-restored busy clock at 1..1400MHz; all host leases; initialized graph,
+history and recurrent seals; the real 120-worker cohort; and the exact
+projection/RMS producers. Every executing controller still independently
+checks physical mapping/source/reset/code/NoC/counter/terminal continuity.
+
+Compile-only containment
+------------------------
+The real driver TU admits this only under the exact separate NODRV
+context compile role. Its sentinel 0x51524c4e4f445256 is ASCII QRLNODRV,
+NOT a new loadable driver tag. ALL normal driver ABI names are removed;
+renamed entry functions return B_NOT_ALLOWED/NULL/inertly before PCI,
+reload guard, module, semaphore, host-buffer or card operations. There is
+no public opcode, hardware selector, Assistant mode or Work registration.
+All legacy builders refuse either new context flag, including defined0,
+before output creation or SDK access.
+
+Real SDK whole-context compile 25657/95548/50451 all EXIT0
+-------------------------------------------------------
+Actual PioneerSessionIO, PioneerStoreContext, context destructor, KernelExport
+ABI, genuine prefix, both zero factories, new scopes/mapping and all new
+controller methods are instantiated against the read-only Haiku RISC-V SDK.
+Every byte of all 5 inert entry-function bodies matches constant-return
+control functions, without linker relocations. Normal driver ABI exports
+are absent. Maximum NEW stack frame: 1456 bytes, static.
+NEW object SHA256:
+ f6e07ba6a154292fbc20b75cccd0436d26d7fe9e77d64888c6493d9203b38d8a
+
+Unchanged native65 control is byte-identical in each actual build:
+ 61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+Old context67 regression 97279 EXIT0 stays byte-identical:
+ 59ecbf0a81d74d2c5a0752a4e5a862f167e4b44181a722f1795b1852cf36135f
+Its max frame remains1488. Old binding107 regression55166 EXIT0.
+
+Completed runtime evidence (SIMULATED OS/byte endpoints)
+-------------------------------------------------------
+New real binding79530 EXIT0:121 foreign FD/team/thread/model/clock/host/
+source/epoch/learned-page/old-owner/map refusals, private construction and
+destruction, no following IO/reset/STOP/free. Actual new END blocks a bound
+but unclosed lifetime, even if genuine old prefix state is CLOSED.
+
+Initialization3229 EXIT0, then 18-fault suite7486 EXIT0:
+ - BOTH recurrent slots:672 regions/73728 observed pages, plus336x5 history
+   pages; actual emitted RV32 zero/fresh reads/private progress/CLOSE seals;
+ - every resulting word observed zero, every page covered exactly once;
+ - actual workspace zero/embedding/RMS can enter only after both new seals;
+ - 18 first/mid/last transfer, closing, ALL119-held, team, clock, source and
+   mapping failures retain ALL resources with no publication/following IO;
+ - 24 inert entry/prefix mismatches cannot create/borrow initialization.
+
+Complete native execution87072 EXIT0:
+ /private/tmp/pioneer-q38-layer-native-execute-20261025-a.log
+Real FD/native context/factories/mappings/owners execute both initializers,
+QPE1/QRN1/fourQPS1/STOP/restore and then the NEW44MB context/controller with
+ALL119 actual booted interpreters. Conv640/GDN96/output24+119 matrices,
+residual+RMS, gate/up/SiLU/down357 matrix jobs/88 producers/final5120residual
+run from actual installed frozen code with no host numerical intermediate.
+Independent ROOT+ALL119 proofs, dual-park frontend observations, ALL119
+STOPs while unheld, ALL120 holds, all11000888 arbitrary originals restored
+and a second full proof precede actual private CLOSED binding and END.
+50 malformed result/foreign-source/clock/learned entry cases stay inert.
+This is NOT original GGUF/numerical model, real PCI/card or token-rate proof.
+
+Role gates82247 EXIT0:468 missing/defined0/late/mixed-role/tag/ABI/legacy
+build exclusions. Existing NativeComponent258 regression42191 EXIT0.
+New source/header changes do not enable any normal driver build or route.
+
+Main final native suite94648 and clean repeat14834 both EXIT0
+-----------------------------------------------------------
+Main final native 94648 completed the new actual
+native lifecycle positive +17 mapping/source/receipt/PC/STOP/restore/END
+faults. To avoid recomputing identical virtual instructions, a TEST ONLY
+callback forks at the actual completed ROOT instruction-stack checkpoint.
+No source/init/producer/ready state is manufactured: real programs and
+device bytes are already complete, while EVERY child still owes genuine
+native ROOT+ALL119 admission, STOP/hold/restore/END or quarantine. The
+callback is only in test byte transport, never in the driver or a mode.
+Clean repeat14834 independently passed the same complete positive +17
+native containment cases. Both runs require genuine ROOT/ALL119 proofs
+after the actual-instruction checkpoint; no private ready bit is replayed.
+
+Clean source:
+ /private/tmp/pioneer-resident-layer-native-context-clean.HDXLIqVD
+33 initial explicitly inventoried source files copied over an archive of11c9108dbd.
+Dirty llama.cpp and unrelated FlashNext were excluded and remain untouched.
+Clean full SDK object has already reproduced the same f6e07... hash.
+Clean context468 gates43926 and binding121 checks11229 both finished EXIT0.
+
+Original-model observer preparation (DATA only,not readback execution)
+--------------------------------------------------------------------
+A separate fixed complete-layer plan selects final hidden, preserved Conv/
+history/GDN/projection and BOTH state slots. FFN overwrites old operands,
+scales and the old GDDR RMS backup;they must NOT be observed as the earlier
+prefix values. The new payload is exactly1630208words/1592full4096Bpages.
+Its page COUNT coincides with old prefix observation, but WORD count/layout
+and marker differ;the old partial payload cannot be retagged as full-layer
+evidence. A canonical recipe check also refuses shape-valid foreign addresses.
+This is only the next observer's fixed DATA schedule. Actual guarded native
+readback, original-GGUF independent math/client comparison remain owed.
+Readback DATA30357/15036 and canonical-plan regression8939 finished EXIT0:
+all7banks/11144unique full pages, correct region ordering/state-slot addresses,
+source/foreign layer-position-slot/bad-page refusals and shape-valid foreign
+norm addresses rejected without changing output. New DATA SDK compile
+is also successful,maxframe592bytes;no native transfer was performed.
+The readback DATA and additional canonical method are not used by the
+runtime controller yet;they do not extend this checkpoint's native grant.
+
+Next required work
+------------------
+Finish native/clean failure suites and independent original-model full-layer
+observer/readback. The old prefix readback is NOT sufficient: FFN reuses
+some old intermediate storage, so do not alias its partial observer into
+full-layer qualification. Only then consider a guarded physical prototype.
+All48 recurrent/16 dense-attention layers, KV, vocabulary, sampling, real
+state/current-slot commit, persistent token loop and no-CPU-reference Work
+integration remain. Profile actual silicon/inference before claiming speed.
+
+No hardware/power/SD/mains/network/Assistant action occurred this goal turn.
+The known working driver/boot/64 CPUs/128GiB setup was not modified.

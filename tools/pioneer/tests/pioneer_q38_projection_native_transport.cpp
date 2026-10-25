@@ -4,9 +4,41 @@
 #include "pioneer_q38_projection_execution_machine.h"
 #include "pioneer_q38_projection_native_transport.h"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+#include "pioneer_q38_resident_layer_execution_machine.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerImages.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerOwner.h"
+using ResidentEndpointMachine=ResidentLayerExecutionMachine;
+using ResidentEndpointFabric=ResidentLayerExecutionFabric;
+using ResidentEndpointResult=PioneerQ38ResidentLayerResult;
+#else
 #include "pioneer_q38_resident_output_execution_machine.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputImages.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputOwner.h"
+using ResidentEndpointMachine=ResidentOutputExecutionMachine;
+using ResidentEndpointFabric=ResidentOutputExecutionFabric;
+using ResidentEndpointResult=PioneerQ38ResidentOutputResult;
+#endif
+// Pure TEST local-memory geometry,not a native role/scope/claim alias.
+struct ResidentEndpointLayout {
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ static constexpr unsigned SavedWords=TT_Q38_RESIDENT_LAYER_SAVED_WORDS;
+ static unsigned SpanCount(unsigned w){return PioneerQ38ResidentLayerSpanCount(w);}
+ static auto SnapshotSpan(unsigned w,unsigned i){return PioneerQ38ResidentLayerSnapshotSpan(w,i);}
+ static unsigned SnapshotBase(unsigned w){return PioneerQ38ResidentLayerSnapshotBase(w);}
+ static unsigned CodeWords(unsigned w){return PioneerQ38ResidentLayerCodeWords(w);}
+ static unsigned CodeAddress(unsigned w,unsigned i){return PioneerQ38ResidentLayerCodeAddress(w,i);}
+ static bool ProgramWord(unsigned w,unsigned a,unsigned& v){return PioneerQ38ResidentLayerProgramWord(w,a,v);}
+#else
+ static constexpr unsigned SavedWords=TT_Q38_RESIDENT_OUTPUT_SAVED_WORDS;
+ static unsigned SpanCount(unsigned w){return PioneerQ38ResidentOutputSpanCount(w);}
+ static auto SnapshotSpan(unsigned w,unsigned i){return PioneerQ38ResidentOutputSnapshotSpan(w,i);}
+ static unsigned SnapshotBase(unsigned w){return PioneerQ38ResidentOutputSnapshotBase(w);}
+ static unsigned CodeWords(unsigned w){return PioneerQ38ResidentOutputCodeWords(w);}
+ static unsigned CodeAddress(unsigned w,unsigned i){return PioneerQ38ResidentOutputCodeAddress(w,i);}
+ static bool ProgramWord(unsigned w,unsigned a,unsigned& v){return PioneerQ38ResidentOutputProgramWord(w,a,v);}
+#endif
+};
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
 #include "pioneer_q38_gdn_output_execution_machine.h"
@@ -51,7 +83,7 @@ static constexpr unsigned kGdnValidationWords=TT_Q38_GDN_RECURRENT_VALIDATION_WO
 #endif
 struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
- ResidentOutputExecutionFabric
+ ResidentEndpointFabric
 #else
  ProjectionExecutionFabric
 #endif
@@ -61,12 +93,15 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
  const PioneerQ38ProjectionGraphResult* result=nullptr;
  ProjectionExecutionLearnedBytes* learned=nullptr;
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
- std::unique_ptr<ResidentOutputExecutionMachine> resident;
+ std::unique_ptr<ResidentEndpointMachine> resident;
  ResidentOutputNativeStateBytes* residentBytes=nullptr;bool residentStarted[120]={};
  const char* residentDeferredRoot=nullptr;const char* residentDeferredPeer=nullptr;
  ResidentOutputNativeStateBytes* residentDeferredBytes=nullptr;
  unsigned residentDeferredFault=0,residentDeferredPage=0,residentDeferredWord=0;
- const PioneerQ38ResidentOutputResult* residentResult=nullptr;
+ const ResidentEndpointResult* residentResult=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ void (*layerTerminalCheckpoint)(void*)=nullptr;void* layerTerminalContext=nullptr;bool layerTerminalCheckpointDone=false;
+#endif
  unsigned residentFault=0,residentFence=0,residentRootPcReads=0,residentFrontendSamples=0;bool residentInjected=false;
  bool residentReadbackObserved=false;unsigned residentReadbackRequests=0,residentReadbackFault=0;
  unsigned residentReadbackFaultPage=0,residentReadbackFaultWord=0,residentReadbackFence=0;
@@ -103,8 +138,8 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
   assert(w==current);
   if(PioneerQ38ProjectionGraphSnapshotContains(w,a))return FullRead(w,a);
   unsigned offset=0;
-  for(unsigned i=0;i<PioneerQ38ResidentOutputSpanCount(w);i++){auto span=PioneerQ38ResidentOutputSnapshotSpan(w,i);
-   if(a>=span.address && a-span.address<span.words*4)return residentExtra.at(PioneerQ38ResidentOutputSnapshotBase(w)+offset+(a-span.address)/4);
+  for(unsigned i=0;i<ResidentEndpointLayout::SpanCount(w);i++){auto span=ResidentEndpointLayout::SnapshotSpan(w,i);
+   if(a>=span.address && a-span.address<span.words*4)return residentExtra.at(ResidentEndpointLayout::SnapshotBase(w)+offset+(a-span.address)/4);
    offset+=span.words;
   }
   // The pre-existing outer dispatch END audits/restores its FULL legacy
@@ -117,8 +152,8 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
   assert(w==current);
   if(PioneerQ38ProjectionGraphSnapshotContains(w,a)){FullWrite(w,a,value);return;}
   unsigned offset=0;
-  for(unsigned i=0;i<PioneerQ38ResidentOutputSpanCount(w);i++){auto span=PioneerQ38ResidentOutputSnapshotSpan(w,i);
-   if(a>=span.address && a-span.address<span.words*4){residentExtra.at(PioneerQ38ResidentOutputSnapshotBase(w)+offset+(a-span.address)/4)=value;return;}
+  for(unsigned i=0;i<ResidentEndpointLayout::SpanCount(w);i++){auto span=ResidentEndpointLayout::SnapshotSpan(w,i);
+   if(a>=span.address && a-span.address<span.words*4){residentExtra.at(ResidentEndpointLayout::SnapshotBase(w)+offset+(a-span.address)/4)=value;return;}
    offset+=span.words;
   }
   if(!(a&3) && a>=0xac000 && a<TT_Q38_PANEL_VIEW_BASE+TT_Q38_PANEL_VIEW_BYTES){C().Q38PanelWrite(a,value);return;}
@@ -126,9 +161,9 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
  }
  bool ResidentInstalled(){
   if(!resident || !residentBytes)return false;
-  for(unsigned i=0;i<PioneerQ38ResidentOutputCodeWords(current);i++){
-   uint32_t a=PioneerQ38ResidentOutputCodeAddress(current,i),expected;
-   if(!PioneerQ38ResidentOutputProgramWord(current,a,expected) || ResidentRead(current,a)!=expected)return false;
+  for(unsigned i=0;i<ResidentEndpointLayout::CodeWords(current);i++){
+   uint32_t a=ResidentEndpointLayout::CodeAddress(current,i),expected;
+   if(!ResidentEndpointLayout::ProgramWord(current,a,expected) || ResidentRead(current,a)!=expected)return false;
   }return true; // actual complete installed bytes,NEVER result/phase/ready fields
  }
  bool ReadState(unsigned b,uint32_t a,uint32_t* out,unsigned n)override{return residentBytes && residentBytes->ReadState(b,a,out,n);}
@@ -419,12 +454,41 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
 ProjectionNativeTransport::ProjectionNativeTransport(const char* root,const char* peer,std::vector<uint32_t>& workspace):implementation(new Impl(root,peer,workspace)){}
 ProjectionNativeTransport::~ProjectionNativeTransport(){delete implementation;}
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+void ProjectionNativeTransport::ResidentLayerSources(const char* root,const char* peer,ResidentLayerNativeStateBytes& bytes){
+ auto& p=*implementation;assert(!p.resident && p.machine->Stops()==119 && !p.learned);
+ for(unsigned w=0;w<120;w++)assert(p.core[w]->coreReset==0x47800);
+ p.residentExtra.resize(ResidentEndpointLayout::SavedWords);
+ for(unsigned i=0;i<p.residentExtra.size();i++)p.residentExtra[i]=0x3c5a7091U^(i*0x9e3779b9U);
+ p.residentBytes=&bytes;p.resident.reset(new ResidentEndpointMachine(root,peer,p));
+} // byte endpoints only;actual QPS1 STOP/holds precede attachment;no ready/input/model product fabricated
+uint32_t ProjectionNativeTransport::ResidentLayerRead(uint32_t a){auto& p=*implementation;p.Touch();assert(p.resident);
+ auto value=p.ResidentRead(p.current,a);
+ if(p.residentFault==8 && !p.residentInjected && p.ResidentAt(5,0) && a==TT_Q38_RESIDENT_LAYER_SHADOW+(TT_Q38_RESIDENT_LAYER_WORDS-1)*4){
+  p.residentInjected=true;p.residentFence=p.touches;return value^1;
+ }return value;
+}
+void ProjectionNativeTransport::ResidentLayerWrite(uint32_t a,uint32_t v){auto& p=*implementation;p.Touch();assert(p.resident);p.ResidentWrite(p.current,a,v);}
+unsigned ProjectionNativeTransport::ResidentLayerBoots()const{return implementation->resident?implementation->resident->Boots():0;}
+unsigned ProjectionNativeTransport::ResidentLayerStops()const{return implementation->resident?implementation->resident->Stops():0;}
+unsigned ProjectionNativeTransport::ResidentLayerFrontendSamples()const{return implementation->residentFrontendSamples;}
+void ProjectionNativeTransport::VerifyResidentLayer(){assert(implementation->resident);implementation->resident->VerifyOutput();}
+void ProjectionNativeTransport::ResidentLayerFault(unsigned kind,const PioneerQ38ResidentLayerResult& result){auto& p=*implementation;
+ assert(p.resident && !p.residentInjected);p.residentFault=kind;p.residentResult=&result;
+}
+bool ProjectionNativeTransport::ResidentLayerFaultInjected()const{return implementation->residentInjected;}
+unsigned ProjectionNativeTransport::ResidentLayerFaultFence()const{return implementation->residentFence;}
+void ProjectionNativeTransport::ResidentLayerRunTerminalCheckpoint(void (*callback)(void*),void* context){auto& p=*implementation;
+ assert(p.resident && callback && context && !p.residentStarted[0] && !p.layerTerminalCheckpoint);
+ p.layerTerminalCheckpoint=callback;p.layerTerminalContext=context;
+}
+#else
 void ProjectionNativeTransport::ResidentOutputSources(const char* root,const char* peer,ResidentOutputNativeStateBytes& bytes){
  auto& p=*implementation;assert(!p.resident && p.machine->Stops()==119);
  for(unsigned w=0;w<120;w++)assert(p.core[w]->coreReset==0x47800);
- p.residentExtra.resize(TT_Q38_RESIDENT_OUTPUT_SAVED_WORDS);
+ p.residentExtra.resize(ResidentEndpointLayout::SavedWords);
  for(unsigned i=0;i<p.residentExtra.size();i++)p.residentExtra[i]=0x3c5a7091U^(i*0x9e3779b9U);
- p.residentBytes=&bytes;p.resident.reset(new ResidentOutputExecutionMachine(root,peer,p));
+ p.residentBytes=&bytes;p.resident.reset(new ResidentEndpointMachine(root,peer,p));
 } // TEST endpoints only:actual STOP/holds are prerequisites,NO native owner or completion is fabricated
 void ProjectionNativeTransport::ConfigureResidentOutputControl(const char* root,const char* peer,ResidentOutputNativeStateBytes& bytes,
  unsigned fault,unsigned page,unsigned word){auto& p=*implementation;
@@ -478,6 +542,7 @@ void ProjectionNativeTransport::VerifyResidentReadback(const uint32_t* values,un
  for(unsigned i=0;i<8;i++)assert(uint32_t(p.NoC(0,PioneerQ38PanelCounter(i))-p.residentReadbackBefore[i])==delta[i]);
 }
 #endif
+#endif
 void ProjectionNativeTransport::SeedRoot(const uint32_t* addresses,const uint32_t* values,unsigned count,
  const uint32_t* source,const uint32_t* command,const uint32_t* counters){
  auto& p=*implementation;assert(!p.boots && !p.starts && !p.current);
@@ -526,6 +591,12 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   // reads must NOT copy a whole emulated L1 after EVERY instruction word.
   bool poll=kind==Status || kind==Local || (kind==Panel && a==0x74140);
   if(poll && p.residentStarted[p.current] && p.C().coreReset==0x46800)p.resident->Advance(p.current);
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  if(kind==Status && !p.current && p.residentStarted[0] && p.C().coreReset==0x46800
+   && p.resident->Pc(0)==0x72038 && p.layerTerminalCheckpoint && !p.layerTerminalCheckpointDone){
+   p.layerTerminalCheckpointDone=true;p.layerTerminalCheckpoint(p.layerTerminalContext);
+  } // ACTUAL device instructions and exported bytes complete;native ROOT/ALL119 admission still owed in EVERY child
+#endif
   uint32_t address=kind==Status?0x17ffc0+a*4:kind==Panel?a:0x17e000+a*4;
   auto value=p.ResidentRead(p.current,address);
   if(p.residentFault==17 && !p.residentInjected && p.ResidentAt(5,0) && address==0x7203c
@@ -1029,7 +1100,7 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    p.C().RuntimeCodeWrite(0,v);return;
   case SetStatus:p.LocalWrite(0x17ffc0+a*4,v);return;
   case SetNoc:
-#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && !defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT)
    if(p.residentDeferredRoot && p.resident && a==0x40 && !p.residentReadbackObserved)
     ObserveResidentReadback(p.residentDeferredFault,p.residentDeferredPage,p.residentDeferredWord);
    if(p.residentReadbackObserved && a==0x40){assert(v==1);p.ResidentReadbackTransfer();return;}

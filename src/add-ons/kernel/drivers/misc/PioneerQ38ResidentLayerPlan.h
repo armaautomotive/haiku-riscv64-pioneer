@@ -70,6 +70,14 @@ public:
   return true;
  }
  const uint32_t* Manifest()const{return ready?output.Manifest():nullptr;}
+ bool CanonicalRecipe()const{
+  if(!ready || !canonical || !norm)return false;
+  const auto* m=output.Manifest();
+  const PioneerQ38GdnIdentity id={uint64_t(m[32])|(uint64_t(m[33])<<32),uint64_t(m[34])|(uint64_t(m[35])<<32),
+   uint64_t(m[36])|(uint64_t(m[37])<<32),uint64_t(m[38])|(uint64_t(m[39])<<32)};
+  return Matches(*canonical,m[3],m[4],m[7],m[14],layer[11],m[5],id,
+   m+TT_Q38_COHORT_SOURCE_WORD,m+TT_Q38_COHORT_SEQUENCE_WORD);
+ } // necessary fixed DATA recipe only;never native/source/initialized authority
  bool LearnedPagesPresent(const uint8_t* pages,unsigned count)const{
   if(!ready || !canonical || !norm || !pages || count!=PioneerResidentBanks::Pages
    || !output.LearnedPagesPresent(pages,count) || !ffn.LearnedPagesPresent(pages,count))return false;

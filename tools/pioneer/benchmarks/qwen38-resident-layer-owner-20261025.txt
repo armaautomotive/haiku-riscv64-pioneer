@@ -2,6 +2,10 @@ QLP2 saved stage receipts and NEW full-layer controller — 2026-10-25
 =================================================================
 
 STATUS: OFFLINE development checkpoint, NOT a new installed driver.
+This records the11c9108dbd checkpoint. Subsequent native state/factory/IO
+implementation and qualification are tracked separately in
+qwen38-resident-layer-native-context-20261025.txt; the remaining-work
+statements below describe this earlier checkpoint, not a lost implementation.
 The complete native state/factory/source/clock/host/mapping binding and
 original-model readback observer are still required. Full 64-layer/token
 loop/Work integration and 20 tokens/sec remain UNMET. No new inference
@@ -111,7 +115,11 @@ NONE starts ROOT. They do not qualify failures during/after full execution.
 
 RUNNING, NOT YET PASS CLAIMS:
  - Final clean controller complete positive plus 20 fault cases 80515.
- - Final clean whole instruction repeat 5229.
+Clean whole instruction repeat 5229 has since finished EXIT0, with identical
+ROOT109532090/packets50607/FFNTensix2088960/observed stack6360 counts.
+The final clean controller suite has passed its positive including the
+exclusive-old-owner assertion and pre-start cases, but the complete
+21-case handle 80515 remains running; do NOT call that whole suite passed.
 Logs use /private/tmp/pioneer-q38-layer-owner-*-20261025-*.log.
 Selected completed outputs and their source-log SHA256 values are retained
 in the sibling qwen38-resident-layer-owner-20261025.log evidence file.

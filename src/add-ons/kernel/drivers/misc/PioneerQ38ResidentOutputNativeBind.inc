@@ -13,6 +13,9 @@ bool PioneerSessionIO::ResidentOutputCallScopeMatches()
 }
 bool PioneerSessionIO::ResidentOutputInitializationBaseScope()
 {
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ if(q38MutableContext && q38MutableContext->q38ResidentLayerNative)return false;
+#endif
  auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
  if(!c || &c->io!=this || !m || !ResidentOutputCallScopeMatches()
   || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sBankStorageOnly || !c->bankStorageOnly

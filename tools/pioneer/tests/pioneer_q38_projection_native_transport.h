@@ -12,6 +12,10 @@ struct ResidentOutputNativeStateBytes {
  virtual bool WriteState(unsigned,uint32_t,const uint32_t*,unsigned)=0;
 }; // TEST byte endpoints ONLY,not an initializer/producer/native capability
 struct PioneerQ38ResidentOutputResult;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+struct ResidentLayerNativeStateBytes:ResidentOutputNativeStateBytes {}; // TEST bytes ONLY,never a native capability
+struct PioneerQ38ResidentLayerResult;
+#endif
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 class PioneerQ38CanonicalModelPlan;struct DecoderHistoryBytes;
@@ -43,6 +47,15 @@ public:
  void Fault(unsigned kind); // simulated endpoint fault,never a production mode
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+ void ResidentLayerSources(const char*,const char*,ResidentLayerNativeStateBytes&);
+ uint32_t ResidentLayerRead(uint32_t);void ResidentLayerWrite(uint32_t,uint32_t);
+ unsigned ResidentLayerBoots()const;unsigned ResidentLayerStops()const;void VerifyResidentLayer();
+ unsigned ResidentLayerFrontendSamples()const;
+ void ResidentLayerFault(unsigned,const PioneerQ38ResidentLayerResult&);
+ bool ResidentLayerFaultInjected()const;unsigned ResidentLayerFaultFence()const;
+ void ResidentLayerRunTerminalCheckpoint(void (*callback)(void*),void* context); // TEST fork after ACTUAL completed instructions,never a ready/producer setter
+#else
  void ResidentOutputSources(const char*,const char*,ResidentOutputNativeStateBytes&);
  void ConfigureResidentOutputControl(const char*,const char*,ResidentOutputNativeStateBytes&,unsigned fault=0,unsigned page=0,unsigned word=0);
  uint32_t ResidentOutputRead(uint32_t);void ResidentOutputWrite(uint32_t,uint32_t);
@@ -53,6 +66,7 @@ public:
  void ObserveResidentReadback(unsigned fault=0,unsigned page=0,unsigned word=0); // TEST bytes/fault timing only
  unsigned ResidentReadbackRequests()const;unsigned ResidentReadbackFaultFence()const;
  void VerifyResidentReadback(const uint32_t*,unsigned);
+#endif
 #endif
  void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
