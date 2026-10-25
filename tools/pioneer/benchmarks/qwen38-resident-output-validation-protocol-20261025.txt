@@ -1,0 +1,47 @@
+Qwen3.8-27B combined-output DEBUG message format,October25,2026
+
+GOAL ACTIVE;last measured whole-model0.207893161tok/s;20tok/s/full
+64-layer card-resident token loop remain UNMET. DATA/API SHAPE ONLY,
+NOT a new supported driver or an installed/linked physical execution role.
+No card/Assistant/boot/CPU/RAM/power/relay/SD/disk/network/mains changes.
+
+Added fixed pointer-free6516736-byte HEAP reply with64-word header and
+1629120values matching the actual combined owner's1592fixed reads:
+Conv10240,history30720,gated6144,packed operands3072,QOL1lines768,
+scales192,final output5120,CURRENT786432,NEXT786432 words. Public section
+offsets form one complete disjoint contiguous cover;page padding is NOT
+logical model output. Reserved namespace19/ops62f0+62f1 do not alias old
+DEBUG55 and have NO receiver in any current driver. A separate physical
+role/actual retained source/native execution/original-GGUF independent
+numeric qualification must precede availability;compile-only67 cannot do
+so. No Work selector,inference ABI,caller bank/address/route/code/count/
+numeric input/threshold/owner/ready/current-slot or cleanup grant.
+Request permits only version1/token0..248319/position0;EVERY other byte,
+including the complete reply header/payload,must initially be zero.
+
+Host ASan/UBSan accepted3/refused142:token/version/position boundaries,
+ALL other metadata bytes,ALL46 header words,ALL9 numeric sections at
+first/middle/last. Public offsets are independently constrained by exact
+section lengths,total1629120words and1592ceil-rounded pages.
+Real Haiku RV64 standalone public Drivers.h/SDK compile passes with
+maxframe16bytes;the large reply is borrowed by reference,not a frame.
+
+First two SDK attempts failed only on missing public-header include
+paths (Drivers.h then BeBuild.h). Both failures are retained as failures;
+adding the actual SDK config/os/drivers/kernel/support include paths
+fixed the runner,without changing protocol semantics or an SDK file.
+Final original and independent clean complete runs BOTH EXIT0;logs
+compare byte-identically:
+/private/tmp/pioneer-q38-output-observer-protocol-20261025-main-d.log
+/private/tmp/pioneer-q38-output-observer-protocol-20261025-clean-a.log
+Complete identical log SHA256:
+8db3c16d901bfcfb3c8c8436197c22d056bc3127df843c70d7e7e327bd17c4fb
+Clean archive4f6632fbb7+exact owned overlays:
+/private/tmp/pioneer-output-observer-clean.eOITYACr
+These four new files are not dependencies of its still-live native
+observer suite45695;all existing clean native dependencies remain frozen.
+
+Next:proper distinct physical DEBUG role/control+client for the genuine
+combined owner;use the fixed reply for independent original-GGUF/card
+qualification BEFORE Work. Continue all-layer residual/RMS/FFN/attention,
+state commit/token loop and measured real27B optimization toward20tok/s.
