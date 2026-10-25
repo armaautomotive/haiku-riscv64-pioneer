@@ -1,0 +1,33 @@
+Prepared-context CPU drift metrics,2026-10-24. Read-only diagnostic only.
+No model validation tolerance/native capability/card program/Work change.
+
+Existing strict bounded log parser still requires complete unique rows,
+fixed normal-or-zero finite input domain,head/lane/index and marker checks.
+Add per-Q/K/V/decay/beta prepared,paired raw,and returned-state-row metrics:
+bit differences,max ordered-binary32 ULP/index,max absolute and relative
+error/index for nonzero reference,and nonzero-against-zero counts. Signed
+zeros have zero ULP distance but retain their bit-difference count. Relative
+error is never fabricated as infinity for zero references. Finite metrics
+are observations only,not a new acceptance bound. Also compare each returned
+NEXT row with its first-token-zero prepared-state reconstruction to help
+separate preparation drift from arithmetic drift. Existing assumptions about
+unchecked partner data/zero CURRENT state/unobserved physical inputs remain.
+
+Synthetic/read-only regression ACTUAL TERMINAL0:
+ /private/tmp/pioneer-qgt52-prepared-context-drift-tests-20261024-a.log
+ 7methods PASS. Existing10head/lane boundaries,394missing/duplicate cases,
+ 7malformed cases,30domain/8gate failures,actual old raw-only log refusal,
+ bounded1MiB/badUTF8/read-only CLI checks unchanged. New exact closed-form
+ beta25percent/0x200000ULP checks,unchanged-QKV/zero drift,returned-row
+ mismatch location,negative/positive ordering,signed zeros/zero references,
+ empty/unequal/nonfinite vector refusals PASS. No device access in tests.
+ A SHA d81590067fb06f9f8bb68ba32223ca8d5ac90dfd5782a878f4929a3f851ed05c.
+ C repeat ACTUAL TERMINAL0:
+ /private/tmp/pioneer-qgt52-prepared-context-drift-tests-20261024-c.log
+ SHA69c8be5bccf6e1d058279aaa733312f7d778754125e7cfa6e5d9cd2e83b56f74.
+
+ONE physical prepared-context capture23715 remains LIVE in its separate
+qualified cbe472f5 client with exact DEBUG52 in clean recovery epoch r63a.
+The source of that binary/session has NOT changed while its parent is live.
+This analyzer extension is separate and cannot supply a GPU input or accept
+that still-pending execution. No physical result/fix/speedup claimed here.

@@ -16,6 +16,34 @@ SIZES = {**{side+'_PREPARED_'+str(half): 322 for side in ('EXPECTED', 'ACTUAL') 
 PREFIXES = ('DEBUG_CPU_EXPECTED_PREPARED', 'DEBUG_CPU_ACTUAL_PREPARED', 'DEBUG_CPU_EXPECTED_NEXT_ROW', 'DEBUG_CPU_ACTUAL_NEXT_ROW')
 
 
+def drift(expected, actual):
+    """Bounded CPU-log comparison only;not a validation tolerance or grant."""
+    if not expected or len(expected) != len(actual):
+        raise ValueError('require equally sized nonempty diagnostic vectors')
+    number = raw_tools['number']
+    def ordered(word):
+        magnitude = word & 0x7fffffff
+        return 0x80000000-magnitude if word & 0x80000000 else 0x80000000+magnitude
+    differences, zero_differences = 0, 0
+    max_ulp, max_absolute, max_relative = 0, 0.0, 0.0
+    worst_ulp, worst_relative = None, None
+    for index, (left, right) in enumerate(zip(expected, actual)):
+        a, b = number(left), number(right)
+        if not math.isfinite(a) or not math.isfinite(b):
+            raise ValueError('nonfinite diagnostic drift input')
+        differences += left != right
+        zero_differences += a == 0 and b != 0
+        ulp, absolute = abs(ordered(left)-ordered(right)), abs(a-b)
+        if ulp > max_ulp:
+            max_ulp, worst_ulp = ulp, index
+        max_absolute = max(max_absolute, absolute)
+        if a != 0 and absolute/abs(a) > max_relative:
+            max_relative, worst_relative = absolute/abs(a), index
+    return {'different_bits': differences, 'max_ulp': max_ulp, 'worst_ulp_index': worst_ulp,
+            'max_absolute': max_absolute, 'max_relative_nonzero_reference': max_relative,
+            'worst_relative_index': worst_relative, 'nonzero_against_zero_reference': zero_differences}
+
+
 def parse(text):
     context = raw_tools['parse'](text)
     rows = {name: {} for name in SIZES}
@@ -77,10 +105,16 @@ def analyze(context):
             'reported_raw_bits': f'{expected_raw:08x}',
             'next_row_different_from_prepared_words': sum(bits(v) != b for v, b in zip(reconstructed, context[side+'_NEXT_ROW'])),
             'shared_qk_differences_between_halves': sum(a != b for a, b in zip(context[side+'_PREPARED_0'][:256], context[side+'_PREPARED_1'][:256])),
+            'next_row_vs_prepared_reconstruction': drift([bits(v) for v in reconstructed], context[side+'_NEXT_ROW']),
         }
     result['prepared_bit_differences'] = {
         name: sum(a != b for a, b in zip(context['EXPECTED_PREPARED_'+str(half)][start:end], context['ACTUAL_PREPARED_'+str(half)][start:end]))
         for name, start, end in (('q', 0, 128), ('k', 128, 256), ('v', 256, 320), ('decay', 320, 321), ('beta', 321, 322))}
+    result['prepared_drift'] = {
+        name: drift(context['EXPECTED_PREPARED_'+str(half)][start:end], context['ACTUAL_PREPARED_'+str(half)][start:end])
+        for name, start, end in (('q', 0, 128), ('k', 128, 256), ('v', 256, 320), ('decay', 320, 321), ('beta', 321, 322))}
+    result['next_row_drift'] = drift(context['EXPECTED_NEXT_ROW'], context['ACTUAL_NEXT_ROW'])
+    result['raw_drift'] = drift(context['EXPECTED_RAW'], context['ACTUAL_RAW'])
     return result
 
 

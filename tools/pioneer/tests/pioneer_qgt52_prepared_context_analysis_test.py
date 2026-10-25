@@ -65,6 +65,14 @@ class PreparedContextTests(unittest.TestCase):
                     self.assertEqual(result[side]['next_row_different_from_prepared_words'], 0)
                     self.assertEqual(result[side]['shared_qk_differences_between_halves'], 0)
                 self.assertEqual(result['prepared_bit_differences'], dict(q=0, k=0, v=0, decay=0, beta=1))
+                self.assertEqual(result['prepared_drift']['beta']['max_relative_nonzero_reference'], .25)
+                self.assertEqual(result['prepared_drift']['beta']['max_ulp'], 0x200000)
+                self.assertEqual(result['prepared_drift']['beta']['worst_ulp_index'], 0)
+                for name in ('q', 'k', 'v', 'decay'):
+                    self.assertEqual(result['prepared_drift'][name]['max_ulp'], 0)
+                    self.assertIsNone(result['prepared_drift'][name]['worst_ulp_index'])
+                for side in ('expected', 'actual'):
+                    self.assertEqual(result[side]['next_row_vs_prepared_reconstruction']['max_ulp'], 0)
 
     def test_distinguishes_returned_state_and_preparation(self):
         context = probe['parse'](fixture())
@@ -74,6 +82,23 @@ class PreparedContextTests(unittest.TestCase):
         self.assertNotEqual(result['actual']['raw_from_next_row_bits'], result['actual']['raw_from_prepared_bits'])
         self.assertEqual(result['actual']['next_row_different_from_prepared_words'], 1)
         self.assertEqual(result['actual']['shared_qk_differences_between_halves'], 1)
+        self.assertEqual(result['actual']['next_row_vs_prepared_reconstruction']['different_bits'], 1)
+        self.assertEqual(result['actual']['next_row_vs_prepared_reconstruction']['worst_ulp_index'], 0)
+
+    def test_drift_metrics_signed_zeros_opposite_signs_and_zero_reference(self):
+        bits = raw['bits']
+        result = probe['drift']([bits(-0.), bits(-1.), bits(0.), bits(2.)], [bits(0.), bits(-1.0000001192092896), bits(.125), bits(1.)])
+        self.assertEqual(result['different_bits'], 4)
+        self.assertEqual(result['nonzero_against_zero_reference'], 1)
+        self.assertEqual(result['max_ulp'], bits(.125))
+        self.assertEqual(result['worst_ulp_index'], 2)
+        self.assertEqual(result['max_relative_nonzero_reference'], .5)
+        self.assertEqual(result['worst_relative_index'], 3)
+        self.assertEqual(probe['drift']([bits(-0.)], [bits(0.)])['max_ulp'], 0)
+        self.assertEqual(probe['drift']([bits(-1.)], [bits(1.)])['max_ulp'], 2*bits(1.))
+        for left, right in (([], []), ([0], []), ([0x7f800000], [0]), ([0], [0x7fc00000])):
+            with self.assertRaises(ValueError):
+                probe['drift'](left, right)
 
     def test_all_missing_duplicate_truncated_and_malformed_rows(self):
         text = fixture()
