@@ -119,6 +119,21 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
   auto& c=C();assert(!c.command[1] && c.command[3]==0x80000 && !c.command[4] && c.command[5]==129
    && !c.command[6] && !c.command[7] && c.command[8]==4096 && !c.command[9]);
   unsigned bank=7;for(unsigned b=0;b<7;b++)if(PioneerQ38ProjectionRoute(b)==c.command[2])bank=b;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  // Independent fixed QLV1 transfer-order audit,NOT the driver's plan.
+  unsigned expectedBank=residentReadbackBank,expectedAddress=residentReadbackBase;
+  const unsigned page=residentReadbackRequests;
+  if(page<56){
+   const unsigned first[]={0,5,15,45,51},count[]={5,10,30,6,5},offset[]={0,0x120000,0x130000,0x150000,0x100000};
+   unsigned kind=0;while(kind<5 && page>=first[kind]+count[kind])kind++;
+   assert(kind<5);expectedAddress+=offset[kind]+(page-first[kind])*4096;
+  }else{
+   unsigned slot=(page-56)/768,at=(page-56)%768,half=at/8;
+   assert(slot<2 && half<96);expectedBank=residentReadbackState[half][slot*2];
+   expectedAddress=residentReadbackState[half][slot*2+1]+(at%8)*4096;
+  }
+  assert(bank==expectedBank && c.command[0]==expectedAddress);
+#endif
   uint32_t bytes[1024];assert(bank<7 && ResidentReadbackBytes(bank,c.command[0],bytes,1024));
   for(unsigned i=0;i<1024;i++){
    assert(ResidentRead(0,0x80000+i*4)==0x7fc70000+residentReadbackRequests*1024+i);
@@ -127,9 +142,16 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
   c.counters[0]++;c.counters[1]+=64;c.accepted++;c.counters[3]++;residentReadbackRequests++;
  } // TEST transfer copies actual VM-exported bytes;NEVER fabricates arithmetic/ready/owner
  uint32_t ObserveResidentReadbackValue(uint32_t a,uint32_t value){
-  if(residentReadbackObserved && residentReadbackFault==4 && !residentReadbackFence && !current
+  if(residentReadbackObserved && residentReadbackFault>=4 && !residentReadbackFence && !current
    && residentReadbackRequests==residentReadbackFaultPage+1 && a==0x80000+residentReadbackFaultWord*4){
-   residentReadbackFence=touches;return 0x7fc00000;
+   residentReadbackFence=touches;
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+   if(residentReadbackFault==5)return 0x3f800000; // finite nonzero CURRENT is still invalid
+   if(residentReadbackFault==6)return 0x80000000; // CURRENT must be exact genuine +0
+   if(residentReadbackFault==7)return 0x7f800000;
+   if(residentReadbackFault==8)return 0x7fc70000+residentReadbackFaultPage*1024+residentReadbackFaultWord;
+#endif
+   return 0x7fc00000;
   }return value;
  } // SAME actual scalar-observation hook for panel AND extra-aperture aliases
  bool ResidentAt(unsigned phase,unsigned worker)const{return residentResult && residentResult->phase==phase && current==worker;}
@@ -463,7 +485,7 @@ void ProjectionNativeTransport::ResidentLayerSources(const char* root,const char
  p.residentBytes=&bytes;p.resident.reset(new ResidentEndpointMachine(root,peer,p));
 } // byte endpoints only;actual QPS1 STOP/holds precede attachment;no ready/input/model product fabricated
 uint32_t ProjectionNativeTransport::ResidentLayerRead(uint32_t a){auto& p=*implementation;p.Touch();assert(p.resident);
- auto value=p.ResidentRead(p.current,a);
+ auto value=p.ObserveResidentReadbackValue(a,p.ResidentRead(p.current,a));
  if(p.residentFault==8 && !p.residentInjected && p.ResidentAt(5,0) && a==TT_Q38_RESIDENT_LAYER_SHADOW+(TT_Q38_RESIDENT_LAYER_WORDS-1)*4){
   p.residentInjected=true;p.residentFence=p.touches;return value^1;
  }return value;
@@ -482,6 +504,31 @@ void ProjectionNativeTransport::ResidentLayerRunTerminalCheckpoint(void (*callba
  assert(p.resident && callback && context && !p.residentStarted[0] && !p.layerTerminalCheckpoint);
  p.layerTerminalCheckpoint=callback;p.layerTerminalContext=context;
 }
+void ProjectionNativeTransport::ObserveResidentLayerReadback(unsigned fault,unsigned page,unsigned word){auto& p=*implementation;
+ assert(p.resident && p.resident->Pc(0)==0x72038 && !p.residentReadbackObserved && fault<=8 && page<1592 && word<1024);
+ assert((fault!=5 && fault!=6) || (page>=56 && page<824));
+ p.residentReadbackObserved=true;p.residentReadbackFault=fault;p.residentReadbackFaultPage=page;p.residentReadbackFaultWord=word;
+ p.residentReadbackBank=p.ReadLocal(0,TT_Q38_COHORT_SHADOW+7*4);p.residentReadbackBase=p.ReadLocal(0,TT_Q38_COHORT_SHADOW+8*4);
+ for(unsigned half=0;half<96;half++)for(unsigned i=0;i<4;i++)
+  p.residentReadbackState[half][i]=p.ReadLocal(0,TT_Q38_COHORT_SHADOW+(TT_Q38_COHORT_GDN_WORD+half*192+64+4+i)*4);
+ for(unsigned i=0;i<8;i++)p.residentReadbackBefore[i]=p.NoC(0,PioneerQ38PanelCounter(i));
+}
+unsigned ProjectionNativeTransport::ResidentLayerReadbackRequests()const{return implementation->residentReadbackRequests;}
+unsigned ProjectionNativeTransport::ResidentLayerReadbackFaultFence()const{return implementation->residentReadbackFence;}
+void ProjectionNativeTransport::VerifyResidentLayerReadback(const uint32_t* values,unsigned words){auto& p=*implementation;
+ assert(values && words==1630208 && p.residentReadbackRequests==1592 && p.resident->Stops()==119 && !p.residentReadbackFence);
+ const unsigned offsets[]={0,0x120000,0x130000,0x150000,0x100000},sizes[]={5120,10240,30720,6144,5120};unsigned at=0;
+ auto compare=[&](unsigned b,uint32_t a,unsigned n){uint32_t bytes[1024];
+  for(unsigned first=0;first<n;first+=1024){assert(p.ResidentReadbackBytes(b,a+first*4,bytes,1024));
+   for(unsigned i=0;i<1024;i++)assert(values[at++]==bytes[i]);
+  }
+ };
+ for(unsigned i=0;i<5;i++)compare(p.residentReadbackBank,p.residentReadbackBase+offsets[i],sizes[i]);
+ for(unsigned slot=0;slot<2;slot++)for(unsigned half=0;half<96;half++)
+  compare(p.residentReadbackState[half][slot*2],p.residentReadbackState[half][slot*2+1],8192);
+ assert(at==words);const unsigned delta[]={1592,1592*64,1592,1592,0,0,1592,0};
+ for(unsigned i=0;i<8;i++)assert(uint32_t(p.NoC(0,PioneerQ38PanelCounter(i))-p.residentReadbackBefore[i])==delta[i]);
+} // compares ALL actual emitted VM bytes,never manufactures a numerical oracle
 #else
 void ProjectionNativeTransport::ResidentOutputSources(const char* root,const char* peer,ResidentOutputNativeStateBytes& bytes){
  auto& p=*implementation;assert(!p.resident && p.machine->Stops()==119);
@@ -1100,9 +1147,11 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
    p.C().RuntimeCodeWrite(0,v);return;
   case SetStatus:p.LocalWrite(0x17ffc0+a*4,v);return;
   case SetNoc:
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && !defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
+#ifndef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
    if(p.residentDeferredRoot && p.resident && a==0x40 && !p.residentReadbackObserved)
     ObserveResidentReadback(p.residentDeferredFault,p.residentDeferredPage,p.residentDeferredWord);
+#endif
    if(p.residentReadbackObserved && a==0x40){assert(v==1);p.ResidentReadbackTransfer();return;}
 #endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE

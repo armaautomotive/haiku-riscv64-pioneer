@@ -12,6 +12,7 @@
 #include "PioneerQ38ResidentLayerMemory.h"
 #include "PioneerQ38ResidentLayerPlan.h"
 #include "PioneerQ38ResidentLayerProof.h"
+#include "PioneerQ38ResidentLayerReadbackPlan.h"
 // HEAP ONLY. Full NEW first-layer Conv/GDN/output/residual+RMS/FFN/final-residual lifetime.
 // This is the actual execution/STOP/restore controller,not a boot-only smoke test.
 // A genuine NEW native state/factory/IO scope and original-GGUF qualification
@@ -27,6 +28,16 @@ struct PioneerQ38ResidentLayerResult {
  uint32_t armed=0,released=0,waiting=0,stopped=0,held=0,rootStarts=0,rootHolds=0;
  PioneerQ38ResidentLayerMemoryResult memory;
 };
+struct PioneerQ38ResidentLayerReadbackResult {
+ uint32_t version=1,started=0,pages=0,words=0,completed=0;
+};
+static_assert(sizeof(PioneerQ38ResidentLayerReadbackResult)==20,"NEW fixed full-layer observer result,NO padding");
+static inline bool PioneerQ38ResidentLayerReadbackPristine(uint32_t* values,unsigned words,
+ const PioneerQ38ResidentLayerReadbackResult& r){
+ const uintptr_t address=reinterpret_cast<uintptr_t>(values);
+ return values && !(address&3) && words==PioneerQ38ResidentLayerReadbackPlan::Words
+  && address<=UINTPTR_MAX-uint64_t(words)*4 && r.version==1 && !r.started && !r.pages && !r.words && !r.completed;
+}
 class PioneerQ38ResidentLayerOwner {
  PioneerQ38ProjectionGraphOwner* projection=nullptr;
  PioneerQ38ResidentProjectionInput* input=nullptr;
@@ -96,6 +107,7 @@ class PioneerQ38ResidentLayerOwner {
   for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=sources[w][i])return false;
   for(unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)if(io.SourceRead(i)!=proof->source[i])return false;
   for(unsigned p=0;p<2;p++)if(!PioneerQ38GraphCsrPciQuiet(io,p))return false;
+  if(!w && readbackTraffic)return ReadbackTransferGuard(io);
   if(!w && traffic && !rootVerified)return true; // only genuine active ROOT may have in-flight packets
   if(!PioneerQ38GraphCsrIdle(io))return false;
   // Before accepting a completed peer, its NEW arithmetic receipt owes
@@ -215,6 +227,7 @@ class PioneerQ38ResidentLayerOwner {
   resets[w]=0x47800;io.RuntimeResetWrite(resets[w]);io.Pause();if(!Guard(io,w))return false;
   running[w]=cohort->worker[w].image.running=false;if(!w){cohort->rootRunning=false;traffic=false;}return true;
  }
+#include "PioneerQ38ResidentLayerValidationReadback.inc"
 public:
  PioneerQ38ResidentLayerOwner()=default;
  PioneerQ38ResidentLayerOwner(const PioneerQ38ResidentLayerOwner&)=delete;
@@ -303,8 +316,8 @@ public:
   if(!Guard(io,0) || !RootPhysical(io) || !Budget(io,began) || !Hold(io,0))return Fail(io,r);
   r.rootHolds++;ran=true;history->residentLayerNextPublished=recurrent->residentLayerNextPublished=true;r.phase=7;return true;
  }
-public:
- template<class IO> bool Close(IO& io,PioneerQ38ResidentLayerResult& r){
+private:
+ template<class IO> bool CloseImpl(IO& io,PioneerQ38ResidentLayerResult& r,uint32_t* values,PioneerQ38ResidentLayerReadbackResult* readback){
   if(!Completed() || running[0] || !r.prepared || r.unsafe || r.closed || r.stopped || r.held || r.memory.restoredWords)return false;
   r.phase=8;const auto* m=operation.Manifest();
   for(unsigned w=1;w<120;w++){
@@ -328,6 +341,7 @@ public:
   // held PC is NEVER read to justify cleanup or another participant.
   r.phase=9;
   for(unsigned w=1;w<120;w++){r.worker=w;if(!Guard(io,w) || Peer(io,w,PioneerQ38ResidentLayerSequence(m,w)+1,true)!=1 || !Hold(io,w))return Fail(io,r);r.held++;}
+  if(readback && !ValidationReadback(io,values,*readback,r))return Fail(io,r);
   r.phase=10;
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(!Guard(io,w) || !Image(io,w))return Fail(io,r);
@@ -345,7 +359,15 @@ public:
    || r.memory.verifiedOriginalWords!=2*TT_Q38_RESIDENT_LAYER_SAVED_WORDS || !Guard(io,0))return Fail(io,r);
   closed=memory->closed=true;ready=memory->installed=false;r.closed=r.memory.closed=1;return true;
  }
-
+public:
+ template<class IO> bool Close(IO& io,PioneerQ38ResidentLayerResult& r){return CloseImpl(io,r,nullptr,nullptr);}
+ template<class IO> bool CloseForValidation(IO& io,PioneerQ38ResidentLayerResult& r,uint32_t* values,
+  unsigned words,PioneerQ38ResidentLayerReadbackResult& readback){
+  if(!Completed() || running[0] || !r.prepared || r.unsafe || r.closed || r.stopped || r.held || r.memory.restoredWords
+   || !PioneerQ38ResidentLayerReadbackPristine(values,words,readback))return false;
+  if(!Scope(io) || !readbackPlan.Build(operation) || !operation.LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return Fail(io,r);
+  readback.started=1;return CloseImpl(io,r,values,&readback);
+ }
 };
 static_assert(sizeof(PioneerQ38ResidentLayerOwner)>524288 && sizeof(PioneerQ38ResidentLayerOwner)<1048576,"complete owner/recipes/physical ledger HEAP ONLY");
 #endif

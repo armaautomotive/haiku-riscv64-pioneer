@@ -64,7 +64,7 @@ for name,size in current.items():
     assert size <= 2048 or name in previous and size <= previous[name],(name,size,previous.get(name))
 sizes = [size for name,size in current.items() if 'ResidentLayer' in name or 'pioneer_layer_context_' in name]
 assert sizes and max(sizes) <= 2048
-for method in ('Prepare','Run','Close'):
+for method in ('Prepare','Run','CloseImpl','ValidationReadback','ReadbackTransferGuard'):
     concrete = [size for name,size in current.items()
                 if 'PioneerQ38ResidentLayerOwner::'+method+'(' in name and '[with IO = PioneerSessionIO]' in name]
     assert concrete and max(concrete) <= 2048,(method,'actual IO controller instantiation must not disappear')
@@ -115,9 +115,9 @@ for name in ('init_hardware','init_driver'):
 for name in ('publish_devices','find_device'):
     assert code('pioneer_q38_layer_context_only_'+name) == null,(name,'entry must return only NULL')
 assert code('pioneer_q38_layer_context_only_uninit_driver') == inert,'uninit must be inert'
-for name in ('bind','initialize','prefix','execute','end','destroy_clean'):
+for name in ('bind','initialize','prefix','execute','validation_readback','end','destroy_clean'):
     assert 'pioneer_layer_context_'+name in defined
-assert 'pioneer_layer_context_validation_readback' not in defined,'complete ORIGINAL layer observer still owed;old prefix readback is not a substitute'
+assert 'CloseQ38ResidentOutputNativeForValidation' not in symbols,'old partial-prefix readback is NOT the full-layer observer'
 print('PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame='+str(max(sizes)))
 print('PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+'  '+str(obj))

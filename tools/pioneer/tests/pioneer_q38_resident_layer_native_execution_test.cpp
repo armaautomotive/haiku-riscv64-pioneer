@@ -74,6 +74,7 @@ static void ForkActualNativeLayerTerminal(void* context){
  puts("PASS COMPLETE NEW_NATIVE_LAYER actual terminal-stack positive+17 source/map/clock/code/PC/receipt/STOP/restore/END containment cases;forks inherit genuine initialization/QPS1/new private claim/installed119boot/COMPLETED emitted joined-layer instructions,EVERY child still owes actual native ROOT+ALL119 proofs/STOP/restore/END;NO fabricated readiness/products,NO silicon/fullmodel/rate qualification");
  _exit(0); // TEST virtual endpoints only;parent never impersonates a clean native END
 }
+#ifndef PIONEER_Q38_LAYER_EXECUTION_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==9 && (!strcmp(argv[8],"--all") || !strcmp(argv[8],"--positive")));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -143,3 +144,4 @@ int main(int argc,char** argv){
   assert(nativeLayerTerminalChild);_exit(0);
  }else FinishNativeOutput(f,transport,output,0);
 }
+#endif

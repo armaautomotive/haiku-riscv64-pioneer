@@ -28,6 +28,10 @@ extern "C" bool pioneer_layer_context_execute(PioneerStoreContext& c,PioneerQ38R
  return PrepareQ38ResidentLayerNative(c,r) && RunQ38ResidentLayerNative(c,r) && CloseQ38ResidentLayerNative(c,r);
 }
 extern "C" bool pioneer_layer_context_end(PioneerStoreContext& c,tt_resident_session_result& r,bool& clean){return EndQ38DispatchOwnership(c,r,clean);}
+extern "C" bool pioneer_layer_context_validation_readback(PioneerStoreContext& c,PioneerQ38ResidentLayerResult& r,
+ uint32_t* values,unsigned words,PioneerQ38ResidentLayerReadbackResult& readback){
+ return CloseQ38ResidentLayerNativeForValidation(c,r,values,words,readback);
+}
 extern "C" void pioneer_layer_context_destroy_clean(PioneerStoreContext* c){delete c;}
 extern "C" status_t pioneer_layer_context_expected_refusal(){return B_NOT_ALLOWED;}
 extern "C" void* pioneer_layer_context_expected_null(){return NULL;}

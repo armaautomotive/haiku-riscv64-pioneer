@@ -55,6 +55,9 @@ public:
  void ResidentLayerFault(unsigned,const PioneerQ38ResidentLayerResult&);
  bool ResidentLayerFaultInjected()const;unsigned ResidentLayerFaultFence()const;
  void ResidentLayerRunTerminalCheckpoint(void (*callback)(void*),void* context); // TEST fork after ACTUAL completed instructions,never a ready/producer setter
+ void ObserveResidentLayerReadback(unsigned fault=0,unsigned page=0,unsigned word=0); // TEST fixed QLV1 byte observation only
+ unsigned ResidentLayerReadbackRequests()const;unsigned ResidentLayerReadbackFaultFence()const;
+ void VerifyResidentLayerReadback(const uint32_t*,unsigned);
 #else
  void ResidentOutputSources(const char*,const char*,ResidentOutputNativeStateBytes&);
  void ConfigureResidentOutputControl(const char*,const char*,ResidentOutputNativeStateBytes&,unsigned fault=0,unsigned page=0,unsigned word=0);

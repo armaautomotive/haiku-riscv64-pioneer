@@ -1,0 +1,54 @@
+FULL-LAYER QLV1 GUARDED READBACK COMPILE/ISOLATION EVIDENCE
+Captured 2026-10-25 23:27 UTC; execution qualifications STILL RUNNING, NOT a PASS claim.
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-native-readback-context-20261025-a.log
+2f20cbd7def1835119396f5247a06fefec986be7f18d568384009504c1da5de8  /private/tmp/pioneer-q38-layer-native-readback-context-20261025-a.log
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+86a092433415047ae243bf2d7b195dea02f2350352fabdb25b5249e96e666bc5  /private/tmp/pioneer-q38-layer-native-readback-context-20261025-a/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-readback-context-20261025-clean-b.log
+5d6355ddd70aef8d7703ed0ad012bbec2f0f17a86b3c04eeb3c3d46ca4e86e36  /private/tmp/pioneer-q38-layer-readback-context-20261025-clean-b.log
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+86a092433415047ae243bf2d7b195dea02f2350352fabdb25b5249e96e666bc5  /private/tmp/pioneer-q38-layer-readback-context-20261025-clean-a/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-readback-old67-control-20261025-a.log
+6bc5bb418cf9f6a03085c30e58af7258a541a0398983c4bc6e68ae98b7d2b331  /private/tmp/pioneer-q38-layer-readback-old67-control-20261025-a.log
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1488
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+59ecbf0a81d74d2c5a0752a4e5a862f167e4b44181a722f1795b1852cf36135f  /private/tmp/pioneer-q38-layer-readback-old67-control-20261025-a/resident-output-context-REFUSING-COMPILE-ONLY.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-readback-owner-kernel-20261025-a.log
+72eda14f294bd0fedcfe19dade7b4fa607a64591d5fba3ca63114e86926eef96  /private/tmp/pioneer-q38-layer-readback-owner-kernel-20261025-a.log
+MAX_LAYER_OWNER_KERNEL_FRAME_BYTES=1456
+ae94f9c6736168d5522421413c009d9caff8c10f6446de011a4a1b0a9409116d  /private/tmp/pioneer-layer-owner-kernel.0q34uqwK/owner.o
+Resident full-layer controller:/private/tmp/pioneer-layer-owner-kernel.0q34uqwK;TEMPLATES ONLY,NO qualified native factory/driver/link/install/card access
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-readback-owner-gates-20261025-a.log
+fe0b9e6549caed467688d48b43571f8ca34a4165114ea76bbb549da47823eb84  /private/tmp/pioneer-q38-layer-readback-owner-gates-20261025-a.log
+PASS new full-layer owner gates121:exact roles/reinclusion/defined0+old68/CPU/Work/image refusals,private noncopyable input and separate state claims,OLD IO cannot instantiate NEW lifetime;NO native factory/driver or physical execution qualification
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-readback-context-gates-20261025-a.log
+534fc18125999e9b5b75257b77f99bb79039c126df8c88c6c18207abd7c57a50  /private/tmp/pioneer-q38-layer-readback-context-gates-20261025-a.log
+PASS full-layer native-context gates468:exact private producer/runtime/NODRV sentinel,all missing/defined0/reinclusion/mixed old67/68/CPU/Work/image roles refused;actual prefix mangles ABI only for exact closed role,all legacy build entries inert before output/SDK access;NO loadable driver or physical grant
+
+SOURCE_LOG /private/tmp/pioneer-q38-layer-readback-native-binding-20261025-a.log
+7b5bb874b6a96610b374f556bb58c569fb85771c8d039b80087b06370462b06c  /private/tmp/pioneer-q38-layer-readback-native-binding-20261025-a.log
+PASS genuine new native bind/FD+team+thread/source/host+clock+model perimeter:refusals121,private construction/destruction,actual retained lifetime/initialization and END interlocks;ZERO MMIO/map/reset/STOP/free. OS/learned endpoints are TEST,NOT initialization/execution/native-driver/silicon or rate qualification
+
+EXACT TASK SOURCE SHA256
+5357af8730365b4d0afaaa6611291f4084140a7cc4b21ecf15d1c1ed0f00a883  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeExecution.inc
+5e40a78e0cac6e91e0dc0743d3dca80a5051fdd53c12b8f33c02b5658cc6feda  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeState.h
+d49e312bb8190532bb4bc3240acb3e9e8d92ec70cdbf08594fa3f34c8c4487ec  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerOwner.h
+93ca1935d161751d15c94aa4394dd05587d91fd6d34fdf9b6fb08f998ce732d6  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerValidationReadback.inc
+f3f02b7d0fa1c55c30e445a87df55fcbb47e1562e0091ac0632cf87ca4325ac9  tools/pioneer/tests/pioneer_q38_projection_native_transport.cpp
+33dc458e24d9a7043d1d039713f2bfd22b3f5f148727b9c919161163f63fa163  tools/pioneer/tests/pioneer_q38_projection_native_transport.h
+62719560909e2227d85121c92d6a4fe3822ba63780f09072b2e96d7cd8006a90  tools/pioneer/tests/pioneer_q38_resident_layer_native_context_full_compile.cpp
+0f40f0d50ffe194cc53fba68b4f2880cb69c9ccb7d2cdb1c910e80f48dcbdf32  tools/pioneer/tests/pioneer_q38_resident_layer_native_execution_test.cpp
+7f3db4ff7ee4ebb4be67509f1079c46a46facb40ce3c21ab3e82e9b2cc2c2b5b  tools/pioneer/tests/run_pioneer_q38_resident_layer_native_context_compile.py
+de02ad7d5201b7eae2d84a7d4ed7075014ecac0df81f9c30e892463a3d96e69c  tools/pioneer/tests/pioneer_q38_resident_layer_native_readback_test.cpp
+f89ae46d687652310dff58caa18e2ff74cfe25e762b2b54e940a0638a1c6ce92  tools/pioneer/tests/run_pioneer_q38_resident_layer_native_readback_tests.py
