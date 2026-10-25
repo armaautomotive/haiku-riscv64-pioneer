@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+#error SAME native63 residual RMS never includes CPU reference code
+#endif
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE
 #error QRR2 device image never contains a CPU reference observer
 #endif

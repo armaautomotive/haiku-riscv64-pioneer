@@ -67,6 +67,10 @@ public:
  unsigned NextOutputStarts()const;
  void NextOutputFault(unsigned);bool NextOutputFaultInjected()const;
 #endif
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+ void NextResidualSource(const char*);unsigned NextResidualStarts()const;
+ void NextResidualFault(unsigned);bool NextResidualFaultInjected()const;unsigned NextResidualFaultTouch()const;
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

@@ -1,5 +1,22 @@
 # Native build status
 
+October24 UTC2026:SAME actual decoder native63 layer1 QRR2 integration
+OFFLINE qualified,NOT linked/installed/Work/public selected. Genuine62
+output+58raw claimed BEFORE IO;5original norm pages required before Bind
+and claim. Existing ROOT40KiB prefix only;one-shot30s through receipt/hold/
+ALL120checks/publication,including nested peer reads;no held live-PC sample.
+Full ORIGINAL genuine-prefix+16real faults+positive43271 TERMINAL0:all5120
+sum+norm BIT-EXACT/2learned reads/oneROOTstart+hold/private FFN result;
+unrelatedstate/history/GDDR preserved;all failures retain with ZERO later
+IO/reset/restore/retry/END. Actual8330680restore+verify+END PASS.
+RISC-V A54434/B13984 EXACT47c11c7f/maxnew656B/ALLold62+ancestors+controls
+BYTE-IDENTICAL.553gates+131072inert routes PASS twice;old62gates unchanged.
+No hardware action;OFF68897/newfansLEDconfirmation pending before ON.
+Physical52precision failure persists;separate preciseSiLU candidate NOT
+selected here. Whole27B0.207893161tok/s/20UNMET/goalACTIVE. Next:later FFN,
+all64layers/attentionKV/sampling/persistent token schedule/hardware timing.
+Evidence:benchmarks/qwen38-next-residual-rms-native-20261024.txt.
+
 October24 UTC2026:ONE physical DEBUG52 prepared capture23715 TERMINAL1
 reproduced same28ULP gated mismatch. Actual prepared inputs reconstruct
 returned128word NEXT row and rawb69a7f89 BIT-EXACT;originals reconstruct

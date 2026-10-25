@@ -28,6 +28,9 @@
 #ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
      || (nextOutput && phase>=42 && phase<=46)
 #endif
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+     || (nextResidual && phase>=47 && phase<=49)
+#endif
      ))
 #endif
     ) || residual->epoch!=output->bootstrap.manifest[6]+1

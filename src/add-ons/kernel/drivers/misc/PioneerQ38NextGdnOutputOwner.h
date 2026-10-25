@@ -25,7 +25,11 @@
    || nextAttention.canonical!=projection->canonical || nextAttention.ledger!=projection->ledger || nextAttention.pages!=projection->pages
    || !(nextAttention.identity==projection->identity) || nextAttention.token!=projection->token || nextAttention.position || projection->position
    || nextAttention.bank!=projection->bank || nextAttention.layer!=1 || nextAttention.phase!=nextGdn->epoch
-   || ((phase<42 || phase>46) && phase!=7 && phase!=8)
+   || ((phase<42 || phase>46) && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+    && !(nextResidual && phase>=47 && phase<=49)
+#endif
+    )
    || !nextOutput->jobs.jobs.Matches(*projection->canonical,1,13,0)
    || !nextOutput->jobs.jobs.LearnedPagesPresent(projection->ledger,projection->pages)
    || !PioneerQ38NextGdnOutputLearned(*projection->canonical,projection->ledger,projection->pages))return false;

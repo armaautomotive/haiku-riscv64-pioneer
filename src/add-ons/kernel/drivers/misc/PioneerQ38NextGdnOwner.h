@@ -17,6 +17,9 @@
 #ifdef PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE
     && !(nextOutput && phase>=42 && phase<=46)
 #endif
+#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+    && !(nextResidual && phase>=47 && phase<=49)
+#endif
     )
    || !recurrent->OwnsNextLayer(this,projection->identity,1,nextGdn->epoch)
    || nextConvolution.outputAddress!=nextInput.normalizedAddress+TT_Q38_CONV_OUTPUT

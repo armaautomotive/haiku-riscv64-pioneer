@@ -1,0 +1,96 @@
+Native63 SAME-owner layer1 residual/RMS,2026-10-24. OFFLINE qualified.
+NOT linked,installed,publicly selectable,Work-promoted or physical inference.
+Last whole27B0.207893161tok/s unchanged;20tok/s/full resident model UNMET.
+
+PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE=1/tag2026102400010063 requires ALL real
+native62 parents. SAME actual decoder claims its genuine NextPostAttentionInput
+and native58 raw residual BEFORE IO;no initial-RMS facade/retagged producer.
+Only layer1/position0. All5 ORIGINAL blk.1.post_attention_norm.weight F32
+pages required BEFORE Bind epoch and again before claim/live Scope. Broad
+QRR2 DATA does not grant source/initialization/completion/launch authority.
+
+Phases47install/48execution/49publication. Existing ROOT40KiB saved prefix
+only replaced by pinned QRR2;old main and119STOP peer images remain exact.
+No new snapshot/map/host buffer or CPU activation/reference product accepted.
+Actual source/cookie/team/thread/global-call/clock/model/host ownership stays
+bound to SAME retained context. Prior output query expires at claim.
+All120real holds proved before first replacement write.10actual packets
+read projected/raw/originalnorm and write5120sum+5120normalized to GDDR.
+
+One sticky30s interval starts BEFORE ROOTrelease and covers receipt,ROOT
+hold,ALL120rechecks and publication. Same deadline pointer also brackets
+deep119peer image/frame reads through historical62 methods;no renewal.
+Expiry/rollback/late terminal/hold/publication do not permit subsequent IO.
+Held ROOT is NEVER sampled as a live PC. Only after full QRR2 descriptor,
+summary,counters,command,source,image,terminal and physical hold checks is
+new nonconstructible typed layer1 NextFfnInput published. Claim/publication
+lineage survives state deletion and is checked by closed owner before END.
+Normal Close restores AND verifies all8330680original words;unknown/failure
+retains all owners/snapshots/hosts/maps with NO reset/restore/retry/END.
+
+Full RISC-V read-only-SDK A54434/B13984 ACTUAL TERMINAL0;cmp IDENTICAL:
+ /private/tmp/pioneer-q38-native63-wip-compile-20261024.HeSbDi8P/sdk-{a,b}/next-residual-rms-NATIVE63-COMPILE-ONLY.o
+ SHA47c11c7f4ff8f3518ea9baaa81266ff7dbf880887ef44d25221d71f04a8e36c3.
+ maxNewFrame656B/allnew<=2048/all oversized inherited frames nongrowing.
+ Old62 EXACT5e9dd01f158aeec67faf8639d5601da0458d7d6e13b96449b9882e2504ccc5bf;
+ ALL ancestors/default/tag38/guard/bare43/private stash/DEBUG controls exact.
+ A:/private/tmp/pioneer-q38-next-residual-rms-native-sdk-20261024-a.log
+ SHA5059d47edaad8c59683d61fc05a9d3e3a1d94b65f70492f5e0a8f744999c5857.
+ B:/private/tmp/pioneer-q38-next-residual-rms-native-sdk-20261024-b.log
+ SHA027f20e55a90c02b22185b70616eb7902eae9f636408d0aa1e06dc435c4a655f.
+
+Role/parent/tag/defined-zero/10CPU-reference+reinclusion/legacy-builder/
+private-producer/inert-route A86109/B11910 ACTUAL TERMINAL0:
+ 553checks and131072actual closed-allowlist probes;no public compute route.
+ Both log SHA28375e92b6dc2c123d8febf7f524737f392beb1d2da88e76e31c6db22cd872dd.
+ Separate old62gate77230 TERMINAL0:526checks/131072routes;log EXACT
+ 3f66b18931106cdb5d6c048e220c67c68250d97b0b8e3b0101e9da617a5f2fa7.
+ Original-observer exclusion20718 TERMINAL0:20checks/log69dcee8b...unchanged.
+ Actual byte-bridge compile9287 TERMINAL0 and private-type static asserts PASS.
+
+ASan/UBSan full ORIGINAL source/canonical/genuine-prefix+16faults+positive
+43271 ACTUAL TERMINAL0:
+ /private/tmp/pioneer-q38-next-residual-rms-native-faults-20261024-a.log
+ SHA079759aec4bfe7db1561b0fe1606578c3542d9588baabd087108c766c84dfdf7.
+ Full c600 authentication+all independent original refs BEFORE context;
+ genuine init73728/history1680/QPE1/QRN1/4QPS1/QCB1/GDN/QOP1/QRR1/FFN/
+ nextRMS/QPS2/QCB1/GDN/QOP2 prefix,not a metadata-only or shortened facade.
+ Original5norm-page corrupt/missing checks before Bind and preclaim,foreign
+ team and all4forged result fields refuse without IO or source-read claims.
+ Actual transport dispatches new ROOT BEFORE historical62 and admits it
+ only after actual121starts+119STOP+allpeerholds/fullcode/descriptor checks.
+ Arithmetic bridge executes actual staged QRR2 instructions,not host math.
+ Positive:10241installed words/one real ROOTstart+run/one hold/one publication,
+ 2original learned reads,ALL5120sum+norm BIT-EXACT independent original
+ observer;state/history/unrelatedworkspace unchanged. Old producer expires;
+ new producer refuses foreign cohort and expires on fault/Close. Actual full
+8330680word restore+verify and legacy END succeeded.
+
+16real endpoint faults,from SAME genuine completed62 prefix (forked TEST
+processes,not caller-ready producers):1boot/2descriptor/3source/4summary/
+5PC/6finalrestore/7releaseexpiry/8oldmain/9actualNaN/10lateStatus/11rollback/
+12holdexpiry/13latepeer/14latepub/15beginOverflow/16peerrollback.
+ 1:0starts/0installed;2:10241installed/0starts;
+ 3/7:actualstart1+2reads but unaccepted release/runs0;
+ 4/5/8/9/10/11:one start+run,no hold/publication;
+ 6:real publication then original-restore corruption retained;
+ 12:receipt accepted,first hold expires,NO second hold/reset;
+ 13/14/16:ROOT held before final peer/publication uncertainty;
+ 15:begin overflow BEFORE release,0starts/0learned reads.
+ NaN case preserves GDDR before any sink write. Every uncertainty retains
+ all resources and repeated run/Close/END causes ZERO following IO. Clock
+ cases also assert endpoint touch count does NOT increase after injection.
+
+Original old62 full genuine-prefix regression26933 TERMINAL0 before this
+integration already preserved new source-interface defaults/full8330680
+restore+END. Log7f6e58da656774e525186616d3a73a2ae5e1091682f94cde12404a9083b83ece.
+ QGT52 prepared-log regression9methods still PASS;physical drift NOT fixed
+ by this stage. Prior physical capture70e49b2b remains failed/quarantined.
+ ONE OFF68897 completed after archive/sync;NEW fans/LED-off confirmation
+ still pending before ON. No power/SD/mains/GPU/Assistant change in native63
+ development. User's development-box saved-work authorization remains valid.
+
+Next:layer1 FFN/residual and reusable subsequent-layer transitions,full
+attentionKV/all64layers/sampling/persistent device token schedule,then real
+whole-model timing. Separate precise-SiLU image investigation is underway
+for observed upstream drift;it is NOT selected by this native63 image.
