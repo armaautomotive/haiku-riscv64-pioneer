@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE
+#error Native66 never compiles LOCAL arithmetic diagnostics
+#endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
 #error Native65 never compiles LOCAL arithmetic diagnostics
 #endif

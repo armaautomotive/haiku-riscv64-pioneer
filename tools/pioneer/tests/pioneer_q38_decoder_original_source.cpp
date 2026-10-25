@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE
+#error Original-model observer remains separate from native66
+#endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
 #error Original-model observer remains separate from native65
 #endif

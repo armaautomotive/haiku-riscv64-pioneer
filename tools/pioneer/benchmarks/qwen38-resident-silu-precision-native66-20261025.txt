@@ -1,0 +1,68 @@
+Resident precise-convolution binding native66 -- OFFLINE QUALIFIED
+2026-10-25 UTC;parent physical precision checkpoint7e719bb5b454.
+Separate PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE=1/tag2026102500010066,
+requires ALL genuine native65 parents. BOTH convolution stages select the
+same exact7560B QCB1 image0a009317 that passed ONE physical DEBUG64 trial.
+DEBUG64/client64/CPU references/Work cannot compile into native66. There is
+NO public compute selector,linked driver,installation or physical native66
+execution. Last whole-model0.207893161tok/s UNCHANGED;20tok/s/full model on
+card remain UNMET. Layer0 DEBUG64 correctness is NOT this full-prefix pass.
+
+Legacy native65 continues to select EXACT6088B/a8df convolution bytes.
+Image bindings cannot switch native66/DEBUG64/legacy roles after inclusion.
+Initial gate44923 TERMINAL1 caught tag66 without its role being accepted
+by the image-only header (the actual driver already refused it). Added
+reserved-tag image refusal AFTER both build/test parents were terminal.
+No tolerance,role or test expectation was relaxed;initial failure retained.
+Fixed gates29343 TERMINAL0:430 new exact-parent/tag/defined-even-zero/
+reinclude/10CPU-reference/independent-observer/builder/emitted-image checks
+plus131072ACTUAL inert route probes. Existing65 gates also passed unchanged
+583checks/131072routes inside this run.
+ /private/tmp/pioneer-q38-native66-gates-20261025-b.log
+ SHAfe4d8e24f8a72df3a95efa4ba3ed76c8c2470821e1dcbcc77d77f2cad6780051.
+ExistingDEBUG64 gates49024 TERMINAL0,350checks/131072actualclosedroutes:
+ /private/tmp/pioneer-q38-native66-old64-gates-20261025-a.log
+Same2DEBUG+6storage routes;no Work/CPU arithmetic grant.
+ Log SHA3d88090a1a0c3a11e689b4ff938407b5227df31bc4eb58272d380929c5790beb
+ is byte-identical to the prior qualified DEBUG64 gate log.
+
+Actual full-kernel read-only SDK builds64967/1672 both TERMINAL0:
+ /private/tmp/pioneer-q38-native66-sdk-20261025-{b,c}/resident-silu-precision-NATIVE66-COMPILE-ONLY.o
+ SHA97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437.
+Both independently recompiled native65 control EXACT
+61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821.
+maxNewFrame496B;2048B gate unchanged;oversized inherited frames nongrowing.
+Builder authenticates old52 and saved SDK trace BEFORE compile;rejects all
+nonzero PIONEER_ environment roles before SDK/output access. SDK and dirty
+llama.cpp remain untouched. Compile-only object is NOT an installable driver.
+
+Full original-model genuine-prefix+16fault+positive run82044 TERMINAL0:
+ /private/tmp/pioneer-q38-native66-original-faults-20261025-a.log
+ SHA32a8f0aa16e870190f98b0876a24450465916a4c9d4887bb10cd5f4b1ea42801
+Uses --resident-silu-precision-faults with the exact precise QCB1 code,
+separately compiled CPU observer and the original native65 full-prefix
+controller. No shortened initialization,caller-ready facade or CPU numeric
+uploads. All851schema/original-reference preparation,missing/corrupt
+weight refusals and ALL73728state pages completed. BOTH precise QCB1 stages,
+layer0/1 GDN829632values each,original learned output/residual/RMS/FFN0/
+next-RMS/projection/output/residual/FFN1 path passed unchanged observers.
+Final actual FFN1:357matrices/88producers/65280original tiles/ALL5120rows,
+119STOPs/ALL120holds/private layer2 hidden+old-input expiry. Recurrent
+CURRENT and all unrelated GDDR/history stayed unchanged. All16actual faults
+retain ALLowners with ZERO following IO/reset/restore/retry/END. Close
+restored8330680words and independently verified8330680words,unsafe0;actual
+END succeeded. This is the complete two-layer ORIGINAL-source resident
+prefix under simulated hardware,NOT physical full-model inference.
+One1-second read-only
+stack sample73892 TERMINAL0 observed RunGdnOutput/real emitted instruction
+interpreters executing,not a blocked parent. Sample/elapsed CPU time are
+diagnostics only,NOT execution success,card timing or model throughput.
+Source dependencies stayed FROZEN throughout parent82044's lifetime. All
+native66 parents are now terminal. No linked/installable driver or public
+selector exists;no native66 hardware grant from these results. Physical
+full-prefix qualification additionally needs current/held/lease/deadline
+audit and separately qualified native install/DEBUG boundary. Pioneer
+remains clean baseline041/tag12/gen4;no power/SD/Assistant action.
+The independent persistent operator service targets removal of code reloads
+between matrix and Conv stages;its synthetic IMAGE tests are NOT a substitute
+for this original-model prefix or a whole-model performance benchmark.

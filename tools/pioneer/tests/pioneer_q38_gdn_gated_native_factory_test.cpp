@@ -18,6 +18,11 @@ static_assert(!std::is_copy_constructible<PioneerQ38GdnOutputBootstrapPlan>::val
  && !std::is_move_constructible<PioneerQ38GdnOutputBootstrapPlan>::value,"same borrowed producer/cohort heap relation cannot be copied");
 #endif
 int main(int argc,char** argv){
+#ifdef PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE
+ static_assert(TT_Q38_CONV_BATCH_TEXT_BYTES==7560 && TT_Q38_CONV_BATCH_IMAGE_WORDS==1891,
+  "native66 BOTH SAME-owner convolutions require the exact physically qualified precision image");
+ puts("NATIVE66_RESIDENT_PRECISION_BOTH_CONVOLUTIONS;GENUINE_FULL_PREFIX_REQUIRED;NO_DEBUG64_OR_WORK");
+#endif
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
  assert(NextProjectionExecutionMachine::GrammarSelfTest()); // actual linked QPS2,not a weak QPS1 fixture
 #endif
