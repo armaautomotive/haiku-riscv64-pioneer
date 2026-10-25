@@ -1,0 +1,261 @@
+Combined Conv/GDN/QOL1/full output-matrix coordinator, 2026-10-25 UTC
+STATUS: implementation + positive/isolation/physical-probe tests PASS.
+Full run56062 exited1 on a malformed-input TEST FIXTURE assertion after113
+fault cases. The fixture is corrected; all9 terminal cases pass separately.
+The complete repeat is still LIVE (PID29666), NOT yet a full117-fault PASS.
+Do NOT label this hardware-qualified, installed, full-model or faster.
+
+Actual implemented pipeline
+---------------------------
+The new distinct OFFLINE PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE=1 variant
+retains ROOT0's six convolution groups plus all119 persistent peer groups,
+then ALL96 cooperative GDN halves, then ALL24 returning QOL1 quantizers,
+then a fresh scale-line gather and the COMPLETE K6144->N5120/Q8_0 output
+matrix on the SAME119 peer instances. No host numeric products or results
+are injected between stages. All640 Conv groups, 786432 GDN NEXT values,
+6144 gated outputs and ALL5120 matrix outputs have independent observers.
+Peer cfg/thread/LRegs/physicalDst/integerDst are not reset between stages;
+their bytes are also observed unchanged across the scalar QOL1 operation.
+
+Unlike the preceding component-only QOL1 test, there are NO synthetic
+remaining activation chunks: every one of the 6144 matrix input values
+comes through actual Conv/GDN/QOL1 instructions. Learned weight byte
+endpoints and initial operand/state data remain SYNTHETIC, not original
+GGUF/native execution or physical timing. This is one recurrent-layer
+pipeline, not all64 layers, residual/RMS/FFN, attention or a token loop.
+
+The ROOT checks ALL24 QOL1 receipts against the actual per-peer counter
+snapshot, private sequence, source seal and same layer/position/producer
+phase/token identity. All24 128-byte ancestry lines must pass before any
+compact-scale publication, native operand fetch or matrix launch. Native
+operands are fetched only ONCE by the matrix core, avoiding a redundant
+12288-byte gather/readback. Scale publication is 768 bytes (192 scales).
+Matrix jobs use canonical private geometry covering ALL5120 rows exactly;
+the shape itself is DATA, NOT authenticated weights/initialization/owner.
+
+Private sequences are derived from actual preceding receipts, not reset:
+workers1..24 finish sequence4, workers25..96 sequence3, workers97..119
+sequence2. Source0 and all15 additional source words differ between peer
+fixtures, so the coordinator cannot assume any peer shares ROOT's seal.
+
+The matrix core's exact QOL1 five executable PC extents are bound to all
+six complete companion section pins, not a shared boot marker. It retains
+each actual64-word matrix receipt. The wrapper independently compares its
+before counters with the actual preceding phase snapshot and compares
+after counters to CURRENT physical samples before final success. This
+prevents a plausible same-delta receipt from inventing a fresh baseline.
+No original native/kernel owner or snapshot grant was broadened.
+
+Code and fixed memory
+---------------------
+New immutable post-manifest: 1152 words at14b600..14c800, private immutable
+shadow14c800..14da00, disjoint from prior coordinator statistics. A future
+genuine joint native owner must save/own/restore the complete NEW extent.
+Matrix ROM68000..6e000 and existing8KiB stack6e000..70000 do not overlap.
+The complete emitted root exports boot/text/conv/matrix/cohort; every
+allocated ELF section must be exported, no writable globals or undefined
+symbols are accepted. Maximum new frame1072B, unchanged inherited matrix
+frame4976B; positive tests observe whole-call stack6408B within8192B.
+Three read-only mcycle/h CSR instructions are bit-audited, no CSR writes.
+
+NEW separate snapshot geometry (not an expansion of the old owner):
+ ALL120 boot, full40KiB code/gaps, complete8KiB stacks, old prefix/operand
+ view, runtime74000..ac000, new64KiB ROM/gaps, and completion trailer.
+ ROOT additionally captures ALL c8000..14da00 manifests/shadows/counters/
+ sequences/statistics/post context. Total10951352 arbitrary-original words
+ (43805408 bytes), HEAP ONLY, not reconstructed zero padding. ALL2259571
+ installed code words lie inside the new non-overlapping L1 spans. MMIO,
+ GDDR and out-of-range worker/word ordinals are rejected by the data map.
+ This is NO IO, restore-after-compute or execution authority; the genuine
+ native owner is still required for mappings, locks, all hosts, source,
+ model, initialized pages, clock, physical STOP/unheld terminal/hold/END.
+
+Footprint tests30380 and independent89715: exit0. Every snapshot word and
+code blob length checked. Actual combined-program ROOT writes and119 peer
+final L1 maps (1977225 observed runtime words) fit the NEW geometry without
+immutable program writes. Both logs SHA256:
+ 93776e248124e9fdc439530c3eb48f9bb91fef332d714b4339716442f8dfbdd7
+Code-DATA generator also passes47 tests: ALL11 exact binary roundtrips,
+BOTH boots/ALL sections authenticate BEFORE ANY patch output, every
+corruption/short/long blob and bad arity refused without partial output.
+ALL11 exact code-DATA leaf headers and a separate catalog are now generated
+in the source tree, NOT included or selected by any existing driver/owner.
+Catalog99204: exit0, ALL2259571 actual code words byte-exact to emitted
+images, ALL120 mappings and every aligned L1 word checked. No fabricated
+zero padding: gaps/stacks/manifests/runtime/trailers/MMIO/bad workers and
+unaligned addresses refuse without changing the output argument. Log:
+ /private/tmp/pioneer-q38-output-images-20261025-a.log
+ SHA256 6b3de29b451f292fd3922c9dcdeba30f9c5d50c893e2b32b0700081f5cf3f72c
+
+The separate PioneerQ38ResidentOutputMemory journal now saves ALL10951352
+arbitrary-original words, repeats a complete original pass BEFORE the
+FIRST write, installs ONLY the2259571 exact emitted-code words, and does
+an independent complete image verification. Its never-launched close
+restores/readbacks ALL originals and verifies them in another full pass.
+All source/reset/command/counter/quiet-host checks stay in place. There
+are no resets, launches, NoC packets, host DMA or held program-counter
+reads in this component. Only a future genuine execution owner can access
+its private launched handoff; no public caller-supplied "clean" capability.
+UNKNOWN retains all snapshots, mappings, host and source owners; no later
+IO/read/reset/restore/retry is allowed. The old memory owner is unchanged.
+
+New memory positive57159: exit0. Saved10951352/installed2259571/restored
+10951352/verifiedOriginal21902704, arbitrary data including UINT32_MAX.
+Original30-fault/29-precondition suite46313 exited0; expanded42-fault suite
+77076 also exited0, adding NEW ROM+ROOT shadow tail failures in capture,
+second preimage proof, restore and final proof. Native endpoints/scopes
+remain simulated; the native cookie/global lock/clock/model/init/input/
+host mapping adapter and post-COMPUTE STOP/hold/restore/END are STILL OWED.
+Never load these images through the old owner or old memory footprint.
+
+Independent clean final evidence (all terminal exit0):
+ catalog94542, memory positive86459, memory42fault/29refusals68794,
+ corrected terminal9cases14501 and isolation420checks92407.
+Clean logs match the original logs byte-for-byte:
+ images.log          6b3de29b451f292fd3922c9dcdeba30f9c5d50c893e2b32b0700081f5cf3f72c
+ memory-positive.log 04132908bc8c8ffe69e9fe139aa56607ff1fb3c510a59a07c79d0f8414507a8f
+ memory-faults.log   3a21c505931847cb61790bd3251acd54bf5e5c04f8962c3ed667e0d1b6fb5399
+ terminal-faults.log a348765f9b8c3d14eb84f4cb23046b909d765058f5ba549179b8f60bfbc1f965
+ gates-final.log     4115140198699a6326e068165228c3c27039b1c047849ab4cea875d31f243f2a
+
+Final candidate C / repeat D / independent clean build pins:
+boot         4 e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+text        92 a5c7dc3a5349fddf0f27570c6a4ae1b22ad7b60ee418931235404eaf7a141aae
+conv      6472 6ed515323e4b3376f6e3f4bc8d78348643a6c758d822170fee799cec404a4694
+matrix   14136 e86c2813892c807d6fe51c5f65fe58199169ff189d4abea15e2c96b89f4d9f6a
+cohort   50692 76958ca27a42af608d44fc6d3e9f4561853a61057b4d1b9889dc1acd0198bc7d
+ALL6 companion sections remain the exact4414ac329b QOL1 image. The builder
+authenticates ALL prior default ROOT+QPM1+companion controls FIRST.
+
+Evidence already terminal PASS
+------------------------------
+Build C93929, repeat D20935, clean build93280: exit0, all pins identical.
+Clean directory /private/tmp/pioneer-q38-output-cohort-clean-20261025.rma2CdVD
+All60 current implementation/test/image/isolation source files exactly
+SHA-matched the independent clean tree after the fixture correction and
+the new code catalog/memory journal/profiler. The report is the61st owned file.
+Unrelated dirty llama.cpp and FlashNext files were NOT copied/read.
+The SDK /Volumes/HaikuBuildLocal/generated.riscv64 remains read-only.
+
+Clean positive-only8210: exit0, all3 complete pipeline variants:
+ layer0  bank0 position0    slot0: ROOT38933374 instructions /23515 packets
+ layer62 bank6 position8191 slot1: ROOT38938490 instructions /23515 packets
+ layer30 bank3 position5    slot0: ROOT38937558 instructions /23515 packets
+These are instruction-model counts, NOT measured silicon cycles/token/sec.
+Each checks actual ALL640 Conv/ALL96 GDN/ALL24 QOL1/ALL5120 matrix rows.
+
+Isolation420 checks46634 and clean48528: exit0. Two exact five-section ROOT
+and six-section peer images, exact PC bounds, no unexported allocation,
+read-only clock opcodes, every required role and forbidden alias, kernel,
+ten CPU references, validation session, original-model observer and ten
+legacy builders closed (including defined0 and late aliases).
+
+Old default ROOT positives81349: exit0, all3 original cases/observers and
+original48277500/48282131/48282011 instruction counts unchanged. The old
+full88-fault bodies are not changed by the new explicit fixture variant.
+
+Full117-fault qualification56062: TERMINAL EXIT1 (fixture only, below).
+All3 positives, ALL64 QOL1 receipt corruptions,13 matrix proof corruptions,
+all7 before/after paired counter baselines, ALL24 line ancestry corruptions,
+3 late mutation and2 lost-transfer cases reached/passed before that error.
+Separate corrected terminal-only rerun: TERMINAL EXIT0, all9 cases:
+ /private/tmp/pioneer-q38-output-cohort-terminal-20261025-a.log
+ SHA256 a348765f9b8c3d14eb84f4cb23046b909d765058f5ba549179b8f60bfbc1f965
+This PARTIAL9-case run is NOT the complete117-case suite.
+Complete unchanged-image repeat remains LIVE:
+ /private/tmp/pioneer-q38-output-cohort-full-20261025-b.log
+PID29666, original unified session ID lost from truncated observation.
+Do NOT launch a duplicate: observe the SAME process and retrieve its
+terminal command-execution exit status before claiming a full-suite PASS.
+Terminal PASS: independent physical probes80742 in clean physical-probes.log:
+ bad physical PC/reset/source/counter samples injected only AFTER all119
+ actual matrix launches; no fake receipts or numeric products supplied.
+All4 cases returned exit0. No pending native execution or power operation.
+
+Retained failure audit
+----------------------
+Build A32635: enum/non-enum conditional failed -Werror; unsigned cast fixed
+only after terminal exit1. Build B57625 then passed.
+Initial smoke failures found the test fixture poisoning the future output
+destination at workspace+100000, which STILL contains raw A during GDN.
+Diagnostic proved both addresses b0618000 and NaN payload BEFORE any card
+instruction. Premature poisoning was removed, not a production guard;
+ALL5120 exact fresh-write coverage remains required. A subsequent observer
+initially sampled GDN after mailboxes were already staged for QOL1. It now
+observes before the FIRST actual ROOT write reuses those mailboxes, without
+changing the executed program or feeding a result. First complete combined
+smoke68818 exited0. Final candidate adds previous-command continuity to the
+gather and exact role closure; all3 complete positives pass again.
+Full56062 reached the four pre-I/O malformed-manifest tests, then its
+fixture compared the captured ACTUAL supplied bytes to pristine post[].
+The test had intentionally corrupted those input bytes BEFORE execution;
+the program correctly copied them before its own shape rejection. The
+fixture now compares the snapshot to the ACTUAL original memory, allowing
+the emitted ROOT shape guard to reject malformed input before ANY packet.
+No production guard, program instruction, binary pin or fault expectation
+was weakened. All9 terminal cases pass on the same immutable images.
+Profiler first runs99692/48994: terminal exit1 ONLY on its expected count.
+The existing positive CLI prints38933374 AFTER128 test-only parked-loop
+inertness checks. The profiler now attributes38933246 instructions through
+the actual terminal park, then invokes the SAME128 inert checks and
+requires the original38933374 final total. No production program changed.
+
+Actual unchanged-program profile (NOT physical timing)
+----------------------------------------------------
+Original12361 and clean57099: terminal exit0, ALL numerical stage observers
+and exact packets unchanged. Byte-identical log SHA256:
+ 34cdb0669534f2e5fd5f073ae82684930f7810a868e9c4c1c54361181029647a
+ /private/tmp/pioneer-q38-output-profile-20261025-b.log
+ clean profile-final.log
+The complete emitted ROOT executes38933246 modeled instructions through
+park. Leading exclusive instruction-attribution counts:
+ Cohort::Packet             17734392
+ Cohort::Audit               5197504
+ ProjectionRootSealed        2760576
+ PeerPollBackoff             2624158
+ ConvBatchShape              1931448
+ StageGdn                    1799821
+ StageConv                   1588801
+These are actual instruction-model counts, NOT cycles or elapsed card
+time. In particular modeled peer scheduling/backoff is not silicon timing.
+
+All23515 actual ROOT packets by purpose:
+ GDDR read                 34 /16960 bytes
+ GDDR write               132 /22784 bytes
+ peer payload read       2417 /271552 bytes
+ peer payload write      1243 /293144 bytes
+ peer program counter    1670 /6680 bytes
+ peer reset               835 /3340 bytes
+ peer source            11456 /45824 bytes
+ peer counters           5728 /22912 bytes
+Thus19689/23515 (83.73%) are remote physical CSR verification reads. These
+are ROOT-to-peer ON-CARD NoC packets, NOT host PCIe/model weight copies.
+They identify a concrete control-traffic target, not a measured speedup.
+The genuine retained joint owner should permit peer-local private source/
+counter continuity and chained receipts between operations, while keeping
+real complete initial/final physical audits and uncertainty retention.
+No verification was removed from the current tested image on that basis.
+
+Working system / performance / next requirements
+------------------------------------------------
+No GPU FD/native launch, driver/Assistant installation, network change,
+power pulse, card/SD/disk/mains operation occurred during this work. Last
+verified board remains Haiku/64 CPUs/RAM137034936320B/baseline041 driver.
+The last actual whole-model rate0.207893161 tokens/sec is UNCHANGED;
+20 tokens/sec remains UNMET. These offline counts are not a speed claim.
+
+Complete remaining fault/probe qualification, independent source/pin
+audit, final record and tested GitHub checkpoint first. Then provide a
+genuine complete pinned joint native model/source/init/clock/ALL120 code,
+runtime snapshot, STOP+hold+restore+END owner; the known held-PC audit
+hazard must NOT be inherited. No loading through an old owner is allowed.
+Continue residual/RMS/FFN and attention/all-layer state/token integration.
+
+Performance work is also still required: the full-audit prototype uses
+about39M ROOT instructions per recurrent layer in the VM. Retained joint
+ownership should move expected-counter/source verification to the peers
+and remove redundant remote CSR/full-manifest round trips, preserving
+actual physical bootstrap/final audits. Do NOT simply drop those checks
+under the old owner or infer authority from metadata/status alone. Keep
+CPU validation/debug separate from Work, then measure genuine complete
+model inference and optimize actual bottlenecks toward20 tokens/sec.

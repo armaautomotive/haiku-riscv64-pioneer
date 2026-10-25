@@ -2,6 +2,9 @@
 // OFFLINE one complete resident Conv->GDN cohort. NO public/native selector.
 // ALL actual source/initialized state/clock/private producer ownership OWED.
 #include "PioneerQ38ResidentCohortImageRole.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
+#include "PioneerQ38ResidentOutputRootImageRole.h"
+#endif
 #if defined(PIONEER_Q38_COHORT_POLL_BACKOFF) && PIONEER_Q38_COHORT_POLL_BACKOFF != 1
 #error Exact separate bounded-poll coordinator image required
 #endif
@@ -193,12 +196,23 @@ static void StageGdn(){
  if(!Audit())cohort_fault_park();
 }
 }
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
+#include "blackhole_qwen38_resident_output_cohort.h"
+#endif
 extern "C" unsigned q38_resident_cohort_main(){
  using namespace Cohort;
  for(unsigned i=0;i<TT_Q38_COHORT_WORDS;i++)Words(TT_Q38_COHORT_SHADOW)[i]=Words(TT_Q38_COHORT_MANIFEST)[i];
  if(!PioneerQ38ResidentCohortShape(Manifest()) || !Audit() || !Quiet())cohort_fault_park();
  for(unsigned i=0;i<64;i++)Words(TT_Q38_COHORT_STATS)[i]=0;
  for(unsigned w=1;w<120;w++)Words(TT_Q38_COHORT_SEQUENCE)[w-1]=Manifest()[64+w-1];
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
+ OutputCapture();
+#endif
  StageConv();StageGdn();
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
+ StageOutput();GatherOutput();StageOutputMatrix();
+ return 5120;
+#else
  return 6144; // private NEXT/output ONLY;NO state-slot or model-token commit
+#endif
 }

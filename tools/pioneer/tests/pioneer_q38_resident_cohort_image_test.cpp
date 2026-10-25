@@ -1,17 +1,28 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL ROOT+119 ACTUAL persistent peers. ONLY byte endpoints/time simulated.
 // No synthetic success receipts or numeric products are fed to the program.
+#ifndef PIONEER_Q38_COHORT_GDN_PEER_ALREADY_INCLUDED
 #define PIONEER_Q38_RESIDENT_GDN_OPERATOR_SERVICE_MACHINE_ONLY
 #include "pioneer_q38_resident_gdn_operator_service_image_test.cpp"
+#endif
+#ifndef PIONEER_Q38_COHORT_PEER_BASE
+#define PIONEER_Q38_COHORT_PEER_BASE ResidentGdnOperatorPeer
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentCohortShape.h"
 struct CohortFabric;
-struct CohortPeer:ResidentGdnOperatorPeer {
+struct CohortPeer:PIONEER_Q38_COHORT_PEER_BASE {
  CohortFabric* fabric=nullptr;bool active=false;unsigned launched=0;
- using ResidentGdnOperatorPeer::ResidentGdnOperatorPeer;
+ using PIONEER_Q38_COHORT_PEER_BASE::PIONEER_Q38_COHORT_PEER_BASE;
  void SubmitConvBytes();void SubmitGdnBytes();void Launch(unsigned sequence);
+#ifdef PIONEER_Q38_COHORT_OUTPUT_PEER
+ void SubmitActivation()override;
+#endif
  void Store(uint32_t at,uint32_t value)override{
+#ifdef PIONEER_Q38_COHORT_OUTPUT_PEER
+  if(!gdnActive && !convActive){PIONEER_Q38_COHORT_PEER_BASE::Store(at,value);return;}
+#endif
   if(at==0xffb20040){assert(value==1 && !pending);if(gdnActive)SubmitGdnBytes();else {assert(convActive);SubmitConvBytes();}return;}
-  ResidentGdnOperatorPeer::Store(at,value);
+  PIONEER_Q38_COHORT_PEER_BASE::Store(at,value);
  }
  uint32_t ReadCycleCsr(unsigned csr)override;
 };
@@ -39,7 +50,10 @@ struct CohortFabric:Machine {
  static unsigned SrcOffset(unsigned i){return BlackholeDramSourceOffset(i);}
  unsigned Symbol(const char* path,const char* name){std::ifstream in(std::string(path)+"/program.symbols");std::string line;
   while(std::getline(in,line)){unsigned at=0;char type=0,text[256]={};if(sscanf(line.c_str(),"%x %c %255s",&at,&type,text)==3 && !strcmp(text,name))return at;}assert(false);return 0;}
- CohortFabric(const char* root,const char* worker,unsigned layer=0,unsigned bank=0,unsigned position=0,unsigned slot=0){
+ CohortFabric(const char* root,const char* worker,unsigned layer=0,unsigned bank=0,unsigned position=0,unsigned slot=0,const unsigned* panels=nullptr){
+#ifndef PIONEER_Q38_COHORT_OUTPUT_PEER
+  assert(!panels);
+#endif
   assert(canonical->Build());const char* names[]={"boot","text","conv","cohort"};
   for(unsigned i=0;i<4;i++)sections[i]=Read((std::string(root)+"/"+names[i]+".bin").c_str());
   donePc=Symbol(root,"cohort_done");parkPc=Symbol(root,"cohort_park");faultPc=Symbol(root,"cohort_fault_park");
@@ -52,7 +66,13 @@ struct CohortFabric:Machine {
   PioneerQ38GdnIdentity identity={1,2,3,4};
   for(unsigned w=0;w<120;w++){
    if(w){
+#ifdef PIONEER_Q38_COHORT_OUTPUT_PEER
+    auto p=std::make_unique<CohortPeer>(worker,w,panels?panels[w-1]:1);p->fabric=this;
+    for(unsigned i=0;i<16;i++)p->source[i]+=w*0x100;
+    p->memory[0x7404c]=p->source[0];assert(p->BootNew());
+#else
     auto p=std::make_unique<CohortPeer>(worker,w);p->fabric=this;assert(p->BootNew());
+#endif
     for(unsigned i=0;i<16;i++)m[TT_Q38_COHORT_SOURCE_WORD+w*16+i]=p->source[i];
     if(w<=96){
      p->StageGdn(2,18,layer,bank,position,slot,1);
@@ -97,7 +117,7 @@ struct CohortFabric:Machine {
   for(unsigned i=0;i<TT_Q38_COHORT_WORDS;i++)Mem(TT_Q38_COHORT_MANIFEST+i*4)=m[i];
   Mem(0x17ffc0)=Mem(0x17ffc4)=Mem(0x17ffc8)=0;
  }
- bool RangeData(unsigned at)const{return Range(at,0x74000,0x1800) || Range(at,0x80000,0x1100)
+ virtual bool RangeData(unsigned at)const{return Range(at,0x74000,0x1800) || Range(at,0x80000,0x1100)
   || Range(at,TT_Q38_COHORT_MANIFEST,TT_Q38_COHORT_WORDS*8) || Range(at,TT_Q38_COHORT_COUNTERS,0x1200)
   || Range(at,0x6e000,8192) || Range(at,0x17ffc0,12);}
  unsigned CodeSection(unsigned at)const{return Range(at,0x72000,unsigned(sections[1].size()))?1:Range(at,0x64000,unsigned(sections[2].size()))?2:3;}
@@ -132,7 +152,7 @@ struct CohortFabric:Machine {
   if(Range(at,0x6e000,8192))minStack=std::min(minStack,at);
   Mem(at)=value;
  }
- void Submit(){
+ virtual void Submit(){
   packets++;if(packets==failPacket){pending=true;return;}
   bool write=command[7]==0x212;unsigned route=write?command[5]:command[2],local=write?command[0]:command[3],remote=write?command[3]:command[0],bytes=command[8];
   assert(!command[1] && !command[4] && !command[6] && !command[9] && (write?command[2]:command[5])==129 && (write || !command[7]));
@@ -198,6 +218,9 @@ struct CohortFabric:Machine {
  void Verify(){
   assert(!pending && !unknown && Mem(0x17ffc4)==6144 && Mem(0x17ffc8)==TT_Q38_RESIDENT_COHORT_MARKER && Mem(0x17ffc0)==donePc);
   assert(convLaunches==119 && gdnLaunches==96 && rootGroups==6 && rootConvPackets==30 && Mem(TT_Q38_COHORT_STATS+20)==120 && Mem(TT_Q38_COHORT_STATS+24)==96);
+  VerifyHistoryAndGdn();
+ }
+ void VerifyHistoryAndGdn(){
   for(unsigned w=0;w<120;w++){
    const auto* table=PioneerQ38CohortConv(manifest.data(),w);
    for(unsigned j=0;j<PioneerQ38ConvBatchCount(w);j++)for(unsigned c=0;c<16;c++){
@@ -247,6 +270,7 @@ void CohortPeer::Launch(unsigned sequence){
  }active=true;
 }
 uint32_t CohortPeer::ReadCycleCsr(unsigned csr){assert(gdnActive && (csr==0xb00 || csr==0xb80));clockReads++;return csr==0xb00?uint32_t(fabric->clock):uint32_t(fabric->clock>>32);}
+#ifndef PIONEER_Q38_RESIDENT_COHORT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--smoke") || !strcmp(argv[3],"--positives") || !strcmp(argv[3],"--stalled"))));
  bool smoke=argc==4 && !strcmp(argv[3],"--smoke"),positivesOnly=argc==4;
@@ -282,3 +306,4 @@ int main(int argc,char** argv){
  }
  printf("PASS complete actual ROOT/actual119peer cohort positive%u/fault%u;SYNTHETIC endpoints+clock,NO native/initialized owner/current-slot/fullmodel or physical throughput grant\n",positive,faults);
 }
+#endif

@@ -1,0 +1,101 @@
+Canonical complete resident-output schedule factory, 2026-10-25 UTC
+STATUS: immutable DATA factory + independent clean tests PASS.
+NOT a native factory/driver installation, authenticated model execution,
+current state-slot/token commit, full-model offload or measured speedup.
+
+Implementation
+--------------
+PioneerQ38ResidentOutputPlan derives the complete66624-word Conv/GDN
+schedule and1152-word QOL1/output-matrix post schedule from the SAME fixed
+canonical27B model layout. No caller weight addresses, bank routes, job
+geometry or descriptors are accepted. The object retains its canonical
+recipes on the HEAP and binds exact plan/layer/position/bank/slot/token/
+phase/identity/all120source seals/all119private sequences as DATA.
+
+ALL120 Conv batches cover640 groups/10240 channels. ALL96 GDN descriptors
+derive current/next32768-byte half-head locations from canonical recurrent
+regions for ALL48 layers and BOTH slots, with exact learned A/dt/norm and
+workspace offsets. ALL119 Q8_0 output jobs cover5120 rows, completeK6144,
+with bounded nonoverlapping canonical weights. Private stages use Conv,
+GDN, QOL1, gather and matrix phases without sequence reset or wraparound.
+
+LearnedPagesPresent checks the SAME private recipes and all required
+Conv/A/dt/norm/output-matrix upload-ledger pages. It does NOT authenticate
+the source, prove completed input producers, initialized/current history
+or recurrent state, or authorize execution. Native owners MUST separately
+supply their private actual source/sequence/slot/token values, compare via
+Matches, and retain genuine model/init/input/code/clock/hosts/ALL120 state.
+No existing native/kernel driver, public opcode, Work or Assistant selects
+this factory. No physical mapping/IO/reset/boot/STOP/restore/END occurs.
+
+Final qualification
+-------------------
+Original63843 tested the initial factory. After strengthening the ledger
+predicate's private-recipe continuity, final55545 and independent5458 both
+exited0. Every one of five current code/test files exactly matches the
+independent clean tree:
+ /private/tmp/pioneer-q38-output-cohort-clean-20261025.rma2CdVD
+
+55 cases: ALL48 recurrent layers + ALL7 work banks, BOTH current slots,
+positions0/8191 and vocabulary token endpoints. One additional maximum
+phase/sequence boundary case proves final phases remain nonwrapping.
+Independent canonical PART lookup (not the builder's recurrent-region
+lookup) verifies all current/next state addresses and learned Conv/history/
+A/dt/norm/output-matrix addresses. Complete nonoverlapping coverage:
+ 35200 Conv groups,5280 GDN halves,281600 matrix rows.
+285 metadata/refusal checks include exact source/sequence/64-bit identity,
+foreign canonical instance, changed schedule/post words and invalid input;
+102 missing/malformed learned-page checks preserve the original ledger.
+All of these endpoint/ledger tests are simulated, not source authentication.
+
+The actual read-only Haiku RV64 SDK compiler also exits0 with -Werror,
+freestanding/no-exceptions/no-rtti, kernel includes and stack-usage proof.
+Maximum kernel function frame576 bytes; the large schedule stays on HEAP.
+The SDK /Volumes/HaikuBuildLocal/generated.riscv64 was NOT edited.
+Original and clean plan-final.log SHA256:
+ 600411e922cba5d21616faeb164b13866c7c986a522479e01938d00543d3b63b
+
+Final emitted-program tests33605 and independent62074 both exited0.
+The factory's schedules first match the independently constructed existing
+fixture schedules word-for-word. Its ACTUAL bytes are then supplied to the
+unchanged pinned ROOT and ALL119 persistent peer instruction machines.
+No numeric products, success receipts or completion flags are injected.
+All640 Conv/96 GDN/24 QOL1/ALL5120 matrix outputs and same physical tensor
+state pass independent observers in ALL3 variants:
+ layer0,bank0,position0,slot0:      ROOT38933374 steps/23515 packets
+ layer62,bank6,position8191,slot1:  ROOT38938490 steps/23515 packets
+ layer30,bank3,position5,slot0:     ROOT38937558 steps/23515 packets
+Each whole-call stack is6408 bytes. These CLI counts include128 intentional
+parked inertness checks, not extra model arithmetic. Synthetic learned
+byte endpoints/clock remain; these are NOT original GGUF/native/silicon
+throughput results. Original and clean plan-image-final.log SHA256:
+ 29a657d9936bb77a8e57b8f83ee4c0716da369ae07b2502c584993cb314c3a72
+
+Retained failure audit
+----------------------
+Initial88089 exited1 because the test checked the 64-bit sequence high
+word at manifest33 instead of35 (33 is the session high word). The test
+index was corrected after terminal exit; no production guard changed.
+Repeated63843 then passed. Initial emitted-factory test6844 also exited0
+for all3 cases. After the private-recipe ledger strengthening, BOTH full
+data/kernel tests and BOTH emitted-program tests passed again as above.
+
+Working system and remaining integration
+----------------------------------------
+No GPU descriptor/native launch, driver/Assistant install, power pulse,
+network, card/SD/disk/mains operation occurred in this work. Haiku baseline
+041/64CPUs/RAM137034936320B was left in place. Previous actual whole-model
+rate0.207893161 tokens/sec is UNCHANGED;20 tokens/sec remains UNMET.
+
+The coordinator checkpoint's original complete117-fault repeat remains
+separately observed in qwen38-resident-output-cohort-20261025.txt; do not
+mistake these factory positives for its full fault-suite terminal result.
+
+The next execution step needs a GENUINE retained native joint owner,
+actual complete mappings/journals/clock/model/source/upload/init/input,
+private unheld terminal receipts BEFORE holds, ALL120 quiescence and
+STOP+restore+END. Do not load via an old smaller footprint or inherit the
+known next-RMS held-program-counter hazard. Initial raw/Z/A/B projections
+must come from real retained GPU producers, not CPU products or an init
+flag. Remaining residual/RMS/FFN, attention, all-layer state/token-loop
+integration and real full-model benchmarking are still required.

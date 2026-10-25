@@ -3,6 +3,9 @@
 // The kernel MUST authenticate/own ALL initialized bank extents,private
 // tasks/bank routes/source seals and all119 peer images/sequence histories.
 // No physical route,address or sequence here is a new userspace capability.
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
+#include "PioneerQ38ResidentOutputRootImageRole.h"
+#endif
 typedef __UINT32_TYPE__ uint32_t;
 #define PIONEER_ATTENTION_FREESTANDING
 #ifdef PIONEER_Q38_FFN_GRAPH_ROOT
@@ -377,7 +380,15 @@ static bool Peer(unsigned worker,unsigned sequence,bool stopped,bool previous Q3
  const unsigned pc[]={first,second};
  for(unsigned value:pc)if(reset!=0x46800 || (value&3) || value==TT_Q38_PEER_FAULT_ENTRY || value==TT_Q38_PEER_FAULT_PARK
   || (!stopped && PioneerQ38PeerTerminalPc(value))
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
+  // ALL SIX exact returning-QOL1 peer sections authenticated by the new
+  // builder. These ranges are not compatibility with the older owner.
+  || (!((value>=0x64000 && value<0x67fe0) || (value>=0x68000 && value<0x6a83c)
+   || (value>=0x70b00 && value<0x71ff0) || (value>=0x72000 && value<0x73f04)
+   || (value>=0xb8000 && value<0xc0a44))))block_fault_park();
+#else
   || (!((value>=0x64000 && value<0x67fe0) || (value>=0x70b00 && value<0x71f80) || (value>=0x72000 && value<0x73fe4))))block_fault_park();
+#endif
 #else
 	if (reset!=0x46800 || first<0x72000 || first>=0x74000 || second<0x72000 || second>=0x74000 || ((first|second)&3)) block_fault_park();
 #endif
@@ -711,7 +722,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(Q38DispatchSourceCache)[w*16+i]) block_fault_park();
 		for (unsigned i=48;i<64;i++) if (proof[i]) block_fault_park();
 		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
-#ifdef PIONEER_Q38_WORK_SPARSE_EXPORT
+#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE)
 		if (!work)
 #endif
 		for (unsigned i=0;i<64;i++) Words(0x76000)[w*64+i]=proof[i];
