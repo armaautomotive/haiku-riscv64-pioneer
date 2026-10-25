@@ -89,3 +89,7 @@ absent staging paths. No installation,compute,power/SD/mains,Assistant or
 network-setting change has occurred at this checkpoint's preparation.
 All3remote staging hashes also match exactly. Physical qualification is
 the next step;this checkpoint does NOT claim card execution or a speedup.
+
+Subsequent physical result:ONE actual DEBUG68 run PASSED,clean END and
+guarded041restore PASSED. See qwen38-resident-output-native-card-20261025.txt
+and its byte-exact native log. Full-model/Work/token-rate goal stays UNMET.

@@ -1,5 +1,22 @@
 # Native build status
 
+October25UTC2026:ACTUAL combined-output DEBUG68 P100A PASS. Both original
+instruction-machine regressions agree BYTE-EXACT;separate native client,
+402failure cases,110client+58source gates and guarded update qualified.
+ONE physical run46031 TERMINAL0:full same-file c600 SHA/references BEFORE
+FD,68603originalpages/300spans,complete first-layer Conv/GDN/output,
+ALL1629120returned words/strict unchanged original bounds and exact native
+operands/scales/output rows,clean explicit END. No CPU products uploaded.
+441994680us includes diagnostic initialization/prefix/readback/restoration,
+NOT token latency or a speedup. Full64-layer/residual/FFN/attention/token
+integration and20tok/s remain UNMET;last whole27B0.207893161tok/s unchanged.
+Guarded041->68->041 completed WITHOUT reboot. Fresh19:37UTC SSH confirms
+Haiku64CPU/137034936320RAM bytes,working041/tag12 generation3,cold0/owner0.
+No power/SD/mains/Assistant/network action or human recovery is pending;
+older historical power/network questions below have been superseded.
+Evidence:benchmarks/qwen38-resident-output-native-card-20261025.txt and
+its byte-exact619-line native log. Client/code checkpoint dc1f6fd75a pushed.
+
 October24Pacific/25UTC2026:separate precise-SiLU QCB1 convolution worker
 OFFLINE actual-instruction qualified,NOT native/Work selected or physical.
 Original c600 source ->actualNoC/Conv4/SiLU/output ALL120workers/640groups:

@@ -1,0 +1,79 @@
+ACTUAL P100A combined-output DEBUG68 physical PASS,2026-10-25UTC.
+This is token0/position0/layer0 Conv/GDN/output qualification,NOT full
+64-layer inference,Work promotion,token-loop support or a token-rate claim.
+The20tok/s goal remains UNMET;last whole-model rate0.207893161tok/s.
+
+Qualified code checkpoint dc1f6fd75afbdefc31071604d81d8f8f5f657492.
+Driver58064edee490bb5335fa135122a8d89588987a56c0451d751bccf9ebbe84ff3d
+Client0e38765f2004b1c7469f60642009bd3f3cbdda2c4f5e39f2d15a88ad55f32de4
+Updater5f5cbdf591a7595e6fe9e6e26d07a33ee8702b1eac83f487e834b4ab1e070e79
+CPU observer is the SAME independently tested shared source,compiled as a
+SEPARATE translation unit with no native,image,Work or client flags.
+Native Haiku uses the fixed PUBLIC c600 GGUF and native /bin/sha256sum.
+
+ONE guarded apply70030 TERMINAL0,exact old041/tag12 generation1 ->
+DEBUG68/tag2026102500010068 generation2. Exact guardd1ce2a and admin
+helperb0c851,complete parent inventory,cold0/owner0/open1,exclusive
+quiesce+close,hash-qualified backup,single watched rename and generation
+proof all passed. NO reset,reboot,power,SD,mains or hardware change.
+
+ONE native client46031 TERMINAL0. FULL same-file model SHA and all
+independent reference preparation/seal completed BEFORE accelerator FD.
+The running SHA child was independently observed accruing CPU time;no
+GPU open/query/retry occurred during that preparation. Then all56first-
+layer original weight parts+12embedding pages uploaded:68603pages in
+300spans,EVERY span returned status0 with exact metadata/nonces/holds.
+SPAN_END returned status0. NO CPU numeric products were uploaded.
+
+The ACTUAL fixed6516736-byte DEBUG68 call returned status0. The real
+driver performed BOTH-slot recurrent initialization672runs/73728pages,
+history336runs/1680pages,QPE1/QRN1,ALL4QPS1projections plus ROOT STOP,
+new complete combined ROOT+ALL119peer programs,640Conv jobs,96GDN
+halves,24output quantizers and119matrix jobs/5120output rows. All119
+STOP/ALL120holds,1592fixed readback transfers/1629120words,full10951352-
+word L1 restore+second proof and exact64-word metadata passed.
+
+Only AFTER that complete call returned,the independent CPU observer
+accepted ALL10240Conv words at unchanged3ppm absolute bounds,ALL30720
+history words BIT-EXACT,ALL786432CURRENT words zero,ALL786432NEXT values
+at3ppm,andALL6144gated values at unchanged absolute AND relative3ppm
+with explicitFTZ. Only then it independently quantized VALIDATED ACTUAL
+gated values and checked ALL3072native operand words,192scales and5120
+output rows BIT-EXACT against ORIGINAL raw GGUF rows. Every scale in the
+24returned QOL1lines also agreed. No tolerance relaxation or CPU fallback.
+
+Explicit BANK_END returned status0 with CLOSED/pciRestored/hostReleased;
+close succeeded. Final native line:
+ PASS_DEBUG68 token0 layer0 original_upload_pages68603 spans300
+ fixed_readback_words1629120 clean_end1
+ execution_readback_restore_us441994680;NOT_FULL_MODEL_OR_TOKEN_RATE
+441.994680seconds is diagnostic initialization+prefix+combined execution+
+readback+restoration time. It EXCLUDES full-SHA/reference preparation,
+weight upload,post-return CPU checks and final END. It is NOT steady-state
+inference,per-token latency or evidence of a speedup/regression. No
+unobserved internal stage timing or theoretical token rate is inferred.
+
+Complete619-line native log is archived BYTE-EXACT in this repository:
+ qwen38-resident-output-native-card-20261025.log
+ SHA88aaf83e5e3bd32cfe180221d68b35d68f85b1d9a6f5a9b143268ddacfb4ce67
+It contains308BEGIN+ENDpairs:5setup+300upload+SPAN_END+combined+END.
+The original local capture remains:
+ /private/tmp/pioneer-q38-output-debug68-physical-20261025-a.log
+
+After successful original checks and clean END,ONE guarded restore33451
+TERMINAL0 returned exact041/tag12 generation3,cold0/owner0/open1. Full
+apply/restore logs remain at:
+ /private/tmp/pioneer-q38-output-debug68-hot-apply-20261025-a.log
+ /private/tmp/pioneer-q38-output-debug68-hot-restore-20261025-a.log
+Fresh SSH19:37:27UTC confirms working driver SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+64CPUs,137034936320maximumRAM bytes,and no cold latch/active owner.
+No accelerator action,parent,relay pulse,reboot,SD/mains,Assistant or
+network-setting action is pending. The Pioneer remains responsive.
+
+Next:extend the genuine resident joint owner/coordinator through residual
+and post-attention RMS,gate/up/activation/down FFN and residual,then all
+recurrent/dense-attention layers,KV/state commits and persistent token
+schedule. Preserve source/clock/host/ALL120ownership and failure retention;
+do NOT promote an old closed-owner receipt or CPU products into that new
+scope. Qualified Work must remain distinct from DEBUG CPU validation.
+Only full-model steady-state measurement can establish an inference gain.
