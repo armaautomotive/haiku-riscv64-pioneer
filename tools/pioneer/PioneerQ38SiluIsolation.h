@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+#error Native65 never compiles LOCAL arithmetic diagnostics
+#endif
 #if defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE) || defined(PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT)
 #error Separate native/CPU precision roles never compile LOCAL arithmetic helpers
 #endif

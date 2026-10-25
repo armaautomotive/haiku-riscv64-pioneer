@@ -1,0 +1,120 @@
+Qwen3.8-27B layer1 FFN+residual resident continuation -- OFFLINE qualified
+2026-10-25 UTC,base85e56bf2e6eced8d9a1f986d67b6ca33ebfa31bb.
+NOT full-model inference,physical qualification,linked/installed driver or
+Assistant/Work selection. Whole-model last physical0.207893161tok/s remains
+unchanged;20tok/s/full resident execution UNMET;goal ACTIVE.
+
+New exact role PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE=1/tag2026102500010065
+requires exact native63 and every inherited genuine owner. Separate from
+native64 precise-convolution DEBUG;mixing those roles is refused. No new
+public compute route. SAME actual decoder consumes private layer1 normalized
+and raw residual lineages BEFORE first IO,uses canonical layer1 gate/up/down
+jobs and unchanged frozen QFG3/119QFP2 code. Candidate private layer2 hidden
+producer requires357matrices,88producers,119STOPs,ALL120physical holds,one
+sticky whole-stage deadline and full original snapshot/END on normal Close.
+The actual native-controller/emitted-instruction execution and restoration
+claims below use simulated PCIe/GDDR endpoints,NOT physical card timing.
+
+Original-source CPU observer remains a SEPARATE translation unit;only
+original learned bytes,never CPU numeric products,reach the controllers.
+Source-unit76356 TERMINAL0:
+ /private/tmp/pioneer-q38-native65-original-source-20261025-a.log
+ SHA6d7debf1ce84d8c9b7a2eb5d4152ab530f0f19dc7c9e8aa307507c26e3fbb5bf
+ Full original c600 authentication/all851schema,ALL21layer1FFNstripes and
+36720pages cached BEFORE context;42first/last2304B tile reads and462atomic
+invalid-read refusals. This is a byte-endpoint component,NOT native execution.
+Source-role65765 TERMINAL0:20defined-even-zero/mixed-role exclusions.
+ /private/tmp/pioneer-q38-native65-original-source-gates-20261025-a.log
+ SHAca19da79461d4c1805d781124f8992eeea7f77f68784d27517f64dfec1327127
+
+Initial full positive test14471 was INTENTIONALLY TERMINATED(SIGTERM child
+90344,parent terminal1) after static review confirmed new held-PC sampling.
+It reached genuine prior FFN execution but is NOT a positive/native65 pass.
+ /private/tmp/pioneer-q38-native65-original-positive-20261025-b.log
+ No source dependencies were changed while that test parent was live.
+Repair preserves independent real terminal/STOP receipts and physical hold
+proofs. Held cores NEVER use live PC samples;running cores still require
+their original two terminal samples. Strict transport refusal stays enabled.
+Component regression TERMINAL0(actual two methods extracted UNMODIFIED;
+TEST DATA ONLY,not a native owner/ready grant):27checks/ASan+UBSan.
+ /private/tmp/pioneer-q38-native65-held-component-20261025-b.log
+ SHAf4608480b0cc5cf4743b7e274290c10344aa1c7f1c7e52a186f6d4b4862de3f1
+Additional actual IO-wrapper/clock component TERMINAL0:872checks across
+13operations and52observed expiry/rollback cases. ZERO following IO after
+observation,sticky uncertainty/no renewal,actual36-read CSR-idle group.
+This does NOT claim clock checks between every read inside that bounded
+group,or supply native Scope/initialization/producer authority.
+ /private/tmp/pioneer-q38-native65-deadline-component-20261025-b.log
+ SHA3cc485f2635354b79f4f182fccedb66c7ea3d1ecd3d7cfd1d718269bcbf41d2c
+
+Fixed full actual kernel SDK F34611/G34876 both TERMINAL0:
+ /private/tmp/pioneer-q38-native65-sdk-20261025-{f,g}/next-ffn-residual-NATIVE65-COMPILE-ONLY.o
+ SHA61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+ maxNewFrame496B;unchanged2048B gate;oversized inherited frames nongrowing.
+ Both independently recompiled old63 control EXACT47c11c7f4ff8f3518ea9baaa81266ff7dbf880887ef44d25221d71f04a8e36c3.
+ Earlier879e9709objects predate hold-proof repair;DO NOT install/use them.
+Gates3502 TERMINAL0:583exact parent/tag/private/reference/builder checks plus
+131072ACTUAL inert compute routes.
+ /private/tmp/pioneer-q38-native65-gates-20261025-c.log
+ SHAb8b1a379eeab2e39dffb1d300c04941d1ef22368b3ce9710d197d95e2b8dbb00
+Prior-role regression gates after the native65 repair:
+ old63 session21464 TERMINAL0:553checks+131072actual inert routes.
+ /private/tmp/pioneer-q38-native65-old63-gates-20261025-a.log
+ SHA28375e92b6dc2c123d8febf7f524737f392beb1d2da88e76e31c6db22cd872dd
+ old64 session65678 TERMINAL0:350checks+131072closed route probes;
+ only2DEBUG+6storage,unchanged exact legacy/precise emitted-image selectors.
+ /private/tmp/pioneer-q38-native65-old64-gates-20261025-a.log
+ SHA3d88090a1a0c3a11e689b4ff938407b5227df31bc4eb58272d380929c5790beb
+ Both logs byte-identical to their prior qualified controls. These are
+ isolation/compatibility checks,not a native65 execution or speed pass.
+
+Full original genuine-prefix+16actual endpoint-fault+positive suite
+47800 TERMINAL0:
+ /private/tmp/pioneer-q38-native65-original-faults-20261025-c.log
+ SHAa9587d496c3ed89e4a983b433aa9e005e40706c986a51227afb132d23a54c780
+Genuine complete init73728/history1680/embedding/RMS/projection/Conv/GDN/
+output/residual/FFN0/next-RMS/QPS2/Conv/GDN/output/residual prefix,NOT an
+abbreviated metadata-ready facade. All21original FFN1 stripes/36720pages
+required before Bind/claim;foreign team and forged result counters refuse
+without IO. Actual QFG3/119QFP2:120installed,119booted,2ROOT runs,357matrices,
+88producers,65280ORIGINAL learned tiles,ALL5120rows+residual checked,119STOPs,
+ALL120holds,private layer2 hidden and old input expiry. Unrelated recurrent
+state/history retained. Full8330680word restore+verification and actual END
+PASS. Faults cover code/frame/source/receipt/PC/restore/NaN,one-shot release/
+boot/RUN/STOP/HOLD/publication deadlines and rollback;ALL16injected cases
+retain owners and permit ZERO following IO/reset/restore/retry/END.
+Late cases fork the SAME actual in-flight ROOT terminal stack,not a ready
+facade or shortened initial prefix. This is not full64-layer/token-loop
+inference or physical arithmetic/throughput qualification.
+Prior-source regressions after the shared observer extension:
+ old63 source/image8214 TERMINAL0:original layer1 norm,55endpoint refusals,
+10bad pages,actual QRR2 ALL5120sum+norm BIT-EXACT/10240output mutations.
+ /private/tmp/pioneer-q38-native65-old63-source-20261025-a.log
+ SHA8771bed1b252d4cec25fe3c4bc6fee46477c0ad96a74a69c4cd1f6b3af505cc6
+ old57 source51617 TERMINAL0:original21FFN0stripes/36720pages/42first-last
+reads/126refusals;no new learned/read authority in old mode.
+ /private/tmp/pioneer-q38-native65-old57-source-20261025-a.log
+ SHA70c27840cd038bf894503d5e5058638d163282f1c1963a973d836738ecdf4c87
+
+Recovery update2026-10-25:OFF31420 sent ONCE/terminal0,then fresh human
+fans/LEDs-off confirmation consumed by ONE ON86413/terminal0. Fresh Linux
+bootdc30a726-7daf-4374-bba8-7ac024255474 had0-63CPUs and131976904kB RAM,
+strict pinned SSH as milkv at10.0.0.247. Samsung journal word434c454e CLEAN.
+Pinned helper9cfc6dc3 prepare61584/boot83997 both TERMINAL0,session
+q38-netrestart-20261025-a/64/memory128-spin-idle7-top-page-nosd-control.
+Haiku pinned SSH returned,with DHCP10.0.0.247/24 on1Gbit rtl8125/1;
+sysinfo64CPUs,max137034936320B RAM. The restart cleared the missing lease.
+Old52 installed/admin/guard/immutablea0d50797 updater hashes verified;
+fresh CPU-only status tag52/generation1/cold0/owner0/open1. Saved updater
+restore9869 TERMINAL0:quiesced old52,restored exact stable041fef18/tag12,
+generation2/cold0/owner0/open1. Independent installed hash and metadata agree.
+No SD/mains/cable or Assistant changes. Subsequent SEPARATE native64 trial:
+exact fb995b39 driver/495b9e18 client/23735daf updater staged/readback matched.
+Guarded apply67054 TERMINAL0,tag64/generation3/cold0/owner0/open1. ONE
+--validate-token0-precision attempt1892 is LIVE;no repeat/reload while its
+parent lives. At this checkpoint it has NOT reported GPU open:checksum team
+555 actively running,and client554waiting for original model verification.
+Its log is /private/tmp/pioneer-q38-native64-card-20261025-a.log.
+Native65 remains UNLINKED/UNINSTALLED/private,not an Assistant or Work mode.
+No performance result is inferred from recovery,administrative IO,component
+tests or the passing native65 simulation.

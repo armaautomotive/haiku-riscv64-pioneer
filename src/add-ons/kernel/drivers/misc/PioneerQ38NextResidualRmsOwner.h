@@ -22,7 +22,11 @@
    || nextResidual->parent!=nextOutput || nextResidual->input!=&nextAttentionResult || !nextOutputClaimed
    || !nextOutputPublishedEpoch || nextOutputPublishedEpoch>=0x7ffffffe || !nextResidualClaimEpoch
    || nextResidualClaimEpoch!=nextOutputPublishedEpoch+1 || nextResidual->epoch!=nextResidualClaimEpoch
-   || ((phase<47 || phase>49) && phase!=7 && phase!=8)
+   || ((phase<47 || phase>49) && phase!=7 && phase!=8
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+    && !NextFfnRetainedPhase()
+#endif
+    )
    || nextAttentionResult.owner!=this || nextAttentionResult.state!=nextOutput || nextAttentionResult.parent!=&nextAttention
    || nextAttentionResult.canonical!=projection->canonical || nextAttentionResult.ledger!=projection->ledger
    || nextAttentionResult.pages!=projection->pages || !(nextAttentionResult.identity==projection->identity)

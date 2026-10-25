@@ -31,6 +31,9 @@
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
      || (nextResidual && phase>=47 && phase<=49)
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+     || NextFfnRetainedPhase()
+#endif
      ))
 #endif
     ) || residual->epoch!=output->bootstrap.manifest[6]+1

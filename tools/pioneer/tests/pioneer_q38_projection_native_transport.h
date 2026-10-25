@@ -71,6 +71,11 @@ public:
  void NextResidualSource(const char*);unsigned NextResidualStarts()const;
  void NextResidualFault(unsigned);bool NextResidualFaultInjected()const;unsigned NextResidualFaultTouch()const;
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+ void NextFfnSources(const char*,const char*);void VerifyNextFfn();unsigned NextFfnStarts()const;
+ void NextFfnFault(unsigned);bool NextFfnFaultInjected()const;unsigned NextFfnFaultTouch()const;
+ void NextFfnRunTerminalCheckpoint(void (*callback)(void*),void* context);
+#endif
 #endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
  void OutputValidationCheckpoint(void (*callback)(void*),void* context);

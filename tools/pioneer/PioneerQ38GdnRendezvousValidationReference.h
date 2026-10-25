@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+#error Native layer1 FFN never contains CPU reference observers
+#endif
 #ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
 #error Native precision diagnostic never contains CPU reference observers
 #endif

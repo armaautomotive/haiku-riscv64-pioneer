@@ -24,6 +24,9 @@
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
     && !(nextResidual && phase>=47 && phase<=49)
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+    && !NextFfnRetainedPhase()
+#endif
     )
    || nextProjections.resultAddress!=nextInput.normalizedAddress+TT_Q38_PROJECTION_RESULT_BASE || nextProjections.residualAddress!=nextInput.residualAddress)return false;
   for(unsigned i=0;i<16;i++)if(nextProjections.source[i]!=projection->cohort->authority.source[0][i])return false;

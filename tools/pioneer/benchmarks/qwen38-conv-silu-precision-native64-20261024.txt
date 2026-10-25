@@ -112,3 +112,19 @@ strict-reference/restore/END pass is required before promoting precision to
 the full resident continuation. Remaining full64-layer/attentionKV/sampling/
 persistent device token loop and measured whole-model throughput are not
 provided by this fixed first-token layer0 validation diagnostic.
+
+2026-10-25 PHYSICAL-TRIAL PROGRESS (NOT A PASS OR SPEED RESULT)
+Network recovered via ONE OFF31420,real fans/LEDs-off confirmation,ONE
+ON86413;Linux bootdc30a726-7daf-4374-bba8-7ac024255474/64CPUs. Pinned helper
+prepare61584/boot83997 CLI0,sessionq38-netrestart-20261025-a/64/full-RAM7.
+Haiku pinned SSH works at10.0.0.247;64CPUs/max137034936320B RAM. Old52 hash,
+admin,guard,immutablea0d50797 updater and clean generation1 metadata verified.
+Restore9869 CLI0 to exact041/tag12/generation2/cold0/owner0/open1.
+All3 new staging readbacks EXACTfb995b39/495b9e18/23735daf. Guarded apply
+67054 CLI0 loaded tag64/generation3/cold0/owner0/open1,NO GPU execution.
+ONE qualified client --validate-token0-precision attempt1892 is LIVE:
+ /private/tmp/pioneer-q38-native64-card-20261025-a.log
+At checkpoint,checksum team555actively runs and client554waits BEFORE GPU
+open;never infer a card result from this state. Poll SAME handle. Do not
+reload,reset,repeat validation or touch GPU during the parent lifetime.
+Source-authentication is correctness overhead,NOT inference token rate.

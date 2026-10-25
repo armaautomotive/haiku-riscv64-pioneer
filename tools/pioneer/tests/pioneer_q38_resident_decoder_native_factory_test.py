@@ -12,6 +12,10 @@ import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
 mode = sys.argv[7] if len(sys.argv) >= 8 else ''
+next_ffn_residual = mode in ('--next-ffn-residual', '--next-ffn-residual-faults')
+next_ffn_faults = mode == '--next-ffn-residual-faults'
+if next_ffn_residual:
+    mode = '--next-residual-rms' # same frozen images;new actual owner and original learned bytes
 gdn_precision_debug = mode in ('--gdn-conv-precision-debug', '--gdn-conv-precision-debug-faults')
 if gdn_precision_debug:
     mode = '--gdn-rendezvous-debug-faults' if mode.endswith('-faults') else '--gdn-rendezvous-debug'
@@ -135,6 +139,8 @@ if next_residual_rms:
     code = (image/'code.bin').read_bytes()
     assert len(code) == 5512 and hashlib.sha256(code).hexdigest() == 'f2fdcb0becf99281ba6910dbb64551d32584c0cc054bc452f030217ea5e81636'
     assert (image/'boot.bin').read_bytes() == struct.pack('<I',0x0005e06f)
+if next_ffn_residual:
+    flags.append('-DPIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE=1')
 if gdn_rendezvous:
     flags.append('-DPIONEER_Q38_GDN_RENDEZVOUS_NATIVE=1')
 if gdn_output_producer:
@@ -292,6 +298,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-decoder-native-factory-') as te
                                 suffix.append('--next-gdn-output-faults')
                             if next_residual_rms:
                                 suffix.append(sys.argv[17])
+                                if next_ffn_faults:
+                                    suffix.append('--next-ffn-residual-faults')
                                 if next_residual_faults:
                                     suffix.append('--next-residual-rms-faults')
                     if mode=='--gdn-output-execution-faults':

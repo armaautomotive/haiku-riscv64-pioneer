@@ -30,6 +30,9 @@
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
     && !(nextResidual && phase>=47 && phase<=49)
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+    && !NextFfnRetainedPhase()
+#endif
     )
    || !nextRms->plan.Matches(*projection->canonical,nextRms->layer,0,projection->position,projection->bank,
     projection->identity,projection->cohort->authority.source[0],nextRms->epoch)

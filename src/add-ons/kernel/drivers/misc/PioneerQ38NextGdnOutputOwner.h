@@ -29,6 +29,9 @@
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
     && !(nextResidual && phase>=47 && phase<=49)
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+    && !NextFfnRetainedPhase()
+#endif
     )
    || !nextOutput->jobs.jobs.Matches(*projection->canonical,1,13,0)
    || !nextOutput->jobs.jobs.LearnedPagesPresent(projection->ledger,projection->pages)

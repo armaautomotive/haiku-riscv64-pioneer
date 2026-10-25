@@ -32,6 +32,9 @@
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
     && !(nextResidual && phase>=47 && phase<=49)
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+    && !NextFfnRetainedPhase()
+#endif
     ))return false;
   const auto* m=ffn->manifest;
   if(!PioneerQ38FfnResidualGraphFrame(m) || m[6]!=ffn->epoch+(ffn->stopping?5U:0U)

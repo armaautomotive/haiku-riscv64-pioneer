@@ -5,6 +5,11 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+#if PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE != 1 || !defined(PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE) || PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE != 1 || defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE) || defined(PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT)
+#error Exact separate native65 requires genuine SAME native63,never DEBUG64 or Work
+#endif
+#endif
 #ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
 #error Precision DEBUG64 CPU client never enters a kernel driver or Work selector
 #endif
@@ -126,7 +131,9 @@
 #if PIONEER_Q38_GDN_INPUT_OWNER != 1 || !defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || PIONEER_Q38_RESIDENT_DECODER_NATIVE != 1 || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE)
 #error Separate resident-input owner needs exact native role,never old convolution DEBUG
 #endif
-#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102500010065ULL
+#elif defined(PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010063ULL
 #elif defined(PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010062ULL
@@ -248,6 +255,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010064ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE))
 #error Reserved tag64 identifies ONLY separate precise-convolution timed DEBUG
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102500010065ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE))
+#error Reserved tag65 identifies ONLY SAME-owner layer1 FFN,NO public selector
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -3851,6 +3861,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
  if(!PioneerQ38NextResidualRmsLearned(m->plan,c.initialized,PioneerResidentBanks::Pages)){delete m;return false;}
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+ if(!PioneerQ38NextFfnResidualLearned(m->plan,c.initialized,PioneerResidentBanks::Pages)){delete m;return false;}
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  unsigned convStripes=0;
  for(unsigned i=0;i<m->plan.Count();i++){
@@ -4199,6 +4212,16 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  bool okay=c.io.ProjectionExecutionSourceScope(true) && m->decoder.RunNextResidualRms(c.io,r);
  if(!okay && m->Unsafe()){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
  return okay; // genuine SAME layer1 output+raw only,no host products/public selector
+}
+#endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+[[maybe_unused]] static bool RunQ38NextFfnResidual(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r)
+{
+ auto* m=c.q38EmbeddingModel;
+ if(!m || m->phase!=PioneerQ38EmbeddingNativeState::DecoderHeld || m->Unsafe() || !m->decoder.NextFfnInput())return false;
+ bool okay=c.io.ProjectionExecutionSourceScope(true) && m->decoder.RunNextFfn(c.io,r);
+ if(!okay && m->Unsafe()){tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}
+ return okay; // completed layer1 hidden stays private in GDDR;NO host products
 }
 #endif
 [[maybe_unused]] static bool CloseQ38ResidentDecoderModel(PioneerStoreContext& c,PioneerQ38ResidentDecoderResult& r

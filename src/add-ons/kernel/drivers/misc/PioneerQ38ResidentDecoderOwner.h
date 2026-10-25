@@ -96,6 +96,10 @@ static __attribute__((noinline)) bool PioneerQ38NextGdnLearned(const PioneerQ38C
 #include "PioneerQ38NextResidualRmsState.h"
 #include "PioneerQ38NextResidualRmsLearned.h"
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+#include "PioneerQ38NextFfnResidualState.h"
+static __attribute__((noinline)) bool PioneerQ38NextFfnResidualLearned(const PioneerQ38CanonicalModelPlan&,const uint8_t*,unsigned);
+#endif
 #ifdef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE
 #if PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1
 #error Exact separate timed-rendezvous DEBUG52 requires SAME native51
@@ -153,6 +157,9 @@ struct PioneerQ38ResidentDecoderResult {
 #endif
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
  uint32_t nextResidualInstalled=0,nextResidualRuns=0,nextResidualHeld=0,nextResidualPublished=0;
+#endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+ uint32_t nextFfnInstalled=0,nextFfnBooted=0,nextFfnRootRuns=0,nextFfnStopped=0,nextFfnPublished=0;
 #endif
 #if defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE)
  uint32_t gdnValidationWorkers=0,gdnValidationWords=0;
@@ -275,6 +282,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
    && (!nextResidual || NextResidualData())
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+   && (!nextFfn || NextFfnData())
+#endif
    && projection->Scope(io) && io.ResidentDecoderScope(*this,*projection,*history)
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
    && (!gdnAttempted || (recurrent && io.ResidentGdnRecurrentScope(*this,*projection,*recurrent)))
@@ -305,6 +315,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Image(IO& io,unsigned w){
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+  if(nextFfn && nextFfn->image[w])return NextFfnImage(io,w);
+#endif
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
   if(!w && nextResidual && nextResidual->image)return NextResidualImage(io);
 #endif
@@ -360,6 +373,9 @@ class PioneerQ38ResidentDecoderOwner {
   return true;
  }
  template<class IO> bool Current(IO& io,unsigned w){
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+  if(nextFfn && nextFfn->image[w])return NextFfnCurrent(io,w);
+#endif
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
   if(!w && nextResidual && nextResidual->image)return NextResidualCurrent(io);
 #endif
@@ -770,6 +786,9 @@ class PioneerQ38ResidentDecoderOwner {
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
 #include "PioneerQ38NextResidualRmsOwner.h"
 #endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+#include "PioneerQ38NextFfnResidualOwner.h"
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38GdnOutputValidationOwner.h"
 #endif
@@ -819,6 +838,10 @@ public:
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
    && !nextResidual && (!nextResidualClaimEpoch?!nextResidualPublishedEpoch:
     nextResidualPublishedEpoch==nextResidualClaimEpoch && nextResidualClaimEpoch==nextOutputPublishedEpoch+1)
+#endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+   && !nextFfn && (!nextFfnClaimEpoch?!nextFfnPublishedEpoch:
+    nextFfnPublishedEpoch==nextFfnClaimEpoch && nextFfnClaimEpoch==nextResidualPublishedEpoch+1)
 #endif
    && p.MatchesClosedNativeOwner(*p.proof,*p.banks,*p.cohort,*p.memory,*p.graph,*p.canonical,*p.input,p.identity,p.ledger,p.pages);
  } // exact CLOSED objects BEFORE legacy END,not a caller clean/ready hint
@@ -1137,7 +1160,9 @@ public:
 #ifdef PIONEER_Q38_FFN_RESIDUAL_NATIVE
 #ifdef PIONEER_Q38_NEXT_RMS_NATIVE
 #ifdef PIONEER_Q38_NEXT_PROJECTION_NATIVE
-#ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+   || (nextFfn?(phase!=55 || !nextFfnHidden.Current()):!NextResidualCloseReady())
+#elif defined(PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE)
    || !NextResidualCloseReady()
 #elif defined(PIONEER_Q38_NEXT_GDN_OUTPUT_NATIVE)
    || (nextOutput?(phase!=46 || !nextAttentionResult.Current()):
@@ -1234,6 +1259,9 @@ public:
    || !p.state->CloseExecution(p.identity,&p,p.input))return Fail(io,r);
   p.closed=p.memory->closed=true;p.memory->installed=false;p.ready=false;closed=true;complete=false;phase=9;r.phase=9;r.closed=1;
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+  delete nextFfn;nextFfn=nullptr;
+#endif
   delete nextResidual;nextResidual=nullptr;
 #endif
 #ifdef PIONEER_Q38_NEXT_GDN_NATIVE
@@ -1350,6 +1378,13 @@ inline bool PioneerQ38NextGdnOutputProducer::MatchesCohort(const PioneerQ38Dispa
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
 inline bool PioneerQ38NextFfnProducer::Current()const{return owner && owner->MatchesNextFfn(*this);}
 inline bool PioneerQ38NextFfnProducer::MatchesCohort(const PioneerQ38DispatchLease& c)const{return owner && owner->MatchesNextFfnCohort(*this,c);}
+#endif
+#ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE
+inline bool PioneerQ38NextFfnHiddenProducer::Current()const{return owner && owner->MatchesNextFfnHidden(*this);}
+inline bool PioneerQ38NextFfnHiddenProducer::MatchesCohort(const PioneerQ38DispatchLease& c)const{return owner && owner->MatchesNextFfnCohort(*this,c);}
+static __attribute__((noinline)) bool PioneerQ38NextFfnResidualLearned(const PioneerQ38CanonicalModelPlan& plan,const uint8_t* ledger,unsigned pages){
+ return plan.FfnPagesPresent(1,ledger,pages);
+}
 #endif
 
 #if defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDUAL_RMS_NATIVE)
