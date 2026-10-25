@@ -27,6 +27,7 @@ struct CohortFabric:Machine {
  unsigned captures=0,packets=0,nocReads=0,rootConvPackets=0,rootGroups=0,minStack=0x70000;
  unsigned convLaunches=0,gdnLaunches=0,failPacket=0,dropClearWorker=0,badProofWorker=0,badProofWord=0,badProofOperation=7;
  unsigned peerSourceFault=0,peerCounterFault=0,badPcWorker=0,badResetWorker=0;
+ unsigned pausedWorker=0;
  unsigned lateManifestPacket=0,lateSourcePacket=0;
  bool pending=false,unknown=false;uint64_t clock=UINT64_C(1)<<40;
  unsigned donePc=0,parkPc=0,faultPc=0;
@@ -186,7 +187,7 @@ struct CohortFabric:Machine {
   }else Machine::Step();
   if(!(steps&255))Tick();
  }
- void Tick(){for(auto& p:peers)if(p->active){
+ void Tick(){for(auto& p:peers)if(p->active && p->logicalWorker!=pausedWorker){
   for(unsigned i=0;i<64;i++){
    if(p->GdnFaulted() || (p->pc==TT_Q38_PEER_WAIT_LOAD && p->memory.at(0x74144)==p->memory.at(0x74100))){p->active=false;break;}
    clock+=19;p->StepBlock();
@@ -247,9 +248,14 @@ void CohortPeer::Launch(unsigned sequence){
 }
 uint32_t CohortPeer::ReadCycleCsr(unsigned csr){assert(gdnActive && (csr==0xb00 || csr==0xb80));clockReads++;return csr==0xb00?uint32_t(fabric->clock):uint32_t(fabric->clock>>32);}
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--smoke") || !strcmp(argv[3],"--positives"))));
+ assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--smoke") || !strcmp(argv[3],"--positives") || !strcmp(argv[3],"--stalled"))));
  bool smoke=argc==4 && !strcmp(argv[3],"--smoke"),positivesOnly=argc==4;
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;unsigned positive=0,faults=0;
+ if(argc==4 && !strcmp(argv[3],"--stalled")){
+  CohortFabric f(argv[1],argv[2]);f.pausedWorker=1;assert(!f.Run() && !f.gdnLaunches);
+  assert(f.Mem(TT_Q38_COHORT_STATS+16)==119+65536 && f.peers[0]->active && !f.peers[0]->memory.at(0x74144));
+  f.Inert();printf("PASS PARTIAL ACTUAL stalled worker/65536bounded status polls+119initial reads/NO invented completion/NO GDN/ROOT fault inert;ROOTsteps%u packets%u;ITERATION bound only,NOT physical watchdog/timing qualification\n",f.steps,f.packets);return 0;
+ }
  for(unsigned variant=0;variant<(smoke?1U:3U);variant++){
   CohortFabric f(argv[1],argv[2],variant==0?0:variant==1?62:30,variant==0?0:variant==1?6:3,variant==0?0:variant==1?8191:5,variant&1);
   assert(f.Run());f.Verify();f.Inert();positive++;

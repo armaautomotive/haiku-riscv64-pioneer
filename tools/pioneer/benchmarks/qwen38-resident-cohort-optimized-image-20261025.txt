@@ -1,0 +1,102 @@
+Full-audit ROOT optimization -- OFFLINE emitted-program comparison
+2026-10-25 UTC. SAME cohort source,roles,arithmetic and ALL physical audits.
+NO native selector,driver install,Work/Assistant change or card benchmark.
+Last real whole27B0.207893161tok/s UNCHANGED;20tok/s remains UNMET.
+
+Compiler-only comparison,then bounded polling backoff. All cases execute
+ACTUAL ROOT instructions+ALL119 ACTUAL persistent worker programs,shared
+synthetic byte endpoints/clock. Numerical products are NEVER supplied by an
+oracle. Same independent full Conv/GDN outputs,30720Conv-NEXT words and
+786432GDN-NEXT words per geometry. No reset/host arithmetic/code reload.
+These counts are NOT physical wall times,model tokens/sec or a2.3x LLM gain.
+
+Layer0/bank0/position0/slot0 diagnostic comparison:
+ ROOT variant        ROOTinstructions  NoCpackets  observedROOTstack
+ old-Os                 48277500          14473        2948B
+ -O2                    28452413          15177        3060B
+ -O3                    20980422          16306        3076B
+ -O3+bounded backoff     20993407          13980        3076B
+Selected O3+backoff:56.515% fewer coordinator VM instructions(2.29965x),
+3.406% fewer NoC packets than default. More aggressive compilation alone
+made status polling more frequent. Backoff keeps ALL next-packet checks,
+waits256/512/1024/2048/4096bounded NOP iterations after a VERIFIED BUSY,
+and retains the exact65536poll limit. No invented completion or retry after
+uncertainty. Default source feature-OFF remains byte-exact. Physical cache,
+MMIO latency and independent core timing are NOT represented by VM counts.
+
+Actual SDK builds O2:86676/O3:42908 TERMINAL0. Initial23436/95399 TERMINAL1
+incorrectly expected an unchanged startup call relocation. Corrected ONLY
+that contract:every frontend byte except AUIPC/JALR is exact;both instructions
+resolve to EXACT emitted q38_resident_cohort_main,with all fixed entry/done/
+park/fault PCs unchanged. No unknown instruction or address was ignored.
+Separate O3+backoff builds47187/14125 BOTH TERMINAL0,ALL4 sections identical:
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text92B 874faf837e78bacfb006eba25bb85bec23ac3ea284a7f0f8972fd509ae12b974
+ conv6472B 19d7092a22366e405987251b2b25447083d6a34022d271398a9201ae5c265498
+ cohort36880B 0c8dc8357c0381167d063e7e8de03afcebcff33dc3aa6699ccfac6268e1d056b
+The SAME -Os root_conv.o numerical object is linked,not recompiled with O3.
+Only its linked route-table address changes. Every build FIRST authenticates
+old-Os ROOT4pins and all6companion sections,including their exact ancestors.
+No undefined/writable globals/GOT/unsupported division,FMA,sqrt or CSR.
+ALL allocated sections must be exported;fixed ROMb8000..c8000 and unchanged
+8KiB stack bounds hold. New maxROOTfunctionFrame1072B,actual stack3076B.
+The original numerical function frame1696B is unchanged. No native snapshot
+grant is enlarged;ALL prior new-joint-owner/footprint restrictions still apply.
+
+O2 smoke26178/O3 smoke83243/O3backoff smoke25118 ALL TERMINAL0:
+ /private/tmp/pioneer-q38-resident-cohort-o2-smoke-20261025-a.log
+ SHAa869d49a8b2f3f506ac79c71b0c1644c0ef464ace51addba9ab35c724d0330ff
+ /private/tmp/pioneer-q38-resident-cohort-o3-smoke-20261025-a.log
+ SHA69dbe7516c2464a75e190baf672de9f8bf53331da06f66d4245e64c06b6c2cb3
+ /private/tmp/pioneer-q38-resident-cohort-o3-backoff-smoke-20261025-a.log
+ SHA1ec79a95f4699d4ae090d5917cad83a6957a816d5cfbac89d6d5aba0df58b5d5
+Smoke runs are PARTIAL,not a negative/full-model qualification.
+
+Actual stalled-worker test56452 TERMINAL0:freeze worker1's instruction
+execution,never synthesize a busy/success receipt. ROOT observes actual old
+status for119initial+65536bounded busy polls,then faults inert without any
+GDN launch or completion claim.866346210ROOTinstructions/69255packets fit
+the unchanged1B VM limit. This is an ITERATION bound,NOT a physical watchdog
+or wall-clock deadline qualification. No hardware was stalled.
+ /private/tmp/pioneer-q38-resident-cohort-o3-backoff-stalled-20261025-a.log
+ SHAf11f0ffc9839057b9ac5c6a5980e5d1f311e934da4c00740e4ef680402c75673
+
+Full selected-image fault suite58515 TERMINAL0:3positive/88fault. All three
+positive geometries pass with all histories/NEXT outputs checked. ALL64Conv
+receipt corruptions,sixGDN receipt corruptions,first/middle/last lost ready
+clear,source/counter/PC/reset,stuck transport and late manifest/source faults
+refuse;ROOT fault remains inert. This is an actual emitted-program coupled
+component test,NOT an original27B/native/token-loop or card-speed result.
+ /private/tmp/pioneer-q38-resident-cohort-o3-backoff-full-20261025-a.log
+ SHA3d556caa1120eacba7652b8dab5b7e43e366712a2df8fb3e3fc0abed0b96a987
+Root role/export/relocation/builder gates16127 TERMINAL0:prior464+extra59.
+ /private/tmp/pioneer-q38-resident-cohort-optimized-gates-20261025-a.log
+ SHA8869f28d930e178cd183145881c445a8cceab2c6e7447a4868a1e43947592702
+No audit/CPU/native exclusion is removed. No new public ABI or runtime mode.
+Opaque old family markers NEVER grant authority to load these new bytes.
+
+Independent clean Git3a0e29a3b5601664f5264236919471874940e6c0+EXACTLY five
+own production/test files,excluding dirty llama.cpp and FlashNext:
+ /private/tmp/pioneer-q38-cohort-optimized-clean-20261025.wvPTbcBi
+Archive70294 TERMINAL0 before overlay;clean SDK49225 TERMINAL0,ALL pins exact.
+Clean positive86865 and gate28443 BOTH TERMINAL0;all5production/test source
+files independently byte-compared to current source. All4optimized+4default
+ROOT sections and6companion sections remain exact. Clean three-positive log:
+ /private/tmp/pioneer-q38-resident-cohort-optimized-clean-positive-20261025-a.log
+ SHA3ab8000d1390af681f7a97298bf5cc826ac00201112ade8a1adfae1accf6afa7
+Clean gate log is byte-identical8869f28d... above. This clean run intentionally
+does NOT rerun the full negative suite;the current-source full58515 does.
+Default feature-OFF ROOT positive regression47809 TERMINAL0:all3geometries,
+original48277500/48282131/48282011instruction counts and14473packets,original
+2948Bstack. Log byte-identical to the prior checkpoint's final history run:
+ /private/tmp/pioneer-q38-resident-cohort-optimized-default-regression-20261025-a.log
+ SHAf54b60acf80223cf0f423d7ff6550f721954e415249aaa5aa13c1b382856a0d2
+
+Remaining includes substantial CONTROL overhead across48recurrent layers,
+persistent full-model ROOT/projection/FFN/residual/RMS/all64layers/attentionKV/
+output/vocabulary/sampling/token commit,and genuine authenticated retained
+joint native source/code/initialized-state/clock/ALL120participants/STOP/
+hold/restore/END qualification. Remote CSR passivity is still a simulated
+assumption for this new owner. No existing native64/65/66 footprint may load
+these images. Pioneer baseline041 is untouched;no GPU FD,power,SD,network,
+Assistant or driver mutation. NO new whole-model or physical speed result.

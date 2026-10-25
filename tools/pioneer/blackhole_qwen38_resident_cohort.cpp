@@ -2,6 +2,9 @@
 // OFFLINE one complete resident Conv->GDN cohort. NO public/native selector.
 // ALL actual source/initialized state/clock/private producer ownership OWED.
 #include "PioneerQ38ResidentCohortImageRole.h"
+#if defined(PIONEER_Q38_COHORT_POLL_BACKOFF) && PIONEER_Q38_COHORT_POLL_BACKOFF != 1
+#error Exact separate bounded-poll coordinator image required
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentCohortShape.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PeerTerminal.h"
@@ -106,6 +109,9 @@ static bool Physical(unsigned w){
  return WaitPc(pc[0]) && WaitPc(pc[1]); // never infer WAIT from a running/held hint
 }
 static void Wait(unsigned w,unsigned sequence,unsigned operation,bool initial){
+#ifdef PIONEER_Q38_COHORT_POLL_BACKOFF
+ unsigned backoff=256;
+#endif
  for(unsigned poll=0;poll<65536;poll++){
   uint32_t s[16];Read(w,0x74140,s,16);Words(TT_Q38_COHORT_STATS)[4]++;
   unsigned old=initial?sequence:sequence-1;
@@ -113,6 +119,13 @@ static void Wait(unsigned w,unsigned sequence,unsigned operation,bool initial){
    || (s[4] && s[4]!=operation))cohort_fault_park();
   for(unsigned i=5;i<16;i++)if(s[i])cohort_fault_park();
   if(s[0]==sequence && s[1]==sequence && !s[4] && Physical(w))return;
+#ifdef PIONEER_Q38_COHORT_POLL_BACKOFF
+  // A verified BUSY response is not an error. Bound the idle interval and
+  // poll count;retain EVERY next-packet source/counter/command/queue check.
+  // No retry after uncertainty and no status success invented by the wait.
+  for(unsigned idle=0;idle<backoff;idle++)asm volatile("nop");
+  if(backoff<4096)backoff<<=1;
+#endif
  }
  cohort_fault_park();
 }
