@@ -195,6 +195,7 @@ void CohortPeer::SubmitActivation(){
  if(!pending && before==1)for(unsigned i=0;i<128;i++)fabric->Put(descriptor[8],descriptor[4]+descriptor[12]+i*4,native[i]);
  if(!pending && before==2)for(unsigned i=0;i<32;i++)fabric->Put(descriptor[8],descriptor[4]+descriptor[13]+i*4,line[i]);
 }
+#ifndef PIONEER_Q38_RESIDENT_OUTPUT_COHORT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--smoke") || !strcmp(argv[3],"--positives") || !strcmp(argv[3],"--faults") || !strcmp(argv[3],"--terminal-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  bool smoke=argc==4 && !strcmp(argv[3],"--smoke"),terminalOnly=argc==4 && !strcmp(argv[3],"--terminal-faults");
@@ -254,3 +255,4 @@ int main(int argc,char** argv){
  if(terminalOnly)printf("PASS PARTIAL terminal-only combined coordinator faults%u/late source+post+command/lost transfers/faithful snapshot of malformed inputs rejected by ACTUAL ROOT before ANY NoC packet;earlier receipt tests intentionally NOT rerun/NO native grant\n",faults);
  else printf("PASS actual combined coordinator faults%u/ALL64QOL proof mutations/matrix receipts+nontrivial prefix-counter chain/fresh line ancestry/late source+post+command/lost transfer/pre-I/O malformed manifests;NO native/token-loop/physical speed grant\n",faults);
 }
+#endif

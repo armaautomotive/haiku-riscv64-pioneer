@@ -46,6 +46,19 @@ base = {**valid, 'PIONEER_Q38_GDN_MUTABLE_STATE':''}
 legacy = {k:v for k,v in base.items() if k != flag}
 check(parent, base, True)
 check(parent, legacy, True)
+controller = '#include "'+str(kernel/'PioneerQ38ResidentOutputOwner.h')+'"\n'
+runtime = {**base,'PIONEER_Q38_DECODER_RUNTIME':'1'}
+check(controller,runtime,True)
+for key in ('PIONEER_Q38_DECODER_RUNTIME','PIONEER_Q38_GDN_MUTABLE_STATE'):
+    missing = dict(runtime);del missing[key]
+    check(controller,missing,False,'complete genuine joint runtime reservation')
+    check(controller+'#undef '+key+'\n'+controller,runtime,False,'complete genuine joint runtime reservation')
+for value in ('','0','2','-1'):
+    check(controller,{**runtime,'PIONEER_Q38_DECODER_RUNTIME':value},False)
+for key in ('PIONEER_Q38_RESIDENT_DECODER_OWNER','PIONEER_Q38_RESIDENT_DECODER_NATIVE','PIONEER_Q38_GDN_RECURRENT_NATIVE','PIONEER_Q38_GDN_INPUT_OWNER'):
+    for value in ('0','1'):
+        check(controller,{**runtime,key:value},False,'NOT an old per-worker decoder alias')
+        check(controller+'#define '+key+' '+value+'\n'+controller,runtime,False,'NOT an old per-worker decoder alias')
 check(parent+'#define '+flag+' 1\n'+parent, legacy, False, 'cannot be selected after legacy inclusion')
 check(parent+'#undef '+flag+'\n'+parent, base, False, 'layout cannot change after inclusion')
 for value in ('0', '2', '-1'):
@@ -88,4 +101,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-resident-input-gates-',dir='/pr
             r = subprocess.run(['sh',str(directory/('build_qwen38_'+name+'.sh')),*args],capture_output=True,text=True,env={**clean,flag:value},timeout=5)
             assert r.returncode==2 and not r.stdout and not r.stderr and not (root/'NO_OUTPUT').exists()
             count += 1
-print(f'PASS resident projection input gates{count}/exact genuine parents/defined0+late CPU+DEBUG+Work+image aliases/closed class-layout changes/10CPU observers/session/original model/10builders;existing kernel explicitly OFFLINE,NO native selector or IO grant')
+print(f'PASS resident projection input gates{count}/exact genuine parents/complete controller runtime reservation/defined0+late old-owner+CPU+DEBUG+Work+image aliases/closed class-layout changes/10CPU observers/session/original model/10builders;existing kernel explicitly OFFLINE,NO native selector or IO grant')

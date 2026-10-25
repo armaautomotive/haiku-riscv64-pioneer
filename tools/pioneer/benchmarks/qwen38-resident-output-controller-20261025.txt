@@ -1,0 +1,131 @@
+Qwen3.8-27B resident-output controller checkpoint, October25,2026
+
+SCOPE / NO SPEED CLAIM
+The requested whole-model persistent P100A execution and20 tokens/sec are
+UNMET. Last actual whole-model rate0.207893161 tokens/sec is UNCHANGED.
+The new controller's successful execution/fault lifecycle, genuine new
+native factory/scope/maps, original GGUF numeric qualification, card run,
+remaining layers/state/token loop and Assistant integration remain OWED.
+This checkpoint is NOT permission to install/select this driver prototype.
+The existing kernel still explicitly refuses RESIDENT_OUTPUT_OWNER even0.
+No Pioneer accelerator FD, driver/Assistant install, relay, SD, network,
+disk or mains mutation was performed. Prior delayed fans-off reply was
+superseded by live pinned Haiku SSH uptime6:53; NO extra ON/OFF was sent.
+
+IMPLEMENTED
+PioneerQ38ResidentOutputProof.h independently checks the actual complete
+ROOT and ALL119 peer counter lineage from their pre-boot physical baseline.
+It covers all640 Conv groups,96 actual input/recurrent/timed-gated summary
+chains,24 QOL1 producers and complete K6144/N5120 learned output matrix.
+ROOT traffic totals are derived from all716 WAIT invocations, fixed stage
+packets, native six-group convolution, compact gathering and separately
+framed matrix traffic; no one observed trace is accepted as an authority.
+Peer before-matrix counts must match both the entire earlier pipeline's
+exact chain and ROOT's retained counter table, not only a final delta.
+Independent physical DATA checks distinguish the NEW ROOT park72038 from
+its FAULT7203c (the old ROOT terminal grammar MUST NOT be reused), released
+reset46800 from a held core, exact peer WAIT versus STOP, boot/source/nonce
+and final job doorbell. No DATA helper grants code/IO/cleanup/current-slot
+or model authority. No CPU arithmetic reference is in production code.
+
+PioneerQ38ResidentOutputOwner.h is the new isolated HEAP-only execution
+controller prototype. It consumes ONLY the actual private closed QPS1
+input, and requires genuine GDN+history initialization in the SAME joint
+runtime reservation. It compares ALL120 accepted physical ledgers before
+the first new write, retains the full43,805,408-byte original journal,
+installs the exact complete image, boots ALL119 peers, stages only its
+private canonical manifests, runs the actual combined ROOT, independently
+checks complete receipts+code+unheld terminals, and holds ROOT only after
+ALL119 final WAIT proofs. The design retains peers between Run and Close.
+Close stages actual fixed STOP jobs, owes ALL119 independent unheld STOP
+terminals before the first peer hold, restores EVERY original word and
+NoC command, and performs a second complete original verification.
+UNKNOWN retains all owners and performs no following IO/reset/retry.
+The consumed old projection input is historical lineage, not a fake live
+ready bit; no old closed/held Current() is called once new cores run.
+Private new GDN/history claim/publication fields exist ONLY in the new
+role; no current-slot/token commit or existing role layout is changed.
+Run rechecks the actual learned-page ledger before its first MMIO.
+The genuine complete native adapter/IO factory and positive/fault execution
+tests of this controller are STILL REQUIRED. A template compile and inert
+refusal are NOT a successful full controller execution qualification.
+
+COMPLETED QUALIFICATION
+1. Actual unchanged frozen ROOT plus ALL119 emitted peers, ASan/UBSan:
+   python3 tools/pioneer/tests/run_pioneer_q38_resident_output_completion_tests.py /private/tmp/pioneer-q38-output-cohort-build-20261025-c --all
+   Original parent52706 EXIT0. Clean repeat65641 EXIT0.
+   Layer0/position0/bank0/slot0;layer62/8191/6/1;layer30/5/3/0.
+   All5120 final outputs independently observed by the existing FP32/FP64
+   test observers. Only learned byte endpoints/clock are synthetic; no
+   host product, success receipt or completion flag is fed to instructions.
+   New host proof accepts all119 independent final counter/source chains,
+   then the ACTUAL SAME119 peers execute STOP with unchanged counters and
+   commands.1388 receipt/source/state/physical mutations are refused.
+   Original and clean output SHA256:
+   71bae09475b9aeda38330bedc3ada42a51a3090490d59c6b99121c5fc59ed93d
+   This is NOT a new-owner execution, original-model or silicon speed test.
+
+2. Actual source/zero/QPE1/QRN1/four genuine QPS1 roles,119 peers and clean
+   STOP/full8,134,072-word old journal restoration feed the new preflight.
+   The valid private GPU input cannot substitute for missing genuine
+   GDN/history initialization.16 ordinary/forged-public-result refusals
+   perform ZERO IO/claim/consume/quarantine and leave that input current.
+   Original parent15962 EXIT0;clean repeat26434 EXIT0.
+   Original and clean output SHA256:
+   a82ffbde0350bd964a2f7ed9eb35854d7007cd17db8c1ebaf29a84962dac13f3
+   NO new controller launch was attempted or claimed by this interlock test.
+
+3.304 exact-role/preprocessor/build/defined0/late-change gates PASS in
+   both original parent22156 and clean repeat92614, EXIT0.
+   The new controller requires genuine joint runtime reservation; old
+   decoder/recurrent roles cannot be aliased, even by defining them0 late.
+   Existing CPU/reference/Work/image/builders and kernel remain isolated.
+   Original and clean output SHA256:
+   921cbe49773d74ffd78d5df373170e8107a11a1a59020deaf3cb10731e9473cc
+
+4. ACTUAL Haiku RV64 SDK, read-only. Full new Prepare/Run/Close templates
+   instantiate; all frames static and <=2048 bytes, MAX1488. Current parent
+   19704 and clean repeat9536 EXIT0, byte-identical object SHA256:
+   ded0e79d02a44f068fa755b3c95685e201f32f7307883a755590f45918390f86
+   Standalone proof compile MAX624, EXIT0, object SHA256:
+   64b47905d6a012ba9b54a69cb30b0dad8714542a448882b749605192e66976fb
+   Compilation proves neither native integration nor successful execution.
+
+5. ACTUAL unchanged native65/native66 kernel source control parent43641
+   EXIT0; old65 byte-identical and old66 byte-identical, maxNewFrame496:
+   61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+   97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437
+   No link/install/card operation. The healthy installed041 driver remains
+   untouched; these are build controls, not another native GPU test.
+
+REPRODUCTION / RETAINED DIAGNOSTICS
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64 READ ONLY.
+All14 owned code/test/gate sources match the clean tree byte for byte:
+/private/tmp/pioneer-output-controller-clean.KjkpIKHR
+Current logs:
+/private/tmp/pioneer-q38-output-completion-all-20261025-a.log
+/private/tmp/pioneer-q38-output-owner-preflight-20261025-b.log
+/private/tmp/pioneer-q38-output-owner-gates-20261025-a.log
+/private/tmp/pioneer-q38-output-owner-kernel-20261025-c.log
+/private/tmp/pioneer-q38-output-proof-kernel-20261025-a.log
+/private/tmp/pioneer-q38-output-owner-legacy-20261025-a.log
+Clean logs:completion.log,preflight.log,gates.log,owner-kernel.log there.
+Initial completion compile failed because renaming main lost its implicit
+return; then an unused observer helper failed -Werror. Both were TEST
+composition errors, corrected without weakening production guards. Initial
+owner compile caught a missing const accessor and misleading indentation;
+fixed in the new header, not by relaxing -Werror/SDK stack limits. All
+original diagnostic logs are retained; no failed native/card run occurred.
+
+NEXT REQUIRED WORK (GOAL STILL ACTIVE)
+Build the genuine new retained native model/IO context and initialization
+ordering; bridge actual zero/GPU projections into this complete controller
+and frozen coordinator/peer instruction machines. Qualify its successful
+Run/Close, ALL first/late IO/source/counter/map/clock/time/STOP/hold/restore
+failures with no later IO, and exact larger ROOT/fleet mappings. Only after
+those gates, authenticate original GGUF values and a new native/card role.
+Then retain and extend the device execution through residual/RMS/FFN,
+attention, all64 layers, state-slot and autoregressive token loop, measure
+real27B inference, optimize actual bottlenecks toward20 tokens/sec, and
+expose the qualified no-CPU-reference Work mode in Assistant. None of this
+remaining work is replaced by the passing offline completion proof.

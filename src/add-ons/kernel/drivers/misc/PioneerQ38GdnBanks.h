@@ -23,6 +23,11 @@ struct PioneerQ38GdnBankExtent { uint32_t bank,address,route,index,pages,bytes; 
 class PioneerQ38GdnBanks {
  friend class PioneerQ38GraphMutableBanks;
  friend class PioneerQ38ProjectionMutableBanks;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ friend class PioneerQ38ResidentOutputOwner;
+ const class PioneerQ38ResidentOutputOwner* residentOutputOwner=nullptr;
+ unsigned residentOutputPhase=0;bool residentOutputNextPublished=false;
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_NATIVE
  friend class PioneerQ38ResidentDecoderOwner;
 #endif
