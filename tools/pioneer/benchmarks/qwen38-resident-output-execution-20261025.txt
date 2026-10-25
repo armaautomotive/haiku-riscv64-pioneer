@@ -1,0 +1,143 @@
+Qwen3.8-27B complete resident-output execution qualification, October25,2026
+
+GOAL ACTIVE, NOT A MODEL-SPEED RESULT
+Whole-model GPU residency and20 tokens/sec remain UNMET. Last actual
+whole-model0.207893161 tokens/sec is unchanged. No accelerator FD, driver/
+Assistant installation, relay, SD, disk or mains mutation. Pinned read-only
+SSH reports Haiku up8:19 at08:15:39; working driver left unchanged.
+
+COMPLETED ORIGINAL FULL CONTROLLER RUN
+Parent33636 EXIT0, original complete process (not a reconstructed union of
+separate test outcomes): one positive plus all20 failure-containment cases.
+Log:/private/tmp/pioneer-q38-output-owner-execution-all-20261025-b.log
+SHA256:10dfc336aef5b90e37aa4f4dd6c0f623843d75c8dc97776471c5b3d81eaafb6b
+
+The SAME actual producer/private joint reservation executes all73728 GDN
+and1680 history pages through the frozen RV32 zero program and real private
+controllers, clean CLOSE publication, workspace zero/QPE1/QRN1/allfour
+QPS1 roles on119 actual peers, STOP/full old restoration/private input.
+The actual new PioneerQ38ResidentOutputOwner consumes that record (public
+Current then becomes false), snapshots/proves ALL10951352 original words
+BEFORE first install, installs all exact new sections and boots119 peers.
+The ACTUAL installed ROOT/peer bytes execute640 Conv groups,96 GDN halves,
+24 QOL1 native-input producers and complete K6144/N5120 output projection.
+Independent existing FP32/FP64 test observers check all5120 matrix rows and
+full recurrent/history/gated arithmetic. No product, ready flag, success
+receipt or completion count is fed to emitted instructions by the bridge.
+All stages of the new coordinator use the SAME119 peer/tensor machines.
+
+Actual pre-boot/source/commands/counters are imported from the controller's
+byte endpoints, including the genuine prior QPS1 controls. Runtime code
+fetches use installed bytes, not an unobserved fresh code file. The same
+QPS1-produced workspace and observed initialized recurrent/history bytes
+feed the new pipeline. ROOT source/manifests/receipts, ALL119 final physical
+WAIT/sequence/source/counter lineage and code are independently checked by
+the actual controller. Only then is ROOT held. Actual STOP jobs run on the
+same119 machines; ALL119 unheld terminal proofs precede the first peer
+hold. ALL120 holds precede full43805408-byte original restoration, original
+NoC command restoration and a second complete original comparison. Every
+saved arbitrary padding word is compared; no presumed-zero reconstruction.
+No held PC is sampled. Complete/closed private state cannot be regenerated
+by a caller's public result fields. Repeated Run/Close after terminal is
+inert. The inherited original producer and all new owners/maps are retained
+on uncertainty. Source/clock/learned-weight/OS endpoints remain SYNTHETIC:
+this is NOT original-GGUF authentication, a native factory/map/controller
+integration, silicon test,64-layer/token-loop or throughput qualification.
+
+ALL20 ACTUAL CONTROLLER FAILURE CASES PASS
+1  source scope refusal before new memory I/O
+2  last participant's complete second original-pass read failure, BEFORE
+   any new image write
+3  last participant's last installed code write failure
+4  corrupt actual complete ROOT receipt, BEFORE root hold
+5  corrupt last participant's actual final matrix receipt, BEFORE root hold
+6  last participant physical source mismatch at completion
+7  last participant mapping loss at completion
+8  corrupt actual final STOP status, BEFORE first peer hold
+9  failed last STOP doorbell write, BEFORE first peer hold
+10 last participant STOP PC fault during independent pre-hold recheck
+11 last participant last original restoration write failure
+12 last participant last second original verification read failure
+13 source scope lost after preparation, before RUN
+14 expired whole-release/compute clock budget
+15 backward host clock during compute
+16 dropped ROOT hold, detected by actual reset readback
+17 dropped last peer hold (118 peers already held after ALL STOP proofs)
+18 last restored NoC command readback mismatch
+19 ROOT mapping lost before final complete original proof
+20 actual learned-page removed between Prepare and Run, refused BEFORE
+   first RUN MMIO; an earlier recipe cannot substitute for current uploads
+
+Every failed call leaves the private controller and memory unsafe, actual
+joint banks/cohort quarantined and original/native host owners retained.
+No subsequent Prepare/Run/Close/held-only restoration performs any IO,
+reset, STOP, restore or retry. Direct IO/scope/reset rejection cases also
+assert no IO between that failed observation and return. Malformed receipt
+DATA is collected before its checker refuses; this is not a claim that no
+remaining receipt fields are read after an as-yet-uncompared corrupt word.
+No cleanup is inferred from an observation timeout or public count.
+
+INDEPENDENT CLEAN REPEAT IS STILL LIVE, NOT CLAIMED PASSED
+Clean archive of16e7794097 plus ONLY these8 execution/mapping source files:
+/private/tmp/pioneer-output-execution-clean.U62rzM5m
+All8 source hashes match current tree byte for byte. Its own parent48203
+is running the same one-positive/20-failure full suite; log execution-all.log.
+Keep the SAME handle until authoritative terminal. Do not edit clean-tree
+dependencies or shared frozen executable fixtures/SDK while it is live.
+Current-tree development may proceed independently of that frozen tree.
+
+DISTINCT ACTUAL NATIVE MEMORY-ADAPTER FRAGMENT
+PioneerQ38ResidentOutputNativeMapping.inc implements new class-body map/
+checked-read/write methods but is deliberately NOT included by the existing
+driver. Genuine native context/source/clock/model/host scope, factory and
+known-clean lifetime integration are still REQUIRED. The fragment calls a
+distinct ResidentOutputMappingSourceScope; it cannot use an old map/ready
+flag as a larger logical grant or perform compute/reset/NoC packets.
+Exact physical aliases are BAR+19064000/40960 bytes and BAR+190b8000/614400
+bytes. Existing panel owns6e000..ac000; runtime owns the separate trailer.
+ROOT logical snapshot ends14da00 while mapped page rounding ends14e000.
+Padding is never readable/writable via this helper. Peers cannot access
+ROOT-only c8000..14da00. Address/selected-core/BAR/pointer/view failures
+leave read outputs untouched; UINT32_MAX is valid original data. Failed/
+null/partial maps are retained and never retried, unmapped or replaced by
+an old projection alias. Actual physical TLB/source and native ownership
+checks remain independently mandatory around this alias-only component.
+
+Original adapter ASan/UBSan test and independent clean repeat EXIT0:
+497316 complete logical words over ROOT+peer1/96/119,84 inert refusals.
+Exact2 OS aliases/whole arbitrary and UINT32_MAX originals/invalid gaps/
+ROOT-only versus peer bounds/rounded padding/metadata/partial-map failures.
+Actual Haiku SDK KernelExport.h types and map API compile, read-only SDK,
+all static frames MAX128. Original and clean object byte-identical SHA256:
+845d98ad256e4356a75ffc1e8a7ffeccf2eedb60c470168a85db9447918f6359
+Original log:/private/tmp/pioneer-q38-output-native-mapping-sdk-20261025-c.log
+Clean log:mapping.log in the clean directory above. This SDK compile is
+NOT a complete native driver/factory compile/link/install/execution grant.
+Initial SDK invocations omitted driver/OS/support/storage include paths;
+fixed the test command, not by substituting API stubs for KernelExport.h.
+
+REPRODUCTION
+PYTHONDONTWRITEBYTECODE=1 python3 tools/pioneer/tests/run_pioneer_q38_resident_output_owner_execution_tests.py ROOT_QPS1 PEER_QPS1 ZERO QPE1 QRN1 /private/tmp/pioneer-q38-output-cohort-build-20261025-c --all
+sh tools/pioneer/tests/run_pioneer_q38_resident_output_native_mapping_tests.sh /Volumes/HaikuBuildLocal/generated.riscv64
+Actual emitted code/source pins and -ffp-contract=off remain enforced.
+The full test first executes the genuine initialized prefix ONCE, then
+forks isolated byte-endpoint copies per case; each child performs its OWN
+actual new preparation/install/boot/run/STOP/restoration or refusal. No
+private producer/initialization state is serialized or manufactured.
+
+NEXT / FULL OBJECTIVE UNCHANGED
+Finish and inspect clean repeat, update this explicitly pending record.
+Then implement/qualify the genuine native retained state/source/factory
+and IO integration, including exact larger mappings, exclusive FD/team/
+thread/generation/clock/model/all-host lifetime and END interlock. Old
+closed projection Current cannot be called after consuming its input or
+starting new workers. New ROOT physical frontend-PC park/fault handling
+must not accept fault7203c via the old terminal grammar; any new padded
+park image needs fresh pins and full instruction/numeric/failure tests.
+Keep existing native65/66 and working installed041 unchanged until the new
+role is independently qualified. Original GGUF/silicon numeric tests must
+precede promotion. Extend device execution through residual/RMS/FFN,
+attention/all64 layers/current-slot/autoregressive token loop, benchmark
+real27B inference, optimize measured bottlenecks toward20 tokens/sec and
+expose qualified no-CPU-reference Work mode in Assistant. None is replaced
+by these passing single-layer instruction-model or OS-alias checks.
