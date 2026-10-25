@@ -71,11 +71,24 @@ it is NOT a physical card pass,full model execution or a throughput result.
 two final350gate logs are byte-identical3d88090a1a0c3a11e689b4ff938407b5227df31bc4eb58272d380929c5790beb.
 The initial bad-counter run remains an observed failure,not overwritten.
 
-The new hash-qualified updater pair is still UNCOMMITTED WIP while its full
-regression65785 runs. It selects ONLY stable041<->exactfb995b39/tag64 and
-refuses old52 as the initial image;it cannot clear cold/unknown ownership.
-Neither updater nor candidate has been installed. Do NOT treat its live/
-empty log as a pass,install via an old mapping,or push untested updater code.
+UPDATER QUALIFICATION
+Final production updater23735dafb55120bdb796aec8a34c0f414e7ad6ffe367ac338eb0ff80d56e122e
+selects ONLY stable041<->exactfb995b39/tag64. Old52 as initial image refuses
+BEFORE administrative open. Exact source/installed/guard/admin identities,
+strict nonempty parent inventory,clean metadata,increased generation,
+hash-qualified backups,symlink/incoming checks and CLOSE-only uncertainty
+remain required. No automatic rollback,reset,reboot or quarantine clear.
+Full65785 TERMINAL0:10041 actual filesystem/handshake/hash/symlink/owner/
+failure cases on the final production script:
+ /private/tmp/pioneer-q38-native64-updater-full-20261024-b.log
+ SHA7f89cd2985407cfbbc8567842ee5de8839e468cf49ff9b0d056310d4b2ba189a.
+Focused94366 TERMINAL0:140 new-pair apply/restore cases;log6e2bef514b63f8e7422fabb93d9ce1dad5c41b6f4e54e9e19a2ac572cf5b8d7c.
+Final focused12003 TERMINAL0:142 cases,adding the actual qualified495b9e18
+client-parent filename as well as old/unqualified and underscore aliases.
+ /private/tmp/pioneer-q38-native64-updater-focused-20261025-c.log
+ SHA829f030c13f45eb901cc69336569f84f1e2bce14f0aeae96b5133d498d77f850.
+This extra fixture does not change the production updater. Neither updater
+nor candidate has been installed;never install via an old hash/tag mapping.
 
 HARDWARE / NEXT GATE
 One new recovery epoch followed ONE OFF68897,real human fans/LEDs-off
