@@ -1,0 +1,120 @@
+Qwen3.8-27B new retained native state initialization, October25,2026
+
+GOAL ACTIVE,NOT A MODEL-SPEED RESULT
+Last whole-model0.207893161tok/s unchanged.20tok/s/full64-layer on-card
+autoregressive model remain UNMET. Working041 driver/Assistant/boot left
+unchanged;no accelerator FD,driver installation,relay,power,SD,network,
+disk or mains action. Dirty llama.cpp and unrelated FlashNext untouched.
+
+IMPLEMENTED,NEW NATIVE ROLE STILL OFFLINE
+PioneerQ38ResidentOutputNativeInitialize.inc uses the exact retained native
+context from f9c0df85d0,not the old decoder/init-owner role. Its two private
+factories execute the ACTUAL zero controllers with private new leases:
+672 GDN regions/BOTH slots/73728 pages and336 history regions x5 pages.
+Every region checks actual controller status/nonce/count/bytes/holds before
+continuing. Full coverage and clean code/scratch/source restoration/CLOSE
+are required before private initialization publication. New private closing
+phases prove full73728/1680 coverage and the corresponding lease nonce;
+no caller can set a phase,lease or readiness bit. Result counts are outputs,
+not grants. The old prototype's public metadata cannot mint these seals.
+
+The shared exact native bind perimeter was factored into initialization
+base scope,not weakened into a compute capability. Bind still refuses
+bulk-dirty/non-pristine/published/progress/competing-owner state. Active
+initialization scope separately binds the SAME private state/cookie/team/
+thread/generation/identity/token/bank/ledger/hash storage and exact phase/
+lease/graph objects. Bulk dirty is allowed ONLY within the already claimed
+zero/closing phase,while actual controllers retain and prove its snapshot.
+Actual ALL119 non-root held/source/TLB audits run before/during/after zero;
+the intentionally running owned ROOT is NOT wrongly required to be held.
+First physical failure retains ALL without restoring even the ROOT view.
+
+Embedding/RMS/projection source gates and the workspace-zero factory require
+the new initialized PREFIX binding,not merely published graph zero pages.
+This additionally rechecks the captured native FD/team/context/token/bank/
+model/generation and excludes the future new output phases. Therefore a
+valid old or new zero seal cannot authorize a different prefix or a resumed
+old producer after the new output owner starts. Ordinary prefix source/
+host/clock and physical controller proofs remain independently mandatory.
+The same real context's retention now also marks its bulk snapshot unsafe
+for the NEW role. No old native65/66/CPU/DEBUG/Work selector was enabled.
+The top-level driver OFFLINE #error remains,including defined0.
+
+COMPLETED FIRST ACTUAL POSITIVE RUN
+Parent29003 EXIT0 (before the later additional exact-prefix-binding guard).
+Log:/private/tmp/pioneer-output-native-initialization-20261025-a.log
+SHA256:cd063bb1db03bbba1db4d43f0ec7252de81c27a7b9bbdc7a54e83fe53e653ca7
+All73728 recurrent and1680 history pages executed frozen RV32 zero+fresh
+readback;every observed byte zero and page coverage exactly once. Actual
+private native zero-CLOSE seals then allowed workspace512 pages,QPE1 and
+QRN1. Actual old prefix CLOSED still could NOT authorize END of the separate
+unfinished new output lifetime;END quarantined/retained with ZERO IO.
+OS/learned/physical byte endpoints remain synthetic;no success receipt,
+ready flag,private progress or GPU product is manufactured by the bridge.
+This is NOT a complete new output native factory,GGUF or silicon result.
+
+REAL SDK AND OLD NATIVE REGRESSIONS COMPLETED
+Actual new native initialization/source/private-state/zero-controller
+fragments compile against REAL Haiku KernelExport.h ABI,maximum static
+frame880 bytes,2048 gate unchanged. Original and independent clean SDK
+object byte-identical:
+2b21bd68f42c238e1a57bb269be15b0b35f181723fce731998b3321848dd3a05
+The SDK test still uses context-shaped endpoints and deliberately unresolved
+base/retention functions. NOT a complete native context/link/driver/grant.
+Clean qualification parent62646 EXIT0:SDK above,107 native binding refusals,
+95 state-role/reinclude and304 existing input/CPU/DEBUG/Work/isolation gates.
+Actual old native65/native66 full SDK control parent68977 EXIT0,unchanged:
+65:61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+66:97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437
+SDK readonly;no linked module or board action.
+
+FAULT-TEST CLOCK DIAGNOSTIC,NOT A RUNTIME-GUARD RELAXATION
+Initial full original32364 EXIT1 correctly caught a bad TEST injection:
+clock began at0 and stayed0 rather than going backward. The asserted fault
+therefore did not occur. No full fault-suite PASS is claimed from it.
+The first clean38921 was deliberately interrupted(EXIT130) after the same
+zero-baseline issue was proven from code/output. Exact CPU-only process
+group41466 (one runner/two emulator processes) was verified before INT;
+this was not an observation timeout,board recovery or hidden retry.
+Both logs are preserved. No production clock/deadline or safety guard was
+changed. Corrected TEST time starts positive,then returns0 ONLY after the
+new release relative to captured starts,including history's672 inherited
+GDN starts. Standalone clock regression8040 EXIT0 checks0/672 inherited
+starts and executes one actual GDN job:actual controller fails its backward
+clock AFTER release,retainsALL,does ZERO STOP/holds and ZERO later IO/retry.
+Log:/private/tmp/pioneer-output-native-clock-regression-20261025-a.log
+Independent clean clock parent58112 EXIT0;both complete clock logs are
+byte-identical,SHA256:cbd32d28d67d5f46e7e97e8fc6ab13f13b17063eb26efd82159abf4a3387f466.
+This regression is not a substitute for the whole success+18fault suite.
+
+COMPLETE FINAL ORIGINAL AND INDEPENDENT CLEAN SUITES PASSED,EXIT0
+Original68242 EXIT0: /private/tmp/pioneer-output-native-initialization-all-20261025-c.log
+Clean4370 EXIT0: /private/tmp/pioneer-output-native-init-clean.jeyvCnMw/native-initialization-all-final.log
+Clean tree is archivef9c0df85d0 plus ONLY9 owned source overlays. Final
+sources compare byte-identically to current tree;both dependency sets and
+shared frozen executable fixtures/SDK stayed unchanged through terminal.
+The two additional standalone clock-test source files and this report are
+not dependencies of those suites. Both original handles reached EXIT0.
+No partial union of children or earlier positives may stand in for either
+complete one-process result. Each final process completed24 entry/prefix
+refusals,one complete positive plus9 GDN/9 history containment cases:
+first/middle/last lost packet,full-coverage-but-failed CLOSE boot restoration,
+actual non-root hold mismatch,late team loss,backward clock,physical source
+corruption and late map loss. Every unknown retainsALL and later calls must
+do ZERO IO/reset/STOP/END/restore/retry. Tests do not promote initialized
+state into mutable current-slot/model/token execution permission. Complete
+original/clean logs compare byte-identically,SHA256:
+abb03add884f8671de790df8f173fad8545c73e92b3c340cfd888be44df6f077.
+No remaining live initialization qualification parent.
+
+NEXT / FULL OBJECTIVE UNCHANGED
+Push this tested checkpoint. Initialization and clock qualifiers are terminal.
+Complete genuine new output IO/source/factory/mapping and END lifetime:
+old prefix CLOSED/current-input helpers cannot grant running new workers.
+Correctly handle new ROOT frontend park/fault separation before silicon;
+an image change requires fresh pins and full arithmetic/failure qualification.
+Original-GGUF/native physical correctness is still mandatory. Extend actual
+device state through residual/RMS/FFN,attention/all64layers/current-slot/
+autoregressive token loop,benchmark real27B inference,optimize measured
+bottlenecks toward20tok/s and expose qualified no-CPU-reference Work in
+Assistant. None is replaced by native initialization or instruction tests.

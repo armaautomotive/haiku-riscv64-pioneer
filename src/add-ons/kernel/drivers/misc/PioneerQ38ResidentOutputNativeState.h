@@ -8,16 +8,21 @@
 struct PioneerStoreContext;
 struct PioneerSessionIO;
 [[maybe_unused]] static bool BindQ38ResidentOutputNativeState(PioneerStoreContext&);
+[[maybe_unused]] static bool InitializeQ38ResidentOutputRecurrent(PioneerStoreContext&,PioneerQ38StateZeroResult&);
+[[maybe_unused]] static bool InitializeQ38ResidentOutputHistory(PioneerStoreContext&,PioneerQ38ConvHistoryZeroResult&);
 // A distinct retained NATIVE context, borrowing the genuine prefix. No
 // public construction/copy, phase setter, readiness bit or destructor.
 // Binding alone is CPU metadata, NEVER initialization/compute permission.
-// The actual initializer/output factories are still required; the driver
-// continues to reject this experimental role before compilation.
+// Initializers use actual private leases; complete output IO/factory and
+// native/physical qualification remain required. The driver still rejects
+// this experimental role before compilation.
 class PioneerQ38ResidentOutputNativeState {
  friend struct PioneerStoreContext;
  friend struct PioneerSessionIO;
  friend bool BindQ38ResidentOutputNativeState(PioneerStoreContext&);
- enum Phase {Bound,RecurrentZeroing,HistoryZeroing,Prefix,OutputPreparing,OutputRunning,OutputComplete,OutputClosed};
+ friend bool InitializeQ38ResidentOutputRecurrent(PioneerStoreContext&,PioneerQ38StateZeroResult&);
+ friend bool InitializeQ38ResidentOutputHistory(PioneerStoreContext&,PioneerQ38ConvHistoryZeroResult&);
+ enum Phase {Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,Prefix,OutputPreparing,OutputRunning,OutputComplete,OutputClosed};
  PioneerStoreContext* const context;
  PioneerQ38EmbeddingNativeState* const prefix;
  const void* const cookie;
@@ -36,13 +41,18 @@ class PioneerQ38ResidentOutputNativeState {
   const void* fd,const void* h,int64_t ownerTeam)
   :context(&c),prefix(&m),cookie(fd),hashes(h),identity(m.identity),ledger(m.ledger),token(m.token),bank(m.bank),team(ownerTeam){}
  ~PioneerQ38ResidentOutputNativeState(){delete memory;} // ONLY known-clean native context destruction
- bool Initialized(const PioneerResidentBanks& banks,const tt_dram_samples_result& proof)const{
+ bool RecurrentInitialized(const PioneerResidentBanks& banks,const tt_dram_samples_result& proof)const{
   if(!prefix)return false;
-  const auto* g=prefix->graph.Recurrent(identity);const auto* h=prefix->graph.ConvHistory(identity);
-  return g && h && prefix->plan.RecurrentCount()==672 && recurrentZero.saved && recurrentZero.closed
+  const auto* g=prefix->graph.Recurrent(identity);
+  return g && prefix->plan.RecurrentCount()==672 && recurrentZero.saved && recurrentZero.closed
    && recurrentZero.nonce==672 && !recurrentZero.dirty && !recurrentZero.ready && !recurrentZero.running && !recurrentZero.unsafe
    && recurrentZero.identity==identity && g->InitializationPublished(identity)
-   && g->MatchesInitializationOwner(banks,proof,identity)
+   && g->MatchesInitializationOwner(banks,proof,identity);
+ }
+ bool Initialized(const PioneerResidentBanks& banks,const tt_dram_samples_result& proof)const{
+  if(!prefix || !RecurrentInitialized(banks,proof))return false;
+  const auto* h=prefix->graph.ConvHistory(identity);
+  return h
    && historyZero.saved && historyZero.closed && historyZero.nonce==336 && !historyZero.dirty && !historyZero.ready
    && !historyZero.running && !historyZero.unsafe && historyZero.identity==identity && historyZero.owner==h
    && historyZero.banks==&banks && historyZero.proof==&proof && h->InitializationPublished(identity)

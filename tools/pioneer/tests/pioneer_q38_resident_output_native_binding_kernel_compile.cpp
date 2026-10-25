@@ -13,6 +13,7 @@
 #include <new>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeState.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 struct PioneerHostPageIO {bool quarantined;};
 struct PioneerSessionIO:PioneerHostPageIO {
  PioneerStoreContext* q38MutableContext;
@@ -20,6 +21,25 @@ struct PioneerSessionIO:PioneerHostPageIO {
  unsigned runtimeCore;bool fleetEnabled,runtimeMapped,q38SpanAllowed,wideQuarantined;
  bool q38EmbeddingMemoryMapAttempted,q38ProjectionMemoryMapAttempted;
  bool ResidentOutputCallScopeMatches();bool ResidentOutputBindSourceScope();
+ bool ResidentOutputInitializationBaseScope();bool ResidentOutputInitializationSourceScope(bool,bool);
+ bool ResidentOutputInitializationOtherCoresHeld(bool);
+ bool ResidentOutputPrefixInitializationScope();
+ bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ bool StateZeroBeforeCohort(){return ResidentOutputInitializationSourceScope(false,false);}
+ bool StateZeroOtherCoresHeld(){return ResidentOutputInitializationOtherCoresHeld(false);}
+ bool NonRootHeldOwner();bool NonRootHeldMappingStable();
+ bool SelectRuntimeCore(unsigned);bool Q38PanelMappingStable();bool BulkMappingStable();bool SpanViewCapacity(unsigned);
+ uint32* Q38PanelSavedWords();uint32* BulkSavedWords();
+ uint32 RuntimeCodeRead(unsigned);void RuntimeCodeWrite(unsigned,uint32);
+ uint32 RuntimeStatusRead(unsigned);void RuntimeStatusWrite(unsigned,uint32);
+ uint32 RuntimePcRead();void RuntimeResetWrite(uint32);uint32 ResetRead();uint32 SourceRead(unsigned);
+ uint32 Q38PanelRead(uint32);void Q38PanelWrite(uint32,uint32);uint32 BulkL1Read(unsigned);void BulkL1Write(unsigned,uint32);
+ uint32 ResidentNocRead(uint32);uint32 HostPciRead(unsigned,uint16,uint8);
+ uint32 DramTlbRead(unsigned,unsigned);void DramTlbWrite(unsigned,unsigned,uint32);
+ int HostPageMap(uint64_t&,uint64_t&);int OutputBufferMap(uint64_t&,uint64_t&);int OutputBufferPageMap(unsigned,uint64_t&,uint64_t&);
+ int WideOutputMap(uint64_t&,uint64_t&);int WideOutputPageMap(unsigned,uint64_t&,uint64_t&);
+ uint32 WideHostLoad(unsigned);void WideHostStore(unsigned,uint32);void WideHostFence();
+ void QuarantineHostPage();void QuarantineOutputBuffer();void QuarantineWideOutput();void Pause();uint64_t Q38CohortNow();
 };
 struct NativeBindingOtherFlags {bool saved,dirty,ready,running,awaiting,closed,unsafe;};
 struct NativeBindingClock {
@@ -32,7 +52,7 @@ struct PioneerStoreContext {
  PioneerQ38ResidentOutputNativeState* q38ResidentOutputNative;
  PioneerResidentBanks& banks;PioneerResidentLease& lease;PioneerBulkUploadLease& bulk;
  tt_host_page_result& host;PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;
- struct Dram {tt_dram_samples_result& dram;};struct Level1 {Dram baseline;};
+ struct Dram {tt_dram_samples_result& dram;};struct Level1 {Dram baseline;tt_compute_noc_result& noc;};
  struct Level2 {Level1 baseline;};struct Level3 {Level2 baseline;}baseline;
  thread_id q38GdnCallThread;uint64 bytes;int runtimeCoreMode;bool bankStorageOnly,dispatchOwnerRetained,q38DispatchRoutes;
  const uint8_t* initialized;const uint32_t* hashes;
@@ -54,8 +74,12 @@ extern uint64 sReloadGeneration;
 extern const void* sQ38LocalDeltaOwner;
 void RetainQ38DispatchOwner(PioneerStoreContext&,tt_resident_session_result&); // intentionally unresolved
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeBind.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeInitialize.inc"
 extern "C" bool pioneer_output_native_binding_compile(PioneerStoreContext& context){
  return BindQ38ResidentOutputNativeState(context);
+}
+extern "C" bool pioneer_output_native_initialization_compile(PioneerStoreContext& context,PioneerQ38StateZeroResult& gdn,PioneerQ38ConvHistoryZeroResult& history){
+ return InitializeQ38ResidentOutputRecurrent(context,gdn) && InitializeQ38ResidentOutputHistory(context,history);
 }
 extern "C" bool pioneer_output_native_end_gate_compile(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeEnd.inc"

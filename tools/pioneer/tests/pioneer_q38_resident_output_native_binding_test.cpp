@@ -18,6 +18,7 @@ struct NativeBindingFixture:NativeFactoryFixture {
   assert(BindQ38EmbeddingModel(*c,token,0,bank) && io.ResidentOutputCallScopeMatches() && io.ResidentOutputBindSourceScope());
  }
 };
+#ifndef PIONEER_Q38_OUTPUT_BINDING_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -89,3 +90,4 @@ int main(int argc,char** argv){
  }
  printf("PASS genuine new native bind/FD+team+thread/source/host+clock+model perimeter:refusals%u,private construction/destruction,actual retained lifetime/initialization and END interlocks;ZERO MMIO/map/reset/STOP/free. OS/learned endpoints are TEST,NOT initialization/execution/native-driver/silicon or rate qualification\n",refused);
 }
+#endif

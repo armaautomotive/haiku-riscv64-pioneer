@@ -11,10 +11,10 @@ bool PioneerSessionIO::ResidentOutputCallScopeMatches()
  return get_thread_info(c->q38GdnCallThread,&info)==B_OK && info.team==fd->team
   && sRuntimeOwner==fd && fd->context==c && c->q38GdnCallThread==find_thread(NULL);
 }
-bool PioneerSessionIO::ResidentOutputBindSourceScope()
+bool PioneerSessionIO::ResidentOutputInitializationBaseScope()
 {
  auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
- if(!c || &c->io!=this || !m || c->q38ResidentOutputNative || !ResidentOutputCallScopeMatches()
+ if(!c || &c->io!=this || !m || !ResidentOutputCallScopeMatches()
   || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sBankStorageOnly || !c->bankStorageOnly
   || c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled || !runtimeMapped
   || q38SpanAllowed || c->dispatchOwnerRetained || !c->initialized || !c->hashes || m->ledger!=c->initialized
@@ -32,20 +32,27 @@ bool PioneerSessionIO::ResidentOutputBindSourceScope()
   || c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready || c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready
   || !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
   || !c->lease.saved || !c->lease.ready || c->lease.pending || c->lease.recovery_required
-  || !c->bulk.saved || !c->bulk.ready || c->bulk.dirty || c->bulk.unsafe
+  || !c->bulk.saved || !c->bulk.ready || c->bulk.unsafe
   || c->host.state!=TT_HOST_PAGE_READY || c->host.released || PioneerHostPageIO::quarantined
   || !c->bulkHost.allocated || !c->bulkHost.ready || c->bulkHost.pending || c->bulkHost.quarantined || c->bulkHost.released
   || !c->wideHost.allocated || !c->wideHost.ready || !c->wideHost.memory_type_set || c->wideHost.pending
   || c->wideHost.quarantined || c->wideHost.released || wideQuarantined
   || m->graph.CanonicalModel(m->identity)!=&m->plan || !m->graph.MatchesInitializationOwner(c->banks,dram,m->identity))return false;
  auto* g=m->graph.Recurrent(m->identity);auto* h=m->graph.ConvHistory(m->identity);
- unsigned pages=0;
  if(!g || !h || !g->MatchesInitializationOwner(c->banks,dram,m->identity) || !h->MatchesInitializationOwner(c->banks,dram,m->identity)
-  || g->InitializationPublished(m->identity) || h->InitializationPublished(m->identity)
-  || !g->InitializationProgress(m->identity,pages) || pages || !h->InitializationProgress(m->identity,pages) || pages)return false;
+  )return false;
  const auto& clock=c->q38Clock.Snapshot();
  return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested
   && clock.busy_acknowledged && !clock.restored && !c->Unsafe(true,false,true);
+}
+bool PioneerSessionIO::ResidentOutputBindSourceScope()
+{
+ auto* c=q38MutableContext;
+ if(!ResidentOutputInitializationBaseScope() || c->q38ResidentOutputNative || c->bulk.dirty)return false;
+ auto* m=c->q38EmbeddingModel;auto* g=m->graph.Recurrent(m->identity);auto* h=m->graph.ConvHistory(m->identity);
+ unsigned pages=0;
+ return g && h && !g->InitializationPublished(m->identity) && !h->InitializationPublished(m->identity)
+  && g->InitializationProgress(m->identity,pages) && !pages && h->InitializationProgress(m->identity,pages) && !pages;
 }
 [[maybe_unused]] static bool BindQ38ResidentOutputNativeState(PioneerStoreContext& c)
 {

@@ -76,6 +76,26 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  PioneerStoreContext* q38MutableContext=nullptr;
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  bool ResidentOutputCallScopeMatches();bool ResidentOutputBindSourceScope();
+ bool ResidentOutputInitializationBaseScope();bool ResidentOutputInitializationSourceScope(bool,bool);
+ bool ResidentOutputInitializationOtherCoresHeld(bool);
+ bool ResidentOutputPrefixInitializationScope();
+ bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ bool StateZeroBeforeCohort(){return ResidentOutputInitializationSourceScope(false,false);}
+ bool StateZeroOtherCoresHeld(){return ResidentOutputInitializationOtherCoresHeld(false);}
+ std::vector<uint32_t> outputGdnWords,outputHistoryWords;
+ std::vector<unsigned> outputGdnTouched,outputHistoryTouched;
+ PioneerQ38GdnBankExtent outputGdnExtents[672]={};PioneerQ38ConvHistoryExtent outputHistoryExtents[336]={};
+ unsigned outputGdnFirst[672]={},outputGdnPages=0,outputGdnRuns=0,outputHistoryRuns=0;
+ unsigned outputGdnFailRun=0,outputHistoryFailRun=0;
+ bool outputGdnCloseFault=false,outputHistoryCloseFault=false;
+ bool outputNonrootFault=false;unsigned outputLoseTeamRun=0;
+ unsigned outputBackwardsAfterStarts=UINT32_MAX;
+#ifndef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+ void RuntimeCodeWrite(unsigned,uint32);
+ uint64_t Q38CohortNow(){
+  return outputBackwardsAfterStarts!=UINT32_MAX && rootStarts>outputBackwardsAfterStarts?0:ProjectionZeroIO::Q38CohortNow();
+ }
+#endif
 #endif
  unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
  std::array<uint32,10240> prefix;
@@ -160,6 +180,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
  bool EmbeddingMode()const;
  bool NonRootHeldOwner(){return EmbeddingSourceScope(false)
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  || ResidentOutputInitializationSourceScope(false,false) || ResidentOutputInitializationSourceScope(true,false)
+#endif
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
   || RecurrentZeroSourceScope()
 #endif
@@ -191,6 +214,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
   Touch();bool root=false;
   for(bool readOnly:{false,true}){bool same=true;for(unsigned w=0;w<3;w++)same&=tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  if(!root && outputNonrootFault)return 0x46800;
+#endif
   return root?coreReset:0x47800;
  }
  uint32 SourceRead(unsigned word){
@@ -339,6 +365,7 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #include "embedding_factory_retain.inc"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeBind.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeInitialize.inc"
 #endif
 #include "embedding_factory_scope.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
@@ -447,7 +474,56 @@ void PioneerSessionIO::ResidentNocWrite(uint32 offset,uint32 value){
  if(validationReads==validationSourceFault)source[11]^=1;
 }
 #endif
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) && !defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
+void PioneerSessionIO::RuntimeCodeWrite(unsigned i,uint32 value){
+ auto* state=q38MutableContext?q38MutableContext->q38ResidentOutputNative:nullptr;
+ if(state && ((outputGdnCloseFault && state->phase==PioneerQ38ResidentOutputNativeState::RecurrentClosing)
+  || (outputHistoryCloseFault && state->phase==PioneerQ38ResidentOutputNativeState::HistoryClosing))){Touch();return;}
+ ProjectionZeroIO::RuntimeCodeWrite(i,value);
+}
+#endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ auto* outputState=q38MutableContext?q38MutableContext->q38ResidentOutputNative:nullptr;
+ if(outputState){
+  // TEST transport observes the actual native lease/descriptor only. It
+  // NEVER publishes progress, writes a ready bit or synthesizes success.
+  bool gdn=outputState->phase==PioneerQ38ResidentOutputNativeState::RecurrentZeroing;
+  bool history=outputState->phase==PioneerQ38ResidentOutputNativeState::HistoryZeroing;
+  bool closing=outputState->phase==PioneerQ38ResidentOutputNativeState::RecurrentClosing
+   || outputState->phase==PioneerQ38ResidentOutputNativeState::HistoryClosing;
+  if(gdn || history || closing){
+   auto* model=q38MutableContext->q38EmbeddingModel;unsigned region=0,first=0,words=0;
+   if(value==0x46800){
+    assert(!closing && !publicationCounterFabricOnly);region=(gdn?outputState->recurrentZero.nonce:outputState->historyZero.nonce)-1;
+    if(gdn){
+     if(outputGdnWords.empty()){outputGdnWords.assign(73728*1024,0xa55aa55a);outputGdnTouched.assign(73728,0);}
+     auto* g=model->graph.Recurrent(model->identity);unsigned pages=0;
+     assert(g && region<672 && g->InitializationPages(model->identity,region,pages)
+      && g->InitializeSpan(model->identity,region,0,pages,outputGdnExtents[region]));
+     const auto& e=outputGdnExtents[region];assert(e.bank==l1[7] && e.address==l1[5] && e.bytes==l1[4] && e.route==l1[8]);
+     first=outputGdnPages;outputGdnFirst[region]=first;words=pages*1024;outputGdnRuns++;
+     if(outputGdnRuns==outputGdnFailRun)packetFault=1;
+    }else{
+     if(outputHistoryWords.empty()){outputHistoryWords.assign(1680*1024,0xa55aa55a);outputHistoryTouched.assign(1680,0);}
+     auto* h=model->graph.ConvHistory(model->identity);
+     assert(h && region<336 && h->InitializeSpan(model->identity,region,0,5,outputHistoryExtents[region]));
+     const auto& e=outputHistoryExtents[region];assert(e.bank==l1[7] && e.address==l1[5] && e.bytes==l1[4] && e.route==l1[8]);
+     first=region*5;words=5120;outputHistoryRuns++;if(outputHistoryRuns==outputHistoryFailRun)packetFault=1;
+    }
+   }
+   ZeroControlIO::RuntimeResetWrite(value); // ACTUAL frozen RV32 zero + fresh reads + independent receipts
+   if(value==0x46800){
+    assert(lastDeviceWords.size()==words);auto& bytes=gdn?outputGdnWords:outputHistoryWords;auto& touched=gdn?outputGdnTouched:outputHistoryTouched;
+    for(unsigned i=0;i<words;i++)bytes[first*1024+i]=lastDeviceWords[i];
+    for(unsigned i=first;i<first+words/1024;i++)touched[i]++;
+    if(gdn){outputGdnPages+=words/1024;if(outputGdnRuns%96==0)printf("NEW_NATIVE_GDN_ACTUAL_ZERO runs%u/pages%u;NO publication before clean CLOSE\n",outputGdnRuns,outputGdnPages);}
+    if(outputLoseTeamRun && (gdn?outputGdnRuns:outputHistoryRuns)==outputLoseTeamRun)currentTeam++;
+   }
+   return;
+  }
+ }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  auto* decoderModel=q38MutableContext?q38MutableContext->q38EmbeddingModel:nullptr;
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE

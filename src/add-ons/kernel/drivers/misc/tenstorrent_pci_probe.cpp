@@ -2123,6 +2123,10 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  bool ResidentOutputCallScopeMatches();bool ResidentOutputBindSourceScope();
+ bool ResidentOutputInitializationBaseScope();bool ResidentOutputInitializationSourceScope(bool,bool);
+ bool ResidentOutputInitializationOtherCoresHeld(bool);
+ bool ResidentOutputPrefixInitializationScope();
+ bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  bool DecoderCallScopeMatches();
@@ -3349,7 +3353,7 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 #endif
 	if (c.q38Dispatch) PioneerQ38DispatchQuarantine(*c.q38Dispatch,c.banks);
 	c.banks.Quarantine(); c.lease.recovery_required=true; c.io.QuarantineHostPage();
-#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
  c.bulk.unsafe=true; // same retained bulk snapshot/lease;NEVER restore/reuse after decoder uncertainty
 #endif
 	if (c.bulkHost.allocated && !c.bulkHost.released) { c.bulkHost.ready=false; c.bulkHost.quarantined=true; }
@@ -3544,7 +3548,7 @@ bool PioneerSessionIO::EmbeddingSourceScope(bool controller)
 {
 	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
- if(c && c->q38ResidentOutputNative && !c->q38ResidentOutputNative->InitializationsClosed(c->banks,dram))return false;
+ if(c && c->q38ResidentOutputNative && !ResidentOutputPrefixInitializationScope())return false;
 #endif
 	if (!c || &c->io!=this || !m || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
 		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
@@ -3638,7 +3642,7 @@ bool PioneerSessionIO::LearnedRmsSourceScope(bool controller)
 {
 	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
- if(c && c->q38ResidentOutputNative && !c->q38ResidentOutputNative->InitializationsClosed(c->banks,dram))return false;
+ if(c && c->q38ResidentOutputNative && !ResidentOutputPrefixInitializationScope())return false;
 #endif
 	if (!c || &c->io!=this || !m || m->phase!=PioneerQ38EmbeddingNativeState::Rms
 		|| sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
@@ -3697,7 +3701,7 @@ bool PioneerSessionIO::ProjectionExecutionSourceScope(bool controller)
 {
 	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
- if(c && c->q38ResidentOutputNative && !c->q38ResidentOutputNative->InitializationsClosed(c->banks,dram))return false;
+ if(c && c->q38ResidentOutputNative && !ResidentOutputPrefixInitializationScope())return false;
 #endif
 	if (!c || &c->io!=this || !m || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
 		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
@@ -3772,6 +3776,7 @@ void PioneerSessionIO::ProjectionGraphRetainHostOwners()
 #endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "PioneerQ38ResidentOutputNativeBind.inc"
+#include "PioneerQ38ResidentOutputNativeInitialize.inc"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 // PIONEER_Q38_RESIDENT_DECODER_NATIVE_SCOPE_BEGIN
@@ -3956,7 +3961,7 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 [[maybe_unused]] static bool InitializeQ38EmbeddingModel(PioneerStoreContext& c,PioneerQ38ProjectionZeroResult& result)
 {
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
- if(c.q38ResidentOutputNative && !c.q38ResidentOutputNative->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram))return false;
+ if(c.q38ResidentOutputNative && !c.io.ResidentOutputPrefixInitializationScope())return false;
 #endif
 	auto* m=c.q38EmbeddingModel;if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Bound || m->Unsafe()) return false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
@@ -4305,7 +4310,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
 {
-#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ return ResidentOutputInitializationSourceScope(false,false);
+#elif defined(PIONEER_Q38_GDN_STATE_INIT_NATIVE)
  return RecurrentZeroSourceScope();
 #elif defined(PIONEER_Q38_FFN_MODEL_INIT)
 	// PIONEER_Q38_FFN_MODEL_NATIVE_SCOPE_BEGIN
@@ -4414,6 +4421,9 @@ bool PioneerSessionIO::ResidentGdnBeforeRoot()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_BEGIN
 bool PioneerSessionIO::NonRootHeldOwner() {
 	return StateZeroBeforeCohort()
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  || ResidentOutputInitializationSourceScope(true,false)
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 		|| EmbeddingSourceScope(false)
 #endif
@@ -4433,11 +4443,15 @@ bool PioneerSessionIO::NonRootHeldMappingStable()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_END
 bool PioneerSessionIO::StateZeroOtherCoresHeld()
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ return ResidentOutputInitializationOtherCoresHeld(false);
+#else
 	if (!StateZeroBeforeCohort() || !NonRootHeldMappingStable()) return false; // CPU-only refusal
 	if (PioneerQ38NonRootHeld(*this,dram)) return true;
 	// First physical readback mismatch:full MEMORY-ONLY context quarantine,
 	// including clock/cookie/PCI/ALL host leases,BEFORE returning to caller.
 	tt_resident_session_result result={}; RetainQ38DispatchOwner(*q38MutableContext,result); return false;
+#endif
 }
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 // PIONEER_Q38_RGDN_ROOT_NATIVE_HELD_BEGIN
