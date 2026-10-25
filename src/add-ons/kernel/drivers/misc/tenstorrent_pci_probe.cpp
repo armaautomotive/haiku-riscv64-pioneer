@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#if defined(PIONEER_Q38_SILU_PRECISION_IMAGE) || defined(PIONEER_Q38_SILU_LEGACY_CONTROL_IMAGE)
+#error LOCAL SiLU diagnostic images never enter a native driver or Work selector
+#endif
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_IMAGE
 #error QRR2 image DATA never enters a native driver or public selector
 #endif

@@ -1,0 +1,105 @@
+SiLU precision investigation,October24 Pacific/October25 UTC2026.
+OFFLINE LOCAL diagnostic only;NOT a physical fix/native inference/speed result.
+Whole27B remains0.207893161tok/s;20tok/s/full resident model UNMET/goalACTIVE.
+
+An isolated two-float exponential/compensated-division SiLU candidate retains
+precision through1+exp and quotient formation rather than prematurely
+rounding each intermediate to F32. Full finite NORMAL-or-zero input domain;
+subnormal/nonfinite inputs atomically refused;only final underflow explicitly
+FTZ. Deep negative tail uses two NORMAL scale operands,not a flushed exp.
+No existing GraphMath/ConvMath/default/native/Work/Assistant math is selected
+or changed. QSP1 is a64-value LOCAL image,not a retained source/NoC producer.
+ALL arithmetic/domain checks complete BEFORE any output;bad descriptor/domain
+leaves all64output words unchanged. No MMIO/PCI/CSR/reset/GDDR instructions.
+
+Read-only-SDK fresh final F/G builds ACTUAL TERMINAL0,3152B code EXACT:
+ c9d917403ae39611d262b1f97aa0bf44e23c21661fec33b6f9a3739493ef08f6.
+ /private/tmp/pioneer-q38-silu-precision-image-20261024.eEIyL9Se/{f,g}
+ Boot5e06f/SHA d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
+ Per-frame max384B;actual nested SP depth448B inside original8KiB stack.
+ No unsupported divide/rem/mulh/FMA/fdiv/fsqrt/fcvt-to-int/helper/mutable data.
+
+ASan/UBSan host arithmetic,finalF TERMINAL0:
+ 1605662cases:uniform[-128,128],EVERY524289binary32input in[-94,-90]
+ around normal/FTZ boundary,whole-normal-F32 pseudorandoms,tiny/edge/maxfloat.
+ Candidate1different/max1ULP;old403527different/max149940201ULP (includes
+ old negative-tail cutoff,not a claim about model-input error magnitude).
+ 8atomic nonfinite/subnormal refusals. Host math is NOT emitted/native proof.
+ /private/tmp/pioneer-q38-silu-precision-tests-20261024-f.log
+ SHA00084689e43bf906a841f8d84e8b97a473afeacbbcd712c5d732992c9c30ec96.
+
+Actual emitted QSP1 RV32IMF finalD75179 TERMINAL0:
+ 208vectors/13312values,including1024adjacentinputs across exact FTZ edge;
+ max0ULP to independent libm observer/max87375instructions/max448Bstack.
+ 1040refusals:ALL1024header bits and first/last illegal finite domains.
+ Header/input/code/canaries immutable;terminal loops inert;no device access.
+ /private/tmp/pioneer-q38-silu-precision-instructions-20261024-d.log
+ SHAace589967f6343513c6f437c9fba1c7961d4e2783c3e125b4493d1e3db4e3989.
+
+Actual legacy-control QSP1 uses EXACT existing PioneerGraphSilu,1540B:
+ d4b6f84cfbeec3abc63a7c130245bd557966ef0412c2f46a93d5159589b6891d.
+ LOCAL unscaled-query QGP1 variant,4548B:
+ 746e4a3600ed18d8710c311883dd0833802dcbbe37b2dac7c6be48f6dfd53894.
+ It retains the combined-worker's UNSCALED query,not default QGP1 prescale.
+ Actual existing QGN1:
+ 7ec76ef20a0a453ae24adbda74623b5f95a400ff0f5b15e17e3788f079beb2b8.
+ These are independent emitted-instruction TUs with no CPU-reference macros
+ or host arithmetic calls. Original references live ONLY in separate CPU TU.
+
+Full original-source C17900/D43942 ACTUAL TERMINAL0,logs BYTE-IDENTICAL:
+ /private/tmp/pioneer-q38-silu-precision-original-probe-20261024-{c,d}.log
+ SHA7165c130858ba19ce488af1a97998750c2a542c97d3a4dd4f2d6afcc600e1366.
+ WHOLE18973870528B original SHA authenticated BEFORE any CPU reference:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+ Original embedding/RMS/QKV/alpha/beta/Z/Conv4/negativeA/dtBias/norm only.
+ Reconstruct all10240pre-SiLU Conv4 sums from ORIGINAL F32 weights/current
+ QKV and canonical zero history;run actual legacy/precise QSP1 instructions.
+ Old3211convolution outputs differ from independent original reference;
+ candidate ALL10240 BIT-EXACT for THIS layer0/token0.
+
+For captured physical head47/halves94,95:actual old QSP1 -> actual unscaled
+QGP1 reproduces ALL644returned prepared words BIT-EXACT. Independent CPU
+zero-state recurrence reconstructs ALL128physical raw outputs and selected
+128word NEXT-state row BIT-EXACT. Then actual QGN1 with ORIGINAL norm/Z
+reproduces physical lane49gated3a86373a. This explains the observed28ULP
+mismatch under original pre-SiLU input assumptions;those PHYSICAL sums/Z/norm
+were not observed,so this is NOT sole-cause physical proof.
+
+Candidate head47:prepared644/raw128 match original references exactly;
+lane49rawb69a7f68 replaces old/physicalb69a7f89. Actual QGN1 candidate gated
+3a86371f vs original3a86371e;worst head47relative2.0025466385602569e-7.
+All48head counterfactual:actual QGP1/QGN1,6144gated outputs,maximum relative
+1.7436884743608592e-6 athead15/lane4,within UNCHANGED3e-6 limit. Prepared22,
+CPU-reconstructed state143241/raw901words still differ from CPU reference;
+do NOT call this an all-bit-exact full-layer result. Recurrence in THIS probe
+is an independent CPU counterfactual,NOT execution of recurrent device code.
+No CPU products become native inputs;no FD/native owner is created.
+
+Isolation73741 TERMINAL0:761checks/2exactimages/384Bframes/native+CPU
+observers+reinclusion+Work/builders/defined-zero/old-neutral-refusal guards.
+ /private/tmp/pioneer-q38-silu-precision-gates-20261024-a.log
+ SHAb64c51366ac10c2c63567dbf0b622a3705bfd066f0e73af61ed785d228ebb318.
+ Actual native63/ALL ancestors/default/tag38/guard/bare43/private/DEBUG
+ read-only-SDK rebuild55721 TERMINAL0:ALL control bytes UNCHANGED;
+ native63 EXACT47c11c7f4ff8f3518ea9baaa81266ff7dbf880887ef44d25221d71f04a8e36c3.
+ /private/tmp/pioneer-q38-silu-isolation-native63-20261024-a.log
+ SHA ff20843ee565ab1c31ce914f769113316a7fcd620efd944a69c231035a32b41b.
+ Existing native63gates67835 TERMINAL0/553checks+131072inert routes/log
+ EXACT28375e92b6dc2c123d8febf7f524737f392beb1d2da88e76e31c6db22cd872dd.
+
+Recovery:NEW actual user fans/LED-off confirmation after singleOFF68897
+consumed by ONE ON18579/TERMINAL0. Fresh Linuxboot
+71e1d4d6-4f0f-4285-90b2-a335a05403b2,all64CPUs;SD-free helper9cfc6dc3
+verified. prepare48908/boot94865 TERMINAL0,uniqueq38-silu-20261024-r64a,
+64/full-RAM untimed top-page7 profile. Haiku console booted,wiredup link
+but DHCP configuring/no IPv4 at60s and SSH still unreachable. No GPU job,
+driver reload/status proof,SD/mains or Assistant change since recovery.
+Known-good041 restore remains pending access. Manual single down/up asked;
+do NOT pulse power again or infer driver health from a successful OS boot.
+
+Next:separate card-resident convolution precision image,actual original
+Conv4/recurrent instruction chain,then separately tagged guarded diagnostic
+driver/client/native physical test after clean metadata/recovery. Never
+change byte-distinct driver under old tag52 or reuse its installer mapping.
+Full64layers/attentionKV/sampling/persistent device token scheduling and
+actual whole-model timing remain required for usable self-hosted inference.

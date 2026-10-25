@@ -1,5 +1,28 @@
 # Native build status
 
+October24 Pacific/October25 UTC2026:isolated card SiLU precision candidate
+OFFLINE qualified,NOT physical/native/Work selected. Actual legacy QSP1+
+unscaledQGP1 reproduces ALL644captured physical head47prepared words and
+CPU zero-state reconstruction matches raw128/NEXTrow128;actual QGN1 gives
+physical gated3a86373a. Candidate ALL10240original layer0/token0conv outputs
+BIT-EXACT;head47prepared/rawexact,final3a86371f vs original3a86371e. ALL48head
+counterfactual6144gated outputs worst1.7436884743608592ppm<UNCHANGED3ppm.
+Recurrence in this probe is CPU observation,NOT emitted recurrent execution;
+physical pre-SiLU sums/Z/norm were unobserved. No physical-fix/speed claim.
+Host1605662cases/max1ULP;actualQSP1instructions13312values/max0ULP/1040
+atomic refusals PASS. Final3152B imageF/G EXACTc9d91740/max384Bframe/448B
+actualstack.761isolation gates PASS;SDK55721 actualnative63+ALLancestor+
+default/DEBUG controls BYTE-IDENTICAL;553+131072oldgates log EXACT.
+Original-source C17900/D43942 TERMINAL0/logs identical. No bounds widened.
+Recovery NEW human OFF confirmation -> ONE ON18579 -> freshLinux71e1d4d6,
+64CPUs -> pinned SD-free prepare48908/boot94865 uniqueq38-silu-20261024-r64a
+64CPU/full-RAM top-page7. Haiku consoleup but DHCP noIPv4/SSH unavailable;
+manual networkdown/up asked,stable041restore/clean metadata proof PENDING.
+NO later power pulse/SD/mains/Assistant/GPU action. Next integrate precise
+Conv4 worker with separate tagged diagnostic,then real native proof;full
+resident27B/20tok/s UNMET,lastwhole0.207893161tok/s unchanged/goalACTIVE.
+Evidence:benchmarks/qwen38-silu-precision-counterfactual-20261024.txt.
+
 October24 UTC2026:SAME actual decoder native63 layer1 QRR2 integration
 OFFLINE qualified,NOT linked/installed/Work/public selected. Genuine62
 output+58raw claimed BEFORE IO;5original norm pages required before Bind

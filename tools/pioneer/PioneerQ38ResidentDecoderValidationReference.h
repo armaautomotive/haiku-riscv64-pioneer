@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_SILU_PRECISION_IMAGE) || defined(PIONEER_Q38_SILU_LEGACY_CONTROL_IMAGE)
+#error Isolated SiLU diagnostic images never include CPU reference observers
+#endif
 #ifdef PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE
 #error SAME native63 residual RMS never includes CPU reference code
 #endif
