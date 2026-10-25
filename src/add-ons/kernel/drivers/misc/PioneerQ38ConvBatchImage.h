@@ -1,7 +1,24 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
+#if PIONEER_Q38_CONV_SILU_PRECISION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_NATIVE != 1 || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE)
+#error Precise QCB1 image requires exact separate DEBUG64 native context
+#endif
+#endif
+#if defined(PIONEER_Q38_CONV_BATCH_IMAGE_H) && (defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE) != defined(PIONEER_Q38_CONV_BATCH_PRECISION_BOUND))
+#error Native convolution code variant cannot change after body binding
+#endif
 #ifndef PIONEER_Q38_CONV_BATCH_IMAGE_H
 #define PIONEER_Q38_CONV_BATCH_IMAGE_H
 #include <stdint.h>
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
+#define PIONEER_Q38_CONV_BATCH_PRECISION_BOUND 1
+#include "PioneerQ38ConvBatchSiluPrecisionImage.h"
+static inline uint32_t PioneerQ38ConvBatchCodeWord(unsigned i){return PioneerQ38ConvBatchSiluPrecisionCodeWord(i);}
+enum {TT_Q38_CONV_BATCH_TEXT_BYTES=TT_Q38_CONV_BATCH_SILU_PRECISION_TEXT_BYTES,TT_Q38_CONV_BATCH_IMAGE_WORDS=TT_Q38_CONV_BATCH_SILU_PRECISION_IMAGE_WORDS};
+static inline uint32_t PioneerQ38ConvBatchImageAddress(unsigned i){return PioneerQ38ConvBatchSiluPrecisionImageAddress(i);}
+static inline uint32_t PioneerQ38ConvBatchImageWord(unsigned i){return PioneerQ38ConvBatchSiluPrecisionImageWord(i);}
+static inline bool PioneerQ38ConvBatchTerminalPc(uint32_t pc){return PioneerQ38ConvBatchSiluPrecisionTerminalPc(pc);}
+#else
 // EXACT offline-qualified QCB1 image,6088B SHA256 a8df2da24fa98535c70172c6f9833228c996a540f487b66fa545660b93256350.
 // ROM DATA only,not native source/ownership/initialization/launch authority.
 // Boot SHA256 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
@@ -205,4 +222,5 @@ enum {TT_Q38_CONV_BATCH_TEXT_BYTES=6088,TT_Q38_CONV_BATCH_IMAGE_WORDS=1523};
 static inline uint32_t PioneerQ38ConvBatchImageAddress(unsigned i){return !i?0x6000:i<1523?0x64000+(i-1)*4:UINT32_MAX;}
 static inline uint32_t PioneerQ38ConvBatchImageWord(unsigned i){return !i?0x0005e06fU:PioneerQ38ConvBatchCodeWord(i-1);}
 static inline bool PioneerQ38ConvBatchTerminalPc(uint32_t pc){return pc==0x64038;}
+#endif
 #endif

@@ -5,6 +5,14 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+#error Precision DEBUG64 CPU client never enters a kernel driver or Work selector
+#endif
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
+#if PIONEER_Q38_CONV_SILU_PRECISION_NATIVE != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE != 1
+#error Exact separate DEBUG64 requires SAME native52 diagnostic parents,never Work
+#endif
+#endif
 #if defined(PIONEER_Q38_SILU_PRECISION_IMAGE) || defined(PIONEER_Q38_SILU_LEGACY_CONTROL_IMAGE)
 #error LOCAL SiLU diagnostic images never enter a native driver or Work selector
 #endif
@@ -140,6 +148,8 @@
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010054ULL
 #elif defined(PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010053ULL
+#elif defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE)
+#define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010064ULL
 #elif defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE)
 #define PIONEER_Q38_DECODER_EXPECTED_TAG 0x2026102400010052ULL
 #elif defined(PIONEER_Q38_GDN_RENDEZVOUS_NATIVE)
@@ -235,6 +245,9 @@
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010063ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE))
 #error Reserved tag63 identifies ONLY SAME-owner next-layer QRR2,NO public selector
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102400010064ULL && (!PIONEER_Q38_DECODER_ROLE_TAG_OK || !defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE))
+#error Reserved tag64 identifies ONLY separate precise-convolution timed DEBUG
 #endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
 #if PIONEER_Q38_PROJECTION_VALIDATION_NATIVE != 1 || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1 || !defined(PIONEER_Q38_EMBEDDING_NATIVE) || PIONEER_Q38_EMBEDDING_NATIVE != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026102200010042ULL || defined(PIONEER_Q38_EMBEDDING_QUALIFICATION) || defined(PIONEER_Q38_EMBEDDING_VALIDATION_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_NATIVE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF)
@@ -4542,7 +4555,10 @@ static status_t Q38GdnRendezvousValidationControl(PioneerProbeCookie* cookie,uin
   && m->gdnZero.closed && m->gdnZero.nonce==672 && state.nonce==672
   && m->historyZero.closed && m->historyZero.nonce==336 && history.nonce==336 && history.pages==5
   && projection.runs==4 && projection.armed==119 && projection.released==119 && projection.rootStarts==4 && projection.rootHolds==4
-  && projection.memory.savedWords==8330680 && projection.memory.verifiedOriginalWords==8330680 && projection.memory.installedWords==1185912
+  && projection.memory.savedWords==8330680 && projection.memory.verifiedOriginalWords==8330680
+  // This ledger counts the initial projection images, not subsequent
+  // checked decoder overlays (including the precise convolution image).
+  && projection.memory.installedWords==1185912
   && decoder.closed && !decoder.unsafe && decoder.installed==120 && decoder.armed==120 && decoder.released==120
   && decoder.completed==120 && decoder.held==120 && decoder.stop.stopped==119 && decoder.stop.held==119
   && decoder.stop.rootStarts==1 && decoder.stop.rootHolds==1 && decoder.gdnInstalled==96 && decoder.gdnArmed==96

@@ -12,6 +12,9 @@ import tempfile
 
 here = pathlib.Path(__file__).resolve().parent
 mode = sys.argv[7] if len(sys.argv) >= 8 else ''
+gdn_precision_debug = mode in ('--gdn-conv-precision-debug', '--gdn-conv-precision-debug-faults')
+if gdn_precision_debug:
+    mode = '--gdn-rendezvous-debug-faults' if mode.endswith('-faults') else '--gdn-rendezvous-debug'
 gdn_state = mode in ('--gdn-state-init', '--gdn-state-init-faults')
 gdn_gated_local = mode == '--gdn-gated-norm-local'
 gdn_gated_resident = mode == '--gdn-gated-resident'
@@ -65,7 +68,7 @@ for directory, name, sha in zip(sys.argv[3:7], ('text.bin', 'code.bin', 'code.bi
         '39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b',
         'c754b24f767f33a00e61d2789cea3bda8ae656f6d58a2d20517311673a5aaaa1',
         'f13d8676f97920c182fa47d9f555453d7855dd5ac394919a577d58c83abe523a',
-        'a8df2da24fa98535c70172c6f9833228c996a540f487b66fa545660b93256350')):
+        '0a009317f69ecba0d6f56575508d4d4e6bdb3c30ece3e1f78a85cd66e2ab644c' if gdn_precision_debug else 'a8df2da24fa98535c70172c6f9833228c996a540f487b66fa545660b93256350')):
     assert hashlib.sha256((pathlib.Path(directory) / name).read_bytes()).hexdigest() == sha
 source = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
 flags = sorted(set(re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here / 'run_pioneer_q38_projection_graph_cooperative_tests.sh').read_text())))
@@ -87,6 +90,8 @@ if gdn_gated_native:
     flags.append('-DPIONEER_Q38_GDN_GATED_NATIVE=1')
 if gdn_rendezvous_debug:
     flags.append('-DPIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE=1')
+if gdn_precision_debug:
+    flags.append('-DPIONEER_Q38_CONV_SILU_PRECISION_NATIVE=1')
 if gdn_output_debug:
     flags.append('-DPIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE=1')
 if residual_rms:

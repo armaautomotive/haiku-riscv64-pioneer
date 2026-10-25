@@ -107,7 +107,9 @@ int main(int argc,char** argv){
   && reply->convolution_workers==120 && reply->convolution_jobs==640 && reply->convolution_channels==10240 && reply->convolution_held==120
   && reply->input_workers==96 && reply->input_installed==96 && reply->input_armed==96 && reply->input_released==96
   && reply->input_completed==96 && reply->input_held==96 && reply->layer_published==1 && reply->gated_published==1 && reply->readback_half_words==8642 && reply->readback_workers==96 && reply->readback_words==829632
-  && reply->saved_words==8330680 && reply->verified_words==16661360 && reply->installed_words==1185912 && reply->restored_words==8330680
+  && reply->saved_words==8330680 && reply->verified_words==16661360
+  && reply->installed_words==1185912
+  && reply->restored_words==8330680
   && f.transport->GdnValidationReads()==829632 && !locked && locks==releases && f.c->q38GdnCallThread==-1
   && f.c->q38EmbeddingModel->Closed() && !f.c->Unsafe() && !f.c->q38EmbeddingModel->decoder.GdnLayerCompleted());
  for(unsigned half=0;half<96;half++){
@@ -122,5 +124,9 @@ int main(int argc,char** argv){
   && f.io.touches==n && f.transport->Touches()==d && !f.c->Unsafe());
  assert(source->ReferenceReads()==1673 && source->GdnInputReads()==192 && source->GdnNormReads()==96 && !f.io.pciWrites && !f.io.HostReadMock::bmeWrites
   && EndFactory(*f.c) && f.c->q38Dispatch->closed && !sColdRecoveryRequired);
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
+ puts("PASS ORIGINAL token0 ACTUAL DEBUG64 preciseQCB1 public root/team/thread/copy/global scope/real73728pageinit/QCB1ALL120->ONE_QGT1ALL96/829632fixedLOCALvalues/strict independent references/NEXT_GDDR_exact/CURRENT_immutable/fullrestore/actualEND;SIMULATED_NOT_PHYSICAL_OR_SPEED");
+#else
  puts("PASS ORIGINAL token0 ACTUAL DEBUG52 public root/team/thread/copy/global scope/real73728pageinit/QCB1ALL120->ONE_QGT1ALL96/829632fixedLOCALvalues/strict independent references/NEXT_GDDR_exact/CURRENT_immutable/fullrestore/actualEND;SIMULATED_NOT_PHYSICAL_OR_SPEED");
+#endif
 }

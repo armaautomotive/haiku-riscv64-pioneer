@@ -1,4 +1,12 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+#if PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT != 1 || !defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_CLIENT) || PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_CLIENT != 1 || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1 || !defined(PIONEER_Q38_LEARNED_RMS_VALIDATION_REFERENCE) || PIONEER_Q38_LEARNED_RMS_VALIDATION_REFERENCE != 1
+#error Exact separate original-source CPU DEBUG64 observer required
+#endif
+#endif
+#if defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_SESSION_H) && (defined(PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT) != defined(PIONEER_Q38_CONV_PRECISION_SESSION_BOUND))
+#error DEBUG52 and DEBUG64 session roles cannot change after body binding
+#endif
 #ifndef PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_SESSION_H
 #define PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_SESSION_H
 #include "PioneerQ38GdnRendezvousValidationReference.h"
@@ -12,6 +20,15 @@
 // tiled weight bytes ONLY on upload. Not inference or a Work fallback.
 template<class IO,class Source=PioneerQ38PublicModelSource>class PioneerQ38GdnRendezvousValidationSession {
 public:
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+#define PIONEER_Q38_CONV_PRECISION_SESSION_BOUND 1
+ static constexpr uint64_t ExpectedBuildTag=UINT64_C(0x2026102400010064);
+#else
+ static constexpr uint64_t ExpectedBuildTag=UINT64_C(0x2026102400010052);
+#endif
+ // Initial projection-image ledger only; decoder overlays have their own
+ // exact-image checks and must not be added to this reply field.
+ static constexpr unsigned ExpectedInstalledWords=1185912;
  enum class Failure {None,SessionContract,SourceChanged,Transport,ReplyMetadata,NonFinite,AbsoluteTolerance,RelativeTolerance,SubnormalFlush,EndMetadata,Close};
  struct Diagnostics {
   Failure reason=Failure::None;
@@ -118,7 +135,7 @@ public:
   fd=io.Open();if(fd<0)return Stop();
   tt_pioneer_driver_reload reload={};reload.version=1;
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,reload) || reload.version!=1 || reload.driver!=55 || reload.guard_version!=1
-   || reload.build_tag!=UINT64_C(0x2026102400010052) || !reload.generation || reload.quiesced || reload.cold
+   || reload.build_tag!=ExpectedBuildTag || !reload.generation || reload.quiesced || reload.cold
    || reload.active_owner || reload.open_count!=1)return Stop();
   generation=reload.generation;tt_q38_embedding_support support={};
   if(!Call(TT_PCI_PROBE_Q38_GDN_RENDEZVOUS_VALIDATION_SUPPORT,support) || support.version!=1 || support.driver!=55
@@ -171,7 +188,7 @@ public:
    || reply->convolution_workers!=120 || reply->convolution_jobs!=640 || reply->convolution_channels!=10240 || reply->convolution_held!=120
    || reply->input_workers!=96 || reply->input_installed!=96 || reply->input_armed!=96 || reply->input_released!=96
    || reply->input_completed!=96 || reply->input_held!=96 || reply->readback_workers!=96 || reply->readback_words!=829632
-   || reply->saved_words!=8330680 || reply->verified_words!=16661360 || reply->installed_words!=1185912 || reply->restored_words!=8330680)return Stop(Failure::ReplyMetadata);
+   || reply->saved_words!=8330680 || reply->verified_words!=16661360 || reply->installed_words!=ExpectedInstalledWords || reply->restored_words!=8330680)return Stop(Failure::ReplyMetadata);
   auto numericStop=[&](Failure reason,unsigned i){
    // CPU memory ONLY,after the single existing reply. Capture the paired
    // raw input and original Z for arithmetic diagnosis,never query the card

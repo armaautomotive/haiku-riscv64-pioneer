@@ -16,8 +16,15 @@ struct GdnRendezvousNativeValidationTransport {
  int Close(int fd){return close(fd);}
 };
 int main(int argc,char** argv){
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+ if(argc!=2 || strcmp(argv[1],"--validate-token0-precision"))return 2;
+#else
  if(argc!=2 || strcmp(argv[1],"--validate-token0"))return 2;
+#endif
  setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+ puts("DEBUG64_PRECISE_CONV_QCB1_QGT1;SEPARATE_TAG64_REQUIRED;NO_WORK_OR_INFERENCE_SPEED_CLAIM");
+#endif
  puts("DEBUG_FIXED_FIRST_TOKEN_LAYER0_SAME_NATIVE_QCB1_QGT1;ORIGINAL_REFERENCES_BEFORE_GPU_FD;REAL_BOTH_SLOT_STATE_INIT_NO_WORK_OR_INFERENCE_SPEED_CLAIM");
  PioneerQ38PublicModelSource source;
  if(!source.Open() || !source.Ready()){puts("STOP_FULL_PUBLIC_GGUF_SHA_REQUIRED_BEFORE_ACCELERATOR_OPEN");return 1;}

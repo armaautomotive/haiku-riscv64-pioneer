@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
+#error Original-model CPU observer never compiles into native64
+#endif
 #if defined(PIONEER_Q38_NEXT_RESIDUAL_RMS_NATIVE)
 #error Original residual CPU observer is separate from native63
 #endif

@@ -1,0 +1,101 @@
+Separate precise-convolution native DEBUG64, October24/25 UTC2026.
+OFFLINE qualification checkpoint; NOT physical card execution or inference.
+Last measured whole27B rate remains0.207893161tok/s. Target20tok/s/full
+resident model remain UNMET; no speedup or Work-mode promotion is claimed.
+
+The frozen autonomous precise QCB1 image0a009317 replaces only the scalar
+SiLU implementation in this separate diagnostic role. SAME Conv4,120
+workers/640groups/10240channels,original source/learned bytes,5or6 jobs per
+worker,private NEXT history,ALL120hold proof,original snapshot restoration
+and explicit clean END. No CPU numerical products are uploaded. Independent
+CPU references stay in the separate DEBUG observer,prepared before GPU FD.
+The ordinary/native52/native63 images and production Work stay unchanged.
+
+Exact new role PIONEER_Q38_CONV_SILU_PRECISION_NATIVE=1 requires ALL native52
+parents,tag2026102400010064,namespace17. Only2fixed DEBUG and6storage routes;
+the existing829632word/3318720byte reply remains fixed. Old52 cannot pose as
+new64. The new client accepts only --validate-token0-precision,requires
+tag64/clean generation/cold0/owner0/open1,checks ALL96halves against strict
+unchanged3ppm normal-gate references,and fails CLOSE ONLY. No retry/reset,
+post-failure accelerator reads,automatic restore,Assistant or Work route.
+
+ACCOUNTING BUG CAUGHT BEFORE INSTALLATION
+The initial uninstalled driver5ae2801f/clientcb7e8f5f incorrectly expected
+1230072 installed words:1185912 plus120*(1891-1523). The actual original-
+model/controller test ran the decoder and restoration but correctly refused
+its final reply because the projection-image ledger still read1185912.
+PioneerQ38ProjectionGraphMemory::PrepareHeld alone increments that counter;
+PioneerQ38ResidentDecoderOwner::Write independently checks the later overlay
+word and readback but does not add it to the initial projection ledger.
+The correction retains exact1185912,not a wider limit or fabricated count.
+A client regression rejects the erroneous1230072. Separate executed selector
+tests check every selected instruction/address,boot word,bounds,terminal PC
+and full SHA of BOTH old6088B and precise7560B images. Never install5ae/cb7.
+
+REPRODUCIBLE READ-ONLY SDK BUILDS
+build_qwen38_conv_silu_precision_validation_native.py SDK NEW_ABSOLUTE_OUTPUT
+Actual builds80748/68163 TERMINAL0; c/d outputs BYTE-IDENTICAL:
+ /private/tmp/pioneer-q38-native64-sdk-20261024-{c,d}/tenstorrent_pci_probe-driver55-conv-silu-precision-debug-tag64
+ SHA fb995b39401f731259ce8154bdd77981b152b8038418728daf2cc420b247ecc6
+Maximum new kernel frame1568B;oversized inherited frames do not grow.
+Both old52 linked controls EXACTcdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759.
+Actual current-source old63 SDK compile20903 TERMINAL0 remains EXACT
+47c11c7f4ff8f3518ea9baaa81266ff7dbf880887ef44d25221d71f04a8e36c3.
+All inherited default/guard/tag38/43/private controls rebuild byte-exact.
+
+build_qwen38_conv_silu_precision_validation_client.sh SDK NEW_ABSOLUTE_FILE
+Independent c/d outputs BYTE-IDENTICAL495b9e18cd56f727d03695ec2f9aa554d6385fe100345c5bffa5838ebb459b68.
+Old52 client rebuilt86132 TERMINAL0 remains EXACT
+cbe472f5dd1676ec51ed97e11cc332543e15f937ba82fc8d98b062672ac7dbc4.
+SDK /Volumes/HaikuBuildLocal/generated.riscv64 read-only;no llama.cpp use.
+
+OFFLINE EVIDENCE
+New exact-role/tag/parent/observer/reinclude/image/builder gates350 and
+131072 actual extracted closed-route probes PASS twice7758/76928 CLI0.
+New ASAN/UBSAN client13460 CLI0:4positive/201faults,wrong-tag and inflated
+counter refusals,ALL references before FD,original-byte upload,CLOSE ONLY.
+Old52 ASAN/UBSAN client9736 CLI0:4positive/197faults and15atomic reference
+refusals. Old52 gates93243 CLI0:234/131072 actual routes. Native63 gates
+56115 CLI0:553/131072 actual inert routes. SiLU isolation40395 CLI0:781.
+Full original-model/controller/fault run41194 TERMINAL0:actual public root/
+team/thread/copy/global scope,real73728page initialization,precise QCB1 on
+ALL120 workers then ONE QGT1 on ALL96 halves,ALL829632LOCAL values checked
+against strict independent original references,NEXT GDDR exact,CURRENT
+immutable,full8330680word restore,explicit clean END. ALL15 injected faults
+retain owners and permit ZERO later IO. This executes production native
+owners/controller and emitted worker instructions in simulated endpoints;
+it is NOT a physical card pass,full model execution or a throughput result.
+ /private/tmp/pioneer-q38-native64-original-faults-20261024-b.log
+ SHA fd46838c4c86539568178b896bfd3ddad16c5e30777e3e8b9ab9796f38b4eef2
+837 malformed/public-role requests refuse before any endpoint IO. The
+two final350gate logs are byte-identical3d88090a1a0c3a11e689b4ff938407b5227df31bc4eb58272d380929c5790beb.
+The initial bad-counter run remains an observed failure,not overwritten.
+
+The new hash-qualified updater pair is still UNCOMMITTED WIP while its full
+regression65785 runs. It selects ONLY stable041<->exactfb995b39/tag64 and
+refuses old52 as the initial image;it cannot clear cold/unknown ownership.
+Neither updater nor candidate has been installed. Do NOT treat its live/
+empty log as a pass,install via an old mapping,or push untested updater code.
+
+HARDWARE / NEXT GATE
+One new recovery epoch followed ONE OFF68897,real human fans/LEDs-off
+confirmation,then ONE ON18579. Linux boot71e1d4d6-4f0f-4285-90b2-a335a05403b2
+had64CPUs. Pinned SD-free helper9cfc6dc3 prepare48908/boot94865 CLI0;
+session q38-silu-20261024-r64a/64/memory128-spin-idle7-top-page-nosd-control.
+Haiku desktop/input responsive per user,but no IPv4 after link toggle.
+Serial snapshot shows1Gb/s/link/configuring/RX41/TX2,not a working lease.
+Explicit inet auto-config requested;no static address guessed. Old10.0.0.247
+SSH unreachable. Fresh driver cold/owner metadata UNVERIFIED;no GPU action,
+driver replacement,Assistant change,second power pulse,SD or mains change.
+Detached serial72956 is retained;reattach69115 only observes existing log.
+
+After offline gates pass and networking returns:strict host-pinned SSH,
+verify fresh OS/64CPUs/full RAM,no compute parent,exact installed/admin/guard
+hashes and clean CPU-only metadata. Restore old52 via immutablea0d50797
+updater to stable041 FIRST. Only then independently stage/hash the qualified
+new64 client/driver/new immutable updater and run ONE precise DEBUG trial.
+Stop CLOSE ONLY on any failure;no in-place quarantine clear. A physical
+strict-reference/restore/END pass is required before promoting precision to
+the full resident continuation. Remaining full64-layer/attentionKV/sampling/
+persistent device token loop and measured whole-model throughput are not
+provided by this fixed first-token layer0 validation diagnostic.

@@ -20,6 +20,12 @@ struct GdnValidationIO {
  unsigned failCall=0,sourceDrop=0,epochDrop=0,corruptWord=UINT32_MAX,badReply=UINT32_MAX;
  uint32_t decay=0x3f000000,corruptBits=0x3f800000;bool stopped=false,closeFail=false;
  uint32_t returnedHeader[48]={};
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+ uint64_t reportedTag=UINT64_C(0x2026102400010064);
+#else
+ uint64_t reportedTag=UINT64_C(0x2026102400010052);
+#endif
+ unsigned installedWords=1185912;
  unsigned contextHead=UINT32_MAX;
  GdnValidationIO(ProjectionValidationSource& s,unsigned id):source(s),token(id){
   assert(plan.Build(source.Model(),8192,true,true));
@@ -38,7 +44,7 @@ struct GdnValidationIO {
   assert(fd==73 && !closes && !stopped && source.referenceReads==1675);calls++;
   switch(op){
    case TT_PCI_PROBE_RELOAD_STATUS:{auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
-    assert(bytes==sizeof(r) && r.version==1);r.driver=55;r.guard_version=1;r.open_count=1;r.generation=4;r.build_tag=UINT64_C(0x2026102400010052);break;}
+    assert(bytes==sizeof(r) && r.version==1);r.driver=55;r.guard_version=1;r.open_count=1;r.generation=4;r.build_tag=reportedTag;break;}
    case TT_PCI_PROBE_Q38_GDN_RENDEZVOUS_VALIDATION_SUPPORT:
     assert(bytes==sizeof(tt_q38_embedding_support));*static_cast<tt_q38_embedding_support*>(data)={1,55,17,829632,248320,512,0,0};break;
    case TT_PCI_PROBE_Q38_BANK_SUPPORT:
@@ -68,7 +74,7 @@ struct GdnValidationIO {
     reply.gated_published=1;reply.readback_half_words=8642;reply.state_runs=672;reply.state_pages=73728;reply.layer_published=1;reply.history_runs=336;reply.history_pages=1680;reply.projections=4;reply.peer_boots=reply.peer_stopped=reply.peer_held=119;
     reply.root_starts=reply.root_holds=5;reply.convolution_workers=120;reply.convolution_jobs=640;reply.convolution_channels=10240;reply.convolution_held=120;
     reply.input_workers=reply.input_installed=reply.input_armed=reply.input_released=reply.input_completed=reply.input_held=96;
-    reply.readback_workers=96;reply.readback_words=829632;reply.saved_words=reply.restored_words=8330680;reply.verified_words=16661360;reply.installed_words=1185912;
+    reply.readback_workers=96;reply.readback_words=829632;reply.saved_words=reply.restored_words=8330680;reply.verified_words=16661360;reply.installed_words=installedWords;
     // Zero original Q8/F32 matrices produce zero q/k/v/alpha/beta logits.
     // A=-1,dt=0 gives decay=beta=.5. A=-120 gives NORMAL decay near2^-120;
     // FP32 Softplus/product rounding gives bits0380001e,NOT exact2^-120.
@@ -183,5 +189,17 @@ int main(){
    && !memcmp(d.paired_prepared_actual,before.paired_prepared_actual,sizeof(d.paired_prepared_actual))
    && !memcmp(d.failing_next_row_actual,before.failing_next_row_actual,sizeof(d.failing_next_row_actual)) && io.closes==1 && io.calls==118);faults++;
  }
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT
+ for(uint64_t tag:{UINT64_C(0x2026102400010051),UINT64_C(0x2026102400010052),UINT64_C(0x2026102400010063)}){
+  ProjectionValidationSource source(fixture.file);GdnValidationIO io(source,0);io.reportedTag=tag;Session session(io,source);
+  assert(!session.Validate(0) && !session.Finish() && io.calls==1 && io.closes==1 && !io.begins && !io.runs);faults++;
+ }
+ // Reject the erroneous addition of 120 precise-overlay size deltas to
+ // the initial projection-image ledger; exact image checks are separate.
+ {ProjectionValidationSource source(fixture.file);GdnValidationIO io(source,0);io.installedWords=1230072;Session session(io,source);
+  assert(!session.Validate(0) && session.diagnostics.reason==Failure::ReplyMetadata && io.calls==118 && io.closes==1 && !io.ends);faults++;}
+ printf("PASS source-bound QGT DEBUG64 precise-convolution session positives%u/faults%u/tag64 ONLY/namespace17/1185912initial-projection-words/ALL96halves/strict-relative-gates/original references BEFORE FD/CLOSE ONLY/old tags+inflated image count refused;SYNTHETIC_NOT_CARD_OR_SPEED\n",positives,faults);
+#else
  printf("PASS source-bound QGT DEBUG session positives%u/faults%u/tag52/namespace17/ALL96halves/strict-relative-gates/1675references BEFORE FD/23238ORIGINALpages/CLOSE ONLY after first fault/CPU-only-first-failure-and-fixed-header-snapshot;SYNTHETIC_NOT_CARD_OR_SPEED\n",positives,faults);
+#endif
 }

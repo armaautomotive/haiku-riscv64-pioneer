@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_CONV_SILU_PRECISION_NATIVE
+#error Native precision diagnostic never contains CPU reference observers
+#endif
 #if defined(PIONEER_Q38_SILU_PRECISION_IMAGE) || defined(PIONEER_Q38_SILU_LEGACY_CONTROL_IMAGE)
 #error Isolated SiLU diagnostic images never include CPU reference observers
 #endif

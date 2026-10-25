@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE) || defined(PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT)
+#error Separate native/CPU precision roles never compile LOCAL arithmetic helpers
+#endif
 // Intentionally outside any include guard: reject role changes on reinclude.
 #if (defined(PIONEER_Q38_SILU_PRECISION_IMAGE) + defined(PIONEER_Q38_SILU_LEGACY_CONTROL_IMAGE)) != 1
 #error Exact single LOCAL SiLU diagnostic role required
