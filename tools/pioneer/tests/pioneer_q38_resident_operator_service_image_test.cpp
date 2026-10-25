@@ -127,6 +127,7 @@ struct ResidentOperatorPeer:FfnPersistentPeer {
   for(unsigned i=0;i<64;i++)StepBlock();assert(reads==nocReads && packets==convPackets && matrices==matrixInstructions && old==requests && writes==convWrites);}
  bool MatrixAfterConv(unsigned sequence){convActive=false;return Matrix(sequence);}
 };
+#ifndef PIONEER_Q38_RESIDENT_OPERATOR_SERVICE_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && !strcmp(argv[3],"--smoke")));setvbuf(stdout,nullptr,_IOLBF,0);
  bool smoke=argc==4;unsigned positives=0,faults=0,groups=0,minStack=0x70000;
@@ -168,3 +169,4 @@ int main(int argc,char** argv){
   old.memory[0x74100]=1;assert(!old.Finish(1) && !old.requests && !old.matrixInstructions);old.Inert();faults++;}
  printf("PASS OFFLINE actual persistent service positive%u/fault%u/maxObservedDeviceStackBytes%u;no reset/CPUref in program/old peer refusesop7/UNKNOWN inert;SYNTHETIC endpoints and weights ONLY,NO native ROOT/model/card timing qualification\n",positives,faults,0x70000-minStack);
 }
+#endif

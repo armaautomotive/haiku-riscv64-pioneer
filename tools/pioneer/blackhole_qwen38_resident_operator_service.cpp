@@ -5,6 +5,11 @@
 // immutable pins and joint native/ROOT qualification before any device use.
 #include "PioneerQ38ResidentOperatorImageRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE
+#include "PioneerQ38ResidentGdnOperatorImageRole.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnServiceShape.h"
+extern "C" void q38_resident_persistent_gdn(const uint32_t*,const uint32_t*,unsigned,unsigned);
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentConvServiceShape.h"
 extern "C" void q38_resident_persistent_conv(const uint32_t*,const uint32_t*,unsigned,unsigned);
 #define PIONEER_Q38_SFPU_ACCUMULATOR
@@ -138,7 +143,9 @@ extern "C" void q38_persistent_main()
 		if (!sequence || sequence>=0x7fffffff || sequence!=previous+1 || snapshot[10]!=Q38PersistentMarker
 			|| snapshot[11]!=worker || snapshot[12]!=sequence ||
 #ifdef PIONEER_Q38_FFN_PERSISTENT
-#ifdef PIONEER_Q38_RESIDENT_OPERATOR_IMAGE
+#ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE
+            (snapshot[13]-1>4 && snapshot[13]!=TT_Q38_RESIDENT_CONV_SERVICE_OPERATION && snapshot[13]!=TT_Q38_RESIDENT_GDN_SERVICE_OPERATION)
+#elif defined(PIONEER_Q38_RESIDENT_OPERATOR_IMAGE)
             (snapshot[13]-1>4 && snapshot[13]!=TT_Q38_RESIDENT_CONV_SERVICE_OPERATION)
 #elif defined(PIONEER_Q38_GDN_OUTPUT_INPUT_IMAGE)
             (snapshot[13]!=1 && snapshot[13]!=2 && snapshot[13]!=6)
@@ -170,6 +177,10 @@ extern "C" void q38_persistent_main()
 		}
 #ifdef PIONEER_Q38_FFN_PERSISTENT
 		if(snapshot[13]>=TT_Q38_FFN_PERSISTENT_ACTIVATION) {
+#ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE
+			if(snapshot[13]==TT_Q38_RESIDENT_GDN_SERVICE_OPERATION)q38_resident_persistent_gdn(snapshot,sealedSource,worker,self);
+			else
+#endif
 			if(snapshot[13]==TT_Q38_RESIDENT_CONV_SERVICE_OPERATION)q38_resident_persistent_conv(snapshot,sealedSource,worker,self);
 			else q38_ffn_persistent_activation(snapshot,sealedSource,worker,self);
 			previous=sequence;continue; // preserve sequence/Tensix state;NO reset

@@ -1,0 +1,94 @@
+Returning persistent matrix/Conv/cooperative GDN -- OFFLINE IMAGE checkpoint
+2026-10-25 UTC. PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE=1 requires exact
+resident IMAGE,FFN persistent and projection persistent roles. No native
+registry,driver install,card run,ROOT/full-model or throughput qualification.
+Last measured whole27B0.207893161tok/s UNCHANGED;20tok/s remains UNMET.
+
+New op8 calls the actual three-stage QGT1 input/recurrent/paired-gating
+implementation and RETURNS into the SAME persistent command loop. Matrix,
+precise Conv and GDN execute without reset,code reload or CPU intermediate
+arithmetic. This is a component integration,NOT all64layers/attentionKV/
+vocabulary/sampling/token commit. The old FFN marker grants NO authority to
+install these bytes using existing native owners or snapshot footprints.
+
+The previous local GDN header at74000 would overwrite the persistent job.
+Only this exact new IMAGE relocates it to74700. Default74000 oldQGT1 bytes
+remain exact. Reinclusion cannot change this layout or silently add a role.
+New returning GDN code occupies proposed b8000..bf4a4 within fixed proposed
+b8000..c8000;service68000..6e000 is also outside old native peer snapshots.
+NO existing mapping/snapshot is enlarged. A NEW joint owner must qualify
+this entire fixed footprint BEFORE ANY write. Future ROOT must clear ALL96
+ready cells before releasing ANY op8;workers reject stale cells themselves.
+
+Actual read-only SDK builds70655/84093(e/f) TERMINAL0,all6 sections EXACT:
+ /private/tmp/pioneer-q38-resident-gdn-service-20261025-{e,f}
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text7912B 47ff39e8f9709f9e87469e44919b374ccfbea3edd3f1f1f1b3020ecfd545c30b
+ affine5360B d8734c6a6e1cea65e8abac370292033f8be1406fa063c0f84501646aaaedca5c
+ ffn16352B f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9
+ service10300B 3498f0507019f44b4c76101ca8df2df84dc4d57e3a288703c437fb441fa0eb43
+ gdn29860B 67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648
+FIRST recompiles/authenticates ALL old matrix/Conv,QFP3 and standalone QGT1
+controls. All remain byte-exact. No undefined/writable globals/GOT;unsupported
+division,FMA,sqrt opcodes absent;only THREE READ-only cycle CSRRS,x0.
+Max NEW frame1456B<=2048;inherited activation3056B strictly nongrowing.
+Observed whole stack4260B fits unchanged8KiB reservation.
+
+Actual ASan/UBSan emitted-program VM63349 TERMINAL0:176positive worker
+scenarios/261faults. SYNTHETIC byte endpoints and clock,NOT original-model
+or physical-time evidence. SAME config/thread/LRegs/physical Dst/ownership/
+drain arrays as the original integer/Tensix matrix VM,NO detached GDN state.
+ /private/tmp/pioneer-q38-resident-gdn-service-full-20261025-b.log
+ SHA85e3169c1d0d7e1905c33694c014ce071dcf3bcc2a37d9ed5b7a0ae164d8ce35
+Six mixed paired streams(heads0/31/47,types12/14),matrix/Conv/GDN/matrix/
+changed-state GDN/matrix/STOP,sequence1..7;ALL48heads/96halves/48recurrent
+layers/7banks/0+8191positions/bothslots;two pairs x16actual NEXT carries;
+delayed peers512/2048polls;strict NORMAL relative3ppm q/k/gates/final output;
+ALL8192NEXT+64RAW bit-exact independent FP32 recurrence per half. ALL64proof
+mutations rejected. Prepared products are computed by emitted instructions,
+not fed from an oracle. Pure geometry is NOT initialized-state authority.
+Malformed jobs/descriptors/stale ready,late frozen frames,source/counter/
+lost-packet faults,missing peer,unstable/backward/stalled clocks and lost
+matrix configuration rearm all refuse;UNKNOWN remains inert. Old matrix/
+Conv IMAGE refusesop8 before packets/math. No current-slot publication.
+
+Initial full61679 TERMINAL1 found missing late doorbell recheck. Fixed the
+actual worker Current() BEFORE/AFTER all stages,not the assertion. Full pass
+above includes lost output plus late job/boot/doorbell. Earlier failed
+builds26517/26290 preserve misleading-indentation and broad linker wildcard
+errors;corrected exact object suffixes,NO widened fixed entry/section limit.
+Initial c/d images were smoke-only,NOT final qualified bytes. All dependency
+edits happened AFTER owning build/test parents were observed terminal.
+
+Closed IMAGE/layout/native/CPU/Work/build-entry gates97066 TERMINAL0:441.
+ /private/tmp/pioneer-q38-resident-gdn-service-gates-20261025-a.log
+ SHAb477cea72f56b217a1fba94e3df28f99db96d35011adebafc418a654455251b0
+Actual driver prefix,ALL10CPU references,CPU session and original observer
+reject even defined-zero or late new subtype. ALL10legacy builders refuse
+nonzero subtype BEFORE SDK/output access. Both IMAGE builders reject ANY
+nonzero PIONEER environment role,including unknown roles.
+Prior service125positive/413fault regression42569 TERMINAL0,log exact:
+ SHA0b026cd1fa9be3b5ac8cc4c2286e85faecf5da5bb5bda24ffc17d5f0d24a97e1
+Prior service356isolation gates66648 TERMINAL0. Actual native66 compile3118
+TERMINAL0 still EXACT97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437,
+old65 EXACT61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821.
+Native66 regression gates14250 TERMINAL0:old65 583/new66 430checks and EACH
+131072 actual inert routes. No native selector or public compute ABI added.
+
+Independent clean-source archive of ef2eaa8d37b67b4a0f008c80a7553fd84ab3730a
+plus EXACTLY these35owned files,excluding dirty llama.cpp and FlashNext:
+ /private/tmp/pioneer-q38-resident-gdn-clean-20261025.KPxXRyVY
+Clean build34661 TERMINAL0:ALL6new sections and old controls remain exact.
+Clean full5784 TERMINAL0:176positive/261fault,log BIT-IDENTICAL85e3169c... .
+Clean gates10568 TERMINAL0:441checks,log BIT-IDENTICALb477cea7... .
+Initial clean attempt TERMINAL1 ran before the archive preparation finished
+and could not find the prior builder. That failure is preserved separately;
+archive18485 was then observed TERMINAL0,the exact overlay reapplied AFTER
+that terminal,and fresh output image-b built/tested as recorded above.
+No source in the successful clean run changed while its parent was live.
+
+Pioneer read-only SSH returned Haiku. Baseline041 remains installed from
+the previous verified restoration;no GPU FD opened,installation,power,SD,
+network or Assistant mutation during these offline tests. Full resident
+ROOT scheduler/ROOT0six Conv groups/all64layers/attentionKV/output sampling/
+original-source native owner/restore-END and real throughput remain OWED.
