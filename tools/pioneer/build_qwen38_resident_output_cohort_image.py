@@ -74,6 +74,14 @@ for tool, argv, name in (('nm', ['-n'], 'program.symbols'), ('nm', ['-u'], 'prog
     with (output/name).open('w') as stream:
         subprocess.run([str(cross)+'-'+tool, *argv, str(output/'program.elf')], stdout=stream, check=True, env=clean)
 assert not (output/'program.undefined').read_bytes()
+symbols = (output/'program.symbols').read_text()
+for symbol,address in (('cohort_entry',0x72000),('cohort_done',0x7200c),('cohort_park',0x72038),
+                       ('cohort_park_frontend',0x7203c),('cohort_fault_park',0x72060)):
+    assert re.search('^'+format(address,'08x')+' T '+symbol+'$',symbols,re.M),(symbol,address)
+terminal = (output/'text.bin').read_bytes()
+assert len(terminal)==128 and terminal[0x38:0x40]==struct.pack('<II',0x0000006f,0xffdff06f)
+assert terminal[0x40:0x60]==bytes(32) # disjoint non-terminal padding,NEVER accepted PC
+assert terminal[0x60:0x64]==struct.pack('<I',0x001802b7) and terminal[-4:]==struct.pack('<I',0x0000006f)
 assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ', (output/'program.symbols').read_text(), re.M)
 assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|fmsub|fnmadd|fnmsub|fcvt\.wu?\.s)\b', (output/'program.disassembly').read_text())
 subprocess.run([sys.executable, str(here/'tests/pioneer_q38_gdn_rendezvous_csr_gate.py'), str(output/'program.disassembly')], check=True, env=clean)

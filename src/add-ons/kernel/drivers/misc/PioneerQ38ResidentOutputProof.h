@@ -17,10 +17,15 @@ static inline unsigned PioneerQ38ResidentOutputSequence(const uint32_t* m,unsign
 static inline uint32_t PioneerQ38ResidentOutputDelta(unsigned i,uint32_t reads,uint32_t writes,uint32_t flits,uint32_t writeFlits){
  return i==0 || i==3?reads:i==1?flits:i==2 || i==6?reads+writes:i==5?writeFlits:writes;
 }
+static inline bool PioneerQ38ResidentOutputRootTerminalPc(uint32_t pc){return pc==0x72038 || pc==0x7203c;}
+static inline bool PioneerQ38ResidentOutputRootRejectedPc(uint32_t pc){return pc>=0x72040 && pc<0x72080;}
 static inline bool PioneerQ38ResidentOutputRootPhysical(const uint32_t* status,const uint32_t* pc,uint32_t reset){
- // Exact NEW symbols:7203c is FAULT, unlike the old ROOT terminal grammar.
+ // Only for the NEW complete pinned image:both72038/7203c branch to safe
+ // PARK;fault is separately72060. Full installed-image checks remain owed
+ // by the executing owner BEFORE any hold/restore,not by copied CPU data.
  return status && pc && reset==0x46800 && status[0]==0x7200c && status[1]==5120
-  && status[2]==TT_Q38_RESIDENT_OUTPUT_COHORT_MARKER && pc[0]==0x72038 && pc[1]==0x72038;
+  && status[2]==TT_Q38_RESIDENT_OUTPUT_COHORT_MARKER
+  && PioneerQ38ResidentOutputRootTerminalPc(pc[0]) && PioneerQ38ResidentOutputRootTerminalPc(pc[1]);
 }
 static inline bool PioneerQ38ResidentOutputPeerPhysical(const uint32_t* m,unsigned w,const uint32_t* source,
  const uint32_t* boot,const uint32_t* status,uint32_t doorbell,const uint32_t* pc,uint32_t reset,bool stop){

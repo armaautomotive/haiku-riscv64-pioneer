@@ -1,0 +1,140 @@
+Qwen3.8-27B resident-output ROOT frontend separation, October25,2026
+
+OFFLINE QUALIFIED / GOAL ACTIVE / NOT A HARDWARE OR MODEL-SPEED RESULT
+Last whole-model0.207893161tok/s unchanged;20tok/s/full64-layer persistent
+on-card autoregressive inference remain UNMET. No accelerator FD,new
+linked/installed driver,Assistant/boot/CPU/RAM change,power/relay,SD,disk/
+network-configuration or mains write. Dirty llama.cpp/FlashNext untouched.
+SDK and all prior/fresh emitted fixture images stay read-only after builds.
+
+IMPLEMENTED NEW IMAGE,NOT A RELAXED OLD-IMAGE COMPLETION CHECK
+The old output ROOT placed its fault entry at7203c immediately after park
+72038. Match the existing guarded block ROOT's explicit safe-next-fetch
+pattern:72038 branches to itself,7203c branches BACK to72038;independent
+fault entry now72060,fault-loop7207c. Done7200c and boot remain unchanged.
+72040..72060 is disjoint nonterminal padding;neither it nor the complete
+fault body through72080 can pass RUN's PC guard. A bad completion PC now
+fails immediately before a second PC/reset read. Full image/physical
+source/clock/receipt/code/ownership checks before any hold remain owed.
+Only the two exact safe PCs are completion candidates;copied CPU data is
+not a capability. The actual installed complete NEW image must match.
+
+Two fresh builds64191/49948 BOTH EXIT0,all5 ROOT sections byte-identical:
+/private/tmp/pioneer-q38-output-frontend-20261025-a
+/private/tmp/pioneer-q38-output-frontend-20261025-b
+Both builders verify ALL old generic ROOT/QPM1/companion pins FIRST.
+ALL6 final peer sections also compare byte-identically to the prior frozen
+output peer. Only the new output ROOT text and relocated fault-call words
+change. Exact new pins:
+text128B:c0569650df36e13b51c78b3ce8183bd0aba8e992ad4b5fc0361cb55d0081dd50
+conv6472B:f1816502e3095391503e335bad44b78cf92389cb1528fa8992a014a6b632288a
+matrix14136B:1d2e2e7e4c8f806ff2983e5d9a2ccbd1a4d177940c7e23d73b6de33bae7e7559
+cohort50692B:5c9111c6cbf897f6a713923bef8a35e74da37120b94b632c0fd29690333017ce
+Boot remains e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b.
+The existing all11-before-output generator produced all4 updated headers
+via apply_patch;no hand-assembled byte arrays or mixed old/new generation.
+Complete code2259580words/9038320bytes (+9ROOTwords). Conservative journal
+10951352words/43805408bytes and every native mapping/logical grant are
+UNCHANGED. Allocated text padding is pinned DATA,not an executable PC grant.
+
+COMPLETED CONTROLS,NOT A SUBSTITUTE FOR THE WHOLE NATIVE SUITES
+34767 EXIT0:ALL11 actual header/binary comparisons,ALL120 code mappings,
+every L1 word,exact safe jumps versus OLD aliased fault word,excluded gaps
+and bad PC/data bounds. Generator47 binary roundtrip/corruption/length/
+arity refusals also EXIT0.424 emitted-image/role gates72106 EXIT0.
+Completion90466 EXIT0:ALL3 actual full arithmetic layer/position/bank/slot
+variants,5120 independent rows,119 actual peer STOPs,all counter ancestry;
+1399 metadata refusals in variant0. ALL4 two-safe-PC combinations accepted;
+padding/fault/fault-loop/neighbor PCs rejected. Also executed the ACTUAL
+emitted instruction at7203c after genuine completion:returns to72038 with
+ZERO extra NoC read or packet. No success/product/owner was injected.
+
+Footprint78821 EXIT1 exposed a pre-existing TEST extractor bug:cutting the
+shared fixture before main left its later-added #ifndef unclosed. After
+that parent's actual terminal,replaced only that runner's extraction with
+the existing MACHINE_ONLY include. Production/code/geometry/tolerance did
+not change. Corrected68404 EXIT0:all10951352 snapshot words,all2259580 code
+words and actual complete ROOT write trace/119 peer final maps;1977225
+observed runtime words stay inside the same snapshot without program writes.
+Both initial/fixed logs remain retained;initial failure is not a PASS.
+
+Whole ACTUAL real-context/KernelExport/IO/owner/END compile55102/46681
+BOTH EXIT0,objects byte-identical,maxNewFrame1488,all conventional driver
+entries absent and renamed entries audited inert. New object SHA256:
+a465845f6a76cc6c848d68a38ff74ab624ab7a2dc18060f3c31bb4974e82d071
+Actual old65 control remains byte-identical61faa093. No linked driver or
+physical-role permission follows from compile-only67.
+
+COMPLETE ORIGINAL AND CLEAN NATIVE SUITES AND WHOLE PROGRAM SUITE PASSED
+Original genuine native positive+50inert+17faults parent32645 EXIT0:
+/private/tmp/pioneer-q38-output-frontend-native-all-20261025-a.log
+Independent clean archive0079f0527b plus owned18 source overlays:
+/private/tmp/pioneer-output-frontend-clean.X4Pm5mOX
+Its corresponding complete native parent17403 EXIT0:
+/private/tmp/pioneer-q38-output-frontend-native-all-20261025-clean-a.log
+The TEST debug-PC endpoint alternates the two safe reported PCs ONLY after
+ACTUAL VM architectural completion. Every successful native run must observe
+that frontend sample and still complete all5120 results/STOP/full restore/
+END. New faults14/15/16 report actual fault entry/padding/fault-loop PCs
+after real completion;17 substitutes the OLD aliased fault instruction
+while the new safe PC is sampled. All must retain before any ROOT hold or
+restore,with ZERO later IO/retry/END. No status,ready,private owner or
+numeric product is fabricated by this endpoint behavior.
+Both complete native logs compare byte-identically,SHA256:
+22a24db547d1c835f4a5e003ef114810cf42410fb66b6b1105913c092061ba98
+Each complete aggregate is from its SAME original parent through EXIT0,
+not a union of child results. Both dependency sets stayed frozen throughout.
+
+Complete ACTUAL new-image arithmetic3variants+ALL117 coordinator faults
+parent97264 EXIT0,16:07UTC:
+/private/tmp/pioneer-q38-output-frontend-cohort-full-20261025-a.log
+Complete log SHA256:
+1395acbc5039605507632b9fec72b0f3e9ef5a28b9f2e3da3bff5af976ba7170
+The prior113-case description was a counting error,NOT a test exclusion:
+the full runner reports117=64QOL+13matrix+7pairedcounter+24line+3late+
+2losttransfer+4malformed-manifest cases. This was ONE original complete
+parent from launch through terminal0,not a union of partial child outputs.
+All original and clean production/context/test/transport/machine/image/
+common dependencies stayed FROZEN until their authoritative parents
+terminated. No observation timeout was treated as terminal or a restart.
+New separate fixed-readback DATA checkpoint5276864b5b was developed and
+independently qualified without modifying ANY live sweep dependency.
+
+NEXT / OBJECTIVE UNCHANGED
+Read-only investigation of the next physical boundary found an important
+readback constraint:the old GdnTimedValidationReadback observes NEXT state
+locally at a0000 while ALL120 are held BEFORE subsequent matrix work. The
+resident matrix reuses that local operand region (rows.cpp inputBase and
+its bounded ReadCommand/FetchBlock path). Do not copy DEBUG52's local-state
+observer blindly into this combined pipeline. Final-state qualification
+must use the fixed canonical GDDR destinations or a genuine earlier held
+checkpoint,inside the same owner before restore. Existing DEBUG55 shows
+how fixed poisoned page transfers track their own command/counter deltas;
+neither a copied recipe nor an arbitrary-address read mode is authorized.
+There is a second exact-address mismatch:old DEBUG55 observes its result
+at TT_Q38_GDN_OUTPUT_RESULT=0x156000,whereas this new resident matrix
+publishes the5120 final rows at TT_Q38_PROJECTION_OUTPUT_OFFSET=0x100000
+in the SAME canonical workspace. Its native operands/scales also remain
+available in their fixed GDDR spans. The eventual observer must resolve
+those NEW actual destinations,not reuse the old output result offset.
+No new protocol/owner/readback code has been added on this evidence yet.
+The complete native/program qualifiers now pass. A physical native/DEBUG boundary
+with its own proper role (NOT compile-only67),original-GGUF/native-card
+qualification still remains. Extend the persistent program through full
+residual/RMS/FFN/attention,all64layers,current-slot/autoregressive token
+loop,and benchmark/optimize real27B inference toward20tok/s. Only qualified
+no-CPU-reference Work may enter Assistant. None of these offline checks
+is a whole-model/token-rate result or a replacement for that end state.
+
+Additional exhaustive emitted delta audit this continuation:the entire old text
+prefix through7203c is unchanged;the complete32-byte fault body moves
+byte-identically from7203c to72060,with the explicit backward jump and
+32zero padding inserted. Every word of Conv1618/matrix3534/cohort12673
+was compared. ALL23 changed words are ONLY23 decoded AUIPC/JALR fault
+calls (2/7/14 respectively),target7203c->72060,with opcode/registers
+unchanged. The preceding AUIPC and remaining words are unchanged;boot
+and ALL6 peer sections also compare byte-identically. This was an
+exhaustive binary/instruction audit,not a truncated disassembly diff.
+Read-only pinned SSH returned Haiku/uptime12:19 this continuation;the
+delayed fans-off reply did not cause any extra ON/OFF pulse. No hardware
+write or installed-driver change followed from this source audit.

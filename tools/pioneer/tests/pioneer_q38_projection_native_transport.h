@@ -46,6 +46,7 @@ public:
  void ResidentOutputSources(const char*,const char*,ResidentOutputNativeStateBytes&);
  uint32_t ResidentOutputRead(uint32_t);void ResidentOutputWrite(uint32_t,uint32_t);
  unsigned ResidentOutputBoots()const;unsigned ResidentOutputStops()const;void VerifyResidentOutput();
+ unsigned ResidentOutputFrontendSamples()const; // TEST physical debug-PC sampling after actual completion ONLY
  void ResidentOutputFault(unsigned,const PioneerQ38ResidentOutputResult&); // TEST fault timing,NEVER a grant
  bool ResidentOutputFaultInjected()const;unsigned ResidentOutputFaultFence()const;
 #endif

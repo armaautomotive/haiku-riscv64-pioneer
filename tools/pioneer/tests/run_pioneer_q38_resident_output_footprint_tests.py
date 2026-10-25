@@ -23,10 +23,9 @@ for section, size, digest in root_pins[0]:
 for section, digest in peer_pins[0]:
     assert hashlib.sha256((image/'exact-companion'/(section+'.bin')).read_bytes()).hexdigest() == digest
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
-source = (here/'pioneer_q38_resident_output_cohort_image_test.cpp').read_text()
-entry = '\nint main(int argc,char** argv){'
-assert source.count(entry) == 1
 trace = r'''
+#define PIONEER_Q38_RESIDENT_OUTPUT_COHORT_MACHINE_ONLY
+#include "pioneer_q38_resident_output_cohort_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputFootprint.h"
 struct FootprintFabric:OutputCohortFabric {
  using OutputCohortFabric::OutputCohortFabric;
@@ -58,5 +57,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-output-footprint-', dir='/priva
     subprocess.run([str(binary), str(image)], check=True, env=environment)
     binary = pathlib.Path(temporary)/'trace'
     subprocess.run([*base, *flags, '-I', str(here), '-x', 'c++', '-', '-o', str(binary)],
-                   input=source.split(entry)[0]+trace, text=True, check=True)
+                   input=trace, text=True, check=True)
     subprocess.run([str(binary), str(image)], check=True, env=environment)

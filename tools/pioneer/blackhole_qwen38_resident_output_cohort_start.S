@@ -5,7 +5,7 @@
 .global _start
 _start: j cohort_entry
 .section .text.start,"ax"
-.global cohort_entry,cohort_done,cohort_park,cohort_fault_park
+.global cohort_entry,cohort_done,cohort_park,cohort_park_frontend,cohort_fault_park
 cohort_entry:
  li sp,0x70000
  call q38_resident_cohort_main
@@ -19,6 +19,10 @@ cohort_done:
  lw t1,8(t0)
  fence
 cohort_park: j cohort_park
+/* The architectural branch and its sampled next-fetch address BOTH
+ * return to the safe park. The fault entry must never alias either. */
+cohort_park_frontend: j cohort_park
+.org 0x60
 cohort_fault_park:
  li t0,0x17ffc8
  li t1,0x464f4351

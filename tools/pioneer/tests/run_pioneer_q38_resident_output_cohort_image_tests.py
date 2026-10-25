@@ -14,10 +14,10 @@ here = pathlib.Path(__file__).resolve().parent
 image, peer = map(pathlib.Path, sys.argv[1:3])
 PINS = (
     ('boot', 4, 'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'),
-    ('text', 92, 'a5c7dc3a5349fddf0f27570c6a4ae1b22ad7b60ee418931235404eaf7a141aae'),
-    ('conv', 6472, '6ed515323e4b3376f6e3f4bc8d78348643a6c758d822170fee799cec404a4694'),
-    ('matrix', 14136, 'e86c2813892c807d6fe51c5f65fe58199169ff189d4abea15e2c96b89f4d9f6a'),
-    ('cohort', 50692, '76958ca27a42af608d44fc6d3e9f4561853a61057b4d1b9889dc1acd0198bc7d'),
+    ('text', 128, 'c0569650df36e13b51c78b3ce8183bd0aba8e992ad4b5fc0361cb55d0081dd50'),
+    ('conv', 6472, 'f1816502e3095391503e335bad44b78cf92389cb1528fa8992a014a6b632288a'),
+    ('matrix', 14136, '1d2e2e7e4c8f806ff2983e5d9a2ccbd1a4d177940c7e23d73b6de33bae7e7559'),
+    ('cohort', 50692, '5c9111c6cbf897f6a713923bef8a35e74da37120b94b632c0fd29690333017ce'),
 )
 for section, size, digest in PINS:
     data = (image/(section+'.bin')).read_bytes()

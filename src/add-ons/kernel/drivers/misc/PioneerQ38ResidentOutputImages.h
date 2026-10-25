@@ -66,10 +66,10 @@ static inline bool PioneerQ38ResidentOutputProgramWord(unsigned w,uint32_t a,uin
  return false;
 }
 static_assert(sizeof(PioneerQ38ResidentOutputRootBoot)==4 && sizeof(PioneerQ38ResidentOutputRootConv)==6472
- && sizeof(PioneerQ38ResidentOutputRootMatrix)==14136 && sizeof(PioneerQ38ResidentOutputRootMain)==92
+ && sizeof(PioneerQ38ResidentOutputRootMatrix)==14136 && sizeof(PioneerQ38ResidentOutputRootMain)==128
  && sizeof(PioneerQ38ResidentOutputRootCohort)==50692,"ALL five exact ROOT sections,not old cohort");
 static_assert(sizeof(PioneerQ38ResidentOutputPeerBoot)==4 && sizeof(PioneerQ38ResidentOutputPeerFfn)==16352
  && sizeof(PioneerQ38ResidentOutputPeerService)==10300 && sizeof(PioneerQ38ResidentOutputPeerAffine)==5360
  && sizeof(PioneerQ38ResidentOutputPeerMain)==7940 && sizeof(PioneerQ38ResidentOutputPeerGdn)==35396,"ALL six exact QOL1 peer sections,not old GDN");
-static_assert(TT_Q38_RESIDENT_OUTPUT_CODE_WORDS==2259571 && TT_Q38_RESIDENT_OUTPUT_CODE_WORDS*4==9038284,"exact complete code DATA,not snapshot size or lease");
+static_assert(TT_Q38_RESIDENT_OUTPUT_CODE_WORDS==2259580 && TT_Q38_RESIDENT_OUTPUT_CODE_WORDS*4==9038320,"exact complete code DATA,not snapshot size or lease");
 #endif

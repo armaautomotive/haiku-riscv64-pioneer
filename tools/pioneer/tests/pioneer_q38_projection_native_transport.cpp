@@ -64,7 +64,7 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
  std::unique_ptr<ResidentOutputExecutionMachine> resident;
  ResidentOutputNativeStateBytes* residentBytes=nullptr;bool residentStarted[120]={};
  const PioneerQ38ResidentOutputResult* residentResult=nullptr;
- unsigned residentFault=0,residentFence=0;bool residentInjected=false;
+ unsigned residentFault=0,residentFence=0,residentRootPcReads=0,residentFrontendSamples=0;bool residentInjected=false;
  bool ResidentAt(unsigned phase,unsigned worker)const{return residentResult && residentResult->phase==phase && current==worker;}
  std::vector<uint32_t> residentExtra;
  uint32_t ResidentRead(unsigned w,uint32_t a){
@@ -402,6 +402,7 @@ uint32_t ProjectionNativeTransport::ResidentOutputRead(uint32_t a){auto& p=*impl
 void ProjectionNativeTransport::ResidentOutputWrite(uint32_t a,uint32_t v){auto& p=*implementation;p.Touch();assert(p.resident);p.ResidentWrite(p.current,a,v);}
 unsigned ProjectionNativeTransport::ResidentOutputBoots()const{return implementation->resident?implementation->resident->Boots():0;}
 unsigned ProjectionNativeTransport::ResidentOutputStops()const{return implementation->resident?implementation->resident->Stops():0;}
+unsigned ProjectionNativeTransport::ResidentOutputFrontendSamples()const{return implementation->residentFrontendSamples;}
 void ProjectionNativeTransport::VerifyResidentOutput(){assert(implementation->resident);implementation->resident->VerifyOutput();}
 void ProjectionNativeTransport::ResidentOutputFault(unsigned kind,const PioneerQ38ResidentOutputResult& result){auto& p=*implementation;
  assert(p.resident && !p.residentInjected);p.residentFault=kind;p.residentResult=&result;
@@ -434,7 +435,19 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
  if(p.resident && p.residentFault==12 && !p.residentInjected && p.ResidentAt(6,119) && kind==Noc && a==BlackholeDramSourceOffset(11)){
   p.residentInjected=true;p.residentFence=p.touches;return p.C().ResidentNocRead(a)^1;
  }
- if(p.resident && kind==Pc){assert(p.residentStarted[p.current] && p.C().coreReset==0x46800);p.resident->Advance(p.current);return p.resident->Pc(p.current);}
+ if(p.resident && kind==Pc){
+  assert(p.residentStarted[p.current] && p.C().coreReset==0x46800);p.resident->Advance(p.current);
+  auto pc=p.resident->Pc(p.current);
+  if(!p.current && pc==0x72038){
+   if(p.residentFault>=14 && p.residentFault<=16 && p.ResidentAt(5,0)){
+    p.residentInjected=true;p.residentFence=p.touches;
+    return p.residentFault==14?0x72060:p.residentFault==15?0x72040:0x7207c;
+   }
+   // Model ONLY the debug register's next-fetch report after ACTUAL VM
+   // completion. No ready flag,status,product,owner or reset is fabricated.
+   if(++p.residentRootPcReads&1){p.residentFrontendSamples++;return 0x7203c;}
+  }return pc;
+ }
  if(p.resident && (kind==Status || kind==Panel || (kind==Local && a>=2032 && a<2040))){
   // Status/PC polls advance real instructions. Immutable-code verification
   // reads must NOT copy a whole emulated L1 after EVERY instruction word.
@@ -442,6 +455,11 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
   if(poll && p.residentStarted[p.current] && p.C().coreReset==0x46800)p.resident->Advance(p.current);
   uint32_t address=kind==Status?0x17ffc0+a*4:kind==Panel?a:0x17e000+a*4;
   auto value=p.ResidentRead(p.current,address);
+  if(p.residentFault==17 && !p.residentInjected && p.ResidentAt(5,0) && address==0x7203c
+   && p.residentStarted[0] && p.resident->Pc(0)==0x72038){
+   assert(value==0xffdff06f);p.residentInjected=true;p.residentFence=p.touches;
+   return 0x001802b7; // actual old aliased fault-entry word MUST NOT qualify the new image
+  }
   if(!p.residentInjected && ((p.residentFault==9 && p.ResidentAt(8,119) && address==0x7417c && p.resident->Stops())
    || (p.residentFault==13 && p.ResidentAt(11,119) && address==0x17ffdc))){
    p.residentInjected=true;p.residentFence=p.touches;return value^1;

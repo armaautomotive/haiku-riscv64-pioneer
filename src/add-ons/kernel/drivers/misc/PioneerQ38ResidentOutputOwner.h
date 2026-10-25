@@ -151,7 +151,7 @@ class PioneerQ38ResidentOutputOwner {
  }
  template<class IO> bool RootPhysical(IO& io){
   uint32_t status[3],pc[2];for(unsigned i=0;i<3;i++)status[i]=io.RuntimeStatusRead(i);
-  for(unsigned i=0;i<2;i++){io.Pause();pc[i]=io.RuntimePcRead();}
+  for(unsigned i=0;i<2;i++){io.Pause();pc[i]=io.RuntimePcRead();if(!PioneerQ38ResidentOutputRootTerminalPc(pc[i]))return false;}
   return PioneerQ38ResidentOutputRootPhysical(status,pc,io.ResetRead());
  }
  template<class IO> bool RootReceipt(IO& io,PioneerQ38ResidentOutputResult& r){
@@ -275,7 +275,7 @@ public:
    uint32_t marker=io.RuntimeStatusRead(2);
    if(marker && marker!=TT_Q38_RESIDENT_OUTPUT_COHORT_MARKER)return Fail(io,r);
    if(marker){if(!RootReceipt(io,r))return Fail(io,r);done=true;break;}
-   io.Pause();uint32_t pc=io.RuntimePcRead();if(!PioneerQ38ResidentOutputProgramImmutable(0,pc) || (pc>=0x7203c && pc<0x7205c))return Fail(io,r);
+   io.Pause();uint32_t pc=io.RuntimePcRead();if(!PioneerQ38ResidentOutputProgramImmutable(0,pc) || PioneerQ38ResidentOutputRootRejectedPc(pc))return Fail(io,r);
   }
   if(!done)return Fail(io,r);
   r.phase=6;

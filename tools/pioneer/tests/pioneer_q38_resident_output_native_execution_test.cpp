@@ -32,9 +32,9 @@ static void FinishNativeOutput(NativeBindingFixture& f,ProjectionNativeTransport
  bool ran=RunQ38ResidentOutputNative(c,output);
  if(fault==5 || fault==6){assert(!ran && !output.rootStarts && !output.rootHolds && !output.memory.restoredWords
   && f.io.touches==touches && transport.Touches()==device);UnknownNativeOutput(f,transport,output,fault);return;}
- if(fault==8 || fault==12){assert(!ran && transport.ResidentOutputFaultInjected() && !output.rootHolds && !output.memory.restoredWords);
+ if(fault==8 || fault==12 || (fault>=14 && fault<=17)){assert(!ran && transport.ResidentOutputFaultInjected() && !output.rootHolds && !output.memory.restoredWords);
   UnknownNativeOutput(f,transport,output,fault);return;}
- assert(ran);transport.VerifyResidentOutput();
+ assert(ran && transport.ResidentOutputFrontendSamples());transport.VerifyResidentOutput();
  puts("NEW_NATIVE_COMPLETE_ACTUAL_CONV_GDN_QOL1_ALL5120_OUTPUTS;BEGIN_CLOSE");
  bool closed=CloseQ38ResidentOutputNative(c,output);
  if((fault>=9 && fault<=11) || fault==13){
@@ -122,7 +122,7 @@ int main(int argc,char** argv){
   && !f.io.ResidentOutputPrefixInitializationScope());
  puts("NEW_NATIVE_ACTUAL_MAPS_PREPARE_CLAIM_AND119BOOT;BEGIN_RUN");
  if(!strcmp(argv[8],"--all")){
-  for(unsigned fault:{0U,5U,6U,7U,8U,9U,10U,11U,12U,13U})NativeOutputChild([&](){FinishNativeOutput(f,transport,output,fault);});
-  puts("PASS COMPLETE ACTUAL_NATIVE_OUTPUT positive plus13 native containment failures;forks inherit ACTUAL private prefix/claim/installed119boot,NEVER fabricated owner or completion;TEST byte endpoints,NOT silicon/fullmodel/rate");
+  for(unsigned fault:{0U,5U,6U,7U,8U,9U,10U,11U,12U,13U,14U,15U,16U,17U})NativeOutputChild([&](){FinishNativeOutput(f,transport,output,fault);});
+  puts("PASS COMPLETE ACTUAL_NATIVE_OUTPUT NEW dual-park positive plus17 native containment failures including fault/padding/fault-loop PC+old aliased fault instruction;forks inherit ACTUAL private prefix/claim/installed119boot,NEVER fabricated owner or completion;TEST byte endpoints,NOT silicon/fullmodel/rate");
  }else FinishNativeOutput(f,transport,output,0);
 }

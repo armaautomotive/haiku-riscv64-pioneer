@@ -24,7 +24,12 @@ static void VerifyCompletion(OutputCohortFabric& f,const CompletionSnapshot& sna
  auto physicalRoot=[&](){return PioneerQ38ResidentOutputRootPhysical(status,pc,reset);};assert(physicalRoot());
  if(mutation){
   Mutate(status,3,physicalRoot);Mutate(pc,2,physicalRoot);reset=0x47800;assert(!physicalRoot());reset=0x46800;refusals++;
-  pc[0]=0x7203c;assert(!physicalRoot());pc[0]=f.pc;refusals++;
+  for(unsigned first:{0x72038U,0x7203cU})for(unsigned second:{0x72038U,0x7203cU}){
+   pc[0]=first;pc[1]=second;assert(physicalRoot());
+  }
+  for(unsigned bad:{0x72034U,0x72040U,0x7205cU,0x72060U,0x7207cU,0x72080U})for(unsigned slot=0;slot<2;slot++){
+   pc[0]=pc[1]=f.pc;pc[slot]=bad;assert(!physicalRoot());refusals++;
+  }pc[0]=pc[1]=f.pc;
   // Cycle values are diagnostics; their framing/nonzero requirement is
   // tested separately. No claim that arbitrary timing bit changes fail.
   Mutate(stats,64,root);Mutate(matrix,57,root);Mutate(f.command,10,root);
@@ -83,6 +88,10 @@ int main(int argc,char** argv){
  const unsigned layers[]={0,62,30},positions[]={0,8191,5},banks[]={0,6,3};
  OutputParts parts(layers[variant],positions[variant]);OutputCohortFabric f(argv[1],argv[2],parts,banks[variant],variant&1);
  auto snapshot=std::make_unique<CompletionSnapshot>(f);assert(f.Run());f.Verify();f.Inert();
+ // Execute the ACTUAL emitted next-fetch instruction too. It must return
+ // to the safe architectural park without any NoC read or packet.
+ unsigned packets=f.packets,reads=f.nocReads;assert(f.pc==0x72038);f.pc=0x7203c;f.StepRoot();
+ assert(f.pc==0x72038 && f.packets==packets && f.nocReads==reads);
  VerifyCompletion(f,*snapshot,variant==0);
- printf("PASS complete resident-output independent ROOT+ALL119 pre-boot-to-final counter lineage/96 actual GDN summary+clock chains/ALL5120 outputs/ACTUAL119 STOP terminals/NOT old ROOT fault7203c/metadataRefusals%u variant%u;NO CPU products/injected success/reset/restore/native grant/throughput claim\n",refusals,variant);
+ printf("PASS complete resident-output independent ROOT+ALL119 pre-boot-to-final counter lineage/96 actual GDN summary+clock chains/ALL5120 outputs/ACTUAL119 STOP terminals/NEW dual safe park72038+7203c versus disjoint fault72060/metadataRefusals%u variant%u;NO CPU products/injected success/reset/restore/native grant/throughput claim\n",refusals,variant);
 }

@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputImages.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputProof.h"
 static std::vector<uint32_t> Read(const std::string& path){
  std::ifstream input(path,std::ios::binary|std::ios::ate);assert(input);
  const auto bytes=input.tellg();assert(bytes>0 && bytes%4==0);
@@ -14,6 +15,14 @@ static std::vector<uint32_t> Read(const std::string& path){
 }
 int main(int argc,char** argv){
  assert(argc==3);unsigned total=0;
+ uint32_t word=0;
+ assert(PioneerQ38ResidentOutputProgramWord(0,0x72038,word) && word==0x0000006f);
+ assert(PioneerQ38ResidentOutputProgramWord(0,0x7203c,word) && word==0xffdff06f && word!=0x001802b7); // NOT old fault entry
+ assert(PioneerQ38ResidentOutputProgramWord(0,0x72060,word) && word==0x001802b7);
+ for(uint32_t pc=0x72000;pc<0x72084;pc++){
+  assert(PioneerQ38ResidentOutputRootTerminalPc(pc)==(pc==0x72038 || pc==0x7203c));
+  if(pc>=0x72040 && pc<0x72080)assert(PioneerQ38ResidentOutputRootRejectedPc(pc));
+ }
  const char* root[]={"boot","conv","matrix","text","cohort"};
  const char* peer[]={"boot","ffn","service","affine","text","gdn"};
  std::vector<uint32_t> images[2][6];
@@ -54,5 +63,5 @@ int main(int argc,char** argv){
   assert(PioneerQ38ResidentOutputCodeAddress(w,0)==UINT32_MAX
    && !PioneerQ38ResidentOutputProgramWord(w,0x6000,value) && value==0x5a6bc7d8);
  }
- std::printf("PASS resident-output ALL11 exact emitted-image sections/ALL120 mappings/2259571 code words/9038284 bytes; every L1 word checked, padding+stacks+runtime+MMIO+bad worker+unaligned refused without output mutation; code DATA only,NO native owner or hardware grant\n");
+ std::printf("PASS resident-output ALL11 exact emitted-image sections/ALL120 mappings/2259580 code words/9038320 bytes; every L1 word checked, padding+stacks+runtime+MMIO+bad worker+unaligned refused without output mutation; code DATA only,NO native owner or hardware grant\n");
 }
