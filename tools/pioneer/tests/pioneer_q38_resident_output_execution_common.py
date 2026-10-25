@@ -10,7 +10,7 @@ import subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 
 
-def compile_test(directory, sources, fixtures, *, producer=True, native_projection=False):
+def compile_test(directory, sources, fixtures, *, producer=True, native_projection=False, extra_flags=()):
     assert len(fixtures) == 5
     for name, (section, size, digest, _) in runpy.run_path(str(HERE.parent/'generate_qwen38_projection_stash_images.py'))['PINS'].items():
         data = (pathlib.Path(fixtures[0 if name.startswith('root-') else 1])/(section+'.bin')).read_bytes()
@@ -28,6 +28,11 @@ def compile_test(directory, sources, fixtures, *, producer=True, native_projecti
               '-DPIONEER_Q38_EMBEDDING_NATIVE=1','-DPIONEER_Q38_LEARNED_RMS_NATIVE=1','-DPIONEER_Q38_PROJECTION_EXECUTION_OWNER=1',
               '-DPIONEER_Q38_NORMAL_CLOCK=1','-DPIONEER_Q38_GDN_MUTABLE_STATE=','-DPIONEER_Q38_DECODER_RUNTIME=1',
               '-DPIONEER_Q38_TEST_RESIDENT_OUTPUT_EXECUTION=1']
+    for flag in extra_flags:
+        assert re.fullmatch(r'-D[A-Z][A-Z0-9_]*(?:=[A-Za-z0-9_]+)?',flag),flag
+        key=flag.split('=',1)[0]
+        flags=[old for old in flags if old!=key and not old.startswith(key+'=')]
+        flags.append(flag)
     native = (HERE.parents[2]/'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
     for prefix, names in [('embedding',('scope','unsafe','mapping','factory','end')),('rms',('scope','factory'))]:
         for name in names:

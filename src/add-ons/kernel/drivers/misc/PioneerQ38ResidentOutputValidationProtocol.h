@@ -3,9 +3,9 @@
 #define PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_PROTOCOL_H
 #include <stddef.h>
 #include "PioneerQ38EmbeddingProtocol.h"
-// Reserved separate combined-output DEBUG namespace19. No existing driver
-// advertises/implements this endpoint yet. A distinct physical role and
-// original-GGUF qualification are REQUIRED;compile-only67 is NOT that role.
+// Separate combined-output DEBUG68/namespace19. The actual private native
+// lifetime and original-GGUF qualification are REQUIRED before Work;
+// compile-only67 is NOT this physical role or a loadable driver.
 // Logical token/position0/layer0 ONLY. No pointers,addresses,routes,code,
 // numeric inputs,thresholds,owner/readiness/current-slot or cleanup grants.
 #define TT_PCI_PROBE_Q38_RESIDENT_OUTPUT_VALIDATION_SUPPORT (B_DEVICE_OP_CODES_END+0x62f0)

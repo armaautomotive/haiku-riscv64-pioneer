@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 #define PIONEER_BANKS_MOCK_ONLY
 #include "pioneer_resident_banks_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphPlan.h"

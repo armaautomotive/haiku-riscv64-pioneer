@@ -44,6 +44,7 @@ public:
  void Observe(const PioneerQ38ProjectionGraphResult& result); // TEST fault timing only
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  void ResidentOutputSources(const char*,const char*,ResidentOutputNativeStateBytes&);
+ void ConfigureResidentOutputControl(const char*,const char*,ResidentOutputNativeStateBytes&,unsigned fault=0,unsigned page=0,unsigned word=0);
  uint32_t ResidentOutputRead(uint32_t);void ResidentOutputWrite(uint32_t,uint32_t);
  unsigned ResidentOutputBoots()const;unsigned ResidentOutputStops()const;void VerifyResidentOutput();
  unsigned ResidentOutputFrontendSamples()const; // TEST physical debug-PC sampling after actual completion ONLY

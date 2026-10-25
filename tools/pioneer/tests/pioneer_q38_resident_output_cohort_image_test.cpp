@@ -175,14 +175,21 @@ struct OutputCohortFabric:CohortFabric {
   }
   CohortFabric::Submit();
  }
- void Verify(){
+ void Verify(bool stopped=false){
   assert(!pending && !unknown && postCaptures==1152 && Mem(0x17ffc0)==donePc && Mem(0x17ffc4)==5120 && Mem(0x17ffc8)==TT_Q38_RESIDENT_OUTPUT_COHORT_MARKER);
   assert(gdnNumericsVerified && preparedVerified && convLaunches==119 && gdnLaunches==96 && outputLaunches==24 && matrixLaunches==119);
   assert(lineReads==24 && compactWrites==1 && nativeReads==1 && scaleReads==1 && resultWrites==119);
   assert(Mem(TT_Q38_COHORT_STATS+7*4)==24 && Mem(TT_Q38_COHORT_STATS+8*4)==24 && Mem(TT_Q38_COHORT_STATS+9*4)==5120);
   for(unsigned w=0;w<119;w++){
    auto& p=*peers[w];unsigned seq=w<24?4:w<96?3:2;
-   assert(!p.active && p.GdnFinished(seq) && p.CorrectRows() && !p.dotProbeReads && Mem(TT_Q38_COHORT_SEQUENCE+w*4)==seq);
+   // The public control returns AFTER genuine STOP,not at RUN's WAIT PC.
+   // Verify the ACTUAL newer terminal/nonce/receipt in that case;never
+   // replace either lifecycle proof with a cached ready/completion flag.
+   if(stopped)assert(p.pc==TT_Q38_PEER_STOP && !p.pending
+    && p.memory.at(0x74140)==seq+1 && p.memory.at(0x74144)==seq+1
+    && p.memory.at(0x7414c)==TT_Q38_FFN_PERSISTENT_MARKER && !p.memory.at(0x74148) && p.memory.at(0x74150)==2);
+   else assert(p.GdnFinished(seq));
+   assert(!p.active && p.CorrectRows() && !p.dotProbeReads && Mem(TT_Q38_COHORT_SEQUENCE+w*4)==seq);
    unsigned first=post[1016+w];
    for(unsigned i=0;i<p.RowsMachine::groups*16;i++)assert(coverage[first+i]==1 && Gddr(manifest[9],manifest[8]+TT_Q38_PROJECTION_OUTPUT_OFFSET+(first+i)*4)==p.buffers[4096+i]);
   }

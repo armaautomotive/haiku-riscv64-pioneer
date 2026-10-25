@@ -125,7 +125,10 @@ void ResidentOutputExecutionMachine::Advance(unsigned w){implementation->Advance
 unsigned ResidentOutputExecutionMachine::Pc(unsigned w)const{const auto& p=*implementation;assert(p.booted[w]);return w?p.machine->peers[w-1]->pc:p.machine->pc;}
 unsigned ResidentOutputExecutionMachine::Boots()const{return implementation->boots;}
 unsigned ResidentOutputExecutionMachine::Stops()const{return implementation->stops;}
-void ResidentOutputExecutionMachine::VerifyOutput(){auto& p=*implementation;assert(p.exported);p.machine->Verify();p.machine->Inert();}
+void ResidentOutputExecutionMachine::VerifyOutput(){auto& p=*implementation;
+ assert(p.exported && (p.stops==0 || p.stops==119));
+ p.machine->Verify(p.stops==119);p.machine->Inert();
+}
 void ResidentOutputExecutionMachine::Diagnostic()const{
  const auto& p=*implementation;if(!p.machine)return;const auto& f=*p.machine;
  fprintf(stderr,"OUTPUT_CAPTURED pc%08x steps%u packets%u conv%u gdn%u output%u matrix%u\n",f.pc,f.steps,f.packets,f.convLaunches,f.gdnLaunches,f.outputLaunches,f.matrixLaunches);

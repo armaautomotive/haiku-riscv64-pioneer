@@ -1,0 +1,77 @@
+Separate combined-output DEBUG68 checkpoint, 2026-10-25.
+This is NOT a Work mode,full64-layer/token-loop implementation or speedup.
+Last measured whole-model throughput remains 0.207893161tok/s;20tok/s UNMET.
+
+Actual complete production kernel/context/IO/control/END role:exact28parents,
+tag2026102500010068,namespace19,root/team/FD/thread/global-lock source scope.
+The closed dispatcher permits only the two new fixed diagnostic operations,
+two reload operations,three bank operations and three span operations.
+No legacy arithmetic/compute selector or arbitrary read address is exposed.
+Compile-only67 remains independently inert,not a loadable alias for68.
+
+The new model-bind preflight matches the EXISTING native handoff's full
+first-layer upload requirement:56stripes/68591pages plus12selected embedding
+pages=68603. This includes36725FFN/post-norm pages,even though this combined
+stage does not yet execute FFN. Missing pages refuse BEFORE model/epoch/
+reservation/publication or initialization IO. The old handoff guard was NOT
+relaxed. DATA-only preflight504corruption cases passed main+clean and were
+pushed separately in c3f41fac77fc1154914cb19715b5adb69bf5f8ba.
+
+Actual full DEBUG68 public control main48510 and independent clean40873
+TERMINAL0.316inert refusals preserve IO counts,epoch and unclaimed context.
+Positive executes genuine672GDN-zero/73728pages,336history-zero/1680pages,
+QPE1/QRN1/4QPS1 plus required ROOT STOP,then the NEW actual combined Conv/GDN/
+QOL1/5120-row output pipeline. ALL119STOP/ALL120holds precede1592fixed reads
+of ALL1629120workspace/state words. Full10951352word new snapshot restoration
+and second proof,actual final user copy,call-seal release,one-shot refusal
+and explicit genuine END pass. Combined compute-journal count19232898 equals
+73737embedding+73737RMS+8134072projection+10951352combined output words.
+Projection ROOT counters are5/5:four actual projections AND the STOP run.
+
+One child forks the SAME actual final user_memcpy stack AFTER all compute,
+readback and restoration. Forced copy failure retains ALL owners/maps/
+snapshots/clock/hosts,releases the call seal and permits ZERO following IO,
+reset,restore,retry or END. No ready-state fixture substitutes for this.
+Main/clean full-control logs BYTE-IDENTICAL:
+ /private/tmp/pioneer-q38-output-debug68-control-20261025-i.log
+ /private/tmp/pioneer-q38-output-debug68-control-20261025-clean-c.log
+ SHAe4a4884131f277cafed664f5ffc8a3184d98de94bcecc16bad75ccff2be501a6
+These compute runs still use SYNTHETIC learned byte endpoints,NOT original
+GGUF arithmetic or physical card qualification.
+
+Shared actual native readback regression80937 TERMINAL0:positive plus ALL16
+CSR/typed payload fault cases retain every owner and prohibit subsequent IO.
+ /private/tmp/pioneer-q38-output-debug68-native-readback-regression-20261025-a.log
+Final role gates505 and actual closed-routing131072operation tests passed
+in both working and clean trees. Normal conventional driver ABI is present;
+NO compile-only/test-witness ABI entries exist in the production driver.
+Main build15544 and clean48901 both TERMINAL0,maxNewFrame1488,byte-identical:
+ /private/tmp/pioneer-q38-output-debug68-build-20261025-b/tenstorrent_pci_probe-resident-output-DEBUG68
+ SHA58064edee490bb5335fa135122a8d89588987a56c0451d751bccf9ebbe84ff3d
+Old65 remains byte-exact61faa093;inert67 remains byte-exact59ecbf0a.
+The new driver is BUILT ONLY,UNINSTALLED and NOT yet qualified for card use.
+
+Separate original-byte import helper/tests30512 and clean52546 TERMINAL0.
+Full SAME-file GGUF SHA and independent references precede any native
+context. Genuine original source supplies640Conv+192A/bias+96norm packets
+(225280bytes),and61440Q8tiles across all119output matrix jobs.18missing or
+changing-source faults refuse;matrix-cache publication is staged,with NO
+synthetic fallback. Main/clean logs are byte-identical:
+ /private/tmp/pioneer-q38-output-learned-bytes-original-20261025-a.log
+ SHA273c3773d7020eecede688fc73492f69f549d8063520d69fbf8314aec5a1c268
+This qualifies raw byte import ONLY. Integration into the combined execution
+machine,independent original-model numerical checks,the new fixed physical
+client and actual silicon qualification are STILL REQUIRED before Work.
+
+Earlier failures are preserved,not renamed as passes:incomplete e/f fixture
+omitted requiredFFN pages;g/clean-a exposed incorrect four-run final control
+expectation;h/clean-b passed the actual control and final-copy containment,
+then their post-return observer incorrectly demanded RUN's WAIT PC after
+realSTOP. The observer now independently checks actualSTOP PC/new nonce/
+marker/fault/opcode while retaining ALL numeric/coverage checks. No device
+program,math tolerance or native ownership guard was weakened for these.
+
+No new driver installation,accelerator FD,power/SD/mains/hardware change or
+Assistant update occurred during this checkpoint. The working041 driver
+is preserved. Full-model speed/performance and complete card offload remain
+unfinished;the goal stays ACTIVE.

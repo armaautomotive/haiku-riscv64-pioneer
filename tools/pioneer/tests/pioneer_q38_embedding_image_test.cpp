@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Actual emitted RV32IMF embedding instructions. ONLY NoC/GDDR transport
 // is simulated;independent TEST references NEVER seed the card output.
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 #ifndef PIONEER_Q38_EMBEDDING_REUSE_SCALAR
 #define PIONEER_GRAPH_MATH_MACHINE_ONLY
 #include "pioneer_graph_math_image_test.cpp"

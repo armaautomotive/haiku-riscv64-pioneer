@@ -63,6 +63,9 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  std::unique_ptr<ResidentOutputExecutionMachine> resident;
  ResidentOutputNativeStateBytes* residentBytes=nullptr;bool residentStarted[120]={};
+ const char* residentDeferredRoot=nullptr;const char* residentDeferredPeer=nullptr;
+ ResidentOutputNativeStateBytes* residentDeferredBytes=nullptr;
+ unsigned residentDeferredFault=0,residentDeferredPage=0,residentDeferredWord=0;
  const PioneerQ38ResidentOutputResult* residentResult=nullptr;
  unsigned residentFault=0,residentFence=0,residentRootPcReads=0,residentFrontendSamples=0;bool residentInjected=false;
  bool residentReadbackObserved=false;unsigned residentReadbackRequests=0,residentReadbackFault=0;
@@ -423,7 +426,16 @@ void ProjectionNativeTransport::ResidentOutputSources(const char* root,const cha
  for(unsigned i=0;i<p.residentExtra.size();i++)p.residentExtra[i]=0x3c5a7091U^(i*0x9e3779b9U);
  p.residentBytes=&bytes;p.resident.reset(new ResidentOutputExecutionMachine(root,peer,p));
 } // TEST endpoints only:actual STOP/holds are prerequisites,NO native owner or completion is fabricated
-uint32_t ProjectionNativeTransport::ResidentOutputRead(uint32_t a){auto& p=*implementation;p.Touch();assert(p.resident);
+void ProjectionNativeTransport::ConfigureResidentOutputControl(const char* root,const char* peer,ResidentOutputNativeStateBytes& bytes,
+ unsigned fault,unsigned page,unsigned word){auto& p=*implementation;
+ assert(root && peer && !p.resident && !p.residentDeferredRoot && !p.boots && !p.starts && fault<=4 && page<1592 && word<1024);
+ p.residentDeferredRoot=root;p.residentDeferredPeer=peer;p.residentDeferredBytes=&bytes;
+ p.residentDeferredFault=fault;p.residentDeferredPage=page;p.residentDeferredWord=word;
+} // TEST file/byte endpoints ONLY;source/owner/ready/private state is NEVER constructed here
+uint32_t ProjectionNativeTransport::ResidentOutputRead(uint32_t a){auto& p=*implementation;p.Touch();
+ if(!p.resident && p.residentDeferredRoot){
+  assert(p.residentDeferredPeer && p.residentDeferredBytes);ResidentOutputSources(p.residentDeferredRoot,p.residentDeferredPeer,*p.residentDeferredBytes);
+ }assert(p.resident);
  auto value=p.ObserveResidentReadbackValue(a,p.ResidentRead(p.current,a));
  if(p.residentFault==8 && !p.residentInjected && p.ResidentAt(5,0) && a==TT_Q38_OUTPUT_COHORT_SHADOW+(TT_Q38_OUTPUT_COHORT_WORDS-1)*4){
   p.residentInjected=true;p.residentFence=p.touches;return value^1;
@@ -1018,6 +1030,8 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
   case SetStatus:p.LocalWrite(0x17ffc0+a*4,v);return;
   case SetNoc:
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+   if(p.residentDeferredRoot && p.resident && a==0x40 && !p.residentReadbackObserved)
+    ObserveResidentReadback(p.residentDeferredFault,p.residentDeferredPage,p.residentDeferredWord);
    if(p.residentReadbackObserved && a==0x40){assert(v==1);p.ResidentReadbackTransfer();return;}
 #endif
 #ifdef PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE

@@ -2,7 +2,9 @@
 // ACTUAL parent+ALL119 retained QFP3 RV32/FPU/Tensix machines. Endpoints
 // copy bytes ONLY;peer status/proofs/products come from actual instructions.
 // Test weights/input/transport/reset endpoints are simulated,NOT native.
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 #ifdef PIONEER_Q38_TEST_PROJECTION_FOOTPRINT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphFootprint.h"
 #endif

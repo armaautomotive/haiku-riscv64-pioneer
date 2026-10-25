@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Actual new memory lifecycle,simulated guarded PCI/L1/source endpoints.
 // No native mapping/learned arithmetic/input producer/launch authority.
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 #define PIONEER_Q38_FFN_CODE_OWNER_MOCK_ONLY
 #include "pioneer_q38_ffn_graph_code_owner_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionGraphMemory.h"

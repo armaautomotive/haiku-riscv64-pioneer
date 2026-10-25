@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL emitted QRN1 scalar instructions,ONLY transport/GDDR simulated.
 // Independent double/sqrtf references OBSERVE output,never populate it.
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 #ifndef PIONEER_Q38_RMS_REUSE_SCALAR
 #define PIONEER_GRAPH_MATH_MACHINE_ONLY
 #include "pioneer_graph_math_image_test.cpp"

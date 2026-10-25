@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL emitted persistent service instructions. ONLY endpoints simulated.
 // SYNTHETIC primitive inputs/weights,NOT original-model/native/speed proof.
+#ifndef PIONEER_Q38_GDN_MUTABLE_STATE
 #define PIONEER_Q38_GDN_MUTABLE_STATE
+#endif
 #define PIONEER_Q38_FFN_PERSISTENT_MACHINE_ONLY
 #include "pioneer_q38_ffn_persistent_image_test.cpp"
 #include <memory>

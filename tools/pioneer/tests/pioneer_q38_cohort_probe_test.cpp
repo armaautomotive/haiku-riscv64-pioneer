@@ -1,7 +1,13 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
 #define TT_PIONEER_EXPERIMENTAL_Q38_AFFINE
+#endif
+#ifndef TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
 #define TT_PIONEER_EXPERIMENTAL_Q38_BLOCK
+#endif
+#ifndef TT_PIONEER_EXPERIMENTAL_Q38_STREAM
 #define TT_PIONEER_EXPERIMENTAL_Q38_STREAM
+#endif
 #define PIONEER_Q38_PANEL_POLICY_MOCK_ONLY
 #include "pioneer_q38_panel_probe_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38CohortProbe.h"
