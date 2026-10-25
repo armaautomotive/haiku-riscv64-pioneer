@@ -1,0 +1,73 @@
+Persistent matrix/precise-Conv returning service -- OFFLINE IMAGE checkpoint
+2026-10-25 UTC. Separate PIONEER_Q38_RESIDENT_OPERATOR_IMAGE=1,requiring
+exact FFN+projection persistent image roles;CPU/native/Work contexts refused.
+NO native registry,driver install,card use or full-model/speed qualification.
+This directly targets per-stage host code reload/reset round trips. It is
+NOT the complete card-side scheduler,all64layers,attentionKV or token loop.
+Last measured whole27B0.207893161tok/s UNCHANGED;20tok/s remains UNMET.
+
+New independent persistent loop preserves actual original integer/Tensix
+matrix execution and sequence history,adds exact returning op7 QCB1 precise
+Conv,and retains existing STOP/fault terminals. No CPU references enter the
+program. Old QFP3 source and pinned text/affine/helper remain byte-exact.
+The old FFN envelope marker is NOT compatibility or authority to load these
+new bytes. New complete image pins and a joint native/ROOT owner are OWED.
+
+Actual read-only SDK builds79933/91286 (c/d) TERMINAL0. After additional
+image-role exclusions,final source builds47015/56193 (e/f) TERMINAL0.
+ /private/tmp/pioneer-q38-resident-operator-service-20261025-{c,d,e,f}
+Complete binary sections:
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text7868B ea6245c426a2707f76dc58cf329d838f40d4dd0b48ff4b4509fffc9b5122a1fb
+ affine5276B 8c496193e749e8933e927f82c7785b097bc375f54f61971e4c7f454efc8bbaca
+ ffn16352B f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9
+ service10300B 1e015c2bea109f36a08da5a651e582d9d8aee81e5c4f29a7eda7eb614d702c92
+Every build FIRST recompiles/authenticates oldQFP3 text783bd17e,affinea55331ee,
+helperf17def10 and boot. No undefined symbols/writable globals/GOT/unsupported
+division,FMA or sqrt instructions. New function frame max1920B<=2048;
+inherited activation3056B frame strictly nongrowing against the byte-exact
+control. Observed whole device stack4260B fits existing8KiB stack reservation.
+Initial builda missing freestanding include ordering and buildb rejecting
+that inherited frame remain recorded failures,not passes. No new frame
+limit was widened. Initial smokea lacked TEST mutable-geometry gating;
+fixed TEST include order only. No running parent dependencies were edited.
+
+Smoke85289 TERMINAL0,matrix/Conv/matrix/changed-layerConv/STOP with SAME
+worker and sequence1..5,NO reset or code reload between operations.
+ /private/tmp/pioneer-q38-resident-operator-service-smoke-20261025-b.log
+ SHA9bb1b8cd905e1809c7f15dc162ecc262a60f1fcd58694ebf8139e5fdaa5d1e64
+Full ASan/UBSan emitted-instruction run81853 TERMINAL0:125positive/413fault.
+ /private/tmp/pioneer-q38-resident-operator-service-full-20261025-a.log
+ SHA0b026cd1fa9be3b5ac8cc4c2286e85faecf5da5bb5bda24ffc17d5f0d24a97e1
+Six mixed matrix/Conv/matrix/changed-layerConv/STOP cases on workers1/63/119,
+types12/14;ALL119peer bindings/634groups (ROOT0 six groups NOT included),
+layers0..2/positions0+8191/all7banks;all output values independent libm
+3ppm scaled-bound and next-history exact;ALL64proof corruptions refused.
+All384late frozen-table mutations,malformed jobs,source/counter/lost packet
+and late boot/job/doorbell faults stop without any following packet;fault
+park remains inert. Old exact QFP3 refuses op7 before computation/packets.
+These use SYNTHETIC primitive inputs and learned weights,NOT authenticated
+whole-model/original-source/native execution or physical card timing.
+
+Image roles/defined-zero/reinclude/CPU/native/Work/builder gates90727 CLI0:
+235checks,two complete emitted images identical,unsupported instructions
+absent. /private/tmp/pioneer-q38-resident-operator-service-gates-20261025-a.log
+ SHAc42b86d6c5105659d804cb83934c439e36b8ff93a3ef0d440662849cd145e4b0
+Final-source e/f image gate30629 TERMINAL0 with the SAME log SHA above.
+Independent CLEAN SOURCE check:Git archive of7e719bb5b454 plus EXACTLY these
+10new service files,excluding all dirty native66/llama.cpp/FlashNext work:
+ /private/tmp/pioneer-q38-resident-service-clean-20261025.pM9GnzjZ
+Clean SDK build41685 TERMINAL0:all5new sections match the pins above and
+oldQFP3 control remains exact. Clean-source ASan/UBSan full execution5011
+TERMINAL0:125positive/413fault/maxStack4260,log BIT-IDENTICAL0b026cd1...
+ /private/tmp/pioneer-q38-resident-operator-service-clean-full-20261025-a.log
+Thus this image checkpoint does not depend on uncommitted native66 changes.
+
+CRITICAL SCOPE:service68000..6a83c is NOT covered by the existing ALL119
+native peer snapshot. No existing mapping/save plan is enlarged here.
+Future joint owner must prove an explicit extended fixed footprint BEFORE
+any write,and independently retain original banks/source/hosts/clock/ALL
+participants,terminal/STOP/deadline/restore/END authority. ROOT0 convolution,
+GDN returning service and persistent ROOT/full model scheduling remain to
+integrate. Passing image tests must NEVER promote this into Assistant/Work.
+Pioneer remains baseline041/tag12/gen4;no GPU/power/SD/Assistant action.
