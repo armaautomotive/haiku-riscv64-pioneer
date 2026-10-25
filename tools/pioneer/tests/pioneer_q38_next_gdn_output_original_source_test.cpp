@@ -11,6 +11,14 @@ int main(int argc,char** argv){
   && !source->NextGdnOutputWeightsReady() && source->SealBeforeNativeContext() && source->NextGdnOutputWeightsReady() && source->NextGdnWeightsReady());
  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned stripes=0,pages=0,rows=0,tiles=0,refused=0,pageFaults=0;
  std::vector<uint8_t> ledger(PioneerResidentBanks::Pages,0),out(16384,0xa5);
+ assert(!source->NextResidualRmsWeightsReady() && !source->NextResidualRmsReads());
+ for(unsigned i=0;i<plan->Count();i++){
+  const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer!=1 || p->role!=1)continue;
+  auto before=out;
+  assert(!source->Read(PioneerQ38ProjectionRoute(p->bank),plan->Base+p->offset,out.data(),16384)
+   && !source->Read(PioneerQ38ProjectionRoute(p->bank),plan->Base+p->offset+16384,out.data(),4096)
+   && out==before && !source->NextResidualRmsReads());
+ }
  assert(!PioneerQ38NextGdnOutputLearned(*plan,ledger.data(),unsigned(ledger.size())));
  for(unsigned i=0;i<plan->Count();i++){
   const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer!=1 || p->role!=13)continue;
@@ -41,7 +49,8 @@ int main(int argc,char** argv){
  assert(pageFaults==42 && !PioneerQ38NextGdnOutputLearned(*plan,nullptr,unsigned(ledger.size()))
   && !PioneerQ38NextGdnOutputLearned(*plan,ledger.data(),unsigned(ledger.size()-1)) && source->NextGdnOutputReads()==14
   && !source->NextGdnReads() && !source->NextConvReads() && !source->NextProjectionReads() && !source->NextRmsReads() && !source->FfnReads()
-  && !source->GdnOutputReads() && !source->ProjectionReads() && !source->ConvolutionReads() && !source->Prepare(0) && !source->SealBeforeNativeContext());
+  && !source->GdnOutputReads() && !source->ProjectionReads() && !source->ConvolutionReads() && !source->NextResidualRmsWeightsReady()
+  && !source->NextResidualRmsReads() && !source->Prepare(0) && !source->SealBeforeNativeContext());
  std::vector<uint32_t> absent;assert(!source->CheckNextGdnOutput(absent,absent));
  puts("PASS ORIGINAL c600/ALL851schema/layer1 Q8_0 ssm_out7stripes8640pages BEFORE context/14edge tiles+154atomic refusals/42missing-corrupt page gates/no other learned reads;NO_NATIVE_PRODUCER_NUMERIC_OR_SPEED_GRANT");
 }

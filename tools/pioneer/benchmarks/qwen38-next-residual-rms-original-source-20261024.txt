@@ -1,0 +1,66 @@
+QRR2 original layer1 learned-byte source/observer checkpoint,2026-10-24.
+TESTED OFFLINE COMPONENT,not a native63 owner or physical inference pass.
+Whole-model0.207893161tok/s remains last measurement;20tok/s/full offload UNMET.
+
+Explicit new source factory preserves all12 old default-false modes and adds
+only layer1 role1 blk.1.post_attention_norm.weight:one canonical F32 part,
+5120values/20480bytes/FIVE original pages. Full public c600 authentication,
+all851tensor schema/canonical routing/size/part identity checks BEFORE
+Prepare/Seal/context. Cached original bytes only;no computed activations or
+numeric reference products are exposed to a native controller. No file/device
+runtime input,driver operation,Work/Assistant/public selector was added.
+
+After Seal,only exact16KiB then4KiB norm byte endpoints are admitted;read
+shape/route/address/null failures are atomic and leave counters/output intact.
+Separate CPU observer recomputes first-token F32 residual add,double square
+reduction/sqrtf and original learned norm from post-return data. It requires
+exact2learned reads and all5120sum+norm bits;never feeds products to execution.
+New learned-page helper is DATA only:unique exact layer1 role1 part plus
+all5ledger bytes==1;not a producer/initialization/owner/launch grant.
+
+ASan/UBSan actual-image/source A64502 and B25601 ACTUAL TERMINAL0:
+ full original source authentication/5cached pages before context;
+ no source read before Prepare/Seal,2actual-image norm packet reads;
+ 55atomic endpoint refusals,10missing/corrupt page refusals;
+ ACTUAL pinned QRR2 instruction image f2fdcb0b... with synthetic activation
+ inputs and ORIGINAL learned norm produced all5120sum+norm BIT-EXACT;
+ all10240individual output-bit mutations rejected by independent observer;
+ other learned-read counters unchanged,repeat Prepare/Seal refused.
+ This is NOT the genuine native62 prefix/producer/owner chain and cannot
+ qualify native63 integration,physical arithmetic or throughput.
+ A:/private/tmp/pioneer-q38-next-residual-rms-original-source-20261024-a.log
+ SHA90959bb8918dad1756c985f6c8315b5dc198193c916d0c07495cc9f8b9ecbd04.
+ B:/private/tmp/pioneer-q38-next-residual-rms-original-source-20261024-b.log
+ SHAb01cb20eb869ab5d591d3f0dbeb0bad0110ef0454d2a3347780e723d381a7592.
+
+Old62 source regression A35086/B37754 ACTUAL TERMINAL0:
+ SAME14output tiles/154atomic refusals/42page gates,all old counters intact.
+ B additionally proves old62 mode cannot serve new layer1 norm packets or
+ claim new source readiness. No change to actual native62 compiled code.
+ A:/private/tmp/pioneer-q38-next-residual-rms-old62-source-20261024-a.log
+ SHA34091135f1638400e0a5cd32405e8d0fc867d2b171d9358956cbfe64f2df5803.
+ B:/private/tmp/pioneer-q38-next-residual-rms-old62-source-20261024-b.log
+ SHA4c17f675d9b1291e3621b49ba05eabc99d85c25c15bd4843d513fd67f920291f.
+ Source-role gates87816 ACTUAL TERMINAL0:20native63 defined-even-zero,
+ invalid-value/mixed-native/CPU/Work/kernel refusals before observer code.
+ /private/tmp/pioneer-q38-next-residual-rms-source-gates-20261024-a.log
+ SHA69dcee8b7261797f2688f5db65e47a12ac390614e89726540e7bb0ea4241ffaa.
+
+Separate hardware recovery during this component work consumed the NEW
+human fans/LED-off confirmation after OFF58955. ONE ON58395 TERMINAL0;
+fresh Linux boot_id17288df1-421c-47a6-8eb6-6d374670ce83/all64CPUs. No extra
+power pulse or SD/mains change. Pinned9cfc6dc3 helper prepare57810/boot72465
+TERMINAL0,unique qgt52-prepared-20261024-r63a,64CPU top-page full-RAM profile.
+Fresh Haiku CPU metadata:DEBUG52/gen1/cold0/owner0;guarded stable041 restore
+50255 TERMINAL0 ->tag12/gen2. sysinfo64CPUs/max137034936320B.
+Qualified cbe472f5 diagnostic staged58495 TERMINAL0 at unused r63a path;
+remote SHA matched. Guarded DEBUG52 apply34082 TERMINAL0 ->tag52/gen3,
+cold0/owner0. ONE prepared-context diagnostic23715 remains LIVE at this
+checkpoint;its existing dependencies/immutable binaries stay frozen.
+No live-parent result or numerical fix is claimed by this source checkpoint.
+
+Next:finish first-failure physical prepared-context diagnosis;separately
+implement SAME native62 output/raw producer claim,QRR2 execution/one-shot
+deadline/physical hold/typed layer1 FFN producer/full restore+END before any
+native63 qualification. Full recurrent/attentionKV/all64layers/sampling and
+persistent whole-token schedule still required before full-card speed claims.

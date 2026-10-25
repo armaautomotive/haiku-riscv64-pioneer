@@ -1,5 +1,20 @@
 # Native build status
 
+October24 UTC2026:QRR2 ORIGINAL layer1 post-attention norm byte source and
+independent CPU observer OFFLINE qualified. Full c600/all851schema checks;
+5original cached pages BEFORE context,2exact norm packet reads,55atomic
+endpoint/10page refusals. Actual QRR2 image with ORIGINAL norm and synthetic
+activation inputs:all5120sum+norm BIT-EXACT;10240output mutations rejected.
+Repeated ASan/UBSan tests terminal0;old62 source regression unchanged plus
+new mode cannot leak into old62;20CPU-observer/native63 role refusals PASS.
+NOT genuine native62 prefix/owner integration,physical pass or throughput.
+Fresh verified recovery:ONE ON after NEW human off confirmation;Linux fresh
+epoch -> pinned SD-free64CPU/full-RAM Haiku;stable041 restore and exact52
+apply clean. ONE prepared-context diagnostic23715 LIVE;no retry or further
+GPU access while pending. No SD/mains/Assistant change. Native63 owner still
+WIP/not installed;last whole27B0.207893161tok/s/20UNMET/goalACTIVE.
+Evidence:benchmarks/qwen38-next-residual-rms-original-source-20261024.txt.
+
 October24 UTC2026:card-resident QFG3 FULL FFN+residual image IMPLEMENTED/
 OFFLINE qualified,NOT integrated into native decoder/linked/installed/Work.
 Found real alias:old gate/up GDDR output overwrites QRR1 raw residual98304.
