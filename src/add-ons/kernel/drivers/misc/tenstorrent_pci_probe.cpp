@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#error Resident-output owner is OFFLINE until its actual complete native factory and role are qualified
+#endif
 #if defined(PIONEER_Q38_RESIDENT_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE)
 #error OFFLINE resident operator IMAGE never enters an existing native or Work driver
 #endif

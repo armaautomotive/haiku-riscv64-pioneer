@@ -1,0 +1,117 @@
+Closed GPU projection input handoff, 2026-10-25 UTC
+STATUS: actual owner/instruction-model tests+independent clean repeat PASS.
+This is historical private GPU-produced input lineage, NOT a new native
+factory/driver selection, initialized/current state, full-model or speed.
+
+Why this handoff
+----------------
+The tested resident Conv/GDN/QOL1/output pipeline needs real raw/Z/A/B
+projections, not host-computed inputs or an initialization-ready bit.
+PioneerQ38ResidentProjectionInput can now be published ONLY inside the
+actual projection owner's successful Close, under the separate exact
+PIONEER_Q38_RESIDENT_OUTPUT_OWNER=1 prototype role. It has no public
+constructor/destructor/copy/move/setter. The four PRIVATE actual role
+receipts must already exist; a public result.runs count cannot create them.
+
+Publication occurs AFTER actual STOP, independent unheld ROOT+ALL119 peer
+terminals, ALL120 physical holds, complete8134072-word originals restored
+and independently verified, original NoC commands restored, and private
+state Close. The resulting GDDR raw/Z/A/B stashes are preserved, while the
+old executable has fully returned to the original held image. The new
+larger journal can therefore start from legacy held originals, rather than
+nesting its snapshot under a still-installed QPS1 program.
+
+The borrowed record binds exact parent/canonical/graph/RMS/upload ledger/
+identity/token/position0/work bank/private final nonce and fixed addresses.
+Its CPU predicate also checks all learned projection pages, all120 held
+metadata and all119 private source seals. It emits NO IO or PC read.
+The future genuine consumer must additionally compare actual physical
+source/commands/counters to the parent's accepted private completion
+ledger, retain its actual context/cookie/global lock/clock/model/hosts,
+claim initialized history/GDN separately and consume this record once.
+Current alone is NOT physical readiness, a state-slot grant or permission
+to execute. Do not rebaseline physical counters or infer ownership from it.
+
+Qualification
+-------------
+Original33047 and independent clean82815: terminal exit0, all4 cases.
+The tests execute the actual extracted zero/embedding/RMS factories and
+installed frozen zero/QPE1/QRN1 instructions, then actual QPS1 ROOT/ALL119
+peer instructions. Learned byte endpoints, clocks and hardware are still
+SIMULATED; no CPU numeric products/status/success receipts are injected.
+
+Positive: ALL4 genuine projections,244 matrix jobs/80 activation producers,
+119 single peer boots, then actual STOP/119 terminal peers/ALL120 holds/
+full8134072-word restore+16268144 original-word proofs, with unchanged
+device stashes.52 metadata/source/lease/page refusals perform ZERO IO.
+A strict projection-owner endpoint refuses held program-counter reads; all cases
+pass. This does not fix or inherit the separate known next-RMS hazard.
+
+Partial: TWO real projections plus a forged PUBLIC r.runs4 still cannot
+publish a closed input; actual STOP/restore completes without publication.
+Faults: final STOP receipt corruption and last-participant restore failure
+publish NOTHING, retain all owners/source/host leases/snapshots and permit
+ZERO subsequent IO/reset/PC/restore/retry. No public ready facade is used.
+Original/clean all4-case log SHA256:
+ 37af0a45b35fd43de0b19bad82d83bb0732e896dba3b6887006369829df639b2
+ /private/tmp/pioneer-q38-resident-input-all-20261025-d.log
+ clean input-all.log
+
+New isolation gates10745 and independent68781: exit0,279 checks. Exact
+parents, defined0/late CPU/DEBUG/Work/image aliases, frozen class layout,
+ten CPU references, validation session/original-model observer and ten
+old builders are closed. The current actual kernel driver explicitly
+REFUSES this prototype role, including defined0. No selector was enabled.
+Log SHA256 f2f6edea1a6abf0ff697aa46986250f42ac226f10785cbb8fe340d894fc28659
+Prior combined-image gates17881 and clean69110: exit0, expanded424 checks;
+all frozen ROOT/peer bytes remain exact. No emitted card instruction changed.
+Log SHA256 2f8306b99fafe7ab885cd5fe324b0e2c8554ed123c23433ff6d723ff9cce21e7
+
+Actual read-only Haiku RV64 SDK template/getter compile passes in BOTH
+trees, maximum kernel function frame880B, heap owners only. Identical object:
+ de825a6061c52c077ad7eaeac78eb26d8da4dcc4ec0a703ee59c840a943d38e3
+Reproduce: sh tools/pioneer/tests/run_pioneer_q38_resident_projection_input_kernel_compile.sh SDK
+No native adapter, linked driver or install is implied by this compile.
+
+Existing full native65 and native66 kernel objects rebuilt with exit0 in
+60469, byte-identical to their prior qualified controls:
+ native65 61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+ native66 97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437
+Legacy flag-absent wide projection execution20859 also exited0, all4 real
+projection roles/378 private observer checks/complete device stashes and
+originals preserved. Log SHA256:
+ e4c5f77e011f9331b2cf61ccc848b62db8b7686af51a0d75d4f0df1550caddf7
+
+Clean tree: /private/tmp/pioneer-q38-resident-input-clean.8zKj8Vj5
+All33 code/test/isolation files exactly match current-source SHA256s.
+Unrelated dirty llama.cpp and untracked FlashNext work were NOT copied,
+read, built, edited or staged. SDK contents remain read-only.
+
+Failure audit
+-------------
+83841/10253: terminal compile failures in TEST lambda bool& binding to a
+uint32 NoC recovery flag; changed to auto& after terminal, no guard removed.
+49411: terminal missing-file failure; the old zero-image directory was
+empty. Rebuilt exact frozen2652-byte image+boot in a fresh owned directory;
+both are now authenticated BEFORE compilation, no missing-file fallback.
+68110: terminal test assertion; inherited genuine fixture uses position8191
+and the new first-position-only record correctly refused publication.
+TEST fixture now calls the actual BindQ38EmbeddingModel(token,0,bank), never
+patching metadata, inventing a producer or relaxing the production guard.
+Repeated33047 and independent82815 then passed all4 cases.
+
+Next / performance / working system
+-----------------------------------
+Still implement the complete genuine resident-output execution owner and
+native mappings/factory: physical preflight of this closed input, actual
+initialized GDN+history owned BEFORE initial projections, complete NEW
+journal, private consume/boot/all arithmetic/actual receipts/STOP/unheld
+terminals/holds/restore/END. Do not query the old held-state Current predicate
+after ownership transfers and new cores run; retain immutable lineage and
+use the new owner's actual physical ledger instead. No PC reads while held.
+
+Then continue residual/RMS/FFN, attention, all64-layer/state/token-loop
+integration and measured full-model optimization.20 tokens/sec remains
+UNMET; last actual whole-model rate0.207893161 tokens/sec is UNCHANGED.
+No GPU FD/launch, driver or Assistant install, power/SD/card/network/disk/
+mains operation occurred here. Working Haiku baseline041 was not replaced.

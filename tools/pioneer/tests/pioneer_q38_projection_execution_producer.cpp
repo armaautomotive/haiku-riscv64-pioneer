@@ -46,7 +46,7 @@ struct ProjectionExecutionProducer::Impl:NativeFactoryFixture {
     for(unsigned n=0;n<p->allocated/4096;n++)learned[first+n]=1;}
   }
   bool bound=
-#ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
+#if defined(PIONEER_Q38_RESIDENT_DECODER_OWNER) || defined(PIONEER_Q38_TEST_CLOSED_INPUT_POSITION_ZERO)
    BindQ38EmbeddingModel(*c,token,0,bank);
 #else
    Bind();

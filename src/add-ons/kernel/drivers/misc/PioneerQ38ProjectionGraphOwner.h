@@ -1,4 +1,16 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_PROJECTION_GRAPH_OWNER_H
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_PARENT_LAYOUT
+#if !defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || PIONEER_Q38_RESIDENT_OUTPUT_OWNER != 1
+#error Resident-output parent layout cannot change after inclusion
+#endif
+#elif defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
+#error Resident-output parent cannot be selected after legacy inclusion
+#endif
+#endif
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "PioneerQ38ResidentOutputOwnerRole.h"
+#endif
 #ifndef PIONEER_Q38_PROJECTION_GRAPH_OWNER_H
 #define PIONEER_Q38_PROJECTION_GRAPH_OWNER_H
 #if !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 || !defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || PIONEER_Q38_LEARNED_RMS_NATIVE != 1
@@ -15,6 +27,10 @@
 #include "PioneerQ38ProjectionGraphPlan.h"
 #include "PioneerQ38ProjectionGraphProof.h"
 #include "PioneerQ38LearnedRmsController.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#define PIONEER_Q38_RESIDENT_OUTPUT_PARENT_LAYOUT 1
+#include "PioneerQ38ResidentProjectionInput.h"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_OWNER
 class PioneerQ38ResidentDecoderOwner;
 #endif
@@ -33,6 +49,11 @@ struct PioneerQ38ProjectionGraphResult {
 };
 class PioneerQ38ProjectionGraphOwner {
  friend class PioneerQ38ResidentDecoderOwner;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ friend class PioneerQ38ResidentProjectionInput;
+ friend class PioneerQ38ResidentOutputOwner;
+ PioneerQ38ResidentProjectionInput closedResidentInput;
+#endif
 #ifdef PIONEER_Q38_GDN_OUTPUT_PRODUCER_NATIVE
  friend class PioneerQ38GdnOutputProducer;
 #endif
@@ -270,6 +291,38 @@ class PioneerQ38ProjectionGraphOwner {
   return r.validationPages==18 && r.validationWords==18432;
  }
 #endif
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ bool MatchesResidentInput(const PioneerQ38ResidentProjectionInput& v,const PioneerQ38ResidentOutputOwner* consumer=nullptr)const{
+  if(&v!=&closedResidentInput || v.owner!=this || v.consumer!=consumer || !closed || unsafe || ready || output || produced
+   || !proof || !banks || !cohort || !memory || !graph || !canonical || !input || !ledger || position || token>=248320
+   || !MatchesClosedNativeOwner(*proof,*banks,*cohort,*memory,*graph,*canonical,*input,identity,ledger,pages)
+   || v.graph!=graph || v.canonical!=canonical || v.rms!=input || v.ledger!=ledger || !(v.identity==identity)
+   || v.pages!=pages || v.token!=token || v.position!=position || v.bank!=bank || v.phase!=nonce || !nonce)return false;
+  const auto* workspace=canonical->Workspace(bank);if(!workspace || workspace->bytes!=67108864 || workspace->allocated!=67108864)return false;
+  const uint32_t base=canonical->Base+workspace->offset;
+  if(v.raw!=base+PioneerQ38ProjectionResultOffset(6) || v.z!=base+PioneerQ38ProjectionResultOffset(5)
+   || v.a!=base+PioneerQ38ProjectionResultOffset(10) || v.b!=base+PioneerQ38ProjectionResultOffset(11))return false;
+  const unsigned roles[]={5,6,10,11};
+  for(unsigned selected:roles)if(!canonical->ProjectionPagesPresent(0,selected,ledger,pages))return false;
+  for(unsigned i=0;i<16;i++)if(v.source[i]!=cohort->authority.source[0][i])return false;
+  for(unsigned w=0;w<120;w++){
+   if(resets[w]!=0x47800 || running[w] || cohort->worker[w].image.running)return false;
+   if(w)for(unsigned i=0;i<16;i++)if(sources[w-1][i]!=cohort->authority.source[w][i])return false;
+  }
+  return true; // CLOSED historical GPU producer,NOT a running/held PC read or physical readiness shortcut
+ }
+ bool PublishClosedResidentInput(){
+  if(closedResidentInput.owner || !closed || unsafe || position || !canonical || !cohort)return false;
+  const auto* workspace=canonical->Workspace(bank);if(!workspace)return false;
+  auto& v=closedResidentInput;v.owner=this;v.graph=graph;v.canonical=canonical;v.rms=input;v.ledger=ledger;v.identity=identity;
+  v.token=token;v.position=position;v.bank=bank;v.phase=nonce;v.pages=pages;
+  const uint32_t base=canonical->Base+workspace->offset;
+  v.raw=base+PioneerQ38ProjectionResultOffset(6);v.z=base+PioneerQ38ProjectionResultOffset(5);
+  v.a=base+PioneerQ38ProjectionResultOffset(10);v.b=base+PioneerQ38ProjectionResultOffset(11);
+  for(unsigned i=0;i<16;i++)v.source[i]=cohort->authority.source[0][i];
+  return MatchesResidentInput(v);
+ }
+#endif
 public:
  PioneerQ38ProjectionGraphOwner()=default;
  PioneerQ38ProjectionGraphOwner(const PioneerQ38ProjectionGraphOwner&)=delete;
@@ -280,6 +333,9 @@ public:
 #endif
   ;}bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
  bool Claimed()const{return started;} // metadata ONLY,not an execution grant
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ const PioneerQ38ResidentProjectionInput* ResidentInput()const{return closedResidentInput.Current()?&closedResidentInput:nullptr;}
+#endif
  void Fault(){unsafe=true;ready=output=false;
 #ifdef PIONEER_Q38_PROJECTION_RESULT_STASH
   produced=0;
@@ -375,6 +431,11 @@ public:
 #endif
  ){
   if(!Ready() || running[0] || !r.prepared || r.closed || r.unsafe)return false;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  // Latch ONLY the parent's actual private role mask. Public r.runs alone
+  // can never manufacture input lineage. No capability is published yet.
+  const bool exportResident=produced==15 && r.runs==4 && !position && !closedResidentInput.owner;
+#endif
 #ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE
   uintptr_t outputAddress=reinterpret_cast<uintptr_t>(validation);
   if(!validation || (outputAddress&3) || outputAddress>UINTPTR_MAX-TT_Q38_PROJECTION_RESULT_BYTES
@@ -408,8 +469,15 @@ public:
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !memory->VerifyOriginal(io,w,r.memory) || !Guard(io,w))return Fail(io,r);}
   if(r.held!=119 || r.stopped!=119 || r.memory.restoredWords!=TT_Q38_PROJECTION_GRAPH_SAVED_WORDS || r.memory.verifiedOriginalWords!=2*TT_Q38_PROJECTION_GRAPH_SAVED_WORDS
    || !Guard(io,0) || !state->CloseExecution(identity,this,input))return Fail(io,r);
-  closed=memory->closed=true;memory->installed=false;ready=false;r.closed=r.memory.closed=1;return true;
+  closed=memory->closed=true;memory->installed=false;ready=false;r.closed=r.memory.closed=1;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  if(exportResident && !PublishClosedResidentInput())return Fail(io,r);
+#endif
+  return true;
  }
 };
 static_assert(sizeof(PioneerQ38ProjectionGraphOwner)>65536 && sizeof(PioneerQ38ProjectionGraphOwner)<131072,"persistent projection execution owner HEAP ONLY");
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+inline bool PioneerQ38ResidentProjectionInput::Current()const{return owner && !consumer && owner->MatchesResidentInput(*this);}
+#endif
 #endif
