@@ -13,6 +13,8 @@ struct PioneerSessionIO;
 [[maybe_unused]] static bool PrepareQ38ResidentOutputNative(PioneerStoreContext&,PioneerQ38ResidentOutputResult&);
 [[maybe_unused]] static bool RunQ38ResidentOutputNative(PioneerStoreContext&,PioneerQ38ResidentOutputResult&);
 [[maybe_unused]] static bool CloseQ38ResidentOutputNative(PioneerStoreContext&,PioneerQ38ResidentOutputResult&);
+[[maybe_unused]] static bool CloseQ38ResidentOutputNativeForValidation(PioneerStoreContext&,PioneerQ38ResidentOutputResult&,
+ uint32_t*,unsigned,PioneerQ38ResidentOutputReadbackResult&);
 // A distinct retained NATIVE context, borrowing the genuine prefix. No
 // public construction/copy, phase setter, readiness bit or destructor.
 // Binding alone is CPU metadata, NEVER initialization/compute permission.
@@ -28,6 +30,8 @@ class PioneerQ38ResidentOutputNativeState {
  friend bool PrepareQ38ResidentOutputNative(PioneerStoreContext&,PioneerQ38ResidentOutputResult&);
  friend bool RunQ38ResidentOutputNative(PioneerStoreContext&,PioneerQ38ResidentOutputResult&);
  friend bool CloseQ38ResidentOutputNative(PioneerStoreContext&,PioneerQ38ResidentOutputResult&);
+ friend bool CloseQ38ResidentOutputNativeForValidation(PioneerStoreContext&,PioneerQ38ResidentOutputResult&,
+  uint32_t*,unsigned,PioneerQ38ResidentOutputReadbackResult&);
  enum Phase {Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,Prefix,OutputPreparing,OutputRunning,OutputComplete,OutputClosing,OutputClosed};
  PioneerStoreContext* const context;
  PioneerQ38EmbeddingNativeState* const prefix;

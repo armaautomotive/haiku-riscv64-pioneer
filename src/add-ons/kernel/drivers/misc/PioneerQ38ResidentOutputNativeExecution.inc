@@ -102,3 +102,17 @@ void PioneerSessionIO::ResidentOutputRetainHostOwners()
  if(okay)state->phase=PioneerQ38ResidentOutputNativeState::OutputClosed;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
+[[maybe_unused]] static bool CloseQ38ResidentOutputNativeForValidation(PioneerStoreContext& c,PioneerQ38ResidentOutputResult& r,
+ uint32_t* values,unsigned words,PioneerQ38ResidentOutputReadbackResult& readback)
+{
+ auto* state=c.q38ResidentOutputNative;
+ if(!state || state->phase!=PioneerQ38ResidentOutputNativeState::OutputComplete || state->Unsafe()
+  || !PioneerQ38ResidentOutputReadbackPristine(values,words,readback))return false;
+ state->phase=PioneerQ38ResidentOutputNativeState::OutputClosing;
+ bool okay=c.io.ResidentOutputSourceScope(true) && state->output.CloseForValidation(c.io,r,values,words,readback)
+  && readback.completed && readback.pages==PioneerQ38ResidentOutputReadbackPlan::Pages
+  && readback.words==PioneerQ38ResidentOutputReadbackPlan::Words
+  && state->output.MatchesClosedNativeOwner(c.q38EmbeddingModel->projection,*state->memory);
+ if(okay)state->phase=PioneerQ38ResidentOutputNativeState::OutputClosed;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+}

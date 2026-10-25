@@ -1,0 +1,135 @@
+Qwen3.8-27B SAME-owner combined output observer,October25,2026
+
+GOAL ACTIVE;last measured whole-model0.207893161tok/s unchanged;20tok/s,
+full64-layer resident autoregressive inference and physical qualification
+of this NEW combined output program remain UNMET. No accelerator FD,
+linked/installed driver,Assistant/boot/CPU/RAM change,power/relay,SD,disk/
+network-configuration or mains write. Dirty llama.cpp/FlashNext untouched.
+
+PRECEDING CHECKPOINTS NOW PUSHED
+5276864b5ba8154b973757a49ecd85bd078a1644:independently tested fixed
+canonical1592-page/1629120-word observer recipe,DATA ONLY.
+4f6632fbb74b47db05425c262ce175715d8149cb:separate safe completion/fault
+entry. Full firmware parent97264 EXIT0,ALL3 arithmetic variants+ALL117
+faults. The earlier113 count was wrong;actual complete117-case run is
+authoritative. Both complete native suites and context/footprint/image
+controls passed. GitHub origin/pioneer-riscv64 equals4f6632fbb7.
+
+IMPLEMENTED AND OFFLINE NATIVE-QUALIFIED,NOT HARDWARE QUALIFICATION
+The SAME existing output owner now has a separate fixed validation CLOSE:
+actual119STOP/ALL120holds->fixed bounded page reads->full43.8MB original
+snapshot restore+second proof->actual native CLOSED binding/END. The
+ordinary Close path never invokes the observer. No public address/route/
+count opcode,Work selector,new parallel hardware owner or CPU model
+reference was introduced. No compile-only67 permission was broadened.
+Private pointers/count/pristine result metadata are checked before IO.
+Actual source/code/reset/NoC/PCI/clock/context/host guards apply. Each
+4096-byte read uses freshly NaN-poisoned original-snapshot-covered80000,
+exact command/counter deltas and a bounded monotonic deadline. Only the
+fixed pending transfer gets an in-flight guard;ALL other changes reject.
+Payload grammar rejects nonfinite scalars,invalid encoded operands/scales,
+wrong actual QOL1 metadata and changed genuinely zero CURRENT slot before
+any following IO. Numerical model-reference comparison remains separately
+owed;these scalar checks are NOT whole-model arithmetic qualification.
+No held-core PC is sampled to justify readback/restoration. Failure is
+memory-only quarantine/retention;NO later reset/restore/retry/END.
+
+DEVELOPMENT AND FAILED CHECKS RETAINED,HONESTLY
+Started in a separate archive5276864+exact frontend overlays:
+/private/tmp/pioneer-output-observer-dev.JmDcikLM
+Thus the then-live original117-case firmware sweep was never edited.
+SDK26929 EXIT1:compilation succeeded but the old audit expected a concrete
+Close symbol;the forwarding wrapper is now inlined. Require the real
+CloseImpl and ALL new concrete IO methods instead,without weakening the
+inert-entry ABI audit. Revised SDK49581 EXIT0,maxnewframe1488.
+SDK67095 EXIT1 then caught misleading-indentation under GCC/Werror in the
+new typed-line grammar. No passing result is claimed for either failure.
+Main copy was updated only after original97264 terminal. It fixes that
+formatting warning and additionally checks kind/route and result padding.
+The isolated native positive's dependency set stayed frozen throughout.
+
+CURRENT MAIN SDK PASS
+Actual complete kernel/context/IO/owner/native function/END compile90371
+EXIT0,maxnewframe1488,old65 byte-identical61faa093. Object SHA256:
+59ecbf0a81d74d2c5a0752a4e5a862f167e4b44181a722f1795b1852cf36135f
+Concrete real PioneerSessionIO frames:ReadbackValue544,transferGuard160,
+held96,ValidationReadback336,CloseImpl320,CloseForValidation656 bytes.
+All conventional driver ABI definitions remain absent;ALL5 renamed
+entries machine-code-identical to inert constant-return controls. Object
+is refusing COMPILE ONLY,NOT linked/loadable or a physical execution role.
+/private/tmp/pioneer-q38-output-observer-sdk-20261025-main-a.log
+Independent archive4f6632fbb7+exact10owned source overlays:
+/private/tmp/pioneer-output-observer-clean.eOITYACr
+Its complete real-context compile5797 EXIT0 and object compares
+byte-identically to main59ecbf0a;all original SDK ABI/old65 checks pass.
+/private/tmp/pioneer-q38-output-observer-sdk-20261025-clean-a.log
+
+ISOLATED,MAIN AND INDEPENDENT CLEAN COMPLETE NATIVE RUNS PASSED
+Separate-copy positive parent6693 EXIT0:
+/private/tmp/pioneer-q38-output-observer-native-positive-20261025-a.log
+Complete genuine prefix/programs->1592transfers/ALL1629120actual words->
+full restore/second proof/actual END passed in ONE original parent.
+Complete log SHA256:
+96ac75d6ba953cae05225ad472136a8a0a024a2442d76c1ad06b61f2ef78d97f
+That isolated dependency set stayed frozen until its actual terminal.
+Its source has the GCC formatting warning (clang accepts it) and lacks
+the main copy's additional kind/route/padding checks,so this is NOT a
+substitute for qualifying the final main copy or its full negative suite.
+Initial main full positive+16fault parent93740 EXIT1:
+/private/tmp/pioneer-q38-output-observer-native-all-20261025-main-a.log
+Three real CSR/command containment cases passed,then the FIRST typed
+payload case failed its aggregate assertion. No full main PASS is claimed.
+Source tracing found that payload fault4 was installed on the extra
+aperture's ResidentOutputRead,but actual scratch80000 observations use
+ResidentOutputMemoryReadChecked->Q38PanelRead->Read32(Panel). The fault
+therefore did not reach the observed payload endpoint. Failed log retained.
+Waited for the shared ordinary regression24273 to actually terminate
+before editing. A single TEST scalar-observation helper now covers BOTH
+the actual Panel and extra-aperture aliases;no production/math/tolerance/
+address changes. Added explicit containment diagnostics and exact request
+count assertions,not a skipped/weakened failure case.
+Main ordinary NO-readback positive regression parent24273 EXIT0:
+/private/tmp/pioneer-q38-output-observer-no-readback-native-positive-20261025-main-a.log
+All50inert entries,actual full prefix/new output/119STOP/ALL120holds/full
+restore/secondproof/native END pass for ordinary Close with NO readback.
+Corrected WHOLE main positive+ALL16fault parent37684 EXIT0,16:30UTC:
+/private/tmp/pioneer-q38-output-observer-native-all-20261025-main-b.log
+Complete log SHA256:
+f3fcba50a9bbc029514087a88aa4230729fe362924afb3228a86a5b4a058e3f9
+ALL3CSR/command+ALL13 typed payload cases AND the complete positive
+finished in ONE same parent. Each failure observes exactly page+1 actual
+reads,ALL119 stopped/held,ZERO original restore and ZERO later IO/END;
+the positive returns ALL1629120words then restores/closes/ENDs.
+Independent same COMPLETE clean parent45695 EXIT0,16:41UTC:
+/private/tmp/pioneer-q38-output-observer-native-all-20261025-clean-a.log
+Its full positive+ALL16fault log compares byte-identically to main
+f3fcba50a9bbc029514087a88aa4230729fe362924afb3228a86a5b4a058e3f9.
+Each PASS is from ONE authoritative complete parent to EXIT0;no union
+of partial child results and no restart after observation timeouts.
+Main refusing-context role/ABI gates parent29147 EXIT0,ALL462 cases:
+/private/tmp/pioneer-q38-output-observer-context-gates-20261025-main-a.log
+Both use actual zero/CLOSE/private prefix,actual4QPS1 and actual new full
+Conv/GDN/QOL1/5120-output programs BEFORE observer tests. Byte endpoints
+only simulate OS/NoC transport:copy actual VM-exported workspace/state,
+require ALL actual STOP/holds and fresh poison,track exact counters.
+Tests compare ALL1629120 returned words to actual VM state/workspace;
+no numeric products,completion or native capability are fabricated.
+The16 new negative cases are3CSR/command faults+13typed payload faults
+across every region/both state slots/first+last boundaries. Each forks
+the SAME actually computed native lifetime,not a fabricated ready owner.
+Clean dependency set stayed FROZEN until its authoritative native parent
+terminated. Additional standalone protocol files were NOT its dependencies.
+Observation
+timeouts are NOT terminal;re-poll SAME handles. No union of partial
+child outputs is a whole PASS,and no hardware/speed follows from these.
+
+NEXT
+The actual native parents,ordinary regression,real kernel context/entry
+audit and independent clean qualification now pass. Separate pointer-free
+DEBUG message checkpoint962f75d0c8 is also tested/pushed but not advertised
+or handled by any installed driver. Add a DISTINCT physical DEBUG
+boundary/fixed pointer-free reply/independent original-GGUF arithmetic
+observer,NOT an alias of compile-only67. Actual silicon qualification
+must precede any Work selection. Continue resident residual/RMS/FFN/
+attention and full64-layer/current-slot/token loop,then honest actual
+27B throughput/optimization toward20tok/s. Offline PASS is not success.

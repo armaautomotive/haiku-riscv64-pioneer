@@ -64,7 +64,7 @@ for name,size in current.items():
     assert size <= 2048 or name in previous and size <= previous[name],(name,size,previous.get(name))
 sizes = [size for name,size in current.items() if 'ResidentOutput' in name or 'pioneer_output_context_' in name]
 assert sizes and max(sizes) <= 2048
-for method in ('Prepare','Run','Close'):
+for method in ('Prepare','Run','CloseImpl','CloseForValidation','ValidationReadback','ReadbackTransferGuard'):
     concrete = [size for name,size in current.items()
                 if 'PioneerQ38ResidentOutputOwner::'+method+'(' in name and '[with IO = PioneerSessionIO]' in name]
     assert concrete and max(concrete) <= 2048,(method,'actual IO controller instantiation must not disappear')
@@ -115,7 +115,7 @@ for name in ('init_hardware','init_driver'):
 for name in ('publish_devices','find_device'):
     assert code('pioneer_q38_output_context_only_'+name) == null,(name,'entry must return only NULL')
 assert code('pioneer_q38_output_context_only_uninit_driver') == inert,'uninit must be inert'
-for name in ('bind','initialize','prefix','execute','end','destroy_clean'):
+for name in ('bind','initialize','prefix','execute','end','destroy_clean','validation_readback'):
     assert 'pioneer_output_context_'+name in defined
 print('PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame='+str(max(sizes)))
 print('PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries')

@@ -49,6 +49,9 @@ public:
  unsigned ResidentOutputFrontendSamples()const; // TEST physical debug-PC sampling after actual completion ONLY
  void ResidentOutputFault(unsigned,const PioneerQ38ResidentOutputResult&); // TEST fault timing,NEVER a grant
  bool ResidentOutputFaultInjected()const;unsigned ResidentOutputFaultFence()const;
+ void ObserveResidentReadback(unsigned fault=0,unsigned page=0,unsigned word=0); // TEST bytes/fault timing only
+ unsigned ResidentReadbackRequests()const;unsigned ResidentReadbackFaultFence()const;
+ void VerifyResidentReadback(const uint32_t*,unsigned);
 #endif
  void LearnedSource(ProjectionExecutionLearnedBytes& source); // TEST bytes,NO numerical products or authority
 #ifdef PIONEER_Q38_GDN_OUTPUT_EXECUTION_NATIVE
