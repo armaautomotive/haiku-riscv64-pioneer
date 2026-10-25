@@ -87,9 +87,10 @@ network, card/SD/disk/mains operation occurred in this work. Haiku baseline
 041/64CPUs/RAM137034936320B was left in place. Previous actual whole-model
 rate0.207893161 tokens/sec is UNCHANGED;20 tokens/sec remains UNMET.
 
-The coordinator checkpoint's original complete117-fault repeat remains
-separately observed in qwen38-resident-output-cohort-20261025.txt; do not
-mistake these factory positives for its full fault-suite terminal result.
+The coordinator checkpoint's original complete117-fault repeat also
+finished with recorded process exit0; see the separate full qualification
+in qwen38-resident-output-cohort-20261025.txt. Factory positives are not
+substituted for that complete fault-suite terminal result.
 
 The next execution step needs a GENUINE retained native joint owner,
 actual complete mappings/journals/clock/model/source/upload/init/input,

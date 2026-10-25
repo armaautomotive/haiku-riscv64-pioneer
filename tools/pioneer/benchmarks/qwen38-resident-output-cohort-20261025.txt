@@ -1,8 +1,8 @@
 Combined Conv/GDN/QOL1/full output-matrix coordinator, 2026-10-25 UTC
-STATUS: implementation + positive/isolation/physical-probe tests PASS.
+STATUS: complete corrected3-positive/117-fault suite PASS, terminal exit0.
 Full run56062 exited1 on a malformed-input TEST FIXTURE assertion after113
-fault cases. The fixture is corrected; all9 terminal cases pass separately.
-The complete repeat is still LIVE (PID29666), NOT yet a full117-fault PASS.
+fault cases. The fixture was corrected; all9 terminal cases passed separately.
+The unchanged-image complete repeat now independently passes ALL117 cases.
 Do NOT label this hardware-qualified, installed, full-model or faster.
 
 Actual implemented pipeline
@@ -162,11 +162,15 @@ Separate corrected terminal-only rerun: TERMINAL EXIT0, all9 cases:
  /private/tmp/pioneer-q38-output-cohort-terminal-20261025-a.log
  SHA256 a348765f9b8c3d14eb84f4cb23046b909d765058f5ba549179b8f60bfbc1f965
 This PARTIAL9-case run is NOT the complete117-case suite.
-Complete unchanged-image repeat remains LIVE:
+Complete unchanged-image repeat: TERMINAL EXIT0:
  /private/tmp/pioneer-q38-output-cohort-full-20261025-b.log
-PID29666, original unified session ID lost from truncated observation.
-Do NOT launch a duplicate: observe the SAME process and retrieve its
-terminal command-execution exit status before claiming a full-suite PASS.
+ SHA256 1395acbc5039605507632b9fec72b0f3e9ef5a28b9f2e3da3bff5af976ba7170
+Original PID29666 is absent. The recorded command execution was retrieved
+from this thread, NOT inferred from a log or timeout:
+ exec-4dd46993-ab7b-42d4-bd99-5f1985a426ab
+ status completed, exitCode0, duration3283007ms (local test wall time,
+ NOT hardware timing). ALL3 positives and complete117 faults pass in ONE
+process. No duplicate test was launched to replace a missing observation.
 Terminal PASS: independent physical probes80742 in clean physical-probes.log:
  bad physical PC/reset/source/counter samples injected only AFTER all119
  actual matrix launches; no fake receipts or numeric products supplied.
@@ -244,8 +248,10 @@ verified board remains Haiku/64 CPUs/RAM137034936320B/baseline041 driver.
 The last actual whole-model rate0.207893161 tokens/sec is UNCHANGED;
 20 tokens/sec remains UNMET. These offline counts are not a speed claim.
 
-Complete remaining fault/probe qualification, independent source/pin
-audit, final record and tested GitHub checkpoint first. Then provide a
+Complete offline fault/probe qualification and independent source/pin
+audit are now recorded. Source checkpointd89245e129 was already pushed
+as explicitly offline with the repeat pending; this record supplies its
+confirmed terminal result. Still provide a
 genuine complete pinned joint native model/source/init/clock/ALL120 code,
 runtime snapshot, STOP+hold+restore+END owner; the known held-PC audit
 hazard must NOT be inherited. No loading through an old owner is allowed.
