@@ -5,6 +5,9 @@
 #define PIONEER_Q38_PROJECTION_ZERO_FIXTURE_ONLY
 #include "pioneer_q38_projection_zero_controller_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingNativeState.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeState.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
@@ -71,6 +74,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  }
 #endif
  PioneerStoreContext* q38MutableContext=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ bool ResidentOutputCallScopeMatches();bool ResidentOutputBindSourceScope();
+#endif
  unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
  std::array<uint32,10240> prefix;
  volatile uint32* runtimeEntry=&entry;volatile uint32* scratchData=destination;unsigned payloadBytes=8192;
@@ -280,6 +286,9 @@ struct FactoryClock{
 };
 struct PioneerStoreContext {
  PioneerSessionIO& io;PioneerQ38EmbeddingNativeState* q38EmbeddingModel=nullptr;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ PioneerQ38ResidentOutputNativeState* q38ResidentOutputNative=nullptr;
+#endif
  PioneerResidentBanks& banks;PioneerResidentLease& lease;PioneerBulkUploadLease& bulk;
  PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;tt_host_page_result& host;
  struct D{tt_dram_samples_result& dram;};struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;};B3 baseline;
@@ -296,9 +305,17 @@ struct PioneerStoreContext {
    baseline{{{{owner.dram},owner.noc}}},initialized(bitmap){
   span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
  }
- ~PioneerStoreContext(){delete q38EmbeddingModel;delete q38Dispatch;} // SIMULATED context;real unknown contexts are retained,never destroyed
+ ~PioneerStoreContext(){
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  delete q38ResidentOutputNative;
+#endif
+  delete q38EmbeddingModel;delete q38Dispatch;
+ } // SIMULATED context;real unknown contexts are retained,never destroyed
  bool Unsafe(bool zero=false,bool graph=false,bool controlledEmbedding=false){
   (void)zero;(void)graph;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeUnsafe.inc"
+#endif
 #include "embedding_factory_unsafe.inc"
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 #include "projection_factory_unsafe.inc"
@@ -313,13 +330,16 @@ static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=4;static const void* sQ38LocalDeltaOwner=nullptr;
 static int currentThread=42;static int find_thread(void*){return currentThread;}
-#ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
 static int currentTeam=7;static bool failThreadInfo=false;
 struct thread_info{int team=-1;};
 static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || thread!=currentThread || !info)return -1;info->team=currentTeam;return B_OK;}
 #endif
 // Use actual native MEMORY-ONLY retention body,not a simulated ready seal.
 #include "embedding_factory_retain.inc"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeBind.inc"
+#endif
 #include "embedding_factory_scope.inc"
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "rms_factory_scope.inc"
@@ -353,6 +373,9 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 }
 #else
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeEnd.inc"
+#endif
 #include "embedding_factory_end.inc"
  return clean;
 }

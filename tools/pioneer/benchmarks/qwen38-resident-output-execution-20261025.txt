@@ -77,14 +77,16 @@ DATA is collected before its checker refuses; this is not a claim that no
 remaining receipt fields are read after an as-yet-uncompared corrupt word.
 No cleanup is inferred from an observation timeout or public count.
 
-INDEPENDENT CLEAN REPEAT IS STILL LIVE, NOT CLAIMED PASSED
+INDEPENDENT CLEAN REPEAT COMPLETED, EXIT0
 Clean archive of16e7794097 plus ONLY these8 execution/mapping source files:
 /private/tmp/pioneer-output-execution-clean.U62rzM5m
-All8 source hashes match current tree byte for byte. Its own parent48203
-is running the same one-positive/20-failure full suite; log execution-all.log.
-Keep the SAME handle until authoritative terminal. Do not edit clean-tree
-dependencies or shared frozen executable fixtures/SDK while it is live.
-Current-tree development may proceed independently of that frozen tree.
+All8 source hashes matched the checkpoint tree byte for byte before launch.
+Its own parent48203 completed the same one-positive/20-failure full suite,
+EXIT0; log execution-all.log. This complete clean-process log compares
+byte-identically with the original full-process log above,SHA256
+10dfc336aef5b90e37aa4f4dd6c0f623843d75c8dc97776471c5b3d81eaafb6b.
+The clean dependencies and shared executable fixtures/SDK stayed frozen
+through terminal. Current-tree native-binding development was separate.
 
 DISTINCT ACTUAL NATIVE MEMORY-ADAPTER FRAGMENT
 PioneerQ38ResidentOutputNativeMapping.inc implements new class-body map/
@@ -126,8 +128,8 @@ actual new preparation/install/boot/run/STOP/restoration or refusal. No
 private producer/initialization state is serialized or manufactured.
 
 NEXT / FULL OBJECTIVE UNCHANGED
-Finish and inspect clean repeat, update this explicitly pending record.
-Then implement/qualify the genuine native retained state/source/factory
+Original and clean full successful/failure lifetimes are now complete.
+Implement/qualify the genuine native retained state/source/factory
 and IO integration, including exact larger mappings, exclusive FD/team/
 thread/generation/clock/model/all-host lifetime and END interlock. Old
 closed projection Current cannot be called after consuming its input or

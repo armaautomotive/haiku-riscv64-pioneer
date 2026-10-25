@@ -342,6 +342,9 @@
 #endif
 #include "PioneerQ38EmbeddingNativeState.h"
 #endif
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "PioneerQ38ResidentOutputNativeState.h"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE
 #include "PioneerQ38ResidentDecoderValidationProtocol.h"
 #include "PioneerQ38ProjectionValidationProtocol.h"
@@ -662,6 +665,9 @@ static const char* sNames[] = {TT_PCI_PROBE_DEVICE, NULL};
 template<class Cookie> static bool Q38MutableScopeOwned(const Cookie* cookie)
 {
 	return cookie && cookie->context && (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  || cookie->context->q38ResidentOutputNative
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 		|| cookie->context->q38EmbeddingModel
 #endif
@@ -2115,6 +2121,9 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 };
 
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ bool ResidentOutputCallScopeMatches();bool ResidentOutputBindSourceScope();
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  bool DecoderCallScopeMatches();
 #ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
@@ -2955,6 +2964,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ PioneerQ38ResidentOutputNativeState* q38ResidentOutputNative=NULL; // separate private retained lifetime,not old prefix CLOSED
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 	PioneerQ38EmbeddingNativeState* q38EmbeddingModel=NULL; // exact retained heap model/workspace/producer owners
 #endif
@@ -3075,6 +3087,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  delete q38ResidentOutputNative; // known-clean END ONLY,before borrowed prefix/graph/banks/host owners
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 		delete q38EmbeddingModel; // ONLY known-clean explicit END may reach destruction
 #endif
@@ -3132,6 +3147,9 @@ struct PioneerStoreContext {
 		,bool controlledEmbedding=false
 #endif
 		) {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "PioneerQ38ResidentOutputNativeUnsafe.inc"
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 		// PIONEER_Q38_EMBEDDING_NATIVE_UNSAFE_BEGIN
 		if (q38EmbeddingModel) {
@@ -3243,6 +3261,9 @@ static bool
 BeginQ38NormalClock(PioneerStoreContext& c)
 {
 	if (!c.bankStorageOnly || c.bytes!=PioneerResidentBanks::Total || c.Unsafe()
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+  || c.q38ResidentOutputNative
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 		|| c.q38EmbeddingModel
 #endif
@@ -3303,6 +3324,9 @@ static void
 RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result)
 {
 	c.dispatchOwnerRetained=true;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(c.q38ResidentOutputNative)c.q38ResidentOutputNative->Fault(); // MEMORY ONLY;never delete on unknown
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 	if (c.q38EmbeddingModel) c.q38EmbeddingModel->Fault(); // MEMORY ONLY;ALL snapshots/leases/maps retained
 #endif
@@ -3345,6 +3369,9 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "PioneerQ38ResidentOutputNativeEnd.inc"
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 	// PIONEER_Q38_EMBEDDING_NATIVE_END_BEGIN
 	if (c.q38EmbeddingModel || c.io.q38EmbeddingMemoryMapAttempted
@@ -3516,6 +3543,9 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 bool PioneerSessionIO::EmbeddingSourceScope(bool controller)
 {
 	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(c && c->q38ResidentOutputNative && !c->q38ResidentOutputNative->InitializationsClosed(c->banks,dram))return false;
+#endif
 	if (!c || &c->io!=this || !m || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
 		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
 		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore || fleetEnabled || !runtimeMapped || q38SpanAllowed
@@ -3607,6 +3637,9 @@ void PioneerSessionIO::EmbeddingRetainHostOwners()
 bool PioneerSessionIO::LearnedRmsSourceScope(bool controller)
 {
 	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(c && c->q38ResidentOutputNative && !c->q38ResidentOutputNative->InitializationsClosed(c->banks,dram))return false;
+#endif
 	if (!c || &c->io!=this || !m || m->phase!=PioneerQ38EmbeddingNativeState::Rms
 		|| sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
 		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
@@ -3663,6 +3696,9 @@ bool PioneerSessionIO::LearnedRmsOtherCoresHeld()
 bool PioneerSessionIO::ProjectionExecutionSourceScope(bool controller)
 {
 	auto* c=q38MutableContext;auto* m=c?c->q38EmbeddingModel:NULL;
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(c && c->q38ResidentOutputNative && !c->q38ResidentOutputNative->InitializationsClosed(c->banks,dram))return false;
+#endif
 	if (!c || &c->io!=this || !m || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration || !sRuntimeOwner
 		|| sRuntimeOwner->magic!=0x50313030 || sRuntimeOwner->context!=c || !sBankStorageOnly || !c->bankStorageOnly
 		|| c->bytes!=PioneerResidentBanks::Total || c->runtimeCoreMode!=1 || runtimeCore>=120 || !runtimeMapped || q38SpanAllowed
@@ -3733,6 +3769,9 @@ void PioneerSessionIO::ProjectionGraphRetainHostOwners()
 	if (q38MutableContext) {tt_resident_session_result result={};RetainQ38DispatchOwner(*q38MutableContext,result);} // MEMORY ONLY
 }
 // PIONEER_Q38_PROJECTION_EXECUTION_NATIVE_SCOPE_END
+#endif
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#include "PioneerQ38ResidentOutputNativeBind.inc"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 // PIONEER_Q38_RESIDENT_DECODER_NATIVE_SCOPE_BEGIN
@@ -3916,6 +3955,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 }
 [[maybe_unused]] static bool InitializeQ38EmbeddingModel(PioneerStoreContext& c,PioneerQ38ProjectionZeroResult& result)
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+ if(c.q38ResidentOutputNative && !c.q38ResidentOutputNative->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram))return false;
+#endif
 	auto* m=c.q38EmbeddingModel;if (!m || m->phase!=PioneerQ38EmbeddingNativeState::Bound || m->Unsafe()) return false;
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  if(!m->MatchesInitializedHistory(c.banks,c.baseline.baseline.baseline.baseline.dram))return false;
@@ -5777,6 +5819,9 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 		// Scope presence alone requires explicit END,even if a future
 		// allocation bug misbound the context as a legacy/non-bank session.
 		if (cookie->context->q38GdnBanks || cookie->context->q38StateZero
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+   || cookie->context->q38ResidentOutputNative
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 			|| cookie->context->q38EmbeddingModel
 #endif

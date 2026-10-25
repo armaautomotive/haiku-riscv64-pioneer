@@ -1,0 +1,133 @@
+Qwen3.8-27B distinct resident-output NATIVE binding perimeter, October25,2026
+
+GOAL ACTIVE;THIS IS NOT A SPEED RESULT OR A NATIVE COMPUTE GRANT
+Last actual whole-model0.207893161tok/s unchanged.20tok/s/full64-layer
+on-card autoregressive execution remain UNMET. Existing041 installation,
+Assistant,boot and hardware are untouched. No accelerator FD,relay,SD,
+disk/network configuration or mains mutation. Read-only pinned SSH found
+Haiku already online;the delayed old fans-off confirmation did not trigger
+another non-idempotent power pulse.
+
+Genuine native lifetime/code,NOT a public ready facade
+PioneerQ38ResidentOutputNativeState has private construction/destruction,
+deleted copies,no phase setter and no caller-created initialized seal.
+Only the actual native binder may publish its heap object under the SAME
+retained prefix/context. It borrows the exact model identity,token/bank,
+uploaded-page bitmap/hash storage,FD pointer and team. It owns DISTINCT
+actual GDN/history initialization leases and actual output controller;
+the43.8MB output restoration journal remains a later HEAP allocation.
+It cannot claim old native65/66 decoder/input-owner roles as these leases.
+
+The actual new native source predicate checks the FD magic/context/team,
+current call-thread seal,real get_thread_info team match,global owner
+stability after that OS query,generation/cold/reload/bank exclusivity,
+canonical joint reservation,pristine prefix/init progress,all competing
+owners/operations,the SAME actual input/bulk/wide host leases and normal
+firmware-clock lease. Binding checks current first-layer learned Conv/GDN/
+output page coverage before allocating/publishing its private CPU object.
+This bitmap/epoch is NOT original-GGUF provenance or upload authentication.
+The normal SAME-FILE host model provenance remains independently required.
+No new native initialization,execution or IO callback is implemented or
+authorized by this binder. The driver's top-level OFFLINE #error remains.
+
+Actual driver integration,all behind the exact new role
+The real context has the separate new pointer,destructed before borrowed
+prefix/graph/banks ONLY on known-clean explicit END. Unsafe/normal-clock
+BEGIN/native retention/cookie-close/mutable-owner presence and the FIRST
+END gate include that pointer. Unknown state faults/retains the new record
+without deleting it;existing retention quarantines all actual borrowed
+banks/clock/host owners. END refuses BEFORE old STOP/restore/IDLE/unmap/free
+unless the actual new output controller/memory are CLOSED and its private
+full initialization leases are clean. CLOSED old projection alone is not
+accepted. The actual old embedding/RMS/projection scopes additionally
+refuse when a new binding exists but its own initializers are not CLOSED;
+the embedding factory refuses this case BEFORE claims or any IO.
+
+Qualified ORIGINAL and independent CLEAN binding tests
+Original parent72731 EXIT0;107 independent source/binding refusals plus
+genuine private publication,duplicate refusal,uninitialized-prefix refusal,
+END failure/retention,repeated-call no-IO and immutable binding checks.
+All tests use the ACTUAL new binder/scopes/state/END/Unsafe fragments and
+the actual old canonical binding factory;OS/learned endpoints are synthetic.
+Static type checks prove callers cannot construct,copy or destruct a record.
+All failure paths checked for ZERO following MMIO/map/reset/STOP/cleanup.
+Log:/private/tmp/pioneer-output-native-binding-20261025-b.log
+SHA256:77d863b7562190859f1a6e286ac946ba3612abfca6d647f5f81a22dad884078f
+
+Clean archive87d224afce plus ONLY11 own native-binding source overlays,
+then the new native-state role-gate test and include-order correction:
+/private/tmp/pioneer-output-native-bind-clean.r8tn70RF
+Parent47403 EXIT0;native-binding.log reports the SAME107 refusal checks,
+native-binding-sdk.log reports the same SDK object and880-byte maximum,
+role-gates.log reports all existing304 isolation checks PASS. No new role
+can enter an old Work/CPU/DEBUG/image/native driver,including defined0.
+All three logs individually inspected;not inferred just from shell exit.
+Final corrected clean repeat20258 EXIT0:107 native-bind checks,95 new native
+state role/reinclude checks and the SAME SDK object/frame limit all pass.
+Its final source overlays match the checkpoint;no fixture/SDK files changed.
+Final current-tree repeat30608 EXIT0 also reports107 checks and the exact
+same77d863b7 log hash. Current95-gate/SDK parent2400 EXIT0;object/frame
+unchanged. All12 final source files compare byte-identically to the clean
+tree. Both reports are evidence files,not live test/build dependencies.
+
+Actual Haiku SDK KernelExport.h thread/type ABI and native bind/lifetime
+fragment compile EXIT0;all static stack frames maximum880bytes,below2048.
+Original and clean object SHA256 byte-identical:
+328e7502720f7b058223c7f1eb49854bf0e6343d70f9ee0dbceccd128a552288
+SDK read-only. This compile uses context-shaped endpoints with deliberately
+unresolved base/retention functions;it is NOT a complete native context,
+linked driver,new role selection,installation or card execution proof.
+
+Actual complete existing native65/native66 SDK control parent16235 EXIT0:
+65:61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+66:97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437
+Both remain byte-identical;native66 maxNewFrame496. No SDK source edits,
+new linked driver or accelerator access. Source dependencies stayed frozen
+throughout these builds. Unrelated dirty llama.cpp/FlashNext were untouched.
+
+Diagnostic failures retained,not hidden or promoted
+Initial native binding runner37284 EXIT1:it linked a second copy of the
+whole old native factory fixture through the default producer helper.
+Added an explicit producer=False compilation option for this standalone
+bind-only test;default full execution compilation remains unchanged.
+Initial binding SDK compile EXIT1:missing actual clock type include and
+one extra level in the compile-only context shape. Added the REAL clock
+header and corrected that test shape;no fake KernelExport/thread types,
+relaxed source guard or removed stack gate. Corrected builds passed above.
+New native-state role gate first caught its include guard hiding a late
+role change. Kept the full real owner/runtime role check OUTSIDE that new
+include guard. Corrected95 gates pass in the independent clean tree.
+The original full pipeline was left untouched while live;the corrected
+header was tested in the freed clean tree first and copied only after its
+terminal result. Ordinary single-include preprocessing differs by just
+one blank line;after removing blank lines both are exactly SHA256
+f72a3d9bfb21076b7505e71728317c2b3f6a80eab82972eec11ce9f5f812a419.
+The corrected SDK object also remains byte-identical328e7502;no runtime
+instruction/phase/permission was changed by this include-order correction.
+
+CURRENT FULL PIPELINE REGRESSION COMPLETED,EXIT0
+Parent53298 completed the original full genuine state/history initialization,
+GPU prefix,new coordinator arithmetic,STOP and43.8MB restoration with the
+new current-tree fixture hooks present but NO native binding attached.
+Log:/private/tmp/pioneer-output-native-binding-prefix-regression-20261025-a.log
+SHA256:12d27a3a99589440f7342513dfd38a719af9bcf1095435553cebf1cb959b745b
+This is a successful complete controller regression with new hooks present,
+NOT execution through the still-owed genuine native initialization/factories.
+The independent full previous-checkpoint suite parent48203 completed EXIT0
+in /private/tmp/pioneer-output-execution-clean.U62rzM5m. Its complete positive
+plus20-failure log is byte-identical to the original,SHA256
+10dfc336aef5b90e37aa4f4dd6c0f623843d75c8dc97776471c5b3d81eaafb6b.
+It is not this new native-binding/full-pipeline regression;each lineage is
+kept distinct. The execution benchmark record now records its completion.
+
+NEXT / NOT REPLACED BY THESE CHECKS
+Implement the genuine new GDN/history initialization factories and
+their exact source/physical-held scopes,then the complete new output native
+IO/model/cookie/clock/host/fleet scope and mapping lifetime. Never call the
+consumed old Current/MatchesClosed input as a new running-worker grant.
+Qualify safe ROOT frontend parked-word/fault separation with fresh pins if
+the image changes. Actual original-GGUF arithmetic/failure/silicon proofs
+must precede enabling any new driver. Then extend through residual/RMS/FFN,
+attention/all64layers/current-slot/token loop,measure actual27B inference,
+optimize toward20tok/s and expose the qualified no-CPU-reference Work target
+in Assistant. None of that is replaced by these passing CPU binding tests.

@@ -10,7 +10,7 @@ import subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 
 
-def compile_test(directory, sources, fixtures):
+def compile_test(directory, sources, fixtures, *, producer=True):
     assert len(fixtures) == 5
     for name, (section, size, digest, _) in runpy.run_path(str(HERE.parent/'generate_qwen38_projection_stash_images.py'))['PINS'].items():
         data = (pathlib.Path(fixtures[0 if name.startswith('root-') else 1])/(section+'.bin')).read_bytes()
@@ -35,8 +35,8 @@ def compile_test(directory, sources, fixtures):
             begin,end = '// '+marker+'_BEGIN','// '+marker+'_END';assert native.count(begin) == native.count(end) == 1
             (directory/(prefix+'_factory_'+name+'.inc')).write_text(native.split(begin,1)[1].split(end,1)[0])
     (directory/'embedding_factory_retain.inc').write_text(native.split('// PIONEER_Q38_RETAIN_MEMORY_BEGIN',1)[1].split('// PIONEER_Q38_RETAIN_MEMORY_END',1)[0])
-    base = ['pioneer_q38_projection_execution_producer','pioneer_q38_projection_execution_machine',
-            'pioneer_q38_embedding_execution_bridge','pioneer_q38_learned_rms_execution_bridge']
+    base = (['pioneer_q38_projection_execution_producer','pioneer_q38_projection_execution_machine'] if producer else [])
+    base += ['pioneer_q38_embedding_execution_bridge','pioneer_q38_learned_rms_execution_bridge']
     binary = directory/'test'
     subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',*flags,
                     '-I'+str(directory),*[str(HERE/(name+'.cpp')) for name in sources+base],'-o',str(binary)],check=True)
