@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_OPERATOR_IMAGE
+#error Resident operator IMAGE never contains a CPU validation session
+#endif
 #ifdef PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE
 #error Native66 never contains a CPU validation session
 #endif

@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_OPERATOR_IMAGE
+#error Original-model observer remains separate from resident operator IMAGE
+#endif
 #ifdef PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE
 #error Original-model observer remains separate from native66
 #endif

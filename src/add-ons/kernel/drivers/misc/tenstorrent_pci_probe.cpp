@@ -5,6 +5,9 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_RESIDENT_OPERATOR_IMAGE
+#error OFFLINE resident operator IMAGE never enters an existing native or Work driver
+#endif
 #ifdef PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE
 #if PIONEER_Q38_RESIDENT_SILU_PRECISION_NATIVE != 1 || !defined(PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE) || PIONEER_Q38_NEXT_FFN_RESIDUAL_NATIVE != 1 || defined(PIONEER_Q38_CONV_SILU_PRECISION_NATIVE) || defined(PIONEER_Q38_CONV_SILU_PRECISION_VALIDATION_CLIENT)
 #error Exact separate native66 requires genuine SAME native65,never DEBUG64 or Work

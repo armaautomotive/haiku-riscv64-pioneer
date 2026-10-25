@@ -63,6 +63,27 @@ TERMINAL0:125positive/413fault/maxStack4260,log BIT-IDENTICAL0b026cd1...
  /private/tmp/pioneer-q38-resident-operator-service-clean-full-20261025-a.log
 Thus this image checkpoint does not depend on uncommitted native66 changes.
 
+Subsequent isolation checkpoint:existing actual driver prefix,ALL10CPU
+reference headers and the CPU session/original-model observer explicitly
+reject this IMAGE flag,even defined0 and on late reinclusion. ALL10legacy
+public/image builders reject nonzero IMAGE environment roles BEFORE SDK
+or output access. Extended gates62505 TERMINAL0:356checks.
+ /private/tmp/pioneer-q38-resident-operator-service-isolation-20261025-a.log
+ SHA29e59269710f2825c73cde9cd208f9ad3ff3e81c23452c68b47f70965d6ff3be
+Post-isolation actual native66 SDK builds98945/57082 (d/e) TERMINAL0 still
+EXACT97c480c4,with old65 controls EXACT61faa093. New service build20858(g)
+TERMINAL0 still all5exact pins above;oldQFP3 rebuilt byte-identical FIRST.
+Regression gates13363 TERMINAL0:native65 583/native66 430checks plus EACH
+131072actual inert routes;log remains EXACTfe4d8e24... . PriorDEBUG64
+gates12522 TERMINAL0:350checks/131072actual closed routes,only2DEBUG+6storage;
+log remains EXACT3d88090a... . No native compute selector or ABI was added.
+Final independent read-only pinned SSH check:Haiku responds at10.0.0.247,
+64CPUs/max137034936320B RAM/free133790056448B;installed driver SHA remains
+EXACT041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+No P100A FD opened for that check;no power/SD/Assistant change. Administrative
+generation4/cold0/owner0 remains the prior verified restore record,not a new
+administrative-status claim from this OS/hash-only check.
+
 CRITICAL SCOPE:service68000..6a83c is NOT covered by the existing ALL119
 native peer snapshot. No existing mapping/save plan is enlarged here.
 Future joint owner must prove an explicit extended fixed footprint BEFORE

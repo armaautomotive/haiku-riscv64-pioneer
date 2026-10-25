@@ -48,8 +48,42 @@ for name in sorted(set(re.findall(r'defined\(([A-Z][A-Z0-9_]*)\)', (directory/'P
     for value in ('0', '1'):
         check(role, {**valid, name:value}, False)
         check(role+'#define '+name+' '+value+'\n'+role, valid, False)
+source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
+prefix = source.split('#ifdef PIONEER_Q38_PROJECTION_VALIDATION_NATIVE', 1)[0].replace('#include "tenstorrent_pci_probe.h"', '')
+check(prefix, {}, True)
+for value in ('0', '1'):
+    check(prefix, {'PIONEER_Q38_RESIDENT_OPERATOR_IMAGE':value}, False)
+    check(prefix, {'PIONEER_Q38_RESIDENT_OPERATOR_IMAGE':value, 'TT_PIONEER_DRIVER_RELOAD':'1', 'PIONEER_DRIVER_BUILD_TAG':'0x2026102100010012ULL'}, False)
+for name in ('Embedding', 'LearnedRms', 'Projection', 'ResidentDecoder', 'GdnInput', 'GdnRecurrent',
+             'GdnRendezvous', 'GdnOutput', 'NextProjection', 'NextGdnOutput'):
+    kind = 'GDN_OUTPUT' if name == 'GdnOutput' else 'GDN_RENDEZVOUS' if name == 'GdnRendezvous' else 'GDN_RECURRENT' if name == 'GdnRecurrent' else 'GDN_INPUT'
+    cpu = {'PIONEER_Q38_'+kind+'_VALIDATION_CLIENT':'1', 'PIONEER_Q38_CPU_VALIDATION':'1', 'PIONEER_Q38_LEARNED_RMS_VALIDATION_REFERENCE':'1'}
+    if name == 'NextGdnOutput':
+        cpu = dict(PIONEER_Q38_NEXT_GDN_OUTPUT_VALIDATION_REFERENCE='1', PIONEER_Q38_RESIDENT_DECODER_VALIDATION_CLIENT='1', PIONEER_Q38_CPU_VALIDATION='1')
+    text = '#include "'+str(directory/('PioneerQ38'+name+'ValidationReference.h'))+'"\n'
+    check(text, cpu, True)
+    for value in ('0', '1'):
+        check(text, {**cpu, 'PIONEER_Q38_RESIDENT_OPERATOR_IMAGE':value}, False)
+        check(text+'#define PIONEER_Q38_RESIDENT_OPERATOR_IMAGE '+value+'\n'+text, cpu, False)
+session = '#include "'+str(directory/'PioneerQ38GdnRendezvousValidationSession.h')+'"\n'
+cpu = dict(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_CLIENT='1', PIONEER_Q38_CPU_VALIDATION='1', PIONEER_Q38_LEARNED_RMS_VALIDATION_REFERENCE='1')
+for value in ('0', '1'):
+    check(session, {**cpu, 'PIONEER_Q38_RESIDENT_OPERATOR_IMAGE':value}, False)
+    check(session+'#define PIONEER_Q38_RESIDENT_OPERATOR_IMAGE '+value+'\n'+session, cpu, False)
+    result = subprocess.run([cxx, '-std=c++17', '-E', '-DPIONEER_Q38_RESIDENT_OPERATOR_IMAGE='+value,
+                             str(here/'pioneer_q38_decoder_original_source.cpp')], capture_output=True, text=True, env=clean, timeout=30)
+    assert result.returncode != 0 and 'Original-model observer remains separate from resident operator IMAGE' in result.stderr
+    count += 1
 with tempfile.TemporaryDirectory(prefix='pioneer-resident-service-gates-', dir='/private/tmp') as temporary:
     root = pathlib.Path(temporary)
+    for name in ('banks_driver', 'banks_client', 'inference', 'local_image', 'ffn_graph_image', 'ffn_matrix_image',
+                 'ffn_persistent_image', 'projection_graph_image', 'projection_matrix_image', 'projection_persistent_image'):
+        for value in ('1', '2', '-1', '', 'false', '0\n1'):
+            argv = [str(root/'NO_SDK'), *([str(root/'NO_LIB')] if name == 'inference' else []), str(root/'NO_OUTPUT')]
+            result = subprocess.run(['sh', str(directory/('build_qwen38_'+name+'.sh')), *argv], capture_output=True, text=True,
+                                    env={**clean, 'PIONEER_Q38_RESIDENT_OPERATOR_IMAGE':value}, timeout=5)
+            assert result.returncode == 2 and not result.stdout and not result.stderr and not (root/'NO_OUTPUT').exists()
+            count += 1
     for name in (*valid, 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_UNKNOWN_ROLE'):
         for value in ('1', '2', '-1', '', 'false', '0\n1'):
             result = subprocess.run([sys.executable, str(directory/'build_qwen38_resident_operator_service_image.py'),
