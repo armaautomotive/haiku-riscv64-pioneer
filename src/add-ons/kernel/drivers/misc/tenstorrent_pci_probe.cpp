@@ -5,8 +5,35 @@
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
+#include "PioneerQ38ResidentOutputContextCompileRole.h"
+#if defined(api_version) || defined(init_hardware) || defined(init_driver) || defined(uninit_driver) || defined(publish_devices) || defined(find_device)
+#error Context compile witness entry names cannot be supplied by the caller
+#endif
+// No conventional driver ABI exports. Even the renamed entry functions
+// below refuse BEFORE PCI/module/sem/host/card operations.
+extern "C" {
+ extern int32 pioneer_q38_output_context_only_api_version;
+ status_t pioneer_q38_output_context_only_init_hardware();
+ status_t pioneer_q38_output_context_only_init_driver();
+ void pioneer_q38_output_context_only_uninit_driver();
+ const char** pioneer_q38_output_context_only_publish_devices();
+ device_hooks* pioneer_q38_output_context_only_find_device(const char*);
+}
+#define api_version pioneer_q38_output_context_only_api_version
+#define init_hardware pioneer_q38_output_context_only_init_hardware
+#define init_driver pioneer_q38_output_context_only_init_driver
+#define uninit_driver pioneer_q38_output_context_only_uninit_driver
+#define publish_devices pioneer_q38_output_context_only_publish_devices
+#define find_device pioneer_q38_output_context_only_find_device
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
+#ifndef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
 #error Resident-output owner is OFFLINE until its actual complete native factory and role are qualified
+#endif
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102500010067ULL && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY)
+#error Reserved tag67 is ONLY a refusing whole-context compile witness,NOT a loadable driver
 #endif
 #if defined(PIONEER_Q38_RESIDENT_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE)
 #error OFFLINE resident operator IMAGE never enters an existing native or Work driver
@@ -115,7 +142,9 @@
 #endif
 #ifdef PIONEER_Q38_DECODER_RUNTIME
 #ifndef PIONEER_Q38_RESIDENT_DECODER_NATIVE
+#ifndef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
 #error Decoder runtime/history reservation is OFFLINE until its separate actual native factory and role are qualified
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
@@ -388,7 +417,7 @@
 #error Persistent full FFN owner is OFFLINE until its separate actual native model/input/clock/host adapter is qualified
 #endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
-#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 #error Persistent full FFN native execution requires its separate exact tag36 model-bound role
 #endif
 #include "PioneerQ38FfnPersistentGraphOwner.h"
@@ -404,7 +433,7 @@
 #error Reserved tag36 identifies ONLY the persistent full FFN native adapter
 #endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
-#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Canonical FFN model init requires its separate exact tag35 retained-owner role,not old GDN/code/Work promotion
 #endif
 #include "PioneerQ38GraphMutableBanks.h"
@@ -987,6 +1016,9 @@ FindCard(pci_module_info* pci, pci_info& card)
 status_t
 init_hardware()
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
+	return B_NOT_ALLOWED; // COMPILE witness:even renamed entry must do ZERO PCI/module IO
+#endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	// Even PCI enumeration must not be used as a recovery retry after an
 	// UNKNOWN event. This check is ordinary resident CPU metadata only.
@@ -1013,6 +1045,9 @@ init_hardware()
 status_t
 init_driver()
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
+	return B_NOT_ALLOWED; // no reload-guard attachment,PCI module or semaphore creation
+#endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	status_t guarded=get_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE,(module_info**)&sReloadGuard);
 	if (guarded!=B_OK) return guarded;
@@ -1056,6 +1091,9 @@ init_driver()
 void
 uninit_driver()
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
+	return; // no guard/module/sem/host teardown from a compile-only object
+#endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	// uninit_driver cannot veto an OS unload. Persist any unsafe state in
 	// the separate KEEP_LOADED guard BEFORE dropping this driver's image.
@@ -1078,6 +1116,9 @@ uninit_driver()
 const char**
 publish_devices()
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
+	return NULL;
+#endif
 	return sNames;
 }
 
@@ -9117,6 +9158,9 @@ ProbeWrite(void*, off_t, const void*, size_t* length)
 device_hooks*
 find_device(const char* name)
 {
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
+	return NULL; // no hooks,including no old Work/CPU/DEBUG controls
+#endif
 	static device_hooks hooks = {
 		ProbeOpen, ProbeClose, ProbeFree, ProbeControl, ProbeData, ProbeWrite,
 		NULL, NULL, NULL, NULL

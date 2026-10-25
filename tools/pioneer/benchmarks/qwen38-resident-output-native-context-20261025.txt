@@ -1,0 +1,119 @@
+Qwen3.8-27B whole native resident-output context compile, October25,2026
+
+GOAL ACTIVE / OFFLINE TYPE+ABI CHECKPOINT,NOT A SPEED OR SILICON RESULT
+Last whole-model0.207893161tok/s unchanged;20tok/s/full64-layer on-card
+autoregressive model remain UNMET. No accelerator FD,linked new driver,
+installation,Assistant/boot/CPU/RAM mutation,power/relay,SD,disk/network
+configuration or mains write. SDK read-only;dirty llama.cpp and unrelated
+FlashNext untouched. This work advances the ACTUAL native context beyond
+22d9e9509d's context-shaped SDK check,not beyond its physical qualification.
+
+ACTUAL WHOLE SOURCE,NOT A REPLACEMENT PIONEERSESSIONIO
+The compile witness includes tenstorrent_pci_probe.cpp itself. Its REAL
+PioneerSessionIO inheritance,profile,KernelExport callbacks/areas/threads,
+PioneerStoreContext,private native lifetime,all native initialization/
+prefix/output factories,controllers,retention,END and clean destruction
+must type-check together. No mock native context,undefined shape-only base
+permission or synthetic success is supplied. Explicit compile endpoints
+instantiate the real zero/QPE1/QRN1/four QPS1 roles/Close and new output
+Prepare/Run/Close,actual END and actual clean context destructor.
+
+Exact role PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY=1/tag67 binds
+all genuine parent flags and the separate private owner. It refuses old
+decoder/native roles,CPU/DEBUG/Work/image aliases,fast-math and caller
+entry-name substitutions,including forbidden aliases defined0. The old
+decoder reservation and FFN tag gates admit only this already validated
+compile witness;ordinary new-owner compilation STILL hard-refuses. Tag67
+without the exact witness is separately reserved/refused. It is not an
+old tag36/43/65/66 promotion or a physical driver role.
+
+UNUSABLE DRIVER ABI BY CONSTRUCTION AND ACTUAL MACHINE-CODE AUDIT
+All six conventional driver ABI definitions are renamed,including
+api_version. The object MUST contain none of their normal definitions.
+Both renamed init functions return B_NOT_ALLOWED BEFORE PCI enumeration,
+reload-guard attachment,module lookup or semaphore creation. Renamed
+publish_devices/find_device return NULL;renamed uninit is inert. The five
+complete function byte sequences must equal separately compiled constant
+return controls. The auditor binds symbol section .text,covers EVERY byte
+within each ELF symbol size,and refuses ANY relocation in those ranges.
+COMDAT sections with address-zero overlap are not combined with .text.
+Thus this is a refusing compilation object,not a loadable driver or new
+compute selector. No object linking/install/card run is done by the test.
+
+Ten legacy driver/client/model/image builders also refuse the new compile
+flag BEFORE reading an SDK/library or making output,even defined0/empty/
+malformed values. The native compile builder rejects nonzero PIONEER_
+environment role injection,authenticates the old52 binary and saved SDK
+compiler trace,and recompiles its actual old65 control FIRST. It reuses
+the existing compiler/SDK only;clean-snapshot project paths are rewritten
+to the corresponding clean source/header tree,not a shape-only wrapper.
+
+COMPLETED ORIGINAL AND INDEPENDENT CLEAN EVIDENCE
+Original63303 EXIT0:
+/private/tmp/pioneer-output-native-context-20261025-c.log
+Clean30275 EXIT0:
+/private/tmp/pioneer-output-native-context-20261025-clean-a.log
+Clean archive22d9e9509d plus only the owned overlays:
+/private/tmp/pioneer-output-native-context-clean.uSRdgeSZ
+Both actual whole-source objects byte-identical,SHA256:
+954a89a64aa7d8f0e73bb51fc9df2f8d520bf7396ce8735b38d8d6a174072ba1
+All new frames <=2048,maximum1488bytes;all inherited oversized frames
+must exist and not grow versus the byte-identical native65 control.
+Inspected emitted ACTUAL IO controller frames in BOTH .su files:
+PioneerQ38ResidentOutputOwner::Prepare<PioneerSessionIO>:688bytes
+PioneerQ38ResidentOutputOwner::Run<PioneerSessionIO>:144bytes
+PioneerQ38ResidentOutputOwner::Close<PioneerSessionIO>:304bytes
+The final repeat additionally asserts all three concrete instantiations
+remain present,so dead-code elimination cannot silently hide that check.
+
+Original462 role/builder/entry-audit gates24603 EXIT0;clean462 gates1126
+EXIT0. Complete gate logs compare byte-identically:
+/private/tmp/pioneer-output-native-context-gates-20261025-b.log
+/private/tmp/pioneer-output-native-context-gates-20261025-clean-a.log
+Gate-log SHA256:
+0c1855c09770372ea528990ee3fe210fcdf09362ae8402178fe48fce45906014
+The actual audit helper is additionally tested against wrong ELF section,
+missing/gapped instructions and relocation inside a supposedly inert entry.
+Existing304 isolation gates11419 EXIT0 and95 private-state gates95811
+EXIT0. No gate,normal mode,clock limit,stack bound or tolerance relaxed.
+Current actual full native65/native66 controls87203 EXIT0,byte-exact:
+65:61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+66:97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437
+No old mode is replaced by the compile witness.
+
+Final concrete-instantiation assertion repeats BOTH completed EXIT0:
+Original97889:/private/tmp/pioneer-output-native-context-20261025-d.log
+Clean3688:/private/tmp/pioneer-output-native-context-20261025-clean-b.log
+Both source/dependency sets stayed frozen through authoritative terminals.
+Current full original/clean objects again compare byte-identically954a89a6,
+and all five owned context/source/test files compare byte-identically.
+Log hashes (paths differ;logs are NOT claimed byte-identical):
+Original:5425974aa8bbf45e68c7553dad435bb88e5ce8ab99c393712d264b7dd1ec8071
+Clean:d509ad84f968734a4047637fc014d9d5edcdbf67772788aa638e438724b316e0
+No remaining live build/gate/qualification parent. No retries were started
+because of an observation timeout;each development repeat followed actual
+terminal completion and a deliberate tighter audit assertion.
+
+AUDIT DEVELOPMENT NOTES
+First full build1358 EXIT0 established actual whole types,old65 equality
+and ordinary ABI absence. Its initial entry-byte parser combined section
+address namespaces;that was not accepted as the final entry audit. After
+terminal,the parser was corrected to bind .text and require all symbol
+bytes;48473 EXIT0 and387 initial gates22403 EXIT0. Next strengthened
+relocation refusal,10 legacy-builder refusals and fast-math checks yielded
+the complete original63303/clean30275 and462 gates above. The actual object
+remained954a89a6 throughout;no production arithmetic,guard or image pin was
+changed to get those results. No provisional audit is a hardware grant.
+
+NEXT / FULL OBJECTIVE NOT REDEFINED
+Push the scoped qualified checkpoint. The actual
+context TYPE/compile gap is now closed,not hardware/link/execution proof.
+Before physical use,separate ROOT72038 safe park from7203c fault with an
+explicit frontend-safe image and fresh pins/full instruction/arithmetic/
+failure qualification;never simply accept the fault entry as completion.
+Prepare a separately scoped physical role/DEBUG boundary,original-GGUF
+and native silicon qualification. Then extend persistent state through
+residual/RMS/FFN,attention,all64layers/current-slot/autoregressive token
+loop,benchmark actual27B inference,optimize toward20tok/s,and expose only
+qualified no-CPU-reference Work in Assistant. No compile-only result
+substitutes for any of those real-model requirements.
