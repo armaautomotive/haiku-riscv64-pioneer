@@ -1,0 +1,89 @@
+Qwen3.8-27B genuine initialized resident input, October25,2026
+
+The20 tokens/sec/full-model GPU execution goal remains ACTIVE and UNMET.
+Last whole-model0.207893161 tokens/sec is unchanged. NO Pioneer accelerator
+FD, driver/Assistant install, relay, SD, network, disk or mains mutation.
+SDK/build mirror was not modified. Existing kernel still rejects the new
+prototype role; the genuine new native factory/scope/maps remain required.
+
+COMPLETED: ACTUAL INITIALIZATION -> ACTUAL GPU INPUT
+The TEST producer's separate PIONEER_Q38_TEST_RESIDENT_OUTPUT_EXECUTION
+configuration now invokes the REAL existing GDN and history zero
+controllers in the SAME actual joint runtime reservation, BEFORE workspace
+zero/embedding/RMS/projections. No private initialized flag/page ledger/
+producer record/status/counter is set by a shortcut. Each release executes
+the frozen actual RV32 zero program, and every returned byte is observed.
+The inherited synthetic status/counter fabric is explicitly forbidden.
+
+All672 recurrent regions, BOTH slots,73728pages/301989888bytes complete,
+followed by actual clean zero CLOSE before private initialization
+publication. All336 history regions,1680pages/6881280bytes complete and
+clean CLOSE before history publication. Actual resulting device bytes
+are retained, not reconstructed as presumed zeros. The same context then
+executes actual workspace zero/QPE1/QRN1/allfour QPS1 projections on the119
+emitted peers, actual STOP/unheld terminals/ALLholds and full old journal
+restoration, publishing the genuine private closed projection input.
+Both layer0 recurrent slots remain byte-identical to actual observed zero
+output. The complete next Conv/GDN/output canonical recipe's required
+learned-page presence is independently checked. Page presence is still
+DATA, not original GGUF authentication or native IO authority.
+
+TEST-ONLY wrapper explicitly supplies BYTE endpoints and pre-cohort
+metadata; it is NOT an implementation of the still-owed native initializer
+factory/scope. Learned weights, endpoint hardware and clock are synthetic.
+Actual controller code and emitted zero/embedding/RMS/projection programs
+execute; no CPU arithmetic result or successful receipt is fed to them.
+The default producer/preflight path remains uninitialized, so the existing
+negative initialization interlock continues to test a genuinely missing
+state seal rather than being bypassed by this new configuration.
+
+QUALIFICATION
+PYTHONDONTWRITEBYTECODE=1 python3 tools/pioneer/tests/run_pioneer_q38_resident_output_input_initialized_tests.py ROOT_QPS1_DIRECTORY PEER_QPS1_DIRECTORY ZERO_DIRECTORY EMBEDDING_DIRECTORY RMS_DIRECTORY
+
+Original parent46905 EXIT0:
+/private/tmp/pioneer-q38-output-input-initialized-20261025-a.log
+Independent clean archive of fe8d13a178 plus ONLY the five initializer
+sources, parent9066 EXIT0:
+/private/tmp/pioneer-output-initialized-clean.CbINoHOx/initialized.log
+Both logs SHA256:
+2686c491ea036f1f5f9d7c2ebe7e196a55e8d4e9e82ec8fa44f9c2bdaad7de91
+All five owned source hashes match that clean tree byte for byte.
+ASan/UBSan, -Wall/-Wextra/-Werror, -ffp-contract=off. All actual executable
+fixtures are pinned, including old ROOT/peer/zero boot instructions and
+the exact zero/QPE1/QRN1 text bytes. No SDK write or card access.
+
+SEPARATE EXECUTION WORK IN PROGRESS, NOT PART OF THIS QUALIFIED CHECKPOINT
+A new byte bridge also completed an initial actual full NEW controller
+Prepare/Run/Close on this genuinely initialized input, original parent
+86404 EXIT0, log:
+/private/tmp/pioneer-q38-output-owner-execution-20261025-d.log
+It ran all119 actual boot/WAIT peers,640 Conv groups/96 GDN halves/24 QOL1
+producers/all5120 outputs, actual119 STOP terminals, ALL120 holds and full
+10951352-word/43805408-byte journal restoration+second verification. No
+held PC was read. These are synthetic endpoint instruction-model results,
+NOT native factory/card/GGUF numeric/whole-model or tokens/sec results.
+That execution harness is being extended with20 failure-containment
+cases; the expanded suite is currently live and explicitly NOT claimed
+passed here. Its four source files remain uncommitted work in progress.
+They must not be edited while that parent is live. Keep its SAME handle;
+an observation timeout is NOT permission to restart it.
+
+The bridge initially caught a compile-only missing counter helper, then
+two TEST adapter mistakes: device stores routed through a held-only HOST
+writer, and legacy ROOT b0000 records incorrectly required to lie in the
+NEW graph's journal. Corrected TEST device raw aliases retain BOTH exact
+layouts, while NEW host reads/writes still require the NEW fixed footprint.
+No production guard/footprint/ownership check was relaxed. All diagnostic
+logs remain under /private/tmp/pioneer-q38-output-owner-execution-20261025-*
+
+NEXT, FULL SCOPE UNCHANGED
+Finish/inspect the expanded actual-controller failure suite, independently
+repeat the complete new Run/Close/failures, qualify the genuine new native
+state/IO factory and exact larger ROOT/fleet mappings, then qualify original
+GGUF numbers and silicon before any native selector/install. Assess the
+NEW ROOT park/fault frontend-PC distinction without accepting fault7203c
+via an old terminal grammar. Extend device residency through residual/RMS,
+FFN/attention/all64 layers/state-slot/token loop, then measure and optimize
+real27B generation and expose the qualified Work mode in Assistant.
+No offline initialization count or successful single-layer model run is
+a substitute for that complete requested end state or a measured speedup.
