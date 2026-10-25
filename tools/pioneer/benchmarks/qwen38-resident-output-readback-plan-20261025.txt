@@ -1,0 +1,45 @@
+Qwen3.8-27B fixed combined-output readback layout,October25,2026
+
+GOAL ACTIVE;last whole-model0.207893161tok/s unchanged;20tok/s UNMET.
+This is a fixed canonical DATA recipe for the next SAME-owner DEBUG
+hardware observer,NOT physical readback,card numerical qualification,
+current-slot publication,Work inference,an ioctl or cleanup permission.
+No existing owner/IO/driver/firmware/test dependency was changed by this
+checkpoint. The earlier complete emitted-program sweep97264 remains live
+with its original frozen inputs;this new header is NOT included there.
+
+The new combined matrix reuses local a0000 and publishes final5120 rows
+at workspace100000,not old DEBUG55's156000. New recipe independently
+resolves all seven workspace spans plus BOTH96-half recurrent slots:
+56256workspace words+2*786432state words=1629120logical words across
+1592fixed nonoverlapping4KiB reads. Partial lines/scales pages expose ONLY
+768/192logical words;their page padding is never counted as model data.
+Every source is derived from the SAME complete matched operation and
+canonical plan;no caller address/route/count is accepted. An unbuilt,
+failed or mismatched canonical/input recipe cannot expose a page;Build
+is one-shot. Build and Page contain NO IO/model arithmetic/reference/
+ready or END mechanism.
+Physical consumers still owe actual same-owner execution/STOP/holds,
+code/source/clock/host/counters/mutable ownership,and transfer receipts
+before restore;the DATA recipe cannot supply any of those capabilities.
+
+Original runner88504 EXIT0 and independent clean runner45703 EXIT0:
+/private/tmp/pioneer-q38-output-readback-plan-20261025-a.log
+/private/tmp/pioneer-q38-output-readback-plan-20261025-clean-a.log
+Independent clean archive0079f0527ba7c9fede290d028dcd324d8abeeaf1 plus
+ONLY the four new readback-plan files:
+/private/tmp/pioneer-output-readback-clean.dpjzlXiW
+Both complete logs compare byte-identically. ASan/UBSan55cases cover all
+48recurrent layers,all7workspace banks,bothslots,position0/8191,87560
+unique pages,total contiguous logical words and187negative refusals.
+The independent oracle resolves public canonical PARTS,not production
+RecurrentRegions/operation descriptors/recipe cache. Boundary refusal
+leaves caller output unchanged. Actual read-only Haiku RV64 SDK compile
+also passes;maxkernel frame672bytes;the7KiB recipe is HEAP ONLY.
+
+Next:integrate fixed observer inside the genuine combined native owner,
+after ALL120 actual holds and BEFORE original snapshot restore,with its
+own bounded fixed read transfer ledger/failure retention. Qualify exact
+original-GGUF arithmetic on silicon under a distinct physical DEBUG role
+(NOT compile-only67),then extend resident residual/RMS/FFN/attention and
+the all64-layer token loop before claiming full card offload or speed.
