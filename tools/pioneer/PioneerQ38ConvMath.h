@@ -1,10 +1,23 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_SILU_PRECISION_IMAGE
+#include "PioneerQ38SiluIsolation.h"
+#endif
+#if defined(PIONEER_Q38_SILU_LEGACY_CONTROL_IMAGE)
+#error LOCAL legacy arithmetic control never selects a resident convolution image
+#endif
+#if defined(PIONEER_Q38_CONV_MATH_H) && (defined(PIONEER_Q38_SILU_PRECISION_IMAGE) != defined(PIONEER_Q38_CONV_SILU_PRECISION_BODY))
+#error Convolution arithmetic role cannot change after its body was bound
+#endif
 #ifndef PIONEER_Q38_CONV_MATH_H
 #define PIONEER_Q38_CONV_MATH_H
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
 #error QCV1 candidate has NO host Work/kernel numerical fallback
 #endif
 #include "PioneerGraphMath.h"
+#ifdef PIONEER_Q38_SILU_PRECISION_IMAGE
+#include "PioneerQ38SiluPrecision.h"
+#define PIONEER_Q38_CONV_SILU_PRECISION_BODY 1
+#endif
 #include "PioneerQwen38Hybrid.h"
 // Card-side16channel Conv4+SiLU. ALL local math completes BEFORE GDDR
 // writes. Previous input/state/ORIGINAL weights immutable;no CPU policy,
@@ -31,7 +44,14 @@ static __attribute__((noinline)) bool PioneerQ38Conv16(const float* input,const 
    if(!PioneerQ38ConvNormal(value))return false;
    sum+=value;if(!PioneerQ38ConvNormal(sum))return false;
   }
-  float value=PioneerGraphSilu(sum);if(!PioneerQ38ConvNormal(value))return false;output[c]=value;
+  float value;
+#ifdef PIONEER_Q38_SILU_PRECISION_IMAGE
+  if(!PioneerQ38SiluPrecision(sum,value))return false;
+#else
+  value=PioneerGraphSilu(sum);
+#endif
+  if(!PioneerQ38ConvNormal(value))return false;
+  output[c]=value;
   next[c*3]=previous[c*3+1];next[c*3+1]=previous[c*3+2];next[c*3+2]=input[c];
  }
  return true;

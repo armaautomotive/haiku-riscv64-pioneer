@@ -9,9 +9,10 @@ import subprocess
 import sys
 import tempfile
 
-if len(sys.argv) != 7 or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
+if len(sys.argv) not in (7, 8) or any(k.startswith('PIONEER_') and v != '0' for k, v in os.environ.items()):
     raise SystemExit(2)
-model, legacy, precise, prepare, gated, log = map(pathlib.Path, sys.argv[1:])
+model, legacy, precise, prepare, gated, log = map(pathlib.Path, sys.argv[1:7])
+convolution = pathlib.Path(sys.argv[7]) if len(sys.argv) == 8 else None
 assert model.is_file() and model.stat().st_size == 18973870528
 pins = ((legacy, 'd4b6f84cfbeec3abc63a7c130245bd557966ef0412c2f46a93d5159589b6891d'),
         (precise, 'c9d917403ae39611d262b1f97aa0bf44e23c21661fec33b6f9a3739493ef08f6'),
@@ -20,6 +21,9 @@ pins = ((legacy, 'd4b6f84cfbeec3abc63a7c130245bd557966ef0412c2f46a93d5159589b689
 for directory, pin in pins:
     assert hashlib.sha256((directory/'code.bin').read_bytes()).hexdigest() == pin
     assert (directory/'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
+if convolution is not None:
+    assert hashlib.sha256((convolution/'code.bin').read_bytes()).hexdigest() == '0a009317f69ecba0d6f56575508d4d4e6bdb3c30ece3e1f78a85cd66e2ab644c'
+    assert (convolution/'boot.bin').read_bytes() == struct.pack('<I', 0x0005e06f)
 here = pathlib.Path(__file__).resolve().parent
 analysis = runpy.run_path(str(here.parent/'analyze_qgt52_prepared_context.py'))
 with log.open('rb') as stream:
@@ -39,11 +43,16 @@ with tempfile.TemporaryDirectory(prefix='pioneer-silu-original-probe-', dir='/pr
     common = [os.environ.get('CXX','c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
               '-ffp-contract=off', '-fsanitize=address,undefined']
     objects = []
-    for name in ('pioneer_q38_silu_precision_probe_bridge','pioneer_q38_unscaled_prepare_probe_bridge','pioneer_q38_gdn_gated_norm_bridge'):
+    names = ['pioneer_q38_silu_precision_probe_bridge','pioneer_q38_unscaled_prepare_probe_bridge','pioneer_q38_gdn_gated_norm_bridge']
+    if convolution is not None:
+        names.append('pioneer_q38_conv_batch_precision_probe_bridge')
+    for name in names:
         target = root/(name+'.o')
         subprocess.run([*common, '-c', str(here/(name+'.cpp')), '-o', str(target)], check=True)
         objects.append(str(target))
     binary = root/'probe'
-    subprocess.run([*common,str(here/'pioneer_q38_silu_precision_original_probe.cpp'),*objects,'-o',str(binary)],check=True)
-    subprocess.run([str(binary),str(model),str(legacy),str(precise),str(prepare),str(gated),str(captured)],check=True,
+    flags = ['-DPIONEER_Q38_CONV_PRECISION_PROBE_ENABLED=1'] if convolution is not None else []
+    subprocess.run([*common,*flags,str(here/'pioneer_q38_silu_precision_original_probe.cpp'),*objects,'-o',str(binary)],check=True)
+    extra = [str(convolution)] if convolution is not None else []
+    subprocess.run([str(binary),str(model),str(legacy),str(precise),str(prepare),str(gated),str(captured),*extra],check=True,
                    env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

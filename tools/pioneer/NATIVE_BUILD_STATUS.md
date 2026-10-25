@@ -1,5 +1,26 @@
 # Native build status
 
+October24Pacific/25UTC2026:separate precise-SiLU QCB1 convolution worker
+OFFLINE actual-instruction qualified,NOT native/Work selected or physical.
+Original c600 source ->actualNoC/Conv4/SiLU/output ALL120workers/640groups:
+ALL10240conv+30720next-history BIT-EXACT. Subsequent LOCAL QGP1/QGN1
+counterfactual6144gated outputs max1.743689ppm<UNCHANGED3ppm;recurrence
+here CPU observation,NOT emitted recurrent/physical/full-model proof.
+Twooriginal runs32904/52370 TERMINAL0/logs644c2edf EXACT;old optional mode
+22257 stays7165c130 EXACT.120generic worker schedules and12476actual fault
+cases PASS;same640groups/5or6jobs autonomous/no intergroup host relaunch.
+Final7560B imagesE/F EXACT0a009317/max1744Bframe/2052BactualSP/old8KiB
+stack. OldQCB1a8df2da2/QCV1d0c9519d BYTE-IDENTICAL;232oldgates unchanged.
+83newgates+ALL1890frozenwords/boot/addresses/endpoints/6generator refusals
+PASS. New DATA header unselected by any owner/driver. All jobs TERMINAL0.
+Hardware still recovered Haiku consoleboot/noIPv4/SSH inaccessible;manual
+wired down/up response pending. NO additional power/SD/mains/GPU/Assistant
+actions;newclean driver metadata andstable041restore UNVERIFIED. Never
+repeatOFF;prior confirmation consumed by ON18579. Next exact separate64
+diagnostic/owner/client/guarded physical test,then full model resident loop.
+Whole27B0.207893161tok/s unchanged/20UNMET/goalACTIVE.
+Evidence:benchmarks/qwen38-conv-batch-silu-precision-20261024.txt.
+
 October24 Pacific/October25 UTC2026:isolated card SiLU precision candidate
 OFFLINE qualified,NOT physical/native/Work selected. Actual legacy QSP1+
 unscaledQGP1 reproduces ALL644captured physical head47prepared words and

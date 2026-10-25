@@ -1,0 +1,98 @@
+Precise-SiLU autonomous convolution worker,October24Pacific/25UTC2026.
+OFFLINE actual-instruction qualification only;NOT linked/native installed,
+selected by any driver,physical P100A execution or a model timing result.
+Last whole27B0.207893161tok/s;20tok/s/full resident model UNMET/goalACTIVE.
+
+Separate fixed wrapper selects already-qualified SiLU precision math inside
+the EXISTING card Conv4+SiLU arithmetic/NoC worker. Existing QCB1 grammar,
+same120coordinates/ALL640groups,5or6groups per invocation;no host relaunch
+between groups,no CPU activation/reference path. ALL local math completes
+before that group's first private GDDR write. Same descriptor/source/NIU
+counter/poison/input domain/quiet-state checks and terminal fault behavior.
+No snapshot/map/workspace/stack reservation expansion. Exact image bytes
+are a different variant,NOT permission to replace old driver/tag52.
+
+Fresh finalE/F builds TERMINAL0,7560B code EXACT:
+ 0a009317f69ecba0d6f56575508d4d4e6bdb3c30ece3e1f78a85cd66e2ab644c
+ /private/tmp/pioneer-q38-conv-batch-silu-precision-20261024-{e,f}
+ BootSHA d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6.
+ Maxstaticframe1744B/actualnested SPdepth2052B inside old8KiB stack;
+ no unsupported instructions,undefined helpers or mutable static data.
+ Actual VM verifies code fits each ALL120 existing saved code prefixes.
+
+Initial builds A/B refused Werror misleading-indentation after extracting
+the shared value declaration;fixed ONLY after all four compile parents
+TERMINAL1. C/D qualified0a009317;final guards E/F leave code byte-identical.
+New role-reinclude test initially refused the source's stale-role acceptance;
+before patching,compiler -MM proved ConvMath is NOT a dependency of live
+fault65558 (only its immutable D/code.bin is). Added guard outside include
+guard;never changed that live test's source/header/binary dependencies.
+
+Old QCB1 finalC rebuilt6088B BYTE-IDENTICAL
+ a8df2da24fa98535c70172c6f9833228c996a540f487b66fa545660b93256350.
+ Old QCV1 finalC BYTE-IDENTICAL
+ d0c9519d0c7ea342a0bbcbede9f9d6355c1c611ea768b9c923f7f645c812d822.
+ New arithmetic selector cannot change after ConvMath body binding and
+rejects late invalid values/CPU/native/Work roles,including defined-zero.
+Actual old QCB1gate33342/17052 reports232checks,log EXACT
+ 767e75fd377628d06a5bec8c3ce47325f80cfefb848bac6a9b4032731f6e6c29.
+
+Actual-instruction positive89785/A and81609/finalB TERMINAL0:
+ ALL120worker schedules/640groups/pass120,tracked counters/6record seals,
+ fresh poison/private next/immutable table;max372984steps/max2052Bstack.
+ DATA coverage5760plans/30720groups/48384refusals over48recurrent layers.
+ These synthetic nonzero-history inputs test generic schedules,NOT original
+all-layer model inference. B:
+ /private/tmp/pioneer-q38-conv-batch-silu-precision-positive-20261024-b.log
+ SHA8a38059cf8841278e6eb90a86aaf61d54bc2e00bafd89a01a1e8e34bf3037d35.
+
+Full fault65558 TERMINAL0,12476actual cases:ALL descriptor/table bit
+mutations and every first/middle/last job packet completion/foreign counter/
+source/descriptor/table/command/poison faults,between-job foreign activity,
+accepted-counter aliases. Unknown execution parks inert;no following packet
+or output;first-read failures leave all private sinks unchanged.
+ /private/tmp/pioneer-q38-conv-batch-silu-precision-faults-20261024-a.log
+ SHA4ce0dec164fce95c45f1a44a74305437ab589a97f0a7cb6c94264073316a366b.
+
+Full ORIGINAL source/CPU-reference+independent actual QCB1 VM bridges:
+A32904/B52370 TERMINAL0/logs BYTE-IDENTICAL:
+ /private/tmp/pioneer-q38-conv-batch-silu-precision-original-20261024-{a,b}.log
+ SHA644c2edfb119e490183f8be7cc56cffcb525b896bdf25a51ac37dc1af9a41f77.
+Whole19GB c600de03 authenticated BEFORE references/ANY simulated context.
+ORIGINAL layer0/token0 QKV10240/Conv4F32weights40960/zero history -> actual
+QCB1 NoC reads/Conv4/precision SiLU/private next+output writes. ALL120workers
+execute once;640groups covered exactly once. ALL10240conv outputs AND30720
+next-state words BIT-EXACT independent ORIGINAL CPU references. New SPdepth
+2052B/max371314steps for this original fixture. This is NOT native scheduling.
+
+Subsequent LOCAL QGP1/QGN1 probes use ACTUAL QCB1 emitted output,not a host
+SiLU replacement. Old head47 physical failure reproduces exactly as in the
+preceding diagnostic;new ALL48head counterfactual6144gated values maxrelative
+1.7436884743608592e-6<unchanged3e-6. Prepared22/state143241/raw901still differ
+from CPU reference. Recurrence here is CPU counterfactual,NOT emitted GDN
+execution;original physical sums/Z/norm unobserved. No physical-fix claim.
+Existing optional-no-QCB original probe22257 TERMINAL0/log EXACT
+7165c130858ba19ce488af1a97998750c2a542c97d3a4dd4f2d6afcc600e1366.
+
+Final83gates75742 TERMINAL0/twoexactimages/oldcontrolbytes/exactrole+
+reinclusion/CPU/native/Work exclusion/builder refusal. Frozen DATA header
+contains ONLY separately named1890words+boot/getters,NOT included by any
+native owner/driver. Generator exactSHA/length/boot gate;ALL1890code words,
+1891image words/addresses/invalid endpoints/terminalPC checked,6corrupt
+code/boot variants refused before patch output.
+ /private/tmp/pioneer-q38-conv-batch-silu-precision-gates-20261024-c.log
+ SHA35b2ab4765e5559afef191df6e9534c97e58391f22a1f910a543649e89440496.
+
+Hardware unchanged from recovery in preceding78fa33621b checkpoint:
+ONE OFF68897 was confirmed,ONE ON18579 ->freshLinux71e1d4d6 ->pinned
+SD-free sessionq38-silu-20261024-r64a/64/full-RAM Haiku. Console booted but
+wiredup DHCP/noIPv4;SSH inaccessible. User asked for single wired down/up;
+response still pending. No further pulse/SD/mains/Assistant/newGPU access.
+Fresh driver cold/owner metadata and known-good041restore still UNVERIFIED.
+
+NEXT:separate exact-tag64 precision diagnostic native role/client/complete
+genuine-prefix instruction proof/guarded installer,while old52/Work/default
+remain exact. Physical test ONLY after recovered Haiku metadata/clean stable
+restore. Do not install altered code under52 or use old52hash/tag mapping.
+Then advance full resident64-layer graph/attentionKV/sampling/persistent
+device token loop and benchmark actual whole-model throughput honestly.

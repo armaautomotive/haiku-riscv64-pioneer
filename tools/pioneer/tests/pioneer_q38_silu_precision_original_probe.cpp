@@ -28,6 +28,9 @@ static int PrecisionExecv(const char* path,char* const* argv){
 #include "../PioneerQ38GdnRendezvousValidationReference.h"
 #include "pioneer_q38_silu_precision_probe_bridge.h"
 #include "pioneer_q38_gdn_gated_norm_bridge.h"
+#ifdef PIONEER_Q38_CONV_PRECISION_PROBE_ENABLED
+#include "pioneer_q38_conv_batch_precision_probe_bridge.h"
+#endif
 using Prepared=std::array<std::array<uint32_t,322>,2>;
 static std::array<uint32_t,128> Reconstruct(const Prepared& prepared){
  std::array<uint32_t,128> output={};
@@ -38,7 +41,7 @@ static std::array<uint32_t,128> Reconstruct(const Prepared& prepared){
  }return output;
 }
 int main(int argc,char** argv){
- assert(argc==7);setvbuf(stdout,nullptr,_IOLBF,0);originalPath=argv[1];
+ assert(argc==7 || argc==8);setvbuf(stdout,nullptr,_IOLBF,0);originalPath=argv[1];
  PioneerQ38PublicModelSource source;assert(source.Open() && source.Ready());
  puts("SILU_PROBE_FULL_ORIGINAL_C600_SOURCE_AUTH_BEFORE_REFERENCES;NO_DEVICE_OR_NATIVE_CONTEXT");
  auto index=[&](const char* name){const auto* t=source.Model().Find(name);assert(t);return unsigned(t-source.Model().Tensors().data());};
@@ -60,10 +63,11 @@ int main(int argc,char** argv){
  for(unsigned i=0;i<128;i++)assert(captured[1296+i]==reference[(94+i/64)*8642+8514+i%64] && captured[1552+i]==z[47*128+i]);
  for(unsigned key=0;key<128;key++)assert(captured[1680+key]==reference[94*8642+322+key*64+49]);
  std::vector<uint8_t> weights(163840);assert(source.ReadReferencePacked(index("blk.0.ssm_conv1d.weight"),0,unsigned(weights.size()),weights.data(),unsigned(weights.size())));
- std::vector<uint32_t> sums(10240),legacy(10240),precise(10240);
+ std::vector<uint32_t> sums(10240),legacy(10240),precise(10240),originalWeights(40960);
  for(unsigned c=0;c<10240;c++){
   float sum=0;for(unsigned tap=0;tap<4;tap++){const auto* b=weights.data()+(c*4+tap)*4;
    uint32_t w=uint32_t(b[0])|(uint32_t(b[1])<<8)|(uint32_t(b[2])<<16)|(uint32_t(b[3])<<24);
+   originalWeights[c*4+tap]=w;
    sum+=(tap==3?PioneerAttentionFloat(qkv[c]):0.f)*PioneerAttentionFloat(w);
   }sums[c]=PioneerAttentionBits(sum);
  }
@@ -77,6 +81,19 @@ int main(int argc,char** argv){
    preciseMaxUlp=std::max(preciseMaxUlp,distance);assert(distance<=1);
   }
  }
+#ifdef PIONEER_Q38_CONV_PRECISION_PROBE_ENABLED
+ if(argc==8){
+  std::vector<uint32_t> emitted(10240),next(30720);
+  auto stats=ExecuteConvBatchPrecisionProbe(argv[7],qkv.data(),originalWeights.data(),emitted.data(),next.data());
+  for(unsigned c=0;c<10240;c++)assert(emitted[c]==precise[c] && emitted[c]==conv[c]
+   && !next[c*3] && !next[c*3+1] && next[c*3+2]==qkv[c]);
+  precise.swap(emitted); // subsequent probe uses ACTUAL QCB1 output,not QSP1 math
+  printf("SILU_ACTUAL_QCB1_ORIGINAL workers%u/groups%u/conv10240BIT_EXACT/next30720BIT_EXACT/maxStack%u/maxSteps%u;NO_NATIVE_COORDINATOR_OR_PHYSICAL_TIMING\n",
+   stats.workers,stats.groups,stats.maxStack,stats.maxSteps);
+ }
+#else
+ assert(argc==7);
+#endif
  uint32_t negativeA[48],dt[48],norm[128];
  assert(source.ReadReferencePacked(index("blk.0.ssm_a"),0,192,negativeA,192)
   && source.ReadReferencePacked(index("blk.0.ssm_dt.bias"),0,192,dt,192)
