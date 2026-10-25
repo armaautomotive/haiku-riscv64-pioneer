@@ -3,6 +3,9 @@
 // Independent persistent-loop variant:old qualified peer source stays exact.
 // The unchanged FFN envelope is NOT compatibility:all new sections need new
 // immutable pins and joint native/ROOT qualification before any device use.
+#ifdef PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE
+#error Persistent peer program is never a cohort ROOT
+#endif
 #include "PioneerQ38ResidentOperatorImageRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #ifdef PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE

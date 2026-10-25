@@ -1,0 +1,121 @@
+Complete card-side Conv->GDN coordinator -- OFFLINE integration checkpoint
+2026-10-25 UTC. Exact PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE=1,requiring
+the separate resident IMAGE/FFN/projection persistent roles. NO native
+selector,public ABI,device write,driver install or Assistant change.
+Last measured whole27B0.207893161tok/s UNCHANGED;20tok/s remains UNMET.
+
+IMPORTANT PERFORMANCE FINDING:the full-audit coordinator uses approximately
+48.28M simulated ROOT instructions/14473 NoC packets for ONE Conv->GDN
+cohort. These are NOT silicon times or token rates. This diagnostic control
+path is NOT a fast/native candidate. Persistent full-model scheduling and
+amortized/sealed device receipts must reduce these repeated audits before
+this can become a usable Work path. CPU reference arithmetic is absent
+from BOTH coordinator and peers;independent math exists ONLY in tests.
+
+New ROOT runs ALL120 precise Conv batches,including ROOT0's six previously
+missing groups,then all96 cooperative GDN half streams. Workers retain code,
+sequence and physical tensor state. No host callback,numerical intermediate,
+code reload or worker reset occurs between Conv and GDN. ALL96 readiness
+cells are cleared AND read back before ANY op8 launch,preventing a late
+clear from erasing a legitimately published peer seal. ALL640 convolution
+outputs precede ANY GDN release. Results remain private;NO state-slot/token
+commit,STOP/hold/restore/END or owner release is supplied by this image.
+
+The66624word immutable schedule contains one64word context,128baseline
+sequence words,120x16source words,120x384Conv records and96x192GDN records.
+Original c8000..109100 captures exactly into disjoint shadow109100..14a200
+before NoC. Per-peer physical counters14a400..14b2e0,sequences14b300..
+14b4dc and stats14b500..14b600 are disjoint. NEW ROM b8000..c8000 plus this
+ENTIRE new manifest/shadow/runtime footprint require a NEW joint owner
+BEFORE ANY write. No old native mapping/save/restore authority is enlarged.
+Geometry/source fields/these receipts are DATA,not authenticated model,
+initialized history,paired-cohort/clock/private-producer or launch authority.
+
+Actual SDK builds78180/59332/20163(d/e/f) TERMINAL0,ALL4 sections identical:
+ boot4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+ text92B ce66ec25896f1e06362bae978499b33222c7c51d603ce36e83bf0e077b804c22
+ conv6472B feb352acfc6490b727e32ba236d8bfa2e9f7b8811b31ae4ee37f5e4d53624112
+ cohort14412B dc7c83eafe4f64ad03137ce6889abc9a5d27e5d3f25865520d960098f3d06b07
+All6 exact companion worker sections recompiled/authenticated FIRST,along
+with old matrix/Conv,QFP3 and standalone QGT1 controls. All stay byte-exact.
+No undefined/writable globals/GOT/unsupported division,FMA,sqrt or CSR
+instructions. Every ALLOC section must belong to one exported image extent.
+Max function frame1696B<=2048;observed whole ROOT stack2948B fits unchanged
+8KiB stack reservation. Precise ROOT Conv uses its own emitted -Os bytes;
+its six groups execute real arithmetic,not a synthetic coordinator receipt.
+
+Initial compile24181 TERMINAL1:enum-type conditional warning,explicitly
+cast with no arithmetic change. Build98799 TERMINAL1:compiler memcpy/memset
+dependencies;implemented bounded volatile-byte helpers,no writable globals.
+Build77946 TERMINAL0 was subsequently REJECTED by actual VM:route tables
+in orphan .q38_projection_data were absent from exported bytes. Real load
+bb814 at ROOT PCb80b0 faulted. Corrected linker export and added ALL-ALLOC
+section audit,not a wider emulator read allowance. Final d/e/f above include
+the constants. Initial fixture compile failures (Range/old cohort marker
+collision) are retained as failures. Dependencies frozen while parents live.
+
+Coupled ASan/UBSan smoke45943 TERMINAL0:ACTUAL coordinator instructions
+AND all119 ACTUAL persistent worker programs,one shared GDDR byte fabric.
+All640 Conv outputs independently observed and ALL96 GDN halves/6144gated
+outputs validated. GDN consumes the ACTUAL emitted Conv output bytes,not
+precomputed/oracle products. Paired readiness/raw output comes from the
+actual buddy program. SAME worker config/thread/LRegs/Dst arrays,no detached
+GDN state or fake success/status/physical-PC receipts. Synthetic primitive
+learned/input bytes and free-running clock;NOT original27B/native/card time.
+Remote CSR reads are modeled as passive to the peer's own NIU counters;
+that physical transport behavior still requires native qualification for
+this new joint owner. Only known word-sized MMIO endpoints are read.
+Full fault suite91082 TERMINAL0:3positive/88fault. All three geometries pass:
+(layer0/bank0/position0/slot0;layer62/bank6/8191/slot1;layer30/bank3/5/slot0).
+ALL64Conv receipt corruptions refuse before ANY GDN launch;six selected
+GDN receipt corruptions,first/middle/last lost readiness clear and physical
+source/counter/PC/reset observations,stuck transport,late manifest/source
+faults refuse. ROOT fault park remains inert without issuing a later packet.
+ /private/tmp/pioneer-q38-resident-cohort-full-20261025-a.log
+ SHAe2604d54e5c8e44b51a5871048146088f756a9c349d96180147a6304eebb6cf5
+After this terminal,the TEST-only observer was strengthened to verify ALL
+Conv-history words and actual GDDR GDN-NEXT words,and the test runner now
+pins all6 companion sections explicitly. Production images did NOT change.
+All88fault-case bodies remain BYTE-IDENTICAL SHA88bf869014c53037d683c7bb891dd5193ba2c8038ecd5772c18b9c02b83119c7.
+The new explicit --positives option reruns only those three complete cohort
+geometries;its PARTIAL label does NOT claim a second full negative suite.
+Final history observers2583/48586(worktree/independent clean) BOTH TERMINAL0:
+all3full geometries,ALL30720Conv-NEXT words and786432GDN-NEXT words plus
+6144gated outputs per geometry. Logs byte-identical;the original88fault
+paths and ALL4ROOT/6companion production sections remain unchanged.
+ /private/tmp/pioneer-q38-resident-cohort-history-20261025-a.log
+ /private/tmp/pioneer-q38-resident-cohort-clean-history-20261025-a.log
+ BOTH SHA f54b60acf80223cf0f423d7ff6550f721954e415249aaa5aa13c1b382856a0d2
+
+Root role/native/CPU/Work/builder gates12952 TERMINAL0:464checks.
+ /private/tmp/pioneer-q38-resident-cohort-gates-20261025-a.log
+ SHAdab19e5cff0ec64bd71f6e86cf7972a51f29cca83d5e7e27ac38d624118c2ddc
+Companion gates12292 TERMINAL0:445checks (including ROOT/peer exclusions).
+ /private/tmp/pioneer-q38-resident-cohort-worker-gates-20261025-a.log
+ SHA871e2f567f80fc7af3a3b3b810da18d0099a302de4f0e6f51e0aac95eb260851
+Actual kernel prefix,ALL10CPU references,CPU session/original observer and
+ALL10legacy builders reject the new ROOT role,even defined-zero or late
+reinclusion where applicable,before native/SDK/output work. No native ABI.
+Companion full regression54549 TERMINAL0:176positive/261fault,exact log:
+ SHA85e3169c1d0d7e1905c33694c014ce071dcf3bcc2a37d9ed5b7a0ae164d8ce35
+Actual native66 SDK regression12284 TERMINAL0 remains EXACT97c480c49e829015c5efd8995787b7199b2643d3e035ebdc4932d597cd4f0437,
+old65 EXACT61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821.
+
+Independent Git archive ofc22887c68fdd17f79f4ecc2536c5093e5e4c9bb5 plus
+EXACT35own production/test files,excluding dirty llama.cpp/FlashNext:
+ /private/tmp/pioneer-q38-resident-cohort-clean-20261025.lTAsCuXo
+Archive25111 TERMINAL0 BEFORE overlay;clean build32024 TERMINAL0. All4ROOT
+and6companion sections match. Clean ACTUAL ROOT+119peer smoke43438 TERMINAL0,
+clean464gates57377 TERMINAL0. All35 source files independently byte-compared
+to current source. Documentation-only evidence record is separate.
+The two observer/runner files were subsequently copied into that same
+clean tree AFTER all old parents were terminal;final48586 above executes
+the stronger assertions and explicit6section companion authentication.
+
+Pioneer remains the previously restored baseline041. No GPU FD,hardware
+test,power/SD/network/Assistant mutation in this checkpoint. Remaining:
+reduce control overhead;genuine authenticated original
+source/initialized-state/joint native code+model+ALL120owner/clock/terminal/
+STOP/hold/restore/END qualification;full64layers/attentionKV/output RMS/
+vocabulary/sampling/token loop;then actual whole-model timing. Do NOT load
+this new image through old native64/65/66 footprints or promote it to Work.

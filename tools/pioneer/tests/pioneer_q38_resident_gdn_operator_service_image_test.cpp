@@ -299,6 +299,7 @@ static bool RunPersistentGdnPair(ResidentGdnOperatorPeer& a,ResidentGdnOperatorP
  }
  a.GdnInert();b.GdnInert();return a.GdnFinished(sequence) && b.GdnFinished(sequence);
 }
+#ifndef PIONEER_Q38_RESIDENT_GDN_OPERATOR_SERVICE_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && !strcmp(argv[3],"--smoke")));setvbuf(stdout,nullptr,_IOLBF,0);bool smoke=argc==4;
  unsigned positive=0,faults=0,minStack=0x70000;
@@ -380,3 +381,4 @@ int main(int argc,char** argv){
   assert(!old.Finish(1) && !old.requests && !old.matrixInstructions && !old.convPackets);old.ServiceInert();faults++;}
  printf("PASS actual returning GDN service positive%u/fault%u/maxObservedStack%u/SAME hardware arrays/matrix rearm loss refused/old service refusesop8/UNKNOWN inert;SYNTHETIC endpoints+clock,NOT native/ROOT/fullmodel or physical throughput qualification\n",positive,faults,0x70000-minStack);
 }
+#endif
