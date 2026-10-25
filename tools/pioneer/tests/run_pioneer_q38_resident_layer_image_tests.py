@@ -8,7 +8,7 @@ import sys
 import tempfile
 from pioneer_q38_resident_layer_image_common import verify
 
-if len(sys.argv) not in (3, 4) or len(sys.argv) == 4 and sys.argv[3] != '--preflight-faults':
+if len(sys.argv) not in (3, 4) or len(sys.argv) == 4 and sys.argv[3] not in ('--preflight-faults', '--runtime-fault1', '--runtime-fault2', '--runtime-fault3'):
     raise SystemExit(2)
 here = pathlib.Path(__file__).resolve().parent
 image, peer = map(pathlib.Path, sys.argv[1:3])

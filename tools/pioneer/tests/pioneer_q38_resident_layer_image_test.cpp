@@ -28,10 +28,12 @@ struct LayerFabric:OutputCohortFabric {
  std::array<std::vector<uint32_t>,3> expected;
  unsigned layerCaptures=0,normPackets=0,ffnCaptures=0,ffnMatrices=0,ffnProducers=0;
  unsigned assembled[3]={},normSumStores=0,normStores=0,residualPackets=0,finalSumStores=0;
+ unsigned runtimeFault=0,prefixPackets=0,injectedRootPacket=0,pendingStackStores=0;
  bool prefixDone=false,normDone=false,ffnStarted=false;
  unsigned ffnEntry=0;
- LayerFabric(const char* image,const char* worker,const OutputParts& geometry)
-  :OutputCohortFabric(image,worker,geometry){
+ LayerFabric(const char* image,const char* worker,const OutputParts& geometry,unsigned failure=0)
+  :OutputCohortFabric(image,worker,geometry),runtimeFault(failure){
+  assert(runtimeFault<=3);
   extra[0]=Read((std::string(image)+"/norm.bin").c_str());extra[1]=Read((std::string(image)+"/ffn.bin").c_str());
   assert(extra[0].size()==5404 && extra[1].size()==30496);
   ffnEntry=Symbol(image,"q38_resident_layer_ffn_once");
@@ -82,7 +84,11 @@ struct LayerFabric:OutputCohortFabric {
    }
    p.ffnPrepared=p.ffnVerified=seq;
   }
-  prefixDone=true;puts("ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back");
+  prefixDone=true;prefixPackets=packets;
+  // Deliberately corrupt an ORIGINAL raw norm input AFTER the genuine
+  // completed prefix. No CPU numeric product/receipt is supplied.
+  if(runtimeFault==1)Put(manifest[9],manifest[8]+98304+5119*4,0x7fc00001);
+  puts("ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back");
  }
  void VerifyNorm(){
   assert(prefixDone && !normDone && normPackets==10 && normSumStores==5120 && normStores==5120);
@@ -114,6 +120,12 @@ struct LayerFabric:OutputCohortFabric {
   }
   if(Range(at,0xffb20000,40)){assert(!pending && !unknown);command[(at-0xffb20000)/4]=value;return;}
   if(at==0xffb20040){assert(value==1 && !pending && !unknown);Submit();return;}
+  // Actual function frames may unwind/call the terminal while a submitted
+  // NoC transfer is UNKNOWN. Permit ONLY that private local stack,never
+  // commands,receipts,GDDR,code or a manufactured transfer completion.
+  if(pending && Range(at,0x6e000,8192)){
+   assert(!unknown && !(at&3));pendingStackStores++;minStack=std::min(minStack,at);Mem(at)=value;return;
+  }
   assert(!CodeAddress(at) && !(at&3) && RangeData(at) && !pending && !unknown);
   assert(!Range(at,TT_Q38_COHORT_MANIFEST,TT_Q38_COHORT_WORDS*4)
    && !Range(at,TT_Q38_OUTPUT_COHORT_MANIFEST,1152*4));
@@ -132,6 +144,9 @@ struct LayerFabric:OutputCohortFabric {
   const uint32_t expect[]={write?local:remote,0,write?129U:route,write?remote:local,0,write?route:129U,0,write?0x212U:0,bytes,0};
   for(unsigned i=0;i<10;i++)assert(command[i]==expect[i]);
   if(write)assert(normSumStores==5120 && normStores==5120);
+  // Model UNKNOWN,not a successful zero-length transfer. No payload,
+  // counter or completion is manufactured after the submitted request.
+  if(runtimeFault==2 && p==6){pending=true;injectedRootPacket=packets;return;}
   for(unsigned i=0;i<bytes/4;i++){if(write)Put(route,remote+i*4,Mem(local+i*4));else Mem(local+i*4)=Gddr(route,remote+i*4);}
   Retire(bytes,write);
  }
@@ -212,7 +227,9 @@ void LayerPeer::PrepareFfn(unsigned role){
  unsigned op=memory.at(0x74034);assert(op==1 || op==3 || op==4);ffnRole=role;
  activation=op!=1;inputFfn=op==4;activationPackets=commandReads=activatedWrites=nativeWrites=scaleWrites=0;
  native.fill(0xa5a5a5a5);scale.fill(0xa5a5a5a5);
- if(activation){for(unsigned i=0;i<64;i++)descriptor[i]=memory.at(0x74200+i*4);active=true;return;}
+ if(activation){for(unsigned i=0;i<64;i++)descriptor[i]=memory.at(0x74200+i*4);
+  if(inputFfn && logicalWorker==1 && layerFabric->runtimeFault==3)failPacket=3;
+  active=true;return;}
  assert(role<3);const auto* r=layerFabric->plan->LayerManifest()+64+PioneerQ38FfnResidualGraphRoleOffset(role);
  const auto* part=r+16+(logicalWorker-1)*8;
  const uint32_t job[]={0x31483851,12,2304,0,0,r[3],part[0],part[2],part[4],1,TT_Q38_FFN_PERSISTENT_MARKER,logicalWorker,ffnPrepared,1,1,0};
@@ -248,6 +265,7 @@ void LayerPeer::SubmitActivation(){
  const uint32_t expect[]={write?local:remote,0,write?selfRoute:descriptor[8],write?remote:local,0,write?descriptor[8]:selfRoute,0,write?0x212U:0,bytes,0};
  for(unsigned i=0;i<10;i++)assert(command[i]==expect[i]);
  if(write)assert(nativeWrites==128 && scaleWrites==31 && activatedWrites==(inputFfn?0U:256U));
+ if(p+1==failPacket){activationPackets++;pending=true;return;}
  for(unsigned i=0;i<bytes/4;i++){
   if(!write){uint32_t v=layerFabric->Gddr(descriptor[8],remote+i*4);memory[local+i*4]=v;(p?up:gate)[i]=v;}
   else{uint32_t v=memory.at(local+i*4);layerFabric->Put(descriptor[8],remote+i*4,v);(local==0x90c00?native.data():scale.data())[i]=v;}
@@ -273,8 +291,8 @@ void LayerPeer::StepBlock(){
  ffnVerified=ffnPrepared;active=false;layerFabric->RecordFfn(*this);
 }
 int main(int argc,char** argv){
- assert(argc==3 || (argc==4 && !strcmp(argv[3],"--preflight-faults")));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
- if(argc==4){
+ assert(argc==3 || argc==4);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
+ if(argc==4 && !strcmp(argv[3],"--preflight-faults")){
   unsigned faults=0;
   for(unsigned word:{0U,3U,13U,16U,40U,64U,70U,128U,272U,3519U,~0U}){
    OutputParts geometry(0,0);LayerFabric f(argv[1],argv[2],geometry);
@@ -286,6 +304,19 @@ int main(int argc,char** argv){
    faults++;
   }
   printf("PASS ACTUAL NEW complete ROOT pre-I/O faults%u:bad layer/norm/source/output/FFN geometry/private-placeholder/late ROOTsource;complete immutable capture then fault park;ZERO ROOT packets/Conv/GDN/norm/FFN jobs,ALL119boot WAIT retained,inert/no reset/STOP/retry;NO native/transport/full-runtime-fault qualification\n",faults);return 0;
+ }
+ if(argc==4){
+  unsigned kind=!strcmp(argv[3],"--runtime-fault1")?1:!strcmp(argv[3],"--runtime-fault2")?2:!strcmp(argv[3],"--runtime-fault3")?3:0;
+  assert(kind);printf("BEGIN ACTUAL NEW joined ROOT runtime fault%u AFTER real prefix;SYNTHETIC endpoint fault,NOT hardware/native recovery evidence\n",kind);
+  OutputParts geometry(0,0);LayerFabric f(argv[1],argv[2],geometry,kind);
+  assert(!f.RunLayer() && f.unknown && f.prefixDone && !f.ffnMatrices && !f.finalSumStores);
+  if(kind==1)assert(!f.normDone && f.normPackets==6 && f.packets==f.prefixPackets+6 && f.normSumStores==5119 && !f.normStores && !f.ffnCaptures && !f.pending);
+  if(kind==2)assert(!f.normDone && f.normPackets==7 && f.packets==f.injectedRootPacket && f.pending && f.pendingStackStores && !f.ffnCaptures);
+  if(kind==3){auto& p=f.Peer(0);assert(f.normDone && f.ffnStarted && f.normPackets==10 && f.residualPackets==2
+   && p.pending && p.pc==TT_Q38_PEER_FAULT_PARK && p.activationPackets==3 && p.ffnPrepared==p.ffnVerified+1
+   && p.memory.at(0x74144)==p.ffnVerified && f.ffnProducers<20);}
+  unsigned before=f.packets,reads=f.nocReads;f.Inert();assert(f.packets==before && f.nocReads==reads);
+  printf("PASS ACTUAL NEW joined ROOT runtime fault%u:real Conv/GDN/output prefix retained,ROOT fault park inert after detection/no FFN matrix/final residual/STOP/reset/retry;ROOTpackets%u normPackets%u actualFfnProducers%u;UNKNOWN owners still required,NO native failure-containment or silicon qualification\n",kind,f.packets,f.normPackets,f.ffnProducers);return 0;
  }
  puts("BEGIN ACTUAL NEW complete QLR1 ROOT+ALL119 SAME retained peers;SYNTHETIC original input/weights only;NO host intermediate products or fake producer");
  OutputParts geometry(0,0);LayerFabric f(argv[1],argv[2],geometry);

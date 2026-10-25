@@ -1,0 +1,4 @@
+BEGIN ACTUAL NEW joined ROOT runtime fault3 AFTER real prefix;SYNTHETIC endpoint fault,NOT hardware/native recovery evidence
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+PASS ACTUAL NEW joined ROOT runtime fault3:real Conv/GDN/output prefix retained,ROOT fault park inert after detection/no FFN matrix/final residual/STOP/reset/retry;ROOTpackets58389 normPackets10 actualFfnProducers19;UNKNOWN owners still required,NO native failure-containment or silicon qualification

@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE+x}" != x ] || exit 2

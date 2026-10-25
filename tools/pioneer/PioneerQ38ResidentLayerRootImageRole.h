@@ -5,6 +5,7 @@
 #error Exact separate OFFLINE complete recurrent-layer ROOT required
 #endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) \
+ || defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT) \
  || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) \
  || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_CLIENT)
 #error New layer ROOT is not a component,native68,compile67 or client alias

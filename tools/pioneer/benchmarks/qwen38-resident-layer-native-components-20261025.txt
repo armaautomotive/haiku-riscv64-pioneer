@@ -1,0 +1,131 @@
+Qwen3.8-27B full-layer native integration: component checkpoint
+2026-10-25 UTC. BASE369c05ecde. NO hardware install or token-rate claim.
+
+What changed
+--------------
+The SAME instruction-tested QLR1 program is now frozen as ALL7 exact ROOT
+code sections,with ALL6 exact unchanged resident-peer DATA sections. The
+generator authenticates ALL13 sections and BOTH boots before emitting ANY
+patch,even a tiny boot. No old registry or Work selector was extended.
+PioneerQ38ResidentLayerImages enumerates2270365 codewords/9081460B across
+ALL120 cores. Code padding,stacks,manifest/runtime/trailer words,unaligned
+addresses and invalid cores are refused WITHOUT changing caller output.
+Identical peer constants are reused as DATA,never as an old native lease.
+
+PioneerQ38ResidentLayerMemory is a DISTINCT44MB HELD code journal. It uses
+NEW typed scope,map,checked-read/write and host-retention callbacks;OLD68
+IO cannot instantiate it. It captures ALL11000888 arbitrary original words,
+does a complete SECOND physical-original check BEFORE FIRST write,installs
+only exact code,verifies it again,and restores all originals ONLY for a
+never-launched held session. First failed scope/map/source/counter/read/
+write/preimage/restore quarantines and requests resource retention;NO later IO,retry,
+reset,PC read or invented completion. The full-layer compute owner and its
+genuine native scope/factory are NOT implemented by this component.
+
+PioneerQ38ResidentLayerNativeMapping.inc is the actual Haiku class-body
+adapter for the NEW geometry:40960B prefix plus811008B suffix through17e000,
+alongside existing panel/trailer mappings. Peer views STILL cannot access
+ROOT-only manifests/norm/FFN data. Partial failed mappings are retained,
+never retried/unmapped/replaced. The source-scope callback is a NEW native
+contract,NOT implemented by a ready bit or copied old context here.
+Actual Haiku SDK compilation passes;max mapping frame128bytes. There is
+NO full new native context/execution owner,driver ABI/tag,public operation,
+installation,Assistant Work integration or physical launch in this change.
+
+Runtime failure evidence: actual ROOT+ALL119 retained interpreters
+------------------------------------------------------------------
+New modes run the GENUINE complete Conv/GDN/QOL1/output-matrix prefix FIRST,
+with synthetic original input/learned bytes and actual emitted instructions.
+No numeric products,success receipts or peer readiness are fed to execution.
+1:NaN in LAST original raw norm input:actual residual scratch5119words may
+  be partial (documented helper contract),but ALL6 input reads complete,
+  ZERO normalized words/GDDR output writes/FFN jobs. ROOTfault/inert.
+2:First norm GDDR write submitted but remains UNKNOWN:7 norm packets total,
+  payload/counters/completion NOT manufactured;ROOTfault/inert. Actual
+  private RISC stack writes on the fault-call path are allowed ONLY within
+  6e000..70000,NOT NoC commands,code,receipts or GDDR completion.
+3:First FFN input producer's scale write remains UNKNOWN after real norm:
+  19 other actual input producers may finish,first private completion stays
+  at its previous sequence;ROOTfault/inert BEFORE ANY FFN matrix/final sum.
+All cases retain real interpreted worker tensors/registers/PC/sequences,
+no peer/ROOT reset,STOP,retry or CPU fallback. They are NOT physical/native
+failure-containment qualification;real owners still must remain retained.
+ROOT packet totals are23521,23522,58389,not silicon timing or token rates.
+
+Workspace results
+-------------------
+Runtime1 session40055 EXIT0,2 session65712 EXIT0,3 session59949 EXIT0.
+Logs:/private/tmp/pioneer-q38-resident-layer-runtime{1,2}-20261025-b.log
+ and /private/tmp/pioneer-q38-resident-layer-runtime3-20261025-a.log
+Two earlier TEST assertions failed:the late invalid value legitimately
+leaves partial LOCAL residual scratch,and a stalled NoC operation still
+permits private local stack frames before fault park. Both harness contracts
+were corrected strictly without allowing command/result/code publication.
+Failed runtime1/2 a logs are preserved;NO hardware was involved.
+
+Images80877 EXIT0:ALL13 exact sections/ALL120/exhaustive L1/refusal tests
+and SAME pure DATA _KERNEL_MODE compile. Generator49714 EXIT0:63 checks,
+all13 section first+last corruptions/truncation/extension/arity/old-peer-leaf
+refused before ANY output. Memory41380 EXIT0:full journal save/install/
+restore+22001776 verified-original words. Memory66260 EXIT0:50faults plus
+29 CPU-precondition refusals;NEW ROOT ROM/layer-shadow tails included.
+Mapping77716 EXIT0:ALL11000888 logical words/1940 inert refusals/partial
+maps retained;SDK mapping object6a3a0ec8bf5cec063d81ca7900659400db9964d6e4c1a6c0cb5f586a2ab3d084.
+Native component gates25684 EXIT0:258 checks,defined0+late CPU/Work/old68/
+compile67/image/native aliases closed;OLD IO cannot satisfy NEW callbacks;
+tags12/65/68 and10 legacy build entries refuse before work.
+
+Independent clean repeat
+--------------------------
+git archive369c05ecde plus ONLY49 selected source files:
+ /private/tmp/pioneer-resident-layer-native-clean.CvcIkGTl
+No dirty llama.cpp,untracked FlashNext or SDK mirror changes included.
+Read-only SDK:/Volumes/HaikuBuildLocal/generated.riscv64
+Clean image build45517 EXIT0:
+ /private/tmp/pioneer-q38-layer-native-clean-image-20261025-a
+ALL7 ROOT/same6 peer/ALL old ancestor/old default QFG3 pins unchanged.
+Clean memory36945 EXIT0;clean50faults+29refusals61869 EXIT0.
+Clean actual mapping+Haiku SDK20093 EXIT0:ALL120/frame128/object SHA same.
+Clean new-native gates20128 EXIT0:258 checks.
+Old actual native-context SDK control73264 EXIT0:old65 remains byte exact
+61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821;
+old compile-only67 entries remain machine-code-identical refusing constants,
+max new kernel frame1488.
+
+Final clean results (all terminal EXIT0):
+- Runtime1:33319,Runtime2:54064,Runtime3:76073,same packet totals as above.
+  /private/tmp/pioneer-q38-layer-native-clean-runtime{1,2,3}-20261025-a.log
+- Exact DATA+_KERNEL_MODE image test76419;generator63checks16924;
+  separate image/late-role/legacy-entry gates591checks98235.
+- Normal joined-layer regression37176,using independently rebuilt clean
+  program and updated TEST harness:ALL stages/private lifetimes/numerics
+  PASS;ROOTsteps109078007,packets50606,FFNTensix2088960,maxStack6312,
+  IDENTICAL to the previous qualified run. NO CPU intermediate products
+  or synthetic completions are supplied. This remains synthetic original
+  input/weight byte evidence,NOT native/original-GGUF/inference timing.
+  /private/tmp/pioneer-q38-layer-native-clean-full-20261025-a.log
+
+Remaining native-proof integration detail:FFN reuses7f800,overwriting the
+earlier output-matrix receipt. The complete native owner must not fit or
+invent those missing intermediate counters. Preserve genuine prefix and
+norm handoff receipts on card if needed,then require new QLR1 terminal,
+all119 fresh final FFN sequences and independent source/counter lineage
+before STOP/holds/restore. Any changed program must be rebuilt/refrozen/
+requalified;the current exact DATA does not silently grant a new variant.
+
+Remaining work: NOT completion
+--------------------------------
+The new execution owner must exclusively consume the genuine typed QPS1
+producer,bind model/hash/cookie/thread/global/source/clock/host/mapping and
+all learned+mutable initialization resources,prove unheld ROOT/ALL119 private
+terminals/counters/source before holds,then actual restore/END. Never borrow
+old68 CLOSED state or a simulated callback as an expanded native grant.
+The old canonical first-layer56-part learned preflight ALREADY includes
+norm/FFN stripes;new native sessions must freshly authenticate/upload and
+retain those real original bytes,not borrow a prior session's ledger.
+Full-layer first-original-GGUF numerical validation remains owed,then all64
+layers/dense attention/KV/current-slot+token commit/persistent decoder loop,
+Assistant Work integration and honest whole-model measurement.
+NO hardware writes/power/SD/mains/Assistant/network changes in this turn.
+Last measured real whole-model performance remains0.207893161tokens/sec.
+20tokens/sec/full-card model execution are UNMET;NO speedup is claimed.
