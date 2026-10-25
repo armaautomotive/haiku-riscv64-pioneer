@@ -58,6 +58,11 @@ struct ResidentOutputExecutionMachine::Impl {
     for(unsigned i=0;i<8192;i++)f.Put(d[12+side],d[5+side*2]+i*4,bytes[i]);
    }
   }
+  if(auto* original=endpoint.LearnedBytes()){
+   assert(original->Ready());f.originalBytes=original;
+   assert(ResidentOutputImportLearnedBytes(f.manifest.data(),*original,
+    [&](unsigned route,uint32_t address,uint32_t value){f.Put(route,address,value);}));
+  } // ORIGINAL learned BYTES only;workspace/state still come from actual prior programs.
  }
  void Sync(unsigned w){
   auto& f=*machine;

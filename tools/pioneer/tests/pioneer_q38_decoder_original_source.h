@@ -3,6 +3,7 @@
 #define PIONEER_Q38_DECODER_ORIGINAL_SOURCE_H
 #include "pioneer_q38_projection_execution_machine.h"
 #include <memory>
+struct tt_q38_resident_output_validation;
 // TEST original-byte endpoints and independent CPU OBSERVER only. The
 // implementation is compiled SEPARATELY without native adapter/execution
 // or Work flags. The canonical mutable-DATA interlock grants NO device IO.
@@ -28,6 +29,9 @@ struct DecoderOriginalSource:ProjectionExecutionLearnedBytes {
  virtual uint64_t GdnNormReads()const{return 0;}
  virtual bool GdnOutputWeightsReady()const{return false;} // TEST learned byte endpoints only
  virtual uint64_t GdnOutputReads()const{return 0;}
+ // Post-return CPU observer only. No references/products are exposed as
+ // input to the native controller or to its instruction-machine endpoints.
+ virtual bool CheckResidentOutput(const tt_q38_resident_output_validation&){return false;}
  virtual bool ResidualRmsWeightsReady()const{return false;}
  virtual uint64_t ResidualRmsReads()const{return 0;}
  virtual bool CheckResidualRms(const std::vector<uint32_t>&,const std::vector<uint32_t>&)const{return false;}

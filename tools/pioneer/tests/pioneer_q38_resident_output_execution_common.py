@@ -10,7 +10,7 @@ import subprocess
 HERE = pathlib.Path(__file__).resolve().parent
 
 
-def compile_test(directory, sources, fixtures, *, producer=True, native_projection=False, extra_flags=()):
+def compile_test(directory, sources, fixtures, *, producer=True, native_projection=False, extra_flags=(), extra_objects=()):
     assert len(fixtures) == 5
     for name, (section, size, digest, _) in runpy.run_path(str(HERE.parent/'generate_qwen38_projection_stash_images.py'))['PINS'].items():
         data = (pathlib.Path(fixtures[0 if name.startswith('root-') else 1])/(section+'.bin')).read_bytes()
@@ -57,8 +57,10 @@ def compile_test(directory, sources, fixtures, *, producer=True, native_projecti
     if native_projection:
         include_flags += ['-I'+str(HERE.parents[2]/'src/add-ons/kernel/drivers/misc')]
     binary = directory/'test'
+    for obj in extra_objects:
+        assert pathlib.Path(obj).is_absolute() and pathlib.Path(obj).is_file() and not pathlib.Path(obj).is_symlink() and pathlib.Path(obj).suffix=='.o'
     subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',*flags,
-                    *include_flags,*[str(HERE/(name+'.cpp')) for name in sources+base],'-o',str(binary)],check=True)
+                    *include_flags,*[str(HERE/(name+'.cpp')) for name in sources+base],*[str(obj) for obj in extra_objects],'-o',str(binary)],check=True)
     return binary
 
 

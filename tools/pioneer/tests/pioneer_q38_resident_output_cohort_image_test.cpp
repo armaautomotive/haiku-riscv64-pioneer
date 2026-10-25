@@ -10,6 +10,7 @@
 #include "pioneer_q38_resident_cohort_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputCohortShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionJobs.h"
+#include "pioneer_q38_resident_output_learned_bytes.h"
 struct OutputParts {
  std::unique_ptr<PioneerQ38CanonicalModelPlan> canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();
  std::unique_ptr<PioneerQ38ProjectionJobs> jobs=std::make_unique<PioneerQ38ProjectionJobs>();
@@ -20,6 +21,7 @@ struct OutputParts {
  }
 };
 struct OutputCohortFabric:CohortFabric {
+ ProjectionExecutionLearnedBytes* originalBytes=nullptr; // TEST raw authenticated bytes ONLY
  std::vector<uint8_t> matrixCode;
  std::array<uint32_t,1152> post={};
  std::array<std::vector<uint8_t>,24> tensorBefore;
@@ -121,6 +123,11 @@ struct OutputCohortFabric:CohortFabric {
   for(unsigned i=p.inputReads;i<p.packets.size();i++){
    p.packets[i].address=p.memory.at(0x74018)+(i-p.inputReads)*576;p.packets[i].route=p.memory.at(0x74020);
   }
+  if(originalBytes){
+   const auto* part=post.data()+64+(p.logicalWorker-1)*8;
+   assert(part[0]==p.memory.at(0x74018) && part[4]==p.memory.at(0x74020) && part[2]==p.RowsMachine::groups
+    && ResidentOutputImportMatrixBytes(part,*originalBytes,p.tiles));
+  } // A present original source can NEVER silently fall back to synthetic tiles.
   p.Poison();p.PoisonTail();p.active=true;if(p.logicalWorker==dropMatrixWorker)p.faultAt=1;
  }
  void Submit()override{

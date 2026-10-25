@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
+#error Original-model CPU observer never compiles into DEBUG68
+#endif
 #if defined(PIONEER_Q38_RESIDENT_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE)
 #error Original-model observer remains separate from resident operator IMAGE
 #endif
@@ -52,6 +55,7 @@ static int DecoderOriginalExecv(const char* path,char* const* argv){
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38LearnedRmsShape.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnOutputGraphShape.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputValidationProtocol.h"
 #include <array>
 namespace {
 class OriginalSource final:public DecoderOriginalSource {
@@ -60,6 +64,7 @@ class OriginalSource final:public DecoderOriginalSource {
  std::vector<Stripe> stripes;bool prepared=false,sealed=false,attempted=false,gdnInputs=false,gdnReferencesReady=false,gdnRecurrent=false,gdnNorm=false,gdnNative=false,gdnOutput=false,residualRms=false,ffn=false,nextRms=false;
  uint64_t referenceReads=0,projectionReads=0,convolutionReads=0,gdnInputReads=0,gdnNormReads=0;
  uint64_t outputReads=0;
+ unsigned preparedToken=UINT32_MAX;
  uint64_t residualReads=0;std::array<uint32_t,5120> postNorm={};
  uint64_t ffnReads=0;
  uint64_t nextRmsReads=0;std::array<uint32_t,5120> nextNorm={};
@@ -282,7 +287,7 @@ public:
     }
    }
   }
-  prepared=true;return Ready();
+  preparedToken=token;prepared=true;return Ready();
  }
  bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=(gdnNorm?1673U:1672U) || projectionReads || convolutionReads || gdnInputReads
   || (gdnInputs && !gdnReferencesReady) || (gdnNorm && gdnNormReferences.size()!=6144))return false;sealed=true;return true;}
@@ -543,6 +548,89 @@ public:
   return Ready();
  }
  uint64_t GdnOutputReads()const override{return outputReads;}
+ bool CheckResidentOutput(const tt_q38_resident_output_validation& reply)override{
+  using namespace PioneerQ38NextGdnOutputReferenceDetail; // Generic independent IEEE/Q8 DATA helpers,not layer1/native authority.
+  if(!GdnOutputWeightsReady() || !ffn || preparedToken>=248320 || reply.metadata.version!=1
+   || reply.metadata.token!=preparedToken || reply.metadata.position || reply.metadata.reserved
+   || reply.metadata.state!=TT_RUNTIME_PASSED || !reply.metadata.closed || !reply.metadata.input_ready || reply.metadata.recovery_required
+   || !reply.metadata.session || !reply.metadata.driver_generation || std::fegetround()!=FE_TONEAREST
+   || reply.readback_pages!=1592 || reply.readback_words!=1629120
+   || recurrentReferences.size()!=96*8578 || gdnNormReferences.size()!=6144)return false;
+  auto fail=[](const char* section,unsigned word,uint32_t expected,uint32_t actual){
+   fprintf(stderr,"ORIGINAL_COMBINED_MISMATCH %s word%u expected%08x actual%08x;CPU_OBSERVER_ONLY\n",section,word,expected,actual);return false;
+  };
+  const auto* values=reply.values;
+  for(unsigned i=0;i<10240;i++){
+   double actual=Float(values[i]),expected=Float(convolution[i]);
+   if(!std::isfinite(actual) || std::fabs(actual-expected)>3e-6*(1+std::fabs(expected)))return fail("convolution",i,convolution[i],values[i]);
+  }
+  for(unsigned i=10240;i<40960;i++)if(values[i]!=convolution[i])return fail("history",i,convolution[i],values[i]);
+  for(unsigned half=0;half<96;half++){
+   for(unsigned i=0;i<8192;i++){
+    const unsigned at=TT_Q38_RESIDENT_OUTPUT_VALIDATION_NEXT+half*8192+i;
+    uint32_t expected=recurrentReferences[half*8578+322+i];double reference=Float(expected),actual=Float(values[at]);
+    if(!std::isfinite(actual) || std::fabs(actual-reference)>3e-6*(1+std::fabs(reference)))return fail("next_state",at,expected,values[at]);
+    unsigned current=TT_Q38_RESIDENT_OUTPUT_VALIDATION_CURRENT+half*8192+i;
+    if(values[current])return fail("current_state",current,0,values[current]);
+   }
+   for(unsigned i=0;i<64;i++){
+    unsigned at=TT_Q38_RESIDENT_OUTPUT_VALIDATION_GATED+half*64+i;
+    uint32_t expected=gdnNormReferences[half*64+i];double reference=Float(expected),actual=Float(values[at]);
+    if(!std::isfinite(actual) || std::fabs(actual-reference)>3e-6*(1+std::fabs(reference))
+     || (std::fabs(reference)>=double(Float(0x00800000))?std::fabs(actual-reference)>3e-6*std::fabs(reference):actual!=0))return fail("gated",at,expected,values[at]);
+   }
+  }
+  // Only AFTER original GDN passes:quantize VALIDATED ACTUAL gated values.
+  // The independent matrix observer reads ORIGINAL raw GGUF rows,not the
+  // tiled decoder/packing path used by the instruction-machine endpoints.
+  auto stage=std::make_unique<PioneerQ38NextGdnOutputReferenceResult>();
+  if(!Ready() || !Input(values+TT_Q38_RESIDENT_OUTPUT_VALIDATION_GATED,*stage))return false;
+  const auto* found=original.Model().Find("blk.0.ssm_out.weight");
+  if(!found || found->type!=8 || found->rank!=2 || found->inputs!=6144 || found->outputs!=5120
+   || found->bytes!=UINT64_C(5120)*6528)return false;
+  const auto tensor=*found;unsigned index=unsigned(found-original.Model().Tensors().data());
+  auto current=[&](){
+   if(!Ready() || std::fegetround()!=FE_TONEAREST || index>=original.Model().Tensors().size())return false;
+   const auto& t=original.Model().Tensors()[index];
+   return t.name==tensor.name && t.type==tensor.type && t.rank==tensor.rank && t.inputs==tensor.inputs
+    && t.outputs==tensor.outputs && t.bytes==tensor.bytes && t.offset==tensor.offset;
+  };
+  std::vector<uint8_t> packed(16*6528);
+  for(unsigned first=0;first<5120;first+=16){
+   if(!current() || !original.ReadReferencePacked(index,uint64_t(first)*6528,unsigned(packed.size()),packed.data(),unsigned(packed.size())) || !current())return false;
+   float sum[16]={};
+   for(unsigned block=0;block<192;block++){
+    float scale=Float(stage->scale[block]),weights[16];
+    for(unsigned row=0;row<16;row++){
+     const auto* bytes=packed.data()+row*6528+block*34;uint16_t half=uint16_t(bytes[0]|(unsigned(bytes[1])<<8));
+     if((half&0x7c00)==0x7c00)return false;
+     weights[row]=HalfFloat(half);
+    }
+    for(unsigned piece=0;piece<2;piece++)for(unsigned row=0;row<16;row++){
+     int dot=0;
+     for(unsigned lane=0;lane<16;lane++){
+      unsigned at=block*32+piece*16+lane;uint16_t operand=uint16_t(stage->operand[at/2]>>((at%2)*16));
+      int activation=operand&0x8000?-int(operand&1023):int(operand&1023);
+      unsigned byte=packed[row*6528+block*34+2+piece*16+lane];int weight=int(byte)-int((byte&128)*2);dot+=weight*activation;
+     }
+     sum[row]+=(weights[row]*scale)*float(dot);if(!std::isfinite(sum[row]))return false;
+    }
+   }
+   for(unsigned row=0;row<16;row++)stage->values[first+row]=Bits(sum[row]);
+  }
+  for(unsigned i=0;i<3072;i++)if(values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_OPERANDS+i]!=stage->operand[i])
+   return fail("native_operands",i,stage->operand[i],values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_OPERANDS+i]);
+  for(unsigned i=0;i<192;i++)if(values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_SCALES+i]!=stage->scale[i])
+   return fail("scales",i,stage->scale[i],values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_SCALES+i]);
+  for(unsigned i=0;i<5120;i++)if(values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_RESULT+i]!=stage->values[i])
+   return fail("output_rows",i,stage->values[i],values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_RESULT+i]);
+  // Every copied scale line must agree with the independently checked
+  // quantizer. Physical source/receipt ancestry remains the genuine native
+  // controller's job,not a CPU-invented NIU or cleanup capability.
+  for(unsigned chunk=0;chunk<24;chunk++)for(unsigned i=0;i<8;i++)
+   if(values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_LINES+chunk*32+i]!=stage->scale[chunk*8+i])return fail("line_scale",chunk*8+i,stage->scale[chunk*8+i],values[TT_Q38_RESIDENT_OUTPUT_VALIDATION_LINES+chunk*32+i]);
+  return current();
+ }
  bool CheckGdnInput(unsigned half,const uint32_t* values)const override{
   if(!gdnInputs || !gdnReferencesReady || !sealed || !Ready() || half>=96 || !values)return false;
   const auto* reference=gdnReferences.data()+half*322;

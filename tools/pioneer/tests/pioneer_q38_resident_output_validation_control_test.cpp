@@ -12,6 +12,9 @@
 #include <algorithm>
 #include <sys/wait.h>
 #include <unistd.h>
+#ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL
+#include "pioneer_q38_decoder_original_source.h"
+#endif
 using status_t=int;using thread_id=int;
 enum {B_BAD_VALUE=-10,B_NOT_ALLOWED=-11,B_DEV_NOT_READY=-12,B_BUSY=-13,B_NO_MEMORY=-14,sLock=91};
 static unsigned locks=0,releases=0,copies=0,copyFailure=0,unexpectedRoutes=0;
@@ -72,10 +75,21 @@ struct ReplyCopyCheckpoint {
  }
 };
 int main(int argc,char** argv){
- assert(argc==8);setvbuf(stdout,nullptr,_IOLBF,0);
+ setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL
+ assert(argc==9);
+ puts("ORIGINAL_COMBINED_FULL_SHA_AND_INDEPENDENT_REFERENCES_BEFORE_NATIVE_CONTEXT");
+ auto original=OpenFfnResidualOriginalSource(argv[8]);
+ assert(original && original->Prepare(0) && original->SealBeforeNativeContext() && original->FfnWeightsReady());
+#else
+ assert(argc==8);
+#endif
  (void)&AcquireQ38DeltaLock; // Actual global-lock helper;legacy delta route is closed in DEBUG68.
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  NativeFactoryFixture f(argv[3],argv[4]);f.io.rmsImage=argv[5];f.c->q38Clock.value.busy_mhz=1400;
+#ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL
+ f.io.originalEmbeddingWeights=original->EmbeddingTile();f.io.originalRmsWeights=original->LearnedNorm();
+#endif
  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
  for(unsigned i=0;i<plan->Count();i++){const auto* p=plan->Part(i);
   if(p->kind!=plan->WeightKind || p->layer || p->role>13)continue;
@@ -85,6 +99,9 @@ int main(int argc,char** argv){
  f.c->q38GdnCallThread=-1;currentTeam=7;currentThread=42;
  ProjectionNativeTransport transport(argv[1],argv[2],f.io.wholeWorkspace);f.io.projectionTransport=&transport;f.io.projectionSeedRequired=true;
  transport.ConfigureResidentOutputControl(argv[6],argv[7],f.io);
+#ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL
+ transport.LearnedSource(*original);
+#endif
  auto& c=*f.c;unsigned touched=f.io.touches,device=transport.Touches(),epoch=unsigned(sQ38EmbeddingModelEpoch),refused=0;
  tt_q38_embedding_support support={};
  assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RESIDENT_OUTPUT_VALIDATION_SUPPORT,&support,sizeof(support))==B_OK
@@ -143,8 +160,25 @@ int main(int argc,char** argv){
  for(auto reserved:reply->reserved_reply)assert(!reserved);
  assert(!locked && locks==releases && c.q38GdnCallThread==-1 && !c.Unsafe() && !sColdRecoveryRequired && !unexpectedRoutes);
  transport.VerifyResidentOutput();transport.VerifyResidentReadback(reply->values,TT_Q38_RESIDENT_OUTPUT_VALIDATION_WORDS);
+#ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL
+ touched=f.io.touches;device=transport.Touches();
+ assert(original->ReferenceReads()==1673 && original->ProjectionReads()==164800 && original->ConvolutionReads()==640
+  && original->GdnInputReads()==192 && original->GdnNormReads()==96 && original->GdnOutputReads()==61440 && !original->FfnReads()
+  && original->CheckResidentOutput(*reply));
+ unsigned mutations=0;
+ for(unsigned at:{0U,10239U,10240U,40959U,40960U,47103U,47104U,50175U,50176U,50183U,50919U,50944U,51135U,51136U,56255U,56256U,842687U,842688U,1629119U}){
+  auto saved=reply->values[at];reply->values[at]=0x7fc00000;
+  assert(!original->CheckResidentOutput(*reply));reply->values[at]=saved;mutations++;
+ }
+ assert(mutations==19 && original->CheckResidentOutput(*reply) && f.io.touches==touched && transport.Touches()==device);
+ puts("PASS ORIGINAL token0 ACTUAL DEBUG68 combined machine:authenticated sameGGUF/ALL independent Conv+history+next-state+gated checks/ALL3072native operands+192scales+5120raw-GGUF-row outputs/19nonfinite-or-current-state corruptions refused;NO CPU products fed to native code");
+#endif
  touched=f.io.touches;device=transport.Touches();auto again=Request();
  assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RESIDENT_OUTPUT_VALIDATE,again.get(),sizeof(*again))==B_NOT_ALLOWED
   && f.io.touches==touched && transport.Touches()==device && EndFactory(c) && !sColdRecoveryRequired);
+#ifdef PIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL
+ puts("PASS ORIGINAL token0 ACTUAL DEBUG68 public/native complete lifetime/1592fixed reads+ALL1629120words/full43.8MB restore+secondproof/independent original-GGUF observer/reply copy+failure containment/one-shot refusal/actual END;OS+physical endpoints TEST,NOT silicon/full64layer/tokenloop/Work/rate qualification");
+#else
  puts("PASS ACTUAL DEBUG68 public root/team/request copy/real global lock+call seal/private native source+zero+prefix/ACTUAL full combined programs/1592fixed reads+ALL1629120words/full43.8MB restore+secondproof/reply copy/scope release/one-shot refusal/actual END;OS+learned+physical bytes TEST,NOT original-GGUF/silicon/Work/rate qualification");
+#endif
 }

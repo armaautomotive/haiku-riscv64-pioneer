@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
 """Actual DEBUG68 public control/native lifetime;TEST endpoints,NO card."""
 import hashlib
+import os
 import pathlib
 import re
 import runpy
+import subprocess
 import sys
 import tempfile
 from pioneer_q38_resident_output_execution_common import HERE,compile_test,run_test
 
-if len(sys.argv)!=7:
+if len(sys.argv) not in (7,8):
     raise SystemExit(2)
 kernel=HERE.parents[2]/'src/add-ons/kernel/drivers/misc'
 image=pathlib.Path(sys.argv[6]);peer=image/'exact-companion'
@@ -34,6 +36,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-output-debug68-control-',dir='/
     start=native.index('static status_t\nProbeControl(')
     end=native.index('// PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE_ROUTING_END',start)
     (directory/'debug68_routing.inc').write_text(native[start:end]+'\n#endif\n}\n')
+    objects=[]
+    if len(sys.argv)==8:
+        # Independent original GGUF/libm observer is a SEPARATE CPU-only
+        # TU,with NONE of the native adapter/owner/image/Work flags.
+        original=directory/'original-reference.o'
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror',
+                        '-fsanitize=address,undefined','-c',str(HERE/'pioneer_q38_decoder_original_source.cpp'),'-o',str(original)],check=True)
+        objects.append(original);flags.append('-DPIONEER_Q38_TEST_RESIDENT_OUTPUT_ORIGINAL=1')
     binary=compile_test(directory,['pioneer_q38_resident_output_validation_control_test','pioneer_q38_resident_output_execution_machine'],
-                        sys.argv[1:6],producer=False,native_projection=True,extra_flags=flags)
-    run_test(binary,[*sys.argv[1:6],str(image),str(peer)])
+                        sys.argv[1:6],producer=False,native_projection=True,extra_flags=flags,extra_objects=objects)
+    run_test(binary,[*sys.argv[1:6],str(image),str(peer),*sys.argv[7:]])

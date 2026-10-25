@@ -1,0 +1,73 @@
+Original-GGUF combined-output execution checkpoint,2026-10-25.
+This is offline first-token/layer0 correctness,NOT physical execution,
+full64-layer/token-loop support,Work promotion or an inference speedup.
+Last whole-model measurement remains0.207893161tok/s;20tok/s UNMET.
+
+The genuine combined instruction machine now receives ORIGINAL learned
+bytes through the existing authenticated source interface. All640Conv,
+192A/bias and96norm byte packets are loaded from the actual private frame.
+All61440Q8tiles for119output matrix jobs are read from the actual canonical
+job addresses. A present original source MUST succeed;there is NO synthetic
+fallback. Workspace/input/history/recurrent bytes still come from the actual
+prior QPE1/QRN1/QPS1 and initialization programs,NEVER CPU numeric products.
+No device image,math tolerance,ownership/clock/source/host guard changed.
+
+The original-model observer compiles as a SEPARATE CPU-only translation
+unit,without native,device-image or Work flags. Full same-file GGUF SHA,
+shape checks and1673independent reference reads finish BEFORE constructing
+the native test context. The source is sealed before that context exists.
+It provides original embedding/norm bytes and164800original projection
+tiles,then the combined stage's640+192+96+61440original byte packets.
+Unused FFN pages remain part of the complete first-layer source contract;
+no FFN computation is claimed by this stage.
+
+After the complete public DEBUG68 call returns,the observer checks:
+ - ALL10240convolution values at unchanged strict3ppm bounds;
+ - ALL30720history words bit-exact;
+ - ALL786432CURRENT-state words zero and786432NEXT-state values at3ppm;
+ - ALL6144gated values at strict absolute AND relative3ppm/explicitFTZ;
+ - ONLY THEN,independent Q8 quantization of VALIDATED ACTUAL gated values;
+ - ALL3072native operands,192scales and5120output rows BIT-EXACT against
+   ORIGINAL raw GGUF rows,not the tiled packing/decoder used by the machine;
+ - every scale copied into the24QOL1lines agrees with the independent result.
+Physical line-source/receipt ancestry remains the real native owner's job;
+the CPU observer does not invent NIU/source/readiness or cleanup authority.
+19NaN/current-state corruption probes across these sections are refused.
+The expected mismatch log lines belong to those deliberate negative probes.
+All CPU observer checks preserve simulated device-IO counts.
+
+Main2936 and independent clean99217 TERMINAL0,with BYTE-IDENTICAL logs:
+ /private/tmp/pioneer-q38-output-debug68-original-control-20261025-c.log
+ /private/tmp/pioneer-q38-output-debug68-original-control-20261025-clean-b.log
+ SHA49c3fd6096955a3c08b12af5db1b5be12b690b08b5c415f83d610171a552f959
+Both run the SAME actual full public/native source-call/thread/lock lifetime,
+672GDN/336history initialization runs,complete original-weight prefix,new
+combined programs,ALL119STOP/ALL120holds,1592fixed transfers/ALL1629120words,
+full43.8MB snapshot restoration+second proof,final-copy failure child,
+one-shot refusal and actual END. Only OS/physical endpoints are simulated.
+Earlier main22302/clean6993 also passed original arithmetic;the final runs
+add exact passed-state/readback-length checks,accurate mismatch positions
+and an explicit zero-device-IO observer assertion. The initial source
+compile failed on a nonexistent metadata.layer member;it was corrected to
+the actual reserved field before any execution. Failed log is retained:
+ /private/tmp/pioneer-q38-output-debug68-original-control-20261025-a.log
+
+Synthetic regression66892 TERMINAL0;its log is BYTE-IDENTICAL to the prior
+qualified synthetic DEBUG68 control test(e4a4884131f277cafed664f5ffc8a3184d98de94bcecc16bad75ccff2be501a6).
+ /private/tmp/pioneer-q38-output-debug68-original-synthetic-regression-20261025-a.log
+Actual original-source role gates70582 and clean78714 TERMINAL0:29cases,
+including defined-zero native68/owner/image/Work/kernel/fast-math refusals.
+The exact built production driver58064ed contains NONE of the independent
+original-observer/test-byte-import symbols. No CPU reference enters Work.
+The existing native65 and native63 original-source gates also each pass
+all20defined-even-zero/mixed-role exclusions after this shared CPU change.
+
+The production kernel driver was NOT changed by this checkpoint. The
+uninstalled DEBUG68 artifact remains58064ed;the Pioneer still uses the
+working041 driver. No accelerator FD,driver installation,power/SD/mains,
+Assistant or network-setting change occurred. The next required step is
+the separate authenticated physical validation client,then controlled
+silicon qualification. Full resident residual/FFN/attention/all-layer/token
+integration and measured performance work remain unfinished;goal ACTIVE.
+Read-only SSH at18:54UTC confirms Haiku responsive,64CPUs and
+137034936320maximumRAM bytes;no restart is needed for local development.
