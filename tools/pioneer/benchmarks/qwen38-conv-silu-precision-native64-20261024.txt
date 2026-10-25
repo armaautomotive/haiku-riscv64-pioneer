@@ -1,5 +1,6 @@
 Separate precise-convolution native DEBUG64, October24/25 UTC2026.
-OFFLINE qualification checkpoint; NOT physical card execution or inference.
+OFFLINE qualification plus ONE PHYSICAL token0/layer0 correctness PASS.
+NOT full-model inference or a throughput result.
 Last measured whole27B rate remains0.207893161tok/s. Target20tok/s/full
 resident model remain UNMET; no speedup or Work-mode promotion is claimed.
 
@@ -87,8 +88,9 @@ Final focused12003 TERMINAL0:142 cases,adding the actual qualified495b9e18
 client-parent filename as well as old/unqualified and underscore aliases.
  /private/tmp/pioneer-q38-native64-updater-focused-20261025-c.log
  SHA829f030c13f45eb901cc69336569f84f1e2bce14f0aeae96b5133d498d77f850.
-This extra fixture does not change the production updater. Neither updater
-nor candidate has been installed;never install via an old hash/tag mapping.
+This extra fixture does not change the production updater. At that offline
+checkpoint neither updater nor candidate had been installed. Subsequent
+qualified physical trial is recorded below;never use an old hash/tag mapping.
 
 HARDWARE / NEXT GATE
 One new recovery epoch followed ONE OFF68897,real human fans/LEDs-off
@@ -113,7 +115,7 @@ the full resident continuation. Remaining full64-layer/attentionKV/sampling/
 persistent device token loop and measured whole-model throughput are not
 provided by this fixed first-token layer0 validation diagnostic.
 
-2026-10-25 PHYSICAL-TRIAL PROGRESS (NOT A PASS OR SPEED RESULT)
+2026-10-25 PHYSICAL-TRIAL RESULT (CORRECTNESS, NOT SPEED)
 Network recovered via ONE OFF31420,real fans/LEDs-off confirmation,ONE
 ON86413;Linux bootdc30a726-7daf-4374-bba8-7ac024255474/64CPUs. Pinned helper
 prepare61584/boot83997 CLI0,sessionq38-netrestart-20261025-a/64/full-RAM7.
@@ -122,9 +124,25 @@ admin,guard,immutablea0d50797 updater and clean generation1 metadata verified.
 Restore9869 CLI0 to exact041/tag12/generation2/cold0/owner0/open1.
 All3 new staging readbacks EXACTfb995b39/495b9e18/23735daf. Guarded apply
 67054 CLI0 loaded tag64/generation3/cold0/owner0/open1,NO GPU execution.
-ONE qualified client --validate-token0-precision attempt1892 is LIVE:
+ONE qualified client --validate-token0-precision attempt1892 TERMINAL0:
  /private/tmp/pioneer-q38-native64-card-20261025-a.log
-At checkpoint,checksum team555actively runs and client554waits BEFORE GPU
-open;never infer a card result from this state. Poll SAME handle. Do not
-reload,reset,repeat validation or touch GPU during the parent lifetime.
-Source-authentication is correctness overhead,NOT inference token rate.
+ SHA9dff216280bc3c0e601da9c6dd66e8e09a4a7504f461611ea663d897d002335d.
+Original-model authentication and ALL independent references completed BEFORE
+GPU open. ALL111 original-byte span uploads and SPAN_END succeeded. Fixed
+validation op000089de/3318720B returned0;BANK_END op00007bf6 returned0.
+PASS_DEBUG_NATIVE_QGT1 token0 layer0 all96_halves all829632_values
+ independent_original_GGUF_references within3e-6_scaled_bound
+ STRICT_relative_normal_gates clean_end1
+ initialization_execution_readback_restore_us259721195;NO_TOKEN_RATE.
+Post-client CPU-only metadata tag64/generation3/cold0/owner0/open1 was clean.
+New immutable23735daf updater restore14581 TERMINAL0 reinstated exact041
+baseline/tag12/generation4/cold0/owner0/open1. Independent installed SHA and
+CPU-only metadata agree. sysinfo64CPUs/max137034936320B RAM;1Gbit wired
+10.0.0.247/24,zero RX/TX errors or drops. All client/updater parents terminal;
+no extra power pulse,SD/mains/cable change or Assistant change.
+Source authentication and initialization/readback/restoration are correctness
+overhead,NOT inference token rate. The strict physical precision prerequisite
+has passed. Integrating this image into the full resident continuation still
+requires a SEPARATE role/tag and complete-prefix qualification;do not mix
+DEBUG64 with native65 or promote either to Work. Full model/token loop and
+20tok/s remain UNMET;last whole-model0.207893161tok/s remains unchanged.

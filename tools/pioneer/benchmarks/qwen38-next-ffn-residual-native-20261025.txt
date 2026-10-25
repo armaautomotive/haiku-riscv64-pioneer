@@ -111,10 +111,19 @@ generation2/cold0/owner0/open1. Independent installed hash and metadata agree.
 No SD/mains/cable or Assistant changes. Subsequent SEPARATE native64 trial:
 exact fb995b39 driver/495b9e18 client/23735daf updater staged/readback matched.
 Guarded apply67054 TERMINAL0,tag64/generation3/cold0/owner0/open1. ONE
---validate-token0-precision attempt1892 is LIVE;no repeat/reload while its
-parent lives. At this checkpoint it has NOT reported GPU open:checksum team
-555 actively running,and client554waiting for original model verification.
-Its log is /private/tmp/pioneer-q38-native64-card-20261025-a.log.
+--validate-token0-precision attempt1892 TERMINAL0:ALL829632values/96halves
+passed unchanged strict3ppm references with clean END. ALL original model
+authentication/references preceded GPU FD. initialization_execution_readback_
+restore_us259721195 is NOT token rate. Physical log:
+ /private/tmp/pioneer-q38-native64-card-20261025-a.log
+ SHA9dff216280bc3c0e601da9c6dd66e8e09a4a7504f461611ea663d897d002335d.
+Post-test clean tag64/generation3/cold0/owner0/open1. New23735daf updater
+restore14581 TERMINAL0,then independent installed SHA/CPU metadata confirmed
+exact041/tag12/generation4/cold0/owner0/open1. Haiku64CPUs/full RAM and wired
+DHCP remain healthy;no pending power action or live validation parent.
 Native65 remains UNLINKED/UNINSTALLED/private,not an Assistant or Work mode.
+It still selects OLD convolution imagea8df,not the physically qualified
+precise image0a009317. Integrate precision under a SEPARATE resident role/tag
+and requalify the entire original-source prefix;never mix DEBUG64/native65.
 No performance result is inferred from recovery,administrative IO,component
 tests or the passing native65 simulation.
