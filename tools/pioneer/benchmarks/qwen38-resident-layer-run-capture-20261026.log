@@ -1,5 +1,5 @@
-OFFLINE capture revision: SUPPORTING checks and FULL original public40710/86307 BOTH terminal0.
-No physical rerun of 9609; old beeaf physical trial remains FAILED.
+SUPPORTING checks and FULL original public40710/86307 BOTH terminal0.
+Update: physical9609 trial B25132 FAILED1; selected exact captured outputs below.
 One OFF / user-verified off / one ON / pinned SD-free boot / fresh clean context / old immutable helper restoration.
 Selected completed outputs and exact supporting/source hashes:
 ec4777c22ed6c85275eb5c281233acb5dfa1048f26bb99dbffe7f2f2cdcf0257  /private/tmp/pioneer-q38-layer-run-capture-original-20261026-a.log
@@ -96,3 +96,38 @@ ed4497dd283ff750af2b1c7d7a555570153d09b1a67d69e111260e657a685bfe  src/add-ons/ke
 ce089c562d87e3ba38e907e75e1ab836b761c867f0caee2cb9ceb23bd7e3aca3  tools/pioneer/tests/pioneer_q38_resident_layer_run_observation_test.py
 7cb6e492df5ce1f9a0e2491100d7ccdf8cd5a3066121b90b921cd0c1980bc1d7  tools/pioneer/pioneer_p100a_hot_swap.sh
 748ab8c5c3077cc661b9c6a1efe4f4e32b9d4cb912d383a0f801388f223469d8  tools/pioneer/tests/pioneer_p100a_hot_swap_test.py
+
+PHYSICAL B25132 terminal1;SOURCEe08791878b;SELECTED outputs,not full627line client log:
+29128f5d5721294a19090efdd61f22d0f2202fc8867144e4b22f7b8c6ce93c58  /private/tmp/pioneer-q38-layer-run-capture-physical-20261026-b.log
+successful_upload_spans=300
+DEBUG69_IOCTL_BEGIN op00008805 bytes16
+DEBUG69_IOCTL_END op00008805 status0 errno0
+DEBUG69_IOCTL_BEGIN op00008a10 bytes6521088
+DEBUG69_IOCTL_END op00008a10 status0 errno0
+DEBUG69_CPU_ONLY_FAILURE reasonreply_metadata op00008a10 word4 expected00000001 actual00000005 reply_captured1;NO_ADDITIONAL_DEVICE_IO
+DEBUG69_CPU_REPLY_HEADER word00 00000001 00000000 00000000 00000000 00000005 00000000 00000000 00000001
+DEBUG69_CPU_REPLY_HEADER word08 00000001 00000000 00000003 00000000 00000000 00000000 00000000 00000000
+DEBUG69_CPU_OBSERVERS ideal_libm_strict_passed0 final_bits0 max_abs0 relative_l20;instruction_policy_passed0 final_bits0 max_abs0;DISTINCT_REPORTS_NOT_WORK_OR_RATE
+FAIL_DEBUG69 token0 layer0 original_upload_pages68603 spans300 fixed_readback_words1630208 clean_end0 execution_readback_restore_us0;NOT_FULL_MODEL_OR_TOKEN_RATE
+CPUcomparisons NOT PERFORMED;zero observer values NOT numerical pass/mismatch.
+PASSIVE serial afterbyte73681610;NOpost-failure device reads:
+Q38-LAYER-DEBUG:FAIL state466956 history466956 zero466956 embedding7 norm7 projection10 output5 worker119 word0 readback0/0 restored0;NO_POST_FAILURE_DEVICE_IO
+Q38-LAYER-DEBUG:PROJECTION worker119 word67592 runs4 stopped119 held119 roots5/5 closed1 memory4/119/67592 saved8134072 verified16268144 restored8134072;CPU_METADATA_ONLY
+Q38-LAYER-DEBUG:RUN failure10 polls173 status00000000/00000000/00000000 valid7 reads176 pc001585ec/00058644 reads173 reset00000000 reads0;CAPTURED_EXISTING_READS_ONLY_NO_POST_FAILURE_DEVICE_IO
+P100A_RELOAD driver55 tag2026102600010069 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+35ecc93c9d5cf0d545fb1e4c670e9a5ddb703eab80a4748d52b3671d951d7e4d  /private/tmp/pioneer-q38-layer-receipt-image-20261025-b/program.elf
+HOST addr2line0x001585ec PioneerQ38RmsSum::Add(float);0x00058644 UNKNOWN;0x00158644 PioneerQ38RmsSum::Add(float)
+RECOVERYB:OFF98795once0/userfreshactualOFF/ON4945once0;Linuxboot61ba3cb5-8e0f-48cd-b1f6-d552101b058d/64CPUs/MemTotal131976904kB/rootnvme0n1p3/kexec0
+PREPARED q38-layer69-recover-20261026-b with 64 CPUs (memory128-spin-idle7-top-page-nosd-control);prepare16677terminal0/boot61522terminal0
+FRESH Haiku64CPUs/RAMmax137034936320/CPUmetadataONLY/noComputeParents;NEWimmutable7cb exactverified:
+P100A_RELOAD driver55 tag2026102600010069 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+RESTORE15189terminal0:
+P100A_RELOAD driver55 tag2026102600010069 generation1 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_HOT_SWAP_COMPLETE_NO_REBOOT
+INDEPENDENT postflight:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+READONLY Deskbar diagnosis:hey Deskbar count Replicant of Shelf of View Status of Window0 => result0/error0;viewcount1(clock);savedreplicants68B/noentries. No settings mutation.

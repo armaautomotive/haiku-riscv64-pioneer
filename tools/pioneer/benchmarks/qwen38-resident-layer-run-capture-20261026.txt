@@ -1,10 +1,11 @@
 Resident-layer coordinator failure capture — 2026-10-26 UTC
 =========================================================
 
-STATUS: OFFLINE diagnostic revision; not staged or installed. Main and
-independent clean full original-model public-control tests BOTH terminal0.
-Supporting branch, SDK, role and updater checks pass. The previous physical
-trial remains FAILED. No new inference rate or numerical pass is claimed.
+STATUS: Capture revision physically tested ONCE; trial B25132 FAILED1.
+The exact existing-read rejection is now preserved below. Controlled
+recovery B and restoration of working041 completed; no retry/reset or
+in-place quarantine clear. Main and independent clean full original-model
+public-control tests BOTH terminal0. No new numerical/rate pass is claimed.
 Last measured whole-model rate is 0.207893161 tokens/sec; 20 remains unmet.
 
 Why this change is needed
@@ -105,12 +106,82 @@ Restore71063 terminal0: old69/gen1 -> quiesced -> working041/tag12/gen2,
 cold0/owner0/guard1, HOT_RELOAD_VERIFIED, no reboot or GPU execution.
 The new7cb6 helper MUST NOT be used to restore beeaf: it correctly rejects
 those bytes before administrative open. The two immutable mappings remain
-distinct. The new9609 image has not been staged, installed or executed.
+distinct. At that checkpoint the new9609 image had not been installed.
+
+Physical capture trial B: FAILED, not a numerical result
+--------------------------------------------------------
+After pushed/remote-verified e08791878b, exact9609 and immutable7cb were
+staged and independently rehashed. Guarded apply97939 terminal0 changed
+working041/tag12/gen2 to9609/tag69/gen3/cold0/owner0/guard1. The independent
+CPU client057b1eca remained unchanged. Exclusive launcher702d20d7 created
+fresh run resident-layer-debug69-physical-20261026-b; it MUST NOT be rerun.
+
+The SAME native client25132 completed terminal1. Full-file original SHA and
+independent CPU references preceded the FD. All68603 pages/300 upload spans
+and SPAN_END passed. Fixed8a10 transport returned0, but the captured reply
+state was5 COMPLETION_FAILED/recovery1, not a completed layer. The zero
+observer fields mean NOT PERFORMED, not zero differences or numerical PASS.
+Client CLOSE only; no BANK_END/cleanup/retry. clean_end0.
+Exact627-line terminal client log SHA256:
+  29128f5d5721294a19090efdd61f22d0f2202fc8867144e4b22f7b8c6ce93c58
+  /private/tmp/pioneer-q38-layer-run-capture-physical-20261026-b.log
+
+Passive serial after byte73681610 captured the first failing Run branch:
+  failure10 PcOutsideImage;polls173;status0/0/0;valid7;statusReads176
+  previousPC001585ec;lastPC00058644;pcReads173;resetReads0
+The projection producer had closed/stopped/held/restored all119 peers and
+8134072 original words. The new full-layer root remained in output phase5,
+before any completed receipt/readback/restoration. CPU-only administrative
+metadata was tag69/gen3/cold1/active_owner1/open1/guard1. No post-failure
+card PC/register read, reset, release, restore, unload or retry occurred.
+
+Actual T0 register mapping is0xffb13140;RuntimePcRead performs an unmasked
+32-bit read. Frozen program.elf SHA256:
+  35ecc93c9d5cf0d545fb1e4c670e9a5ddb703eab80a4748d52b3671d951d7e4d
+Host-only symbolization maps1585ec and158644 to PioneerQ38RmsSum::Add(float),
+but58644 is outside the image.158644 is the epilogue ADDIsp,sp,16. The two
+addresses differ by bit20; this is NOT proof of a hardware bit-loss defect
+or actual execution at58644. No address correction or bypass is installed.
+
+Primary architectural distinction, not an execution diagnosis:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+Tenstorrent documents this register as a frontend snapshot; speculative
+instructions may be discarded before execution. Thus a single unexpected
+running snapshot is not executed-PC proof. This is a supported hypothesis
+for the host rejection, not evidence that the coordinator finished or that
+its arithmetic/receipts/STOP/restore would pass. Completion remains owed.
+
+Controlled recovery B: working041 restored
+------------------------------------------
+After evidence preservation and sync, ONE OFF98795 terminal0; a FRESH user
+fans/LEDs-off confirmation; then ONE ON4945 terminal0. No SD/mains/cable
+change. Linux6.1.31 boot_id61ba3cb5-8e0f-48cd-b1f6-d552101b058d was new,
+all64 CPUs/MemTotal131976904kB/rootNVMe0n1p3/kexec0 verified with pinned SSH.
+An initial pre-hash shell quoting/root-read refusal made no changes; the
+corrected root hash check passed. Pinned9cfc helper PREPARE16677 terminal0
+and BOOT61522 terminal0 used fresh q38-layer69-recover-20261026-b,64 CPUs,
+same memory128-spin-idle7-top-page-nosd-control;clean read-only BFS check,
+no journal override/default-boot edit. Early SSH timeout caused no restart.
+
+Fresh Haiku64CPU/RAMmax137034936320/services/no compute parents verified.
+Installed9609/adminb0c/guardd1ce/NEW immutable7cb independently rehashed;
+fresh tag69/gen1/cold0/owner0/open1/guard1. ONLY NEW7cb restored9609:
+restore15189 terminal0 -> working041/tag12/gen2/cold0/owner0/guard1,
+HOT_RELOAD_VERIFIED. A separate final installed hash/status check passed.
+No GPU execution during recovery; old0d0f beeaf-only helper was NOT used.
+
+User-reported missing Deskbar CPU/RAM/network indicators are separately
+diagnosed:live tray shelf count0,saved replicants68B with no entries;
+ProcessController and NetworkStatus binaries exist. CPU64/full RAM and
+wired10.0.0.247/link1Gbps/SSH work. No indicator/startup settings changed;
+restoring the two standard indicators was offered to the user.
 
 Remaining work
 ---------------
-Save/push the qualified source checkpoint before any new guarded physical
-single-attempt trial. Full64-layer scheduling, dense attention/KV,
+Qualify a principled frontend-observation policy before any new guarded
+single-attempt trial;do not OR bit20,grant completion from an unknown PC,
+extend the budget blindly or weaken actual receipts/STOP/restore/END.
+Full64-layer scheduling, dense attention/KV,
 current-state commit, vocabulary/sampling, persistent token loop and
 no-CPU-reference FAST Work/Assistant integration remain incomplete.
 A captured first-layer error or eventual layer pass is NOT full-model
