@@ -72,7 +72,11 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  const auto* b=Boot(w);
  if(!M::BootShape(b) || b[3]!=w+1 || b[4]!=M::Peer(w+1))scalar_fault_park();
  for(unsigned i=0;i<8;i++)if(b[8+i]!=d[32+i])scalar_fault_park();
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+ if(w<d[7] && b[16]!=Words(L::PartsShadow+w*32)[5])scalar_fault_park();
+#else
  if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
+#endif
  PhysicalSource(d,tracked,w);ClosedJob(d,tracked,w,true);
  const auto* previous=reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256);
  bool dense=previous[2]==M::DenseValues;

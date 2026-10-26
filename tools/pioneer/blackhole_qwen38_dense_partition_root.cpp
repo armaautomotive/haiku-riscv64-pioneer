@@ -2,7 +2,9 @@
 // NEW QDR1: actual96-worker card controller. Local prepared inputs are
 // supplied by FOUR real QDP producers in the joined qualification. Native
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+#include "PioneerQ38MixedProjectionRootImageRole.h"
+#elif defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE)
 #include "PioneerQ38MixedDenseRootImageRole.h"
 #else
 #include "PioneerQ38DensePartitionImageRole.h"
@@ -10,14 +12,22 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DensePositiveSum.h"
 #include "PioneerQ38DensePartitionRootLayout.h"
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+#include "PioneerQ38MixedProjectionRootLayout.h"
+#else
 #include "PioneerQ38MixedDenseRootLayout.h"
+#endif
 extern "C" void q38_mixed_root_seal();
 #endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 namespace DensePartitionRoot {
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+namespace L=PioneerQ38MixedProjectionRootLayout;
+#else
 namespace L=PioneerQ38MixedDenseRootLayout;
+#endif
 namespace M=PioneerQ38MixedWorkerLayout;
 #else
 namespace L=PioneerQ38DensePartitionRootLayout;
@@ -35,7 +45,7 @@ static bool Quiet(){
 }
 static const uint32_t* Frame(unsigned w){return reinterpret_cast<const uint32_t*>(L::Shadow+w*256);}
 static void Seal(const uint32_t* d){
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  q38_mixed_root_seal();
 #endif
  for(unsigned i=0;i<64;i++)if(Words(L::Header)[i]!=d[i])scalar_fault_park();
@@ -43,21 +53,33 @@ static void Seal(const uint32_t* d){
  if(!Quiet())scalar_fault_park();
 }
 static void FrameSeal(unsigned w){
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+ if(w>=119)scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(Words(L::Parts+w*32)[i]!=Words(L::PartsShadow+w*32)[i])scalar_fault_park();
+ if(Words(L::Rows)[w]!=Words(L::RowsShadow)[w])scalar_fault_park();
+ for(unsigned i=0;i<16;i++)if(Words(L::MatrixHeader)[i]!=Words(L::HeaderShadow)[i])scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(Words(L::Banks)[i]!=Words(L::BankShadow)[i])scalar_fault_park();
+#else
  for(unsigned i=0;i<64;i++)if(Words(L::Frames+w*256)[i]!=Frame(w)[i])scalar_fault_park();
+#endif
 }
 static void Copy(unsigned to,unsigned from,unsigned words){for(unsigned i=0;i<words;i++)Words(to)[i]=Words(from)[i];}
 static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned remote,unsigned bytes,bool write){
  unsigned local=L::Scratch+(remote&31);
  if(w>=
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  119
 #else
  96
 #endif
  || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
  Seal(d);
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+ FrameSeal(w);
+#else
  if(w<96)FrameSeal(w);
+#endif
  unsigned route=M::Peer(w+1);
 #else
  FrameSeal(w);unsigned route=Frame(w)[14];
@@ -68,7 +90,11 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
   unsigned delta=i==(write?5U:1U)?(bytes+63)>>6:i==2 || i==6 || i==(write?4U:0U) || i==(write?7U:3U)?1U:0U;
   expected[i]=tracked[i]+delta;if(i==6 && expected[6]!=expected[2])scalar_fault_park();
  }
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+ const uint32_t command[]={write?local:remote,0,write?d[9]:route,write?remote:local,0,write?route:d[9],0,write?0x212U:0,bytes,0};
+#else
  const uint32_t command[]={write?local:remote,0,write?d[5]:route,write?remote:local,0,write?route:d[5],0,write?0x212U:0,bytes,0};
+#endif
  for(unsigned i=0;i<10;i++)Words(0xffb20000)[i]=command[i];
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
  Fence();*Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();
@@ -76,8 +102,12 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
    Seal(d);
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#ifdef PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE
+   FrameSeal(w);
+#else
    if(w<96)FrameSeal(w);
+#endif
 #else
    FrameSeal(w);
 #endif
@@ -89,7 +119,7 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  scalar_fault_park(); // UNKNOWN: no later packet/retry/reset/cleanup grant
 }
 static uint32_t Register(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned at){Transfer(d,tracked,w,at,4,false);return *Words(L::Scratch+(at&31));}
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
 #include "blackhole_qwen38_mixed_dense_root_control.inc"
 #else
 static void Job(unsigned w,unsigned phase){
@@ -190,7 +220,7 @@ static void Inputs(const uint32_t* d,uint32_t* tracked){
 }
 static void Launch(const uint32_t* d,uint32_t* tracked,unsigned phase){
  if(phase==2 || phase==3)for(unsigned w=0;w<96;w++){Copy(L::Scratch,L::Parameters+Frame(w)[5]*64,16);Transfer(d,tracked,w,W::Parameters,64,true);}
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  for(unsigned w=0;w<96;w++){Job(w,phase);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<96;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
 #else
@@ -252,7 +282,7 @@ extern "C" unsigned scalar_main(){
  Seal(d);Capture(d);
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++){before[i]=tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
  // NO worker reset/boot/STOP. Install only the next attention DATA frame
  // after ALL retained source/job/counter/physical admission checks finish.
@@ -261,7 +291,7 @@ extern "C" unsigned scalar_main(){
  for(unsigned w=0;w<96;w++)Snapshot(d,tracked,w,0);
 #endif
  Inputs(d,tracked);Launch(d,tracked,1);Maximum();Launch(d,tracked,2);Inverse();Launch(d,tracked,3);Merge(d,tracked);
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  for(unsigned w=0;w<119;w++)Final(d,tracked,w);
 #else
  Launch(d,tracked,4);
@@ -274,13 +304,13 @@ extern "C" unsigned scalar_main(){
  for(unsigned i=0;i<16;i++)s[24+i]=d[16+i];
  for(unsigned i=0;i<8;i++)s[40+i]=d[32+i];
  s[1]=96;s[2]=
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  3;
 #else
  4;
 #endif
  s[3]=6144;s[4]=d[3];s[5]=d[4];s[48]=d[6];s[49]=3;s[50]=96;s[51]=
-#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
  119;s[52]=d[48];
 #else
  4;

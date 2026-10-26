@@ -262,6 +262,7 @@ static unsigned Refusals(MixedRootMachine& base){
  for(unsigned kind=11;kind<=14;kind++)branch(kind,0);
  printf("PASS ACTUAL mixed ROOT refusals%u/from EXECUTED119-worker world/no following IO/success/held-reset rejected before PC/closed-receipt counters cannot be absorbed\n",refused);return refused;
 }
+#ifndef PIONEER_Q38_MIXED_DENSE_ROOT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5 || (argc==6 && !strcmp(argv[5],"--full")));(void)&Group;(void)&Geometry;(void)&Faults;(void)&D::Run;
  setvbuf(stdout,nullptr,_IOLBF,0);auto m=std::make_unique<MixedRootMachine>(argv[1],argv[2],argv[3],argv[4]);assert(m->Wait(0));
@@ -274,3 +275,4 @@ int main(int argc,char** argv){
  }
  printf("PASS NEW retained mixed graph frames%u/refusals%u/maxRelativeL2%.12g/ROOTstack%u;synthetic byte/physical endpoints,NO native/fullmodel/throughput grant\n",cases,refusals,maximum,0x70000-m->minStack);
 }
+#endif

@@ -1,0 +1,148 @@
+Qwen3.8-27B: returning mixed projection controller QMP1
+2026-10-26; OFFLINE instruction qualification, NOT inference throughput
+
+Implementation
+--------------
+New QMP1 ROOT code keeps the SAME119 QMW1 workers alive across the dense
+Q/G, K, V and O projections. It reads their ACTUAL current closed-job
+nonces, immutable jobs/boots, physical sources/reset/PC and last receipts.
+All119 are admitted before the first worker write, including inactive
+workers for the smaller K/V projections. A fresh boot/ready marker or
+caller-supplied next sequence is not accepted as upstream execution proof.
+
+Canonical DATA recipes have ZERO sequence placeholders. QMP1 validates
+the complete original shape, banks, weight ranges and exact one-to-one
+output-row coverage, snapshots them and assigns the next worker nonces
+from live observations. The ROOT's private boot/frame/doorbell seal uses
+reserved s11; its own private sequence/counter history survives each job.
+
+Actual ROOT instructions quantize F32 inputs in256-element chunks into
+native operands and compact scales. Q/G/K/V use K5120 and Q8_0-compatible
+input packing; O uses K6144 and signed Q8_K input packing for Q6_K weights.
+The quantizer runs on the card's scalar processor, NOT on the host CPU.
+Jobs select Work math with no CPU dot-reference validation. Q/G produces
+12288 F32 values, K and V1024 each, and O5120. Q/G/O use119 workers;
+K/V use64, without stopping or reinitializing the other55 workers.
+
+The ROOT launches ALL matrix jobs before gathering results. Each actual
+receipt must match the live nonce, worker, all16 original source words,
+all eight before/after counters, exact arithmetic count, final NoC command
+and all reserved fields. Actual current physical counters and source/boot/
+closed-job/status/PC are checked again. Gathered output rows must be finite.
+The raw input, native operands, compact scales and recipes are rechecked.
+Only then are output bytes scattered to the recipe's GDDR workspace.
+
+GDDR writes are PROVISIONAL data, NOT a state/KV/token commit or a consumer
+producer grant. A successful summary/finished sequence is published only
+after all transfers, source/frame/input seals and counter checks pass.
+An unknown transfer parks the controller; it cannot retry, reset workers,
+continue IO or publish current success. No CPU expected product is used
+by the controller or its simulated byte-transfer fabric.
+
+Execution qualification
+-----------------------
+The fixture starts119 actual QMW1 programs ONCE and first runs real Q8/Q4/
+Q6 matrix operations with different nonzero histories, plus real paired
+GDN operations on heads0/31/47. Projection roles then share those SAME
+RV32 registers, tensor/config/thread/LReg/Dst arrays, sources and counters.
+ClearTensorState() is an ASSERTION of drained state, NOT a tensor reset.
+Only raw synthetic learned/input endpoints and observer geometry change.
+Poisoning affects L1/scratch operands, never an expected tensor product.
+
+Every native operand/scale is compared with a separate input-quantization
+observer, and every gathered/scattered matrix row with exact FP32 and an
+independent FP64 observer. Expected products do not enter the fabric.
+Two different raw inputs exercise Q/G -> K -> V -> O twice. The fault suite
+also resumes one valid K projection after its OS-fork fault snapshots.
+
+Fault branches use OS-fork snapshots of an ALREADY EXECUTED VM world,
+including snapshots at actually reached pending NoC-submit instructions.
+No branch changes the emulated PC, registers or private sequence to invent
+readiness. This avoids repeating identical admission/math merely to flip
+each of64 receipt words. All64 are individually tested. Other cases cover
+timeouts, root source/header/boot/recipe corruption, all10 command words,
+active/idle peer reset/STOP/source/status/boot/job mismatch, malformed
+recipes, caller nonce placeholders, invalid raw input, changes to each
+independent idle counter, and late raw/native/scale mutation.
+Additional final-scatter faults check timeout/counters, all10 post-transfer
+command words and source/header/boot mutation. A partial provisional write
+does not become a published producer or authorize another transfer.
+
+Placement, builds and separation
+-------------------------------
+ROOT entry58000, wait5804c/branch58050, fault58080/park5809c.
+Boot75300/doorbell75400/status75440. New projection DATA includes parts
+75800, rows76800, banks76a00, matrix header76b00 and shadows76c00..77ee0;
+quantization chunk7e000, projected values80000, native operandsa0000,
+compact scalesab000 and input/native/scale shadows148000/150000/154000.
+The retained-worker counter/nonce/boot/job regions remain122000/123000/
+170000/178000. These are NOT additions to old native save/restore authority.
+
+Main and clean builds produce identical new image pins:
+boot.bin4B ce5f73f31ecb80edc4dd267e1f46b0534a0201b837ba6d6231a5d4271df10102
+code.bin16580B f84c41dd22582d170086d2cac98286d0d8e208d2e7c7ee58ce828436b57a0192
+program.elf26840B e1b9bbc183a31b503b6b9ce89cb4f7329901cb335fe267b6d2aa5732027411b7
+Maximum individual static frame2112B; no undefined/writable global/GOT,
+unexported allocated section, CSR/div/sqrt/high-multiply/hardware-FMA/
+FP-to-int/EBREAK instructions. Exactly two instructions use reserved s11.
+The unused attention lifecycle is absent from this image. Each build first
+reproduces unchanged complete QDR1 and QMR1 binaries, not only their entries.
+
+Builder: build_qwen38_mixed_projection_root_image.py SDK FRESH_ABSOLUTE_OUT
+Test: tests/run_pioneer_q38_mixed_projection_root_tests.py QMP1 QMW1 QDP QDA --full
+The runner authenticates QMP1, all QMW1 section/ELF pins and QDP/QDA bytes.
+Host tests use warnings-as-errors, ASan+UBSan and disabled FP contraction.
+
+The new image role is rejected by old worker/controller, kernel/native,
+CPU-observer/client and Work builds, including defined0 and late mixing.
+415 projection-role gates cover23 ambient builders from VALID old-role
+baselines. Existing mixed dense391/mixed worker368/partition325 gates pass.
+DEBUG69 client178/reference88/native-component266/native-context484 pass.
+The unchanged QMW1 regression passes10 positives/267 faults.
+Main and independent clean SDK builds reproduce DEBUG69 b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f. The clean source tree uses HEAD
+tools/pioneer + misc-driver + headers + tracked build/config_headers,
+overlaid ONLY with this checkpoint's changes. Dirty llama.cpp and unrelated
+untracked FlashNext work are excluded and untouched. SDK files are read only.
+
+Development failures (all offline)
+----------------------------------
+The tests found a ROOT-address mismatch: canonical projection frames store
+the ROOT route in word9, while attention frames use word5. Transfer now
+selects the proper field only in QMP1; old images remain byte-identical.
+Gather also checks the exact final weight-fetch command, not merely the
+receipt's counter/source fields. Frame seals cover all119 workers.
+Warnings/undefined linkage caught formatting and an emitted zeroing helper;
+the image now has a bounded aligned word-only memset with no libc runtime.
+The first clean native build lacked tracked build/config_headers; supplying
+that unchanged configuration reproduced the authenticated native binaries.
+
+Final qualification
+-------------------
+Main and independent clean FULL runs BOTH exit0, with byte-identical
+complete stdout. Both pass all142 fault cases and all eight repeated
+canonical projection cases on the SAME119 worker lifetimes, plus the
+accepted K probe used for real-continuation fault snapshots. That is796
+accepted matrix jobs and39936 F32 output values checked after the initial
+matrix/GDN histories. Observed ROOT stack3556B of8192B. All37 changed code,
+build, guard and test files match the independent source tree exactly.
+The raw stdout is qwen38-mixed-projection-root-20261026.log, SHA256
+a6deb38b4292c3a14ffdb563fc217fe7a768645c7629852c3c43a7f00fa1a5a4.
+These modeled execution results and process runtimes are NOT silicon throughput.
+
+Hardware and remaining work
+---------------------------
+No driver install, GPU launch, Assistant restart, relay or hardware change.
+Read-only SSH: driver55/tag2026102100010012/generation4/quiesced0/cold0/
+active_owner0/open_count1/guard1;CPU_METADATA_ONLY.
+
+Weights, raw vectors, GDDR/NoC endpoints and physical registers in these
+tests are MODELED. O's raw6144-vector is currently synthetic, not the output
+of QMR1. This is NOT yet canonical Q/G/K/V -> FOUR QDP -> QMR1 -> O joined
+execution, original-GGUF provenance, all64 layers, state/KV/token commit,
+native upload/init/clock/host/Tensix/NoC lifetime or a Work launch grant.
+Those integrations, residual/RMS/FFN and output-head/sampling qualification
+remain required BEFORE full-card inference and real profiling.
+
+No speedup is claimed. Last measured real whole-model rate remains
+0.207893161 tokens/sec; target20 tokens/sec is UNMET. Goal remains ACTIVE.
