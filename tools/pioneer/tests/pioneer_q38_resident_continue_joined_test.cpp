@@ -120,6 +120,7 @@ struct ContinueJoined:AdvanceFabric {
   assert(minStack>=0x6e000);
  }
 };
+#ifndef PIONEER_Q38_CONTINUE_JOINED_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && !strcmp(argv[3],"--faults")));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  puts("BEGIN STAGED actual full predecessor+advance+ONCARD next-recipe admission;stops at second-layer ENTRY,NOT completed second layer/native/model/rate");
@@ -128,3 +129,4 @@ int main(int argc,char** argv){
  f.VerifyAdmission();
  printf("PASS STAGED actual full layer->link->next projections->ONCARD canonical recipe+119LIVE sequences/ALL16480products+5120input preserved/3351NoCreads+7788flits/maxStack%u;NO host products/reset/relaunch. Stopped at REAL second-layer ENTRY;following-layer execution/native/full64/token-rate qualification STILL OWED\n",0x70000-f.minStack);
 }
+#endif

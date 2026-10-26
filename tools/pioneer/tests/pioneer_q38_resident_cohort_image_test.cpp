@@ -228,8 +228,9 @@ struct CohortFabric:Machine {
     double x=sum,expected=x/(1+exp(-x)),actual=Float(Gddr(d[8],d[4]+d[43]+c*4));assert(isfinite(actual) && fabs(actual-expected)<=3e-6*(1+fabs(expected)));
     for(unsigned t=0;t<3;t++)assert(Gddr(d[8],d[4]+d[42]+(c*3+t)*4)==(t==2?Gddr(d[8],d[4]+d[45]+c*4):Gddr(d[41],d[15]+(c*3+t+1)*4)));
    }
-   if(w){auto& p=*peers[w-1];assert(!p.active && !p.GdnFaulted());assert(Mem(TT_Q38_COHORT_SEQUENCE+(w-1)*4)==(w<=96?2U:1U));
-    if(w<=96){p.VerifyGdn(2);for(unsigned i=0;i<64;i++)assert(Gddr(p.gated[8],p.gated[4]+p.gated[43]+i*4)==p.gatedOutput[i]);
+   if(w){auto& p=*peers[w-1];assert(!p.active && !p.GdnFaulted());unsigned initial=manifest[64+w-1];
+    assert(Mem(TT_Q38_COHORT_SEQUENCE+(w-1)*4)==initial+(w<=96?2U:1U));
+    if(w<=96){p.VerifyGdn(initial+2);for(unsigned i=0;i<64;i++)assert(Gddr(p.gated[8],p.gated[4]+p.gated[43]+i*4)==p.gatedOutput[i]);
      for(unsigned i=0;i<8192;i++)assert(Gddr(p.state[13],p.state[7]+i*4)==p.next[i]);}
    }
   }

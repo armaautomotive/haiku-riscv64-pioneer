@@ -94,7 +94,7 @@ struct OutputCohortFabric:CohortFabric {
  void VerifyPrepared(){
   assert(gdnNumericsVerified && !preparedVerified && outputLaunches==24);
   for(unsigned w=0;w<24;w++){
-   auto& p=*peers[w];assert(!p.active && p.GdnFinished(3));p.VerifyOutput();assert(Tensor(p)==tensorBefore[w]);
+   auto& p=*peers[w];assert(!p.active && p.GdnFinished(manifest[64+w]+3));p.VerifyOutput();assert(Tensor(p)==tensorBefore[w]);
    for(unsigned i=0;i<128;i++)assert(Gddr(manifest[9],manifest[8]+TT_Q38_PROJECTION_NATIVE_OFFSET+w*512+i*4)==p.native[i]);
    for(unsigned i=0;i<32;i++)assert(Gddr(manifest[9],manifest[8]+TT_Q38_PROJECTION_LINES_OFFSET+w*128+i*4)==p.line[i]);
   }
@@ -188,7 +188,7 @@ struct OutputCohortFabric:CohortFabric {
   assert(lineReads==24 && compactWrites==1 && nativeReads==1 && scaleReads==1 && resultWrites==119);
   assert(Mem(TT_Q38_COHORT_STATS+7*4)==24 && Mem(TT_Q38_COHORT_STATS+8*4)==24 && Mem(TT_Q38_COHORT_STATS+9*4)==5120);
   for(unsigned w=0;w<119;w++){
-   auto& p=*peers[w];unsigned seq=w<24?4:w<96?3:2;
+   auto& p=*peers[w];unsigned seq=manifest[64+w]+(w<24?4:w<96?3:2);
    // The public control returns AFTER genuine STOP,not at RUN's WAIT PC.
    // Verify the ACTUAL newer terminal/nonce/receipt in that case;never
    // replace either lifecycle proof with a cached ready/completion flag.

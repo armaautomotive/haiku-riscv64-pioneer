@@ -1,0 +1,106 @@
+Qwen3.8-27B: complete resident two-layer instruction qualification
+2026-10-26 UTC; OFFLINE correctness, NOT hardware inference timing
+
+Scope and result
+----------------
+Main and independent clean-tree full-chain tests both passed, process
+exit0, including all nine faults forked from the actual completed SECOND
+layer before QCP1 publication. Their complete stdout/stderr is identical.
+The adjacent .log is that complete output, SHA256
+1fed4a7637aa9145feba63ee1ad4345983df31b050a2a18f03fc8de6092f8d4b.
+
+This extends the prior39203c5 checkpoint, whose combined test stopped at
+the second-layer ENTRY. The new test actually executes BOTH complete
+recurrent layers, including the on-card inter-layer RMS/link,20 input
+producers,244 projection jobs, recipe admission and the following full
+Conv/GDN/output/norm/FFN/residual path. It observes every5120 final hidden
+value and the current proof/counter chains of all119 retained workers.
+Each layer has640 convolution batches,96 GDN jobs,119 output matrices,
+357 FFN matrices and88 FFN producers. Full maximum ROOT stack7160 bytes
+remains within the8192-byte range. This is CPU instruction interpretation
+of the actual pinned emitted RV32/FPU/Tensix code, NOT physical card time.
+
+No ready bits, completed descriptors, expected arithmetic products or
+zero private sequences are supplied at the second-layer boundary. The
+same119 machines retain their registers, tensors, PC, physical-counter
+model and actual private sequences. The unchanged layer entry reloads
+the SAME values admitted ON CARD. Only observer phase bookkeeping and
+raw learned/state/NoC-byte endpoints are prepared by the host fixture.
+Independent exact FP32 and secondary FP64 checks observe results; no
+numeric reference product is fed back as input to the emitted program.
+
+The new fixture explicitly refuses an original-byte source. All learned
+and initial history/state bytes are SYNTHETIC; this is NOT qualification
+against the downloaded model's original weights or a native ownership,
+initialization, upload, cleanup, Work or Assistant grant. No dense layer,
+64-layer graph, canonical token commit, sampling or token loop is proved.
+
+Final-return failure tests
+--------------------------
+Nine child interpreters inherit the genuinely completed second layer.
+They corrupt: layer receipt marker; saved prefix counter; runtime FFN
+sequence; FFN AFTER counter; continuation header; layer shadow; cohort
+initial sequence shadow; ROOT physical-counter model; ROOT source11.
+Every case refuses without QCP1 publication, any further ROOT packet,
+reset or retry. These synthetic failures do not prove native recovery.
+The actual QCP1 success receipt is checked completely, including both
+saved predecessor receipts, admission counts, all119 final sequences,
+current ROOT BEFORE/AFTER/last command, copied second-layer receipts and
+all reserved zero words. Existing249/7616/483 mutation checks also run.
+
+Offline A failure and test-only correction
+-----------------------------------------
+Main A and clean A both reached all119 second-layer output matrices and
+failed the combined prefix observer assertion. No arithmetic row-mismatch
+diagnostic was emitted. A following5120-row output job has fewer groups
+than the prior10240-row projection, leaving finite old data in unused
+output staging. The new endpoint preparer had omitted the NaN staging
+initialization used by existing matrix/FFN fixtures. B initializes ONLY
+that new job's output staging, retaining tensor registers, PC, sequence,
+status and all strict valid-row/unused-tail/proof predicates. Detailed
+unused-tail and combined-predicate diagnostics were also added. The same
+immutable emitter now passes main and clean B; it was not changed to fit
+this test. This supports the stale unused-tail diagnosis; A's combined
+assertion did not itself provide a per-predicate diagnostic.
+
+Exact executable and checks
+---------------------------
+No production source or emitted byte changed in this checkpoint.
+Main and clean program.elf SHA256
+91f5cb27b7ab075a5309693d02446a56c350215893be079b721b4abe16cfa620
+continue.bin31992B SHA256
+2f8a6dda08c67daeb543cab817713d940ec15f5cdc63a06477950e9dc9f0a5fe
+text.bin128B SHA256
+ba57fa1835372b8a7769ec605bdf6ab68b6cbaafda2bab3e3052886be464c766
+All10 predecessor sections and all119 companion images retain byte pins.
+All seven test-source files match the independent clean tree exactly.
+The full runner builds with ASan/UBSan, warnings-as-errors and FP
+contraction disabled. Canonical continuation32/16-boundary refusal tests,
+247 mutations,1000007 modulus equivalence cases and226 role/build gates
+pass. Old native/CPU/Work/other component aliases remain refused. Python
+AST syntax and own-file diff checks pass. A separate py_compile command
+was refused when macOS attempted an out-of-workspace bytecode cache;
+the no-write AST check passes. Neither was a device/code-execution fault.
+
+Reproduction
+-------------
+python3 tools/pioneer/tests/run_pioneer_q38_resident_continue_full_tests.py \
+  /private/tmp/pioneer-q38-resident-continue-image-20261026-g --faults
+The clean tree uses the same runner and --faults with the independent
+image at /private/tmp/pioneer-q38-resident-continue-image-20261026-clean-a.
+
+Physical status and remaining requested work
+--------------------------------------------
+No driver/image installed, accelerator access, power/SD/mains/hardware
+action or modification of the working Assistant. Read-only CPU metadata
+postflight: driver55/tag2026102100010012/generation4/quiesced0/cold0/
+active_owner0/open_count1/guard1. Working041 driver remains installed.
+
+Next: extend the real on-card graph through the remaining recurrent and
+dense-attention/KV layers; preserve canonical recurrent/token commits;
+add vocabulary/sampling and the persistent token loop. A genuine NEW
+native joint owner, authenticated original-byte recipe/model/source,
+initialization/clock/host lifetime, arbitrary-original journals, current
+physical proofs and exact STOP/holds/restoration remain OWED before
+silicon or no-CPU-reference FAST Work/Assistant selection. Last measured
+WHOLE MODEL remains0.207893161tok/s.20tok/s is UNMET; no speedup is claimed.

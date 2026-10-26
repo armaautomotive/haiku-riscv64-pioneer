@@ -83,8 +83,12 @@ struct LayerFabric:OutputCohortFabric {
   assert(convLaunches==119 && gdnLaunches==96 && outputLaunches==24 && matrixLaunches==119
    && lineReads==24 && compactWrites==1 && nativeReads==1 && scaleReads==1 && resultWrites==119);
   for(unsigned w=0;w<119;w++){
-   auto& p=Peer(w);unsigned seq=w<24?4:w<96?3:2;
-   assert(p.GdnFinished(seq) && !p.active && p.CorrectRows() && !p.dotProbeReads
+   auto& p=Peer(w);unsigned seq=manifest[64+w]+(w<24?4:w<96?3:2);
+   bool rows=p.CorrectRows();
+   if(!p.GdnFinished(seq) || p.active || !rows || p.dotProbeReads || Mem(TT_Q38_COHORT_SEQUENCE+w*4)!=seq)
+    fprintf(stderr,"LAYER_PREFIX_OBSERVER_FAILURE layer%u worker%u initial%u expectedSeq%u pc%08x status%u private%u active%u correctRows%u dotProbes%u type%u K%u groups%u requests%u/%zu\n",
+     manifest[3],w+1,manifest[64+w],seq,p.pc,p.memory.at(0x74144),Mem(TT_Q38_COHORT_SEQUENCE+w*4),p.active,rows,p.dotProbeReads,p.type,p.inputs,p.RowsMachine::groups,p.requests,p.packets.size());
+   assert(p.GdnFinished(seq) && !p.active && rows && !p.dotProbeReads
     && Mem(TT_Q38_COHORT_SEQUENCE+w*4)==seq);
    unsigned first=post[1016+w];
    for(unsigned i=0;i<p.RowsMachine::groups*16;i++){

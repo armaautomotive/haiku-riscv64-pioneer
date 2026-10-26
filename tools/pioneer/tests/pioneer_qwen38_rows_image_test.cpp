@@ -97,7 +97,12 @@ struct RowsMachine:StreamMachine {
 				}
 			}
 		}
-		for (unsigned row=groups*16;row<4096;row++) if (buffers[4096+row]!=0x7fc00000) return false;
+		for (unsigned row=groups*16;row<4096;row++) if (buffers[4096+row]!=0x7fc00000) {
+#ifdef PIONEER_Q38_REF_DIAGNOSTIC
+			fprintf(stderr,"ROW_UNUSED_TAIL_DIAGNOSTIC type%u K%u groups%u row%u value%08x\n",type,inputs,groups,row,buffers[4096+row]);
+#endif
+			return false;
+		}
 		return true;
 	}
 	void BindRows(PioneerQwen38Gguf& model,unsigned tensor,unsigned firstRow) {
