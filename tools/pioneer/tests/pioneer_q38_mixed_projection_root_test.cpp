@@ -13,8 +13,8 @@ struct ProjectionRootMachine:MixedRootMachine {
  std::array<std::array<uint32_t,8>,119> parts={};std::array<uint32_t,119> rows={};
  std::vector<uint32_t> scattered;unsigned active=0,scatterPackets=0,quantWrites=0,completedGathers=0;
  unsigned badProofWord=~0U,inputFaultPacket=0,nativeFaultPacket=0,scaleFaultPacket=0,recipeFaultPacket=0;
- ProjectionRootMachine(const char* image,const char* worker,const char* qdp,const char* qda)
-  :MixedRootMachine(image,worker,qdp,qda),canonical(new PioneerQ38CanonicalModelPlan){
+ ProjectionRootMachine(const char* image,const char* worker,const char* qdp,const char* qda,unsigned romLimit=32764)
+  :MixedRootMachine(image,worker,qdp,qda,romLimit),canonical(new PioneerQ38CanonicalModelPlan){
   assert(canonical->Build());boot[0]=Q::Magic;memory[Q::Boot]=Q::Magic;
   for(auto r:std::array<std::pair<unsigned,unsigned>,10>{{{Q::Parts,119*32},{Q::Rows,119*4},{Q::Banks,32},{Q::MatrixHeader,64},
    {Q::RecipeShadow,256},{Q::HeaderShadow,64},{Q::BankShadow,32},{Q::RowsShadow,119*4},{Q::PartsShadow,119*32},{Q::QuantizedChunk,576}}})
@@ -106,7 +106,8 @@ struct ProjectionRootMachine:MixedRootMachine {
     if(bytes>256 && badProofWord<64)memory[local+badProofWord*4]^=1;
     if(bytes>256)completedGathers++;
    }else{
-    assert((remote==M::Boot && bytes==256) || (remote==M::Job && bytes==256) || (remote==M::Status && bytes==64) || (remote==M::Doorbell && bytes==4));
+    assert((remote==M::Boot && bytes==256) || (remote==M::Job && bytes==256) || (remote==M::Status && bytes==64)
+     || (remote==M::Doorbell && bytes==4) || (remote==W::Summary && bytes==256));
     for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=p.memory.at(remote+i*4);
     if(badWorker==w+1){
      if(badKind==4 && remote==M::Status)memory[local+15*4]^=1;
@@ -251,6 +252,7 @@ static unsigned ProjectionRefusals(ProjectionRootMachine& base,bool full){
  printf("PASS ACTUAL QMP1 refusals%u/no current success/fault park inert/ALL119 source+receipt admission/held reset rejected BEFORE PC/failed GDDR writes stay PROVISIONAL\n",refused);
  return refused;
 }
+#ifndef PIONEER_Q38_MIXED_PROJECTION_ROOT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5 || (argc==6 && !strcmp(argv[5],"--full")));(void)&Refusals;(void)&Group;(void)&Geometry;(void)&Faults;(void)&D::Run;setvbuf(stdout,nullptr,_IOLBF,0);
  printf("START actual QMP1/119 QMW1 boot ONCE and diverse actual matrix+GDN histories;NOT silicon timing\n");
@@ -262,3 +264,4 @@ int main(int argc,char** argv){
  }
  printf("PASS new mixed projections matrices%u/refusals%u/119bootsONCE/noSTOP/noReset/card-native input bytes+independent matrix output/ROOTstack%u;SYNTHETIC weights/byte endpoints ONLY\n",matrices,refusals,0x70000-m->minStack);
 }
+#endif

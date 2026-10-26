@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // NEW returning projection controller. Old shape checks are DATA only;
 // no old QDM/QMR/native image role or source capability is selected.
+#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#define scalar_main q38_joined_dense_frame
+#else
 #define scalar_main q38_unused_dense_frame
+#endif
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
@@ -142,6 +146,7 @@ static unsigned Run(const uint32_t* d){
  Fence();s[0]=L::Magic;Fence();return d[11];
 }
 }
+#ifndef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
 extern "C" void q38_mixed_root_seal(){
  using namespace DensePartitionRoot;const L::PrivateSeal* p;asm volatile("mv %0,s11":"=r"(p));
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x6fe00)scalar_fault_park();
@@ -171,3 +176,4 @@ extern "C" void mixed_projection_main(){
   Words(L::Status)[4]=0;Fence();Words(L::Status)[1]=n;Fence();
  }
 }
+#endif

@@ -1,0 +1,17 @@
+START ACTUAL QJR1 ONE ROOT/SAME119 workers/QG-K-V -> ROOT prepare -> retained attention -> actual O;NOT native timing
+OBSERVED ACTUAL QJR1 projection role5 all12288 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role6 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role7 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+PASS ACTUAL QJR1 refusals74/from actual waiting/pending-submit continuations/no full result or attention dispatch/fault parks inert;partial projections PROVISIONAL
+OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied
+OBSERVED ACTUAL attention6144/max-inverse+EVERY finalF16 probability vs QDA observer/L25.00570820801e-08 -> O input
+OBSERVED ACTUAL QJR1 projection role10 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+PASS ACTUAL QJR1 frame1 N33/all6144 attention values used by O/ALL5120 final outputs/maxL25.00570820801e-08/SAME119 noSTOP or reboot/stack4228
+OBSERVED ACTUAL QJR1 projection role5 all12288 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role6 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role7 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied
+OBSERVED ACTUAL attention6144/max-inverse+EVERY finalF16 probability vs QDA observer/L24.80161580843e-08 -> O input
+OBSERVED ACTUAL QJR1 projection role10 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+PASS ACTUAL QJR1 frame2 N65/all6144 attention values used by O/ALL5120 final outputs/maxL25.00570820801e-08/SAME119 noSTOP or reboot/stack4228
+PASS joined instruction graph/refusals74;SYNTHETIC RAW learned/KV/table endpoints ONLY;NO native/original full64/stateKVtokencommit/throughput grant

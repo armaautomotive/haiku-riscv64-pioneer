@@ -15,10 +15,12 @@ struct ScalarMachine:Machine {
 	// TEST instruction harness may supply a different exact ROM map. This
 	// constructor grants no result,device,producer or native capability.
 	ScalarMachine(unsigned count,unsigned kind):n(count),mode(kind) {}
-	ScalarMachine(const char* root,unsigned count,unsigned kind):ScalarMachine(count,kind) {
+	ScalarMachine(const char* root,unsigned count,unsigned kind,unsigned romLimit=32764):ScalarMachine(count,kind) {
 		std::string directory(root); code=Read((directory+"/code.bin").c_str()); auto boot=Read((directory+"/boot.bin").c_str());
-		assert(boot.size()==4 && code.size()<32764 && !(code.size()&3)); l1[0]=Word(boot,0);
-		for (unsigned i=0;i<code.size()/4;i++) l1[1+i]=Word(code,i*4);
+		assert((romLimit==32764 || romLimit==131072) && boot.size()==4 && code.size()<romLimit && !(code.size()&3)); l1[0]=Word(boot,0);
+		// Explicit new large-ROM fixture uses its OWN fetch-slot override.
+		// Do not enlarge the old fixed mapping or any native image owner.
+		if(code.size()<32764)for (unsigned i=0;i<code.size()/4;i++) l1[1+i]=Word(code,i*4);
 		memory[0x74000]=0x31504c47; memory[0x74004]=n; memory[0x74008]=mode; memory[0x7400c]=mode==5?(n%1024?128:1024):0;
 		memory[0x17ffc0]=memory[0x17ffc4]=memory[0x17ffc8]=0;
 		for (unsigned i=0;i<3072;i++) {

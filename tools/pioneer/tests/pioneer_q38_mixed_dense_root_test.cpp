@@ -38,7 +38,7 @@ struct MixedRootMachine:ScalarMachine {
  unsigned failPacket=0,counterFaultPacket=0,sourceFaultPacket=0,frameFaultPacket=0,bootFaultPacket=0,headerFaultPacket=0;
  unsigned badWorker=0,badPhase=0,badKind=0,heldPCReads=0,badReadback=0,readbacks=0;
  bool pending=false;
- MixedRootMachine(const char* image,const char* worker,const char* qdp,const char* qda):ScalarMachine(image,0,0),qdpImage(qdp),qdaImage(qda){
+ MixedRootMachine(const char* image,const char* worker,const char* qdp,const char* qda,unsigned romLimit=32764):ScalarMachine(image,0,0,romLimit),qdpImage(qdp),qdaImage(qda){
   memory.clear();counts.fill(0xfffffff8);
   boot[0]=R::Magic;boot[1]=1;boot[2]=64;boot[3]=129;boot[4]=0x16005;boot[5]=119;boot[6]=8192;boot[7]=64;
   for(unsigned i=0;i<4;i++)boot[8+i*2]=i+1;

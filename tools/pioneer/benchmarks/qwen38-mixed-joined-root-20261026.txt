@@ -1,0 +1,165 @@
+Qwen3.8-27B: single persistent joined controller QJR1
+2026-10-26; OFFLINE actual instruction evidence, NOT inference throughput
+
+Implemented data path
+---------------------
+ONE new ROOT program drives Q/G -> K -> V -> learned normalization/RoPE
+for all FOUR groups -> retained96-worker dense attention -> O projection.
+The SAME119 QMW1 workers and SAME ROOT stay alive throughout every stage
+and successive frames. There is no worker or ROOT boot/STOP/reset between
+operations. This is actual emitted controller code, not a test sequencer
+that manufactures matrix/attention products or edits private sequences.
+
+The real6144-element attention result feeds O's on-card native quantizer
+directly from ROOT L1. It is no longer a separately supplied synthetic O
+input. Q/G, K, V and final O results are written by actual ROOT NoC packets
+to provisional workspace. The preparation code reads computed Q/G/K/V
+bytes through actual NoC commands, plus raw learned Q/K norm weights and
+the fixed-position RoPE table. Four calls to the same DensePrepare math
+execute inside the new ROOT image; no CPU-normalized queries, RoPE values
+or expected attention products are supplied at runtime.
+
+The ROOT returns every matrix and attention job to the original mixed
+worker loop. Live job nonces, physical sources/reset/PC, closed receipts
+and cumulative counters are chained across matrix -> dense -> matrix.
+All119 are audited, not only the96 dense workers or64 K/V workers.
+Work matrix jobs do not select CPU dot-reference validation. Independent
+CPU/device oracles exist ONLY in the external qualification harness.
+
+Private transaction and ownership boundaries
+-------------------------------------------
+A reserved-s11 private stack context retains boot, outer command, current
+internally bound operation frame and phase. The outer sequence/counter
+history survives complete joined jobs. All four projection recipes,96
+attention frames and5120 raw input elements are captured and validated
+before the first participant write. Immutable recipes contain ZERO nonce
+placeholders; actual next worker sequences are obtained from live workers.
+The ROOT builds its own active frames and source addresses, including the
+ordered Q/G,K,V,attention,O operation epochs. Caller metadata cannot supply
+a worker's next private sequence or a fabricated completion flag.
+
+Boot/outer/current-frame/source seals are checked around transfers.
+Original metadata and raw input are rechecked at stage boundaries and at
+completion. The ROOT's internal prepared inputs reuse shared scratch only
+after the preceding projection has finished; the O native-input shadow
+reuses the dense gate-shadow region only AFTER dense attention closes.
+The four-group preparation reads use complete command readback, exact
+counter deltas, source/context sealing, bounded waits and an inert fault
+terminal. Unknown transfer state cannot authorize another packet or reset.
+
+All intermediate workspace results remain PROVISIONAL. A separate joined
+summary and final finished sequence are published only after O and final
+seals succeed. This is not canonical recurrent/KV/token state commit and
+cannot grant a native or Work selector by itself.
+
+Qualification strategy
+----------------------
+The same real mixed matrix/GDN/dense tensor-state model is retained for
+each worker. Actual arithmetic first establishes different nonzero job
+histories; no fixture writes a PC, register, private nonce, completion
+status or expected tensor product to invent readiness. Packet bookkeeping
+may be folded into the SAME cumulative physical counter values when the
+observer changes mode; hardware counters and tensor arrays are not reset.
+
+The fabric copies RAW learned/KV/table bytes and actual program outputs
+only. An independent original QDA program consumes the observed computed
+Q/G/K/V bytes and the same raw norm/table/KV endpoints. It supplies NO ROOT
+reduction parameters or input products. Separate QDP executions check all
+four ROOT-prepared groups bit-for-bit. Every final F16 attention probability,
+global max/inverse, all6144 gated attention values and all5120 O outputs
+are checked. Matrix rows also retain independent FP32/FP64 observers.
+
+The two target joined frames use N33/layer3 and N65/layer7 with different
+raw inputs, crossing KV chunk/partition boundaries on the SAME lifetimes.
+Each frame has366 matrix jobs plus288 dense phase jobs. The K/V prefix is
+synthetic READONLY raw history, not canonical committed output from a prior
+whole-model token. Learned endpoints are synthetic; canonical matrix DATA
+geometry is not original-GGUF source authentication.
+
+74 refusal branches start from OS-fork snapshots of the ALREADY EXECUTED
+waiting ROOT or an actually reached pending preparation-read submit.
+Cases cover malformed outer/recipe/worker frames, caller nonce placeholders,
+bad raw input, every independent root counter before admission, preparation
+timeout/counter/source/frame/boot faults, all10 post-transfer command words,
+late raw/recipe/dense-frame changes and invalid norm/RoPE bytes. Faults
+cannot publish a full result or dispatch attention; partial projections
+stay provisional. No emulated processor state is reset to build a case.
+
+Placement and reproducibility
+-----------------------------
+New ROOT entry40000/wait4004c+40050/fault40080+4009c. The36KiB image is a
+new independent layout, NOT a widened old32KiB/native image capability.
+Boot75300/doorbell75400/status75440; outer75000; joined summary75500.
+Recipes b0000..b5000, copies b6000..bb000; dense copies bc000..c2000;
+raw snapshot c2000..c7000; raw source c8000..cd000. These proposed ranges
+are NOT additions to any old native journal/save/restore authority.
+
+Main/clean image pins:
+boot.bin4B 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+code.bin36160B 27c5a3685683db74d8b18d1112aa06f82f9599cae2b03e4b550c3b57615108e5
+program.elf47736B 9dc2716e040a0430e456112feca01d452612edbca02a77e4eec5503ae7dc0b69
+Max individual static frame2112B; exactly two reserved-s11 instructions.
+No undefined/writable-global/GOT/unexported-ALLOC/CSR/div/sqrt/high-multiply/
+hardware-FMA/FP-to-int/EBREAK instructions. Every build FIRST reproduces
+the complete unchanged QDR1, QMR1 and QMP1 executable bytes.
+
+Builder: build_qwen38_mixed_joined_root_image.py SDK FRESH_ABSOLUTE_OUTPUT
+Test: tests/run_pioneer_q38_mixed_joined_root_tests.py QJR1 QMW1 QDP QDA
+Runner authenticates QJR1, all QMW1 sections/ELF and QDP/QDA code pins.
+Warnings-as-errors, ASan+UBSan and disabled FP contraction. Large ROM
+fetch-slot support is an explicit new test-fixture argument, not an old
+default mapping or native launch grant. SDK directories are read only.
+
+431 role gates cover24 ambient builders, including valid old-role baselines,
+defined0 and late reinclusion. Old kernel/native/worker/controller/CPU/Work
+builds refuse the joined flag before output/SDK access. Client182/reference90
+and old projection419 gates pass. Main and clean SDK builds reproduce
+unchanged DEBUG69 b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f.
+
+Development failures (all offline)
+----------------------------------
+Warnings-as-errors caught ambiguous statement formatting. Division gates
+caught generated /24 and %24; nested group/ordinal loops removed those
+instructions without changing the partition math. Test integration exposed
+three harness issues: dropping prior matrix packet counts when selecting
+the dense observer; missing actual dense-receipt byte reads when O admits
+workers; and observing the final phase6 notification twice. These were
+fixed in test bookkeeping/byte endpoints/phase-edge observation, not by
+changing tensor state, inventing products or weakening receipt validation.
+
+Final qualification
+-------------------
+Main and independent clean runs BOTH exit0 with byte-identical full stdout.
+Both execute two complete joined frames, N33/layer3 then N65/layer7, plus
+all74 fault branches. The SAME ROOT and119 workers complete732 matrix jobs
+and576 dense phase jobs without an intervening boot/reset/STOP. All38912
+matrix output values,12288 gated attention values,2352 final F16 probabilities
+and all prepared groups are checked. Global maxima/inverses and probability
+bits match the independent QDA observer exactly. Attention maximum relative
+L2 is5.00570820801e-8; observed ROOT stack4228B of8192B. All42 changed source,
+test, guard and build files match the independent source tree exactly.
+The unchanged standalone QMP1 regression also passes all8 projections and
+142 fault cases after the shared test-fixture changes.
+Raw stdout: qwen38-mixed-joined-root-20261026.log, SHA256
+9b61745f34caf7c8ea1c5981d2e3135125c1624ad24fa2271aa8ca45f5e672bc.
+Instruction/process runtimes are NOT silicon throughput or inference speed.
+
+Hardware and remaining scope
+---------------------------
+No GPU launch, driver install, Assistant restart, relay/SD/hardware change.
+Read-only SSH status remains driver55/tag2026102100010012/generation4/
+quiesced0/cold0/active_owner0/open_count1/guard1;CPU_METADATA_ONLY.
+Dirty llama.cpp and unrelated untracked FlashNext work are untouched and
+excluded from independent clean source/build/test qualification.
+
+Still owed: original-source and initialized-page provenance, canonical
+KV/recurrent token-state commit, residual/RMS/FFN/link integration, all64
+layers and multiple real model tokens, final output-head/vocabulary/sampling,
+and complete genuine native init/clock/host/L1-GDDR/Tensix/NoC ownership,
+current physical proofs and arbitrary-original journals. Old first-layer/
+position0 native scopes cannot authorize this new graph. Real on-device
+inference and profiles are required BEFORE claiming a speedup.
+
+Last measured real whole-model rate remains0.207893161 tokens/sec.
+Target20 tokens/sec is UNMET; the long-running goal remains ACTIVE.

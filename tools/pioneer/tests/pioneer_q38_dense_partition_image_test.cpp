@@ -15,6 +15,9 @@ struct ProducedGroup {
  std::array<std::vector<uint32_t>,6> scores,exp,probability;
  std::array<std::array<float,256>,6> output={};
  unsigned tokens,group;
+ // Explicit observer construction for joined tests. No arithmetic or
+ // emulated processor state is manufactured by this data-only constructor.
+ ProducedGroup(unsigned g,unsigned n):tokens(n),group(g){}
  ProducedGroup(const char* image,unsigned g,unsigned n,unsigned trial=0):tokens(n),group(g){
   for(unsigned h=0;h<6;h++){
    DenseAttentionMachine original(image,g*6+h,n,trial);
