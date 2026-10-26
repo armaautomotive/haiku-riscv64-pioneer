@@ -732,7 +732,7 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(Q38DispatchSourceCache)[w*16+i]) block_fault_park();
 		for (unsigned i=48;i<64;i++) if (proof[i]) block_fault_park();
 		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
-#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE) && !defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE)
+#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE) && !defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE) && !defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE)
 		if (!work)
 #endif
 		// Joined advance needs these ACTUAL verified receipts for its

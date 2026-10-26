@@ -1,7 +1,15 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE_ALIASES_H)
+#include "PioneerQ38DenseProjectionImageAliases.h"
+#elif defined(PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H) && defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE)
+#error Dense projection IMAGE cannot be added after existing matrix geometry
+#endif
 #ifndef PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H
 #define PIONEER_Q38_PROJECTION_MATRIX_SHAPE_H
-#ifdef PIONEER_Q38_PROJECTION_NEXT_ROOT
+#ifdef PIONEER_Q38_DENSE_PROJECTION_IMAGE
+#include "PioneerQ38DenseProjectionShape.h"
+#include "PioneerQ38DenseProjectionImageAliases.h"
+#elif defined(PIONEER_Q38_PROJECTION_NEXT_ROOT)
 #include "PioneerQ38NextProjectionMatrixShape.h"
 #include "PioneerQ38NextProjectionImageAliases.h"
 #else

@@ -1,0 +1,145 @@
+Qwen3.8-27B: distinct dense-projection controller and canonical recipes
+2026-10-26 UTC; OFFLINE correctness, NOT native inference throughput
+
+Implemented
+-----------
+New QDM1 matrix controller has its OWN marker/fault grammar and disjoint
+QG/K/V/attention/O workspace DATA slots. It does not retag QPM1, the old
+Next/GDN projection grammar, an old initialization ledger or native owner.
+It shares the qualified matrix transport/arithmetic core, retaining all
+64 ACTUAL per-peer receipts in local scratch for a future joined consumer.
+There is no host output endpoint, CPU numeric-reference call or fallback
+in the emitted Work matrix path. Structural command/source/status/counter
+checks are not CPU numerical validation. CPU references exist ONLY in
+the offline observers and separate existing CPU DEBUG client.
+
+Heap-only PioneerQ38DenseProjectionPlan stores canonical QG/K/V/Q6-O
+recipes for each of the16 dense layers, all seven workspace banks and
+the exact same canonical object. Immutable recipes contain ZERO private
+sequence placeholders. A separate runtime grammar requires nonzero next
+sequences; copying a recipe or setting a ready flag cannot launch it.
+All120 sixteen-word source records are retained as DATA, not authenticated
+source ownership. Learned-page checks cover the four matrix roles ONLY;
+they do not authenticate normalization tables, KV state or an input producer.
+
+Geometry and separation
+-----------------------
+Dense layers are3,7,...,63. QG is Q8 type8 K5120 N12288 across119 peers;
+K/V are Q8 K5120 N1024 across64 peers each. O is Q6 type14 K6144 N5120
+across119 peers. Every canonical part and global row is checked. Geometry
+slots in the 2MiB workspace are:
+  QG        0x180000..0x18c000
+  K         0x18c000..0x18d000
+  V         0x18d000..0x18e000
+  attention 0x190000..0x196000
+  O         0x196000..0x19b000
+These addresses alone reserve or initialize NOTHING. The new controller
+cannot be added after an old matrix shape has already been included.
+Defined0, late inclusion and old Next/GDN/CPU/Work/native aliases refuse.
+
+Qualification
+-------------
+Main and independent clean-tree runs both exit0. Canonical DATA tests:
+448 recipes /16layers x7banks x4roles;4604 field/part/row mutations;
+14 absent-or-foreign learned-page/layer refusals. Rebuild/foreign-canonical
+and separate ZERO-immutable/nonzero-runtime sequence checks also pass.
+
+Actual emitted QDM1 ROOT geometry test covers ALL64 dense matrices and
+311296 global rows. Its115 failure cases use SYNTHETIC peer products and
+physical-status endpoints. They are not arithmetic or silicon proof.
+Main/clean stdout SHA256:
+e7ca3f3ab4c28ac8ac6c4072e037cb46f57b2056b2149ec299c246979c0416da
+
+The separate arithmetic suite couples the ACTUAL QDM1 controller to ACTUAL
+emitted matrix peers. The fabric copies bytes ONLY. It never computes a
+product, marks a worker complete, fabricates a proof or supplies a private
+sequence. All descriptors/doorbells/input reads/gathers/output scatters
+are issued by interpreted device instructions. Each role runs TWICE with
+changed native input/scale bytes on its SAME retained peer pool. Sources
+are distinct for every peer; raw learned bytes differ by global row/block.
+No peer PC/register/Dst/Src/NoC/private sequence is reset between these jobs.
+Observer packet bookkeeping carries cumulative physical-counter MODEL
+values, including wraparound, rather than clearing the physical counts.
+
+All8 matrices /38912 output rows /732 peer jobs /366 initial boots pass
+exact original FP32 plus independent FP64 observers, fresh poisoned
+input tails, every global row, ALL64 retained actual proof words and STOP.
+There are3276800 modeled matrix instructions, NOT a silicon-time result.
+Max observed ROOT/peer stack is5704 bytes inside the8192-byte stack.
+Raw learned/input/NoC/physical-counter endpoints are still SYNTHETIC.
+This is arithmetic qualification for these four role geometries at layer3,
+not original GGUF weights or arithmetic at all16 layer-specific matrices.
+Main/clean complete arithmetic stdout SHA256:
+c7f9be21876ad5e7ffc3151ebcf940cbfa7828cebbeb4fe2f0225382218c44d6
+Warnings-as-errors, ASan/UBSan and disabled FP contraction are used.
+
+Executable and regressions
+--------------------------
+Main/clean ELF is byte-identical. All37 implementation/test/build sources
+match the independent clean tree, archived without dirty llama.cpp or
+unrelated FlashNext files.
+boot.bin4B e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+text.bin7520B 2f69045e8bb3b7c8348cb604254f73ff6673af821a407d4d889d5b589335334e
+prefix.bin6424B a22a00de78c13e1f2cb4bcefabe0ed0b88fee9261fc76f6ee65c797da55c2408
+program.elf25944B 446d14aede1f1bd68ccc4c12a8677343ac3807a188a466e689b33faf92a87b26
+Max static frame4976B; no undefined symbols, writable globals/GOT,
+division/sqrt/high-multiply/hardware-FMA/FP-to-int/EBREAK. The ONLY three
+CSR instructions are the prior read-only cycle-high/low/high sequence.
+Program uses NoC/tensor/configuration state; new native journals are OWED.
+
+312 new role/build gates pass, including18 ambient builders refusing before
+SDK/output access. Prior attention256/preparation247/continuation238 gates
+pass. DEBUG69 role585/native-context484/client158/reference78 gates pass.
+The CPU client now explicitly requires all THREE dense roles in its34-name
+refusal set. Existing driver/source .cpp line numbers remain unchanged.
+Main/clean SDK compile reproduces DEBUG69 SHA256
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f, with no install or execution.
+Rebuilt continuation ELF remains91f5cb27b7ab075a5309693d02446a56c350215893be079b721b4abe16cfa620.
+Prior attention ELF remainsb86f8fd4edd928a29340bb1643289a0d1251799dbb9903203aab8f41ce3f51d5,
+preparation ELF remainsd36992ecfda92a613bf06ab7dcf0378e304dfac7f603322594b1bfde00daaaf2.
+Default QPM1 regression passes498matrices/514waves/4400640row-cover/151faults.
+Its peer arithmetic is SYNTHETIC; it is a backward-compatibility check ONLY.
+
+Offline failures retained
+-------------------------
+Initial harness compilation lacked the established queued/Work peer flags;
+it now derives the exact existing persistent-peer test flags and adds only
+the new ROOT fixture's compact-input/output flags. The first minimal peer
+harness refused the real startup PC0x6a73c: its already-emitted service
+section was absent. It now uses the existing ResidentOperatorPeer's exact
+read-only service fetch model, rather than patching startup or fabricating
+completion. Its Conv group array hides the matrix group scalar; references
+now explicitly select the existing matrix-base member. No emitter bytes
+were changed to fit these fixture fixes. The first late-inclusion test
+caught the matrix-shape include guard bypassing adapter revalidation; a
+pre-guard check now rejects both late mixed roles and late old->new shapes.
+
+Reproduction
+------------
+python3 tools/pioneer/build_qwen38_dense_projection_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW_ABSOLUTE_OUTPUT
+python3 tools/pioneer/tests/run_pioneer_q38_dense_projection_root_tests.py \
+  /private/tmp/NEW_ABSOLUTE_OUTPUT
+python3 tools/pioneer/tests/run_pioneer_q38_dense_projection_arithmetic_tests.py \
+  /private/tmp/NEW_ABSOLUTE_OUTPUT /private/tmp/EXACT_PINNED_CONTINUE_IMAGE
+python3 tools/pioneer/tests/pioneer_q38_dense_projection_gates_test.py
+
+Remaining full goal
+-------------------
+No GPU compute/driver install/power/SD/mains/hardware/Assistant change.
+Read-only18:20:15 and18:27:13 UTC status retains normal driver55, tag
+2026102100010012, generation4, quiesced0,cold0,active_owner0,open_count1,
+guard1; CPU_METADATA_ONLY. SDK remains read-only; unrelated files untouched.
+
+Actual preceding-layer input producer and table/operand transfers; one
+genuine four-preparation/24-head cohort (no repeated six-head preparation);
+canonical provisional KV ownership/commit; O residual/norm/FFN integration;
+all64-layer persistent graph, recurrent/token commit, vocabulary/sampling,
+original-GGUF full-model comparison and real measured FAST Work remain.
+A GENUINELY NEW authenticated source/init/clock/host/joint L1-GDDR-tensor-
+NoC lifetime, arbitrary-original journals, current physical proofs and
+exact STOP/holds/restoration are required before new silicon or Work use.
+This checkpoint is not presented as that integration or a speedup.
+Last measured WHOLE MODEL remains0.207893161tok/s.20tok/s is UNMET.
+Continue the entire requested goal, not merely these passing components.

@@ -30,7 +30,7 @@ struct ProjectionMatrixMachine:DispatchMachine {
   for(unsigned i=0;i<prefix.size()/4;i++)l1[Index(0x64000+i*4)]=Word(prefix,i*4);
   auto& d=frame;d[0]=TT_Q38_PROJECTION_MATRIX_MARKER;d[1]=1;d[2]=67108864;d[3]=bank;
   d[4]=edge?0xc0000000:0x04000000+plan.Workspace(bank)->offset;d[5]=wave;d[6]=17+wave;d[7]=active;
-  d[8]=PioneerQ38ProjectionRoute(bank);d[9]=129;d[10]=TT_Q38_PROJECTION_OUTPUT_OFFSET;d[11]=jobs.Outputs();
+  d[8]=PioneerQ38ProjectionRoute(bank);d[9]=129;d[10]=PioneerQ38ProjectionOutputOffset(layer,role);d[11]=jobs.Outputs();
   d[13]=TT_Q38_PROJECTION_MATRIX_ROWS;d[14]=k;d[15]=kind;
   for(unsigned i=0;i<16;i++)d[16+i]=i?0x12340000+i:0x16005;
   for(unsigned i=32;i<40;i++)d[i]=0x13570000+i;d[40]=123;d[41]=7;d[42]=layer;d[43]=role;d[44]=jobs.Count();d[45]=jobs.Waves();

@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE)
+#if defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE) || defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE)
 #error Local dense-prepare IMAGE is not a continuation IMAGE
 #endif
 // No guard: exact separate OFFLINE continuation role,including reinclusion.

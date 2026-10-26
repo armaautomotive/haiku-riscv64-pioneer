@@ -1,0 +1,75 @@
+OFFLINE QDM1 correctness only; no physical GPU compute or inference timing.
+Main and independent clean arithmetic/root stdout match; all processes exit0.
+
+=== new build ===
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b boot.bin bytes4
+2f69045e8bb3b7c8348cb604254f73ff6673af821a407d4d889d5b589335334e text.bin bytes7520
+a22a00de78c13e1f2cb4bcefabe0ed0b88fee9261fc76f6ee65c797da55c2408 prefix.bin bytes6424
+446d14aede1f1bd68ccc4c12a8677343ac3807a188a466e689b33faf92a87b26 program.elf bytes25944
+PASS COMPILED newQDM1 canonical denseQG12288/K1024/V1024/Q6-O5120 waveROOT;maxFrame4976;NO native/inputproducer/FAST Work/speed grant
+
+=== canonical plan and emitted ROOT (main/clean identical) ===
+PASS canonical denseQG/K/V/Q6-O DATA recipes448/16layers7banks4roles/mutations4604/absent-or-foreign-page+layer-refusals14/foreigncanonical+duplicatebuild/ZERO immutable sequences andSEPARATE runtime grammar;NO source/init/inputproducer/native/Work grant
+PASS ACTUAL QDM1 ROOT cases64/globalrows311296/faults115/maxStack5704;ALL16dense layersQG/K/V/Q6-O distinctslots,NoCPU-readback endpoints;SYNTHETIC peer products/status,NOT arithmetic/native/original-model/speed qualification
+
+=== emitted ROOT and actual arithmetic peers (main/clean identical) ===
+START ACTUAL QDM1 dense role5 type8 K5120 N12288 workers119 changed0;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role5 ALL12288rows/119peers changed0 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role5 type8 K5120 N12288 workers119 changed1;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role5 ALL12288rows/119peers changed1 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role6 type8 K5120 N1024 workers64 changed0;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role6 ALL1024rows/64peers changed0 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role6 type8 K5120 N1024 workers64 changed1;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role6 ALL1024rows/64peers changed1 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role7 type8 K5120 N1024 workers64 changed0;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role7 ALL1024rows/64peers changed0 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role7 type8 K5120 N1024 workers64 changed1;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role7 ALL1024rows/64peers changed1 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role10 type14 K6144 N5120 workers119 changed0;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role10 ALL5120rows/119peers changed0 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+START ACTUAL QDM1 dense role10 type14 K6144 N5120 workers119 changed1;NOT_SILICON_TIME
+PASS ACTUAL QDM1 role10 ALL5120rows/119peers changed1 exactFP32+independentFP64/ALL64actual proofwords retained;NOT_NATIVE_TIME
+PASS OFFLINE ACTUAL dense projections matrices8/rows38912/boots366/peerJobs732/matrixInstructions3276800/maxObservedStack5704;QG/K/V/Q6-O,TWO changed inputs,SAME retained peers/private sequences/cumulative counters/STOP,NO host numeric results in images;SYNTHETIC_ENDPOINTS_NOT_NATIVE_ORIGINAL_MODEL_FULL64_OR_SPEED
+
+=== new containment ===
+PASS local dense-projection role/build gates312/exact IMAGE/defined0+late native-CPU-Work-Next-GDN aliases/18ambient builders refuse BEFORE SDK/output;NO native/L1/GDDR/source/init/producer grant
+
+=== prior attention containment ===
+PASS local dense-attention role/build gates256/exact IMAGE/defined0+late native-CPU-Work-component aliases/17ambient builders refuse BEFORE SDK/output access;NO native/L1/GDDR/producer grant
+
+=== prior preparation containment ===
+PASS local dense-prepare role/build gates247/exact IMAGE/defined0+late native-CPU-Work-component aliases/16ambient builders refuse BEFORE SDK/output access;NO native/L1/GDDR/producer grant
+
+=== prior continuation containment ===
+PASS continuation role/build gates238/exact offline role/defined0+late native/CPU/Work/old component aliases/15 ambient build entries refuse BEFORE SDK/output access;NO L1/GDDR reservation/device grant
+
+=== DEBUG69 containment ===
+PASS exact DEBUG69 role gates585/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+
+=== native context containment ===
+PASS full-layer native-context gates484:exact private producer/runtime/NODRV sentinel,all missing/defined0/reinclusion/mixed old67/68/CPU/Work/image roles refused;actual prefix mangles ABI only for exact closed role,all legacy build entries inert before output/SDK access;NO loadable driver or physical grant
+
+=== CPU client containment ===
+PASS ACTUAL DEBUG69 client gates158/exact CPU+client roles/native+image+old client+Work+kernel+fast-math defined0 refusal/late reinclusion;NO device execution
+
+=== CPU reference containment ===
+PASS complete-layer original CPU observer gates78:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+
+=== old default generic ROOT regression ===
+PASS ACTUAL projection ROOT layer0 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer8 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer16 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer24 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer32 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer40 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer48 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer56 role2 type12 K5120 N17408 ALL1 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer64 role0 type12 K5120 N248320 ALL9 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS ACTUAL projection ROOT layer64 role1 type14 K5120 N248320 ALL9 waves/exact global row placement;SYNTHETIC peers NOT_NATIVE
+PASS OFFLINE ACTUAL QPM1 ROOT matrices498/waves514/full-row-cover4400640/faults151/maxDeviceStack5704;ALL498 types+small64/3workers+9wave vocab/strict no-host endpoints;SYNTHETIC PEERS_NOT_NATIVE_OWNER_FULL_MODEL_OR_SPEED
+Offline projection ROOT wave evidence:/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-projection-matrix-test.IQ5uFZ1x;NO device access
+
+37 implementation/test/build sources cmp-identical across main/clean trees.
+Main/clean full SDK DEBUG69 b554d37d.../old65 61faa093/NODRV 9fcf1f7f unchanged.
+18:27:13 UTC physical status: P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+NO native ownership/full64/original-model/FAST Work/speed grant. Last whole-model0.207893161tok/s;20tok/s UNMET.
