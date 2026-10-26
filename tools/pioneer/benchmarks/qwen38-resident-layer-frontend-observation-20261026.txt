@@ -1,13 +1,14 @@
 Resident-layer frontend observation policy — 2026-10-26 UTC
 =========================================================
 
-STATUS: Complete OFFLINE qualification;NOT yet staged/installed/executed.
+STATUS: Complete OFFLINE qualification;single physical attempt C started
+after the qualified checkpoint was pushed. Physical result still PENDING.
 Main44068 and clean39777 full original public-control tests BOTH terminal0,
 as is native86872 including all17 failure-containment cases. The preceding
 04:05 checkpoint correctly left them LIVE;each SAME handle was retained
 until its actual terminal result. No silicon/full-model/rate pass claimed.
-Current card driver remains working041/tag12/gen2/cold0/owner0,restored in
-the preceding recovery. Last actual whole-model0.207893161tok/s unchanged;
+Working041 is preserved;newb554/tag69/gen3 was cleanly installed for C.
+Last actual whole-model0.207893161tok/s unchanged;
 20tok/s/full-card inference remain UNMET.
 
 Evidence and semantics
@@ -72,7 +73,8 @@ Main18313 and clean46160 updater suites terminal0/300cases each. BOTH older
 same-tag images refuse BEFORE administrative open;all owner/idle/unknown,
 hash/symlink/parent/generation/backup checks remain. No automatic rollback.
 Preserve immutable0d0f (beeaf) and7cb (9609) helpers;neither maps b554.
-New candidate/updater have NOT been staged,installed or executed.
+At initial offline qualification they had not been staged or installed;
+the subsequent physical-C staging/guarded apply is recorded below.
 
 Completed original-model and native tests — simulated endpoints ONLY
 --------------------------------------------------------------------
@@ -110,7 +112,7 @@ of57bbf94aaa plus the ten explicit source/test/updater changes. All long
 handles are now terminal;do not restart/repoll them. Source058f6af0fa remains
 unchanged. Save/push this qualification before any guarded one-shot trial.
 
-Prepared local launcher (NOT staged/executed yet):
+Prepared local launcher (subsequently staged/executed ONCE for C):
   /private/tmp/pioneer-q38-debug69-physical-20261026-c.sh
   a10a6a63ef80963af36f4428fa6023d32281f658a3243ddf11946a5a305183d8
 Pins exactb554/guardd1ce/client057b/adminb0c;requires CPU-only metadata
@@ -126,6 +128,35 @@ explicit user approval,standard ProcessController-deskbar and NetworkStatus
 --deskbar restored the missing indicators without a restart. Live shelf
 count2/names correct;both paths persisted in183B saved list. Exact prior
 clearing cause remains unknown;user requested returning focus to Qwen.
+
+Physical C: started once,NOT a completed result
+-----------------------------------------------
+Complete qualification evidence0ce0f70ccd was pushed and remote-verified
+before staging. Initial modern SCP/SFTP transfers all refused the missing
+subsystem;read-only checks confirmed no files were created. Legacy SCP-O
+then copied all3 files terminal0 to NEW immutable names;remote SHA checks
+matchedb554/e115/a10 exactly. Old0d0f/7cb helpers were untouched.
+
+Preflight still showed working041/tag12/gen2/quiesced0/cold0/owner0/open1/
+guard1,no compute parent. NEW immutablee115 guarded apply27712 terminal0:
+quiesced old12 -> new69/gen3/cold0/owner0/open1/guard1,
+HOT_RELOAD_VERIFIED. No reboot or GPU arithmetic during replacement.
+
+Exclusive launcher C was invoked ONCE,SSH handle33602 remains LIVE:
+  /boot/home/pioneer-p100a-hot-reload-20261019-a/resident-layer-debug69-physical-20261026-c
+Passive serial capture offset74416888 was saved before invocation.
+Latest observed client701 is in pre-GPU full-model authentication/reference
+preparation;only the initial fixed-diagnostic line is logged. No exit
+marker,no native or CPU-numerical result yet. Poll SAME33602 and C's log;
+never repeat the launcher or infer failure from elapsed observation time.
+
+If actual completion fails,save captured CPU/passive evidence ONLY;no
+post-failure device peek/reset/retry/unload/restore. If recovery is needed,
+follow standing OFF-once/allow-a-few-minutes/ON-once policy;no SD/mains
+change. Only after a fresh clean epoch may immutablee115 restore b554
+to041. Old7cb maps9609 ONLY and must never be used for b554 recovery.
+If strict diagnostic PASS/clean_end1/explicit END and clean idle metadata
+are proven,an explicit guarded e115 restore may be used without reboot.
 
 Full objective remains unchanged:full64-layer scheduling,dense attention
 and KV,current-state commits,vocabulary/sampling,persistent whole-token

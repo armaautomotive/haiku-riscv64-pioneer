@@ -46,3 +46,18 @@ PASS COMPLETE NEW_NATIVE_LAYER actual terminal-stack positive+17 source/map/cloc
 PASS actual one-shot C launcher 18 filesystem/hash/symlink/metadata/success/client-failure/duplicate cases;NO native/device qualification or retry/reset/restore/power
 a10a6a63ef80963af36f4428fa6023d32281f658a3243ddf11946a5a305183d8  /private/tmp/pioneer-q38-debug69-physical-20261026-c.sh
 DESKBAR user-approved restore19203terminal0:no reboot/live shelf2/namesProcessController+NetworkStatus/error0/saved183Bbothapp paths. Prior disappearance cause unproven.
+
+PHYSICAL_C_STARTED_ONCE;PENDING,NO native/numeric/rate pass claimed:
+Qualification checkpoint0ce0f70ccdaa2e07e871d68cf49efaab8288d1d2 pushed/remoteverified BEFORE staging.
+ModernSCP3subsystem-refusals/pathsabsentverified;LegacySCP-O3terminal0/new immutable paths/independentremotehashesexactb554,e115,a10.
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+APPLY27712terminal0:
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102600010069 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_HOT_SWAP_COMPLETE_NO_REBOOT
+Passive serial offset74416888;ONE launcher C/SSH33602 LIVE:
+DEBUG69_FRONTEND_PHYSICAL_SINGLE_ATTEMPT_STARTED
+DEBUG69_FIXED_TOKEN0_POSITION0_LAYER0_COMPLETE_CONV_GDN_OUTPUT_NORM_FFN_FINAL;CPU_OBSERVER_SEPARATE;NOT_WORK_OR_FULL_MODEL_INFERENCE
+Observed clientteam701 wait/UTime5ms/KTime26ms;no exit.status,pre-GPU authentication/references. No retry/reset/restore/power action.
