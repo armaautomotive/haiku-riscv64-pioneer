@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // No guard. NEW front end only; old math is linked as separately built
 // internal capsules, never by retagging an old source/native scope.
-#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE)
 #error Mixed worker never aliases a returning ROOT image
 #endif
 #if !defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || PIONEER_Q38_MIXED_WORKER_IMAGE != 1

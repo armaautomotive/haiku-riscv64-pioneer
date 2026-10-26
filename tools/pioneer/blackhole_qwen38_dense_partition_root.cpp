@@ -2,7 +2,9 @@
 // NEW QDR1: actual96-worker card controller. Local prepared inputs are
 // supplied by FOUR real QDP producers in the joined qualification. Native
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
-#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+#include "PioneerQ38MixedBlockRootImageRole.h"
+#elif defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 #include "PioneerQ38MixedJoinedRootImageRole.h"
 #elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
 #include "PioneerQ38MixedProjectionRootImageRole.h"
@@ -14,8 +16,10 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DensePositiveSum.h"
 #include "PioneerQ38DensePartitionRootLayout.h"
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
-#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+#include "PioneerQ38MixedBlockRootLayout.h"
+#elif defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 #include "PioneerQ38MixedJoinedRootLayout.h"
 #elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
 #include "PioneerQ38MixedProjectionRootLayout.h"
@@ -26,8 +30,10 @@ extern "C" void q38_mixed_root_seal();
 #endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 namespace DensePartitionRoot {
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
-#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+namespace L=PioneerQ38MixedBlockRootLayout;
+#elif defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 namespace L=PioneerQ38MixedJoinedRootLayout;
 #elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
 namespace L=PioneerQ38MixedProjectionRootLayout;
@@ -51,7 +57,7 @@ static bool Quiet(){
 }
 static const uint32_t* Frame(unsigned w){return reinterpret_cast<const uint32_t*>(L::Shadow+w*256);}
 static void Seal(const uint32_t* d){
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  q38_mixed_root_seal();
 #endif
  for(unsigned i=0;i<64;i++)if(Words(L::Header)[i]!=d[i])scalar_fault_park();
@@ -59,13 +65,13 @@ static void Seal(const uint32_t* d){
  if(!Quiet())scalar_fault_park();
 }
 static void FrameSeal(unsigned w){
-#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  if(Words(L::Header)[0]!=PioneerQ38MixedProjectionRootLayout::Magic){
   if(w<96)for(unsigned i=0;i<64;i++)if(Words(L::Frames+w*256)[i]!=Frame(w)[i])scalar_fault_park();
   return;
  }
 #endif
-#if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  if(w>=119)scalar_fault_park();
  for(unsigned i=0;i<8;i++)if(Words(L::Parts+w*32)[i]!=Words(L::PartsShadow+w*32)[i])scalar_fault_park();
  if(Words(L::Rows)[w]!=Words(L::RowsShadow)[w])scalar_fault_park();
@@ -79,15 +85,15 @@ static void Copy(unsigned to,unsigned from,unsigned words){for(unsigned i=0;i<wo
 static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned remote,unsigned bytes,bool write){
  unsigned local=L::Scratch+(remote&31);
  if(w>=
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  119
 #else
  96
 #endif
  || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
  Seal(d);
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
-#if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  FrameSeal(w);
 #else
  if(w<96)FrameSeal(w);
@@ -102,7 +108,7 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
   unsigned delta=i==(write?5U:1U)?(bytes+63)>>6:i==2 || i==6 || i==(write?4U:0U) || i==(write?7U:3U)?1U:0U;
   expected[i]=tracked[i]+delta;if(i==6 && expected[6]!=expected[2])scalar_fault_park();
  }
-#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  unsigned root=d[0]==PioneerQ38MixedProjectionRootLayout::Magic?d[9]:d[5];
  const uint32_t command[]={write?local:remote,0,write?root:route,write?remote:local,0,write?route:root,0,write?0x212U:0,bytes,0};
 #elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
@@ -117,8 +123,8 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
    Seal(d);
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
-#if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
    FrameSeal(w);
 #else
    if(w<96)FrameSeal(w);
@@ -134,7 +140,7 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  scalar_fault_park(); // UNKNOWN: no later packet/retry/reset/cleanup grant
 }
 static uint32_t Register(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned at){Transfer(d,tracked,w,at,4,false);return *Words(L::Scratch+(at&31));}
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
 #include "blackhole_qwen38_mixed_dense_root_control.inc"
 #else
 static void Job(unsigned w,unsigned phase){
@@ -235,7 +241,7 @@ static void Inputs(const uint32_t* d,uint32_t* tracked){
 }
 static void Launch(const uint32_t* d,uint32_t* tracked,unsigned phase){
  if(phase==2 || phase==3)for(unsigned w=0;w<96;w++){Copy(L::Scratch,L::Parameters+Frame(w)[5]*64,16);Transfer(d,tracked,w,W::Parameters,64,true);}
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  for(unsigned w=0;w<96;w++){Job(w,phase);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<96;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
 #else
@@ -297,7 +303,7 @@ extern "C" unsigned scalar_main(){
  Seal(d);Capture(d);
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++){before[i]=tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
  // NO worker reset/boot/STOP. Install only the next attention DATA frame
  // after ALL retained source/job/counter/physical admission checks finish.
@@ -306,7 +312,7 @@ extern "C" unsigned scalar_main(){
  for(unsigned w=0;w<96;w++)Snapshot(d,tracked,w,0);
 #endif
  Inputs(d,tracked);Launch(d,tracked,1);Maximum();Launch(d,tracked,2);Inverse();Launch(d,tracked,3);Merge(d,tracked);
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  for(unsigned w=0;w<119;w++)Final(d,tracked,w);
 #else
  Launch(d,tracked,4);
@@ -319,13 +325,13 @@ extern "C" unsigned scalar_main(){
  for(unsigned i=0;i<16;i++)s[24+i]=d[16+i];
  for(unsigned i=0;i<8;i++)s[40+i]=d[32+i];
  s[1]=96;s[2]=
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  3;
 #else
  4;
 #endif
  s[3]=6144;s[4]=d[3];s[5]=d[4];s[48]=d[6];s[49]=3;s[50]=96;s[51]=
-#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
  119;s[52]=d[48];
 #else
  4;

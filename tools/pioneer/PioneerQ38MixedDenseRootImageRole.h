@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: NEW returning persistent controller, not old QDR1 authority.
-#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
 #error Mixed dense ROOT never selects the projection ROOT role
 #endif
 #if !defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE != 1

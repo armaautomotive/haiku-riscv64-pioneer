@@ -38,7 +38,7 @@ struct JoinedRootMachine:ProjectionRootMachine {
   for(unsigned i=0;i<64;i++)descriptor[i]=memory.at(J::Header+i*4);active=descriptor[7];
   for(unsigned w=0;w<119;w++)rows[w]=memory.at(J::Rows+w*4);
  }
- void ObserveProjections(){
+ virtual void ObserveProjections(){
   for(unsigned w=0;w<active;w++){
    auto& p=*child[w];assert((p.pc==p.waitPC || p.pc==p.waitPC+4) && !p.memory.at(M::Status+8) && !p.dotProbeReads && p.CorrectRows());
    for(unsigned row=0;row<p.FfnPersistentPeer::groups*16;row++)assert(WordAt(descriptor[8],descriptor[4]+descriptor[10]+(rows[w]+row)*4)==p.buffers[4096+row]);
@@ -238,6 +238,7 @@ static unsigned JoinedRefusals(JoinedRootMachine& base){
  printf("PASS ACTUAL QJR1 refusals%u/from actual waiting/pending-submit continuations/no full result or attention dispatch/fault parks inert;partial projections PROVISIONAL\n",refused);
  return refused;
 }
+#ifndef PIONEER_Q38_MIXED_JOINED_ROOT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);(void)&ProjectionRefusals;(void)&Refusals;(void)&Group;(void)&Geometry;(void)&Faults;(void)&D::Run;setvbuf(stdout,nullptr,_IOLBF,0);
  puts("START ACTUAL QJR1 ONE ROOT/SAME119 workers/QG-K-V -> ROOT prepare -> retained attention -> actual O;NOT native timing");
@@ -249,3 +250,4 @@ int main(int argc,char** argv){
  }
  printf("PASS joined instruction graph/refusals%u;SYNTHETIC RAW learned/KV/table endpoints ONLY;NO native/original full64/stateKVtokencommit/throughput grant\n",refused);
 }
+#endif

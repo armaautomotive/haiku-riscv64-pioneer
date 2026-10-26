@@ -1,0 +1,27 @@
+START QBR1 actual ISA/packet workload profile;unchanged pinned code+SAME119/numerical observers enabled;NOT native cycles or inference throughput
+QBR_WORKLOAD phase0 root_instructions68821 root_packets0 worker_max_instructions0 worker_sum_instructions0;NOT cycles or native timing
+OBSERVED ACTUAL QBR1 initial RMS ALL5120 BIT-EXACT;original residual input preserved separately
+OBSERVED ACTUAL QJR1 projection role5 all12288 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase1 root_instructions352350946 root_packets56395 worker_max_instructions4074269 worker_sum_instructions447743031;NOT cycles or native timing
+OBSERVED ACTUAL QJR1 projection role6 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase2 root_instructions87236478 root_packets13898 worker_max_instructions650117 worker_sum_instructions41607488;NOT cycles or native timing
+OBSERVED ACTUAL QJR1 projection role7 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase3 root_instructions87230166 root_packets13898 worker_max_instructions650117 worker_sum_instructions41607488;NOT cycles or native timing
+QBR_WORKLOAD phase4 root_instructions2170419 root_packets15 worker_max_instructions0 worker_sum_instructions0;NOT cycles or native timing
+OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied
+QBR_WORKLOAD phase5 root_instructions154517405 root_packets21873 worker_max_instructions410251 worker_sum_instructions30863435;NOT cycles or native timing
+OBSERVED ACTUAL attention6144/max-inverse+EVERY finalF16 probability vs QDA observer/L25.07811850526e-08 -> O input
+OBSERVED ACTUAL QJR1 projection role10 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase6 root_instructions169029654 root_packets27016 worker_max_instructions1447611 worker_sum_instructions155535863;NOT cycles or native timing
+QBR_WORKLOAD phase7 root_instructions1454852 root_packets5 worker_max_instructions0 worker_sum_instructions0;NOT cycles or native timing
+OBSERVED ACTUAL QBR1 O+ORIGINAL residual and post-RMS ALL5120 BIT-EXACT;not normalized-input residual
+OBSERVED ACTUAL QJR1 projection role2 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase8 root_instructions297878260 root_packets47755 worker_max_instructions3318839 worker_sum_instructions362466979;NOT cycles or native timing
+OBSERVED ACTUAL QJR1 projection role3 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase9 root_instructions297872241 root_packets47755 worker_max_instructions3318839 worker_sum_instructions362466979;NOT cycles or native timing
+QBR_WORKLOAD phase10 root_instructions16763858 root_packets136 worker_max_instructions0 worker_sum_instructions0;NOT cycles or native timing
+OBSERVED ACTUAL QBR1 SiLU(gate)*up ALL17408/L25.10062953456e-08 -> actual down input;NO CPU products supplied
+OBSERVED ACTUAL QJR1 projection role4 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+QBR_WORKLOAD phase11 root_instructions322288883 root_packets51460 worker_max_instructions3705270 worker_sum_instructions400622031;NOT cycles or native timing
+QBR_WORKLOAD phase12 root_instructions473367 root_packets2 worker_max_instructions0 worker_sum_instructions0;NOT cycles or native timing
+PASS QBR1 complete numerically checked block WORKLOAD root_instructions1789335350 root_packets280208;qualification audits+scalar ROOT arithmetic are not a fast-Work guarantee;NO cycle/latency/throughput claim

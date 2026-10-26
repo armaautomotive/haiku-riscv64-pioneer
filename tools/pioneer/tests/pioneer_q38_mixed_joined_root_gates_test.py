@@ -8,7 +8,10 @@ import sys
 import tempfile
 here=pathlib.Path(__file__).resolve().parents[1]
 kernel=here.parents[1]/'src/add-ons/kernel/drivers/misc'
-flag='PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE';role=here/'PioneerQ38MixedJoinedRootImageRole.h'
+assert sys.argv[1:] in ([],['--block'])
+block=bool(sys.argv[1:])
+flag='PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE' if block else 'PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE'
+role=here/('PioneerQ38MixedBlockRootImageRole.h' if block else 'PioneerQ38MixedJoinedRootImageRole.h')
 clean={k:v for k,v in os.environ.items() if not k.startswith('PIONEER_')}
 checks=0
 def check(text,defines,okay):
@@ -31,7 +34,8 @@ check(prefix,{},True)
 for v in ('0','1'):check(prefix,{flag:v},False)
 for name in ('PioneerQ38DensePrepareImageRole.h','PioneerQ38DenseAttentionImageRole.h','PioneerQ38DenseProjectionImageRole.h',
  'PioneerQ38DensePartitionImageRole.h','PioneerQ38MixedProjectionRootImageRole.h','PioneerQ38MixedDenseRootImageRole.h','PioneerQ38MixedWorkerImageRole.h','PioneerQ38ResidentContinueImageRole.h',
- 'PioneerQ38ResidentAdvanceImageRole.h','PioneerQ38ResidentLayerLinkImageRole.h','PioneerQ38ResidentOperatorImageRole.h'):
+ 'PioneerQ38ResidentAdvanceImageRole.h','PioneerQ38ResidentLayerLinkImageRole.h','PioneerQ38ResidentOperatorImageRole.h',
+ *(['PioneerQ38MixedJoinedRootImageRole.h'] if block else ['PioneerQ38MixedBlockRootImageRole.h'])):
  path=here/name;text=path.read_text();valid={k:'1' for k in re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1',text)}
  old='#include "'+str(path)+'"\n';assert valid,name;check(old,valid,True)
  for v in ('0','1'):
@@ -43,7 +47,7 @@ for name,parent in (('PioneerQ38ResidentLayerValidationReference.h','PIONEER_Q38
 scripts=('banks_driver','banks_client','inference','local_image','ffn_graph_image','ffn_matrix_image','ffn_persistent_image',
  'projection_graph_image','projection_matrix_image','projection_persistent_image','resident_layer_validation_client',
  'resident_layer_validation_native','resident_layer_link_image','resident_advance_image','resident_continue_image',
- 'dense_prepare_image','dense_attention_image','dense_projection_image','dense_partition_image','dense_partition_root_image','mixed_worker_image','mixed_dense_root_image','mixed_projection_root_image','mixed_joined_root_image')
+ 'dense_prepare_image','dense_attention_image','dense_projection_image','dense_partition_image','dense_partition_root_image','mixed_worker_image','mixed_dense_root_image','mixed_projection_root_image','mixed_joined_root_image','mixed_block_root_image')
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-root-gates-',dir='/private/tmp') as temporary:
  d=pathlib.Path(temporary)
  for value in ('0','1','2','-1','','false','0\n1'):
@@ -53,4 +57,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-root-gates-',dir='/privat
    r=subprocess.run([sys.executable if py else 'sh',str(script),*args],capture_output=True,text=True,env={**clean,flag:value},timeout=5)
    assert r.returncode==2 and not r.stdout and not r.stderr and not (d/'NO_OUTPUT').exists(),(name,value,r.stderr)
    checks+=1
-print('PASS mixed joined ROOT gates'+str(checks)+'/24builders/valid old-role baselines BEFORE defined0+late refusal/native-CPU-Work ownership never promoted;NO device IO')
+print('PASS mixed '+('block' if block else 'joined')+' ROOT gates'+str(checks)+'/25builders/valid old-role baselines BEFORE defined0+late refusal/native-CPU-Work ownership never promoted;NO device IO')

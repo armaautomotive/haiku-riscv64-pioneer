@@ -1,0 +1,193 @@
+Qwen3.8-27B: complete dense decoder block QBR1
+2026-10-26; OFFLINE actual instruction qualification, NOT throughput
+
+Implementation
+--------------
+ONE new persistent ROOT runs original hidden input -> learned RMS ->
+Q/G,K,V -> four-group learned Q/K normalization and RoPE -> retained dense
+attention -> O -> original-input residual and learned post-attention RMS
+-> Q4 gate/up -> SiLU(gate)*up -> Q4 down -> final residual. The SAME119
+mixed QMW1 workers stay alive across every stage and successive frames.
+There are no host-produced intermediate values, worker boots, tensor resets
+or STOP transitions between operators. CPU dot-reference validation is not
+selected by the matrix Work jobs. Independent external observers are used
+only for qualification, never as a source of controller products.
+
+The first residual uses the ORIGINAL pre-normalization5120-element hidden
+vector, not the normalized vector consumed by Q/G,K,V. Both are preserved
+separately. The O projection consumes the actual6144 gated attention
+values; gate/up consume the actual post-residual normalized5120 values;
+down consumes the actual17408 SiLU products. The final5120 values add the
+actual down projection to the saved post-attention residual, each with one
+rounded F32 addition. SiLU uses the existing wide-domain stable sigmoid,
+not a clipped or CPU-substituted result.
+
+FFN matrix recipes are immutable DATA: canonical Q4 geometry for all119
+workers, K5120/N17408 for gate/up and K17408/N5120 for down. All caller
+sequence placeholders are ZERO. The controller obtains actual live worker
+nonces and binds next operations privately. No recipe, layout, image flag,
+receipt or arithmetic test grants native/original-source/Work ownership.
+
+Transfers use source/boot/outer/current-frame seals, full10-word command
+readback, exact cumulative counter deltas, bounded waits and inert fault
+terminals. Recurrent/KV/token state is NOT committed by this program.
+Intermediate GDDR output, including a partially written final hidden
+vector, remains PROVISIONAL until the complete block summary and finished
+sequence publish after final seals. Even that publication is only a block
+result, not a canonical whole-model token/state commit.
+
+Memory and ABI
+--------------
+Independent ROOT entry40000/wait4004c+40050/fault40080+4009c; new QBR1 magic
+31524251/fault46524251. Outer75000 is128 words, not the old64-word ABI.
+Private stack seal1028 bytes retains boot64/outer128/current-frame64/phase.
+Twelve private phases cover initial RMS through final residual publication.
+
+Original c8000/copy c2000; normalized d0000/copy d6000; learned norm db000.
+Input shadow e0000 holds17408F32; native shadow f2000 holds17408x2 bytes;
+scale shadow fab00 reserves640 bytes for the largest Q8 input, not only
+the320-byte Q4 down case. Post residual156000, post normalized15b000 and
+final160000 each hold5120F32. Gate/up packet scratch92000/92400 stays
+outside the largest matrix result80000..91000. FFN recipes110000 and
+copies118000 reuse dense reports/proofs ONLY after attention is closed.
+Original projection recipes and96 dense-frame snapshots remain untouched.
+Compile-time layout checks cover the maximum input/result/shadow extents.
+
+Workspace offsets: gate400000, up411000, down422000, final427000;
+three5120-byte FFN metadata slots at440000. These are after the separate
+2MiB RoPE-table range. New spans are NOT added to an old native mapping,
+save/restore journal, source scope or launch capability.
+
+Build and separation
+--------------------
+Builder: build_qwen38_mixed_block_root_image.py SDK FRESH_ABSOLUTE_OUTPUT
+Runner: tests/run_pioneer_q38_mixed_block_root_tests.py QBR1 QMW1 QDP QDA
+Gates: tests/pioneer_q38_mixed_joined_root_gates_test.py --block
+
+Main and independent clean image pins:
+boot.bin4B 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+code.bin44664B 61aada5043559c58827b205f8a0cb637822376e445b366d1217b783418443e4b
+program.elf56876B 51498d12a94d782e817a42d92b0f1cc76bb35cec91aaea367481e8655066e311
+Max individual static frame2112B. Exactly two reserved-s11 instructions;
+no undefined functions, writable globals, GOT, foreign allocated sections,
+controller CSR, integer division/high multiply, hardware FMA/fdiv/fsqrt,
+FP-to-int conversion or EBREAK. Every build first reproduces the complete
+unchanged QDR1,QMR1,QMP1 and QJR1 executable bytes. The runner authenticates
+QBR1, complete QMW1 artifacts and original QDP/QDA code before execution.
+
+447 block-role and447 joined-role gates cover25 builders, valid old-role
+baselines, defined0 and late reinclusion. Old projection423/client186/
+reference92 gates pass. Actual DEBUG69 client lifetime tests pass406 fault
+cases, including all308 call failures. Main and independent clean SDK
+builds reproduce unchanged DEBUG69 b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f. SDK input is read-only. Kernel
+prefix changes preserve line count and do not create a public selector.
+
+Qualification passed
+--------------------
+Warnings-as-errors, ASan+UBSan, disabled FP contraction. Two actual frames
+completed: N33/layer3 then N65/layer7 with different raw inputs, on the
+SAME ROOT and119 worker lifetimes. The fabric supplies synthetic RAW
+learned/KV/table bytes only, not independent RMS, projection, attention,
+SiLU or residual products. Separate old QDP/QDA programs and FP32/FP64
+matrix observers check results; no expected result is fed back to ROOT.
+
+Main and independent clean runs BOTH exit0 with byte-identical full stdout.
+Each completes N33/layer3 and N65/layer7 plus all206 fault branches. Both
+initial and post-attention RMS outputs are BIT-EXACT:20480 total checked
+normalized values. Both residual additions are checked for all5120 values
+on each frame. All118784 matrix values,34816 SiLU products,12288 attention
+values,2352 final F16 probabilities and eight prepared groups are checked.
+The SAME ROOT+119 workers complete1446 matrix and576 dense phase jobs
+without an intervening boot/reset/STOP. Max attention relative L2 is
+5.07811850526e-8; max SiLU L2 is5.10062953456e-8. Observed ROOT stack4868B
+of8192B. The unchanged standalone QMP1 regression passes all8 projections
+and142 fault cases after the shared byte-endpoint updates.
+
+Refusal branches use OS-fork snapshots of actual reached continuations,
+not fabricated PCs, nonces, counters or tensor state. Cases cover all128
+outer words, nonfinite original/norm data, independent counter faults,
+timeouts, all10 command readback words, changed sources/boot/current frame,
+all three FFN metadata records/sequence placeholders/rows, late original
+or normalized-input changes, invalid gate/up values, late final-sum input
+or metadata changes, and final GDDR-write failures. Fault terminals remain
+inert and never publish complete-block success; partial GDDR is provisional.
+
+All45 controller/recipe/test/profile/guard/build source files match the
+independent clean tree. Raw stdout: qwen38-mixed-block-root-20261026.log, SHA256
+f9a8fd683f482fdcefd3f625296bec940f5a9d5bb1964eae97b141052718f9af.
+This is synthetic-endpoint instruction qualification, NOT native execution,
+original-GGUF full-model correctness, real inference or measured speed.
+
+Observed instruction/packet workload (NOT silicon timing)
+--------------------------------------------------------
+Separate main and clean profile runs BOTH exit0 with byte-identical stdout.
+They execute the unchanged pinned QBR1 code and SAME119 workers through a
+complete N33/layer3 block with every numerical observer still enabled.
+Only the host test observer records stage-edge instruction/packet totals;
+it never writes a private processor state, result or completion field.
+No instruction or clock instrumentation is added to the accelerator image.
+
+Total observed ROOT instructions1789335350/ROOT packets280208. Phase10
+SiLU17408 alone has16763858 ROOT instructions/136 ROOT packets, with no
+worker arithmetic in that phase. Phase4 preparation has2170419 ROOT
+instructions/15 packets; phase7 post-RMS+FFN-metadata has1454852/5.
+Full per-stage root and worker counts are preserved in
+qwen38-mixed-block-root-profile-20261026.log, SHA256
+5f2a35036ebaebc8a6a15b2db7d9738de7de29bad6af4757eaeafe06c69cc8a9.
+
+These are workload observations under the byte fabric's deterministic
+worker scheduling, NOT intrinsic native instruction/packet requirements.
+Repeated polling depends on endpoint progress; the harness advances a
+worker during its byte/register observations, not with a silicon cycle
+model. Do not divide totals by a presumed clock or convert process runtime
+to tokens/sec. Native profiles are needed to separate mandatory audits,
+polling and real matrix/NoC latency. The counts motivate testing a lower-
+overhead controller and parallel arithmetic, not claiming a speedup.
+
+Runner: tests/run_pioneer_q38_mixed_block_root_profile_tests.py QBR1 QMW1 QDP QDA
+
+Development findings (offline only)
+----------------------------------
+Warnings caught enum/integer conditional types and ambiguous formatting.
+The first actual run exposed a harness mapping that reserved320 scale
+bytes for down-Q4 but missed the640 bytes needed by initial Q8. The actual
+controller had the correct scale loop; the harness extent was corrected,
+and static layout checks now explicitly reserve the full640 bytes. A
+known wrong test fault address outside the FFN metadata extent was fixed
+before final qualification; its earlier run was stopped, not counted as
+a PASS. A duplicate run using the wrong compilation directory was stopped
+and replaced by the genuine independent clean-source run. No processor
+state, counter, private nonce, tensor product or validation tolerance was
+changed to manufacture success.
+A first profile-wrapper compile correctly failed because renaming main
+removed C++'s implicit return0. The wrapper now uses the same explicit
+machine-only inclusion guard as the other fixtures; no warning is disabled
+and no numerical assertion changes. Default qualification main is unchanged.
+
+Hardware and remaining work
+---------------------------
+No GPU launch, driver install, Assistant restart, relay/SD/mains/hardware
+change. Read-only status: driver55/tag2026102100010012/generation4,
+quiesced0/cold0/active_owner0/open_count1/guard1;CPU_METADATA_ONLY.
+Dirty llama.cpp and unrelated untracked FlashNext work are untouched and
+excluded from qualification and commits.
+
+Still owed: GDN/dense full64-layer linking, original-model source and
+initialized-page provenance and
+multiple real tokens; canonical recurrent/KV/token-state commit; output
+head/vocabulary/sampling; complete genuine native init/clock/host/L1-GDDR/
+Tensix/NoC ownership, current physical proofs and arbitrary-original
+journals. Old first-layer/position0 native scopes cannot grant this image.
+Actual hardware inference/profiles are required before claiming speedup.
+This is a qualification-first controller, not a certified fast Work mode.
+Card residency alone does not imply20 tokens/sec. Its per-packet private
+context/metadata audits, repeated full119-worker admissions, small NoC
+receipt/CSR transactions and scalar ROOT RMS/SiLU must be profiled too.
+The subsequent low-overhead Work design needs a genuine exclusive native
+lifetime, cached on-card participant ownership/next sequences and batched
+receipts, with arithmetic spread across workers rather than a serial ROOT.
+Keep the thorough diagnostic path separate; do not simply remove checks
+and assume that an old native/source/journal scope grants the new path.
+Last measured real whole-model rate remains0.207893161 tokens/sec.
+Target20 tokens/sec is UNMET. Long-running goal remains ACTIVE.

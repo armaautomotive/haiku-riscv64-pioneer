@@ -1,0 +1,30 @@
+START ACTUAL QBR1 complete dense block/SAME ROOT+119 workers;synthetic RAW endpoints;NOT native timing
+PASS QBR1 initial-stage refusals154/actual reached continuation/no completion/fault inert
+OBSERVED ACTUAL QBR1 initial RMS ALL5120 BIT-EXACT;original residual input preserved separately
+OBSERVED ACTUAL QJR1 projection role5 all12288 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role6 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role7 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied
+OBSERVED ACTUAL attention6144/max-inverse+EVERY finalF16 probability vs QDA observer/L25.07811850526e-08 -> O input
+OBSERVED ACTUAL QJR1 projection role10 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QBR1 O+ORIGINAL residual and post-RMS ALL5120 BIT-EXACT;not normalized-input residual
+OBSERVED ACTUAL QJR1 projection role2 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role3 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QBR1 SiLU(gate)*up ALL17408/L25.10062953456e-08 -> actual down input;NO CPU products supplied
+OBSERVED ACTUAL QJR1 projection role4 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+PASS QBR1 all-stage refusals206/late metadata+SiLU+final write faults/all outputs provisional/fault inert
+PASS ACTUAL QBR1 frame1 N33/initial+postRMS/7matrix+attention+SiLU/final residual ALL5120/SAME119 noSTOP or reboot/attentionL25.07811850526e-08 activationL25.10062953456e-08 stack4868
+OBSERVED ACTUAL QBR1 initial RMS ALL5120 BIT-EXACT;original residual input preserved separately
+OBSERVED ACTUAL QJR1 projection role5 all12288 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role6 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role7 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied
+OBSERVED ACTUAL attention6144/max-inverse+EVERY finalF16 probability vs QDA observer/L24.63870902258e-08 -> O input
+OBSERVED ACTUAL QJR1 projection role10 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QBR1 O+ORIGINAL residual and post-RMS ALL5120 BIT-EXACT;not normalized-input residual
+OBSERVED ACTUAL QJR1 projection role2 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role3 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QBR1 SiLU(gate)*up ALL17408/L24.73127918049e-08 -> actual down input;NO CPU products supplied
+OBSERVED ACTUAL QJR1 projection role4 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+PASS ACTUAL QBR1 frame2 N65/initial+postRMS/7matrix+attention+SiLU/final residual ALL5120/SAME119 noSTOP or reboot/attentionL25.07811850526e-08 activationL25.10062953456e-08 stack4868
+PASS complete dense block actual instructions/refusals206;SYNTHETIC RAW learned/KV/table only;NO native/original full64/stateKVtokencommit/throughput grant

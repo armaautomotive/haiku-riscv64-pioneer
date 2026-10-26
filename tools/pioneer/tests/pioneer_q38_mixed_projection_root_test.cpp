@@ -47,7 +47,8 @@ struct ProjectionRootMachine:MixedRootMachine {
   p.type=type;p.inputs=k;p.count=type==8?32:256;p.FfnPersistentPeer::groups=g;p.base=base;
   p.tile.assign(PioneerQ38PanelTileBytes(type),0);p.tiles.assign(g*(k/p.count),p.tile);p.vector.resize(k);p.scales.resize(k/p.count);
   p.packets.clear();p.root.clear();unsigned scaleBytes=(unsigned(p.scales.size()*4)+63)&~63U;
-  p.packets.push_back({Q::Native,129,Q::Native,k*2,-1});p.packets.push_back({Q::Scales,129,0x94000,scaleBytes,-1});p.inputReads=2;
+  for(unsigned at=0;at<k*2;at+=16384)p.packets.push_back({Q::Native+at,129,Q::Native+at,std::min(16384U,k*2-at),-1});
+  p.packets.push_back({Q::Scales,129,0x94000,scaleBytes,-1});p.inputReads=unsigned(p.packets.size());
   for(unsigned i=0;i<k/2;i++)p.root[Q::Native+i*4]=memory.at(Q::Native+i*4);
   for(unsigned i=0;i<scaleBytes/4;i++)p.root[Q::Scales+i*4]=memory.at(Q::Scales+i*4);
   for(unsigned i=0;i<k;i++)p.vector[i]=uint16_t(p.root.at(Q::Native+i/2*4)>>((i%2)*16));
@@ -56,7 +57,11 @@ struct ProjectionRootMachine:MixedRootMachine {
    for(unsigned row=0;row<16;row++){
     unsigned global=rows[w]+t/(k/p.count)*16+row;std::vector<uint8_t> raw(PioneerQ38BlockBytes(type),0);uint16_t half=uint16_t(0x0800+(global%4)*0x80);
     if(type==8){raw[0]=uint8_t(half);raw[1]=uint8_t(half>>8);for(unsigned i=0;i<32;i++)raw[2+i]=uint8_t(int((t*17+global*19+i*37)%255)-127);}
-    else{assert(type==14);for(unsigned i=0;i<128;i++)raw[i]=uint8_t((t*17+global*19+i*37)%256);
+    else if(type==12){
+     raw[0]=raw[2]=uint8_t(half);raw[1]=raw[3]=uint8_t(half>>8);
+     for(unsigned i=4;i<16;i++)raw[i]=uint8_t(1+(t+global+i)%3);
+     for(unsigned i=16;i<144;i++)raw[i]=uint8_t((t*17+global*19+i*37)%256);
+    }else{assert(type==14);for(unsigned i=0;i<128;i++)raw[i]=uint8_t((t*17+global*19+i*37)%256);
      for(unsigned i=128;i<192;i++)raw[i]=global&1?0x55:0xaa;for(unsigned i=192;i<208;i++)raw[i]=uint8_t(global&2?-int(1+(t+i)%3):int(1+(t+i)%3));
      raw[208]=uint8_t(half);raw[209]=uint8_t(half>>8);
     }

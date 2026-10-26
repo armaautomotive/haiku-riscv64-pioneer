@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // NEW returning projection controller. Old shape checks are DATA only;
 // no old QDM/QMR/native image role or source capability is selected.
-#ifdef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
 #define scalar_main q38_joined_dense_frame
 #else
 #define scalar_main q38_unused_dense_frame
@@ -9,6 +9,9 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BlockFfnRecipe.h"
+#endif
 extern "C" unsigned mixed_projection_wait(unsigned);
 extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
  if(value || ((reinterpret_cast<unsigned>(target)|bytes)&3))scalar_fault_park();
@@ -22,8 +25,18 @@ static void CaptureRecipe(const uint32_t* d){
  Copy(L::RecipeShadow,L::Header,64);Copy(L::HeaderShadow,L::MatrixHeader,16);Copy(L::BankShadow,L::Banks,8);
  Copy(L::PartsShadow,L::Parts,119*8);Copy(L::RowsShadow,L::Rows,119);
  uint32_t old[64];for(unsigned i=0;i<64;i++)old[i]=i>=48?0:d[i];old[0]=TT_Q38_DENSE_MATRIX_MARKER;old[13]=TT_Q38_DENSE_MATRIX_ROWS;
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+ bool ffn=d[43]>=2 && d[43]<=4;
+ if(ffn)old[0]=L::MatrixMagic;
+ bool valid=ffn?PioneerQ38BlockFfnRecipe(old,reinterpret_cast<const uint32_t*>(L::HeaderShadow),reinterpret_cast<const uint32_t*>(L::BankShadow),
+  reinterpret_cast<const uint32_t(*)[8]>(L::PartsShadow),reinterpret_cast<const uint32_t*>(L::RowsShadow)):
+  PioneerQ38DenseProjectionRecipe(old,reinterpret_cast<const uint32_t*>(L::HeaderShadow),reinterpret_cast<const uint32_t*>(L::BankShadow),
+  reinterpret_cast<const uint32_t(*)[8]>(L::PartsShadow),reinterpret_cast<const uint32_t*>(L::RowsShadow),false);
+ if(!valid)scalar_fault_park();
+#else
  if(!PioneerQ38DenseProjectionRecipe(old,reinterpret_cast<const uint32_t*>(L::HeaderShadow),reinterpret_cast<const uint32_t*>(L::BankShadow),
   reinterpret_cast<const uint32_t(*)[8]>(L::PartsShadow),reinterpret_cast<const uint32_t*>(L::RowsShadow),false))scalar_fault_park();
+#endif
  for(unsigned w=0;w<119;w++)FrameSeal(w);
 }
 static void Quantize(const uint32_t* d){
@@ -54,7 +67,11 @@ static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
  for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=0;
  const uint32_t head[]={M::Magic,sequence,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};
  for(unsigned i=0;i<8;i++){Words(L::Scratch)[i]=head[i];Words(L::Scratch)[8+i]=d[32+i];}
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+ const unsigned job[]={0x31483851,d[15],L::Tile(d[15]),0,0,d[14],p[0],p[2],p[4],1};
+#else
  const unsigned job[]={0x31483851,d[15],d[15]==8?576U:3392U,0,0,d[14],p[0],p[2],p[4],1};
+#endif
  for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];
  Words(L::Scratch)[26]=1;
 }
@@ -76,7 +93,11 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
  unsigned groups=Words(L::PartsShadow+w*32)[2],k=d[14],type=d[15],blocks=k>>(type==8?5:8);
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+ unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*L::Tile(type)/64+(k*2+((blocks*4+63)&~63U))/64;
+#else
  unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
+#endif
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];
  for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
  if(proof[16]!=groups*k/16 || proof[17]!=Words(L::Nonces)[w] || proof[18]!=w+1 || proof[19]!=0x32504651
@@ -84,7 +105,11 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  for(unsigned i=0;i<16;i++)if(proof[32+i]!=Boot(w)[16+i])scalar_fault_park();
  for(unsigned i=48;i<64;i++)if(proof[i])scalar_fault_park();
  const auto* part=Words(L::PartsShadow+w*32);
+#ifdef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+ const unsigned command[]={part[0]+(groups*blocks-1)*L::Tile(type),0,part[4],0x90000,0,M::Peer(w+1),0,0,L::Tile(type),0};
+#else
  const unsigned command[]={part[0]+(groups*blocks-1)*(type==8?576U:3392U),0,part[4],0x90000,0,M::Peer(w+1),0,0,type==8?576U:3392U,0};
+#endif
  for(unsigned i=0;i<10;i++)if(proof[20+i]!=command[i])scalar_fault_park();
  unsigned first=Words(L::RowsShadow)[w];
  for(unsigned i=0;i<groups*16;i++){
@@ -146,7 +171,7 @@ static unsigned Run(const uint32_t* d){
  Fence();s[0]=L::Magic;Fence();return d[11];
 }
 }
-#ifndef PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE
+#if !defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) && !defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
 extern "C" void q38_mixed_root_seal(){
  using namespace DensePartitionRoot;const L::PrivateSeal* p;asm volatile("mv %0,s11":"=r"(p));
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x6fe00)scalar_fault_park();
