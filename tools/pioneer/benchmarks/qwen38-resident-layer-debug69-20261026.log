@@ -1,13 +1,35 @@
 DEBUG69 complete-first-layer public interface checkpoint — 2026-10-26 UTC
 Main8523 and independent clean31644 BOTH terminal0 through the REAL new END caller-seal block.
 Runs83526+30787 also EXIT1 at missing END call seal;NONE are whole-public-lifetime PASS claims.
-NOT a physical/full-model/speed qualification.
+Single physical28770 EXIT1 at coordinator phase5;NOT a physical/full-model/speed qualification.
 Supporting unit/gate/SDK/updater tests below are terminal0. Earlier main78372/clean25091
 explicitly EXIT1 at duplicate-refusal+END,despite earlier lifecycle/numerical/copy-containment PASS lines.
 The real wrapper bug was corrected with hadModel snapshot;DO NOT install old548e prototype.
 Latest linked candidate beeaf6b0,CPU client057b1eca;working installed041 remains untouched.
 Old548e andd52f candidates/launchers were BOTH recoverably withdrawn without installation.
 Old staged prototype/launcher were withdrawn recoverably,never installed or executed.
+
+PHYSICAL28770 terminal1;NO retry/END/reset/hot restore.
+9ee124613bae9e7fdc4b50112e4ec3487ae16d1ddaed5ea0f801cf8ab14c2bd2  /private/tmp/pioneer-q38-layer-debug69-physical-20261026-a.log
+Exact same hash for remote resident-layer-debug69-physical-20261026-a/client.log.
+DEBUG69_IOCTL_BEGIN op00008805 bytes16
+DEBUG69_IOCTL_END op00008805 status0 errno0
+DEBUG69_IOCTL_BEGIN op00008a10 bytes6521088
+DEBUG69_IOCTL_END op00008a10 status0 errno0
+DEBUG69_CPU_ONLY_FAILURE reasonreply_metadata op00008a10 word4 expected00000001 actual00000005 reply_captured1;NO_ADDITIONAL_DEVICE_IO
+DEBUG69_CPU_REPLY_HEADER word00 00000001 00000000 00000000 00000000 00000005 00000000 00000000 00000001
+DEBUG69_CPU_REPLY_HEADER word08 00000001 00000000 00000004 00000000 00000000 00000000 00000000 00000000
+DEBUG69_CPU_REPLY_HEADER word16..63 all zero
+DEBUG69_CPU_OBSERVERS ideal_libm_strict_passed0 final_bits0 max_abs0 relative_l20;instruction_policy_passed0 final_bits0 max_abs0;DISTINCT_REPORTS_NOT_WORK_OR_RATE
+FAIL_DEBUG69 token0 layer0 original_upload_pages68603 spans300 fixed_readback_words1630208 clean_end0 execution_readback_restore_us0;NOT_FULL_MODEL_OR_TOKEN_RATE
+Observer zeros mean NOT performed,NOT numerical PASS or observed mismatch.
+Existing passive serial /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0 lines1073019..1073020:
+Q38-LAYER-DEBUG:FAIL state466956 history466956 zero466956 embedding7 norm7 projection10 output5 worker119 word0 readback0/0 restored0;NO_POST_FAILURE_DEVICE_IO
+Q38-LAYER-DEBUG:PROJECTION worker119 word67592 runs4 stopped119 held119 roots5/5 closed1 memory4/119/67592 saved8134072 verified16268144 restored8134072;CPU_METADATA_ONLY
+Postfailure CPU-only admin:
+P100A_RELOAD driver55 tag2026102600010069 generation4 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+beeaf6b0c5eb5af1f1992a357abc0ceefcc3614aa2f81741d8eb86a432b094d2 installed driver unchanged.
+Successful sync;single relayOFF58543 terminal0. Actualoff confirmation PENDING,ON not sent.
 
 FINAL ORIGINAL PUBLIC TESTS:main8523 and clean31644 BOTH terminal0.
 ec4777c22ed6c85275eb5c281233acb5dfa1048f26bb99dbffe7f2f2cdcf0257  /private/tmp/pioneer-q38-layer-debug69-original-control-20261026-f.log

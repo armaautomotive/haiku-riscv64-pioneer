@@ -2,7 +2,9 @@ Complete first-layer physical diagnostic prototype — 2026-10-26 UTC
 ==================================================================
 
 STATUS: physical DEBUG69 driver/client/closed dispatcher IMPLEMENTED and
-SDK-linked,NOT installed or executed on the card. Main original public
+SDK-linked. The single physical test EXIT1 in coordinator launch/run phase5;
+GPU resources are retained/quarantined,NOT safe for hot restoration.
+Main original public
 control/duplicate-refusal/END qualification8523 and independent clean-copy
 31644 are BOTH terminal0. Physical qualification remains owed.
 No inference speedup measured;last actual whole-model0.207893161 tokens/sec.
@@ -12,6 +14,46 @@ This continues pushed dfc46e0180,which qualified the complete ORIGINAL
 first-layer emitted programs and private native lifetime,using simulated
 OS/PCI/NoC endpoints. That checkpoint was not a loadable driver or silicon
 qualification. The existing NODRV witness remains non-loadable and inert.
+
+Single physical trial: FAILED, not a numerical or speed result
+-------------------------------------------------------------
+After both offline terminal0 runs and pushed72b5d2af19886077844d219bcd9906bf478eef6a,
+guarded apply48227 completed terminal0:working041/tag12/generation3 ->
+exactbeeaf6b0/tag2026102600010069/generation4,cold0/owner0. No reboot.
+The separate057b1eca client was run ONCE by28770,with a unique mkdir-only
+launcher and persistent private project logs. Full same-file SHA and all
+independent references finished before FD;ALL68603 pages/300 original
+upload spans and SPAN_END returned0. The combined fixed ioctl8a10 returned
+transport0,but metadata state was5 COMPLETION_FAILED instead of1 PASSED,
+recovery_required1. The client captured the returned header,closed ONLY,
+and exited1 with clean_end0. It issued NO BANK_END or further device work.
+Both observer reports are unperformed zeros,NOT measured bit-equality or
+numerical mismatch. execution_readback_restore_us0 is NOT a timing result.
+
+Existing passive serial,lines1073019..1073020,records:
+ state/history/zero phase466956;embedding7;norm7;projection10;
+ output phase5,worker119,word0,readback0/0,restored0.
+ Projection itself completed runs4/STOP119/HOLD119/ROOT5/5/CLOSED1,
+ saved8134072/verified16268144/restored8134072.
+This locates failure at the NEW coordinator launch/run phase,not the
+earlier projection. worker119 is a retained progress field,NOT proof that
+worker119 caused it. The log does NOT distinguish guard,deadline,marker,
+PC or receipt failure. No post-failure GPU peeks were made to guess it.
+Next diagnostic must retain values from EXISTING reads and the first
+failure branch;it must add no post-failure IO or relax a completion gate.
+
+Saved remote log:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/resident-layer-debug69-physical-20261026-a/client.log
+Local exact copy:/private/tmp/pioneer-q38-layer-debug69-physical-20261026-a.log
+Both SHA2569ee124613bae9e7fdc4b50112e4ec3487ae16d1ddaed5ea0f801cf8ab14c2bd2.
+CPU-only admin status confirms tag69/gen4/quiesced0/cold1/active_owner1/
+open_count1/guard1. Haiku remained SSH-responsive. Installedbeeaf is still
+exact. No hot restore,retry,reset or in-place quarantine clear is permitted.
+
+After preserving evidence and successful sync,ONE relay OFF hold58543
+completed terminal0. Actual fans/LEDs-off confirmation is PENDING;NO ON
+has been sent. Relay ACK/SSH loss is NOT actual power-state proof. No
+software-shutdown-plus-second-OFF,SD,mains or hardware change was used.
 
 Distinct physical role and interface
 -----------------------------------
@@ -151,8 +193,9 @@ The057b CPU client remains staged,but refuses old041 tag BEFORE BANK_BEGIN.
 Latest beeaf6b0 and hash-pinned helper0d0f3f9c were staged at new unused
 filenames outside watched drivers/bin;remote SHA256 matches local. The
 installed041,guardd1ce and adminclientb0c were independently rehashed.
-Latest beeaf6b0 is not installed. Installation is forbidden until the final
-public tests pass and the independent SDK/scope checks remain satisfied.
+At that preparation point beeaf6b0 was not installed. The subsequent single
+guarded application and FAILED trial are recorded above;neither is a
+physical qualification or permission to retry/restore the quarantined card.
 
 Clean tree:/private/tmp/pioneer-layer-debug69-clean.grHsu8jY,archive ofdfc46e
 plus the explicit task files. Dirty llama.cpp and unrelated FlashNext remain
@@ -160,13 +203,13 @@ unread/unmodified/unstaged. No subagents or additional chats were used.
 
 Remaining end state
 -------------------
-After final offline qualification,save/push the tested checkpoint,verify
-current idle state and exact artifact hashes,then guarded-swap69 and run
-the fixed physical diagnostic ONCE. Poll its actual handle,never repeat on
-timeout. A clean comparison+explicit END permits guarded restoration of041.
-Any uncertainty requires retained ownership/quarantine and controlled
-recovery,not retry/unload/reset/automatic restoration. Standing devbox work
-is saved;relay OFF once/verify actual off/ON once remains mandatory.
+The final offline qualification/checkpoint and single physical trial have
+finished. Recover only after actual fans/LEDs-off confirmation,then ON once
+and the pinned SD-free Linux/Haiku chain. Verify a fresh hardware/OS epoch
+and clean idle metadata before guarded restoration of041. Capture the
+coordinator's existing-read failure metadata in a separately qualified new
+candidate before another trial. No timeout-based retry,unload,reset,
+automatic restoration or in-place quarantine clear is permitted.
 
 Even a physical first-layer PASS is NOT64-layer inference. Device attention/
 KV,all-layer scheduling/current-state commits,vocabulary/sampling,persistent
