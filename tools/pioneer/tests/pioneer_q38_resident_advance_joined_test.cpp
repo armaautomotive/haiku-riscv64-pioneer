@@ -178,9 +178,9 @@ struct AdvanceFabric:LinkedLayerFabric {
   }
   puts("PASS ACTUAL advance SUBROUTINE components/20real QPD1 producers/ALL4matrices244jobs/ALL16480rows arithmetic checked/SAME119peers/no numerical feedback;synthetic raw input and descriptor DATA only,NOT completed-prefix/native/full-model qualification");return true;
  }
- void VerifyAdvance(){
-  assert(advancing && !unknown && !pending && advanceJobs==244 && advanceProducers==20 && gatherPackets==22 && matrixInputPackets==8
-   && Mem(0x17ffc8)==TT_Q38_ADVANCE_MARKER && Mem(0x17ffc0)==donePc && Mem(0x17ffc4)==5120);
+ void VerifyAdvance(bool terminal=true){
+  assert(advancing && !unknown && !pending && advanceJobs==244 && advanceProducers==20 && gatherPackets==22 && matrixInputPackets==8);
+  if(terminal)assert(Mem(0x17ffc8)==TT_Q38_ADVANCE_MARKER && Mem(0x17ffc0)==donePc && Mem(0x17ffc4)==5120);
   assert(Mem(TT_Q38_ADVANCE_RECEIPT)==TT_Q38_ADVANCE_RECEIPT_MARKER && Mem(TT_Q38_ADVANCE_RECEIPT+49*4)==647);
   std::array<uint32_t,512> receipt;for(unsigned i=0;i<512;i++)receipt[i]=Mem(TT_Q38_ADVANCE_RECEIPT+i*4);
   std::array<uint32_t,8> start;for(unsigned i=0;i<8;i++)start[i]=Mem(TT_Q38_LAYER_LINK_RECEIPT+(56+i)*4);
@@ -262,6 +262,7 @@ void AdvancePeer::StepBlock(){
  }
  active=false;
 }
+#ifndef PIONEER_Q38_ADVANCE_JOINED_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--faults") || !strcmp(argv[3],"--component"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  puts("BEGIN ACTUAL full layer+link+shared quantization+FOUR next-layer matrices;SAME119peer programs, synthetic byte endpoints ONLY");
@@ -271,3 +272,4 @@ int main(int argc,char** argv){
  f.VerifyAdvance();f.Inert();
  printf("PASS ACTUAL uninterrupted layer->link->next projections/ONE20worker Q8 producer group/244 actual matrix jobs/ALL16480 resident rows checked/ALL119 private sequences retained/maxStack%u;NO host product feedback/reset/relaunch;NOT native/original-model/full64layer/token-rate qualification\n",0x70000-f.minStack);
 }
+#endif

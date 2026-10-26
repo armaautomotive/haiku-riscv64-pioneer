@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
+#error Continuation IMAGE has no existing native/CPU/Work/component role
+#endif
 // No guard:every inclusion revalidates the separate OFFLINE native component.
 #ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
 #error Advance IMAGE is not a native69 component or journal scope

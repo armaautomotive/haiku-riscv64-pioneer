@@ -4,6 +4,18 @@
 #include "PioneerQ38ResidentOutputCohortShape.h"
 #include "PioneerQ38RootCycleData.h"
 #include "PioneerQ38PeerTerminal.h"
+#ifdef PIONEER_ATTENTION_FREESTANDING
+// Base4 digits have value1 modulo3. Fold their bounded sum without the
+// unsupported RV32 high-multiply/remainder or a 64-bit runtime helper.
+static inline bool PioneerQ38RootMultipleOf3(uint32_t value){
+ value=(value&0x33333333U)+((value>>2)&0x33333333U);
+ value=(value&0x0f0f0f0fU)+((value>>4)&0x0f0f0f0fU);
+ value=(value&0x00ff00ffU)+((value>>8)&0x00ff00ffU);
+ value=(value&0x0000ffffU)+(value>>16);
+ while(value>=3)value-=3;
+ return !value;
+}
+#endif
 // DATA checks for the complete NEW resident pipeline, not an IO/cleanup,
 // initialized-slot or producer capability. A genuine executing owner MUST
 // capture independent physical baselines BEFORE release, retain exact
@@ -48,7 +60,13 @@ static inline bool PioneerQ38ResidentOutputRootReceipt(const uint32_t* m,const u
  // Fixed packet totals are derived from ALL stages, not fitted to a trace.
  const uint64_t waits=s[4],reads=s[0];
  if(waits<716 || waits>UINT64_C(716)*65536 || reads<18022+waits+3*716 || reads>18022+4*waits
-  || (reads-18022-waits)%3 || s[1]!=1005 || uint64_t(s[2])!=reads+1124 || s[3]!=4678
+  ||
+#ifdef PIONEER_ATTENTION_FREESTANDING
+  !PioneerQ38RootMultipleOf3(uint32_t(reads-18022-waits))
+#else
+  (reads-18022-waits)%3
+#endif
+  || s[1]!=1005 || uint64_t(s[2])!=reads+1124 || s[3]!=4678
   || s[5]!=120 || s[6]!=96 || s[7]!=24 || s[8]!=24 || s[9]!=5120)return false;
  for(unsigned i=10;i<64;i++)if(s[i])return false;
  const auto* a=matrix;

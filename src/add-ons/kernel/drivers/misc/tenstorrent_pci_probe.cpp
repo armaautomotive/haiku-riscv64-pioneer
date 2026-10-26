@@ -4,6 +4,9 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
+#error Continuation IMAGE has no existing native/CPU/Work/component role
+#endif
 #ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
 #error OFFLINE advance IMAGE has no existing native or Work driver role
 #endif

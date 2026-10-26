@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
+#error Continuation IMAGE has no existing native/CPU/Work/component role
+#endif
 #ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
 #error On-card advance IMAGE is not a CPU DEBUG69 client
 #endif

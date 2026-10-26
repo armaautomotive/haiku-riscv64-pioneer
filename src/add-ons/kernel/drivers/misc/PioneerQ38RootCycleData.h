@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_ROOT_CYCLE_DATA_H
 #define PIONEER_Q38_ROOT_CYCLE_DATA_H
+#ifndef PIONEER_ATTENTION_FREESTANDING
 #include <stdint.h>
+#endif
 // DATA-only diagnostic framing,NEVER a replacement for ANY existing
 // source/counter/PC/nonce/owner proof. No IO,clock conversion or authority.
 static inline uint64_t PioneerQ38RootCyclePhase(const uint32_t* stats,unsigned phase) {

@@ -12,7 +12,7 @@ import runpy
 import subprocess
 import sys
 
-if 'PIONEER_Q38_RESIDENT_ADVANCE_IMAGE' in os.environ:
+if any(k in os.environ for k in ('PIONEER_Q38_RESIDENT_ADVANCE_IMAGE','PIONEER_Q38_RESIDENT_CONTINUE_IMAGE')):
     raise SystemExit(2)
 
 if len(sys.argv)!=3 or any(k in os.environ for k in ('PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE','PIONEER_Q38_RESIDENT_LAYER_VALIDATION_CLIENT','PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE')) \

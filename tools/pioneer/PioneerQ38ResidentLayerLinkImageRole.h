@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
+#error Continuation IMAGE has no existing native/CPU/Work/component role
+#endif
 // No guard: revalidate exact offline role even on late inclusion.
 #ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
 #error Link and advance components have separate exact compilation roles

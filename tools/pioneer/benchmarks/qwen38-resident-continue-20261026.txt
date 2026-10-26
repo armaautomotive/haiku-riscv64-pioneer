@@ -1,0 +1,123 @@
+Qwen3.8-27B: on-card next-layer recipe admission and live-sequence binding
+2026-10-26 UTC; OFFLINE implementation/STAGED qualification, NOT inference timing
+
+Requested final scope remains full64-layer FAST Work, no CPU-reference
+validation, usable real-model inference and measured performance. This
+checkpoint is NOT that completion and NOT a completed second-layer pass.
+
+Implemented device call chain
+----------------------------
+The new ROOT entry captures its immutable continuation header, calls the
+actual unchanged complete layer/link/advance program, validates that
+invocation's actual advance receipt, preserves the actual predecessor
+receipts and119 private sequences, then checks ALL119 workers against
+their last real projection proofs: WAIT/status/PC/reset/source/counters.
+It reads the new canonical recipe from a fixed private GDDR DATA extent
+into the temporal cohort/output/layer mailboxes. Only after all geometry,
+layer/token/position/slot/identity/source checks pass does it substitute
+the ACTUAL retained sequences into the next cohort recipe ON CARD.
+It then calls the unchanged complete-layer program. That entry reloads
+the SAME admitted actual values, not host zero placeholders or restarted
+workers. No CPU intermediate, host layer loop, CLOSE/relaunch or reset.
+
+The compiled program contains the complete following-layer call and its
+full root-receipt check. However the current staged combined test STOPS
+at that real following-layer ENTRY. Execution and independent arithmetic/
+proof qualification of the following layer are explicitly STILL OWED.
+The new QCT1/QCTF terminal and QCP1 receipt have no old native69 alias.
+
+New canonical DATA and footprint
+--------------------------------
+The pointer-bound continuation plan owns the next full canonical layer
+recipe with119 ZERO placeholders, never caller-supplied live readiness.
+32 recurrent-to-recurrent recipes build;16 dense-boundary cases refuse.
+128 header+119 actual-sequence mutations, foreign canonical/duplicate
+binding and absent/foreign next learned pages refuse. The page check
+covers parent, link, next projections and following-layer learned DATA;
+it is not source authentication, device upload or initialized state.
+
+The fixed285184-byte recipe has66624+1152+3520 words in19 NoC reads,
+at workspace+4194304. New continuation ROM30000..3a000 and header/shadow/
+receipt60000..62400 are OFFLINE geometry only. They are NOT covered by
+old native journals/reservations/initialization. A genuine future native
+owner must retain an authenticated, immutable recipe upload throughout
+the operation as well as the model/source/clock/host and all initialized
+state resources. Structural shape cannot authenticate a foreign weight
+address or create that exclusive lifetime.
+
+Exact executable
+----------------
+Main program.elf SHA256
+91f5cb27b7ab075a5309693d02446a56c350215893be079b721b4abe16cfa620
+continue.bin31992B SHA256
+2f8a6dda08c67daeb543cab817713d940ec15f5cdc63a06477950e9dc9f0a5fe
+text.bin128B SHA256
+ba57fa1835372b8a7769ec605bdf6ab68b6cbaafda2bab3e3052886be464c766
+ALL10 predecessor sections and ALL119 companion programs byte-identical.
+Main/independent clean ELF byte-identical. New max frame592B.
+No undefined symbols, writable globals/GOT, unsupported division/sqrt/
+remainder/high multiply/FMA/EBREAK or CSR writes. Only the nine existing
+read-only cycle samples remain. Full following-layer stack still owed.
+
+Tests and precise limits
+------------------------
+Direct emitted loader: PASS, exit0, main and clean. Two boundary cases,
+3351 exact READ packets/7788 flits,285184 copied bytes and119 sequential
+live-value substitutions, max stack1040B. Twelve UNKNOWN/source/counter/
+status/recipe/header/sequence faults refuse before binding/publication or
+any following packet/reset. ALL predecessor/peer proof/status setup in
+these direct tests is synthetic DATA. It does NOT prove earlier execution.
+
+Main and clean STAGED combined runs: PASS, both process exit0. Their
+complete stdout is byte-identical, SHA256
+84772f75587085d156579ac4f639c9ab2b5db69d6b480307fc1c6b0848594c5b.
+They check the real complete layer/link/20QPD1/244projection-job outputs
+BEFORE admission, keep all119 actual machines, and pass all nine fault
+forks from that genuine preceding execution. The new recipe/119 bindings
+and unchanged16480 products+5120 input pass at the real following-layer
+ENTRY; actual preceding+admission max stack7160B within8KiB. There is NO
+host numeric feedback, worker reboot/sequence reset or root relaunch.
+This staged test explicitly does NOT execute or qualify the complete
+following layer. No time from these CPU instruction interpreters is an
+inference throughput measurement.
+
+The freestanding root-receipt framing retains its exact bounds but uses
+an RV32-safe base4 fold for divisibility by3, avoiding __umoddi3 and
+unsupported high-multiply/remainder instructions.1000007 independent
+equivalence cases pass. The ordinary CPU implementation is unchanged.
+226 new role/build gates refuse old native/CPU/Work/component aliases,
+including defined0 and late changes.15 ambient build entries refuse
+before SDK/output access. Prior advance222/native585/client146/reference72
+gates pass. Full SDK default regression remains b554d37d0e74204a2ab9e521
+c6f535ea7c697879295ff2d418def6afabe9f8c7; old65=61faa093, NODRV=9fcf1f7f.
+
+Offline failures preserved
+--------------------------
+First invocation supplied the native qualification directory rather than
+the cross-tool SDK and refused before compilation. Freestanding builds
+then rejected unconditional stdint, missing target integer types and a
+misleading-indentation warning. Full proof framing exposed __umoddi3 and
+a31KiB component exceeding the originally proposed20KiB layout; the safe
+fold and explicit NEW lower-L1 ROM fix those, not an old reservation grant.
+The first DATA loader reached all119 bindings then refused its wrong
+expected flit total8145: a64-byte status is ONE flit, not four. Derived
+total119*28+285184/64=7788 now passes. A kernel-role gate caught a guard
+inside a copyright comment; moving it outside restores actual refusal.
+The next image intentionally failed the obsolete prototype hash pin;
+only the corrected bytes were repinned after opcode/ancestor-byte checks.
+None of these offline refusals touched or quarantined the physical card.
+
+Physical status and remaining requested work
+--------------------------------------------
+No new driver/image installed; no power/SD/mains/hardware action. Read-only
+CPU metadata postflight: driver55/tag2026102100010012/generation4/quiesced0/
+cold0/active_owner0/open_count1/guard1. Working041 driver remains in place.
+
+Next: run and independently qualify the COMPLETE following layer with the
+same119 actual machines and admitted sequences. Then all64 layers, dense
+attention/KV, canonical state/token commits, vocabulary/sampling and the
+persistent token loop. A NEW real native joint owner, original-byte source/
+initialization/clock/host lifetime, arbitrary-original journals, current
+physical proofs and exact STOP/holds/restoration are OWED before silicon
+or no-CPU-reference FAST Work/Assistant selection. Last measured WHOLE
+MODEL remains0.207893161tok/s.20tok/s is UNMET; no speedup is claimed.

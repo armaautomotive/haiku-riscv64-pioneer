@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_RESIDENT_CONTINUE_IMAGE+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_ADVANCE_IMAGE+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE+x}" != x ] || exit 2
 [ "${PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE+x}" != x ] || exit 2

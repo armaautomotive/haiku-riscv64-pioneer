@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
+#error Continuation IMAGE has no existing native/CPU/Work/component role
+#endif
 // No guard: exact OFFLINE program roles, including late re-inclusion.
 #if !defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE) || PIONEER_Q38_RESIDENT_ADVANCE_IMAGE != 1
 #error Exact separate on-card advance IMAGE required

@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
+#error Continuation IMAGE has no existing native/CPU/Work/component role
+#endif
 // Private root dispatcher source. Selection requires a pinned kernel image.
 // The kernel MUST authenticate/own ALL initialized bank extents,private
 // tasks/bank routes/source seals and all119 peer images/sequence histories.
