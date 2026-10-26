@@ -55,6 +55,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
         payloads['hash_gdn_rendezvous_validation'] = ('test-' + values['hash_gdn_rendezvous_validation']).encode()
         payloads['hash_conv_silu_precision_validation'] = ('test-' + values['hash_conv_silu_precision_validation']).encode()
         payloads['hash_resident_output_validation'] = ('test-' + values['hash_resident_output_validation']).encode()
+        payloads['hash_resident_layer_validation'] = ('test-' + values['hash_resident_layer_validation']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -176,6 +177,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             '--restore-conv-silu-precision-validation': ('hash_conv_silu_precision_validation', 'hash_scale_reuse_qualification', 'tag_conv_silu_precision_validation'),
             '--apply-resident-output-validation': ('hash_scale_reuse_qualification', 'hash_resident_output_validation', 'tag_scale_reuse_qualification'),
             '--restore-resident-output-validation': ('hash_resident_output_validation', 'hash_scale_reuse_qualification', 'tag_resident_output_validation'),
+            '--apply-resident-layer-validation': ('hash_scale_reuse_qualification', 'hash_resident_layer_validation', 'tag_scale_reuse_qualification'),
+            '--restore-resident-layer-validation': ('hash_resident_layer_validation', 'hash_scale_reuse_qualification', 'tag_resident_layer_validation'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -268,6 +271,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
         put('candidate_gdn_rendezvous_validation', payloads['hash_gdn_rendezvous_validation'])
         put('candidate_conv_silu_precision_validation', payloads['hash_conv_silu_precision_validation'])
         put('candidate_resident_output_validation', payloads['hash_resident_output_validation'])
+        put('candidate_resident_layer_validation', payloads['hash_resident_layer_validation'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -330,7 +334,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             stage.symlink_to(real.name)
         if fault in ['incoming', 'guardincoming']:
             put(fault, b'preexisting user file')
-        hash_backup = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation')
+        hash_backup = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation', '--apply-resident-layer-validation', '--restore-resident-layer-validation')
         backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
         if hash_backup:
             backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
@@ -403,6 +407,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             'owner-conv-precision-validation-underscore': '/boot/home/pioneer_q38_conv_silu_precision_validation',
             'owner-resident-output-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-resident-output-validation-0e38765f',
             'owner-resident-output-validation-underscore': '/boot/home/pioneer_q38_resident_output_validation',
+            'owner-resident-layer-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-resident-layer-validation-057b1eca',
+            'owner-resident-layer-validation-underscore': '/boot/home/pioneer_q38_resident_layer_validation',
         }
         if fault in owner_faults:
             teams.append('999 ' + owner_faults[fault])
@@ -529,6 +535,7 @@ if __name__ == '__main__':
     modes += ['--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation']
     modes += ['--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation']
     modes += ['--apply-resident-output-validation', '--restore-resident-output-validation']
+    modes += ['--apply-resident-layer-validation', '--restore-resident-layer-validation']
     parents += ['owner-embedding-validation']
     parents += ['owner-rms-validation']
     parents += ['owner-projection-validation']
@@ -538,6 +545,7 @@ if __name__ == '__main__':
     parents += ['owner-gdn-rendezvous-validation', 'owner-gdn-rendezvous-validation-underscore']
     parents += ['owner-conv-precision-validation', 'owner-conv-precision-validation-underscore', 'owner-conv-precision-qualified']
     parents += ['owner-resident-output-validation', 'owner-resident-output-validation-underscore']
+    parents += ['owner-resident-layer-validation', 'owner-resident-layer-validation-underscore']
     for mode in modes:
         if selected and mode not in selected:
             continue
@@ -789,11 +797,15 @@ if __name__ == '__main__':
             candidate = ['candidate_resident_output_validation']
         elif mode == '--restore-resident-output-validation':
             candidate = ['candidate_scale_reuse_qualification']
+        elif mode == '--apply-resident-layer-validation':
+            candidate = ['candidate_resident_layer_validation']
+        elif mode == '--restore-resident-layer-validation':
+            candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
         previous_image = ['previous-debug44', 'previous-capture-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
         if mode in ('--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation'):
             previous_image.append('previous-debug52')
-        hash_backup_mode = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation')
+        hash_backup_mode = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation', '--apply-resident-layer-validation', '--restore-resident-layer-validation')
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

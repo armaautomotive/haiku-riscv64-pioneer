@@ -49,6 +49,7 @@ public:
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  void ResidentLayerSources(const char*,const char*,ResidentLayerNativeStateBytes&);
+ void ConfigureResidentLayerControl(const char*,const char*,ResidentLayerNativeStateBytes&);
  uint32_t ResidentLayerRead(uint32_t);void ResidentLayerWrite(uint32_t,uint32_t);
  unsigned ResidentLayerBoots()const;unsigned ResidentLayerStops()const;void VerifyResidentLayer();
  unsigned ResidentLayerFrontendSamples()const;

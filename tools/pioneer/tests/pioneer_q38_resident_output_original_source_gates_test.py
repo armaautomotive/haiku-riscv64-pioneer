@@ -22,7 +22,8 @@ def check(flags,expected,diagnostic=None):
             assert diagnostic in result.stderr,(source,flags,result.stderr)
         count+=1
 check([],True)
-for name in ('PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT','PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY',
+for name in ('PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE','PIONEER_Q38_RESIDENT_LAYER_VALIDATION_CLIENT',
+             'PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT','PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY',
              'PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT','PIONEER_Q38_RESIDENT_LAYER_OWNER',
              'PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE','PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE','PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE',
              'PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE','PIONEER_Q38_RESIDENT_OUTPUT_OWNER',
@@ -33,7 +34,7 @@ for name in ('PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT','PIONEER_Q38_RESIDENT_L
              'PIONEER_Q38_RESIDENT_DECODER_NATIVE','PIONEER_Q38_WORK_INFERENCE','_KERNEL_MODE','__FAST_MATH__'):
     for value in ('0','1'):
         check(['-D'+name+'='+value],False,'DEBUG68' if name=='PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE' else None)
-print('PASS ACTUAL original-source CPU TU gates'+str(count)+'/defined-zero native68+owner+image+Work+kernel+fast-math refusal;preprocessing ONLY')
+print('PASS ACTUAL original-source CPU TU gates'+str(count)+'/defined-zero native69+client+native68+owner+image+Work+kernel+fast-math refusal;preprocessing ONLY')
 if len(sys.argv)==2:
     driver=pathlib.Path(sys.argv[1])
     assert driver.is_file() and not driver.is_symlink()

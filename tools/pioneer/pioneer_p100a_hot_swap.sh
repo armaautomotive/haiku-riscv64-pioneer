@@ -36,6 +36,7 @@ case "$1" in
  --apply-gdn-rendezvous-validation|--restore-gdn-rendezvous-validation) mode=$1;;
  --apply-conv-silu-precision-validation|--restore-conv-silu-precision-validation) mode=$1;;
  --apply-resident-output-validation|--restore-resident-output-validation) mode=$1;;
+ --apply-resident-layer-validation|--restore-resident-layer-validation) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -127,6 +128,7 @@ candidate_gdn_recurrent_validation=$stage/tenstorrent_pci_probe-gdn-recurrent-va
 candidate_gdn_rendezvous_validation=$stage/tenstorrent_pci_probe-gdn-rendezvous-validation-cdacaa3a
 candidate_conv_silu_precision_validation=$stage/tenstorrent_pci_probe-conv-silu-precision-validation-fb995b39
 candidate_resident_output_validation=$stage/tenstorrent_pci_probe-resident-output-validation-58064ede
+candidate_resident_layer_validation=$stage/tenstorrent_pci_probe-resident-layer-validation-beeaf6b0
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -209,6 +211,7 @@ hash_gdn_recurrent_validation=b43a6cc70dc8b5d1f5d69d1b9207fbf577a9671881963da458
 hash_gdn_rendezvous_validation=cdacaa3a971823cbc5bbbebde8bd2c3771d48842df814729b5fe67c4dc290759
 hash_conv_silu_precision_validation=fb995b39401f731259ce8154bdd77981b152b8038418728daf2cc420b247ecc6
 hash_resident_output_validation=58064edee490bb5335fa135122a8d89588987a56c0451d751bccf9ebbe84ff3d
+hash_resident_layer_validation=beeaf6b0c5eb5af1f1992a357abc0ceefcc3614aa2f81741d8eb86a432b094d2
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -289,6 +292,7 @@ tag_gdn_recurrent_validation=2026102400010049
 tag_gdn_rendezvous_validation=2026102400010052
 tag_conv_silu_precision_validation=2026102400010064
 tag_resident_output_validation=2026102500010068
+tag_resident_layer_validation=2026102600010069
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -497,6 +501,8 @@ else
  # exact known-clean041 <-> byte-pinned68;UNKNOWN can never restore/retry.
  elif [ "$mode" = --apply-resident-output-validation ]; then source=$candidate_resident_output_validation; expected=$hash_scale_reuse_qualification; result=$hash_resident_output_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_resident_output_validation
  elif [ "$mode" = --restore-resident-output-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_resident_output_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_resident_output_validation; newtag=$tag_scale_reuse_qualification
+ elif [ "$mode" = --apply-resident-layer-validation ]; then source=$candidate_resident_layer_validation; expected=$hash_scale_reuse_qualification; result=$hash_resident_layer_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_resident_layer_validation
+ elif [ "$mode" = --restore-resident-layer-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_resident_layer_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_resident_layer_validation; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -537,7 +543,7 @@ else
  case "$mode" in
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only
   # backup; never overwrite it or confuse it with this exact input image.
-  --apply-decoder-validation|--restore-decoder-validation|--apply-gdn-input-validation|--restore-gdn-input-validation|--apply-gdn-recurrent-validation|--restore-gdn-recurrent-validation|--apply-gdn-rendezvous-validation|--restore-gdn-rendezvous-validation|--apply-conv-silu-precision-validation|--restore-conv-silu-precision-validation|--apply-resident-output-validation|--restore-resident-output-validation) reload_backup=$reload_backup-$expected;;
+  --apply-decoder-validation|--restore-decoder-validation|--apply-gdn-input-validation|--restore-gdn-input-validation|--apply-gdn-recurrent-validation|--restore-gdn-recurrent-validation|--apply-gdn-rendezvous-validation|--restore-gdn-rendezvous-validation|--apply-conv-silu-precision-validation|--restore-conv-silu-precision-validation|--apply-resident-output-validation|--restore-resident-output-validation|--apply-resident-layer-validation|--restore-resident-layer-validation) reload_backup=$reload_backup-$expected;;
  esac
  backup "$reload_backup" "$expected"
 fi

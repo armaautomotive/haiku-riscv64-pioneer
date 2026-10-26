@@ -13,7 +13,7 @@
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
-#ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputLearned.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GraphMutableBanks.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnZeroController.h"
@@ -159,7 +159,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
  ProjectionNativeTransport* projectionTransport=nullptr;
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
  mutable bool projectionSeedRequired=false; // TEST delayed physical byte handoff after genuine QRN1
 #endif
  std::array<uint32,10240> projectionPrefix={};std::array<uint32,9216> projectionPrimary={},projectionShadow={};
@@ -426,7 +426,7 @@ struct PioneerStoreContext {
  PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;tt_host_page_result& host;
  struct D{tt_dram_samples_result& dram;};struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;};B3 baseline;
  uint8* initialized;uint32 hash=0,*hashes=&hash;
-#ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
  // Real production pointee types for complete-role CPU END/retention
  // gates. This role never constructs any competing legacy FFN owner.
  PioneerQ38CanonicalModelPlan* q38FfnModelPlan=nullptr;PioneerQ38GraphMutableBanks* q38GraphMutable=nullptr;
@@ -439,7 +439,7 @@ struct PioneerStoreContext {
  PioneerQ38DispatchLease* q38Dispatch=nullptr;void *q38Cohort=nullptr,*fleet=nullptr;
  PioneerQ38ProjectionIdentity q38FfnModelIdentity={},q38GdnIdentity={};
  FactoryFlags span,panelProbe,streamProbe;FactoryFlags* q38Span=&span;FactoryClock q38Clock;
-#ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
  PioneerQ38DeltaProbeLease q38Delta;
 #else
  FactoryFlags q38Delta;
@@ -555,7 +555,7 @@ bool PioneerSessionIO::UseProjectionIO()const{
 #else
   && q38MutableContext->q38EmbeddingModel->phase>=PioneerQ38EmbeddingNativeState::ProjectionPreparing;
 #endif
-#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_PROJECTION_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_DECODER_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_INPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_RENDEZVOUS_VALIDATION_NATIVE) || defined(PIONEER_Q38_GDN_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
  if(active && projectionSeedRequired){
   projectionSeedRequired=false;auto& endpoint=*const_cast<PioneerSessionIO*>(this);
   std::vector<uint32> addresses(73737),values(73737);uint32 sources[16],commands[10],counts[8];

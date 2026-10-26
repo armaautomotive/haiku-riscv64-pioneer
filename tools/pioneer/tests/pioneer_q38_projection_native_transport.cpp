@@ -484,7 +484,14 @@ void ProjectionNativeTransport::ResidentLayerSources(const char* root,const char
  for(unsigned i=0;i<p.residentExtra.size();i++)p.residentExtra[i]=0x3c5a7091U^(i*0x9e3779b9U);
  p.residentBytes=&bytes;p.resident.reset(new ResidentEndpointMachine(root,peer,p));
 } // byte endpoints only;actual QPS1 STOP/holds precede attachment;no ready/input/model product fabricated
-uint32_t ProjectionNativeTransport::ResidentLayerRead(uint32_t a){auto& p=*implementation;p.Touch();assert(p.resident);
+void ProjectionNativeTransport::ConfigureResidentLayerControl(const char* root,const char* peer,ResidentLayerNativeStateBytes& bytes){
+ auto& p=*implementation;assert(root && peer && !p.resident && !p.residentDeferredRoot && !p.boots && !p.starts);
+ p.residentDeferredRoot=root;p.residentDeferredPeer=peer;p.residentDeferredBytes=&bytes;
+} // TEST deferred BYTE attachment ONLY,not a native owner/input/ready setter
+uint32_t ProjectionNativeTransport::ResidentLayerRead(uint32_t a){auto& p=*implementation;p.Touch();
+ if(!p.resident && p.residentDeferredRoot){assert(p.residentDeferredPeer && p.residentDeferredBytes);
+  ResidentLayerSources(p.residentDeferredRoot,p.residentDeferredPeer,*static_cast<ResidentLayerNativeStateBytes*>(p.residentDeferredBytes));
+ }assert(p.resident);
  auto value=p.ObserveResidentReadbackValue(a,p.ResidentRead(p.current,a));
  if(p.residentFault==8 && !p.residentInjected && p.ResidentAt(5,0) && a==TT_Q38_RESIDENT_LAYER_SHADOW+(TT_Q38_RESIDENT_LAYER_WORDS-1)*4){
   p.residentInjected=true;p.residentFence=p.touches;return value^1;
@@ -1155,6 +1162,9 @@ void ProjectionNativeTransport::Write32(Write kind,unsigned a,uint32_t v,unsigne
 #ifndef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
    if(p.residentDeferredRoot && p.resident && a==0x40 && !p.residentReadbackObserved)
     ObserveResidentReadback(p.residentDeferredFault,p.residentDeferredPage,p.residentDeferredWord);
+#else
+   if(p.residentDeferredRoot && p.resident && a==0x40 && !p.residentReadbackObserved)
+    ObserveResidentLayerReadback(p.residentDeferredFault,p.residentDeferredPage,p.residentDeferredWord);
 #endif
    if(p.residentReadbackObserved && a==0x40){assert(v==1);p.ResidentReadbackTransfer();return;}
 #endif

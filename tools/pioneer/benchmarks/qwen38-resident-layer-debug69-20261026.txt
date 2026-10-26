@@ -1,0 +1,173 @@
+Complete first-layer physical diagnostic prototype — 2026-10-26 UTC
+==================================================================
+
+STATUS: physical DEBUG69 driver/client/closed dispatcher IMPLEMENTED and
+SDK-linked,NOT installed or executed on the card. Main original public
+control/duplicate-refusal/END qualification8523 and independent clean-copy
+31644 are BOTH terminal0. Physical qualification remains owed.
+No inference speedup measured;last actual whole-model0.207893161 tokens/sec.
+Full64-layer/persistent-token/FAST Work integration and20t/s remain UNMET.
+
+This continues pushed dfc46e0180,which qualified the complete ORIGINAL
+first-layer emitted programs and private native lifetime,using simulated
+OS/PCI/NoC endpoints. That checkpoint was not a loadable driver or silicon
+qualification. The existing NODRV witness remains non-loadable and inert.
+
+Distinct physical role and interface
+-----------------------------------
+New PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE requires ALL31 exact parent
+roles,conventional driver ABI,and tag2026102600010069. It rejects NODRV,
+old68,CPU/client/Work/image/legacy arithmetic aliases,including defined0.
+An internal physical-role witness cannot be supplied by a compiler caller.
+Actual ProbeControl allows ONLY10 reload/bank/span/new diagnostic operations;
+old Work/DEBUG/compute/foreign-address routes remain unreachable.
+
+The new namespace20/fixed6521088-byte reply contains a256-byte header and
+1630208 fixed QLV1 words. It does NOT alias old namespace19/1629120 words.
+ONLY token0/position0/layer0 is admitted. Every other request byte MUST be
+zero. No caller source/owner/ready/current-slot/address/route/code/threshold
+or numeric input can be supplied in this diagnostic request.
+
+Real kernel control calls the SAME genuine embedding bind,NEW layer bind,
+672 recurrent/336 history initializers,QPE1/QRN1/fourQPS1,complete joined
+ROOT/ALL119 persistent peers,actual receipt/counter ancestry,119 fresh STOPs,
+ALL120 holds,1592 fixed reads,44003552-byte restoration and second proof.
+Only a clean closed native lifetime may produce a passing reply. User-copy
+failure retains ALL owners/maps/journals/clock/hosts,with NO later device IO,
+reset,restore,retry or END. All combined result records are HEAP allocations.
+The actual production SDK frames remain bounded:maxNewFrame1456 bytes.
+
+Separate CPU diagnostic client
+------------------------------
+The CPU observer is a SEPARATE translation unit,never part of the driver or
+Work target. Complete same-file GGUF SHA/schema/4810 reference reads/seal
+finish BEFORE any accelerator FD. Original upload covers68603 pages/300
+spans,including all56 layer0 stripes and the original token embedding.
+The original weights,not CPU products,supply every upload.
+
+After fixed reply metadata validation,the client keeps ideal-libm and
+instruction-policy reports DISTINCT. The instruction-policy report MUST
+strictly pass with correct version/word count. The ideal report is retained,
+NOT reclassified as a bit-equality pass. Only then can explicit BANK_END
+release native resources. Failures close only;no implicit END/reset/retry.
+This is a fixed diagnostic,NOT Assistant/Work/full-model/token-rate support.
+
+Completed supporting qualifications
+-----------------------------------
+Protocol2077 malformed header/payload/token/position cases refused.
+Physical role581 preprocessing gates;CPU client146 gates;independent CPU
+reference72 gates;actual original-source TU94 gates;12 ambient builder
+entries168 cases refuse new roles even0/empty/malformed BEFORE SDK/output.
+Actual closed routing131072 operations:exactly10 allowed,root/cookie checks
+preserved. Old NODRV context480 and old68 role505 gates still pass.
+Main and clean actual client lifecycle1 positive+406 failure cases pass,
+including ALL308 individual call failures,changed source/epoch,missing raw
+pages,all62 fixed header corruptions,policy/observer/report refusal,missing
+reference seal,early END,open/close and preparation failures.
+
+Main and clean actual SDK builds reproduce the fixed prototype:
+ corrected END-seal driver:beeaf6b0c5eb5af1f1992a357abc0ceefcc3614aa2f81741d8eb86a432b094d2
+ CPU client:057b1ecab2d3277564bdfe7e1d455a16beaf3328ea37aaab8ec15c6d53ba7802
+ client.o:a7fe1d44860a7c25f8a4fe2b00c4ca10aa5d2740d99ffd1cfe4d6c72c352b397
+ separate CPUoriginal.o:3ce63f7f4596ee125af8ce961401ba975e5ef3998336e7ddd6e97d0c6cc094f8
+The production driver exports conventional ABI,not NODRV/test aliases,and
+symbol audits reject CPU observer/client/test-byte-import code. SDK is read
+only. Old65 remains byte-exact61faa093,NODRV86a092,and rebuilt old68 remains
+exact58064edee490bb5335fa135122a8d89588987a56c0451d751bccf9ebbe84ff3d.
+
+Genuine public-control findings and final test
+----------------------------------------------------
+Main78372 and clean25091 completed actual ORIGINAL compute/readback/full
+restoration,strict instruction-policy comparison and14 numerical corruption
+refusals. A child forked the SAME actual final user-copy stack;forced copy
+failure retained every resource with ZERO following IO/reset/retry/END.
+313 pre-start request/root/team/copy/missing-stripe cases were inert.
+Their ideal report remains3423 differing final words,max5.96046447754e-8;
+instruction policy has0 final differences. No CPU product enters device code.
+
+Both whole runs nevertheless EXIT1 at the final duplicate-refusal+END check.
+The wrapper incorrectly retained an already-existing CLEAN model when its
+second one-shot request was refused. Corrected control snapshots hadModel
+before bind and retains only a NEW partial bind from THIS attempt. It never
+clears unsafe state. Duplicate calls remain inert,not retry permission.
+Previous548e prototype is SUPERSEDED;do not install/use it.
+
+Main83526 and clean30787 also EXIT1 at the composite duplicate/END assertion.
+Source inspection then identified the additional missing integration:the
+ordinary bank-END path acquired its semaphore but did NOT establish the
+new native context's mandatory FD/team/thread call seal. The direct test
+EndFactory call outside any scope also could not satisfy that guard.
+The native END guard is NOT relaxed. The actual bank-END branch now binds
+the real caller thread under the global semaphore,then releases the seal
+only if the retained context is still alive. Successful context destruction
+is never dereferenced. Scope anomalies retain resources and unsafe state.
+The test routes END through this SAME block and the actual native END
+controller;outer bank/host destruction remains an SDK/physical obligation,
+not fabricated by the host test.14 CPU-only caller-seal cases pass under
+ASAN,including destruction,retention,thread changes and bad bindings.
+
+Latest main8523 completed terminal0 through the complete actual programs,
+1592 reads/ALL1630208 words,strict original policy,14 numerical corruption
+refusals,final-copy failure containment,inert duplicate and actual native
+END through the new seal. Its ideal report remains3423 differing final
+words/max5.96046447754e-8;instruction policy has0 final differences.
+The independent clean31644 run also completed terminal0 with the same
+complete lifetime and numerical outcomes. The intervening29251
+compile found an invalid test-only enum,which was corrected before rerun.
+Poll these SAME live handles;observation timeout is not a failed computation
+or restart authority. No listed whole public-control failure is a PASS.
+
+Earlier development failures are not passes:initial legacy type/name and
+missing canonical-DATA compile gates were corrected. CPU-only80914/90340
+were deliberately stopped after locating a pre-STOP test helper used after
+STOP;the corrected public test now verifies actual119 boots/stops and ALL
+emitted VM readback bytes,without inventing WAIT state. No silicon involved.
+
+Guarded deployment preparation,not installation
+-----------------------------------------------
+The existing guarded updater gains only two new apply/restore modes,pinned
+to the corrected beeaf6b0 driver and known working041fef18 baseline. It keeps
+all hash/symlink/parent-inventory/backup/tag-generation/quiesce/atomic-rename
+and post-reload checks. UNKNOWN permits NO automatic rollback or reset.
+Main/clean296 filesystem/handshake/failure tests pass for new69+old68 pairs;
+the preceding d52f hash-pin repeats also pass296 cases each. Latest beeaf6b0
+main29576 and clean28131 are also terminal0/296 cases each. Both hyphen/underscore names
+of the new diagnostic client block reload,even before its accelerator FD.
+
+Latest read-only Pioneer check:Haiku up8h55,working installed041fef18,guardd1ce2aa4,
+reload-clientb0c851b3;tag2026102100010012/generation3/quiesced0/cold0/owner0/
+open_count1/guard1. Wired10.0.0.247/1GBit has0 errors;no compute parents were
+present. The uptime does not confirm a restart occurred. No power action is
+needed. No SD,mains,cable or hardware
+changes are authorized or requested.64 CPUs/RAM/Assistant/boot are unchanged.
+
+The SUPERSEDED548e candidate and old481e launcher were ONLY copied into the
+unwatched project staging directory,NEVER installed/executed. Both were
+withdrawn recoverably by renaming to -WITHDRAWN and .withdrawn. The active
+driver was rehashed and remains041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+The intermediate d52f candidate and b247 launcher were also only staged,
+then recoverably withdrawn without installation after the END-seal finding.
+The057b CPU client remains staged,but refuses old041 tag BEFORE BANK_BEGIN.
+Latest beeaf6b0 and hash-pinned helper0d0f3f9c were staged at new unused
+filenames outside watched drivers/bin;remote SHA256 matches local. The
+installed041,guardd1ce and adminclientb0c were independently rehashed.
+Latest beeaf6b0 is not installed. Installation is forbidden until the final
+public tests pass and the independent SDK/scope checks remain satisfied.
+
+Clean tree:/private/tmp/pioneer-layer-debug69-clean.grHsu8jY,archive ofdfc46e
+plus the explicit task files. Dirty llama.cpp and unrelated FlashNext remain
+unread/unmodified/unstaged. No subagents or additional chats were used.
+
+Remaining end state
+-------------------
+After final offline qualification,save/push the tested checkpoint,verify
+current idle state and exact artifact hashes,then guarded-swap69 and run
+the fixed physical diagnostic ONCE. Poll its actual handle,never repeat on
+timeout. A clean comparison+explicit END permits guarded restoration of041.
+Any uncertainty requires retained ownership/quarantine and controlled
+recovery,not retry/unload/reset/automatic restoration. Standing devbox work
+is saved;relay OFF once/verify actual off/ON once remains mandatory.
+
+Even a physical first-layer PASS is NOT64-layer inference. Device attention/
+KV,all-layer scheduling/current-state commits,vocabulary/sampling,persistent
+token loop,FAST no-CPU-reference Work integration and measured20t/s are owed.
