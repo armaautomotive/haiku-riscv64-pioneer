@@ -320,9 +320,13 @@ public:
    uint32_t marker=io.RuntimeStatusRead(2);runObservation.Status(2,marker);
    if(marker && marker!=TT_Q38_RESIDENT_LAYER_MARKER)return RunFail(io,r,Failure::Marker);
    if(marker){if(!RootReceipt(io,r))return RunFail(io,r,Failure::Receipt);done=true;break;}
-   io.Pause();uint32_t pc=io.RuntimePcRead();runObservation.Pc(pc);
-   if(!PioneerQ38ResidentLayerProgramImmutable(0,pc))return RunFail(io,r,Failure::PcOutsideImage);
-   if(PioneerQ38ResidentLayerRootRejectedPc(pc))return RunFail(io,r,Failure::PcRejected);
+   io.Pause();const uint32_t pc=io.RuntimePcRead();
+   // 0xffb13140 samples the speculative frontend,NOT retired execution:
+   // https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+   // A no-marker snapshot neither proves a fault nor grants completion.
+   // Keep its raw value as evidence;the SAME finite poll/deadline and
+   // exact marker/RootReceipt/ALL119 peer proofs are still mandatory.
+   runObservation.RunningPc(pc,PioneerQ38ResidentLayerProgramImmutable(0,pc),PioneerQ38ResidentLayerRootRejectedPc(pc));
   }
   if(!done)return RunFail(io,r,Failure::PollsExhausted);
   r.phase=6;

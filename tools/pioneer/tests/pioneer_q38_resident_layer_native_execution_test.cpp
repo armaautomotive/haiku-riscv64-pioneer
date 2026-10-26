@@ -37,7 +37,10 @@ static void FinishNativeOutput(NativeBindingFixture& f,ProjectionNativeTransport
   && f.io.touches==touches && transport.Touches()==device);UnknownNativeOutput(f,transport,output,fault);return;}
  if(fault==8 || fault==12 || (fault>=14 && fault<=17)){assert(!ran && transport.ResidentLayerFaultInjected() && !output.rootHolds && !output.memory.restoredWords);
   UnknownNativeOutput(f,transport,output,fault);return;}
- assert(ran && transport.ResidentLayerFrontendSamples());transport.VerifyResidentLayer();
+ const auto& observed=state->RunObservation();
+ assert(ran && transport.ResidentLayerFrontendSamples() && transport.ResidentLayerRunningSamples()==6
+  && observed.unexpectedPcCount==3 && observed.outsideImageCount==2 && observed.rejectedPcCount==1
+  && observed.firstUnexpectedPc==0x58644 && observed.firstUnexpectedPoll==2);transport.VerifyResidentLayer();
  puts("NEW_NATIVE_COMPLETE_ACTUAL_CONV_GDN_OUTPUT_RMS_FFN_FINAL5120RESIDUAL;BEGIN_CLOSE");
  bool closed=CloseQ38ResidentLayerNative(c,output);
  if((fault>=9 && fault<=11) || fault==13){
@@ -65,6 +68,7 @@ static void FinishNativeOutput(NativeBindingFixture& f,ProjectionNativeTransport
 struct NativeLayerTerminalForks {ProjectionNativeTransport& transport;PioneerQ38ResidentLayerResult& result;};
 static void ForkActualNativeLayerTerminal(void* context){
  auto& c=*static_cast<NativeLayerTerminalForks*>(context);unsigned cases=0;
+ assert(c.transport.ResidentLayerRunningSamples()==6); // actual running stack already observed the raw anomalies
  for(unsigned fault:{0U,7U,8U,9U,10U,11U,12U,13U,14U,15U,16U,17U}){
   pid_t child=fork();assert(child>=0);
   if(!child){nativeLayerTerminalChild=true;nativeLayerTerminalFault=fault;c.transport.ResidentLayerFault(fault,c.result);return;}
@@ -95,6 +99,8 @@ int main(int argc,char** argv){
  assert(CloseQ38ProjectionExecution(c,projection) && m.Closed() && m.projection.ResidentInput() && m.projection.ResidentInput()->Current());
  puts("NEW_NATIVE_GENUINE_GDN_HISTORY_ZERO_QPE1_QRN1_ALL4QPS1_STOP_RESTORE_PRIVATE_INPUT;BEGIN_NEW_FACTORY");
  transport.ResidentLayerSources(argv[6],argv[7],f.io);
+ const uint32_t snapshots[]={0x1585ec,0x58644,0x72060,0xdeadc0dc,0x72038,0x158644};
+ transport.ResidentLayerRunningSnapshots(snapshots,6); // TEST debug register only;actual emitted PC/status/receipts unchanged
  assert(f.io.ResidentLayerSourceScope(false) && !f.io.ResidentLayerSourceScope(true) && !state->HasLayerMemory());
  PioneerQ38ResidentLayerResult output;uint32 resultWords[28];memcpy(resultWords,&output,sizeof(output));
  unsigned touches=f.io.touches,device=transport.Touches();

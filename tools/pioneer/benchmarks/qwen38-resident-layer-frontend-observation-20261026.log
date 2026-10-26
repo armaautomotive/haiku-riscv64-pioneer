@@ -1,0 +1,31 @@
+OFFLINE frontend policy checkpoint04:05UTC;NOT physical/Work/rate qualification.
+Main44068/clean39777 fulloriginal and native86872 were polled LIVE,not terminal results.
+Completed selected supporting outputs:
+PASS actual Run/RootPhysical CPU observation: 350 cases;unchanged predicates/order except no-marker speculative PC rejection;raw snapshots NEVER complete/hold/publish;finite exhaustion+all later failures retain/freeze;NO added reads/retries after failure;TEST branches ONLY,NOT native/device/cleanup/Work/speed qualification
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+PASS ACTUAL production DEBUG69/namespace20/fixed6521088-byte QLV1/closed10-operation dispatcher;conventional ABI,NO test/NODRV/old68 alias;maxNewFrame=1456
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7  /private/tmp/pioneer-q38-layer-frontend-driver-20261026-a/tenstorrent_pci_probe-resident-layer-DEBUG69
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7  /private/tmp/pioneer-q38-layer-frontend-driver-20261026-clean-a/tenstorrent_pci_probe-resident-layer-DEBUG69
+PASS exact DEBUG69 role gates581/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+PASS ACTUAL DEBUG69 client gates146/exact CPU+client roles/native+image+old client+Work+kernel+fast-math defined0 refusal/late reinclusion;NO device execution
+PASS ACTUAL DEBUG69 closed ProbeControl prefix/131072 operations/10exact allowed/root+cookie checks/handler arguments unchanged;handlers TEST routing tags ONLY,NO IO/native/source/model or execution proof
+PASS DEBUG69 ambient builder gates168/12native-client-legacy entries/both roles including defined0/empty/malformed refused BEFORE SDK/output access;NO Work fallback or device access
+PASS 300 actual updater filesystem/handshake/hash/symlink/owner/failure cases;NO native reload/reset or automatic rollback
+4f9535ae67a853eed4deee4ad064d573d0ecef6a7e6d9a4298e54b175dfa5110  /private/tmp/pioneer-q38-layer-frontend-sdk-20261026-a.log
+9372d3418fd73ccf244e79d0fe7584668666f50167c42e0c35604e9cd68ec898  /private/tmp/pioneer-q38-layer-frontend-sdk-20261026-clean-a.log
+ce3e3f55ce2e057943711efdb29685e584714520458db3d8e24a3f9bd3028010  /private/tmp/pioneer-q38-layer-frontend-branch-20261026-clean-a.log
+ab74880acda20ae22e8dd83dfabce837d6421b87f33c0c4186c33c5692d0859a  /private/tmp/pioneer-q38-layer-frontend-hotswap-20261026-a.log
+ab74880acda20ae22e8dd83dfabce837d6421b87f33c0c4186c33c5692d0859a  /private/tmp/pioneer-q38-layer-frontend-hotswap-20261026-clean-a.log
+36cf7a1825a6167b529da6c7d250fd785573c1dcd401a51be13bd5237778fd7b  /private/tmp/pioneer-q38-layer-frontend-role-20261026-a.log
+4e8008df6a5cc5f5149909ad08cb5a451a27bb8a7e1b16460102ad231c858d0b  /private/tmp/pioneer-q38-layer-frontend-containment-20261026-a.log
+8bf3e63bf0c2acf86b2110da24a45deadd75e2856a8ab66c9d8b970754886a92  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerOwner.h
+b71cd353eebf90cf3f351a4b7103bcbe4b4e0a64ac17411e2041999331c47c87  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerRunObservation.h
+971afed22d8e864b1d0667ae1a02381e5a5e86f556191194ba91b64e5eaecda2  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerValidationControl.h
+966ecfff2e02627cddaeeb6ccecf3b1a97aa7f83533c450752996b09160c2aed  tools/pioneer/tests/pioneer_q38_resident_layer_run_observation_test.py
+e6e1d43104984b5e496220c3704d97d1faf6b2128248b4084bcacffadd1c6588  tools/pioneer/tests/pioneer_q38_projection_native_transport.h
+b94ea2d913ef45a3de7583f60e866c9c10ebbd8efa6156ac43e33dbf6510191f  tools/pioneer/tests/pioneer_q38_projection_native_transport.cpp
+72e9d21898983740923c309a5dea4fcebae5521773a641bcc3dad31cb567998b  tools/pioneer/tests/pioneer_q38_resident_layer_validation_control_test.cpp
+a9b5db7e3ebacd524cb49dad0b12f1b26bfe1dadea8d2ec00af9c06f12efc53e  tools/pioneer/tests/pioneer_q38_resident_layer_native_execution_test.cpp
+e115323e07b4fa78f4ee57c8118baf1c45da18159f652565f1f01b28a0826aeb  tools/pioneer/pioneer_p100a_hot_swap.sh
+103b08d051550cff99722941fa72dcb5deb224db1c04c1df00df26ac308f6716  tools/pioneer/tests/pioneer_p100a_hot_swap_test.py

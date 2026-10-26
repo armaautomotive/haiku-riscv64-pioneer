@@ -101,6 +101,7 @@ struct ProjectionNativeTransport::Impl:ProjectionMemoryIO,
  const ResidentEndpointResult* residentResult=nullptr;
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  void (*layerTerminalCheckpoint)(void*)=nullptr;void* layerTerminalContext=nullptr;bool layerTerminalCheckpointDone=false;
+ std::vector<uint32_t> layerRunningSnapshots;unsigned layerRunningSamples=0;
 #endif
  unsigned residentFault=0,residentFence=0,residentRootPcReads=0,residentFrontendSamples=0;bool residentInjected=false;
  bool residentReadbackObserved=false;unsigned residentReadbackRequests=0,residentReadbackFault=0;
@@ -501,6 +502,11 @@ void ProjectionNativeTransport::ResidentLayerWrite(uint32_t a,uint32_t v){auto& 
 unsigned ProjectionNativeTransport::ResidentLayerBoots()const{return implementation->resident?implementation->resident->Boots():0;}
 unsigned ProjectionNativeTransport::ResidentLayerStops()const{return implementation->resident?implementation->resident->Stops():0;}
 unsigned ProjectionNativeTransport::ResidentLayerFrontendSamples()const{return implementation->residentFrontendSamples;}
+void ProjectionNativeTransport::ResidentLayerRunningSnapshots(const uint32_t* values,unsigned count){auto& p=*implementation;
+ assert(values && count && count<=32 && !p.residentStarted[0] && p.layerRunningSnapshots.empty());
+ p.layerRunningSnapshots.assign(values,values+count);
+} // no VM pc/status/instruction/byte/counter/ready/owner is changed
+unsigned ProjectionNativeTransport::ResidentLayerRunningSamples()const{return implementation->layerRunningSamples;}
 void ProjectionNativeTransport::VerifyResidentLayer(){assert(implementation->resident);implementation->resident->VerifyOutput();}
 void ProjectionNativeTransport::ResidentLayerDiagnostic()const{if(implementation->resident)implementation->resident->Diagnostic();}
 void ProjectionNativeTransport::ResidentLayerStageFingerprints(uint64_t* out)const{
@@ -634,6 +640,13 @@ uint32_t ProjectionNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsig
  if(p.resident && kind==Pc){
   assert(p.residentStarted[p.current] && p.C().coreReset==0x46800);p.resident->Advance(p.current);
   auto pc=p.resident->Pc(p.current);
+#ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
+  if(!p.current && p.layerRunningSamples<p.layerRunningSnapshots.size() && !p.ResidentRead(0,0x17ffc8)){
+   // Real emitted instructions continue normally. Only the external
+   // speculative debug sample differs;all success/receipt data are owed.
+   return p.layerRunningSnapshots[p.layerRunningSamples++];
+  }
+#endif
   if(!p.current && pc==0x72038){
    if(p.residentFault>=14 && p.residentFault<=16 && p.ResidentAt(5,0)){
     p.residentInjected=true;p.residentFence=p.touches;

@@ -90,7 +90,7 @@ struct IO {
   if(i<2)return i==config.physicalBad?1:i==0?0x7200c:5120;
   if(complete)return config.physicalBad==2?0:TT_Q38_RESIDENT_LAYER_MARKER;
   markers++;
-  if(config.markerMode==2)return 0xdeadbeef;
+  if(config.markerMode==2 || (config.markerMode==3 && markers>1))return 0xdeadbeef;
   if(!config.markerMode || markers==1)return 0;
   complete=true;return TT_Q38_RESIDENT_LAYER_MARKER;
  }
@@ -133,6 +133,43 @@ void Compare(Config c){
  }else assert(now.runObservation.failure==Observation::None && now.runObservation.polls==2);
  cases++;
 }
+void Snapshot(uint32_t pc){
+ Config c;c.runningPc=pc;
+ IO before(c),after(c),ordinary(Config{});Legacy old(before);Current now(after),normal(ordinary);
+ PioneerQ38ResidentLayerResult a,b,baseline;
+ assert(!old.Run(before,a)); // documents the intentional former false rejection
+ assert(now.Run(after,b) && normal.Run(ordinary,baseline));
+ assert(after.events==ordinary.events && !std::memcmp(&b,&baseline,sizeof(b)));
+ const auto& observed=now.runObservation;
+ assert(observed.failure==Observation::None && observed.unexpectedPcCount==1
+  && observed.firstUnexpectedPc==pc && observed.firstUnexpectedPoll==1
+  && observed.outsideImageCount==unsigned(!PioneerQ38ResidentLayerProgramImmutable(0,pc))
+  && observed.rejectedPcCount==unsigned(PioneerQ38ResidentLayerRootRejectedPc(pc)));
+ cases++;
+ // A snapshot NEVER substitutes for a later marker,receipt,peer,physical
+ // terminal,guard,budget or HOLD. Each failed attempt is frozen/inert.
+ for(unsigned bad=0;bad<8;bad++){
+  c=Config{};c.runningPc=pc;
+  if(!bad)c.markerMode=0; // persistent unexpected snapshots still exhaust
+  if(bad==1)c.markerMode=3; // genuine fault marker AFTER one snapshot
+  if(bad==2){c.failEvent=ReceiptEvent;c.failNth=1;}
+  if(bad==3){c.failEvent=AcceptEvent;c.failNth=119;}
+  if(bad==4)c.terminalPc=pc;
+  if(bad==5){c.failEvent=HoldEvent;c.failNth=1;}
+  if(bad==6){c.failEvent=GuardEvent;c.failNth=4;}
+  if(bad==7){c.failEvent=BudgetEvent;c.failNth=3;}
+  IO endpoint(c);Current value(endpoint);PioneerQ38ResidentLayerResult out;
+  assert(!value.Run(endpoint,out) && out.unsafe && !out.rootHolds && !value.ran
+   && !value.h.residentLayerNextPublished && !value.g.residentLayerNextPublished
+   && value.runObservation.failure!=Observation::None);
+  if(!bad)assert(value.runObservation.failure==Observation::PollsExhausted
+   && value.runObservation.polls==65536 && value.runObservation.unexpectedPcCount==65536);
+  auto frozen=value.runObservation;auto count=endpoint.events.size();
+  assert(!value.Run(endpoint,out) && endpoint.events.size()==count
+   && !std::memcmp(&frozen,&value.runObservation,sizeof(frozen)));
+  cases++;
+ }
+}
 int main(){
  IO baseline(Config{});Legacy old(baseline);PioneerQ38ResidentLayerResult r;assert(old.Run(baseline,r));Compare(Config{});
  for(unsigned e:{ScopeEvent,LearnedEvent,GuardEvent,BudgetEvent,ReceiptEvent,AcceptEvent,HoldEvent}){
@@ -140,7 +177,8 @@ int main(){
  }
  for(unsigned index=0;index<3;index++){Config c;c.initBad=index;Compare(c);c=Config{};c.physicalBad=index;Compare(c);}
  {Config c;c.markerMode=2;Compare(c);c=Config{};c.markerMode=0;Compare(c);}
- for(uint32_t pc:{0U,1U,0x72040U,0x72060U,0x7207cU,0x17e000U}){Config c;c.runningPc=pc;Compare(c);}
+ for(uint32_t pc:{0U,1U,0x58644U,0x72040U,0x72060U,0x7207cU,0x17e000U,0xdeadc0dcU})Snapshot(pc);
+ {Config c;c.runningPc=0x1585ec;Compare(c);}
  for(uint32_t pc:{0U,0x72040U,0x72060U,0x72000U}){Config c;c.terminalPc=pc;Compare(c);}
  for(uint32_t reset:{0U,0x47800U,0x87ffffU}){Config c;c.reset=reset;Compare(c);}
  for(unsigned which=0;which<9;which++){
@@ -153,10 +191,13 @@ int main(){
  Observation observed;observed.Status(3,5);assert(!observed.statusValid && !observed.statusReads);
  observed.Poll();observed.Status(2,0x46524c51);observed.Pc(0x72074);observed.Pc(0x7207c);observed.Reset(0x46800);
  assert(observed.statusValid==4 && observed.statusReads==1 && observed.pcReads==2 && observed.pc[0]==0x72074 && observed.pc[1]==0x7207c);
- observed.Fail(Observation::PcRejected);auto frozen=observed;
- observed.Fail(Observation::Marker);observed.Status(0,1);observed.Pc(1);observed.Reset(1);observed.Poll();
+ observed.Poll();observed.RunningPc(0x58644,false,false);observed.Poll();observed.RunningPc(0x72060,true,true);
+ assert(observed.unexpectedPcCount==2 && observed.outsideImageCount==1 && observed.rejectedPcCount==1
+  && observed.firstUnexpectedPc==0x58644 && observed.firstUnexpectedPoll==2);
+ observed.Fail(Observation::Marker);auto frozen=observed;
+ observed.Fail(Observation::Marker);observed.Status(0,1);observed.Pc(1);observed.Reset(1);observed.Poll();observed.RunningPc(0,false,false);
  assert(!std::memcmp(&observed,&frozen,sizeof(frozen)));cases++;
- printf("PASS actual Run/RootPhysical CPU observation: %u branch/refusal/freeze cases;exact BEFORE/AFTER IO-event order+results;NO added reads/retries after failure;TEST branches ONLY,NOT native/device/cleanup/Work/speed qualification\n",cases);
+ printf("PASS actual Run/RootPhysical CPU observation: %u cases;unchanged predicates/order except no-marker speculative PC rejection;raw snapshots NEVER complete/hold/publish;finite exhaustion+all later failures retain/freeze;NO added reads/retries after failure;TEST branches ONLY,NOT native/device/cleanup/Work/speed qualification\n",cases);
 }
 '''
 

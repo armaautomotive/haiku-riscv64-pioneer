@@ -1,0 +1,101 @@
+Resident-layer frontend observation policy — 2026-10-26 UTC
+=========================================================
+
+STATUS at04:05UTC: OFFLINE implementation checkpoint,NOT staged/installed.
+Supporting checks below are complete. Main44068,clean39777 full original
+public-control tests and native86872 failure-containment test were each
+polled and confirmed LIVE. No full-test pass or physical qualification is
+claimed yet. Keep the SAME handles;elapsed observation time is not failure.
+Current card driver remains working041/tag12/gen2/cold0/owner0,restored in
+the preceding recovery. Last actual whole-model0.207893161tok/s unchanged;
+20tok/s/full-card inference remain UNMET.
+
+Evidence and semantics
+----------------------
+57bbf94aaa preserves physical B25132 FAILURE10/no completed receipt. Its
+existing reads recorded1585ec followed by58644 while marker0. No CPU
+numeric comparison was performed;no speed result was produced. Neither
+speculation nor actual bad execution was proven by that sample alone.
+
+Primary architecture source:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+T0 debug PC at0xffb13140 is a speculative frontend snapshot,not retirement.
+Instructions seen there may never execute. The new root RUN therefore
+records no-marker PCs verbatim rather than interpreting one as executed
+code or a fault. It never corrects bit20 or treats any sample as success.
+This is NOT a claim that the previous coordinator actually completed.
+
+Only the no-marker ROOT polling branch changes. The same Pause/PC read
+is retained;no extra reads per poll,resampling retry or post-failure IO.
+Marker faults,
+30-second monotonic budget,65536-poll ceiling,source/mapping/reset/clock
+guards,exact positive completion trailer/two terminal PCs,full installed
+code/manifests/counter/command receipts,ALL119 independent peers,real STOPs,
+ALL120holds,full44MB original restore/second verification and sealed END
+remain mandatory. No UNKNOWN owner can be released/reset/retried/restored.
+Peer polling and positive terminal-PC admission are unchanged.
+
+Private CPU observation v2 is72bytes (not public ABI):last reads plus first
+unexpected running PC/poll and raw outside-image/fault-region counts. The
+first actual Run failure still freezes all fields. Fixed DEBUG69 prints
+those existing-read counts on success or failure;Work gains no logger,
+CPU arithmetic/reference,validation fallback,device peek or public flag.
+Old captured failure enum values10/11 remain decodable;they are no longer
+no-marker fault predicates. Failed completion still follows real retention.
+
+Completed supporting checks — NOT native/silicon qualification
+--------------------------------------------------------------
+Main88588 and independent clean branch tests350cases each terminal0:
+all formerly unchanged predicates/results/IO order remain checked. Eight
+classes of speculative sample (including58644,zero,misalignment,fault code
+and unrelated addresses) are observations only. Each still refuses missing
+marker/poll exhaustion,later fault marker,receipt,119th peer,bad positive
+terminal,HOLD,guard and deadline;no next-state publication or cleanup.
+First unexpected sample is preserved;first failure freezes it;retry inert.
+These extracted-method endpoint tests are NOT actual owner/native proof.
+
+Actual read-only Haiku SDK builds41434/main and55002/clean terminal0:
+  driver b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7
+  NODRV 9fcf1f7fa56cbcda1e02d3f4d504bd60e0c5173028f51002174d8b5d35ba6d70
+Both byte-identical;max new kernel frame1456B. Conventional ABI and CPU/test
+symbol audits pass;ALL5 NODRV entrypoints stay inert constant-return.
+Old65 remains byte-exact61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821.
+No SDK/dirty llama.cpp/FlashNext modification or inspection.
+
+Role admission581,CPU-client separation146,closed dispatch131072operations
+and ambient-builder refusal168 pass. Public reply/role69/namespace20 and
+unchanged independent CPU client057b1eca retain their separate meanings.
+
+New SOURCE updater maps ONLY working041 <-> b554,NOT beeaf or9609.
+  e115323e07b4fa78f4ee57c8118baf1c45da18159f652565f1f01b28a0826aeb
+Main18313 and clean46160 updater suites terminal0/300cases each. BOTH older
+same-tag images refuse BEFORE administrative open;all owner/idle/unknown,
+hash/symlink/parent/generation/backup checks remain. No automatic rollback.
+Preserve immutable0d0f (beeaf) and7cb (9609) helpers;neither maps b554.
+New candidate/updater have NOT been staged,installed or executed.
+
+Required next checks already running,NOT yet passes
+---------------------------------------------------
+Main44068: /private/tmp/pioneer-q38-layer-frontend-original-20261026-a.log
+Clean39777: /private/tmp/pioneer-q38-layer-frontend-original-20261026-clean-a.log
+Native86872: /private/tmp/pioneer-q38-layer-frontend-native-20261026-a.log
+The two original-model tests authenticate the same GGUF and compute all
+independent references before native context. The actual emitted VM's PC,
+instructions,bytes,status,counters and products are NOT modified. Only six
+external no-marker debug samples are varied,including the physical pair,
+a fault-region value,unrelated address and terminal-looking speculation.
+They still owe all1630208 readback words/numeric checks/STOP/restore/END.
+The native test propagates the same earlier samples into its actual-stack
+terminal failure forks;bad completed status/PC/code/receipts must still
+quarantine with zero subsequent device IO/reset/restore/retry/END.
+Simulated OS/NoC byte endpoints are NOT physical execution or rate evidence.
+
+Clean tree /private/tmp/pioneer-layer-frontend-clean.lzQALzHh is an archive
+of57bbf94aaa plus the ten explicit source/test/updater changes. Poll the
+same live handles,inspect exact terminal results,fix any actual failures
+and update evidence before any guarded single-attempt card trial.
+
+Full objective remains unchanged:full64-layer scheduling,dense attention
+and KV,current-state commits,vocabulary/sampling,persistent whole-token
+loop and no-CPU-reference FAST Work/Assistant integration,then honest
+end-to-end rate measurements. First-layer diagnostics are not completion.

@@ -109,6 +109,11 @@ static status_t Q38ResidentLayerValidationControl(PioneerProbeCookie* cookie,uin
   }
   memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
  }
+ if(native){
+  const auto& observed=native->RunObservation();
+  dprintf("Q38-LAYER-DEBUG:FRONTEND unexpected%u outside%u rejected%u first%08x poll%u;RAW_SPECULATIVE_SNAPSHOTS_NOT_EXECUTION_OR_COMPLETION;CPU_ONLY_EXISTING_READS\n",
+   observed.unexpectedPcCount,observed.outsideImageCount,observed.rejectedPcCount,observed.firstUnexpectedPc,observed.firstUnexpectedPoll);
+ } // fixed DEBUG69 ONLY;success or failure,NO additional device IO/Work logging
  status=user_memcpy(data,reply,sizeof(*reply));delete reply;
  if(!okay || status!=B_OK || c->Unsafe()){tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
  delete results;return status; // independent original-GGUF DEBUG observer must qualify BEFORE explicit END

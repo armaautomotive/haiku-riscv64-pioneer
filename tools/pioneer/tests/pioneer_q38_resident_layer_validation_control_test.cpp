@@ -113,6 +113,11 @@ int main(int argc,char** argv){
  f.c->q38GdnCallThread=-1;currentTeam=7;currentThread=42;
  ProjectionNativeTransport transport(argv[1],argv[2],f.io.wholeWorkspace);f.io.projectionTransport=&transport;f.io.projectionSeedRequired=true;
  transport.ConfigureResidentLayerControl(argv[6],argv[7],f.io);
+ // Actual VM execution is untouched. Reproduce the physical1585ec->58644
+ // snapshots plus independent fault-region/unknown/terminal-looking
+ // speculation BEFORE any real success marker. These are NOT products.
+ const uint32_t snapshots[]={0x1585ec,0x58644,0x72060,0xdeadc0dc,0x72038,0x158644};
+ transport.ResidentLayerRunningSnapshots(snapshots,6);
 #ifdef PIONEER_Q38_TEST_RESIDENT_LAYER_ORIGINAL
  transport.LearnedSource(*original);
 #endif
@@ -174,6 +179,11 @@ int main(int argc,char** argv){
   && reply->ffn_matrices==357 && reply->ffn_producers==88 && reply->final_rows==5120);
  for(auto reserved:reply->reserved_reply)assert(!reserved);
  assert(!locked && locks==releases && c.q38GdnCallThread==-1 && !c.Unsafe() && !sColdRecoveryRequired && !unexpectedRoutes);
+ const auto& observed=c.q38ResidentLayerNative->RunObservation();
+ assert(transport.ResidentLayerRunningSamples()==6 && observed.failure==PioneerQ38ResidentLayerRunObservation::None
+  && observed.unexpectedPcCount==3 && observed.outsideImageCount==2 && observed.rejectedPcCount==1
+  && observed.firstUnexpectedPc==0x58644 && observed.firstUnexpectedPoll==2);
+ puts("PASS ACTUAL DEBUG69 emitted original pipeline with6 no-marker raw frontend snapshots/3 anomalies;ALL genuine success/physical/numeric/STOP/restore requirements unchanged;NO snapshot grants completion");
  // This public call already owes all119 fresh STOPs and full restoration.
  // The separate VerifyResidentLayer helper intentionally accepts ONLY the
  // earlier pre-STOP state;do not call it here or manufacture WAIT state.
