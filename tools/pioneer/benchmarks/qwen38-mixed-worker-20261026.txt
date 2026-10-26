@@ -1,0 +1,154 @@
+Qwen3.8-27B: NEW returning mixed worker QMW1
+2026-10-26; OFFLINE instruction/endpoint qualification, NOT card throughput
+
+Implemented
+-----------
+One genuinely new worker front end owns the boot record, full64-word job,
+private monotonic nonce, physical source seal, and completion status. The
+same live worker calls matrix, activation/input packing, Conv, paired GDN,
+GDN output packing, and all three dense-attention phases. Attention RETURNS
+instead of entering the standalone QDW1 STOP terminal. Local/global maxima,
+scores and partial state persist between the phases. A completed phase3
+allows a new layer/position frame, never a fresh boot or reset of history.
+No other operation, including STOP, can interrupt an incomplete dense frame.
+
+The old QFP2 records are INTERNAL arithmetic-call data only. The external
+grammar is QMW1, not a retagged old native scope or caller-ready flag. Old
+arithmetic translation units are separately recompiled as internal capsules
+with s11 reserved. The new front end alone sets s11 to its private stack
+snapshot; the packet seal alone reads it. The complete emitted disassembly
+contains exactly those two s11 instructions. There is no writable global
+or second public mailbox posing as a private descriptor/source snapshot.
+
+Before/after packets, capsule hooks check the complete captured external
+boot/job, current global doorbell and all16 physical source words. Existing
+arithmetic descriptor/command/counter checks remain. The front end also
+retains all8 counter words across idle/job boundaries; unexplained movement
+cannot be absorbed as the next baseline. Words2/6 alias ONE physical counter.
+No CPU numerical reference, CPU dot validation, host intermediate product,
+PCI weight roundtrip, code reload, core reset or per-attention STOP is in
+this new executable lifecycle. Matrix-call data still have their own bounded
+debug/work selector; this is NOT an installed Assistant Work mode.
+
+New explicit placement, not old ownership
+----------------------------------------
+Boot6000 -> entry20000; wait2004c/branch20050; STOP20060;
+fault entry20080/terminal2009c. NEW front code20000, returning dense code40000,
+FFN helpers60000, service68000, affine70b00, matrix72000, GDNb8000.
+The new60000 helper region is deliberate: reserving s11 plus packet seals
+grew it beyond the old64000..68000 bound. It was NOT allowed to overlap
+the service, shrink the stack, or masquerade as the old native footprint.
+External boot75000/job75100/doorbell75200/status75240..75280 are distinct
+from all old math metadata, including the GDN clock at74d00.
+Different operations reuse operand scratch only AFTER completed returns.
+
+This is a PEER image, not a combined controller image. ROOT and worker code
+having the same numeric L1 address on DIFFERENT tiles is not a joint native
+link or ownership proof. No existing native snapshot/source/init/clock/
+GDDR/L1/Tensix/NoC capability has been extended or aliased to run it.
+
+Actual execution evidence
+-------------------------
+Warnings-as-errors, ASan+UBSan and disabled FP contraction. The test uses
+ONE shared config/thread/LRegs/physical-Dst model for matrix, GDN and dense;
+there is no detached attention simulator or state copy/reset at transitions.
+Actual emitted instructions perform every arithmetic operation and return.
+CONTROL and byte endpoints are SYNTHETIC, not an actual mixed ROOT program.
+
+Final clean-tree FULL suite: 131 execution cases, 267 fault cases, exit0.
+All119 worker bindings execute actual matrix jobs. All96 dense bindings
+execute three changed frames N1/32/64 interleaved with matrix jobs, retaining
+their private sequence (nonce1..14). Bindings1/24/96 also run N8192 without
+reboot, continuing through nonce18. Paired GDN tests at heads0/31/47 execute
+matrix/Conv/GDN/[output]/matrix/dense/matrix/changed-state GDN/matrix/STOP
+on the SAME cores. Output packing is included at head0; its producer values
+are explicit synthetic byte inputs, NOT a complete model projection.
+Q4_K (GGUF type12) and Q6_K (type14) execute K5120/6144/17408, three output
+groups, changed-input matrix jobs before/after dense attention. The raw log
+uses legacy Q12/Q14 labels for these GGUF TYPE NUMBERS, not 12/14-bit weights.
+
+Dense Q/K/V and reduction parameters are deliberately structured synthetic
+inputs: zero K, finite half-expanded Q, exact power-of-two inverse, changing
+V, six heads per worker. Scores/exp/probability and compensated PV results
+are checked independently. This proves retained-state dispatch/arithmetic
+handoff, NOT the actual original-model QG/K/V -> QDP -> QDR producer path.
+The earlier standalone QDR full8192/all96 QDP/oracle qualification remains
+separate; it has NOT been relabeled as a mixed-controller/native run.
+
+Faults: all64 external job and64 boot words changed after the first packet;
+all64 job words malformed before work; all64 dense frame words changed
+between phases; four illegal mid-frame operation transitions; unexplained
+movement of each of the SEVEN independent counter registers. Each tested
+fault is terminal/inert, with no following packet/compute/success. Provisional
+local data do not grant cleanup, state/KV commit or token publication.
+Max observed shared device stack5060B of the fixed8192B; new front static
+frame1072B, dense phase400B. No unsupported division/FMA/FP-to-int/EBREAK,
+writable global/GOT, undefined symbol or unexported allocated section.
+
+Main/clean builds have IDENTICAL eight sections and ELF, all45 changed
+implementation/build/test/guard files byte-identical in the independent
+tree. Dirty llama.cpp and unrelated FlashNext files were excluded/untouched.
+Main initial full suite121/132 passed before expanding the host test.
+Final main default suite10/267 and final clean full131/267 pass. These are
+different test selections, so their complete stdout is NOT called identical.
+Raw final clean FULL output is qwen38-mixed-worker-20261026.log, SHA256
+d49d9c30d2e59aa2a698d1799e3ba20e05b4ea6f4063fdd133973b09509f5e14.
+Final main default SHA256
+660fcbfd3d5016049b2b80e80a7e95460e185ab6238ad48369ad037d184796a7.
+
+Reproducible pins
+------------------
+boot.bin4 a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c
+mixed.bin4400 daae5eab80a4e423d9b33a1eff84b39de6d29b7b4d85fe52a7e00e24bc3178f2
+dense.bin10332 cef405cc7405eea6001e47e9a6c9db73ca790bcac985f09d2bb964de8c68045f
+text.bin5984 3a8ffe4f7e885f992f210bd1cc0887a1309159972409403b3082535b1916dab1
+affine.bin5360 47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78
+ffn.bin16456 f6ef5d614091b5ed12365e1945daa2dad04d37c432ac9dd5f859f857bba83e52
+service.bin9888 b9fb256a75546dfe9be4a7805ef170913b2b1eecab1fbf1afb3b6d7c098c9262
+gdn.bin35564 eeaa084e659efbc5f2b7c9922a9de862057b2ed624bf85b03b8ccde2c02c5c74
+program.elf121680 6a74556d6f4095353b0bffd0f44fe3d35706c21ea304f5233d034e47702117ea
+Builder: build_qwen38_mixed_worker_image.py SDK FRESH_ABSOLUTE_OUTPUT
+Test: tests/run_pioneer_q38_mixed_worker_tests.py IMAGE --full
+Image admission verifies every section/ELF pin before running the tests.
+
+Containment/regression
+-----------------------
+360 mixed-role gates across21 ambient build entries and317 old-partition
+gates across20 entries pass, including defined0 and late role mixing.
+DEBUG69 role585/client170/reference84 gates and original CPU observer and
+client406-fault regression pass. Main+clean SDK builds reproduce unchanged
+DEBUG69 b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093, inert NODRV=9fcf1f7f. The ancestor builder authenticates
+every prior image FIRST; the old six-section QOL1 image remains exact.
+Old QOL1 output49-case/GDN shared-state smoke tests pass. Recompiled old
+standalone QDW1 ELF remains47c53a5f144bb0ffdebec933ff9300b8e01fc74dc3c6123c70c1249f18383e8f.
+
+Development failures, all OFFLINE
+----------------------------------
+Initial builds rejected misleading indentation, an unused inherited helper,
+and the real helper/service overlap. These were repaired in the NEW image;
+old binaries stayed exact. First host fixture missed the relocated matrix
+command-normalizer range; the strict transport observer caught it. An added
+counter test incorrectly treated alias word6 as a second register; correcting
+the fixture tests all seven real registers rather than inventing hardware.
+The closed client gate count was extended35->37 for the two new forbidden
+roles, not weakened. No failed test touched the accelerator.
+
+Still owed / NEXT
+------------------
+The actual QDR controller must use QMW1/live per-worker nonces and retain
+ALL119 workers across matrix/GDN/dense layers, NEVER boot/STOP96 per layer.
+Join actual QDM QG/K/V, four QDP producers and transport, QDR reduction,
+6144-vector native quantization/scales, actual QDM O and residual/RMS/FFN/link.
+Then qualify full64-layer/multiple-token model order, actual canonical KV/
+recurrent-state commit, output head/vocabulary/sampling, source and immutable
+original GGUF ledger, and the new complete role-specific native journals,
+physical source/PC/reset/nonces, init, clocks, host and all memory/compute/NoC
+lifetimes. A proof/plan/ready flag or old first-layer scope cannot supply them.
+
+No GPU launch, driver installation, relay pulse or Assistant restart occurred.
+Read-only SSH status: driver55 tag2026102100010012 generation4 quiesced0
+cold0 active_owner0 open_count1 guard1; CPU_METADATA_ONLY.
+Last measured whole-model inference remains0.207893161 tokens/sec. This
+checkpoint makes NO measured speedup claim. Target20 tokens/sec is UNMET;
+the long-running goal stays ACTIVE.

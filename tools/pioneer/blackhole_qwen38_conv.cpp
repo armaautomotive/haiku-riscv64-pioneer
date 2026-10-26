@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38MixedCapsuleHook.h"
 // OFFLINE QCV1 parallel16channel consumer candidate,NO native selection.
 // Reads resident QPS1 QKV/original F32 weights/previous state on CARD;
 // writes only private next state+convolution result. No PCI/DMA/host math.
@@ -22,6 +23,7 @@ static bool Seal(const uint32_t* d
  ,const uint32_t* table
 #endif
  ){
+ PIONEER_Q38_MIXED_SEAL();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])return false;
 #ifdef PIONEER_Q38_CONV_BATCH_IMAGE
  for(unsigned i=0;i<384;i++)if(Words(TT_Q38_CONV_BATCH_TABLE)[i]!=table[i])return false;

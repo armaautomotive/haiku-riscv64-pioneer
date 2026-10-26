@@ -3,6 +3,7 @@
 // No driver selects it. Shape is not ownership;native use requires a NEW
 // retained mutable-workspace owner and independently proven coordinator.
 #define PIONEER_ATTENTION_FREESTANDING
+#include "PioneerQ38MixedCapsuleHook.h"
 #include "PioneerQ38FfnNativeInput.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnResidentShape.h"
 extern "C" void scalar_fault_park() __attribute__((noreturn));
@@ -12,6 +13,7 @@ static void Fence(){asm volatile("fence" ::: "memory");}
 static unsigned Counter(unsigned i){const unsigned o[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};return o[i];}
 static unsigned Source(unsigned i){return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
 static bool Sealed(const uint32_t* d) {
+ PIONEER_Q38_MIXED_SEAL();
  bool same=true;
  for(unsigned i=0;i<16;i++)same &= *Words(0xffb20000+Source(i))==d[16+i];
  for(unsigned i=0;i<64;i++)same &= Words(TT_Q38_FFN_RESIDENT_DESCRIPTOR)[i]==d[i];

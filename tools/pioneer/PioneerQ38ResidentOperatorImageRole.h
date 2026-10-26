@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Deliberately outside an include guard:roles cannot change on reinclusion.
+#ifdef PIONEER_Q38_MIXED_WORKER_IMAGE
+#error Old operator ABI never aliases the NEW mixed front end
+#endif
 #if !defined(PIONEER_Q38_RESIDENT_OPERATOR_IMAGE) || PIONEER_Q38_RESIDENT_OPERATOR_IMAGE != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT) || PIONEER_Q38_FFN_PERSISTENT != 1 || !defined(PIONEER_Q38_PROJECTION_PERSISTENT) || PIONEER_Q38_PROJECTION_PERSISTENT != 1
 #error Exact OFFLINE resident operator IMAGE role required
 #endif

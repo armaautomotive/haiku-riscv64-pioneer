@@ -252,8 +252,8 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
   for(unsigned i=0;i<16;i++){memory[0x74000+i*4]=job[i];memory[TT_Q38_GDN_GATED_READY+i*4]=0;memory[TT_Q38_GDN_GATED_PEER_READY+i*4]=0x7fc00000;memory[TT_Q38_GDN_RENDEZVOUS_CLOCK+i*4]=0;}
   for(unsigned i=0;i<8;i++)gdnBefore[i]=Count(i);memory[0x74100]=sequence;
  }
- bool GdnFinished(unsigned sequence)const{return pc==TT_Q38_PEER_WAIT_LOAD && memory.at(0x74144)==sequence;}
- bool GdnFaulted()const{return pc==TT_Q38_PEER_FAULT_PARK;}
+ virtual bool GdnFinished(unsigned sequence)const{return pc==TT_Q38_PEER_WAIT_LOAD && memory.at(0x74144)==sequence;}
+ virtual bool GdnFaulted()const{return pc==TT_Q38_PEER_FAULT_PARK;}
  void VerifyGdn(unsigned sequence){
   assert(GdnFinished(sequence) && !pending && gdnPhase==5 && gdnPolls && gdnImports==9 && gdnNextWrites==8192
    && gdnOutputWrites==64 && gdnGatedWrites==64 && gdnCsrReads==8256 && drained && !gdnLatency && !gdnPendingWords && peer);

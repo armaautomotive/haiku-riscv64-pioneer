@@ -2,7 +2,15 @@
 // NEW96-worker/4KV-group partition kernel. SIX queries reuse each KV
 // chunk; global reductions are SEPARATE card-controller dependencies.
 // No CPU numeric reference, host output endpoint or canonical KV write.
+#ifdef PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE
+#include "PioneerQ38MixedWorkerImageRole.h"
+#include "PioneerQ38MixedCapsuleHook.h"
+#if PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE != 1 || !defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE)
+#error Exact separately compiled returning dense capsule required
+#endif
+#else
 #include "PioneerQ38DensePartitionImageRole.h"
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38LearnedRms.h"
 #include "PioneerQ38DensePartitionLayout.h"
@@ -25,6 +33,9 @@ static bool Quiet(){
  return true;
 }
 static void Seal(const uint32_t* d){
+#ifdef PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE
+ PIONEER_Q38_MIXED_SEAL();
+#endif
  for(unsigned i=0;i<64;i++)if(Words(L::Header)[i]!=d[i])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])scalar_fault_park();
  if(!Quiet())scalar_fault_park();
@@ -205,6 +216,42 @@ static void LocalValues(const uint32_t* d,const uint32_t* p,const float* global,
  Fence();Words(L::Local)[0]=3;Fence();
 }
 }
+#ifdef PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE
+// Callable phase, NOT a second persistent loop. The caller retains d,
+// local/global maxima and the ONE global nonce across all operation kinds.
+extern "C" void q38_mixed_dense_phase(const uint32_t* d,unsigned operation,unsigned sequence,float* local,float* global){
+ using namespace DensePartition;
+ (void)&PioneerQ38LearnedRms;
+ uint32_t tracked[8],before[8],job[16],parameters[16];
+ if(!L::Shape(d) || operation<1 || operation>3)scalar_fault_park();
+ for(unsigned i=0;i<16;i++)job[i]=Words(L::Job)[i];
+ if(!L::JobShape(job,d,sequence,operation))scalar_fault_park();
+ JobSeal(job,sequence);Seal(d);
+ for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
+ for(unsigned i=0;i<8;i++){
+  before[i]=tracked[i]=*Words(0xffb20000+Counter(i));
+  if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();
+ }
+ if(operation>1)for(unsigned i=0;i<16;i++)parameters[i]=Words(L::Parameters)[i];
+ if(operation==1)LocalScores(d,tracked,local,job);
+ else if(operation==2)LocalExp(d,parameters,local,global);
+ else LocalValues(d,parameters,global,tracked,job);
+ JobSeal(job,sequence);Seal(d);
+ unsigned reads=operation==2?0:d[46]>>1,flits=operation==2?0:d[47]>>1;
+ auto* s=Words(L::Summary);
+ if(s[6]!=reads || s[7]!=flits)scalar_fault_park();
+ for(unsigned i=0;i<8;i++){
+  unsigned delta=i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U;
+  if(tracked[i]!=*Words(0xffb20000+Counter(i)) || uint32_t(tracked[i]-before[i])!=delta)scalar_fault_park();
+  s[8+i]=before[i];s[16+i]=tracked[i];
+ }
+ for(unsigned i=0;i<16;i++)s[24+i]=d[16+i];
+ for(unsigned i=0;i<8;i++)s[40+i]=d[32+i];
+ s[1]=sequence;s[2]=operation;s[3]=d[48];s[4]=d[49];s[5]=6;
+ s[48]=d[40];s[49]=d[15];s[50]=d[3];s[51]=d[4];s[52]=d[5];s[53]=d[6];s[54]=d[46];s[55]=d[47];
+ Fence();s[0]=L::Magic;Fence();
+}
+#else
 extern "C" unsigned scalar_main(){
  using namespace DensePartition;
  (void)&PioneerQ38LearnedRms; // only the exact software-binary64 SUM is reused
@@ -254,3 +301,4 @@ extern "C" unsigned scalar_main(){
   Words(L::Status)[4]=0;Fence();Words(L::Status)[1]=last;Fence();
  }
 }
+#endif

@@ -10,8 +10,8 @@ struct ResidentGdnOutputPeer:ResidentGdnOperatorPeer {
  std::array<uint32_t,32> line={};
  unsigned lineWrites=0,descriptorWord=40,busyPacket=0,busyOffset=0;
  unsigned receiptCounterPacket=0,receiptCommandPacket=0,receiptReads=0,packetCommandReads=0;
- ResidentGdnOutputPeer(const char* path,unsigned worker=1,unsigned panels=1)
-  :ResidentGdnOperatorPeer(path,worker,8,6144,panels){
+ ResidentGdnOutputPeer(const char* path,unsigned worker=1,unsigned panels=1,unsigned type=8,unsigned k=6144)
+  :ResidentGdnOperatorPeer(path,worker,type,k,panels){
   line.fill(0xa5a5a5a5);
   // An op6->op7 job-bit corruption reaches the existing Conv entry, which
   // snapshots this exact fixed local table before rejecting its job tag.

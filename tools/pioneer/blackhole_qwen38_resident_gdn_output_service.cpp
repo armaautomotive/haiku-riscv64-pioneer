@@ -2,6 +2,7 @@
 // OFFLINE returning op6: actual gated GDDR -> native Q8_0 + fresh ancestry.
 // All-layer DATA grammar, not a native producer or full-model launch grant.
 #include "PioneerQ38ResidentGdnOutputImageRole.h"
+#include "PioneerQ38MixedCapsuleHook.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38ProjectionInput.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnOutputShape.h"
@@ -12,6 +13,7 @@ static void Fence(){asm volatile("fence" ::: "memory");}
 static unsigned Source(unsigned i){return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
 static unsigned Counter(unsigned i){const unsigned o[]={0x208,0x20c,0x210,0x214,0x204,0x220,0x210,0x228};return o[i];}
 static __attribute__((noinline,optimize("Os"))) bool Current(const uint32_t* d,const uint32_t* job,const uint32_t* source,unsigned worker,unsigned self){
+ PIONEER_Q38_MIXED_SEAL();
  if(*Words(0x74100)!=job[12])return false;
  for(unsigned i=0;i<16;i++)if(Words(0x74000)[i]!=job[i] || *Words(0xffb20000+Source(i))!=source[i])return false;
  for(unsigned i=0;i<8;i++)if(Words(0x74040)[i]!=(i==0?unsigned(TT_Q38_FFN_PERSISTENT_MARKER):i==1?worker:i==2?self:i==3?source[0]:0))return false;

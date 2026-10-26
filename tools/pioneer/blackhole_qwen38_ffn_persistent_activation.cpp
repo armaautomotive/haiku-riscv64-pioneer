@@ -102,6 +102,7 @@ extern "C" void q38_ffn_persistent_activation(const uint32_t* job,const uint32_t
 namespace ProjectionProducer {
 using namespace FfnResident;
 static __attribute__((noinline,optimize("Os"))) bool Seal(const uint32_t* d){
+ PIONEER_Q38_MIXED_SEAL();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])return false;
  for(unsigned i=0;i<64;i++)if(Words(TT_Q38_FFN_RESIDENT_DESCRIPTOR)[i]!=d[i])return false;
  return true;

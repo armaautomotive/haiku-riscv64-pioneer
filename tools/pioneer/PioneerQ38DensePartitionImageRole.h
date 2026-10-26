@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: NEW96-worker image,not a native selector or old component alias.
+#if defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE)
+#error Standalone stopping partition ABI is not a mixed returning capsule
+#endif
 #if !defined(PIONEER_Q38_DENSE_PARTITION_IMAGE) || PIONEER_Q38_DENSE_PARTITION_IMAGE != 1
 #error Exact separate dense-partition IMAGE required
 #endif

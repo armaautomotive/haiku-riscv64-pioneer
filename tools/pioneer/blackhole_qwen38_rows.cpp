@@ -1,4 +1,5 @@
 // OFFLINE-ONLY multi-output-row follow-on. NOT selected by any driver.
+#include "PioneerQ38MixedCapsuleHook.h"
 #define PIONEER_Q38_STREAM
 /* SPDX-License-Identifier: MIT */
 // OFFLINE full GGUF quantization-block primitive: sixteen output rows,
@@ -367,13 +368,14 @@ static void Matrix()
 // NoC uncertainty parks immediately;never retry/clear a counter or command.
 static void FetchBlock(uint32_t address)
 {
+	PIONEER_Q38_MIXED_SEAL();
 	if (*Words(0xffb20040) || (*Words(0xffb20240)&255)) block_fault_park();
 	*Words(0xffb20000)=address;
 	if (*Words(0xffb20000)!=address) block_fault_park();
 	uint32_t expected=*Words(0xffb20208)+1;
 	*Words(0xffb20040)=1; (void)*Words(0xffb20040); Fence();
 	for (unsigned attempt=0;attempt<65536;attempt++) {
-		if (!*Words(0xffb20040) && *Words(0xffb20208)==expected && !(*Words(0xffb20240)&255)) { Fence(); return; }
+		if (!*Words(0xffb20040) && *Words(0xffb20208)==expected && !(*Words(0xffb20240)&255)) { Fence(); PIONEER_Q38_MIXED_SEAL(); return; }
 	}
 	block_fault_park();
 }
@@ -386,6 +388,7 @@ __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
 static void ReadCommand(uint32_t address,uint32_t route,uint32_t destination,unsigned bytes)
 {
+	PIONEER_Q38_MIXED_SEAL();
 	if (*Words(0xffb20040) || (*Words(0xffb20240)&255)) block_fault_park();
 	const unsigned offsets[]={0,8,12,32};
 	const uint32_t values[]={address,route,destination,bytes};

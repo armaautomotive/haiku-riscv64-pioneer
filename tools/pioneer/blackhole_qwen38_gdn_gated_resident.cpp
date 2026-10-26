@@ -5,6 +5,7 @@
 #error Exact separate offline fused-resident image role required
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
+#include "PioneerQ38MixedCapsuleHook.h"
 #define PIONEER_Q38_GDN_GATED_NORM_IMAGE 1
 #define PIONEER_Q38_GDN_PREPARE_IMAGE 1
 #include "PioneerQ38GdnGatedNorm.h"
@@ -43,6 +44,7 @@ static bool Quiet(){
  return true;
 }
 static bool Bound(const uint32_t* d){
+ PIONEER_Q38_MIXED_SEAL();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])return false;
  for(unsigned i=0;i<64;i++)if(Words(TT_Q38_GDN_GATED_DESCRIPTOR)[i]!=d[i])return false;
  return true;

@@ -4,6 +4,7 @@
 // No intermediate terminal,host numeric input,CPU reference,PCI/DMA or
 // host stop/reload. NOT selected by any native owner/driver/Work mode.
 #define PIONEER_ATTENTION_FREESTANDING
+#include "PioneerQ38MixedCapsuleHook.h"
 typedef __UINT32_TYPE__ uint32_t;
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnRecurrentShape.h"
 // Size-optimized descriptor checks may copy constant route tables. Fixed
@@ -23,6 +24,7 @@ extern "C" __attribute__((noinline)) bool q38_resident_gdn_state_shape(const uin
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 static volatile uint32_t* Words(unsigned at){return reinterpret_cast<volatile uint32_t*>(at);}
 static bool Descriptors(const uint32_t* input,const uint32_t* state){
+ PIONEER_Q38_MIXED_SEAL();
  for(unsigned i=0;i<64;i++)if(Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i]!=input[i]
   || Words(TT_Q38_RGDN_DESCRIPTOR)[i]!=state[i])return false;
  return true;

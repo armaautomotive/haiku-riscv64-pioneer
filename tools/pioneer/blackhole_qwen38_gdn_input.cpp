@@ -2,6 +2,7 @@
 // OFFLINE resident raw-input -> local GDN preparation. Not a native grant.
 // Reuse the qualified QGP1 math IN THIS worker,not a host stop/reload path.
 #define PIONEER_Q38_GDN_INPUT_IMAGE 1
+#include "PioneerQ38MixedCapsuleHook.h"
 #define scalar_main q38_local_gdn_prepare
 #include "blackhole_qwen38_gdn_prepare.cpp"
 #undef scalar_main
@@ -11,6 +12,7 @@ static unsigned Counter(unsigned i){const unsigned o[]={0x208,0x20c,0x210,0x214,
 static unsigned Source(unsigned i){return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
 static void Fence(){asm volatile("fence" ::: "memory");}
 static bool Seal(const uint32_t* d){
+ PIONEER_Q38_MIXED_SEAL();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])return false;
  for(unsigned i=0;i<64;i++)if(Words(TT_Q38_GDN_INPUT_DESCRIPTOR)[i]!=d[i])return false;
  return true;

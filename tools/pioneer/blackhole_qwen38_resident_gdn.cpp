@@ -3,6 +3,7 @@
 // Two reserved GDDR->L1 reads,EXACT post-dot FP32 vector arithmetic,two
 // L1->DIFFERENT reserved GDDR writes. NO host/PCI/DMA/CPU-reference work.
 #define PIONEER_Q38_DELTA_VECTOR_PROBE_IMAGE
+#include "PioneerQ38MixedCapsuleHook.h"
 #define PIONEER_Q38_DELTA_VECTOR_POST_SCALE
 #define scalar_main q38_local_recurrent_step
 #include "blackhole_qwen38_delta_vector.cpp"
@@ -20,6 +21,7 @@ static bool Idle() {
  return idle;
 }
 static bool Sealed(const uint32_t* d) {
+ PIONEER_Q38_MIXED_SEAL();
  // command word5 is the LAST PACKET destination coordinate,NOT a tile
  // identity register. Physical worker identity belongs to the independent
  // coordinator/source proof;do not mistake a writable command for it.
