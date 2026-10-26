@@ -275,6 +275,7 @@ static unsigned Faults(const char* worker,const char* original){
  printf("PASS partition refusals/detections%u/header+private-sequence+job+params+NoC-source-counters-timeouts/no following packets/UNKNOWN inert;numeric corruption caught ONLY by offline observer\n",refused);
  return refused;
 }
+#ifndef PIONEER_Q38_DENSE_PARTITION_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && !strcmp(argv[3],"--full")));(void)&D::Run;
  setvbuf(stdout,nullptr,_IOLBF,0);Geometry();unsigned workers=0,maxSteps=0,maxStack=0;double error=0;
@@ -289,3 +290,4 @@ int main(int argc,char** argv){
  }
  printf("PASS OFFLINE ACTUAL QDW1 partition positives%u/refusals%u/maxStepsPerWorker%u/maxStack%u/maxMergedL2%.9g;ALL96bindings/fourKVgroups/sharedsix-headKV/privatephase1-2-3-STOP/NO CPU numeric feedback. Coordinator CONTROL+endpoints SYNTHETIC;ACTUAL96workerRootreduction/native/full64/model/Work/speed STILL OWED\n",workers,refused,maxSteps,maxStack,error);
 }
+#endif

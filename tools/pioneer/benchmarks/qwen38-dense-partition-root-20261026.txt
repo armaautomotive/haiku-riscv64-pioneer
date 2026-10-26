@@ -1,0 +1,165 @@
+Qwen3.8-27B: ACTUAL96-worker attention ROOT coordinator
+2026-10-26 UTC; OFFLINE instruction/endpoint correctness, NOT native throughput
+
+What is now actual code
+------------------------
+NEW QDR1 ROOT replaces the previous SYNTHETIC control sequencer. Emitted
+RV32 instructions distribute and half-round prepared queries/current KV,
+send96 private jobs/doorbells,wait for actual worker completion,reduce
+global maxima/denominators,invert the denominators,merge partial PV and
+apply sigmoid gates. All three numerical phases and STOP execute through
+ACTUAL ROOT+worker instructions,not host Stage/ready setters or CPU products.
+
+The joined test obtains prepared queries/gates/current packed K/V from
+FOUR ACTUAL QDP programs,one per KV group. Their raw inputs/learned tables
+are synthetic. QDP is run before ROOT by the qualification harness;the
+production upstream QG/K/V->four-QDP transport/launch capability is still
+OWED. No six repeated QDA preparations or QDA global parameters are supplied
+to the new ROOT/worker path. Old whole-head QDA is an independent oracle
+ONLY. Child query/KV input slots start poisoned,so actual ROOT NoC
+distribution and query rounding are required for success.
+
+ROOT captures all96 fixed child frames and local producer inputs,checks
+their exact position/layer/identity/group/partition geometry and disjoint
+per-group KV spans,then verifies fresh boot state. It drives all96 jobs
+before the corresponding96 doorbells,with global barriers between phases:
+1. ACTUAL worker QK/local max -> ROOT global max for all24 query heads.
+2. ROOT max distribution -> ACTUAL worker exponentials/local53-bit sums ->
+   ROOT global53-bit positive sums and exact F32 reciprocal.
+3. ROOT inverse distribution -> ACTUAL F16 probabilities/V partials ->
+   ROOT compensated PV merge and stable sigmoid gate ->6144 local F32 values.
+4. ALL96 actual STOP completions,physical terminal proofs and final seals
+   precede ROOT successful publication. There is no canonical KV write,
+   recurrent/state/token commit,CPU numerical fallback or host output sink.
+
+Physical endpoint MODEL checks are not authority
+------------------------------------------------
+Each ROOT packet checks its own immutable descriptor/source/counters and
+target frame before/after its exact command/response. Four-byte physical
+reads preserve the SAME32-byte offset at source/destination,as required by
+the qualified existing transport. ROOT reads reset FIRST and refuses a held
+peer BEFORE reading its PC. It checks actual status/private sequence,
+fixed wait or STOP PC,unheld reset,all16 physical source words,immutable
+child frame,exact child job/doorbell,all64 proof words and all8 counter
+values (including the real2/6 alias). Old physical endpoints/constants and
+NoC are still MODELED by the fabric,not physical hardware evidence.
+
+Counter receipts link actual before/after values across the three phases;
+unknown timeout/counter/source/frame/status/proof/job/parameter/physical
+state cannot emit a following packet or a successful completion. A failure
+can leave provisional local results/dirty compute state;future native
+quarantine/holds/full restoration are NOT waived by an inert fault loop.
+Structural validation is not CPU numerical validation;the Work path still
+contains no CPU reference or numeric-validation fallback.
+
+Global reduction arithmetic
+----------------------------
+PioneerQ38DensePositiveSum adds actual normalized53-bit LOCAL sum records
+using paired32-bit integers,guard/round/sticky bits and binary64 RNE. The
+reciprocal uses exact restoring division of a single-bit75/76 numerator by
+the53-bit denominator,followed by an explicit F32 tie-even rounding step.
+No hardware double,integer division,fdiv or runtime division helper exists.
+Host arithmetic unit tests cover720000 exact binary64 additions and24507
+F32 reciprocals,including all powers of two from1..8192. These randomized
+tests exercise the C++ arithmetic helper on the HOST,not720000 device runs.
+The emitted ROOT arithmetic is independently exercised by the joined graph.
+
+Qualification results and limits
+---------------------------------
+Main full-positive run,main separate fault suite,and independent clean-tree
+full-positive+fault run all exit0 on the SAME final executable bytes.
+Positive cases cover N1,33,65,257 and one COMPLETE N8192 pass across ALL24
+heads/ALL96 retained workers. Each graph consumes four actual QDP outputs.
+ROOT-generated global maxima/inverses and every final F16 probability
+match the old whole-head device oracle BIT-FOR-BIT. Final6144 gated outputs
+have max relative L2=5.17114035e-8 vs the independent oracle. The separate
+unchanged worker regression still verifies raw QK/exponential/probability
+bits and local binary64 sums across384 worker lifecycles/133 refusals.
+Do not turn a final-probability graph check into a claim that this ROOT
+test separately snapshots every earlier QK/exponential value.
+
+41 ROOT refusals cover own timeout/counter/source/header/frame changes,
+all10 command readback words,held reset,bad PC/source/status/header/proof/
+parameters/sum/PV/job/doorbell data and invalid input descriptors/producer
+values. Held reset is checked to prevent the subsequent PC read. Failure
+and successful terminal loops issue no later packet/output. Inputs and
+L1 canaries are checked. Warnings-as-errors,ASan/UBSan and disabled FP
+contraction are used.
+
+Max observed interpreted ROOT steps830065288/peer26874181. The test advances
+a target worker on transport visits;this scheduling is NOT hardware
+parallel timing or a performance benchmark. No speedup/TPS is claimed.
+The main full test was compiled before the new refusal suite was added;
+its complete stdout differs intentionally from clean-full+fault stdout.
+Common full-positive traces are identical after excluding ONLY the added
+refusal lines/count. Raw logs are retained unmodified.
+Main full-positive SHA256
+dbe756bcf5ae73394fcd98645995d83a2bea67317d9e98d4e26dbab7668b37e8
+Main small-positive+fault SHA256
+7b9df4aa43ce645198c90b61db6c83723799331690a8d74071f881b5ca719479
+Clean full-positive+fault SHA256
+3ff3087cba90eba56e8c280e331787dd5bf3c82b0375aaa988f7435f2ed7afc3
+
+Executable and containment
+---------------------------
+Standalone ROOT entry0x50000/park0x50038 is distinct from standalone
+worker40000/wait40064-40068. New ROOT data are explicit disjoint standalone
+ranges through0x156000. This does NOT prove a joint persistent-decoder link
+or native reservation:old code/data and all119 role-specific journals must
+be audited before any combined image or hardware use.
+
+Main/clean ELF bytes identical;all10 implementation/test/build files match
+the independent tree,excluding dirty llama.cpp and unrelated FlashNext.
+boot.bin4B 49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a
+code.bin12140B a8aa43b88af5d821a50498d0e79a75025ca672490fa6d4ead51be8442013bf8c
+program.elf21528B 213afbc1746516e470fe8e9614a2723f3a0e4a00c8dfc3d562513d9cf69d36af
+Max static ROOT frame496B. No undefined symbols,writable globals/GOT,
+CSR,division/sqrt/high-multiply/hardware-FMA/FP-to-int conversion/EBREAK.
+ROOT uses NoC but no SFPU/tensor writes;workers DO modify compute state.
+The family role stays blocked from old native/CPU/Work selectors,including
+defined0/late inclusion. Updated309 family gates now cover20 ambient build
+entries refusing before SDK/output. DEBUG69 role585/client162/reference80
+gates pass. Main/clean full SDK rebuild reproduces DEBUG69
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f. Rebuilt worker ELF remains
+47c53a5f144bb0ffdebec933ff9300b8e01fc74dc3c6123c70c1249f18383e8f.
+
+Development failures retained
+------------------------------
+First device compile refused enum/integer ternaries and misleading
+indentation;explicit unsigned values and statement lines fix them.
+The first N33 graph failed only the observer's phase3 accounting because
+STOP reset that bookkeeping;the actual worker already retained correct
+state. STOP now preserves prior observer counters,without setting any
+device completion/product/nonce. During review,the old qualified transport
+exposed the missing32-byte register-read staging offset;both the actual
+ROOT and strict endpoint model were corrected BEFORE final qualification.
+No numeric check or native scope was relaxed to obtain a pass.
+
+Reproduction
+-------------
+python3 tools/pioneer/build_qwen38_dense_partition_root_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW_ROOT
+python3 tools/pioneer/tests/run_pioneer_q38_dense_partition_root_tests.py \
+  /private/tmp/NEW_ROOT /private/tmp/PINNED_QDW /private/tmp/PINNED_QDP \
+  /private/tmp/PINNED_QDA_ORACLE --full
+
+Remaining FULL goal,not this passing component
+-----------------------------------------------
+No driver/image installed,no GPU compute/power/SD/mains/hardware/Assistant
+change.19:54:16 UTC read-only status:normal driver55/tag2026102100010012/
+generation4/quiesced0/cold0/active_owner0/open_count1/guard1;CPU_METADATA_ONLY.
+Source SDK remains read-only;unrelated user work is untouched.
+
+Attach real QDM1 QG/K/V outputs/learned norm+RoPE tables to FOUR reusable
+QDP producers and ROOT input distribution,then create the actual Q6-O input
+quantization/transport and residual/RMS/FFN continuation. Integrate with
+SAME119 retained matrix/GDN peer sequences across all64 layers and tokens.
+The standalone fresh-boot1->2->3->STOP protocol here is a QUALIFICATION
+lifetime,not permission to reboot or stop/relaunch96 workers per layer in
+Work. A genuine mixed persistent image/controller ABI,source/init/clock/
+host/joint L1-GDDR-tensor-NoC owner,arbitrary-original journals,current
+physical proofs and exact STOP/holds/restoration are OWED before hardware.
+All-layer recurrent/provisional-KV/token commits,vocabulary/sampling,
+original-GGUF whole-model correctness and real inference profiling remain.
+Last measured WHOLE MODEL0.207893161tok/s;20tok/s remains UNMET.

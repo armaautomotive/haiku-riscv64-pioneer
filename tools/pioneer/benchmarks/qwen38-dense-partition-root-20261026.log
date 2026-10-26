@@ -1,0 +1,104 @@
+OFFLINE ACTUAL ROOT+96workers correctness ONLY. Raw weights/physical/NoC endpoints modeled;NO native/full64/model-speed grant.
+Main full-positive + separate main-fault + CLEAN full-positive/fault all exit0. Common full-positive traces identical;complete raw stdout intentionally differs by added refusal suite.
+
+=== ROOT immutable image build ===
+49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a boot.bin bytes4
+a8aa43b88af5d821a50498d0e79a75025ca672490fa6d4ead51be8442013bf8c code.bin bytes12140
+213afbc1746516e470fe8e9614a2723f3a0e4a00c8dfc3d562513d9cf69d36af program.elf bytes21528
+PASS COMPILED NEW QDR1 actual96workerROOT/NoC/privatephases/globalmax-binary64sum-exactF32inverse/PVmerge-gate/maxFrame496;producer/native/journals/KV-tokencommit/full64/speed STILL OWED
+
+=== main full-positive trace (before added fault suite) ===
+PASS paired-u32 ROOT sum additions720000/exact binary64 RNE/inverses24507/exact F32 reciprocal vs independent observer;NO native authority
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N1;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N1/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N33;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N33/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N65;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N65/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N257;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N257/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL ROOT+ALL96 FULL8192 ALL24heads/FOUR QDP;NOT_SILICON_TIME
+PASS OFFLINE ACTUAL QDR1 ROOT96-worker pipeline cases5/maxROOTsteps830065288/maxPeerSteps26874181/maxGatedL25.17114035e-08;FOUR actualQDP producers,actual globalmax/sum/inverse/query-rounding/distribution/privatephases/PVmerge/gate/ALL96STOP;NO host products/Stage/ready setters. ENDPOINTS+RAWWEIGHTS synthetic;NOT native/full64/originalGGUF/Work/inference-speed qualification
+
+=== main separate fault suite and small positive cases ===
+PASS paired-u32 ROOT sum additions720000/exact binary64 RNE/inverses24507/exact F32 reciprocal vs independent observer;NO native authority
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N1;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N1/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N33;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N33/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N65;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N65/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N257;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N257/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START actual ROOT refusal suite/real96workers+4QDP/NO native IO
+PASS actual ROOT refusals41/UNKNOWN inert/no following packets or success marker;held-reset rejected BEFORE PC read/physical-source-status-header-proof-params-sum-PV-job-source/immutable inputs
+PASS OFFLINE ACTUAL QDR1 ROOT96-worker pipeline cases4/refusals41/maxROOTsteps88584997/maxPeerSteps1050796/maxGatedL25.17114035e-08;FOUR actualQDP producers,actual globalmax/sum/inverse/query-rounding/distribution/privatephases/PVmerge/gate/ALL96STOP;NO host products/Stage/ready setters. ENDPOINTS+RAWWEIGHTS synthetic;NOT native/full64/originalGGUF/Work/inference-speed qualification
+
+=== independent CLEAN full-positive + fault suite ===
+PASS paired-u32 ROOT sum additions720000/exact binary64 RNE/inverses24507/exact F32 reciprocal vs independent observer;NO native authority
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N1;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N1/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N33;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N33/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N65;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N65/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL QDR1 ROOT+ALL96workers+FOUR QDP N257;NOT_SILICON_TIME
+PASS ACTUAL ROOT+ALL96+FOUR QDP N257/ROOTgenerated max+inverse+barriers+PVmerge+gate/ALL96STOP/noCPU numeric feedback;NOT_NATIVE_TIME
+START ACTUAL ROOT+ALL96 FULL8192 ALL24heads/FOUR QDP;NOT_SILICON_TIME
+START actual ROOT refusal suite/real96workers+4QDP/NO native IO
+PASS actual ROOT refusals41/UNKNOWN inert/no following packets or success marker;held-reset rejected BEFORE PC read/physical-source-status-header-proof-params-sum-PV-job-source/immutable inputs
+PASS OFFLINE ACTUAL QDR1 ROOT96-worker pipeline cases5/refusals41/maxROOTsteps830065288/maxPeerSteps26874181/maxGatedL25.17114035e-08;FOUR actualQDP producers,actual globalmax/sum/inverse/query-rounding/distribution/privatephases/PVmerge/gate/ALL96STOP;NO host products/Stage/ready setters. ENDPOINTS+RAWWEIGHTS synthetic;NOT native/full64/originalGGUF/Work/inference-speed qualification
+
+=== updated family role/build gates ===
+PASS local dense-partition role/build gates309/exact IMAGE/defined0+late native-CPU-Work-Next-GDN-component aliases/20ambient builders refuse BEFORE SDK/output;NO native/L1/GDDR/source/init/producer grant
+
+=== prior worker regression ===
+PASS partition DATA ranges196608/ALL8192lengths/exact one-cover/no currentKV prefix read/all96unique physical routes/max342tokens;NOT native owner
+START ACTUAL partition group0 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group0 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.63661091e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group0 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.64163166e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group0 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.58241691e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.47610042e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.57241546e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.75511358e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.56397051e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.45462549e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.51502058e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.69205969e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.50447575e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.61739796e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START partition refusal suite/three-packet slices/globalparams fromACTUAL_QDA;NOT_SILICON_TIME
+PASS partition refusals/detections133/header+private-sequence+job+params+NoC-source-counters-timeouts/no following packets/UNKNOWN inert;numeric corruption caught ONLY by offline observer
+PASS OFFLINE ACTUAL QDW1 partition positives384/refusals133/maxStepsPerWorker1048871/maxStack872/maxMergedL22.75511358e-08;ALL96bindings/fourKVgroups/sharedsix-headKV/privatephase1-2-3-STOP/NO CPU numeric feedback. Coordinator CONTROL+endpoints SYNTHETIC;ACTUAL96workerRootreduction/native/full64/model/Work/speed STILL OWED
+
+=== native role containment ===
+PASS exact DEBUG69 role gates585/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+
+=== CPU client containment ===
+PASS ACTUAL DEBUG69 client gates162/exact CPU+client roles/native+image+old client+Work+kernel+fast-math defined0 refusal/late reinclusion;NO device execution
+
+=== CPU reference containment ===
+PASS complete-layer original CPU observer gates80:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+
+All10 implementation/test/build sources main-clean cmp-identical;ELF bytes identical;main-clean SDK DEBUG69 b554d37d.../old65 61faa093/NODRV 9fcf1f7f unchanged.
+19:54:16 UTC P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+NO GPU/image install/power/Assistant change. Wholemodel last0.207893161tok/s;20tok/s UNMET.

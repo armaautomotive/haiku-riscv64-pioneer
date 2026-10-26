@@ -37,16 +37,16 @@ for value in ('0','1'):
 scripts=('banks_driver','banks_client','inference','local_image','ffn_graph_image','ffn_matrix_image','ffn_persistent_image',
  'projection_graph_image','projection_matrix_image','projection_persistent_image','resident_layer_validation_client',
  'resident_layer_validation_native','resident_layer_link_image','resident_advance_image','resident_continue_image',
- 'dense_prepare_image','dense_attention_image','dense_projection_image','dense_partition_image')
+ 'dense_prepare_image','dense_attention_image','dense_projection_image','dense_partition_image','dense_partition_root_image')
 with tempfile.TemporaryDirectory(prefix='pioneer-dense-partition-build-gates-',dir='/private/tmp') as temporary:
  d=pathlib.Path(temporary)
  for value in ('0','1','2','-1','','false','0\n1'):
   for name in scripts:
    py=name in ('resident_layer_validation_native','resident_layer_link_image','resident_advance_image',
-    'resident_continue_image','dense_prepare_image','dense_attention_image','dense_projection_image','dense_partition_image')
+    'resident_continue_image','dense_prepare_image','dense_attention_image','dense_projection_image','dense_partition_image','dense_partition_root_image')
    script=here/('build_qwen38_'+name+('.py' if py else '.sh'))
    args=[str(d/'NO_SDK'),*([str(d/'NO_LIB')] if name=='inference' else []),str(d/'NO_OUTPUT')]
    r=subprocess.run([sys.executable if py else 'sh',str(script),*args],capture_output=True,text=True,env={**clean,flag:value},timeout=5)
    assert r.returncode==2 and not r.stdout and not r.stderr and not (d/'NO_OUTPUT').exists(),(name,value,r.stderr)
    count+=1
-print('PASS local dense-partition role/build gates'+str(count)+'/exact IMAGE/defined0+late native-CPU-Work-Next-GDN-component aliases/19ambient builders refuse BEFORE SDK/output;NO native/L1/GDDR/source/init/producer grant')
+print('PASS local dense-partition role/build gates'+str(count)+'/exact IMAGE/defined0+late native-CPU-Work-Next-GDN-component aliases/20ambient builders refuse BEFORE SDK/output;NO native/L1/GDDR/source/init/producer grant')
