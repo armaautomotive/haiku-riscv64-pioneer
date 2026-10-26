@@ -1,0 +1,151 @@
+Qwen3.8-27B: actual persistent mixed attention controller QMR1
+2026-10-26; OFFLINE instruction/endpoint evidence, NOT native throughput
+
+Implemented
+-----------
+One new ROOT boot drives successive attention frames on the SAME119 QMW1
+workers. The ROOT reads live finished/requested private-job sequences,
+boot records, physical sources/reset/PCs, last closed-operation receipts
+and actual NoC counters. It does not assume sequence0 or recycle1/2/3.
+All119 must have a real closed upstream operation; a fresh boot/ready flag
+is not an input-producer proof. Twenty-three non-attention workers are
+audited and preserved, not stopped, reset, reloaded or silently omitted.
+
+The ROOT first validates ALL119 before its first worker write. Only then
+does it install the96 attention frames and distribute the four QDP query,
+gate and packed-current-K/V outputs. Actual QMW1 jobs9/10/11 use each
+worker's own next nonce. Actual ROOT instructions perform global maxima,
+53-bit sum/reciprocal, compensated PV merge and sigmoid gate. Workers
+return to their original mixed loop, retaining all state/history; there
+is NO per-layer worker boot or STOP. The ROOT arithmetic is a returning
+component inside a persistent command shell, not a host stop/reload loop.
+
+Admission chains counters to the LAST ACTUAL CLOSED arithmetic receipt.
+Matrix/Conv/GDN/input/output capsules and dense phase3 have different DATA
+receipt locations, but each receipt must match the actual current nonce,
+worker, source and frame. Unexplained idle counter movement cannot become
+a new baseline. Counter words2/6 refer to ONE physical register. Physical
+reset is read BEFORE PC; held, STOP and fault states cannot be accepted
+as completion. All subsequent phase proofs bind the exact live nonce,
+immutable QMW1 job/doorbell, internal dense data, source, counters, frame,
+global parameters and local reduction/PV receipts.
+
+ROOT source/header/doorbell have a private stack seal through reserved s11.
+Only two emitted instructions use s11: one private producer, one seal reader.
+No writable global or caller-editable second mailbox manufactures a seal.
+The ROOT keeps its own private sequence and NoC counter history across
+frames; matrix interludes on other cores do not reset this history.
+
+Qualification scope
+---------------------
+The actual programs execute on ONE shared matrix/GDN/dense tensor-state
+model per worker. All119 start with actual Q8/Q4/Q6 matrix work and different
+nonzero histories; paired GDN heads0/31/47 then close actual recurrent jobs.
+No fixture writes a processor PC, register, private nonce, completion status
+or tensor array to invent readiness. Subsequent matrix interludes use the
+actual observed closed sequence, not a rewritten worker history.
+
+FOUR actual QDP programs provide learned-norm/RoPE-prepared queries, gates
+and packed current K/V per frame. The ROOT actually rounds/distributes the
+queries, launches every phase and computes the global max and inverse;
+no CPU or old-QDA numeric result is supplied as a reduction parameter.
+The older whole-head QDA program is an independent OBSERVER ONLY.
+Every final F16 probability, all global max/inverse bits, and all6144 final
+gated outputs are checked. The earlier raw-QK/exponential/local-sum worker
+qualification remains separate; this graph does not claim to snapshot
+every earlier intermediate value.
+
+The byte endpoints, weights, KV prefix and physical register addresses are
+MODELED. QDP inputs are synthetic. Upstream QDM QG/K/V -> QDP launch/transport,
+original learned/source provenance and O native quantization/transport are
+NOT yet joined. This is NOT an original-GGUF/full64-layer inference run,
+canonical state/KV/token commit, native selector, cleanup or speed grant.
+
+Fault evidence
+----------------
+61 branches execute from OS-fork snapshots of the ALREADY EXECUTED whole
+VM world. Fork is a qualification convenience, never an emulated production
+transition or detached tensor-state copy/reset. Each branch starts from
+actual closed matrix/GDN jobs and an actual initialized waiting ROOT.
+Failures cover own timeout/counter/source/header/boot/frame mutation,
+all10 command readback words, active and idle peer reset/PC/source/status/
+boot/job/receipt/parameter/sum/PV failures, malformed headers/inputs,
+and movement of all seven independent physical counters before admission.
+Fault terminals are inert and cannot publish a current successful frame.
+
+New placement and containment
+------------------------------
+ROOT entry50000, wait5004c/branch50050, fault entry50080/park5009c.
+Boot75300, doorbell75400, status75440. The common arithmetic DATA scratch
+is reused, not the old QDR1 role/native source capability. The new119-core
+counter records extend122000..122ee0; live nonces123000..1231dc;
+boot snapshots170000..177700; closed jobs178000..17f700. These are NEW
+proposed ROOT ranges, NOT additions to old native save/restore authority.
+The real future joint link/journals must audit every role-specific range,
+code, stack, GDDR, L1, Tensix and NoC lifetime before ANY hardware use.
+
+The new role stays closed to old ROOT/worker/native/CPU/Work roles, including
+defined0 and late mixing. 391 new gates cover22 ambient builders. Unlike a
+missing-parent refusal, old image-role isolation is tested from VALID old
+role baselines first. Existing worker360/partition321 and DEBUG69 role585,
+client174/reference86 gates pass. Main+clean SDK builds reproduce unchanged
+DEBUG69 b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f. QMW1 rebuild remains
+6a74556d6f4095353b0bffd0f44fe3d35706c21ea304f5233d034e47702117ea;
+its existing10-positive/267-fault default regression passes. Every new
+ROOT build first reproduces the complete unchanged QDR1 ELF
+213afbc1746516e470fe8e9614a2723f3a0e4a00c8dfc3d562513d9cf69d36af.
+
+Executable pins and reproducibility
+------------------------------------
+Main/clean new executable sections and ELF are BYTE IDENTICAL.
+boot.bin4B 49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a
+code.bin17488B 53e9e2d8dfceb756ae6dd6de2b72996b01b188eff13d4741bd2a6da8581fa06d
+program.elf27600B f09227e3972bf02dad64cd9ea318d4371ca33c56646de7a490885c6e0b1e7e77
+New max static frame848B; no undefined/writable global/GOT/unexported-ALLOC,
+CSR/division/sqrt/high-multiply/hardware-FMA/FP-to-int/EBREAK instructions.
+Builder: build_qwen38_mixed_dense_root_image.py SDK FRESH_ABSOLUTE_OUTPUT
+Test: tests/run_pioneer_q38_mixed_dense_root_tests.py ROOT QMW1 QDP QDA --full
+The test authenticates ROOT, ALL QMW1 section/ELF pins and QDP/QDA bytes first.
+Warnings-as-errors, ASan+UBSan, disabled FP contraction. Dirty llama.cpp and
+unrelated FlashNext files are excluded/untouched.
+
+Development failures, all OFFLINE
+----------------------------------
+Warnings-as-errors caught misleading indentation and an unparenthesized
+test condition. Counter fault injection found a fabric bug: it returned
+the LAST alias match for register210, incorrectly masking movement of the
+actual word2 register with an invented independent word6. The fixture now
+returns the same FIRST physical match as the worker MMIO model. Production
+admission also now uses the prior closed receipt, rather than accepting
+arbitrary current counters. No failed test touched the real accelerator.
+
+Final qualification results
+----------------------------
+Main and independent clean FULL runs BOTH exit0, with BYTE IDENTICAL
+complete stdout. Five successive frames N1/33/65/257/8192 run on the SAME
+ROOT and119 mixed-worker lifetimes. All61 fault cases pass. Global maxima,
+inverses and EVERY final F16 probability match the separate whole-head
+device oracle BIT-FOR-BIT. Maximum relative L2 of the6144 gated outputs is
+5.17114034598e-8. Observed ROOT stack2292B of8192B. Thirty-six changed code,
+build, guard and test files match the independent source tree exactly.
+Raw output is retained as qwen38-mixed-dense-root-20261026.log, SHA256
+a250eeb88ba2a7a98d1193e400c5f3e2f05c2f4a8a9a61ed6236a64ccc2b74ed.
+These instruction counts/process runtimes and the serial test-fabric
+scheduler are NOT a silicon performance benchmark; no speedup is claimed.
+
+Hardware and remaining work
+-----------------------------
+No GPU launch, driver installation, relay action or Assistant restart.
+Read-only SSH status: driver55/tag2026102100010012/generation4/quiesced0/
+cold0/active_owner0/open_count1/guard1; CPU_METADATA_ONLY.
+Next: actual QDM controller support for the QMW1 interface, actual canonical
+QG/K/V -> four QDP transport -> QMR1 ->6144-vector native input/scales ->
+QDM O -> residual/RMS/FFN/link, with all64 layers and multiple tokens.
+Then complete original-source/ledger and real native memory/init/clock/host/
+compute/NoC lifetime authority, arbitrary-original journals/physical proofs,
+state/KV/token commit and output-head/vocabulary/sampling qualification.
+Do not promote old first-layer native scopes or readiness flags to supply it.
+Only real on-device inference/profile measurements can establish speed.
+Last measured whole-model rate remains0.207893161 tokens/sec. Target20
+tokens/sec is UNMET and the long-running goal remains ACTIVE.

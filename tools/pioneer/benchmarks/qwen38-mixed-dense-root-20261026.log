@@ -1,0 +1,7 @@
+PASS ACTUAL mixed ROOT refusals61/from EXECUTED119-worker world/no following IO/success/held-reset rejected before PC/closed-receipt counters cannot be absorbed
+PASS ACTUAL persistent ROOT+SAME119 mixed workers/FOUR QDP frame1 N1 ALL96 dynamic nonces/global reductions/23 idle preserved/NO STOP or reboot
+PASS ACTUAL persistent ROOT+SAME119 mixed workers/FOUR QDP frame2 N33 ALL96 dynamic nonces/global reductions/23 idle preserved/NO STOP or reboot
+PASS ACTUAL persistent ROOT+SAME119 mixed workers/FOUR QDP frame3 N65 ALL96 dynamic nonces/global reductions/23 idle preserved/NO STOP or reboot
+PASS ACTUAL persistent ROOT+SAME119 mixed workers/FOUR QDP frame4 N257 ALL96 dynamic nonces/global reductions/23 idle preserved/NO STOP or reboot
+PASS ACTUAL persistent ROOT+SAME119 mixed workers/FOUR QDP frame5 N8192 ALL96 dynamic nonces/global reductions/23 idle preserved/NO STOP or reboot
+PASS NEW retained mixed graph frames5/refusals61/maxRelativeL25.17114034598e-08/ROOTstack2292;synthetic byte/physical endpoints,NO native/fullmodel/throughput grant

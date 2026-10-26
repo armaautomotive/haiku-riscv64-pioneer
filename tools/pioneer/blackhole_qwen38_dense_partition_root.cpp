@@ -2,13 +2,26 @@
 // NEW QDR1: actual96-worker card controller. Local prepared inputs are
 // supplied by FOUR real QDP producers in the joined qualification. Native
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#include "PioneerQ38MixedDenseRootImageRole.h"
+#else
 #include "PioneerQ38DensePartitionImageRole.h"
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DensePositiveSum.h"
 #include "PioneerQ38DensePartitionRootLayout.h"
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#include "PioneerQ38MixedDenseRootLayout.h"
+extern "C" void q38_mixed_root_seal();
+#endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 namespace DensePartitionRoot {
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+namespace L=PioneerQ38MixedDenseRootLayout;
+namespace M=PioneerQ38MixedWorkerLayout;
+#else
 namespace L=PioneerQ38DensePartitionRootLayout;
+#endif
 namespace W=PioneerQ38DensePartitionLayout;
 static volatile uint32_t* Words(unsigned a){return reinterpret_cast<volatile uint32_t*>(a);}
 static float* Floats(unsigned a){return reinterpret_cast<float*>(a);}
@@ -22,6 +35,9 @@ static bool Quiet(){
 }
 static const uint32_t* Frame(unsigned w){return reinterpret_cast<const uint32_t*>(L::Shadow+w*256);}
 static void Seal(const uint32_t* d){
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ q38_mixed_root_seal();
+#endif
  for(unsigned i=0;i<64;i++)if(Words(L::Header)[i]!=d[i])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])scalar_fault_park();
  if(!Quiet())scalar_fault_park();
@@ -32,8 +48,21 @@ static void FrameSeal(unsigned w){
 static void Copy(unsigned to,unsigned from,unsigned words){for(unsigned i=0;i<words;i++)Words(to)[i]=Words(from)[i];}
 static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned remote,unsigned bytes,bool write){
  unsigned local=L::Scratch+(remote&31);
- if(w>=96 || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
- Seal(d);FrameSeal(w);uint32_t expected[8];unsigned route=Frame(w)[14];
+ if(w>=
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ 119
+#else
+ 96
+#endif
+ || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
+ Seal(d);
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ if(w<96)FrameSeal(w);
+ unsigned route=M::Peer(w+1);
+#else
+ FrameSeal(w);unsigned route=Frame(w)[14];
+#endif
+ uint32_t expected[8];
  for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
   unsigned delta=i==(write?5U:1U)?(bytes+63)>>6:i==2 || i==6 || i==(write?4U:0U) || i==(write?7U:3U)?1U:0U;
@@ -46,7 +75,13 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  for(unsigned poll=0;poll<65536;poll++){
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
-   Seal(d);FrameSeal(w);for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
+   Seal(d);
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+   if(w<96)FrameSeal(w);
+#else
+   FrameSeal(w);
+#endif
+   for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
    for(unsigned i=0;i<8;i++)tracked[i]=expected[i];
    Words(L::Summary)[6]++;Words(L::Summary)[7]+=(bytes+63)>>6;return;
   }
@@ -54,6 +89,9 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  scalar_fault_park(); // UNKNOWN: no later packet/retry/reset/cleanup grant
 }
 static uint32_t Register(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned at){Transfer(d,tracked,w,at,4,false);return *Words(L::Scratch+(at&31));}
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#include "blackhole_qwen38_mixed_dense_root_control.inc"
+#else
 static void Job(unsigned w,unsigned phase){
  const auto* f=Frame(w);const uint32_t j[]={W::Magic,phase,phase,f[40],f[15],f[3],f[4],f[5],f[48],f[49],0,0,0,0,0,0};
  for(unsigned i=0;i<16;i++)Words(L::Scratch)[i]=j[i];
@@ -119,6 +157,7 @@ static void Snapshot(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned pha
   for(unsigned i=10;i<64;i++)if((phase==1 || i<16 || i>=40) && r[i])scalar_fault_park();
  }
 }
+#endif
 static void Capture(const uint32_t* d){
  for(unsigned group=0;group<4;group++)for(unsigned ordinal=0;ordinal<24;ordinal++){
   unsigned w=group*24+ordinal;Copy(L::Shadow+w*256,L::Frames+w*256,64);const auto* f=Frame(w);
@@ -151,8 +190,13 @@ static void Inputs(const uint32_t* d,uint32_t* tracked){
 }
 static void Launch(const uint32_t* d,uint32_t* tracked,unsigned phase){
  if(phase==2 || phase==3)for(unsigned w=0;w<96;w++){Copy(L::Scratch,L::Parameters+Frame(w)[5]*64,16);Transfer(d,tracked,w,W::Parameters,64,true);}
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ for(unsigned w=0;w<96;w++){Job(w,phase);Transfer(d,tracked,w,M::Job,256,true);}
+ for(unsigned w=0;w<96;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
+#else
  for(unsigned w=0;w<96;w++){Job(w,phase);Transfer(d,tracked,w,W::Job,64,true);}
  for(unsigned w=0;w<96;w++){*Words(L::Scratch)=phase;Transfer(d,tracked,w,W::Doorbell,4,true);}
+#endif
  for(unsigned w=0;w<96;w++)Snapshot(d,tracked,w,phase);
 }
 static void Maximum(){
@@ -208,8 +252,20 @@ extern "C" unsigned scalar_main(){
  Seal(d);Capture(d);
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++){before[i]=tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
+ // NO worker reset/boot/STOP. Install only the next attention DATA frame
+ // after ALL retained source/job/counter/physical admission checks finish.
+ for(unsigned w=0;w<96;w++){Copy(L::Scratch,L::Shadow+w*256,64);Transfer(d,tracked,w,W::Header,256,true);}
+#else
  for(unsigned w=0;w<96;w++)Snapshot(d,tracked,w,0);
- Inputs(d,tracked);Launch(d,tracked,1);Maximum();Launch(d,tracked,2);Inverse();Launch(d,tracked,3);Merge(d,tracked);Launch(d,tracked,4);
+#endif
+ Inputs(d,tracked);Launch(d,tracked,1);Maximum();Launch(d,tracked,2);Inverse();Launch(d,tracked,3);Merge(d,tracked);
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ for(unsigned w=0;w<119;w++)Final(d,tracked,w);
+#else
+ Launch(d,tracked,4);
+#endif
  Seal(d);for(unsigned w=0;w<96;w++)FrameSeal(w);
  for(unsigned i=0;i<7168;i++)if(Words(L::Input)[i]!=Words(L::InputShadow)[i])scalar_fault_park();
  for(unsigned i=0;i<6144;i++)if(Words(L::Gate)[i]!=Words(L::GateShadow)[i])scalar_fault_park();
@@ -217,6 +273,17 @@ extern "C" unsigned scalar_main(){
  for(unsigned i=0;i<8;i++){if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();s[8+i]=before[i];s[16+i]=tracked[i];}
  for(unsigned i=0;i<16;i++)s[24+i]=d[16+i];
  for(unsigned i=0;i<8;i++)s[40+i]=d[32+i];
- s[1]=96;s[2]=4;s[3]=6144;s[4]=d[3];s[5]=d[4];s[48]=d[6];s[49]=3;s[50]=96;s[51]=4;
+ s[1]=96;s[2]=
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ 3;
+#else
+ 4;
+#endif
+ s[3]=6144;s[4]=d[3];s[5]=d[4];s[48]=d[6];s[49]=3;s[50]=96;s[51]=
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+ 119;s[52]=d[48];
+#else
+ 4;
+#endif
  Fence();s[0]=L::Magic;Fence();return 6144; // LOCAL result only,NOT canonical KV/token commit
 }

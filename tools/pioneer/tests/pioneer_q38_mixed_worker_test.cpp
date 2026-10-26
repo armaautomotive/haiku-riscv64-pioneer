@@ -7,7 +7,7 @@
 #include "../PioneerQ38DensePartitionLayout.h"
 #include <fstream>
 namespace M=PioneerQ38MixedWorkerLayout;
-namespace D=PioneerQ38DensePartitionLayout;
+namespace MWD=PioneerQ38DensePartitionLayout;
 struct MixedPeer:ResidentGdnOutputPeer {
  std::vector<uint8_t> front,dense,helper;
  std::array<uint32_t,64> boot={},denseHeader={};
@@ -49,9 +49,9 @@ struct MixedPeer:ResidentGdnOutputPeer {
    if(a==0xffe000fc)return gpr63;
    if(Range(a,0xffef0000,224*4))return config[(a-0xffef0000)/4];
    if(Range(a,0xffbd8000,12*64)){assert(drained && !config[3]);unsigned at=(a-0xffbd8000)/4;return FloatDst(at/16,at%16);}
-   if(Range(a,D::Header,256) || Range(a,D::Summary,256) || Range(a,D::Job,64) || a==D::Doorbell || Range(a,D::Parameters,64)
-    || Range(a,D::HalfQuery,7168) || Range(a,D::PrivateQuery,7168) || Range(a,D::Scores,6*384*4) || Range(a,D::Local,256)
-    || Range(a,D::Accumulate,12288) || Range(a,D::Partial,12288) || Range(a,D::Chunk,16384))return memory.at(a);
+   if(Range(a,MWD::Header,256) || Range(a,MWD::Summary,256) || Range(a,MWD::Job,64) || a==MWD::Doorbell || Range(a,MWD::Parameters,64)
+    || Range(a,MWD::HalfQuery,7168) || Range(a,MWD::PrivateQuery,7168) || Range(a,MWD::Scores,6*384*4) || Range(a,MWD::Local,256)
+    || Range(a,MWD::Accumulate,12288) || Range(a,MWD::Partial,12288) || Range(a,MWD::Chunk,16384))return memory.at(a);
   }
   return ResidentGdnOutputPeer::Load(a);
  }
@@ -64,7 +64,7 @@ struct MixedPeer:ResidentGdnOutputPeer {
    assert(i==normalizationWords && value==(i==5?selfRoute:0));
    if(++normalizationWords==10){normalizationWords=0;normalizations++;}command[i]=value;return;
   }
-  if(Range(pc,M::Code,unsigned(front.size())) && (Range(a,0x74000,96) || a==0x74100 || Range(a,D::Job,64) || a==D::Doorbell)){
+  if(Range(pc,M::Code,unsigned(front.size())) && (Range(a,0x74000,96) || a==0x74100 || Range(a,MWD::Job,64) || a==MWD::Doorbell)){
    assert(!pending && drained);memory[a]=value;return;
   }
   if(denseActive){
@@ -74,8 +74,8 @@ struct MixedPeer:ResidentGdnOutputPeer {
    if(Range(a,0xffbd8000,8*64)){assert(drained && !config[3]);unsigned at=(a-0xffbd8000)/4;StoreFloatDst(at/16,at%16,value);defined[Adj(at/16)]=true;return;}
    if(Range(a,0xffb20000,40)){assert(!pending);command[(a-0xffb20000)/4]=value;return;}
    if(a==0xffb20040){assert(value==1 && !pending);SubmitDense();return;}
-   if(Range(a,D::Summary,256) || Range(a,D::PrivateQuery,7168) || Range(a,D::Scores,6*384*4) || Range(a,D::Local,256)
-    || Range(a,D::Accumulate,12288) || Range(a,D::Partial,12288) || Range(a,D::Chunk,16384)){assert(!pending);memory[a]=value;return;}
+   if(Range(a,MWD::Summary,256) || Range(a,MWD::PrivateQuery,7168) || Range(a,MWD::Scores,6*384*4) || Range(a,MWD::Local,256)
+    || Range(a,MWD::Accumulate,12288) || Range(a,MWD::Partial,12288) || Range(a,MWD::Chunk,16384)){assert(!pending);memory[a]=value;return;}
   }
   ResidentGdnOutputPeer::Store(a,value);
  }
@@ -116,13 +116,13 @@ struct MixedPeer:ResidentGdnOutputPeer {
  }
  static uint16_t Half(float x){_Float16 v=_Float16(x);uint16_t b;memcpy(&b,&v,2);return b;}
  static float Value(unsigned token,unsigned dimension){return float(int((token*7+dimension*3)%19)-9)*.0625f;}
- void SubmitDense(){
+ virtual void SubmitDense(){
   assert(phase==1 || phase==3);unsigned global=denseHeader[48]+phasePackets*32;
   unsigned count=std::min(32U,std::min(denseHeader[49]-phasePackets*32,denseHeader[4]-global)),bytes=count*512;
-  unsigned which=phase==3;const uint32_t expected[]={denseHeader[8+which]+global*512,0,denseHeader[12+which],D::Chunk,0,selfRoute,0,0,bytes,0};
+  unsigned which=phase==3;const uint32_t expected[]={denseHeader[8+which]+global*512,0,denseHeader[12+which],MWD::Chunk,0,selfRoute,0,0,bytes,0};
   for(unsigned i=0;i<10;i++)assert(command[i]==expected[i]);
   densePackets++;phasePackets++;
-  for(unsigned i=0;i<bytes/4;i++)memory[D::Chunk+i*4]=which?Half(Value(global+i/128,i%128*2))|(uint32_t(Half(Value(global+i/128,i%128*2+1)))<<16):0;
+  for(unsigned i=0;i<bytes/4;i++)memory[MWD::Chunk+i*4]=which?Half(Value(global+i/128,i%128*2))|(uint32_t(Half(Value(global+i/128,i%128*2+1)))<<16):0;
   countBase[0]++;countBase[1]+=bytes/64;countBase[2]++;countBase[3]++;countBase[6]++;
   if(densePackets==envelopeFaultPacket)memory[M::Job+envelopeFaultWord*4]^=1;
   if(densePackets==outerBootFaultPacket)memory[M::Boot+envelopeFaultWord*4]^=1;
@@ -170,30 +170,31 @@ struct MixedPeer:ResidentGdnOutputPeer {
   denseActive=activation=true;gdnActive=convActive=outputActive=false;phase=p;phasePackets=0;
   if(p==1){
    denseHeader={};unsigned w=logicalWorker,group=(w-1)/24,ordinal=(w-1)%24;
-   const unsigned first[]={D::Magic,1,64,layer,tokens-1,group,ordinal,tokens,0x10000000,0x20000000,0,1,D::Route(0),D::Route(1),selfRoute,w};
+   const unsigned first[]={MWD::Magic,1,64,layer,tokens-1,group,ordinal,tokens,0x10000000,0x20000000,0,1,MWD::Route(0),MWD::Route(1),selfRoute,w};
    for(unsigned i=0;i<16;i++)denseHeader[i]=first[i];
    for(unsigned i=0;i<16;i++)denseHeader[16+i]=source[i];for(unsigned i=0;i<8;i++)denseHeader[32+i]=boot[8+i];
    auto& d=denseHeader;d[40]=1000+sequence;d[41]=256;d[42]=0x3d800000;d[43]=32;d[44]=8192;d[45]=16384;
-   d[48]=D::First(tokens,ordinal);d[49]=D::Count(tokens,ordinal);unsigned prior=d[48]>=d[4]?0:std::min(d[49],d[4]-d[48]);
-   d[46]=2*((prior+31)>>5);d[47]=prior*16;d[50]=3;d[51]=6;d[52]=24;d[53]=384;d[54]=1536;d[55]=D::Magic;
-   assert(D::Shape(d.data()));for(unsigned i=0;i<64;i++)memory[D::Header+i*4]=d[i];
-   for(unsigned i=0;i<1536;i++)memory[D::HalfQuery+i*4]=Bits(float(int(i%7)-3)*.125f);
-   for(unsigned i=0;i<128;i++){memory[D::NewK+i*4]=0;memory[D::NewV+i*4]=Half(Value(tokens-1,i*2))|(uint32_t(Half(Value(tokens-1,i*2+1)))<<16);}
+   d[48]=MWD::First(tokens,ordinal);d[49]=MWD::Count(tokens,ordinal);unsigned prior=d[48]>=d[4]?0:std::min(d[49],d[4]-d[48]);
+   d[46]=2*((prior+31)>>5);d[47]=prior*16;d[50]=3;d[51]=6;d[52]=24;d[53]=384;d[54]=1536;d[55]=MWD::Magic;
+   assert(MWD::Shape(d.data()));for(unsigned i=0;i<64;i++)memory[MWD::Header+i*4]=d[i];
+   for(unsigned i=0;i<1536;i++)memory[MWD::HalfQuery+i*4]=Bits(float(int(i%7)-3)*.125f);
+   for(unsigned i=0;i<128;i++){memory[MWD::NewK+i*4]=0;memory[MWD::NewV+i*4]=Half(Value(tokens-1,i*2))|(uint32_t(Half(Value(tokens-1,i*2+1)))<<16);}
   }
-  for(unsigned i=0;i<16;i++)memory[D::Parameters+i*4]=i>=8 && i<14 && p==3?Bits(1.f/float(denseHeader[7])):0;
+  for(unsigned i=0;i<16;i++)memory[MWD::Parameters+i*4]=i>=8 && i<14 && p==3?Bits(1.f/float(denseHeader[7])):0;
   StageMixed(M::DenseScores+p-1,denseHeader[3],denseHeader[4],denseHeader[40]);
  }
  void VerifyDense(){
-  assert(memory.at(D::Summary)==D::Magic && memory.at(D::Summary+4)==sequence && memory.at(D::Local)==phase);
-  for(unsigned h=0;h<6;h++)for(unsigned t=0;t<denseHeader[49];t++)assert(memory.at(D::Scores+(h*384+t)*4)==(phase==1?0:phase==2?Bits(1.f):Bits(1.f/float(denseHeader[7]))));
+  assert(memory.at(MWD::Summary)==MWD::Magic && memory.at(MWD::Summary+4)==sequence && memory.at(MWD::Local)==phase);
+  for(unsigned h=0;h<6;h++)for(unsigned t=0;t<denseHeader[49];t++)assert(memory.at(MWD::Scores+(h*384+t)*4)==(phase==1?0:phase==2?Bits(1.f):Bits(1.f/float(denseHeader[7]))));
   if(phase==3)for(unsigned h=0;h<6;h++)for(unsigned dim=0;dim<256;dim++){
    double expected=0;for(unsigned t=0;t<denseHeader[49];t++)expected+=double(Value(denseHeader[48]+t,dim))/double(denseHeader[7]);
-   double actual=double(Float(memory.at(D::Partial+(h*512+dim*2)*4)))+Float(memory.at(D::Partial+(h*512+dim*2+1)*4));assert(actual==expected);
+   double actual=double(Float(memory.at(MWD::Partial+(h*512+dim*2)*4)))+Float(memory.at(MWD::Partial+(h*512+dim*2+1)*4));assert(actual==expected);
   }
  }
  void InertMixed(){unsigned p=densePackets,g=gdnPackets,m=matrixInstructions,c=denseCommands;for(unsigned i=0;i<32;i++)StepBlock();assert(p==densePackets && g==gdnPackets && m==matrixInstructions && c==denseCommands);}
  void StopMixed(){StageMixed(M::Stop,0,0,1000+sequence);assert(FinishMixed(sequence,true));InertMixed();}
 };
+#ifndef PIONEER_Q38_MIXED_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && !strcmp(argv[2],"--full")));setvbuf(stdout,nullptr,_IOLBF,0);bool full=argc==3;
  unsigned cases=0,faults=0,stack=0;
@@ -256,7 +257,7 @@ int main(int argc,char** argv){
  }
  for(unsigned word=0;word<64;word++){
   auto m=std::make_unique<MixedPeer>(argv[1]);assert(m->BootMixed());m->StageDense(1,64);assert(m->FinishMixed(m->sequence));
-  m->StageDense(2);m->memory[D::Header+word*4]^=1;unsigned packets=m->densePackets,commands=m->denseCommands;
+  m->StageDense(2);m->memory[MWD::Header+word*4]^=1;unsigned packets=m->densePackets,commands=m->denseCommands;
   assert(!m->FinishMixed(m->sequence) && m->densePackets==packets && m->denseCommands==commands);m->InertMixed();faults++;
  }
  for(unsigned c=0;c<8;c++){
@@ -266,3 +267,4 @@ int main(int argc,char** argv){
  }
  printf("PASS OFFLINE mixed positives%u/faults%u/maxObservedStack%u;synthetic CONTROL/weights/KV/structured max+inverse only;NO native/full64/token commit/card timing grant\n",cases,faults,stack);
 }
+#endif

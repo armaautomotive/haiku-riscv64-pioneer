@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // No guard. NEW front end only; old math is linked as separately built
 // internal capsules, never by retagging an old source/native scope.
+#ifdef PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE
+#error Mixed worker never aliases a returning ROOT image
+#endif
 #if !defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || PIONEER_Q38_MIXED_WORKER_IMAGE != 1
 #error Exact separate OFFLINE mixed-worker front end required
 #endif
