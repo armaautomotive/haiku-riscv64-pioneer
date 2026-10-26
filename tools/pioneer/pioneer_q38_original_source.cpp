@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#error Complete resident layer IMAGE never contains CPU reference observers
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE
 #error Complete resident layer IMAGE never contains CPU reference observers
 #endif

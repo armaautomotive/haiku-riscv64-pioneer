@@ -3,6 +3,13 @@
 // The kernel MUST authenticate/own ALL initialized bank extents,private
 // tasks/bank routes/source seals and all119 peer images/sequence histories.
 // No physical route,address or sequence here is a new userspace capability.
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#include "PioneerQ38ResidentAdvanceImageRole.h"
+#if !defined(PIONEER_Q38_PROJECTION_MATRIX_ROOT) || PIONEER_Q38_PROJECTION_MATRIX_ROOT != 1 \
+ || !defined(PIONEER_Q38_PROJECTION_NEXT_ROOT) || PIONEER_Q38_PROJECTION_NEXT_ROOT != 1
+#error Advance matrix component needs its exact nonzero-layer projection grammar
+#endif
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE
 #include "PioneerQ38ResidentOutputRootImageRole.h"
 #endif
@@ -722,9 +729,12 @@ extern "C" Q38_MAIN_SECTION unsigned block_main()
 		for (unsigned i=0;i<16;i++) if (proof[32+i]!=Words(Q38DispatchSourceCache)[w*16+i]) block_fault_park();
 		for (unsigned i=48;i<64;i++) if (proof[i]) block_fault_park();
 		for (unsigned row=0;row<groups*16;row++) if ((proof[64+row]&0x7f800000)==0x7f800000) block_fault_park();
-#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE)
+#if defined(PIONEER_Q38_WORK_SPARSE_EXPORT) && !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE) && !defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE)
 		if (!work)
 #endif
+		// Joined advance needs these ACTUAL verified receipts for its
+		// independent per-worker BEFORE/current-counter chain. Retain them
+		// in private L1 only: no host export or extra NoC transaction.
 		for (unsigned i=0;i<64;i++) Words(0x76000)[w*64+i]=proof[i];
 #ifdef PIONEER_Q38_WORK_COMPACT_OUTPUT
 		if (work) {

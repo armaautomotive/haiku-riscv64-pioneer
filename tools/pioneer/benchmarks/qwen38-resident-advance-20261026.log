@@ -1,0 +1,96 @@
+Qwen3.8-27B resident advance, 2026-10-26 UTC
+OFFLINE instructions/CPU simulated byte endpoints ONLY; NOT an inference benchmark.
+See sibling .txt for failed prototypes, containment, native ownership still OWED,
+and remaining full-model/FAST Work scope. Last whole model0.207893161tok/s unchanged.
+
+Final compiled image
+fb9e6d3368601f65883b49c3f964257370712acac9e37112cda4a16dc041e8b6 link bytes5976
+e0c5de18d44c1ecce93b9e3282e853de1943da2a4ffae7c6ef482d0493ad9f3f ffn bytes30496
+PASS NEW COMPILED device layer->next learned-RMS+raw-residual handoff;maxNewFrame304
+Old QLR1/peers/norm/FFN bytes preserved;NO host callback or intermediate readback;new native ownership/initialization/qualification OWED;NOT full64layer/attention/token-loop/Work/speed
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b boot bytes4
+dc8cee871492f76e05537e61d69adaf457efb85ded96ca8990f61e51b7a4d00c text bytes128
+479cb028a09ff252c8df32b279facfbf295d1b7cd72a13d2966272406398da51 conv bytes6472
+1d2e2e7e4c8f806ff2983e5d9a2ccbd1a4d177940c7e23d73b6de33bae7e7559 matrix bytes14136
+fca3da36bc93a1976c2f4609b423c8023a51661f58cc8267848f2e7bbe55c0a7 cohort bytes59288
+60f44ff5f83914fedcaee02d70dd0c1a821edfc4a150e4406430d82d30dbeef1 norm bytes5404
+fb9e6d3368601f65883b49c3f964257370712acac9e37112cda4a16dc041e8b6 link bytes5976
+e0c5de18d44c1ecce93b9e3282e853de1943da2a4ffae7c6ef482d0493ad9f3f ffn bytes30496
+bb56967029a2a4ca9eae46d4297ae9a51ba65ba2ca765c63b2ed966a107c69f4 advance_matrix bytes13776
+0b93f02b1aee70e60aa86e611ef963f61cce55ca304f96c6e57a586e6e8c857c advance bytes15624
+9ecabb2c6bb436bbc7380a695e136ba879b13cbd83ce7e4161c09f07a6901f7b advance_gather bytes4256
+PASS COMPILED actual layer->link->ONE20worker shared Q8 input->four resident next-layer matrices;maxFrame4976
+NEW L1 footprint/private native ownership/initialization/physical qualification OWED;NO old58/69 alias,Work/full64layer/token-loop or inference-speed grant
+
+Full actual joined run; exit0
+BEGIN ACTUAL full layer+link+shared quantization+FOUR next-layer matrices;SAME119peer programs, synthetic byte endpoints ONLY
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+ACTUAL_JOINED_LAYER_RETURNED_TO_LINK all5120hidden observed/ALL119peer sequences retained;NO host arithmetic feedback/readback/relaunch
+ACTUAL_ADVANCE_ENTER after actual complete layer+link/ALL5120 next input retained;NO CPU products or root relaunch
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT0 packets0 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT1 packets0 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT2 packets0 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT3 packets1 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT4 packets1 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT5 packets1 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT6 packets600 producers0 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+PASS ACTUAL_ADVANCE_PREFIX_FORK_FAULT7 packets1185 producers19 matrices0 publication0/inert/no later IO or reset;ACTUAL prefix retained,NOT native recovery
+ACTUAL_ADVANCE_MATRIX role10 worker1 seq11;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role11 worker1 seq12;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role5 worker119 seq6;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role5 worker1 seq13;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role6 worker119 seq7;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role6 worker1 seq14;NOT_NATIVE_TIME
+PASS actual advance complete-root traffic/gather/4matrix receipts/ALL119sequences/483fixed-receipt-word corruptions refused;DATA ONLY,not cleanup/native authority
+PASS ACTUAL uninterrupted layer->link->next projections/ONE20worker Q8 producer group/244 actual matrix jobs/ALL16480 resident rows checked/ALL119 private sequences retained/maxStack7144;NO host product feedback/reset/relaunch;NOT native/original-model/full64layer/token-rate qualification
+
+Final direct components; exit0; DATA-only setup, not prefix/native qualification
+BEGIN ACTUAL full layer+link+shared quantization+FOUR next-layer matrices;SAME119peer programs, synthetic byte endpoints ONLY
+ACTUAL_ADVANCE_MATRIX role10 worker1 seq2;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role11 worker1 seq3;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role5 worker119 seq1;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role5 worker1 seq4;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role6 worker119 seq2;NOT_NATIVE_TIME
+ACTUAL_ADVANCE_MATRIX role6 worker1 seq5;NOT_NATIVE_TIME
+PASS ACTUAL advance SUBROUTINE components/20real QPD1 producers/ALL4matrices244jobs/ALL16480rows arithmetic checked/SAME119peers/no numerical feedback;synthetic raw input and descriptor DATA only,NOT completed-prefix/native/full-model qualification
+
+Canonical DATA plan; exit0
+PASS advance canonical DATA32 GDN next-layer recipes/16 dense-boundary refusals/4672 descriptor mutations/64 missing-or-foreign edge-page refusals/foreign canonical and one-shot binding;244 matrix jobs share20 input producers;NO native/initialized/model readiness grant
+
+Actual gather; synthetic line DATA only; exit0
+PASS ACTUAL advance gather instructions:2boundary positives/ALL20 distinct per-peer sources/160scale words and2560native words BITEXACT copies/legacy ROOT-source predicate provably refuses these valid distinct producers/28 packet-source-table-counter-line failures before later IO;synthetic line DATA only,NO producer/native/full-model/rate grant
+
+Final role/build gates; exit0
+PASS advance role/build gates222/exact offline role/defined0+late old58/69/CPU/Work/component aliases/14 ambient build entries refuse BEFORE SDK/output access;NO native/L1 reservation/device grant
+
+Preserved DEBUG69 role/client/reference gates; all exit0
+PASS exact DEBUG69 role gates585/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+PASS ACTUAL DEBUG69 client gates146/exact CPU+client roles/native+image+old client+Work+kernel+fast-math defined0 refusal/late reinclusion;NO device execution
+PASS complete-layer original CPU observer gates72:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+
+Final SDK regression; exit0; BUILD ONLY
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+9fcf1f7fa56cbcda1e02d3f4d504bd60e0c5173028f51002174d8b5d35ba6d70  /private/tmp/pioneer-q38-advance-driver-regression-20261026-b/context-NODRV-control/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+PASS ACTUAL production DEBUG69/namespace20/fixed6521088-byte QLV1/closed10-operation dispatcher;conventional ABI,NO test/NODRV/old68 alias;maxNewFrame=1456
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7  /private/tmp/pioneer-q38-advance-driver-regression-20261026-b/tenstorrent_pci_probe-resident-layer-DEBUG69
+BUILT ONLY;public-control/source/client containment and physical qualification REQUIRED BEFORE Work;NO full-model or inference-speed grant
+
+Main and clean identical ELF/full stdout
+1a36c68b3f53faa49d3810aa205b943cb32176b5eab8dc65f07ebbcda7799e74  /private/tmp/pioneer-q38-resident-advance-image-20261026-j/program.elf
+1a36c68b3f53faa49d3810aa205b943cb32176b5eab8dc65f07ebbcda7799e74  /private/tmp/pioneer-q38-resident-advance-image-20261026-clean-b/program.elf
+4e0f1eb2b13683ddcb333793d41ae5985d22989451b627edaa57b60ba61d63da  /private/tmp/pioneer-q38-resident-advance-joined-20261026-f.log
+4e0f1eb2b13683ddcb333793d41ae5985d22989451b627edaa57b60ba61d63da  /private/tmp/pioneer-q38-resident-advance-joined-20261026-clean-c.log
+
+Read-only Pioneer postflight; exit0; NO GPU I/O or power/hardware change
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

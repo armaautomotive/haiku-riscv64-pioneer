@@ -4,6 +4,9 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#error OFFLINE advance IMAGE has no existing native or Work driver role
+#endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE) || (defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT) && !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE))
 #error OFFLINE complete layer IMAGE has no existing native or Work driver role
 #endif

@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: revalidate exact offline role even on late inclusion.
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#error Link and advance components have separate exact compilation roles
+#endif
 #if !defined(PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE) || PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE != 1
 #error Exact separate device-layer-link image required
 #endif

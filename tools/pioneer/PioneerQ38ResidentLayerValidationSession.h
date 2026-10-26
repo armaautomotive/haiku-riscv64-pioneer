@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#error On-card advance IMAGE is not a CPU DEBUG69 client
+#endif
 // Gates precede the include guard:late mixed-role inclusion MUST fail.
 #ifdef PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE
 #error On-card link IMAGE is not a CPU DEBUG69 client

@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#error On-card advance IMAGE cannot contain independent CPU reference products
+#endif
 // Gates precede the guard: late mixed-role inclusion is also forbidden.
 #ifdef PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE
 #error On-card link IMAGE cannot contain independent CPU reference products

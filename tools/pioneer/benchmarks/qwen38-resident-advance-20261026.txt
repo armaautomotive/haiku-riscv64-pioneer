@@ -1,0 +1,131 @@
+Qwen3.8-27B: on-card complete layer -> next input -> four next projections
+2026-10-26 UTC; OFFLINE implementation/qualification, NOT inference timing
+
+Implementation
+--------------
+One ROOT call now captures a new immutable advance recipe, calls the
+unchanged complete recurrent layer and next learned-RMS link, quantizes
+THAT normalized resident input once on20 actual companion workers, and
+executes the next layer's four projection matrices. Roles10/11/5/6 share
+that same type8/K5120 input:20 producers, not80. The matrices run3/3/119/119
+jobs and leave all16480 output rows in their separate device-GDDR slots.
+All119 peer programs, registers, physical tensors, counters and private
+sequence histories survive. There is no numeric CPU reference in the
+emitted program, host intermediate readback, CLOSE/relaunch or peer reset.
+This is NOT yet a complete second layer or token-producing model loop.
+
+The separate gather binds each QPD1 line to its ACTUAL peer's complete
+source table retained in the private cohort shadow. ROOT's source is NOT
+substituted for the peer source. All20 lines pass before native input is
+fetched or compact scales are published. The matrix component retains
+its already-validated actual peer receipts in PRIVATE L1 for the next
+independent BEFORE/AFTER/current-physical-counter check. This adds no NoC
+transaction, host export or CPU arithmetic validation. It does not relax
+any existing proof/source/counter/current-command predicate.
+
+Canonical DATA and containment
+------------------------------
+The pointer-bound heap plan reconstructs four canonical next-layer weight
+recipes and their upload-ledger pages, position/token/workspace/identity
+and source geometry. There are32 GDN-to-GDN recipes. All16 GDN-to-dense
+boundaries refuse; dense attention is NOT silently skipped or implemented.
+4672 descriptor mutations,64 missing/foreign edge-page cases, foreign
+canonical binding and duplicate construction refuse. Moving all three
+small-role learned chunks together gives valid foreign geometry, which
+still fails canonical binding. Page presence is DATA, not authentication,
+initialized state or completed execution/native lifetime authority.
+
+The new QAP1/QAPF terminal and QAR1 receipt do NOT alias old native58/69.
+The new lower-L1 region40000..5b000 and the predecessor's link region are
+not covered by native69's journal. No new kernel ABI/selector was added.
+Native/CPU/Work/old component roles and14 ambient build entries refuse
+the new image role, including defined0 and late role changes.222 new
+role/build gates pass. Prior DEBUG69 role585/client146/reference72 pass.
+
+Exact emitted identity
+----------------------
+Main and independent clean program.elf SHA256
+1a36c68b3f53faa49d3810aa205b943cb32176b5eab8dc65f07ebbcda7799e74
+advance_matrix.bin13776B SHA256
+bb56967029a2a4ca9eae46d4297ae9a51ba65ba2ca765c63b2ed966a107c69f4
+advance.bin15624B SHA256
+0b93f02b1aee70e60aa86e611ef963f61cce55ca304f96c6e57a586e6e8c857c
+advance_gather.bin4256B SHA256
+9ecabb2c6bb436bbc7380a695e136ba879b13cbd83ce7e4161c09f07a6901f7b
+text.bin128B SHA256
+dc8cee871492f76e05537e61d69adaf457efb85ded96ca8990f61e51b7a4d00c
+ALL seven predecessor sections and ALL119 companion programs are
+byte-identical. Max matrix frame4976B; actual combined max stack7144B,
+within the retained8KiB stack. All36 changed source files match the
+independent clean tree exactly.
+No undefined symbols, writable globals/GOT, unsupported division/sqrt/
+FMA, EBREAK or CSR writes. Only nine read-only cycle CSR instructions
+remain: one mcycleh/mcycle/mcycleh triplet in each of the three matrices.
+
+Actual-instruction tests: simulated CPU byte endpoints ONLY
+----------------------------------------------------------
+Main and independent clean combined runs: PASS, both process exit0.
+Their COMPLETE stdout is byte-identical, SHA256
+4e0f1eb2b13683ddcb333793d41ae5985d22989451b627edaa57b60ba61d63da.
+They execute the complete preceding layer and link before the advance,
+inspect actual intermediate arithmetic without feeding results back,
+and check all16480 new rows, all119 retained sequences, complete ROOT
+traffic and483 fixed receipt-word mutations. All eight fault forks pass
+while retaining the ACTUAL preceding layer state; none supplies a
+synthetic completion. Unknown/mismatched/source/receipt/counter/manifest/
+math faults leave ROOT inert, with no following ROOT packet/reset/retry
+or publication. The late-NaN case has19 actual producers before refusal.
+This does NOT assert that already-running workers synchronously stop.
+The native owner must retain every resource after uncertainty.
+
+Direct component tests: PASS, process exit0. They execute20 actual QPD1 producers, the gather and
+all244 actual matrix jobs, with all16480 rows independently checked.
+Their setup supplies synthetic raw input/descriptor DATA ONLY: no fake
+predecessor receipt, producer readiness or native qualification. They
+are NOT a replacement for the full combined execution above.
+Direct gather:2 boundary positives,20 distinct source identities,
+160 scale +2560 native words copied exactly,28 injected packet/source/
+table/counter/line failures before later I/O. These are synthetic line
+DATA, not independently completed producers; the combined test supplies
+the real producer lineage. No runtime is an inference benchmark.
+
+Offline refusals and corrections (no hardware involved)
+-------------------------------------------------------
+Early builds refused a freestanding stdint dependency, misleading
+indentation, enum comparisons and EBREAK from an unchecked null-role
+path. They were corrected without weakening opcode or byte-equality
+gates. Explicitly stopped rejected-image tests were not timeout recovery.
+The first real joined path caught the legacy homogeneous-source gather
+assumption after20 actual QPD1 producers. The separate per-peer-source
+gather fixes the cause rather than relabeling the source evidence.
+The next real joined runs and component trace caught an unfilled private
+matrix receipt cache after the first three actual role10 matrix jobs.
+The exact advance role now retains the ACTUAL already-verified receipts;
+old/default components remain byte-identical. The final joined fixture
+then caught its own obsolete first-layer scratch-write assertion: that
+completed temporary FFN span is legitimately reused for the next matrix
+proof cache. The observer now permits ONLY sequential actual proof copies
+from the current75000 peer response, at the exact per-role extent. The
+preceding layer was already fully inspected before this temporal reuse.
+Persistent canonical manifests, saved receipts and immutable code remain
+protected. No completion or numeric product is synthesized by this fix.
+
+Preserved physical system and remaining work
+-------------------------------------------
+Full SDK regression still produces DEBUG69
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7;
+old65 remains61faa093 and NODRV remains9fcf1f7f/inert. SDK read-only.
+No new image/driver was installed; no power, SD, mains or hardware action.
+Read-only SSH postflight: tag2026102100010012/generation4/quiesced0/cold0/
+active_owner0/open_count1/guard1, CPU_METADATA_ONLY. Working041 driver
+from the prior physically verified restoration remains in place.
+
+Before hardware use, a NEW genuine native joint owner owes exclusive L1
+reservation, arbitrary-original journals, authenticated source/upload/
+initialized history and state, model/clock/host lifetime, current physical
+proofs, exact STOP/holds and complete restoration. Neither shape DATA,
+synthetic subroutine tests nor old native69 closure can grant that scope.
+Remaining: complete second layer, all64 layers, canonical state commits,
+dense attention/KV, vocabulary/sampling, persistent token loop and
+no-CPU-reference FAST Work/Assistant integration. Last measured WHOLE
+MODEL remains0.207893161tok/s.20tok/s is UNMET; no speedup is claimed.

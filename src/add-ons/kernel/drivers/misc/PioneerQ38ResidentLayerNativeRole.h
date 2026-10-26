@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard:every inclusion revalidates the separate OFFLINE native component.
+#ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE
+#error Advance IMAGE is not a native69 component or journal scope
+#endif
 #if !defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT) || PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT != 1 \
  || !defined(PIONEER_Q38_PROJECTION_EXECUTION_OWNER) || PIONEER_Q38_PROJECTION_EXECUTION_OWNER != 1 \
  || !defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || PIONEER_Q38_PROJECTION_RESULT_STASH != 1 \

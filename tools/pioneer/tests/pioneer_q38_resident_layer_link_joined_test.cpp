@@ -64,9 +64,9 @@ struct LinkedLayerFabric:LayerFabric {
   entered=true;puts("ACTUAL_JOINED_LAYER_RETURNED_TO_LINK all5120hidden observed/ALL119peer sequences retained;NO host arithmetic feedback/readback/relaunch");
  }
  bool RunLinked(){while(pc!=parkPc && !(unknown && l1[Index(pc)]==0x0000006f)){if(pc==linkEntry)EnterLink();StepRoot();}return !unknown;}
- void VerifyLink(){
-  assert(entered && linkPackets==8 && linkNormStores==5120 && Mem(0x17ffc8)==TT_Q38_LAYER_LINK_MARKER
-   && Mem(0x17ffc0)==donePc && Mem(0x17ffc4)==5120 && !pending && !unknown && minStack>=0x6e000);
+ void VerifyLink(bool terminal=true){
+  assert(entered && linkPackets==8 && linkNormStores==5120 && !pending && !unknown && minStack>=0x6e000);
+  if(terminal)assert(Mem(0x17ffc8)==TT_Q38_LAYER_LINK_MARKER && Mem(0x17ffc0)==donePc && Mem(0x17ffc4)==5120);
   double square=0;for(unsigned i=0;i<5120;i++){float x=Float(finalHidden[i]);square+=double(x*x);
    assert(Gddr(manifest[9],manifest[8]+98304+i*4)==finalHidden[i]);}
   float scale=1.f/sqrtf(float(square/5120)+1e-6f);const auto* n=link.Descriptor()+64;
@@ -76,6 +76,7 @@ struct LinkedLayerFabric:LayerFabric {
   for(unsigned w=0;w<119;w++)assert(!Peer(w).active && Peer(w).pc==TT_Q38_PEER_WAIT_LOAD && Peer(w).memory.at(0x74144)==peerSequence[w]);
  }
 };
+#ifndef PIONEER_Q38_LAYER_LINK_JOINED_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  puts("BEGIN ACTUAL complete recurrent layer->next learned RMS one uninterrupted ROOT/ALL119retained peers;SYNTHETIC raw/learned inputs only");
@@ -83,3 +84,4 @@ int main(int argc,char** argv){
  assert(f.RunLinked());f.VerifyLink();f.Inert();
  printf("PASS ACTUAL joined layer->next-input device handoff ALL5120 normalized+raw BITEXACT independent CPU observer/8NoC packets/ALL119peers unchanged/no CPU product injection/no host roundtrip/no relaunch/maxStack%u;NOT native/original-model/silicon/full64layer/token-rate qualification\n",0x70000-f.minStack);
 }
+#endif
