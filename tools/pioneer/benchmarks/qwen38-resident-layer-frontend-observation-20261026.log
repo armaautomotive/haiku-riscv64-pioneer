@@ -1,5 +1,5 @@
-OFFLINE frontend policy checkpoint04:05UTC;NOT physical/Work/rate qualification.
-Main44068/clean39777 fulloriginal and native86872 were polled LIVE,not terminal results.
+OFFLINE frontend policy qualification;NOT physical/Work/rate qualification.
+Update:Main44068/clean39777 fulloriginal and native86872 ALLterminal0;the same earlier live handles completed without restart.
 Completed selected supporting outputs:
 PASS actual Run/RootPhysical CPU observation: 350 cases;unchanged predicates/order except no-marker speculative PC rejection;raw snapshots NEVER complete/hold/publish;finite exhaustion+all later failures retain/freeze;NO added reads/retries after failure;TEST branches ONLY,NOT native/device/cleanup/Work/speed qualification
 PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
@@ -29,3 +29,20 @@ b94ea2d913ef45a3de7583f60e866c9c10ebbd8efa6156ac43e33dbf6510191f  tools/pioneer/
 a9b5db7e3ebacd524cb49dad0b12f1b26bfe1dadea8d2ec00af9c06f12efc53e  tools/pioneer/tests/pioneer_q38_resident_layer_native_execution_test.cpp
 e115323e07b4fa78f4ee57c8118baf1c45da18159f652565f1f01b28a0826aeb  tools/pioneer/pioneer_p100a_hot_swap.sh
 103b08d051550cff99722941fa72dcb5deb224db1c04c1df00df26ac308f6716  tools/pioneer/tests/pioneer_p100a_hot_swap_test.py
+
+6745d55d5756aae136f20dec6ca2a3fc312bd655e40698d8eb73582182ca389b  /private/tmp/pioneer-q38-layer-frontend-original-20261026-a.log
+6745d55d5756aae136f20dec6ca2a3fc312bd655e40698d8eb73582182ca389b  /private/tmp/pioneer-q38-layer-frontend-original-20261026-clean-a.log
+2ecee074fd6a0ae991039b0e2d1277381b83024c856badf7d25d62753322d50a  /private/tmp/pioneer-q38-layer-frontend-native-20261026-a.log
+Q38-LAYER-DEBUG:FRONTEND unexpected3 outside2 rejected1 first00058644 poll2;RAW_SPECULATIVE_SNAPSHOTS_NOT_EXECUTION_OR_COMPLETION;CPU_ONLY_EXISTING_READS
+DEBUG69_ACTUAL_FULL_PIPELINE_READBACK_RESTORE_COMPLETE_BEFORE_USER_COPY;forking final-copy failure
+PASS ACTUAL DEBUG69 final-user-copy failure AFTER full native compute/readback/restore:ALL owners/maps/snapshots/clock/hosts retained,call seal released,ZERO laterIO-reset-restore-retry-END
+PASS ACTUAL DEBUG69 emitted original pipeline with6 no-marker raw frontend snapshots/3 anomalies;ALL genuine success/physical/numeric/STOP/restore requirements unchanged;NO snapshot grants completion
+DEBUG69_ORIGINAL_DUAL_REFERENCE idealStrict0 idealFinalBits3423 idealMaxAbs5.96046447754e-08 policyStrict1 policyFinalBits0;NOT_FULLMODEL_OR_RATE
+PASS ORIGINAL token0 ACTUAL DEBUG69 full-layer machine:authenticated sameGGUF/ALL independent Conv+history+next-state+gated checks/ALL5120final+projectionwords/14nonfinite-or-current-state corruptions refused;NO CPU products fed to native code
+DEBUG69_DUPLICATE_STATUS status-11 cold0 unsafe0 deviceDelta0/0 thread-1;CPU_METADATA_ONLY
+PASS ORIGINAL token0 ACTUAL DEBUG69 public/native complete lifetime/1592fixed reads+ALL1630208words/full44MB restore+secondproof/independent original-GGUF observer/reply copy+failure containment/one-shot refusal/actual END;OS+physical endpoints TEST,NOT silicon/full64layer/tokenloop/Work/rate qualification
+PASS COMPLETE NEW_NATIVE_LAYER actual terminal-stack positive+17 source/map/clock/code/PC/receipt/STOP/restore/END containment cases;forks inherit genuine initialization/QPS1/new private claim/installed119boot/COMPLETED emitted joined-layer instructions,EVERY child still owes actual native ROOT+ALL119 proofs/STOP/restore/END;NO fabricated readiness/products,NO silicon/fullmodel/rate qualification
+4b669cfc6e7024e1f3a007c68f4adf435dfc90337870f62eae15dc8b8108bd4f  /private/tmp/pioneer-q38-layer-frontend-launcher-guard-20261026-c.log
+PASS actual one-shot C launcher 18 filesystem/hash/symlink/metadata/success/client-failure/duplicate cases;NO native/device qualification or retry/reset/restore/power
+a10a6a63ef80963af36f4428fa6023d32281f658a3243ddf11946a5a305183d8  /private/tmp/pioneer-q38-debug69-physical-20261026-c.sh
+DESKBAR user-approved restore19203terminal0:no reboot/live shelf2/namesProcessController+NetworkStatus/error0/saved183Bbothapp paths. Prior disappearance cause unproven.

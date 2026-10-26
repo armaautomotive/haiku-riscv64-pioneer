@@ -1,11 +1,11 @@
 Resident-layer frontend observation policy — 2026-10-26 UTC
 =========================================================
 
-STATUS at04:05UTC: OFFLINE implementation checkpoint,NOT staged/installed.
-Supporting checks below are complete. Main44068,clean39777 full original
-public-control tests and native86872 failure-containment test were each
-polled and confirmed LIVE. No full-test pass or physical qualification is
-claimed yet. Keep the SAME handles;elapsed observation time is not failure.
+STATUS: Complete OFFLINE qualification;NOT yet staged/installed/executed.
+Main44068 and clean39777 full original public-control tests BOTH terminal0,
+as is native86872 including all17 failure-containment cases. The preceding
+04:05 checkpoint correctly left them LIVE;each SAME handle was retained
+until its actual terminal result. No silicon/full-model/rate pass claimed.
 Current card driver remains working041/tag12/gen2/cold0/owner0,restored in
 the preceding recovery. Last actual whole-model0.207893161tok/s unchanged;
 20tok/s/full-card inference remain UNMET.
@@ -74,8 +74,8 @@ hash/symlink/parent/generation/backup checks remain. No automatic rollback.
 Preserve immutable0d0f (beeaf) and7cb (9609) helpers;neither maps b554.
 New candidate/updater have NOT been staged,installed or executed.
 
-Required next checks already running,NOT yet passes
----------------------------------------------------
+Completed original-model and native tests — simulated endpoints ONLY
+--------------------------------------------------------------------
 Main44068: /private/tmp/pioneer-q38-layer-frontend-original-20261026-a.log
 Clean39777: /private/tmp/pioneer-q38-layer-frontend-original-20261026-clean-a.log
 Native86872: /private/tmp/pioneer-q38-layer-frontend-native-20261026-a.log
@@ -84,16 +84,48 @@ independent references before native context. The actual emitted VM's PC,
 instructions,bytes,status,counters and products are NOT modified. Only six
 external no-marker debug samples are varied,including the physical pair,
 a fault-region value,unrelated address and terminal-looking speculation.
-They still owe all1630208 readback words/numeric checks/STOP/restore/END.
-The native test propagates the same earlier samples into its actual-stack
-terminal failure forks;bad completed status/PC/code/receipts must still
-quarantine with zero subsequent device IO/reset/restore/retry/END.
+Both completed all1630208 readback words/1592 fixed reads/numeric checks,
+real STOP/44MB restore/second proof/END. Each also forked the actual final
+user-copy call AFTER restoration;copy failure retained ALL native owners
+with zero later IO/reset/restore/retry/END. All14 numeric/current-slot
+corruptions were refused. Main/clean complete logs are byte-identical:
+  6745d55d5756aae136f20dec6ca2a3fc312bd655e40698d8eb73582182ca389b
+Observed raw snapshots:unexpected3/outside2/rejected1/first58644/poll2.
+Instruction-policy comparison has0 final bit differences/strict1. Separate
+ideal-libm comparison remains strict0/3423 final differences/max absolute
+5.96046447754e-8;it is NOT silently promoted to a strict numerical pass.
+
+Native86872 terminal0 propagated the same earlier samples into actual-stack
+terminal forks:all17 source/map/clock/code/PC/receipt/STOP/restore/END
+failures retained owners with zero subsequent device IO/reset/restore/
+retry/END. Positive case still completed all119 STOPs/all120 holds/full
+original restore+second proof/actual END. Independent saved-prefix proof
+refused249 corruptions;ALL119 peer chains refused7616 proof-word mutations.
+Native complete log SHA256:
+  2ecee074fd6a0ae991039b0e2d1277381b83024c856badf7d25d62753322d50a
 Simulated OS/NoC byte endpoints are NOT physical execution or rate evidence.
 
 Clean tree /private/tmp/pioneer-layer-frontend-clean.lzQALzHh is an archive
-of57bbf94aaa plus the ten explicit source/test/updater changes. Poll the
-same live handles,inspect exact terminal results,fix any actual failures
-and update evidence before any guarded single-attempt card trial.
+of57bbf94aaa plus the ten explicit source/test/updater changes. All long
+handles are now terminal;do not restart/repoll them. Source058f6af0fa remains
+unchanged. Save/push this qualification before any guarded one-shot trial.
+
+Prepared local launcher (NOT staged/executed yet):
+  /private/tmp/pioneer-q38-debug69-physical-20261026-c.sh
+  a10a6a63ef80963af36f4428fa6023d32281f658a3243ddf11946a5a305183d8
+Pins exactb554/guardd1ce/client057b/adminb0c;requires CPU-only metadata
+role69/gen3/quiesced0/cold0/owner0/open1/guard1;exclusive run-directory
+creation forbids duplicates. Exactly one validate-token0 call,return code
+preserved,NO retry/reset/restore/power. Shell syntax check0 and18 fake-
+filesystem/hash/symlink/metadata/success/client-failure/duplicate cases0.
+An initial fake uname quoting error failed the TEST harness only;corrected
+the mock,then all18 passed. No hardware action or production script change.
+
+Haiku remains healthy,64CPUs/full137034936320B RAM/working041/SSH. With
+explicit user approval,standard ProcessController-deskbar and NetworkStatus
+--deskbar restored the missing indicators without a restart. Live shelf
+count2/names correct;both paths persisted in183B saved list. Exact prior
+clearing cause remains unknown;user requested returning focus to Qwen.
 
 Full objective remains unchanged:full64-layer scheduling,dense attention
 and KV,current-state commits,vocabulary/sampling,persistent whole-token
